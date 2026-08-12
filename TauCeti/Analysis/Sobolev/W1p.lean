@@ -7,6 +7,7 @@ module
 public import TauCeti.Analysis.Sobolev.WeakDeriv
 public import Mathlib.MeasureTheory.Function.Holder
 public import Mathlib.MeasureTheory.Function.L2Space
+public import Mathlib.MeasureTheory.SpecificCodomains.WithLp
 public import Mathlib.Analysis.InnerProductSpace.ProdL2
 
 /-!
@@ -98,6 +99,8 @@ omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
 theorem Sobolev1JetLp.value_apply_ae (J : Sobolev1JetLp mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
       Sobolev1JetLp.value J x = WithLp.fst (J x) := by
+  -- `coeFn_compLp` is stated for the unbundled `compLp`; expose that implementation of
+  -- `valueL` so its pointwise theorem applies.
   change ∀ᵐ x ∂mu.restrict Omega,
     (WithLp.fstL 2 ℝ ℝ E).compLp J x = (WithLp.fstL 2 ℝ ℝ E) (J x)
   exact (WithLp.fstL 2 ℝ ℝ E).coeFn_compLp J
@@ -107,6 +110,8 @@ omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
 theorem Sobolev1JetLp.gradient_apply_ae (J : Sobolev1JetLp mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
       Sobolev1JetLp.gradient J x = WithLp.snd (J x) := by
+  -- As for `value_apply_ae`, expose the unbundled `compLp` implementation consumed by
+  -- Mathlib's pointwise coercion theorem.
   change ∀ᵐ x ∂mu.restrict Omega,
     (WithLp.sndL 2 ℝ ℝ E).compLp J x = (WithLp.sndL 2 ℝ ℝ E) (J x)
   exact (WithLp.sndL 2 ℝ ℝ E).coeFn_compLp J
@@ -357,12 +362,6 @@ theorem mem_w1pSubmodule_iff_hasWeakFDerivOn (J : Sobolev1JetLp mu Omega p) :
       (h v).locallyIntegrableOn_deriv phi v).mpr
         ((h v).integral_lineDeriv_smul_eq_neg_integral_smul phi)
 
-omit [FiniteDimensional ℝ E] in
-/-- The first-order weak Sobolev subspace is closed in its ambient Bochner `Lᵖ` space. -/
-theorem isClosed_w1pSubmodule :
-    IsClosed (w1pSubmodule mu Omega p : Set (Sobolev1JetLp mu Omega p)) :=
-  (w1pSubmodule mu Omega p).isClosed
-
 /-- The first-order, real-valued weak Sobolev space `W^{1,p}(Ω)`, represented by its value and
 weak gradient. -/
 abbrev W1p (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
@@ -383,6 +382,69 @@ def W1p.gradientL : W1p mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
 /-- The `Lᵖ` weak-gradient component of a Sobolev function. -/
 def W1p.gradient (u : W1p mu Omega p) : Lp E p (mu.restrict Omega) :=
   W1p.gradientL u
+
+omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
+    [Fact (1 <= p)] in
+private theorem memLp_assembleSobolev1Jet (u : Lp ℝ p (mu.restrict Omega))
+    (g : Lp E p (mu.restrict Omega)) :
+    MemLp (fun x => WithLp.toLp 2 (u x, g x)) p (mu.restrict Omega) := by
+  apply MemLp.of_fst_of_snd_prodLp
+  exact ⟨by simpa only [WithLp.toLp_fst] using Lp.memLp u,
+    by simpa only [WithLp.toLp_snd] using Lp.memLp g⟩
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
+private def assembleSobolev1JetLp (u : Lp ℝ p (mu.restrict Omega))
+    (g : Lp E p (mu.restrict Omega)) : Sobolev1JetLp mu Omega p :=
+  (memLp_assembleSobolev1Jet u g).toLp fun x => WithLp.toLp 2 (u x, g x)
+
+omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
+    [Fact (1 <= p)] in
+private theorem assembleSobolev1JetLp_apply_ae (u : Lp ℝ p (mu.restrict Omega))
+    (g : Lp E p (mu.restrict Omega)) :
+    ∀ᵐ x ∂mu.restrict Omega,
+      assembleSobolev1JetLp u g x = WithLp.toLp 2 (u x, g x) := by
+  exact (memLp_assembleSobolev1Jet u g).coeFn_toLp
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
+@[simp]
+private theorem value_assembleSobolev1JetLp (u : Lp ℝ p (mu.restrict Omega))
+    (g : Lp E p (mu.restrict Omega)) :
+    Sobolev1JetLp.value (assembleSobolev1JetLp u g) = u := by
+  apply Lp.ext
+  filter_upwards [Sobolev1JetLp.value_apply_ae (assembleSobolev1JetLp u g),
+    assembleSobolev1JetLp_apply_ae u g] with x hvalue hassemble
+  simpa only [hassemble, WithLp.toLp_fst] using hvalue
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
+@[simp]
+private theorem gradient_assembleSobolev1JetLp (u : Lp ℝ p (mu.restrict Omega))
+    (g : Lp E p (mu.restrict Omega)) :
+    Sobolev1JetLp.gradient (assembleSobolev1JetLp u g) = g := by
+  apply Lp.ext
+  filter_upwards [Sobolev1JetLp.gradient_apply_ae (assembleSobolev1JetLp u g),
+    assembleSobolev1JetLp_apply_ae u g] with x hgradient hassemble
+  simpa only [hassemble, WithLp.toLp_snd] using hgradient
+
+/-- Construct a Sobolev function from its `Lᵖ` value and weak-gradient components. -/
+def W1p.mk (u : Lp ℝ p (mu.restrict Omega)) (g : Lp E p (mu.restrict Omega))
+    (h : HasWeakFDerivOn mu Omega u (fun x => innerSL ℝ (g x))) : W1p mu Omega p :=
+  ⟨assembleSobolev1JetLp u g, (mem_w1pSubmodule_iff_hasWeakFDerivOn _).mpr (by
+    rw [value_assembleSobolev1JetLp]
+    convert h using 1
+    funext x
+    rw [Sobolev1JetLp.weakFDeriv, gradient_assembleSobolev1JetLp])⟩
+
+@[simp]
+theorem W1p.value_mk (u : Lp ℝ p (mu.restrict Omega)) (g : Lp E p (mu.restrict Omega))
+    (h : HasWeakFDerivOn mu Omega u (fun x => innerSL ℝ (g x))) :
+    W1p.value (W1p.mk u g h) = u :=
+  value_assembleSobolev1JetLp u g
+
+@[simp]
+theorem W1p.gradient_mk (u : Lp ℝ p (mu.restrict Omega)) (g : Lp E p (mu.restrict Omega))
+    (h : HasWeakFDerivOn mu Omega u (fun x => innerSL ℝ (g x))) :
+    W1p.gradient (W1p.mk u g h) = g :=
+  gradient_assembleSobolev1JetLp u g
 
 omit [FiniteDimensional ℝ E] in
 /-- Two Sobolev functions are equal when their value and weak-gradient components are equal. -/
@@ -417,6 +479,6 @@ theorem W1p.norm_sq_eq_value_add_gradient (u : W1p mu Omega 2) :
 
 /-- `W^{1,p}(Ω)` is complete in its value-gradient graph norm. -/
 instance : CompleteSpace (W1p mu Omega p) :=
-  isClosed_w1pSubmodule.completeSpace_coe
+  (w1pSubmodule mu Omega p).isClosed.completeSpace_coe
 
 end TauCeti
