@@ -21,11 +21,12 @@ chain: if the first edge of a chain of `m + 3` vertices is double, the last one 
 
 The diagram to exclude is a chain whose two extreme edges are double, and there are two of them,
 because a Cartan matrix orients its multiple edges: writing the entry `-2` of a double edge as an
-arrow, the two arrows either point towards each other, or both the same way along the chain. On
+arrow, the two arrows either point away from each other towards the chain ends, or both the same way
+along the chain. On
 `l + 1` vertices these are the diagrams of the affine Kac-Moody algebras `C⁽¹⁾ₗ` and `A⁽²⁾₂ₗ`,
 hence singular, so the certificate is in each case a genuine null vector: the vector of **marks**
 `TauCeti.twoDoubleEdgeMark`, which is `1` at the first vertex, `2` at every interior vertex, and,
-at the last vertex, `1` when the arrows point towards each other and `2` when they agree. These are
+at the last vertex, `1` when the arrows point outwards and `2` when they agree. These are
 the marks `1, 2, …, 2, 1` and `1, 2, …, 2, 2` of those two diagrams.
 
 Unlike the fork bound of `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star` and the double-edge
@@ -80,9 +81,10 @@ edges except for the first and the last edges, which are double.
 
 The first double edge is oriented once and for all, the entry from the second vertex to the first
 being `-2`. The boolean `b` orients the last one: the entry from the vertex `m + 1` to the vertex
-`m + 2` is `-2` when `b` is `true`, so that the two double edges point towards each other, and the
-opposite entry is `-2` when `b` is `false`, so that they point the same way along the chain. In the
-notation of Kac's tables the first diagram is `C⁽¹⁾ₘ₊₂` and the second is `A⁽²⁾₂ₘ₊₄`. -/
+`m + 2` is `-2` when `b` is `true`, so that the two double edges point away from each other towards
+the chain ends, and the opposite entry is `-2` when `b` is `false`, so that they point the same way
+along the chain. In the notation of Kac's tables the first diagram is `C⁽¹⁾ₘ₊₂` and the second is
+`A⁽²⁾₂ₘ₊₄`. -/
 def twoDoubleEdgeCartanMatrix (m : ℕ) (b : Bool) : Matrix (Fin (m + 3)) (Fin (m + 3)) ℤ :=
   Matrix.of fun i j ↦
     if (i : ℕ) = 1 ∧ (j : ℕ) = 0 then -2
@@ -136,7 +138,8 @@ private lemma twoDoubleEdgeCartanMatrix_eq_sub (i j : Fin (m + 3)) :
   split_ifs <;> omega
 
 /-- The **marks** of a doubly ended chain: `1` at the first vertex, `2` at every other one, except
-that the last vertex also carries `1` when the two double edges point towards each other.
+that the last vertex also carries `1` when the two double edges point outwards towards the chain
+ends.
 
 At the vertices of the chain these are the marks of the affine diagram the chain is: `1, 2, …, 2,
 1` for `C̃ₙ`, when `b` is `true`, and `1, 2, …, 2, 2` for `A⁽²⁾₂ₙ`, when `b` is `false`. The
@@ -202,9 +205,7 @@ private lemma twoDoubleEdgeMark_row (m : ℕ) (b : Bool) {s : ℕ} (hs : s < m +
       | (exfalso; omega)
       | norm_num
 
-/-- **The marks are a null vector of the doubly ended chain.** Every row annihilates them: the
-chain part of the row is the second difference of the marks, and the two lowered entries account
-for the two ends. -/
+/-- **The marks are a null vector of the doubly ended chain:** every row annihilates them. -/
 theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m + 3)) :
     ∑ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
       * twoDoubleEdgeMark m b (j : ℕ) = 0 := by
@@ -252,8 +253,8 @@ diagrams that the classical argument reaches by contracting the chain between th
 a contraction that is not needed here, since the marks are available at every length.
 -/
 
-/-- **The shortest doubly ended chain with the two double edges pointing towards each other**: the
-extended Dynkin diagram `C̃₂`, whose marks are `1, 2, 1`. -/
+/-- **The shortest doubly ended chain with the two double edges pointing outwards towards the chain
+ends**: the extended Dynkin diagram `C̃₂`, whose marks are `1, 2, 1`. -/
 theorem twoDoubleEdgeCartanMatrix_zero_true :
     twoDoubleEdgeCartanMatrix 0 true = !![2, -1, 0; -2, 2, -2; 0, -1, 2] := by
   ext i j
@@ -353,7 +354,7 @@ private theorem not_two_le_of_chain_of_apply_eq_neg_two (h : IsFiniteType A) {v 
       (by simpa using h1) (by simpa using h2)]
     exact h.submatrix fun i j hij ↦ Fin.ext
       (hv (Set.mem_Iio.2 i.isLt) (Set.mem_Iio.2 j.isLt) hij)
-  · -- The two double edges point towards each other.
+  · -- The two double edges point outwards towards the chain ends.
     refine not_isFiniteType_twoDoubleEdgeCartanMatrix m true ?_
     rw [← submatrix_eq_twoDoubleEdgeCartanMatrix h hzero hsimple hfirst hfirst'
       (by simpa using h1) (by simpa using h2)]
