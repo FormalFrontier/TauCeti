@@ -53,34 +53,19 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
         Tannaka.fgPointNatIsoHom.{u, v, x, u} k H K g := by
   constructor
   · intro hg
-    have hg_end :=
-      (isSemisimplePoint_iff_forall_isSemisimple_endOfPoint g).mp hg
-    have hg_action : ∀ M : FGComoduleCat.{u, v, u} k H,
-        GeneralLinearGroup.IsSemisimple
-          (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
-      intro M
-      rw [GeneralLinearGroup.isSemisimple_def]
-      rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
-      have haction :
-          LinearMap.GeneralLinearGroup.generalLinearEquiv K _
-              (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
-            Comodule.pointsAction M g :=
-        (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
-      rw [haction]
-      simpa only [Comodule.pointsAction_toLinearMap] using hg_end M
     apply Aut.ext
     apply NatTrans.ext
     funext (M : FGComoduleCat.{u, v, u} k H)
     rw [Tannaka.fgPointSemisimplePartNatIso_hom_app,
       Tannaka.fgPointNatIsoHom_hom_app,
-      GeneralLinearGroup.semisimplePart_eq_self (hg_action M)]
+      GeneralLinearGroup.semisimplePart_eq_self (hg.isSemisimple M)]
     have haction :
         (LinearMap.GeneralLinearGroup.ofLinearEquiv
           (Comodule.pointsAction M g)).toLinearEquiv = Comodule.pointsAction M g :=
       (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
     rw [haction]
   · intro h
-    apply (isSemisimplePoint_iff_forall_isSemisimple_endOfPoint g).2
+    apply isSemisimplePoint_of_forall_isSemisimple
     intro M
     have happ := congrArg
       (fun a : Aut (FGComoduleCat.scalarExtensionFunctor.{u, v, u, x} k H K) ↦
@@ -101,15 +86,7 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
       rw [← hfactor]
       exact GeneralLinearGroup.isSemisimple_semisimplePart _
-    rw [GeneralLinearGroup.isSemisimple_def] at hM
-    rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap] at hM
-    have haction :
-        LinearMap.GeneralLinearGroup.generalLinearEquiv K _
-            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
-          Comodule.pointsAction M g :=
-      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
-    rw [haction] at hM
-    simpa only [Comodule.pointsAction_toLinearMap] using hM
+    exact hM
 
 end HopfAlgebra
 
