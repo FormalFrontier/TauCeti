@@ -33,7 +33,7 @@ Coxeter matrix of type `Dₙ`: alongside the fork edge between the nodes `n - 3`
 the chain edge between the two fork nodes `n - 2` and `n - 1`, so its diagram carries `n` edges on
 `n` nodes and contains a triangle, while a Dynkin diagram is a tree.
 `TauCeti.DynkinType.coxeterMatrix_D_apply` describes the type `Dₙ` entries directly instead, and
-`TauCeti.DynkinType.coxeterMatrix_D_ne_coxeterMatrixD` records that the two matrices differ, in the
+`TauCeti.DynkinType.coxeterMatrix_D_ne_coxeterMatrix_D` records that the two matrices differ, in the
 Bourbaki numbering, at that pair of fork nodes.
 
 ## Main definitions
@@ -219,7 +219,7 @@ private lemma coxeterMatrixD_apply_fork {n : ℕ} (hn : 4 ≤ n) {i j : Fin n}
 between two nodes that are not, type `Dₙ` being simply laced.
 
 Mathlib's `CoxeterMatrix.D n` is not this matrix; see
-`TauCeti.DynkinType.coxeterMatrix_D_ne_coxeterMatrixD`. -/
+`TauCeti.DynkinType.coxeterMatrix_D_ne_coxeterMatrix_D`. -/
 theorem coxeterMatrix_D_apply (n : ℕ) {i j : Fin (D n).rank} (hij : i ≠ j) :
     (D n).coxeterMatrix i j = if CartanMatrix.D n i j = 0 then 2 else 3 := by
   rw [coxeterMatrix_apply_of_isSimplyLaced (by simpa using CartanMatrix.isSimplyLaced_D n) hij,
@@ -232,7 +232,7 @@ numbering.** The two differ at the pair `n - 2`, `n - 1` of fork nodes: the Cart
 adds between `n - 3` and `n - 1`. Its diagram therefore carries `n` edges on `n` nodes and is no
 tree, so no relabelling matches it to the diagram of `Dₙ` either; it is the inequality in the
 Bourbaki numbering that is recorded here. -/
-theorem coxeterMatrix_D_ne_coxeterMatrixD {n : ℕ} (hn : 4 ≤ n) :
+theorem coxeterMatrix_D_ne_coxeterMatrix_D {n : ℕ} (hn : 4 ≤ n) :
     (D n).coxeterMatrix ≠ CoxeterMatrix.D n := by
   intro hcontra
   have h2 : n - 2 < (D n).rank := by simp only [rank_D]; omega
