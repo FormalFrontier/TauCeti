@@ -256,8 +256,10 @@ theorem hopfAntipode_eq_antipode :
     HopfAlgebraStruct.antipode R (A := U) =
       UniversalEnvelopingAlgebra.antipode R := rfl
 
-/-- The Hopf antipode negates each canonical Lie generator. -/
-@[simp]
+/-- The Hopf antipode negates each canonical Lie generator.
+
+This is not a `simp` lemma: `hopfAntipode_eq_antipode` already rewrites the Hopf antipode to
+`UniversalEnvelopingAlgebra.antipode`, after which the `simp` lemmas for that antipode apply. -/
 theorem hopfAntipode_ι (x : L) :
     HopfAlgebraStruct.antipode R (_root_.UniversalEnvelopingAlgebra.ι R x) =
       -_root_.UniversalEnvelopingAlgebra.ι R x := by
@@ -270,6 +272,9 @@ variable {L : Type v} [LieRing L] [LieAlgebra ℚ L]
 
 local notation "Uℚ" => _root_.UniversalEnvelopingAlgebra ℚ L
 
+/-- A rational universal enveloping algebra is a `ℚ≥0`-module, by restricting scalars along
+`algebraMap ℚ≥0 ℚ`. This is what makes the `BinomialRing` machinery used for divided powers
+available on `Uℚ`. -/
 noncomputable local instance moduleNNRat : Module ℚ≥0 Uℚ :=
   Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
