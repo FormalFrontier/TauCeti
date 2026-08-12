@@ -26,7 +26,7 @@ The count is the point. `TauCeti.length_coxeterRelators` says that a diagram on 
 allowed, not `n.choose 2`.
 
 The ordered-pair set and the unordered-pair list need not agree: for distinct nodes,
-`(sᵢ sⱼ) ^ mᵢⱼ` and `(sⱼ sᵢ) ^ mᵢⱼ` are distinct elements of the free group, so the list has to
+`(sᵢ sⱼ) ^ mᵢⱼ` and `(sⱼ sᵢ) ^ mᵢⱼ` can be distinct elements of the free group, so the list has to
 pick one of the two orders — here the one increasing in the node numbering. They are conjugate, so
 the two sets have the same normal closure, which is what
 `TauCeti.normalClosure_relatorSet_coxeterRelators` proves and what makes the presented groups the
@@ -262,17 +262,15 @@ theorem GroupPresentation.mulEquivCoxeterGroup_apply_of (P : GroupPresentation)
     (i : Fin P.generatorCount) :
     P.mulEquivCoxeterGroup M h (PresentedGroup.of i) = M.simple i :=
   by
-    let hset : Subgroup.normalClosure P.relatorSet =
-        Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M)) := by
-      rw [P.relatorSet_eq_relatorSet_transcribed, h]
-    have hfirst : QuotientGroup.quotientMulEquivOfEq hset
-        (PresentedGroup.of (rels := P.relatorSet) i) =
-        PresentedGroup.of (rels := Relator.relatorSet (coxeterRelators M)) i := by
-      exact QuotientGroup.quotientMulEquivOfEq_mk hset (FreeGroup.of i)
-    change _root_.TauCeti.mulEquivCoxeterGroup M
-      (QuotientGroup.quotientMulEquivOfEq hset
-        (PresentedGroup.of (rels := P.relatorSet) i)) = M.simple i
-    rw [hfirst, _root_.TauCeti.mulEquivCoxeterGroup_apply_of]
+    rw [GroupPresentation.mulEquivCoxeterGroup]
+    calc
+      _ = _root_.TauCeti.mulEquivCoxeterGroup M
+          (QuotientGroup.quotientMulEquivOfEq _ (PresentedGroup.of i)) :=
+        MulEquiv.trans_apply _ _ _
+      _ = _root_.TauCeti.mulEquivCoxeterGroup M (PresentedGroup.of i) :=
+        congrArg (_root_.TauCeti.mulEquivCoxeterGroup M)
+          (QuotientGroup.quotientMulEquivOfEq_mk _ (FreeGroup.of i))
+      _ = _ := _root_.TauCeti.mulEquivCoxeterGroup_apply_of M i
 
 /-- **A transcription that appends further relators to the Coxeter relators of `M` presents the
 Coxeter relations together with those extra relations.** This is the form an audited Y-diagram
@@ -293,17 +291,16 @@ theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of (P : Grou
     (h : P.transcribed = coxeterRelators M ++ extra) (i : Fin P.generatorCount) :
     P.mulEquivPresentedGroupCoxeterAppend M extra h (PresentedGroup.of i) = PresentedGroup.of i :=
   by
-    let hset : Subgroup.normalClosure P.relatorSet =
-        Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M ++ extra)) := by
-      rw [P.relatorSet_eq_relatorSet_transcribed, h]
-    have hfirst : QuotientGroup.quotientMulEquivOfEq hset
-        (PresentedGroup.of (rels := P.relatorSet) i) =
-        PresentedGroup.of (rels := Relator.relatorSet (coxeterRelators M ++ extra)) i := by
-      exact QuotientGroup.quotientMulEquivOfEq_mk hset (FreeGroup.of i)
-    change _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra
-      (QuotientGroup.quotientMulEquivOfEq hset
-        (PresentedGroup.of (rels := P.relatorSet) i)) = PresentedGroup.of i
-    rw [hfirst, _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend_apply_of]
+    rw [GroupPresentation.mulEquivPresentedGroupCoxeterAppend]
+    calc
+      _ = _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra
+          (QuotientGroup.quotientMulEquivOfEq _ (PresentedGroup.of i)) :=
+        MulEquiv.trans_apply _ _ _
+      _ = _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra
+          (PresentedGroup.of i) :=
+        congrArg (_root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra)
+          (QuotientGroup.quotientMulEquivOfEq_mk _ (FreeGroup.of i))
+      _ = _ := _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend_apply_of M extra i
 
 end Coxeter
 
