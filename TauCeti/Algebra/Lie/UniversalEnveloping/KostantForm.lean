@@ -157,28 +157,11 @@ theorem dividedPower_mem_kostantForm (e : ι → L) (h : κ → L) (i : ι) (n :
       kostantForm e h :=
   Subring.subset_closure <| Or.inl (dividedPower_mem_kostantRootGenerators e i n)
 
-/-- The `simp`-normal form of `dividedPower_mem_kostantForm`, after unfolding the canonical
-inclusion into the universal enveloping algebra. -/
-@[simp]
-theorem dividedPower_mem_kostantForm' (e : ι → L) (h : κ → L) (i : ι) (n : ℕ) :
-    Associative.dividedPower n
-        ((_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L) (TensorAlgebra.ι ℚ (e i))) ∈
-      kostantForm e h := by
-  simpa using dividedPower_mem_kostantForm e h i n
-
 /-- Every binomial coefficient of a designated Cartan vector belongs to the Kostant form. -/
 theorem ringChoose_mem_kostantForm (e : ι → L) (h : κ → L) (i : κ) (n : ℕ) :
     Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n ∈
       kostantForm e h :=
   Subring.subset_closure <| Or.inr (ringChoose_mem_kostantCartanGenerators h i n)
-
-/-- The `simp`-normal form of `ringChoose_mem_kostantForm`, after unfolding the canonical
-inclusion into the universal enveloping algebra. -/
-@[simp]
-theorem ringChoose_mem_kostantForm' (e : ι → L) (h : κ → L) (i : κ) (n : ℕ) :
-    Ring.choose ((_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L) (TensorAlgebra.ι ℚ (h i))) n ∈
-      kostantForm e h := by
-  simpa using ringChoose_mem_kostantForm e h i n
 
 /-- Each designated root vector itself belongs to the Kostant form. -/
 theorem rootVector_mem_kostantForm (e : ι → L) (h : κ → L) (i : ι) :
