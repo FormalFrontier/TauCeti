@@ -108,10 +108,8 @@ theorem cotangentLocalizationEquiv_smul (r : R ⧸ p) (x : p.Cotangent) :
   let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
   obtain ⟨r, rfl⟩ := Ideal.Quotient.mk_surjective r
   rw [IsLocalization.AtPrime.equivQuotMaximalIdeal_apply_mk]
-  -- Expose the quotient-module scalar actions on both sides; their public API has no
-  -- rewriting lemma from a quotient representative to the underlying ring action.
-  change cotangentLocalizationEquiv (Rₚ := Rₚ) p (r • x) =
-    algebraMap R Rₚ r • cotangentLocalizationEquiv (Rₚ := Rₚ) p x
+  rw [← Ideal.Quotient.algebraMap_eq, IsScalarTower.algebraMap_smul,
+    ← Ideal.Quotient.algebraMap_eq, IsScalarTower.algebraMap_smul]
   rw [IsScalarTower.algebraMap_smul Rₚ]
   exact map_smul (cotangentLocalizationEquiv (Rₚ := Rₚ) p) r x
 

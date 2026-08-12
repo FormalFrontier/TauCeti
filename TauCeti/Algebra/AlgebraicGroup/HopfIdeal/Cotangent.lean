@@ -105,11 +105,9 @@ noncomputable def quotientCotangentMap (I : HopfIdeal k H) :
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
       (Algebra.ofId H (H ⧸ I.toIdeal))
       (by
-        -- The underlying ring hom of the canonical quotient algebra hom is `algebraMap`.
-        change Bialgebra.AugmentationIdeal k H ≤
-          (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).comap
-            (algebraMap H (H ⧸ I.toIdeal))
-        exact augmentationIdeal_le_comap_quotient I)).restrictScalars k
+        intro x hx
+        rw [Ideal.mem_comap, Algebra.ofId_apply]
+        exact augmentationIdeal_le_comap_quotient I hx)).restrictScalars k
 
 /-- The quotient cotangent map sends the class of an augmentation-ideal element to the class of
 its image in the quotient. -/
