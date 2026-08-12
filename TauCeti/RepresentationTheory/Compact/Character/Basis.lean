@@ -223,6 +223,7 @@ variable {𝕜 G ι : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTop
   [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
   {models : ι → IrrepModel 𝕜 G}
 
+omit [T2Space G] in
 /-- **Class-function completeness.**  A class function in `L²(G)` orthogonal to the character of
 every model in a skeleton of the unitary dual is zero.
 
@@ -302,6 +303,7 @@ theorem orthonormal_characterFamily
     (fun i ↦ (models i).isIrreducible) hne
   exact hL2.codRestrict _ fun i ↦ ContRepresentation.characterLp_mem_classFunctionLp _ _
 
+omit [T2Space G] in
 /-- **The characters of a skeleton are complete in the class functions.**  Their span is dense:
 its orthogonal complement inside `classFunctionLp` vanishes, which is
 `TauCeti.eq_zero_of_forall_inner_characterLp_eq_zero`. -/
@@ -328,6 +330,7 @@ noncomputable def characterBasis (h : IsIrrepSkeleton models) :
   HilbertBasis.mkOfOrthogonalEqBot (orthonormal_characterFamily h.pairwise_isEmpty_equiv)
     (orthogonal_span_characterFamily_eq_bot h)
 
+omit [T2Space G] in
 /-- **The class-function basis is the characters.**  As for `TauCeti.coe_peterWeylBasis`, the
 elements are on the nose the characters of the models, not merely some orthonormal basis whose
 existence is asserted. -/
@@ -345,6 +348,7 @@ noncomputable def stdCharacterBasis :
     HilbertBasis (IrrepClass 𝕜 G) 𝕜 (classFunctionLp 𝕜 𝕜 2 (haarProb G)) :=
   characterBasis (isIrrepSkeleton_model 𝕜 G)
 
+omit [T2Space G] in
 /-- The unconditional class-function basis is the characters of the chosen representatives. -/
 @[simp]
 theorem coe_stdCharacterBasis :
