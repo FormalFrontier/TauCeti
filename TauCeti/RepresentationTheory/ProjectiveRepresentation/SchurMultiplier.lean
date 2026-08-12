@@ -65,8 +65,8 @@ syntactically, and rewriting across the difference then fails.
 
 ## Main results
 
-* `TauCeti.IsProjectiveRep.cohomologyClass_of_monoidHom`: a linear representation has vanishing
-  class.
+* `TauCeti.IsProjectiveRep.cohomologyClass_of_monoidHom_eq_zero`: a linear representation has
+  vanishing class.
 * `TauCeti.IsProjectiveRep.cohomologyClass_rescale`: rescaling the lift does not move the class,
   and `TauCeti.IsProjectiveRep.cohomologyClass_eq_of_eq_smul`: two lifts differing by scalars have
   the same class.
@@ -129,22 +129,26 @@ attribute [local instance] trivialMulDistribMulAction
 
 variable {k G : Type} [CommSemiring k] [Group G] {V : Type*} [AddCommMonoid V] [Module k V]
 
-/-- Under `TauCeti.trivialMulDistribMulAction` the units of `k` are fixed by `G`. This is the
-triviality hypothesis that `TauCeti.IsFactorSet.toFactorSet` and
-`TauCeti.FactorSet.isFactorSet_curry` take, supplied once so that the statements below name a
-constant rather than an inlined proof. -/
-theorem trivialMulDistribMulAction_smul (g : G) (a : kˣ) : g • a = a :=
-  rfl
-
 /-- **The Schur multiplier** `H²(G, kˣ)` of a group `G` over a commutative semiring `k`: the second
 cohomology of `G` with coefficients in the units of `k` under the trivial action. By
 `TauCeti.exists_isProjectiveRep_cohomologyClass_eq` and
 `TauCeti.IsProjectiveRep.cohomologyClass_rescale` it is exactly the set of classes of factor sets
 of projective representations of `G` over `k`, equivalently — through
 `TauCeti.FactorSet.cohomologyClassEquiv` — the set of central extensions of `G` by `kˣ` up to
-equivalence. -/
+equivalence.
+
+The body is exposed because `TauCeti.schurMultiplier k G` is used in type position, through the
+`CoeSort` on `ModuleCat ℤ`: a statement relating an element of it to an element of
+`groupCohomology.H2 (Rep.ofMulDistribMulAction G kˣ)` — such as
+`TauCeti.IsProjectiveRep.cohomologyClass_def` below — does not elaborate otherwise. -/
+@[expose]
 noncomputable def schurMultiplier (k G : Type) [CommSemiring k] [Group G] :=
   H2 (Rep.ofMulDistribMulAction G kˣ)
+
+/-- The Schur multiplier is the second cohomology of `G` with coefficients in the units of `k`. -/
+theorem schurMultiplier_def (k G : Type) [CommSemiring k] [Group G] :
+    schurMultiplier k G = H2 (Rep.ofMulDistribMulAction G kˣ) :=
+  rfl
 
 variable {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
 
@@ -162,19 +166,20 @@ theorem IsProjectiveRep.factorSet_apply (h : IsProjectiveRep ρ α) (p : G × G)
   letI := h.isFactorSet
   IsFactorSet.toFactorSet_apply α trivialMulDistribMulAction_smul p
 
-/-- Transporting a projective representation along an equality of factor sets. Rescaling delivers
-the new factor set in a form that has still to be recognized as the intended one, and this is that
-rewriting step. -/
-theorem IsProjectiveRep.congr_factorSet {β : G → G → kˣ} (h : IsProjectiveRep ρ α) (hα : α = β) :
-    IsProjectiveRep ρ β :=
-  hα ▸ h
-
 /-- **The class of a projective representation in the Schur multiplier**: the class of its factor
 set in `H²(G, kˣ)`. Unlike the factor set itself it depends only on the underlying projective
 action, by `TauCeti.IsProjectiveRep.cohomologyClass_eq_of_eq_smul`. -/
 noncomputable def IsProjectiveRep.cohomologyClass (h : IsProjectiveRep ρ α) :
     schurMultiplier k G :=
   h.factorSet.cohomologyClass
+
+/-- The class of a projective representation is the class of its bundled factor set. The body of
+`TauCeti.IsProjectiveRep.cohomologyClass` is not exposed, so this is how an importing module unfolds
+it. It is deliberately not a `simp` lemma: the class is the normal form, and the lemmas below
+evaluate it directly. -/
+theorem IsProjectiveRep.cohomologyClass_def (h : IsProjectiveRep ρ α) :
+    h.cohomologyClass = h.factorSet.cohomologyClass :=
+  (rfl)
 
 /-- The class of a projective representation depends on the lift only through its factor set. -/
 theorem IsProjectiveRep.cohomologyClass_congr {ρ₁ ρ₂ : G → V ≃ₗ[k] V} {α₁ α₂ : G → G → kˣ}
@@ -186,11 +191,12 @@ theorem IsProjectiveRep.cohomologyClass_congr {ρ₁ ρ₂ : G → V ≃ₗ[k] V
 /-- **A linear representation has vanishing class**: its factor set is the trivial one. This is the
 easy half of `TauCeti.IsProjectiveRep.cohomologyClass_eq_zero_iff`, stated before any rescaling and
 so without a faithfulness hypothesis. -/
-theorem IsProjectiveRep.cohomologyClass_of_monoidHom (π : G →* (V ≃ₗ[k] V)) :
+@[simp]
+theorem IsProjectiveRep.cohomologyClass_of_monoidHom_eq_zero (π : G →* (V ≃ₗ[k] V)) :
     (IsProjectiveRep.of_monoidHom π).cohomologyClass = 0 := by
   have h : (IsProjectiveRep.of_monoidHom π).factorSet = FactorSet.trivial G kˣ :=
     FactorSet.ext fun p ↦ by simp
-  rw [IsProjectiveRep.cohomologyClass, h]
+  rw [IsProjectiveRep.cohomologyClass_def, h]
   exact FactorSet.cohomologyClass_trivial
 
 /-! ### Rescaling the lift -/
@@ -308,7 +314,7 @@ theorem exists_isProjectiveRep_cohomologyClass_eq (x : schurMultiplier k G) :
   have hfactorSet : (isProjectiveRep_twistedRegularRep k G (Function.curry ⇑γ)).factorSet = γ :=
     FactorSet.ext fun p ↦
       (isProjectiveRep_twistedRegularRep k G (Function.curry ⇑γ)).factorSet_apply p
-  rw [← hγ, IsProjectiveRep.cohomologyClass, hfactorSet]
+  rw [← hγ, IsProjectiveRep.cohomologyClass_def, hfactorSet]
 
 /-! ### The twisted monoid algebra sees only the class -/
 

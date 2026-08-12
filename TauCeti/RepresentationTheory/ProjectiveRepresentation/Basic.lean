@@ -144,6 +144,13 @@ theorem rescale (h : IsProjectiveRep ρ α) (c : G → kˣ) (hc : c 1 = 1) :
     simp only [LinearEquiv.trans_apply, LinearEquiv.smulOfUnit_apply, map_smul, h.mul_apply,
       smul_smul, ← Units.val_mul, hunit]
 
+/-- Transporting a projective representation along an equality of factor sets. Rescaling delivers
+the new factor set in a form that has still to be recognized as the intended one, and this is that
+rewriting step. -/
+theorem congr_factorSet {β : G → G → kˣ} (h : IsProjectiveRep ρ α) (hα : α = β) :
+    IsProjectiveRep ρ β :=
+  hα ▸ h
+
 /-- A linear representation, presented as a homomorphism into the group of linear automorphisms, is
 a projective representation with trivial factor set. -/
 theorem of_monoidHom (π : G →* (V ≃ₗ[k] V)) : IsProjectiveRep (⇑π) (1 : G → G → kˣ) where
