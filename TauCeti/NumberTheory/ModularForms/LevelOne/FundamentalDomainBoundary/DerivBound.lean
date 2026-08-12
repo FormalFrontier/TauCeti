@@ -64,15 +64,15 @@ private lemma re_arc_tangent (θ : ℝ) :
 chord. -/
 private lemma hasDerivWithinAt_fdBoundary_four_left (H : ℝ) :
     HasDerivWithinAt (fdBoundary H) (-1 / 2 + H * Complex.I - (ρ : ℂ)) (Icc 3 4) 4 :=
-  ((hasDerivAt_fdBoundary_segment4 H 4).hasDerivWithinAt).congr
-    (fun t ht => eqOn_fdBoundary_segment4 H ht) (eqOn_fdBoundary_segment4 H (by norm_num))
+  ((hasDerivAt_fdBoundarySegment4 H 4).hasDerivWithinAt).congr
+    (fun t ht => eqOn_fdBoundarySegment4 H ht) (eqOn_fdBoundarySegment4 H (by norm_num))
 
 /-- The one-sided derivative from the right at the ceiling corner: the ceiling's unit
 horizontal. -/
 private lemma hasDerivWithinAt_fdBoundary_four_right (H : ℝ) :
     HasDerivWithinAt (fdBoundary H) 1 (Icc 4 5) 4 :=
-  ((hasDerivAt_fdBoundary_segment5 H 4).hasDerivWithinAt).congr
-    (fun t ht => eqOn_fdBoundary_segment5 H ht) (eqOn_fdBoundary_segment5 H (by norm_num))
+  ((hasDerivAt_fdBoundarySegment5 H 4).hasDerivWithinAt).congr
+    (fun t ht => eqOn_fdBoundarySegment5 H ht) (eqOn_fdBoundarySegment5 H (by norm_num))
 
 /-- **The contour is not differentiable at the ceiling corner.** The left vertical arrives
 with a purely imaginary chord and the ceiling leaves with the unit horizontal, so no single
@@ -98,8 +98,8 @@ theorem not_differentiableAt_fdBoundary_four (H : ℝ) :
 chord. -/
 private lemma hasDerivWithinAt_fdBoundary_one_left (H : ℝ) :
     HasDerivWithinAt (fdBoundary H) ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)) (Icc 0 1) 1 :=
-  ((hasDerivAt_fdBoundary_segment1 H 1).hasDerivWithinAt).congr
-    (fun t ht => eqOn_fdBoundary_segment1 H ht) (eqOn_fdBoundary_segment1 H (by norm_num))
+  ((hasDerivAt_fdBoundarySegment1 H 1).hasDerivWithinAt).congr
+    (fun t ht => eqOn_fdBoundarySegment1 H ht) (eqOn_fdBoundarySegment1 H (by norm_num))
 
 /-- **The contour is not differentiable at the first corner.** The right vertical arrives
 with a purely imaginary chord and the arc leaves with a tangent of nonzero real part. -/
@@ -135,9 +135,9 @@ theorem not_differentiableAt_fdBoundary_three (H : ℝ) :
       (hd.hasDerivAt.hasDerivWithinAt)
   have hRd : -1 / 2 + H * Complex.I - (ρ : ℂ) = deriv (fdBoundary H) 3 :=
     (uniqueDiffOn_Icc (by norm_num : (3 : ℝ) < 4) 3 (by norm_num)).eq_deriv _
-      (((hasDerivAt_fdBoundary_segment4 H 3).hasDerivWithinAt).congr
-        (fun t ht => eqOn_fdBoundary_segment4 H ht)
-        (eqOn_fdBoundary_segment4 H (by norm_num)))
+      (((hasDerivAt_fdBoundarySegment4 H 3).hasDerivWithinAt).congr
+        (fun t ht => eqOn_fdBoundarySegment4 H ht)
+        (eqOn_fdBoundarySegment4 H (by norm_num)))
       (hd.hasDerivAt.hasDerivWithinAt)
   have hre : ((Real.pi / 6) • (circleMap 0 1 ((3 + 1) * (Real.pi / 6)) * Complex.I) : ℂ).re =
       ((-1 / 2 + H * Complex.I - (ρ : ℂ)) : ℂ).re := by

@@ -68,7 +68,7 @@ theorem fdBoundary_sub_I_mem_slitPlane_of_lt_two (H : ℝ) (ht : t ∈ Ico (0 : 
   rw [Complex.mem_slitPlane_iff]
   left
   rcases le_or_gt t 1 with ht1 | ht1
-  · rw [Complex.sub_re, Complex.I_re, sub_zero, re_fdBoundary_segment1 H ⟨ht.1, ht1⟩]
+  · rw [Complex.sub_re, Complex.I_re, sub_zero, re_fdBoundarySegment1 H ⟨ht.1, ht1⟩]
     norm_num
   · have hcurve : fdBoundary H t = circleMap 0 1 ((t + 1) * (Real.pi / 6)) :=
       eqOn_fdBoundary_arc H ⟨ht1.le, by linarith [ht.2]⟩
@@ -101,7 +101,7 @@ is constantly `1/2`. -/
 theorem norm_fdBoundary_sub_I_segment1 (H : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     1 / 2 ≤ ‖fdBoundary H t - Complex.I‖ := by
   have hre : (fdBoundary H t - Complex.I).re = 1 / 2 := by
-    rw [Complex.sub_re, Complex.I_re, sub_zero, re_fdBoundary_segment1 H ht]
+    rw [Complex.sub_re, Complex.I_re, sub_zero, re_fdBoundarySegment1 H ht]
   calc (1 : ℝ) / 2 = |(fdBoundary H t - Complex.I).re| := by rw [hre]; norm_num
     _ ≤ ‖fdBoundary H t - Complex.I‖ := Complex.abs_re_le_norm _
 
@@ -110,7 +110,7 @@ is constantly `-1/2`. -/
 theorem norm_fdBoundary_sub_I_segment4 (H : ℝ) (ht : t ∈ Icc (3 : ℝ) 4) :
     1 / 2 ≤ ‖fdBoundary H t - Complex.I‖ := by
   have hre : (fdBoundary H t - Complex.I).re = -(1 / 2) := by
-    rw [Complex.sub_re, Complex.I_re, sub_zero, re_fdBoundary_segment4 H ht]
+    rw [Complex.sub_re, Complex.I_re, sub_zero, re_fdBoundarySegment4 H ht]
   calc (1 : ℝ) / 2 = |(fdBoundary H t - Complex.I).re| := by rw [hre]; norm_num
     _ ≤ ‖fdBoundary H t - Complex.I‖ := Complex.abs_re_le_norm _
 
@@ -119,7 +119,7 @@ is constantly `H`. -/
 theorem norm_fdBoundary_sub_I_segment5 (H : ℝ) (ht : t ∈ Icc (4 : ℝ) 5) :
     |H - 1| ≤ ‖fdBoundary H t - Complex.I‖ := by
   have him : (fdBoundary H t - Complex.I).im = H - 1 := by
-    rw [Complex.sub_im, Complex.I_im, im_fdBoundary_segment5 H ht]
+    rw [Complex.sub_im, Complex.I_im, im_fdBoundarySegment5 H ht]
   calc |H - 1| = |(fdBoundary H t - Complex.I).im| := by rw [him]
     _ ≤ ‖fdBoundary H t - Complex.I‖ := Complex.abs_im_le_norm _
 
