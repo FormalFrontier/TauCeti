@@ -96,6 +96,26 @@ theorem inner_matrixCoeffLp_map_map (hunitary : IsUnitary π) {f : Lp 𝕜 2 (ha
     _ = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 :=
       (conjLpₗᵢ (E := 𝕜) (p := 2) (μ := haarProb G) 𝕜 h⁻¹).toLinearIsometry.inner_map_map _ _
 
+omit [FiniteDimensional 𝕜 V] in
+/-- **An endomorphism that represents the pairing against a class function is an intertwiner.**
+If `⟪w, T v⟫ = ⟪(π)_{v,w}, f⟫` for all `v, w` and `f` is a class function, then `T` intertwines `π`
+with itself. -/
+private lemma isIntertwiningMap_of_inner_matrixCoeffLp_eq (hunitary : IsUnitary π)
+    {f : Lp 𝕜 2 (haarProb G)} (hf : f ∈ classFunctionLp 𝕜 𝕜 2 (haarProb G)) (T : V →ₗ[𝕜] V)
+    (hT : ∀ v w : V, ⟪w, T v⟫_𝕜 = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜) :
+    π.toRepresentation.IsIntertwiningMap π.toRepresentation T := by
+  refine ⟨fun g v ↦ ext_inner_left 𝕜 fun u ↦ ?_⟩
+  -- Conjugation invariance of `f` is what moves `g` across the coefficient.
+  have hu : π g (π g⁻¹ u) = u := Representation.self_inv_apply π.toRepresentation g u
+  calc ⟪u, T (π g v)⟫_𝕜
+      = ⟪π g (π g⁻¹ u), T (π g v)⟫_𝕜 := by rw [hu]
+    _ = ⟪matrixCoeffLp π hπ (π g v) (π g (π g⁻¹ u)), f⟫_𝕜 := hT _ _
+    _ = ⟪matrixCoeffLp π hπ v (π g⁻¹ u), f⟫_𝕜 :=
+        inner_matrixCoeffLp_map_map hπ hunitary hf g v (π g⁻¹ u)
+    _ = ⟪π g⁻¹ u, T v⟫_𝕜 := (hT _ _).symm
+    _ = ⟪π g (π g⁻¹ u), π g (T v)⟫_𝕜 := (hunitary.inner_map_map g _ _).symm
+    _ = ⟪u, π g (T v)⟫_𝕜 := by rw [hu]
+
 /-- **Against a class function, the matrix coefficients of an irreducible collapse to one scalar.**
 For `π` irreducible unitary and `f` a class function there is a `c` with
 `⟪(π)_{v,w}, f⟫ = c · ⟪w, v⟫` for all `v, w`.
@@ -127,19 +147,8 @@ theorem exists_forall_inner_matrixCoeffLp_eq [IsAlgClosed 𝕜] (hunitary : IsUn
     simp only [LinearMap.coe_mk, AddHom.coe_mk, inner_sum, inner_smul_right, sum_inner,
       inner_smul_left]
     exact Finset.sum_congr rfl fun a _ ↦ by rw [inner_conj_symm, mul_comm]
-  -- Conjugation invariance of `f` makes `T` an intertwiner.
-  have hcomm : ∀ (g : G) (v : V), T (π g v) = π g (T v) := by
-    intro g v
-    refine ext_inner_left 𝕜 fun u ↦ ?_
-    have hu : π g (π g⁻¹ u) = u := Representation.self_inv_apply π.toRepresentation g u
-    calc ⟪u, T (π g v)⟫_𝕜
-        = ⟪π g (π g⁻¹ u), T (π g v)⟫_𝕜 := by rw [hu]
-      _ = ⟪matrixCoeffLp π hπ (π g v) (π g (π g⁻¹ u)), f⟫_𝕜 := hT _ _
-      _ = ⟪matrixCoeffLp π hπ v (π g⁻¹ u), f⟫_𝕜 :=
-          inner_matrixCoeffLp_map_map hπ hunitary hf g v (π g⁻¹ u)
-      _ = ⟪π g⁻¹ u, T v⟫_𝕜 := (hT _ _).symm
-      _ = ⟪π g (π g⁻¹ u), π g (T v)⟫_𝕜 := (hunitary.inner_map_map g _ _).symm
-      _ = ⟪u, π g (T v)⟫_𝕜 := by rw [hu]
+  have hcomm : ∀ (g : G) (v : V), T (π g v) = π g (T v) :=
+    (isIntertwiningMap_of_inner_matrixCoeffLp_eq hπ hunitary hf T hT).isIntertwining
   -- Schur's lemma turns it into a scalar.
   obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
     { toContinuousLinearMap := LinearMap.toContinuousLinearMap T

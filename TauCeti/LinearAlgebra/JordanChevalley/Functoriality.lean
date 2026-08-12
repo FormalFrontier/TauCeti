@@ -27,6 +27,8 @@ representation of an affine algebraic group.
 
 * `TauCeti.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
   under linear conjugation.
+* `TauCeti.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
+  conjugation within the general linear group.
 * `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
   linear conjugation.
 * `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
@@ -73,6 +75,29 @@ theorem isSemisimple_congrLinearEquiv_iff
   apply LinearEquiv.isSemisimple_iff (e := e)
   ext x
   simp
+
+/-- Semisimplicity is invariant under conjugation by a linear automorphism. -/
+@[simp]
+theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
+    IsSemisimple (h * g * h⁻¹) ↔ IsSemisimple g := by
+  have heq : h * g * h⁻¹ =
+      LinearMap.GeneralLinearGroup.congrLinearEquiv h.toLinearEquiv g := by
+    have hinv : ((h⁻¹ : GeneralLinearGroup K V) : End K V) =
+        h.toLinearEquiv.symm.toLinearMap := by
+      calc
+        _ = (h⁻¹).toLinearEquiv.toLinearMap :=
+          (LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap _).symm
+        _ = h.toLinearEquiv.symm.toLinearMap := congrArg LinearEquiv.toLinearMap
+          (LinearMap.GeneralLinearGroup.toLinearEquiv_inv h)
+    ext v
+    simp only [Units.val_mul, End.mul_apply,
+      LinearMap.GeneralLinearGroup.congrLinearEquiv_apply,
+      LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, LinearEquiv.trans_apply,
+      LinearMap.GeneralLinearGroup.coe_toLinearEquiv]
+    rw [LinearMap.congr_fun hinv v]
+    simp only [LinearEquiv.coe_toLinearMap]
+  rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
+  exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 
 /-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
 @[simp]

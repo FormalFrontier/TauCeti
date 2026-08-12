@@ -398,35 +398,20 @@ theorem matrixCoeffLp_mem_span_peterWeylFamily (models : ι → IrrepModel 𝕜 
   have hspan : Submodule.span 𝕜 (Set.range ⇑(models i).basis) = ⊤ := by
     rw [← OrthonormalBasis.coe_toBasis]
     exact (models i).basis.toBasis.span_eq
-  -- the second vector may be spread over the basis
+  -- Each slot of the bundled sesquilinear coefficient map is (semi)linear, so membership in `P`
+  -- spreads from the basis over the whole span; `hspan` says that span is everything.
   have hright : ∀ (a : Fin (models i).dim) (u : EuclideanSpace 𝕜 (Fin (models i).dim)),
       ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep
-        ((models i).basis a) u ∈ P := by
-    intro a u
-    have key : ∀ u ∈ Submodule.span 𝕜 (Set.range ⇑(models i).basis),
-        ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep
-          ((models i).basis a) u ∈ P := by
-      intro u hu
-      induction hu using Submodule.span_induction with
-      | mem x hx =>
-          obtain ⟨b, rfl⟩ := hx
-          exact hbase a b
-      | zero => simp
-      | add x y _ _ hx hy => simpa using add_mem hx hy
-      | smul c x _ hx => simpa using Submodule.smul_mem P c hx
-    exact key u (hspan ▸ Submodule.mem_top)
-  -- and then so may the first
-  have key : ∀ u ∈ Submodule.span 𝕜 (Set.range ⇑(models i).basis),
-      ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep u w ∈ P := by
-    intro u hu
-    induction hu using Submodule.span_induction with
-    | mem x hx =>
-        obtain ⟨a, rfl⟩ := hx
-        exact hright a w
-    | zero => simp
-    | add x y _ _ hx hy => simpa using add_mem hx hy
-    | smul c x _ hx => simpa using Submodule.smul_mem P _ hx
-  exact key v (hspan ▸ Submodule.mem_top)
+        ((models i).basis a) u ∈ P := fun a u => by
+    have himg := (Submodule.image_span_subset
+      (ContRepresentation.matrixCoeffLpₛₗ (models i).rep (models i).continuous_rep
+        ((models i).basis a)) (Set.range ⇑(models i).basis) P).2
+      (by rintro _ ⟨b, rfl⟩; simpa using hbase a b)
+    simpa using himg ⟨u, hspan ▸ Submodule.mem_top, rfl⟩
+  have himg := (Submodule.image_span_subset
+    ((ContRepresentation.matrixCoeffLpₛₗ (models i).rep (models i).continuous_rep).flip w)
+    (Set.range ⇑(models i).basis) P).2 (by rintro _ ⟨a, rfl⟩; simpa using hright a w)
+  simpa using himg ⟨v, hspan ▸ Submodule.mem_top, rfl⟩
 
 namespace IsIrrepSkeleton
 
