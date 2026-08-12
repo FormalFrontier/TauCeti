@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 
 public section
@@ -13,9 +13,9 @@ public section
 # Classification of finite double-edge chains
 
 The double-edge bound in
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge` leaves exactly three possible shapes for
-two nonempty chains joined by a double edge: one chain has one vertex, giving the families `B_n`
-and `C_n`, or both chains have two vertices, giving `F_4`. That file realizes the two infinite
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic` leaves exactly three possible shapes
+for two nonempty chains joined by a double edge: one chain has one vertex, giving the families
+`B_n` and `C_n`, or both chains have two vertices, giving `F_4`. That file realizes the two infinite
 families and deliberately leaves the exceptional case to the assembly step of the classification.
 
 This file supplies that step. The equivalence `TauCeti.doubleEdgeF4Equiv` reads the second chain
@@ -66,19 +66,6 @@ def doubleEdgeF4Equiv : Fin 2 ⊕ Fin 2 ≃ Fin 4 :=
 @[simp] private lemma doubleEdgeF4Equiv_inr_one :
     doubleEdgeF4Equiv (Sum.inr (1 : Fin 2)) = 1 := rfl
 
-private theorem doubleEdgeCartanMatrix_two_two_aux :
-    doubleEdgeCartanMatrix 2 2 =
-      CartanMatrix.F₄.submatrix doubleEdgeF4Equiv doubleEdgeF4Equiv := by
-  ext v w
-  rcases v with v | v <;> rcases w with w | w <;>
-    fin_cases v <;> fin_cases w <;>
-    norm_num [Matrix.submatrix_apply,
-      doubleEdgeCartanMatrix_inl_inl, doubleEdgeCartanMatrix_inr_inr,
-      doubleEdgeCartanMatrix_inl_inr, doubleEdgeCartanMatrix_inr_inl,
-      chainEntry_def, CartanMatrix.F₄, _root_.Matrix.cons_val_zero,
-      _root_.Matrix.cons_val_one, _root_.Matrix.cons_val_two,
-      _root_.Matrix.cons_val_three]
-
 /-- **The exceptional double-edge chain is `F₄`.** After ordering its four vertices from one outer
 end to the other, with the double edge in the middle, `doubleEdgeCartanMatrix 2 2` is the standard
 Bourbaki-numbered Cartan matrix of the Dynkin type `F₄`. -/
@@ -86,7 +73,16 @@ theorem doubleEdgeCartanMatrix_two_two :
     doubleEdgeCartanMatrix 2 2 =
       DynkinType.F4.cartanMatrix.submatrix doubleEdgeF4Equiv doubleEdgeF4Equiv := by
   rw [DynkinType.cartanMatrix_F4]
-  exact doubleEdgeCartanMatrix_two_two_aux
+  ext v w
+  change doubleEdgeCartanMatrix 2 2 v w =
+    CartanMatrix.F₄ (doubleEdgeF4Equiv v) (doubleEdgeF4Equiv w)
+  rcases v with v | v <;> rcases w with w | w <;>
+    fin_cases v <;> fin_cases w <;>
+    norm_num [doubleEdgeCartanMatrix_inl_inl, doubleEdgeCartanMatrix_inr_inr,
+      doubleEdgeCartanMatrix_inl_inr, doubleEdgeCartanMatrix_inr_inl,
+      chainEntry_def, CartanMatrix.F₄, _root_.Matrix.cons_val_zero,
+      _root_.Matrix.cons_val_one, _root_.Matrix.cons_val_two,
+      _root_.Matrix.cons_val_three]
 
 /-- The double-edge chain with two vertices on each side is of finite type, since it is the
 standard Cartan matrix of type `F₄` after reindexing. -/
@@ -99,7 +95,7 @@ theorem isFiniteType_doubleEdgeCartanMatrix_two_two :
 double-edge diagram is of finite type exactly when the second chain is a single vertex (type
 `C_n`), the first chain is a single vertex (type `B_n`), or both chains have two vertices (type
 `F₄`). -/
-theorem isFiniteType_doubleEdgeCartanMatrix_iff {p q : ℕ} (hp : 0 < p) (hq : 0 < q) :
+@[simp] theorem isFiniteType_doubleEdgeCartanMatrix_iff {p q : ℕ} (hp : 0 < p) (hq : 0 < q) :
     IsFiniteType (doubleEdgeCartanMatrix p q) ↔ q = 1 ∨ p = 1 ∨ (p = 2 ∧ q = 2) := by
   constructor
   · exact eq_one_or_eq_one_or_eq_two_two_of_isFiniteType_doubleEdge hp hq
