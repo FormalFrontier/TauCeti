@@ -25,7 +25,8 @@ index `c`, and the three exceptional shapes `(1, 2, 2)`, `(1, 2, 3)`, `(1, 2, 4)
 and `E₈`, whose common branch node is Bourbaki index `3`. Combining the two halves gives
 `TauCeti.IsFiniteType.existsUnique_dynkinType_of_star`: **a three-armed star of finite type with no
 empty arm is, after one simultaneous relabelling of rows and columns, the standard Cartan matrix of
-a unique valid Dynkin type**, namely the simply-laced type `D`, `E₆`, `E₇` or `E₈`.
+a unique valid Dynkin type**. Which type that is, is not part of that statement; it is the four
+identifications above that name it, as `D` or one of `E₆`, `E₇` and `E₈` according to the arms.
 
 This is the fork half of the reindexing step of the Cartan-Killing classification, the step that
 turns the elimination theorems into a `DynkinType`. The complementary step for a diagram with no
@@ -49,7 +50,8 @@ Mathlib's `CartanMatrix.D`, `.E₆`, `.E₇` and `.E₈`.
   diagram is of finite type, so each of the four admissible shapes does occur.
 * `TauCeti.IsFiniteType.existsUnique_dynkinType_of_star`: **the classification of the three-armed
   stars**. A star of finite type whose three arms are all nonempty carries a unique valid Dynkin
-  type, which is one of the simply-laced types `D`, `E₆`, `E₇` or `E₈`.
+  type. The statement asserts existence and uniqueness only; the type carried by a given star is
+  named by the four identifications above.
 
 ## References
 
@@ -147,15 +149,16 @@ theorem isStarOfType_E8 : IsStarOfType (![1, 2, 4] : Fin 3 → ℕ) E8 := by
 end Exceptional
 
 /-- **The classification of the three-armed stars of finite type.** A star with three nonempty arms
-whose Cartan matrix is of finite type carries a unique valid Dynkin type: after one simultaneous
-relabelling of rows and columns it is the standard Cartan matrix of the simply-laced type `D n` with
-`n ≥ 4`, or of `E₆`, `E₇` or `E₈`.
+whose Cartan matrix is of finite type carries a unique valid Dynkin type: exactly one valid type
+has a standard Cartan matrix that the star becomes after one simultaneous relabelling of rows and
+columns.
 
-The shape is cut out by the fork bound
+The statement does not name that type. It is cut out in the proof by the fork bound
 `TauCeti.eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three`, which leaves the
 arms `(1, 1, c)` and `(1, 2, c)` with `c ≤ 4` once no arm is empty, and each of those is identified
 with its Bourbaki-numbered diagram by `TauCeti.isStarOfType_D`, `TauCeti.isStarOfType_E6`,
-`TauCeti.isStarOfType_E7` and `TauCeti.isStarOfType_E8`.
+`TauCeti.isStarOfType_E7` and `TauCeti.isStarOfType_E8`; those four theorems are what exhibit the
+type for a given star, as `D n` with `4 ≤ n`, or as `E₆`, `E₇` or `E₈`.
 
 The type is unique, by `TauCeti.DynkinType.eq_of_valid_of_forall_eq`. -/
 theorem IsFiniteType.existsUnique_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ : ∀ i, ℓ i ≠ 0)
