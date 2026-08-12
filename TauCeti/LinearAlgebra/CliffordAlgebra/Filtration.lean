@@ -27,6 +27,12 @@ increasing, multiplicative (`filtration Q i * filtration Q j = filtration Q (i +
 algebra, and is preserved by the grade involution, by reversal, and by the functoriality of the
 Clifford algebra in the quadratic form.
 
+The construction itself is not special to Clifford algebras: `filtration` and `filtrationPrevious`
+are `TauCeti.Algebra.wordFiltration` and `TauCeti.Algebra.wordFiltrationPrevious` of
+`TauCeti/Algebra/WordFiltration.lean`, specialized to `ι Q`, and the lemmas below that do not use
+the Clifford relation are specializations of the generic ones. The universal enveloping algebra
+carries the same construction as its PBW filtration.
+
 Following the roadmap, the filtration is *not* the submodule power `LinearMap.range (ι Q) ^ k`:
 powers of a submodule of a noncommutative algebra collect the products of *exactly* `k` generators.
 The relation between the two is `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`, which writes
@@ -101,24 +107,27 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 the products `ι Q v₁ * ⋯ * ι Q vₙ` of at most `k` generators, the empty product `1` included.
 
 This is deliberately not the submodule power `LinearMap.range (ι Q) ^ k`, which spans the products
-of exactly `k` generators; see `filtration_eq_iSup_pow` for the comparison. -/
+of exactly `k` generators; see `filtration_eq_iSup_pow` for the comparison.
+
+This is `TauCeti.Algebra.wordFiltration` specialized to `ι Q`; the shared API is in
+`TauCeti/Algebra/WordFiltration.lean`. -/
 def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltration (ι Q) k
 
-/-- The filtration step preceding degree `k`. At degree zero it is bottom, so the degree-zero
-piece remains the scalar filtration step rather than a zero quotient. -/
-def filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q)
-  | 0 => ⊥
-  | k + 1 => filtration Q k
+/-- The filtration step preceding degree `k`, that is `TauCeti.Algebra.wordFiltrationPrevious`
+specialized to `ι Q`. At degree zero it is bottom, so the degree-zero piece remains the scalar
+filtration step rather than a zero quotient. -/
+def filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q) :=
+  TauCeti.Algebra.wordFiltrationPrevious (ι Q)
 
 @[simp]
 theorem filtrationPrevious_zero (Q : QuadraticForm R M) : filtrationPrevious Q 0 = ⊥ :=
-  (rfl)
+  TauCeti.Algebra.wordFiltrationPrevious_zero (ι Q)
 
 @[simp]
 theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPrevious Q (k + 1) = filtration Q k :=
-  (rfl)
+  TauCeti.Algebra.wordFiltrationPrevious_succ (ι Q) k
 
 /-- The filtration step preceding degree `k`, viewed inside the degree-`k` filtration step. This is
 the relation defining the degree-`k` associated-graded quotient. -/
@@ -148,7 +157,7 @@ viewed inside the successor step. -/
 theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPreviousRestricted Q (k + 1) =
       Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k) := by
-  rfl
+  simp only [filtrationPreviousRestricted, Submodule.submoduleOf, filtrationPrevious_succ]
 
 /-- The degree-`k` piece of the associated graded Clifford filtration. -/
 abbrev FiltrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
