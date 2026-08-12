@@ -52,8 +52,6 @@ so it is the fork, and not the double edge, that these diagrams die of.
 
 ## Main definitions
 
-* `TauCeti.adjoinPendant`: the diagram of a matrix with one further vertex adjoined, joined by a
-  single edge to a chosen vertex.
 * `TauCeti.affineBCartanMatrix`: the Cartan matrix of the extended Dynkin diagram `B̃ₗ`, for
   `ℓ = n + 3`.
 * `TauCeti.affineBComark`: its comarks, the test vector the exclusion is proved with.
