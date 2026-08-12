@@ -31,10 +31,9 @@ a product of division rings rather than of matrix algebras over them; equivalent
 indecomposable projective is repeated in a decomposition of the regular module.
 
 That reformulation is the main result.  Its ring-level form,
-`TauCeti.isReduced_iff_exists_ringEquiv_pi_divisionRing`, holds for an arbitrary semisimple ring and
-mentions no algebra structure; `TauCeti.isBasic_iff_exists_ringEquiv_pi_divisionRing` reads it at
-the semisimple quotient of a finite-dimensional algebra, which is semisimple because that algebra
-is Artinian.
+`TauCeti.isReduced_iff_pi_divisionRing`, holds for an arbitrary semisimple ring and mentions no
+algebra structure; `TauCeti.isBasic_iff_pi_divisionRing` reads it at the semisimple quotient of a
+finite-dimensional algebra, which is semisimple because that algebra is Artinian.
 
 Basicness is the normalization step of Morita theory: every finite-dimensional algebra is Morita
 equivalent to a basic one, obtained by keeping one indecomposable projective per simple module.
@@ -47,12 +46,13 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
 
 ## Main results
 
-* `TauCeti.Matrix.isReduced_iff_subsingleton`: a matrix ring over a nonzero reduced ring is reduced
-  exactly when it has at most one index.
-* `TauCeti.isReduced_iff_exists_ringEquiv_pi_divisionRing`: a semisimple ring is reduced if and only
-  if it is a finite product of division rings.
-* `TauCeti.isBasic_iff_exists_ringEquiv_pi_divisionRing`: a finite-dimensional algebra is basic if
-  and only if its semisimple quotient is a finite product of division rings.
+* `TauCeti.isBasic_def`: unfolding lemma for `TauCeti.IsBasic`.
+* `TauCeti.Matrix.isReduced_iff_subsingleton`: a matrix ring over a nonzero reduced semiring is
+  reduced exactly when it has at most one index.
+* `TauCeti.isReduced_iff_pi_divisionRing`: a semisimple ring is reduced if and only if it is a
+  finite product of division rings.
+* `TauCeti.isBasic_iff_pi_divisionRing`: a finite-dimensional algebra is basic if and only if its
+  semisimple quotient is a finite product of division rings.
 * `TauCeti.isBasic_of_commRing`: a commutative ring is basic.
 
 ## Implementation notes
@@ -64,14 +64,13 @@ multiplication of a matrix ring depends on which one is used.  Both uses below t
 along `Subsingleton.elim` first; the index types in question are a `Fin`-indexed one, as produced by
 Artin--Wedderburn, and one carrying a `Fintype` hypothesis.
 
-`TauCeti.IsBasic` is `@[expose]`d so that importing modules can unfold it; without that, a
-definitional unfolding lemma would be needed to use the definition at all.
+`TauCeti.IsBasic` keeps its body private; `TauCeti.isBasic_def` is the unfolding lemma through which
+importing modules use the definition.
 
 `TauCeti.IsBasic` takes only the ring, where the roadmap signature also carries a base field and
 finite-dimensionality over it.  Neither appears in the condition, so the environment linter rejects
-them as unused arguments; they are carried instead by
-`TauCeti.isBasic_iff_exists_ringEquiv_pi_divisionRing`, the result that needs them, and by nothing
-else.
+them as unused arguments; they are carried instead by `TauCeti.isBasic_iff_pi_divisionRing`, the
+result that needs them, and by nothing else.
 
 ## References
 
@@ -105,9 +104,10 @@ theorem isReduced_of_isReduced_pi {ι : Type w} {R : ι → Type u} [∀ i, Mono
     simpa using congrFun (IsReduced.eq_zero _ ⟨n + 1, hx⟩) i
 
 /-- **A matrix ring of size at least two is never reduced.**  For `i ≠ j` the matrix unit `Eᵢⱼ` is
-nonzero and squares to zero, so a reduced matrix ring over a nonzero ring has at most one index. -/
+nonzero and squares to zero, so a reduced matrix ring over a nonzero semiring has at most one
+index. -/
 theorem Matrix.subsingleton_of_isReduced {m : Type w} {A : Type u} [DecidableEq m] [Fintype m]
-    [Ring A] [Nontrivial A] [IsReduced (Matrix m m A)] : Subsingleton m := by
+    [Semiring A] [Nontrivial A] [IsReduced (Matrix m m A)] : Subsingleton m := by
   refine ⟨fun i j => by_contra fun hij => ?_⟩
   have hji : j ≠ i := Ne.symm hij
   have hsq : (_root_.Matrix.single i j 1 : Matrix m m A) ^ 2 = 0 := by
@@ -116,11 +116,11 @@ theorem Matrix.subsingleton_of_isReduced {m : Type w} {A : Type u} [DecidableEq 
   have h1 := congrFun (congrFun h0 i) j
   simp at h1
 
-/-- **A matrix ring over a nonzero reduced ring is reduced exactly in size at most one.**  In one
-direction this is `TauCeti.Matrix.subsingleton_of_isReduced`; in the other, a matrix ring on an
-empty index is the zero ring, and on a one-element index it is the base ring. -/
+/-- **A matrix ring over a nonzero reduced semiring is reduced exactly in size at most one.**  In
+one direction this is `TauCeti.Matrix.subsingleton_of_isReduced`; in the other, a matrix ring on an
+empty index is the zero ring, and on a one-element index it is the base semiring. -/
 theorem Matrix.isReduced_iff_subsingleton {m : Type w} {A : Type u} [DecidableEq m]
-    [inst : Fintype m] [Ring A] [Nontrivial A] [IsReduced A] :
+    [inst : Fintype m] [Semiring A] [Nontrivial A] [IsReduced A] :
     IsReduced (Matrix m m A) ↔ Subsingleton m := by
   refine ⟨fun _ => Matrix.subsingleton_of_isReduced (A := A), fun hm => ?_⟩
   rcases isEmpty_or_nonempty m with hempty | ⟨⟨i⟩⟩
@@ -138,7 +138,7 @@ theorem Matrix.isReduced_iff_subsingleton {m : Type w} {A : Type u} [DecidableEq
 through Artin--Wedderburn, reducedness says that every block `Matₙᵢ(Dᵢ)` has `nᵢ = 1`, a larger
 matrix block carrying a nonzero square-zero matrix unit; the converse is immediate, a division ring
 having no nonzero nilpotent element. -/
-theorem isReduced_iff_exists_ringEquiv_pi_divisionRing (R : Type u) [Ring R] [IsSemisimpleRing R] :
+theorem isReduced_iff_pi_divisionRing (R : Type u) [Ring R] [IsSemisimpleRing R] :
     IsReduced R ↔ ∃ (n : ℕ) (D : Fin n → Type u) (_ : ∀ i, DivisionRing (D i)),
       Nonempty (R ≃+* ∀ i, D i) := by
   refine ⟨fun _ => ?_, fun ⟨n, D, hD, ⟨e⟩⟩ => isReduced_of_injective (e : R ≃+* ∀ i, D i)
@@ -163,26 +163,30 @@ theorem isReduced_iff_exists_ringEquiv_pi_divisionRing (R : Type u) [Ring R] [Is
 /-- A ring is **basic** when its quotient by the Jacobson radical is reduced.  For a
 finite-dimensional algebra over a field, where that quotient is semisimple, this says that the
 quotient is a product of division rings rather than of matrix algebras over them, so that no
-Wedderburn block is repeated; see `TauCeti.isBasic_iff_exists_ringEquiv_pi_divisionRing`. -/
-@[expose]
+Wedderburn block is repeated; see `TauCeti.isBasic_iff_pi_divisionRing`. -/
 def IsBasic (A : Type v) [Ring A] : Prop :=
   IsReduced (A ⧸ Ring.jacobson A)
 
+/-- Unfolding lemma for `TauCeti.IsBasic`: it is reducedness of the quotient by the Jacobson
+radical. -/
+@[simp]
+theorem isBasic_def (A : Type v) [Ring A] :
+    IsBasic A ↔ IsReduced (A ⧸ Ring.jacobson A) := Iff.rfl
+
 /-- **A finite-dimensional algebra is basic exactly when its semisimple quotient is a finite product
-of division rings.**  This is `TauCeti.isReduced_iff_exists_ringEquiv_pi_divisionRing`, read at the
-quotient by the radical; that quotient is semisimple because a finite-dimensional algebra is
-Artinian. -/
-theorem isBasic_iff_exists_ringEquiv_pi_divisionRing (k : Type u) (A : Type v) [Field k] [Ring A]
+of division rings.**  This is `TauCeti.isReduced_iff_pi_divisionRing`, read at the quotient by the
+radical; that quotient is semisimple because a finite-dimensional algebra is Artinian. -/
+theorem isBasic_iff_pi_divisionRing (k : Type u) (A : Type v) [Field k] [Ring A]
     [Algebra k A] [FiniteDimensional k A] :
     IsBasic A ↔ ∃ (n : ℕ) (D : Fin n → Type v) (_ : ∀ i, DivisionRing (D i)),
       Nonempty ((A ⧸ Ring.jacobson A) ≃+* ∀ i, D i) :=
   have := isSemisimpleRing_quotient_jacobson (K := k) (A := A)
-  isReduced_iff_exists_ringEquiv_pi_divisionRing (A ⧸ Ring.jacobson A)
+  (isBasic_def A).trans (isReduced_iff_pi_divisionRing (A ⧸ Ring.jacobson A))
 
 /-- **A commutative ring is basic.**  Its quotient by the Jacobson radical has vanishing Jacobson
 radical, and in a commutative ring the nilradical is contained in the Jacobson radical. -/
 theorem isBasic_of_commRing (A : Type v) [CommRing A] : IsBasic A :=
-  (nilradical_eq_bot_iff (R := A ⧸ Ring.jacobson A)).mp <| le_bot_iff.mp <|
+  (isBasic_def A).mpr <| (nilradical_eq_bot_iff (R := A ⧸ Ring.jacobson A)).mp <| le_bot_iff.mp <|
     (nilradical_le_jacobson _).trans (Ring.jacobson_quotient_jacobson A).le
 
 end TauCeti
