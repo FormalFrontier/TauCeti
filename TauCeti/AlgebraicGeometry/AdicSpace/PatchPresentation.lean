@@ -17,6 +17,16 @@ compact product `(A × A) → Bool`, with closed image; the basic opens of `Spv 
 for the induced compact topology. This is the presentation that the patch criterion for
 spectral spaces consumes to prove `Spv A` spectral.
 
+It also settles quasi-compactness of the generating family of `Spv A`, by instantiating the patch
+criterion's `isCompact_of_isClosed_generateFrom` at `patchTopology A`: the mechanism lives once,
+in `TauCeti/Topology/Spectral/PatchCriterion.lean`, and is specialised here. That is the part of
+Wedhorn's Theorem 4.9 which says the family consists of quasi-compact opens, as opposed to merely
+generating the topology. It says nothing about Lemma 7.5(1), whose family lives in `Spv (A, I)`:
+these statements do not transfer to the traces along the inclusion. That side is proved separately
+in `SpvOfIdeal/Spectral.lean`, by the same criterion applied to the witness topology coinduced
+along `r_I`. Nor is the *basis* property proved here — only quasi-compactness of the individual
+members.
+
 ## Main definitions
 
 * `TauCeti.ValuationSpectrum.toPatch` : The relation table `Spv A → (A × A) → Bool`.
@@ -30,6 +40,17 @@ spectral spaces consumes to prove `Spv A` spectral.
 * `TauCeti.ValuationSpectrum.compactSpace_patchTopology` : The witness topology is compact.
 * `TauCeti.ValuationSpectrum.isClopen_patchTopology_basicOpen` : Basic opens are clopen for
   the witness topology.
+* `TauCeti.ValuationSpectrum.isCompact_of_isClosed_patchTopology` : a patch-closed subset is
+  quasi-compact, with `TauCeti.ValuationSpectrum.isCompact_basicOpen` and
+  `TauCeti.ValuationSpectrum.isCompact_basicOpenFinset` its two instances.
+
+## Provenance
+
+The corresponding development in AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0) at commit
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`, project `projects/AdicSpaces/`, reaches spectrality
+through `isSpectralSpace_of_qcKolmogorov_oc_basis` and `Spv.isSpectralSpace`, which return a
+`CompactSpace ∧ T0Space ∧ QuasiSober` conjunction; it has no counterpart to an isolated
+quasi-compactness statement about a single rational subset. Nothing was copied.
 -/
 
 public section
@@ -203,5 +224,33 @@ lemma isClopen_patchTopology_basicOpenFinset (T : Finset A) (s : A) :
   rw [basicOpenFinset_eq_biInter]
   exact @Set.Finite.isClopen_biInter _ (patchTopology A) _ _ (T.finite_toSet.insert s) _
     fun t _ ↦ isClopen_patchTopology_basicOpen t s
+
+/-! ### Quasi-compactness of the rational subsets -/
+
+/-- The basic opens are patch-clopen — the hypothesis the patch criterion's quasi-compactness
+lemmas take, packaged once for the two instantiations below. -/
+private lemma isClopen_patchTopology_of_mem_basicOpens :
+    ∀ U ∈ {U : Set (Spv A) | ∃ f s : A, U = basicOpen f s},
+      @IsClopen (Spv A) (patchTopology A) U := by
+  rintro _ ⟨f, s, rfl⟩
+  exact isClopen_patchTopology_basicOpen f s
+
+/-- Any patch-closed subset of `Spv A` is quasi-compact — the patch criterion's
+`isCompact_of_isClosed_generateFrom`, instantiated at the patch presentation. -/
+lemma isCompact_of_isClosed_patchTopology {U : Set (Spv A)}
+    (hU : @IsClosed (Spv A) (patchTopology A) U) : IsCompact U :=
+  isCompact_of_isClosed_generateFrom (t' := patchTopology A) instTopologicalSpace_eq_generateFrom
+    compactSpace_patchTopology isClopen_patchTopology_of_mem_basicOpens hU
+
+/-- A basic open of `Spv A` is quasi-compact. -/
+lemma isCompact_basicOpen (f s : A) : IsCompact (basicOpen f s) :=
+  isCompact_of_isClosed_patchTopology
+    (@IsClopen.isClosed (Spv A) (patchTopology A) _ (isClopen_patchTopology_basicOpen f s))
+
+/-- `Spv(A)(T/s)` is quasi-compact: a finite intersection of patch-clopen basic opens is
+patch-clopen. -/
+lemma isCompact_basicOpenFinset (T : Finset A) (s : A) : IsCompact (basicOpenFinset T s) :=
+  isCompact_of_isClosed_patchTopology
+    (@IsClopen.isClosed (Spv A) (patchTopology A) _ (isClopen_patchTopology_basicOpenFinset T s))
 
 end TauCeti.ValuationSpectrum
