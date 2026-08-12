@@ -55,8 +55,7 @@ local infixl:70 " ⬝ " => Relator.mul
 
 /-- The nine relators in the source's `R_H2` block, on its generator expressions `a`, `b`, and
 `c`. -/
-@[expose]
-def lyH2Relators {α : Type*} (a b c : Relator α) : List (Relator α) :=
+private def lyH2Relators {α : Type*} (a b c : Relator α) : List (Relator α) :=
   let bInv := .inv b
   [ .pow a 8,
     .pow b 5,
@@ -72,8 +71,7 @@ def lyH2Relators {α : Type*} (a b c : Relator α) : List (Relator α) :=
 
 /-- The seven relators in the source's `R_H1` block, on its generator expressions `a`, `b`, `c`,
 and `d`. -/
-@[expose]
-def lyH1Relators {α : Type*} (a b c d : Relator α) : List (Relator α) :=
+private def lyH1Relators {α : Type*} (a b c d : Relator α) : List (Relator α) :=
   let aInv := .inv a
   let bInv := .inv b
   let cInv := .inv c
@@ -100,8 +98,7 @@ def lyH1Relators {α : Type*} (a b c d : Relator α) : List (Relator α) :=
 
 /-- The nine relators in the source's final `R_G` block extending the presentation to `Ly`, on its
 generator expressions `a`, `b`, `c`, `d`, and `z`. -/
-@[expose]
-def lyExtensionRelators {α : Type*} (a b c d z : Relator α) : List (Relator α) :=
+private def lyExtensionRelators {α : Type*} (a b c d z : Relator α) : List (Relator α) :=
   let aInv := .inv a
   let bInv := .inv b
   let cInv := .inv c
@@ -262,9 +259,15 @@ theorem lyPresentation_expectedGeneratorCount : lyPresentation.expectedGenerator
 theorem lyPresentation_expectedRelatorCount : lyPresentation.expectedRelatorCount = 25 := by
   rfl
 
-/-- The twenty-five relator expressions transcribed for `Ly`, split into the three blocks used by
-the source. The named blocks are the single source of truth for both the presentation and its
-transcription checks. -/
+/-- The twenty-five relator expressions transcribed for `Ly`, written out in the source's order.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Indices `0` through
+`4` are the generators `a`, `b`, `c`, `d`, and `z`, and the bounds come from
+`TauCeti.Sporadic.lyPresentation_generatorNames`. The first nine entries are the source's `R_H2`
+block, the next seven its `R_H1` block, and the last nine its `R_G` block. -/
 @[simp]
 theorem lyPresentation_transcribed :
     lyPresentation.transcribed =
@@ -278,7 +281,78 @@ theorem lyPresentation_transcribed :
         .gen ⟨3, by simp [lyPresentation]⟩
       let z : Relator (Fin lyPresentation.generatorNames.length) :=
         .gen ⟨4, by simp [lyPresentation]⟩
-      lyH2Relators a b c ++ lyH1Relators a b c d ++ lyExtensionRelators a b c d z := by
+      let aInv := Relator.inv a
+      let bInv := Relator.inv b
+      let cInv := Relator.inv c
+      let dInv := Relator.inv d
+      let zInv := Relator.inv z
+      [ .pow a 8,
+        .pow b 5,
+        .pow (a ⬝ b) 4,
+        Relator.sourceComm (.pow a 2) b,
+        .pow (Relator.sourceComm a b) 3,
+        .pow c 5,
+        Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
+        Relator.div (Relator.conj c (b ⬝ a))
+          (Relator.conj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
+        Relator.div (Relator.conj c (.pow b 2))
+          (.pow c 2 ⬝ Relator.conj c bInv ⬝ .pow (.inv (Relator.conj c b)) 2),
+        Relator.div (Relator.conj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
+        Relator.div (Relator.conj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
+        Relator.div
+          (Relator.conj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
+          (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ a ⬝ c ⬝ bInv ⬝ c ⬝ b ⬝
+            a ⬝ cInv),
+        Relator.div
+          (Relator.conj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
+            (d ⬝ c ⬝ d))
+          (.pow aInv 2 ⬝ bInv ⬝ aInv ⬝ .pow (bInv ⬝ c) 2 ⬝ .pow b 2),
+        Relator.div
+          (Relator.conj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+          (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ c ⬝ aInv ⬝ bInv ⬝ c ⬝
+            b ⬝ a),
+        Relator.div
+          (Relator.conj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+          (.pow aInv 4 ⬝ .pow b 2 ⬝ cInv ⬝ bInv ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝ bInv),
+        c ⬝ aInv ⬝ cInv ⬝ a ⬝ cInv ⬝ aInv ⬝ c ⬝ a ⬝ dInv ⬝ cInv ⬝ aInv ⬝
+          cInv ⬝ a ⬝ c ⬝ aInv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ cInv ⬝ aInv ⬝ cInv ⬝ a ⬝ c ⬝ d,
+        Relator.div (Relator.conj a z) (.pow aInv 3),
+        Relator.div (Relator.conj a (z ⬝ d ⬝ z)) (.pow a 3),
+        Relator.div
+          (Relator.conj
+            (cInv ⬝ dInv ⬝ c ⬝ b ⬝ a ⬝ .pow b 2 ⬝ .pow (c ⬝ b) 2 ⬝ cInv ⬝ d)
+            (z ⬝ d ⬝ z))
+          (cInv ⬝ b ⬝ .pow c 2 ⬝ a ⬝ cInv ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝
+            .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
+            dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
+        Relator.div
+          (Relator.sourceComm z
+            (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
+              a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
+          (b ⬝ c ⬝ bInv ⬝ cInv),
+        Relator.div (Relator.conj a (z ⬝ d ⬝ bInv ⬝ z))
+          (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow cInv 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
+            .pow bInv 2 ⬝ c ⬝ bInv ⬝ c ⬝ a ⬝ cInv ⬝ d ⬝ bInv ⬝ aInv),
+        Relator.div
+          (Relator.conj
+            (cInv ⬝ aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝
+              cInv ⬝ dInv ⬝ c ⬝ d ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ b ⬝ a ⬝ c)
+            (z ⬝ d ⬝ bInv ⬝ z))
+          (aInv ⬝ c ⬝ .pow aInv 3 ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝ d ⬝ cInv ⬝ a ⬝
+            cInv ⬝ .pow b 2 ⬝ c ⬝ bInv ⬝ c ⬝ aInv ⬝ cInv ⬝ d ⬝ bInv ⬝ cInv ⬝
+            dInv ⬝ cInv ⬝ b ⬝ a ⬝ b ⬝ d ⬝ c ⬝ aInv),
+        Relator.div
+          (Relator.conj
+            (aInv ⬝ b ⬝ d ⬝ c ⬝ aInv ⬝ bInv ⬝ a ⬝ b ⬝ aInv ⬝ cInv ⬝ bInv ⬝ c ⬝ a)
+            (z ⬝ d ⬝ c ⬝ d ⬝ z))
+          (cInv ⬝ .pow a 3 ⬝ b ⬝ cInv ⬝ bInv ⬝ aInv ⬝ c ⬝ dInv ⬝ cInv ⬝ b ⬝
+            aInv ⬝ bInv),
+        Relator.div (Relator.conj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
+          (a ⬝ c ⬝ aInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ aInv ⬝
+            bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a),
+        a ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow aInv 2 ⬝ dInv ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝
+          d ⬝ cInv ⬝ .pow (a ⬝ cInv) 2 ⬝ b ⬝ aInv ⬝ .pow c 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
+          c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ] := by
   rfl
 
 private theorem lyPresentation_blockDecomposition :
