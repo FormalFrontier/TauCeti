@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
+public import Mathlib.Combinatorics.SimpleGraph.Hamiltonian
 public import Mathlib.Combinatorics.SimpleGraph.Hasse
 
 public section
@@ -120,12 +121,9 @@ theorem IsTree.nonempty_iso_pathGraph_of_degree_le_two [Fintype V] [DecidableRel
   have hsupp : ∀ x : V, x ∈ p.support :=
     forall_mem_support_of_degree_le_two hG.connected hdeg hp hmax
   -- The path is spanning, so it has as many vertices as the graph.
+  have hpHam := hp.isHamiltonian_of_mem hsupp
   have hcard : p.length + 1 = Fintype.card V := by
-    have huniv : p.support.toFinset = Finset.univ := by
-      ext x
-      simp [hsupp x]
-    rw [← p.length_support, ← List.toFinset_card_of_nodup hp.support_nodup, huniv,
-      Finset.card_univ]
+    rw [← p.length_support, hpHam.length_support]
   -- A tree has one edge fewer than it has vertices, and the path already has that many.
   have hedges : ∀ {a b : V}, G.Adj a b → s(a, b) ∈ p.edges := by
     have hsub : p.edges.toFinset ⊆ G.edgeFinset := by
