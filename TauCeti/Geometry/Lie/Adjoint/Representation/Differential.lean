@@ -47,7 +47,6 @@ attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
 the Lie-algebra adjoint `ad X Y`. -/
-@[simp]
 theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     mvfderiv I (fun g : G => Ad (I := I) g Y) 1
@@ -113,7 +112,6 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/
-@[simp]
 theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
