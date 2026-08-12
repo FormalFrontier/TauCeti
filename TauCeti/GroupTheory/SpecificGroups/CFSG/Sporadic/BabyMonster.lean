@@ -100,13 +100,17 @@ The source numbers its involutions `t₁` to `t₁₁`; the relator index `Fin 1
 numbering with the customary offset, so `tᵢ` is index `i - 1`. -/
 
 /-- The branch node of the diagram, the source's `t₅`. -/
-@[expose]
 def branchNode : Fin 11 := 4
+
+/-- The branch node is index four, corresponding to the source's `t₅`. -/
+theorem branchNode_eq : branchNode = 4 := (rfl)
 
 /-- The three arms of the diagram, each listed outwards from the branch node: `t₄ t₃ t₂ t₁`, then
 `t₆ t₇ t₈`, then `t₉ t₁₀ t₁₁`. -/
-@[expose]
 def arms : List (List (Fin 11)) := [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]]
+
+/-- The three arms, spelled out in the numbered alphabet. -/
+theorem arms_eq : arms = [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]] := (rfl)
 
 /-- **The three arms have lengths four, three and three**, which is what the name `Y₄₃₃`
 records. -/
@@ -165,9 +169,12 @@ theorem coxeterMatrix_apply (i j : Fin 11) :
 /-- The nodes joined to a given node by an edge, read off the Coxeter matrix rather than off the
 edge list, so that a comparison with the diagram sees the matrix that the relators are built
 from. -/
-@[expose]
 def neighbors (i : Fin 11) : List (Fin 11) :=
   (List.finRange 11).filter fun j => coxeterMatrix i j = 3
+
+/-- Membership in `neighbors i` is characterized by the corresponding Coxeter-matrix entry. -/
+theorem mem_neighbors_iff (i j : Fin 11) : j ∈ neighbors i ↔ coxeterMatrix i j = 3 := by
+  simp [neighbors]
 
 /-- The branch node is joined to the first node of each of the three arms. -/
 theorem neighbors_branchNode : neighbors branchNode = [3, 5, 8] := by decide
@@ -236,14 +243,20 @@ theorem extraRelatorTwo_eq :
 
 /-- The three relators the source adjoins to the Coxeter relations of the diagram, in the order it
 introduces them. -/
-@[expose]
 def adjoinedRelators : List (Relator (Fin 11)) :=
   [spiderRelator, extraRelatorOne, extraRelatorTwo]
 
+/-- The adjoined-relator list, in source order. -/
+theorem adjoinedRelators_eq :
+    adjoinedRelators = [spiderRelator, extraRelatorOne, extraRelatorTwo] := (rfl)
+
 /-- The sixty-nine relators of the presentation: the Coxeter relations of the `Y₄₃₃` diagram
 followed by the spider relator and the two further relators. -/
-@[expose]
 def relatorList : List (Relator (Fin 11)) := coxeterRelators coxeterMatrix ++ adjoinedRelators
+
+/-- The relator list is the Coxeter list followed by the three adjoined relators. -/
+theorem relatorList_def :
+    relatorList = coxeterRelators coxeterMatrix ++ adjoinedRelators := (rfl)
 
 /-! ### The transcribed row and its checks -/
 
@@ -355,17 +368,17 @@ adjoined relators.** This is the form in which the source states the presentatio
 hypothesis that `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeter` below consumes. -/
 theorem presentation_transcribed_append :
     presentation.transcribed = coxeterRelators coxeterMatrix ++ adjoinedRelators := by
-  rw [presentation_transcribed, relatorList]
+  rw [presentation_transcribed, relatorList_def]
 
 /-- **The transcribed presentation has sixty-nine relators**, the `(11 + 1).choose 2 = 66` Coxeter
 relators of a diagram on eleven nodes together with the three adjoined relators. -/
 theorem length_relatorList : relatorList.length = 69 := by
-  rw [relatorList, List.length_append, length_coxeterRelators, adjoinedRelators]
+  rw [relatorList_def, List.length_append, length_coxeterRelators, adjoinedRelators_eq]
   decide
 
 /-- **The recorded generator and relator counts agree with the transcribed data.** -/
 theorem matchesMetadata_presentation : presentation.matchesMetadata :=
-  (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨rfl, length_relatorList⟩
+  (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨by decide, length_relatorList⟩
 
 /-- **The row presents the Coxeter group of the `Y₄₃₃` diagram cut down by the three adjoined
 relations**, which is the shape in which the source states the presentation: the Coxeter relations
