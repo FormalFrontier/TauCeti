@@ -125,32 +125,25 @@ private noncomputable def ContMDiffMap.leftGenerator
 
 /-- The smooth scalar infinitesimal generator of conjugation by the exponential line of `X`. -/
 private noncomputable def ContMDiffMap.conjugationGenerator
-    (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) : C^∞⟮I, G; ℝ⟯ := by
-  refine ⟨fun g => mvfderiv I f g
-    (mulRightInvariantVectorField X g - mulInvariantVectorField X g), ?_⟩
-  have hsub := (ContMDiffMap.rightGenerator (I := I) f X).contMDiff.sub
-    (ContMDiffMap.leftGenerator (I := I) f X).contMDiff
-  apply hsub.congr
-  intro g
-  -- Coercing the bundled maps exposes their carrier functions; linearity supplies the equality.
-  change mvfderiv I f g (_ - _) = mvfderiv I f g _ - mvfderiv I f g _
-  exact map_sub (mvfderiv I f g) _ _
+    (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) : C^∞⟮I, G; ℝ⟯ :=
+  ContMDiffMap.rightGenerator (I := I) f X - ContMDiffMap.leftGenerator (I := I) f X
 
 omit [FiniteDimensional ℝ E] in
 private theorem ContMDiffMap.conjugationGenerator_apply
     (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) (g : G) :
     ContMDiffMap.conjugationGenerator (I := I) f X g = mvfderiv I f g
-      (mulRightInvariantVectorField X g - mulInvariantVectorField X g) := rfl
+      (mulRightInvariantVectorField X g - mulInvariantVectorField X g) := by
+  change mvfderiv I f g (mulRightInvariantVectorField X g) -
+      mvfderiv I f g (mulInvariantVectorField X g) = _
+  exact (map_sub (mvfderiv I f g) _ _).symm
 
 omit [FiniteDimensional ℝ E] in
 private theorem ContMDiffMap.conjugationGenerator_coe
     (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) :
     (ContMDiffMap.conjugationGenerator (I := I) f X : G → ℝ) =
       (ContMDiffMap.rightGenerator (I := I) f X : G → ℝ) -
-        (ContMDiffMap.leftGenerator (I := I) f X : G → ℝ) := by
-  funext g
-  rw [ContMDiffMap.conjugationGenerator_apply]
-  exact map_sub (mvfderiv I f g) _ _
+      (ContMDiffMap.leftGenerator (I := I) f X : G → ℝ) :=
+  ContMDiffMap.coe_sub _ _
 
 /-- Differentiating the scalar conjugation generator along a left-invariant direction gives the
 Lie bracket. -/
@@ -161,9 +154,7 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let RXf := ContMDiffMap.rightGenerator (I := I) f X
   let LXf := ContMDiffMap.leftGenerator (I := I) f X
-  let LYf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun g => mvfderiv I f g (mulInvariantVectorField Y g),
-      contMDiff_mvfderiv_mulInvariantVectorField Y f⟩
+  let LYf := ContMDiffMap.leftGenerator (I := I) f Y
   let H := ContMDiffMap.conjugationGenerator (I := I) f X
   have hH : (H : G → ℝ) = (RXf : G → ℝ) - (LXf : G → ℝ) :=
     ContMDiffMap.conjugationGenerator_coe f X
@@ -257,15 +248,13 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     (hA.differentiable (by simp) 0).hasDerivAt
   let bracketTangent : GroupLieAlgebra I G :=
     LieAlgebra.ad ℝ (GroupLieAlgebra I G) X Y
-  let bracketModel : E := @id E bracketTangent
   apply hAder.congr_deriv
-  -- Tangent vectors at the identity are determined by their action on pointed smooth functions;
-  -- unfolding exposes the model-space representatives hidden in `GroupLieAlgebra`.
-  with_unfolding_all apply tangentToPointDerivation_injective (I := I) (1 : G)
+  let derivTangent : GroupLieAlgebra I G := deriv A 0
+  change derivTangent = bracketTangent
+  apply tangentToPointDerivation_injective (I := I) (1 : G)
   ext f
-  let q : E →L[ℝ] ℝ := by
-    -- `mvfderiv` is the canonical continuous-linear action of a model tangent vector on `f`.
-    with_unfolding_all exact mvfderiv I f 1
+  change mvfderiv I f 1 derivTangent = mvfderiv I f 1 bracketTangent
+  let q : GroupLieAlgebra I G →L[ℝ] ℝ := mvfderiv I f 1
   let F : ℝ × ℝ → ℝ := fun p =>
     f (γX p.1 * γY p.2 *
       mulInvariantExp (I := I) (G := G) (p.1 • (-X)))
@@ -334,8 +323,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     funext s
     exact htime s
   rw [hspaceFun, htimeFun, fderiv_apply_one_eq_deriv] at hmixed
-  -- Unfold the canonical model-space and point-derivation identifications on both sides.
-  with_unfolding_all change q (deriv A 0) = q bracketModel
+  change q derivTangent = q bracketTangent
   have hq : HasDerivAt (fun t => q (A t)) (q (deriv A 0)) 0 :=
     q.hasFDerivAt.comp_hasDerivAt (f := A) 0 hAder
   have hleftDeriv : deriv (fun t => q (A t)) 0 = q (deriv A 0) := by
@@ -349,7 +337,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
   have hrightDeriv : deriv (fun s =>
       mvfderiv I f (γY s)
         (mulRightInvariantVectorField X (γY s) -
-          mulInvariantVectorField X (γY s))) 0 = q bracketModel := by
+          mulInvariantVectorField X (γY s))) 0 = q bracketTangent := by
     -- `H` packages exactly the scalar generator displayed on the left.
     rw [show (fun s => mvfderiv I f (γY s)
         (mulRightInvariantVectorField X (γY s) -
@@ -359,9 +347,8 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     rw [hHcurve'.deriv]
     -- The left side is the bundled scalar conjugation generator differentiated along `Y`.
     have hbracket := mvfderiv_conjugationGenerator_eq_bracket f X Y
-    have hqBracket : q bracketModel = mvfderiv I f 1 bracketTangent := by
-      dsimp only [q, bracketModel, bracketTangent]
-      rfl
+    have hqBracket : q bracketTangent = mvfderiv I f 1 bracketTangent := by
+      dsimp only [q]
     rw [hqBracket]
     exact hbracket
   rw [hleftDeriv, hrightDeriv] at hmixed

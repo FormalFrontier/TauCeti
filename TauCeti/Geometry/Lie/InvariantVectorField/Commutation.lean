@@ -23,7 +23,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 ## Main results
 
 * `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: a scalar function on two exponential lines
-  multiplied around a fixed group element is twice continuously differentiable.
+  multiplied around a fixed group element is smooth in both parameters.
 * `spatialFDeriv_mulInvariantExp_mul_mulInvariantExp` and
   `timeFDeriv_mulInvariantExp_mul_mulInvariantExp`: identify its two partial derivatives with
   left- and right-invariant differentiation.
