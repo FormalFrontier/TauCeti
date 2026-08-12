@@ -305,12 +305,13 @@ theorem isReduced_quotient_jacobson (h : Quiver.IsAcyclic Q) :
   isReduced_of_injective (quotientJacobsonAlgEquiv k Q h).toRingEquiv
     (quotientJacobsonAlgEquiv k Q h).toRingEquiv.injective
 
-/-- **The path algebra of a finite acyclic quiver is a basic algebra.**  This is the previous
-result read through `TauCeti.IsBasic`: by `TauCeti.isBasic_iff_pi_divisionRing` the semisimple
-quotient is then a product of division rings -- here, one copy of `k` for each vertex -- so the
+/-- **The path algebra of a finite acyclic quiver is a basic algebra.**  This is the previous two
+results read through `TauCeti.IsBasic`: by `TauCeti.isBasic_iff_pi_divisionRing` the quotient by the
+radical is then a product of division rings -- here, one copy of `k` for each vertex -- so the
 vertices index the simple modules and the indecomposable projectives without repetition. -/
 theorem isBasic (h : Quiver.IsAcyclic Q) : IsBasic (pathAlgebra k Q) :=
-  (isBasic_def _).mpr (isReduced_quotient_jacobson k Q h)
+  (isBasic_def _).mpr
+    ⟨isSemisimpleRing_quotient_jacobson k Q h, isReduced_quotient_jacobson k Q h⟩
 
 /-- The semisimple quotient of the path algebra of a finite acyclic quiver is commutative. -/
 theorem mul_comm_quotient_jacobson (h : Quiver.IsAcyclic Q)

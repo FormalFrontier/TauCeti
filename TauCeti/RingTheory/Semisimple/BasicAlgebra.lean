@@ -4,38 +4,42 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- Public: `IsReduced` is the content of the definition below, Artin--Wedderburn supplies the shape
--- of the main equivalence, and the semisimplicity of the quotient by the radical is what makes the
--- definition usable.
+-- Public: `IsSemisimpleRing` and `IsReduced` are the two clauses of the definition below,
+-- Artin--Wedderburn supplies the shape of the main equivalence, and the semisimplicity of the
+-- quotient by the radical is what makes the definition usable over a finite-dimensional algebra.
 public import Mathlib.RingTheory.Nilpotent.Defs
 public import Mathlib.RingTheory.SimpleModule.WedderburnArtin
 public import TauCeti.RingTheory.Jacobson.FiniteDimensional
 -- Non-public: used only inside proofs.  The matrix units produce the square-zero element that
--- rules out a block of size at least two, a one-by-one matrix ring collapses to its base ring, an
--- equivalence of rings carries the Jacobson radical onto the Jacobson radical and so descends to
--- the quotients, and the nilradical of a commutative ring is bounded by its Jacobson radical.
+-- rules out a block of size at least two, a one-by-one matrix ring collapses to its base ring, and
+-- an equivalence of rings carries the Jacobson radical onto the Jacobson radical and so descends
+-- to the quotients.
 import Mathlib.Data.Matrix.Basis
 import Mathlib.LinearAlgebra.Matrix.Unique
 import Mathlib.RingTheory.Ideal.Quotient.Operations
-import Mathlib.RingTheory.KrullDimension.Basic
-import Mathlib.RingTheory.Nilpotent.Lemmas
 
 /-!
 # Basic algebras
 
-A ring `A` is **basic** when its quotient by the Jacobson radical, `A ⧸ Ring.jacobson A`, is
-*reduced*.  The condition is aimed at a finite-dimensional algebra over a field, where that quotient
-is semisimple: Artin--Wedderburn writes it as a finite product of matrix algebras over division
-rings, one block for each simple module, and a matrix algebra of size at least two is never reduced,
-the matrix unit `Eᵢⱼ` with `i ≠ j` being nonzero and square-zero.  So for such an algebra
-reducedness says exactly that **every block has size one**, that is, that the semisimple quotient is
-a product of division rings rather than of matrix algebras over them; equivalently, that no
-indecomposable projective is repeated in a decomposition of the regular module.
+A ring `A` is **basic** when its quotient by the Jacobson radical, `A ⧸ Ring.jacobson A`, is a
+finite product of division rings.  The definition states this as the quotient being *semisimple* and
+*reduced*, which says the same thing (`TauCeti.isBasic_iff_pi_divisionRing`): Artin--Wedderburn
+writes a semisimple ring as a finite product of matrix algebras over division rings, one block for
+each simple module, and a matrix algebra of size at least two is never reduced, the matrix unit
+`Eᵢⱼ` with `i ≠ j` being nonzero and square-zero.  So over a semisimple ring reducedness says
+exactly that **every block has size one**, that is, that the ring is a product of division rings
+rather than of matrix algebras over them; equivalently, that no indecomposable projective is
+repeated in a decomposition of the regular module.
 
 That reformulation is the main result.  Its ring-level form,
 `TauCeti.isReduced_iff_pi_divisionRing`, holds for an arbitrary semisimple ring and mentions no
-algebra structure; `TauCeti.isBasic_iff_pi_divisionRing` reads it at the semisimple quotient of a
-finite-dimensional algebra, which is semisimple because that algebra is Artinian.
+algebra structure.
+
+The condition is aimed at a finite-dimensional algebra over a field, where the quotient by the
+radical is semisimple because the algebra is Artinian: there the semisimplicity clause is automatic
+and basicness is reducedness alone (`TauCeti.isBasic_iff_isReduced`), which is the form the roadmap
+pins.  Outside that setting the clause has to be asked for: `ℤ` has zero Jacobson radical and is
+reduced, but is not a product of division rings and is not a basic ring.
 
 Basicness is the normalization step of Morita theory: every finite-dimensional algebra is Morita
 equivalent to a basic one, obtained by keeping one indecomposable projective per simple module.
@@ -44,7 +48,7 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
 
 ## Main definitions
 
-* `TauCeti.IsBasic`: a ring whose quotient by the Jacobson radical is reduced.
+* `TauCeti.IsBasic`: a ring whose quotient by the Jacobson radical is semisimple and reduced.
 
 ## Main results
 
@@ -54,9 +58,11 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
   reduced exactly when it has at most one index.
 * `TauCeti.isReduced_iff_pi_divisionRing`: a semisimple ring is reduced if and only if it is a
   finite product of division rings.
-* `TauCeti.isBasic_iff_pi_divisionRing`: a finite-dimensional algebra is basic if and only if its
-  semisimple quotient is a finite product of division rings.
-* `TauCeti.isBasic_of_commRing`: a commutative ring is basic.
+* `TauCeti.isBasic_iff_pi_divisionRing`: a ring is basic if and only if its quotient by the
+  Jacobson radical is a finite product of division rings.
+* `TauCeti.isBasic_iff_isReduced`: a finite-dimensional algebra is basic if and only if its
+  semisimple quotient is reduced.
+* `TauCeti.isBasic_of_commRing`: a finite-dimensional commutative algebra is basic.
 
 ## Implementation notes
 
@@ -72,8 +78,11 @@ importing modules use the definition.
 
 `TauCeti.IsBasic` takes only the ring, where the roadmap signature also carries a base field and
 finite-dimensionality over it.  Neither appears in the condition, so the environment linter rejects
-them as unused arguments; they are carried instead by `TauCeti.isBasic_iff_pi_divisionRing`, the
-result that needs them, and by nothing else.
+them as unused arguments; they are carried instead by `TauCeti.isBasic_iff_isReduced`, which
+recovers the roadmap's formulation -- reducedness of the quotient -- under exactly those
+hypotheses, and by nothing else.  Dropping them is what puts semisimplicity of the quotient into
+the definition: over a finite-dimensional algebra it is automatic, but for a general ring
+reducedness alone is strictly weaker than being a product of division rings.
 
 ## References
 
@@ -164,22 +173,23 @@ theorem isReduced_iff_pi_divisionRing (R : Type u) [Ring R] [IsSemisimpleRing R]
 
 /-! ### Basic algebras -/
 
-/-- A ring is **basic** when its quotient by the Jacobson radical is reduced.  For a
-finite-dimensional algebra over a field, where that quotient is semisimple, this says that the
-quotient is a product of division rings rather than of matrix algebras over them, so that every
-Wedderburn block has size one; see `TauCeti.isBasic_iff_pi_divisionRing`. -/
+/-- A ring is **basic** when its quotient by the Jacobson radical is a finite product of division
+rings, stated as that quotient being semisimple and reduced; the two readings agree by
+`TauCeti.isBasic_iff_pi_divisionRing`.  For a finite-dimensional algebra over a field the quotient
+is semisimple anyway, and the condition is reducedness alone -- every Wedderburn block has size one
+-- which is `TauCeti.isBasic_iff_isReduced`. -/
 def IsBasic (A : Type v) [Ring A] : Prop :=
-  IsReduced (A ⧸ Ring.jacobson A)
+  IsSemisimpleRing (A ⧸ Ring.jacobson A) ∧ IsReduced (A ⧸ Ring.jacobson A)
 
-/-- Unfolding lemma for `TauCeti.IsBasic`: it is reducedness of the quotient by the Jacobson
-radical. -/
+/-- Unfolding lemma for `TauCeti.IsBasic`: it is semisimplicity together with reducedness of the
+quotient by the Jacobson radical. -/
 @[simp]
 theorem isBasic_def (A : Type v) [Ring A] :
-    IsBasic A ↔ IsReduced (A ⧸ Ring.jacobson A) := Iff.rfl
+    IsBasic A ↔ IsSemisimpleRing (A ⧸ Ring.jacobson A) ∧ IsReduced (A ⧸ Ring.jacobson A) := Iff.rfl
 
 /-- **Basicness is invariant under ring equivalence.**  A ring equivalence carries the Jacobson
 radical onto the Jacobson radical, hence descends to an equivalence of the quotients, along which
-reducedness transports. -/
+both semisimplicity and reducedness transport. -/
 theorem RingEquiv.isBasic_iff {A : Type v} {B : Type w} [Ring A] [Ring B] (e : A ≃+* B) :
     IsBasic A ↔ IsBasic B := by
   have hmap : Ring.jacobson B = (Ring.jacobson A).map (e : A →+* B) :=
@@ -187,28 +197,36 @@ theorem RingEquiv.isBasic_iff {A : Type v} {B : Type w} [Ring A] [Ring B] (e : A
       (Ideal.map_le_iff_le_comap.mpr (Ring.le_comap_jacobson (e : A →+* B)))
   let q : (A ⧸ Ring.jacobson A) ≃+* (B ⧸ Ring.jacobson B) :=
     Ideal.quotientEquiv _ _ e hmap
-  constructor
-  · intro h
-    have : IsReduced (A ⧸ Ring.jacobson A) := (isBasic_def A).mp h
-    exact (isBasic_def B).mpr (isReduced_of_injective q.symm q.symm.injective)
-  · intro h
-    have : IsReduced (B ⧸ Ring.jacobson B) := (isBasic_def B).mp h
-    exact (isBasic_def A).mpr (isReduced_of_injective q q.injective)
+  refine and_congr q.isSemisimpleRing_iff ⟨fun _ => ?_, fun _ => ?_⟩
+  · exact isReduced_of_injective q.symm q.symm.injective
+  · exact isReduced_of_injective q q.injective
 
-/-- **A finite-dimensional algebra is basic exactly when its semisimple quotient is a finite product
-of division rings.**  This is `TauCeti.isReduced_iff_pi_divisionRing`, read at the quotient by the
-radical; that quotient is semisimple because a finite-dimensional algebra is Artinian. -/
-theorem isBasic_iff_pi_divisionRing (k : Type u) (A : Type v) [Field k] [Ring A]
-    [Algebra k A] [FiniteDimensional k A] :
+/-- **A ring is basic exactly when its quotient by the Jacobson radical is a finite product of
+division rings.**  This is `TauCeti.isReduced_iff_pi_divisionRing`, read at that quotient; the
+semisimplicity asked for by the definition is what makes the criterion applicable, and it comes
+back from a product of division rings, each of which is a semisimple ring. -/
+theorem isBasic_iff_pi_divisionRing (A : Type v) [Ring A] :
     IsBasic A ↔ ∃ (n : ℕ) (D : Fin n → Type v) (_ : ∀ i, DivisionRing (D i)),
-      Nonempty ((A ⧸ Ring.jacobson A) ≃+* ∀ i, D i) :=
-  have := isSemisimpleRing_quotient_jacobson (K := k) (A := A)
-  (isBasic_def A).trans (isReduced_iff_pi_divisionRing (A ⧸ Ring.jacobson A))
+      Nonempty ((A ⧸ Ring.jacobson A) ≃+* ∀ i, D i) := by
+  refine ⟨fun ⟨_, h⟩ => (isReduced_iff_pi_divisionRing _).mp h, fun ⟨n, D, _, ⟨e⟩⟩ => ?_⟩
+  have := e.symm.isSemisimpleRing
+  exact ⟨this, isReduced_of_injective e e.injective⟩
 
-/-- **A commutative ring is basic.**  Its quotient by the Jacobson radical has vanishing Jacobson
-radical, and in a commutative ring the nilradical is contained in the Jacobson radical. -/
-theorem isBasic_of_commRing (A : Type v) [CommRing A] : IsBasic A :=
-  (isBasic_def A).mpr <| (nilradical_eq_bot_iff (R := A ⧸ Ring.jacobson A)).mp <| le_bot_iff.mp <|
-    (nilradical_le_jacobson _).trans (Ring.jacobson_quotient_jacobson A).le
+/-- **A finite-dimensional algebra is basic exactly when its semisimple quotient is reduced.**  The
+quotient by the radical is semisimple because a finite-dimensional algebra is Artinian, so that
+half of `TauCeti.IsBasic` is automatic here and only reducedness is a condition; this is the form
+the definition takes in the setting it is aimed at. -/
+theorem isBasic_iff_isReduced (k : Type u) (A : Type v) [Field k] [Ring A]
+    [Algebra k A] [FiniteDimensional k A] :
+    IsBasic A ↔ IsReduced (A ⧸ Ring.jacobson A) :=
+  have := isSemisimpleRing_quotient_jacobson (K := k) (A := A)
+  ⟨fun h => h.2, fun h => ⟨this, h⟩⟩
+
+/-- **A finite-dimensional commutative algebra is basic.**  Its quotient by the Jacobson radical is
+semisimple, and a commutative semisimple ring is reduced. -/
+theorem isBasic_of_commRing (k : Type u) (A : Type v) [Field k] [CommRing A] [Algebra k A]
+    [FiniteDimensional k A] : IsBasic A :=
+  have := isSemisimpleRing_quotient_jacobson (K := k) (A := A)
+  ⟨this, inferInstance⟩
 
 end TauCeti
