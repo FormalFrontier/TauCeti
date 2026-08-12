@@ -72,23 +72,24 @@ noncomputable def unitsLeftMulMatrix : Sˣ →* GL ι R :=
   Units.map (Algebra.leftMulMatrix b).toRingHom.toMonoidHom
 
 /-- The matrix underlying `unitsLeftMulMatrix b x` is `Algebra.leftMulMatrix b x`. -/
-@[simp]
+@[simp, grind =]
 theorem coe_unitsLeftMulMatrix (x : Sˣ) :
     (unitsLeftMulMatrix b x : Matrix ι ι R) = Algebra.leftMulMatrix b (x : S) := by
   rfl
 
+-- Not a `simp` lemma: `simp` rewrites the coercion on the left-hand side through
+-- `coe_unitsLeftMulMatrix` first, so this lemma would never fire.
 /-- The entries of `unitsLeftMulMatrix b x` are the coordinates of `x * b j` in the basis `b`. -/
-@[simp]
 theorem unitsLeftMulMatrix_apply (x : Sˣ) (i j : ι) :
     (unitsLeftMulMatrix b x : Matrix ι ι R) i j = b.repr ((x : S) * b j) i :=
   Algebra.leftMulMatrix_eq_repr_mul b (x : S) i j
 
-/-- Left multiplication by a unit determines the unit: apply the matrix to `1`. -/
+/-- Left multiplication by a unit determines the unit. -/
 theorem unitsLeftMulMatrix_injective : Function.Injective (unitsLeftMulMatrix b) := fun _ _ h =>
   Units.ext (Algebra.leftMulMatrix_injective b (congrArg Units.val h))
 
 /-- A unit of the base ring is sent to the corresponding scalar matrix. -/
-@[simp]
+@[simp, grind =]
 theorem unitsLeftMulMatrix_map_algebraMap (r : Rˣ) :
     unitsLeftMulMatrix b (Units.map (algebraMap R S : R →* S) r) =
       Matrix.GeneralLinearGroup.scalar ι r := by

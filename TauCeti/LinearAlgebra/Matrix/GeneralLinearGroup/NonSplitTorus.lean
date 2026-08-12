@@ -116,7 +116,15 @@ namespace GL2NonSplitTorus
 
 variable (hE : Module.finrank F E = 2)
 
-@[simp]
+/-- Membership in the non-split torus: a matrix lies in it exactly when it is left multiplication
+by a unit of `E`. -/
+theorem mem_iff {g : GL (Fin 2) F} :
+    g ∈ GL2NonSplitTorus F E hE ↔ ∃ x : Eˣ, GL2NonSplitTorusHom F E hE x = g :=
+  MonoidHom.mem_range
+
+/-- The matrix underlying `GL2NonSplitTorusHom F E hE x` is multiplication by `x` in the basis
+`TauCeti.nonSplitTorusBasis`. -/
+@[simp, grind =]
 theorem coe_GL2NonSplitTorusHom (x : Eˣ) :
     (GL2NonSplitTorusHom F E hE x : Matrix (Fin 2) (Fin 2) F) =
       Algebra.leftMulMatrix (nonSplitTorusBasis F E hE) (x : E) :=
@@ -132,7 +140,8 @@ transports a character of `Eˣ` to a character of the torus. -/
 noncomputable def unitsEquiv : Eˣ ≃* GL2NonSplitTorus F E hE :=
   MonoidHom.ofInjective (GL2NonSplitTorusHom_injective hE)
 
-@[simp]
+/-- `TauCeti.GL2NonSplitTorus.unitsEquiv` is `TauCeti.GL2NonSplitTorusHom` on the nose. -/
+@[simp, grind =]
 theorem coe_unitsEquiv_apply (x : Eˣ) :
     (unitsEquiv hE x : GL (Fin 2) F) = GL2NonSplitTorusHom F E hE x :=
   (rfl)
@@ -152,10 +161,17 @@ theorem trace_GL2NonSplitTorusHom (x : Eˣ) :
       Algebra.trace F E (x : E) :=
   trace_unitsLeftMulMatrix _ x
 
+/-- A unit of `F` is sent to the corresponding scalar matrix. -/
+@[simp, grind =]
+theorem GL2NonSplitTorusHom_map_algebraMap (a : Fˣ) :
+    GL2NonSplitTorusHom F E hE (Units.map (algebraMap F E : F →* E) a) =
+      Matrix.GeneralLinearGroup.scalar (Fin 2) a :=
+  unitsLeftMulMatrix_map_algebraMap _ a
+
 /-- The scalar matrices lie in the non-split torus: it contains the centre of `GL₂(F)`. -/
 theorem scalar_mem (a : Fˣ) :
     Matrix.GeneralLinearGroup.scalar (Fin 2) a ∈ GL2NonSplitTorus F E hE :=
-  ⟨Units.map (algebraMap F E : F →* E) a, unitsLeftMulMatrix_map_algebraMap _ a⟩
+  ⟨_, GL2NonSplitTorusHom_map_algebraMap hE a⟩
 
 /-- **The order of the non-split torus**: it has one element for each nonzero element of `E`, so
 over a field with `q` elements it has `q² - 1` of them. (Over an infinite `F` both sides are `0`,
@@ -166,7 +182,7 @@ theorem natCard_eq : Nat.card (GL2NonSplitTorus F E hE) = Nat.card F ^ 2 - 1 := 
     Module.natCard_eq_pow_finrank (K := F) (V := E), hE]
 
 /-- The key computation behind non-splitness: for `x : E` outside `F`, the matrix of multiplication
-by `x` has no eigenvalue `a : F`, because `det (x - a) = N_{E/F}(x - a) ≠ 0`. -/
+by `x` has no eigenvalue `a : F`. -/
 theorem det_sub_algebraMap_ne_zero {x : E} (hx : x ∉ Set.range (algebraMap F E)) (a : F) :
     (Algebra.leftMulMatrix (nonSplitTorusBasis F E hE) x -
       algebraMap F (Matrix (Fin 2) (Fin 2) F) a).det ≠ 0 := by

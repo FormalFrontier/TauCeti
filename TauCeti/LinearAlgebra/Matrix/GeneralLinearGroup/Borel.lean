@@ -389,8 +389,7 @@ theorem mem_iff_exists_mk {g : GL (Fin 2) R} :
     exact mk_mem a d b
 
 /-- If some conjugate of `u : GL (Fin 2) R` is upper triangular then `u` has an eigenvalue in the
-base ring: writing `a` for the upper-left entry of that conjugate, `det (u - a) = 0`. Conjugation
-leaves the determinant alone and `a` clears the whole first column of the conjugate. This is the
+base ring: writing `a` for the upper-left entry of that conjugate, `det (u - a) = 0`. This is the
 eigenvalue that an element of the non-split torus has to be shown not to have. -/
 theorem exists_det_sub_algebraMap_eq_zero {u g : GL (Fin 2) R}
     (h : g * u * g⁻¹ ∈ GL2Borel R) :
