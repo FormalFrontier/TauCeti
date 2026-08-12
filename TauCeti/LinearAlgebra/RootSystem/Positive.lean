@@ -294,9 +294,9 @@ theorem image_reflectionPerm_self_negRoots :
 
 /-! ### The number of positive roots -/
 
-/-- A root pairing with a finite root index type has equally many positive and negative roots. Root
-negation gives the bijection between the two sets. -/
-theorem ncard_negRoots_eq_ncard_posRoots [Finite ι] :
+/-- A root pairing has equally many positive and negative roots. Root negation gives the bijection
+between the two sets. -/
+theorem ncard_negRoots_eq_ncard_posRoots :
     (negRoots P b).ncard = (posRoots P b).ncard := by
   rw [← image_reflectionPerm_self_posRoots P b]
   apply Set.ncard_image_of_injective
