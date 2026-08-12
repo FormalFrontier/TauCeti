@@ -21,6 +21,8 @@ coordinate rings of geometrically connected affine schemes.
   is connected.
 * `TauCeti.connectedSpace_primeSpectrum_iff_idempotent_eq_zero_or_one`: `Spec R` is connected
   if and only if every idempotent of `R` is zero or one.
+* `TauCeti.connectedSpace_primeSpectrum_of_injective`: connectedness descends along an
+  injective ring homomorphism.
 -/
 
 public section
@@ -65,5 +67,19 @@ theorem connectedSpace_primeSpectrum_iff_idempotent_eq_zero_or_one :
     rcases hidempotent e he with rfl | rfl
     · simp
     · simp
+
+variable {S : Type*} [CommRing S]
+
+omit [Nontrivial R] in
+/-- Connectedness of prime spectra descends along injective ring homomorphisms. -/
+theorem connectedSpace_primeSpectrum_of_injective [ConnectedSpace (PrimeSpectrum S)]
+    (f : R →+* S) (hf : Function.Injective f) : ConnectedSpace (PrimeSpectrum R) := by
+  let : Nontrivial S := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
+  let : Nontrivial R := f.domain_nontrivial
+  rw [connectedSpace_primeSpectrum_iff_idempotent_eq_zero_or_one]
+  intro e he
+  rcases eq_zero_or_eq_one_of_isIdempotentElem (he.map f) with hzero | hone
+  · exact Or.inl (hf (hzero.trans f.map_zero.symm))
+  · exact Or.inr (hf (hone.trans f.map_one.symm))
 
 end TauCeti

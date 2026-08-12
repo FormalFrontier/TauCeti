@@ -238,6 +238,21 @@ theorem hasBasis_nhds_zero (P : PairOfDefinition A) :
   rw [← hmap]
   exact P.isAdic_idealOfDefinition.hasBasis_nhds_zero.map _
 
+/-- **An element of the ideal of definition is topologically nilpotent.** Its powers lie in the
+successive `Iⁿ`, whose images are a neighbourhood basis of zero
+(`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`), so they converge to `0` in `A`.
+
+This is the property Wedhorn uses throughout §7.2: it is what forces a continuous valuation to
+have cofinal values on `I`, and hence `v a < 1` there (Theorem 7.10). -/
+theorem isTopologicallyNilpotent_of_mem_idealOfDefinition (P : PairOfDefinition A)
+    {a : P.ringOfDefinition} (ha : a ∈ P.idealOfDefinition) :
+    IsTopologicallyNilpotent (a : A) := by
+  rw [IsTopologicallyNilpotent, P.hasBasis_nhds_zero.tendsto_right_iff]
+  intro n _
+  filter_upwards [Filter.eventually_ge_atTop n] with m hm
+  refine (P.mem_idealImage n).mpr ⟨a ^ m, ?_, by push_cast; ring⟩
+  exact Ideal.pow_le_pow_right hm (Ideal.pow_mem_pow ha m)
+
 /-- A ring admitting a pair of definition is nonarchimedean. -/
 theorem toNonarchimedeanRing [IsTopologicalRing A] (P : PairOfDefinition A) :
     NonarchimedeanRing A where
