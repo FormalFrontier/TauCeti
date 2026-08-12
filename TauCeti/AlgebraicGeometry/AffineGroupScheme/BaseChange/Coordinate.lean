@@ -7,7 +7,6 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Coordinate compatibility of affine-group-scheme base change
@@ -91,6 +90,7 @@ private theorem hopfSpec_map_left {T : Type u} [CommRing T]
     {H K : CommHopfAlgCat.{u} T} (f : H ⟶ K) :
     ((hopfSpec (CommRingCat.of T)).map f.op).hom.hom.left =
       Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) := by
+  -- `hopfSpec.map` is built by lifting this `Spec.map`; no separate projection lemma is exposed.
   rfl
 
 private theorem pullbackSpecIso'_natural {H K : CommHopfAlgCat.{u} R}
@@ -171,6 +171,8 @@ private noncomputable def hopfSpecBaseChangeιNatIso :
       ((CommHopfAlgCat.baseChangeFunctor (K := S)).op ⋙
           (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of S)).functor) ⋙
         (affineGroupSchemeProperty (CommRingCat.of S)).ι := by
+  -- The equivalence functor followed by the subtype inclusion is definitionally its `hopfSpec`
+  -- model; `functorCompιIso` below supplies the explicit comparison once the goal has that shape.
   change
     (((commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor ⋙
           (affineGroupSchemeProperty (CommRingCat.of R)).ι) ⋙
@@ -207,9 +209,7 @@ private theorem hopfSpecBaseChangeιNatIso_hom_app (H : (CommHopfAlgCat.{u} R)�
 
 /-- Scheme-theoretic pullback of affine group schemes corresponds naturally, under the
 Hopf-spectrum anti-equivalence, to scalar extension of their coordinate Hopf algebras. -/
--- Exposing the definition makes its public component formulas compute without requiring users
--- to unfold the categorical construction by hand.
-@[expose] noncomputable def hopfSpecBaseChangeNatIso :
+noncomputable def hopfSpecBaseChangeNatIso :
     (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor ⋙
         baseChangeFunctor (CommRingCat.ofHom (algebraMap R S)) ≅
       (CommHopfAlgCat.baseChangeFunctor (K := S)).op ⋙
@@ -227,7 +227,7 @@ Hopf-spectrum anti-equivalence, to scalar extension of their coordinate Hopf alg
 theorem hopfSpecBaseChangeNatIso_hom_app (H : (CommHopfAlgCat.{u} R)ᵒᵖ) :
     (hopfSpecBaseChangeNatIso (R := R) (S := S)).hom.app H =
       (hopfSpecBaseChangeIso (R := R) (S := S) H.unop).hom :=
-  rfl
+  (rfl)
 
 /-- The inverse component of `hopfSpecBaseChangeNatIso` is the inverse of
 `hopfSpecBaseChangeIso`. -/
@@ -235,7 +235,7 @@ theorem hopfSpecBaseChangeNatIso_hom_app (H : (CommHopfAlgCat.{u} R)ᵒᵖ) :
 theorem hopfSpecBaseChangeNatIso_inv_app (H : (CommHopfAlgCat.{u} R)ᵒᵖ) :
     (hopfSpecBaseChangeNatIso (R := R) (S := S)).inv.app H =
       (hopfSpecBaseChangeIso (R := R) (S := S) H.unop).inv :=
-  rfl
+  (rfl)
 
 end AffineGroupSchemeCat
 
