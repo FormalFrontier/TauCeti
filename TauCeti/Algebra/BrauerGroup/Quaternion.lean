@@ -32,7 +32,7 @@ central division algebra of dimension `4`, so that class is not the identity
 (`TauCeti.BrauerGroup.mk_eq_one_iff_finrank_eq_one`). Together these say the class has order exactly
 `2`, and in particular `BrauerGroup ℝ` is not trivial. Complexification kills the class, in the two
 ways `TauCeti/Algebra/BrauerGroup/BaseChange.lean` offers, so the kernel of base change to `ℂ` is
-strictly bigger than `1`.
+strictly larger than the trivial subgroup.
 
 What is *not* proved here is that `[ℍ[ℝ]]` **generates** `BrauerGroup ℝ`, that is, that
 `BrauerGroup ℝ ≃ ℤ/2`. That needs the classification of the finite-dimensional real division
@@ -106,8 +106,8 @@ example : (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]))⁻¹ = BrauerGroup.mk (CSA.of �
 algebraically closed and so has trivial Brauer group.
 
 By `TauCeti.Quaternion.mk_ne_one` this is a *nontrivial* class being killed, so the kernel of
-`TauCeti.BrauerGroup.baseChange ℝ ℂ` is strictly bigger than `1`: `ℍ[ℝ]` is not already split over
-`ℝ`. -/
+`TauCeti.BrauerGroup.baseChange ℝ ℂ` is strictly larger than the trivial subgroup: `ℍ[ℝ]` is not
+already split over `ℝ`. -/
 example : BrauerGroup.baseChange ℝ ℂ (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) = 1 := by
   rw [BrauerGroup.baseChange_eq_one_of_isAlgClosed, MonoidHom.one_apply]
 
