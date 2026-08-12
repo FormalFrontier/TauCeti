@@ -21,9 +21,12 @@ with scalar diagonal `a b : R` and vector off-diagonal `v w : Fin 3 → R`, mult
 `[[a, v], [w, b]] * [[a', v'], [w', b']] =`
 `  [[a * a' + v ⬝ᵥ w', a • v' + b' • v - w ⨯₃ w'], [a' • w + b • w' + v ⨯₃ v', b * b' + w ⬝ᵥ v']]`
 
-using the dot and cross products of `Fin 3 → R`. This is an `8`-dimensional unital, non-associative,
-non-commutative `R`-algebra carrying the multiplicative norm `N ⟨a, b, v, w⟩ = a * b - v ⬝ᵥ w`, the
-determinant of the vector matrix: it is the split Cayley algebra, the split form of the octonions.
+using the dot and cross products of `Fin 3 → R`. This is an `8`-dimensional unital `R`-algebra
+carrying the multiplicative norm `N ⟨a, b, v, w⟩ = a * b - v ⬝ᵥ w`, the determinant of the vector
+matrix: it is the split Cayley algebra, the split form of the octonions. It is alternative, and the
+worked examples at the end of the file exhibit an `R` — namely `ℤ` — over which it is neither
+commutative nor associative; no such failure is claimed for every base ring, since over the zero
+ring `Octonion R` is trivial and hence both.
 
 Zorn's model is used rather than a Cayley--Dickson doubling of the split quaternions because the two
 produce the same algebra while the vector matrices carry the norm form on their sleeve: `N` is a
@@ -69,8 +72,10 @@ and `ring` finishes.
 The module is `public` but not exposed: consumers work through the projection `simp` lemmas rather
 than through any definition body. The three component equivalences `TauCeti.Octonion.equivProd`,
 `TauCeti.Octonion.addEquivProd` and `TauCeti.Octonion.linearEquivProd` are the exception, and carry
-`@[expose]` because the additive and module structures they transport are the componentwise
-operations only definitionally, through those bodies.
+`@[expose]` because the module system requires it twice over: the additive and module structures
+they transport are the componentwise operations only definitionally, through those bodies, and the
+`@[simps]` lemmas that make up their whole public API are exported `rfl`-proofs, which the kernel
+refuses to validate against an unexposed body.
 
 The norm is left as a bare map `Octonion R → R`, as the roadmap pins it. Packaging it as a
 `QuadraticForm R (Octonion R)` — its polarization is the trace form `x, y ↦ trace (x * conj y)` —
@@ -302,6 +307,7 @@ def conj : Octonion R →ₗ[R] Octonion R where
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
 
 /-- **Conjugation is an anti-automorphism**: it reverses products. -/
+@[simp]
 theorem conj_mul_eq (x y : Octonion R) : conj (x * y) = conj y * conj x := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
@@ -343,6 +349,7 @@ theorem norm_def (x : Octonion R) : norm x = x.a * x.b - x.v ⬝ᵥ x.w := (rfl)
   simp [norm_def]; ring
 
 /-- The norm is a **quadratic** form: rescaling an octonion by `r` rescales its norm by `r ^ 2`. -/
+@[simp]
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
 
@@ -362,6 +369,7 @@ theorem mul_self (x : Octonion R) : x * x = trace x • x - norm x • 1 := by
 /-- **The norm of a split octonion is multiplicative**, so `𝕆` is a composition algebra. In
 coordinates this is a Binet--Cauchy identity: the cross-product corrections to the vector entries of
 a product are exactly what the two dot products of the norm need. -/
+@[simp]
 theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
   simp [norm_def]; ring
 
@@ -392,11 +400,13 @@ theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := 
 theorem moufang_middle (x y z : Octonion R) : z * x * (y * z) = z * (x * y) * z := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
-/-! ### Worked examples: `𝕆` is neither commutative nor associative
+/-! ### Worked examples: `Octonion ℤ` is neither commutative nor associative
 
 Alternativity is as much associativity as `𝕆` has, and the two vector entries are what break the
 rest: `[[0, e₀], [0, 0]] · [[0, e₁], [0, 0]]` picks up the cross product `e₀ ⨯₃ e₁ = e₂` in its
-bottom-left entry, and the opposite product picks up `e₁ ⨯₃ e₀ = -e₂`. -/
+bottom-left entry, and the opposite product picks up `e₁ ⨯₃ e₀ = -e₂`. The two examples below run
+this over `ℤ`, so they witness both failures for that base ring rather than for every `R`; over the
+zero ring `Octonion R` is of course commutative and associative. -/
 
 example :
     (⟨0, 0, ![1, 0, 0], 0⟩ * ⟨0, 0, ![0, 1, 0], 0⟩ : Octonion ℤ) ≠
@@ -434,8 +444,9 @@ theorem trace_surjective : Function.Surjective (trace : Octonion R →ₗ[R] R) 
   fun r => ⟨⟨r, 0, 0, 0⟩, by simp⟩
 
 /-- The imaginary octonions are free on the entries `a`, `v`, `w`: a vanishing trace forces
-`b = -a`, so `⟨a, -a, v, w⟩ ↦ (a, v, w)` is an `R`-linear isomorphism. -/
-def imaginaryLinearEquivProd (R : Type*) [CommRing R] :
+`b = -a`, so `⟨a, -a, v, w⟩ ↦ (a, v, w)` is an `R`-linear isomorphism. Private: it exists only to
+transport the dimension count in `TauCeti.Octonion.finrank_imaginary`. -/
+private def imaginaryLinearEquivProd (R : Type*) [CommRing R] :
     imaginary R ≃ₗ[R] R × (Fin 3 → R) × (Fin 3 → R) where
   toFun x := (x.1.a, x.1.v, x.1.w)
   map_add' _ _ := rfl
