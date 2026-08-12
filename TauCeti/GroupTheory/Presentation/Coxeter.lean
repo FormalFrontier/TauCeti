@@ -86,7 +86,6 @@ theorem toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
   simp [coxeterRelator]
 
 /-- A Coxeter relator contains twice as many signed letters as its matrix entry. -/
-@[simp]
 theorem length_toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
     (coxeterRelator M i j).toWord.length = 2 * M i j := by
   rw [toWord_coxeterRelator, List.length_flatten]
