@@ -190,10 +190,13 @@ def div {α : Type*} (r s : Relator α) : Relator α := .mul r (.inv s)
 /-- The commutator `r⁻¹ * s⁻¹ * r * s` used by most of the presentation literature.
 
 Mathlib's `commutatorElement`, carried by the `Relator.comm` constructor, uses the convention
-`r * s * r⁻¹ * s⁻¹`, so the source convention is obtained by applying it to the two inverses.
-The body is exposed for the same reason as that of `TauCeti.Relator.conj`. -/
-@[expose]
+`r * s * r⁻¹ * s⁻¹`, so the source convention is obtained by applying it to the two inverses. -/
 def sourceComm {α : Type*} (r s : Relator α) : Relator α := .comm (.inv r) (.inv s)
+
+/-- A source-convention commutator has the `Relator.comm` constructor at its head. -/
+theorem sourceComm_eq_comm {α : Type*} (r s : Relator α) :
+    ∃ t u, sourceComm r s = .comm t u := by
+  exact ⟨.inv r, .inv s, rfl⟩
 
 /-- The conjugate expression denotes the conjugate free-group element. -/
 @[simp]

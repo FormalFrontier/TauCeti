@@ -294,6 +294,10 @@ theorem length_relatorList : relatorList.length = 39 := rfl
 theorem matchesMetadata_presentation : presentation.matchesMetadata :=
   (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨rfl, rfl⟩
 
+private def squareRelatorGenerator : Relator (Fin 8) → Option (Fin 8)
+  | .pow (.gen i) 2 => some i
+  | _ => none
+
 /-- The indices `i` for which the relator `gᵢ²` occurs literally in the transcribed list.
 
 This is a syntactic test on the data as written, not a statement about element orders in the
@@ -308,10 +312,21 @@ def generatorsWithSquareRelator : List (Fin 8) :=
     | .pow (.gen i) 2 => some i
     | _ => none
 
+private theorem sourceComm_notSquare (r s : Relator (Fin 8)) :
+    squareRelatorGenerator (Relator.sourceComm r s) = none := by
+  obtain ⟨t, u, h⟩ := Relator.sourceComm_eq_comm r s
+  rw [h]
+  simp [squareRelatorGenerator]
+
 /-- **The generators carrying a square relator are exactly `a`, `b`, `c`, `d` and `e`**, the first
 five of the eight, which are the source's involutory generators. A power relator dropped from, or
 transposed within, relators (1) would change this list. -/
-theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2, 3, 4] := rfl
+theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2, 3, 4] := by
+  change relatorList.filterMap squareRelatorGenerator = [0, 1, 2, 3, 4]
+  simp only [relatorList, relatorsOne, relatorsTwo, relatorsThree, relatorsFour, relatorsFive,
+    relatorsSix, sourceCommutator, List.filterMap_append, List.filterMap_cons,
+    List.filterMap_nil, sourceComm_notSquare]
+  rfl
 
 /-- **The source's column-count formula evaluates to eleven on the transcribed relators**, the
 figure the source records for its enumeration: one column for each generator carrying a square
@@ -323,6 +338,8 @@ terminates. Its value is that it checks the transcription against a published nu
 of `TauCeti.Sporadic.Thompson.matchesMetadata_presentation` do not see. -/
 theorem cosetTableColumns :
     generatorsWithSquareRelator.length +
-      2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := rfl
+      2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := by
+  rw [generatorsWithSquareRelator_eq]
+  rfl
 
 end TauCeti.Sporadic.Thompson
