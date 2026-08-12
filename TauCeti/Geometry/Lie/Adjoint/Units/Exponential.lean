@@ -64,7 +64,6 @@ local instance finiteDimensionalCompleteSpaceAdjointUnitsExponential : CompleteS
 
 /-- On algebra units, `Ad (lieExp X)` is the exponential of the continuous commutator by the
 ambient algebra element corresponding to `X`. -/
-@[simp high]
 theorem unitsLieAlgebraEquiv_Ad_lieExp
     (X Y : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
     unitsLieAlgebraEquiv (Ad (I := 𝓘(ℝ, R)) (lieExp X) Y) =
