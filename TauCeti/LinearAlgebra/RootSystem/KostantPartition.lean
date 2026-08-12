@@ -5,7 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Positive
-import TauCeti.LinearAlgebra.RootSystem.Lowering
+import Mathlib.Algebra.BigOperators.Finsupp.Basic
+import TauCeti.LinearAlgebra.RootSystem.Height
 
 /-!
 # The Kostant partition function
@@ -20,8 +21,9 @@ not necessarily finitely many functions `ι → ℕ` when the index type is fini
 proved before `Nat.card` represents the intended finite cardinality. The theorem
 `TauCeti.finite_setOf_isKostantPartition` supplies this proof.
 
-The bound comes from a fact about heights that is worth isolating, since it has nothing to do with
-positivity: `TauCeti.sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero` says that height respects
+The bound comes from a fact about heights proved in
+`TauCeti/LinearAlgebra/RootSystem/Height.lean`, since it has nothing to do with positivity:
+`TauCeti.sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero` says that height respects
 every integral relation among roots, so the total height `∑ᵢ cᵢ ht(αᵢ)` depends only on `ν` and not
 on the partition. Fixing one partition of `ν`, its total height therefore bounds the total
 multiplicity, and hence each multiplicity, of every other partition of `ν`.
@@ -80,16 +82,6 @@ variable [Finite ι]
 positive roots, whose weighted sum of positive roots is `ν`. -/
 def IsKostantPartition (ν : M) (c : ι → ℕ) : Prop :=
   support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν
-
-/-- A multiplicity function is a Kostant partition exactly when it is supported on the positive
-roots and its weighted root sum is the element being partitioned.
-
-This is deliberately not a `simp` lemma: unfolding the predicate on sight would put every other
-statement about it — `isKostantPartition_zero_iff` first of all — out of simp normal form. -/
-theorem isKostantPartition_iff (ν : M) (c : ι → ℕ) :
-    IsKostantPartition P b ν c ↔
-      support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν :=
-  Iff.rfl
 
 variable {P b}
 
@@ -160,11 +152,16 @@ positive roots with multiplicity. -/
 noncomputable def kostantPartition (ν : M) : ℕ :=
   Nat.card {c : ι → ℕ // IsKostantPartition P b ν c}
 
+/-- The Kostant partition function counts the Kostant partitions of its argument. -/
+theorem kostantPartition_def (ν : M) :
+    kostantPartition P b ν = Nat.card {c : ι → ℕ // IsKostantPartition P b ν c} := by
+  rw [kostantPartition]
+
 /-- The Kostant partition function is positive exactly on the elements that are a sum of positive
 roots. -/
 @[simp] theorem kostantPartition_pos_iff (ν : M) :
     0 < kostantPartition P b ν ↔ ∃ c, IsKostantPartition P b ν c := by
-  rw [kostantPartition, Finite.card_pos_iff, nonempty_subtype]
+  rw [kostantPartition_def, Finite.card_pos_iff, nonempty_subtype]
 
 /-- The Kostant partition function vanishes exactly off the set of sums of positive roots. -/
 @[simp] theorem kostantPartition_eq_zero_iff (ν : M) :
@@ -199,7 +196,7 @@ roots. -/
 
 /-- `P(0) = 1`. -/
 @[simp] theorem kostantPartition_zero : kostantPartition P b (0 : M) = 1 := by
-  rw [kostantPartition, Nat.card_eq_one_iff_unique]
+  rw [kostantPartition_def, Nat.card_eq_one_iff_unique]
   refine ⟨⟨fun x y ↦ Subtype.ext ?_⟩, ⟨⟨0, (isKostantPartition_zero_iff P b).mpr rfl⟩⟩⟩
   exact ((isKostantPartition_zero_iff P b).mp x.2).trans
     ((isKostantPartition_zero_iff P b).mp y.2).symm
@@ -247,23 +244,19 @@ theorem eq_single_of_isKostantPartition_root_of_mem_support [DecidableEq ι] {i 
     intro k hk
     rw [Finset.sum_eq_zero_iff.mp h k hk, zero_smul]
   have hsum : ∑ k ∈ posRootsFinset P b, c k = 1 := by omega
-  -- so exactly one multiplicity is nonzero, and it equals one
-  obtain ⟨k₀, hk₀mem, hk₀⟩ := Finset.exists_ne_zero_of_sum_ne_zero hne
-  have hsplit := Finset.add_sum_erase (posRootsFinset P b) c hk₀mem
-  rw [hsum] at hsplit
-  have hck₀ : c k₀ = 1 := by omega
-  have herase : ∀ k ∈ (posRootsFinset P b).erase k₀, c k = 0 := by
-    refine Finset.sum_eq_zero_iff.mp ?_
-    omega
+  -- so exactly one multiplicity is nonzero, and it equals one, by `Finsupp.sum_eq_one_iff` read
+  -- through the identification of `ι → ℕ` with `ι →₀ ℕ`
+  have : Fintype ι := Fintype.ofFinite ι
+  have hd : (Finsupp.equivFunOnFinite.symm c).sum (fun _ n ↦ n) = 1 := by
+    rw [Finsupp.equivFunOnFinite_symm_sum, ← hsum]
+    refine (Finset.sum_subset (Finset.subset_univ _) fun k _ hk ↦ ?_).symm
+    by_contra h
+    exact hk ((mem_posRootsFinset P b k).mpr (hc.1 (mem_support.mpr h)))
+  obtain ⟨k₀, hk₀⟩ := (Finsupp.sum_eq_one_iff _).mp hd
   have hcsingle : c = Pi.single k₀ 1 := by
-    funext k
-    by_cases hkk : k = k₀
-    · rw [hkk, hck₀, Pi.single_eq_same]
-    · rw [Pi.single_eq_of_ne hkk]
-      by_cases hk : k ∈ posRootsFinset P b
-      · exact herase k (Finset.mem_erase.mpr ⟨hkk, hk⟩)
-      · by_contra h
-        exact hk ((mem_posRootsFinset P b k).mpr (hc.1 (mem_support.mpr h)))
+    simpa using congrArg (⇑Finsupp.equivFunOnFinite) hk₀
+  have hk₀mem : k₀ ∈ posRootsFinset P b :=
+    (mem_posRootsFinset P b k₀).mpr (hc.1 (mem_support.mpr (by simp [hcsingle])))
   -- finally the chosen root is the simple root itself
   have hroot : P.root i = P.root k₀ := by
     rw [← hc.2, hcsingle,
@@ -276,7 +269,7 @@ theorem eq_single_of_isKostantPartition_root_of_mem_support [DecidableEq ι] {i 
     kostantPartition P b (P.root i) = 1 := by
   classical
   have hipos : i ∈ posRoots P b := support_subset_posRoots P b hi
-  rw [kostantPartition, Nat.card_eq_one_iff_unique]
+  rw [kostantPartition_def, Nat.card_eq_one_iff_unique]
   refine ⟨⟨fun x y ↦ Subtype.ext ?_⟩, ⟨⟨_, isKostantPartition_single P b hipos⟩⟩⟩
   exact (eq_single_of_isKostantPartition_root_of_mem_support P b hi x.2).trans
     (eq_single_of_isKostantPartition_root_of_mem_support P b hi y.2).symm

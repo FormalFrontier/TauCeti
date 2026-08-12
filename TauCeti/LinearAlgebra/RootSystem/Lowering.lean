@@ -17,13 +17,8 @@ positive root admits a simple reflection that strictly decreases its height. If 
 ring is also a domain and the pairing is reduced, a positive root that is not simple can be lowered
 while remaining positive.
 
-It also records that height respects integral relations among roots, the general height fact used
-to compare different expressions of an element of the root lattice.
-
 ## Main results
 
-* `TauCeti.sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero` says that height respects integral
-  relations among roots.
 * `TauCeti.height_reflectionPerm` computes the height after an arbitrary root reflection.
 * `TauCeti.height_reflectionPerm_lt_iff` characterizes strict height decrease by positivity of
   the corresponding Cartan integer.
@@ -48,42 +43,7 @@ universe u v w x
 
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  (P : RootPairing ι R M N) [CharZero R]
-
-/-- If an integral combination of roots vanishes, the same combination of their heights
-vanishes. -/
-theorem sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero (b : P.Base) {s : Finset ι} {e : ι → ℤ}
-    (he : ∑ i ∈ s, e i • P.root i = 0) :
-    ∑ i ∈ s, e i * b.height i = 0 := by
-  classical
-  -- Expand the roots in the simple roots and use their linear independence.
-  choose g _hgsupp _hgsign hg using fun i : ι ↦ b.exists_root_eq_sum_int i
-  have hcomb : ∑ j ∈ b.support, (∑ i ∈ s, e i * g i j) • P.root j = 0 := by
-    rw [← he]
-    simp_rw [Finset.sum_smul, mul_smul]
-    rw [Finset.sum_comm]
-    exact Finset.sum_congr rfl fun i _ ↦ by rw [← Finset.smul_sum, ← hg i]
-  have hczero : ∀ j ∈ b.support, (∑ i ∈ s, e i * g i j) = 0 :=
-    linearIndepOn_iff'.mp (b.linearIndepOn_root.restrict_scalars' ℤ) b.support
-      (fun j ↦ ∑ i ∈ s, e i * g i j) (fun _ h ↦ h) hcomb
-  calc ∑ i ∈ s, e i * b.height i
-      = ∑ i ∈ s, ∑ j ∈ b.support, e i * g i j :=
-        Finset.sum_congr rfl fun i _ ↦ by rw [b.height_eq_sum (hg i), Finset.mul_sum]
-    _ = ∑ j ∈ b.support, ∑ i ∈ s, e i * g i j := Finset.sum_comm
-    _ = 0 := Finset.sum_eq_zero hczero
-
-/-- Two integral combinations of roots with the same value have the same combination of
-heights. -/
-theorem sum_mul_height_eq_of_sum_zsmul_root_eq (b : P.Base) {s : Finset ι} {e f : ι → ℤ}
-    (h : ∑ i ∈ s, e i • P.root i = ∑ i ∈ s, f i • P.root i) :
-    ∑ i ∈ s, e i * b.height i = ∑ i ∈ s, f i * b.height i := by
-  have h0 : ∑ i ∈ s, (e i - f i) • P.root i = 0 := by
-    simp_rw [sub_smul, Finset.sum_sub_distrib, h, sub_self]
-  have key := sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero P b h0
-  simp_rw [sub_mul, Finset.sum_sub_distrib, sub_eq_zero] at key
-  exact key
-
-variable [P.IsCrystallographic]
+  (P : RootPairing ι R M N) [CharZero R] [P.IsCrystallographic]
 
 /-- Reflection in the root indexed by `i` changes the height of `j` by the Cartan integer
 `P.pairingIn ℤ j i` times the height of `i`. -/
