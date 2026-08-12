@@ -125,8 +125,9 @@ variable (K A : Type*) [Field K] [Ring A] [Algebra K A] [FiniteDimensional K A]
 
 /-- **A finite-dimensional algebra has a commutative subalgebra of maximal dimension.**
 
-The dimensions of commutative subalgebras form a set of naturals bounded by `finrank K A` and
-containing `finrank K ⊥`, so it has a greatest element, and any subalgebra realizing it will do.
+Maximality is in dimension over `K` and is stated as a bound on every commutative subalgebra of
+`A`, not as maximality for inclusion.
+
 No hypothesis beyond finite-dimensionality is needed; it is in a division algebra that such a
 subalgebra becomes interesting
 (`TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg`). -/
@@ -150,9 +151,8 @@ variable {K A}
 
 /-- **A commutative subalgebra of maximal dimension is its own centralizer.**
 
-An element `x` of the centralizer commutes with every element of `L`, and the elements of `L`
-commute with one another, so `Algebra.adjoin K (insert x L)` is a commutative subalgebra. It
-contains `L`, and maximal dimension forces the containment to be an equality, so `x ∈ L`.
+Maximality enters as the hypothesis `hmax`, the dimension bound over all commutative subalgebras
+of `A` that `TauCeti.exists_isMulCommutative_forall_finrank_le` produces.
 
 Nothing beyond finite-dimensionality is asked of `A`; it is in a division algebra that the
 conclusion becomes the maximality of a subfield
@@ -185,8 +185,8 @@ section Domain
 variable {K D : Type*} [Field K] [Ring D] [IsDomain D] [Algebra K D]
 
 /-- **A commutative subalgebra of a domain is a field**, as soon as it is finite-dimensional over
-the base field: it is a commutative domain, and an Artinian domain is a field. Only `L` need be
-finite-dimensional; the ambient `D` need not be, and a division ring is more than is asked of it. -/
+the base field. Only `L` need be finite-dimensional; the ambient `D` need not be, and a division
+ring is more than is asked of it. -/
 theorem isField_of_isMulCommutative (L : Subalgebra K D) [IsMulCommutative ↥L]
     [FiniteDimensional K ↥L] : IsField ↥L := by
   have : IsArtinianRing ↥L := IsArtinianRing.of_finite K ↥L
@@ -230,9 +230,9 @@ variable (K : Type*) [Field K] (D : Type u) [DivisionRing D] [Algebra K D] [Alge
 
 /-- **A central division algebra has a subfield of degree `deg K D`.**
 
-A commutative subalgebra `L` of maximal dimension is a field and its own centralizer, so the
-dimension count for the centralizer of a subfield reads `(finrank K L)² = finrank K D`; the degree
-is the square root of `finrank K D`, so `finrank K L = deg K D`.
+The subfield is delivered as a `Subalgebra K D` carrying `IsField`;
+`TauCeti.Algebra.exists_isSplittingField_finrank_eq_deg` is the same subfield packaged as a field
+in its own right, together with its embedding in `D`.
 
 Together with `TauCeti.Algebra.finrank_le_deg`, which bounds the degree of *every* subfield by
 `deg K D`, this says `L` is a maximal subfield in the literal sense as well. -/

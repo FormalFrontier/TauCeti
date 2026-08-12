@@ -298,11 +298,6 @@ ring `R = B ⊗[K] Aᵐᵒᵖ` acting on `A` is simple (and that `A` is nonzero,
 
   `finrank K B * finrank K C_A(B) = finrank K A`.
 
-The endomorphism algebra of `A` over `R` is the centralizer (`TauCeti.centralizerAlgEquivEnd`), and
-satisfies `finrank K (End_R A) * finrank K R = (finrank K A)²` with
-`finrank K R = finrank K B * finrank K A`; cancelling one factor of `finrank K A`, which is nonzero,
-gives the formula.
-
 Simplicity of `R` is the only point at which hypotheses on `B` and on `A` enter, and there is more
 than one way to supply it: `TauCeti.finrank_mul_finrank_centralizer` has it from `B` central simple
 and `A` simple, while `TauCeti.finrank_mul_finrank_centralizer_of_isField` has it from `B` a
