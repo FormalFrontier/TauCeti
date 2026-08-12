@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
+public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
 import TauCeti.Probability.Exchangeability.PermutationExtension
