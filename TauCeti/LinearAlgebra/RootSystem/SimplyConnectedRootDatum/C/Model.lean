@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Data.Fin.Basic
 public import Mathlib.LinearAlgebra.Matrix.Dual
 public import Mathlib.LinearAlgebra.Reflection
 
@@ -115,32 +116,6 @@ lemma coweight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : coweight n a = 0 := by
   have := k.isLt
   exact ite_eq_right (by omega)
 
-private lemma sum_ite_val (f : Fin n → ℤ) (b : ℕ) :
-    ∑ k : Fin n, (if b = (k : ℕ) then f k else 0) = if h : b < n then f ⟨b, h⟩ else 0 := by
-  by_cases h : b < n
-  · have hb : ∀ k : Fin n, (b = (k : ℕ)) = (k = (⟨b, h⟩ : Fin n)) := by
-      intro k; simp [Fin.ext_iff, eq_comm]
-    simp only [hb, dite_eq_left h, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
-  · rw [dite_eq_right h, Finset.sum_eq_zero]
-    intro k _
-    have := k.isLt
-    exact ite_eq_right (by omega)
-
-private lemma sum_ite_val_succ (f : Fin n → ℤ) (b : ℕ) :
-    ∑ k : Fin n, (if b = (k : ℕ) + 1 then f k else 0)
-      = if h : b - 1 < n ∧ 1 ≤ b then f ⟨b - 1, h.1⟩ else 0 := by
-  by_cases h : b - 1 < n ∧ 1 ≤ b
-  · have hb : ∀ k : Fin n, (b = (k : ℕ) + 1) = (k = (⟨b - 1, h.1⟩ : Fin n)) := by
-      intro k
-      have := h.2
-      simp only [Fin.ext_iff, eq_iff_iff]
-      omega
-    simp only [hb, dite_eq_left h, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
-  · rw [dite_eq_right h, Finset.sum_eq_zero]
-    intro k _
-    have := k.isLt
-    exact ite_eq_right (by omega)
-
 /-- The fundamental pairing identity of type `Cₙ`: the two pinned lattices see the classical
 pairing `⟨e_a, e_c⟩ = [a = c]` exactly, with no correction term, because the simple coroots of `Cₙ`
 are a basis of the classical lattice. -/
@@ -150,13 +125,14 @@ lemma weight_dotProduct_coweight {a c : ℕ} (ha : a < n) :
       (if c ≤ (k : ℕ) then 1 else 0) = if h : b < n then (if c ≤ b then (1 : ℤ) else 0) else 0 := by
     intro b
     simp only [ite_mul, one_mul, zero_mul]
-    exact sum_ite_val (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b
+    simpa only [Nat.add_zero, Nat.sub_zero, Nat.zero_le, and_true] using
+      sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 0
   have key' : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) + 1 then (1 : ℤ) else 0) *
       (if c ≤ (k : ℕ) then 1 else 0)
         = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 := by
     intro b
     simp only [ite_mul, one_mul, zero_mul]
-    exact sum_ite_val_succ (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b
+    exact sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 1
   simp only [dotProduct, weight, coweight, sub_mul, Finset.sum_sub_distrib,
     key a, key' a]
   split_ifs <;> omega

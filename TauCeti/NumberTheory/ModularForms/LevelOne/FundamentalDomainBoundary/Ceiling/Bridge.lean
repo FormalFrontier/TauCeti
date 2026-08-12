@@ -29,11 +29,11 @@ ceiling still reads the cusp order.
 
 ## Main declarations
 
-* `TauCeti.ModularForm.intervalIntegral_fdBoundary_segment5_eq_circleIntegral_logDeriv_cuspFunction`
+* `TauCeti.ModularForm.intervalIntegral_fdBoundarySegment5_eq_circleIntegral_logDeriv_cuspFunction`
   (the ceiling bridge).
 * `TauCeti.ModularForm.not_exists_norm_fdBoundary_sub_le_of_mem_Icc_four_five` (the excision
   never fires on the ceiling) and
-  `intervalIntegral_excised_logDeriv_fdBoundary_segment5_eq_two_pi_I_mul_qExpansionOrderAtCusp`
+  `intervalIntegral_excised_logDeriv_fdBoundarySegment5_eq_two_pi_I_mul_qExpansionOrderAtCusp`
   (same namespace; the fully qualified name does not fit the line limit — so the excised
   ceiling integral is still `2πi · ord_∞`).
 
@@ -64,17 +64,17 @@ private lemma ceiling_integrand_eq {g : UpperHalfPlane → ℂ} {H : ℝ}
         logDeriv (Function.Periodic.cuspFunction 1 (g ∘ UpperHalfPlane.ofComplex))
           (circleMap 0 (fdBoundaryQRadius H) (2 * π * t + -(9 * π)))) := by
   have hangle : 2 * Real.pi * (t - 9 / 2) = 2 * π * t + -(9 * π) := by ring
-  have hqe : Function.Periodic.qParam 1 (fdBoundary_segment5 H t) =
+  have hqe : Function.Periodic.qParam 1 (fdBoundarySegment5 H t) =
       circleMap 0 (fdBoundaryQRadius H) (2 * π * t + -(9 * π)) := by
-    rw [qParam_fdBoundary_segment5 H t, hangle]
+    rw [qParam_fdBoundarySegment5 H t, hangle]
   calc deriv (fdBoundary H) t • logDeriv (g ∘ UpperHalfPlane.ofComplex) (fdBoundary H t)
-      = logDeriv (g ∘ UpperHalfPlane.ofComplex) (fdBoundary_segment5 H t) := by
+      = logDeriv (g ∘ UpperHalfPlane.ofComplex) (fdBoundarySegment5 H t) := by
         rw [deriv_fdBoundary_of_gt_four hgt, one_smul, fdBoundary_of_gt_four hgt]
     _ = logDeriv (Function.Periodic.cuspFunction 1 (g ∘ UpperHalfPlane.ofComplex))
-          (Function.Periodic.qParam 1 (fdBoundary_segment5 H t)) *
-          deriv (Function.Periodic.qParam 1) (fdBoundary_segment5 H t) :=
+          (Function.Periodic.qParam 1 (fdBoundarySegment5 H t)) *
+          deriv (Function.Periodic.qParam 1) (fdBoundarySegment5 H t) :=
         TauCeti.Periodic.logDeriv_eq_logDeriv_cuspFunction_mul_deriv_qParam one_ne_zero
-          hper (fdBoundary_segment5 H t)
+          hper (fdBoundarySegment5 H t)
     _ = logDeriv (Function.Periodic.cuspFunction 1 (g ∘ UpperHalfPlane.ofComplex))
           (circleMap 0 (fdBoundaryQRadius H) (2 * π * t + -(9 * π))) *
           (circleMap 0 (fdBoundaryQRadius H) (2 * π * t + -(9 * π)) *
@@ -90,7 +90,7 @@ function on the upper half-plane is the `q`-circle integral of its cusp function
 logarithmic derivative: the contour derivative is `1` on the ceiling, the `q`-parameter
 carries the ceiling onto the `q`-circle, and the logarithmic derivative factors through
 the cusp function. -/
-theorem intervalIntegral_fdBoundary_segment5_eq_circleIntegral_logDeriv_cuspFunction
+theorem intervalIntegral_fdBoundarySegment5_eq_circleIntegral_logDeriv_cuspFunction
     {g : UpperHalfPlane → ℂ} {H : ℝ}
     (hper : Function.Periodic (g ∘ UpperHalfPlane.ofComplex) 1) :
     ∫ t in (4 : ℝ)..5,
@@ -140,14 +140,14 @@ theorem not_exists_norm_fdBoundary_sub_le_of_mem_Icc_four_five {H ε : ℝ} {S :
     ¬ ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε := by
   rintro ⟨s, hs, hle⟩
   have himle : |(fdBoundary H t - s).im| ≤ ‖fdBoundary H t - s‖ := Complex.abs_im_le_norm _
-  rw [Complex.sub_im, im_fdBoundary_segment5 H ht] at himle
+  rw [Complex.sub_im, im_fdBoundarySegment5 H ht] at himle
   have : H - s.im ≤ ε := (le_abs_self _).trans (himle.trans hle)
   linarith [hlt s hs]
 
 /-- **The excised ceiling integral is the plain one.** The excision never fires on the
 ceiling, so the excised integrand agrees with the unexcised one there and the ceiling still
 evaluates through the `q`-circle to `2πi · ord_∞`. -/
-theorem intervalIntegral_excised_logDeriv_fdBoundary_segment5_eq_two_pi_I_mul_qExpansionOrderAtCusp
+theorem intervalIntegral_excised_logDeriv_fdBoundarySegment5_eq_two_pi_I_mul_qExpansionOrderAtCusp
     {g : UpperHalfPlane → ℂ} {H ε : ℝ} {S : Finset ℂ} (hlt : ∀ s ∈ S, s.im + ε < H)
     (hper : Function.Periodic (g ∘ UpperHalfPlane.ofComplex) 1)
     (hga : ∀ q ∈ Metric.closedBall (0 : ℂ) (fdBoundaryQRadius H),
@@ -159,7 +159,7 @@ theorem intervalIntegral_excised_logDeriv_fdBoundary_segment5_eq_two_pi_I_mul_qE
       2 * Real.pi * Complex.I * qExpansionOrderAtCusp 1 g := by
   rw [intervalIntegral.integral_congr (g := fun t ↦ deriv (fdBoundary H) t •
         logDeriv (g ∘ UpperHalfPlane.ofComplex) (fdBoundary H t)) fun t ht ↦ ?_,
-    (intervalIntegral_fdBoundary_segment5_eq_circleIntegral_logDeriv_cuspFunction hper).trans
+    (intervalIntegral_fdBoundarySegment5_eq_circleIntegral_logDeriv_cuspFunction hper).trans
       (circleIntegral_logDeriv_cuspFunction hga hgz)]
   rw [uIcc_of_le (by norm_num : (4 : ℝ) ≤ 5)] at ht
   exact ite_eq_right (not_exists_norm_fdBoundary_sub_le_of_mem_Icc_four_five hlt ht)

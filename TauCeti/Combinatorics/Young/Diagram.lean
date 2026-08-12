@@ -30,9 +30,12 @@ Reading the rows also describes containment: one diagram is contained in another
 each of its rows is shorter (`TauCeti.YoungDiagram.le_iff_forall_rowLen_le`), from which a diagram
 has only finitely many sub-diagrams (`TauCeti.YoungDiagram.finite_Iic`).
 
-The file closes with the degenerate shapes at the bottom of the dominance order, the diagrams with
-at most one column: `TauCeti.YoungDiagram.mem_iff_of_rowLen_le_one` describes their cells one row
-at a time, and `TauCeti.YoungDiagram.card_eq_colLen_of_rowLen_le_one` counts them.
+The file closes with the two degenerate shapes, at the bottom and at the top of the dominance
+order.  A diagram with at most one column has its cells described one row at a time by
+`TauCeti.YoungDiagram.mem_iff_of_rowLen_le_one` and counted by
+`TauCeti.YoungDiagram.card_eq_colLen_of_rowLen_le_one`; a diagram with at most one row is described
+by `TauCeti.YoungDiagram.mem_iff_of_colLen_le_one` and counted by
+`TauCeti.YoungDiagram.card_eq_rowLen_of_colLen_le_one`.
 -/
 
 public section
@@ -213,6 +216,35 @@ theorem cells_eq_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) :
 theorem card_eq_colLen_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) :
     μ.card = μ.colLen 0 := by
   simp [_root_.YoungDiagram.card, cells_eq_of_rowLen_le_one h]
+
+/-- **The cells of a Young diagram with at most one row.**  Every column is then either empty or
+the single cell in row `0`, so a cell is a cell of the first row, and the diagram reaches exactly
+as far right as that row does. -/
+theorem mem_iff_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) {i j : ℕ} :
+    (i, j) ∈ μ ↔ i = 0 ∧ j < μ.rowLen 0 := by
+  constructor
+  · intro hij
+    have hlt := _root_.YoungDiagram.mem_iff_lt_colLen.mp hij
+    have hanti := μ.colLen_anti 0 j (Nat.zero_le _)
+    have hi : i = 0 := by omega
+    subst hi
+    exact ⟨rfl, _root_.YoungDiagram.mem_iff_lt_rowLen.mp hij⟩
+  · rintro ⟨rfl, hj⟩
+    exact _root_.YoungDiagram.mem_iff_lt_rowLen.mpr hj
+
+/-- The cells of a Young diagram with at most one row are exactly the cells `(0, j)` with
+`j < μ.rowLen 0`: the whole of its first row, and nothing else. -/
+theorem cells_eq_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
+    μ.cells = {0} ×ˢ Finset.range (μ.rowLen 0) := by
+  ext c
+  obtain ⟨i, j⟩ := c
+  rw [_root_.YoungDiagram.mem_cells, mem_iff_of_colLen_le_one h, Finset.mem_product,
+    Finset.mem_singleton, Finset.mem_range]
+
+/-- A Young diagram with at most one row has one cell in each of its `μ.rowLen 0` columns. -/
+theorem card_eq_rowLen_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
+    μ.card = μ.rowLen 0 := by
+  simp [_root_.YoungDiagram.card, cells_eq_of_colLen_le_one h]
 
 end YoungDiagram
 
