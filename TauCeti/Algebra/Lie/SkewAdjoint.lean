@@ -4,13 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.InvariantForm
 public import Mathlib.Algebra.Lie.Killing
 public import Mathlib.Algebra.Lie.SkewAdjoint
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
 /-!
-# The adjoint embedding of a Lie algebra carrying an invariant bilinear form
+# The adjoint action of a Lie algebra carrying an invariant bilinear form
 
 A bilinear form `B` on a Lie algebra `L` is *invariant* when `B ⁅x, y⁆ z = -B y ⁅x, z⁆`
 (`LinearMap.BilinForm.lieInvariant`). Read with `x` fixed, that equation says exactly that the
@@ -19,17 +18,18 @@ adjoint action are the same statement, transposed. So a Lie algebra with an inva
 the Lie algebra of skew-adjoint endomorphisms of that form, by `x ↦ ad x`, and the map is a
 homomorphism because `ad` already is.
 
-This file builds that homomorphism, `TauCeti.LieAlgebra.adjointSO`, against
-`skewAdjointLieSubalgebra` — Mathlib's `𝔰𝔬` of a bilinear form — and identifies its kernel with the
-centre. The target form is not `B` itself but the polar form of the quadratic form `x ↦ B x x`,
-which is `B + B.flip`; that is the shape a Clifford algebra consumes, since the Clifford relation
-`ι v * ι v = Q v` polarizes to `polar Q`. The two are interchangeable for symmetric `B`, where the
-polar form is `2 • B`, but stating the codomain against `QuadraticMap.polarBilin` avoids a factor of
-two travelling with every later use.
+This file builds that homomorphism, `TauCeti.LieAlgebra.adSO`, against `skewAdjointLieSubalgebra` —
+Mathlib's `𝔰𝔬` of a bilinear form — and identifies the kernel of its polar-form specialization
+`TauCeti.LieAlgebra.adjointSO` with the centre. The form that specialization targets is not `B`
+itself but the polar form of the quadratic form `x ↦ B x x`, which is `B + B.flip`; that is the
+shape a Clifford algebra consumes, since the Clifford relation `ι v * ι v = Q v` polarizes to
+`polar Q`. The two are interchangeable for symmetric `B`, where the polar form is `2 • B`, but
+stating the codomain against `QuadraticMap.polarBilin` avoids a factor of two travelling with every
+later use.
 
 The motivating instance is the Killing form of a Lie algebra, whose quadratic form is
 `TauCeti.LieAlgebra.killingQuadraticForm`. It is invariant (`LieModule.traceForm_lieInvariant`) and
-symmetric, so `ad` embeds `L` in `𝔰𝔬(L, κ)`; when `L` is Killing-semisimple and `2` is invertible
+symmetric, so `ad` maps `L` into `𝔰𝔬(L, κ)`; when `L` is Killing-semisimple and `2` is invertible
 the form is moreover nondegenerate, which is the hypothesis under which the skew-adjoint
 endomorphisms are the quadratic elements of the Clifford algebra `Cliff(L, κ)`
 (`TauCeti.CliffordAlgebra.soEquivQuadratic`). Composing the two is the adjoint quadratic lift
@@ -38,9 +38,10 @@ composite is not built here.
 
 ## Main definitions
 
-* `TauCeti.LieAlgebra.adjointSO`: the adjoint action of a Lie algebra carrying an invariant
-  bilinear form, as a Lie algebra homomorphism into the skew-adjoint endomorphisms of the polar
-  form.
+* `TauCeti.LieAlgebra.adSO`: the adjoint action of a Lie algebra carrying an invariant bilinear
+  form `B`, as a Lie algebra homomorphism into the skew-adjoint endomorphisms of `B`.
+* `TauCeti.LieAlgebra.adjointSO`: the same map read into the skew-adjoint endomorphisms of the
+  polar form.
 * `TauCeti.LieAlgebra.killingQuadraticForm`: the Killing form read as a quadratic form.
 
 ## Main results
@@ -111,33 +112,43 @@ end Invariant
 
 section AdjointSO
 
-/-- **The adjoint embedding** `ad : L →ₗ⁅R⁆ 𝔰𝔬(L, B)` of a Lie algebra carrying an invariant
-bilinear form. The codomain is the skew-adjoint endomorphisms of the *polar* form of `x ↦ B x x`,
-which is `B + B.flip`; for symmetric `B` that is `2 • B` and the two conditions agree, but the polar
-form is what the Clifford algebra of `B` sees. -/
-def adjointSO (B : BilinForm R L) (hB : B.lieInvariant L) :
-    L →ₗ⁅R⁆ skewAdjointLieSubalgebra
-      (QuadraticMap.polarBilin (LinearMap.BilinMap.toQuadraticMap B)) where
-  toFun x :=
-    ⟨_root_.LieAlgebra.ad R L x, ad_mem_skewAdjointSubmodule (lieInvariant_polarBilin hB) x⟩
+/-- **The adjoint homomorphism** `ad : L →ₗ⁅R⁆ 𝔰𝔬(L, B)` of a Lie algebra carrying an invariant
+bilinear form `B`: `ad x` is skew-adjoint for `B`, and `ad` is a Lie algebra homomorphism. -/
+def adSO (B : BilinForm R L) (hB : B.lieInvariant L) :
+    L →ₗ⁅R⁆ skewAdjointLieSubalgebra B where
+  toFun x := ⟨_root_.LieAlgebra.ad R L x, ad_mem_skewAdjointSubmodule hB x⟩
   map_add' x y := by ext z; simp
   map_smul' r x := by ext z; simp
   map_lie' {x y} := by ext z; simp
 
+@[simp]
+theorem adSO_apply (B : BilinForm R L) (hB : B.lieInvariant L) (x y : L) :
+    (adSO B hB x : Module.End R L) y = ⁅x, y⁆ := (rfl)
+
+/-- The adjoint homomorphism read into the skew-adjoint endomorphisms of the *polar* form of
+`x ↦ B x x`, which is `B + B.flip`; for symmetric `B` that is `2 • B` and the two skew-adjointness
+conditions agree, but the polar form is what the Clifford algebra of `B` sees. -/
+def adjointSO (B : BilinForm R L) (hB : B.lieInvariant L) :
+    L →ₗ⁅R⁆ skewAdjointLieSubalgebra
+      (QuadraticMap.polarBilin (LinearMap.BilinMap.toQuadraticMap B)) :=
+  adSO _ (lieInvariant_polarBilin hB)
+
 variable (B : BilinForm R L) (hB : B.lieInvariant L)
 
 @[simp]
-theorem adjointSO_apply (x y : L) : (adjointSO B hB x : Module.End R L) y = ⁅x, y⁆ := (rfl)
+theorem adjointSO_apply (x y : L) : (adjointSO B hB x : Module.End R L) y = ⁅x, y⁆ :=
+  adSO_apply _ (lieInvariant_polarBilin hB) x y
 
-/-- The kernel of the adjoint embedding is the centre; in particular `adjointSO` is injective
-exactly when the centre is trivial. -/
+/-- The kernel of the adjoint homomorphism is the centre, since `adjointSO` is `ad` with its
+codomain restricted. -/
 theorem ker_adjointSO : (adjointSO B hB).ker = _root_.LieAlgebra.center R L := by
+  rw [← _root_.LieAlgebra.self_module_ker_eq_center,
+    ← _root_.LieAlgebra.ad_ker_eq_self_module_ker]
   ext x
-  rw [LieHom.mem_ker, ← _root_.LieAlgebra.self_module_ker_eq_center, LieModule.mem_ker]
-  refine ⟨fun h y => ?_, fun h => by ext y; simpa using h y⟩
-  rw [← adjointSO_apply B hB x y, h]
-  simp
+  have h : (adjointSO B hB x : Module.End R L) = _root_.LieAlgebra.ad R L x := by ext y; simp
+  simp only [LieHom.mem_ker, ← ZeroMemClass.coe_eq_zero, h]
 
+/-- The adjoint homomorphism is injective exactly when the centre of `L` is trivial. -/
 theorem adjointSO_injective_iff :
     Function.Injective (adjointSO B hB) ↔ _root_.LieAlgebra.center R L = ⊥ := by
   rw [← LieHom.ker_eq_bot, ker_adjointSO]
@@ -149,8 +160,8 @@ section Killing
 variable (R L)
 
 /-- **The Killing quadratic form** `x ↦ κ(x, x)` of a Lie algebra. This is the form whose Clifford
-algebra carries Kostant's isotypic left-regular module; it is nondegenerate exactly in the
-Killing-semisimple case (`killingQuadraticForm_nondegenerate`). -/
+algebra carries Kostant's isotypic left-regular module; it is nondegenerate whenever `L` is
+Killing-semisimple and `2` is invertible in `R` (`killingQuadraticForm_nondegenerate`). -/
 noncomputable def killingQuadraticForm : QuadraticForm R L :=
   LinearMap.BilinMap.toQuadraticMap (killingForm R L)
 
@@ -161,6 +172,7 @@ theorem killingQuadraticForm_apply (x : L) :
 
 /-- The polar form of the Killing quadratic form is `2 • κ`: here the symmetry of the Killing form
 does the work, collapsing `κ + κ.flip`. -/
+@[simp]
 theorem polarBilin_killingQuadraticForm :
     QuadraticMap.polarBilin (killingQuadraticForm R L) = (2 : R) • killingForm R L := by
   rw [killingQuadraticForm, LinearMap.BilinMap.polarBilin_toQuadraticMap,
@@ -178,16 +190,17 @@ theorem killingQuadraticForm_nondegenerate [Invertible (2 : R)] [_root_.LieAlgeb
   · simpa only [LinearMap.smul_apply, smul_eq_mul, h2.mul_right_eq_zero] using hx y
   · simpa only [LinearMap.smul_apply, smul_eq_mul, h2.mul_right_eq_zero] using hy x
 
-/-- The adjoint embedding of a Lie algebra into the skew-adjoint endomorphisms of its Killing form:
-`ad : L →ₗ⁅R⁆ 𝔰𝔬(L, κ)`. This is the homomorphism whose composite with the quadratic realization
-inside `Cliff(L, κ)` is the adjoint quadratic lift of Kostant's theorem. -/
+/-- The adjoint homomorphism of a Lie algebra into the skew-adjoint endomorphisms of its Killing
+form: `ad : L →ₗ⁅R⁆ 𝔰𝔬(L, κ)`. This is the homomorphism whose composite with the quadratic
+realization inside `Cliff(L, κ)` is the adjoint quadratic lift of Kostant's theorem. -/
 noncomputable def killingAdjointSO :
     L →ₗ⁅R⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin (killingQuadraticForm R L)) :=
   adjointSO (killingForm R L) (LieModule.traceForm_lieInvariant R L L)
 
 @[simp]
 theorem killingAdjointSO_apply (x y : L) :
-    (killingAdjointSO R L x : Module.End R L) y = ⁅x, y⁆ := (rfl)
+    (killingAdjointSO R L x : Module.End R L) y = ⁅x, y⁆ :=
+  adjointSO_apply (killingForm R L) (LieModule.traceForm_lieInvariant R L L) x y
 
 end Killing
 
