@@ -67,7 +67,6 @@ Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, th
 * `TauCeti.spinAction_ι_wedge`, `TauCeti.spinAction_ι_contract` and
   `TauCeti.spinAction_ι_lineOperator`: the three summands act by exterior multiplication,
   contraction, and the parity operator.
-* `TauCeti.spinAction_ι_contract_one`: the second isotropic summand annihilates the vacuum vector.
 
 ## References
 
@@ -256,12 +255,5 @@ theorem spinAction_ι_lineOperator (z : P.line) (s : ExteriorAlgebra K P.W) :
     spinAction Q P (CliffordAlgebra.ι Q z) s =
       P.lineCoordinate z • CliffordAlgebra.involute s := by
   rw [spinAction_ι, P.cliffordOperator_coe_line, P.lineOperator_apply]
-
-/-- The second isotropic summand annihilates the vacuum vector `1 ∈ ⋀·W`: contraction lowers the
-exterior degree, and the vacuum has degree zero. -/
-@[grind =]
-theorem spinAction_ι_contract_one (y : P.W') :
-    spinAction Q P (CliffordAlgebra.ι Q y) 1 = 0 := by
-  rw [spinAction_ι_contract, CliffordAlgebra.contractLeft_one]
 
 end TauCeti
