@@ -130,14 +130,13 @@ theorem IsUnipotent.pow {g : GeneralLinearGroup K V} (hg : IsUnipotent g) (n : �
 /-- Unipotence is invariant under conjugation by a linear automorphism. -/
 @[simp]
 theorem isUnipotent_conj_iff (g h : GeneralLinearGroup K V) :
-    IsUnipotent (MulAut.conj h g) ↔ IsUnipotent g := by
+    IsUnipotent (h * g * h⁻¹) ↔ IsUnipotent g := by
   have hconj : LinearMap.GeneralLinearGroup.ofLinearEquiv
       (h.toLinearEquiv.symm.trans (g.toLinearEquiv.trans h.toLinearEquiv)) =
-        MulAut.conj h g := by
+        h * g * h⁻¹ := by
     ext x
     simp only [LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, LinearEquiv.trans_apply,
-      LinearMap.GeneralLinearGroup.coe_toLinearEquiv, MulAut.conj_apply, Units.val_mul,
-      Module.End.mul_apply]
+      LinearMap.GeneralLinearGroup.coe_toLinearEquiv, Units.val_mul, Module.End.mul_apply]
     apply congrArg (fun y ↦ (h : End K V) ((g : End K V) y))
     change h.toLinearEquiv.symm x = (h⁻¹).toLinearEquiv x
     rw [LinearMap.GeneralLinearGroup.toLinearEquiv_inv]

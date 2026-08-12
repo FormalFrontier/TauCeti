@@ -148,17 +148,17 @@ theorem IsUnipotent.pow {g : WithConv (H →ₐ[k] K)}
 /-- Unipotence of points is invariant under conjugation. -/
 @[simp]
 theorem isUnipotent_conj_iff (g h : WithConv (H →ₐ[k] K)) :
-    IsUnipotent (MulAut.conj h g) ↔ IsUnipotent g := by
+    IsUnipotent (h * g * h⁻¹) ↔ IsUnipotent g := by
   constructor
   · intro hg M
     have hM := hg M
-    simp only [MulAut.conj_apply, map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    simp only [map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
       LinearMap.GeneralLinearGroup.ofLinearEquiv_inv] at hM
     exact (GeneralLinearGroup.isUnipotent_conj_iff
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h))).mp hM
   · intro hg M
-    simp only [MulAut.conj_apply, map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    simp only [map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
       LinearMap.GeneralLinearGroup.ofLinearEquiv_inv]
     exact (GeneralLinearGroup.isUnipotent_conj_iff
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
