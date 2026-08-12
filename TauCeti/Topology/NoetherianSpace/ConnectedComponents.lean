@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Topology.Connected.LocallyConnected
 public import Mathlib.Topology.NoetherianSpace
+public import TauCeti.Topology.ConnectedComponents
 
 /-!
 # Connected components of Noetherian spaces
@@ -42,14 +43,6 @@ universe u
 variable {X : Type u} [TopologicalSpace X]
 
 namespace TauCeti
-
-/-- The quotient of a topological space by its connected components is a T1 space. -/
-instance instT1SpaceConnectedComponents : T1Space (ConnectedComponents X) :=
-  ⟨fun c => by
-    obtain ⟨x, rfl⟩ := ConnectedComponents.surjective_coe c
-    rw [← ConnectedComponents.isQuotientMap_coe.isClosed_preimage,
-      connectedComponents_preimage_singleton]
-    exact isClosed_connectedComponent⟩
 
 /-- A space with finitely many irreducible components has finitely many connected components. -/
 theorem finite_connectedComponents_of_finite_irreducibleComponents

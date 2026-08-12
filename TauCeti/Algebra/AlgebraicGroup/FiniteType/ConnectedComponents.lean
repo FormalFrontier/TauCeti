@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.FiniteType
 public import Mathlib.RingTheory.Spectrum.Prime.Noetherian
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
@@ -12,10 +11,11 @@ public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
 /-!
 # Connected components of finite-type affine groups
 
-The prime spectrum of the coordinate ring of a finite-type affine group over a field has
-finitely many connected components, and each component is clopen. The Hopf structure is not
-needed for this finiteness statement: finite type over a field makes the coordinate ring
-Noetherian, and a Noetherian topological space has finitely many connected components.
+The prime spectrum of the coordinate ring of a finite-type affine group over a Noetherian
+commutative ring has finitely many connected components, and each component is clopen. The Hopf
+structure is not needed for this finiteness statement: finite type over a Noetherian ring makes
+the coordinate ring Noetherian, and a Noetherian topological space has finitely many connected
+components.
 
 ## Main declaration
 
@@ -38,13 +38,13 @@ namespace TauCeti.FiniteTypeCommHopfAlgCat
 
 universe u v
 
-variable {k : Type u} [Field k]
+variable {R : Type u} [CommRing R] [IsNoetherianRing R]
 
-/-- The spectrum of the coordinate ring of a finite-type affine group over a field has finitely
-many connected components. -/
-instance instFiniteConnectedComponents (H : FiniteTypeCommHopfAlgCat.{u, v} k) :
+/-- The spectrum of the coordinate ring of a finite-type affine group over a Noetherian
+commutative ring has finitely many connected components. -/
+instance instFiniteConnectedComponents (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
     Finite (ConnectedComponents (PrimeSpectrum H)) := by
-  let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing R H
   exact TauCeti.finite_connectedComponents_of_noetherianSpace
 
 end TauCeti.FiniteTypeCommHopfAlgCat

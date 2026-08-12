@@ -11,10 +11,10 @@ public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
 /-!
 # Finiteness of the components of an affine group scheme
 
-An affine group scheme of finite type over a field has finitely many connected components. This
-is the scheme-side form of the corresponding coordinate-ring fact: its structural morphism is
-locally of finite type over the Noetherian scheme `Spec k`, so its source is locally Noetherian;
-affineness makes the source compact, hence Noetherian.
+An affine group scheme of finite type over a Noetherian commutative ring has finitely many
+connected components. This is the scheme-side form of the corresponding coordinate-ring fact:
+its structural morphism is locally of finite type over the Noetherian scheme `Spec R`, so its
+source is locally Noetherian; affineness makes the source compact, hence Noetherian.
 
 ## Main declaration
 
@@ -39,12 +39,12 @@ open AlgebraicGeometry
 
 universe u
 
-variable {k : Type u} [Field k]
+variable {R : Type u} [CommRing R] [IsNoetherianRing R]
 
-/-- The underlying scheme of a finite-type affine group scheme over a field has finitely many
-connected components. -/
+/-- The underlying scheme of a finite-type affine group scheme over a Noetherian commutative ring
+has finitely many connected components. -/
 instance instFiniteConnectedComponents
-    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k)) :
+    (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of R)) :
     Finite (ConnectedComponents G.obj.obj.X.left) := by
   let _ : IsLocallyNoetherian G.obj.obj.X.left :=
     LocallyOfFiniteType.isLocallyNoetherian G.obj.obj.X.hom
