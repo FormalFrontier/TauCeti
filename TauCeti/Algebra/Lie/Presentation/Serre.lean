@@ -306,19 +306,19 @@ noncomputable def serreLift (h : IsSerreSystem R CM H E F) :
 @[simp]
 theorem serreLift_serreH (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreH R CM i) = H i :=
-  (LieIdeal.liftQ_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- The homomorphism determined by a Serre system sends `Eᵢ` to `E i`. -/
 @[simp]
 theorem serreLift_serreE (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreE R CM i) = E i :=
-  (LieIdeal.liftQ_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- The homomorphism determined by a Serre system sends `Fᵢ` to `F i`. -/
 @[simp]
 theorem serreLift_serreF (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreF R CM i) = F i :=
-  (LieIdeal.liftQ_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- Two homomorphisms out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
 theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}

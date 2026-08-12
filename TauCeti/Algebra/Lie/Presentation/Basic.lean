@@ -52,9 +52,10 @@ generate the presented algebra, rather than merely determine maps out of it.
 ## Implementation notes
 
 Neither `TauCeti.LieIdeal.mkQ` nor `TauCeti.LieIdeal.liftQ` is exposed: `TauCeti.LieIdeal.mkQ_apply`
-and `TauCeti.LieIdeal.liftQ_mkQ` characterise them on elements, and `TauCeti.LieIdeal.ker_mkQ`,
-`TauCeti.LieIdeal.liftQ_comp_mkQ` and `TauCeti.LieIdeal.eq_liftQ` say all a consumer needs about
-their kernel and their factorisation, so nothing downstream has to unfold the quotient. Those three
+and `TauCeti.LieIdeal.liftQ_apply_mkQ` characterise them on elements, and
+`TauCeti.LieIdeal.ker_mkQ`, `TauCeti.LieIdeal.liftQ_comp_mkQ` and `TauCeti.LieIdeal.eq_liftQ` say
+all a consumer needs about their kernel and their factorisation, so nothing downstream has to
+unfold the quotient. Those three
 equations are proved by the parenthesised `(rfl)`, which elaborates against the definitions
 themselves; a bare `rfl` in an exported theorem would demand that they be `@[expose]`d.
 
@@ -125,14 +126,15 @@ theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
 
 Not a `simp` lemma: `TauCeti.LieIdeal.mkQ_apply` and `TauCeti.LieIdeal.liftQ_apply_mk` already
 rewrite the left-hand side, and `simp` rejects a lemma its own set can prove. -/
-theorem liftQ_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) : liftQ f h (mkQ I x) = f x := (rfl)
+theorem liftQ_apply_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
+    liftQ f h (mkQ I x) = f x := (rfl)
 
 /-- The induced homomorphism on the quotient composed with the quotient map is the original
 homomorphism. -/
 @[simp]
 theorem liftQ_comp_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : (liftQ f h).comp (mkQ I) = f := by
   ext x
-  exact liftQ_mkQ f h x
+  exact liftQ_apply_mkQ f h x
 
 /-- Two homomorphisms out of `L ⧸ I` that agree after composition with the quotient map are
 equal. -/
@@ -146,7 +148,7 @@ theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ 
 restricting to `f` along the quotient map is `TauCeti.LieIdeal.liftQ f h`. -/
 theorem eq_liftQ {f : L →ₗ⁅R⁆ L'} {h : I ≤ f.ker} {g : L ⧸ I →ₗ⁅R⁆ L'}
     (hg : ∀ x : L, g (mkQ I x) = f x) : g = liftQ f h :=
-  lieHom_qext fun x => by rw [hg, liftQ_mkQ]
+  lieHom_qext fun x => by rw [hg, liftQ_apply_mkQ]
 
 end LieIdeal
 
