@@ -6,7 +6,6 @@ module
 
 public import Mathlib.LinearAlgebra.CrossProduct
 public import Mathlib.LinearAlgebra.Dimension.Constructions
-public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 public import Mathlib.RingTheory.Finiteness.Prod
 
 /-!
@@ -32,8 +31,9 @@ determinant, and its multiplicativity reduces to polynomial identities in the ei
 each factor.
 
 Everything is stated over a commutative ring; no field, characteristic or closedness hypothesis is
-needed for the algebra structure, the conjugation, or the norm. Only the two dimension counts ask
-for a base over which ranks are well behaved, and they ask for it as `StrongRankCondition`.
+needed for the algebra structure, the conjugation, or the norm. Only the two dimension counts
+`TauCeti.Octonion.finrank_eq_eight` and `TauCeti.Octonion.finrank_imaginary` ask for a base over
+which ranks are well behaved, and each asks for it as `StrongRankCondition` and nothing more.
 
 ## Main definitions
 
@@ -47,14 +47,17 @@ for a base over which ranks are well behaved, and they ask for it as `StrongRank
 
 ## Main results
 
-* `TauCeti.Octonion.finrank_eq`: the split octonions are `8`-dimensional.
+* `TauCeti.Octonion.finrank_eq_eight`: the split octonions are `8`-dimensional.
 * `TauCeti.Octonion.mul_conj` and `TauCeti.Octonion.conj_mul`: `x * x̄ = x̄ * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
 * `TauCeti.Octonion.mul_self_mul` and `TauCeti.Octonion.mul_mul_self`: `𝕆` is **alternative**.
+* `TauCeti.Octonion.moufang_left`, `TauCeti.Octonion.moufang_right` and
+  `TauCeti.Octonion.moufang_middle`: the three **Moufang identities**.
 * `TauCeti.Octonion.mul_self`: every octonion satisfies its rank-two equation
   `x * x = trace x • x - norm x • 1`.
-* `TauCeti.Octonion.finrank_imaginary`: the imaginary octonions are `7`-dimensional; they carry the
-  `7`-dimensional fundamental representation of `G₂ = Der 𝕆`.
+* `TauCeti.Octonion.finrank_imaginary`: the imaginary octonions, the trace-zero subspace, are
+  `7`-dimensional. Identifying them with the fundamental representation of `G₂ = Der 𝕆` waits on
+  the derivation algebra, which is not built here.
 
 ## Implementation notes
 
@@ -63,9 +66,15 @@ all run the same way: `TauCeti.Octonion.ext_coords` splits an equation of octoni
 scalar coordinates, the file-local simp set expands the dot and cross products into coordinates,
 and `ring` finishes.
 
+The module is `public` but not exposed: consumers work through the projection `simp` lemmas rather
+than through any definition body. The three component equivalences `TauCeti.Octonion.equivProd`,
+`TauCeti.Octonion.addEquivProd` and `TauCeti.Octonion.linearEquivProd` are the exception, and carry
+`@[expose]` because the additive and module structures they transport are the componentwise
+operations only definitionally, through those bodies.
+
 The norm is left as a bare map `Octonion R → R`, as the roadmap pins it. Packaging it as a
 `QuadraticForm R (Octonion R)` — its polarization is the trace form `x, y ↦ trace (x * conj y)` —
-is deferred, together with the Moufang identities and the derivation algebra `Der 𝕆`.
+is deferred, together with the derivation algebra `Der 𝕆`.
 
 ## References
 
@@ -83,7 +92,7 @@ The model is M. Zorn, *Alternativkörper und quadratische Systeme*, Abh. Math. S
 Groups*, §1.8, and J. C. Baez, *The octonions*, Bull. Amer. Math. Soc. 39 (2002), §2.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -118,7 +127,7 @@ theorem ext_coords {x y : Octonion R} (ha : x.a = y.a) (hb : x.b = y.b)
     exacts [hw₀, hw₁, hw₂]
 
 /-- The components of a vector matrix, as a bijection with the tuple of its four entries. -/
-@[simps]
+@[simps, expose]
 def equivProd (R : Type*) : Octonion R ≃ R × R × (Fin 3 → R) × (Fin 3 → R) where
   toFun x := (x.a, x.b, x.v, x.w)
   invFun p := ⟨p.1, p.2.1, p.2.2.1, p.2.2.2⟩
@@ -179,7 +188,7 @@ instance [AddCommGroup R] : AddCommGroup (Octonion R) := by
 
 /-- The components of a vector matrix, as an additive isomorphism with the tuple of its four
 entries. -/
-@[simps!]
+@[simps!, expose]
 def addEquivProd (R : Type*) [AddCommGroup R] :
     Octonion R ≃+ R × R × (Fin 3 → R) × (Fin 3 → R) :=
   { equivProd R with map_add' := fun _ _ => rfl }
@@ -196,7 +205,7 @@ instance [AddCommGroup R] [One R] : AddCommGroupWithOne (Octonion R) where
 
 /-- The components of a vector matrix, as an `R`-linear isomorphism with the tuple of its four
 entries. -/
-@[simps!]
+@[simps!, expose]
 def linearEquivProd (R : Type*) [CommRing R] :
     Octonion R ≃ₗ[R] R × R × (Fin 3 → R) × (Fin 3 → R) :=
   { addEquivProd R with map_smul' := fun _ _ => rfl }
@@ -208,7 +217,7 @@ instance [CommRing R] : Module.Finite R (Octonion R) :=
   Module.Finite.equiv (linearEquivProd R).symm
 
 /-- **The split octonions are `8`-dimensional**: two scalar and two vector entries. -/
-theorem finrank_eq (R : Type*) [CommRing R] [StrongRankCondition R] :
+theorem finrank_eq_eight (R : Type*) [CommRing R] [StrongRankCondition R] :
     Module.finrank R (Octonion R) = 8 := by
   rw [(linearEquivProd R).finrank_eq]
   simp
@@ -233,10 +242,6 @@ instance : Mul (Octonion R) :=
 @[simp] theorem mul_w (x y : Octonion R) :
     (x * y).w = y.a • x.w + x.b • y.w + x.v ⨯₃ y.v := (rfl)
 
-/-- The dot product of `Fin 3 → R`, in coordinates. -/
-private theorem dotProduct_eq (u t : Fin 3 → R) : u ⬝ᵥ t = u 0 * t 0 + u 1 * t 1 + u 2 * t 2 := by
-  simp [dotProduct, Fin.sum_univ_three]
-
 /-- The first coordinate of a cross product. -/
 private theorem cross_apply_zero (u t : Fin 3 → R) : (u ⨯₃ t) 0 = u 1 * t 2 - u 2 * t 1 := by
   simp [cross_apply]
@@ -249,7 +254,13 @@ private theorem cross_apply_one (u t : Fin 3 → R) : (u ⨯₃ t) 1 = u 2 * t 0
 private theorem cross_apply_two (u t : Fin 3 → R) : (u ⨯₃ t) 2 = u 0 * t 1 - u 1 * t 0 := by
   simp [cross_apply]
 
-attribute [local simp] dotProduct_eq cross_apply_zero cross_apply_one cross_apply_two
+/- Dot products are expanded by Mathlib's `Matrix.vec3_dotProduct`; cross products are expanded one
+coordinate at a time by the three lemmas above rather than by `Matrix.cross_apply` itself, because
+`cross_apply` rewrites `u ⨯₃ t` to a `![…]` literal, and a literal meeting the generic vector
+entries of a product fires `Matrix.sub_cons`, `Matrix.head_add` and `Matrix.dotProduct_cons`, which
+re-express the coordinates as `vecHead`/`vecTail` towers that `ring` sees as atoms distinct from
+`u 0`, `u 1`, `u 2`. -/
+attribute [local simp] vec3_dotProduct cross_apply_zero cross_apply_one cross_apply_two
 
 instance : NonAssocRing (Octonion R) where
   __ := (inferInstance : AddCommGroupWithOne (Octonion R))
@@ -331,6 +342,7 @@ theorem norm_def (x : Octonion R) : norm x = x.a * x.b - x.v ⬝ᵥ x.w := (rfl)
 @[simp] theorem norm_conj (x : Octonion R) : norm (conj x) = norm x := by
   simp [norm_def]; ring
 
+/-- The norm is a **quadratic** form: rescaling an octonion by `r` rescales its norm by `r ^ 2`. -/
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
 
@@ -340,7 +352,7 @@ theorem mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
 
 /-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.mul_conj`. -/
 theorem conj_mul (x : Octonion R) : conj x * x = norm x • 1 := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp [norm_def] <;> ring
+  simpa using mul_conj (conj x)
 
 /-- **The rank-two equation.** Every split octonion satisfies `x² - trace x · x + N x · 1 = 0`, so
 it generates a subalgebra of dimension at most `2`. -/
@@ -359,8 +371,25 @@ theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
 theorem mul_self_mul (x y : Octonion R) : x * x * y = x * (x * y) := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
-/-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. -/
+/-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. This is left
+alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul_eq`. -/
 theorem mul_mul_self (x y : Octonion R) : x * y * y = x * (y * y) := by
+  have h : conj (conj y * conj y * conj x) = conj (conj y * (conj y * conj x)) :=
+    congrArg _ (mul_self_mul (conj y) (conj x))
+  simpa [conj_mul_eq] using h.symm
+
+/-! ### The Moufang identities -/
+
+/-- **The left Moufang identity**: `(z * x * z) * y = z * (x * (z * y))`. -/
+theorem moufang_left (x y z : Octonion R) : z * x * z * y = z * (x * (z * y)) := by
+  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+
+/-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. -/
+theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := by
+  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+
+/-- **The middle Moufang identity**: `(z * x) * (y * z) = (z * (x * y)) * z`. -/
+theorem moufang_middle (x y z : Octonion R) : z * x * (y * z) = z * (x * y) * z := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
 /-! ### Worked examples: `𝕆` is neither commutative nor associative
@@ -372,35 +401,56 @@ bottom-left entry, and the opposite product picks up `e₁ ⨯₃ e₀ = -e₂`.
 example :
     (⟨0, 0, ![1, 0, 0], 0⟩ * ⟨0, 0, ![0, 1, 0], 0⟩ : Octonion ℤ) ≠
       ⟨0, 0, ![0, 1, 0], 0⟩ * ⟨0, 0, ![1, 0, 0], 0⟩ := fun h => by
-  simpa using congrArg (fun x : Octonion ℤ => x.w 2) h
+  have h₂ := congrArg (fun x : Octonion ℤ => x.w 2) h
+  -- the bottom-left entries are `e₀ ⨯₃ e₁` and `e₁ ⨯₃ e₀`, so `h₂` reads `(1 : ℤ) = -1`
+  simp only [mul_w, smul_zero, add_zero, Pi.add_apply, Pi.zero_apply, cross_apply_two,
+    cons_val_zero, cons_val_one, mul_one, mul_zero, sub_zero, zero_add, zero_sub] at h₂
+  exact absurd h₂ (by decide)
 
 example :
     (⟨0, 0, ![1, 0, 0], 0⟩ * ⟨0, 0, 0, ![1, 0, 0]⟩ : Octonion ℤ) * ⟨0, 0, ![0, 1, 0], 0⟩ ≠
       (⟨0, 0, ![1, 0, 0], 0⟩ : Octonion ℤ) *
         (⟨0, 0, 0, ![1, 0, 0]⟩ * ⟨0, 0, ![0, 1, 0], 0⟩) := fun h => by
-  simpa using congrArg (fun x : Octonion ℤ => x.v 1) h
+  have h₁ := congrArg (fun x : Octonion ℤ => x.v 1) h
+  -- bracketed on the left the dot product `e₀ ⬝ᵥ e₀ = 1` scales `e₁`; on the right the two cross
+  -- products `e₀ ⨯₃ e₁` and `e₀ ⨯₃ (e₀ ⨯₃ e₁)` cancel it, so `h₁` reads `(1 : ℤ) = 0`
+  simp only [mul_v, mul_a, mul_b, mul_w, mul_zero, mul_one, dotProduct_cons, head_cons, tail_cons,
+    dotProduct_of_isEmpty, add_zero, zero_add, one_smul, zero_smul, smul_zero, Pi.sub_apply,
+    Pi.zero_apply, cons_val_zero, cons_val_one] at h₁
+  exact absurd h₁ (by decide)
 
 /-! ### The imaginary octonions -/
 
-/-- **The imaginary octonions**, the trace-zero subspace: the carrier of the `7`-dimensional
-fundamental representation of `G₂ = Der 𝕆`. -/
+/-- **The imaginary octonions**, the trace-zero subspace of `𝕆`. It is `7`-dimensional
+(`TauCeti.Octonion.finrank_imaginary`); identifying it with the fundamental representation of
+`G₂ = Der 𝕆` waits on the derivation algebra, which is not built here. -/
 def imaginary (R : Type*) [CommRing R] : Submodule R (Octonion R) := LinearMap.ker trace
 
 @[simp] theorem mem_imaginary {x : Octonion R} : x ∈ imaginary R ↔ x.a + x.b = 0 :=
   LinearMap.mem_ker
 
+/-- The trace is a surjection onto the base ring: it already is on the scalar diagonal. -/
 theorem trace_surjective : Function.Surjective (trace : Octonion R →ₗ[R] R) :=
   fun r => ⟨⟨r, 0, 0, 0⟩, by simp⟩
 
-/-- **The imaginary split octonions are `7`-dimensional**, the trace being a surjection onto the
-one-dimensional `K`. Stated over a field, where the rank-nullity theorem is available. -/
-theorem finrank_imaginary (K : Type*) [Field K] : Module.finrank K (imaginary K) = 7 := by
-  change Module.finrank K (LinearMap.ker (trace : Octonion K →ₗ[K] K)) = 7
-  have hrange : LinearMap.range (trace : Octonion K →ₗ[K] K) = ⊤ :=
-    LinearMap.range_eq_top.mpr trace_surjective
-  have h := LinearMap.finrank_range_add_finrank_ker (trace : Octonion K →ₗ[K] K)
-  rw [hrange, finrank_top, Module.finrank_self, finrank_eq K] at h
-  omega
+/-- The imaginary octonions are free on the entries `a`, `v`, `w`: a vanishing trace forces
+`b = -a`, so `⟨a, -a, v, w⟩ ↦ (a, v, w)` is an `R`-linear isomorphism. -/
+def imaginaryLinearEquivProd (R : Type*) [CommRing R] :
+    imaginary R ≃ₗ[R] R × (Fin 3 → R) × (Fin 3 → R) where
+  toFun x := (x.1.a, x.1.v, x.1.w)
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  invFun p := ⟨⟨p.1, -p.1, p.2.1, p.2.2⟩, by simp⟩
+  left_inv x :=
+    Subtype.ext (Octonion.ext rfl (neg_eq_iff_add_eq_zero.mpr (mem_imaginary.mp x.2)) rfl rfl)
+  right_inv _ := rfl
+
+/-- **The imaginary split octonions are `7`-dimensional**: a vanishing trace pins the second
+diagonal entry to `b = -a`, leaving the entries `a`, `v` and `w` free. -/
+theorem finrank_imaginary (R : Type*) [CommRing R] [StrongRankCondition R] :
+    Module.finrank R (imaginary R) = 7 := by
+  rw [(imaginaryLinearEquivProd R).finrank_eq]
+  simp
 
 end Octonion
 
