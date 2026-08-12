@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Data.Fin.Tuple.Sort
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic
 import TauCeti.LinearAlgebra.RootSystem.Classification
 
 public section
@@ -13,8 +13,8 @@ public section
 /-!
 # The finite-type stars are the diagrams of types `Dₙ`, `E₆`, `E₇` and `E₈`
 
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Star` bounds the shape of a star of finite type: with
-three arms carrying `a ≤ b ≤ c` vertices besides the centre, either `a = 0` (so the star is a
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic` bounds the shape of a star of finite type:
+with three arms carrying `a ≤ b ≤ c` vertices besides the centre, either `a = 0` (so the star is a
 chain), or `a = b = 1`, or `a = 1`, `b = 2` and `c ≤ 4`. That is an arithmetic statement about the
 arm lengths, and it does not yet say which Dynkin diagram the surviving star *is*.
 

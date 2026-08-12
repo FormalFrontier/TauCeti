@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """Keep exactly one status label on every open TauCeti PR.
 
-The five labels are mutually exclusive; together they say, at a glance in the PR
+The six labels are mutually exclusive; together they say, at a glance in the PR
 list, where a PR is in the pipeline:
 
     awaiting-CI         CI has not yet reported on the latest commit
     awaiting-review     CI is green; waiting for review verdicts
     review-in-progress  a review is running on this exact commit right now
-    awaiting-author     the build failed or a review requested changes
+    ci-failed           the build failed on the latest commit
+    awaiting-author     a review requested changes
     ready-to-merge      CI green and every rubric approved
 
-All five are derived here from the PR's status (core.derive) and this sink is the
+`ci-failed` and `awaiting-author` both mean "the author owns it now", but they are
+kept apart because the fix is completely different -- read the build log, or read
+the review threads -- and collapsing them cost real time when a PR sat red while
+its reviews were being watched.
+
+All six are derived here from the PR's status (core.derive) and this sink is the
 SOLE writer of them, so the "exactly one" invariant is CI's alone to keep -- it
 never depends on any worker or review harness behaving a particular way. reconcile
 is idempotent and convergent: it reads GitHub truth afresh and drives the label
@@ -37,6 +43,7 @@ Environment:
 Only python3's standard library and an authenticated `gh` CLI are required.
 """
 
+import json
 import subprocess
 import sys
 
@@ -50,7 +57,10 @@ LABELS = {
     "awaiting-CI":        ("fbca04", "CI has not yet reported on the latest commit"),
     "awaiting-review":    ("1d76db", "CI is green; waiting for review verdicts"),
     "review-in-progress": ("a371f7", "A review is running on this exact commit right now"),
-    "awaiting-author":    ("d93f0b", "The build failed or a review requested changes; author action needed"),
+    # Distinct colours on purpose: telling a red build apart from a changes request AT A GLANCE in
+    # the PR list is the whole reason these are two labels rather than one.
+    "ci-failed":          ("d93f0b", "The build failed on the latest commit; author action needed"),
+    "awaiting-author":    ("e99695", "A review requested changes; author action needed"),
     "ready-to-merge":     ("0e8a16", "CI green and every rubric approved; ready to merge"),
 }
 STATUS_LABELS = list(LABELS)
@@ -66,7 +76,7 @@ def derived_label(status):
     Precedence:
         PR merged/closed                       -> None (no status label)
         CI not reported yet / running          -> awaiting-CI
-        CI failed                              -> awaiting-author
+        CI failed                              -> ci-failed
         CI green, review requested changes     -> awaiting-author
         CI green, every rubric approved        -> ready-to-merge
         CI green, review pending + live marker -> review-in-progress
@@ -78,7 +88,7 @@ def derived_label(status):
     if ci in (None, "running"):
         return "awaiting-CI"
     if ci == "failure":
-        return "awaiting-author"
+        return "ci-failed"
     # ci == "success"
     review = status["review"]
     if review == "changes":
@@ -107,11 +117,18 @@ def current_status_labels(pr):
 
 
 def ensure_label(name):
-    """Create the label if it does not exist yet (idempotent). Only a clear 404 on the probe means
-    'absent, create it'; any other probe failure is left alone (the add may still succeed, and we do
-    not want to mask a token/permission error as a missing label)."""
+    """Create the label if absent, and keep its colour and description matching LABELS (idempotent).
+
+    Only a clear 404 on the probe means 'absent, create it'; any other probe failure is left alone
+    (the add may still succeed, and we do not want to mask a token/permission error as a missing
+    label). When the label already exists we reconcile its presentation rather than returning
+    straight away: a label is created once and then lives forever, so editing a description in
+    LABELS would otherwise never reach GitHub and the live label would keep describing behaviour
+    this file no longer has. The probe already fetched it, so the comparison is free and only a
+    genuine mismatch costs a PATCH."""
     probe = _run([f"/repos/{REPO}/labels/{name}"])
     if probe.returncode == 0:
+        _reconcile_label_presentation(name, probe.stdout)
         return
     if "404" not in probe.stderr:
         return
@@ -123,6 +140,27 @@ def ensure_label(name):
     # A concurrent create (422 already_exists) is fine; anything else is a real error.
     if create.returncode != 0 and "already_exists" not in create.stderr:
         raise RuntimeError(f"gh api create label {name} failed: {create.stderr.strip()}")
+
+
+def _reconcile_label_presentation(name, probe_stdout):
+    """PATCH an existing label whose colour or description has drifted from LABELS.
+
+    Presentation is cosmetic, so this never raises: an unparseable probe body or a failed PATCH
+    leaves the label as it is and lets the caller get on with the actual add, which is what keeps
+    the PR list correct."""
+    color, description = LABELS[name]
+    try:
+        live = json.loads(probe_stdout)
+    except (ValueError, TypeError):
+        return
+    if live.get("color") == color and (live.get("description") or "") == description:
+        return
+    patch = _run([
+        "--method", "PATCH", f"/repos/{REPO}/labels/{name}",
+        "-f", f"color={color}", "-f", f"description={description}",
+    ])
+    if patch.returncode != 0:
+        log(f"note: could not update the {name} label's colour/description: {patch.stderr.strip()}")
 
 
 def add_label(pr, name):

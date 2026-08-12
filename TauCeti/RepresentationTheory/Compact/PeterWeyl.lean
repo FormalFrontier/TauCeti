@@ -367,6 +367,17 @@ noncomputable def peterWeylFamily (models : ι → IrrepModel 𝕜 G)
       ((models x.1).basis x.2.1) ((models x.1).basis x.2.2)
 
 omit [T2Space G] in
+/-- The elements of the Peter-Weyl family, on the nose. -/
+@[simp]
+theorem peterWeylFamily_apply (models : ι → IrrepModel 𝕜 G)
+    (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
+    peterWeylFamily models x =
+      (Real.sqrt (models x.1).dim : 𝕜) •
+        ContRepresentation.matrixCoeffLp (models x.1).rep (models x.1).continuous_rep
+          ((models x.1).basis x.2.1) ((models x.1).basis x.2.2) :=
+  (rfl)
+
+omit [T2Space G] in
 /-- Every `L²` matrix coefficient of a model lies in the span of the normalized ones: expand both
 defining vectors in the canonical orthonormal basis and use sesquilinearity. -/
 theorem matrixCoeffLp_mem_span_peterWeylFamily (models : ι → IrrepModel 𝕜 G) (i : ι)

@@ -5,10 +5,11 @@ name: PR status labels
 #   awaiting-CI         CI has not yet reported on the latest commit
 #   awaiting-review     CI is green; waiting for review verdicts
 #   review-in-progress  a review is running on this exact commit right now
-#   awaiting-author     the build failed or a review requested changes
+#   ci-failed           the build failed on the latest commit
+#   awaiting-author     a review requested changes
 #   ready-to-merge      CI green and every rubric approved
 #
-# scripts/pr_status/labels.py is the SOLE writer of these labels and derives all five from GitHub
+# scripts/pr_status/labels.py is the SOLE writer of these labels and derives all six from GitHub
 # truth alone (core.derive): the `build` commit status, the canonical <!--tauceti-scoreboard--> meta,
 # and the review engine's <!--tauceti-review-in-progress--> marker. It assumes nothing about any
 # worker or review harness -- a harness that posts the (optional) in-progress marker gets a
@@ -24,7 +25,7 @@ on:
   # New commit / open / reopen / close -> awaiting-CI, or strip labels on close.
   pull_request_target:
     types: [opened, reopened, synchronize, closed]
-  # Build finished -> awaiting-author / review / ready. (We do NOT react to "requested": a late
+  # Build finished -> ci-failed / review / ready. (We do NOT react to "requested": a late
   # requested event for an old head could force awaiting-CI onto a moved PR, and a new commit already
   # paints awaiting-CI via pull_request_target: synchronize.)
   workflow_run:
@@ -50,21 +51,84 @@ permissions:
   contents: read
 
 jobs:
-  # Resolve the PR number ONCE, so the mutation job can serialize on it. Keeping resolution in its own
-  # job lets `label` key its concurrency on needs.resolve.outputs.pr, which unifies the concurrency
-  # group across every trigger (pull_request_target/issue_comment know the PR up front; workflow_run
-  # only knows the head sha) so two events for one PR can never interleave a label add/remove.
-  resolve:
+  # The PR number has to key the concurrency group, and a group expression is evaluated before the job
+  # starts, so it can never read a step output: a number that must be COMPUTED needs its own upstream
+  # job. Most events don't need computing, though -- pull_request_target, issue_comment and same-repo
+  # workflow_run all carry the number in the payload -- and under runner contention a second job costs
+  # a second queue wait, which is exactly the lag this workflow is trying not to add.
+  #
+  # So the events split in two, by whether the number is already known:
+  #
+  #   label           payload knows the number: one job, one queue wait.
+  #   resolve+labelr  it has to be worked out: a fork PR's workflow_run (pull_requests[] is empty, so
+  #                   the head sha is scanned for) or a workflow_dispatch (an untrusted input string
+  #                   that must be validated down to digits before it can key anything).
+  #
+  # The two `if` conditions are mutually exclusive, so exactly one path runs per event, and both label
+  # jobs use the SAME pr-labels-<number> group. That shared key is what stops two events for one PR
+  # interleaving a label add/remove, and it holds across the split because both paths end up keyed on
+  # the same number by different routes. Keep the two label jobs in step: they differ only in where
+  # the number comes from.
+  label:
     if: >
       github.repository == 'TauCetiProject/TauCeti' && (
         github.event_name == 'pull_request_target'
-        || github.event_name == 'workflow_dispatch'
         || (github.event_name == 'workflow_run'
-            && github.event.workflow_run.event == 'pull_request_target')
+            && github.event.workflow_run.event == 'pull_request_target'
+            && github.event.workflow_run.pull_requests[0] != null)
         || (github.event_name == 'issue_comment'
             && github.event.issue.pull_request != null
             && (contains(github.event.comment.body, 'tauceti-scoreboard')
                 || contains(github.event.comment.body, 'tauceti-review-in-progress')))
+      )
+    runs-on: ubuntu-latest
+    # Serialize all events for one PR on its number. Don't cancel: GitHub already collapses a burst
+    # (one run in progress, one pending, and a third cancels the pending one), so cancelling would buy
+    # only the tail of a run that is already executing -- and it would buy it by interrupting a
+    # non-atomic mutation. reconcile removes labels one API call at a time before adding the right
+    # one, so a run killed mid-sequence can leave a PR carrying two status labels, and `sweep` would
+    # not repair it: the hourly backstop only looks at PRs holding review-in-progress.
+    concurrency:
+      group: pr-labels-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.pull_requests[0].number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: write
+          permission-pull-requests: read
+          permission-statuses: read
+      # The trusted base checkout: the labels script that runs is the one on the target branch, never
+      # the version proposed by the PR.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/pr_status
+          persist-credentials: false
+      - name: Reconcile status label
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.pull_requests[0].number }}
+          # Only the number is taken from the payload. core.derive can also be handed the PR's state
+          # and head sha through PR_STATE/PR_MERGED/PR_HEAD to save an API call, and this workflow
+          # used to do that -- but a payload is a snapshot of the moment the event fired, and after a
+          # queue wait it can describe a commit the PR has already moved past. One API call is a good
+          # price for a label that always reflects live truth. A PR's NUMBER cannot go stale.
+        run: python3 scripts/pr_status/labels.py reconcile "$PR"
+
+  # Resolve the PR number for the events whose payload doesn't carry it, so `label-resolved` can key
+  # its concurrency on the result. See the `label` job above for why this exists for these events only.
+  resolve:
+    if: >
+      github.repository == 'TauCetiProject/TauCeti' && (
+        github.event_name == 'workflow_dispatch'
+        || (github.event_name == 'workflow_run'
+            && github.event.workflow_run.event == 'pull_request_target'
+            && github.event.workflow_run.pull_requests[0] == null)
       )
     runs-on: ubuntu-latest
     outputs:
@@ -84,32 +148,24 @@ jobs:
           REPO: ${{ github.repository }}
           EVENT: ${{ github.event_name }}
           WF_HEAD: ${{ github.event.workflow_run.head_sha }}
-          WF_PR: ${{ github.event.workflow_run.pull_requests[0].number }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
           INPUT_PR: ${{ github.event.inputs.pr }}
         run: |
           set -euo pipefail
           case "$EVENT" in
-            pull_request_target) pr="$PR_NUMBER" ;;
-            issue_comment)       pr="$ISSUE_NUMBER" ;;
             workflow_dispatch)   pr="$INPUT_PR" ;;
             workflow_run)
-              pr="$WF_PR"
-              if [ -z "$pr" ]; then
-                # Fork PRs leave pull_requests[] empty, and GitHub's
-                # commits/<sha>/pulls endpoint need not associate their head
-                # commit with the base repository. Scan every open PR instead
-                # and accept EXACTLY ONE head-SHA match, so an ambiguous match
-                # can never label the wrong PR.
-                matches=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
-                  --jq ".[] | select(.head.sha == \"$WF_HEAD\") | .number")
-                mapfile -t prs <<< "$matches"
-                if [ -n "$matches" ] && [ "${#prs[@]}" -eq 1 ]; then
-                  pr="${prs[0]}"
-                else
-                  pr=""
-                fi
+              # This job only runs when pull_requests[] came back empty, which is
+              # what a fork PR looks like, and GitHub's commits/<sha>/pulls
+              # endpoint need not associate a fork's head commit with the base
+              # repository. Scan every open PR instead and accept EXACTLY ONE
+              # head-SHA match, so an ambiguous match can never label the wrong PR.
+              matches=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+                --jq ".[] | select(.head.sha == \"$WF_HEAD\") | .number")
+              mapfile -t prs <<< "$matches"
+              if [ -n "$matches" ] && [ "${#prs[@]}" -eq 1 ]; then
+                pr="${prs[0]}"
+              else
+                pr=""
               fi
               ;;
           esac
@@ -120,12 +176,13 @@ jobs:
             echo "no single PR resolved (pr='${pr:-}'); skipping"
           fi
 
-  label:
+  # Identical to `label` above except that the number comes from `resolve`; change the two together.
+  label-resolved:
     needs: resolve
     if: needs.resolve.outputs.pr != ''
     runs-on: ubuntu-latest
-    # Serialize all events for one PR on its resolved number. Don't cancel: each run reconciles fresh
-    # truth and we want the last word, not a dropped one.
+    # The same group as `label`, so the two paths serialize against each other. See that job for why
+    # cancel-in-progress stays false.
     concurrency:
       group: pr-labels-${{ needs.resolve.outputs.pr }}
       cancel-in-progress: false
@@ -151,18 +208,19 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}
           PR: ${{ needs.resolve.outputs.pr }}
-          # Fast-path the PR's state from the event payload (no /pulls API call); only
-          # pull_request_target carries a pull_request object, other events leave these empty and the
-          # script falls back to the REST API. Passed via env (never interpolated into the shell).
-          PR_STATE: ${{ github.event.pull_request.state }}
-          PR_MERGED: ${{ github.event.pull_request.merged }}
-          PR_HEAD: ${{ github.event.pull_request.head.sha }}
         run: python3 scripts/pr_status/labels.py reconcile "$PR"
 
   # Scheduled backstop: reconcile the PRs currently carrying review-in-progress, so an expired
   # in-flight marker (a crashed review) drops the label even though nothing else fired. It is the only
-  # label that can go stale with no event; the other four are always refreshed by a build/scoreboard/PR
-  # event. Its own concurrency group keeps two sweeps from overlapping.
+  # label that can go stale with no event; the other five are always refreshed by a build/scoreboard/PR
+  # event. Note the deliberately narrow scope -- this is NOT a general repair pass over every open PR,
+  # so nothing here rescues a PR whose label is wrong for some other reason.
+  #
+  # Its own concurrency group keeps two sweeps from overlapping. It is a different group from the
+  # per-PR one, so a sweep CAN run alongside a per-PR job for a PR it happens to be reconciling. That
+  # is tolerable rather than intended: both are convergent reconcilers reading live truth, so the
+  # worst case is a PR that briefly shows two labels until the next event settles it. Closing the gap
+  # properly means one job per swept PR, which costs more runner time than the drift is worth.
   sweep:
     if: github.event_name == 'schedule' && github.repository == 'TauCetiProject/TauCeti'
     runs-on: ubuntu-latest

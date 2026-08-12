@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.RingTheory.Huber.Basic
-public import TauCeti.RingTheory.Valuation.Continuous
+public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
 /-!
 # Continuity of a valuation on a Huber ring
