@@ -5,18 +5,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Positive
+import TauCeti.LinearAlgebra.RootSystem.Lowering
 
 /-!
 # The Kostant partition function
 
-The Kostant partition function `P(ν)` counts the ways of writing an element `ν` of the weight
-space as a sum of positive roots with multiplicity. This file defines it for a base of an
-arbitrary root pairing, together with the finiteness statement that makes the count meaningful.
+The Kostant partition function `P(ν)` counts the ways of writing an element `ν` of the ambient root
+module as a sum of positive roots with multiplicity. This file defines it for a base of an arbitrary
+root pairing, together with the finiteness statement that makes the count meaningful.
 
 The multiplicities are recorded as a function `c : ι → ℕ` on root indices, supported on the
 positive roots, and `TauCeti.IsKostantPartition P b ν c` says that `∑ᵢ cᵢ αᵢ = ν`. There are
-infinitely many functions `ι → ℕ` even for a finite index type, so finiteness must be proved before
-`Nat.card` gives the intended finite count. The theorem
+not necessarily finitely many functions `ι → ℕ` when the index type is finite, so finiteness must be
+proved before `Nat.card` represents the intended finite cardinality. The theorem
 `TauCeti.finite_setOf_isKostantPartition` supplies this proof.
 
 The bound comes from a fact about heights that is worth isolating, since it has nothing to do with
@@ -34,8 +35,6 @@ multiplicity, and hence each multiplicity, of every other partition of `ν`.
 
 ## Main results
 
-* `TauCeti.sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero`: heights respect integral relations
-  among roots.
 * `TauCeti.sum_natCast_mul_height_eq_of_isKostantPartition`: two Kostant partitions of the same
   element have the same total height.
 * `TauCeti.finite_setOf_isKostantPartition`: an element has only finitely many Kostant partitions.
@@ -73,51 +72,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N] [CharZero R]
   (P : RootPairing ι R M N) (b : P.Base)
 
-/-! ## Height and integral relations among roots -/
-
-/-- **Height respects integral relations among roots.** If an integral combination of roots
-vanishes, then the same combination of their heights vanishes.
-
-Expanding each root in the simple roots turns the relation into one among the simple roots, whose
-coefficients then vanish by linear independence; summing those coefficients over the simple roots
-recovers the combination of heights, because the height of a root is by definition the sum of its
-simple coordinates. -/
-theorem sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero {s : Finset ι} {e : ι → ℤ}
-    (he : ∑ i ∈ s, e i • P.root i = 0) :
-    ∑ i ∈ s, e i * b.height i = 0 := by
-  classical
-  choose g _hgsupp _hgsign hg using fun i : ι ↦ b.exists_root_eq_sum_int i
-  have hcomb : ∑ j ∈ b.support, (∑ i ∈ s, e i * g i j) • P.root j = 0 := by
-    rw [← he]
-    simp_rw [Finset.sum_smul, mul_smul]
-    rw [Finset.sum_comm]
-    exact Finset.sum_congr rfl fun i _ ↦ by rw [← Finset.smul_sum, ← hg i]
-  have hczero : ∀ j ∈ b.support, (∑ i ∈ s, e i * g i j) = 0 :=
-    linearIndepOn_iff'.mp (b.linearIndepOn_root.restrict_scalars' ℤ) b.support
-      (fun j ↦ ∑ i ∈ s, e i * g i j) subset_rfl hcomb
-  calc ∑ i ∈ s, e i * b.height i
-      = ∑ i ∈ s, ∑ j ∈ b.support, e i * g i j :=
-        Finset.sum_congr rfl fun i _ ↦ by rw [b.height_eq_sum (hg i), Finset.mul_sum]
-    _ = ∑ j ∈ b.support, ∑ i ∈ s, e i * g i j := Finset.sum_comm
-    _ = 0 := Finset.sum_eq_zero hczero
-
-/-- Two integral combinations of roots with the same value have the same combination of heights:
-the height of an element of the root lattice does not depend on how it is written. -/
-theorem sum_mul_height_eq_of_sum_zsmul_root_eq {s : Finset ι} {e f : ι → ℤ}
-    (h : ∑ i ∈ s, e i • P.root i = ∑ i ∈ s, f i • P.root i) :
-    ∑ i ∈ s, e i * b.height i = ∑ i ∈ s, f i * b.height i := by
-  have h0 : ∑ i ∈ s, (e i - f i) • P.root i = 0 := by
-    simp_rw [sub_smul, Finset.sum_sub_distrib, h, sub_self]
-  have key := sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero P b h0
-  simp_rw [sub_mul, Finset.sum_sub_distrib, sub_eq_zero] at key
-  exact key
-
-/-- A positive root has height at least one, its height being a positive integer. -/
-theorem one_le_height_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) : 1 ≤ b.height i := by
-  have h : b.IsPos i := (mem_posRoots P b i).mp hi
-  rw [RootPairing.Base.isPos_iff] at h
-  omega
-
 /-! ## Kostant partitions -/
 
 variable [Finite ι]
@@ -129,7 +83,7 @@ def IsKostantPartition (ν : M) (c : ι → ℕ) : Prop :=
 
 /-- A multiplicity function is a Kostant partition exactly when it is supported on the positive
 roots and its weighted root sum is the element being partitioned. -/
-theorem isKostantPartition_iff (ν : M) (c : ι → ℕ) :
+@[simp] theorem isKostantPartition_iff (ν : M) (c : ι → ℕ) :
     IsKostantPartition P b ν c ↔
       support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν :=
   Iff.rfl
@@ -155,26 +109,24 @@ theorem sum_natCast_mul_height_eq_of_isKostantPartition {ν : M} {c c' : ι → 
 
 variable (P b)
 
-/-- Every term of the total height of a multiplicity function is nonnegative. -/
-theorem natCast_mul_height_nonneg (c : ι → ℕ) (i : ι) (hi : i ∈ posRootsFinset P b) :
+private lemma natCast_mul_height_nonneg (c : ι → ℕ) (i : ι) (hi : i ∈ posRootsFinset P b) :
     0 ≤ (c i : ℤ) * b.height i := by
   have h := one_le_height_of_mem_posRoots P b ((mem_posRootsFinset P b i).mp hi)
   exact mul_nonneg (Int.natCast_nonneg _) (by omega)
 
-/-- **Each multiplicity is bounded by the total height.** Positive roots have height at least one,
-so a single multiplicity never exceeds the whole weighted height sum. -/
-theorem natCast_le_sum_natCast_mul_height (c : ι → ℕ) {i : ι} (hi : i ∈ posRootsFinset P b) :
+private lemma natCast_le_sum_natCast_mul_height (c : ι → ℕ) {i : ι}
+    (hi : i ∈ posRootsFinset P b) :
     (c i : ℤ) ≤ ∑ k ∈ posRootsFinset P b, (c k : ℤ) * b.height k := by
   refine le_trans ?_ (Finset.single_le_sum (natCast_mul_height_nonneg P b c) hi)
   exact le_mul_of_one_le_right (Int.natCast_nonneg _)
     (one_le_height_of_mem_posRoots P b ((mem_posRootsFinset P b i).mp hi))
 
-/-- **An element has only finitely many Kostant partitions.** If there is one, its total height
-bounds every multiplicity of every other one, so all of them lie in a fixed finite box. -/
+/-- An element has only finitely many Kostant partitions. -/
 theorem finite_setOf_isKostantPartition (ν : M) :
     {c : ι → ℕ | IsKostantPartition P b ν c}.Finite := by
   by_cases hne : ∃ c₀, IsKostantPartition P b ν c₀
   · obtain ⟨c₀, hc₀⟩ := hne
+    -- The total height of `c₀` bounds every coordinate of every other partition.
     refine Set.Finite.subset (Set.Finite.pi fun _ : ι ↦ Set.finite_Iic
       (∑ k ∈ posRootsFinset P b, (c₀ k : ℤ) * b.height k).toNat) ?_
     intro c hc i _
@@ -194,8 +146,8 @@ theorem finite_setOf_isKostantPartition (ν : M) :
     rw [hempty]
     exact Set.finite_empty
 
-/-- The Kostant partitions of an element form a finite type, which is what makes the Kostant
-partition function below a natural number. -/
+/-- The Kostant partitions of an element form a finite type, so their `Nat.card` is their finite
+cardinality. -/
 instance instFiniteSubtypeIsKostantPartition (ν : M) :
     Finite {c : ι → ℕ // IsKostantPartition P b ν c} :=
   (finite_setOf_isKostantPartition P b ν).to_subtype
@@ -205,20 +157,11 @@ positive roots with multiplicity. -/
 noncomputable def kostantPartition (ν : M) : ℕ :=
   Nat.card {c : ι → ℕ // IsKostantPartition P b ν c}
 
-/-- The Kostant partition function is the cardinality of the type of Kostant partitions. -/
-theorem kostantPartition_def (ν : M) :
-    kostantPartition P b ν = Nat.card {c : ι → ℕ // IsKostantPartition P b ν c} :=
-  by rw [kostantPartition]
-
 /-- The Kostant partition function is positive exactly on the elements that are a sum of positive
 roots. -/
 @[simp] theorem kostantPartition_pos_iff (ν : M) :
     0 < kostantPartition P b ν ↔ ∃ c, IsKostantPartition P b ν c := by
-  refine ⟨fun h ↦ ?_, fun ⟨c, hc⟩ ↦ ?_⟩
-  · obtain ⟨⟨c, hc⟩⟩ := (Nat.card_pos_iff.mp h).1
-    exact ⟨c, hc⟩
-  · have : Nonempty {c : ι → ℕ // IsKostantPartition P b ν c} := ⟨⟨c, hc⟩⟩
-    exact Nat.card_pos
+  rw [kostantPartition, Finite.card_pos_iff, nonempty_subtype]
 
 /-- The Kostant partition function vanishes exactly off the set of sums of positive roots. -/
 @[simp] theorem kostantPartition_eq_zero_iff (ν : M) :
@@ -227,11 +170,11 @@ roots. -/
 
 /-! ## The two smallest values -/
 
-/-- **The empty partition is the only partition of zero.** A nonzero multiplicity would contribute
-a positive amount to the total height, which is zero. -/
+/-- The zero multiplicity function is the unique Kostant partition of zero. -/
 @[simp] theorem isKostantPartition_zero_iff {c : ι → ℕ} :
     IsKostantPartition P b (0 : M) c ↔ c = 0 := by
   refine ⟨fun hc ↦ ?_, ?_⟩
+  -- A nonzero multiplicity would contribute positively to the total height.
   · have h0 : ∑ i ∈ posRootsFinset P b, (c i : ℤ) * b.height i = 0 :=
       sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero P b
         (sum_zsmul_root_of_isKostantPartition hc)
@@ -276,12 +219,11 @@ theorem kostantPartition_root_pos {i : ι} (hi : i ∈ posRoots P b) :
   classical
   exact (kostantPartition_pos_iff P b _).mpr ⟨_, isKostantPartition_single P b hi⟩
 
-/-- **A simple root is a sum of positive roots in only the obvious way.** Every positive root has
-height at least one and the simple root has height one, so a partition of it uses exactly one root,
-with multiplicity one; that root then has the same root vector, hence the same index. -/
-theorem isKostantPartition_root_eq_single_of_mem_support [DecidableEq ι] {i : ι}
+/-- Every Kostant partition of a simple root is its singleton partition. -/
+theorem eq_single_of_isKostantPartition_root_of_mem_support [DecidableEq ι] {i : ι}
     (hi : i ∈ b.support) {c : ι → ℕ} (hc : IsKostantPartition P b (P.root i) c) :
     c = Pi.single i 1 := by
+  -- Total height one forces exactly one positive root to occur, with multiplicity one.
   have hipos : i ∈ posRoots P b := support_subset_posRoots P b hi
   have hheight : ∑ k ∈ posRootsFinset P b, (c k : ℤ) * b.height k = 1 := by
     rw [sum_natCast_mul_height_eq_of_isKostantPartition hc (isKostantPartition_single P b hipos),
@@ -333,7 +275,7 @@ theorem isKostantPartition_root_eq_single_of_mem_support [DecidableEq ι] {i : �
   have hipos : i ∈ posRoots P b := support_subset_posRoots P b hi
   rw [kostantPartition, Nat.card_eq_one_iff_unique]
   refine ⟨⟨fun x y ↦ Subtype.ext ?_⟩, ⟨⟨_, isKostantPartition_single P b hipos⟩⟩⟩
-  exact (isKostantPartition_root_eq_single_of_mem_support P b hi x.2).trans
-    (isKostantPartition_root_eq_single_of_mem_support P b hi y.2).symm
+  exact (eq_single_of_isKostantPartition_root_of_mem_support P b hi x.2).trans
+    (eq_single_of_isKostantPartition_root_of_mem_support P b hi y.2).symm
 
 end TauCeti
