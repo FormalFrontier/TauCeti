@@ -37,6 +37,11 @@ relations, regarded as a set, defines `TauCeti.GroupPresentation.Group` using Ma
 * `TauCeti.GroupPresentation.Group`: the group defined by the presentation.
 * `TauCeti.GroupPresentation.matchesMetadata`: the decidable generator and relator count check.
 
+## Main results
+
+* `TauCeti.GroupPresentation.relatorSet_eq_relatorSet_transcribed`: the relations of a presentation
+  are the relator set of its transcribed expressions.
+
 ## References
 
 This file implements the finite-presentation metadata format in milestone S0 of
@@ -178,6 +183,20 @@ discharging the relations of `PresentedGroup` never has to unfold the compiler. 
 theorem mem_relatorSet_iff (P : GroupPresentation) (r : FreeGroup (Fin P.generatorCount)) :
     r ∈ P.relatorSet ↔ ∃ t ∈ P.transcribed, t.toFreeGroup = r := by
   simp [relatorSet]
+
+/-- The relations of a presentation are the relator set of its transcribed expressions.
+
+This is the bridge between the presentation-level relation set and `TauCeti.Relator.relatorSet`,
+the notion in which the relator lists of a transcription are built and reasoned about, so a
+consumer relating the two never has to re-derive the identification by extensionality.
+
+It is deliberately not `@[simp]`: `mem_relatorSet_iff` above is the simp normal form of a
+membership in `relatorSet`, and rewriting the set itself would take that lemma's left-hand side out
+of normal form, which the `simpNF` linter rejects. -/
+theorem relatorSet_eq_relatorSet_transcribed (P : GroupPresentation) :
+    P.relatorSet = Relator.relatorSet P.transcribed := by
+  ext r
+  simp
 
 /-- The group defined by the generators and compiled relations of a presentation. -/
 abbrev Group (P : GroupPresentation) : Type :=

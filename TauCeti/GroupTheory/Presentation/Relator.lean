@@ -29,9 +29,12 @@ from Mathlib.
 * `TauCeti.PresentationWord`: Mathlib's left-to-right list of signed generators.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
+* `TauCeti.Relator.length`: the length of that word, computed from the expression without
+  expanding powers.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
 * `TauCeti.Relator.conj` and `TauCeti.Relator.div`: the conjugate `s⁻¹ r s` and the relator `r s⁻¹`
   by which a source states an equation between two words.
+* `TauCeti.Relator.relatorSet`: the free-group elements denoted by a list of expressions.
 
 ## Main result
 
@@ -84,7 +87,8 @@ namespace Relator
 /-- Compile a relator expression to a flat signed word.
 
 Inversion uses Mathlib's `FreeGroup.invRev`, which reverses the word and flips every sign. Powers
-are compiled by repeating the whole word, rather than by expanding the expression recursively. -/
+are compiled by repeating the whole word, rather than by expanding the expression recursively. The
+five equation lemmas below are the public interface: the body itself stays private. -/
 def toWord {α : Type*} : Relator α → PresentationWord α
   | .gen x => [(x, true)]
   | .inv r => FreeGroup.invRev r.toWord
@@ -123,8 +127,68 @@ theorem toWord_comm {α : Type*} (r s : Relator α) :
       ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++ FreeGroup.invRev s.toWord := by
   rw [toWord]
 
+/-- The number of signed letters in the compiled word of a relator expression, read off the
+expression itself rather than from the compiled list.
+
+A transcribed presentation checks its published letter count against
+`TauCeti.GroupPresentation.totalLength`. Computing that count through `Relator.toWord` alone forces
+every power to be expanded, which for a relator such as `(adefcefgh)³⁹` is hundreds of signed-letter
+constructors; this function multiplies instead of repeating, and `TauCeti.Relator.length_toWord`
+certifies that the two agree.
+
+The five equations below are the interface: a module carrying transcribed relators rewrites with
+them rather than unfolding this definition. -/
+def length {α : Type*} : Relator α → ℕ
+  | .gen _ => 1
+  | .inv r => r.length
+  | .mul r s => r.length + s.length
+  | .pow r n => n * r.length
+  | .comm r s => r.length + s.length + r.length + s.length
+
+/-- The structural length of a generator. -/
+@[simp]
+theorem length_gen {α : Type*} (x : α) : (Relator.gen x).length = 1 := by
+  rw [length]
+
+/-- The structural length of an inverse. -/
+@[simp]
+theorem length_inv {α : Type*} (r : Relator α) : (Relator.inv r).length = r.length := by
+  rw [length]
+
+/-- The structural length of a product. -/
+@[simp]
+theorem length_mul {α : Type*} (r s : Relator α) :
+    (Relator.mul r s).length = r.length + s.length := by
+  rw [length]
+
+/-- The structural length of a natural power. -/
+@[simp]
+theorem length_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (Relator.pow r n).length = n * r.length := by
+  rw [length]
+
+/-- The structural length of a commutator. -/
+@[simp]
+theorem length_comm {α : Type*} (r s : Relator α) :
+    (Relator.comm r s).length = r.length + s.length + r.length + s.length := by
+  rw [length]
+
+/-- **The structural length is the length of the compiled word.**
+
+This is stated in the direction that rewrites away `Relator.toWord`, so a letter count of a
+transcribed presentation reduces to arithmetic on the transcribed expressions. -/
+@[simp]
+theorem length_toWord {α : Type*} (r : Relator α) : r.toWord.length = r.length := by
+  induction r with
+  | gen => simp
+  | inv r ih => simp [FreeGroup.invRev, ih]
+  | mul r s ihr ihs => simp [ihr, ihs]
+  | pow r n ih => simp [List.length_flatten, List.sum_replicate, ih]
+  | comm r s ihr ihs => simp [FreeGroup.invRev, ihr, ihs, Nat.add_assoc]
+
 /-- Interpret a relator expression directly in the free group. This is deliberately independent of
-`Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. -/
+`Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. As for
+`Relator.toWord`, the five equation lemmas below are the public interface. -/
 def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .gen x => FreeGroup.of x
   | .inv r => r.toFreeGroup⁻¹
@@ -219,6 +283,21 @@ theorem toFreeGroup_comm_inv_inv {α : Type*} (r s : Relator α) :
       r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
   rw [toFreeGroup_comm, toFreeGroup_inv, toFreeGroup_inv, commutatorElement_def, inv_inv, inv_inv]
 
+/-- The free-group elements denoted by a list of relator expressions. -/
+def relatorSet {α : Type*} (l : List (Relator α)) : Set (FreeGroup α) :=
+  toFreeGroup '' {x | x ∈ l}
+
+@[simp]
+theorem mem_relatorSet {α : Type*} {l : List (Relator α)} {r : FreeGroup α} :
+    r ∈ relatorSet l ↔ ∃ t ∈ l, t.toFreeGroup = r :=
+  Iff.rfl
+
+/-- Appending relator lists unions their relator sets. -/
+@[simp]
+theorem relatorSet_append {α : Type*} (l l' : List (Relator α)) :
+    relatorSet (l ++ l') = relatorSet l ∪ relatorSet l' := by
+  simp only [relatorSet, List.mem_append, Set.ofPred_or, Set.image_union]
+
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
 Consequently, a reviewer may check the structured `Relator` against a published presentation while
@@ -228,12 +307,12 @@ theorem toWord_toFreeGroup {α : Type*} (r : Relator α) :
     FreeGroup.mk r.toWord = r.toFreeGroup := by
   induction r with
   | gen => rfl
-  | inv r ih => rw [toWord, toFreeGroup, ← FreeGroup.inv_mk, ih]
-  | mul r s ihr ihs => rw [toWord, toFreeGroup, ← FreeGroup.mul_mk, ihr, ihs]
-  | pow r n ih => rw [toWord, toFreeGroup, ← FreeGroup.pow_mk, ih]
+  | inv r ih => rw [toWord_inv, toFreeGroup_inv, ← FreeGroup.inv_mk, ih]
+  | mul r s ihr ihs => rw [toWord_mul, toFreeGroup_mul, ← FreeGroup.mul_mk, ihr, ihs]
+  | pow r n ih => rw [toWord_pow, toFreeGroup_pow, ← FreeGroup.pow_mk, ih]
   | comm r s ihr ihs =>
-    rw [toWord, toFreeGroup, commutatorElement_def, ← FreeGroup.mul_mk, ← FreeGroup.mul_mk,
-      ← FreeGroup.mul_mk, ← FreeGroup.inv_mk, ← FreeGroup.inv_mk, ihr, ihs]
+    rw [toWord_comm, toFreeGroup_comm, commutatorElement_def, ← FreeGroup.mul_mk,
+      ← FreeGroup.mul_mk, ← FreeGroup.mul_mk, ← FreeGroup.inv_mk, ← FreeGroup.inv_mk, ihr, ihs]
 
 end Relator
 

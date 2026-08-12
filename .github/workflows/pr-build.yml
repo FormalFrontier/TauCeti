@@ -219,6 +219,29 @@ jobs:
           # mapping yet. Harmless (just a slightly deeper fetch) when the cache is off.
           fetch-depth: 100
 
+      # Pin the new build/watchdog scripts to the commit that supplied this
+      # workflow. This matters during first rollout and historical manual
+      # dispatches, where the PR's base predates those scripts. For normal
+      # pull_request_target and merge_group events github.workflow_sha is the
+      # trusted base-defined workflow commit, never the candidate checkout.
+      - name: Checkout workflow-pinned trusted build tooling
+        if: ${{ env.INFRA != '1' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: gate
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Stage workflow-pinned build tooling into the trusted base
+        if: ${{ env.INFRA != '1' }}
+        run: |
+          set -euo pipefail
+          rm -rf base/scripts/perf
+          cp -a gate/scripts/perf base/scripts/perf
+          cp gate/scripts/sandbox-build.sh base/scripts/sandbox-build.sh
+          cp gate/scripts/lint-env.sh base/scripts/lint-env.sh
+
       - name: Checkout merge-base config (trusted ancestor — only to scope the PR's pin delta)
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
         uses: actions/checkout@v4
@@ -542,6 +565,16 @@ jobs:
             } >> "$GITHUB_ENV"
           fi
 
+      - name: Prepare trusted read-only Lean watchdog toolchain
+        if: ${{ env.INFRA != '1' }}
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          real_lean=$(cd base && elan which lean)
+          watchdog="$RUNNER_TEMP/lean-watchdog-toolchain"
+          bash base/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
+          echo "WATCHDOG_TOOLCHAIN=$watchdog" >> "$GITHUB_ENV"
+
       - name: Build (trusted config + overlaid TauCeti/) under landrun, offline
         id: build
         if: ${{ env.INFRA != '1' }}
@@ -560,9 +593,11 @@ jobs:
           # early and reddened every PR build (#694). All prose now lives in the script.
           landrun --rox /usr --rox /etc \
             --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
-            --rox "$HOME/.elan" --rox "$PWD/base" --rw "$PWD/base/.lake" \
+            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
+            --rox "$PWD/base" --rw "$PWD/base/.lake" \
             --env PATH --env HOME --env CI \
             --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
+            --env WATCHDOG_TOOLCHAIN \
             -- bash -euxo pipefail -c 'cd base && exec bash scripts/sandbox-build.sh'
 
       - name: Report build and bump-guard statuses to the PR head commit
