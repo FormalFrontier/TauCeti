@@ -404,20 +404,20 @@ def HasLipschitzDerivOnEachSideAt (γ : ℝ → ℂ) (t : ℝ) : Prop :=
     DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
       (Icc (t - εL) t)
 
-/-- **Eliminating `HasLipschitzDerivOnEachSideAt` into its one-sided witnesses.** The
-characteristic destructor for the opaque `def` above: exposes the `εR`/`KR`-window to the right
-and the `εL`/`KL`-window to the left as a plain nested existential, for a caller (e.g. via
-`choose!`) that needs to name the witnesses rather than only invoke the corner boundedness result
-directly. -/
-theorem HasLipschitzDerivOnEachSideAt.exists_lipschitzOnWith {γ : ℝ → ℂ} {t : ℝ}
-    (h : HasLipschitzDerivOnEachSideAt γ t) :
+/-- **The characteristic iff for `HasLipschitzDerivOnEachSideAt`.** Equates the opaque `def` above
+with its displayed one-sided witness proposition, exposing the `εR`/`KR`-window to the right and
+the `εL`/`KL`-window to the left as a plain nested existential -- the introduction/elimination
+interface a caller (e.g. via `choose!`) uses to name the witnesses, or to build the predicate from
+them directly, rather than unfolding the `def`. -/
+@[simp] theorem hasLipschitzDerivOnEachSideAt_iff {γ : ℝ → ℂ} {t : ℝ} :
+    HasLipschitzDerivOnEachSideAt γ t ↔
     ∃ εR > 0, ∃ KR : ℝ≥0,
       DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
         (Icc t (t + εR)) ∧
       ∃ εL > 0, ∃ KL : ℝ≥0,
       DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
         (Icc (t - εL) t) :=
-  h
+  Iff.rfl
 
 /-- **Introducing `HasLipschitzDerivOnEachSideAt` from one-sided `C^{1,1}` data on arbitrary
 pieces.** If `γ` is differentiable with Lipschitz `derivWithin` on `[c, t]` and on `[t, d]`, `t`

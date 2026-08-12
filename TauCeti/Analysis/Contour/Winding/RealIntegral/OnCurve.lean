@@ -76,9 +76,10 @@ theorem) and deriving the real winding integrand's boundedness and interval-inte
 the crossing regularity rather than assuming them, via `Winding.LipschitzBoundedIntegrand`'s
 one-sided bounds instantiating `Crossing.PVAggregation`'s generic sorted-crossing-list gluing
 induction (`sorted_crossing_gluing_induction`) with that integrability invariant -- the first
-consumer of that combinator outside its own file, which uses the same induction shape by hand for
-its own per-crossing-window construction rather than through the generic combinator; the assembly
-of all of the above into the final formula is this file's content too. The per-crossing window
+consumer of that combinator outside its own file, instantiating it directly for its own
+per-crossing-window integrability construction rather than re-deriving the induction shape by
+hand; the assembly of all of the above into the final formula is this file's content too. The
+per-crossing window
 value this file reads off (`exists_radius_perWindow_tendsto_log_norm_add_arg`), with both its
 real and imaginary parts, is proved once, generically, in `InvSubCPVExistence`.
 
@@ -216,7 +217,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
   -- each side already buys on a (possibly smaller) one-sided window. Each side's forced non-zero
   -- velocity is not assumed here -- `IsPwC1ImmersionOn` already forces it.
   choose! εR hεR_pos _ hdiffR hlipR εL hεL_pos _ hdiffL hlipL using fun t₀ (ht₀ : t₀ ∈ T) =>
-    (hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2).exists_lipschitzOnWith
+    hasLipschitzDerivOnEachSideAt_iff.mp (hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
   have h_Ico : ∀ t ∈ T, t ∈ Ico (min a b) (max a b) := fun t ht => by
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1.le, (h_Ioo t ht).2⟩
   have h_Ioc : ∀ t ∈ T, t ∈ Ioc (min a b) (max a b) := fun t ht => by

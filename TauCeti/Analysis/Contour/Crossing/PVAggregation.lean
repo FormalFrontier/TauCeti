@@ -47,7 +47,7 @@ simple-pole and higher-order per-window theorems both discharge them.
   value. Weaker than the telescoping form's shared complex antiderivative `Φ`, so it applies even
   when different windows need different branch choices for their imaginary part.
 * `Contour.sorted_crossing_gluing_induction` — the sorted-crossing-list geometry underlying all
-  four theorems above, generalized to an arbitrary invariant `Q : ℝ → ℝ → Prop` closed under
+  aggregation theorems above, generalized to an arbitrary invariant `Q : ℝ → ℝ → Prop` closed under
   concatenation; every consumer instantiates it, including the value-carrying ones (existential
   `HasCauchyPVAt` witnesses, or a known closed form), so none needs its own copy of the
   recursion.
