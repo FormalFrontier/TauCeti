@@ -267,27 +267,6 @@ theorem isSemisimple_isUnipotent_unique (g s u : WithConv (H →ₐ[k] K))
     intro x
     exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).2
 
-/-- The canonical point-level Jordan decomposition has the defining semisimple, unipotent,
-commutation, and product properties. -/
-theorem jordanDecomposition_spec (g : WithConv (H →ₐ[k] K)) :
-    (∀ M : FGComoduleCat.{u, u, u} k H,
-      GeneralLinearGroup.IsSemisimple
-        (LinearMap.GeneralLinearGroup.ofLinearEquiv
-          (Comodule.pointsAction M (jordanDecomposition k H K g).1))) ∧
-      (∀ M : FGComoduleCat.{u, u, u} k H,
-        GeneralLinearGroup.IsUnipotent
-          (LinearMap.GeneralLinearGroup.ofLinearEquiv
-            (Comodule.pointsAction M (jordanDecomposition k H K g).2))) ∧
-      Commute (jordanDecomposition k H K g).1 (jordanDecomposition k H K g).2 ∧
-      g = (jordanDecomposition k H K g).1 * (jordanDecomposition k H K g).2 := by
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · intro M
-    exact isSemisimple_pointsAction_semisimplePart k H K g M
-  · intro M
-    exact isUnipotent_pointsAction_unipotentPart k H K g M
-  · exact commute_semisimplePart_unipotentPart k H K g
-  · exact (semisimplePart_mul_unipotentPart k H K g).symm
-
 /-- A pair is the canonical point-level Jordan decomposition exactly when it is a commuting
 semisimple-unipotent factorization in every finite-dimensional comodule. -/
 theorem eq_jordanDecomposition_iff (g s u : WithConv (H →ₐ[k] K)) :
@@ -305,7 +284,13 @@ theorem eq_jordanDecomposition_iff (g s u : WithConv (H →ₐ[k] K)) :
     have hu : u = (jordanDecomposition k H K g).2 := congrArg Prod.snd h
     subst s
     subst u
-    exact jordanDecomposition_spec k H K g
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro M
+      exact isSemisimple_pointsAction_semisimplePart k H K g M
+    · intro M
+      exact isUnipotent_pointsAction_unipotentPart k H K g M
+    · exact commute_semisimplePart_unipotentPart k H K g
+    · exact (semisimplePart_mul_unipotentPart k H K g).symm
   · intro h
     have h_unique := isSemisimple_isUnipotent_unique k H K g s u h.2.2.1 h.2.2.2.symm
       h.1 h.2.1
