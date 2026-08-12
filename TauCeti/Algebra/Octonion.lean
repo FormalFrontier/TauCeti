@@ -30,8 +30,8 @@ ring `Octonion R` is trivial and hence both.
 
 Zorn's model is used rather than a Cayley--Dickson doubling of the split quaternions because the two
 produce the same algebra while the vector matrices carry the norm form on their sleeve: `N` is a
-determinant, and its multiplicativity reduces to polynomial identities in the eight coordinates of
-each factor.
+determinant, and its multiplicativity reduces to Mathlib's scalar quadruple product identity
+`Matrix.cross_dot_cross`.
 
 Everything is stated over a commutative ring; no field, characteristic or closedness hypothesis is
 needed for the algebra structure, the conjugation, or the norm. Only the two dimension counts
@@ -66,11 +66,16 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 
 ## Implementation notes
 
-Every identity below is a polynomial identity in the coordinates of its arguments, so the proofs
-all run the same way: a private coordinate extensionality lemma splits an equation of octonions
-into its eight scalar coordinates, the file-local simp set expands the dot and cross products of
-`Fin 3 → R` into those coordinates through Mathlib's `Matrix.vec3_dotProduct` and
-`Matrix.cross_apply`, and `ring` finishes.
+Almost every identity below is proved without ever looking at a coordinate: `Octonion.ext` splits an
+equation of octonions into its four entries, a file-local simp set pushes the dot and cross products
+of `Fin 3 → R` through the linear combinations that make up an entry of a product and reduces the
+compound products that survive by Mathlib's `Matrix.cross_dot_cross`,
+`Matrix.cross_cross_eq_smul_sub_smul` and `Matrix.cross_cross_eq_smul_sub_smul'`, and `module` or
+`ring` finishes. The two Moufang identities proved directly are the exception: they need relations
+special to three coordinates that Mathlib does not name, so they — and the worked examples — expand
+the vector entries into coordinates through `Matrix.vec3_dotProduct` and `Matrix.cross_apply`, with
+a private coordinate extensionality lemma splitting an equation of octonions into its eight scalar
+coordinates.
 
 No definition here is exposed: consumers work through the projection `simp` lemmas rather than
 through any definition body. The additive and module structures are built directly on the
@@ -122,8 +127,8 @@ namespace Octonion
 variable {R S : Type*}
 
 /-- Two vector matrices agreeing in each of their eight scalar coordinates are equal. This is the
-form of extensionality the coordinate computations below use; it is private, since `Octonion.ext` is
-the extensionality lemma consumers want. -/
+form of extensionality the coordinate computations of the Moufang identities use; it is private,
+since `Octonion.ext` is the extensionality lemma consumers want. -/
 private theorem ext_coords {x y : Octonion R} (ha : x.a = y.a) (hb : x.b = y.b)
     (hv₀ : x.v 0 = y.v 0) (hv₁ : x.v 1 = y.v 1) (hv₂ : x.v 2 = y.v 2)
     (hw₀ : x.w 0 = y.w 0) (hw₁ : x.w 1 = y.w 1) (hw₂ : x.w 2 = y.w 2) : x = y := by
@@ -264,32 +269,45 @@ instance : Mul (Octonion R) :=
 @[simp] theorem mul_w (x y : Octonion R) :
     (x * y).w = y.a • x.w + x.b • y.w + x.v ⨯₃ y.v := (rfl)
 
-/- The coordinate simp set: dot products are expanded by Mathlib's `Matrix.vec3_dotProduct`, cross
-products by Mathlib's `Matrix.cross_apply`. The latter rewrites `u ⨯₃ t` to a `![…]` literal, and
-such a literal meeting the generic vector entries of a product fires `Matrix.sub_cons`,
-`Matrix.head_add` and `Matrix.dotProduct_cons`, which re-express the coordinates as
-`vecHead`/`vecTail` towers; unfolding those two definitions turns the towers back into the
-coordinates `u 0`, `u 1`, `u 2`, so that `ring` sees one atom per coordinate. -/
-attribute [local simp] vec3_dotProduct cross_apply Matrix.vecHead Matrix.vecTail
+/- The vector simp set. Dot and cross products are pushed through the linear combinations that make
+up an entry of a product — the dot product by Mathlib's bilinearity `simp` lemmas, the cross product
+by `LinearMap.map_add₂`, `LinearMap.map_sub₂` and `LinearMap.map_smul₂` in its first argument and by
+`map_add`, `map_sub` and `map_smul` in its second — and the compound products that survive are
+reduced by Mathlib's own identities: `Matrix.cross_dot_cross` for a dot product of two cross
+products, and `Matrix.cross_cross_eq_smul_sub_smul` and its primed form for an iterated cross
+product. What is left is a linear combination of the entries and their cross products, which
+`module` closes, or a polynomial in their dot products, which `ring` closes. -/
+section Vector
+
+attribute [local simp] LinearMap.map_add₂ LinearMap.map_sub₂ LinearMap.map_smul₂
+  cross_dot_cross cross_cross_eq_smul_sub_smul cross_cross_eq_smul_sub_smul'
 
 instance : NonAssocRing (Octonion R) where
   __ := (inferInstance : AddCommGroupWithOne (Octonion R))
   left_distrib x y z := by
-    refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+    refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [add_smul] <;> ring
   right_distrib x y z := by
-    refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
-  zero_mul x := by refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
-  mul_zero x := by refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
-  one_mul x := by refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
-  mul_one x := by refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
+    refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [add_smul] <;> ring
+  zero_mul x := by refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
+  mul_zero x := by refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
+  one_mul x := by refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
+  mul_one x := by refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
 instance : SMulCommClass R (Octonion R) (Octonion R) where
   smul_comm r x y := by
-    refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+    refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
+    · ring
+    · ring
+    · module
+    · module
 
 instance : IsScalarTower R (Octonion R) (Octonion R) where
   smul_assoc r x y := by
-    refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+    refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
+    · ring
+    · ring
+    · module
+    · module
 
 /-! ### Conjugation, trace and norm -/
 
@@ -297,8 +315,8 @@ instance : IsScalarTower R (Octonion R) (Octonion R) where
 and negates the two vector entries, so it fixes `1` and negates the imaginary part. -/
 def conj : Octonion R →ₗ[R] Octonion R where
   toFun x := ⟨x.b, x.a, -x.v, -x.w⟩
-  map_add' _ _ := by refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
-  map_smul' _ _ := by refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
+  map_add' _ _ := by refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [add_comm]
+  map_smul' _ _ := by refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
 @[simp] theorem conj_a (x : Octonion R) : (conj x).a = x.b := (rfl)
 @[simp] theorem conj_b (x : Octonion R) : (conj x).b = x.a := (rfl)
@@ -306,15 +324,20 @@ def conj : Octonion R →ₗ[R] Octonion R where
 @[simp] theorem conj_w (x : Octonion R) : (conj x).w = -x.w := (rfl)
 
 @[simp] theorem conj_conj (x : Octonion R) : conj (conj x) = x := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
 @[simp] theorem conj_one : conj (1 : Octonion R) = 1 := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
-/-- **Conjugation is an anti-automorphism**: it reverses products. -/
+/-- **Conjugation is an anti-automorphism**: it reverses products. The two vector entries pick up
+the sign of `Matrix.cross_anticomm`, the two scalar entries the symmetry of the dot product. -/
 @[simp]
 theorem conj_mul (x y : Octonion R) : conj (x * y) = conj y * conj x := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+  -- `Matrix.cross_anticomm` is used at the two entries it is needed at rather than in its `simp`
+  -- orientation, which would leave the two sides with opposite argument orders.
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;>
+    simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
+      mul_comm] <;> module
 
 /-- **The trace** `⟨a, b, v, w⟩ ↦ a + b` of a vector matrix, the coefficient of the rank-two
 equation `TauCeti.Octonion.mul_self`. -/
@@ -332,13 +355,19 @@ theorem trace_one : trace (1 : Octonion R) = 2 := by
 
 /-- An octonion and its conjugate add up to a scalar: the trace. -/
 theorem add_conj (x : Octonion R) : x + conj x = trace x • 1 := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp
-  ring
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [add_comm]
 
 /-- Conjugation preserves the trace: it only exchanges the two diagonal entries. Not a `simp`
 lemma, for the same reason as `TauCeti.Octonion.trace_one`. -/
 theorem trace_conj (x : Octonion R) : trace (conj x) = trace x := by
   simp [add_comm]
+
+/-- **The trace is symmetric in a product**: `trace (x * y) = trace (y * x)`, since the two dot
+products of a Zorn product are exchanged when the factors are. Not a `simp` lemma, for the same
+reason as `TauCeti.Octonion.trace_one`. -/
+theorem trace_mul_comm (x y : Octonion R) : trace (x * y) = trace (y * x) := by
+  simp [dotProduct_comm, mul_comm]
+  ring
 
 /-- **The norm** `⟨a, b, v, w⟩ ↦ a * b - v ⬝ᵥ w` of a vector matrix: the determinant of the matrix,
 and the norm form of the composition algebra `𝕆`. -/
@@ -359,10 +388,11 @@ theorem norm_def (x : Octonion R) : norm x = x.a * x.b - x.v ⬝ᵥ x.w := (rfl)
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
 
-/-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. -/
+/-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. The two vector entries
+vanish by `Matrix.cross_self`. -/
 @[simp]
 theorem self_mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp [norm_def] <;> ring
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [norm_def, dotProduct_comm] <;> ring
 
 /-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.self_mul_conj`. -/
 @[simp]
@@ -372,21 +402,30 @@ theorem conj_mul_self (x : Octonion R) : conj x * x = norm x • 1 := by
 /-- **The rank-two equation.** Every split octonion satisfies `x² - trace x · x + N x · 1 = 0`, so
 it generates a subalgebra of dimension at most `2`. -/
 theorem mul_self (x : Octonion R) : x * x = trace x • x - norm x • 1 := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp [norm_def] <;> ring
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [norm_def, dotProduct_comm, add_smul]
+  ring
 
-/-- **The norm of a split octonion is multiplicative**, so `𝕆` is a composition algebra. In
-coordinates this is a Binet--Cauchy identity: the cross-product corrections to the vector entries of
-a product are exactly what the two dot products of the norm need. -/
+/-- **The norm of a split octonion is multiplicative**, so `𝕆` is a composition algebra. This is
+the scalar quadruple product identity `Matrix.cross_dot_cross`, a Binet--Cauchy identity: the
+cross-product corrections to the vector entries of a product are exactly what the two dot products
+of the norm need. -/
 @[simp]
 theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
-  simp [norm_def]; ring
+  simp [norm_def, dotProduct_comm]
+  ring
 
 /-! ### Alternativity -/
 
-/-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. -/
+/-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. The iterated cross
+products of the vector entries are expanded by `Matrix.cross_cross_eq_smul_sub_smul'`, which is
+exactly what the repeated dot products of the scalar entries produce. -/
 @[simp]
 theorem left_alternative (x y : Octonion R) : x * x * y = x * (x * y) := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+  refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [dotProduct_comm, mul_comm]
+  · ring
+  · ring
+  · module
+  · module
 
 /-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. This is left
 alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul`. -/
@@ -396,7 +435,25 @@ theorem right_alternative (x y : Octonion R) : x * y * y = x * (y * y) := by
     congrArg _ (left_alternative (conj y) (conj x))
   simpa only [conj_mul, conj_conj] using h.symm
 
-/-! ### The Moufang identities -/
+end Vector
+
+/-! ### The Moufang identities
+
+The two Moufang identities proved directly are the one place where the vector simp set above does
+not suffice. Reducing them with it leaves obligations that hold only because the vector entries have
+three coordinates and that Mathlib does not name: the vanishing of `v ⬝ᵥ u ⨯₃ w + w ⬝ᵥ u ⨯₃ v` at
+the scalar entries, and a relation between a triple product and the entries themselves at the vector
+entries. Both are therefore proved in coordinates: dot
+products are expanded by Mathlib's `Matrix.vec3_dotProduct`, cross products by Mathlib's
+`Matrix.cross_apply`. The latter rewrites `u ⨯₃ t` to a `![…]` literal, and such a literal meeting
+the generic vector entries of a product fires `Matrix.sub_cons`, `Matrix.head_add` and
+`Matrix.dotProduct_cons`, which re-express the coordinates as `vecHead`/`vecTail` towers; unfolding
+those two definitions turns the towers back into the coordinates `u 0`, `u 1`, `u 2`, so that `ring`
+sees one atom per coordinate. -/
+
+section Coordinates
+
+attribute [local simp] vec3_dotProduct cross_apply Matrix.vecHead Matrix.vecTail
 
 /-- **The left Moufang identity**: `(z * x * z) * y = z * (x * (z * y))`. -/
 theorem moufang_left (x y z : Octonion R) : z * x * z * y = z * (x * (z * y)) := by
@@ -418,6 +475,8 @@ theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := 
 /-- **The middle Moufang identity**: `(z * x) * (y * z) = (z * (x * y)) * z`. -/
 theorem moufang_middle (x y z : Octonion R) : z * x * (y * z) = z * (x * y) * z := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+
+end Coordinates
 
 /-! ### Worked examples: `Octonion ℤ` is neither commutative nor associative
 
@@ -457,6 +516,12 @@ def imaginary (R : Type*) [CommRing R] : Submodule R (Octonion R) := LinearMap.k
 
 @[simp] theorem mem_imaginary {x : Octonion R} : x ∈ imaginary R ↔ x.a + x.b = 0 :=
   LinearMap.mem_ker
+
+/-- **Conjugation negates exactly the imaginary octonions**: `x̄ = -x` if and only if `x` has
+vanishing trace. Not a `simp` lemma, because `TauCeti.Octonion.mem_imaginary` already takes its
+left-hand side apart. -/
+theorem mem_imaginary_iff_conj_eq_neg {x : Octonion R} : x ∈ imaginary R ↔ conj x = -x := by
+  simp [Octonion.ext_iff, eq_neg_iff_add_eq_zero, add_comm]
 
 /-- The trace is a surjection onto the base ring: it already is on the scalar diagonal. -/
 theorem trace_surjective : Function.Surjective (trace : Octonion R →ₗ[R] R) :=
