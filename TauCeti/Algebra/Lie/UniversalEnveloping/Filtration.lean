@@ -36,6 +36,8 @@ from the tensor-algebra presentation.
 
 * `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration`: words of length at most `k` in the range of
   `UniversalEnvelopingAlgebra.ι R`.
+* `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_eq_pow`: its defining equation as the power of
+  the scalar-and-generator submodule.
 * `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_mul`: multiplication adds degrees.
 * `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_zero` and
   `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_one`: the scalar and generator steps.
@@ -74,6 +76,17 @@ This is `TauCeti.Algebra.wordFiltration` specialized to `UniversalEnvelopingAlge
 shared API is in `TauCeti/Algebra/WordFiltration.lean`. -/
 def pbwFiltration (k : ℕ) : Submodule R U :=
   TauCeti.Algebra.wordFiltration (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap k
+
+/-- PBW filtration degree `k` is the `k`-th power of the scalars and canonical Lie generators. -/
+theorem pbwFiltration_eq_pow (k : ℕ) :
+    pbwFiltration R L k =
+      (1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap) ^ k :=
+  by
+    change TauCeti.Algebra.wordFiltration _ k = _
+    calc
+      _ = TauCeti.Algebra.wordFiltration _ 1 ^ k := by
+        simpa using (TauCeti.Algebra.wordFiltration_pow _ 1 k).symm
+      _ = _ := by rw [TauCeti.Algebra.wordFiltration_one]
 
 /-- The step preceding degree `k` in the PBW filtration, that is
 `TauCeti.Algebra.wordFiltrationPrevious` specialized to `UniversalEnvelopingAlgebra.ι R`, with
