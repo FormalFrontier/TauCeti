@@ -56,10 +56,15 @@ same shape as in `TauCeti/RepresentationTheory/Compact/ClassFunctionLp.lean`, ra
 predicate: it is passed directly through this API, and the `L²`-level notion that deserves a
 bundling is the almost-everywhere one, `TauCeti.classFunctionLp`, which is already defined.
 
-The definition asks only that `V` be a complete normed space; finite-dimensionality enters with the
-trace, and algebraic closedness of the scalars with Schur's lemma. The integrated operator of the
-trivial group action and other structural identities are not developed here: what the character
-projections need is linearity in `f`, the trace, and the scalar theorem.
+The definition asks only that `V` be a normed space: it is `TauCeti.haarAverage` of a continuous
+family valued in the operator space `V →L[𝕜] V`, so it inherits that average's convention. What the
+Bochner integral reads is completeness of that codomain, and `[CompleteSpace V]` is what supplies
+it; failing that, the average is the integral's junk value `0` rather than the classical integrated
+form `π(f)`. Completeness therefore enters with
+`TauCeti.ContRepresentation.integratedOperator_apply`, finite-dimensionality with the trace, and
+algebraic closedness of the scalars with Schur's lemma. The integrated operator
+of the trivial group action and other structural identities are not developed here: what the
+character projections need is linearity in `f`, the trace, and the scalar theorem.
 
 The scalar in `integratedOperator_eq_smul_id` is `(dim V)⁻¹ · ∫ f · χ_π`, not `∫ f · conj χ_π`: the
 integrand pairs `f` with the character itself, and the conjugation appears only when the acting
@@ -99,7 +104,7 @@ variable [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 /-- Haar averaging does not see the conjugation of the group variable: it is a right translation
 followed by a left translation. -/
 private theorem haarAverage_comp_conjMap {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W]
-    [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] [CompleteSpace W] (F : C(G, W)) (h : G) :
+    [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] (F : C(G, W)) (h : G) :
     haarAverage G (𝕜 := 𝕜) (F.comp (conjMap h)) = haarAverage G (𝕜 := 𝕜) F := by
   rw [conjMap, ← ContinuousMap.comp_assoc, haarAverage_comp_mulRight, haarAverage_comp_mulLeft]
 
@@ -116,6 +121,7 @@ variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
 
 include hπ
 
+omit [CompleteSpace V] in
 /-- The integrand `g ↦ f g • π g` of the integrated operator, as a continuous map on the group.
 Continuity is where the continuity hypothesis on the representation is used. -/
 private noncomputable def weightFamily (f : C(G, 𝕜)) : C(G, V →L[𝕜] V) where
@@ -131,11 +137,15 @@ private theorem weightFamily_apply (f : C(G, 𝕜)) (g : G) :
     weightFamily π hπ f g = f g • π g :=
   (rfl)
 
+omit [CompleteSpace V] in
 /-- **The operator by which a continuous scalar function acts on a continuous representation**,
 `∫ g, f g • π g ∂(haarProb G)`.
 
-For a compact group this is always defined: the integrand is continuous and normalized Haar measure
-is finite. It is the classical integrated form `π(f)` of the representation. -/
+On a complete `V` this is the classical integrated form `π(f)` of the representation, and it is
+always defined there: the integrand is continuous and normalized Haar measure is finite. `V` is not
+assumed complete. The average is taken in the operator space `V →L[𝕜] V`, so it is
+`TauCeti.haarAverage`'s junk value `0` unless that space is complete, which `[CompleteSpace V]`
+supplies; that is why the results below that read the operator's actual value carry it. -/
 noncomputable def integratedOperator (f : C(G, 𝕜)) : V →L[𝕜] V :=
   haarAverage G (𝕜 := 𝕜) (weightFamily π hπ f)
 
@@ -151,6 +161,7 @@ theorem integratedOperator_apply (f : C(G, 𝕜)) (v : V) :
 
 /-! ### Linearity in the acting function -/
 
+omit [CompleteSpace V] in
 @[simp]
 theorem integratedOperator_zero : integratedOperator π hπ (0 : C(G, 𝕜)) = 0 := by
   have hzero : weightFamily π hπ (0 : C(G, 𝕜)) = 0 := by
@@ -158,6 +169,7 @@ theorem integratedOperator_zero : integratedOperator π hπ (0 : C(G, 𝕜)) = 0
     simp
   rw [integratedOperator, hzero, map_zero]
 
+omit [CompleteSpace V] in
 @[simp]
 theorem integratedOperator_add (f₁ f₂ : C(G, 𝕜)) :
     integratedOperator π hπ (f₁ + f₂)
@@ -167,6 +179,7 @@ theorem integratedOperator_add (f₁ f₂ : C(G, 𝕜)) :
     simp [add_smul]
   rw [integratedOperator, integratedOperator, integratedOperator, hadd, map_add]
 
+omit [CompleteSpace V] in
 @[simp]
 theorem integratedOperator_smul (c : 𝕜) (f : C(G, 𝕜)) :
     integratedOperator π hπ (c • f) = c • integratedOperator π hπ f := by
@@ -175,6 +188,7 @@ theorem integratedOperator_smul (c : 𝕜) (f : C(G, 𝕜)) :
     simp [mul_smul]
   rw [integratedOperator, integratedOperator, hsmul, map_smul]
 
+omit [CompleteSpace V] in
 /-- The integrated operator, bundled as a linear map in the acting function. Bundling supplies the
 remaining additive identities (`map_neg`, `map_sub`, `map_sum`) through the `LinearMap` API. -/
 noncomputable def integratedOperatorₗ : C(G, 𝕜) →ₗ[𝕜] V →L[𝕜] V where
@@ -182,6 +196,7 @@ noncomputable def integratedOperatorₗ : C(G, 𝕜) →ₗ[𝕜] V →L[𝕜] V
   map_add' := integratedOperator_add π hπ
   map_smul' := integratedOperator_smul π hπ
 
+omit [CompleteSpace V] in
 @[simp]
 theorem integratedOperatorₗ_apply (f : C(G, 𝕜)) :
     integratedOperatorₗ π hπ f = integratedOperator π hπ f :=

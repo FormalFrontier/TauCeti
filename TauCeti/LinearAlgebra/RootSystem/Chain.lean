@@ -21,8 +21,8 @@ Nothing here mentions `TauCeti.IsFiniteType`, which is why the file sits above t
 directory rather than in it. It exists because the diagrams that carry the two length constraints
 of the classification - the stars of
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic` and the double-edge chains of
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge` - are both assembled from chains and are
-both excluded by a vector that is linear along each of them.
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic` - are both assembled from chains and
+are both excluded by a vector that is linear along each of them.
 
 ## Main definitions
 
