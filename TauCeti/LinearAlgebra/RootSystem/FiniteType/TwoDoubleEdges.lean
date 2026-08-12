@@ -22,12 +22,15 @@ chain: if the first edge of a chain of `m + 3` vertices is double, the last one 
 The diagram to exclude is a chain whose two extreme edges are double, and there are two of them,
 because a Cartan matrix orients its multiple edges: writing the entry `-2` of a double edge as an
 arrow, the two arrows either point away from each other towards the chain ends, or both the same way
-along the chain. On
-`l + 1` vertices these are the diagrams of the affine Kac-Moody algebras `C⁽¹⁾ₗ` and `A⁽²⁾₂ₗ`,
-hence singular, so the certificate is in each case a genuine null vector: the vector of **marks**
+along the chain. On `l + 1` vertices these are the diagrams of the affine Kac-Moody algebras
+`D⁽²⁾ₗ₊₁` and `A⁽²⁾₂ₗ`, hence singular, so the certificate is in each case a genuine null vector:
 `TauCeti.twoDoubleEdgeMark`, which is `1` at the first vertex, `2` at every interior vertex, and,
-at the last vertex, `1` when the arrows point outwards and `2` when they agree. These are
-the marks `1, 2, …, 2, 1` and `1, 2, …, 2, 2` of those two diagrams.
+at the last vertex, `1` when the arrows point outwards and `2` when they agree.
+
+A Cartan matrix is read here as `A i j = ⟨αᵢ, αⱼ^∨⟩`, the transpose of Kac's convention, so it is
+the *rows* that annihilate this vector, and what its entries list are the **dual labels** of those
+two diagrams, `1, 2, …, 2, 1` and `1, 2, …, 2, 2` — equivalently the marks of the dual diagrams
+`C⁽¹⁾ₗ` and `A⁽²⁾₂ₗ`, the latter renumbered backwards, which is what the name records.
 
 Unlike the fork bound of `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star` and the double-edge
 bound of `TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`, which leave surviving shapes and
@@ -49,8 +52,8 @@ about indices outside the chain, since finite type passes to principal submatric
 
 * `TauCeti.twoDoubleEdgeCartanMatrix`: the Cartan matrix of a chain of `m + 3` vertices whose first
   and last edges are double, the boolean argument orienting the last one.
-* `TauCeti.twoDoubleEdgeMark`: the marks of that diagram, the null vector the exclusion is proved
-  with.
+* `TauCeti.twoDoubleEdgeMark`: the dual labels of that diagram, the null vector the exclusion is
+  proved with.
 
 ## Main results
 
@@ -67,7 +70,8 @@ This file supplies the "at most one multiple edge" step of the classification of
 matrices, Layer 5 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. See
 J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.4, step (5), and
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, Ch. VI §4. The two affine diagrams and their
-marks are Tables Aff 1 and Aff 2 of V. G. Kac, *Infinite Dimensional Lie Algebras*, CUP (1990).
+labels are Table Aff 2 of V. G. Kac, *Infinite Dimensional Lie Algebras*, CUP (1990), whose
+convention `aᵢⱼ = ⟨αⱼ, αᵢ^∨⟩` is the transpose of the one used here.
 -/
 
 namespace TauCeti
@@ -83,8 +87,8 @@ The first double edge is oriented once and for all, the entry from the second ve
 being `-2`. The boolean `b` orients the last one: the entry from the vertex `m + 1` to the vertex
 `m + 2` is `-2` when `b` is `true`, so that the two double edges point away from each other towards
 the chain ends, and the opposite entry is `-2` when `b` is `false`, so that they point the same way
-along the chain. In the notation of Kac's tables the first diagram is `C⁽¹⁾ₘ₊₂` and the second is
-`A⁽²⁾₂ₘ₊₄`. -/
+along the chain. In the notation of Kac's tables, read through the transpose, the first diagram is
+`D⁽²⁾ₘ₊₃` and the second is `A⁽²⁾₂ₘ₊₄`. -/
 def twoDoubleEdgeCartanMatrix (m : ℕ) (b : Bool) : Matrix (Fin (m + 3)) (Fin (m + 3)) ℤ :=
   Matrix.of fun i j ↦
     if (i : ℕ) = 1 ∧ (j : ℕ) = 0 then -2
@@ -141,9 +145,11 @@ private lemma twoDoubleEdgeCartanMatrix_eq_sub (i j : Fin (m + 3)) :
 that the last vertex also carries `1` when the two double edges point outwards towards the chain
 ends.
 
-At the vertices of the chain these are the marks of the affine diagram the chain is: `1, 2, …, 2,
-1` for `C̃ₙ`, when `b` is `true`, and `1, 2, …, 2, 2` for `A⁽²⁾₂ₙ`, when `b` is `false`. The
-function is defined on all of `ℕ`, and used at the vertex numbers `0, …, m + 2`; the values it
+At the vertices of the chain these are the dual labels of the affine diagram the chain is, the
+marks of its dual: `1, 2, …, 2, 1` for `D⁽²⁾ₘ₊₃`, when `b` is `true`, and `1, 2, …, 2, 2` for
+`A⁽²⁾₂ₘ₊₄`, when `b` is `false`. It is the dual labels, and so the rows of the matrix, that occur
+here because the convention of this repository, `A i j = ⟨αᵢ, αⱼ^∨⟩`, is the transpose of Kac's.
+The function is defined on all of `ℕ`, and used at the vertex numbers `0, …, m + 2`; the values it
 takes outside that range are not meaningful. -/
 def twoDoubleEdgeMark (m : ℕ) (b : Bool) (s : ℕ) : ℚ :=
   if s = 0 ∨ (b ∧ s = m + 2) then 1 else 2
@@ -273,14 +279,14 @@ a contraction that is not needed here, since the marks are available at every le
 -/
 
 /-- **The shortest doubly ended chain with the two double edges pointing outwards towards the chain
-ends**: the extended Dynkin diagram `C̃₂`, whose marks are `1, 2, 1`. -/
+ends**: the twisted affine diagram `D⁽²⁾₃`, whose dual labels are `1, 2, 1`. -/
 theorem twoDoubleEdgeCartanMatrix_zero_true :
     twoDoubleEdgeCartanMatrix 0 true = !![2, -1, 0; -2, 2, -2; 0, -1, 2] := by
   ext i j
   fin_cases i <;> fin_cases j <;> simp [twoDoubleEdgeCartanMatrix_def]
 
 /-- **The shortest doubly ended chain with the two double edges pointing the same way**: the
-twisted affine diagram `A⁽²⁾₄`, whose marks are `1, 2, 2`. -/
+twisted affine diagram `A⁽²⁾₄`, whose dual labels are `1, 2, 2`. -/
 theorem twoDoubleEdgeCartanMatrix_zero_false :
     twoDoubleEdgeCartanMatrix 0 false = !![2, -1, 0; -2, 2, -1; 0, -2, 2] := by
   ext i j
