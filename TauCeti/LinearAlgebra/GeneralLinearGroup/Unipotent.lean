@@ -4,12 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
+public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
+public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
 import Mathlib.Tactic.NoncommRing
 
 /-!
-# Closure properties of unipotent linear automorphisms
+# Unipotent linear automorphisms
 
 A linear automorphism is unipotent when its underlying endomorphism minus the identity is
 nilpotent. This file records the elementary group-theoretic closure properties needed to use
@@ -21,6 +22,10 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 ## Main declarations
 
+* `TauCeti.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
+  difference from the identity is nilpotent.
+* `TauCeti.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
+* `TauCeti.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
 * `TauCeti.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
   unipotent.
 * `TauCeti.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
@@ -54,6 +59,22 @@ open _root_.Module
 universe u v w
 
 variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
+
+/-- A linear automorphism is unipotent if its difference from the identity is nilpotent. -/
+def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=
+  _root_.IsNilpotent ((g : End K V) - 1)
+
+/-- Unipotence of a linear automorphism means that its underlying endomorphism minus the
+identity is nilpotent. -/
+theorem isUnipotent_def (g : GeneralLinearGroup K V) :
+    IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
+  Iff.rfl
+
+/-- The identity automorphism is unipotent. -/
+@[simp]
+theorem isUnipotent_one : IsUnipotent (1 : GeneralLinearGroup K V) := by
+  unfold IsUnipotent
+  simp
 
 /-- A linear equivalence is unipotent after conversion to the general linear group exactly when
 its underlying endomorphism minus the identity is nilpotent. -/

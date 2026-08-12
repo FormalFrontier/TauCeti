@@ -11,7 +11,8 @@ public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 /-!
 # Unipotent points of an affine group
 
-Let `H` be a Hopf algebra over a field `k` and let `K` be a commutative `k`-algebra. A
+Let `H` be a Hopf algebra over a commutative semiring `k` and let `K` be a commutative
+`k`-algebra. A
 `K`-valued point `g : H →ₐ[k] K` acts on the scalar extension of every finite-dimensional
 `H`-comodule. This file calls `g` **unipotent** when every one of those linear automorphisms is
 unipotent, meaning that its difference from the identity is nilpotent.
@@ -59,7 +60,7 @@ namespace HopfAlgebra
 universe u v x
 
 variable {k : Type u} {H : Type v} {K : Type x}
-variable [Field k] [Semiring H] [_root_.HopfAlgebra k H] [CommRing K] [Algebra k K]
+variable [CommSemiring k] [Semiring H] [_root_.HopfAlgebra k H] [CommRing K] [Algebra k K]
 
 /-- A point of a Hopf algebra valued in a commutative algebra is unipotent when it acts by a
 unipotent linear automorphism on the scalar extension of every finite-dimensional comodule.
