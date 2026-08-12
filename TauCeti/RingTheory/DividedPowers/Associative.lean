@@ -31,6 +31,10 @@ definition is made here.
 ## Main definitions and results
 
 * `TauCeti.Associative.dividedPower`: the normalized power `x ^ n / n!`.
+* `TauCeti.Associative.mul_pow_of_commutator_eq_zsmul`: moving an element past a power of an
+  integer-eigenvector for its commutator.
+* `TauCeti.Associative.mul_dividedPower_of_commutator_eq_zsmul`: the corresponding divided-power
+  identity.
 * `TauCeti.Associative.mul_dividedPower`: products of divided powers of one element have a
   binomial coefficient as structure constant.
 * `TauCeti.Associative.dividedPower_add`: divided powers turn a sum of commuting elements into an
@@ -49,6 +53,33 @@ public section
 namespace TauCeti.Associative
 
 open Finset
+
+section Ring
+
+variable {A : Type*} [Ring A] {x y : A} {c : ℤ}
+
+/-- If `y` has integer eigenvalue `c` for commutation with `x`, then moving `x` past `yⁿ`
+adds `n * c` copies of `yⁿ`. -/
+theorem mul_pow_of_commutator_eq_zsmul (hxy : x * y - y * x = c • y) (n : ℕ) :
+    x * y ^ n = y ^ n * x + ((n : ℤ) * c) • y ^ n := by
+  have hy : x * y = y * x + c • y := by
+    rw [← hxy]
+    abel
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    calc x * y ^ (n + 1) = x * y ^ n * y := by rw [pow_succ, ← mul_assoc]
+      _ = (y ^ n * x + ((n : ℤ) * c) • y ^ n) * y := by rw [ih]
+      _ = y ^ n * (x * y) + ((n : ℤ) * c) • y ^ (n + 1) := by
+          rw [add_mul, mul_assoc, smul_mul_assoc, ← pow_succ]
+      _ = y ^ n * (y * x + c • y) + ((n : ℤ) * c) • y ^ (n + 1) := by rw [hy]
+      _ = y ^ (n + 1) * x + (c + (n : ℤ) * c) • y ^ (n + 1) := by
+          rw [mul_add, ← mul_assoc, ← pow_succ, mul_smul_comm, ← pow_succ, add_assoc, ← add_smul]
+      _ = y ^ (n + 1) * x + (((n + 1 : ℕ) : ℤ) * c) • y ^ (n + 1) := by
+          push_cast
+          ring_nf
+
+end Ring
 
 section Semiring
 
@@ -187,7 +218,17 @@ end Semiring
 
 section Ring
 
-variable {A : Type*} [Ring A] [Algebra ℚ A]
+variable {A : Type*} [Ring A] [Algebra ℚ A] {x y : A} {c : ℤ}
+
+/-- Moving an element past a divided power of an integer-eigenvector for its commutator adds the
+same integral multiple of that divided power. -/
+theorem mul_dividedPower_of_commutator_eq_zsmul
+    (hxy : x * y - y * x = c • y) (n : ℕ) :
+    x * dividedPower n y =
+      dividedPower n y * x + ((n : ℤ) * c) • dividedPower n y := by
+  simp only [dividedPower_def, mul_smul_comm, smul_mul_assoc,
+    mul_pow_of_commutator_eq_zsmul hxy, smul_add]
+  rw [smul_comm]
 
 /-- Divided powers of a negated element acquire the expected sign. -/
 @[simp]
