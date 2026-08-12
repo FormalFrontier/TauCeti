@@ -34,8 +34,8 @@ spanning and the independence half of the decomposition.
 * `TauCeti.Comodule.tensorComponent`: the `g`-th coefficient map of `V ⊗[R] R[G]`.
 * `TauCeti.Comodule.tensorCoeffEquiv`: the coefficients of an element of `V ⊗[R] R[G]`, as a
   finitely supported family.
-* `TauCeti.Comodule.weightDecomposition`: the finitely supported family of weight components of a
-  vector of a comodule.
+* `TauCeti.Comodule.weightDecomposition`: the weight components of a comodule, as a linear map to
+  finitely supported families.
 * `TauCeti.Comodule.weightProj`: the projection onto the `g`-weight component.
 * `TauCeti.Comodule.weightSpace`: the `g`-weight submodule, where the coaction is `v ↦ v ⊗ g`.
 * `TauCeti.Comodule.weightSubcomodule`: the weight submodule as a subcomodule.
@@ -78,7 +78,7 @@ diagonalizable group `D(G) = Spec R[G]` itself is in
 `TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Basic`.
 -/
 
-@[expose] public section
+public section
 
 open scoped DirectSum TensorProduct
 
@@ -148,21 +148,32 @@ section Weight
 variable [Comodule R (MonoidAlgebra R G) V]
 
 /-- The projection of a comodule over `R[G]` onto its `g`-weight component. -/
-noncomputable def weightProj (g : G) : V →ₗ[R] V :=
+@[expose] noncomputable def weightProj (g : G) : V →ₗ[R] V :=
   tensorComponent R G V g ∘ₗ coact (R := R) (C := MonoidAlgebra R G) (M := V)
+
+variable {R G V} in
+/-- The `g`-weight component of `v` is the `g`-th coefficient of its coaction.
+
+This is deliberately not a `simp` lemma: `weightProj_weightProj_self` and
+`weightProj_weightProj_of_ne` are the simp-normal form of a composite of weight projections, and
+they could never fire if `simp` first unfolded every `weightProj` to a coefficient of a coaction. -/
+theorem weightProj_apply (g : G) (v : V) :
+    weightProj R G V g v = tensorComponent R G V g (coact (R := R) (C := MonoidAlgebra R G) v) :=
+  rfl
 
 variable [DecidableEq G]
 
-/-- The weight components of a vector of a comodule over `R[G]`, read off its coaction. -/
-noncomputable def weightDecomposition (v : V) : G →₀ V :=
-  tensorCoeffEquiv R G V (coact (R := R) (C := MonoidAlgebra R G) v)
+/-- The weight components of a comodule over `R[G]`, read off its coaction as a finitely supported
+family. -/
+noncomputable def weightDecomposition : V →ₗ[R] (G →₀ V) :=
+  (tensorCoeffEquiv R G V).toLinearMap ∘ₗ coact (R := R) (C := MonoidAlgebra R G) (M := V)
 
 variable {R G V}
 
 @[simp]
 theorem weightDecomposition_apply (v : V) (g : G) :
     weightDecomposition R G V v g = weightProj R G V g v := by
-  simp [weightDecomposition, weightProj]
+  simp [weightDecomposition, weightProj_apply]
 
 /-- The coaction is determined by the weight components. -/
 theorem coact_eq_symm_weightDecomposition (v : V) :
@@ -345,13 +356,13 @@ theorem mem_weightSpace_iff {g : G} {v : V} :
 /-- On its own weight submodule the weight projection is the identity. -/
 theorem weightProj_of_mem {g : G} {v : V} (hv : v ∈ weightSpace R G V g) :
     weightProj R G V g v = v := by
-  simp [weightProj, mem_weightSpace_iff.mp hv]
+  simp [weightProj_apply, mem_weightSpace_iff.mp hv]
 
 /-- A weight projection kills the weight submodules at all other indices. -/
 theorem weightProj_of_mem_of_ne {h g : G} (hne : h ≠ g) {v : V} (hv : v ∈ weightSpace R G V g) :
     weightProj R G V h v = 0 := by
   classical
-  simp [weightProj, mem_weightSpace_iff.mp hv, Ne.symm hne]
+  simp [weightProj_apply, mem_weightSpace_iff.mp hv, Ne.symm hne]
 
 /-- **Each weight component lies in its weight submodule.** -/
 theorem weightProj_mem_weightSpace (g : G) (v : V) :
@@ -367,6 +378,14 @@ theorem weightProj_mem_weightSpace (g : G) (v : V) :
     · simp [hh, weightProj_weightProj_of_ne (Ne.symm hh)]
   rw [mem_weightSpace_iff, coact_eq_symm_weightDecomposition, hsingle,
     tensorCoeffEquiv_symm_single]
+
+/-- The coaction on a weight component is diagonal. This is `weightProj_mem_weightSpace` in the
+`simp` normal form of membership in `weightSpace`, and is what discharges such membership goals. -/
+@[simp]
+theorem coact_weightProj (g : G) (v : V) :
+    coact (R := R) (C := MonoidAlgebra R G) (weightProj R G V g v) =
+      weightProj R G V g v ⊗ₜ[R] MonoidAlgebra.single g (1 : R) :=
+  weightProj_mem_weightSpace g v
 
 variable (R G V)
 
@@ -428,7 +447,7 @@ theorem isInternal_weightSpace [DecidableEq G] : DirectSum.IsInternal (weightSpa
 
 /-- The `g`-weight submodule as a subcomodule: the decomposition is one of comodules, not merely
 of modules. -/
-def weightSubcomodule (g : G) : Subcomodule R (MonoidAlgebra R G) V where
+@[expose] def weightSubcomodule (g : G) : Subcomodule R (MonoidAlgebra R G) V where
   carrier := weightSpace R G V g
   coact_mem' v hv := by
     refine ⟨(⟨v, hv⟩ : weightSpace R G V g) ⊗ₜ[R] MonoidAlgebra.single g (1 : R), ?_⟩
@@ -438,8 +457,8 @@ def weightSubcomodule (g : G) : Subcomodule R (MonoidAlgebra R G) V where
 variable {R G V}
 
 @[simp]
-theorem weightSubcomodule_carrier (g : G) :
-    (weightSubcomodule R G V g).carrier = weightSpace R G V g :=
+theorem weightSubcomodule_toSubmodule (g : G) :
+    (weightSubcomodule R G V g).toSubmodule = weightSpace R G V g :=
   rfl
 
 @[simp]
