@@ -76,14 +76,6 @@ theorem coeFn_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 f =ᵐ[μ] fun g �
   Lp.coeFn_compMeasurePreservingₗᵢEquiv 𝕜 (Measure.measurePreserving_inv μ)
     (Measure.measurePreserving_inv μ) _ f
 
-/-- The inversion equivalence is its own inverse. -/
-@[simp]
-theorem invLpₗᵢ_symm : (invLpₗᵢ 𝕜 (E := E) (p := p) (μ := μ)).symm = invLpₗᵢ 𝕜 := by
-  ext f
-  simp only [invLpₗᵢ, Lp.compMeasurePreservingₗᵢEquiv_symm_apply,
-    Lp.compMeasurePreservingₗᵢEquiv_apply]
-  exact Filter.EventuallyEq.rfl
-
 /-- **Inverting twice is the identity.**  The two precompositions compose to precomposition with
 `g ↦ (g⁻¹)⁻¹`, which is the identity on the nose. -/
 @[simp]
@@ -92,6 +84,12 @@ theorem invLpₗᵢ_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 (invLpₗᵢ 
     Lp.compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p)
     (Measure.measurePreserving_inv μ) (Measure.measurePreserving_inv μ)
     (.of_eq (funext inv_inv)) f
+
+/-- The inversion equivalence is its own inverse: it is an equivalence and an involution. -/
+@[simp]
+theorem invLpₗᵢ_symm : (invLpₗᵢ 𝕜 (E := E) (p := p) (μ := μ)).symm = invLpₗᵢ 𝕜 := by
+  refine LinearIsometryEquiv.ext fun f ↦ ?_
+  rw [LinearIsometryEquiv.symm_apply_eq, invLpₗᵢ_invLpₗᵢ]
 
 end Involution
 

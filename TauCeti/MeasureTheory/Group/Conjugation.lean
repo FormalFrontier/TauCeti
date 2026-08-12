@@ -218,10 +218,11 @@ theorem coeFn_conjLpₗᵢ (h : G) (f : Lp E p μ) : conjLpₗᵢ 𝕜 h f =ᵐ[
 theorem conjLpₗᵢ_symm (h : G) :
     (conjLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜 h).symm =
       conjLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜 h⁻¹ := by
-  ext f
-  simp only [conjLpₗᵢ, Lp.compMeasurePreservingₗᵢEquiv_symm_apply,
-    Lp.compMeasurePreservingₗᵢEquiv_apply]
-  exact Filter.EventuallyEq.rfl
+  refine LinearIsometryEquiv.ext fun f ↦ ?_
+  rw [LinearIsometryEquiv.symm_apply_eq, conjLpₗᵢ_apply, conjLpₗᵢ_apply]
+  exact (Lp.compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p)
+    (measurePreserving_conj μ h⁻¹) (measurePreserving_conj μ h)
+    (.of_eq (funext fun g ↦ by simp [mul_assoc])) f).symm
 
 omit [Fact (1 ≤ p)] in
 /-- **Precomposition by conjugation is the `(ConjAct G)ᵈᵐᵃ`-action.**  The two are the same
