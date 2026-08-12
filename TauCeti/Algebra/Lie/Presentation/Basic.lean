@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Lie.Free
-public import Mathlib.Algebra.Lie.Ideal
 public import Mathlib.Algebra.Lie.Quotient
 
 /-!

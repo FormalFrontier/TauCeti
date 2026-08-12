@@ -334,6 +334,7 @@ theorem serreLift_serreF (h : IsSerreSystem R CM H E F) (i : B) :
   (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- Two homomorphisms out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
+@[ext]
 theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
     (hH : ∀ i, g₁ (serreH R CM i) = g₂ (serreH R CM i))
     (hE : ∀ i, g₁ (serreE R CM i) = g₂ (serreE R CM i))
