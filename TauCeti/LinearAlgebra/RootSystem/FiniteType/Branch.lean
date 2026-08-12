@@ -8,6 +8,7 @@ public import Mathlib.Data.Fin.Tuple.Sort
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star
+import TauCeti.LinearAlgebra.RootSystem.Classification
 
 public section
 
@@ -24,9 +25,9 @@ standard Cartan matrix of `TauCeti.DynkinType` under an explicit relabelling of 
 Bourbaki numbering. The fork `(1, 1, c)` is type `D (c + 3)`, its branch node sitting at Bourbaki
 index `c`, and the three exceptional shapes `(1, 2, 2)`, `(1, 2, 3)`, `(1, 2, 4)` are `E₆`, `E₇`
 and `E₈`, whose common branch node is Bourbaki index `3`. Combining the two halves gives
-`TauCeti.IsFiniteType.exists_dynkinType_of_star`: **a three-armed star of finite type with no empty
-arm is, after one simultaneous relabelling of rows and columns, the standard Cartan matrix of a
-unique valid simply-laced Dynkin type**, namely `D`, `E₆`, `E₇` or `E₈`.
+`TauCeti.IsFiniteType.existsUnique_dynkinType_of_star`: **a three-armed star of finite type with no
+empty arm is, after one simultaneous relabelling of rows and columns, the standard Cartan matrix of
+a unique valid simply-laced Dynkin type**, namely `D`, `E₆`, `E₇` or `E₈`.
 
 This is the fork half of the reindexing step of the Cartan-Killing classification, the step that
 turns the elimination theorems into a `DynkinType`. The complementary step for a diagram with no
@@ -34,9 +35,8 @@ branch node produces the chains `Aₙ`, and the step for a diagram with a multip
 `Bₙ`, `Cₙ`, `F₄` and `G₂`; neither is proved here. Nor is the extraction that presents a general
 finite-type diagram with a branch vertex as a star - this file starts from the star.
 
-The relabellings are honest data, not existence statements dressed up: the vertex maps
-`TauCeti.forkValD` and `TauCeti.forkValE` are written down, and the identification is checked
-entrywise against Mathlib's `CartanMatrix.D`, `.E₆`, `.E₇` and `.E₈`.
+The proofs construct explicit vertex relabellings and check the identification entrywise against
+Mathlib's `CartanMatrix.D`, `.E₆`, `.E₇` and `.E₈`.
 
 ## Main definitions
 
@@ -47,12 +47,11 @@ entrywise against Mathlib's `CartanMatrix.D`, `.E₆`, `.E₇` and `.E₈`.
 
 * `TauCeti.isStarOfType_D`, `TauCeti.isStarOfType_E6`, `TauCeti.isStarOfType_E7`,
   `TauCeti.isStarOfType_E8`: the four admissible shapes and the types they carry.
-* `TauCeti.IsStarOfType.isFiniteType` and `TauCeti.isFiniteType_starCartanMatrix_fork`,
-  `TauCeti.isFiniteType_starCartanMatrix_E6`, `TauCeti.isFiniteType_starCartanMatrix_E7`,
-  `TauCeti.isFiniteType_starCartanMatrix_E8`: the converse of the fork bound. A star carrying a
-  finite-type diagram is of finite type, so each of the four admissible shapes does occur.
-* `TauCeti.IsFiniteType.exists_dynkinType_of_star`: **the classification of the three-armed stars**.
-  A star of finite type whose three arms are all nonempty carries a valid simply-laced Dynkin type.
+* `TauCeti.IsStarOfType.isFiniteType`: the converse of the fork bound. A star carrying a finite-type
+  diagram is of finite type, so each of the four admissible shapes does occur.
+* `TauCeti.IsFiniteType.existsUnique_dynkinType_of_star`: **the classification of the three-armed
+  stars**. A star of finite type whose three arms are all nonempty carries a unique valid
+  simply-laced Dynkin type.
 
 ## References
 
@@ -137,9 +136,10 @@ section Fork
 /-! ### The fork `(1, 1, c)` and type `D` -/
 
 /-- The position of a vertex of the star with arms `(1, 1, c)` in the Bourbaki numbering of type
-`D (c + 3)`: the centre is the branch node `c`, the two short arms are the two leaves `c + 1` and
-`c + 2` of the fork, and the long arm runs back down the chain from `c - 1` to `0`. -/
-def forkValD (c : ℕ) : StarIndex (![1, 1, c] : Fin 3 → ℕ) → ℕ
+`D (c + 3)`. When `1 ≤ c`, the centre is the branch node `c`, the two short arms are the two leaves
+`c + 1` and `c + 2` of the fork, and the long arm runs back down the chain from `c - 1` to `0`.
+When `c = 0`, the absent third arm leaves the three-node chain of the degenerate type `D 3`. -/
+private def forkValD (c : ℕ) : StarIndex (![1, 1, c] : Fin 3 → ℕ) → ℕ
   | none => c
   | some v => if (v.1 : ℕ) = 0 then c + 1 else if (v.1 : ℕ) = 1 then c + 2 else c - 1 - (v.2 : ℕ)
 
@@ -203,34 +203,35 @@ private lemma card_starIndex_fork (c : ℕ) :
     Fintype.card (StarIndex (![1, 1, c] : Fin 3 → ℕ)) = Fintype.card (Fin (c + 3)) := by
   simp only [StarIndex, Fintype.card_option, Fintype.card_sigma, Fintype.card_fin,
     Fin.sum_univ_three]
-  change 1 + 1 + c + 1 = c + 3
+  norm_num [Matrix.cons_val_two]
   omega
 
 private lemma starCartanMatrix_fork_eq (c : ℕ) (v w : StarIndex (![1, 1, c] : Fin 3 → ℕ)) :
     starCartanMatrix ![1, 1, c] v w
       = CartanMatrix.D (c + 3) (forkIndexD c v) (forkIndexD c w) := by
   rcases v with _ | v <;> rcases w with _ | w
-  · rw [starCartanMatrix_none_none, cartanMatrixD_apply]
+  · rw [starCartanMatrix_none_none, CartanMatrix.D_apply]
     simp only [forkIndexD_val, forkValD_none]
     split_ifs <;> omega
   · have hw := forkArmD c w
-    rw [starCartanMatrix_none_some, cartanMatrixD_apply]
+    rw [starCartanMatrix_none_some, CartanMatrix.D_apply]
     simp only [forkIndexD_val, forkValD_none, forkValD_some]
     -- `split_ifs` normalizes some edge conditions to `True ∧ …`, which `omega` cannot read.
     split_ifs <;> first | omega | simp_all
   · have hv := forkArmD c v
-    rw [starCartanMatrix_some_none, cartanMatrixD_apply]
+    rw [starCartanMatrix_some_none, CartanMatrix.D_apply]
     simp only [forkIndexD_val, forkValD_none, forkValD_some]
     split_ifs <;> first | omega | simp_all
   · have hv := forkArmD c v
     have hw := forkArmD c w
-    rw [starCartanMatrix_some_some, cartanMatrixD_apply]
+    rw [starCartanMatrix_some_some, CartanMatrix.D_apply]
     simp only [forkIndexD_val, forkValD_some, Fin.ext_iff]
     split_ifs <;> omega
 
 /-- **The fork of type `D`.** The star with arms of one, one and `c` vertices is the Dynkin diagram
-of type `D (c + 3)`: the branch node is Bourbaki index `c`, the two leaves of the fork are `c + 1`
-and `c + 2`, and the long arm is the chain `c - 1, …, 0`. -/
+of type `D (c + 3)`. When `1 ≤ c`, the branch node is Bourbaki index `c`, the two leaves of the fork
+are `c + 1` and `c + 2`, and the long arm is the chain `c - 1, …, 0`. When `c = 0`, the third arm is
+empty and the same formula identifies the resulting chain with the degenerate type `D 3`. -/
 theorem isStarOfType_D (c : ℕ) : IsStarOfType (![1, 1, c] : Fin 3 → ℕ) (D (c + 3)) := by
   have hbij : Function.Bijective (forkIndexD c) :=
     (Fintype.bijective_iff_injective_and_card _).2 ⟨forkIndexD_injective c, card_starIndex_fork c⟩
@@ -244,10 +245,11 @@ section Exceptional
 
 /-! ### The exceptional shapes `(1, 2, c)` and the types `E₆`, `E₇`, `E₈` -/
 
-/-- The position of a vertex of the star with arms `(1, 2, c)` in the Bourbaki numbering of the
-exceptional type of rank `c + 4`: the centre is the branch node `3`, the short arm is the node `1`
-hanging off it, the arm of two vertices is `2` then `0`, and the long arm is `4, …, c + 3`. -/
-def forkValE (c : ℕ) : StarIndex (![1, 2, c] : Fin 3 → ℕ) → ℕ
+/-- The position of a vertex of the star with arms `(1, 2, c)` in the Bourbaki numbering pattern
+used below for `E₆`, `E₇` and `E₈`, where `c` is respectively `2`, `3` and `4`: the centre is the
+branch node `3`, the short arm is the node `1` hanging off it, the arm of two vertices is `2` then
+`0`, and the long arm is `4, …, c + 3`. -/
+private def forkValE (c : ℕ) : StarIndex (![1, 2, c] : Fin 3 → ℕ) → ℕ
   | none => 3
   | some v =>
       if (v.1 : ℕ) = 0 then 1
@@ -338,38 +340,8 @@ theorem isStarOfType_E8 : IsStarOfType (![1, 2, 4] : Fin 3 → ℕ) E8 := by
 
 end Exceptional
 
-/-! ### Each admissible shape occurs
-
-The four identifications run backwards as well: since the standard Cartan matrices of `D`, `E₆`,
-`E₇` and `E₈` are of finite type, so is each of the four stars. This is the converse of the fork
-bound, and with it the shapes the bound leaves are exactly the shapes that occur.
--/
-
-/-- The fork with arms of one, one and `c` vertices is of finite type, being the diagram of
-`D (c + 3)`. -/
-theorem isFiniteType_starCartanMatrix_fork (c : ℕ) :
-    IsFiniteType (starCartanMatrix (![1, 1, c] : Fin 3 → ℕ)) :=
-  (isStarOfType_D c).isFiniteType (by rw [cartanMatrix_D]; exact isFiniteType_cartanMatrix_D _)
-
-/-- The star with arms of one, two and two vertices is of finite type, being the diagram of `E₆`. -/
-theorem isFiniteType_starCartanMatrix_E6 :
-    IsFiniteType (starCartanMatrix (![1, 2, 2] : Fin 3 → ℕ)) :=
-  isStarOfType_E6.isFiniteType isFiniteType_cartanMatrix_E6
-
-/-- The star with arms of one, two and three vertices is of finite type, being the diagram of
-`E₇`. -/
-theorem isFiniteType_starCartanMatrix_E7 :
-    IsFiniteType (starCartanMatrix (![1, 2, 3] : Fin 3 → ℕ)) :=
-  isStarOfType_E7.isFiniteType isFiniteType_cartanMatrix_E7
-
-/-- The star with arms of one, two and four vertices is of finite type, being the diagram of
-`E₈`. -/
-theorem isFiniteType_starCartanMatrix_E8 :
-    IsFiniteType (starCartanMatrix (![1, 2, 4] : Fin 3 → ℕ)) :=
-  isStarOfType_E8.isFiniteType isFiniteType_cartanMatrix_E8
-
 /-- **The classification of the three-armed stars of finite type.** A star with three nonempty arms
-whose Cartan matrix is of finite type carries a valid simply-laced Dynkin type: after one
+whose Cartan matrix is of finite type carries a unique valid simply-laced Dynkin type: after one
 simultaneous relabelling of rows and columns it is the standard Cartan matrix of `D n` with
 `n ≥ 4`, or of `E₆`, `E₇` or `E₈`.
 
@@ -380,40 +352,46 @@ with its Bourbaki-numbered diagram by `TauCeti.isStarOfType_D`, `TauCeti.isStarO
 `TauCeti.isStarOfType_E7` and `TauCeti.isStarOfType_E8`.
 
 The type is unique, by `TauCeti.DynkinType.eq_of_valid_of_forall_eq`. -/
-theorem IsFiniteType.exists_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ : ∀ i, ℓ i ≠ 0)
+theorem IsFiniteType.existsUnique_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ : ∀ i, ℓ i ≠ 0)
     (h : IsFiniteType (starCartanMatrix ℓ)) :
-    ∃ t : DynkinType, t.Valid ∧ t.IsSimplyLaced ∧ IsStarOfType ℓ t := by
-  -- Sort the arms so that the fork bound applies, and record the sorted star as a `![a, b, c]`.
-  obtain ⟨σ, hmono⟩ : ∃ σ : Equiv.Perm (Fin 3), Monotone (ℓ ∘ σ) :=
-    ⟨Tuple.sort ℓ, Tuple.monotone_sort ℓ⟩
-  have hcomp : ℓ ∘ σ = ![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] := by
-    funext i; fin_cases i <;> rfl
-  have hab : ℓ (σ 0) ≤ ℓ (σ 1) := hmono (by decide)
-  have hbc : ℓ (σ 1) ≤ ℓ (σ 2) := hmono (by decide)
-  have hsorted : IsFiniteType (starCartanMatrix ![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)]) := by
-    rw [← hcomp]
-    exact isFiniteType_starCartanMatrix_comp σ h
-  -- Transporting a statement about the sorted star back to `ℓ` undoes the sorting permutation.
-  have hback : ∀ t : DynkinType, IsStarOfType (![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] : Fin 3 → ℕ) t →
-      IsStarOfType ℓ t := by
-    intro t ht
-    have hfun : ((![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] : Fin 3 → ℕ) ∘ (σ.symm : Fin 3 ≃ Fin 3)) = ℓ := by
-      rw [← hcomp]; funext i; simp
-    exact hfun ▸ ht.comp (σ.symm : Fin 3 ≃ Fin 3)
-  -- The fork bound leaves the fork `(1, 1, c)` and the three exceptional shapes.
-  rcases eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three hab hbc hsorted with
-    h0 | ⟨h1, h2⟩ | ⟨h1, h2, h3⟩
-  · exact absurd h0 (hℓ (σ 0))
-  · refine ⟨D (ℓ (σ 2) + 3), ?_, isSimplyLaced_D _, hback _ ?_⟩
-    · simp only [valid_D]; omega
-    · rw [h1, h2]; exact isStarOfType_D _
-  · have hc : ℓ (σ 2) = 2 ∨ ℓ (σ 2) = 3 ∨ ℓ (σ 2) = 4 := by omega
-    rcases hc with hc | hc | hc
-    · refine ⟨E6, valid_E6, isSimplyLaced_E6, hback _ ?_⟩
-      rw [h1, h2, hc]; exact isStarOfType_E6
-    · refine ⟨E7, valid_E7, isSimplyLaced_E7, hback _ ?_⟩
-      rw [h1, h2, hc]; exact isStarOfType_E7
-    · refine ⟨E8, valid_E8, isSimplyLaced_E8, hback _ ?_⟩
-      rw [h1, h2, hc]; exact isStarOfType_E8
+    ∃! t : DynkinType, t.Valid ∧ t.IsSimplyLaced ∧ IsStarOfType ℓ t := by
+  have hex : ∃ t : DynkinType, t.Valid ∧ t.IsSimplyLaced ∧ IsStarOfType ℓ t := by
+    -- Sort the arms so that the fork bound applies, and record the sorted star as a `![a, b, c]`.
+    obtain ⟨σ, hmono⟩ : ∃ σ : Equiv.Perm (Fin 3), Monotone (ℓ ∘ σ) :=
+      ⟨Tuple.sort ℓ, Tuple.monotone_sort ℓ⟩
+    have hcomp : ℓ ∘ σ = ![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] := by
+      funext i; fin_cases i <;> rfl
+    have hab : ℓ (σ 0) ≤ ℓ (σ 1) := hmono (by decide)
+    have hbc : ℓ (σ 1) ≤ ℓ (σ 2) := hmono (by decide)
+    have hsorted : IsFiniteType (starCartanMatrix ![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)]) := by
+      rw [← hcomp]
+      exact isFiniteType_starCartanMatrix_comp σ h
+    -- Transporting a statement about the sorted star back to `ℓ` undoes the sorting permutation.
+    have hback : ∀ t : DynkinType, IsStarOfType (![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] : Fin 3 → ℕ) t →
+        IsStarOfType ℓ t := by
+      intro t ht
+      have hfun : ((![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] : Fin 3 → ℕ) ∘
+          (σ.symm : Fin 3 ≃ Fin 3)) = ℓ := by
+        rw [← hcomp]; funext i; simp
+      exact hfun ▸ ht.comp (σ.symm : Fin 3 ≃ Fin 3)
+    -- The fork bound leaves the fork `(1, 1, c)` and the three exceptional shapes.
+    rcases
+        eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three hab hbc hsorted with
+      h0 | ⟨h1, h2⟩ | ⟨h1, h2, h3⟩
+    · exact absurd h0 (hℓ (σ 0))
+    · refine ⟨D (ℓ (σ 2) + 3), ?_, isSimplyLaced_D _, hback _ ?_⟩
+      · simp only [valid_D]; omega
+      · rw [h1, h2]; exact isStarOfType_D _
+    · have hc : ℓ (σ 2) = 2 ∨ ℓ (σ 2) = 3 ∨ ℓ (σ 2) = 4 := by omega
+      rcases hc with hc | hc | hc
+      · refine ⟨E6, valid_E6, isSimplyLaced_E6, hback _ ?_⟩
+        rw [h1, h2, hc]; exact isStarOfType_E6
+      · refine ⟨E7, valid_E7, isSimplyLaced_E7, hback _ ?_⟩
+        rw [h1, h2, hc]; exact isStarOfType_E7
+      · refine ⟨E8, valid_E8, isSimplyLaced_E8, hback _ ?_⟩
+        rw [h1, h2, hc]; exact isStarOfType_E8
+  obtain ⟨t, htv, hts, et, het⟩ := hex
+  exact ⟨t, ⟨htv, hts, et, het⟩, fun s ⟨hsv, _, es, hes⟩ ↦
+    DynkinType.eq_of_valid_of_forall_eq hsv htv es et hes het⟩
 
 end TauCeti

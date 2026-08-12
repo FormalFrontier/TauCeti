@@ -116,7 +116,7 @@ private lemma typeDSimpleRoot_dotProduct_of_add_one_lt (hn : 4 ≤ n) {i : Fin n
   have hi' := i.isLt
   have hj' := j.isLt
   rw [typeDSimpleRoot_of_add_one_lt hn hi, sub_dotProduct, single_dotProduct, single_dotProduct,
-    cartanMatrixD_apply]
+    CartanMatrix.D_apply]
   by_cases hj : (j : ℕ) + 1 < n
   · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
     split_ifs <;> omega
@@ -130,7 +130,7 @@ private lemma typeDSimpleRoot_dotProduct_of_not_add_one_lt (hn : 4 ≤ n) {i : F
   have hi' := i.isLt
   have hj' := j.isLt
   rw [typeDSimpleRoot_of_not_add_one_lt hn hi, add_dotProduct, single_dotProduct,
-    single_dotProduct, cartanMatrixD_apply]
+    single_dotProduct, CartanMatrix.D_apply]
   by_cases hj : (j : ℕ) + 1 < n
   · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
     split_ifs <;> omega
