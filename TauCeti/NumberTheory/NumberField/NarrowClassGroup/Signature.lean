@@ -12,34 +12,31 @@ public import TauCeti.NumberTheory.NumberField.Units.Signature
 
 The narrow class group `Cl⁺(K)` surjects onto the ordinary class group `Cl(K)` by forgetting the
 positivity condition on generators, and the kernel of that surjection is an elementary abelian
-`2`-group. This file identifies that kernel with the **relative signature quotient**: the sign
-patterns `fieldSignatures K` realized by `Kˣ` modulo the subgroup `unitSignatures K` of those
-realized by the units of `𝓞 K`.
+`2`-group. This file identifies that kernel with the **cokernel of the unit signature**: the group
+of all sign patterns at the real places, modulo the subgroup `unitSignatures K` of those realized
+by the units of `𝓞 K`.
 
 The mechanism is that a principal fractional ideal `(x)` acquires a totally positive generator
 exactly when some integer unit corrects the signs of `x`, and two generators of the same principal
 ideal differ by an integer unit. So `mkPrincipal x = 1` holds precisely when the signature of `x`
 lies in `unitSignatures K`, which is `mkPrincipal_eq_one_iff`. Everything else is the first
-isomorphism theorem applied to that description of the kernel: `kerToClassGroupEquiv` presents the
-relative signature quotient directly, and `card_ker_toClassGroup` records its order as the relative
-index of the two ranges.
+isomorphism theorem applied to that description of the kernel, using that `fieldUnitSignature` is
+onto (`fieldUnitSignature_surjective`): `kerToClassGroupEquiv` presents the cokernel directly, and
+`card_ker_toClassGroup` records its order as the index of `unitSignatures K`.
 
-The consequences are the classical narrow class number formula in index form,
+The consequences are the classical narrow class number formula, in index form
 
 ```text
-h⁺(K) = h(K) · [fieldSignatures K : unitSignatures K],
+h⁺(K) = h(K) · [signature Kˣ : signature (𝓞 K)ˣ],
 ```
 
-together with `h⁺(K) ∣ h(K) · 2 ^ r₁`, since the ambient group of sign patterns has order `2 ^ r₁`
-for `r₁` the number of real places. Both refine `exists_card_eq_card_classGroup_mul_two_pow`, which
-records only that the extra factor is *some* power of `2`. For a totally complex field there are no
-real places and the two class groups already coincide, by `toClassGroup_injective`; the content here
-is the real case, where the correction is measured by which sign patterns the units realize.
-
-Nothing here computes either range. Surjectivity of `fieldUnitSignature` — every sign pattern is
-realized by some element of `Kˣ`, by weak approximation at the real places — would turn the index
-above into `2 ^ r₁ / Nat.card (unitSignatures K)`; it is a separate archimedean input, and the
-statements below are phrased against `fieldSignatures K` so that they stand without it.
+and, since the group of sign patterns has order `2 ^ r₁` for `r₁` the number of real places, in the
+product form `h⁺(K) · #signature (𝓞 K)ˣ = h(K) · 2 ^ r₁` — that is, `h⁺ = h · 2 ^ r₁ / [E : E⁺]`
+with `E` the units and `E⁺` the totally positive ones. Both refine
+`exists_card_eq_card_classGroup_mul_two_pow`, which records only that the extra factor is *some*
+power of `2`. For a totally complex field there are no real places and the two class groups already
+coincide, by `toClassGroup_injective`; the content here is the real case, where the correction is
+measured by which sign patterns the units realize.
 
 ## Main definitions and results
 
@@ -48,34 +45,34 @@ statements below are phrased against `fieldSignatures K` so that they stand with
 * `TauCeti.NumberField.NarrowClassGroup.ker_mkPrincipal`: hence the kernel of the principal-class
   map is the preimage of `unitSignatures K`.
 * `TauCeti.NumberField.NarrowClassGroup.kerToClassGroupEquiv`: **the kernel of `Cl⁺(K) → Cl(K)` is
-  the relative signature quotient** `fieldSignatures K / unitSignatures K`, with
+  the cokernel of the unit signature**, with
   `TauCeti.NumberField.NarrowClassGroup.kerToClassGroupEquiv_mkPrincipal` evaluating it on the
   narrow class of a principal ideal `(x)` as the class of the signature of `x`.
-* `TauCeti.NumberField.NarrowClassGroup.card_ker_toClassGroup`: its order is the relative index of
-  the two signature ranges.
-* `TauCeti.NumberField.NarrowClassGroup.card_eq_card_classGroup_mul_relIndex` and
+* `TauCeti.NumberField.NarrowClassGroup.card_ker_toClassGroup`: its order is the index of the unit
+  signatures.
+* `TauCeti.NumberField.NarrowClassGroup.card_eq_card_classGroup_mul_index` and
   `TauCeti.NumberField.NarrowClassGroup.card_mul_card_unitSignatures`: **the narrow class number
   formula**, in index and in product form.
 * `TauCeti.NumberField.NarrowClassGroup.card_dvd_card_classGroup_mul_two_pow_nrRealPlaces`:
   `h⁺ ∣ h · 2 ^ r₁`.
 * `TauCeti.NumberField.NarrowClassGroup.toClassGroup_injective_iff`: `Cl⁺(K) → Cl(K)` is injective
-  exactly when every sign pattern realized in `Kˣ` is realized by an integer unit.
+  exactly when the units realize every sign pattern.
 
 ## Roadmap
 
-This advances Layer 3 of `TauCetiRoadmap/Multiquadratic/README.md`, whose `2`-rank formula
-`2-rank = t - 1` is a theorem about the *narrow* class group and which asks for the narrow class
-group as the prerequisite for the real quadratic case. That case is where the two class groups come
-apart: the roadmap's own example `ℚ(√3)` has `t = 2` ramified primes and class number `1`, so the
-`t - 1` count cannot be read off `Cl(K)` there. What measures the discrepancy is the relative index
-computed here — `card_eq_card_classGroup_mul_relIndex` recovers `h⁺` from `h` and the unit
-signatures, and `toClassGroup_injective_iff` says exactly when the two groups agree, so a `2`-rank
-count may be transported between them. The previously available
-`exists_card_eq_card_classGroup_mul_two_pow` identifies the extra factor only as *some* power of
-`2`, which is too coarse for that transport. For the classical genus theory this serves
-see D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws: from Euler to
-Eisenstein*; the exact sequence computing `h⁺/h` from the unit signatures is standard, see also
-H. Cohen, *A Course in Computational Algebraic Number Theory*, §5.2.
+This advances Layer 3 of `TauCetiRoadmap/Multiquadratic/README.md`, which says that "defining the
+narrow class group is part of this layer and the prerequisite for the real case" of the `2`-rank
+formula `2-rank = t - 1`. The definition, its finiteness and the surjection onto `Cl(K)` are on
+`main`; what was missing is any computation of `Cl⁺(K)` itself, since
+`exists_card_eq_card_classGroup_mul_two_pow` pins the extra factor only as *some* power of `2`.
+This file computes it: `card_mul_card_unitSignatures` determines `h⁺` from `h` and the unit
+signatures, and `toClassGroup_injective_iff` decides, for a given field, whether `Cl⁺(K)` and
+`Cl(K)` agree — the case distinction the layer prescribes between the imaginary case, where "narrow
+= ordinary", and the real one, where the roadmap's own example `ℚ(√3)` has `t = 2` ramified primes
+and class number `1`. For the classical genus theory this serves see D. A. Cox, *Primes of the Form
+x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws: from Euler to Eisenstein*; the exact sequence
+computing `h⁺/h` from the unit signatures is standard, see also H. Cohen, *A Course in
+Computational Algebraic Number Theory*, §5.2.
 -/
 
 public section
@@ -124,36 +121,30 @@ theorem ker_mkPrincipal :
   ext x
   rw [MonoidHom.mem_ker, Subgroup.mem_comap, mkPrincipal_eq_one_iff]
 
-local instance : IsMulCommutative (fieldSignatures K) := ⟨⟨fun x y => mul_comm x y⟩⟩
+-- The sign group is a product of quotients of `ℝˣ`, so it is commutative; instance search finds
+-- `Pi.group` for it and stops, so record the commutativity that makes `unitSignatures K` normal.
+local instance : IsMulCommutative
+    ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) := ⟨⟨fun x y => mul_comm x y⟩⟩
 
 -- Construction: by `toClassGroup_ker` the kernel is the image of the principal-class map, and by
 -- `ker_mkPrincipal` that map's own kernel is the preimage of `unitSignatures K`. The first
--- isomorphism theorem for the field signature then identifies this quotient with the quotient of
--- the two signature ranges.
-/-- **The kernel of `Cl⁺(K) → Cl(K)` is the relative signature quotient.** Forgetting positivity
-loses exactly the sign patterns that `Kˣ` realizes and the units of `𝓞 K` do not. -/
+-- isomorphism theorem for the field signature, which is onto, then identifies this quotient with
+-- the cokernel of the unit signature.
+/-- **The kernel of `Cl⁺(K) → Cl(K)` is the cokernel of the unit signature.** Forgetting positivity
+loses exactly the sign patterns that the units of `𝓞 K` do not realize. -/
 noncomputable def kerToClassGroupEquiv :
     MonoidHom.ker (toClassGroup (K := K)) ≃*
-      fieldSignatures K ⧸ (unitSignatures K).subgroupOf (fieldSignatures K) := by
-  let fieldSignature : Kˣ →* fieldSignatures K :=
-    (fieldUnitSignature (K := K)).codRestrict (fieldSignatures K)
-      fun x => mem_fieldSignatures.mpr ⟨x, rfl⟩
+      ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) ⧸ unitSignatures K := by
   let signatureQuotient :
-      Kˣ →* fieldSignatures K ⧸ (unitSignatures K).subgroupOf (fieldSignatures K) :=
-    (QuotientGroup.mk' ((unitSignatures K).subgroupOf (fieldSignatures K))).comp
-      fieldSignature
-  have hfieldSur : Function.Surjective fieldSignature := by
-    rintro ⟨s, hs⟩
-    obtain ⟨x, hx⟩ := mem_fieldSignatures.mp hs
-    exact ⟨x, Subtype.ext hx⟩
+      Kˣ →* ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) ⧸ unitSignatures K :=
+    (QuotientGroup.mk' (unitSignatures K)).comp (fieldUnitSignature (K := K))
   have hsur : Function.Surjective signatureQuotient :=
-    (QuotientGroup.mk'_surjective _).comp hfieldSur
+    (QuotientGroup.mk'_surjective _).comp fieldUnitSignature_surjective
   have hker : MonoidHom.ker signatureQuotient =
       Subgroup.comap (fieldUnitSignature (K := K)) (unitSignatures K) := by
     ext x
     simp only [MonoidHom.mem_ker, signatureQuotient, MonoidHom.comp_apply,
-      QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff, Subgroup.mem_subgroupOf,
-      Subgroup.mem_comap, fieldSignature, MonoidHom.codRestrict_apply]
+      QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff, Subgroup.mem_comap]
   exact (MulEquiv.subgroupCongr toClassGroup_ker).trans
     ((QuotientGroup.quotientKerEquivRange (mkPrincipal (K := K))).symm.trans
       ((QuotientGroup.quotientMulEquivOfEq (ker_mkPrincipal.trans hker.symm)).trans
@@ -165,8 +156,8 @@ some isomorphism of the right size. -/
 @[simp] theorem kerToClassGroupEquiv_mkPrincipal (x : Kˣ)
     (hx : mkPrincipal x ∈ MonoidHom.ker (toClassGroup (K := K))) :
     kerToClassGroupEquiv ⟨mkPrincipal x, hx⟩ =
-      QuotientGroup.mk (⟨fieldUnitSignature x, mem_fieldSignatures.mpr ⟨x, rfl⟩⟩ :
-        fieldSignatures K) := by
+      (QuotientGroup.mk (fieldUnitSignature x) :
+        ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) ⧸ unitSignatures K) := by
   -- The first isomorphism theorem for `mkPrincipal` sends `⟨mkPrincipal x, _⟩` back to the class of
   -- `x`, on which the remaining maps evaluate definitionally.
   have hsymm : (QuotientGroup.quotientKerEquivRange (mkPrincipal (K := K))).symm
@@ -176,48 +167,45 @@ some isomorphism of the right size. -/
   simp only [MulEquiv.trans_apply, hsymm]
   rfl
 
-/-- **The narrow-versus-ordinary defect is the relative index of the two signature ranges.** -/
+/-- **The narrow-versus-ordinary defect is the index of the unit signatures.** -/
 theorem card_ker_toClassGroup :
-    Nat.card (MonoidHom.ker (toClassGroup (K := K))) =
-      (unitSignatures K).relIndex (fieldSignatures K) := by
-  rw [Nat.card_congr kerToClassGroupEquiv.toEquiv, ← Subgroup.index_eq_card,
-    Subgroup.relIndex]
+    Nat.card (MonoidHom.ker (toClassGroup (K := K))) = (unitSignatures K).index := by
+  rw [Nat.card_congr kerToClassGroupEquiv.toEquiv, ← Subgroup.index_eq_card]
 
 /-- **The defect, in product form.** Multiplying by the number of sign patterns realized by the
 units clears the index: the kernel of `Cl⁺(K) → Cl(K)` and the unit signatures together account for
-all the sign patterns realized by `Kˣ`. -/
+all `2 ^ r₁` sign patterns at the real places. -/
 theorem card_ker_toClassGroup_mul_card_unitSignatures :
     Nat.card (MonoidHom.ker (toClassGroup (K := K))) * Nat.card (unitSignatures K) =
-      Nat.card (fieldSignatures K) := by
-  rw [card_ker_toClassGroup, Subgroup.relIndex,
-    ← Nat.card_congr (Subgroup.subgroupOfEquivOfLe unitSignatures_le_fieldSignatures).toEquiv]
-  exact Subgroup.index_mul_card _
+      2 ^ nrRealPlaces K := by
+  rw [card_ker_toClassGroup, mul_comm]
+  exact TauCeti.NumberField.card_unitSignatures_mul_index
 
 /-- **The narrow class number formula.** The narrow class number is the ordinary class number times
-the index, inside the sign patterns realized by `Kˣ`, of those realized by the units of `𝓞 K`:
+the index of the sign patterns realized by the units of `𝓞 K`:
 
 ```text
-h⁺(K) = h(K) · [fieldSignatures K : unitSignatures K].
+h⁺(K) = h(K) · [signature Kˣ : signature (𝓞 K)ˣ].
 ```
 
 This sharpens `exists_card_eq_card_classGroup_mul_two_pow`, which records only that the second
 factor is a power of `2`. -/
-theorem card_eq_card_classGroup_mul_relIndex :
+theorem card_eq_card_classGroup_mul_index :
     Nat.card (NarrowClassGroup K) =
-      Nat.card (ClassGroup (𝓞 K)) * (unitSignatures K).relIndex (fieldSignatures K) := by
+      Nat.card (ClassGroup (𝓞 K)) * (unitSignatures K).index := by
   rw [card_eq_card_classGroup_mul_card_ker, card_ker_toClassGroup]
 
 /-- **The narrow class number formula, in product form**:
 
 ```text
-h⁺(K) · #(signature (𝓞 K)ˣ) = h(K) · #(signature Kˣ).
+h⁺(K) · #(signature (𝓞 K)ˣ) = h(K) · 2 ^ r₁,
 ```
 
-Once the signature of `Kˣ` is known to be onto — a separate archimedean input — the right-hand
-factor is `2 ^ r₁` and this is the classical `h⁺ = h · 2 ^ r₁ / [E : E⁺]`. -/
+which is the classical `h⁺ = h · 2 ^ r₁ / [E : E⁺]` with `E` the units of `𝓞 K` and `E⁺` the
+totally positive ones. -/
 theorem card_mul_card_unitSignatures :
     Nat.card (NarrowClassGroup K) * Nat.card (unitSignatures K) =
-      Nat.card (ClassGroup (𝓞 K)) * Nat.card (fieldSignatures K) := by
+      Nat.card (ClassGroup (𝓞 K)) * 2 ^ nrRealPlaces K := by
   rw [card_eq_card_classGroup_mul_card_ker, mul_assoc,
     card_ker_toClassGroup_mul_card_unitSignatures]
 
@@ -225,22 +213,22 @@ theorem card_mul_card_unitSignatures :
 class number is bounded by the number of sign patterns at the real places. -/
 theorem card_dvd_card_classGroup_mul_two_pow_nrRealPlaces :
     Nat.card (NarrowClassGroup K) ∣ Nat.card (ClassGroup (𝓞 K)) * 2 ^ nrRealPlaces K := by
-  rw [card_eq_card_classGroup_mul_relIndex]
-  exact Nat.mul_dvd_mul_left _
-    ((Subgroup.relIndex_dvd_card _ _).trans
-      TauCeti.NumberField.card_fieldSignatures_dvd_two_pow_nrRealPlaces)
+  rw [card_eq_card_classGroup_mul_index]
+  exact Nat.mul_dvd_mul_left _ ⟨Nat.card (unitSignatures K), by
+    rw [mul_comm, TauCeti.NumberField.card_unitSignatures_mul_index]⟩
 
-/-- **The narrow and the ordinary class group agree exactly when the units realize every attainable
-sign pattern.** For a totally complex field both ranges are trivial, which is the content of
-`toClassGroup_injective`; the criterion is informative for a field with real places. -/
+/-- **The narrow and the ordinary class group agree exactly when the units realize every sign
+pattern.** For a totally complex field there are no real places and the sign group is trivial, which
+is the content of `toClassGroup_injective`; the criterion is informative for a field with real
+places. -/
 theorem toClassGroup_injective_iff :
-    Function.Injective (toClassGroup (K := K)) ↔ fieldSignatures K = unitSignatures K := by
+    Function.Injective (toClassGroup (K := K)) ↔ unitSignatures K = ⊤ := by
   rw [← MonoidHom.ker_eq_bot_iff, toClassGroup_ker, Subgroup.eq_bot_iff_forall]
   constructor
-  · refine fun h => le_antisymm (fun z hz => ?_) unitSignatures_le_fieldSignatures
-    obtain ⟨x, rfl⟩ := mem_fieldSignatures.mp hz
+  · refine fun h => eq_top_iff.mpr fun z _ => ?_
+    obtain ⟨x, rfl⟩ := fieldUnitSignature_surjective z
     exact mkPrincipal_eq_one_iff.mp (h _ ⟨x, rfl⟩)
   · rintro h _ ⟨x, rfl⟩
-    exact mkPrincipal_eq_one_iff.mpr (h ▸ mem_fieldSignatures.mpr ⟨x, rfl⟩)
+    exact mkPrincipal_eq_one_iff.mpr (h ▸ Subgroup.mem_top _)
 
 end TauCeti.NumberField.NarrowClassGroup
