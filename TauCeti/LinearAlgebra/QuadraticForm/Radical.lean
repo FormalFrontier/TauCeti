@@ -28,4 +28,11 @@ theorem ne_zero [Nontrivial M] {Q : QuadraticForm R M} (hQ : Q.Nondegenerate) : 
     simp
   rwa [hQ.radical_eq_bot, Submodule.mem_bot] at hm
 
+/-- A nondegenerate quadratic form on a positive-dimensional finite module is nonzero. -/
+theorem ne_zero_of_finrank_pos {R M : Type*} [CommRing R] [Nontrivial R]
+    [AddCommGroup M] [Module R M] {Q : QuadraticForm R M}
+    (hQ : Q.Nondegenerate) (hM : 0 < Module.finrank R M) : Q ≠ 0 := by
+  let _ : Nontrivial M := Module.nontrivial_of_finrank_pos hM
+  exact hQ.ne_zero
+
 end QuadraticMap.Nondegenerate
