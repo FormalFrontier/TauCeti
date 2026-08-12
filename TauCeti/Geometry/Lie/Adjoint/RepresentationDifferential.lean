@@ -109,7 +109,7 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   simp only [L]
   rw [hLmf.mfderiv]
   have hTangent := mvfderiv_tangentAd_apply_one (I := I) (G := G) (eLie X) (eLie Y)
-  with_unfolding_all change
+  change
     (mfderiv I 𝓘(ℝ, E) T 1) (eLie X) =
       (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) (eLie X) (eLie Y)) at hTangent
   rw [hTangent]
