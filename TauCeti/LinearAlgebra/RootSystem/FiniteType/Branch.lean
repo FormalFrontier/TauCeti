@@ -133,7 +133,7 @@ private lemma comp_symm_comp (e : α ≃ β) (m : β → ℕ) : (m ∘ e) ∘ (e
   funext i; simp
 
 /-- Carrying a Dynkin diagram is invariant under a relabelling of the arms, in either direction. -/
-theorem isStarOfType_comp_iff {m : β → ℕ} (e : α ≃ β) :
+@[simp] theorem isStarOfType_comp_iff {m : β → ℕ} (e : α ≃ β) :
     IsStarOfType (m ∘ e) t ↔ IsStarOfType m t :=
   ⟨fun h ↦ comp_symm_comp e m ▸ h.comp (e.symm : β ≃ α), fun h ↦ h.comp e⟩
 
@@ -143,7 +143,8 @@ theorem isFiniteType_starCartanMatrix_comp [Fintype α] [Fintype β] {m : β →
   isFiniteType_of_forall_eq (starIndexCongrArms e m) h (starCartanMatrix_comp e m)
 
 /-- Finite type is invariant under a relabelling of the arms of a star, in either direction. -/
-theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β → ℕ} (e : α ≃ β) :
+@[simp] theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β → ℕ}
+    (e : α ≃ β) :
     IsFiniteType (starCartanMatrix (m ∘ e)) ↔ IsFiniteType (starCartanMatrix m) :=
   ⟨fun h ↦ comp_symm_comp e m ▸ isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h,
     isFiniteType_starCartanMatrix_comp e⟩
