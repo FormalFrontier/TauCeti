@@ -25,20 +25,17 @@ highest-weight classification of the irreducible representations of `SU(2)` runs
 value `d + 1` at the identity is read off it at `z = 1`.
 
 The route is Layer 1's `TauCeti.char_symPowerRep_diagonal`, which gives the character at a
-diagonal matrix as the complete homogeneous symmetric polynomial `h_d` in the diagonal entries.
-The rank-two case of that polynomial is the geometric-looking sum `∑ᵢ x^i y^{d-i}`, proved here
-from the bijection `TauCeti.symFinTwoEquiv` between the `d`-element multisets over a two-element
-type and `Fin (d + 1)`, which records how many of the entries are `0`.
+diagonal matrix as the complete homogeneous symmetric polynomial `h_d` in the diagonal entries,
+together with its rank-two evaluation `TauCeti.eval_hsymm_fin_two`: the geometric-looking sum
+`∑ᵢ x^i y^{d-i}`.
 
 ## Main definitions
 
-* `TauCeti.symFinTwoEquiv`: multisets of size `d` over `Fin 2` are counted by `Fin (d + 1)`.
 * `TauCeti.SU2.toGL`: `SU(2)` as a subgroup of `GL₂(ℂ)`.
 * `TauCeti.SU2.symPower`: the `d`-th symmetric power of the standard representation of `SU(2)`.
 
 ## Main results
 
-* `TauCeti.eval_hsymm_fin_two`: `h_d(x, y) = ∑_{i ≤ d} xⁱ y^{d-i}`.
 * `TauCeti.SU2.character_symPower_torusHom` and
   `TauCeti.SU2.character_symPower_torusHom_zpow`: the character of `Symᵈ` on the maximal torus is
   the weight string `∑_{i ≤ d} z^{2i - d}`.
@@ -61,56 +58,6 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-/-! ### Multisets over a two-element type -/
-
-/-- **A multiset of size `d` over `Fin 2` is determined by how many of its entries are `0`**, and
-that count can be anything from `0` to `d`.  This is the rank-two instance of the count
-`#(Sym α d) = (#α + d - 1).choose d`, in the form the symmetric-polynomial computation below
-consumes. -/
-noncomputable def symFinTwoEquiv (d : ℕ) : Sym (Fin 2) d ≃ Fin (d + 1) where
-  toFun s := ⟨Multiset.count 0 s.1, by
-    have h := Multiset.count_le_card (0 : Fin 2) s.1
-    rw [s.2] at h
-    omega⟩
-  invFun i := ⟨Multiset.replicate (i : ℕ) 0 + Multiset.replicate (d - (i : ℕ)) 1, by
-    have hi : (i : ℕ) ≤ d := Nat.lt_succ_iff.mp i.2
-    simp only [Multiset.card_add, Multiset.card_replicate]
-    omega⟩
-  left_inv s := by
-    obtain ⟨m, hm⟩ := s
-    have hcount : Multiset.count (0 : Fin 2) m + Multiset.count (1 : Fin 2) m = d := by
-      have := Multiset.sum_count_eq_card (s := (univ : Finset (Fin 2))) (m := m)
-        (fun a _ => mem_univ a)
-      rw [Fin.sum_univ_two, hm] at this
-      exact this
-    refine Subtype.ext (Multiset.ext.mpr fun a => ?_)
-    have ha : a = 0 ∨ a = 1 := by fin_cases a <;> simp
-    rcases ha with rfl | rfl
-    · simp [Multiset.count_add, Multiset.count_replicate]
-    · simp only [Multiset.count_add, Multiset.count_replicate]
-      norm_num
-      omega
-  right_inv i := by
-    have hi : (i : ℕ) ≤ d := Nat.lt_succ_iff.mp i.2
-    refine Fin.ext ?_
-    simp [Multiset.count_replicate]
-
-/-- The inverse of `TauCeti.symFinTwoEquiv` spelled out: `i` many `0`s and `d - i` many `1`s. -/
-theorem coe_symFinTwoEquiv_symm_apply (d : ℕ) (i : Fin (d + 1)) :
-    (((symFinTwoEquiv d).symm i : Sym (Fin 2) d) : Multiset (Fin 2))
-      = Multiset.replicate (i : ℕ) 0 + Multiset.replicate (d - (i : ℕ)) 1 := (rfl)
-
-/-- **The complete homogeneous symmetric polynomial in two variables**: `h_d(x, y)` is the sum of
-all `d + 1` monomials `xⁱ y^{d-i}` of degree `d`. -/
-theorem eval_hsymm_fin_two {R : Type*} [CommSemiring R] (f : Fin 2 → R) (d : ℕ) :
-    MvPolynomial.eval f (MvPolynomial.hsymm (Fin 2) R d)
-      = ∑ i ∈ range (d + 1), f 0 ^ i * f 1 ^ (d - i) := by
-  rw [eval_hsymm, ← Fin.sum_univ_eq_sum_range _ (d + 1),
-    ← Equiv.sum_comp (symFinTwoEquiv d).symm]
-  refine Fintype.sum_congr _ _ fun i => ?_
-  rw [coe_symFinTwoEquiv_symm_apply]
-  simp
-
 /-! ### The symmetric powers of the standard representation -/
 
 namespace SU2
@@ -123,6 +70,10 @@ def toGL : SU2 →* GL (Fin 2) ℂ :=
 @[simp]
 theorem coe_toGL (g : SU2) :
     (toGL g : Matrix (Fin 2) (Fin 2) ℂ) = (g : Matrix (Fin 2) (Fin 2) ℂ) := (rfl)
+
+/-- The inclusion of `SU(2)` into `GL₂(ℂ)` is injective: it does not move the underlying matrix. -/
+theorem toGL_injective : Function.Injective (toGL : SU2 → GL (Fin 2) ℂ) := fun g h hgh =>
+  Subtype.ext (by rw [← coe_toGL, ← coe_toGL, hgh])
 
 /-- **The maximal torus of `SU(2)` inside the diagonal torus of `GL₂(ℂ)`**: `torusHom z` is the
 diagonal matrix `diag(z, z⁻¹)`. -/
@@ -163,8 +114,9 @@ theorem character_symPower_torusHom_zpow (z : Circle) :
   rw [character_symPower_torusHom]
   refine sum_congr rfl fun i hi => ?_
   have hi' : (i : ℕ) ≤ d := Nat.lt_succ_iff.mp (mem_range.mp hi)
-  rw [show (2 * (i : ℤ) - d) = (i : ℤ) - ((d - i : ℕ) : ℤ) by omega,
-    zpow_sub₀ (Circle.coe_ne_zero z), zpow_natCast, zpow_natCast, inv_pow,
+  -- the weight `2i - d` is the exponent of `z` minus the exponent of `z⁻¹`
+  have hexp : 2 * (i : ℤ) - d = (i : ℤ) - ((d - i : ℕ) : ℤ) := by omega
+  rw [hexp, zpow_sub₀ (Circle.coe_ne_zero z), zpow_natCast, zpow_natCast, inv_pow,
     div_eq_mul_inv]
 
 /-- **The weight string in exponential coordinates.**  Writing the torus element as
@@ -183,7 +135,7 @@ theorem character_symPower_torusExp (θ : ℝ) :
 weights, each of multiplicity one. -/
 theorem character_symPower_one : (symPower d).character 1 = (d : ℂ) + 1 := by
   have h := character_symPower_torusHom d 1
-  rw [show torusHom (1 : Circle) = 1 from map_one _] at h
+  rw [map_one] at h
   rw [h]
   simp
 

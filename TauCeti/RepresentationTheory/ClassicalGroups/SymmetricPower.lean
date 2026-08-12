@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Data.Finset.NatAntidiagonal
+public import Mathlib.Data.Finsupp.Multiset
+public import Mathlib.Logic.Equiv.Fin.Basic
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 public import TauCeti.LinearAlgebra.SymmetricPower.Basis
 public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
@@ -24,6 +27,7 @@ elementary symmetric polynomial the exterior power gives.
 
 ## Main definitions
 
+* `TauCeti.symFinTwoEquiv` counts the unordered `d`-tuples of indices in two variables.
 * `TauCeti.symPowerRep` is the symmetric-power representation of `GL n k`.
 * `TauCeti.symPowerFDRep` is its bundled finite-dimensional form.
 
@@ -31,6 +35,7 @@ elementary symmetric polynomial the exterior power gives.
 
 * `TauCeti.eval_hsymm` evaluates the complete homogeneous symmetric polynomial as a sum over the
   unordered `d`-tuples of indices.
+* `TauCeti.eval_hsymm_fin_two` reads that off in two variables: `h_d(x, y) = ∑_{i ≤ d} xⁱ y^{d-i}`.
 * `TauCeti.char_symPowerRep_diagonal` identifies the character on diagonal matrices with a
   complete homogeneous symmetric polynomial.
 
@@ -58,6 +63,40 @@ theorem eval_hsymm {σ R : Type*} [Fintype σ] [DecidableEq σ] [CommSemiring R]
   refine Finset.sum_congr rfl fun s _ => ?_
   rw [map_multiset_prod, Multiset.map_map]
   simp [Function.comp_def]
+
+/-- **A multiset of size `d` over `Fin 2` is determined by how many of its entries are `0`**, and
+that count can be anything from `0` to `d`: the two counts sum to `d`, so the pair of them runs
+over the antidiagonal of `d`.  This is the rank-two instance of the count
+`#(Sym α d) = (#α + d - 1).choose d`, in the form the symmetric-polynomial computation below
+consumes. -/
+noncomputable def symFinTwoEquiv (d : ℕ) : Sym (Fin 2) d ≃ Fin (d + 1) :=
+  (Sym.equivNatSumOfFintype (Fin 2) d).trans <|
+    ((finTwoArrowEquiv ℕ).subtypeEquiv fun _ => by
+      simp [Fin.sum_univ_two, Finset.mem_antidiagonal]).trans
+        (Finset.Nat.antidiagonalEquivFin d)
+
+/-- `TauCeti.symFinTwoEquiv` is the number of entries equal to `0`. -/
+@[simp]
+theorem coe_symFinTwoEquiv_apply (d : ℕ) (s : Sym (Fin 2) d) :
+    (symFinTwoEquiv d s : ℕ) = Multiset.count 0 (s : Multiset (Fin 2)) := (rfl)
+
+/-- The inverse of `TauCeti.symFinTwoEquiv` spelled out: `i` many `0`s and `d - i` many `1`s. -/
+@[simp]
+theorem coe_symFinTwoEquiv_symm_apply (d : ℕ) (i : Fin (d + 1)) :
+    (((symFinTwoEquiv d).symm i : Sym (Fin 2) d) : Multiset (Fin 2))
+      = Multiset.replicate (i : ℕ) 0 + Multiset.replicate (d - (i : ℕ)) 1 := by
+  simp [symFinTwoEquiv, Fin.sum_univ_two, Multiset.nsmul_singleton]
+
+/-- **The complete homogeneous symmetric polynomial in two variables**: `h_d(x, y)` is the sum of
+all `d + 1` monomials `xⁱ y^{d-i}` of degree `d`. -/
+theorem eval_hsymm_fin_two {R : Type*} [CommSemiring R] (f : Fin 2 → R) (d : ℕ) :
+    MvPolynomial.eval f (MvPolynomial.hsymm (Fin 2) R d)
+      = ∑ i ∈ Finset.range (d + 1), f 0 ^ i * f 1 ^ (d - i) := by
+  rw [eval_hsymm, ← Fin.sum_univ_eq_sum_range _ (d + 1),
+    ← Equiv.sum_comp (symFinTwoEquiv d).symm]
+  refine Fintype.sum_congr _ _ fun i => ?_
+  rw [coe_symFinTwoEquiv_symm_apply]
+  simp
 
 variable (k : Type) (n d : ℕ)
 
