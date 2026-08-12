@@ -18,8 +18,6 @@ components is a finite discrete space, and every connected component is open as 
 
 ## Main declarations
 
-* `TauCeti.finite_connectedComponents_of_finite_irreducibleComponents`: finiteness of the
-  irreducible components implies finiteness of the connected components.
 * `TauCeti.finite_connectedComponents_of_noetherianSpace`: a Noetherian space has finitely
   many connected components.
 * `TauCeti.instLocallyConnectedSpaceOfNoetherianSpace`: a Noetherian space is locally
@@ -43,29 +41,6 @@ universe u
 variable {X : Type u} [TopologicalSpace X]
 
 namespace TauCeti
-
-/-- A space with finitely many irreducible components has finitely many connected components. -/
-theorem finite_connectedComponents_of_finite_irreducibleComponents
-    (h : (irreducibleComponents X).Finite) : Finite (ConnectedComponents X) := by
-  let C : Set (ConnectedComponents X) :=
-    ⋃ Z ∈ irreducibleComponents X, ConnectedComponents.mk '' Z
-  have hC : C.Finite := h.biUnion fun Z hZ =>
-    Set.Subsingleton.finite <| by
-      rintro _ ⟨x, hx, rfl⟩ _ ⟨y, hy, rfl⟩
-      rw [ConnectedComponents.coe_eq_coe']
-      exact hZ.1.isConnected.isPreconnected.subset_connectedComponent hy hx
-  have hC_eq : C = Set.univ := by
-    rw [eq_univ_iff_forall]
-    intro c
-    obtain ⟨x, rfl⟩ := ConnectedComponents.surjective_coe c
-    have hx : x ∈ ⋃₀ irreducibleComponents X := by
-      rw [sUnion_irreducibleComponents]
-      simp
-    obtain ⟨Z, hZ, hxZ⟩ := Set.mem_sUnion.mp hx
-    exact Set.mem_iUnion_of_mem Z <| Set.mem_iUnion_of_mem hZ ⟨x, hxZ, rfl⟩
-  apply Finite.of_finite_univ
-  rw [← hC_eq]
-  exact hC
 
 /-- A Noetherian space has finitely many connected components. -/
 theorem finite_connectedComponents_of_noetherianSpace [TopologicalSpace.NoetherianSpace X] :
