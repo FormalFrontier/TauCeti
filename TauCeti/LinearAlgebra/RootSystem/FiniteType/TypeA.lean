@@ -33,11 +33,14 @@ whose diagrams are also paths, and without the degree bound they are `Dₙ` and 
 
 ## Main results
 
+* `TauCeti.exists_equiv_forall_eq_cartanMatrix_A_of_isTree_of_isSimplyLaced_of_degree_le_two`:
+  a simply-laced matrix with diagonal entries `2` and a tree diagram of maximum degree two is the
+  standard Cartan matrix of type `Aₙ` after a relabelling of its index type.
 * `TauCeti.IsFiniteType.exists_equiv_forall_eq_cartanMatrix_A`: a connected simply-laced finite-type
   matrix whose diagram has maximum degree two is the standard Cartan matrix of type `Aₙ` after a
   relabelling of its index type.
-* `TauCeti.hasCartanType_A_of_degree_le_two`: the same statement for the base of an irreducible
-  root system, in the form `TauCeti.HasCartanType`.
+* `TauCeti.hasCartanType_A_of_isSimplyLaced_of_degree_le_two`: the same statement for the base of an
+  irreducible root system, in the form `TauCeti.HasCartanType`.
 * `TauCeti.existsUnique_dynkinType_of_isSimplyLaced_of_degree_le_two`: such a base has exactly one
   valid Dynkin type, which is the classification statement itself on these diagrams.
 
@@ -55,6 +58,42 @@ open SimpleGraph
 
 variable {B : Type*} [Fintype B] [DecidableEq B] {A : Matrix B B ℤ}
 
+/-- **A simply-laced matrix with diagonal entries `2` whose diagram is a tree of maximum degree two
+is the standard Cartan matrix of type `Aₙ`**, after a relabelling of its index type by the vertices
+of a path.
+
+Only the Cartan-matrix normalization and symmetric vanishing pattern are needed here, rather than
+positive definiteness or the other finite-type hypotheses. -/
+theorem exists_equiv_forall_eq_cartanMatrix_A_of_isTree_of_isSimplyLaced_of_degree_le_two
+    (htree : (diagramGraph A).IsTree) (hdiag : ∀ i, A i i = 2)
+    (hzero : ∀ i j, A i j = 0 ↔ A j i = 0) (hsl : A.IsSimplyLaced)
+    (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2) :
+    ∃ e : B ≃ Fin (Fintype.card B),
+      ∀ i j, A i j = DynkinType.cartanMatrix (.A (Fintype.card B)) (e i) (e j) := by
+  obtain ⟨iso⟩ := IsTree.nonempty_iso_pathGraph_of_degree_le_two htree hdeg
+  have key : ∀ i j, A i j = chainEntry (iso i) (iso j) := by
+    intro i j
+    rcases eq_or_ne i j with rfl | hij
+    · rw [hdiag, chainEntry_self]
+    by_cases hA : A i j = 0
+    · -- Distinct nonadjacent indices: the entry vanishes and the vertices are not consecutive.
+      have hnot : ¬ (diagramGraph A).Adj i j := fun hc ↦ (diagramGraph_adj.mp hc).2.1 hA
+      rw [← iso.map_adj_iff, pathGraph_adj] at hnot
+      push Not at hnot
+      have hne : (iso i : ℕ) ≠ (iso j : ℕ) := fun hc ↦ hij (iso.toEquiv.injective (Fin.ext hc))
+      rw [hA, chainEntry_eq_zero hne (fun hc ↦ hnot.2 hc.symm) fun hc ↦ hnot.1 hc.symm]
+    · -- Adjacent indices: the entry is `-1` and the vertices are consecutive.
+      have hadj : (diagramGraph A).Adj i j := diagramGraph_adj.mpr
+        ⟨hij, hA, fun hji ↦ hA ((hzero i j).mpr hji)⟩
+      rw [← iso.map_adj_iff, pathGraph_adj] at hadj
+      rw [(hsl hij).resolve_left hA]
+      rcases hadj with hc | hc
+      · rw [← hc, chainEntry_succ_right]
+      · rw [← hc, chainEntry_succ_left]
+  refine ⟨iso.toEquiv, fun i j ↦ ?_⟩
+  simp only [DynkinType.cartanMatrix_A, ← chainEntry_eq_cartanMatrix_A]
+  exact key i j
+
 /-- **A connected simply-laced finite-type matrix whose diagram has maximum degree two is the
 standard Cartan matrix of type `Aₙ`**, after a relabelling of its index type by the vertices of a
 path.
@@ -66,29 +105,8 @@ theorem IsFiniteType.exists_equiv_forall_eq_cartanMatrix_A (h : IsFiniteType A)
     (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2) :
     ∃ e : B ≃ Fin (Fintype.card B),
       ∀ i j, A i j = DynkinType.cartanMatrix (.A (Fintype.card B)) (e i) (e j) := by
-  obtain ⟨iso⟩ :=
-    IsTree.nonempty_iso_pathGraph_of_degree_le_two (h.isTree_diagramGraph hconn) hdeg
-  have key : ∀ i j, A i j = chainEntry (iso i) (iso j) := by
-    intro i j
-    rcases eq_or_ne i j with rfl | hij
-    · rw [h.apply_self, chainEntry_self]
-    by_cases hA : A i j = 0
-    · -- Distinct nonadjacent indices: the entry vanishes and the vertices are not consecutive.
-      have hnot : ¬ (diagramGraph A).Adj i j := fun hc ↦ (h.diagramGraph_adj_iff.mp hc).2 hA
-      rw [← iso.map_adj_iff, pathGraph_adj] at hnot
-      push Not at hnot
-      have hne : (iso i : ℕ) ≠ (iso j : ℕ) := fun hc ↦ hij (iso.toEquiv.injective (Fin.ext hc))
-      rw [hA, chainEntry_eq_zero hne (fun hc ↦ hnot.2 hc.symm) fun hc ↦ hnot.1 hc.symm]
-    · -- Adjacent indices: the entry is `-1` and the vertices are consecutive.
-      have hadj : (diagramGraph A).Adj i j := h.diagramGraph_adj_iff.mpr ⟨hij, hA⟩
-      rw [← iso.map_adj_iff, pathGraph_adj] at hadj
-      rw [(hsl hij).resolve_left hA]
-      rcases hadj with hc | hc
-      · rw [← hc, chainEntry_succ_right]
-      · rw [← hc, chainEntry_succ_left]
-  refine ⟨iso.toEquiv, fun i j ↦ ?_⟩
-  simp only [DynkinType.cartanMatrix_A, ← chainEntry_eq_cartanMatrix_A]
-  exact key i j
+  exact exists_equiv_forall_eq_cartanMatrix_A_of_isTree_of_isSimplyLaced_of_degree_le_two
+    (h.isTree_diagramGraph hconn) h.apply_self (fun _ _ ↦ h.apply_eq_zero_iff) hsl hdeg
 
 section RootPairing
 
@@ -99,7 +117,8 @@ variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommG
 /-- **An irreducible root system whose Dynkin diagram is simply laced and has no branch node has
 Cartan type `Aₙ`**, for `n` the number of its simple roots. This is the type `Aₙ` half of the
 existence of a Dynkin type; `TauCeti.HasCartanType.eq_of_valid` supplies its uniqueness. -/
-theorem hasCartanType_A_of_degree_le_two (b : P.Base) (hsl : b.cartanMatrix.IsSimplyLaced)
+theorem hasCartanType_A_of_isSimplyLaced_of_degree_le_two (b : P.Base)
+    (hsl : b.cartanMatrix.IsSimplyLaced)
     (hdeg : ∀ i, (diagramGraph b.cartanMatrix).degree i ≤ 2) :
     HasCartanType P b (.A b.support.card) := by
   obtain ⟨e, he⟩ := (isFiniteType_cartanMatrix b).exists_equiv_forall_eq_cartanMatrix_A
@@ -115,7 +134,7 @@ theorem existsUnique_dynkinType_of_isSimplyLaced_of_degree_le_two (b : P.Base)
     (hsl : b.cartanMatrix.IsSimplyLaced)
     (hdeg : ∀ i, (diagramGraph b.cartanMatrix).degree i ≤ 2) :
     ∃! t : DynkinType, t.Valid ∧ HasCartanType P b t :=
-  (hasCartanType_A_of_degree_le_two b hsl hdeg).existsUnique_of_valid
+  (hasCartanType_A_of_isSimplyLaced_of_degree_le_two b hsl hdeg).existsUnique_of_valid
     (DynkinType.valid_A.mpr (Finset.card_pos.mpr b.support_nonempty))
 
 end RootPairing
