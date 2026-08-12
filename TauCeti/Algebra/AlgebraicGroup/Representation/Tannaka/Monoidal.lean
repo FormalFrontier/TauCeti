@@ -311,6 +311,7 @@ theorem isMonoidal_of_linear_components
     erw [← Category.assoc, htensor', Category.assoc]
 
 /-- The point action on the tensor unit is the identity automorphism. -/
+@[simp]
 theorem ofLinearEquiv_pointsAction_tensorUnit_eq_one
     (g : WithConv (H →ₐ[R] A)) :
     LinearMap.GeneralLinearGroup.ofLinearEquiv
@@ -337,45 +338,12 @@ theorem distribBaseChange_comp_pointsAction
           (Comodule.pointsAction (M ⊗ N : FGComoduleCat R H) g) :
         Module.End A (A ⊗[R] ((M ⊗ N : FGComoduleCat R H) : Type u))).comp
           (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap := by
-  let _ : Comodule R H (M ⊗[R] N) :=
-    inferInstanceAs (Comodule R H ((M ⊗ N : FGComoduleCat R H) : Type u))
-  let d := (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap
-  let dc :
-      (SemimoduleCat.of A (A ⊗[R] M) ⊗ SemimoduleCat.of A (A ⊗[R] N)) ⟶
-        SemimoduleCat.of A (A ⊗[R] (M ⊗[R] N)) :=
-    SemimoduleCat.ofHom d
-  have htensor :
-        (SemimoduleCat.ofHom (Comodule.endOfPoint M g.ofConv) ⊗ₘ
-            SemimoduleCat.ofHom (Comodule.endOfPoint N g.ofConv)) ≫ dc =
-      dc ≫ SemimoduleCat.ofHom (Comodule.endOfPoint
-        ((M ⊗ N : FGComoduleCat R H) : Type u) g.ofConv) := by
-    apply SemimoduleCat.hom_ext
-    exact Comodule.endOfPoint_tensor_of_coact_eq (R := R) (H := H) (A := A)
-      (V := M) (W := N) (FGComoduleCat.tensor_coact (R := R) (C := H) M N) g.ofConv
-  have hlin := congrArg SemimoduleCat.Hom.hom htensor
-  simp only [SemimoduleCat.hom_comp] at hlin
-  rw [SemimoduleCat.hom_tensorHom] at hlin
-  -- The extracted hom equality still contains the categorical `ofHom` tensor and composition;
-  -- rewriting cannot see through them, so reduce them to linear-map composition and tensoring.
-  change d.comp (TensorProduct.map (Comodule.endOfPoint M g.ofConv)
-      (Comodule.endOfPoint N g.ofConv)) =
-    (Comodule.endOfPoint ((M ⊗ N : FGComoduleCat R H) : Type u) g.ofConv).comp d at hlin
-  have hM :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g) :
-        Module.End A (A ⊗[R] M)) = Comodule.endOfPoint M g.ofConv :=
-    Comodule.pointsAction_toLinearMap M g
-  have hN :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction N g) :
-        Module.End A (A ⊗[R] N)) = Comodule.endOfPoint N g.ofConv :=
-    Comodule.pointsAction_toLinearMap N g
-  have hMN :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv
-          (Comodule.pointsAction (M ⊗ N : FGComoduleCat R H) g) :
-        Module.End A (A ⊗[R] ((M ⊗ N : FGComoduleCat R H) : Type u))) =
-          Comodule.endOfPoint ((M ⊗ N : FGComoduleCat R H) : Type u) g.ofConv :=
-    Comodule.pointsAction_toLinearMap (M ⊗ N : FGComoduleCat R H) g
-  rw [hM, hN, hMN]
-  exact hlin
+  have hpoint (P : FGComoduleCat.{u, v, u} R H) :
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction P g) :
+        Module.End A (A ⊗[R] P)) = Comodule.endOfPoint P g.ofConv :=
+    Comodule.pointsAction_toLinearMap P g
+  rw [hpoint M, hpoint N, hpoint (M ⊗ N : FGComoduleCat R H)]
+  exact Comodule.endOfPoint_tensor g.ofConv
 
 /-- The natural automorphism induced by an algebra-valued point is monoidal. -/
 theorem isMonoidal_fgPointNatIsoHom_hom (g : WithConv (H →ₐ[R] A)) :
