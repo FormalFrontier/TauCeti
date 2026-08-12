@@ -8,6 +8,7 @@ public import Mathlib.RingTheory.Idempotents
 public import TauCeti.RepresentationTheory.CharacterTable.CentralIdempotent
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
 public import TauCeti.RepresentationTheory.CharacterTable.Completeness
+public import TauCeti.RingTheory.Idempotents.LinearIndependent
 
 /-!
 # The primitive central idempotents decompose the identity
@@ -84,25 +85,6 @@ namespace Representation
 
 universe u v w x
 
-/-! ### Families of pairwise inequivalent representations -/
-
-section Pairwise
-
-variable {k : Type u} {G : Type v} [Semiring k] [Monoid G] {ι : Type*} {V : ι → Type w}
-  [∀ i, AddCommMonoid (V i)] [∀ i, Module k (V i)] (ρ : ∀ i, Representation k G (V i))
-  (hind : Pairwise fun i j => IsEmpty ((ρ i).Equiv (ρ j)))
-
-include hind
-
-/-- Inside a family of pairwise inequivalent representations, two members are equivalent exactly
-when they are the same member. -/
-theorem nonempty_equiv_iff_eq {i j : ι} : Nonempty ((ρ i).Equiv (ρ j)) ↔ i = j := by
-  refine ⟨fun h => ?_, fun h => h ▸ ⟨_root_.Representation.Equiv.refl (ρ i)⟩⟩
-  by_contra hij
-  exact (hind hij).elim' h.some
-
-end Pairwise
-
 /-! ### Orthogonality along a family -/
 
 section Orthogonal
@@ -115,6 +97,7 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed 
 include hind
 
 /-- **The primitive central idempotents of a pairwise inequivalent family are orthogonal.** -/
+@[simp]
 theorem primitiveCentralIdempotent_mul_eq_zero {i j : ι} (hij : i ≠ j) :
     primitiveCentralIdempotent (ρ i) * primitiveCentralIdempotent (ρ j) = 0 := by
   classical
@@ -122,6 +105,7 @@ theorem primitiveCentralIdempotent_mul_eq_zero {i j : ι} (hij : i ≠ j) :
     ite_eq_right (fun h => hij ((nonempty_equiv_iff_eq ρ hind).mp h))]
 
 /-- **A member of the family other than `ρ i` sees `e_{ρ i}` as `0`.** -/
+@[simp]
 theorem centralCharacter_primitiveCentralIdempotentCenter_eq_zero {i j : ι} (hij : i ≠ j) :
     centralCharacter (ρ j) (primitiveCentralIdempotentCenter (ρ i)) = 0 := by
   classical
@@ -146,21 +130,14 @@ theorem orthogonalIdempotents_primitiveCentralIdempotent :
   idem i := isIdempotentElem_primitiveCentralIdempotent (ρ i)
   ortho _ _ hij := primitiveCentralIdempotent_mul_eq_zero ρ hind hij
 
-/-- **Pairwise orthogonal nonzero idempotents are linearly independent.** Multiplying a vanishing
-combination by `e_{ρ j}` kills every term but the `j`-th. -/
+/-- **The primitive central idempotents of a pairwise inequivalent family are linearly
+independent.** They are orthogonal and nonzero, and that is all the general
+`TauCeti.linearIndependent_of_orthogonalIdempotents` asks for. -/
 theorem linearIndependent_primitiveCentralIdempotent :
-    LinearIndependent k fun i => primitiveCentralIdempotent (ρ i) := by
-  classical
-  rw [linearIndependent_iff']
-  intro s g hg j hj
-  have hmul := congrArg (· * primitiveCentralIdempotent (ρ j)) hg
-  simp only [Finset.sum_mul, smul_mul_assoc, zero_mul] at hmul
-  rw [Finset.sum_eq_single j] at hmul
-  · rw [(isIdempotentElem_primitiveCentralIdempotent (ρ j)).eq] at hmul
-    exact (smul_eq_zero.mp hmul).resolve_right (primitiveCentralIdempotent_ne_zero (ρ j))
-  · intro i _ hij
-    rw [primitiveCentralIdempotent_mul_eq_zero ρ hind hij, smul_zero]
-  · exact fun h => absurd hj h
+    LinearIndependent k fun i => primitiveCentralIdempotent (ρ i) :=
+  linearIndependent_of_orthogonalIdempotents
+    (orthogonalIdempotents_primitiveCentralIdempotent ρ hind)
+    fun i => primitiveCentralIdempotent_ne_zero (ρ i)
 
 /-- The primitive central idempotents of the family are linearly independent in the centre of the
 group algebra, the inclusion of the centre being injective. -/
