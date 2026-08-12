@@ -14,8 +14,9 @@ import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
 A polarization of a quadratic space `(V, Q)` splits it as `W ⊕ W' ⊕ L`, with `W` and `W'`
 isotropic and in perfect `QuadraticMap.polar`-pairing and `L` an orthogonal remainder carried by a
 scalar coordinate. This file turns the exterior algebra `⋀·W` into a module over the Clifford
-algebra of `Q` — the Fock model of the spinor representation, and the carrier of the spin and
-half-spin representations, which no tensor power of `V` contains.
+algebra of `Q` — the Fock model of the spinor representation. Classically, over `ℂ`, it is the
+carrier of the spin and half-spin representations, which no tensor power of `V` contains; that
+statement belongs to the complex theory and is not proved here.
 
 The three summands act by three visibly different operators on `S = ⋀·W`:
 
@@ -57,6 +58,10 @@ Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, th
 
 ## Main results
 
+* `TauCeti.SpinPolarizationData.cliffordOperator_coe_W`,
+  `TauCeti.SpinPolarizationData.cliffordOperator_coe_W'` and
+  `TauCeti.SpinPolarizationData.cliffordOperator_coe_line`: the operator of a vector of a single
+  summand, in terms of the component operator of that summand.
 * `TauCeti.SpinPolarizationData.contract_wedge`, `TauCeti.SpinPolarizationData.parity_wedge` and
   `TauCeti.SpinPolarizationData.parity_contract`: the anticommutation relations between the
   component operators.
@@ -147,6 +152,30 @@ theorem cliffordOperator_add_apply (x : P.W) (y : P.W') (z : P.line)
       P.wedge x s + P.contract y s + P.lineCoordinate z • P.parity s := by
   simp [cliffordOperator]
 
+/-- On the isotropic summand `W` the Clifford operator is the creation operator. -/
+@[simp]
+theorem cliffordOperator_coe_W (x : P.W) : P.cliffordOperator (x : V) = P.wedge x := by
+  have h : P.decompositionEquiv.symm (x : V) = ((x, 0), 0) := by
+    apply P.decompositionEquiv.injective
+    simp
+  simp [cliffordOperator, h]
+
+/-- On the second isotropic summand `W'` the Clifford operator is the annihilation operator. -/
+@[simp]
+theorem cliffordOperator_coe_W' (y : P.W') : P.cliffordOperator (y : V) = P.contract y := by
+  have h : P.decompositionEquiv.symm (y : V) = ((0, y), 0) := by
+    apply P.decompositionEquiv.injective
+    simp
+  simp [cliffordOperator, h]
+
+/-- On the orthogonal remainder the Clifford operator is the scaled parity operator. -/
+@[simp]
+theorem cliffordOperator_coe_line (z : P.line) : P.cliffordOperator (z : V) = P.lineOperator z := by
+  have h : P.decompositionEquiv.symm (z : V) = ((0, 0), z) := by
+    apply P.decompositionEquiv.injective
+    simp
+  simp [cliffordOperator, h]
+
 /-! ### The anticommutation relations
 
 The Clifford relation is the sum of six anticommutators between the three component operators.
@@ -191,7 +220,7 @@ theorem parity_contract (y : P.W') (s : ExteriorAlgebra K P.W) :
 
 /-- The quadratic form of a vector in polarization coordinates: both isotropic summands drop out
 and the remainder is orthogonal to them, so only the pairing term and the remainder survive. -/
-theorem quadraticForm_add (x : P.W) (y : P.W') (z : P.line) :
+theorem quadraticForm_decomposition_apply (x : P.W) (y : P.W') (z : P.line) :
     Q ((x : V) + (y : V) + (z : V)) = polar Q (x : V) (y : V) + Q (z : V) := by
   have hxz : polar Q (x : V) (z : V) = 0 := by
     rw [polar_comm]
@@ -215,7 +244,7 @@ theorem cliffordOperator_sq (v : V) :
   rw [P.decompositionEquiv_apply]
   ext s
   rw [Module.End.mul_apply, Module.algebraMap_end_apply, P.cliffordOperator_add_apply,
-    P.cliffordOperator_add_apply, P.quadraticForm_add, ← P.lineCoordinate_sq z]
+    P.cliffordOperator_add_apply, P.quadraticForm_decomposition_apply, ← P.lineCoordinate_sq z]
   simp only [map_add, map_smul, P.wedge_wedge, P.contract_contract, P.contract_wedge,
     P.parity_wedge, P.parity_contract, P.parity_parity]
   module
@@ -227,9 +256,11 @@ exterior algebra `S = ⋀·W` of the isotropic summand of a polarization, by ext
 for `W`, by contraction against the polar pairing for `W'`, and by a multiple of the parity
 operator for the orthogonal remainder.
 
-This is the Fock model of the spin module. In even dimension over an algebraically closed field it
-is an isomorphism onto `Module.End K S`, and in odd dimension it factors through one of the two
-central-idempotent summands of the Clifford algebra; neither statement is proved here. -/
+This is the Fock model of the spin module. Classically — over an algebraically closed field of
+characteristic different from `2`, with `Q` nondegenerate and finite-dimensional — it is an
+isomorphism onto `Module.End K S` in even dimension, and in odd dimension it factors through one
+of the two central-idempotent summands of the Clifford algebra; neither statement is proved
+here, and neither is claimed at the generality of this definition. -/
 noncomputable def spinAction {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
     (Q : QuadraticForm K V) (P : SpinPolarizationData Q) :
     CliffordAlgebra Q →ₐ[K] Module.End K (ExteriorAlgebra K P.W) :=
@@ -246,28 +277,21 @@ theorem spinAction_ι (v : V) :
 /-- A vector of the isotropic summand `W` acts on the spin module by exterior multiplication. -/
 theorem spinAction_ι_wedge (x : P.W) (s : ExteriorAlgebra K P.W) :
     spinAction Q P (CliffordAlgebra.ι Q x) s = ExteriorAlgebra.ι K x * s := by
-  rw [spinAction_ι, show ((x : V)) = (x : V) + ((0 : P.W') : V) + ((0 : P.line) : V) by simp,
-    P.cliffordOperator_add_apply]
-  simp
+  rw [spinAction_ι, P.cliffordOperator_coe_W, P.wedge_apply]
 
 /-- A vector of the second isotropic summand `W'` acts on the spin module by contraction against
 the functional the polarization pairing attaches to it. -/
 theorem spinAction_ι_contract (y : P.W') (s : ExteriorAlgebra K P.W) :
     spinAction Q P (CliffordAlgebra.ι Q y) s =
       CliffordAlgebra.contractLeft (P.pairingEquiv y) s := by
-  rw [spinAction_ι, show ((y : V)) = ((0 : P.W) : V) + (y : V) + ((0 : P.line) : V) by simp,
-    P.cliffordOperator_add_apply]
-  simp
+  rw [spinAction_ι, P.cliffordOperator_coe_W', P.contract_apply]
 
 /-- A vector of the orthogonal remainder acts on the spin module by its scalar coordinate times
 the parity operator. -/
 theorem spinAction_ι_parity (z : P.line) (s : ExteriorAlgebra K P.W) :
     spinAction Q P (CliffordAlgebra.ι Q z) s =
       P.lineCoordinate z • CliffordAlgebra.involute s := by
-  rw [spinAction_ι,
-    show ((z : V)) = ((0 : P.W) : V) + ((0 : P.W') : V) + (z : V) by simp,
-    P.cliffordOperator_add_apply]
-  simp
+  rw [spinAction_ι, P.cliffordOperator_coe_line, P.lineOperator_apply]
 
 /-- **The anticommutator identity** pinning the coefficient of the spinor action: two vectors act
 with anticommutator the scalar `QuadraticMap.polar Q x y`. Taking `y = x` returns the Clifford
@@ -281,7 +305,7 @@ theorem spinAction_ι_mul_add_swap (a b : V) :
 
 /-- The second isotropic summand annihilates the vacuum vector `1 ∈ ⋀·W`: contraction lowers the
 exterior degree, and the vacuum has degree zero. -/
-theorem spinAction_ι_apply_one (y : P.W') :
+theorem spinAction_ι_contract_one (y : P.W') :
     spinAction Q P (CliffordAlgebra.ι Q y) 1 = 0 := by
   rw [spinAction_ι_contract, CliffordAlgebra.contractLeft_one]
 

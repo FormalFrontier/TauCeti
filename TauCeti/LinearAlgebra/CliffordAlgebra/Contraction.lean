@@ -22,8 +22,6 @@ orthogonal to a polarization acts on a spinor module.
 ## Main results
 
 * `TauCeti.CliffordAlgebra.involute_contractLeft`: `involute (d ⌋ x) = -(d ⌋ involute x)`.
-* `TauCeti.CliffordAlgebra.contractLeft_involute_add`: the anticommutator form of the same
-  identity.
 
 ## References
 
@@ -45,6 +43,7 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 /-- **The grade involution anticommutes with contraction.** Contracting against a linear
 functional lowers the degree by one, hence swaps the even and odd parts of the Clifford algebra,
 so it anticommutes with the operator that is `+1` on the even part and `-1` on the odd part. -/
+@[simp]
 theorem involute_contractLeft (d : Module.Dual R M) (x : CliffordAlgebra Q) :
     involute (contractLeft d x) = -contractLeft d (involute x) := by
   induction x using CliffordAlgebra.left_induction with
@@ -57,11 +56,5 @@ theorem involute_contractLeft (d : Module.Dual R M) (x : CliffordAlgebra Q) :
     have hrhs : involute (ι Q a * x) = -(ι Q a * involute x) := by
       rw [map_mul, involute_ι, neg_mul]
     rw [hlhs, hrhs, map_neg, neg_neg, contractLeft_ι_mul]
-
-/-- The anticommutator form of `TauCeti.CliffordAlgebra.involute_contractLeft`: contraction and
-the grade involution anticommute as endomorphisms. -/
-theorem contractLeft_involute_add (d : Module.Dual R M) (x : CliffordAlgebra Q) :
-    contractLeft d (involute x) + involute (contractLeft d (Q := Q) x) = 0 := by
-  rw [involute_contractLeft, add_neg_cancel]
 
 end TauCeti.CliffordAlgebra
