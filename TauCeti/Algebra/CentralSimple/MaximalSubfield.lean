@@ -92,9 +92,12 @@ rather than carrying a hand-rolled `∀ x ∈ L, ∀ y ∈ L, x * y = y * x`.
 
 `TauCeti.finrank_mul_finrank_centralizer_of_isField` asks for `IsField ↥L` and not for the weaker
 `IsSimpleRing ↥L`. The proof would go through unchanged for a merely simple subalgebra, but that
-statement is the general centralizer theorem for a non-central simple subalgebra, which the
-roadmap defers to a later target together with the description of the centralizer's centre; only
-the subfield case, which is what the maximal-subfield theory needs, is claimed here.
+statement is the general centralizer theorem for a non-central simple subalgebra, which the Layer 5
+bullet of the roadmap referenced below rules out in as many words: "the general form for a merely
+simple subalgebra `B` (center `Z(B) ⊋ K`) needs a center-sensitive correction to the dimension
+formula and is a **later** target, not this one", to be taken up together with the description of
+the centralizer's centre. Only the subfield case, which is what the maximal-subfield theory needs,
+is claimed here.
 
 The existence statements are stated for a **division** algebra. The passage from there to an
 arbitrary central simple algebra `A ≃ₐ[K] Mₙ(D)`, and with it the index `ind A`, needs the
@@ -181,12 +184,12 @@ theorem centralizer_eq_self_of_forall_finrank_le {L : Subalgebra K D} [IsMulComm
     exact this ▸ Algebra.subset_adjoin (Set.mem_insert _ _)
   · exact congrArg Subtype.val (mul_comm (⟨z, hz⟩ : ↥L) ⟨y, hy⟩)
 
+omit [FiniteDimensional K D] in
 /-- **A commutative subalgebra of a division algebra is a field**, as soon as it is
 finite-dimensional over the base field: it is a commutative domain, and an Artinian domain is a
-field. -/
-theorem isField_of_isMulCommutative (L : Subalgebra K D) [IsMulCommutative ↥L] : IsField ↥L := by
-  have : FiniteDimensional K ↥L :=
-    FiniteDimensional.of_injective L.val.toLinearMap Subtype.val_injective
+field. Only `L` need be finite-dimensional; the ambient `D` need not be. -/
+theorem isField_of_isMulCommutative (L : Subalgebra K D) [IsMulCommutative ↥L]
+    [FiniteDimensional K ↥L] : IsField ↥L := by
   have : IsArtinianRing ↥L := IsArtinianRing.of_finite K ↥L
   exact IsArtinianRing.isField_of_isDomain ↥L
 
@@ -279,9 +282,10 @@ section Examples
 open scoped _root_.Quaternion
 
 /-- **The real quaternions have a subfield of degree `2`.** The general theorem produces one
-without exhibiting a copy of `ℂ` by hand; by `TauCeti.Algebra.bijective_of_finrank_eq_deg` any two
-such subfields are isomorphic, so it *is* a copy of `ℂ`, and the example in
-`TauCeti/Algebra/CentralSimple/Subfield.lean` names it. -/
+without exhibiting a copy of `ℂ` by hand. Which subfield it is takes the classification of the
+finite extensions of `ℝ`, not proved here, to say: every degree-`2` extension of `ℝ` is
+`ℝ`-isomorphic to `ℂ`. The example in `TauCeti/Algebra/CentralSimple/Subfield.lean` exhibits a
+copy of `ℂ` inside `ℍ[ℝ]` by hand instead. -/
 example : ∃ L : Subalgebra ℝ ℍ[ℝ], IsField ↥L ∧ Module.finrank ℝ ↥L = 2 := by
   have hdeg : Algebra.deg ℝ ℍ[ℝ] = 2 :=
     Algebra.deg_eq_of_finrank_eq_sq (by rw [Quaternion.finrank_eq_four]; norm_num)
