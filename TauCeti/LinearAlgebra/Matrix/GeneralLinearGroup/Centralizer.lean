@@ -4,32 +4,31 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `Matrix.scalar` occurs in the statements below, and the `2 × 2` entry lemma
--- `Matrix.det_fin_two` in the proofs.
+-- `Matrix.scalar` occurs in the statements below.
 public import Mathlib.LinearAlgebra.Matrix.Notation
--- `Subgroup.centralizer` occurs in the statements below.
-public import Mathlib.GroupTheory.Subgroup.Centralizer
--- `TauCeti.commute_finTwo_iff` is the engine of every centralizer computation below.
+-- `Subgroup.centralizer` occurs in the statements below, and
+-- `TauCeti.mem_centralizer_singleton_iff_commute_val` reads membership in it on matrices.
+public import TauCeti.Algebra.Group.Subgroup.Centralizer
+-- `TauCeti.commute_fin_two_iff` is the engine of the centralizer computations below.
 public import TauCeti.LinearAlgebra.Matrix.Commute
 -- `ConjClasses.carrier` occurs in the statements below, and `TauCeti.ConjClasses.ncard_carrier_mk`
 -- is what turns a centralizer order into a class size.
 public import TauCeti.Algebra.Group.Conj
--- `TauCeti.diagGL` occurs in the statements below.
+-- `TauCeti.diagGL` and `TauCeti.diagonalTorus` occur in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 -- `TauCeti.GL2NonSplitTorus` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.NonSplitTorus
--- Non-public: the order of `GL (Fin 2) F` and the number of units of a finite field are used only
--- inside the counting proofs, so downstream importers do not pay for them.
-import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
-import Mathlib.Algebra.GroupWithZero.Units.Fintype
+-- Non-public: the order of `GL (Fin 2) F` over a finite field is used only inside the counting
+-- proofs, so downstream importers do not pay for it.
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 
 /-!
 # Centralizers of the regular elements of `GL₂`
 
 A `2 × 2` matrix over a field is **regular** as soon as it is not scalar: it is then cyclic
 (nonderogatory), and the matrices commuting with it are exactly the polynomials in it, the
-two-dimensional algebra `F[M]`. That is `TauCeti.commute_finTwo_iff`, from
-`TauCeti.LinearAlgebra.Matrix.Commute`, and it is the engine of this file.
+two-dimensional algebra `F[M]`. That is `TauCeti.commute_fin_two_iff`, from
+`TauCeti.LinearAlgebra.Matrix.Commute`, and it is what organizes this file.
 
 Two consequences organize the conjugacy classes of `GL₂(F)`. First, the commutant of a non-scalar
 matrix is commutative, so the centralizer of a non-central element of `GL₂(F)` is an **abelian**
@@ -38,13 +37,18 @@ element generates a maximal commutative subalgebra of `Matrix (Fin 2) (Fin 2) F`
 `F × F`, or a quadratic field extension `E/F` — its centralizer is that subalgebra's unit group:
 
 * the *split* case, an invertible diagonal matrix with distinct diagonal entries: its centralizer
-  is the split torus `TauCeti.diagGL` of all invertible diagonal matrices
+  is the split torus `TauCeti.diagonalTorus F 2` of all invertible diagonal matrices
   (`TauCeti.centralizer_diagGL`), of order `(q - 1)²`, so its conjugacy class has `q (q + 1)`
   elements;
 * the *non-split* case, an element of `TauCeti.GL2NonSplitTorus` — the unit group of a quadratic
   field extension `E/F` — that does not come from `F`: its centralizer is that whole group
   (`TauCeti.GL2NonSplitTorus.centralizer_gl2NonSplitTorusHom`), of order `q² - 1`, so its
   conjugacy class has `q (q - 1)` elements.
+
+The split computation needs no commutant: a matrix commuting with a diagonal matrix of distinct
+entries is diagonal (`TauCeti.isDiag_of_commute_diagonal`), and the torus is commutative. It is the
+non-split case, and the abelianness of a general non-central centralizer, that consume
+`TauCeti.commute_fin_two_iff`.
 
 Over a finite field — more generally whenever `E/F` is separable — both elements are **regular
 semisimple** and both centralizers are the **maximal torus** containing the element, split in the
@@ -55,13 +59,18 @@ by an element of `E ∖ F` is not semisimple and `Eˣ` is not a torus; the gener
 and read as a centralizer computation for a quadratic extension, with no semisimplicity claimed.
 The counting results all assume `F` finite, where the torus language is unconditionally correct.
 
+Both computations are stated for a normal form — a diagonal matrix, and an element of the non-split
+torus in the basis `TauCeti.nonSplitTorusBasis` — rather than for an arbitrary regular semisimple
+element. Every regular semisimple element of `GL₂(𝔽_q)` is conjugate to one of the two, but that
+classification, and the transport of a centralizer along a conjugation, are not proved here.
+
 The remaining conjugacy classes of `GL₂(𝔽_q)` are the central ones, whose centralizer is
 everything, and the non-semisimple ones `!![a, 1; 0, a]`, whose centralizer is again `F[M]ˣ` but
-for a matrix with a repeated eigenvalue; the latter is not proved here.
+for a matrix with a repeated eigenvalue; neither is proved here.
 
 The class sizes are read off the centralizer orders by orbit-stabilizer
-(`TauCeti.ConjClasses.ncard_carrier_mk`), together with `Matrix.card_GL_field`, which gives
-`|GL₂(𝔽_q)| = (q² - 1)(q² - q)`.
+(`TauCeti.ConjClasses.ncard_carrier_mk`), together with `TauCeti.natCard_GL_fin_two`, which gives
+`|GL₂(𝔽_q)| = (q - 1)² q (q + 1)`.
 
 ## Main results
 
@@ -93,81 +102,61 @@ namespace TauCeti
 
 section GeneralLinearGroup
 
-variable {F : Type*} [Field F] {g h : GL (Fin 2) F}
-
-/-- Membership in the centralizer of `g`, read on the underlying matrices. -/
-theorem mem_centralizer_singleton_iff_commute_coe :
-    h ∈ Subgroup.centralizer {g} ↔
-      Commute (g : Matrix (Fin 2) (Fin 2) F) (h : Matrix (Fin 2) (Fin 2) F) :=
-  ⟨fun hh => Commute.units_val_iff.mpr (Subgroup.mem_centralizer_singleton_iff.mp hh).symm,
-    fun hh => Subgroup.mem_centralizer_singleton_iff.mpr (Commute.units_val_iff.mp hh).symm⟩
+variable {F : Type*} [Field F] {g : GL (Fin 2) F}
 
 /-- A non-central element of `GL (Fin 2) F` is one whose matrix is not scalar; the matrices
 commuting with it then form a commutative algebra, so its centralizer is an **abelian** subgroup.
-This is what makes the centralizers of the regular elements of `GL₂` tori. -/
+This is the prerequisite for the centralizers computed below being tori: an abelian overgroup of
+the torus can be no larger than it. -/
 theorem isMulCommutative_centralizer_of_notMem_range_scalar
     (hg : (g : Matrix (Fin 2) (Fin 2) F) ∉ Set.range (Matrix.scalar (Fin 2))) :
     IsMulCommutative ↥(Subgroup.centralizer {g}) :=
-  ⟨⟨fun x y => Subtype.ext (Commute.units_val_iff.mp (commute_of_commute_finTwo hg
-    (mem_centralizer_singleton_iff_commute_coe.mp x.2)
-    (mem_centralizer_singleton_iff_commute_coe.mp y.2))).eq⟩⟩
+  ⟨⟨fun x y => Subtype.ext (Commute.units_val_iff.mp (commute_of_commute_fin_two hg
+    (mem_centralizer_singleton_iff_commute_val.mp x.2)
+    (mem_centralizer_singleton_iff_commute_val.mp y.2))).eq⟩⟩
 
 end GeneralLinearGroup
 
 section SplitTorus
 
-variable {F : Type*} [Field F] {t : Fin 2 → Fˣ}
-
-/-- An invertible diagonal matrix with distinct diagonal entries is not scalar. -/
-theorem notMem_range_scalar_diagGL (ht : t 0 ≠ t 1) :
-    (diagGL t : Matrix (Fin 2) (Fin 2) F) ∉ Set.range (Matrix.scalar (Fin 2)) := by
-  rw [mem_range_scalar_finTwo_iff]
+/-- An invertible diagonal matrix with distinct diagonal entries is not scalar, so
+`TauCeti.isMulCommutative_centralizer_of_notMem_range_scalar` applies to it.  Like `diagGL`
+itself, this needs only a semiring. -/
+theorem notMem_range_scalar_diagGL {k : Type*} [Semiring k] {t : Fin 2 → kˣ} (ht : t 0 ≠ t 1) :
+    (diagGL t : Matrix (Fin 2) (Fin 2) k) ∉ Set.range (Matrix.scalar (Fin 2)) := by
+  rw [mem_range_scalar_fin_two_iff]
   rintro ⟨-, -, h⟩
   exact ht (Units.ext (by simpa using h))
 
-/-- **The centralizer of a split regular semisimple element of `GL₂`.** An invertible diagonal
-matrix with *distinct* diagonal entries has, as its centralizer, exactly the split torus of all
-invertible diagonal matrices: the maximal torus containing it. -/
-theorem centralizer_diagGL (ht : t 0 ≠ t 1) :
-    Subgroup.centralizer {diagGL t} = (diagGL (k := F) (n := 2)).range := by
-  ext h
-  rw [mem_centralizer_singleton_iff_commute_coe, MonoidHom.mem_range]
-  constructor
-  · intro hcomm
-    obtain ⟨a, b, hab⟩ := (commute_finTwo_iff (notMem_range_scalar_diagGL ht)).mp hcomm
-    have hentry : ∀ i j : Fin 2, (h : Matrix (Fin 2) (Fin 2) F) i j =
-        (if i = j then a else 0) + b * (diagGL t : Matrix (Fin 2) (Fin 2) F) i j := fun i j => by
-      rw [hab]
-      simp [Matrix.scalar_apply, Matrix.diagonal_apply]
-    -- The commuting matrix is diagonal, and it is invertible, so its entries are units.
-    have h01 : (h : Matrix (Fin 2) (Fin 2) F) 0 1 = 0 := by simp [hentry 0 1]
-    have h10 : (h : Matrix (Fin 2) (Fin 2) F) 1 0 = 0 := by simp [hentry 1 0]
-    have hdet : (h : Matrix (Fin 2) (Fin 2) F) 0 0 * (h : Matrix (Fin 2) (Fin 2) F) 1 1 ≠ 0 := by
-      have hu := (Matrix.GeneralLinearGroup.det h).isUnit.ne_zero
-      rw [Matrix.GeneralLinearGroup.val_det_apply, Matrix.det_fin_two, h01, h10] at hu
-      simpa using hu
-    refine ⟨fun i => Units.mk0 ((h : Matrix (Fin 2) (Fin 2) F) i i) ?_, ?_⟩
-    · fin_cases i
-      · exact left_ne_zero_of_mul hdet
-      · exact right_ne_zero_of_mul hdet
-    · refine Units.ext ?_
-      ext i j
-      rcases eq_or_ne i j with rfl | hij
-      · simp
-      · simp [hentry i j, hij]
-  · rintro ⟨s, rfl⟩
-    exact Commute.units_val_iff.mpr ((Commute.all t s).map diagGL)
+variable {F : Type*} [Field F] {t : Fin 2 → Fˣ}
 
-variable [Fintype F]
+/-- **The centralizer of a split regular semisimple element of `GL₂`.** An invertible diagonal
+matrix with *distinct* diagonal entries has, as its centralizer, exactly the split torus
+`TauCeti.diagonalTorus F 2` of all invertible diagonal matrices: the maximal torus containing it.
+
+Both inclusions come from the diagonal API: a matrix commuting with a diagonal matrix of distinct
+entries is diagonal (`TauCeti.isDiag_of_commute_diagonal`), and conversely the torus is
+commutative, so it centralizes each of its own elements. -/
+theorem centralizer_diagGL (ht : t 0 ≠ t 1) :
+    Subgroup.centralizer {diagGL t} = diagonalTorus F 2 := by
+  have hne : (t 0 : F) ≠ (t 1 : F) := fun h => ht (Units.ext h)
+  have hinj : Function.Injective fun i => (t i : F) := by
+    intro i j hij
+    fin_cases i <;> fin_cases j <;> simp_all
+  refine le_antisymm (fun h hh => mem_diagonalTorus_iff.mpr ?_) ?_
+  · refine isDiag_of_commute_diagonal hinj ?_
+    have hcomm := mem_centralizer_singleton_iff_commute_val.mp hh
+    rwa [diagGL_coe] at hcomm
+  · exact (Subgroup.le_centralizer (diagonalTorus F 2)).trans
+      (Subgroup.centralizer_le (Set.singleton_subset_iff.mpr
+        (mem_diagonalTorus_iff_exists_diagGL.mpr ⟨t, rfl⟩)))
 
 /-- **The order of the centralizer of a split regular semisimple element**: over a field with `q`
-elements the split torus has `(q - 1)²` elements, one invertible scalar per diagonal entry. -/
+elements the split torus has `(q - 1)²` elements, one invertible scalar per diagonal entry.  No
+finiteness is assumed: over an infinite field both sides vanish. -/
 theorem natCard_centralizer_diagGL (ht : t 0 ≠ t 1) :
-    Nat.card (Subgroup.centralizer {diagGL t}) = (Fintype.card F - 1) ^ 2 := by
-  classical
-  rw [centralizer_diagGL ht, ← Nat.card_congr (MonoidHom.ofInjective
-    (diagGL_injective (k := F) (n := 2))).toEquiv, Nat.card_eq_fintype_card, Fintype.card_fun,
-    Fintype.card_fin, ← Nat.card_eq_fintype_card, Nat.card_units, Nat.card_eq_fintype_card]
+    Nat.card (Subgroup.centralizer {diagGL t}) = (Nat.card F - 1) ^ 2 := by
+  rw [centralizer_diagGL ht, natCard_diagonalTorus]
 
 end SplitTorus
 
@@ -175,38 +164,32 @@ section Counting
 
 variable {F : Type*} [Field F] [Fintype F]
 
-/-- The order of `GL₂` over a field with `q` elements, in the factored form
-`(q - 1)² · q · (q + 1)` that divides out against the centralizer orders. -/
-private theorem natCard_gl2 :
-    Nat.card (GL (Fin 2) F) =
-      (Fintype.card F - 1) ^ 2 * (Fintype.card F * (Fintype.card F + 1)) := by
-  obtain ⟨m, hm⟩ : ∃ m, Fintype.card F = m + 1 :=
-    ⟨Fintype.card F - 1, (Nat.succ_pred_eq_of_pos Fintype.card_pos).symm⟩
-  have h1 : (m + 1) ^ 2 - 1 = m * (m + 2) := by
-    have : (m + 1) ^ 2 = m * (m + 2) + 1 := by ring
-    omega
-  have h2 : (m + 1) ^ 2 - (m + 1) = m * (m + 1) := by
-    have : (m + 1) ^ 2 = m * (m + 1) + (m + 1) := by ring
-    omega
-  rw [Matrix.card_GL_field, Fin.prod_univ_two, hm]
-  simp only [Fin.val_zero, Fin.val_one, pow_zero, pow_one, Nat.add_sub_cancel, h1, h2]
-  ring
+/-- Orbit-stabilizer arithmetic: a subgroup of known nonzero order in a group whose order it
+divides in a known way has the complementary factor as its index. -/
+private theorem index_eq_of_natCard_eq_mul {G : Type*} [Group G] {H : Subgroup G} {c d : ℕ}
+    (hpos : 0 < c) (hH : Nat.card H = c) (hG : Nat.card G = c * d) : H.index = d := by
+  refine Nat.eq_of_mul_eq_mul_left hpos ?_
+  calc c * H.index = Nat.card H * H.index := by rw [hH]
+    _ = Nat.card G := Subgroup.card_mul_index H
+    _ = c * d := hG
 
 /-- The factor the split class-size computation cancels by is positive: `(q - 1)² > 0` for a field
 with `q > 1` elements. -/
-private theorem sub_one_sq_pos : 0 < (Fintype.card F - 1) ^ 2 :=
+private theorem card_sub_one_sq_pos : 0 < (Fintype.card F - 1) ^ 2 :=
   pow_pos (Nat.sub_pos_of_lt Fintype.one_lt_card) 2
+
+/-- The factor the elliptic class-size computation cancels by is positive: `q² - 1 > 0` for a field
+with `q > 1` elements. -/
+private theorem card_sq_sub_one_pos : 0 < Fintype.card F ^ 2 - 1 :=
+  Nat.sub_pos_of_lt (Nat.one_lt_pow two_ne_zero Fintype.one_lt_card)
 
 /-- **The size of a split regular semisimple conjugacy class of `GL₂(𝔽_q)`**: it is
 `q (q + 1) = [GL₂(𝔽_q) : T]` for the split torus `T`. -/
 theorem ncard_carrier_mk_diagGL {t : Fin 2 → Fˣ} (ht : t 0 ≠ t 1) :
     (ConjClasses.mk (diagGL t)).carrier.ncard = Fintype.card F * (Fintype.card F + 1) := by
-  have key := Subgroup.index_mul_card (Subgroup.centralizer {diagGL t})
-  rw [natCard_centralizer_diagGL ht, natCard_gl2] at key
   rw [ConjClasses.ncard_carrier_mk]
-  refine Nat.eq_of_mul_eq_mul_right (sub_one_sq_pos (F := F)) ?_
-  rw [key]
-  ring
+  refine index_eq_of_natCard_eq_mul card_sub_one_sq_pos ?_ (natCard_GL_fin_two F)
+  rw [natCard_centralizer_diagGL ht, Nat.card_eq_fintype_card]
 
 end Counting
 
@@ -216,10 +199,13 @@ variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E]
   (hE : Module.finrank F E = 2) {x : Eˣ}
 
 /-- A scalar matrix over `F` is the image of the algebra map of the matrix algebra, so that the
-commutant description of `TauCeti.commute_finTwo_iff` can be compared with `Algebra.leftMulMatrix`
+commutant description of `TauCeti.commute_fin_two_iff` can be compared with `Algebra.leftMulMatrix`
 through `AlgHom.commutes`. -/
 private theorem scalar_eq_algebraMap (c : F) :
-    Matrix.scalar (Fin 2) c = algebraMap F (Matrix (Fin 2) (Fin 2) F) c := (rfl)
+    Matrix.scalar (Fin 2) c = algebraMap F (Matrix (Fin 2) (Fin 2) F) c := by
+  ext i j
+  rw [Matrix.algebraMap_matrix_apply, Matrix.scalar_apply, Matrix.diagonal_apply]
+  simp
 
 /-- An element of the non-split torus not coming from `F` is not a scalar matrix: multiplication by
 `x` on `E` is multiplication by an element of `F` exactly when `x` lies in `F`. -/
@@ -236,19 +222,21 @@ of `TauCeti.GL2NonSplitTorus F E hE`, the unit group of a quadratic extension `E
 by multiplication, that does not come from `F` has that whole group as its centralizer.
 
 When `E/F` is separable — always so over a finite field — such an element is elliptic regular
-semisimple and `TauCeti.GL2NonSplitTorus F E hE` is the maximal torus containing it, so together
-with `TauCeti.centralizer_diagGL` this says that the centralizer of a regular semisimple element of
-`GL₂` is the maximal torus containing it, split or not. Separability is not needed below: for a
-purely inseparable `E/F` in characteristic two the statement computes the centralizer of an element
-that is *not* semisimple, and `Eˣ` is then not a torus. -/
+semisimple and `TauCeti.GL2NonSplitTorus F E hE` is the maximal torus containing it. Together with
+`TauCeti.centralizer_diagGL` this computes the centralizer of each of the two standard regular
+semisimple normal forms of `GL₂`, split and elliptic; that every regular semisimple element is
+conjugate to one of them, and that a centralizer transports along such a conjugation, are not
+proved here. Separability is not needed below: for a purely inseparable `E/F` in characteristic
+two the statement computes the centralizer of an element that is *not* semisimple, and `Eˣ` is then
+not a torus. -/
 theorem centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     Subgroup.centralizer {GL2NonSplitTorusHom F E hE x} = GL2NonSplitTorus F E hE := by
   ext h
-  rw [mem_centralizer_singleton_iff_commute_coe, mem_iff]
+  rw [mem_centralizer_singleton_iff_commute_val, mem_iff]
   constructor
   · intro hcomm
     obtain ⟨a, b, hab⟩ :=
-      (commute_finTwo_iff (notMem_range_scalar_gl2NonSplitTorusHom hE hx)).mp hcomm
+      (commute_fin_two_iff (notMem_range_scalar_gl2NonSplitTorusHom hE hx)).mp hcomm
     -- The commuting matrix is multiplication by `a + b x`, which is nonzero as it is invertible.
     have hmat : (h : Matrix (Fin 2) (Fin 2) F) = Algebra.leftMulMatrix (nonSplitTorusBasis F E hE)
         (algebraMap F E a + b • (x : E)) := by
@@ -264,38 +252,23 @@ theorem centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (algebraMap 
   · rintro ⟨z, rfl⟩
     exact Commute.units_val_iff.mpr ((Commute.all x z).map (GL2NonSplitTorusHom F E hE))
 
-variable [Fintype F]
-
 /-- **The order of the centralizer of an elliptic element**: over a field with `q` elements the
-non-split torus is a copy of `E ∖ {0}`, so it has `q² - 1` elements. -/
+non-split torus is a copy of `E ∖ {0}`, so it has `q² - 1` elements.  As for
+`TauCeti.GL2NonSplitTorus.natCard_eq`, no finiteness is assumed. -/
 theorem natCard_centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (algebraMap F E)) :
-    Nat.card (Subgroup.centralizer {GL2NonSplitTorusHom F E hE x}) = Fintype.card F ^ 2 - 1 := by
-  rw [centralizer_gl2NonSplitTorusHom hE hx, natCard_eq, Nat.card_eq_fintype_card]
+    Nat.card (Subgroup.centralizer {GL2NonSplitTorusHom F E hE x}) = Nat.card F ^ 2 - 1 := by
+  rw [centralizer_gl2NonSplitTorusHom hE hx, natCard_eq]
 
 /-- **The size of an elliptic conjugacy class of `GL₂(𝔽_q)`**: it is `q (q - 1) = [GL₂(𝔽_q) : T]`
 for the non-split torus `T`. -/
-theorem ncard_carrier_mk_gl2NonSplitTorusHom
+theorem ncard_carrier_mk_gl2NonSplitTorusHom [Fintype F]
     (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     (ConjClasses.mk (GL2NonSplitTorusHom F E hE x)).carrier.ncard =
       Fintype.card F * (Fintype.card F - 1) := by
-  obtain ⟨m, hm⟩ : ∃ m, Fintype.card F = m + 1 :=
-    ⟨Fintype.card F - 1, (Nat.succ_pred_eq_of_pos Fintype.card_pos).symm⟩
-  have hm1 : 1 ≤ m := by
-    have := Fintype.one_lt_card (α := F)
-    omega
-  have h1 : (m + 1) ^ 2 - 1 = m * (m + 2) := by
-    have : (m + 1) ^ 2 = m * (m + 2) + 1 := by ring
-    omega
-  have hpos : 0 < Fintype.card F ^ 2 - 1 := by
-    rw [hm, h1]
-    exact Nat.mul_pos (by omega) (by omega)
-  have key := Subgroup.index_mul_card (Subgroup.centralizer {GL2NonSplitTorusHom F E hE x})
-  rw [natCard_centralizer_gl2NonSplitTorusHom hE hx, natCard_gl2] at key
   rw [ConjClasses.ncard_carrier_mk]
-  refine Nat.eq_of_mul_eq_mul_right hpos ?_
-  rw [key, hm]
-  simp only [Nat.add_sub_cancel, h1]
-  ring
+  refine index_eq_of_natCard_eq_mul card_sq_sub_one_pos ?_
+    (natCard_GL_fin_two_eq_sq_sub_one_mul F)
+  rw [natCard_centralizer_gl2NonSplitTorusHom hE hx, Nat.card_eq_fintype_card]
 
 end GL2NonSplitTorus
 
