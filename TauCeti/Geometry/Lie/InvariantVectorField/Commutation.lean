@@ -148,8 +148,7 @@ theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
   rw [mvfderiv_apply_eq_mfderiv_apply]
   exact hpartial.unique hdirection'
 
-/-- Left- and right-invariant scalar differentiation commute at every group point. This is
-Clairaut symmetry for `(s, t) ↦ f (exp(sX) * g * exp(tY))`. -/
+/-- Left- and right-invariant scalar differentiation commute at every group point. -/
 theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) :
     mvfderiv I (tangentToLeftInvariantDerivation Y f) g

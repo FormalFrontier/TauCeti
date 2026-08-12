@@ -123,17 +123,11 @@ private theorem ContMDiffMap.conjugationGenerator_apply
     ContMDiffMap.conjugationGenerator (I := I) f X g = mvfderiv I f g
       (mulRightInvariantVectorField X g - mulInvariantVectorField X g) := by
   rw [ContMDiffMap.conjugationGenerator]
+  -- Expose the bundled subtraction at `g`; the two public application lemmas then identify its
+  -- summands with the corresponding invariant directional derivatives.
   change rightInvariantDerivative X f g - tangentToLeftInvariantDerivation X f g = _
   rw [rightInvariantDerivative_apply, tangentToLeftInvariantDerivation_apply]
   exact (map_sub (mvfderiv I f g) _ _).symm
-
-omit [FiniteDimensional ℝ E] in
-private theorem ContMDiffMap.conjugationGenerator_coe
-    (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) :
-    (ContMDiffMap.conjugationGenerator (I := I) f X : G → ℝ) =
-      (rightInvariantDerivative (I := I) X f : G → ℝ) -
-      (tangentToLeftInvariantDerivation X f : G → ℝ) :=
-  ContMDiffMap.coe_sub _ _
 
 /-- Differentiating the scalar conjugation generator along a left-invariant direction gives the
 Lie bracket. -/
@@ -147,7 +141,7 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
   let LYf := tangentToLeftInvariantDerivation (I := I) (G := G) Y f
   let H := ContMDiffMap.conjugationGenerator (I := I) f X
   have hH : (H : G → ℝ) = (RXf : G → ℝ) - (LXf : G → ℝ) :=
-    ContMDiffMap.conjugationGenerator_coe f X
+    ContMDiffMap.coe_sub _ _
   -- Unfold only the private bundle `H`; its underlying function is the displayed generator.
   change mvfderiv I H 1 Y = _
   rw [hH]
@@ -165,6 +159,8 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
   simp only [tangentToLeftInvariantDerivation_apply,
     LeftInvariantDerivation.commutator_apply, ContMDiffMap.coe_sub, Pi.sub_apply,
     mulInvariantVectorField_one] at hbridge
+  -- Express the evaluated derivation identity through the named smooth-map bundles `LYf` and
+  -- `LXf`, whose applications the preceding simplification has exposed.
   change mvfderiv I f 1 ⁅X, Y⁆ =
     mvfderiv I LYf 1 X - mvfderiv I LXf 1 Y at hbridge
   exact hbridge.symm
@@ -228,9 +224,12 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     LieAlgebra.ad ℝ (GroupLieAlgebra I G) X Y
   apply hAder.congr_deriv
   let derivTangent : GroupLieAlgebra I G := deriv A 0
+  -- Move from the model-space derivative used by `HasDerivAt` to its canonical identity tangent
+  -- space so pointed smooth functions can separate the two vectors.
   change derivTangent = bracketTangent
   apply tangentToPointDerivation_injective (I := I) (1 : G)
   ext f
+  -- Evaluation of the two point derivations is definitionally `mvfderiv` on the chosen test map.
   change mvfderiv I f 1 derivTangent = mvfderiv I f 1 bracketTangent
   let q : GroupLieAlgebra I G →L[ℝ] ℝ := mvfderiv I f 1
   let F : ℝ × ℝ → ℝ := fun p =>
@@ -265,6 +264,8 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
         (fun s : ℝ => f (mulInvariantExp (I := I) (G := G)
           (s • tangentAd (I := I) (γX t) Y))) (q (A t)) 0 := by
       apply hdirection.congr_deriv
+      -- The exponential-line chain rule returns `mfderiv`; use the public bridge to the
+      -- model-space directional derivative used by `q`.
       change mfderiv I 𝓘(ℝ, ℝ) (f : G → ℝ) 1 _ = mvfderiv I (f : G → ℝ) 1 _
       exact (mvfderiv_apply_eq_mfderiv_apply (I := I) (f := (f : G → ℝ)) _ _).symm
     exact hpartial.unique hdirection'
@@ -301,6 +302,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     funext s
     exact htime s
   rw [hspaceFun, htimeFun, fderiv_apply_one_eq_deriv] at hmixed
+  -- Restate the scalar mixed-partial identity through the tangent-space functional `q`.
   change q derivTangent = q bracketTangent
   have hq : HasDerivAt (fun t => q (A t)) (q (deriv A 0)) 0 :=
     q.hasFDerivAt.comp_hasDerivAt (f := A) 0 hAder
@@ -361,6 +363,8 @@ theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
   have hpathModel : HasDerivAt
       (fun t : ℝ => T (mulInvariantExp (I := I) (G := G) (t • X)))
       (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X Y) 0 := by
+    -- Unfold only the local path abbreviation `T`; the tangent/model conversion is the explicit
+    -- `show E from` boundary already present in the theorem statement.
     change HasDerivAt
       (fun t : ℝ => show E from tangentAd (I := I)
         (mulInvariantExp (I := I) (G := G) (t • X)) Y)

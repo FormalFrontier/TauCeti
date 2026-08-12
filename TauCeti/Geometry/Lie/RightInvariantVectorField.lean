@@ -217,3 +217,13 @@ theorem rightInvariantDerivative_apply
     rightInvariantDerivative v f g =
       mvfderiv I f g (mulRightInvariantVectorField v g) :=
   by simp only [rightInvariantDerivative, ContMDiffMap.coeFn_mk]
+
+/-- The function underlying right-invariant differentiation. -/
+@[simp]
+theorem rightInvariantDerivative_coe
+    [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
+    (f : C^∞⟮I, G; 𝕜⟯) :
+    (rightInvariantDerivative v f : G → 𝕜) =
+      fun g => mvfderiv I f g (mulRightInvariantVectorField v g) := by
+  funext g
+  exact rightInvariantDerivative_apply v f g
