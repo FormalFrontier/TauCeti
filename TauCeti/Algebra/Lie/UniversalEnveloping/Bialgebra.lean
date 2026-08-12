@@ -5,8 +5,9 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import Mathlib.RingTheory.Bialgebra.Hom
 public import TauCeti.Algebra.Bialgebra.Primitive
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
 
 /-!
 # The bialgebra structure on a universal enveloping algebra
@@ -26,6 +27,8 @@ eventually makes the corresponding distribution algebra a Hopf algebra over `ℤ
 * `TauCeti.UniversalEnvelopingAlgebra.comul_ι`: the comultiplication of a Lie generator.
 * `TauCeti.UniversalEnvelopingAlgebra.counit_ι`: the counit of a Lie generator.
 * `TauCeti.UniversalEnvelopingAlgebra.comul_ι_pow`: the comultiplication of a generator power.
+* `TauCeti.UniversalEnvelopingAlgebra.mapBialgHom`: the bialgebra homomorphism induced by a Lie
+  homomorphism.
 
 ## References
 
@@ -41,7 +44,7 @@ open scoped TensorProduct
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u v
+universe u v w
 
 variable (R : Type u) (L : Type v)
 variable [CommRing R] [LieRing L] [LieAlgebra R L]
@@ -154,6 +157,37 @@ theorem counit_ι (x : L) :
   rw [← _root_.UniversalEnvelopingAlgebra.ι_apply]
   exact _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
 
+/-- A Lie algebra homomorphism induces a bialgebra homomorphism of universal enveloping
+algebras. -/
+noncomputable def mapBialgHom {L₁ : Type v} {L₂ : Type w}
+    [LieRing L₁] [LieAlgebra R L₁] [LieRing L₂] [LieAlgebra R L₂]
+    (f : LieHom R L₁ L₂) :
+    _root_.UniversalEnvelopingAlgebra R L₁ →ₐc[R]
+      _root_.UniversalEnvelopingAlgebra R L₂ :=
+  .ofAlgHom (map R f)
+    (by
+      apply _root_.UniversalEnvelopingAlgebra.hom_ext
+      apply LieHom.ext
+      intro x
+      simp only [LieHom.coe_comp, Function.comp_apply, AlgHom.coe_toLieHom, AlgHom.comp_apply,
+        Bialgebra.counitAlgHom_apply, _root_.UniversalEnvelopingAlgebra.ι_apply, map_ι',
+        counit_ι])
+    (by
+      apply _root_.UniversalEnvelopingAlgebra.hom_ext
+      apply LieHom.ext
+      intro x
+      simp only [LieHom.coe_comp, Function.comp_apply, AlgHom.coe_toLieHom, AlgHom.comp_apply,
+        Bialgebra.comulAlgHom_apply, _root_.UniversalEnvelopingAlgebra.ι_apply, map_ι',
+        comul_ι, map_add, Algebra.TensorProduct.map_tmul, map_one])
+
+/-- The bialgebra homomorphism induced by a Lie homomorphism agrees with it on Lie generators. -/
+theorem mapBialgHom_ι {L₁ : Type v} {L₂ : Type w}
+    [LieRing L₁] [LieAlgebra R L₁] [LieRing L₂] [LieAlgebra R L₂]
+    (f : LieHom R L₁ L₂) (x : L₁) :
+    mapBialgHom R f (_root_.UniversalEnvelopingAlgebra.ι R x) =
+      _root_.UniversalEnvelopingAlgebra.ι R (f x) :=
+  map_ι R f x
+
 /-- The standard bialgebra structure on a universal enveloping algebra is cocommutative. -/
 instance instIsCocomm : Coalgebra.IsCocomm R U where
   comm_comp_comul := by
@@ -167,15 +201,13 @@ instance instIsCocomm : Coalgebra.IsCocomm R U where
       simp only [LieHom.coe_comp, Function.comp_apply, AlgHom.coe_toLieHom, AlgHom.comp_apply,
         Bialgebra.comulAlgHom_apply, _root_.UniversalEnvelopingAlgebra.ι_apply, comul_ι,
         map_add]
-      -- The algebra equivalence and linear equivalence implementing the tensor swap have
-      -- definitionally equal underlying functions, but their wrappers do not rewrite directly.
       change
-        (TensorProduct.comm R U U)
+        (Algebra.TensorProduct.comm R U U)
               (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) ⊗ₜ[R] 1) +
-            (TensorProduct.comm R U U)
+            (Algebra.TensorProduct.comm R U U)
               (1 ⊗ₜ[R]
                 _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = _
-      simp only [TensorProduct.comm_tmul]
+      simp only [Algebra.TensorProduct.comm_tmul]
       abel
     exact congrArg AlgHom.toLinearMap h
 
