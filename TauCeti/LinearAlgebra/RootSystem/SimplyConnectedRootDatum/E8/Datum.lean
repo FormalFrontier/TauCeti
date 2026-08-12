@@ -21,8 +21,9 @@ that the `i`-th simple root is the `i`-th row of the Bourbaki-numbered Cartan ma
 
 ## Reflection stability
 
-Reflection in a norm-two vector preserves the `E₈` Gram form of the simple-coroot basis, so it maps
-norm-two vectors to norm-two vectors. The enumeration exhausts the norm-two vectors
+Reflection in a norm-two vector preserves the `E₈` Gram form of the simple-coroot basis
+(`TauCeti.reflect_vecMul_dotProduct_self`, which needs nothing beyond symmetry of the matrix), so
+it maps norm-two vectors to norm-two vectors. The enumeration exhausts the norm-two vectors
 (`TauCeti.DynkinType.exists_e8Coroot_eq`), and hence the root and coroot families are stable under
 reflection. Mathlib's `RootPairing.mk'` then constructs the permutations of `Fin 240` required by a
 root datum, without a two hundred and forty by two hundred and forty table.
@@ -45,6 +46,8 @@ coroot-side condition as its siblings, which is what the per-type dispatcher wil
 
 ## Main results
 
+* `TauCeti.DynkinType.e8Root_dotProduct_coroot_comm`: the pairing of the pinned tables is
+  symmetric, type `E₈` being simply laced.
 * `TauCeti.DynkinType.hasCartanType_e8SimplyConnectedRootDatum`: the pinned base has Cartan type
   `E8`.
 * `TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`: the coroots span the
@@ -65,46 +68,25 @@ open _root_.Matrix
 
 namespace DynkinType
 
-/-! ## The `E₈` Gram form -/
-
-/-- The Gram form of the simple-coroot basis is symmetric, type `E₈` being simply laced. -/
-private lemma e8_vecMul_dotProduct_comm (v w : Fin 8 → ℤ) :
-    (v ᵥ* CartanMatrix.E₈) ⬝ᵥ w = (w ᵥ* CartanMatrix.E₈) ⬝ᵥ v := by
-  rw [← dotProduct_mulVec, dotProduct_comm, ← mulVec_transpose, CartanMatrix.E₈_isSymm]
-
-/-- The `E₈` roots are the images of the coroots under the Cartan matrix, read on the left or,
-equivalently, on the right. -/
-theorem e8Root_eq_mulVec (j : Fin 240) : e8Root j = CartanMatrix.E₈ *ᵥ e8Coroot j := by
-  rw [e8Root_apply, ← mulVec_transpose, CartanMatrix.E₈_isSymm]
-
-/-- Pairing a root with a coroot is the Gram form of their simple-coroot coordinates. -/
-theorem e8Root_dotProduct_e8Coroot (i j : Fin 240) :
-    e8Root i ⬝ᵥ e8Coroot j = (e8Coroot i ᵥ* CartanMatrix.E₈) ⬝ᵥ e8Coroot j := by
-  rw [e8Root_apply]
-
 /-! ## Reflection stability -/
 
-private lemma e8_reflect_dotProduct_self {u v : Fin 8 → ℤ}
-    (hu : (u ᵥ* CartanMatrix.E₈) ⬝ᵥ u = 2) (hv : (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2) :
-    ((v - ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ u) • u) ᵥ* CartanMatrix.E₈) ⬝ᵥ
-      (v - ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ u) • u) = 2 := by
-  simp only [sub_vecMul, smul_vecMul, sub_dotProduct, dotProduct_sub, smul_dotProduct,
-    dotProduct_smul, smul_eq_mul, hu, hv, e8_vecMul_dotProduct_comm u v]
-  ring
-
-private lemma e8Root_dotProduct_e8Coroot_comm (i j : Fin 240) :
+/-- **The pairing of the pinned tables is symmetric.** This is the simply-laced feature of `E₈`:
+both sides are the value at the simple-coroot coordinates of the symmetric form carried by
+`CartanMatrix.E₈`. -/
+theorem e8Root_dotProduct_coroot_comm (i j : Fin 240) :
     e8Root i ⬝ᵥ e8Coroot j = e8Root j ⬝ᵥ e8Coroot i := by
-  rw [e8Root_dotProduct_e8Coroot, e8Root_dotProduct_e8Coroot,
-    e8_vecMul_dotProduct_comm]
+  rw [e8Root_apply, e8Root_apply, vecMul_dotProduct_comm CartanMatrix.E₈_isSymm]
 
 private lemma exists_e8Coroot_reflection (i j : Fin 240) :
     ∃ k, e8Coroot k =
       e8Coroot j - (e8Root i ⬝ᵥ e8Coroot j) • e8Coroot i := by
-  apply exists_e8Coroot_eq
-  rw [e8Root_dotProduct_e8Coroot,
-    e8_vecMul_dotProduct_comm (e8Coroot i) (e8Coroot j)]
-  exact e8_reflect_dotProduct_self (e8Coroot_vecMul_dotProduct_self i)
-    (e8Coroot_vecMul_dotProduct_self j)
+  have hnorm (k : Fin 240) : (e8Coroot k ᵥ* CartanMatrix.E₈) ⬝ᵥ e8Coroot k = 2 := by
+    rw [← e8Root_apply]
+    exact e8Root_dotProduct_coroot k
+  refine exists_e8Coroot_eq ?_
+  rw [e8Root_apply, vecMul_dotProduct_comm CartanMatrix.E₈_isSymm (e8Coroot i) (e8Coroot j)]
+  exact (reflect_vecMul_dotProduct_self CartanMatrix.E₈_isSymm (hnorm i) (e8Coroot j)).trans
+    (hnorm j)
 
 /-! ## The pinned datum -/
 
@@ -124,7 +106,7 @@ noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → �
           e8Root j - (e8Root i ⬝ᵥ e8Coroot j) • e8Root i := by
         simpa only [sub_vecMul, smul_vecMul, ← e8Root_apply] using
           congrArg (fun x : Fin 8 → ℤ ↦ x ᵥ* CartanMatrix.E₈) hk
-      rw [e8Root_dotProduct_e8Coroot_comm] at hroot
+      rw [e8Root_dotProduct_coroot_comm] at hroot
       simpa [Module.preReflection_apply, dotProductEquiv_apply_apply] using hroot)
     (by
       rintro i _ ⟨j, rfl⟩
@@ -160,7 +142,8 @@ lemma e8SimpleIndex_injective : Function.Injective e8SimpleIndex :=
 
 /-- The simple roots of the pinned `E₈` datum are the rows of the Bourbaki Cartan matrix. -/
 @[simp] theorem root_e8SimpleIndex (i : Fin 8) :
-    e8Root (e8SimpleIndex i) = CartanMatrix.E₈.row i := e8Root_simple i
+    e8Root (e8SimpleIndex i) = CartanMatrix.E₈ i :=
+  (e8Root_simple i).trans (Matrix.row_apply' _ i)
 
 /-- The simple coroots of the pinned `E₈` datum are the standard basis vectors. -/
 @[simp] theorem coroot_e8SimpleIndex (i : Fin 8) :
@@ -192,11 +175,8 @@ private lemma e8Coroot_nonneg_or_nonpos (j : Fin 240) :
 /-- In the cocharacter lattice a coroot is the combination of the simple coroots recorded by its
 own coordinates, the simple coroots being the standard basis. -/
 private lemma sum_smul_coroot_e8SimpleIndex (j : Fin 240) :
-    ∑ k : Fin 8, e8Coroot j k • e8Coroot (e8SimpleIndex k) = e8Coroot j := by
-  have hk (k : Fin 8) :
-      e8Coroot j k • e8Coroot (e8SimpleIndex k) = Pi.single k (e8Coroot j k) := by
-    rw [coroot_e8SimpleIndex, ← Pi.single_smul', smul_eq_mul, mul_one]
-  simpa only [hk] using LinearMap.sum_single_apply _ (e8Coroot j)
+    ∑ k : Fin 8, e8Coroot j k • e8Coroot (e8SimpleIndex k) = e8Coroot j :=
+  sum_smul_eq_of_eq_single coroot_e8SimpleIndex (e8Coroot j)
 
 /-- In the character lattice a root is the combination of the simple roots recorded by the same
 coordinates, the two tables differing by the Cartan-matrix map. -/
@@ -208,14 +188,13 @@ private lemma sum_smul_root_e8SimpleIndex (j : Fin 240) :
 
 private lemma linearIndependent_root_e8SimpleIndex :
     LinearIndependent ℤ fun i : Fin 8 ↦ e8Root (e8SimpleIndex i) := by
-  have h : (fun i : Fin 8 ↦ e8Root (e8SimpleIndex i)) = fun i ↦ CartanMatrix.E₈ i :=
-    funext root_e8SimpleIndex
-  rw [h]
+  rw [show (fun i : Fin 8 ↦ e8Root (e8SimpleIndex i)) = fun i ↦ CartanMatrix.E₈ i from
+    funext root_e8SimpleIndex]
   exact linearIndependent_rows_of_det_ne_zero (by rw [CartanMatrix.E₈_det]; norm_num)
 
 private lemma linearIndependent_coroot_e8SimpleIndex :
-    LinearIndependent ℤ fun i : Fin 8 ↦ e8Coroot (e8SimpleIndex i) := by
-  simpa only [coroot_e8SimpleIndex] using Pi.linearIndependent_single_one (Fin 8) ℤ
+    LinearIndependent ℤ fun i : Fin 8 ↦ e8Coroot (e8SimpleIndex i) :=
+  linearIndependent_of_eq_single coroot_e8SimpleIndex
 
 /-- The Bourbaki-numbered base of the pinned simply connected root datum of type `E₈`. Its support
 is the set of the first eight root indices, carrying the simple roots in Bourbaki order. -/
@@ -243,12 +222,8 @@ private lemma e8SimplyConnectedBase_support :
 indices. -/
 @[simp] theorem mem_e8SimplyConnectedBase_support {k : Fin 240} :
     k ∈ e8SimplyConnectedBase.support ↔ (k : ℕ) < 8 := by
-  rw [e8SimplyConnectedBase_support, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    rw [e8SimpleIndex_val]
-    exact i.isLt
-  · exact fun hk ↦ ⟨⟨k, hk⟩, Fin.ext (by rw [e8SimpleIndex_val])⟩
+  rw [e8SimplyConnectedBase_support]
+  exact mem_simpleSupport_iff_lt e8SimpleIndex_injective e8SimpleIndex_val
 
 /-- **The Cartan integers at the first eight root indices are Mathlib's Bourbaki-numbered `E₈`
 matrix.** This pins the node order independently of the existential relabelling in
@@ -258,7 +233,6 @@ theorem pairing_e8SimpleIndex (i j : Fin 8) :
       CartanMatrix.E₈ i j := by
   rw [e8SimplyConnectedRootDatum_pairing, root_e8SimpleIndex, coroot_e8SimpleIndex,
     dotProduct_single, mul_one]
-  rfl
 
 /-- **The pinned datum of type `E₈` has Cartan type `E8`.** Its Bourbaki-numbered base realizes the
 standard Cartan matrix `CartanMatrix.E₈`, with the node numbering of `TauCeti.DynkinType`. -/

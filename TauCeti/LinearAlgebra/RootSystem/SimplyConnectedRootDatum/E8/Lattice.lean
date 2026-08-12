@@ -27,29 +27,23 @@ that a direct construction would have to tabulate and check.
 The `E₈` norm `(v ᵥ* CartanMatrix.E₈) ⬝ᵥ v` is the Gram form of the simple-coroot basis, so the
 norm-two vectors are the minimal vectors of the `E₈` lattice, read in that basis. They are counted
 in the Euclidean model instead, where the lattice is described by congruences rather than by a Gram
-matrix. To keep the coordinates integral the model is scaled by two:
-`TauCeti.DynkinType.IsDoubledE8` describes `2 · Γ₈`, whose minimal vectors have norm eight and are
-of exactly two shapes, `(±2)` in two coordinates and `(±1)` in all eight with an even number of
-minus signs. Those shapes are enumerated by `TauCeti.DynkinType.e8MinimalVector`, whose index type
-has two hundred and forty elements.
+matrix. To keep the coordinates integral the model is scaled by two: `IsDoubledE8` describes
+`2 · Γ₈`, whose vectors of norm eight are of exactly two shapes, `(±2)` in two coordinates and
+`(±1)` in all eight with an even number of minus signs. Those shapes are enumerated by
+`e8DoubledMinimalVector`, whose index type has two hundred and forty elements.
 
-The map `TauCeti.DynkinType.e8Embed` sends the simple-coroot coordinates to the doubled Euclidean
-model by multiplying with the doubled simple roots of Bourbaki's Plate VII; it multiplies the norm
-by four, so it carries norm-two vectors to minimal vectors of `2 · Γ₈`. It is injective, and the
-listed coroots are two hundred and forty distinct norm-two vectors, so their images already exhaust
-the two hundred and forty minimal vectors, and no norm-two vector is left over. The classification
-is used only through this counting step: neither the surjectivity of `e8Embed` onto `2 · Γ₈` nor
-the equality of the two lattices is needed, and neither is proved.
-
-## Main definitions
-
-* `TauCeti.DynkinType.IsDoubledE8`: the congruences defining the doubled `E₈` lattice `2 · Γ₈`.
-* `TauCeti.DynkinType.e8MinimalVector`: the enumeration of the minimal vectors of `2 · Γ₈`.
-* `TauCeti.DynkinType.e8Embed`: the simple-coroot coordinates read in the doubled Euclidean model.
+The map `e8DoubledEmbed` sends the simple-coroot coordinates to the doubled Euclidean model by
+multiplying with the doubled simple roots of Bourbaki's Plate VII; it multiplies the norm by four,
+so it carries norm-two vectors to norm-eight vectors of `2 · Γ₈`. It is injective, and the listed
+coroots are two hundred and forty distinct norm-two vectors, so their images already exhaust the
+two hundred and forty vectors of the enumeration, and no norm-two vector is left over. The
+classification is used only through this counting step: neither the surjectivity of
+`e8DoubledEmbed` onto `2 · Γ₈` nor the equality of the two lattices is needed, and neither is
+proved. That whole Euclidean scaffold is therefore private to this file; the completeness statement
+is its only public consequence.
 
 ## Main results
 
-* `TauCeti.DynkinType.exists_e8MinimalVector_eq`: a norm-eight vector of `2 · Γ₈` is listed.
 * `TauCeti.DynkinType.exists_e8Coroot_eq`: a norm-two vector of the simple-coroot lattice is one of
   the listed `E₈` coroots.
 
@@ -67,7 +61,7 @@ open _root_.Matrix
 
 namespace DynkinType
 
-/-! ## The doubled `E₈` lattice and its minimal vectors -/
+/-! ## The doubled `E₈` lattice and its vectors of norm eight -/
 
 /-- The doubled `E₈` lattice `2 · Γ₈` in Euclidean coordinates: a vector all of whose coordinates
 are congruent modulo two and whose coordinate sum is divisible by four.
@@ -75,28 +69,28 @@ are congruent modulo two and whose coordinate sum is divisible by four.
 Doubling clears the half-integral coordinates of `Γ₈`, so this is a sublattice of `ℤ⁸`: an integral
 vector of `Γ₈` doubles to an all-even vector with coordinate sum in `4ℤ`, and a half-integral one
 doubles to an all-odd vector with the same property. Only the inclusion
-`TauCeti.DynkinType.isDoubledE8_e8Embed` is needed below, so this file never proves that the
-condition cuts out exactly the doubled lattice. -/
-def IsDoubledE8 (x : Fin 8 → ℤ) : Prop :=
+`isDoubledE8_e8DoubledEmbed` is needed below, so this file never proves that the condition cuts out
+exactly the doubled lattice. -/
+private def IsDoubledE8 (x : Fin 8 → ℤ) : Prop :=
   (∀ j, (2 : ℤ) ∣ x j - x 0) ∧ (4 : ℤ) ∣ ∑ j, x j
 
-/-- The index type of the minimal vectors of `2 · Γ₈`: either an ordered pair of distinct
-coordinates carrying a sign each, or a sign for every coordinate with an even number of minus
-signs. -/
-abbrev E8MinimalIndex : Type :=
+/-- The index type of the enumeration below: either an ordered pair of distinct coordinates
+carrying a sign each, or a sign for every coordinate with an even number of minus signs. -/
+private abbrev E8DoubledMinimalIndex : Type :=
   ({p : Fin 8 × Fin 8 // p.1 < p.2} × Bool × Bool) ⊕
     {s : Fin 8 → Bool // Even (Finset.univ.filter fun j ↦ s j = true).card}
 
-/-- The minimal vectors of the doubled lattice `2 · Γ₈`: the vectors `±2 eᵢ ± 2 eⱼ` for `i < j`,
-and the vectors with all coordinates `±1` and an even number of minus signs. -/
-def e8MinimalVector : E8MinimalIndex → (Fin 8 → ℤ)
+/-- The two shapes of norm eight in the doubled lattice `2 · Γ₈`: the vectors `±2 eᵢ ± 2 eⱼ` for
+`i < j`, and the vectors with all coordinates `±1` and an even number of minus signs. -/
+private def e8DoubledMinimalVector : E8DoubledMinimalIndex → (Fin 8 → ℤ)
   | .inl (p, s, t) => fun j ↦
       if j = p.1.1 then (if s then 2 else -2) else if j = p.1.2 then (if t then 2 else -2) else 0
   | .inr s => fun j ↦ if s.1 j then 1 else -1
 
-/-- There are two hundred and forty minimal vectors listed: `4 * 28` of the first shape and `128`
-of the second. -/
-theorem card_e8MinimalIndex : Fintype.card E8MinimalIndex = 240 := by decide +kernel
+/-- The index type has two hundred and forty elements: `4 * 28` of the first shape and `128` of the
+second. -/
+private theorem card_e8DoubledMinimalIndex : Fintype.card E8DoubledMinimalIndex = 240 := by
+  decide +kernel
 
 /-- A coordinate of a norm-eight vector is at most two in absolute value. -/
 private lemma abs_le_two_of_dotProduct_self {x : Fin 8 → ℤ} (hx : x ⬝ᵥ x = 8) (j : Fin 8) :
@@ -107,32 +101,33 @@ private lemma abs_le_two_of_dotProduct_self {x : Fin 8 → ℤ} (hx : x ⬝ᵥ x
   constructor <;> nlinarith [hsq]
 
 /-- A vector supported on two coordinates, with the value `±2` there, is listed. -/
-private lemma exists_e8MinimalVector_eq_of_pair {x : Fin 8 → ℤ} {a b : Fin 8} (hab : a < b)
+private lemma exists_e8DoubledMinimalVector_eq_of_pair {x : Fin 8 → ℤ} {a b : Fin 8} (hab : a < b)
     (hvals : ∀ j, x j = -2 ∨ x j = 0 ∨ x j = 2)
-    (hsupp : ∀ j, x j ≠ 0 ↔ (j = a ∨ j = b)) : ∃ i, e8MinimalVector i = x := by
+    (hsupp : ∀ j, x j ≠ 0 ↔ (j = a ∨ j = b)) : ∃ i, e8DoubledMinimalVector i = x := by
   refine ⟨.inl (⟨(a, b), hab⟩, x a = 2, x b = 2), funext fun j ↦ ?_⟩
   by_cases hja : j = a
   · subst hja
     have ha : x j ≠ 0 := (hsupp j).mpr (Or.inl rfl)
     rcases hvals j with h | h | h
-    · simp [e8MinimalVector, h]
+    · simp [e8DoubledMinimalVector, h]
     · exact absurd h ha
-    · simp [e8MinimalVector, h]
+    · simp [e8DoubledMinimalVector, h]
   · by_cases hjb : j = b
     · subst hjb
       have hb : x j ≠ 0 := (hsupp j).mpr (Or.inr rfl)
       rcases hvals j with h | h | h
-      · simp [e8MinimalVector, h, hja]
+      · simp [e8DoubledMinimalVector, h, hja]
       · exact absurd h hb
-      · simp [e8MinimalVector, h, hja]
+      · simp [e8DoubledMinimalVector, h, hja]
     · have hzero : x j = 0 := not_not.mp ((hsupp j).not.mpr (by tauto))
-      simp [e8MinimalVector, hja, hjb, hzero]
+      simp [e8DoubledMinimalVector, hja, hjb, hzero]
 
-/-- **The minimal vectors of the doubled lattice are the listed ones.** A vector of `2 · Γ₈` of
-norm eight is `±2 eᵢ ± 2 eⱼ` with `i < j`, or has all coordinates `±1` with an even number of minus
-signs. -/
-theorem exists_e8MinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x) (hnorm : x ⬝ᵥ x = 8) :
-    ∃ i, e8MinimalVector i = x := by
+/-- **A vector of the doubled lattice of norm eight is one of the listed ones.** A vector
+satisfying `IsDoubledE8` with `x ⬝ᵥ x = 8` is `±2 eᵢ ± 2 eⱼ` with `i < j`, or has all coordinates
+`±1` with an even number of minus signs. Only this inclusion is proved: that the listed vectors lie
+in `2 · Γ₈`, and that eight is the minimal norm there, are not needed below. -/
+private theorem exists_e8DoubledMinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x)
+    (hnorm : x ⬝ᵥ x = 8) : ∃ i, e8DoubledMinimalVector i = x := by
   classical
   obtain ⟨hpar, hsum⟩ := hlat
   have hbound := abs_le_two_of_dotProduct_self hnorm
@@ -162,8 +157,8 @@ theorem exists_e8MinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x) (hn
       rw [← hmem j, hs2]
       simp
     rcases lt_or_gt_of_ne hab with hlt | hlt
-    · exact exists_e8MinimalVector_eq_of_pair hlt hvals hsupp
-    · exact exists_e8MinimalVector_eq_of_pair hlt hvals fun j ↦ (hsupp j).trans or_comm
+    · exact exists_e8DoubledMinimalVector_eq_of_pair hlt hvals hsupp
+    · exact exists_e8DoubledMinimalVector_eq_of_pair hlt hvals fun j ↦ (hsupp j).trans or_comm
   · -- Every coordinate is odd, hence `±1`, and the sum condition makes the sign count even.
     have hvals : ∀ j, x j = 1 ∨ x j = -1 := fun j ↦ by
       obtain ⟨c, hc⟩ := h0
@@ -183,7 +178,7 @@ theorem exists_e8MinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x) (hn
       omega
     refine ⟨.inr ⟨fun j ↦ x j = 1, ?_⟩, funext fun j ↦ ?_⟩
     · simpa [ht] using hparity
-    · rcases hvals j with h | h <;> simp [e8MinimalVector, h]
+    · rcases hvals j with h | h <;> simp [e8DoubledMinimalVector, h]
 
 /-! ## The doubled Euclidean model -/
 
@@ -191,7 +186,7 @@ theorem exists_e8MinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x) (hn
 Plate VII, in the Euclidean coordinates of the model, so that all entries are integers. Only two
 properties of the table are used below, and both are checked: its Gram matrix is four times the
 `E₈` Cartan matrix, and its rows lie in the doubled lattice. -/
-def e8DoubledSimpleRoot : Matrix (Fin 8) (Fin 8) ℤ :=
+private def e8DoubledSimpleRoot : Matrix (Fin 8) (Fin 8) ℤ :=
   !![ 1, -1, -1, -1, -1, -1, -1,  1;
       2,  2,  0,  0,  0,  0,  0,  0;
      -2,  2,  0,  0,  0,  0,  0,  0;
@@ -216,18 +211,18 @@ private lemma e8DoubledSimpleRoot_sum_emod :
 
 /-- Simple-coroot coordinates read in the doubled Euclidean model: the combination of the doubled
 simple roots with the given coordinates. -/
-def e8Embed (v : Fin 8 → ℤ) : Fin 8 → ℤ := v ᵥ* e8DoubledSimpleRoot
+private def e8DoubledEmbed (v : Fin 8 → ℤ) : Fin 8 → ℤ := v ᵥ* e8DoubledSimpleRoot
 
 /-- Reading the simple-coroot coordinates in the doubled model multiplies the `E₈` norm by four. -/
-theorem e8Embed_dotProduct_self (v : Fin 8 → ℤ) :
-    e8Embed v ⬝ᵥ e8Embed v = 4 * ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ v) := by
-  rw [e8Embed]
+private theorem e8DoubledEmbed_dotProduct_self (v : Fin 8 → ℤ) :
+    e8DoubledEmbed v ⬝ᵥ e8DoubledEmbed v = 4 * ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ v) := by
+  rw [e8DoubledEmbed]
   nth_rewrite 2 [← Matrix.mulVec_transpose]
   rw [dotProduct_mulVec, Matrix.vecMul_vecMul, e8DoubledSimpleRoot_mul_transpose,
     Matrix.vecMul_smul, smul_dotProduct, smul_eq_mul]
 
 /-- Reading the simple-coroot coordinates in the doubled model is injective. -/
-theorem e8Embed_injective : Function.Injective e8Embed := by
+private theorem e8DoubledEmbed_injective : Function.Injective e8DoubledEmbed := by
   intro v w h
   apply sub_eq_zero.mp
   refine Matrix.eq_zero_of_vecMul_eq_zero (M := CartanMatrix.E₈)
@@ -241,30 +236,23 @@ theorem e8Embed_injective : Function.Injective e8Embed := by
   exact (smul_eq_zero.mp h1).resolve_left (by norm_num)
 
 /-- Simple-coroot coordinates land in the doubled `E₈` lattice. -/
-theorem isDoubledE8_e8Embed (v : Fin 8 → ℤ) : IsDoubledE8 (e8Embed v) := by
+private theorem isDoubledE8_e8DoubledEmbed (v : Fin 8 → ℤ) : IsDoubledE8 (e8DoubledEmbed v) := by
   constructor
   · intro j
-    have hexpand : e8Embed v j - e8Embed v 0 =
+    have hexpand : e8DoubledEmbed v j - e8DoubledEmbed v 0 =
         ∑ i, v i * (e8DoubledSimpleRoot i j - e8DoubledSimpleRoot i 0) := by
-      simp only [e8Embed, Matrix.vecMul, dotProduct, mul_sub, Finset.sum_sub_distrib]
+      simp only [e8DoubledEmbed, Matrix.vecMul, dotProduct, mul_sub, Finset.sum_sub_distrib]
     rw [hexpand]
     exact Finset.dvd_sum fun i _ ↦
       Dvd.dvd.mul_left (Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sub_emod i j)) _
-  · have hexpand : ∑ j, e8Embed v j = ∑ i, v i * ∑ j, e8DoubledSimpleRoot i j := by
-      simp only [e8Embed, Matrix.vecMul, dotProduct, Finset.mul_sum]
+  · have hexpand : ∑ j, e8DoubledEmbed v j = ∑ i, v i * ∑ j, e8DoubledSimpleRoot i j := by
+      simp only [e8DoubledEmbed, Matrix.vecMul, dotProduct, Finset.mul_sum]
       exact Finset.sum_comm
     rw [hexpand]
     exact Finset.dvd_sum fun i _ ↦
       Dvd.dvd.mul_left (Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sum_emod i)) _
 
 /-! ## Completeness of the enumeration -/
-
-/-- Every listed `E₈` coroot has `E₈` norm two, the Gram form of the simple-coroot basis being the
-Cartan matrix. -/
-theorem e8Coroot_vecMul_dotProduct_self (k : Fin 240) :
-    (e8Coroot k ᵥ* CartanMatrix.E₈) ⬝ᵥ e8Coroot k = 2 := by
-  rw [← e8Root_apply]
-  exact e8Root_dotProduct_coroot k
 
 /-- **The listed `E₈` coroots are all the norm-two vectors of the simple-coroot lattice.** The
 enumeration of the two hundred and forty coroots is complete: nothing of norm two is missing from
@@ -273,29 +261,29 @@ theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E₈) 
     ∃ k, e8Coroot k = v := by
   classical
   have hmin : ∀ w : Fin 8 → ℤ, (w ᵥ* CartanMatrix.E₈) ⬝ᵥ w = 2 →
-      e8Embed w ∈ Finset.univ.image e8MinimalVector := by
+      e8DoubledEmbed w ∈ Finset.univ.image e8DoubledMinimalVector := by
     intro w hw
-    obtain ⟨i, hi⟩ := exists_e8MinimalVector_eq (isDoubledE8_e8Embed w)
-      (by rw [e8Embed_dotProduct_self, hw]; norm_num)
+    obtain ⟨i, hi⟩ := exists_e8DoubledMinimalVector_eq (isDoubledE8_e8DoubledEmbed w)
+      (by rw [e8DoubledEmbed_dotProduct_self, hw]; norm_num)
     exact Finset.mem_image.mpr ⟨i, Finset.mem_univ i, hi⟩
-  set T : Finset (Fin 8 → ℤ) := Finset.univ.image e8MinimalVector with hT
-  set C : Finset (Fin 8 → ℤ) := Finset.univ.image fun k ↦ e8Embed (e8Coroot k) with hC
+  set T : Finset (Fin 8 → ℤ) := Finset.univ.image e8DoubledMinimalVector with hT
+  set C : Finset (Fin 8 → ℤ) := Finset.univ.image fun k ↦ e8DoubledEmbed (e8Coroot k) with hC
   have hCT : C ⊆ T := by
     rw [hC]
     intro y hy
     obtain ⟨k, -, rfl⟩ := Finset.mem_image.mp hy
-    exact hmin _ (e8Coroot_vecMul_dotProduct_self k)
-  have hinj : Function.Injective fun k ↦ e8Embed (e8Coroot k) :=
-    fun _ _ h ↦ e8Coroot.injective (e8Embed_injective h)
+    exact hmin _ (by rw [← e8Root_apply]; exact e8Root_dotProduct_coroot k)
+  have hinj : Function.Injective fun k ↦ e8DoubledEmbed (e8Coroot k) :=
+    fun _ _ h ↦ e8Coroot.injective (e8DoubledEmbed_injective h)
   have hCcard : C.card = 240 := by
     rw [hC, Finset.card_image_of_injective _ hinj, Finset.card_univ, Fintype.card_fin]
   have hTcard : T.card ≤ 240 := by
     rw [hT]
     refine le_trans Finset.card_image_le ?_
-    rw [Finset.card_univ, card_e8MinimalIndex]
+    rw [Finset.card_univ, card_e8DoubledMinimalIndex]
   have hCT' : C = T := Finset.eq_of_subset_of_card_le hCT (by omega)
   obtain ⟨k, -, hk⟩ := Finset.mem_image.mp (hCT' ▸ hmin v hv)
-  exact ⟨k, e8Embed_injective hk⟩
+  exact ⟨k, e8DoubledEmbed_injective hk⟩
 
 end DynkinType
 

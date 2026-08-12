@@ -33,6 +33,13 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
 * `TauCeti.sum_smul_mem_or_neg_mem_closure`: a combination of a family with coefficients of one
   sign lies in the additive closure of the family, or its negative does. This is the shape in which
   the two membership axioms of `RootPairing.Base` are met.
+* `TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self`: the bilinear form
+  of a symmetric matrix is symmetric, and reflection in a vector of norm two preserves it. For a
+  simply laced type this is the form the Cartan matrix carries on the simple-coroot coordinates,
+  and reflection stability of a root enumeration is read off it.
+* `TauCeti.sum_smul_eq_of_eq_single` and `TauCeti.linearIndependent_of_eq_single`: a family whose
+  members are the standard basis of `κ → R` expands every vector in its own coordinates and is
+  linearly independent.
 
 Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
 by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`.
@@ -73,6 +80,71 @@ theorem linearIndepOn_simpleSupport {R M : Type*} [Semiring R] [AddCommMonoid M]
   exact (linearIndepOn_range_iff he f).mpr h
 
 end SimpleSupport
+
+section SimpleSupportFin
+
+variable {n N : ℕ} {e : Fin n → Fin N}
+
+/-- **A pinned support numbered in order is an initial segment.** When the simple index map sends
+`i` to the root index `i`, membership in the support is the bound `k < n` on the index. -/
+theorem mem_simpleSupport_iff_lt (he : Injective e) (h : ∀ i, ((e i : Fin N) : ℕ) = i)
+    {k : Fin N} : k ∈ simpleSupport he ↔ (k : ℕ) < n := by
+  rw [mem_simpleSupport]
+  refine ⟨?_, fun hk => ⟨⟨k, hk⟩, Fin.ext (h ⟨k, hk⟩)⟩⟩
+  rintro ⟨i, rfl⟩
+  rw [h i]
+  exact i.isLt
+
+end SimpleSupportFin
+
+/-! ## The bilinear form of a symmetric matrix -/
+
+section Gram
+
+open _root_.Matrix
+
+variable {n R : Type*} [Fintype n] [CommRing R] {M : Matrix n n R}
+
+/-- The bilinear form carried by a symmetric matrix is symmetric. -/
+theorem vecMul_dotProduct_comm (hM : M.IsSymm) (v w : n → R) :
+    (v ᵥ* M) ⬝ᵥ w = (w ᵥ* M) ⬝ᵥ v := by
+  rw [← dotProduct_mulVec, dotProduct_comm, ← mulVec_transpose, hM.eq]
+
+/-- **Reflection in a vector of norm two preserves the form.** For a symmetric matrix `M` and a
+vector `u` with `⟨u, u⟩ = 2`, the reflection `v ↦ v - ⟨v, u⟩ • u` is an isometry of the form
+carried by `M`. This is what makes a family of norm-two vectors stable under its own reflections
+once the family exhausts the norm-two vectors. -/
+theorem reflect_vecMul_dotProduct_self (hM : M.IsSymm) {u : n → R} (hu : (u ᵥ* M) ⬝ᵥ u = 2)
+    (v : n → R) :
+    ((v - ((v ᵥ* M) ⬝ᵥ u) • u) ᵥ* M) ⬝ᵥ (v - ((v ᵥ* M) ⬝ᵥ u) • u) = (v ᵥ* M) ⬝ᵥ v := by
+  simp only [sub_vecMul, smul_vecMul, sub_dotProduct, dotProduct_sub, smul_dotProduct,
+    dotProduct_smul, smul_eq_mul, hu, vecMul_dotProduct_comm hM u v]
+  ring
+
+end Gram
+
+/-! ## Families that are the standard basis -/
+
+section StandardBasis
+
+variable {κ R : Type*} [DecidableEq κ] [CommRing R] {b : κ → κ → R}
+
+/-- **A vector expands in its own coordinates over the standard basis.** This is the shape in which
+`RootPairing.Base` asks a coroot to be a combination of the simple coroots, the simple coroots of a
+simply connected datum being the standard basis. -/
+theorem sum_smul_eq_of_eq_single [Fintype κ] (hb : ∀ i, b i = Pi.single i 1) (v : κ → R) :
+    ∑ i, v i • b i = v := by
+  have hi (i : κ) : v i • b i = Pi.single i (v i) := by
+    rw [hb i, ← Pi.single_smul', smul_eq_mul, mul_one]
+  simpa only [hi] using Finset.univ_sum_single v
+
+/-- The standard basis is linearly independent. -/
+theorem linearIndependent_of_eq_single (hb : ∀ i, b i = Pi.single i 1) :
+    LinearIndependent R b := by
+  rw [show b = fun i => Pi.single i (1 : R) from funext hb]
+  exact Pi.linearIndependent_single_one κ R
+
+end StandardBasis
 
 /-! ## Combinations with coefficients of one sign -/
 

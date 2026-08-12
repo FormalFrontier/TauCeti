@@ -13,8 +13,11 @@ public section
 /-!
 # The integral roots of type E8
 
-This file enumerates the 240 roots of type `E8` in the lattices used by the future pinned simply
-connected root datum. Coroots are expressed in the simple-coroot basis and roots in the
+This file enumerates the 240 roots of type `E8` in the lattices used by the pinned simply connected
+root datum, which is built from these tables in
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum`; that the enumeration below
+misses no root is proved in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Lattice`.
+Coroots are expressed in the simple-coroot basis and roots in the
 fundamental-weight basis. Both tables are indexed by the same `Fin 240`: the first eight entries
 of the root table are the Bourbaki simple roots and the first eight entries of the coroot table
 are the corresponding simple coroots. The remaining positive entries are ordered by height, and
@@ -251,6 +254,11 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
 /-- The `E8` roots are obtained from the coroot coordinates using the Cartan matrix. -/
 theorem e8Root_apply (i : Fin 240) :
     e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
+
+/-- The `E8` roots are the images of the coroots under the Cartan matrix, read on the left or,
+equivalently, on the right, the matrix being symmetric. -/
+theorem e8Root_eq_mulVec (i : Fin 240) : e8Root i = CartanMatrix.E₈ *ᵥ e8Coroot i := by
+  rw [e8Root_apply, ← mulVec_transpose, CartanMatrix.E₈_isSymm]
 
 /-- The coroot table is the concatenation of the positive coroots with their negatives. -/
 private theorem e8Coroot_coe :

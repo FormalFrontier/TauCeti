@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+-- `vecMul_dotProduct_comm` is used in the proof of `e6Root_dotProduct_e6Coroot_comm` below.
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import Mathlib.LinearAlgebra.Matrix.Dual
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
@@ -161,15 +163,9 @@ pairing is the symmetric bilinear form attached to `CartanMatrix.E₆`, read on 
 simple-root coordinates of a root and its coroot. -/
 theorem e6Root_dotProduct_e6Coroot_comm (i j : Fin 72) :
     e6Root i ⬝ᵥ e6Coroot j = e6Root j ⬝ᵥ e6Coroot i := by
-  rw [e6Root_eq_mulVec, e6Root_eq_mulVec]
-  calc
-    (CartanMatrix.E₆ *ᵥ e6Coroot i) ⬝ᵥ e6Coroot j =
-        e6Coroot j ⬝ᵥ CartanMatrix.E₆ *ᵥ e6Coroot i := dotProduct_comm _ _
-    _ = e6Coroot i ⬝ᵥ CartanMatrix.E₆ᵀ *ᵥ e6Coroot j :=
-      (Matrix.dotProduct_transpose_mulVec CartanMatrix.E₆ (e6Coroot i) (e6Coroot j)).symm
-    _ = e6Coroot i ⬝ᵥ CartanMatrix.E₆ *ᵥ e6Coroot j := by
-      rw [CartanMatrix.E₆_isSymm.eq]
-    _ = (CartanMatrix.E₆ *ᵥ e6Coroot j) ⬝ᵥ e6Coroot i := dotProduct_comm _ _
+  rw [e6Root_eq_mulVec, e6Root_eq_mulVec, ← vecMul_transpose, ← vecMul_transpose,
+    CartanMatrix.E₆_isSymm.eq]
+  exact vecMul_dotProduct_comm CartanMatrix.E₆_isSymm _ _
 
 /-- The second half of the table lists the negatives of the coroots in the first half. -/
 @[simp] theorem e6Coroot_e6NegativeIndex (i : Fin 36) :
