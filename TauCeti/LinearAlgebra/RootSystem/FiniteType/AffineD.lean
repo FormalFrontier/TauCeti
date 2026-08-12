@@ -203,7 +203,7 @@ theorem doubleForkMark_ne_zero (n : ℕ) : doubleForkMark n ≠ 0 := by
 
 /-- Every diagonal entry of a double-fork Cartan matrix is `2`. -/
 @[simp]
-theorem doubleForkCartanMatrix_apply_self (n : ℕ) (i : DoubleForkIndex n) :
+theorem doubleForkCartanMatrix_diag (n : ℕ) (i : DoubleForkIndex n) :
     doubleForkCartanMatrix n i i = 2 := by
   rcases i with i | i
   · simp [doubleForkCartanMatrix]
@@ -212,7 +212,7 @@ theorem doubleForkCartanMatrix_apply_self (n : ℕ) (i : DoubleForkIndex n) :
     · simp [doubleForkCartanMatrix]
 
 /-- Every off-diagonal entry of a double-fork Cartan matrix is nonpositive. -/
-theorem doubleForkCartanMatrix_apply_nonpos_of_ne (n : ℕ) {i j : DoubleForkIndex n} (hij : i ≠ j) :
+theorem doubleForkCartanMatrix_off_diag_nonpos (n : ℕ) {i j : DoubleForkIndex n} (hij : i ≠ j) :
     doubleForkCartanMatrix n i j ≤ 0 := by
   rcases i with i | i <;> rcases j with j | j
   · have hne : i ≠ j := fun h => hij (by rw [h])
@@ -290,11 +290,6 @@ private lemma sum_cartanMatrix_A_row_general : ∀ (m : ℕ) (i : Fin m),
         simp only [Fin.val_succ, Nat.succ_ne_zero, ↓reduceIte, hlast]
         by_cases hi : i.val = 0 <;> simp [hi]
 
-private lemma sum_cartanMatrix_A_row (n : ℕ) (i : Fin (n + 2)) :
-    ∑ j, (CartanMatrix.A (n + 2) i j : ℚ) =
-      (if i.val = 0 then 1 else 0) + if i.val + 1 = n + 2 then 1 else 0 :=
-  sum_cartanMatrix_A_row_general (n + 2) i
-
 /-- The standard affine marks form a null vector for the double-fork Cartan matrix. -/
 theorem doubleForkCartanMatrix_mulVec_doubleForkMark (n : ℕ) :
     (Matrix.map (doubleForkCartanMatrix n) Int.cast).mulVec (doubleForkMark n) = 0 := by
@@ -308,7 +303,7 @@ theorem doubleForkCartanMatrix_mulVec_doubleForkMark (n : ℕ) :
       simp only [Fin.sum_univ_two]
       have hmiddle : (∑ j, (CartanMatrix.A (n + 2) i j : ℚ) * 2) =
           ((if i.val = 0 then 1 else 0) + if i.val + 1 = n + 2 then 1 else 0) * 2 := by
-        rw [← Finset.sum_mul, sum_cartanMatrix_A_row]
+        rw [← Finset.sum_mul, sum_cartanMatrix_A_row_general (n + 2) i]
       rw [hmiddle]
       split_ifs <;> norm_num
     · have hlast : ∀ j : Fin (n + 2), j.val + 1 = n + 2 ↔ j = Fin.last (n + 1) := by
