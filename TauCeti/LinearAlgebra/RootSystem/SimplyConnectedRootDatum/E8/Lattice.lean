@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic
+import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
 
 public section
 
@@ -33,14 +34,14 @@ matrix. To keep the coordinates integral the model is scaled by two: `IsDoubledE
 `e8DoubledMinimalVector`, whose index type has two hundred and forty elements.
 
 The map `e8DoubledEmbed` sends the simple-coroot coordinates to the doubled Euclidean model by
-multiplying with the doubled simple roots of Bourbaki's Plate VII; it multiplies the norm by four,
-so it carries norm-two vectors to norm-eight vectors of `2 · Γ₈`. It is injective, and the listed
-coroots are two hundred and forty distinct norm-two vectors, so their images already exhaust the
-two hundred and forty vectors of the enumeration, and no norm-two vector is left over. The
-classification is used only through this counting step: neither the surjectivity of
-`e8DoubledEmbed` onto `2 · Γ₈` nor the equality of the two lattices is needed, and neither is
-proved. That whole Euclidean scaffold is therefore private to this file; the completeness statement
-is its only public consequence.
+multiplying with `TauCeti.DynkinType.e8DoubledSimpleRoot`, the shared integral table of
+`TauCeti.LinearAlgebra.RootSystem.E8Coordinates`; it multiplies the norm by four, so it carries
+norm-two vectors to norm-eight vectors of `2 · Γ₈`. It is injective, and the listed coroots are two
+hundred and forty distinct norm-two vectors, so their images already exhaust the two hundred and
+forty vectors of the enumeration, and no norm-two vector is left over. The classification is used
+only through this counting step: neither the surjectivity of `e8DoubledEmbed` onto `2 · Γ₈` nor the
+equality of the two lattices is needed, and neither is proved. The counting scaffold built on the
+table is therefore private to this file; the completeness statement is its only public consequence.
 
 ## Main results
 
@@ -182,35 +183,8 @@ private theorem exists_e8DoubledMinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsD
 
 /-! ## The doubled Euclidean model -/
 
-/-- The doubled Bourbaki simple roots of type `E₈`: row `i` is twice the `i`-th simple root of
-Plate VII, in the Euclidean coordinates of the model, so that all entries are integers. Only two
-properties of the table are used below, and both are checked: its Gram matrix is four times the
-`E₈` Cartan matrix, and its rows lie in the doubled lattice. -/
-private def e8DoubledSimpleRoot : Matrix (Fin 8) (Fin 8) ℤ :=
-  !![ 1, -1, -1, -1, -1, -1, -1,  1;
-      2,  2,  0,  0,  0,  0,  0,  0;
-     -2,  2,  0,  0,  0,  0,  0,  0;
-      0, -2,  2,  0,  0,  0,  0,  0;
-      0,  0, -2,  2,  0,  0,  0,  0;
-      0,  0,  0, -2,  2,  0,  0,  0;
-      0,  0,  0,  0, -2,  2,  0,  0;
-      0,  0,  0,  0,  0, -2,  2,  0]
-
-/-- The doubled simple roots have the `E₈` Cartan matrix as their Gram matrix, up to the factor
-four that doubling introduces. -/
-private lemma e8DoubledSimpleRoot_mul_transpose :
-    e8DoubledSimpleRoot * e8DoubledSimpleRootᵀ = (4 : ℤ) • CartanMatrix.E₈ := by decide
-
-/-- Two entries in the same row of the doubled simple roots are congruent modulo two. -/
-private lemma e8DoubledSimpleRoot_sub_emod :
-    ∀ i j : Fin 8, (e8DoubledSimpleRoot i j - e8DoubledSimpleRoot i 0) % 2 = 0 := by decide
-
-/-- Every doubled simple root has coordinate sum divisible by four. -/
-private lemma e8DoubledSimpleRoot_sum_emod :
-    ∀ i : Fin 8, (∑ j, e8DoubledSimpleRoot i j) % 4 = 0 := by decide
-
 /-- Simple-coroot coordinates read in the doubled Euclidean model: the combination of the doubled
-simple roots with the given coordinates. -/
+simple roots of `TauCeti.LinearAlgebra.RootSystem.E8Coordinates` with the given coordinates. -/
 private def e8DoubledEmbed (v : Fin 8 → ℤ) : Fin 8 → ℤ := v ᵥ* e8DoubledSimpleRoot
 
 /-- Reading the simple-coroot coordinates in the doubled model multiplies the `E₈` norm by four. -/
