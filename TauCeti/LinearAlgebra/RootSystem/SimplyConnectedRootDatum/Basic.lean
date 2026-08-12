@@ -42,9 +42,8 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
   of a symmetric matrix is symmetric, and reflection in a vector of norm two preserves it. For a
   simply laced type this is the form the Cartan matrix carries on the simple-coroot coordinates,
   and reflection stability of a root enumeration is read off it.
-* `TauCeti.sum_smul_eq_of_eq_single` and `TauCeti.linearIndependent_of_eq_single`: a family whose
-  members are the standard basis of `κ → R` expands every vector in its own coordinates and is
-  linearly independent.
+* `TauCeti.sum_smul_eq_of_eq_single`: a family whose members are the standard basis of `κ → R`
+  expands every vector in its own coordinates.
 
 Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
 by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`.
@@ -132,22 +131,16 @@ end Gram
 
 section StandardBasis
 
-variable {κ R : Type*} [DecidableEq κ] [CommRing R] {b : κ → κ → R}
+variable {κ R : Type*} [DecidableEq κ] [Fintype κ] [Semiring R] {b : κ → κ → R}
 
 /-- **A vector expands in its own coordinates over the standard basis.** This is the shape in which
 `RootPairing.Base` asks a coroot to be a combination of the simple coroots, the simple coroots of a
 simply connected datum being the standard basis. -/
-theorem sum_smul_eq_of_eq_single [Fintype κ] (hb : ∀ i, b i = Pi.single i 1) (v : κ → R) :
+theorem sum_smul_eq_of_eq_single (hb : ∀ i, b i = Pi.single i 1) (v : κ → R) :
     ∑ i, v i • b i = v := by
   have hi (i : κ) : v i • b i = Pi.single i (v i) := by
     rw [hb i, ← Pi.single_smul', smul_eq_mul, mul_one]
   simpa only [hi] using Finset.univ_sum_single v
-
-/-- The standard basis is linearly independent. -/
-theorem linearIndependent_of_eq_single (hb : ∀ i, b i = Pi.single i 1) :
-    LinearIndependent R b := by
-  rw [show b = fun i => Pi.single i (1 : R) from funext hb]
-  exact Pi.linearIndependent_single_one κ R
 
 end StandardBasis
 

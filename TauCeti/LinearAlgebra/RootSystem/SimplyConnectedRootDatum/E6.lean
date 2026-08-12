@@ -4,11 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
--- `vecMul_dotProduct_comm` is used in the proof of `e6Root_dotProduct_e6Coroot_comm` below.
+-- `vecMul_dotProduct_comm` is used in the proof of `e6Root_dotProduct_e6Coroot_comm` below; the
+-- `DynkinType` API, `dotProductEquiv` and `RootPairing.Base` come with it.
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
 

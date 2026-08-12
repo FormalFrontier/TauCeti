@@ -188,13 +188,13 @@ private lemma sum_smul_root_e8SimpleIndex (j : Fin 240) :
 
 private lemma linearIndependent_root_e8SimpleIndex :
     LinearIndependent ℤ fun i : Fin 8 ↦ e8Root (e8SimpleIndex i) := by
-  rw [show (fun i : Fin 8 ↦ e8Root (e8SimpleIndex i)) = fun i ↦ CartanMatrix.E₈ i from
-    funext root_e8SimpleIndex]
-  exact linearIndependent_rows_of_det_ne_zero (by rw [CartanMatrix.E₈_det]; norm_num)
+  simpa only [root_e8SimpleIndex] using
+    linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.E₈)
+      (by rw [CartanMatrix.E₈_det]; norm_num)
 
 private lemma linearIndependent_coroot_e8SimpleIndex :
-    LinearIndependent ℤ fun i : Fin 8 ↦ e8Coroot (e8SimpleIndex i) :=
-  linearIndependent_of_eq_single coroot_e8SimpleIndex
+    LinearIndependent ℤ fun i : Fin 8 ↦ e8Coroot (e8SimpleIndex i) := by
+  simpa only [coroot_e8SimpleIndex] using Pi.linearIndependent_single_one (Fin 8) ℤ
 
 /-- The Bourbaki-numbered base of the pinned simply connected root datum of type `E₈`. Its support
 is the set of the first eight root indices, carrying the simple roots in Bourbaki order. -/
