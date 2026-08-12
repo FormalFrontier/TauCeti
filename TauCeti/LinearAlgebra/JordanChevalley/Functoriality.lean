@@ -27,6 +27,8 @@ representation of an affine algebraic group.
 
 * `TauCeti.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
   under linear conjugation.
+* `TauCeti.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
+  conjugation within the general linear group.
 * `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
   linear conjugation.
 * `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
@@ -73,6 +75,19 @@ theorem isSemisimple_congrLinearEquiv_iff
   apply LinearEquiv.isSemisimple_iff (e := e)
   ext x
   simp
+
+/-- Semisimplicity is invariant under conjugation by a linear automorphism. -/
+@[simp]
+theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
+    IsSemisimple (h * g * h⁻¹) ↔ IsSemisimple g := by
+  have heq : h * g * h⁻¹ =
+      LinearMap.GeneralLinearGroup.congrLinearEquiv h.toLinearEquiv g := by
+    ext v
+    change h.toLinearEquiv (g.toLinearEquiv ((h⁻¹).toLinearEquiv v)) =
+      h.toLinearEquiv (g.toLinearEquiv (h.toLinearEquiv.symm v))
+    rw [LinearMap.GeneralLinearGroup.toLinearEquiv_inv, LinearEquiv.coe_inv]
+  rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
+  exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 
 /-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
 @[simp]

@@ -346,12 +346,7 @@ theorem fgPointSemisimplePartNatIso_mul_fgPointUnipotentPartNatIso
   funext M
   simp only [fgPointFactorNatIso_hom_app, fgPointNatIsoHom_hom_app]
   rw [GeneralLinearGroup.semisimplePart_mul_unipotentPart]
-  have haction :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv
-        (Comodule.pointsAction M g)).toLinearEquiv = Comodule.pointsAction M g :=
-    (LinearMap.GeneralLinearGroup.generalLinearEquiv K (K ⊗[k] M)).apply_symm_apply
-      (Comodule.pointsAction M g)
-  rw [haction]
+  rw [GeneralLinearGroup.toLinearEquiv_ofLinearEquiv]
 
 end PerfectField
 
