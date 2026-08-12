@@ -49,9 +49,10 @@ followed by a fixed-point-free involution, so a strand cannot return to its own 
 * `TauCeti.BrauerDiagram.composeDiagram_val_inl_eq_inl_capMatching`,
   `TauCeti.BrauerDiagram.composeDiagram_val_inr_eq_inr_cupMatching`: the caps of `D₂` are caps of
   the composite, and the cups of `D₁` are cups of the composite.
-* `TauCeti.composeDiagram_permToBrauer_one_left`,
-  `TauCeti.composeDiagram_permToBrauer_one_right`: the identity diagram is a two-sided identity
-  for stacking.
+
+The interaction of stacking with the permutation diagrams -- in particular that the identity
+diagram is a two-sided identity -- is in
+`TauCeti/Combinatorics/Brauer/Relabel.lean`.
 
 ## References
 
@@ -610,39 +611,5 @@ theorem topThrough_composeDiagram_subset :
     ((mem_topCup _).mp (topCup_subset_topCup_composeDiagram D₁ D₂ ((mem_topCup _).mpr hcup))) hj
 
 end BrauerDiagram
-
-/-- **The identity diagram is a left identity for stacking.** -/
-@[simp]
-theorem composeDiagram_permToBrauer_one_left (D : BrauerDiagram k) :
-    composeDiagram (permToBrauer 1) D = D := by
-  refine Subtype.ext (Equiv.ext fun x => ?_)
-  rcases x with i | j
-  · rcases h : D.val (Sum.inl i) with i' | a
-    · exact composeDiagram_val_inl_eq_inl_of_cap_lower _ D h
-    · exact composeDiagram_val_inl_eq_inr_of_through (D₁ := permToBrauer 1) (D₂ := D) (j := a) h
-        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl)
-  · rcases h : D.val (Sum.inr j) with i | j'
-    · exact composeDiagram_val_inr_eq_inl_of_through (D₁ := permToBrauer 1) (D₂ := D) (a := j)
-        (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl) h
-    · exact composeDiagram_val_inr_eq_inr_of_cup_lower (D₁ := permToBrauer 1) (D₂ := D) (a := j)
-        (j' := j') (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl) h
-        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl)
-
-/-- **The identity diagram is a right identity for stacking.** -/
-@[simp]
-theorem composeDiagram_permToBrauer_one_right (D : BrauerDiagram k) :
-    composeDiagram D (permToBrauer 1) = D := by
-  refine Subtype.ext (Equiv.ext fun x => ?_)
-  rcases x with i | j
-  · rcases h : D.val (Sum.inl i) with i' | a
-    · exact composeDiagram_val_inl_eq_inl_of_cap_upper (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        (i' := i') (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl) h
-        (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl)
-    · exact composeDiagram_val_inl_eq_inr_of_through (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl) h
-  · rcases h : D.val (Sum.inr j) with i | j'
-    · exact composeDiagram_val_inr_eq_inl_of_through (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        h (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl)
-    · exact composeDiagram_val_inr_eq_inr_of_cup_upper (D₁ := D) (D₂ := permToBrauer 1) h
 
 end TauCeti
