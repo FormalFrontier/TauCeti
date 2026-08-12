@@ -295,12 +295,11 @@ section NegOne
 
 variable {K : Type u} [Field K] [Module K M]
 
-/-- The scalar `-1` belongs to the Spin group of a positive-dimensional
+/-- The scalar `-1` belongs to the Spin group of a nontrivial
 nondegenerate quadratic space. -/
 theorem neg_one_mem_spinGroup (Q : QuadraticForm K M) [Invertible (2 : K)]
-    (hQ : Q.Nondegenerate) (hM : 0 < Module.finrank K M) :
+    [Nontrivial M] (hQ : Q.Nondegenerate) :
     (-1 : CliffordAlgebra Q) ∈ spinGroup Q := by
-  let _ : Nontrivial M := Module.nontrivial_of_finrank_pos hM
   let B : LinearMap.BilinForm K M := QuadraticMap.associated Q
   have hB : B.Nondegenerate := by
     simpa only [B] using QuadraticMap.nondegenerate_associated_iff.mpr hQ
@@ -333,17 +332,17 @@ theorem neg_one_mem_spinGroup (Q : QuadraticForm K M) [Invertible (2 : K)]
     simp [Unitary.mem_iff]
   · exact (CliffordAlgebra.even Q).neg_mem (CliffordAlgebra.even Q).one_mem
 
-/-- The scalar `-1` as an element of the Spin group of a positive-dimensional
+/-- The scalar `-1` as an element of the Spin group of a nontrivial
 nondegenerate quadratic space. -/
 def negOneSpin (Q : QuadraticForm K M) [Invertible (2 : K)]
-    (hQ : Q.Nondegenerate) (hM : 0 < Module.finrank K M) : spinGroup Q :=
-  ⟨-1, neg_one_mem_spinGroup Q hQ hM⟩
+    [Nontrivial M] (hQ : Q.Nondegenerate) : spinGroup Q :=
+  ⟨-1, neg_one_mem_spinGroup Q hQ⟩
 
 /-- The underlying Clifford element of `negOneSpin` is the scalar `-1`. -/
 @[simp]
 theorem coe_negOneSpin (Q : QuadraticForm K M) [Invertible (2 : K)]
-    (hQ : Q.Nondegenerate) (hM : 0 < Module.finrank K M) :
-    (negOneSpin Q hQ hM : CliffordAlgebra Q) = -1 :=
+    [Nontrivial M] (hQ : Q.Nondegenerate) :
+    (negOneSpin Q hQ : CliffordAlgebra Q) = -1 :=
   (rfl)
 
 private theorem mem_ker_spinToOrthogonal_of_mem_ker_spinToSpecialOrthogonal
@@ -362,8 +361,8 @@ private theorem mem_ker_spinToOrthogonal_of_mem_ker_spinToSpecialOrthogonal
 @[simp high]
 theorem negOneSpin_mem_ker_spinToSpecialOrthogonal
     (Q : QuadraticForm K M) [Invertible (2 : K)]
-    (hQ : Q.Nondegenerate) (hM : 0 < Module.finrank K M) :
-    negOneSpin Q hQ hM ∈ MonoidHom.ker (spinToSpecialOrthogonal Q) := by
+    [Nontrivial M] (hQ : Q.Nondegenerate) :
+    negOneSpin Q hQ ∈ MonoidHom.ker (spinToSpecialOrthogonal Q) := by
   rw [MonoidHom.mem_ker]
   apply Subtype.ext
   apply LinearEquiv.ext
@@ -381,11 +380,12 @@ variable {K : Type u} [Field K] [Module K M] [FiniteDimensional K M]
 
 /-- A Spin element lies in the kernel of the special-orthogonal action exactly when it is
 the scalar `1` or the canonical scalar `-1`. -/
-theorem mem_ker_spinToSpecialOrthogonal_iff (hM : 0 < Module.finrank K M)
-    (Q : QuadraticForm K M) [Invertible (2 : K)] (hQ : Q.Nondegenerate)
+theorem mem_ker_spinToSpecialOrthogonal_iff
+    (Q : QuadraticForm K M) [Invertible (2 : K)] [Nontrivial M]
+    (hQ : Q.Nondegenerate)
     (x : spinGroup Q) :
     x ∈ MonoidHom.ker (spinToSpecialOrthogonal Q) ↔
-      x = 1 ∨ x = negOneSpin Q hQ hM := by
+      x = 1 ∨ x = negOneSpin Q hQ := by
   constructor
   · intro hx
     rcases coe_eq_one_or_eq_neg_one_of_mem_ker_spinToOrthogonal Q hQ x
@@ -398,16 +398,17 @@ theorem mem_ker_spinToSpecialOrthogonal_iff (hM : 0 < Module.finrank K M)
       simpa using h
   · rintro (rfl | rfl)
     · exact Subgroup.one_mem _
-    · exact negOneSpin_mem_ker_spinToSpecialOrthogonal Q hQ hM
+    · exact negOneSpin_mem_ker_spinToSpecialOrthogonal Q hQ
 
 /-- The kernel of the Spin action on a positive-dimensional finite nondegenerate quadratic space
 over a field where `2` is invertible has cardinality two. -/
 theorem card_ker_spinToSpecialOrthogonal (hM : 0 < Module.finrank K M)
     (Q : QuadraticForm K M) [Invertible (2 : K)] (hQ : Q.Nondegenerate) :
     Nat.card (MonoidHom.ker (spinToSpecialOrthogonal Q)) = 2 := by
+  let _ : Nontrivial M := Module.nontrivial_of_finrank_pos hM
   rw [Nat.card_eq_two_iff' (1 : MonoidHom.ker (spinToSpecialOrthogonal Q))]
   let z : MonoidHom.ker (spinToSpecialOrthogonal Q) :=
-    ⟨negOneSpin Q hQ hM, negOneSpin_mem_ker_spinToSpecialOrthogonal Q hQ hM⟩
+    ⟨negOneSpin Q hQ, negOneSpin_mem_ker_spinToSpecialOrthogonal Q hQ⟩
   refine ⟨z, ?_, ?_⟩
   · intro hz
     have hcoe := congrArg
@@ -423,7 +424,7 @@ theorem card_ker_spinToSpecialOrthogonal (hM : 0 < Module.finrank K M)
       _ = 0 := sub_self 1
   · intro y hy
     apply Subtype.ext
-    rcases (mem_ker_spinToSpecialOrthogonal_iff hM Q hQ y).mp y.2 with h | h
+    rcases (mem_ker_spinToSpecialOrthogonal_iff Q hQ y).mp y.2 with h | h
     · exfalso
       apply hy
       apply Subtype.ext
