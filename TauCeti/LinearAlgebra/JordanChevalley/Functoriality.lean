@@ -6,7 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Prod
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
-public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # Functoriality of the multiplicative Jordan decomposition
