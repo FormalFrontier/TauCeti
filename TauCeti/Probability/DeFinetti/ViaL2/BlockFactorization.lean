@@ -4,10 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.DeFinetti.ViaL2.WindowProduct
 public import TauCeti.Probability.Exchangeability.CondExp
-public import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
 public import TauCeti.Probability.Exchangeability.Cylinder
+public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
+import TauCeti.Probability.DeFinetti.ViaL2.WindowProduct
+import TauCeti.Probability.DeFinetti.DirectingMeasure.Integral
 
 /-!
 # The finite-block factorization, via `L²`
@@ -97,7 +98,8 @@ marginals.
 
 The two inputs are selection invariance and `L¹` convergence of the disjoint-window product; see
 the module docstring. Nothing here uses a martingale. -/
-theorem condExp_blockIndicatorProd_ae_eq_prod_directingMeasure [StandardBorelSpace α] [Nonempty α]
+theorem condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure
+    [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
     {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i)) :
@@ -114,28 +116,14 @@ theorem condExp_blockIndicatorProd_ae_eq_prod_directingMeasure [StandardBorelSpa
   have hW_tail : Measurable[tailProcess X] W :=
     Finset.measurable_prod _ fun i _ =>
       (measurable_tailProcess_directingMeasure_coe (hB i)).ennreal_toReal
-  have hW_meas : Measurable W := hW_tail.mono hTail le_rfl
-  have hW_le : ∀ ω, ‖W ω‖ ≤ 1 := by
-    intro ω
-    rw [hW, Real.norm_of_nonneg (Finset.prod_nonneg fun i _ => measureReal_nonneg)]
-    exact Finset.prod_le_one (fun i _ => measureReal_nonneg) fun i _ => measureReal_le_one
-  have hW_int : Integrable W μ :=
-    ⟨hW_meas.aestronglyMeasurable, .of_bounded (C := 1) (ae_of_all _ hW_le)⟩
+  have hW_int : Integrable W μ := integrable_prod_directingMeasure_real hTail hB
   have hcondW : μ[W | tailProcess X] =ᵐ[μ] W := by
     rw [condExp_of_stronglyMeasurable hTail hW_tail.stronglyMeasurable hW_int]
-  -- Every indicator block is measurable and `[0,1]`-valued, hence integrable.
-  have hblock_meas : ∀ s : Fin r → ℕ, Measurable fun ω => ∏ i, Y i (s i) ω := fun s =>
-    Finset.measurable_prod _ fun i _ => (measurable_const.indicator (hB i)).comp (hX_meas (s i))
-  have hblock_le : ∀ (s : Fin r → ℕ) ω, ‖∏ i, Y i (s i) ω‖ ≤ 1 := by
-    intro s ω
-    have h0 : ∀ i : Fin r, 0 ≤ Y i (s i) ω := fun i =>
-      Set.indicator_apply_nonneg fun _ => zero_le_one
-    have h1 : ∀ i : Fin r, Y i (s i) ω ≤ 1 := fun i =>
-      Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
-    rw [Real.norm_of_nonneg (Finset.prod_nonneg fun i _ => h0 i)]
-    exact Finset.prod_le_one (fun i _ => h0 i) fun i _ => h1 i
-  have hblock_int : ∀ s : Fin r → ℕ, Integrable (fun ω => ∏ i, Y i (s i) ω) μ := fun s =>
-    ⟨(hblock_meas s).aestronglyMeasurable, .of_bounded (C := 1) (ae_of_all _ (hblock_le s))⟩
+  -- Each indicator block is `blockIndicatorProd` along its own selection, hence integrable.
+  have hblock_int : ∀ s : Fin r → ℕ, Integrable (fun ω => ∏ i, Y i (s i) ω) μ := fun s => by
+    rw [show (fun ω => ∏ i, Y i (s i) ω) = blockIndicatorProd X s B from
+      (funext fun ω => blockIndicatorProd_apply X s B ω).symm]
+    exact integrable_blockIndicatorProd (fun i => (hX_meas (s i)).aemeasurable) hB
   -- The product of disjoint-window block averages, whose conditional expectation is `μ[Z | tail]`
   -- at every length and which converges in `L¹` to `W`.
   set P : ℕ → Ω → ℝ :=
@@ -145,8 +133,7 @@ theorem condExp_blockIndicatorProd_ae_eq_prod_directingMeasure [StandardBorelSpa
       ∑ js : Fin r → Fin (n + 1), fun ω => ∏ i, Y i (window (n + 1) (i : ℕ) (js i : ℕ)) ω := by
     intro n
     funext ω
-    have hexp := prod_blockAverage_eq_expect Y
-      (fun (i : Fin r) (j : Fin (n + 1)) => window (n + 1) (i : ℕ) (j : ℕ)) ω
+    have hexp := prod_blockAverage_window_eq_expect (N := n + 1) Y ω
     rw [Fintype.expect_eq_sum_div_card, div_eq_inv_mul] at hexp
     simpa [hP] using hexp
   have hP_int : ∀ n, Integrable (P n) μ := by
