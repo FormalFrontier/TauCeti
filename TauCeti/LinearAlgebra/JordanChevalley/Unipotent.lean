@@ -54,19 +54,18 @@ universe u v
 
 variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 
-/-- The endomorphism underlying a linear equivalence converted to the general linear group is
-the original linear equivalence's underlying endomorphism. -/
-theorem ofLinearEquiv_toLinearMap (f : V ≃ₗ[K] V) :
-    ((LinearMap.GeneralLinearGroup.ofLinearEquiv f : GeneralLinearGroup K V) : End K V) =
-      f.toLinearMap :=
-  rfl
-
 /-- A linear equivalence is unipotent after conversion to the general linear group exactly when
 its underlying endomorphism minus the identity is nilpotent. -/
 theorem isUnipotent_ofLinearEquiv_iff (f : V ≃ₗ[K] V) :
     IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv f) ↔
       _root_.IsNilpotent (f.toLinearMap - 1) := by
-  rw [isUnipotent_def, ofLinearEquiv_toLinearMap]
+  rw [isUnipotent_def]
+  have h :
+      ((LinearMap.GeneralLinearGroup.ofLinearEquiv f : GeneralLinearGroup K V) : End K V) =
+        f.toLinearMap := by
+    ext x
+    exact congrFun (LinearMap.GeneralLinearGroup.coe_ofLinearEquiv f) x
+  rw [h]
 
 /-- The inverse of a unipotent linear automorphism is unipotent. -/
 theorem IsUnipotent.inv {g : GeneralLinearGroup K V} (hg : IsUnipotent g) :
