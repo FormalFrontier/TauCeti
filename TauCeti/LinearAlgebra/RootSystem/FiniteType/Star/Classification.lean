@@ -297,6 +297,22 @@ lemma starHasCartanType_iff (ℓ : α → ℕ) (t : DynkinType) :
       ∀ v w, starCartanMatrix ℓ v w = t.cartanMatrix (e v) (e w) :=
   Iff.rfl
 
+/-- Having Cartan type `t`, expressed as a reindexing of matrices rather than entrywise. -/
+lemma starHasCartanType_iff_reindex (ℓ : α → ℕ) (t : DynkinType) :
+    StarHasCartanType ℓ t ↔
+      ∃ e : StarIndex ℓ ≃ Fin t.rank, (starCartanMatrix ℓ).reindex e e = t.cartanMatrix := by
+  refine exists_congr fun e ↦ ⟨fun h ↦ ?_, fun h v w ↦ ?_⟩
+  · ext v w
+    simpa using h (e.symm v) (e.symm w)
+  · simpa using congrFun₂ h (e v) (e w)
+
+/-- A star has at most one valid Cartan type. -/
+theorem StarHasCartanType.eq_of_valid (h : StarHasCartanType ℓ t)
+    (h' : StarHasCartanType ℓ t') (ht : t.Valid) (ht' : t'.Valid) : t = t' := by
+  obtain ⟨e, he⟩ := (starHasCartanType_iff ℓ t).mp h
+  obtain ⟨e', he'⟩ := (starHasCartanType_iff ℓ t').mp h'
+  exact DynkinType.eq_of_valid_of_forall_eq ht ht' e e' he he'
+
 /-- Having a Cartan type is invariant under relabelling the arms. -/
 theorem StarHasCartanType.comp {m : β → ℕ} (h : StarHasCartanType m t) (e : α ≃ β) :
     StarHasCartanType (m ∘ e) t := by
@@ -403,8 +419,7 @@ theorem IsFiniteType.existsUnique_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ
       · refine ⟨E8, valid_E8, hback _ ?_⟩
         rw [h1, h2, hc]
         exact starHasCartanType_E8
-  obtain ⟨t, htv, et, het⟩ := hex
-  exact ⟨t, ⟨htv, et, het⟩, fun s ⟨hsv, es, hes⟩ ↦
-    DynkinType.eq_of_valid_of_forall_eq hsv htv es et hes het⟩
+  obtain ⟨t, htv, ht⟩ := hex
+  exact ⟨t, ⟨htv, ht⟩, fun _ hs ↦ hs.2.eq_of_valid ht hs.1 htv⟩
 
 end TauCeti
