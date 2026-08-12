@@ -190,6 +190,9 @@ jobs:
       - name: Checkout candidate head (untrusted, no credentials)
         uses: actions/checkout@v4
         with:
+          # pull_request_target intentionally fetches untrusted source for a
+          # data-only overlay; it is executed only later, offline in landrun.
+          allow-unsafe-pr-checkout: true
           repository: ${{ steps.pr.outputs.head_repo }}
           ref: ${{ steps.pr.outputs.sha }}
           path: pr

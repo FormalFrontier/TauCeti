@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
-public import TauCeti.RingTheory.Valuation.Continuous
+public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
 /-!
 # The space `Cont A` of continuous valuations
@@ -27,7 +27,8 @@ equivalent valuations agree on the predicate. For continuity as Wedhorn states i
 quantifier running over the value group `Γ_v` — that holds, and
 `TauCeti.Valuation.IsEquiv.isContinuous_iff` says so. Had continuity instead been asked of every
 `γ` in the ambient codomain, it would **not** descend, and `Cont A` would not be well defined;
-the module docstring of `TauCeti.RingTheory.Valuation.Continuous` carries the counterexample.
+the module docstring of `TauCeti.RingTheory.Valuation.Continuous.Basic` carries the
+counterexample.
 
 So `IsContinuous` is defined here by testing the *canonical* valuation of the point, and
 `isContinuous_ofValuation_iff` says the test may equally be run on any representative.
@@ -78,7 +79,7 @@ is, in the attained-value sense of `TauCeti.Valuation.IsContinuous`. Any represe
 — that is `isContinuous_ofValuation_iff` — but the canonical one makes the definition depend on
 nothing chosen.
 
-Under `[SeparatelyContinuousMul A]` this is Wedhorn's Definition 7.7; see `cont`. -/
+Under `[ContinuousConstSMul Aᵐᵒᵖ A]` this is Wedhorn's Definition 7.7; see `cont`. -/
 def IsContinuous (v : Spv A) : Prop :=
   v.valuation.IsContinuous
 
@@ -92,9 +93,9 @@ it a subspace; here it is the underlying set, and the subspace topology is the o
 `↥(cont A)` carries as a subtype of `Spv A`.
 
 Membership is the attained-value test of `TauCeti.Valuation.IsContinuous`, which is Wedhorn's
-Definition 7.7 once multiplication is separately continuous —
+Definition 7.7 once right multiplication is continuous —
 `isContinuous_iff_forall_isOpen_lt_div` is that step, and it is where
-`[SeparatelyContinuousMul A]` is asked for. It is *not* asked for
+`[ContinuousConstSMul Aᵐᵒᵖ A]` is asked for. It is *not* asked for
 here: an unused instance argument is a lint violation, and every setting `Cont A` is used in — a
 Huber ring, and `Spa` beyond it — is a topological ring, which supplies it at the point of use. -/
 def cont (A : Type*) [CommRing A] [TopologicalSpace A] : Set (Spv A) :=

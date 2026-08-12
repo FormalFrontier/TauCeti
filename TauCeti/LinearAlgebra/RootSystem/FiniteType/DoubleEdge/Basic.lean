@@ -22,7 +22,7 @@ step taken outside this file, as noted below - it is two chains, of `p` and of `
 at their last vertices by that edge, and that is the shape this file takes as given. Which of those
 survive is the *chain* half of the "chain/fork length constraints" of the Cartan--Killing
 classification, and, like the fork half in
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Star`, it is an arithmetic constraint:
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic`, it is an arithmetic constraint:
 
 `2 p q < (p + 1) (q + 1)`,
 
