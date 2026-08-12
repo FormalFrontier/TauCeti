@@ -192,8 +192,13 @@ omit [DecidableEq α] [DecidableEq β] in
   rcases v with _ | v <;> rcases w with _ | w <;>
     simp [e.injective.eq_iff]
 
-/-- Relabelling the arms reindexes the Cartan matrix of a star. -/
-@[simp] theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) :
+/-- Relabelling the arms reindexes the Cartan matrix of a star.
+
+Deliberately not `@[simp]`: it replaces the compact `starCartanMatrix (ℓ ∘ e)` by a submatrix, so
+it would preempt the normalizations that strip the relabelling outright, such as
+`TauCeti.isFiniteType_starCartanMatrix_comp_iff`. The entrywise
+`TauCeti.starCartanMatrix_comp_apply` is the simp-normal form of a relabelled entry. -/
+theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) :
     starCartanMatrix (ℓ ∘ e) =
       (starCartanMatrix ℓ).submatrix (starIndexCongrArms e ℓ) (starIndexCongrArms e ℓ) := by
   ext v w
