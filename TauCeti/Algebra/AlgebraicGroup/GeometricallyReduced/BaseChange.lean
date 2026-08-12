@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeometricallyReduced.CommHopfAlgCat
+import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 
 /-!
 # Geometric reducedness under base change
@@ -18,6 +19,8 @@ geometrically reduced over every field extension `K / k`.
 
 * `TauCeti.geometricallyReducedCommHopfAlgProperty.baseChange`: geometric reducedness is
   preserved by extension of the base field.
+* `TauCeti.geometricallyReducedCommHopfAlgProperty.of_baseChange_of_isAlgebraic`: geometric
+  reducedness descends from an algebraic extension of the base field.
 
 ## References
 
@@ -54,5 +57,34 @@ theorem geometricallyReducedCommHopfAlgProperty.baseChange
       (Algebra.TensorProduct.comm k L H).toRingEquiv)
   let _ := hH L
   exact isReduced_of_injective e.toRingHom e.injective
+
+/-- **Geometric reducedness descends from an algebraic extension of the base field.**
+
+For a further extension `L / k`, embed the algebraic field `K` into an algebraic closure `Ω` of
+`L`. Reducedness of `(K ⊗[k] H) ⊗[K] Ω` identifies with reducedness of `H ⊗[k] Ω`, which
+descends to `H ⊗[k] L` along the injective scalar-extension map. -/
+theorem geometricallyReducedCommHopfAlgProperty.of_baseChange_of_isAlgebraic
+    {k : Type u} (K : Type (max u v)) [Field k] [Field K] [Algebra k K]
+    [Algebra.IsAlgebraic k K] (H : CommHopfAlgCat.{v} k)
+    (hH : geometricallyReducedCommHopfAlgProperty K
+      (CommHopfAlgCat.baseChange (K := K) H)) :
+    geometricallyReducedCommHopfAlgProperty k H := by
+  rw [geometricallyReducedCommHopfAlgProperty_iff] at hH ⊢
+  intro L _ _
+  let Ω := AlgebraicClosure L
+  let i : K →ₐ[k] Ω := IsAlgClosed.lift
+  let _ : Algebra K Ω := i.toRingHom.toAlgebra
+  let _ : IsScalarTower k K Ω := IsScalarTower.of_algHom i
+  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) Ω).toRingEquiv |>.trans
+    ((Algebra.TensorProduct.cancelBaseChange k K Ω Ω H).toRingEquiv.trans
+      (Algebra.TensorProduct.comm k Ω H).toRingEquiv)
+  have hΩ : IsReduced ((H : Type v) ⊗[k] Ω) :=
+    isReduced_of_injective e.symm.toRingHom e.symm.injective
+  let g : L →ₐ[k] Ω := IsScalarTower.toAlgHom k L Ω
+  let f : (H : Type v) ⊗[k] L →ₐ[k] (H : Type v) ⊗[k] Ω :=
+    Algebra.TensorProduct.map (AlgHom.id k H) g
+  exact isReduced_of_injective f.toRingHom
+    (Module.Flat.lTensor_preserves_injective_linearMap g.toLinearMap
+      (RingHom.injective g.toRingHom))
 
 end TauCeti
