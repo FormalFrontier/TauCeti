@@ -94,23 +94,13 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
           LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g) := by
       have hlinear := congrArg SemimoduleCat.Hom.hom happ
       simp only [LinearEquiv.toModuleIsoₛ_hom, SemimoduleCat.hom_ofHom] at hlinear
-      apply Units.ext
-      calc
-        _ = (GeneralLinearGroup.semisimplePart
-              (LinearMap.GeneralLinearGroup.ofLinearEquiv
-                (Comodule.pointsAction M g))).toLinearEquiv.toLinearMap :=
-            (LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap _).symm
-        _ = (Comodule.pointsAction M g).toLinearMap := hlinear
-        _ = LinearMap.GeneralLinearGroup.ofLinearEquiv
-              (Comodule.pointsAction M g) := by
-            rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
-            exact congrArg LinearEquiv.toLinearMap
-              ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _).symm
+      apply (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).injective
+      ext v
+      exact LinearMap.congr_fun hlinear v
     have hM : GeneralLinearGroup.IsSemisimple
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
       rw [← hfactor]
-      exact GeneralLinearGroup.isSemisimple_semisimplePart
-        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
+      exact GeneralLinearGroup.isSemisimple_semisimplePart _
     rw [GeneralLinearGroup.isSemisimple_def] at hM
     rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap] at hM
     have haction :

@@ -82,18 +82,20 @@ theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
     IsSemisimple (h * g * h⁻¹) ↔ IsSemisimple g := by
   have heq : h * g * h⁻¹ =
       LinearMap.GeneralLinearGroup.congrLinearEquiv h.toLinearEquiv g := by
-    apply (LinearMap.GeneralLinearGroup.generalLinearEquiv K V).injective
-    rw [map_mul, map_mul, map_inv,
-      LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
-    have hroundtrip :
-        LinearMap.GeneralLinearGroup.generalLinearEquiv K V
-            (LinearMap.GeneralLinearGroup.ofLinearEquiv
-              (h.toLinearEquiv.symm.trans (g.toLinearEquiv.trans h.toLinearEquiv))) =
-          h.toLinearEquiv.symm.trans (g.toLinearEquiv.trans h.toLinearEquiv) :=
-      (LinearMap.GeneralLinearGroup.generalLinearEquiv K V).apply_symm_apply _
-    rw [hroundtrip]
+    have hinv : ((h⁻¹ : GeneralLinearGroup K V) : End K V) =
+        h.toLinearEquiv.symm.toLinearMap := by
+      calc
+        _ = (h⁻¹).toLinearEquiv.toLinearMap :=
+          (LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap _).symm
+        _ = h.toLinearEquiv.symm.toLinearMap := congrArg LinearEquiv.toLinearMap
+          (LinearMap.GeneralLinearGroup.toLinearEquiv_inv h)
     ext v
-    rfl
+    simp only [Units.val_mul, End.mul_apply,
+      LinearMap.GeneralLinearGroup.congrLinearEquiv_apply,
+      LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, LinearEquiv.trans_apply,
+      LinearMap.GeneralLinearGroup.coe_toLinearEquiv]
+    rw [LinearMap.congr_fun hinv v]
+    simp only [LinearEquiv.coe_toLinearMap]
   rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 
