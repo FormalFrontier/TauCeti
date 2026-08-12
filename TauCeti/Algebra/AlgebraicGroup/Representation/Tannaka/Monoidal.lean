@@ -289,6 +289,8 @@ theorem isMonoidal_of_linear_components
             SemimoduleCat.ofHom
               (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap := by
       apply SemimoduleCat.hom_ext
+      -- `hom_ext` leaves categorical composition and tensoring wrapped by `ofHom`; rewriting
+      -- cannot reach their linear maps, so reduce those wrappers to `comp` and `TensorProduct.map`.
       change
         (F (M ⊗ N : FGComoduleCat R H) :
           Module.End A (A ⊗[R] ((M ⊗ N : FGComoduleCat R H) : Type u))).comp
@@ -314,6 +316,8 @@ theorem ofLinearEquiv_pointsAction_tensorUnit_eq_one
     LinearMap.GeneralLinearGroup.ofLinearEquiv
         (Comodule.pointsAction (𝟙_ (FGComoduleCat R H)) g) = 1 := by
   apply Units.ext
+  -- `Units.ext` still hides the values of `ofLinearEquiv` and `1` behind unit and equivalence
+  -- wrappers, so expose their definitionally equal underlying linear maps before rewriting.
   change (Comodule.pointsAction (𝟙_ (FGComoduleCat R H)) g :
     A ⊗[R] (𝟙_ (FGComoduleCat R H)) →ₗ[A] A ⊗[R] (𝟙_ (FGComoduleCat R H))) =
       LinearMap.id
@@ -351,6 +355,8 @@ theorem distribBaseChange_comp_pointsAction
   have hlin := congrArg SemimoduleCat.Hom.hom htensor
   simp only [SemimoduleCat.hom_comp] at hlin
   rw [SemimoduleCat.hom_tensorHom] at hlin
+  -- The extracted hom equality still contains the categorical `ofHom` tensor and composition;
+  -- rewriting cannot see through them, so reduce them to linear-map composition and tensoring.
   change d.comp (TensorProduct.map (Comodule.endOfPoint M g.ofConv)
       (Comodule.endOfPoint N g.ofConv)) =
     (Comodule.endOfPoint ((M ⊗ N : FGComoduleCat R H) : Type u) g.ofConv).comp d at hlin
@@ -394,6 +400,29 @@ theorem fgPointTensorIso_hom_hom (g : WithConv (H →ₐ[R] A)) :
     (fgPointTensorIso R H A g).hom.hom = (fgPointNatIsoHom R H A g).hom :=
   (rfl)
 
+/-- Evaluate a transported scalar-extension component from the corresponding natural
+transformation component. -/
+theorem scalarExtensionComponent_eq_of_hom_app
+    (M : FGComoduleCat.{u, v, u} R H)
+    (F : LinearMap.GeneralLinearGroup A (A ⊗[R] M))
+    (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (happ : eta.hom.hom.app M =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        F.toLinearEquiv.toModuleIsoₛ.hom ≫
+          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm) :
+    scalarExtensionComponent R H A eta M = (F : Module.End A (A ⊗[R] M)) := by
+  apply LinearMap.ext
+  intro x
+  rw [scalarExtensionComponent_apply, happ]
+  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
+  -- The functor object is definitionally the explicit scalar extension, but this equality is
+  -- hidden by the categorical and linear-map wrappers. Displaying the four transports lets the
+  -- standard `eqToHom` simp lemmas cancel them without unfolding either public construction.
+  change (eqToHom hM.symm ≫
+      (eqToHom hM ≫ F.toLinearEquiv.toModuleIsoₛ.hom ≫ eqToHom hM.symm) ≫
+        eqToHom hM) x = _
+  simp
+
 /-- The transported component of the tensor automorphism induced by a point is the usual point
 action on every finite comodule. -/
 @[simp]
@@ -401,17 +430,12 @@ theorem scalarExtensionComponent_fgPointTensorIso
     (g : WithConv (H →ₐ[R] A)) (M : FGComoduleCat.{u, v, u} R H) :
     scalarExtensionComponent R H A (fgPointTensorIso R H A g) M =
       (Comodule.pointsAction M g).toLinearMap := by
-  apply LinearMap.ext
-  intro x
-  unfold scalarExtensionComponent
-  rw [fgPointTensorIso_hom_hom, fgPointNatIsoHom_hom_app]
-  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
-  -- After rewriting the point-induced component, only transport along `hM` remains; displaying
-  -- the four `eqToHom`s lets the category simp lemmas cancel this object equality.
-  change (eqToHom hM.symm ≫
-      (eqToHom hM ≫ (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
-        eqToHom hM.symm) ≫ eqToHom hM) x = _
-  simp
+  have h := scalarExtensionComponent_eq_of_hom_app R H A M
+    (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
+    (fgPointTensorIso R H A g) (by
+      rw [fgPointTensorIso_hom_hom]
+      exact fgPointNatIsoHom_hom_app R H A g M)
+  exact h
 
 /-- Forgetting tensor compatibility from the inverse point automorphism recovers the inverse
 underlying natural automorphism. -/

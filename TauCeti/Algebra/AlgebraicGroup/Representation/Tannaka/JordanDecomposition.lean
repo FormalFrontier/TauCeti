@@ -404,27 +404,6 @@ private theorem distribBaseChange_comp_pointFactor
     (W := K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u)) d a b hab
   simpa only [d, a, b, htensor] using h
 
-private theorem scalarExtensionComponent_eq_of_hom_app
-    (M : FGComoduleCat.{u, v, u} k H)
-    (F : LinearMap.GeneralLinearGroup K (K ⊗[k] M))
-    (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H K))
-    (happ : eta.hom.hom.app M =
-      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M) ≫
-        F.toLinearEquiv.toModuleIsoₛ.hom ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm) :
-    scalarExtensionComponent k H K eta M = (F : Module.End K (K ⊗[k] M)) := by
-  apply LinearMap.ext
-  intro x
-  rw [scalarExtensionComponent_apply, happ]
-  let hM := FGComoduleCat.scalarExtensionFunctor_obj k H K M
-  -- The functor object is definitionally the explicit scalar extension, but this equality is
-  -- hidden by the categorical and linear-map wrappers. Displaying the four transports lets the
-  -- standard `eqToHom` simp lemmas cancel them without unfolding either public construction.
-  change (eqToHom hM.symm ≫
-      (eqToHom hM ≫ F.toLinearEquiv.toModuleIsoₛ.hom ≫ eqToHom hM.symm) ≫
-        eqToHom hM) x = _
-  simp
-
 section PerfectField
 
 variable [PerfectField K]
