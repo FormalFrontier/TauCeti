@@ -10,10 +10,10 @@ public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.JordanDecomp
 /-!
 # Tannakian characterization of semisimple points
 
-Let `H` be a Hopf algebra over a commutative semiring `k`, let `K` be a perfect extension field,
-and let `g : WithConv (H →ₐ[k] K)` be a `K`-valued point. The natural automorphism formed
-from the semisimple factors of the actions of `g` on finitely generated comodules equals the
-original point-action automorphism exactly when `g` is semisimple.
+Let `H` be a Hopf algebra over a commutative semiring `k`, let `K` be a perfect field equipped with
+a `k`-algebra structure, and let `g : WithConv (H →ₐ[k] K)` be a `K`-valued point. The natural
+automorphism formed from the semisimple factors of the actions of `g` on finitely generated
+comodules equals the original point-action automorphism exactly when `g` is semisimple.
 
 ## Main declarations
 
@@ -58,14 +58,14 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
     funext (M : FGComoduleCat.{u, v, u} k H)
     rw [Tannaka.fgPointSemisimplePartNatIso_hom_app,
       Tannaka.fgPointNatIsoHom_hom_app,
-      GeneralLinearGroup.semisimplePart_eq_self (hg.isSemisimple M)]
+      GeneralLinearGroup.semisimplePart_eq_self ((isSemisimplePoint_def g).mp hg M)]
     have haction :
         (LinearMap.GeneralLinearGroup.ofLinearEquiv
           (Comodule.pointsAction M g)).toLinearEquiv = Comodule.pointsAction M g :=
       (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
     rw [haction]
   · intro h
-    apply isSemisimplePoint_of_forall_isSemisimple
+    apply (isSemisimplePoint_def g).mpr
     intro M
     have happ := congrArg
       (fun a : Aut (FGComoduleCat.scalarExtensionFunctor.{u, v, u, x} k H K) ↦

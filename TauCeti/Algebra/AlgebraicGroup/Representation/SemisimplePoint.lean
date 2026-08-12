@@ -10,11 +10,12 @@ public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
 /-!
 # Semisimple points of a Hopf algebra
 
-Let `H` be a Hopf algebra over a commutative semiring `k` and let `K` be an extension field. A
-`K`-valued point `g : WithConv (H →ₐ[k] K)` acts on the scalar extension of every finitely
-generated `H`-comodule. This file calls `g` **semisimple** when every one of those linear
-automorphisms is semisimple. The `WithConv` wrapper supplies the convolution group structure from
-the antipode of `H`; all group operations in the closure API below refer to that convolution law.
+Let `H` be a Hopf algebra over a commutative semiring `k` and let `K` be a field equipped with a
+`k`-algebra structure. A `K`-valued point `g : WithConv (H →ₐ[k] K)` acts on the scalar extension
+of every finitely generated `H`-comodule. This file calls `g` **semisimple** when every one of those
+linear automorphisms is semisimple. The `WithConv` wrapper supplies the convolution group
+structure from the antipode of `H`; all group operations in the closure API below refer to that
+convolution law.
 
 For the commutative coordinate Hopf algebra of an affine group scheme, taking `K` to be an
 algebraic closure of `k` gives the representation-theoretic definition of a geometric semisimple
@@ -69,20 +70,12 @@ def IsSemisimplePoint (g : WithConv (H →ₐ[k] K)) : Prop :=
     GeneralLinearGroup.IsSemisimple
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
 
-/-- A semisimple point acts semisimply on each finitely generated comodule. -/
-theorem IsSemisimplePoint.isSemisimple {g : WithConv (H →ₐ[k] K)}
-    (hg : IsSemisimplePoint g) (M : FGComoduleCat.{u, v, u} k H) :
-    GeneralLinearGroup.IsSemisimple
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
-  exact hg M
-
-/-- A point is semisimple if it acts semisimply on each finitely generated comodule. -/
-theorem isSemisimplePoint_of_forall_isSemisimple {g : WithConv (H →ₐ[k] K)}
-    (h : ∀ M : FGComoduleCat.{u, v, u} k H,
+/-- A point is semisimple exactly when it acts semisimply on each finitely generated comodule. -/
+theorem isSemisimplePoint_def (g : WithConv (H →ₐ[k] K)) :
+    IsSemisimplePoint g ↔ ∀ M : FGComoduleCat.{u, v, u} k H,
       GeneralLinearGroup.IsSemisimple
-        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))) :
-    IsSemisimplePoint g := by
-  exact h
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :=
+  Iff.rfl
 
 private theorem isSemisimple_pointAction_iff_endOfPoint
     (g : WithConv (H →ₐ[k] K)) (M : FGComoduleCat.{u, v, u} k H) :
@@ -108,10 +101,8 @@ theorem isSemisimplePoint_iff_forall_isSemisimple_endOfPoint
         Module.End.IsSemisimple (Comodule.endOfPoint M g.ofConv) := by
   constructor
   · intro h M
-    exact (isSemisimple_pointAction_iff_endOfPoint g M).mp (h.isSemisimple M)
-  · intro h
-    apply isSemisimplePoint_of_forall_isSemisimple
-    intro M
+    exact (isSemisimple_pointAction_iff_endOfPoint g M).mp (h M)
+  · intro h M
     exact (isSemisimple_pointAction_iff_endOfPoint g M).mpr (h M)
 
 /-- The identity point is semisimple. -/
