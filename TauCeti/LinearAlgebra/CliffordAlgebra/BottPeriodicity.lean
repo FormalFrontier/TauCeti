@@ -6,6 +6,7 @@ Authors: Tau Ceti Project
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.RealForm
+public import TauCeti.LinearAlgebra.CliffordAlgebra.SignSwitch
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
 
@@ -14,8 +15,10 @@ import Mathlib.LinearAlgebra.Matrix.Unique
 /-!
 # Hyperbolic Bott periodicity for real Clifford algebras
 
-This file proves the `(1, 1)` periodicity step for Clifford algebras. Adding one positive and one
-negative generator is equivalent to tensoring with two-by-two real matrices.
+This file proves the `(1, 1)` periodicity step for Clifford algebras: adding one positive and one
+negative generator is equivalent to tensoring with two-by-two real matrices. It also derives the
+signature-switch recurrence `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)` from
+`TauCeti.CliffordAlgebra.signSwitchEquiv`.
 
 ## Main results
 
@@ -25,7 +28,9 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
 * `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
   size `2 ^ n` after adjoining `n` hyperbolic planes;
 * `TauCeti.realCliffordSignatureReductionEquiv`: the reduction of a standard signature by its
-  common positive and negative part.
+  common positive and negative part;
+* `TauCeti.realCliffordSignatureSwitchRecurrenceEquiv`: the recurrence which switches a real
+  signature while adding two positive generators.
 
 ## References
 
@@ -421,160 +426,6 @@ end TauCeti.CliffordAlgebra
 
 namespace TauCeti
 
-private def splitLastEquiv (n : ℕ) : Fin (n + 1) ≃ Fin n ⊕ Fin 1 :=
-  (finSuccEquivLast).trans <|
-    (Equiv.optionEquivSumPUnit.{0, 0} _).trans <|
-      Equiv.sumCongr (Equiv.refl _) (Equiv.equivPUnit.{1, 1} (Fin 1)).symm
-
-private def realBottIndexEquiv (p q : ℕ) :
-    Fin ((p + 1) + (q + 1)) ≃ Fin (p + q) ⊕ Fin 2 :=
-  finSumFinEquiv.symm |>.trans
-    (Equiv.sumCongr (splitLastEquiv p) (splitLastEquiv q)) |>.trans
-    (Equiv.sumSumSumComm (Fin p) (Fin 1) (Fin q) (Fin 1)) |>.trans
-    (Equiv.sumCongr finSumFinEquiv finSumFinEquiv)
-
-private def realBottSplitLinearEquiv (p q : ℕ) :
-    (Fin ((p + 1) + (q + 1)) → ℝ) ≃ₗ[ℝ]
-      (Fin (p + q) → ℝ) × (Fin 2 → ℝ) :=
-  (LinearEquiv.piCongrLeft' ℝ (fun _ : Fin ((p + 1) + (q + 1)) ↦ ℝ)
-      (realBottIndexEquiv p q)).trans
-    (LinearEquiv.sumArrowLequivProdArrow _ _ ℝ ℝ)
-
-private theorem realBottIndexEquiv_symm_inl_pos (p q : ℕ) (i : Fin p) :
-    (realBottIndexEquiv p q).symm (Sum.inl (finSumFinEquiv (Sum.inl i))) =
-      finSumFinEquiv (Sum.inl i.castSucc) := by
-  simp [realBottIndexEquiv, splitLastEquiv]
-
-private theorem realBottIndexEquiv_symm_inl_neg (p q : ℕ) (i : Fin q) :
-    (realBottIndexEquiv p q).symm (Sum.inl (finSumFinEquiv (Sum.inr i))) =
-      finSumFinEquiv (Sum.inr i.castSucc) := by
-  simp [realBottIndexEquiv, splitLastEquiv]
-
-private theorem realBottIndexEquiv_symm_inr_zero (p q : ℕ) :
-    (realBottIndexEquiv p q).symm (Sum.inr (0 : Fin 2)) =
-      finSumFinEquiv (Sum.inl (Fin.last p)) := by
-  apply Fin.ext
-  -- After forgetting the dependent `Fin` bounds, both index constructions have value `p`.
-  change p = p
-  rfl
-
-private theorem realBottIndexEquiv_symm_inr_one (p q : ℕ) :
-    (realBottIndexEquiv p q).symm (Sum.inr (1 : Fin 2)) =
-      finSumFinEquiv (Sum.inr (Fin.last q)) := by
-  apply Fin.ext
-  -- After forgetting the dependent `Fin` bounds, both index constructions have value `p + 1 + q`.
-  change p + 1 + q = p + 1 + q
-  rfl
-
-private theorem realBottWeight_inl (p q : ℕ) (i : Fin (p + q)) :
-    realCliffordWeight (p + 1) (q + 1)
-        ((realBottIndexEquiv p q).symm (Sum.inl i)) =
-      realCliffordWeight p q i := by
-  rw [← finSumFinEquiv.apply_symm_apply i]
-  rcases finSumFinEquiv.symm i with i | i
-  · rw [realBottIndexEquiv_symm_inl_pos]
-    have hs :
-        (finSumFinEquiv (Sum.inl i.castSucc : Fin (p + 1) ⊕ Fin (q + 1)) : ℕ) < p + 1 := by
-      simp
-    have ht : (finSumFinEquiv (Sum.inl i : Fin p ⊕ Fin q) : ℕ) < p := by simp
-    rw [realCliffordWeight_of_lt hs, realCliffordWeight_of_lt ht]
-  · rw [realBottIndexEquiv_symm_inl_neg]
-    have hs : p + 1 ≤
-        (finSumFinEquiv (Sum.inr i.castSucc : Fin (p + 1) ⊕ Fin (q + 1)) : ℕ) := by
-      simp
-    have ht : p ≤ (finSumFinEquiv (Sum.inr i : Fin p ⊕ Fin q) : ℕ) := by simp
-    rw [realCliffordWeight_of_le hs, realCliffordWeight_of_le ht]
-
-private theorem realBottWeight_inr (p q : ℕ) (i : Fin 2) :
-    realCliffordWeight (p + 1) (q + 1)
-        ((realBottIndexEquiv p q).symm (Sum.inr i)) =
-      realCliffordWeight 1 1 i := by
-  fin_cases i
-  · -- Expose the `Fin 2` coordinate so the corresponding index-conversion lemma rewrites.
-    change realCliffordWeight (p + 1) (q + 1)
-        ((realBottIndexEquiv p q).symm (Sum.inr (0 : Fin 2))) =
-      realCliffordWeight 1 1 (0 : Fin 2)
-    rw [realBottIndexEquiv_symm_inr_zero]
-    rw [realCliffordWeight_of_lt (by simp), realCliffordWeight_of_lt (by norm_num)]
-  · -- Expose the `Fin 2` coordinate so the corresponding index-conversion lemma rewrites.
-    change realCliffordWeight (p + 1) (q + 1)
-        ((realBottIndexEquiv p q).symm (Sum.inr (1 : Fin 2))) =
-      realCliffordWeight 1 1 (1 : Fin 2)
-    rw [realBottIndexEquiv_symm_inr_one]
-    rw [realCliffordWeight_of_le (by simp), realCliffordWeight_of_le (by norm_num)]
-
-/-- The coordinate isometry which separates the last positive and negative coordinates of the
-signature form as a hyperbolic plane. -/
-def realBottSplitIsometry (p q : ℕ) :
-    (realCliffordForm (p + 1) (q + 1)).IsometryEquiv
-      ((realCliffordForm p q).prod (realCliffordForm 1 1)) :=
-  { realBottSplitLinearEquiv p q with
-    map_app' := by
-      intro x
-      rw [QuadraticMap.prod_apply, realCliffordForm_apply, realCliffordForm_apply,
-        realCliffordForm_apply]
-      let y := realBottSplitLinearEquiv p q x
-      calc
-        (∑ i, realCliffordWeight p q i * (y.1 i * y.1 i)) +
-            ∑ i, realCliffordWeight 1 1 i * (y.2 i * y.2 i) =
-          ∑ s : Fin (p + q) ⊕ Fin 2, Sum.elim
-            (fun i => realCliffordWeight p q i * (y.1 i * y.1 i))
-            (fun i => realCliffordWeight 1 1 i * (y.2 i * y.2 i)) s :=
-              (Fintype.sum_sum_type (Sum.elim
-                (fun i => realCliffordWeight p q i * (y.1 i * y.1 i))
-                (fun i => realCliffordWeight 1 1 i * (y.2 i * y.2 i)))).symm
-        _ = ∑ i, realCliffordWeight (p + 1) (q + 1) i * (x i * x i) := by
-          refine Fintype.sum_equiv (realBottIndexEquiv p q).symm _ _ ?_
-          rintro (i | i)
-          · simp [y, realBottSplitLinearEquiv, realBottWeight_inl]
-          · simp [y, realBottSplitLinearEquiv, realBottWeight_inr] }
-
-/-- The positive coordinates retained by `realBottSplitIsometry`. -/
-@[simp]
-theorem realBottSplitIsometry_fst_pos (p q : ℕ)
-    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin p) :
-    (realBottSplitIsometry p q v).1 (Fin.castAdd q i) =
-      v (Fin.castAdd (q + 1) i.castSucc) := by
-  -- Expose the linear equivalence underlying the bundled quadratic isometry.
-  change (realBottSplitLinearEquiv p q v).1 _ = _
-  simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
-
-/-- The negative coordinates retained by `realBottSplitIsometry`. -/
-@[simp]
-theorem realBottSplitIsometry_fst_neg (p q : ℕ)
-    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin q) :
-    (realBottSplitIsometry p q v).1 (Fin.natAdd p i) =
-      v (Fin.natAdd (p + 1) i.castSucc) := by
-  -- Expose the linear equivalence underlying the bundled quadratic isometry.
-  change (realBottSplitLinearEquiv p q v).1 _ = _
-  simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
-
-/-- The last positive coordinate extracted by `realBottSplitIsometry`. -/
-@[simp]
-theorem realBottSplitIsometry_snd_zero (p q : ℕ)
-    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
-    (realBottSplitIsometry p q v).2 0 =
-      v (Fin.castAdd (q + 1) (Fin.last p)) := by
-  -- Expose the linear equivalence and its stable coordinate maps.
-  change (realBottSplitLinearEquiv p q v).2 0 = _
-  simp only [realBottSplitLinearEquiv, LinearEquiv.trans_apply,
-    LinearEquiv.sumArrowLequivProdArrow_apply_snd, LinearEquiv.piCongrLeft'_apply]
-  rw [realBottIndexEquiv_symm_inr_zero]
-  congr 1
-
-/-- The last negative coordinate extracted by `realBottSplitIsometry`. -/
-@[simp]
-theorem realBottSplitIsometry_snd_one (p q : ℕ)
-    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
-    (realBottSplitIsometry p q v).2 1 =
-      v (Fin.natAdd (p + 1) (Fin.last q)) := by
-  -- Expose the linear equivalence and its stable coordinate maps.
-  change (realBottSplitLinearEquiv p q v).2 1 = _
-  simp only [realBottSplitLinearEquiv, LinearEquiv.trans_apply,
-    LinearEquiv.sumArrowLequivProdArrow_apply_snd, LinearEquiv.piCongrLeft'_apply]
-  rw [realBottIndexEquiv_symm_inr_one]
-  congr 1
-
 /-- The hyperbolic Bott step for the standard real signature forms:
 `Cliff(p + 1, q + 1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
 noncomputable def realCliffordBottEquiv (p q : ℕ) :
@@ -723,5 +574,41 @@ theorem realCliffordBottIterEquiv_succ (p q n : ℕ) :
   unfold realCliffordBottIterEquiv
   rw [realCliffordBottIterEquivImpl]
   rfl
+
+/-! ### Signature-switch recurrence -/
+
+/-- One sign switch followed by the hyperbolic Bott step gives the signature-switch recurrence
+`Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)`. -/
+noncomputable def realCliffordSignatureSwitchRecurrenceEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + 1 + 1) q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm q p) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ :=
+  (_root_.CliffordAlgebra.equivOfIsometry
+    (realCliffordPositiveSplitIsometry (p + 1) q)).trans
+    ((CliffordAlgebra.signSwitchEquiv (realCliffordForm (p + 1) q)).trans
+      ((_root_.CliffordAlgebra.equivOfIsometry
+        (realCliffordSignSwitchStandardIsometry (p + 1) q)).trans
+          (realCliffordBottEquiv q p)))
+
+/-- The signature-switch recurrence sends a Clifford generator through its two coordinate
+isometries and the sign-switch generator formula, then transports the result through
+`realCliffordBottEquiv q p`. -/
+@[simp]
+theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
+    (v : Fin ((p + 1 + 1) + q) → ℝ) :
+    realCliffordSignatureSwitchRecurrenceEquiv p q (_root_.CliffordAlgebra.ι _ v) =
+      realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+        (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) *
+        realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+          (realCliffordSignSwitchStandardIsometry (p + 1) q
+            ((realCliffordPositiveSplitIsometry (p + 1) q v).1, 0))) +
+          (realCliffordPositiveSplitIsometry (p + 1) q v).2 •
+            realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+              (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) := by
+  simp only [realCliffordSignatureSwitchRecurrenceEquiv, AlgEquiv.trans_apply,
+    _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι, AlgEquiv.trans_apply,
+    CliffordAlgebra.signSwitchEquiv_ι, map_add, map_mul, map_smul,
+    AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry_apply]
 
 end TauCeti

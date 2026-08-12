@@ -44,7 +44,7 @@ transposed family, `Cₙ₊₃` with the same pendant vertex adjoined, is the tw
 `A⁽²⁾₂ₗ₋₁`, and it is excluded through `TauCeti.IsFiniteType.transpose`. The rows of the chain are
 evaluated with `TauCeti.sum_range_chainBEntry_mul`. Its simply-laced specialization is
 `TauCeti.sum_range_chainEntry_mul`, used by
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Star`.
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic`.
 
 The exclusion is sharp in the only direction available to it: deleting the pendant vertex leaves
 `CartanMatrix.B (n + 3)`, which `TauCeti.isFiniteType_cartanMatrix_B` proves to be of finite type,

@@ -19,7 +19,7 @@ last edge may be double, together with the summation identities used by weightin
 
 Nothing here mentions `TauCeti.IsFiniteType`, which is why the file sits above the finite-type
 directory rather than in it. It exists because the diagrams that carry the length constraints of
-the classification - the stars of `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star`, the
+the classification - the stars of `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic`, the
 double-edge chains of `TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`, and the forked
 double-edge diagrams - are all assembled from chains. The simply-laced entry function and row sum
 are the special case `L = 0` of their type-`B` counterparts.
