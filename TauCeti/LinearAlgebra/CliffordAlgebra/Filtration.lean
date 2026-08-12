@@ -50,6 +50,8 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.prod_map_ι_mem_filtration` and
   `TauCeti.CliffordAlgebra.filtration_le_iff`: the products of at most `k` generators lie in the
   `k`-th step and generate it, which is how memberships and bounds are proved.
+* `TauCeti.CliffordAlgebra.filtration_eq_pow`: the defining equation, as the `k`-th power of the
+  scalars together with `LinearMap.range (ι Q)`.
 * `TauCeti.CliffordAlgebra.filtration_zero` and
   `TauCeti.CliffordAlgebra.filtration_one` compute the first two steps, as the scalars and the
   scalars together with `LinearMap.range (ι Q)`.
@@ -113,6 +115,13 @@ This is `TauCeti.Algebra.wordFiltration` specialized to `ι Q`; the shared API i
 `TauCeti/Algebra/WordFiltration.lean`. -/
 def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltration (ι Q) k
+
+/-- The defining equation of the filtration: degree `k` is the `k`-th submodule power of the
+scalars together with `LinearMap.range (ι Q)`. Contrast `filtration_eq_iSup_pow`, the comparison
+with the powers of `LinearMap.range (ι Q)` alone. -/
+theorem filtration_eq_pow (Q : QuadraticForm R M) (k : ℕ) :
+    filtration Q k = (1 ⊔ LinearMap.range (ι Q)) ^ k :=
+  TauCeti.Algebra.wordFiltration_eq_pow (ι Q) k
 
 /-- The filtration step preceding degree `k`, that is `TauCeti.Algebra.wordFiltrationPrevious`
 specialized to `ι Q`. At degree zero it is bottom, so the degree-zero piece remains the scalar

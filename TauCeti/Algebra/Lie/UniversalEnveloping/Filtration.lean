@@ -81,12 +81,7 @@ def pbwFiltration (k : ℕ) : Submodule R U :=
 theorem pbwFiltration_eq_pow (k : ℕ) :
     pbwFiltration R L k =
       (1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap) ^ k :=
-  by
-    rw [pbwFiltration]
-    calc
-      _ = TauCeti.Algebra.wordFiltration _ 1 ^ k := by
-        simpa using (TauCeti.Algebra.wordFiltration_pow _ 1 k).symm
-      _ = _ := by rw [TauCeti.Algebra.wordFiltration_one]
+  TauCeti.Algebra.wordFiltration_eq_pow _ k
 
 /-- The step preceding degree `k` in the PBW filtration, that is
 `TauCeti.Algebra.wordFiltrationPrevious` specialized to `UniversalEnvelopingAlgebra.ι R`, with
