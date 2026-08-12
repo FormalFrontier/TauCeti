@@ -83,7 +83,9 @@ theorem scalarExtensionComponent_apply
           (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm x)) := by
   rfl
 
-private theorem ofHom_scalarExtensionComponent
+/-- Bundling a transported tensor-automorphism component as a semimodule morphism recovers the
+conjugation of the original component by the scalar-extension object's defining equality. -/
+theorem ofHom_scalarExtensionComponent
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H)
     (h : (FGComoduleCat.scalarExtensionFunctor R H A).obj M =
