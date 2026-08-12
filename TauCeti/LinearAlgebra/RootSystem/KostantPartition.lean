@@ -15,15 +15,15 @@ arbitrary root pairing, together with the finiteness statement that makes the co
 
 The multiplicities are recorded as a function `c : ι → ℕ` on root indices, supported on the
 positive roots, and `TauCeti.IsKostantPartition P b ν c` says that `∑ᵢ cᵢ αᵢ = ν`. There are
-infinitely many functions `ι → ℕ` even for a finite index type, so the count is a theorem rather
-than a definition: `TauCeti.finite_setOf_isKostantPartition` bounds the multiplicities of a
-partition by the height of `ν`, and only then is `TauCeti.kostantPartition` a natural number.
+infinitely many functions `ι → ℕ` even for a finite index type, so finiteness must be proved before
+`Nat.card` gives the intended finite count. The theorem
+`TauCeti.finite_setOf_isKostantPartition` supplies this proof.
 
 The bound comes from a fact about heights that is worth isolating, since it has nothing to do with
 positivity: `TauCeti.sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero` says that height respects
 every integral relation among roots, so the total height `∑ᵢ cᵢ ht(αᵢ)` depends only on `ν` and not
-on the partition. Each positive root has height at least one, so a partition of `ν` cannot use more
-than `ht(ν)` roots in all, and in particular no multiplicity exceeds `ht(ν)`.
+on the partition. Fixing one partition of `ν`, its total height therefore bounds the total
+multiplicity, and hence each multiplicity, of every other partition of `ν`.
 
 ## Main definitions
 
@@ -127,6 +127,13 @@ positive roots, whose weighted sum of positive roots is `ν`. -/
 def IsKostantPartition (ν : M) (c : ι → ℕ) : Prop :=
   support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν
 
+/-- A multiplicity function is a Kostant partition exactly when it is supported on the positive
+roots and its weighted root sum is the element being partitioned. -/
+theorem isKostantPartition_iff (ν : M) (c : ι → ℕ) :
+    IsKostantPartition P b ν c ↔
+      support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν :=
+  Iff.rfl
+
 variable {P b}
 
 /-- The defining sum of a Kostant partition, with the multiplicities read as integers. -/
@@ -198,9 +205,14 @@ positive roots with multiplicity. -/
 noncomputable def kostantPartition (ν : M) : ℕ :=
   Nat.card {c : ι → ℕ // IsKostantPartition P b ν c}
 
+/-- The Kostant partition function is the cardinality of the type of Kostant partitions. -/
+theorem kostantPartition_def (ν : M) :
+    kostantPartition P b ν = Nat.card {c : ι → ℕ // IsKostantPartition P b ν c} :=
+  by rw [kostantPartition]
+
 /-- The Kostant partition function is positive exactly on the elements that are a sum of positive
 roots. -/
-theorem kostantPartition_pos_iff (ν : M) :
+@[simp] theorem kostantPartition_pos_iff (ν : M) :
     0 < kostantPartition P b ν ↔ ∃ c, IsKostantPartition P b ν c := by
   refine ⟨fun h ↦ ?_, fun ⟨c, hc⟩ ↦ ?_⟩
   · obtain ⟨⟨c, hc⟩⟩ := (Nat.card_pos_iff.mp h).1
@@ -209,7 +221,7 @@ theorem kostantPartition_pos_iff (ν : M) :
     exact Nat.card_pos
 
 /-- The Kostant partition function vanishes exactly off the set of sums of positive roots. -/
-theorem kostantPartition_eq_zero_iff (ν : M) :
+@[simp] theorem kostantPartition_eq_zero_iff (ν : M) :
     kostantPartition P b ν = 0 ↔ ¬ ∃ c, IsKostantPartition P b ν c := by
   rw [← kostantPartition_pos_iff, Nat.pos_iff_ne_zero, not_ne_iff]
 
@@ -217,7 +229,8 @@ theorem kostantPartition_eq_zero_iff (ν : M) :
 
 /-- **The empty partition is the only partition of zero.** A nonzero multiplicity would contribute
 a positive amount to the total height, which is zero. -/
-theorem isKostantPartition_zero_iff {c : ι → ℕ} : IsKostantPartition P b (0 : M) c ↔ c = 0 := by
+@[simp] theorem isKostantPartition_zero_iff {c : ι → ℕ} :
+    IsKostantPartition P b (0 : M) c ↔ c = 0 := by
   refine ⟨fun hc ↦ ?_, ?_⟩
   · have h0 : ∑ i ∈ posRootsFinset P b, (c i : ℤ) * b.height i = 0 :=
       sum_mul_height_eq_zero_of_sum_zsmul_root_eq_zero P b
@@ -314,7 +327,7 @@ theorem isKostantPartition_root_eq_single_of_mem_support [DecidableEq ι] {i : �
   rw [hcsingle, P.root.injective hroot]
 
 /-- `P(αᵢ) = 1` for a simple root `αᵢ`. -/
-theorem kostantPartition_root_of_mem_support {i : ι} (hi : i ∈ b.support) :
+@[simp] theorem kostantPartition_root_of_mem_support {i : ι} (hi : i ∈ b.support) :
     kostantPartition P b (P.root i) = 1 := by
   classical
   have hipos : i ∈ posRoots P b := support_subset_posRoots P b hi
