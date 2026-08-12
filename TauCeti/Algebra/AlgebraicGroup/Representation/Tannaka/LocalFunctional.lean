@@ -88,10 +88,10 @@ theorem counitEvaluation_apply (N : Subcomodule k H H) (z : A ⊗[k] N) :
       (TensorProduct.AlgebraTensorModule.rid k A A)
         (((Coalgebra.counit (R := k) (A := H)).comp
           (SMulMemClass.subtype N)).baseChange A z) := by
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp only [map_add, hx, hy]
-  | tmul a n => simp [Algebra.smul_def, mul_comm]
+  simp only [counitEvaluation, TauCeti.Module.Dual.baseChangeEvaluation_one_tmul,
+    Module.Dual.baseChange,
+    LinearMap.compRight_apply, LinearMap.baseChangeHom_apply, LinearMap.coe_comp,
+    Function.comp_apply, LinearEquiv.coe_coe]
 
 end CounitEvaluation
 

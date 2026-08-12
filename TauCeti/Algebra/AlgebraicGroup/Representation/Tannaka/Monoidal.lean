@@ -97,6 +97,7 @@ private theorem ofHom_scalarExtensionComponent
 
 /-- Tensor automorphisms of scalar extension are equal when all their explicitly transported
 components are equal. -/
+@[ext]
 theorem eq_of_scalarExtensionComponent_eq
     (η θ : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (h : ∀ M, scalarExtensionComponent R H A η M =

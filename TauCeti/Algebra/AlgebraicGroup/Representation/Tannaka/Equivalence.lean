@@ -51,11 +51,7 @@ private theorem baseChange_eq_baseChangeEvaluation_one
     (M : FGComoduleCat.{u, u, u} k H) (phi : Module.Dual k M) (z : A ⊗[k] M) :
     Module.Dual.baseChange A phi z =
       TauCeti.Module.Dual.baseChangeEvaluation (1 ⊗ₜ[k] phi) z := by
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | add z w hz hw => simp only [map_add, hz, hw]
-  | tmul b n =>
-      simp [Module.Dual.baseChange_apply_tmul, Algebra.smul_def, mul_comm]
+  rw [TauCeti.Module.Dual.baseChangeEvaluation_one_tmul]
 
 private theorem counitEvaluation_matrixCoefficientSubcoalgebraHom
     (M : FGComoduleCat.{u, u, u} k H) (phi : Module.Dual k M) (z : A ⊗[k] M) :
@@ -98,7 +94,13 @@ private theorem scalarExtensionComponent_reconstructedPoint_tmul
   -- to the finite regular subcomodule on which reconstruction is defined.
   have hnatural := LinearMap.congr_fun
     (scalarExtensionComponent_natural k H A eta f) (1 ⊗ₜ[k] m)
-  simp only [LinearMap.comp_apply, LinearMap.baseChange_tmul] at hnatural
+  simp only [LinearMap.comp_apply] at hnatural
+  have hf_baseChange_tmul :
+      f.hom.toLinearMap.baseChange A (1 ⊗ₜ[k] m) =
+        1 ⊗ₜ[k] Comodule.matrixCoefficientSubcoalgebraHom (C := H) phi m := by
+    rw [LinearMap.baseChange_tmul]
+    exact congrArg (fun n => (1 : A) ⊗ₜ[k] n)
+      (ComoduleCat.ofHom_apply (R := k) (C := H) q m)
   have hpointAction :
       Comodule.pointsAction M (reconstructedPoint k H A eta) (1 ⊗ₜ[k] m) =
         Comodule.endOfPoint M (reconstructedPoint k H A eta).ofConv (1 ⊗ₜ[k] m) :=
@@ -136,8 +138,7 @@ private theorem scalarExtensionComponent_reconstructedPoint_tmul
     _ = counitEvaluation k H A N.1
           (f.hom.toLinearMap.baseChange A
             (scalarExtensionComponent k H A eta M (1 ⊗ₜ[k] m))) := by
-            rw [hnatural]
-            rfl
+            rw [← hf_baseChange_tmul, ← hnatural]
     _ = Module.Dual.baseChange A phi
           (scalarExtensionComponent k H A eta M (1 ⊗ₜ[k] m)) := by
             simpa only [f, q, N, D] using
