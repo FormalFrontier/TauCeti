@@ -50,6 +50,8 @@ choice, following the convention of
 * `TauCeti.nonSplitTorusBasis`: a chosen `F`-basis of `E`, indexed by `Fin 2`.
 * `TauCeti.GL2NonSplitTorusHom`: the embedding `Eˣ ↪ GL (Fin 2) F` by left multiplication.
 * `TauCeti.GL2NonSplitTorus`: its range, the non-split torus.
+* `TauCeti.GL2NonSplitTorus.unitsEquiv`: the resulting multiplicative equivalence `Eˣ ≃*` the
+  torus.
 
 ## Main results
 
@@ -114,13 +116,16 @@ theorem coe_GL2NonSplitTorusHom (x : Eˣ) :
 theorem GL2NonSplitTorusHom_injective : Function.Injective (GL2NonSplitTorusHom F E hE) :=
   unitsLeftMulMatrix_injective _
 
-@[simp]
-theorem mem_iff {g : GL (Fin 2) F} :
-    g ∈ GL2NonSplitTorus F E hE ↔ ∃ x : Eˣ, GL2NonSplitTorusHom F E hE x = g :=
-  Iff.rfl
+/-- **The non-split torus is a copy of `Eˣ`**: the embedding `TauCeti.GL2NonSplitTorusHom` is
+injective, so it corestricts to a multiplicative equivalence from `Eˣ` onto the torus. This is what
+transports a character of `Eˣ` to a character of the torus. -/
+noncomputable def unitsEquiv : Eˣ ≃* GL2NonSplitTorus F E hE :=
+  MonoidHom.ofInjective (GL2NonSplitTorusHom_injective hE)
 
-theorem apply_mem (x : Eˣ) : GL2NonSplitTorusHom F E hE x ∈ GL2NonSplitTorus F E hE :=
-  ⟨x, rfl⟩
+@[simp]
+theorem coe_unitsEquiv (x : Eˣ) :
+    (unitsEquiv hE x : GL (Fin 2) F) = GL2NonSplitTorusHom F E hE x :=
+  (rfl)
 
 /-- The torus is abelian: it is the image of the commutative group `Eˣ`. -/
 instance : IsMulCommutative (GL2NonSplitTorus F E hE) :=
@@ -147,9 +152,8 @@ over a field with `q` elements it has `q² - 1` of them. (Over an infinite `F` b
 the `Nat.card` of an infinite type.) -/
 theorem natCard_eq : Nat.card (GL2NonSplitTorus F E hE) = Nat.card F ^ 2 - 1 := by
   have := Module.finite_of_finrank_eq_succ (n := 1) hE
-  rw [GL2NonSplitTorus,
-    ← Nat.card_congr (MonoidHom.ofInjective (GL2NonSplitTorusHom_injective hE)).toEquiv,
-    Nat.card_units, Module.natCard_eq_pow_finrank (K := F) (V := E), hE]
+  rw [← Nat.card_congr (unitsEquiv hE).toEquiv, Nat.card_units,
+    Module.natCard_eq_pow_finrank (K := F) (V := E), hE]
 
 /-- The key computation behind non-splitness: for `x : E` outside `F`, the matrix of multiplication
 by `x` has no eigenvalue `a : F`, because `det (x - a) = N_{E/F}(x - a) ≠ 0`. -/
@@ -181,8 +185,7 @@ theorem exists_forall_conj_notMem_GL2Borel :
   have : Algebra.IsQuadraticExtension F E := ⟨hE⟩
   obtain ⟨x, hx⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap F E
   have hx0 : x ≠ 0 := fun h => hx ⟨0, by rw [map_zero, h]⟩
-  exact ⟨GL2NonSplitTorusHom F E hE (Units.mk0 x hx0), apply_mem hE _,
-    conj_notMem_GL2Borel hE hx⟩
+  exact ⟨GL2NonSplitTorusHom F E hE (Units.mk0 x hx0), ⟨_, rfl⟩, conj_notMem_GL2Borel hE hx⟩
 
 end GL2NonSplitTorus
 
