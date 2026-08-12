@@ -1,31 +1,25 @@
-name: pr-profile
+name: pr-performance
 
-# Advisory heartbeat profile for a PR's TauCeti/ changes. Posts (and updates) a
-# sticky PR comment; it NEVER blocks merge and posts no commit status. The
-# metric is Mathlib's `countHeartbeats` linter (in `maxHeartbeats` units),
-# which is deterministic and machine-independent, so a base -> head comparison
-# is meaningful. New files get an absolute count; modified files get a
-# base -> head comparison and are flagged when a refactor makes a file at least
-# 1.5x more expensive to elaborate (see scripts/profile/render.py).
+# Required, base-branch-defined performance gate for untrusted Lean changes.
 #
-# Trust model mirrors pr-build.yml: this is a base-branch-defined workflow
-# (pull_request_target / issue_comment / workflow_dispatch all take the base
-# definition), it overlays ONLY the PR's TauCeti/ sources onto a trusted base
-# checkout, and it elaborates that untrusted code solely under landrun (offline,
-# no secrets or token in reach). The GITHUB_TOKEN is never passed into the
-# sandbox; the sticky comment is posted by the trusted step AFTER the sandbox
-# has exited, reading only the rendered Markdown the sandbox left behind. The
-# measurement and render scripts come from the trusted base (scripts/ is never
-# overlaid from the PR), so a PR cannot alter how it is measured.
+# Security boundary: GitHub/API resolution, perf, threshold evaluation, status
+# posting, and report rendering run as trusted host steps. The PR contributes
+# only TauCeti/ sources (plus forward-bump-validated pins). Every command that
+# can elaborate those sources runs offline under landrun with the same mounts
+# and environment allowlist as pr-build. Host perf wraps the landrun process;
+# its raw counter files live in RUNNER_TEMP, which is not mounted in landrun, so
+# PR code cannot forge or erase its measurements. No token enters the sandbox.
 #
-# Cost control: to avoid re-profiling on every push, this runs on PR open, on a
-# `/profile` comment from the PR author or a collaborator, and on manual
-# dispatch. It builds only the changed modules and their dependency cones, not
-# the whole library.
+# The required `perf` commit status is separate from the advisory heartbeat
+# profile. It uses retired instructions when the runner exposes them and a
+# same-runner CPU-time comparison otherwise. Every Lean process also has the
+# universal 300-second watchdog installed by scripts/perf/lean-watchdog.sh.
 
 on:
   pull_request_target:
-    types: [opened]
+    types: [opened, synchronize, reopened]
+  merge_group:
+    types: [checks_requested]
   issue_comment:
     types: [created]
   workflow_dispatch:
@@ -35,35 +29,32 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  statuses: write
 
-# Route non-`/profile` comment events (e.g. `/review`) into a unique per-run
-# group so they cannot cancel an in-flight profile before the job `if` below
-# short-circuits them; real triggers share the per-PR group.
 concurrency:
   group: >-
     ${{
       (github.event_name == 'pull_request_target' ||
        github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'issue_comment' &&
-        startsWith(github.event.comment.body, '/profile')))
-      && format('pr-profile-{0}',
-           github.event.pull_request.number ||
-           github.event.issue.number ||
-           inputs.pr)
-      || format('pr-profile-noop-{0}', github.run_id)
+       github.event_name == 'merge_group' ||
+       (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/profile')))
+      && format('pr-performance-{0}',
+           github.event.pull_request.number || github.event.issue.number ||
+           inputs.pr || github.event.merge_group.head_sha)
+      || format('pr-performance-noop-{0}', github.run_id)
     }}
   cancel-in-progress: true
 
 jobs:
-  profile:
+  # Deliberately not named `perf`: the authoritative required context is the
+  # commit status posted at the end, not this workflow's automatic check-run.
+  performance-gate:
     runs-on: ubuntu-24.04
-    # Fresh PR or manual dispatch: always. Comment: only `/profile` on a PR from
-    # the PR author or someone with write access — the same code-execution
-    # surface as the auto-profile on `opened`, just re-triggered by a trusted
-    # user, so it adds no new trust.
+    timeout-minutes: 45
     if: >-
       github.event_name == 'pull_request_target' ||
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'merge_group' ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
        startsWith(github.event.comment.body, '/profile') &&
@@ -72,218 +63,518 @@ jobs:
     env:
       LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
       LANDRUN_VER: v0.1.14
+      LAKE_ARTIFACT_CACHE: ""
+      LAKE_RESTORE_ARTIFACTS: ""
+      LAKE_CACHE_DIR: ""
     steps:
-      # --- Trusted setup: no PR code runs until the landrun measurement phase.
-      - name: Resolve PR head and base
+      # --- Trusted setup. No PR code runs before the landrun measurement steps. ---
+      - name: Resolve immutable base and head commits
         id: pr
         env:
           GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
+          TARGET_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          case "${{ github.event_name }}" in
+          case '${{ github.event_name }}' in
+            merge_group)
+              NUM=merge-group
+              SHA='${{ github.event.merge_group.head_sha }}'
+              HEAD_REPO="$TARGET_REPO"
+              BASE_SHA='${{ github.event.merge_group.base_sha }}'
+              STATUS_SHA="$SHA"
+              AUTHOR=''
+              MB="$BASE_SHA"
+              ;;
             pull_request_target)
               NUM='${{ github.event.pull_request.number }}'
               SHA='${{ github.event.pull_request.head.sha }}'
               HEAD_REPO='${{ github.event.pull_request.head.repo.full_name }}'
-              BASE_REF='${{ github.event.pull_request.base.ref }}'
+              BASE_SHA='${{ github.event.pull_request.base.sha }}'
+              STATUS_SHA="$SHA"
+              AUTHOR='${{ github.event.pull_request.user.login }}'
               ;;
-            issue_comment)  NUM='${{ github.event.issue.number }}' ;;
-            workflow_dispatch) NUM='${{ inputs.pr }}' ;;
+            issue_comment)
+              NUM='${{ github.event.issue.number }}'
+              ;;
+            workflow_dispatch)
+              NUM='${{ inputs.pr }}'
+              ;;
           esac
-          if [ "${{ github.event_name }}" != "pull_request_target" ]; then
-            read -r SHA HEAD_REPO BASE_REF < <(gh api "repos/$REPO/pulls/$NUM" \
-              --jq '"\(.head.sha) \(.head.repo.full_name) \(.base.ref)"')
+          if [ '${{ github.event_name }}' = issue_comment ] || [ '${{ github.event_name }}' = workflow_dispatch ]; then
+            data=$(gh api "repos/$TARGET_REPO/pulls/$NUM")
+            SHA=$(jq -r .head.sha <<<"$data")
+            HEAD_REPO=$(jq -r .head.repo.full_name <<<"$data")
+            BASE_SHA=$(jq -r .base.sha <<<"$data")
+            STATUS_SHA="$SHA"
+            AUTHOR=$(jq -r .user.login <<<"$data")
+          fi
+          if [ -z "${MB:-}" ]; then
+            OWNER="${HEAD_REPO%%/*}"
+            MB=$(gh api "repos/$TARGET_REPO/compare/$BASE_SHA...$OWNER:$SHA" \
+              --jq .merge_base_commit.sha)
           fi
           {
             echo "num=$NUM"
             echo "sha=$SHA"
             echo "head_repo=$HEAD_REPO"
-            echo "base_ref=$BASE_REF"
+            echo "base_sha=$BASE_SHA"
+            echo "status_sha=$STATUS_SHA"
+            echo "mergebase=$MB"
+            echo "author=$AUTHOR"
           } >> "$GITHUB_OUTPUT"
-          echo "Profiling PR #$NUM @ $SHA from $HEAD_REPO (base $BASE_REF)"
+          echo "Performance gate for $NUM: $BASE_SHA -> $SHA (merge-base $MB)"
 
-      - name: List added and modified TauCeti/ Lean files (trusted GitHub file list)
-        id: files
+      - name: Post pending perf status
         env:
           GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
+          SHA: ${{ steps.pr.outputs.status_sha }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/statuses/$SHA" \
+            -f state=pending -f context=perf \
+            -f description='measuring Lean wall time and module cost' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Fetch trusted changed-file metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
           NUM: ${{ steps.pr.outputs.num }}
+          BASE: ${{ steps.pr.outputs.base_sha }}
+          HEAD: ${{ steps.pr.outputs.sha }}
         run: |
           set -euo pipefail
-          # From the trusted API file list, keep only .lean files under TauCeti/
-          # (plus the root TauCeti.lean). `added`/`copied` count as new; anything
-          # else that still exists at base counts as modified. Paths outside
-          # TauCeti/ are ignored here: only TauCeti/ is overlaid and profiled.
-          json=$(gh api --paginate "repos/$REPO/pulls/$NUM/files" \
-            --jq '.[] | select((.filename | endswith(".lean")) and
-                               ((.filename | startswith("TauCeti/")) or .filename == "TauCeti.lean"))
-                      | "\(.status)\t\(.filename)"')
-          added=$(printf '%s\n' "$json" | awk -F'\t' '$1=="added" || $1=="copied" {print $2}' | tr '\n' ' ')
-          modified=$(printf '%s\n' "$json" | awk -F'\t' '$1=="modified" || $1=="renamed" || $1=="changed" {print $2}' | tr '\n' ' ')
-          echo "added=$added" >> "$GITHUB_OUTPUT"
-          echo "modified=$modified" >> "$GITHUB_OUTPUT"
-          if [ -z "${added// }" ] && [ -z "${modified// }" ]; then
-            echo "none=1" >> "$GITHUB_OUTPUT"
-            echo "No TauCeti/ Lean files changed; nothing to profile."
+          if [ "$NUM" = merge-group ]; then
+            gh api "repos/${{ github.repository }}/compare/$BASE...$HEAD" --jq .files > "$RUNNER_TEMP/files.json"
+            count=$(jq length "$RUNNER_TEMP/files.json")
+            if [ "$count" -ge 300 ]; then
+              echo "::error::merge-group changed-file list hit GitHub's 300-file compare cap; failing closed"
+              exit 1
+            fi
           else
-            echo "added: $added"
-            echo "modified: $modified"
+            gh api --paginate --slurp \
+              "repos/${{ github.repository }}/pulls/$NUM/files?per_page=100" > "$RUNNER_TEMP/file-pages.json"
+            jq '[.[][]]' "$RUNNER_TEMP/file-pages.json" > "$RUNNER_TEMP/files.json"
           fi
 
-      - name: Checkout base (trusted)
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Checkout workflow-pinned trusted tooling
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.pr.outputs.base_ref }}
-          path: base
+          ref: ${{ github.workflow_sha }}
+          path: gate
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Checkout PR head (untrusted, no credentials)
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Checkout immutable base (trusted)
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.pr.outputs.base_sha }}
+          path: base
+          persist-credentials: false
+          fetch-depth: 100
+
+      - name: Checkout base again for the head overlay (trusted config)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.base_sha }}
+          path: head
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Checkout merge-base config (trusted ancestor)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.mergebase }}
+          path: mergebase
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Checkout candidate head (untrusted, no credentials)
+        uses: actions/checkout@v4
+        with:
+          # pull_request_target intentionally fetches untrusted source for a
+          # data-only overlay; it is executed only later, offline in landrun.
+          allow-unsafe-pr-checkout: true
           repository: ${{ steps.pr.outputs.head_repo }}
           ref: ${{ steps.pr.outputs.sha }}
           path: pr
           persist-credentials: false
-          # actions/checkout refuses to fetch fork PR code under
-          # pull_request_target unless this opt-in is set. Safe here for the
-          # same reasons as pr-build.yml: no credentials in the checkout, and
-          # the fork's code runs only under landrun below (offline, no token).
-          allow-unsafe-pr-checkout: true
 
-      - name: Overlay PR TauCeti/ and root TauCeti.lean onto the trusted base (reject symlinks)
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Stage workflow-pinned performance tooling into trusted trees
+        run: |
+          set -euo pipefail
+          for tree in base head; do
+            rm -rf "$tree/scripts/perf"
+            cp -a gate/scripts/perf "$tree/scripts/perf"
+            cp -a gate/scripts/profile/measure.sh "$tree/scripts/profile/measure.sh"
+            cp -a gate/scripts/profile/render.py "$tree/scripts/profile/render.py"
+          done
+
+      - name: Validate optional Lake-pin bump with trusted base validator
+        id: pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if jq -e '.[] | select(.filename == "lakefile.toml" or .filename == "lakefile.lean")' \
+               "$RUNNER_TEMP/files.json" >/dev/null; then
+            # Lakefiles are human-owned and are never executed here. Measure
+            # any TauCeti/ delta against the trusted base config, as pr-build does.
+            echo 'changed=0' >> "$GITHUB_OUTPUT"
+            echo '::notice::candidate changes a human-owned lakefile; performance uses trusted base config'
+          elif jq -e '.[] | select(.filename == "lake-manifest.json" or .filename == "lean-toolchain")' \
+               "$RUNNER_TEMP/files.json" >/dev/null; then
+            echo 'changed=1' >> "$GITHUB_OUTPUT"
+            bash base/scripts/check-bump.sh base mergebase pr
+          else
+            echo 'changed=0' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Overlay only candidate TauCeti sources and validated pins
         run: |
           set -euo pipefail
           if find pr/TauCeti -type l -print | grep -q .; then
-            echo "::error::symlinks are not allowed under TauCeti/"; exit 1
+            echo '::error::symlinks are not allowed under TauCeti/'
+            exit 1
           fi
           test -d pr/TauCeti && test ! -L pr/TauCeti
-          rm -rf base/TauCeti
-          cp -a pr/TauCeti base/TauCeti
+          rm -rf head/TauCeti
+          cp -a pr/TauCeti head/TauCeti
           if [ -e pr/TauCeti.lean ]; then
-            test ! -L pr/TauCeti.lean || { echo "::error::TauCeti.lean must not be a symlink"; exit 1; }
-            cp -a pr/TauCeti.lean base/TauCeti.lean
+            test ! -L pr/TauCeti.lean
+            cp -a pr/TauCeti.lean head/TauCeti.lean
+          fi
+          if [ '${{ steps.pins.outputs.changed }}' = 1 ]; then
+            for file in lake-manifest.json lean-toolchain; do
+              test ! -L "pr/$file"
+              [ ! -e "pr/$file" ] || cp -a "pr/$file" "head/$file"
+            done
           fi
 
-      # Prepare the measurement inputs OUTSIDE the sandbox (no Lean runs here):
-      # the head source is the overlaid working-tree file; the base source comes
-      # from `git show` of the base tip. Both are written under base/.lake (the
-      # sandbox's only writable mount) so the landrun measurement can read them.
-      - name: Prepare measurement sources
-        id: prep
-        if: ${{ steps.files.outputs.none != '1' }}
-        env:
-          ADDED: ${{ steps.files.outputs.added }}
-          MODIFIED: ${{ steps.files.outputs.modified }}
+      - name: Prepare safe performance manifest (trusted)
+        id: manifest
         run: |
           set -euo pipefail
-          PREP="$PWD/base/.lake/tmp/profile"
-          rm -rf "$PREP"
-          mkdir -p "$PREP/src/added" "$PREP/src/base" "$PREP/src/head"
-          : > "$PREP/manifest.tsv"
-          modules=""
-          i=0
-          for path in $ADDED; do
-            slug=$(printf 'a%03d' "$i"); i=$((i + 1))
-            cp "base/$path" "$PREP/src/added/$slug.lean"
-            printf 'added\t%s\t%s\n' "$slug" "$path" >> "$PREP/manifest.tsv"
-            modules="$modules $(printf '%s' "$path" | sed -e 's/\.lean$//' -e 's#/#.#g')"
-          done
-          j=0
-          for path in $MODIFIED; do
-            slug=$(printf 'm%03d' "$j"); j=$((j + 1))
-            cp "base/$path" "$PREP/src/head/$slug.lean"
-            # base source; if it does not exist at base (should not for a
-            # modified file) the comparison for it is simply skipped.
-            git -C base show "HEAD:$path" > "$PREP/src/base/$slug.lean" 2>/dev/null \
-              || rm -f "$PREP/src/base/$slug.lean"
-            printf 'modified\t%s\t%s\n' "$slug" "$path" >> "$PREP/manifest.tsv"
-            modules="$modules $(printf '%s' "$path" | sed -e 's/\.lean$//' -e 's#/#.#g')"
-          done
-          echo "modules=${modules# }" >> "$GITHUB_OUTPUT"
-          echo "Prepared $(grep -c . "$PREP/manifest.tsv") file(s); build targets:${modules}"
+          python3 gate/scripts/perf/manifest.py \
+            --files "$RUNNER_TEMP/files.json" --base base --head head \
+            --output "$RUNNER_TEMP/perf-manifest.json"
+          count=$(jq '[.[] | select(.kind != "removed")] | length' "$RUNNER_TEMP/perf-manifest.json")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          printf '[]\n' > "$RUNNER_TEMP/base-results.json"
+          printf '[]\n' > "$RUNNER_TEMP/head-results.json"
 
       - name: Install elan (trusted)
-        if: ${{ steps.files.outputs.none != '1' }}
+        if: ${{ steps.manifest.outputs.count != '0' }}
         run: |
           curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
-          chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
+          chmod +x elan-init.sh
+          ./elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install landrun (pinned + checksum) and self-test (fail closed)
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Install landrun and prove confinement (trusted, fail closed)
+        if: ${{ steps.manifest.outputs.count != '0' }}
         run: |
           set -euo pipefail
-          curl -sSL -H "Accept: application/octet-stream" \
+          curl -sSL -H 'Accept: application/octet-stream' \
             "https://github.com/Zouuup/landrun/releases/download/${LANDRUN_VER}/landrun-linux-amd64" -o landrun
           echo "${LANDRUN_SHA256}  landrun" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin"; install -m 0755 landrun "$HOME/.local/bin/landrun"
+          mkdir -p "$HOME/.local/bin"
+          install -m 0755 landrun "$HOME/.local/bin/landrun"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
-          landrun --version || true
           set +e
           landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo ok' >/dev/null 2>&1; ok=$?
           landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /etc/landrun-probe' >/dev/null 2>&1; wr=$?
           landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /dev/shm/landrun-probe' >/dev/null 2>&1; shm=$?
           landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
           set -e
-          echo "self-test: run=$ok write=$wr shm=$shm net=$net (nonzero = denied for w/shm/net)"
-          if [ $ok -ne 0 ] || [ $wr -eq 0 ] || [ $shm -eq 0 ] || [ $net -eq 0 ]; then
-            echo "::error::landrun not enforcing (run=$ok write=$wr shm=$shm net=$net); refusing to run PR code"; exit 1
+          echo "self-test: run=$ok write=$wr shm=$shm net=$net"
+          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$shm" -eq 0 ] || [ "$net" -eq 0 ]; then
+            echo '::error::landrun did not enforce; refusing to run candidate code'
+            exit 1
           fi
 
-      - name: Fetch Mathlib oleans (network, no token; no PR code)
-        if: ${{ steps.files.outputs.none != '1' }}
-        run: ( cd base && lake exe cache get ) && mkdir -p base/.lake/tmp
+      - name: Select and prove the host performance metric before candidate code
+        id: metric
+        run: |
+          set -euo pipefail
+          if perf stat -j -e instructions:u -o "$RUNNER_TEMP/perf-probe.json" -- true \
+               2>"$RUNNER_TEMP/perf-probe.err" \
+             && ! grep -Eq 'not supported|not counted|<not' "$RUNNER_TEMP/perf-probe.json"; then
+            mode=instructions
+            echo '::notice::using retired hardware instructions'
+          else
+            mode=cpu
+            /usr/bin/time --quiet \
+              --format '{"user_seconds":%U,"system_seconds":%S,"wall_seconds":%e}' \
+              --output "$RUNNER_TEMP/cpu-probe.json" -- true
+            python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert float(d["user_seconds"]) >= 0 and float(d["system_seconds"]) >= 0' \
+              "$RUNNER_TEMP/cpu-probe.json"
+            echo '::notice::retired instructions unavailable; using same-runner CPU time'
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
 
-      # Build the changed modules (their dependency cones) and measure every
-      # prepared source, entirely under landrun: offline, writes confined to
-      # base/.lake, and with no token in the passed --env list. This is the only
-      # phase that runs the PR's Lean code. Building is tolerant (|| true) so a
-      # file that fails to compile still yields a profile for the rest; the
-      # per-file measurement (scripts/profile/measure.sh) is tolerant too.
-      - name: Build changed modules and measure heartbeats (landrun, offline)
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Fetch immutable-base Mathlib oleans (network, no candidate code)
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        run: |
+          set -o pipefail
+          ( cd base && lake exe cache get ) 2>&1 | tee "$RUNNER_TEMP/base-cache.log"
+          mkdir -p base/.lake/tmp
+
+      - name: Fetch immutable-base Tau Ceti oleans (network, no candidate code)
+        id: tauceti_cache
+        if: ${{ steps.manifest.outputs.count != '0' }}
         env:
-          LAKE_NO_CACHE: "true"
-          MODULES: ${{ steps.prep.outputs.modules }}
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PUBLIC_ARTIFACT_ENDPOINT" ] || [ -z "$PUBLIC_REVISION_ENDPOINT" ]; then
+            echo 'enabled=0' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          config="$RUNNER_TEMP/lake-cache.toml"
+          cat > "$config" <<TOML
+          cache.defaultService = "tauceti-public"
+          [[cache.service]]
+          name = "tauceti-public"
+          kind = "s3"
+          artifactEndpoint = "$PUBLIC_ARTIFACT_ENDPOINT"
+          revisionEndpoint = "$PUBLIC_REVISION_ENDPOINT"
+          TOML
+          cache_dir="$PWD/base/.lake/cache"
+          fail_re='failed to download|output lookup failed|curl exited with code|downloaded artifact hash mismatch'
+          discard_cache() {
+            [ -e "$cache_dir" ] || return 0
+            if mv "$cache_dir" "$cache_dir.discard.$$" 2>/dev/null; then
+              rm -rf "$cache_dir.discard.$$" 2>/dev/null || true
+            else
+              rm -rf "$cache_dir" 2>/dev/null || true
+            fi
+            return 0
+          }
+          clean=0
+          for attempt in 1 2 3 4 5 6; do
+            discard_cache
+            log="$RUNNER_TEMP/tauceti-cache-$attempt.log"
+            rc=0
+            ( cd base && LAKE_CONFIG="$config" LAKE_CACHE_DIR="$cache_dir" \
+                lake cache get --service tauceti-public --repo TauCetiProject/TauCeti ) \
+                >"$log" 2>&1 || rc=$?
+            cat "$log"
+            if [ "$rc" = 0 ] && ! grep -qE "$fail_re" "$log"; then
+              clean=1
+              break
+            fi
+            [ "$attempt" = 6 ] || sleep 10
+          done
+          if [ "$clean" = 1 ]; then
+            {
+              echo 'enabled=1'
+              echo "dir=$cache_dir"
+            } >> "$GITHUB_OUTPUT"
+            {
+              echo 'LAKE_ARTIFACT_CACHE=true'
+              echo 'LAKE_RESTORE_ARTIFACTS=true'
+              echo "LAKE_CACHE_DIR=$cache_dir"
+            } >> "$GITHUB_ENV"
+          else
+            discard_cache
+            echo 'enabled=0' >> "$GITHUB_OUTPUT"
+            echo '::warning::Tau Ceti artifact cache unavailable; measuring from source'
+          fi
+
+      - name: Prepare immutable-base read-only Lean watchdog toolchain
+        id: base_watchdog
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          real_lean=$(cd base && elan which lean)
+          watchdog="$RUNNER_TEMP/lean-watchdog-base"
+          bash gate/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
+          echo "path=$watchdog" >> "$GITHUB_OUTPUT"
+
+      # Host perf owns RUNNER_TEMP and wraps landrun. The raw files are not in
+      # any landrun mount, while all Lean/Lake execution is inside landrun.
+      - name: Measure base modules (host metric around offline landrun)
+        id: base_perf
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        continue-on-error: true
+        env:
+          LAKE_NO_CACHE: 'true'
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          python3 gate/scripts/perf/measure.py --root base \
+            --watchdog-toolchain '${{ steps.base_watchdog.outputs.path }}' \
+            --metric '${{ steps.metric.outputs.mode }}' \
+            --manifest "$RUNNER_TEMP/perf-manifest.json" --side base \
+            --raw-dir "$RUNNER_TEMP/perf-raw/base" \
+            --output "$RUNNER_TEMP/base-results.json"
+
+      - name: Prepare isolated head build state (trusted)
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        run: |
+          set -euo pipefail
+          rm -rf head/.lake
+          if [ '${{ steps.pins.outputs.changed }}' = 1 ]; then
+            ( cd head && lake exe cache get ) 2>&1 | tee "$RUNNER_TEMP/head-cache.log"
+            mkdir -p head/.lake/tmp
+            {
+              echo 'LAKE_ARTIFACT_CACHE=false'
+              echo 'LAKE_RESTORE_ARTIFACTS=false'
+              echo 'LAKE_CACHE_DIR='
+            } >> "$GITHUB_ENV"
+          else
+            # Base measurements are complete and base/.lake is never trusted or
+            # executed again. A hardlink clone therefore reuses its large public
+            # artifact set without a multi-minute copy. Candidate writes may
+            # affect those retired base-cache inodes, but cannot reach the raw
+            # base result in RUNNER_TEMP or any trusted scripts/config.
+            cp -al base/.lake head/.lake
+            if [ '${{ steps.tauceti_cache.outputs.enabled }}' = 1 ]; then
+              echo "LAKE_CACHE_DIR=$PWD/head/.lake/cache" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - name: Prepare candidate read-only Lean watchdog toolchain
+        id: head_watchdog
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          real_lean=$(cd head && elan which lean)
+          watchdog="$RUNNER_TEMP/lean-watchdog-head"
+          bash gate/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
+          echo "path=$watchdog" >> "$GITHUB_OUTPUT"
+
+      # Prepare these writable sandbox inputs before any candidate code runs in
+      # head/.lake. They are advisory only; after measurement their logs are
+      # copied out with O_NOFOLLOW before the trusted renderer reads them.
+      - name: Prepare advisory heartbeat sources (trusted)
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        continue-on-error: true
+        run: |
+          python3 gate/scripts/perf/manifest.py \
+            --files "$RUNNER_TEMP/files.json" --base base --head head \
+            --output "$RUNNER_TEMP/perf-manifest.json" \
+            --heartbeat-dir head/.lake/tmp/profile
+
+      - name: Measure head modules (host metric around offline landrun)
+        id: head_perf
+        if: ${{ steps.manifest.outputs.count != '0' }}
+        continue-on-error: true
+        env:
+          LAKE_NO_CACHE: 'true'
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          python3 gate/scripts/perf/measure.py --root head \
+            --watchdog-toolchain '${{ steps.head_watchdog.outputs.path }}' \
+            --metric '${{ steps.metric.outputs.mode }}' \
+            --manifest "$RUNNER_TEMP/perf-manifest.json" --side head \
+            --raw-dir "$RUNNER_TEMP/perf-raw/head" \
+            --output "$RUNNER_TEMP/head-results.json"
+
+      - name: Evaluate required performance budgets (trusted, fail closed)
+        id: report
+        continue-on-error: true
+        run: |
+          python3 gate/scripts/perf/report.py \
+            --metric '${{ steps.metric.outputs.mode }}' \
+            --manifest "$RUNNER_TEMP/perf-manifest.json" \
+            --base "$RUNNER_TEMP/base-results.json" \
+            --head "$RUNNER_TEMP/head-results.json" \
+            --output performance.md \
+            --run-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      # Advisory heartbeat profile remains available, but it has no bearing on
+      # the required perf status. It executes under the same landrun + watchdog.
+      - name: Measure advisory heartbeats (landrun, offline)
+        id: heartbeats
+        if: ${{ steps.manifest.outputs.count != '0' && steps.head_perf.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          LAKE_NO_CACHE: 'true'
+          WATCHDOG_TOOLCHAIN: ${{ steps.head_watchdog.outputs.path }}
         run: |
           export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
           landrun --rox /usr --rox /etc \
             --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
-            --rox "$HOME/.elan" --rox "$PWD/base" --rw "$PWD/base/.lake" \
-            --env PATH --env HOME --env CI --env LAKE_NO_CACHE --env MODULES \
-            -- bash -euxo pipefail -c 'cd base && lake build $MODULES || true; exec bash scripts/profile/measure.sh .lake/tmp/profile'
+            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
+            --rox "$PWD/head" --rw "$PWD/head/.lake" \
+            --env PATH --env HOME --env CI --env LAKE_NO_CACHE --env WATCHDOG_TOOLCHAIN \
+            -- bash -euo pipefail -c 'cd head && exec bash scripts/profile/measure.sh .lake/tmp/profile'
 
-      - name: Render the profile comment (trusted; sandbox has exited)
-        id: render
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Safely collect heartbeat logs from the untrusted writable tree
+        id: collect_heartbeats
+        if: ${{ steps.heartbeats.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          python3 gate/scripts/perf/collect_heartbeats.py \
+            --lake-root head/.lake --manifest "$RUNNER_TEMP/perf-manifest.json" \
+            --output "$RUNNER_TEMP/collected-profile"
+
+      - name: Render advisory heartbeat profile (trusted)
+        if: ${{ steps.collect_heartbeats.outcome == 'success' }}
+        continue-on-error: true
         env:
-          PREP: ${{ github.workspace }}/base/.lake/tmp/profile
+          PREP: ${{ runner.temp }}/collected-profile
           OUTPUT: ${{ github.workspace }}/profile.md
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: python3 base/scripts/profile/render.py
+        run: python3 gate/scripts/profile/render.py
 
-      - name: Post or update the sticky profile comment
-        if: ${{ steps.files.outputs.none != '1' }}
+      - name: Post or update performance and heartbeat comments
+        if: ${{ always() && steps.pr.outputs.num != 'merge-group' }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
           NUM: ${{ steps.pr.outputs.num }}
         run: |
           set -euo pipefail
-          marker="<!-- proof-profile-comment -->"
-          existing=$(gh api "repos/$REPO/issues/$NUM/comments" --paginate \
-            --jq "[.[] | select(.body | startswith(\"$marker\"))] | first | .id // empty")
-          if [ -n "$existing" ]; then
-            jq -n --rawfile body profile.md '{body: $body}' \
-              | gh api -X PATCH "repos/$REPO/issues/comments/$existing" --input -
-            echo "Updated comment $existing on PR #$NUM."
+          update_comment() {
+            local marker="$1" file="$2" existing
+            [ -r "$file" ] || return 0
+            existing=$(gh api "repos/${{ github.repository }}/issues/$NUM/comments" --paginate \
+              --jq "[.[] | select(.body | startswith(\"$marker\"))] | first | .id // empty")
+            if [ -n "$existing" ]; then
+              jq -n --rawfile body "$file" '{body: $body}' \
+                | gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$existing" --input -
+            else
+              gh pr comment "$NUM" --repo '${{ github.repository }}' --body-file "$file"
+            fi
+          }
+          update_comment '<!-- lean-performance-comment -->' performance.md
+          update_comment '<!-- proof-profile-comment -->' profile.md
+
+      - name: Post terminal required perf status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.pr.outputs.status_sha }}
+          FILE_COUNT: ${{ steps.manifest.outputs.count }}
+          BASE_OUTCOME: ${{ steps.base_perf.outcome }}
+          HEAD_OUTCOME: ${{ steps.head_perf.outcome }}
+          REPORT_OUTCOME: ${{ steps.report.outcome }}
+          METRIC: ${{ steps.metric.outputs.mode }}
+        run: |
+          set -uo pipefail
+          if [ "$FILE_COUNT" = 0 ] && [ "$REPORT_OUTCOME" = success ]; then
+            state=success
+            description='no added or modified TauCeti Lean files'
+          elif [ "$BASE_OUTCOME" = success ] && [ "$HEAD_OUTCOME" = success ] && [ "$REPORT_OUTCOME" = success ]; then
+            state=success
+            description="wall-time and $METRIC budgets passed"
           else
-            gh pr comment "$NUM" --repo "$REPO" --body-file profile.md
-            echo "Posted profile comment on PR #$NUM."
+            state=failure
+            description='Lean performance gate failed (see run and report)'
           fi
+          posted=0
+          for attempt in 1 2 3; do
+            if gh api -X POST "repos/${{ github.repository }}/statuses/$SHA" \
+              -f state="$state" -f context=perf -f description="$description" \
+              -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'; then
+              posted=1
+              break
+            fi
+            [ "$attempt" = 3 ] || sleep $((attempt * 5))
+          done
+          [ "$posted" = 1 ] || { echo '::error::could not post terminal perf status'; exit 1; }
+          [ "$state" = success ]

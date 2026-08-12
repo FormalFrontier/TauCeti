@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.FiniteField
 public import Mathlib.RingTheory.Artinian.Module
+public import TauCeti.Algebra.MonoidAlgebra.Trace
 public import TauCeti.FieldTheory.Finite.FrobeniusFixed
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
 
@@ -26,7 +27,8 @@ proper extensions, and splitting can fail. What rules that out is the following 
 which is the whole content of the file.
 
 For any `u : K[G]`, the trace of the matrix `M` of left multiplication by `u` in the group basis
-is `|G|` times the coefficient of `u` at `1`, and over a finite field
+is `|G|` times the coefficient of `u` at `1` (`TauCeti.trace_leftMulMatrix_monoidAlgebra`), and
+over a finite field
 `Matrix.trace (M ^ |K|) = (Matrix.trace M) ^ |K|` (`FiniteField.trace_pow_card`). Since
 `a ^ |K| = a` in `K`, the coefficient at `1` is unchanged by raising to the `|K|`-th power, once
 `|G|` is invertible. Now apply this to `u = y * g⁻¹` for a *central* `y`: there
@@ -60,22 +62,6 @@ general finite coefficient field; the specialization to `ZMod p` at a good Dixon
 public section
 
 namespace TauCeti
-
-/-! ### The left regular matrix -/
-
-section Regular
-
-variable {k G : Type*} [CommSemiring k] [Group G] [Fintype G] [DecidableEq G]
-
-/-- **The regular trace reads off the coefficient at the identity.** Every diagonal entry of the
-left regular matrix of `u` is the coefficient of `u` at `1`, so the trace is `|G|` times it. -/
-theorem trace_leftMulMatrix_monoidAlgebra (u : MonoidAlgebra k G) :
-    Matrix.trace (Algebra.leftMulMatrix (MonoidAlgebra.basis G k) u) =
-      (Fintype.card G : k) * u.coeff 1 := by
-  simp [Matrix.trace, Matrix.diag, Algebra.leftMulMatrix_eq_repr_mul, MonoidAlgebra.basis,
-    Finset.card_univ]
-
-end Regular
 
 /-! ### Frobenius fixes the centre -/
 

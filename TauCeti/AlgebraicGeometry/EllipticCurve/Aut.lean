@@ -117,9 +117,7 @@ private lemma u_eq_one_or_eq_neg_one (hc4 : E.c₄ ≠ 0) (hc6 : E.c₆ ≠ 0) {
     have h := congrArg c₆ hCE
     rwa [variableChange_c₆, Units.val_inv_eq_inv_val, mul_eq_right₀ hc6, inv_pow, inv_eq_one] at h
   have hu2 : (C.u : K) * (C.u : K) = 1 := by linear_combination hu6 - (C.u : K) ^ 2 * hu4
-  rcases mul_self_eq_one_iff.mp hu2 with h | h
-  · exact .inl (Units.val_eq_one.mp h)
-  · exact .inr (Units.val_eq_neg_one.mp h)
+  exact (mul_self_eq_one_iff.mp hu2).imp Units.val_eq_one.mp Units.val_eq_neg_one.mp
 
 /-- If `c₄ ≠ 0` and `c₆ ≠ 0` then the only admissible changes of variables fixing `E` are `1` and
 `negVariableChange E`. This is the form of `Aut(E) = {±1}` phrased via `c₄, c₆` (equivalent to
@@ -158,7 +156,7 @@ injection — `c₄`, `c₆` by `map_c₄`/`map_c₆`, the fixing equation by
 theorem eq_one_or_eq_negVariableChange_of_c₄_ne_zero_of_c₆_ne_zero_of_smul_eq
     (hc4 : E.c₄ ≠ 0) (hc6 : E.c₆ ≠ 0) {C : VariableChange A} (hC : C • E = E) :
     C = 1 ∨ C = E.negVariableChange := by
-  set φ := algebraMap A (FractionRing A) with hφ
+  set φ := algebraMap A (FractionRing A)
   have hinj : Function.Injective φ := IsFractionRing.injective A (FractionRing A)
   have hC' : (C.map φ) • (E.map φ) = E.map φ := by
     rw [map_variableChange, hC]
@@ -179,7 +177,6 @@ theorem eq_one_or_eq_negVariableChange_of_smul_eq [E.IsElliptic] (hj₀ : E.j �
     C = 1 ∨ C = E.negVariableChange :=
   E.eq_one_or_eq_negVariableChange_of_c₄_ne_zero_of_c₆_ne_zero_of_smul_eq
     (E.j_eq_zero_iff.not.mp hj₀) (E.j_eq_1728_iff.not.mp hj₁₇₂₈) hC
-
 
 /-! ### The automorphism group -/
 

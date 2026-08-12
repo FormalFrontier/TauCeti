@@ -7,6 +7,7 @@ module
 public import Mathlib.LinearAlgebra.RootSystem.Finite.G2
 public import TauCeti.LinearAlgebra.RootSystem.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Orbit
 
 public section
 
@@ -51,6 +52,10 @@ the Cartan matrix of `A₁ × A₁`, of finite type but not irreducible.
   disjunction.
 * `TauCeti.isG2_of_hasCartanType_G2`: a base of type `G₂` makes its pairing Mathlib's
   `RootPairing.IsG2`.
+* `TauCeti.hasCartanType_G2_of_isG2`: **conversely, a base of an `IsG2` pairing is of type `G₂`**,
+  so the two conditions agree (`TauCeti.hasCartanType_G2_iff_isG2`). This is the direction that
+  needs the roots away from the base, and it closes the recognition step that Mathlib's `G₂` file
+  lists as a TODO.
 * `TauCeti.existsUnique_dynkinType_of_card_support_eq_one`: the rank-one case, which turns on the
   diagonal entry `2` alone and so needs neither finiteness, finite type nor irreducibility.
 
@@ -110,26 +115,31 @@ end DynkinType
 
 /-! ### The classification of matrices on at most two indices -/
 
-namespace IsFiniteType
-
-variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
-
 /-- **Entrywise agreement with a two-node matrix is four equations, and two of them are automatic.**
-The diagonal of a finite-type matrix is constant `2`, so only the two off-diagonal entries have to
-be matched by hand. -/
-private theorem forall_eq_of_apply_offDiag {C : Matrix (Fin 2) (Fin 2) ℤ} (h : IsFiniteType A)
-    (e : B ≃ Fin 2) (hC : ∀ i, C i i = 2)
+The two diagonal equations follow from the two matrices having constant diagonal `2`, so only the
+two off-diagonal entries have to be matched by hand. Like
+`TauCeti.existsUnique_dynkinType_of_card_eq_one`, this takes the diagonal equation itself rather
+than `TauCeti.IsFiniteType`, which is what the root-system-level callers have available. -/
+private theorem forall_eq_of_apply_offDiag {B : Type*} {A : Matrix B B ℤ}
+    {C : Matrix (Fin 2) (Fin 2) ℤ} (hA : ∀ i, A i i = 2) (e : B ≃ Fin 2) (hC : ∀ i, C i i = 2)
     (h01 : A (e.symm 0) (e.symm 1) = C 0 1) (h10 : A (e.symm 1) (e.symm 0) = C 1 0) (i j : B) :
     A i j = C (e i) (e j) := by
   suffices key : ∀ i j : Fin 2, A (e.symm i) (e.symm j) = C i j by simpa using key (e i) (e j)
   intro i j
   fin_cases i <;> fin_cases j
-  · simpa using (h.apply_self _).trans (hC 0).symm
+  · simpa using (hA _).trans (hC 0).symm
   · simpa using h01
   · simpa using h10
-  · simpa using (h.apply_self _).trans (hC 1).symm
+  · simpa using (hA _).trans (hC 1).symm
 
-end IsFiniteType
+private theorem exists_equiv_fin_two_apply_eq {B : Type*} [Fintype B]
+    (hcard : Fintype.card B = 2) {x y : B} (hxy : x ≠ y) :
+    ∃ e : B ≃ Fin 2, e x = 0 ∧ e y = 1 := by
+  let e₀ : B ≃ Fin 2 := Fintype.equivFinOfCardEq hcard
+  let e : B ≃ Fin 2 := e₀.trans (Equiv.swap (e₀ x) 0)
+  have hx : e x = 0 := by simp [e]
+  refine ⟨e, hx, Fin.eq_one_of_ne_zero _ fun hy ↦ ?_⟩
+  exact hxy (e.injective (hx.trans hy.symm))
 
 namespace Matrix
 
@@ -203,7 +213,7 @@ theorem existsUnique_dynkinType_of_card_eq_two (h : IsFiniteType A) (hcard : Fin
       have h01 : A x y = -1 := by omega
       have h10 : A y x = -1 := by omega
       rw [DynkinType.cartanMatrix_A_two_eq]
-      exact h.forall_eq_of_apply_offDiag e₀ (by decide) (by rw [← hx, ← hy, h01]; decide)
+      exact forall_eq_of_apply_offDiag h.apply_self e₀ (by decide) (by rw [← hx, ← hy, h01]; decide)
         (by rw [← hx, ← hy, h10]; decide)
     · rw [hp] at hsum
       have hchoice : A x y = -1 ∨ A x y = -2 := by omega
@@ -212,28 +222,28 @@ theorem existsUnique_dynkinType_of_card_eq_two (h : IsFiniteType A) (hcard : Fin
         have h10 : A y x = -2 := by rw [hc] at hp; omega
         refine ⟨.B 2, Or.inr (Or.inl rfl), e₁, ?_⟩
         rw [DynkinType.cartanMatrix_B_two_eq]
-        exact h.forall_eq_of_apply_offDiag e₁ (by decide) (by rw [he₁0, he₁1, h10]; decide)
-          (by rw [he₁0, he₁1, hc]; decide)
+        exact forall_eq_of_apply_offDiag h.apply_self e₁ (by decide)
+          (by rw [he₁0, he₁1, h10]; decide) (by rw [he₁0, he₁1, hc]; decide)
       · have h10 : A y x = -1 := by rw [hc] at hp; omega
         refine ⟨.B 2, Or.inr (Or.inl rfl), e₀, ?_⟩
         rw [DynkinType.cartanMatrix_B_two_eq]
-        exact h.forall_eq_of_apply_offDiag e₀ (by decide) (by rw [← hx, ← hy, hc]; decide)
-          (by rw [← hx, ← hy, h10]; decide)
+        exact forall_eq_of_apply_offDiag h.apply_self e₀ (by decide)
+          (by rw [← hx, ← hy, hc]; decide) (by rw [← hx, ← hy, h10]; decide)
     · rw [hp] at hsum
       have hchoice : A x y = -1 ∨ A x y = -2 ∨ A x y = -3 := by omega
       rcases hchoice with hc | hc | hc
       · have h10 : A y x = -3 := by rw [hc] at hp; omega
         refine ⟨.G2, Or.inr (Or.inr rfl), e₀, ?_⟩
         rw [DynkinType.cartanMatrix_G2_eq]
-        exact h.forall_eq_of_apply_offDiag e₀ (by decide) (by rw [← hx, ← hy, hc]; decide)
-          (by rw [← hx, ← hy, h10]; decide)
+        exact forall_eq_of_apply_offDiag h.apply_self e₀ (by decide)
+          (by rw [← hx, ← hy, hc]; decide) (by rw [← hx, ← hy, h10]; decide)
       · exact absurd hp (by rw [hc]; omega)
       · -- The short root is at `y`, so the relabelling has to reverse the two nodes.
         have h10 : A y x = -1 := by rw [hc] at hp; omega
         refine ⟨.G2, Or.inr (Or.inr rfl), e₁, ?_⟩
         rw [DynkinType.cartanMatrix_G2_eq]
-        exact h.forall_eq_of_apply_offDiag e₁ (by decide) (by rw [he₁0, he₁1, h10]; decide)
-          (by rw [he₁0, he₁1, hc]; decide)
+        exact forall_eq_of_apply_offDiag h.apply_self e₁ (by decide)
+          (by rw [he₁0, he₁1, h10]; decide) (by rw [he₁0, he₁1, hc]; decide)
   -- Uniqueness is the general fact that a matrix has at most one valid Dynkin type.
   obtain ⟨t, ht, et, het⟩ := hex
   have htv : t.Valid := by rcases ht with rfl | rfl | rfl <;> simp
@@ -278,15 +288,12 @@ theorem cartanMatrix_ne_zero_of_card_support_eq_two [Finite ι] [CharZero R] [Is
   -- Every index is `i` or `j`, so the indices reachable from `j` form the singleton `{j}`;
   -- irreducibility makes every index reachable, so `i = j`.
   have hcard : Fintype.card b.support = 2 := by simpa using hb
-  set e : b.support ≃ Fin 2 := Fintype.equivFinOfCardEq hcard with he
+  obtain ⟨e, hei, hej⟩ := exists_equiv_fin_two_apply_eq hcard hij
   have hmem (k : b.support) : k = i ∨ k = j := by
     have h2 : ∀ m : Fin 2, m = 0 ∨ m = 1 := by decide
-    rcases h2 (e i) with hi | hi <;> rcases h2 (e j) with hj | hj <;>
-      rcases h2 (e k) with hk | hk <;>
-      first
-        | exact absurd (e.injective (hi.trans hj.symm)) hij
-        | exact Or.inl (e.injective (hk.trans hi.symm))
-        | exact Or.inr (e.injective (hk.trans hj.symm))
+    rcases h2 (e k) with hk | hk
+    · exact Or.inl (e.injective (hk.trans hei.symm))
+    · exact Or.inr (e.injective (hk.trans hej.symm))
   have hreach : ∀ k : b.support, k = j := fun k ↦
     b.induction_on_cartanMatrix (p := fun m ↦ m = j) (i := j) (j := k) rfl (by
       rintro u v rfl huv
@@ -319,8 +326,8 @@ theorem hasCartanType_of_card_support_eq_two [Finite ι] [CharZero R] [IsDomain 
 /-- **A base of Cartan type `G₂` makes its root pairing Mathlib's `RootPairing.IsG2`.** The entry
 `-3` of the standard `G₂` Cartan matrix is the pairing of two simple roots, which is exactly the
 datum `RootPairing.IsG2` asks for; `RootPairing.IsG2.card_base_support_eq_two` is the matching fact
-that an `IsG2` pairing has a rank-two base. The converse implication is not proved here: excluding
-type `A₂` needs the pairings of *all* roots, not only of the simple ones. -/
+that an `IsG2` pairing has a rank-two base. `TauCeti.hasCartanType_G2_of_isG2` is the converse, and
+needs more: excluding type `A₂` turns on the pairings of *all* roots, not only the simple ones. -/
 theorem isG2_of_hasCartanType_G2 [P.IsReduced] [P.IsIrreducible] {b : P.Base}
     (h : HasCartanType P b .G2) : P.IsG2 := by
   obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
@@ -331,6 +338,96 @@ theorem isG2_of_hasCartanType_G2 [P.IsReduced] [P.IsIrreducible] {b : P.Base}
   have hentry := he (e.symm 1) (e.symm 0)
   rw [Equiv.apply_symm_apply, Equiv.apply_symm_apply] at hentry
   simpa [RootPairing.Base.cartanMatrixIn_def] using hentry
+
+/-- **An `IsG2` root pairing has Cartan type `G₂`.** This is the converse of
+`TauCeti.isG2_of_hasCartanType_G2`, and it is the harder direction, because `RootPairing.IsG2` asks
+only that *some* pair of roots pair to `-3`, while the conclusion is about the two simple roots of
+the given base.
+
+The bridge is root length. A pair of roots pairing to `-3` has its transposed pairing `-1`, so the
+two differ in squared length by the factor `3`; every root has the length of a simple root
+(`TauCeti.RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq`), so two of the simple
+roots already differ by that factor, and reading the ratio back off the Cartan matrix makes their
+two off-diagonal entries `-3` and `-1`. Since the base has two elements, these entries and the
+diagonal entries `2` identify its Cartan matrix with the standard matrix of `G₂`. -/
+theorem hasCartanType_G2_of_isG2 [Finite ι] [CharZero R] [IsDomain R]
+    (hG2 : P.IsG2) (b : P.Base) : HasCartanType P b .G2 := by
+  classical
+  have _i : Fintype ι := Fintype.ofFinite ι
+  have hcard : b.support.card = 2 := RootPairing.IsG2.card_base_support_eq_two b
+  set Bf := P.posRootForm ℤ
+  have _iEmbeddedG2 : P.EmbeddedG2 := RootPairing.IsG2.toEmbeddedG2 P
+  have hkl := RootPairing.EmbeddedG2.pairingIn_long_short (P := P)
+  have hlk := RootPairing.EmbeddedG2.pairingIn_short_long (P := P)
+  -- So the two differ in squared length by the factor three.
+  have hkl_len : Bf.rootLength (RootPairing.EmbeddedG2.long P) =
+      3 * Bf.rootLength (RootPairing.EmbeddedG2.short P) := by
+    have hswap := Bf.pairingIn_mul_eq_pairingIn_mul_swap
+      (RootPairing.EmbeddedG2.long P) (RootPairing.EmbeddedG2.short P)
+    rw [hkl, hlk] at hswap
+    omega
+  -- Every root has the length of a simple root, so two simple roots already differ by that factor.
+  obtain ⟨p, hp, hpk⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b
+    (RootPairing.EmbeddedG2.long P)
+  obtain ⟨q, hq, hql⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b
+    (RootPairing.EmbeddedG2.short P)
+  have hpos : 0 < Bf.rootLength q := Bf.rootLength_pos q
+  have hlen : Bf.rootLength p = 3 * Bf.rootLength q := by omega
+  have hpq : p ≠ q := by rintro rfl; omega
+  have hne : (⟨p, hp⟩ : b.support) ≠ ⟨q, hq⟩ := fun hc ↦ hpq (congrArg Subtype.val hc)
+  -- Reading the ratio back off the Cartan matrix makes the two pairings `-3` and `-1`.
+  have hratio : P.pairingIn ℤ p q = 3 * P.pairingIn ℤ q p := by
+    have hswap := Bf.pairingIn_mul_eq_pairingIn_mul_swap p q
+    rw [hlen] at hswap
+    refine (mul_right_cancel₀ hpos.ne' ?_).symm
+    rw [← hswap]; ring
+  have hnz : P.pairingIn ℤ q p ≠ 0 := by
+    have hzero := cartanMatrix_ne_zero_of_card_support_eq_two b hcard hne.symm
+    simpa only [RootPairing.Base.cartanMatrixIn_def] using hzero
+  have hqp : P.pairingIn ℤ q p = -1 := by
+    have hmem := P.pairingIn_pairingIn_mem_set_of_isCrystal_of_isRed p q
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, Prod.mk.injEq] at hmem
+    have hunit : P.pairingIn ℤ q p = 1 ∨ P.pairingIn ℤ q p = -1 := by omega
+    rcases hunit with h1 | h1
+    · have hnonpos := b.cartanMatrix_le_zero_of_ne ⟨q, hq⟩ ⟨p, hp⟩ hne.symm
+      simp only [RootPairing.Base.cartanMatrixIn_def] at hnonpos
+      omega
+    · exact h1
+  have hpq' : P.pairingIn ℤ p q = -3 := by rw [hratio, hqp]; norm_num
+  -- The two chosen simple roots exhaust the base, and their order gives the standard `G₂` matrix.
+  let p' : b.support := ⟨p, hp⟩
+  let q' : b.support := ⟨q, hq⟩
+  have hcard' : Fintype.card b.support = 2 := by simp [hcard]
+  -- Relabel so that the short root `q'` sits at node `0` and the long root `p'` at node `1`, the
+  -- Bourbaki orientation of the standard `G₂` matrix.
+  obtain ⟨e, heq, hep⟩ := exists_equiv_fin_two_apply_eq hcard' hne.symm
+  have hsymm0 : e.symm 0 = q' := by rw [← heq, Equiv.symm_apply_apply]
+  have hsymm1 : e.symm 1 = p' := by rw [← hep, Equiv.symm_apply_apply]
+  -- Only the two off-diagonal entries are left to match, the diagonal being constant `2`.
+  rw [hasCartanType_iff]
+  refine ⟨e, fun i j ↦ ?_⟩
+  rw [DynkinType.cartanMatrix_G2_eq]
+  refine forall_eq_of_apply_offDiag b.cartanMatrix_apply_same e (by decide) ?_ ?_ i j
+  · -- Expose the Cartan entry as `pairingIn`, the form in which `hqp` is stated.
+    rw [hsymm0, hsymm1]
+    calc
+      b.cartanMatrix q' p' = P.pairingIn ℤ q p := RootPairing.Base.cartanMatrixIn_def _ _ _ _
+      _ = _ := by rw [hqp]; decide
+  · -- Expose the Cartan entry as `pairingIn`, the form in which `hpq'` is stated.
+    rw [hsymm0, hsymm1]
+    calc
+      b.cartanMatrix p' q' = P.pairingIn ℤ p q := RootPairing.Base.cartanMatrixIn_def _ _ _ _
+      _ = _ := by rw [hpq']; decide
+
+/-- **Cartan type `G₂` and Mathlib's `RootPairing.IsG2` are the same condition.** The right-hand
+side does not mention the base, so an irreducible reduced crystallographic finite root pairing with
+one base of type `G₂` has every base of type `G₂`. The `IsG2` hypothesis of
+`TauCeti.hasCartanType_G2_of_isG2` is taken as an argument rather than as an instance, so that it
+can be supplied by the right-hand side here. -/
+@[simp] theorem hasCartanType_G2_iff_isG2 [Finite ι] [CharZero R] [IsDomain R]
+    [P.IsReduced] [P.IsIrreducible] (b : P.Base) :
+    HasCartanType P b .G2 ↔ P.IsG2 :=
+  ⟨isG2_of_hasCartanType_G2, fun h ↦ hasCartanType_G2_of_isG2 h b⟩
 
 /-- **A pairing with a single simple root is of type `A₁`.** Neither finiteness nor irreducibility
 is needed, nor even that the pairing is a root system: the Cartan matrix is the `1 × 1` matrix `[2]`

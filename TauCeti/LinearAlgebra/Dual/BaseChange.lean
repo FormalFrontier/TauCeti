@@ -18,6 +18,8 @@ extension.
 ## Main declarations
 
 * `TauCeti.Module.Dual.baseChangeEvaluation`: the canonical scalar-extended evaluation map.
+* `TauCeti.Module.Dual.baseChangeEvaluation_one_tmul`: evaluation at a scalar-extended
+  functional with coefficient one is its base change.
 * `TauCeti.Module.Dual.baseChangeEvaluation_tmul`: its value on two pure tensors.
 * `TauCeti.Module.Dual.baseChange_coord`: base-changed dual basis elements recover the
   coordinates in the base-changed basis.
@@ -44,6 +46,12 @@ This map requires no finiteness hypothesis and is not asserted to be an equivale
 def baseChangeEvaluation :
     A ⊗[R] Module.Dual R M →ₗ[A] Module.Dual A (A ⊗[R] M) :=
   (Module.Dual.baseChange A).liftBaseChange A
+
+/-- Evaluating at the pure tensor `1 ⊗ φ` is the base change of `φ`. -/
+theorem baseChangeEvaluation_one_tmul (φ : Module.Dual R M) :
+    baseChangeEvaluation (R := R) (M := M) (A := A) (1 ⊗ₜ[R] φ) =
+      Module.Dual.baseChange A φ := by
+  simp only [baseChangeEvaluation, LinearMap.liftBaseChange_tmul, one_smul]
 
 /-- On pure tensors, scalar-extended evaluation is
 `⟨a ⊗ φ, b ⊗ m⟩ = a * b * algebraMap R A (φ m)`. -/

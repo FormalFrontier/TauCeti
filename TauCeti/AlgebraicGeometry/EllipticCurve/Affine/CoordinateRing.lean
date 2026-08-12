@@ -317,12 +317,66 @@ private noncomputable def conjFunctionField :
     W.FunctionField ≃ₐ[F[X]] W.FunctionField :=
   IsFractionRing.algEquivOfAlgEquiv (CoordinateRing.conj W)
 
+/-- **The trace and the norm of an integral quotient are divisible by the denominator.** For
+`w = b / d` with `b` in the coordinate ring and `d` in `F[X]`, writing `b = p + q Y` in the basis,
+`d` divides the trace `2p - q(a₁X + a₃)` of `b`, and `d²` divides its norm
+`p² - pq(a₁X + a₃) - q²(X³ + a₂X² + a₄X + a₆)`.
+
+Ellipticity of `W` is not needed for this computation, and is not assumed. It enters only in the
+divisibility argument that consumes these two facts. -/
+private theorem dvd_trace_and_sq_dvd_norm {b : W.CoordinateRing} {d p q : F[X]}
+    (hd0 : d ≠ 0) (hpq : p • (1 : W.CoordinateRing) + q • mk W Y = b)
+    (hz : IsIntegral F[X] (algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d)) :
+    d ∣ 2 * p - q * (C W.a₁ * X + C W.a₃) ∧
+      d ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+  set σ := conjFunctionField W with hσ
+  have hmap : ∀ r : F[X], algebraMap F[X] W.FunctionField r =
+      algebraMap W.CoordinateRing W.FunctionField (algebraMap F[X] W.CoordinateRing r) := fun r =>
+    IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField r
+  have hσz : σ (algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d) =
+      algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.conj W b) /
+        algebraMap F[X] W.FunctionField d := by
+    rw [map_div₀, hσ, conjFunctionField, IsFractionRing.algEquivOfAlgEquiv_algebraMap,
+      AlgEquiv.commutes]
+  have hσzi : IsIntegral F[X] (σ (algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d)) := hz.map (σ : W.FunctionField →ₐ[F[X]] W.FunctionField)
+  refine ⟨dvd_of_isIntegral_div (L := W.FunctionField) hd0 ?_,
+    dvd_of_isIntegral_div (L := W.FunctionField) (pow_ne_zero 2 hd0) ?_⟩
+  · have hadd : p • (1 : W.CoordinateRing) + q • mk W Y +
+        CoordinateRing.conj W (p • 1 + q • mk W Y) =
+        algebraMap F[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
+      simpa only [AdjoinRoot.mk_X, map_add, map_smul, map_one, CoordinateRing.conj_mk_Y,
+        AdjoinRoot.smul_mk] using CoordinateRing.add_negPolynomial_smul_basis W p q
+    have : algebraMap F[X] W.FunctionField (2 * p - q * (C W.a₁ * X + C W.a₃)) /
+        algebraMap F[X] W.FunctionField d =
+        algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d +
+          σ (algebraMap W.CoordinateRing W.FunctionField b /
+            algebraMap F[X] W.FunctionField d) := by
+      rw [hσz, ← add_div, ← map_add, hmap, ← hpq, hadd]
+    rw [this]
+    exact hz.add hσzi
+  · have hnorm : Algebra.norm F[X] b = p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+      rw [← hpq, norm_smul_basis]
+    have : algebraMap F[X] W.FunctionField (p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) /
+        algebraMap F[X] W.FunctionField (d ^ 2) =
+        (algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d) *
+          σ (algebraMap W.CoordinateRing W.FunctionField b /
+            algebraMap F[X] W.FunctionField d) := by
+      rw [hσz, div_mul_div_comm, ← map_mul, ← hnorm, CoordinateRing.mul_conj, ← hmap,
+        map_pow, pow_two]
+    rw [this]
+    exact hz.mul hσzi
+
 /-- Every element of the function field of an elliptic curve that is integral over `F[X]` already
 lies in the coordinate ring. -/
 private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
     (hz : IsIntegral F[X] z) :
     ∃ b : W.CoordinateRing, algebraMap W.CoordinateRing W.FunctionField b = z := by
-  set σ := conjFunctionField W with hσ
   -- write `z = b / d` with `b` in the coordinate ring and `d` in `F[X]`
   obtain ⟨b₁, b₂, hb₂, rfl⟩ := IsFractionRing.div_surjective (A := W.CoordinateRing) z
   have hb₂0 : b₂ ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp hb₂
@@ -352,45 +406,7 @@ private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
   rw [hzeq] at hz ⊢
   -- the trace and the norm of `z`
   obtain ⟨p, q, hpq⟩ := exists_smul_basis_eq b
-  have hσz : σ (algebraMap W.CoordinateRing W.FunctionField b /
-      algebraMap F[X] W.FunctionField d) =
-      algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.conj W b) /
-        algebraMap F[X] W.FunctionField d := by
-    rw [map_div₀, hσ, conjFunctionField, IsFractionRing.algEquivOfAlgEquiv_algebraMap,
-      AlgEquiv.commutes]
-  have hσzi : IsIntegral F[X] (σ (algebraMap W.CoordinateRing W.FunctionField b /
-      algebraMap F[X] W.FunctionField d)) := hz.map (σ : W.FunctionField →ₐ[F[X]] W.FunctionField)
-  have htr : d ∣ 2 * p - q * (C W.a₁ * X + C W.a₃) := by
-    refine dvd_of_isIntegral_div (L := W.FunctionField) hd0 ?_
-    have hadd : p • (1 : W.CoordinateRing) + q • mk W Y +
-        CoordinateRing.conj W (p • 1 + q • mk W Y) =
-        algebraMap F[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
-      simpa only [AdjoinRoot.mk_X, map_add, map_smul, map_one, CoordinateRing.conj_mk_Y,
-        AdjoinRoot.smul_mk] using CoordinateRing.add_negPolynomial_smul_basis W p q
-    have : algebraMap F[X] W.FunctionField (2 * p - q * (C W.a₁ * X + C W.a₃)) /
-        algebraMap F[X] W.FunctionField d =
-        algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d +
-          σ (algebraMap W.CoordinateRing W.FunctionField b /
-            algebraMap F[X] W.FunctionField d) := by
-      rw [hσz, ← add_div, ← map_add, hmap, ← hpq, hadd]
-    rw [this]
-    exact hz.add hσzi
-  have hnm : d ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
-      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
-    refine dvd_of_isIntegral_div (L := W.FunctionField) (pow_ne_zero 2 hd0) ?_
-    have hnorm : Algebra.norm F[X] b = p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
-        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
-      rw [← hpq, norm_smul_basis]
-    have : algebraMap F[X] W.FunctionField (p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
-        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) /
-        algebraMap F[X] W.FunctionField (d ^ 2) =
-        (algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d) *
-          σ (algebraMap W.CoordinateRing W.FunctionField b /
-            algebraMap F[X] W.FunctionField d) := by
-      rw [hσz, div_mul_div_comm, ← map_mul, ← hnorm, CoordinateRing.mul_conj, ← hmap,
-        map_pow, pow_two]
-    rw [this]
-    exact hz.mul hσzi
+  obtain ⟨htr, hnm⟩ := dvd_trace_and_sq_dvd_norm W hd0 hpq hz
   -- conclude
   obtain ⟨hdp, hdq⟩ := dvd_and_dvd W d p q hd0 htr hnm
   obtain ⟨p', rfl⟩ := hdp

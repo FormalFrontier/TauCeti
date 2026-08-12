@@ -8,6 +8,7 @@ public import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
 public import Mathlib.Data.Finset.Lattice.Fold
 
 import Mathlib.Analysis.Real.Sqrt
+import TauCeti.Analysis.Complex.UpperHalfPlane.Rho
 
 /-!
 # The singular sets on the boundary contour
@@ -29,13 +30,16 @@ dominates every vertical point.
 * `TauCeti.ModularForm.neg_one_div_mem_arcSingularSet` (inversion closure).
 * `TauCeti.ModularForm.sub_one_mem_verticalSingularSet` and
   `TauCeti.ModularForm.add_one_mem_verticalSingularSet` (translation pairing).
+* `TauCeti.ModularForm.neg_conj_mem_arcSingularSet_union_verticalSingularSet` (closure of the
+  union under the vertical reflection `z ↦ -conj z`, through the two closures above).
 * `TauCeti.ModularForm.exists_height_bound` (a height above `√3/2` and `1` dominating `S`).
 
 ## References
 
 * [AINTLIB `LeanModularForms`](https://github.com/CBirkbeck/AINTLIB) — the valence-formula
   development (`ForMathlib/ValenceFormula/PVChain/Helpers.lean`) this file ports onto the
-  current Mathlib pin.
+  current Mathlib pin; the reflection and union closure lemmas adapt the per-part closure
+  bookkeeping of `ForMathlib/ValenceFormula/PVChain/Assembly.lean`.
 -/
 
 public section
@@ -62,23 +66,6 @@ noncomputable def verticalSingularSet (S : Finset ℍ) : Finset ℂ :=
     (S.filter fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖).image ((↑·) : ℍ → ℂ) ∪
     (S.filter fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖).image
       (fun p : ℍ ↦ (p : ℂ) + 1)
-
-private lemma rho_ne_zero : (ρ : ℂ) ≠ 0 := fun h0 ↦ by
-  simpa [h0] using UpperHalfPlane.norm_ρ
-
-/-- The inversion carries `ρ` to `ρ + 1`. -/
-private lemma neg_one_div_rho : -1 / (ρ : ℂ) = (ρ : ℂ) + 1 := by
-  rw [div_eq_iff rho_ne_zero]
-  linear_combination -UpperHalfPlane.ρ_sq
-
-private lemma rho_add_one_ne_zero : (ρ : ℂ) + 1 ≠ 0 := by
-  rw [← neg_one_div_rho]
-  exact div_ne_zero (by norm_num) rho_ne_zero
-
-/-- The inversion carries `ρ + 1` to `ρ`. -/
-private lemma neg_one_div_rho_add_one : -1 / ((ρ : ℂ) + 1) = (ρ : ℂ) := by
-  rw [div_eq_iff rho_add_one_ne_zero]
-  linear_combination -UpperHalfPlane.ρ_sq
 
 /-- Membership in the arc singular set, by branch: an original unit-norm point, an inversion
 image, or one of the two corners. -/
@@ -146,7 +133,7 @@ theorem norm_eq_one_of_mem_arcSingularSet {S : Finset ℍ} {s : ℂ}
   · exact hp_norm
   · rw [norm_div, norm_neg, norm_one, hp_norm, div_one]
   · exact UpperHalfPlane.norm_ρ
-  · rw [← neg_one_div_rho, norm_div, norm_neg, norm_one, UpperHalfPlane.norm_ρ, div_one]
+  · exact UpperHalfPlane.norm_ρ_add_one
 
 /-- The arc singular set is closed under the inversion `z ↦ -1/z`. -/
 theorem neg_one_div_mem_arcSingularSet {S : Finset ℍ} {s : ℂ}
@@ -161,8 +148,8 @@ theorem neg_one_div_mem_arcSingularSet {S : Finset ℍ} {s : ℂ}
       rw [h0] at hp
       simpa using hp.2
     field_simp
-  · exact Or.inr (Or.inr neg_one_div_rho)
-  · exact Or.inr (Or.inl neg_one_div_rho_add_one)
+  · exact Or.inr (Or.inr UpperHalfPlane.neg_one_div_ρ)
+  · exact Or.inr (Or.inl UpperHalfPlane.neg_one_div_ρ_add_one)
 
 /-- Every point of the vertical singular set lies on one of the two vertical lines. -/
 theorem re_eq_of_mem_verticalSingularSet {S : Finset ℍ} {s : ℂ}
@@ -208,6 +195,43 @@ theorem add_one_mem_verticalSingularSet {S : Finset ℍ} {s : ℂ}
   · exact Or.inr ⟨p, hp, rfl⟩
   · rw [add_re, one_re, hp.2.1] at hre
     norm_num at hre
+
+/-- The arc singular set is closed under the reflection `z ↦ -conj z` that exchanges the two
+verticals of the boundary contour: on unit-norm points the reflection coincides with the
+inversion `z ↦ -1/z`, and the set is inversion-closed. -/
+theorem neg_conj_mem_arcSingularSet {S : Finset ℍ} {s : ℂ}
+    (hs : s ∈ arcSingularSet S) : -(starRingEnd ℂ) s ∈ arcSingularSet S := by
+  have h : -(starRingEnd ℂ) s = -1 / s := by
+    rw [neg_div, one_div, Complex.inv_eq_conj (norm_eq_one_of_mem_arcSingularSet hs)]
+  rw [h]
+  exact neg_one_div_mem_arcSingularSet hs
+
+/-- The vertical singular set is closed under the reflection `z ↦ -conj z` that exchanges the
+two verticals of the boundary contour: on the lines `re = ±1/2` the reflection coincides with
+the translation onto the opposite line, and the set is translation-paired. -/
+theorem neg_conj_mem_verticalSingularSet {S : Finset ℍ} {s : ℂ}
+    (hs : s ∈ verticalSingularSet S) : -(starRingEnd ℂ) s ∈ verticalSingularSet S := by
+  rcases re_eq_of_mem_verticalSingularSet hs with hre | hre
+  · have h : -(starRingEnd ℂ) s = s - 1 := by
+      refine Complex.ext ?_ ?_ <;> simp [hre]
+      norm_num
+    rw [h]
+    exact sub_one_mem_verticalSingularSet hs hre
+  · have h : -(starRingEnd ℂ) s = s + 1 := by
+      refine Complex.ext ?_ ?_ <;> simp [hre]
+      norm_num
+    rw [h]
+    exact add_one_mem_verticalSingularSet hs hre
+
+/-- The union of the two singular sets is closed under the reflection `z ↦ -conj z` — the
+reflection invariance the excised vertical cancellation
+(`intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1`) asks of its excision set. -/
+theorem neg_conj_mem_arcSingularSet_union_verticalSingularSet {S : Finset ℍ} {s : ℂ}
+    (hs : s ∈ arcSingularSet S ∪ verticalSingularSet S) :
+    -(starRingEnd ℂ) s ∈ arcSingularSet S ∪ verticalSingularSet S := by
+  rcases Finset.mem_union.mp hs with h | h
+  · exact Finset.mem_union_left _ (neg_conj_mem_arcSingularSet h)
+  · exact Finset.mem_union_right _ (neg_conj_mem_verticalSingularSet h)
 
 /-- Some height above `√3/2` and `1` dominates the imaginary parts of a finite `S ⊆ ℍ`. -/
 theorem exists_height_bound (S : Finset ℍ) :
