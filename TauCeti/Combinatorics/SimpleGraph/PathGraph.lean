@@ -19,13 +19,15 @@ finite tree of maximum degree two is isomorphic to Mathlib's `SimpleGraph.pathGr
 vertices as it has, so its vertices can be numbered `0, …, n - 1` with two of them adjacent exactly
 when their numbers are consecutive.
 
-The proof takes a path `p` of greatest length in the graph, which exists because every path is
-shorter than the number of vertices. Every neighbour of a vertex of `p` again lies on `p`: at an
-interior vertex because the two neighbours along `p` already exhaust the degree bound, and at an
-endpoint because a neighbour off `p` could be prepended, contradicting maximality. The vertices of
-`p` therefore admit no boundary edge, so connectedness makes them all of the vertices, and a count
-of edges finishes the argument: a tree has one edge fewer than it has vertices, `p` already supplies
-that many distinct edges, and so every edge of the graph is an edge of `p`.
+The proof takes a path `p` of greatest length in the graph, which Mathlib's
+`SimpleGraph.exists_isPath_forall_isPath_length_le_length` supplies. Every neighbour of a vertex of
+`p` again lies on `p`: at an interior vertex because the two neighbours along `p` already exhaust
+the degree bound, and at an endpoint because a neighbour off `p` could be prepended, contradicting
+maximality. The vertices of `p` therefore admit no boundary edge, so connectedness makes them all of
+the vertices, and a count of edges finishes the argument: a tree has one edge fewer than it has
+vertices, `p` already supplies that many distinct edges, and so every edge of the graph is an edge
+of `p`. The subgraph spanned by `p` is therefore all of `G`, and Mathlib's
+`SimpleGraph.Walk.IsPath.pathGraphIsoToSubgraph` identifies it with a path graph.
 
 ## Main results
 
@@ -43,25 +45,6 @@ namespace TauCeti
 open SimpleGraph
 
 variable {V : Type*} {G : SimpleGraph V}
-
-/-- A path of greatest length in a finite graph. There is one because every path is shorter than
-the number of vertices. -/
-private lemma exists_isPath_forall_length_le [Finite V] [Nonempty V] (G : SimpleGraph V) :
-    ∃ (u v : V) (p : G.Walk u v), p.IsPath ∧
-      ∀ (a b : V) (q : G.Walk a b), q.IsPath → q.length ≤ p.length := by
-  classical
-  have : Fintype V := Fintype.ofFinite V
-  set S : Set ℕ := {n | ∃ (a b : V) (q : G.Walk a b), q.IsPath ∧ q.length = n} with hS
-  have hne : S.Nonempty :=
-    ⟨0, Classical.arbitrary V, Classical.arbitrary V, Walk.nil, Walk.IsPath.nil, rfl⟩
-  have hbdd : BddAbove S := by
-    refine ⟨Fintype.card V, ?_⟩
-    rintro n ⟨a, b, q, hq, rfl⟩
-    exact hq.length_lt.le
-  obtain ⟨u, v, p, hp, hlen⟩ := Nat.sSup_mem hne hbdd
-  refine ⟨u, v, p, hp, fun a b q hq ↦ ?_⟩
-  rw [hlen]
-  exact le_csSup hbdd ⟨a, b, q, hq, rfl⟩
 
 /-- **A neighbour of the first vertex of a longest path lies on that path**: otherwise it could be
 prepended, and the path was not longest. -/
@@ -145,7 +128,7 @@ theorem nonempty_iso_pathGraph_of_isTree_of_degree_le_two [Fintype V] [Decidable
     Nonempty (G ≃g pathGraph (Fintype.card V)) := by
   classical
   have : Nonempty V := hG.connected.nonempty
-  obtain ⟨u, v, p, hp, hmax⟩ := exists_isPath_forall_length_le G
+  obtain ⟨u, v, p, hp, hmax⟩ := Walk.exists_isPath_forall_isPath_length_le_length G
   have hsupp : ∀ x : V, x ∈ p.support :=
     forall_mem_support_of_degree_le_two hG.connected hdeg hp hmax
   -- The path is spanning, so it has as many vertices as the graph.
@@ -169,37 +152,15 @@ theorem nonempty_iso_pathGraph_of_isTree_of_degree_le_two [Fintype V] [Decidable
     intro a b hab
     rw [← List.mem_toFinset, heq]
     exact SimpleGraph.mem_edgeFinset.mpr hab
+  -- The path spans every vertex and every edge, so the subgraph it traverses is all of `G`.
+  have htop : p.toSubgraph = ⊤ := by
+    refine Subgraph.ext (Set.ext fun x ↦ ?_) ?_
+    · simpa [Walk.mem_verts_toSubgraph] using hsupp x
+    · ext a b
+      simp only [Subgraph.top_adj]
+      exact ⟨fun h ↦ h.adj_sub, fun h ↦ Walk.adj_toSubgraph_iff_mem_edges.mpr (hedges h)⟩
+  have hiso : p.toSubgraph.coe ≃g G := by rw [htop]; exact Subgraph.topIso
   rw [← hcard]
-  -- Numbering the vertices along the path is a bijection.
-  have hinj : Set.InjOn p.getVert {i | i ≤ p.length} := hp.getVert_injOn
-  have hbij : Function.Bijective fun i : Fin (p.length + 1) ↦ p.getVert i := by
-    refine ⟨fun i j hij ↦ Fin.ext (hinj ?_ ?_ hij), fun x ↦ ?_⟩
-    · simpa using Nat.lt_succ_iff.mp i.isLt
-    · simpa using Nat.lt_succ_iff.mp j.isLt
-    · obtain ⟨n, hn, hnle⟩ := Walk.mem_support_iff_exists_getVert.mp (hsupp x)
-      exact ⟨⟨n, by omega⟩, hn⟩
-  refine ⟨(RelIso.mk (Equiv.ofBijective _ hbij) ?_).symm⟩
-  intro i j
-  have hile : (i : ℕ) ≤ p.length := Nat.lt_succ_iff.mp i.isLt
-  have hjle : (j : ℕ) ≤ p.length := Nat.lt_succ_iff.mp j.isLt
-  change G.Adj (p.getVert i) (p.getVert j) ↔ _
-  rw [pathGraph_adj]
-  constructor
-  · intro hadj
-    have hmem := hedges hadj
-    rw [← Walk.adj_toSubgraph_iff_mem_edges, Walk.toSubgraph_adj_iff] at hmem
-    obtain ⟨k, hk, hklt⟩ := hmem
-    have hkle : k ≤ p.length := by omega
-    have hkle' : k + 1 ≤ p.length := by omega
-    rw [Sym2.eq_iff] at hk
-    rcases hk with ⟨h1, h2⟩ | ⟨h1, h2⟩
-    · exact Or.inl (by rw [← hinj hkle hile h1, ← hinj hkle' hjle h2])
-    · exact Or.inr (by rw [← hinj hkle hjle h1, ← hinj hkle' hile h2])
-  · rintro (h | h)
-    · have hadj := p.adj_getVert_succ (i := (i : ℕ)) (by omega)
-      rwa [h] at hadj
-    · have hadj := p.adj_getVert_succ (i := (j : ℕ)) (by omega)
-      rw [h] at hadj
-      exact hadj.symm
+  exact ⟨(hp.pathGraphIsoToSubgraph.trans hiso).symm⟩
 
 end TauCeti
