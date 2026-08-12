@@ -43,6 +43,13 @@ martingale: neither `DeFinetti.BlockFactorization` nor `TailFactorization`, `Joi
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 3** — the martingale-free
   standard-Borel de Finetti route, `deFinetti_viaL2`.
+* The integration argument follows the private `measure_inter_blockCylinder_eq_setLIntegral` in
+  `DeFinetti/JointRectangle.lean`, which performs the same steps for the martingale route: test the
+  factorization against the tail event with `setIntegral_condExp`, read the cylinder's mass as the
+  integral of its indicator, and convert once at the `ℝ≥0∞` boundary. The only substantive
+  difference is which factorization is fed in — here the strictly monotone form from
+  `ViaL2/BlockFactorization.lean` rather than the prefix form. This file does not import that
+  module; the debt is to its proof plan, not to its code.
 -/
 
 public section
