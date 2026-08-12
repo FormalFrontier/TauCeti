@@ -67,7 +67,7 @@ theorem kernelPoint_asIdeal :
     rfl
 
 /-- The augmentation point is the pullback of the closed point of the ground field. -/
-theorem kernelPoint_eq_comap_closedPoint :
+theorem kernelPoint_def :
     kernelPoint f = PrimeSpectrum.comap (f : H →+* k) (closedPoint k) := by
   rw [kernelPoint]
 
@@ -96,6 +96,8 @@ instance kernelStalkIsLocalization :
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
       (RingHom.ker (f : H →+* k)) := by
   unfold kernelStalkAlgebra
+  -- `to_stalk` is stated using the point's `asIdeal`, while `AtPrime` unfolds to
+  -- `IsLocalization` at the explicit prime complement; no public lemma bridges the wrappers.
   change @IsLocalization H _ (RingHom.ker (f : H →+* k)).primeCompl
     ((Spec.structureSheaf H).presheaf.stalk (kernelPoint f)) _
       (StructureSheaf.stalkAlgebra H (kernelPoint f))
