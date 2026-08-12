@@ -226,7 +226,8 @@ theorem exists_eq_algebraMap_of_contractLeft_eq_zero (Q : QuadraticForm K M)
   let r := b.ExteriorAlgebra.repr y ∅
   refine ⟨r, ?_⟩
   apply (equivExterior Q).injective
-  simpa [y, r] using eq_algebraMap_of_all_contractLeft_eq_zero b y hycontract
+  simpa only [y, r, equivExterior_algebraMap] using
+    eq_algebraMap_of_all_contractLeft_eq_zero b y hycontract
 
 /-- An even Clifford element that commutes with every generating vector is a scalar. -/
 theorem exists_eq_algebraMap_of_mem_even_of_commute

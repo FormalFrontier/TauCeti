@@ -5,11 +5,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Spin.SpecialOrthogonal
-public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 
 /-!
-# The kernel of the Spin double cover
+# The kernel of the Spin action
 
 For a positive-dimensional finite nondegenerate quadratic space over a field where `2` is
 invertible, the kernel of the Spin action consists of the two scalar elements. The proof first
@@ -26,7 +26,7 @@ the special orthogonal group has cardinality two.
 ## References
 
 This completes Layer 2's kernel target, `card_ker_spinToSpecialOrthogonal`, in
-`TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`. See H. B. Lawson and
+`TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean`. See H. B. Lawson and
 M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 -/
 
@@ -207,22 +207,6 @@ end spinGroup
 end NegOne
 
 end TauCeti.CliffordAlgebra
-
-namespace QuadraticMap.Nondegenerate
-
-variable {K : Type u} {M : Type v} [Field K] [AddCommGroup M] [Module K M]
-
-/-- A nondegenerate quadratic form on a nontrivial module is nonzero. -/
-theorem ne_zero [Nontrivial M] {Q : QuadraticForm K M} (hQ : Q.Nondegenerate) : Q ≠ 0 := by
-  intro hzero
-  obtain ⟨v, hv⟩ := exists_ne (0 : M)
-  apply hv
-  have hm : v ∈ Q.radical := by
-    rw [hzero, QuadraticMap.mem_radical_iff']
-    simp
-  rwa [hQ.radical_eq_bot, Submodule.mem_bot] at hm
-
-end QuadraticMap.Nondegenerate
 
 namespace TauCeti.CliffordAlgebra
 
