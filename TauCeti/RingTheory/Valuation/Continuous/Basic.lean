@@ -16,13 +16,14 @@ public import Mathlib.Topology.Algebra.WithZeroTopology
 `IsContinuous v` here says every `{a ; v a < v b}` is open, the quantifier running over the
 values `v` **attains**. Wedhorn's Definition 7.7 instead runs it over the whole value group
 `Γ_v`, whose general element is a ratio `v b / v c`. The two say the same thing as soon as
-multiplication is separately continuous — `isOpen_lt_div` is precisely that step, and carries
-`[SeparatelyContinuousMul A]` for it — but the definition itself asks for no such hypothesis, so
+right multiplication is continuous — `isOpen_lt_div` is precisely that step, and carries
+`[ContinuousConstSMul Aᵐᵒᵖ A]` for it — but the definition itself asks for no such hypothesis, so
 `IsContinuous` is the attained-value predicate and not literally Wedhorn's.
 
 Wedhorn works over a topological ring throughout, but the compatibility is only needed where it
 is used, so it is asked for per result rather than up front: the definition itself needs no more
-than a topology on `A`, the ratio results need `[SeparatelyContinuousMul A]`, the translation
+than a topology on `A`, the ratio results need only continuity of right multiplication
+(`[ContinuousConstSMul Aᵐᵒᵖ A]`; `isOpen_le_div` also wants the additive side), the translation
 results need `[SeparatelyContinuousAdd A]` — only translation by a *fixed* element is ever
 used, on either side — and `isContinuous_iff_continuous` needs both. Commutativity is
 never used, so `A` is a `Ring`.
@@ -49,14 +50,15 @@ no such `γ` available.
 
 So `IsContinuous` is stated by quantifying over the **values** `v b`. Nothing of Wedhorn's
 condition is lost: every element of `Γ_v` is a ratio `v b / v c`, and `IsContinuous.isOpen_lt_div`
-recovers those — though only once multiplication is continuous, which is why that lemma, and not
-the definition, carries `[SeparatelyContinuousMul A]`. Phrased this way the defining sets are
-*literally equal* for equivalent valuations, which is `Valuation.IsEquiv.isContinuous_iff`.
+recovers those — though only once right multiplication is continuous, which is why that lemma,
+and not the definition, carries `[ContinuousConstSMul Aᵐᵒᵖ A]`. Phrased this way the defining
+sets are *literally equal* for equivalent valuations, which is
+`Valuation.IsEquiv.isContinuous_iff`.
 
 ## Main definitions
 
 * `TauCeti.Valuation.IsContinuous` : continuity of a valuation, in attained-value form. It
-  recovers **Definition 7.7** under `[SeparatelyContinuousMul A]`, via `isOpen_lt_div`.
+  recovers **Definition 7.7** under `[ContinuousConstSMul Aᵐᵒᵖ A]`, via `isOpen_lt_div`.
 
 ## Main results
 
@@ -110,9 +112,9 @@ variable {A : Type*} [Ring A] [TopologicalSpace A]
 /-- **Continuity of a valuation, in attained-value form.** Every set `{a ; v a < v b}` is open.
 
 This is *not* literally Wedhorn's Definition 7.7, which quantifies over the whole value group
-`Γ_v`: reaching a general element of `Γ_v`, being a ratio `v b / v c`, needs multiplication to be
-continuous, and this definition asks for no compatibility beyond a topology on `A`. Under
-`[SeparatelyContinuousMul A]` the two coincide, which is what `isOpen_lt_div` proves.
+`Γ_v`: reaching a general element of `Γ_v`, being a ratio `v b / v c`, needs right multiplication
+to be continuous, and this definition asks for no compatibility beyond a topology on `A`. Under
+`[ContinuousConstSMul Aᵐᵒᵖ A]` the two coincide, which is what `isOpen_lt_div` proves.
 
 Quantifying over attained values rather than over the codomain `Γ₀` is deliberate — see the
 module docstring for why the `Γ₀` form is a different, and equivalence-class-dependent,
@@ -197,17 +199,18 @@ variable {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]
 /-- **Wedhorn's quantifier in full.** Every element of the value group `Γ_v` is a ratio
 `v b / v c` with `c` outside the support, and continuity makes `{a ; v a < v b / v c}` open for
 all of them. -/
-theorem IsContinuous.isOpen_lt_div [SeparatelyContinuousMul A] {v : Valuation A Γ₀}
+theorem IsContinuous.isOpen_lt_div [ContinuousConstSMul Aᵐᵒᵖ A] {v : Valuation A Γ₀}
     (hv : v.IsContinuous)
     (b : A) {c : A} (hc : v c ≠ 0) : IsOpen {a : A | v a < v b / v c} := by
-  -- the set is the preimage of `{x ; v x < v b}` under multiplication by `c`
-  simpa [lt_div_iff₀ (zero_lt_iff.mpr hc)] using (hv b).preimage (continuous_mul_const c)
+  -- the set is the preimage of `{x ; v x < v b}` under multiplication by `c` on the right
+  simpa [lt_div_iff₀ (zero_lt_iff.mpr hc)] using
+    (hv b).preimage (continuous_const_smul (MulOpposite.op c))
 
 /-- **Wedhorn's quantifier in full, as an equivalence.** Continuity is exactly openness of
 `{a ; v a < v b / v c}` for every ratio, i.e. for every element of the value group `Γ_v` — which
 is Definition 7.7 verbatim. The reverse direction is the case `c = 1`, so this is the named
 introduction rule for continuity that `isOpen_lt_div` alone does not provide. -/
-theorem isContinuous_iff_forall_isOpen_lt_div [SeparatelyContinuousMul A]
+theorem isContinuous_iff_forall_isOpen_lt_div [ContinuousConstSMul Aᵐᵒᵖ A]
     {v : Valuation A Γ₀} :
     v.IsContinuous ↔ ∀ b c : A, v c ≠ 0 → IsOpen {a : A | v a < v b / v c} := by
   refine ⟨fun hv b _ hc ↦ hv.isOpen_lt_div b hc, fun h b ↦ ?_⟩
@@ -217,11 +220,11 @@ theorem isContinuous_iff_forall_isOpen_lt_div [SeparatelyContinuousMul A]
 a general element of it is a ratio `v b / v c` rather than an attained value, so this rather than
 `isOpen_le` is the statement Wedhorn makes. As in `isOpen_lt_div` the set is the preimage of the
 attained-value one under multiplication by `c`. -/
-theorem IsContinuous.isOpen_le_div [SeparatelyContinuousAdd A] [SeparatelyContinuousMul A]
+theorem IsContinuous.isOpen_le_div [SeparatelyContinuousAdd A] [ContinuousConstSMul Aᵐᵒᵖ A]
     {v : Valuation A Γ₀} (hv : v.IsContinuous) {b c : A} (hb : v b ≠ 0) (hc : v c ≠ 0) :
     IsOpen {a : A | v a ≤ v b / v c} := by
   simpa [le_div_iff₀ (zero_lt_iff.mpr hc)] using
-    (hv.isOpen_le hb).preimage (continuous_mul_const c)
+    (hv.isOpen_le hb).preimage (continuous_const_smul (MulOpposite.op c))
 
 open scoped WithZeroTopology in
 /-- Ordinary continuity into `WithZeroTopology` implies continuity in the sense of Definition
@@ -244,7 +247,7 @@ codomain is no larger than `Γ_v ∪ {0}`, which is Wedhorn's setting.
 
 `hΓ` is not decoration: without it only the reverse implication survives, and the module
 docstring's `ℤ_p` valuation is a witness — its attained ratios all exceed `(1/2, 1)`. -/
-theorem isContinuous_iff_continuous [SeparatelyContinuousAdd A] [SeparatelyContinuousMul A]
+theorem isContinuous_iff_continuous [SeparatelyContinuousAdd A] [ContinuousConstSMul Aᵐᵒᵖ A]
     {v : Valuation A Γ₀}
     (hΓ : ∀ γ : Γ₀, γ ≠ 0 → ∃ b c : A, v b ≠ 0 ∧ v c ≠ 0 ∧ v b / v c ≤ γ) :
     v.IsContinuous ↔ Continuous v := by
