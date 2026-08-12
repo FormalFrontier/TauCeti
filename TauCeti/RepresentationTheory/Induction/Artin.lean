@@ -391,7 +391,7 @@ theorem indVirtualCharacters_isCyclic_eq_indVirtualCharacterSpanCyclic
 
 /-- Every cyclic subgroup is elementary, so a virtual character induced from a cyclic subgroup is
 induced from an elementary one. -/
-theorem indVirtualCharacters_isCyclic_le_isElementary :
+theorem indVirtualCharacters_isCyclic_le_indVirtualCharacters_isElementary :
     indVirtualCharacters k G (fun C => IsCyclic C) ≤
       indVirtualCharacters k G (fun E => IsElementary E) :=
   indVirtualCharacters_mono fun C hC => by
@@ -411,7 +411,7 @@ theorem exists_zsmul_mem_indVirtualCharacters_isElementary [IsAlgClosed k] [Char
     ∃ d : ℤ, d ≠ 0 ∧ ∀ f ∈ virtualCharacters k G,
       d • f ∈ indVirtualCharacters k G (fun E => IsElementary E) := by
   obtain ⟨d, hd, h⟩ := exists_zsmul_mem_indVirtualCharacterSpanCyclic k G
-  exact ⟨d, hd, fun f hf => indVirtualCharacters_isCyclic_le_isElementary
+  exact ⟨d, hd, fun f hf => indVirtualCharacters_isCyclic_le_indVirtualCharacters_isElementary
     (indVirtualCharacterSpanCyclic_le_indVirtualCharacters_isCyclic (h f hf))⟩
 
 end ClassFunction

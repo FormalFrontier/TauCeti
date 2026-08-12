@@ -288,8 +288,11 @@ variable {f : G → k}
 
 /-- **The projection formula, on a single summand.**  The summand only ever evaluates a function on
 `S` at a conjugate of `g`, so multiplying by the restriction of a class function `f` of `G`
-multiplies the summand by the constant `f g`. -/
-theorem indTerm_comp_subtype_mul (hf : f ∈ ClassFunction k G) (ψ : S → k) (g x : G) :
+multiplies the summand by the constant `f g`.
+
+It is private: `TauCeti.indClassFun_comp_subtype_mul` is the projection formula every consumer
+uses. -/
+private theorem indTerm_comp_subtype_mul (hf : f ∈ ClassFunction k G) (ψ : S → k) (g x : G) :
     indTerm ((fun s : S => f s) * ψ) g x = f g * indTerm ψ g x := by
   classical
   by_cases h : x⁻¹ * g * x ∈ S
