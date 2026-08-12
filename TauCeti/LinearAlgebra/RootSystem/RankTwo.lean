@@ -132,11 +132,14 @@ private theorem forall_eq_of_apply_offDiag {B : Type*} {A : Matrix B B ℤ}
   · simpa using h10
   · simpa using (hA _).trans (hC 1).symm
 
-namespace IsFiniteType
-
-variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
-
-end IsFiniteType
+private theorem exists_equiv_fin_two_apply_eq {B : Type*} [Fintype B]
+    (hcard : Fintype.card B = 2) {x y : B} (hxy : x ≠ y) :
+    ∃ e : B ≃ Fin 2, e x = 0 ∧ e y = 1 := by
+  let e₀ : B ≃ Fin 2 := Fintype.equivFinOfCardEq hcard
+  let e : B ≃ Fin 2 := e₀.trans (Equiv.swap (e₀ x) 0)
+  have hx : e x = 0 := by simp [e]
+  refine ⟨e, hx, Fin.eq_one_of_ne_zero _ fun hy ↦ ?_⟩
+  exact hxy (e.injective (hx.trans hy.symm))
 
 namespace Matrix
 
@@ -285,15 +288,12 @@ theorem cartanMatrix_ne_zero_of_card_support_eq_two [Finite ι] [CharZero R] [Is
   -- Every index is `i` or `j`, so the indices reachable from `j` form the singleton `{j}`;
   -- irreducibility makes every index reachable, so `i = j`.
   have hcard : Fintype.card b.support = 2 := by simpa using hb
-  set e : b.support ≃ Fin 2 := Fintype.equivFinOfCardEq hcard with he
+  obtain ⟨e, hei, hej⟩ := exists_equiv_fin_two_apply_eq hcard hij
   have hmem (k : b.support) : k = i ∨ k = j := by
     have h2 : ∀ m : Fin 2, m = 0 ∨ m = 1 := by decide
-    rcases h2 (e i) with hi | hi <;> rcases h2 (e j) with hj | hj <;>
-      rcases h2 (e k) with hk | hk <;>
-      first
-        | exact absurd (e.injective (hi.trans hj.symm)) hij
-        | exact Or.inl (e.injective (hk.trans hi.symm))
-        | exact Or.inr (e.injective (hk.trans hj.symm))
+    rcases h2 (e k) with hk | hk
+    · exact Or.inl (e.injective (hk.trans hei.symm))
+    · exact Or.inr (e.injective (hk.trans hej.symm))
   have hreach : ∀ k : b.support, k = j := fun k ↦
     b.induction_on_cartanMatrix (p := fun m ↦ m = j) (i := j) (j := k) rfl (by
       rintro u v rfl huv
@@ -349,31 +349,28 @@ two differ in squared length by the factor `3`; every root has the length of a s
 (`TauCeti.RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq`), so two of the simple
 roots already differ by that factor, and reading the ratio back off the Cartan matrix makes their
 two off-diagonal entries `-3` and `-1`. Since the base has two elements, these entries and the
-diagonal entries `2` identify its Cartan matrix with the standard matrix of `G₂`.
-
-The root-positive form used is Mathlib's canonical `RootPairing.posRootForm`, but any other would
-do: the statement compares two lengths, and rescaling the form cancels from the comparison. -/
+diagonal entries `2` identify its Cartan matrix with the standard matrix of `G₂`. -/
 theorem hasCartanType_G2_of_isG2 [Finite ι] [CharZero R] [IsDomain R]
     (hG2 : P.IsG2) (b : P.Base) : HasCartanType P b .G2 := by
   classical
-  have _iG2 : P.IsG2 := hG2
   have _i : Fintype ι := Fintype.ofFinite ι
   have hcard : b.support.card = 2 := RootPairing.IsG2.card_base_support_eq_two b
   set Bf := P.posRootForm ℤ
-  -- Two roots pairing to `-3`. Their transposed pairing is `-1`, the only admissible partner.
-  obtain ⟨k, l, hkl⟩ := RootPairing.IsG2.exists_pairingIn_neg_three (P := P)
-  have hlk : P.pairingIn ℤ l k = -1 := by
-    have hmem := P.pairingIn_pairingIn_mem_set_of_isCrystal_of_isRed k l
-    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, Prod.mk.injEq, hkl] at hmem
-    omega
+  have _iEmbeddedG2 : P.EmbeddedG2 := RootPairing.IsG2.toEmbeddedG2 P
+  have hkl := RootPairing.EmbeddedG2.pairingIn_long_short (P := P)
+  have hlk := RootPairing.EmbeddedG2.pairingIn_short_long (P := P)
   -- So the two differ in squared length by the factor three.
-  have hkl_len : Bf.rootLength k = 3 * Bf.rootLength l := by
-    have hswap := Bf.pairingIn_mul_eq_pairingIn_mul_swap k l
+  have hkl_len : Bf.rootLength (RootPairing.EmbeddedG2.long P) =
+      3 * Bf.rootLength (RootPairing.EmbeddedG2.short P) := by
+    have hswap := Bf.pairingIn_mul_eq_pairingIn_mul_swap
+      (RootPairing.EmbeddedG2.long P) (RootPairing.EmbeddedG2.short P)
     rw [hkl, hlk] at hswap
     omega
   -- Every root has the length of a simple root, so two simple roots already differ by that factor.
-  obtain ⟨p, hp, hpk⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b k
-  obtain ⟨q, hq, hql⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b l
+  obtain ⟨p, hp, hpk⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b
+    (RootPairing.EmbeddedG2.long P)
+  obtain ⟨q, hq, hql⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b
+    (RootPairing.EmbeddedG2.short P)
   have hpos : 0 < Bf.rootLength q := Bf.rootLength_pos q
   have hlen : Bf.rootLength p = 3 * Bf.rootLength q := by omega
   have hpq : p ≠ q := by rintro rfl; omega
@@ -400,18 +397,10 @@ theorem hasCartanType_G2_of_isG2 [Finite ι] [CharZero R] [IsDomain R]
   -- The two chosen simple roots exhaust the base, and their order gives the standard `G₂` matrix.
   let p' : b.support := ⟨p, hp⟩
   let q' : b.support := ⟨q, hq⟩
-  have hpq_ne : p' ≠ q' := hne
   have hcard' : Fintype.card b.support = 2 := by simp [hcard]
   -- Relabel so that the short root `q'` sits at node `0` and the long root `p'` at node `1`, the
   -- Bourbaki orientation of the standard `G₂` matrix.
-  set e₀ : b.support ≃ Fin 2 := Fintype.equivFinOfCardEq hcard' with he₀
-  set e : b.support ≃ Fin 2 := e₀.trans (Equiv.swap (e₀ q') 0) with he
-  have heq : e q' = 0 := by rw [he]; simp
-  have hep : e p' = 1 := by
-    have h2 : ∀ m : Fin 2, m = 0 ∨ m = 1 := by decide
-    rcases h2 (e p') with h | h
-    · exact absurd (e.injective (h.trans heq.symm)) hpq_ne
-    · exact h
+  obtain ⟨e, heq, hep⟩ := exists_equiv_fin_two_apply_eq hcard' hne.symm
   have hsymm0 : e.symm 0 = q' := by rw [← heq, Equiv.symm_apply_apply]
   have hsymm1 : e.symm 1 = p' := by rw [← hep, Equiv.symm_apply_apply]
   -- Only the two off-diagonal entries are left to match, the diagonal being constant `2`.

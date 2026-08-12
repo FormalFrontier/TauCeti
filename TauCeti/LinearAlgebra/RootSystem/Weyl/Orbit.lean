@@ -48,7 +48,8 @@ variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommG
   [Module R N] {P : RootPairing ι R M N}
 
 /-- **Every root is Weyl-conjugate to a simple root.** Stated on root indices: for a base `b`, each
-index `j` is `w • i` for some `i` in the support of `b` and some Weyl-group element `w`.
+index `j` satisfies `P.weylGroupToPerm w i = j` for some `i` in the support of `b` and some
+Weyl-group element `w`.
 
 The Weyl-group element is far from unique — the stabilizer of a simple root index is generally
 nontrivial — so this is an existence statement and not a parametrization of the roots by
