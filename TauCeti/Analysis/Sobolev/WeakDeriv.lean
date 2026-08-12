@@ -191,6 +191,15 @@ def HasWeakLineDerivOn (μ : Measure E) (Ω : Opens E) (u u' : E → F) (v : E) 
   CompleteSpace F ∧ LocallyIntegrableOn u Ω μ ∧ LocallyIntegrableOn u' Ω μ ∧
     ∀ φ : 𝓓(Ω, ℝ), ∫ x, lineDeriv ℝ (φ : E → ℝ) x v • u x ∂μ = -∫ x, (φ : E → ℝ) x • u' x ∂μ
 
+/-- The constructor-and-eliminator form of `HasWeakLineDerivOn`, using bundled test functions. -/
+theorem hasWeakLineDerivOn_iff_testFunction :
+    HasWeakLineDerivOn μ Ω u u' v ↔
+      CompleteSpace F ∧ LocallyIntegrableOn u Ω μ ∧ LocallyIntegrableOn u' Ω μ ∧
+        ∀ φ : 𝓓(Ω, ℝ),
+          ∫ x, lineDeriv ℝ (φ : E → ℝ) x v • u x ∂μ =
+            -∫ x, (φ : E → ℝ) x • u' x ∂μ :=
+  Iff.rfl
+
 /-- The codomain of a weak derivative is complete; use as `have := h.completeSpace`. -/
 theorem HasWeakLineDerivOn.completeSpace (h : HasWeakLineDerivOn μ Ω u u' v) :
     CompleteSpace F := h.1
@@ -217,6 +226,13 @@ Requiring `u` and `U` to be `Lᵖ` on `Ω` is what cuts out the first-order Sobo
 `W^{1,p}(Ω)`. -/
 def HasWeakFDerivOn (μ : Measure E) (Ω : Opens E) (u : E → F) (U : E → E →L[ℝ] F) : Prop :=
   ∀ v : E, HasWeakLineDerivOn μ Ω u (fun x => U x v) v
+
+/-- A weak Fréchet derivative is equivalently a weak directional derivative in every direction.
+This is the constructor-and-eliminator form of `HasWeakFDerivOn`. -/
+theorem hasWeakFDerivOn_iff {U : E → E →L[ℝ] F} :
+    HasWeakFDerivOn μ Ω u U ↔
+      ∀ v : E, HasWeakLineDerivOn μ Ω u (fun x => U x v) v :=
+  Iff.rfl
 
 /-- The codomain of a weak Fréchet derivative is complete; use as `have := h.completeSpace`. -/
 theorem HasWeakFDerivOn.completeSpace {U : E → E →L[ℝ] F} (h : HasWeakFDerivOn μ Ω u U) :
