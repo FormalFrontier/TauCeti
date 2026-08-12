@@ -27,8 +27,6 @@ narrow class group measures.
 
 * `TauCeti.NumberField.fieldUnitSignature_surjective`: every sign pattern at the real places is the
   signature of an element of `Kˣ`.
-* `TauCeti.NumberField.exists_isTotallyPositive_mul`: consequently every element of `Kˣ` can be
-  scaled to a totally positive one.
 * `TauCeti.NumberField.quotientTotallyPositiveUnitsEquiv`: `Kˣ ⧸ totallyPositiveUnits` is the sign
   group.
 * `TauCeti.NumberField.index_totallyPositiveUnits`: the totally positive elements have index
@@ -75,22 +73,10 @@ theorem fieldUnitSignature_surjective :
   · exact mul_pos (inv_pos.mpr h2) h1
   · exact mul_pos_of_neg_of_neg (inv_lt_zero.mpr h2) h1
 
-/-- **Every element of `Kˣ` can be corrected to a totally positive one:** for every `x : Kˣ` there
-is `y : Kˣ` with `x * y` totally positive. Sign patterns can always be repaired inside `K`, which is
-why the narrow and ordinary class groups of `K` differ only through the units. -/
-theorem exists_isTotallyPositive_mul (x : Kˣ) :
-    ∃ y : Kˣ, IsTotallyPositive ((x * y : Kˣ) : K) := by
-  obtain ⟨y, hy⟩ := fieldUnitSignature_surjective (K := K) (fieldUnitSignature x)⁻¹
-  refine ⟨y, fieldUnitSignature_eq_one_iff.mp ?_⟩
-  rw [map_mul, hy]
-  exact mul_inv_cancel (fieldUnitSignature x)
-
-/-- **The sign group is the quotient of `Kˣ` by the totally positive elements.**
-
-The two instance arguments of `QuotientGroup.quotientKerEquivOfSurjective` are supplied explicitly
-because the codomain of `TauCeti.NumberField.fieldUnitSignature` carries `Pi.mulOneClass`, while the
-lemma states its multiplicative structure through `Group`; the two agree definitionally, but leaving
-the group to be inferred makes the unifier rediscover that at each use. -/
+/-- **The sign group is the quotient of `Kˣ` by the totally positive elements.** -/
+-- The two instance arguments are explicit because the codomain carries `Pi.mulOneClass`, while
+-- `QuotientGroup.quotientKerEquivOfSurjective` states its multiplicative structure through `Group`.
+-- They agree definitionally, but inference otherwise makes the unifier rediscover this at each use.
 noncomputable def quotientTotallyPositiveUnitsEquiv :
     Kˣ ⧸ totallyPositiveUnits (K := K) ≃*
       ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) :=
@@ -120,7 +106,7 @@ theorem index_totallyPositiveUnits :
 /-- **Every element of `Kˣ` is totally positive exactly when `K` has no real place.** One direction
 is vacuity of total positivity over a totally complex field; the other needs an element of `Kˣ`
 negative at a given real place, which is what surjectivity of the signature provides. -/
-theorem totallyPositiveUnits_eq_top_iff :
+@[simp] theorem totallyPositiveUnits_eq_top_iff :
     totallyPositiveUnits (K := K) = ⊤ ↔ nrRealPlaces K = 0 := by
   rw [← Subgroup.index_eq_one, index_totallyPositiveUnits]
   simp
