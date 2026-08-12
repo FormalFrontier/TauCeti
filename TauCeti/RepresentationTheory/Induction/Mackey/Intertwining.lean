@@ -49,6 +49,8 @@ choice: replacing `s` by `h₁ s h₂` with `h₁ ∈ H` and `h₂ ∈ K` leaves
   identity double coset split off.
 * `TauCeti.finrank_hom_indFDRep_mackey_erase`: the same split for intertwining-space dimensions,
   whose identity-coset term is `dim End_H A`.
+* `TauCeti.finrank_hom_res_mackeyToH_of_normal`: for normal `H`, a Mackey term has the same
+  dimension as the ordinary intertwining space from `A` to `{}^s A`.
 * `TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`: a term of the formula does not depend
   on the representative chosen for its double coset.
 
@@ -301,6 +303,34 @@ theorem finrank_hom_indFDRep_mackey_erase [Finite G] [CharZero k] (A : FDRep k H
   have hG : IsUnit (Nat.card G : k) :=
     isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   exact_mod_cast natCast_finrank_hom_indFDRep_mackey_erase hG A
+
+/-- For a normal subgroup, the dimension of a Mackey intertwining space equals the dimension of
+the ordinary intertwining space from `A` to its conjugate `{}^s A`. -/
+theorem finrank_hom_res_mackeyToH_of_normal [H.Normal] (A : FDRep k H) (s : G) :
+    Module.finrank k (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
+        (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) =
+      Module.finrank k (A ⟶ conjNormalFDRep s A) := by
+  let e := mackeySubgroupNormalEquiv (H := H) s
+  have he_apply (y : (mackeySubgroup s H H).subgroupOf H) : e y = (y : H) :=
+    coe_mackeySubgroupNormalEquiv_apply s y
+  have hsubtype : ((mackeySubgroup s H H).subgroupOf H).subtype = e.toMonoidHom :=
+    ((MulEquiv.toMonoidHom_eq_coe e).trans (coe_mackeySubgroupNormalEquiv s)).symm
+  have hconj : mackeyToH s H H =
+      (MulAut.conjNormal s⁻¹ : MulAut H).toMonoidHom.comp e.toMonoidHom := by
+    ext y
+    simp only [coe_mackeyToH_apply, MonoidHom.coe_comp, MulEquiv.coe_toMonoidHom,
+      Function.comp_apply]
+    rw [he_apply]
+    simp
+  have hsource : resFDRep ((mackeySubgroup s H H).subgroupOf H) A =
+      (Action.res (FGModuleCat k) e.toMonoidHom).obj A := by
+    exact congrArg (fun φ => (Action.res (FGModuleCat k) φ).obj A) hsubtype
+  have htarget : (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A =
+      (Action.res (FGModuleCat k) e.toMonoidHom).obj (conjNormalFDRep s A) := by
+    rw [hconj, conjNormalFDRep, conjNormalFDRepFunctor]
+    exact CategoryTheory.Functor.congr_obj (actionRes_comp _ _) A
+  rw [hsource, htarget]
+  exact finrank_hom_res_mulEquiv e A (conjNormalFDRep s A)
 
 open CategoryTheory in
 /-- **Conjugation intertwines two restrictions of one representation.**  If the two homomorphisms
