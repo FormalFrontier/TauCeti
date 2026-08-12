@@ -311,7 +311,7 @@ result read through `TauCeti.IsBasic`: by
 division rings -- here, one copy of `k` for each vertex -- so the vertices index the simple modules
 and the indecomposable projectives without repetition. -/
 theorem isBasic (h : Quiver.IsAcyclic Q) : IsBasic (pathAlgebra k Q) :=
-  (isBasic_iff_isReduced (pathAlgebra k Q)).mpr (isReduced_quotient_jacobson k Q h)
+  isReduced_quotient_jacobson k Q h
 
 /-- The semisimple quotient of the path algebra of a finite acyclic quiver is commutative. -/
 theorem mul_comm_quotient_jacobson (h : Quiver.IsAcyclic Q)

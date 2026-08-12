@@ -5,17 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- Public: `IsReduced` is the content of the definition below, Artin--Wedderburn supplies the shape
--- of the main equivalence, the collapse of a one-by-one matrix ring is repackaged as an exported
--- definition, and the semisimplicity of the quotient by the radical is what makes the definition
--- usable.
-public import Mathlib.LinearAlgebra.Matrix.Unique
+-- of the main equivalence, and the semisimplicity of the quotient by the radical is what makes the
+-- definition usable.
 public import Mathlib.RingTheory.Nilpotent.Defs
 public import Mathlib.RingTheory.SimpleModule.WedderburnArtin
 public import TauCeti.RingTheory.Jacobson.FiniteDimensional
 -- Non-public: used only inside proofs.  The matrix units produce the square-zero element that
--- rules out a block of size at least two, and the nilradical of a commutative ring is bounded by
--- its Jacobson radical.
+-- rules out a block of size at least two, a one-by-one matrix ring collapses to its base ring, and
+-- the nilradical of a commutative ring is bounded by its Jacobson radical.
 import Mathlib.Data.Matrix.Basis
+import Mathlib.LinearAlgebra.Matrix.Unique
 import Mathlib.RingTheory.KrullDimension.Basic
 import Mathlib.RingTheory.Nilpotent.Lemmas
 
@@ -45,8 +44,6 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
 ## Main definitions
 
 * `TauCeti.IsBasic`: a ring whose quotient by the Jacobson radical is reduced.
-* `TauCeti.Matrix.ringEquivOfUnique`: the one-by-one matrix ring over `A`, as `A`, with its two
-  evaluation lemmas.
 
 ## Main results
 
@@ -56,16 +53,19 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
   if it is a finite product of division rings.
 * `TauCeti.isBasic_iff_exists_ringEquiv_pi_divisionRing`: a finite-dimensional algebra is basic if
   and only if its semisimple quotient is a finite product of division rings.
-* `TauCeti.isBasic_iff_isReduced`: the definitional unfolding of `TauCeti.IsBasic`.
 * `TauCeti.isBasic_of_commRing`: a commutative ring is basic.
 
 ## Implementation notes
 
-`TauCeti.Matrix.ringEquivOfUnique` repeats Mathlib's `Matrix.uniqueRingEquiv` with the `Fintype`
-structure on the index type taken from the context rather than manufactured from `Unique`.  The two
-`Fintype` structures are equal, but not definitionally so, and the multiplication of a matrix ring
-depends on which one is used; a `Fin`-indexed matrix ring, as produced by Artin--Wedderburn, carries
-the former.
+Mathlib's `Matrix.uniqueRingEquiv` fixes the `Fintype` structure on the one-element index type to
+the one manufactured from `Unique`, so its type does not match a matrix ring formed with a `Fintype`
+structure coming from elsewhere -- the two are equal but not definitionally so, and the
+multiplication of a matrix ring depends on which one is used.  Both uses below therefore rewrite
+along `Subsingleton.elim` first; the index types in question are a `Fin`-indexed one, as produced by
+Artin--Wedderburn, and one carrying a `Fintype` hypothesis.
+
+`TauCeti.IsBasic` is `@[expose]`d so that importing modules can unfold it; without that, a
+definitional unfolding lemma would be needed to use the definition at all.
 
 `TauCeti.IsBasic` takes only the ring, where the roadmap signature also carries a base field and
 finite-dimensionality over it.  Neither appears in the condition, so the environment linter rejects
@@ -104,31 +104,6 @@ theorem isReduced_of_isReduced_pi {ι : Type w} {R : ι → Type u} [∀ i, Mono
       · simp [Pi.single_eq_of_ne (Ne.symm hj), zero_pow]
     simpa using congrFun (IsReduced.eq_zero _ ⟨n + 1, hx⟩) i
 
-/-- The one-by-one matrix ring over `A` is `A`.  This is Mathlib's `Matrix.uniqueRingEquiv` with the
-`Fintype` structure on the index taken from the ambient context instead of from `Unique`; see the
-implementation notes. -/
-def Matrix.ringEquivOfUnique {m : Type w} {A : Type u} [Fintype m] [Unique m]
-    [NonUnitalNonAssocSemiring A] : Matrix m m A ≃+* A := by
-  have he : ‹Fintype m› = Unique.fintype := Subsingleton.elim _ _
-  rw [he]
-  exact _root_.Matrix.uniqueRingEquiv
-
-@[simp]
-theorem Matrix.ringEquivOfUnique_apply {m : Type w} {A : Type u} [inst : Fintype m] [Unique m]
-    [NonUnitalNonAssocSemiring A] (M : Matrix m m A) :
-    Matrix.ringEquivOfUnique M = M default default := by
-  have he : inst = Unique.fintype := Subsingleton.elim _ _
-  subst he
-  rfl
-
-@[simp]
-theorem Matrix.ringEquivOfUnique_symm_apply {m : Type w} {A : Type u} [inst : Fintype m] [Unique m]
-    [NonUnitalNonAssocSemiring A] (a : A) (i j : m) :
-    (Matrix.ringEquivOfUnique (m := m)).symm a i j = a := by
-  have he : inst = Unique.fintype := Subsingleton.elim _ _
-  subst he
-  rfl
-
 /-- **A matrix ring of size at least two is never reduced.**  For `i ≠ j` the matrix unit `Eᵢⱼ` is
 nonzero and squares to zero, so a reduced matrix ring over a nonzero ring has at most one index. -/
 theorem Matrix.subsingleton_of_isReduced {m : Type w} {A : Type u} [DecidableEq m] [Fintype m]
@@ -144,15 +119,18 @@ theorem Matrix.subsingleton_of_isReduced {m : Type w} {A : Type u} [DecidableEq 
 /-- **A matrix ring over a nonzero reduced ring is reduced exactly in size at most one.**  In one
 direction this is `TauCeti.Matrix.subsingleton_of_isReduced`; in the other, a matrix ring on an
 empty index is the zero ring, and on a one-element index it is the base ring. -/
-theorem Matrix.isReduced_iff_subsingleton {m : Type w} {A : Type u} [DecidableEq m] [Fintype m]
-    [Ring A] [Nontrivial A] [IsReduced A] :
+theorem Matrix.isReduced_iff_subsingleton {m : Type w} {A : Type u} [DecidableEq m]
+    [inst : Fintype m] [Ring A] [Nontrivial A] [IsReduced A] :
     IsReduced (Matrix m m A) ↔ Subsingleton m := by
   refine ⟨fun _ => Matrix.subsingleton_of_isReduced (A := A), fun hm => ?_⟩
   rcases isEmpty_or_nonempty m with hempty | ⟨⟨i⟩⟩
   · exact ⟨fun x _ => funext fun i => (hempty.false i).elim⟩
   · have : Unique m := uniqueOfSubsingleton i
-    exact isReduced_of_injective (Matrix.ringEquivOfUnique (m := m) (A := A))
-      Matrix.ringEquivOfUnique.injective
+    let e : Matrix m m A ≃+* A := by
+      have he : inst = Unique.fintype := Subsingleton.elim _ _
+      rw [he]
+      exact _root_.Matrix.uniqueRingEquiv
+    exact isReduced_of_injective e e.injective
 
 /-! ### Reduced semisimple rings are products of division rings -/
 
@@ -174,8 +152,11 @@ theorem isReduced_iff_exists_ringEquiv_pi_divisionRing (R : Type u) [Ring R] [Is
       isReduced_of_isReduced_pi (R := fun j => Matrix (Fin (d j)) (Fin (d j)) (D j)) i
     have hsub : Subsingleton (Fin (d i)) := Matrix.subsingleton_of_isReduced (A := D i)
     exact uniqueOfSubsingleton (⟨0, (hd i).pos⟩ : Fin (d i))
-  exact ⟨n, D, hD, ⟨e.trans <| RingEquiv.piCongrRight fun i =>
-    @Matrix.ringEquivOfUnique (Fin (d i)) (D i) inferInstance (huniq i) inferInstance⟩⟩
+  refine ⟨n, D, hD, ⟨e.trans <| RingEquiv.piCongrRight fun i => ?_⟩⟩
+  have hu := huniq i
+  have he : Fin.fintype (d i) = Unique.fintype := Subsingleton.elim _ _
+  rw [he]
+  exact _root_.Matrix.uniqueRingEquiv
 
 /-! ### Basic algebras -/
 
@@ -183,13 +164,9 @@ theorem isReduced_iff_exists_ringEquiv_pi_divisionRing (R : Type u) [Ring R] [Is
 finite-dimensional algebra over a field, where that quotient is semisimple, this says that the
 quotient is a product of division rings rather than of matrix algebras over them, so that no
 Wedderburn block is repeated; see `TauCeti.isBasic_iff_exists_ringEquiv_pi_divisionRing`. -/
+@[expose]
 def IsBasic (A : Type v) [Ring A] : Prop :=
   IsReduced (A ⧸ Ring.jacobson A)
-
-/-- Unfolding of `TauCeti.IsBasic`: a ring is basic exactly when its quotient by the Jacobson
-radical is reduced. -/
-theorem isBasic_iff_isReduced (A : Type v) [Ring A] :
-    IsBasic A ↔ IsReduced (A ⧸ Ring.jacobson A) := Iff.rfl
 
 /-- **A finite-dimensional algebra is basic exactly when its semisimple quotient is a finite product
 of division rings.**  This is `TauCeti.isReduced_iff_exists_ringEquiv_pi_divisionRing`, read at the
