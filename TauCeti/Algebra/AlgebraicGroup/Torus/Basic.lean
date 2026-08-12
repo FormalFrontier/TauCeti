@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
-public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Cocharacter
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
 
 /-!
 # Tori over a field
