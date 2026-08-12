@@ -38,7 +38,9 @@ multiple of `ψ(x⁻¹)`, the coefficient of `x` in `∑_g ψ(g⁻¹) g`. Orthog
 and `e_ρ² = e_ρ`, are then read off from the values of the central character.
 
 That the `e_ρ` sum to `1` needs the classification of the irreducible representations indexing that
-sum, and is not proved here.
+sum, so it is not proved here but in
+`TauCeti/RepresentationTheory/CharacterTable/IdempotentDecomposition.lean`, downstream of the
+completeness of the irreducible characters.
 
 ## Main definitions
 
