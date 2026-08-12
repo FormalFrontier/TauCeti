@@ -28,7 +28,6 @@ every element of `K` lies in one of them.
   `p ^ n`-power Frobenius has `p ^ n` elements.
 * `TauCeti.frobeniusFixedFieldRingEquivGaloisField`: it is therefore isomorphic to Mathlib's
   `GaloisField p n`.
-* `TauCeti.frobeniusFixedField_one`: the Frobenius itself fixes exactly the prime subfield `⊥`.
 * `TauCeti.eq_frobeniusFixedField_of_card`: conversely a subfield with `p ^ n` elements is that
   fixed subfield, so it is the only one of its order.
 * `TauCeti.frobeniusFixedField_le_iff`: the fixed subfields are ordered by divisibility of the
@@ -110,19 +109,6 @@ theorem frobeniusFixedField_mono {m n : ℕ} (h : m ∣ n) :
   exact (iterateFrobenius_mul_apply K p m k x).trans (hx'.iterate k)
 
 end ExpChar
-
-section PrimeField
-
-variable [Fact p.Prime] [CharP K p]
-
-/-- **The Frobenius itself fixes exactly the prime subfield.** Together with
-`TauCeti.frobeniusFixedField_mono` this puts the prime subfield inside every fixed subfield. -/
-@[simp]
-theorem frobeniusFixedField_one : frobeniusFixedField K p 1 = ⊥ := by
-  ext x
-  rw [mem_frobeniusFixedField, pow_one, Subfield.mem_bot_iff_pow_eq_self K p]
-
-end PrimeField
 
 section AlgClosed
 
