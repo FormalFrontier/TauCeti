@@ -34,9 +34,11 @@ so end in an arithmetic inequality, no member of this family is of finite type, 
 of the chain. That is what makes the conclusion available in the form the classification wants,
 `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_chain_of_two_le`: a statement about an arbitrary
 finite-type matrix rather than about the model diagram. Its hypotheses are the data of a chain of
-indices - distinct indices, consecutive ones joined by a single edge, non-consecutive ones not
-joined - which is exactly what a path in the diagram of the matrix supplies, and the extraction of
-such a path from a diagram carrying two double edges is the step left outside this file.
+indices carrying a multiple edge at one end - distinct indices, non-consecutive ones not joined,
+the interior edges, those joining the vertices `s` and `s + 1` for `0 < s < m + 1`, single, and the
+first edge multiple - and its conclusion is that the last edge is then single. That is exactly what
+a path in the diagram of the matrix supplies, and the extraction of such a path from a diagram
+carrying two double edges is the step left outside this file.
 
 Note that the ends of the chain need not be the ends of the diagram: the hypotheses say nothing
 about indices outside the chain, since finite type passes to principal submatrices
@@ -51,8 +53,8 @@ about indices outside the chain, since finite type passes to principal submatric
 
 ## Main results
 
-* `TauCeti.sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark`: the marks are a null vector of the
-  diagram.
+* `TauCeti.sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero`: the marks are a null
+  vector of the diagram.
 * `TauCeti.not_isFiniteType_twoDoubleEdgeCartanMatrix`: **no doubly ended chain is of finite
   type**, in either orientation and at every length.
 * `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_chain_of_two_le`: **at most one edge of a chain
@@ -172,23 +174,16 @@ private theorem sum_fin_chainEntry_mul_twoDoubleEdgeMark (i : Fin (m + 3)) :
     (fun s ↦ ((chainEntry (i : ℕ) s : ℤ) : ℚ) * twoDoubleEdgeMark m b s)]
   simpa using h
 
-/-- A single lowered entry contributes the mark of its column to the row it sits in. -/
+/-- A single lowered entry contributes the mark of its column to the row it sits in. This is
+`Finset.sum_ite_eq'` on `Finset.range n`, read on `Fin n` and with the guard of the summand
+carrying the side condition `P` that names the row the entry sits in. -/
 private theorem sum_fin_ite_mul {n : ℕ} (P : Prop) [Decidable P] {k : ℕ} (hk : k < n) (c : ℚ)
     (f : ℕ → ℚ) :
     ∑ j : Fin n, (if P ∧ (j : ℕ) = k then c else 0) * f (j : ℕ)
       = if P then c * f k else 0 := by
-  by_cases hP : P
-  · have hterm : ∀ j : Fin n, (if P ∧ (j : ℕ) = k then c else 0) * f (j : ℕ)
-        = if j = ⟨k, hk⟩ then c * f k else 0 := by
-      intro j
-      by_cases hj : j = (⟨k, hk⟩ : Fin n)
-      · subst hj
-        simp [hP]
-      · have hjk : (j : ℕ) ≠ k := fun hc ↦ hj (Fin.ext hc)
-        simp [hjk, hj]
-    rw [Finset.sum_congr rfl fun j _ ↦ hterm j]
-    simp [hP]
-  · simp [hP]
+  rw [Fin.sum_univ_eq_sum_range fun j ↦ (if P ∧ j = k then c else 0) * f j]
+  by_cases hP : P <;>
+    simp [hP, ite_mul, Finset.sum_ite_eq' (Finset.range n) k fun j ↦ c * f j, hk]
 
 /-- **The row identity at a vertex number.** Away from the two ends of the chain the marks are
 constant, so the second difference vanishes; at the first vertex the mark is half of its
@@ -210,7 +205,7 @@ private lemma twoDoubleEdgeMark_row (m : ℕ) (b : Bool) {s : ℕ} (hs : s < m +
 /-- **The marks are a null vector of the doubly ended chain.** Every row annihilates them: the
 chain part of the row is the second difference of the marks, and the two lowered entries account
 for the two ends. -/
-theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark (i : Fin (m + 3)) :
+theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m + 3)) :
     ∑ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
       * twoDoubleEdgeMark m b (j : ℕ) = 0 := by
   have hsplit : ∀ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
@@ -245,7 +240,7 @@ theorem not_isFiniteType_twoDoubleEdgeCartanMatrix (m : ℕ) (b : Bool) :
   intro h
   have hzero := h.eq_zero_of_forall_mul_sum_apply_mul_nonpos
     (x := fun i : Fin (m + 3) ↦ twoDoubleEdgeMark m b (i : ℕ)) fun i ↦ by
-      rw [sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark, mul_zero]
+      rw [sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero, mul_zero]
   have hfirst := congrFun hzero (⟨0, by omega⟩ : Fin (m + 3))
   rw [Pi.zero_apply] at hfirst
   exact absurd hfirst (twoDoubleEdgeMark_pos (m := m) (b := b) _).ne'
@@ -366,9 +361,10 @@ private theorem not_two_le_of_chain_of_apply_eq_neg_two (h : IsFiniteType A) {v 
       (hv (Set.mem_Iio.2 i.isLt) (Set.mem_Iio.2 j.isLt) hij)
 
 /-- **At most one edge of a chain of a finite-type diagram is multiple.** Let `v 0, …, v (m + 2)`
-be distinct indices of a finite-type matrix, consecutive ones joined by a single edge and
-non-consecutive ones not joined at all. If the first edge of that chain is multiple, the last one
-is single.
+be distinct indices of a finite-type matrix, non-consecutive ones not joined at all and the
+interior edges of the chain - those joining `v s` to `v (s + 1)` for `0 < s < m + 1` - single. If
+the first edge, the one joining `v 0` to `v 1`, is multiple, then the last one, joining `v (m + 1)`
+to `v (m + 2)`, is single; nothing is assumed about that last edge beforehand.
 
 Nothing is assumed about the indices outside the chain: finite type passes to principal
 submatrices, so the chain may sit anywhere inside a larger diagram. The hypotheses are what a path
@@ -394,7 +390,8 @@ theorem IsFiniteType.apply_mul_apply_le_one_of_chain_of_two_le (h : IsFiniteType
       rw [hc] at hcon
       exact absurd hcon (by norm_num)
     · have h1 := hsimple 1 one_pos (by omega)
-      rw [show (1 : ℕ) + 1 = 2 from rfl, hc] at h1
+      norm_num at h1
+      rw [hc] at h1
       exact absurd h1 (by norm_num)
   -- So is the edge before the last one, which on the shortest chain is the first edge.
   have hedgeLast : A (v (m + 1)) (v m) * A (v m) (v (m + 1)) ≠ 0 := by
