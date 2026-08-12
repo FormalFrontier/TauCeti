@@ -112,14 +112,16 @@ theorem choose_mem_kostantCartanGenerators (h : κ → L) (i : κ) (n : ℕ) :
 /-- Every divided power of a designated root vector belongs to the Kostant form. -/
 @[simp]
 theorem dividedPower_mem_kostantForm (e : ι → L) (h : κ → L) (i : ι) (n : ℕ) :
-    Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ∈
+    Associative.dividedPower n
+        ((_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L) (TensorAlgebra.ι ℚ (e i))) ∈
       kostantForm e h :=
   Subring.subset_closure <| Or.inl (dividedPower_mem_kostantRootGenerators e i n)
 
 /-- Every binomial coefficient of a designated Cartan vector belongs to the Kostant form. -/
 @[simp]
 theorem choose_mem_kostantForm (e : ι → L) (h : κ → L) (i : κ) (n : ℕ) :
-    Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n ∈ kostantForm e h :=
+    Ring.choose ((_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L) (TensorAlgebra.ι ℚ (h i))) n ∈
+      kostantForm e h :=
   Subring.subset_closure <| Or.inr (choose_mem_kostantCartanGenerators h i n)
 
 /-- Each designated root vector itself belongs to the Kostant form. -/
