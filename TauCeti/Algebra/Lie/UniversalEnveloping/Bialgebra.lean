@@ -200,14 +200,7 @@ instance instIsCocomm : Coalgebra.IsCocomm R U where
       intro x
       simp only [LieHom.coe_comp, Function.comp_apply, AlgHom.coe_toLieHom, AlgHom.comp_apply,
         Bialgebra.comulAlgHom_apply, _root_.UniversalEnvelopingAlgebra.ι_apply, comul_ι,
-        map_add]
-      change
-        (Algebra.TensorProduct.comm R U U)
-              (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) ⊗ₜ[R] 1) +
-            (Algebra.TensorProduct.comm R U U)
-              (1 ⊗ₜ[R]
-                _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = _
-      simp only [Algebra.TensorProduct.comm_tmul]
+        map_add, AlgEquiv.toAlgHom_apply, Algebra.TensorProduct.comm_tmul]
       abel
     exact congrArg AlgHom.toLinearMap h
 
