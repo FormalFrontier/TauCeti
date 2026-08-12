@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import TauCeti.Geometry.Lie.Adjoint.Infinitesimal
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 public import TauCeti.Geometry.Lie.Adjoint.Representation.Basic
 
 /-!
@@ -60,29 +61,20 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
     (I := I) (G := G)
   let L : E → LeftInvariantDerivation I G := eIso.symm.toContinuousLinearEquiv
-  let T : G → E := fun g => show E from tangentAd (I := I) g (eLie Y)
-  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T := by
-    have hpair : ContMDiff I
-        (I.prod 𝓘(ℝ, E)) ∞
-        (fun g : G => (g, show E from eLie Y)) := contMDiff_id.prodMk contMDiff_const
-    exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair
+  let T : G → E := fun g => show E from tangentAd (I := I) g (eIso Y)
+  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
+    contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
   have hEq : (fun g : G => Ad (I := I) g Y) = L ∘ T := by
     funext g
-    have hAd := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
-      (I := I) g Y
-    apply eLie.injective
-    change eLie (Ad (I := I) g Y) = eLie (L (T g))
-    rw [hAd]
-    have htransport : L (show E from tangentAd (I := I) g (eLie Y)) =
-        eLie.symm (tangentAd (I := I) g (eLie Y)) := by
-      rw [leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply]
-      dsimp only [L]
-      exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply
-        (I := I) (G := G) (show E from tangentAd (I := I) g (eLie Y))
-    rw [htransport, eLie.apply_symm_apply]
+    apply eIso.injective
+    rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad]
+    -- Unfold the local composition and use the explicit inverse law of the model equivalence.
+    change tangentAd (I := I) g (eIso Y) = eIso (eIso.symm (T g))
+    rw [eIso.apply_symm_apply]
   have hL : ContMDiff 𝓘(ℝ, E) 𝓘(ℝ, LeftInvariantDerivation I G) ∞ L :=
     eIso.symm.toContinuousLinearEquiv.contDiff.contMDiff
-  rw [hEq, mvfderiv, ContinuousLinearMap.comp_apply]
+  rw [hEq]
+  rw [mvfderiv_apply_eq_mfderiv_apply]
   rw [mfderiv_comp_apply (1 : G)
     (hL.mdifferentiable (by simp) (T 1))
     (hT.mdifferentiable (by simp) 1) (eLie X)]
@@ -90,25 +82,33 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     (eIso.symm.toContinuousLinearEquiv.hasFDerivAt (x := T 1)).hasMFDerivAt
   simp only [L]
   rw [hLmf.mfderiv]
-  have hTangent := mvfderiv_tangentAd_apply_one (I := I) (G := G) (eLie X) (eLie Y)
+  have hTangent := mvfderiv_tangentAd_apply_one (I := I) (G := G) (eLie X)
+    ((eIso Y : E) : GroupLieAlgebra I G)
   -- `GroupLieAlgebra I G` is definitionally the model vector space `E`; expose that canonical
   -- identification so the tangent-level derivative theorem can rewrite the model-valued map `T`.
   change
     (mfderiv I 𝓘(ℝ, E) T 1) (eLie X) =
-      (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) (eLie X) (eLie Y)) at hTangent
+      (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) (eLie X)
+        ((eIso Y : E) : GroupLieAlgebra I G)) at hTangent
   rw [hTangent]
   simp only [LieAlgebra.ad_apply]
-  rw [← eLie.map_lie]
-  -- The isometric and Lie-algebra equivalences are both evaluation at the identity. The following
-  -- calculation uses their explicit inverse-application lemmas instead of relying on that fact by
-  -- definitional reduction.
+  have heIsoLieY : ((eIso Y : E) : GroupLieAlgebra I G) = eLie Y := by
+    rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
+      leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
+  rw [heIsoLieY]
+  have hbracket := eLie.map_lie X Y
+  -- Expose the bracket-valued model vector produced by `LieAlgebra.ad` so the Lie equivalence's
+  -- explicit bracket-preservation theorem can rewrite it.
+  change eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) = ⁅X, Y⁆
+  rw [← hbracket]
+  have hsymm (v : E) : eIso.symm v = eLie.symm (v : GroupLieAlgebra I G) := by
+    rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
+    exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
+      (I := I) (G := G) BoundarylessManifold.isInteriorPoint
+      (v : GroupLieAlgebra I G)).symm
+  -- Expose the model-space coercion so the shared inverse-transport fact applies.
   change eIso.symm (show E from eLie (⁅X, Y⁆)) = ⁅X, Y⁆
-  calc
-    eIso.symm (show E from eLie (⁅X, Y⁆)) = eLie.symm (eLie (⁅X, Y⁆)) := by
-      rw [leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply]
-      exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply
-        (I := I) (G := G) (show E from eLie (⁅X, Y⁆))
-    _ = ⁅X, Y⁆ := eLie.symm_apply_apply _
+  rw [hsymm, eLie.symm_apply_apply]
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/
@@ -155,15 +155,17 @@ theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivatio
     exact (continuousAdjointRepresentation_apply (I := I) g Y).symm
   have hCompAY :
       mvfderiv I AY 1 (eLie X) = dOp Y := by
-    rw [hAY, mvfderiv, ContinuousLinearMap.comp_apply, hComp]
-    -- Evaluation of a bounded operator and the model-space tangent identifications are transparent.
-    rfl
+    rw [hAY, mvfderiv_apply_eq_mfderiv_apply, hComp]
+    rw [← mvfderiv_apply_eq_mfderiv_apply]
+    -- `evalY` is bounded-operator evaluation, and `dOp` abbreviates the bundled derivative.
+    change dOp Y = dOp Y
+    exact Eq.refl _
   calc
     dOp Y = mvfderiv I AY 1 (eLie X) := hCompAY.symm
     _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
       simpa only [AY, eLie] using mvfderiv_Ad_apply_one (I := I) (G := G) X Y
     _ = LinearMap.toContinuousLinearMap
         (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X) Y := by
-      rfl
+      rw [LinearMap.coe_toContinuousLinearMap']
 
 end TauCeti.Lie
