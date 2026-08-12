@@ -525,7 +525,7 @@ coroot lattice, so that the datum is the simply connected one. -/
 private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
     weight n a - weight n b ∈
       AddSubmonoid.closure (range (typeCSimpleRoot (n := n))) := by
-  refine TauCeti.sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   have hk' : k + 1 < n := by omega
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleRoot_of_lt (i := ⟨k, by omega⟩) (by simpa using hk')]
@@ -533,7 +533,7 @@ private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
 private lemma coweight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b ≤ n) :
     coweight n a - coweight n b ∈
       AddSubmonoid.closure (range (typeCSimpleCoroot (n := n))) := by
-  refine TauCeti.sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleCoroot_eq (i := ⟨k, by omega⟩)]
 

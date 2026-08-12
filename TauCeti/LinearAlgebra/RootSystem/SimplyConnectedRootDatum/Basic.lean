@@ -33,8 +33,8 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
 * `TauCeti.sum_smul_mem_or_neg_mem_closure`: a combination of a family with coefficients of one
   sign lies in the additive closure of the family, or its negative does. This is the shape in which
   the two membership axioms of `RootPairing.Base` are met.
-* `TauCeti.sub_mem_of_forall`: a difference of two members of a family telescopes into any additive
-  submonoid containing the consecutive differences between them.
+* `TauCeti.sub_mem_of_consecutive_sub_mem`: a difference of two members of a family telescopes into
+  any additive submonoid containing the consecutive differences between them.
 * `TauCeti.sub_mem_closure_of_le`: a difference of two members of a family telescopes into the
   additive closure of the consecutive differences. This is the shape in which those same axioms are
   met by the pinned data written in a coordinate potential.
@@ -107,7 +107,7 @@ theorem sum_smul_mem_or_neg_mem_closure (c : κ → ℤ) (hc : (∀ i, 0 ≤ c i
 
 /-- A difference `f a - f b` telescopes into any additive submonoid containing all the consecutive
 differences `f k - f (k + 1)` for `a ≤ k < b`. -/
-theorem sub_mem_of_forall (S : AddSubmonoid M) (f : ℕ → M) {a b : ℕ} (hab : a ≤ b)
+theorem sub_mem_of_consecutive_sub_mem (S : AddSubmonoid M) (f : ℕ → M) {a b : ℕ} (hab : a ≤ b)
     (h : ∀ k, a ≤ k → k < b → f k - f (k + 1) ∈ S) : f a - f b ∈ S := by
   have key := Finset.sum_Ico_sub (fun k => -f k) hab
   simp only [neg_sub_neg] at key
@@ -120,7 +120,7 @@ pinned datum whose roots or coroots are differences of a coordinate potential me
 axioms of `RootPairing.Base` in this shape. -/
 theorem sub_mem_closure_of_le {n : ℕ} (f : ℕ → M) {a b : ℕ} (hb : b ≤ n) (hab : a ≤ b) :
     f a - f b ∈ AddSubmonoid.closure (range fun i : Fin n => f (i : ℕ) - f ((i : ℕ) + 1)) := by
-  refine sub_mem_of_forall _ _ hab fun i _ hib => AddSubmonoid.subset_closure ?_
+  refine sub_mem_of_consecutive_sub_mem _ _ hab fun i _ hib => AddSubmonoid.subset_closure ?_
   exact ⟨⟨i, lt_of_lt_of_le hib hb⟩, rfl⟩
 
 end Closure

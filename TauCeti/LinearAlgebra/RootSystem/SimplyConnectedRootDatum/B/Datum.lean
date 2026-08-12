@@ -179,13 +179,13 @@ private lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
 
 private lemma rootIdx_injective : Injective (rootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
-  refine eq_of_forall_mem_iff fun m => ?_
+  refine index_eq_of_pair_mem_iff fun m => ?_
   rw [← rootIdx_dotProduct_signedCoweight_eq_two_iff,
     ← rootIdx_dotProduct_signedCoweight_eq_two_iff, h]
 
 private lemma corootIdx_injective : Injective (corootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
-  refine eq_of_forall_mem_iff fun m => ?_
+  refine index_eq_of_pair_mem_iff fun m => ?_
   rw [← two_mul_signedWeight_dotProduct_corootIdx_iff,
     ← two_mul_signedWeight_dotProduct_corootIdx_iff, h]
 

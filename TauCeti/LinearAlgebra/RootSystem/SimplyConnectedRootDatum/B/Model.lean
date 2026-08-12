@@ -73,7 +73,7 @@ their bodies are not exposed to importing modules.
 * `TauCeti.DynkinType.TypeB.signedWeight_reflMap` and
   `TauCeti.DynkinType.TypeB.signedCoweight_reflMap`: the reflection
   formulas on a single signed basis vector, from which the root-datum axioms follow additively.
-* `TauCeti.DynkinType.TypeB.eq_of_forall_mem_iff`: an index is recovered from its unordered
+* `TauCeti.DynkinType.TypeB.index_eq_of_pair_mem_iff`: an index is recovered from its unordered
   signed-vector pair.
 
 ## References
@@ -823,7 +823,7 @@ lemma two_mul_signedWeight_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (
         omega
 
 /-- Two indices naming the same pair of signed basis vectors are equal. -/
-lemma eq_of_forall_mem_iff {z z' : Fin (2 * n) × Fin n}
+lemma index_eq_of_pair_mem_iff {z z' : Fin (2 * n) × Fin n}
     (h : ∀ m, (m = z.1 ∨ m = shift z.1 z.2) ↔ (m = z'.1 ∨ m = shift z'.1 z'.2)) : z = z' := by
   have e1 : cyclicDistance z.1 (shift z.1 z.2) = (z.2 : ℕ) := cyclicDistance_shift _ _
   have e2 : cyclicDistance z'.1 (shift z'.1 z'.2) = (z'.2 : ℕ) := cyclicDistance_shift _ _
