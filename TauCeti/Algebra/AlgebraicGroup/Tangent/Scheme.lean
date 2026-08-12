@@ -83,6 +83,7 @@ theorem finrank_cotangentSpace_eq_finrank_zariskiCotangentSpace :
       Module.finrank k
         (TauCeti.AlgebraicGeometry.ZariskiCotangentSpace
           (Spec (CommRingCat.of H)) (augmentationPoint k H)) :=
-  (cotangentLinearEquivZariski k H).finrank_eq
+  AlgHom.finrank_kernelCotangent_eq_finrank_zariskiCotangentSpace
+    (_root_.Bialgebra.counitAlgHom k H)
 
 end TauCeti.Bialgebra
