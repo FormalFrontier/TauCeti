@@ -103,4 +103,6 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
         mvfderiv I f p.1 p.2 := by
     rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
     rfl
+  -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
+  -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
   exact h.congr fun p => (htangent p).symm
