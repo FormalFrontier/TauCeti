@@ -107,12 +107,49 @@ theorem dividedPower_mem_kostantRootGenerators (e : ι → L) (i : ι) (n : ℕ)
       kostantRootGenerators e :=
   ⟨(i, n), rfl⟩
 
+/-- Membership in the root generators: the elements are exactly the divided powers of the
+designated root vectors. -/
+@[simp]
+theorem mem_kostantRootGenerators_iff {e : ι → L}
+    {x : _root_.UniversalEnvelopingAlgebra ℚ L} :
+    x ∈ kostantRootGenerators e ↔
+      ∃ i n, Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) = x := by
+  constructor
+  · rintro ⟨⟨i, n⟩, rfl⟩
+    exact ⟨i, n, rfl⟩
+  · rintro ⟨i, n, rfl⟩
+    exact ⟨(i, n), rfl⟩
+
 /-- A binomial coefficient of a designated Cartan vector is one of the Cartan-generator
 elements. -/
 theorem ringChoose_mem_kostantCartanGenerators (h : κ → L) (i : κ) (n : ℕ) :
     Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n ∈
       kostantCartanGenerators h :=
   ⟨(i, n), rfl⟩
+
+/-- Membership in the Cartan generators: the elements are exactly the binomial coefficients of the
+designated Cartan vectors. -/
+@[simp]
+theorem mem_kostantCartanGenerators_iff {h : κ → L}
+    {x : _root_.UniversalEnvelopingAlgebra ℚ L} :
+    x ∈ kostantCartanGenerators h ↔
+      ∃ i n, Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n = x := by
+  constructor
+  · rintro ⟨⟨i, n⟩, rfl⟩
+    exact ⟨i, n, rfl⟩
+  · rintro ⟨i, n, rfl⟩
+    exact ⟨(i, n), rfl⟩
+
+/-- Membership in the full generator set: an element is a generator exactly when it is a divided
+power of a designated root vector or a binomial coefficient of a designated Cartan vector. -/
+@[simp]
+theorem mem_kostantGenerators_iff {e : ι → L} {h : κ → L}
+    {x : _root_.UniversalEnvelopingAlgebra ℚ L} :
+    x ∈ kostantGenerators e h ↔
+      (∃ i n, Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) = x) ∨
+        ∃ i n, Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n = x := by
+  rw [kostantGenerators, mem_union, mem_kostantRootGenerators_iff,
+    mem_kostantCartanGenerators_iff]
 
 /-- Every divided power of a designated root vector belongs to the Kostant form. -/
 theorem dividedPower_mem_kostantForm (e : ι → L) (h : κ → L) (i : ι) (n : ℕ) :
@@ -266,10 +303,16 @@ theorem coe_kostantFormEquiv_apply (g : LieEquiv ℚ L M) (e : ι → L) (h : κ
     (x : kostantForm e h) :
     (kostantFormEquiv g e h x : _root_.UniversalEnvelopingAlgebra ℚ M) =
       map ℚ g.toLieHom x := by
-  rw [kostantFormEquiv, RingEquiv.trans_apply, RingEquiv.coe_subringCongr_apply,
-    RingEquiv.subringMap]
-  change (mapEquiv ℚ g) (x : _root_.UniversalEnvelopingAlgebra ℚ L) = _
-  rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
+  rw [kostantFormEquiv, RingEquiv.trans_apply, RingEquiv.coe_subringCongr_apply]
+  -- `RingEquiv.subringMap` is `RingEquiv.subsemiringMap` on the underlying subsemiring, so
+  -- `RingEquiv.subsemiringMap_apply_coe` computes it; it cannot be used by `rw`, since the two
+  -- carriers `↥(kostantForm e h)` and `↥(kostantForm e h).toSubsemiring` are only definitionally
+  -- equal, so the computation is recorded as an explicit coercion equation instead.
+  have hsub : ((RingEquiv.subringMap (s := kostantForm e h) (mapEquiv ℚ g).toRingEquiv) x :
+      _root_.UniversalEnvelopingAlgebra ℚ M) =
+      mapEquiv ℚ g (x : _root_.UniversalEnvelopingAlgebra ℚ L) :=
+    RingEquiv.subsemiringMap_apply_coe _ _ _
+  rw [hsub, ← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 /-- The inverse restricted equivalence acts by the enveloping-algebra map induced by the inverse
 Lie equivalence. -/
@@ -278,20 +321,16 @@ theorem coe_kostantFormEquiv_symm_apply (g : LieEquiv ℚ L M) (e : ι → L) (h
     (y : kostantForm (fun i => g (e i)) (fun i => g (h i))) :
     ((kostantFormEquiv g e h).symm y : _root_.UniversalEnvelopingAlgebra ℚ L) =
       map ℚ g.symm.toLieHom y := by
-  apply (mapEquiv ℚ g).injective
-  calc
-    (mapEquiv ℚ g) ((kostantFormEquiv g e h).symm y :
-        _root_.UniversalEnvelopingAlgebra ℚ L) = map ℚ g.toLieHom
-          ((kostantFormEquiv g e h).symm y : _root_.UniversalEnvelopingAlgebra ℚ L) := by
-            rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
-    _ = (y : _root_.UniversalEnvelopingAlgebra ℚ M) := by
-      rw [← coe_kostantFormEquiv_apply]
-      simp
-    _ = (mapEquiv ℚ g) (map ℚ g.symm.toLieHom y) := by
-      rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
-      symm
-      apply map_leftInverse ℚ
-      apply LieHom.ext
-      exact g.apply_symm_apply
+  rw [kostantFormEquiv, RingEquiv.symm_trans_apply]
+  -- As in `coe_kostantFormEquiv_apply`, the inverse of the restricted equivalence is computed by
+  -- `RingEquiv.subsemiringMap_symm_apply_coe` through the definitional identification of
+  -- `RingEquiv.subringMap` with `RingEquiv.subsemiringMap`.
+  have hsub : ∀ z : (kostantForm e h).map (mapEquiv ℚ g).toRingEquiv.toRingHom,
+      ((RingEquiv.subringMap (s := kostantForm e h) (mapEquiv ℚ g).toRingEquiv).symm z :
+        _root_.UniversalEnvelopingAlgebra ℚ L) =
+        (mapEquiv ℚ g).symm (z : _root_.UniversalEnvelopingAlgebra ℚ M) :=
+    fun z => RingEquiv.subsemiringMap_symm_apply_coe _ _ _
+  rw [hsub, RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply, mapEquiv_symm,
+    ← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 end TauCeti.UniversalEnvelopingAlgebra
