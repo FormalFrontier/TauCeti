@@ -77,8 +77,11 @@ this file in the import order; it is `TauCeti.BrauerGroup.mk_eq_one_iff_isSplitt
 `TauCeti/Algebra/BrauerGroup/Splitting.lean`. It is also what supplies, in an example such as
 `ℍ[ℝ]`, the nonidentity hypothesis that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sharpen
 the divisibility `orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` to the equality `= 2`. The functoriality of
-`BrauerGroup` under base change, and splitting fields as the kernel of that homomorphism, are the
-next steps and are not taken here either.
+`BrauerGroup` under base change is not taken here either, but it is on record one file up:
+`TauCeti.BrauerGroup.baseChange` in `TauCeti/Algebra/BrauerGroup/BaseChange.lean`, whose kernel is
+described there as the classes that become Brauer trivial over the extension
+(`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff`). Identifying that kernel with the classes *split*
+by the extension is the converse above again, one field up, and is not proved anywhere yet.
 
 ## References
 

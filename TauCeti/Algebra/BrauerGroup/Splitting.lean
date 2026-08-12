@@ -69,6 +69,14 @@ instead, which keeps the argument inside `Module.finrank` and avoids having to p
 isomorphism `D ≃+* K` that `TauCeti.wedderburn_data_unique` also supplies to an isomorphism of
 `K`-algebras.
 
+The two `IsBrauerTrivial` equivalences are the `simp` normal form of `TauCeti.IsBrauerTrivial`, the
+division-algebra one at default priority and the general one at `low`, because a division algebra is
+simple and so matches both left-hand sides; the sharper `Module.finrank` criterion is the one that
+should win there. The two `TauCeti.BrauerGroup.mk` forms are deliberately *not* `simp` lemmas:
+`TauCeti.BrauerGroup.mk_eq_one_iff` is one already, so `simp` normalizes `mk (CSA.of K A) = 1`
+through it and reaches the same right-hand sides; tagging them as well makes the `simpNF` linter
+report them as provable by the rules already in the set.
+
 As in `TauCeti/Algebra/BrauerGroup/Trivial.lean`, the statements mentioning `TauCeti.CSA.base K`
 are for a `CSA.{u, u} K`, an algebra in the universe of its own base field, because Mathlib's
 `IsBrauerEquivalent` relates two algebras in one universe.
@@ -132,13 +140,21 @@ theorem Algebra.isSplittingField_self_of_isBrauerTrivial (h : IsBrauerTrivial (C
     (AlgEquiv.ofBijective (_root_.Algebra.ofId K D)
       (_root_.Algebra.finrank_eq_one_iff_bijective_algebraMap.1 hD)).symm)⟩⟩
 
-/-- **Brauer triviality is exactly splitting by the base field.** -/
+/-- **Brauer triviality is exactly splitting by the base field.**
+
+This is the `simp` normal form of `TauCeti.IsBrauerTrivial` for a general central simple algebra;
+it is at low priority so that the sharper `TauCeti.isBrauerTrivial_iff_finrank_eq_one` wins on a
+division algebra, whose `IsBrauerTrivial` hypothesis matches both. -/
+@[simp low]
 theorem isBrauerTrivial_iff_isSplittingField :
     IsBrauerTrivial (CSA.of K A) ↔ Algebra.IsSplittingField K A K :=
   ⟨Algebra.isSplittingField_self_of_isBrauerTrivial K A, isBrauerTrivial_of_isSplittingField K⟩
 
 /-- **A Brauer class is the identity exactly when its algebras are split by the base field.** This
-is the sharp form of `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField`. -/
+is the sharp form of `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField`.
+
+Not a `simp` lemma: `TauCeti.BrauerGroup.mk_eq_one_iff` is one already, so `simp` reaches the
+right-hand side through it. -/
 theorem BrauerGroup.mk_eq_one_iff_isSplittingField :
     BrauerGroup.mk (CSA.of K A) = 1 ↔ Algebra.IsSplittingField K A K :=
   BrauerGroup.mk_eq_one_iff.trans (isBrauerTrivial_iff_isSplittingField K A)
@@ -157,6 +173,7 @@ variable (K : Type u) [Field K] (D : Type u) [DivisionRing D] [Algebra K D]
 This is the base case of the statement that every Brauer class has a unique division-algebra
 representative, and it is what makes a Brauer group nontrivial in practice: exhibiting a central
 division algebra of dimension greater than one exhibits a nonidentity class. -/
+@[simp]
 theorem isBrauerTrivial_iff_finrank_eq_one :
     IsBrauerTrivial (CSA.of K D) ↔ Module.finrank K D = 1 := by
   constructor
@@ -196,7 +213,9 @@ theorem algebraMap_baseFieldAlgEquivOfIsBrauerTrivial (h : IsBrauerTrivial (CSA.
   rw [← baseFieldAlgEquivOfIsBrauerTrivial_symm_apply K D h, AlgEquiv.symm_apply_apply]
 
 /-- **The Brauer class of a central division algebra is the identity exactly when the algebra is
-one-dimensional.** -/
+one-dimensional.**
+
+Not a `simp` lemma, for the same reason as `TauCeti.BrauerGroup.mk_eq_one_iff_isSplittingField`. -/
 theorem BrauerGroup.mk_eq_one_iff_finrank_eq_one :
     BrauerGroup.mk (CSA.of K D) = 1 ↔ Module.finrank K D = 1 :=
   BrauerGroup.mk_eq_one_iff.trans (isBrauerTrivial_iff_finrank_eq_one K D)
