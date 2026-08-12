@@ -7,6 +7,7 @@ module
 public import TauCeti.Geometry.Lie.Exponential.Smoothness
 public import TauCeti.Geometry.Lie.RightInvariantVectorField
 import TauCeti.Geometry.Lie.Interior
+import TauCeti.Geometry.Manifold.ContMDiff.Prod
 
 /-!
 # Derivative of the Lie-group exponential
@@ -25,6 +26,8 @@ calculation supplies reusable chain rules for functions along translated exponen
 * `hasFDerivAt_extChartAt_lieExp_zero`: the identity-chart derivative of the derivation-based
   exponential is the canonical linear isometry to the model space.
 * `contMDiff_mulInvariantExp_smul`: an exponential line is smooth.
+* `contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul`: two exponential lines multiplied
+  around a fixed group element give a smooth two-parameter map.
 * `hasMFDerivAt_mulInvariantExp_smul_zero`: an exponential line has its generator as initial
   velocity.
 * `hasMFDerivAt_mulInvariantExp_smul`: at every time, an exponential line's velocity is its
@@ -79,6 +82,24 @@ theorem contMDiff_mulInvariantExp_smul (X : GroupLieAlgebra I G) :
   dsimp only
   simpa only [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
     contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) X
+
+/-- Two exponential lines multiplied around a fixed group element give a smooth two-parameter
+map. -/
+theorem contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul
+    (g : G) (X Y : GroupLieAlgebra I G) :
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    ContMDiff 𝓘(ℝ, ℝ × ℝ) I ∞ (fun p : ℝ × ℝ =>
+      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
+        mulInvariantExp (I := I) (G := G) (p.2 • Y)) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  dsimp only
+  have hX := contMDiff_mulInvariantExp_smul (I := I) (G := G) X
+  have hY := contMDiff_mulInvariantExp_smul (I := I) (G := G) Y
+  have hprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞ (fun p : ℝ × ℝ =>
+      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
+        mulInvariantExp (I := I) (G := G) (p.2 • Y)) :=
+    ((hX.comp contMDiff_fst).mul contMDiff_const).mul (hY.comp contMDiff_snd)
+  exact (contMDiff_prod_modelWithCornersSelf_iff (I' := I)).mp hprod
 
 end Smoothness
 

@@ -56,7 +56,7 @@ theorem fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt (hre : |w.re| < 
   obtain ⟨hx₁, hx₂⟩ := abs_lt.mp hre
   intro t ht h_eq
   rcases le_or_gt t 1 with h1 | h1
-  · have := re_fdBoundary_segment1 H ⟨ht.1, h1⟩
+  · have := re_fdBoundarySegment1 H ⟨ht.1, h1⟩
     rw [h_eq] at this
     linarith
   · rcases le_or_gt t 3 with h3 | h3
@@ -65,10 +65,10 @@ theorem fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt (hre : |w.re| < 
       rw [h_eq] at this
       linarith
     · rcases le_or_gt t 4 with h4 | h4
-      · have := re_fdBoundary_segment4 H ⟨h3.le, h4⟩
+      · have := re_fdBoundarySegment4 H ⟨h3.le, h4⟩
         rw [h_eq] at this
         linarith
-      · have := im_fdBoundary_segment5 H ⟨h4.le, ht.2⟩
+      · have := im_fdBoundarySegment5 H ⟨h4.le, ht.2⟩
         rw [h_eq] at this
         linarith
 
@@ -124,10 +124,10 @@ private theorem windingNumber_fdBoundary_eq_neg_one_of_one_lt_im (hx : |w.re| < 
           Complex.log ((-1 / 2 + H * Complex.I - w) / ((ρ : ℂ) - w)) +
           Complex.log ((1 / 2 + H * Complex.I - w) / (-1 / 2 + H * Complex.I - w))) := by
     rw [windingNumber_fdBoundary_eq_sum_pieces hw,
-      windingNumber_fdBoundary_segment1_eq_log hx₂,
+      windingNumber_fdBoundarySegment1_eq_log hx₂,
       windingNumber_fdBoundary_arc_eq_log hy1,
-      windingNumber_fdBoundary_segment4_eq_log hx₁,
-      windingNumber_fdBoundary_segment5_eq_log hyH]
+      windingNumber_fdBoundarySegment4_eq_log hx₁,
+      windingNumber_fdBoundarySegment5_eq_log hyH]
     ring
   -- integrality
   obtain ⟨P, hP, hdiff⟩ := (isPiecewiseC1On_fdBoundary H).exists_countable_differentiableAt
