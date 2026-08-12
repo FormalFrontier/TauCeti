@@ -6,6 +6,7 @@ module
 
 public import TauCeti.NumberTheory.NumberField.SignApproximation
 public import TauCeti.NumberTheory.NumberField.Units.Signature.Basic
+import TauCeti.GroupTheory.QuotientGroup.KerEquiv
 
 /-!
 # The signature map of a number field is surjective
@@ -18,10 +19,10 @@ elements, so `Kˣ ⧸ totallyPositiveUnits` *is* the sign group and the totally 
 index exactly `2 ^ r₁` in `Kˣ`, with `r₁` the number of real places.
 
 The input is weak approximation at the real places,
-`TauCeti.NumberField.exists_ne_zero_forall_isReal_pos`. Nothing here is true of the *unit*
-signature `TauCeti.NumberField.unitSignature`: the index of the totally positive units inside
-`(𝓞 K)ˣ` is a genuine arithmetic invariant, and the gap between it and `2 ^ r₁` is exactly what the
-narrow class group measures.
+`TauCeti.NumberField.exists_ne_zero_forall_isReal_pos`. The analogous *unit* signature
+`TauCeti.NumberField.unitSignature` need not be surjective, so the index of the totally positive
+units inside `(𝓞 K)ˣ` need not equal `2 ^ r₁`: it is a genuine arithmetic invariant, and the gap
+between it and `2 ^ r₁` is exactly what the narrow class group measures.
 
 ## Main results
 
@@ -85,6 +86,12 @@ noncomputable def quotientTotallyPositiveUnitsEquiv :
     (@QuotientGroup.quotientKerEquivOfSurjective Kˣ _
       ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) inferInstance
       fieldUnitSignature fieldUnitSignature_surjective)
+
+/-- The quotient equivalence sends the class of `u : Kˣ` to its signature. -/
+@[simp] theorem quotientTotallyPositiveUnitsEquiv_mk (u : Kˣ) :
+    quotientTotallyPositiveUnitsEquiv (K := K) (QuotientGroup.mk u) = fieldUnitSignature u := by
+  simp [quotientTotallyPositiveUnitsEquiv,
+    TauCeti.QuotientGroup.quotientKerEquivOfSurjective_apply_mk]
 
 /-- There are `2 ^ r₁` sign patterns at the real places, `r₁` being their number: the codomain of
 `TauCeti.NumberField.fieldUnitSignature` is a product of `r₁` two-element sign groups. -/

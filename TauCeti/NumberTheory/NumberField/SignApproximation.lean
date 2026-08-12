@@ -46,21 +46,24 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- **Weak approximation at the infinite places.** Given one target `a v : K` for each infinite
-place `v` of a number field and a tolerance `r > 0`, some single `x : K` is within `r` of every
-target, as measured by the place at which that target was prescribed.
+/-- **Weak approximation at the infinite places.** Given one target `a v : K` and one positive
+tolerance `r v` for each infinite place `v` of a number field, some single `x : K` is within `r v`
+of every target, as measured by the place at which that target was prescribed.
 
 This is `NumberField.InfinitePlace.denseRange_algebraMap_pi` with the topology of the finite
 product unwound into the individual places. -/
-theorem exists_forall_infinitePlace_sub_lt (a : InfinitePlace K → K) {r : ℝ} (hr : 0 < r) :
-    ∃ x : K, ∀ v : InfinitePlace K, v (x - a v) < r := by
+theorem exists_forall_infinitePlace_sub_lt (a : InfinitePlace K → K)
+    (r : InfinitePlace K → ℝ) (hr : ∀ v, 0 < r v) :
+    ∃ x : K, ∀ v : InfinitePlace K, v (x - a v) < r v := by
+  let δ := Finset.univ.inf' Finset.univ_nonempty r
+  have hδ : 0 < δ := (Finset.lt_inf'_iff _).2 fun v _ => hr v
   obtain ⟨x, hx⟩ := Metric.denseRange_iff.mp (InfinitePlace.denseRange_algebraMap_pi K)
-    (fun v => WithAbs.toAbs v.1 (a v)) r hr
+    (fun v => WithAbs.toAbs v.1 (a v)) δ hδ
   refine ⟨x, fun v => ?_⟩
-  have h := (dist_pi_lt_iff hr).mp hx v
+  have h := (dist_pi_lt_iff hδ).mp hx v
   rw [dist_eq_norm, WithAbs.norm_eq_apply_ofAbs, WithAbs.ofAbs_sub] at h
   rw [coe_apply, AbsoluteValue.map_sub]
-  exact h
+  exact h.trans_le (Finset.inf'_le r (Finset.mem_univ v))
 
 /-- **A nonzero element with prescribed signs at the real places.** For any family of nonzero
 reals `s`, indexed by the real infinite places of a number field `K`, some nonzero `x : K` has
@@ -86,7 +89,7 @@ theorem exists_ne_zero_forall_isReal_pos (s : {w : InfinitePlace K // w.IsReal} 
       split_ifs <;> simp
     rw [coe_apply]
     rcases h with h | h <;> rw [h] <;> simp
-  obtain ⟨x, hx⟩ := exists_forall_infinitePlace_sub_lt a one_pos
+  obtain ⟨x, hx⟩ := exists_forall_infinitePlace_sub_lt a (fun _ => 1) fun _ => one_pos
   have hx0 : x ≠ 0 := by
     rintro rfl
     have h := hx (Classical.arbitrary (InfinitePlace K))
