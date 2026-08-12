@@ -83,10 +83,6 @@ theorem mkQ_apply (x : L) : mkQ I x = LieSubmodule.Quotient.mk x := rfl
 theorem mkQ_surjective : Function.Surjective (mkQ I) := Quot.mk_surjective
 
 @[simp]
-theorem mkQ_eq_zero_iff {x : L} : mkQ I x = 0 ↔ x ∈ I :=
-  LieSubmodule.Quotient.mk_eq_zero'
-
-@[simp]
 theorem ker_mkQ : (mkQ I).ker = I := by
   ext x
   simp [LieHom.mem_ker]
@@ -108,7 +104,7 @@ contains the ideal `I`. -/
 
 @[simp]
 theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
-    liftQ f h (mkQ I x) = f x := rfl
+    liftQ f h (LieSubmodule.Quotient.mk x) = f x := rfl
 
 @[simp]
 theorem liftQ_comp_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : (liftQ f h).comp (mkQ I) = f := by
@@ -127,7 +123,7 @@ theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ 
 restricting to `f` along the quotient map is `TauCeti.LieIdeal.liftQ f h`. -/
 theorem eq_liftQ {f : L →ₗ⁅R⁆ L'} {h : I ≤ f.ker} {g : L ⧸ I →ₗ⁅R⁆ L'}
     (hg : ∀ x : L, g (mkQ I x) = f x) : g = liftQ f h :=
-  lieHom_qext fun x => by rw [hg, liftQ_apply_mk]
+  lieHom_qext fun x => by rw [hg, mkQ_apply, liftQ_apply_mk]
 
 end LieIdeal
 

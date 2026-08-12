@@ -95,7 +95,7 @@ theorem serreMk_surjective : Function.Surjective (serreMk R CM) := LieIdeal.mkQ_
 
 theorem serreMk_eq_zero_of_mem_toSet {x : FreeLieAlgebra R (Generators B)}
     (hx : x ∈ Relations.toSet R CM) : serreMk R CM x = 0 :=
-  (LieIdeal.mkQ_eq_zero_iff _).mpr (LieSubmodule.subset_lieSpan hx)
+  LieSubmodule.Quotient.mk_eq_zero'.mpr (LieSubmodule.subset_lieSpan hx)
 
 /-- The Chevalley generator `Hᵢ` of `Matrix.ToLieAlgebra R CM`. For a Cartan matrix this is the
 `i`-th simple coroot. -/
@@ -248,27 +248,7 @@ omit [DecidableEq B] in
   | .E i => E i
   | .F i => F i
 
-variable (H E F : B → L)
-
-omit [DecidableEq B] in
-@[simp]
-theorem lift_serreGeneratorMap_of_H (i : B) :
-    FreeLieAlgebra.lift R (serreGeneratorMap H E F) (FreeLieAlgebra.of R (Generators.H i)) = H i :=
-  FreeLieAlgebra.lift_of_apply _ _
-
-omit [DecidableEq B] in
-@[simp]
-theorem lift_serreGeneratorMap_of_E (i : B) :
-    FreeLieAlgebra.lift R (serreGeneratorMap H E F) (FreeLieAlgebra.of R (Generators.E i)) = E i :=
-  FreeLieAlgebra.lift_of_apply _ _
-
-omit [DecidableEq B] in
-@[simp]
-theorem lift_serreGeneratorMap_of_F (i : B) :
-    FreeLieAlgebra.lift R (serreGeneratorMap H E F) (FreeLieAlgebra.of R (Generators.F i)) = F i :=
-  FreeLieAlgebra.lift_of_apply _ _
-
-variable {H E F}
+variable {H E F : B → L}
 
 /-- A Serre system kills every relator, so the ideal they generate lies in the kernel of the
 homomorphism the system induces on the free Lie algebra. -/
@@ -287,10 +267,10 @@ theorem toIdeal_le_ker_lift (h : IsSerreSystem R CM H E F) :
   · simpa [Relations.HE, serreGeneratorMap, sub_eq_zero] using h.lie_H_E i j
   · simpa [Relations.HF, serreGeneratorMap, add_eq_zero_iff_eq_neg] using h.lie_H_F i j
   · simp only [Relations.adE, Function.uncurry, Function.comp_apply, LieHom.map_ad_pow,
-      LieHom.map_lie, lift_serreGeneratorMap_of_E]
+      LieHom.map_lie, FreeLieAlgebra.lift_of_apply, serreGeneratorMap]
     exact h.ad_pow_lie_E_E i j
   · simp only [Relations.adF, Function.uncurry, Function.comp_apply, LieHom.map_ad_pow,
-      LieHom.map_lie, lift_serreGeneratorMap_of_F]
+      LieHom.map_lie, FreeLieAlgebra.lift_of_apply, serreGeneratorMap]
     exact h.ad_pow_lie_F_F i j
 
 /-- The homomorphism out of `Matrix.ToLieAlgebra R CM` determined by a Serre system: the universal
@@ -302,17 +282,17 @@ property of the presentation. -/
 @[simp]
 theorem serreLift_serreH (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreH R CM i) = H i :=
-  lift_serreGeneratorMap_of_H H E F i
+  FreeLieAlgebra.lift_of_apply _ _
 
 @[simp]
 theorem serreLift_serreE (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreE R CM i) = E i :=
-  lift_serreGeneratorMap_of_E H E F i
+  FreeLieAlgebra.lift_of_apply _ _
 
 @[simp]
 theorem serreLift_serreF (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreF R CM i) = F i :=
-  lift_serreGeneratorMap_of_F H E F i
+  FreeLieAlgebra.lift_of_apply _ _
 
 /-- Two homomorphisms out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
 theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
