@@ -65,8 +65,9 @@ Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, th
 * `TauCeti.SpinPolarizationData.contract_wedge`: the only anticommutation relation between the
   component operators that is not zero, and the one carrying the polarization pairing.
 * `TauCeti.SpinPolarizationData.cliffordOperator_sq`: the Clifford relation `c v ∘ c v = Q v • 1`.
-* `TauCeti.spinAction_ι_wedge`, `TauCeti.spinAction_ι_contract`, `TauCeti.spinAction_ι_parity`:
-  the three summands act by exterior multiplication, contraction, and the parity operator.
+* `TauCeti.spinAction_ι_wedge`, `TauCeti.spinAction_ι_contract` and
+  `TauCeti.spinAction_ι_lineOperator`: the three summands act by exterior multiplication,
+  contraction, and the parity operator.
 * `TauCeti.spinAction_ι_contract_one`: the second isotropic summand annihilates the vacuum vector.
 * `TauCeti.spinAction_ι_mul_add_swap`: the anticommutator identity pinning the coefficient to
   `QuadraticMap.polar`.
@@ -96,7 +97,7 @@ multiplication. -/
 noncomputable def wedge : P.W →ₗ[K] Module.End K (ExteriorAlgebra K P.W) :=
   (LinearMap.mul K (ExteriorAlgebra K P.W)).comp (ExteriorAlgebra.ι K)
 
-@[simp]
+@[simp, grind =]
 theorem wedge_apply (x : P.W) (s : ExteriorAlgebra K P.W) :
     P.wedge x s = ExteriorAlgebra.ι K x * s :=
   -- `(rfl)`, not `rfl`: the body of `wedge` is not `@[expose]`d.
@@ -109,7 +110,7 @@ noncomputable def contract : P.W' →ₗ[K] Module.End K (ExteriorAlgebra K P.W)
   (CliffordAlgebra.contractLeft (Q := (0 : QuadraticForm K P.W))).comp
     P.pairingEquiv.toLinearMap
 
-@[simp]
+@[simp, grind =]
 theorem contract_apply (y : P.W') (s : ExteriorAlgebra K P.W) :
     P.contract y s = CliffordAlgebra.contractLeft (P.pairingEquiv y) s :=
   -- `(rfl)`, not `rfl`: the body of `contract` is not `@[expose]`d.
@@ -124,7 +125,7 @@ noncomputable def lineOperator : P.line →ₗ[K] Module.End K (ExteriorAlgebra 
     (CliffordAlgebra.involute (Q := (0 : QuadraticForm K P.W))).toLinearMap).comp
     P.lineCoordinate
 
-@[simp]
+@[simp, grind =]
 theorem lineOperator_apply (z : P.line) (s : ExteriorAlgebra K P.W) :
     P.lineOperator z s = P.lineCoordinate z • CliffordAlgebra.involute s :=
   -- `(rfl)`, not `rfl`: the body of `lineOperator` is not `@[expose]`d.
@@ -137,17 +138,17 @@ noncomputable def cliffordOperator : V →ₗ[K] Module.End K (ExteriorAlgebra K
     P.decompositionEquiv.symm.toLinearMap
 
 /-- On the isotropic summand `W` the Clifford operator is the creation operator. -/
-@[simp]
+@[simp, grind =]
 theorem cliffordOperator_coe_W (x : P.W) : P.cliffordOperator (x : V) = P.wedge x := by
   simp [cliffordOperator]
 
 /-- On the second isotropic summand `W'` the Clifford operator is the annihilation operator. -/
-@[simp]
+@[simp, grind =]
 theorem cliffordOperator_coe_W' (y : P.W') : P.cliffordOperator (y : V) = P.contract y := by
   simp [cliffordOperator]
 
 /-- On the orthogonal remainder the Clifford operator is the scaled parity operator. -/
-@[simp]
+@[simp, grind =]
 theorem cliffordOperator_coe_line (z : P.line) : P.cliffordOperator (z : V) = P.lineOperator z := by
   simp [cliffordOperator]
 
@@ -171,7 +172,8 @@ theorem contract_wedge (x : P.W) (y : P.W') (s : ExteriorAlgebra K P.W) :
 
 /-- The quadratic form of a vector in polarization coordinates: both isotropic summands drop out
 and the remainder is orthogonal to them, so only the pairing term and the remainder survive. -/
-theorem quadraticForm_decompositionEquiv_apply (x : P.W) (y : P.W') (z : P.line) :
+@[simp, grind =]
+theorem quadraticForm_coe_add_coe_add_coe (x : P.W) (y : P.W') (z : P.line) :
     Q ((x : V) + (y : V) + (z : V)) = polar Q (x : V) (y : V) + Q (z : V) := by
   have hxz : polar Q (x : V) (z : V) = 0 := by
     rw [polar_comm]
@@ -197,7 +199,7 @@ theorem cliffordOperator_sq (v : V) :
       = P.wedge x + P.contract y + P.lineOperator z := by
     simp only [map_add, P.cliffordOperator_coe_W, P.cliffordOperator_coe_W',
       P.cliffordOperator_coe_line]
-  rw [hc, P.quadraticForm_decompositionEquiv_apply, ← P.lineCoordinate_sq z]
+  rw [hc, P.quadraticForm_coe_add_coe_add_coe, ← P.lineCoordinate_sq z]
   ext s
   simp only [Module.End.mul_apply, LinearMap.add_apply, Module.algebraMap_end_apply,
     wedge_apply, contract_apply, lineOperator_apply, map_add, map_smul, mul_add,
@@ -227,7 +229,7 @@ noncomputable def spinAction {K : Type u} [CommRing K] {V : Type v} [AddCommGrou
 variable {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
   {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
 
-@[simp]
+@[simp, grind =]
 theorem spinAction_ι (v : V) :
     spinAction Q P (CliffordAlgebra.ι Q v) = P.cliffordOperator v :=
   CliffordAlgebra.lift_ι_apply _ _ v
@@ -246,7 +248,7 @@ theorem spinAction_ι_contract (y : P.W') (s : ExteriorAlgebra K P.W) :
 
 /-- A vector of the orthogonal remainder acts on the spin module by its scalar coordinate times
 the parity operator. -/
-theorem spinAction_ι_parity (z : P.line) (s : ExteriorAlgebra K P.W) :
+theorem spinAction_ι_lineOperator (z : P.line) (s : ExteriorAlgebra K P.W) :
     spinAction Q P (CliffordAlgebra.ι Q z) s =
       P.lineCoordinate z • CliffordAlgebra.involute s := by
   rw [spinAction_ι, P.cliffordOperator_coe_line, P.lineOperator_apply]
@@ -264,6 +266,7 @@ theorem spinAction_ι_mul_add_swap (a b : V) :
 
 /-- The second isotropic summand annihilates the vacuum vector `1 ∈ ⋀·W`: contraction lowers the
 exterior degree, and the vacuum has degree zero. -/
+@[grind =]
 theorem spinAction_ι_contract_one (y : P.W') :
     spinAction Q P (CliffordAlgebra.ι Q y) 1 = 0 := by
   rw [spinAction_ι_contract, CliffordAlgebra.contractLeft_one]

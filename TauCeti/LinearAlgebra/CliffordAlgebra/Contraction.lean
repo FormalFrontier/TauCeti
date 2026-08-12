@@ -54,7 +54,7 @@ theorem involute_ι_mul (m : M) (x : CliffordAlgebra Q) :
 /-- **The grade involution anticommutes with contraction.** Contracting against a linear
 functional lowers the degree by one, hence swaps the even and odd parts of the Clifford algebra,
 so it anticommutes with the operator that is `+1` on the even part and `-1` on the odd part. -/
-@[simp]
+@[simp, grind =]
 theorem involute_contractLeft (d : Module.Dual R M) (x : CliffordAlgebra Q) :
     involute (contractLeft d x) = -contractLeft d (involute x) := by
   induction x using CliffordAlgebra.left_induction with
