@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.ADEInequality
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
 
 public section
 
@@ -26,11 +26,13 @@ whose solutions with `p ≤ q ≤ r` are `(1, q, r)`, `(2, 2, r)`, `(2, 3, 3)`, 
 `(2, 3, 5)` - the chains `Aₙ`, the forks `Dₙ`, and `E₆`, `E₇`, `E₈`.
 
 Only that arithmetic constraint is proved here. The step that produces a star from a diagram with a
-branch vertex, and the constraints governing a multiple edge (the ones behind `B`, `C`, `F₄`), are
-both outside this file.
+branch vertex is outside this file, and so is the constraint governing a multiple edge (the one
+behind `B`, `C`, `F₄`), which is
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`.
 
-This file builds the star as a matrix, `TauCeti.starCartanMatrix`, over an arbitrary finite index
-type of arms, and proves the bound. The elimination tool is a new one, living with the others in
+This file builds the star as a matrix, `TauCeti.starCartanMatrix`, out of the chain entries of
+`TauCeti.LinearAlgebra.RootSystem.Chain`, over an arbitrary finite index type of arms, and proves
+the bound. The elimination tool is a new one, living with the others in
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic`: a finite-type matrix admits no nonzero
 **subdominant** vector, one whose every coordinate `xᵢ` has `xᵢ · (A x)ᵢ ≤ 0`
 (`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`), because the symmetrized
@@ -83,47 +85,6 @@ open scoped Matrix
 
 namespace TauCeti
 
-/-- The Cartan-matrix entry of a **chain** between the positions `s` and `t` along it: `2` on the
-diagonal, `-1` between consecutive positions, and `0` otherwise. Every diagram in this file is
-simply laced, so this single function describes all of its edges: it is the case `L = 0` of
-`TauCeti.chainBEntry`, where no position is the successor of `0` and the double edge is therefore
-absent. -/
-private def chainEntry (s t : ℕ) : ℤ := chainBEntry 0 s t
-
-@[simp] private lemma chainEntry_self (s : ℕ) : chainEntry s s = 2 := chainBEntry_self 0 s
-
-@[simp] private lemma chainEntry_succ_left (s : ℕ) : chainEntry (s + 1) s = -1 :=
-  chainBEntry_succ_left 0 s
-
-@[simp] private lemma chainEntry_succ_right (s : ℕ) : chainEntry s (s + 1) = -1 := by
-  rw [chainEntry, chainBEntry_succ_right, ite_eq_right (Nat.succ_ne_zero s)]
-
-/-- Away from the diagonal and its two neighbours a chain has no entry. -/
-private lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1)
-    (h3 : t ≠ s + 1) :
-    chainEntry s t = 0 :=
-  chainBEntry_eq_zero h1 (Ne.symm h3) (Ne.symm h2)
-
-/-- Shifting both positions of a chain by one leaves the entry unchanged: only the difference of
-the positions matters. This is not a `simp` lemma: it would rewrite the right-hand sides of the
-entry lemmas for `TauCeti.starCartanMatrix`, whose arm positions are shifted by one against the
-centre, out of the form those lemmas state. -/
-private lemma chainEntry_succ_succ (s t : ℕ) :
-    chainEntry (s + 1) (t + 1) = chainEntry s t := by
-  simp only [chainEntry, chainBEntry_def]
-  split_ifs <;> first | contradiction | omega
-
-/-- A chain is symmetric: the entry depends on the unordered pair of positions. -/
-private lemma chainEntry_comm (s t : ℕ) : chainEntry s t = chainEntry t s := by
-  simp only [chainEntry, chainBEntry_def]
-  split_ifs <;> first | contradiction | omega
-
-/-- A chain is Mathlib's Cartan matrix of type `A`: on `n` positions the two entry rules agree. -/
-private lemma chainEntry_eq_cartanMatrix_A {n : ℕ} (i j : Fin n) :
-    chainEntry i j = CartanMatrix.A n i j := by
-  simp only [chainEntry, chainBEntry_def, CartanMatrix.A, Matrix.of_apply, Fin.ext_iff]
-  split_ifs <;> first | contradiction | omega
-
 variable {α : Type*} [DecidableEq α] {ℓ : α → ℕ}
 
 /-- The vertices of the **star** with arms of lengths `ℓ`: a centre, written `none`, together with
@@ -145,8 +106,8 @@ def starCartanMatrix (ℓ : α → ℕ) : Matrix (StarIndex ℓ) (StarIndex ℓ)
 
 @[simp] lemma starCartanMatrix_none_none : starCartanMatrix ℓ none none = 2 := chainEntry_self 0
 
--- `(rfl)`, not `rfl`: the bodies of the definitions in this file are deliberately left unexposed,
--- and the parenthesised form keeps these equations out of the exported definitional-equality check.
+-- `(rfl)`, not `rfl`: the body of `TauCeti.starCartanMatrix` is deliberately left unexposed, and
+-- the parenthesised form keeps these equations out of the exported definitional-equality check.
 private lemma starCartanMatrix_none_some_chain (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = chainEntry 0 ((w.2 : ℕ) + 1) := (rfl)
 
@@ -161,13 +122,13 @@ private lemma starCartanMatrix_some_some_chain (v w : (i : α) × Fin (ℓ i)) :
 @[simp] lemma starCartanMatrix_none_some (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = if (w.2 : ℕ) = 0 then -1 else 0 := by
   rw [starCartanMatrix_none_some_chain]
-  simp [chainEntry, chainBEntry_def]
+  simp [chainEntry_def]
 
 /-- The centre is joined precisely to the first vertex of each nonempty arm. -/
 @[simp] lemma starCartanMatrix_some_none (v : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ (some v) none = if (v.2 : ℕ) = 0 then -1 else 0 := by
   rw [starCartanMatrix_some_none_chain]
-  simp [chainEntry, chainBEntry_def]
+  simp [chainEntry_def]
 
 /-- Two arm vertices have entry `2` when equal, `-1` when consecutive on the same arm, and `0`
 otherwise. -/
@@ -178,8 +139,8 @@ otherwise. -/
         else if (w.2 : ℕ) = v.2 + 1 then -1 else 0
       else 0 := by
   rw [starCartanMatrix_some_some_chain]
-  simp only [chainEntry, chainBEntry_def]
-  split_ifs <;> first | contradiction | omega
+  simp only [chainEntry_def]
+  split_ifs <;> omega
 
 /-- A star is simply laced, in particular symmetric: each arm is a chain, and being on a common arm
 is a symmetric relation. -/
@@ -248,25 +209,9 @@ section RowSums
 
 The two computations behind the bound: the row of `starCartanMatrix` at an arm vertex annihilates
 the marks, and the row at the centre evaluates to `∑ᵢ ∏_{j ≠ i} (ℓ j + 1) - (n - 2) ∏ᵢ (ℓ i + 1)`.
-Both are assembled from the same two facts about a chain, proved first for an abstract linear
-weight function `g`.
+Both are assembled from the chain row of `TauCeti.LinearAlgebra.RootSystem.Chain`,
+`TauCeti.sum_range_chainEntry_mul`, taken at an abstract weight function `g`.
 -/
-
-/-- The chain sum, in the shape both rows consume: along `n` positions `1, …, n`, the entries at
-the position `m` collect `2 g (m + 1) - g m - g (m + 2)`, the term `g m` being absent at `m = 0`
-(where it is the centre, summed separately) and `g (m + 2)` at the far end.
-
-This is `TauCeti.sum_range_chainBEntry_mul` in the simply-laced case `L = 0`, the positions shifted
-by one so that the centre of the star occupies the position `0`. -/
-private theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
-    ∑ s ∈ Finset.range n, (chainEntry m s : ℚ) * g (s + 1)
-      = 2 * g (m + 1) - (if m = 0 then 0 else g m)
-        - (if m + 1 = n then 0 else g (m + 2)) := by
-  simp only [chainEntry]
-  rw [sum_range_chainBEntry_mul (L := 0) hm fun s ↦ g (s + 1)]
-  match m with
-  | 0 => norm_num
-  | k + 1 => norm_num
 
 /-- The full row of a star at an arm vertex, in chain coordinates: the centre contributes `-g 0` at
 the near end of the arm and nothing elsewhere, which is exactly the term the chain sum omits. -/
@@ -298,7 +243,7 @@ private theorem chainEntry_center_row (n : ℕ) (g : ℕ → ℚ) :
       rw [chainEntry_eq_zero (by omega) (by omega) (by omega)]
       norm_num
     rw [Finset.sum_congr rfl htail]
-    simp [chainEntry]
+    simp
 
 end RowSums
 
