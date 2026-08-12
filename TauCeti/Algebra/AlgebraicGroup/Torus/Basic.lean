@@ -31,7 +31,7 @@ distinguishes tori from general groups of multiplicative type.
 ## Main declarations
 
 * `TauCeti.splitTorusCommHopfAlgProperty`: finite-type coordinate Hopf algebras isomorphic over
-  the base field to the coordinate ring of a finite-rank split torus.
+  the base ring to the coordinate ring of a finite-rank split torus.
 * `TauCeti.torusCommHopfAlgProperty`: finite-type coordinate Hopf algebras that become a
   finite-rank split torus over `AlgebraicClosure k`.
 * `TauCeti.splitTorusCommHopfAlgProperty.torus`: every split torus is a torus.
@@ -62,7 +62,7 @@ rings of split tori of finite rank.
 
 The witness `n` is the rank. The finite index type is universe-lifted so that its character group
 lives in the same universe as `k`; this does not change the represented rank-`n` torus. -/
-def splitTorusCommHopfAlgProperty (k : Type u) [Field k] :
+def splitTorusCommHopfAlgProperty (k : Type u) [CommRing k] :
     ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k) :=
   fun H ↦ ∃ n : ℕ, Nonempty
     (DiagonalizableGroup.coordinateRing k
@@ -72,7 +72,7 @@ def splitTorusCommHopfAlgProperty (k : Type u) [Field k] :
 of a finite-rank split torus. -/
 @[simp]
 theorem splitTorusCommHopfAlgProperty_iff
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    (k : Type u) [CommRing k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     splitTorusCommHopfAlgProperty k H ↔
       ∃ n : ℕ, Nonempty
         (DiagonalizableGroup.coordinateRing k
@@ -81,14 +81,14 @@ theorem splitTorusCommHopfAlgProperty_iff
 
 /-- Being a split torus is invariant under isomorphisms of finite-type commutative Hopf
 algebras. -/
-instance (k : Type u) [Field k] :
+instance (k : Type u) [CommRing k] :
     (splitTorusCommHopfAlgProperty k).IsClosedUnderIsomorphisms where
   of_iso e := by
     rintro ⟨n, ⟨i⟩⟩
     exact ⟨n, ⟨i ≪≫ e⟩⟩
 
-/-- The category of finite-type split-torus coordinate Hopf algebras over a field. -/
-abbrev SplitTorusCommHopfAlgCat (k : Type u) [Field k] :=
+/-- The category of finite-type split-torus coordinate Hopf algebras over a commutative ring. -/
+abbrev SplitTorusCommHopfAlgCat (k : Type u) [CommRing k] :=
   (splitTorusCommHopfAlgProperty k).FullSubcategory
 
 /-- The object property selecting finite-type commutative Hopf algebras that become coordinate
@@ -97,10 +97,8 @@ rings of split tori of finite rank after base change to an algebraic closure.
 This is the coordinate-Hopf-algebra definition of a not-necessarily-split torus over `k`. -/
 def torusCommHopfAlgProperty (k : Type u) [Field k] :
     ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k) :=
-  fun H ↦ ∃ n : ℕ, Nonempty
-    (DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
-        (SplitTorus.characterGroup (ULift.{u} (Fin n))) ≅
-      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
+  (splitTorusCommHopfAlgProperty (AlgebraicClosure k)).inverseImage
+    (FiniteTypeCommHopfAlgCat.baseChangeFunctor (K := AlgebraicClosure k))
 
 /-- Membership in the torus property means becoming a finite-rank split torus after base change
 to an algebraic closure. -/
@@ -116,11 +114,9 @@ theorem torusCommHopfAlgProperty_iff
 
 /-- Being a torus is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
-    (torusCommHopfAlgProperty k).IsClosedUnderIsomorphisms where
-  of_iso e := by
-    rintro ⟨n, ⟨i⟩⟩
-    exact ⟨n, ⟨i ≪≫
-      (FiniteTypeCommHopfAlgCat.baseChangeFunctor (K := AlgebraicClosure k)).mapIso e⟩⟩
+    (torusCommHopfAlgProperty k).IsClosedUnderIsomorphisms := by
+  unfold torusCommHopfAlgProperty
+  infer_instance
 
 /-- The category of finite-type torus coordinate Hopf algebras over a field.
 
@@ -154,7 +150,7 @@ theorem torusCommHopfAlgProperty.multiplicativeType
 namespace SplitTorus
 
 /-- The coordinate Hopf algebra of a finite-rank split torus satisfies the split-torus property. -/
-theorem splitTorus_coordinateRing (k : Type u) [Field k] (σ : Type u) [Finite σ] :
+theorem splitTorus_coordinateRing (k : Type u) [CommRing k] (σ : Type u) [Finite σ] :
     splitTorusCommHopfAlgProperty k
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)) := by
   let eσ : σ ≃ ULift.{u} (Fin (Nat.card σ)) :=
