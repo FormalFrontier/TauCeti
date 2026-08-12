@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Basic
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 
 /-!
 # Coordinate compatibility of affine-group-scheme base change
@@ -193,6 +191,8 @@ private theorem hopfSpecBaseChangeιNatIso_hom_app (H : (CommHopfAlgCat.{u} R)�
       (hopfSpecBaseChangeIso (R := R) (S := S) H.unop).hom.hom := by
   apply Grp.hom_ext
   apply Over.OverMorphism.ext
+  -- No projection lemma exposes the component of this private composite natural isomorphism;
+  -- unfold that composite definitionally so its constituent component lemmas can simplify it.
   change
     (((Functor.isoWhiskerRight
           (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
