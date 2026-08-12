@@ -116,7 +116,8 @@ variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommG
 
 /-- **An irreducible root system whose Dynkin diagram is simply laced and has no branch node has
 Cartan type `Aₙ`**, for `n` the number of its simple roots. This is the type `Aₙ` half of the
-existence of a Dynkin type; `TauCeti.HasCartanType.eq_of_valid` supplies its uniqueness. -/
+existence of a Dynkin type; `TauCeti.HasCartanType.eq_of_valid` supplies its uniqueness. Reducedness
+is used to deduce connectedness of the Dynkin diagram from irreducibility. -/
 theorem hasCartanType_A_of_isSimplyLaced_of_degree_le_two (b : P.Base)
     (hsl : b.cartanMatrix.IsSimplyLaced)
     (hdeg : ∀ i, (diagramGraph b.cartanMatrix).degree i ≤ 2) :
