@@ -153,6 +153,7 @@ theorem torusCommHopfAlgProperty.multiplicativeType
 namespace SplitTorus
 
 /-- The coordinate Hopf algebra of a finite-rank split torus satisfies the split-torus property. -/
+@[grind =>]
 theorem splitTorus_coordinateRing (k : Type u) [CommRing k] (σ : Type u) [Finite σ] :
     splitTorusCommHopfAlgProperty k
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)) := by
