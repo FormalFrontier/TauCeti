@@ -118,7 +118,8 @@ theorem tendsto_yosidaLimit (hA : IsMDissipative A) (hdense : Dense (A.domain : 
     {t : ℝ} (ht : 0 ≤ t) (x : X) :
     Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x)) :=
-  ((_root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact (M := 1)
+  ((_root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact
+      (K := 1) (M := 1)
       (fun _ h => hA.mem_resolventSet h)
       (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h)
       (fun _ h _ hs => norm_exp_smul_yosidaApproximation_le_one
@@ -130,7 +131,8 @@ theorem tendstoUniformlyOn_exp_yosidaApproximation (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) (x : X) {T : ℝ} (hT : 0 ≤ T) :
     TendstoUniformlyOn (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
       (fun t : ℝ => yosidaLimit A t x) atTop (Set.Icc 0 T) :=
-  (_root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact (M := 1)
+  (_root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact
+    (K := 1) (M := 1)
     (fun _ h => hA.mem_resolventSet h)
     (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h)
     (fun _ h _ hs => norm_exp_smul_yosidaApproximation_le_one

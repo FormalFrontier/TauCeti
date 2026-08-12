@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.BoundedGenerator.Perturbation
 public import TauCeti.Analysis.Semigroups.Dissipative.Basic
+import TauCeti.Analysis.Normed.Operator.Dense
 import TauCeti.Analysis.Normed.Operator.Exponential
 
 /-!
@@ -332,51 +333,14 @@ theorem tendsto_smul_resolvent_apply_atTop {A : X →ₗ.[ℝ] X} {M : ℝ}
     (hdense : Dense (A.domain : Set X)) (x : X) :
     Filter.Tendsto (fun lambda : ℝ => lambda • LinearPMap.resolvent A lambda x)
       Filter.atTop (nhds x) := by
-  have hM : 0 ≤ M := nonneg_of_norm_resolvent_le hbound
-  rw [Metric.tendsto_atTop]
-  intro epsilon hepsilon
-  let C : ℝ := M + 1
-  have hC : 0 < C := by dsimp only [C]; linarith
-  have hCne : C ≠ 0 := hC.ne'
-  have hCone : (1 : ℝ) ≤ C := by dsimp only [C]; linarith
-  obtain ⟨y, hy, hxy⟩ := hdense.exists_dist_lt x (by positivity : 0 < epsilon / (3 * C))
-  have hxy_norm : ‖x - y‖ < epsilon / (3 * C) := by simpa only [dist_eq_norm] using hxy
-  let y' : A.domain := ⟨y, hy⟩
-  have hy_tendsto := tendsto_smul_resolvent_apply_atTop_of_mem hres hbound y'
-  rw [Metric.tendsto_atTop] at hy_tendsto
-  obtain ⟨N, hN⟩ := hy_tendsto (epsilon / 3) (by positivity)
-  refine ⟨max N 1, fun lambda hlambda => ?_⟩
-  have hlambda_pos : 0 < lambda := lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hlambda)
-  let T : X →L[ℝ] X := lambda • LinearPMap.resolvent A lambda
-  have hscale : C * (epsilon / (3 * C)) = epsilon / 3 := by field_simp
-  have hTnorm : ‖T‖ ≤ C := by
-    dsimp only [T, C]
-    exact (norm_smul_resolvent_le hlambda_pos (hbound lambda hlambda_pos)).trans (by linarith)
-  have hTy : ‖T y - y‖ < epsilon / 3 := by
-    have := hN lambda (le_trans (le_max_left _ _) hlambda)
-    simpa [T, dist_eq_norm] using this
-  have hTxy : ‖T (x - y)‖ < epsilon / 3 := by
-    calc
-      ‖T (x - y)‖ ≤ ‖T‖ * ‖x - y‖ := ContinuousLinearMap.le_opNorm _ _
-      _ ≤ C * ‖x - y‖ := mul_le_mul_of_nonneg_right hTnorm (norm_nonneg _)
-      _ < C * (epsilon / (3 * C)) := mul_lt_mul_of_pos_left hxy_norm hC
-      _ = epsilon / 3 := hscale
-  have hyx : ‖y - x‖ < epsilon / 3 := by
-    calc
-      ‖y - x‖ = ‖x - y‖ := norm_sub_rev _ _
-      _ ≤ C * ‖x - y‖ := le_mul_of_one_le_left (norm_nonneg _) hCone
-      _ < C * (epsilon / (3 * C)) := mul_lt_mul_of_pos_left hxy_norm hC
-      _ = epsilon / 3 := hscale
-  have hdecomp : T x - x = T (x - y) + (T y - y) + (y - x) := by
-    rw [map_sub]
-    abel
-  dsimp only [T] at hdecomp ⊢
-  rw [dist_eq_norm, ← smul_apply, hdecomp]
-  calc
-    ‖T (x - y) + (T y - y) + (y - x)‖
-        ≤ ‖T (x - y)‖ + ‖T y - y‖ + ‖y - x‖ := norm_add₃_le
-    _ < epsilon / 3 + epsilon / 3 + epsilon / 3 := by linarith
-    _ = epsilon := by ring
+  refine ContinuousLinearMap.tendsto_apply_of_dense (𝕜 := ℝ)
+    (f := fun lambda => lambda • LinearPMap.resolvent A lambda)
+    (g := (1 : X →L[ℝ] X)) (C := M) hdense ?_ ?_ x
+  · filter_upwards [Filter.eventually_gt_atTop 0] with lambda hlambda
+    exact norm_smul_resolvent_le hlambda (hbound lambda hlambda)
+  · intro y hy
+    simpa only [smul_apply, one_apply_eq_self] using
+      tendsto_smul_resolvent_apply_atTop_of_mem hres hbound (⟨y, hy⟩ : A.domain)
 
 omit [CompleteSpace X] in
 /-- At a resolvent point, the Yosida approximation acts on `x ∈ D(A)` as
@@ -404,8 +368,8 @@ theorem tendsto_yosidaApproximation_apply_atTop {A : X →ₗ.[ℝ] X} {M : ℝ}
 
 /-! ## Compact-time Cauchy convergence of the approximating semigroups
 
-The two statements below take the uniform bound `‖exp (s A_lambda)‖ ≤ M` on the Yosida
-exponentials as a hypothesis. For a dissipative operator it is the contraction estimate
+The two statements below take independent resolvent and exponential bounds, with constants `K`
+and `M` respectively. For a dissipative operator the exponential bound is the contraction estimate
 `TauCeti.Semigroups.norm_exp_smul_yosidaApproximation_le_one`; under the Hille--Yosida resolvent
 power bounds for a general growth constant it is
 `TauCeti.Semigroups.norm_exp_smul_yosidaApproximation_le`. -/
@@ -414,11 +378,12 @@ power bounds for a general growth constant it is
 interval. Explicitly, for `T ≥ 0`, the vectors `exp (t A_lambda) x` are uniformly Cauchy for
 `0 ≤ t ≤ T` as `lambda -> +∞`, whenever `x ∈ D(A)`.
 
-The comparison estimate reduces this to the convergence `A_lambda x -> A x` proved above, at the
-cost of the factor `M ^ 2` coming from the two exponential factors of the Duhamel formula. -/
-theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem {A : X →ₗ.[ℝ] X} {M : ℝ}
+The resolvent bound has constant `K`, while the independent exponential bound has constant `M`.
+The comparison estimate reduces the result to the convergence `A_lambda x -> A x` proved above,
+at the cost of the factor `M ^ 2` from the two exponential factors of the Duhamel formula. -/
+theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem {A : X →ₗ.[ℝ] X} {K M : ℝ}
     (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
-    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ K / lambda)
     (hexp : ∀ lambda : ℝ, 0 < lambda → ∀ s : ℝ, 0 ≤ s →
       ‖exp (s • yosidaApproximation A lambda)‖ ≤ M)
     (hdense : Dense (A.domain : Set X)) (x : A.domain) {T : ℝ} (hT : 0 ≤ T) :
@@ -478,71 +443,24 @@ vector of the Banach space.
 This is the compact-time Cauchy estimate from which a candidate pointwise limit family is defined;
 later arguments establish its semigroup structure and identify its generator as `A`. The domain
 case is `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem`; the uniform
-bound `‖exp (s A_lambda)‖ ≤ M` extends it to the whole space by density of `D(A)`. -/
-theorem exp_yosidaApproximation_uniformCauchySeqOn_compact {A : X →ₗ.[ℝ] X} {M : ℝ}
+bound `‖exp (s A_lambda)‖ ≤ M` extends it to the whole space by density of `D(A)`, independently
+of the resolvent-bound constant `K`. -/
+theorem exp_yosidaApproximation_uniformCauchySeqOn_compact {A : X →ₗ.[ℝ] X} {K M : ℝ}
     (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
-    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ K / lambda)
     (hexp : ∀ lambda : ℝ, 0 < lambda → ∀ s : ℝ, 0 ≤ s →
       ‖exp (s • yosidaApproximation A lambda)‖ ≤ M)
     (hdense : Dense (A.domain : Set X)) (x : X) {T : ℝ} (hT : 0 ≤ T) :
     UniformCauchySeqOn
       (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
       Filter.atTop (Set.Icc 0 T) := by
-  have hM : 0 ≤ M := nonneg_of_norm_resolvent_le hbound
-  rw [Metric.uniformCauchySeqOn_iff]
-  intro epsilon hepsilon
-  let C : ℝ := M + 1
-  have hC : 0 < C := by dsimp only [C]; linarith
-  have hCne : C ≠ 0 := hC.ne'
-  have hCone : (1 : ℝ) ≤ C := by dsimp only [C]; linarith
-  have hscale : C * (epsilon / (3 * C)) = epsilon / 3 := by field_simp
-  obtain ⟨y, hy, hxy⟩ := hdense.exists_dist_lt x (by positivity : 0 < epsilon / (3 * C))
-  have hxy_norm : ‖x - y‖ < epsilon / (3 * C) := by simpa only [dist_eq_norm] using hxy
-  let y' : A.domain := ⟨y, hy⟩
-  have hy_cauchy :=
-    exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem hres hbound hexp hdense y' hT
-  rw [Metric.uniformCauchySeqOn_iff] at hy_cauchy
-  obtain ⟨L, hL⟩ := hy_cauchy (epsilon / 3) (by positivity)
-  refine ⟨max L 1, fun lambda hlambda mu hmu t ht => ?_⟩
-  rw [dist_eq_norm]
-  have hlambda_pos : 0 < lambda :=
-    lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hlambda)
-  have hmu_pos : 0 < mu :=
-    lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hmu)
-  let Slambda : X →L[ℝ] X := exp (t • yosidaApproximation A lambda)
-  let Smu : X →L[ℝ] X := exp (t • yosidaApproximation A mu)
-  have hSlambda : ‖Slambda‖ ≤ C :=
-    (hexp lambda hlambda_pos t ht.1).trans (by dsimp only [C]; linarith)
-  have hSmu : ‖Smu‖ ≤ C :=
-    (hexp mu hmu_pos t ht.1).trans (by dsimp only [C]; linarith)
-  have hleft : ‖Slambda (x - y)‖ < epsilon / 3 := by
-    calc
-      ‖Slambda (x - y)‖ ≤ ‖Slambda‖ * ‖x - y‖ := ContinuousLinearMap.le_opNorm _ _
-      _ ≤ C * ‖x - y‖ := mul_le_mul_of_nonneg_right hSlambda (norm_nonneg _)
-      _ < C * (epsilon / (3 * C)) := mul_lt_mul_of_pos_left hxy_norm hC
-      _ = epsilon / 3 := hscale
-  have hyx_norm : ‖y - x‖ < epsilon / (3 * C) := by rwa [norm_sub_rev]
-  have hright : ‖Smu (y - x)‖ < epsilon / 3 := by
-    calc
-      ‖Smu (y - x)‖ ≤ ‖Smu‖ * ‖y - x‖ := ContinuousLinearMap.le_opNorm _ _
-      _ ≤ C * ‖y - x‖ := mul_le_mul_of_nonneg_right hSmu (norm_nonneg _)
-      _ < C * (epsilon / (3 * C)) := mul_lt_mul_of_pos_left hyx_norm hC
-      _ = epsilon / 3 := hscale
-  have hmiddle : ‖Slambda y - Smu y‖ < epsilon / 3 := by
-    simpa only [Slambda, Smu, dist_eq_norm] using
-      hL lambda (le_trans (le_max_left _ _) hlambda)
-        mu (le_trans (le_max_left _ _) hmu) t ht
-  have hdecomp : Slambda x - Smu x =
-      Slambda (x - y) + (Slambda y - Smu y) + Smu (y - x) := by
-    rw [map_sub, map_sub]
-    abel
-  dsimp only [Slambda, Smu] at hdecomp ⊢
-  rw [hdecomp]
-  calc
-    ‖Slambda (x - y) + (Slambda y - Smu y) + Smu (y - x)‖
-        ≤ ‖Slambda (x - y)‖ + ‖Slambda y - Smu y‖ + ‖Smu (y - x)‖ := norm_add₃_le
-    _ < epsilon / 3 + epsilon / 3 + epsilon / 3 := by linarith
-    _ = epsilon := by ring
+  refine ContinuousLinearMap.uniformCauchySeqOn_apply_of_dense (𝕜 := ℝ)
+    (f := fun lambda t => exp (t • yosidaApproximation A lambda)) (C := M) hdense ?_ ?_ x
+  · filter_upwards [Filter.eventually_gt_atTop 0] with lambda hlambda t ht
+    exact hexp lambda hlambda t ht.1
+  · intro y hy
+    exact exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem hres hbound hexp hdense
+      (⟨y, hy⟩ : A.domain) hT
 
 end TauCeti.Semigroups
 
