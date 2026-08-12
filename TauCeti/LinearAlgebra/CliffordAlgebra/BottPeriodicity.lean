@@ -6,6 +6,7 @@ Authors: Tau Ceti Project
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.RealForm
+public import TauCeti.LinearAlgebra.CliffordAlgebra.SignSwitch
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
 
@@ -14,8 +15,10 @@ import Mathlib.LinearAlgebra.Matrix.Unique
 /-!
 # Hyperbolic Bott periodicity for real Clifford algebras
 
-This file proves the `(1, 1)` periodicity step for Clifford algebras. Adding one positive and one
-negative generator is equivalent to tensoring with two-by-two real matrices.
+This file proves the `(1, 1)` periodicity step for Clifford algebras: adding one positive and one
+negative generator is equivalent to tensoring with two-by-two real matrices. It also derives the
+signature-switch recurrence `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)` from
+`TauCeti.CliffordAlgebra.signSwitchEquiv`.
 
 ## Main results
 
@@ -25,7 +28,9 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
 * `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
   size `2 ^ n` after adjoining `n` hyperbolic planes;
 * `TauCeti.realCliffordSignatureReductionEquiv`: the reduction of a standard signature by its
-  common positive and negative part.
+  common positive and negative part;
+* `TauCeti.realCliffordSignatureSwitchRecurrenceEquiv`: the recurrence which switches a real
+  signature while adding two positive generators.
 
 ## References
 
@@ -723,5 +728,43 @@ theorem realCliffordBottIterEquiv_succ (p q n : ℕ) :
   unfold realCliffordBottIterEquiv
   rw [realCliffordBottIterEquivImpl]
   rfl
+
+/-! ### Signature-switch recurrence -/
+
+/-- One sign switch followed by the hyperbolic Bott step gives the signature-switch recurrence
+`Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)`. -/
+noncomputable def realCliffordSignatureSwitchRecurrenceEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + 1 + 1) q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm q p) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ :=
+  (_root_.CliffordAlgebra.equivOfIsometry
+    (realCliffordPositiveSplitIsometry (p + 1) q)).trans
+    ((CliffordAlgebra.signSwitchEquiv (realCliffordForm (p + 1) q)).trans
+      ((_root_.CliffordAlgebra.equivOfIsometry
+        (realCliffordSignSwitchStandardIsometry (p + 1) q)).trans
+          (realCliffordBottEquiv q p)))
+
+/-- The signature-switch recurrence sends a Clifford generator through its two coordinate
+isometries and the sign-switch generator formula, then transports the result through
+`realCliffordBottEquiv q p`. -/
+@[simp]
+theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
+    (v : Fin ((p + 1 + 1) + q) → ℝ) :
+    realCliffordSignatureSwitchRecurrenceEquiv p q (_root_.CliffordAlgebra.ι _ v) =
+      realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+        (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) *
+        realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+          (realCliffordSignSwitchStandardIsometry (p + 1) q
+            ((realCliffordPositiveSplitIsometry (p + 1) q v).1, 0))) +
+          (realCliffordPositiveSplitIsometry (p + 1) q v).2 •
+            realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
+              (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) := by
+  rw [realCliffordSignatureSwitchRecurrenceEquiv, AlgEquiv.trans_apply,
+    _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι, AlgEquiv.trans_apply,
+    CliffordAlgebra.signSwitchEquiv_ι, map_add, map_mul, map_smul,
+    AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι]
+  simp only [AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry_apply]
 
 end TauCeti
