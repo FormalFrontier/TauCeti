@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.Adjoint.Exponential
+import TauCeti.Geometry.Lie.Adjoint.Infinitesimal
+public import TauCeti.Geometry.Lie.Adjoint.OperatorExponential
 public import TauCeti.Geometry.Lie.Exponential.Units.Compatibility
 
 /-!
@@ -26,6 +28,11 @@ This advances Deliverable A, Layer 1 of
   `g * x * g⁻¹`.
 * `unitsLieAlgebraEquiv_Ad`: under the canonical identification with the ambient algebra,
   `Ad g X` is `g * X * g⁻¹`.
+* `groupLieAlgebra_units_lie_apply`: the tangent Lie bracket on algebra units is the associative
+  commutator.
+* `unitsLieAlgebraLieEquiv`: the canonical units identification as a Lie equivalence.
+* `unitsLieAlgebraEquiv_ad`: the units identification transports the abstract adjoint operator to
+  the bounded commutator operator.
 
 ## References
 
@@ -99,6 +106,55 @@ variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [FiniteDimensional ℝ
 local instance finiteDimensionalCompleteSpaceAdjointUnits : CompleteSpace R :=
   FiniteDimensional.complete ℝ R
 
+/-- The Lie bracket on the tangent Lie algebra of algebra units is the associative commutator. -/
+theorem groupLieAlgebra_units_lie_apply (x y : R) :
+    (show R from LieAlgebra.ad ℝ (GroupLieAlgebra 𝓘(ℝ, R) Rˣ)
+      (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ) (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) =
+      x * y - y * x := by
+  let _ : T2Space Rˣ := t2Space_of_lieGroup (I := 𝓘(ℝ, R)) (n := ∞)
+  have hgeom := hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
+    (I := 𝓘(ℝ, R)) (G := Rˣ)
+    (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ) (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)
+  have hcurve : (fun t : ℝ => show R from tangentAd (I := 𝓘(ℝ, R))
+      (mulInvariantExp (I := 𝓘(ℝ, R)) (G := Rˣ)
+        (t • (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)))
+      (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) =
+      fun t : ℝ => NormedSpace.exp (t • x) * y * NormedSpace.exp (-(t • x)) := by
+    funext t
+    rw [tangentAd_units]
+    have hexp : mulInvariantExp (I := 𝓘(ℝ, R)) (G := Rˣ)
+        (t • (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) = TauCeti.expUnit (t • x) := by
+      have h := DFunLike.congr_fun
+        (mulInvariantOneParameterSubgroup_eq_expUnitHom (R := R) x)
+        (Multiplicative.ofAdd t)
+      rw [show (mulInvariantOneParameterSubgroup
+        (I := 𝓘(ℝ, R)) (G := Rˣ) (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ))
+          (Multiplicative.ofAdd t) =
+        mulInvariantExp (I := 𝓘(ℝ, R)) (G := Rˣ)
+          (t • (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) from
+            mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul
+              (I := 𝓘(ℝ, R)) (G := Rˣ) x t] at h
+      simpa only [TauCeti.expUnitHom_apply] using h
+    rw [hexp]
+    simp only [TauCeti.expUnit_coe, ← TauCeti.expUnit_neg, TauCeti.expUnit_coe]
+  have hx := hasDerivAt_exp_smul_const x (0 : ℝ)
+  have hnegx := hasDerivAt_exp_smul_const (-x) (0 : ℝ)
+  have hexp : HasDerivAt
+      (fun t : ℝ => NormedSpace.exp (t • x) * y * NormedSpace.exp (-(t • x)))
+      (x * y - y * x) 0 := by
+    convert (hx.mul_const y).mul hnegx using 1
+    · funext t
+      rw [Pi.mul_apply, smul_neg]
+    · simp only [zero_smul, NormedSpace.exp_zero, one_mul, mul_one, mul_neg,
+        sub_eq_add_neg]
+  have hgeom' : HasDerivAt
+      (fun t : ℝ => NormedSpace.exp (t • x) * y * NormedSpace.exp (-(t • x)))
+      (show R from LieAlgebra.ad ℝ (GroupLieAlgebra 𝓘(ℝ, R) Rˣ)
+        (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ) (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) 0 := by
+    rw [← hcurve]
+    exact hgeom
+  exact hgeom'.unique hexp
+
 /-- On the units of a finite-dimensional real normed algebra, the abstract group adjoint is
 ordinary conjugation in the ambient algebra. -/
 @[simp high]
@@ -119,6 +175,65 @@ theorem unitsLieAlgebraEquiv_Ad (g : Rˣ)
   rw [ht] at hR
   simpa only [unitsLieAlgebraEquiv_apply,
     leftInvariantDerivationLieEquivGroupLieAlgebra_apply] using hR
+
+attribute [local instance 100] LieRing.ofAssociativeRing
+
+/-- The canonical identification of the Lie algebra of `Rˣ` with `R`, equipped with its associative
+commutator bracket. -/
+noncomputable def unitsLieAlgebraLieEquiv :
+    LeftInvariantDerivation 𝓘(ℝ, R) Rˣ ≃ₗ⁅ℝ⁆ R :=
+  { unitsLieAlgebraEquiv (R := R) with
+    map_lie' := by
+      intro X Y
+      let _ : T2Space Rˣ := t2Space_of_lieGroup (I := 𝓘(ℝ, R)) (n := ∞)
+      let e := leftInvariantDerivationLieEquivGroupLieAlgebra
+        (I := 𝓘(ℝ, R)) (G := Rˣ) BoundarylessManifold.isInteriorPoint
+      have hmap := e.map_lie X Y
+      have hmapR := congrArg
+        (fun z : GroupLieAlgebra 𝓘(ℝ, R) Rˣ => show R from z) hmap
+      dsimp only [e] at hmapR
+      have hgroup := groupLieAlgebra_units_lie_apply (R := R)
+        (unitsLieAlgebraEquiv X) (unitsLieAlgebraEquiv Y)
+      have hcomm : ⁅unitsLieAlgebraEquiv X, unitsLieAlgebraEquiv Y⁆ =
+          unitsLieAlgebraEquiv X * unitsLieAlgebraEquiv Y -
+            unitsLieAlgebraEquiv Y * unitsLieAlgebraEquiv X := by
+        exact LieRing.of_associative_ring_bracket _ _
+      have hmapUnits : unitsLieAlgebraEquiv ⁅X, Y⁆ =
+          (show R from LieAlgebra.ad ℝ (GroupLieAlgebra 𝓘(ℝ, R) Rˣ)
+            (show GroupLieAlgebra 𝓘(ℝ, R) Rˣ from
+              (unitsLieAlgebraEquiv (R := R) X : R))
+            (show GroupLieAlgebra 𝓘(ℝ, R) Rˣ from
+              (unitsLieAlgebraEquiv (R := R) Y : R))) := by
+        rw [LieAlgebra.ad_apply]
+        simpa only [unitsLieAlgebraEquiv_apply,
+          leftInvariantDerivationLieEquivGroupLieAlgebra_apply] using hmapR
+      exact hmapUnits.trans (hgroup.trans hcomm.symm) }
+
+local instance finiteDimensionalLeftInvariantDerivationAdjointUnits :
+    FiniteDimensional ℝ (LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :=
+  finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
+
+/-- Conjugating the abstract adjoint operator by the units Lie-algebra identification gives the
+bounded associative commutator operator. -/
+theorem unitsLieAlgebraEquiv_ad (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
+    let e := (unitsLieAlgebraEquiv (R := R)).toContinuousLinearEquiv
+    e.conjContinuousAlgEquiv
+        (LinearMap.toContinuousLinearMap
+          (LieAlgebra.ad ℝ (LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) X)) =
+      continuousCommutator (unitsLieAlgebraEquiv X) := by
+  dsimp only
+  apply ContinuousLinearMap.ext
+  intro Y
+  rw [ContinuousLinearEquiv.conjContinuousAlgEquiv_apply_apply,
+    LinearMap.coe_toContinuousLinearMap']
+  change unitsLieAlgebraEquiv (LieAlgebra.ad ℝ _ X
+    ((unitsLieAlgebraEquiv (R := R)).symm Y)) = continuousCommutator _ Y
+  rw [LieAlgebra.ad_apply]
+  change unitsLieAlgebraLieEquiv ⁅X, (unitsLieAlgebraLieEquiv (R := R)).symm Y⁆ =
+    continuousCommutator _ Y
+  rw [unitsLieAlgebraLieEquiv.map_lie, LieEquiv.apply_symm_apply,
+    LieRing.of_associative_ring_bracket, continuousCommutator_apply]
+  rfl
 
 end FiniteDimensional
 
