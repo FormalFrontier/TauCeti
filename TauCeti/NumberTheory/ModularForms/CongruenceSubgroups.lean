@@ -175,7 +175,7 @@ private lemma coe_diagUnit (u : (ZMod N)ˣ) :
 
 /-- `(Gamma0Map N).toHomUnits` is surjective: every unit `u ∈ (ZMod N)ˣ` is realized as the
 lower-right entry of some `g ∈ Gamma0 N`, by strong approximation for `SL₂`. -/
-theorem Gamma0Map_toHomUnits_surjective [NeZero N] :
+theorem Gamma0Map_toHomUnits_surjective :
     Function.Surjective ((Gamma0Map N).toHomUnits) := fun u ↦ by
   obtain ⟨g, hg⟩ := map_intCast_zmod_surjective (diagUnit u)
   have hentry : ∀ i j, ((g i j : ℤ) : ZMod N) =

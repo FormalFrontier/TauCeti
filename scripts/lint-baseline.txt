@@ -56,7 +56,6 @@ simpNF TauCeti.Subgroup.normalizerQuotientEquivMap_symm_mk'
 simpNF TauCeti.integral_normalizedChebyshevT_mul_normalizedChebyshevT_measureT_eq_ite
 simpNF TauCeti.isComplexLinear_arrowCongr_iff
 simpNF TauCeti.reflectRepMapApp_of_ne✝
-unusedArguments CongruenceSubgroup.Gamma0Map_toHomUnits_surjective
 unusedArguments CongruenceSubgroup.map_apply_of_dvd_lcm✝
 unusedArguments TauCeti.IsFiniteType
 unusedArguments TauCeti.IsHighestWeightVector
