@@ -218,18 +218,6 @@ theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β
     exact isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h
   · exact isFiniteType_starCartanMatrix_comp e
 
-omit [DecidableEq α] in
-/-- A star Cartan matrix reindexed by an arm equivalence is of finite type exactly when the
-original star Cartan matrix is. This is the simplifier normal form of
-`TauCeti.isFiniteType_starCartanMatrix_comp_iff`. -/
-@[simp] theorem isFiniteType_starCartanMatrix_submatrix_iff [Fintype α] [Fintype β]
-    {m : β → ℕ} (e : α ≃ β) :
-    IsFiniteType ((starCartanMatrix m).submatrix (starIndexCongrArms e m)
-      (starIndexCongrArms e m)) ↔ IsFiniteType (starCartanMatrix m) := by
-  classical
-  rw [← starCartanMatrix_comp]
-  exact isFiniteType_starCartanMatrix_comp_iff e
-
 end Relabel
 
 variable [Fintype α]

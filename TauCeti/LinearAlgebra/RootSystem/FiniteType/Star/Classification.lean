@@ -318,6 +318,10 @@ theorem StarHasCartanType.comp {m : β → ℕ} (h : StarHasCartanType m t) (e :
     exact h.comp (e.symm : β ≃ α)
   · exact fun h ↦ h.comp e
 
+private lemma starHasCartanType_of_eq_submatrix (e : StarIndex ℓ ≃ Fin t.rank)
+    (h : starCartanMatrix ℓ = t.cartanMatrix.submatrix e e) : StarHasCartanType ℓ t :=
+  (starHasCartanType_iff ℓ t).mpr ⟨e, fun v w ↦ by rw [h, Matrix.submatrix_apply]⟩
+
 /-! ### The fork `(1, 1, c)` and type `D` -/
 
 /-- **The fork of type `D`.** The star with arms of one, one and `c` vertices has Cartan type
@@ -326,29 +330,29 @@ theorem StarHasCartanType.comp {m : β → ℕ} (h : StarHasCartanType m t) (e :
 empty and the same formula identifies the resulting chain with the degenerate type `D 3`. -/
 theorem starHasCartanType_D (c : ℕ) :
     StarHasCartanType (![1, 1, c] : Fin 3 → ℕ) (D (c + 3)) := by
-  refine (starHasCartanType_iff _ _).mpr ⟨starIndexEquivD c, fun v w ↦ ?_⟩
-  simp only [cartanMatrix_D]
-  exact congrFun (congrFun (starCartanMatrix_one_one_eq_submatrix_D c) v) w
+  apply starHasCartanType_of_eq_submatrix (starIndexEquivD c)
+  rw [cartanMatrix_D]
+  exact starCartanMatrix_one_one_eq_submatrix_D c
 
 /-! ### The exceptional shapes `(1, 2, c)` and the types `E₆`, `E₇`, `E₈` -/
 
 /-- **Type `E₆`.** The star with arms of one, two and two vertices has Cartan type `E₆`. -/
 theorem starHasCartanType_E6 : StarHasCartanType (![1, 2, 2] : Fin 3 → ℕ) E6 := by
-  refine (starHasCartanType_iff _ _).mpr ⟨starIndexEquivE 2, fun v w ↦ ?_⟩
-  simp only [cartanMatrix_E6]
-  exact congrFun (congrFun starCartanMatrix_one_two_two_eq_submatrix_E6 v) w
+  apply starHasCartanType_of_eq_submatrix (starIndexEquivE 2)
+  rw [cartanMatrix_E6]
+  exact starCartanMatrix_one_two_two_eq_submatrix_E6
 
 /-- **Type `E₇`.** The star with arms of one, two and three vertices has Cartan type `E₇`. -/
 theorem starHasCartanType_E7 : StarHasCartanType (![1, 2, 3] : Fin 3 → ℕ) E7 := by
-  refine (starHasCartanType_iff _ _).mpr ⟨starIndexEquivE 3, fun v w ↦ ?_⟩
-  simp only [cartanMatrix_E7]
-  exact congrFun (congrFun starCartanMatrix_one_two_three_eq_submatrix_E7 v) w
+  apply starHasCartanType_of_eq_submatrix (starIndexEquivE 3)
+  rw [cartanMatrix_E7]
+  exact starCartanMatrix_one_two_three_eq_submatrix_E7
 
 /-- **Type `E₈`.** The star with arms of one, two and four vertices has Cartan type `E₈`. -/
 theorem starHasCartanType_E8 : StarHasCartanType (![1, 2, 4] : Fin 3 → ℕ) E8 := by
-  refine (starHasCartanType_iff _ _).mpr ⟨starIndexEquivE 4, fun v w ↦ ?_⟩
-  simp only [cartanMatrix_E8]
-  exact congrFun (congrFun starCartanMatrix_one_two_four_eq_submatrix_E8 v) w
+  apply starHasCartanType_of_eq_submatrix (starIndexEquivE 4)
+  rw [cartanMatrix_E8]
+  exact starCartanMatrix_one_two_four_eq_submatrix_E8
 
 /-- **The classification of the three-armed forks of finite type.** A finite star with three
 nonempty arms has a unique valid Cartan type: exactly one valid standard Cartan matrix agrees with
