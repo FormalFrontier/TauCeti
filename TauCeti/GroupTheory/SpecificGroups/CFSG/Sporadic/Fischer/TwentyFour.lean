@@ -244,23 +244,23 @@ theorem length_fi24AutomorphismRelators : fi24AutomorphismRelators.length = 80 :
 
 /-- The source word `a b c d e f h` has seven letters. -/
 @[simp]
-theorem length_fi24SourceEquationWord : fi24SourceEquationWord.toWord.length = 7 := by
+theorem length_fi24SourceEquationWord : fi24SourceEquationWord.length = 7 := by
   simp [fi24SourceEquationWord_def]
 
 /-- The source word `d c b a k l d e f g j d h i` has fourteen letters. -/
 @[simp]
-theorem length_fi24SourceLongWord : fi24SourceLongWord.toWord.length = 14 := by
+theorem length_fi24SourceLongWord : fi24SourceLongWord.length = 14 := by
   simp [fi24SourceLongWord_def]
 
 /-- The compiled source equation for `l` has `1 + 9 · 7 = 64` letters. -/
 @[simp]
-theorem length_fi24SourceEquationRelator : fi24SourceEquationRelator.toWord.length = 64 := by
-  simp [fi24SourceEquationRelator_def, Relator.div, length_fi24SourceEquationWord]
+theorem length_fi24SourceEquationRelator : fi24SourceEquationRelator.length = 64 := by
+  simp [fi24SourceEquationRelator_def, Relator.div]
 
 /-- The compiled final source relation has `17 · 14 = 238` letters. -/
 @[simp]
-theorem length_fi24SourceLongRelator : fi24SourceLongRelator.toWord.length = 238 := by
-  simp [fi24SourceLongRelator_def, length_fi24SourceLongWord]
+theorem length_fi24SourceLongRelator : fi24SourceLongRelator.length = 238 := by
+  simp [fi24SourceLongRelator_def]
 
 /-- Every source relator has even length, so sending all twelve involutory generators to the
 nontrivial element of `C₂` kills every relation. This is the parity check needed before applying
@@ -280,9 +280,9 @@ theorem even_length_of_mem_fi24AutomorphismRelators :
   · simp only [fi24AutomorphismAdditionalRelators, List.mem_cons, List.not_mem_nil,
       or_false] at hr
     rcases hr with rfl | rfl
-    · rw [length_fi24SourceEquationRelator]
+    · rw [Relator.length_toWord, length_fi24SourceEquationRelator]
       exact even_iff_two_dvd.mpr (by norm_num)
-    · rw [length_fi24SourceLongRelator]
+    · rw [Relator.length_toWord, length_fi24SourceLongRelator]
       exact even_iff_two_dvd.mpr (by norm_num)
 
 /-! ## Reidemeister--Schreier rewriting -/
