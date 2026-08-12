@@ -28,12 +28,13 @@ transposed Cartan matrices, share the single Coxeter matrix `CoxeterMatrix.B n`.
 exactly the information the Coxeter matrix drops — it records the diagram and its edge
 multiplicities, but not the direction of a multiple edge.
 
-Type `Dₙ` is the one type not matched to a Mathlib matrix, because `CoxeterMatrix.D n` is not the
+Type `Dₙ` is the one type this file matches to no Mathlib matrix, `CoxeterMatrix.D n` not being the
 Coxeter matrix of type `Dₙ`: alongside the fork edge between the nodes `n - 3` and `n - 1` it keeps
 the chain edge between the two fork nodes `n - 2` and `n - 1`, so its diagram carries `n` edges on
 `n` nodes and contains a triangle, while a Dynkin diagram is a tree.
 `TauCeti.DynkinType.coxeterMatrix_D_apply` describes the type `Dₙ` entries directly instead, and
-`TauCeti.DynkinType.coxeterMatrix_D_ne_coxeterMatrixD` records the difference.
+`TauCeti.DynkinType.coxeterMatrix_D_ne_coxeterMatrixD` records that the two matrices differ, in the
+Bourbaki numbering, at exactly that pair of fork nodes.
 
 ## Main definitions
 
@@ -51,9 +52,11 @@ the chain edge between the two fork nodes `n - 2` and `n - 1`, so its diagram ca
 * `TauCeti.DynkinType.coxeterMatrix_A`, `_B`, `_C`, `_E6`, `_E7`, `_E8`, `_F4`, `_G2`: the standard
   Coxeter matrix of each type, identified with Mathlib's, together with
   `TauCeti.DynkinType.coxeterMatrix_D_apply` for type `Dₙ`.
-* `TauCeti.HasCartanType.exists_coxeterMatrixOfBase_eq`: **the Coxeter matrix of a base of Cartan
-  type `t` is the standard Coxeter matrix of `t`**, after the same relabelling of the simple roots
-  by the Bourbaki nodes. Its corollaries
+* `TauCeti.coxeterMatrixOfBase_eq_coxeterMatrix_reindex`: **the Coxeter matrix of a base is the
+  standard Coxeter matrix of a type, under any relabelling of the simple roots by the Bourbaki
+  nodes that matches the two Cartan matrices**, and
+  `TauCeti.HasCartanType.exists_coxeterMatrixOfBase_eq`, its existential form for a base of Cartan
+  type `t`. Its corollaries
   `TauCeti.HasCartanType.exists_coxeterMatrixOfBase_eq_A` and
   `TauCeti.HasCartanType.exists_coxeterMatrixOfBase_eq_G2` are the two the roadmap names.
 
@@ -105,41 +108,29 @@ lemma cartanMatrix_mul_cartanMatrix_mem_of_ne (t : DynkinType) {i j : Fin t.rank
 /-! ## The Coxeter matrix of a type -/
 
 /-- **The standard Coxeter matrix of a Dynkin type**, indexed by `Fin t.rank` in the Bourbaki node
-numbering of `TauCeti.DynkinType.cartanMatrix`: the entry at a pair of nodes is
-`TauCeti.coxeterOrder` applied to their Cartan product, which is the order of the product of the two
-simple reflections in the Weyl group of a root system of that type.
+numbering of `TauCeti.DynkinType.cartanMatrix`: it is `TauCeti.coxeterMatrixOfCartanMatrix` applied
+to the standard Cartan matrix, so the entry at a pair of nodes is `TauCeti.coxeterOrder` of their
+Cartan product, which is the order of the product of the two simple reflections in the Weyl group of
+a root system of that type.
 
 The body is not exposed: `TauCeti.DynkinType.coxeterMatrix_apply` is the entry API. -/
-def coxeterMatrix (t : DynkinType) : CoxeterMatrix (Fin t.rank) where
-  M := .of fun i j ↦ coxeterOrder (t.cartanMatrix i j * t.cartanMatrix j i)
-  isSymm := by
-    ext i j
-    simp [Matrix.transpose_apply, mul_comm]
-  diagonal i := by simp
-  off_diagonal i j hij := by
-    have := two_le_coxeterOrder (t.cartanMatrix_mul_cartanMatrix_mem_of_ne hij)
-    simp only [Matrix.of_apply]
-    omega
+def coxeterMatrix (t : DynkinType) : CoxeterMatrix (Fin t.rank) :=
+  coxeterMatrixOfCartanMatrix t.cartanMatrix t.cartanMatrix_apply_same
+    fun _ _ hij ↦ t.cartanMatrix_mul_cartanMatrix_mem_of_ne hij
 
--- `(rfl)`, not `rfl`: the body of `coxeterMatrix` is deliberately left unexposed, and the
--- parenthesised form keeps this proof out of the exported definitional-equality check.
 /-- The entry of the standard Coxeter matrix of a type at a pair of nodes is `TauCeti.coxeterOrder`
 applied to the product of the two Cartan entries. -/
 @[simp]
 lemma coxeterMatrix_apply (t : DynkinType) (i j : Fin t.rank) :
-    t.coxeterMatrix i j = coxeterOrder (t.cartanMatrix i j * t.cartanMatrix j i) := (rfl)
-
-/-- The diagonal entries of a standard Coxeter matrix are `1`. -/
-lemma coxeterMatrix_apply_self (t : DynkinType) (i : Fin t.rank) : t.coxeterMatrix i i = 1 :=
-  t.coxeterMatrix.diagonal i
+    t.coxeterMatrix i j = coxeterOrder (t.cartanMatrix i j * t.cartanMatrix j i) :=
+  coxeterMatrixOfCartanMatrix_apply ..
 
 /-- **Two nodes carry the Coxeter entry `2` exactly when they are not joined**: the two simple
 reflections commute exactly when the two simple roots are orthogonal. -/
 lemma coxeterMatrix_apply_eq_two_iff (t : DynkinType) {i j : Fin t.rank} (hij : i ≠ j) :
-    t.coxeterMatrix i j = 2 ↔ t.cartanMatrix i j = 0 := by
-  rw [coxeterMatrix_apply,
-    coxeterOrder_eq_two_iff (t.cartanMatrix_mul_cartanMatrix_mem_of_ne hij), mul_eq_zero]
-  exact or_iff_left_iff_imp.mpr fun h ↦ (t.cartanMatrix_apply_eq_zero_iff_symm i j).mpr h
+    t.coxeterMatrix i j = 2 ↔ t.cartanMatrix i j = 0 :=
+  coxeterMatrixOfCartanMatrix_apply_eq_two_iff _ _ _
+    (fun i j h ↦ (t.cartanMatrix_apply_eq_zero_iff_symm i j).mp h) hij
 
 /-- **On a simply-laced type the Coxeter matrix is the diagram**: distinct nodes carry the entry `2`
 when they are not joined and `3` when they are, there being no multiple edge to raise an entry to
@@ -162,7 +153,7 @@ private lemma coxeterMatrix_eq_of_isSimplyLaced {t : DynkinType}
     t.coxeterMatrix = M := by
   ext i j
   rcases eq_or_ne i j with rfl | hij
-  · rw [coxeterMatrix_apply_self, ← h i i]
+  · rw [← h i i]
     simp
   · rw [coxeterMatrix_apply_of_isSimplyLaced ht hij, ← h i j, ite_eq_right hij]
 
@@ -235,11 +226,13 @@ theorem coxeterMatrix_D_apply (n : ℕ) {i j : Fin (D n).rank} (hij : i ≠ j) :
   rw [coxeterMatrix_apply_of_isSimplyLaced (by simpa using CartanMatrix.isSimplyLaced_D n) hij,
     cartanMatrix_D]
 
-/-- **Mathlib's `CoxeterMatrix.D n` is not the Coxeter matrix of type `Dₙ`.** On top of the fork
-edge it adds between the nodes `n - 3` and `n - 1`, it labels the pair `n - 2`, `n - 1` of fork
-nodes with a `3` as well, that pair being consecutive; the resulting diagram has `n` edges on `n`
-nodes, so it is not a tree, while the diagram of `Dₙ` is. The two matrices differ at exactly that
-pair of nodes, where the Cartan entry of type `Dₙ` vanishes. -/
+/-- **Mathlib's `CoxeterMatrix.D n` is not the Coxeter matrix of type `Dₙ` in the Bourbaki
+numbering.** The two differ at the pair `n - 2`, `n - 1` of fork nodes: the Cartan entry of type
+`Dₙ` vanishes there, both nodes being joined to the branch node `n - 3` instead, while
+`CoxeterMatrix.D n` labels that pair with a `3`, it being consecutive — on top of the fork edge it
+adds between `n - 3` and `n - 1`. Its diagram therefore carries `n` edges on `n` nodes and is no
+tree, so no relabelling matches it to the diagram of `Dₙ` either; it is the inequality in the
+Bourbaki numbering that is recorded here. -/
 theorem coxeterMatrix_D_ne_coxeterMatrixD {n : ℕ} (hn : 4 ≤ n) :
     (D n).coxeterMatrix ≠ CoxeterMatrix.D n := by
   intro hcontra
@@ -316,19 +309,30 @@ variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommG
   {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic]
   {b : P.Base} {t : DynkinType}
 
-/-- **The Coxeter matrix of a base of Cartan type `t` is the standard Coxeter matrix of `t`**, under
-the very relabelling of the simple roots by the Bourbaki nodes that matches the two Cartan matrices.
+/-- **The Coxeter matrix of a base is the standard Coxeter matrix of a type, under any relabelling
+of the simple roots by the Bourbaki nodes that matches the two Cartan matrices.** Reading a Coxeter
+matrix off a Cartan matrix is entrywise, so a relabelling matching the Cartan entries matches the
+Coxeter entries too — the same relabelling, so that a caller holding a Cartan-matching `e` keeps it
+rather than being handed a new one.
 
 This is what makes the Coxeter presentation of a Weyl group a presentation on a *named* matrix:
 combined with the identifications above, a base of type `Aₙ` carries `CoxeterMatrix.A n`, one of
 type `Bₙ` or `Cₙ` carries `CoxeterMatrix.B n`, and so on. -/
-theorem HasCartanType.exists_coxeterMatrixOfBase_eq (h : HasCartanType P b t) :
-    ∃ e : b.support ≃ Fin t.rank, coxeterMatrixOfBase P b = t.coxeterMatrix.reindex e.symm := by
-  obtain ⟨e, he⟩ := (hasCartanType_iff b t).mp h
-  refine ⟨e, ?_⟩
+theorem coxeterMatrixOfBase_eq_coxeterMatrix_reindex (e : b.support ≃ Fin t.rank)
+    (he : ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j)) :
+    coxeterMatrixOfBase P b = t.coxeterMatrix.reindex e.symm := by
   ext i j
   rw [coxeterMatrixOfBase_apply, CoxeterMatrix.reindex_apply, Equiv.symm_symm,
     DynkinType.coxeterMatrix_apply, he i j, he j i]
+
+/-- **The Coxeter matrix of a base of Cartan type `t` is the standard Coxeter matrix of `t`**, after
+a relabelling of the simple roots by the Bourbaki nodes. Any relabelling matching the two Cartan
+matrices will do, by `TauCeti.coxeterMatrixOfBase_eq_coxeterMatrix_reindex`; this existential is the
+form the type-by-type corollaries below take. -/
+theorem HasCartanType.exists_coxeterMatrixOfBase_eq (h : HasCartanType P b t) :
+    ∃ e : b.support ≃ Fin t.rank, coxeterMatrixOfBase P b = t.coxeterMatrix.reindex e.symm :=
+  let ⟨e, he⟩ := (hasCartanType_iff b t).mp h
+  ⟨e, coxeterMatrixOfBase_eq_coxeterMatrix_reindex e he⟩
 
 /-- **A base of type `Aₙ` carries the Coxeter matrix `CoxeterMatrix.A n`**, so that its Weyl group
 is presented on the Coxeter matrix of the regular `n`-simplex, with the simple reflections as the
