@@ -75,16 +75,8 @@ the decompositions of its two factors. -/
 theorem jordanDecomposition_prodMap (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
     jordanDecomposition (prodMap g h) =
       (prodMap (semisimplePart g) (semisimplePart h),
-        prodMap (unipotentPart g) (unipotentPart h)) := by
-  symm
-  apply (eq_jordanDecomposition_iff (prodMap g h) _ _).2
-  refine ⟨(isSemisimple_semisimplePart g).prodMap (isSemisimple_semisimplePart h),
-    (isUnipotent_unipotentPart g).prodMap (isUnipotent_unipotentPart h), ?_, ?_⟩
-  · rw [commute_iff_eq, ← prodMap_mul, ← prodMap_mul]
-    exact congrArg₂ prodMap (commute_semisimplePart_unipotentPart g).eq
-      (commute_semisimplePart_unipotentPart h).eq
-  · rw [← prodMap_mul, semisimplePart_mul_unipotentPart,
-      semisimplePart_mul_unipotentPart]
+        prodMap (unipotentPart g) (unipotentPart h)) :=
+  jordanDecomposition_map₂ prodMap prodMap_mul IsSemisimple.prodMap IsUnipotent.prodMap g h
 
 /-- The semisimple factor of a product-map automorphism is computed componentwise. -/
 @[simp]
