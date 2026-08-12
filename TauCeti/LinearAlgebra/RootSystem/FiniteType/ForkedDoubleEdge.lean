@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 
 public section
 
@@ -41,7 +41,8 @@ between. The Cartan matrix annihilates them, so they are a nonzero subdominant v
 `TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos` excludes the diagram. The
 transposed family, `Cₙ₊₃` with the same pendant vertex adjoined, is the twisted affine diagram
 `A⁽²⁾₂ₗ₋₁`, and it is excluded through `TauCeti.IsFiniteType.transpose`. The rows of the chain are
-evaluated with `TauCeti.sum_range_chainBEntry_mul`, the chain computation this file shares with
+evaluated with `TauCeti.sum_range_chainBEntry_mul`. Its simply-laced specialization is
+`TauCeti.sum_range_chainEntry_mul`, used by
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star`.
 
 The exclusion is sharp in the only direction available to it: deleting the pendant vertex leaves
@@ -175,7 +176,7 @@ lemma affineBCartanMatrix_def (n : ℕ) :
 
 /-- **Reversing the double edge of `B̃ₗ` gives `Cₗ` with the same pendant vertex**, the twisted
 affine diagram `A⁽²⁾₂ₗ₋₁`. -/
-lemma affineBCartanMatrix_transpose (n : ℕ) :
+@[simp] lemma affineBCartanMatrix_transpose (n : ℕ) :
     (affineBCartanMatrix n)ᵀ = adjoinPendant (CartanMatrix.C (n + 3)) ⟨1, by omega⟩ := by
   rw [affineBCartanMatrix_def, adjoinPendant_transpose, CartanMatrix.B_transpose]
 
