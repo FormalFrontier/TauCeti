@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic
 
 public section
 
@@ -12,7 +12,7 @@ public section
 # The listed `E₈` coroots are all the norm-two vectors
 
 The two hundred and forty coroots of type `E₈` are enumerated in
-`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8` as coordinate vectors in the
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic` as coordinate vectors in the
 simple-coroot basis. This file proves that the enumeration is *complete*: a vector of
 `Fin 8 → ℤ` whose `E₈` norm is two is one of the two hundred and forty listed coroots
 (`TauCeti.DynkinType.exists_e8Coroot_eq`).

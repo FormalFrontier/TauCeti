@@ -6,8 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Lattice
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
 
@@ -16,21 +14,18 @@ public section
 
 This file builds the pinned integral root datum of type `E₈` on the character and cocharacter
 lattices `Fin 8 → ℤ`, out of the enumeration of the two hundred and forty roots in
-`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8`. The character lattice is written in
-the fundamental-weight basis and the cocharacter lattice in the simple-coroot basis, so that the
-`i`-th simple root is the `i`-th row of the Bourbaki-numbered Cartan matrix `CartanMatrix.E₈` and
-the `i`-th simple coroot is the `i`-th standard basis vector.
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic`. The character lattice is
+written in the fundamental-weight basis and the cocharacter lattice in the simple-coroot basis, so
+that the `i`-th simple root is the `i`-th row of the Bourbaki-numbered Cartan matrix
+`CartanMatrix.E₈` and the `i`-th simple coroot is the `i`-th standard basis vector.
 
-## The reflection permutations
+## Reflection stability
 
-The one piece of a root datum that an enumeration does not carry is the permutation of the root
-indices induced by each reflection. It is obtained here without tabulating it. Reflection in a
-norm-two vector preserves the `E₈` Gram form of the simple-coroot basis, so it maps norm-two
-vectors to norm-two vectors, and it is involutive; the enumeration exhausts the norm-two vectors
-(`TauCeti.DynkinType.exists_e8Coroot_eq`), so it transports along
-`TauCeti.DynkinType.e8CorootEquiv` to an involutive permutation of `Fin 240`. The identities the
-root datum requires then hold by bilinear algebra rather than by two hundred and forty by two
-hundred and forty coordinate comparisons.
+Reflection in a norm-two vector preserves the `E₈` Gram form of the simple-coroot basis, so it maps
+norm-two vectors to norm-two vectors. The enumeration exhausts the norm-two vectors
+(`TauCeti.DynkinType.exists_e8Coroot_eq`), and hence the root and coroot families are stable under
+reflection. Mathlib's `RootPairing.mk'` then constructs the permutations of `Fin 240` required by a
+root datum, without a two hundred and forty by two hundred and forty table.
 
 ## The lattices
 
@@ -45,7 +40,6 @@ coroot-side condition as its siblings, which is what the per-type dispatcher wil
 
 ## Main definitions
 
-* `TauCeti.DynkinType.e8ReflectionPerm`: reflection in a root, as a permutation of root indices.
 * `TauCeti.DynkinType.e8SimplyConnectedRootDatum`: the pinned root datum of type `E₈`.
 * `TauCeti.DynkinType.e8SimplyConnectedBase`: the base formed by the first eight root indices.
 
@@ -88,20 +82,8 @@ theorem e8Root_dotProduct_e8Coroot (i j : Fin 240) :
     e8Root i ⬝ᵥ e8Coroot j = (e8Coroot i ᵥ* CartanMatrix.E₈) ⬝ᵥ e8Coroot j := by
   rw [e8Root_apply]
 
-/-! ## Reflection as a permutation of the root indices -/
+/-! ## Reflection stability -/
 
-/-- The listed `E₈` coroots enumerate the norm-two vectors of the simple-coroot lattice, without
-repetition. -/
-noncomputable def e8CorootEquiv : Fin 240 ≃ {v : Fin 8 → ℤ // (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2} :=
-  Equiv.ofBijective (fun k ↦ ⟨e8Coroot k, e8Coroot_vecMul_dotProduct_self k⟩)
-    ⟨fun _ _ h ↦ e8Coroot.injective (congrArg Subtype.val h),
-      fun v ↦ (exists_e8Coroot_eq v.2).imp fun _ hk ↦ Subtype.ext hk⟩
-
-@[simp] theorem e8CorootEquiv_coe (k : Fin 240) : (e8CorootEquiv k : Fin 8 → ℤ) = e8Coroot k :=
-  (rfl)
-
-/-- Reflection of a norm-two vector in another one, in the simple-coroot coordinates. The Gram form
-is preserved by such a reflection, so the value is again of norm two. -/
 private lemma e8_reflect_dotProduct_self {u v : Fin 8 → ℤ}
     (hu : (u ᵥ* CartanMatrix.E₈) ⬝ᵥ u = 2) (hv : (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2) :
     ((v - ((v ᵥ* CartanMatrix.E₈) ⬝ᵥ u) • u) ᵥ* CartanMatrix.E₈) ⬝ᵥ
@@ -110,56 +92,19 @@ private lemma e8_reflect_dotProduct_self {u v : Fin 8 → ℤ}
     dotProduct_smul, smul_eq_mul, hu, hv, e8_vecMul_dotProduct_comm u v]
   ring
 
-private def e8Reflect (u v : {v : Fin 8 → ℤ // (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2}) :
-    {v : Fin 8 → ℤ // (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2} :=
-  ⟨v.1 - ((v.1 ᵥ* CartanMatrix.E₈) ⬝ᵥ u.1) • u.1, e8_reflect_dotProduct_self u.2 v.2⟩
+private lemma e8Root_dotProduct_e8Coroot_comm (i j : Fin 240) :
+    e8Root i ⬝ᵥ e8Coroot j = e8Root j ⬝ᵥ e8Coroot i := by
+  rw [e8Root_dotProduct_e8Coroot, e8Root_dotProduct_e8Coroot,
+    e8_vecMul_dotProduct_comm]
 
-private lemma e8Reflect_coe (u v : {v : Fin 8 → ℤ // (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2}) :
-    (e8Reflect u v : Fin 8 → ℤ) = v.1 - ((v.1 ᵥ* CartanMatrix.E₈) ⬝ᵥ u.1) • u.1 := (rfl)
-
-private lemma e8Reflect_involutive (u : {v : Fin 8 → ℤ // (v ᵥ* CartanMatrix.E₈) ⬝ᵥ v = 2}) :
-    Function.Involutive (e8Reflect u) := by
-  intro v
-  have hcoeff : ((v.1 - ((v.1 ᵥ* CartanMatrix.E₈) ⬝ᵥ u.1) • u.1) ᵥ* CartanMatrix.E₈) ⬝ᵥ u.1 =
-      -((v.1 ᵥ* CartanMatrix.E₈) ⬝ᵥ u.1) := by
-    rw [sub_vecMul, smul_vecMul, sub_dotProduct, smul_dotProduct, smul_eq_mul, u.2]
-    ring
-  refine Subtype.ext ?_
-  rw [e8Reflect_coe, e8Reflect_coe, hcoeff, neg_smul, sub_neg_eq_add, sub_add_cancel]
-
-/-- Reflection in an `E₈` root as a permutation of the pinned root indices. It is transported from
-reflection of norm-two vectors along the enumeration `TauCeti.DynkinType.e8CorootEquiv`, so no
-table of reflected indices is stored. -/
-noncomputable def e8ReflectionPerm (i : Fin 240) : Equiv.Perm (Fin 240) :=
-  e8CorootEquiv.permCongr.symm
-    (Function.Involutive.toPerm _ (e8Reflect_involutive (e8CorootEquiv i)))
-
-/-- Reflection in the `i`-th root sends the `j`-th coroot to the reflected coordinate vector. -/
-theorem e8Coroot_e8ReflectionPerm (i j : Fin 240) :
-    e8Coroot (e8ReflectionPerm i j) =
-      e8Coroot j - ((e8Coroot j ᵥ* CartanMatrix.E₈) ⬝ᵥ e8Coroot i) • e8Coroot i := by
-  have h : e8CorootEquiv (e8ReflectionPerm i j) =
-      e8Reflect (e8CorootEquiv i) (e8CorootEquiv j) := by
-    rw [e8ReflectionPerm, Equiv.permCongr_symm, Equiv.permCongr_apply, Equiv.symm_symm,
-      Equiv.apply_symm_apply]
-    rfl
-  have hval := congrArg Subtype.val h
-  rwa [e8CorootEquiv_coe, e8Reflect_coe, e8CorootEquiv_coe, e8CorootEquiv_coe] at hval
-
-/-- The reflection permutations are compatible with the coroot table, in the form the root datum
-requires. -/
-theorem e8ReflectionPerm_coroot (i j : Fin 240) :
-    e8Coroot j - (e8Root i ⬝ᵥ e8Coroot j) • e8Coroot i = e8Coroot (e8ReflectionPerm i j) := by
-  rw [e8Coroot_e8ReflectionPerm, e8Root_dotProduct_e8Coroot,
+private lemma exists_e8Coroot_reflection (i j : Fin 240) :
+    ∃ k, e8Coroot k =
+      e8Coroot j - (e8Root i ⬝ᵥ e8Coroot j) • e8Coroot i := by
+  apply exists_e8Coroot_eq
+  rw [e8Root_dotProduct_e8Coroot,
     e8_vecMul_dotProduct_comm (e8Coroot i) (e8Coroot j)]
-
-/-- The reflection permutations are compatible with the root table, in the form the root datum
-requires. -/
-theorem e8ReflectionPerm_root (i j : Fin 240) :
-    e8Root j - (e8Root j ⬝ᵥ e8Coroot i) • e8Root i = e8Root (e8ReflectionPerm i j) := by
-  have h := congrArg (fun x : Fin 8 → ℤ ↦ x ᵥ* CartanMatrix.E₈) (e8Coroot_e8ReflectionPerm i j)
-  simp only [sub_vecMul, smul_vecMul, ← e8Root_apply] at h
-  rw [h, e8Root_dotProduct_e8Coroot]
+  exact e8_reflect_dotProduct_self (e8Coroot_vecMul_dotProduct_self i)
+    (e8Coroot_vecMul_dotProduct_self j)
 
 /-! ## The pinned datum -/
 
@@ -168,14 +113,24 @@ theorem e8ReflectionPerm_root (i j : Fin 240) :
 Both lattices are `Fin 8 → ℤ`: the character lattice in the fundamental-weight basis and the
 cocharacter lattice in the simple-coroot basis. Root indices `0` through `7` are the Bourbaki
 simple roots; see `TauCeti.DynkinType.e8Root_simple`. -/
-noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → ℤ) (Fin 8 → ℤ) where
-  toLinearMap := (dotProductEquiv ℤ (Fin 8)).toLinearMap
-  root := e8Root
-  coroot := e8Coroot
-  root_coroot_two i := e8Root_dotProduct_coroot i
-  reflectionPerm := e8ReflectionPerm
-  reflectionPerm_root i j := e8ReflectionPerm_root i j
-  reflectionPerm_coroot i j := e8ReflectionPerm_coroot i j
+noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → ℤ) (Fin 8 → ℤ) :=
+  RootPairing.mk' (dotProductEquiv ℤ (Fin 8)).toLinearMap e8Root e8Coroot
+    e8Root_dotProduct_coroot
+    (by
+      rintro i _ ⟨j, rfl⟩
+      obtain ⟨k, hk⟩ := exists_e8Coroot_reflection i j
+      refine ⟨k, ?_⟩
+      have hroot : e8Root k =
+          e8Root j - (e8Root i ⬝ᵥ e8Coroot j) • e8Root i := by
+        simpa only [sub_vecMul, smul_vecMul, ← e8Root_apply] using
+          congrArg (fun x : Fin 8 → ℤ ↦ x ᵥ* CartanMatrix.E₈) hk
+      rw [e8Root_dotProduct_e8Coroot_comm] at hroot
+      simpa [Module.preReflection_apply, dotProductEquiv_apply_apply] using hroot)
+    (by
+      rintro i _ ⟨j, rfl⟩
+      obtain ⟨k, hk⟩ := exists_e8Coroot_reflection i j
+      refine ⟨k, ?_⟩
+      simpa [Module.preReflection_apply, dotProductEquiv_apply_apply] using hk)
 
 /-- The root embedding of the pinned `E₈` datum is the explicit table `e8Root`. -/
 @[simp] lemma e8SimplyConnectedRootDatum_root : e8SimplyConnectedRootDatum.root = e8Root := (rfl)
