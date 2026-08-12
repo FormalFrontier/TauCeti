@@ -39,10 +39,9 @@ every element of `K` lies in one of them.
 
 ## Implementation notes
 
-The fixed subfield is defined as `RingHom.eqLocus` of Mathlib's `iterateFrobenius` against the
-identity, with the closure under inversion added, so its `Subring` structure is Mathlib's and only
-`inv_mem'` is new. Membership is definitionally `x ^ p ^ n = x`, which is what
-`TauCeti.mem_frobeniusFixedField` records.
+The fixed subfield is Mathlib's `RingHom.eqLocusField` of `iterateFrobenius` against the identity,
+so the whole `Subfield` structure is Mathlib's. Membership is definitionally `x ^ p ^ n = x`, which
+is what `TauCeti.mem_frobeniusFixedField` records.
 
 The cardinality count is the classical one: `X ^ q - X` is separable in characteristic `p` for
 `p ∣ q`, an algebraically closed field splits it, and its root set is exactly the fixed set, so
@@ -90,11 +89,7 @@ variable [ExpChar K p]
 `x ^ p ^ n = x`. Over an algebraically closed field of characteristic `p` and for `n ≠ 0` this is a
 copy of the field with `p ^ n` elements; see `TauCeti.card_frobeniusFixedField`. -/
 def frobeniusFixedField : Subfield K :=
-  { (iterateFrobenius K p n).eqLocus (RingHom.id K) with
-    inv_mem' := fun x hx ↦ by
-      change x⁻¹ ^ p ^ n = x⁻¹
-      have hx' : x ^ p ^ n = x := hx
-      rw [inv_pow, hx'] }
+  (iterateFrobenius K p n).eqLocusField (RingHom.id K)
 
 @[simp]
 theorem mem_frobeniusFixedField {x : K} : x ∈ frobeniusFixedField K p n ↔ x ^ p ^ n = x :=
