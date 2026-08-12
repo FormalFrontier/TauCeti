@@ -74,7 +74,7 @@ def IsUnipotent (g : WithConv (H →ₐ[k] K)) : Prop :=
 
 /-- Unfolding the definition of a unipotent point gives unipotence of its action on every finite
 comodule. -/
-theorem isUnipotent_iff (g : WithConv (H →ₐ[k] K)) :
+theorem isUnipotent_def (g : WithConv (H →ₐ[k] K)) :
     IsUnipotent g ↔
       ∀ M : FGComoduleCat.{u, v, u} k H,
         GeneralLinearGroup.IsUnipotent
@@ -87,18 +87,11 @@ theorem isUnipotent_iff_endOfPoint (g : WithConv (H →ₐ[k] K)) :
     IsUnipotent g ↔
       ∀ M : FGComoduleCat.{u, v, u} k H,
         _root_.IsNilpotent (Comodule.endOfPoint M g.ofConv - 1) := by
-  rw [isUnipotent_iff]
-  constructor
-  · intro h M
-    have hM := (GeneralLinearGroup.isUnipotent_def _).mp (h M)
-    change _root_.IsNilpotent ((Comodule.pointsAction M g).toLinearMap - 1) at hM
-    rw [Comodule.pointsAction_toLinearMap] at hM
-    exact hM
-  · intro h M
-    rw [GeneralLinearGroup.isUnipotent_def]
-    have hM := h M
-    rw [← Comodule.pointsAction_toLinearMap M g] at hM
-    exact hM
+  rw [isUnipotent_def]
+  apply forall_congr'
+  intro M
+  rw [GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff,
+    Comodule.pointsAction_toLinearMap]
 
 /-- The identity point is unipotent. -/
 @[simp]
@@ -145,11 +138,7 @@ theorem IsUnipotent.mul {g h : WithConv (H →ₐ[k] K)}
 theorem IsUnipotent.pow {g : WithConv (H →ₐ[k] K)}
     (hg : IsUnipotent g) (n : ℕ) : IsUnipotent (g ^ n) := by
   intro M
-  rw [map_pow]
-  rw [show LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (Comodule.pointsAction M g ^ n) =
-        LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g) ^ n by
-      exact map_pow (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm _ n]
+  rw [map_pow, GeneralLinearGroup.ofLinearEquiv_pow]
   exact (hg M).pow n
 
 /-- Unipotence of points is invariant under conjugation. -/

@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
-public import Mathlib.RingTheory.Nilpotent.Basic
+public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -23,6 +22,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 * `TauCeti.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
   unipotent.
+* `TauCeti.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
+  linear equivalence to a general-linear-group element.
 * `TauCeti.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
   its inverse is.
 * `TauCeti.GeneralLinearGroup.IsUnipotent.mul`: commuting unipotent automorphisms have unipotent
@@ -51,6 +52,27 @@ universe u v
 
 variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 
+/-- The endomorphism underlying a linear equivalence converted to the general linear group is
+the original linear equivalence's underlying endomorphism. -/
+theorem ofLinearEquiv_toLinearMap (f : V ≃ₗ[K] V) :
+    ((LinearMap.GeneralLinearGroup.ofLinearEquiv f : GeneralLinearGroup K V) : End K V) =
+      f.toLinearMap :=
+  rfl
+
+/-- Converting a power of a linear equivalence to the general linear group commutes with taking
+that power. -/
+theorem ofLinearEquiv_pow (f : V ≃ₗ[K] V) (n : ℕ) :
+    LinearMap.GeneralLinearGroup.ofLinearEquiv (f ^ n) =
+      LinearMap.GeneralLinearGroup.ofLinearEquiv f ^ n :=
+  map_pow (LinearMap.GeneralLinearGroup.generalLinearEquiv K V).symm f n
+
+/-- A linear equivalence is unipotent after conversion to the general linear group exactly when
+its underlying endomorphism minus the identity is nilpotent. -/
+theorem isUnipotent_ofLinearEquiv_iff (f : V ≃ₗ[K] V) :
+    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv f) ↔
+      _root_.IsNilpotent (f.toLinearMap - 1) := by
+  rw [isUnipotent_def, ofLinearEquiv_toLinearMap]
+
 /-- The inverse of a unipotent linear automorphism is unipotent. -/
 theorem IsUnipotent.inv {g : GeneralLinearGroup K V} (hg : IsUnipotent g) :
     IsUnipotent g⁻¹ := by
@@ -63,9 +85,7 @@ theorem IsUnipotent.inv {g : GeneralLinearGroup K V} (hg : IsUnipotent g) :
     hc.isNilpotent_mul_left hg
   have heq : ((g⁻¹ : GeneralLinearGroup K V) : End K V) - 1 =
       -(((g⁻¹ : GeneralLinearGroup K V) : End K V) * ((g : End K V) - 1)) := by
-    rw [mul_sub, mul_one]
-    change g.inv - 1 = -(g.inv * g.val - g.inv)
-    rw [g.inv_val]
+    rw [mul_sub, mul_one, Units.inv_mul]
     simp
   rw [heq]
   exact hnil.neg
@@ -112,16 +132,36 @@ theorem IsUnipotent.pow {g : GeneralLinearGroup K V} (hg : IsUnipotent g) (n : �
       rw [pow_succ]
       exact hn.mul hg (Commute.self_pow g n).symm
 
+private theorem isNilpotent_conjugate_iff (x : End K V) (h : GeneralLinearGroup K V) :
+    _root_.IsNilpotent ((h : End K V) * x * ((h⁻¹ : GeneralLinearGroup K V) : End K V)) ↔
+      _root_.IsNilpotent x := by
+  constructor
+  · rintro ⟨n, hn⟩
+    refine ⟨n, ?_⟩
+    calc
+      x ^ n = ((h⁻¹ : GeneralLinearGroup K V) : End K V) *
+          ((h : End K V) * x ^ n * ((h⁻¹ : GeneralLinearGroup K V) : End K V)) *
+          (h : End K V) := by simp [mul_assoc]
+      _ = ((h⁻¹ : GeneralLinearGroup K V) : End K V) *
+          (((h : End K V) * x * ((h⁻¹ : GeneralLinearGroup K V) : End K V)) ^ n) *
+          (h : End K V) := by rw [Units.conj_pow]
+      _ = 0 := by rw [hn]; simp
+  · rintro ⟨n, hn⟩
+    refine ⟨n, ?_⟩
+    rw [Units.conj_pow, hn]
+    simp
+
 /-- Unipotence is invariant under conjugation by a linear automorphism. -/
 @[simp]
 theorem isUnipotent_mul_mul_inv_iff (g h : GeneralLinearGroup K V) :
     IsUnipotent (h * g * h⁻¹) ↔ IsUnipotent g := by
-  have heq : h * g * h⁻¹ = LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (h.toLinearEquiv.symm.trans (g.toLinearEquiv.trans h.toLinearEquiv)) := by
-    apply Units.ext
-    rfl
-  rw [heq]
-  exact isUnipotent_congrLinearEquiv_iff h.toLinearEquiv g
+  rw [isUnipotent_def, isUnipotent_def]
+  have heq : (((h * g * h⁻¹ : GeneralLinearGroup K V) : End K V) - 1) =
+      (h : End K V) * ((g : End K V) - 1) *
+        ((h⁻¹ : GeneralLinearGroup K V) : End K V) := by
+    simp only [Units.val_mul]
+    rw [mul_sub, sub_mul, mul_one, Units.mul_inv]
+  rw [heq, isNilpotent_conjugate_iff]
 
 end GeneralLinearGroup
 
