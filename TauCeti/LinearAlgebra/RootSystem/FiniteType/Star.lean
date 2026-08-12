@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.ADEInequality
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
@@ -25,11 +26,13 @@ whose solutions with `p ≤ q ≤ r` are `(1, q, r)`, `(2, 2, r)`, `(2, 3, 3)`, 
 `(2, 3, 5)` - the chains `Aₙ`, the forks `Dₙ`, and `E₆`, `E₇`, `E₈`.
 
 Only that arithmetic constraint is proved here. The step that produces a star from a diagram with a
-branch vertex, and the constraints governing a multiple edge (the ones behind `B`, `C`, `F₄`), are
-both outside this file.
+branch vertex is outside this file, and so is the constraint governing a multiple edge (the one
+behind `B`, `C`, `F₄`), which is
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`.
 
-This file builds the star as a matrix, `TauCeti.starCartanMatrix`, over an arbitrary finite index
-type of arms, and proves the bound. The elimination tool is a new one, living with the others in
+This file builds the star as a matrix, `TauCeti.starCartanMatrix`, out of the chain entries of
+`TauCeti.LinearAlgebra.RootSystem.Chain`, over an arbitrary finite index type of arms, and proves
+the bound. The elimination tool is a new one, living with the others in
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic`: a finite-type matrix admits no nonzero
 **subdominant** vector, one whose every coordinate `xᵢ` has `xᵢ · (A x)ᵢ ≤ 0`
 (`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`), because the symmetrized
@@ -82,50 +85,6 @@ open scoped Matrix
 
 namespace TauCeti
 
-/-- The Cartan-matrix entry of a **chain** between the positions `s` and `t` along it: `2` on the
-diagonal, `-1` between consecutive positions, and `0` otherwise. Every diagram in this file is
-simply laced, so this single function describes all of its edges. -/
-private def chainEntry (s t : ℕ) : ℤ :=
-  if s = t then 2 else if s = t + 1 then -1 else if t = s + 1 then -1 else 0
-
--- `(rfl)`, not `rfl`: the bodies of the definitions in this file are deliberately left unexposed,
--- and the parenthesised form keeps these equations out of the exported definitional-equality check.
-private lemma chainEntry_def (s t : ℕ) :
-    chainEntry s t = if s = t then 2 else if s = t + 1 then -1 else if t = s + 1 then -1 else 0 :=
-  (rfl)
-
-@[simp] private lemma chainEntry_self (s : ℕ) : chainEntry s s = 2 := by simp [chainEntry]
-
-@[simp] private lemma chainEntry_succ_left (s : ℕ) : chainEntry (s + 1) s = -1 := by
-  unfold chainEntry; split_ifs <;> omega
-
-@[simp] private lemma chainEntry_succ_right (s : ℕ) : chainEntry s (s + 1) = -1 := by
-  unfold chainEntry; split_ifs <;> omega
-
-/-- Away from the diagonal and its two neighbours a chain has no entry. -/
-private lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1)
-    (h3 : t ≠ s + 1) :
-    chainEntry s t = 0 := by
-  unfold chainEntry; split_ifs <;> omega
-
-/-- Shifting both positions of a chain by one leaves the entry unchanged: only the difference of
-the positions matters. This is not a `simp` lemma: it would rewrite the right-hand sides of the
-entry lemmas for `TauCeti.starCartanMatrix`, whose arm positions are shifted by one against the
-centre, out of the form those lemmas state. -/
-private lemma chainEntry_succ_succ (s t : ℕ) :
-    chainEntry (s + 1) (t + 1) = chainEntry s t := by
-  unfold chainEntry; split_ifs <;> omega
-
-/-- A chain is symmetric: the entry depends on the unordered pair of positions. -/
-private lemma chainEntry_comm (s t : ℕ) : chainEntry s t = chainEntry t s := by
-  unfold chainEntry; split_ifs <;> omega
-
-/-- A chain is Mathlib's Cartan matrix of type `A`: on `n` positions the two entry rules agree. -/
-private lemma chainEntry_eq_cartanMatrix_A {n : ℕ} (i j : Fin n) :
-    chainEntry i j = CartanMatrix.A n i j := by
-  simp only [chainEntry, CartanMatrix.A, Matrix.of_apply, Fin.ext_iff]
-  split_ifs <;> omega
-
 variable {α : Type*} [DecidableEq α] {ℓ : α → ℕ}
 
 /-- The vertices of the **star** with arms of lengths `ℓ`: a centre, written `none`, together with
@@ -147,6 +106,8 @@ def starCartanMatrix (ℓ : α → ℕ) : Matrix (StarIndex ℓ) (StarIndex ℓ)
 
 @[simp] lemma starCartanMatrix_none_none : starCartanMatrix ℓ none none = 2 := chainEntry_self 0
 
+-- `(rfl)`, not `rfl`: the body of `TauCeti.starCartanMatrix` is deliberately left unexposed, and
+-- the parenthesised form keeps these equations out of the exported definitional-equality check.
 private lemma starCartanMatrix_none_some_chain (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = chainEntry 0 ((w.2 : ℕ) + 1) := (rfl)
 
@@ -161,13 +122,13 @@ private lemma starCartanMatrix_some_some_chain (v w : (i : α) × Fin (ℓ i)) :
 @[simp] lemma starCartanMatrix_none_some (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = if (w.2 : ℕ) = 0 then -1 else 0 := by
   rw [starCartanMatrix_none_some_chain]
-  simp [chainEntry]
+  simp [chainEntry_def]
 
 /-- The centre is joined precisely to the first vertex of each nonempty arm. -/
 @[simp] lemma starCartanMatrix_some_none (v : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ (some v) none = if (v.2 : ℕ) = 0 then -1 else 0 := by
   rw [starCartanMatrix_some_none_chain]
-  simp [chainEntry]
+  simp [chainEntry_def]
 
 /-- Two arm vertices have entry `2` when equal, `-1` when consecutive on the same arm, and `0`
 otherwise. -/
@@ -178,7 +139,7 @@ otherwise. -/
         else if (w.2 : ℕ) = v.2 + 1 then -1 else 0
       else 0 := by
   rw [starCartanMatrix_some_some_chain]
-  simp only [chainEntry]
+  simp only [chainEntry_def]
   split_ifs <;> omega
 
 /-- A star is simply laced, in particular symmetric: each arm is a chain, and being on a common arm
@@ -248,63 +209,9 @@ section RowSums
 
 The two computations behind the bound: the row of `starCartanMatrix` at an arm vertex annihilates
 the marks, and the row at the centre evaluates to `∑ᵢ ∏_{j ≠ i} (ℓ j + 1) - (n - 2) ∏ᵢ (ℓ i + 1)`.
-Both are assembled from the same two facts about a chain, proved first for an abstract linear
-weight function `g`.
+Both are assembled from the chain row of `TauCeti.LinearAlgebra.RootSystem.Chain`,
+`TauCeti.sum_range_chainEntry_mul`, taken at an abstract weight function `g`.
 -/
-
-/-- The chain sum, in the shape both rows consume: along `n` positions `1, …, n`, the entries at
-the position `m` collect `2 g (m + 1) - g m - g (m + 2)`, the term `g m` being absent at `m = 0`
-(where it is the centre, summed separately) and `g (m + 2)` at the far end. -/
-private theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
-    ∑ s ∈ Finset.range n, (chainEntry m s : ℚ) * g (s + 1)
-      = 2 * g (m + 1) - (if m = 0 then 0 else g m)
-        - (if m + 1 = n then 0 else g (m + 2)) := by
-  have key : ∀ s ∈ Finset.range n, ((chainEntry m s : ℤ) : ℚ) * g (s + 1)
-      = (if s = m then 2 * g (m + 1) else 0) + (if s + 1 = m then -g m else 0)
-        + (if s = m + 1 then -g (m + 2) else 0) := by
-    intro s _
-    by_cases h1 : s = m
-    · subst h1
-      rw [ite_eq_left rfl, ite_eq_right (by omega : ¬ (s + 1 = s)),
-        ite_eq_right (by omega : ¬ (s = s + 1)), chainEntry_self]
-      norm_num
-    by_cases h2 : s + 1 = m
-    · subst h2
-      rw [ite_eq_right h1, ite_eq_left rfl, ite_eq_right (by omega : ¬ (s = s + 1 + 1)),
-        chainEntry_succ_left]
-      norm_num
-    by_cases h3 : s = m + 1
-    · subst h3
-      rw [ite_eq_right h1, ite_eq_right h2, ite_eq_left rfl, chainEntry_succ_right]
-      norm_num
-    · rw [ite_eq_right h1, ite_eq_right h2, ite_eq_right h3,
-        chainEntry_eq_zero (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm) h3]
-      norm_num
-  rw [Finset.sum_congr rfl key, Finset.sum_add_distrib, Finset.sum_add_distrib]
-  have h1 : ∑ s ∈ Finset.range n, (if s = m then 2 * g (m + 1) else 0) = 2 * g (m + 1) := by
-    rw [Finset.sum_ite_eq' (Finset.range n) m fun _ ↦ 2 * g (m + 1)]
-    simp [Finset.mem_range, hm]
-  have h3 : ∑ s ∈ Finset.range n, (if s = m + 1 then -g (m + 2) else 0)
-      = -(if m + 1 = n then 0 else g (m + 2)) := by
-    rw [Finset.sum_ite_eq' (Finset.range n) (m + 1) fun _ ↦ -g (m + 2)]
-    by_cases hn : m + 1 = n
-    · simp [Finset.mem_range, hn]
-    · rw [ite_eq_left (Finset.mem_range.2 (by omega)), ite_eq_right hn]
-  have h2 : ∑ s ∈ Finset.range n, (if s + 1 = m then -g m else 0)
-      = -(if m = 0 then 0 else g m) := by
-    match m with
-    | 0 => simp
-    | k + 1 =>
-      have hcongr : ∀ s ∈ Finset.range n, (if s + 1 = k + 1 then -g (k + 1) else 0)
-          = (if s = k then -g (k + 1) else 0) := by
-        intro s _
-        by_cases h : s = k <;> simp [h]
-      rw [Finset.sum_congr rfl hcongr,
-        Finset.sum_ite_eq' (Finset.range n) k fun _ ↦ -g (k + 1)]
-      have hk : k < n := by omega
-      rw [ite_eq_left (Finset.mem_range.2 hk), ite_eq_right (Nat.succ_ne_zero k)]
-  rw [h1, h2, h3]
-  ring
 
 /-- The full row of a star at an arm vertex, in chain coordinates: the centre contributes `-g 0` at
 the near end of the arm and nothing elsewhere, which is exactly the term the chain sum omits. -/
@@ -336,7 +243,7 @@ private theorem chainEntry_center_row (n : ℕ) (g : ℕ → ℚ) :
       rw [chainEntry_eq_zero (by omega) (by omega) (by omega)]
       norm_num
     rw [Finset.sum_congr rfl htail]
-    simp [chainEntry]
+    simp
 
 end RowSums
 
