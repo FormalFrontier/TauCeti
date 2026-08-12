@@ -102,7 +102,9 @@ noncomputable def serreMk :
   LieIdeal.mkQ (Relations.toIdeal R CM)
 
 /-- Every element of the presented algebra is the class of an element of the free Lie algebra. -/
-theorem serreMk_surjective : Function.Surjective (serreMk R CM) := LieIdeal.mkQ_surjective _
+theorem serreMk_surjective : Function.Surjective (serreMk R CM) := fun y => by
+  obtain ⟨x, hx⟩ := LieSubmodule.Quotient.surjective_mk' (Relations.toIdeal R CM) y
+  exact ⟨x, (LieIdeal.mkQ_apply _ x).trans hx⟩
 
 /-- A relator of Serre's presentation becomes zero in the presented algebra. -/
 theorem serreMk_eq_zero_of_mem_toSet {x : FreeLieAlgebra R (Generators B)}

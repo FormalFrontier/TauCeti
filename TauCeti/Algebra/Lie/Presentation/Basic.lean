@@ -59,6 +59,14 @@ unfold the quotient. Those three
 equations are proved by the parenthesised `(rfl)`, which elaborates against the definitions
 themselves; a bare `rfl` in an exported theorem would demand that they be `@[expose]`d.
 
+`TauCeti.LieIdeal.liftQ_apply_mkQ` is the composite of `TauCeti.LieIdeal.mkQ_apply` and
+`TauCeti.LieIdeal.liftQ_apply_mk`, but only inside this file: unexposed bodies mean that in another
+module `mkQ I x` is not defeq to `LieSubmodule.Quotient.mk x`, so a consumer whose goal is stated
+in terms of its own definitions cannot chain the two lemmas there.
+
+Surjectivity of `TauCeti.LieIdeal.mkQ` is not restated: it is Mathlib's
+`LieSubmodule.Quotient.surjective_mk'` transported along `TauCeti.LieIdeal.mkQ_apply`.
+
 ## Roadmap
 
 These are the general steps behind the universal property of the Serre presentation in
@@ -91,9 +99,6 @@ def mkQ : L →ₗ⁅R⁆ L ⧸ I where
 @[simp]
 theorem mkQ_apply (x : L) : mkQ I x = LieSubmodule.Quotient.mk x := (rfl)
 
-/-- The quotient homomorphism is surjective. -/
-theorem mkQ_surjective : Function.Surjective (mkQ I) := Quot.mk_surjective
-
 /-- The kernel of the quotient homomorphism is the ideal quotiented by. -/
 @[simp]
 theorem ker_mkQ : (mkQ I).ker = I := by
@@ -125,7 +130,9 @@ theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
 /-- The induced homomorphism on the quotient agrees with `f` on the image of the quotient map.
 
 Not a `simp` lemma: `TauCeti.LieIdeal.mkQ_apply` and `TauCeti.LieIdeal.liftQ_apply_mk` already
-rewrite the left-hand side, and `simp` rejects a lemma its own set can prove. -/
+rewrite the left-hand side here, and `simp` rejects a lemma its own set can prove. It is still
+needed as a lemma, because those two only chain where the body of `TauCeti.LieIdeal.mkQ` is
+visible: in another module `mkQ I x` is not reducible to `LieSubmodule.Quotient.mk x`. -/
 theorem liftQ_apply_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
     liftQ f h (mkQ I x) = f x := (rfl)
 
@@ -134,7 +141,7 @@ homomorphism. -/
 @[simp]
 theorem liftQ_comp_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : (liftQ f h).comp (mkQ I) = f := by
   ext x
-  exact liftQ_apply_mkQ f h x
+  simp
 
 /-- Two homomorphisms out of `L ⧸ I` that agree after composition with the quotient map are
 equal. -/
@@ -148,7 +155,7 @@ theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ 
 restricting to `f` along the quotient map is `TauCeti.LieIdeal.liftQ f h`. -/
 theorem eq_liftQ {f : L →ₗ⁅R⁆ L'} {h : I ≤ f.ker} {g : L ⧸ I →ₗ⁅R⁆ L'}
     (hg : ∀ x : L, g (mkQ I x) = f x) : g = liftQ f h :=
-  lieHom_qext fun x => by rw [hg, liftQ_apply_mkQ]
+  lieHom_qext fun x => by rw [hg]; simp
 
 end LieIdeal
 
