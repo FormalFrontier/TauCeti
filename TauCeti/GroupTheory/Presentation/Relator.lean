@@ -130,9 +130,9 @@ expression itself rather than from the compiled list.
 
 A transcribed presentation checks its published letter count against
 `TauCeti.GroupPresentation.totalLength`. Computing that count through `Relator.toWord` alone forces
-every power to be expanded, which for a relator such as `(adefcefgh)³⁹` is thousands of list steps;
-this function multiplies instead of repeating, and `TauCeti.Relator.length_toWord` certifies that
-the two agree.
+every power to be expanded, which for a relator such as `(adefcefgh)³⁹` is hundreds of signed-letter
+constructors; this function multiplies instead of repeating, and `TauCeti.Relator.length_toWord`
+certifies that the two agree.
 
 The five equations below are the interface: a module carrying transcribed relators rewrites with
 them rather than unfolding this definition. -/
