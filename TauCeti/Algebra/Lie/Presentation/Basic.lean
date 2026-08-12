@@ -107,16 +107,10 @@ theorem ker_mkQ : (mkQ I).ker = I := by
 
 variable {I}
 
-/-- A homomorphism whose kernel contains `I` kills `I` as a submodule; this is the hypothesis
-`Submodule.liftQ` asks for. -/
-theorem toSubmodule_le_ker_toLinearMap {f : L →ₗ⁅R⁆ L'} (h : I ≤ f.ker) :
-    LieSubmodule.toSubmodule I ≤ LinearMap.ker (f : L →ₗ[R] L') :=
-  fun _ hx => LieHom.mem_ker.mp (h hx)
-
 /-- The homomorphism `L ⧸ I →ₗ⁅R⁆ L'` induced by a homomorphism `f : L →ₗ⁅R⁆ L'` whose kernel
 contains the ideal `I`. -/
 def liftQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : L ⧸ I →ₗ⁅R⁆ L' where
-  __ := LieSubmodule.toSubmodule I |>.liftQ (f : L →ₗ[R] L') (toSubmodule_le_ker_toLinearMap h)
+  __ := LieSubmodule.toSubmodule I |>.liftQ (f : L →ₗ[R] L') h
   map_lie' {x y} := by
     induction x using Quotient.inductionOn' with | _ x
     induction y using Quotient.inductionOn' with | _ y
@@ -166,6 +160,7 @@ variable {R L L' : Type*} [CommRing R] [LieRing L] [LieAlgebra R L] [LieRing L']
 /-- A homomorphism of Lie algebras carries an iterated adjoint action to the iterated adjoint
 action of the image. Relations of the form `(ad x) ^ n y = 0`, such as Serre's, are transported
 along a homomorphism by this. -/
+@[simp]
 theorem map_ad_pow (f : L →ₗ⁅R⁆ L') (x : L) (n : ℕ) (y : L) :
     f ((LieAlgebra.ad R L x ^ n) y) = (LieAlgebra.ad R L' (f x) ^ n) (f y) := by
   induction n generalizing y with
@@ -180,12 +175,7 @@ namespace FreeLieAlgebra
 
 variable (R : Type*) [CommRing R] (X : Type*)
 
-/-- The generators of a free Lie algebra generate it as a Lie subalgebra.
-
-The proof factors the identity of `FreeLieAlgebra R X` through the subalgebra `K` they generate:
-the universal property produces a homomorphism into `K` sending each generator to itself, and
-composing it with the inclusion of `K` gives a homomorphism agreeing with the identity on
-generators, hence equal to it. Every element is therefore in the image of `K`. -/
+/-- The generators of a free Lie algebra generate it as a Lie subalgebra. -/
 theorem lieSpan_range_of_eq_top :
     LieSubalgebra.lieSpan R (FreeLieAlgebra R X) (Set.range (FreeLieAlgebra.of R)) = ⊤ := by
   set K := LieSubalgebra.lieSpan R (FreeLieAlgebra R X) (Set.range (FreeLieAlgebra.of R)) with hK
