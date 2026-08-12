@@ -39,11 +39,14 @@ compact connected subset is a subsingleton: it is empty, or it has `a = b` and i
 
 ## Why this is a layer-L5 prerequisite
 
-`ConformalMapping/STATUS.md` asks, under **Jordan curve input**, that "the strong facts about Jordan
-curves that the forward direction classically leans on" be settled before layer **L5** of the
-conformal-mapping roadmap (`TauCetiRoadmap/ConformalMapping/README.md`), Carathéodory's boundary
-correspondence for a Jordan domain, is attacked. The classification of the compact connected subsets
-of a curve is one such fact, and it is established here with no conformal input, as
+The target is layer **L5** of the conformal-mapping roadmap
+(`TauCetiRoadmap/ConformalMapping/README.md`), Carathéodory's boundary correspondence for a Jordan
+domain. `ConformalMapping/STATUS.md` counts the Jordan-curve side of that layer as its
+infrastructure, listing Jordan curves with "the arc theory the boundary work needs: two points cut
+it into two arcs, and two nearby points cut off a small one", and, of the topological facts about
+Jordan curves that the forward direction classically leans on, asks under **Plane separation for
+Jordan curves** that how much of them it needs "should be settled first". The classification of the
+compact connected subsets of a curve is one such fact, established here with no conformal input, as
 `TauCeti/Topology/JordanCurve/Separation.lean` settles the cutting of a curve at given points and
 `TauCeti/Topology/JordanCurve/SmallArc.lean` the size of the pieces that cutting leaves. Of the
 statements below, `TauCeti.IsJordanCurve.isPathConnected_sdiff` is a strict generalisation of the
@@ -63,9 +66,11 @@ side is exactly the exclusion of the other two.
 `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` excludes both at once from a single
 condition on the subcontinuum — that it be nowhere dense in the curve — and that is the step of the
 L5 argument this file exists for: fed to
-`TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` — which
-`ConformalMapping/STATUS.md` names as "the topological form the estimate should be fed into" — it
-gives `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`, a conformal map of
+`TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` — the criterion that turns singleton
+boundary cluster sets into a continuous extension on the closure of the domain, and the companion of
+the diameter form `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` that
+`ConformalMapping/STATUS.md` names as proved — it gives
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`, a conformal map of
 a convex domain onto a bounded Jordan-bounded region none of whose boundary cluster sets has
 interior in the boundary curve extends continuously to `closure U`. That conclusion is the L5
 milestone's conclusion; the hypothesis separating them is relative nowhere density of each boundary
@@ -74,9 +79,9 @@ domain and the boundary point, and not one on the curve by itself: what it drops
 content of the milestone, not the map.
 
 Verifying that hypothesis for a Riemann map is not attempted here, and nothing here shortens or
-replaces the route `ConformalMapping/STATUS.md` sequences next for it: the length–area estimate,
-fed into the same `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded`, proves singletonness
-directly.
+replaces the route `ConformalMapping/STATUS.md` sequences next for it: showing that the boundary
+piece a small crosscut cuts off is itself small, which the length–area estimate and the crosscut
+files are aimed at, proves singletonness directly.
 
 ## Generality
 

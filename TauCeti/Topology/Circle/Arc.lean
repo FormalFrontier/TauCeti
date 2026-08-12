@@ -95,13 +95,8 @@ theorem exists_eq_circleExp_image_Icc {T : Set Circle} (hT : IsClosed T) (hpre :
       fun x y hxy => Subtype.ext (hinj x.2 y.2 hxy)
     have hgc : Continuous fun x : K => Circle.exp (x : ℝ) :=
       Circle.exp.continuous.comp continuous_subtype_val
-    have hrange : range (fun x : K => Circle.exp (x : ℝ)) = T := by
-      rw [← himg]
-      refine subset_antisymm ?_ ?_
-      · rintro _ ⟨x, rfl⟩
-        exact ⟨x, x.2, rfl⟩
-      · rintro _ ⟨x, hx, rfl⟩
-        exact ⟨⟨x, hx⟩, rfl⟩
+    have hrange : range (fun x : K => Circle.exp (x : ℝ)) = T :=
+      (image_eq_range Circle.exp K).symm.trans himg
     have hpre' := hpre.preimage_of_isClosedMap hginj hgc.isClosedMap hrange.ge
     have hpreimage : (fun x : K => Circle.exp (x : ℝ)) ⁻¹' T = univ :=
       eq_univ_of_forall fun x => x.2.1

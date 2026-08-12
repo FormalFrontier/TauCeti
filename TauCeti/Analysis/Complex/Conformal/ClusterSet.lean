@@ -413,24 +413,6 @@ which plays no role once the map is given: `U` is open and convex — the disc o
 case of interest, and convexity is what makes the cluster sets connected — the image is bounded, and
 its frontier is a Jordan curve. -/
 
-/-- A boundary cluster set of a conformal map on a convex domain is a compact continuum lying on
-the frontier of the image. This packages, for the two theorems below, the three inputs the
-classification of
-`TauCeti/Topology/JordanCurve/Subcontinuum.lean` consumes: compactness from boundedness of the
-image, connectedness from convexity of the domain
-(`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`), and the location from
-`TauCeti.clusterSetOn_subset_frontier_image`. -/
-private theorem isCompact_isConnected_clusterSetOn_subset_frontier_image (hUo : IsOpen U)
-    (hUc : Convex ℝ U)
-    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hfb : Bornology.IsBounded (f '' U))
-    (hw : w ∈ frontier U) :
-    IsCompact (clusterSetOn f U w) ∧ IsConnected (clusterSetOn f U w) ∧
-      clusterSetOn f U w ⊆ frontier (f '' U) :=
-  ⟨isCompact_clusterSetOn_of_isBounded hfb,
-    isConnected_clusterSetOn_of_convex_of_isBounded hUc hfd.continuousOn hfb
-      (frontier_subset_closure hw),
-    clusterSetOn_subset_frontier_image hUo hfd hfi hw⟩
-
 /-- **A boundary cluster set on a Jordan image boundary is a point, an arc, or the whole curve.**
 For a conformal map of a convex domain whose image has Jordan frontier, a boundary cluster set other
 than that whole frontier is either a subsingleton or the range of an injective path.
@@ -448,8 +430,10 @@ theorem subsingleton_or_exists_injective_path_clusterSetOn (hUo : IsOpen U) (hUc
     (hne : clusterSetOn f U w ≠ frontier (f '' U)) :
     (clusterSetOn f U w).Subsingleton ∨
       ∃ (p q : ℂ) (γ : Path p q), Function.Injective γ ∧ range γ = clusterSetOn f U w :=
-  have h := isCompact_isConnected_clusterSetOn_subset_frontier_image hUo hUc hfd hfi hfb hw
-  hJ.subsingleton_or_exists_injective_path h.2.2 h.1 h.2.1.isPreconnected hne
+  hJ.subsingleton_or_exists_injective_path (clusterSetOn_subset_frontier_image hUo hfd hfi hw)
+    (isCompact_clusterSetOn_of_isBounded hfb)
+    (isConnected_clusterSetOn_of_convex_of_isBounded hUc hfd.continuousOn hfb
+      (frontier_subset_closure hw)).isPreconnected hne
 
 /-- **A boundary cluster set that is nowhere dense in a Jordan image boundary is a single point.**
 If every value the conformal map clusters at over the boundary point `w` is adherent to the rest of
@@ -466,8 +450,10 @@ theorem subsingleton_clusterSetOn_of_subset_closure_sdiff (hUo : IsOpen U) (hUc 
     (hJ : IsJordanCurve (frontier (f '' U))) (hw : w ∈ frontier U)
     (hnwd : clusterSetOn f U w ⊆ closure (frontier (f '' U) \ clusterSetOn f U w)) :
     (clusterSetOn f U w).Subsingleton :=
-  have h := isCompact_isConnected_clusterSetOn_subset_frontier_image hUo hUc hfd hfi hfb hw
-  hJ.subsingleton_of_subset_closure_sdiff h.2.2 h.1 h.2.1.isPreconnected hnwd
+  hJ.subsingleton_of_subset_closure_sdiff (clusterSetOn_subset_frontier_image hUo hfd hfi hw)
+    (isCompact_clusterSetOn_of_isBounded hfb)
+    (isConnected_clusterSetOn_of_convex_of_isBounded hUc hfd.continuousOn hfb
+      (frontier_subset_closure hw)).isPreconnected hnwd
 
 /-- **A nowhere-density criterion for the Carathéodory extension.** A holomorphic injection of a
 convex open set onto a bounded region whose frontier is a Jordan curve extends continuously to the
