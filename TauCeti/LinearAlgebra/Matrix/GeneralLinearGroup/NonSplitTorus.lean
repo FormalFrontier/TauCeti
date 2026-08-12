@@ -123,7 +123,7 @@ noncomputable def unitsEquiv : Eˣ ≃* GL2NonSplitTorus F E hE :=
   MonoidHom.ofInjective (GL2NonSplitTorusHom_injective hE)
 
 @[simp]
-theorem coe_unitsEquiv (x : Eˣ) :
+theorem coe_unitsEquiv_apply (x : Eˣ) :
     (unitsEquiv hE x : GL (Fin 2) F) = GL2NonSplitTorusHom F E hE x :=
   (rfl)
 
