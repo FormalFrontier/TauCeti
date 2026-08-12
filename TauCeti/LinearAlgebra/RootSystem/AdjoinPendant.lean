@@ -76,7 +76,7 @@ matrix needs them. -/
 lemma adjoinPendant_diag (hM : ∀ j, M j j = 2) (v : Option α) : adjoinPendant M i v v = 2 := by
   cases v with
   | none => exact adjoinPendant_none_none
-  | some j => exact hM j
+  | some j => rw [adjoinPendant_some_some]; exact hM j
 
 /-- Adjoining a pendant vertex keeps the off-diagonal entries nonpositive. -/
 lemma adjoinPendant_apply_le_zero_of_ne (hM : ∀ j k, j ≠ k → M j k ≤ 0) {v w : Option α}
@@ -85,6 +85,6 @@ lemma adjoinPendant_apply_le_zero_of_ne (hM : ∀ j k, j ≠ k → M j k ≤ 0) 
   · exact absurd rfl hvw
   · rw [adjoinPendant_none_some]; split_ifs <;> norm_num
   · rw [adjoinPendant_some_none]; split_ifs <;> norm_num
-  · exact hM v w fun h ↦ hvw (congrArg some h)
+  · rw [adjoinPendant_some_some]; exact hM v w fun h ↦ hvw (congrArg some h)
 
 end TauCeti

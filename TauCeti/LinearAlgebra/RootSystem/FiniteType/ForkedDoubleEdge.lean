@@ -115,8 +115,8 @@ lemma affineBCartanMatrix_def (n : ℕ) :
 
 /-- Deleting the pendant vertex of `B̃ₗ` leaves `Bₗ`, which is of finite type. -/
 @[simp] lemma affineBCartanMatrix_submatrix_some (n : ℕ) :
-    (affineBCartanMatrix n).submatrix some some = CartanMatrix.B (n + 3) :=
-  adjoinPendant_submatrix_some
+    (affineBCartanMatrix n).submatrix some some = CartanMatrix.B (n + 3) := by
+  rw [affineBCartanMatrix_def, adjoinPendant_submatrix_some]
 
 /-- **Reversing the double edge of `B̃ₗ` gives `Cₗ` with the same pendant vertex**, the twisted
 affine diagram `A⁽²⁾₂ₗ₋₁`. -/
@@ -126,13 +126,15 @@ affine diagram `A⁽²⁾₂ₗ₋₁`. -/
 
 /-- `B̃ₗ` is a generalized Cartan matrix: its diagonal is `2`. -/
 @[simp] lemma affineBCartanMatrix_diag (n : ℕ) (v : Option (Fin (n + 3))) :
-    affineBCartanMatrix n v v = 2 :=
-  adjoinPendant_diag (fun j ↦ CartanMatrix.B_diag (n + 3) j) v
+    affineBCartanMatrix n v v = 2 := by
+  rw [affineBCartanMatrix_def]
+  exact adjoinPendant_diag (fun j ↦ CartanMatrix.B_diag (n + 3) j) v
 
 /-- `B̃ₗ` is a generalized Cartan matrix: its off-diagonal entries are nonpositive. -/
 lemma affineBCartanMatrix_apply_le_zero_of_ne (n : ℕ) {v w : Option (Fin (n + 3))} (hvw : v ≠ w) :
-    affineBCartanMatrix n v w ≤ 0 :=
-  adjoinPendant_apply_le_zero_of_ne
+    affineBCartanMatrix n v w ≤ 0 := by
+  rw [affineBCartanMatrix_def]
+  exact adjoinPendant_apply_le_zero_of_ne
     (fun j k hjk ↦ CartanMatrix.B_off_diag_nonpos (n + 3) j k hjk) hvw
 
 /-! ### The rows of `B̃ₗ` at its comarks -/
