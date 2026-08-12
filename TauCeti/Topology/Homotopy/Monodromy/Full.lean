@@ -58,18 +58,11 @@ private theorem monodromy_eq_of_path_in_sheet (hp : _root_.IsCoveringMap p)
     simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
   have hz_base : p z = b := by
     simpa only [Set.mem_preimage, Set.mem_singleton_iff] using z.2
-  have heq : (e : E) = φ a := by
-    calc
-      (e : E) = φ (p e) := by
-        rw [← congrFun hφ e]
-        exact (φ.right_inv he).symm
-      _ = φ a := congrArg φ he_base
-  have hzq : (z : E) = φ b := by
-    calc
-      (z : E) = φ (p z) := by
-        rw [← congrFun hφ z]
-        exact (φ.right_inv hz).symm
-      _ = φ b := congrArg φ hz_base
+  have key : ∀ w : E, w ∈ φ.target → w = φ (p w) := fun w hw ↦ by
+    rw [← congrFun hφ w]
+    exact (φ.right_inv hw).symm
+  have heq : (e : E) = φ a := (key e he).trans (congrArg φ he_base)
+  have hzq : (z : E) = φ b := (key z hz).trans (congrArg φ hz_base)
   let Γ : Path (e : E) z :=
     (γ.map' (φ.continuousOn.mono fun _ hy ↦ by
       obtain ⟨t, rfl⟩ := hy
@@ -94,6 +87,13 @@ private theorem proj_mapOfNatTrans (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) (e : E) :
     q (mapOfNatTrans hp hq α e) = p e :=
   ((α.app (FundamentalGroupoid.mk (p e))) ⟨e, rfl⟩).2
+
+/-- The defining pointwise equation for the map forced by a monodromy transformation. -/
+private theorem mapOfNatTrans_apply (hp : _root_.IsCoveringMap p)
+    (hq : _root_.IsCoveringMap q) (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) (e : E) :
+    α.app (FundamentalGroupoid.mk (p e)) ⟨e, rfl⟩ =
+      ⟨mapOfNatTrans hp hq α e, proj_mapOfNatTrans hp hq α e⟩ :=
+  rfl
 
 /-- The map forced by a natural transformation of monodromy functors is continuous when the
 base is locally path-connected. -/
@@ -144,11 +144,10 @@ private theorem continuous_mapOfNatTrans [LocallyPathConnectedSpace X]
     let z' : p ⁻¹' {p z} := ⟨z, rfl⟩
     have hpmono : hp.monodromy (Path.Homotopic.Quotient.mk γ) e' = z' :=
       monodromy_eq_of_path_in_sheet hp φp hφp γ hγφp e' z' heφp hz.1
-    have hfe : q (f e) = x := proj_mapOfNatTrans hp hq α e
     have hgz : q (g z) = p z := by
       dsimp only [g]
-      exact (congrFun hφq (φq (p z))).symm.trans (φq.left_inv (hUsub hpzU).2)
-    let fe' : q ⁻¹' {x} := ⟨f e, hfe⟩
+      exact hq.isLocalHomeomorph.apply_localInverseAt_of_mem (hUsub hpzU).2
+    let fe' : q ⁻¹' {x} := ⟨f e, hqfe⟩
     let gz' : q ⁻¹' {p z} := ⟨g z, hgz⟩
     have hgzφq : g z ∈ φq.target := by
       dsimp only [g]
@@ -159,12 +158,14 @@ private theorem continuous_mapOfNatTrans [LocallyPathConnectedSpace X]
       (α.naturality (Path.Homotopic.Quotient.mk γ)) e'
     rw [_root_.IsCoveringMap.monodromyFunctor_map,
       _root_.IsCoveringMap.monodromyFunctor_map] at hα
-    -- Naturality is an equality of composites; expose its value on the chosen fibre point.
+    -- The rewrites leave bundled `Type` composites under `ConcreteCategory.hom`, where the
+    -- pointwise composition lemmas do not match, so expose their definitionally equal values.
     change α.app (FundamentalGroupoid.mk (p z))
         (hp.monodromy (Path.Homotopic.Quotient.mk γ) e') =
       hq.monodromy (Path.Homotopic.Quotient.mk γ)
         (α.app (FundamentalGroupoid.mk x) e') at hα
-    have hαe : α.app (FundamentalGroupoid.mk x) e' = fe' := Subtype.ext rfl
+    have hαe : α.app (FundamentalGroupoid.mk x) e' = fe' := by
+      simpa only [e', fe', f, x] using mapOfNatTrans_apply hp hq α e
     rw [hpmono, hαe, hqmono] at hα
     exact congrArg Subtype.val hα
   exact (continuousAt_congr hfg).mpr hg
@@ -185,7 +186,12 @@ theorem exists_map_of_monodromyNatTrans [LocallyPathConnectedSpace X]
   simp only [Set.mem_preimage, Set.mem_singleton_iff] at he
   subst x
   rw [monodromyNatTrans_app]
-  apply Subtype.ext
-  exact fiberMap_apply_coe f hf (p e) ⟨e, rfl⟩
+  have he' : (⟨e, he⟩ : p ⁻¹' {p e}) = ⟨e, rfl⟩ := Subtype.ext rfl
+  rw [he']
+  have hfiber : fiberMap f hf (p e) ⟨e, rfl⟩ =
+      ⟨mapOfNatTrans hp hq α e, proj_mapOfNatTrans hp hq α e⟩ := by
+    apply Subtype.ext
+    exact fiberMap_apply_coe f hf (p e) ⟨e, rfl⟩
+  exact hfiber.trans (mapOfNatTrans_apply hp hq α e).symm
 
 end TauCeti.IsCoveringMap

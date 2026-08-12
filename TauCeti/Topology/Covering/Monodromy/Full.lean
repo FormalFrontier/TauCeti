@@ -54,26 +54,10 @@ instance monodromyFunctor_full [LocallyPathConnectedSpace X] : (monodromyFunctor
     have hmap :
       IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
           F.hom.left.hom (proj_hom_comp_hom_left_hom F) =
-          α' := by
-      calc
-        IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
-            F.hom.left.hom (proj_hom_comp_hom_left_hom F) =
-            IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj f hf := by
-          ext ⟨x⟩ e
-          obtain ⟨e, he⟩ := e
-          rw [IsCoveringMap.monodromyNatTrans_app, IsCoveringMap.monodromyNatTrans_app]
-          apply Subtype.ext
-          calc
-            (IsCoveringMap.fiberMap F.hom.left.hom (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩ :
-                (q : TopCat)) = F.hom.left.hom e :=
-              IsCoveringMap.fiberMap_apply_coe F.hom.left.hom
-                (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩
-            _ = f e := congrArg (fun k : C((p : TopCat), (q : TopCat)) ↦ k e) hF
-            _ = (IsCoveringMap.fiberMap f hf x ⟨e, he⟩ : (q : TopCat)) :=
-              (IsCoveringMap.fiberMap_apply_coe f hf x ⟨e, he⟩).symm
-        _ = α' := hα
-    apply (cancel_epi (eqToHom (monodromyFunctor_obj p).symm)).1
-    apply (cancel_mono (eqToHom (monodromyFunctor_obj q))).1
-    simpa only [Category.assoc] using (monodromyFunctor_map F).trans hmap
+          α' :=
+      (IsCoveringMap.monodromyNatTrans_congr p.isCoveringMap_proj q.isCoveringMap_proj
+        (proj_hom_comp_hom_left_hom F) hf hF).trans hα
+    rw [monodromyFunctor_map, hmap]
+    simp [α']
 
 end TauCeti.CoveringSpace
