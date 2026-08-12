@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
 
 public section
@@ -30,8 +30,8 @@ equivalently `(p - 1) (q - 1) < 2`, whose solutions with both chains nonempty ar
 chains `Cₙ`), `p = 1` (the chains `Bₙ`), and `p = q = 2` (`F₄`).
 
 This file builds that diagram as a matrix, `TauCeti.doubleEdgeCartanMatrix`, out of the chain
-entries of `TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain`, and proves the bound. The
-elimination tool is the one the fork bound uses: a finite-type matrix admits no nonzero
+entries of `TauCeti.LinearAlgebra.RootSystem.Chain`, and proves the bound. The elimination tool is
+the one the fork bound uses: a finite-type matrix admits no nonzero
 **subdominant** vector, one whose every coordinate `xᵢ` has `xᵢ · (A x)ᵢ ≤ 0`
 (`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`). The certificate is the vector
 of **marks** `TauCeti.doubleEdgeMark`, which grows linearly along each of the two chains towards
@@ -128,7 +128,7 @@ def doubleEdgeCartanMatrix (p q : ℕ) : Matrix (Fin p ⊕ Fin q) (Fin p ⊕ Fin
 give transposed diagrams, which is exactly the relation between `Bₙ` and `Cₙ`; since finite type is
 invariant under transposition (`TauCeti.IsFiniteType.transpose`), one orientation carries all the
 information. -/
-theorem doubleEdgeCartanMatrix_transpose (p q : ℕ) :
+@[simp] theorem doubleEdgeCartanMatrix_transpose (p q : ℕ) :
     (doubleEdgeCartanMatrix p q)ᵀ
       = (doubleEdgeCartanMatrix q p).submatrix Sum.swap Sum.swap := by
   ext v w
@@ -198,26 +198,31 @@ private theorem sum_fin_chainEntry_mul_linear {n : ℕ} (m : Fin n) (c : ℚ) :
     push_cast
     ring
 
-/-- The double edge, evaluated at a weight linear in the position: only the far end of the chain
-it meets contributes. -/
-private theorem sum_fin_ite_last_mul_linear (n : ℕ) (c k : ℚ) :
-    ∑ w : Fin n, (if (w : ℕ) + 1 = n then c else 0) * ((((w : ℕ) : ℚ) + 1) * k)
-      = c * ((n : ℚ) * k) := by
+/-- The double edge, evaluated at a weight linear in the position: the row at a vertex `v` of one
+chain meets the other chain only if `v` is the last vertex of its own, and then only at the far end
+of the other, where the weight is `n k`. This is the cross-chain block of both rows below, whose
+two uses differ only in the two lengths, in the coefficient `c` and in the slope `k`. -/
+private theorem sum_fin_ite_last_mul_linear {m : ℕ} (v : Fin m) (n : ℕ) (c k : ℚ) :
+    ∑ w : Fin n, (if (v : ℕ) + 1 = m ∧ (w : ℕ) + 1 = n then c else 0) * ((((w : ℕ) : ℚ) + 1) * k)
+      = if (v : ℕ) + 1 = m then c * ((n : ℚ) * k) else 0 := by
   match n with
   | 0 => simp
-  | m + 1 =>
+  | j + 1 =>
     rw [Fin.sum_univ_castSucc]
-    have hzero : ∀ i : Fin m,
-        (if ((Fin.castSucc i : Fin (m + 1)) : ℕ) + 1 = m + 1 then c else 0)
-          * (((((Fin.castSucc i : Fin (m + 1)) : ℕ) : ℚ) + 1) * k) = 0 := by
+    have hzero : ∀ i : Fin j,
+        (if (v : ℕ) + 1 = m ∧ ((Fin.castSucc i : Fin (j + 1)) : ℕ) + 1 = j + 1 then c else 0)
+          * (((((Fin.castSucc i : Fin (j + 1)) : ℕ) : ℚ) + 1) * k) = 0 := by
       intro i
       have hi := i.isLt
       rw [ite_eq_right (by simp only [Fin.val_castSucc]; omega)]
       ring
-    rw [Finset.sum_congr rfl fun i _ ↦ hzero i, Finset.sum_const_zero, zero_add, Fin.val_last,
-      ite_eq_left rfl]
-    push_cast
-    ring
+    rw [Finset.sum_congr rfl fun i _ ↦ hzero i, Finset.sum_const_zero, zero_add, Fin.val_last]
+    rcases eq_or_ne ((v : ℕ) + 1) m with hv | hv
+    · rw [ite_eq_left ⟨hv, rfl⟩, ite_eq_left hv]
+      push_cast
+      ring
+    · rw [ite_eq_right fun h ↦ hv h.1, ite_eq_right hv]
+      ring
 
 /-- **The rows at the first chain annihilate the marks.** Away from the double edge this is the
 second difference of a linear weight; at the double edge the first chain contributes `(p + 1) q`
@@ -235,19 +240,10 @@ theorem sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inl_eq_zero (v : Fin p) :
       ((doubleEdgeCartanMatrix p q (Sum.inl v) (Sum.inr w) : ℤ) : ℚ)
         * doubleEdgeMark p q (Sum.inr w)
       = if (v : ℕ) + 1 = p then (-1 : ℚ) * ((q : ℚ) * ((p : ℚ) + 1)) else 0 := by
-    rcases eq_or_ne ((v : ℕ) + 1) p with hv | hv
-    · rw [ite_eq_left hv, ← sum_fin_ite_last_mul_linear q (-1) ((p : ℚ) + 1)]
-      refine Finset.sum_congr rfl fun w _ ↦ ?_
-      rw [doubleEdgeCartanMatrix_inl_inr, doubleEdgeMark_inr]
-      rcases eq_or_ne ((w : ℕ) + 1) q with hw | hw
-      · rw [ite_eq_left ⟨hv, hw⟩, ite_eq_left hw]
-        norm_num
-      · rw [ite_eq_right fun h ↦ hw h.2, ite_eq_right hw]
-        norm_num
-    · rw [ite_eq_right hv]
-      refine Finset.sum_eq_zero fun w _ ↦ ?_
-      rw [doubleEdgeCartanMatrix_inl_inr, ite_eq_right fun h ↦ hv h.1]
-      norm_num
+    rw [← sum_fin_ite_last_mul_linear v q (-1) ((p : ℚ) + 1)]
+    refine Finset.sum_congr rfl fun w _ ↦ ?_
+    rw [doubleEdgeCartanMatrix_inl_inr, doubleEdgeMark_inr]
+    split_ifs <;> norm_num
   rw [hchain, hcross]
   split_ifs <;> ring
 
@@ -261,19 +257,10 @@ theorem sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inr (w : Fin q) :
       ((doubleEdgeCartanMatrix p q (Sum.inr w) (Sum.inl u) : ℤ) : ℚ)
         * doubleEdgeMark p q (Sum.inl u)
       = if (w : ℕ) + 1 = q then (-2 : ℚ) * ((p : ℚ) * (q : ℚ)) else 0 := by
-    rcases eq_or_ne ((w : ℕ) + 1) q with hw | hw
-    · rw [ite_eq_left hw, ← sum_fin_ite_last_mul_linear p (-2) (q : ℚ)]
-      refine Finset.sum_congr rfl fun u _ ↦ ?_
-      rw [doubleEdgeCartanMatrix_inr_inl, doubleEdgeMark_inl]
-      rcases eq_or_ne ((u : ℕ) + 1) p with hu | hu
-      · rw [ite_eq_left ⟨hw, hu⟩, ite_eq_left hu]
-        norm_num
-      · rw [ite_eq_right fun h ↦ hu h.2, ite_eq_right hu]
-        norm_num
-    · rw [ite_eq_right hw]
-      refine Finset.sum_eq_zero fun u _ ↦ ?_
-      rw [doubleEdgeCartanMatrix_inr_inl, ite_eq_right fun h ↦ hw h.1]
-      norm_num
+    rw [← sum_fin_ite_last_mul_linear w p (-2) (q : ℚ)]
+    refine Finset.sum_congr rfl fun u _ ↦ ?_
+    rw [doubleEdgeCartanMatrix_inr_inl, doubleEdgeMark_inl]
+    split_ifs <;> norm_num
   have hchain : ∑ u : Fin q,
       ((doubleEdgeCartanMatrix p q (Sum.inr w) (Sum.inr u) : ℤ) : ℚ)
         * doubleEdgeMark p q (Sum.inr u)
@@ -339,10 +326,11 @@ family `Bₙ`), or two on each (`F₄`).
 
 This is the exclusion half of the classification of the diagrams with a double edge. The converse,
 that these shapes are the diagrams of actual root systems, is the separate realization target of
-the same layer; that they are at least of finite type is
-`TauCeti.isFiniteType_doubleEdgeCartanMatrix_one_right`,
-`TauCeti.isFiniteType_doubleEdgeCartanMatrix_one_left` and
-`TauCeti.DynkinType.isFiniteType_cartanMatrix_F4`. -/
+the same layer. That the two families are at least of finite type is
+`TauCeti.isFiniteType_doubleEdgeCartanMatrix_one_right` and
+`TauCeti.isFiniteType_doubleEdgeCartanMatrix_one_left`; the remaining shape,
+`TauCeti.doubleEdgeCartanMatrix 2 2`, is the diagram of `F₄`, but nothing here identifies it with
+`TauCeti.DynkinType.F4.cartanMatrix`, so its finite type is not established in this file. -/
 theorem eq_one_or_eq_one_or_eq_two_two_of_isFiniteType_doubleEdge (hp : 0 < p) (hq : 0 < q)
     (h : IsFiniteType (doubleEdgeCartanMatrix p q)) :
     q = 1 ∨ p = 1 ∨ (p = 2 ∧ q = 2) := by
@@ -368,9 +356,11 @@ theorem not_isFiniteType_affineF₄ : ¬ IsFiniteType (doubleEdgeCartanMatrix 3 
 
 /-! ## Sharpness: the two families the bound leaves
 
-The bound excludes everything outside `Bₙ`, `Cₙ` and `F₄`, and those three do occur. `F₄` is
-`TauCeti.DynkinType.isFiniteType_cartanMatrix_F4`; the two families are here, by identifying the
-diagram at `q = 1` with Mathlib's `CartanMatrix.C`.
+The bound excludes everything outside `Bₙ`, `Cₙ` and `F₄`. That the two families do occur is proved
+here, by identifying the diagram at `q = 1` with Mathlib's `CartanMatrix.C`. The third shape,
+`TauCeti.doubleEdgeCartanMatrix 2 2`, is left alone: the reindexing that identifies it with the
+canonical Cartan matrix of `F₄` belongs to the assembly step of the classification, outside this
+file.
 -/
 
 /-- **A double-edge chain whose second chain is a single vertex is of type `Cₙ`.** The `n - 1`

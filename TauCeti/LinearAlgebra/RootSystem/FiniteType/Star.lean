@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.ADEInequality
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
 
 public section
 
@@ -31,8 +31,8 @@ behind `B`, `C`, `F₄`), which is
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`.
 
 This file builds the star as a matrix, `TauCeti.starCartanMatrix`, out of the chain entries of
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain`, over an arbitrary finite index
-type of arms, and proves the bound. The elimination tool is a new one, living with the others in
+`TauCeti.LinearAlgebra.RootSystem.Chain`, over an arbitrary finite index type of arms, and proves
+the bound. The elimination tool is a new one, living with the others in
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic`: a finite-type matrix admits no nonzero
 **subdominant** vector, one whose every coordinate `xᵢ` has `xᵢ · (A x)ᵢ ≤ 0`
 (`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`), because the symmetrized
@@ -209,9 +209,8 @@ section RowSums
 
 The two computations behind the bound: the row of `starCartanMatrix` at an arm vertex annihilates
 the marks, and the row at the centre evaluates to `∑ᵢ ∏_{j ≠ i} (ℓ j + 1) - (n - 2) ∏ᵢ (ℓ i + 1)`.
-Both are assembled from the chain row of
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain`, `TauCeti.sum_range_chainEntry_mul`, taken at
-an abstract weight function `g`.
+Both are assembled from the chain row of `TauCeti.LinearAlgebra.RootSystem.Chain`,
+`TauCeti.sum_range_chainEntry_mul`, taken at an abstract weight function `g`.
 -/
 
 /-- The full row of a star at an arm vertex, in chain coordinates: the centre contributes `-g 0` at

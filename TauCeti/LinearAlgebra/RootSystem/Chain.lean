@@ -17,8 +17,9 @@ a run, `TauCeti.chainEntry`, together with the one summation identity that every
 along a chain needs, `TauCeti.sum_range_chainEntry_mul`: the row of a chain at a position collects
 the second difference of the weight there.
 
-Nothing here mentions `TauCeti.IsFiniteType`. The file exists because the diagrams that carry the
-two length constraints of the classification - the stars of
+Nothing here mentions `TauCeti.IsFiniteType`, which is why the file sits above the finite-type
+directory rather than in it. It exists because the diagrams that carry the two length constraints
+of the classification - the stars of
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star` and the double-edge chains of
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge` - are both assembled from chains and are
 both excluded by a vector that is linear along each of them.
@@ -91,12 +92,15 @@ term `g m` being absent at `m = 0` and the term `g (m + 2)` at the far end. A we
 in the position is therefore annihilated away from the two ends.
 
 The offset by one in the argument of `g` leaves room for a further vertex at the position `0`,
-which is how both diagrams that consume this identity attach a chain to the rest of themselves. -/
-theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
-    ∑ s ∈ Finset.range n, (chainEntry m s : ℚ) * g (s + 1)
+which is how both diagrams that consume this identity attach a chain to the rest of themselves.
+
+Only the ring operations and the integer cast of the entries are used, so the weight may take its
+values in any ring; the diagrams weigh their vertices by rational numbers. -/
+theorem sum_range_chainEntry_mul {R : Type*} [Ring R] {n m : ℕ} (hm : m < n) (g : ℕ → R) :
+    ∑ s ∈ Finset.range n, (chainEntry m s : R) * g (s + 1)
       = 2 * g (m + 1) - (if m = 0 then 0 else g m)
         - (if m + 1 = n then 0 else g (m + 2)) := by
-  have key : ∀ s ∈ Finset.range n, ((chainEntry m s : ℤ) : ℚ) * g (s + 1)
+  have key : ∀ s ∈ Finset.range n, ((chainEntry m s : ℤ) : R) * g (s + 1)
       = (if s = m then 2 * g (m + 1) else 0) + (if s + 1 = m then -g m else 0)
         + (if s = m + 1 then -g (m + 2) else 0) := by
     intro s _
@@ -141,6 +145,6 @@ theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
       have hk : k < n := by omega
       rw [ite_eq_left (Finset.mem_range.2 hk), ite_eq_right (Nat.succ_ne_zero k)]
   rw [h1, h2, h3]
-  ring
+  abel
 
 end TauCeti
