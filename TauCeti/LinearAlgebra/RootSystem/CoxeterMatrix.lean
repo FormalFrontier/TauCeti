@@ -7,9 +7,12 @@ module
 public import Mathlib.GroupTheory.Coxeter.Matrix
 public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
+public import TauCeti.LinearAlgebra.RootSystem.RankTwo
 public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 
 public section
+
+open scoped Matrix
 
 /-!
 # The Coxeter matrix of a base
@@ -54,6 +57,8 @@ roots, and there the two simple reflections commute
   In particular the diagonal entries are not `2`, since no root is orthogonal to itself.
 * `TauCeti.isSimplyLaced_iff_forall_coxeterMatrixOfBase_le_three`: the Cartan matrix is simply laced
   exactly when all entries are at most `3`.
+* `TauCeti.coxeterMatrixOfBase_eq_three_of_hasCartanType_A_two` and its `B₂` and `G₂`
+  companions evaluate the Coxeter entries of the three rank-two Cartan types.
 * `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_two_of_coxeterMatrixOfBase_eq_two`:
   where the matrix entry is `2`, the product of the two simple reflections does have order `2`.
 
@@ -289,6 +294,49 @@ theorem isSimplyLaced_iff_forall_coxeterMatrixOfBase_le_three :
     · exact Or.inr ((cartanMatrix_mul_cartanMatrix_eq_one_iff P b hij).mp h₁).1
 
 end CoxeterMatrixOfBase
+
+/-! ## The Coxeter entries of the three rank-two Cartan types -/
+
+section CartanType
+
+variable [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] (b : P.Base)
+
+/-- A base of type `A₂` has Coxeter entry `3`: the two simple reflections have a product of
+order `3`. -/
+theorem coxeterMatrixOfBase_eq_three_of_hasCartanType_A_two (h : HasCartanType P b (.A 2))
+    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 3 := by
+  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
+      b.cartanMatrix i j = (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
+    obtain ⟨e, he⟩ := (hasCartanType_iff b (.A 2)).mp h
+    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_A_two_eq]; rfl⟩
+  have hval : b.cartanMatrix i j * b.cartanMatrix j i = 1 :=
+    (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two e he hij).trans (by decide)
+  rw [coxeterMatrixOfBase_apply, hval, coxeterOrder_one]
+
+/-- A base of type `B₂` has Coxeter entry `4`. -/
+theorem coxeterMatrixOfBase_eq_four_of_hasCartanType_B_two (h : HasCartanType P b (.B 2))
+    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 4 := by
+  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
+      b.cartanMatrix i j = (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
+    obtain ⟨e, he⟩ := (hasCartanType_iff b (.B 2)).mp h
+    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_B_two_eq]; rfl⟩
+  have hval : b.cartanMatrix i j * b.cartanMatrix j i = 2 :=
+    (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two e he hij).trans (by decide)
+  rw [coxeterMatrixOfBase_apply, hval, coxeterOrder_two]
+
+/-- A base of type `G₂` has Coxeter entry `6`: the two simple reflections have a product of
+order `6`, the rotation by a sixth of a turn of the `G₂` hexagon. -/
+theorem coxeterMatrixOfBase_eq_six_of_hasCartanType_G2 (h : HasCartanType P b .G2)
+    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 6 := by
+  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
+      b.cartanMatrix i j = (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
+    obtain ⟨e, he⟩ := (hasCartanType_iff b .G2).mp h
+    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_G2_eq]; rfl⟩
+  have hval : b.cartanMatrix i j * b.cartanMatrix j i = 3 :=
+    (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two e he hij).trans (by decide)
+  rw [coxeterMatrixOfBase_apply, hval, coxeterOrder_three]
+
+end CartanType
 
 /-! ## The orthogonal case: commuting simple reflections -/
 

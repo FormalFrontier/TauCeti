@@ -75,7 +75,7 @@ private lemma rho_add_one_eq_circleMap :
 theorem fdBoundary_sub_rho_add_one_of_mem_Icc_zero_one (H : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1) =
       (((1 - t) * (H - Real.sqrt 3 / 2) : ℝ) : ℂ) * Complex.I := by
-  rw [eqOn_fdBoundary_segment1 H ht, fdBoundary_segment1_apply, AffineMap.lineMap_apply]
+  rw [eqOn_fdBoundarySegment1 H ht, fdBoundarySegment1_apply, AffineMap.lineMap_apply]
   refine Complex.ext ?_ ?_
   · simp [UpperHalfPlane.ρ, Complex.real_smul]
     ring
@@ -154,7 +154,7 @@ below the corner row, where `H - √3/2 < 0` makes the signed bound vacuous. -/
 theorem norm_fdBoundary_sub_rho_add_one_segment5 (ht : t ∈ Icc (4 : ℝ) 5) :
     |H - Real.sqrt 3 / 2| ≤ ‖fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)‖ := by
   have him : (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im = H - Real.sqrt 3 / 2 := by
-    rw [Complex.sub_im, im_fdBoundary_segment5 H ht]
+    rw [Complex.sub_im, im_fdBoundarySegment5 H ht]
     norm_num [UpperHalfPlane.ρ]
   have h1 : |(fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im| ≤
       ‖fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)‖ := Complex.abs_im_le_norm _
@@ -293,7 +293,7 @@ theorem eq_one_of_fdBoundary_eq_rho_add_one (hH : H ≠ Real.sqrt 3 / 2) (ht : t
         have him := congrArg Complex.im hz
         have hρ : ((UpperHalfPlane.ρ : ℂ) + 1).im = Real.sqrt 3 / 2 := by
           norm_num [UpperHalfPlane.ρ]
-        rw [Complex.sub_im, im_fdBoundary_segment5 H ⟨h4.le, ht.2⟩, hρ, Complex.zero_im] at him
+        rw [Complex.sub_im, im_fdBoundarySegment5 H ⟨h4.le, ht.2⟩, hρ, Complex.zero_im] at him
         exact absurd (by linarith) hH
 
 end ModularForm
