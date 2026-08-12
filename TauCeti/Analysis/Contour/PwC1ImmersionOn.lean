@@ -47,6 +47,10 @@ theorem, whose singularities lie *off* the curve, needs only `IsPiecewiseC1On`.)
 * `Contour.IsPwC1ImmersionOn.derivWithin_ne_zero_right`,
   `Contour.IsPwC1ImmersionOn.derivWithin_ne_zero_left` — a crossing's one-sided velocity is
   non-zero on any window ending or starting there, from the immersion alone.
+* `Contour.IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`,
+  `Contour.IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_left` — shrink a one-sided
+  Lipschitz-derivative window to fit inside a breakpoint-free piece the immersion supplies,
+  picking up differentiability there for free.
 * `Contour.IsPwC1ImmersionOn.exists_deriv_slope_right_limit`,
   `Contour.IsPwC1ImmersionOn.exists_deriv_slope_left_limit` — the same one-sided tangent as the
   limit of both `deriv γ` and the chord slope `(γ t - γ t₀) / (t - t₀)`; the chord form is what
@@ -214,6 +218,32 @@ theorem IsPwC1ImmersionOn.exists_Icc_piece_left (h : IsPwC1ImmersionOn γ a b) {
   obtain ⟨c, hlt, hsub, hdisj⟩ := exists_Icc_left_avoiding hp ht₀
   exact ⟨c, hlt, hsub, hpieces c t₀ hlt hsub hdisj⟩
 
+/-- **`derivWithin` at a shared left endpoint does not depend on the other endpoint.** For any
+`t < d` and `t < d'`, `derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t`: near `t`, both
+sets agree with `Ici t`, so their `derivWithin`s at `t` agree too. -/
+private theorem derivWithin_Icc_left_endpoint_congr {γ : ℝ → ℂ} {t d d' : ℝ} (hd : t < d)
+    (hd' : t < d') : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
+  derivWithin_congr_set (by
+    filter_upwards [Iio_mem_nhds (lt_min hd hd')] with y hy
+    rw [mem_Iio] at hy
+    have h_iff : y ∈ Icc t d ↔ y ∈ Icc t d' := by
+      simp only [mem_Icc]
+      exact ⟨fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_right d d']⟩,
+        fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d d']⟩⟩
+    exact propext h_iff)
+
+/-- **The mirror of `derivWithin_Icc_left_endpoint_congr`, at a shared right endpoint.** -/
+private theorem derivWithin_Icc_right_endpoint_congr {γ : ℝ → ℂ} {c c' t : ℝ} (hc : c < t)
+    (hc' : c' < t) : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
+  derivWithin_congr_set (by
+    filter_upwards [Ioi_mem_nhds (max_lt hc hc')] with y hy
+    rw [mem_Ioi] at hy
+    have h_iff : y ∈ Icc c t ↔ y ∈ Icc c' t := by
+      simp only [mem_Icc]
+      exact ⟨fun ⟨_, h2⟩ => ⟨by linarith [le_max_right c c'], h2⟩,
+        fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c c'], h2⟩⟩
+    exact propext h_iff)
+
 /-- **A crossing's one-sided velocity is non-zero, from the immersion alone.** No need to assume
 this alongside a `C^{1,1}` window at a crossing: `IsPwC1ImmersionOn` already forces a non-zero
 `derivWithin`-derivative at every point of the breakpoint-free piece to the right of `t`
@@ -224,16 +254,7 @@ theorem IsPwC1ImmersionOn.derivWithin_ne_zero_right (h : IsPwC1ImmersionOn γ a 
     (ht₀ : t ∈ Ico (min a b) (max a b)) (htd : t < d) :
     derivWithin γ (Icc t d) t ≠ 0 := by
   obtain ⟨d', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_right ht₀
-  have heq : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
-    derivWithin_congr_set (by
-      filter_upwards [Iio_mem_nhds (lt_min htd hlt')] with y hy
-      rw [mem_Iio] at hy
-      have h_iff : y ∈ Icc t d ↔ y ∈ Icc t d' := by
-        simp only [mem_Icc]
-        exact ⟨fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_right d d']⟩,
-          fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d d']⟩⟩
-      exact propext h_iff)
-  rw [heq]
+  rw [derivWithin_Icc_left_endpoint_congr htd hlt']
   exact hne' t (left_mem_Icc.mpr hlt'.le)
 
 /-- **A crossing's one-sided velocity is non-zero, from the immersion alone, from the left.** The
@@ -242,16 +263,7 @@ theorem IsPwC1ImmersionOn.derivWithin_ne_zero_left (h : IsPwC1ImmersionOn γ a b
     (ht₀ : t ∈ Ioc (min a b) (max a b)) (hct : c < t) :
     derivWithin γ (Icc c t) t ≠ 0 := by
   obtain ⟨c', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_left ht₀
-  have heq : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
-    derivWithin_congr_set (by
-      filter_upwards [Ioi_mem_nhds (max_lt hct hlt')] with y hy
-      rw [mem_Ioi] at hy
-      have h_iff : y ∈ Icc c t ↔ y ∈ Icc c' t := by
-        simp only [mem_Icc]
-        exact ⟨fun ⟨_, h2⟩ => ⟨by linarith [le_max_right c c'], h2⟩,
-          fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c c'], h2⟩⟩
-      exact propext h_iff)
-  rw [heq]
+  rw [derivWithin_Icc_right_endpoint_congr hct hlt']
   exact hne' t (right_mem_Icc.mpr hlt'.le)
 
 /-- **Shrinking a one-sided Lipschitz-derivative window to fit inside a breakpoint-free piece,
@@ -282,15 +294,7 @@ theorem IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right
   have hEqOn : Set.EqOn (derivWithin γ (Icc t₀ d)) (derivWithin γ (Icc t₀ D)) (Icc t₀ d) := by
     intro x hx
     rcases eq_or_lt_of_le hx.1 with heq | hlt
-    · rw [← heq]
-      apply derivWithin_congr_set
-      filter_upwards [Iio_mem_nhds (lt_min htd htD)] with y hy
-      rw [mem_Iio] at hy
-      have h_iff : y ∈ Icc t₀ d ↔ y ∈ Icc t₀ D := by
-        simp only [mem_Icc]
-        exact ⟨fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_right d D]⟩,
-          fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d D]⟩⟩
-      exact propext h_iff
+    · rw [← heq]; exact derivWithin_Icc_left_endpoint_congr htd htD
     · rcases eq_or_lt_of_le hx.2 with heq2 | hlt2
       · rw [heq2, derivWithin_of_mem_nhds (Icc_mem_nhds htd hdD),
           (hdiffAt_d.hasDerivAt.hasDerivWithinAt).derivWithin
@@ -323,15 +327,7 @@ theorem IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_left
   have hEqOn : Set.EqOn (derivWithin γ (Icc d t₀)) (derivWithin γ (Icc c t₀)) (Icc d t₀) := by
     intro x hx
     rcases eq_or_lt_of_le hx.2 with heq | hlt
-    · rw [heq]
-      apply derivWithin_congr_set
-      filter_upwards [Ioi_mem_nhds (max_lt hct hdt)] with y hy
-      rw [mem_Ioi] at hy
-      have h_iff : y ∈ Icc d t₀ ↔ y ∈ Icc c t₀ := by
-        simp only [mem_Icc]
-        exact ⟨fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c d], h2⟩,
-          fun ⟨_, h2⟩ => ⟨by linarith [le_max_right c d], h2⟩⟩
-      exact propext h_iff
+    · rw [heq]; exact derivWithin_Icc_right_endpoint_congr hdt hct
     · rcases eq_or_lt_of_le hx.1 with heq2 | hlt2
       · rw [← heq2, derivWithin_of_mem_nhds (Icc_mem_nhds hcd hdt),
           (hdiffAt_d.hasDerivAt.hasDerivWithinAt).derivWithin

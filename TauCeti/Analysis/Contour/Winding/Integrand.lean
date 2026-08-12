@@ -62,13 +62,19 @@ theorem realWindingIntegrand_neg_right (z v : ℂ) :
 theorem realWindingIntegrand_zero_left (v : ℂ) : realWindingIntegrand 0 v = 0 := by
   simp
 
-/-- **A crude bound on the real winding integrand away from its singularity.** `realWindingIntegrand
-z v = (z⁻¹ * v).im`, whose absolute value is at most `‖z⁻¹ * v‖ = ‖v‖ / ‖z‖ ≤ ‖v‖ / m`. -/
-theorem abs_realWindingIntegrand_le_div_of_le_norm {z v : ℂ} {m : ℝ} (hm : 0 < m)
-    (hz : m ≤ ‖z‖) : |realWindingIntegrand z v| ≤ ‖v‖ / m := by
+/-- **A crude bound on the real winding integrand.** `realWindingIntegrand z v = (z⁻¹ * v).im`,
+whose absolute value is at most `‖z⁻¹ * v‖ = ‖v‖ / ‖z‖` -- including at `z = 0`, where both sides
+vanish (`realWindingIntegrand_zero_left`, `div_zero`). -/
+theorem abs_realWindingIntegrand_le_div_norm (z v : ℂ) :
+    |realWindingIntegrand z v| ≤ ‖v‖ / ‖z‖ := by
   rw [realWindingIntegrand_def]
   calc |(z⁻¹ * v).im| ≤ ‖z⁻¹ * v‖ := Complex.abs_im_le_norm _
     _ = ‖v‖ / ‖z‖ := by rw [norm_mul, norm_inv, mul_comm, ← div_eq_mul_inv]
-    _ ≤ ‖v‖ / m := by gcongr
+
+/-- **The crude bound above, weakened to a uniform denominator** `m ≤ ‖z‖` away from the
+singularity. -/
+theorem abs_realWindingIntegrand_le_div_of_le_norm {z v : ℂ} {m : ℝ} (hm : 0 < m)
+    (hz : m ≤ ‖z‖) : |realWindingIntegrand z v| ≤ ‖v‖ / m :=
+  (abs_realWindingIntegrand_le_div_norm z v).trans (by gcongr)
 
 end TauCeti.Contour

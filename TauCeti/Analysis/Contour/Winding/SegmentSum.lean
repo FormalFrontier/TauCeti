@@ -38,6 +38,8 @@ increments telescope away and the imaginary parts sum to the total argument chan
   imaginary segment logarithm sum.
 * `TauCeti.Contour.integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im` — its `deriv γ`
   specialization with the winding integrand.
+* `TauCeti.Contour.re_integral_inv_sub_mul_deriv_eq_log_norm` — the real part of the plain-piece
+  index integral is the log-norm difference of its endpoints, with no slit-plane hypothesis.
 
 ## Provenance
 

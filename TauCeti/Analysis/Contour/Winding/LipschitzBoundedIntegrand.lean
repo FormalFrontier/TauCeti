@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Contour.Crossing.LipschitzRegularity
 public import TauCeti.Analysis.Contour.Winding.Integrand
 public import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Calculus.Deriv.Shift
