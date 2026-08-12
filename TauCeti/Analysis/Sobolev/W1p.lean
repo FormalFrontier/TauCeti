@@ -40,7 +40,6 @@ boundary regularity of `Ω` is used.
 ## Main declarations
 
 * `TauCeti.Sobolev1Jet`: the value-gradient fibre `ℝ × E` with its Euclidean product norm.
-* `TauCeti.weakDerivativeTestJet`: the `Lᶜ` test jet `(∂_v φ, φ v)` dual to an `Lᵖ` jet.
 * `TauCeti.w1pSubmodule`: the closed subspace of jets annihilating every weak-derivative test.
 * `TauCeti.W1p`: the corresponding complete normed space.
 * `TauCeti.mem_w1pSubmodule_iff_hasWeakFDerivOn`: membership is exactly weak
@@ -98,6 +97,64 @@ theorem Sobolev1JetLp.gradient_apply_ae (J : Sobolev1JetLp mu Omega p) :
       Sobolev1JetLp.gradient J x = WithLp.snd (J x) := by
   simpa [Sobolev1JetLp.gradient] using (WithLp.sndL 2 ℝ ℝ E).coeFn_compLp J
 
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+@[simp]
+theorem Sobolev1JetLp.value_zero :
+    Sobolev1JetLp.value (0 : Sobolev1JetLp mu Omega p) = 0 := by
+  exact map_zero ((WithLp.fstL 2 ℝ ℝ E).compLpₗ p (mu.restrict Omega))
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+@[simp]
+theorem Sobolev1JetLp.gradient_zero :
+    Sobolev1JetLp.gradient (0 : Sobolev1JetLp mu Omega p) = 0 := by
+  exact map_zero ((WithLp.sndL 2 ℝ ℝ E).compLpₗ p (mu.restrict Omega))
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+@[simp]
+theorem Sobolev1JetLp.value_add (J K : Sobolev1JetLp mu Omega p) :
+    Sobolev1JetLp.value (J + K) = Sobolev1JetLp.value J + Sobolev1JetLp.value K := by
+  exact map_add ((WithLp.fstL 2 ℝ ℝ E).compLpₗ p (mu.restrict Omega)) J K
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+@[simp]
+theorem Sobolev1JetLp.gradient_add (J K : Sobolev1JetLp mu Omega p) :
+    Sobolev1JetLp.gradient (J + K) = Sobolev1JetLp.gradient J + Sobolev1JetLp.gradient K := by
+  exact map_add ((WithLp.sndL 2 ℝ ℝ E).compLpₗ p (mu.restrict Omega)) J K
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+@[simp]
+theorem Sobolev1JetLp.value_smul (c : ℝ) (J : Sobolev1JetLp mu Omega p) :
+    Sobolev1JetLp.value (c • J) = c • Sobolev1JetLp.value J := by
+  exact map_smul ((WithLp.fstL 2 ℝ ℝ E).compLpₗ p (mu.restrict Omega)) c J
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+@[simp]
+theorem Sobolev1JetLp.gradient_smul (c : ℝ) (J : Sobolev1JetLp mu Omega p) :
+    Sobolev1JetLp.gradient (c • J) = c • Sobolev1JetLp.gradient J := by
+  exact map_smul ((WithLp.sndL 2 ℝ ℝ E).compLpₗ p (mu.restrict Omega)) c J
+
+omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
+/-- Two Sobolev jets are equal when their value and gradient components are equal. -/
+@[ext]
+theorem Sobolev1JetLp.ext {J K : Sobolev1JetLp mu Omega p}
+    (hvalue : Sobolev1JetLp.value J = Sobolev1JetLp.value K)
+    (hgradient : Sobolev1JetLp.gradient J = Sobolev1JetLp.gradient K) : J = K := by
+  apply Lp.ext
+  have hvalue_ae : Sobolev1JetLp.value J =ᵐ[mu.restrict Omega]
+      Sobolev1JetLp.value K := by
+    rwa [← Lp.ext_iff]
+  have hgradient_ae : Sobolev1JetLp.gradient J =ᵐ[mu.restrict Omega]
+      Sobolev1JetLp.gradient K := by
+    rwa [← Lp.ext_iff]
+  filter_upwards [Sobolev1JetLp.value_apply_ae J, Sobolev1JetLp.value_apply_ae K,
+    Sobolev1JetLp.gradient_apply_ae J, Sobolev1JetLp.gradient_apply_ae K,
+    hvalue_ae, hgradient_ae] with x hJvalue hKvalue hJgradient hKgradient hvalue hgradient
+  apply (WithLp.prodContinuousLinearEquiv 2 ℝ ℝ E).injective
+  apply Prod.ext
+  · simpa only [WithLp.prodContinuousLinearEquiv_apply, WithLp.fst, hJvalue, hKvalue] using hvalue
+  · simpa only [WithLp.prodContinuousLinearEquiv_apply, WithLp.snd, hJgradient, hKgradient]
+      using hgradient
+
 /-- The candidate weak Fréchet derivative recorded by the gradient component of a Sobolev jet. -/
 def Sobolev1JetLp.weakFDeriv (J : Sobolev1JetLp mu Omega p) : E → E →L[ℝ] ℝ :=
   fun x => innerSL ℝ (Sobolev1JetLp.gradient J x)
@@ -131,8 +188,10 @@ private theorem weakDerivativeTestFunction_memLp (q : ENNReal) (phi : 𝓓(Omega
     have hf_eq : f = (fun x => WithLp.toLp 2 (dphi x, (0 : E))) +
         fun x => WithLp.toLp 2 ((0 : ℝ), phi x • v) := by
       funext x
+      -- Reduce pointwise addition to the product equality consumed by the linear equivalence.
       change WithLp.toLp 2 (dphi x, phi x • v) =
         WithLp.toLp 2 (dphi x, 0) + WithLp.toLp 2 (0, phi x • v)
+      -- This product identity supplies the input to `map_add`; `WithLp.toLp` is otherwise opaque.
       rw [show (dphi x, phi x • v) =
           (dphi x, (0 : E)) + ((0 : ℝ), phi x • v) by ext <;> simp]
       exact (WithLp.prodContinuousLinearEquiv 2 ℝ ℝ E).symm.map_add _ _
@@ -147,14 +206,14 @@ private theorem weakDerivativeTestFunction_memLp (q : ENNReal) (phi : 𝓓(Omega
 
 /-- The compactly supported jet `(∂_v φ, φ v)` used to test whether an `Lᵖ` jet is a weak
 derivative.  Its exponent is Hölder-conjugate to `p`, including the endpoints `p = 1, ∞`. -/
-def weakDerivativeTestJet (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
+private def weakDerivativeTestJet (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
     Lp (Sobolev1Jet E) (ENNReal.conjExponent p) (mu.restrict Omega) :=
   (weakDerivativeTestFunction_memLp (mu := mu) (ENNReal.conjExponent p) phi v).toLp
     (weakDerivativeTestFunction phi v)
 
 omit [FiniteDimensional ℝ E] in
 @[simp]
-theorem weakDerivativeTestJet_apply_ae (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
+private theorem weakDerivativeTestJet_apply_ae (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
     ∀ᵐ x ∂mu.restrict Omega,
       weakDerivativeTestJet (mu := mu) p phi v x =
         WithLp.toLp 2 (lineDeriv ℝ (phi : E → ℝ) x v, phi x • v) := by
@@ -164,7 +223,7 @@ theorem weakDerivativeTestJet_apply_ae (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v
 
 /-- The continuous functional expressing the weak-derivative identity against `φ` in direction
 `v`.  It pairs the candidate jet with `(∂_v φ, φ v)`. -/
-def weakDerivativeTestFunctional (p : ENNReal) [Fact (1 <= p)]
+private def weakDerivativeTestFunctional (p : ENNReal) [Fact (1 <= p)]
     (phi : 𝓓(Omega, ℝ)) (v : E) : Sobolev1JetLp mu Omega p →L[ℝ] ℝ := by
   let _ : (ENNReal.conjExponent p).HolderConjugate p := ENNReal.HolderConjugate.symm
   let _ : Fact (1 <= ENNReal.conjExponent p) :=
@@ -175,7 +234,7 @@ def weakDerivativeTestFunctional (p : ENNReal) [Fact (1 <= p)]
 omit [FiniteDimensional ℝ E] in
 /-- The test functional is the sum of the value and candidate-gradient terms in the weak
 integration-by-parts identity. -/
-theorem weakDerivativeTestFunctional_apply (J : Sobolev1JetLp mu Omega p)
+private theorem weakDerivativeTestFunctional_apply (J : Sobolev1JetLp mu Omega p)
     (phi : 𝓓(Omega, ℝ)) (v : E) :
     weakDerivativeTestFunctional (mu := mu) p phi v J =
       ∫ x in Omega, (lineDeriv ℝ (phi : E → ℝ) x v * Sobolev1JetLp.value J x +
@@ -183,6 +242,7 @@ theorem weakDerivativeTestFunctional_apply (J : Sobolev1JetLp mu Omega p)
   let _ : (ENNReal.conjExponent p).HolderConjugate p := ENNReal.HolderConjugate.symm
   let _ : Fact (1 <= ENNReal.conjExponent p) :=
     ⟨ENNReal.HolderConjugate.one_le _ p⟩
+  -- Unfold the private test functional to the `lpPairing` form required by its integral theorem.
   change (innerSL ℝ (E := Sobolev1Jet E)).lpPairing (mu.restrict Omega) p
       (ENNReal.conjExponent p) J (weakDerivativeTestJet (mu := mu) p phi v) = _
   rw [ContinuousLinearMap.lpPairing_eq_integral]
@@ -207,8 +267,14 @@ omit [FiniteDimensional ℝ E] in
 theorem mem_w1pSubmodule_iff (J : Sobolev1JetLp mu Omega p) :
     J ∈ w1pSubmodule mu Omega p ↔
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
-        weakDerivativeTestFunctional (mu := mu) p phi v J = 0 := by
-  simp [w1pSubmodule]
+        ∫ x in Omega, (lineDeriv ℝ (phi : E → ℝ) x v * Sobolev1JetLp.value J x +
+          phi x * Sobolev1JetLp.weakFDeriv J x v) ∂mu = 0 := by
+  -- Pass through the private kernel presentation once, keeping it out of the public statement.
+  rw [show J ∈ w1pSubmodule mu Omega p ↔
+      ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
+        weakDerivativeTestFunctional (mu := mu) p phi v J = 0 by
+    simp [w1pSubmodule]]
+  simp only [weakDerivativeTestFunctional_apply]
 
 /-- A jet belongs to `w1pSubmodule` exactly when its value component has the recorded gradient as
 its weak Fréchet derivative. -/
@@ -249,16 +315,15 @@ theorem mem_w1pSubmodule_iff_hasWeakFDerivOn (J : Sobolev1JetLp mu Omega p) :
         image_eq_zero_of_notMem_tsupport hxt]
       simp
     have hzero := h phi v
-    rw [weakDerivativeTestFunctional_apply,
-      setIntegral_eq_integral_of_forall_compl_eq_zero hsupport,
+    rw [setIntegral_eq_integral_of_forall_compl_eq_zero hsupport,
       integral_add hleft hright] at hzero
+    -- Rearrange the scalar zero-sum identity after rewriting both integrals out of set form.
     simpa only [smul_eq_mul] using (show
       (∫ x, lineDeriv ℝ (phi : E → ℝ) x v * Sobolev1JetLp.value J x ∂mu) =
         -(∫ x, phi x * Sobolev1JetLp.weakFDeriv J x v ∂mu) by linarith)
   · intro h
     rw [hasWeakFDerivOn_iff] at h
     intro phi v
-    rw [weakDerivativeTestFunctional_apply]
     have hleft : Integrable
         (fun x => lineDeriv ℝ (phi : E → ℝ) x v * Sobolev1JetLp.value J x) mu := by
       simpa only [smul_eq_mul] using
@@ -280,6 +345,7 @@ omit [FiniteDimensional ℝ E] in
 /-- The first-order weak Sobolev subspace is closed in its ambient Bochner `Lᵖ` space. -/
 theorem isClosed_w1pSubmodule :
     IsClosed (w1pSubmodule mu Omega p : Set (Sobolev1JetLp mu Omega p)) := by
+  -- Expose the coerced intersection of kernels so closedness follows from the continuous kernels.
   rw [show (w1pSubmodule mu Omega p : Set (Sobolev1JetLp mu Omega p)) =
       ⋂ phi : 𝓓(Omega, ℝ), ⋂ v : E,
         (LinearMap.ker (weakDerivativeTestFunctional (mu := mu) p phi v).toLinearMap :
@@ -293,6 +359,14 @@ theorem isClosed_w1pSubmodule :
 weak gradient. -/
 abbrev W1p (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] := w1pSubmodule mu Omega p
+
+omit [FiniteDimensional ℝ E] in
+/-- Two Sobolev functions are equal when their value and weak-gradient components are equal. -/
+@[ext]
+theorem W1p.ext {u v : W1p mu Omega p}
+    (hvalue : Sobolev1JetLp.value u.1 = Sobolev1JetLp.value v.1)
+    (hgradient : Sobolev1JetLp.gradient u.1 = Sobolev1JetLp.gradient v.1) : u = v :=
+  Subtype.ext (Sobolev1JetLp.ext hvalue hgradient)
 
 /-- The value-gradient pair represented by an element of `W1p` satisfies the weak derivative
 identity. -/
