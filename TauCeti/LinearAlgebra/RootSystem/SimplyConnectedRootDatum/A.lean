@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Data.Fin.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
 public section
@@ -101,42 +102,17 @@ private lemma typeAWeight_dotProduct_typeACoweight {a c : ℕ} (ha : a ≤ n) (h
     typeAWeight n a ⬝ᵥ typeACoweight n c
       = (if a = c then 1 else 0) - (if a = n then 1 else 0) := by
   have key : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) then (1 : ℤ) else 0) *
-      (if c ≤ (k : ℕ) then 1 else 0) = if h : b < n then (if c ≤ b then (1 : ℤ) else 0) else 0 := by
-    intro b
-    simp only [ite_mul, one_mul, zero_mul]
-    by_cases h : b < n
-    · rw [dite_eq_left h]
-      convert Fintype.sum_ite_eq (⟨b, h⟩ : Fin n)
-        (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) using 1 with k
-      simp [Fin.ext_iff]
-    · rw [dite_eq_right h]
-      exact Finset.sum_eq_zero fun k _ => ite_eq_right (by omega)
+      (if c ≤ (k : ℕ) then 1 else 0) = if h : b < n then (if c ≤ b then (1 : ℤ) else 0) else 0 :=
+    fun b => by
+      simp only [ite_mul, one_mul, zero_mul]
+      simpa only [Nat.add_zero, Nat.sub_zero, Nat.zero_le, and_true] using
+        sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 0
   have key' : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) + 1 then (1 : ℤ) else 0) *
       (if c ≤ (k : ℕ) then 1 else 0)
-        = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 := by
-    intro b
-    simp only [ite_mul, one_mul, zero_mul]
-    by_cases h : b - 1 < n ∧ 1 ≤ b
-    · rw [dite_eq_left h]
-      calc
-        _ = ∑ k : Fin n, if (⟨b - 1, h.1⟩ : Fin n) = k then
-            (if c ≤ (k : ℕ) then (1 : ℤ) else 0) else 0 := by
-          apply Finset.sum_congr rfl
-          intro k _
-          congr 1
-          apply propext
-          constructor
-          · intro hb
-            apply Fin.ext
-            simp only
-            omega
-          · intro hk
-            have hkval := congrArg Fin.val hk
-            simp only at hkval
-            omega
-        _ = _ := Fintype.sum_ite_eq _ _
-    · rw [dite_eq_right h]
-      exact Finset.sum_eq_zero fun k _ => ite_eq_right (by omega)
+        = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 :=
+    fun b => by
+      simp only [ite_mul, one_mul, zero_mul]
+      exact sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 1
   simp only [dotProduct, typeAWeight, typeACoweight, sub_mul, Finset.sum_sub_distrib,
     key a, key' a]
   split_ifs <;> omega
