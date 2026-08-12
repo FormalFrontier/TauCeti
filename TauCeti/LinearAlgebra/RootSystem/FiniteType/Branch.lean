@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Data.Fin.Tuple.Sort
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star
 import TauCeti.LinearAlgebra.RootSystem.Classification
 
@@ -27,7 +25,7 @@ index `c`, and the three exceptional shapes `(1, 2, 2)`, `(1, 2, 3)`, `(1, 2, 4)
 and `E₈`, whose common branch node is Bourbaki index `3`. Combining the two halves gives
 `TauCeti.IsFiniteType.existsUnique_dynkinType_of_star`: **a three-armed star of finite type with no
 empty arm is, after one simultaneous relabelling of rows and columns, the standard Cartan matrix of
-a unique valid simply-laced Dynkin type**, namely `D`, `E₆`, `E₇` or `E₈`.
+a unique valid Dynkin type**, namely the simply-laced type `D`, `E₆`, `E₇` or `E₈`.
 
 This is the fork half of the reindexing step of the Cartan-Killing classification, the step that
 turns the elimination theorems into a `DynkinType`. The complementary step for a diagram with no
@@ -50,8 +48,8 @@ Mathlib's `CartanMatrix.D`, `.E₆`, `.E₇` and `.E₈`.
 * `TauCeti.IsStarOfType.isFiniteType`: the converse of the fork bound. A star carrying a finite-type
   diagram is of finite type, so each of the four admissible shapes does occur.
 * `TauCeti.IsFiniteType.existsUnique_dynkinType_of_star`: **the classification of the three-armed
-  stars**. A star of finite type whose three arms are all nonempty carries a unique valid
-  simply-laced Dynkin type.
+  stars**. A star of finite type whose three arms are all nonempty carries a unique valid Dynkin
+  type, which is one of the simply-laced types `D`, `E₆`, `E₇` or `E₈`.
 
 ## References
 
@@ -75,6 +73,13 @@ form the Cartan-Killing classification asks for. -/
 def IsStarOfType (ℓ : α → ℕ) (t : DynkinType) : Prop :=
   ∃ e : StarIndex ℓ ≃ Fin t.rank,
     ∀ v w, starCartanMatrix ℓ v w = t.cartanMatrix (e v) (e w)
+
+/-- Carrying a Dynkin type, unfolded to the simultaneous relabelling it asserts to exist. This is
+the interface through which consumers build and destructure `TauCeti.IsStarOfType`. -/
+lemma isStarOfType_iff (ℓ : α → ℕ) (t : DynkinType) :
+    IsStarOfType ℓ t ↔ ∃ e : StarIndex ℓ ≃ Fin t.rank,
+      ∀ v w, starCartanMatrix ℓ v w = t.cartanMatrix (e v) (e w) :=
+  Iff.rfl
 
 /-- Relabelling the arms of a star: an equivalence `e : α ≃ β` of arm indices carries the star with
 arms `ℓ ∘ e` isomorphically onto the star with arms `ℓ`, moving the vertex at position `t` of the
@@ -115,14 +120,15 @@ identifications below this is the converse of the fork bound: each admissible sh
 diagram of a root system. -/
 theorem IsStarOfType.isFiniteType [Fintype α] (h : IsStarOfType ℓ t)
     (ht : IsFiniteType t.cartanMatrix) : IsFiniteType (starCartanMatrix ℓ) := by
-  obtain ⟨e, he⟩ := h
+  obtain ⟨e, he⟩ := (isStarOfType_iff ℓ t).mp h
   exact isFiniteType_of_forall_eq e ht he
 
 /-- Carrying a Dynkin diagram is invariant under a relabelling of the arms. -/
 theorem IsStarOfType.comp {m : β → ℕ} (h : IsStarOfType m t) (e : α ≃ β) :
     IsStarOfType (m ∘ e) t := by
-  obtain ⟨f, hf⟩ := h
-  refine ⟨(starIndexCongrArms e m).trans f, fun v w ↦ ?_⟩
+  obtain ⟨f, hf⟩ := (isStarOfType_iff m t).mp h
+  refine (isStarOfType_iff (m ∘ e) t).mpr
+    ⟨(starIndexCongrArms e m).trans f, fun v w ↦ ?_⟩
   rw [starCartanMatrix_comp e m v w]
   exact hf _ _
 
@@ -253,7 +259,7 @@ empty and the same formula identifies the resulting chain with the degenerate ty
 theorem isStarOfType_D (c : ℕ) : IsStarOfType (![1, 1, c] : Fin 3 → ℕ) (D (c + 3)) := by
   have hbij : Function.Bijective (forkIndexD c) :=
     (Fintype.bijective_iff_injective_and_card _).2 ⟨forkIndexD_injective c, card_starIndex_fork c⟩
-  refine ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
   simp only [cartanMatrix_D]
   exact starCartanMatrix_fork_eq c v w
 
@@ -334,7 +340,7 @@ private lemma starCartanMatrix_exceptional_E8 (v w : StarIndex (![1, 2, 4] : Fin
 theorem isStarOfType_E6 : IsStarOfType (![1, 2, 2] : Fin 3 → ℕ) E6 := by
   have hbij : Function.Bijective (forkIndexE 2) :=
     (Fintype.bijective_iff_surjective_and_card _).2 ⟨by decide, by decide⟩
-  refine ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
   simp only [cartanMatrix_E6]
   exact starCartanMatrix_exceptional_E6 v w
 
@@ -343,7 +349,7 @@ theorem isStarOfType_E6 : IsStarOfType (![1, 2, 2] : Fin 3 → ℕ) E6 := by
 theorem isStarOfType_E7 : IsStarOfType (![1, 2, 3] : Fin 3 → ℕ) E7 := by
   have hbij : Function.Bijective (forkIndexE 3) :=
     (Fintype.bijective_iff_surjective_and_card _).2 ⟨by decide, by decide⟩
-  refine ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
   simp only [cartanMatrix_E7]
   exact starCartanMatrix_exceptional_E7 v w
 
@@ -352,15 +358,15 @@ theorem isStarOfType_E7 : IsStarOfType (![1, 2, 3] : Fin 3 → ℕ) E7 := by
 theorem isStarOfType_E8 : IsStarOfType (![1, 2, 4] : Fin 3 → ℕ) E8 := by
   have hbij : Function.Bijective (forkIndexE 4) :=
     (Fintype.bijective_iff_surjective_and_card _).2 ⟨by decide, by decide⟩
-  refine ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
   simp only [cartanMatrix_E8]
   exact starCartanMatrix_exceptional_E8 v w
 
 end Exceptional
 
 /-- **The classification of the three-armed stars of finite type.** A star with three nonempty arms
-whose Cartan matrix is of finite type carries a unique valid simply-laced Dynkin type: after one
-simultaneous relabelling of rows and columns it is the standard Cartan matrix of `D n` with
+whose Cartan matrix is of finite type carries a unique valid Dynkin type: after one simultaneous
+relabelling of rows and columns it is the standard Cartan matrix of the simply-laced type `D n` with
 `n ≥ 4`, or of `E₆`, `E₇` or `E₈`.
 
 The shape is cut out by the fork bound
@@ -372,7 +378,7 @@ with its Bourbaki-numbered diagram by `TauCeti.isStarOfType_D`, `TauCeti.isStarO
 The type is unique, by `TauCeti.DynkinType.eq_of_valid_of_forall_eq`. -/
 theorem IsFiniteType.existsUnique_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ : ∀ i, ℓ i ≠ 0)
     (h : IsFiniteType (starCartanMatrix ℓ)) :
-    ∃! t : DynkinType, t.Valid ∧ t.IsSimplyLaced ∧ IsStarOfType ℓ t := by
+    ∃! t : DynkinType, t.Valid ∧ IsStarOfType ℓ t := by
   have hex : ∃ t : DynkinType, t.Valid ∧ t.IsSimplyLaced ∧ IsStarOfType ℓ t := by
     -- Sort the arms so that the fork bound applies, and record the sorted star as a `![a, b, c]`.
     obtain ⟨σ, hmono⟩ : ∃ σ : Equiv.Perm (Fin 3), Monotone (ℓ ∘ σ) :=
@@ -406,8 +412,8 @@ theorem IsFiniteType.existsUnique_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ
         rw [h1, h2, hc]; exact isStarOfType_E7
       · refine ⟨E8, valid_E8, isSimplyLaced_E8, hback _ ?_⟩
         rw [h1, h2, hc]; exact isStarOfType_E8
-  obtain ⟨t, htv, hts, et, het⟩ := hex
-  exact ⟨t, ⟨htv, hts, et, het⟩, fun s ⟨hsv, _, es, hes⟩ ↦
+  obtain ⟨t, htv, _, et, het⟩ := hex
+  exact ⟨t, ⟨htv, et, het⟩, fun s ⟨hsv, es, hes⟩ ↦
     DynkinType.eq_of_valid_of_forall_eq hsv htv es et hes het⟩
 
 end TauCeti
