@@ -22,11 +22,11 @@ proves at each stage that the displayed relations define the claimed group. The 
 freely reduced lengths `80`, `160`, and `309`, giving the published total length `549`.
 
 The source writes `x̄` for `x⁻¹`, `x^y` for `y⁻¹xy`, which is `TauCeti.Relator.conj`, and `[x,y]`
-for `x⁻¹y⁻¹xy`. An equation `r = s` is stored as the relator `r * s⁻¹`, which is
-`TauCeti.Relator.div`. The structured expressions below preserve the source's powers, conjugates,
-commutators, and equations. Since their direct compilation need not perform free cancellation,
-decidable checks apply Mathlib's `FreeGroup.reduce` before checking the three block lengths and
-their total.
+for `x⁻¹y⁻¹xy`, which is `TauCeti.Relator.sourceComm`. An equation `r = s` is stored as the relator
+`r * s⁻¹`, which is `TauCeti.Relator.div`. The structured expressions below preserve the source's
+powers, conjugates, commutators, and equations. Since their direct compilation need not perform
+free cancellation, decidable checks apply Mathlib's `FreeGroup.reduce` before checking the three
+block lengths and their total.
 
 The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between the expressions and
 the signed words consumed by `PresentedGroup`. This file asserts no order, finiteness, simplicity,
@@ -50,31 +50,19 @@ public section
 
 namespace TauCeti.Sporadic
 
-private abbrev a : Relator (Fin 5) := .gen 0
-private abbrev b : Relator (Fin 5) := .gen 1
-private abbrev c : Relator (Fin 5) := .gen 2
-private abbrev d : Relator (Fin 5) := .gen 3
-private abbrev z : Relator (Fin 5) := .gen 4
-
-private abbrev aInv : Relator (Fin 5) := .inv a
-private abbrev bInv : Relator (Fin 5) := .inv b
-private abbrev cInv : Relator (Fin 5) := .inv c
-private abbrev dInv : Relator (Fin 5) := .inv d
-private abbrev zInv : Relator (Fin 5) := .inv z
-
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
-/-- The source's commutator convention `[r,s] = r⁻¹ s⁻¹ r s`. -/
-private abbrev sourceComm (r s : Relator (Fin 5)) : Relator (Fin 5) :=
-  .comm (.inv r) (.inv s)
-
-private abbrev h2Relators : List (Relator (Fin 5)) :=
+/-- The nine relators in the source's `R_H2` block, on its generator expressions `a`, `b`, and
+`c`. -/
+@[expose]
+def lyH2Relators {α : Type*} (a b c : Relator α) : List (Relator α) :=
+  let bInv := .inv b
   [ .pow a 8,
     .pow b 5,
     .pow (a ⬝ b) 4,
-    sourceComm (.pow a 2) b,
-    .pow (sourceComm a b) 3,
+    Relator.sourceComm (.pow a 2) b,
+    .pow (Relator.sourceComm a b) 3,
     .pow c 5,
     Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
     Relator.div (Relator.conj c (b ⬝ a))
@@ -82,7 +70,14 @@ private abbrev h2Relators : List (Relator (Fin 5)) :=
     Relator.div (Relator.conj c (.pow b 2))
       (.pow c 2 ⬝ Relator.conj c bInv ⬝ .pow (.inv (Relator.conj c b)) 2) ]
 
-private abbrev h1Relators : List (Relator (Fin 5)) :=
+/-- The seven relators in the source's `R_H1` block, on its generator expressions `a`, `b`, `c`,
+and `d`. -/
+@[expose]
+def lyH1Relators {α : Type*} (a b c d : Relator α) : List (Relator α) :=
+  let aInv := .inv a
+  let bInv := .inv b
+  let cInv := .inv c
+  let dInv := .inv d
   [ Relator.div (Relator.conj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
     Relator.div (Relator.conj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
     Relator.div
@@ -103,7 +98,15 @@ private abbrev h1Relators : List (Relator (Fin 5)) :=
     c ⬝ aInv ⬝ cInv ⬝ a ⬝ cInv ⬝ aInv ⬝ c ⬝ a ⬝ dInv ⬝ cInv ⬝ aInv ⬝
       cInv ⬝ a ⬝ c ⬝ aInv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ cInv ⬝ aInv ⬝ cInv ⬝ a ⬝ c ⬝ d ]
 
-private abbrev lyExtensionRelators : List (Relator (Fin 5)) :=
+/-- The nine relators in the source's final `R_G` block extending the presentation to `Ly`, on its
+generator expressions `a`, `b`, `c`, `d`, and `z`. -/
+@[expose]
+def lyExtensionRelators {α : Type*} (a b c d z : Relator α) : List (Relator α) :=
+  let aInv := .inv a
+  let bInv := .inv b
+  let cInv := .inv c
+  let dInv := .inv d
+  let zInv := .inv z
   [ Relator.div (Relator.conj a z) (.pow aInv 3),
     Relator.div (Relator.conj a (z ⬝ d ⬝ z)) (.pow a 3),
     Relator.div
@@ -114,7 +117,7 @@ private abbrev lyExtensionRelators : List (Relator (Fin 5)) :=
         .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
         dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
     Relator.div
-      (sourceComm z
+      (Relator.sourceComm z
         (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
           a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
       (b ⬝ c ⬝ bInv ⬝ cInv),
@@ -142,29 +145,40 @@ private abbrev lyExtensionRelators : List (Relator (Fin 5)) :=
       d ⬝ cInv ⬝ .pow (a ⬝ cInv) 2 ⬝ b ⬝ aInv ⬝ .pow c 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
       c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ]
 
+private abbrev a : Relator (Fin 5) := .gen 0
+private abbrev b : Relator (Fin 5) := .gen 1
+private abbrev c : Relator (Fin 5) := .gen 2
+private abbrev d : Relator (Fin 5) := .gen 3
+private abbrev z : Relator (Fin 5) := .gen 4
+
+private abbrev h2Relators : List (Relator (Fin 5)) := lyH2Relators a b c
+private abbrev h1Relators : List (Relator (Fin 5)) := lyH1Relators a b c d
+private abbrev extensionRelators : List (Relator (Fin 5)) := lyExtensionRelators a b c d z
+
 private theorem reducedH2Length :
     (h2Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 80 := by
-  simp only [h2Relators, sourceComm, List.map_cons, List.map_nil,
+  simp only [h2Relators, lyH2Relators, List.map_cons, List.map_nil,
     Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_comm, Relator.toWord_conj, Relator.toWord_div]
+    Relator.toWord_sourceComm, Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedH1Length :
     (h1Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 160 := by
-  simp only [h1Relators, List.map_cons, List.map_nil,
+  simp only [h1Relators, lyH1Relators, List.map_cons, List.map_nil,
     Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
     Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedLyExtensionLength :
-    (lyExtensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309 := by
-  simp only [lyExtensionRelators, sourceComm, List.map_cons, List.map_nil,
-    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_comm, Relator.toWord_conj, Relator.toWord_div]
+    (extensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309 := by
+  simp only [extensionRelators, lyExtensionRelators,
+    List.map_cons, List.map_nil, Relator.toWord_gen, Relator.toWord_inv,
+    Relator.toWord_mul, Relator.toWord_pow, Relator.toWord_sourceComm,
+    Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedTotalLength :
-    ((h2Relators ++ h1Relators ++ lyExtensionRelators).map fun r =>
+    ((h2Relators ++ h1Relators ++ extensionRelators).map fun r =>
       (FreeGroup.reduce r.toWord).length).sum = 549 := by
   simp only [List.map_append, List.sum_append]
   rw [reducedH2Length, reducedH1Length, reducedLyExtensionLength]
@@ -192,7 +206,10 @@ def lyPresentation : GroupPresentation where
     double-coset enumeration. The independent FiniteSimpleGroups development does not cover Ly."
   expectedGeneratorCount := 5
   expectedRelatorCount := 25
-  transcribed := h2Relators ++ h1Relators ++ lyExtensionRelators
+  transcribed :=
+    lyH2Relators (.gen 0) (.gen 1) (.gen 2) ++
+      lyH1Relators (.gen 0) (.gen 1) (.gen 2) (.gen 3) ++
+      lyExtensionRelators (.gen 0) (.gen 1) (.gen 2) (.gen 3) (.gen 4)
 
 /-- The generator names recorded for `Ly`. -/
 @[simp]
@@ -245,28 +262,9 @@ theorem lyPresentation_expectedGeneratorCount : lyPresentation.expectedGenerator
 theorem lyPresentation_expectedRelatorCount : lyPresentation.expectedRelatorCount = 25 := by
   rfl
 
-private theorem lyPresentation_blockDecomposition :
-    lyPresentation.transcribed = h2Relators ++ h1Relators ++ lyExtensionRelators := by
-  rfl
-
-private theorem lyPresentation_h2Block :
-    lyPresentation.transcribed.take 9 = h2Relators := by
-  rw [lyPresentation_blockDecomposition]
-  rfl
-
-private theorem lyPresentation_h1Block :
-    (lyPresentation.transcribed.drop 9).take 7 = h1Relators := by
-  rw [lyPresentation_blockDecomposition]
-  rfl
-
-private theorem lyPresentation_extensionBlock :
-    lyPresentation.transcribed.drop 16 = lyExtensionRelators := by
-  rw [lyPresentation_blockDecomposition]
-  rfl
-
 /-- The twenty-five relator expressions transcribed for `Ly`, split into the three blocks used by
-the source. This self-contained equation characterizes the sealed presentation without exposing
-the file's private transcription helpers. -/
+the source. The named blocks are the single source of truth for both the presentation and its
+transcription checks. -/
 @[simp]
 theorem lyPresentation_transcribed :
     lyPresentation.transcribed =
@@ -280,80 +278,26 @@ theorem lyPresentation_transcribed :
         .gen ⟨3, by simp [lyPresentation]⟩
       let z : Relator (Fin lyPresentation.generatorNames.length) :=
         .gen ⟨4, by simp [lyPresentation]⟩
-      let aInv := .inv a
-      let bInv := .inv b
-      let cInv := .inv c
-      let dInv := .inv d
-      let zInv := .inv z
-      let sourceComm (r s : Relator (Fin lyPresentation.generatorNames.length)) :=
-        .comm (.inv r) (.inv s)
-      [ .pow a 8,
-        .pow b 5,
-        .pow (a ⬝ b) 4,
-        sourceComm (.pow a 2) b,
-        .pow (sourceComm a b) 3,
-        .pow c 5,
-        Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
-        Relator.div (Relator.conj c (b ⬝ a))
-          (Relator.conj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
-        Relator.div (Relator.conj c (.pow b 2))
-          (.pow c 2 ⬝ Relator.conj c bInv ⬝ .pow (.inv (Relator.conj c b)) 2) ] ++
-      [ Relator.div (Relator.conj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
-        Relator.div (Relator.conj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
-        Relator.div
-          (Relator.conj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
-          (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ a ⬝ c ⬝ bInv ⬝ c ⬝ b ⬝
-            a ⬝ cInv),
-        Relator.div
-          (Relator.conj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
-            (d ⬝ c ⬝ d))
-          (.pow aInv 2 ⬝ bInv ⬝ aInv ⬝ .pow (bInv ⬝ c) 2 ⬝ .pow b 2),
-        Relator.div
-          (Relator.conj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
-          (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ c ⬝ aInv ⬝ bInv ⬝ c ⬝
-            b ⬝ a),
-        Relator.div
-          (Relator.conj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
-          (.pow aInv 4 ⬝ .pow b 2 ⬝ cInv ⬝ bInv ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝ bInv),
-        c ⬝ aInv ⬝ cInv ⬝ a ⬝ cInv ⬝ aInv ⬝ c ⬝ a ⬝ dInv ⬝ cInv ⬝ aInv ⬝
-          cInv ⬝ a ⬝ c ⬝ aInv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ cInv ⬝ aInv ⬝ cInv ⬝ a ⬝ c ⬝ d ] ++
-      [ Relator.div (Relator.conj a z) (.pow aInv 3),
-        Relator.div (Relator.conj a (z ⬝ d ⬝ z)) (.pow a 3),
-        Relator.div
-          (Relator.conj
-            (cInv ⬝ dInv ⬝ c ⬝ b ⬝ a ⬝ .pow b 2 ⬝ .pow (c ⬝ b) 2 ⬝ cInv ⬝ d)
-            (z ⬝ d ⬝ z))
-          (cInv ⬝ b ⬝ .pow c 2 ⬝ a ⬝ cInv ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝
-            .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
-            dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
-        Relator.div
-          (sourceComm z
-            (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
-              a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
-          (b ⬝ c ⬝ bInv ⬝ cInv),
-        Relator.div (Relator.conj a (z ⬝ d ⬝ bInv ⬝ z))
-          (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow cInv 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
-            .pow bInv 2 ⬝ c ⬝ bInv ⬝ c ⬝ a ⬝ cInv ⬝ d ⬝ bInv ⬝ aInv),
-        Relator.div
-          (Relator.conj
-            (cInv ⬝ aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝
-              cInv ⬝ dInv ⬝ c ⬝ d ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ b ⬝ a ⬝ c)
-            (z ⬝ d ⬝ bInv ⬝ z))
-          (aInv ⬝ c ⬝ .pow aInv 3 ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝ d ⬝ cInv ⬝ a ⬝
-            cInv ⬝ .pow b 2 ⬝ c ⬝ bInv ⬝ c ⬝ aInv ⬝ cInv ⬝ d ⬝ bInv ⬝ cInv ⬝
-            dInv ⬝ cInv ⬝ b ⬝ a ⬝ b ⬝ d ⬝ c ⬝ aInv),
-        Relator.div
-          (Relator.conj
-            (aInv ⬝ b ⬝ d ⬝ c ⬝ aInv ⬝ bInv ⬝ a ⬝ b ⬝ aInv ⬝ cInv ⬝ bInv ⬝ c ⬝ a)
-            (z ⬝ d ⬝ c ⬝ d ⬝ z))
-          (cInv ⬝ .pow a 3 ⬝ b ⬝ cInv ⬝ bInv ⬝ aInv ⬝ c ⬝ dInv ⬝ cInv ⬝ b ⬝
-            aInv ⬝ bInv),
-        Relator.div (Relator.conj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
-          (a ⬝ c ⬝ aInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ aInv ⬝
-            bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a),
-        a ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow aInv 2 ⬝ dInv ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝
-          d ⬝ cInv ⬝ .pow (a ⬝ cInv) 2 ⬝ b ⬝ aInv ⬝ .pow c 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
-          c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ] := by
+      lyH2Relators a b c ++ lyH1Relators a b c d ++ lyExtensionRelators a b c d z := by
+  rfl
+
+private theorem lyPresentation_blockDecomposition :
+    lyPresentation.transcribed = h2Relators ++ h1Relators ++ extensionRelators := by
+  rfl
+
+private theorem lyPresentation_h2Block :
+    lyPresentation.transcribed.take 9 = h2Relators := by
+  rw [lyPresentation_blockDecomposition]
+  rfl
+
+private theorem lyPresentation_h1Block :
+    (lyPresentation.transcribed.drop 9).take 7 = h1Relators := by
+  rw [lyPresentation_blockDecomposition]
+  rfl
+
+private theorem lyPresentation_extensionBlock :
+    lyPresentation.transcribed.drop 16 = extensionRelators := by
+  rw [lyPresentation_blockDecomposition]
   rfl
 
 /-- The freely reduced lengths of the first nine relators sum to `80`, as recorded for the
