@@ -122,26 +122,40 @@ private theorem starDEmbedding_injective (c : ℕ) : Function.Injective (starDEm
     all_goals congr 1
     all_goals exact Fin.ext (by omega)
 
-private theorem starCartanMatrix_one_one_eq_D (c : ℕ) :
+/-- The relabelling from the star with arms `(1, 1, c)` to the Bourbaki indices of type
+`D (c + 3)`. -/
+noncomputable def starIndexEquivD (c : ℕ) : StarIndex ![1, 1, c] ≃ Fin (c + 3) :=
+  Equiv.ofBijective (starDEmbedding c) <|
+    (Fintype.bijective_iff_injective_and_card _).2 ⟨starDEmbedding_injective c, by
+      simp only [StarIndex, Fintype.card_option, Fintype.card_sigma, Fintype.card_fin,
+        Fin.sum_univ_three]
+      norm_num [Matrix.cons_val_two]
+      omega⟩
+
+/-- Relabelling the star with arms `(1, 1, c)` by `starIndexEquivD` identifies its Cartan matrix
+with that of type `D (c + 3)`. -/
+theorem starCartanMatrix_one_one_eq_D (c : ℕ) :
     starCartanMatrix ![1, 1, c] =
-      (CartanMatrix.D (c + 3)).submatrix (starDEmbedding c) (starDEmbedding c) := by
+      (CartanMatrix.D (c + 3)).submatrix (starIndexEquivD c) (starIndexEquivD c) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · simp [Matrix.submatrix_apply, starDEmbedding, CartanMatrix.D]
-  · fin_cases j <;> simp [Matrix.submatrix_apply, starDEmbedding, CartanMatrix.D] at t ⊢
+  · simp [Matrix.submatrix_apply, starIndexEquivD, starDEmbedding, CartanMatrix.D]
+  · fin_cases j <;>
+      simp [Matrix.submatrix_apply, starIndexEquivD, starDEmbedding, CartanMatrix.D] at t ⊢
     all_goals split_ifs
     all_goals omega
-  · fin_cases i <;> simp [Matrix.submatrix_apply, starDEmbedding, CartanMatrix.D] at s ⊢
+  · fin_cases i <;>
+      simp [Matrix.submatrix_apply, starIndexEquivD, starDEmbedding, CartanMatrix.D] at s ⊢
     all_goals split_ifs
     all_goals omega
   · fin_cases i <;> fin_cases j <;>
-      simp [Matrix.submatrix_apply, starDEmbedding, CartanMatrix.D] at s t ⊢ <;>
+      simp [Matrix.submatrix_apply, starIndexEquivD, starDEmbedding, CartanMatrix.D] at s t ⊢ <;>
       split_ifs <;> omega
 
 private theorem isFiniteType_starCartanMatrix_one_one (c : ℕ) :
     IsFiniteType (starCartanMatrix ![1, 1, c]) := by
   rw [starCartanMatrix_one_one_eq_D]
-  exact (isFiniteType_cartanMatrix_D _).submatrix (starDEmbedding_injective c)
+  exact (isFiniteType_cartanMatrix_D _).submatrix (starIndexEquivD c).injective
 
 /-! ## Exceptional forks -/
 
@@ -165,62 +179,78 @@ private theorem starEEmbedding_injective (c : ℕ) : Function.Injective (starEEm
     all_goals congr 1
     all_goals exact Fin.ext (by omega)
 
-private theorem starCartanMatrix_one_two_two_eq_E6 :
+/-- The relabelling from the star with arms `(1, 2, c)` to the Bourbaki numbering pattern used for
+the exceptional types when `c` is `2`, `3`, or `4`. -/
+noncomputable def starIndexEquivE (c : ℕ) : StarIndex ![1, 2, c] ≃ Fin (c + 4) :=
+  Equiv.ofBijective (starEEmbedding c) <|
+    (Fintype.bijective_iff_injective_and_card _).2 ⟨starEEmbedding_injective c, by
+      simp only [StarIndex, Fintype.card_option, Fintype.card_sigma, Fintype.card_fin,
+        Fin.sum_univ_three]
+      norm_num [Matrix.cons_val_two]
+      omega⟩
+
+/-- Relabelling the star with arms `(1, 2, 2)` by `starIndexEquivE 2` identifies its Cartan matrix
+with that of type `E₆`. -/
+theorem starCartanMatrix_one_two_two_eq_E6 :
     starCartanMatrix ![1, 2, 2] =
-      CartanMatrix.E₆.submatrix (starEEmbedding 2) (starEEmbedding 2) := by
+      CartanMatrix.E₆.submatrix (starIndexEquivE 2) (starIndexEquivE 2) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₆]
+  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
   · fin_cases j <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₆]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
   · fin_cases i <;> fin_cases s <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₆]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
   · fin_cases i <;> fin_cases j <;> fin_cases s <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₆]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₆]
 
-private theorem starCartanMatrix_one_two_three_eq_E7 :
+/-- Relabelling the star with arms `(1, 2, 3)` by `starIndexEquivE 3` identifies its Cartan matrix
+with that of type `E₇`. -/
+theorem starCartanMatrix_one_two_three_eq_E7 :
     starCartanMatrix ![1, 2, 3] =
-      CartanMatrix.E₇.submatrix (starEEmbedding 3) (starEEmbedding 3) := by
+      CartanMatrix.E₇.submatrix (starIndexEquivE 3) (starIndexEquivE 3) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₇]
+  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
   · fin_cases j <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₇]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
   · fin_cases i <;> fin_cases s <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₇]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
   · fin_cases i <;> fin_cases j <;> fin_cases s <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₇]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₇]
 
-private theorem starCartanMatrix_one_two_four_eq_E8 :
+/-- Relabelling the star with arms `(1, 2, 4)` by `starIndexEquivE 4` identifies its Cartan matrix
+with that of type `E₈`. -/
+theorem starCartanMatrix_one_two_four_eq_E8 :
     starCartanMatrix ![1, 2, 4] =
-      CartanMatrix.E₈.submatrix (starEEmbedding 4) (starEEmbedding 4) := by
+      CartanMatrix.E₈.submatrix (starIndexEquivE 4) (starIndexEquivE 4) := by
   ext v w
   rcases v with _ | ⟨i, s⟩ <;> rcases w with _ | ⟨j, t⟩
-  · norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₈]
+  · norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
   · fin_cases j <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₈]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
   · fin_cases i <;> fin_cases s <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₈]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
   · fin_cases i <;> fin_cases j <;> fin_cases s <;> fin_cases t <;>
-      norm_num [Matrix.submatrix_apply, starEEmbedding, CartanMatrix.E₈]
+      norm_num [Matrix.submatrix_apply, starIndexEquivE, starEEmbedding, CartanMatrix.E₈]
 
 private theorem isFiniteType_starCartanMatrix_one_two_two :
     IsFiniteType (starCartanMatrix ![1, 2, 2]) := by
   rw [starCartanMatrix_one_two_two_eq_E6]
   exact (DynkinType.cartanMatrix_E6 ▸ DynkinType.isFiniteType_cartanMatrix_E6).submatrix
-    (starEEmbedding_injective 2)
+    (starIndexEquivE 2).injective
 
 private theorem isFiniteType_starCartanMatrix_one_two_three :
     IsFiniteType (starCartanMatrix ![1, 2, 3]) := by
   rw [starCartanMatrix_one_two_three_eq_E7]
   exact (DynkinType.cartanMatrix_E7 ▸ DynkinType.isFiniteType_cartanMatrix_E7).submatrix
-    (starEEmbedding_injective 3)
+    (starIndexEquivE 3).injective
 
 private theorem isFiniteType_starCartanMatrix_one_two_four :
     IsFiniteType (starCartanMatrix ![1, 2, 4]) := by
   rw [starCartanMatrix_one_two_four_eq_E8]
   exact (DynkinType.cartanMatrix_E8 ▸ DynkinType.isFiniteType_cartanMatrix_E8).submatrix
-    (starEEmbedding_injective 4)
+    (starIndexEquivE 4).injective
 
 /-- An ordered three-arm star is of finite type exactly for the `A`, `D`, and exceptional `E`
 shapes. Arm lengths count vertices beyond the centre, so an empty first arm gives an `A`-chain,

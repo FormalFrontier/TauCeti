@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Data.Fin.Tuple.Sort
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Basic
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Classification
 import TauCeti.LinearAlgebra.RootSystem.Classification
 
 public section
@@ -109,109 +109,14 @@ section Fork
 
 /-! ### The fork `(1, 1, c)` and type `D` -/
 
-/-- The position of a vertex of the star with arms `(1, 1, c)` in the Bourbaki numbering of type
-`D (c + 3)`. When `1 ≤ c`, the centre is the branch node `c`, the two short arms are the two leaves
-`c + 1` and `c + 2` of the fork, and the long arm runs back down the chain from `c - 1` to `0`.
-When `c = 0`, the absent third arm leaves the three-node chain of the degenerate type `D 3`. -/
-private def forkValD (c : ℕ) : StarIndex (![1, 1, c] : Fin 3 → ℕ) → ℕ
-  | none => c
-  | some v => if (v.1 : ℕ) = 0 then c + 1 else if (v.1 : ℕ) = 1 then c + 2 else c - 1 - (v.2 : ℕ)
-
-private lemma forkValD_none (c : ℕ) : forkValD c none = c := rfl
-
-private lemma forkValD_some (c : ℕ) (v : (i : Fin 3) × Fin ((![1, 1, c] : Fin 3 → ℕ) i)) :
-    forkValD c (some v) =
-      if (v.1 : ℕ) = 0 then c + 1 else if (v.1 : ℕ) = 1 then c + 2 else c - 1 - (v.2 : ℕ) := rfl
-
-/-- Which arm a vertex of the star `(1, 1, c)` lies on, and where along it: the first two arms carry
-their single vertex, and the third carries `c` of them. -/
-private lemma forkArmD (c : ℕ) (v : (i : Fin 3) × Fin ((![1, 1, c] : Fin 3 → ℕ) i)) :
-    ((v.1 : ℕ) = 0 ∧ (v.2 : ℕ) = 0) ∨ ((v.1 : ℕ) = 1 ∧ (v.2 : ℕ) = 0) ∨
-      ((v.1 : ℕ) = 2 ∧ (v.2 : ℕ) < c) := by
-  have key : (![1, 1, c] : Fin 3 → ℕ) v.1 =
-      if (v.1 : ℕ) = 0 then 1 else if (v.1 : ℕ) = 1 then 1 else c := by
-    obtain ⟨i, s⟩ := v; fin_cases i <;> simp
-  have hs : (v.2 : ℕ) < (![1, 1, c] : Fin 3 → ℕ) v.1 := v.2.isLt
-  have hi := v.1.isLt
-  split_ifs at key <;> omega
-
-private lemma forkValD_lt (c : ℕ) (v : StarIndex (![1, 1, c] : Fin 3 → ℕ)) :
-    forkValD c v < c + 3 := by
-  rcases v with _ | v
-  · rw [forkValD_none]; omega
-  · rw [forkValD_some]
-    split_ifs <;> omega
-
-/-- The relabelling of the star `(1, 1, c)` by the Bourbaki indices of type `D (c + 3)`. -/
-private def forkIndexD (c : ℕ) (v : StarIndex (![1, 1, c] : Fin 3 → ℕ)) : Fin (c + 3) :=
-  ⟨forkValD c v, forkValD_lt c v⟩
-
-private lemma forkIndexD_val (c : ℕ) (v : StarIndex (![1, 1, c] : Fin 3 → ℕ)) :
-    (forkIndexD c v : ℕ) = forkValD c v := rfl
-
-private lemma forkIndexD_injective (c : ℕ) : Function.Injective (forkIndexD c) := by
-  rintro v w h
-  have hval : forkValD c v = forkValD c w := congrArg Fin.val h
-  rcases v with _ | v <;> rcases w with _ | w
-  · rfl
-  · exfalso
-    have hw := forkArmD c w
-    rw [forkValD_none, forkValD_some] at hval
-    split_ifs at hval <;> omega
-  · exfalso
-    have hv := forkArmD c v
-    rw [forkValD_none, forkValD_some] at hval
-    split_ifs at hval <;> omega
-  · have hv := forkArmD c v
-    have hw := forkArmD c w
-    rw [forkValD_some, forkValD_some] at hval
-    have hij : (v.1 : ℕ) = (w.1 : ℕ) := by split_ifs at hval <;> omega
-    have hsu : (v.2 : ℕ) = (w.2 : ℕ) := by split_ifs at hval <;> omega
-    obtain ⟨i, s⟩ := v
-    obtain ⟨j, u⟩ := w
-    obtain rfl : i = j := Fin.ext hij
-    simp only [Option.some.injEq, Sigma.mk.injEq, heq_eq_eq, true_and]
-    exact Fin.ext hsu
-
-private lemma card_starIndex_fork (c : ℕ) :
-    Fintype.card (StarIndex (![1, 1, c] : Fin 3 → ℕ)) = Fintype.card (Fin (c + 3)) := by
-  simp only [StarIndex, Fintype.card_option, Fintype.card_sigma, Fintype.card_fin,
-    Fin.sum_univ_three]
-  norm_num [Matrix.cons_val_two]
-  omega
-
-private lemma starCartanMatrix_fork_eq (c : ℕ) (v w : StarIndex (![1, 1, c] : Fin 3 → ℕ)) :
-    starCartanMatrix ![1, 1, c] v w
-      = CartanMatrix.D (c + 3) (forkIndexD c v) (forkIndexD c w) := by
-  rcases v with _ | v <;> rcases w with _ | w
-  · rw [starCartanMatrix_none_none, CartanMatrix.D_apply]
-    simp only [forkIndexD_val, forkValD_none]
-    split_ifs <;> omega
-  · have hw := forkArmD c w
-    rw [starCartanMatrix_none_some, CartanMatrix.D_apply]
-    simp only [forkIndexD_val, forkValD_none, forkValD_some]
-    -- `split_ifs` normalizes some edge conditions to `True ∧ …`, which `omega` cannot read.
-    split_ifs <;> first | omega | simp_all
-  · have hv := forkArmD c v
-    rw [starCartanMatrix_some_none, CartanMatrix.D_apply]
-    simp only [forkIndexD_val, forkValD_none, forkValD_some]
-    split_ifs <;> first | omega | simp_all
-  · have hv := forkArmD c v
-    have hw := forkArmD c w
-    rw [starCartanMatrix_some_some, CartanMatrix.D_apply]
-    simp only [forkIndexD_val, forkValD_some, Fin.ext_iff]
-    split_ifs <;> omega
-
 /-- **The fork of type `D`.** The star with arms of one, one and `c` vertices is the Dynkin diagram
 of type `D (c + 3)`. When `1 ≤ c`, the branch node is Bourbaki index `c`, the two leaves of the fork
 are `c + 1` and `c + 2`, and the long arm is the chain `c - 1, …, 0`. When `c = 0`, the third arm is
 empty and the same formula identifies the resulting chain with the degenerate type `D 3`. -/
 theorem isStarOfType_D (c : ℕ) : IsStarOfType (![1, 1, c] : Fin 3 → ℕ) (D (c + 3)) := by
-  have hbij : Function.Bijective (forkIndexD c) :=
-    (Fintype.bijective_iff_injective_and_card _).2 ⟨forkIndexD_injective c, card_starIndex_fork c⟩
-  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨starIndexEquivD c, fun v w ↦ ?_⟩
   simp only [cartanMatrix_D]
-  exact starCartanMatrix_fork_eq c v w
+  exact congrFun (congrFun (starCartanMatrix_one_one_eq_D c) v) w
 
 end Fork
 
@@ -219,98 +124,25 @@ section Exceptional
 
 /-! ### The exceptional shapes `(1, 2, c)` and the types `E₆`, `E₇`, `E₈` -/
 
-/-- The position of a vertex of the star with arms `(1, 2, c)` in the Bourbaki numbering pattern
-used below for `E₆`, `E₇` and `E₈`, where `c` is respectively `2`, `3` and `4`: the centre is the
-branch node `3`, the short arm is the node `1` hanging off it, the arm of two vertices is `2` then
-`0`, and the long arm is `4, …, c + 3`. -/
-private def forkValE (c : ℕ) : StarIndex (![1, 2, c] : Fin 3 → ℕ) → ℕ
-  | none => 3
-  | some v =>
-      if (v.1 : ℕ) = 0 then 1
-      else if (v.1 : ℕ) = 1 then (if (v.2 : ℕ) = 0 then 2 else 0)
-      else 4 + (v.2 : ℕ)
-
-/-- Which arm a vertex of the star `(1, 2, c)` lies on, and where along it. -/
-private lemma forkArmE (c : ℕ) (v : (i : Fin 3) × Fin ((![1, 2, c] : Fin 3 → ℕ) i)) :
-    ((v.1 : ℕ) = 0 ∧ (v.2 : ℕ) = 0) ∨ ((v.1 : ℕ) = 1 ∧ (v.2 : ℕ) < 2) ∨
-      ((v.1 : ℕ) = 2 ∧ (v.2 : ℕ) < c) := by
-  have key : (![1, 2, c] : Fin 3 → ℕ) v.1 =
-      if (v.1 : ℕ) = 0 then 1 else if (v.1 : ℕ) = 1 then 2 else c := by
-    obtain ⟨i, s⟩ := v; fin_cases i <;> simp
-  have hs : (v.2 : ℕ) < (![1, 2, c] : Fin 3 → ℕ) v.1 := v.2.isLt
-  have hi := v.1.isLt
-  split_ifs at key <;> omega
-
-private lemma forkValE_none (c : ℕ) : forkValE c none = 3 := rfl
-
-private lemma forkValE_some (c : ℕ) (v : (i : Fin 3) × Fin ((![1, 2, c] : Fin 3 → ℕ) i)) :
-    forkValE c (some v) =
-      if (v.1 : ℕ) = 0 then 1
-      else if (v.1 : ℕ) = 1 then (if (v.2 : ℕ) = 0 then 2 else 0)
-      else 4 + (v.2 : ℕ) := rfl
-
-private lemma forkValE_lt (c : ℕ) (v : StarIndex (![1, 2, c] : Fin 3 → ℕ)) :
-    forkValE c v < c + 4 := by
-  rcases v with _ | v
-  · rw [forkValE_none]; omega
-  · have h := forkArmE c v
-    rw [forkValE_some]
-    split_ifs <;> omega
-
-/-- The relabelling of the star `(1, 2, c)` by the Bourbaki indices of the exceptional type of
-rank `c + 4`. -/
-private def forkIndexE (c : ℕ) (v : StarIndex (![1, 2, c] : Fin 3 → ℕ)) : Fin (c + 4) :=
-  ⟨forkValE c v, forkValE_lt c v⟩
-
-private lemma starCartanMatrix_exceptional_E6 (v w : StarIndex (![1, 2, 2] : Fin 3 → ℕ)) :
-    starCartanMatrix ![1, 2, 2] v w = CartanMatrix.E₆ (forkIndexE 2 v) (forkIndexE 2 w) := by
-  rcases v with _ | v <;> rcases w with _ | w
-  · simp only [starCartanMatrix_none_none]; decide
-  · revert w; simp only [starCartanMatrix_none_some]; decide
-  · revert v; simp only [starCartanMatrix_some_none]; decide
-  · revert v w; simp only [starCartanMatrix_some_some]; decide
-
-private lemma starCartanMatrix_exceptional_E7 (v w : StarIndex (![1, 2, 3] : Fin 3 → ℕ)) :
-    starCartanMatrix ![1, 2, 3] v w = CartanMatrix.E₇ (forkIndexE 3 v) (forkIndexE 3 w) := by
-  rcases v with _ | v <;> rcases w with _ | w
-  · simp only [starCartanMatrix_none_none]; decide
-  · revert w; simp only [starCartanMatrix_none_some]; decide
-  · revert v; simp only [starCartanMatrix_some_none]; decide
-  · revert v w; simp only [starCartanMatrix_some_some]; decide
-
-private lemma starCartanMatrix_exceptional_E8 (v w : StarIndex (![1, 2, 4] : Fin 3 → ℕ)) :
-    starCartanMatrix ![1, 2, 4] v w = CartanMatrix.E₈ (forkIndexE 4 v) (forkIndexE 4 w) := by
-  rcases v with _ | v <;> rcases w with _ | w
-  · simp only [starCartanMatrix_none_none]; decide
-  · revert w; simp only [starCartanMatrix_none_some]; decide
-  · revert v; simp only [starCartanMatrix_some_none]; decide
-  · revert v w; simp only [starCartanMatrix_some_some]; decide
-
 /-- **Type `E₆`.** The star with arms of one, two and two vertices is the Dynkin diagram of `E₆`. -/
 theorem isStarOfType_E6 : IsStarOfType (![1, 2, 2] : Fin 3 → ℕ) E6 := by
-  have hbij : Function.Bijective (forkIndexE 2) :=
-    (Fintype.bijective_iff_surjective_and_card _).2 ⟨by decide, by decide⟩
-  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨starIndexEquivE 2, fun v w ↦ ?_⟩
   simp only [cartanMatrix_E6]
-  exact starCartanMatrix_exceptional_E6 v w
+  exact congrFun (congrFun starCartanMatrix_one_two_two_eq_E6 v) w
 
 /-- **Type `E₇`.** The star with arms of one, two and three vertices is the Dynkin diagram of
 `E₇`. -/
 theorem isStarOfType_E7 : IsStarOfType (![1, 2, 3] : Fin 3 → ℕ) E7 := by
-  have hbij : Function.Bijective (forkIndexE 3) :=
-    (Fintype.bijective_iff_surjective_and_card _).2 ⟨by decide, by decide⟩
-  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨starIndexEquivE 3, fun v w ↦ ?_⟩
   simp only [cartanMatrix_E7]
-  exact starCartanMatrix_exceptional_E7 v w
+  exact congrFun (congrFun starCartanMatrix_one_two_three_eq_E7 v) w
 
 /-- **Type `E₈`.** The star with arms of one, two and four vertices is the Dynkin diagram of
 `E₈`. -/
 theorem isStarOfType_E8 : IsStarOfType (![1, 2, 4] : Fin 3 → ℕ) E8 := by
-  have hbij : Function.Bijective (forkIndexE 4) :=
-    (Fintype.bijective_iff_surjective_and_card _).2 ⟨by decide, by decide⟩
-  refine (isStarOfType_iff _ _).mpr ⟨Equiv.ofBijective _ hbij, fun v w ↦ ?_⟩
+  refine (isStarOfType_iff _ _).mpr ⟨starIndexEquivE 4, fun v w ↦ ?_⟩
   simp only [cartanMatrix_E8]
-  exact starCartanMatrix_exceptional_E8 v w
+  exact congrFun (congrFun starCartanMatrix_one_two_four_eq_E8 v) w
 
 end Exceptional
 
