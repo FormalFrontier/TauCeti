@@ -35,13 +35,15 @@ characters give the principal series by ordinary induction from the Borel subgro
 
 The word *torus* is the algebraic-group one only when `E/F` is separable, which over a finite
 field — the setting of the roadmap target — it always is. Degree `2` alone also admits a purely
-inseparable `E/F` (characteristic `2` only), where `E ⊗[F] F̄` is `F̄[X]/(X²)` rather than
-`F̄ × F̄`, so the image of `Eˣ` is a nonreduced group scheme rather than a torus and its
-non-scalar elements are not semisimple. Everything stated below, non-splitness included, is true
-in that case too: no proof here uses separability, so no statement assumes it.
+inseparable `E/F` (characteristic `2` only), where the *algebra* `E ⊗[F] F̄` is the nonreduced
+`F̄[X]/(X²)` rather than `F̄ × F̄`. The image of `Eˣ` is then not a torus: after base change to
+`F̄` it is the unit group of `F̄[X]/(X²)`, which is `Gₘ × Gₐ` — still smooth and reduced as a
+group, but with a nontrivial unipotent part — and its non-scalar elements are not semisimple.
+Everything stated below, non-splitness included, is true in that case too: no proof here uses
+separability, so no statement assumes it.
 
 "Non-split" is the assertion that, away from the scalars, the torus is not conjugate into the Borel
-subgroup: `TauCeti.GL2NonSplitTorus.conj_notMem_GL2Borel` says that if `x : Eˣ` does not lie in `F`
+subgroup: `TauCeti.GL2NonSplitTorus.conj_notMem_gl2Borel` says that if `x : Eˣ` does not lie in `F`
 then no conjugate of its matrix is upper triangular. Equivalently the matrix has no eigenvalue in
 `F` — over a finite field its eigenvalues are a conjugate pair in `E ∖ F` — which is what makes
 these the **elliptic** conjugacy classes of `GL₂(𝔽_q)`. The proof is that the determinant of
@@ -64,9 +66,9 @@ choice, following the convention of
 
 * `TauCeti.GL2NonSplitTorus.natCard_eq`: the torus has `q² - 1` elements over a finite field with
   `q` elements.
-* `TauCeti.GL2NonSplitTorus.conj_notMem_GL2Borel`: an element of the torus not coming from `F` has
+* `TauCeti.GL2NonSplitTorus.conj_notMem_gl2Borel`: an element of the torus not coming from `F` has
   no conjugate in the Borel subgroup, and
-  `TauCeti.GL2NonSplitTorus.exists_forall_conj_notMem_GL2Borel`: such an element exists, so the
+  `TauCeti.GL2NonSplitTorus.exists_forall_conj_notMem_gl2Borel`: such an element exists, so the
   torus is not conjugate into the Borel subgroup. What these contradict is
   `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`, that a matrix with an upper-triangular
   conjugate has an eigenvalue in the base ring.
@@ -125,20 +127,20 @@ theorem mem_iff {g : GL (Fin 2) F} :
 /-- The matrix underlying `GL2NonSplitTorusHom F E hE x` is multiplication by `x` in the basis
 `TauCeti.nonSplitTorusBasis`. -/
 @[simp, grind =]
-theorem coe_GL2NonSplitTorusHom (x : Eˣ) :
+theorem coe_gl2NonSplitTorusHom (x : Eˣ) :
     (GL2NonSplitTorusHom F E hE x : Matrix (Fin 2) (Fin 2) F) =
       Algebra.leftMulMatrix (nonSplitTorusBasis F E hE) (x : E) :=
   coe_unitsLeftMulMatrix (nonSplitTorusBasis F E hE) x
 
 /-- Distinct elements of `Eˣ` give distinct matrices. -/
-theorem GL2NonSplitTorusHom_injective : Function.Injective (GL2NonSplitTorusHom F E hE) :=
+theorem gl2NonSplitTorusHom_injective : Function.Injective (GL2NonSplitTorusHom F E hE) :=
   unitsLeftMulMatrix_injective _
 
 /-- **The non-split torus is a copy of `Eˣ`**: the embedding `TauCeti.GL2NonSplitTorusHom` is
 injective, so it corestricts to a multiplicative equivalence from `Eˣ` onto the torus. This is what
 transports a character of `Eˣ` to a character of the torus. -/
 noncomputable def unitsEquiv : Eˣ ≃* GL2NonSplitTorus F E hE :=
-  MonoidHom.ofInjective (GL2NonSplitTorusHom_injective hE)
+  MonoidHom.ofInjective (gl2NonSplitTorusHom_injective hE)
 
 /-- `TauCeti.GL2NonSplitTorus.unitsEquiv` is `TauCeti.GL2NonSplitTorusHom` on the nose. -/
 @[simp, grind =]
@@ -151,19 +153,19 @@ instance : IsMulCommutative (GL2NonSplitTorus F E hE) :=
   Subgroup.range_isMulCommutative (GL2NonSplitTorusHom F E hE)
 
 /-- The determinant of a torus element is the norm of the field element it comes from. -/
-theorem val_det_GL2NonSplitTorusHom (x : Eˣ) :
+theorem val_det_gl2NonSplitTorusHom (x : Eˣ) :
     (Matrix.GeneralLinearGroup.det (GL2NonSplitTorusHom F E hE x) : F) = Algebra.norm F (x : E) :=
   val_det_unitsLeftMulMatrix _ x
 
 /-- The trace of a torus element is the trace of the field element it comes from. -/
-theorem trace_GL2NonSplitTorusHom (x : Eˣ) :
+theorem trace_gl2NonSplitTorusHom (x : Eˣ) :
     Matrix.trace (GL2NonSplitTorusHom F E hE x : Matrix (Fin 2) (Fin 2) F) =
       Algebra.trace F E (x : E) :=
   trace_unitsLeftMulMatrix _ x
 
 /-- A unit of `F` is sent to the corresponding scalar matrix. -/
 @[simp, grind =]
-theorem GL2NonSplitTorusHom_map_algebraMap (a : Fˣ) :
+theorem gl2NonSplitTorusHom_map_algebraMap (a : Fˣ) :
     GL2NonSplitTorusHom F E hE (Units.map (algebraMap F E : F →* E) a) =
       Matrix.GeneralLinearGroup.scalar (Fin 2) a :=
   unitsLeftMulMatrix_map_algebraMap _ a
@@ -171,7 +173,7 @@ theorem GL2NonSplitTorusHom_map_algebraMap (a : Fˣ) :
 /-- The scalar matrices lie in the non-split torus: it contains the centre of `GL₂(F)`. -/
 theorem scalar_mem (a : Fˣ) :
     Matrix.GeneralLinearGroup.scalar (Fin 2) a ∈ GL2NonSplitTorus F E hE :=
-  ⟨_, GL2NonSplitTorusHom_map_algebraMap hE a⟩
+  ⟨_, gl2NonSplitTorusHom_map_algebraMap hE a⟩
 
 /-- **The order of the non-split torus**: it has one element for each nonzero element of `E`, so
 over a field with `q` elements it has `q² - 1` of them. (Over an infinite `F` both sides are `0`,
@@ -195,23 +197,23 @@ theorem det_sub_algebraMap_ne_zero {x : E} (hx : x ∉ Set.range (algebraMap F E
 /-- **The torus is non-split**: if `x : Eˣ` does not come from `F`, then no conjugate of the
 corresponding matrix is upper triangular. Equivalently, that matrix has no eigenvalue in `F`, which
 over a finite field is what makes its conjugacy class elliptic. -/
-theorem conj_notMem_GL2Borel {x : Eˣ} (hx : (x : E) ∉ Set.range (algebraMap F E))
+theorem conj_notMem_gl2Borel {x : Eˣ} (hx : (x : E) ∉ Set.range (algebraMap F E))
     (g : GL (Fin 2) F) :
     g * GL2NonSplitTorusHom F E hE x * g⁻¹ ∉ GL2Borel F := fun hmem => by
   obtain ⟨a, ha⟩ := GL2Borel.exists_det_sub_algebraMap_eq_zero hmem
-  rw [coe_GL2NonSplitTorusHom] at ha
+  rw [coe_gl2NonSplitTorusHom] at ha
   exact det_sub_algebraMap_ne_zero hE hx a ha
 
 /-- **The non-split torus is not conjugate into the Borel subgroup**: it contains an element no
 conjugate of which is upper triangular. This is exactly what distinguishes it from the split torus
 of diagonal matrices, which lies in the Borel subgroup outright, and it is why the cuspidal
 representations attached to it are absent from every principal series. -/
-theorem exists_forall_conj_notMem_GL2Borel :
+theorem exists_forall_conj_notMem_gl2Borel :
     ∃ u ∈ GL2NonSplitTorus F E hE, ∀ g : GL (Fin 2) F, g * u * g⁻¹ ∉ GL2Borel F := by
   have : Algebra.IsQuadraticExtension F E := ⟨hE⟩
   obtain ⟨x, hx⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap F E
   have hx0 : x ≠ 0 := fun h => hx ⟨0, by rw [map_zero, h]⟩
-  exact ⟨GL2NonSplitTorusHom F E hE (Units.mk0 x hx0), ⟨_, rfl⟩, conj_notMem_GL2Borel hE hx⟩
+  exact ⟨GL2NonSplitTorusHom F E hE (Units.mk0 x hx0), ⟨_, rfl⟩, conj_notMem_gl2Borel hE hx⟩
 
 end GL2NonSplitTorus
 
