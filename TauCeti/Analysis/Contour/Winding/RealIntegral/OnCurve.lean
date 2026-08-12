@@ -212,16 +212,36 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
     fun t₀ (ht₀ : t₀ ∈ T) =>
       exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀)
         (hT_mem.mp ht₀).2
-  -- The crossing regularity: a `C^{1,1}` neighborhood on each side of each crossing (possibly a
-  -- corner, so the two sides may disagree), and the boundedness of the real winding integrand
-  -- each side already buys on a (possibly smaller) one-sided window. Each side's forced non-zero
-  -- velocity is not assumed here -- `IsPwC1ImmersionOn` already forces it.
-  choose! εR hεR_pos _ hdiffR hlipR εL hεL_pos _ hdiffL hlipL using fun t₀ (ht₀ : t₀ ∈ T) =>
-    hasLipschitzDerivOnEachSideAt_iff.mp (hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
+  -- The crossing regularity: a one-sided Lipschitz-derivative window on each side of each
+  -- crossing (possibly a corner, so the two sides may disagree).
+  choose! εR_raw hεR_raw_pos KR hlipR_raw εL_raw hεL_raw_pos KL hlipL_raw
+    using fun t₀ (ht₀ : t₀ ∈ T) =>
+      hasLipschitzDerivOnEachSideAt_iff.mp (hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2)
   have h_Ico : ∀ t ∈ T, t ∈ Ico (min a b) (max a b) := fun t ht => by
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1.le, (h_Ioo t ht).2⟩
   have h_Ioc : ∀ t ∈ T, t ∈ Ioc (min a b) (max a b) := fun t ht => by
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1, (h_Ioo t ht).2.le⟩
+  -- Each side's Lipschitz window need not itself avoid every breakpoint of the immersion, so
+  -- shrink it to a piece that does, picking up differentiability there for free -- the redundant
+  -- differentiability data `HasLipschitzDerivOnEachSideAt` used to ask callers to supply.
+  have h_shrink_right : ∀ t₀ ∈ T, ∃ εR' > 0, εR' < εR_raw t₀ ∧
+      DifferentiableOn ℝ γ (Icc t₀ (t₀ + εR')) ∧
+      LipschitzOnWith (KR t₀) (derivWithin γ (Icc t₀ (t₀ + εR'))) (Icc t₀ (t₀ + εR')) := by
+    intro t₀ ht₀
+    obtain ⟨d, htd, hdD, hdiffOn, hlip'⟩ := h_imm.exists_lipschitzOnWith_derivWithin_shrink_right
+      (h_Ico t₀ ht₀) (by linarith [hεR_raw_pos t₀ ht₀] : t₀ < t₀ + εR_raw t₀) (hlipR_raw t₀ ht₀)
+    exact ⟨d - t₀, by linarith, by linarith,
+      by simpa only [add_sub_cancel] using hdiffOn, by simpa only [add_sub_cancel] using hlip'⟩
+  have h_shrink_left : ∀ t₀ ∈ T, ∃ εL' > 0, εL' < εL_raw t₀ ∧
+      DifferentiableOn ℝ γ (Icc (t₀ - εL') t₀) ∧
+      LipschitzOnWith (KL t₀) (derivWithin γ (Icc (t₀ - εL') t₀)) (Icc (t₀ - εL') t₀) := by
+    intro t₀ ht₀
+    obtain ⟨d, hcd, hdt, hdiffOn, hlip'⟩ := h_imm.exists_lipschitzOnWith_derivWithin_shrink_left
+      (h_Ioc t₀ ht₀) (by linarith [hεL_raw_pos t₀ ht₀] : t₀ - εL_raw t₀ < t₀) (hlipL_raw t₀ ht₀)
+    exact ⟨t₀ - d, by linarith, by linarith,
+      by simpa only [sub_sub_cancel] using hdiffOn, by simpa only [sub_sub_cancel] using hlip'⟩
+  choose! εR hεR_pos _ hdiffR hlipR using h_shrink_right
+  choose! εL hεL_pos _ hdiffL hlipL using h_shrink_left
   -- `_corner` gives one bounded symmetric window per crossing directly, so the one-sided
   -- `_right`/`_left` windows never need computing and re-combining by hand.
   choose! ρ_lip hρ_lip_pos hρ_lip_lt hρ_lip_bdd using fun t₀ (ht₀ : t₀ ∈ T) =>

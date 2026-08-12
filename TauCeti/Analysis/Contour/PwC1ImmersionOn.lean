@@ -73,6 +73,8 @@ namespace TauCeti.Contour
 
 open Filter Set Topology
 
+open scoped NNReal
+
 variable {γ : ℝ → ℂ} {a b : ℝ}
 
 /-- **Piecewise-`C¹` immersion on the interval between `a` and `b`.** The curve `γ : ℝ → ℂ` is
@@ -251,6 +253,94 @@ theorem IsPwC1ImmersionOn.derivWithin_ne_zero_left (h : IsPwC1ImmersionOn γ a b
       exact propext h_iff)
   rw [heq]
   exact hne' t (right_mem_Icc.mpr hlt'.le)
+
+/-- **Shrinking a one-sided Lipschitz-derivative window to fit inside a breakpoint-free piece,
+from the right.** If `derivWithin γ` is `K`-Lipschitz on `[t₀, D]`, the immersion supplies a
+smaller `[t₀, d] ⊆ [t₀, D]` on which `γ` is differentiable and `derivWithin γ` is the *same*
+`K`-Lipschitz function -- not merely a restriction of the wider one, since `derivWithin` a priori
+depends on the underlying set. Away from the shared right endpoint `d`, both windows agree with
+the ordinary two-sided `deriv γ` directly (`derivWithin_of_mem_nhds`); at `d` itself, `d` is kept
+strictly inside a further breakpoint-free piece the immersion supplies, so `γ` has an honest
+two-sided derivative there too, and both windows' `derivWithin` again equal it. -/
+theorem IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right
+    (h : IsPwC1ImmersionOn γ a b) {t₀ D : ℝ} {K : ℝ≥0} (ht₀ : t₀ ∈ Ico (min a b) (max a b))
+    (htD : t₀ < D) (hlip : LipschitzOnWith K (derivWithin γ (Icc t₀ D)) (Icc t₀ D)) :
+    ∃ d, t₀ < d ∧ d < D ∧ DifferentiableOn ℝ γ (Icc t₀ d) ∧
+      LipschitzOnWith K (derivWithin γ (Icc t₀ d)) (Icc t₀ d) := by
+  obtain ⟨dR, hltR, -, hC1R, -⟩ := h.exists_Icc_piece_right ht₀
+  set d : ℝ := t₀ + min (D - t₀) (dR - t₀) / 2 with hd_def
+  have hρ_pos : 0 < min (D - t₀) (dR - t₀) := lt_min (by linarith) (by linarith)
+  have htd : t₀ < d := by rw [hd_def]; linarith
+  have hdD : d < D := by
+    have := min_le_left (D - t₀) (dR - t₀); rw [hd_def]; linarith
+  have hddR : d < dR := by
+    have := min_le_right (D - t₀) (dR - t₀); rw [hd_def]; linarith
+  have hdiffOnR : DifferentiableOn ℝ γ (Icc t₀ dR) := hC1R.differentiableOn (by norm_num)
+  have hdiffOn : DifferentiableOn ℝ γ (Icc t₀ d) := hdiffOnR.mono (Icc_subset_Icc le_rfl hddR.le)
+  have hdiffAt_d : DifferentiableAt ℝ γ d :=
+    (hdiffOnR d ⟨htd.le, hddR.le⟩).differentiableAt (Icc_mem_nhds htd hddR)
+  have hEqOn : Set.EqOn (derivWithin γ (Icc t₀ d)) (derivWithin γ (Icc t₀ D)) (Icc t₀ d) := by
+    intro x hx
+    rcases eq_or_lt_of_le hx.1 with heq | hlt
+    · rw [← heq]
+      apply derivWithin_congr_set
+      filter_upwards [Iio_mem_nhds (lt_min htd htD)] with y hy
+      rw [mem_Iio] at hy
+      have h_iff : y ∈ Icc t₀ d ↔ y ∈ Icc t₀ D := by
+        simp only [mem_Icc]
+        exact ⟨fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_right d D]⟩,
+          fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d D]⟩⟩
+      exact propext h_iff
+    · rcases eq_or_lt_of_le hx.2 with heq2 | hlt2
+      · rw [heq2, derivWithin_of_mem_nhds (Icc_mem_nhds htd hdD),
+          (hdiffAt_d.hasDerivAt.hasDerivWithinAt).derivWithin
+            ((uniqueDiffOn_Icc htd) d (right_mem_Icc.mpr htd.le))]
+      · rw [derivWithin_of_mem_nhds (Icc_mem_nhds hlt hlt2),
+          derivWithin_of_mem_nhds (Icc_mem_nhds hlt (hlt2.trans hdD))]
+  exact ⟨d, htd, hdD, hdiffOn, fun x hx y hy => by
+    rw [hEqOn hx, hEqOn hy]; exact hlip (Icc_subset_Icc le_rfl hdD.le hx)
+      (Icc_subset_Icc le_rfl hdD.le hy)⟩
+
+/-- **The mirror of `IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`, from the
+left.** -/
+theorem IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_left
+    (h : IsPwC1ImmersionOn γ a b) {c t₀ : ℝ} {K : ℝ≥0} (ht₀ : t₀ ∈ Ioc (min a b) (max a b))
+    (hct : c < t₀) (hlip : LipschitzOnWith K (derivWithin γ (Icc c t₀)) (Icc c t₀)) :
+    ∃ d, c < d ∧ d < t₀ ∧ DifferentiableOn ℝ γ (Icc d t₀) ∧
+      LipschitzOnWith K (derivWithin γ (Icc d t₀)) (Icc d t₀) := by
+  obtain ⟨cL, hltL, -, hC1L, -⟩ := h.exists_Icc_piece_left ht₀
+  set d : ℝ := t₀ - min (t₀ - c) (t₀ - cL) / 2 with hd_def
+  have hρ_pos : 0 < min (t₀ - c) (t₀ - cL) := lt_min (by linarith) (by linarith)
+  have hdt : d < t₀ := by rw [hd_def]; linarith
+  have hcd : c < d := by
+    have := min_le_left (t₀ - c) (t₀ - cL); rw [hd_def]; linarith
+  have hcLd : cL < d := by
+    have := min_le_right (t₀ - c) (t₀ - cL); rw [hd_def]; linarith
+  have hdiffOnL : DifferentiableOn ℝ γ (Icc cL t₀) := hC1L.differentiableOn (by norm_num)
+  have hdiffOn : DifferentiableOn ℝ γ (Icc d t₀) := hdiffOnL.mono (Icc_subset_Icc hcLd.le le_rfl)
+  have hdiffAt_d : DifferentiableAt ℝ γ d :=
+    (hdiffOnL d ⟨hcLd.le, hdt.le⟩).differentiableAt (Icc_mem_nhds hcLd hdt)
+  have hEqOn : Set.EqOn (derivWithin γ (Icc d t₀)) (derivWithin γ (Icc c t₀)) (Icc d t₀) := by
+    intro x hx
+    rcases eq_or_lt_of_le hx.2 with heq | hlt
+    · rw [heq]
+      apply derivWithin_congr_set
+      filter_upwards [Ioi_mem_nhds (max_lt hct hdt)] with y hy
+      rw [mem_Ioi] at hy
+      have h_iff : y ∈ Icc d t₀ ↔ y ∈ Icc c t₀ := by
+        simp only [mem_Icc]
+        exact ⟨fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c d], h2⟩,
+          fun ⟨_, h2⟩ => ⟨by linarith [le_max_right c d], h2⟩⟩
+      exact propext h_iff
+    · rcases eq_or_lt_of_le hx.1 with heq2 | hlt2
+      · rw [← heq2, derivWithin_of_mem_nhds (Icc_mem_nhds hcd hdt),
+          (hdiffAt_d.hasDerivAt.hasDerivWithinAt).derivWithin
+            ((uniqueDiffOn_Icc hdt) d (left_mem_Icc.mpr hdt.le))]
+      · rw [derivWithin_of_mem_nhds (Icc_mem_nhds hlt2 hlt),
+          derivWithin_of_mem_nhds (Icc_mem_nhds (hcd.trans hlt2) hlt)]
+  exact ⟨d, hcd, hdt, hdiffOn, fun x hx y hy => by
+    rw [hEqOn hx, hEqOn hy]; exact hlip (Icc_subset_Icc hcd.le le_rfl hx)
+      (Icc_subset_Icc hcd.le le_rfl hy)⟩
 
 /-- **Non-zero one-sided tangent of an immersion, from the right.** At every parameter
 `t₀ ∈ [min, max)` a piecewise-`C¹` immersion has a non-zero limit of `deriv γ` from the right —

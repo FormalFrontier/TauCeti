@@ -45,16 +45,15 @@ open scoped NNReal
 closed window ending or starting at `t`, on each side (a `KR`/`εR`-window to the right, a
 `KL`/`εL`-window to the left) — the two sides need not agree, so `t` may coincide with a
 breakpoint of the immersion. Packages the hypotheses of `Winding.LipschitzBoundedIntegrand`'s
-`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner`. An opaque
-`def`, not an `abbrev`: consumers destructure it via `hasLipschitzDerivOnEachSideAt_iff`
-below rather than unfolding it directly. -/
+`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner` other than
+differentiability, which a caller who already has a piecewise-`C¹` immersion in hand gets for
+free from `PwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`/`_left` and so should
+not need to separately supply. An opaque `def`, not an `abbrev`: consumers destructure it via
+`hasLipschitzDerivOnEachSideAt_iff` below rather than unfolding it directly. -/
 def HasLipschitzDerivOnEachSideAt (γ : ℝ → ℂ) (t : ℝ) : Prop :=
-  ∃ εR > 0, ∃ KR : ℝ≥0,
-    DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-      (Icc t (t + εR)) ∧
+  ∃ εR > 0, ∃ KR : ℝ≥0, LipschitzOnWith KR (derivWithin γ (Icc t (t + εR))) (Icc t (t + εR)) ∧
     ∃ εL > 0, ∃ KL : ℝ≥0,
-    DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-      (Icc (t - εL) t)
+    LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t)) (Icc (t - εL) t)
 
 /-- **The characteristic iff for `HasLipschitzDerivOnEachSideAt`.** Equates the opaque `def` above
 with its displayed one-sided witness proposition, exposing the `εR`/`KR`-window to the right and
@@ -63,27 +62,22 @@ interface a caller (e.g. via `choose!`) uses to name the witnesses, or to build 
 them directly, rather than unfolding the `def`. -/
 @[simp] theorem hasLipschitzDerivOnEachSideAt_iff {γ : ℝ → ℂ} {t : ℝ} :
     HasLipschitzDerivOnEachSideAt γ t ↔
-    ∃ εR > 0, ∃ KR : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-        (Icc t (t + εR)) ∧
+    ∃ εR > 0, ∃ KR : ℝ≥0, LipschitzOnWith KR (derivWithin γ (Icc t (t + εR))) (Icc t (t + εR)) ∧
       ∃ εL > 0, ∃ KL : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-        (Icc (t - εL) t) :=
+      LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t)) (Icc (t - εL) t) :=
   Iff.rfl
 
 /-- **Introducing `HasLipschitzDerivOnEachSideAt` from one-sided `C^{1,1}` data on arbitrary
-pieces.** If `γ` is differentiable with Lipschitz `derivWithin` on `[c, t]` and on `[t, d]`, `t`
-itself has a Lipschitz derivative on each side -- the defining `εR`/`εL`-windows are just these
-same pieces, `εR := d - t` and `εL := t - c`. A caller whose one-sided pieces are wider than it
-ultimately needs can restrict along `DifferentiableOn.mono`/`LipschitzOnWith.mono` first, since
-both hypotheses are monotone in the underlying set. -/
+pieces.** If `derivWithin γ` is Lipschitz on `[c, t]` and on `[t, d]`, `t` itself has a Lipschitz
+derivative on each side -- the defining `εR`/`εL`-windows are just these same pieces, `εR := d - t`
+and `εL := t - c`. A caller whose one-sided pieces are wider than it ultimately needs can restrict
+along `LipschitzOnWith.mono` first, since the hypothesis is monotone in the underlying set. -/
 theorem hasLipschitzDerivOnEachSideAt_of_lipschitzOnWith {γ : ℝ → ℂ} {c t d : ℝ} {KR KL : ℝ≥0}
-    (hct : c < t) (htd : t < d) (hdiffR : DifferentiableOn ℝ γ (Icc t d))
+    (hct : c < t) (htd : t < d)
     (hlipR : LipschitzOnWith KR (derivWithin γ (Icc t d)) (Icc t d))
-    (hdiffL : DifferentiableOn ℝ γ (Icc c t))
     (hlipL : LipschitzOnWith KL (derivWithin γ (Icc c t)) (Icc c t)) :
     HasLipschitzDerivOnEachSideAt γ t := by
-  refine ⟨d - t, by linarith, KR, ?_, ?_, t - c, by linarith, KL, ?_, ?_⟩ <;>
+  refine ⟨d - t, by linarith, KR, ?_, t - c, by linarith, KL, ?_⟩ <;>
     simpa only [add_sub_cancel, sub_sub_cancel]
 
 /-- **Introducing `HasLipschitzDerivOnEachSideAt` from `C²` data.** A `γ` twice differentiable on
@@ -103,9 +97,7 @@ theorem hasLipschitzDerivOnEachSideAt_of_contDiffOn {γ : ℝ → ℂ} {t ε : �
   obtain ⟨KL, hKL⟩ := ContDiffOn.exists_lipschitzOnWith
     (ContDiffOn.derivWithin hγL huL (m := 1) (by norm_num)) one_ne_zero (convex_Icc _ _)
     isCompact_Icc
-  exact hasLipschitzDerivOnEachSideAt_of_lipschitzOnWith (by linarith) (by linarith)
-    (ContDiffOn.differentiableOn hγR (by norm_num)) hKR
-    (ContDiffOn.differentiableOn hγL (by norm_num)) hKL
+  exact hasLipschitzDerivOnEachSideAt_of_lipschitzOnWith (by linarith) (by linarith) hKR hKL
 
 end TauCeti.Contour
 
