@@ -44,6 +44,9 @@ theorem, whose singularities lie *off* the curve, needs only `IsPiecewiseC1On`.)
 * `Contour.IsPwC1ImmersionOn.of_breakpoints`, `Contour.IsPwC1ImmersionOn.exists_breakpoints` —
   introduce the predicate from, and eliminate it to, a finite breakpoint witness.
 * `Contour.isPwC1ImmersionOn_comm`, `Contour.IsPwC1ImmersionOn.symm` — endpoint-swap invariance.
+* `Contour.IsPwC1ImmersionOn.derivWithin_ne_zero_right`,
+  `Contour.IsPwC1ImmersionOn.derivWithin_ne_zero_left` — a crossing's one-sided velocity is
+  non-zero on any window ending or starting there, from the immersion alone.
 * `Contour.IsPwC1ImmersionOn.exists_deriv_slope_right_limit`,
   `Contour.IsPwC1ImmersionOn.exists_deriv_slope_left_limit` — the same one-sided tangent as the
   limit of both `deriv γ` and the chord slope `(γ t - γ t₀) / (t - t₀)`; the chord form is what
@@ -216,40 +219,34 @@ this alongside a `C^{1,1}` window at a crossing: `IsPwC1ImmersionOn` already for
 does not depend on which (`C¹` on `[t, d]`) right-piece it is computed against, since both agree
 with the same `HasDerivWithinAt` witness on their common initial segment. -/
 theorem IsPwC1ImmersionOn.derivWithin_ne_zero_right (h : IsPwC1ImmersionOn γ a b) {t d : ℝ}
-    (ht₀ : t ∈ Ico (min a b) (max a b))
-    (hdiff : DifferentiableWithinAt ℝ γ (Icc t d) t) (htd : t < d) :
+    (ht₀ : t ∈ Ico (min a b) (max a b)) (htd : t < d) :
     derivWithin γ (Icc t d) t ≠ 0 := by
   obtain ⟨d', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_right ht₀
-  have hte : t < min d d' := lt_min htd hlt'
-  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc t d) t) (Icc t (min d d')) t :=
-    hdiff.hasDerivWithinAt.mono (Icc_subset_Icc le_rfl (min_le_left d d'))
-  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc t d') t) (Icc t (min d d')) t :=
-    ((hC1'.differentiableOn one_ne_zero) t (left_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc le_rfl (min_le_right d d'))
-  have hud : UniqueDiffWithinAt ℝ (Icc t (min d d')) t :=
-    (uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le)
   have heq : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
-    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
+    derivWithin_congr_set (by
+      filter_upwards [Iio_mem_nhds (lt_min htd hlt')] with y hy
+      rw [mem_Iio] at hy
+      exact propext (show y ∈ Icc t d ↔ y ∈ Icc t d' by
+        simp only [mem_Icc]
+        exact ⟨fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_right d d']⟩,
+          fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d d']⟩⟩))
   rw [heq]
   exact hne' t (left_mem_Icc.mpr hlt'.le)
 
 /-- **A crossing's one-sided velocity is non-zero, from the immersion alone, from the left.** The
 mirror of `IsPwC1ImmersionOn.derivWithin_ne_zero_right` above. -/
 theorem IsPwC1ImmersionOn.derivWithin_ne_zero_left (h : IsPwC1ImmersionOn γ a b) {c t : ℝ}
-    (ht₀ : t ∈ Ioc (min a b) (max a b))
-    (hdiff : DifferentiableWithinAt ℝ γ (Icc c t) t) (hct : c < t) :
+    (ht₀ : t ∈ Ioc (min a b) (max a b)) (hct : c < t) :
     derivWithin γ (Icc c t) t ≠ 0 := by
   obtain ⟨c', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_left ht₀
-  have het : max c c' < t := max_lt hct hlt'
-  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc c t) t) (Icc (max c c') t) t :=
-    hdiff.hasDerivWithinAt.mono (Icc_subset_Icc (le_max_left c c') le_rfl)
-  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc c' t) t) (Icc (max c c') t) t :=
-    ((hC1'.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc (le_max_right c c') le_rfl)
-  have hud : UniqueDiffWithinAt ℝ (Icc (max c c') t) t :=
-    (uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le)
   have heq : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
-    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
+    derivWithin_congr_set (by
+      filter_upwards [Ioi_mem_nhds (max_lt hct hlt')] with y hy
+      rw [mem_Ioi] at hy
+      exact propext (show y ∈ Icc c t ↔ y ∈ Icc c' t by
+        simp only [mem_Icc]
+        exact ⟨fun ⟨_, h2⟩ => ⟨by linarith [le_max_right c c'], h2⟩,
+          fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c c'], h2⟩⟩))
   rw [heq]
   exact hne' t (right_mem_Icc.mpr hlt'.le)
 

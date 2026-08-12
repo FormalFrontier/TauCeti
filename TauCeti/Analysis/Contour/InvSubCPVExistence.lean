@@ -157,7 +157,7 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
         fun t _ => one_pos)
     all_goals simp [hT_empty]
-  · choose! R hR_pos L_R L_L hL_R hL_L hL_tend_R hL_tend_L h_spec using
+  · choose! R hR_pos _ _ _ _ _ _ h_spec using
       fun t₀ (ht₀ : t₀ ∈ T) =>
         exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
     -- one radius serving every crossing at once, below each per-crossing radius `R t`

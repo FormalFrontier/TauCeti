@@ -10,8 +10,9 @@ public import Mathlib.Analysis.Complex.Basic
 /-!
 # The real winding integrand
 
-This file defines the pointwise real winding integrand and records its coordinate formula and
-invariance under simultaneous nonzero complex scaling.
+This file defines the pointwise real winding integrand and records its coordinate formula,
+invariance under simultaneous nonzero complex scaling, velocity negation, vanishing at the
+origin, and a crude bound away from the origin.
 
 ## Provenance
 
@@ -60,5 +61,14 @@ theorem realWindingIntegrand_neg_right (z v : ℂ) :
 /-- The real winding integrand vanishes at the origin, for any velocity: `0⁻¹ = 0` in `ℂ`. -/
 theorem realWindingIntegrand_zero_left (v : ℂ) : realWindingIntegrand 0 v = 0 := by
   simp
+
+/-- **A crude bound on the real winding integrand away from its singularity.** `realWindingIntegrand
+z v = (z⁻¹ * v).im`, whose absolute value is at most `‖z⁻¹ * v‖ = ‖v‖ / ‖z‖ ≤ ‖v‖ / m`. -/
+theorem abs_realWindingIntegrand_le_div_of_le_norm {z v : ℂ} {m : ℝ} (hm : 0 < m)
+    (hz : m ≤ ‖z‖) : |realWindingIntegrand z v| ≤ ‖v‖ / m := by
+  rw [realWindingIntegrand_def]
+  calc |(z⁻¹ * v).im| ≤ ‖z⁻¹ * v‖ := Complex.abs_im_le_norm _
+    _ = ‖v‖ / ‖z‖ := by rw [norm_mul, norm_inv, mul_comm, ← div_eq_mul_inv]
+    _ ≤ ‖v‖ / m := by gcongr
 
 end TauCeti.Contour
