@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Idempotents
 public import TauCeti.RepresentationTheory.CharacterTable.CentralIdempotent
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
 public import TauCeti.RepresentationTheory.CharacterTable.Completeness
@@ -112,18 +111,6 @@ theorem centralCharacter_primitiveCentralIdempotentCenter_eq_zero {i j : ι} (hi
   rw [centralCharacter_primitiveCentralIdempotentCenter,
     ite_eq_right (fun h => hij ((nonempty_equiv_iff_eq ρ hind).mp h))]
 
-/-- **The idempotents of the family are pairwise distinct**: two equal ones would be orthogonal to
-themselves, hence zero, and a primitive central idempotent is nonzero. -/
-theorem primitiveCentralIdempotent_injective :
-    Function.Injective fun i => primitiveCentralIdempotent (ρ i) := by
-  intro i j hij
-  have hij' : primitiveCentralIdempotent (ρ i) = primitiveCentralIdempotent (ρ j) := hij
-  by_contra hne
-  refine primitiveCentralIdempotent_ne_zero (ρ i) ?_
-  rw [← (isIdempotentElem_primitiveCentralIdempotent (ρ i)).eq]
-  nth_rewrite 2 [hij']
-  exact primitiveCentralIdempotent_mul_eq_zero ρ hind hne
-
 /-- **The idempotents of the family are a family of orthogonal idempotents.** -/
 theorem orthogonalIdempotents_primitiveCentralIdempotent :
     OrthogonalIdempotents fun i => primitiveCentralIdempotent (ρ i) where
@@ -138,6 +125,11 @@ theorem linearIndependent_primitiveCentralIdempotent :
   linearIndependent_of_orthogonalIdempotents
     (orthogonalIdempotents_primitiveCentralIdempotent ρ hind)
     fun i => primitiveCentralIdempotent_ne_zero (ρ i)
+
+/-- **The idempotents of the family are pairwise distinct**, being linearly independent. -/
+theorem primitiveCentralIdempotent_injective :
+    Function.Injective fun i => primitiveCentralIdempotent (ρ i) :=
+  (linearIndependent_primitiveCentralIdempotent ρ hind).injective
 
 /-- The primitive central idempotents of the family are linearly independent in the centre of the
 group algebra, the inclusion of the centre being injective. -/
