@@ -28,6 +28,8 @@ spaces obeys: a root vector shifts it by the corresponding root.
   universal property of the span: it is contained in a given submodule exactly when each of the
   weight spaces it is spanned by is. `TauCeti.genWeightSpaceSpan_mono` is the resulting monotonicity
   in the indexing set.
+* `TauCeti.genWeightSpaceSpan_eq_iSup` exhibits the span as a supremum, so that a member can be
+  taken apart by `LieSubmodule.iSup_induction` without unfolding the definition.
 * `TauCeti.lie_mem_genWeightSpaceSpan`: for a nilpotent subalgebra `H` of a Lie algebra `L` acting
   on `M`, a vector in the root space of `α` carries the span of a set `S` of weight spaces into the
   span of any set containing `α + S`.
@@ -85,6 +87,15 @@ theorem genWeightSpaceSpan_le_iff {S : Set (H → R)} {N : LieSubmodule R H M} :
   ⟨fun h _ hchi => (genWeightSpace_le_genWeightSpaceSpan hchi).trans h,
     fun h => iSup_le fun chi => h chi chi.2⟩
 
+variable (H M) in
+/-- The span of the weight spaces indexed by `S`, written as the supremum of those weight spaces,
+so that a member of the span can be taken apart by `LieSubmodule.iSup_induction`. -/
+theorem genWeightSpaceSpan_eq_iSup (S : Set (H → R)) :
+    genWeightSpaceSpan H M S = ⨆ chi : S, genWeightSpace M (chi : H → R) :=
+  le_antisymm (genWeightSpaceSpan_le_iff.mpr fun chi hchi =>
+      le_iSup (fun psi : S => genWeightSpace M (psi : H → R)) ⟨chi, hchi⟩)
+    (iSup_le fun chi => genWeightSpace_le_genWeightSpaceSpan chi.2)
+
 end Span
 
 /-! ### The action of a root vector on a span of weight spaces -/
@@ -101,6 +112,7 @@ vector in the root space of `alpha` carries the weight space at `chi` into the w
 theorem lie_mem_genWeightSpaceSpan {S T : Set (H → R)} {alpha : H → R} {x : L}
     (hx : x ∈ rootSpace H alpha) (hST : ∀ chi ∈ S, alpha + chi ∈ T)
     {m : M} (hm : m ∈ genWeightSpaceSpan H M S) : ⁅x, m⁆ ∈ genWeightSpaceSpan H M T := by
+  rw [genWeightSpaceSpan_eq_iSup] at hm
   refine LieSubmodule.iSup_induction (fun chi : S => genWeightSpace M (chi : H → R))
     (motive := fun m => ⁅x, m⁆ ∈ genWeightSpaceSpan H M T) hm (fun chi y hy => ?_) (by simp)
     (fun y z hy hz => by rw [lie_add]; exact add_mem hy hz)

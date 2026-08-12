@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.Group.Submonoid.Support
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
@@ -46,7 +47,8 @@ positive root is a nonnegative integer combination of the simple coroots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
 * `TauCeti.root_mem_posRootCone_of_mem_posRoots` says the positive roots lie in `Q⁺`,
-  `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` says `Q⁺` is a sharp cone,
+  `TauCeti.isPointed_posRootCone` says `Q⁺` is pointed,
+  `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` is the same fact as a cancellation rule,
   `TauCeti.root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone` specializes that to a positive root
   added to a member of `Q⁺`, and `TauCeti.sum_root_ne_zero_of_mem_posRoots` deduces that a nonempty
   sum of positive roots is nonzero.
@@ -246,17 +248,20 @@ theorem root_mem_posRootCone_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
   let ⟨f, _, hf⟩ := exists_root_eq_sum_nat_of_mem_posRoots P b hi
   (mem_posRootCone P b).mpr ⟨f, hf⟩
 
-/-- **A member of the positive root cone that is cancelled by another member is zero.** Expanding
-both in the simple roots, the total coefficient vector is nonnegative and, the simple roots being
-linearly independent, must vanish, so each coefficient vector does.
+/-- **The positive root cone is pointed**: the only member whose negative is again a member is
+zero. Expanding a member and its negative in the simple roots, the total coefficient vector is
+nonnegative and sums to zero and, the simple roots being linearly independent, must vanish, so each
+coefficient vector does.
 
 This is what makes the cone an order on weights: `μ ≤ λ` defined by `λ - μ ∈ Q⁺` is antisymmetric,
 and a weight cannot be reached from itself through a nonempty chain of positive roots. -/
-theorem eq_zero_of_add_eq_zero_of_mem_posRootCone {u v : M} (hu : u ∈ posRootCone P b)
-    (hv : v ∈ posRootCone P b) (huv : u + v = 0) : u = 0 := by
+theorem isPointed_posRootCone : (posRootCone P b).IsPointed := by
   classical
+  refine AddSubmonoid.IsPointed.mk fun u hu hu' => ?_
   obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
-  obtain ⟨g, rfl⟩ := (mem_posRootCone P b).mp hv
+  obtain ⟨g, hg⟩ := (mem_posRootCone P b).mp hu'
+  have huv : (∑ j ∈ b.support, f j • P.root j) + ∑ j ∈ b.support, g j • P.root j = 0 := by
+    rw [← hg, add_neg_cancel]
   have hcomb : ∑ j ∈ b.support, ((f j + g j : ℕ) : ℤ) • P.root j = 0 := by
     rw [← huv, ← Finset.sum_add_distrib]
     exact Finset.sum_congr rfl fun j _ => by push_cast; rw [add_smul, natCast_zsmul, natCast_zsmul]
@@ -267,6 +272,13 @@ theorem eq_zero_of_add_eq_zero_of_mem_posRootCone {u v : M} (hu : u ∈ posRootC
   refine Finset.sum_eq_zero fun j hj => ?_
   have : f j = 0 := by have := hzero j hj; omega
   rw [this, zero_smul]
+
+/-- **A member of the positive root cone that is cancelled by another member is zero**: pointedness
+of the cone, in the additive form the weight order uses. -/
+theorem eq_zero_of_add_eq_zero_of_mem_posRootCone {u v : M} (hu : u ∈ posRootCone P b)
+    (hv : v ∈ posRootCone P b) (huv : u + v = 0) : u = 0 :=
+  (isPointed_posRootCone P b).eq_zero_of_mem_of_neg_mem hu
+    (by rwa [neg_eq_of_add_eq_zero_right huv])
 
 /-- **A positive root is never cancelled inside the positive root cone.** A positive root is a
 nonzero member of the cone, so `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` forbids it. -/
