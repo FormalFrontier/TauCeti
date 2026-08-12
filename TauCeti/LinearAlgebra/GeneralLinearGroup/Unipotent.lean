@@ -34,8 +34,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
   transport by a linear equivalence.
 * `TauCeti.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
   its inverse is.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.mul`: commuting unipotent automorphisms have unipotent
-  product.
+* `TauCeti.GeneralLinearGroup.IsUnipotent.mul_of_commute`: commuting unipotent automorphisms have
+  unipotent product.
 * `TauCeti.GeneralLinearGroup.IsUnipotent.pow`: every natural power of a unipotent automorphism
   is unipotent.
 * `TauCeti.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
@@ -144,7 +144,7 @@ theorem isUnipotent_inv_iff (g : GeneralLinearGroup K V) :
   · exact IsUnipotent.inv
 
 /-- The product of two commuting unipotent linear automorphisms is unipotent. -/
-theorem IsUnipotent.mul {g h : GeneralLinearGroup K V}
+theorem IsUnipotent.mul_of_commute {g h : GeneralLinearGroup K V}
     (hg : IsUnipotent g) (hh : IsUnipotent h) (hcomm : Commute g h) :
     IsUnipotent (g * h) := by
   rw [isUnipotent_def] at hg hh ⊢
@@ -173,7 +173,7 @@ theorem IsUnipotent.pow {g : GeneralLinearGroup K V} (hg : IsUnipotent g) (n : �
   | zero => simp
   | succ n hn =>
       rw [pow_succ]
-      exact hn.mul hg (Commute.self_pow g n).symm
+      exact hn.mul_of_commute hg (Commute.self_pow g n).symm
 
 /-- Unipotence is invariant under conjugation by a linear automorphism. -/
 @[simp]
