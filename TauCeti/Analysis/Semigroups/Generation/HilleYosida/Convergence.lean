@@ -59,16 +59,6 @@ open NormedSpace
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 variable {A : X →ₗ.[ℝ] X} {M : ℝ}
 
-omit [CompleteSpace X] in
-/-- The `n = 1` case of the Hille--Yosida power bounds is the resolvent bound
-`‖R(lambda, A)‖ ≤ M / lambda` consumed by the convergence estimates. -/
-theorem norm_resolvent_le_of_pow_le
-    (hpow : ∀ n : ℕ, 1 ≤ n → ∀ lambda : ℝ, 0 < lambda →
-      ‖LinearPMap.resolvent A lambda ^ n‖ ≤ M / lambda ^ n)
-    (lambda : ℝ) (hlambda : 0 < lambda) :
-    ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda := by
-  simpa using hpow 1 le_rfl lambda hlambda
-
 /-- **The Hille--Yosida approximations are uniformly Cauchy on compact time intervals, on a domain
 vector.** For a densely defined operator whose resolvent powers obey the exponent-zero
 Hille--Yosida bounds at growth constant `M`, and for `x ∈ D(A)` and `T ≥ 0`, the vectors
@@ -82,7 +72,7 @@ theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_pow_le_of_mem (hM 
       (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) (x : X))
       Filter.atTop (Set.Icc 0 T) :=
   exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem hres
-    (norm_resolvent_le_of_pow_le hpow)
+    (fun lambda hlambda => by simpa using hpow 1 le_rfl lambda hlambda)
     (fun lambda hlambda _ hs =>
       norm_exp_smul_yosidaApproximation_le hM hlambda hs fun n hn => hpow n hn lambda hlambda)
     hdense x hT
@@ -102,7 +92,8 @@ theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_pow_le (hM : 1 ≤
     UniformCauchySeqOn
       (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
       Filter.atTop (Set.Icc 0 T) :=
-  exp_yosidaApproximation_uniformCauchySeqOn_compact hres (norm_resolvent_le_of_pow_le hpow)
+  exp_yosidaApproximation_uniformCauchySeqOn_compact hres
+    (fun lambda hlambda => by simpa using hpow 1 le_rfl lambda hlambda)
     (fun lambda hlambda _ hs =>
       norm_exp_smul_yosidaApproximation_le hM hlambda hs fun n hn => hpow n hn lambda hlambda)
     hdense x hT

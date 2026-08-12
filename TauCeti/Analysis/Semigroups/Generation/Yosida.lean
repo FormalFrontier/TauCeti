@@ -242,8 +242,8 @@ theorem yosidaSemigroup_generator (A : X →ₗ.[ℝ] X) (lambda : ℝ)
 
 The estimates of this section carry the resolvent bound `‖R(lambda, A)‖ ≤ M / lambda` as an
 explicit hypothesis rather than assuming dissipativity, since the Hille--Yosida generation theorem
-needs them at a growth constant `M` larger than one. The m-dissipative statements at the end of the
-file are the case `M = 1`. -/
+needs them at a growth constant `M` larger than one. An m-dissipative operator is the case `M = 1`,
+which its consumers obtain by instantiating these results at that value. -/
 
 omit [CompleteSpace X] in
 /-- On the domain of `A`, the scaled resolvent differs from the identity by at most
