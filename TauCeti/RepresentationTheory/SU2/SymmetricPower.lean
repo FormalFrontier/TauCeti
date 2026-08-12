@@ -38,7 +38,6 @@ type and `Fin (d + 1)`, which records how many of the entries are `0`.
 
 ## Main results
 
-* `TauCeti.card_sym_fin_two`: there are `d + 1` multisets of size `d` over `Fin 2`.
 * `TauCeti.eval_hsymm_fin_two`: `h_d(x, y) = ∑_{i ≤ d} xⁱ y^{d-i}`.
 * `TauCeti.SU2.character_symPower_torusHom` and
   `TauCeti.SU2.character_symPower_torusHom_zpow`: the character of `Symᵈ` on the maximal torus is
@@ -96,56 +95,39 @@ noncomputable def symFinTwoEquiv (d : ℕ) : Sym (Fin 2) d ≃ Fin (d + 1) where
     refine Fin.ext ?_
     simp [Multiset.count_replicate]
 
-/-- The inverse of `TauCeti.symFinTwoEquiv` spelled out: `i` many `0`s and `d - i` many `1`s.
-Not a `simp` lemma, since `Sym.val_eq_coe` rewrites its left-hand side. -/
-theorem symFinTwoEquiv_symm_apply_val (d : ℕ) (i : Fin (d + 1)) :
-    ((symFinTwoEquiv d).symm i).val
+/-- The inverse of `TauCeti.symFinTwoEquiv` spelled out: `i` many `0`s and `d - i` many `1`s. -/
+theorem coe_symFinTwoEquiv_symm_apply (d : ℕ) (i : Fin (d + 1)) :
+    (((symFinTwoEquiv d).symm i : Sym (Fin 2) d) : Multiset (Fin 2))
       = Multiset.replicate (i : ℕ) 0 + Multiset.replicate (d - (i : ℕ)) 1 := (rfl)
-
-/-- There are `d + 1` multisets of size `d` over a two-element type. -/
-@[simp]
-theorem card_sym_fin_two (d : ℕ) : Fintype.card (Sym (Fin 2) d) = d + 1 := by
-  rw [Fintype.card_congr (symFinTwoEquiv d), Fintype.card_fin]
 
 /-- **The complete homogeneous symmetric polynomial in two variables**: `h_d(x, y)` is the sum of
 all `d + 1` monomials `xⁱ y^{d-i}` of degree `d`. -/
 theorem eval_hsymm_fin_two {R : Type*} [CommSemiring R] (f : Fin 2 → R) (d : ℕ) :
     MvPolynomial.eval f (MvPolynomial.hsymm (Fin 2) R d)
       = ∑ i ∈ range (d + 1), f 0 ^ i * f 1 ^ (d - i) := by
-  rw [MvPolynomial.hsymm, map_sum, ← Fin.sum_univ_eq_sum_range _ (d + 1),
+  rw [eval_hsymm, ← Fin.sum_univ_eq_sum_range _ (d + 1),
     ← Equiv.sum_comp (symFinTwoEquiv d).symm]
   refine Fintype.sum_congr _ _ fun i => ?_
-  rw [symFinTwoEquiv_symm_apply_val]
+  rw [coe_symFinTwoEquiv_symm_apply]
   simp
 
 /-! ### The symmetric powers of the standard representation -/
 
 namespace SU2
 
-/-- `SU(2)` as a subgroup of `GL₂(ℂ)`: a special unitary matrix is invertible, its inverse being
-its conjugate transpose. -/
-def toGL : SU2 →* GL (Fin 2) ℂ where
-  toFun g := ⟨(g : Matrix (Fin 2) (Fin 2) ℂ), ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ),
-    by rw [← Submonoid.coe_mul, mul_inv_cancel]; rfl,
-    by rw [← Submonoid.coe_mul, inv_mul_cancel]; rfl⟩
-  map_one' := Units.ext rfl
-  map_mul' _ _ := Units.ext rfl
+/-- `SU(2)` as a subgroup of `GL₂(ℂ)`: an element of the group `SU(2)` is a unit there, and a unit
+of a submonoid of the matrices is a unit of the matrices. -/
+def toGL : SU2 →* GL (Fin 2) ℂ :=
+  (Units.map (Submonoid.subtype _)).comp toUnits.toMonoidHom
 
 @[simp]
 theorem coe_toGL (g : SU2) :
     (toGL g : Matrix (Fin 2) (Fin 2) ℂ) = (g : Matrix (Fin 2) (Fin 2) ℂ) := (rfl)
 
-/-- The unit of `ℂ` underlying a point of the circle. -/
-noncomputable def circleUnit (z : Circle) : ℂˣ :=
-  Units.mk0 (z : ℂ) (Circle.coe_ne_zero z)
-
-@[simp]
-theorem coe_circleUnit (z : Circle) : (circleUnit z : ℂ) = (z : ℂ) := (rfl)
-
 /-- **The maximal torus of `SU(2)` inside the diagonal torus of `GL₂(ℂ)`**: `torusHom z` is the
 diagonal matrix `diag(z, z⁻¹)`. -/
 theorem toGL_torusHom (z : Circle) :
-    toGL (torusHom z) = diagGL ![circleUnit z, (circleUnit z)⁻¹] := by
+    toGL (torusHom z) = diagGL ![Circle.toUnits z, (Circle.toUnits z)⁻¹] := by
   refine Units.ext (Matrix.ext fun i j => ?_)
   rw [coe_toGL, coe_torusHom, diagGL_coe]
   fin_cases i <;> fin_cases j <;>

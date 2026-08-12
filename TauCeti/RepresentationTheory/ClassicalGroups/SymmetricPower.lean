@@ -29,6 +29,8 @@ elementary symmetric polynomial the exterior power gives.
 
 ## Main results
 
+* `TauCeti.eval_hsymm` evaluates the complete homogeneous symmetric polynomial as a sum over the
+  unordered `d`-tuples of indices.
 * `TauCeti.char_symPowerRep_diagonal` identifies the character on diagonal matrices with a
   complete homogeneous symmetric polynomial.
 
@@ -46,6 +48,16 @@ open Matrix
 open scoped TensorProduct
 
 namespace TauCeti
+
+/-- **The complete homogeneous symmetric polynomial evaluated**: `h_d(f)` is the sum, over the
+unordered `d`-tuples of indices, of the product of the values `f` takes on the tuple. -/
+theorem eval_hsymm {σ R : Type*} [Fintype σ] [DecidableEq σ] [CommSemiring R] (f : σ → R)
+    (d : ℕ) : MvPolynomial.eval f (MvPolynomial.hsymm σ R d)
+      = ∑ s : Sym σ d, ((s : Multiset σ).map f).prod := by
+  rw [MvPolynomial.hsymm, map_sum]
+  refine Finset.sum_congr rfl fun s _ => ?_
+  rw [map_multiset_prod, Multiset.map_map]
+  simp [Function.comp_def]
 
 variable (k : Type) (n d : ℕ)
 
@@ -77,11 +89,7 @@ theorem char_symPowerRep_diagonal (t : Fin n → kˣ) : (symPowerRep k n d).char
     SymmetricPower.trace_map_of_apply_basis (Pi.basisFun k (Fin n))
       (stdRep k n (diagGL t)) (fun i => (t i : k)) d (stdRep_diagGL_apply_basisFun t)]
   -- both sides sum, over the unordered `d`-tuples of indices, the product of the entries listed
-  rw [MvPolynomial.hsymm, map_sum]
-  refine Finset.sum_congr rfl fun s _ => ?_
-  rw [map_multiset_prod, Multiset.map_map]
-  simp only [Function.comp_def, MvPolynomial.eval_X]
-  rfl
+  rw [eval_hsymm]
 
 /-- The character of the bundled `d`th symmetric power on a diagonal matrix is the `d`th complete
 homogeneous symmetric polynomial in its diagonal entries. -/
