@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Spin.Action
+import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 
 /-!
 # The Pin group acting on its quadratic space by twisted conjugation
@@ -46,6 +47,10 @@ Twisted conjugation is the one that extends to the odd part.
   orthogonal hyperplane.** This is the identification of the generators referred to above.
 * `TauCeti.CliffordAlgebra.lipschitzVectorAction_map_app`: twisted conjugation by a Lipschitz
   element preserves the quadratic form.
+* `TauCeti.CliffordAlgebra.neg_one_mem_spinGroup_of_isUnit`: the scalar `-1` is in the Spin group
+  when the form takes a unit value.
+* `TauCeti.CliffordAlgebra.spinGroup.negOne`: the canonical scalar `-1` in the Spin group of a
+  nonzero quadratic form over a field.
 * `TauCeti.CliffordAlgebra.ι_mem_pinGroup`: a vector `v` with `Q v = -1` lies in the Pin group, and
   `TauCeti.CliffordAlgebra.pinToOrthogonal_ι_apply` computes the reflection it induces. The sign is
   forced by Mathlib's conventions: `star` is the reversal composed with the grade involution, so
@@ -108,7 +113,7 @@ private theorem twistedConj_mul (x y : (CliffordAlgebra Q)ˣ) (a : CliffordAlgeb
   simp only [twistedConj_apply, Units.val_mul, mul_inv_rev, map_mul]
   noncomm_ring
 
-/-! ### Vectors of invertible norm as Lipschitz elements -/
+/-! ### Vectors of invertible norm and the scalar `-1` -/
 
 /-- A vector of invertible norm, as a unit of the Clifford algebra. These units generate the
 Lipschitz group (`unitι_mem_lipschitzGroup`), and they act on the quadratic space by the
@@ -128,6 +133,71 @@ theorem coe_unitι (v : M) [Invertible (Q v)] : (unitι Q v : CliffordAlgebra Q)
 theorem unitι_mem_lipschitzGroup (v : M) [Invertible (Q v)] : unitι Q v ∈ lipschitzGroup Q := by
   unfold lipschitzGroup
   exact Subgroup.subset_closure ⟨v, (coe_unitι v).symm⟩
+
+/-- The scalar `-1` belongs to the Spin group when the quadratic form is a unit
+on some vector. -/
+theorem neg_one_mem_spinGroup_of_isUnit (Q : QuadraticForm R M) (v : M)
+    (hvQ : IsUnit (Q v)) :
+    (-1 : CliffordAlgebra Q) ∈ spinGroup Q := by
+  let _ : Invertible (Q v) := hvQ.invertible
+  let a : R := -⅟(Q v)
+  have ha : IsUnit a := (isUnit_of_invertible (⅟(Q v))).neg
+  let _ : Invertible a := ha.invertible
+  have havQ : IsUnit (Q (a • v)) := by
+    rw [QuadraticMap.map_smul]
+    simpa [smul_eq_mul, mul_assoc] using ha.mul (ha.mul hvQ)
+  let _ : Invertible (Q (a • v)) := havQ.invertible
+  let x := unitι Q (a • v) * unitι Q v
+  have hx : (x : CliffordAlgebra Q) = -1 := by
+    simp only [x, Units.val_mul, coe_unitι, map_smul, Algebra.smul_def]
+    rw [mul_assoc, ι_sq_scalar, ← map_mul]
+    simp [a]
+  rw [spinGroup.mem_iff]
+  refine ⟨?_, ?_⟩
+  · refine ⟨⟨x, mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _), hx⟩,
+      ?_⟩
+    simp [Unitary.mem_iff]
+  · exact (CliffordAlgebra.even Q).neg_mem (CliffordAlgebra.even Q).one_mem
+
+section NegOne
+
+variable {K : Type u} [Field K] [Module K M]
+
+/-- The scalar `-1` belongs to the Spin group of a nonzero quadratic form over a field. -/
+theorem neg_one_mem_spinGroup (Q : QuadraticForm K M) (hQ : Q ≠ 0) :
+    (-1 : CliffordAlgebra Q) ∈ spinGroup Q := by
+  obtain ⟨v, hv⟩ := DFunLike.ne_iff.mp hQ
+  exact neg_one_mem_spinGroup_of_isUnit Q v
+    (isUnit_iff_ne_zero.mpr (by simpa using hv))
+
+namespace spinGroup
+
+/-- The canonical scalar `-1` in the Spin group of a nonzero quadratic form over a field. -/
+def negOne (Q : QuadraticForm K M) (hQ : Q ≠ 0) : spinGroup Q :=
+  ⟨-1, neg_one_mem_spinGroup Q hQ⟩
+
+/-- The underlying Clifford element of `spinGroup.negOne` is the scalar `-1`. -/
+@[simp]
+theorem coe_negOne (Q : QuadraticForm K M) (hQ : Q ≠ 0) :
+    (negOne Q hQ : CliffordAlgebra Q) = -1 :=
+  (rfl)
+
+/-- The canonical scalar `-1` in the Spin group is not the identity when `2` is invertible. -/
+theorem negOne_ne_one (Q : QuadraticForm K M) [Invertible (2 : K)] (hQ : Q ≠ 0) :
+    negOne Q hQ ≠ 1 := by
+  intro h
+  have hK : (-1 : K) = 1 := by
+    apply algebraMap_injective Q
+    simpa using congrArg (fun x : spinGroup Q ↦ (x : CliffordAlgebra Q)) h
+  apply Invertible.ne_zero (2 : K)
+  calc
+    (2 : K) = 1 - (-1) := by ring
+    _ = 1 - 1 := by rw [hK]
+    _ = 0 := sub_self 1
+
+end spinGroup
+
+end NegOne
 
 /-- A vector of norm `-1` lies in the Pin group. The sign is Mathlib's convention: `star` is the
 reversal composed with the grade involution, so `star (ι Q v) = -ι Q v`, and the unitarity
