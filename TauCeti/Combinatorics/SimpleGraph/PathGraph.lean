@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
-public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Subgraph
 public import Mathlib.Combinatorics.SimpleGraph.Hasse
 
 public section
@@ -31,8 +30,8 @@ of `p`. The subgraph spanned by `p` is therefore all of `G`, and Mathlib's
 
 ## Main results
 
-* `TauCeti.nonempty_iso_pathGraph_of_isTree_of_degree_le_two`: a finite tree of maximum degree two
-  is isomorphic to the path graph on its vertices.
+* `TauCeti.IsTree.nonempty_iso_pathGraph_of_degree_le_two`: a finite tree of maximum degree two is
+  isomorphic to the path graph on its vertices.
 
 ## References
 
@@ -91,30 +90,19 @@ private lemma forall_mem_support_of_degree_le_two [Fintype V] [DecidableRel G.Ad
     exact hb hbmem
   -- `a` is an interior vertex: its two neighbours along `p`, together with `b`, are three.
   obtain ⟨k, rfl⟩ : ∃ k, i = k + 1 := ⟨i - 1, by omega⟩
-  have hk : G.Adj a (p.getVert k) := by
+  have hpath : (p.toSubgraph.neighborSet a).ncard = 2 := by
     rw [← hi]
-    exact (p.adj_getVert_succ (by omega)).symm
-  have hk' : G.Adj a (p.getVert (k + 2)) := by
-    rw [← hi]
-    exact p.adj_getVert_succ (by omega)
-  have hne : p.getVert k ≠ p.getVert (k + 2) := fun hc ↦ by
-    have hkle : k ≤ p.length := by omega
-    have hkle' : k + 2 ≤ p.length := by omega
-    have := hp.getVert_injOn hkle hkle' hc
-    omega
-  have hbk : b ≠ p.getVert k := fun hc ↦ hb (hc ▸ p.getVert_mem_support k)
-  have hbk' : b ≠ p.getVert (k + 2) := fun hc ↦ hb (hc ▸ p.getVert_mem_support (k + 2))
-  have hsub : ({p.getVert k, p.getVert (k + 2), b} : Finset V) ⊆ G.neighborFinset a := by
-    intro y hy
-    simp only [Finset.mem_insert, Finset.mem_singleton] at hy
-    rw [SimpleGraph.mem_neighborFinset]
-    rcases hy with rfl | rfl | rfl
-    exacts [hk, hk', hab]
-  have hcard : ({p.getVert k, p.getVert (k + 2), b} : Finset V).card = 3 := by
-    rw [Finset.card_insert_of_notMem (by simp [hne, hbk.symm]),
-      Finset.card_insert_of_notMem (by simp [hbk'.symm]), Finset.card_singleton]
-  have hle := Finset.card_le_card hsub
-  have hdeg' : (G.neighborFinset a).card = G.degree a := rfl
+    exact hp.ncard_neighborSet_toSubgraph_internal_eq_two (by omega) (by omega)
+  have hbnot : b ∉ p.toSubgraph.neighborSet a := fun hba ↦
+    hb (p.mem_verts_toSubgraph.mp (p.toSubgraph.neighborSet_subset_verts a hba))
+  have hsub : insert b (p.toSubgraph.neighborSet a) ⊆ G.neighborSet a :=
+    Set.insert_subset hab (p.toSubgraph.neighborSet_subset a)
+  have hle := Set.ncard_le_ncard hsub (Set.toFinite _)
+  have hcard : (insert b (p.toSubgraph.neighborSet a)).ncard = 3 := by
+    rw [Set.ncard_insert_of_notMem hbnot, hpath]
+  have hdeg' : (G.neighborSet a).ncard = G.degree a := by
+    rw [Set.ncard_eq_toFinset_card']
+    rfl
   have hda := hdeg a
   omega
 
@@ -123,7 +111,7 @@ private lemma forall_mem_support_of_degree_le_two [Fintype V] [DecidableRel G.Ad
 
 Both hypotheses are needed: a cycle graph is connected with every degree two and is not a path, and
 a star with three arms is a tree that is not one. -/
-theorem nonempty_iso_pathGraph_of_isTree_of_degree_le_two [Fintype V] [DecidableRel G.Adj]
+theorem IsTree.nonempty_iso_pathGraph_of_degree_le_two [Fintype V] [DecidableRel G.Adj]
     (hG : G.IsTree) (hdeg : ∀ x, G.degree x ≤ 2) :
     Nonempty (G ≃g pathGraph (Fintype.card V)) := by
   classical

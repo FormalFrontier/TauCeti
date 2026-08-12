@@ -23,13 +23,13 @@ at most two neighbours.
 
 The reindexing is the identification of the diagram with a path graph: a connected finite-type
 diagram is a tree (`TauCeti.IsFiniteType.isTree_diagramGraph`), a finite tree of maximum degree two
-is a path graph (`TauCeti.nonempty_iso_pathGraph_of_isTree_of_degree_le_two`), and a simply-laced
+is a path graph (`TauCeti.IsTree.nonempty_iso_pathGraph_of_degree_le_two`), and a simply-laced
 matrix is determined by its diagram, its entries being `2` on the diagonal, `-1` along the edges,
 and `0` elsewhere. Those are exactly the entries of `CartanMatrix.A n` at consecutive and
 non-consecutive indices, which is what `TauCeti.chainEntry_eq_cartanMatrix_A` records.
 
-Both hypotheses do work. Without simple lacing the surviving shapes are `Bₙ`, `Cₙ` and `F₄`, whose
-diagrams are also paths, and without the degree bound they are `Dₙ` and `E₆`, `E₇`, `E₈`.
+Both hypotheses do work. Without simple lacing the surviving shapes are `Bₙ`, `Cₙ`, `F₄` and `G₂`,
+whose diagrams are also paths, and without the degree bound they are `Dₙ` and `E₆`, `E₇`, `E₈`.
 
 ## Main results
 
@@ -67,7 +67,7 @@ theorem IsFiniteType.exists_equiv_forall_eq_cartanMatrix_A (h : IsFiniteType A)
     ∃ e : B ≃ Fin (Fintype.card B),
       ∀ i j, A i j = DynkinType.cartanMatrix (.A (Fintype.card B)) (e i) (e j) := by
   obtain ⟨iso⟩ :=
-    nonempty_iso_pathGraph_of_isTree_of_degree_le_two (h.isTree_diagramGraph hconn) hdeg
+    IsTree.nonempty_iso_pathGraph_of_degree_le_two (h.isTree_diagramGraph hconn) hdeg
   have key : ∀ i j, A i j = chainEntry (iso i) (iso j) := by
     intro i j
     rcases eq_or_ne i j with rfl | hij
