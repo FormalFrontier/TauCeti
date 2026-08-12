@@ -75,15 +75,6 @@ def IsSemisimplePoint (g : WithConv (H →ₐ[k] K)) : Prop :=
     GeneralLinearGroup.IsSemisimple
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
 
-/-- Unfolding the definition of a semisimple point gives semisimplicity of its action on every
-finitely generated comodule. -/
-theorem isSemisimplePoint_def (g : WithConv (H →ₐ[k] K)) :
-    IsSemisimplePoint g ↔
-      ∀ M : FGComoduleCat.{u, v, u} k H,
-        GeneralLinearGroup.IsSemisimple
-          (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :=
-  Iff.rfl
-
 /-- A point is semisimple exactly when each underlying point-action endomorphism is
 semisimple. -/
 theorem isSemisimplePoint_iff_forall_isSemisimple_endOfPoint
@@ -91,18 +82,28 @@ theorem isSemisimplePoint_iff_forall_isSemisimple_endOfPoint
     IsSemisimplePoint g ↔
       ∀ M : FGComoduleCat.{u, v, u} k H,
         Module.End.IsSemisimple (Comodule.endOfPoint M g.ofConv) := by
-  rw [isSemisimplePoint_def]
+  unfold IsSemisimplePoint
   constructor
   · intro h M
     have hM := (GeneralLinearGroup.isSemisimple_def _).mp (h M)
-    simpa only [
-      GeneralLinearGroup.coe_ofLinearEquiv_toLinearMap,
-      Comodule.pointsAction_toLinearMap] using hM
+    rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap] at hM
+    have haction :
+        LinearMap.GeneralLinearGroup.generalLinearEquiv K _
+            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
+          Comodule.pointsAction M g :=
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
+    rw [haction] at hM
+    simpa only [Comodule.pointsAction_toLinearMap] using hM
   · intro h M
     rw [GeneralLinearGroup.isSemisimple_def]
-    simpa only [
-      GeneralLinearGroup.coe_ofLinearEquiv_toLinearMap,
-      Comodule.pointsAction_toLinearMap] using h M
+    rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
+    have haction :
+        LinearMap.GeneralLinearGroup.generalLinearEquiv K _
+            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
+          Comodule.pointsAction M g :=
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
+    rw [haction]
+    simpa only [Comodule.pointsAction_toLinearMap] using h M
 
 /-- The identity point is semisimple. -/
 @[simp]
@@ -137,7 +138,11 @@ theorem isSemisimplePoint_inv_iff (g : WithConv (H →ₐ[k] K)) :
 theorem IsSemisimplePoint.pow {g : WithConv (H →ₐ[k] K)}
     (hg : IsSemisimplePoint g) (n : ℕ) : IsSemisimplePoint (g ^ n) := by
   intro M
-  rw [map_pow, GeneralLinearGroup.ofLinearEquiv_pow]
+  rw [map_pow]
+  change GeneralLinearGroup.IsSemisimple
+    ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm
+      (Comodule.pointsAction M g ^ n))
+  rw [map_pow]
   exact (hg M).pow n
 
 /-- Every integer power of a semisimple point is semisimple. -/
@@ -151,7 +156,8 @@ theorem IsSemisimplePoint.zpow {g : WithConv (H →ₐ[k] K)}
 @[simp]
 theorem isSemisimplePoint_conj_iff (g h : WithConv (H →ₐ[k] K)) :
     IsSemisimplePoint (h * g * h⁻¹) ↔ IsSemisimplePoint g := by
-  simp only [isSemisimplePoint_def, map_mul, map_inv,
+  unfold IsSemisimplePoint
+  simp only [map_mul, map_inv,
     LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
     LinearMap.GeneralLinearGroup.ofLinearEquiv_inv,
     GeneralLinearGroup.isSemisimple_conj_iff]
@@ -185,7 +191,11 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
     rw [Tannaka.fgPointSemisimplePartNatIso_hom_app,
       Tannaka.fgPointNatIsoHom_hom_app,
       GeneralLinearGroup.semisimplePart_eq_self (hg M)]
-    rw [GeneralLinearGroup.toLinearEquiv_ofLinearEquiv]
+    have haction :
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv
+          (Comodule.pointsAction M g)).toLinearEquiv = Comodule.pointsAction M g :=
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
+    rw [haction]
   · intro h M
     have happ := congrArg
       (fun a : Aut (FGComoduleCat.scalarExtensionFunctor.{u, v, u, x} k H K) ↦
@@ -200,8 +210,17 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
       have hlinear := congrArg SemimoduleCat.Hom.hom happ
       simp only [LinearEquiv.toModuleIsoₛ_hom, SemimoduleCat.hom_ofHom] at hlinear
       apply Units.ext
-      simpa only [GeneralLinearGroup.toLinearEquiv_toLinearMap,
-        GeneralLinearGroup.coe_ofLinearEquiv_toLinearMap] using hlinear
+      calc
+        _ = (GeneralLinearGroup.semisimplePart
+              (LinearMap.GeneralLinearGroup.ofLinearEquiv
+                (Comodule.pointsAction M g))).toLinearEquiv.toLinearMap :=
+            (LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap _).symm
+        _ = (Comodule.pointsAction M g).toLinearMap := hlinear
+        _ = LinearMap.GeneralLinearGroup.ofLinearEquiv
+              (Comodule.pointsAction M g) := by
+            rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
+            exact congrArg LinearEquiv.toLinearMap
+              ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _).symm
     rw [← hfactor]
     exact GeneralLinearGroup.isSemisimple_semisimplePart
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
