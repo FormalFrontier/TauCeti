@@ -97,11 +97,10 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
   have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
       (fun p : TangentBundle 𝓘(𝕜, F) F => p.2) :=
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
-  simp only [mvfderiv_apply_eq_mfderiv_apply]
   have h := hsnd.comp hdf
   have htangent (p : TangentBundle I M) :
       NormedSpace.fromTangentSpace (f p.1) ((tangentMap% f p).2) =
-        mfderiv I 𝓘(𝕜, F) f p.1 p.2 := by
-    rw [tangentMap_snd]
+        mvfderiv I f p.1 p.2 := by
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
     rfl
   exact h.congr fun p => (htangent p).symm
