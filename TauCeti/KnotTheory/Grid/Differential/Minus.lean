@@ -30,7 +30,7 @@ available, `minusDifferential` is a linear endomorphism rather than a packaged c
 ## Main definitions
 
 * `TauCeti.GridMinusRing`: the polynomial coefficient ring `ZMod 2[V₁, ..., Vₙ]`.
-* `TauCeti.GridRectangleBetween.interiorOMarkings`: the column labels of the `O` markings in a
+* `TauCeti.GridRectangleBetween.interiorOColumns`: the column labels of the `O` markings in a
   rectangle interior.
 * `TauCeti.GridRectangleBetween.minusRectangleWeight`: the corresponding variable monomial.
 * `TauCeti.GridDiagram.minusRectangles`: empty rectangles avoiding all `X` markings.
@@ -66,23 +66,23 @@ variable {n : ℕ} {x y : GridState n} (R : GridRectangleBetween x y)
 
 There is one `O` marking in every column, so its column is also its variable label in
 `GridMinusRing n`. -/
-noncomputable def interiorOMarkings (G : GridDiagram n) : Finset (Fin n) :=
+noncomputable def interiorOColumns (G : GridDiagram n) : Finset (Fin n) :=
   Finset.univ.filter fun i => (i, G.O i) ∈ R.toGridRectangle.interior
 
 /-- A column labels an interior `O` marking exactly when its `O` marking lies in the rectangle
 interior. -/
 @[simp]
-theorem mem_interiorOMarkings (G : GridDiagram n) (i : Fin n) :
-    i ∈ R.interiorOMarkings G ↔ (i, G.O i) ∈ R.toGridRectangle.interior := by
+theorem mem_interiorOColumns (G : GridDiagram n) (i : Fin n) :
+    i ∈ R.interiorOColumns G ↔ (i, G.O i) ∈ R.toGridRectangle.interior := by
   classical
-  simp [interiorOMarkings]
+  simp [interiorOColumns]
 
 /-- A rectangle contains no interior `O` marking exactly when its interior is disjoint from the
 diagram's `O`-marking set. -/
-theorem interiorOMarkings_eq_empty_iff (G : GridDiagram n) :
-    R.interiorOMarkings G = ∅ ↔ Disjoint R.toGridRectangle.interior G.OSet := by
+theorem interiorOColumns_eq_empty_iff (G : GridDiagram n) :
+    R.interiorOColumns G = ∅ ↔ Disjoint R.toGridRectangle.interior G.OSet := by
   classical
-  rw [interiorOMarkings, Finset.filter_eq_empty_iff, Finset.disjoint_left]
+  rw [interiorOColumns, Finset.filter_eq_empty_iff, Finset.disjoint_left]
   constructor
   · intro hfilter p hpR hpO
     have hrow : G.O p.1 = p.2 := (G.mem_OSet p).mp hpO
@@ -94,12 +94,12 @@ theorem interiorOMarkings_eq_empty_iff (G : GridDiagram n) :
 /-- The monomial contributed by a rectangle to the minus differential: one variable for every
 `O` marking in its interior. -/
 noncomputable def minusRectangleWeight (G : GridDiagram n) : GridMinusRing n :=
-  ∏ i ∈ R.interiorOMarkings G, MvPolynomial.X i
+  ∏ i ∈ R.interiorOColumns G, MvPolynomial.X i
 
 /-- The minus rectangle weight is the product of the variables labeling its interior `O`
 markings. -/
 theorem minusRectangleWeight_def (G : GridDiagram n) :
-    R.minusRectangleWeight G = ∏ i ∈ R.interiorOMarkings G, MvPolynomial.X i :=
+    R.minusRectangleWeight G = ∏ i ∈ R.interiorOColumns G, MvPolynomial.X i :=
   (rfl)
 
 /-- The constant coefficient of a minus rectangle weight is one exactly when the rectangle has
@@ -107,11 +107,11 @@ no interior `O` marking. -/
 @[simp]
 theorem constantCoeff_minusRectangleWeight (G : GridDiagram n) :
     MvPolynomial.constantCoeff (R.minusRectangleWeight G) =
-      if R.interiorOMarkings G = ∅ then 1 else 0 := by
+      if R.interiorOColumns G = ∅ then 1 else 0 := by
   classical
-  by_cases h : R.interiorOMarkings G = ∅
+  by_cases h : R.interiorOColumns G = ∅
   · simp [minusRectangleWeight, h]
-  · have hcard : 0 < (R.interiorOMarkings G).card :=
+  · have hcard : 0 < (R.interiorOColumns G).card :=
       Finset.card_pos.mpr (Finset.nonempty_iff_ne_empty.mpr h)
     simp [minusRectangleWeight, h, zero_pow (ne_of_gt hcard)]
 
@@ -160,11 +160,11 @@ theorem minusRectangles_self (x : GridState n) : G.minusRectangles x x = ∅ := 
 /-- Fully blocked rectangles are exactly the minus rectangles with no interior `O` marking. -/
 theorem fullyBlockedRectangles_eq_filter_minusRectangles :
     G.fullyBlockedRectangles x y =
-      (G.minusRectangles x y).filter fun R => R.interiorOMarkings G = ∅ := by
+      (G.minusRectangles x y).filter fun R => R.interiorOColumns G = ∅ := by
   classical
   ext R
   rw [G.mem_fullyBlockedRectangles x y R, Finset.mem_filter, G.mem_minusRectangles x y R,
-    R.interiorOMarkings_eq_empty_iff G, R.avoidsMarkings_iff G]
+    R.interiorOColumns_eq_empty_iff G, R.avoidsMarkings_iff G]
   tauto
 
 /-- The coefficient from `x` to `y` in the minus grid differential: the sum of the monomial
@@ -210,28 +210,21 @@ theorem constantCoeff_minusRectangleCoefficient :
 
 /-- The value of the minus differential on one grid-state generator. -/
 noncomputable def minusDifferentialOnGenerator (x : GridState n) : GridChain (GridMinusRing n) n :=
-  Finset.univ.sum fun y : GridState n =>
-    Finsupp.single y (G.minusRectangleCoefficient x y)
+  Finsupp.equivFunOnFinite.symm fun y => G.minusRectangleCoefficient x y
 
-/-- The generator row of the minus differential is the finite sum of weighted rectangle
-coefficients. -/
+/-- The generator row of the minus differential is the finitely supported function of weighted
+rectangle coefficients. -/
 theorem minusDifferentialOnGenerator_def (x : GridState n) :
     G.minusDifferentialOnGenerator x =
-      Finset.univ.sum fun y : GridState n =>
-        Finsupp.single y (G.minusRectangleCoefficient x y) :=
+      Finsupp.equivFunOnFinite.symm fun y => G.minusRectangleCoefficient x y :=
   by simp only [minusDifferentialOnGenerator]
 
 /-- The `y`-coefficient of the minus differential on the generator `x`. -/
 @[simp]
 theorem minusDifferentialOnGenerator_apply (x y : GridState n) :
     G.minusDifferentialOnGenerator x y = G.minusRectangleCoefficient x y := by
-  classical
-  rw [minusDifferentialOnGenerator_def, Finsupp.finsetSum_apply, Finset.sum_eq_single y]
-  · simp
-  · intro z _ hz
-    simp [hz.symm]
-  · intro hy
-    exact (hy (Finset.mem_univ y)).elim
+  rw [minusDifferentialOnGenerator_def]
+  exact congrFun (Finsupp.coe_equivFunOnFinite_symm _) y
 
 /-- There is no self-term in the minus differential of a generator. -/
 theorem minusDifferentialOnGenerator_apply_self (x : GridState n) :
