@@ -70,14 +70,28 @@ has; proof irrelevance makes the choice immaterial.
 
 ## Roadmap
 
-The diagram automorphisms are a prerequisite for the pinned Chevalley--Demazure group schemes,
-Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`: a pinning is what makes "the" graph
-automorphism well defined, and the isomorphism theorem for pinned groups is what turns a diagram
-automorphism into a named group automorphism. The Chevalley involution is the other automorphism
-Layer 9's Chevalley basis needs, since it is what relates the structure constants `N (α, β)` and
-`N (-α, -β)` and so fixes their signs. Consumed in turn by milestone L0 of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose twisted groups of Lie type are built from graph
-automorphisms of the ambient pinned group.
+Both automorphisms are prerequisites for the pinned Chevalley--Demazure group schemes, Layer 9 of
+`TauCetiRoadmap/ReductiveGroups/README.md`, which asks for the split reductive group scheme over
+`ℤ` to be built "via a Chevalley basis and the Kostant `ℤ`-form of the enveloping algebra". The
+Serre presentation of `TauCeti/Algebra/Lie/Presentation/Serre.lean` is the explicit carrier of the
+Lie algebra that construction starts from, and the two automorphisms are the two symmetries of it
+that construction uses.
+
+The Chevalley involution is the immediate one: the classical normalisation of a Chevalley basis
+picks the root vectors `x α` and `x (-α)` compatibly by transporting them along an automorphism
+acting as `h ↦ -h` on the Cartan subalgebra and exchanging the raising and lowering root vectors
+with a sign, which is what forces `N (-α, -β) = -N (α, β)` and hence makes the structure constants
+integral rather than merely rational (Humphreys §25.2, Carter §4.1).
+`TauCeti.serreChevalleyInvolution` is that automorphism on the presented algebra, and
+`TauCeti.serreLift_comp_serreChevalleyInvolution` is what will carry it to any concrete split
+semisimple Lie algebra identified with the presentation.
+
+The diagram automorphisms are the second: a pinning is what makes "the" graph automorphism well
+defined, and on the Chevalley--Demazure side the graph automorphism of the group scheme is obtained
+by descending the one that permutes the divided powers of the generators in the Kostant `ℤ`-form,
+which is `TauCeti.serreDiagramAut` on the underlying Lie algebra. Consumed in turn by milestone L0
+of `TauCetiRoadmap/CFSGStatement/README.md`, whose twisted groups of Lie type are the fixed points
+of a Steinberg endomorphism built from a graph automorphism of the ambient pinned group.
 
 ## References
 
@@ -321,11 +335,6 @@ theorem serreChevalleyInvolution_involutive :
 theorem serreChevalleyInvolution_symm :
     (serreChevalleyInvolution R CM).symm = serreChevalleyInvolution R CM :=
   LieEquiv.ext fun _ => rfl
-
-@[simp]
-theorem serreChevalleyInvolution_trans_self :
-    (serreChevalleyInvolution R CM).trans (serreChevalleyInvolution R CM) = LieEquiv.refl :=
-  LieEquiv.ext (serreChevalleyInvolution_involutive R CM)
 
 /-- The Chevalley involution commutes with every diagram automorphism: both send the generator of
 index `i` to the signed generator of index `σ i` of the opposite family. -/
