@@ -12,7 +12,7 @@ public import TauCeti.Geometry.Lie.Exponential.Matrix.Compatibility
 # The differential of the general-linear-group exponential in matrix coordinates
 
 After identifying the Lie algebra of `GL(n, ℝ)` with square matrices and coercing the group-valued
-exponential back to matrices, its derivative is left multiplication by `exp A` followed by the
+exponential back to matrices, its derivative is left multiplication by `exp A` applied to the
 integral of conjugations along the exponential line. The statements use Mathlib's scoped `L∞`
 operator norm on matrices; in finite dimension this does not change the derivative or topology.
 
@@ -39,7 +39,7 @@ namespace TauCeti.Lie
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 /-- In matrix coordinates, the derivative of the abstract exponential on `GL(n, ℝ)` is left
-multiplication by `exp A` followed by the integral of conjugations along the exponential line. -/
+multiplication by `exp A` applied to the integral of conjugations along the exponential line. -/
 theorem fderiv_lieExp_generalLinearGroup_coe_apply (A B : Matrix n n ℝ) :
     fderiv ℝ
         (fun C : Matrix n n ℝ =>
