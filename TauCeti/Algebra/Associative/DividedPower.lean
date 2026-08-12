@@ -102,7 +102,7 @@ theorem dividedPower_smul (q : ℚ) (n : ℕ) (x : A) :
   ring
 
 /-- Divided powers preserve commutation of their underlying elements. -/
-theorem commute_dividedPower {x y : A} (hxy : Commute x y) (m n : ℕ) :
+theorem commute_dividedPower_dividedPower {x y : A} (hxy : Commute x y) (m n : ℕ) :
     Commute (dividedPower m x) (dividedPower n y) := by
   simpa only [dividedPower_def] using
     ((hxy.pow_pow m n).smul_left (m.factorial : ℚ)⁻¹).smul_right (n.factorial : ℚ)⁻¹
