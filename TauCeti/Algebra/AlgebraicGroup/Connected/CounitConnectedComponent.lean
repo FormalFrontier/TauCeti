@@ -4,9 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.FiniteType.ConnectedComponents
+public import Mathlib.RingTheory.Spectrum.Prime.Noetherian
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Scheme
 public import TauCeti.RingTheory.Idempotents.ConnectedComponent
+public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
 
 /-!
 # The coordinate idempotent of the counit's ground-field connected component
@@ -45,13 +46,13 @@ open AlgebraicGeometry
 
 namespace TauCeti.Bialgebra
 
-universe u
+universe u v
 
 variable (k : Type u) [Field k]
-variable (H : Type u) [CommRing H] [Bialgebra k H] [Algebra.FiniteType k H]
+variable (H : Type v) [CommRing H] [Bialgebra k H] [Algebra.FiniteType k H]
 
 /-- The idempotent whose basic open is the ground-field connected component of the counit point. -/
-noncomputable abbrev counitConnectedComponentIdempotent : H :=
+noncomputable def counitConnectedComponentIdempotent : H :=
   letI : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
   PrimeSpectrum.connectedComponentIdempotent (augmentationPoint k H)
 
@@ -59,6 +60,7 @@ noncomputable abbrev counitConnectedComponentIdempotent : H :=
 theorem isIdempotentElem_counitConnectedComponentIdempotent :
     IsIdempotentElem (counitConnectedComponentIdempotent k H) := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold counitConnectedComponentIdempotent
   exact PrimeSpectrum.isIdempotentElem_connectedComponentIdempotent (augmentationPoint k H)
 
 /-- The basic open of the component idempotent is the ground-field connected component of the
@@ -67,6 +69,7 @@ theorem basicOpen_counitConnectedComponentIdempotent :
     (PrimeSpectrum.basicOpen (counitConnectedComponentIdempotent k H) : Set (PrimeSpectrum H)) =
       connectedComponent (augmentationPoint k H) := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold counitConnectedComponentIdempotent
   exact PrimeSpectrum.basicOpen_connectedComponentIdempotent (augmentationPoint k H)
 
 /-- The counit takes its connected-component idempotent to one. -/
@@ -75,22 +78,22 @@ theorem counit_counitConnectedComponentIdempotent :
     Coalgebra.counit (R := k) (A := H) (counitConnectedComponentIdempotent k H) = 1 := by
   have hnot : counitConnectedComponentIdempotent k H ∉ (augmentationPoint k H).asIdeal := by
     let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+    unfold counitConnectedComponentIdempotent
     exact PrimeSpectrum.connectedComponentIdempotent_notMem (augmentationPoint k H)
   rw [augmentationPoint, AlgHom.kernelPoint_asIdeal, RingHom.mem_ker] at hnot
-  have hnot' : (_root_.Bialgebra.counitAlgHom k H).toLinearMap
+  have hnot' : (_root_.Bialgebra.counitAlgHom k H)
       (counitConnectedComponentIdempotent k H) ≠ 0 := hnot
-  rw [_root_.Bialgebra.toLinearMap_counitAlgHom] at hnot'
-  have hidempotent := (isIdempotentElem_counitConnectedComponentIdempotent k H).map
-    (_root_.Bialgebra.counitAlgHom k H).toRingHom
-  change IsIdempotentElem
-    ((_root_.Bialgebra.counitAlgHom k H).toLinearMap
-      (counitConnectedComponentIdempotent k H)) at hidempotent
-  rw [_root_.Bialgebra.toLinearMap_counitAlgHom] at hidempotent
+  rw [_root_.Bialgebra.counitAlgHom_apply] at hnot'
+  have hidempotent : IsIdempotentElem
+      ((_root_.Bialgebra.counitAlgHom k H) (counitConnectedComponentIdempotent k H)) :=
+    (isIdempotentElem_counitConnectedComponentIdempotent k H).map
+      (_root_.Bialgebra.counitAlgHom k H).toRingHom
+  rw [_root_.Bialgebra.counitAlgHom_apply] at hidempotent
   exact (IsIdempotentElem.iff_eq_zero_or_one.mp hidempotent).resolve_left hnot'
 
 /-- The ideal `(1 - e)` whose vanishing locus is the ground-field connected component of the
 counit point. -/
-noncomputable abbrev counitConnectedComponentIdeal : Ideal H :=
+noncomputable def counitConnectedComponentIdeal : Ideal H :=
   letI : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
   PrimeSpectrum.connectedComponentIdeal (augmentationPoint k H)
 
@@ -100,6 +103,7 @@ theorem counitConnectedComponentIdeal_eq_span :
     counitConnectedComponentIdeal k H =
       Ideal.span {1 - counitConnectedComponentIdempotent k H} := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold counitConnectedComponentIdeal counitConnectedComponentIdempotent
   exact PrimeSpectrum.connectedComponentIdeal_eq_span (augmentationPoint k H)
 
 /-- The zero locus of the counit-component ideal is precisely the ground-field connected component
@@ -108,6 +112,7 @@ theorem zeroLocus_counitConnectedComponentIdeal :
     PrimeSpectrum.zeroLocus (counitConnectedComponentIdeal k H : Set H) =
       connectedComponent (augmentationPoint k H) := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold counitConnectedComponentIdeal
   exact PrimeSpectrum.zeroLocus_connectedComponentIdeal (augmentationPoint k H)
 
 /-- The counit-component ideal is killed by the counit, so the counit point belongs to the
@@ -143,6 +148,7 @@ noncomputable def primeSpectrumCounitConnectedComponentHomeomorph :
     PrimeSpectrum (H ⧸ counitConnectedComponentIdeal k H) ≃ₜ
       (connectedComponent (augmentationPoint k H) : Set (PrimeSpectrum H)) := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold counitConnectedComponentIdeal
   exact PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent
     (augmentationPoint k H)
 
@@ -152,6 +158,7 @@ theorem primeSpectrumCounitConnectedComponentHomeomorph_apply
     (primeSpectrumCounitConnectedComponentHomeomorph k H x : PrimeSpectrum H) =
       PrimeSpectrum.comap (Ideal.Quotient.mk (counitConnectedComponentIdeal k H)) x := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold primeSpectrumCounitConnectedComponentHomeomorph counitConnectedComponentIdeal
   exact PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent_apply
     (augmentationPoint k H) x
 
