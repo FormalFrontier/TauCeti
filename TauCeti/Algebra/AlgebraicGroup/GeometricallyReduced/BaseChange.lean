@@ -40,7 +40,7 @@ universe u v
 
 /-- **Geometric reducedness is preserved by extension of the base field.** -/
 theorem geometricallyReducedCommHopfAlgProperty.baseChange
-    (k K : Type u) [Field k] [Field K] [Algebra k K]
+    (k : Type u) (K : Type (max u v)) [Field k] [Field K] [Algebra k K]
     (H : CommHopfAlgCat.{v} k)
     (hH : geometricallyReducedCommHopfAlgProperty k H) :
     geometricallyReducedCommHopfAlgProperty K
@@ -52,7 +52,7 @@ theorem geometricallyReducedCommHopfAlgProperty.baseChange
   let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) L).toRingEquiv.trans
     ((Algebra.TensorProduct.cancelBaseChange k K L L H).toRingEquiv.trans
       (Algebra.TensorProduct.comm k L H).toRingEquiv)
-  let _ := hH.isReduced_tensorProduct L
+  let _ := hH L
   exact isReduced_of_injective e.toRingHom e.injective
 
 end TauCeti

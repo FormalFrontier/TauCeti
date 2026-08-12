@@ -23,8 +23,6 @@ as a TODO. The all-extension condition used here implies Mathlib's existing alge
 
 * `TauCeti.geometricallyReducedCommHopfAlgProperty`: geometric reducedness after every field
   extension.
-* `TauCeti.geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct`: the direct
-  eliminator for a chosen field extension.
 * `TauCeti.geometricallyReducedCommHopfAlgProperty.isGeometricallyReduced`: comparison with
   Mathlib's algebra predicate.
 * `TauCeti.geometricallyReducedCommHopfAlgProperty.isReduced`: reducedness over the base field.
@@ -70,14 +68,6 @@ theorem geometricallyReducedCommHopfAlgProperty_iff
         IsReduced ((H : Type v) ⊗[k] K) :=
   Iff.rfl
 
-/-- The coordinate ring stays reduced after any chosen extension of the base field. -/
-theorem geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct
-    {k : Type u} [Field k] {H : CommHopfAlgCat.{v} k}
-    (hH : geometricallyReducedCommHopfAlgProperty k H)
-    (K : Type (max u v)) [Field K] [Algebra k K] :
-    IsReduced ((H : Type v) ⊗[k] K) :=
-  hH K
-
 /-- The coordinate ring stays reduced after any chosen extension of the base field, with the
 extension field as the left tensor factor. -/
 theorem geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct_comm
@@ -85,7 +75,7 @@ theorem geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct_comm
     (hH : geometricallyReducedCommHopfAlgProperty k H)
     (K : Type (max u v)) [Field K] [Algebra k K] :
     IsReduced (K ⊗[k] (H : Type v)) := by
-  let _ := hH.isReduced_tensorProduct K
+  let _ := hH K
   exact isReduced_of_injective (Algebra.TensorProduct.comm k H K).symm.toRingHom
     (Algebra.TensorProduct.comm k H K).symm.injective
 
