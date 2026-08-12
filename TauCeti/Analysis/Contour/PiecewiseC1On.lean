@@ -340,12 +340,14 @@ private theorem isBounded_image_deriv_aux {p : Finset ℝ}
 
 /-- **Boundedness of the derivative of a piecewise-`C¹` curve on its whole parameter interval.**
 Mirrors `IsPiecewiseC1On.intervalIntegrable_deriv`'s gluing-across-breakpoints argument, but for
-boundedness of the image rather than interval-integrability. -/
-theorem IsPiecewiseC1On.isBounded_image_deriv (h : IsPiecewiseC1On γ a b) (hab : a ≤ b) :
-    Bornology.IsBounded (deriv γ '' Icc a b) := by
+boundedness of the image rather than interval-integrability. Orientation-generic like its
+sibling: unlike `Icc a b`, which is empty (not `Icc b a`) when `b < a`, `uIcc a b` is symmetric
+in `a` and `b`, so no `a ≤ b` hypothesis is needed. -/
+theorem IsPiecewiseC1On.isBounded_image_deriv (h : IsPiecewiseC1On γ a b) :
+    Bornology.IsBounded (deriv γ '' uIcc a b) := by
   obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
   have key := isBounded_image_deriv_aux hC1 (p.filter (· ∈ Ioo (min a b) (max a b))).card
     (min a b) (max a b) le_rfl min_le_max Icc_min_max.subset
-  simpa [min_eq_left hab, max_eq_right hab] using key
+  rwa [Icc_min_max] at key
 
 end TauCeti.Contour

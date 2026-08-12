@@ -383,7 +383,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
   -- the crude `‖v‖ / m` estimate, `m` the lower bound on `‖γ - s‖` there and `Cd` a bound on
   -- `‖deriv γ‖` over all of `[a, b]` (piecewise-`C¹`, hence bounded on finitely many pieces).
   have hm_pos : 0 < h_far.choose := h_far.choose_spec.1
-  obtain ⟨Cd, hCd⟩ := (h_imm.isPiecewiseC1On.isBounded_image_deriv hab.le).exists_norm_le
+  obtain ⟨Cd, hCd⟩ := h_imm.isPiecewiseC1On.isBounded_image_deriv.exists_norm_le
   have hwin_union_bdd : Bornology.IsBounded
       (⋃ t₀ ∈ T, (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) ''
         Icc (t₀ - ρ) (t₀ + ρ)) :=
@@ -400,7 +400,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
     · refine Or.inr ?_
       rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
       have hm_le : h_far.choose ≤ ‖γ t - s‖ := h_far.choose_spec.2 t ht hcase
-      have hv_le : ‖deriv γ t‖ ≤ Cd := hCd _ ⟨t, ht, rfl⟩
+      have hv_le : ‖deriv γ t‖ ≤ Cd := hCd _ ⟨t, uIcc_of_le hab.le ▸ ht, rfl⟩
       calc |realWindingIntegrand (γ t - s) (deriv γ t)| ≤ ‖deriv γ t‖ / h_far.choose :=
             abs_realWindingIntegrand_le_div_of_norm_le hm_pos hm_le
         _ ≤ Cd / h_far.choose := by gcongr
