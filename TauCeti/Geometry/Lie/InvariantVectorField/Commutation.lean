@@ -4,11 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-import TauCeti.Analysis.Calculus.ParametricFDeriv
-import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
+public import TauCeti.Analysis.Calculus.ParametricFDeriv
+public import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 public import TauCeti.Geometry.Lie.RightInvariantVectorField
 public import TauCeti.Geometry.Manifold.VectorField.LieBracket
-import TauCeti.Geometry.Lie.Interior
+public import TauCeti.Geometry.Lie.Interior
 
 /-!
 # Commutation of left- and right-invariant vector fields
@@ -22,6 +22,11 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
+* `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: a scalar function on two exponential lines
+  multiplied around a fixed group element is twice continuously differentiable.
+* `spatialFDeriv_mulInvariantExp_mul_mulInvariantExp` and
+  `timeFDeriv_mulInvariantExp_mul_mulInvariantExp`: identify its two partial derivatives with
+  left- and right-invariant differentiation.
 * `mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute`: left- and
   right-invariant scalar differentiation commute at every group point.
 * `mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField`: the corresponding
@@ -52,7 +57,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-private theorem two_le_infinite_smoothness :
+/-- Twice differentiable regularity is bounded by infinite smoothness. -/
+theorem two_le_infinite_smoothness :
     ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
   ENat.natCast_le_of_coe_top_le_withTop le_rfl 2
 
@@ -62,7 +68,7 @@ variable [CompleteSpace E]
 
 /-- A smooth scalar function evaluated on two exponential lines multiplied around a fixed group
 element is smooth in both parameters. -/
-private theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
+theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
     {f : G → ℝ} (hf : ContMDiff I 𝓘(ℝ, ℝ) ∞ f) (g : G)
     (X Y : GroupLieAlgebra I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
@@ -74,7 +80,7 @@ private theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
   exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff.of_le
     two_le_infinite_smoothness
 
-private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
+theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (s : ℝ) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     spatialFDeriv (fun p : ℝ × ℝ =>
@@ -104,7 +110,7 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
   rw [mvfderiv_apply_eq_mfderiv_apply]
   exact hpartial.unique hdirection'
 
-private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
+theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (t : ℝ) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     timeFDeriv (fun p : ℝ × ℝ =>

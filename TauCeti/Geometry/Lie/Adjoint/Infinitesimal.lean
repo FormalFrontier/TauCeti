@@ -56,10 +56,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-private theorem two_le_infinite_smoothness_adjoint :
-    ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
-  ENat.natCast_le_of_coe_top_le_withTop le_rfl 2
-
 /-- The infinitesimal generator of conjugation acts on scalar functions by the difference of
 right- and left-invariant differentiation. -/
 private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
@@ -75,59 +71,31 @@ private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
   let F : ℝ × ℝ → ℝ := fun p =>
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • (-X)))
-  have hF : ContDiff ℝ ∞ F :=
-    (f.contMDiff.comp
-      (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X (-X))).contDiff
+  have hF : ContDiff ℝ 2 F :=
+    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X (-X)
   have hdiag : HasDerivAt (fun t : ℝ => F (t, t))
       (fderiv ℝ F (0, 0) (1, 1)) 0 := by
     have hemb : HasDerivAt (fun t : ℝ => (t, t)) (1, 1) 0 :=
       (hasDerivAt_id (𝕜 := ℝ) 0).prodMk (hasDerivAt_id (𝕜 := ℝ) 0)
     exact (hF.differentiable (by simp) (0, 0)).hasFDerivAt.comp_hasDerivAt
       (f := fun t : ℝ => (t, t)) 0 hemb
-  have hfAt := f.contMDiff.mdifferentiable (by simp) g |>.hasMFDerivAt
-  have hright := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul_zero hfAt X
-  have hleftNeg := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero hfAt (-X)
   have ht : fderiv ℝ F (0, 0) (1, 0) =
       mvfderiv I f g (mulRightInvariantVectorField X g) := by
-    have hpartial : HasDerivAt (fun t : ℝ => F (t, 0))
-        (fderiv ℝ F (0, 0) (1, 0)) 0 := by
-      simpa only [timeFDeriv_apply] using
-        hasDerivAt_parameterCurve (hF.differentiable (by simp) (0, 0))
-    have hright' : HasDerivAt (fun t : ℝ => F (t, 0))
-        (mvfderiv I f g (mulRightInvariantVectorField X g)) 0 := by
-      have hfun : (fun t : ℝ => F (t, 0)) =
-          fun t => f (mulInvariantExp (I := I) (G := G) (t • X) * g) := by
-        funext t
-        simp only [F, zero_smul, mulInvariantExp_zero, mul_one]
-      rw [hfun]
-      apply hright.congr_deriv
-      -- `mvfderiv` and the derivative supplied by `HasMFDerivAt` share the canonical real model.
-      with_unfolding_all rfl
-    exact hpartial.unique hright'
+    have h := timeFDeriv_mulInvariantExp_mul_mulInvariantExp f g X (-X) 0
+    dsimp only at h
+    rw [zero_smul, mulInvariantExp_zero, mul_one] at h
+    simpa only [F, timeFDeriv_apply] using h
   have hs : fderiv ℝ F (0, 0) (0, 1) =
       mvfderiv I f g (-mulInvariantVectorField X g) := by
-    have hFdiff : DifferentiableAt ℝ F (0, 0) := hF.differentiable (by simp) (0, 0)
-    have hslice : DifferentiableAt ℝ (fun t => F (0, t)) 0 :=
-      hFdiff.comp 0 ((differentiableAt_const 0).prodMk differentiableAt_id)
-    have hpartial := hslice.hasDerivAt
-    rw [← fderiv_apply_one_eq_deriv, fderiv_timeSlice hFdiff] at hpartial
-    have hleftNeg' : HasDerivAt (fun t : ℝ => F (0, t))
-        (mvfderiv I f g (-mulInvariantVectorField X g)) 0 := by
-      have hfun : (fun t : ℝ => F (0, t)) =
-          fun t => f (g * mulInvariantExp (I := I) (G := G) (t • (-X))) := by
-        funext t
-        simp only [F, zero_smul, mulInvariantExp_zero, one_mul]
-      have hvec : mulInvariantVectorField (-X) g = -mulInvariantVectorField X g := by
-        rw [show -X = (-1 : ℝ) • X by simp]
-        exact congrFun (mulInvariantVectorField_smul (I := I) (G := G) (-1) X) g |>.trans
-          (by simp)
-      rw [hfun]
-      rw [hvec] at hleftNeg
-      apply hleftNeg.congr_deriv
-      -- `mvfderiv` and the derivative supplied by `HasMFDerivAt` share the canonical real model.
-      with_unfolding_all rfl
-    simpa only [spatialFDeriv_apply, zero_smul, one_smul] using
-      hpartial.unique hleftNeg'
+    have hvec : mulInvariantVectorField (-X) g = -mulInvariantVectorField X g := by
+      -- Rewrite negation as scalar multiplication to use linearity of the invariant vector field.
+      rw [show -X = (-1 : ℝ) • X by simp]
+      exact congrFun (mulInvariantVectorField_smul (I := I) (G := G) (-1) X) g |>.trans
+        (by simp)
+    have h := spatialFDeriv_mulInvariantExp_mul_mulInvariantExp f g X (-X) 0
+    dsimp only at h
+    rw [zero_smul, mulInvariantExp_zero, one_mul, hvec] at h
+    simpa only [F, spatialFDeriv_apply] using h
   have hder : fderiv ℝ F (0, 0) (1, 1) =
       mvfderiv I f g
         (mulRightInvariantVectorField X g - mulInvariantVectorField X g) := by
@@ -156,6 +124,7 @@ private noncomputable def ContMDiffMap.conjugationGenerator
   have hsub := RXf.contMDiff.sub LXf.contMDiff
   apply hsub.congr
   intro g
+  -- Coercing the bundled maps exposes their carrier functions; linearity supplies the equality.
   change mvfderiv I f g (_ - _) = mvfderiv I f g _ - mvfderiv I f g _
   exact map_sub (mvfderiv I f g) _ _
 
@@ -178,6 +147,7 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
   let H := ContMDiffMap.conjugationGenerator (I := I) f X
   have hH : (H : G → ℝ) = (RXf : G → ℝ) - (LXf : G → ℝ) := by
     funext g
+    -- Coercing `H`, `RXf`, and `LXf` exposes their carrier functions before applying linearity.
     change mvfderiv I f g (_ - _) = mvfderiv I f g _ - mvfderiv I f g _
     rw [map_sub]
   -- Unfold only the private bundle `H`; its underlying function is the displayed generator.
@@ -198,7 +168,7 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
     (V := mulInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := (1 : G))
-    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness_adjoint)
+    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness)
     (by simp)
     ((contMDiff_mulInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt
@@ -283,15 +253,12 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
       mulInvariantExp (I := I) (G := G) (p.1 • (-X)))
   have hF : ContDiff ℝ 2 F :=
     (ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp f X Y).of_le
-      two_le_infinite_smoothness_adjoint
+      two_le_infinite_smoothness
   -- Varying the second parameter conjugates the `Y`-line by `γX t`, so this spatial partial
   -- evaluates the tangent adjoint orbit against the chosen test function.
   have hspace (t : ℝ) : spatialFDeriv F 0 t 1 = q (A t) := by
     have hFdiff : DifferentiableAt ℝ F (t, 0) := hF.differentiable (by norm_num) (t, 0)
-    have hslice : DifferentiableAt ℝ (fun s => F (t, s)) 0 :=
-      hFdiff.comp 0 ((differentiableAt_const (c := t)).prodMk differentiableAt_id)
-    have hpartial := hslice.hasDerivAt
-    rw [← fderiv_apply_one_eq_deriv, fderiv_timeSlice hFdiff] at hpartial
+    have hpartial := (hasFDerivAt_timeSlice hFdiff).hasDerivAt
     have hfOne := f.contMDiff.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
     have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hfOne
       (tangentAd (I := I) (γX t) Y)
@@ -299,6 +266,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
         fun s => f (mulInvariantExp (I := I) (G := G)
           (s • tangentAd (I := I) (γX t) Y)) := by
       funext s
+      -- Scalar negation in the Lie algebra matches inversion of the exponential curve.
       have hinv : mulInvariantExp (I := I) (G := G) (t • (-X)) = (γX t)⁻¹ := by
         rw [show t • (-X) = -(t • X) by module, mulInvariantExp_neg]
       simp only [F]
@@ -357,6 +325,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
   let H := ContMDiffMap.conjugationGenerator (I := I) f X
   have hH (g : G) : H g = mvfderiv I f g
       (mulRightInvariantVectorField X g - mulInvariantVectorField X g) := by
+    -- Coercing the private bundled map `H` exposes exactly its defining carrier function.
     change mvfderiv I f g (_ - _) = _
     rfl
   have hHmf := H.contMDiff.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
