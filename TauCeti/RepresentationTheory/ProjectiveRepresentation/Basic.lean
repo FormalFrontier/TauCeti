@@ -23,7 +23,7 @@ displayed relation for every `α`, so without them nothing below is true.
 Working with a normalized lift rather than with a homomorphism `G → PGL(V)` keeps the theory
 basis-free and puts the factor set in the statement, where the rest of the theory needs it.
 
-That `α` is a factor set is rarely something to check by hand: as soon as `k` acts faithfully on
+That `α` is a factor set is rarely something to check by hand: as soon as `kˣ` acts faithfully on
 `V` it is *determined* by `ρ`, and `TauCeti.IsProjectiveRep.of_map_one_mul_apply` derives its
 normalization and its multiplicative `2`-cocycle identity from associativity of composition, so
 there only the two conditions on `ρ` remain. The main results then identify projective
@@ -45,7 +45,7 @@ itself becomes the **twisted regular representation**, which realizes every fact
 
 ## Main results
 
-* `TauCeti.IsProjectiveRep.of_map_one_mul_apply`: when `k` acts faithfully on `V` the factor-set
+* `TauCeti.IsProjectiveRep.of_map_one_mul_apply`: when `kˣ` acts faithfully on `V` the factor-set
   axioms are automatic, and `TauCeti.IsProjectiveRep.factorSet_eq`: there the factor set is
   determined by the lift.
 * `TauCeti.IsProjectiveRep.rescale`: rescaling the lift by `c : G → kˣ` multiplies the factor set by
@@ -85,7 +85,7 @@ variable [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V]
 that is multiplicative up to the scalars `α`. Invertibility of the `ρ g` is carried by the type
 `V ≃ₗ[k] V` and normalization by `map_one`; without them the zero family would satisfy `mul_apply`
 for every `α`, and on the zero module it still does, which is why the factor-set axioms are
-recorded here rather than left to be derived. When `k` acts faithfully on `V` they *are*
+recorded here rather than left to be derived. When `kˣ` acts faithfully on `V` they *are*
 derivable, and `TauCeti.IsProjectiveRep.of_map_one_mul_apply` derives them. -/
 structure IsProjectiveRep (ρ : G → V ≃ₗ[k] V) (α : G → G → kˣ) : Prop where
   /-- The scalars are a normalized multiplicative `2`-cocycle. -/
@@ -169,18 +169,20 @@ end IsProjectiveRep
 end Defs
 
 /-!
-## For a faithful scalar action the factor-set axioms are automatic
+## For a faithful action of the units the factor-set axioms are automatic
 
-When `k` acts faithfully on `V` the scalars in the defining relation are determined by the lift,
+When `kˣ` acts faithfully on `V` the scalars in the defining relation are determined by the lift,
 and associativity of composition forces the cocycle identity on them. So there a normalized lift
 that is multiplicative up to `α` is already a projective representation, and its factor set is
-unique. Faithfulness is exactly what lets a scalar be read off from its action; a nonzero
-torsion-free module, a nonzero vector space in particular, has it.
+unique. Faithfulness is exactly what lets a scalar be read off from its action, and only the
+scalars in `kˣ` are ever compared, so `[FaithfulSMul kˣ V]` is what is asked for; `k` acting
+faithfully — as it does on a nonzero torsion-free module, a nonzero vector space in particular —
+supplies it.
 -/
 
 section Faithful
 
-variable [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V] [FaithfulSMul k V]
+variable [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V] [FaithfulSMul kˣ V]
   {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
 
 namespace IsProjectiveRep
@@ -194,7 +196,7 @@ theorem of_map_one_mul_apply (h₁ : ρ 1 = 1)
     IsProjectiveRep ρ α where
   isFactorSet :=
     { cocycle g₁ g₂ g₃ := by
-        refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
+        refine FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_
         obtain ⟨y, rfl⟩ := (ρ (g₁ * g₂ * g₃)).surjective x
         have outer : ρ g₁ (ρ g₂ (ρ g₃ y))
             = ((α g₁ g₂ : k) * α (g₁ * g₂) g₃) • ρ (g₁ * g₂ * g₃) y := by
@@ -202,29 +204,30 @@ theorem of_map_one_mul_apply (h₁ : ρ 1 = 1)
         have inner : ρ g₁ (ρ g₂ (ρ g₃ y))
             = ((α g₂ g₃ : k) * α g₁ (g₂ * g₃)) • ρ (g₁ * g₂ * g₃) y := by
           rw [h₂ g₂ g₃, map_smul, h₂ g₁ (g₂ * g₃), smul_smul, mul_assoc]
-        rw [Units.val_mul, Units.val_mul, ← inner, outer, mul_comm]
+        rw [Units.smul_def, Units.smul_def, Units.val_mul, Units.val_mul, ← inner, outer, mul_comm]
       one_left g := by
-        refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
+        refine FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_
         obtain ⟨y, rfl⟩ := (ρ g).surjective x
         have hy := h₂ 1 g y
         rw [h₁, one_mul] at hy
-        simpa using hy.symm
+        simpa [Units.smul_def] using hy.symm
       one_right g := by
-        refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
+        refine FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_
         obtain ⟨y, rfl⟩ := (ρ g).surjective x
         have hy := h₂ g 1 y
         rw [h₁, mul_one] at hy
-        simpa using hy.symm }
+        simpa [Units.smul_def] using hy.symm }
   map_one := h₁
   mul_apply := h₂
 
-/-- **The factor set is determined by the lift**: for a faithful scalar action a projective
+/-- **The factor set is determined by the lift**: for a faithful action of the units a projective
 representation has at most one factor set, so `α` is not extra data but an invariant of `ρ`. -/
 theorem factorSet_eq {β : G → G → kˣ} (h : IsProjectiveRep ρ α) (h' : IsProjectiveRep ρ β) :
     α = β := by
   funext g₁ g₂
-  refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
+  refine FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_
   obtain ⟨y, rfl⟩ := (ρ (g₁ * g₂)).surjective x
+  simp only [Units.smul_def]
   exact (h.mul_apply g₁ g₂ y).symm.trans (h'.mul_apply g₁ g₂ y)
 
 end IsProjectiveRep

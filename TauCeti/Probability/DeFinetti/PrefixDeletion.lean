@@ -95,32 +95,6 @@ private lemma phi1_strictMono (r m : ℕ) : StrictMono (phi1 r m) := by
 
 /-! ### Prefix-tail split as a measurable equivalence -/
 
-/-- Split a sequence into its length-`r` prefix `Fin r → α` and the tail `ℕ → α` from index `r`, as
-a measurable equivalence.  The forward map sends `f` to `(fun i => f i.val, fun j => f (r + j))`;
-its inverse glues a prefix/tail pair back into a sequence, taking coordinates below `r` from the
-prefix and the rest (reindexed by `· - r`) from the tail. -/
-private def prefixSplitEquiv (r : ℕ) : (ℕ → α) ≃ᵐ (Fin r → α) × (ℕ → α) :=
-  (MeasurableEquiv.arrowCongr' (finSumNatEquiv r).symm (.refl α)).trans
-    (MeasurableEquiv.sumPiEquivProdPi fun _ => α)
-
-/-- The inverse of `prefixSplitEquiv` glues a prefix/tail pair into a sequence: coordinates below
-`r` come from the prefix `p.1`, the rest (reindexed by `· - r`) from the tail `p.2`. -/
-private lemma prefixSplitEquiv_symm_apply (r : ℕ) (p : (Fin r → α) × (ℕ → α)) (n : ℕ) :
-    (prefixSplitEquiv r).symm p n = if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
-  have key : (prefixSplitEquiv r).symm p
-      = fun n => if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
-    apply (prefixSplitEquiv r).injective
-    rw [MeasurableEquiv.apply_symm_apply]
-    -- BRITTLE: uses the defeq `prefixSplitEquiv r f = (fun i => f i.val, fun j => f (r + j))`;
-    -- `MeasurableEquiv.arrowCongr'` exposes no coe/apply lemma, so this cannot be a `simp` rewrite.
-    change p = (fun i : Fin r => (if h : (i : ℕ) < r then p.1 ⟨i, h⟩ else p.2 ((i : ℕ) - r)),
-        fun j : ℕ => if h : r + j < r then p.1 ⟨r + j, h⟩ else p.2 (r + j - r))
-    refine Prod.ext (funext fun i => ?_) (funext fun j => ?_)
-    · simp only [dite_eq_left i.isLt, Fin.eta]
-    · have h : ¬ (r + j < r) := Nat.not_lt.mpr (Nat.le_add_right r j)
-      simp only [dite_eq_right h, Nat.add_sub_cancel_left]
-  rw [key]
-
 omit [MeasurableSpace Ω] in
 /-- Gluing the length-`r` prefix `i ↦ X i` onto the shifted tail `processShift X (m+1)` yields the
 `phi0`-reindexing of `X` (evaluated pointwise). -/
@@ -179,12 +153,8 @@ private lemma pair_law_eq_of_contractable [IsFiniteMeasure μ]
   have hX_ae : ∀ i, AEMeasurable (X i) μ := fun i => (hX i).aemeasurable
   -- Reindexing a contractable process by a strictly increasing map preserves the path law.
   have hreindex : ∀ φ : ℕ → ℕ, StrictMono φ →
-      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
-    intro φ hφ
-    calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
-        = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
-          (map_reindex_pathLaw μ hX_ae φ).symm
-      _ = pathLaw μ X := (hContr.measurePreserving_reindex hX_ae hφ).map_eq
+      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X :=
+    fun φ hφ => hContr.map_reindex_pathLaw_eq hX_ae hφ
   -- Measurability of the building blocks.
   have hU_meas : Measurable U := measurable_pi_lambda _ fun i => hX i.val
   have hW_meas : Measurable W := measurable_processShift fun n => hX (m + 1 + n)
