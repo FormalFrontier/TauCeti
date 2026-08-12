@@ -81,47 +81,15 @@ lemma isStarOfType_iff (ℓ : α → ℕ) (t : DynkinType) :
       ∀ v w, starCartanMatrix ℓ v w = t.cartanMatrix (e v) (e w) :=
   Iff.rfl
 
-/-- Relabelling the arms of a star: an equivalence `e : α ≃ β` of arm indices carries the star with
-arms `ℓ ∘ e` isomorphically onto the star with arms `ℓ`, moving the vertex at position `t` of the
-arm `i` to the same position of the arm `e i` and fixing the centre. -/
-def starIndexCongrArms (e : α ≃ β) (ℓ : β → ℕ) : StarIndex (ℓ ∘ e) ≃ StarIndex ℓ :=
-  (Equiv.sigmaCongrLeft (β := fun j ↦ Fin (ℓ j)) e).optionCongr
-
-omit [DecidableEq α] [DecidableEq β] in
-/-- Relabelling the arms fixes the centre. -/
-@[simp] lemma starIndexCongrArms_none (e : α ≃ β) (ℓ : β → ℕ) :
-    starIndexCongrArms e ℓ none = none := (rfl)
-
-omit [DecidableEq α] [DecidableEq β] in
-/-- Relabelling the arms keeps each arm vertex at its position along its (renamed) arm. -/
-@[simp] lemma starIndexCongrArms_some (e : α ≃ β) (ℓ : β → ℕ) (v : (i : α) × Fin (ℓ (e i))) :
-    starIndexCongrArms e ℓ (some v) = some ⟨e v.1, v.2⟩ := (rfl)
-
-/-- Relabelling the arms does not change the Cartan matrix of a star. -/
-@[simp] theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) (v w : StarIndex (ℓ ∘ e)) :
-    starCartanMatrix (ℓ ∘ e) v w
-      = starCartanMatrix ℓ (starIndexCongrArms e ℓ v) (starIndexCongrArms e ℓ w) := by
-  rcases v with _ | v <;> rcases w with _ | w <;>
-    simp [e.injective.eq_iff]
-
-/-- A matrix that agrees entrywise with a finite-type matrix along a relabelling of its index type
-is itself of finite type. This is `TauCeti.IsFiniteType.submatrix` in the shape the identifications
-below produce, where the relabelling is given by its action on entries rather than as a
-submatrix. -/
-private theorem isFiniteType_of_forall_eq {B C : Type*} [Fintype B] [Fintype C]
-    {A : Matrix B B ℤ} {A' : Matrix C C ℤ} (e : C ≃ B) (hA : IsFiniteType A)
-    (h : ∀ v w, A' v w = A (e v) (e w)) : IsFiniteType A' := by
-  have hsub : A' = A.submatrix e e := by ext v w; exact h v w
-  rw [hsub]
-  exact hA.submatrix e.injective
-
 /-- A star carrying a finite-type Dynkin diagram is of finite type. Together with the four
 identifications below this is the converse of the fork bound: each admissible shape really is the
 diagram of a root system. -/
 theorem IsStarOfType.isFiniteType [Fintype α] (h : IsStarOfType ℓ t)
     (ht : IsFiniteType t.cartanMatrix) : IsFiniteType (starCartanMatrix ℓ) := by
   obtain ⟨e, he⟩ := (isStarOfType_iff ℓ t).mp h
-  exact isFiniteType_of_forall_eq e ht he
+  have hsub : starCartanMatrix ℓ = t.cartanMatrix.submatrix e e := by ext v w; exact he v w
+  rw [hsub]
+  exact ht.submatrix e.injective
 
 /-- Carrying a Dynkin diagram is invariant under a relabelling of the arms. -/
 theorem IsStarOfType.comp {m : β → ℕ} (h : IsStarOfType m t) (e : α ≃ β) :
@@ -132,28 +100,10 @@ theorem IsStarOfType.comp {m : β → ℕ} (h : IsStarOfType m t) (e : α ≃ β
   rw [starCartanMatrix_comp e m v w]
   exact hf _ _
 
-omit [DecidableEq α] [DecidableEq β] in
-/-- Undoing a relabelling of the arms: composing with `e` and then with `e.symm` returns the
-original arm family. -/
-private lemma comp_symm_comp (e : α ≃ β) (m : β → ℕ) : (m ∘ e) ∘ (e.symm : β ≃ α) = m := by
-  funext i; simp
-
 /-- Carrying a Dynkin diagram is invariant under a relabelling of the arms, in either direction. -/
 @[simp] theorem isStarOfType_comp_iff {m : β → ℕ} (e : α ≃ β) :
     IsStarOfType (m ∘ e) t ↔ IsStarOfType m t :=
-  ⟨fun h ↦ comp_symm_comp e m ▸ h.comp (e.symm : β ≃ α), fun h ↦ h.comp e⟩
-
-/-- Finite type is invariant under a relabelling of the arms of a star. -/
-theorem isFiniteType_starCartanMatrix_comp [Fintype α] [Fintype β] {m : β → ℕ} (e : α ≃ β)
-    (h : IsFiniteType (starCartanMatrix m)) : IsFiniteType (starCartanMatrix (m ∘ e)) :=
-  isFiniteType_of_forall_eq (starIndexCongrArms e m) h (starCartanMatrix_comp e m)
-
-/-- Finite type is invariant under a relabelling of the arms of a star, in either direction. -/
-@[simp] theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β → ℕ}
-    (e : α ≃ β) :
-    IsFiniteType (starCartanMatrix (m ∘ e)) ↔ IsFiniteType (starCartanMatrix m) :=
-  ⟨fun h ↦ comp_symm_comp e m ▸ isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h,
-    isFiniteType_starCartanMatrix_comp e⟩
+  ⟨fun h ↦ (Equiv.comp_symm_eq e m (m ∘ e)).2 rfl ▸ h.comp (e.symm : β ≃ α), fun h ↦ h.comp e⟩
 
 section Fork
 
