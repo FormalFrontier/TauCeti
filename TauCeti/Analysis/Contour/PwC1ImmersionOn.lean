@@ -226,10 +226,11 @@ theorem IsPwC1ImmersionOn.derivWithin_ne_zero_right (h : IsPwC1ImmersionOn γ a 
     derivWithin_congr_set (by
       filter_upwards [Iio_mem_nhds (lt_min htd hlt')] with y hy
       rw [mem_Iio] at hy
-      exact propext (show y ∈ Icc t d ↔ y ∈ Icc t d' by
+      have h_iff : y ∈ Icc t d ↔ y ∈ Icc t d' := by
         simp only [mem_Icc]
         exact ⟨fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_right d d']⟩,
-          fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d d']⟩⟩))
+          fun ⟨h1, _⟩ => ⟨h1, by linarith [min_le_left d d']⟩⟩
+      exact propext h_iff)
   rw [heq]
   exact hne' t (left_mem_Icc.mpr hlt'.le)
 
@@ -243,10 +244,11 @@ theorem IsPwC1ImmersionOn.derivWithin_ne_zero_left (h : IsPwC1ImmersionOn γ a b
     derivWithin_congr_set (by
       filter_upwards [Ioi_mem_nhds (max_lt hct hlt')] with y hy
       rw [mem_Ioi] at hy
-      exact propext (show y ∈ Icc c t ↔ y ∈ Icc c' t by
+      have h_iff : y ∈ Icc c t ↔ y ∈ Icc c' t := by
         simp only [mem_Icc]
         exact ⟨fun ⟨_, h2⟩ => ⟨by linarith [le_max_right c c'], h2⟩,
-          fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c c'], h2⟩⟩))
+          fun ⟨_, h2⟩ => ⟨by linarith [le_max_left c c'], h2⟩⟩
+      exact propext h_iff)
   rw [heq]
   exact hne' t (right_mem_Icc.mpr hlt'.le)
 

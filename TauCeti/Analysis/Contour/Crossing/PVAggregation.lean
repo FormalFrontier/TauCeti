@@ -273,9 +273,9 @@ theorem hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint {γ : �
       have h0 := hasCauchyPVAt_plain_piece hab hm_pos h_int_tr hA hlu hu h_far'
       rwa [h_plain_eq l u hA hlu hu h_ne] at h0)
     (fun l u₀ u _ _ h₁ h₂ => by
-      have := h₁.concat h₂
-      rwa [show (Φ (γ u₀) - Φ (γ l)) + (Φ (γ u) - Φ (γ u₀)) = Φ (γ u) - Φ (γ l) from by
-        ring] at this)
+      have h0 := h₁.concat h₂
+      have h_tel : (Φ (γ u₀) - Φ (γ l)) + (Φ (γ u) - Φ (γ u₀)) = Φ (γ u) - Φ (γ l) := by ring
+      rwa [h_tel] at h0)
     (crossings.sort (· ≤ ·)) (Finset.sortedLT_sort crossings)
     (fun h => hr_nonneg (Finset.nonempty_iff_ne_empty.mpr fun he => h (by simp [he])))
     a le_rfl hab
