@@ -35,9 +35,6 @@ both excluded by a vector that is linear along each of them.
 * `TauCeti.sum_range_chainEntry_mul`: the row of a chain at a position, evaluated at a weight `g`.
   Away from the two ends it is the second difference `2 g (m + 1) - g m - g (m + 2)`, so a weight
   that is linear in the position is annihilated there.
-* `TauCeti.sum_cartanMatrix_A_row`: the rows of `CartanMatrix.A n` sum to `1` at each end of the
-  chain and to `0` in its interior.
-
 ## References
 
 The chain weighting is the calculation of J. E. Humphreys, *Introduction to Lie Algebras and
@@ -148,18 +145,5 @@ theorem sum_range_chainEntry_mul {R : Type*} [Ring R] {n m : ℕ} (hm : m < n) (
       rw [ite_eq_left (Finset.mem_range.2 hk), ite_eq_right (Nat.succ_ne_zero k)]
   rw [h1, h2, h3]
   abel
-
-/-- **The row sums of a type-`A` Cartan matrix.** A row of `CartanMatrix.A n` sums to `2` less the
-number of neighbours the position has, so it is `1` at each of the two ends of the chain and `0` in
-its interior. This is the constant-weight case of `TauCeti.sum_range_chainEntry_mul`. -/
-theorem sum_cartanMatrix_A_row {n : ℕ} (i : Fin n) :
-    ∑ j, CartanMatrix.A n i j
-      = (if (i : ℕ) = 0 then 1 else 0) + if (i : ℕ) + 1 = n then 1 else 0 := by
-  have key := sum_range_chainEntry_mul i.isLt fun _ ↦ (1 : ℤ)
-  simp only [Int.cast_id] at key
-  rw [← Fin.sum_univ_eq_sum_range (fun s ↦ chainEntry i s * 1) n] at key
-  simp only [mul_one, chainEntry_eq_cartanMatrix_A] at key
-  rw [key]
-  split_ifs <;> norm_num
 
 end TauCeti

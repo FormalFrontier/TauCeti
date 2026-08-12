@@ -111,8 +111,7 @@ theorem doubleForkCartanMatrix_inr_inl_inl (n : ℕ) (i : Fin (n + 2)) (j : Fin 
     doubleForkCartanMatrix n (.inr (.inl i)) (.inl j) =
       if i.val = 0 then -1 else 0 := (rfl)
 
-/-- The middle chain is Mathlib's Cartan matrix of type `A`. This is the identification the row
-sum `TauCeti.sum_cartanMatrix_A_row` is stated for; it is not a `simp` lemma, since
+/-- The middle chain is Mathlib's Cartan matrix of type `A`. This is not a `simp` lemma, since
 `CartanMatrix.A` has no entry lemma and `simp` would stall on it. -/
 theorem doubleForkCartanMatrix_inr_inl_inr_inl_eq_cartanMatrix_A (n : ℕ) (i j : Fin (n + 2)) :
     doubleForkCartanMatrix n (.inr (.inl i)) (.inr (.inl j)) =
@@ -207,8 +206,8 @@ theorem doubleForkCartanMatrix_transpose (n : ℕ) :
 
 /-- **Every row of a double-fork Cartan matrix annihilates the affine marks.** At a leaf the row
 meets its fork vertex only; at a fork vertex the two leaves cancel the end of the chain the row sum
-`TauCeti.sum_cartanMatrix_A_row` leaves over; and in the interior of the chain the row sum vanishes
-on its own.
+from `TauCeti.sum_range_chainEntry_mul` leaves over; and in the interior of the chain the row sum
+vanishes on its own.
 
 This is the shape `TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos` consumes; it is
 not a `simp` lemma, since `simp` dismantles the sum over `TauCeti.DoubleForkIndex` with the entry
@@ -224,9 +223,12 @@ theorem sum_doubleForkCartanMatrix_mul_doubleForkMark_eq_zero (n : ℕ) (i : Dou
       doubleForkCartanMatrix_inr_inl_inr_inl_eq_cartanMatrix_A, doubleForkMark_inl,
       doubleForkMark_inr_inl, doubleForkMark_inr_inr, Fin.sum_univ_two]
     have hmiddle : ∑ j, ((CartanMatrix.A (n + 2) i j : ℤ) : ℚ) * 2
-        = (((if (i : ℕ) = 0 then 1 else 0)
-            + if (i : ℕ) + 1 = n + 2 then 1 else 0 : ℤ) : ℚ) * 2 := by
-      rw [← Finset.sum_mul, ← Int.cast_sum, sum_cartanMatrix_A_row]
+        = 2 * 2 - (if (i : ℕ) = 0 then 0 else 2)
+          - (if (i : ℕ) + 1 = n + 2 then 0 else 2) := by
+      simp_rw [← chainEntry_eq_cartanMatrix_A]
+      have key := sum_range_chainEntry_mul i.isLt fun _ ↦ (2 : ℚ)
+      rw [← Fin.sum_univ_eq_sum_range (fun s ↦ (chainEntry i s : ℚ) * 2) (n + 2)] at key
+      exact key
     rw [hmiddle]
     split_ifs <;> norm_num
   · -- A right leaf: the mirror image of the first case, at the far end of the chain.
