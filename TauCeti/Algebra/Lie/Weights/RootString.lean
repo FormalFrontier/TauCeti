@@ -21,16 +21,19 @@ characteristic zero, let `H` be a splitting Cartan subalgebra, and let `α` and 
 ```
 
 for an `sl₂` triple `(h, e, f)` with `e ∈ Lα` and `f ∈ L(-α)`, together with the consequences that
-make it the first step of the Chevalley basis theorem. The scalar is a *natural number*, and it is
-the whole source of integrality of the structure constants: choosing non-zero root vectors
-`y ∈ Lβ` and `z ∈ L(α + β)` and writing `⁅e, y⁆ = N • z` and `⁅f, z⁆ = N' • y`, the identity reads
-`N * N' = q * (p + 1)`.
+make it the first step of the Chevalley basis theorem. Choosing non-zero root vectors `y ∈ Lβ` and
+`z ∈ L(α + β)` and writing `⁅e, y⁆ = N • z` and `⁅f, z⁆ = N' • y`, the identity gives the product
+constraint `N * N' = q * (p + 1)`. Integrality of the individual constants and the normalization
+`N = ±(p + 1)` additionally require a coherent normalization of root vectors and symmetry
+relations among the constants.
 
 ## Main results
 
-* `TauCeti.lie_lie_eq_nsmul_of_mem_rootSpace`: the ladder identity above, and
-  `TauCeti.lie_lie_eq_nsmul_of_mem_rootSpace'` its mirror `⁅e, ⁅f, y⁆⁆ = (p * (q + 1)) • y`.
-* `TauCeti.chainTopCoeff_pos`: `α + β` being a root forces `0 < q`.
+* `TauCeti.lie_f_lie_e_eq_nsmul_of_mem_rootSpace`: the ladder identity above, and
+  `TauCeti.lie_e_lie_f_eq_nsmul_of_mem_rootSpace` its mirror
+  `⁅e, ⁅f, y⁆⁆ = (p * (q + 1)) • y`.
+* `TauCeti.chainTopCoeff_pos` and `TauCeti.chainBotCoeff_pos`: `α + β` being a root forces `0 < q`,
+  while `-α + β` being a root forces `0 < p`.
 * `TauCeti.lie_ne_zero_of_mem_rootSpace`: if `α + β` is a root then `⁅e, y⁆ ≠ 0` for *every*
   non-zero `e ∈ Lα` and `y ∈ Lβ`.
 * `TauCeti.exists_mem_rootSpace_lie_eq`: `⁅e, ·⁆` maps `Lβ` *onto* `L(α + β)`, so that
@@ -51,16 +54,17 @@ is determined by its value on `f ^ q` applied to that primitive vector, which is
 existential into the identity proved here; `TauCeti.lie_ne_zero_of_mem_rootSpace` is then the
 universally quantified form of Mathlib's lemma.
 
-The scalar is stated as an `ℕ`-scalar action rather than as a cast into `K`, since integrality of
-the structure constants is the point of the statement.
+The scalar is stated as an `ℕ`-scalar action rather than as a cast into `K` to expose the
+combinatorial root-string coefficient directly.
 
 ## References
 
 This file advances the target "The Chevalley--Demazure construction" of Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, which builds the pinned group scheme over `ℤ` "via a
 Chevalley basis and the Kostant `ℤ`-form of the enveloping algebra": the structure constants of a
-Chevalley basis are the numbers `N` above, and `N * N' = q * (p + 1)` is the identity from which
-`N = ±(p + 1)` is read off.
+Chevalley basis are the numbers `N` above. The product constraint `N * N' = q * (p + 1)`, together
+with a coherent normalization of root vectors and additional symmetry relations, leads to the
+integral normalization `N = ±(p + 1)`.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §25.1.
 * R. W. Carter, *Simple Groups of Lie Type*, §4.1.
@@ -90,7 +94,7 @@ where `β - pα, …, β, …, β + qα` is the `α`-string through `β`.
 
 The scalar is a natural number; this is Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, §25.1. -/
-theorem lie_lie_eq_nsmul_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
+theorem lie_f_lie_e_eq_nsmul_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
     (hβ : β.IsNonZero) {h e f : L} (t : IsSl2Triple h e f) (he : e ∈ rootSpace H α)
     (hf : f ∈ rootSpace H (-α)) {y : L} (hy : y ∈ rootSpace H β) :
     ⁅f, ⁅e, y⁆⁆ = (chainTopCoeff α β * (chainBotCoeff α β + 1)) • y := by
@@ -137,14 +141,14 @@ theorem lie_lie_eq_nsmul_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNon
 ⁅e, ⁅f, y⁆⁆ = (p * (q + 1)) • y   for y ∈ Lβ.
 ```
 -/
-theorem lie_lie_eq_nsmul_of_mem_rootSpace' {α β : Weight K H L} (hα : α.IsNonZero)
+theorem lie_e_lie_f_eq_nsmul_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
     (hβ : β.IsNonZero) {h e f : L} (t : IsSl2Triple h e f) (he : e ∈ rootSpace H α)
     (hf : f ∈ rootSpace H (-α)) {y : L} (hy : y ∈ rootSpace H β) :
     ⁅e, ⁅f, y⁆⁆ = (chainBotCoeff α β * (chainTopCoeff α β + 1)) • y := by
   have he' : e ∈ rootSpace H (-⇑(-α : Weight K H L)) := by simpa using he
   have hf' : f ∈ rootSpace H (⇑(-α : Weight K H L)) := by simpa using hf
   simpa using
-    lie_lie_eq_nsmul_of_mem_rootSpace (α := (-α : Weight K H L)) hα.neg hβ t.symm hf' he' hy
+    lie_f_lie_e_eq_nsmul_of_mem_rootSpace (α := (-α : Weight K H L)) hα.neg hβ t.symm hf' he' hy
 
 /-! ### Consequences for the structure constants -/
 
@@ -156,6 +160,12 @@ theorem chainTopCoeff_pos {α β : Weight K H L} (hα : α.IsNonZero)
   rw [Finset.mem_Icc] at hmem
   omega
 
+/-- If `-α + β` is a root then the `α`-string through `β` extends downwards, that is, its bottom
+coefficient is positive. -/
+theorem chainBotCoeff_pos {α β : Weight K H L} (hα : α.IsNonZero)
+    (h_ne_bot : rootSpace H (-α + β) ≠ ⊥) : 0 < chainBotCoeff α β := by
+  simpa using chainTopCoeff_pos (β := β) hα.neg h_ne_bot
+
 /-- If `α + β` is a root then *every* non-zero root vector of `α` brackets every non-zero root
 vector of `β` to something non-zero. This is the universally quantified form of Mathlib's
 `LieAlgebra.IsKilling.exists_mem_rootSpace_lie_ne_zero`. -/
@@ -166,7 +176,7 @@ theorem lie_ne_zero_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
   obtain ⟨h, e', f, t, he', hf'⟩ := exists_isSl2Triple_of_weight_isNonZero hα
   have h' : ⁅e', y⁆ ≠ 0 := by
     intro hzero
-    have hmain := lie_lie_eq_nsmul_of_mem_rootSpace hα hβ t he' hf' hy
+    have hmain := lie_f_lie_e_eq_nsmul_of_mem_rootSpace hα hβ t he' hf' hy
     rw [hzero, lie_zero, eq_comm, ← Nat.cast_smul_eq_nsmul K, smul_eq_zero] at hmain
     rcases hmain with hmain | hmain
     · rw [Nat.cast_eq_zero, Nat.mul_eq_zero] at hmain
@@ -224,14 +234,15 @@ theorem ne_zero_of_lie_eq_smul {α β : Weight K H L} (hα : α.IsNonZero)
 
 /-- The two structure constants of a root string multiply to `q * (p + 1)`, where
 `β - pα, …, β, …, β + qα` is the `α`-string through `β`. Choosing `e`, `f` and `z` so that
-`⁅e, y⁆ = N • z` and `⁅f, z⁆ = N' • y`, this says `N * N' = q * (p + 1)`, the identity from which
-the Chevalley normalisation `N = ±(p + 1)` is read off. -/
+`⁅e, y⁆ = N • z` and `⁅f, z⁆ = N' • y`, this says `N * N' = q * (p + 1)`. Integrality of the
+individual constants and the Chevalley normalization `N = ±(p + 1)` additionally require a
+coherent normalization of root vectors and symmetry relations among the constants. -/
 theorem mul_eq_of_lie_eq_smul {α β : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero)
     {h e f : L} (t : IsSl2Triple h e f) (he : e ∈ rootSpace H α) (hf : f ∈ rootSpace H (-α))
     {y z : L} (hy : y ∈ rootSpace H β) (hy₀ : y ≠ 0) {N N' : K} (hN : ⁅e, y⁆ = N • z)
     (hN' : ⁅f, z⁆ = N' • y) :
     N * N' = (chainTopCoeff α β * (chainBotCoeff α β + 1) : ℕ) := by
-  have hmain := lie_lie_eq_nsmul_of_mem_rootSpace hα hβ t he hf hy
+  have hmain := lie_f_lie_e_eq_nsmul_of_mem_rootSpace hα hβ t he hf hy
   rw [hN, lie_smul, hN', smul_smul, ← Nat.cast_smul_eq_nsmul K] at hmain
   have hsub := sub_eq_zero.mpr hmain
   rw [← sub_smul, smul_eq_zero] at hsub
