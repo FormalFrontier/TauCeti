@@ -11,8 +11,8 @@ public import TauCeti.LinearAlgebra.RootSystem.RankTwo
 # The triple-edge case of the finite-type classification
 
 A triple edge in a finite-type Cartan matrix is isolated: neither endpoint can have another
-neighbour.  This file combines that local obstruction with connectedness.  If the whole diagram is
-connected, the two endpoints are therefore all its vertices.  The rank-two classification then
+neighbour.  This file combines that local obstruction with preconnectedness.  If the whole diagram
+is preconnected, the two endpoints are therefore all its vertices.  The rank-two classification then
 identifies the matrix, up to one simultaneous relabelling of rows and columns, with the standard
 Bourbaki Cartan matrix of type `G₂`.
 
@@ -23,13 +23,13 @@ triple edge is precisely `G₂`.
 
 ## Main results
 
-* `TauCeti.IsFiniteType.eq_or_eq_of_apply_mul_apply_eq_three`: every vertex of a connected
+* `TauCeti.IsFiniteType.eq_or_eq_of_apply_mul_apply_eq_three`: every vertex of a preconnected
   finite-type diagram containing a triple edge is one of its endpoints.
 * `TauCeti.IsFiniteType.card_eq_two_of_apply_mul_apply_eq_three`: such a diagram has two vertices.
 * `TauCeti.IsFiniteType.exists_equiv_cartanMatrix_eq_G2_of_apply_mul_apply_eq_three`: the matrix
   reindexes to the standard Cartan matrix of type `G₂`.
 * `TauCeti.IsFiniteType.exists_apply_mul_apply_eq_three_iff_exists_equiv_cartanMatrix_eq_G2`: a
-  connected finite-type matrix has a triple edge exactly when it has Cartan type `G₂`.
+  preconnected finite-type matrix has a triple edge exactly when it has Cartan type `G₂`.
 
 ## References
 
@@ -50,14 +50,14 @@ namespace IsFiniteType
 
 variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
 
-/-- **A connected finite-type diagram containing a triple edge consists only of its endpoints.**
+/-- **A preconnected finite-type diagram containing a triple edge consists only of its endpoints.**
 
 Both endpoints have no other neighbour by
 `TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`.  The induced subgraph on the two
-endpoints is therefore closed under taking neighbours.  Connectedness forces every vertex into
+endpoints is therefore closed under taking neighbours.  Preconnectedness forces every vertex into
 that induced subgraph. -/
 theorem eq_or_eq_of_apply_mul_apply_eq_three (h : IsFiniteType A)
-    (hconn : (diagramGraph A).Connected) {i j : B} (hij : A i j * A j i = 3) (k : B) :
+    (hconn : (diagramGraph A).Preconnected) {i j : B} (hij : A i j * A j i = 3) (k : B) :
     k = i ∨ k = j := by
   classical
   have hij_ne : i ≠ j := by
@@ -95,35 +95,26 @@ theorem eq_or_eq_of_apply_mul_apply_eq_three (h : IsFiniteType A)
     (hconn i k).mem_subgraphVerts hclosed hiH
   simpa [H, eq_comm] using hkH
 
-/-- **A connected finite-type diagram containing a triple edge has exactly two vertices.** -/
+/-- **A preconnected finite-type diagram containing a triple edge has exactly two vertices.** -/
 theorem card_eq_two_of_apply_mul_apply_eq_three (h : IsFiniteType A)
-    (hconn : (diagramGraph A).Connected) {i j : B} (hij : A i j * A j i = 3) :
+    (hconn : (diagramGraph A).Preconnected) {i j : B} (hij : A i j * A j i = 3) :
     Fintype.card B = 2 := by
-  classical
   have hij_ne : i ≠ j := by
     rintro rfl
     rw [h.apply_self] at hij
     omega
-  let e : B ≃ Fin 2 :=
-    { toFun := fun k ↦ if k = i then 0 else 1
-      invFun := fun n ↦ if n = 0 then i else j
-      left_inv := fun k ↦ by
-        rcases h.eq_or_eq_of_apply_mul_apply_eq_three hconn hij k with hk | hk
-        · subst k
-          simp
-        · subst k
-          simp [Ne.symm hij_ne]
-      right_inv := fun n ↦ by
-        fin_cases n <;> simp [Ne.symm hij_ne] }
-  exact Fintype.card_congr e
+  rw [← Nat.card_eq_fintype_card]
+  refine Nat.card_eq_two_iff.mpr ⟨i, j, hij_ne, Set.eq_univ_of_forall ?_⟩
+  intro k
+  simpa [eq_comm] using h.eq_or_eq_of_apply_mul_apply_eq_three hconn hij k
 
 /-- **The triple-edge branch of the finite-type classification is `G₂`.**
 
-For a connected finite-type matrix, a Cartan product of three first forces the index type to have
+For a preconnected finite-type matrix, a Cartan product of three first forces the index type to have
 two elements.  Rank-two classification supplies its unique valid Dynkin type.  The Cartan product
 is invariant under relabelling and distinguishes `G₂` from `A₂` and `B₂`. -/
 theorem exists_equiv_cartanMatrix_eq_G2_of_apply_mul_apply_eq_three (h : IsFiniteType A)
-    (hconn : (diagramGraph A).Connected) {i j : B} (hij : A i j * A j i = 3) :
+    (hconn : (diagramGraph A).Preconnected) {i j : B} (hij : A i j * A j i = 3) :
     ∃ e : B ≃ Fin DynkinType.G2.rank,
       ∀ x y, A x y = DynkinType.G2.cartanMatrix (e x) (e y) := by
   have hij_ne : i ≠ j := by
@@ -156,14 +147,14 @@ theorem exists_equiv_cartanMatrix_eq_G2_of_apply_mul_apply_eq_three (h : IsFinit
     omega
   · exact ⟨e, he⟩
 
-/-- **A connected finite-type matrix contains a triple edge exactly when it has type `G₂`.**
+/-- **A preconnected finite-type matrix contains a triple edge exactly when it has type `G₂`.**
 
 The right side uses the same simultaneous row-and-column relabelling as `HasCartanType`.  No
 orientation is imposed on the witness edge on the left: reversing its endpoints does not change
 the Cartan product. -/
 theorem exists_apply_mul_apply_eq_three_iff_exists_equiv_cartanMatrix_eq_G2
     (h : IsFiniteType A)
-    (hconn : (diagramGraph A).Connected) :
+    (hconn : (diagramGraph A).Preconnected) :
     (∃ i j, A i j * A j i = 3) ↔
       ∃ e : B ≃ Fin DynkinType.G2.rank,
         ∀ x y, A x y = DynkinType.G2.cartanMatrix (e x) (e y) := by
