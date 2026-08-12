@@ -21,11 +21,12 @@ Gebhardt constructs the presentation in three stages. The first nine relators pr
 proves at each stage that the displayed relations define the claimed group. The three blocks have
 freely reduced lengths `80`, `160`, and `309`, giving the published total length `549`.
 
-The source writes `x̄` for `x⁻¹`, `x^y` for `y⁻¹xy`, and `[x,y]` for `x⁻¹y⁻¹xy`. An equation
-`r = s` is stored as the relator `r * s⁻¹`. The structured expressions below preserve the source's
-powers, conjugates, commutators, and equations. Since their direct compilation need not perform
-free cancellation, decidable checks apply Mathlib's `FreeGroup.reduce` before checking the three
-block lengths and their total.
+The source writes `x̄` for `x⁻¹`, `x^y` for `y⁻¹xy`, which is `TauCeti.Relator.conj`, and `[x,y]`
+for `x⁻¹y⁻¹xy`. An equation `r = s` is stored as the relator `r * s⁻¹`, which is
+`TauCeti.Relator.div`. The structured expressions below preserve the source's powers, conjugates,
+commutators, and equations. Since their direct compilation need not perform free cancellation,
+decidable checks apply Mathlib's `FreeGroup.reduce` before checking the three block lengths and
+their total.
 
 The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between the expressions and
 the signed words consumed by `PresentedGroup`. This file asserts no order, finiteness, simplicity,
@@ -64,17 +65,9 @@ private abbrev zInv : Relator (Fin 5) := .inv z
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
-/-- The source's conjugation convention `r^s = s⁻¹ r s`. -/
-private abbrev sourceConj (r s : Relator (Fin 5)) : Relator (Fin 5) :=
-  .inv s ⬝ r ⬝ s
-
 /-- The source's commutator convention `[r,s] = r⁻¹ s⁻¹ r s`. -/
 private abbrev sourceComm (r s : Relator (Fin 5)) : Relator (Fin 5) :=
   .comm (.inv r) (.inv s)
-
-/-- Store the source equation `r = s` as the relator `r * s⁻¹`. -/
-private abbrev sourceEq (r s : Relator (Fin 5)) : Relator (Fin 5) :=
-  r ⬝ .inv s
 
 private abbrev h2Relators : List (Relator (Fin 5)) :=
   [ .pow a 8,
@@ -83,66 +76,66 @@ private abbrev h2Relators : List (Relator (Fin 5)) :=
     sourceComm (.pow a 2) b,
     .pow (sourceComm a b) 3,
     .pow c 5,
-    sourceEq (sourceConj c (.pow a 2)) (.pow c 3),
-    sourceEq (sourceConj c (b ⬝ a))
-      (sourceConj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
-    sourceEq (sourceConj c (.pow b 2))
-      (.pow c 2 ⬝ sourceConj c bInv ⬝ .pow (.inv (sourceConj c b)) 2) ]
+    Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
+    Relator.div (Relator.conj c (b ⬝ a))
+      (Relator.conj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
+    Relator.div (Relator.conj c (.pow b 2))
+      (.pow c 2 ⬝ Relator.conj c bInv ⬝ .pow (.inv (Relator.conj c b)) 2) ]
 
 private abbrev h1Relators : List (Relator (Fin 5)) :=
-  [ sourceEq (sourceConj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
-    sourceEq (sourceConj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
-    sourceEq
-      (sourceConj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
+  [ Relator.div (Relator.conj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
+    Relator.div (Relator.conj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
+    Relator.div
+      (Relator.conj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
       (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ a ⬝ c ⬝ bInv ⬝ c ⬝ b ⬝
         a ⬝ cInv),
-    sourceEq
-      (sourceConj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
+    Relator.div
+      (Relator.conj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
         (d ⬝ c ⬝ d))
       (.pow aInv 2 ⬝ bInv ⬝ aInv ⬝ .pow (bInv ⬝ c) 2 ⬝ .pow b 2),
-    sourceEq
-      (sourceConj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+    Relator.div
+      (Relator.conj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
       (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ c ⬝ aInv ⬝ bInv ⬝ c ⬝
         b ⬝ a),
-    sourceEq
-      (sourceConj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+    Relator.div
+      (Relator.conj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
       (.pow aInv 4 ⬝ .pow b 2 ⬝ cInv ⬝ bInv ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝ bInv),
     c ⬝ aInv ⬝ cInv ⬝ a ⬝ cInv ⬝ aInv ⬝ c ⬝ a ⬝ dInv ⬝ cInv ⬝ aInv ⬝
       cInv ⬝ a ⬝ c ⬝ aInv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ cInv ⬝ aInv ⬝ cInv ⬝ a ⬝ c ⬝ d ]
 
 private abbrev lyExtensionRelators : List (Relator (Fin 5)) :=
-  [ sourceEq (sourceConj a z) (.pow aInv 3),
-    sourceEq (sourceConj a (z ⬝ d ⬝ z)) (.pow a 3),
-    sourceEq
-      (sourceConj
+  [ Relator.div (Relator.conj a z) (.pow aInv 3),
+    Relator.div (Relator.conj a (z ⬝ d ⬝ z)) (.pow a 3),
+    Relator.div
+      (Relator.conj
         (cInv ⬝ dInv ⬝ c ⬝ b ⬝ a ⬝ .pow b 2 ⬝ .pow (c ⬝ b) 2 ⬝ cInv ⬝ d)
         (z ⬝ d ⬝ z))
       (cInv ⬝ b ⬝ .pow c 2 ⬝ a ⬝ cInv ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝
         .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
         dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
-    sourceEq
+    Relator.div
       (sourceComm z
         (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
           a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
       (b ⬝ c ⬝ bInv ⬝ cInv),
-    sourceEq (sourceConj a (z ⬝ d ⬝ bInv ⬝ z))
+    Relator.div (Relator.conj a (z ⬝ d ⬝ bInv ⬝ z))
       (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow cInv 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
         .pow bInv 2 ⬝ c ⬝ bInv ⬝ c ⬝ a ⬝ cInv ⬝ d ⬝ bInv ⬝ aInv),
-    sourceEq
-      (sourceConj
+    Relator.div
+      (Relator.conj
         (cInv ⬝ aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝
           cInv ⬝ dInv ⬝ c ⬝ d ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ b ⬝ a ⬝ c)
         (z ⬝ d ⬝ bInv ⬝ z))
       (aInv ⬝ c ⬝ .pow aInv 3 ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝ d ⬝ cInv ⬝ a ⬝
         cInv ⬝ .pow b 2 ⬝ c ⬝ bInv ⬝ c ⬝ aInv ⬝ cInv ⬝ d ⬝ bInv ⬝ cInv ⬝
         dInv ⬝ cInv ⬝ b ⬝ a ⬝ b ⬝ d ⬝ c ⬝ aInv),
-    sourceEq
-      (sourceConj
+    Relator.div
+      (Relator.conj
         (aInv ⬝ b ⬝ d ⬝ c ⬝ aInv ⬝ bInv ⬝ a ⬝ b ⬝ aInv ⬝ cInv ⬝ bInv ⬝ c ⬝ a)
         (z ⬝ d ⬝ c ⬝ d ⬝ z))
       (cInv ⬝ .pow a 3 ⬝ b ⬝ cInv ⬝ bInv ⬝ aInv ⬝ c ⬝ dInv ⬝ cInv ⬝ b ⬝
         aInv ⬝ bInv),
-    sourceEq (sourceConj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
+    Relator.div (Relator.conj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
       (a ⬝ c ⬝ aInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ aInv ⬝
         bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a),
     a ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow aInv 2 ⬝ dInv ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝
@@ -151,25 +144,23 @@ private abbrev lyExtensionRelators : List (Relator (Fin 5)) :=
 
 private theorem reducedH2Length :
     (h2Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 80 := by
-  simp only [h2Relators, sourceEq, sourceConj, sourceComm,
-    List.map_cons, List.map_nil,
+  simp only [h2Relators, sourceComm, List.map_cons, List.map_nil,
     Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_comm]
+    Relator.toWord_comm, Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedH1Length :
     (h1Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 160 := by
-  simp only [h1Relators, sourceEq, sourceConj,
-    List.map_cons, List.map_nil,
-    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow]
+  simp only [h1Relators, List.map_cons, List.map_nil,
+    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedLyExtensionLength :
     (lyExtensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309 := by
-  simp only [lyExtensionRelators, sourceEq, sourceConj, sourceComm,
-    List.map_cons, List.map_nil,
+  simp only [lyExtensionRelators, sourceComm, List.map_cons, List.map_nil,
     Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_comm]
+    Relator.toWord_comm, Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedTotalLength :
@@ -294,73 +285,70 @@ theorem lyPresentation_transcribed :
       let cInv := .inv c
       let dInv := .inv d
       let zInv := .inv z
-      let sourceConj (r s : Relator (Fin lyPresentation.generatorNames.length)) :=
-        .inv s ⬝ r ⬝ s
       let sourceComm (r s : Relator (Fin lyPresentation.generatorNames.length)) :=
         .comm (.inv r) (.inv s)
-      let sourceEq (r s : Relator (Fin lyPresentation.generatorNames.length)) := r ⬝ .inv s
       [ .pow a 8,
         .pow b 5,
         .pow (a ⬝ b) 4,
         sourceComm (.pow a 2) b,
         .pow (sourceComm a b) 3,
         .pow c 5,
-        sourceEq (sourceConj c (.pow a 2)) (.pow c 3),
-        sourceEq (sourceConj c (b ⬝ a))
-          (sourceConj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
-        sourceEq (sourceConj c (.pow b 2))
-          (.pow c 2 ⬝ sourceConj c bInv ⬝ .pow (.inv (sourceConj c b)) 2) ] ++
-      [ sourceEq (sourceConj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
-        sourceEq (sourceConj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
-        sourceEq
-          (sourceConj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
+        Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
+        Relator.div (Relator.conj c (b ⬝ a))
+          (Relator.conj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
+        Relator.div (Relator.conj c (.pow b 2))
+          (.pow c 2 ⬝ Relator.conj c bInv ⬝ .pow (.inv (Relator.conj c b)) 2) ] ++
+      [ Relator.div (Relator.conj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
+        Relator.div (Relator.conj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
+        Relator.div
+          (Relator.conj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
           (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ a ⬝ c ⬝ bInv ⬝ c ⬝ b ⬝
             a ⬝ cInv),
-        sourceEq
-          (sourceConj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
+        Relator.div
+          (Relator.conj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
             (d ⬝ c ⬝ d))
           (.pow aInv 2 ⬝ bInv ⬝ aInv ⬝ .pow (bInv ⬝ c) 2 ⬝ .pow b 2),
-        sourceEq
-          (sourceConj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+        Relator.div
+          (Relator.conj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
           (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ c ⬝ aInv ⬝ bInv ⬝ c ⬝
             b ⬝ a),
-        sourceEq
-          (sourceConj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+        Relator.div
+          (Relator.conj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
           (.pow aInv 4 ⬝ .pow b 2 ⬝ cInv ⬝ bInv ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝ bInv),
         c ⬝ aInv ⬝ cInv ⬝ a ⬝ cInv ⬝ aInv ⬝ c ⬝ a ⬝ dInv ⬝ cInv ⬝ aInv ⬝
           cInv ⬝ a ⬝ c ⬝ aInv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ cInv ⬝ aInv ⬝ cInv ⬝ a ⬝ c ⬝ d ] ++
-      [ sourceEq (sourceConj a z) (.pow aInv 3),
-        sourceEq (sourceConj a (z ⬝ d ⬝ z)) (.pow a 3),
-        sourceEq
-          (sourceConj
+      [ Relator.div (Relator.conj a z) (.pow aInv 3),
+        Relator.div (Relator.conj a (z ⬝ d ⬝ z)) (.pow a 3),
+        Relator.div
+          (Relator.conj
             (cInv ⬝ dInv ⬝ c ⬝ b ⬝ a ⬝ .pow b 2 ⬝ .pow (c ⬝ b) 2 ⬝ cInv ⬝ d)
             (z ⬝ d ⬝ z))
           (cInv ⬝ b ⬝ .pow c 2 ⬝ a ⬝ cInv ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝
             .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
             dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
-        sourceEq
+        Relator.div
           (sourceComm z
             (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
               a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
           (b ⬝ c ⬝ bInv ⬝ cInv),
-        sourceEq (sourceConj a (z ⬝ d ⬝ bInv ⬝ z))
+        Relator.div (Relator.conj a (z ⬝ d ⬝ bInv ⬝ z))
           (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow cInv 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
             .pow bInv 2 ⬝ c ⬝ bInv ⬝ c ⬝ a ⬝ cInv ⬝ d ⬝ bInv ⬝ aInv),
-        sourceEq
-          (sourceConj
+        Relator.div
+          (Relator.conj
             (cInv ⬝ aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝
               cInv ⬝ dInv ⬝ c ⬝ d ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ b ⬝ a ⬝ c)
             (z ⬝ d ⬝ bInv ⬝ z))
           (aInv ⬝ c ⬝ .pow aInv 3 ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝ d ⬝ cInv ⬝ a ⬝
             cInv ⬝ .pow b 2 ⬝ c ⬝ bInv ⬝ c ⬝ aInv ⬝ cInv ⬝ d ⬝ bInv ⬝ cInv ⬝
             dInv ⬝ cInv ⬝ b ⬝ a ⬝ b ⬝ d ⬝ c ⬝ aInv),
-        sourceEq
-          (sourceConj
+        Relator.div
+          (Relator.conj
             (aInv ⬝ b ⬝ d ⬝ c ⬝ aInv ⬝ bInv ⬝ a ⬝ b ⬝ aInv ⬝ cInv ⬝ bInv ⬝ c ⬝ a)
             (z ⬝ d ⬝ c ⬝ d ⬝ z))
           (cInv ⬝ .pow a 3 ⬝ b ⬝ cInv ⬝ bInv ⬝ aInv ⬝ c ⬝ dInv ⬝ cInv ⬝ b ⬝
             aInv ⬝ bInv),
-        sourceEq (sourceConj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
+        Relator.div (Relator.conj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
           (a ⬝ c ⬝ aInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ aInv ⬝
             bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a),
         a ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow aInv 2 ⬝ dInv ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝
