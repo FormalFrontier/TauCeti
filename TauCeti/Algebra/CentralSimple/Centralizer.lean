@@ -26,7 +26,8 @@ public import TauCeti.Algebra.CentralSimple.Degree
 -- finite-dimensionality of an opposite space are the bookkeeping, and the complex numbers appear
 -- only in the worked examples. The equality of injectivity and surjectivity in equal finite
 -- dimension and the descent of centrality from a tensor product to its factors are the two further
--- tools of the tensor decomposition and the double centralizer.
+-- tools of the tensor decomposition and the double centralizer. The simplicity of a field is what
+-- feeds the subfield case of the dimension count.
 import Mathlib.Algebra.Algebra.Subalgebra.Lattice
 import Mathlib.Algebra.Central.TensorProduct
 import Mathlib.LinearAlgebra.Basis.MulOpposite
@@ -36,6 +37,7 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.RingTheory.Artinian.Module
 import Mathlib.RingTheory.SimpleRing.Congr
+import Mathlib.RingTheory.SimpleRing.Field
 import Mathlib.RingTheory.TensorProduct.Finite
 import TauCeti.RingTheory.Semisimple.EndAlgebra
 
@@ -80,6 +82,9 @@ is simple, and `finrank K (End_R A) * finrank K R = (finrank K A)²`. Since
 * `TauCeti.centralizer_isSimpleRing`: **the centralizer of a central simple subalgebra is simple.**
 * `TauCeti.finrank_mul_finrank_centralizer`: **the centralizer theorem**,
   `finrank K B * finrank K C_A(B) = finrank K A`.
+* `TauCeti.finrank_mul_finrank_centralizer_of_isField`: the same dimension formula for a
+  **subfield** of a central simple algebra, where centrality is asked of the ambient algebra
+  instead of the subalgebra.
 * `TauCeti.tensorCentralizerAlgEquiv`: **the tensor decomposition** `B ⊗[K] C_A(B) ≃ₐ[K] A`, by
   multiplication.
 * `TauCeti.centralizer_isCentral`: **the centralizer of a central simple subalgebra of a central
@@ -108,11 +113,19 @@ at the end of the file records this.
 
 Because simplicity of `B ⊗[K] Aᵐᵒᵖ` is all the dimension formula uses, the count itself is proved
 once and separately, in
-`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct`;
+`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct_mulOpposite`;
 `TauCeti.finrank_mul_finrank_centralizer` is the case of it where that simplicity comes from `B`
-central simple and `A` simple, and `TauCeti.finrank_mul_finrank_centralizer_of_isField` in
-`TauCeti/Algebra/CentralSimple/MaximalSubfield.lean` the case where it comes instead from `B` a
-subfield of a central simple `A`.
+central simple and `A` simple, and `TauCeti.finrank_mul_finrank_centralizer_of_isField` the case
+where it comes instead from `B` a subfield of a central simple `A`.
+
+That last statement asks for `IsField ↥L` and not for the weaker `IsSimpleRing ↥L`, which is all
+its proof uses. The restriction is a scope boundary and not a mathematical one: stated for a merely
+simple subalgebra it is the centralizer theorem for a non-central simple subalgebra, which the
+Layer 5 bullet of the roadmap referenced below defers — "the general form for a merely simple
+subalgebra `B` (center `Z(B) ⊋ K`) ... is a **later** target, not this one" — to be taken up
+together with the description of the centralizer's centre. Nothing is lost in generality by it:
+the count itself is stated at the level its proof works at, and a caller with a merely simple `L`
+can use it directly.
 
 Centrality of `A`, on the other hand, is asked only of the last three statements, and there it
 cannot be dropped either: for `K = ℝ`, `A = ℂ` and `B = ⊥`, which is central simple, the centralizer
@@ -292,17 +305,17 @@ section DimensionCount
 variable {K A : Type*} [Field K] [Ring A] [Nontrivial A] [Algebra K A] [FiniteDimensional K A]
   (B : Subalgebra K A) [IsSimpleRing (↥B ⊗[K] Aᵐᵒᵖ)]
 
-/-- **The dimension count behind the centralizer theorem**, asking only for what it uses: that the
-ring `R = B ⊗[K] Aᵐᵒᵖ` acting on `A` is simple (and that `A` is nonzero, so that the factor of
-`finrank K A` cancelled at the end is nonzero). Then
+/-- **The dimension count behind the centralizer theorem**, asking only for what it uses: that `A`
+is finite-dimensional and nonzero over the field `K` — so that the factor of `finrank K A` cancelled
+at the end is nonzero — and that the ring `R = B ⊗[K] Aᵐᵒᵖ` acting on `A` is simple. Then
 
   `finrank K B * finrank K C_A(B) = finrank K A`.
 
-Simplicity of `R` is the only point at which hypotheses on `B` and on `A` enter, and there is more
-than one way to supply it: `TauCeti.finrank_mul_finrank_centralizer` has it from `B` central simple
-and `A` simple, while `TauCeti.finrank_mul_finrank_centralizer_of_isField` has it from `B` a
-subfield and `A` central simple. -/
-theorem finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct :
+Simplicity of `R` is the only algebraic hypothesis on `B` and on `A`, and there is more than one way
+to supply it: `TauCeti.finrank_mul_finrank_centralizer` has it from `B` central simple and `A`
+simple, while `TauCeti.finrank_mul_finrank_centralizer_of_isField` has it from `B` a subfield and
+`A` central simple. -/
+theorem finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct_mulOpposite :
     finrank K B * finrank K (Subalgebra.centralizer K (B : Set A)) = finrank K A := by
   have : FiniteDimensional K ↥B :=
     FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective
@@ -319,6 +332,35 @@ theorem finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct :
   exact key
 
 end DimensionCount
+
+section Subfield
+
+-- The scoped instances of `IsMulCommutative` are what turn commutativity of the subfield, which is
+-- how `IsField` records it, into the `CommRing` structure `isSimpleRing_iff_isField` asks for.
+open scoped IsMulCommutative
+
+variable {K A : Type*} [Field K] [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
+  [FiniteDimensional K A]
+
+/-- **The dimension of the centralizer of a subfield of a central simple algebra is the
+complementary one**:
+
+  `finrank K L * finrank K C_A(L) = finrank K A`.
+
+This is `TauCeti.finrank_mul_finrank_centralizer` with the centrality hypothesis moved from the
+subalgebra to the ambient algebra. The shared dimension count is
+`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct_mulOpposite`, whose one
+algebraic hypothesis — that `L ⊗[K] Aᵐᵒᵖ` be simple —
+`TauCeti.IsSimpleRing.tensorProduct_of_isCentral_right` supplies here from the simplicity of the
+field `L` and the central simplicity of `Aᵐᵒᵖ`; `L` itself is not central over `K` unless it is `K`,
+so the orientation used by `TauCeti.finrank_mul_finrank_centralizer` does not apply. -/
+theorem finrank_mul_finrank_centralizer_of_isField (L : Subalgebra K A) (hL : IsField ↥L) :
+    finrank K ↥L * finrank K ↥(Subalgebra.centralizer K (L : Set A)) = finrank K A := by
+  have : IsMulCommutative ↥L := ⟨⟨hL.mul_comm⟩⟩
+  have : IsSimpleRing ↥L := (isSimpleRing_iff_isField ↥L).2 hL
+  exact finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct_mulOpposite L
+
+end Subfield
 
 section Centralizer
 
@@ -344,12 +386,12 @@ simple `K`-algebra `A`, the dimensions of `B` and of its centralizer are complem
   `finrank K B * finrank K C_A(B) = finrank K A`.
 
 This is the dimension count of
-`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct`, whose one hypothesis —
-simplicity of `B ⊗[K] Aᵐᵒᵖ` — `TauCeti.IsSimpleRing.tensorProduct` supplies from `B` central simple
-and `Aᵐᵒᵖ` simple. -/
+`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct_mulOpposite`, whose one
+algebraic hypothesis — simplicity of `B ⊗[K] Aᵐᵒᵖ` — `TauCeti.IsSimpleRing.tensorProduct` supplies
+from `B` central simple and `Aᵐᵒᵖ` simple. -/
 theorem finrank_mul_finrank_centralizer :
     finrank K B * finrank K (Subalgebra.centralizer K (B : Set A)) = finrank K A :=
-  finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct B
+  finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct_mulOpposite B
 
 /-- **`B` and its centralizer generate `A`, freely**: multiplication
 `B ⊗[K] C_A(B) → A` is bijective.
