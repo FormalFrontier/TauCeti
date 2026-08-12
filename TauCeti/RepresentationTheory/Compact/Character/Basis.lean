@@ -84,35 +84,6 @@ variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopo
 variable {π : ContRepresentation 𝕜 G V} (hπ : Continuous π)
 
 omit [FiniteDimensional 𝕜 V] in
-/-- **Simultaneously moving the two vectors conjugates the argument of a matrix coefficient.** -/
-theorem matrixCoeffLp_map_map (hunitary : IsUnitary π) (h : G) (v w : V) :
-    matrixCoeffLp π hπ (π h v) (π h w) = conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w) := by
-  have hcoeff : matrixCoeff π hπ (π h v) (π h w) =
-      (matrixCoeff π hπ v w).comp
-        ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹, (continuous_const.mul continuous_id).mul continuous_const⟩ := by
-    ext g
-    calc
-      matrixCoeff π hπ (π h v) (π h w) g =
-          matrixCoeff π hπ (π h v) w (h⁻¹ * g) := by
-        simpa using (matrixCoeff_apply_mul_left hπ hunitary (π h v) w h⁻¹ g).symm
-      _ = matrixCoeff π hπ v w ((h⁻¹ * g) * h) :=
-        (matrixCoeff_apply_mul_right π hπ v w (h⁻¹ * g) h).symm
-      _ = matrixCoeff π hπ v w (h⁻¹ * g * (h⁻¹)⁻¹) := by simp
-  rw [matrixCoeffLp_def, matrixCoeffLp_def, conjLpₗᵢ_apply]
-  calc
-    ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ (π h v) (π h w)) =
-        ContinuousMap.toLp 2 (haarProb G) 𝕜 ((matrixCoeff π hπ v w).comp
-          ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹,
-            (continuous_const.mul continuous_id).mul continuous_const⟩) := congrArg _ hcoeff
-    _ = Lp.compMeasurePreserving (fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹)
-          (measurePreserving_conj (haarProb G) h⁻¹)
-          (ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ v w)) :=
-      (Lp.compMeasurePreserving_toLp 𝕜 (matrixCoeff π hπ v w)
-        ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹,
-          (continuous_const.mul continuous_id).mul continuous_const⟩
-        (measurePreserving_conj (haarProb G) h⁻¹)).symm
-
-omit [FiniteDimensional 𝕜 V] in
 /-- **A class function does not see a simultaneous move of the two defining vectors.**  Moving both
 vectors of a matrix coefficient by `π h` reparametrizes it by the conjugation `g ↦ h⁻¹ * g * h`,
 which fixes a class function and preserves the inner product. -/
@@ -121,7 +92,7 @@ theorem inner_matrixCoeffLp_map_map (hunitary : IsUnitary π) {f : Lp 𝕜 2 (ha
     ⟪matrixCoeffLp π hπ (π h v) (π h w), f⟫_𝕜 = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 := by
   calc ⟪matrixCoeffLp π hπ (π h v) (π h w), f⟫_𝕜
       = ⟪conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w), conjLpₗᵢ 𝕜 h⁻¹ f⟫_𝕜 := by
-        rw [matrixCoeffLp_map_map hπ hunitary, conjLpₗᵢ_apply_of_mem_classFunctionLp hf]
+        rw [matrixCoeffLp_map_map π hπ hunitary, conjLpₗᵢ_apply_of_mem_classFunctionLp hf]
     _ = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 :=
       (conjLpₗᵢ (E := 𝕜) (p := 2) (μ := haarProb G) 𝕜 h⁻¹).toLinearIsometry.inner_map_map _ _
 

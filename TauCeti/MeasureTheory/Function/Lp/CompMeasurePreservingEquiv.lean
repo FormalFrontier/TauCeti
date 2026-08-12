@@ -79,6 +79,7 @@ theorem compMeasurePreserving_comp_apply_of_ae_id {α β E : Type*} [MeasurableS
 
 /-- Precomposition of the `Lp` class of a continuous function by a measure-preserving continuous
 map is the `Lp` class of the composite continuous function. -/
+@[simp]
 theorem compMeasurePreserving_toLp {α β E : Type*} [TopologicalSpace α] [CompactSpace α]
     [MeasurableSpace α] [BorelSpace α] [TopologicalSpace β] [CompactSpace β] [MeasurableSpace β]
     [BorelSpace β] [NormedAddCommGroup E] [SecondCountableTopologyEither α E]
