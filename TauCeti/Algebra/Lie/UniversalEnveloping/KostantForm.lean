@@ -62,7 +62,8 @@ variable [LieRing L] [LieAlgebra ℚ L]
 variable [LieRing M] [LieAlgebra ℚ M]
 variable {ι : Type w} {κ : Type*}
 
-noncomputable local instance :
+/-- The nonnegative-rational scalar action used to form divided powers over `ℚ`. -/
+noncomputable local instance kostantFormModuleNNRat :
     Module ℚ≥0 (_root_.UniversalEnvelopingAlgebra ℚ L) :=
   Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
