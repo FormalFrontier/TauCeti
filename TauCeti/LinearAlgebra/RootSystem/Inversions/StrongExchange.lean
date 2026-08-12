@@ -10,24 +10,34 @@ public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 public section
 
 /-!
-# The deletion condition and the identity criterion for inversion sets
+# The strong exchange condition and the identity criterion for inversion sets
 
-If a word in the simple reflections spells a Weyl-group element sending a simple root to a negative
-root, then appending that simple reflection to the word can be spelled by a word two letters
-shorter. This is the deletion condition, and it is the missing half of the identification of the
-inversion set as the obstruction to being the identity: an element with an empty inversion set is
-spelled by the empty word, so it is the identity.
+If a word in the simple reflections spells a Weyl-group element sending a positive root to a
+negative root, then appending the reflection in that root to the word is spelled by the word with
+one of its letters deleted. This is the strong exchange condition, and it is the missing half of
+the identification of the inversion set as the obstruction to being the identity: an element with
+an empty inversion set is spelled by the empty word, so it is the identity.
 
-The proof of the deletion condition is an induction on the word. Peeling off the leading simple
-reflection `sⱼ`, either the shorter word already sends the simple root to a negative root, and the
-inductive hypothesis deletes a letter from it, or the shorter word sends it to a positive root that
-`sⱼ` makes negative. In the second case that positive root must be the simple root `αⱼ` itself,
-because a simple reflection permutes the remaining positive roots, and then conjugation identifies
-`sⱼ` with the appended reflection, so both letters cancel.
+Two features of the statement are what make it usable and are not shared by the weaker "some
+shorter word exists" form. The reflecting root ranges over *all* positive roots, not just the
+simple ones, so the condition applies to an arbitrary reflection of the Weyl group; and the
+shorter word is `l.eraseIdx j` for a named position `j`, a deletion that can be replayed verbatim
+on the corresponding word over any other family of generators indexed by `b.support`, in particular
+over the generators of the presented Coxeter group. The weaker form asserts only that some shorter
+word exists inside the Weyl group; it names no word over those generators to carry the assertion
+back through the presentation map, which is why the word property behind Tits' theorem consumes the
+deletion form.
+
+The proof is an induction on the word. Peeling off the leading simple reflection `sⱼ`, either the
+shorter word already sends the root to a negative root, and the inductive hypothesis deletes a
+letter from it, or the shorter word sends it to a positive root that `sⱼ` makes negative. In the
+second case that positive root must be the simple root `αⱼ` itself, because a simple reflection
+permutes the remaining positive roots, and then conjugation identifies `sⱼ` with the appended
+reflection, so the leading letter is the one deleted.
 
 ## Main results
 
-* `TauCeti.exists_wordProd_eq_mul_ofIdx_of_not_isPos` is the deletion condition.
+* `TauCeti.exists_wordProd_eraseIdx_eq_mul_ofIdx` is the strong exchange condition.
 * `TauCeti.eq_one_of_inversions_eq_empty` and `TauCeti.inversions_eq_empty_iff_eq_one` say that the
   inversion set of a Weyl-group element is empty exactly when the element is the identity.
 * `TauCeti.eq_one_of_mapsTo_posRoots` restates this as: a Weyl-group element keeping every positive
@@ -57,40 +67,41 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   (P : RootPairing ι R M N) [Finite ι] [CharZero R] [IsDomain R]
   [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
 
-/-- **The deletion condition.** If the word `l` spells a Weyl-group element sending the simple root
-`αₖ` to a negative root, then the word `l` with `sₖ` appended is spelled by a word one letter
-shorter than `l`, hence two letters shorter than `l` with `sₖ` appended. -/
-theorem exists_wordProd_eq_mul_ofIdx_of_not_isPos {k : ι} (hk : k ∈ b.support)
+/-- **The strong exchange condition.** If the word `l` spells a Weyl-group element sending the
+positive root `αₖ` to a negative root, then the word `l` with the reflection `sₖ` appended is
+spelled by `l` with one of its letters deleted. The root `αₖ` is an arbitrary positive root, not
+necessarily a simple one, and the shorter word is a subword of `l`. -/
+theorem exists_wordProd_eraseIdx_eq_mul_ofIdx {k : ι} (hk : b.IsPos k)
     (l : List b.support) (h : ¬ b.IsPos (P.weylGroupToPerm (wordProd P b l) k)) :
-    ∃ l' : List b.support,
-      wordProd P b l' = wordProd P b l * RootPairing.weylGroup.ofIdx P k ∧
-        l'.length + 1 = l.length := by
+    ∃ j < l.length,
+      wordProd P b (l.eraseIdx j) = wordProd P b l * RootPairing.weylGroup.ofIdx P k := by
   induction l with
   | nil =>
-    exact absurd (by simpa using b.isPos_of_mem_support hk) h
+    exact absurd (by simpa using hk) h
   | cons j l ih =>
     rw [wordProd_cons, RootPairing.weylGroupToPerm_ofIdx_mul_apply] at h
     by_cases hpos : b.IsPos (P.weylGroupToPerm (wordProd P b l) k)
     · -- The shorter word keeps `αₖ` positive, so the image is the simple root `αⱼ` itself.
-      refine ⟨l, ?_, by simp⟩
+      refine ⟨0, by simp, ?_⟩
       have hkey : P.weylGroupToPerm (wordProd P b l) k = (j : ι) := by
         by_contra hne
         have hmem : P.weylGroupToPerm (wordProd P b l) k ∈ posRoots P b \ {(j : ι)} :=
           ⟨(mem_posRoots P b _).mpr hpos, by simpa using hne⟩
         exact h ((mem_posRoots P b _).mp
           ((reflectionPerm_mem_posRoots_diff_singleton_iff P b j.2 _).mpr hmem).1)
-      rw [wordProd_cons, ← hkey, RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj,
+      rw [List.eraseIdx_cons_zero, wordProd_cons, ← hkey,
+        RootPairing.weylGroup.ofIdx_weylGroupToPerm_eq_conj,
         inv_mul_cancel_right, mul_assoc, RootPairing.weylGroup.ofIdx_mul_self, mul_one]
     · -- The shorter word already makes `αₖ` negative, so a letter is deleted from it.
-      obtain ⟨l', hl', hlen⟩ := ih hpos
-      refine ⟨j :: l', ?_, by simp only [List.length_cons]; omega⟩
-      rw [wordProd_cons, hl', wordProd_cons, mul_assoc]
+      obtain ⟨j', hj', hl'⟩ := ih hpos
+      refine ⟨j' + 1, by simpa using hj', ?_⟩
+      rw [List.eraseIdx_cons_succ, wordProd_cons, hl', wordProd_cons, mul_assoc]
 
 variable {P b}
 
 /-- **A Weyl-group element with an empty inversion set is the identity.** A shortest word spelling
 it must be empty: otherwise its final simple reflection is an inversion of the word it follows, and
-the deletion condition produces a shorter word. -/
+the strong exchange condition produces a shorter word. -/
 theorem eq_one_of_inversions_eq_empty {w : P.weylGroup} (h : inversions P b w = ∅) : w = 1 := by
   classical
   have hex : ∃ n : ℕ, ∃ l : List b.support, l.length = n ∧ wordProd P b l = w := by
@@ -106,12 +117,14 @@ theorem eq_one_of_inversions_eq_empty {w : P.weylGroup} (h : inversions P b w = 
     have hkw : k.1 ∉ inversions P b w := by simp [h]
     have hkv : k.1 ∈ inversions P b (wordProd P b l₁) := by
       by_contra hc
-      exact hkw (hl ▸ (mem_inversions_mul_ofIdx_iff_not_mem P _ b k.2).mpr hc)
-    obtain ⟨l', hl'w, hl'len⟩ :=
-      exists_wordProd_eq_mul_ofIdx_of_not_isPos P b k.2 l₁
+      exact hkw (hl ▸ (mem_inversions_mul_ofIdx_iff_not_mem P _ b
+        (b.isPos_of_mem_support k.2)).mpr hc)
+    obtain ⟨j, hj, hl'w⟩ :=
+      exists_wordProd_eraseIdx_eq_mul_ofIdx P b (b.isPos_of_mem_support k.2) l₁
         ((mem_inversions P b _ _).mp hkv).2
     -- The resulting word spells `w` and is two letters shorter, contradicting minimality.
-    refine Nat.find_min hex (m := l'.length) ?_ ⟨l', rfl, hl'w.trans hl⟩
+    refine Nat.find_min hex (m := (l₁.eraseIdx j).length) ?_ ⟨l₁.eraseIdx j, rfl, hl'w.trans hl⟩
+    have hlen' := List.length_eraseIdx_add_one hj
     rw [← hlen, List.concat_eq_append, List.length_append]
     omega
 

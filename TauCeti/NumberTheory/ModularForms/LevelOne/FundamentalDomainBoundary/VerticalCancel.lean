@@ -31,8 +31,8 @@ hypothesis, since a finite set closed under `s ↦ s + 1` is empty.
 
 ## Main declarations
 
-* `TauCeti.ModularForm.intervalIntegral_fdBoundary_segment4_eq_neg_segment1`.
-* `TauCeti.ModularForm.intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1`: the
+* `TauCeti.ModularForm.intervalIntegral_fdBoundarySegment4_eq_neg_segment1`.
+* `TauCeti.ModularForm.intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1`: the
   same cancellation for a reflection-invariantly excised integrand.
 
 ## References
@@ -54,7 +54,7 @@ namespace ModularForm
 the negative of the right vertical integral: the reflection `t ↦ 4 - t` carries the
 right vertical onto the left through the translation `z ↦ z - 1`, which the periodicity
 absorbs, and reverses the orientation. -/
-theorem intervalIntegral_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
+theorem intervalIntegral_fdBoundarySegment4_eq_neg_segment1 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] (H : ℝ) {φ : ℂ → E}
     (hφ : Function.Periodic φ 1) :
     ∫ t in (3 : ℝ)..4, deriv (fdBoundary H) t • φ (fdBoundary H t) =
@@ -73,7 +73,7 @@ theorem intervalIntegral_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
 /-- The right-vertical integrability of a period-`1` integrand reflects to the left
 vertical: the reflection carries the integrand to its negation through the translation
 and the periodicity. -/
-theorem intervalIntegrable_deriv_smul_fdBoundary_segment4 {E : Type*}
+theorem intervalIntegrable_deriv_smul_fdBoundarySegment4 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] {H : ℝ} {φ : ℂ → E}
     (hφ : Function.Periodic φ 1)
     (hint : IntervalIntegrable (fun t ↦ deriv (fdBoundary H) t • φ (fdBoundary H t))
@@ -131,7 +131,7 @@ theorem exists_norm_fdBoundary_four_sub_le_iff {H : ℝ} {S : Finset ℂ} {ε : 
 right vertical onto the left, and it carries the excised integrand to itself: the excision
 test transports by `exists_norm_fdBoundary_four_sub_le_iff`, and the integrand's value by the
 periodicity already used without the excision. -/
-theorem intervalIntegrable_excised_deriv_smul_fdBoundary_segment4 {E : Type*}
+theorem intervalIntegrable_excised_deriv_smul_fdBoundarySegment4 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] {H : ℝ} {φ : ℂ → E}
     (hφ : Function.Periodic φ 1) {S : Finset ℂ} {ε : ℝ}
     (hrefl : ∀ s ∈ S, -(starRingEnd ℂ) s ∈ S)
@@ -161,7 +161,7 @@ theorem intervalIntegrable_excised_deriv_smul_fdBoundary_segment4 {E : Type*}
 vertical onto the left by `z ↦ -conj z`, an isometry of `ℂ`, so an integrand excised within `ε`
 of a set invariant under that reflection is excised at matching parameters on the two verticals,
 and the cancellation of the untruncated integrals
-(`TauCeti.ModularForm.intervalIntegral_fdBoundary_segment4_eq_neg_segment1`) persists.
+(`TauCeti.ModularForm.intervalIntegral_fdBoundarySegment4_eq_neg_segment1`) persists.
 
 Reflection invariance, not translation closure, is the right hypothesis: the two verticals are
 exchanged by `z ↦ -conj z`, and being an isometry it moves an `ε`-ball to an `ε`-ball. (A set
@@ -169,7 +169,7 @@ closed under the bare translation `s ↦ s + 1` would have to be empty, since a 
 element of largest real part.) For `TauCeti.ModularForm.verticalSingularSet` the invariance is the
 composite of `re_eq_of_mem_verticalSingularSet` with `sub_one_mem_verticalSingularSet` or
 `add_one_mem_verticalSingularSet`, whose translations are conditional on the real part. -/
-theorem intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
+theorem intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1 {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℂ E] (H : ℝ) {φ : ℂ → E}
     (hφ : Function.Periodic φ 1) {S : Finset ℂ} {ε : ℝ}
     (hrefl : ∀ s ∈ S, -(starRingEnd ℂ) s ∈ S) :

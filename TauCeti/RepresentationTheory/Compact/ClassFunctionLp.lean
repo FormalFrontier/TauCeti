@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.MeasureTheory.Group.Conjugation
-public import TauCeti.RepresentationTheory.Compact.Character
+public import TauCeti.RepresentationTheory.Compact.Character.Basic
 
 /-!
 # Characters are class functions in `L²(G)`
@@ -18,8 +18,8 @@ an almost-everywhere equivalence class, and the correct home for it is the close
 
 This file proves that a continuous class function lands in that subspace, and specializes to
 characters.  Together with the orthogonality relations of
-`TauCeti/RepresentationTheory/Compact/Character.lean` this says the irreducible characters form an
-orthonormal system *inside* `classFunctionLp`; that they are a Hilbert basis of it -- the
+`TauCeti/RepresentationTheory/Compact/Character/Basic.lean` this says the irreducible characters
+form an orthonormal system *inside* `classFunctionLp`; that they are a Hilbert basis of it -- the
 compact-group form of "the irreducible characters are a basis of the class functions" -- needs the
 Peter-Weyl theorem and is not proved here.
 
