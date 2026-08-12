@@ -400,9 +400,18 @@ theorem right_alternative (x y : Octonion R) : x * y * y = x * (y * y) := by
 theorem moufang_left (x y z : Octonion R) : z * x * z * y = z * (x * (z * y)) := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
-/-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. -/
+/-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. This is the left identity
+read through the anti-automorphism `TauCeti.Octonion.conj_mul_eq`, after the flexible law
+`z * y * z = z * (y * z)` — itself the left identity at `y = 1` — has put the two brackets of
+`z * y * z` in the shape the mirror produces. -/
 theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := by
-  refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
+  have hflex : z * y * z = z * (y * z) := by
+    simpa only [mul_one] using moufang_left y 1 z
+  have h : conj (conj z * conj y * conj z * conj x) =
+      conj (conj z * (conj y * (conj z * conj x))) :=
+    congrArg _ (moufang_left (conj y) (conj x) (conj z))
+  rw [hflex]
+  simpa only [conj_mul_eq, conj_conj] using h
 
 /-- **The middle Moufang identity**: `(z * x) * (y * z) = (z * (x * y)) * z`. -/
 theorem moufang_middle (x y z : Octonion R) : z * x * (y * z) = z * (x * y) * z := by
