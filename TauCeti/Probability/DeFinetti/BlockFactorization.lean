@@ -43,7 +43,7 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 
 * `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure` — the prefix block factorization
   (the `L²` route proves a stronger, arbitrary-selection form independently, as
-  `condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure_viaL2` in
+  `condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure` in
   `DeFinetti/ViaL2/BlockFactorization.lean`; the overlap is the intended two-route structure and
   neither file imports the other)
   at the directing measure, the base case rectangle identities over a contractable process reduce

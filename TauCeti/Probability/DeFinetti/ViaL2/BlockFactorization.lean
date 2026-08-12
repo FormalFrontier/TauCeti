@@ -51,8 +51,9 @@ A constant sequence that converges must equal its limit, which is the factorizat
 `DeFinetti/BlockFactorization.lean` proves
 `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure`, the same factorization for the
 *prefix* selection, through `TailFactorization` and reverse-martingale convergence. The overlap is
-intentional: the two are endpoints of the two roadmap routes, and the `_viaL2` suffix marks this
-one as route-specific while the unsuffixed name belongs to the martingale development.
+intentional: the two are the corresponding steps of the two roadmap routes. Their names record the
+difference in what they *say* — `_prefix_` against `_strictMono_` — rather than how they are
+proved; the roadmap's `_viaL2` route suffix is reserved for the public route endpoints.
 
 Neither theorem is derivable from the other without collapsing that separation, since a single
 Lean declaration carries a single proof and a single import closure: making either canonical would
@@ -118,7 +119,7 @@ marginals.
 
 The two inputs are selection invariance and `L¹` convergence of the disjoint-window product; see
 the module docstring. Nothing here uses a martingale. -/
-theorem condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure_viaL2
+theorem condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure
     [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
