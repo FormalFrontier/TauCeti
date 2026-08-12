@@ -8,6 +8,7 @@ public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.RingTheory.Finiteness.Subalgebra
+public import TauCeti.Algebra.WordFiltration
 
 /-!
 # The degree filtration of a Clifford algebra
@@ -102,7 +103,7 @@ the products `ι Q v₁ * ⋯ * ι Q vₙ` of at most `k` generators, the empty 
 This is deliberately not the submodule power `LinearMap.range (ι Q) ^ k`, which spans the products
 of exactly `k` generators; see `filtration_eq_iSup_pow` for the comparison. -/
 def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
-  Submodule.span R {x | ∃ l : List M, l.length ≤ k ∧ (l.map (ι Q)).prod = x}
+  TauCeti.Algebra.wordFiltration (ι Q) k
 
 /-- The filtration step preceding degree `k`. At degree zero it is bottom, so the degree-zero
 piece remains the scalar filtration step rather than a zero quotient. -/
@@ -159,57 +160,42 @@ variable (Q : QuadraticForm R M)
 generating family, so most `filtration` memberships reduce to it. -/
 theorem prod_map_ι_mem_filtration {k : ℕ} {l : List M} (hl : l.length ≤ k) :
     (l.map (ι Q)).prod ∈ filtration Q k :=
-  Submodule.subset_span ⟨l, hl, rfl⟩
+  TauCeti.Algebra.prod_map_mem_wordFiltration (ι Q) hl
 
 /-- The `k`-th step of the filtration is spanned by the products of at most `k` generators, so a
 submodule contains it exactly when it contains those products. This is `Submodule.span_le` in the
 form in which it applies to `filtration`. -/
 theorem filtration_le_iff {k : ℕ} {p : Submodule R (CliffordAlgebra Q)} :
-    filtration Q k ≤ p ↔ ∀ l : List M, l.length ≤ k → (l.map (ι Q)).prod ∈ p := by
-  rw [filtration, Submodule.span_le]
-  constructor
-  · intro h l hl
-    exact h ⟨l, hl, rfl⟩
-  · rintro h _ ⟨l, hl, rfl⟩
-    exact h l hl
+    filtration Q k ≤ p ↔ ∀ l : List M, l.length ≤ k → (l.map (ι Q)).prod ∈ p :=
+  TauCeti.Algebra.wordFiltration_le_iff (ι Q)
 
 /-- The filtration is increasing: a product of at most `i` generators is a product of at most `j`
 of them whenever `i ≤ j`. -/
-theorem filtration_mono : Monotone (filtration Q) := fun _ _ hij =>
-  (filtration_le_iff Q).2 fun _ hl => prod_map_ι_mem_filtration Q (hl.trans hij)
+theorem filtration_mono : Monotone (filtration Q) :=
+  TauCeti.Algebra.wordFiltration_mono (ι Q)
 
 /-- The zeroth step of the filtration is the module of scalars, the span of the empty product. -/
 @[simp]
-theorem filtration_zero : filtration Q 0 = 1 := by
-  rw [filtration, Submodule.one_eq_span]
-  congr 1
-  ext x
-  constructor
-  · rintro ⟨l, hl, rfl⟩
-    rw [List.length_eq_zero_iff.1 (Nat.le_zero.1 hl)]
-    simp
-  · rintro rfl
-    exact ⟨[], le_rfl, rfl⟩
+theorem filtration_zero : filtration Q 0 = 1 :=
+  TauCeti.Algebra.wordFiltration_zero (ι Q)
 
 /-- `1` is the empty product of generators, so it lies in every step of the filtration. -/
-theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k := by
-  simpa using prod_map_ι_mem_filtration Q (l := []) (Nat.zero_le k)
+theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k :=
+  TauCeti.Algebra.one_mem_wordFiltration (ι Q) k
 
 /-- Scalars lie in every step of the filtration, being multiples of the empty product. -/
 theorem algebraMap_mem_filtration (r : R) (k : ℕ) :
-    algebraMap R (CliffordAlgebra Q) r ∈ filtration Q k := by
-  rw [Algebra.algebraMap_eq_smul_one]
-  exact Submodule.smul_mem _ _ (one_mem_filtration Q k)
+    algebraMap R (CliffordAlgebra Q) r ∈ filtration Q k :=
+  TauCeti.Algebra.algebraMap_mem_wordFiltration (ι Q) r k
 
 /-- A generator is a product of one generator, so it lies in the first step. -/
-theorem ι_mem_filtration_one (m : M) : ι Q m ∈ filtration Q 1 := by
-  simpa using prod_map_ι_mem_filtration Q (l := [m]) le_rfl
+theorem ι_mem_filtration_one (m : M) : ι Q m ∈ filtration Q 1 :=
+  TauCeti.Algebra.apply_mem_wordFiltration_one (ι Q) m
 
 /-- The submodule form of `ι_mem_filtration_one`: all of `LinearMap.range (ι Q)` lies in the first
 step. -/
-theorem ι_range_le_filtration_one : LinearMap.range (ι Q) ≤ filtration Q 1 := by
-  rintro _ ⟨m, rfl⟩
-  exact ι_mem_filtration_one Q m
+theorem ι_range_le_filtration_one : LinearMap.range (ι Q) ≤ filtration Q 1 :=
+  TauCeti.Algebra.range_le_wordFiltration_one (ι Q)
 
 /-- A product of two generators lies in the second step. This is the membership the roadmap's
 bivectors use. -/
@@ -221,76 +207,47 @@ generators with a product of at most `j` generators gives a product of at most `
 conversely a product of at most `i + j` generators splits after its `i`-th factor. In particular the
 associated graded object of the filtration is an algebra. -/
 theorem filtration_mul (i j : ℕ) :
-    filtration Q i * filtration Q j = filtration Q (i + j) := by
-  refine le_antisymm ?_ ?_
-  · rw [filtration, filtration, Submodule.span_mul_span, Submodule.span_le, Set.mul_subset_iff]
-    rintro _ ⟨l₁, h₁, rfl⟩ _ ⟨l₂, h₂, rfl⟩
-    rw [← List.prod_append, ← List.map_append]
-    exact prod_map_ι_mem_filtration Q (by simpa using Nat.add_le_add h₁ h₂)
-  · refine (filtration_le_iff Q).2 fun l hl => ?_
-    rw [← List.take_append_drop i l, List.map_append, List.prod_append]
-    refine Submodule.mul_mem_mul (prod_map_ι_mem_filtration Q (List.length_take_le i l))
-      (prod_map_ι_mem_filtration Q ?_)
-    rw [List.length_drop]
-    omega
+    filtration Q i * filtration Q j = filtration Q (i + j) :=
+  TauCeti.Algebra.wordFiltration_mul (ι Q) i j
 
 /-- The elementwise form of `filtration_mul`: a product of an element of the `i`-th step and an
 element of the `j`-th step lies in the `i + j`-th step. -/
 theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i)
-    (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) := by
-  rw [← filtration_mul Q i j]
-  exact Submodule.mul_mem_mul hx hy
+    (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltration (ι Q) hx hy
 
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
-theorem filtration_pow (i n : ℕ) : filtration Q i ^ n = filtration Q (i * n) := by
-  induction n with
-  | zero => rw [pow_zero, Nat.mul_zero, filtration_zero]
-  | succ n ih => rw [pow_succ, ih, filtration_mul, Nat.mul_succ]
+theorem filtration_pow (i n : ℕ) : filtration Q i ^ n = filtration Q (i * n) :=
+  TauCeti.Algebra.wordFiltration_pow (ι Q) i n
 
 /-- A product of exactly `n` generators lies in the `n`-th submodule power of
 `LinearMap.range (ι Q)`. -/
 theorem prod_map_ι_mem_pow (l : List M) :
-    (l.map (ι Q)).prod ∈ LinearMap.range (ι Q) ^ l.length := by
-  induction l with
-  | nil => exact Submodule.one_le.1 le_rfl
-  | cons m t ih =>
-    rw [List.map_cons, List.prod_cons, List.length_cons, pow_succ']
-    exact Submodule.mul_mem_mul (LinearMap.mem_range_self _ m) ih
+    (l.map (ι Q)).prod ∈ LinearMap.range (ι Q) ^ l.length :=
+  TauCeti.Algebra.prod_map_mem_range_pow (ι Q) l
 
 /-- The products of exactly `n` generators are among the products of at most `n` of them. -/
-theorem ι_range_pow_le_filtration (n : ℕ) : LinearMap.range (ι Q) ^ n ≤ filtration Q n := by
-  induction n with
-  | zero => rw [pow_zero, filtration_zero]
-  | succ n ih =>
-    calc LinearMap.range (ι Q) ^ (n + 1)
-        = LinearMap.range (ι Q) ^ n * LinearMap.range (ι Q) := pow_succ _ _
-      _ ≤ filtration Q n * filtration Q 1 := mul_le_mul' ih (ι_range_le_filtration_one Q)
-      _ = filtration Q (n + 1) := filtration_mul Q n 1
+theorem ι_range_pow_le_filtration (n : ℕ) : LinearMap.range (ι Q) ^ n ≤ filtration Q n :=
+  TauCeti.Algebra.range_pow_le_wordFiltration (ι Q) n
 
 /-- The comparison between the filtration and the submodule powers of `LinearMap.range (ι Q)`:
 `filtration Q k` collects the products of at most `k` generators, so it is the supremum of the
 powers up to `k`. Compare `CliffordAlgebra.evenOdd`, the supremum of the powers whose exponent has
 a fixed parity. -/
 theorem filtration_eq_iSup_pow (k : ℕ) :
-    filtration Q k = ⨆ i : {i : ℕ // i ≤ k}, LinearMap.range (ι Q) ^ (i : ℕ) := by
-  refine le_antisymm ((filtration_le_iff Q).2 fun l hl => ?_) (iSup_le fun i => ?_)
-  · exact Submodule.mem_iSup_of_mem ⟨l.length, hl⟩ (prod_map_ι_mem_pow Q l)
-  · exact (ι_range_pow_le_filtration Q i).trans (filtration_mono Q i.2)
+    filtration Q k = ⨆ i : {i : ℕ // i ≤ k}, LinearMap.range (ι Q) ^ (i : ℕ) :=
+  TauCeti.Algebra.wordFiltration_eq_iSup_pow (ι Q) k
 
 /-- The successor step of the filtration adjoins the products of exactly `k + 1` generators. -/
 theorem filtration_succ_eq_sup (k : ℕ) :
-    filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) := by
-  refine le_antisymm ((filtration_le_iff Q).2 fun l hl => ?_)
-    (sup_le (filtration_mono Q (Nat.le_succ k)) (ι_range_pow_le_filtration Q (k + 1)))
-  rcases eq_or_lt_of_le hl with h | h
-  · exact Submodule.mem_sup_right (h ▸ prod_map_ι_mem_pow Q l)
-  · exact Submodule.mem_sup_left (prod_map_ι_mem_filtration Q (Nat.lt_succ_iff.1 h))
+    filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) :=
+  TauCeti.Algebra.wordFiltration_succ_eq_sup (ι Q) k
 
 /-- The first step of the filtration is the scalars together with the generators. -/
 @[simp]
-theorem filtration_one : filtration Q 1 = 1 ⊔ LinearMap.range (ι Q) := by
-  simpa [filtration_zero] using filtration_succ_eq_sup Q 0
+theorem filtration_one : filtration Q 1 = 1 ⊔ LinearMap.range (ι Q) :=
+  TauCeti.Algebra.wordFiltration_one (ι Q)
 
 /-- **The filtration is exhaustive.** Every element of the Clifford algebra is a combination of
 products of generators, so it lies in some step. -/
