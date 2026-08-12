@@ -567,17 +567,9 @@ private lemma typeB_signedWeight_sub_signedWeight_mem_closure (u v : Fin (2 * n)
 
 private lemma typeB_mem_closure_single {w : Fin n → ℤ} (hw : ∀ j, 0 ≤ w j) :
     w ∈ AddSubmonoid.closure (range fun i : Fin n => (Pi.single i 1 : Fin n → ℤ)) := by
-  have hsum : w = ∑ j : Fin n, (w j).toNat • (Pi.single j 1 : Fin n → ℤ) := by
-    funext l
-    rw [Finset.sum_apply, Finset.sum_eq_single l
-      (fun j _ hj => by simp [Ne.symm hj])
-      (fun h => absurd (Finset.mem_univ l) h)]
-    simp only [Pi.smul_apply, Pi.single_eq_same, nsmul_eq_mul, mul_one]
-    have := hw l
-    omega
-  rw [hsum]
-  exact AddSubmonoid.sum_mem _ fun j _ =>
-    nsmul_mem (AddSubmonoid.subset_closure (Set.mem_range_self j)) _
+  rw [← (Pi.basisFun ℤ (Fin n)).sum_repr w]
+  simpa only [Pi.basisFun_apply, Pi.basisFun_repr] using
+    sum_smul_mem_closure (fun i : Fin n => (Pi.single i 1 : Fin n → ℤ)) w hw
 
 private lemma corootOfPair_apply_last {u v : Fin (2 * n)} {j : Fin n}
     (hj : (j : ℕ) + 1 = n) :
