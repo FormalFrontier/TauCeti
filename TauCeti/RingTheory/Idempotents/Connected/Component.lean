@@ -123,7 +123,7 @@ theorem zeroLocus_connectedComponentIdeal (x : PrimeSpectrum R) :
     sub_sub_cancel, basicOpen_connectedComponentIdempotent]
 
 /-- The component ideal is contained in the prime ideal defining the selected point. -/
-theorem connectedComponentIdeal_le (x : PrimeSpectrum R) :
+theorem connectedComponentIdeal_le_asIdeal (x : PrimeSpectrum R) :
     connectedComponentIdeal x ≤ x.asIdeal := by
   rw [← SetLike.coe_subset_coe, ← mem_zeroLocus,
     zeroLocus_connectedComponentIdeal]

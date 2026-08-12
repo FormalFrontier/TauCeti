@@ -6,7 +6,7 @@ module
 
 public import Mathlib.RingTheory.Spectrum.Prime.Noetherian
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Scheme
-public import TauCeti.RingTheory.Idempotents.ConnectedComponent
+public import TauCeti.RingTheory.Idempotents.Connected.Component
 public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
 
 /-!
@@ -120,12 +120,10 @@ component quotient. -/
 theorem counitConnectedComponentIdeal_le_counit_ker :
     counitConnectedComponentIdeal k H ≤
       RingHom.ker (_root_.Bialgebra.counitAlgHom k H : H →+* k) := by
-  rw [counitConnectedComponentIdeal_eq_span, Ideal.span_singleton_le_iff_mem, RingHom.mem_ker]
-  -- `RingHom.mem_ker` exposes the counit through its coerced ring homomorphism.
-  change _root_.Bialgebra.counitAlgHom k H
-      (1 - counitConnectedComponentIdempotent k H) = 0
-  rw [map_sub, map_one, _root_.Bialgebra.counitAlgHom_apply,
-    counit_counitConnectedComponentIdempotent, sub_self]
+  let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  unfold counitConnectedComponentIdeal
+  simpa only [augmentationPoint, AlgHom.kernelPoint_asIdeal] using
+    PrimeSpectrum.connectedComponentIdeal_le_asIdeal (augmentationPoint k H)
 
 /-- The counit point, as an algebra homomorphism from the coordinate ring of its component. -/
 noncomputable def counitConnectedComponentCounitAlgHom :
@@ -141,6 +139,15 @@ theorem counitConnectedComponentCounitAlgHom_comp_mk :
       (Ideal.Quotient.mkₐ k (counitConnectedComponentIdeal k H)) =
         _root_.Bialgebra.counitAlgHom k H :=
   Ideal.Quotient.liftₐ_comp _ _ _
+
+/-- The component counit evaluates a quotient constructor as the original counit. -/
+@[simp]
+theorem counitConnectedComponentCounitAlgHom_mk (h : H) :
+    counitConnectedComponentCounitAlgHom k H
+        (Ideal.Quotient.mk (counitConnectedComponentIdeal k H) h) =
+      _root_.Bialgebra.counitAlgHom k H h := by
+  unfold counitConnectedComponentCounitAlgHom
+  exact Ideal.Quotient.lift_mk _ _ _
 
 /-- **The spectrum of the component quotient is homeomorphic to the ground-field connected
 component of the counit point.** The map to `Spec H` is contraction along the quotient map. -/

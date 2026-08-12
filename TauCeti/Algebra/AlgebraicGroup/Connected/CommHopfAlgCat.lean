@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
-public import TauCeti.RingTheory.Idempotents.ConnectedSpectrum
+public import TauCeti.RingTheory.Idempotents.Connected.Spectrum
 import Mathlib.RingTheory.Flat.Basic
 
 /-!
