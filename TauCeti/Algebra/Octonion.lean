@@ -54,8 +54,8 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 * `TauCeti.Octonion.self_mul_conj` and `TauCeti.Octonion.conj_mul_self`:
   `x * x̄ = x̄ * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
-* `TauCeti.Octonion.left_alternative` and `TauCeti.Octonion.right_alternative`: `𝕆` is
-  **alternative**.
+* `TauCeti.Octonion.left_alternative`, `TauCeti.Octonion.right_alternative` and
+  `TauCeti.Octonion.flexible`: `𝕆` is **alternative** and **flexible**.
 * `TauCeti.Octonion.moufang_left`, `TauCeti.Octonion.moufang_right` and
   `TauCeti.Octonion.moufang_middle`: the three **Moufang identities**.
 * `TauCeti.Octonion.mul_self`: every octonion satisfies its rank-two equation
@@ -323,14 +323,14 @@ def conj : Octonion R →ₗ[R] Octonion R where
 @[simp] theorem conj_v (x : Octonion R) : (conj x).v = -x.v := (rfl)
 @[simp] theorem conj_w (x : Octonion R) : (conj x).w = -x.w := (rfl)
 
-@[simp] theorem conj_conj (x : Octonion R) : conj (conj x) = x := by
+@[simp, grind =] theorem conj_conj (x : Octonion R) : conj (conj x) = x := by
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
-@[simp] theorem conj_one : conj (1 : Octonion R) = 1 := by
+@[simp, grind =] theorem conj_one : conj (1 : Octonion R) = 1 := by
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
 /-- **Conjugation is an anti-automorphism**: it reverses products. -/
-@[simp]
+@[simp, grind =]
 theorem conj_mul (x y : Octonion R) : conj (x * y) = conj y * conj x := by
   -- The two vector entries pick up the sign of `Matrix.cross_anticomm`, the two scalar entries the
   -- symmetry of the dot product. `Matrix.cross_anticomm` is used at the two entries it is needed at
@@ -376,27 +376,32 @@ def norm (x : Octonion R) : R := x.a * x.b - x.v ⬝ᵥ x.w
 
 theorem norm_def (x : Octonion R) : norm x = x.a * x.b - x.v ⬝ᵥ x.w := (rfl)
 
-@[simp] theorem norm_one : norm (1 : Octonion R) = 1 := by simp [norm_def]
+@[simp, grind =] theorem norm_one : norm (1 : Octonion R) = 1 := by simp [norm_def]
 
-@[simp] theorem norm_zero : norm (0 : Octonion R) = 0 := by simp [norm_def]
+@[simp, grind =] theorem norm_zero : norm (0 : Octonion R) = 0 := by simp [norm_def]
 
-@[simp] theorem norm_conj (x : Octonion R) : norm (conj x) = norm x := by
+@[simp, grind =] theorem norm_conj (x : Octonion R) : norm (conj x) = norm x := by
   simp [norm_def]; ring
+
+/-- The norm is even: negating an octonion negates both its scalar and both its vector entries, so
+each of the two products making up the norm is unchanged. -/
+@[simp, grind =] theorem norm_neg (x : Octonion R) : norm (-x) = norm x := by
+  simp [norm_def]
 
 /-- The norm is homogeneous of degree two: rescaling an octonion by `r` rescales its norm by
 `r ^ 2`. -/
-@[simp]
+@[simp, grind =]
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
 
 /-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. -/
-@[simp]
+@[simp, grind =]
 theorem self_mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
   -- The two vector entries vanish by `Matrix.cross_self`.
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [norm_def, dotProduct_comm] <;> ring
 
 /-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.self_mul_conj`. -/
-@[simp]
+@[simp, grind =]
 theorem conj_mul_self (x : Octonion R) : conj x * x = norm x • 1 := by
   simpa using self_mul_conj (conj x)
 
@@ -407,7 +412,7 @@ theorem mul_self (x : Octonion R) : x * x = trace x • x - norm x • 1 := by
   ring
 
 /-- **The norm of a split octonion is multiplicative**, so `𝕆` is a composition algebra. -/
-@[simp]
+@[simp, grind =]
 theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
   -- The scalar quadruple product identity `Matrix.cross_dot_cross`, a Binet--Cauchy identity, does
   -- the work: the cross-product corrections to the vector entries of a product are exactly what the
@@ -418,7 +423,7 @@ theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
 /-! ### Alternativity -/
 
 /-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. -/
-@[simp]
+@[simp, grind =]
 theorem left_alternative (x y : Octonion R) : x * x * y = x * (x * y) := by
   -- The iterated cross products of the vector entries are expanded by
   -- `Matrix.cross_cross_eq_smul_sub_smul'`, which is exactly what the repeated dot products of the
@@ -430,7 +435,7 @@ theorem left_alternative (x y : Octonion R) : x * x * y = x * (x * y) := by
   · module
 
 /-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. -/
-@[simp]
+@[simp, grind =]
 theorem right_alternative (x y : Octonion R) : x * y * y = x * (y * y) := by
   -- Left alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul`.
   have h : conj (conj y * conj y * conj x) = conj (conj y * (conj y * conj x)) :=
@@ -461,17 +466,21 @@ attribute [local simp] vec3_dotProduct cross_apply Matrix.vecHead Matrix.vecTail
 theorem moufang_left (x y z : Octonion R) : z * x * z * y = z * (x * (z * y)) := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
+/-- **The flexible law**: `x * y * x = x * (y * x)`, so the two bracketings of `x * y * x` agree. -/
+@[grind =]
+theorem flexible (x y : Octonion R) : x * y * x = x * (y * x) := by
+  -- The left Moufang identity at `y = 1`.
+  simpa only [mul_one] using moufang_left y 1 x
+
 /-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. -/
 theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := by
   -- The left identity read through the anti-automorphism `TauCeti.Octonion.conj_mul`, after the
-  -- flexible law `z * y * z = z * (y * z)` — itself the left identity at `y = 1` — has put the two
-  -- brackets of `z * y * z` in the shape the mirror produces.
-  have hflex : z * y * z = z * (y * z) := by
-    simpa only [mul_one] using moufang_left y 1 z
+  -- flexible law `TauCeti.Octonion.flexible` has put the two brackets of `z * y * z` in the shape
+  -- the mirror produces.
   have h : conj (conj z * conj y * conj z * conj x) =
       conj (conj z * (conj y * (conj z * conj x))) :=
     congrArg _ (moufang_left (conj y) (conj x) (conj z))
-  rw [hflex]
+  rw [flexible z y]
   simpa only [conj_mul, conj_conj] using h
 
 /-- **The middle Moufang identity**: `(z * x) * (y * z) = (z * (x * y)) * z`. -/
@@ -516,7 +525,7 @@ example :
 `G₂ = Der 𝕆` waits on the derivation algebra, which is not built here. -/
 def imaginary (R : Type*) [CommRing R] : Submodule R (Octonion R) := LinearMap.ker trace
 
-@[simp] theorem mem_imaginary {x : Octonion R} : x ∈ imaginary R ↔ x.a + x.b = 0 :=
+@[simp] theorem mem_imaginary {x : Octonion R} : x ∈ imaginary R ↔ trace x = 0 :=
   LinearMap.mem_ker
 
 /-- **Conjugation negates exactly the imaginary octonions**: `x̄ = -x` if and only if `x` has
