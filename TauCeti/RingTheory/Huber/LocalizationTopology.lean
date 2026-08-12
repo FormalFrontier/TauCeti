@@ -36,8 +36,8 @@ so a consumer holding `A[1/s]` in another presentation can use the topology dire
   which stand in for unfolding `locIdeal` (whose body is not exported).
 * `locIdealImage_antitone`: Neighborhoods are antitone.
 * `locIdealImage_preimage_eq_locIdeal_pow`: the image and preimage along the subtype embedding are
-  inverse on `Jⁿ`. Identifying the subspace topology on `D` with its `J`-adic topology is a
-  separate result and is not proved here.
+  inverse on `Jⁿ`. This is what identifies the subspace topology on `D` with its `J`-adic
+  topology, in `hasBasis_nhds_zero_locSubring` and `isAdic_locIdeal` below.
 * `locIdealImage_mul_subset_add`: the basis is graded,
   `locIdealImage i * locIdealImage j ⊆ locIdealImage (i + j)`; `locIdealImage_mul_subset` and
   `locIdealImage_mul_locSubring_subset` are its diagonal and zeroth cases.
@@ -49,9 +49,10 @@ so a consumer holding `A[1/s]` in another presentation can use the topology dire
   the construction.
 * `continuous_algebraMap_locTopology`: the structure map `A → Aₛ` is continuous.
 * `isOpen_locIdealImage`, and `isOpen_locSubring` with `isBounded_locSubring`: every basic
-  neighbourhood is open, and `D` is open and bounded. These do **not** yet make `(D, J)` a
-  `TauCeti.Huber.PairOfDefinition`, which also asks that `J` be finitely generated (`fg_locIdeal`,
-  proved here) and that the subspace topology on `D` be `J`-adic (not proved here).
+  neighbourhood is open, and `D` is open and bounded.
+* `hasBasis_nhds_zero_locSubring` and `isAdic_locIdeal`: the powers of `J` are a neighbourhood
+  basis of zero in `D`, so the subspace topology on `D` is the `J`-adic one. With `fg_locIdeal`
+  this completes every condition `TauCeti.Huber.PairOfDefinition` asks of the pair `(D, J)`.
 * `isPowerBounded_of_mem_locSubring` and `isPowerBounded_divBy`: every element of `D` — in
   particular each fraction `t/s` — is power-bounded, the fact a converse to the continuity
   criterion needs.
@@ -260,8 +261,8 @@ theorem toLocSubring_mem_locIdeal_pow (P : PairOfDefinition A) (T : Finset A) (s
   rw [locIdeal_pow]; exact Ideal.mem_map_of_mem _ hb
 
 /-- **`J` is finitely generated**, because `I` is and `Ideal.map` preserves that. This is one of
-the two conditions `(D, J)` still needs to be a `TauCeti.Huber.PairOfDefinition`; the other, that
-the subspace topology on `D` is `J`-adic, is not proved here. -/
+the two conditions `(D, J)` needs to be a `TauCeti.Huber.PairOfDefinition`; the other, that the
+subspace topology on `D` is `J`-adic, is `isAdic_locIdeal` below. -/
 theorem fg_locIdeal (P : PairOfDefinition A) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
     (locIdeal P T s S).FG := by
@@ -540,10 +541,9 @@ theorem isOpen_locIdealImage [IsTopologicalRing A] (P : PairOfDefinition A) (T :
   exact (locIdealImage P T s S n).isOpen_of_mem_nhds (g := 0)
     ((hasBasis_nhds_zero_locTopology P T s S hden).mem_of_mem (i := n) trivial)
 
-/-- **`D` is open**: it is the zeroth basic neighbourhood of zero. With `isBounded_locSubring`
-`D` is open and bounded, but that does not yet make `(D, J)` a
-`TauCeti.Huber.PairOfDefinition`: both `J.FG` and `IsAdic J` remain. `fg_locIdeal` supplies the
-first; the second is not proved here. -/
+/-- **`D` is open**: it is the zeroth basic neighbourhood of zero. With `isBounded_locSubring`,
+`fg_locIdeal` and `isAdic_locIdeal`, this completes what
+`TauCeti.Huber.PairOfDefinition` asks of `(D, J)`. -/
 theorem isOpen_locSubring [IsTopologicalRing A] (P : PairOfDefinition A) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S) :
@@ -602,6 +602,45 @@ theorem continuous_algebraMap_locTopology [IsTopologicalRing A] (P : PairOfDefin
   filter_upwards [P.hasBasis_nhds_zero.mem_of_mem (i := n) trivial] with a ha
   obtain ⟨b, hb, rfl⟩ := (P.mem_idealImage n).mp ha
   exact algebraMap_mem_locIdealImage P T s S hb
+
+/-- **The powers of `J` are a neighbourhood basis of zero in `D`.** The images `image(Jⁿ)` are one
+in `Aₛ` by `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero_locTopology`, and `D` carries the
+subspace topology, so it suffices that pulling those images back along the inclusion returns the
+`Jⁿ` themselves — which is
+`TauCeti.Huber.PairOfDefinition.locIdealImage_preimage_eq_locIdeal_pow`. -/
+theorem hasBasis_nhds_zero_locSubring [IsTopologicalRing A] (P : PairOfDefinition A)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locTopology P T s S hden
+    (𝓝 (0 : locSubring P T s S)).HasBasis (fun _ : ℕ ↦ True)
+      fun n ↦ ((locIdeal P T s S ^ n : Ideal (locSubring P T s S)) :
+        Set (locSubring P T s S)) := by
+  let _ := locTopology P T s S hden
+  have h := (hasBasis_nhds_zero_locTopology P T s S hden).comap
+    (Subtype.val : locSubring P T s S → S)
+  rw [nhds_induced (Subtype.val : locSubring P T s S → S) (0 : locSubring P T s S)]
+  simpa using h
+
+/-- **The subspace topology on `D` is the `J`-adic topology.** This is the last condition
+`TauCeti.Huber.PairOfDefinition` asks of the candidate pair `(D, J)`; `fg_locIdeal` supplies the
+other.
+
+`IsAdic` is an equality of topologies, and `Ideal.isAdic_iff` turns it into the two conditions the
+basis already gives: each `Jⁿ` is open, and every neighbourhood of zero contains one. -/
+theorem isAdic_locIdeal [IsTopologicalRing A] (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locTopology P T s S hden
+    IsAdic (locIdeal P T s S) := by
+  let _ := locTopology P T s S hden
+  have _ := isTopologicalRing_locTopology P T s S hden
+  have hbasis := hasBasis_nhds_zero_locSubring P T s S hden
+  rw [isAdic_iff]
+  refine ⟨fun n ↦ ?_, fun U hU ↦ ?_⟩
+  · exact (locIdeal P T s S ^ n).toAddSubgroup.isOpen_of_mem_nhds (g := 0)
+      (hbasis.mem_of_mem (i := n) trivial)
+  · obtain ⟨n, -, hn⟩ := hbasis.mem_iff.mp hU
+    exact ⟨n, hn⟩
 
 /-! ### A sufficient criterion for continuity -/
 
@@ -730,6 +769,7 @@ theorem continuous_of_continuous_algebraMap_of_isPowerBounded {B : Type*}
   · intro c d _ hd r
     rw [smul_eq_mul, ← mul_assoc]
     exact hd (r * c)
+
 
 end PairOfDefinition
 

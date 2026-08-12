@@ -222,17 +222,8 @@ private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
       (fun u => ∫ y, ψ (u - hid.approx n y) ∂μ) μ
   have hbd2 : ∀ n, ∀ᵐ x ∂μ,
       ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖ ≤
-        (ψ 0).re * (μ Set.univ).toReal := by
-    intro n
-    refine ae_of_all _ (fun x => ?_)
-    calc ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖
-        ≤ ∫ y, ‖ψ (hid.approx n x - hid.approx n y)‖ ∂μ :=
-          norm_integral_le_integral_norm _
-      _ ≤ ∫ _, (ψ 0).re ∂μ :=
-          integral_mono_of_nonneg (ae_of_all _ (fun _ => norm_nonneg _))
-            (integrable_const _) (ae_of_all _ (fun _ => hbound _))
-      _ = (ψ 0).re * (μ Set.univ).toReal := by
-          rw [integral_const, smul_eq_mul, mul_comm, measureReal_def]
+        (ψ 0).re * (μ Set.univ).toReal := fun n =>
+    ae_of_all _ fun _ => norm_integral_le_of_norm_le_const (ae_of_all _ fun _ => hbound _)
   exact tendsto_integral_of_dominated_convergence
     (fun _ => (ψ 0).re * (μ Set.univ).toReal)
     hmeas2 (integrable_const _) hbd2 (ae_of_all _ h_inner_conv)
