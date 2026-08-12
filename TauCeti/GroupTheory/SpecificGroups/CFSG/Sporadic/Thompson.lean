@@ -47,7 +47,7 @@ it writes `[w₁, w₂]` for `w₁⁻¹ w₂⁻¹ w₁ w₂`, which is
 `TauCeti.Sporadic.Thompson.sourceCommutator`, that is, Mathlib's commutator applied to the two
 inverses. The three conventions are pinned by `TauCeti.Relator.toFreeGroup_div` (with Mathlib's
 `div_eq_one`, which turns the relator `w₁ w₂⁻¹` back into the source's equation),
-`TauCeti.Relator.toFreeGroup_conj` and `TauCeti.Relator.toFreeGroup_sourceComm`, so no step
+`TauCeti.Relator.toFreeGroup_conj` and `TauCeti.Relator.toFreeGroup_comm_inv_inv`, so no step
 between the printed source and the free-group element used as a relation is left unstated.
 
 ## What is and is not claimed
@@ -133,10 +133,9 @@ abbrev genU : Relator (Fin 8) := .gen 7
 /-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`.
 
 Mathlib's bracket, carried by `TauCeti.Relator.comm`, is `⁅r, s⁆ = r s r⁻¹ s⁻¹`, so the source's
-convention is Mathlib's applied to the two inverses, which is `TauCeti.Relator.sourceComm`;
-`TauCeti.Relator.toFreeGroup_sourceComm` proves that this denotes `r⁻¹ s⁻¹ r s` in the free
-group. -/
-abbrev sourceCommutator (r s : Relator (Fin 8)) : Relator (Fin 8) := Relator.sourceComm r s
+convention is Mathlib's applied to the two inverses; `TauCeti.Relator.toFreeGroup_comm_inv_inv`
+proves that this denotes `r⁻¹ s⁻¹ r s` in the free group. -/
+abbrev sourceCommutator (r s : Relator (Fin 8)) : Relator (Fin 8) := .comm (.inv r) (.inv s)
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
@@ -294,10 +293,6 @@ theorem length_relatorList : relatorList.length = 39 := rfl
 theorem matchesMetadata_presentation : presentation.matchesMetadata :=
   (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨rfl, rfl⟩
 
-private def squareRelatorGenerator : Relator (Fin 8) → Option (Fin 8)
-  | .pow (.gen i) 2 => some i
-  | _ => none
-
 /-- The indices `i` for which the relator `gᵢ²` occurs literally in the transcribed list.
 
 This is a syntactic test on the data as written, not a statement about element orders in the
@@ -312,21 +307,10 @@ def generatorsWithSquareRelator : List (Fin 8) :=
     | .pow (.gen i) 2 => some i
     | _ => none
 
-private theorem sourceComm_notSquare (r s : Relator (Fin 8)) :
-    squareRelatorGenerator (Relator.sourceComm r s) = none := by
-  obtain ⟨t, u, h⟩ := Relator.sourceComm_eq_comm r s
-  rw [h]
-  simp [squareRelatorGenerator]
-
 /-- **The generators carrying a square relator are exactly `a`, `b`, `c`, `d` and `e`**, the first
 five of the eight, which are the source's involutory generators. A power relator dropped from, or
 transposed within, relators (1) would change this list. -/
-theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2, 3, 4] := by
-  change relatorList.filterMap squareRelatorGenerator = [0, 1, 2, 3, 4]
-  simp only [relatorList, relatorsOne, relatorsTwo, relatorsThree, relatorsFour, relatorsFive,
-    relatorsSix, sourceCommutator, List.filterMap_append, List.filterMap_cons,
-    List.filterMap_nil, sourceComm_notSquare]
-  rfl
+theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2, 3, 4] := rfl
 
 /-- **The source's column-count formula evaluates to eleven on the transcribed relators**, the
 figure the source records for its enumeration: one column for each generator carrying a square
@@ -338,8 +322,6 @@ terminates. Its value is that it checks the transcription against a published nu
 of `TauCeti.Sporadic.Thompson.matchesMetadata_presentation` do not see. -/
 theorem cosetTableColumns :
     generatorsWithSquareRelator.length +
-      2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := by
-  rw [generatorsWithSquareRelator_eq]
-  rfl
+      2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := rfl
 
 end TauCeti.Sporadic.Thompson

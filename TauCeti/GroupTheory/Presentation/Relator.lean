@@ -30,9 +30,8 @@ from Mathlib.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
-* `TauCeti.Relator.conj`, `TauCeti.Relator.div`, and `TauCeti.Relator.sourceComm`: the conjugate
-  `s⁻¹ r s`, the relator `r s⁻¹` by which a source states an equation between two words, and the
-  commutator convention `r⁻¹ s⁻¹ r s` used in the presentation literature.
+* `TauCeti.Relator.conj` and `TauCeti.Relator.div`: the conjugate `s⁻¹ r s` and the relator `r s⁻¹`
+  by which a source states an equation between two words.
 * `TauCeti.Relator.relatorSet`: the free-group elements denoted by a list of expressions.
 
 ## Main result
@@ -67,7 +66,7 @@ abbrev PresentationWord (α : Type*) := List (α × Bool)
 
 The commutator constructor is Mathlib's `commutatorElement`, that is, the convention
 `⁅r, s⁆ = r * s * r⁻¹ * s⁻¹`. A source using the convention
-`[r, s] = r⁻¹ * s⁻¹ * r * s` should be transcribed with `Relator.sourceComm`. -/
+`[r, s] = r⁻¹ * s⁻¹ * r * s` should be transcribed as `comm (inv r) (inv s)`. -/
 inductive Relator (α : Type*) where
   /-- A generator. -/
   | gen (x : α)
@@ -187,17 +186,6 @@ The body is exposed for the same reason as that of `TauCeti.Relator.conj`. -/
 @[expose]
 def div {α : Type*} (r s : Relator α) : Relator α := .mul r (.inv s)
 
-/-- The commutator `r⁻¹ * s⁻¹ * r * s` used by most of the presentation literature.
-
-Mathlib's `commutatorElement`, carried by the `Relator.comm` constructor, uses the convention
-`r * s * r⁻¹ * s⁻¹`, so the source convention is obtained by applying it to the two inverses. -/
-def sourceComm {α : Type*} (r s : Relator α) : Relator α := .comm (.inv r) (.inv s)
-
-/-- A source-convention commutator has the `Relator.comm` constructor at its head. -/
-theorem sourceComm_eq_comm {α : Type*} (r s : Relator α) :
-    ∃ t u, sourceComm r s = .comm t u := by
-  exact ⟨.inv r, .inv s, rfl⟩
-
 /-- The conjugate expression denotes the conjugate free-group element. -/
 @[simp]
 theorem toFreeGroup_conj {α : Type*} (r s : Relator α) :
@@ -222,24 +210,17 @@ theorem toWord_div {α : Type*} (r s : Relator α) :
     (r.div s).toWord = r.toWord ++ FreeGroup.invRev s.toWord := by
   rw [div, toWord_mul, toWord_inv]
 
-/-- The compiled word of a source-convention commutator. -/
-@[simp]
-theorem toWord_sourceComm {α : Type*} (r s : Relator α) :
-    (r.sourceComm s).toWord =
-      ((FreeGroup.invRev r.toWord ++ FreeGroup.invRev s.toWord) ++ r.toWord) ++ s.toWord := by
-  rw [sourceComm, toWord_comm, toWord_inv, toWord_inv, FreeGroup.invRev_invRev,
-    FreeGroup.invRev_invRev]
-
 /-- **The commutator convention of the presentation literature.** Sources that write
 `[r, s] = r⁻¹ s⁻¹ r s`, rather than Mathlib's `⁅r, s⁆ = r s r⁻¹ s⁻¹` carried by `Relator.comm`, are
-transcribed with `Relator.sourceComm`; this computes what that denotes, as the expanded word a
-reviewer compares against the printed source. -/
-@[simp]
-theorem toFreeGroup_sourceComm {α : Type*} (r s : Relator α) :
-    (r.sourceComm s).toFreeGroup =
+transcribed by applying `Relator.comm` to the two inverses; this computes what that denotes.
+
+This is not a `simp` lemma: `Relator.toFreeGroup_comm` and `Relator.toFreeGroup_inv` already carry
+its left-hand side to `⁅r.toFreeGroup⁻¹, s.toFreeGroup⁻¹⁆`, so the statement here is the expanded
+word a reviewer compares against the printed source rather than a normal form. -/
+theorem toFreeGroup_comm_inv_inv {α : Type*} (r s : Relator α) :
+    (Relator.comm (.inv r) (.inv s)).toFreeGroup =
       r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
-  rw [sourceComm, toFreeGroup_comm, toFreeGroup_inv, toFreeGroup_inv, commutatorElement_def,
-    inv_inv, inv_inv]
+  rw [toFreeGroup_comm, toFreeGroup_inv, toFreeGroup_inv, commutatorElement_def, inv_inv, inv_inv]
 
 /-- The free-group elements denoted by a list of relator expressions. -/
 def relatorSet {α : Type*} (l : List (Relator α)) : Set (FreeGroup α) :=

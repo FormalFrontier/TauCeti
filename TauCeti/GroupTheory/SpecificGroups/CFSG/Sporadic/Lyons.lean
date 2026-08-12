@@ -22,11 +22,12 @@ proves at each stage that the displayed relations define the claimed group. The 
 freely reduced lengths `80`, `160`, and `309`, giving the published total length `549`.
 
 The source writes `x̄` for `x⁻¹`, `x^y` for `y⁻¹xy`, which is `TauCeti.Relator.conj`, and `[x,y]`
-for `x⁻¹y⁻¹xy`, which is `TauCeti.Relator.sourceComm`. An equation `r = s` is stored as the relator
-`r * s⁻¹`, which is `TauCeti.Relator.div`. The structured expressions below preserve the source's
-powers, conjugates, commutators, and equations. Since their direct compilation need not perform
-free cancellation, decidable checks apply Mathlib's `FreeGroup.reduce` before checking the three
-block lengths and their total.
+for `x⁻¹y⁻¹xy`, transcribed as `TauCeti.Relator.comm (.inv x) (.inv y)`. An equation `r = s` is
+stored as the relator `r * s⁻¹`, which is `TauCeti.Relator.div`. The structured expressions below
+preserve the source's powers, conjugates, commutators, and equations. Since their direct compilation
+need not perform free cancellation, decidable checks apply Mathlib's `FreeGroup.reduce` before
+checking the three block lengths and their total, and then check that the reduced words are
+cyclically reduced.
 
 The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between the expressions and
 the signed words consumed by `PresentedGroup`. This file asserts no order, finiteness, simplicity,
@@ -53,6 +54,9 @@ namespace TauCeti.Sporadic
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
+private abbrev sourceComm {α : Type*} (r s : Relator α) : Relator α :=
+  .comm (.inv r) (.inv s)
+
 /-- The nine relators in the source's `R_H2` block, on its generator expressions `a`, `b`, and
 `c`. -/
 private def lyH2Relators {α : Type*} (a b c : Relator α) : List (Relator α) :=
@@ -60,8 +64,8 @@ private def lyH2Relators {α : Type*} (a b c : Relator α) : List (Relator α) :
   [ .pow a 8,
     .pow b 5,
     .pow (a ⬝ b) 4,
-    Relator.sourceComm (.pow a 2) b,
-    .pow (Relator.sourceComm a b) 3,
+    sourceComm (.pow a 2) b,
+    .pow (sourceComm a b) 3,
     .pow c 5,
     Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
     Relator.div (Relator.conj c (b ⬝ a))
@@ -114,7 +118,7 @@ private def lyExtensionRelators {α : Type*} (a b c d z : Relator α) : List (Re
         .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
         dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
     Relator.div
-      (Relator.sourceComm z
+      (sourceComm z
         (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
           a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
       (b ⬝ c ⬝ bInv ⬝ cInv),
@@ -156,7 +160,7 @@ private theorem reducedH2Length :
     (h2Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 80 := by
   simp only [h2Relators, lyH2Relators, List.map_cons, List.map_nil,
     Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_sourceComm, Relator.toWord_conj, Relator.toWord_div]
+    sourceComm, Relator.toWord_comm, Relator.toWord_conj, Relator.toWord_div]
   decide
 
 private theorem reducedH1Length :
@@ -170,7 +174,7 @@ private theorem reducedLyExtensionLength :
     (extensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309 := by
   simp only [extensionRelators, lyExtensionRelators,
     List.map_cons, List.map_nil, Relator.toWord_gen, Relator.toWord_inv,
-    Relator.toWord_mul, Relator.toWord_pow, Relator.toWord_sourceComm,
+    Relator.toWord_mul, Relator.toWord_pow, sourceComm, Relator.toWord_comm,
     Relator.toWord_conj, Relator.toWord_div]
   decide
 
@@ -198,9 +202,11 @@ def lyPresentation : GroupPresentation where
     [x,y] means x^-1*y^-1*x*y, and products are read left to right."
   transcriptionNotes := "The nine R_H2 relators, seven R_H1 relators, and nine R_G relators are \
     stored in the source's order. An equation r=s is compiled as r*s^-1. Free reduction gives \
-    block lengths 80, 160, and 309, agreeing with the source's total 549; decidable checks in this \
-    module verify each block separately and derive the total. The paper proves the presentation by \
-    double-coset enumeration. The independent FiniteSimpleGroups development does not cover Ly."
+    block lengths 80, 160, and 309, matching the figures printed by the source and its total 549; \
+    decidable checks verify these lengths and that every reduced word is cyclically reduced. In \
+    R_G relator 4 the source prints the right side as the literal word b*c*b^-1*c^-1, not as a \
+    bracketed commutator. The paper proves the presentation by double-coset enumeration. The \
+    independent FiniteSimpleGroups development does not cover Ly."
   expectedGeneratorCount := 5
   expectedRelatorCount := 25
   transcribed :=
@@ -243,10 +249,12 @@ theorem lyPresentation_generatorConvention :
 theorem lyPresentation_transcriptionNotes :
     lyPresentation.transcriptionNotes = "The nine R_H2 relators, seven R_H1 relators, and nine \
       R_G relators are stored in the source's order. An equation r=s is compiled as r*s^-1. Free \
-      reduction gives block lengths 80, 160, and 309, agreeing with the source's total 549; \
-      decidable checks in this module verify each block separately and derive the total. The paper \
-      proves the presentation by double-coset enumeration. The independent FiniteSimpleGroups \
-      development does not cover Ly." := by
+      reduction gives block lengths 80, 160, and 309, matching the figures printed by the source \
+      and its total 549; decidable checks verify these lengths and that every reduced word is \
+      cyclically reduced. In R_G relator 4 the source prints the right side as the literal word \
+      b*c*b^-1*c^-1, not as a bracketed commutator. The paper proves the presentation by \
+      double-coset enumeration. The independent FiniteSimpleGroups development does not cover \
+      Ly." := by
   rfl
 
 /-- The generator count recorded for `Ly`. -/
@@ -289,8 +297,8 @@ theorem lyPresentation_transcribed :
       [ .pow a 8,
         .pow b 5,
         .pow (a ⬝ b) 4,
-        Relator.sourceComm (.pow a 2) b,
-        .pow (Relator.sourceComm a b) 3,
+        Relator.comm (.inv (.pow a 2)) (.inv b),
+        .pow (Relator.comm (.inv a) (.inv b)) 3,
         .pow c 5,
         Relator.div (Relator.conj c (.pow a 2)) (.pow c 3),
         Relator.div (Relator.conj c (b ⬝ a))
@@ -326,9 +334,9 @@ theorem lyPresentation_transcribed :
             .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
             dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
         Relator.div
-          (Relator.sourceComm z
+          (Relator.comm (.inv z) (.inv
             (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
-              a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
+              a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d)))
           (b ⬝ c ⬝ bInv ⬝ cInv),
         Relator.div (Relator.conj a (z ⬝ d ⬝ bInv ⬝ z))
           (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow cInv 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
@@ -352,8 +360,20 @@ theorem lyPresentation_transcribed :
             bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a),
         a ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow aInv 2 ⬝ dInv ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝
           d ⬝ cInv ⬝ .pow (a ⬝ cInv) 2 ⬝ b ⬝ aInv ⬝ .pow c 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
-          c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ] := by
+      c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ] := by
   rfl
+
+/-- Free reduction makes every compiled relator word cyclically reduced.
+
+The structured equation relators can contain cancellations at their concatenation boundary, so
+this checks the reduced words used for comparison with the source's published length figures. -/
+theorem lyPresentation_reducedRelatorsCyclicallyReduced :
+    ∀ w ∈ lyPresentation.relators,
+      FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
+  simp only [GroupPresentation.relators_def, lyPresentation_transcribed, List.map_cons,
+    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul,
+    Relator.toWord_pow, Relator.toWord_comm, Relator.toWord_conj, Relator.toWord_div]
+  decide
 
 private theorem lyPresentation_blockDecomposition :
     lyPresentation.transcribed = h2Relators ++ h1Relators ++ extensionRelators := by
