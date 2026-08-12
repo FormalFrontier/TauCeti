@@ -12,8 +12,8 @@ public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 The multiplicative Jordan--Chevalley decomposition of a linear automorphism does not depend on
 the coordinates used to describe it.  A linear equivalence `e : V ≃ₗ[K] W` transports an
-automorphism by conjugation.  This file proves that semisimplicity and unipotence are invariant
-under this transport and that both canonical Jordan factors commute with it.  More generally,
+automorphism by conjugation.  This file proves that semisimplicity is invariant under this
+transport and that both canonical Jordan factors commute with it.  More generally,
 every linear map between finite-dimensional modules over a perfect field that intertwines two
 automorphisms also intertwines their canonical semisimple and unipotent factors; no injectivity or
 surjectivity assumption is needed.
@@ -29,8 +29,6 @@ representation of an affine algebraic group.
   under linear conjugation.
 * `TauCeti.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
   conjugation within the general linear group.
-* `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
-  linear conjugation.
 * `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
   equivariant under linear conjugation.
 * `TauCeti.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
