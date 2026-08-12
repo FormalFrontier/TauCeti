@@ -82,8 +82,11 @@ def IsKostantPartition (ν : M) (c : ι → ℕ) : Prop :=
   support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν
 
 /-- A multiplicity function is a Kostant partition exactly when it is supported on the positive
-roots and its weighted root sum is the element being partitioned. -/
-@[simp] theorem isKostantPartition_iff (ν : M) (c : ι → ℕ) :
+roots and its weighted root sum is the element being partitioned.
+
+This is deliberately not a `simp` lemma: unfolding the predicate on sight would put every other
+statement about it — `isKostantPartition_zero_iff` first of all — out of simp normal form. -/
+theorem isKostantPartition_iff (ν : M) (c : ι → ℕ) :
     IsKostantPartition P b ν c ↔
       support c ⊆ posRoots P b ∧ ∑ i ∈ posRootsFinset P b, c i • P.root i = ν :=
   Iff.rfl
