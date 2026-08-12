@@ -5,22 +5,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Geometrically.Connected
-public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Geometric connectedness of affine group schemes
 
 This file compares geometric connectedness of a commutative Hopf algebra with Mathlib's
-scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum. It then restricts the
-affine Hopf/group-scheme anti-equivalence to geometrically connected objects:
-
-```text
-(GeometricallyConnectedCommHopfAlgCat k)ᵒᵖ ≌
-  GeometricallyConnectedAffineGroupSchemeCat (CommRingCat.of k).
-```
+scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum.
 
 ## Main declarations
 
@@ -28,22 +20,10 @@ affine Hopf/group-scheme anti-equivalence to geometrically connected objects:
   of the coordinate-ring and scheme-theoretic predicates.
 * `TauCeti.geometricallyConnected_hopfSpec_iff_idempotent_eq_zero_or_one`: the idempotent
   characterization of geometric connectedness for a Hopf spectrum.
-* `TauCeti.geometricallyConnectedAffineGroupSchemeProperty`: the geometrically connected
-  object property on affine group schemes.
-* `TauCeti.GeometricallyConnectedAffineGroupSchemeCat`: the resulting full subcategory.
-* `TauCeti.geometricallyConnectedCommHopfAlgCatOpEquivGeometricallyConnectedAffineGroupSchemeCat`:
-  the restricted anti-equivalence.
-* `functorCompιIso` in the restricted anti-equivalence's namespace: after both inclusions,
-  the forward functor is Mathlib's `AlgebraicGeometry.hopfSpec`.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §2.a.
-
-The categorical restriction follows
-`TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType`, especially
-`TauCeti.finiteTypeAffineGroupSchemeProperty_inverseImage` and
-`TauCeti.finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat`.
 
 This is the geometric-connectedness prerequisite for Layer 3, "Identity component and component
 group", of the ReductiveGroups roadmap.
@@ -60,42 +40,6 @@ open AlgebraicGeometry
 
 universe u
 
-private instance geometricallyConnected_respectsIso :
-    MorphismProperty.RespectsIso @GeometricallyConnected :=
-  MorphismProperty.IsStableUnderBaseChange.respectsIso
-
-/-- The object property on affine group schemes selecting those whose structural morphism is
-geometrically connected. -/
-def geometricallyConnectedAffineGroupSchemeProperty (S : CommRingCat.{u}) :
-    ObjectProperty (AffineGroupSchemeCat S) :=
-  fun G => GeometricallyConnected G.obj.X.hom
-
-/-- Membership in the geometrically connected affine-group-scheme object property. -/
-@[simp]
-lemma geometricallyConnectedAffineGroupSchemeProperty_iff (S : CommRingCat.{u})
-    (G : AffineGroupSchemeCat S) :
-    geometricallyConnectedAffineGroupSchemeProperty S G ↔
-      GeometricallyConnected G.obj.X.hom :=
-  Iff.rfl
-
-/-- Geometric connectedness of the structural morphism is invariant under isomorphism of affine
-group schemes. -/
-instance (S : CommRingCat.{u}) :
-    (geometricallyConnectedAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
-  of_iso e hG :=
-    (MorphismProperty.over_iso_iff (@GeometricallyConnected)
-      ((Grp.forget _).mapIso ((affineGroupSchemeProperty S).ι.mapIso e))).mp hG
-
-/-- The category of geometrically connected affine group schemes over the affine base `Spec S`. -/
-abbrev GeometricallyConnectedAffineGroupSchemeCat (S : CommRingCat.{u}) :=
-  (geometricallyConnectedAffineGroupSchemeProperty S).FullSubcategory
-
-/-- An object of `GeometricallyConnectedAffineGroupSchemeCat S` has geometrically connected
-structural morphism by construction. -/
-instance (G : GeometricallyConnectedAffineGroupSchemeCat S) :
-    GeometricallyConnected G.obj.obj.X.hom :=
-  G.property
-
 /-- **Geometric connectedness agrees across the affine-group-scheme and coordinate-ring
 models.** The structural morphism of a Hopf spectrum is geometrically connected if and only if
 its coordinate algebra is geometrically connected after every field extension. -/
@@ -104,6 +48,9 @@ theorem geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec
     geometricallyConnectedCommHopfAlgProperty k H ↔
       GeometricallyConnected
         (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom) := by
+  -- This witness is not a global instance, but `cancel_left_of_respectsIso` needs it below.
+  let : MorphismProperty.RespectsIso @GeometricallyConnected :=
+    MorphismProperty.IsStableUnderBaseChange.respectsIso
   rw [geometricallyConnectedCommHopfAlgProperty_iff, hopfSpec_obj_X_hom]
   rw [MorphismProperty.cancel_left_of_respectsIso
     (P := @GeometricallyConnected) (eqToHom (hopfSpec_obj_X_left k H))]
@@ -125,78 +72,5 @@ theorem geometricallyConnected_hopfSpec_iff_idempotent_eq_zero_or_one
         IsIdempotentElem e → e = 0 ∨ e = 1 := by
   rw [← geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec,
     geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one]
-
-/-- Under the affine Hopf/group-scheme anti-equivalence, the inverse image of geometric
-connectedness is geometric connectedness of the coordinate Hopf algebra. -/
-theorem geometricallyConnectedAffineGroupSchemeProperty_inverseImage
-    (k : Type u) [Field k] :
-    (geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k)).inverseImage
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor =
-      (geometricallyConnectedCommHopfAlgProperty k).op := by
-  ext H
-  let G : AffineGroupSchemeCat (CommRingCat.of k) :=
-    ⟨(hopfSpec (CommRingCat.of k)).obj H, by
-      apply (affineGroupSchemeProperty_iff _).mpr
-      rw [← essImage_hopfSpec]
-      exact ⟨H, ⟨Iso.refl _⟩⟩⟩
-  let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of k)).functor.obj H ≅ G :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of k)).app H)
-  rw [ObjectProperty.prop_inverseImage_iff,
-    geometricallyConnectedAffineGroupSchemeProperty_iff, ObjectProperty.op_iff]
-  exact ((geometricallyConnectedAffineGroupSchemeProperty
-    (CommRingCat.of k)).prop_iff_of_iso e).trans
-      (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec k H.unop).symm
-
-/-- `Spec` as an anti-equivalence from geometrically connected commutative Hopf algebras to
-geometrically connected affine group schemes over a field. -/
-noncomputable def
-    geometricallyConnectedCommHopfAlgCatOpEquivGeometricallyConnectedAffineGroupSchemeCat
-    (k : Type u) [Field k] :
-    (GeometricallyConnectedCommHopfAlgCat.{u} k)ᵒᵖ ≌
-      GeometricallyConnectedAffineGroupSchemeCat (CommRingCat.of k) :=
-  (ObjectProperty.opEquivalence (geometricallyConnectedCommHopfAlgProperty k)).symm.trans <|
-    (commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of k)).congrFullSubcategory
-        (geometricallyConnectedAffineGroupSchemeProperty_inverseImage k)
-
-namespace geometricallyConnectedCommHopfAlgCatOpEquivGeometricallyConnectedAffineGroupSchemeCat
-
-/-- The forward restricted equivalence followed by the geometrically connected inclusion is
-definitionally the unrestricted equivalence applied after forgetting the connectedness proof.
-This private isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and
-`congrFullSubcategory` from the public compatibility isomorphism below. -/
-private noncomputable def functorCompιIsoAux (k : Type u) [Field k] :
-    (geometricallyConnectedCommHopfAlgCatOpEquivGeometricallyConnectedAffineGroupSchemeCat
-        k).functor ⋙
-        (geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k)).ι ≅
-      (forget₂ (GeometricallyConnectedCommHopfAlgCat.{u} k)
-          (CommHopfAlgCat.{u} k)).op ⋙
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor :=
-  Iso.refl _
-
-/-- The forward geometrically connected anti-equivalence, followed by the inclusions into affine
-group schemes and then all group schemes, is `hopfSpec` after forgetting the connectedness proof. -/
-noncomputable def
-    functorCompιIso (k : Type u) [Field k] :
-    (geometricallyConnectedCommHopfAlgCatOpEquivGeometricallyConnectedAffineGroupSchemeCat
-        k).functor ⋙
-          (geometricallyConnectedAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
-        (affineGroupSchemeProperty (CommRingCat.of k)).ι ≅
-      (forget₂ (GeometricallyConnectedCommHopfAlgCat.{u} k)
-          (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
-  Functor.isoWhiskerRight
-      (functorCompιIsoAux k)
-      (affineGroupSchemeProperty (CommRingCat.of k)).ι ≪≫
-    Functor.associator _ _ _ ≪≫
-    Functor.isoWhiskerLeft
-      (forget₂ (GeometricallyConnectedCommHopfAlgCat.{u} k)
-        (CommHopfAlgCat.{u} k)).op
-      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of k))
-
-end geometricallyConnectedCommHopfAlgCatOpEquivGeometricallyConnectedAffineGroupSchemeCat
 
 end TauCeti

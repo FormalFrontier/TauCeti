@@ -22,16 +22,10 @@ idempotents other than zero and one.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty_iff`: its connected-spectrum form.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one`: its
   idempotent form.
-* `TauCeti.GeometricallyConnectedCommHopfAlgCat`: the full subcategory of geometrically
-  connected commutative Hopf algebras.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §2.a.
-
-The full-subcategory abbreviation follows the finite-type model
-`TauCeti.FiniteTypeCommHopfAlgCat` from
-`TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat`.
 
 This is the geometric-connectedness prerequisite for Layer 3, "Identity component and component
 group", of the ReductiveGroups roadmap.
@@ -104,10 +98,5 @@ theorem geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one
   · intro h K _ _
     let := nontrivial_tensorProduct k H K
     exact connectedSpace_primeSpectrum_iff_idempotent_eq_zero_or_one.mpr (h K)
-
-/-- The category of geometrically connected commutative Hopf algebras over a field. Geometric
-connectedness remains an object property rather than part of the ambient Hopf-algebra category. -/
-abbrev GeometricallyConnectedCommHopfAlgCat (k : Type u) [Field k] :=
-  (geometricallyConnectedCommHopfAlgProperty k).FullSubcategory
 
 end TauCeti
