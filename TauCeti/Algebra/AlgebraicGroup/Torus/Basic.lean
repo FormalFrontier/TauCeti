@@ -131,6 +131,8 @@ theorem splitTorusCommHopfAlgProperty.torus
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : splitTorusCommHopfAlgProperty k H) :
     torusCommHopfAlgProperty k H := by
+  rw [splitTorusCommHopfAlgProperty_iff] at hH
+  rw [torusCommHopfAlgProperty_iff]
   obtain ⟨n, ⟨i⟩⟩ := hH
   exact ⟨n, ⟨
     (DiagonalizableGroup.baseChangeCoordinateRingIso k (AlgebraicClosure k)
@@ -144,6 +146,7 @@ theorem torusCommHopfAlgProperty.multiplicativeType
     (hH : torusCommHopfAlgProperty k H) :
     multiplicativeTypeCommHopfAlgProperty k H := by
   rw [multiplicativeTypeCommHopfAlgProperty_iff_exists_iso_coordinateRing]
+  rw [torusCommHopfAlgProperty_iff] at hH
   obtain ⟨n, hn⟩ := hH
   exact ⟨SplitTorus.characterGroup (ULift.{u} (Fin n)), hn⟩
 
@@ -153,6 +156,7 @@ namespace SplitTorus
 theorem splitTorus_coordinateRing (k : Type u) [CommRing k] (σ : Type u) [Finite σ] :
     splitTorusCommHopfAlgProperty k
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)) := by
+  rw [splitTorusCommHopfAlgProperty_iff]
   let eσ : σ ≃ ULift.{u} (Fin (Nat.card σ)) :=
     (Finite.equivFin σ).trans Equiv.ulift.symm
   let e : Multiplicative (σ →₀ ℤ) ≃*
