@@ -149,38 +149,54 @@ At the vertices of the chain these are the dual labels of the affine diagram the
 marks of its dual: `1, 2, …, 2, 1` for `D⁽²⁾ₘ₊₃`, when `b` is `true`, and `1, 2, …, 2, 2` for
 `A⁽²⁾₂ₘ₊₄`, when `b` is `false`. It is the dual labels, and so the rows of the matrix, that occur
 here because the convention of this repository, `A i j = ⟨αᵢ, αⱼ^∨⟩`, is the transpose of Kac's.
-The function is defined on all of `ℕ`, and used at the vertex numbers `0, …, m + 2`; the values it
-takes outside that range are not meaningful. -/
-def twoDoubleEdgeMark (m : ℕ) (b : Bool) (s : ℕ) : ℚ :=
-  if s = 0 ∨ (b ∧ s = m + 2) then 1 else 2
+The function is indexed by the vertices `Fin (m + 3)` of the diagram. -/
+def twoDoubleEdgeMark (m : ℕ) (b : Bool) (s : Fin (m + 3)) : ℚ :=
+  if (s : ℕ) = 0 ∨ (b ∧ (s : ℕ) = m + 2) then 1 else 2
 
-lemma twoDoubleEdgeMark_def (s : ℕ) :
-    twoDoubleEdgeMark m b s = if s = 0 ∨ (b ∧ s = m + 2) then 1 else 2 := (rfl)
+lemma twoDoubleEdgeMark_def (s : Fin (m + 3)) :
+    twoDoubleEdgeMark m b s =
+      if (s : ℕ) = 0 ∨ (b ∧ (s : ℕ) = m + 2) then 1 else 2 := (rfl)
 
 /-- The first vertex of the chain carries the mark `1`. -/
 @[simp] lemma twoDoubleEdgeMark_zero : twoDoubleEdgeMark m b 0 = 1 := by
   rw [twoDoubleEdgeMark_def]
   simp
 
+/-- The last vertex carries the mark `1` exactly when the double edges point outwards. -/
+@[simp] lemma twoDoubleEdgeMark_last :
+    twoDoubleEdgeMark m b ⟨m + 2, by omega⟩ = if b then 1 else 2 := by
+  rw [twoDoubleEdgeMark_def]
+  rcases b with _ | _ <;> simp
+
+/-- Every vertex strictly between the two ends carries the mark `2`. -/
+@[simp] lemma twoDoubleEdgeMark_interior (s : Fin (m + 3))
+    (hzero : 0 < (s : ℕ)) (hlast : (s : ℕ) < m + 2) : twoDoubleEdgeMark m b s = 2 := by
+  rw [twoDoubleEdgeMark_def]
+  simp [ne_of_gt hzero, ne_of_lt hlast]
+
 /-- The marks are positive, which is what makes them a nonzero certificate. -/
-lemma twoDoubleEdgeMark_pos (s : ℕ) : 0 < twoDoubleEdgeMark m b s := by
+lemma twoDoubleEdgeMark_pos (s : Fin (m + 3)) : 0 < twoDoubleEdgeMark m b s := by
   rw [twoDoubleEdgeMark_def]
   split_ifs <;> norm_num
 
 /-! ## The rows of the diagram at its marks -/
 
+private def twoDoubleEdgeMarkNat (m : ℕ) (b : Bool) (s : ℕ) : ℚ :=
+  if s = 0 ∨ (b ∧ s = m + 2) then 1 else 2
+
 /-- The chain part of a row, evaluated at the marks: this is the chain row identity
 `TauCeti.sum_range_chainEntry_mul` read on `Fin (m + 3)`, the weight at the vertex `s` being the
 mark of `s`. -/
 private theorem sum_fin_chainEntry_mul_twoDoubleEdgeMark (i : Fin (m + 3)) :
-    ∑ j : Fin (m + 3), ((chainEntry (i : ℕ) (j : ℕ) : ℤ) : ℚ) * twoDoubleEdgeMark m b (j : ℕ)
-      = 2 * twoDoubleEdgeMark m b (i : ℕ)
-        - (if (i : ℕ) = 0 then 0 else twoDoubleEdgeMark m b ((i : ℕ) - 1))
-        - (if (i : ℕ) + 1 = m + 3 then 0 else twoDoubleEdgeMark m b ((i : ℕ) + 1)) := by
+    ∑ j : Fin (m + 3),
+      ((chainEntry (i : ℕ) (j : ℕ) : ℤ) : ℚ) * twoDoubleEdgeMarkNat m b (j : ℕ)
+      = 2 * twoDoubleEdgeMarkNat m b (i : ℕ)
+        - (if (i : ℕ) = 0 then 0 else twoDoubleEdgeMarkNat m b ((i : ℕ) - 1))
+        - (if (i : ℕ) + 1 = m + 3 then 0 else twoDoubleEdgeMarkNat m b ((i : ℕ) + 1)) := by
   have h := sum_range_chainEntry_mul (R := ℚ) (n := m + 3) (m := (i : ℕ)) i.isLt
-    (fun u ↦ twoDoubleEdgeMark m b (u - 1))
+    (fun u ↦ twoDoubleEdgeMarkNat m b (u - 1))
   rw [Fin.sum_univ_eq_sum_range
-    (fun s ↦ ((chainEntry (i : ℕ) s : ℤ) : ℚ) * twoDoubleEdgeMark m b s)]
+    (fun s ↦ ((chainEntry (i : ℕ) s : ℤ) : ℚ) * twoDoubleEdgeMarkNat m b s)]
   simpa using h
 
 /-- **The row identity at a vertex number.** Away from the two ends of the chain the marks are
@@ -188,62 +204,49 @@ constant, so the second difference vanishes; at the first vertex the mark is hal
 neighbour's, and at the last one the drop in the mark, when there is one, is exactly compensated by
 the double edge. Only the vertex numbers occur here, which is what the row sums of the diagram
 reduce to. -/
-private lemma twoDoubleEdgeMark_row (m : ℕ) (b : Bool) {s : ℕ} (hs : s < m + 3) :
-    2 * twoDoubleEdgeMark m b s - (if s = 0 then 0 else twoDoubleEdgeMark m b (s - 1))
-        - (if s + 1 = m + 3 then 0 else twoDoubleEdgeMark m b (s + 1))
-        - (if s = 1 then 1 * twoDoubleEdgeMark m b 0 else 0)
-        - (if s = m + 1 then (if b then (1 : ℚ) else 0) * twoDoubleEdgeMark m b (m + 2) else 0)
-        - (if s = m + 2 then (if b then (0 : ℚ) else 1) * twoDoubleEdgeMark m b (m + 1) else 0)
+private lemma twoDoubleEdgeMarkNat_row (m : ℕ) (b : Bool) {s : ℕ} (hs : s < m + 3) :
+    2 * twoDoubleEdgeMarkNat m b s - (if s = 0 then 0 else twoDoubleEdgeMarkNat m b (s - 1))
+        - (if s + 1 = m + 3 then 0 else twoDoubleEdgeMarkNat m b (s + 1))
+        - (if s = 1 then 1 * twoDoubleEdgeMarkNat m b 0 else 0)
+        - (if s = m + 1 then
+            (if b then (1 : ℚ) else 0) * twoDoubleEdgeMarkNat m b (m + 2) else 0)
+        - (if s = m + 2 then
+            (if b then (0 : ℚ) else 1) * twoDoubleEdgeMarkNat m b (m + 1) else 0)
       = 0 := by
-  rcases b with _ | _ <;> norm_num [twoDoubleEdgeMark_def] <;> split_ifs <;>
+  rcases b with _ | _ <;> norm_num [twoDoubleEdgeMarkNat] <;> split_ifs <;>
     first
       | (exfalso; omega)
       | norm_num
 
-/-- **The marks are a null vector of the doubly ended chain:** every row annihilates them. -/
-theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m + 3)) :
+private lemma sum_fin_ite_and_eq_mul {n r k : ℕ} (i : Fin n) (hk : k < n) (c : ℚ)
+    (w : Fin n → ℚ) :
+    (∑ j : Fin n, (if (i : ℕ) = r ∧ (j : ℕ) = k then c else 0) * w j) =
+      if (i : ℕ) = r then c * w ⟨k, hk⟩ else 0 := by
+  by_cases hi : (i : ℕ) = r
+  · simp only [hi, true_and, ite_true]
+    simpa only [Fin.ext_iff, ite_mul, zero_mul] using
+      Fintype.sum_ite_eq' (⟨k, hk⟩ : Fin n) (fun j ↦ c * w j)
+  · simp [hi]
+
+private theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMarkNat_eq_zero
+    (i : Fin (m + 3)) :
     ∑ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
-      * twoDoubleEdgeMark m b (j : ℕ) = 0 := by
-  have hfirst : (∑ j : Fin (m + 3),
-      (if (i : ℕ) = 1 ∧ (j : ℕ) = 0 then (1 : ℚ) else 0) *
-        twoDoubleEdgeMark m b (j : ℕ)) =
-      if (i : ℕ) = 1 then 1 * twoDoubleEdgeMark m b 0 else 0 := by
-    by_cases hi : (i : ℕ) = 1
-    · simp only [hi, true_and, ite_true]
-      simpa only [Fin.ext_iff, ite_mul, zero_mul] using
-        Fintype.sum_ite_eq' (⟨0, by omega⟩ : Fin (m + 3))
-          (fun j ↦ (1 : ℚ) * twoDoubleEdgeMark m b (j : ℕ))
-    · simp [hi]
-  have hlast : (∑ j : Fin (m + 3),
-      (if (i : ℕ) = m + 1 ∧ (j : ℕ) = m + 2 then (if b then (1 : ℚ) else 0) else 0) *
-        twoDoubleEdgeMark m b (j : ℕ)) =
-      if (i : ℕ) = m + 1 then (if b then (1 : ℚ) else 0) *
-        twoDoubleEdgeMark m b (m + 2) else 0 := by
-    by_cases hi : (i : ℕ) = m + 1
-    · simp only [hi, true_and, ite_true]
-      simpa only [Fin.ext_iff, ite_mul, zero_mul] using
-        Fintype.sum_ite_eq' (⟨m + 2, by omega⟩ : Fin (m + 3))
-          (fun j ↦ (if b then (1 : ℚ) else 0) * twoDoubleEdgeMark m b (j : ℕ))
-    · simp [hi]
-  have hlast' : (∑ j : Fin (m + 3),
-      (if (i : ℕ) = m + 2 ∧ (j : ℕ) = m + 1 then (if b then (0 : ℚ) else 1) else 0) *
-        twoDoubleEdgeMark m b (j : ℕ)) =
-      if (i : ℕ) = m + 2 then (if b then (0 : ℚ) else 1) *
-        twoDoubleEdgeMark m b (m + 1) else 0 := by
-    by_cases hi : (i : ℕ) = m + 2
-    · simp only [hi, true_and, ite_true]
-      simpa only [Fin.ext_iff, ite_mul, zero_mul] using
-        Fintype.sum_ite_eq' (⟨m + 1, by omega⟩ : Fin (m + 3))
-          (fun j ↦ (if b then (0 : ℚ) else 1) * twoDoubleEdgeMark m b (j : ℕ))
-    · simp [hi]
+      * twoDoubleEdgeMarkNat m b (j : ℕ) = 0 := by
+  have hfirst := sum_fin_ite_and_eq_mul i (k := 0) (r := 1) (by omega) 1
+    (fun j ↦ twoDoubleEdgeMarkNat m b (j : ℕ))
+  have hlast := sum_fin_ite_and_eq_mul i (k := m + 2) (r := m + 1) (by omega)
+    (if b then 1 else 0) (fun j ↦ twoDoubleEdgeMarkNat m b (j : ℕ))
+  have hlast' := sum_fin_ite_and_eq_mul i (k := m + 1) (r := m + 2) (by omega)
+    (if b then 0 else 1) (fun j ↦ twoDoubleEdgeMarkNat m b (j : ℕ))
   have hsplit : ∀ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
-      * twoDoubleEdgeMark m b (j : ℕ)
-      = ((chainEntry (i : ℕ) (j : ℕ) : ℤ) : ℚ) * twoDoubleEdgeMark m b (j : ℕ)
-        - (if (i : ℕ) = 1 ∧ (j : ℕ) = 0 then (1 : ℚ) else 0) * twoDoubleEdgeMark m b (j : ℕ)
+      * twoDoubleEdgeMarkNat m b (j : ℕ)
+      = ((chainEntry (i : ℕ) (j : ℕ) : ℤ) : ℚ) * twoDoubleEdgeMarkNat m b (j : ℕ)
+        - (if (i : ℕ) = 1 ∧ (j : ℕ) = 0 then (1 : ℚ) else 0)
+          * twoDoubleEdgeMarkNat m b (j : ℕ)
         - (if (i : ℕ) = m + 1 ∧ (j : ℕ) = m + 2 then (if b then (1 : ℚ) else 0) else 0)
-          * twoDoubleEdgeMark m b (j : ℕ)
+          * twoDoubleEdgeMarkNat m b (j : ℕ)
         - (if (i : ℕ) = m + 2 ∧ (j : ℕ) = m + 1 then (if b then (0 : ℚ) else 1) else 0)
-          * twoDoubleEdgeMark m b (j : ℕ) := by
+          * twoDoubleEdgeMarkNat m b (j : ℕ) := by
     intro j
     rw [twoDoubleEdgeCartanMatrix_eq_sub]
     push_cast
@@ -251,7 +254,14 @@ theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m 
   rw [Finset.sum_congr rfl fun j _ ↦ hsplit j, Finset.sum_sub_distrib, Finset.sum_sub_distrib,
     Finset.sum_sub_distrib, sum_fin_chainEntry_mul_twoDoubleEdgeMark,
     hfirst, hlast, hlast']
-  exact twoDoubleEdgeMark_row m b i.isLt
+  exact twoDoubleEdgeMarkNat_row m b i.isLt
+
+/-- **The marks are a null vector of the doubly ended chain:** every row annihilates them. -/
+theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m + 3)) :
+    ∑ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
+      * twoDoubleEdgeMark m b j = 0 := by
+  simpa [twoDoubleEdgeMark, twoDoubleEdgeMarkNat] using
+    sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMarkNat_eq_zero (m := m) (b := b) i
 
 /-- **No doubly ended chain is of finite type**: whatever the length of the chain, and whichever
 way the two double edges are oriented, the marks are a nonzero null vector, and a finite-type
@@ -265,7 +275,7 @@ theorem not_isFiniteType_twoDoubleEdgeCartanMatrix (m : ℕ) (b : Bool) :
     ¬ IsFiniteType (twoDoubleEdgeCartanMatrix m b) := by
   intro h
   have hzero := h.eq_zero_of_forall_mul_sum_apply_mul_nonpos
-    (x := fun i : Fin (m + 3) ↦ twoDoubleEdgeMark m b (i : ℕ)) fun i ↦ by
+    (x := twoDoubleEdgeMark m b) fun i ↦ by
       rw [sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero, mul_zero]
   have hfirst := congrFun hzero (⟨0, by omega⟩ : Fin (m + 3))
   rw [Pi.zero_apply] at hfirst
