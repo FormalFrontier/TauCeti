@@ -5,6 +5,7 @@ Authors: Codex
 -/
 module
 
+public import Mathlib.GroupTheory.FreeGroup.CyclicallyReduced
 public import Mathlib.GroupTheory.PresentedGroup
 public import TauCeti.GroupTheory.Presentation.Relator
 
@@ -26,9 +27,20 @@ relations, regarded as a set, defines `TauCeti.GroupPresentation.Group` using Ma
 
 * `TauCeti.GroupPresentation`: cited presentation data and its transcription metadata.
 * `TauCeti.GroupPresentation.relators`: the compiled signed words.
+* `TauCeti.GroupPresentation.relatorLetters`: the compiled words with generator indices as naturals,
+  for stating a letter-by-letter comparison with a source.
+* `TauCeti.GroupPresentation.totalLength`: the number of letters in the compiled words, for checking
+  against a published presentation length.
+* `TauCeti.GroupPresentation.relatorsCyclicallyReduced`: the decidable check that every compiled
+  word is cyclically reduced.
 * `TauCeti.GroupPresentation.relatorSet`: the relations as free-group elements.
 * `TauCeti.GroupPresentation.Group`: the group defined by the presentation.
 * `TauCeti.GroupPresentation.matchesMetadata`: the decidable generator and relator count check.
+
+## Main results
+
+* `TauCeti.GroupPresentation.relatorSet_eq_relatorSet_transcribed`: the relations of a presentation
+  are the relator set of its transcribed expressions.
 
 ## References
 
@@ -77,6 +89,14 @@ abbrev generatorCount (P : GroupPresentation) : ℕ := P.generatorNames.length
 def relators (P : GroupPresentation) : List (PresentationWord (Fin P.generatorCount)) :=
   P.transcribed.map Relator.toWord
 
+/-- The compiled relators are obtained by compiling each transcribed expression.
+
+This is the unfolding lemma for `TauCeti.GroupPresentation.relators`, whose body is sealed. It is
+deliberately not `@[simp]`: the simp normal form of a presentation is the structural description
+given by `length_relators` and `mem_relators_iff` below, not the compiled list. -/
+theorem relators_def (P : GroupPresentation) : P.relators = P.transcribed.map Relator.toWord := by
+  rw [relators]
+
 /-- Compilation preserves the number of relators. -/
 @[simp]
 theorem length_relators (P : GroupPresentation) : P.relators.length = P.transcribed.length := by
@@ -87,6 +107,69 @@ theorem length_relators (P : GroupPresentation) : P.relators.length = P.transcri
 theorem mem_relators_iff (P : GroupPresentation) (w : PresentationWord (Fin P.generatorCount)) :
     w ∈ P.relators ↔ ∃ t ∈ P.transcribed, t.toWord = w := by
   simp [relators]
+
+/-- The compiled relator words, with each generator index displayed as a natural number.
+
+A transcription is audited by comparing the compiled letters with the published relators, and this
+form of them is the one to state such a comparison against: the index type of a word depends on the
+generator-name list, whereas the letters here do not, so the comparison needs no arithmetic on that
+dependency. -/
+def relatorLetters (P : GroupPresentation) : List (List (ℕ × Bool)) :=
+  P.relators.map (List.map fun letter => (letter.1.val, letter.2))
+
+/-- The displayed letters are obtained by forgetting the bounds on the compiled generator
+indices. This is the unfolding lemma for the sealed body, and like `relators_def` it is not
+`@[simp]`. -/
+theorem relatorLetters_def (P : GroupPresentation) :
+    P.relatorLetters = P.relators.map (List.map fun letter => (letter.1.val, letter.2)) := by
+  rw [relatorLetters]
+
+/-- The total number of letters in the compiled relator words.
+
+Sources for finite presentations customarily publish this figure, usually calling it the length of
+the presentation, so comparing it with the transcribed data is a third decidable check on a
+transcription alongside the two counts of `TauCeti.GroupPresentation.matchesMetadata`. A published
+length is normally measured after free and cyclic reduction of each relator, so a row using it as a
+check should also record that its compiled words are reduced. -/
+def totalLength (P : GroupPresentation) : ℕ := (P.relators.map List.length).sum
+
+/-- The total length is the sum of the lengths of the compiled relator words. This is the unfolding
+lemma for the sealed body, and like `relators_def` it is not `@[simp]`. -/
+theorem totalLength_def (P : GroupPresentation) :
+    P.totalLength = (P.relators.map List.length).sum := by
+  rw [totalLength]
+
+/-- The total length is also the sum of the lengths of the displayed letter words, since forgetting
+the bounds on the generator indices does not change a word's length.
+
+A row that spells its compiled words out letter by letter therefore gets its length check from that
+one comparison, rather than by unfolding the relator compiler a second time. -/
+theorem sum_map_length_relatorLetters (P : GroupPresentation) :
+    (P.relatorLetters.map List.length).sum = P.totalLength := by
+  simp [relatorLetters_def, totalLength_def, List.map_map, Function.comp_def]
+
+/-- Every compiled relator word of a presentation is cyclically reduced.
+
+A published presentation length is normally measured after free and cyclic reduction of each
+relator, so this is what makes `TauCeti.GroupPresentation.totalLength` comparable with such a
+figure. It is a check on the transcribed data only, and says nothing about the presented group. -/
+def relatorsCyclicallyReduced (P : GroupPresentation) : Prop :=
+  ∀ w ∈ P.relators, FreeGroup.IsCyclicallyReduced w
+
+/-- The cyclic-reduction check unfolds to a statement about each compiled word. -/
+@[simp]
+theorem relatorsCyclicallyReduced_iff (P : GroupPresentation) :
+    P.relatorsCyclicallyReduced ↔ ∀ w ∈ P.relators, FreeGroup.IsCyclicallyReduced w :=
+  Iff.rfl
+
+/-- A word is cyclically reduced exactly when free reduction leaves it alone and its last letter
+does not cancel against its first, and both halves of that are decidable. -/
+instance {α : Type*} [DecidableEq α] (w : PresentationWord α) :
+    Decidable (FreeGroup.IsCyclicallyReduced w) :=
+  decidable_of_iff _ (and_congr_left' FreeGroup.isReduced_iff_reduce_eq).symm
+
+instance (P : GroupPresentation) : Decidable P.relatorsCyclicallyReduced :=
+  decidable_of_iff _ (relatorsCyclicallyReduced_iff P).symm
 
 /-- The compiled relations, interpreted as elements of the free group. -/
 def relatorSet (P : GroupPresentation) : Set (FreeGroup (Fin P.generatorCount)) :=
@@ -100,6 +183,20 @@ discharging the relations of `PresentedGroup` never has to unfold the compiler. 
 theorem mem_relatorSet_iff (P : GroupPresentation) (r : FreeGroup (Fin P.generatorCount)) :
     r ∈ P.relatorSet ↔ ∃ t ∈ P.transcribed, t.toFreeGroup = r := by
   simp [relatorSet]
+
+/-- The relations of a presentation are the relator set of its transcribed expressions.
+
+This is the bridge between the presentation-level relation set and `TauCeti.Relator.relatorSet`,
+the notion in which the relator lists of a transcription are built and reasoned about, so a
+consumer relating the two never has to re-derive the identification by extensionality.
+
+It is deliberately not `@[simp]`: `mem_relatorSet_iff` above is the simp normal form of a
+membership in `relatorSet`, and rewriting the set itself would take that lemma's left-hand side out
+of normal form, which the `simpNF` linter rejects. -/
+theorem relatorSet_eq_relatorSet_transcribed (P : GroupPresentation) :
+    P.relatorSet = Relator.relatorSet P.transcribed := by
+  ext r
+  simp
 
 /-- The group defined by the generators and compiled relations of a presentation. -/
 abbrev Group (P : GroupPresentation) : Type :=

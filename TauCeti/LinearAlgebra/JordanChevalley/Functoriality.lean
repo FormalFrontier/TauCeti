@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Prod
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Functoriality of the multiplicative Jordan decomposition
@@ -185,28 +186,7 @@ theorem comp_unipotentPart_eq_of_comp_eq
     f.comp (unipotentPart g : Module.End K V) =
       (unipotentPart h : Module.End K W).comp f := by
   have hs := comp_semisimplePart_eq_of_comp_eq f g h hfg
-  have hs_inv :
-      f.comp (↑((semisimplePart g)⁻¹) : Module.End K V) =
-        (↑((semisimplePart h)⁻¹) : Module.End K W).comp f := by
-    apply LinearMap.ext
-    intro x
-    calc
-      f ((↑((semisimplePart g)⁻¹) : Module.End K V) x) =
-          (↑((semisimplePart h)⁻¹) : Module.End K W)
-            ((semisimplePart h : Module.End K W)
-              (f ((↑((semisimplePart g)⁻¹) : Module.End K V) x))) := by
-        exact ((semisimplePart h).toLinearEquiv.symm_apply_apply _).symm
-      _ = (↑((semisimplePart h)⁻¹) : Module.End K W)
-          (f ((semisimplePart g : Module.End K V)
-            ((↑((semisimplePart g)⁻¹) : Module.End K V) x))) := by
-        exact congrArg (↑((semisimplePart h)⁻¹) : Module.End K W)
-          (LinearMap.congr_fun hs
-            ((↑((semisimplePart g)⁻¹) : Module.End K V) x)).symm
-      _ = (↑((semisimplePart h)⁻¹) : Module.End K W) (f x) := by
-        have hxg : (semisimplePart g : Module.End K V)
-            ((↑((semisimplePart g)⁻¹) : Module.End K V) x) = x :=
-          LinearMap.congr_fun (semisimplePart g).val_inv x
-        rw [hxg]
+  have hs_inv := comp_inv_eq_of_comp_eq f (semisimplePart g) (semisimplePart h) hs
   have hug : unipotentPart g = (semisimplePart g)⁻¹ * g := by
     apply mul_left_cancel (a := semisimplePart g)
     simp

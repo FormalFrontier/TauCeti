@@ -51,7 +51,10 @@ group cohomology: `groupCohomology.cocyclesOfIsMulCocycle₂ α.isMulCocycle₂`
 ## Main results
 
 * `TauCeti.FactorSet.canonicalSection_mul`: `σ g * σ h = inl (α (g, h)) * σ (g * h)`, so `α`
-  measures the failure of the canonical section to be a homomorphism.
+  measures the failure of the canonical section to be a homomorphism, and
+  `TauCeti.FactorSet.inl_mul_canonicalSection`: every element of the extension is its `M`-component
+  times the section at its `G`-component, so the two together determine a homomorphism out of the
+  extension.
 * `TauCeti.FactorSet.mul_inl`: conjugation moves the copy of `M` by the action of the image in `G`.
 * `TauCeti.FactorSet.inl_range_le_center`: when `G` acts trivially the extension is central.
 * `TauCeti.FactorSet.nonempty_groupExtensionEquiv`: cohomologous factor sets build equivalent
@@ -279,6 +282,14 @@ be a homomorphism by exactly `α`. -/
 theorem canonicalSection_mul (g h : G) :
     α.canonicalSection g * α.canonicalSection h
       = inl α (α (g, h)) * α.canonicalSection (g * h) := by
+  ext <;> simp
+
+/-- **Every element of the twisted product factors through the canonical section**, as its
+`M`-component times the section at its `G`-component. Together with
+`TauCeti.FactorSet.canonicalSection_mul` this reduces any statement about a homomorphism out of the
+extension to its values on the copy of `M` and on the section. -/
+theorem inl_mul_canonicalSection (x : α.Extension) :
+    inl α x.left * α.canonicalSection x.right = x := by
   ext <;> simp
 
 /-- Conjugation in the twisted product moves the copy of `M` by the action of the image in `G`.

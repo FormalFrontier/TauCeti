@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.EllipticCurve.VariableChange
-public import TauCeti.FieldTheory.Galois.Basic
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Aut
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.VariableChange
+public import TauCeti.AlgebraicGeometry.EllipticCurve.GaloisDescent
 public import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -63,11 +64,40 @@ change of variables, again over any commutative ring in which the relevant param
   statement about *this* change of variables and not about an arbitrary one carrying the twist
   to `E`. `WeierstrassCurve.exists_smul_quadraticTwist_baseChange_eq` is the corresponding
   statement for `quadraticTwist` itself, where the generator is the one chosen internally.
+* `WeierstrassCurve.quadraticTwistVariableChange`: the same change of variables in the other
+  direction, carrying `E` to the twist, at the generator `quadraticTwist` chooses internally —
+  the inverse of the previous one, with `WeierstrassCurve.quadraticTwistVariableChange_smul` and the
+  cocycle `WeierstrassCurve.map_quadraticTwistVariableChange`, where the `negVariableChange` factor
+  sits on the right because inverting a product reverses it.
+* `WeierstrassCurve.not_exists_smul_quadraticTwist_eq` and
+  `WeierstrassCurve.exists_smul_eq_or_exists_smul_eq_quadraticTwist`: **the classification**, for
+  `j ∉ {0, 1728}`. The twist is not `K`-isomorphic to `E`, and any curve becoming isomorphic to
+  `E` over `L` is `K`-isomorphic to one of the two. This is where the cocycle is used: forms are
+  classified by `H¹(Gal(L/K), Aut Eᴸ) = Hom(ℤ/2, {±1})`, of order two, and the two branches of
+  the proof are its two classes.
 
 These are the `quadraticTwistOf` seeds of `TauCetiRoadmap/EllipticCurves/README.md` §Layer 5
 (twists), pinned in that roadmap's `Suggested.lean`, together with the extension twist they make
-well posed; the point isomorphism and the split-multiplicative-reduction theorem are later
-milestones of the same layer and build on this file.
+well posed, the classification of the `L`-forms that the cocycle delivers, and the point
+isomorphism `quadraticTwistPointEquiv` that `quadraticTwistVariableChange` induces; the
+split-multiplicative-reduction theorem is a later milestone of the same layer and builds on this
+file.
+
+## The point isomorphism
+
+Over any field `M` in a tower `K ⊆ L ⊆ M`, the base change of `quadraticTwistVariableChange`
+carries `E` to its twist (`quadraticTwistVariableChange_smul_baseChange`) and satisfies the
+cocycle identity (`map_quadraticTwistVariableChange_baseChange`). Transporting along it gives
+`quadraticTwistPointEquiv : ((E.quadraticTwist L)⁄M).Point ≃+ (E⁄M).Point`, with
+`quadraticTwistPointEquiv_some` the coordinate equation a consumer needs. It is natural in `M`
+(`quadraticTwistPointEquiv_map`) and **anti-equivariant** for the Galois elements that move `L`
+(`quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed`): that sign is what makes the twist a
+twist. `quadraticTwistPointEquiv_map_eq_quadraticCharacter_smul_map` packages the two cases as
+`φ(σP) = χ(σ|_L) • σ(φP)`, uniformly in `σ`, where `χ` is
+`Algebra.IsQuadraticExtension.quadraticCharacter` — the
+`Gal(L/K) →* ℤˣ` sending the nontrivial automorphism to `-1`. That is the canonical form of the
+statement: the isomorphism is defined over `L` rather than over `K`, and `χ` measures precisely
+that failure.
 
 The twist by a generator is deliberately **not** given its own constructor here. Such a
 definition would accept any field extension, and outside the finite-dimensional case Mathlib's
@@ -540,6 +570,384 @@ theorem exists_smul_quadraticTwist_baseChange_eq :
   exact ⟨E.quadraticTwistOfTraceNormVariableChange hθ hσ * C₀.baseChange L, by
     rw [mul_smul, baseChange_smul_baseChange, hC₀,
       E.quadraticTwistOfTraceNormVariableChange_smul_baseChange hθ hσ]⟩
+
+variable (L) in
+/-- **The change of variables over `L` carrying `E` to its quadratic twist.** It is the inverse of
+`quadraticTwistOfTraceNormVariableChange`, taken at the generator `quadraticTwist` chooses
+internally, so no bridging change of variables is needed: at that generator the twist *is*
+`quadraticTwistOf` of its trace and norm, by definition.
+
+Naming an explicit witness rather than an existential is what makes the cocycle identity
+`map_quadraticTwistVariableChange` statable: that identity is false of an arbitrary change of
+variables
+carrying `E` to the twist, since two such differ by an automorphism of the twist. -/
+noncomputable def quadraticTwistVariableChange : VariableChange L :=
+  (E.quadraticTwistOfTraceNormVariableChange
+    (choose_exists_discrim_notMem_range_algebraMap K L)
+    (Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L).choose_spec)⁻¹
+
+variable (L) in
+/-- **`quadraticTwistVariableChange` does carry `E` to the twist**, after base change to `L`. -/
+@[simp]
+theorem quadraticTwistVariableChange_smul :
+    E.quadraticTwistVariableChange L • E.baseChange L = (E.quadraticTwist L).baseChange L := by
+  rw [quadraticTwistVariableChange, inv_smul_eq_iff]
+  exact (E.quadraticTwistOfTraceNormVariableChange_smul_baseChange _ _).symm
+
+variable (L) in
+/-- **The defining cocycle of the quadratic twist.** The nontrivial `σ ∈ Gal(L/K)` conjugates
+`quadraticTwistVariableChange` by the automorphism `[-1]` of `E`. This is the mirror of
+`map_quadraticTwistOfTraceNormVariableChange`, and the factor lands on the *right* here because
+inverting a product reverses it and `[-1]` is its own inverse (`negVariableChange_inv`).
+
+As there, this is the cocycle identity and not a nontriviality claim. -/
+@[simp]
+theorem map_quadraticTwistVariableChange {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) :
+    (E.quadraticTwistVariableChange L).map (σ : L →+* L)
+      = E.quadraticTwistVariableChange L * (E.baseChange L).negVariableChange := by
+  set σ₀ := (Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L).choose with hσ₀def
+  have hσ₀ : σ₀ ≠ 1 := (Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L).choose_spec
+  -- `Gal(L/K)` has order two, so `σ` is the automorphism chosen inside
+  -- `quadraticTwistVariableChange`
+  obtain rfl : σ = σ₀ :=
+    (Algebra.IsQuadraticExtension.algEquiv_eq_one_or_eq K L hσ₀ σ).resolve_left hσ
+  rw [quadraticTwistVariableChange, VariableChange.map_inv,
+    E.map_quadraticTwistOfTraceNormVariableChange,
+    mul_inv_rev,
+    (E.baseChange L).negVariableChange_inv]
+
+section Classification
+
+variable [E.IsElliptic]
+
+variable (L) in
+/-- **The quadratic twist is not isomorphic to `E` over `K`**, when `j(E) ∉ {0, 1728}`. Twisting is
+a genuinely nontrivial operation: this is what `map_quadraticTwistOfTraceNormVariableChange`
+deliberately stopped short of claiming, and the `j`-hypotheses are exactly what it lacked.
+
+Where the hypotheses enter: the only use of them is to get `Aut(Eᴸ) = {±1}`, via
+`eq_one_or_eq_negVariableChange_of_c₄_ne_zero_of_c₆_ne_zero_of_smul_eq`, whose hypotheses `c₄ ≠ 0`
+and `c₆ ≠ 0` are exactly `j ≠ 0` and `j ≠ 1728`. At those two values the automorphism group can be
+strictly larger and the argument has nothing to run on. That is a statement about *this proof*;
+whether the theorem itself fails without them is not settled here, and no counterexample is
+asserted. -/
+theorem not_exists_smul_quadraticTwist_eq (hj₀ : E.j ≠ 0) (hj₁₇₂₈ : E.j ≠ 1728) :
+    ¬∃ C : VariableChange K, C • E.quadraticTwist L = E := by
+  rintro ⟨CK, hCK⟩
+  obtain ⟨σ, hσ⟩ := Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L
+  obtain ⟨θ, hθ⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap K L
+  set C₁ := E.quadraticTwistOfTraceNormVariableChange hθ hσ with hC₁
+  have hiso := E.quadraticTwistOfTraceNormVariableChange_smul_baseChange hθ hσ
+  have hcoc := E.map_quadraticTwistOfTraceNormVariableChange hθ hσ
+  obtain ⟨C₀, hC₀⟩ := E.exists_smul_quadraticTwist_eq hθ
+  have hinj := FaithfulSMul.algebraMap_injective K L
+  -- `baseChange` is `map (algebraMap K L)`, whose `IsElliptic` instance Mathlib registers
+  have : (E.baseChange L).IsElliptic := inferInstanceAs ((E.map (algebraMap K L)).IsElliptic)
+  -- transfer the hypothetical `K`-isomorphism to the twist by `θ`
+  have hDK : (CK * C₀⁻¹) • E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) = E := by
+    rw [mul_smul, ← hC₀, inv_smul_smul, hCK]
+  -- base change it: a `σ`-invariant `L`-isomorphism from the twist by `θ` to `E`
+  set ψ := (CK * C₀⁻¹).baseChange L with hψ
+  have hψiso : ψ • (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L
+      = E.baseChange L := by rw [hψ, baseChange_smul_baseChange, hDK]
+  have hψinv : ψ.map (σ : L →+* L) = ψ :=
+    VariableChange.map_baseChange (C := CK * C₀⁻¹) (σ : L →ₐ[K] L)
+  have hc4L : (E.baseChange L).c₄ ≠ 0 :=
+    E.baseChange_c₄_ne_zero hinj (E.j_eq_zero_iff.not.mp hj₀)
+  have hc6L : (E.baseChange L).c₆ ≠ 0 :=
+    E.baseChange_c₆_ne_zero hinj (E.j_eq_1728_iff.not.mp hj₁₇₂₈)
+  -- `a := ψ · C₁⁻¹` fixes `Eᴸ`, so it is `1` or `[-1]`; either way it is `σ`-invariant
+  set a := ψ * C₁⁻¹ with ha
+  have hC1inv : C₁⁻¹ • E.baseChange L
+      = (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L := by
+    rw [← hiso, inv_smul_smul]
+  have haut : a • E.baseChange L = E.baseChange L := by rw [ha, mul_smul, hC1inv, hψiso]
+  have haC : a * C₁ = ψ := by rw [ha, mul_assoc, inv_mul_cancel, mul_one]
+  have hamap : a.map (σ : L →+* L) = a := by
+    rcases (E.baseChange L).eq_one_or_eq_negVariableChange_of_c₄_ne_zero_of_c₆_ne_zero_of_smul_eq
+      hc4L hc6L haut with hcase | hcase
+    · rw [hcase]; exact VariableChange.map_one _
+    · rw [hcase]; exact E.negVariableChange_baseChange_map L (σ : L →ₐ[K] L)
+  -- applying `σ` to `ψ = a · C₁` forces `[-1] = 1`
+  apply (E.baseChange L).negVariableChange_ne_one
+  have hchain : a * ((E.baseChange L).negVariableChange * C₁) = a * C₁ :=
+    calc a * ((E.baseChange L).negVariableChange * C₁)
+        = a.map (σ : L →+* L) * C₁.map (σ : L →+* L) := by rw [hamap, hcoc]
+      _ = (a * C₁).map (σ : L →+* L) := (VariableChange.map_mul ..).symm
+      _ = ψ.map (σ : L →+* L) := by rw [haC]
+      _ = ψ := hψinv
+      _ = a * C₁ := haC.symm
+  exact mul_right_cancel (((mul_left_cancel hchain).trans (one_mul C₁).symm))
+
+variable (L) in
+/-- **Classification of the forms of `E` split by `L/K`, for `j(E) ∉ {0, 1728}`.** A curve over `K`
+that becomes isomorphic to `E` over `L` is isomorphic over `K` either to `E` or to its quadratic
+twist by `L` — and, by `not_exists_smul_quadraticTwist_eq`, those two alternatives are distinct.
+
+The mechanism: such forms are classified by `H¹(Gal(L/K), Aut Eᴸ) = Hom(ℤ/2, {±1})`, of order two,
+and the two cases below are the two cocycles. `Aut Eᴸ = {±1}` is where `j ∉ {0, 1728}` enters
+(`eq_one_or_eq_negVariableChange_of_c₄_ne_zero_of_c₆_ne_zero_of_smul_eq`); for the excluded `j`
+the automorphism group is larger and there can be more forms. -/
+theorem exists_smul_eq_or_exists_smul_eq_quadraticTwist (hj₀ : E.j ≠ 0) (hj₁₇₂₈ : E.j ≠ 1728)
+    (E' : WeierstrassCurve K)
+    (h : ∃ C : VariableChange L, C • E'.baseChange L = E.baseChange L) :
+    (∃ C : VariableChange K, C • E' = E) ∨
+      ∃ C : VariableChange K, C • E' = E.quadraticTwist L := by
+  obtain ⟨ρ, hρ⟩ := h
+  obtain ⟨σ, hσ⟩ := Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L
+  obtain ⟨θ, hθ⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap K L
+  set C₁ := E.quadraticTwistOfTraceNormVariableChange hθ hσ with hC₁
+  have hiso := E.quadraticTwistOfTraceNormVariableChange_smul_baseChange hθ hσ
+  have hcoc := E.map_quadraticTwistOfTraceNormVariableChange hθ hσ
+  have hinj := FaithfulSMul.algebraMap_injective K L
+  -- `baseChange` is `map (algebraMap K L)`, whose `IsElliptic` instance Mathlib registers
+  have : (E.baseChange L).IsElliptic := inferInstanceAs ((E.map (algebraMap K L)).IsElliptic)
+  have hc4L : (E.baseChange L).c₄ ≠ 0 :=
+    E.baseChange_c₄_ne_zero hinj (E.j_eq_zero_iff.not.mp hj₀)
+  have hc6L : (E.baseChange L).c₆ ≠ 0 :=
+    E.baseChange_c₆_ne_zero hinj (E.j_eq_1728_iff.not.mp hj₁₇₂₈)
+  -- the Galois conjugate of `ρ` is again an isomorphism `E'ᴸ ≅ Eᴸ`, so `σρ · ρ⁻¹` fixes `Eᴸ`
+  have hσρ : (ρ.map (σ : L →+* L)) • E'.baseChange L = E.baseChange L :=
+    map_smul_baseChange_eq L (σ : L →ₐ[K] L) hρ
+  have hρinv : ρ⁻¹ • E.baseChange L = E'.baseChange L := by rw [← hρ, inv_smul_smul]
+  have hb : (ρ.map (σ : L →+* L) * ρ⁻¹) • E.baseChange L = E.baseChange L := by
+    rw [mul_smul, hρinv, hσρ]
+  rcases (E.baseChange L).eq_one_or_eq_negVariableChange_of_c₄_ne_zero_of_c₆_ne_zero_of_smul_eq
+    hc4L hc6L hb with hbcase | hbcase
+  · -- trivial cocycle: `ρ` is `σ`-invariant, so it descends and `E' ≅ E` over `K`
+    left
+    obtain ⟨ρK, hρK⟩ :=
+      VariableChange.exists_baseChange_eq_of_map_eq L hσ (mul_inv_eq_one.mp hbcase)
+    exact ⟨ρK, smul_eq_of_baseChange_smul_eq L hinj ρK (by rw [hρK]; exact hρ)⟩
+  · -- nontrivial cocycle: `C₁⁻¹ · ρ` is `σ`-invariant, its cocycle cancelling that of `C₁`
+    right
+    have hρmap : ρ.map (σ : L →+* L) = (E.baseChange L).negVariableChange * ρ :=
+      mul_inv_eq_iff_eq_mul.mp hbcase
+    have hC1inv : C₁⁻¹ • E.baseChange L
+        = (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L := by
+      rw [← hiso, inv_smul_smul]
+    have hχiso : (C₁⁻¹ * ρ) • E'.baseChange L
+        = (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L := by
+      rw [mul_smul, hρ, hC1inv]
+    have hχinv : (C₁⁻¹ * ρ).map (σ : L →+* L) = C₁⁻¹ * ρ := by
+      rw [VariableChange.map_mul, VariableChange.map_inv, hcoc, hρmap, mul_inv_rev,
+        (E.baseChange L).negVariableChange_inv, mul_assoc,
+        ← mul_assoc (E.baseChange L).negVariableChange,
+        (E.baseChange L).negVariableChange_mul_self, one_mul]
+    obtain ⟨χK, hχK⟩ := VariableChange.exists_baseChange_eq_of_map_eq L hσ hχinv
+    have hE'T : χK • E' = E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) :=
+      smul_eq_of_baseChange_smul_eq L hinj χK (by rw [hχK]; exact hχiso)
+    obtain ⟨C₀, hC₀⟩ := E.exists_smul_quadraticTwist_eq hθ
+    exact ⟨C₀⁻¹ * χK, by rw [mul_smul, hE'T, ← hC₀, inv_smul_smul]⟩
+
+end Classification
+
+/-! ### The isomorphism on points and its Galois anti-equivariance -/
+
+section PointEquiv
+
+/-! The curve-level identity below is about base change alone, so it asks only for a commutative
+`L`-algebra. Everything after it — the Galois cocycle, the isomorphism on points, and the
+equivariance statements — genuinely needs `M` to be a field, and lives in the section after. -/
+
+section BaseChange
+
+variable (M : Type*) [CommRing M] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+
+variable (L) in
+/-- **The change of variables carries `E` to its twist over every commutative `L`-algebra `M`**,
+not just over `L`: `quadraticTwistVariableChange_smul` base changed along `L → M`. -/
+theorem quadraticTwistVariableChange_smul_baseChange :
+    (E.quadraticTwistVariableChange L).baseChange M • E.baseChange M
+      = (E.quadraticTwist L).baseChange M := by
+  have hb : ∀ W : WeierstrassCurve K, (W.baseChange L).baseChange M = W.baseChange M :=
+    fun W ↦ by simpa [baseChange] using W.map_baseChange (IsScalarTower.toAlgHom K L M)
+  rw [← hb E, baseChange_smul_baseChange, quadraticTwistVariableChange_smul, hb]
+
+end BaseChange
+
+-- `M` is any extension field of `L` compatible with the `K`-algebra tower; e.g. `L` itself.
+variable (M : Type*) [Field M] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+
+/-- **The twist's defining cocycle over `M`.** Applying any `σ ∈ Aut(M/K)` that does not fix `L`
+pointwise multiplies the base change of `quadraticTwistVariableChange` on the right by the
+automorphism `[-1]` of `E`.
+This is `map_quadraticTwistVariableChange` base changed to `M`: `σ` restricts to the nontrivial
+element of `Gal(L/K)` precisely because it moves `L`, which is what
+`AlgEquiv.restrictNormal_eq_one_iff_algebraMap` records. -/
+theorem map_quadraticTwistVariableChange_baseChange {σ : M ≃ₐ[K] M}
+    (hσ : ¬ ∀ x : L, σ (algebraMap L M x) = algebraMap L M x) :
+    ((E.quadraticTwistVariableChange L).baseChange M).map (σ : M →+* M)
+      = (E.quadraticTwistVariableChange L).baseChange M * (E.baseChange M).negVariableChange := by
+  obtain ⟨σ₀, hσ₀⟩ := exists_algEquiv_ne_one K L
+  have hres : σ.restrictNormal L = σ₀ :=
+    (algEquiv_eq_one_or_eq K L hσ₀ _).resolve_left
+      (fun h ↦ hσ ((AlgEquiv.restrictNormal_eq_one_iff_algebraMap K L M σ).mp h))
+  have hcomp : (σ : M →+* M).comp (algebraMap L M) = (algebraMap L M).comp (σ₀ : L →+* L) := by
+    ext l
+    have h := (AlgEquiv.restrictNormal_commutes σ L l).symm
+    rw [hres] at h
+    simpa using h
+  have hb : ∀ W : WeierstrassCurve K, (W.baseChange L).map (algebraMap L M) = W.baseChange M :=
+    fun W ↦ by simpa using W.map_baseChange (IsScalarTower.toAlgHom K L M)
+  rw [VariableChange.baseChange, VariableChange.map_map, hcomp, ← VariableChange.map_map,
+    map_quadraticTwistVariableChange (E := E) (L := L) hσ₀, VariableChange.map_mul,
+    ← VariableChange.baseChange,
+    ← negVariableChange_map, hb]
+
+variable [E.IsElliptic] [DecidableEq M]
+
+variable (L) in
+/-- **The isomorphism `Eᴸ(M) ≅ E(M)` on `M`-points**, for any field `M` in a tower `K ⊆ L ⊆ M`:
+the base change to `M` of the change of variables carrying `E` to its twist over `L`. It is
+natural in `M` (`quadraticTwistPointEquiv_map`) and anti-equivariant for the Galois elements that
+move `L` (`quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed`);
+`quadraticTwistPointEquiv_map_eq_quadraticCharacter_smul_map` bundles those two branches into a
+single statement, uniform in `σ`, twisted by the quadratic character of `L/K`.
+
+Like the twist itself this is well defined only up to an `L`-automorphism of `E` — generically up
+to sign — and this definition makes one arbitrary choice, consistently across all `M`. -/
+noncomputable def quadraticTwistPointEquiv :
+    ((E.quadraticTwist L).baseChange M).toAffine.Point ≃+ (E.baseChange M).toAffine.Point :=
+  have : (E.baseChange M).IsElliptic := inferInstanceAs (E.map (algebraMap K M)).IsElliptic
+  (AddEquiv.cast (M := fun V : WeierstrassCurve M ↦ V.toAffine.Point)
+      (E.quadraticTwistVariableChange_smul_baseChange L M).symm).trans
+    (Affine.Point.equivVariableChange (E.baseChange M)
+      ((E.quadraticTwistVariableChange L).baseChange M))
+
+variable (L) in
+/-- **What the isomorphism does to a point given by coordinates.** The change of variables acting
+is `quadraticTwistVariableChange` base changed to `M`. -/
+@[simp] lemma quadraticTwistPointEquiv_some {x y : M}
+    (h : ((E.quadraticTwist L).baseChange M).toAffine.Nonsingular x y) :
+    E.quadraticTwistPointEquiv L M (.some x y h)
+      = .some ((((E.quadraticTwistVariableChange L).baseChange M).u : M) ^ 2 * x
+            + ((E.quadraticTwistVariableChange L).baseChange M).r)
+          ((((E.quadraticTwistVariableChange L).baseChange M).u : M) ^ 3 * y
+            + (((E.quadraticTwistVariableChange L).baseChange M).u : M) ^ 2
+              * ((E.quadraticTwistVariableChange L).baseChange M).s * x
+            + ((E.quadraticTwistVariableChange L).baseChange M).t)
+          ((Affine.variableChange_nonsingular (E.baseChange M)
+            ((E.quadraticTwistVariableChange L).baseChange M) x y).mpr
+              ((E.quadraticTwistVariableChange_smul_baseChange L M).symm ▸ h)) := by
+  rw [quadraticTwistPointEquiv, AddEquiv.trans_apply, Affine.Point.cast_some,
+    Affine.Point.equivVariableChange_some]
+
+/-- **What the inverse isomorphism does to a point given by coordinates.** It is the map induced
+by the inverse of the base-changed change of variables. -/
+@[simp] lemma quadraticTwistPointEquiv_symm_some {x y : M}
+    (h : (E.baseChange M).toAffine.Nonsingular x y) :
+    (E.quadraticTwistPointEquiv L M).symm (.some x y h)
+      = .some (((((E.quadraticTwistVariableChange L).baseChange M)⁻¹).u : M) ^ 2 * x
+            + (((E.quadraticTwistVariableChange L).baseChange M)⁻¹).r)
+          (((((E.quadraticTwistVariableChange L).baseChange M)⁻¹).u : M) ^ 3 * y
+            + ((((E.quadraticTwistVariableChange L).baseChange M)⁻¹).u : M) ^ 2
+              * (((E.quadraticTwistVariableChange L).baseChange M)⁻¹).s * x
+            + (((E.quadraticTwistVariableChange L).baseChange M)⁻¹).t)
+          (by
+            rw [← E.quadraticTwistVariableChange_smul_baseChange L M]
+            exact (Affine.variableChange_nonsingular
+              (((E.quadraticTwistVariableChange L).baseChange M) • E.baseChange M)
+              (((E.quadraticTwistVariableChange L).baseChange M)⁻¹) x y).mpr
+                ((inv_smul_smul ((E.quadraticTwistVariableChange L).baseChange M)
+                  (E.baseChange M)).symm ▸ h)) := by
+  rw [AddEquiv.symm_apply_eq, quadraticTwistPointEquiv, AddEquiv.trans_apply,
+    Affine.Point.cast_some, Affine.Point.equivVariableChange_some, Affine.Point.some.injEq]
+  refine ⟨?_, ?_⟩ <;>
+    simp only [VariableChange.inv_def, Units.val_inv_eq_inv_val] <;> field
+
+/-- **Naturality of `quadraticTwistPointEquiv` in `M`.** The isomorphisms on `M`-points over
+varying `M ⊇ L` all come from one isomorphism of curves over `L`, so they commute with the maps on
+points induced by any `L`-algebra homomorphism. -/
+@[simp]
+theorem quadraticTwistPointEquiv_map {N : Type*} [Field N] [Algebra K N] [Algebra L N]
+    [IsScalarTower K L N] [DecidableEq N] (f : M →ₐ[L] N)
+    (P : ((E.quadraticTwist L).baseChange M).toAffine.Point) :
+    E.quadraticTwistPointEquiv L N (Affine.Point.map f P)
+      = Affine.Point.map f (E.quadraticTwistPointEquiv L M P) := by
+  have hu : (((E.quadraticTwistVariableChange L).baseChange N).u : N)
+      = f (((E.quadraticTwistVariableChange L).baseChange M).u : M) := by
+    simp only [VariableChange.baseChange, VariableChange.map, Units.coe_map, MonoidHom.coe_coe]
+    exact (f.commutes _).symm
+  have hr : ((E.quadraticTwistVariableChange L).baseChange N).r
+      = f ((E.quadraticTwistVariableChange L).baseChange M).r := (f.commutes _).symm
+  have hs : ((E.quadraticTwistVariableChange L).baseChange N).s
+      = f ((E.quadraticTwistVariableChange L).baseChange M).s := (f.commutes _).symm
+  have ht : ((E.quadraticTwistVariableChange L).baseChange N).t
+      = f ((E.quadraticTwistVariableChange L).baseChange M).t := (f.commutes _).symm
+  rcases P with _ | ⟨x, y, h⟩
+  · simp [← Affine.Point.zero_def]
+  · simp only [quadraticTwistPointEquiv_some, Affine.Point.map_some,
+      Affine.Point.some.injEq]
+    constructor
+    · simp only [map_add, map_mul, map_pow, hu, hr]
+    · simp only [map_add, map_mul, map_pow, hu, hs, ht]
+
+
+variable (L) in
+/-- **Anti-equivariance**: if `σ ∈ Aut(M/K)` does not fix `L` pointwise, transporting its action
+through `Eᴸ(M) ≅ E(M)` gives minus its action. -/
+@[simp]
+theorem quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed {σ : M ≃ₐ[K] M}
+    (hσ : ¬ ∀ x : L, σ (algebraMap L M x) = algebraMap L M x)
+    (P : ((E.quadraticTwist L).baseChange M).toAffine.Point) :
+    E.quadraticTwistPointEquiv L M (Affine.Point.map σ.toAlgHom P)
+      = -Affine.Point.map σ.toAlgHom (E.quadraticTwistPointEquiv L M P) := by
+  have hM := map_quadraticTwistVariableChange_baseChange (E := E) (L := L) (M := M) hσ
+  have hu : σ.toAlgHom (((E.quadraticTwistVariableChange L).baseChange M).u : M)
+      = -(((E.quadraticTwistVariableChange L).baseChange M).u : M) := by
+    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
+      negVariableChange_s, negVariableChange_t]
+      using congrArg (fun C ↦ (VariableChange.u C : M)) hM
+  have hr : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).r
+      = ((E.quadraticTwistVariableChange L).baseChange M).r := by
+    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
+      negVariableChange_s, negVariableChange_t] using congrArg VariableChange.r hM
+  have hs : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).s
+      = -((E.quadraticTwistVariableChange L).baseChange M).s - (E.baseChange M).a₁ := by
+    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
+      negVariableChange_s, negVariableChange_t, sub_eq_add_neg]
+      using congrArg VariableChange.s hM
+  have ht : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).t
+      = -((E.quadraticTwistVariableChange L).baseChange M).t
+        - ((E.quadraticTwistVariableChange L).baseChange M).r * (E.baseChange M).a₁
+        - (E.baseChange M).a₃ := by
+    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
+      negVariableChange_s, negVariableChange_t, sub_eq_add_neg, mul_neg_one,
+      (by ring : ((-1 : M)) ^ 3 = -1)] using congrArg VariableChange.t hM
+  rcases P with _ | ⟨x, y, hns⟩
+  · simp [← Affine.Point.zero_def]
+  · simp only [quadraticTwistPointEquiv_some, Affine.Point.map_some, Affine.Point.neg_some,
+      Affine.Point.some.injEq]
+    refine ⟨?_, ?_⟩
+    · simp only [map_add, map_mul, map_pow, hu, hr]; ring
+    · simp only [Affine.negY, map_add, map_mul, map_pow, hu, hr, hs, ht]; ring
+
+variable (L) in
+/-- **Galois equivariance of the point isomorphism, twisted by the quadratic character.** For
+*every* `σ ∈ Aut(M/K)`, transporting the action of `σ` through `Eᴸ(M) ≅ E(M)` multiplies it by
+`χ(σ|_L) = ±1`, the quadratic character of `L/K`. This is the uniform statement that
+`quadraticTwistPointEquiv_map` (the `σ|_L = 1` branch, where the isomorphism is `L`-linear) and
+`quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed` (the moved branch, where it is
+anti-equivariant) together assert: the isomorphism is defined over `L`, not over `K`, and the
+character measures exactly that failure. -/
+theorem quadraticTwistPointEquiv_map_eq_quadraticCharacter_smul_map (σ : M ≃ₐ[K] M)
+    (P : ((E.quadraticTwist L).baseChange M).toAffine.Point) :
+    E.quadraticTwistPointEquiv L M (Affine.Point.map σ.toAlgHom P)
+      = (Algebra.IsQuadraticExtension.quadraticCharacter K L (σ.restrictNormal L) : ℤ) •
+          Affine.Point.map σ.toAlgHom (E.quadraticTwistPointEquiv L M P) := by
+  by_cases hσ : ∀ x : L, σ (algebraMap L M x) = algebraMap L M x
+  · -- `σ` fixes `L` pointwise, so it *is* an `L`-algebra map and naturality applies verbatim
+    have key := quadraticTwistPointEquiv_map (E := E) (L := L) (M := M) (N := M)
+      (f := ({ σ.toAlgHom.toRingHom with commutes' := hσ } : M →ₐ[L] M)) (P := P)
+    rw [(AlgEquiv.restrictNormal_eq_one_iff_algebraMap K L M σ).2 hσ, map_one]
+    exact_mod_cast key
+  · rw [Algebra.IsQuadraticExtension.quadraticCharacter_eq_neg_one_of_ne_one _ _
+      fun h ↦ hσ ((AlgEquiv.restrictNormal_eq_one_iff_algebraMap K L M σ).1 h)]
+    simpa using quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed
+      (E := E) (L := L) (M := M) (σ := σ) hσ P
+
+end PointEquiv
 
 end QuadraticTwistBy
 

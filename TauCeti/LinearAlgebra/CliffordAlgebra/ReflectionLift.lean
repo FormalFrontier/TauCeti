@@ -76,7 +76,7 @@ private theorem isUnit_sqrtOfIsSquare (v w : V) [Invertible (Q v)] [Invertible (
   rw [← isUnit_mul_self_iff, sqrtOfIsSquare_mul_self h]
   exact (isUnit_of_invertible (⅟(Q v))).mul (isUnit_of_invertible (⅟(Q w)))
 
-private theorem reflection_smul_eq (a : K) [Invertible a] (v : V) [Invertible (Q v)]
+private theorem reflection_smul_eq (a : K) (v : V) [Invertible (Q v)]
     [Invertible (Q (a • v))] :
     QuadraticMap.reflection Q (a • v) = QuadraticMap.reflection Q v := by
   have hcoeff : ⅟(Q (a • v)) * a * a = ⅟(Q v) := by

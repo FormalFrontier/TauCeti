@@ -429,7 +429,7 @@ private theorem exists_equivariant_projection (htop : t.toLieSubalgebra K = ⊤)
 then `N` has a complement, namely the kernel of that endomorphism. -/
 private theorem exists_isCompl_of_equivariant_projection {R : Type*} {L' M' : Type*} [CommRing R]
     [LieRing L'] [LieAlgebra R L'] [AddCommGroup M'] [Module R M'] [LieRingModule L' M']
-    [LieModule R L' M'] {N : LieSubmodule R L' M'} {ψ : M' →ₗ[R] M'}
+     {N : LieSubmodule R L' M'} {ψ : M' →ₗ[R] M'}
     (hψmem : ∀ m, ψ m ∈ N) (hψid : ∀ n ∈ N, ψ n = n)
     (hψlie : ∀ (x : L') (m : M'), ψ ⁅x, m⁆ = ⁅x, ψ m⁆) :
     ∃ N' : LieSubmodule R L' M', IsCompl N N' := by

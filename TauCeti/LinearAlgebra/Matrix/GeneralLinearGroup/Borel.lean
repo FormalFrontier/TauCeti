@@ -70,6 +70,8 @@ q + 1`, the number of points of the projective line.
 * `TauCeti.GL2Borel.eq_torusHom_mul_unipotentHom`: the decomposition `B = T U`.
 * `TauCeti.GL2Borel.det_diag`: the determinant of an element of `B` is the product of its two
   diagonal entries.
+* `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`: a matrix with an upper-triangular conjugate
+  has an eigenvalue in the base ring.
 * `TauCeti.GL2Borel.card_eq`: `|B| = q (q - 1)²` over a finite field with `q` elements.
 * `TauCeti.GL2Borel.index_eq`: `[GL₂(𝔽_q) : B] = q + 1`.
 
@@ -385,6 +387,31 @@ theorem mem_iff_exists_mk {g : GL (Fin 2) R} :
   · exact congrArg Subtype.val ((equivProd (R := R)).symm_apply_apply ⟨g, hg⟩).symm
   · rintro ⟨a, d, b, rfl⟩
     exact mk_mem a d b
+
+/-- If some conjugate of `u : GL (Fin 2) R` is upper triangular then `u` has an eigenvalue in the
+base ring: writing `a` for the upper-left entry of that conjugate, `det (u - a) = 0`. This is the
+eigenvalue that an element of the non-split torus has to be shown not to have. -/
+theorem exists_det_sub_algebraMap_eq_zero {u g : GL (Fin 2) R}
+    (h : g * u * g⁻¹ ∈ GL2Borel R) :
+    ∃ a : R,
+      ((u : Matrix (Fin 2) (Fin 2) R) - algebraMap R (Matrix (Fin 2) (Fin 2) R) a).det = 0 := by
+  obtain ⟨N, hN⟩ : ∃ N : Matrix (Fin 2) (Fin 2) R,
+      ((g * u * g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = N := ⟨_, rfl⟩
+  refine ⟨N 0 0, ?_⟩
+  -- A scalar matrix is central, so conjugating `u - a` conjugates `u` and leaves `a` alone.
+  have hgc : (g : Matrix (Fin 2) (Fin 2) R) * algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) *
+      ((g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) =
+      algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) := by
+    rw [← Algebra.commutes (N 0 0) (g : Matrix (Fin 2) (Fin 2) R), mul_assoc, ← Units.val_mul,
+      mul_inv_cancel, Units.val_one, mul_one]
+  have key : (g : Matrix (Fin 2) (Fin 2) R) *
+      ((u : Matrix (Fin 2) (Fin 2) R) - algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0)) *
+      ((g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) =
+      N - algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) := by
+    rw [Matrix.mul_sub, Matrix.sub_mul, hgc, ← hN, Units.val_mul, Units.val_mul]
+  have h10 : N 1 0 = 0 := by rw [← hN]; exact mem_iff.mp h
+  rw [← Matrix.det_units_conj g, key, Matrix.det_fin_two]
+  simp [Matrix.sub_apply, Matrix.algebraMap_matrix_apply, h10]
 
 variable (R)
 

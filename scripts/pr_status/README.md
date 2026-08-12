@@ -24,7 +24,7 @@ reactions can never disagree:
 | conflicting | `merge-conflict` | ⚠️ `warning` |
 | ci `running` | `awaiting-CI` | 🟡 `yellow` |
 | ci not reported | `awaiting-CI` | 🟡 `yellow` |
-| ci `failure` | `awaiting-author` | 🔴 `red_circle` |
+| ci `failure` | `ci-failed` | 🔴 `red_circle` |
 | ci `success`, review `changes` | `awaiting-author` | 🟢 + ✍️ `writing` |
 | ci `success`, review `approved` | `ready-to-merge` | 🟢 + ✔️ `check` |
 | ci `success`, review pending, live marker | `review-in-progress` | 🟢 + 👀 |
@@ -40,22 +40,22 @@ and an authenticated `gh` CLI, nothing from PyPI.
 
 ## Labels
 
-The six labels are mutually exclusive; [`labels.py`](labels.py) sets one and
+The seven labels are mutually exclusive; [`labels.py`](labels.py) sets one and
 removes any other, so exactly one is present on an open PR (none on a terminal
-PR). All six are provisioned on first use, and **`labels.py` is the sole writer
+PR). All seven are provisioned on first use, and **`labels.py` is the sole writer
 of them**: the "exactly one" invariant is CI's alone to keep, and it assumes
 nothing about any worker or review harness. That is deliberate: anyone can point
 their own review harness at TauCeti, and CI must not depend on a particular one.
 The conflict sweep is a *caller* of `labels.reconcile`, not a second writer.
 
-`merge-conflict` outranks the other five, because it is the one state in which
+`merge-conflict` outranks the other six, because it is the one state in which
 nothing downstream can make progress: a green build and an approving review on
 the current head still cannot merge. It is also the only state derived from a
 tri-state — GitHub computes mergeability lazily, and `conflicting is None` means
 "not computed", never "no conflict", so an uncomputed PR keeps whatever label it
 had rather than being painted either way.
 
-`review-in-progress` is derived, like the other four, from a signal CI reads
+`review-in-progress` is derived, like the other six, from a signal CI reads
 rather than from anyone writing the label. The signal is the review engine's
 in-flight marker (`<!--tauceti-review-in-progress-->`, carrying a `head` and an
 `expires_at`), treated as an **optional, documented** contract that any review
@@ -280,7 +280,7 @@ a persistent Zulip config break, exactly like the healthcheck.
 
 The labels need no secret: `pr-labels.yml` uses the same GitHub App
 (`APP_ID` / `APP_PRIVATE_KEY`) already configured for the roadmap and merge
-workflows, scoped to this repo, and provisions the five labels on first use.
+workflows, scoped to this repo, and provisions the seven labels on first use.
 
 ## Failure modes (Zulip)
 
