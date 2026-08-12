@@ -42,8 +42,11 @@ bialgebras, since it speaks about points, and takes a `BialgHom`.
 
 This is the restriction step that Layer 7 of `TauCetiRoadmap/ReductiveGroups/README.md` asks for
 in its split root-datum target: the roots of a split pair `(G, T)` are the nonzero weights of the
-adjoint representation of `G` restricted along the split torus `T`, and that restriction is what
-this file supplies. `TauCeti/Algebra/AlgebraicGroup/RootSpace.lean` performs the specialization.
+adjoint representation of `G` restricted along the split maximal torus `T`. This file supplies
+that restriction for an arbitrary homomorphism from a diagonalizable group, carrying no torus,
+maximality or closed-immersion hypotheses;
+`TauCeti/Algebra/AlgebraicGroup/Tangent/RootSpace.lean` performs the specialization to the
+adjoint representation.
 
 ## References
 
@@ -74,7 +77,7 @@ variable (V : Type*) [AddCommMonoid V] [Module R V] [Comodule R C V]
 Geometrically `π` is the coordinate morphism of a homomorphism `D(X) → G` of affine group schemes
 and `V` is a representation of `G`; this is the submodule on which `D(X)` acts through the
 character `x`. -/
-@[expose] noncomputable def weightSpace (π : C →ₗc[R] MonoidAlgebra R X) (x : X) :
+noncomputable def weightSpace (π : C →ₗc[R] MonoidAlgebra R X) (x : X) :
     Submodule R V :=
   letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
   Comodule.weightSpace R X V x
@@ -99,18 +102,6 @@ theorem isInternal_weightSpace (π : C →ₗc[R] MonoidAlgebra R X) :
     DirectSum.IsInternal (weightSpace V π) :=
   letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
   Comodule.isInternal_weightSpace R X V
-
-/-- The weight submodules span the representation. -/
-theorem iSup_weightSpace_eq_top (π : C →ₗc[R] MonoidAlgebra R X) :
-    ⨆ x : X, weightSpace V π x = ⊤ :=
-  letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
-  Comodule.iSup_weightSpace_eq_top R X V
-
-/-- The weight submodules are independent. -/
-theorem iSupIndep_weightSpace (π : C →ₗc[R] MonoidAlgebra R X) :
-    iSupIndep (weightSpace V π) :=
-  letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
-  Comodule.iSupIndep_weightSpace R X V
 
 /-- **A representation that is finitely generated as a module has only finitely many weights.** -/
 theorem finite_setOf_weightSpace_ne_bot [Module.Finite R V] (π : C →ₗc[R] MonoidAlgebra R X) :

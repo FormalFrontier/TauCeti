@@ -8,49 +8,50 @@ public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Weight
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Representation
 
 /-!
-# Root spaces of a split pair
+# Weight spaces of the adjoint representation
 
 Let `G = Spec H` be an affine group scheme over `R` whose augmentation cotangent space is finite
 projective, so that its Lie algebra is the single `R`-module
 `Module.Dual R (Bialgebra.CotangentSpace R H)` carrying the adjoint comodule of
-`TauCeti.Algebra.AlgebraicGroup.Tangent.Representation`. A split torus in `G` is a homomorphism
-`T = D(M) → G` of affine group schemes, that is, a morphism `π : H →ₐc[R] R[M]` of coordinate
-bialgebras, where `M` is the character lattice written multiplicatively.
+`TauCeti.Algebra.AlgebraicGroup.Tangent.Representation`. Let `π : H →ₐc[R] R[M]` be a morphism of
+coordinate bialgebras, that is, a homomorphism `D(M) → G` of affine group schemes out of the
+diagonalizable group on a commutative group `M` written multiplicatively.
 
 Restricting the adjoint representation along `π` decomposes the Lie algebra into weight
-submodules, indexed by the characters of `T`. This file names them: `adjointWeightSpace π α` is
-`𝔤_α`, `roots π` is the set of nonzero characters with a nonzero weight submodule, and the Lie
-algebra is the direct sum of `𝔤_1` and the `𝔤_α` for `α` a root. A point of `T` acts on `𝔤_α`
-by the value of the character `α`, which is what makes `α` a root rather than a bare index.
+submodules, indexed by `M`. This file names them: `adjointWeightSpace π α` is the `α`-weight
+submodule `𝔤_α`, `roots π` is the set of nontrivial characters whose weight submodule is nonzero,
+and the Lie algebra is spanned by `𝔤_1` together with the `𝔤_α` for `α ∈ roots π`. A point of
+`D(M)` acts on `𝔤_α` by the value of `α` at that point.
 
-Nothing here asserts that `π` is a closed immersion, that `T` is a maximal torus, that `G` is
-reductive, or that `roots π` is a root system; those all need hypotheses this file does not carry.
-What is fixed here is the object those statements will be about.
+Nothing here asserts that `π` is a closed immersion, that `D(M)` is a torus, let alone a maximal
+one, that `G` is reductive, or that `roots π` is a root system; those all need hypotheses this
+file does not carry. When `π` does exhibit a split maximal torus `T` in a reductive `G`, `roots π`
+is the set of roots of the split pair `(G, T)`; fixing that object is what this file is for.
 
 ## Main definitions
 
-* `TauCeti.Derivation.adjointWeightSpace`: the weight submodule `𝔤_α` of the Lie algebra of `G`
-  under a split torus.
-* `TauCeti.Derivation.roots`: the set of roots of the pair, the nonzero characters whose weight
-  submodule is nonzero.
+* `TauCeti.Derivation.adjointWeightSpace`: the `α`-weight submodule `𝔤_α` of the Lie algebra of
+  `G` under a homomorphism from a diagonalizable group.
+* `TauCeti.Derivation.roots`: the nontrivial characters whose weight submodule is nonzero.
 
 ## Main results
 
 * `TauCeti.Derivation.isInternal_adjointWeightSpace`: **the Lie algebra of `G` is the internal
-  direct sum of its weight submodules under a split torus.**
-* `TauCeti.Derivation.sup_iSup_adjointWeightSpace_eq_top`: the zero weight submodule together with
-  the root submodules exhaust the Lie algebra.
+  direct sum of its weight submodules.**
+* `TauCeti.Derivation.sup_iSup_adjointWeightSpace_eq_top`: the trivial weight submodule together
+  with the submodules indexed by `roots π` exhaust the Lie algebra.
 * `TauCeti.Derivation.finite_roots`: **the set of roots is finite.**
-* `TauCeti.Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of the torus acts on
-  `𝔤_α` by the value of `α` at that point.
+* `TauCeti.Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of `D(M)` acts on the
+  `α`-weight submodule by the value of `α` at that point.
 
 ## Roadmap
 
 Layer 7 of `TauCetiRoadmap/ReductiveGroups/README.md` asks for the root datum
 `(X*(T), Φ, X_*(T), Φ^∨)` of a split pair `(G, T)`, taking the split case first. The character and
 cocharacter lattices with their pairing are already in
-`TauCeti.Algebra.AlgebraicGroup.Cocharacter`; this file supplies `Φ`, the remaining piece of the
-root datum that is read off the group rather than the torus. Layer 9's split reductive group
+`TauCeti.Algebra.AlgebraicGroup.Cocharacter`; this file supplies the weight decomposition that
+`Φ` is read off, the remaining piece of the root datum that comes from the group rather than the
+torus. Layer 9's split reductive group
 schemes over `ℤ` take the split maximal torus as part of their data and are defined by conditions
 on exactly this decomposition, and milestone `L0` of `TauCetiRoadmap/CFSGStatement/README.md`
 consumes those pinned Chevalley--Demazure groups.
@@ -77,8 +78,8 @@ variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
 variable {M : Type*} [CommGroup M]
 
-/-- The weight submodule `𝔤_α` of the Lie algebra of `G = Spec H` under the split torus
-`T = D(M) → G` with coordinate morphism `π`: the part of the Lie algebra on which `T` acts through
+/-- The `α`-weight submodule `𝔤_α` of the Lie algebra of `G = Spec H` under a homomorphism
+`D(M) → G` with coordinate morphism `π`: the part of the Lie algebra on which `D(M)` acts through
 the character `α`. -/
 noncomputable def adjointWeightSpace (π : H →ₐc[R] MonoidAlgebra R M) (α : M) :
     Submodule R (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
@@ -87,8 +88,24 @@ noncomputable def adjointWeightSpace (π : H →ₐc[R] MonoidAlgebra R M) (α :
   DiagonalizableGroup.weightSpace (Module.Dual R (Bialgebra.CotangentSpace R H))
     (π : H →ₗc[R] MonoidAlgebra R M) α
 
-/-- **The Lie algebra of `G` is the internal direct sum of its weight submodules under a split
-torus.** -/
+/-- Membership in the `α`-weight submodule, in terms of the adjoint coaction: pushing the adjoint
+coaction of `x` through `π` must give `x ⊗ α`. -/
+@[simp]
+theorem mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α : M}
+    {x : Module.Dual R (Bialgebra.CotangentSpace R H)} :
+    letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
+      adjointComodule (R := R) (H := H)
+    x ∈ adjointWeightSpace π α ↔
+      TensorProduct.map LinearMap.id (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap
+          (Comodule.coact (R := R) (C := H)
+            (M := Module.Dual R (Bialgebra.CotangentSpace R H)) x) =
+        x ⊗ₜ[R] MonoidAlgebra.single α (1 : R) :=
+  letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
+    adjointComodule (R := R) (H := H)
+  DiagonalizableGroup.mem_weightSpace
+
+/-- **The Lie algebra of `G` is the internal direct sum of its weight submodules under a
+homomorphism from a diagonalizable group.** -/
 theorem isInternal_adjointWeightSpace (π : H →ₐc[R] MonoidAlgebra R M) :
     DirectSum.IsInternal (adjointWeightSpace π) :=
   letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
@@ -96,27 +113,13 @@ theorem isInternal_adjointWeightSpace (π : H →ₐc[R] MonoidAlgebra R M) :
   DiagonalizableGroup.isInternal_weightSpace (Module.Dual R (Bialgebra.CotangentSpace R H))
     (π : H →ₗc[R] MonoidAlgebra R M)
 
-/-- The weight submodules span the Lie algebra. -/
-theorem iSup_adjointWeightSpace_eq_top (π : H →ₐc[R] MonoidAlgebra R M) :
-    ⨆ α : M, adjointWeightSpace π α = ⊤ :=
-  letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
-    adjointComodule (R := R) (H := H)
-  DiagonalizableGroup.iSup_weightSpace_eq_top (Module.Dual R (Bialgebra.CotangentSpace R H))
-    (π : H →ₗc[R] MonoidAlgebra R M)
-
-/-- The weight submodules are independent. -/
-theorem iSupIndep_adjointWeightSpace (π : H →ₐc[R] MonoidAlgebra R M) :
-    iSupIndep (adjointWeightSpace π) :=
-  letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
-    adjointComodule (R := R) (H := H)
-  DiagonalizableGroup.iSupIndep_weightSpace (Module.Dual R (Bialgebra.CotangentSpace R H))
-    (π : H →ₗc[R] MonoidAlgebra R M)
-
-/-- The roots of the split pair `(G, T)`: the nontrivial characters of `T` whose weight submodule
-in the Lie algebra of `G` is nonzero. -/
+/-- The nontrivial characters of `D(M)` whose weight submodule in the Lie algebra of `G` is
+nonzero. When `π` exhibits a split maximal torus `T` in a reductive `G` these are the roots of the
+split pair `(G, T)`. -/
 def roots (π : H →ₐc[R] MonoidAlgebra R M) : Set M :=
   {α | α ≠ 1 ∧ adjointWeightSpace π α ≠ ⊥}
 
+@[simp]
 theorem mem_roots {π : H →ₐc[R] MonoidAlgebra R M} {α : M} :
     α ∈ roots π ↔ α ≠ 1 ∧ adjointWeightSpace π α ≠ ⊥ :=
   Iff.rfl
@@ -145,12 +148,12 @@ theorem finite_roots (π : H →ₐc[R] MonoidAlgebra R M) : (roots π).Finite :
       (Module.Dual R (Bialgebra.CotangentSpace R H)) (π : H →ₗc[R] MonoidAlgebra R M))
     fun _ hα => hα.2
 
-/-- **The Lie algebra is spanned by the zero weight submodule together with the root
-submodules.** -/
+/-- **The Lie algebra is spanned by the trivial weight submodule together with the submodules
+indexed by the roots.** -/
 theorem sup_iSup_adjointWeightSpace_eq_top (π : H →ₐc[R] MonoidAlgebra R M) :
     (adjointWeightSpace π 1 ⊔ ⨆ α ∈ roots π, adjointWeightSpace π α) = ⊤ := by
   refine top_unique ?_
-  rw [← iSup_adjointWeightSpace_eq_top π]
+  rw [← (isInternal_adjointWeightSpace π).submodule_iSup_eq_top]
   refine iSup_le fun α => ?_
   by_cases hα : α = 1
   · subst hα
@@ -161,10 +164,9 @@ theorem sup_iSup_adjointWeightSpace_eq_top (π : H →ₐc[R] MonoidAlgebra R M)
     · exact le_sup_of_le_right (le_iSup₂ (f := fun β (_ : β ∈ roots π) => adjointWeightSpace π β)
         α ⟨hα, hbot⟩)
 
-/-- **A point of the torus acts on the root submodule `𝔤_α` by the value of the character `α`.**
-This is the property that makes `α` a root of `(G, T)` and not merely an index of the
-decomposition. -/
-theorem endOfPoint_tmul_of_mem_adjointWeightSpace {A : Type*} [CommRing A] [Algebra R A]
+/-- **A point of `D(M)` acts on the `α`-weight submodule `𝔤_α` by the value of the character
+`α` at that point.** -/
+theorem endOfPoint_tmul_of_mem_adjointWeightSpace {A : Type*} [CommSemiring A] [Algebra R A]
     (π : H →ₐc[R] MonoidAlgebra R M) (f : MonoidAlgebra R M →ₐ[R] A) (a : A) {α : M}
     {x : Module.Dual R (Bialgebra.CotangentSpace R H)} (hx : x ∈ adjointWeightSpace π α) :
     letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
