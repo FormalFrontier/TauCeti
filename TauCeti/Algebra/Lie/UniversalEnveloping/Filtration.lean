@@ -82,7 +82,7 @@ theorem pbwFiltration_eq_pow (k : ℕ) :
     pbwFiltration R L k =
       (1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap) ^ k :=
   by
-    change TauCeti.Algebra.wordFiltration _ k = _
+    rw [pbwFiltration]
     calc
       _ = TauCeti.Algebra.wordFiltration _ 1 ^ k := by
         simpa using (TauCeti.Algebra.wordFiltration_pow _ 1 k).symm
