@@ -15,9 +15,6 @@ import TauCeti.Analysis.Contour.PerWindow.CPV
 import TauCeti.Analysis.Contour.Winding.LipschitzBoundedIntegrand
 import TauCeti.Analysis.Contour.Winding.SegmentSum
 import TauCeti.Analysis.Contour.Winding.PrincipalValueRealIntegral
-import Mathlib.Analysis.InnerProductSpace.Calculus
-import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 
 /-!
 # The real bounded-integrand formula for the winding number, allowing crossings
@@ -132,9 +129,9 @@ of `[c, d]`, `[p', q']`, `[p, q]` sharing their left endpoint gives the right-wi
 their right endpoint gives the left-window case -- both proved at once here rather than by two
 near-identical arguments differing only in which side grows from the crossing. -/
 private theorem intervalIntegrable_realWindingIntegrand_window {γ : ℝ → ℂ} {s : ℂ}
-    {c d p q p' q' : ℝ} {K : ℝ≥0} (hpq : p ≤ q) (h_sub_bdd : Icc p q ⊆ Icc p' q')
-    (h_sub_cd : Icc p' q' ⊆ Icc c d) (hdiff : DifferentiableOn ℝ γ (Icc c d))
-    (hlip : LipschitzOnWith K (derivWithin γ (Icc c d)) (Icc c d))
+    {c d p q p' q' : ℝ} (hpq : p ≤ q) (h_sub_bdd : Icc p q ⊆ Icc p' q')
+    (h_sub_cd : Icc p' q' ⊆ Icc c d) (hγc' : ContinuousOn γ (Icc c d))
+    (hdw' : ContinuousOn (derivWithin γ (Icc c d)) (Icc c d))
     (hbdd : Bornology.IsBounded
       ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc p' q')) :
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume p q := by
@@ -142,8 +139,8 @@ private theorem intervalIntegrable_realWindingIntegrand_window {γ : ℝ → ℂ
   have hcp : c ≤ p := (hsub_cd (left_mem_Icc.mpr hpq)).1
   have hqd : q ≤ d := (hsub_cd (right_mem_Icc.mpr hpq)).2
   obtain ⟨C, hC⟩ := (hbdd.subset (Set.image_mono h_sub_bdd)).exists_norm_le
-  have hγc : ContinuousOn γ (Icc p q) := hdiff.continuousOn.mono hsub_cd
-  have hdw : ContinuousOn (derivWithin γ (Icc c d)) (Icc p q) := hlip.continuousOn.mono hsub_cd
+  have hγc : ContinuousOn γ (Icc p q) := hγc'.mono hsub_cd
+  have hdw : ContinuousOn (derivWithin γ (Icc c d)) (Icc p q) := hdw'.mono hsub_cd
   have huIoc_eq : uIoc p q = Ioc p q := uIoc_of_le hpq
   have huIoc_sub : uIoc p q ⊆ Icc p q := (uIoc_subset_uIcc).trans (by rw [uIcc_of_le hpq])
   have haesm : AEStronglyMeasurable (fun t => (γ t - s)⁻¹ * derivWithin γ (Icc c d) t)
@@ -179,31 +176,34 @@ private theorem intervalIntegrable_realWindingIntegrand_window {γ : ℝ → ℂ
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t ht
   exact hC _ ⟨t, huIoc_sub ht, rfl⟩
 
-/-- **A crude bound on the real winding integrand away from its singularity.** No quadratic
-remainder estimate is needed once `‖z‖` is bounded below: the numerator is `|Im(v · conj z)| ≤
-‖v‖ · ‖z‖` and the denominator is `‖z‖ ^ 2`, so the quotient is at most `‖v‖ / ‖z‖ ≤ ‖v‖ / m`. -/
+/-- **A crude bound on the real winding integrand away from its singularity.** `realWindingIntegrand
+z v = (z⁻¹ * v).im`, whose absolute value is at most `‖z⁻¹ * v‖ = ‖v‖ / ‖z‖ ≤ ‖v‖ / m`. -/
 private theorem abs_realWindingIntegrand_le_div_of_norm_le {z v : ℂ} {m : ℝ} (hm : 0 < m)
     (hz : m ≤ ‖z‖) : |realWindingIntegrand z v| ≤ ‖v‖ / m := by
-  have hz_pos : 0 < ‖z‖ := lt_of_lt_of_le hm hz
-  have hnum : |z.re * v.im - z.im * v.re| ≤ ‖v‖ * ‖z‖ := by
-    have heq : z.re * v.im - z.im * v.re = (v * (starRingEnd ℂ) z).im := by
-      rw [Complex.mul_im, Complex.conj_re, Complex.conj_im]; ring
-    rw [heq]
-    calc |(v * (starRingEnd ℂ) z).im| ≤ ‖v * (starRingEnd ℂ) z‖ := by
-          rw [← RCLike.im_eq_complex_im]; exact RCLike.abs_im_le_norm _
-      _ = ‖v‖ * ‖z‖ := by rw [norm_mul, RCLike.norm_conj]
-  rw [realWindingIntegrand_eq_div, abs_div, Complex.normSq_eq_norm_sq,
-    abs_of_nonneg (by positivity : (0 : ℝ) ≤ ‖z‖ ^ 2), div_le_div_iff₀ (by positivity) hm]
-  calc |z.re * v.im - z.im * v.re| * m ≤ (‖v‖ * ‖z‖) * m :=
-        mul_le_mul_of_nonneg_right hnum hm.le
-    _ ≤ ‖v‖ * ‖z‖ * ‖z‖ := mul_le_mul_of_nonneg_left hz (mul_nonneg (norm_nonneg v) (norm_nonneg z))
-    _ = ‖v‖ * ‖z‖ ^ 2 := by ring
+  rw [realWindingIntegrand_def]
+  calc |(z⁻¹ * v).im| ≤ ‖z⁻¹ * v‖ := Complex.abs_im_le_norm _
+    _ = ‖v‖ / ‖z‖ := by rw [norm_mul, norm_inv, mul_comm, ← div_eq_mul_inv]
+    _ ≤ ‖v‖ / m := by gcongr
 
 /-! ### Assembly -/
 
+/-- **The `C^{1,1}` crossing-regularity hypothesis**: `derivWithin γ` is Lipschitz on a one-sided
+closed window ending or starting at `t`, on each side (a `KR`/`εR`-window to the right, a
+`KL`/`εL`-window to the left) — the two sides need not agree, so `t` may coincide with a
+breakpoint of the immersion. Named to avoid repeating this 8-binder existential verbatim across
+`isBounded_intervalIntegrable_cauchyPV_of_interior_crossings` and its three public projections
+below. -/
+abbrev IsLipschitzCrossingAt (γ : ℝ → ℂ) (t : ℝ) : Prop :=
+  ∃ εR > 0, ∃ KR : ℝ≥0,
+    DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
+      (Icc t (t + εR)) ∧
+    ∃ εL > 0, ∃ KL : ℝ≥0,
+    DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
+      (Icc (t - εL) t)
+
 /-- **The real bounded-integrand formula's boundedness, integrability, and Cauchy-PV facts, from
 interior crossings alone** (Hungerbühler–Wasem Prop 2.3's analytic content). Unlike
-`bounded_integrable_eq_real_integral_of_closed_interior_crossings` below, this needs no closedness
+`windingNumber_eq_real_integral_of_closed_interior_crossings` below, this needs no closedness
 assumption: closedness is only used to show the principal value's real part vanishes, which is a
 one-line addition on top of what this theorem already supplies (`L.re = Real.log ‖γ b - s‖ -
 Real.log ‖γ a - s‖`, zero exactly when `γ a = γ b`).
@@ -217,12 +217,7 @@ and the ordinary avoidance argument between crossings — the actual content of 
 private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
-    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-        (Icc t (t + εR)) ∧
-      ∃ εL > 0, ∃ KL : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-        (Icc (t - εL) t)) :
+    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → IsLipschitzCrossingAt γ t) :
     Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) ∧
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b ∧
     ∃ L : ℂ, HasCauchyPVAt γ a b (fun z => (z - s)⁻¹) s L ∧
@@ -252,7 +247,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
     rw [min_eq_left hab.le, max_eq_right hab.le] at hp
     exact hp t ht
   -- The window value: the explicit log-norm-plus-argument limit at each crossing.
-  choose! R hR_pos L_R L_L hL_R hL_L h_spec using
+  choose! R hR_pos L_R L_L hL_R hL_L hL_tend_R hL_tend_L h_spec using
     fun t₀ (ht₀ : t₀ ∈ T) =>
       exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀)
         (hT_mem.mp ht₀).2
@@ -273,9 +268,11 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
       (c := t₀ - εL t₀) (d := t₀ + εR t₀) (by linarith [hεL_pos t₀ ht₀])
       (by linarith [hεR_pos t₀ ht₀])
       (hdiffR t₀ ht₀) (hlipR t₀ ht₀) (hdiffL t₀ ht₀) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
-      (h_imm.derivWithin_ne_zero_right (h_Ico t₀ ht₀) (hdiffR t₀ ht₀)
+      (h_imm.derivWithin_ne_zero_right (h_Ico t₀ ht₀)
+        (hdiffR t₀ ht₀ t₀ (left_mem_Icc.mpr (by linarith [hεR_pos t₀ ht₀])))
         (by linarith [hεR_pos t₀ ht₀]))
-      (h_imm.derivWithin_ne_zero_left (h_Ioc t₀ ht₀) (hdiffL t₀ ht₀)
+      (h_imm.derivWithin_ne_zero_left (h_Ioc t₀ ht₀)
+        (hdiffL t₀ ht₀ t₀ (right_mem_Icc.mpr (by linarith [hεL_pos t₀ ht₀])))
         (by linarith [hεL_pos t₀ ht₀]))
   -- The one-sided windows the window-integrability lemma needs are just the two halves of the
   -- symmetric window `_corner` already bounded.
@@ -320,10 +317,10 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
         have hρ_le_ρlip' : ρ ≤ ρ_lip t := hρ_le_ρlip t ht'
         exact (intervalIntegrable_realWindingIntegrand_window (by linarith [hρ_pos])
             (Icc_subset_Icc (by linarith) le_rfl) (Icc_subset_Icc (by linarith) le_rfl)
-            (hdiffL t ht') (hlipL t ht') (hbddL t ht')).trans
+            (hdiffL t ht').continuousOn (hlipL t ht').continuousOn (hbddL t ht')).trans
           (intervalIntegrable_realWindingIntegrand_window (by linarith [hρ_pos])
             (Icc_subset_Icc le_rfl (by linarith)) (Icc_subset_Icc le_rfl (by linarith))
-            (hdiffR t ht') (hlipR t ht') (hbddR t ht')))
+            (hdiffR t ht').continuousOn (hlipR t ht').continuousOn (hbddR t ht')))
       (fun u hu h_avoid => h_far.choose_spec.2 u hu
         fun t ht => h_avoid t ((Finset.mem_sort _).mpr ht))
     have h_ne : ∀ t ∈ Icc l u, γ t ≠ s := fun t ht h_eq => by
@@ -409,50 +406,6 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
       exact Or.inl (Set.mem_biUnion ht₀ ⟨t, Ioo_subset_Icc_self htwin, rfl⟩)
   exact ⟨h_bdd, h_int, L, hHCPV, hRe0, hIm⟩
 
-/-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3),
-bundled with the boundedness and interval-integrability facts it is built from. Kept private and
-conjunctive to avoid an overlong public name; see
-`isBounded_image_realWindingIntegrand_of_interior_crossings`,
-`intervalIntegrable_realWindingIntegrand_of_interior_crossings`, and
-`windingNumber_eq_real_integral_of_closed_interior_crossings` below for its three public
-projections, and for the full documentation of the hypotheses.
-
-A thin closedness wrapper around
-`isBounded_intervalIntegrable_cauchyPV_of_interior_crossings`: closedness (`hclosed`, `hsa`) is
-used only to show every crossing is interior and that the principal value's real part vanishes
-(`Real.log ‖γ b - s‖ - Real.log ‖γ a - s‖ = 0` when `γ a = γ b`); the boundedness, integrability,
-and Cauchy-PV construction themselves need no closedness assumption. -/
-private theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
-    {γ : ℝ → ℂ} {a b : ℝ}
-    {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b) (hsa : γ a ≠ s)
-    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-        (Icc t (t + εR)) ∧
-      ∃ εL > 0, ∃ KL : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-        (Icc (t - εL) t)) :
-    Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) ∧
-    IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b ∧
-    windingNumber γ a b s
-      = ((1 / (2 * Real.pi)
-          * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) := by
-  -- Every crossing is interior: on `[a, b]`, `t ∈ Ioo a b` reduces to `t ≠ a ∧ t ≠ b`, and both
-  -- endpoints avoid `s` -- `a` directly by `hsa`, `b` via `hclosed : γ a = γ b`.
-  have h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b := fun t ht h_eq =>
-    ⟨ht.1.lt_of_ne (by rintro rfl; exact hsa h_eq),
-      ht.2.lt_of_ne (by intro h; exact hsa (hclosed.trans (h ▸ h_eq)))⟩
-  obtain ⟨h_bdd, h_int, L, hHCPV, hRe0, hIm⟩ :=
-    isBounded_intervalIntegrable_cauchyPV_of_interior_crossings h_imm hab h_interior hγ_lip
-  refine ⟨h_bdd, h_int, ?_⟩
-  have hwind : windingNumber γ a b s = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * L :=
-    windingNumber_eq_of_hasCauchyPVAt hHCPV
-  have hRe : L.re = 0 := by rw [hRe0, hclosed, sub_self]
-  rw [hwind, ← Complex.re_add_im L, hRe, hIm]
-  have h2πI_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := Complex.two_pi_I_ne_zero
-  push_cast
-  field_simp
-  ring
-
 /-- **The real winding integrand is bounded on all of `[a, b]` for an immersion with interior
 crossings** (Hungerbühler–Wasem Prop 2.3, boundedness half). Projection of
 `isBounded_intervalIntegrable_cauchyPV_of_interior_crossings`; needs no closedness, only that
@@ -462,12 +415,7 @@ equality and the full documentation of `hγ_lip`. -/
 theorem isBounded_image_realWindingIntegrand_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
-    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-        (Icc t (t + εR)) ∧
-      ∃ εL > 0, ∃ KL : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-        (Icc (t - εL) t)) :
+    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → IsLipschitzCrossingAt γ t) :
     Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) :=
   (isBounded_intervalIntegrable_cauchyPV_of_interior_crossings h_imm hab h_interior hγ_lip).1
 
@@ -480,12 +428,7 @@ equality and the full documentation of `hγ_lip`. -/
 theorem intervalIntegrable_realWindingIntegrand_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
-    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-        (Icc t (t + εR)) ∧
-      ∃ εL > 0, ∃ KL : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-        (Icc (t - εL) t)) :
+    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → IsLipschitzCrossingAt γ t) :
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b :=
   (isBounded_intervalIntegrable_cauchyPV_of_interior_crossings h_imm hab h_interior hγ_lip).2.1
 
@@ -506,17 +449,32 @@ Prop 2.3, which handles that case via the same one-sided splitting (arXiv:1808.0
 theorem windingNumber_eq_real_integral_of_closed_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (hclosed : γ a = γ b) (hsa : γ a ≠ s)
-    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
-        (Icc t (t + εR)) ∧
-      ∃ εL > 0, ∃ KL : ℝ≥0,
-      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
-        (Icc (t - εL) t)) :
+    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → IsLipschitzCrossingAt γ t) :
     windingNumber γ a b s
       = ((1 / (2 * Real.pi)
-          * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) :=
-  (bounded_integrable_eq_real_integral_of_closed_interior_crossings
-    h_imm hab hclosed hsa hγ_lip).2.2
+          * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) := by
+  -- Every crossing is interior: on `[a, b]`, `t ∈ Ioo a b` reduces to `t ≠ a ∧ t ≠ b`, and both
+  -- endpoints avoid `s` -- `a` directly by `hsa`, `b` via `hclosed : γ a = γ b`.
+  have h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b := fun t ht h_eq =>
+    ⟨ht.1.lt_of_ne (by rintro rfl; exact hsa h_eq),
+      ht.2.lt_of_ne (by intro h; exact hsa (hclosed.trans (h ▸ h_eq)))⟩
+  -- Closedness is used only here: to show every crossing is interior (above) and that the
+  -- principal value's real part vanishes (`hRe` below, `= Real.log ‖γ b - s‖ - Real.log ‖γ a - s‖`
+  -- by `hRe0`, which is `0` exactly when `γ a = γ b`). The boundedness, integrability, and
+  -- Cauchy-PV construction themselves need no closedness assumption -- see
+  -- `isBounded_image_realWindingIntegrand_of_interior_crossings` and
+  -- `intervalIntegrable_realWindingIntegrand_of_interior_crossings` above, which project them
+  -- directly from `isBounded_intervalIntegrable_cauchyPV_of_interior_crossings`.
+  obtain ⟨-, -, L, hHCPV, hRe0, hIm⟩ :=
+    isBounded_intervalIntegrable_cauchyPV_of_interior_crossings h_imm hab h_interior hγ_lip
+  have hwind : windingNumber γ a b s = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * L :=
+    windingNumber_eq_of_hasCauchyPVAt hHCPV
+  have hRe : L.re = 0 := by rw [hRe0, hclosed, sub_self]
+  rw [hwind, ← Complex.re_add_im L, hRe, hIm]
+  have h2πI_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := Complex.two_pi_I_ne_zero
+  push_cast
+  field_simp
+  ring
 
 end TauCeti.Contour
 

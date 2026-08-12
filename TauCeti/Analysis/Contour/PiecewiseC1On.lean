@@ -48,9 +48,8 @@ prerequisite for the homology Cauchy theorem and the generalized residue theorem
   corollaries) — eventual differentiability near an interior parameter.
 * `Contour.IsPiecewiseC1On.intervalIntegrable_deriv` — the derivative is interval-integrable on
   `a..b`, glued across the breakpoints from the `C¹` pieces.
-* `Contour.piecewise_gluing_induction` — the shared breakpoint-gluing induction underlying it,
-  generic in the invariant being glued (interval-integrability, boundedness of the image, ...),
-  reused by other piecewise-`C¹` gluing arguments.
+* `Contour.IsPiecewiseC1On.isBounded_image_deriv` — the derivative has bounded image on
+  `[[a, b]]`, glued the same way.
 
 ## Provenance
 
@@ -232,17 +231,22 @@ private theorem intervalIntegrable_deriv_of_contDiffOn {c d : ℝ} (hcd : c ≤ 
 /-- **Generic breakpoint-gluing induction.** An invariant `Q` that holds on every closed,
 breakpoint-free subinterval of `[[a, b]]` (`hbase`) and is closed under concatenation at a shared
 endpoint (`hglue`) holds on every closed subinterval, by induction on the number of breakpoints
-strictly inside it, splitting off the largest one. Shared scaffolding for gluing any piecewise-`C¹`
+strictly inside it, splitting off the largest one. Shared scaffolding for gluing a piecewise-`C¹`
 invariant across breakpoints — e.g. `IntervalIntegrable (deriv γ) volume` via `.trans`, or
 `Bornology.IsBounded (deriv γ '' ·)` via `.union` on `Icc c m ∪ Icc m d = Icc c d`
-(`Winding.RealIntegral.OnCurve`'s `isBounded_image_deriv_aux`). -/
-theorem piecewise_gluing_induction {p : Finset ℝ} {Q : ℝ → ℝ → Prop}
+(`isBounded_image_deriv_aux` below). Kept private: both current instances are in this file. -/
+private theorem piecewise_gluing_induction {p : Finset ℝ} {Q : ℝ → ℝ → Prop}
     (hbase : ∀ c d : ℝ, c ≤ d → Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) → Q c d)
     (hglue : ∀ c m d : ℝ, c ≤ m → m ≤ d → Q c m → Q m d → Q c d) :
-    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b → Q c d := by
+    ∀ c d : ℝ, c ≤ d → Icc c d ⊆ uIcc a b → Q c d := by
   have hdisj : ∀ {c d : ℝ}, p.filter (· ∈ Ioo c d) = ∅ → Disjoint (↑p : Set ℝ) (Ioo c d) :=
     fun he => Set.disjoint_left.mpr fun x hxp hx =>
       Finset.notMem_empty x (he ▸ Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hxp, hx⟩)
+  -- Strong induction on the number of breakpoints strictly inside `[c, d]`, via an explicit
+  -- upper bound `n` discharged with `le_rfl` at the end -- internal scaffolding, not part of the
+  -- public signature above.
+  suffices h : ∀ n, ∀ c d : ℝ, (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
+      Q c d from fun c d => h _ c d le_rfl
   intro n
   induction n with
   | zero =>
@@ -276,7 +280,7 @@ derivative on any subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_g
 private theorem intervalIntegrable_deriv_aux {p : Finset ℝ}
     (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
       ContDiffOn ℝ 1 γ (Icc c d)) :
-    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
+    ∀ c d : ℝ, c ≤ d → Icc c d ⊆ uIcc a b →
       IntervalIntegrable (fun t ↦ deriv γ t) volume c d :=
   piecewise_gluing_induction
     (fun c d hcd hsub hdisj => intervalIntegrable_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
@@ -289,8 +293,8 @@ breakpoints. This discharges the `hderiv_int` hypothesis of the raw contour-inte
 theorem IsPiecewiseC1On.intervalIntegrable_deriv (h : IsPiecewiseC1On γ a b) :
     IntervalIntegrable (fun t ↦ deriv γ t) volume a b := by
   obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
-  have key := intervalIntegrable_deriv_aux hC1 (p.filter (· ∈ Ioo (min a b) (max a b))).card
-    (min a b) (max a b) le_rfl min_le_max Icc_min_max.subset
+  have key := intervalIntegrable_deriv_aux hC1
+    (min a b) (max a b) min_le_max Icc_min_max.subset
   rcases le_total a b with hab | hab
   · simpa [min_eq_left hab, max_eq_right hab] using key
   · have key' : IntervalIntegrable (fun t ↦ deriv γ t) volume b a := by
@@ -327,7 +331,7 @@ image on any subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing
 private theorem isBounded_image_deriv_aux {p : Finset ℝ}
     (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
       ContDiffOn ℝ 1 γ (Icc c d)) :
-    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
+    ∀ c d : ℝ, c ≤ d → Icc c d ⊆ uIcc a b →
       Bornology.IsBounded (deriv γ '' Icc c d) :=
   piecewise_gluing_induction
     (fun c d hcd hsub hdisj => isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
@@ -346,8 +350,8 @@ in `a` and `b`, so no `a ≤ b` hypothesis is needed. -/
 theorem IsPiecewiseC1On.isBounded_image_deriv (h : IsPiecewiseC1On γ a b) :
     Bornology.IsBounded (deriv γ '' uIcc a b) := by
   obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
-  have key := isBounded_image_deriv_aux hC1 (p.filter (· ∈ Ioo (min a b) (max a b))).card
-    (min a b) (max a b) le_rfl min_le_max Icc_min_max.subset
+  have key := isBounded_image_deriv_aux hC1
+    (min a b) (max a b) min_le_max Icc_min_max.subset
   rwa [Icc_min_max] at key
 
 end TauCeti.Contour

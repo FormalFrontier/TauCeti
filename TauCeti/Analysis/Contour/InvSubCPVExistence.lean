@@ -80,17 +80,20 @@ private theorem exists_one_sided_tangents {γ : ℝ → ℂ} {a b t₀ : ℝ}
     hasDerivWithinAt_Iio_of_tendsto_deriv h_cont h_diff_L h_tend_L⟩
 
 /-- **Value-exposing form of the per-crossing window radius.** Around each interior crossing
-there is a radius `R > 0` and nonzero complex constants `L_R`, `L_L` appearing in the explicit
-limit value below, such that at every window radius `ρ ≤ R` whose window lies inside `[a, b]`
-and contains no other crossing, the truncated window integral of the Cauchy kernel converges to
-that explicit log-norm-plus-argument value (the value `perWindow_truncated_integral_tendsto`
-supplies), rather than to a merely existentially-bound limit. A consumer that only needs
-existence of the limit (not its value) can take the displayed value itself as the existential
-witness, so no separate existence-only wrapper is kept here. -/
+there is a radius `R > 0` and the crossing's nonzero one-sided tangent limits `L_R`, `L_L` of
+`deriv γ` (from the right and left respectively — `hL_tend_R`, `hL_tend_L` pin them down, so a
+caller can compute with the value below rather than treat `L_R`, `L_L` as opaque), such that at
+every window radius `ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the
+truncated window integral of the Cauchy kernel converges to that explicit log-norm-plus-argument
+value (the value `perWindow_truncated_integral_tendsto` supplies), rather than to a merely
+existentially-bound limit. A consumer that only needs existence of the limit (not its value) can
+take the displayed value itself as the existential witness, so no separate existence-only wrapper
+is kept here. -/
 theorem exists_radius_perWindow_tendsto_log_norm_add_arg
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
     ∃ R > 0, ∃ L_R L_L : ℂ, L_R ≠ 0 ∧ L_L ≠ 0 ∧
+      Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R) ∧ Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L) ∧
       ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
       (∀ t ∈ Icc (t₀ - ρ) (t₀ + ρ), γ t = s → t = t₀) →
       Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
@@ -105,7 +108,8 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
   obtain ⟨p, hp⟩ := h_imm.isPiecewiseC1On.exists_finset_differentiableAt
   have ht₀' : t₀ ∈ Ioo (min a b) (max a b) := by
     rwa [min_eq_left hab.le, max_eq_right hab.le]
-  refine ⟨R, hR_pos, L_R, L_L, hL_R, hL_L, fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
+  refine ⟨R, hR_pos, L_R, L_L, hL_R, hL_L, h_tend_R, h_tend_L,
+    fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
     perWindow_truncated_integral_tendsto hρ_pos h_at
       (h_imm.continuousOn.mono (by
         rw [uIcc_of_le hab.le]
@@ -153,8 +157,9 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
         fun t _ => one_pos)
     all_goals simp [hT_empty]
-  · choose! R hR_pos L_R L_L hL_R hL_L h_spec using fun t₀ (ht₀ : t₀ ∈ T) =>
-      exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
+  · choose! R hR_pos L_R L_L hL_R hL_L hL_tend_R hL_tend_L h_spec using
+      fun t₀ (ht₀ : t₀ ∈ T) =>
+        exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
     -- one radius serving every crossing at once, below each per-crossing radius `R t`
     obtain ⟨ρ, hρ_pos, h_endpts, h_pair, hρ_le_R⟩ :=
       exists_common_window_radius_le h_Ioo R hR_pos

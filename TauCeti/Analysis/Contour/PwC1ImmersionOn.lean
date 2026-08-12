@@ -217,13 +217,12 @@ does not depend on which (`C¹` on `[t, d]`) right-piece it is computed against,
 with the same `HasDerivWithinAt` witness on their common initial segment. -/
 theorem IsPwC1ImmersionOn.derivWithin_ne_zero_right (h : IsPwC1ImmersionOn γ a b) {t d : ℝ}
     (ht₀ : t ∈ Ico (min a b) (max a b))
-    (hdiff : DifferentiableOn ℝ γ (Icc t d)) (htd : t < d) :
+    (hdiff : DifferentiableWithinAt ℝ γ (Icc t d) t) (htd : t < d) :
     derivWithin γ (Icc t d) t ≠ 0 := by
   obtain ⟨d', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_right ht₀
   have hte : t < min d d' := lt_min htd hlt'
   have h1 : HasDerivWithinAt γ (derivWithin γ (Icc t d) t) (Icc t (min d d')) t :=
-    (hdiff t (left_mem_Icc.mpr htd.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc le_rfl (min_le_left d d'))
+    hdiff.hasDerivWithinAt.mono (Icc_subset_Icc le_rfl (min_le_left d d'))
   have h2 : HasDerivWithinAt γ (derivWithin γ (Icc t d') t) (Icc t (min d d')) t :=
     ((hC1'.differentiableOn one_ne_zero) t (left_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
       (Icc_subset_Icc le_rfl (min_le_right d d'))
@@ -238,13 +237,12 @@ theorem IsPwC1ImmersionOn.derivWithin_ne_zero_right (h : IsPwC1ImmersionOn γ a 
 mirror of `IsPwC1ImmersionOn.derivWithin_ne_zero_right` above. -/
 theorem IsPwC1ImmersionOn.derivWithin_ne_zero_left (h : IsPwC1ImmersionOn γ a b) {c t : ℝ}
     (ht₀ : t ∈ Ioc (min a b) (max a b))
-    (hdiff : DifferentiableOn ℝ γ (Icc c t)) (hct : c < t) :
+    (hdiff : DifferentiableWithinAt ℝ γ (Icc c t) t) (hct : c < t) :
     derivWithin γ (Icc c t) t ≠ 0 := by
   obtain ⟨c', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_left ht₀
   have het : max c c' < t := max_lt hct hlt'
   have h1 : HasDerivWithinAt γ (derivWithin γ (Icc c t) t) (Icc (max c c') t) t :=
-    (hdiff t (right_mem_Icc.mpr hct.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc (le_max_left c c') le_rfl)
+    hdiff.hasDerivWithinAt.mono (Icc_subset_Icc (le_max_left c c') le_rfl)
   have h2 : HasDerivWithinAt γ (derivWithin γ (Icc c' t) t) (Icc (max c c') t) t :=
     ((hC1'.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
       (Icc_subset_Icc (le_max_right c c') le_rfl)
