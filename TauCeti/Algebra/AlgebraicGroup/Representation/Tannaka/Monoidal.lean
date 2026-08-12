@@ -83,9 +83,7 @@ theorem scalarExtensionComponent_apply
           (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm x)) := by
   rfl
 
-/-- Bundling a transported tensor-automorphism component as a semimodule morphism recovers the
-conjugation of the original component by the scalar-extension object's defining equality. -/
-theorem ofHom_scalarExtensionComponent
+private theorem ofHom_scalarExtensionComponent
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H)
     (h : (FGComoduleCat.scalarExtensionFunctor R H A).obj M =
@@ -96,6 +94,31 @@ theorem ofHom_scalarExtensionComponent
           eqToHom h := by
   cases Subsingleton.elim h (FGComoduleCat.scalarExtensionFunctor_obj R H A M)
   rfl
+
+/-- Tensor automorphisms of scalar extension are equal when all their explicitly transported
+components are equal. -/
+theorem eq_of_scalarExtensionComponent_eq
+    (η θ : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (h : ∀ M, scalarExtensionComponent R H A η M =
+      scalarExtensionComponent R H A θ M) :
+    η = θ := by
+  apply Aut.ext
+  apply LaxMonoidalFunctor.hom_ext
+  apply NatTrans.ext
+  funext M
+  let hM : (FGComoduleCat.scalarExtensionMonoidalFunctor R H A).obj M =
+      SemimoduleCat.of A (A ⊗[R] M) :=
+    FGComoduleCat.scalarExtensionFunctor_obj R H A M
+  have hcomponent := congrArg SemimoduleCat.ofHom (h M)
+  rw [ofHom_scalarExtensionComponent R H A η M hM,
+    ofHom_scalarExtensionComponent R H A θ M hM] at hcomponent
+  have hpre :
+      eqToHom hM.symm ≫ η.hom.hom.app M =
+        eqToHom hM.symm ≫ θ.hom.hom.app M := by
+    apply (cancel_mono (eqToHom hM)).mp
+    rw [Category.assoc, Category.assoc]
+    exact hcomponent
+  exact (cancel_epi (eqToHom hM.symm)).mp hpre
 
 /-- Naturality of the explicitly transported components of a tensor automorphism. -/
 theorem scalarExtensionComponent_natural

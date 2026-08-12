@@ -69,10 +69,8 @@ private theorem counitEvaluation_matrixCoefficientSubcoalgebraHom
   | add z w hz hw => simp only [map_add, hz, hw]
   | tmul b n =>
       simp only [LinearMap.baseChange_tmul, counitEvaluation_tmul]
-      rw [show
-        ((Comodule.matrixCoefficientSubcoalgebraHom (C := H) phi).toLinearMap n : H) =
-          (Comodule.matrixCoefficientSubcoalgebraHom (C := H) phi n : H) from rfl]
-      rw [Comodule.matrixCoefficientSubcoalgebraHom_apply_coe,
+      rw [Comodule.Hom.coe_toLinearMap,
+        Comodule.matrixCoefficientSubcoalgebraHom_apply_coe,
         Comodule.matrixCoefficientHom_apply, Comodule.counit_matrixCoefficient]
       simp [Module.Dual.baseChange_apply_tmul, Algebra.smul_def, mul_comm]
 
@@ -149,17 +147,11 @@ private theorem scalarExtensionComponent_reconstructedPoint
     scalarExtensionComponent k H A
         (fgPointTensorIso k H A (reconstructedPoint k H A eta)) M =
       scalarExtensionComponent k H A eta M := by
+  apply (LinearMap.liftBaseChangeEquiv A).symm.injective
   apply LinearMap.ext
-  intro x
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
-  | tmul a m =>
-      have htmul : a ⊗ₜ[k] m = a • (1 ⊗ₜ[k] m) := by
-        simp [TensorProduct.smul_tmul']
-      rw [htmul, map_smul, map_smul]
-      congr 1
-      exact scalarExtensionComponent_reconstructedPoint_tmul k H A eta M m
+  intro m
+  simpa only [LinearMap.liftBaseChangeEquiv_symm_apply] using
+    scalarExtensionComponent_reconstructedPoint_tmul k H A eta M m
 
 /-- The tensor automorphism induced by a reconstructed point is the original tensor
 automorphism. Thus reconstruction is a right inverse to the tensor action of points. -/
@@ -167,26 +159,8 @@ automorphism. Thus reconstruction is a right inverse to the tensor action of poi
 theorem fgPointTensorIso_reconstructedPoint
     (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
     fgPointTensorIso k H A (reconstructedPoint k H A eta) = eta := by
-  apply Aut.ext
-  apply LaxMonoidalFunctor.hom_ext
-  apply NatTrans.ext
-  funext M
-  let hM : (FGComoduleCat.scalarExtensionMonoidalFunctor k H A).obj M =
-      SemimoduleCat.of A (A ⊗[k] M) :=
-    FGComoduleCat.scalarExtensionFunctor_obj k H A M
-  have hcomponent := congrArg SemimoduleCat.ofHom
-    (scalarExtensionComponent_reconstructedPoint k H A eta M)
-  rw [ofHom_scalarExtensionComponent k H A
-      (fgPointTensorIso k H A (reconstructedPoint k H A eta)) M hM,
-    ofHom_scalarExtensionComponent k H A eta M hM] at hcomponent
-  have hpre :
-      eqToHom hM.symm ≫
-          (fgPointTensorIso k H A (reconstructedPoint k H A eta)).hom.hom.app M =
-        eqToHom hM.symm ≫ eta.hom.hom.app M := by
-    apply (cancel_mono (eqToHom hM)).mp
-    rw [Category.assoc, Category.assoc]
-    exact hcomponent
-  exact (cancel_epi (eqToHom hM.symm)).mp hpre
+  apply eq_of_scalarExtensionComponent_eq
+  exact scalarExtensionComponent_reconstructedPoint k H A eta
 
 /-- Algebra-valued points of a commutative Hopf algebra over a field are equivalent to tensor
 automorphisms of scalar extension on its finite-dimensional comodules. -/
