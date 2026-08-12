@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.ADEInequality
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
 
 public section
 
@@ -26,14 +26,13 @@ whose solutions with `p ≤ q ≤ r` are `(1, q, r)`, `(2, 2, r)`, `(2, 3, 3)`, 
 `(2, 3, 5)` - the chains `Aₙ`, the forks `Dₙ`, and `E₆`, `E₇`, `E₈`.
 
 Only that arithmetic constraint is proved here. The step that produces a star from a diagram with a
-branch vertex, and the constraints governing a multiple edge (the ones behind `B`, `C`, `F₄`), are
-both outside this file.
+branch vertex is outside this file, and so is the constraint governing a multiple edge (the one
+behind `B`, `C`, `F₄`), which is
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`.
 
-This file builds the star as a matrix, `TauCeti.starCartanMatrix`, over an arbitrary finite index
-type of arms, and proves the bound. Each arm is a chain, so the entries of the matrix and the row
-computation along an arm come from
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain`. The elimination tool is a new one, living with
-the others in
+This file builds the star as a matrix, `TauCeti.starCartanMatrix`, out of the chain entries of
+`TauCeti.LinearAlgebra.RootSystem.Chain`, over an arbitrary finite index type of arms, and proves
+the bound. The elimination tool is a new one, living with the others in
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic`: a finite-type matrix admits no nonzero
 **subdominant** vector, one whose every coordinate `xᵢ` has `xᵢ · (A x)ᵢ ≤ 0`
 (`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`), because the symmetrized
@@ -107,6 +106,8 @@ def starCartanMatrix (ℓ : α → ℕ) : Matrix (StarIndex ℓ) (StarIndex ℓ)
 
 @[simp] lemma starCartanMatrix_none_none : starCartanMatrix ℓ none none = 2 := chainEntry_self 0
 
+-- `(rfl)`, not `rfl`: the body of `TauCeti.starCartanMatrix` is deliberately left unexposed, and
+-- the parenthesised form keeps these equations out of the exported definitional-equality check.
 private lemma starCartanMatrix_none_some_chain (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = chainEntry 0 ((w.2 : ℕ) + 1) := (rfl)
 
@@ -208,8 +209,8 @@ section RowSums
 
 The two computations behind the bound: the row of `starCartanMatrix` at an arm vertex annihilates
 the marks, and the row at the centre evaluates to `∑ᵢ ∏_{j ≠ i} (ℓ j + 1) - (n - 2) ∏ᵢ (ℓ i + 1)`.
-Both are assembled from `TauCeti.sum_range_chainEntry_mul`, the weighted row of a chain, for an
-abstract linear weight function `g`.
+Both are assembled from the chain row of `TauCeti.LinearAlgebra.RootSystem.Chain`,
+`TauCeti.sum_range_chainEntry_mul`, taken at an abstract weight function `g`.
 -/
 
 /-- The full row of a star at an arm vertex, in chain coordinates: the centre contributes `-g 0` at

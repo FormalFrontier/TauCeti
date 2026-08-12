@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
+public import TauCeti.LinearAlgebra.RootSystem.Chain
 
 public section
 
@@ -25,7 +25,7 @@ is `1` on the four leaves and `2` on the middle chain is a nonzero null vector. 
 matrix has positive-definite symmetrization, it cannot admit this vector.
 
 The spine of the diagram is a chain, so its entries and the row sum along it come from
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain`, which the star obstructions of
+`TauCeti.LinearAlgebra.RootSystem.Chain`, which the star obstructions of
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star` share.
 
 ## Main definitions

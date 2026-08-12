@@ -91,10 +91,7 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
   have hF : ContDiff ℝ 2 F :=
     contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
   have hFdiff : DifferentiableAt ℝ F (s, 0) := hF.differentiable (by norm_num) (s, 0)
-  have hslice : DifferentiableAt ℝ (fun t => F (s, t)) 0 :=
-    hFdiff.comp 0 ((differentiableAt_const s).prodMk differentiableAt_id)
-  have hpartial := hslice.hasDerivAt
-  rw [← fderiv_apply_one_eq_deriv, fderiv_timeSlice hFdiff] at hpartial
+  have hpartial := (hasFDerivAt_timeSlice hFdiff).hasDerivAt
   have hfAt := f.contMDiff.mdifferentiable (by simp)
     (mulInvariantExp (I := I) (G := G) (s • X) * g) |>.hasMFDerivAt
   have hdirection := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero hfAt Y
