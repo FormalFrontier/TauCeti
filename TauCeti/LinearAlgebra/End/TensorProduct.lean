@@ -14,8 +14,9 @@ import Mathlib.Tactic.NoncommRing
 # Endomorphisms of tensor products
 
 This file establishes semisimplicity and nilpotence properties of tensor-product endomorphisms.
-After choosing a basis of an unchanged factor, the tensor product is a direct sum of copies of the
-original module, and the corresponding one-sided tensor endomorphism acts componentwise.
+After embedding an unchanged projective factor as a direct summand of a free module, the tensor
+product is a direct summand of a direct sum of copies of the original module, and the corresponding
+one-sided tensor endomorphism acts componentwise.
 
 ## Main declarations
 
@@ -42,6 +43,20 @@ universe u v w
 
 variable {K : Type u} {V : Type v} {W : Type w}
 
+/-- The right-tensor algebra homomorphism sends `f` to `f.rTensor W`. -/
+theorem rTensorAlgHom_apply [CommSemiring K] [AddCommMonoid V] [Module K V]
+    [AddCommMonoid W] [Module K W] (f : _root_.Module.End K V) :
+    (_root_.Module.End.rTensorAlgHom K V W) f = f.rTensor W := by
+  apply LinearMap.ext
+  exact _root_.Module.End.rTensorAlgHom_apply_apply K V W f
+
+/-- The left-tensor algebra homomorphism sends `f` to `f.lTensor V`. -/
+theorem lTensorAlgHom_apply [CommSemiring K] [AddCommMonoid V] [Module K V]
+    [AddCommMonoid W] [Module K W] (f : _root_.Module.End K W) :
+    (_root_.Module.End.lTensorAlgHom K W V) f = f.lTensor V := by
+  apply LinearMap.ext
+  exact _root_.Module.End.lTensorAlgHom_apply_apply K W V f
+
 /-- One-sided tensor endomorphisms acting on different factors commute. -/
 theorem commute_rTensor_lTensor [CommSemiring K] [AddCommMonoid V] [Module K V]
     [AddCommMonoid W] [Module K W] (f : _root_.Module.End K V)
@@ -56,7 +71,7 @@ variable [CommRing K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W
 
 section Right
 
-variable [Module.Free K W]
+variable [Module.Projective K W]
 
 /-- Tensoring a semisimple endomorphism on the right with an identity endomorphism preserves
 semisimplicity. -/
@@ -64,31 +79,58 @@ theorem IsSemisimple.rTensor {f : _root_.Module.End K V} (hf : f.IsSemisimple) :
     _root_.Module.End.IsSemisimple (f.rTensor W) := by
   classical
   rw [_root_.Module.End.IsSemisimple] at hf ⊢
-  let _ : IsSemisimpleModule K[X] (Module.AEval' f) := hf
-  let b := Module.Free.chooseBasis K W
-  let E₀ : (V ⊗[K] W) ≃ₗ[K] (Module.Free.ChooseBasisIndex K W →₀ V) :=
-    TensorProduct.equivFinsuppOfBasisRight b
-  let E₀' : (V ⊗[K] W) ≃ₗ[K]
-      (Module.Free.ChooseBasisIndex K W →₀ Module.AEval' f) :=
-    E₀.trans (Finsupp.mapRange.linearEquiv (Module.AEval'.of f))
-  let E : Module.AEval' (f.rTensor W) ≃ₗ[K[X]]
-      (Module.Free.ChooseBasisIndex K W →₀ Module.AEval' f) :=
-    LinearEquiv.ofAEval _ E₀' fun x ↦ by
-      ext i
-      simp only [E₀', LinearEquiv.trans_apply, Finsupp.mapRange.linearEquiv_apply,
-        Finsupp.mapRange_apply, Finsupp.smul_apply, Module.AEval'.X_smul_of,
-        _root_.Module.End.smul_def]
-      induction x using TensorProduct.induction_on with
-      | zero => simp
-      | tmul v w => simp [E₀]
-      | add x y hx hy => simp [hx, hy]
-  exact IsSemisimpleModule.congr E
+  obtain ⟨M, _, _, _, i, s, his⟩ :=
+    (Module.Projective.iff_split (R := K) (P := W)).mp inferInstance
+  have hfree : IsSemisimpleModule K[X] (Module.AEval' (f.rTensor M)) := by
+    let _ : IsSemisimpleModule K[X] (Module.AEval' f) := hf
+    let b := Module.Free.chooseBasis K M
+    let E₀ : (V ⊗[K] M) ≃ₗ[K] (Module.Free.ChooseBasisIndex K M →₀ V) :=
+      TensorProduct.equivFinsuppOfBasisRight b
+    let E₀' : (V ⊗[K] M) ≃ₗ[K]
+        (Module.Free.ChooseBasisIndex K M →₀ Module.AEval' f) :=
+      E₀.trans (Finsupp.mapRange.linearEquiv (Module.AEval'.of f))
+    let E : Module.AEval' (f.rTensor M) ≃ₗ[K[X]]
+        (Module.Free.ChooseBasisIndex K M →₀ Module.AEval' f) :=
+      LinearEquiv.ofAEval _ E₀' fun x ↦ by
+        ext j
+        simp only [E₀', LinearEquiv.trans_apply, Finsupp.mapRange.linearEquiv_apply,
+          Finsupp.mapRange_apply, Finsupp.smul_apply, Module.AEval'.X_smul_of,
+          _root_.Module.End.smul_def]
+        induction x using TensorProduct.induction_on with
+        | zero => simp
+        | tmul v m => simp [E₀]
+        | add x y hx hy => simp [hx, hy]
+    exact IsSemisimpleModule.congr E
+  let iT : V ⊗[K] W →ₗ[K] V ⊗[K] M := i.lTensor V
+  let sT : V ⊗[K] M →ₗ[K] V ⊗[K] W := s.lTensor V
+  have hiT : Function.Injective iT := by
+    apply LinearMap.injective_of_comp_eq_id iT sT
+    rw [← LinearMap.lTensor_comp, his, LinearMap.lTensor_id]
+  have hiT_comm : iT.comp (f.rTensor W) = (f.rTensor M).comp iT := by
+    exact (LinearMap.lTensor_comp_rTensor V f i).trans
+      (LinearMap.rTensor_comp_lTensor V f i).symm
+  let iX : Module.AEval' (f.rTensor W) →ₗ[K[X]] Module.AEval' (f.rTensor M) :=
+    LinearMap.ofAEval _ ((Module.AEval'.of (f.rTensor M)).toLinearMap.comp iT) fun x ↦ by
+      calc
+        _ = (Module.AEval'.of (f.rTensor M)) (iT ((f.rTensor W) x)) := by
+          simp only [LinearMap.comp_apply, _root_.Module.End.smul_def]
+          rfl
+        _ = (Module.AEval'.of (f.rTensor M)) ((f.rTensor M) (iT x)) :=
+          congrArg (Module.AEval'.of (f.rTensor M)) (LinearMap.congr_fun hiT_comm x)
+        _ = _ := (Module.AEval'.X_smul_of (f.rTensor M) (iT x)).symm
+  let _ : IsSemisimpleModule K[X] (Module.AEval' (f.rTensor M)) := hfree
+  apply IsSemisimpleModule.of_injective iX
+  intro x y hxy
+  apply (Module.AEval'.of (f.rTensor W)).symm.injective
+  apply hiT
+  apply (Module.AEval'.of (f.rTensor M)).injective
+  exact hxy
 
 end Right
 
 section Left
 
-variable [Module.Free K V]
+variable [Module.Projective K V]
 
 /-- Tensoring a semisimple endomorphism on the left with an identity endomorphism preserves
 semisimplicity. -/
@@ -114,17 +156,11 @@ theorem _root_.IsNilpotent.tensorProduct_map_sub_one {f : _root_.Module.End K V}
   let m : _root_.Module.End K (V ⊗[K] W) := g.lTensor V - 1
   have hn : IsNilpotent n := by
     have hn' := hf.map (_root_.Module.End.rTensorAlgHom K V W)
-    rw [map_sub, map_one] at hn'
-    rw [show (_root_.Module.End.rTensorAlgHom K V W) f = f.rTensor W by
-      apply LinearMap.ext
-      exact _root_.Module.End.rTensorAlgHom_apply_apply K V W f] at hn'
+    rw [map_sub, map_one, rTensorAlgHom_apply] at hn'
     exact hn'
   have hm : IsNilpotent m := by
     have hm' := hg.map (_root_.Module.End.lTensorAlgHom K W V)
-    rw [map_sub, map_one] at hm'
-    rw [show (_root_.Module.End.lTensorAlgHom K W V) g = g.lTensor V by
-      apply LinearMap.ext
-      exact _root_.Module.End.lTensorAlgHom_apply_apply K W V g] at hm'
+    rw [map_sub, map_one, lTensorAlgHom_apply] at hm'
     exact hm'
   have hab := commute_rTensor_lTensor f g
   have hnm : Commute n m := by
