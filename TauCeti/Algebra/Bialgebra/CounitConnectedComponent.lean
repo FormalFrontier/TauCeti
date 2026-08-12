@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.Spectrum.Prime.Noetherian
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Scheme
+public import TauCeti.Algebra.Bialgebra.Augmentation
 public import TauCeti.RingTheory.Idempotents.Connected.Component
 public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
 
@@ -24,12 +24,13 @@ work.
 
 ## Main declarations
 
-* `Bialgebra.counitConnectedComponentIdempotent`: the idempotent selecting the ground-field
+* `TauCeti.Bialgebra.counitConnectedComponentIdempotent`: the idempotent selecting the ground-field
   connected component of the counit point.
-* `Bialgebra.counitConnectedComponentIdeal`: the principal ideal `(1 - e)` cutting it out.
-* `Bialgebra.primeSpectrumCounitConnectedComponentHomeomorph`: the quotient spectrum is that
-  connected component.
-* `Bialgebra.counitConnectedComponentCounitAlgHom`: the counit point factors through the quotient.
+* `TauCeti.Bialgebra.counitConnectedComponentIdeal`: the principal ideal `(1 - e)` cutting it out.
+* `TauCeti.Bialgebra.primeSpectrumCounitConnectedComponentHomeomorph`: the quotient spectrum is
+  that connected component.
+* `TauCeti.Bialgebra.counitConnectedComponentCounitAlgHom`: the counit point factors through the
+  quotient.
 
 ## References
 
