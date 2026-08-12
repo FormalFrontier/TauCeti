@@ -604,13 +604,11 @@ theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
           (realCliffordPositiveSplitIsometry (p + 1) q v).2 •
             realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
               (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) := by
-  rw [realCliffordSignatureSwitchRecurrenceEquiv, AlgEquiv.trans_apply,
+  simp only [realCliffordSignatureSwitchRecurrenceEquiv, AlgEquiv.trans_apply,
     _root_.CliffordAlgebra.equivOfIsometry_apply,
     _root_.CliffordAlgebra.map_apply_ι, AlgEquiv.trans_apply,
     CliffordAlgebra.signSwitchEquiv_ι, map_add, map_mul, map_smul,
     AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
-    _root_.CliffordAlgebra.map_apply_ι]
-  simp only [AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
     _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry_apply]
 
 end TauCeti

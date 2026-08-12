@@ -94,13 +94,12 @@ private theorem signSwitchGenerator_sq (h : P' = -P) (x : N × R) :
     dsimp only [e, v]
     rw [_root_.CliffordAlgebra.ι_mul_ι_add_swap]
     simp [Q', QuadraticMap.polar]
-  rw [signSwitchGenerator_apply]
-  -- Expose the two local Clifford generators used in the square calculation.
-  change (e * v + x.2 • e) * (e * v + x.2 • e) = _
+  have hgenerator : signSwitchGenerator P' x = e * v + x.2 • e := rfl
+  rw [hgenerator]
   rw [Algebra.smul_def]
   let r := algebraMap R (_root_.CliffordAlgebra Q') x.2
-  -- Name the scalar's central image so the four noncommutative terms can be compared directly.
-  change (e * v + r * e) * (e * v + r * e) = _
+  have hscalar : algebraMap R (_root_.CliffordAlgebra Q') x.2 = r := rfl
+  rw [hscalar]
   have hve : v * e = -(e * v) := eq_neg_of_add_eq_zero_right hev
   have hre : r * e = e * r := Algebra.commutes x.2 e
   have hrv : r * v = v * r := Algebra.commutes x.2 v
@@ -129,10 +128,9 @@ private theorem signSwitchTo_comp_signSwitchTo
   rintro ⟨m, r⟩
   simp only [LinearMap.comp_apply, AlgHom.toLinearMap_apply, AlgHom.comp_apply,
     signSwitchTo_ι, signSwitchGenerator_apply, map_add, map_mul, map_smul]
-  -- Split a source generator into its module and scalar components for the linear lift.
-  rw [show (m, r) = (m, 0) + r • (0, 1) by ext <;> simp, map_add, map_smul]
-  -- Expose the zero module-scalar pair so the Clifford generator reduces with `map_zero`.
-  rw [show ((0 : N), (0 : R)) = 0 by rfl, map_zero]
+  have hsplit : (m, r) = (m, 0) + r • (0, 1) := by ext <;> simp
+  have hzero : ((0 : N), (0 : R)) = 0 := rfl
+  rw [hsplit, map_add, map_smul, hzero, map_zero]
   simp only [mul_zero, zero_add, add_zero, one_smul, zero_smul]
   rw [← mul_assoc, _root_.CliffordAlgebra.ι_sq_scalar]
   simp

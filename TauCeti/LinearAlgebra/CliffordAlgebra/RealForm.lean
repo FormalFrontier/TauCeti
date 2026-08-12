@@ -223,7 +223,7 @@ def realCliffordFormNegIsometry (p q : ℕ) :
 theorem realCliffordFormNegIsometry_pos_of_neg (p q : ℕ)
     (x : Fin (p + q) → ℝ) (i : Fin q) :
     realCliffordFormNegIsometry p q x (Fin.castAdd p i) = x (Fin.natAdd p i) := by
-  -- Expose the bundled isometry's private reindexing map before using its coordinate equation.
+  -- The bundled-isometry coercion does not reduce to its private linear equivalence with `dsimp`.
   change realCliffordNegLinearEquiv p q x _ = _
   rw [← finSumFinEquiv_apply_left, ← realCliffordNegIndexEquiv_inr,
     realCliffordNegLinearEquiv_apply, finSumFinEquiv_apply_right]
@@ -234,7 +234,7 @@ theorem realCliffordFormNegIsometry_pos_of_neg (p q : ℕ)
 theorem realCliffordFormNegIsometry_neg_of_pos (p q : ℕ)
     (x : Fin (p + q) → ℝ) (i : Fin p) :
     realCliffordFormNegIsometry p q x (Fin.natAdd q i) = x (Fin.castAdd q i) := by
-  -- Expose the bundled isometry's private reindexing map before using its coordinate equation.
+  -- The bundled-isometry coercion does not reduce to its private linear equivalence with `dsimp`.
   change realCliffordNegLinearEquiv p q x _ = _
   rw [← finSumFinEquiv_apply_right, ← realCliffordNegIndexEquiv_inl,
     realCliffordNegLinearEquiv_apply, finSumFinEquiv_apply_left]
@@ -347,7 +347,7 @@ theorem realCliffordSplitIsometry_fst_pos (p₁ p₂ q₁ q₂ : ℕ)
     (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin p₁) :
     (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).1 (Fin.castAdd q₁ i) =
       x (Fin.castAdd (q₁ + q₂) (Fin.castAdd p₂ i)) := by
-  -- Expose the bundled isometry's underlying linear equivalence.
+  -- The bundled-isometry coercion does not expose the underlying linear equivalence with `dsimp`.
   change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).1 _ = _
   rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_left,
     realCliffordSplitIndexEquiv_symm_inl_pos]
@@ -359,7 +359,7 @@ theorem realCliffordSplitIsometry_fst_neg (p₁ p₂ q₁ q₂ : ℕ)
     (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin q₁) :
     (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).1 (Fin.natAdd p₁ i) =
       x (Fin.natAdd (p₁ + p₂) (Fin.castAdd q₂ i)) := by
-  -- Expose the bundled isometry's underlying linear equivalence.
+  -- The bundled-isometry coercion does not expose the underlying linear equivalence with `dsimp`.
   change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).1 _ = _
   rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_right,
     realCliffordSplitIndexEquiv_symm_inl_neg]
@@ -371,7 +371,7 @@ theorem realCliffordSplitIsometry_snd_pos (p₁ p₂ q₁ q₂ : ℕ)
     (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin p₂) :
     (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).2 (Fin.castAdd q₂ i) =
       x (Fin.castAdd (q₁ + q₂) (Fin.natAdd p₁ i)) := by
-  -- Expose the bundled isometry's underlying linear equivalence.
+  -- The bundled-isometry coercion does not expose the underlying linear equivalence with `dsimp`.
   change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).2 _ = _
   rw [realCliffordSplitLinearEquiv_snd, ← finSumFinEquiv_apply_left,
     realCliffordSplitIndexEquiv_symm_inr_pos]
@@ -383,7 +383,7 @@ theorem realCliffordSplitIsometry_snd_neg (p₁ p₂ q₁ q₂ : ℕ)
     (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin q₂) :
     (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).2 (Fin.natAdd p₂ i) =
       x (Fin.natAdd (p₁ + p₂) (Fin.natAdd q₁ i)) := by
-  -- Expose the bundled isometry's underlying linear equivalence.
+  -- The bundled-isometry coercion does not expose the underlying linear equivalence with `dsimp`.
   change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).2 _ = _
   rw [realCliffordSplitLinearEquiv_snd, ← finSumFinEquiv_apply_right,
     realCliffordSplitIndexEquiv_symm_inr_neg]
@@ -411,7 +411,7 @@ theorem realCliffordPositiveSplitIsometry_fst_pos (p q : ℕ)
     (v : Fin ((p + 1) + q) → ℝ) (i : Fin p) :
     (realCliffordPositiveSplitIsometry p q v).1 (Fin.castAdd q i) =
       v (Fin.castAdd q i.castSucc) := by
-  -- Expose the shared splitter underlying this bundled specialization.
+  -- The composed-isometry coercion does not expose the shared splitter with `dsimp`.
   change (realCliffordSplitIsometry p 1 q 0 v).1 _ = _
   rw [realCliffordSplitIsometry_fst_pos]
   congr 1
@@ -422,7 +422,7 @@ theorem realCliffordPositiveSplitIsometry_fst_neg (p q : ℕ)
     (v : Fin ((p + 1) + q) → ℝ) (i : Fin q) :
     (realCliffordPositiveSplitIsometry p q v).1 (Fin.natAdd p i) =
       v (Fin.natAdd (p + 1) i) := by
-  -- Expose the shared splitter underlying this bundled specialization.
+  -- The composed-isometry coercion does not expose the shared splitter with `dsimp`.
   change (realCliffordSplitIsometry p 1 q 0 v).1 _ = _
   rw [realCliffordSplitIsometry_fst_neg]
   congr 1
@@ -433,7 +433,7 @@ theorem realCliffordPositiveSplitIsometry_snd (p q : ℕ)
     (v : Fin ((p + 1) + q) → ℝ) :
     (realCliffordPositiveSplitIsometry p q v).2 =
       v (Fin.castAdd q (Fin.last p)) := by
-  -- Expose the shared splitter underlying this bundled specialization.
+  -- The composed-isometry coercion does not expose the shared splitter with `dsimp`.
   change (realCliffordSplitIsometry p 1 q 0 v).2 0 = _
   convert realCliffordSplitIsometry_snd_pos p 1 q 0 v (0 : Fin 1) using 1 <;>
     congr
@@ -451,7 +451,7 @@ theorem realBottSplitIsometry_fst_pos (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin p) :
     (realBottSplitIsometry p q v).1 (Fin.castAdd q i) =
       v (Fin.castAdd (q + 1) i.castSucc) := by
-  -- Expose the shared splitter underlying this bundled specialization.
+  -- The bundled-isometry coercion does not expose the shared splitter with `dsimp`.
   change (realCliffordSplitIsometry p 1 q 1 v).1 _ = _
   rw [realCliffordSplitIsometry_fst_pos]
   congr 1
@@ -462,7 +462,7 @@ theorem realBottSplitIsometry_fst_neg (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin q) :
     (realBottSplitIsometry p q v).1 (Fin.natAdd p i) =
       v (Fin.natAdd (p + 1) i.castSucc) := by
-  -- Expose the shared splitter underlying this bundled specialization.
+  -- The bundled-isometry coercion does not expose the shared splitter with `dsimp`.
   change (realCliffordSplitIsometry p 1 q 1 v).1 _ = _
   rw [realCliffordSplitIsometry_fst_neg]
   congr 1
