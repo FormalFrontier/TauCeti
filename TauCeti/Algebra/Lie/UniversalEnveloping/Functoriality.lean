@@ -77,12 +77,20 @@ noncomputable def map (f : LieHom R L M) :
 
 /-- An enveloping-algebra map acts on the canonical Lie generators by the original Lie
 homomorphism. -/
-@[simp]
+-- `simp`-normal form is `map_ι'`, since `simp` unfolds `ι` through `ι_apply`.
 theorem map_ι (f : LieHom R L M) (x : L) :
     map R f (_root_.UniversalEnvelopingAlgebra.ι R x) =
       _root_.UniversalEnvelopingAlgebra.ι R (f x) := by
   rw [map, _root_.UniversalEnvelopingAlgebra.lift_ι_apply]
   exact LieHom.comp_apply _ _ _
+
+/-- The `simp`-normal form of `map_ι`, stated for the canonical generators as `simp` writes them:
+`ι R x` unfolds to `mkAlgHom R L (TensorAlgebra.ι R x)`. -/
+@[simp]
+theorem map_ι' (f : LieHom R L M) (x : L) :
+    map R f (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
+      _root_.UniversalEnvelopingAlgebra.mkAlgHom R M (TensorAlgebra.ι R (f x)) := by
+  simpa using map_ι R f x
 
 /-- An algebra homomorphism out of an enveloping algebra is the map induced by `f` exactly when
 it sends every canonical generator to the image prescribed by `f`. -/
@@ -170,11 +178,19 @@ noncomputable def mapEquiv (e : LieEquiv R L M) :
 
 /-- The algebra equivalence induced by a Lie equivalence acts on canonical generators by that Lie
 equivalence. -/
-@[simp]
+-- `simp`-normal form is `mapEquiv_ι'`, since `simp` unfolds `ι` through `ι_apply`.
 theorem mapEquiv_ι (e : LieEquiv R L M) (x : L) :
     mapEquiv R e (_root_.UniversalEnvelopingAlgebra.ι R x) =
-      _root_.UniversalEnvelopingAlgebra.ι R (e x) := by
-  exact map_ι R e.toLieHom x
+      _root_.UniversalEnvelopingAlgebra.ι R (e x) :=
+  map_ι R e.toLieHom x
+
+/-- The `simp`-normal form of `mapEquiv_ι`, stated for the canonical generators as `simp` writes
+them: `ι R x` unfolds to `mkAlgHom R L (TensorAlgebra.ι R x)`. -/
+@[simp]
+theorem mapEquiv_ι' (e : LieEquiv R L M) (x : L) :
+    mapEquiv R e (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
+      _root_.UniversalEnvelopingAlgebra.mkAlgHom R M (TensorAlgebra.ι R (e x)) := by
+  simpa using mapEquiv_ι R e x
 
 /-- The algebra homomorphism underlying `mapEquiv` is the map induced by the underlying Lie
 homomorphism. -/
