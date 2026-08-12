@@ -69,7 +69,7 @@ variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpa
 
 /-- The fibre of a first-order scalar Sobolev jet: a value and its gradient, with the Euclidean
 product norm. -/
-abbrev Sobolev1Jet (E : Type*) [NormedAddCommGroup E] [InnerProductSpace ℝ E] :=
+abbrev Sobolev1Jet (E : Type*) :=
   WithLp 2 (ℝ × E)
 
 /-- The ambient Bochner `Lᵖ` space of value-gradient jets on `Ω`. -/
@@ -88,14 +88,14 @@ omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= 
 @[simp]
 theorem Sobolev1JetLp.value_apply_ae (J : Sobolev1JetLp mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
-      Sobolev1JetLp.value J x = (WithLp.ofLp (J x)).1 := by
+      Sobolev1JetLp.value J x = WithLp.fst (J x) := by
   simpa [Sobolev1JetLp.value] using (WithLp.fstL 2 ℝ ℝ E).coeFn_compLp J
 
 omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] [Fact (1 <= p)] in
 @[simp]
 theorem Sobolev1JetLp.gradient_apply_ae (J : Sobolev1JetLp mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
-      Sobolev1JetLp.gradient J x = (WithLp.ofLp (J x)).2 := by
+      Sobolev1JetLp.gradient J x = WithLp.snd (J x) := by
   simpa [Sobolev1JetLp.gradient] using (WithLp.sndL 2 ℝ ℝ E).coeFn_compLp J
 
 /-- The candidate weak Fréchet derivative recorded by the gradient component of a Sobolev jet. -/
@@ -147,15 +147,14 @@ private theorem weakDerivativeTestFunction_memLp (q : ENNReal) (phi : 𝓓(Omega
 
 /-- The compactly supported jet `(∂_v φ, φ v)` used to test whether an `Lᵖ` jet is a weak
 derivative.  Its exponent is Hölder-conjugate to `p`, including the endpoints `p = 1, ∞`. -/
-def weakDerivativeTestJet (p : ENNReal) [Fact (1 <= p)] (phi : 𝓓(Omega, ℝ)) (v : E) :
+def weakDerivativeTestJet (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
     Lp (Sobolev1Jet E) (ENNReal.conjExponent p) (mu.restrict Omega) :=
   (weakDerivativeTestFunction_memLp (mu := mu) (ENNReal.conjExponent p) phi v).toLp
     (weakDerivativeTestFunction phi v)
 
 omit [FiniteDimensional ℝ E] in
 @[simp]
-theorem weakDerivativeTestJet_apply_ae (p : ENNReal) [Fact (1 <= p)]
-    (phi : 𝓓(Omega, ℝ)) (v : E) :
+theorem weakDerivativeTestJet_apply_ae (p : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
     ∀ᵐ x ∂mu.restrict Omega,
       weakDerivativeTestJet (mu := mu) p phi v x =
         WithLp.toLp 2 (lineDeriv ℝ (phi : E → ℝ) x v, phi x • v) := by
