@@ -45,8 +45,7 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
   and its averaged corollary `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
 * `TauCeti.indClassFun_comp_subtype_mul`: the **projection formula**,
-  `Ind_S^G ((Res_S f) · ψ) = f · Ind_S^G ψ` for a class function `f` of `G`, with
-  `TauCeti.ClassFunction.indClassFun_comap_subtype_mul` its `TauCeti.ClassFunction.comap` form.
+  `Ind_S^G ((Res_S f) · ψ) = f · Ind_S^G ψ` for a class function `f` of `G`.
 
 Frobenius reciprocity for class functions, `⟨Ind f, h⟩_G = ⟨f, Res h⟩_S`, is
 `TauCeti.frobenius_reciprocity_classFunction`; it needs the pairing, so it lives with the other
@@ -333,16 +332,6 @@ noncomputable def ind (S : Subgroup G) [S.FiniteIndex] :
 theorem ind_apply [S.FiniteIndex] (f : ClassFunction k S) (g : G) :
     (ind S f).1 g = indClassFun S f.1 g :=
   (rfl)
-
-/-- The projection formula `TauCeti.indClassFun_comp_subtype_mul` with the restriction written as
-`TauCeti.ClassFunction.comap` along the inclusion of the subgroup. -/
-@[simp]
-theorem indClassFun_comap_subtype_mul [S.FiniteIndex] (f : ClassFunction k G) (ψ : S → k) :
-    indClassFun S ((comap S.subtype f).1 * ψ) = f.1 * indClassFun S ψ := by
-  have h : ((comap S.subtype f).1 : S → k) = fun s : S => f.1 s :=
-    funext fun s => comap_apply S.subtype f s
-  rw [h]
-  exact indClassFun_comp_subtype_mul f.2 ψ
 
 end ClassFunction
 
