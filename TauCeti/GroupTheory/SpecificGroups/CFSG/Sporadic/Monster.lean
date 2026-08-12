@@ -107,6 +107,7 @@ def coxeterMatrix : CoxeterMatrix (Fin 12) where
     split <;> omega
 
 /-- Evaluation of the `Y₄₄₃` Coxeter matrix directly from its edge list. -/
+@[simp]
 theorem coxeterMatrix_apply (i j : Fin 12) :
     coxeterMatrix i j =
       if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2 := by
@@ -169,12 +170,7 @@ theorem relatorList_def : relatorList =
 
 Ivanov proves that `Y₄₄₃` is `M × 2` and that quotienting by the central element `f₃₁₂` gives `M`.
 No structural property of the resulting `PresentedGroup` is asserted here; this definition records
-only the cited generators and complete relator data.
-
-The body is exposed so that `presentation_transcribed` below can state the exact typed relator
-data: the index type of a transcribed relator is `Fin presentation.generatorNames.length`, which
-is `Fin 12` only by unfolding this definition. -/
-@[expose]
+only the cited generators and complete relator data. -/
 def presentation : GroupPresentation where
   generatorNames := ["a", "b1", "c1", "d1", "e1", "b2", "c2", "d2", "e2", "b3", "c3", "d3"]
   source := "J. N. Bray, Sporadic (Fischer-Griess) Monster group M = F1; A. A. Ivanov, Y-groups \
@@ -245,8 +241,8 @@ theorem presentation_expectedRelatorCount : presentation.expectedRelatorCount = 
 /-- The relator expressions carried by the Monster presentation are exactly the transcribed
 relator list, whose decomposition is `relatorList_def`. -/
 @[simp]
-theorem presentation_transcribed : presentation.transcribed = relatorList := by
-  simp [presentation]
+theorem presentation_transcribed : presentation.transcribed = cast (by simp) relatorList := by
+  rfl
 
 /-- The compiled relators carried by the Monster presentation, with generator bounds forgotten. -/
 theorem presentation_relatorLetters : presentation.relatorLetters =
