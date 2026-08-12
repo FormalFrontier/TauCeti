@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Lie.Weights.RootSystem
+public import TauCeti.Algebra.Lie.Weights.Span
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
 public section
@@ -28,10 +29,8 @@ function.
 
 ## Main definitions
 
-* `TauCeti.genWeightSpaceSpan H M S`: the `H`-submodule of a module `M` spanned by the weight spaces
-  indexed by a set `S` of `K`-valued functions on `H`.
 * `TauCeti.rootSpaceSpan H S`: the `H`-submodule of `L` spanned by the root spaces indexed by a set
-  `S` of roots, the instance of the previous construction at `M = L`.
+  `S` of roots, the instance of `TauCeti.genWeightSpaceSpan` at `M = L`.
 * `TauCeti.IsSpecialClosedRootSet H S`: `S` is stable under those sums of its members that are
   again roots, and contains no root together with its negative.
 * `TauCeti.rootSpaceSubalgebra H S hS`: the span of a special closed set of roots, as a Lie
@@ -42,13 +41,10 @@ function.
 
 ## Main results
 
-* `TauCeti.genWeightSpaceSpan_le_iff`, `TauCeti.rootSpaceSpan_le_iff` and
-  `TauCeti.rootSpaceSubalgebra_le_iff` are the universal property of the span: it is contained in a
-  given submodule, resp. Lie subalgebra, exactly when each of the weight spaces it is spanned by is.
-  `TauCeti.positiveNilradical_le_iff` and `TauCeti.negativeNilradical_le_iff` are its two
-  specialisations to the nilradicals.
-* `TauCeti.lie_mem_genWeightSpaceSpan`: a vector in the root space of `α` carries the span of a set
-  `S` of weight spaces into the span of any set containing `α + S`.
+* `TauCeti.rootSpaceSpan_le_iff` and `TauCeti.rootSpaceSubalgebra_le_iff` are the universal property
+  of the span: it is contained in a given submodule, resp. Lie subalgebra, exactly when each of the
+  root spaces it is spanned by is. `TauCeti.positiveNilradical_le_iff` and
+  `TauCeti.negativeNilradical_le_iff` are its two specialisations to the nilradicals.
 * `TauCeti.mem_positiveNilradical_of_mem_rootSpace` and
   `TauCeti.mem_negativeNilradical_of_mem_rootSpace` say the nilradicals contain the root spaces
   they are built from.
@@ -91,57 +87,11 @@ namespace TauCeti
 
 open LieAlgebra LieModule Module
 
-universe u v w
+universe u v
 
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [IsKilling K L] [FiniteDimensional K L]
   (H : LieSubalgebra K L) [H.IsCartanSubalgebra] [IsTriangularizable K H L]
-  {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-
-/-! ### Spans of weight spaces -/
-
-variable (M) in
-/-- The `H`-submodule of a module `M` spanned by the weight spaces indexed by a set `S` of
-`K`-valued functions on the Cartan subalgebra. -/
-def genWeightSpaceSpan (S : Set (H → K)) : LieSubmodule K H M :=
-  ⨆ chi : S, genWeightSpace M (chi : H → K)
-
-variable {H}
-
-omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
-/-- A weight space indexed by a member of `S` lies in the span of `S`. -/
-theorem genWeightSpace_le_genWeightSpaceSpan {S : Set (H → K)} {chi : H → K} (h : chi ∈ S) :
-    genWeightSpace M chi ≤ genWeightSpaceSpan H M S :=
-  le_iSup (fun psi : S => genWeightSpace M (psi : H → K)) ⟨chi, h⟩
-
-omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
-/-- Spans of weight spaces are monotone in the indexing set. -/
-theorem genWeightSpaceSpan_mono {S T : Set (H → K)} (h : S ⊆ T) :
-    genWeightSpaceSpan H M S ≤ genWeightSpaceSpan H M T :=
-  iSup_le fun chi => genWeightSpace_le_genWeightSpaceSpan (h chi.2)
-
-omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
-/-- The span of the weight spaces indexed by `S` is contained in an `H`-submodule exactly when each
-of the weight spaces it is spanned by is. -/
-theorem genWeightSpaceSpan_le_iff {S : Set (H → K)} {N : LieSubmodule K H M} :
-    genWeightSpaceSpan H M S ≤ N ↔ ∀ chi ∈ S, genWeightSpace M chi ≤ N :=
-  ⟨fun h _ hchi => (genWeightSpace_le_genWeightSpaceSpan hchi).trans h,
-    fun h => iSup_le fun chi => h chi chi.2⟩
-
-omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
-/-- **A root vector moves the span of a set of weight spaces to the span of the shifted set**: a
-vector in the root space of `alpha` carries the weight space at `chi` into the weight space at
-`alpha + chi`. -/
-theorem lie_mem_genWeightSpaceSpan {S T : Set (H → K)} {alpha : H → K} {x : L}
-    (hx : x ∈ rootSpace H alpha) (hST : ∀ chi ∈ S, alpha + chi ∈ T)
-    {m : M} (hm : m ∈ genWeightSpaceSpan H M S) : ⁅x, m⁆ ∈ genWeightSpaceSpan H M T := by
-  refine LieSubmodule.iSup_induction (fun chi : S => genWeightSpace M (chi : H → K))
-    (motive := fun m => ⁅x, m⁆ ∈ genWeightSpaceSpan H M T) hm (fun chi y hy => ?_) (by simp)
-    (fun y z hy hz => by rw [lie_add]; exact add_mem hy hz)
-  exact genWeightSpace_le_genWeightSpaceSpan (hST _ chi.2)
-    (lie_mem_genWeightSpace_of_mem_genWeightSpace (M := M) hx hy)
-
-variable (H)
 
 /-! ### Spans of root spaces -/
 

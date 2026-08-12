@@ -132,7 +132,7 @@ private theorem lie_mem_lieSpan_of_mem_borelSubalgebra (hv : IsHighestWeightVect
     intro x hx
     rw [← LieSubalgebra.mem_toSubmodule, borelSubalgebra_toSubmodule, Submodule.mem_sup] at hx
     obtain ⟨u, hu, p, hp, rfl⟩ := hx
-    rw [add_lie, hv.lie_eq_smul_of_mem hu, hv.lie_eq_zero_of_mem_positiveNilradical hp, add_zero]
+    rw [add_lie, hv.lie_eq_smul ⟨u, hu⟩, hv.lie_eq_zero_of_mem_positiveNilradical hp, add_zero]
     exact SMulMemClass.smul_mem _ (LieSubmodule.subset_lieSpan rfl)
   | zero => intro x _; rw [lie_zero]; exact zero_mem _
   | add y z _ _ ihy ihz => intro x hx; rw [lie_add]; exact add_mem (ihy x hx) (ihz x hx)
@@ -324,8 +324,7 @@ theorem sub_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of
     exists_eq_sub_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top
       hv hgen hchi
   have hnu' : lam - nu = chi := DFunLike.coe_injective heq
-  rw [show lam - chi = nu by rw [← hnu']; abel]
-  exact hnu
+  rwa [← hnu', sub_sub_cancel]
 
 /-- **A module is a highest weight module for at most one weight.** If two highest weight vectors
 both generate `M`, each of their weights lies below the other, and the cone is sharp. -/
@@ -379,8 +378,7 @@ theorem genWeightSpace_eq_span_singleton_of_isHighestWeightVector_of_lieSpan_eq_
   have hyw : y ∈ (genWeightSpace M ((lam : Dual K H) : H → K) : Submodule K M) :=
     Submodule.span_le.mpr (Set.singleton_subset_iff.mpr hv.mem_genWeightSpace) hy
   have hzw : z ∈ (genWeightSpace M ((lam : Dual K H) : H → K) : Submodule K M) := by
-    rw [show z = y + z - y by abel]
-    exact sub_mem hm hyw
+    simpa only [add_sub_cancel_left] using sub_mem hm hyw
   have hz0 : z = 0 := by
     have : z ∈ (⊥ : Submodule K M) := hdisj' ▸ Submodule.mem_inf.mpr ⟨hzw, hz⟩
     simpa using this

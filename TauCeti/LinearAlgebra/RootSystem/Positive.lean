@@ -225,21 +225,9 @@ omit [CharZero R] in
 simple roots. -/
 theorem mem_posRootCone {v : M} :
     v ∈ posRootCone P b ↔ ∃ f : ι → ℕ, v = ∑ j ∈ b.support, f j • P.root j := by
-  classical
-  refine ⟨fun hv => ?_, ?_⟩
-  · induction hv using AddSubmonoid.closure_induction with
-    | mem x hx =>
-      obtain ⟨j, hj, rfl⟩ := hx
-      rw [Finset.mem_coe] at hj
-      exact ⟨fun k => if k = j then 1 else 0, by simp [ite_smul, Finset.sum_ite_eq', hj]⟩
-    | zero => exact ⟨0, by simp⟩
-    | add x y _ _ hx hy =>
-      obtain ⟨f, rfl⟩ := hx
-      obtain ⟨g, rfl⟩ := hy
-      exact ⟨f + g, by simp [add_smul, Finset.sum_add_distrib]⟩
-  · rintro ⟨f, rfl⟩
-    exact AddSubmonoid.sum_mem _ fun j hj =>
-      nsmul_mem (AddSubmonoid.subset_closure (Set.mem_image_of_mem _ (Finset.mem_coe.mpr hj))) _
+  rw [posRootCone, ← Submodule.span_nat_eq_addSubmonoidClosure, Submodule.mem_toAddSubmonoid,
+    Submodule.mem_span_image_finset_iff_exists_fun']
+  exact exists_congr fun _ => eq_comm
 
 /-- Every positive root lies in the positive root cone. -/
 theorem root_mem_posRootCone_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
