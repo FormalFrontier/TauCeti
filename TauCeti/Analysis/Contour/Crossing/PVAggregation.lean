@@ -35,12 +35,6 @@ simple-pole and higher-order per-window theorems both discharge them.
   form: when the integrand has a curve-antiderivative `Φ` off the pole and each window limit is
   the boundary difference of `Φ ∘ γ`, the principal value is `Φ (γ b) - Φ (γ a)` — zero around
   a closed curve.
-* `Contour.cauchyPVExistsAt_of_perWindow_tendsto` and
-  `Contour.hasCauchyPVAt_of_perWindow_boundary_tendsto` — the strict special cases of those
-  two, for windows strictly separated from each other and starting strictly after `a` — their
-  right edges may already reach `b`, since `h_hi` is `t + r ≤ b`. They cannot express windows
-  that touch each other or that start at `a`; reach for the `_of_interiorDisjoint` forms above
-  when either matters.
 * `Contour.exists_hasCauchyPVAt_re_eq_of_perWindow_tendsto_of_interiorDisjoint` — like the first
   form above, but returns the aggregated value explicitly and pins its **real part** to the
   difference of a real boundary function `Ψ`, given only the real part of each piece and window
@@ -288,49 +282,6 @@ theorem hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint {γ : �
       exact hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window hab
         (h_lo t h_mem) (h_hi t h_mem) (hr_nonneg ⟨t, h_mem⟩) h_int_tr, h_win t h_mem⟩)
     (fun u hu h_avoid => hm u hu fun t ht => h_avoid t ((Finset.mem_sort _).mpr ht))
-
-/-- **Compatibility form of `cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint`** with
-windows strictly separated from each other and starting strictly after `a`; the right edges may
-equal `b`, since `h_hi` is `t + r ≤ b`. Prefer the general form, which additionally admits windows
-that touch each other or start at `a`. -/
-theorem cauchyPVExistsAt_of_perWindow_tendsto {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ}
-    {a b r : ℝ} (hr_pos : 0 < r) (hab : a ≤ b) (crossings : Finset ℝ)
-    (h_lo : ∀ t ∈ crossings, a < t - r) (h_hi : ∀ t ∈ crossings, t + r ≤ b)
-    (h_pair : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r < |t - t'|)
-    (h_int_tr : ∀ ε : ℝ, 0 < ε →
-      IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
-        MeasureTheory.volume a b)
-    (h_win : ∀ t ∈ crossings, ∃ v : ℂ, Tendsto (fun ε : ℝ => ∫ u in (t - r)..(t + r),
-        if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) (𝓝[>] (0 : ℝ)) (𝓝 v))
-    (h_far : ∃ m : ℝ, 0 < m ∧ ∀ u ∈ Icc a b, (∀ t ∈ crossings, u ∉ Ioo (t - r) (t + r)) →
-      m ≤ ‖γ u - s‖) :
-    CauchyPVExistsAt γ a b g s :=
-  cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint hab crossings (fun _ => hr_pos.le)
-    (fun t ht => (h_lo t ht).le) h_hi (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le)
-    h_int_tr h_win h_far
-
-/-- **Compatibility form of `hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint`**
-with windows strictly separated from each other and starting strictly after `a`; the right edges
-may equal `b`. Prefer the general form. -/
-theorem hasCauchyPVAt_of_perWindow_boundary_tendsto {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ}
-    {Φ : ℂ → ℂ} {a b r : ℝ} (hr_pos : 0 < r) (hab : a ≤ b) (crossings : Finset ℝ)
-    (h_lo : ∀ t ∈ crossings, a < t - r) (h_hi : ∀ t ∈ crossings, t + r ≤ b)
-    (h_pair : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r < |t - t'|)
-    (h_int_tr : ∀ ε : ℝ, 0 < ε →
-      IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
-        MeasureTheory.volume a b)
-    (h_plain_eq : ∀ l u : ℝ, a ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, γ t ≠ s) →
-      ∫ t in l..u, g (γ t) * deriv γ t = Φ (γ u) - Φ (γ l))
-    (h_win : ∀ t ∈ crossings, Tendsto (fun ε : ℝ => ∫ u in (t - r)..(t + r),
-        if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) (𝓝[>] (0 : ℝ))
-        (𝓝 (Φ (γ (t + r)) - Φ (γ (t - r)))))
-    (h_far : ∃ m : ℝ, 0 < m ∧ ∀ u ∈ Icc a b, (∀ t ∈ crossings, u ∉ Ioo (t - r) (t + r)) →
-      m ≤ ‖γ u - s‖) :
-    HasCauchyPVAt γ a b g s (Φ (γ b) - Φ (γ a)) :=
-  hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint hab crossings
-    (fun _ => hr_pos.le) (fun t ht => (h_lo t ht).le) h_hi
-    (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le) h_int_tr h_plain_eq h_win h_far
-
 
 end TauCeti.Contour
 

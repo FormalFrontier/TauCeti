@@ -27,7 +27,7 @@ through `s`. The immersion makes the crossing set finite; each interior crossing
 slit-plane radius (`Contour.exists_crossing_slitPlane_radius`), the radii shrink to a common
 window radius (`Contour.exists_common_window_radius`), each window integral converges
 (`Contour.perWindow_truncated_integral_tendsto`), and the windows aggregate
-(`Contour.cauchyPVExistsAt_of_perWindow_tendsto`).
+(`Contour.cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint`).
 
 ## Main results
 
@@ -153,8 +153,8 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
     fun _ hε => intervalIntegrable_inv_sub_truncated h_imm.continuousOn
       h_imm.isPiecewiseC1On.intervalIntegrable_deriv hε
   rcases T.eq_empty_or_nonempty with hT_empty | -
-  · refine cauchyPVExistsAt_of_perWindow_tendsto one_pos hab.le T ?_ ?_ ?_ h_int_tr ?_
-      (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
+  · refine cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint hab.le T ?_ ?_ ?_ ?_ h_int_tr
+      ?_ (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
         fun t _ => one_pos)
     all_goals simp [hT_empty]
   · choose! R hR_pos _ _ _ _ _ _ h_spec using
@@ -163,10 +163,10 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
     -- one radius serving every crossing at once, below each per-crossing radius `R t`
     obtain ⟨ρ, hρ_pos, h_endpts, h_pair, hρ_le_R⟩ :=
       exists_common_window_radius_le h_Ioo R hR_pos
-    refine cauchyPVExistsAt_of_perWindow_tendsto hρ_pos hab.le T
+    refine cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint hab.le T (fun _ => hρ_pos.le)
       (fun t ht => by linarith [(h_endpts t ht).1])
       (fun t ht => by linarith [(h_endpts t ht).2])
-      h_pair
+      (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le)
       h_int_tr
       (fun t₀ ht₀ => ⟨_, h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
         (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
