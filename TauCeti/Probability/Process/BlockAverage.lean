@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Order.Filter.AtTopBot.Basic
-public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
+public import Mathlib.Algebra.Order.BigOperators.Expect
 public import Mathlib.Dynamics.BirkhoffSum.Average
 import Mathlib.Algebra.BigOperators.Fin
 
@@ -167,6 +166,28 @@ theorem birkhoffAverage_eq_prefixAverage {β : Type*} (T : β → β) (F : β �
   rw [birkhoffAverage, birkhoffSum, prefixAverage_apply, smul_eq_mul]
   congr 1
   exact Finset.sum_range fun i => F (T^[i] x)
+
+/-! ### The unit interval
+
+A block average of `[0,1]`-valued coordinates stays in `[0,1]`. This is the bound the product
+convergence lemmas need, and it is pure order algebra — no measure and no norm is involved, so the
+`‖·‖ ≤ 1` form is left to the consumer that has a normed structure in scope. -/
+
+/-- A block average of nonnegative coordinates is nonnegative. Only the sampled coordinates at the
+one point `ω` are constrained. -/
+theorem blockAverage_nonneg {Y : ℕ → Ω → ℝ} {n : ℕ} {k : Fin n → ℕ} {ω : Ω}
+    (hY : ∀ i, 0 ≤ Y (k i) ω) : 0 ≤ blockAverage Y k ω := by
+  rw [blockAverage, Finset.expect_apply]
+  exact Finset.expect_nonneg fun i _ => hY i
+
+/-- A block average of coordinates bounded by `1` is bounded by `1`. Only the sampled coordinates
+at the one point `ω` are constrained. -/
+theorem blockAverage_le_one {Y : ℕ → Ω → ℝ} {n : ℕ} {k : Fin n → ℕ} {ω : Ω}
+    (hY : ∀ i, Y (k i) ω ≤ 1) : blockAverage Y k ω ≤ 1 := by
+  rw [blockAverage, Finset.expect_apply]
+  rcases Finset.univ.eq_empty_or_nonempty (α := Fin n) with h | h
+  · simp [h]
+  · exact Finset.expect_le h fun i _ => hY i
 
 end Probability
 
