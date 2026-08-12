@@ -129,6 +129,33 @@ theorem unitι_mem_lipschitzGroup (v : M) [Invertible (Q v)] : unitι Q v ∈ li
   unfold lipschitzGroup
   exact Subgroup.subset_closure ⟨v, (coe_unitι v).symm⟩
 
+/-- The scalar `-1` belongs to the Spin group when the quadratic form is a unit
+on some vector. -/
+theorem neg_one_mem_spinGroup_of_isUnit (Q : QuadraticForm R M) (v : M)
+    (hvQ : IsUnit (Q v)) :
+    (-1 : CliffordAlgebra Q) ∈ spinGroup Q := by
+  let _ : Invertible (Q v) := hvQ.invertible
+  let a : R := -⅟(Q v)
+  have ha : IsUnit a := (isUnit_of_invertible (⅟(Q v))).neg
+  let _ : Invertible a := ha.invertible
+  have havQ : IsUnit (Q (a • v)) := by
+    rw [QuadraticMap.map_smul]
+    simpa [smul_eq_mul, mul_assoc] using ha.mul (ha.mul hvQ)
+  let _ : Invertible (Q (a • v)) := havQ.invertible
+  let x := unitι Q (a • v) * unitι Q v
+  have hx : (x : CliffordAlgebra Q) = -1 := by
+    simp only [x, Units.val_mul, coe_unitι, map_smul, Algebra.smul_def]
+    rw [mul_assoc, ι_sq_scalar, ← map_mul]
+    simp [a]
+  rw [spinGroup.mem_iff]
+  refine ⟨?_, ?_⟩
+  · refine ⟨⟨x, mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _), hx⟩,
+      ?_⟩
+    -- Expose the unitary component of the Lipschitz-group membership goal.
+    change (-1 : CliffordAlgebra Q) ∈ unitary (CliffordAlgebra Q)
+    simp [Unitary.mem_iff]
+  · exact (CliffordAlgebra.even Q).neg_mem (CliffordAlgebra.even Q).one_mem
+
 /-- A vector of norm `-1` lies in the Pin group. The sign is Mathlib's convention: `star` is the
 reversal composed with the grade involution, so `star (ι Q v) = -ι Q v`, and the unitarity
 condition `star x * x = 1` defining `pinGroup Q` reads `-Q v = 1` on a vector. -/

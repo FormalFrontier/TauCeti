@@ -308,29 +308,9 @@ theorem neg_one_mem_spinGroup (Q : QuadraticForm K M) [Invertible (2 : K)]
   obtain ⟨v, hv⟩ :=
     LinearMap.BilinForm.exists_bilinForm_self_ne_zero hB.ne_zero
       (LinearMap.BilinForm.isSymm_iff.mp hBsymm)
-  have hvQ : Q v ≠ 0 := by
-    rwa [QuadraticMap.associated_eq_self_apply] at hv
-  let _ : Invertible (Q v) := (isUnit_iff_ne_zero.mpr hvQ).invertible
-  let a : K := -⅟(Q v)
-  have ha : a ≠ 0 := neg_ne_zero.mpr (Invertible.ne_zero (⅟(Q v)))
-  let _ : Invertible a := (isUnit_iff_ne_zero.mpr ha).invertible
-  have havQ : Q (a • v) ≠ 0 := by
-    rw [QuadraticMap.map_smul]
-    exact mul_ne_zero (mul_ne_zero ha ha) hvQ
-  let _ : Invertible (Q (a • v)) := (isUnit_iff_ne_zero.mpr havQ).invertible
-  let x := unitι Q (a • v) * unitι Q v
-  have hx : (x : CliffordAlgebra Q) = -1 := by
-    simp only [x, Units.val_mul, coe_unitι, map_smul, Algebra.smul_def]
-    rw [mul_assoc, ι_sq_scalar, ← map_mul]
-    simp [a]
-  rw [spinGroup.mem_iff]
-  refine ⟨?_, ?_⟩
-  · refine ⟨⟨x, mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _), hx⟩,
-      ?_⟩
-    -- Expose the unitary component of the Lipschitz-group membership goal.
-    change (-1 : CliffordAlgebra Q) ∈ unitary (CliffordAlgebra Q)
-    simp [Unitary.mem_iff]
-  · exact (CliffordAlgebra.even Q).neg_mem (CliffordAlgebra.even Q).one_mem
+  apply neg_one_mem_spinGroup_of_isUnit Q v
+  rw [isUnit_iff_ne_zero]
+  rwa [QuadraticMap.associated_eq_self_apply] at hv
 
 /-- The scalar `-1` as an element of the Spin group of a nontrivial
 nondegenerate quadratic space. -/
