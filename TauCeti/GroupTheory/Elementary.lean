@@ -83,7 +83,7 @@ public section
 
 namespace TauCeti
 
-open Subgroup
+open _root_.Subgroup
 
 section Defs
 

@@ -52,11 +52,14 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 
 * `TauCeti.Representation.iSup_conjSubrep_eq_top`: the translates of a nonzero
   `N`-subrepresentation of an irreducible representation span.
+* `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top`: the same statement read in the
+  lattice of `k[N]`-submodules of the restriction.
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`: if some
   `N`-subrepresentation of an irreducible representation `IsAtom`, then the restriction to `N` is
   semisimple.
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`: the same conclusion for a
-  **finite-dimensional** irreducible representation, where such an atom is automatic.
+  **finite-dimensional** irreducible representation, where such an atom is automatic
+  (`TauCeti.Representation.exists_isAtom`).
 
 ## Implementation notes
 
@@ -73,12 +76,12 @@ only the statement.
 This file supplies item (iii) of the **prerequisite** of Layer 5 (Clifford theory over a normal
 subgroup) of `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md` — "restriction
 along a subgroup preserves semisimplicity" — in the normal-subgroup case Clifford theory uses,
-as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  It stops there: the layer's
-**Clifford's theorem** milestone itself, which the roadmap orders after the whole of that
-prerequisite, is not claimed here, and nothing below mentions a decomposition, an isotypic
-component, a multiplicity or a `G`-orbit of constituents.  What the file does leave in place is the
-translation machinery that milestone runs on, since it is the same machinery the semisimplicity
-statement is proved from.
+as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  It stops there: nothing below
+mentions a decomposition, an isotypic component, a multiplicity or a `G`-orbit of constituents.
+What the file does leave in place is the translation machinery the **Clifford's theorem** milestone
+runs on, since it is the same machinery the semisimplicity statement is proved from; the
+single-orbit half of that milestone is
+`TauCeti/RepresentationTheory/Induction/Clifford/Orbit.lean`.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
@@ -286,6 +289,35 @@ theorem iSup_conjSubrep_eq_top [ρ.IsIrreducible]
     exact le_bot_iff.mp (hbot ▸ hτσ)
   · exact congrArg Subrepresentation.toSubmodule h
 
+/-- **The translates of a nonzero `N`-subrepresentation of an irreducible representation span, as
+`k[N]`-submodules.**  This is `TauCeti.Representation.iSup_conjSubrep_eq_top` read in the lattice of
+`k[N]`-submodules of `Representation.asModule (ρ.comp N.subtype)` instead of the lattice of
+`k`-subspaces of `V`; the two lattices are exchanged by
+`Subrepresentation.subrepresentationSubmoduleOrderIso`, and this is the only place the exchange is
+performed. -/
+theorem iSup_asSubmodule_conjSubrep_eq_top [ρ.IsIrreducible]
+    {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : σ ≠ ⊥) :
+    ⨆ g : G, (conjSubrep ρ g σ).asSubmodule = ⊤ := by
+  -- The lattice of subrepresentations is only a `BoundedOrder`, with no suprema of its own, so the
+  -- supremum is formed on the submodule side and pulled back, rather than pushed forward.
+  set S : Subrepresentation (ρ.comp N.subtype) :=
+    Subrepresentation.subrepresentationSubmoduleOrderIso.symm
+      (⨆ g : G, (conjSubrep ρ g σ).asSubmodule) with hS
+  have hSeq : S.asSubmodule = ⨆ g : G, (conjSubrep ρ g σ).asSubmodule := by
+    rw [hS, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
+      OrderIso.apply_symm_apply]
+  have hle : ∀ g : G, conjSubrep ρ g σ ≤ S := fun g => by
+    rw [← Subrepresentation.subrepresentationSubmoduleOrderIso.le_iff_le,
+      Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
+      Subrepresentation.subrepresentationSubmoduleOrderIso_apply, hSeq]
+    exact le_iSup (fun g : G => (conjSubrep ρ g σ).asSubmodule) g
+  have htop : S = ⊤ := by
+    refine Subrepresentation.toSubmodule_injective (le_antisymm le_top ?_)
+    rw [Subrepresentation.toSubmodule_top, ← iSup_conjSubrep_eq_top ρ hσ]
+    exact iSup_le fun g => hle g
+  rw [← hSeq, htop, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
+    OrderIso.map_top]
+
 /-- **Restriction to a normal subgroup is semisimple, from a minimal constituent.** If an
 irreducible representation has a minimal nonzero `N`-stable subspace, then its restriction to `N`
 is semisimple: the translates of that subspace are again minimal and they span, so the restriction
@@ -297,47 +329,19 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
     {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) :
     _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
   rw [_root_.Representation.isSemisimpleRepresentation_iff_isSemisimpleModule_asModule]
-  refine IsSemisimpleModule.of_sSup_simples_eq_top (le_antisymm le_top ?_)
-  have hmem : ∀ g : G, Subrepresentation.asSubmodule (conjSubrep ρ g σ) ∈
-      { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
-        IsSimpleModule k[N] m } := by
-    intro g
-    rw [Set.mem_ofPred_eq, isSimpleModule_iff_isAtom]
-    exact (Subrepresentation.subrepresentationSubmoduleOrderIso.isAtom_iff _).mpr
-      (isAtom_conjSubrep_iff.mpr hσ)
-  -- pull the supremum back to a subrepresentation, where the spanning statement lives
-  set T : Subrepresentation (ρ.comp N.subtype) :=
-    Subrepresentation.subrepresentationSubmoduleOrderIso.symm
-      (sSup { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
-        IsSimpleModule k[N] m }) with hT
-  have hTsSup : Subrepresentation.asSubmodule T =
-      sSup { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
-        IsSimpleModule k[N] m } := by
-    rw [hT, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
-      OrderIso.apply_symm_apply]
-  have hle : ∀ g : G, conjSubrep ρ g σ ≤ T := fun g => by
-    rw [← Subrepresentation.subrepresentationSubmoduleOrderIso.le_iff_le,
-      Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
-      Subrepresentation.subrepresentationSubmoduleOrderIso_apply, hTsSup]
-    exact le_sSup (hmem g)
-  have htop : T = ⊤ := by
-    refine Subrepresentation.toSubmodule_injective (le_antisymm le_top ?_)
-    rw [Subrepresentation.toSubmodule_top, ← iSup_conjSubrep_eq_top ρ hσ.1]
-    exact iSup_le fun g => hle g
-  rw [← hTsSup, htop, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
-    OrderIso.map_top]
+  refine IsSemisimpleModule.of_sSup_simples_eq_top (eq_top_iff.mpr ?_)
+  rw [← iSup_asSubmodule_conjSubrep_eq_top ρ hσ.1]
+  refine iSup_le fun g => le_sSup ?_
+  rw [Set.mem_ofPred_eq]
+  exact Subrepresentation.isSimpleModule_asSubmodule_iff.mpr (isAtom_conjSubrep_iff.mpr hσ)
 
 /-- **Restriction to a normal subgroup preserves semisimplicity.** The restriction to a normal
 subgroup of a finite-dimensional irreducible representation is semisimple. -/
 theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
     _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
-  have hbot : (⊤ : Subrepresentation (ρ.comp N.subtype)) ≠ ⊥ := by
-    intro h
-    have h' : (⊤ : Submodule k V) = ⊥ := by
-      simpa using congrArg Subrepresentation.toSubmodule h
-    exact (bot_ne_top (α := Subrepresentation ρ))
-      (Subrepresentation.toSubmodule_injective (by simpa using h'.symm))
-  obtain ⟨σ, -, hσ⟩ := exists_isAtom_le (ρ := ρ.comp N.subtype) hbot
+  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] _
+  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  obtain ⟨σ, hσ⟩ := exists_isAtom (ρ.comp N.subtype)
   exact isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
 
 end Clifford

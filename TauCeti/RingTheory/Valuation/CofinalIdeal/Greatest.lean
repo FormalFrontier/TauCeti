@@ -102,6 +102,14 @@ def IdealCofinalFor (v : Valuation A Γ₀)
     (H : TauCeti.ConvexSubgroup (valueGroup (.ofClass v))) (I : Ideal A) : Prop :=
   ∀ a ∈ I, CofinalValueFor v H.toSubgroup a
 
+/-- The defining property of ideal-wide cofinality. Needed because the definition's body is not
+exposed, so consumers cannot apply `IdealCofinalFor` as a `∀` directly. Mirrors
+`cofinalValueFor_def`. -/
+theorem idealCofinalFor_def {v : Valuation A Γ₀}
+    {H : TauCeti.ConvexSubgroup (valueGroup (.ofClass v))} {I : Ideal A} :
+    IdealCofinalFor v H I ↔ ∀ a ∈ I, CofinalValueFor v H.toSubgroup a :=
+  Iff.rfl
+
 /-- The condition is antitone in the ideal. -/
 theorem IdealCofinalFor.mono {v : Valuation A Γ₀}
     {H : TauCeti.ConvexSubgroup (valueGroup (.ofClass v))} {I J : Ideal A}

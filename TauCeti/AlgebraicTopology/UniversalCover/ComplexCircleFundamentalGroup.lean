@@ -64,27 +64,27 @@ theorem homeomorphCircle_symm_one :
 
 /-- The fundamental group of the complex unit circle `Circle = {z : ℂ | ‖z‖ = 1}`, based at
 `1`, is `Multiplicative ℤ`: `π₁(S¹) ≅ ℤ`. It is obtained by transporting the additive-circle
-computation `TauCeti.AddCircle.fundamentalGroupMulEquiv_zero` across the homeomorphism
+computation `TauCeti.AddCircle.fundamentalGroupMulEquivZero` across the homeomorphism
 `AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`, which carries the basepoint `0` to
 `1`. -/
 def fundamentalGroupMulEquiv : FundamentalGroup Circle 1 ≃* Multiplicative ℤ :=
   (FundamentalGroup.homeomorphMulEquivOfEq
       (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
       homeomorphCircle_symm_one).trans
-    (AddCircle.fundamentalGroupMulEquiv_zero (2 * Real.pi) Real.two_pi_pos.ne')
+    (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne')
 
 /-- `fundamentalGroupMulEquiv` factors as the homeomorphism-invariance isomorphism of
 `AddCircle.homeomorphCircle.symm` (based at `1 ↦ 0`) composed with the additive-circle
-computation `AddCircle.fundamentalGroupMulEquiv_zero`. This exposes the otherwise-opaque
+computation `AddCircle.fundamentalGroupMulEquivZero`. This exposes the otherwise-opaque
 definition, so a downstream consumer can rewrite a loop's image in `Multiplicative ℤ` through the
 component `@[simp]` lemmas `FundamentalGroup.homeomorphMulEquivOfEq_apply` and the
-`AddCircle.fundamentalGroupMulEquiv_zero` characterization. -/
+`AddCircle.fundamentalGroupMulEquivZero` characterization. -/
 theorem fundamentalGroupMulEquiv_def :
     fundamentalGroupMulEquiv =
       (FundamentalGroup.homeomorphMulEquivOfEq
           (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
           homeomorphCircle_symm_one).trans
-        (AddCircle.fundamentalGroupMulEquiv_zero (2 * Real.pi) Real.two_pi_pos.ne') := by
+        (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne') := by
   unfold fundamentalGroupMulEquiv
   rfl
 

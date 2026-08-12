@@ -609,8 +609,8 @@ theorem continuous_algebraMap_locTopology [IsTopologicalRing A] (P : PairOfDefin
 any prescribed open subgroup of `B`. This is the `A₀`-level base case of
 `exists_pow_mul_locSubring_mem`. -/
 private theorem exists_pow_mul_algebraMap_mem {B : Type*} [Ring B] [TopologicalSpace B]
-    (P : PairOfDefinition A) (s : A)
-    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] (f : S →+* B)
+    (P : PairOfDefinition A)
+    (S : Type*) [Ring S] [Algebra A S] (f : S →+* B)
     (hf : Continuous (f.comp (algebraMap A S))) (G : OpenAddSubgroup B) :
     ∃ m : ℕ, ∀ x ∈ P.ringOfDefinition.map (algebraMap A S),
       ∀ b ∈ P.idealOfDefinition ^ m,
@@ -647,7 +647,7 @@ private theorem exists_pow_mul_locSubring_mem {B : Type*} [Ring B] [TopologicalS
   induction U using Finset.induction with
   | empty =>
     intro _ G
-    obtain ⟨m, hm⟩ := exists_pow_mul_algebraMap_mem P s S f hf G
+    obtain ⟨m, hm⟩ := exists_pow_mul_algebraMap_mem P S f hf G
     exact ⟨m, fun x hx b hb ↦ hm x (locSubring_empty P s S ▸ hx) b hb⟩
   | insert t U' ht ih =>
     intro hpowU G

@@ -127,11 +127,16 @@ private theorem forall_eq_of_apply_offDiag {C : Matrix (Fin 2) (Fin 2) ℤ} (h :
   · simpa using h10
   · simpa using (h.apply_self _).trans (hC 1).symm
 
-omit [Fintype B] in
+end IsFiniteType
+
+namespace Matrix
+
+variable {B : Type*} {A : Matrix B B ℤ}
+
 /-- **The Cartan product is the invariant of a two-node diagram.** A relabelling matching `A` with
 `C` carries the product of the two off-diagonal entries of `A` to that of `C`, whichever way round
 it sends the two indices, because the product is symmetric. -/
-private theorem mul_eq_of_forall_eq {C : Matrix (Fin 2) (Fin 2) ℤ} (e : B ≃ Fin 2)
+theorem mul_apply_mul_apply_eq_of_equiv_fin_two {C : Matrix (Fin 2) (Fin 2) ℤ} (e : B ≃ Fin 2)
     (he : ∀ i j, A i j = C (e i) (e j)) {x y : B} (hxy : x ≠ y) :
     A x y * A y x = C 0 1 * C 1 0 := by
   have hne : e x ≠ e y := fun hc ↦ hxy (e.injective hc)
@@ -141,6 +146,12 @@ private theorem mul_eq_of_forall_eq {C : Matrix (Fin 2) (Fin 2) ℤ} (e : B ≃ 
   generalize e y = b
   intro hne
   fin_cases a <;> fin_cases b <;> simp_all [mul_comm]
+
+end Matrix
+
+namespace IsFiniteType
+
+variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
 
 /-- **Two integers at most `-1` satisfy `ac + a + c + 1 ≥ 0`,** being `(a + 1)(c + 1) ≥ 0` expanded.
 Applied to the two off-diagonal entries of a connected finite-type matrix on two indices, it bounds
@@ -230,15 +241,18 @@ theorem existsUnique_dynkinType_of_card_eq_two (h : IsFiniteType A) (hcard : Fin
     rintro u (rfl | rfl | rfl) eu heu
     · have heu' : ∀ i j, A i j = (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (eu i) (eu j) :=
         fun i j ↦ by rw [heu i j, DynkinType.cartanMatrix_A_two_eq]
-      have hval : A x y * A y x = 1 := (mul_eq_of_forall_eq eu heu' hxy).trans (by decide)
+      have hval : A x y * A y x = 1 :=
+        (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two eu heu' hxy).trans (by decide)
       exact ⟨fun _ ↦ rfl, fun hc ↦ by omega, fun hc ↦ by omega⟩
     · have heu' : ∀ i j, A i j = (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (eu i) (eu j) :=
         fun i j ↦ by rw [heu i j, DynkinType.cartanMatrix_B_two_eq]
-      have hval : A x y * A y x = 2 := (mul_eq_of_forall_eq eu heu' hxy).trans (by decide)
+      have hval : A x y * A y x = 2 :=
+        (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two eu heu' hxy).trans (by decide)
       exact ⟨fun hc ↦ by omega, fun _ ↦ rfl, fun hc ↦ by omega⟩
     · have heu' : ∀ i j, A i j = (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) (eu i) (eu j) :=
         fun i j ↦ by rw [heu i j, DynkinType.cartanMatrix_G2_eq]
-      have hval : A x y * A y x = 3 := (mul_eq_of_forall_eq eu heu' hxy).trans (by decide)
+      have hval : A x y * A y x = 3 :=
+        (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two eu heu' hxy).trans (by decide)
       exact ⟨fun hc ↦ by omega, fun hc ↦ by omega, fun _ ↦ rfl⟩
   obtain ⟨t, ht, et, het⟩ := hex
   refine ⟨t, ⟨by rcases ht with rfl | rfl | rfl <;> simp, et, het⟩, ?_⟩
