@@ -30,6 +30,12 @@ genus-theory formula computes for a real quadratic field.
 * `TauCeti.NumberField.unitSignature`: the signature homomorphism on `(𝓞 K)ˣ`, the restriction of
   `fieldUnitSignature`, with `unitSignature_ker` its kernel `totallyPositiveIntegerUnits` (defined
   in `TotallyPositive.lean`).
+* `TauCeti.NumberField.fieldUnitSignature_map_algebraMap`: the two signatures agree on an integer
+  unit, the form in which the comparison of their ranges is used.
+* `TauCeti.NumberField.fieldSignatures` and `TauCeti.NumberField.unitSignatures`: the two ranges,
+  the sign patterns realized by `Kˣ` and by the units of `𝓞 K`, with
+  `unitSignatures_le_fieldSignatures` between them. They are named because the cokernel of the
+  signature is an index of one in the other.
 -/
 
 public section
@@ -86,6 +92,14 @@ image of `u` under the real embedding `w` composed with `(𝓞 K) → K`. -/
   simp only [unitSignature, MonoidHom.comp_apply, fieldUnitSignature_apply]
 
 omit [NumberField K] in
+/-- The integer-unit signature is the field-unit signature of the image in `Kˣ`. This is
+`unitSignature`'s defining factorization, in the applied form a consumer comparing the two ranges
+uses. -/
+@[simp] theorem fieldUnitSignature_map_algebraMap (u : (𝓞 K)ˣ) :
+    fieldUnitSignature (Units.map (algebraMap (𝓞 K) K : (𝓞 K) →* K) u) = unitSignature u := by
+  simp only [unitSignature, MonoidHom.comp_apply, RingHom.toMonoidHom_eq_coe]
+
+omit [NumberField K] in
 /-- An integer unit has trivial signature exactly when its image in `K` is totally positive. -/
 @[simp] theorem unitSignature_eq_one_iff {u : (𝓞 K)ˣ} :
     unitSignature u = 1 ↔ IsTotallyPositive (algebraMap (𝓞 K) K (u : 𝓞 K)) := by
@@ -98,5 +112,37 @@ theorem unitSignature_ker :
     MonoidHom.ker (unitSignature (K := K)) = totallyPositiveIntegerUnits := by
   ext u
   rw [MonoidHom.mem_ker, unitSignature_eq_one_iff, mem_totallyPositiveIntegerUnits]
+
+variable (K)
+
+/-- The **sign patterns realized by `Kˣ`**: the range of the field-unit signature. -/
+@[expose] noncomputable def fieldSignatures :
+    Subgroup ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) :=
+  (fieldUnitSignature (K := K)).range
+
+/-- The **sign patterns realized by the units of `𝓞 K`**: the range of the integer-unit
+signature. -/
+@[expose] noncomputable def unitSignatures :
+    Subgroup ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) :=
+  (unitSignature (K := K)).range
+
+variable {K}
+
+omit [NumberField K] in
+@[simp] theorem mem_fieldSignatures
+    {s : {w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ} :
+    s ∈ fieldSignatures K ↔ ∃ x : Kˣ, fieldUnitSignature x = s := Iff.rfl
+
+omit [NumberField K] in
+@[simp] theorem mem_unitSignatures
+    {s : {w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ} :
+    s ∈ unitSignatures K ↔ ∃ u : (𝓞 K)ˣ, unitSignature u = s := Iff.rfl
+
+omit [NumberField K] in
+/-- Every sign pattern realized by an integer unit is realized in `Kˣ`, the integer-unit signature
+being the restriction of the field-unit signature. -/
+theorem unitSignatures_le_fieldSignatures : unitSignatures K ≤ fieldSignatures K := by
+  rintro _ ⟨u, rfl⟩
+  exact ⟨Units.map (algebraMap (𝓞 K) K : (𝓞 K) →* K) u, fieldUnitSignature_map_algebraMap u⟩
 
 end TauCeti.NumberField
