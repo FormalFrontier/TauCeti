@@ -98,12 +98,6 @@ theorem negOne_mul_self (Q : QuadraticForm K M) (hQ : Q ≠ 0) :
   apply Subtype.ext
   simp
 
-/-- Reversion fixes the canonical scalar `-1`. -/
-@[simp]
-theorem star_negOne (Q : QuadraticForm K M) (hQ : Q ≠ 0) :
-    star (negOne Q hQ : CliffordAlgebra Q) = negOne Q hQ := by
-  simp
-
 /-- The canonical scalar `-1` in the Spin group is not the identity when `2` is invertible. -/
 theorem negOne_ne_one (Q : QuadraticForm K M) [Invertible (2 : K)] (hQ : Q ≠ 0) :
     negOne Q hQ ≠ 1 := by
