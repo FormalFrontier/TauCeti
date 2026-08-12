@@ -353,7 +353,8 @@ theorem norm_def (x : Octonion R) : norm x = x.a * x.b - x.v ⬝ᵥ x.w := (rfl)
 @[simp] theorem norm_conj (x : Octonion R) : norm (conj x) = norm x := by
   simp [norm_def]; ring
 
-/-- The norm is a **quadratic** form: rescaling an octonion by `r` rescales its norm by `r ^ 2`. -/
+/-- The norm is homogeneous of degree two: rescaling an octonion by `r` rescales its norm by
+`r ^ 2`. -/
 @[simp]
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
