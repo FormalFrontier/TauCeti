@@ -38,7 +38,9 @@ multiple of `ψ(x⁻¹)`, the coefficient of `x` in `∑_g ψ(g⁻¹) g`. Orthog
 and `e_ρ² = e_ρ`, are then read off from the values of the central character.
 
 That the `e_ρ` sum to `1` needs the classification of the irreducible representations indexing that
-sum, and is not proved here.
+sum, so it is not proved here but in
+`TauCeti/RepresentationTheory/CharacterTable/IdempotentDecomposition.lean`, downstream of the
+completeness of the irreducible characters.
 
 ## Main definitions
 
@@ -61,6 +63,12 @@ sum, and is not proved here.
   times the degree, is `|G|` for isomorphic representations and `0` otherwise.
 * `TauCeti.Representation.isUnit_char_one`: the degree of an irreducible representation is a unit
   in `k`.
+* `TauCeti.Representation.primitiveCentralIdempotent_eq_of_nonempty_equiv`: `e_ρ` depends only on
+  the isomorphism class of `ρ`.
+* `TauCeti.Representation.centralCharacter_primitiveCentralIdempotentCenter`: an irreducible
+  representation sees `e_ρ` as `1` or as `0` according to whether it is isomorphic to `ρ`, with
+  `TauCeti.Representation.centralCharacter_primitiveCentralIdempotentCenter_self` the diagonal
+  case.
 * `TauCeti.Representation.asAlgebraHom_primitiveCentralIdempotent`: `e_ρ` acts as the identity on
   `ρ` and as zero on an irreducible representation not isomorphic to `ρ`.
 * `TauCeti.Representation.primitiveCentralIdempotent_mul_primitiveCentralIdempotent`: the
@@ -308,6 +316,15 @@ theorem primitiveCentralIdempotent_coeff (g : G) :
       (Nat.card G : k)⁻¹ * ρ.character 1 * ρ.character g⁻¹ := by
   simp [primitiveCentralIdempotent]
 
+/-- **Equivalent irreducible representations have the same primitive central idempotent.** The
+idempotent is built from the character alone, and equivalent representations have equal characters,
+so `e_ρ` is an invariant of the isomorphism class of `ρ`. -/
+theorem primitiveCentralIdempotent_eq_of_nonempty_equiv (h : Nonempty (ρ.Equiv σ)) :
+    primitiveCentralIdempotent ρ = primitiveCentralIdempotent σ := by
+  have hc : ρ.character = σ.character := _root_.Representation.char_iso h.some
+  refine MonoidAlgebra.ext (Finsupp.ext fun g => ?_)
+  rw [primitiveCentralIdempotent_coeff, primitiveCentralIdempotent_coeff, hc]
+
 /-- The primitive central idempotent lies in the centre of the group algebra. -/
 theorem primitiveCentralIdempotent_mem_center :
     primitiveCentralIdempotent ρ ∈ Subalgebra.center k k[G] :=
@@ -362,6 +379,15 @@ theorem centralCharacter_primitiveCentralIdempotentCenter :
     ring
   · rw [ite_eq_left hN, mul_one, one_mul, _root_.Representation.char_iso hN.some, mul_assoc,
       mul_comm (σ.character 1), ← mul_assoc, inv_mul_cancel₀ hne, one_mul]
+
+/-- **An irreducible representation sees its own primitive central idempotent as `1`.** This is the
+diagonal case of `TauCeti.Representation.centralCharacter_primitiveCentralIdempotentCenter`. -/
+@[simp]
+theorem centralCharacter_primitiveCentralIdempotentCenter_self :
+    centralCharacter ρ (primitiveCentralIdempotentCenter ρ) = 1 := by
+  classical
+  rw [centralCharacter_primitiveCentralIdempotentCenter,
+    ite_eq_left ⟨_root_.Representation.Equiv.refl ρ⟩]
 
 open scoped Classical in
 /-- **`e_ρ` is the Wedderburn projector onto the block of `ρ`**: it acts as the identity on `ρ`
