@@ -25,8 +25,8 @@ The three summands act by three visibly different operators on `S = ⋀·W`:
 * a vector of `W'` acts by contraction against the functional `QuadraticMap.polar Q · y` that the
   polarization pairing attaches to it (`TauCeti.SpinPolarizationData.contract`), an
   *annihilation* operator;
-* a vector of the remainder acts by its scalar coordinate times the grade involution
-  (`TauCeti.SpinPolarizationData.parity`), the operator that supplies the extra anticommuting
+* a vector of the remainder acts by its scalar coordinate times the grade involution, or *parity*
+  operator, of `⋀·W` (`TauCeti.SpinPolarizationData.lineOperator`), which supplies the extra
   generator in odd dimension.
 
 Assembled into one linear map `TauCeti.SpinPolarizationData.cliffordOperator`, these satisfy the
@@ -51,7 +51,7 @@ Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, th
 ## Main definitions
 
 * `TauCeti.SpinPolarizationData.wedge`, `TauCeti.SpinPolarizationData.contract`,
-  `TauCeti.SpinPolarizationData.parity`: the three component operators on `⋀·W`.
+  `TauCeti.SpinPolarizationData.lineOperator`: the three component operators on `⋀·W`.
 * `TauCeti.SpinPolarizationData.cliffordOperator`: the operator `c v` on `⋀·W` attached to a
   vector `v` of `V`, assembled from them.
 * `TauCeti.spinAction`: the resulting `CliffordAlgebra Q`-module structure on `⋀·W`.
@@ -62,12 +62,12 @@ Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, th
   `TauCeti.SpinPolarizationData.cliffordOperator_coe_W'` and
   `TauCeti.SpinPolarizationData.cliffordOperator_coe_line`: the operator of a vector of a single
   summand, in terms of the component operator of that summand.
-* `TauCeti.SpinPolarizationData.contract_wedge`, `TauCeti.SpinPolarizationData.parity_wedge` and
-  `TauCeti.SpinPolarizationData.parity_contract`: the anticommutation relations between the
-  component operators.
+* `TauCeti.SpinPolarizationData.contract_wedge`: the only anticommutation relation between the
+  component operators that is not zero, and the one carrying the polarization pairing.
 * `TauCeti.SpinPolarizationData.cliffordOperator_sq`: the Clifford relation `c v ∘ c v = Q v • 1`.
 * `TauCeti.spinAction_ι_wedge`, `TauCeti.spinAction_ι_contract`, `TauCeti.spinAction_ι_parity`:
   the three summands act by exterior multiplication, contraction, and the parity operator.
+* `TauCeti.spinAction_ι_contract_one`: the second isotropic summand annihilates the vacuum vector.
 * `TauCeti.spinAction_ι_mul_add_swap`: the anticommutator identity pinning the coefficient to
   `QuadraticMap.polar`.
 
@@ -115,21 +115,13 @@ theorem contract_apply (y : P.W') (s : ExteriorAlgebra K P.W) :
   -- `(rfl)`, not `rfl`: the body of `contract` is not `@[expose]`d.
   (rfl)
 
-/-- **The parity operator** on `⋀·W`, the grade involution of the exterior algebra. It anticommutes
-with both the creation and the annihilation operators, which is what lets an anisotropic vector
-orthogonal to the polarization act by a multiple of it. -/
-noncomputable def parity : Module.End K (ExteriorAlgebra K P.W) :=
-  (CliffordAlgebra.involute (Q := (0 : QuadraticForm K P.W))).toLinearMap
-
-@[simp]
-theorem parity_apply (s : ExteriorAlgebra K P.W) : P.parity s = CliffordAlgebra.involute s :=
-  -- `(rfl)`, not `rfl`: the body of `parity` is not `@[expose]`d.
-  (rfl)
-
-/-- A vector of the orthogonal remainder acts by its scalar coordinate times the parity
-operator, the normalization that makes its square the scalar `Q z`. -/
+/-- **The parity operator**: a vector of the orthogonal remainder acts on `⋀·W` by its scalar
+coordinate times the grade involution `CliffordAlgebra.involute` of the exterior algebra. The
+involution anticommutes with both the creation and the annihilation operators, and the
+scalar coordinate is the normalization that makes the square of this operator `Q z`. -/
 noncomputable def lineOperator : P.line →ₗ[K] Module.End K (ExteriorAlgebra K P.W) :=
-  (LinearMap.toSpanSingleton K (Module.End K (ExteriorAlgebra K P.W)) P.parity).comp
+  (LinearMap.toSpanSingleton K (Module.End K (ExteriorAlgebra K P.W))
+    (CliffordAlgebra.involute (Q := (0 : QuadraticForm K P.W))).toLinearMap).comp
     P.lineCoordinate
 
 @[simp]
@@ -144,53 +136,29 @@ noncomputable def cliffordOperator : V →ₗ[K] Module.End K (ExteriorAlgebra K
   ((P.wedge.coprod P.contract).coprod P.lineOperator).comp
     P.decompositionEquiv.symm.toLinearMap
 
-/-- The Clifford operator of a vector in polarization coordinates is the sum of the three
-component operators. -/
-theorem cliffordOperator_add_apply (x : P.W) (y : P.W') (z : P.line)
-    (s : ExteriorAlgebra K P.W) :
-    P.cliffordOperator ((x : V) + (y : V) + (z : V)) s =
-      P.wedge x s + P.contract y s + P.lineCoordinate z • P.parity s := by
-  simp [cliffordOperator]
-
 /-- On the isotropic summand `W` the Clifford operator is the creation operator. -/
 @[simp]
 theorem cliffordOperator_coe_W (x : P.W) : P.cliffordOperator (x : V) = P.wedge x := by
-  have h : P.decompositionEquiv.symm (x : V) = ((x, 0), 0) := by
-    apply P.decompositionEquiv.injective
-    simp
-  simp [cliffordOperator, h]
+  simp [cliffordOperator]
 
 /-- On the second isotropic summand `W'` the Clifford operator is the annihilation operator. -/
 @[simp]
 theorem cliffordOperator_coe_W' (y : P.W') : P.cliffordOperator (y : V) = P.contract y := by
-  have h : P.decompositionEquiv.symm (y : V) = ((0, y), 0) := by
-    apply P.decompositionEquiv.injective
-    simp
-  simp [cliffordOperator, h]
+  simp [cliffordOperator]
 
 /-- On the orthogonal remainder the Clifford operator is the scaled parity operator. -/
 @[simp]
 theorem cliffordOperator_coe_line (z : P.line) : P.cliffordOperator (z : V) = P.lineOperator z := by
-  have h : P.decompositionEquiv.symm (z : V) = ((0, 0), z) := by
-    apply P.decompositionEquiv.injective
-    simp
-  simp [cliffordOperator, h]
+  simp [cliffordOperator]
 
 /-! ### The anticommutation relations
 
 The Clifford relation is the sum of six anticommutators between the three component operators.
-Each is recorded separately, in the "solved" form that rewrites a composite back to the opposite
-order, since that is what the assembly of `TauCeti.SpinPolarizationData.cliffordOperator_sq`
-consumes. -/
-
-/-- **Exterior multiplication is square-zero**: the isotropy of `W` at the level of operators. -/
-theorem wedge_wedge (x : P.W) (s : ExteriorAlgebra K P.W) : P.wedge x (P.wedge x s) = 0 := by
-  rw [wedge_apply, wedge_apply, ← mul_assoc, ExteriorAlgebra.ι_sq_zero, zero_mul]
-
-/-- **Contraction is square-zero**: the isotropy of `W'` at the level of operators. -/
-theorem contract_contract (y : P.W') (s : ExteriorAlgebra K P.W) :
-    P.contract y (P.contract y s) = 0 := by
-  rw [contract_apply, contract_apply, CliffordAlgebra.contractLeft_contractLeft]
+Five of them are square-zero or anticommutation statements about a single Clifford algebra,
+supplied by `ExteriorAlgebra.ι_sq_zero`, `CliffordAlgebra.contractLeft_contractLeft`,
+`CliffordAlgebra.involute_involute`, `TauCeti.CliffordAlgebra.involute_ι_mul` and
+`TauCeti.CliffordAlgebra.involute_contractLeft`. The sixth is the only one that sees the
+polarization, and it is recorded here. -/
 
 /-- **Creation and annihilation anticommute up to the pairing**: this is the one anticommutator
 that is not zero, and the scalar it produces is the polar form of the two vectors. It is what pins
@@ -201,26 +169,9 @@ theorem contract_wedge (x : P.W) (y : P.W') (s : ExteriorAlgebra K P.W) :
   rw [contract_apply, wedge_apply, CliffordAlgebra.contractLeft_ι_mul, P.pairingEquiv_apply,
     wedge_apply, contract_apply]
 
-/-- **The parity operator is an involution.** -/
-theorem parity_parity (s : ExteriorAlgebra K P.W) : P.parity (P.parity s) = s := by
-  rw [parity_apply, parity_apply, CliffordAlgebra.involute_involute]
-
-/-- **Parity anticommutes with exterior multiplication**, since a vector is odd. -/
-theorem parity_wedge (x : P.W) (s : ExteriorAlgebra K P.W) :
-    P.parity (P.wedge x s) = -P.wedge x (P.parity s) := by
-  rw [parity_apply, wedge_apply, map_mul, CliffordAlgebra.involute_ι, neg_mul, wedge_apply,
-    parity_apply]
-
-/-- **Parity anticommutes with contraction**, since contracting lowers the exterior degree
-by one. -/
-theorem parity_contract (y : P.W') (s : ExteriorAlgebra K P.W) :
-    P.parity (P.contract y s) = -P.contract y (P.parity s) := by
-  rw [parity_apply, contract_apply, TauCeti.CliffordAlgebra.involute_contractLeft, contract_apply,
-    parity_apply]
-
 /-- The quadratic form of a vector in polarization coordinates: both isotropic summands drop out
 and the remainder is orthogonal to them, so only the pairing term and the remainder survive. -/
-theorem quadraticForm_decomposition_apply (x : P.W) (y : P.W') (z : P.line) :
+theorem quadraticForm_decompositionEquiv_apply (x : P.W) (y : P.W') (z : P.line) :
     Q ((x : V) + (y : V) + (z : V)) = polar Q (x : V) (y : V) + Q (z : V) := by
   have hxz : polar Q (x : V) (z : V) = 0 := by
     rw [polar_comm]
@@ -242,11 +193,18 @@ theorem cliffordOperator_sq (v : V) :
   obtain ⟨c, rfl⟩ := P.decompositionEquiv.surjective v
   obtain ⟨⟨x, y⟩, z⟩ := c
   rw [P.decompositionEquiv_apply]
+  have hc : P.cliffordOperator ((x : V) + (y : V) + (z : V))
+      = P.wedge x + P.contract y + P.lineOperator z := by
+    simp only [map_add, P.cliffordOperator_coe_W, P.cliffordOperator_coe_W',
+      P.cliffordOperator_coe_line]
+  rw [hc, P.quadraticForm_decompositionEquiv_apply, ← P.lineCoordinate_sq z]
   ext s
-  rw [Module.End.mul_apply, Module.algebraMap_end_apply, P.cliffordOperator_add_apply,
-    P.cliffordOperator_add_apply, P.quadraticForm_decomposition_apply, ← P.lineCoordinate_sq z]
-  simp only [map_add, map_smul, P.wedge_wedge, P.contract_contract, P.contract_wedge,
-    P.parity_wedge, P.parity_contract, P.parity_parity]
+  simp only [Module.End.mul_apply, LinearMap.add_apply, Module.algebraMap_end_apply,
+    wedge_apply, contract_apply, lineOperator_apply, map_add, map_smul, mul_add,
+    ← mul_assoc, ExteriorAlgebra.ι_sq_zero, zero_mul,
+    CliffordAlgebra.contractLeft_ι_mul, CliffordAlgebra.contractLeft_contractLeft,
+    TauCeti.CliffordAlgebra.involute_ι_mul, TauCeti.CliffordAlgebra.involute_contractLeft,
+    CliffordAlgebra.involute_involute, P.pairingEquiv_apply]
   module
 
 end SpinPolarizationData
@@ -293,9 +251,10 @@ theorem spinAction_ι_parity (z : P.line) (s : ExteriorAlgebra K P.W) :
       P.lineCoordinate z • CliffordAlgebra.involute s := by
   rw [spinAction_ι, P.cliffordOperator_coe_line, P.lineOperator_apply]
 
-/-- **The anticommutator identity** pinning the coefficient of the spinor action: two vectors act
-with anticommutator the scalar `QuadraticMap.polar Q x y`. Taking `y = x` returns the Clifford
-relation, since `polar Q x x = 2 • Q x`. -/
+/-- **The anticommutator identity** pinning the coefficient of the spinor action: two vectors `a`
+and `b` act with anticommutator the scalar `QuadraticMap.polar Q a b`. Setting `b = a` gives twice
+the Clifford relation, since `polar Q a a = 2 • Q a`; the relation itself, which does not need `2`
+to be cancellable, is `TauCeti.SpinPolarizationData.cliffordOperator_sq`. -/
 theorem spinAction_ι_mul_add_swap (a b : V) :
     spinAction Q P (CliffordAlgebra.ι Q a) * spinAction Q P (CliffordAlgebra.ι Q b)
         + spinAction Q P (CliffordAlgebra.ι Q b) * spinAction Q P (CliffordAlgebra.ι Q a)
