@@ -106,10 +106,13 @@ theorem finrank_spechtIdeal_smul_youngSymmetrizer_sq (t : YoungTableau μ) :
       (μ.card.factorial : ℚ) • youngSymmetrizer t := by
   obtain ⟨κ, hκ⟩ := exists_eq_smul_youngSymmetrizer_sq t
   have hdim : κ * (finrank ℚ (spechtIdeal t) : ℚ) = (μ.card.factorial : ℚ) := by
+    -- Reading the left ideal as a `ℚ`-submodule does not change its dimension: the two are the
+    -- same `ℚ`-module, `Submodule.restrictScalarsEquiv` being the identity map.
+    have hres : finrank ℚ ((spechtIdeal t).restrictScalars ℚ) = finrank ℚ (spechtIdeal t) :=
+      ((Submodule.restrictScalarsEquiv ℚ _ _ (spechtIdeal t)).restrictScalars ℚ).finrank_eq
     rw [← trace_mulRight_youngSymmetrizer t,
       LinearMap.trace_eq_mul_finrank_range (mulRight_youngSymmetrizer_sq t hκ),
-      range_mulRight_youngSymmetrizer]
-    rfl
+      range_mulRight_youngSymmetrizer, hres]
   rw [hκ, smul_smul, ← hdim, mul_comm]
 
 /-- **Essential idempotence of the Young symmetrizer.** The square of `c_t` is `c_t` scaled by
