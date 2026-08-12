@@ -329,12 +329,13 @@ def conj : Octonion R →ₗ[R] Octonion R where
 @[simp] theorem conj_one : conj (1 : Octonion R) = 1 := by
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp
 
-/-- **Conjugation is an anti-automorphism**: it reverses products. The two vector entries pick up
-the sign of `Matrix.cross_anticomm`, the two scalar entries the symmetry of the dot product. -/
+/-- **Conjugation is an anti-automorphism**: it reverses products. -/
 @[simp]
 theorem conj_mul (x y : Octonion R) : conj (x * y) = conj y * conj x := by
-  -- `Matrix.cross_anticomm` is used at the two entries it is needed at rather than in its `simp`
-  -- orientation, which would leave the two sides with opposite argument orders.
+  -- The two vector entries pick up the sign of `Matrix.cross_anticomm`, the two scalar entries the
+  -- symmetry of the dot product. `Matrix.cross_anticomm` is used at the two entries it is needed at
+  -- rather than in its `simp` orientation, which would leave the two sides with opposite argument
+  -- orders.
   refine Octonion.ext ?_ ?_ ?_ ?_ <;>
     simp [-cross_anticomm, ← cross_anticomm y.v x.v, ← cross_anticomm y.w x.w, dotProduct_comm,
       mul_comm] <;> module
@@ -388,10 +389,10 @@ theorem norm_def (x : Octonion R) : norm x = x.a * x.b - x.v ⬝ᵥ x.w := (rfl)
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
 
-/-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. The two vector entries
-vanish by `Matrix.cross_self`. -/
+/-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. -/
 @[simp]
 theorem self_mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
+  -- The two vector entries vanish by `Matrix.cross_self`.
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [norm_def, dotProduct_comm] <;> ring
 
 /-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.self_mul_conj`. -/
@@ -405,32 +406,33 @@ theorem mul_self (x : Octonion R) : x * x = trace x • x - norm x • 1 := by
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [norm_def, dotProduct_comm, add_smul]
   ring
 
-/-- **The norm of a split octonion is multiplicative**, so `𝕆` is a composition algebra. This is
-the scalar quadruple product identity `Matrix.cross_dot_cross`, a Binet--Cauchy identity: the
-cross-product corrections to the vector entries of a product are exactly what the two dot products
-of the norm need. -/
+/-- **The norm of a split octonion is multiplicative**, so `𝕆` is a composition algebra. -/
 @[simp]
 theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
+  -- The scalar quadruple product identity `Matrix.cross_dot_cross`, a Binet--Cauchy identity, does
+  -- the work: the cross-product corrections to the vector entries of a product are exactly what the
+  -- two dot products of the norm need.
   simp [norm_def, dotProduct_comm]
   ring
 
 /-! ### Alternativity -/
 
-/-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. The iterated cross
-products of the vector entries are expanded by `Matrix.cross_cross_eq_smul_sub_smul'`, which is
-exactly what the repeated dot products of the scalar entries produce. -/
+/-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. -/
 @[simp]
 theorem left_alternative (x y : Octonion R) : x * x * y = x * (x * y) := by
+  -- The iterated cross products of the vector entries are expanded by
+  -- `Matrix.cross_cross_eq_smul_sub_smul'`, which is exactly what the repeated dot products of the
+  -- scalar entries produce.
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [dotProduct_comm, mul_comm]
   · ring
   · ring
   · module
   · module
 
-/-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. This is left
-alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul`. -/
+/-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. -/
 @[simp]
 theorem right_alternative (x y : Octonion R) : x * y * y = x * (y * y) := by
+  -- Left alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul`.
   have h : conj (conj y * conj y * conj x) = conj (conj y * (conj y * conj x)) :=
     congrArg _ (left_alternative (conj y) (conj x))
   simpa only [conj_mul, conj_conj] using h.symm
@@ -459,11 +461,11 @@ attribute [local simp] vec3_dotProduct cross_apply Matrix.vecHead Matrix.vecTail
 theorem moufang_left (x y z : Octonion R) : z * x * z * y = z * (x * (z * y)) := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
-/-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. This is the left identity
-read through the anti-automorphism `TauCeti.Octonion.conj_mul`, after the flexible law
-`z * y * z = z * (y * z)` — itself the left identity at `y = 1` — has put the two brackets of
-`z * y * z` in the shape the mirror produces. -/
+/-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. -/
 theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := by
+  -- The left identity read through the anti-automorphism `TauCeti.Octonion.conj_mul`, after the
+  -- flexible law `z * y * z = z * (y * z)` — itself the left identity at `y = 1` — has put the two
+  -- brackets of `z * y * z` in the shape the mirror produces.
   have hflex : z * y * z = z * (y * z) := by
     simpa only [mul_one] using moufang_left y 1 z
   have h : conj (conj z * conj y * conj z * conj x) =
