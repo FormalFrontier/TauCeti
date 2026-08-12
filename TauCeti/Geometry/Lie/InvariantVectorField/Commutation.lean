@@ -22,8 +22,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
-* `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: a scalar function on two exponential lines
-  multiplied around a fixed group element is smooth in both parameters.
+* `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: a vector-valued function on two exponential
+  lines multiplied around a fixed group element is smooth in both parameters.
 * `spatialFDeriv_mulInvariantExp_mul_mulInvariantExp` and
   `timeFDeriv_mulInvariantExp_mul_mulInvariantExp`: identify its two partial derivatives with
   left- and right-invariant differentiation.
@@ -60,11 +60,12 @@ attribute [local instance] ContMDiffMul.boundarylessManifold
 section Complete
 
 variable [CompleteSpace E]
+variable {F' : Type*} [NormedAddCommGroup F'] [NormedSpace ℝ F']
 
-/-- A smooth scalar function evaluated on two exponential lines multiplied around a fixed group
-element is smooth in both parameters. -/
+/-- A smooth vector-valued function evaluated on two exponential lines multiplied around a fixed
+group element is smooth in both parameters. -/
 theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
-    {f : G → ℝ} (hf : ContMDiff I 𝓘(ℝ, ℝ) ∞ f) (g : G)
+    {f : G → F'} (hf : ContMDiff I 𝓘(ℝ, F') ∞ f) (g : G)
     (X Y : GroupLieAlgebra I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
@@ -74,8 +75,11 @@ theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
   dsimp only
   exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff
 
+/-- Differentiating the second exponential parameter gives left-invariant differentiation by
+`Y`. -/
 theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
-    (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (s : ℝ) :
+    (f : C^∞⟮I, G; 𝓘(ℝ, F'), F'⟯) (g : G)
+    (X Y : GroupLieAlgebra I G) (s : ℝ) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     spatialFDeriv (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
@@ -85,7 +89,7 @@ theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
           (mulInvariantExp (I := I) (G := G) (s • X) * g)) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  let F : ℝ × ℝ → ℝ := fun p =>
+  let F : ℝ × ℝ → F' := fun p =>
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
@@ -97,7 +101,7 @@ theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     (mulInvariantExp (I := I) (G := G) (s • X) * g) |>.hasMFDerivAt
   have hdirection := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero hfAt Y
   have hdirection' : HasDerivAt (fun t => F (s, t))
-      ((mfderiv I 𝓘(ℝ, ℝ) f (mulInvariantExp (I := I) (G := G) (s • X) * g))
+      ((mfderiv I 𝓘(ℝ, F') f (mulInvariantExp (I := I) (G := G) (s • X) * g))
         (mulInvariantVectorField Y
           (mulInvariantExp (I := I) (G := G) (s • X) * g))) 0 := by
     -- Naming the hypothesis makes the canonical real scalar-structure identification explicit.
@@ -105,8 +109,11 @@ theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
   rw [mvfderiv_apply_eq_mfderiv_apply]
   exact hpartial.unique hdirection'
 
+/-- Differentiating the first exponential parameter gives right-invariant differentiation by
+`X`. -/
 theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
-    (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (t : ℝ) :
+    (f : C^∞⟮I, G; 𝓘(ℝ, F'), F'⟯) (g : G)
+    (X Y : GroupLieAlgebra I G) (t : ℝ) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     timeFDeriv (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
@@ -116,7 +123,7 @@ theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
           (g * mulInvariantExp (I := I) (G := G) (t • Y))) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  let F : ℝ × ℝ → ℝ := fun p =>
+  let F : ℝ × ℝ → F' := fun p =>
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
@@ -128,7 +135,7 @@ theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
     (g * mulInvariantExp (I := I) (G := G) (t • Y)) |>.hasMFDerivAt
   have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul_zero hfAt X
   have hdirection' : HasDerivAt (fun s => F (s, t))
-      ((mfderiv I 𝓘(ℝ, ℝ) f (g * mulInvariantExp (I := I) (G := G) (t • Y)))
+      ((mfderiv I 𝓘(ℝ, F') f (g * mulInvariantExp (I := I) (G := G) (t • Y)))
         (mulRightInvariantVectorField X
           (g * mulInvariantExp (I := I) (G := G) (t • Y)))) 0 := by
     -- Reassociate the product while naming the canonical real scalar-structure identification.
