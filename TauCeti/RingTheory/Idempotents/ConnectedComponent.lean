@@ -31,8 +31,9 @@ Tau Ceti already supplies the locally connected instance.
 * The Stacks Project, Tag 00EE, for the idempotent--clopen correspondence.
 * J. S. Milne, *Algebraic Groups* (2017), Section 2.a, for the identity-component construction.
 
-This is the commutative-algebra input for the identity component in Layer 3 of the
-ReductiveGroups roadmap.
+This ground-field construction is a commutative-algebra prerequisite for the geometric identity
+component in Layer 3 of the ReductiveGroups roadmap; it does not itself assert compatibility with
+base change.
 -/
 
 public section
