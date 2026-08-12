@@ -77,8 +77,12 @@ generated commutative group `G`:
 ```text
 K ⊗[k] k[G] ≅ K[G].
 ```
+
+It is an abbreviation so that `MonoidAlgebra.scalarTensorBialgEquiv_tmul` and
+`MonoidAlgebra.scalarTensorBialgEquiv_symm_single` apply directly to its forward and inverse maps,
+without duplicating their statements at this bundling layer.
 -/
-noncomputable def baseChangeCoordinateRingIso
+noncomputable abbrev baseChangeCoordinateRingIso
     (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
     (G : FGCommGrpCat.{u}) :
     FiniteTypeCommHopfAlgCat.baseChange (K := K) (coordinateRing k G) ≅
