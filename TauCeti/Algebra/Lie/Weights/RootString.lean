@@ -136,9 +136,7 @@ theorem lie_lie_eq_nsmul_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNon
 ```text
 ⁅e, ⁅f, y⁆⁆ = (p * (q + 1)) • y   for y ∈ Lβ.
 ```
-
-It is `TauCeti.lie_lie_eq_nsmul_of_mem_rootSpace` applied to the root `-α`, whose string through
-`β` is the reverse of the string of `α`. -/
+-/
 theorem lie_lie_eq_nsmul_of_mem_rootSpace' {α β : Weight K H L} (hα : α.IsNonZero)
     (hβ : β.IsNonZero) {h e f : L} (t : IsSl2Triple h e f) (he : e ∈ rootSpace H α)
     (hf : f ∈ rootSpace H (-α)) {y : L} (hy : y ∈ rootSpace H β) :
@@ -152,21 +150,19 @@ theorem lie_lie_eq_nsmul_of_mem_rootSpace' {α β : Weight K H L} (hα : α.IsNo
 
 /-- If `α + β` is a root then the `α`-string through `β` extends upwards, that is, its top
 coefficient is positive. -/
-theorem chainTopCoeff_pos {α β γ : Weight K H L} (hα : α.IsNonZero)
-    (hγ : (γ : H → K) = ⇑α + ⇑β) : 0 < chainTopCoeff α β := by
-  have hne : rootSpace H ((1 : ℤ) • (⇑α : H → K) + ⇑β) ≠ ⊥ := by
-    rw [one_smul, ← hγ]
-    exact γ.genWeightSpace_ne_bot
-  have hmem := (rootSpace_zsmul_add_ne_bot_iff_mem α β hα 1).mp hne
+theorem chainTopCoeff_pos {α β : Weight K H L} (hα : α.IsNonZero)
+    (h_ne_bot : rootSpace H (α + β) ≠ ⊥) : 0 < chainTopCoeff α β := by
+  have hmem := (rootSpace_zsmul_add_ne_bot_iff_mem α β hα 1).mp (by simpa using h_ne_bot)
   rw [Finset.mem_Icc] at hmem
   omega
 
 /-- If `α + β` is a root then *every* non-zero root vector of `α` brackets every non-zero root
 vector of `β` to something non-zero. This is the universally quantified form of Mathlib's
 `LieAlgebra.IsKilling.exists_mem_rootSpace_lie_ne_zero`. -/
-theorem lie_ne_zero_of_mem_rootSpace {α β γ : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero)
-    (hγ : (γ : H → K) = ⇑α + ⇑β) {e y : L} (he : e ∈ rootSpace H α) (he₀ : e ≠ 0)
-    (hy : y ∈ rootSpace H β) (hy₀ : y ≠ 0) : ⁅e, y⁆ ≠ 0 := by
+theorem lie_ne_zero_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
+    (hβ : β.IsNonZero) (h_ne_bot : rootSpace H (α + β) ≠ ⊥) {e y : L}
+    (he : e ∈ rootSpace H α) (he₀ : e ≠ 0) (hy : y ∈ rootSpace H β) (hy₀ : y ≠ 0) :
+    ⁅e, y⁆ ≠ 0 := by
   obtain ⟨h, e', f, t, he', hf'⟩ := exists_isSl2Triple_of_weight_isNonZero hα
   have h' : ⁅e', y⁆ ≠ 0 := by
     intro hzero
@@ -174,7 +170,7 @@ theorem lie_ne_zero_of_mem_rootSpace {α β γ : Weight K H L} (hα : α.IsNonZe
     rw [hzero, lie_zero, eq_comm, ← Nat.cast_smul_eq_nsmul K, smul_eq_zero] at hmain
     rcases hmain with hmain | hmain
     · rw [Nat.cast_eq_zero, Nat.mul_eq_zero] at hmain
-      have := chainTopCoeff_pos (β := β) hα hγ
+      have := chainTopCoeff_pos (β := β) hα h_ne_bot
       omega
     · exact hy₀ hmain
   obtain ⟨c, rfl⟩ : ∃ c : K, c • e' = e :=
@@ -193,7 +189,11 @@ theorem exists_mem_rootSpace_lie_eq {α β γ : Weight K H L} (hα : α.IsNonZer
     (hγ₀ : γ.IsNonZero) (hγ : (γ : H → K) = ⇑α + ⇑β) {e : L} (he : e ∈ rootSpace H α)
     (he₀ : e ≠ 0) {z : L} (hz : z ∈ rootSpace H γ) : ∃ y ∈ rootSpace H β, ⁅e, y⁆ = z := by
   obtain ⟨y₀, hy₀, hy₀'⟩ := β.exists_ne_zero
-  have h₁ : ⁅e, y₀⁆ ≠ 0 := lie_ne_zero_of_mem_rootSpace hα hβ hγ he he₀ hy₀ hy₀'
+  have h_ne_bot : rootSpace H (α + β) ≠ ⊥ := by
+    rw [← hγ]
+    exact γ.genWeightSpace_ne_bot
+  have h₁ : ⁅e, y₀⁆ ≠ 0 :=
+    lie_ne_zero_of_mem_rootSpace hα hβ h_ne_bot he he₀ hy₀ hy₀'
   have h₂ : ⁅e, y₀⁆ ∈ rootSpace H γ := by
     rw [hγ]
     exact lie_mem_genWeightSpace_of_mem_genWeightSpace he hy₀
@@ -214,12 +214,13 @@ theorem exists_lie_eq_smul {α β γ : Weight K H L} (hγ₀ : γ.IsNonZero)
   rwa [← toSubmodule_rootSpace_eq_span γ hγ₀ _ hz₀ hz]
 
 /-- A structure constant of a pair of roots whose sum is a root is non-zero. -/
-theorem ne_zero_of_lie_eq_smul {α β γ : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero)
-    (hγ : (γ : H → K) = ⇑α + ⇑β) {e y z : L} (he : e ∈ rootSpace H α) (he₀ : e ≠ 0)
-    (hy : y ∈ rootSpace H β) (hy₀ : y ≠ 0) {N : K} (hN : ⁅e, y⁆ = N • z) : N ≠ 0 := by
+theorem ne_zero_of_lie_eq_smul {α β : Weight K H L} (hα : α.IsNonZero)
+    (hβ : β.IsNonZero) (h_ne_bot : rootSpace H (α + β) ≠ ⊥) {e y z : L}
+    (he : e ∈ rootSpace H α) (he₀ : e ≠ 0) (hy : y ∈ rootSpace H β) (hy₀ : y ≠ 0)
+    {N : K} (hN : ⁅e, y⁆ = N • z) : N ≠ 0 := by
   rintro rfl
   rw [zero_smul] at hN
-  exact lie_ne_zero_of_mem_rootSpace hα hβ hγ he he₀ hy hy₀ hN
+  exact lie_ne_zero_of_mem_rootSpace hα hβ h_ne_bot he he₀ hy hy₀ hN
 
 /-- The two structure constants of a root string multiply to `q * (p + 1)`, where
 `β - pα, …, β, …, β + qα` is the `α`-string through `β`. Choosing `e`, `f` and `z` so that
