@@ -47,12 +47,6 @@ universe u
 variable (k H A : Type u) [Field k] [CommRing H] [HopfAlgebra k H]
   [CommRing A] [Algebra k A]
 
-private theorem baseChange_eq_baseChangeEvaluation_one
-    (M : FGComoduleCat.{u, u, u} k H) (phi : Module.Dual k M) (z : A ⊗[k] M) :
-    Module.Dual.baseChange A phi z =
-      TauCeti.Module.Dual.baseChangeEvaluation (1 ⊗ₜ[k] phi) z := by
-  rw [TauCeti.Module.Dual.baseChangeEvaluation_one_tmul]
-
 private theorem counitEvaluation_matrixCoefficientSubcoalgebraHom
     (M : FGComoduleCat.{u, u, u} k H) (phi : Module.Dual k M) (z : A ⊗[k] M) :
     counitEvaluation k H A
@@ -86,7 +80,6 @@ private theorem scalarExtensionComponent_reconstructedPoint_tmul
   let D := Comodule.matrixCoefficientSubcoalgebra (R := k) (C := H) (M := M)
   let N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H) :=
     ⟨D.toRegularSubcomodule, Subcomodule.mem_finiteSubcomodules.mpr inferInstance⟩
-  let hNfinite : Module.Finite k N.1 := Subcomodule.mem_finiteSubcomodules.mp N.2
   let q := Comodule.matrixCoefficientSubcoalgebraHom (C := H) phi
   let f : M ⟶ finiteRegularObject k H N :=
     ⟨ComoduleCat.ofHom (R := k) (C := H) q⟩
@@ -118,7 +111,7 @@ private theorem scalarExtensionComponent_reconstructedPoint_tmul
             rfl
     _ = (reconstructedPoint k H A eta).ofConv
           (Comodule.matrixCoefficient (R := k) (C := H) phi m) := by
-            rw [baseChange_eq_baseChangeEvaluation_one k H A M phi, hpointAction]
+            rw [← TauCeti.Module.Dual.baseChangeEvaluation_one_tmul phi, hpointAction]
             simpa only [one_mul] using
               Comodule.baseChangeEvaluation_endOfPoint_tmul
                 (reconstructedPoint k H A eta).ofConv (1 : A) (1 : A) phi m
@@ -165,7 +158,7 @@ automorphism. Thus reconstruction is a right inverse to the tensor action of poi
 theorem fgPointTensorIso_reconstructedPoint
     (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
     fgPointTensorIso k H A (reconstructedPoint k H A eta) = eta := by
-  apply eq_of_scalarExtensionComponent_eq
+  apply scalarExtensionComponent_ext
   exact scalarExtensionComponent_reconstructedPoint k H A eta
 
 /-- Algebra-valued points of a commutative Hopf algebra over a field are equivalent to tensor
