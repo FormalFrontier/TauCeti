@@ -65,17 +65,16 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 ## Implementation notes
 
 Every identity below is a polynomial identity in the coordinates of its arguments, so the proofs
-all run the same way: `TauCeti.Octonion.ext_coords` splits an equation of octonions into its eight
-scalar coordinates, the file-local simp set expands the dot and cross products into coordinates,
-and `ring` finishes.
+all run the same way: a private coordinate extensionality lemma splits an equation of octonions
+into its eight scalar coordinates, the file-local simp set expands the dot and cross products of
+`Fin 3 → R` into those coordinates through Mathlib's `Matrix.vec3_dotProduct` and
+`Matrix.cross_apply`, and `ring` finishes.
 
-The module is `public` but not exposed: consumers work through the projection `simp` lemmas rather
-than through any definition body. The three component equivalences `TauCeti.Octonion.equivProd`,
-`TauCeti.Octonion.addEquivProd` and `TauCeti.Octonion.linearEquivProd` are the exception, and carry
-`@[expose]` because the module system requires it twice over: the additive and module structures
-they transport are the componentwise operations only definitionally, through those bodies, and the
-`@[simps]` lemmas that make up their whole public API are exported `rfl`-proofs, which the kernel
-refuses to validate against an unexposed body.
+No definition here is exposed: consumers work through the projection `simp` lemmas rather than
+through any definition body. The additive and module structures are transported along
+`TauCeti.Octonion.toProd_injective`, the injection reading a vector matrix off as the tuple of its
+four entries, and `TauCeti.Octonion.linearEquivProd` packages that tuple as an `R`-linear
+isomorphism, which is what the dimension count runs through.
 
 The norm is left as a bare map `Octonion R → R`, as the roadmap pins it. Packaging it as a
 `QuadraticForm R (Octonion R)` — its polarization is the trace form `x, y ↦ trace (x * conj y)` —
@@ -121,8 +120,9 @@ namespace Octonion
 variable {R S : Type*}
 
 /-- Two vector matrices agreeing in each of their eight scalar coordinates are equal. This is the
-form of extensionality the coordinate computations below use. -/
-theorem ext_coords {x y : Octonion R} (ha : x.a = y.a) (hb : x.b = y.b)
+form of extensionality the coordinate computations below use; it is private, since `Octonion.ext` is
+the extensionality lemma consumers want. -/
+private theorem ext_coords {x y : Octonion R} (ha : x.a = y.a) (hb : x.b = y.b)
     (hv₀ : x.v 0 = y.v 0) (hv₁ : x.v 1 = y.v 1) (hv₂ : x.v 2 = y.v 2)
     (hw₀ : x.w 0 = y.w 0) (hw₁ : x.w 1 = y.w 1) (hw₂ : x.w 2 = y.w 2) : x = y := by
   refine Octonion.ext ha hb (funext fun i => ?_) (funext fun i => ?_)
@@ -131,13 +131,11 @@ theorem ext_coords {x y : Octonion R} (ha : x.a = y.a) (hb : x.b = y.b)
   · fin_cases i
     exacts [hw₀, hw₁, hw₂]
 
-/-- The components of a vector matrix, as a bijection with the tuple of its four entries. -/
-@[simps, expose]
-def equivProd (R : Type*) : Octonion R ≃ R × R × (Fin 3 → R) × (Fin 3 → R) where
-  toFun x := (x.a, x.b, x.v, x.w)
-  invFun p := ⟨p.1, p.2.1, p.2.2.1, p.2.2.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
+/-- Reading a vector matrix off as the tuple of its four entries is injective. The additive and
+module structures below are transported along this map. -/
+theorem toProd_injective : Function.Injective fun x : Octonion R => (x.a, x.b, x.v, x.w) :=
+  fun _ _ h => Octonion.ext (congrArg (·.1) h) (congrArg (·.2.1) h) (congrArg (·.2.2.1) h)
+    (congrArg (·.2.2.2) h)
 
 /-! ### The additive and module structure -/
 
@@ -189,20 +187,18 @@ instance [SMul S R] : SMul S (Octonion R) :=
 @[simp] theorem smul_w [SMul S R] (s : S) (x : Octonion R) : (s • x).w = s • x.w := (rfl)
 
 instance [AddCommGroup R] : AddCommGroup (Octonion R) := by
-  apply (equivProd R).injective.addCommGroup <;> intros <;> rfl
+  apply toProd_injective.addCommGroup <;> intros <;> rfl
 
-/-- The components of a vector matrix, as an additive isomorphism with the tuple of its four
-entries. -/
-@[simps!, expose]
-def addEquivProd (R : Type*) [AddCommGroup R] :
-    Octonion R ≃+ R × R × (Fin 3 → R) × (Fin 3 → R) :=
-  { equivProd R with map_add' := fun _ _ => rfl }
-
+/- The two scalar transports below spell the entry map out inline rather than share a named
+`AddMonoidHom`: an instance body may unfold only exposed definitions, and nothing here is
+exposed. -/
 instance [Monoid S] [AddCommGroup R] [DistribMulAction S R] : DistribMulAction S (Octonion R) :=
-  (addEquivProd R).injective.distribMulAction (addEquivProd R).toAddMonoidHom fun _ _ => rfl
+  toProd_injective.distribMulAction
+    (AddMonoidHom.mk' (fun x : Octonion R => (x.a, x.b, x.v, x.w)) fun _ _ => rfl) fun _ _ => rfl
 
 instance [Semiring S] [AddCommGroup R] [Module S R] : Module S (Octonion R) :=
-  (addEquivProd R).injective.module _ (addEquivProd R).toAddMonoidHom fun _ _ => rfl
+  toProd_injective.module _
+    (AddMonoidHom.mk' (fun x : Octonion R => (x.a, x.b, x.v, x.w)) fun _ _ => rfl) fun _ _ => rfl
 
 instance [AddCommGroup R] [One R] : AddCommGroupWithOne (Octonion R) where
   __ := (inferInstance : AddCommGroup (Octonion R))
@@ -210,10 +206,20 @@ instance [AddCommGroup R] [One R] : AddCommGroupWithOne (Octonion R) where
 
 /-- The components of a vector matrix, as an `R`-linear isomorphism with the tuple of its four
 entries. -/
-@[simps!, expose]
 def linearEquivProd (R : Type*) [CommRing R] :
-    Octonion R ≃ₗ[R] R × R × (Fin 3 → R) × (Fin 3 → R) :=
-  { addEquivProd R with map_smul' := fun _ _ => rfl }
+    Octonion R ≃ₗ[R] R × R × (Fin 3 → R) × (Fin 3 → R) where
+  toFun x := (x.a, x.b, x.v, x.w)
+  invFun p := ⟨p.1, p.2.1, p.2.2.1, p.2.2.2⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+@[simp] theorem linearEquivProd_apply [CommRing R] (x : Octonion R) :
+    linearEquivProd R x = (x.a, x.b, x.v, x.w) := (rfl)
+
+@[simp] theorem linearEquivProd_symm_apply [CommRing R] (p : R × R × (Fin 3 → R) × (Fin 3 → R)) :
+    (linearEquivProd R).symm p = ⟨p.1, p.2.1, p.2.2.1, p.2.2.2⟩ := (rfl)
 
 instance [CommRing R] : Module.Free R (Octonion R) :=
   Module.Free.of_equiv (linearEquivProd R).symm
@@ -247,25 +253,13 @@ instance : Mul (Octonion R) :=
 @[simp] theorem mul_w (x y : Octonion R) :
     (x * y).w = y.a • x.w + x.b • y.w + x.v ⨯₃ y.v := (rfl)
 
-/-- The first coordinate of a cross product. -/
-private theorem cross_apply_zero (u t : Fin 3 → R) : (u ⨯₃ t) 0 = u 1 * t 2 - u 2 * t 1 := by
-  simp [cross_apply]
-
-/-- The second coordinate of a cross product. -/
-private theorem cross_apply_one (u t : Fin 3 → R) : (u ⨯₃ t) 1 = u 2 * t 0 - u 0 * t 2 := by
-  simp [cross_apply]
-
-/-- The third coordinate of a cross product. -/
-private theorem cross_apply_two (u t : Fin 3 → R) : (u ⨯₃ t) 2 = u 0 * t 1 - u 1 * t 0 := by
-  simp [cross_apply]
-
-/- Dot products are expanded by Mathlib's `Matrix.vec3_dotProduct`; cross products are expanded one
-coordinate at a time by the three lemmas above rather than by `Matrix.cross_apply` itself, because
-`cross_apply` rewrites `u ⨯₃ t` to a `![…]` literal, and a literal meeting the generic vector
-entries of a product fires `Matrix.sub_cons`, `Matrix.head_add` and `Matrix.dotProduct_cons`, which
-re-express the coordinates as `vecHead`/`vecTail` towers that `ring` sees as atoms distinct from
-`u 0`, `u 1`, `u 2`. -/
-attribute [local simp] vec3_dotProduct cross_apply_zero cross_apply_one cross_apply_two
+/- The coordinate simp set: dot products are expanded by Mathlib's `Matrix.vec3_dotProduct`, cross
+products by Mathlib's `Matrix.cross_apply`. The latter rewrites `u ⨯₃ t` to a `![…]` literal, and
+such a literal meeting the generic vector entries of a product fires `Matrix.sub_cons`,
+`Matrix.head_add` and `Matrix.dotProduct_cons`, which re-express the coordinates as
+`vecHead`/`vecTail` towers; unfolding those two definitions turns the towers back into the
+coordinates `u 0`, `u 1`, `u 2`, so that `ring` sees one atom per coordinate. -/
+attribute [local simp] vec3_dotProduct cross_apply Matrix.vecHead Matrix.vecTail
 
 instance : NonAssocRing (Octonion R) where
   __ := (inferInstance : AddCommGroupWithOne (Octonion R))
@@ -413,8 +407,8 @@ example :
       ⟨0, 0, ![0, 1, 0], 0⟩ * ⟨0, 0, ![1, 0, 0], 0⟩ := fun h => by
   have h₂ := congrArg (fun x : Octonion ℤ => x.w 2) h
   -- the bottom-left entries are `e₀ ⨯₃ e₁` and `e₁ ⨯₃ e₀`, so `h₂` reads `(1 : ℤ) = -1`
-  simp only [mul_w, smul_zero, add_zero, Pi.add_apply, Pi.zero_apply, cross_apply_two,
-    cons_val_zero, cons_val_one, mul_one, mul_zero, sub_zero, zero_add, zero_sub] at h₂
+  simp only [mul_w, smul_zero, add_zero, cross_apply, cons_val_one, cons_val_zero, mul_one,
+    mul_zero, zero_sub, sub_zero, Pi.add_apply, Pi.zero_apply, zero_add] at h₂
   exact absurd h₂ (by decide)
 
 example :
