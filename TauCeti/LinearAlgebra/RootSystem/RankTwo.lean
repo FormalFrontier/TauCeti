@@ -445,7 +445,7 @@ theorem hasCartanType_G2_of_isG2 [Finite ι] [CharZero R] [IsDomain R]
   let q' : b.support := ⟨q, hq⟩
   have hpq_ne : p' ≠ q' := hne
   have hcard' : Fintype.card b.support = 2 := by simp [hcard]
-  -- Relabel so that the long root `q'` sits at node `0` and the short root `p'` at node `1`, the
+  -- Relabel so that the short root `q'` sits at node `0` and the long root `p'` at node `1`, the
   -- Bourbaki orientation of the standard `G₂` matrix.
   set e₀ : b.support ≃ Fin 2 := Fintype.equivFinOfCardEq hcard' with he₀
   set e : b.support ≃ Fin 2 := e₀.trans (Equiv.swap (e₀ q') 0) with he
