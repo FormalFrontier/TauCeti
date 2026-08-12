@@ -67,11 +67,12 @@ source-to-Lean read-through remains the whole of the S1 review obligation.
 ## Main results
 
 * `TauCeti.Sporadic.BabyMonster.map_length_neighbors`: the degree sequence of the transcribed
-  diagram, which is the check that it is the published `Y`-shape.
+  diagram, a check consistent with the published `Y`-shape; `edges_eq` and `map_length_arms` pin
+  the shape itself.
 * `TauCeti.Sporadic.BabyMonster.length_relatorList` and
   `TauCeti.Sporadic.BabyMonster.matchesMetadata_presentation`: the transcription count checks.
-* `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeter`: the row presents the Coxeter group
-  of the diagram cut down by the three adjoined relations, which is the shape of the source's
+* `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeterAppend`: the row presents the Coxeter
+  group of the diagram cut down by the three adjoined relations, which is the shape of the source's
   statement.
 
 ## References
@@ -104,7 +105,7 @@ def branchNode : Fin 11 := 4
 
 /-- The branch node is index four, corresponding to the source's `t₅`. -/
 @[simp]
-theorem branchNode_eq : branchNode = 4 := (rfl)
+theorem branchNode_def : branchNode = 4 := (rfl)
 
 /-- The three arms of the diagram, each listed outwards from the branch node: `t₄ t₃ t₂ t₁`, then
 `t₆ t₇ t₈`, then `t₉ t₁₀ t₁₁`. -/
@@ -112,7 +113,7 @@ def arms : List (List (Fin 11)) := [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]]
 
 /-- The three arms, spelled out in the numbered alphabet. -/
 @[simp]
-theorem arms_eq : arms = [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]] := (rfl)
+theorem arms_def : arms = [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]] := (rfl)
 
 /-- **The three arms have lengths four, three and three**, which is what the name `Y₄₃₃`
 records. -/
@@ -135,8 +136,9 @@ def edges : List (Fin 11 × Fin 11) := arms.flatMap fun arm => (branchNode :: ar
 /-- The ten edges of the numbered diagram, written out.
 
 Read with the offset `tᵢ ↦ i - 1`, these are the source's ten adjacent pairs
-`(1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (5,9), (9,10), (10,11)`, the first four in the
-opposite orientation. -/
+`(1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (5,9), (9,10), (10,11)`. The first arm's four
+edges appear in reverse order and reverse orientation because that arm is listed outwards from the
+branch node. -/
 @[simp]
 theorem edges_eq :
     edges = [(4, 3), (3, 2), (2, 1), (1, 0), (4, 5), (5, 6), (6, 7), (4, 8), (8, 9), (9, 10)] := by
@@ -184,10 +186,10 @@ theorem neighbors_branchNode : neighbors branchNode = [3, 5, 8] := by decide
 
 /-- **The degree sequence of the transcribed diagram.** Node `t₅`, that is index `4`, has three
 neighbors; the three arm ends `t₁`, `t₈` and `t₁₁`, that is indices `0`, `7` and `10`, have one
-each; and the remaining seven nodes have two each. So the matrix that the relators are built from
-has a single branch node, of degree three, and three ends, which is the `Y`-shape; the three arm
-lengths are pinned separately by `TauCeti.Sporadic.BabyMonster.map_length_arms`, from which the
-edges are built. -/
+each; and the remaining seven nodes have two each. Thus the matrix that the relators are built from
+has a degree sequence consistent with the `Y`-shape. The shape itself is pinned by `edges_eq`
+together with `map_length_arms` and `nodup_branchNode_cons_flatten_arms`, from which the edges are
+built. -/
 theorem map_length_neighbors :
     (List.finRange 11).map (fun i => (neighbors i).length) =
       [1, 2, 2, 2, 3, 2, 2, 1, 2, 2, 1] := by
@@ -251,7 +253,7 @@ def adjoinedRelators : List (Relator (Fin 11)) :=
 
 /-- The adjoined-relator list, in source order. -/
 @[simp]
-theorem adjoinedRelators_eq :
+theorem adjoinedRelators_def :
     adjoinedRelators = [spiderRelator, extraRelatorOne, extraRelatorTwo] := (rfl)
 
 /-- The sixty-nine relators of the presentation: the Coxeter relations of the `Y₄₃₃` diagram
@@ -309,7 +311,8 @@ theorem presentation_transcribed : presentation.transcribed = relatorList := rfl
 
 /-- **The relators of the row are the Coxeter relators of the `Y₄₃₃` diagram followed by the three
 adjoined relators.** This is the form in which the source states the presentation, and the
-hypothesis that `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeter` below consumes. -/
+hypothesis that `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeterAppend` below
+consumes. -/
 theorem presentation_transcribed_append :
     presentation.transcribed = coxeterRelators coxeterMatrix ++ adjoinedRelators := by
   rw [presentation_transcribed, relatorList_def]
@@ -317,7 +320,7 @@ theorem presentation_transcribed_append :
 /-- **The transcribed presentation has sixty-nine relators**, the `(11 + 1).choose 2 = 66` Coxeter
 relators of a diagram on eleven nodes together with the three adjoined relators. -/
 theorem length_relatorList : relatorList.length = 69 := by
-  rw [relatorList_def, List.length_append, length_coxeterRelators, adjoinedRelators_eq]
+  rw [relatorList_def, List.length_append, length_coxeterRelators, adjoinedRelators_def]
   decide
 
 /-- **The recorded generator and relator counts agree with the transcribed data.** -/
@@ -331,7 +334,7 @@ of the diagram, the spider relation, and the two further relations.
 This is an identification of the presented group with a quotient built from Mathlib's
 `CoxeterMatrix.relationsSet`; it asserts nothing about the order or the structure of either
 side. -/
-def mulEquivPresentedGroupCoxeter :
+def mulEquivPresentedGroupCoxeterAppend :
     presentation.Group ≃*
       PresentedGroup (coxeterMatrix.relationsSet ∪ Relator.relatorSet adjoinedRelators) :=
   presentation.mulEquivPresentedGroupCoxeterAppend coxeterMatrix adjoinedRelators
@@ -340,8 +343,8 @@ def mulEquivPresentedGroupCoxeter :
 /-- The Coxeter equivalence sends each canonical generator to the corresponding canonical
 generator. -/
 @[simp]
-theorem mulEquivPresentedGroupCoxeter_apply_of (i : Fin presentation.generatorCount) :
-    mulEquivPresentedGroupCoxeter (PresentedGroup.of i) = PresentedGroup.of i :=
+theorem mulEquivPresentedGroupCoxeterAppend_apply_of (i : Fin presentation.generatorCount) :
+    mulEquivPresentedGroupCoxeterAppend (PresentedGroup.of i) = PresentedGroup.of i :=
   GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of _ _ _
     presentation_transcribed_append i
 
