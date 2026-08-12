@@ -71,10 +71,10 @@ into its eight scalar coordinates, the file-local simp set expands the dot and c
 `Matrix.cross_apply`, and `ring` finishes.
 
 No definition here is exposed: consumers work through the projection `simp` lemmas rather than
-through any definition body. The additive and module structures are transported along
-`TauCeti.Octonion.toProd_injective`, the injection reading a vector matrix off as the tuple of its
-four entries, and `TauCeti.Octonion.linearEquivProd` packages that tuple as an `R`-linear
-isomorphism, which is what the dimension count runs through.
+through any definition body. The additive and module structures are built directly on the
+componentwise operations, and `TauCeti.Octonion.linearEquivProd` packages a vector matrix as the
+tuple of its four entries, an `R`-linear isomorphism, which is what the dimension count runs
+through.
 
 The norm is left as a bare map `Octonion R → R`, as the roadmap pins it. Packaging it as a
 `QuadraticForm R (Octonion R)` — its polarization is the trace form `x, y ↦ trace (x * conj y)` —
@@ -131,12 +131,6 @@ private theorem ext_coords {x y : Octonion R} (ha : x.a = y.a) (hb : x.b = y.b)
   · fin_cases i
     exacts [hw₀, hw₁, hw₂]
 
-/-- Reading a vector matrix off as the tuple of its four entries is injective. The additive and
-module structures below are transported along this map. -/
-theorem toProd_injective : Function.Injective fun x : Octonion R => (x.a, x.b, x.v, x.w) :=
-  fun _ _ h => Octonion.ext (congrArg (·.1) h) (congrArg (·.2.1) h) (congrArg (·.2.2.1) h)
-    (congrArg (·.2.2.2) h)
-
 /-! ### The additive and module structure -/
 
 instance [Zero R] : Zero (Octonion R) := ⟨⟨0, 0, 0, 0⟩⟩
@@ -186,19 +180,34 @@ instance [SMul S R] : SMul S (Octonion R) :=
 @[simp] theorem smul_v [SMul S R] (s : S) (x : Octonion R) : (s • x).v = s • x.v := (rfl)
 @[simp] theorem smul_w [SMul S R] (s : S) (x : Octonion R) : (s • x).w = s • x.w := (rfl)
 
-instance [AddCommGroup R] : AddCommGroup (Octonion R) := by
-  apply toProd_injective.addCommGroup <;> intros <;> rfl
+/- The structures below are built directly on the componentwise operations rather than transported
+along an injection into `R × R × (Fin 3 → R) × (Fin 3 → R)`: a transport would have to name that
+injection and its injectivity proof in an instance body, and an instance body may mention only
+public declarations, so the helper would have to be part of the public API. -/
+instance [AddCommGroup R] : AddCommGroup (Octonion R) where
+  add_assoc _ _ _ := by ext <;> simp [add_assoc]
+  zero_add _ := by ext <;> simp
+  add_zero _ := by ext <;> simp
+  neg_add_cancel _ := by ext <;> simp
+  sub_eq_add_neg _ _ := by ext <;> simp [sub_eq_add_neg]
+  add_comm _ _ := by ext <;> simp [add_comm]
+  nsmul n x := n • x
+  nsmul_zero _ := by ext <;> simp
+  nsmul_succ _ _ := by ext <;> simp [succ_nsmul]
+  zsmul n x := n • x
+  zsmul_zero' _ := by ext <;> simp
+  zsmul_succ' _ _ := by ext <;> simp [add_zsmul]
+  zsmul_neg' _ _ := by ext <;> simp [add_zsmul, succ_nsmul]
 
-/- The two scalar transports below spell the entry map out inline rather than share a named
-`AddMonoidHom`: an instance body may unfold only exposed definitions, and nothing here is
-exposed. -/
-instance [Monoid S] [AddCommGroup R] [DistribMulAction S R] : DistribMulAction S (Octonion R) :=
-  toProd_injective.distribMulAction
-    (AddMonoidHom.mk' (fun x : Octonion R => (x.a, x.b, x.v, x.w)) fun _ _ => rfl) fun _ _ => rfl
+instance [Monoid S] [AddCommGroup R] [DistribMulAction S R] : DistribMulAction S (Octonion R) where
+  one_smul _ := by ext <;> simp
+  mul_smul _ _ _ := by ext <;> simp [mul_smul]
+  smul_zero _ := by ext <;> simp
+  smul_add _ _ _ := by ext <;> simp
 
-instance [Semiring S] [AddCommGroup R] [Module S R] : Module S (Octonion R) :=
-  toProd_injective.module _
-    (AddMonoidHom.mk' (fun x : Octonion R => (x.a, x.b, x.v, x.w)) fun _ _ => rfl) fun _ _ => rfl
+instance [Semiring S] [AddCommGroup R] [Module S R] : Module S (Octonion R) where
+  add_smul _ _ _ := by ext <;> simp [add_smul]
+  zero_smul _ := by ext <;> simp
 
 instance [AddCommGroup R] [One R] : AddCommGroupWithOne (Octonion R) where
   __ := (inferInstance : AddCommGroup (Octonion R))
