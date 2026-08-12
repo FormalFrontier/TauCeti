@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 public import TauCeti.AlgebraicGeometry.PullbackSpecMap
 
 /-!
