@@ -7,6 +7,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Aut
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.VariableChange
 public import TauCeti.AlgebraicGeometry.EllipticCurve.GaloisDescent
+public import TauCeti.AlgebraicGeometry.EllipticCurve.NodePolynomial
 public import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -27,6 +28,10 @@ change of variables, again over any commutative ring in which the relevant param
 
 * `WeierstrassCurve.quadraticTwistOf`: the quadratic twist of a Weierstrass curve by `(t, n)`,
   an explicit Weierstrass model over any commutative ring.
+* `WeierstrassCurve.nodePolynomial_coeff_zero_quadraticTwistOf`: the constant coefficient of
+  `nodePolynomial` is the one quantity here that does **not** simply scale by a power of
+  `t² - 4n`; it acquires `+ D² n a₁² c₄`. Splitting of the node polynomial is not determined by
+  this coefficient alone, so this is a record of how it transforms, not a reduction statement.
 * `WeierstrassCurve.Δ_quadraticTwistOf`, `WeierstrassCurve.c₄_quadraticTwistOf`,
   `WeierstrassCurve.c₆_quadraticTwistOf`: the invariants of the twist.
 * `WeierstrassCurve.isElliptic_quadraticTwistOf_iff` and its field specialisation
@@ -226,6 +231,25 @@ curve itself. -/
 @[simp] theorem Δ_quadraticTwistOf : (E.quadraticTwistOf t n).Δ = (t ^ 2 - 4 * n) ^ 6 * E.Δ := by
   simp only [Δ, b₂_quadraticTwistOf, b₄_quadraticTwistOf, b₆_quadraticTwistOf,
     b₈_quadraticTwistOf]
+  ring
+
+/-- **The constant coefficient of the node polynomial, under twisting.** Unlike `b₂`, `b₄`, `b₆`,
+`c₄`, `c₆` and `Δ`, which all simply scale by a power of `D = t² - 4n`, this coefficient picks up
+an extra `+ D² n a₁² c₄`. That term vanishes when any of `a₁`, `n`, `c₄` or `D` does — and, over a
+general commutative ring, it can vanish from zero divisors without any factor being zero.
+
+Whether the node polynomial splits over the residue field is what distinguishes split from
+non-split multiplicative reduction, so a twist can change that behaviour — but splitting is not
+determined by this coefficient alone, and this lemma establishes no reduction statement by itself.
+It records the coefficient's transformation, which such an argument would use (for instance in the
+characteristic-two Artin–Schreier calculation), and nothing more. -/
+@[simp]
+theorem nodePolynomial_coeff_zero_quadraticTwistOf :
+    (E.quadraticTwistOf t n).nodePolynomial.coeff 0
+      = (t ^ 2 - 4 * n) ^ 3 * E.nodePolynomial.coeff 0
+        + (t ^ 2 - 4 * n) ^ 2 * n * E.a₁ ^ 2 * E.c₄ := by
+  simp only [nodePolynomial_coeff_zero, b₆_quadraticTwistOf, b₂_quadraticTwistOf,
+    b₄_quadraticTwistOf, c₄_quadraticTwistOf, a₂_quadraticTwistOf]
   ring
 
 /-- The quadratic twist commutes with a ring homomorphism `f` (in particular with base change):

@@ -24,6 +24,9 @@ answered at the level of the polynomial, not yet of the class.
 
 * `WeierstrassCurve.nodePolynomial` is `c₄ T² + a₁ c₄ T - (54 b₆ - 3 b₂ b₄ + a₂ c₄)`, defined over
   any commutative ring;
+* `WeierstrassCurve.nodePolynomial_coeff_zero` reads off the constant coefficient, which is *minus*
+  `54 b₆ - 3 b₂ b₄ + a₂ c₄` since the definition subtracts that combination. It is the projection
+  through which `QuadraticTwist.lean` states how twisting moves this coefficient;
 * `WeierstrassCurve.discrim_nodePolynomial` computes its discriminant as `-c₄ c₆`. This is the
   number the twist lane needs: twisting by `(t, n)` scales `-c₄ c₆` by `(t² - 4n)⁵`, i.e. by the
   twisting parameter times a square, so twisting by the right square class moves the discriminant
@@ -88,6 +91,17 @@ lemma nodePolynomial_def (W : WeierstrassCurve A) :
     W.nodePolynomial = .C W.c₄ * .X ^ 2 + .C (W.a₁ * W.c₄) * .X
       - .C (54 * W.b₆ - 3 * W.b₂ * W.b₄ + W.a₂ * W.c₄) := by
   simp only [nodePolynomial]
+
+/-- The constant coefficient of the node polynomial. Note the sign: `nodePolynomial` *subtracts*
+`54 b₆ - 3 b₂ b₄ + a₂ c₄`, so `coeff 0` is minus that combination, not it.
+
+Deliberately not `@[simp]`: the normal form wanted downstream rewrites a twisted curve's
+coefficient back to the base curve's (`nodePolynomial_coeff_zero_quadraticTwistOf`), and that
+lemma's left-hand side is exactly this one's, so tagging both would make the twist lemma
+non-normal-form. -/
+lemma nodePolynomial_coeff_zero (W : WeierstrassCurve A) :
+    W.nodePolynomial.coeff 0 = -(54 * W.b₆ - 3 * W.b₂ * W.b₄ + W.a₂ * W.c₄) := by
+  simp [nodePolynomial_def]
 
 /-- The discriminant of the node polynomial is `-c₄ c₆`. Hence — away from residue characteristic
 two, and provided `c₄` survives the reduction — the tangent directions at the node are rational

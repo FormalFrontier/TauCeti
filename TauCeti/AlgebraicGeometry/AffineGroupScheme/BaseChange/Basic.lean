@@ -41,14 +41,17 @@ rings; no field or finite-type hypothesis is needed.
   with scalar extension of its coordinate Hopf algebra, first for group objects and then through
   the affine-group-scheme anti-equivalence.
 
+The comparison with base change of coordinate Hopf algebras is developed in
+`TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Coordinate`.
+
 ## References
 
 The coordinate-algebra counterpart of this construction, base change of commutative Hopf
 algebras, is `TauCeti.CommHopfAlgCat.baseChangeFunctor`; the two sides are related by the
 anti-equivalence `TauCeti.commHopfAlgCatOpEquivAffineGroupSchemeCat`.
-`hopfSpecBaseChangeIso` identifies their values on each Hopf algebra. A natural isomorphism of the
-two resulting functors, including its coherence with the identity and composition comparisons,
-is not asserted here.
+`hopfSpecBaseChangeIso` identifies their values on each Hopf algebra. Their natural compatibility
+is developed in `TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Coordinate` as
+`TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeNatIso`.
 
 ## Roadmap
 
