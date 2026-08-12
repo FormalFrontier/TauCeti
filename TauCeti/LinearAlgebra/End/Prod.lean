@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Category.ModuleCat.Basic
 public import Mathlib.LinearAlgebra.Prod
 public import Mathlib.LinearAlgebra.Semisimple
+import TauCeti.RingTheory.SimpleModule.Basic
 
 /-!
 # Products of endomorphisms
@@ -72,28 +72,7 @@ theorem IsSemisimple.prodMap {f : Module.End K V} {g : Module.End K W}
   rw [Module.End.IsSemisimple] at hf hg ⊢
   let _ : IsSemisimpleModule K[X] (Module.AEval' f) := hf
   let _ : IsSemisimpleModule K[X] (Module.AEval' g) := hg
-  let M : Fin 2 → ModuleCat.{max v w} K[X] := fun i ↦
-    if i = 0 then ModuleCat.of K[X] (ULift.{max v w} (Module.AEval' f))
-    else ModuleCat.of K[X] (ULift.{max v w} (Module.AEval' g))
-  let _ (i : Fin 2) : IsSemisimpleModule K[X] (M i) := by
-    by_cases hi : i = 0
-    · subst i
-      simpa [M] using IsSemisimpleModule.congr
-        (ULift.moduleEquiv : ULift.{max v w} (Module.AEval' f) ≃ₗ[K[X]] Module.AEval' f)
-    · -- Cross the dependent, universe-lifted family boundary before applying the equivalence.
-      have hM : M i = ModuleCat.of K[X] (ULift.{max v w} (Module.AEval' g)) := by
-        simp [M, hi]
-      rw [hM]
-      exact IsSemisimpleModule.congr
-        (ULift.moduleEquiv : ULift.{max v w} (Module.AEval' g) ≃ₗ[K[X]] Module.AEval' g)
-  have hprod : IsSemisimpleModule K[X] (Module.AEval' f × Module.AEval' g) := by
-    let e₀ : (M 0 × M 1) ≃ₗ[K[X]] Module.AEval' f × Module.AEval' g := by
-      simpa [M] using
-        ((ULift.moduleEquiv : ULift.{max v w} (Module.AEval' f) ≃ₗ[K[X]]
-          Module.AEval' f).prodCongr
-          (ULift.moduleEquiv : ULift.{max v w} (Module.AEval' g) ≃ₗ[K[X]] Module.AEval' g))
-    let e := (LinearEquiv.piFinTwo K[X] (fun i ↦ (M i : Type (max v w)))).trans e₀
-    exact e.isSemisimpleModule_iff.mp inferInstance
+  have hprod : IsSemisimpleModule K[X] (Module.AEval' f × Module.AEval' g) := inferInstance
   let E : Module.AEval' (f.prodMap g) ≃ₗ[K[X]]
       Module.AEval' f × Module.AEval' g := {
     toFun x := (x.1, x.2)

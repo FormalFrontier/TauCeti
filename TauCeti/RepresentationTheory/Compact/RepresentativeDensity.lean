@@ -13,10 +13,11 @@ public import TauCeti.RepresentationTheory.Compact.EigenspaceRepresentation
 
 The **representative ring** `𝓡(G)` of `TauCeti/RepresentationTheory/Continuous/Representative.lean`
 is the span, inside `C(G, 𝕜)`, of the matrix coefficients of the finite-dimensional continuous
-representations of `G`. This file proves that on a compact Hausdorff group it is **uniformly
-dense** in `C(G, 𝕜)`. That density is the analytic core of the Peter-Weyl theorem: it is what makes
-the matrix coefficients span a dense subspace of `L²(G)`, and hence what a Hilbert basis of `L²(G)`
-can be assembled from.
+representations of `G`. This file proves that on a compact group it is **uniformly dense** in
+`C(G, 𝕜)`; no separation axiom is needed for density, only for the point-separation corollaries
+below, which read closedness of points off `isClosed_singleton` and so ask for `[T1Space G]`. That
+density is the analytic core of the Peter-Weyl theorem: it is what makes the matrix coefficients
+span a dense subspace of `L²(G)`, and hence what a Hilbert basis of `L²(G)` can be assembled from.
 
 Two halves already available meet here, and neither of them presupposes any separation property of
 `𝓡(G)`.
@@ -35,11 +36,13 @@ Two halves already available meet here, and neither of them presupposes any sepa
 Putting them together, a continuous function is a uniform limit of functions in the closure of
 `𝓡(G)`, so it lies in that closure: `TauCeti.dense_representativeSubmodule`.
 
-**Point separation is a corollary, never an input.** Once density is known, `𝓡(G)` separates the
-points of `G` because `C(G, 𝕜)` does — the values `0` and `1` of a Urysohn function at two distinct
-points cannot both be approximated to within `1/2` by a function taking equal values there. Since a
-span separates two points only if one of its generators does, this upgrades to the statement that
-the *finite-dimensional continuous representations themselves* separate the points of a compact
+**Point separation is a corollary, never an input.** Once density is known, and provided the points
+of `G` are closed, `𝓡(G)` separates the points of `G` because `C(G, 𝕜)` does: the values `0` and `1`
+of a Urysohn function at two distinct points cannot both be approximated to within `1/2` by a
+function taking equal values there. Closed points are exactly what this last step needs, and
+nothing before it, which is why only the results below carry `[T1Space G]`. Since a span separates
+two points only if one of its generators does, this upgrades to the statement that the
+*finite-dimensional continuous representations themselves* separate the points of a compact
 Hausdorff group (`TauCeti.exists_contRepresentation_apply_ne`): distinct group elements act
 differently in some finite-dimensional continuous representation.
 
@@ -55,6 +58,12 @@ The uniform density and the point separation drawn from it are purely topologica
 they take no measurable structure on `G`: the Haar measure their proofs run through is built on the
 Borel σ-algebra installed inside those proofs. Only the `L²` statements name a measure, and they
 alone carry `[MeasurableSpace G] [BorelSpace G]`.
+
+The separation hypothesis on the point-separation results is spelled `[T1Space G]`, the closedness
+of points that the Urysohn step consumes, rather than `[T2Space G]`. On a topological group the two
+are the same condition: such a group is regular (`IsTopologicalGroup.regularSpace`), so `T1Space G`
+already delivers `T3Space G`. These are therefore the usual compact Hausdorff statements, with the
+separation axiom stated at the strength the proof actually uses.
 
 ## Main statements
 
@@ -96,13 +105,14 @@ open _root_.TauCeti.ContRepresentation
 section CompactGroup
 
 variable {𝕜 G : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  [CompactSpace G] [T2Space G]
+  [CompactSpace G]
 
 /-! ### Uniform density -/
 
 variable (𝕜 G) in
-/-- **The Peter-Weyl density theorem.** The representative ring `𝓡(G)` of a compact Hausdorff group
-is uniformly dense in `C(G, 𝕜)`. -/
+/-- **The Peter-Weyl density theorem.** The representative ring `𝓡(G)` of a compact group is
+uniformly dense in `C(G, 𝕜)`. Hausdorffness is not needed: the mollifiers the proof runs on are
+built without it. -/
 theorem dense_representativeSubmodule : Dense (representativeSubmodule 𝕜 G : Set C(G, 𝕜)) := by
   let : MeasurableSpace G := borel G
   have : BorelSpace G := ⟨rfl⟩
@@ -143,7 +153,7 @@ theorem representativeStarSubalgebra_dense :
 
 Point separation is a *corollary* of `TauCeti.dense_representativeSubmodule`, and the roadmap's
 non-circular route to Peter-Weyl depends on its never being assumed beforehand. -/
-theorem exists_mem_representativeSubmodule_apply_ne (x y : G) (hxy : x ≠ y) :
+theorem exists_mem_representativeSubmodule_apply_ne [T1Space G] (x y : G) (hxy : x ≠ y) :
     ∃ f ∈ representativeSubmodule 𝕜 G, f x ≠ f y := by
   obtain ⟨u, hux, huy, -⟩ := exists_continuous_zero_one_of_isClosed (X := G)
     isClosed_singleton isClosed_singleton (Set.disjoint_singleton.2 hxy)
@@ -171,14 +181,14 @@ theorem exists_mem_representativeSubmodule_apply_ne (x y : G) (hxy : x ≠ y) :
 
 /-- Point separation, read on the representative `*`-subalgebra: this is the roadmap's
 `representativeStarSubalgebra_separatesPoints`. -/
-theorem representativeStarSubalgebra_separatesPoints (x y : G) (hxy : x ≠ y) :
+theorem representativeStarSubalgebra_separatesPoints [T1Space G] (x y : G) (hxy : x ≠ y) :
     ∃ f ∈ representativeStarSubalgebra 𝕜 G, f x ≠ f y := by
   obtain ⟨f, hf, hne⟩ := exists_mem_representativeSubmodule_apply_ne (𝕜 := 𝕜) x y hxy
   exact ⟨f, mem_representativeStarSubalgebra_iff.2 hf, hne⟩
 
 /-- **A single representative function already separates two distinct points**, and not merely a
 linear combination of representative functions. -/
-theorem exists_isRepresentative_apply_ne (x y : G) (hxy : x ≠ y) :
+theorem exists_isRepresentative_apply_ne [T1Space G] (x y : G) (hxy : x ≠ y) :
     ∃ f : C(G, 𝕜), IsRepresentative f ∧ f x ≠ f y := by
   by_contra hcon
   have hall : Set.EqOn (ContinuousMap.evalCLM 𝕜 x).toLinearMap
@@ -194,7 +204,7 @@ elements of `G` act differently in some finite-dimensional continuous representa
 
 This is the group-theoretic content of Peter-Weyl density: the finite-dimensional continuous
 representations of a compact Hausdorff group are jointly faithful. -/
-theorem exists_contRepresentation_apply_ne (x y : G) (hxy : x ≠ y) :
+theorem exists_contRepresentation_apply_ne [T1Space G] (x y : G) (hxy : x ≠ y) :
     ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n))),
       Continuous π ∧ π x ≠ π y := by
   obtain ⟨f, hf, hne⟩ := exists_isRepresentative_apply_ne (𝕜 := 𝕜) x y hxy
