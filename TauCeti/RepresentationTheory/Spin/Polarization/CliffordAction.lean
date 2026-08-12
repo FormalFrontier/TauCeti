@@ -33,9 +33,8 @@ Assembled into one linear map `TauCeti.SpinPolarizationData.cliffordOperator`, t
 Clifford relation, and the universal property then produces the algebra homomorphism
 `TauCeti.spinAction`. The coefficient in the relation is not a prose "twice": the
 computation of `TauCeti.SpinPolarizationData.cliffordOperator_sq` runs through
-`QuadraticMap.polar`, and the polarized form
-`TauCeti.spinAction_ι_mul_add_swap` records the anticommutator
-`c x ∘ c y + c y ∘ c x = polar Q x y • 1` that pins it.
+`QuadraticMap.polar`, which enters through the creation–annihilation anticommutator
+`TauCeti.SpinPolarizationData.contract_wedge` and through nothing else.
 
 The exterior algebra is Mathlib's `ExteriorAlgebra K W`, which *is*
 `CliffordAlgebra (0 : QuadraticForm K W)`, so the interior product is the zero-form
@@ -69,8 +68,6 @@ Surjectivity of `TauCeti.spinAction` onto `Module.End K S` in even dimension, th
   `TauCeti.spinAction_ι_lineOperator`: the three summands act by exterior multiplication,
   contraction, and the parity operator.
 * `TauCeti.spinAction_ι_contract_one`: the second isotropic summand annihilates the vacuum vector.
-* `TauCeti.spinAction_ι_mul_add_swap`: the anticommutator identity pinning the coefficient to
-  `QuadraticMap.polar`.
 
 ## References
 
@@ -169,6 +166,7 @@ three; it is recorded here. -/
 /-- **Creation and annihilation anticommute up to the pairing**: this is the one anticommutator
 that is not zero, and the scalar it produces is the polar form of the two vectors. It is what pins
 the coefficient of the Clifford relation to `QuadraticMap.polar`. -/
+@[grind =]
 theorem contract_wedge (x : P.W) (y : P.W') (s : ExteriorAlgebra K P.W) :
     P.contract y (P.wedge x s) =
       polar Q (x : V) (y : V) • s - P.wedge x (P.contract y s) := by
@@ -258,17 +256,6 @@ theorem spinAction_ι_lineOperator (z : P.line) (s : ExteriorAlgebra K P.W) :
     spinAction Q P (CliffordAlgebra.ι Q z) s =
       P.lineCoordinate z • CliffordAlgebra.involute s := by
   rw [spinAction_ι, P.cliffordOperator_coe_line, P.lineOperator_apply]
-
-/-- **The anticommutator identity** pinning the coefficient of the spinor action: two vectors `a`
-and `b` act with anticommutator the scalar `QuadraticMap.polar Q a b`. Setting `b = a` gives twice
-the Clifford relation, since `polar Q a a = 2 • Q a`; the relation itself, which does not need `2`
-to be cancellable, is `TauCeti.SpinPolarizationData.cliffordOperator_sq`. -/
-theorem spinAction_ι_mul_add_swap (a b : V) :
-    spinAction Q P (CliffordAlgebra.ι Q a) * spinAction Q P (CliffordAlgebra.ι Q b)
-        + spinAction Q P (CliffordAlgebra.ι Q b) * spinAction Q P (CliffordAlgebra.ι Q a)
-      = algebraMap K (Module.End K (ExteriorAlgebra K P.W)) (polar Q a b) := by
-  rw [← map_mul (spinAction Q P), ← map_mul (spinAction Q P), ← map_add (spinAction Q P),
-    CliffordAlgebra.ι_mul_ι_add_swap, AlgHom.commutes]
 
 /-- The second isotropic summand annihilates the vacuum vector `1 ∈ ⋀·W`: contraction lowers the
 exterior degree, and the vacuum has degree zero. -/
