@@ -30,10 +30,12 @@ representation, so `H²(G, kˣ)` is exactly the set of classes of projective rep
 over `k`. And the twisted monoid algebra `k_α[G]` sees only the class
 (`TauCeti.TwistedMonoidAlgebra.nonempty_algEquiv_of_cohomologyClass_eq`).
 
-Two of these need `k` to act faithfully on `V`, and genuinely so: on `V = 0` every lift is the zero
-map and every normalized factor set whatsoever is a factor set for it, so nothing about `α` can be
-read off `ρ` there. The two directions of the lifting criterion are therefore also recorded
-separately, the direction that does not need faithfulness being stated for an arbitrary module.
+Two of these need `kˣ` to act faithfully on `V`, and genuinely so: on `V = 0` every lift is the
+zero map and every normalized factor set whatsoever is a factor set for it, so nothing about `α`
+can be read off `ρ` there. Only scalars in `kˣ` are ever compared, so faithfulness is asked of the
+units; `k` itself acting faithfully — on a nonzero vector space, say — supplies it. The two
+directions of the lifting criterion are therefore also recorded separately, the direction that does
+not need faithfulness being stated for an arbitrary module.
 
 ## The action on the scalars
 
@@ -65,7 +67,7 @@ syntactically, and rewriting across the difference then fails.
 
 ## Main results
 
-* `TauCeti.IsProjectiveRep.cohomologyClass_of_monoidHom_eq_zero`: a linear representation has
+* `TauCeti.IsProjectiveRep.cohomologyClass_of_monoidHom`: a linear representation has
   vanishing class.
 * `TauCeti.IsProjectiveRep.cohomologyClass_rescale`: rescaling the lift does not move the class,
   and `TauCeti.IsProjectiveRep.cohomologyClass_eq_of_eq_smul`: two lifts differing by scalars have
@@ -192,7 +194,7 @@ theorem IsProjectiveRep.cohomologyClass_congr {ρ₁ ρ₂ : G → V ≃ₗ[k] V
 easy half of `TauCeti.IsProjectiveRep.cohomologyClass_eq_zero_iff`, stated before any rescaling and
 so without a faithfulness hypothesis. -/
 @[simp]
-theorem IsProjectiveRep.cohomologyClass_of_monoidHom_eq_zero (π : G →* (V ≃ₗ[k] V)) :
+theorem IsProjectiveRep.cohomologyClass_of_monoidHom (π : G →* (V ≃ₗ[k] V)) :
     (IsProjectiveRep.of_monoidHom π).cohomologyClass = 0 := by
   have h : (IsProjectiveRep.of_monoidHom π).factorSet = FactorSet.trivial G kˣ :=
     FactorSet.ext fun p ↦ by simp
@@ -212,20 +214,21 @@ theorem IsProjectiveRep.cohomologyClass_rescale (h : IsProjectiveRep ρ α) (c :
   exact coboundary_aux _ _ _
 
 /-- A lift obtained from another by multiplying by units is again normalized: the scalars take the
-value `1` at `1`. Faithfulness is what lets a scalar be read off from its action. -/
-theorem IsProjectiveRep.eq_one_of_eq_smul [FaithfulSMul k V] {ρ' : G → V ≃ₗ[k] V}
+value `1` at `1`. Faithfulness is what lets a scalar be read off from its action, and only scalars
+in `kˣ` are compared, so the faithful action of the units is what is asked for. -/
+theorem IsProjectiveRep.eq_one_of_eq_smul [FaithfulSMul kˣ V] {ρ' : G → V ≃ₗ[k] V}
     {β : G → G → kˣ} (h : IsProjectiveRep ρ α) (h' : IsProjectiveRep ρ' β) (c : G → kˣ)
     (hc : ∀ g, ρ' g = (ρ g).trans (LinearEquiv.smulOfUnit (c g))) : c 1 = 1 := by
-  refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
+  refine FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_
   have hx : ρ' 1 x = (c 1 : k) • ρ 1 x := by
     rw [hc 1, LinearEquiv.trans_apply, LinearEquiv.smulOfUnit_apply]
   rw [h.map_one, h'.map_one] at hx
-  simpa using hx.symm
+  simpa [Units.smul_def] using hx.symm
 
 /-- **Two lifts of the same projective action have the same class.** The hypothesis is that the two
 lifts differ by the units `c`, which is what it means for them to induce the same homomorphism into
 the projective linear group. -/
-theorem IsProjectiveRep.cohomologyClass_eq_of_eq_smul [FaithfulSMul k V] {ρ' : G → V ≃ₗ[k] V}
+theorem IsProjectiveRep.cohomologyClass_eq_of_eq_smul [FaithfulSMul kˣ V] {ρ' : G → V ≃ₗ[k] V}
     {β : G → G → kˣ} (h : IsProjectiveRep ρ α) (h' : IsProjectiveRep ρ' β) (c : G → kˣ)
     (hc : ∀ g, ρ' g = (ρ g).trans (LinearEquiv.smulOfUnit (c g))) :
     h'.cohomologyClass = h.cohomologyClass := by
@@ -251,13 +254,14 @@ theorem IsProjectiveRep.exists_monoidHom_of_cohomologyClass_eq_zero (h : IsProje
     have h11 := hx' 1 1
     rw [mul_one, h.isFactorSet.one_left] at h11
     simpa using h11
-  have hrs : IsProjectiveRep (fun g ↦ (ρ g).trans (LinearEquiv.smulOfUnit (x g)⁻¹))
-      (1 : G → G → kˣ) := by
-    refine (h.rescale (fun g ↦ (x g)⁻¹) (by simp [hx1])).congr_factorSet (funext fun g₁ ↦ ?_)
-    funext g₂
+  have hrs := h.rescale (fun g ↦ (x g)⁻¹) (by simp [hx1])
+  have hone : (fun g₁ g₂ ↦ (x g₁)⁻¹ * (x g₂)⁻¹ * ((x (g₁ * g₂))⁻¹)⁻¹ * α g₁ g₂)
+      = (1 : G → G → kˣ) := by
+    funext g₁ g₂
     simp only [Pi.one_apply]
     rw [← hx' g₁ g₂]
     exact coboundary_inv_aux _ _ _
+  rw [hone] at hrs
   refine ⟨x, hrs.toMonoidHom, hx1, fun g ↦ ?_⟩
   refine LinearEquiv.ext fun v ↦ ?_
   have hg : hrs.toMonoidHom g = (ρ g).trans (LinearEquiv.smulOfUnit (x g)⁻¹) :=
@@ -269,7 +273,7 @@ theorem IsProjectiveRep.exists_monoidHom_of_cohomologyClass_eq_zero (h : IsProje
 /-- **A linear representation rescaled by scalars has vanishing class.** Faithfulness is what makes
 the factor set of the rescaled lift *be* the coboundary of `c`, rather than merely some factor set
 acting the same way. -/
-theorem IsProjectiveRep.cohomologyClass_eq_zero_of_monoidHom [FaithfulSMul k V]
+theorem IsProjectiveRep.cohomologyClass_eq_zero_of_monoidHom [FaithfulSMul kˣ V]
     (h : IsProjectiveRep ρ α) (c : G → kˣ) (π : G →* (V ≃ₗ[k] V))
     (hc : ∀ g, ρ g = (π g).trans (LinearEquiv.smulOfUnit (c g))) : h.cohomologyClass = 0 := by
   have hπ := IsProjectiveRep.of_monoidHom π
@@ -286,7 +290,7 @@ theorem IsProjectiveRep.cohomologyClass_eq_zero_of_monoidHom [FaithfulSMul k V]
 its lift is a homomorphism `G →* (V ≃ₗ[k] V)` rescaled by units of `k`. So the Schur-multiplier
 class is the complete obstruction to a projective representation being an ordinary linear
 representation in disguise. -/
-theorem IsProjectiveRep.cohomologyClass_eq_zero_iff [FaithfulSMul k V]
+theorem IsProjectiveRep.cohomologyClass_eq_zero_iff [FaithfulSMul kˣ V]
     (h : IsProjectiveRep ρ α) :
     h.cohomologyClass = 0 ↔
       ∃ (c : G → kˣ) (π : G →* (V ≃ₗ[k] V)),
