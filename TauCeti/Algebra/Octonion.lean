@@ -51,7 +51,8 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 ## Main results
 
 * `TauCeti.Octonion.finrank_eq_eight`: the split octonions are `8`-dimensional.
-* `TauCeti.Octonion.mul_conj` and `TauCeti.Octonion.conj_mul`: `x * x̄ = x̄ * x = N x • 1`.
+* `TauCeti.Octonion.self_mul_conj` and `TauCeti.Octonion.conj_mul_self`:
+  `x * x̄ = x̄ * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
 * `TauCeti.Octonion.left_alternative` and `TauCeti.Octonion.right_alternative`: `𝕆` is
   **alternative**.
@@ -312,7 +313,7 @@ def conj : Octonion R →ₗ[R] Octonion R where
 
 /-- **Conjugation is an anti-automorphism**: it reverses products. -/
 @[simp]
-theorem conj_mul_eq (x y : Octonion R) : conj (x * y) = conj y * conj x := by
+theorem conj_mul (x y : Octonion R) : conj (x * y) = conj y * conj x := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
 /-- **The trace** `⟨a, b, v, w⟩ ↦ a + b` of a vector matrix, the coefficient of the rank-two
@@ -359,13 +360,13 @@ theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := 
 
 /-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. -/
 @[simp]
-theorem mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
+theorem self_mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp [norm_def] <;> ring
 
-/-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.mul_conj`. -/
+/-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.self_mul_conj`. -/
 @[simp]
-theorem conj_mul (x : Octonion R) : conj x * x = norm x • 1 := by
-  simpa using mul_conj (conj x)
+theorem conj_mul_self (x : Octonion R) : conj x * x = norm x • 1 := by
+  simpa using self_mul_conj (conj x)
 
 /-- **The rank-two equation.** Every split octonion satisfies `x² - trace x · x + N x · 1 = 0`, so
 it generates a subalgebra of dimension at most `2`. -/
@@ -387,12 +388,12 @@ theorem left_alternative (x y : Octonion R) : x * x * y = x * (x * y) := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
 /-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. This is left
-alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul_eq`. -/
+alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul`. -/
 @[simp]
 theorem right_alternative (x y : Octonion R) : x * y * y = x * (y * y) := by
   have h : conj (conj y * conj y * conj x) = conj (conj y * (conj y * conj x)) :=
     congrArg _ (left_alternative (conj y) (conj x))
-  simpa only [conj_mul_eq, conj_conj] using h.symm
+  simpa only [conj_mul, conj_conj] using h.symm
 
 /-! ### The Moufang identities -/
 
@@ -401,7 +402,7 @@ theorem moufang_left (x y z : Octonion R) : z * x * z * y = z * (x * (z * y)) :=
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
 /-- **The right Moufang identity**: `x * (z * y * z) = ((x * z) * y) * z`. This is the left identity
-read through the anti-automorphism `TauCeti.Octonion.conj_mul_eq`, after the flexible law
+read through the anti-automorphism `TauCeti.Octonion.conj_mul`, after the flexible law
 `z * y * z = z * (y * z)` — itself the left identity at `y = 1` — has put the two brackets of
 `z * y * z` in the shape the mirror produces. -/
 theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := by
@@ -411,7 +412,7 @@ theorem moufang_right (x y z : Octonion R) : x * (z * y * z) = x * z * y * z := 
       conj (conj z * (conj y * (conj z * conj x))) :=
     congrArg _ (moufang_left (conj y) (conj x) (conj z))
   rw [hflex]
-  simpa only [conj_mul_eq, conj_conj] using h
+  simpa only [conj_mul, conj_conj] using h
 
 /-- **The middle Moufang identity**: `(z * x) * (y * z) = (z * (x * y)) * z`. -/
 theorem moufang_middle (x y z : Octonion R) : z * x * (y * z) = z * (x * y) * z := by
