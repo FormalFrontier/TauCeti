@@ -54,17 +54,21 @@ edge, then the first chain from the double edge to its outer vertex. Thus
 def doubleEdgeF4Equiv : Fin 2 ⊕ Fin 2 ≃ Fin 4 :=
   ((Equiv.sumCongr Fin.revPerm (Equiv.refl _)).trans (Equiv.sumComm _ _)).trans finSumFinEquiv
 
-@[simp] private lemma doubleEdgeF4Equiv_inl_zero :
-    doubleEdgeF4Equiv (Sum.inl (0 : Fin 2)) = 3 := rfl
+/-- The outer vertex of the first chain is node `3` under `doubleEdgeF4Equiv`. -/
+@[simp] lemma doubleEdgeF4Equiv_inl_zero :
+    doubleEdgeF4Equiv (Sum.inl (0 : Fin 2)) = 3 := by decide
 
-@[simp] private lemma doubleEdgeF4Equiv_inl_one :
-    doubleEdgeF4Equiv (Sum.inl (1 : Fin 2)) = 2 := rfl
+/-- The inner vertex of the first chain is node `2` under `doubleEdgeF4Equiv`. -/
+@[simp] lemma doubleEdgeF4Equiv_inl_one :
+    doubleEdgeF4Equiv (Sum.inl (1 : Fin 2)) = 2 := by decide
 
-@[simp] private lemma doubleEdgeF4Equiv_inr_zero :
-    doubleEdgeF4Equiv (Sum.inr (0 : Fin 2)) = 0 := rfl
+/-- The outer vertex of the second chain is node `0` under `doubleEdgeF4Equiv`. -/
+@[simp] lemma doubleEdgeF4Equiv_inr_zero :
+    doubleEdgeF4Equiv (Sum.inr (0 : Fin 2)) = 0 := by decide
 
-@[simp] private lemma doubleEdgeF4Equiv_inr_one :
-    doubleEdgeF4Equiv (Sum.inr (1 : Fin 2)) = 1 := rfl
+/-- The inner vertex of the second chain is node `1` under `doubleEdgeF4Equiv`. -/
+@[simp] lemma doubleEdgeF4Equiv_inr_one :
+    doubleEdgeF4Equiv (Sum.inr (1 : Fin 2)) = 1 := by decide
 
 /-- **The exceptional double-edge chain is `F₄`.** After ordering its four vertices from one outer
 end to the other, with the double edge in the middle, `doubleEdgeCartanMatrix 2 2` is the standard
@@ -74,8 +78,7 @@ theorem doubleEdgeCartanMatrix_two_two :
       DynkinType.F4.cartanMatrix.submatrix doubleEdgeF4Equiv doubleEdgeF4Equiv := by
   rw [DynkinType.cartanMatrix_F4]
   ext v w
-  change doubleEdgeCartanMatrix 2 2 v w =
-    CartanMatrix.F₄ (doubleEdgeF4Equiv v) (doubleEdgeF4Equiv w)
+  dsimp [Matrix.submatrix]
   rcases v with v | v <;> rcases w with w | w <;>
     fin_cases v <;> fin_cases w <;>
     norm_num [doubleEdgeCartanMatrix_inl_inl, doubleEdgeCartanMatrix_inr_inr,
