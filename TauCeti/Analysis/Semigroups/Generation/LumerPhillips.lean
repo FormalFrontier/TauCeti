@@ -81,9 +81,7 @@ private theorem tendstoUniformlyOn_duhamel_integrand (hA : IsMDissipative A)
   intro epsilon hepsilon
   have hquot : Tendsto (fun lambda : ℝ => yosidaApproximation A lambda (x : X)) atTop
       (𝓝 (A x)) :=
-    _root_.TauCeti.Semigroups.tendsto_yosidaApproximation_apply_atTop (M := 1)
-      (fun _ h => hA.mem_resolventSet h)
-      (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h) hdense x
+    hA.tendsto_yosidaApproximation_apply_atTop hdense x
   have hquot' : ∀ᶠ lambda : ℝ in atTop,
       ‖yosidaApproximation A lambda (x : X) - A x‖ < epsilon / 2 := by
     have := tendsto_iff_norm_sub_tendsto_zero.mp hquot

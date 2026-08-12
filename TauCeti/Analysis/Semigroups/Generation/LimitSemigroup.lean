@@ -13,8 +13,8 @@ import Mathlib.Topology.UniformSpace.UniformApproximation
 For a densely defined m-dissipative operator `A` on a real Banach space, the Yosida
 approximations `A_lambda = lambda ^ 2 R(lambda, A) - lambda I` are bounded, and the exponentials
 `exp (t A_lambda) x` are Cauchy as `lambda -> +∞`, uniformly on every compact time interval
-by `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact`. This file specializes
-that estimate to the m-dissipative hypotheses and takes the limit.
+by `TauCeti.Semigroups.IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact`. This
+file takes the limit of that Cauchy family.
 
 Completeness of the Banach space turns the Cauchy estimate into a limit vector
 `yosidaLimit A t x`. The definition is the chosen value `limUnder atTop` of
@@ -118,26 +118,16 @@ theorem tendsto_yosidaLimit (hA : IsMDissipative A) (hdense : Dense (A.domain : 
     {t : ℝ} (ht : 0 ≤ t) (x : X) :
     Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x)) :=
-  ((_root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact
-      (K := 1) (M := 1)
-      (fun _ h => hA.mem_resolventSet h)
-      (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h)
-      (fun _ h _ hs => norm_exp_smul_yosidaApproximation_le_one
-        (hA.mul_norm_resolvent_le_one h) h hs)
-      hdense x ht).cauchySeq (Set.right_mem_Icc.mpr ht)).tendsto_limUnder
+  ((hA.exp_yosidaApproximation_uniformCauchySeqOn_compact hdense x ht).cauchySeq
+    (Set.right_mem_Icc.mpr ht)).tendsto_limUnder
 
 /-- The convergence to the Yosida limit is uniform on every compact time interval. -/
 theorem tendstoUniformlyOn_exp_yosidaApproximation (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) (x : X) {T : ℝ} (hT : 0 ≤ T) :
     TendstoUniformlyOn (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
       (fun t : ℝ => yosidaLimit A t x) atTop (Set.Icc 0 T) :=
-  (_root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact
-    (K := 1) (M := 1)
-    (fun _ h => hA.mem_resolventSet h)
-    (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h)
-    (fun _ h _ hs => norm_exp_smul_yosidaApproximation_le_one
-      (hA.mul_norm_resolvent_le_one h) h hs)
-    hdense x hT).tendstoUniformlyOn_of_tendsto fun _t ht => hA.tendsto_yosidaLimit hdense ht.1 x
+  (hA.exp_yosidaApproximation_uniformCauchySeqOn_compact hdense x hT).tendstoUniformlyOn_of_tendsto
+    fun _t ht => hA.tendsto_yosidaLimit hdense ht.1 x
 
 /-! ## Linearity and contractivity in the vector variable -/
 

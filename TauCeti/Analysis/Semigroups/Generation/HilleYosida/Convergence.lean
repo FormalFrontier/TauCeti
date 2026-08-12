@@ -36,10 +36,8 @@ general growth exponent to zero is
 
 ## Main results
 
-* `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_pow_le_of_mem`: the
-  compact-time Cauchy property on a domain vector.
-* `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_pow_le`: the
-  compact-time Cauchy property on an arbitrary vector.
+* `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_norm_resolvent_pow_le`:
+  the compact-time Cauchy property, on every vector of the space.
 
 ## References
 
@@ -59,24 +57,6 @@ open NormedSpace
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 variable {A : X →ₗ.[ℝ] X} {M : ℝ}
 
-/-- **The Hille--Yosida approximations are uniformly Cauchy on compact time intervals, on a domain
-vector.** For a densely defined operator whose resolvent powers obey the exponent-zero
-Hille--Yosida bounds at growth constant `M`, and for `x ∈ D(A)` and `T ≥ 0`, the vectors
-`exp (t A_lambda) x` are Cauchy as `lambda -> +∞`, uniformly for `0 ≤ t ≤ T`. -/
-theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_pow_le_of_mem (hM : 1 ≤ M)
-    (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
-    (hpow : ∀ n : ℕ, 1 ≤ n → ∀ lambda : ℝ, 0 < lambda →
-      ‖LinearPMap.resolvent A lambda ^ n‖ ≤ M / lambda ^ n)
-    (hdense : Dense (A.domain : Set X)) (x : A.domain) {T : ℝ} (hT : 0 ≤ T) :
-    UniformCauchySeqOn
-      (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) (x : X))
-      Filter.atTop (Set.Icc 0 T) :=
-  exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem hres
-    (fun lambda hlambda => by simpa using hpow 1 le_rfl lambda hlambda)
-    (fun lambda hlambda _ hs =>
-      norm_exp_smul_yosidaApproximation_le hM hlambda hs fun n hn => hpow n hn lambda hlambda)
-    hdense x hT
-
 /-- **The Hille--Yosida approximations are uniformly Cauchy on compact time intervals.** For a
 densely defined operator whose resolvent powers obey the exponent-zero Hille--Yosida bounds at
 growth constant `M`, and for every vector `x` and every `T ≥ 0`, the vectors
@@ -84,7 +64,7 @@ growth constant `M`, and for every vector `x` and every `T ≥ 0`, the vectors
 
 This is the estimate from which a candidate pointwise limit family is defined; later arguments
 establish its semigroup structure and identify its generator as `A`. -/
-theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_pow_le (hM : 1 ≤ M)
+theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_norm_resolvent_pow_le (hM : 1 ≤ M)
     (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
     (hpow : ∀ n : ℕ, 1 ≤ n → ∀ lambda : ℝ, 0 < lambda →
       ‖LinearPMap.resolvent A lambda ^ n‖ ≤ M / lambda ^ n)
