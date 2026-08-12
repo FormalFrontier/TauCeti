@@ -183,29 +183,39 @@ omit [DecidableEq α] [DecidableEq β] in
 @[simp] lemma starIndexCongrArms_some (e : α ≃ β) (ℓ : β → ℕ) (v : (i : α) × Fin (ℓ (e i))) :
     starIndexCongrArms e ℓ (some v) = some ⟨e v.1, v.2⟩ := (rfl)
 
-/-- Relabelling the arms does not change the Cartan matrix of a star. -/
-@[simp] theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) (v w : StarIndex (ℓ ∘ e)) :
+/-- Relabelling the arms does not change an entry of the Cartan matrix of a star. -/
+@[simp] theorem starCartanMatrix_comp_apply (e : α ≃ β) (ℓ : β → ℕ)
+    (v w : StarIndex (ℓ ∘ e)) :
     starCartanMatrix (ℓ ∘ e) v w
       = starCartanMatrix ℓ (starIndexCongrArms e ℓ v) (starIndexCongrArms e ℓ w) := by
   rcases v with _ | v <;> rcases w with _ | w <;>
     simp [e.injective.eq_iff]
 
+/-- Relabelling the arms reindexes the Cartan matrix of a star. -/
+@[simp] theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) :
+    starCartanMatrix (ℓ ∘ e) =
+      (starCartanMatrix ℓ).submatrix (starIndexCongrArms e ℓ) (starIndexCongrArms e ℓ) := by
+  ext v w
+  exact starCartanMatrix_comp_apply e ℓ v w
+
 /-- Finite type is invariant under a relabelling of the arms of a star. -/
 theorem isFiniteType_starCartanMatrix_comp [Fintype α] [Fintype β] {m : β → ℕ} (e : α ≃ β)
     (h : IsFiniteType (starCartanMatrix m)) : IsFiniteType (starCartanMatrix (m ∘ e)) := by
-  have hsub : starCartanMatrix (m ∘ e)
-      = (starCartanMatrix m).submatrix (starIndexCongrArms e m) (starIndexCongrArms e m) := by
-    ext v w; exact starCartanMatrix_comp e m v w
-  rw [hsub]
+  rw [starCartanMatrix_comp]
   exact h.submatrix (starIndexCongrArms e m).injective
 
 /-- Finite type is invariant under a relabelling of the arms of a star, in either direction. -/
 @[simp] theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β → ℕ}
-    (e : α ≃ β) :
-    IsFiniteType (starCartanMatrix (m ∘ e)) ↔ IsFiniteType (starCartanMatrix m) :=
-  ⟨fun h ↦ (Equiv.comp_symm_eq e m (m ∘ e)).2 rfl ▸
-      isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h,
-    isFiniteType_starCartanMatrix_comp e⟩
+    (e : α ≃ β) : IsFiniteType (starCartanMatrix (m ∘ e)) ↔
+      IsFiniteType (starCartanMatrix m) := by
+  constructor
+  · intro h
+    have hm : m = (m ∘ e) ∘ e.symm := by
+      funext b
+      simp
+    rw [hm]
+    exact isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h
+  · exact isFiniteType_starCartanMatrix_comp e
 
 end Relabel
 
