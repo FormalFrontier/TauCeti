@@ -108,7 +108,7 @@ private theorem twistedConj_mul (x y : (CliffordAlgebra Q)ˣ) (a : CliffordAlgeb
   simp only [twistedConj_apply, Units.val_mul, mul_inv_rev, map_mul]
   noncomm_ring
 
-/-! ### Vectors of invertible norm as Lipschitz elements -/
+/-! ### Vectors of invertible norm -/
 
 /-- A vector of invertible norm, as a unit of the Clifford algebra. These units generate the
 Lipschitz group (`unitι_mem_lipschitzGroup`), and they act on the quadratic space by the

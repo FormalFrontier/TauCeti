@@ -15,8 +15,8 @@ The additive and multiplicative laws of Wedhorn's evaluation are proved in
 than by a hypothesis — they assemble into a ring homomorphism, which is the shape Proposition 5.50
 needs.
 
-Its continuity, and the uniqueness that makes 5.50 a *universal* property, are still not proved
-here.
+Its continuity is `TauCeti.Huber.continuous_weightedEvalHom` in `WeightedEval/Continuous.lean`.
+The uniqueness that makes 5.50 a *universal* property is still unproved.
 
 ## Main definitions
 
