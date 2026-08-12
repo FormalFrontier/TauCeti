@@ -53,7 +53,8 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 * `TauCeti.Octonion.finrank_eq_eight`: the split octonions are `8`-dimensional.
 * `TauCeti.Octonion.mul_conj` and `TauCeti.Octonion.conj_mul`: `x * x̄ = x̄ * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
-* `TauCeti.Octonion.mul_self_mul` and `TauCeti.Octonion.mul_mul_self`: `𝕆` is **alternative**.
+* `TauCeti.Octonion.left_alternative` and `TauCeti.Octonion.right_alternative`: `𝕆` is
+  **alternative**.
 * `TauCeti.Octonion.moufang_left`, `TauCeti.Octonion.moufang_right` and
   `TauCeti.Octonion.moufang_middle`: the three **Moufang identities**.
 * `TauCeti.Octonion.mul_self`: every octonion satisfies its rank-two equation
@@ -357,10 +358,12 @@ theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := 
   simp [norm_def]; ring
 
 /-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. -/
+@[simp]
 theorem mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp [norm_def] <;> ring
 
 /-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.mul_conj`. -/
+@[simp]
 theorem conj_mul (x : Octonion R) : conj x * x = norm x • 1 := by
   simpa using mul_conj (conj x)
 
@@ -379,15 +382,17 @@ theorem norm_mul (x y : Octonion R) : norm (x * y) = norm x * norm y := by
 /-! ### Alternativity -/
 
 /-- **The split octonions are left alternative**: `x * x * y = x * (x * y)`. -/
-theorem mul_self_mul (x y : Octonion R) : x * x * y = x * (x * y) := by
+@[simp]
+theorem left_alternative (x y : Octonion R) : x * x * y = x * (x * y) := by
   refine ext_coords ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ <;> simp <;> ring
 
 /-- **The split octonions are right alternative**: `x * y * y = x * (y * y)`. This is left
 alternativity read through the anti-automorphism `TauCeti.Octonion.conj_mul_eq`. -/
-theorem mul_mul_self (x y : Octonion R) : x * y * y = x * (y * y) := by
+@[simp]
+theorem right_alternative (x y : Octonion R) : x * y * y = x * (y * y) := by
   have h : conj (conj y * conj y * conj x) = conj (conj y * (conj y * conj x)) :=
-    congrArg _ (mul_self_mul (conj y) (conj x))
-  simpa [conj_mul_eq] using h.symm
+    congrArg _ (left_alternative (conj y) (conj x))
+  simpa only [conj_mul_eq, conj_conj] using h.symm
 
 /-! ### The Moufang identities -/
 
