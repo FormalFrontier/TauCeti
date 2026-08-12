@@ -16,10 +16,10 @@ calculation behind collar charts: the last factor is the inward normal coordinat
 slice is exactly the boundary parametrization from `Boundary.Model`.
 
 The equivalence is constructed first in the ambient Euclidean spaces by splitting off the zeroth
-coordinate.  Restricting it to the half-spaces gives a homeomorphism and, with Mathlib's product
-model-with-corners structure, a diffeomorphism.  The characteristic lemmas record both coordinate
-projections and identify the zero slice, so later collar constructions do not need to unfold the
-coordinate implementation.
+coordinate.  Restricting it to the half-spaces gives, with Mathlib's product model-with-corners
+structure, a diffeomorphism.  The characteristic lemmas record both coordinate projections and
+identify the zero slice, so later collar constructions do not need to unfold the coordinate
+implementation.
 
 This is the standard-model prerequisite for the collar-neighbourhood target in Layer 1 of the
 GeometricTopology roadmap.  The global collar theorem requires patching these local product
@@ -29,8 +29,6 @@ coordinates on an arbitrary manifold and is not proved here.
 
 * `EuclideanHalfSpace.collarDiffeomorph`: the same identification as a diffeomorphism of manifolds
   with corners.
-* `EuclideanHalfSpace.collarHomeomorph`: the underlying homeomorphism from boundary times inward
-  normal coordinate to the half-space.
 
 ## Main results
 
@@ -84,24 +82,12 @@ private theorem collarAmbientEquiv_apply_zero_eq_boundaryParam (n : ℕ)
 private theorem collarAmbientEquiv_symm_apply_fst (n : ℕ)
     (y : EuclideanSpace ℝ (Fin (n + 1))) :
     ((collarAmbientEquiv n).symm y).1 = euclideanHalfSpaceBoundaryProj n y := by
-  ext i
-  rw [euclideanHalfSpaceBoundaryProj_apply]
-  symm
-  calc
-    y i.succ = collarAmbientEquiv n ((collarAmbientEquiv n).symm y) i.succ :=
-      congrArg (fun z : EuclideanSpace ℝ (Fin (n + 1)) ↦ z i.succ)
-        ((collarAmbientEquiv n).apply_symm_apply y).symm
-    _ = ((collarAmbientEquiv n).symm y).1 i := collarAmbientEquiv_apply_succ ..
+  simp [collarAmbientEquiv]
 
 private theorem collarAmbientEquiv_symm_apply_snd_apply_zero (n : ℕ)
     (y : EuclideanSpace ℝ (Fin (n + 1))) :
     ((collarAmbientEquiv n).symm y).2 0 = y 0 := by
-  symm
-  calc
-    y 0 = collarAmbientEquiv n ((collarAmbientEquiv n).symm y) 0 :=
-      congrArg (fun z : EuclideanSpace ℝ (Fin (n + 1)) ↦ z 0)
-        ((collarAmbientEquiv n).apply_symm_apply y).symm
-    _ = ((collarAmbientEquiv n).symm y).2 0 := collarAmbientEquiv_apply_zero ..
+  simp [collarAmbientEquiv]
 
 private theorem collarAmbientEquiv_symm_apply_snd_apply_zero_nonneg (n : ℕ)
     (y : EuclideanHalfSpace (n + 1)) :
@@ -221,11 +207,5 @@ theorem collarDiffeomorph_apply_zero_eq_boundaryParam (n : ℕ) {k : WithTop ℕ
   apply Subtype.ext
   rw [boundaryParam_coe]
   exact collarAmbientEquiv_apply_zero_eq_boundaryParam n x
-
-/-- The product of the boundary Euclidean space and an inward half-line is homeomorphic to the
-Euclidean half-space.  The second factor is the inward normal coordinate. -/
-def collarHomeomorph (n : ℕ) :
-    (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) ≃ₜ EuclideanHalfSpace (n + 1) :=
-  (collarDiffeomorph (k := ∞) n).toHomeomorph
 
 end TauCeti.EuclideanHalfSpace
