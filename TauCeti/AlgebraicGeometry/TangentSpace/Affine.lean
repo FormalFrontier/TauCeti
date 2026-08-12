@@ -66,11 +66,6 @@ theorem kernelPoint_asIdeal :
     rw [IsLocalRing.maximalIdeal_eq_bot]
     rfl
 
-/-- The augmentation point is the pullback of the closed point of the ground field. -/
-theorem kernelPoint_def :
-    kernelPoint f = PrimeSpectrum.comap (f : H →+* k) (closedPoint k) := by
-  rw [kernelPoint]
-
 /-- The kernel of an augmentation to a field is canonically maximal. -/
 instance kernelIsMaximal : (RingHom.ker (f : H →+* k)).IsMaximal :=
   RingHom.ker_isMaximal_of_surjective (f : H →+* k) (surjective f)
@@ -190,16 +185,6 @@ theorem kernelCotangentLinearEquivZariski_smul (r : k)
     (algebraMap H ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
       (algebraMap k H r))
     (kernelCotangentLinearEquivZariski f x)).symm
-
-/-- The cotangent space of an augmentation kernel and the Zariski cotangent space at its point
-have the same dimension over the ground field. -/
-@[simp]
-theorem finrank_kernelCotangent_eq_finrank_zariskiCotangentSpace :
-    Module.finrank k (RingHom.ker (f : H →+* k)).Cotangent =
-      Module.finrank k
-        (TauCeti.AlgebraicGeometry.ZariskiCotangentSpace
-          (Spec (CommRingCat.of H)) (kernelPoint f)) :=
-  (kernelCotangentLinearEquivZariski f).finrank_eq
 
 end AlgHom
 
