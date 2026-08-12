@@ -74,10 +74,6 @@ private def compSubtypeAddHom (S : Subgroup G) : (G → k) →+ (S → k) where
   map_zero' := rfl
   map_add' _ _ := rfl
 
-private theorem compSubtypeAddHom_apply (S : Subgroup G) (f : G → k) :
-    compSubtypeAddHom S f = fun s : S => f s :=
-  rfl
-
 /-- **Restriction preserves virtual characters.**  The restriction of a character is the character
 of the restricted representation (`TauCeti.character_resFDRep`), and restriction is additive, so
 the property propagates through the additive generation of the lattice.
@@ -88,13 +84,12 @@ theorem comp_subtype_mem_virtualCharacters (S : Subgroup G) {f : G → k}
     (hf : f ∈ virtualCharacters k G) : (fun s : S => f s) ∈ virtualCharacters k S := by
   have hle : virtualCharacters k G ≤ (virtualCharacters k S).comap (compSubtypeAddHom S) := by
     refine virtualCharacters_le fun V => ?_
-    rw [AddSubgroup.mem_comap, compSubtypeAddHom_apply]
-    have h : (fun s : S => V.character (s : G)) = (resFDRep S V).character :=
+    have h : compSubtypeAddHom S V.character = (resFDRep S V).character :=
       funext fun s => (character_resFDRep S V s).symm
-    rw [h]
+    rw [AddSubgroup.mem_comap, h]
     exact character_mem_virtualCharacters _
   have hmem := hle hf
-  rwa [AddSubgroup.mem_comap, compSubtypeAddHom_apply] at hmem
+  rwa [AddSubgroup.mem_comap] at hmem
 
 /-- **Induction preserves virtual characters.**  A character of the subgroup induces to a character
 (`TauCeti.ClassFunction.ind_ofFDRep_mem_virtualCharacters`), and induction is additive, so the
