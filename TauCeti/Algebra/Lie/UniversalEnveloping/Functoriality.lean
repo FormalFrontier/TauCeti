@@ -99,14 +99,16 @@ theorem map_unique (f : LieHom R L M)
       _root_.UniversalEnvelopingAlgebra R M) :
     (∀ x, g (_root_.UniversalEnvelopingAlgebra.ι R x) =
       _root_.UniversalEnvelopingAlgebra.ι R (f x)) ↔ g = map R f := by
+  rw [map]
+  refine Iff.trans ?_
+    (_root_.UniversalEnvelopingAlgebra.lift_unique R
+      ((_root_.UniversalEnvelopingAlgebra.ι R).comp f) g)
   constructor
   · intro h
-    apply _root_.UniversalEnvelopingAlgebra.hom_ext
-    apply LieHom.ext
-    intro x
-    simpa only [LieHom.comp_apply, AlgHom.coe_toLieHom, map_ι] using h x
-  · rintro rfl x
-    exact map_ι R f x
+    funext x
+    exact h x
+  · intro h x
+    exact congrFun h x
 
 /-- The identity Lie homomorphism induces the identity algebra homomorphism. -/
 @[simp]
@@ -119,6 +121,7 @@ theorem map_id :
   simp only [map_ι, LieHom.id_apply, AlgHom.coe_toLieHom, LieHom.comp_apply, AlgHom.id_apply]
 
 /-- Composition of Lie homomorphisms becomes composition of the induced algebra homomorphisms. -/
+@[simp]
 theorem map_comp (f : LieHom R L M) (g : LieHom R M N) :
     map R (g.comp f) = (map R g).comp (map R f) := by
   apply _root_.UniversalEnvelopingAlgebra.hom_ext
@@ -176,13 +179,20 @@ noncomputable def mapEquiv (e : LieEquiv R L M) :
         exact e.symm_apply_apply
       rw [h, map_id])
 
+/-- The algebra homomorphism underlying `mapEquiv` is the map induced by the underlying Lie
+homomorphism. -/
+@[simp]
+theorem mapEquiv_toAlgHom (e : LieEquiv R L M) :
+    (mapEquiv R e).toAlgHom = map R e.toLieHom :=
+  by rw [mapEquiv, AlgEquiv.toAlgHom_ofAlgHom]
+
 /-- The algebra equivalence induced by a Lie equivalence acts on canonical generators by that Lie
 equivalence. -/
 -- `simp`-normal form is `mapEquiv_ι'`, since `simp` unfolds `ι` through `ι_apply`.
 theorem mapEquiv_ι (e : LieEquiv R L M) (x : L) :
     mapEquiv R e (_root_.UniversalEnvelopingAlgebra.ι R x) =
-      _root_.UniversalEnvelopingAlgebra.ι R (e x) :=
-  map_ι R e.toLieHom x
+      _root_.UniversalEnvelopingAlgebra.ι R (e x) := by
+  rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom, map_ι, LieEquiv.coe_coe]
 
 /-- The `simp`-normal form of `mapEquiv_ι`, stated for the canonical generators as `simp` writes
 them: `ι R x` unfolds to `mkAlgHom R L (TensorAlgebra.ι R x)`. -/
@@ -191,13 +201,6 @@ theorem mapEquiv_ι' (e : LieEquiv R L M) (x : L) :
     mapEquiv R e (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
       _root_.UniversalEnvelopingAlgebra.mkAlgHom R M (TensorAlgebra.ι R (e x)) := by
   simpa using mapEquiv_ι R e x
-
-/-- The algebra homomorphism underlying `mapEquiv` is the map induced by the underlying Lie
-homomorphism. -/
-@[simp]
-theorem mapEquiv_toAlgHom (e : LieEquiv R L M) :
-    (mapEquiv R e).toAlgHom = map R e.toLieHom :=
-  by rw [mapEquiv, AlgEquiv.toAlgHom_ofAlgHom]
 
 /-- Passing the inverse Lie equivalence to enveloping algebras gives the inverse algebra
 equivalence. -/
@@ -215,16 +218,31 @@ theorem mapEquiv_symm (e : LieEquiv R L M) :
 theorem mapEquiv_refl :
     mapEquiv R (LieEquiv.refl : LieEquiv R L L) = AlgEquiv.refl :=
   by
-    apply AlgEquiv.ext
-    intro a
-    exact AlgHom.congr_fun (map_id R) a
+    apply AlgEquiv.coe_toAlgHom_injective
+    rw [mapEquiv_toAlgHom]
+    have hrefl : (LieEquiv.refl : LieEquiv R L L).toLieHom = LieHom.id := by
+      apply LieHom.ext
+      intro x
+      rfl
+    rw [hrefl, map_id, AlgEquiv.refl_toAlgHom]
 
 /-- Composition of Lie equivalences becomes composition of the induced algebra equivalences. -/
+@[simp]
 theorem mapEquiv_trans (e : LieEquiv R L M) (d : LieEquiv R M N) :
     (mapEquiv R e).trans (mapEquiv R d) = mapEquiv R (e.trans d) :=
   by
-    apply AlgEquiv.ext
-    intro a
-    exact (AlgHom.congr_fun (map_comp R e.toLieHom d.toLieHom) a).symm
+    apply AlgEquiv.coe_toAlgHom_injective
+    rw [mapEquiv_toAlgHom]
+    have htrans : ((mapEquiv R e).trans (mapEquiv R d)).toAlgHom =
+        (mapEquiv R d).toAlgHom.comp (mapEquiv R e).toAlgHom := by
+      apply AlgHom.ext
+      intro a
+      simp only [AlgEquiv.toAlgHom_apply, AlgEquiv.trans_apply, AlgHom.comp_apply]
+    rw [htrans, mapEquiv_toAlgHom, mapEquiv_toAlgHom]
+    have hLie : (e.trans d).toLieHom = d.toLieHom.comp e.toLieHom := by
+      apply LieHom.ext
+      intro x
+      simp only [LieEquiv.trans_apply, LieHom.comp_apply, LieEquiv.coe_coe]
+    rw [hLie, map_comp]
 
 end TauCeti.UniversalEnvelopingAlgebra
