@@ -50,8 +50,10 @@ composite is not built here.
 
 * `TauCeti.LieAlgebra.ad_mem_skewAdjointSubmodule`: invariance of a form is skew-adjointness of the
   adjoint action.
-* `TauCeti.LieAlgebra.ker_adjointSO`: the kernel of `adjointSO` is the centre, so `adjointSO` is
-  injective exactly when the centre is trivial (`TauCeti.LieAlgebra.adjointSO_injective_iff`).
+* `TauCeti.LieAlgebra.ker_adSO`: the kernel of `adSO` is the centre, so `adSO` is injective exactly
+  when the centre is trivial (`TauCeti.LieAlgebra.adSO_injective_iff`); the same for the polar-form
+  and Killing specializations (`TauCeti.LieAlgebra.ker_adjointSO`,
+  `TauCeti.LieAlgebra.ker_killingAdjointSO`).
 * `TauCeti.LieAlgebra.polarBilin_killingQuadraticForm`: the polar form of the Killing quadratic
   form is `2 • killingForm`.
 * `TauCeti.LieAlgebra.killingQuadraticForm_nondegenerate`: over a ring in which `2` is invertible,
@@ -66,6 +68,11 @@ a rearrangement of the invariance equation valid over any commutative ring. Symm
 where it genuinely bites, in `polarBilin_killingQuadraticForm`, which is stated for the Killing form
 rather than hypothesised. Carrying an unused hypothesis on a `def` would in any case be rejected by
 the `unusedArguments` linter.
+
+The stability of invariance under flipping and addition is a statement about a form on any Lie
+module `M` over `L`, the generality in which Mathlib defines `lieInvariant`, and is stated that way
+here; only from `ad_mem_skewAdjointSubmodule` on, where the adjoint action enters, is the module
+`L` itself.
 -/
 
 public section
@@ -78,7 +85,9 @@ variable {R L : Type*} [CommRing R] [LieRing L] [LieAlgebra R L]
 
 section Invariant
 
-variable {B C : BilinForm R L}
+variable {M : Type*} [AddCommGroup M] [Module R M] [LieRingModule L M] {B C : BilinForm R M}
+
+omit [LieAlgebra R L]
 
 /-- The flip of an invariant bilinear form is invariant: invariance is the equation
 `B ⁅x, y⁆ z = -B y ⁅x, z⁆`, and reading it with the roles of `y` and `z` exchanged is the same
@@ -93,13 +102,19 @@ theorem lieInvariant_add (hB : B.lieInvariant L) (hC : C.lieInvariant L) :
     (B + C).lieInvariant L := fun x y z => by
   simp only [LinearMap.add_apply, hB x y z, hC x y z, neg_add]
 
-/-- The polar form of the quadratic form `x ↦ B x x` of an invariant `B` is again invariant: it is
+/-- The polar form of the quadratic form `y ↦ B y y` of an invariant `B` is again invariant: it is
 `B + B.flip`, and both summands are. -/
 theorem lieInvariant_polarBilin (hB : B.lieInvariant L) :
     LinearMap.BilinForm.lieInvariant L
       (QuadraticMap.polarBilin (LinearMap.BilinMap.toQuadraticMap B)) := by
   rw [LinearMap.BilinMap.polarBilin_toQuadraticMap]
   exact lieInvariant_add hB (lieInvariant_flip hB)
+
+end Invariant
+
+section SkewAdjoint
+
+variable {B : BilinForm R L}
 
 /-- **Invariance is skew-adjointness of the adjoint action.** The invariance equation
 `B ⁅x, y⁆ z = -B y ⁅x, z⁆`, read with `x` held fixed, says that `ad x` is skew-adjoint for `B`. -/
@@ -110,7 +125,7 @@ theorem ad_mem_skewAdjointSubmodule (hB : B.lieInvariant L) (x : L) :
   simp only [Pi.neg_apply, _root_.LieAlgebra.ad_apply, map_neg]
   exact hB x y z
 
-end Invariant
+end SkewAdjoint
 
 section AdjointSO
 
@@ -123,9 +138,30 @@ def adSO (B : BilinForm R L) (hB : B.lieInvariant L) :
   map_smul' r x := by ext z; simp
   map_lie' {x y} := by ext z; simp
 
+/-- `adSO` is `ad` with its codomain restricted: as an endomorphism of `L` it is `ad x`. -/
 @[simp]
+theorem coe_adSO (B : BilinForm R L) (hB : B.lieInvariant L) (x : L) :
+    (adSO B hB x : Module.End R L) = _root_.LieAlgebra.ad R L x := (rfl)
+
+/-- The adjoint homomorphism acts by the bracket. This is not `@[simp]`: `coe_adSO` together with
+`LieAlgebra.ad_apply` already rewrites the left-hand side. -/
 theorem adSO_apply (B : BilinForm R L) (hB : B.lieInvariant L) (x y : L) :
     (adSO B hB x : Module.End R L) y = ⁅x, y⁆ := (rfl)
+
+/-- The kernel of the adjoint homomorphism is the centre, since `adSO` is `ad` with its codomain
+restricted. -/
+@[simp]
+theorem ker_adSO (B : BilinForm R L) (hB : B.lieInvariant L) :
+    (adSO B hB).ker = _root_.LieAlgebra.center R L := by
+  rw [← _root_.LieAlgebra.self_module_ker_eq_center,
+    ← _root_.LieAlgebra.ad_ker_eq_self_module_ker]
+  ext x
+  simp only [LieHom.mem_ker, ← ZeroMemClass.coe_eq_zero, coe_adSO]
+
+/-- The adjoint homomorphism is injective exactly when the centre of `L` is trivial. -/
+theorem adSO_injective_iff (B : BilinForm R L) (hB : B.lieInvariant L) :
+    Function.Injective (adSO B hB) ↔ _root_.LieAlgebra.center R L = ⊥ := by
+  rw [← LieHom.ker_eq_bot, ker_adSO]
 
 /-- The adjoint homomorphism read into the skew-adjoint endomorphisms of the *polar* form of
 `x ↦ B x x`, which is `B + B.flip`, and is `2 • B` for symmetric `B`. Skew-adjointness for `B`
@@ -138,23 +174,27 @@ def adjointSO (B : BilinForm R L) (hB : B.lieInvariant L) :
 
 variable (B : BilinForm R L) (hB : B.lieInvariant L)
 
+/-- The polar-form specialization is again `ad` with its codomain restricted. -/
 @[simp]
+theorem coe_adjointSO (x : L) :
+    (adjointSO B hB x : Module.End R L) = _root_.LieAlgebra.ad R L x :=
+  coe_adSO _ (lieInvariant_polarBilin hB) x
+
+/-- The polar-form specialization acts by the bracket. This is not `@[simp]`: `coe_adjointSO`
+together with `LieAlgebra.ad_apply` already rewrites the left-hand side. -/
 theorem adjointSO_apply (x y : L) : (adjointSO B hB x : Module.End R L) y = ⁅x, y⁆ :=
   adSO_apply _ (lieInvariant_polarBilin hB) x y
 
 /-- The kernel of the adjoint homomorphism is the centre, since `adjointSO` is `ad` with its
 codomain restricted. -/
-theorem ker_adjointSO : (adjointSO B hB).ker = _root_.LieAlgebra.center R L := by
-  rw [← _root_.LieAlgebra.self_module_ker_eq_center,
-    ← _root_.LieAlgebra.ad_ker_eq_self_module_ker]
-  ext x
-  have h : (adjointSO B hB x : Module.End R L) = _root_.LieAlgebra.ad R L x := by ext y; simp
-  simp only [LieHom.mem_ker, ← ZeroMemClass.coe_eq_zero, h]
+@[simp]
+theorem ker_adjointSO : (adjointSO B hB).ker = _root_.LieAlgebra.center R L :=
+  ker_adSO _ (lieInvariant_polarBilin hB)
 
 /-- The adjoint homomorphism is injective exactly when the centre of `L` is trivial. -/
 theorem adjointSO_injective_iff :
-    Function.Injective (adjointSO B hB) ↔ _root_.LieAlgebra.center R L = ⊥ := by
-  rw [← LieHom.ker_eq_bot, ker_adjointSO]
+    Function.Injective (adjointSO B hB) ↔ _root_.LieAlgebra.center R L = ⊥ :=
+  adSO_injective_iff _ (lieInvariant_polarBilin hB)
 
 end AdjointSO
 
@@ -201,10 +241,23 @@ noncomputable def killingAdjointSO :
     L →ₗ⁅R⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin (killingQuadraticForm R L)) :=
   adjointSO (killingForm R L) (LieModule.traceForm_lieInvariant R L L)
 
+/-- The Killing specialization is again `ad` with its codomain restricted. -/
 @[simp]
+theorem coe_killingAdjointSO (x : L) :
+    (killingAdjointSO R L x : Module.End R L) = _root_.LieAlgebra.ad R L x :=
+  coe_adjointSO (killingForm R L) (LieModule.traceForm_lieInvariant R L L) x
+
+/-- The Killing specialization acts by the bracket. This is not `@[simp]`: `coe_killingAdjointSO`
+together with `LieAlgebra.ad_apply` already rewrites the left-hand side. -/
 theorem killingAdjointSO_apply (x y : L) :
     (killingAdjointSO R L x : Module.End R L) y = ⁅x, y⁆ :=
   adjointSO_apply (killingForm R L) (LieModule.traceForm_lieInvariant R L L) x y
+
+/-- The kernel of the Killing adjoint homomorphism is the centre. -/
+@[simp]
+theorem ker_killingAdjointSO :
+    (killingAdjointSO R L).ker = _root_.LieAlgebra.center R L :=
+  ker_adjointSO (killingForm R L) (LieModule.traceForm_lieInvariant R L L)
 
 end Killing
 
