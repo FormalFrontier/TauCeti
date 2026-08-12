@@ -18,10 +18,10 @@ totally positive units `totallyPositiveUnits` — and then restrict along `(𝓞
 arithmetic unit group to obtain `unitSignature`, whose kernel is the totally positive integer units.
 
 The integer-unit signature is the archimedean input to the narrow class group `Cl⁺(K)` (Layer 3 of
-the multiquadratic roadmap): the *cokernel* of the signature — the full sign group modulo the
-signatures realized by units — is what contributes the kernel of the surjection `Cl⁺(K) → Cl(K)`
-between the narrow and ordinary class groups, and the `2`-rank of `Cl⁺(K)` is what the `t - 1`
-genus-theory formula computes for a real quadratic field.
+the multiquadratic roadmap): the quotient of the attainable field signatures by the signatures
+realized by units is what contributes the kernel of the surjection `Cl⁺(K) → Cl(K)` between the
+narrow and ordinary class groups, and the `2`-rank of `Cl⁺(K)` is what the `t - 1` genus-theory
+formula computes for a real quadratic field.
 
 ## Main definitions and results
 
@@ -34,8 +34,8 @@ genus-theory formula computes for a real quadratic field.
   unit, the form in which the comparison of their ranges is used.
 * `TauCeti.NumberField.fieldSignatures` and `TauCeti.NumberField.unitSignatures`: the two ranges,
   the sign patterns realized by `Kˣ` and by the units of `𝓞 K`, with
-  `unitSignatures_le_fieldSignatures` between them. They are named because the cokernel of the
-  signature is an index of one in the other.
+  `unitSignatures_le_fieldSignatures` between them. They are named because their relative index
+  measures the narrow-versus-ordinary class-group defect.
 -/
 
 public section
@@ -134,14 +134,6 @@ omit [NumberField K] in
     s ∈ fieldSignatures K ↔ ∃ x : Kˣ, fieldUnitSignature x = s := Iff.rfl
 
 omit [NumberField K] in
-/-- `fieldSignatures K` is the range of the field-unit signature, the form in which lemmas about
-`MonoidHom.range` — `Subgroup.index_comap`, say — deliver it. -/
-theorem range_fieldUnitSignature :
-    (fieldUnitSignature (K := K)).range = fieldSignatures K := by
-  ext s
-  rw [MonoidHom.mem_range, mem_fieldSignatures]
-
-omit [NumberField K] in
 @[simp] theorem mem_unitSignatures
     {s : {w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ} :
     s ∈ unitSignatures K ↔ ∃ u : (𝓞 K)ˣ, unitSignature u = s := Iff.rfl
@@ -152,5 +144,16 @@ being the restriction of the field-unit signature. -/
 theorem unitSignatures_le_fieldSignatures : unitSignatures K ≤ fieldSignatures K := by
   rintro _ ⟨u, rfl⟩
   exact ⟨Units.map (algebraMap (𝓞 K) K : (𝓞 K) →* K) u, fieldUnitSignature_map_algebraMap u⟩
+
+open scoped Classical in
+/-- The sign patterns realized by `Kˣ` form a group of order dividing `2 ^ r₁`, with `r₁` the number
+of real places: they sit inside a product, indexed by the real places, of copies of the two-element
+sign group `ℝˣ ⧸ posSubgroup ℝ`. -/
+theorem card_fieldSignatures_dvd_two_pow_nrRealPlaces :
+    Nat.card (fieldSignatures K) ∣ 2 ^ nrRealPlaces K := by
+  have hcard : Nat.card ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) =
+      2 ^ nrRealPlaces K := by
+    rw [Nat.card_fun, ← Subgroup.index_eq_card, Units.index_posSubgroup, Nat.card_eq_fintype_card]
+  exact hcard ▸ Subgroup.card_subgroup_dvd_card _
 
 end TauCeti.NumberField
