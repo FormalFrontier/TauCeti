@@ -26,6 +26,8 @@ We define the valuation spectrum `Spv A` following Wedhorn, *Adic Spaces*
 * `TauCeti.ValuationSpectrum.comap φ` : The continuous map `Spv B → Spv A` induced by
   `φ : A →+* B`.
 * `TauCeti.ValuationSpectrum.supp v` : The support ideal `{a ∈ A | v(a) = 0}`.
+* `TauCeti.ValuationSpectrum.basicOpenFinset_inter` : **Wedhorn's step (i)** in the proof of
+  Lemma 7.5, that the rational opens are stable under finite intersection.
 * `TauCeti.ValuationSpectrum.quotientLift 𝔞 h` : Lift the implicitly inferred point `v` with
   `𝔞 ≤ supp v` to `Spv (A ⧸ 𝔞)`.
 * `TauCeti.ValuationSpectrum.localizationComapSection S B v hS` : Lift `v` to a localization
@@ -485,6 +487,53 @@ lemma basicOpenFinset_eq_biInter (T : Finset A) (s : A) :
 lemma isOpen_basicOpenFinset (T : Finset A) (s : A) : IsOpen (basicOpenFinset T s) := by
   rw [basicOpenFinset_eq_biInter]
   exact Set.Finite.isOpen_biInter (T.finite_toSet.insert s) fun t _ ↦ isOpen_basicOpen t s
+
+open scoped Classical in
+/-- Inserting the denominator among the numerators changes nothing: the extra condition it adds
+is `v s ≤ v s`. -/
+@[simp]
+lemma basicOpenFinset_insert_self (T : Finset A) (s : A) :
+    basicOpenFinset (insert s T) s = basicOpenFinset T s := by
+  ext v
+  simp only [mem_basicOpenFinset_iff, Finset.mem_insert]
+  exact ⟨fun ⟨h, hs⟩ ↦ ⟨fun t ht ↦ h t (Or.inr ht), hs⟩,
+    fun ⟨h, hs⟩ ↦ ⟨fun t ht ↦ ht.elim (fun e ↦ e ▸ v.toValuativeRel.vle_refl s) (h t), hs⟩⟩
+
+open scoped Classical Pointwise in
+/-- **Wedhorn's step (i) in the proof of Lemma 7.5**: the rational opens are stable under finite
+intersection. Writing `Uᵢ = insert sᵢ Tᵢ` for the numerator set augmented by its own denominator,
+
+```text
+Spv(A)(T₁/s₁) ∩ Spv(A)(T₂/s₂) = Spv(A)(U₁U₂ / s₁s₂).
+```
+
+The numerator sets on the right carry their own denominators, which
+`basicOpenFinset_insert_self` shows costs nothing — the same absorption `IsAdmissible` performs
+for the admissibility condition. -/
+@[simp]
+lemma basicOpenFinset_inter (T₁ T₂ : Finset A) (s₁ s₂ : A) :
+    basicOpenFinset T₁ s₁ ∩ basicOpenFinset T₂ s₂
+      = basicOpenFinset (insert s₁ T₁ * insert s₂ T₂) (s₁ * s₂) := by
+  rw [← basicOpenFinset_insert_self T₁ s₁, ← basicOpenFinset_insert_self T₂ s₂]
+  set U₁ := insert s₁ T₁ with hU₁
+  set U₂ := insert s₂ T₂ with hU₂
+  have h₁ : s₁ ∈ U₁ := Finset.mem_insert_self _ _
+  have h₂ : s₂ ∈ U₂ := Finset.mem_insert_self _ _
+  ext v
+  simp only [Set.mem_inter_iff, mem_basicOpenFinset_iff, ← mem_supp_iff,
+    (instIsPrimeSupp v).mul_mem_iff_mem_or_mem, not_or]
+  constructor
+  · rintro ⟨⟨hT₁, hs₁⟩, ⟨hT₂, hs₂⟩⟩
+    refine ⟨?_, hs₁, hs₂⟩
+    rintro _ ht
+    obtain ⟨t₁, ht₁, t₂, ht₂, rfl⟩ := Finset.mem_mul.mp ht
+    exact v.toValuativeRel.mul_vle_mul (hT₁ t₁ ht₁) (hT₂ t₂ ht₂)
+  · rintro ⟨hT, hs₁, hs₂⟩
+    refine ⟨⟨fun t₁ ht₁ ↦ ?_, hs₁⟩, fun t₂ ht₂ ↦ ?_, hs₂⟩
+    · exact v.toValuativeRel.vle_mul_cancel hs₂ (hT _ (Finset.mul_mem_mul ht₁ h₂))
+    · refine v.toValuativeRel.vle_mul_cancel hs₁ ?_
+      have := hT _ (Finset.mul_mem_mul h₁ ht₂)
+      rwa [mul_comm s₁ t₂, mul_comm s₁ s₂] at this
 
 end RationalOpenFinset
 end ValuationSpectrum

@@ -28,7 +28,7 @@ whose solutions with `p ≤ q ≤ r` are `(1, q, r)`, `(2, 2, r)`, `(2, 3, 3)`, 
 Only that arithmetic constraint is proved here. The step that produces a star from a diagram with a
 branch vertex is outside this file, and so is the constraint governing a multiple edge (the one
 behind `B`, `C`, `F₄`), which is
-`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge`.
+`TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic`.
 
 This file builds the star as a matrix, `TauCeti.starCartanMatrix`, out of the chain entries of
 `TauCeti.LinearAlgebra.RootSystem.Chain`, over an arbitrary finite index type of arms, and proves
