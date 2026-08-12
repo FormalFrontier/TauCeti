@@ -57,11 +57,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-/-- Twice differentiable regularity is bounded by infinite smoothness. -/
-theorem two_le_infinite_smoothness :
-    ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
-  ENat.natCast_le_of_coe_top_le_withTop le_rfl 2
-
 section Complete
 
 variable [CompleteSpace E]
@@ -72,13 +67,12 @@ theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
     {f : G → ℝ} (hf : ContMDiff I 𝓘(ℝ, ℝ) ∞ f) (g : G)
     (X Y : GroupLieAlgebra I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    ContDiff ℝ 2 (fun p : ℝ × ℝ =>
+    ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
         mulInvariantExp (I := I) (G := G) (p.2 • Y))) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff.of_le
-    two_le_infinite_smoothness
+  exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff
 
 theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (s : ℝ) :
@@ -95,7 +89,8 @@ theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
-    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
+    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
+      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
   have hFdiff : DifferentiableAt ℝ F (s, 0) := hF.differentiable (by norm_num) (s, 0)
   have hpartial := (hasFDerivAt_timeSlice hFdiff).hasDerivAt
   have hfAt := f.contMDiff.mdifferentiable (by simp)
@@ -125,7 +120,8 @@ theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
-    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
+    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
+      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
   have hFdiff : DifferentiableAt ℝ F (0, t) := hF.differentiable (by norm_num) (0, t)
   have hpartial := hasDerivAt_parameterCurve hFdiff
   have hfAt := f.contMDiff.mdifferentiable (by simp)
@@ -164,7 +160,8 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
     ⟨fun h => mvfderiv I f h (mulRightInvariantVectorField X h),
       contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
   have hF : ContDiff ℝ 2 F :=
-    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
+    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
+      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
   -- Identify the two partial derivatives with the invariant directional derivatives.
   have hspaceFun : (fun s => spatialFDeriv F 0 s 1) =
       fun s => LYf (γX s * g) := by
@@ -214,7 +211,8 @@ theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
     (V := mulRightInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := g)
-    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness)
+    (f.contMDiff.contMDiffAt.of_le
+      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out))
     (by simp)
     ((contMDiff_mulRightInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt
