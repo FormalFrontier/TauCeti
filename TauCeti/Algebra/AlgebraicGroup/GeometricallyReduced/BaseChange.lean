@@ -40,8 +40,8 @@ universe u v
 
 /-- **Geometric reducedness is preserved by extension of the base field.** -/
 theorem geometricallyReducedCommHopfAlgProperty.baseChange
-    (k : Type u) (K : Type (max u v)) [Field k] [Field K] [Algebra k K]
-    (H : CommHopfAlgCat.{v} k)
+    {k : Type u} (K : Type (max u v)) [Field k] [Field K] [Algebra k K]
+    {H : CommHopfAlgCat.{v} k}
     (hH : geometricallyReducedCommHopfAlgProperty k H) :
     geometricallyReducedCommHopfAlgProperty K
       (CommHopfAlgCat.baseChange (K := K) H) := by
