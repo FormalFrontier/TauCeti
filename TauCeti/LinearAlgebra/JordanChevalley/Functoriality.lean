@@ -6,6 +6,7 @@ module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Prod
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # Functoriality of the multiplicative Jordan decomposition
@@ -99,22 +100,6 @@ theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
   rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 
-/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence.
-The transported side is stated as its simp-normal nilpotence criterion. -/
-@[simp]
-theorem isUnipotent_congrLinearEquiv_iff
-    (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    _root_.IsNilpotent
-      ((e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1) ↔ IsUnipotent g := by
-  rw [isUnipotent_def]
-  have hmap :
-      LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
-        (e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1 := by
-    ext x
-    simp
-  rw [← hmap]
-  exact IsNilpotent.map_iff (LinearEquiv.conjRingEquiv e).injective
-
 end Predicates
 
 section PerfectField
@@ -134,14 +119,8 @@ theorem jordanDecomposition_congrLinearEquiv
   symm
   apply (eq_jordanDecomposition_iff
     (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) _ _).2
-  have hunipotent : IsUnipotent
-      (LinearMap.GeneralLinearGroup.congrLinearEquiv e (unipotentPart g)) := by
-    rw [isUnipotent_def]
-    change _root_.IsNilpotent
-      ((e.symm.trans ((unipotentPart g).toLinearEquiv.trans e)).toLinearMap - 1)
-    exact (isUnipotent_congrLinearEquiv_iff e _).2 (isUnipotent_unipotentPart g)
   refine ⟨(isSemisimple_congrLinearEquiv_iff e _).2 (isSemisimple_semisimplePart g),
-    hunipotent, ?_, ?_⟩
+    (isUnipotent_congrLinearEquiv_iff e _).2 (isUnipotent_unipotentPart g), ?_, ?_⟩
   · exact (commute_semisimplePart_unipotentPart g).map
       (LinearMap.GeneralLinearGroup.congrLinearEquiv e).toMonoidHom
   · rw [← map_mul, semisimplePart_mul_unipotentPart]

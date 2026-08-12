@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
-import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
 import Mathlib.Algebra.Group.End
 import Mathlib.Tactic.NoncommRing
 
@@ -26,6 +25,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
   unipotent.
 * `TauCeti.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
   linear equivalence to a general-linear-group element.
+* `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
+  transport by a linear equivalence.
 * `TauCeti.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
   its inverse is.
 * `TauCeti.GeneralLinearGroup.IsUnipotent.mul`: commuting unipotent automorphisms have unipotent
@@ -50,7 +51,7 @@ namespace GeneralLinearGroup
 
 open _root_.Module
 
-universe u v
+universe u v w
 
 variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 
@@ -67,6 +68,32 @@ theorem isUnipotent_ofLinearEquiv_iff (f : V ≃ₗ[K] V) :
     ext x
     exact congrFun (LinearMap.GeneralLinearGroup.coe_ofLinearEquiv f) x
   rw [h]
+
+/-- The nilpotence criterion for a transported linear automorphism is equivalent to unipotence
+of the original automorphism. -/
+@[simp]
+theorem isNilpotent_congrLinearEquiv_sub_one_iff_isUnipotent
+    {W : Type w} [AddCommGroup W] [Module K W]
+    (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
+    _root_.IsNilpotent
+      ((e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1) ↔ IsUnipotent g := by
+  rw [isUnipotent_def]
+  have hmap :
+      LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
+        (e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1 := by
+    ext x
+    simp
+  rw [← hmap]
+  exact IsNilpotent.map_iff (LinearEquiv.conjRingEquiv e).injective
+
+/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
+theorem isUnipotent_congrLinearEquiv_iff
+    {W : Type w} [AddCommGroup W] [Module K W]
+    (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
+    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
+      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
+  rw [isUnipotent_ofLinearEquiv_iff]
+  exact isNilpotent_congrLinearEquiv_sub_one_iff_isUnipotent e g
 
 /-- The inverse of a unipotent linear automorphism is unipotent. -/
 theorem IsUnipotent.inv {g : GeneralLinearGroup K V} (hg : IsUnipotent g) :

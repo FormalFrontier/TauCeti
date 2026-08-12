@@ -11,10 +11,10 @@ public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 /-!
 # Unipotent points of an affine group
 
-Let `H` be a Hopf algebra over a field `k` and let `K / k` be a field extension. A `K`-valued
-point `g : H →ₐ[k] K` acts on the scalar extension of every finite-dimensional `H`-comodule.
-This file calls `g` **unipotent** when every one of those linear automorphisms is unipotent,
-meaning that its difference from the identity is nilpotent.
+Let `H` be a Hopf algebra over a field `k` and let `K` be a commutative `k`-algebra. A
+`K`-valued point `g : H →ₐ[k] K` acts on the scalar extension of every finite-dimensional
+`H`-comodule. This file calls `g` **unipotent** when every one of those linear automorphisms is
+unipotent, meaning that its difference from the identity is nilpotent.
 
 For the commutative coordinate Hopf algebra of an affine group scheme, taking `K` to be an
 algebraic closure of `k` is precisely the representation-theoretic definition of a geometric
@@ -59,10 +59,10 @@ namespace HopfAlgebra
 universe u v x
 
 variable {k : Type u} {H : Type v} {K : Type x}
-variable [Field k] [Semiring H] [_root_.HopfAlgebra k H] [Field K] [Algebra k K]
+variable [Field k] [Semiring H] [_root_.HopfAlgebra k H] [CommRing K] [Algebra k K]
 
-/-- A field-valued point of a Hopf algebra is unipotent when it acts by a unipotent linear
-automorphism on the scalar extension of every finite-dimensional comodule.
+/-- A point of a Hopf algebra valued in a commutative algebra is unipotent when it acts by a
+unipotent linear automorphism on the scalar extension of every finite-dimensional comodule.
 
 When `H` is the commutative coordinate Hopf algebra of an affine group over `k` and `K` is an
 algebraic closure, this is the standard representation-theoretic definition of a geometric
