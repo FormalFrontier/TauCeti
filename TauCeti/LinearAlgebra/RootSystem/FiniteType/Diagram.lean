@@ -145,8 +145,7 @@ theorem exists_chain_of_reachable (h : IsFiniteType A) {u v : B}
     have hne' : q.getVert i ≠ q.getVert j := fun heq ↦ by
       have := hq.getVert_injOn (by omega : i ≤ q.length) hj heq
       omega
-    exact TauCeti.IsAcyclic.not_adj_getVert_of_add_one_lt
-      h.isAcyclic_diagramGraph hq hij hj
+    exact h.isAcyclic_diagramGraph.not_adj_getVert_of_add_one_lt hq hij hj
       (h.diagramGraph_adj_iff.mpr ⟨hne', hne⟩)
 
 /-- **The degree bound in graph form**: no index of a finite-type matrix has four neighbours in the
