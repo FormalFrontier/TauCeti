@@ -120,10 +120,9 @@ theorem condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure
   have hcondW : μ[W | tailProcess X] =ᵐ[μ] W := by
     rw [condExp_of_stronglyMeasurable hTail hW_tail.stronglyMeasurable hW_int]
   -- Each indicator block is `blockIndicatorProd` along its own selection, hence integrable.
-  have hblock_int : ∀ s : Fin r → ℕ, Integrable (fun ω => ∏ i, Y i (s i) ω) μ := fun s => by
-    rw [show (fun ω => ∏ i, Y i (s i) ω) = blockIndicatorProd X s B from
-      (funext fun ω => blockIndicatorProd_apply X s B ω).symm]
-    exact integrable_blockIndicatorProd (fun i => (hX_meas (s i)).aemeasurable) hB
+  have hblock_int : ∀ s : Fin r → ℕ, Integrable (fun ω => ∏ i, Y i (s i) ω) μ := fun s =>
+    (integrable_blockIndicatorProd (fun i => (hX_meas (s i)).aemeasurable) hB).congr
+      (ae_of_all _ fun ω => blockIndicatorProd_apply X s B ω)
   -- The product of disjoint-window block averages, whose conditional expectation is `μ[Z | tail]`
   -- at every length and which converges in `L¹` to `W`.
   set P : ℕ → Ω → ℝ :=
