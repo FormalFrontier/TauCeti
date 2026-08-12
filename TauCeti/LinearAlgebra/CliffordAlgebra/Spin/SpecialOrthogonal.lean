@@ -236,6 +236,7 @@ noncomputable def spinToSpecialOrthogonal (Q : QuadraticForm R M) :
 
 /-- Restricting the codomain of the Spin action to the special orthogonal group does not change
 its kernel. -/
+@[simp]
 theorem ker_spinToSpecialOrthogonal (Q : QuadraticForm R M) :
     MonoidHom.ker (spinToSpecialOrthogonal Q) = MonoidHom.ker (spinToOrthogonal Q) := by
   rw [spinToSpecialOrthogonal, MonoidHom.ker_codRestrict,
