@@ -193,12 +193,6 @@ lemma affineBCartanMatrix_apply_le_zero_of_ne (n : ℕ) {v w : Option (Fin (n + 
 
 /-! ### The rows of `B̃ₗ` at its comarks -/
 
-/-- Mathlib's Cartan matrix of type `B`, in the chain coordinates of `TauCeti.chainBEntry`: the
-short root sits at the last position. -/
-private lemma cartanMatrix_B_apply {m : ℕ} (i j : Fin m) :
-    CartanMatrix.B m i j = chainBEntry (m - 1) i j := by
-  simp only [CartanMatrix.B, chainBEntry_def, Matrix.of_apply, Fin.ext_iff]
-
 /-- The **comarks** of `B̃ₗ`: the value `1` at the two vertices of the fork and at the short vertex
 beyond the double edge, and `2` at every vertex of the chain in between.
 
@@ -241,7 +235,7 @@ private theorem sum_cartanMatrix_B_mul_affineBComark (n : ℕ) (j : Fin (n + 3))
       = (chainBEntry (n + 2) (j : ℕ) (k : ℕ) : ℚ)
         * (if (k : ℕ) = 0 ∨ (k : ℕ) = n + 2 then 1 else 2) := by
     intro k
-    rw [cartanMatrix_B_apply, affineBComark_some]
+    rw [← chainBEntry_eq_cartanMatrix_B, affineBComark_some]
     norm_num
   rw [Finset.sum_congr rfl fun k _ ↦ hcast k,
     Fin.sum_univ_eq_sum_range

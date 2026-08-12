@@ -78,9 +78,16 @@ of the double edge, not its source. -/
   unfold chainBEntry; split_ifs <;> omega
 
 /-- Away from the diagonal and its two neighbours a chain has no entry. -/
-lemma chainBEntry_eq_zero {L s t : ℕ} (h1 : s ≠ t) (h2 : s + 1 ≠ t) (h3 : t + 1 ≠ s) :
+@[simp] lemma chainBEntry_eq_zero {L s t : ℕ} (h1 : s ≠ t) (h2 : s + 1 ≠ t)
+    (h3 : t + 1 ≠ s) :
     chainBEntry L s t = 0 := by
   unfold chainBEntry; split_ifs <;> omega
+
+/-- A chain of type `B` is Mathlib's Cartan matrix of type `B`: on `n` positions the two entry
+rules agree. -/
+lemma chainBEntry_eq_cartanMatrix_B {n : ℕ} (i j : Fin n) :
+    chainBEntry (n - 1) i j = CartanMatrix.B n i j := by
+  simp only [CartanMatrix.B, chainBEntry_def, Matrix.of_apply, Fin.ext_iff]
 
 /-- **A row of a chain of type `B`, against an arbitrary weighting of its positions.** The row `a`
 collects `2 g a`, the weight of the position before it - absent at the head of the chain - and the
