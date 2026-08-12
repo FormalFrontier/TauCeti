@@ -55,6 +55,7 @@ noncomputable def cotangentLinearEquivZariski :
 
 /-- On an element of the augmentation ideal, the cotangent comparison is induced by the map from
 the coordinate ring to its stalk at the augmentation point. -/
+@[simp]
 theorem cotangentLinearEquivZariski_toCotangent (a : AugmentationIdeal k H) :
     cotangentLinearEquivZariski k H ((AugmentationIdeal k H).toCotangent a) =
       (maximalIdeal
