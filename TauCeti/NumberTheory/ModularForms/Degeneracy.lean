@@ -492,7 +492,7 @@ theorem CuspForm.diamondOpCusp_levelRaise {M d N : ℕ} [NeZero N]
 /-- **The nebentypus of a level-raise.** `V_d` carries `M_k(Γ₁(M), χ)` into
 `M_k(Γ₁(dM), χ ∘ (ZMod (dM))ˣ → (ZMod M)ˣ)`: the character of `V_d f` at level `dM` is the
 character of `f` read along the reduction map. -/
-theorem ModularForm.levelRaise_mem_modFormCharSpace (M d : ℕ) [NeZero M] [NeZero d]
+theorem ModularForm.levelRaise_mem_modFormCharSpace (M d : ℕ) [NeZero d]
     (χ : (ZMod M)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) :
     levelRaise d (Gamma1_map_le_conjAct_scaleGL M d) f ∈
@@ -506,7 +506,7 @@ theorem ModularForm.levelRaise_mem_modFormCharSpace (M d : ℕ) [NeZero M] [NeZe
 /-- **The nebentypus of a level-raise (cusp forms).** `V_d` carries `S_k(Γ₁(M), χ)` into
 `S_k(Γ₁(dM), χ ∘ (ZMod (dM))ˣ → (ZMod M)ˣ)`. This is the inclusion whose images span the old
 subspace of `S_k(Γ₁(N), χ)`. -/
-theorem CuspForm.levelRaise_mem_cuspFormCharSpace (M d : ℕ) [NeZero M] [NeZero d]
+theorem CuspForm.levelRaise_mem_cuspFormCharSpace (M d : ℕ) [NeZero d]
     (χ : (ZMod M)ˣ →* ℂˣ) {f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k}
     (hf : f ∈ cuspFormCharSpace k χ) :
     levelRaise d (Gamma1_map_le_conjAct_scaleGL M d) f ∈

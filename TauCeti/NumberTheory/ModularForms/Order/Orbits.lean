@@ -71,16 +71,10 @@ lemma orderOfVanishingOnOrbit_mk [SlashInvariantFormClass F 𝒮ℒ k] (p : ℍ)
 
 /-- For a nonzero level-one form, only finitely many orbits carry nonzero order. -/
 lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) : (orderOfVanishingOnOrbit f).HasFiniteSupport := by
-  rw [Function.HasFiniteSupport, Function.support]
-  choose rep hrep_mk hrep_fd using ModularGroup.exists_rep_mem_fd
-  have h_image : rep '' {q | orderOfVanishingOnOrbit f q ≠ 0} ⊆
-      {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt f p ≠ 0} := by
-    rintro _ ⟨q, hq, rfl⟩
-    exact ⟨hrep_fd q, by rwa [← orderOfVanishingOnOrbit_mk f (rep q), hrep_mk q]⟩
-  have h_inj : Set.InjOn rep {q | orderOfVanishingOnOrbit f q ≠ 0} := fun q₁ _ q₂ _ h ↦ by
-    rw [← hrep_mk q₁, ← hrep_mk q₂, h]
-  exact ((finite_zeros_in_fd hf).subset h_image).of_finite_image h_inj
+    (hf : (⇑f : ℍ → ℂ) ≠ 0) : (orderOfVanishingOnOrbit f).HasFiniteSupport :=
+  -- the `rfl` pattern rewrites `q` to `⟦p⟧`, after which `orderOfVanishingOnOrbit_mk` fires
+  (finite_zeros_in_fd hf).of_surjOn Quotient.mk'' fun q hq ↦
+    (ModularGroup.exists_rep_mem_fd q).imp fun p ⟨rfl, hfd⟩ ↦ ⟨⟨hfd, by simpa using hq⟩, rfl⟩
 
 /-- A divisor sum reindexed over the orbits its points represent. The index set is arbitrary,
 mapped into `ℍ` by `p`.
