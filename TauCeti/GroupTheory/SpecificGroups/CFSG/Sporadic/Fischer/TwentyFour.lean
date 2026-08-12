@@ -101,8 +101,11 @@ def fi24AutomorphismEdges : List (Fin 12 × Fin 12) :=
 
 /-- The edges of the source diagram, spelled out. The body is sealed, so this equation is what
 publishes the transcribed diagram: with `TauCeti.Sporadic.fi24AutomorphismCoxeterMatrix_apply` it
-determines every entry of the source Coxeter matrix. -/
-@[simp]
+determines every entry of the source Coxeter matrix.
+
+This is deliberately not `@[simp]`: the simp-normal fact about this list is
+`TauCeti.Sporadic.length_fi24AutomorphismEdges`, while this equation is available for an explicit
+audit of the transcribed edges. -/
 theorem fi24AutomorphismEdges_def :
     fi24AutomorphismEdges =
       [(11, 10), (10, 0), (0, 1), (1, 2), (2, 3), (3, 4),
