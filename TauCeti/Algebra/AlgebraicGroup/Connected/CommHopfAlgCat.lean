@@ -29,6 +29,10 @@ idempotents other than zero and one.
 
 * J. S. Milne, *Algebraic Groups* (2017), §2.a.
 
+The full-subcategory abbreviation follows the finite-type model
+`TauCeti.FiniteTypeCommHopfAlgCat` from
+`TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat`.
+
 This is the geometric-connectedness prerequisite for Layer 3, "Identity component and component
 group", of the ReductiveGroups roadmap.
 -/
