@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
+public import Mathlib.Algebra.BigOperators.Ring.Finset
+public import Mathlib.Data.Rat.Cast.Defs
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Push
+import Mathlib.Tactic.Ring
 
 public section
 

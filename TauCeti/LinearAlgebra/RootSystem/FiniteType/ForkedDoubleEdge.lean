@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain
 
 public section
@@ -57,9 +58,8 @@ so it is the fork, and not the double edge, that these diagrams die of.
 
 ## Main results
 
-* `TauCeti.sum_affineBCartanMatrix_mul_affineBComark_eq_zero`: the comarks are a null vector, row
-  by row in `TauCeti.sum_affineBCartanMatrix_mul_affineBComark_none_eq_zero` and
-  `TauCeti.sum_affineBCartanMatrix_mul_affineBComark_some_eq_zero`.
+* `TauCeti.sum_affineBCartanMatrix_mul_affineBComark_eq_zero`: the comarks are a null vector of the
+  Cartan matrix.
 * `TauCeti.not_isFiniteType_affineBCartanMatrix` and
   `TauCeti.not_isFiniteType_affineBCartanMatrix_transpose`: `affineBCartanMatrix n` and its
   transpose, the affine diagrams `B̃ₗ` and `A⁽²⁾₂ₗ₋₁`, are not of finite type.
@@ -250,13 +250,10 @@ private theorem sum_cartanMatrix_B_mul_affineBComark (n : ℕ) (j : Fin (n + 3))
 /-- **The row of `B̃ₗ` at the pendant vertex annihilates the comarks**: that vertex carries the
 comark `1`, and its single neighbour, the branch vertex, carries the comark `2`.
 
-This is not a `simp` lemma, and neither is its companion
-`TauCeti.sum_affineBCartanMatrix_mul_affineBComark_some_eq_zero`: `Fintype.sum_option` and the entry
-lemmas above dismantle the left-hand side before this equation could fire, so the attribute would
-report only as a `simpNF` violation. Both rows are stated in the shape
-`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos` consumes, and their call site
-reaches them by `rw`. -/
-theorem sum_affineBCartanMatrix_mul_affineBComark_none_eq_zero (n : ℕ) :
+This row and its companion below are the two halves of
+`TauCeti.sum_affineBCartanMatrix_mul_affineBComark_eq_zero`, which states them uniformly and is the
+form a consumer wants; they are private. -/
+private theorem sum_affineBCartanMatrix_mul_affineBComark_none_eq_zero (n : ℕ) :
     ∑ w, (affineBCartanMatrix n none w : ℚ) * affineBComark n w = 0 := by
   rw [Fintype.sum_option]
   have hchain : ∀ k : Fin (n + 3),
@@ -276,9 +273,9 @@ theorem sum_affineBCartanMatrix_mul_affineBComark_none_eq_zero (n : ℕ) :
 chain of `Bₗ` does it alone; at the branch vertex the chain leaves `1`, which the pendant edge
 cancels.
 
-Not a `simp` lemma, for the reason given at
+Private, for the reason given at
 `TauCeti.sum_affineBCartanMatrix_mul_affineBComark_none_eq_zero`. -/
-theorem sum_affineBCartanMatrix_mul_affineBComark_some_eq_zero (n : ℕ) (j : Fin (n + 3)) :
+private theorem sum_affineBCartanMatrix_mul_affineBComark_some_eq_zero (n : ℕ) (j : Fin (n + 3)) :
     ∑ w, (affineBCartanMatrix n (some j) w : ℚ) * affineBComark n w = 0 := by
   rw [Fintype.sum_option, affineBCartanMatrix_some_none, affineBComark_none]
   have hchain : ∀ k : Fin (n + 3),
@@ -290,7 +287,11 @@ theorem sum_affineBCartanMatrix_mul_affineBComark_some_eq_zero (n : ℕ) (j : Fi
   split_ifs <;> grind
 
 /-- **The comarks of `B̃ₗ` are a null vector of its Cartan matrix.** This is the certificate the
-exclusion runs on, in the uniform form a consumer of the two rows above needs. -/
+exclusion runs on, stated in the shape
+`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos` consumes.
+
+This is not a `simp` lemma: `Fintype.sum_option` and the entry lemmas above dismantle the left-hand
+side before the equation could fire, so the attribute would report only as a `simpNF` violation. -/
 theorem sum_affineBCartanMatrix_mul_affineBComark_eq_zero (n : ℕ) (v : Option (Fin (n + 3))) :
     ∑ w, (affineBCartanMatrix n v w : ℚ) * affineBComark n w = 0 := by
   cases v with
