@@ -20,12 +20,12 @@ changes neither the polarized Tits form nor the simple reflections built from it
 the original quiver.
 
 The main result is that this transformation has **no nonzero fixed vector** once the list runs
-over every vertex without repetition and the Tits form is anisotropic, in particular for a
-quiver of ADE type, where the Tits form is positive definite and
-`QuadraticMap.PosDef.anisotropic` supplies the hypothesis. This is the engine of the
-Bernstein-Gelfand-Ponomarev proof of Gabriel's theorem: it is what forbids an indecomposable
-representation from being carried to itself by the Coxeter functor, and so forces the reflection
-induction to descend to a vertex simple.
+over every vertex without repetition and the polarized Tits form has trivial radical, in
+particular whenever the Tits form is anisotropic, and so for a quiver of ADE type, where the
+Tits form is positive definite and `QuadraticMap.PosDef.anisotropic` applies. This is the engine
+of the Bernstein-Gelfand-Ponomarev proof of Gabriel's theorem: it is what forbids an
+indecomposable representation from being carried to itself by the Coxeter functor, and so forces
+the reflection induction to descend to a vertex simple.
 
 The proof reads the fixed-point equation off one coordinate at a time rather than through a
 linear-independence argument. The head `j` of the list occurs nowhere else in it, so the later
@@ -47,8 +47,11 @@ inherits the hypothesis.
   transformation of a repetition-free list of all the vertices lies in the radical of the
   polarized Tits form.
 * `TauCeti.coxeterPreTransformation_eq_self_iff` and
-  `TauCeti.coxeterTransformation_eq_self_iff`: consequently, for an anisotropic Tits form the only
-  fixed vector is `0`.
+  `TauCeti.coxeterTransformation_eq_self_iff`: consequently, once that radical is trivial the only
+  fixed vector is `0`;
+  `TauCeti.coxeterPreTransformation_eq_self_iff_of_anisotropic` and
+  `TauCeti.coxeterTransformation_eq_self_iff_of_anisotropic` are the same statements for an
+  anisotropic Tits form.
 
 ## References
 
@@ -75,24 +78,24 @@ at those vertices, applied in the order in which they are listed, so that
 No hypothesis on the vertices is imposed here, following `TauCeti.vertexPreReflection`; over a
 list of loopless vertices `TauCeti.coxeterTransformation` packages this map as an
 automorphism. -/
-@[expose] noncomputable def coxeterPreTransformation (l : List Q) : Module.End ℤ (Q → ℤ) :=
+noncomputable def coxeterPreTransformation (l : List Q) : Module.End ℤ (Q → ℤ) :=
   l.foldr (fun i c ↦ c * vertexPreReflection Q i) 1
 
 @[simp]
-theorem coxeterPreTransformation_nil : coxeterPreTransformation Q [] = 1 :=
-  rfl
+theorem coxeterPreTransformation_nil : coxeterPreTransformation Q [] = 1 := by
+  simp [coxeterPreTransformation]
 
 /-- The vertex at the head of the list is reflected first. -/
 theorem coxeterPreTransformation_cons (i : Q) (l : List Q) :
     coxeterPreTransformation Q (i :: l)
-      = coxeterPreTransformation Q l * vertexPreReflection Q i :=
-  rfl
+      = coxeterPreTransformation Q l * vertexPreReflection Q i := by
+  simp [coxeterPreTransformation]
 
 /-- The vertex at the head of the list is reflected first, in applied form. -/
 theorem coxeterPreTransformation_apply_cons (i : Q) (l : List Q) (d : Q → ℤ) :
     coxeterPreTransformation Q (i :: l) d
-      = coxeterPreTransformation Q l (vertexPreReflection Q i d) :=
-  rfl
+      = coxeterPreTransformation Q l (vertexPreReflection Q i d) := by
+  rw [coxeterPreTransformation_cons, Module.End.mul_apply]
 
 /-- Concatenating two lists of vertices composes their Coxeter transformations, the first list
 acting first. -/
@@ -142,41 +145,38 @@ theorem titsPolarForm_coxeterPreTransformation {l : List Q} (hl : ∀ i ∈ l, I
 
 /-- The Coxeter transformation along a list of loopless vertices is bijective, being a composite
 of involutions. -/
-theorem bijective_coxeterPreTransformation {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+theorem coxeterPreTransformation_bijective {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     Function.Bijective (coxeterPreTransformation Q l) := by
   induction l with
   | nil =>
-    have hid : ⇑(coxeterPreTransformation Q ([] : List Q)) = id := by
-      rw [coxeterPreTransformation_nil]; rfl
-    rw [hid]
+    rw [coxeterPreTransformation_nil, Module.End.coe_one]
     exact Function.bijective_id
   | cons j l ih =>
-    have hcomp : ⇑(coxeterPreTransformation Q (j :: l))
-        = ⇑(coxeterPreTransformation Q l) ∘ ⇑(vertexPreReflection Q j) := rfl
-    rw [hcomp]
+    rw [coxeterPreTransformation_cons, Module.End.coe_mul]
     exact (ih fun i hi ↦ hl i (by simp [hi])).comp
       (involutive_vertexPreReflection Q (hl j (by simp))).bijective
 
 /-- The Coxeter transformation along a list of loopless vertices, as a linear automorphism of the
 dimension-vector lattice. -/
-@[expose] noncomputable def coxeterTransformation {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+noncomputable def coxeterTransformation {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     (Q → ℤ) ≃ₗ[ℤ] (Q → ℤ) :=
   LinearEquiv.ofBijective (coxeterPreTransformation Q l)
-    (bijective_coxeterPreTransformation Q hl)
+    (coxeterPreTransformation_bijective Q hl)
 
 @[simp]
 theorem coe_coxeterTransformation {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
-    ⇑(coxeterTransformation Q hl) = ⇑(coxeterPreTransformation Q l) :=
-  rfl
+    ⇑(coxeterTransformation Q hl) = ⇑(coxeterPreTransformation Q l) := by
+  funext d
+  simp [coxeterTransformation]
 
 /-- The Coxeter transformation along a list of loopless vertices permutes every level set of the
 Tits form; at the level `1` this says that it permutes the roots of `Q`. -/
 theorem bijOn_coxeterPreTransformation {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (n : ℤ) :
     Set.BijOn (coxeterPreTransformation Q l) {d : Q → ℤ | titsForm Q d = n}
       {d : Q → ℤ | titsForm Q d = n} := by
-  refine ⟨fun d hd ↦ ?_, (bijective_coxeterPreTransformation Q hl).injective.injOn, fun d hd ↦ ?_⟩
+  refine ⟨fun d hd ↦ ?_, (coxeterPreTransformation_bijective Q hl).injective.injOn, fun d hd ↦ ?_⟩
   · simpa only [Set.mem_ofPred_eq, titsForm_coxeterPreTransformation Q hl] using hd
-  · obtain ⟨e, rfl⟩ := (bijective_coxeterPreTransformation Q hl).surjective d
+  · obtain ⟨e, rfl⟩ := (coxeterPreTransformation_bijective Q hl).surjective d
     exact ⟨e, by simpa only [Set.mem_ofPred_eq, titsForm_coxeterPreTransformation Q hl] using hd,
       rfl⟩
 
@@ -224,28 +224,50 @@ theorem titsPolarForm_eq_zero_of_coxeterPreTransformation_eq_self {l : List Q} (
   exact Finset.sum_eq_zero fun i _ ↦ by
     rw [map_smul, LinearMap.smul_apply, smul_eq_mul, hsingle i, mul_zero]
 
+/-- **The Coxeter transformation of a quiver whose polarized Tits form has trivial radical fixes
+only the zero vector**, as soon as the list of vertices it is taken along is repetition-free and
+exhausts the vertices.
+
+This is the input to the reflection induction behind Gabriel's theorem: no nonzero dimension
+vector survives a full pass of the Coxeter functor unchanged. An anisotropic Tits form has
+trivial radical, which is the form the hypothesis takes in
+`TauCeti.coxeterPreTransformation_eq_self_iff_of_anisotropic`. -/
+theorem coxeterPreTransformation_eq_self_iff
+    (hsep : LinearMap.SeparatingRight (titsPolarForm Q)) {l : List Q} (hnd : l.Nodup)
+    (hmem : ∀ i : Q, i ∈ l) (v : Q → ℤ) :
+    coxeterPreTransformation Q l v = v ↔ v = 0 :=
+  ⟨fun hv ↦ hsep v (titsPolarForm_eq_zero_of_coxeterPreTransformation_eq_self Q hnd hmem hv),
+    fun hv ↦ by rw [hv, map_zero]⟩
+
+/-- **The Coxeter transformation of a quiver whose polarized Tits form has trivial radical fixes
+only the zero vector**, in the automorphism packaging. -/
+theorem coxeterTransformation_eq_self_iff (hsep : LinearMap.SeparatingRight (titsPolarForm Q))
+    {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l)
+    (v : Q → ℤ) :
+    coxeterTransformation Q hl v = v ↔ v = 0 := by
+  simp only [coe_coxeterTransformation]
+  exact coxeterPreTransformation_eq_self_iff Q hsep hnd hmem v
+
 /-- **The Coxeter transformation of a quiver with anisotropic Tits form fixes only the zero
-vector**, as soon as the list of vertices it is taken along is repetition-free and exhausts the
-vertices.
+vector**: a vector in the radical of the polarized form is isotropic, since `⟨v, v⟩ = 2 q(v)`.
 
 For a quiver of ADE type the Tits form is positive definite, and
-`QuadraticMap.PosDef.anisotropic` supplies the hypothesis. This is the input to the reflection
-induction behind Gabriel's theorem: no nonzero dimension vector survives a full pass of the
-Coxeter functor unchanged. -/
-theorem coxeterPreTransformation_eq_self_iff (hani : (titsForm Q).Anisotropic) {l : List Q}
-    (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l) (v : Q → ℤ) :
+`QuadraticMap.PosDef.anisotropic` supplies the hypothesis. -/
+theorem coxeterPreTransformation_eq_self_iff_of_anisotropic (hani : (titsForm Q).Anisotropic)
+    {l : List Q} (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l) (v : Q → ℤ) :
     coxeterPreTransformation Q l v = v ↔ v = 0 := by
-  refine ⟨fun hv ↦ hani v ?_, fun hv ↦ by rw [hv, map_zero]⟩
-  have h := titsPolarForm_eq_zero_of_coxeterPreTransformation_eq_self Q hnd hmem hv v
+  refine coxeterPreTransformation_eq_self_iff Q (fun w hw ↦ hani w ?_) hnd hmem v
+  have h := hw w
   rw [titsPolarForm_def, ← titsForm_def] at h
   omega
 
 /-- **The Coxeter transformation of a quiver with anisotropic Tits form fixes only the zero
 vector**, in the automorphism packaging. -/
-theorem coxeterTransformation_eq_self_iff (hani : (titsForm Q).Anisotropic) {l : List Q}
-    (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l) (v : Q → ℤ) :
+theorem coxeterTransformation_eq_self_iff_of_anisotropic (hani : (titsForm Q).Anisotropic)
+    {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l)
+    (v : Q → ℤ) :
     coxeterTransformation Q hl v = v ↔ v = 0 := by
   simp only [coe_coxeterTransformation]
-  exact coxeterPreTransformation_eq_self_iff Q hani hnd hmem v
+  exact coxeterPreTransformation_eq_self_iff_of_anisotropic Q hani hnd hmem v
 
 end TauCeti
