@@ -129,6 +129,7 @@ theorem tensorCoeffEquiv_apply (t : V ⊗[R] MonoidAlgebra R G) (g : G) :
   exact congr($h t)
 
 /-- The coefficient family of a pure tensor scales the vector by the coefficients. -/
+@[simp]
 theorem tensorCoeffEquiv_tmul (v : V) (x : MonoidAlgebra R G) :
     tensorCoeffEquiv R G V (v ⊗ₜ[R] x) =
       Finsupp.mapRange (fun r : R => r • v) (zero_smul R v) x.coeff :=
@@ -302,7 +303,7 @@ private theorem weightProj_weightProj_eq (h g : G) (v : V) :
     (coact (R := R) (C := MonoidAlgebra R G) v))
   simp only [LinearMap.coe_comp, Function.comp_apply] at hcomp
   rw [key, hcomp]
-  rfl
+  rw [weightProj_apply, weightProj_apply]
 
 /-- **The weight projections are idempotent.** -/
 @[simp]
