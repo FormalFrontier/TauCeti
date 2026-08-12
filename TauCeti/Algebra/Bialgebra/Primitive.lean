@@ -50,12 +50,12 @@ theorem comul_pow_of_primitive
   simp only [Algebra.TensorProduct.tmul_pow, one_pow,
     Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul]
 
-section Rational
+section DividedPower
 
-variable {A : Type w} [Ring A] [Bialgebra ℚ A]
+variable {A : Type w} [Semiring A] [Bialgebra ℚ A]
 
-/-- The nonnegative-rational scalar action used to interpret binomial coefficients in the tensor
-square of a rational algebra. -/
+/-- The nonnegative-rational scalar action used to interpret divided powers in the tensor square
+of a rational algebra. -/
 noncomputable local instance tensorProductModuleNNRat : Module ℚ≥0 (A ⊗[ℚ] A) :=
   Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
@@ -94,13 +94,29 @@ theorem counit_dividedPower_of_counit_eq_zero
     Bialgebra.counitAlgHom_apply, h]
   exact Associative.dividedPower_eval_zero (Nat.succ_ne_zero n)
 
+end DividedPower
+
+section Choose
+
+variable {A : Type w} [Ring A] [Bialgebra ℚ A]
+
+/-- The nonnegative-rational scalar action on a rational algebra used to interpret binomial
+coefficients. -/
+noncomputable local instance moduleNNRat : Module ℚ≥0 A :=
+  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+
+/-- The nonnegative-rational scalar action used to interpret binomial coefficients in the tensor
+square of a rational algebra. -/
+noncomputable local instance tensorProductModuleNNRatChoose : Module ℚ≥0 (A ⊗[ℚ] A) :=
+  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+
 /-- The comultiplication of a binomial coefficient in a primitive element has integral
 structure constants:
 `Δ((a choose n)) = ∑ i+j=n, (a choose i) ⊗ (a choose j)`.
 
 This is the formula used for the Cartan generators of a Kostant integral form. -/
 theorem comul_choose_of_primitive
-    [Module ℚ≥0 A] (a : A) (h : Coalgebra.comul a = a ⊗ₜ[ℚ] 1 + 1 ⊗ₜ[ℚ] a) (n : ℕ) :
+    (a : A) (h : Coalgebra.comul a = a ⊗ₜ[ℚ] 1 + 1 ⊗ₜ[ℚ] a) (n : ℕ) :
     (Coalgebra.comul (R := ℚ)) (Ring.choose a n) =
       ∑ ij ∈ Finset.antidiagonal n,
         Ring.choose a ij.1 ⊗ₜ[ℚ] Ring.choose a ij.2 := by
@@ -122,11 +138,11 @@ theorem comul_choose_of_primitive
 
 /-- A counit that kills an element also kills all its positive binomial coefficients. -/
 theorem counit_choose_of_counit_eq_zero
-    [Module ℚ≥0 A] (a : A) (h : Coalgebra.counit (R := ℚ) a = 0) (n : ℕ) :
+    (a : A) (h : Coalgebra.counit (R := ℚ) a = 0) (n : ℕ) :
     (Coalgebra.counit (R := ℚ)) (Ring.choose a (n + 1)) = 0 := by
   rw [← Bialgebra.counitAlgHom_apply, Ring.map_choose, Bialgebra.counitAlgHom_apply, h]
   exact Ring.choose_zero_succ ℚ n
 
-end Rational
+end Choose
 
 end TauCeti.Bialgebra
