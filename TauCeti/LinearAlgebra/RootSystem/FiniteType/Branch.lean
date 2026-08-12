@@ -93,7 +93,7 @@ omit [DecidableEq α] [DecidableEq β] in
     starIndexCongrArms e ℓ (some v) = some ⟨e v.1, v.2⟩ := (rfl)
 
 /-- Relabelling the arms does not change the Cartan matrix of a star. -/
-theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) (v w : StarIndex (ℓ ∘ e)) :
+@[simp] theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) (v w : StarIndex (ℓ ∘ e)) :
     starCartanMatrix (ℓ ∘ e) v w
       = starCartanMatrix ℓ (starIndexCongrArms e ℓ v) (starIndexCongrArms e ℓ w) := by
   rcases v with _ | v <;> rcases w with _ | w <;>
@@ -126,10 +126,27 @@ theorem IsStarOfType.comp {m : β → ℕ} (h : IsStarOfType m t) (e : α ≃ β
   rw [starCartanMatrix_comp e m v w]
   exact hf _ _
 
+omit [DecidableEq α] [DecidableEq β] in
+/-- Undoing a relabelling of the arms: composing with `e` and then with `e.symm` returns the
+original arm family. -/
+private lemma comp_symm_comp (e : α ≃ β) (m : β → ℕ) : (m ∘ e) ∘ (e.symm : β ≃ α) = m := by
+  funext i; simp
+
+/-- Carrying a Dynkin diagram is invariant under a relabelling of the arms, in either direction. -/
+theorem isStarOfType_comp_iff {m : β → ℕ} (e : α ≃ β) :
+    IsStarOfType (m ∘ e) t ↔ IsStarOfType m t :=
+  ⟨fun h ↦ comp_symm_comp e m ▸ h.comp (e.symm : β ≃ α), fun h ↦ h.comp e⟩
+
 /-- Finite type is invariant under a relabelling of the arms of a star. -/
 theorem isFiniteType_starCartanMatrix_comp [Fintype α] [Fintype β] {m : β → ℕ} (e : α ≃ β)
     (h : IsFiniteType (starCartanMatrix m)) : IsFiniteType (starCartanMatrix (m ∘ e)) :=
   isFiniteType_of_forall_eq (starIndexCongrArms e m) h (starCartanMatrix_comp e m)
+
+/-- Finite type is invariant under a relabelling of the arms of a star, in either direction. -/
+theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β → ℕ} (e : α ≃ β) :
+    IsFiniteType (starCartanMatrix (m ∘ e)) ↔ IsFiniteType (starCartanMatrix m) :=
+  ⟨fun h ↦ comp_symm_comp e m ▸ isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h,
+    isFiniteType_starCartanMatrix_comp e⟩
 
 section Fork
 
@@ -365,15 +382,13 @@ theorem IsFiniteType.existsUnique_dynkinType_of_star {ℓ : Fin 3 → ℕ} (hℓ
     have hbc : ℓ (σ 1) ≤ ℓ (σ 2) := hmono (by decide)
     have hsorted : IsFiniteType (starCartanMatrix ![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)]) := by
       rw [← hcomp]
-      exact isFiniteType_starCartanMatrix_comp σ h
+      exact (isFiniteType_starCartanMatrix_comp_iff (σ : Fin 3 ≃ Fin 3)).2 h
     -- Transporting a statement about the sorted star back to `ℓ` undoes the sorting permutation.
     have hback : ∀ t : DynkinType, IsStarOfType (![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] : Fin 3 → ℕ) t →
         IsStarOfType ℓ t := by
       intro t ht
-      have hfun : ((![ℓ (σ 0), ℓ (σ 1), ℓ (σ 2)] : Fin 3 → ℕ) ∘
-          (σ.symm : Fin 3 ≃ Fin 3)) = ℓ := by
-        rw [← hcomp]; funext i; simp
-      exact hfun ▸ ht.comp (σ.symm : Fin 3 ≃ Fin 3)
+      rw [← hcomp] at ht
+      exact (isStarOfType_comp_iff (σ : Fin 3 ≃ Fin 3)).1 ht
     -- The fork bound leaves the fork `(1, 1, c)` and the three exceptional shapes.
     rcases
         eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three hab hbc hsorted with

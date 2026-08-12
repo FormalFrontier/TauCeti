@@ -342,7 +342,7 @@ private lemma cartanMatrix_B_apply_last {n : ℕ} (hn : 2 ≤ n) :
 /-- The two edges of the fork of a type `D` diagram leave its branch node `n - 3`. -/
 private lemma cartanMatrix_D_apply_fork {n m : ℕ} (hn : 4 ≤ n) (hm : n - 2 ≤ m) (hmn : m < n) :
     CartanMatrix.D n ⟨n - 3, by omega⟩ ⟨m, hmn⟩ = -1 := by
-  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff]
+  simp only [CartanMatrix.D_apply]
   split_ifs <;> omega
 
 private lemma hasLeafDoubleEdge_B {n : ℕ} (hn : 2 ≤ n) : HasLeafDoubleEdge (B n).cartanMatrix := by
