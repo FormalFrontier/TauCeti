@@ -50,7 +50,7 @@ closure of `𝔽_p`; that hypothesis appears only in the last section, where it 
 finite subfields exhaust `K`.
 
 Mathlib has the converse direction of the count, that a finite field of cardinality `p ^ n` is
-`GaloisField p n` (`FiniteField.ringEquivOfCardEq`), and, in Tau Ceti,
+`GaloisField p n` (`GaloisField.algEquivGaloisField`), and, in Tau Ceti,
 `TauCeti.FiniteField.pow_card_eq_self_iff_mem_range_algebraMap` identifies the fixed points of the
 `q`-power map of an extension of a *given* finite field with that field. What is missing, and is
 supplied here, is the existence half: inside an algebraically closed field of characteristic `p`
@@ -107,11 +107,8 @@ theorem frobeniusFixedField_mono {m n : ℕ} (h : m ∣ n) :
     frobeniusFixedField K p m ≤ frobeniusFixedField K p n := by
   obtain ⟨k, rfl⟩ := h
   intro x hx
-  rw [mem_frobeniusFixedField] at hx ⊢
-  rw [pow_mul p m k]
-  induction k with
-  | zero => simp
-  | succ k ih => rw [pow_succ, pow_mul, ih, hx]
+  have hx' : Function.IsFixedPt (iterateFrobenius K p m) x := hx
+  exact (iterateFrobenius_mul_apply K p m k x).trans (hx'.iterate k)
 
 end ExpChar
 
@@ -168,13 +165,9 @@ theorem finite_frobeniusFixedField (hn : n ≠ 0) : Finite (frobeniusFixedField 
 /-- **The fixed subfield of the `p ^ n`-power Frobenius is the Galois field of order `p ^ n`.**
 Like every identification of finite fields of equal cardinality this is noncanonical. -/
 noncomputable def frobeniusFixedFieldRingEquivGaloisField (hn : n ≠ 0) :
-    frobeniusFixedField K p n ≃+* GaloisField p n := by
-  haveI := finite_frobeniusFixedField K p n hn
-  haveI : Fintype (frobeniusFixedField K p n) := Fintype.ofFinite _
-  haveI : Fintype (GaloisField p n) := Fintype.ofFinite _
-  refine _root_.FiniteField.ringEquivOfCardEq ?_
-  rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card, card_frobeniusFixedField K p n hn,
-    GaloisField.card p n hn]
+    frobeniusFixedField K p n ≃+* GaloisField p n :=
+  letI := ZMod.algebra (frobeniusFixedField K p n) p
+  (GaloisField.algEquivGaloisField p n (card_frobeniusFixedField K p n hn)).toRingEquiv
 
 /-- **A subfield with `p ^ n` elements is the fixed subfield of the `p ^ n`-power Frobenius**, so
 the fixed subfields exhaust the finite subfields of `K` and there is exactly one of each admissible
