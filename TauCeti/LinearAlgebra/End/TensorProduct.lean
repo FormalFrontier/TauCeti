@@ -8,6 +8,7 @@ public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import Mathlib.LinearAlgebra.Semisimple
 public import Mathlib.RingTheory.TensorProduct.Maps
 import Mathlib.RingTheory.TensorProduct.Finite
+import TauCeti.LinearAlgebra.Semisimple
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -73,58 +74,50 @@ section Right
 
 variable [Module.Projective K W]
 
+/-- Tensoring a semisimple endomorphism on the right with the identity of a *free* module
+preserves semisimplicity. -/
+private theorem isSemisimple_rTensor_of_free {N : Type*} [AddCommGroup N] [Module K N]
+    [Module.Free K N] {f : _root_.Module.End K V} (hf : f.IsSemisimple) :
+    _root_.Module.End.IsSemisimple (f.rTensor N) := by
+  classical
+  rw [_root_.Module.End.IsSemisimple] at hf ⊢
+  let _ : IsSemisimpleModule K[X] (Module.AEval' f) := hf
+  -- A basis of `N` splits `V ⊗ N` as a direct sum of copies of `V`, on which `f.rTensor N` acts
+  -- as `f` in each coordinate.
+  let b := Module.Free.chooseBasis K N
+  let E₀ : (V ⊗[K] N) ≃ₗ[K] (Module.Free.ChooseBasisIndex K N →₀ V) :=
+    TensorProduct.equivFinsuppOfBasisRight b
+  let E₀' : (V ⊗[K] N) ≃ₗ[K]
+      (Module.Free.ChooseBasisIndex K N →₀ Module.AEval' f) :=
+    E₀.trans (Finsupp.mapRange.linearEquiv (Module.AEval'.of f))
+  let E : Module.AEval' (f.rTensor N) ≃ₗ[K[X]]
+      (Module.Free.ChooseBasisIndex K N →₀ Module.AEval' f) :=
+    LinearEquiv.ofAEval _ E₀' fun x ↦ by
+      ext j
+      simp only [E₀', LinearEquiv.trans_apply, Finsupp.mapRange.linearEquiv_apply,
+        Finsupp.mapRange_apply, Finsupp.smul_apply, Module.AEval'.X_smul_of,
+        _root_.Module.End.smul_def]
+      induction x using TensorProduct.induction_on with
+      | zero => simp
+      | tmul v m => simp [E₀]
+      | add x y hx hy => simp [hx, hy]
+  exact IsSemisimpleModule.congr E
+
 /-- Tensoring a semisimple endomorphism on the right with an identity endomorphism preserves
 semisimplicity. -/
 theorem IsSemisimple.rTensor {f : _root_.Module.End K V} (hf : f.IsSemisimple) :
     _root_.Module.End.IsSemisimple (f.rTensor W) := by
-  classical
-  rw [_root_.Module.End.IsSemisimple] at hf ⊢
+  -- Split `W` off a free module `M`; the free case then transfers back along `i.lTensor V`.
   obtain ⟨M, _, _, _, i, s, his⟩ :=
     (Module.Projective.iff_split (R := K) (P := W)).mp inferInstance
-  have hfree : IsSemisimpleModule K[X] (Module.AEval' (f.rTensor M)) := by
-    let _ : IsSemisimpleModule K[X] (Module.AEval' f) := hf
-    let b := Module.Free.chooseBasis K M
-    let E₀ : (V ⊗[K] M) ≃ₗ[K] (Module.Free.ChooseBasisIndex K M →₀ V) :=
-      TensorProduct.equivFinsuppOfBasisRight b
-    let E₀' : (V ⊗[K] M) ≃ₗ[K]
-        (Module.Free.ChooseBasisIndex K M →₀ Module.AEval' f) :=
-      E₀.trans (Finsupp.mapRange.linearEquiv (Module.AEval'.of f))
-    let E : Module.AEval' (f.rTensor M) ≃ₗ[K[X]]
-        (Module.Free.ChooseBasisIndex K M →₀ Module.AEval' f) :=
-      LinearEquiv.ofAEval _ E₀' fun x ↦ by
-        ext j
-        simp only [E₀', LinearEquiv.trans_apply, Finsupp.mapRange.linearEquiv_apply,
-          Finsupp.mapRange_apply, Finsupp.smul_apply, Module.AEval'.X_smul_of,
-          _root_.Module.End.smul_def]
-        induction x using TensorProduct.induction_on with
-        | zero => simp
-        | tmul v m => simp [E₀]
-        | add x y hx hy => simp [hx, hy]
-    exact IsSemisimpleModule.congr E
-  let iT : V ⊗[K] W →ₗ[K] V ⊗[K] M := i.lTensor V
-  let sT : V ⊗[K] M →ₗ[K] V ⊗[K] W := s.lTensor V
-  have hiT : Function.Injective iT := by
-    apply LinearMap.injective_of_comp_eq_id iT sT
+  -- `iff_split` only supplies `AddCommMonoid M`; over a ring the module structure promotes it.
+  let _ : AddCommGroup M := Module.addCommMonoidToAddCommGroup K
+  refine IsSemisimple.of_injective (isSemisimple_rTensor_of_free (N := M) hf)
+    (i.lTensor V) ?_ ?_
+  · apply LinearMap.injective_of_comp_eq_id (i.lTensor V) (s.lTensor V)
     rw [← LinearMap.lTensor_comp, his, LinearMap.lTensor_id]
-  have hiT_comm : iT.comp (f.rTensor W) = (f.rTensor M).comp iT := by
-    exact (LinearMap.lTensor_comp_rTensor V f i).trans
+  · exact (LinearMap.lTensor_comp_rTensor V f i).trans
       (LinearMap.rTensor_comp_lTensor V f i).symm
-  let iX : Module.AEval' (f.rTensor W) →ₗ[K[X]] Module.AEval' (f.rTensor M) :=
-    LinearMap.ofAEval _ ((Module.AEval'.of (f.rTensor M)).toLinearMap.comp iT) fun x ↦ by
-      calc
-        _ = (Module.AEval'.of (f.rTensor M)) (iT ((f.rTensor W) x)) := by
-          simp only [LinearMap.comp_apply, _root_.Module.End.smul_def]
-          rfl
-        _ = (Module.AEval'.of (f.rTensor M)) ((f.rTensor M) (iT x)) :=
-          congrArg (Module.AEval'.of (f.rTensor M)) (LinearMap.congr_fun hiT_comm x)
-        _ = _ := (Module.AEval'.X_smul_of (f.rTensor M) (iT x)).symm
-  let _ : IsSemisimpleModule K[X] (Module.AEval' (f.rTensor M)) := hfree
-  apply IsSemisimpleModule.of_injective iX
-  intro x y hxy
-  apply (Module.AEval'.of (f.rTensor W)).symm.injective
-  apply hiT
-  apply (Module.AEval'.of (f.rTensor M)).injective
-  exact hxy
 
 end Right
 
