@@ -52,8 +52,6 @@ basis is the idempotent side of the splitting of `Z(k[G])` by central characters
 
 ## Main statements
 
-* `TauCeti.Representation.primitiveCentralIdempotent_eq_of_nonempty_equiv`: equivalent
-  representations have the same primitive central idempotent.
 * `TauCeti.Representation.sum_primitiveCentralIdempotent`: **the primitive central idempotents of a
   complete family of irreducible representations sum to `1`**, with
   `TauCeti.Representation.sum_primitiveCentralIdempotentCenter` the same identity in the centre.
@@ -61,9 +59,11 @@ basis is the idempotent side of the splitting of `Z(k[G])` by central characters
   complete orthogonal family of idempotents.
 * `TauCeti.Representation.sum_primitiveCentralIdempotent_mul`: consequently every element of the
   group algebra is the sum of its blocks `e_ρ a`.
-* `TauCeti.Representation.sum_centralCharacter_smul_primitiveCentralIdempotentCenter`: a central
-  element is the combination of the primitive central idempotents whose coefficients are its
-  central characters.
+* `TauCeti.Representation.basisPrimitiveCentralIdempotentCenter_repr_apply`: the coordinates in
+  that basis are the central characters, so that
+  `TauCeti.Representation.sum_centralCharacter_smul_primitiveCentralIdempotentCenter` expands a
+  central element as the combination of the primitive central idempotents whose coefficients are
+  its central characters.
 
 ## References
 
@@ -84,51 +84,12 @@ namespace Representation
 
 universe u v w x
 
-/-! ### One irreducible representation -/
-
-section Single
-
-variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed k]
-  [Invertible (Nat.card G : k)] {V : Type w} [AddCommGroup V] [Module k V]
-  [FiniteDimensional k V] (ρ : Representation k G V) [ρ.IsIrreducible]
-
-/-- **An irreducible representation sees its own primitive central idempotent as `1`.** This is the
-diagonal case of `TauCeti.Representation.centralCharacter_primitiveCentralIdempotentCenter`. -/
-@[simp]
-theorem centralCharacter_primitiveCentralIdempotentCenter_self :
-    centralCharacter ρ (primitiveCentralIdempotentCenter ρ) = 1 := by
-  classical
-  rw [centralCharacter_primitiveCentralIdempotentCenter,
-    ite_eq_left ⟨_root_.Representation.Equiv.refl ρ⟩]
-
-end Single
-
-/-! ### The idempotent depends only on the isomorphism class -/
-
-section Pair
-
-variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed k]
-  [Invertible (Nat.card G : k)] {V : Type w} {W : Type x} [AddCommGroup V] [Module k V]
-  [AddCommGroup W] [Module k W] [FiniteDimensional k V] [FiniteDimensional k W]
-  (ρ : Representation k G V) (σ : Representation k G W) [ρ.IsIrreducible] [σ.IsIrreducible]
-
-/-- **Equivalent irreducible representations have the same primitive central idempotent.** The
-idempotent is built from the character alone, and equivalent representations have equal characters,
-so `e_ρ` is an invariant of the isomorphism class of `ρ`. -/
-theorem primitiveCentralIdempotent_eq_of_nonempty_equiv (h : Nonempty (ρ.Equiv σ)) :
-    primitiveCentralIdempotent ρ = primitiveCentralIdempotent σ := by
-  have hc : ρ.character = σ.character := _root_.Representation.char_iso h.some
-  refine MonoidAlgebra.ext (Finsupp.ext fun g => ?_)
-  rw [primitiveCentralIdempotent_coeff, primitiveCentralIdempotent_coeff, hc]
-
-end Pair
-
-/-! ### Families of pairwise inequivalent irreducibles -/
+/-! ### Families of pairwise inequivalent representations -/
 
 section Pairwise
 
-variable {k : Type u} {G : Type v} [Field k] [Group G] {ι : Type*} {V : ι → Type w}
-  [∀ i, AddCommGroup (V i)] [∀ i, Module k (V i)] (ρ : ∀ i, Representation k G (V i))
+variable {k : Type u} {G : Type v} [Semiring k] [Monoid G] {ι : Type*} {V : ι → Type w}
+  [∀ i, AddCommMonoid (V i)] [∀ i, Module k (V i)] (ρ : ∀ i, Representation k G (V i))
   (hind : Pairwise fun i j => IsEmpty ((ρ i).Equiv (ρ j)))
 
 include hind
@@ -314,30 +275,35 @@ theorem coe_basisPrimitiveCentralIdempotentCenter :
       fun i => primitiveCentralIdempotentCenter (ρ i) :=
   coe_basisOfLinearIndependentOfCardEqFinrank' _ _ _
 
-/-- **The central characters are the coordinates in the idempotent basis.** A central element of
-the group algebra is the combination of the primitive central idempotents whose coefficients are
-its central characters. -/
+/-- **The central characters are the coordinates in the idempotent basis.** Applying the `i`-th
+central character to the basis expansion of a central element `z` reads off its `i`-th coordinate,
+because the `i`-th idempotent is the only member of the basis that character does not kill. -/
+@[simp]
+theorem basisPrimitiveCentralIdempotentCenter_repr_apply (z : Subalgebra.center k k[G]) (i : ι) :
+    (basisPrimitiveCentralIdempotentCenter ρ hind hcard).repr z i = centralCharacter (ρ i) z := by
+  have hbj : ∀ j, basisPrimitiveCentralIdempotentCenter ρ hind hcard j =
+      primitiveCentralIdempotentCenter (ρ j) := fun j =>
+    congrFun (coe_basisPrimitiveCentralIdempotentCenter ρ hind hcard) j
+  conv_rhs => rw [← (basisPrimitiveCentralIdempotentCenter ρ hind hcard).sum_repr z]
+  rw [map_sum, Finset.sum_eq_single i]
+  · rw [map_smul, hbj i, centralCharacter_primitiveCentralIdempotentCenter_self (ρ i),
+      smul_eq_mul, mul_one]
+  · intro j _ hji
+    rw [map_smul, hbj j,
+      centralCharacter_primitiveCentralIdempotentCenter_eq_zero ρ hind hji, smul_zero]
+  · intro hi
+    exact absurd (Finset.mem_univ i) hi
+
+/-- **A central element is the combination of the primitive central idempotents whose coefficients
+are its central characters.** This is the expansion of `z` in the idempotent basis, with the
+coordinates identified by
+`TauCeti.Representation.basisPrimitiveCentralIdempotentCenter_repr_apply`. -/
 theorem sum_centralCharacter_smul_primitiveCentralIdempotentCenter
     (z : Subalgebra.center k k[G]) :
     ∑ i, centralCharacter (ρ i) z • primitiveCentralIdempotentCenter (ρ i) = z := by
-  set b := basisPrimitiveCentralIdempotentCenter ρ hind hcard with hb
-  have hbi : ∀ i, b i = primitiveCentralIdempotentCenter (ρ i) := fun i =>
-    congrFun (coe_basisPrimitiveCentralIdempotentCenter ρ hind hcard) i
-  -- Applying the `j`-th central character to the basis expansion of `z` reads off its coordinate.
-  have hrepr : ∀ j, centralCharacter (ρ j) z = b.repr z j := by
-    intro j
-    conv_lhs => rw [← b.sum_repr z]
-    rw [map_sum, Finset.sum_eq_single j]
-    · rw [map_smul, hbi j, centralCharacter_primitiveCentralIdempotentCenter_self (ρ j),
-        smul_eq_mul, mul_one]
-    · intro i _ hij
-      rw [map_smul, hbi i,
-        centralCharacter_primitiveCentralIdempotentCenter_eq_zero ρ hind hij, smul_zero]
-    · intro hj
-      exact absurd (Finset.mem_univ j) hj
-  calc ∑ i, centralCharacter (ρ i) z • primitiveCentralIdempotentCenter (ρ i)
-      = ∑ i, b.repr z i • b i := Finset.sum_congr rfl fun i _ => by rw [hrepr i, hbi i]
-    _ = z := b.sum_repr z
+  have hsum := (basisPrimitiveCentralIdempotentCenter ρ hind hcard).sum_repr z
+  simpa only [basisPrimitiveCentralIdempotentCenter_repr_apply,
+    coe_basisPrimitiveCentralIdempotentCenter] using hsum
 
 end Complete
 
