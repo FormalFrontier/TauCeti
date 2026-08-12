@@ -130,6 +130,7 @@ abbrev TorusCommHopfAlgCat (k : Type u) [Field k] :=
   (torusCommHopfAlgProperty k).FullSubcategory
 
 /-- Every split torus is a torus. -/
+@[grind]
 theorem splitTorusCommHopfAlgProperty.torus
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : splitTorusCommHopfAlgProperty k H) :
@@ -141,6 +142,7 @@ theorem splitTorusCommHopfAlgProperty.torus
     (FiniteTypeCommHopfAlgCat.baseChangeFunctor (K := AlgebraicClosure k)).mapIso i⟩⟩
 
 /-- Every torus is a group of multiplicative type. -/
+@[grind]
 theorem torusCommHopfAlgProperty.multiplicativeType
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : torusCommHopfAlgProperty k H) :
@@ -151,10 +153,7 @@ theorem torusCommHopfAlgProperty.multiplicativeType
 
 namespace SplitTorus
 
-/-- The coordinate Hopf algebra of a finite-rank split torus satisfies the split-torus property.
-
-The proof reindexes the finite basis by `Fin (Nat.card σ)` and then applies the standard
-bialgebra equivalence between group algebras of isomorphic groups. -/
+/-- The coordinate Hopf algebra of a finite-rank split torus satisfies the split-torus property. -/
 theorem splitTorus_coordinateRing (k : Type u) [Field k] (σ : Type u) [Finite σ] :
     splitTorusCommHopfAlgProperty k
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)) := by
@@ -169,12 +168,6 @@ theorem splitTorus_coordinateRing (k : Type u) [Field k] (σ : Type u) [Finite �
     ObjectProperty.isoMk _ <|
       _root_.CommHopfAlgCat.isoMk (MonoidAlgebra.domCongrBialgEquiv k k e)
   exact ⟨Nat.card σ, ⟨i.symm⟩⟩
-
-/-- The coordinate Hopf algebra of a finite-rank split torus is a torus. -/
-theorem torus_coordinateRing (k : Type u) [Field k] (σ : Type u) [Finite σ] :
-    torusCommHopfAlgProperty k
-      (DiagonalizableGroup.coordinateRing k (characterGroup σ)) :=
-  (splitTorus_coordinateRing k σ).torus k _
 
 end SplitTorus
 
