@@ -34,8 +34,13 @@ application is `TauCeti.UniversalCover.isCoveringMap_subgroupQuotientProj`.
 ## Implementation notes
 
 The sheets are produced by hand rather than by exhibiting `r` as a quotient covering map for some
-group, because in general it is not one: the deck group of `E / H → E / G` is the normalizer
-quotient `N_G(H) / H`, which acts transitively on the fibres of `r` only when `H` is normal in `G`.
+group, because in general it is not one. The fibre of `r` over `q e` consists of the classes of
+the points `g • e` for `g : G`, two of which agree exactly when `g` differs by an element of `H`;
+the normalizer quotient `N_G(H) / H` acts on `E / H` over `X` by deck transformations of `r`, but
+on that fibre it acts transitively only when `H` is normal in `G`. (Whether it exhausts the deck
+transformations of `r` is a further question, needing connectedness hypotheses that are not
+assumed here.)
+
 So the construction goes through Mathlib's `IsOpen.trivializationDiscrete`, which turns a family
 of pairwise disjoint sets on which the map is injective into a `Bundle.Trivialization`. The index
 type of that family is the set of translate images itself, which makes the family injective and
@@ -54,12 +59,6 @@ variable {E X Y : Type*} [TopologicalSpace E] [TopologicalSpace X] [TopologicalS
 
 namespace IsQuotientCoveringMap
 
-/-- A quotient covering map for a subgroup `H` of `G` is unchanged by translating its argument by
-an element of `H`, viewed inside the ambient group `G`. -/
-private theorem apply_smul_of_mem (hqH : IsQuotientCoveringMap qH H) {g : G} (hg : g ∈ H)
-    (y : E) : qH (g • y) = qH y :=
-  hqH.apply_eq_iff_mem_orbit.mpr ⟨⟨g, hg⟩, rfl⟩
-
 /-- Translating a set by an element of `H` does not change its image under a quotient covering map
 for `H`. -/
 private theorem image_smul_of_mem (hqH : IsQuotientCoveringMap qH H) {g : G} (hg : g ∈ H)
@@ -68,9 +67,9 @@ private theorem image_smul_of_mem (hqH : IsQuotientCoveringMap qH H) {g : G} (hg
   constructor
   · rintro ⟨w, hw, rfl⟩
     obtain ⟨s, hs, rfl⟩ := Set.mem_smul_set.mp hw
-    exact ⟨s, hs, (apply_smul_of_mem hqH hg s).symm⟩
+    exact ⟨s, hs, (hqH.map_smul ⟨g, hg⟩).symm⟩
   · rintro ⟨s, hs, rfl⟩
-    exact ⟨g • s, Set.smul_mem_smul_set hs, apply_smul_of_mem hqH hg s⟩
+    exact ⟨g • s, Set.smul_mem_smul_set hs, hqH.map_smul ⟨g, hg⟩⟩
 
 /-- Two points of `E` with the same image under a quotient covering map for `H` differ by an
 element of `H`, viewed inside the ambient group `G`. -/
