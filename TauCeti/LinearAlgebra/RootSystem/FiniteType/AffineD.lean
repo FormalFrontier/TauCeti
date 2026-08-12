@@ -39,7 +39,7 @@ The spine of the diagram is a chain, so its entries and the row sum along it com
 * `TauCeti.sum_doubleForkCartanMatrix_mul_doubleForkMark_eq_zero` and
   `TauCeti.doubleForkCartanMatrix_mulVec_doubleForkMark_eq_zero`: the affine marks form a null
   vector, row by row and as a matrix-vector product.
-* `TauCeti.doubleForkCartanMatrix_diag`, `TauCeti.doubleForkCartanMatrix_isSimplyLaced`,
+* `TauCeti.doubleForkCartanMatrix_diag`, `TauCeti.isSimplyLaced_doubleForkCartanMatrix`,
   `TauCeti.doubleForkCartanMatrix_off_diag_nonpos`, `TauCeti.doubleForkCartanMatrix_isSymm` and
   `TauCeti.doubleForkCartanMatrix_transpose`: the shape of the matrix. Together they certify that
   it is a symmetric, simply-laced generalized Cartan matrix, which is what an argument embedding
@@ -179,7 +179,7 @@ theorem doubleForkCartanMatrix_diag (n : ℕ) (i : DoubleForkIndex n) :
   rcases i with i | i | i <;> simp
 
 /-- A double-fork Cartan matrix is simply laced: every off-diagonal entry is `0` or `-1`. -/
-theorem doubleForkCartanMatrix_isSimplyLaced (n : ℕ) :
+theorem isSimplyLaced_doubleForkCartanMatrix (n : ℕ) :
     (doubleForkCartanMatrix n).IsSimplyLaced := by
   intro i j hij
   rcases i with i | i | i <;> rcases j with j | j | j <;> simp only
@@ -192,7 +192,7 @@ theorem doubleForkCartanMatrix_isSimplyLaced (n : ℕ) :
 /-- Every off-diagonal entry of a double-fork Cartan matrix is nonpositive. -/
 theorem doubleForkCartanMatrix_off_diag_nonpos (n : ℕ) {i j : DoubleForkIndex n} (hij : i ≠ j) :
     doubleForkCartanMatrix n i j ≤ 0 := by
-  rcases doubleForkCartanMatrix_isSimplyLaced n hij with h | h <;> omega
+  rcases isSimplyLaced_doubleForkCartanMatrix n hij with h | h <;> omega
 
 /-- Every double-fork Cartan matrix is symmetric. -/
 theorem doubleForkCartanMatrix_isSymm (n : ℕ) : (doubleForkCartanMatrix n).IsSymm := by
