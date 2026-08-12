@@ -97,7 +97,7 @@ theorem antipodeOp_ι (x : L) :
 /-- The `simp`-normal form of `antipodeOp_ι`, stated for the canonical generators as `simp`
 writes them. -/
 @[simp]
-theorem antipodeOp_ι' (x : L) :
+theorem antipodeOp_mkAlgHom_ι (x : L) :
     antipodeOp R
         (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
       MulOpposite.op
@@ -141,7 +141,7 @@ theorem antipode_ι (x : L) :
 /-- The `simp`-normal form of `antipode_ι`, stated for the canonical generators as `simp` writes
 them. -/
 @[simp]
-theorem antipode_ι' (x : L) :
+theorem antipode_mkAlgHom_ι (x : L) :
     antipode R
         (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
       -_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) := by
