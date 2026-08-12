@@ -32,8 +32,14 @@ the two sets have the same normal closure, which is what
 `TauCeti.normalClosure_relatorSet_coxeterRelators` proves and what makes the presented groups the
 same.
 
+A published diagram is usually simply laced: every edge carries the label three and every non-edge
+the label two. `TauCeti.coxeterMatrixOfEdges` builds the `CoxeterMatrix` of such a diagram from the
+list of its edges, so that a transcribed row records the edges the source draws rather than a
+hand-built matrix.
+
 ## Main definitions
 
+* `TauCeti.coxeterMatrixOfEdges`: the Coxeter matrix of a simply laced diagram, from its edges.
 * `TauCeti.coxeterRelator`: the relator expression `(sᵢ sⱼ) ^ M i j`.
 * `TauCeti.coxeterRelatorsOfList` and `TauCeti.coxeterRelators`: one Coxeter relator per unordered
   pair of nodes, the diagonal included.
@@ -72,6 +78,36 @@ open Function
 section Coxeter
 
 variable {B : Type*}
+
+/-- The Coxeter matrix of the simply laced diagram with the given edges: a node with itself has
+entry one, a pair of distinct nodes joined by an edge has entry three, and every other pair of
+distinct nodes has entry two.
+
+The edge list is read symmetrically, so each edge may be oriented either way, and repeated edges are
+harmless. The body is exposed so that the checks a transcribed diagram runs on its own matrix
+reduce. -/
+@[expose]
+def coxeterMatrixOfEdges [DecidableEq B] (edges : List (B × B)) : CoxeterMatrix B where
+  M := Matrix.of fun i j =>
+    if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2
+  isSymm := by
+    ext i j
+    simp only [Matrix.transpose_apply, Matrix.of_apply]
+    rcases eq_or_ne i j with rfl | h
+    · rfl
+    · simp only [h, Ne.symm h, ↓reduceIte]
+      exact if_congr or_comm rfl rfl
+  diagonal i := by simp
+  off_diagonal i j h := by
+    simp only [Matrix.of_apply, h, ↓reduceIte]
+    split <;> omega
+
+/-- Evaluation of the Coxeter matrix of a simply laced diagram directly from its edge list. -/
+@[simp]
+theorem coxeterMatrixOfEdges_apply [DecidableEq B] (edges : List (B × B)) (i j : B) :
+    coxeterMatrixOfEdges edges i j =
+      if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2 := by
+  simp only [coxeterMatrixOfEdges, Matrix.of_apply]
 
 /-- The Coxeter relator `(sᵢ sⱼ) ^ M i j`, as an auditable relator expression. On the diagonal
 `M i i = 1`, so this is the involution relator `sᵢ ^ 2` written as `(sᵢ sᵢ) ^ 1`. -/

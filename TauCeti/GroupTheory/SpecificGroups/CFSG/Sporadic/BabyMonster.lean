@@ -147,28 +147,16 @@ theorem edges_eq :
 /-- The diagram has ten edges. -/
 theorem length_edges : edges.length = 10 := by decide
 
-/-- The Coxeter matrix of the numbered `Y₄₃₃` diagram: a node with itself has entry one, an edge
-has entry three, and every other pair of nodes has entry two. -/
-def coxeterMatrix : CoxeterMatrix (Fin 11) where
-  M := Matrix.of fun i j =>
-    if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2
-  isSymm := by
-    ext i j
-    simp only [Matrix.transpose_apply, Matrix.of_apply]
-    rcases eq_or_ne i j with rfl | h
-    · rfl
-    · simp only [h, Ne.symm h, ↓reduceIte]
-      exact if_congr or_comm rfl rfl
-  diagonal i := by simp
-  off_diagonal i j h := by
-    simp only [Matrix.of_apply, h, ↓reduceIte]
-    split <;> omega
+/-- The Coxeter matrix of the numbered `Y₄₃₃` diagram, the simply laced matrix of its edge list: a
+node with itself has entry one, an edge has entry three, and every other pair of nodes has entry
+two. -/
+def coxeterMatrix : CoxeterMatrix (Fin 11) := coxeterMatrixOfEdges edges
 
 /-- Evaluation of the Coxeter matrix directly from the edge list. -/
 @[simp]
 theorem coxeterMatrix_apply (i j : Fin 11) :
     coxeterMatrix i j = if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2 := by
-  simp only [coxeterMatrix, Matrix.of_apply]
+  rw [coxeterMatrix, coxeterMatrixOfEdges_apply]
 
 /-- The nodes joined to a given node by an edge, read off the Coxeter matrix rather than off the
 edge list, so that a comparison with the diagram sees the matrix that the relators are built

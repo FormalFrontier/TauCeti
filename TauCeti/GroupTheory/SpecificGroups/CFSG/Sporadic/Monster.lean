@@ -86,32 +86,16 @@ theorem edges_def : edges =
       (0, 9), (9, 10), (10, 11)] := by
   rw [edges]
 
-/-- The Coxeter matrix of `Y₄₄₃`: diagonal entries are one, an edge has label three, and every
-other pair has label two. -/
-def coxeterMatrix : CoxeterMatrix (Fin 12) where
-  M := Matrix.of fun i j =>
-    if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2
-  isSymm := by
-    ext i j
-    simp only [Matrix.transpose_apply, Matrix.of_apply]
-    rcases eq_or_ne i j with rfl | h
-    · rfl
-    · simp only [h, Ne.symm h, ↓reduceIte]
-      apply if_congr
-      · exact or_comm
-      · rfl
-      · rfl
-  diagonal i := by simp
-  off_diagonal i j h := by
-    simp only [Matrix.of_apply, h, ↓reduceIte]
-    split <;> omega
+/-- The Coxeter matrix of `Y₄₄₃`, the simply laced matrix of its edge list: diagonal entries are
+one, an edge has label three, and every other pair has label two. -/
+def coxeterMatrix : CoxeterMatrix (Fin 12) := coxeterMatrixOfEdges edges
 
 /-- Evaluation of the `Y₄₄₃` Coxeter matrix directly from its edge list. -/
 @[simp]
 theorem coxeterMatrix_apply (i j : Fin 12) :
     coxeterMatrix i j =
       if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2 := by
-  simp only [coxeterMatrix, Matrix.of_apply]
+  rw [coxeterMatrix, coxeterMatrixOfEdges_apply]
 
 /-! ### The two non-Coxeter relators -/
 
