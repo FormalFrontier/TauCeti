@@ -143,9 +143,8 @@ theorem mem_minusRectangles (R : GridRectangleBetween x y) :
 theorem minusRectangles_subset_emptyRectangles :
     G.minusRectangles x y ⊆ GridRectangleBetween.emptyRectangles x y := by
   classical
-  intro R hR
-  exact (GridRectangleBetween.mem_emptyRectangles R).mpr
-    ((G.mem_minusRectangles x y R).mp hR).1
+  unfold minusRectangles
+  exact Finset.filter_subset _ _
 
 /-- There are at most two minus rectangles in each matrix coefficient of the minus differential. -/
 theorem card_minusRectangles_le_two : (G.minusRectangles x y).card ≤ 2 :=
