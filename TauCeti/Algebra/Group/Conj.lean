@@ -29,8 +29,9 @@ conjugation action.
   `TauCeti.isRealClass_iff_inv_eq` identifying it with being fixed by inversion.
 * `TauCeti.ConjClasses.ncard_carrier_inv` and `TauCeti.ConjClasses.card_carrier_inv`: a conjugacy
   class and its inverse have the same size, in `Set.ncard` and in `Nat.card` form.
-* `TauCeti.ConjClasses.ncard_carrier_mk`: the size of a conjugacy class is the index of the
-  centralizer of any of its members.
+* `TauCeti.ConjClasses.ncard_carrier_mk` and `TauCeti.ConjClasses.card_carrier_mk`: the size of a
+  conjugacy class is the index of the centralizer of any of its members, in `Set.ncard` and in
+  `Nat.card` form.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
   a class is nonzero in any semiring where the group order is.
@@ -121,12 +122,22 @@ theorem ncard_carrier_mk (g : G) :
     Subgroup.centralizer_eq_comap_stabilizer]
   exact hcomap.symm
 
+/-- **The size of a conjugacy class is the index of the centralizer of any of its members**, in
+`Nat.card` form.
+
+Not `@[simp]`: Mathlib's `Nat.card_coe_set_eq` is itself `simp`, so the left-hand side simplifies
+to `(ConjClasses.mk g).carrier.ncard` and the simp normal form linter rejects the pair; that
+normalized form is `TauCeti.ConjClasses.ncard_carrier_mk`. -/
+theorem card_carrier_mk (g : G) :
+    Nat.card (ConjClasses.mk g).carrier = (Subgroup.centralizer {g}).index := by
+  rw [Nat.card_coe_set_eq, ncard_carrier_mk]
+
 /-- **The size of a conjugacy class divides the order of the group**, being the index of a
 centralizer. -/
 theorem card_carrier_dvd_card (C : ConjClasses G) : Nat.card C.carrier ∣ Nat.card G := by
   obtain ⟨x, rfl⟩ := ConjClasses.exists_rep C
   calc Nat.card (ConjClasses.mk x).carrier
-      = (Subgroup.centralizer {x}).index := by rw [Nat.card_coe_set_eq, ncard_carrier_mk]
+      = (Subgroup.centralizer {x}).index := card_carrier_mk x
     _ ∣ Nat.card G := Subgroup.index_dvd_card _
 
 /-- The size of a conjugacy class is nonzero in any semiring in which the order of the group is

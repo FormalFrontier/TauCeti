@@ -4,11 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `Matrix.scalar` occurs in the statements below, and the `2 × 2` entry lemmas
--- (`Matrix.det_fin_two`, `Fin.sum_univ_two`) in the proofs.
+-- `Matrix.scalar` occurs in the statements below, and the `2 × 2` entry lemma
+-- `Matrix.det_fin_two` in the proofs.
 public import Mathlib.LinearAlgebra.Matrix.Notation
 -- `Subgroup.centralizer` occurs in the statements below.
 public import Mathlib.GroupTheory.Subgroup.Centralizer
+-- `TauCeti.commute_finTwo_iff` is the engine of every centralizer computation below.
+public import TauCeti.LinearAlgebra.Matrix.Commute
 -- `ConjClasses.carrier` occurs in the statements below, and `TauCeti.ConjClasses.ncard_carrier_mk`
 -- is what turns a centralizer order into a class size.
 public import TauCeti.Algebra.Group.Conj
@@ -22,28 +24,36 @@ import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
 
 /-!
-# Centralizers of the regular semisimple elements of `GL₂`
+# Centralizers of the regular elements of `GL₂`
 
 A `2 × 2` matrix over a field is **regular** as soon as it is not scalar: it is then cyclic
-(nonderogatory), and the matrices commuting with it are exactly the polynomials in it. In size `2`
-those polynomials are the affine combinations `a • 1 + b • M`, and that is the content of
-`TauCeti.commute_finTwo_iff`, the engine of this file: the commutant of a non-scalar
-`M : Matrix (Fin 2) (Fin 2) F` is the two-dimensional algebra `F[M]`.
+(nonderogatory), and the matrices commuting with it are exactly the polynomials in it, the
+two-dimensional algebra `F[M]`. That is `TauCeti.commute_finTwo_iff`, from
+`TauCeti.LinearAlgebra.Matrix.Commute`, and it is the engine of this file.
 
 Two consequences organize the conjugacy classes of `GL₂(F)`. First, the commutant of a non-scalar
 matrix is commutative, so the centralizer of a non-central element of `GL₂(F)` is an **abelian**
-subgroup (`TauCeti.isMulCommutative_centralizer_of_notMem_range_scalar`). Second, for a **regular
-semisimple** element — one with two distinct eigenvalues, over `F` or over a quadratic extension
-`E/F` — that centralizer is exactly the **maximal torus** containing it:
+subgroup (`TauCeti.isMulCommutative_centralizer_of_notMem_range_scalar`). Second, when a regular
+element generates a maximal commutative subalgebra of `Matrix (Fin 2) (Fin 2) F` — a split one,
+`F × F`, or a quadratic field extension `E/F` — its centralizer is that subalgebra's unit group:
 
 * the *split* case, an invertible diagonal matrix with distinct diagonal entries: its centralizer
   is the split torus `TauCeti.diagGL` of all invertible diagonal matrices
   (`TauCeti.centralizer_diagGL`), of order `(q - 1)²`, so its conjugacy class has `q (q + 1)`
   elements;
-* the *elliptic* case, an element of the non-split torus `TauCeti.GL2NonSplitTorus` not coming from
-  `F`: its centralizer is that whole torus
+* the *non-split* case, an element of `TauCeti.GL2NonSplitTorus` — the unit group of a quadratic
+  field extension `E/F` — that does not come from `F`: its centralizer is that whole group
   (`TauCeti.GL2NonSplitTorus.centralizer_gl2NonSplitTorusHom`), of order `q² - 1`, so its
   conjugacy class has `q (q - 1)` elements.
+
+Over a finite field — more generally whenever `E/F` is separable — both elements are **regular
+semisimple** and both centralizers are the **maximal torus** containing the element, split in the
+first case and elliptic in the second. Those words are used only under that hypothesis: over an
+imperfect field of characteristic two a purely inseparable quadratic extension `E/F` satisfies the
+hypotheses of `TauCeti.GL2NonSplitTorus.centralizer_gl2NonSplitTorusHom`, and there multiplication
+by an element of `E ∖ F` is not semisimple and `Eˣ` is not a torus; the general statement is proved
+and read as a centralizer computation for a quadratic extension, with no semisimplicity claimed.
+The counting results all assume `F` finite, where the torus language is unconditionally correct.
 
 The remaining conjugacy classes of `GL₂(𝔽_q)` are the central ones, whose centralizer is
 everything, and the non-semisimple ones `!![a, 1; 0, a]`, whose centralizer is again `F[M]ˣ` but
@@ -55,21 +65,17 @@ The class sizes are read off the centralizer orders by orbit-stabilizer
 
 ## Main results
 
-* `TauCeti.commute_finTwo_iff`: a matrix commutes with a non-scalar `2 × 2` matrix `M` exactly when
-  it is of the form `a • 1 + b • M`.
-* `TauCeti.commute_of_commute_finTwo`: two matrices commuting with a common non-scalar `2 × 2`
-  matrix commute with each other.
 * `TauCeti.isMulCommutative_centralizer_of_notMem_range_scalar`: the centralizer of a non-central
   element of `GL (Fin 2) F` is abelian.
 * `TauCeti.centralizer_diagGL`, `TauCeti.natCard_centralizer_diagGL`,
-  `TauCeti.ncard_carrier_conjClasses_diagGL`: the centralizer of an invertible diagonal matrix with
+  `TauCeti.ncard_carrier_mk_diagGL`: the centralizer of an invertible diagonal matrix with
   distinct entries is the split torus, of order `(q - 1)²`, and its conjugacy class has `q (q + 1)`
   elements.
 * `TauCeti.GL2NonSplitTorus.centralizer_gl2NonSplitTorusHom`,
   `TauCeti.GL2NonSplitTorus.natCard_centralizer_gl2NonSplitTorusHom`,
-  `TauCeti.GL2NonSplitTorus.ncard_carrier_conjClasses_gl2NonSplitTorusHom`: the centralizer of an
-  elliptic element is the non-split torus, of order `q² - 1`, and its conjugacy class has
-  `q (q - 1)` elements.
+  `TauCeti.GL2NonSplitTorus.ncard_carrier_mk_gl2NonSplitTorusHom`: the centralizer of an element of
+  the non-split torus not coming from `F` — an elliptic element, over a finite field — is that
+  whole torus, of order `q² - 1`, and its conjugacy class has `q (q - 1)` elements.
 
 ## References
 
@@ -84,98 +90,6 @@ public section
 open Matrix
 
 namespace TauCeti
-
-section Commutant
-
-variable {F : Type*} [Field F] {M N P : Matrix (Fin 2) (Fin 2) F}
-
-/-- A `2 × 2` matrix is scalar exactly when its off-diagonal entries vanish and its two diagonal
-entries agree. -/
-theorem mem_range_scalar_finTwo_iff :
-    M ∈ Set.range (Matrix.scalar (Fin 2)) ↔ M 0 1 = 0 ∧ M 1 0 = 0 ∧ M 0 0 = M 1 1 := by
-  constructor
-  · rintro ⟨c, rfl⟩
-    simp [Matrix.scalar_apply]
-  · rintro ⟨h01, h10, h00⟩
-    refine ⟨M 0 0, ?_⟩
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.scalar_apply, h01, h10, h00]
-
-/-- The entries of `a • 1 + b • M`, for a `2 × 2` matrix `M`. -/
-private theorem scalar_add_smul_apply (a b : F) (i j : Fin 2) :
-    (Matrix.scalar (Fin 2) a + b • M) i j = (if i = j then a else 0) + b * M i j := by
-  simp [Matrix.scalar_apply, Matrix.diagonal_apply]
-
-/-- A `2 × 2` matrix is `a • 1 + b • M` as soon as its four entries are. -/
-private theorem eq_scalar_add_smul_finTwo {a b : F} (h00 : N 0 0 = a + b * M 0 0)
-    (h01 : N 0 1 = b * M 0 1) (h10 : N 1 0 = b * M 1 0) (h11 : N 1 1 = a + b * M 1 1) :
-    N = Matrix.scalar (Fin 2) a + b • M := by
-  ext i j
-  rw [scalar_add_smul_apply]
-  fin_cases i <;> fin_cases j <;> simp [h00, h01, h10, h11]
-
-/-- **The commutant of a non-scalar `2 × 2` matrix.** A matrix commutes with a non-scalar
-`M : Matrix (Fin 2) (Fin 2) F` exactly when it lies in the two-dimensional subalgebra spanned by
-`1` and `M`; equivalently, a non-scalar `2 × 2` matrix is cyclic, so its commutant is `F[M]`.
-
-The hypothesis is necessary: everything commutes with a scalar matrix. -/
-theorem commute_finTwo_iff (hM : M ∉ Set.range (Matrix.scalar (Fin 2))) :
-    Commute M N ↔ ∃ a b : F, N = Matrix.scalar (Fin 2) a + b • M := by
-  constructor
-  · intro h
-    -- The entry equations of `M * N = N * M`; only three of the four are used.
-    have key : ∀ i j : Fin 2,
-        M i 0 * N 0 j + M i 1 * N 1 j = N i 0 * M 0 j + N i 1 * M 1 j := fun i j => by
-      simpa [Matrix.mul_apply, Fin.sum_univ_two] using congrFun (congrFun h.eq i) j
-    have e00 := key 0 0
-    have e01 := key 0 1
-    have e10 := key 1 0
-    -- Being non-scalar, `M` has a nonzero off-diagonal entry or distinct diagonal entries.
-    rw [mem_range_scalar_finTwo_iff] at hM
-    push Not at hM
-    by_cases h01 : M 0 1 = 0
-    · by_cases h10 : M 1 0 = 0
-      · -- `M` is diagonal with distinct entries: everything commuting with it is diagonal.
-        have hdiag : M 0 0 - M 1 1 ≠ 0 := sub_ne_zero.mpr (hM h01 h10)
-        obtain ⟨b, hb⟩ : ∃ b : F, b * (M 0 0 - M 1 1) = N 0 0 - N 1 1 :=
-          ⟨(N 0 0 - N 1 1) / (M 0 0 - M 1 1), div_mul_cancel₀ _ hdiag⟩
-        have hN01 : N 0 1 = 0 :=
-          mul_right_cancel₀ hdiag (by linear_combination e01 + (N 0 0 - N 1 1) * h01)
-        have hN10 : N 1 0 = 0 :=
-          mul_right_cancel₀ hdiag (by linear_combination -e10 + (N 0 0 - N 1 1) * h10)
-        exact ⟨N 0 0 - b * M 0 0, b, eq_scalar_add_smul_finTwo (by ring)
-          (by rw [hN01, h01, mul_zero]) (by rw [hN10, h10, mul_zero])
-          (by linear_combination hb)⟩
-      · -- The lower-left entry is nonzero and determines the coefficient of `M`.
-        obtain ⟨b, hb⟩ : ∃ b : F, b * M 1 0 = N 1 0 := ⟨N 1 0 / M 1 0, div_mul_cancel₀ _ h10⟩
-        exact ⟨N 0 0 - b * M 0 0, b, eq_scalar_add_smul_finTwo (by ring)
-          (mul_left_cancel₀ h10 (by linear_combination -e00 - M 0 1 * hb)) hb.symm
-          (mul_left_cancel₀ h10 (by linear_combination -e10 + (M 0 0 - M 1 1) * hb))⟩
-    · -- The upper-right entry is nonzero and determines the coefficient of `M`.
-      obtain ⟨b, hb⟩ : ∃ b : F, b * M 0 1 = N 0 1 := ⟨N 0 1 / M 0 1, div_mul_cancel₀ _ h01⟩
-      exact ⟨N 0 0 - b * M 0 0, b, eq_scalar_add_smul_finTwo (by ring) hb.symm
-        (mul_left_cancel₀ h01 (by linear_combination e00 - M 1 0 * hb))
-        (mul_left_cancel₀ h01 (by linear_combination e01 + (M 0 0 - M 1 1) * hb))⟩
-  · rintro ⟨a, b, rfl⟩
-    exact ((Matrix.scalar_commute a (Commute.all a) M).symm).add_right
-      ((Commute.refl M).smul_right b)
-
-/-- Two matrices commuting with a common non-scalar `2 × 2` matrix commute with each other: both
-lie in the commutative algebra `F[M]`. -/
-theorem commute_of_commute_finTwo (hM : M ∉ Set.range (Matrix.scalar (Fin 2)))
-    (hN : Commute M N) (hP : Commute M P) : Commute N P := by
-  obtain ⟨a, b, rfl⟩ := (commute_finTwo_iff hM).mp hN
-  obtain ⟨c, d, rfl⟩ := (commute_finTwo_iff hM).mp hP
-  have hs : ∀ x : F, Commute (Matrix.scalar (Fin 2) x) M :=
-    fun x => Matrix.scalar_commute x (Commute.all x) M
-  have h1 : Commute (Matrix.scalar (Fin 2) a) (Matrix.scalar (Fin 2) c) :=
-    Matrix.scalar_commute a (Commute.all a) _
-  have h2 : Commute (Matrix.scalar (Fin 2) a) (d • M) := (hs a).smul_right d
-  have h3 : Commute (b • M) (Matrix.scalar (Fin 2) c) := (hs c).symm.smul_left b
-  have h4 : Commute (b • M) (d • M) := ((Commute.refl M).smul_right d).smul_left b
-  exact (h1.add_right h2).add_left (h3.add_right h4)
-
-end Commutant
 
 section GeneralLinearGroup
 
@@ -223,7 +137,8 @@ theorem centralizer_diagGL (ht : t 0 ≠ t 1) :
     obtain ⟨a, b, hab⟩ := (commute_finTwo_iff (notMem_range_scalar_diagGL ht)).mp hcomm
     have hentry : ∀ i j : Fin 2, (h : Matrix (Fin 2) (Fin 2) F) i j =
         (if i = j then a else 0) + b * (diagGL t : Matrix (Fin 2) (Fin 2) F) i j := fun i j => by
-      rw [hab, scalar_add_smul_apply]
+      rw [hab]
+      simp [Matrix.scalar_apply, Matrix.diagonal_apply]
     -- The commuting matrix is diagonal, and it is invertible, so its entries are units.
     have h01 : (h : Matrix (Fin 2) (Fin 2) F) 0 1 = 0 := by simp [hentry 0 1]
     have h10 : (h : Matrix (Fin 2) (Fin 2) F) 1 0 = 0 := by simp [hentry 1 0]
@@ -284,7 +199,7 @@ private theorem sub_one_sq_pos : 0 < (Fintype.card F - 1) ^ 2 :=
 
 /-- **The size of a split regular semisimple conjugacy class of `GL₂(𝔽_q)`**: it is
 `q (q + 1) = [GL₂(𝔽_q) : T]` for the split torus `T`. -/
-theorem ncard_carrier_conjClasses_diagGL {t : Fin 2 → Fˣ} (ht : t 0 ≠ t 1) :
+theorem ncard_carrier_mk_diagGL {t : Fin 2 → Fˣ} (ht : t 0 ≠ t 1) :
     (ConjClasses.mk (diagGL t)).carrier.ncard = Fintype.card F * (Fintype.card F + 1) := by
   have key := Subgroup.index_mul_card (Subgroup.centralizer {diagGL t})
   rw [natCard_centralizer_diagGL ht, natCard_gl2] at key
@@ -316,10 +231,16 @@ theorem notMem_range_scalar_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (alg
   rw [(Algebra.leftMulMatrix (nonSplitTorusBasis F E hE)).commutes c,
     ← coe_gl2NonSplitTorusHom hE, ← hc, scalar_eq_algebraMap]
 
-/-- **The centralizer of an elliptic element of `GL₂`.** An element of the non-split torus not
-coming from `F` has that whole torus as its centralizer: the maximal torus containing it. Together
+/-- **The centralizer of an element of `GL₂` coming from a quadratic field extension.** An element
+of `TauCeti.GL2NonSplitTorus F E hE`, the unit group of a quadratic extension `E/F` acting on `E`
+by multiplication, that does not come from `F` has that whole group as its centralizer.
+
+When `E/F` is separable — always so over a finite field — such an element is elliptic regular
+semisimple and `TauCeti.GL2NonSplitTorus F E hE` is the maximal torus containing it, so together
 with `TauCeti.centralizer_diagGL` this says that the centralizer of a regular semisimple element of
-`GL₂` is the maximal torus containing it, split or not. -/
+`GL₂` is the maximal torus containing it, split or not. Separability is not needed below: for a
+purely inseparable `E/F` in characteristic two the statement computes the centralizer of an element
+that is *not* semisimple, and `Eˣ` is then not a torus. -/
 theorem centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     Subgroup.centralizer {GL2NonSplitTorusHom F E hE x} = GL2NonSplitTorus F E hE := by
   ext h
@@ -353,7 +274,7 @@ theorem natCard_centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (alg
 
 /-- **The size of an elliptic conjugacy class of `GL₂(𝔽_q)`**: it is `q (q - 1) = [GL₂(𝔽_q) : T]`
 for the non-split torus `T`. -/
-theorem ncard_carrier_conjClasses_gl2NonSplitTorusHom
+theorem ncard_carrier_mk_gl2NonSplitTorusHom
     (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     (ConjClasses.mk (GL2NonSplitTorusHom F E hE x)).carrier.ncard =
       Fintype.card F * (Fintype.card F - 1) := by
