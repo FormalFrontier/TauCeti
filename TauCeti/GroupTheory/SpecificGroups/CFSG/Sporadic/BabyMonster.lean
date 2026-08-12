@@ -230,19 +230,9 @@ introduces them. -/
 def adjoinedRelators : List (Relator (Fin 11)) :=
   [spiderRelator, extraRelatorOne, extraRelatorTwo]
 
-/-- The relators the source adjoins, spelled out. -/
-theorem adjoinedRelators_eq :
-    adjoinedRelators = [spiderRelator, extraRelatorOne, extraRelatorTwo] := by
-  rw [adjoinedRelators]
-
 /-- The sixty-nine relators of the presentation: the Coxeter relations of the `Y₄₃₃` diagram
 followed by the spider relator and the two further relators. -/
 def relatorList : List (Relator (Fin 11)) := coxeterRelators coxeterMatrix ++ adjoinedRelators
-
-/-- The relator list is the Coxeter relations of the diagram followed by the three adjoined
-relators. -/
-theorem relatorList_eq : relatorList = coxeterRelators coxeterMatrix ++ adjoinedRelators := by
-  rw [relatorList]
 
 /-! ### The transcribed row and its checks -/
 
@@ -340,10 +330,14 @@ theorem presentation_expectedRelatorCount : presentation.expectedRelatorCount = 
 adjoined relators. This equation characterizes the row for downstream audits. -/
 theorem presentation_transcribed : presentation.transcribed = relatorList := rfl
 
+private theorem presentation_transcribed_append :
+    presentation.transcribed = coxeterRelators coxeterMatrix ++ adjoinedRelators := by
+  rw [presentation_transcribed, relatorList]
+
 /-- **The transcribed presentation has sixty-nine relators**, the `(11 + 1).choose 2 = 66` Coxeter
 relators of a diagram on eleven nodes together with the three adjoined relators. -/
 theorem length_relatorList : relatorList.length = 69 := by
-  rw [relatorList_eq, List.length_append, length_coxeterRelators, adjoinedRelators_eq]
+  rw [relatorList, List.length_append, length_coxeterRelators, adjoinedRelators]
   decide
 
 /-- **The recorded generator and relator counts agree with the transcribed data.** -/
@@ -360,11 +354,15 @@ side. -/
 def mulEquivPresentedGroupCoxeter :
     presentation.Group ≃*
       PresentedGroup (coxeterMatrix.relationsSet ∪ Relator.relatorSet adjoinedRelators) :=
-  presentation.mulEquivPresentedGroupCoxeterAppend coxeterMatrix adjoinedRelators rfl
+  presentation.mulEquivPresentedGroupCoxeterAppend coxeterMatrix adjoinedRelators
+    presentation_transcribed_append
 
+/-- The Coxeter equivalence sends each canonical generator to the corresponding canonical
+generator. -/
 @[simp]
 theorem mulEquivPresentedGroupCoxeter_apply_of (i : Fin presentation.generatorCount) :
     mulEquivPresentedGroupCoxeter (PresentedGroup.of i) = PresentedGroup.of i :=
-  GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of _ _ _ rfl i
+  GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of _ _ _
+    presentation_transcribed_append i
 
 end TauCeti.Sporadic.BabyMonster
