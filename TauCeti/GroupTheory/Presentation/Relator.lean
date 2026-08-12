@@ -229,22 +229,14 @@ theorem toWord_sourceComm {α : Type*} (r s : Relator α) :
 
 /-- **The commutator convention of the presentation literature.** Sources that write
 `[r, s] = r⁻¹ s⁻¹ r s`, rather than Mathlib's `⁅r, s⁆ = r s r⁻¹ s⁻¹` carried by `Relator.comm`, are
-transcribed with `Relator.sourceComm`; this computes what its exposed body denotes.
-
-This is not a `simp` lemma: `Relator.toFreeGroup_comm` and `Relator.toFreeGroup_inv` already carry
-its left-hand side to `⁅r.toFreeGroup⁻¹, s.toFreeGroup⁻¹⁆`, so the statement here is the expanded
-word a reviewer compares against the printed source rather than a normal form. -/
-theorem toFreeGroup_comm_inv_inv {α : Type*} (r s : Relator α) :
-    (Relator.comm (.inv r) (.inv s)).toFreeGroup =
-      r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
-  rw [toFreeGroup_comm, toFreeGroup_inv, toFreeGroup_inv, commutatorElement_def, inv_inv, inv_inv]
-
-/-- A source-convention commutator denotes `r⁻¹ * s⁻¹ * r * s` in the free group. -/
+transcribed with `Relator.sourceComm`; this computes what that denotes, as the expanded word a
+reviewer compares against the printed source. -/
 @[simp]
 theorem toFreeGroup_sourceComm {α : Type*} (r s : Relator α) :
     (r.sourceComm s).toFreeGroup =
       r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
-  rw [sourceComm, toFreeGroup_comm_inv_inv]
+  rw [sourceComm, toFreeGroup_comm, toFreeGroup_inv, toFreeGroup_inv, commutatorElement_def,
+    inv_inv, inv_inv]
 
 /-- The free-group elements denoted by a list of relator expressions. -/
 def relatorSet {α : Type*} (l : List (Relator α)) : Set (FreeGroup α) :=

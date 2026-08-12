@@ -47,7 +47,7 @@ it writes `[w₁, w₂]` for `w₁⁻¹ w₂⁻¹ w₁ w₂`, which is
 `TauCeti.Sporadic.Thompson.sourceCommutator`, that is, Mathlib's commutator applied to the two
 inverses. The three conventions are pinned by `TauCeti.Relator.toFreeGroup_div` (with Mathlib's
 `div_eq_one`, which turns the relator `w₁ w₂⁻¹` back into the source's equation),
-`TauCeti.Relator.toFreeGroup_conj` and `TauCeti.Relator.toFreeGroup_comm_inv_inv`, so no step
+`TauCeti.Relator.toFreeGroup_conj` and `TauCeti.Relator.toFreeGroup_sourceComm`, so no step
 between the printed source and the free-group element used as a relation is left unstated.
 
 ## What is and is not claimed
@@ -133,9 +133,10 @@ abbrev genU : Relator (Fin 8) := .gen 7
 /-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`.
 
 Mathlib's bracket, carried by `TauCeti.Relator.comm`, is `⁅r, s⁆ = r s r⁻¹ s⁻¹`, so the source's
-convention is Mathlib's applied to the two inverses; `TauCeti.Relator.toFreeGroup_comm_inv_inv`
-proves that this denotes `r⁻¹ s⁻¹ r s` in the free group. -/
-abbrev sourceCommutator (r s : Relator (Fin 8)) : Relator (Fin 8) := .comm (.inv r) (.inv s)
+convention is Mathlib's applied to the two inverses, which is `TauCeti.Relator.sourceComm`;
+`TauCeti.Relator.toFreeGroup_sourceComm` proves that this denotes `r⁻¹ s⁻¹ r s` in the free
+group. -/
+abbrev sourceCommutator (r s : Relator (Fin 8)) : Relator (Fin 8) := Relator.sourceComm r s
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
