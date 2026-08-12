@@ -45,6 +45,12 @@ So the construction goes through Mathlib's `IsOpen.trivializationDiscrete`, whic
 of pairwise disjoint sets on which the map is injective into a `Bundle.Trivialization`. The index
 type of that family is the set of translate images itself, which makes the family injective and
 its pairwise disjointness exactly the statement that two meeting translate images coincide.
+
+## References
+
+The `IsQuotientCoveringMap` interface this file is built on — the predicate itself, its
+`disjoint` and `apply_eq_iff_mem_orbit` fields, and `IsQuotientCoveringMap.isOpenQuotientMap` —
+is Junyan Xu's, in `Mathlib/Topology/Covering/Quotient.lean`.
 -/
 
 public section
