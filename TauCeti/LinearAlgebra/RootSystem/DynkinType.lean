@@ -54,8 +54,6 @@ same root system; `Valid` keeps only `B 2` of those two names.
 
 ## Main results
 
-* `TauCeti.CartanMatrix.D_apply`: Mathlib's `CartanMatrix.D` written as a diagonal term and an edge
-  term, the form its users case on.
 * `TauCeti.DynkinType.cartanMatrix_apply_same` and
   `TauCeti.DynkinType.cartanMatrix_apply_le_zero_of_ne`: the standard matrices have diagonal `2`
   and nonpositive off-diagonal entries.
@@ -99,26 +97,6 @@ private lemma isSimplyLaced_congr {α β : Type*} {A : Matrix α α ℤ} {B : Ma
   exact EquivLike.pairwise_comp_iff e fun i j ↦ B i j = 0 ∨ B i j = -1
 
 end Matrix
-
-namespace CartanMatrix
-
-/-- **The Bourbaki `Dₙ` diagram read off `CartanMatrix.D`**: two distinct nodes are joined when they
-are consecutive among the first `n - 1` nodes, or are the branch node `n - 3` and the last node
-`n - 1`. Mathlib states the matrix as a six-way case distinction on the two indices; collapsing it
-to a diagonal term and an edge term keeps the case analyses of its users small. -/
-theorem D_apply {n : ℕ} (i j : Fin n) :
-    _root_.CartanMatrix.D n i j =
-      (if (i : ℕ) = (j : ℕ) then 2 else 0) -
-        (if ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 ≤ n) ∨
-              ((j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) + 2 ≤ n) ∨
-              ((i : ℕ) + 3 = n ∧ (j : ℕ) + 1 = n) ∨ ((j : ℕ) + 3 = n ∧ (i : ℕ) + 1 = n) then 1
-          else 0) := by
-  have hi := i.isLt
-  have hj := j.isLt
-  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff]
-  split_ifs <;> omega
-
-end CartanMatrix
 
 /-- The Dynkin types: the four classical families `Aₙ`, `Bₙ`, `Cₙ`, `Dₙ`, whose constructors accept
 every natural number, together with the five exceptional types. The rank ranges on which these are
