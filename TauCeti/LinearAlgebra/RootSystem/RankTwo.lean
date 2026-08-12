@@ -129,6 +129,32 @@ private theorem forall_eq_of_apply_offDiag {C : Matrix (Fin 2) (Fin 2) ℤ} (h :
   · simpa using h10
   · simpa using (h.apply_self _).trans (hC 1).symm
 
+end IsFiniteType
+
+namespace Matrix
+
+variable {B : Type*} {A : Matrix B B ℤ}
+
+/-- **The Cartan product is the invariant of a two-node diagram.** A relabelling matching `A` with
+`C` carries the product of the two off-diagonal entries of `A` to that of `C`, whichever way round
+it sends the two indices, because the product is symmetric. -/
+theorem mul_apply_mul_apply_eq_of_equiv_fin_two {C : Matrix (Fin 2) (Fin 2) ℤ} (e : B ≃ Fin 2)
+    (he : ∀ i j, A i j = C (e i) (e j)) {x y : B} (hxy : x ≠ y) :
+    A x y * A y x = C 0 1 * C 1 0 := by
+  have hne : e x ≠ e y := fun hc ↦ hxy (e.injective hc)
+  rw [he x y, he y x]
+  revert hne
+  generalize e x = a
+  generalize e y = b
+  intro hne
+  fin_cases a <;> fin_cases b <;> simp_all [mul_comm]
+
+end Matrix
+
+namespace IsFiniteType
+
+variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
+
 /-- **Two integers at most `-1` satisfy `ac + a + c + 1 ≥ 0`,** being `(a + 1)(c + 1) ≥ 0` expanded.
 Applied to the two off-diagonal entries of a connected finite-type matrix on two indices, it bounds
 their sum below by the negative of the Cartan product minus two, which together with the value of

@@ -28,6 +28,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `hasDerivAt_parameterCurve`: the parameter velocity differentiates the corresponding parameter
   curve.
+* `hasFDerivAt_timeSlice`: the spatial Jacobian differentiates the corresponding fixed-parameter
+  slice.
 * `fderiv_timeSlice`: the derivative of a fixed-parameter slice is its spatial Jacobian.
 * `hasDerivAt_spatialFDeriv`: the spatial Jacobian differentiates to the spatial derivative of the
   parameter velocity.
@@ -115,12 +117,18 @@ theorem hasDerivAt_parameterCurve {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
   simpa only [timeFDeriv_apply, Function.comp_def, ContinuousLinearMap.inl_apply] using
     hF.hasFDerivAt.comp_hasDerivAt t (hasFDerivAt_prodMk_left t x).hasDerivAt
 
+/-- The spatial Jacobian is the derivative of the fixed-parameter slice `fun y ↦ F (t, y)`. -/
+theorem hasFDerivAt_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
+    (hF : DifferentiableAt 𝕜 F (t, x)) :
+    HasFDerivAt (fun y => F (t, y)) (spatialFDeriv F x t) x := by
+  rw [spatialFDeriv_def]
+  exact hF.hasFDerivAt.comp x (hasFDerivAt_prodMk_right t x)
+
 /-- The derivative of the fixed-parameter slice `fun y ↦ F (t, y)` is its spatial Jacobian. -/
 theorem fderiv_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
     (hF : DifferentiableAt 𝕜 F (t, x)) :
-    fderiv 𝕜 (fun y => F (t, y)) x = spatialFDeriv F x t := by
-  rw [spatialFDeriv_def]
-  exact (hF.hasFDerivAt.comp x (hasFDerivAt_prodMk_right t x)).fderiv
+    fderiv 𝕜 (fun y => F (t, y)) x = spatialFDeriv F x t :=
+  (hasFDerivAt_timeSlice hF).fderiv
 
 private theorem hasDerivAt_spatialFDeriv_apply_mixed {F : 𝕜 × E → F'}
     {t : 𝕜} {x w : E} (hF : ContDiffAt 𝕜 (minSmoothness 𝕜 2) F (t, x)) :
