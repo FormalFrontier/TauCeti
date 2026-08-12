@@ -58,12 +58,12 @@ variable {A : Type*} [Semiring A] [Algebra ℚ A]
 
 The scalar is placed through the `ℚ`-algebra structure, so this definition applies to
 noncommutative algebras such as universal enveloping algebras. -/
-@[expose] noncomputable def dividedPower (n : ℕ) (x : A) : A :=
+noncomputable def dividedPower (n : ℕ) (x : A) : A :=
   (n.factorial : ℚ)⁻¹ • x ^ n
 
 /-- The defining equation of `dividedPower`, for consumers that need to normalize it. -/
 theorem dividedPower_def (n : ℕ) (x : A) :
-    dividedPower n x = (n.factorial : ℚ)⁻¹ • x ^ n := rfl
+    dividedPower n x = (n.factorial : ℚ)⁻¹ • x ^ n := (rfl)
 
 @[simp]
 theorem dividedPower_zero (x : A) : dividedPower 0 x = 1 := by
@@ -78,7 +78,7 @@ theorem dividedPower_eval_zero {n : ℕ} (hn : n ≠ 0) : dividedPower n (0 : A)
   simp [dividedPower_def, hn]
 
 /-- Multiplying a divided power by its factorial recovers the ordinary power. -/
-theorem factorial_smul_dividedPower (n : ℕ) (x : A) :
+theorem factorial_smul_dividedPower_eq_pow (n : ℕ) (x : A) :
     (n.factorial : ℚ) • dividedPower n x = x ^ n := by
   rw [dividedPower_def, ← mul_smul]
   rw [Rat.mul_inv_cancel]
@@ -88,18 +88,23 @@ theorem factorial_smul_dividedPower (n : ℕ) (x : A) :
 /-- Divided powers are preserved by homomorphisms of associative `ℚ`-algebras. -/
 @[simp]
 theorem map_dividedPower {B : Type*} [Semiring B] [Algebra ℚ B]
-    (f : A →ₐ[ℚ] B) (n : ℕ) (x : A) :
+    {F : Type*} [FunLike F A B] [AlgHomClass F ℚ A B] (f : F) (n : ℕ) (x : A) :
     f (dividedPower n x) = dividedPower n (f x) := by
   simp [dividedPower_def]
+
+/-- Multiplying an element on the left by a commuting element multiplies its `n`-th divided
+power by the `n`-th power of that element. -/
+theorem dividedPower_mul_left {a x : A} (hax : Commute a x) (n : ℕ) :
+    dividedPower n (a * x) = a ^ n * dividedPower n x := by
+  simp only [dividedPower_def, hax.mul_pow]
+  rw [mul_smul_comm]
 
 /-- Scaling an element scales its `n`-th divided power by the `n`-th power of the scalar. -/
 @[simp]
 theorem dividedPower_smul (q : ℚ) (n : ℕ) (x : A) :
     dividedPower n (q • x) = q ^ n • dividedPower n x := by
-  simp only [dividedPower_def, smul_pow]
-  rw [smul_smul, smul_smul]
-  congr 1
-  ring
+  simpa only [Algebra.smul_def, map_pow] using
+    dividedPower_mul_left (Algebra.commutes q x) n
 
 /-- Divided powers preserve commutation of their underlying elements. -/
 theorem commute_dividedPower_dividedPower {x y : A} (hxy : Commute x y) (m n : ℕ) :
@@ -123,18 +128,35 @@ theorem mul_dividedPower (m n : ℕ) (x : A) :
   simp only [dividedPower_def, smul_mul_smul, ← pow_add, smul_smul]
   rw [inv_factorial_mul_inv_factorial]
 
-/-- The first-order recurrence for divided powers. -/
-theorem succ_smul_dividedPower (n : ℕ) (x : A) :
-    (n + 1) • dividedPower (n + 1) x = dividedPower n x * x := by
-  simpa using (mul_dividedPower n 1 x).symm
+/-- The right-handed first-order recurrence for divided powers. -/
+theorem dividedPower_mul_self (n : ℕ) (x : A) :
+    dividedPower n x * x = (n + 1) • dividedPower (n + 1) x := by
+  simpa using mul_dividedPower n 1 x
 
 /-- The left-handed first-order recurrence for divided powers. -/
-theorem mul_dividedPower_eq_succ_smul (n : ℕ) (x : A) :
+theorem self_mul_dividedPower (n : ℕ) (x : A) :
     x * dividedPower n x = (n + 1) • dividedPower (n + 1) x := by
-  rw [succ_smul_dividedPower]
-  rw [dividedPower_def, mul_smul_comm, Algebra.smul_mul_assoc]
+  simpa [add_comm 1 n] using mul_dividedPower 1 n x
+
+/-- The first-order recurrence solved for the successor divided power. -/
+theorem dividedPower_succ (n : ℕ) (x : A) :
+    dividedPower (n + 1) x = ((n + 1 : ℕ) : ℚ)⁻¹ • (dividedPower n x * x) := by
+  have hn : (((n + 1 : ℕ) : ℚ)) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero n
+  rw [dividedPower_mul_self, ← Nat.cast_smul_eq_nsmul ℚ, smul_smul]
+  rw [inv_mul_cancel₀ hn, one_smul]
+
+/-- Iterating divided powers has the integral uniform-Bell-number structure constant. -/
+theorem dividedPower_comp (m n : ℕ) (hn : n ≠ 0) (x : A) :
+    dividedPower m (dividedPower n x) =
+      Nat.uniformBell m n • dividedPower (m * n) x := by
+  rw [← Nat.cast_smul_eq_nsmul ℚ]
+  simp only [dividedPower_def, smul_pow, smul_smul, ← pow_mul]
   congr 1
-  exact ((Commute.refl x).pow_right n).eq
+  · rw [inv_pow]
+    field_simp
+    norm_cast
+    simpa [mul_comm, mul_left_comm, mul_assoc] using (Nat.uniformBell_mul_eq m hn).symm
+  · rw [mul_comm]
 
 /-- The rational coefficient identity that cancels the binomial coefficient in the divided-power
 expansion of a commuting sum. -/
@@ -142,8 +164,8 @@ private theorem inv_factorial_mul_choose (n i j : ℕ) (hij : i + j = n) :
     (n.factorial : ℚ)⁻¹ * Nat.choose n i =
       (i.factorial : ℚ)⁻¹ * (j.factorial : ℚ)⁻¹ := by
   subst n
-  rw [Nat.cast_add_choose ℚ]
-  field_simp
+  rw [mul_comm]
+  exact (inv_factorial_mul_inv_factorial i j).symm
 
 /-- The divided-power binomial formula for commuting elements of an associative algebra:
 `(x + y)⁽ⁿ⁾ = ∑ i+j=n x⁽ⁱ⁾ y⁽ʲ⁾`.
@@ -186,12 +208,11 @@ theorem dividedPower_sub {x y : A} (hxy : Commute x y) (n : ℕ) :
 end Ring
 
 /-- In a commutative `ℚ`-algebra, `dividedPower` agrees with every Mathlib divided-power
-structure on the unit ideal. -/
+structure on each element of its ideal. -/
 theorem dividedPower_eq_dpow {R : Type*} [CommSemiring R] [Algebra ℚ R]
-    (hR : DividedPowers (⊤ : Ideal R)) (n : ℕ) (x : R) :
-    dividedPower n x = hR.dpow n x := by
+    {I : Ideal R} (hI : DividedPowers I) (n : ℕ) {x : R} (hx : x ∈ I) :
+    dividedPower n x = hI.dpow n x := by
   rw [dividedPower_def, ← Ring.inverse_eq_inv']
-  exact (DividedPowers.RatAlgebra.dpow_eq_inv_fact_smul (⊤ : Ideal R) hR
-    Submodule.mem_top).symm
+  exact (DividedPowers.RatAlgebra.dpow_eq_inv_fact_smul I hI hx).symm
 
 end TauCeti.Associative
