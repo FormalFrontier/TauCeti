@@ -109,22 +109,6 @@ private lemma typeDSimpleRoot_apply_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n}
   rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
   simp [Pi.single_apply, Fin.ext_iff]
 
-/-- The Bourbaki `Dₙ` diagram read off `CartanMatrix.D`: two distinct nodes are joined when they
-are consecutive among the first `n - 1` nodes, or are the branch node `n - 3` and the last node
-`n - 1`. Separating this from the six-way definition keeps the Gram-matrix case analysis below
-small. -/
-private lemma cartanMatrixD_apply (i j : Fin n) :
-    CartanMatrix.D n i j =
-      (if (i : ℕ) = (j : ℕ) then 2 else 0) -
-        (if ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 ≤ n) ∨
-              ((j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) + 2 ≤ n) ∨
-              ((i : ℕ) + 3 = n ∧ (j : ℕ) + 1 = n) ∨ ((j : ℕ) + 3 = n ∧ (i : ℕ) + 1 = n) then 1
-          else 0) := by
-  have hi := i.isLt
-  have hj := j.isLt
-  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff]
-  split_ifs <;> omega
-
 /-- A chain simple root pairs with the others by the corresponding row of the Cartan matrix. -/
 private lemma typeDSimpleRoot_dotProduct_of_add_one_lt (hn : 4 ≤ n) {i : Fin n}
     (hi : (i : ℕ) + 1 < n) (j : Fin n) :
