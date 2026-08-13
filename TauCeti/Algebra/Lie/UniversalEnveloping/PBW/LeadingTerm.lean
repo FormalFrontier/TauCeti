@@ -61,12 +61,6 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 local notation "ι" => _root_.UniversalEnvelopingAlgebra.ι R
 
-/-- The defining relation of the universal enveloping algebra, written as a difference of the two
-orders of a product of generators. -/
-theorem ι_mul_ι_sub_swap (x y : L) :
-    ι x * ι y - ι y * ι x = ι ⁅x, y⁆ := by
-  simpa only [LieRing.of_associative_ring_bracket] using (LieHom.map_lie ι x y).symm
-
 /-- Exchanging two adjacent generators lowers the PBW filtration degree of the resulting
 difference by one. -/
 theorem prod_map_ι_sub_swap_mem_pbwFiltrationPrevious (x y : L) (l : List L) :
@@ -75,7 +69,9 @@ theorem prod_map_ι_sub_swap_mem_pbwFiltrationPrevious (x y : L) (l : List L) :
   rw [show (x :: y :: l).length = (l.length + 1) + 1 by simp,
     pbwFiltrationPrevious_succ]
   simp only [List.map_cons, List.prod_cons]
-  rw [← mul_assoc, ← mul_assoc, ← sub_mul, ι_mul_ι_sub_swap]
+  rw [← mul_assoc, ← mul_assoc, ← sub_mul,
+    show ι x * ι y - ι y * ι x = ι ⁅x, y⁆ by
+      simpa only [LieRing.of_associative_ring_bracket] using (LieHom.map_lie ι x y).symm]
   simpa only [Nat.add_comm] using
     mul_mem_pbwFiltration (R := R) (L := L) (ι_mem_pbwFiltration_one R L ⁅x, y⁆)
       (prod_map_ι_mem_pbwFiltration R L le_rfl)
