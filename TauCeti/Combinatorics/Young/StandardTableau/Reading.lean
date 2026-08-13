@@ -141,7 +141,7 @@ variable {μ : YoungDiagram}
 so on.  This is the tableau at which the classical-groups roadmap fixes the Young symmetrizer
 `c_λ`. -/
 noncomputable def rowSuperstandard (μ : YoungDiagram) : StandardYoungTableau μ where
-  toEquiv :=
+  toTableau :=
     Equiv.ofBijective
       (fun c => ⟨YoungDiagram.readingIndex μ c.1, YoungDiagram.readingIndex_lt_card c.2⟩)
       ((Fintype.bijective_iff_injective_and_card _).mpr
