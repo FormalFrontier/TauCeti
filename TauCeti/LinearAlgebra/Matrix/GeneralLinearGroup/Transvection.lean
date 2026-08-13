@@ -35,10 +35,8 @@ sum is neither a root nor zero, and the second every pair whose sum is a root:
 `(εᵢ - εⱼ) + (εⱼ - εₗ)` is `εᵢ - εₗ`. In type `A` the structure constants are `±1`; the chosen
 orientation in the second relation gives `1`, which is why its right-hand side is `xᵢₗ(cd)`.
 
-The one remaining case, `xᵢⱼ(c)` against `xⱼᵢ(d)`, is deliberately absent: there the two roots sum
-to zero, no commutator relation holds, and the product generates a copy of `SL₂` instead. That is
-also the only case in which the commutator leaves the unipotent part, so it is a statement about
-the torus rather than about the root subgroups.
+The one remaining case, `xᵢⱼ(c)` against `xⱼᵢ(d)`, is deliberately absent: there the sum of the two
+roots is zero, and no commutator formula in terms of a single root subgroup holds.
 
 Conjugating a transvection by an invertible diagonal matrix rescales its parameter by the value of
 the corresponding root: `TauCeti.diagGL_mul_transvectionUnit_mul_inv` says that `t xᵢⱼ(c) t⁻¹` is
@@ -112,19 +110,6 @@ theorem transvection_mul_transvection_swap (hij : i ≠ j) (hil : i ≠ l) (c d 
     single_mul_single_of_ne _ _ _ _ hji, Matrix.zero_mul]
   abel
 
-/-- A matrix unit conjugated between two diagonal matrices is the matrix unit rescaled by the two
-corresponding diagonal entries. -/
-@[simp]
-theorem diagonal_mul_single_mul_diagonal (v w : n → A) (i j : n) (c : A) :
-    diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
-  ext a b
-  rw [Matrix.mul_assoc]
-  simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
-  by_cases h : i = a ∧ j = b
-  · obtain ⟨rfl, rfl⟩ := h
-    simp [mul_assoc]
-  · simp [h]
-
 /-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
 corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
 another. -/
@@ -133,8 +118,15 @@ theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a
   have hd : diagonal v * diagonal w = (1 : Matrix n n A) := by
     rw [Matrix.diagonal_mul_diagonal]
     exact Matrix.diagonal_eq_one.2 (by ext a; exact hvw a)
-  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd,
-    diagonal_mul_single_mul_diagonal]
+  have hs : diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
+    ext a b
+    rw [Matrix.mul_assoc]
+    simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
+    by_cases h : i = a ∧ j = b
+    · obtain ⟨rfl, rfl⟩ := h
+      simp [mul_assoc]
+    · simp [h]
+  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd, hs]
 
 end Products
 
@@ -151,11 +143,6 @@ torus. -/
 def transvectionUnit (hij : i ≠ j) (c : A) : GL n A :=
   SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c)
 
-/-- `TauCeti.transvectionUnit` is Mathlib's special linear transvection, viewed in `GL n A`. -/
-theorem transvectionUnit_eq_toGL (hij : i ≠ j) (c : A) :
-    transvectionUnit hij c = SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c) :=
-  (rfl)
-
 /-- The matrix underlying `TauCeti.transvectionUnit` is the transvection itself. -/
 @[simp]
 theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
@@ -165,19 +152,19 @@ theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
 /-- The transvection of parameter zero is the identity. -/
 @[simp]
 theorem transvectionUnit_zero (hij : i ≠ j) : transvectionUnit hij (0 : A) = 1 := by
-  rw [transvectionUnit_eq_toGL, SpecialLinearGroup.transvection_coeff_zero, map_one]
+  rw [transvectionUnit, SpecialLinearGroup.transvection_coeff_zero, map_one]
 
 /-- The parameter of a transvection is additive: the root subgroup is one-parameter. -/
 @[simp]
 theorem transvectionUnit_add (hij : i ≠ j) (c d : A) :
     transvectionUnit hij (c + d) = transvectionUnit hij c * transvectionUnit hij d := by
-  simp only [transvectionUnit_eq_toGL, SpecialLinearGroup.transvection_add, map_mul]
+  simp only [transvectionUnit, SpecialLinearGroup.transvection_add, map_mul]
 
 /-- The inverse of a transvection negates its parameter. -/
 @[simp]
 theorem transvectionUnit_inv (hij : i ≠ j) (c : A) :
     (transvectionUnit hij c)⁻¹ = transvectionUnit hij (-c) := by
-  simp only [transvectionUnit_eq_toGL, ← map_inv, SpecialLinearGroup.transvection_inv]
+  simp only [transvectionUnit, ← map_inv, SpecialLinearGroup.transvection_inv]
 
 /-- A transvection has determinant one, so the root subgroup lands in `SLₙ`. -/
 @[simp]

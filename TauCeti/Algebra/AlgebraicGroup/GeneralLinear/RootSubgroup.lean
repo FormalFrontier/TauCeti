@@ -146,7 +146,7 @@ theorem rootSubgroup_app (hij : i ≠ j) (A : CommAlgCat.{w} R) :
 /-- Every component of the root subgroup morphism is injective on points. -/
 theorem rootSubgroup_app_injective (hij : i ≠ j) (A : CommAlgCat.{w} R) :
     Function.Injective ((rootSubgroup (R := R) (N := N) hij).app A) := by
-  change Function.Injective (rootSubgroupPoints (R := R) (A := A) hij)
+  rw [rootSubgroup_app]
   exact rootSubgroupPoints_injective hij
 
 /-- The root subgroup morphism sends an `A`-point of `𝔾ₐ` to the elementary matrix of its
