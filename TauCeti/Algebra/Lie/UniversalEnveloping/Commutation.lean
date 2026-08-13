@@ -6,10 +6,11 @@ Authors: Codex
 module
 
 public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Commutation
 
 /-!
-# Cartan and root-vector commutation in a Kostant form
+# Cartan and root-vector commutation in a universal enveloping algebra
 
 Let `h` and `x` be elements of a Lie algebra over `ℚ` satisfying
 

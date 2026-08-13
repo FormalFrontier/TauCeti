@@ -7,7 +7,6 @@ module
 
 public import Mathlib.RingTheory.DividedPowers.RatAlgebra
 import Mathlib.Data.Nat.Choose.Cast
-import Mathlib.RingTheory.Binomial
 import Mathlib.Tactic.FieldSimp
 
 /-!
@@ -47,14 +46,7 @@ definition is made here.
 
 public section
 
-namespace TauCeti
-
-/-- The nonnegative-rational module structure induced on a rational algebra. -/
-@[instance_reducible]
-noncomputable def moduleNNRat {A : Type*} [Ring A] [Algebra ℚ A] : Module ℚ≥0 A :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
-
-namespace Associative
+namespace TauCeti.Associative
 
 open Finset
 
@@ -223,6 +215,4 @@ theorem dividedPower_eq_dpow {R : Type*} [CommSemiring R] [Algebra ℚ R]
   rw [dividedPower_def, ← Ring.inverse_eq_inv']
   exact (DividedPowers.RatAlgebra.dpow_eq_inv_fact_smul I hI hx).symm
 
-end Associative
-
-end TauCeti
+end TauCeti.Associative

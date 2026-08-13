@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import Mathlib.RingTheory.Binomial
 
