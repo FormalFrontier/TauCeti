@@ -18,8 +18,10 @@ changes no set-integral; so for a **contractable** law, where strict monotonicit
 preservation, a strictly increasing finite selection may be displaced onto the prefix
 `0, 1, …, m - 1`.
 
-Both hypotheses are essential rather than incidental. Without measure preservation the first claim
-fails outright — take `ρ` a point mass at an alternating path, `A = univ` and `φ = (· + 1)`.
+Measure preservation cannot be dropped: without it the first claim fails outright — take `ρ` a
+point mass at an alternating path, `A = univ` and `φ = (· + 1)`. Eventual translation is a
+*sufficient* condition for the reindexing to fix every invariant event, not a necessary one for the
+integral identity, which needs only `T ⁻¹' A = A`.
 
 ## Main results
 
