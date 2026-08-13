@@ -34,7 +34,8 @@ of `L` inside it; the canonical generators then generate `U(L)` as an algebra, w
 
 Nothing here bounds the form from the other side. That the form is a *free* `ℤ`-module on the
 ordered monomials in divided powers, the integral Poincaré--Birkhoff--Witt theorem, is a separate
-statement and is not proved here; the results below say only that the form is a full lattice.
+statement and is not proved here; the results below say only that the form rationally spans the
+enveloping algebra and allows denominators to be cleared.
 
 ## Main definitions
 
@@ -106,7 +107,7 @@ theorem span_kostantForm_eq_top
 
 /-- **The Kostant form is an integral form of the enveloping algebra.** Extending its scalars from
 `ℤ` to `ℚ` recovers `U(L)`. -/
-@[expose] noncomputable def kostantFormBaseChange
+noncomputable def kostantFormBaseChange
     (hgen : LieSubalgebra.lieSpan ℚ L (Set.range e ∪ Set.range h) = ⊤) :
     ℚ ⊗[ℤ] (kostantForm e h) ≃ₐ[ℚ] U :=
   TauCeti.Subring.ratBaseChangeEquiv _ (span_kostantForm_eq_top e h hgen)
@@ -115,11 +116,11 @@ theorem span_kostantForm_eq_top
 theorem kostantFormBaseChange_tmul
     (hgen : LieSubalgebra.lieSpan ℚ L (Set.range e ∪ Set.range h) = ⊤)
     (q : ℚ) (x : kostantForm e h) :
-    kostantFormBaseChange e h hgen (q ⊗ₜ[ℤ] x) = q • (x : U) :=
-  rfl
+    kostantFormBaseChange e h hgen (q ⊗ₜ[ℤ] x) = q • (x : U) := by
+  exact TauCeti.Subring.ratBaseChangeEquiv_tmul _ _ q x
 
-/-- The Kostant form is a full lattice: every element of the enveloping algebra is carried into it
-by some nonzero natural number. -/
+/-- The Kostant form allows denominators to be cleared: every element of the enveloping algebra is
+carried into it by some nonzero natural number. -/
 theorem exists_natCast_smul_mem_kostantForm
     (hgen : LieSubalgebra.lieSpan ℚ L (Set.range e ∪ Set.range h) = ⊤) (u : U) :
     ∃ n : ℕ, n ≠ 0 ∧ (n : ℚ) • u ∈ kostantForm e h :=

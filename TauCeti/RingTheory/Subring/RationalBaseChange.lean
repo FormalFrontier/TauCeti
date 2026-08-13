@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.TensorProduct.Basic
+public import Mathlib.RingTheory.Localization.BaseChange
 
 /-!
 # Extending the scalars of a subring of a rational algebra
@@ -76,11 +76,12 @@ variable {A : Type*} [Ring A] [Algebra ℚ A] (R : _root_.Subring A)
 
 /-- The canonical `ℚ`-algebra map `ℚ ⊗[ℤ] R → A` extending the inclusion of a subring of a
 `ℚ`-algebra. It sends `q ⊗ₜ r` to `q • r`. -/
-@[expose] noncomputable def ratBaseChange : ℚ ⊗[ℤ] R →ₐ[ℚ] A :=
+noncomputable def ratBaseChange : ℚ ⊗[ℤ] R →ₐ[ℚ] A :=
   AlgHom.liftEquiv ℤ ℚ R A (_root_.Subring.subtype R).toIntAlgHom
 
 @[simp]
-theorem ratBaseChange_tmul (q : ℚ) (r : R) : ratBaseChange R (q ⊗ₜ[ℤ] r) = q • (r : A) := rfl
+theorem ratBaseChange_tmul (q : ℚ) (r : R) : ratBaseChange R (q ⊗ₜ[ℤ] r) = q • (r : A) := by
+  simp [ratBaseChange]
 
 omit [Algebra ℚ A] in
 /-- Every element of `ℚ ⊗[ℤ] R` is a single elementary tensor with a natural-number denominator:
@@ -88,26 +89,20 @@ the rational coefficients of a finite sum can be put over a common denominator, 
 absorbed into the right-hand factor. -/
 theorem exists_tmul_inv_natCast (z : ℚ ⊗[ℤ] R) :
     ∃ n : ℕ, ∃ r : R, n ≠ 0 ∧ z = (n : ℚ)⁻¹ ⊗ₜ[ℤ] r := by
-  induction z with
-  | zero => exact ⟨1, 0, one_ne_zero, by simp⟩
-  | tmul q r =>
-      refine ⟨q.den, q.num • r, q.den_nz, ?_⟩
-      rw [← TensorProduct.smul_tmul]
-      congr 1
-      rw [zsmul_eq_mul, ← div_eq_mul_inv, Rat.num_div_den]
-  | add x y hx hy =>
-      obtain ⟨n, r, hn, rfl⟩ := hx
-      obtain ⟨m, s, hm, rfl⟩ := hy
-      have hn' : (n : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
-      have hm' : (m : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hm
-      have h₁ : ((m : ℤ) • (((n * m : ℕ) : ℚ))⁻¹) = (n : ℚ)⁻¹ := by
-        rw [zsmul_eq_mul, Int.cast_natCast, Nat.cast_mul, mul_inv, ← mul_assoc,
-          mul_comm (m : ℚ) ((n : ℚ)⁻¹), mul_assoc, mul_inv_cancel₀ hm', mul_one]
-      have h₂ : ((n : ℤ) • (((n * m : ℕ) : ℚ))⁻¹) = (m : ℚ)⁻¹ := by
-        rw [zsmul_eq_mul, Int.cast_natCast, Nat.cast_mul, mul_inv, ← mul_assoc,
-          mul_inv_cancel₀ hn', one_mul]
-      refine ⟨n * m, (m : ℤ) • r + (n : ℤ) • s, Nat.mul_ne_zero hn hm, ?_⟩
-      rw [TensorProduct.tmul_add, ← TensorProduct.smul_tmul, ← TensorProduct.smul_tmul, h₁, h₂]
+  let f := TensorProduct.mk ℤ ℚ R 1
+  let _ : IsLocalizedModule (Submonoid.pos ℤ) f :=
+    IsLocalization.tensorProduct_isLocalizedModule (Submonoid.pos ℤ) ℚ
+  obtain ⟨⟨r, s⟩, hs⟩ := IsLocalizedModule.mk'_surjective (Submonoid.pos ℤ) f z
+  let n := s.1.natAbs
+  have hs_nonneg : 0 ≤ s.1 := le_of_lt s.2
+  have hn_int : (n : ℤ) = s.1 := Int.natAbs_of_nonneg hs_nonneg
+  have hn : n ≠ 0 := Int.natAbs_ne_zero.mpr (ne_of_gt s.2)
+  refine ⟨n, r, hn, hs.symm.trans ?_⟩
+  apply IsLocalizedModule.mk'_eq_iff.mpr
+  change 1 ⊗ₜ[ℤ] r = (s.1 : ℤ) • ((n : ℚ)⁻¹ ⊗ₜ[ℤ] r)
+  rw [TensorProduct.smul_tmul']
+  congr 1
+  simp [← hn_int, hn]
 
 /-- The comparison map is injective for every subring: a common denominator can be cleared, and a
 nonzero rational scalar acts injectively on the `ℚ`-algebra `A`. -/
@@ -120,7 +115,8 @@ theorem ratBaseChange_injective : Function.Injective (ratBaseChange R) := by
   have hr : (r : A) = 0 := by
     have := congrArg (fun a : A => (n : ℚ) • a) hz
     simpa [smul_smul, mul_inv_cancel₀ hn'] using this
-  rw [show r = 0 from Subtype.ext hr, TensorProduct.tmul_zero]
+  have hr0 : r = 0 := Subtype.ext hr
+  rw [hr0, TensorProduct.tmul_zero]
 
 /-- The range of the comparison map is the `ℚ`-span of the subring. -/
 theorem range_ratBaseChange :
@@ -141,17 +137,20 @@ theorem ratBaseChange_surjective_iff :
 
 /-- A spanning subring is a `ℤ`-form of the ambient `ℚ`-algebra: extending its scalars to `ℚ`
 recovers that algebra. -/
-@[expose] noncomputable def ratBaseChangeEquiv (h : Submodule.span ℚ (R : Set A) = ⊤) :
+noncomputable def ratBaseChangeEquiv (h : Submodule.span ℚ (R : Set A) = ⊤) :
     ℚ ⊗[ℤ] R ≃ₐ[ℚ] A :=
   AlgEquiv.ofBijective (ratBaseChange R)
     ⟨ratBaseChange_injective R, (ratBaseChange_surjective_iff R).2 h⟩
 
 @[simp]
 theorem ratBaseChangeEquiv_tmul (h : Submodule.span ℚ (R : Set A) = ⊤) (q : ℚ) (r : R) :
-    ratBaseChangeEquiv R h (q ⊗ₜ[ℤ] r) = q • (r : A) := rfl
+    ratBaseChangeEquiv R h (q ⊗ₜ[ℤ] r) = q • (r : A) := by
+  rw [ratBaseChangeEquiv]
+  change ratBaseChange R (q ⊗ₜ[ℤ] r) = q • (r : A)
+  exact ratBaseChange_tmul R q r
 
-/-- A spanning subring is a *full* lattice: every element of the ambient algebra is carried into
-it by some nonzero natural number. -/
+/-- Denominators can be cleared in a spanning subring: every element of the ambient algebra is
+carried into it by some nonzero natural number. -/
 theorem exists_natCast_smul_mem (h : Submodule.span ℚ (R : Set A) = ⊤) (a : A) :
     ∃ n : ℕ, n ≠ 0 ∧ (n : ℚ) • a ∈ R := by
   obtain ⟨z, rfl⟩ := (ratBaseChange_surjective_iff R).2 h a
