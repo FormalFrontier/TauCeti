@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RingTheory.Huber.Basic
+public import TauCeti.Algebra.Ring.Subgroup
 
 /-!
 # Enlarging rings of definition
@@ -86,20 +87,14 @@ private theorem mul_mem_addSubgroupClosure_mul_range_pow (B : Subring A) (a : A)
     (hx : x ∈ AddSubgroup.closure ((B : Set A) * Set.range (a ^ · : ℕ → A)))
     (hy : y ∈ AddSubgroup.closure ((B : Set A) * Set.range (a ^ · : ℕ → A))) :
     x * y ∈ AddSubgroup.closure ((B : Set A) * Set.range (a ^ · : ℕ → A)) := by
-  induction hx, hy using AddSubgroup.closure_induction₂ with
-  | mem u v hu hv =>
-    obtain ⟨b₁, hb₁, _, ⟨k₁, rfl⟩, rfl⟩ := Set.mem_mul.mp hu
-    obtain ⟨b₂, hb₂, _, ⟨k₂, rfl⟩, rfl⟩ := Set.mem_mul.mp hv
-    apply AddSubgroup.subset_closure
-    convert Set.mul_mem_mul (s := (B : Set A)) (t := Set.range (a ^ · : ℕ → A))
-      (B.mul_mem hb₁ hb₂) ⟨k₁ + k₂, rfl⟩ using 1
-    ring
-  | zero_left => simp
-  | zero_right => simp
-  | add_left _ _ _ _ _ _ hx hy => simpa [add_mul] using AddSubgroup.add_mem _ hx hy
-  | add_right _ _ _ _ _ _ hx hy => simpa [mul_add] using AddSubgroup.add_mem _ hx hy
-  | neg_left _ _ _ _ hx => simpa [neg_mul] using AddSubgroup.neg_mem _ hx
-  | neg_right _ _ _ _ hx => simpa [mul_neg] using AddSubgroup.neg_mem _ hx
+  refine AddSubgroup.mul_mem_closure_of_mul_mem ?_ hx hy
+  intro u hu v hv
+  obtain ⟨b₁, hb₁, _, ⟨k₁, rfl⟩, rfl⟩ := Set.mem_mul.mp hu
+  obtain ⟨b₂, hb₂, _, ⟨k₂, rfl⟩, rfl⟩ := Set.mem_mul.mp hv
+  apply AddSubgroup.subset_closure
+  convert Set.mul_mem_mul (s := (B : Set A)) (t := Set.range (a ^ · : ℕ → A))
+    (B.mul_mem hb₁ hb₂) ⟨k₁ + k₂, rfl⟩ using 1
+  ring
 
 /-- Adjoining finitely many power-bounded elements to a bounded subring gives a bounded subring.
 This is the boundedness input in Wedhorn's Corollary 6.4. -/
