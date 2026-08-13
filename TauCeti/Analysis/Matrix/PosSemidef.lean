@@ -109,9 +109,11 @@ theorem posSemidef_const_of_nonneg {R : Type u}
     [CommRing R] [PartialOrder R] [StarRing R] [StarOrderedRing R]
     {c : R} (hc : 0 ≤ c) : Matrix.PosSemidef (fun _ _ : α => c) := by
   refine ⟨?_, fun x => ?_⟩
-  · ext a b
-    change star c = c
-    exact hc.star_eq
+  · have hHerm : (Matrix.of fun _ _ : α => c).IsHermitian := by
+      ext a b
+      rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply]
+      exact hc.star_eq
+    exact hHerm
   · let s := x.sum fun _ xi => xi
     have hs := star_left_conjugate_nonneg hc s
     dsimp only [s] at hs
@@ -247,32 +249,7 @@ theorem posSemidef_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
     {K : ι → α → α → 𝕜} {L : α → α → 𝕜} (hK : ∀ᶠ i in l, Matrix.PosSemidef (K i))
     (hlim : ∀ a b : α, Tendsto (fun i => K i a b) l (𝓝 (L a b))) :
     Matrix.PosSemidef L := by
-  -- Lean does not unfold the semireducible function-to-matrix identification while elaborating
-  -- the `PosSemidef` structure fields, so expose Mathlib's `Matrix.of` representation here.
-  change (Matrix.of L).PosSemidef
-  refine ⟨?_, ?_⟩
-  · ext a b
-    rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply, ← starRingEnd_apply]
-    have hconj : Tendsto (fun i => conj (K i b a)) l (𝓝 (conj (L b a))) :=
-      RCLike.continuous_conj.tendsto (L b a) |>.comp (hlim b a)
-    have hswap : Tendsto (fun i => conj (K i b a)) l (𝓝 (L a b)) :=
-      (hlim a b).congr' <| by
-        filter_upwards [hK] with i hi
-        simpa only [starRingEnd_apply] using (hi.isHermitian.apply a b).symm
-    exact tendsto_nhds_unique hconj hswap
-  · intro x
-    have hquad :
-        Tendsto
-          (fun i => x.support.sum fun a =>
-            x.support.sum fun b => star (x a) * K i a b * x b) l
-          (𝓝 (x.support.sum fun a => x.support.sum fun b => star (x a) * L a b * x b)) := by
-      refine tendsto_finsetSum _ fun a _ => tendsto_finsetSum _ fun b _ => ?_
-      exact ((tendsto_const_nhds.mul (hlim a b)).mul tendsto_const_nhds)
-    have hnonneg : 0 ≤ x.support.sum fun a =>
-        x.support.sum fun b => star (x a) * L a b * x b := by
-      refine ge_of_tendsto hquad ?_
-      filter_upwards [hK] with i hi
-      simpa [Finsupp.sum] using hi.2 x
-    simpa [Finsupp.sum, Matrix.of_apply] using hnonneg
+  exact Matrix.posSemidef_is_closed.mem_of_tendsto
+    (tendsto_pi_nhds.2 fun a => tendsto_pi_nhds.2 (hlim a)) hK
 
 end TauCeti
