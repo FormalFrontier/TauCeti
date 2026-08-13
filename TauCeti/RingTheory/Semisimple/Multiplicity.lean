@@ -33,11 +33,10 @@ space of intertwiners".
 
 ## Main definitions
 
-* `TauCeti.homCompRight`: postcomposition with an `A`-linear map, as a `k`-linear map of hom
-  spaces out of a fixed module.
 * `TauCeti.homCongrRight`: isomorphic `A`-modules have `k`-isomorphic hom spaces out of a fixed
   module.  This is `LinearEquiv.congrRight` for a noncommutative `A`, with the auxiliary scalars
-  `k` supplying the linear structure that `A` cannot.
+  `k` supplying the linear structure that `A` cannot; it is assembled from Mathlib's
+  `LinearMap.compRight`.
 
 ## Main results
 
@@ -89,32 +88,16 @@ variable {S : Type*} [AddCommMonoid S] [Module A S]
 variable {N : Type*} [AddCommMonoid N] [Module A N] [Module k N] [IsScalarTower k A N]
 variable {P : Type*} [AddCommMonoid P] [Module A P] [Module k P] [IsScalarTower k A P]
 
-/-- Postcomposition with an `A`-linear map, as a `k`-linear map of hom spaces out of `S`.
-
-The ring `A` is not assumed commutative, so the hom spaces are not `A`-modules and Mathlib's
-`LinearMap.compRight` does not apply; the auxiliary base ring `k`, acting on the targets
-compatibly with `A`, supplies the linear structure instead. -/
-def homCompRight (g : N →ₗ[A] P) : (S →ₗ[A] N) →ₗ[k] (S →ₗ[A] P) where
-  toFun f := g ∘ₗ f
-  map_add' _ _ := by ext s; simp
-  map_smul' c f := by
-    ext s
-    simp only [LinearMap.comp_apply, LinearMap.smul_apply, RingHom.id_apply]
-    exact g.map_smul_of_tower c (f s)
-
-@[simp]
-theorem homCompRight_apply (g : N →ₗ[A] P) (f : S →ₗ[A] N) (s : S) :
-    homCompRight k (S := S) g f s = g (f s) :=
-  (rfl)
-
 /-- **Isomorphic targets give isomorphic hom spaces.**  An `A`-linear isomorphism `e : N ≃ₗ[A] P`
 carries `S →ₗ[A] N` to `S →ₗ[A] P` by postcomposition, `k`-linearly.
 
 This is `LinearEquiv.congrRight` with the auxiliary scalars `k` in place of a commutativity
-assumption on `A`. -/
+assumption on `A`: since `A` is not assumed commutative the hom spaces are not `A`-modules, and
+`k`, acting on the targets compatibly with `A`, supplies the linear structure instead.  The two
+directions are `LinearMap.compRight`. -/
 def homCongrRight (e : N ≃ₗ[A] P) : (S →ₗ[A] N) ≃ₗ[k] (S →ₗ[A] P) :=
-  LinearEquiv.ofLinearMap (homCompRight k (S := S) (e : N →ₗ[A] P))
-    (homCompRight k (S := S) (e.symm : P →ₗ[A] N))
+  LinearEquiv.ofLinearMap (LinearMap.compRight (M := S) k (e : N →ₗ[A] P))
+    (LinearMap.compRight (M := S) k (e.symm : P →ₗ[A] N))
     (by ext f s; simp) (by ext f s; simp)
 
 @[simp]
