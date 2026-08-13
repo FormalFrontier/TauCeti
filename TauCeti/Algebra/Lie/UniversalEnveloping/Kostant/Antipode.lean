@@ -72,6 +72,7 @@ variable (a : _root_.UniversalEnvelopingAlgebra ℚ L)
 
 /-- The antipode passes through a divided power. Antimultiplicativity is invisible here because a
 divided power is a rational multiple of a power of a single element. -/
+@[simp]
 theorem antipode_dividedPower (n : ℕ) :
     antipode ℚ (Associative.dividedPower n a) =
       Associative.dividedPower n (antipode ℚ a) := by
@@ -81,6 +82,7 @@ theorem antipode_dividedPower (n : ℕ) :
 
 Both sides are determined by their `n!`-fold multiples, which agree by `antipode_smeval` applied
 to the descending Pochhammer polynomial. -/
+@[simp]
 theorem antipode_ringChoose (n : ℕ) :
     antipode ℚ (Ring.choose a n) = Ring.choose (antipode ℚ a) n := by
   have hfac : (n.factorial : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr n.factorial_ne_zero
@@ -89,9 +91,7 @@ theorem antipode_ringChoose (n : ℕ) :
     rw [← map_nsmul, ← Ring.descPochhammer_eq_factorial_smul_choose,
       ← Ring.descPochhammer_eq_factorial_smul_choose, antipode_smeval]
   refine smul_right_injective _ hfac ?_
-  change (n.factorial : ℚ) • _ = (n.factorial : ℚ) • _
-  rw [Nat.cast_smul_eq_nsmul, Nat.cast_smul_eq_nsmul]
-  exact key
+  simpa only [Nat.cast_smul_eq_nsmul] using key
 
 end Generators
 
@@ -119,7 +119,7 @@ theorem antipode_ringChoose_mem_kostantForm (j : κ) (n : ℕ) :
     antipode ℚ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) n) ∈
       kostantForm e h := by
   rw [antipode_ringChoose, antipode_ι]
-  exact Ring.choose_neg_mem (fun k => ringChoose_mem_kostantForm e h j k) n
+  exact Ring.choose_neg_mem fun k _ => ringChoose_mem_kostantForm e h j k
 
 /-- **The Kostant integral form is stable under the antipode.**
 
@@ -136,6 +136,7 @@ theorem antipode_mem_kostantForm {a : _root_.UniversalEnvelopingAlgebra ℚ L}
 
 /-- Membership in the Kostant integral form is unchanged by the antipode, since the antipode is
 involutive. -/
+@[simp]
 theorem antipode_mem_kostantForm_iff {a : _root_.UniversalEnvelopingAlgebra ℚ L} :
     antipode ℚ a ∈ kostantForm e h ↔ a ∈ kostantForm e h := by
   refine ⟨fun ha => ?_, antipode_mem_kostantForm e h⟩
@@ -145,7 +146,7 @@ theorem antipode_mem_kostantForm_iff {a : _root_.UniversalEnvelopingAlgebra ℚ 
 opposite-valued antipode is the opposite subring, not merely contained in it. Involutivity of the
 antipode supplies the missing inclusion. -/
 theorem map_antipodeEquiv_kostantForm :
-    (kostantForm e h).map ((antipodeEquiv (L := L) ℚ).toAlgHom.toRingHom) =
+    (kostantForm e h).map ((antipodeEquiv (L := L) ℚ).toRingEquiv.toRingHom) =
       Subring.op (kostantForm e h) := by
   refine le_antisymm ?_ ?_
   · rintro _ ⟨a, ha, rfl⟩
@@ -156,22 +157,42 @@ theorem map_antipodeEquiv_kostantForm :
     simpa [antipode_apply] using antipode_antipode ℚ b.unop
 
 /-- The antipode restricted to the Kostant integral form, as a ring equivalence onto the opposite
-ring of the form. This is the anti-automorphism a Hopf order carries. -/
+ring of the form. This is the anti-automorphism a Hopf order carries.
+
+It is the restriction `RingEquiv.subringMap` of `antipodeEquiv`, transported along
+`map_antipodeEquiv_kostantForm` and Mathlib's identification `Subring.mopRingEquivOp` of the
+opposite of a subring with the corresponding subring of the opposite ring. -/
 noncomputable def kostantFormAntipode :
-    kostantForm e h ≃+* (kostantForm e h)ᵐᵒᵖ where
-  toFun a := MulOpposite.op ⟨antipode ℚ a, antipode_mem_kostantForm e h a.2⟩
-  invFun b := ⟨antipode ℚ (b.unop : _root_.UniversalEnvelopingAlgebra ℚ L),
-    antipode_mem_kostantForm e h b.unop.2⟩
-  left_inv a := Subtype.ext (by simp)
-  right_inv b := MulOpposite.unop_injective (Subtype.ext (by simp))
-  map_mul' a b := MulOpposite.unop_injective (Subtype.ext (by simp))
-  map_add' a b := MulOpposite.unop_injective (Subtype.ext (by simp))
+    kostantForm e h ≃+* (kostantForm e h)ᵐᵒᵖ :=
+  ((RingEquiv.subringMap (s := kostantForm e h) (antipodeEquiv (L := L) ℚ).toRingEquiv).trans
+      (RingEquiv.subringCongr (map_antipodeEquiv_kostantForm e h))).trans
+    (Subring.mopRingEquivOp (kostantForm e h)).symm
 
 /-- The restricted antipode acts by the antipode on underlying elements. -/
 @[simp]
 theorem coe_unop_kostantFormAntipode_apply (a : kostantForm e h) :
     ((kostantFormAntipode e h a).unop : _root_.UniversalEnvelopingAlgebra ℚ L) =
-      antipode ℚ (a : _root_.UniversalEnvelopingAlgebra ℚ L) := (rfl)
+      antipode ℚ (a : _root_.UniversalEnvelopingAlgebra ℚ L) := by
+  -- `Subring.mopRingEquivOp` and `RingEquiv.subringMap` are stated for the underlying
+  -- subsemiring, whose carrier is only definitionally the carrier of the subring, so their
+  -- computation rules are recorded as explicit coercion equations instead of being rewritten.
+  have hmop : ∀ b : (kostantForm e h)ᵐᵒᵖ,
+      ((Subring.mopRingEquivOp (kostantForm e h) b : Subring.op (kostantForm e h)) :
+        (_root_.UniversalEnvelopingAlgebra ℚ L)ᵐᵒᵖ) =
+        MulOpposite.op ((b.unop : kostantForm e h) :
+          _root_.UniversalEnvelopingAlgebra ℚ L) :=
+    fun b => Subring.mopRingEquivOp_apply_coe _ _
+  have hsub : ∀ x : kostantForm e h,
+      ((RingEquiv.subringMap (s := kostantForm e h) (antipodeEquiv (L := L) ℚ).toRingEquiv x :
+          (kostantForm e h).map (antipodeEquiv (L := L) ℚ).toRingEquiv.toRingHom) :
+        (_root_.UniversalEnvelopingAlgebra ℚ L)ᵐᵒᵖ) =
+        antipodeEquiv ℚ (x : _root_.UniversalEnvelopingAlgebra ℚ L) :=
+    fun x => RingEquiv.subsemiringMap_apply_coe _ _ _
+  apply MulOpposite.op_injective
+  rw [← hmop, kostantFormAntipode]
+  simp only [RingEquiv.trans_apply, RingEquiv.apply_symm_apply,
+    RingEquiv.coe_subringCongr_apply]
+  rw [hsub, antipodeEquiv_apply, antipode_apply, MulOpposite.op_unop]
 
 end KostantForm
 
