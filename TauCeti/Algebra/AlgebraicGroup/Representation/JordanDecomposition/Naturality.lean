@@ -67,10 +67,10 @@ theorem jordanDecomposition_mapDomain (φ : H₁ →ₐc[k] H₂)
   symm
   apply (eq_jordanDecomposition_iff k H₁ K (AlgHom.mapDomain φ g) _ _).2
   refine ⟨?_, ?_, ?_, ?_⟩
-  · intro M
-    rw [← Comodule.pointsAction_corestrict (V := M) φ]
-    exact isSemisimple_pointsAction_semisimplePart k H₂ K g
-      ((FGComoduleCat.corestrict φ.toCoalgHom).obj M)
+  · rw [← isSemisimplePoint_def]
+    apply IsSemisimplePoint.mapDomain ?_ φ
+    rw [isSemisimplePoint_def]
+    exact fun M ↦ isSemisimple_pointsAction_semisimplePart k H₂ K g M
   · intro M
     rw [← Comodule.pointsAction_corestrict (V := M) φ]
     exact isUnipotent_pointsAction_unipotentPart k H₂ K g
