@@ -31,7 +31,7 @@ namespace TauCeti
 
 /-- The nonnegative-rational module structure induced on a rational algebra. -/
 @[instance_reducible]
-noncomputable def moduleNNRat {A : Type*} [Ring A] [Algebra ℚ A] : Module ℚ≥0 A :=
+noncomputable def moduleNNRat {A : Type*} [Semiring A] [Algebra ℚ A] : Module ℚ≥0 A :=
   Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
 end TauCeti
