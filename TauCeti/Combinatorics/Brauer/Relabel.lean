@@ -165,7 +165,10 @@ theorem isCup_relabel_inr (j : Fin k) :
     (D.relabel σ τ).IsCup (Sum.inr (τ j)) ↔ D.IsCup (Sum.inr j) :=
   Sum.map_inr σ τ j ▸ isCup_relabel D σ τ (Sum.inr j)
 
-/-- The capped bottom points of a relabelled diagram are the renamed capped bottom points. -/
+/-- The capped bottom points of a relabelled diagram are the renamed capped bottom points.
+
+Not a `simp` lemma: rewriting by it takes `TauCeti.BrauerDiagram.card_bottomCap_relabel` out of
+simp-normal form, and `simp` cannot finish the resulting cardinality goal on its own. -/
 theorem bottomCap_relabel : (D.relabel σ τ).bottomCap = D.bottomCap.image σ := by
   ext i
   rw [mem_bottomCap, Finset.mem_image]
@@ -174,7 +177,9 @@ theorem bottomCap_relabel : (D.relabel σ τ).bottomCap = D.bottomCap.image σ :
   · rintro ⟨i', hi', rfl⟩
     exact (isCap_relabel_inl D σ τ i').mpr ((mem_bottomCap _).mp hi')
 
-/-- The cupped top points of a relabelled diagram are the renamed cupped top points. -/
+/-- The cupped top points of a relabelled diagram are the renamed cupped top points.
+
+Not a `simp` lemma, for the reason given for `TauCeti.BrauerDiagram.bottomCap_relabel`. -/
 theorem topCup_relabel : (D.relabel σ τ).topCup = D.topCup.image τ := by
   ext j
   rw [mem_topCup, Finset.mem_image]
@@ -183,7 +188,9 @@ theorem topCup_relabel : (D.relabel σ τ).topCup = D.topCup.image τ := by
   · rintro ⟨j', hj', rfl⟩
     exact (isCup_relabel_inr D σ τ j').mpr ((mem_topCup _).mp hj')
 
-/-- The bottom endpoints of the through strands of a relabelled diagram are the renamed ones. -/
+/-- The bottom endpoints of the through strands of a relabelled diagram are the renamed ones.
+
+Not a `simp` lemma, for the reason given for `TauCeti.BrauerDiagram.bottomCap_relabel`. -/
 theorem bottomThrough_relabel : (D.relabel σ τ).bottomThrough = D.bottomThrough.image σ := by
   ext i
   rw [mem_bottomThrough, Finset.mem_image]
@@ -192,7 +199,9 @@ theorem bottomThrough_relabel : (D.relabel σ τ).bottomThrough = D.bottomThroug
   · rintro ⟨i', hi', rfl⟩
     exact (isThrough_relabel_inl D σ τ i').mpr ((mem_bottomThrough _).mp hi')
 
-/-- The top endpoints of the through strands of a relabelled diagram are the renamed ones. -/
+/-- The top endpoints of the through strands of a relabelled diagram are the renamed ones.
+
+Not a `simp` lemma, for the reason given for `TauCeti.BrauerDiagram.bottomCap_relabel`. -/
 theorem topThrough_relabel : (D.relabel σ τ).topThrough = D.topThrough.image τ := by
   ext j
   rw [mem_topThrough, Finset.mem_image]

@@ -269,6 +269,7 @@ theorem congr_refl (D : PerfectMatching α) : congr (Equiv.refl α) D = D :=
 
 /-- **Transports compose**: transporting along `e` and then along `e'` is transporting along
 `e.trans e'`, both matchings sending `c` to `e' (e (D.val (e.symm (e'.symm c))))`. -/
+@[simp]
 theorem congr_trans (e : α ≃ β) (e' : β ≃ γ) (D : PerfectMatching α) :
     congr e' (congr e D) = congr (e.trans e') D :=
   Subtype.ext <| Equiv.ext fun c => by
