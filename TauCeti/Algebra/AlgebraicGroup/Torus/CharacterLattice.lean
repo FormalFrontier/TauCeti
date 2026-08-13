@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
 public import TauCeti.Algebra.Bialgebra.GroupLike.Map
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
@@ -23,8 +23,6 @@ non-split tori.
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.geometricCharacterGroup_fg_of_torus`: the geometric character group of
-  a torus is finitely generated.
 * `TauCeti.exists_characterLattice_addEquiv_of_torus`: the character lattice of any torus is
   finite-rank free.
 
@@ -41,20 +39,6 @@ open TensorProduct
 namespace TauCeti
 
 universe u
-
-namespace CommHopfAlgCat
-
-variable {k : Type u} [Field k]
-
-/-- The geometric character group of a torus is finitely generated. -/
-theorem geometricCharacterGroup_fg_of_torus
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (hH : torusCommHopfAlgProperty k H) :
-    Group.FG (geometricCharacterGroup H.obj) :=
-  geometricCharacterGroup_fg_of_multiplicativeType H
-    (torusCommHopfAlgProperty.multiplicativeType k H hH)
-
-end CommHopfAlgCat
 
 /-- The character lattice of a torus is a finite-rank free abelian group. The equivalence is
 noncanonical: it uses the splitting over the chosen algebraic closure from the torus predicate. -/
