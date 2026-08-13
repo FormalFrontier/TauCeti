@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.Adjoint.OperatorExponential
 public import TauCeti.Geometry.Lie.Adjoint.Units.Basic
 
 /-!
@@ -44,6 +43,7 @@ variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
 /-- On algebra units, the tangent adjoint of an exponential is the exponential of the continuous
 commutator by its exponent. -/
+@[simp]
 theorem tangentAd_expUnit (x y : R) :
     tangentAd (I := 𝓘(ℝ, R)) (TauCeti.expUnit x)
         (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ) =
@@ -68,6 +68,7 @@ local instance finiteDimensionalLeftInvariantDerivationAdjointUnitsExponential :
 
 /-- On algebra units, the abstract adjoint of `lieExp X` is the bounded-operator exponential of
 Mathlib's Lie-algebra adjoint `ad X`. -/
+@[simp]
 theorem Ad_lieExp_units (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
     let adX := LinearMap.toContinuousLinearMap
       (LieAlgebra.ad ℝ (LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) X)
@@ -88,6 +89,8 @@ theorem Ad_lieExp_units (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
       apply ContinuousLinearMap.ext
       intro Y
       rw [ContinuousLinearEquiv.conjContinuousAlgEquiv_apply_apply]
+      -- Conjugation is bundled through continuous-linear equivalences, whereas `Ad` acts on the
+      -- underlying derivations; expose that evaluation before applying the units transport laws.
       change unitsLieAlgebraEquiv (Ad (I := 𝓘(ℝ, R)) (lieExp X)
         ((unitsLieAlgebraEquiv (R := R)).symm Y)) =
           exp (continuousCommutator (unitsLieAlgebraEquiv X)) Y

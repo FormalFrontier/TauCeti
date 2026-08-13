@@ -28,7 +28,7 @@ This advances Deliverable A, Layer 1 of
   `g * x * g⁻¹`.
 * `unitsLieAlgebraEquiv_Ad`: under the canonical identification with the ambient algebra,
   `Ad g X` is `g * X * g⁻¹`.
-* `groupLieAlgebra_units_lie_apply`: the tangent Lie bracket on algebra units is the associative
+* `groupLieAlgebra_units_ad_apply`: the tangent Lie bracket on algebra units is the associative
   commutator.
 * `unitsLieAlgebraLieEquiv`: the canonical units identification as a Lie equivalence.
 * `unitsLieAlgebraEquiv_ad`: the units identification transports the abstract adjoint operator to
@@ -107,10 +107,13 @@ local instance finiteDimensionalCompleteSpaceAdjointUnits : CompleteSpace R :=
   FiniteDimensional.complete ℝ R
 
 /-- The Lie bracket on the tangent Lie algebra of algebra units is the associative commutator. -/
-theorem groupLieAlgebra_units_lie_apply (x y : R) :
+@[simp]
+theorem groupLieAlgebra_units_ad_apply (x y : R) :
     (show R from LieAlgebra.ad ℝ (GroupLieAlgebra 𝓘(ℝ, R) Rˣ)
       (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ) (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) =
       x * y - y * x := by
+  -- For units the model space, and hence `GroupLieAlgebra`, is definitionally the ambient algebra
+  -- `R`; the displayed casts expose that identification to the generic tangent-adjoint theorem.
   let _ : T2Space Rˣ := t2Space_of_lieGroup (I := 𝓘(ℝ, R)) (n := ∞)
   have hgeom := hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     (I := 𝓘(ℝ, R)) (G := Rˣ)
@@ -192,7 +195,7 @@ noncomputable def unitsLieAlgebraLieEquiv :
       have hmapR := congrArg
         (fun z : GroupLieAlgebra 𝓘(ℝ, R) Rˣ => show R from z) hmap
       dsimp only [e] at hmapR
-      have hgroup := groupLieAlgebra_units_lie_apply (R := R)
+      have hgroup := groupLieAlgebra_units_ad_apply (R := R)
         (unitsLieAlgebraEquiv X) (unitsLieAlgebraEquiv Y)
       have hcomm : ⁅unitsLieAlgebraEquiv X, unitsLieAlgebraEquiv Y⁆ =
           unitsLieAlgebraEquiv X * unitsLieAlgebraEquiv Y -
@@ -209,12 +212,33 @@ noncomputable def unitsLieAlgebraLieEquiv :
           leftInvariantDerivationLieEquivGroupLieAlgebra_apply] using hmapR
       exact hmapUnits.trans (hgroup.trans hcomm.symm) }
 
+/-- The units Lie equivalence has the same forward map as the canonical linear equivalence. -/
+@[simp]
+theorem unitsLieAlgebraLieEquiv_apply (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
+    unitsLieAlgebraLieEquiv X = unitsLieAlgebraEquiv X := by
+  rfl
+
+/-- The inverse units Lie equivalence has the same map as the inverse canonical linear
+equivalence. -/
+@[simp]
+theorem unitsLieAlgebraLieEquiv_symm_apply (x : R) :
+    (unitsLieAlgebraLieEquiv (R := R)).symm x =
+      (unitsLieAlgebraEquiv (R := R)).symm x := by
+  rfl
+
+/-- Forgetting the bracket-preserving structure recovers the canonical linear equivalence. -/
+@[simp]
+theorem unitsLieAlgebraLieEquiv_toLinearEquiv :
+    (unitsLieAlgebraLieEquiv (R := R)).toLinearEquiv = unitsLieAlgebraEquiv := by
+  rfl
+
 local instance finiteDimensionalLeftInvariantDerivationAdjointUnits :
     FiniteDimensional ℝ (LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :=
   finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
 
 /-- Conjugating the abstract adjoint operator by the units Lie-algebra identification gives the
 bounded associative commutator operator. -/
+@[simp]
 theorem unitsLieAlgebraEquiv_ad (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
     let e := (unitsLieAlgebraEquiv (R := R)).toContinuousLinearEquiv
     e.conjContinuousAlgEquiv
@@ -226,6 +250,8 @@ theorem unitsLieAlgebraEquiv_ad (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
   intro Y
   rw [ContinuousLinearEquiv.conjContinuousAlgEquiv_apply_apply,
     LinearMap.coe_toContinuousLinearMap']
+  -- The conjugation API exposes continuous-linear maps, while the characteristic equivalence is
+  -- linear; change only the wrapper so the explicit Lie-equivalence application lemmas can apply.
   change unitsLieAlgebraEquiv (LieAlgebra.ad ℝ _ X
     ((unitsLieAlgebraEquiv (R := R)).symm Y)) = continuousCommutator _ Y
   rw [LieAlgebra.ad_apply]
