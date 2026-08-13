@@ -11,6 +11,11 @@ public import Mathlib.RepresentationTheory.Intertwining
 -- `LinearMap.toMatrix` and `Module.Basis.tensorProduct` occur in the statements below, and
 -- `TensorProduct.toMatrix_map` is what computes the entries of a tensor product.
 public import Mathlib.LinearAlgebra.TensorProduct.Matrix
+-- `Basis.piTensorProduct`, the basis of pure tensors the tensor-power entries are read
+-- against.
+public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
+-- `Representation.tensorPower` occurs in the statements below.
+public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
 # Matrix coefficients of a representation
@@ -29,11 +34,13 @@ so that a proof of the condition never has to be repeated for each choice:
   lift and independent of `g`;
 * changing the basis of a single representation is the special case of the identity map, so the
   condition is basis independent;
+* against the basis of pure tensors of basis vectors, the matrix coefficients of a tensor power of a
+  representation are the products of matrix coefficients of the representation;
 * against a tensor product of bases, the matrix coefficients of a tensor product of representations
   are the products of matrix coefficients of the two factors.
 
-The first two need only a commutative semiring of scalars; the tensor-product entries are read off
-`TensorProduct.toMatrix_map`, which Mathlib states over a commutative ring.
+All but the last need only a commutative semiring of scalars; the tensor-product entries are read
+off `TensorProduct.toMatrix_map`, which Mathlib states over a commutative ring.
 
 ## Main results
 
@@ -41,6 +48,10 @@ The first two need only a commutative semiring of scalars; the tensor-product en
   quotient representation stay inside any subalgebra containing those of the source.
 * `TauCeti.Representation.toMatrix_mem_of_toMatrix_mem`: changing basis keeps the matrix
   coefficients inside any subalgebra.
+* `TauCeti.Representation.toMatrix_tensorPower` and
+  `TauCeti.Representation.toMatrix_tensorPower_mem`: the matrix coefficients of a tensor power are
+  products of matrix coefficients, hence stay inside any subalgebra containing those of the
+  representation.
 * `TauCeti.Representation.toMatrix_tprod` and `TauCeti.Representation.toMatrix_tprod_mem`: the
   matrix coefficients of a tensor product are products of matrix coefficients, hence stay inside
   any subalgebra containing those of the two factors.
@@ -104,6 +115,34 @@ theorem toMatrix_mem_of_toMatrix_mem (A : Subalgebra k (G → k))
     (h : ∀ p l, (fun g => LinearMap.toMatrix b b (ρ g) p l) ∈ A) (i j : κ) :
     (fun g => LinearMap.toMatrix c c (ρ g) i j) ∈ A :=
   toMatrix_mem_of_toMatrix_mem_of_surjective A b c (.id ρ) (fun v => ⟨v, rfl⟩) h i j
+
+/-- Against the basis of pure tensors of basis vectors, a matrix coefficient of the `d`-fold tensor
+power of `ρ` is the product of the `d` matrix coefficients of `ρ` listed by the two indices. -/
+theorem toMatrix_tensorPower {ι : Type w} [Fintype ι] [DecidableEq ι] (b : Module.Basis ι k W)
+    (ρ : Representation k G W) (d : ℕ) (g : G) (i j : Fin d → ι) :
+    LinearMap.toMatrix (Basis.piTensorProduct fun _ : Fin d => b)
+        (Basis.piTensorProduct fun _ : Fin d => b) (ρ.tensorPower d g) i j
+      = ∏ l : Fin d, LinearMap.toMatrix b b (ρ g) (i l) (j l) := by
+  rw [LinearMap.toMatrix_apply, Basis.piTensorProduct_apply,
+    _root_.Representation.tensorPower_apply, PiTensorProduct.map_tprod,
+    Basis.piTensorProduct_repr_tprod_apply]
+  simp [LinearMap.toMatrix_apply]
+
+/-- **The matrix coefficients of a tensor power stay inside any subalgebra of functions**
+containing those of the representation. -/
+theorem toMatrix_tensorPower_mem (A : Subalgebra k (G → k))
+    {ι : Type w} [Fintype ι] [DecidableEq ι] (b : Module.Basis ι k W)
+    {ρ : Representation k G W} {d : ℕ}
+    (h : ∀ p l, (fun g => LinearMap.toMatrix b b (ρ g) p l) ∈ A) (i j : Fin d → ι) :
+    (fun g => LinearMap.toMatrix (Basis.piTensorProduct fun _ : Fin d => b)
+        (Basis.piTensorProduct fun _ : Fin d => b) (ρ.tensorPower d g) i j) ∈ A := by
+  have hentry : (fun g => LinearMap.toMatrix (Basis.piTensorProduct fun _ : Fin d => b)
+        (Basis.piTensorProduct fun _ : Fin d => b) (ρ.tensorPower d g) i j)
+      = ∏ l : Fin d, fun g => LinearMap.toMatrix b b (ρ g) (i l) (j l) := by
+    funext g
+    simpa using toMatrix_tensorPower b ρ d g i j
+  rw [hentry]
+  exact prod_mem fun l _ => h (i l) (j l)
 
 end CommSemiring
 

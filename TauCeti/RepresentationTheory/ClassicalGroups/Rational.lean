@@ -6,12 +6,12 @@ Authors: Claude
 module
 
 public import Mathlib.Data.Complex.Basic
-public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 -- The two subalgebras of functions on `GL n k` the definitions below are stated against; this
 -- module also supplies `MvPolynomial.eval`, in which their coordinate form is written.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.PolynomialFunctions
--- The subalgebra-generic behaviour of matrix coefficients under change of basis, quotients and
--- tensor products.
+-- The subalgebra-generic behaviour of matrix coefficients under change of basis, quotients,
+-- tensor products and tensor powers; this module also supplies `Basis.piTensorProduct`, the basis
+-- the tensor-power results below are stated against.
 public import TauCeti.RepresentationTheory.MatrixCoefficients
 public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
@@ -77,9 +77,11 @@ development rather than to this layer.
 * `TauCeti.IsPolynomialRep.of_surjective` and `TauCeti.IsRationalRep.of_surjective`: both
   properties pass to quotients.
 * `TauCeti.IsPolynomialRep.tensorPower`, `TauCeti.IsPolynomialRep.symmetricPower` and
-  `TauCeti.IsPolynomialRep.exteriorPower`: polynomiality passes to the functorial powers, whence
-  `TauCeti.isPolynomialRep_tensorPowerRep`, `TauCeti.isPolynomialRep_symPowerRep` and
-  `TauCeti.isPolynomialRep_extPowerRep` for the standard representation.
+  `TauCeti.IsPolynomialRep.exteriorPower`, together with `TauCeti.IsRationalRep.tensorPower`,
+  `TauCeti.IsRationalRep.symmetricPower` and `TauCeti.IsRationalRep.exteriorPower`: both properties
+  pass to the functorial powers, whence `TauCeti.isPolynomialRep_tensorPowerRep`,
+  `TauCeti.isPolynomialRep_symPowerRep` and `TauCeti.isPolynomialRep_extPowerRep` for the standard
+  representation.
 
 ## References
 
@@ -338,43 +340,70 @@ section FunctorialPowers
 variable {n : ℕ} {W : Type} [AddCommGroup W] [Module ℂ W]
 variable {ρ : Representation ℂ (GL (Fin n) ℂ) W}
 
-/-- **A tensor power of a polynomial representation is polynomial**: against the basis of pure
-tensors of basis vectors, an entry of the tensor power is the product of the `d` entries listed by
-the two indices. -/
+/-- **A tensor power of a polynomial representation is polynomial.** -/
 theorem IsPolynomialRep.tensorPower (h : IsPolynomialRep ρ) (d : ℕ) :
     IsPolynomialRep (ρ.tensorPower d) := by
   obtain ⟨b, P, hP⟩ := h
   refine (isPolynomialRep_iff_forall_mem_polynomialFunctions
     (Basis.piTensorProduct fun _ : Fin d => b)).mpr fun i j => ?_
-  have hentry : (fun g : GL (Fin n) ℂ =>
-      LinearMap.toMatrix (Basis.piTensorProduct fun _ : Fin d => b)
-        (Basis.piTensorProduct fun _ : Fin d => b) (ρ.tensorPower d g) i j)
-      = ∏ l : Fin d, fun g : GL (Fin n) ℂ => LinearMap.toMatrix b b (ρ g) (i l) (j l) := by
-    funext g
-    rw [LinearMap.toMatrix_apply, Basis.piTensorProduct_apply,
-      Representation.tensorPower_apply, PiTensorProduct.map_tprod,
-      Basis.piTensorProduct_repr_tprod_apply]
-    simp [LinearMap.toMatrix_apply]
-  rw [hentry]
-  exact prod_mem fun l _ =>
-    mem_polynomialFunctions.mpr ⟨P (i l) (j l), fun g => hP g (i l) (j l)⟩
+  exact Representation.toMatrix_tensorPower_mem _ b
+    (fun p l => mem_polynomialFunctions.mpr ⟨P p l, fun g => hP g p l⟩) i j
+
+/-- **A tensor power of a rational representation is rational.** -/
+theorem IsRationalRep.tensorPower (h : IsRationalRep ρ) (d : ℕ) :
+    IsRationalRep (ρ.tensorPower d) := by
+  obtain ⟨b, P, m, hP⟩ := h
+  refine (isRationalRep_iff_forall_mem_rationalFunctions
+    (Basis.piTensorProduct fun _ : Fin d => b)).mpr fun i j => ?_
+  exact Representation.toMatrix_tensorPower_mem _ b
+    (fun p l => mem_rationalFunctions_iff_inv.mpr ⟨P p l, m, fun g => hP g p l⟩) i j
+
+/-- The canonical map onto the symmetric power, as a surjective intertwining map out of the tensor
+power.  It is what makes the symmetric power inherit polynomiality and rationality. -/
+private noncomputable def symmetricPowerIntertwiningMap (ρ : Representation ℂ (GL (Fin n) ℂ) W)
+    (d : ℕ) : Representation.IntertwiningMap (ρ.tensorPower d) (ρ.symmetricPower d) :=
+  LinearMap.intertwiningMap_of_isIntertwiningMap _ _ (SymmetricPower.mk ℂ (Fin d) W) fun g x => by
+    simp
+
+private theorem symmetricPowerIntertwiningMap_surjective (ρ : Representation ℂ (GL (Fin n) ℂ) W)
+    (d : ℕ) : Function.Surjective (symmetricPowerIntertwiningMap ρ d) :=
+  LinearMap.range_eq_top.mp (SymmetricPower.range_mk ℂ (Fin d) W)
+
+/-- The canonical map onto the exterior power, as a surjective intertwining map out of the tensor
+power.  It is what makes the exterior power inherit polynomiality and rationality. -/
+private noncomputable def exteriorPowerIntertwiningMap (ρ : Representation ℂ (GL (Fin n) ℂ) W)
+    (d : ℕ) : Representation.IntertwiningMap (ρ.tensorPower d) (ρ.exteriorPower d) :=
+  LinearMap.intertwiningMap_of_isIntertwiningMap _ _ (exteriorPower.fromTensorPower ℂ W d)
+    fun g x => by
+      simpa using (LinearMap.congr_fun (exteriorPower.map_comp_fromTensorPower d (ρ g)) x).symm
+
+private theorem exteriorPowerIntertwiningMap_surjective (ρ : Representation ℂ (GL (Fin n) ℂ) W)
+    (d : ℕ) : Function.Surjective (exteriorPowerIntertwiningMap ρ d) :=
+  exteriorPower.fromTensorPower_surjective d
 
 /-- **A symmetric power of a polynomial representation is polynomial.** -/
 theorem IsPolynomialRep.symmetricPower (h : IsPolynomialRep ρ) (d : ℕ) :
     IsPolynomialRep (ρ.symmetricPower d) :=
-  (h.tensorPower d).of_surjective
-    (LinearMap.intertwiningMap_of_isIntertwiningMap _ _ (SymmetricPower.mk ℂ (Fin d) W)
-      fun g x => by simp)
-    (LinearMap.range_eq_top.mp (SymmetricPower.range_mk ℂ (Fin d) W))
+  (h.tensorPower d).of_surjective (symmetricPowerIntertwiningMap ρ d)
+    (symmetricPowerIntertwiningMap_surjective ρ d)
+
+/-- **A symmetric power of a rational representation is rational.** -/
+theorem IsRationalRep.symmetricPower (h : IsRationalRep ρ) (d : ℕ) :
+    IsRationalRep (ρ.symmetricPower d) :=
+  (h.tensorPower d).of_surjective (symmetricPowerIntertwiningMap ρ d)
+    (symmetricPowerIntertwiningMap_surjective ρ d)
 
 /-- **An exterior power of a polynomial representation is polynomial.** -/
 theorem IsPolynomialRep.exteriorPower (h : IsPolynomialRep ρ) (d : ℕ) :
     IsPolynomialRep (ρ.exteriorPower d) :=
-  (h.tensorPower d).of_surjective
-    (LinearMap.intertwiningMap_of_isIntertwiningMap _ _ (exteriorPower.fromTensorPower ℂ W d)
-      fun g x => by
-        simpa using (LinearMap.congr_fun (exteriorPower.map_comp_fromTensorPower d (ρ g)) x).symm)
-    (exteriorPower.fromTensorPower_surjective d)
+  (h.tensorPower d).of_surjective (exteriorPowerIntertwiningMap ρ d)
+    (exteriorPowerIntertwiningMap_surjective ρ d)
+
+/-- **An exterior power of a rational representation is rational.** -/
+theorem IsRationalRep.exteriorPower (h : IsRationalRep ρ) (d : ℕ) :
+    IsRationalRep (ρ.exteriorPower d) :=
+  (h.tensorPower d).of_surjective (exteriorPowerIntertwiningMap ρ d)
+    (exteriorPowerIntertwiningMap_surjective ρ d)
 
 variable (n d : ℕ)
 
