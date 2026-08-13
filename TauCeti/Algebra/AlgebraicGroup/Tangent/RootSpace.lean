@@ -45,7 +45,7 @@ one, or that `G` is reductive. When `π` does exhibit a split maximal torus `T` 
   finite.**
 * `TauCeti.Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of `D(M)` acts on the
   `α`-weight submodule by the value of `α` at that point.
-* `TauCeti.Derivation.lie_mem_adjointWeightSpace`: the adjoint weight decomposition is a Lie
+* `TauCeti.Derivation.lie_mem_adjointWeightSpace_mul`: the adjoint weight decomposition is a Lie
   grading: `[𝔤_α, 𝔤_β] ⊆ 𝔤_{αβ}`.
 
 ## Roadmap
@@ -211,7 +211,7 @@ private theorem map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace
 
 For a split pair this is the root-space grading relation
 `[𝔤_α, 𝔤_β] ⊆ 𝔤_{αβ}` (with characters written multiplicatively). -/
-theorem lie_mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α β : M}
+theorem lie_mem_adjointWeightSpace_mul {π : H →ₐc[R] MonoidAlgebra R M} {α β : M}
     {x y : Module.Dual R (Bialgebra.CotangentSpace R H)}
     (hx : x ∈ adjointWeightSpace π α) (hy : y ∈ adjointWeightSpace π β) :
     ⁅x, y⁆ ∈ adjointWeightSpace π (α * β) := by
@@ -223,16 +223,18 @@ theorem lie_mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α β 
   let q : U →ₐ[R] MonoidAlgebra R M :=
     (π : H →ₐ[R] MonoidAlgebra R M).comp
       (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toAlgHom
+  have hπ : (π : H →ₐ[R] MonoidAlgebra R M).toLinearMap =
+      (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap := by
+    rw [CoalgHom.toLinearMap_eq_coe]
+    exact BialgHom.toAlgHom_toLinearMap π
   have hq : q.toLinearMap =
       ((π : H →ₗc[R] MonoidAlgebra R M).toLinearMap ∘ₗ
         (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap) := by
+    -- Unfold `q`: `AlgHom.comp` has no theorem exposing its underlying linear map.
     change
       ((π : H →ₐ[R] MonoidAlgebra R M).toLinearMap ∘ₗ
           (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap) = _
-    rw [show (π : H →ₐ[R] MonoidAlgebra R M).toLinearMap =
-        (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap by
-      rw [CoalgHom.toLinearMap_eq_coe]
-      exact BialgHom.toAlgHom_toLinearMap π]
+    rw [hπ]
   have hx' :
       TensorProduct.map q.toLinearMap LinearMap.id
           ((adjointAction A g).val (1 ⊗ₜ[R] x)) =
