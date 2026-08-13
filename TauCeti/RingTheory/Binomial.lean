@@ -30,8 +30,8 @@ needed.
 
 ## Main result
 
-* `TauCeti.choose_mul_choose`: the product of two binomial coefficients in `r`, expanded as a
-  natural-number linear combination of binomial coefficients in `r`.
+* `TauCeti.ringChoose_mul_ringChoose`: the product of two binomial coefficients in `r`, expanded
+  as a natural-number linear combination of binomial coefficients in `r`.
 * `TauCeti.ringChooseSpan`: the additive subgroup spanned by the binomial coefficients in one
   element.
 * `TauCeti.mul_mem_ringChooseSpan`: that span is closed under multiplication.
@@ -61,7 +61,7 @@ combination of generalized binomial coefficients in the same element.
 
 The pair `(i, j)` runs over `i + j = n`. Thus the summand has binomial degree `m + i` and
 coefficient `(m choose j) * (m + i choose m)`. Terms with `m < j` vanish automatically. -/
-theorem choose_mul_choose (r : R) (m n : ℕ) :
+theorem ringChoose_mul_ringChoose (r : R) (m n : ℕ) :
     Ring.choose r m * Ring.choose r n =
       ∑ ij ∈ antidiagonal n,
         (Nat.choose m ij.2 * Nat.choose (m + ij.1) m) • Ring.choose r (m + ij.1) := by
@@ -96,6 +96,41 @@ theorem choose_mul_choose (r : R) (m n : ℕ) :
 
 end Product
 
+/-! ## Closure lemmas -/
+
+/-- If products of generators lie in their additive closure, then that additive closure is
+closed under multiplication. -/
+theorem AddSubgroup.mul_mem_closure {R : Type*} [NonUnitalNonAssocRing R] {s : Set R}
+    (hs : ∀ x ∈ s, ∀ y ∈ s, x * y ∈ AddSubgroup.closure s) {x y : R}
+    (hx : x ∈ AddSubgroup.closure s) (hy : y ∈ AddSubgroup.closure s) :
+    x * y ∈ AddSubgroup.closure s := by
+  induction hx, hy using AddSubgroup.closure_induction₂ with
+  | mem x y hx hy => exact hs x hx y hy
+  | zero_left => simp
+  | zero_right => simp
+  | add_left _ _ _ _ _ _ hx hy => simpa [add_mul] using AddSubgroup.add_mem _ hx hy
+  | add_right _ _ _ _ _ _ hx hy => simpa [mul_add] using AddSubgroup.add_mem _ hx hy
+  | neg_left _ _ _ _ hx => simpa [neg_mul] using AddSubgroup.neg_mem _ hx
+  | neg_right _ _ _ _ hx => simpa [mul_neg] using AddSubgroup.neg_mem _ hx
+
+/-- If the additive closure of a set contains one and is closed under multiplication, it is the
+underlying additive subgroup of the subring closure of that set. -/
+theorem Subring.toAddSubgroup_closure {R : Type*} [Ring R] {s : Set R}
+    (h1 : (1 : R) ∈ AddSubgroup.closure s)
+    (hmul : ∀ x ∈ AddSubgroup.closure s, ∀ y ∈ AddSubgroup.closure s,
+      x * y ∈ AddSubgroup.closure s) :
+    (Subring.closure s).toAddSubgroup = AddSubgroup.closure s := by
+  refine le_antisymm (fun x hx => ?_) ((AddSubgroup.closure_le _).2 fun x hx => ?_)
+  · rw [Subring.mem_toAddSubgroup] at hx
+    induction hx using Subring.closure_induction with
+    | mem x hx => exact AddSubgroup.subset_closure hx
+    | zero => exact zero_mem _
+    | one => exact h1
+    | add _ _ _ _ hx hy => exact add_mem hx hy
+    | neg _ _ hx => exact neg_mem hx
+    | mul _ _ _ _ hx hy => exact hmul _ hx _ hy
+  · exact Subring.mem_toAddSubgroup.2 (Subring.subset_closure hx)
+
 /-! ## The integral span -/
 
 section Span
@@ -105,6 +140,11 @@ variable [AddCommGroupWithOne R] [Pow R ℕ] [BinomialRing R]
 /-- The additive subgroup spanned by all generalized binomial coefficients in `r`. -/
 def ringChooseSpan (r : R) : AddSubgroup R :=
   AddSubgroup.closure (Set.range (Ring.choose r))
+
+/-- The integral span is the additive closure of the generalized binomial coefficients. -/
+theorem ringChooseSpan_eq_closure (r : R) :
+    ringChooseSpan r = AddSubgroup.closure (Set.range (Ring.choose r)) :=
+  (rfl)
 
 /-- Every generalized binomial coefficient in `r` belongs to its integral span. -/
 @[simp]
@@ -119,6 +159,21 @@ theorem ringChooseSpan_le_iff {A : AddSubgroup R} {r : R} :
     ringChooseSpan r ≤ A ↔ ∀ n, Ring.choose r n ∈ A :=
   ⟨fun h n => h (ringChoose_mem_ringChooseSpan r n),
     fun h => (AddSubgroup.closure_le _).2 (Set.range_subset_iff.2 h)⟩
+
+/-- Induction on the integral span of the generalized binomial coefficients. -/
+@[elab_as_elim]
+theorem ringChooseSpan_induction {r : R} {p : R → Prop}
+    (mem : ∀ n, p (Ring.choose r n)) (zero : p 0)
+    (add : ∀ x y, p x → p y → p (x + y)) (neg : ∀ x, p x → p (-x))
+    {x : R} (hx : x ∈ ringChooseSpan r) : p x := by
+  rw [ringChooseSpan_eq_closure] at hx
+  induction hx using AddSubgroup.closure_induction with
+  | mem x hx =>
+      obtain ⟨n, rfl⟩ := hx
+      exact mem n
+  | zero => exact zero
+  | add x y _ _ hx hy => exact add x y hx hy
+  | neg x _ hx => exact neg x hx
 
 end Span
 
@@ -140,24 +195,18 @@ variable [Ring R] [BinomialRing R]
 
 /-- The integral span of the generalized binomial coefficients is closed under multiplication.
 
-This is the algebraic content of `choose_mul_choose`: its natural-number coefficients act by
+This is the algebraic content of `ringChoose_mul_ringChoose`: its natural-number coefficients act by
 repeated addition, so every product of spanning generators remains in the same additive span. -/
 theorem mul_mem_ringChooseSpan (r : R) {x y : R} (hx : x ∈ ringChooseSpan r)
     (hy : y ∈ ringChooseSpan r) : x * y ∈ ringChooseSpan r := by
-  rw [ringChooseSpan] at hx hy ⊢
-  induction hx, hy using AddSubgroup.closure_induction₂ with
-  | mem x y hx hy =>
-      obtain ⟨m, rfl⟩ := hx
-      obtain ⟨n, rfl⟩ := hy
-      rw [choose_mul_choose]
-      exact sum_mem fun ij _ =>
-        AddSubgroup.nsmul_mem _ (ringChoose_mem_ringChooseSpan r (m + ij.1)) _
-  | zero_left => simp
-  | zero_right => simp
-  | add_left _ _ _ _ _ _ hx hy => simpa [add_mul] using AddSubgroup.add_mem _ hx hy
-  | add_right _ _ _ _ _ _ hx hy => simpa [mul_add] using AddSubgroup.add_mem _ hx hy
-  | neg_left _ _ _ _ hx => simpa [neg_mul] using AddSubgroup.neg_mem _ hx
-  | neg_right _ _ _ _ hx => simpa [mul_neg] using AddSubgroup.neg_mem _ hx
+  rw [ringChooseSpan_eq_closure] at hx hy ⊢
+  refine AddSubgroup.mul_mem_closure ?_ hx hy
+  rintro _ ⟨m, rfl⟩ _ ⟨n, rfl⟩
+  rw [ringChoose_mul_ringChoose]
+  exact sum_mem fun ij _ => AddSubgroup.nsmul_mem _
+    (show Ring.choose r (m + ij.1) ∈
+      AddSubgroup.closure (Set.range (Ring.choose r)) from
+        AddSubgroup.subset_closure ⟨m + ij.1, rfl⟩) _
 
 /-- The subring generated by the generalized binomial coefficients in one element `r` is, as an
 additive subgroup, exactly their integral span: no products or powers of these coefficients
@@ -165,18 +214,13 @@ escape the span they already generate additively. -/
 @[simp]
 theorem toAddSubgroup_subringClosure_range_ringChoose (r : R) :
     (Subring.closure (Set.range (Ring.choose r))).toAddSubgroup = ringChooseSpan r := by
-  refine le_antisymm (fun x hx => ?_) (ringChooseSpan_le_iff.2 fun n => ?_)
-  · rw [Subring.mem_toAddSubgroup] at hx
-    induction hx using Subring.closure_induction with
-    | mem x hx =>
-        obtain ⟨n, rfl⟩ := hx
-        exact ringChoose_mem_ringChooseSpan r n
-    | zero => exact zero_mem _
-    | one => exact one_mem_ringChooseSpan r
-    | add _ _ _ _ hx hy => exact add_mem hx hy
-    | neg _ _ hx => exact neg_mem hx
-    | mul _ _ _ _ hx hy => exact mul_mem_ringChooseSpan r hx hy
-  · exact Subring.mem_toAddSubgroup.2 (Subring.subset_closure ⟨n, rfl⟩)
+  rw [ringChooseSpan_eq_closure]
+  apply Subring.toAddSubgroup_closure
+  · rw [← ringChooseSpan_eq_closure]
+    exact one_mem_ringChooseSpan r
+  · intro x hx y hy
+    rw [← ringChooseSpan_eq_closure] at hx hy ⊢
+    exact mul_mem_ringChooseSpan r hx hy
 
 /-- Membership in the subring generated by the generalized binomial coefficients in `r` is
 membership in their integral additive span. -/
