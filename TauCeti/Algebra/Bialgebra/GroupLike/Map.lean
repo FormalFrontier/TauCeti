@@ -1,0 +1,84 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.RingTheory.Bialgebra.Equiv
+public import Mathlib.RingTheory.HopfAlgebra.GroupLike
+
+/-!
+# Functoriality of group-like elements
+
+A bialgebra morphism sends group-like elements to group-like elements and respects their
+multiplication. This file bundles that operation as a monoid homomorphism and records that a
+bialgebra equivalence induces a multiplicative equivalence of group-like elements.
+
+## Main declarations
+
+* `TauCeti.GroupLike.map`: the homomorphism on group-like elements induced by a bialgebra map.
+* `TauCeti.GroupLike.mapEquiv`: the equivalence induced by a bialgebra equivalence.
+-/
+
+public section
+
+namespace TauCeti
+
+universe u v w
+
+namespace GroupLike
+
+variable {R : Type u} {A : Type v} {B : Type w}
+variable [CommSemiring R] [Semiring A] [Semiring B]
+variable [Bialgebra R A] [Bialgebra R B]
+
+/-- A bialgebra morphism induces a monoid homomorphism on group-like elements. -/
+def map (f : A →ₐc[R] B) : _root_.GroupLike R A →* _root_.GroupLike R B where
+  toFun x := ⟨f x.val, x.isGroupLikeElem_val.map f⟩
+  map_one' := _root_.GroupLike.val_injective (map_one f)
+  map_mul' x y := _root_.GroupLike.val_injective (map_mul f x.val y.val)
+
+/-- The underlying value of the image of a group-like element is its image under the bialgebra
+morphism. -/
+@[simp]
+theorem map_apply_val (f : A →ₐc[R] B) (x : _root_.GroupLike R A) :
+    (map f x).val = f x.val :=
+  (rfl)
+
+/-- Mapping group-like elements respects identity bialgebra morphisms. -/
+@[simp]
+theorem map_id : map (_root_.BialgHom.id R A) = MonoidHom.id (_root_.GroupLike R A) := by
+  ext x
+  rfl
+
+/-- Mapping group-like elements respects composition of bialgebra morphisms. -/
+theorem map_comp {C : Type*} [Semiring C] [Bialgebra R C]
+    (g : B →ₐc[R] C) (f : A →ₐc[R] B) :
+    map (g.comp f) = (map g).comp (map f) := by
+  ext x
+  rfl
+
+/-- A bialgebra equivalence induces a multiplicative equivalence of group-like elements. -/
+def mapEquiv (e : A ≃ₐc[R] B) :
+    _root_.GroupLike R A ≃* _root_.GroupLike R B where
+  toFun := map e.toBialgHom
+  invFun := map e.symm.toBialgHom
+  left_inv x := _root_.GroupLike.val_injective (e.symm_apply_apply x.val)
+  right_inv x := _root_.GroupLike.val_injective (e.apply_symm_apply x.val)
+  map_mul' := (map e.toBialgHom).map_mul
+
+/-- The underlying value of `mapEquiv` is the original bialgebra equivalence. -/
+@[simp]
+theorem mapEquiv_apply_val (e : A ≃ₐc[R] B) (x : _root_.GroupLike R A) :
+    (mapEquiv e x).val = e x.val :=
+  (rfl)
+
+/-- The inverse of `mapEquiv` is induced by the inverse bialgebra equivalence. -/
+@[simp]
+theorem mapEquiv_symm_apply_val (e : A ≃ₐc[R] B) (x : _root_.GroupLike R B) :
+    ((mapEquiv e).symm x).val = e.symm x.val :=
+  (rfl)
+
+end GroupLike
+
+end TauCeti
