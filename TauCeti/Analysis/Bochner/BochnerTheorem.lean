@@ -54,7 +54,7 @@ functions. Uniqueness is `Measure.ext_of_forall_integral_fourierAtom_eq` from
 
 Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
-the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`,
+the positive-definiteness hypotheses are restated through `Matrix.PosSemidef`,
 and the representation is stated in the `fourierAtom` convention rather than through
 `MeasureTheory.charFun`.
 
@@ -97,7 +97,7 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 Lebesgue measure. The identity is Fourier inversion `𝓕 (𝓕⁻ F) = F`, using that `𝓕⁻ F` is real
 and nonnegative. Rudin, *Fourier Analysis on Groups*, §1.4; Folland, §4.2. -/
 theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (v : V) :
     ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
   have hft_int : Integrable (𝓕 F) :=
@@ -123,7 +123,7 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
 subtraction kernel and `G 0 = 1` is the Fourier-convention transform of a probability
 measure: Gaussian regularization, tightness via Lévy continuity, and Prokhorov compactness. -/
 private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ}
-    (hpd : IsPositiveDefiniteKernel fun a b : V => G (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => G (a - b))
     (hcont : Continuous G) (hG0 : G 0 = 1) :
     ∃ μ : Measure V, IsProbabilityMeasure μ ∧ ∀ v, ∫ q, fourierAtom v q ∂μ = G v := by
   -- the regularization parameters `ε n → 0⁺`
@@ -133,7 +133,7 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
   -- the explicit representing measures of the regularizations
   set ν : ℕ → Measure V := fun n =>
     volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ (gaussianRegularize G (ε n)) ξ).re
-  have hGn_pd : ∀ n, IsPositiveDefiniteKernel
+  have hGn_pd : ∀ n, Matrix.PosSemidef
       fun a b : V => gaussianRegularize G (ε n) (a - b) := fun n =>
     isPositiveDefiniteKernel_gaussianRegularize hpd (hε_pos n).le
   have hGn_int : ∀ n, Integrable (gaussianRegularize G (ε n)) := fun n =>
@@ -200,7 +200,7 @@ the Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a finit
 Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3. -/
 theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel
     (F : V → ℂ) (hcont : Continuous F)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) :
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) :
     ∃ μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
   have h0re : 0 ≤ (F 0).re := by
     simpa using map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
@@ -217,7 +217,7 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
     set c : ℝ := (F 0).re
     have hcne : (c : ℂ) ≠ 0 := by exact_mod_cast hpos.ne'
     set G : V → ℂ := fun v => (c : ℂ)⁻¹ * F v with hG_def
-    have hG_pd : IsPositiveDefiniteKernel fun a b : V => G (a - b) := by
+    have hG_pd : Matrix.PosSemidef fun a b : V => G (a - b) := by
       have h := isPositiveDefiniteKernel_smul_of_nonneg (K := fun a b : V => F (a - b))
         (c := ((c : ℂ))⁻¹)
         (inv_nonneg.mpr ((RCLike.ofReal_nonneg (K := ℂ)).mpr hpos.le)) hpd
@@ -240,7 +240,7 @@ continuous with a positive-definite subtraction kernel `(a, b) ↦ F (a - b)` if
 is the Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a unique finite Borel
 measure `μ`. Bochner (1932); Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3. -/
 theorem bochner (F : V → ℂ) :
-    (Continuous F ∧ IsPositiveDefiniteKernel fun a b : V => F (a - b)) ↔
+    (Continuous F ∧ Matrix.PosSemidef fun a b : V => F (a - b)) ↔
       ∃! μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
   constructor
   · rintro ⟨hcont, hpd⟩
@@ -278,7 +278,7 @@ theorem bochner_of_forall_star_eq_neg [StarAddMonoid V] (hstar : ∀ x : V, star
 function on `EuclideanSpace ℝ (Fin d)` is continuous with positive-definite subtraction kernel
 if and only if it is the Fourier transform of a unique finite positive measure. -/
 theorem bochner_euclideanSpace (d : ℕ) (F : EuclideanSpace ℝ (Fin d) → ℂ) :
-    (Continuous F ∧ IsPositiveDefiniteKernel fun a b => F (a - b)) ↔
+    (Continuous F ∧ Matrix.PosSemidef fun a b => F (a - b)) ↔
       ∃! μ : Measure (EuclideanSpace ℝ (Fin d)), IsFiniteMeasure μ ∧
         ∀ v, F v = ∫ q, fourierAtom v q ∂μ :=
   bochner F

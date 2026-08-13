@@ -14,9 +14,8 @@ kernel `K : M → M → ℂ` are two views of the same data, linked by the assig
 `K(a, b) = F(a + b⋆)`. This file records the forward and reverse correspondence, packages them
 as an iff, and records the translation-invariant group specialization.
 
-Both predicates express nonnegativity of finite quadratic forms, with
-`IsPositiveDefiniteKernel` using Mathlib's `Matrix.PosSemidef` convention for the two-variable
-kernel.
+Both sides express nonnegativity of finite quadratic forms; the two-variable kernel is viewed
+directly as a matrix and tested with Mathlib's `Matrix.PosSemidef` predicate.
 
 Under the negation involution `a⋆ = -a` the kernel takes the familiar translation-invariant shape
 `K(a, b) = F(a - b)`, the form in which positive definiteness is usually stated on groups such as
@@ -57,7 +56,7 @@ variable {M : Type*} [AddMonoid M] [StarAddMonoid M] {F : M → ℂ}
 /-- A function `F` on an involutive additive monoid is positive definite if and only if the
 two-variable kernel `K(a, b) = F(a + b⋆)` is positive definite. -/
 theorem isPositiveDefinite_iff_isPositiveDefiniteKernel :
-    IsPositiveDefinite F ↔ IsPositiveDefiniteKernel (fun a b => F (a + star b)) :=
+    IsPositiveDefinite F ↔ Matrix.PosSemidef (fun a b => F (a + star b)) :=
   ⟨IsPositiveDefinite.isPositiveDefiniteKernel, IsPositiveDefinite.of_isPositiveDefiniteKernel⟩
 
 namespace IsPositiveDefinite
@@ -68,7 +67,7 @@ variable {G : Type*} [SubNegMonoid G] [StarAddMonoid G] {F : G → ℂ}
 translation-invariant positive-definite kernel `K(a, b) = F(a - b)`. This is the form in which
 positive definiteness is usually stated on groups such as `ℝᵈ` or a real inner-product space. -/
 theorem isPositiveDefiniteKernel_sub (hstar : ∀ a : G, star a = -a) (hF : IsPositiveDefinite F) :
-    IsPositiveDefiniteKernel (fun a b => F (a - b)) := by
+    Matrix.PosSemidef (fun a b => F (a - b)) := by
   have hfun : (fun a b : G => F (a + star b)) = fun a b => F (a - b) := by
     funext a b
     rw [hstar, ← sub_eq_add_neg]
@@ -82,7 +81,7 @@ variable {G : Type*} [SubNegMonoid G] [StarAddMonoid G] {F : G → ℂ}
 /-- Under the negation involution `a⋆ = -a`, `F` is positive definite if and only if the
 translation-invariant kernel `K(a, b) = F(a - b)` is positive definite. -/
 theorem isPositiveDefinite_iff_isPositiveDefiniteKernel_sub (hstar : ∀ a : G, star a = -a) :
-    IsPositiveDefinite F ↔ IsPositiveDefiniteKernel (fun a b => F (a - b)) := by
+    IsPositiveDefinite F ↔ Matrix.PosSemidef (fun a b => F (a - b)) := by
   have hfun : (fun a b : G => F (a + star b)) = fun a b => F (a - b) := by
     funext a b
     rw [hstar, ← sub_eq_add_neg]

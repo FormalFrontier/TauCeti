@@ -15,14 +15,14 @@ For a kernel `K : α → α → 𝕜` and finitely supported coefficient vectors
 
 `∑ a ∈ x.support, ∑ b ∈ y.support, conj (x a) * y b * K a b`.
 
-The diagonal nonnegativity of this form is exactly the `Matrix.PosSemidef` content in
-`TauCeti.IsPositiveDefiniteKernel`, but a named finitely supported form is the object needed by
-the later GNS/Kolmogorov construction: its null space is quotiented, then completed.
+The diagonal nonnegativity of this form is exactly the quadratic-form content of
+`Matrix.PosSemidef`, but a named finitely supported form is the object needed by the later
+GNS/Kolmogorov construction: its null space is quotiented, then completed.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C ("Positive-definite
 functions and Bochner's theorem"), specifically the positive-definite-kernel / GNS-Kolmogorov API
-prerequisite. No Mathlib code is vendored; the proofs reuse Mathlib's positive-semidefinite matrix
-API through `TauCeti.IsPositiveDefiniteKernel`.
+prerequisite. No Mathlib code is vendored; kernels are passed directly to Mathlib's
+positive-semidefinite matrix API via `Matrix.of`.
 
 ## Main declarations
 
@@ -90,11 +90,10 @@ private theorem positiveDefiniteKernelFinsuppForm_eq_posSemidef_sum (x : α →�
 
 /-- The diagonal finitely supported Gram form of a positive-definite kernel is nonnegative. -/
 theorem positiveDefiniteKernelFinsuppForm_self_nonneg
-    (hK : IsPositiveDefiniteKernel K) (x : α →₀ 𝕜) :
+    (hK : Matrix.PosSemidef K) (x : α →₀ 𝕜) :
     0 ≤ positiveDefiniteKernelFinsuppForm K x x := by
-  have hK' := (isPositiveDefiniteKernel_def K).mp hK
   rw [positiveDefiniteKernelFinsuppForm_eq_posSemidef_sum]
-  exact hK'.2 x
+  exact hK.2 x
 
 /-- The finitely supported Gram form is additive in the left argument. -/
 theorem positiveDefiniteKernelFinsuppForm_add_left (x y z : α →₀ 𝕜) :
@@ -243,14 +242,14 @@ theorem positiveDefiniteKernelFinsuppForm_conj_symm_of_conj_symm
 /-- The finitely supported Gram form attached to a positive-definite kernel is conjugate
 symmetric. -/
 theorem positiveDefiniteKernelFinsuppForm_conj_symm
-    (hK : IsPositiveDefiniteKernel K) (x y : α →₀ 𝕜) :
+    (hK : Matrix.PosSemidef K) (x y : α →₀ 𝕜) :
     conj (positiveDefiniteKernelFinsuppForm K x y)
       = positiveDefiniteKernelFinsuppForm K y x :=
   positiveDefiniteKernelFinsuppForm_conj_symm_of_conj_symm
     (isPositiveDefiniteKernel_conj_symm hK) x y
 
 /-- Positive-definite kernels give positive-semidefinite finitely supported sesquilinear forms. -/
-theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : IsPositiveDefiniteKernel K) :
+theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : Matrix.PosSemidef K) :
     (positiveDefiniteKernelFinsuppSesqForm K).IsPosSemidef where
   isSymm := ⟨fun x y => positiveDefiniteKernelFinsuppForm_conj_symm hK x y⟩
   isNonneg := ⟨fun x => by
@@ -259,8 +258,8 @@ theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : IsPositiveDefin
 /-- The finitely supported Gram form of a positive-definite kernel is itself a positive-definite
 kernel on the finitely supported coefficient space. -/
 theorem positiveDefiniteKernelFinsuppForm_isPositiveDefiniteKernel
-    (hK : IsPositiveDefiniteKernel K) :
-    IsPositiveDefiniteKernel fun x y : α →₀ 𝕜 =>
+    (hK : Matrix.PosSemidef K) :
+    Matrix.PosSemidef fun x y : α →₀ 𝕜 =>
       positiveDefiniteKernelFinsuppForm K x y := by
   classical
   refine (isPositiveDefiniteKernel_iff.{u, max u v, 0} (𝕜 := 𝕜) (α := α →₀ 𝕜)).mpr

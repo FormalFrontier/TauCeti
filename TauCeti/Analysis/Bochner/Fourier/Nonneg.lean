@@ -48,7 +48,7 @@ against a shrinking family of Gaussians and using the Parseval/Fubini identity b
 Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source files `Bochner/FejerPD.lean`
 and `Bochner/Main.lean`; the arguments are ported with the positive-definiteness hypotheses
-restated through `IsPositiveDefiniteKernel`.
+restated through `Matrix.PosSemidef`.
 
 ## Main declarations
 
@@ -171,7 +171,7 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [Bo
 /-- The positive-definite double sum attached to a subtraction kernel has nonnegative real
 part. -/
 private theorem re_sum_nonneg_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) {ι : Type*} [Fintype ι]
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) {ι : Type*} [Fintype ι]
     (x : ι → V) (c : ι → ℂ) :
     0 ≤ (∑ i, ∑ j, conj (c i) * c j * ψ (x i - x j)).re := by
   have h := (isPositiveDefiniteKernel_iff.mp hpd).2 x c
@@ -187,7 +187,7 @@ integrals along `StronglyMeasurable.approx id` converge to `∬ ψ (x - y)`.
 Dominated convergence twice, with the uniform bound `‖ψ z‖ ≤ (ψ 0).re` supplied by positive
 definiteness. -/
 private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (hcont : Continuous ψ)
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) (hcont : Continuous ψ)
     (μ : Measure V) [IsFiniteMeasure μ] :
     ∃ s : ℕ → SimpleFunc V V,
       Tendsto (fun n => ∫ x, ∫ y, ψ (s n x - s n y) ∂μ ∂μ) atTop
@@ -233,7 +233,7 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [BorelSpace V] in
 real part.** For a positive-definite `fun a b => ψ (a - b)`, a finite measure `μ` and a simple
 function `sn`, the real part of `∬ ψ (sn x - sn y)` is nonnegative. -/
 private theorem re_double_integral_simpleFunc_nonneg (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b))
     (μ : Measure V) [IsFiniteMeasure μ] (sn : SimpleFunc V V) :
     0 ≤ (∫ x, ∫ y, ψ (sn x - sn y) ∂μ ∂μ).re := by
   classical
@@ -258,7 +258,7 @@ double sum with real coefficients, so has nonnegative real part
 (`exists_simpleFunc_tendsto_double_integral`), so nonnegativity passes to the limit.
 See Rudin, *Fourier Analysis on Groups*, proof of Theorem 1.4.3, step 1. -/
 private theorem pd_double_integral_re_nonneg (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b))
     (hcont : Continuous ψ) (S : Set V) (hSbdd : Bornology.IsBounded S) :
     0 ≤ (∫ x in S, ∫ y in S, ψ (x - y)).re := by
   let μ := (volume : Measure V).restrict S
@@ -536,7 +536,7 @@ private theorem tendsto_integral_overlapRatio_mul (ψ : V → ℂ) (hint : Integ
 nonnegative real part: the Fejér-averaged double integral `J_R` converges to `∫ ψ` and has
 nonnegative real part for each radius `R`. -/
 private theorem pd_integral_re_nonneg (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b))
     (hint : Integrable ψ) (hcont : Continuous ψ) :
     0 ≤ (∫ x, ψ x).re := by
   -- Define `J n = vol(B_n)⁻¹ • ∬_{B_n × B_n} ψ (x - y)`.
@@ -574,13 +574,13 @@ finite-dimensional real inner-product space has nonnegative real part.
 Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3; Folland, *A Course in Abstract Harmonic
 Analysis*, §4.2, Lemma 4.8. -/
 theorem fourier_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (ξ : V) :
     0 ≤ (𝓕 F ξ).re := by
   -- Step 1: `𝓕 F ξ = ∫ v, fourierAtom ξ v * F v`.
   rw [fourier_eq_integral_fourierAtom_mul F ξ]
   -- Step 2: the twisted function is positive definite (Schur product with the Fourier atom).
-  have hψ_pd : IsPositiveDefiniteKernel
+  have hψ_pd : Matrix.PosSemidef
       fun a b : V => (fun v => fourierAtom ξ v * F v) (a - b) :=
     isPositiveDefiniteKernel_mul (isPositiveDefiniteKernel_fourierAtom ξ) hpd
   -- Step 3: the twisted function is continuous and integrable.
@@ -641,13 +641,13 @@ theorem fourier_eq_re_of_map_neg_eq_conj (F : V → ℂ)
 /-- The positive-definite specialization of `fourier_im_eq_zero_of_map_neg_eq_conj`: a function
 with positive-definite subtraction kernel is conjugate-symmetric. -/
 theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     (𝓕 F ξ).im = 0 :=
   fourier_im_eq_zero_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
 
 /-- The positive-definite specialization of `fourier_eq_re_of_map_neg_eq_conj`. -/
 theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) :=
   fourier_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
 
@@ -689,7 +689,7 @@ private theorem integral_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) 
 nonnegative because the Gaussian has a positive-definite subtraction kernel. -/
 private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) :
     ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖ = 1 := by
-  have hg_pd : IsPositiveDefiniteKernel
+  have hg_pd : Matrix.PosSemidef
       fun a b : V => Complex.exp (-(t * ‖a - b‖ ^ 2 : ℝ)) :=
     isPositiveDefiniteKernel_cexp_neg_mul_sq_norm ht.le
   have hg_int : Integrable fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
@@ -714,7 +714,7 @@ private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 
 of `𝓕 F` is at most `(F 0).re`, by the Parseval/Fubini identity and the `L¹` bound on the
 Fourier transform of the Gaussian. -/
 private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
     (∫ ξ, 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re ≤ (F 0).re := by
   have hgt_int : Integrable fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
@@ -755,7 +755,7 @@ private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
 damping parameter: the damped transform is real and nonnegative, so its `L¹` norm equals the
 Gaussian-tested integral bounded by `re_integral_fourierIntegral_mul_gaussian_le`. -/
 private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
     ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ₑ ≤ ENNReal.ofReal (F 0).re := by
   have hbound : ∀ ξ : V, ‖𝓕 F ξ‖ ≤ ∫ x, ‖F x‖ := fun ξ =>
@@ -787,7 +787,7 @@ Testing `𝓕 F` against the Gaussians `exp (-‖·‖²/(n+1))` gives integrals
 `(F 0).re`, and Fatou's lemma passes the bound to `∫⁻ ‖𝓕 F‖ₑ`. Folland, *A Course in Abstract
 Harmonic Analysis*, §4.2. -/
 theorem integrable_fourier_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕 F) := by
   have hft_cont : Continuous (𝓕 F) := continuous_fourier_of_integrable hint
@@ -830,7 +830,7 @@ Bochner's theorem, so nonnegativity, realness and integrability are recorded for
 /-- The inverse Fourier transform of a continuous integrable positive-definite function has
 nonnegative real part. -/
 theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (ξ : V) :
     0 ≤ (𝓕⁻ F ξ).re := by
   rw [Real.fourierInv_eq_fourier_neg]
@@ -848,14 +848,14 @@ theorem fourierInv_eq_re_of_map_neg_eq_conj (F : V → ℂ)
 
 /-- The positive-definite specialization of `fourierInv_eq_re_of_map_neg_eq_conj`. -/
 theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) :=
   fourierInv_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
 
 /-- The inverse Fourier transform of a continuous integrable positive-definite function is
 integrable. -/
 theorem integrable_fourierInv_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕⁻ F) := by
   rw [funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]

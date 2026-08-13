@@ -24,7 +24,7 @@ positive-definite function by an integrable one to which Fourier inversion appli
 
 Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
-the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`.
+the positive-definiteness hypotheses are restated through `Matrix.PosSemidef`.
 
 ## Main declarations
 
@@ -45,7 +45,7 @@ the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDef
 public section
 
 open Filter MeasureTheory
-open scoped Topology
+open scoped ComplexOrder Topology
 
 namespace TauCeti
 
@@ -98,8 +98,8 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 has a positive-definite subtraction kernel: it is the Schur product of the original kernel with
 the Gaussian kernel `(a, b) ↦ exp (-ε‖a - b‖²)`. -/
 theorem isPositiveDefiniteKernel_gaussianRegularize {φ : V → ℂ}
-    (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b)) {ε : ℝ} (hε : 0 ≤ ε) :
-    IsPositiveDefiniteKernel fun a b : V => gaussianRegularize φ ε (a - b) :=
+    (hpd : (Matrix.of fun a b : V => φ (a - b)).PosSemidef) {ε : ℝ} (hε : 0 ≤ ε) :
+    (Matrix.of fun a b : V => gaussianRegularize φ ε (a - b)).PosSemidef :=
   isPositiveDefiniteKernel_mul hpd (isPositiveDefiniteKernel_cexp_neg_mul_sq_norm hε)
 
 end PositiveDefinite

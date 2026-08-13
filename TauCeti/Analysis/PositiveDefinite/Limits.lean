@@ -56,10 +56,10 @@ variable {𝕜 : Type*} [RCLike 𝕜] {α : Type*}
 hypothesis on positive-definiteness is eventual, so this applies equally to nets that are
 eventually positive definite. -/
 theorem isPositiveDefiniteKernel_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
-    {K : ι → α → α → 𝕜} {L : α → α → 𝕜} (hK : ∀ᶠ i in l, IsPositiveDefiniteKernel (K i))
+    {K : ι → α → α → 𝕜} {L : α → α → 𝕜} (hK : ∀ᶠ i in l, Matrix.PosSemidef (K i))
     (hlim : ∀ a b : α, Tendsto (fun i => K i a b) l (𝓝 (L a b))) :
-    IsPositiveDefiniteKernel L := by
-  rw [isPositiveDefiniteKernel_def]
+    Matrix.PosSemidef L := by
+  change (Matrix.of L).PosSemidef
   refine ⟨?_, ?_⟩
   · ext a b
     rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply, ← starRingEnd_apply]
@@ -82,7 +82,7 @@ theorem isPositiveDefiniteKernel_of_tendsto {ι : Type*} {l : Filter ι} [NeBot 
         x.support.sum fun b => star (x a) * L a b * x b := by
       refine ge_of_tendsto hquad ?_
       filter_upwards [hK] with i hi
-      simpa [Finsupp.sum] using ((isPositiveDefiniteKernel_def (K i)).mp hi).2 x
+      simpa [Finsupp.sum] using hi.2 x
     simpa [Finsupp.sum] using hnonneg
 
 namespace IsPositiveDefinite

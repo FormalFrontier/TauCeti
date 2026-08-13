@@ -61,7 +61,7 @@ namespace IsSemigroupGroupPD
 /-- The zero-spatial time-axis kernel of a semigroup-group positive-definite function is positive
 definite: `(t, u) ↦ F (t + u, 0)`. -/
 theorem timeAxis_isPositiveDefiniteKernel (hF : IsSemigroupGroupPD F) :
-    IsPositiveDefiniteKernel fun t u : ℝ≥0 => F (t + u, 0) := by
+    Matrix.PosSemidef fun t u : ℝ≥0 => F (t + u, 0) := by
   have hK := isPositiveDefiniteKernel_comp hF.isPositiveDefiniteKernel
     (fun t : ℝ≥0 => (t, (0 : V)))
   simpa using hK
@@ -102,7 +102,7 @@ variable [TopologicalSpace V] {F : ℝ≥0 × V → ℂ}
 one-variable time-axis slice. -/
 theorem IsSemigroupGroupPD.timeAxis_isPositiveDefiniteKernel_and_continuous
     (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F) :
-    IsPositiveDefiniteKernel (fun t u : ℝ≥0 => F (t + u, 0)) ∧
+    Matrix.PosSemidef (fun t u : ℝ≥0 => F (t + u, 0)) ∧
       Continuous (fun t : ℝ≥0 => F (t, 0)) :=
   ⟨hFpd.timeAxis_isPositiveDefiniteKernel, hFcont.comp (.prodMk_left 0)⟩
 

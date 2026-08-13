@@ -161,7 +161,7 @@ def IsSemigroupGroupPD (F : ℝ≥0 × V → ℂ) : Prop :=
 kernel. -/
 theorem isSemigroupGroupPD_iff_isPositiveDefiniteKernel :
     IsSemigroupGroupPD F ↔
-      IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
+      Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
   constructor
   · intro hF
     have hK := IsPositiveDefinite.isPositiveDefiniteKernel hF
@@ -174,13 +174,13 @@ theorem isSemigroupGroupPD_iff_isPositiveDefiniteKernel :
 
 /-- The kernel associated to a semigroup-group positive-definite function is positive definite. -/
 theorem IsSemigroupGroupPD.isPositiveDefiniteKernel (hF : IsSemigroupGroupPD F) :
-    IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) :=
+    Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) :=
   isSemigroupGroupPD_iff_isPositiveDefiniteKernel.mp hF
 
 /-- Build a semigroup-group positive-definite function from the associated positive-definite
 kernel. -/
 theorem IsSemigroupGroupPD.of_isPositiveDefiniteKernel
-    (hF : IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2)) :
+    (hF : Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2)) :
     IsSemigroupGroupPD F :=
   isSemigroupGroupPD_iff_isPositiveDefiniteKernel.mpr hF
 

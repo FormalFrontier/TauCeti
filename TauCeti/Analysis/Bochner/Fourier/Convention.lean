@@ -117,15 +117,20 @@ measure is positive definite. This is the kernel form of
 `fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg`, avoiding any explicit choice of
 involution on the domain. -/
 theorem fourierConventionCharFun_isPositiveDefiniteKernel :
-    IsPositiveDefiniteKernel fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
+    Matrix.PosSemidef fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
+  change (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν).PosSemidef
   have hscaled := isPositiveDefiniteKernel_comp
     (charFun_isPositiveDefiniteKernel (μ := ν))
     (fun a : W => (-2 * Real.pi) • a)
-  convert hscaled using 1
-  ext a b
-  rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
-  congr 1
-  simp [smul_sub]
+  rw [show Matrix.of (fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν) =
+      Matrix.of (fun a b : W => MeasureTheory.charFun ν
+        ((-2 * Real.pi) • a - (-2 * Real.pi) • b)) by
+    ext a b
+    simp only [Matrix.of_apply]
+    rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
+    congr 1
+    simp [smul_sub]]
+  exact hscaled
 
 section Topology
 

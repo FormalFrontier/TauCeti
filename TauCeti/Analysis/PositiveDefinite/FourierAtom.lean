@@ -78,7 +78,7 @@ theorem fourierAtom_sub (q v w : V) :
 
 /-- The spatial subtraction kernel supplied by a Fourier atom is positive definite. -/
 theorem isPositiveDefiniteKernel_fourierAtom (q : V) :
-    IsPositiveDefiniteKernel fun v w : V => fourierAtom q (v - w) := by
+    Matrix.PosSemidef fun v w : V => fourierAtom q (v - w) := by
   simp_rw [fourierAtom_sub]
   exact isPositiveDefiniteKernel_conj_mul
     (fun v : V => Complex.exp (2 * ((Real.pi : ℝ) : ℂ) * Complex.I * ((inner ℝ v q : ℝ) : ℂ)))

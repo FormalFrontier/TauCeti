@@ -119,7 +119,7 @@ the rescaling `√(2c) • ·`. The general case, `isPositiveDefiniteKernel_cexp
 reduces to this one on the span of a finite family of points. -/
 private theorem isPositiveDefiniteKernel_cexp_neg_mul_sq_norm_of_finiteDimensional {c : ℝ}
     (hc : 0 ≤ c) :
-    IsPositiveDefiniteKernel fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
+    Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
   have hscaled := isPositiveDefiniteKernel_comp
     (charFun_isPositiveDefiniteKernel (μ := stdGaussian V))
     (fun a : V => Real.sqrt (2 * c) • a)
@@ -149,7 +149,7 @@ finite-dimensional subspace on which the kernel restricts to the Gaussian kernel
 subspace; so the statement follows from the finite-dimensional case, where the Gaussian is the
 characteristic function of the standard Gaussian measure. -/
 theorem isPositiveDefiniteKernel_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
-    IsPositiveDefiniteKernel fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
+    Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
   refine isPositiveDefiniteKernel_iff.mpr ⟨fun a b => ?_, fun {ι : Type} _ v x => ?_⟩
   · rw [← Complex.exp_conj, map_neg, Complex.conj_ofReal, norm_sub_rev]
   · -- Restrict to the span of the finite family, a finite-dimensional inner-product space.
@@ -184,7 +184,7 @@ theorem isPositiveDefinite_cexp_neg_sq_norm [StarAddMonoid V] (hstar : ∀ x : V
 `(a, b) ↦ exp (-‖a - b‖²)` is a positive-definite kernel. Unlike
 `isPositiveDefinite_cexp_neg_sq_norm`, this requires no choice of involution on `V`. -/
 theorem isPositiveDefiniteKernel_cexp_neg_sq_norm :
-    IsPositiveDefiniteKernel fun a b : V => Complex.exp (-(‖a - b‖ ^ 2 : ℝ)) := by
+    Matrix.PosSemidef fun a b : V => Complex.exp (-(‖a - b‖ ^ 2 : ℝ)) := by
   simpa only [one_mul] using
     isPositiveDefiniteKernel_cexp_neg_mul_sq_norm (V := V) (c := 1) zero_le_one
 

@@ -48,10 +48,10 @@ variable {E : Type*} [SeminormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- The translation-invariant characteristic-function kernel
 `(a, b) ↦ charFun μ (a - b)` is positive definite. This repackages the existing Gram-matrix
-statement `charFun_posSemidef` as a `TauCeti.IsPositiveDefiniteKernel`. -/
+statement `charFun_posSemidef` as a `Matrix.PosSemidef`. -/
 theorem charFun_isPositiveDefiniteKernel :
-    IsPositiveDefiniteKernel (fun a b : E => MeasureTheory.charFun μ (a - b)) := by
-  rw [isPositiveDefiniteKernel_def]
+    Matrix.PosSemidef (fun a b : E => MeasureTheory.charFun μ (a - b)) := by
+  change (Matrix.of fun a b : E => MeasureTheory.charFun μ (a - b)).PosSemidef
   simpa using charFun_posSemidef (μ := μ) (fun x : E => x)
 
 /-- With an explicit `star = -` involution, the kernel associated to `charFun μ` by the generic
@@ -60,7 +60,7 @@ definite. Under `hstar` this kernel coincides with the translation-invariant ker
 `charFun_isPositiveDefiniteKernel`. -/
 theorem charFun_star_kernel_isPositiveDefiniteKernel_of_star_eq_neg [StarAddMonoid E]
     (hstar : ∀ x : E, star x = -x) :
-    IsPositiveDefiniteKernel (fun a b : E => MeasureTheory.charFun μ (a + star b)) := by
+    Matrix.PosSemidef (fun a b : E => MeasureTheory.charFun μ (a + star b)) := by
   have h : (fun a b : E => MeasureTheory.charFun μ (a + star b))
       = fun a b : E => MeasureTheory.charFun μ (a - b) := by
     simp only [hstar, sub_eq_add_neg]

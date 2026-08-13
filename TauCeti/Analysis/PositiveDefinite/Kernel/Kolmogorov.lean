@@ -31,14 +31,14 @@ scalar-kernel bridge and its characteristic API.
 ## Main declarations
 
 * `TauCeti.positiveDefiniteKernelOperator`: regard a scalar kernel as an operator-valued kernel.
-* `TauCeti.IsPositiveDefiniteKernel.posSemidef_positiveDefiniteKernelOperator`: positivity of that
+* `Matrix.PosSemidef.posSemidef_positiveDefiniteKernelOperator`: positivity of that
   operator kernel.
-* `TauCeti.IsPositiveDefiniteKernel.KolmogorovSpace`: the canonical Hilbert space.
-* `TauCeti.IsPositiveDefiniteKernel.kolmogorovFeature`: its canonical feature map.
-* `TauCeti.IsPositiveDefiniteKernel.inner_kolmogorovFeature`: the Kolmogorov identity.
-* `TauCeti.IsPositiveDefiniteKernel.kolmogorovFeature_dense`: minimality of the decomposition.
-* `TauCeti.IsPositiveDefiniteKernel.kolmogorovIsometry`: the universal comparison isometry.
-* `TauCeti.IsPositiveDefiniteKernel.kolmogorovEquiv`: equivalence with any other minimal
+* `Matrix.PosSemidef.KolmogorovSpace`: the canonical Hilbert space.
+* `Matrix.PosSemidef.kolmogorovFeature`: its canonical feature map.
+* `Matrix.PosSemidef.inner_kolmogorovFeature`: the Kolmogorov identity.
+* `Matrix.PosSemidef.kolmogorovFeature_dense`: minimality of the decomposition.
+* `Matrix.PosSemidef.kolmogorovIsometry`: the universal comparison isometry.
+* `Matrix.PosSemidef.kolmogorovEquiv`: equivalence with any other minimal
   realization.
 
 ## References
@@ -70,13 +70,19 @@ theorem positiveDefiniteKernelOperator_apply (K : α → α → 𝕜) (a b : α)
     positiveDefiniteKernelOperator K a b z = K a b * z := by
   rfl
 
-namespace IsPositiveDefiniteKernel
+end TauCeti
 
+namespace Matrix.PosSemidef
+
+open TauCeti
+
+variable {𝕜 : Type u} [RCLike 𝕜]
+variable {α : Type v}
 variable {K : α → α → 𝕜}
 
 /-- The operator-valued kernel obtained from a scalar positive-definite kernel is positive
 semidefinite.  This is the bridge needed by Mathlib's `RKHS.OfKernel` construction. -/
-theorem posSemidef_positiveDefiniteKernelOperator (hK : IsPositiveDefiniteKernel K) :
+theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     (positiveDefiniteKernelOperator K).PosSemidef := by
   apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
   refine ⟨?_, ?_⟩
@@ -91,7 +97,7 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : IsPositiveDefiniteKernel
       isPositiveDefiniteKernel_conj_symm hK]
     ring
   · intro f
-    have hnonneg := ((isPositiveDefiniteKernel_def K).mp hK).2 f
+    have hnonneg := hK.2 f
     have hre := (RCLike.nonneg_iff.mp hnonneg).1
     have hinner (a b : α) (x y : 𝕜) :
         ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜 = star x * K a b * y := by
@@ -110,14 +116,14 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : IsPositiveDefiniteKernel
 
 This is an abbreviation because Mathlib's `RKHS.OfKernel` currently has to be an abbreviation in
 order for its normed-group and inner-product instances to reduce. -/
-noncomputable abbrev KolmogorovSpace (hK : IsPositiveDefiniteKernel K) :=
+noncomputable abbrev KolmogorovSpace (hK : Matrix.PosSemidef K) :=
   letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   RKHS.OfKernel (positiveDefiniteKernelOperator K)
 
 /-- The canonical feature map into the Kolmogorov space.  It sends `a` to the reproducing-kernel
 vector at `a`, evaluated on the scalar `1`. -/
-noncomputable def kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a : α) :
+noncomputable def kolmogorovFeature (hK : Matrix.PosSemidef K) (a : α) :
     hK.KolmogorovSpace := by
   letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
@@ -126,7 +132,7 @@ noncomputable def kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a : α) :
 /-- **Kolmogorov identity.** Inner products of the canonical feature vectors recover the
 original kernel. -/
 @[simp]
-theorem inner_kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a b : α) :
+theorem inner_kolmogorovFeature (hK : Matrix.PosSemidef K) (a b : α) :
     ⟪hK.kolmogorovFeature a, hK.kolmogorovFeature b⟫_𝕜 = K a b := by
   let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
@@ -138,14 +144,14 @@ theorem inner_kolmogorovFeature (hK : IsPositiveDefiniteKernel K) (a b : α) :
 /-- The squared norm of a canonical feature vector is the real part of the corresponding
 diagonal kernel value. -/
 @[simp]
-theorem norm_kolmogorovFeature_sq (hK : IsPositiveDefiniteKernel K) (a : α) :
+theorem norm_kolmogorovFeature_sq (hK : Matrix.PosSemidef K) (a : α) :
     ‖hK.kolmogorovFeature a‖ ^ 2 = RCLike.re (K a a) := by
   rw [← inner_self_eq_norm_sq (𝕜 := 𝕜), hK.inner_kolmogorovFeature]
 
 /-- The squared distance between two canonical feature vectors, expressed entirely in terms of
 the original kernel. -/
 @[simp]
-theorem norm_kolmogorovFeature_sub_sq (hK : IsPositiveDefiniteKernel K) (a b : α) :
+theorem norm_kolmogorovFeature_sub_sq (hK : Matrix.PosSemidef K) (a b : α) :
     ‖hK.kolmogorovFeature a - hK.kolmogorovFeature b‖ ^ 2 =
       RCLike.re (K a a) - 2 * RCLike.re (K a b) + RCLike.re (K b b) := by
   rw [norm_sub_sq (𝕜 := 𝕜), hK.norm_kolmogorovFeature_sq, hK.norm_kolmogorovFeature_sq,
@@ -153,7 +159,7 @@ theorem norm_kolmogorovFeature_sub_sq (hK : IsPositiveDefiniteKernel K) (a b : �
 
 /-- The canonical feature vectors have dense linear span in the Kolmogorov space.  Thus the
 construction is minimal: it contains no orthogonal summand invisible to the kernel. -/
-theorem kolmogorovFeature_dense (hK : IsPositiveDefiniteKernel K) :
+theorem kolmogorovFeature_dense (hK : Matrix.PosSemidef K) :
     (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature)).topologicalClosure = ⊤ := by
   let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
@@ -179,7 +185,7 @@ theorem kolmogorovFeature_dense (hK : IsPositiveDefiniteKernel K) :
   rw [hspan] at hdense
   exact hdense
 
-private theorem denseRange_featureCombination (hK : IsPositiveDefiniteKernel K) :
+private theorem denseRange_featureCombination (hK : Matrix.PosSemidef K) :
     DenseRange (Finsupp.linearCombination 𝕜 hK.kolmogorovFeature) := by
   have hdense : Dense ((Finsupp.linearCombination 𝕜 hK.kolmogorovFeature).range :
       Set hK.KolmogorovSpace) := by
@@ -189,7 +195,7 @@ private theorem denseRange_featureCombination (hK : IsPositiveDefiniteKernel K) 
   exact hdense
 
 private theorem norm_featureCombination_eq {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b) (f : α →₀ 𝕜) :
     ‖Finsupp.linearCombination 𝕜 φ f‖ =
       ‖Finsupp.linearCombination 𝕜 hK.kolmogorovFeature f‖ := by
@@ -203,7 +209,7 @@ private theorem norm_featureCombination_eq {E : Type w} [NormedAddCommGroup E]
 realization of `K`.  It sends each canonical feature vector to the corresponding vector in the
 given realization. -/
 noncomputable def kolmogorovIsometry {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b) : hK.KolmogorovSpace →ₗᵢ[𝕜] E := by
   let canonical := Finsupp.linearCombination 𝕜 hK.kolmogorovFeature
   let target := Finsupp.linearCombination 𝕜 φ
@@ -224,7 +230,7 @@ noncomputable def kolmogorovIsometry {E : Type w} [NormedAddCommGroup E]
 given realization. -/
 @[simp]
 theorem kolmogorovIsometry_apply {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b) (a : α) :
     hK.kolmogorovIsometry φ hφ (hK.kolmogorovFeature a) = φ a := by
   rw [kolmogorovIsometry]
@@ -239,7 +245,7 @@ theorem kolmogorovIsometry_apply {E : Type w} [NormedAddCommGroup E]
 /-- A linear isometry out of the canonical Kolmogorov space is uniquely determined by its values
 on the canonical feature vectors. -/
 theorem kolmogorovIsometry_unique {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b) (T : hK.KolmogorovSpace →ₗᵢ[𝕜] E)
     (hT : ∀ a, T (hK.kolmogorovFeature a) = φ a) : T = hK.kolmogorovIsometry φ hφ := by
   have hdense : Dense (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature) :
@@ -252,7 +258,7 @@ theorem kolmogorovIsometry_unique {E : Type w} [NormedAddCommGroup E]
 /-- If the vectors in a realization of `K` have dense linear span, the universal comparison
 isometry is surjective. -/
 theorem kolmogorovIsometry_surjective {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b)
     (hφdense : (Submodule.span 𝕜 (Set.range φ)).topologicalClosure = ⊤) :
     Function.Surjective (hK.kolmogorovIsometry φ hφ) := by
@@ -268,7 +274,7 @@ theorem kolmogorovIsometry_surjective {E : Type w} [NormedAddCommGroup E]
 /-- The canonical Kolmogorov space is linearly isometric to every other minimal realization of
 the same kernel. -/
 noncomputable def kolmogorovEquiv {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b)
     (hφdense : (Submodule.span 𝕜 (Set.range φ)).topologicalClosure = ⊤) :
     hK.KolmogorovSpace ≃ₗᵢ[𝕜] E :=
@@ -279,15 +285,13 @@ noncomputable def kolmogorovEquiv {E : Type w} [NormedAddCommGroup E]
 vectors of that realization. -/
 @[simp]
 theorem kolmogorovEquiv_apply {E : Type w} [NormedAddCommGroup E]
-    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : IsPositiveDefiniteKernel K) (φ : α → E)
+    [InnerProductSpace 𝕜 E] [CompleteSpace E] (hK : Matrix.PosSemidef K) (φ : α → E)
     (hφ : ∀ a b, ⟪φ a, φ b⟫_𝕜 = K a b)
     (hφdense : (Submodule.span 𝕜 (Set.range φ)).topologicalClosure = ⊤) (a : α) :
     hK.kolmogorovEquiv φ hφ hφdense (hK.kolmogorovFeature a) = φ a := by
   rw [kolmogorovEquiv, LinearIsometryEquiv.coe_ofSurjective]
   exact hK.kolmogorovIsometry_apply φ hφ a
 
-end IsPositiveDefiniteKernel
-
-end TauCeti
+end Matrix.PosSemidef
 
 end

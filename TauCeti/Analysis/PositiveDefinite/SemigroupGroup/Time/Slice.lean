@@ -64,7 +64,7 @@ namespace IsSemigroupGroupPD
 /-- At every fixed time `t`, a semigroup-group positive-definite function gives the spatial
 positive-definite kernel `(v, w) ↦ F (t, v - w)`. -/
 theorem timeSlice_isPositiveDefiniteKernel (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
-    IsPositiveDefiniteKernel fun v w : V => F (t, v - w) := by
+    Matrix.PosSemidef fun v w : V => F (t, v - w) := by
   have hK := isPositiveDefiniteKernel_comp hF.isPositiveDefiniteKernel
     (fun v : V => (t / 2, v))
   simpa [add_halves] using hK
@@ -148,7 +148,7 @@ variable [TopologicalSpace V] {F : ℝ≥0 × V → ℂ}
 one-variable fixed-time slice. -/
 theorem IsSemigroupGroupPD.timeSlice_isPositiveDefiniteKernel_and_continuous
     (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F) (t : ℝ≥0) :
-    IsPositiveDefiniteKernel (fun v w : V => F (t, v - w)) ∧ Continuous (fun v : V => F (t, v)) :=
+    Matrix.PosSemidef (fun v w : V => F (t, v - w)) ∧ Continuous (fun v : V => F (t, v)) :=
   ⟨hFpd.timeSlice_isPositiveDefiniteKernel t, hFcont.comp (.prodMk_right t)⟩
 
 end Topology

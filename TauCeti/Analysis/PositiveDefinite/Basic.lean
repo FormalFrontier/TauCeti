@@ -183,7 +183,7 @@ theorem conj_symm (hF : IsPositiveDefinite F) (a b : M) :
 /-- A positive-definite function `F` induces the positive-definite kernel `K(a, b) = F(a + b⋆)`.
 This is the forward half of the function ↔ kernel correspondence. -/
 theorem isPositiveDefiniteKernel (hF : IsPositiveDefinite F) :
-    IsPositiveDefiniteKernel (fun a b => F (a + star b)) :=
+    Matrix.PosSemidef (fun a b => F (a + star b)) :=
   isPositiveDefiniteKernel_iff.mpr
     ⟨fun a b => hF.conj_symm b a, fun {_ι : Type} _ v x => by
       have h := hF.sum_nonneg (fun i => conj (x i)) v
@@ -194,7 +194,7 @@ theorem isPositiveDefiniteKernel (hF : IsPositiveDefinite F) :
 /-- If the kernel `K(a, b) = F(a + b⋆)` is positive definite, then so is the function `F`. This is
 the reverse half of the function ↔ kernel correspondence. -/
 theorem of_isPositiveDefiniteKernel
-    (hK : IsPositiveDefiniteKernel (fun a b => F (a + star b))) : IsPositiveDefinite F := by
+    (hK : Matrix.PosSemidef (fun a b => F (a + star b))) : IsPositiveDefinite F := by
   obtain ⟨_, hpos⟩ := isPositiveDefiniteKernel_iff.mp hK
   intro n c v
   have h := hpos v (fun i => conj (c i))

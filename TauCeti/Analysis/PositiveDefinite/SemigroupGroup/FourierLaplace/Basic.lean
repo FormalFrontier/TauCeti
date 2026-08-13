@@ -74,7 +74,7 @@ theorem laplaceAtom_add (p t u : ℝ≥0) :
 
 /-- The time kernel supplied by a Laplace atom is positive definite. -/
 theorem isPositiveDefiniteKernel_laplaceAtom (p : ℝ≥0) :
-    IsPositiveDefiniteKernel fun t u : ℝ≥0 => laplaceAtom p (t + u) := by
+    Matrix.PosSemidef fun t u : ℝ≥0 => laplaceAtom p (t + u) := by
   simp_rw [laplaceAtom_add]
   exact isPositiveDefiniteKernel_conj_mul (fun t : ℝ≥0 => laplaceAtom p t)
 
