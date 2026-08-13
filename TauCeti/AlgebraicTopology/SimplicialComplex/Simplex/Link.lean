@@ -45,7 +45,7 @@ variable {V σ : Finset ι}
 theorem closedStar_simplex (hσ : σ ⊆ V) : closedStar (simplex V) σ = simplex V := by
   apply SetLike.ext
   intro ρ
-  rw [mem_closedStar, mem_simplex, mem_simplex]
+  simp only [mem_closedStar, mem_simplex]
   constructor
   · exact And.left
   · exact fun h => ⟨h, h.1.mono subset_union_left, union_subset h.2 hσ⟩
@@ -56,7 +56,7 @@ not in `σ`. -/
 theorem link_simplex (hσ : σ ⊆ V) : link (simplex V) σ = simplex (V \ σ) := by
   apply SetLike.ext
   intro ρ
-  rw [mem_link, mem_simplex, mem_simplex, mem_simplex]
+  simp only [mem_link, mem_simplex]
   constructor
   · rintro ⟨⟨hρ, -⟩, hdis, -, hρσ⟩
     refine ⟨hρ, subset_sdiff.mpr ⟨subset_union_left.trans hρσ, ?_⟩⟩
@@ -83,7 +83,7 @@ theorem deletion_simplex_self : deletion (simplex V) V = simplexBoundary V := by
 `ρ` is nonempty and `ρ ∪ σ` is a proper subset of `V`. -/
 theorem mem_closedStar_simplexBoundary {ρ : Finset ι} :
     ρ ∈ closedStar (simplexBoundary V) σ ↔ ρ.Nonempty ∧ ρ ∪ σ ⊂ V := by
-  rw [mem_closedStar, mem_simplexBoundary, mem_simplexBoundary]
+  simp only [mem_closedStar, mem_simplexBoundary]
   constructor
   · exact fun h => ⟨h.1.1, h.2.2⟩
   · exact fun h => ⟨⟨h.1, subset_union_left.trans_ssubset h.2⟩,
@@ -96,7 +96,7 @@ theorem link_simplexBoundary (hσ : σ ⊆ V) :
     link (simplexBoundary V) σ = simplexBoundary (V \ σ) := by
   apply SetLike.ext
   intro ρ
-  rw [mem_link, mem_simplexBoundary, mem_simplexBoundary, mem_simplexBoundary]
+  simp only [mem_link, mem_simplexBoundary]
   constructor
   · rintro ⟨⟨hρ, -⟩, hdis, -, hρσ⟩
     refine ⟨hρ, Finset.ssubset_iff_subset_ne.mpr ⟨subset_sdiff.mpr
