@@ -13,8 +13,9 @@ public import TauCeti.Analysis.Calculus.IteratedDerivWithin
 /-!
 # Completely monotone functions
 
-A function `f : ℝ → ℝ` is *completely monotone* if it is smooth on the closed half-line
-`[0, ∞)` and its iterated derivatives there alternate in sign:
+A function `f : ℝ → ℝ` is *completely monotone on a set* if it is smooth there and its iterated
+derivatives alternate in sign. The principal specialization in this development uses the closed
+half-line `[0, ∞)`:
 `(-1)ⁿ f⁽ⁿ⁾(t) ≥ 0` for every `n` and every `t ≥ 0`. Equivalently `f` is nonnegative,
 nonincreasing, convex, and so on through every order. Bernstein's theorem identifies the
 completely monotone functions on the *open* half-line `(0, ∞)` with the Laplace transforms of
@@ -34,6 +35,8 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
 
 ## Main declarations
 
+* `TauCeti.CompletelyMonotoneOn`: complete monotonicity on an arbitrary set, formulated through a
+  Taylor-series witness in parallel with Mathlib's `AbsolutelyMonotoneOn`.
 * `TauCeti.IsCompletelyMonotone`: the predicate that `f` is smooth and sign-alternating on
   `[0, ∞)`.
 * `TauCeti.IsCompletelyMonotone.congr`: complete monotonicity only depends on the values of the
@@ -70,6 +73,49 @@ open scoped ContDiff Topology
 
 namespace TauCeti
 
+/-- A function `f : ℝ → ℝ` is **completely monotone on a set `s`** if it admits a Taylor series on
+`s` whose `n`th coefficient has sign `(-1)ⁿ`. As in Mathlib's `AbsolutelyMonotoneOn`, the Taylor
+witness makes the definition meaningful even when `s` is not uniquely differentiable. Under
+`UniqueDiffOn ℝ s`, this is equivalent to the expected condition on `iteratedDerivWithin`. -/
+def CompletelyMonotoneOn (f : ℝ → ℝ) (s : Set ℝ) : Prop :=
+  ∃ p : ℝ → FormalMultilinearSeries ℝ ℝ ℝ,
+    HasFTaylorSeriesUpToOn ∞ f p s ∧
+      ∀ (n : ℕ) ⦃x : ℝ⦄, x ∈ s → 0 ≤ (-1) ^ n * p x n fun _ ↦ (1 : ℝ)
+
+namespace CompletelyMonotoneOn
+
+variable {f : ℝ → ℝ} {s : Set ℝ}
+
+/-- A completely monotone function on `s` is smooth on `s`. -/
+theorem contDiffOn (hf : CompletelyMonotoneOn f s) : ContDiffOn ℝ ∞ f s := by
+  obtain ⟨_, hp, _⟩ := hf
+  exact hp.contDiffOn
+
+/-- On a uniquely differentiable set, the iterated derivatives of a completely monotone function
+have the expected alternating signs. -/
+theorem neg_one_pow_mul_iteratedDerivWithin_nonneg (hf : CompletelyMonotoneOn f s)
+    (hs : UniqueDiffOn ℝ s) (n : ℕ) {x : ℝ} (hx : x ∈ s) :
+    0 ≤ (-1) ^ n * iteratedDerivWithin n f s x := by
+  obtain ⟨p, hp, hp_nonneg⟩ := hf
+  have heq : p x n = iteratedFDerivWithin ℝ n f s x :=
+    hp.eq_iteratedFDerivWithin_of_uniqueDiffOn (mod_cast le_top) hs hx
+  rw [iteratedDerivWithin_eq_iteratedFDerivWithin, ← heq]
+  exact hp_nonneg n hx
+
+/-- On a uniquely differentiable set, complete monotonicity is equivalent to smoothness together
+with the usual alternating-sign condition on iterated derivatives within the set. -/
+theorem iff_iteratedDerivWithin_nonneg (hs : UniqueDiffOn ℝ s) :
+    CompletelyMonotoneOn f s ↔
+      ContDiffOn ℝ ∞ f s ∧
+        ∀ n : ℕ, ∀ x ∈ s, 0 ≤ (-1) ^ n * iteratedDerivWithin n f s x := by
+  refine ⟨fun hf => ⟨hf.contDiffOn,
+    fun n _ hx => hf.neg_one_pow_mul_iteratedDerivWithin_nonneg hs n hx⟩, ?_⟩
+  rintro ⟨hcont, hsign⟩
+  refine ⟨ftaylorSeriesWithin ℝ f s, hcont.ftaylorSeriesWithin hs, fun n x hx => ?_⟩
+  exact iteratedDerivWithin_eq_iteratedFDerivWithin (𝕜 := ℝ) (f := f) (s := s) ▸ hsign n x hx
+
+end CompletelyMonotoneOn
+
 /-- A function `f : ℝ → ℝ` is **completely monotone** if it is `C^∞` on the closed half-line
 `[0, ∞)` and its iterated derivatives within `[0, ∞)` alternate in sign:
 `0 ≤ (-1)ⁿ f⁽ⁿ⁾(t)` for every `n` and every `t ≥ 0`. The smoothness clause prevents the sign
@@ -85,6 +131,13 @@ lemma isCompletelyMonotone_iff {f : ℝ → ℝ} :
       ContDiffOn ℝ ∞ f (Ici 0) ∧
         ∀ n : ℕ, ∀ t : ℝ, 0 ≤ t → 0 ≤ (-1) ^ n * iteratedDerivWithin n f (Ici 0) t :=
   Iff.rfl
+
+/-- The closed-half-line predicate is the specialization of complete monotonicity on a set. -/
+lemma isCompletelyMonotone_iff_completelyMonotoneOn {f : ℝ → ℝ} :
+    IsCompletelyMonotone f ↔ CompletelyMonotoneOn f (Ici 0) := by
+  rw [isCompletelyMonotone_iff, CompletelyMonotoneOn.iff_iteratedDerivWithin_nonneg
+    (uniqueDiffOn_Ici 0)]
+  simp only [mem_Ici]
 
 /-- Completely monotone functions are exactly absolutely monotone functions after reflecting the
 closed half-line through zero. -/
