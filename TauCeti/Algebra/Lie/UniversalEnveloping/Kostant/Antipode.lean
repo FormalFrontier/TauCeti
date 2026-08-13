@@ -11,6 +11,8 @@ public import Mathlib.Algebra.Ring.Subring.MulOpposite
 
 public section
 
+open scoped UniversalEnvelopingAlgebra
+
 /-!
 # The Kostant integral form is stable under the antipode
 
@@ -76,22 +78,24 @@ divided power is a rational multiple of a power of a single element. -/
 theorem antipode_dividedPower (n : ℕ) :
     antipode ℚ (Associative.dividedPower n a) =
       Associative.dividedPower n (antipode ℚ a) := by
-  rw [Associative.dividedPower_def, map_smul, antipode_pow, Associative.dividedPower_def]
+  rw [antipode_apply, Associative.map_dividedPower, antipode_apply]
+  simp [Associative.dividedPower_def]
 
-/-- The antipode passes through a generalized binomial coefficient.
-
-Both sides are determined by their `n!`-fold multiples, which agree by `antipode_smeval` applied
-to the descending Pochhammer polynomial. -/
+/-- The antipode passes through a generalized binomial coefficient. -/
 @[simp]
 theorem antipode_ringChoose (n : ℕ) :
     antipode ℚ (Ring.choose a n) = Ring.choose (antipode ℚ a) n := by
+  rw [antipode_apply, Ring.map_choose, antipode_apply]
   have hfac : (n.factorial : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr n.factorial_ne_zero
-  have key : n.factorial • antipode ℚ (Ring.choose a n) =
-      n.factorial • Ring.choose (antipode ℚ a) n := by
-    rw [← map_nsmul, ← Ring.descPochhammer_eq_factorial_smul_choose,
-      ← Ring.descPochhammer_eq_factorial_smul_choose, antipode_smeval]
   refine smul_right_injective _ hfac ?_
-  simpa only [Nat.cast_smul_eq_nsmul] using key
+  simp only [Nat.cast_smul_eq_nsmul]
+  rw [← MulOpposite.unop_smul, ← Ring.descPochhammer_eq_factorial_smul_choose,
+    ← Ring.descPochhammer_eq_factorial_smul_choose]
+  generalize descPochhammer ℤ n = p
+  induction p using Polynomial.induction_on' with
+  | add p q hp hq => simp only [Polynomial.smeval_add, MulOpposite.unop_add, hp, hq]
+  | monomial k c => simp only [Polynomial.smeval_monomial, MulOpposite.unop_smul,
+      MulOpposite.unop_pow]
 
 end Generators
 

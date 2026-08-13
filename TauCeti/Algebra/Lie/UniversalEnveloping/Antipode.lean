@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Algebra.Algebra.Opposite
 public import Mathlib.Algebra.Lie.UniversalEnveloping
-public import Mathlib.Algebra.Polynomial.Smeval
 public import Mathlib.Algebra.Ring.Subring.MulOpposite
 
 /-!
@@ -38,8 +37,6 @@ property of the enveloping algebra is used here.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_mul_antidistrib`: the antipode reverses
   multiplication.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_antipode`: the antipode is involutive.
-* `TauCeti.UniversalEnvelopingAlgebra.antipode_smeval`: the antipode passes through the value of
-  a polynomial at one element.
 
 ## Roadmap
 
@@ -178,26 +175,6 @@ theorem antipode_mul_antidistrib (a b : _root_.UniversalEnvelopingAlgebra R L) :
 theorem antipode_pow (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
     antipode R (a ^ n) = antipode R a ^ n := by
   rw [antipode_apply, map_pow, MulOpposite.unop_pow, antipode_apply]
-
-/-- The antipode commutes with evaluating a polynomial at one element, for coefficients in any
-scalar semiring whose action on the enveloping algebra the `R`-linear antipode respects. Both
-`ℤ` and the base ring `R` itself are such a semiring.
-
-Antimultiplicativity is no obstruction: the value of a polynomial at `a` is a sum of scalar
-multiples of powers of the single element `a`, and the antipode reverses no product of an element
-with itself. -/
-@[simp]
-theorem antipode_smeval {S : Type*} [Semiring S]
-    [Module S (_root_.UniversalEnvelopingAlgebra R L)]
-    [LinearMap.CompatibleSMul (_root_.UniversalEnvelopingAlgebra R L)
-      (_root_.UniversalEnvelopingAlgebra R L) S R]
-    (p : Polynomial S) (a : _root_.UniversalEnvelopingAlgebra R L) :
-    antipode R (p.smeval a) = p.smeval (antipode R a) := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => rw [Polynomial.smeval_add, map_add, hp, hq, Polynomial.smeval_add]
-  | monomial n c =>
-    rw [Polynomial.smeval_monomial, LinearMap.map_smul_of_tower, antipode_pow,
-      Polynomial.smeval_monomial]
 
 /-- Applying the opposite-valued antipode and then its opposite transform is the identity. -/
 private theorem opComm_antipodeOp_comp_antipodeOp :
