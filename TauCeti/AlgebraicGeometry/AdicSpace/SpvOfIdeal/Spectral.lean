@@ -21,11 +21,10 @@ spectral with the sets
 Spv (A, I)(T/s) = { v ∈ Spv (A, I) ; v(t) ≤ v(s) ≠ 0 for all t ∈ T },   I ⊆ √(T · A)
 ```
 
-as a generating family. (Wedhorn states them as a basis of quasi-compact opens. Both halves that
-are about individual members are proved here: they generate the topology, which is what the patch
-criterion consumes, and each is quasi-compact. The *basis* property itself — every open a union
-of them — is not, since it needs stability under finite intersection, Wedhorn's step (i), which
-the criterion absorbs rather than proves.)
+as a generating family. (Wedhorn states them as a basis of quasi-compact opens, and that is what
+is proved: they generate the topology, which is what the patch criterion consumes; each is
+quasi-compact; and the family is stable under intersection — Wedhorn's step (i) — which upgrades
+generation to `isTopologicalBasis_rationalFamily`.)
 No second topology on the subtype is introduced here: the
 `Subtype` instance *is* that topology, which is the content of
 `instTopologicalSpace_spvOfIdeal_eq_generateFrom`.
@@ -39,10 +38,13 @@ needed, but only as `restrictToIdealCodRestrict_preimage`, which turns clopen-ne
 `Spv(A)(T/s)` in the patch of `Spv A` into clopen-ness of `Spv(A,I)(T/s)` in the witness
 topology.
 
-Wedhorn's step (i) — stability of the basis under finite intersection — is **not** needed: the
-subspace topology is `induced` of a `generateFrom`, so `induced_generateFrom_eq` reduces the
-basis condition to single subbasic opens, and the patch criterion absorbs finite intersections
-itself.
+Wedhorn's step (i) — stability of the family under intersection — is **not** needed for
+spectrality: the subspace topology is `induced` of a `generateFrom`, so `induced_generateFrom_eq`
+reduces the basis condition to single subbasic opens, and the patch criterion absorbs finite
+intersections itself. It is needed for the *basis* claim, and later for the spectral-map half of
+Lemma 7.5(2), so it is proved here all the same: `basicOpenFinset_inter` supplies the identity in
+`Spv A`, `IsAdmissible.mul` keeps the product pair admissible, and `inter_mem_rationalFamily`
+closes the family.
 
 Note that `Spv (A, I)` is *not* pro-constructible in `Spv A` in general, so
 `TauCeti.IsProConstructible.spectralSpace` cannot be used: that would give a spectral inclusion
@@ -64,14 +66,18 @@ below is the public neighbourhood interface that merges them.)
 * `TauCeti.ValuationSpectrum.spectralSpace_spvOfIdeal` : **Lemma 7.5(1)**.
 * `TauCeti.ValuationSpectrum.instTopologicalSpace_spvOfIdeal_eq_generateFrom` : **step (ii)**,
   that `R` generates the subspace topology.
+* `TauCeti.ValuationSpectrum.isTopologicalBasis_rationalFamily` : **step (i)**, that `R` is
+  moreover a *basis* — it is closed under intersection, through `IsAdmissible.mul` and
+  `inter_mem_rationalFamily`.
 * `TauCeti.ValuationSpectrum.restrictToIdealCodRestrict_preimage` : **step (iii)**,
   `r_I⁻¹(Spv(A,I)(T/s)) = Spv(A)(T/s)`.
 * `TauCeti.ValuationSpectrum.isCompact_of_mem_rationalFamily` : the members of `R` are
   quasi-compact, the other half of what Lemma 7.5(1) asserts about them.
 * `TauCeti.ValuationSpectrum.continuous_restrictToIdealCodRestrict` : **Lemma 7.5(2)**, the
   continuity half — steps (ii) and (iii) give it at once. Wedhorn's further claim that `r_I` is
-  a *spectral* map is not recorded here; the quasi-compactness that claim needs is available as
-  `isCompact_of_mem_rationalFamily` just above.
+  a *spectral* map is not recorded here; the quasi-compactness and the basis property that claim
+  needs are available as `isCompact_of_mem_rationalFamily` and
+  `isTopologicalBasis_rationalFamily` just above.
 
 ## References
 
@@ -157,6 +163,19 @@ lemma isAdmissible_of_forall_exists_pow_mem {I : Ideal A} {S T : Finset A} {u : 
   calc I ≤ (Ideal.span (S : Set A)).radical := hI
     _ ≤ ((Ideal.span (insert u (T : Set A))).radical).radical := Ideal.radical_mono hle
     _ = (Ideal.span (insert u (T : Set A))).radical := Ideal.radical_idem _
+
+open scoped Classical Pointwise in
+/-- **Admissibility is stable under the product of pairs.** The numerator sets multiply
+pointwise, each augmented by its own denominator — the same shape `basicOpenFinset_inter`
+produces — and the product pair is admissible for the same `I`: the radical of the span of a
+product of sets is the meet of the radicals. -/
+theorem IsAdmissible.mul {I : Ideal A} {T₁ T₂ : Finset A} {u₁ u₂ : A}
+    (h₁ : IsAdmissible I T₁ u₁) (h₂ : IsAdmissible I T₂ u₂) :
+    IsAdmissible I (insert u₁ T₁ * insert u₂ T₂) (u₁ * u₂) := by
+  rw [isAdmissible_iff, Set.insert_eq_self.mpr (Finset.mem_coe.mpr
+      (Finset.mul_mem_mul (Finset.mem_insert_self u₁ T₁) (Finset.mem_insert_self u₂ T₂))),
+    Finset.coe_mul, ← Ideal.span_mul_span', Ideal.radical_mul]
+  exact le_inf (by simpa using h₁) (by simpa using h₂)
 
 /-! ### Wedhorn 7.5(ii): the rational subsets are a basis -/
 
@@ -302,6 +321,46 @@ theorem instTopologicalSpace_spvOfIdeal_eq_generateFrom (I : Ideal A)
     obtain ⟨T, u, hadm, hvT, hsub⟩ := exists_isAdmissible_basicOpenFinset hfg hvI hv
     exact ⟨Subtype.val ⁻¹' basicOpenFinset T u, fun _ hw ↦ hsub hw,
       isOpen_generateFrom_of_mem ⟨T, u, hadm, rfl⟩, hvT⟩
+
+/-- **The whole space is a member of `R`**: it is the trace of `Spv(A)({1}/1)`, whose defining
+conditions hold at every point and whose numerator set contains `1` and is therefore admissible
+for every ideal.
+
+Deliberately not `@[simp]`: family membership already has a simp normal form through
+`mem_rationalFamily_iff`, which rewrites this left-hand side first, so the tag would be dead
+weight — and `simpNF` rejects it. -/
+theorem univ_mem_rationalFamily (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    Set.univ ∈ rationalFamily I hfg :=
+  ⟨{1}, 1, isAdmissible_of_one_mem (Finset.mem_singleton_self 1), by
+    rw [basicOpenFinset_eq_biInter]
+    simp [basicOpen_one]⟩
+
+/-- **Wedhorn's step (i) in the proof of Lemma 7.5, on `Spv (A, I)`**: the family `R` is stable
+under intersection. The traces intersect along the trace of the intersection, which
+`basicOpenFinset_inter` computes as another rational subset, and `IsAdmissible.mul` keeps its
+pair admissible. -/
+theorem inter_mem_rationalFamily {I : Ideal A}
+    {hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical} {U V : Set (spvOfIdeal I hfg)}
+    (hU : U ∈ rationalFamily I hfg) (hV : V ∈ rationalFamily I hfg) :
+    U ∩ V ∈ rationalFamily I hfg := by
+  obtain ⟨T₁, u₁, hadm₁, rfl⟩ := hU
+  obtain ⟨T₂, u₂, hadm₂, rfl⟩ := hV
+  exact ⟨_, _, IsAdmissible.mul hadm₁ hadm₂,
+    by rw [← Set.preimage_inter, basicOpenFinset_inter]⟩
+
+/-- **The basis half of Wedhorn Lemma 7.5(1)**: the family `R` is a topological basis of
+`Spv (A, I)`, not merely a generating family. Generation is
+`instTopologicalSpace_spvOfIdeal_eq_generateFrom`; this upgrades it with the two closure
+properties a basis needs, `univ_mem_rationalFamily` and `inter_mem_rationalFamily`. Together
+with `isCompact_of_mem_rationalFamily` below, this is Wedhorn's full claim: a basis of
+quasi-compact opens. -/
+theorem isTopologicalBasis_rationalFamily (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    IsTopologicalBasis (rationalFamily I hfg) :=
+  isTopologicalBasis_of_subbasis_of_finiteInter
+    (instTopologicalSpace_spvOfIdeal_eq_generateFrom I hfg)
+    ⟨univ_mem_rationalFamily I hfg, fun _ hU _ hV ↦ inter_mem_rationalFamily hU hV⟩
 
 /-! ### The compact witness topology -/
 

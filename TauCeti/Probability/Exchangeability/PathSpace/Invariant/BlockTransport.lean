@@ -4,39 +4,53 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
+public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
-import TauCeti.Probability.Exchangeability.PermutationExtension
-import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 
 /-!
 # Moving a block through a reindexing, over an invariant event
 
-Over a shift-invariant event, a reindexing that is eventually a translation changes no
-set-integral, and a strictly increasing finite selection may therefore be displaced onto the
-prefix `0, 1, …, m - 1`.
+Over a shift-invariant event, a **law-preserving** reindexing that is eventually a translation
+changes no set-integral; so for a **contractable** law, where strict monotonicity supplies that
+preservation, a strictly increasing finite selection may be displaced onto the prefix
+`0, 1, …, m - 1`.
+
+Measure preservation cannot be dropped: without it the first claim fails outright — take `ρ` a
+point mass at an alternating path, `A = univ` and `φ = (· + 1)`. Eventual translation is a
+*sufficient* condition for the reindexing to fix every invariant event, not a necessary one for the
+integral identity, which needs only `T ⁻¹' A = A`.
 
 ## Main results
 
-* `setLIntegral_comp_reindex_eq_of_measurableSet_invariants` — the general form, for any
-  reindexing that preserves the law and is eventually a translation;
-* `ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants` — its contractable
-  instance, where strict monotonicity supplies the measure preservation;
-* `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — the finite-selection
-  form: a strictly increasing block becomes the prefix.
+* `measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add` — the
+  primitive: such a reindexing preserves the restricted law, so Koopman-side consumers get a
+  `MeasurePreserving`, not only an integral identity;
+* `ContractableLaw.map_restrict_block_eq_prefixProj_of_measurableSet_invariants` — the
+  finite-selection form as a measure equality on the **restricted** law: reading a strictly
+  increasing block and reading the prefix push `ρ.restrict A` to the same measure, so Bochner and
+  `Lᵖ` statements follow as well. The unrestricted counterpart is the existing
+  `ContractableLaw.map_prefixProj_of_strictMono`.
+
+`ℝ≥0∞` statements are not restated here: a consumer wanting one applies `.lintegral_comp` to the
+`MeasurePreserving` above, or rewrites with `lintegral_map` through the measure equality.
+
+The endomorphism-level facts are Mathlib's: `MeasurePreserving.restrict_preimage` gives the
+restricted measure preservation once the invariant event is rewritten by
+`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`, and
+`MeasurePreserving.lintegral_comp` gives the integral identity. This module supplies only the
+reindexing-and-invariant-event instance, and restates no Mathlib API.
 
 Nothing here is specific to a de Finetti route. The statements mention a contractable path law, a
 shift-invariant event and a finite selection, and no Koopman operator; the Koopman route is the
-motivating consumer and imports this.
+motivating consumer and will import this; nothing imports it yet.
 
 ## Invariance, not tail-measurability
 
 ⚠ These results rest on *invariance*: `shift ⁻¹' A = A`, in the
 `MeasurableSpace.invariants`-measurable form. A tail event need not satisfy it, and
-`invariants_shift_lt_pathTail` shows the inclusion is strict. This is the substantive difference
-from the `L²` route, whose block comparison is distributional — an equality of conditional laws
-given the tail — rather than an actual invariance of the test event.
+`invariants_shift_lt_pathTail` shows the inclusion is strict already over `Bool`. This is the
+substantive difference from the `L²` route, whose block comparison is distributional — an equality
+of conditional laws given the tail — rather than an actual invariance of the test event.
 
 The general statement asks only that the reindexing preserve the law. Contractability and strict
 monotonicity are one way to obtain that, not requirements: a merely shift-invariant law with
@@ -44,12 +58,13 @@ monotonicity are one way to obtain that, not requirements: a merely shift-invari
 
 ## Source
 
-The block-reindexing strategy follows the earlier `cameronfreer/exchangeability` development,
-which carries related block-reindexing and factorization material. These lemmas are not
-line-by-line ports: they are assembled from Tau Ceti's eventual-translation extension
-(`exists_strictMono_nat_extending_fin_eventually_add`), the invariant-event preimage identity
-(`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`), and contractable reindexing
-(`ContractableLaw.measurePreserving_reindex`). The transport theorem itself is Tau Ceti-native.
+No material is adapted from `cameronfreer/exchangeability`. That development carries its own
+block-reindexing and factorization material for the Koopman argument; the statements here were
+assembled from Tau Ceti's own pieces — the eventual-translation extension
+`exists_strictMono_nat_extending_fin_eventually_add`, the invariant-event preimage identity
+`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`, contractable reindexing
+`ContractableLaw.measurePreserving_reindex`, and Mathlib's `MeasurePreserving.restrict_preimage`.
+
 -/
 
 public section
@@ -66,58 +81,40 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- **An eventually-translating measure-preserving reindexing acts trivially over an invariant
-event.** If reading a path through `φ` preserves `ρ`, and `φ n = n + C` for all `n ≥ m`, then the
-set-integral of a measurable path functional over a shift-invariant `A` is unchanged.
+/-- **Such a reindexing preserves the restricted law.** The primitive form: consumers needing the
+Koopman operator on `Lp (ρ.restrict A)`, or a Bochner integral, get a `MeasurePreserving` rather
+than only an `ℝ≥0∞` identity.
 
 Only measure preservation by *this* reindexing is used; contractability and strict monotonicity are
 one way to obtain it, not requirements. In particular a merely shift-invariant law with
 `φ = (· + C)` qualifies. -/
-theorem setLIntegral_comp_reindex_eq_of_measurableSet_invariants
+theorem measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add
     {ρ : Measure (ℕ → α)} {φ : ℕ → ℕ} {m C : ℕ}
     (hmp : MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) ρ ρ)
     (hφ_add : ∀ n, m ≤ n → φ n = n + C)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
-    ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ := by
-  have hpre : (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A :=
-    preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add
-  have hAmeas : MeasurableSet A := (MeasurableSpace.measurableSet_invariants.1 hA).1
-  calc ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ
-      = ∫⁻ x in (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A, f (fun k => x (φ k)) ∂ρ := by
-        rw [hpre]
-    _ = ∫⁻ x in A, f x ∂ρ := by
-        rw [← hmp.setLIntegral_comp_preimage hAmeas hf]
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
+    MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) (ρ.restrict A) (ρ.restrict A) := by
+  have h := hmp.restrict_preimage (MeasurableSpace.measurableSet_invariants.1 hA).1
+  rwa [preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add] at h
 
-/-- **The contractable instance.** A strictly increasing reindexing preserves a contractable path
-law, which is the hypothesis the general statement wants. -/
-theorem ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {φ : ℕ → ℕ} {m C : ℕ}
-    (hφ_mono : StrictMono φ) (hφ_add : ∀ n, m ≤ n → φ n = n + C)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
-    ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ :=
-  _root_.TauCeti.Probability.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
-    (hρ.measurePreserving_reindex hφ_mono) hφ_add hA hf
+/-- **The primitive measure equality.** Over an invariant event, reading a strictly increasing
+block and reading the prefix push the restricted law to the same measure on `Fin m → α`.
 
-/-- **A strictly increasing finite selection can be displaced to the prefix over an invariant
-event.** For a contractable path law and a set `A` measurable in
-`MeasurableSpace.invariants (shift α)`, the set-integral over `A` of a block observable read along
-a strictly increasing selection `k` equals the set-integral of the same observable read along the
-prefix `0, 1, …, m - 1`. -/
-theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
+This is the form that gives Bochner integrals and `Lᵖ` statements as well; an `ℝ≥0∞` identity
+follows by rewriting with `lintegral_map`, and is not restated here. -/
+theorem ContractableLaw.map_restrict_block_eq_prefixProj_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {g : (Fin m → α) → ℝ≥0∞} (hg : Measurable g) :
-    ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (prefixProj α m x) ∂ρ := by
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
+    (ρ.restrict A).map (fun x : ℕ → α => fun i : Fin m => x (k i))
+      = (ρ.restrict A).map (prefixProj α m) := by
   obtain ⟨φ, C, hφ_mono, hφ_eq, hφ_add⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
-  have hf : Measurable fun x : ℕ → α => g (prefixProj α m x) :=
-    hg.comp (measurable_prefixProj m)
-  have hcomp : ∀ x : ℕ → α,
-      prefixProj α m (fun j => x (φ j)) = fun i : Fin m => x (k i) := by
-    intro x; funext i; simp only [prefixProj_apply, hφ_eq]
-  simpa only [hcomp] using
-    hρ.setLIntegral_comp_reindex_eq_of_measurableSet_invariants hφ_mono hφ_add hA hf
+  have hmp := measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add
+    (hρ.measurePreserving_reindex hφ_mono) hφ_add hA
+  have hcomp : (fun x : ℕ → α => fun i : Fin m => x (k i))
+      = prefixProj α m ∘ fun x : ℕ → α => fun j => x (φ j) := by
+    funext x i
+    simp only [Function.comp_apply, prefixProj_apply, hφ_eq]
+  rw [hcomp, ← Measure.map_map (measurable_prefixProj m) hmp.measurable, hmp.map_eq]
 
 end Probability
 
