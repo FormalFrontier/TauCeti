@@ -74,11 +74,12 @@ namespace TauCeti
 namespace Derivation
 
 attribute [local instance] Classical.decEq
+attribute [local instance] adjointComodule
 
 variable {R : Type*} {H : Type*} [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
-variable {M : Type*} [CommGroup M]
+variable {M : Type*} [Monoid M]
 
 /-- The `α`-weight submodule `𝔤_α` of the Lie algebra of `G = Spec H` under a homomorphism
 `D(M) → G` with coordinate morphism `π`: the part of the Lie algebra on which `D(M)` acts through
@@ -95,8 +96,6 @@ coaction of `x` through `π` must give `x ⊗ α`. -/
 @[simp]
 theorem mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α : M}
     {x : Module.Dual R (Bialgebra.CotangentSpace R H)} :
-    letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
-      adjointComodule (R := R) (H := H)
     x ∈ adjointWeightSpace π α ↔
       TensorProduct.map LinearMap.id (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap
           (Comodule.coact (R := R) (C := H)
@@ -125,15 +124,6 @@ def nontrivialAdjointWeights (π : H →ₐc[R] MonoidAlgebra R M) : Set M :=
 theorem mem_nontrivialAdjointWeights {π : H →ₐc[R] MonoidAlgebra R M} {α : M} :
     α ∈ nontrivialAdjointWeights π ↔ α ≠ 1 ∧ adjointWeightSpace π α ≠ ⊥ :=
   Iff.rfl
-
-theorem ne_one_of_mem_nontrivialAdjointWeights {π : H →ₐc[R] MonoidAlgebra R M} {α : M}
-    (hα : α ∈ nontrivialAdjointWeights π) : α ≠ 1 :=
-  hα.1
-
-theorem adjointWeightSpace_ne_bot_of_mem_nontrivialAdjointWeights
-    {π : H →ₐc[R] MonoidAlgebra R M} {α : M} (hα : α ∈ nontrivialAdjointWeights π) :
-    adjointWeightSpace π α ≠ ⊥ :=
-  hα.2
 
 /-- Off the nontrivial adjoint weights and the trivial character the weight submodule vanishes. -/
 theorem adjointWeightSpace_eq_bot_of_notMem_nontrivialAdjointWeights
@@ -176,8 +166,6 @@ theorem sup_iSup_adjointWeightSpace_eq_top (π : H →ₐc[R] MonoidAlgebra R M)
 theorem endOfPoint_tmul_of_mem_adjointWeightSpace {A : Type*} [CommSemiring A] [Algebra R A]
     (π : H →ₐc[R] MonoidAlgebra R M) (f : MonoidAlgebra R M →ₐ[R] A) (a : A) {α : M}
     {x : Module.Dual R (Bialgebra.CotangentSpace R H)} (hx : x ∈ adjointWeightSpace π α) :
-    letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
-      adjointComodule (R := R) (H := H)
     Comodule.endOfPoint (Module.Dual R (Bialgebra.CotangentSpace R H))
         (f.comp (π : H →ₐ[R] MonoidAlgebra R M)) (a ⊗ₜ[R] x) =
       (a * f (MonoidAlgebra.single α (1 : R))) ⊗ₜ[R] x :=

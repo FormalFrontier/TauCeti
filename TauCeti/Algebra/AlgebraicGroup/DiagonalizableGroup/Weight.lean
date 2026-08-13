@@ -134,8 +134,7 @@ theorem endOfPoint_tmul_comp (π : C →ₐc[R] MonoidAlgebra R X)
     exact BialgHom.toAlgHom_toLinearMap π
   rw [Comodule.endOfPoint_tmul]
   congr 2
-  rw [LinearMap.lTensor_map]
-  congr 1
+  rw [LinearMap.lTensor_map, AlgHom.comp_toLinearMap, hπ, LinearMap.lTensor_def]
 
 /-- **A point of `D(X)` acts on the `x`-weight submodule by the value of the character `x`.**
 

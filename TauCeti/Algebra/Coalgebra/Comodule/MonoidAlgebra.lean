@@ -512,6 +512,7 @@ variable (R G V)
 
 /-- The `g`-weight submodule is the range of the `g`-weight projection: the projection is
 idempotent with image the submodule it projects onto. -/
+@[simp]
 theorem range_weightProj (g : G) :
     LinearMap.range (weightProj R G V g) = weightSpace R G V g := by
   refine le_antisymm ?_ fun v hv => ⟨v, weightProj_of_mem hv⟩
@@ -519,8 +520,7 @@ theorem range_weightProj (g : G) :
   exact weightProj_mem_weightSpace g v
 
 /-- **A comodule over `R[G]` that is finitely generated as a module has only finitely many
-weights.** Each weight submodule is the image of a weight projection, and a projection whose
-index misses the finitely many weights of every generator kills the whole comodule.
+weights.**
 
 For a representation of the diagonalizable group `D(G)` this is the finiteness of its set of
 weights, and for the adjoint representation of an affine group scheme under a split torus it is
