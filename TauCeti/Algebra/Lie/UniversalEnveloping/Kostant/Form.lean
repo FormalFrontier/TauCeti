@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import TauCeti.RingTheory.Binomial
 
@@ -72,11 +73,7 @@ variable [LieRing L] [LieAlgebra ℚ L]
 variable [LieRing M] [LieAlgebra ℚ M]
 variable {ι : Type w} {κ : Type*}
 
-/-- The nonnegative-rational scalar action supplying the `BinomialRing` instance for
-`Ring.choose`. -/
-noncomputable local instance moduleNNRat :
-    Module ℚ≥0 (_root_.UniversalEnvelopingAlgebra ℚ L) :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+attribute [local instance] TauCeti.moduleNNRat
 
 /-! ## Generators and the integral form -/
 
