@@ -282,9 +282,9 @@ private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
   rw [coe_circleI, Complex.I_sq]
   norm_num
 
-/-- **The two entries of a torus element are distinct exactly when `z² ≠ 1`**: `z - z⁻¹` vanishes
-only at the two points `z = ±1` of the circle. This is the separation that makes `diag (z, z⁻¹)`
-a regular element. -/
+/-- **The two entries of a torus element are distinct once `z² ≠ 1`**: `z - z⁻¹` vanishes only at
+the two points `z = ±1` of the circle. This is the separation that makes `diag (z, z⁻¹)` a regular
+element. -/
 theorem coe_sub_inv_ne_zero {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
     (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := by
   intro hc
@@ -296,7 +296,7 @@ theorem coe_sub_inv_ne_zero {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
 /-- **An element of `SU(2)` commuting with a single torus element `diag (z, z⁻¹)` with `z² ≠ 1`
 already lies in the maximal torus.** Reading off the off-diagonal entries of
 `diag (z, z⁻¹) g = g diag (z, z⁻¹)` gives `g₀₁ (z - z⁻¹) = 0` and `g₁₀ (z⁻¹ - z) = 0`, and
-`z ≠ z⁻¹` is exactly `z² ≠ 1` (`TauCeti.SU2.coe_sub_inv_ne_zero`). -/
+`z² ≠ 1` gives `z ≠ z⁻¹` (`TauCeti.SU2.coe_sub_inv_ne_zero`). -/
 theorem mem_torus_of_commute_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) {g : SU2}
     (h : torusHom z * g = g * torusHom z) : g ∈ torus := by
   have hsub : (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := coe_sub_inv_ne_zero hz

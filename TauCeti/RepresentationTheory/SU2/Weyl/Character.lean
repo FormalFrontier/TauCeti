@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.RepresentationTheory.Character
 public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
 
@@ -59,7 +60,7 @@ the character of `Symᵈ(ℂ²)` everywhere.
   `χ_d = (e^{i(d+1)θ} - e^{-i(d+1)θ}) / (e^{iθ} - e^{-iθ})`.
 * `TauCeti.SU2.character_symPower_eq_sin_div_sin_of_isConj` and
   `TauCeti.SU2.exists_mem_Icc_character_symPower_eq`: the same formulas off the torus, the
-  character being a class function (`TauCeti.SU2.character_symPower_eq_of_isConj`) on a group in
+  character being a class function (`TauCeti.Representation.character_eq_of_isConj`) on a group in
   which every element is conjugate to a torus element with angle in the Weyl chamber `[0, π]`.
 
 ## References
@@ -225,20 +226,14 @@ theorem character_symPower_torusExp_eq_div {θ : ℝ} (hθ : Real.sin θ ≠ 0) 
 
 /-! ### The character away from the maximal torus -/
 
-/-- The character of `Symᵈ(ℂ²)` is a class function: it takes the same value at any two conjugate
-elements of `SU(2)`. -/
-theorem character_symPower_eq_of_isConj {g h : SU2} (hgh : IsConj g h) :
-    (symPower d).character g = (symPower d).character h := by
-  obtain ⟨c, hc⟩ := isConj_iff.mp hgh
-  rw [← hc, Representation.char_conj]
-
 /-- **The Weyl character formula at an arbitrary element of `SU(2)`.**  Every element is conjugate
 to a torus element `diag (e^{iθ}, e^{-iθ})` (`TauCeti.SU2.exists_isConj_torusExp`), so the formula
 on the torus computes the character of `Symᵈ(ℂ²)` off the torus as well. -/
 theorem character_symPower_eq_sin_div_sin_of_isConj {g : SU2} {θ : ℝ}
     (hg : IsConj g (torusExp θ)) (hθ : Real.sin θ ≠ 0) :
     (symPower d).character g = ((Real.sin (((d : ℝ) + 1) * θ) / Real.sin θ : ℝ) : ℂ) := by
-  rw [character_symPower_eq_of_isConj d hg, character_symPower_torusExp_eq_sin_div_sin d hθ]
+  rw [Representation.character_eq_of_isConj (symPower d) hg,
+    character_symPower_torusExp_eq_sin_div_sin d hθ]
 
 /-- **The Weyl character formula on the Weyl chamber.**  Each element of `SU(2)` is conjugate to a
 torus element whose angle lies in `[0, π]` (`TauCeti.SU2.exists_isConj_torusExp_mem_Icc`), where the
