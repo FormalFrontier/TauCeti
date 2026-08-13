@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Character
 public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
+import TauCeti.Topology.Circle.Metric
 
 /-!
 # The Weyl character formula for `SU(2)`
@@ -39,9 +39,11 @@ formula becomes the classical
 At a multiple of `π` the character is `(d + 1) cosᵈ θ`, the two excluded points `z = ±1` read in
 the angle coordinate, so the description in that coordinate is complete as well.
 
-Since every element of `SU(2)` is conjugate into the maximal torus
-(`TauCeti.SU2.exists_isConj_torusHom`) and a character is a class function, these formulas compute
-the character of `Symᵈ(ℂ²)` everywhere.
+These formulas compute the character of `Symᵈ(ℂ²)` everywhere, no declaration here being needed
+for that: a character is conjugation invariant (`Representation.char_conj`), and
+`TauCeti.SU2.exists_mem_Icc_eq_torusExp_of_conjInvariant` carries a conjugation-invariant function
+to the angle in the Weyl chamber `[0, π]` of the torus element that the given element is conjugate
+to, where the closed forms below apply.
 
 ## Main results
 
@@ -58,10 +60,6 @@ the character of `Symᵈ(ℂ²)` everywhere.
   of `π`, `χ_d = (d + 1) cosᵈ θ`.
 * `TauCeti.SU2.character_symPower_torusExp_eq_div`: the alternating-sum form
   `χ_d = (e^{i(d+1)θ} - e^{-i(d+1)θ}) / (e^{iθ} - e^{-iθ})`.
-* `TauCeti.SU2.character_symPower_eq_sin_div_sin_of_isConj` and
-  `TauCeti.SU2.exists_mem_Icc_character_symPower_eq`: the same formulas off the torus, the
-  character being a class function (`TauCeti.Representation.character_eq_of_isConj`) on a group in
-  which every element is conjugate to a torus element with angle in the Weyl chamber `[0, π]`.
 
 ## References
 
@@ -116,7 +114,7 @@ quotient of the Weyl numerator by the Weyl denominator. -/
 theorem character_symPower_torusHom_eq_div {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
     (symPower d).character (torusHom z)
       = ((z : ℂ) ^ (d + 1) - ((z : ℂ)⁻¹) ^ (d + 1)) / ((z : ℂ) - (z : ℂ)⁻¹) :=
-  eq_div_of_mul_eq (coe_sub_inv_ne_zero hz)
+  eq_div_of_mul_eq (circle_sub_inv_ne_zero hz)
     (by rw [mul_comm]; exact sub_inv_mul_character_symPower_torusHom d z)
 
 /-- **The character at the two points where the Weyl denominator vanishes.**  At `z = ±1` every one
@@ -142,13 +140,16 @@ theorem character_symPower_torusHom_of_sq_eq_one {z : Circle} (hz : (z : ℂ) ^ 
   ring
 
 /-- The Weyl numerator and denominator in the angle parametrisation: for a real `t`,
-`e^{it} - e^{-it} = 2i·sin t`. -/
+`e^{it} - e^{-it} = 2i·sin t`.  This is the antipodal case `β = -α` of the polar chord identity
+`TauCeti.exp_mul_I_sub_exp_mul_I`, in the shape the rewrites below need. -/
 private theorem exp_sub_exp_neg_mul_I (t : ℝ) :
     Complex.exp ((t : ℂ) * Complex.I) - Complex.exp (-((t : ℂ) * Complex.I))
       = 2 * Complex.I * (Real.sin t : ℂ) := by
-  rw [← neg_mul, Complex.ofReal_sin]
-  linear_combination (-Complex.I) * Complex.two_sin (t : ℂ) -
-    (Complex.exp (-(t : ℂ) * Complex.I) - Complex.exp ((t : ℂ) * Complex.I)) * Complex.I_sq
+  have h := exp_mul_I_sub_exp_mul_I t (-t)
+  simp only [Complex.ofReal_neg, neg_mul, sub_neg_eq_add, add_self_div_two, add_neg_cancel,
+    zero_div, Complex.ofReal_zero, zero_mul, Complex.exp_zero, mul_one] at h
+  rw [h]
+  ring
 
 /-- **The Weyl numerator identity in the angle parametrisation:** writing the torus element as
 `diag (e^{iθ}, e^{-iθ})`, the identity of
@@ -223,35 +224,6 @@ theorem character_symPower_torusExp_eq_div {θ : ℝ} (hθ : Real.sin θ ≠ 0) 
     character_symPower_torusExp_eq_sin_div_sin d hθ, Complex.ofReal_div,
     div_eq_div_iff hθ' (mul_ne_zero hI hθ')]
   ring
-
-/-! ### The character away from the maximal torus -/
-
-/-- **The Weyl character formula at an arbitrary element of `SU(2)`.**  Every element is conjugate
-to a torus element `diag (e^{iθ}, e^{-iθ})` (`TauCeti.SU2.exists_isConj_torusExp`), so the formula
-on the torus computes the character of `Symᵈ(ℂ²)` off the torus as well. -/
-theorem character_symPower_eq_sin_div_sin_of_isConj {g : SU2} {θ : ℝ}
-    (hg : IsConj g (torusExp θ)) (hθ : Real.sin θ ≠ 0) :
-    (symPower d).character g = ((Real.sin (((d : ℝ) + 1) * θ) / Real.sin θ : ℝ) : ℂ) := by
-  rw [Representation.character_eq_of_isConj (symPower d) hg,
-    character_symPower_torusExp_eq_sin_div_sin d hθ]
-
-/-- **The Weyl character formula on the Weyl chamber.**  Each element of `SU(2)` is conjugate to a
-torus element whose angle lies in `[0, π]` (`TauCeti.SU2.exists_isConj_torusExp_mem_Icc`), where the
-angle is moreover unique (`TauCeti.SU2.eq_of_mem_Icc_of_isConj_torusExp`); at that angle the closed
-forms above evaluate the character of `Symᵈ(ℂ²)`, the second alternative covering the two endpoints
-`θ = 0, π` of the chamber, which are exactly the angles where the Weyl denominator vanishes. -/
-theorem exists_mem_Icc_character_symPower_eq (g : SU2) :
-    ∃ θ ∈ Set.Icc (0 : ℝ) Real.pi,
-      (symPower d).character g = (symPower d).character (torusExp θ) ∧
-        (Real.sin θ ≠ 0 →
-          (symPower d).character g = ((Real.sin (((d : ℝ) + 1) * θ) / Real.sin θ : ℝ) : ℂ)) ∧
-        (Real.sin θ = 0 →
-          (symPower d).character g = ((d : ℂ) + 1) * (Real.cos θ : ℂ) ^ d) := by
-  obtain ⟨θ, hθ, hval⟩ :=
-    exists_mem_Icc_eq_of_conjInvariant (f := (symPower d).character)
-      (fun u g => Representation.char_conj (symPower d) g u) g
-  exact ⟨θ, hθ, hval, fun h => hval.trans (character_symPower_torusExp_eq_sin_div_sin d h),
-    fun h => hval.trans (character_symPower_torusExp_of_sin_eq_zero d h)⟩
 
 end SU2
 
