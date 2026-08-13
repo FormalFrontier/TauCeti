@@ -146,6 +146,8 @@ noncomputable def vertexReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (
     (Q → ℤ) ≃ₗ[ℤ] (Q → ℤ) :=
   ((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).reverse).prod
 
+/-- Coercing the reflection automorphism along a word to a function gives the corresponding
+pre-reflection product. -/
 @[simp]
 theorem coe_vertexReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     ⇑(vertexReflectionProd Q hl) = ⇑(vertexPreReflectionProd Q l) := by
