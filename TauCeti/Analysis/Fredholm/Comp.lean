@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Fredholm.Basic
+public import TauCeti.Analysis.Fredholm.Index
 
 /-!
 # Composition of Fredholm operators
@@ -59,10 +59,8 @@ theorem index_comp (S : F →L[𝕜] G) (T : E →L[𝕜] F)
   let := hT.finite_coker
   let := hS.finite_ker
   let := hS.finite_coker
-  simp only [index_eq_finrank_sub]
-  rw [ContinuousLinearMap.toLinearMap_comp]
-  have h := LinearMap.index_comp (f := (T : E →ₗ[𝕜] F)) (S : F →ₗ[𝕜] G)
-  simpa only [LinearMap.index_eq_finrank_sub] using h
+  simpa only [index_def, ContinuousLinearMap.toLinearMap_comp] using
+    (LinearMap.index_comp (f := (T : E →ₗ[𝕜] F)) (S : F →ₗ[𝕜] G))
 
 end ContinuousLinearMap
 

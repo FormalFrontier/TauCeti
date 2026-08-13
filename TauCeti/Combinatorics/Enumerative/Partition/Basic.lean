@@ -8,13 +8,9 @@ module
 public import Mathlib.Combinatorics.Enumerative.Partition.Basic
 
 /-!
-# Partitions as decreasing lists of positive parts
+# The finest and coarsest partitions
 
-Mathlib's `Nat.Partition n` records the parts of a partition of `n` as a multiset.  This file
-provides the equivalence `Nat.Partition.equivSortedParts` between partitions of `n` and weakly
-decreasing lists of positive natural numbers summing to `n`, obtained by sorting the parts.
-
-It also records the partition `Nat.Partition.ones n = (1ⁿ)` into `n` parts equal to `1`, the
+This file records the partition `Nat.Partition.ones n = (1ⁿ)` into `n` parts equal to `1`, the
 opposite extreme to Mathlib's coarsest partition `Nat.Partition.indiscrete n = (n)`, whose parts
 are the single part `n` when `n ≠ 0`, and none when `n = 0`.
 -/
@@ -24,40 +20,6 @@ public section
 namespace TauCeti
 
 namespace Nat.Partition
-
-/-- A partition is equivalent to its decreasing list of positive parts. -/
-noncomputable def equivSortedParts (n : ℕ) :
-    n.Partition ≃
-      {w : List ℕ // (w.SortedGE ∧ ∀ x ∈ w, 0 < x) ∧ w.sum = n} where
-  toFun p :=
-    ⟨p.parts.sort (· ≥ ·),
-      ⟨(Multiset.pairwise_sort p.parts (· ≥ ·)).sortedGE,
-        fun x hx => p.parts_pos ((Multiset.mem_sort (r := (· ≥ ·))).mp hx)⟩, by
-        rw [← Multiset.sum_coe, Multiset.sort_eq, p.parts_sum]⟩
-  invFun w :=
-    ⟨w.1, fun {_} hx => w.2.1.2 _ hx, by
-      simpa only [Multiset.sum_coe] using w.2.2⟩
-  left_inv p := by
-    apply Nat.Partition.ext
-    exact Multiset.sort_eq p.parts (· ≥ ·)
-  right_inv w := by
-    apply Subtype.ext
-    exact List.Perm.eq_of_sortedGE
-      (Multiset.pairwise_sort (↑w.1 : Multiset ℕ) (· ≥ ·)).sortedGE w.2.1.1
-      (Multiset.coe_eq_coe.mp (Multiset.sort_eq (↑w.1 : Multiset ℕ) (· ≥ ·)))
-
-/-- Sorting the parts is the forward map of `equivSortedParts`. -/
-@[simp]
-theorem equivSortedParts_apply_coe (n : ℕ) (p : n.Partition) :
-    (equivSortedParts n p).1 = p.parts.sort (· ≥ ·) := by
-  simp [equivSortedParts]
-
-/-- The inverse of `equivSortedParts` has the given list as its multiset of parts. -/
-@[simp]
-theorem equivSortedParts_symm_apply_parts (n : ℕ)
-    (w : {w : List ℕ // (w.SortedGE ∧ ∀ x ∈ w, 0 < x) ∧ w.sum = n}) :
-    ((equivSortedParts n).symm w).parts = w.1 := by
-  simp [equivSortedParts]
 
 /-- The partition `(1ⁿ)` of `n` into `n` parts, each equal to `1`.
 
