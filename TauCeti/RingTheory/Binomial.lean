@@ -49,7 +49,11 @@ namespace TauCeti
 
 open Finset
 
-variable {R : Type*} [Ring R] [BinomialRing R]
+variable {R : Type*}
+
+section Product
+
+variable [Ring R] [BinomialRing R]
 
 /-- The product of two generalized binomial coefficients, expanded as an integral linear
 combination of generalized binomial coefficients in the same element.
@@ -89,7 +93,13 @@ theorem choose_mul_choose (r : R) (m n : ℕ) :
         simpa using Ring.choose_smul_choose r (Nat.le_add_right m ij.1)
       rw [← hproduct, smul_smul]
 
+end Product
+
 /-! ## The integral span -/
+
+section Span
+
+variable [AddCommGroupWithOne R] [Pow R ℕ] [BinomialRing R]
 
 /-- The additive subgroup spanned by all generalized binomial coefficients in `r`. -/
 def ringChooseSpan (r : R) : AddSubgroup R :=
@@ -101,10 +111,22 @@ theorem ringChoose_mem_ringChooseSpan (r : R) (n : ℕ) :
     Ring.choose r n ∈ ringChooseSpan r :=
   AddSubgroup.subset_closure ⟨n, rfl⟩
 
+end Span
+
+section One
+
+variable [NonAssocRing R] [Pow R ℕ] [NatPowAssoc R] [BinomialRing R]
+
 /-- The integral span of the generalized binomial coefficients contains one. -/
 theorem one_mem_ringChooseSpan (r : R) : 1 ∈ ringChooseSpan r := by
   rw [← Ring.choose_zero_right r]
   exact ringChoose_mem_ringChooseSpan r 0
+
+end One
+
+section Subring
+
+variable [Ring R] [BinomialRing R]
 
 /-- The integral span of the generalized binomial coefficients is closed under multiplication.
 
@@ -128,7 +150,7 @@ theorem mul_mem_ringChooseSpan (r : R) {x y : R} (hx : x ∈ ringChooseSpan r)
   | neg_right _ _ _ _ hx => simpa [mul_neg] using AddSubgroup.neg_mem _ hx
 
 /-- The subring whose underlying additive group is spanned by all generalized binomial
-coefficients in `r`. The nontrivial multiplication field is `mul_mem_ringChooseSpan`. -/
+coefficients in `r`. -/
 def ringChooseSubring (r : R) : Subring R where
   toAddSubgroup := ringChooseSpan r
   one_mem' := one_mem_ringChooseSpan r
@@ -176,5 +198,7 @@ theorem ringChooseSubring_le_iff {S : Subring R} {r : R} :
     refine Subring.closure_le.2 ?_
     rintro _ ⟨n, rfl⟩
     exact h n
+
+end Subring
 
 end TauCeti
