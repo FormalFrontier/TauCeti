@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.Algebra.Lie.AdjointAction.Derivation
-public import Mathlib.Algebra.Lie.Derivation.Basic
 
 public section
 
