@@ -7,17 +7,13 @@ module
 
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
-public import Mathlib.LinearAlgebra.TensorProduct.Matrix
-public import Mathlib.RepresentationTheory.Intertwining
 -- The two subalgebras of functions on `GL n k` the definitions below are stated against; this
 -- module also supplies `MvPolynomial.eval`, in which their coordinate form is written.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.PolynomialFunctions
 -- The subalgebra-generic behaviour of matrix coefficients under change of basis, quotients and
 -- tensor products.
 public import TauCeti.RepresentationTheory.MatrixCoefficients
-public import TauCeti.RepresentationTheory.ClassicalGroups.Determinant
 public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
-public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.TensorPower
 

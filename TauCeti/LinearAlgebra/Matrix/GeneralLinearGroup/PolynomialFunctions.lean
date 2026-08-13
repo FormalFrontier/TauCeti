@@ -115,6 +115,8 @@ private theorem aeval_entry_apply (P : MvPolynomial (Fin n × Fin n) k) (g : GL 
     (fun p : Fin n × Fin n => fun h : GL (Fin n) k => (h : Matrix (Fin n) (Fin n) k) p.1 p.2)
     (Pi.evalAlgHom k (fun _ : GL (Fin n) k => k) g) P
 
+/-- **Membership in the polynomial functions**: `f` is polynomial exactly when some polynomial in
+the matrix entries evaluates to `f g` at every `g`. -/
 theorem mem_polynomialFunctions {f : GL (Fin n) k → k} :
     f ∈ polynomialFunctions k n ↔ ∃ P : MvPolynomial (Fin n × Fin n) k, ∀ g : GL (Fin n) k,
       f g = MvPolynomial.eval (fun p => (g : Matrix (Fin n) (Fin n) k) p.1 p.2) P := by
@@ -124,6 +126,8 @@ theorem mem_polynomialFunctions {f : GL (Fin n) k → k} :
   · rintro ⟨P, hP⟩
     exact ⟨P, funext fun g => (aeval_entry_apply P g).trans (hP g).symm⟩
 
+/-- **Membership in the rational functions**: `f` is rational exactly when some determinant power
+`det ^ m` makes `det ^ m * f` the evaluation of a polynomial in the matrix entries. -/
 theorem mem_rationalFunctions {f : GL (Fin n) k → k} :
     f ∈ rationalFunctions k n ↔ ∃ (P : MvPolynomial (Fin n × Fin n) k) (m : ℕ),
       ∀ g : GL (Fin n) k, (g : Matrix (Fin n) (Fin n) k).det ^ m * f g

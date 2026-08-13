@@ -32,6 +32,9 @@ so that a proof of the condition never has to be repeated for each choice:
 * against a tensor product of bases, the matrix coefficients of a tensor product of representations
   are the products of matrix coefficients of the two factors.
 
+The first two need only a commutative semiring of scalars; the tensor-product entries are read off
+`TensorProduct.toMatrix_map`, which Mathlib states over a commutative ring.
+
 ## Main results
 
 * `TauCeti.Representation.toMatrix_mem_of_toMatrix_mem_of_surjective`: the matrix coefficients of a
@@ -51,9 +54,11 @@ namespace TauCeti
 
 namespace Representation
 
-variable {k : Type u} [CommRing k] {G : Type z} [Monoid G] {W : Type v} [AddCommGroup W]
+section CommSemiring
+
+variable {k : Type u} [CommSemiring k] {G : Type z} [Monoid G] {W : Type v} [AddCommMonoid W]
   [Module k W]
-variable {V : Type y} [AddCommGroup V] [Module k V]
+variable {V : Type y} [AddCommMonoid V] [Module k V]
 
 /-- **The matrix coefficients of a quotient representation stay inside any subalgebra of
 functions.**  If `σ` is the image of `ρ` under a surjective intertwining map, and every matrix
@@ -100,6 +105,14 @@ theorem toMatrix_mem_of_toMatrix_mem (A : Subalgebra k (G → k))
     (fun g => LinearMap.toMatrix c c (ρ g) i j) ∈ A :=
   toMatrix_mem_of_toMatrix_mem_of_surjective A b c (.id ρ) (fun v => ⟨v, rfl⟩) h i j
 
+end CommSemiring
+
+section CommRing
+
+variable {k : Type u} [CommRing k] {G : Type z} [Monoid G] {W : Type v} [AddCommGroup W]
+  [Module k W]
+variable {V : Type y} [AddCommGroup V] [Module k V]
+
 /-- Against a tensor product of bases, the matrix coefficients of a tensor product of
 representations are the products of the matrix coefficients of the two factors: the Kronecker
 product, read entrywise. -/
@@ -129,6 +142,8 @@ theorem toMatrix_tprod_mem (A : Subalgebra k (G → k))
     funext fun g => toMatrix_tprod b c g i j
   rw [hentry]
   exact mul_mem (hb i.1 j.1) (hc i.2 j.2)
+
+end CommRing
 
 end Representation
 
