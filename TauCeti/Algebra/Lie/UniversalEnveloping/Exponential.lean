@@ -13,17 +13,19 @@ public import TauCeti.RingTheory.Nilpotent.Exp
 
 Let `L` be a Lie algebra over `ℚ` with distinguished root vectors `e : ι → L` and Cartan vectors
 `h : κ → L`, and let `U_ℤ = kostantForm e h` be the integral form they generate inside
-`UniversalEnvelopingAlgebra ℚ L`. A root vector `eᵢ` is never nilpotent in the enveloping algebra
-itself, but whenever its image under an algebra map `f` is nilpotent — an extra hypothesis
-throughout, satisfied by the finite-dimensional representations the construction is applied to —
+`UniversalEnvelopingAlgebra ℚ L`. A root vector `eᵢ` need not be nilpotent in the enveloping
+algebra itself — a nonzero Chevalley root vector never is, the enveloping algebra being a domain —
+but whenever its image under an algebra map `f` is nilpotent — an extra hypothesis throughout,
+satisfied by the finite-dimensional representations the construction is applied to —
 
 ```text
 x_i(t) = exp (t • f (ι ℚ (eᵢ))) = ∑ n, tⁿ • f (eᵢ⁽ⁿ⁾)
 ```
 
-makes sense and has integer coefficients on the images of the Kostant generators. These are the
-**root subgroup elements** of the Chevalley--Demazure construction: the `t`-parameter family of
-units by which the group scheme over `ℤ` is generated.
+makes sense and has integer coefficients on the images of the Kostant generators. What is built
+here is this integral-point family of units, indexed by `t : ℤ`; a later development is to exhibit
+it as the `ℤ`-points of a **root subgroup map** `x_α : 𝔾ₐ → G` of the Chevalley--Demazure
+construction. No scheme, and no morphism of schemes, appears below.
 
 The results below record what integrality buys. First, `x_i(t)` lies in the image of the Kostant
 form, and so does the whole one-parameter group of which it is a member. Second, and this is the

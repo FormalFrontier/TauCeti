@@ -129,7 +129,6 @@ end Endomorphisms
 
 For a Chevalley root vector this is the root subgroup map `x_α` evaluated on the integral points of
 the additive group. -/
-@[expose]
 noncomputable def expSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ →* Aˣ where
   toFun t :=
     { val := exp ((Multiplicative.toAdd t : ℤ) • x)
@@ -148,7 +147,9 @@ noncomputable def expSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ �
 @[simp]
 theorem coe_expSMulHom {x : A} (hx : IsNilpotent x) (t : Multiplicative ℤ) :
     ((expSMulHom hx t : Aˣ) : A) = exp ((Multiplicative.toAdd t : ℤ) • x) :=
-  rfl
+  -- The parentheses opt out of the exported-theorem exposure check, so that `expSMulHom` can stay
+  -- sealed and this `@[simp]` lemma remain its public characterization.
+  (rfl)
 
 /-! ## Conjugation and the commutator endomorphism -/
 
