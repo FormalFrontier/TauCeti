@@ -412,8 +412,7 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
 
-noncomputable local instance : Module ℚ≥0 (_root_.UniversalEnvelopingAlgebra ℚ L) :=
-  TauCeti.moduleNNRat
+attribute [local instance] TauCeti.moduleNNRat
 
 /-- The rank-one Kostant straightening formula in a universal enveloping algebra over `ℚ`,
 stated from the three `sl₂` Lie-bracket relations. -/
