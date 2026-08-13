@@ -37,7 +37,7 @@ public import TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Thompson
 This file assembles the twenty-six independently transcribed sporadic-group presentations into the
 total function `TauCeti.SporadicName.presentation`. Each branch is the explicit, cited
 `TauCeti.GroupPresentation` defined in its group-specific module. The theorem
-`TauCeti.SporadicName.presentation_matchesMetadata` combines the individual generator- and
+`TauCeti.presentation_matchesMetadata` combines the individual generator- and
 relator-count checks, while `TauCeti.SporadicName.Group` is the concrete group defined by the
 selected presentation.
 
@@ -53,7 +53,7 @@ imported module.
 
 ## Main results
 
-* `TauCeti.SporadicName.presentation_matchesMetadata`: every selected presentation has the stated
+* `TauCeti.presentation_matchesMetadata`: every selected presentation has the stated
   number of generators and relators.
 -/
 
@@ -91,7 +91,7 @@ def SporadicName.presentation : SporadicName → GroupPresentation
   | .M => Sporadic.Monster.presentation
 
 /-- Every sporadic presentation has the generator and relator counts stated in its metadata. -/
-theorem SporadicName.presentation_matchesMetadata (s : SporadicName) :
+theorem presentation_matchesMetadata (s : SporadicName) :
     s.presentation.matchesMetadata := by
   cases s with
   | M11 => exact Sporadic.m11Presentation_matchesMetadata
