@@ -13,11 +13,12 @@ public import TauCeti.Analysis.Calculus.IteratedDerivWithin
 /-!
 # Completely monotone functions
 
-A function `f : ℝ → ℝ` is *completely monotone on a set* if it admits a Taylor-series witness
-whose coefficients alternate in sign. This formulation remains meaningful on sets that are not
-uniquely differentiable. On a `UniqueDiffOn` set it is equivalent to smoothness together with
-alternating signs for the iterated derivatives within the set. The principal specialization in
-this development uses the closed half-line `[0, ∞)`:
+A function `f : ℝ → ℝ` is *completely monotone on a set* if its reflection `u ↦ f (-u)` is
+absolutely monotone on the reflected set. Mathlib formulates absolute monotonicity through a
+Taylor-series witness, so this remains meaningful on sets that are not uniquely differentiable.
+On a `UniqueDiffOn` set it is equivalent to smoothness together with alternating signs for the
+iterated derivatives within the set. The principal specialization in this development uses the
+closed half-line `[0, ∞)`:
 `(-1)ⁿ f⁽ⁿ⁾(t) ≥ 0` for every `n` and every `t ≥ 0`. Equivalently `f` is nonnegative,
 nonincreasing, convex, and so on through every order. Bernstein's theorem identifies the
 completely monotone functions on the *open* half-line `(0, ∞)` with the Laplace transforms of
@@ -37,8 +38,8 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
 
 ## Main declarations
 
-* `TauCeti.CompletelyMonotoneOn`: complete monotonicity on an arbitrary set, formulated through a
-  Taylor-series witness in parallel with Mathlib's `AbsolutelyMonotoneOn`.
+* `TauCeti.CompletelyMonotoneOn`: complete monotonicity on an arbitrary set, defined by reflecting
+  Mathlib's `AbsolutelyMonotoneOn` predicate.
 * `TauCeti.CompletelyMonotoneOn.of_contDiff`: a globally smooth function whose ordinary iterated
   derivatives have alternating signs on a set is completely monotone there.
 * `TauCeti.CompletelyMonotoneOn.add`, `TauCeti.CompletelyMonotoneOn.smul`: closure under addition
@@ -79,42 +80,52 @@ open scoped ContDiff Topology
 
 namespace TauCeti
 
-/-- A function `f : ℝ → ℝ` is **completely monotone on a set `s`** if it admits a Taylor series on
-`s` whose `n`th coefficient has sign `(-1)ⁿ`. As in Mathlib's `AbsolutelyMonotoneOn`, the Taylor
-witness makes the definition meaningful even when `s` is not uniquely differentiable. Under
-`UniqueDiffOn ℝ s`, this is equivalent to the expected condition on `iteratedDerivWithin`. -/
+/-- A function `f : ℝ → ℝ` is **completely monotone on a set `s`** if its reflection
+`u ↦ f (-u)` is absolutely monotone on the reflected set `-s`. Mathlib's
+`AbsolutelyMonotoneOn` uses a Taylor-series witness, so this definition remains meaningful even
+when `s` is not uniquely differentiable. Under `UniqueDiffOn ℝ s`, it is equivalent to the
+expected alternating-sign condition on `iteratedDerivWithin`. -/
 def CompletelyMonotoneOn (f : ℝ → ℝ) (s : Set ℝ) : Prop :=
-  ∃ p : ℝ → FormalMultilinearSeries ℝ ℝ ℝ,
-    HasFTaylorSeriesUpToOn ∞ f p s ∧
-      ∀ (n : ℕ) ⦃x : ℝ⦄, x ∈ s → 0 ≤ (-1) ^ n * p x n fun _ ↦ (1 : ℝ)
+  AbsolutelyMonotoneOn (fun u => f (-u)) (-s)
 
 namespace CompletelyMonotoneOn
 
 variable {f : ℝ → ℝ} {s : Set ℝ}
 
+private theorem uniqueDiffOn_neg (hs : UniqueDiffOn ℝ s) : UniqueDiffOn ℝ (-s) := by
+  rw [← Set.image_neg_eq_neg]
+  exact (ContinuousLinearEquiv.neg ℝ).uniqueDiffOn_image hs
+
 /-- A completely monotone function on `s` is smooth on `s`. -/
 theorem contDiffOn (hf : CompletelyMonotoneOn f s) : ContDiffOn ℝ ∞ f s := by
-  obtain ⟨_, hp, _⟩ := hf
-  exact hp.contDiffOn
+  have hneg := AbsolutelyMonotoneOn.contDiffOn hf
+  have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' (-s)) = s := by
+    ext x
+    simp
+  rw [← hpre]
+  simpa [Function.comp_def] using
+    hneg.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
 
 /-- A globally `C^∞` function whose iterated derivatives have alternating signs on `s` is
 completely monotone on `s`. The set `s` need *not* satisfy `UniqueDiffOn`. -/
 theorem of_contDiff (hf : ContDiff ℝ ∞ f)
     (h : ∀ n : ℕ, ∀ x ∈ s, 0 ≤ (-1) ^ n * iteratedDeriv n f x) :
     CompletelyMonotoneOn f s := by
-  refine ⟨ftaylorSeries ℝ f, (hf.ftaylorSeries).hasFTaylorSeriesUpToOn s, fun n x hx => ?_⟩
-  exact iteratedDeriv_eq_iteratedFDeriv (𝕜 := ℝ) (f := f) ▸ h n x hx
+  refine AbsolutelyMonotoneOn.of_contDiff (hf.comp contDiff_neg) ?_
+  intro n x hx
+  rw [iteratedDeriv_comp_neg]
+  simpa [smul_eq_mul] using h n (-x) (by simpa using hx)
 
 /-- On a uniquely differentiable set, the iterated derivatives of a completely monotone function
 have the expected alternating signs. -/
 theorem neg_one_pow_mul_iteratedDerivWithin_nonneg (hf : CompletelyMonotoneOn f s)
     (hs : UniqueDiffOn ℝ s) (n : ℕ) {x : ℝ} (hx : x ∈ s) :
     0 ≤ (-1) ^ n * iteratedDerivWithin n f s x := by
-  obtain ⟨p, hp, hp_nonneg⟩ := hf
-  have heq : p x n = iteratedFDerivWithin ℝ n f s x :=
-    hp.eq_iteratedFDerivWithin_of_uniqueDiffOn (mod_cast le_top) hs hx
-  rw [iteratedDerivWithin_eq_iteratedFDerivWithin, ← heq]
-  exact hp_nonneg n hx
+  have hsneg := uniqueDiffOn_neg hs
+  have h := AbsolutelyMonotoneOn.iteratedDerivWithin_nonneg hf hsneg n
+    (x := -x) (by simpa using hx)
+  rw [iteratedDerivWithin_comp_neg] at h
+  simpa [smul_eq_mul] using h
 
 /-- On a uniquely differentiable set, complete monotonicity is equivalent to smoothness together
 with the usual alternating-sign condition on iterated derivatives within the set. -/
@@ -125,30 +136,36 @@ theorem iff_iteratedDerivWithin_nonneg (hs : UniqueDiffOn ℝ s) :
   refine ⟨fun hf => ⟨hf.contDiffOn,
     fun n _ hx => hf.neg_one_pow_mul_iteratedDerivWithin_nonneg hs n hx⟩, ?_⟩
   rintro ⟨hcont, hsign⟩
-  refine ⟨ftaylorSeriesWithin ℝ f s, hcont.ftaylorSeriesWithin hs, fun n x hx => ?_⟩
-  exact iteratedDerivWithin_eq_iteratedFDerivWithin (𝕜 := ℝ) (f := f) (s := s) ▸ hsign n x hx
+  have hsneg := uniqueDiffOn_neg hs
+  rw [CompletelyMonotoneOn,
+    AbsolutelyMonotoneOn.iff_iteratedDerivWithin_nonneg hsneg]
+  refine ⟨?_, fun n x hx => ?_⟩
+  · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' s) = -s := by
+      ext x
+      simp
+    rw [← hpre]
+    simpa [Function.comp_def] using
+      hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
+  · rw [iteratedDerivWithin_comp_neg]
+    simpa [smul_eq_mul] using hsign n (-x) (by simpa using hx)
 
 /-! ### Closure properties -/
 
 /-- The sum of two completely monotone functions is completely monotone. -/
 theorem add {g : ℝ → ℝ} (hf : CompletelyMonotoneOn f s) (hg : CompletelyMonotoneOn g s) :
     CompletelyMonotoneOn (f + g) s := by
-  obtain ⟨p, hp, hp_nonneg⟩ := hf
-  obtain ⟨q, hq, hq_nonneg⟩ := hg
-  refine ⟨p + q, hp.add hq, fun n x hx => ?_⟩
-  simp only [Pi.add_apply, FormalMultilinearSeries.add_apply, add_apply, mul_add]
-  exact add_nonneg (hp_nonneg n hx) (hq_nonneg n hx)
+  rw [CompletelyMonotoneOn]
+  convert AbsolutelyMonotoneOn.add hf hg using 1
+  ext u
+  rfl
 
 /-- A nonnegative scalar multiple of a completely monotone function is completely monotone. -/
 theorem smul {c : ℝ} (hf : CompletelyMonotoneOn f s) (hc : 0 ≤ c) :
     CompletelyMonotoneOn (c • f) s := by
-  obtain ⟨p, hp, hp_nonneg⟩ := hf
-  set T : ℝ →L[ℝ] ℝ := c • ContinuousLinearMap.id ℝ ℝ with hT
-  have hcomp : (T ∘ f) = c • f := by ext x; simp [hT, smul_eq_mul]
-  refine ⟨_, hcomp ▸ hp.continuousLinearMap_comp T, fun n x hx => ?_⟩
-  simp only [ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp_apply, hT,
-    smul_apply, ContinuousLinearMap.id_apply, smul_eq_mul]
-  simpa only [mul_assoc, mul_left_comm, mul_comm] using mul_nonneg hc (hp_nonneg n hx)
+  rw [CompletelyMonotoneOn]
+  convert AbsolutelyMonotoneOn.smul hf hc using 1
+  ext u
+  rfl
 
 end CompletelyMonotoneOn
 
@@ -179,40 +196,11 @@ lemma isCompletelyMonotone_iff_completelyMonotoneOn {f : ℝ → ℝ} :
 closed half-line through zero. -/
 lemma isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg {f : ℝ → ℝ} :
     IsCompletelyMonotone f ↔ AbsolutelyMonotoneOn (fun u => f (-u)) (Iic 0) := by
-  rw [isCompletelyMonotone_iff,
-    AbsolutelyMonotoneOn.iff_iteratedDerivWithin_nonneg (uniqueDiffOn_Iic 0)]
-  constructor
-  -- Reflect smoothness and the alternating-sign condition from `[0, ∞)` to `(-∞, 0]`.
-  · rintro ⟨hcont, hsign⟩
-    refine ⟨?_, fun n u hu => ?_⟩
-    · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Ici 0) = Iic 0 := by
-        ext x
-        simp
-      rw [← hpre]
-      simpa [Function.comp_def] using
-        hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
-    · rw [iteratedDerivWithin_comp_neg (n := n) (f := f) (s := Iic 0) u]
-      have hset : (-Iic (0 : ℝ) : Set ℝ) = Ici 0 := by
-        ext x
-        simp
-      rw [hset]
-      simpa [smul_eq_mul] using hsign n (-u) (neg_nonneg.mpr hu)
-  -- Reflect the absolutely-monotone data back to the original closed half-line.
-  · rintro ⟨hcont, hsign⟩
-    refine ⟨?_, fun n t ht => ?_⟩
-    · have hpre : ((-ContinuousLinearMap.id ℝ ℝ) ⁻¹' Iic 0) = Ici 0 := by
-        ext x
-        simp
-      rw [← hpre]
-      simpa [Function.comp_def] using
-        hcont.comp_continuousLinearMap (-ContinuousLinearMap.id ℝ ℝ)
-    · have hsign' := hsign n (-t) (mem_Iic.mpr (neg_nonpos.mpr ht))
-      rw [iteratedDerivWithin_comp_neg (n := n) (f := f) (s := Iic 0) (-t)] at hsign'
-      have hset : (-Iic (0 : ℝ) : Set ℝ) = Ici 0 := by
-        ext x
-        simp
-      rw [hset] at hsign'
-      simpa [smul_eq_mul] using hsign'
+  rw [isCompletelyMonotone_iff_completelyMonotoneOn, CompletelyMonotoneOn]
+  have hset : (-(Ici (0 : ℝ)) : Set ℝ) = Iic 0 := by
+    ext x
+    simp
+  rw [hset]
 
 namespace IsCompletelyMonotone
 
