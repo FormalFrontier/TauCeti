@@ -139,52 +139,93 @@ theorem titsPolarForm_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, Is
 
 /-! ### The Coxeter transformation as an automorphism -/
 
-/-- Over loopless vertices the reversed word undoes the word: the simple reflections are
-involutions, and are unwound from the outside in. -/
-theorem vertexPreReflectionProd_reverse_apply {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i))
-    (d : Q → ℤ) :
-    vertexPreReflectionProd Q l.reverse (vertexPreReflectionProd Q l d) = d := by
-  induction l generalizing d with
-  | nil => simp
-  | cons j l ih =>
-    rw [List.reverse_cons, vertexPreReflectionProd_apply_cons, vertexPreReflectionProd_append,
-      Module.End.mul_apply, ih (fun i hi ↦ hl i (by simp [hi]))]
-    simpa using involutive_vertexPreReflection Q (hl j (by simp)) d
-
-/-- The reflection product along a word in loopless vertices is bijective, the reversed word
-providing the inverse. -/
-theorem vertexPreReflectionProd_bijective {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
-    Function.Bijective (vertexPreReflectionProd Q l) := by
-  refine Function.bijective_iff_has_inverse.mpr ⟨vertexPreReflectionProd Q l.reverse,
-    vertexPreReflectionProd_reverse_apply Q hl, fun d ↦ ?_⟩
-  have h := vertexPreReflectionProd_reverse_apply Q (l := l.reverse)
-    (fun i hi ↦ hl i (by simpa using hi)) d
-  rwa [List.reverse_reverse] at h
-
 /-- The reflection product along a word in loopless vertices, as a linear automorphism of the
 dimension-vector lattice; over a repetition-free word running through all the vertices this is the
 Coxeter transformation. -/
 noncomputable def vertexReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     (Q → ℤ) ≃ₗ[ℤ] (Q → ℤ) :=
-  LinearEquiv.ofBijective (vertexPreReflectionProd Q l)
-    (vertexPreReflectionProd_bijective Q hl)
+  ((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).reverse).prod
 
 @[simp]
 theorem coe_vertexReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     ⇑(vertexReflectionProd Q hl) = ⇑(vertexPreReflectionProd Q l) := by
-  funext d
-  simp [vertexReflectionProd]
+  have hlist :
+      l.attach.map (fun i : {i // i ∈ l} ↦ (vertexReflection Q (hl i.1 i.2)).toLinearMap)
+        = l.map (vertexPreReflection Q) := by
+    rw [← List.attach_map_val (f := vertexPreReflection Q)]
+    apply List.map_congr_left
+    intro i hi
+    apply LinearMap.coe_injective
+    exact coe_vertexReflection Q (hl i.1 i.2)
+  have h : (vertexReflectionProd Q hl).toLinearMap = vertexPreReflectionProd Q l := by
+    rw [vertexReflectionProd, vertexPreReflectionProd]
+    calc
+      _ = (((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).reverse).map
+          (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
+            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))).prod :=
+        map_list_prod (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
+            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))
+            (l.attach.map fun i : {i // i ∈ l} ↦
+              vertexReflection Q (hl i.1 i.2)).reverse
+      _ = (l.attach.map (fun i : {i // i ∈ l} ↦
+          (vertexReflection Q (hl i.1 i.2)).toLinearMap)).reverse.prod := by
+        apply congrArg List.prod
+        rw [List.map_reverse, List.map_map]
+        apply congrArg List.reverse
+        apply List.map_congr_left
+        intro i hi
+        exact LinearEquiv.automorphismGroup.toLinearMapMonoidHom_apply _
+      _ = _ := by rw [hlist, ← List.map_reverse]
+  exact congrArg (fun f : Module.End ℤ (Q → ℤ) ↦ (f : (Q → ℤ) → (Q → ℤ))) h
+
+/-- The reflection product along a word in loopless vertices is bijective. -/
+theorem vertexPreReflectionProd_bijective {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    Function.Bijective (vertexPreReflectionProd Q l) := by
+  rw [← coe_vertexReflectionProd Q hl]
+  exact (vertexReflectionProd Q hl).bijective
 
 /-- The inverse automorphism is the reflection product along the reversed word. -/
 @[simp]
 theorem coe_vertexReflectionProd_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     ⇑(vertexReflectionProd Q hl).symm = ⇑(vertexPreReflectionProd Q l.reverse) := by
-  funext d
-  rw [LinearEquiv.symm_apply_eq, coe_vertexReflectionProd]
-  have h := vertexPreReflectionProd_reverse_apply Q (l := l.reverse)
-    (fun i hi ↦ hl i (by simpa using hi)) d
-  rw [List.reverse_reverse] at h
-  exact h.symm
+  have hlist :
+      l.attach.map (fun i : {i // i ∈ l} ↦ (vertexReflection Q (hl i.1 i.2)).toLinearMap)
+        = l.map (vertexPreReflection Q) := by
+    rw [← List.attach_map_val (f := vertexPreReflection Q)]
+    apply List.map_congr_left
+    intro i hi
+    apply LinearMap.coe_injective
+    exact coe_vertexReflection Q (hl i.1 i.2)
+  have hinv : (vertexReflectionProd Q hl).symm =
+      (l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).prod := by
+    rw [vertexReflectionProd]
+    change ((l.attach.map fun i : {i // i ∈ l} ↦
+      vertexReflection Q (hl i.1 i.2)).reverse.prod)⁻¹ = _
+    rw [List.prod_reverse_noncomm]
+    simp only [inv_inv, List.map_map]
+    congr 1
+    apply List.map_congr_left
+    intro i hi
+    exact vertexReflection_symm Q (hl i.1 i.2)
+  have h : (vertexReflectionProd Q hl).symm.toLinearMap =
+      vertexPreReflectionProd Q l.reverse := by
+    rw [hinv, vertexPreReflectionProd, List.reverse_reverse]
+    calc
+      _ = ((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).map
+          (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
+            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))).prod :=
+        map_list_prod (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
+            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))
+            (l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2))
+      _ = (l.attach.map (fun i : {i // i ∈ l} ↦
+          (vertexReflection Q (hl i.1 i.2)).toLinearMap)).prod := by
+        apply congrArg List.prod
+        rw [List.map_map]
+        apply List.map_congr_left
+        intro i hi
+        exact LinearEquiv.automorphismGroup.toLinearMapMonoidHom_apply _
+      _ = _ := by rw [hlist]
+  exact congrArg (fun f : Module.End ℤ (Q → ℤ) ↦ (f : (Q → ℤ) → (Q → ℤ))) h
 
 /-- The reflection product along a word in loopless vertices permutes every level set of the
 Tits form; at the level `1` this says that it permutes the roots of `Q`. -/
