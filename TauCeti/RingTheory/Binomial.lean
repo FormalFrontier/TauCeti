@@ -51,9 +51,11 @@ namespace TauCeti.Ring
 
 open Finset
 
-variable {R : Type*} [Ring R] [BinomialRing R]
-
 /-! ## Weighted Pascal identities -/
+
+section WeightedPascal
+
+variable {R : Type*} [NonAssocRing R] [Pow R ℕ] [NatPowAssoc R] [BinomialRing R]
 
 /-- A scalar-weighted form of Pascal's identity:
 
@@ -63,6 +65,7 @@ c (r - 1 choose k + 1) + (r + c) (r - 1 choose k)
 ```
 
 No commutativity between `c` and `r` is needed: every occurrence of `c` is on the left. -/
+@[simp]
 theorem mul_weighted_choose_add_mul_choose (r c : R) (k : ℕ) :
     c * _root_.Ring.choose (r - 1) (k + 1) +
         (r + c) * _root_.Ring.choose (r - 1) k =
@@ -72,11 +75,12 @@ theorem mul_weighted_choose_add_mul_choose (r c : R) (k : ℕ) :
       (k + 1) • _root_.Ring.choose r (k + 1) =
         r * _root_.Ring.choose (r - 1) k := by
     simpa [Nat.choose_one_right] using
-      _root_.Ring.choose_smul_choose r (show 1 ≤ k + 1 by omega)
+      _root_.Ring.choose_smul_choose r (n := k + 1) (k := 1) (by omega)
   rw [add_mul, ← hmul]
-  rw [show _root_.Ring.choose r (k + 1) =
-      _root_.Ring.choose (r - 1) k + _root_.Ring.choose (r - 1) (k + 1) by
-    simpa only [sub_add_cancel] using _root_.Ring.choose_succ_succ (r - 1) k]
+  have hpascal : _root_.Ring.choose r (k + 1) =
+      _root_.Ring.choose (r - 1) k + _root_.Ring.choose (r - 1) (k + 1) := by
+    simpa only [sub_add_cancel] using _root_.Ring.choose_succ_succ (r - 1) k
+  rw [hpascal]
   rw [mul_add]
   abel
 
@@ -98,7 +102,11 @@ theorem nsmul_weighted_choose_add_mul_choose (r : R) (s k : ℕ) :
   rw [← add_nsmul]
   congr 1
 
+end WeightedPascal
+
 /-! ## Negating the argument -/
+
+variable {R : Type*} [Ring R] [BinomialRing R]
 
 /-- Negating the argument of a generalized binomial coefficient of positive degree expands, by
 Chu--Vandermonde, into a signed sum of the coefficients of the original argument weighted by
