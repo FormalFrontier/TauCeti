@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Probability.StrongLaw
--- Public: the statements are about `Measure.infinitePi` and independence of its coordinates.
+-- Public: the statement is about `Measure.infinitePi`; the proof uses `iIndepFun_infinitePi`.
 public import Mathlib.Probability.Independence.InfinitePi
 
 /-!
@@ -18,22 +18,18 @@ and this file specializes the strong law to it.
 
 ## Main results
 
-* `TauCeti.Probability.iIndepFun_eval_infinitePi` — the coordinates of an infinite product measure
-  are independent;
 * `TauCeti.Probability.strong_law_ae_infinitePi` — for `f` integrable against `Q`, the averages
   `n⁻¹ • ∑_{i < n} f (xᵢ)` converge `Q^{⊗ℕ}`-almost everywhere to `∫ f dQ`.
 
 ## Implementation
 
-Independence of the coordinates is read off Mathlib's characterization
-`iIndepFun_iff_map_fun_eq_infinitePi_map`: the joint law of the coordinate family is the identity
-pushforward of the product measure, and its marginals are the factors by
-`Measure.infinitePi_map_eval`. Nothing is reproved about product measures.
+Independence of the coordinates is Mathlib's `ProbabilityTheory.iIndepFun_infinitePi` for the
+identity variables. Nothing is reproved about product measures.
 
 The strong law itself is then Mathlib's, applied to `x ↦ f (x i)`: the three hypotheses come from
-that independence, from `Measure.infinitePi_map_eval` again (which makes the coordinates
-identically distributed and transports integrability), and from `integral_map` (which identifies
-the limit `𝔼[f ∘ eval 0]` with `∫ f dQ`).
+that independence, from `Measure.infinitePi_map_eval` (which makes the coordinates identically
+distributed and transports integrability), and from `integral_map` (which identifies the limit
+`𝔼[f ∘ eval 0]` with `∫ f dQ`).
 
 This is general probability theory with no exchangeability in its statements. It is used by the
 conditional strong law for conditionally i.i.d. processes in
@@ -54,14 +50,6 @@ open scoped Topology
 namespace TauCeti
 
 namespace Probability
-
-/-- **The coordinates of an infinite product measure are independent.** -/
-theorem iIndepFun_eval_infinitePi {ι : Type*} {β : ι → Type*} [∀ i, MeasurableSpace (β i)]
-    (Q : ∀ i, Measure (β i)) [∀ i, IsProbabilityMeasure (Q i)] :
-    iIndepFun (fun (i : ι) (x : ∀ j, β j) => x i) (Measure.infinitePi Q) := by
-  rw [iIndepFun_iff_map_fun_eq_infinitePi_map fun i => measurable_pi_apply i]
-  simp_rw [Measure.infinitePi_map_eval]
-  exact Measure.map_id
 
 variable {α : Type*} [MeasurableSpace α] {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [CompleteSpace E] [MeasurableSpace E] [BorelSpace E]
@@ -94,7 +82,8 @@ theorem strong_law_ae_infinitePi (Q : Measure α) [IsProbabilityMeasure Q] {f : 
   have hindep : ∀ i j : ℕ, i ≠ j →
       IndepFun (fun x : ℕ → α => f (x i)) (fun x : ℕ → α => f (x j)) P :=
     fun _ _ hij =>
-      ((iIndepFun_eval_infinitePi fun _ : ℕ => Q).comp (fun _ => f) fun _ => hf).indepFun hij
+      ((iIndepFun_infinitePi (P := fun _ : ℕ => Q) (X := fun _ x => x)
+        fun _ => measurable_id).comp (fun _ => f) fun _ => hf).indepFun hij
   have hlimit : ∫ x, f (x 0) ∂P = ∫ y, f y ∂Q := by
     rw [← hmap 0, integral_map (hcoord 0).aemeasurable (by rw [hmap 0]; exact hint.1)]
   simpa only [hlimit] using
