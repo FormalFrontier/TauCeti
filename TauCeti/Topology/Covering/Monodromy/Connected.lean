@@ -133,27 +133,16 @@ fundamental-groupoid actions.
 The underlying action is the ordinary covering-space monodromy functor, and the underlying map
 of every morphism is its fibrewise natural transformation. -/
 noncomputable def monodromyFunctor (X : TopCat.{u}) [LocallyPathConnectedSpace X] :
-    ConnectedCoveringSpace X ⥤ PretransitiveFundamentalGroupoidAction X where
-  obj p := ⟨(CoveringSpace.monodromyFunctor X).obj ((forget X).obj p),
-    monodromy_isFiberwisePretransitive p⟩
-  map f := ObjectProperty.homMk
-    ((CoveringSpace.monodromyFunctor X).map ((forget X).map f))
-  map_id p := by
-    apply ObjectProperty.hom_ext
-    convert (CoveringSpace.monodromyFunctor X).map_id ((forget X).obj p) using 1
-    all_goals rfl
-  map_comp f g := by
-    apply ObjectProperty.hom_ext
-    convert (CoveringSpace.monodromyFunctor X).map_comp ((forget X).map f) ((forget X).map g)
-      using 1
-    all_goals rfl
+    ConnectedCoveringSpace X ⥤ PretransitiveFundamentalGroupoidAction X :=
+  ObjectProperty.lift _ (forget X ⋙ CoveringSpace.monodromyFunctor X)
+    monodromy_isFiberwisePretransitive
 
 /-- Forgetting fibrewise pretransitivity recovers the ordinary monodromy functor after including
 connected covers into all covers. -/
-theorem monodromyFunctor_comp_forget [LocallyPathConnectedSpace X] :
-    monodromyFunctor X ⋙ PretransitiveFundamentalGroupoidAction.forget X =
+noncomputable def monodromyFunctorCompForgetIso [LocallyPathConnectedSpace X] :
+    monodromyFunctor X ⋙ PretransitiveFundamentalGroupoidAction.forget X ≅
       forget X ⋙ CoveringSpace.monodromyFunctor X :=
-  (rfl)
+  ObjectProperty.liftCompιIso _ _ _
 
 /-- The underlying action of connected-cover monodromy is the ordinary monodromy action. -/
 @[simp]
@@ -161,7 +150,12 @@ theorem monodromyFunctor_obj_obj [LocallyPathConnectedSpace X]
     (p : ConnectedCoveringSpace X) :
     ((monodromyFunctor X).obj p).obj =
       (CoveringSpace.monodromyFunctor X).obj ((forget X).obj p) :=
-  (rfl)
+  by
+    simpa only [monodromyFunctor, ObjectProperty.ι_obj, Functor.comp_obj] using
+      ObjectProperty.ι_obj_lift_obj
+        (FundamentalGroupoidAction.isFiberwisePretransitive X)
+        (forget X ⋙ CoveringSpace.monodromyFunctor X)
+        monodromy_isFiberwisePretransitive p
 
 /-- The underlying natural transformation assigned to a map of connected covers is the one
 assigned by ordinary covering-space monodromy. -/
@@ -172,21 +166,21 @@ theorem monodromyFunctor_map_hom [LocallyPathConnectedSpace X]
       eqToHom (monodromyFunctor_obj_obj p) ≫
         (CoveringSpace.monodromyFunctor X).map ((forget X).map f) ≫
         eqToHom (monodromyFunctor_obj_obj q).symm :=
-  (rfl)
+  by
+    convert ObjectProperty.ι_obj_lift_map
+      (FundamentalGroupoidAction.isFiberwisePretransitive X)
+      (forget X ⋙ CoveringSpace.monodromyFunctor X)
+      monodromy_isFiberwisePretransitive f using 1 <;> rfl
 
 /-- Connected-cover monodromy is faithful. -/
 instance monodromyFunctor_faithful [LocallyPathConnectedSpace X] :
     (monodromyFunctor X).Faithful :=
-  monodromyFunctor_comp_forget.faithful_of_comp
+  inferInstanceAs <| (ObjectProperty.lift _ _ _).Faithful
 
 /-- Over a locally path-connected base, connected-cover monodromy is full. -/
 instance monodromyFunctor_full [LocallyPathConnectedSpace X] :
-    (monodromyFunctor X).Full := by
-  let _ : (monodromyFunctor X ⋙ PretransitiveFundamentalGroupoidAction.forget X).Full := by
-    rw [monodromyFunctor_comp_forget]
-    infer_instance
-  exact Functor.Full.of_comp_faithful
-    (monodromyFunctor X) (PretransitiveFundamentalGroupoidAction.forget X)
+    (monodromyFunctor X).Full :=
+  inferInstanceAs <| (ObjectProperty.lift _ _ _).Full
 
 end ConnectedCoveringSpace
 
