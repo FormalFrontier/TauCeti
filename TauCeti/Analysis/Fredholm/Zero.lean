@@ -88,8 +88,7 @@ dimension of its codomain. -/
 @[simp]
 lemma index_zero :
     index (0 : E →L[𝕜] F) = (finrank 𝕜 E : ℤ) - finrank 𝕜 F := by
-  rw [index_eq_finrank_sub]
-  simpa only [ContinuousLinearMap.toLinearMap_zero, LinearMap.index_eq_finrank_sub] using
+  simpa only [index_def, ContinuousLinearMap.toLinearMap_zero] using
     (LinearMap.index_zero (R := 𝕜) (M := E) (N := F))
 
 end ContinuousLinearMap
