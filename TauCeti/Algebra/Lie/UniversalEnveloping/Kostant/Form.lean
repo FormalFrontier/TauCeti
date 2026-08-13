@@ -215,10 +215,12 @@ theorem span_kostantForm_eq_top (e : ι → L) (h : κ → L)
   have hspan : Subalgebra.toSubmodule (_root_.Algebra.adjoin ℚ
       (kostantForm e h : Set (_root_.UniversalEnvelopingAlgebra ℚ L))) =
       Submodule.span ℚ (kostantForm e h : Set (_root_.UniversalEnvelopingAlgebra ℚ L)) := by
-    apply _root_.Algebra.adjoin_eq_span_of_subset
-    refine Set.Subset.trans ?_ Submodule.subset_span
-    exact (Submonoid.closure_le (S := (kostantForm e h).toSubmonoid)).2
-      (by rw [Subring.coe_toSubmonoid])
+    rw [_root_.Algebra.adjoin_eq_span]
+    apply congrArg (Submodule.span ℚ)
+    simpa only [Subring.coe_toSubmonoid] using congrArg
+      ((↑) : Submonoid (_root_.UniversalEnvelopingAlgebra ℚ L) →
+        Set (_root_.UniversalEnvelopingAlgebra ℚ L))
+      (Submonoid.closure_eq (kostantForm e h).toSubmonoid)
   rw [← hspan, hadjoin, _root_.Algebra.top_toSubmodule]
 
 /-! ## Functoriality -/
