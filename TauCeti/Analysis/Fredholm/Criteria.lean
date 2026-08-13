@@ -109,9 +109,10 @@ lemma isFredholm_iff_finite_coker_of_injective (hT : Function.Injective T)
 omit [IsRCLikeNormedField K] [CompleteSpace E] [CompleteSpace F] in
 /-- The inclusion of the kernel of an operator of finite rank is Fredholm: the kernel is closed
 and, by the first isomorphism theorem, of finite codimension. -/
-lemma isFredholm_ker_subtypeL (hT : FiniteDimensional K (LinearMap.range (T : E →ₗ[K] F))) :
+lemma isFredholm_ker_subtypeL (hT : LinearMap.HasFiniteRange (T : E →ₗ[K] F)) :
     ContinuousLinearMap.IsFredholm (LinearMap.ker (T : E →ₗ[K] F)).subtypeL := by
-  let := hT
+  let : FiniteDimensional K (LinearMap.range (T : E →ₗ[K] F)) :=
+    (Submodule.fg_iff_finiteDimensional _).mp hT.fg_range
   let : FiniteDimensional K (E ⧸ LinearMap.range
       ((LinearMap.ker (T : E →ₗ[K] F)).subtypeL : LinearMap.ker (T : E →ₗ[K] F) →ₗ[K] E)) := by
     rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
@@ -180,9 +181,10 @@ require bundling its inverse as a continuous linear equivalence. Codomain comple
 Mathlib's bounded-inverse construction `ContinuousLinearEquiv.ofBijective`. -/
 lemma _root_.ContinuousLinearMap.IsFredholm.of_bijective (hT : Function.Bijective T) :
     ContinuousLinearMap.IsFredholm T := by
-  exact ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv
+  have := ContinuousLinearEquiv.isFredholm
     (ContinuousLinearEquiv.ofBijective T
       (LinearMap.ker_eq_bot.mpr hT.injective)
       (LinearMap.range_eq_top.mpr hT.surjective))
+  rwa [ContinuousLinearEquiv.coe_ofBijective] at this
 
 end TauCeti

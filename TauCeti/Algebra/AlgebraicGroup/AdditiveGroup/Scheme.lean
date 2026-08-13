@@ -126,7 +126,8 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateHopfAlgebra R))
 
-private lemma groupScheme_eq_hopfSpec :
+/-- The additive group scheme is the relative spectrum of its coordinate Hopf algebra. -/
+lemma groupScheme_def :
     groupScheme R =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R)) := by
@@ -286,7 +287,7 @@ noncomputable def groupSchemePointMulEquiv :
       ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
         (groupScheme R).X) :=
   CommHopfAlgCat.mapMulEquivOfPresentation
-    (coordinateHopfAlgebra R) A (groupScheme_eq_hopfSpec R)
+    (coordinateHopfAlgebra R) A (groupScheme_def R)
 
 /-- The underlying map of the spectrum point associated to an algebra point. -/
 @[simp]
@@ -297,7 +298,7 @@ lemma groupSchemePointMulEquiv_apply_left
         eqToHom (groupScheme_X_left R).symm := by
   simpa only [groupSchemePointMulEquiv] using
     CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
-      (coordinateHopfAlgebra R) A (groupScheme_eq_hopfSpec R)
+      (coordinateHopfAlgebra R) A (groupScheme_def R)
         (groupScheme_X_left R) f
 
 /-- The group of scheme-valued points of the additive group scheme is the additive group of the
@@ -356,7 +357,7 @@ theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
           (CommAlgCat.ofHom φ) q := by
     simpa only [q, groupSchemePointMulEquiv] using
       CommHopfAlgCat.mapMulEquivOfPresentation_mapValue
-        (coordinateHopfAlgebra R) φ (groupScheme_eq_hopfSpec R) p
+        (coordinateHopfAlgebra R) φ (groupScheme_def R) p
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   exact gaPointsMulEquiv_mapValue φ q

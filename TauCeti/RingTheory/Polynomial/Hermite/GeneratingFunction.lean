@@ -8,9 +8,7 @@ module
 public import Mathlib.Analysis.Complex.TaylorSeries
 public import Mathlib.Analysis.Calculus.Deriv.Polynomial
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-public import Mathlib.Analysis.Complex.Exponential
 public import Mathlib.RingTheory.Polynomial.Hermite.Basic
-public import Mathlib.Algebra.Polynomial.AlgebraMap
 
 /-!
 # The exponential generating function of the probabilists' Hermite polynomials
@@ -40,9 +38,18 @@ complex differentiable everywhere, Mathlib's `Complex.hasSum_taylorSeries_of_ent
 its Taylor series about `0` at every point, which is exactly the summability statement of the
 generating function at an arbitrary complex `t`.
 
-The primary statement is the complex `HasSum` form `TauCeti.hasSum_hermite_generating_function`,
-which is where the analytic content actually lives; the real `tsum` form
-`TauCeti.hermite_generating_function` (the roadmap target A1) follows from it by casting `ℝ → ℂ`.
+The primary statement is the complex `HasSum` form
+`Polynomial.hasSum_hermite_generating_function`, which is where the analytic content actually
+lives; the real `tsum` form `Polynomial.hermite_generating_function` (the roadmap target A1)
+follows from it by casting `ℝ → ℂ`. Both are stated in the `Polynomial` namespace, matching the
+existing Hermite API, as upstream candidates.
+
+## References
+
+* [Mathlib PR #42724](https://github.com/leanprover-community/mathlib4/pull/42724)
+  (Kim Morrison) — the draft upstream adaptation of this file and of `Derivative.lean`; the
+  `Polynomial`-namespace names (after `Polynomial.bernoulli_generating_function`) and the trimmed
+  imports here follow the choices made for that PR.
 -/
 
 public section
@@ -103,7 +110,7 @@ For all complex `x` and `t`, the family `Hₙ(x) · tⁿ / n!` is summable with 
 This is the analytic heart of the identity: it carries the summability that the `tsum` form
 `hermite_generating_function` discards, and it holds over all of `ℂ` (the real case is a
 specialization by casting). -/
-theorem hasSum_hermite_generating_function (x t : ℂ) :
+theorem _root_.Polynomial.hasSum_hermite_generating_function (x t : ℂ) :
     HasSum (fun n : ℕ => aeval x (hermite n) * t ^ n / (n.factorial : ℂ))
       (Complex.exp (x * t - t ^ 2 / 2)) := by
   -- The entire function `f z = exp (x·z - z²/2)` on the complex plane.
@@ -136,7 +143,7 @@ and `t`,
 `∑' n, Hₙ(x) · tⁿ / n! = exp (x · t - t² / 2)`,
 where `Hₙ = Polynomial.hermite n`. This is target **A1** of the `OrthogonalL2Bases` roadmap; it is
 the real specialization of `hasSum_hermite_generating_function`. -/
-theorem hermite_generating_function (x t : ℝ) :
+theorem _root_.Polynomial.hermite_generating_function (x t : ℝ) :
     ∑' n : ℕ, aeval x (hermite n) * t ^ n / (n.factorial : ℝ)
       = Real.exp (x * t - t ^ 2 / 2) := by
   -- Compatibility of `aeval` with the coercion `ℝ → ℂ`.

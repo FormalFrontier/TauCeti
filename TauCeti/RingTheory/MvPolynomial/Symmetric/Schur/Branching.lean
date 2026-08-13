@@ -219,7 +219,7 @@ theorem aeval_snoc_zero_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
   rcases le_or_gt (μ.colLen 0) n with hμ | hμ
   · have hself : μ ∈ YoungDiagram.interlacingShapes n μ :=
       YoungDiagram.mem_interlacingShapes.mpr
-        ⟨YoungDiagram.interlaces_iff.mpr
+        ⟨YoungDiagram.interlacedBy_iff.mpr
           fun i => ⟨μ.rowLen_anti i (i + 1) (Nat.le_succ i), le_rfl⟩, hμ⟩
     rw [Finset.sum_eq_single_of_mem μ hself hvanish, Nat.sub_self, pow_zero, one_mul,
       aeval_X_left_apply]
