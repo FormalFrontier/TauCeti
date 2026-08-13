@@ -66,6 +66,22 @@ theorem isFiberwisePretransitive_iff (X : TopCat.{u})
         ∃ γ : x ⟶ x, F.map γ a = b :=
   Iff.rfl
 
+/-- Fibrewise pretransitivity is preserved by natural isomorphisms of actions. -/
+instance (X : TopCat.{u}) :
+    (isFiberwisePretransitive X).IsClosedUnderIsomorphisms where
+  of_iso := by
+    rintro F G e hF
+    rw [isFiberwisePretransitive_iff] at hF ⊢
+    intro x a b
+    obtain ⟨γ, hγ⟩ := hF x (e.inv.app x a) (e.inv.app x b)
+    refine ⟨γ, ?_⟩
+    calc
+      G.map γ a = G.map γ (e.hom.app x (e.inv.app x a)) := by simp
+      _ = e.hom.app x (F.map γ (e.inv.app x a)) :=
+        (e.hom.naturality_apply γ _).symm
+      _ = e.hom.app x (e.inv.app x b) := by rw [hγ]
+      _ = b := by simp
+
 end FundamentalGroupoidAction
 
 /-- Fundamental-groupoid actions that are pretransitive on every fibre. Morphisms are arbitrary
