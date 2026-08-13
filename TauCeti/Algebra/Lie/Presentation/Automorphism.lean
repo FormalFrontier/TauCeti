@@ -23,7 +23,7 @@ invariance lemmas supply the hypothesis `CM.submatrix σ σ = CM` through `Matri
 The second is the *Chevalley involution* `TauCeti.serreChevalleyInvolution`, which exchanges the
 raising and lowering generators with a sign: `Hᵢ ↦ -Hᵢ`, `Eᵢ ↦ -Fᵢ`, `Fᵢ ↦ -Eᵢ`. It exists because
 Serre's relations are invariant under that exchange, and it is an involution because the exchange
-is. The two families commute (`TauCeti.serreChevalleyInvolution_trans_serreDiagramAut`).
+is. The two families commute (`TauCeti.serreChevalleyInvolution_comm_serreDiagramAut`).
 
 Both are instances of one observation, isolated here as stability properties of the predicate
 `TauCeti.IsSerreSystem`: a Serre system in *any* Lie algebra stays a Serre system after reindexing
@@ -52,9 +52,10 @@ Nothing here assumes that `CM` is a Cartan matrix, matching
   `TauCeti.eq_serreDiagramAut` and `TauCeti.eq_serreChevalleyInvolution`.
 * `TauCeti.serreDiagramAut_refl`, `TauCeti.serreDiagramAut_trans` and
   `TauCeti.serreDiagramAut_symm`: the diagram automorphisms follow the group law of the
-  permutations.
+  permutations, which for the hypothesis itself is `TauCeti.submatrix_perm_refl`,
+  `TauCeti.submatrix_perm_trans` and `TauCeti.submatrix_perm_symm`.
 * `TauCeti.serreChevalleyInvolution_involutive`: the Chevalley involution squares to the identity.
-* `TauCeti.serreChevalleyInvolution_trans_serreDiagramAut`: it commutes with every diagram
+* `TauCeti.serreChevalleyInvolution_comm_serreDiagramAut`: it commutes with every diagram
   automorphism.
 * `TauCeti.serreLift_comp_serreDiagramAut` and
   `TauCeti.serreLift_comp_serreChevalleyInvolution`: naturality against an arbitrary Serre system.
@@ -63,10 +64,11 @@ Nothing here assumes that `CM` is a Cartan matrix, matching
 
 The hypothesis that `σ` preserves `CM` is carried as the equation `CM.submatrix σ σ = CM` rather
 than as a new predicate: it is the Mathlib spelling, its entrywise form `CM (σ i) (σ j) = CM i j`
-holds by `rfl`, and the group law of such permutations is `Matrix.submatrix_submatrix`. Where a
-composite automorphism needs the corresponding hypothesis for `σ.symm` or `σ.trans τ`, the lemmas
-below take it as an argument instead of building it, so that a caller may supply whichever proof it
-has; proof irrelevance makes the choice immaterial.
+holds by `rfl`, and the group law of such permutations is `Matrix.submatrix_submatrix`. That group
+law is recorded as `TauCeti.submatrix_perm_refl`, `TauCeti.submatrix_perm_trans` and
+`TauCeti.submatrix_perm_symm`, so a composite automorphism builds the hypothesis it needs for
+`Equiv.refl B`, `σ.trans τ` or `σ.symm` rather than demanding it from the caller; proof irrelevance
+makes a caller's own proof interchangeable with the one built here.
 
 ## Roadmap
 
@@ -80,8 +82,11 @@ that construction uses.
 The Chevalley involution is the immediate one: the classical normalisation of a Chevalley basis
 picks the root vectors `x α` and `x (-α)` compatibly by transporting them along an automorphism
 acting as `h ↦ -h` on the Cartan subalgebra and exchanging the raising and lowering root vectors
-with a sign, which is what forces `N (-α, -β) = -N (α, β)` and hence makes the structure constants
-integral rather than merely rational (Humphreys §25.2, Carter §4.1).
+with a sign, and that choice is what forces the structure constants of opposite pairs of roots to
+match up as `N (-α, -β) = -N (α, β)` (Humphreys §25.2, Carter §4.1). Integrality of the structure
+constants is a separate matter, coming from the root-string argument once the basis is normalised
+this way; the involution is what makes the two halves of the basis consistent, not what clears
+denominators.
 `TauCeti.serreChevalleyInvolution` is that automorphism on the presented algebra, and
 `TauCeti.serreLift_comp_serreChevalleyInvolution` is what will carry it to any concrete split
 semisimple Lie algebra identified with the presentation.
@@ -175,8 +180,20 @@ section Diagram
 variable {σ τ : Equiv.Perm B}
 
 omit [DecidableEq B] in
+/-- The identity permutation preserves every square matrix. -/
+theorem submatrix_perm_refl {α : Type*} (M : Matrix B B α) :
+    M.submatrix (Equiv.refl B) (Equiv.refl B) = M :=
+  M.submatrix_id_id
+
+omit [DecidableEq B] in
+/-- If `σ` and `τ` preserve a square matrix then so does `σ.trans τ`. -/
+theorem submatrix_perm_trans {α : Type*} {M : Matrix B B α} (hσ : M.submatrix σ σ = M)
+    (hτ : M.submatrix τ τ = M) : M.submatrix (σ.trans τ) (σ.trans τ) = M := by
+  rw [Equiv.coe_trans, ← Matrix.submatrix_submatrix, hτ, hσ]
+
+omit [DecidableEq B] in
 /-- If `σ` preserves a square matrix then so does `σ.symm`. -/
-private theorem submatrix_perm_symm {α : Type*} {M : Matrix B B α}
+theorem submatrix_perm_symm {α : Type*} {M : Matrix B B α}
     (hσ : M.submatrix σ σ = M) : M.submatrix σ.symm σ.symm = M :=
   calc M.submatrix ⇑σ.symm ⇑σ.symm
       = (M.submatrix ⇑σ ⇑σ).submatrix ⇑σ.symm ⇑σ.symm := by rw [hσ]
@@ -209,16 +226,19 @@ noncomputable def serreDiagramAut (hσ : CM.submatrix σ σ = CM) :
     simpa using congrArg (fun f : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM => f x)
       (serreDiagramHom_comp R CM (submatrix_perm_symm hσ) hσ)
 
+/-- The diagram automorphism of `σ` sends `Hᵢ` to `H_{σ i}`. -/
 @[simp]
 theorem serreDiagramAut_serreH (hσ : CM.submatrix σ σ = CM) (i : B) :
     serreDiagramAut R CM hσ (serreH R CM i) = serreH R CM (σ i) :=
   serreLift_serreH _ i
 
+/-- The diagram automorphism of `σ` sends `Eᵢ` to `E_{σ i}`. -/
 @[simp]
 theorem serreDiagramAut_serreE (hσ : CM.submatrix σ σ = CM) (i : B) :
     serreDiagramAut R CM hσ (serreE R CM i) = serreE R CM (σ i) :=
   serreLift_serreE _ i
 
+/-- The diagram automorphism of `σ` sends `Fᵢ` to `F_{σ i}`. -/
 @[simp]
 theorem serreDiagramAut_serreF (hσ : CM.submatrix σ σ = CM) (i : B) :
     serreDiagramAut R CM hσ (serreF R CM i) = serreF R CM (σ i) :=
@@ -235,30 +255,35 @@ theorem eq_serreDiagramAut {hσ : CM.submatrix σ σ = CM}
 
 /-- The identity permutation induces the identity automorphism. -/
 @[simp]
-theorem serreDiagramAut_refl (hσ : CM.submatrix (Equiv.refl B) (Equiv.refl B) = CM) :
-    serreDiagramAut R CM hσ = LieEquiv.refl := by
+theorem serreDiagramAut_refl :
+    serreDiagramAut R CM (submatrix_perm_refl CM) = LieEquiv.refl := by
   refine LieEquiv.ext fun x => ?_
-  have h : (serreDiagramAut R CM hσ).toLieHom =
+  have h : (serreDiagramAut R CM (submatrix_perm_refl CM)).toLieHom =
       (LieEquiv.refl : Matrix.ToLieAlgebra R CM ≃ₗ⁅R⁆ Matrix.ToLieAlgebra R CM).toLieHom :=
     serre_hom_ext (fun i => by simp) (fun i => by simp) fun i => by simp
   exact congrArg (fun f : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM => f x) h
 
 /-- Diagram automorphisms compose along the composition of permutations. -/
-theorem serreDiagramAut_trans (hσ : CM.submatrix σ σ = CM) (hτ : CM.submatrix τ τ = CM)
-    (hστ : CM.submatrix (σ.trans τ) (σ.trans τ) = CM) :
-    (serreDiagramAut R CM hσ).trans (serreDiagramAut R CM hτ) = serreDiagramAut R CM hστ := by
+theorem serreDiagramAut_trans (hσ : CM.submatrix σ σ = CM) (hτ : CM.submatrix τ τ = CM) :
+    (serreDiagramAut R CM hσ).trans (serreDiagramAut R CM hτ) =
+      serreDiagramAut R CM (submatrix_perm_trans hσ hτ) := by
   refine LieEquiv.ext fun x => ?_
   have h : ((serreDiagramAut R CM hσ).trans (serreDiagramAut R CM hτ)).toLieHom =
-      (serreDiagramAut R CM hστ).toLieHom :=
+      (serreDiagramAut R CM (submatrix_perm_trans hσ hτ)).toLieHom :=
     serre_hom_ext (fun i => by simp) (fun i => by simp) fun i => by simp
   exact congrArg (fun f : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM => f x) h
 
 /-- The inverse of a diagram automorphism is the diagram automorphism of the inverse
 permutation. -/
-theorem serreDiagramAut_symm (hσ : CM.submatrix σ σ = CM)
-    (hσ' : CM.submatrix σ.symm σ.symm = CM) :
-    (serreDiagramAut R CM hσ).symm = serreDiagramAut R CM hσ' :=
-  LieEquiv.ext fun _ => rfl
+theorem serreDiagramAut_symm (hσ : CM.submatrix σ σ = CM) :
+    (serreDiagramAut R CM hσ).symm = serreDiagramAut R CM (submatrix_perm_symm hσ) := by
+  refine LieEquiv.ext fun x => ?_
+  have h : (serreDiagramAut R CM hσ).symm.toLieHom =
+      (serreDiagramAut R CM (submatrix_perm_symm hσ)).toLieHom :=
+    eq_serreDiagramAut R CM (fun i => (LieEquiv.symm_apply_eq _).2 (by simp))
+      (fun i => (LieEquiv.symm_apply_eq _).2 (by simp))
+      fun i => (LieEquiv.symm_apply_eq _).2 (by simp)
+  exact congrArg (fun f : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM => f x) h
 
 /-- Naturality: any Serre system realising the presentation transports the diagram automorphism to
 the reindexed system. -/
@@ -300,16 +325,19 @@ noncomputable def serreChevalleyInvolution :
     simpa using congrArg (fun f : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM => f x)
       (serreChevalleyHom_comp R CM)
 
+/-- The Chevalley involution sends `Hᵢ` to `-Hᵢ`. -/
 @[simp]
 theorem serreChevalleyInvolution_serreH (i : B) :
     serreChevalleyInvolution R CM (serreH R CM i) = -serreH R CM i :=
   serreLift_serreH _ i
 
+/-- The Chevalley involution sends `Eᵢ` to `-Fᵢ`. -/
 @[simp]
 theorem serreChevalleyInvolution_serreE (i : B) :
     serreChevalleyInvolution R CM (serreE R CM i) = -serreF R CM i :=
   serreLift_serreE _ i
 
+/-- The Chevalley involution sends `Fᵢ` to `-Eᵢ`. -/
 @[simp]
 theorem serreChevalleyInvolution_serreF (i : B) :
     serreChevalleyInvolution R CM (serreF R CM i) = -serreE R CM i :=
@@ -331,14 +359,28 @@ theorem serreChevalleyInvolution_involutive :
     Function.Involutive (serreChevalleyInvolution R CM) := fun x =>
   (serreChevalleyInvolution R CM).left_inv x
 
+/-- Applying the Chevalley involution twice returns the original element. -/
+@[simp]
+theorem serreChevalleyInvolution_serreChevalleyInvolution (x : Matrix.ToLieAlgebra R CM) :
+    serreChevalleyInvolution R CM (serreChevalleyInvolution R CM x) = x :=
+  serreChevalleyInvolution_involutive R CM x
+
+/-- The Chevalley involution is its own inverse. -/
 @[simp]
 theorem serreChevalleyInvolution_symm :
-    (serreChevalleyInvolution R CM).symm = serreChevalleyInvolution R CM :=
-  LieEquiv.ext fun _ => rfl
+    (serreChevalleyInvolution R CM).symm = serreChevalleyInvolution R CM := by
+  refine LieEquiv.ext fun x => ?_
+  have h : (serreChevalleyInvolution R CM).symm.toLieHom =
+      (serreChevalleyInvolution R CM :
+        Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM) :=
+    eq_serreChevalleyInvolution R CM (fun i => (LieEquiv.symm_apply_eq _).2 (by simp))
+      (fun i => (LieEquiv.symm_apply_eq _).2 (by simp))
+      fun i => (LieEquiv.symm_apply_eq _).2 (by simp)
+  exact congrArg (fun f : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ Matrix.ToLieAlgebra R CM => f x) h
 
 /-- The Chevalley involution commutes with every diagram automorphism: both send the generator of
 index `i` to the signed generator of index `σ i` of the opposite family. -/
-theorem serreChevalleyInvolution_trans_serreDiagramAut {σ : Equiv.Perm B}
+theorem serreChevalleyInvolution_comm_serreDiagramAut {σ : Equiv.Perm B}
     (hσ : CM.submatrix σ σ = CM) :
     (serreChevalleyInvolution R CM).trans (serreDiagramAut R CM hσ) =
       (serreDiagramAut R CM hσ).trans (serreChevalleyInvolution R CM) := by
