@@ -52,10 +52,6 @@ after their stronger level-preserving notion of non-ambient isotopy (Definition 
 
 * `TauCeti.Isotopy.isEmbedding_left` / `isEmbedding_right`: the endpoints of an isotopy are
   embeddings.
-* `TauCeti.Isotopy.toHomotopyWith`: an isotopy is, in particular, a Mathlib homotopy through
-  embeddings.
-* `TauCeti.Isotopy.refl` / `TauCeti.Isotopy.symm` / `TauCeti.Isotopy.trans`: bundled
-  constructors for constant, reversed, and concatenated isotopies.
 * `TauCeti.Isotopic.refl` / `TauCeti.Isotopic.symm` / `TauCeti.Isotopic.trans`: isotopy is
   reflexive on embeddings, symmetric, and transitive.
 * `TauCeti.Isotopic.homotopic`: isotopic maps are homotopic.
@@ -82,33 +78,12 @@ As an equivalence this non-ambient relation is too coarse for classical knot the
 extend to a motion of the ambient space and therefore need not preserve knot complements. Use
 `AmbientIsotopy`/`AmbientIsotopic` for knot equivalence; see the module docstring and the
 comparison with the Burde--Zieschang definition there. -/
-structure Isotopy (f₀ f₁ : C(X, Y)) extends
-    HomotopyWith f₀ f₁ fun g : C(X, Y) => IsEmbedding g
+abbrev Isotopy (f₀ f₁ : C(X, Y)) :=
+  HomotopyWith f₀ f₁ fun g : C(X, Y) => IsEmbedding g
 
 namespace Isotopy
 
 variable {f₀ f₁ : C(X, Y)}
-
-instance instFunLike : FunLike (Isotopy f₀ f₁) (I × X) Y where
-  coe F := F.toHomotopyWith
-  coe_injective F G h := by
-    obtain ⟨F, _⟩ := F
-    obtain ⟨G, _⟩ := G
-    congr
-    exact DFunLike.coe_injective h
-
-/-- Two isotopies are equal when they agree at every time and point. -/
-@[ext]
-theorem ext {F G : Isotopy f₀ f₁} (h : ∀ x, F x = G x) : F = G :=
-  DFunLike.ext F G h
-
-@[simp]
-theorem apply_zero (F : Isotopy f₀ f₁) (x : X) : F (0, x) = f₀ x :=
-  F.map_zero_left x
-
-@[simp]
-theorem apply_one (F : Isotopy f₀ f₁) (x : X) : F (1, x) = f₁ x :=
-  F.map_one_left x
 
 /-- Every time-slice of an isotopy is a topological embedding. -/
 theorem isEmbedding_apply (F : Isotopy f₀ f₁) (t : I) :
@@ -122,37 +97,6 @@ theorem isEmbedding_left (F : Isotopy f₀ f₁) : IsEmbedding f₀ := by
 /-- The map an isotopy ends at is a topological embedding. -/
 theorem isEmbedding_right (F : Isotopy f₀ f₁) : IsEmbedding f₁ := by
   simpa using F.isEmbedding_apply 1
-
-/-- The constant homotopy at an embedding is an isotopy. -/
-def refl (f : C(X, Y)) (hf : IsEmbedding f) : Isotopy f f where
-  toHomotopyWith := HomotopyWith.refl f hf
-
-/-- Reverse an isotopy by reversing its time parameter. -/
-def symm (F : Isotopy f₀ f₁) : Isotopy f₁ f₀ where
-  toHomotopyWith := F.toHomotopyWith.symm
-
-/-- Concatenate two isotopies: the result follows `F` on `[0, 1 / 2]` and `G` on `[1 / 2, 1]`,
-with the time parameter rescaled linearly. -/
-noncomputable def trans {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) :
-    Isotopy f₀ f₂ where
-  toHomotopyWith := F.toHomotopyWith.trans G.toHomotopyWith
-
-/-- The value of a concatenated isotopy is given by the first isotopy on `[0, 1 / 2]`
-and by the second isotopy on `[1 / 2, 1]`, with the time parameter rescaled linearly. -/
-@[simp]
-theorem trans_apply {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) (x : I × X) :
-    (F.trans G) x =
-      if h : (x.1 : ℝ) ≤ 1 / 2 then
-        F (⟨2 * x.1, (unitInterval.mul_pos_mem_iff zero_lt_two).2 ⟨x.1.2.1, h⟩⟩, x.2)
-      else
-        G (⟨2 * x.1 - 1,
-          unitInterval.two_mul_sub_one_mem_iff.2 ⟨(not_le.1 h).le, x.1.2.2⟩⟩, x.2) :=
-  Homotopy.trans_apply F.toHomotopy G.toHomotopy x
-
-instance instHomotopyLike : HomotopyLike (Isotopy f₀ f₁) f₀ f₁ where
-  map_continuous F := F.continuous_toFun
-  map_zero_left F := F.map_zero_left
-  map_one_left F := F.map_one_left
 
 end Isotopy
 
@@ -175,7 +119,7 @@ theorem of_isotopy (F : Isotopy f₀ f₁) : Isotopic f₀ f₁ := ⟨F⟩
 
 /-- Isotopy is reflexive on embeddings. -/
 theorem refl (f : C(X, Y)) (hf : IsEmbedding f) : Isotopic f f :=
-  ⟨Isotopy.refl f hf⟩
+  ⟨HomotopyWith.refl f hf⟩
 
 /-- Isotopy is symmetric. -/
 @[symm]
@@ -202,7 +146,7 @@ theorem homotopic (h : Isotopic f₀ f₁) : Homotopic f₀ f₁ :=
 /-- Isotopic maps are homotopic through embeddings in Mathlib's generic API. -/
 theorem homotopicWith (h : Isotopic f₀ f₁) :
     HomotopicWith f₀ f₁ fun g : C(X, Y) => IsEmbedding g :=
-  ⟨h.some.toHomotopyWith⟩
+  h
 
 end Isotopic
 
@@ -313,12 +257,11 @@ instance : Inhabited (AmbientIsotopy Y) := ⟨refl Y⟩
 /-- An ambient isotopy carries any embedding `f` to the embedding `Φ.final ∘ f` through an
 explicit isotopy: at time `t` the embedding is the homeomorphism `Φ t` postcomposed with `f`. -/
 def isotopy {f : C(X, Y)} (hf : IsEmbedding f) : Isotopy f (Φ.final.comp f) where
-  toHomotopyWith :=
-    { toFun := fun p => Φ.toContinuousMap (p.1, f p.2)
-      continuous_toFun := by fun_prop
-      map_zero_left := fun x => Φ.map_zero_left (f x)
-      map_one_left := fun _ => rfl
-      prop' := fun t => (Φ.isHomeomorph_apply t).isEmbedding.comp hf }
+  toFun := fun p => Φ.toContinuousMap (p.1, f p.2)
+  continuous_toFun := by fun_prop
+  map_zero_left := fun x => Φ.map_zero_left (f x)
+  map_one_left := fun _ => rfl
+  prop' := fun t => (Φ.isHomeomorph_apply t).isEmbedding.comp hf
 
 @[simp]
 theorem isotopy_apply {f : C(X, Y)} (hf : IsEmbedding f) (t : I) (x : X) :

@@ -59,9 +59,8 @@ variable {f₀ f₁ : C(X, Y)}
 isotopy `g ∘ f₀ ≈ g ∘ f₁`. -/
 def postcomp (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) :
     Isotopy (g.comp f₀) (g.comp f₁) where
-  toHomotopyWith :=
-    { toHomotopy := (Homotopy.refl g).comp F.toHomotopy
-      prop' := fun t => hg.comp (F.isEmbedding_apply t) }
+  toHomotopy := (Homotopy.refl g).comp F.toHomotopy
+  prop' := fun t => hg.comp (F.isEmbedding_apply t)
 
 @[simp]
 theorem postcomp_apply (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) (p : I × X) :
@@ -71,9 +70,8 @@ theorem postcomp_apply (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g
 isotopy `f₀ ∘ e ≈ f₁ ∘ e`. -/
 def precomp (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) :
     Isotopy (f₀.comp e) (f₁.comp e) where
-  toHomotopyWith :=
-    { toHomotopy := F.toHomotopy.compContinuousMap e
-      prop' := fun t => (F.isEmbedding_apply t).comp he }
+  toHomotopy := F.toHomotopy.compContinuousMap e
+  prop' := fun t => (F.isEmbedding_apply t).comp he
 
 @[simp]
 theorem precomp_apply (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) (p : I × W) :
@@ -89,13 +87,13 @@ variable {f₀ f₁ : C(X, Y)}
 embedding, then `g ∘ f₀ ≈ g ∘ f₁`. -/
 theorem postcomp (h : Isotopic f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) :
     Isotopic (g.comp f₀) (g.comp f₁) :=
-  isotopic_def.mpr ⟨(isotopic_def.mp h).some.postcomp g hg⟩
+  of_isotopy ((isotopic_def.mp h).some.postcomp g hg)
 
 /-- Precompose an isotopy relation with a topological embedding: if `f₀ ≈ f₁` and `e` is an
 embedding, then `f₀ ∘ e ≈ f₁ ∘ e`. -/
 theorem precomp (h : Isotopic f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) :
     Isotopic (f₀.comp e) (f₁.comp e) :=
-  isotopic_def.mpr ⟨(isotopic_def.mp h).some.precomp e he⟩
+  of_isotopy ((isotopic_def.mp h).some.precomp e he)
 
 /-- The two-sided form: an isotopy relation survives composing with an embedding on each
 side. -/

@@ -94,9 +94,8 @@ isotopy `g₀ ≈ g₁` build an isotopy `f₀.prodMap g₀ ≈ f₁.prodMap g�
 and each slice is a product of embeddings. -/
 def prodMap (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) :
     Isotopy (f₀.prodMap g₀) (f₁.prodMap g₁) where
-  toHomotopyWith :=
-    { toHomotopy := F.toHomotopy.prodMap G.toHomotopy
-      prop' := fun t => (F.isEmbedding_apply t).prodMap (G.isEmbedding_apply t) }
+  toHomotopy := F.toHomotopy.prodMap G.toHomotopy
+  prop' := fun t => (F.isEmbedding_apply t).prodMap (G.isEmbedding_apply t)
 
 @[simp]
 theorem prodMap_apply (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) (p : I × (X × X')) :
@@ -112,7 +111,7 @@ variable {f₀ f₁ : C(X, Y)} {g₀ g₁ : C(X', Y')}
 `f₀.prodMap g₀ ≈ f₁.prodMap g₁`. -/
 theorem prodMap (h : Isotopic f₀ f₁) (h' : Isotopic g₀ g₁) :
     Isotopic (f₀.prodMap g₀) (f₁.prodMap g₁) :=
-  isotopic_def.mpr ⟨(isotopic_def.mp h).some.prodMap (isotopic_def.mp h').some⟩
+  of_isotopy ((isotopic_def.mp h).some.prodMap (isotopic_def.mp h').some)
 
 end Isotopic
 
