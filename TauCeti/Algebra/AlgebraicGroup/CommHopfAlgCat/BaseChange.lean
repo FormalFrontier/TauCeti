@@ -7,9 +7,6 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.Algebra.Category.CommAlgCat.RestrictScalars
-import Mathlib.RingTheory.Flat.Basic
-import Mathlib.RingTheory.LocalRing.ResidueField.Ideal
-import Mathlib.RingTheory.TensorProduct.Nontrivial
 
 /-!
 # Base change of commutative Hopf algebras
@@ -30,8 +27,6 @@ the original points evaluated on `K`-algebras.
 * `CommHopfAlgCat.baseChangeFunctor`: functorial base change on commutative Hopf algebras.
 * `CommHopfAlgCat.baseChangePointsMulEquiv`: the inherited point equivalence
   `(K ⊗[k] H →ₐ[K] A) ≃* (H →ₐ[k] A)`.
-* `CommHopfAlgCat.BaseChangeDescentData`: a common overfield used to descend properties of
-  scalar extensions.
 
 ## References
 
@@ -51,62 +46,6 @@ universe u v w x
 namespace CommHopfAlgCat
 
 variable {k : Type u} {K : Type w} [CommRing k] [CommRing K] [Algebra k K]
-
-/-- Data for descending a property of scalar extensions from `K` to `k`.
-
-For field extensions `K / k` and `L / k`, this packages a common overfield `Ω`, the comparison
-between the two successive base changes to `Ω`, and the injective scalar-extension map from `L`
-to `Ω`. -/
-structure BaseChangeDescentData (k : Type u) (K L : Type w)
-    [Field k] [Field K] [Field L] [Algebra k K] [Algebra k L]
-    (H : _root_.CommHopfAlgCat.{v} k) where
-  /-- A common overfield of `K` and `L`. -/
-  Ω : Type w
-  /-- The field structure on the common overfield. -/
-  [fieldΩ : Field Ω]
-  /-- The common overfield as a `k`-algebra. -/
-  [algebraOmega : Algebra k Ω]
-  /-- The common overfield as a `K`-algebra. -/
-  [algebraKΩ : Algebra K Ω]
-  [isScalarTower : IsScalarTower k K Ω]
-  /-- Cancellation of the successive scalar extensions after passing to `Ω`. -/
-  comparison : ((K ⊗[k] H) ⊗[K] Ω) ≃+* ((H : Type v) ⊗[k] Ω)
-  /-- Scalar extension from `L` to the common overfield. -/
-  map : ((H : Type v) ⊗[k] L) →ₐ[k] ((H : Type v) ⊗[k] Ω)
-  /-- The scalar-extension map is injective. -/
-  map_injective : Function.Injective map
-
-/-- Construct common-overfield data for descending a property of scalar extensions. -/
-noncomputable def baseChangeDescentData (k : Type u) (K L : Type w)
-    [Field k] [Field K] [Field L] [Algebra k K] [Algebra k L]
-    (H : _root_.CommHopfAlgCat.{v} k) : BaseChangeDescentData k K L H := by
-  let R := K ⊗[k] L
-  letI : Nontrivial R :=
-    Algebra.TensorProduct.nontrivial_of_algebraMap_injective_of_isDomain k K L
-      (algebraMap k K).injective (algebraMap k L).injective
-  let P := Classical.choose (Ideal.exists_maximal R)
-  have hP : P.IsMaximal := Classical.choose_spec (Ideal.exists_maximal R)
-  letI : P.IsMaximal := hP
-  let Ω := P.ResidueField
-  let iK : K →ₐ[k] Ω := (IsScalarTower.toAlgHom k R Ω).comp Algebra.TensorProduct.includeLeft
-  let iL : L →ₐ[k] Ω := (IsScalarTower.toAlgHom k R Ω).comp Algebra.TensorProduct.includeRight
-  letI : Algebra K Ω := iK.toRingHom.toAlgebra
-  letI : IsScalarTower k K Ω := IsScalarTower.of_algHom iK
-  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) Ω).toRingEquiv |>.trans
-    ((Algebra.TensorProduct.cancelBaseChange k K Ω Ω H).toRingEquiv.trans
-      (Algebra.TensorProduct.comm k Ω H).toRingEquiv)
-  let f : (H : Type v) ⊗[k] L →ₐ[k] (H : Type v) ⊗[k] Ω :=
-    Algebra.TensorProduct.map (AlgHom.id k H) iL
-  exact
-    { Ω := Ω
-      fieldΩ := inferInstance
-      algebraOmega := inferInstance
-      algebraKΩ := inferInstance
-      isScalarTower := inferInstance
-      comparison := e
-      map := f
-      map_injective := Module.Flat.lTensor_preserves_injective_linearMap iL.toLinearMap
-        (RingHom.injective iL.toRingHom) }
 
 /-- Base change of a commutative Hopf algebra along `k → K`.
 
