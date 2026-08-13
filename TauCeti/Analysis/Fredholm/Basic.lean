@@ -31,19 +31,25 @@ maps rather than restating it.
 * `TauCeti.ContinuousLinearMap.index`: the Fredholm index `dim ker T − dim coker T`, defined via
   `LinearMap.index`.
 * `TauCeti.ContinuousLinearMap.index_eq_finrank_sub`: the index as `dim ker T − dim coker T`.
-* `TauCeti.isFredholm_id` and `TauCeti.ContinuousLinearMap.index_id`: the identity is Fredholm of
-  index `0`.
-* `ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv` and
-  `TauCeti.ContinuousLinearMap.index_continuousLinearEquiv_eq_zero`: a continuous linear
-  equivalence is Fredholm of index `0`.
+* `TauCeti.ContinuousLinearMap.index_id`: the identity has index `0`; that it is Fredholm is
+  Mathlib's `ContinuousLinearMap.IsFredholm.id`.
+* `TauCeti.ContinuousLinearMap.index_continuousLinearEquiv_eq_zero`: a continuous linear
+  equivalence has index `0`; that it is Fredholm is Mathlib's `ContinuousLinearEquiv.isFredholm`.
 * `TauCeti.isFredholm_of_finiteDimensional` and
   `TauCeti.ContinuousLinearMap.index_eq_of_finiteDimensional`: every operator between
   finite-dimensional spaces is Fredholm, with index `dim E − dim F`.
 * `ContinuousLinearMap.IsFredholm.neg`, `ContinuousLinearMap.IsFredholm.smul`: Fredholmness is
   preserved by negation and by nonzero scalar multiples, with the index unchanged.
 * `ContinuousLinearMap.IsFredholm.comp_equiv` and
-  `ContinuousLinearMap.IsFredholm.equiv_comp`: composing with a continuous linear equivalence on
-  either side preserves Fredholmness and the index.
+  `ContinuousLinearMap.IsFredholm.equiv_comp`, with
+  `TauCeti.ContinuousLinearMap.index_comp_equiv` and
+  `TauCeti.ContinuousLinearMap.index_equiv_comp`: composing with a continuous linear equivalence on
+  either side preserves Fredholmness and the index. Mathlib's
+  `ContinuousLinearMap.isFredholm_comp_equiv` and `ContinuousLinearMap.isFredholm_equiv_comp` are
+  stronger, being `↔` equivalences rather than one-way preservation, but they assume a complete
+  scalar field. Mathlib states them with the composite on the left, so preservation is their `mpr`
+  direction; that is the implication proved here, by transporting the structure fields directly,
+  and it holds over any `NontriviallyNormedField`.
 
 The conventions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Appendix
 A.1, where the index is `dim ker D − dim coker D`.
@@ -60,37 +66,6 @@ variable {E F G : Type*}
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 variable [NormedAddCommGroup G] [NormedSpace 𝕜 G]
-
-/-- The underlying linear map of a continuous linear equivalence, written with the
-linear-equivalence coercion so that submodule lemmas apply. -/
-private lemma coe_continuousLinearEquiv (e : E ≃L[𝕜] F) :
-    ((e : E →L[𝕜] F) : E →ₗ[𝕜] F) = (e.toLinearEquiv : E →ₗ[𝕜] F) := by
-  ext x; simp
-
-/-- A continuous linear equivalence is a Fredholm operator.
-
-This is proved directly from the structure fields because Mathlib's quasi-inverse
-characterization currently assumes that the scalar field is complete, whereas this result does
-not need that assumption. -/
-lemma _root_.ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv (e : E ≃L[𝕜] F) :
-    ContinuousLinearMap.IsFredholm (e : E →L[𝕜] F) where
-  isStrictMap := e.isHomeomorph.isStrictMap
-  isClosed_range := by
-    rw [coe_continuousLinearEquiv, LinearEquiv.range]
-    simp
-  finite_ker := by
-    rw [coe_continuousLinearEquiv, LinearEquiv.ker]
-    infer_instance
-  finite_coker := by
-    rw [coe_continuousLinearEquiv, LinearEquiv.range]
-    infer_instance
-  closedComplemented_ker := by
-    rw [coe_continuousLinearEquiv, LinearEquiv.ker]
-    exact Submodule.closedComplemented_bot
-
-/-- The identity operator is Fredholm: its kernel is trivial and its range is everything. -/
-lemma isFredholm_id : ContinuousLinearMap.IsFredholm (ContinuousLinearMap.id 𝕜 E) := by
-  simpa using ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv (.refl 𝕜 E)
 
 section FiniteDimensional
 
@@ -199,8 +174,9 @@ private lemma range_comp_equiv (e : G ≃L[𝕜] E) :
 /-- Postcomposing a Fredholm operator with a continuous linear equivalence yields a Fredholm
 operator.
 
-The structure fields are transported directly to avoid the complete-scalar-field assumption on
-Mathlib's quasi-inverse characterization. -/
+This is the `mpr` direction of Mathlib's `ContinuousLinearMap.isFredholm_equiv_comp`, which
+states the `↔` and so is stronger, but assumes a complete scalar field. Transporting the structure
+fields directly proves this implication over any `NontriviallyNormedField`. -/
 lemma _root_.ContinuousLinearMap.IsFredholm.equiv_comp
     (hT : ContinuousLinearMap.IsFredholm T) (e : F ≃L[𝕜] G) :
     ContinuousLinearMap.IsFredholm ((e : F →L[𝕜] G).comp T) := by
@@ -221,8 +197,9 @@ lemma _root_.ContinuousLinearMap.IsFredholm.equiv_comp
 /-- Precomposing a Fredholm operator with a continuous linear equivalence yields a Fredholm
 operator.
 
-The structure fields are transported directly to avoid the complete-scalar-field assumption on
-Mathlib's quasi-inverse characterization. -/
+This is the `mpr` direction of Mathlib's `ContinuousLinearMap.isFredholm_comp_equiv`, which
+states the `↔` and so is stronger, but assumes a complete scalar field. Transporting the structure
+fields directly proves this implication over any `NontriviallyNormedField`. -/
 lemma _root_.ContinuousLinearMap.IsFredholm.comp_equiv (hT : ContinuousLinearMap.IsFredholm T)
     (e : G ≃L[𝕜] E) :
     ContinuousLinearMap.IsFredholm (T.comp (e : G →L[𝕜] E)) := by
