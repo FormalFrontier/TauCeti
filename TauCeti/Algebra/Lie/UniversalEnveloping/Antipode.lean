@@ -6,6 +6,8 @@ module
 
 public import Mathlib.Algebra.Algebra.Opposite
 public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import Mathlib.Algebra.Polynomial.Smeval
+public import Mathlib.Algebra.Ring.Subring.Basic
 
 /-!
 # The antipode of a universal enveloping algebra
@@ -24,6 +26,8 @@ property of the enveloping algebra is used here.
 * `TauCeti.UniversalEnvelopingAlgebra.antipodeOp`: the algebra homomorphism from an enveloping
   algebra to its opposite.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode`: the same map as a linear endomorphism.
+* `TauCeti.UniversalEnvelopingAlgebra.antipodeComap`: the preimage of a subring under the
+  antipode, again a subring.
 * `TauCeti.UniversalEnvelopingAlgebra.antipodeEquiv`: the resulting algebra equivalence with the
   opposite algebra.
 
@@ -34,6 +38,8 @@ property of the enveloping algebra is used here.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_mul_antidistrib`: the antipode reverses
   multiplication.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_antipode`: the antipode is involutive.
+* `TauCeti.UniversalEnvelopingAlgebra.antipode_smeval`: the antipode passes through the value of
+  an integer polynomial at one element.
 
 ## Roadmap
 
@@ -173,6 +179,18 @@ theorem antipode_pow (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
     antipode R (a ^ n) = antipode R a ^ n := by
   rw [antipode_apply, map_pow, MulOpposite.unop_pow, antipode_apply]
 
+/-- The antipode commutes with evaluating an integer polynomial at one element.
+
+Antimultiplicativity is no obstruction: the value of a polynomial at `a` is a sum of scalar
+multiples of powers of the single element `a`, and the antipode reverses no product of an element
+with itself. -/
+theorem antipode_smeval (p : Polynomial ℤ) (a : _root_.UniversalEnvelopingAlgebra R L) :
+    antipode R (p.smeval a) = p.smeval (antipode R a) := by
+  induction p using Polynomial.induction_on' with
+  | add p q hp hq => rw [Polynomial.smeval_add, map_add, hp, hq, Polynomial.smeval_add]
+  | monomial n c =>
+    rw [Polynomial.smeval_monomial, map_zsmul, antipode_pow, Polynomial.smeval_monomial]
+
 /-- Applying the opposite-valued antipode and then its opposite transform is the identity. -/
 private theorem opComm_antipodeOp_comp_antipodeOp :
     (AlgHom.opComm (antipodeOp R)).comp (antipodeOp R) =
@@ -251,6 +269,27 @@ theorem antipode_antipode (a : _root_.UniversalEnvelopingAlgebra R L) :
   -- `AlgHom.opComm` has no application lemma, so expose the composite's underlying function.
   change (antipodeOp R (antipodeOp R a).unop).unop = a
   exact h
+
+/-- The preimage of a subring under the antipode.
+
+It is a subring again: the antipode is additive and unital, and although it reverses products, a
+subring is closed under multiplication in either order. This is the object a stability proof for a
+generated subring runs its universal property against. -/
+def antipodeComap (S : Subring (_root_.UniversalEnvelopingAlgebra R L)) :
+    Subring (_root_.UniversalEnvelopingAlgebra R L) where
+  carrier := {a | antipode R a ∈ S}
+  zero_mem' := by simp
+  one_mem' := by simp
+  add_mem' ha hb := by simpa using S.add_mem ha hb
+  neg_mem' ha := by simpa using S.neg_mem ha
+  mul_mem' ha hb := by
+    simp only [Set.mem_ofPred_eq, antipode_mul_antidistrib] at *
+    exact S.mul_mem hb ha
+
+@[simp]
+theorem mem_antipodeComap {S : Subring (_root_.UniversalEnvelopingAlgebra R L)}
+    {a : _root_.UniversalEnvelopingAlgebra R L} :
+    a ∈ antipodeComap R S ↔ antipode R a ∈ S := Iff.rfl
 
 /-- The antipode is bijective. -/
 theorem antipode_bijective : Function.Bijective (antipode (L := L) R) :=
