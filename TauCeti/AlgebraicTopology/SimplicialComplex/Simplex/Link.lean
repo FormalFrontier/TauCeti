@@ -31,8 +31,6 @@ Chapter 2.
 
 public section
 
-namespace TauCeti
-
 open Finset
 
 namespace PreAbstractSimplicialComplex
@@ -127,4 +125,3 @@ theorem link_simplexBoundary_self : link (simplexBoundary V) V = ⊥ := by
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

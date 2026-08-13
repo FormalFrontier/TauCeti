@@ -18,8 +18,8 @@ counts the cells of a diagram row by row: the row lengths sum to the number of c
 first `k` row lengths sum to the number of cells lying in the first `k` rows, whether those
 lengths are summed as `∑ i ∈ Finset.range k, μ.rowLen i` or as `(μ.rowLens.take k).sum`.  Since
 the rows exhaust the cells, the row lengths also determine the diagram
-(`TauCeti.YoungDiagram.rowLen_injective`).  Cutting the same count column by column,
-`TauCeti.YoungDiagram.card_filter_fst_lt_filter_snd_eq` counts the cells of the first `k` rows
+(`YoungDiagram.rowLen_injective`).  Cutting the same count column by column,
+`YoungDiagram.card_filter_fst_lt_filter_snd_eq` counts the cells of the first `k` rows
 lying in a fixed column.
 
 The partial sums are the shape of every dominance statement about partitions, since dominance
@@ -27,20 +27,18 @@ compares partial sums of decreasingly sorted parts, and the sorted parts of a pa
 row lengths of its Young diagram.
 
 Reading the rows also describes containment: one diagram is contained in another exactly when
-each of its rows is shorter (`TauCeti.YoungDiagram.le_iff_forall_rowLen_le`), from which a diagram
-has only finitely many sub-diagrams (`TauCeti.YoungDiagram.finite_Iic`).
+each of its rows is shorter (`YoungDiagram.le_iff_forall_rowLen_le`), from which a diagram
+has only finitely many sub-diagrams (`YoungDiagram.finite_Iic`).
 
 The file closes with the two degenerate shapes, at the bottom and at the top of the dominance
 order.  A diagram with at most one column has its cells described one row at a time by
-`TauCeti.YoungDiagram.mem_iff_of_rowLen_le_one` and counted by
-`TauCeti.YoungDiagram.card_eq_colLen_of_rowLen_le_one`; a diagram with at most one row is described
-by `TauCeti.YoungDiagram.mem_iff_of_colLen_le_one` and counted by
-`TauCeti.YoungDiagram.card_eq_rowLen_of_colLen_le_one`.
+`YoungDiagram.mem_iff_of_rowLen_le_one` and counted by
+`YoungDiagram.card_eq_colLen_of_rowLen_le_one`; a diagram with at most one row is described
+by `YoungDiagram.mem_iff_of_colLen_le_one` and counted by
+`YoungDiagram.card_eq_rowLen_of_colLen_le_one`.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace YoungDiagram
 
@@ -106,7 +104,7 @@ theorem sum_range_rowLen_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :
       aesop
 
 /-- The cells of a Young diagram, counted over any range of rows that contains all of them.  This
-is `TauCeti.YoungDiagram.sum_rowLens` with the range of summation chosen by hand instead of being
+is `YoungDiagram.sum_rowLens` with the range of summation chosen by hand instead of being
 the exact number of rows `μ.colLen 0`. -/
 theorem card_eq_sum_range_rowLen (μ : _root_.YoungDiagram) {N : ℕ} (hN : μ.colLen 0 ≤ N) :
     μ.card = ∑ i ∈ Finset.range N, μ.rowLen i := by
@@ -116,7 +114,7 @@ theorem card_eq_sum_range_rowLen (μ : _root_.YoungDiagram) {N : ℕ} (hN : μ.c
     (μ.colLen_anti 0 c.snd c.snd.zero_le)) hN
 
 /-- The first `k` entries of `YoungDiagram.rowLens` count the cells in the first `k` rows.  This
-is `TauCeti.YoungDiagram.sum_range_rowLen_eq_card_filter_fst` with the truncation taken on the
+is `YoungDiagram.sum_range_rowLen_eq_card_filter_fst` with the truncation taken on the
 list of row lengths, the form in which partial sums enter the dominance order on partitions. -/
 theorem sum_take_rowLens_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :
     (μ.rowLens.take k).sum = (μ.cells.filter fun c => c.1 < k).card := by
@@ -248,4 +246,3 @@ theorem card_eq_rowLen_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤
 
 end YoungDiagram
 
-end TauCeti
