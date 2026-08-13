@@ -22,11 +22,12 @@ of a pure tensor as an alternating sum of pure powers and needs no invertibility
 `(#ι)!` then turns the symmetrization into a projection onto the invariants: an invariant tensor is
 the average of its own orbit, so it lies in the span of the pure powers.
 
-This is the spanning half of the double centralizer in Schur-Weyl duality. Under the
-identification `End (V^{⊗ι}) ≃ (End V)^{⊗ι}`, the endomorphisms commuting with the factor
-permutations are the invariants of the permutation action on `(End V)^{⊗ι}`, and this file says
-they are spanned by the pure powers `f^{⊗ι}` — the diagonal operators through which the general
-linear group acts.
+This is the spanning half of the double centralizer in Schur-Weyl duality. There `ι` is finite and
+`V` is a finite free module, so that the canonical map `(End V)^{⊗ι} → End (V^{⊗ι})` is an
+isomorphism; the results below need neither hypothesis on `M`. Under that identification the
+endomorphisms commuting with the factor permutations are the invariants of the permutation action
+on `(End V)^{⊗ι}`, and this file says they are spanned by the pure powers `f^{⊗ι}` — the diagonal
+operators through which the general linear group acts.
 
 ## Main results
 
