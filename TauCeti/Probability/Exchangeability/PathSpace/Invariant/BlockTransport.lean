@@ -7,7 +7,6 @@ module
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
-import TauCeti.Probability.Exchangeability.PermutationExtension
 import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 
 /-!
@@ -28,15 +27,14 @@ integral identity, which needs only `T ⁻¹' A = A`.
 * `measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add` — the
   primitive: such a reindexing preserves the restricted law, so Koopman-side consumers get a
   `MeasurePreserving`, not only an integral identity;
-* `setLIntegral_comp_reindex_eq_of_measurableSet_invariants_of_eventually_add` — its `ℝ≥0∞`
-  shadow;
 * `ContractableLaw.restrict_map_block_eq_prefixProj_of_measurableSet_invariants` — the
   finite-selection form as a measure equality on the **restricted** law: reading a strictly
   increasing block and reading the prefix push `ρ.restrict A` to the same measure, so Bochner and
   `Lᵖ` statements follow as well. The unrestricted counterpart is the existing
-  `ContractableLaw.map_prefixProj_of_strictMono`;
-* `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — its `ℝ≥0∞`
-  corollary.
+  `ContractableLaw.map_prefixProj_of_strictMono`.
+
+`ℝ≥0∞` statements are not restated here: a consumer wanting one applies `.lintegral_comp` to the
+`MeasurePreserving` above, or rewrites with `lintegral_map` through the measure equality.
 
 The endomorphism-level facts are Mathlib's: `MeasurePreserving.restrict_preimage` gives the
 restricted measure preservation once the invariant event is rewritten by
@@ -101,18 +99,6 @@ theorem measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventu
   have h := hmp.restrict_preimage (MeasurableSpace.measurableSet_invariants.1 hA).1
   rwa [preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add] at h
 
-/-- **The `ℝ≥0∞` shadow.** Precomposition with such a reindexing changes no set-integral over an
-invariant event. -/
-theorem setLIntegral_comp_reindex_eq_of_measurableSet_invariants_of_eventually_add
-    {ρ : Measure (ℕ → α)} {φ : ℕ → ℕ} {m C : ℕ}
-    (hmp : MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) ρ ρ)
-    (hφ_add : ∀ n, m ≤ n → φ n = n + C)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
-    ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ :=
-  (measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add
-    hmp hφ_add hA).lintegral_comp hf
-
 /-- **The primitive measure equality.** Over an invariant event, reading a strictly increasing
 block and reading the prefix push the restricted law to the same measure on `Fin m → α`.
 
@@ -131,19 +117,6 @@ theorem ContractableLaw.restrict_map_block_eq_prefixProj_of_measurableSet_invari
     funext x i
     simp only [Function.comp_apply, prefixProj_apply, hφ_eq]
   rw [hcomp, ← Measure.map_map (measurable_prefixProj m) hmp.measurable, hmp.map_eq]
-
-/-- **A strictly increasing finite selection can be displaced to the prefix over an invariant
-event.** The `ℝ≥0∞` corollary of the measure equality: the set-integral over `A` of a block
-observable read along `k` equals the set-integral of the same observable read along the prefix
-`0, 1, …, m - 1`. -/
-theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {g : (Fin m → α) → ℝ≥0∞} (hg : Measurable g) :
-    ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (prefixProj α m x) ∂ρ := by
-  rw [← lintegral_map hg (measurable_pi_lambda _ fun i => measurable_pi_apply (k i)),
-    ← lintegral_map hg (measurable_prefixProj m),
-    hρ.restrict_map_block_eq_prefixProj_of_measurableSet_invariants hk hA]
 
 end Probability
 
