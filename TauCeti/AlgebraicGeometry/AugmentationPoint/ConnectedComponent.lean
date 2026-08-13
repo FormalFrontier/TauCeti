@@ -11,12 +11,14 @@ public import TauCeti.RingTheory.Idempotents.Connected.Component
 # The connected component defined by an augmentation
 
 An algebra homomorphism from a commutative algebra to its ground field determines a rational point
-of the algebra's prime spectrum. This file records the factorization of the augmentation through
-the quotient cutting out that point's connected component when the prime spectrum is locally
-connected.
+of the algebra's prime spectrum. This file records that the component idempotent maps to one and
+the factorization of the augmentation through the quotient cutting out that point's connected
+component when the prime spectrum is locally connected.
 
 ## Main declarations
 
+* `TauCeti.AlgHom.map_connectedComponentIdempotent_kernelPoint_eq_one`: the augmentation maps the
+  component idempotent of its kernel point to one.
 * `TauCeti.AlgHom.kernelPointConnectedComponentAlgHom`: the augmentation factored through the
   quotient cutting out the connected component of its kernel point.
 
@@ -47,11 +49,11 @@ variable [LocallyConnectedSpace (PrimeSpectrum H)]
 /-- An augmentation takes the idempotent selecting the connected component of its kernel point to
 one. -/
 @[simp]
-theorem map_connectedComponentIdempotent_kernelPoint :
+theorem map_connectedComponentIdempotent_kernelPoint_eq_one :
     f (PrimeSpectrum.connectedComponentIdempotent (kernelPoint f)) = 1 := by
   have hnot : PrimeSpectrum.connectedComponentIdempotent (kernelPoint f) ∉
       (kernelPoint f).asIdeal :=
-    PrimeSpectrum.connectedComponentIdempotent_notMem (kernelPoint f)
+    PrimeSpectrum.connectedComponentIdempotent_notMem_asIdeal (kernelPoint f)
   rw [kernelPoint_asIdeal, RingHom.mem_ker] at hnot
   have hidempotent : IsIdempotentElem
       (f (PrimeSpectrum.connectedComponentIdempotent (kernelPoint f))) :=
@@ -85,8 +87,7 @@ theorem kernelPointConnectedComponentAlgHom_comp_mk :
 @[simp]
 theorem kernelPointConnectedComponentAlgHom_mk (h : H) :
     kernelPointConnectedComponentAlgHom f
-        (Ideal.Quotient.mk (PrimeSpectrum.connectedComponentIdeal (kernelPoint f)) h) = f h := by
-  unfold kernelPointConnectedComponentAlgHom
-  exact Ideal.Quotient.lift_mk _ _ _
+        (Ideal.Quotient.mk (PrimeSpectrum.connectedComponentIdeal (kernelPoint f)) h) = f h :=
+  DFunLike.congr_fun (kernelPointConnectedComponentAlgHom_comp_mk f) h
 
 end TauCeti.AlgHom
