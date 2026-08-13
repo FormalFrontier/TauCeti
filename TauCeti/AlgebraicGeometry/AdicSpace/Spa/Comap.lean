@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset
 public import TauCeti.RingTheory.Huber.Pair
+public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
 /-!
 # Pullbacks and quotient embeddings of the adic spectrum `Spa(A, A⁺)`
@@ -24,7 +25,8 @@ spaComap φ : Spa(B, B⁺) → Spa(A, A⁺)
 and establishes its fundamental properties:
 1. **Pullback of continuous sub-unit valuations** (`comap_mem_spa`).
 2. **Continuity and functoriality** (`continuous_spaComap`, `spaComap_id`, `spaComap_comp`).
-3. **Preimages of rational subsets** (`comap_preimage_rationalSubset`, `spaComap_preimage_rationalSubset`).
+3. **Preimages of rational subsets** (`comap_preimage_rationalSubset`,
+   `spaComap_preimage_rationalSubset`).
 4. **Quotient embeddings (Wedhorn Proposition 7.38)** (`isEmbedding_spaComap_quotient`,
    `range_spaComap_quotient`): for an ideal `J ⊆ A`, the quotient map `A → A ⧸ J` induces a
    topological embedding `Spa(A ⧸ J, A⁺ ⧸ J) → Spa(A, A⁺)` whose image is the closed subset
@@ -34,13 +36,16 @@ and establishes its fundamental properties:
 
 * `TauCeti.ValuationSpectrum.spaComap` : the continuous map `spa Bplus → spa Aplus` induced by a
   continuous ring homomorphism `φ : A →+* B` with `φ(Aplus) ⊆ Bplus`.
-* `TauCeti.Huber.Pair.Hom.spaComap` : the bundled version for morphisms of Huber pairs `Pair.Hom S T`.
+* `TauCeti.Huber.Pair.Hom.spaComap` : the bundled version for morphisms of Huber pairs
+  `Pair.Hom S T`.
 
 ## Main results
 
 * `TauCeti.ValuationSpectrum.comap_mem_spa` : `v ∈ spa Bplus` implies `comap φ v ∈ spa Aplus`.
-* `TauCeti.ValuationSpectrum.continuous_spaComap` : `spaComap` is continuous for the subspace topologies.
-* `TauCeti.ValuationSpectrum.spaComap_id`, `spaComap_comp` : `spaComap` is contravariantly functorial.
+* `TauCeti.ValuationSpectrum.continuous_spaComap` : `spaComap` is continuous for the subspace
+  topologies.
+* `TauCeti.ValuationSpectrum.spaComap_id`, `spaComap_comp` : `spaComap` is contravariantly
+  functorial.
 * `TauCeti.ValuationSpectrum.comap_preimage_rationalSubset`,
   `spaComap_preimage_rationalSubset` : preimages of rational subsets under `spaComap`.
 * `TauCeti.ValuationSpectrum.isEmbedding_spaComap_quotient` : **Wedhorn Proposition 7.38**, the
@@ -57,6 +62,8 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
+open TauCeti.Valuation
+
 variable {A B C : Type*} [CommRing A] [TopologicalSpace A] [CommRing B] [TopologicalSpace B]
   [CommRing C] [TopologicalSpace C]
 
@@ -67,7 +74,7 @@ theorem comap_mem_spa {φ : A →+* B} (hφ : Continuous φ) {Aplus : Subring A}
     comap φ v ∈ spa Aplus := by
   rw [mem_spa_iff] at hv ⊢
   refine ⟨hv.1.comap hφ, fun a ha ↦ ?_⟩
-  rw [comap_vle]
+  rw [comap_vle, map_one]
   exact hv.2 (φ a) (hplus a ha)
 
 /-- The contravariant map on adic spectra `spa Bplus → spa Aplus` induced by a continuous ring
@@ -89,21 +96,20 @@ theorem continuous_spaComap (φ : A →+* B) (hφ : Continuous φ) {Aplus : Subr
   exact (continuous_comap φ).comp continuous_subtype_val
 
 /-- `spaComap` of the identity homomorphism is the identity map on `spa Aplus`. -/
-@[simp]
-theorem spaComap_id {Aplus : Subring A} :
-    spaComap (RingHom.id A) continuous_id (fun _ ha ↦ ha) = id := by
-  ext v
-  exact Subtype.ext (congr_fun comap_id v.1)
+theorem spaComap_id {A : Type*} [CommRing A] [TopologicalSpace A] {Aplus : Subring A} :
+    spaComap (RingHom.id A) continuous_id (Aplus := Aplus) (Bplus := Aplus) (fun _ ha ↦ ha) =
+      _root_.id :=
+  funext fun ⟨v, _⟩ ↦ Subtype.ext (congr_fun comap_id v)
 
 /-- `spaComap` is contravariantly functorial: `spaComap (ψ ∘ φ) = spaComap φ ∘ spaComap ψ`. -/
 theorem spaComap_comp {φ : A →+* B} (hφ : Continuous φ) {ψ : B →+* C} (hψ : Continuous ψ)
-    {Aplus : Subring A} {Bplus : Subring B} {Cplus : Subring C}
+    (Aplus : Subring A) {Bplus : Subring B} {Cplus : Subring C}
     (hφ_plus : ∀ a ∈ Aplus, φ a ∈ Bplus) (hψ_plus : ∀ b ∈ Bplus, ψ b ∈ Cplus) :
     spaComap (ψ.comp φ) (hψ.comp hφ) (fun a ha ↦ hψ_plus (φ a) (hφ_plus a ha)) =
-      spaComap φ hφ hφ_plus ∘ spaComap ψ hψ hψ_plus := by
-  ext v
-  exact Subtype.ext (congr_fun (comap_comp φ ψ) v.1)
+      spaComap φ hφ hφ_plus ∘ spaComap ψ hψ hψ_plus :=
+  funext fun ⟨v, _⟩ ↦ Subtype.ext (congr_fun (comap_comp φ ψ) v)
 
+open scoped Classical in
 /-- Preimage of a rational subset under `comap φ` in `spa Bplus`:
 `(comap φ) ⁻¹' R(T/s) ∩ Spa (B, B⁺) = R(φ(T)/φ(s))`. -/
 theorem comap_preimage_rationalSubset (φ : A →+* B) (hφ : Continuous φ) {Aplus : Subring A}
@@ -112,16 +118,20 @@ theorem comap_preimage_rationalSubset (φ : A →+* B) (hφ : Continuous φ) {Ap
       rationalSubset Bplus (T.image φ) (φ s) := by
   ext v
   simp only [Set.mem_inter_iff, Set.mem_preimage, mem_rationalSubset_iff, mem_spa_iff,
-    Finset.mem_image, comap_vle]
+    comap_vle, map_one, map_zero]
   constructor
-  · rintro ⟨⟨-, hT, hs⟩, hv_cont, hv_plus⟩
-    refine ⟨⟨hv_cont, hv_plus⟩, fun t ht ↦ ?_, hs⟩
-    obtain ⟨a, ha, rfl⟩ := ht
-    exact hT a ha
+  · rintro ⟨⟨⟨-, -⟩, hT, hs⟩, hv_cont, hv_plus⟩
+    exact ⟨⟨hv_cont, hv_plus⟩, fun t ht ↦ by
+      obtain ⟨a, ha, rfl⟩ := Finset.mem_image.mp ht
+      exact hT a ha, hs⟩
   · rintro ⟨⟨hv_cont, hv_plus⟩, hT, hs⟩
-    have hcomap : comap φ v ∈ spa Aplus := comap_mem_spa hφ hplus ⟨hv_cont, hv_plus⟩
-    exact ⟨⟨hcomap, fun a ha ↦ hT (φ a) (Finset.mem_image_of_mem φ ha), hs⟩, hv_cont, hv_plus⟩
+    have hcomap_cont : (comap φ v).IsContinuous := hv_cont.comap hφ
+    have hcomap_plus : ∀ a ∈ Aplus, v.toValuativeRel.vle (φ a) 1 :=
+      fun a ha ↦ hv_plus (φ a) (hplus a ha)
+    exact ⟨⟨⟨hcomap_cont, hcomap_plus⟩,
+      fun a ha ↦ hT (φ a) (Finset.mem_image_of_mem φ ha), hs⟩, hv_cont, hv_plus⟩
 
+open scoped Classical in
 /-- Preimage of a rational subset under `spaComap`: the preimage of `R(T/s)` under `spaComap φ` is
 `R(φ(T)/φ(s))`. -/
 theorem spaComap_preimage_rationalSubset (φ : A →+* B) (hφ : Continuous φ) {Aplus : Subring A}
@@ -130,75 +140,85 @@ theorem spaComap_preimage_rationalSubset (φ : A →+* B) (hφ : Continuous φ) 
       Subtype.val ⁻¹' rationalSubset Bplus (T.image φ) (φ s) := by
   ext ⟨v, hv⟩
   simp only [Set.mem_preimage, spaComap_val]
-  have := congr_arg (fun (S : Set (Spv B)) ↦ v ∈ S)
-    (comap_preimage_rationalSubset φ hφ hplus T s)
-  simp only [Set.mem_inter_iff, Set.mem_preimage, hv, and_true] at this
-  exact this
+  have h := congr_arg (fun S ↦ v ∈ S) (comap_preimage_rationalSubset φ hφ hplus T s)
+  simp only [Set.mem_inter_iff, Set.mem_preimage, hv, and_true] at h
+  exact Iff.of_eq h
 
 section Quotient
 
 /-- Continuity of the lifted valuation on the quotient ring `A ⧸ J`. -/
 theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
     (hv : v.IsContinuous) : (quotientLift J hJ).IsContinuous := by
-  rw [isContinuous_def] at hv ⊢
+  have hv_cont : Valuation.IsContinuous v.valuation := (isContinuous_def v).mp hv
+  have hv_open : ∀ a : A, IsOpen {y : A | v.valuation y < v.valuation a} :=
+    Valuation.isContinuous_def.mp hv_cont
+  rw [isContinuous_def, Valuation.isContinuous_def]
   intro b
   obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective b
-  rw [isOpen_coinduced, Set.preimage_setOf_eq]
-  have h_eq : ∀ y : A, (quotientLift J hJ).valuation (Ideal.Quotient.mk J y) <
-      (quotientLift J hJ).valuation (Ideal.Quotient.mk J a) ↔ v.valuation y < v.valuation a := by
-    intro y
-    have h1 : (quotientLift J hJ).valuation (Ideal.Quotient.mk J y) =
-        (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).valuation y := rfl
-    rw [h1, comap_quotientLift J hJ]
-    have h2 : (quotientLift J hJ).valuation (Ideal.Quotient.mk J a) =
-        (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).valuation a := rfl
-    rw [h2, comap_quotientLift J hJ]
-  have h_set : {y : A | (quotientLift J hJ).valuation (Ideal.Quotient.mk J y) <
-      (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
+  have h_eq : Ideal.Quotient.mk J ⁻¹'
+        {x : A ⧸ J | (quotientLift J hJ).valuation x <
+          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
       {y : A | v.valuation y < v.valuation a} := by
     ext y
-    exact h_eq y
-  rw [h_set]
-  exact hv a
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
+    have h1 : (quotientLift J hJ).toValuativeRel.vlt
+          (Ideal.Quotient.mk J y) (Ideal.Quotient.mk J a) ↔
+        (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).toValuativeRel.vlt y a := by
+      rw [comap_vlt]
+    rw [h1, comap_quotientLift J hJ, ← valuation_lt_iff]
+  have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
+        {x : A ⧸ J | (quotientLift J hJ).valuation x <
+          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
+    rw [h_eq]
+    exact hv_open a
+  exact isOpen_coinduced.mp h_open
 
 /-- **Wedhorn Proposition 7.38 (Part 1)**: The contravariant map on adic spectra induced by the
 quotient homomorphism `A → A ⧸ J` is a topological embedding. -/
 theorem isEmbedding_spaComap_quotient (J : Ideal A) (Aplus : Subring A) :
     Topology.IsEmbedding
-      (spaComap (Ideal.Quotient.mk J) continuous_quotient_mk
-        (fun a ha ↦ Subring.mem_map.mpr ⟨a, ha, rfl⟩) :
+      (spaComap (Ideal.Quotient.mk J) continuous_quotient_mk'
+        (fun (a : A) (ha : a ∈ Aplus) ↦
+          (Subring.mem_map (f := Ideal.Quotient.mk J)).mpr ⟨a, ha, rfl⟩) :
         spa (Aplus.map (Ideal.Quotient.mk J)) → spa Aplus) := by
+  have hcomp : Subtype.val ∘ spaComap (Ideal.Quotient.mk J) continuous_quotient_mk'
+        (fun (a : A) (ha : a ∈ Aplus) ↦
+          (Subring.mem_map (f := Ideal.Quotient.mk J)).mpr ⟨a, ha, rfl⟩) =
+      comap (Ideal.Quotient.mk J) ∘ Subtype.val := by
+    ext ⟨v, hv⟩
+    rfl
   refine Topology.IsEmbedding.of_comp_iff Topology.IsEmbedding.subtypeVal |>.mp ?_
-  have hcomp : Subtype.val ∘ spaComap (Ideal.Quotient.mk J) continuous_quotient_mk
-        (fun a ha ↦ Subring.mem_map.mpr ⟨a, ha, rfl⟩) =
-      comap (Ideal.Quotient.mk J) ∘ Subtype.val := rfl
   rw [hcomp]
   exact (isEmbedding_comap_quotientMk J).comp Topology.IsEmbedding.subtypeVal
 
 /-- **Wedhorn Proposition 7.38 (Part 2)**: The range of the quotient map on adic spectra is the
 closed subset of points whose support contains `J`. -/
 theorem range_spaComap_quotient (J : Ideal A) (Aplus : Subring A) :
-    Set.range (spaComap (Ideal.Quotient.mk J) continuous_quotient_mk
-      (fun a ha ↦ Subring.mem_map.mpr ⟨a, ha, rfl⟩) :
+    Set.range (spaComap (Ideal.Quotient.mk J) continuous_quotient_mk'
+      (fun (a : A) (ha : a ∈ Aplus) ↦
+        (Subring.mem_map (f := Ideal.Quotient.mk J)).mpr ⟨a, ha, rfl⟩) :
       spa (Aplus.map (Ideal.Quotient.mk J)) → spa Aplus) =
       Subtype.val ⁻¹' {v : Spv A | J ≤ v.supp} := by
   ext ⟨v, hv⟩
-  simp only [Set.mem_range, Set.mem_preimage, Set.mem_setOf_eq]
+  simp only [Set.mem_range, Set.mem_preimage, Set.mem_ofPred_eq]
   constructor
   · rintro ⟨⟨w, hw⟩, heq⟩
     have hval : comap (Ideal.Quotient.mk J) w = v := Subtype.ext_iff.mp heq
     rw [← hval]
     exact self_le_supp_comap J w
   · intro hJ
-    have hlift := quotientLift J hJ
-    have hlift_spa : hlift ∈ spa (Aplus.map (Ideal.Quotient.mk J)) := by
+    have hlift_spa : quotientLift J hJ ∈ spa (Aplus.map (Ideal.Quotient.mk J)) := by
       rw [mem_spa_iff]
       refine ⟨isContinuous_quotientLift J hJ (mem_spa_iff Aplus v |>.mp hv).1, ?_⟩
       rintro _ ⟨a, ha, rfl⟩
-      rw [← comap_vle (Ideal.Quotient.mk J), comap_quotientLift J hJ]
+      have h1 : (quotientLift J hJ).toValuativeRel.vle (Ideal.Quotient.mk J a) 1 ↔
+          (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).toValuativeRel.vle a 1 := by
+        rw [comap_vle, map_one]
+      rw [h1, comap_quotientLift J hJ]
       exact (mem_spa_iff Aplus v |>.mp hv).2 a ha
-    refine ⟨⟨hlift, hlift_spa⟩, ?_⟩
-    ext
+    refine ⟨⟨quotientLift J hJ, hlift_spa⟩, ?_⟩
+    apply Subtype.ext
+    dsimp
     exact comap_quotientLift J hJ
 
 end Quotient
@@ -224,15 +244,21 @@ theorem continuous_spaComap (f : Hom S T) : Continuous f.spaComap :=
   TauCeti.ValuationSpectrum.continuous_spaComap f.toRingHom f.continuous_toRingHom f.map_mem_plus
 
 /-- `spaComap` for the identity morphism is the identity map on `Spa(S)`. -/
-@[simp]
-theorem spaComap_id (S : Pair A) : (Hom.id S).spaComap = id :=
-  TauCeti.ValuationSpectrum.spaComap_id
+theorem spaComap_id (S : Pair A) : (Hom.id S).spaComap = _root_.id := by
+  funext ⟨v, hv⟩
+  apply Subtype.ext
+  dsimp [spaComap, TauCeti.ValuationSpectrum.spaComap]
+  rw [Hom.toRingHom_id, comap_id]
+  rfl
 
 /-- `spaComap` is contravariantly functorial for composition of morphisms of Huber pairs:
 `(g ∘ f).spaComap = f.spaComap ∘ g.spaComap`. -/
 theorem spaComap_comp (g : Hom T U) (f : Hom S T) :
-    (g.comp f).spaComap = f.spaComap ∘ g.spaComap :=
-  TauCeti.ValuationSpectrum.spaComap_comp f.continuous_toRingHom g.continuous_toRingHom
-    f.map_mem_plus g.map_mem_plus
+    (g.comp f).spaComap = f.spaComap ∘ g.spaComap := by
+  funext ⟨v, hv⟩
+  apply Subtype.ext
+  dsimp [spaComap, TauCeti.ValuationSpectrum.spaComap]
+  rw [Hom.toRingHom_comp, comap_comp]
+  rfl
 
 end TauCeti.Huber.Pair.Hom
