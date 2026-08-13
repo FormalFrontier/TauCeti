@@ -7,7 +7,7 @@ module
 public import Mathlib.Algebra.Lie.Sl2
 public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
-import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
+import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 import Mathlib.Tactic.Module
 
 /-!
@@ -21,6 +21,8 @@ E * F - F * E = H,   H * E - E * H = 2 • E,   H * F - F * H = -(2 • F).
 ```
 
 This file computes how `E` and `F` commute past powers, and past divided powers, of one another.
+It uses the general integer-eigenvalue identities from
+`TauCeti.Algebra.Ring.Commutator` and `TauCeti.RingTheory.DividedPowers.Associative`.
 Over a `ℚ`-algebra the divided-power forms are
 
 ```text
@@ -39,26 +41,23 @@ closed under multiplication.
 The relations are stated with the hypotheses each one needs, and not as a bundled `IsSl2Triple`:
 the intended consumer is the universal enveloping algebra, where the image of the Cartan element
 is not known to be nonzero, so the `IsSl2Triple.h_ne_zero` field is unavailable there. The last
-section records that a genuine `IsSl2Triple` of a Lie algebra does supply the hypotheses after
-applying the canonical map to the enveloping algebra.
+section transports the individual bracket hypotheses through the canonical map to the enveloping
+algebra; a genuine `IsSl2Triple` supplies them through its bracket fields.
 
 ## Main results
 
-* `TauCeti.Associative.mul_pow_of_commutator_eq_zsmul`: an eigenvector `X` of commutation by `H`
-  with integer eigenvalue `c` shifts `H` by `n * c` when `H` is moved past `Xⁿ`;
-  `TauCeti.Sl2.h_mul_f_pow` and `TauCeti.Sl2.h_mul_e_pow` are its `c = ∓2` specialisations.
-* `TauCeti.Associative.mul_dividedPower_of_commutator_eq_zsmul`: the corresponding general
-  integer-eigenvalue relation for divided powers.
-* `TauCeti.Sl2.e_mul_f_pow` and `TauCeti.Sl2.f_mul_e_pow`: the classical formulas
+* `TauCeti.Sl2.e_mul_f_pow_succ` and `TauCeti.Sl2.f_mul_e_pow_succ`: the classical formulas
   `⁅E, Fⁿ⁆ = n Fⁿ⁻¹ (H - (n - 1))` and `⁅F, Eⁿ⁆ = -n Eⁿ⁻¹ (H + (n - 1))`, written with the index
   shifted so that no truncated subtraction appears.
-* `TauCeti.Sl2.e_mul_f_dividedPower` and `TauCeti.Sl2.f_mul_e_dividedPower`: their divided-power
-  forms, in which the structure constants are units `±1`.
-* `TauCeti.Sl2.h_mul_f_dividedPower` and `TauCeti.Sl2.h_mul_e_dividedPower`: moving a Cartan
+* `TauCeti.Sl2.h_mul_f_pow` and `TauCeti.Sl2.h_mul_e_pow`: moving a Cartan element past a power
+  translates it by `∓2n`.
+* `TauCeti.Sl2.e_mul_dividedPower_succ_f` and `TauCeti.Sl2.f_mul_dividedPower_succ_e`: their
+  divided-power forms, in which the structure constants are units `±1`.
+* `TauCeti.Sl2.h_mul_dividedPower_f` and `TauCeti.Sl2.h_mul_dividedPower_e`: moving a Cartan
   element past a divided power translates it by `∓2n`.
-* `TauCeti.Sl2.ι_e_mul_dividedPower_ι_f` and `TauCeti.Sl2.ι_f_mul_dividedPower_ι_e`: the two
-  divided-power relations for the image of an `sl₂` triple in a universal enveloping algebra over
-  `ℚ`.
+* `TauCeti.Sl2.ι_e_mul_dividedPower_succ_ι_f` and
+  `TauCeti.Sl2.ι_f_mul_dividedPower_succ_ι_e`: the two divided-power relations in a universal
+  enveloping algebra over `ℚ`.
 
 ## Roadmap
 
@@ -94,24 +93,22 @@ variable {A : Type*} [Ring A] {H E F : A}
 
 /-- Moving a Cartan element past a power of the lowering element translates it by `-2n`. -/
 theorem h_mul_f_pow (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
-    H * F ^ n = F ^ n * (H - (2 * n : ℕ)) := by
+    H * F ^ n = F ^ n * (H - 2 * (n : A)) := by
   have hhf' : H * F - F * H = (-2 : ℤ) • F := by rw [hhf, neg_smul]; norm_num
-  have hc : ((n : ℤ) * (-2)) = -((2 * n : ℕ) : ℤ) := by push_cast; ring
-  rw [mul_pow_of_commutator_eq_zsmul hhf' n, hc, neg_zsmul, natCast_zsmul, mul_sub,
-    nsmul_eq_mul']
-  abel
+  simpa only [Int.cast_neg, Int.cast_ofNat, neg_mul, sub_eq_add_neg] using
+    mul_pow_eq_pow_mul_add_intCast hhf' n
 
 /-- Moving a Cartan element past a power of the raising element translates it by `2n`. -/
 theorem h_mul_e_pow (hhe : H * E - E * H = 2 • E) (n : ℕ) :
-    H * E ^ n = E ^ n * (H + (2 * n : ℕ)) := by
+    H * E ^ n = E ^ n * (H + 2 * (n : A)) := by
   have hhe' : H * E - E * H = (2 : ℤ) • E := by rw [hhe]; norm_num
-  have hc : ((n : ℤ) * 2) = ((2 * n : ℕ) : ℤ) := by push_cast; ring
-  rw [mul_pow_of_commutator_eq_zsmul hhe' n, hc, natCast_zsmul, mul_add, nsmul_eq_mul']
+  simpa only [Int.cast_ofNat] using mul_pow_eq_pow_mul_add_intCast hhe' n
 
 /-- The raising element commuted past a power of the lowering element: this is the classical
 `⁅E, Fⁿ⁆ = n Fⁿ⁻¹ (H - (n - 1))`, with the index shifted so that no truncated subtraction
 appears. -/
-theorem e_mul_f_pow (hef : E * F - F * E = H) (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
+theorem e_mul_f_pow_succ (hef : E * F - F * E = H)
+    (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
     E * F ^ (n + 1) = F ^ (n + 1) * E + (n + 1) • (F ^ n * (H - n)) := by
   rw [sub_eq_iff_eq_add] at hef hhf
   have hEF : E * F = F * E + H := by rw [hef]; abel
@@ -122,7 +119,7 @@ theorem e_mul_f_pow (hef : E * F - F * E = H) (hhf : H * F - F * H = -(2 • F))
     have hcast : ((n + 1 : ℕ) : A) = (n : A) + 1 := by push_cast; rfl
     have hstep : F ^ n * (H - (n : A)) * F = F ^ (n + 1) * (H - ((n : A) + 2)) := by
       have h1 : (H - (n : A)) * F = F * (H - ((n : A) + 2)) := by
-        rw [sub_mul, hHF, sub_add_eq_sub_sub, mul_sub, mul_sub,
+        simp only [sub_mul, hHF, sub_add_eq_sub_sub, mul_sub,
           (Nat.cast_commute n F).eq, nsmul_eq_mul']
         push_cast
         abel
@@ -138,19 +135,23 @@ theorem e_mul_f_pow (hef : E * F - F * E = H) (hhf : H * F - F * H = -(2 • F))
       _ = F ^ (n + 1) * (F * E + H) + (n + 1) • (F ^ (n + 1) * (H - ((n : A) + 2))) := by
           rw [hEF, hstep]
       _ = F ^ (n + 1 + 1) * E + (n + 1 + 1) • (F ^ (n + 1) * (H - ((n : A) + 1))) := by
-          rw [mul_add, ← mul_assoc, ← pow_succ, mul_sub, mul_sub, hA, hB]
+          simp only [mul_add]
+          rw [← mul_assoc, ← pow_succ]
+          simp only [mul_sub, hA, hB]
           module
       _ = F ^ (n + 1 + 1) * E + (n + 1 + 1) • (F ^ (n + 1) * (H - ((n + 1 : ℕ) : A))) := by
           rw [hcast]
 
-/-- The lowering element commuted past a power of the raising element. This is `e_mul_f_pow`
-applied to the `sl₂` triple `(-H, F, E)`. -/
-theorem f_mul_e_pow (hef : E * F - F * E = H) (hhe : H * E - E * H = 2 • E) (n : ℕ) :
+/-- The lowering element commuted past a power of the raising element:
+`⁅F, Eⁿ⁺¹⁆ = -(n + 1) Eⁿ (H + n)`, the mirror of `e_mul_f_pow_succ` under the Chevalley
+involution. -/
+theorem f_mul_e_pow_succ (hef : E * F - F * E = H)
+    (hhe : H * E - E * H = 2 • E) (n : ℕ) :
     F * E ^ (n + 1) = E ^ (n + 1) * F - (n + 1) • (E ^ n * (H + n)) := by
   have hef' : F * E - E * F = -H := by rw [← hef]; abel
   have hhe' : -H * E - E * -H = -(2 • E) := by
     rw [neg_mul, mul_neg, sub_neg_eq_add, ← hhe]; abel
-  rw [e_mul_f_pow hef' hhe' n, ← neg_add', mul_neg, smul_neg, ← sub_eq_add_neg]
+  rw [e_mul_f_pow_succ hef' hhe' n, ← neg_add', mul_neg, smul_neg, ← sub_eq_add_neg]
 
 end CommutingPowers
 
@@ -160,44 +161,33 @@ variable {A : Type*} [Ring A] [Algebra ℚ A] {H E F : A}
 
 /-- Moving a Cartan element past a divided power of the lowering element translates it by
 `-2n`. -/
-theorem h_mul_f_dividedPower (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
-    H * dividedPower n F = dividedPower n F * (H - (2 * n : ℕ)) := by
+theorem h_mul_dividedPower_f (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
+    H * dividedPower n F = dividedPower n F * (H - 2 * (n : A)) := by
   have hhf' : H * F - F * H = (-2 : ℤ) • F := by rw [hhf, neg_smul]; norm_num
-  have hc : ((n : ℤ) * (-2)) = -((2 * n : ℕ) : ℤ) := by push_cast; ring
-  rw [mul_dividedPower_of_commutator_eq_zsmul hhf' n, hc, neg_zsmul, natCast_zsmul, mul_sub,
-    nsmul_eq_mul']
-  abel
+  simpa only [Int.cast_neg, Int.cast_ofNat, neg_mul, sub_eq_add_neg] using
+    mul_dividedPower_eq_dividedPower_mul_add_intCast hhf' n
 
 /-- Moving a Cartan element past a divided power of the raising element translates it by `2n`. -/
-theorem h_mul_e_dividedPower (hhe : H * E - E * H = 2 • E) (n : ℕ) :
-    H * dividedPower n E = dividedPower n E * (H + (2 * n : ℕ)) := by
+theorem h_mul_dividedPower_e (hhe : H * E - E * H = 2 • E) (n : ℕ) :
+    H * dividedPower n E = dividedPower n E * (H + 2 * (n : A)) := by
   have hhe' : H * E - E * H = (2 : ℤ) • E := by rw [hhe]; norm_num
-  have hc : ((n : ℤ) * 2) = ((2 * n : ℕ) : ℤ) := by push_cast; ring
-  rw [mul_dividedPower_of_commutator_eq_zsmul hhe' n, hc, natCast_zsmul, mul_add, nsmul_eq_mul']
-
-/-- Dividing by `(n + 1)!` absorbs the factor `n + 1` that the power relations produce, leaving
-`n!` behind. This is the arithmetic behind the integrality of the divided-power relations. -/
-private theorem inv_factorial_succ_nsmul (n : ℕ) (x : A) :
-    (((n + 1).factorial : ℚ))⁻¹ • ((n + 1) • x) = ((n.factorial : ℚ))⁻¹ • x := by
-  have hfac : (n.factorial : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr n.factorial_ne_zero
-  rw [← Nat.cast_smul_eq_nsmul ℚ, smul_smul]
-  congr 1
-  rw [Nat.factorial_succ]
-  push_cast
-  field_simp
+  simpa only [Int.cast_ofNat] using
+    mul_dividedPower_eq_dividedPower_mul_add_intCast hhe' n
 
 /-- The raising element commuted past a divided power of the lowering element. Every structure
 constant on the right is `1`: this is the first case of Kostant's normal-ordering formula, and the
 first step toward proving that the relevant `ℤ`-form is closed under multiplication. -/
-theorem e_mul_f_dividedPower (hef : E * F - F * E = H) (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
+theorem e_mul_dividedPower_succ_f (hef : E * F - F * E = H)
+    (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
     E * dividedPower (n + 1) F = dividedPower (n + 1) F * E + dividedPower n F * (H - n) := by
-  rw [dividedPower_def, dividedPower_def, mul_smul_comm, e_mul_f_pow hef hhf, smul_add,
+  rw [dividedPower_def, dividedPower_def, mul_smul_comm, e_mul_f_pow_succ hef hhf, smul_add,
     smul_mul_assoc, smul_mul_assoc, inv_factorial_succ_nsmul]
 
 /-- The lowering element commuted past a divided power of the raising element. -/
-theorem f_mul_e_dividedPower (hef : E * F - F * E = H) (hhe : H * E - E * H = 2 • E) (n : ℕ) :
+theorem f_mul_dividedPower_succ_e (hef : E * F - F * E = H)
+    (hhe : H * E - E * H = 2 • E) (n : ℕ) :
     F * dividedPower (n + 1) E = dividedPower (n + 1) E * F - dividedPower n E * (H + n) := by
-  rw [dividedPower_def, dividedPower_def, mul_smul_comm, f_mul_e_pow hef hhe, smul_sub,
+  rw [dividedPower_def, dividedPower_def, mul_smul_comm, f_mul_e_pow_succ hef hhe, smul_sub,
     smul_mul_assoc, smul_mul_assoc, inv_factorial_succ_nsmul]
 
 end DividedPowers
@@ -210,43 +200,20 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable (R : Type*) [CommRing R] {L : Type*} [LieRing L] [LieAlgebra R L] {h e f : L}
 
-/-- The image of the bracket relation `⁅e, f⁆ = h` of an `sl₂` triple. -/
-theorem ι_e_mul_ι_f_sub_mul (t : IsSl2Triple h e f) :
+/-- The image of a bracket relation `⁅e, f⁆ = h` under the canonical map. -/
+theorem ι_e_mul_ι_f_sub_mul (hef : ⁅e, f⁆ = h) :
     ι R e * ι R f - ι R f * ι R e = ι R h := by
-  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, t.lie_e_f]
+  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, hef]
 
-/-- The image of the bracket relation `⁅h, e⁆ = 2 • e` of an `sl₂` triple. -/
-theorem ι_h_mul_ι_e_sub_mul (t : IsSl2Triple h e f) :
+/-- The image of a bracket relation `⁅h, e⁆ = 2 • e` under the canonical map. -/
+theorem ι_h_mul_ι_e_sub_mul (hhe : ⁅h, e⁆ = 2 • e) :
     ι R h * ι R e - ι R e * ι R h = 2 • ι R e := by
-  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, t.lie_h_e_nsmul, map_nsmul]
+  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, hhe, map_nsmul]
 
-/-- The image of the bracket relation `⁅h, f⁆ = -(2 • f)` of an `sl₂` triple. -/
-theorem ι_h_mul_ι_f_sub_mul (t : IsSl2Triple h e f) :
+/-- The image of a bracket relation `⁅h, f⁆ = -(2 • f)` under the canonical map. -/
+theorem ι_h_mul_ι_f_sub_mul (hhf : ⁅h, f⁆ = -(2 • f)) :
     ι R h * ι R f - ι R f * ι R h = -(2 • ι R f) := by
-  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, t.lie_h_f_nsmul, map_neg,
-    map_nsmul]
-
-/-- The raising element of an `sl₂` triple commuted past a power of the lowering element, inside
-the universal enveloping algebra. -/
-theorem ι_e_mul_ι_f_pow (t : IsSl2Triple h e f) (n : ℕ) :
-    ι R e * ι R f ^ (n + 1) = ι R f ^ (n + 1) * ι R e + (n + 1) • (ι R f ^ n * (ι R h - n)) :=
-  e_mul_f_pow (ι_e_mul_ι_f_sub_mul R t) (ι_h_mul_ι_f_sub_mul R t) n
-
-/-- The lowering element of an `sl₂` triple commuted past a power of the raising element, inside
-the universal enveloping algebra. -/
-theorem ι_f_mul_ι_e_pow (t : IsSl2Triple h e f) (n : ℕ) :
-    ι R f * ι R e ^ (n + 1) = ι R e ^ (n + 1) * ι R f - (n + 1) • (ι R e ^ n * (ι R h + n)) :=
-  f_mul_e_pow (ι_e_mul_ι_f_sub_mul R t) (ι_h_mul_ι_e_sub_mul R t) n
-
-/-- The Cartan element of an `sl₂` triple moved past a power of the lowering element. -/
-theorem ι_h_mul_ι_f_pow (t : IsSl2Triple h e f) (n : ℕ) :
-    ι R h * ι R f ^ n = ι R f ^ n * (ι R h - (2 * n : ℕ)) :=
-  h_mul_f_pow (ι_h_mul_ι_f_sub_mul R t) n
-
-/-- The Cartan element of an `sl₂` triple moved past a power of the raising element. -/
-theorem ι_h_mul_ι_e_pow (t : IsSl2Triple h e f) (n : ℕ) :
-    ι R h * ι R e ^ n = ι R e ^ n * (ι R h + (2 * n : ℕ)) :=
-  h_mul_e_pow (ι_h_mul_ι_e_sub_mul R t) n
+  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, hhf, map_neg, map_nsmul]
 
 end UniversalEnveloping
 
@@ -256,30 +223,22 @@ open _root_.UniversalEnvelopingAlgebra
 
 variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
 
-/-- The divided-power relation `e * f⁽ⁿ⁺¹⁾ = f⁽ⁿ⁺¹⁾ * e + f⁽ⁿ⁾ * (h - n)` for an `sl₂` triple,
-inside a universal enveloping algebra over `ℚ`. This is the relation used after specialization
-to the enveloping algebra of a Chevalley Lie algebra. -/
-theorem ι_e_mul_dividedPower_ι_f (t : IsSl2Triple h e f) (n : ℕ) :
+/-- The divided-power relation `e * f⁽ⁿ⁺¹⁾ = f⁽ⁿ⁺¹⁾ * e + f⁽ⁿ⁾ * (h - n)` in a universal
+enveloping algebra over `ℚ`. This is the relation used after specialization to the enveloping
+algebra of a Chevalley Lie algebra. -/
+theorem ι_e_mul_dividedPower_succ_ι_f (hef : ⁅e, f⁆ = h) (hhf : ⁅h, f⁆ = -(2 • f))
+    (n : ℕ) :
     ι ℚ e * dividedPower (n + 1) (ι ℚ f) =
       dividedPower (n + 1) (ι ℚ f) * ι ℚ e + dividedPower n (ι ℚ f) * (ι ℚ h - n) :=
-  e_mul_f_dividedPower (ι_e_mul_ι_f_sub_mul ℚ t) (ι_h_mul_ι_f_sub_mul ℚ t) n
+  e_mul_dividedPower_succ_f (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_f_sub_mul ℚ hhf) n
 
-/-- The divided-power relation `f * e⁽ⁿ⁺¹⁾ = e⁽ⁿ⁺¹⁾ * f - e⁽ⁿ⁾ * (h + n)` for an `sl₂` triple,
-inside the universal enveloping algebra over `ℚ`. -/
-theorem ι_f_mul_dividedPower_ι_e (t : IsSl2Triple h e f) (n : ℕ) :
+/-- The divided-power relation `f * e⁽ⁿ⁺¹⁾ = e⁽ⁿ⁺¹⁾ * f - e⁽ⁿ⁾ * (h + n)` in a universal
+enveloping algebra over `ℚ`. -/
+theorem ι_f_mul_dividedPower_succ_ι_e (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+    (n : ℕ) :
     ι ℚ f * dividedPower (n + 1) (ι ℚ e) =
       dividedPower (n + 1) (ι ℚ e) * ι ℚ f - dividedPower n (ι ℚ e) * (ι ℚ h + n) :=
-  f_mul_e_dividedPower (ι_e_mul_ι_f_sub_mul ℚ t) (ι_h_mul_ι_e_sub_mul ℚ t) n
-
-/-- The Cartan element of an `sl₂` triple moved past a divided power of the lowering element. -/
-theorem ι_h_mul_dividedPower_ι_f (t : IsSl2Triple h e f) (n : ℕ) :
-    ι ℚ h * dividedPower n (ι ℚ f) = dividedPower n (ι ℚ f) * (ι ℚ h - (2 * n : ℕ)) :=
-  h_mul_f_dividedPower (ι_h_mul_ι_f_sub_mul ℚ t) n
-
-/-- The Cartan element of an `sl₂` triple moved past a divided power of the raising element. -/
-theorem ι_h_mul_dividedPower_ι_e (t : IsSl2Triple h e f) (n : ℕ) :
-    ι ℚ h * dividedPower n (ι ℚ e) = dividedPower n (ι ℚ e) * (ι ℚ h + (2 * n : ℕ)) :=
-  h_mul_e_dividedPower (ι_h_mul_ι_e_sub_mul ℚ t) n
+  f_mul_dividedPower_succ_e (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_e_sub_mul ℚ hhe) n
 
 end UniversalEnvelopingRat
 

@@ -28,8 +28,6 @@ In particular, the equivalence construction is available over an arbitrary commu
 
 ## Main results
 
-* `TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul`: canonical Lie generators satisfy their
-  defining commutator relation.
 * `TauCeti.UniversalEnvelopingAlgebra.map_ι`: the induced map agrees with the original Lie
   homomorphism on the canonical generators.
 * `TauCeti.UniversalEnvelopingAlgebra.map_id` and
@@ -64,15 +62,6 @@ variable [LieRing M] [LieAlgebra R M]
 variable [LieRing N] [LieAlgebra R N]
 
 attribute [local instance 100] LieRing.ofAssociativeRing
-
-/-- The canonical map to the universal enveloping algebra turns a Lie bracket into an associative
-ring commutator. -/
-theorem ι_mul_sub_mul (x y : L) :
-    _root_.UniversalEnvelopingAlgebra.ι R x * _root_.UniversalEnvelopingAlgebra.ι R y -
-      _root_.UniversalEnvelopingAlgebra.ι R y * _root_.UniversalEnvelopingAlgebra.ι R x =
-        _root_.UniversalEnvelopingAlgebra.ι R ⁅x, y⁆ := by
-  rw [(_root_.UniversalEnvelopingAlgebra.ι R).map_lie x y,
-    LieRing.of_associative_ring_bracket]
 
 /-- The algebra homomorphism of universal enveloping algebras induced by a Lie algebra
 homomorphism.
