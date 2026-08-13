@@ -440,8 +440,7 @@ theorem restrictToIdealCodRestrict_preimage (I : Ideal A)
     refine ⟨fun t ht ↦ ?_, hu0⟩
     rcases hT t ht with h | ⟨-, h⟩
     · by_contra hlt
-      exact restrictToIdeal_ne_zero_of_le _ I hfg hu
-        (le_of_not_ge fun hc ↦ hlt ((valuation_le_iff w t u).mp hc)) h
+      exact restrictToIdeal_ne_zero_of_le _ I hfg hu ((valuation_lt_iff w u t).mpr hlt).le h
     · exact h
   · rintro ⟨hT, hu0⟩
     have hu : w.valuation.restrictToIdeal I hfg u ≠ 0 :=
