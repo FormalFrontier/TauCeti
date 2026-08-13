@@ -28,9 +28,9 @@ The main result is that this composite has **no nonzero fixed vector** once the 
 every vertex without repetition and the polarized Tits form has trivial radical, in particular
 whenever the Tits form is anisotropic, and so for a quiver of ADE type, where the Tits form is
 positive definite and `QuadraticMap.PosDef.anisotropic` applies. This is the engine of the
-Bernstein-Gelfand-Ponomarev proof of Gabriel's theorem: it is what forbids an indecomposable
-representation from being carried to itself by the Coxeter functor, and so forces the reflection
-induction to descend to a vertex simple.
+Bernstein-Gelfand-Ponomarev proof of Gabriel's theorem that forbids a nonzero dimension vector from
+being carried to itself after a full pass of the Coxeter functor. The separate positive-root height
+argument supplies the descent to a vertex simple.
 
 ## Main definitions and results
 
@@ -288,9 +288,10 @@ theorem titsPolarForm_eq_zero_of_vertexPreReflectionProd_eq_self {l : List Q} (h
 only the zero vector**, as soon as the word of vertices it is taken along is repetition-free and
 exhausts the vertices.
 
-This is the input to the reflection induction behind Gabriel's theorem: no nonzero dimension
-vector survives a full pass of the Coxeter functor unchanged. An anisotropic Tits form has
-trivial radical, which is the form the hypothesis takes in
+This fixed-point obstruction is one input to the reflection induction behind Gabriel's theorem: no
+nonzero dimension vector survives a full pass of the Coxeter functor unchanged. The descent itself
+requires a separate positive-root height argument. An anisotropic Tits form has trivial radical,
+which is the form the hypothesis takes in
 `TauCeti.vertexPreReflectionProd_eq_self_iff_of_anisotropic`. -/
 theorem vertexPreReflectionProd_eq_self_iff
     (hsep : LinearMap.SeparatingRight (titsPolarForm Q)) {l : List Q} (hnd : l.Nodup)
