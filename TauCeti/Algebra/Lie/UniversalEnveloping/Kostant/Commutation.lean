@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Commutation
 
 /-!
@@ -32,6 +32,8 @@ Kostant integral form; the root/root part requires the separate root-string form
 
 ## Main results
 
+* `TauCeti.UniversalEnvelopingAlgebra.ι_mul_ι_eq_ι_mul_ι_add_zsmul_one`: the associative-ring
+  form of an integral weight relation.
 * `TauCeti.UniversalEnvelopingAlgebra.ringChoose_ι_mul_dividedPower_ι`: move a Cartan binomial
   coefficient to the right of a root-vector divided power.
 * `TauCeti.UniversalEnvelopingAlgebra.dividedPower_ι_mul_ringChoose_ι`: the reverse reordering.
@@ -53,14 +55,10 @@ variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
 local notation "U" => _root_.UniversalEnvelopingAlgebra ℚ L
 
 attribute [local instance 100] LieRing.ofAssociativeRing
-
-/-- The nonnegative-rational scalar action supplying the `BinomialRing` instance for
-`Ring.choose` on the universal enveloping algebra. -/
-noncomputable local instance moduleNNRatCommutation : Module ℚ≥0 U :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+attribute [local instance] TauCeti.moduleNNRat
 
 /-- The associative-ring form of an integral weight relation in a Lie algebra. -/
-private theorem mul_ι_eq_ι_mul_add_zsmul_one {h x : L} {z : ℤ} (hz : ⁅h, x⁆ = z • x) :
+theorem ι_mul_ι_eq_ι_mul_ι_add_zsmul_one {h x : L} {z : ℤ} (hz : ⁅h, x⁆ = z • x) :
     _root_.UniversalEnvelopingAlgebra.ι ℚ h *
         _root_.UniversalEnvelopingAlgebra.ι ℚ x =
       _root_.UniversalEnvelopingAlgebra.ι ℚ x *
@@ -71,20 +69,8 @@ private theorem mul_ι_eq_ι_mul_add_zsmul_one {h x : L} {z : ℤ} (hz : ⁅h, x
       _root_.UniversalEnvelopingAlgebra.ι ℚ x * (z • (1 : U)) := by
     simp only [zsmul_eq_mul, mul_one]
     exact (Int.cast_commute z (_root_.UniversalEnvelopingAlgebra.ι ℚ x)).eq
-  calc
-    _root_.UniversalEnvelopingAlgebra.ι ℚ h *
-        _root_.UniversalEnvelopingAlgebra.ι ℚ x =
-        z • _root_.UniversalEnvelopingAlgebra.ι ℚ x +
-          _root_.UniversalEnvelopingAlgebra.ι ℚ x *
-            _root_.UniversalEnvelopingAlgebra.ι ℚ h :=
-      eq_add_of_sub_eq hmap.symm
-    _ = _root_.UniversalEnvelopingAlgebra.ι ℚ x *
-          _root_.UniversalEnvelopingAlgebra.ι ℚ h +
-        _root_.UniversalEnvelopingAlgebra.ι ℚ x * (z • (1 : U)) := by
-      rw [hzmul, add_comm]
-    _ = _root_.UniversalEnvelopingAlgebra.ι ℚ x *
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ h + z • (1 : U)) :=
-      (mul_add _ _ _).symm
+  rw [mul_add, ← hzmul, add_comm]
+  exact eq_add_of_sub_eq hmap.symm
 
 /-- A Cartan binomial coefficient moves to the right of a root-vector divided power by adding
 `n` copies of the integral weight to its argument. -/
@@ -94,9 +80,10 @@ theorem ringChoose_ι_mul_dividedPower_ι {h x : L} {z : ℤ} (hz : ⁅h, x⁆ =
         Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) =
       Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) *
         Ring.choose
-          (_root_.UniversalEnvelopingAlgebra.ι ℚ h + n • (z • (1 : U))) m :=
-  ringChoose_mul_dividedPower_eq m (mul_ι_eq_ι_mul_add_zsmul_one hz)
-    ((Commute.one_left _).smul_left z) n
+          (_root_.UniversalEnvelopingAlgebra.ι ℚ h + ((n * z : ℤ) : U)) m := by
+  simpa only [nsmul_eq_mul, zsmul_eq_mul, mul_one, Int.cast_natCast, Int.cast_mul] using
+    Associative.ringChoose_mul_dividedPower m
+      (ι_mul_ι_eq_ι_mul_ι_add_zsmul_one hz) ((Commute.one_left _).smul_left z) n
 
 /-- A Cartan binomial coefficient moves to the left of a root-vector divided power by subtracting
 `n` copies of the integral weight from its argument. -/
@@ -105,9 +92,10 @@ theorem dividedPower_ι_mul_ringChoose_ι {h x : L} {z : ℤ} (hz : ⁅h, x⁆ =
     Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) *
         Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ h) m =
       Ring.choose
-          (_root_.UniversalEnvelopingAlgebra.ι ℚ h - n • (z • (1 : U))) m *
-        Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) :=
-  dividedPower_mul_ringChoose_eq m (mul_ι_eq_ι_mul_add_zsmul_one hz)
-    ((Commute.one_left _).smul_left z) n
+          (_root_.UniversalEnvelopingAlgebra.ι ℚ h - ((n * z : ℤ) : U)) m *
+        Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) := by
+  simpa only [nsmul_eq_mul, zsmul_eq_mul, mul_one, Int.cast_natCast, Int.cast_mul] using
+    Associative.dividedPower_mul_ringChoose m
+      (ι_mul_ι_eq_ι_mul_ι_add_zsmul_one hz) ((Commute.one_left _).smul_left z) n
 
 end TauCeti.UniversalEnvelopingAlgebra

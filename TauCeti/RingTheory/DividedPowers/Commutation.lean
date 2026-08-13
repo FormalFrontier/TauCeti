@@ -25,8 +25,8 @@ moving it past a Cartan binomial coefficient introduces no new rational coeffici
 
 ## Main results
 
-* `TauCeti.ringChoose_mul_dividedPower_eq`: move a binomial coefficient to the right.
-* `TauCeti.dividedPower_mul_ringChoose_eq`: move a binomial coefficient to the left.
+* `TauCeti.Associative.ringChoose_mul_dividedPower`: move a binomial coefficient to the right.
+* `TauCeti.Associative.dividedPower_mul_ringChoose`: move a binomial coefficient to the left.
 
 ## References
 
@@ -36,33 +36,26 @@ moving it past a Cartan binomial coefficient introduces no new rational coeffici
 
 public section
 
-namespace TauCeti
+namespace TauCeti.Associative
 
 universe u
 
-variable {A : Type u} [Ring A] [Algebra ℚ A]
-
-/-- The nonnegative-rational scalar action supplying Mathlib's canonical `BinomialRing`
-instance on a rational algebra. -/
-noncomputable local instance moduleNNRat : Module ℚ≥0 A :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+variable {A : Type u} [Ring A] [Algebra ℚ A] [BinomialRing A]
 
 /-- A generalized binomial coefficient can be moved to the right across a divided power by
 shifting its argument by the accumulated commutator. -/
-theorem ringChoose_mul_dividedPower_eq (m : ℕ) {a x c : A}
+theorem ringChoose_mul_dividedPower (m : ℕ) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
-    Ring.choose a m * Associative.dividedPower n x =
-      Associative.dividedPower n x * Ring.choose (a + n • c) m := by
-  rw [Associative.dividedPower_def, mul_smul_comm, smul_mul_assoc,
-    ringChoose_mul_pow_eq m h hc n]
+    Ring.choose a m * dividedPower n x =
+      dividedPower n x * Ring.choose (a + n • c) m := by
+  rw [dividedPower_def, mul_smul_comm, smul_mul_assoc, ringChoose_mul_pow m h hc n]
 
 /-- A generalized binomial coefficient can be moved to the left across a divided power by
 shifting its argument by the negative accumulated commutator. -/
-theorem dividedPower_mul_ringChoose_eq (m : ℕ) {a x c : A}
+theorem dividedPower_mul_ringChoose (m : ℕ) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
-    Associative.dividedPower n x * Ring.choose a m =
-      Ring.choose (a - n • c) m * Associative.dividedPower n x := by
-  rw [Associative.dividedPower_def, smul_mul_assoc, mul_smul_comm,
-    pow_mul_ringChoose_eq m h hc n]
+    dividedPower n x * Ring.choose a m =
+      Ring.choose (a - n • c) m * dividedPower n x := by
+  rw [dividedPower_def, smul_mul_assoc, mul_smul_comm, pow_mul_ringChoose m h hc n]
 
-end TauCeti
+end TauCeti.Associative
