@@ -6,8 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.SemisimplePoint
-public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
-public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 
 /-!
 # Naturality of Jordan decomposition for algebraic-group points
@@ -19,19 +17,15 @@ homomorphism is precomposition, `TauCeti.AlgHom.mapDomain φ`.
 This file proves that point-level Jordan decomposition is natural under these homomorphisms. The
 key compatibility is representation-theoretic: acting by the precomposed point on an
 `H₁`-comodule is the same as first corestricting that comodule along `φ` and then acting by the
-original `H₂`-point. Consequently `mapDomain φ` preserves semisimple points, and uniqueness of
-the commuting semisimple--unipotent factorization identifies the images of both Jordan factors.
+original `H₂`-point. The earlier point-action and semisimple-point APIs provide this compatibility;
+uniqueness of the commuting semisimple--unipotent factorization then identifies the images of both
+Jordan factors.
 
 This is the functoriality-under-homomorphisms part of Layer 4, "Jordan decomposition", in the
 ReductiveGroups roadmap.
 
 ## Main declarations
 
-* `TauCeti.Comodule.endOfPoint_corestrict`: compatibility of point endomorphisms with
-  corestriction and precomposition.
-* `TauCeti.Comodule.pointsAction_corestrict`: the corresponding equality of point actions.
-* `TauCeti.HopfAlgebra.IsSemisimplePoint.mapDomain`: a homomorphism of affine groups preserves
-  semisimple points.
 * `TauCeti.HopfAlgebra.Point.jordanDecomposition_mapDomain`: Jordan decomposition commutes with
   a homomorphism of affine groups.
 * `TauCeti.HopfAlgebra.Point.semisimplePart_mapDomain` and
@@ -50,56 +44,7 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-universe u v w x
-
-namespace Comodule
-
-variable {k : Type u} {H₁ : Type v} {H₂ : Type w} {K : Type x}
-variable [CommSemiring k] [Semiring H₁] [Semiring H₂]
-variable [CommSemiring K] [Algebra k K]
-
-section Bialgebra
-
-variable [_root_.Bialgebra k H₁] [_root_.Bialgebra k H₂]
-variable {V : Type*} [AddCommMonoid V] [Module k V] [Comodule k H₁ V]
-
-/-- Acting on a comodule by a point precomposed with a bialgebra morphism is the same as
-corestricting the comodule along that morphism and acting by the original point. -/
-theorem endOfPoint_corestrict (φ : H₁ →ₐc[k] H₂)
-    (g : WithConv (H₂ →ₐ[k] K)) :
-    (letI : Comodule k H₂ V := Corestrict φ.toCoalgHom
-     endOfPoint V g.ofConv) = endOfPoint V (AlgHom.mapDomain φ g).ofConv := by
-  apply TensorProduct.AlgebraTensorModule.ext
-  intro a v
-  rw [endOfPoint_tmul, endOfPoint_tmul]
-  simp only [corestrict_coact_apply, AlgHom.mapDomain_apply,
-    AlgHom.comp_toLinearMap]
-  rw [LinearMap.lTensor_comp, LinearMap.comp_apply]
-  rfl
-
-end Bialgebra
-
-section HopfAlgebra
-
-variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂]
-variable {V : Type*} [AddCommMonoid V] [Module k V] [Comodule k H₁ V]
-
-/-- The linear action of a precomposed point agrees with the action of the original point on
-the corestricted comodule. -/
-theorem pointsAction_corestrict (φ : H₁ →ₐc[k] H₂)
-    (g : WithConv (H₂ →ₐ[k] K)) :
-    (letI : Comodule k H₂ V := Corestrict φ.toCoalgHom
-     pointsAction V g) = pointsAction V (AlgHom.mapDomain φ g) := by
-  let : Comodule k H₂ V := Corestrict φ.toCoalgHom
-  apply LinearEquiv.ext
-  exact LinearMap.congr_fun <|
-    (pointsAction_toLinearMap V g).trans <|
-      (endOfPoint_corestrict φ g).trans <|
-        (pointsAction_toLinearMap V (AlgHom.mapDomain φ g)).symm
-
-end HopfAlgebra
-
-end Comodule
+universe u
 
 namespace HopfAlgebra
 
@@ -107,16 +52,6 @@ variable {k H₁ H₂ K : Type u}
 variable [Field k] [CommRing H₁] [CommRing H₂]
 variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂]
 variable [Field K] [Algebra k K]
-
-/-- A homomorphism of affine groups sends semisimple points to semisimple points. In coordinate
-algebras the homomorphism is represented contravariantly by a bialgebra morphism. -/
-theorem IsSemisimplePoint.mapDomain {g : WithConv (H₂ →ₐ[k] K)}
-    (hg : IsSemisimplePoint g) (φ : H₁ →ₐc[k] H₂) :
-    IsSemisimplePoint (AlgHom.mapDomain φ g) := by
-  rw [isSemisimplePoint_def] at hg ⊢
-  intro M
-  rw [← Comodule.pointsAction_corestrict (V := M) φ g]
-  exact hg ((FGComoduleCat.corestrict φ.toCoalgHom).obj M)
 
 namespace Point
 

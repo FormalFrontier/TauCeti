@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.ScalarExtension
+public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
 
 /-!
@@ -31,6 +33,8 @@ invariant under conjugation.
   formulation using the underlying comodule action endomorphisms.
 * `TauCeti.HopfAlgebra.IsSemisimplePoint.inv`, `.mul_of_commute`, and `.zpow`: closure under
   inversion, commuting products, and integer powers.
+* `TauCeti.HopfAlgebra.IsSemisimplePoint.mapDomain`: a homomorphism of affine groups preserves
+  semisimple points.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_conj_iff`: invariance under conjugation.
 
 ## References
@@ -52,7 +56,7 @@ namespace TauCeti
 
 namespace HopfAlgebra
 
-universe u v x
+universe u v w x
 
 variable {k : Type u} {H : Type v} {K : Type x}
 variable [CommSemiring k] [Semiring H] [_root_.HopfAlgebra k H] [Field K] [Algebra k K]
@@ -76,6 +80,24 @@ theorem isSemisimplePoint_def (g : WithConv (H →ₐ[k] K)) :
       GeneralLinearGroup.IsSemisimple
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :=
   Iff.rfl
+
+section MapDomain
+
+variable {H₁ : Type v} {H₂ : Type w}
+variable [Semiring H₁] [Semiring H₂]
+variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂]
+
+/-- A homomorphism of affine groups sends semisimple points to semisimple points. In coordinate
+algebras the homomorphism is represented contravariantly by a bialgebra morphism. -/
+theorem IsSemisimplePoint.mapDomain {g : WithConv (H₂ →ₐ[k] K)}
+    (hg : IsSemisimplePoint g) (φ : H₁ →ₐc[k] H₂) :
+    IsSemisimplePoint (AlgHom.mapDomain φ g) := by
+  rw [isSemisimplePoint_def] at hg ⊢
+  intro M
+  rw [← Comodule.pointsAction_corestrict (V := M) φ g]
+  exact hg ((FGComoduleCat.corestrict φ.toCoalgHom).obj M)
+
+end MapDomain
 
 private theorem isSemisimple_pointAction_iff_endOfPoint
     (g : WithConv (H →ₐ[k] K)) (M : FGComoduleCat.{u, v, u} k H) :
