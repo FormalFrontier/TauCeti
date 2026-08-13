@@ -166,8 +166,13 @@ theorem smul_eq_self (k : Type u) [Field k] (G : FGCommGrpCat.{u})
     σ • x = x := by
   rw [← (geometricCharacterGroupEquiv k G).symm_apply_apply x]
   apply _root_.GroupLike.val_injective
-  rw [CommHopfAlgCat.val_smul_geometricCharacterGroup,
-    geometricCharacterGroupEquiv_symm_apply_val, CommHopfAlgCat.galoisScalarMap_tmul, map_one]
+  -- Expose the generic action beneath the necessary absolute-Galois and coordinate-ring bridges.
+  change GaloisScalar.map
+    (A := (coordinateRing k G).obj)
+    (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ)
+      ((geometricCharacterGroupEquiv k G).symm
+        (geometricCharacterGroupEquiv k G x)).val = _
+  rw [geometricCharacterGroupEquiv_symm_apply_val, GaloisScalar.map_tmul, map_one]
 
 end DiagonalizableGroup
 

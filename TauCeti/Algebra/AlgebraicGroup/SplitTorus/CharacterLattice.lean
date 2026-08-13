@@ -108,8 +108,9 @@ theorem smul_eq_self (k : Type u) [Field k] (σ : Type u) [Finite σ]
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj) :
     γ • x = x := by
   apply Additive.toMul.injective
-  rw [CommHopfAlgCat.toMul_smul_additiveCharacterGroup,
-    DiagonalizableGroup.smul_eq_self]
+  -- Expose the generic additive action beneath the split-torus instance bridge.
+  change (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from γ) • x.toMul = x.toMul
+  exact DiagonalizableGroup.smul_eq_self k (characterGroup σ) γ x.toMul
 
 end SplitTorus
 
