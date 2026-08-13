@@ -155,6 +155,7 @@ theorem map_pbwFiltration_eq_inf_range_of_leftInverse (f : LieHom R L M) (g : Li
 
 /-- A Lie algebra equivalence maps each PBW filtration step exactly onto the corresponding target
 step. -/
+@[simp]
 theorem mapEquiv_pbwFiltration (e : LieEquiv R L M) (k : ℕ) :
     (pbwFiltration R L k).map (mapEquiv R e).toLinearMap = pbwFiltration R M k := by
   have h : e.toLieHom.comp e.symm.toLieHom = LieHom.id := by
@@ -168,12 +169,13 @@ theorem mapEquiv_pbwFiltration (e : LieEquiv R L M) (k : ℕ) :
 
 /-- A Lie algebra equivalence maps each preceding PBW filtration step exactly onto the
 corresponding preceding target step. -/
+@[simp]
 theorem mapEquiv_pbwFiltrationPrevious (e : LieEquiv R L M) (k : ℕ) :
     (pbwFiltrationPrevious R L k).map (mapEquiv R e).toLinearMap =
       pbwFiltrationPrevious R M k := by
   cases k with
   | zero => simp
-  | succ k => simpa using mapEquiv_pbwFiltration R e k
+  | succ k => simp
 
 /-- The linear equivalence between the `k`-th PBW filtration steps induced by a Lie algebra
 equivalence. -/
