@@ -79,7 +79,7 @@ attribute [local instance] adjointComodule
 variable {R : Type*} {H : Type*} [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
-variable {M : Type*} [Monoid M]
+variable {M : Type*} [CommGroup M]
 
 /-- The `α`-weight submodule `𝔤_α` of the Lie algebra of `G = Spec H` under a homomorphism
 `D(M) → G` with coordinate morphism `π`: the part of the Lie algebra on which `D(M)` acts through

@@ -17,11 +17,11 @@ makes `V` an `R[X]`-comodule. The resulting comodule decomposes into the weight 
 `TauCeti.DiagonalizableGroup.weightSpace V π x` is the `x`-weight submodule of the corestricted
 comodule, and `V` is the internal direct sum of these submodules.
 
-When `C` is the coordinate bialgebra of an affine group scheme `G` and `π` underlies a bialgebra
-morphism, it is the coordinate morphism of a homomorphism `D(X) → G`, and these are the weight
-spaces of a representation restricted along that homomorphism. The statement identifying the
-action of a point of `D(X)` as multiplication by the value of the character therefore takes a
-`BialgHom`.
+When `X` is a commutative group, `C` is the coordinate bialgebra of an affine group scheme `G`,
+and `π` underlies a bialgebra morphism, it is the coordinate morphism of a homomorphism
+`D(X) → G`, and these are the weight spaces of a representation restricted along that
+homomorphism. The statement identifying the action of a point of `D(X)` as multiplication by the
+value of the character therefore takes a `BialgHom`.
 
 ## Main definitions
 
@@ -34,8 +34,9 @@ action of a point of `D(X)` as multiplication by the value of the character ther
   direct sum of its weight submodules.**
 * `TauCeti.DiagonalizableGroup.finite_setOf_weightSpace_ne_bot`: a comodule that is finitely
   generated as a module has finitely many nonzero weight submodules after corestriction.
-* `TauCeti.DiagonalizableGroup.endOfPoint_tmul_of_mem_weightSpace`: a point of `D(X)` acts on the
-  `x`-weight submodule by multiplication by the value of the character `x` at that point.
+* `TauCeti.DiagonalizableGroup.endOfPoint_tmul_of_mem_weightSpace`: a monoid-algebra point acts on
+  the `x`-weight submodule by multiplication by its value on `x`; for a commutative group `X`,
+  this is the corresponding action of a point of `D(X)`.
 
 ## Roadmap
 
@@ -73,8 +74,9 @@ variable (V : Type*) [AddCommMonoid V] [Module R V] [Comodule R C V]
 /-- The `x`-weight submodule obtained by corestricting a right `C`-comodule `V` along a coalgebra
 morphism `π : C →ₗc[R] R[X]`.
 
-If `π` underlies the coordinate-bialgebra morphism of a homomorphism `D(X) → G` and `V` is a
-representation of `G`, this is the submodule on which `D(X)` acts through the character `x`. -/
+If `X` is a commutative group, `π` underlies the coordinate-bialgebra morphism of a homomorphism
+`D(X) → G`, and `V` is a representation of `G`, this is the submodule on which `D(X)` acts
+through the character `x`. -/
 noncomputable def weightSpace (π : C →ₗc[R] MonoidAlgebra R X) (x : X) :
     Submodule R V :=
   letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
@@ -136,10 +138,11 @@ theorem endOfPoint_tmul_comp (π : C →ₐc[R] MonoidAlgebra R X)
   congr 2
   rw [LinearMap.lTensor_map, AlgHom.comp_toLinearMap, hπ, LinearMap.lTensor_def]
 
-/-- **A point of `D(X)` acts on the `x`-weight submodule by the value of the character `x`.**
+/-- **A monoid-algebra point acts on the `x`-weight submodule by its value on `x`.**
 
-The point of `G` in question is the composite of the homomorphism `D(X) → G` with the given point
-of `D(X)`, whose coordinate morphism is `f ∘ π`. -/
+When `X` is a commutative group and the bialgebras are coordinate rings, the point of `G` in
+question is the composite of the homomorphism `D(X) → G` with the given point of `D(X)`, whose
+coordinate morphism is `f ∘ π`. -/
 theorem endOfPoint_tmul_of_mem_weightSpace (π : C →ₐc[R] MonoidAlgebra R X)
     (f : MonoidAlgebra R X →ₐ[R] A) (a : A) {x : X} {v : V}
     (hv : v ∈ weightSpace V (π : C →ₗc[R] MonoidAlgebra R X) x) :
