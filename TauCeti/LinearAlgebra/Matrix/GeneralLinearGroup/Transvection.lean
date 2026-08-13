@@ -1,0 +1,271 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+-- `Matrix.transvection` and its product law are the subject of this file.
+public import Mathlib.LinearAlgebra.Matrix.Transvection
+-- `TauCeti.diagGL` occurs in the conjugation statement below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+-- The group-commutator bracket `⁅x, y⁆` occurs in the statements below.
+public import Mathlib.Algebra.Group.Commutator
+
+/-!
+# The commutator relations between transvections
+
+Mathlib's `Matrix.transvection i j c = 1 + c Eᵢⱼ` is the elementary matrix adding `c` times the
+`j`-th coordinate to the `i`-th one. For `i ≠ j` it is invertible, with inverse
+`Matrix.transvection i j (-c)`, and `c ↦ transvection i j c` is a homomorphism from the additive
+group of the base ring: this file packages it as `TauCeti.transvectionUnit` and
+`TauCeti.transvectionHom`, and proves the two relations that hold between transvections at
+different pairs of indices.
+
+Writing `xᵢⱼ(c)` for the transvection, the relations are
+
+* `xᵢⱼ(c) xₖₗ(d) = xₖₗ(d) xᵢⱼ(c)` whenever `j ≠ k` and `l ≠ i`;
+* `⁅xᵢⱼ(c), xⱼₗ(d)⁆ = xᵢₗ(cd)` whenever `i`, `j` and `l` are distinct.
+
+They are the **Chevalley commutator relations** of the general linear group. Reading the pair
+`(i, j)` as the root `εᵢ - εⱼ` of the diagonal torus, the first covers every pair of roots whose
+sum is not a root, and the second every pair whose sum is a root: `(εᵢ - εⱼ) + (εⱼ - εₗ)` is
+`εᵢ - εₗ`. In type `A` all the structure constants are `1`, which is why the right-hand side is
+`xᵢₗ(cd)` on the nose rather than `xᵢₗ(± cd)`.
+
+The one remaining case, `xᵢⱼ(c)` against `xⱼᵢ(d)`, is deliberately absent: there the two roots sum
+to zero, no commutator relation holds, and the product generates a copy of `SL₂` instead. That is
+also the only case in which the commutator leaves the unipotent part, so it is a statement about
+the torus rather than about the root subgroups.
+
+Conjugating a transvection by an invertible diagonal matrix rescales its parameter by the value of
+the corresponding root: `TauCeti.diagGL_mul_transvectionUnit_mul_inv` says that `t xᵢⱼ(c) t⁻¹` is
+`xᵢⱼ(tᵢ c tⱼ⁻¹)`. Together with the two relations above these are the equations that pin the
+elementary matrices against the diagonal torus.
+
+## Main definitions
+
+* `TauCeti.transvectionUnit`: a transvection at a pair of distinct indices, as an element of
+  `GL n A`.
+* `TauCeti.transvectionHom`: the resulting homomorphism from the additive group of `A`.
+
+## Main results
+
+* `TauCeti.commute_transvection` and `TauCeti.commute_transvectionUnit`: transvections at index
+  pairs that do not chain commute.
+* `TauCeti.transvection_mul_transvection_swap`: the product of two chaining transvections, in the
+  two orders. As a matrix identity it needs only `i ≠ j` and `i ≠ l`; the third index condition
+  `j ≠ l` is what makes the three matrices involved transvections.
+* `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
+* `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
+  determinant `1`, and distinct parameters give distinct transvections.
+* `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
+* `TauCeti.map_transvectionUnit`: transvections are natural in the base ring.
+
+## References
+
+* R. W. Carter, *Simple Groups of Lie Type* (1972), §11.3, where these relations are the type `A`
+  case of the Chevalley commutator formula.
+* J. E. Humphreys, *Linear Algebraic Groups* (1975), §26.3.
+-/
+
+public section
+
+open Matrix
+
+open scoped commutatorElement
+
+namespace TauCeti
+
+universe u v
+
+variable {n : Type*} [DecidableEq n] {A : Type u} [CommRing A] {i j k l : n}
+
+/-! ## The commutator relations between transvections -/
+
+section Products
+
+variable [Fintype n]
+
+/-- Two transvections whose index pairs do not chain commute: the products of the corresponding
+matrix units vanish in both orders. In root-system terms the sum of the two roots `εᵢ - εⱼ` and
+`εₖ - εₗ` is then not a root. -/
+theorem commute_transvection (hjk : j ≠ k) (hli : l ≠ i) (c d : A) :
+    Commute (transvection i j c) (transvection k l d) := by
+  simp only [Commute, SemiconjBy, transvection, Matrix.add_mul, Matrix.mul_add, Matrix.one_mul,
+    Matrix.mul_one, single_mul_single_of_ne _ _ _ _ hjk, single_mul_single_of_ne _ _ _ _ hli]
+  abel
+
+/-- The product of two chaining transvections, in the two orders: swapping `xᵢⱼ(c)` past `xⱼₗ(d)`
+produces the extra factor `xᵢₗ(cd)`. This is the type `A` Chevalley commutator relation before it
+is written as a commutator. -/
+theorem transvection_mul_transvection_swap (hij : i ≠ j) (hil : i ≠ l) (c d : A) :
+    transvection i j c * transvection j l d =
+      transvection j l d * transvection i j c * transvection i l (c * d) := by
+  have hli : l ≠ i := hil.symm
+  have hji : j ≠ i := hij.symm
+  simp only [transvection, Matrix.add_mul, Matrix.mul_add, Matrix.one_mul, Matrix.mul_one,
+    single_mul_single_same, single_mul_single_of_ne _ _ _ _ hli,
+    single_mul_single_of_ne _ _ _ _ hji, Matrix.zero_mul]
+  abel
+
+/-- A matrix unit conjugated between two diagonal matrices is the matrix unit rescaled by the two
+corresponding diagonal entries. -/
+theorem diagonal_mul_single_mul_diagonal (v w : n → A) (i j : n) (c : A) :
+    diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
+  ext a b
+  rw [Matrix.mul_assoc]
+  simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
+  by_cases h : i = a ∧ j = b
+  · obtain ⟨rfl, rfl⟩ := h
+    simp [mul_assoc]
+  · simp [h]
+
+/-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
+corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
+another. -/
+theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a * w a = 1) (c : A) :
+    diagonal v * transvection i j c * diagonal w = transvection i j (v i * c * w j) := by
+  have hd : diagonal v * diagonal w = (1 : Matrix n n A) := by
+    rw [Matrix.diagonal_mul_diagonal]
+    exact Matrix.diagonal_eq_one.2 (by ext a; exact hvw a)
+  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd,
+    diagonal_mul_single_mul_diagonal]
+
+end Products
+
+/-! ## Transvections as invertible matrices -/
+
+section Unit
+
+variable [Fintype n]
+
+/-- A transvection at a pair of distinct indices, as an invertible matrix. It is the value at `c`
+of the root subgroup homomorphism attached to the root `εᵢ - εⱼ` of the diagonal torus. -/
+def transvectionUnit (hij : i ≠ j) (c : A) : GL n A where
+  val := transvection i j c
+  inv := transvection i j (-c)
+  val_inv := by rw [transvection_mul_transvection_same _ _ hij, add_neg_cancel, transvection_zero]
+  inv_val := by rw [transvection_mul_transvection_same _ _ hij, neg_add_cancel, transvection_zero]
+
+/-- The matrix underlying `TauCeti.transvectionUnit` is the transvection itself. -/
+@[simp]
+theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
+    (transvectionUnit hij c : Matrix n n A) = transvection i j c :=
+  (rfl)
+
+/-- The transvection of parameter zero is the identity. -/
+@[simp]
+theorem transvectionUnit_zero (hij : i ≠ j) : transvectionUnit hij (0 : A) = 1 := by
+  ext a b
+  simp
+
+/-- The parameter of a transvection is additive: the root subgroup is one-parameter. -/
+theorem transvectionUnit_add (hij : i ≠ j) (c d : A) :
+    transvectionUnit hij (c + d) = transvectionUnit hij c * transvectionUnit hij d := by
+  ext a b
+  rw [Units.val_mul, coe_transvectionUnit, coe_transvectionUnit, coe_transvectionUnit,
+    transvection_mul_transvection_same _ _ hij]
+
+/-- The inverse of a transvection negates its parameter. -/
+@[simp]
+theorem transvectionUnit_inv (hij : i ≠ j) (c : A) :
+    (transvectionUnit hij c)⁻¹ = transvectionUnit hij (-c) :=
+  inv_eq_of_mul_eq_one_right <| by
+    rw [← transvectionUnit_add, add_neg_cancel, transvectionUnit_zero]
+
+/-- A transvection has determinant one, so the root subgroup lands in `SLₙ`. -/
+@[simp]
+theorem det_transvectionUnit (hij : i ≠ j) (c : A) :
+    Matrix.GeneralLinearGroup.det (transvectionUnit hij c) = 1 := by
+  ext
+  simpa using det_transvection_of_ne i j hij c
+
+/-- The transvections at a fixed pair of distinct indices form a one-parameter subgroup of
+`GL n A`, isomorphic to the additive group of `A`. This is the root subgroup of `εᵢ - εⱼ`. -/
+def transvectionHom (hij : i ≠ j) : Multiplicative A →* GL n A where
+  toFun c := transvectionUnit hij (Multiplicative.toAdd c)
+  map_one' := transvectionUnit_zero hij
+  map_mul' _ _ := transvectionUnit_add hij _ _
+
+/-- The value of the root subgroup homomorphism is the transvection of the parameter. -/
+@[simp]
+theorem transvectionHom_apply (hij : i ≠ j) (c : Multiplicative A) :
+    transvectionHom hij c = transvectionUnit hij (Multiplicative.toAdd c) :=
+  (rfl)
+
+/-- Distinct parameters give distinct transvections: the parameter is the `(i, j)` entry. So the
+root subgroup is a copy of the additive group of `A` inside `GL n A`, not a quotient of it. -/
+theorem transvectionUnit_injective (hij : i ≠ j) :
+    Function.Injective fun c : A => transvectionUnit hij c := fun c d h => by
+  have h' : (transvectionUnit hij c : Matrix n n A) = transvectionUnit hij d := by
+    simp only [show transvectionUnit hij c = transvectionUnit hij d from h]
+  simpa [transvection, Matrix.one_apply, Matrix.single_apply, hij] using congrFun₂ h' i j
+
+/-- Transvections at index pairs that do not chain commute in `GL n A`. -/
+theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
+    (c d : A) : Commute (transvectionUnit hij c) (transvectionUnit hkl d) := by
+  ext a b
+  exact congrFun₂ (commute_transvection hjk hli c d) a b
+
+/-- The product of two chaining transvections in `GL n A`, in the two orders. -/
+theorem transvectionUnit_mul_transvectionUnit_swap (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l)
+    (c d : A) :
+    transvectionUnit hij c * transvectionUnit hjl d =
+      transvectionUnit hjl d * transvectionUnit hij c * transvectionUnit hil (c * d) := by
+  ext a b
+  exact congrFun₂ (transvection_mul_transvection_swap hij hil c d) a b
+
+/-- **The Chevalley commutator relation of type `A`.** The commutator of the root subgroup elements
+`xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`, is `xᵢₗ(cd)`: the root `εᵢ - εₗ` is the sum
+of `εᵢ - εⱼ` and `εⱼ - εₗ`, and the structure constant is `1`. -/
+theorem commutatorElement_transvectionUnit (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
+    ⁅transvectionUnit hij c, transvectionUnit hjl d⁆ = transvectionUnit hil (c * d) := by
+  have hxz : Commute (transvectionUnit hij c) (transvectionUnit hil (c * d)) :=
+    commute_transvectionUnit hij hil hij.symm hil.symm c (c * d)
+  have hyz : Commute (transvectionUnit hjl d) (transvectionUnit hil (c * d)) :=
+    commute_transvectionUnit hjl hil hil.symm hjl.symm d (c * d)
+  rw [commutatorElement_def, transvectionUnit_mul_transvectionUnit_swap hij hjl hil,
+    mul_assoc (transvectionUnit hjl d) (transvectionUnit hij c), hxz.eq, ← mul_assoc,
+    mul_inv_cancel_right, hyz.eq, mul_inv_cancel_right]
+
+end Unit
+
+/-! ## Naturality in the base ring -/
+
+section Map
+
+variable [Fintype n] {B : Type v} [CommRing B]
+
+/-- A transvection is natural in the base ring: applying a ring homomorphism entrywise to
+`xᵢⱼ(c)` gives `xᵢⱼ(f c)`. -/
+@[simp]
+theorem map_transvectionUnit (f : A →+* B) (hij : i ≠ j) (c : A) :
+    Matrix.GeneralLinearGroup.map f (transvectionUnit hij c) = transvectionUnit hij (f c) := by
+  ext a b
+  simp [Matrix.GeneralLinearGroup.map, transvection, Matrix.one_apply, single, apply_ite f]
+
+end Map
+
+/-! ## Conjugation by the diagonal torus -/
+
+section Torus
+
+variable {N : ℕ} {i j : Fin N}
+
+/-- Conjugating the root subgroup element `xᵢⱼ(c)` by the diagonal matrix with entries `t`
+rescales the parameter by `tᵢ tⱼ⁻¹`, the value at `t` of the root `εᵢ - εⱼ`. This is the equation
+pinning the root subgroup against the diagonal torus. -/
+theorem diagGL_mul_transvectionUnit_mul_inv (hij : i ≠ j) (t : Fin N → Aˣ) (c : A) :
+    diagGL t * transvectionUnit hij c * (diagGL t)⁻¹ =
+      transvectionUnit hij ((t i : A) * c * ((t j)⁻¹ : Aˣ)) := by
+  have hval : ((((diagGL t)⁻¹ : GL (Fin N) A)) : Matrix (Fin N) (Fin N) A) =
+      diagonal fun a => (((t a)⁻¹ : Aˣ) : A) := by
+    rw [← map_inv diagGL t, diagGL_coe]
+    simp
+  refine Units.ext ?_
+  rw [Units.val_mul, Units.val_mul, coe_transvectionUnit, coe_transvectionUnit, diagGL_coe, hval,
+    diagonal_mul_transvection_mul_diagonal (fun a => (t a).mul_inv)]
+
+end Torus
+
+end TauCeti
