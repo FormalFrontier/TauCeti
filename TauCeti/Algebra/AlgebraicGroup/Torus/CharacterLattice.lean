@@ -59,14 +59,13 @@ end CommHopfAlgCat
 /-- The additive character lattice of a split-torus presentation is its defining finite-rank
 free `ℤ`-module. -/
 noncomputable def splitTorusCharacterLatticeEquiv
-    (k : Type u) [Field k] (n : ℕ) :
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
     CommHopfAlgCat.characterLattice
         (DiagonalizableGroup.coordinateRing k
-          (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj ≃+
-      (ULift.{u} (Fin n) →₀ ℤ) :=
+          (SplitTorus.characterGroup σ)).obj ≃+ (σ →₀ ℤ) :=
   (MulEquiv.toAdditive (DiagonalizableGroup.geometricCharacterGroupEquiv k
-    (SplitTorus.characterGroup (ULift.{u} (Fin n))))).trans
-    (AddEquiv.additiveMultiplicative (ULift.{u} (Fin n) →₀ ℤ))
+    (SplitTorus.characterGroup σ))).trans
+    (AddEquiv.additiveMultiplicative (σ →₀ ℤ))
 
 /-- The character lattice of a torus is a finite-rank free abelian group. The equivalence is
 noncanonical: it uses the splitting over the chosen algebraic closure from the torus predicate. -/

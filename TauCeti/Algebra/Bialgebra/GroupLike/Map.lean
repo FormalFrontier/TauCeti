@@ -41,7 +41,7 @@ def map (f : A →ₐc[R] B) : _root_.GroupLike R A →* _root_.GroupLike R B wh
 /-- The underlying value of the image of a group-like element is its image under the bialgebra
 morphism. -/
 @[simp]
-theorem map_apply_val (f : A →ₐc[R] B) (x : _root_.GroupLike R A) :
+theorem val_map (f : A →ₐc[R] B) (x : _root_.GroupLike R A) :
     (map f x).val = f x.val :=
   (rfl)
 
@@ -70,7 +70,7 @@ def mapEquiv (e : A ≃ₐc[R] B) :
 
 /-- The underlying value of `mapEquiv` is the original bialgebra equivalence. -/
 @[simp]
-theorem mapEquiv_apply_val (e : A ≃ₐc[R] B) (x : _root_.GroupLike R A) :
+theorem val_mapEquiv (e : A ≃ₐc[R] B) (x : _root_.GroupLike R A) :
     (mapEquiv e x).val = e x.val :=
   (rfl)
 

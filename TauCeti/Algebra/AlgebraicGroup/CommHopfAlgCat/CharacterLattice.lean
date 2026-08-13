@@ -68,23 +68,20 @@ theorem galoisScalarMap_tmul (σ : Field.absoluteGaloisGroup k)
 @[simp]
 theorem galoisScalarMap_one (x : AlgebraicClosure k ⊗[k] H) :
     galoisScalarMap H 1 x = x := by
-  induction x with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a h =>
-      rw [galoisScalarMap_tmul]
-      rfl
+  have h_one : (1 : Field.absoluteGaloisGroup k).toAlgHom =
+      AlgHom.id k (AlgebraicClosure k) := AlgHom.ext fun _ => rfl
+  rw [galoisScalarMap, h_one, Algebra.TensorProduct.map_id]
+  rfl
 
 /-- Galois scalar maps compose according to multiplication in the absolute Galois group. -/
 theorem galoisScalarMap_mul (σ τ : Field.absoluteGaloisGroup k)
     (x : AlgebraicClosure k ⊗[k] H) :
     galoisScalarMap H (σ * τ) x = galoisScalarMap H σ (galoisScalarMap H τ x) := by
-  induction x with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a h =>
-      rw [galoisScalarMap_tmul, galoisScalarMap_tmul, galoisScalarMap_tmul]
-      rfl
+  have h_mul : (σ * τ).toAlgHom = σ.toAlgHom.comp τ.toAlgHom := AlgHom.ext fun _ => rfl
+  rw [galoisScalarMap, h_mul]
+  convert DFunLike.congr_fun
+    (Algebra.TensorProduct.map_comp (R := k) (S := k)
+      σ.toAlgHom τ.toAlgHom (AlgHom.id k H) (AlgHom.id k H)) x using 1 <;> rfl
 
 /-- The scalar-factor action is semilinear for the corresponding automorphism of `k̄`. -/
 theorem galoisScalarMap_smul (σ : Field.absoluteGaloisGroup k)
@@ -186,12 +183,13 @@ noncomputable instance instGeometricCharacterGroupGaloisAction :
 
 /-- The underlying coordinate of the Galois action is the scalar-factor action. -/
 @[simp]
-theorem smul_val (σ : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
+theorem val_smul (σ : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
     (σ • x).val = galoisScalarMap H σ x.val :=
   (rfl)
 
-/-- The character lattice of a commutative Hopf algebra, written additively. It carries the
-absolute-Galois action transported from `geometricCharacterGroup`. -/
+/-- The additive form of the geometric character group of a commutative Hopf algebra. It carries
+the absolute-Galois action transported from `geometricCharacterGroup`; for a torus, it is a
+finite-rank free character lattice. -/
 abbrev characterLattice := Additive (geometricCharacterGroup H)
 
 /-- The absolute Galois action on the additive character lattice. -/
