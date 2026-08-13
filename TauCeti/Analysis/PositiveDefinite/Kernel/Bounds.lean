@@ -125,7 +125,7 @@ theorem map_zero_re_nonneg_of_posSemidef
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) :
     0 ≤ RCLike.re (ψ 0) := by
   have h : (0 : 𝕜) ≤ ψ 0 := by
-    simpa using posSemidef_apply_self_nonneg hpd 0
+    simpa using hpd.diag_nonneg (i := 0)
   exact (RCLike.nonneg_iff.mp h).1
 
 /-- The value at `0` of a function with positive-definite subtraction kernel is real. -/
@@ -133,7 +133,7 @@ theorem map_zero_eq_ofReal_re_of_posSemidef
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) :
     ψ 0 = ((RCLike.re (ψ 0) : ℝ) : 𝕜) := by
   have h : (0 : 𝕜) ≤ ψ 0 := by
-    simpa using posSemidef_apply_self_nonneg hpd 0
+    simpa using hpd.diag_nonneg (i := 0)
   simpa [(RCLike.nonneg_iff.mp h).2] using (RCLike.re_add_im (ψ 0)).symm
 
 /-- A function with positive-definite subtraction kernel is conjugate-symmetric under negation:

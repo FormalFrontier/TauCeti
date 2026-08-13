@@ -83,8 +83,7 @@ theorem timeSlice_conj_symm (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) 
 
 /-- The diagonal value `F (t, 0)` of a fixed-time slice is real and nonnegative. -/
 theorem timeSlice_diagonal_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) : 0 ≤ F (t, 0) := by
-  simpa using posSemidef_apply_self_nonneg (hF.timeSlice_posSemidef t)
-    (0 : V)
+  simpa using (hF.timeSlice_posSemidef t).diag_nonneg (i := (0 : V))
 
 /-- The diagonal value `F (t, 0)` of a fixed-time slice has zero imaginary part. -/
 @[simp]

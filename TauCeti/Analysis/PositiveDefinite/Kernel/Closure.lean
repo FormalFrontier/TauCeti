@@ -25,7 +25,6 @@ No external formalization is vendored.
 
 ## Main declarations
 
-* `TauCeti.posSemidef_sum`: finite sums of positive-definite kernels.
 * `TauCeti.posSemidef_prod`: finite pointwise products of positive-definite
   kernels.
 * `TauCeti.posSemidef_sum_smul`: finite sums with nonnegative weights.
@@ -49,17 +48,6 @@ universe u v w
 variable {𝕜 : Type u} [RCLike 𝕜]
 variable {α : Type v}
 
-/-- Finite sums of positive-definite kernels are positive definite. -/
-theorem posSemidef_sum {ι : Type w} {s : Finset ι}
-    {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
-    Matrix.PosSemidef (fun a b => ∑ i ∈ s, K i a b) := by
-  have h := Finset.sum_induction K Matrix.PosSemidef
-    (fun _ _ hA hB => hA.add hB) posSemidef_zero hK
-  have heq : (∑ i ∈ s, K i) = fun a b => ∑ i ∈ s, K i a b := by
-    ext a b
-    simp
-  rwa [heq] at h
-
 /-- Finite pointwise products of positive-definite kernels are positive definite. -/
 theorem posSemidef_prod {ι : Type w} {s : Finset ι}
     {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
@@ -76,9 +64,12 @@ definite. This is the weighted finite-mixture form most often used in examples. 
 theorem posSemidef_sum_smul {ι : Type w} {s : Finset ι}
     {r : ι → 𝕜} {K : ι → α → α → 𝕜} (hr : ∀ i ∈ s, 0 ≤ r i)
     (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
-    Matrix.PosSemidef (fun a b => ∑ i ∈ s, r i • K i a b) :=
-  posSemidef_sum fun i hi =>
-    (hK i hi).smul (hr i hi)
+    Matrix.PosSemidef (fun a b => ∑ i ∈ s, r i • K i a b) := by
+  have h := Matrix.posSemidef_sum s fun i hi => (hK i hi).smul (hr i hi)
+  have heq : (∑ i ∈ s, r i • K i) = fun a b => ∑ i ∈ s, r i • K i a b := by
+    ext a b
+    simp
+  exact heq ▸ h
 
 /-- Schur powers of a positive-definite kernel are positive definite. -/
 theorem posSemidef_pow {K : α → α → 𝕜} (hK : Matrix.PosSemidef K) (n : ℕ) :
@@ -100,8 +91,13 @@ These are the finite-rank positive-definite kernels used as the elementary build
 the later GNS/Kolmogorov decomposition. -/
 theorem posSemidef_sum_conj_mul {ι : Type w} (s : Finset ι) (g : ι → α → 𝕜) :
     Matrix.PosSemidef
-      (fun a b => ∑ i ∈ s, conj (g i a) * g i b) :=
-  posSemidef_sum fun i _ => posSemidef_conj_mul (g i)
+      (fun a b => ∑ i ∈ s, conj (g i a) * g i b) := by
+  have h := Matrix.posSemidef_sum s fun i _ => posSemidef_conj_mul (g i)
+  have heq : (∑ i ∈ s, fun a b => conj (g i a) * g i b) =
+      fun a b => ∑ i ∈ s, conj (g i a) * g i b := by
+    ext a b
+    simp
+  exact (congrArg (fun K => Matrix.PosSemidef K) heq).mp h
 
 /-- Finite products of rank-one kernels are positive definite. This is the Schur-product
 companion to `TauCeti.posSemidef_sum_conj_mul`. -/

@@ -264,7 +264,7 @@ theorem conj_symm (hF : IsSemigroupGroupPD F) (p q : ℝ≥0 × V) :
 /-- Values of a semigroup-group positive-definite function on the time diagonal `(t + t, 0)` are
 real and nonnegative. -/
 theorem diagonal_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) : 0 ≤ F (t + t, 0) := by
-  simpa using posSemidef_apply_self_nonneg hF.posSemidef (t, 0)
+  simpa using hF.posSemidef.diag_nonneg (i := (t, 0))
 
 /-- Values of a semigroup-group positive-definite function on the time diagonal `(t + t, 0)` have
 zero imaginary part. -/
@@ -368,8 +368,14 @@ theorem mul (hF : IsSemigroupGroupPD F) (hG : IsSemigroupGroupPD G) :
 theorem sum {ι : Type*} {s : Finset ι} {F : ι → ℝ≥0 × V → ℂ}
     (hF : ∀ i ∈ s, IsSemigroupGroupPD (F i)) :
     IsSemigroupGroupPD fun x => ∑ i ∈ s, F i x :=
-  IsSemigroupGroupPD.of_posSemidef <|
-    posSemidef_sum fun i hi => (hF i hi).posSemidef
+  IsSemigroupGroupPD.of_posSemidef <| by
+    have h := Matrix.posSemidef_sum s fun i hi => (hF i hi).posSemidef
+    have heq :
+        (∑ i ∈ s, fun p q : ℝ≥0 × V => F i (p.1 + q.1, p.2 - q.2)) =
+          fun p q => ∑ i ∈ s, F i (p.1 + q.1, p.2 - q.2) := by
+      ext p q
+      simp
+    exact heq ▸ h
 
 /-- Semigroup-group positive-definite functions are closed under finite products
 (Schur products). -/

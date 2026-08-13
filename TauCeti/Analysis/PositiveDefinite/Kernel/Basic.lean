@@ -33,11 +33,9 @@ Mathlib's `Matrix.PosSemidef` rather than introducing a second predicate.
 
 ## Main statements
 
-* `TauCeti.posSemidef_apply_self_nonneg`: diagonal entries of a positive-definite
-  kernel are nonnegative.
 * `TauCeti.posSemidef_conj_symm`: positive-definite kernels are
   conjugate-symmetric.
-* `TauCeti.posSemidef_zero`, `TauCeti.posSemidef_one`, and
+* `TauCeti.posSemidef_one` and
   `TauCeti.posSemidef_const_of_nonneg`: constant positive-definite kernels.
 * `TauCeti.posSemidef_smul`: closure under nonnegative real scalar multiples.
 * `TauCeti.posSemidef_iff`: the quadratic-form characterization, whose reverse
@@ -57,11 +55,6 @@ universe u v z
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 variable {α : Type v}
-
-/-- Diagonal values of a positive-definite kernel are nonnegative. -/
-theorem posSemidef_apply_self_nonneg {K : α → α → 𝕜}
-    (hK : Matrix.PosSemidef K) (a : α) : 0 ≤ K a a := by
-  simpa [Finsupp.sum_single_index] using hK.2 (Finsupp.single a 1)
 
 /-- Positive-definite kernels are conjugate-symmetric. -/
 theorem posSemidef_conj_symm {K : α → α → 𝕜}
@@ -126,11 +119,6 @@ theorem posSemidef_conj_mul (g : α → 𝕜) :
   intro x
   exact (matrixOf_conj_mul_eq_vecMulVec (g := fun i : x.support => g (i : α))).symm ▸
     Matrix.posSemidef_vecMulVec_star_self _
-
-/-- The zero kernel is positive definite. -/
-theorem posSemidef_zero :
-    Matrix.PosSemidef (fun _ _ : α => (0 : 𝕜)) := by
-  simpa using posSemidef_conj_mul (𝕜 := 𝕜) (α := α) (fun _ => (0 : 𝕜))
 
 /-- The constant kernel with value `1` is positive definite. -/
 theorem posSemidef_one :
