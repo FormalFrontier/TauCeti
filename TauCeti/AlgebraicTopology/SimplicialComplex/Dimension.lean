@@ -46,7 +46,7 @@ roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 11) asks for on top
   finite dimension means that they have a uniform natural-number bound.
 * `TauCeti.PreAbstractSimplicialComplex.dimension_le_card_sub_one`: a finite set containing every
   face gives an explicit dimension bound.
-* `TauCeti.PreAbstractSimplicialComplex.dimension_eq_top_of_infinite`: the full complex on an
+* `TauCeti.PreAbstractSimplicialComplex.dimension_top_eq_top_of_infinite`: the full complex on an
   infinite vertex type has infinite dimension.
 * `TauCeti.PreAbstractSimplicialComplex.dimension_simplex` /
   `TauCeti.PreAbstractSimplicialComplex.dimension_simplexBoundary`: the dimensions of the standard
@@ -155,7 +155,7 @@ theorem dimension_lt_top_of_finite [Finite ι] : dimension K < ⊤ := by
 
 /-- The full complex on an infinite vertex type has infinite dimension. -/
 @[simp]
-theorem dimension_eq_top_of_infinite [Infinite ι] :
+theorem dimension_top_eq_top_of_infinite [Infinite ι] :
     dimension (⊤ : PreAbstractSimplicialComplex ι) = ⊤ := by
   rw [dimension_eq_top_iff]
   intro n
@@ -275,11 +275,11 @@ theorem dimension_lt_top_of_finite [Finite ι] : dimension K < ⊤ := by
 
 /-- The full abstract simplicial complex on an infinite vertex type has infinite dimension. -/
 @[simp]
-theorem dimension_eq_top_of_infinite [Infinite ι] :
+theorem dimension_top_eq_top_of_infinite [Infinite ι] :
     dimension (⊤ : AbstractSimplicialComplex ι) = ⊤ := by
   rw [← dimension_toPreAbstractSimplicialComplex,
     _root_.AbstractSimplicialComplex.top_toPreAbstractSimplicialComplex]
-  exact PreAbstractSimplicialComplex.dimension_eq_top_of_infinite
+  exact PreAbstractSimplicialComplex.dimension_top_eq_top_of_infinite
 
 end AbstractSimplicialComplex
 
