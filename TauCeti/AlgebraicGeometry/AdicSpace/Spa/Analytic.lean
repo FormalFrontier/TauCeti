@@ -132,7 +132,6 @@ theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
   rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
 
 /-- Over a zero ring, `Cont A = ∅`. -/
-@[simp]
 theorem cont_eq_empty_of_subsingleton [Subsingleton A] : cont A = ∅ :=
   cont_eq_empty_of_one_mem_closure_zero (by simp [Subsingleton.elim (1 : A) 0])
 
