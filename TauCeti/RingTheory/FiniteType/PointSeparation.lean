@@ -6,7 +6,6 @@ module
 
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import Mathlib.RingTheory.Jacobson.Ring
-public import Mathlib.RingTheory.Nilpotent.Lemmas
 
 /-!
 # Separation by algebraically closed points
@@ -55,11 +54,7 @@ variable {k : Type u} {A : Type v} {K : Type w}
   [Field K] [Algebra k K] [IsAlgClosed K]
 
 /-- An element outside the radical of an ideal in a finite-type algebra over a field is nonzero
-at some algebraically closed point annihilating that ideal.
-
-The point is obtained from a maximal ideal containing the given ideal's radical. Its residue
-field is finite over the ground field and hence embeds into the chosen algebraically closed
-extension. -/
+at some algebraically closed point annihilating that ideal. -/
 theorem exists_algHom_apply_ne_zero_of_notMem_radical (I : Ideal A) {x : A}
     (hx : x ∉ I.radical) :
     ∃ f : A →ₐ[k] K, I ≤ RingHom.ker f.toRingHom ∧ f x ≠ 0 := by
@@ -148,7 +143,7 @@ theorem eq_of_forall_algHom_apply_eq {x y : A} (h : ∀ f : A →ₐ[k] K, f x =
 
 /-- Evaluation on all algebraically closed points is injective for a reduced finite-type algebra
 over a field. -/
-theorem injective_algHom_evaluation :
+theorem algHom_evaluation_injective :
     Function.Injective (fun x : A ↦ fun f : A →ₐ[k] K ↦ f x) := by
   intro x y h
   exact eq_of_forall_algHom_apply_eq (k := k) (A := A) (K := K) fun f ↦ congrFun h f
