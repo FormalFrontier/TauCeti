@@ -98,6 +98,14 @@ def deletion : PreAbstractSimplicialComplex ι where
 
 variable {K L σ}
 
+private theorem mem_closedStar_raw {ρ : Finset ι} :
+    ρ ∈ closedStar K σ ↔ ρ.Nonempty ∧ ρ ∪ σ ∈ K :=
+  Iff.rfl
+
+private theorem mem_link_raw {ρ : Finset ι} :
+    ρ ∈ link K σ ↔ ρ.Nonempty ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K :=
+  Iff.rfl
+
 omit [DecidableEq ι] in
 @[simp]
 theorem mem_deletion {ρ : Finset ι} : ρ ∈ deletion K σ ↔ ρ ∈ K ∧ ¬ σ ⊆ ρ := Iff.rfl
@@ -106,7 +114,7 @@ theorem mem_deletion {ρ : Finset ι} : ρ ∈ deletion K σ ↔ ρ ∈ K ∧ ¬
 @[simp]
 theorem mem_closedStar {ρ : Finset ι} :
     ρ ∈ closedStar K σ ↔ ρ ∈ K ∧ ρ ∪ σ ∈ K := by
-  change (ρ.Nonempty ∧ ρ ∪ σ ∈ K) ↔ _
+  rw [mem_closedStar_raw]
   refine ⟨fun hρ => ⟨?_, hρ.2⟩, fun hρ => ⟨?_, hρ.2⟩⟩
   · exact (K.isRelLowerSet_faces hρ.2).2 subset_union_left hρ.1
   · exact (K.isRelLowerSet_faces hρ.1).1
@@ -116,7 +124,7 @@ gives a face of `K`. -/
 @[simp]
 theorem mem_link {ρ : Finset ι} :
     ρ ∈ link K σ ↔ ρ ∈ K ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K := by
-  change (ρ.Nonempty ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K) ↔ _
+  rw [mem_link_raw]
   refine ⟨fun hρ => ⟨?_, hρ.2.1, hρ.2.2⟩, fun hρ => ⟨?_, hρ.2⟩⟩
   · exact (K.isRelLowerSet_faces hρ.2.2).2 subset_union_left hρ.1
   · exact (K.isRelLowerSet_faces hρ.1).1
@@ -214,14 +222,14 @@ variable {v : ι}
 a face `ρ` of the closed star leaves the defining union `ρ ∪ σ` unchanged. -/
 theorem isCone_closedStar (hσ : σ ∈ K) (hv : v ∈ σ) : IsCone (closedStar K σ) v where
   apex_mem := by
-    change Finset.Nonempty {v} ∧ {v} ∪ σ ∈ K
+    apply mem_closedStar_raw.mpr
     exact ⟨Finset.singleton_nonempty v, by
       rwa [Finset.singleton_union, Finset.insert_eq_self.mpr hv]⟩
   insert_mem ρ hρ := by
-    change (insert v ρ).Nonempty ∧ insert v ρ ∪ σ ∈ K
+    apply mem_closedStar_raw.mpr
     exact ⟨Finset.insert_nonempty v ρ, by
       rw [Finset.insert_union, Finset.insert_eq_self.mpr (Finset.mem_union_right _ hv)]
-      exact hρ.2⟩
+      exact (mem_closedStar_raw.mp hρ).2⟩
 
 /-- Deleting a nonempty face that misses the apex of a cone leaves a cone with the same apex.
 Note that the deletion of a face *containing* the apex need not be a cone: deleting `{v}` itself
