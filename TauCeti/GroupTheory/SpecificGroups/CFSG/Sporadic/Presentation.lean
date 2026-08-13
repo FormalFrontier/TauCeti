@@ -62,6 +62,7 @@ public section
 namespace TauCeti
 
 /-- The explicit, cited finite presentation attached to each sporadic-group name. -/
+@[simp]
 def SporadicName.presentation : SporadicName → GroupPresentation
   | .M11 => Sporadic.m11Presentation
   | .M12 => Sporadic.m12Presentation
@@ -91,6 +92,7 @@ def SporadicName.presentation : SporadicName → GroupPresentation
   | .M => Sporadic.Monster.presentation
 
 /-- Every sporadic presentation has the generator and relator counts stated in its metadata. -/
+@[simp]
 theorem SporadicName.presentation_matchesMetadata (s : SporadicName) :
     s.presentation.matchesMetadata := by
   cases s with
