@@ -189,7 +189,7 @@ theorem ringChoose_ι_add_intCast_mem_kostantForm (e : ι → L) (h : κ → L) 
       (z : _root_.UniversalEnvelopingAlgebra ℚ L)) n ∈ kostantForm e h := by
   apply subringClosure_range_ringChoose_le_kostantForm e h i
   rw [mem_subringClosure_range_ringChoose_iff]
-  exact choose_add_intCast_mem_ringChooseSpan _ z n
+  exact TauCeti.Ring.choose_add_intCast_mem_ringChooseSpan _ z n
 
 /-- Subtracting an integer from the argument of a designated Cartan binomial coefficient keeps it
 in the Kostant integral form. -/
