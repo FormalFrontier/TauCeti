@@ -81,7 +81,7 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 /-- Root negation is an involution of the root index type: it is the `InvolutiveNeg` supplied by
 `RootPairing.indexNeg`, written through the self-reflection permutation. -/
-lemma involutive_reflectionPerm_self : Function.Involutive fun i : ι ↦ P.reflectionPerm i i := by
+lemma reflectionPerm_self_involutive : Function.Involutive fun i : ι ↦ P.reflectionPerm i i := by
   let := P.indexNeg
   simpa only [← RootPairing.indexNeg_neg] using neg_involutive
 
@@ -283,7 +283,7 @@ theorem image_reflectionPerm_self_posRoots :
 /-- Root negation exchanges negative and positive roots. -/
 theorem image_reflectionPerm_self_negRoots :
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b = posRoots P b := by
-  have hinv := involutive_reflectionPerm_self P
+  have hinv := reflectionPerm_self_involutive P
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
         (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_eq_compl]
@@ -303,7 +303,7 @@ between the two sets. -/
 theorem ncard_negRoots_eq_ncard_posRoots :
     (negRoots P b).ncard = (posRoots P b).ncard := by
   rw [← image_reflectionPerm_self_posRoots P b]
-  exact Set.ncard_image_of_injective _ (involutive_reflectionPerm_self P).injective
+  exact Set.ncard_image_of_injective _ (reflectionPerm_self_involutive P).injective
 
 /-- The numbers of positive and negative roots add up to the total number of roots. -/
 theorem ncard_posRoots_add_ncard_negRoots [Finite ι] :
