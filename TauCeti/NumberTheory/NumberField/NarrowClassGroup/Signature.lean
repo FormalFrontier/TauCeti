@@ -63,16 +63,25 @@ measured by which sign patterns the units realize.
 This advances Layer 3 of `TauCetiRoadmap/Multiquadratic/README.md`, which says that "defining the
 narrow class group is part of this layer and the prerequisite for the real case" of the `2`-rank
 formula `2-rank = t - 1`. The definition, its finiteness and the surjection onto `Cl(K)` are on
-`main`; what was missing is any computation of `Cl⁺(K)` itself, since
+`main`; what was missing is any computation of `ker(Cl⁺(K) → Cl(K))`, since
 `exists_card_eq_card_classGroup_mul_two_pow` pins the extra factor only as *some* power of `2`.
-This file computes it: `card_mul_card_unitSignatures` determines `h⁺` from `h` and the unit
-signatures, and `toClassGroup_injective_iff` decides, for a given field, whether `Cl⁺(K)` and
-`Cl(K)` agree — the case distinction the layer prescribes between the imaginary case, where "narrow
-= ordinary", and the real one, where the roadmap's own example `ℚ(√3)` has `t = 2` ramified primes
-and class number `1`. For the classical genus theory this serves see D. A. Cox, *Primes of the Form
-x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws: from Euler to Eisenstein*; the exact sequence
-computing `h⁺/h` from the unit signatures is standard, see also H. Cohen, *A Course in
-Computational Algebraic Number Theory*, §5.2.
+
+The remaining step of the layer that consumes this is the real case of the rank formula itself.
+Genus theory computes `2-rank = t - 1` for the *narrow* class group, and the layer records that
+for a real field the ordinary rank can be smaller — its own example `ℚ(√3)` has `t = 2` ramified
+primes and class number `1`, so there `h⁺ = 2` while `h = 1`. Reading the narrow statement back on
+`Cl(K)` — the comparison the layer defers to the narrow group — goes through the exact sequence
+`1 → ker(Cl⁺(K) → Cl(K)) → Cl⁺(K) → Cl(K) → 1`, whose left-hand term this file identifies:
+`card_ker_toClassGroup` gives its order as the index of the unit signatures,
+`card_mul_card_unitSignatures` turns that into the two class numbers, and
+`toClassGroup_injective_iff` decides for a given field whether the narrow and the ordinary
+statement coincide — the case distinction the layer prescribes between the imaginary case, where
+"narrow = ordinary", and the real one.
+
+For the classical genus theory this serves see D. A. Cox, *Primes of the Form x² + ny²*, and
+F. Lemmermeyer, *Reciprocity Laws: from Euler to Eisenstein*; the exact sequence computing `h⁺/h`
+from the unit signatures is standard, see also H. Cohen, *A Course in Computational Algebraic
+Number Theory*, §5.2.
 -/
 
 public section
