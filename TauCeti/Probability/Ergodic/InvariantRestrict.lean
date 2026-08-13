@@ -51,10 +51,8 @@ theorem restrict_of_preimage_eq {μ : Measure X} {T : X → X} (hT : MeasurePres
 theorem setLIntegral_comp_eq_of_preimage_eq {μ : Measure X} {T : X → X}
     (hT : MeasurePreserving T μ μ) {A : Set X} (hA : MeasurableSet A) (hTA : T ⁻¹' A = A)
     {f : X → ℝ≥0∞} (hf : Measurable f) :
-    ∫⁻ x in A, f (T x) ∂μ = ∫⁻ x in A, f x ∂μ := by
-  calc ∫⁻ x in A, f (T x) ∂μ
-      = ∫⁻ x in T ⁻¹' A, f (T x) ∂μ := by rw [hTA]
-    _ = ∫⁻ x in A, f x ∂μ := hT.setLIntegral_comp_preimage hA hf
+    ∫⁻ x in A, f (T x) ∂μ = ∫⁻ x in A, f x ∂μ :=
+  (hT.restrict_of_preimage_eq hA hTA).lintegral_comp hf
 
 end MeasurePreserving
 

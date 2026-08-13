@@ -25,8 +25,11 @@ prefix `0, 1, …, m - 1`.
   `MeasurePreserving`, not only an integral identity;
 * `setLIntegral_comp_reindex_eq_of_measurableSet_invariants_of_eventually_add` — its `ℝ≥0∞`
   shadow;
-* `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — the finite-selection
-  form: a strictly increasing block becomes the prefix.
+* `ContractableLaw.map_block_eq_prefix_of_measurableSet_invariants` — the finite-selection form as
+  a measure equality: reading a strictly increasing block and reading the prefix push the
+  restricted law to the same measure, so Bochner and `Lᵖ` statements follow as well;
+* `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — its `ℝ≥0∞`
+  corollary.
 
 The endomorphism-level content is not here: that an endomorphism fixing a set preserves the
 restriction to it, and the resulting set-integral identity, are
@@ -102,28 +105,40 @@ theorem setLIntegral_comp_reindex_eq_of_measurableSet_invariants_of_eventually_a
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
     ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ :=
-  hmp.setLIntegral_comp_eq_of_preimage_eq (MeasurableSpace.measurableSet_invariants.1 hA).1
-    (preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add) hf
+  (measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add
+    hmp hφ_add hA).lintegral_comp hf
+
+/-- **The primitive measure equality.** Over an invariant event, reading a strictly increasing
+block and reading the prefix push the restricted law to the same measure on `Fin m → α`.
+
+This is the form that gives Bochner integrals and `Lᵖ` statements as well; the `ℝ≥0∞` identity
+below is its corollary. -/
+theorem ContractableLaw.map_block_eq_prefix_of_measurableSet_invariants
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
+    (ρ.restrict A).map (fun x : ℕ → α => fun i : Fin m => x (k i))
+      = (ρ.restrict A).map (prefixProj α m) := by
+  obtain ⟨φ, C, hφ_mono, hφ_eq, hφ_add⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
+  have hmp := measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add
+    (hρ.measurePreserving_reindex hφ_mono) hφ_add hA
+  have hcomp : (fun x : ℕ → α => fun i : Fin m => x (k i))
+      = prefixProj α m ∘ fun x : ℕ → α => fun j => x (φ j) := by
+    funext x i
+    simp only [Function.comp_apply, prefixProj_apply, hφ_eq]
+  rw [hcomp, ← Measure.map_map (measurable_prefixProj m) hmp.measurable, hmp.map_eq]
 
 /-- **A strictly increasing finite selection can be displaced to the prefix over an invariant
-event.** For a contractable path law and a set `A` measurable in
-`MeasurableSpace.invariants (shift α)`, the set-integral over `A` of a block observable read along
-a strictly increasing selection `k` equals the set-integral of the same observable read along the
-prefix `0, 1, …, m - 1`. -/
+event.** The `ℝ≥0∞` corollary of the measure equality: the set-integral over `A` of a block
+observable read along `k` equals the set-integral of the same observable read along the prefix
+`0, 1, …, m - 1`. -/
 theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {g : (Fin m → α) → ℝ≥0∞} (hg : Measurable g) :
     ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (prefixProj α m x) ∂ρ := by
-  obtain ⟨φ, C, hφ_mono, hφ_eq, hφ_add⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
-  have hf : Measurable fun x : ℕ → α => g (prefixProj α m x) :=
-    hg.comp (measurable_prefixProj m)
-  have hcomp : ∀ x : ℕ → α,
-      prefixProj α m (fun j => x (φ j)) = fun i : Fin m => x (k i) := by
-    intro x; funext i; simp only [prefixProj_apply, hφ_eq]
-  simpa only [hcomp] using
-    setLIntegral_comp_reindex_eq_of_measurableSet_invariants_of_eventually_add
-      (hρ.measurePreserving_reindex hφ_mono) hφ_add hA hf
+  rw [← lintegral_map hg (measurable_pi_lambda _ fun i => measurable_pi_apply (k i)),
+    ← lintegral_map hg (measurable_prefixProj m),
+    hρ.map_block_eq_prefix_of_measurableSet_invariants hk hA]
 
 end Probability
 
