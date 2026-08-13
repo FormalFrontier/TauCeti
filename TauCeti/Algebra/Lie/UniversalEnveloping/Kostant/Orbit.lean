@@ -107,12 +107,6 @@ theorem mem_kostantOrbit_iff {x : V} :
   · rintro ⟨u, hu, rfl⟩
     exact ⟨⟨u, hu⟩, Subring.smul_def ⟨u, hu⟩ v⟩
 
-/-- The Kostant orbit is the restriction to `ℤ` of the span over the Kostant form. -/
-theorem kostantOrbit_def (e : ι → L) (h : κ → L) (v : V) :
-    kostantOrbit e h v = (Submodule.span (kostantForm e h) {v}).restrictScalars ℤ := by
-  unfold kostantOrbit
-  rfl
-
 /-- The generating vector belongs to its Kostant orbit. -/
 theorem mem_kostantOrbit_self : v ∈ kostantOrbit e h v :=
   mem_kostantOrbit_iff.2 ⟨1, (kostantForm e h).one_mem, one_smul U v⟩
@@ -120,7 +114,8 @@ theorem mem_kostantOrbit_self : v ∈ kostantOrbit e h v :=
 /-- The Kostant orbit is stable under the integral form. -/
 theorem smul_mem_kostantOrbit {u : U} (hu : u ∈ kostantForm e h) {x : V}
     (hx : x ∈ kostantOrbit e h v) : u • x ∈ kostantOrbit e h v := by
-  rw [kostantOrbit_def, Submodule.restrictScalars_mem] at hx ⊢
+  unfold kostantOrbit at hx ⊢
+  rw [Submodule.restrictScalars_mem] at hx ⊢
   rw [← Subring.smul_def (⟨u, hu⟩ : kostantForm e h) x]
   exact Submodule.smul_mem _ ⟨u, hu⟩ hx
 
