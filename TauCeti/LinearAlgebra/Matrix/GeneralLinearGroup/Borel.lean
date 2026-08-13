@@ -15,10 +15,9 @@ public import Mathlib.GroupTheory.Index
 public import Mathlib.LinearAlgebra.Matrix.Block
 -- `TauCeti.diagGL` is the body of `TauCeti.GL2Borel.torusHom`, so it must be imported publicly.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
--- Non-public: the cardinality of the general linear group over a finite field, and the number of
--- units of a finite field, are used only inside the counting proofs, so downstream importers do
--- not pay for them.
-import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
+-- Non-public: the order of `GL₂` over a finite field, and the number of units of a finite field,
+-- are used only inside the counting proofs, so downstream importers do not pay for them.
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
 
 /-!
@@ -70,6 +69,8 @@ q + 1`, the number of points of the projective line.
 * `TauCeti.GL2Borel.eq_torusHom_mul_unipotentHom`: the decomposition `B = T U`.
 * `TauCeti.GL2Borel.det_diag`: the determinant of an element of `B` is the product of its two
   diagonal entries.
+* `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`: a matrix with an upper-triangular conjugate
+  has an eigenvalue in the base ring.
 * `TauCeti.GL2Borel.card_eq`: `|B| = q (q - 1)²` over a finite field with `q` elements.
 * `TauCeti.GL2Borel.index_eq`: `[GL₂(𝔽_q) : B] = q + 1`.
 
@@ -386,6 +387,31 @@ theorem mem_iff_exists_mk {g : GL (Fin 2) R} :
   · rintro ⟨a, d, b, rfl⟩
     exact mk_mem a d b
 
+/-- If some conjugate of `u : GL (Fin 2) R` is upper triangular then `u` has an eigenvalue in the
+base ring: writing `a` for the upper-left entry of that conjugate, `det (u - a) = 0`. This is the
+eigenvalue that an element of the non-split torus has to be shown not to have. -/
+theorem exists_det_sub_algebraMap_eq_zero {u g : GL (Fin 2) R}
+    (h : g * u * g⁻¹ ∈ GL2Borel R) :
+    ∃ a : R,
+      ((u : Matrix (Fin 2) (Fin 2) R) - algebraMap R (Matrix (Fin 2) (Fin 2) R) a).det = 0 := by
+  obtain ⟨N, hN⟩ : ∃ N : Matrix (Fin 2) (Fin 2) R,
+      ((g * u * g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = N := ⟨_, rfl⟩
+  refine ⟨N 0 0, ?_⟩
+  -- A scalar matrix is central, so conjugating `u - a` conjugates `u` and leaves `a` alone.
+  have hgc : (g : Matrix (Fin 2) (Fin 2) R) * algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) *
+      ((g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) =
+      algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) := by
+    rw [← Algebra.commutes (N 0 0) (g : Matrix (Fin 2) (Fin 2) R), mul_assoc, ← Units.val_mul,
+      mul_inv_cancel, Units.val_one, mul_one]
+  have key : (g : Matrix (Fin 2) (Fin 2) R) *
+      ((u : Matrix (Fin 2) (Fin 2) R) - algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0)) *
+      ((g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) =
+      N - algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) := by
+    rw [Matrix.mul_sub, Matrix.sub_mul, hgc, ← hN, Units.val_mul, Units.val_mul]
+  have h10 : N 1 0 = 0 := by rw [← hN]; exact mem_iff.mp h
+  rw [← Matrix.det_units_conj g, key, Matrix.det_fin_two]
+  simp [Matrix.sub_apply, Matrix.algebraMap_matrix_apply, h10]
+
 variable (R)
 
 /-- The Borel subgroup is proper: the swap `!![0, 1; 1, 0]` is invertible but not upper
@@ -419,22 +445,14 @@ theorem card_eq :
 /-- **The index of the Borel subgroup** of `GL₂(𝔽_q)` is `q + 1`, the number of points of the
 projective line — hence the dimension of the principal series induced from `B`. -/
 theorem index_eq : (GL2Borel F).index = Fintype.card F + 1 := by
-  set q := Fintype.card F with hq
-  have hq2 : 2 ≤ q := Fintype.one_lt_card
-  have hG : Nat.card (GL (Fin 2) F) = (q ^ 2 - 1) * (q ^ 2 - q) := by
-    rw [Matrix.card_GL_field, ← hq]
-    simp [Fin.prod_univ_two]
-  have hcard := Subgroup.card_mul_index (GL2Borel F)
-  rw [card_eq, hG] at hcard
-  have hkey : q * (q - 1) ^ 2 * (q + 1) = (q ^ 2 - 1) * (q ^ 2 - q) := by
-    have h1 : 1 ≤ q := by omega
-    have h2 : 1 ≤ q ^ 2 := Nat.one_le_pow _ _ (by omega)
-    have h3 : q ≤ q ^ 2 := Nat.le_self_pow two_ne_zero q
-    zify [h1, h2, h3]
-    ring
-  have hpos : 0 < q * (q - 1) ^ 2 :=
+  have hq2 : 2 ≤ Fintype.card F := Fintype.one_lt_card
+  have hpos : 0 < Fintype.card F * (Fintype.card F - 1) ^ 2 :=
     Nat.mul_pos (by omega) (pow_pos (by omega) 2)
-  exact Nat.eq_of_mul_eq_mul_left hpos (hcard.trans hkey.symm)
+  have hcard := Subgroup.card_mul_index (GL2Borel F)
+  rw [card_eq, natCard_GL_fin_two] at hcard
+  refine Nat.eq_of_mul_eq_mul_left hpos ?_
+  rw [hcard]
+  ring
 
 end GL2Borel
 

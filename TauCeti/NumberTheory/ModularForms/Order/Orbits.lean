@@ -5,8 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.BigOperators.Finprod
+public import Mathlib.NumberTheory.Modular
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
+import Mathlib.Algebra.FiniteSupport.Basic
 import TauCeti.NumberTheory.Modular.Orbits
 import TauCeti.NumberTheory.ModularForms.FiniteZeros
 
@@ -30,6 +32,12 @@ formula. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.
 * `TauCeti.ModularForm.sum_orderOfVanishingAt_ofComplex_eq_finsum_orbit`: the same for the
   valence formula's own divisor sum, whose points are complex numbers carrying the interior
   bounds.
+* `TauCeti.ModularForm.orderOfVanishingOnOrbit_eq_zero_of_notMem`: an orbit outside a set of
+  orbits complete for `f`'s nonzero-order points on `𝒟` carries vanishing order zero.
+* `TauCeti.ModularForm.NonEllipticOrbit`: the orbits other than those of the elliptic points
+  `i` and `ρ` — the index type of the valence formula's divisor sum.
+* `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic`: the finite
+  support restricted to the non-elliptic orbits.
 
 ## References
 
@@ -133,6 +141,47 @@ lemma sum_orderOfVanishingAt_ofComplex_eq_finsum_orbit [SlashInvariantFormClass 
   have h : ofComplex a = ofComplex b :=
     ModularGroup.orbit_mk_injOn_fdo (hfdo a ha') (hfdo b hb') hab
   exact (hcoe a ha').symm.trans ((congrArg (fun w : ℍ ↦ (w : ℂ)) h).trans (hcoe b hb'))
+
+/-- **The missing completeness step.** An orbit outside a set `S` that catches every
+fundamental-domain point of nonzero order carries vanishing order zero. Completeness means `hS`:
+every `p ∈ 𝒟` with `orderOfVanishingAt f p ≠ 0` has its orbit `⟦p⟧` inside `S`, the same idiom
+`hasFiniteSupport_orderOfVanishingOnOrbit` uses over `𝒟`.
+
+⚠ This does **not** by itself extend `sum_orderOfVanishingAt_ofComplex_eq_finsum_orbit`'s
+image-indexed `∑ᶠ` to the whole orbit space. Instantiated at that lemma's orbit map, `hS` ranges
+over the *closed* `𝒟`, which holds the elliptic points `i` and `ρ` (`‖i‖ = ‖ρ‖ = 1`), whereas that
+lemma confines its divisor set to the *open* `𝒟ᵒ`. For a form of nonzero order at `i` or `ρ` the
+two demands cannot both hold — those are exactly the points the valence formula weights by `1/2`
+and `1/3` instead of counting into the divisor sum. Reaching the roadmap's non-elliptic orbit
+space still needs separate treatment of the elliptic orbits. -/
+lemma orderOfVanishingOnOrbit_eq_zero_of_notMem [SlashInvariantFormClass F 𝒮ℒ k]
+    {S : Set (MulAction.orbitRel.Quotient SL(2, ℤ) ℍ)}
+    (hS : ∀ p ∈ 𝒟, orderOfVanishingAt f p ≠ 0 →
+      (Quotient.mk'' p : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ∈ S)
+    {q} (hq : q ∉ S) : orderOfVanishingOnOrbit f q = 0 := by
+  -- `q`'s representative `p ∈ 𝒟` (`ModularGroup.exists_rep_mem_fd`) would, if its order were
+  -- nonzero, put `q` itself into `S` via `hS` (order is orbit-constant,
+  -- `orderOfVanishingOnOrbit_mk`), contradicting `hq`
+  by_contra hne
+  obtain ⟨p, rfl, hpfd⟩ := ModularGroup.exists_rep_mem_fd q
+  rw [orderOfVanishingOnOrbit_mk] at hne
+  exact hq (hS p hpfd hne)
+
+/-- The non-elliptic orbits of `SL(2, ℤ)` on `ℍ`: all orbits except the two elliptic ones, of
+`i` and of `ρ`. The valence formula's divisor sum is indexed by this type — the elliptic
+orbits enter the formula through fractional weights instead. -/
+abbrev NonEllipticOrbit : Type :=
+  {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ //
+    q ≠ Quotient.mk'' I ∧ q ≠ Quotient.mk'' ρ}
+
+/-- For a nonzero level-one form only finitely many non-elliptic orbits carry nonzero order:
+the finite support of `orderOfVanishingOnOrbit`, restricted along the inclusion of the
+non-elliptic orbits. -/
+lemma hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic [ModularFormClass F 𝒮ℒ k] {f : F}
+    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+    Function.HasFiniteSupport fun q : NonEllipticOrbit ↦ orderOfVanishingOnOrbit f q.val :=
+  Function.HasFiniteSupport.fun_comp_of_injective Subtype.val_injective
+    (hasFiniteSupport_orderOfVanishingOnOrbit hf)
 
 end ModularForm
 

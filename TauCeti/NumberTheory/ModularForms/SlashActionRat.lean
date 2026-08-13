@@ -1,0 +1,131 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
+module
+
+public import TauCeti.NumberTheory.ModularForms.Basic
+
+/-!
+# The weight-`k` slash action of `GL(2, ℚ)`
+
+Mathlib defines the slash action of `GL(2, ℝ)` on `ℍ → ℂ` and specialises it to `SL(2, ℤ)`
+through `monoidHomSlashAction`. The Hecke operators need the group in between: their coset
+representatives are *rational* matrices of positive determinant — `Δ₀(N)` is a submonoid of
+`GL(2, ℚ)` — and they are slashed against functions invariant under an integral congruence
+subgroup.
+
+This file supplies that action, by the same mechanism Mathlib uses for `SL(2, ℤ)`: transport
+along the entrywise map `GL(2, ℚ) →* GL(2, ℝ)`. It is a `scoped instance`, so a module that does
+not want `f ∣[k] g` to elaborate at rational `g` simply does not open the scope.
+
+`f ∣[k] g` is the real slash at the mapped matrix *definitionally*, so every `GL(2, ℝ)` lemma
+applies after rewriting with `rat_slash`; the point of the instance is that consumers need
+not insert the coercion by hand.
+
+## Main results
+
+* `ModularForm.rat_slash`: the rational action is the real one at the mapped matrix.
+* `ModularForm.rat_slash_def_of_det_pos`, `ModularForm.rat_slash_apply_of_det_pos`: the expanded
+  formula at positive determinant, free of the `σ` twist.
+* `ModularForm.det_map_ratCast_pos`: positivity of the determinant survives the embedding.
+* `ModularForm.rat_smul_slash_of_det_pos`: scalars pass through the slash of a
+  positive-determinant rational matrix, with no `σ` twist.
+
+## Provenance
+
+Ported from the AINTLIB `LeanModularForms` project
+([`LeanModularForms/HeckeRIngs/GL2/HeckeAction.lean`](https://github.com/CBirkbeck/AINTLIB),
+commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck): the
+`SlashAction ℤ (GL (Fin 2) ℚ) (ℍ → ℂ)` instance built by `monoidHomSlashAction`, and the
+scalar-pull-through step inside its `heckeSlash_smul`. AINTLIB names the embedding `glMap`; that
+is a one-use wrapper around Mathlib's `Matrix.GeneralLinearGroup.map`, so it is not ported and
+the map is spelled out instead. The scalar lemma is stated here at the `SMul`/`IsScalarTower`
+generality of Mathlib's `ModularForm.SL_smul_slash` rather than AINTLIB's `c : ℂ`.
+
+## References
+
+* [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
+  Chapter 3.
+-/
+
+public section
+
+open Matrix UpperHalfPlane
+
+open scoped MatrixGroups ModularForm
+
+namespace ModularForm
+
+/-- The weight-`k` slash action of `GL(2, ℚ)`, induced from `GL(2, ℝ)` along `ℚ ↪ ℝ`. Scoped,
+so it is opted into rather than imposed. -/
+noncomputable scoped instance ratSlashAction : SlashAction ℤ (GL (Fin 2) ℚ) (ℍ → ℂ) :=
+  monoidHomSlashAction (Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ))
+
+/-- The rational slash action is the real one at the mapped matrix. Definitional, but named:
+it is how every `GL(2, ℝ)` lemma is brought to bear on a rational slash.
+
+The three lemmas here mirror Mathlib's integral trio exactly, including the absence of a `_def`
+suffix on this one: `ModularForm.SL_slash` is the transport
+(`Mathlib/NumberTheory/ModularForms/SlashActions.lean:155`), `ModularForm.SL_slash_def` the
+expanded formula (:158) and `ModularForm.SL_slash_apply` the pointwise one (:162). `_def` marks
+the *expanded* statement in this family, not the transport, so it belongs to
+`rat_slash_def_of_det_pos` below. -/
+lemma rat_slash (k : ℤ) (g : GL (Fin 2) ℚ) (f : ℍ → ℂ) :
+    f ∣[k] g = f ∣[k] (Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g) := (rfl)
+
+/-- A rational matrix of positive determinant maps to a real one of positive determinant.
+Stated with `Matrix.det`, the form `UpperHalfPlane.σ_eq_refl_of_det_pos` consumes. -/
+lemma det_map_ratCast_pos {g : GL (Fin 2) ℚ} (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℚ).det) :
+    0 < ((Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det := by
+  rw [Matrix.GeneralLinearGroup.val_map_apply, ← RingHom.mapMatrix_apply, ← RingHom.map_det]
+  simpa using hg
+
+/-- **The expanded formula for a positive-determinant rational slash**, with no `σ` twist:
+
+`f ∣[k] g = fun τ ↦ f (ĝ • τ) * |det ĝ| ^ (k - 1) * denom ĝ τ ^ (-k)`,
+
+where `ĝ` abbreviates `Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g`, the real image of `g`.
+The distinction is not cosmetic: `g : GL (Fin 2) ℚ` does not act on `ℍ` at all, and `denom` is
+likewise only defined at the real matrix, so every occurrence in the statement below is at `ĝ`.
+
+Mathlib's `ModularForm.slash_def` carries `σ g` around the value of `f`, which is complex
+conjugation on the negative-determinant branch. This is the analogue of
+`ModularForm.SL_slash_def`, which drops the twist because `det = 1`; here positivity is the
+hypothesis that does it. -/
+lemma rat_slash_def_of_det_pos (k : ℤ) {g : GL (Fin 2) ℚ}
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℚ).det) (f : ℍ → ℂ) :
+    f ∣[k] g = fun τ ↦
+      f ((Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g) • τ) *
+        |((Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g).det : ℝ)| ^ (k - 1) *
+          denom (Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g) τ ^ (-k) := by
+  rw [rat_slash, _root_.ModularForm.slash_def_of_det_pos k (det_map_ratCast_pos hg)]
+
+/-- The pointwise form of `rat_slash_def_of_det_pos`, matching
+`ModularForm.SL_slash_apply`. -/
+lemma rat_slash_apply_of_det_pos (k : ℤ) {g : GL (Fin 2) ℚ}
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℚ).det) (f : ℍ → ℂ) (τ : ℍ) :
+    (f ∣[k] g) τ =
+      f ((Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g) • τ) *
+        |((Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g).det : ℝ)| ^ (k - 1) *
+          denom (Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) g) τ ^ (-k) :=
+  congrFun (rat_slash_def_of_det_pos k hg f) τ
+
+/-- **Scalars pass through the slash of a positive-determinant rational matrix.** Mathlib's
+`ModularForm.smul_slash` carries the twist `σ A c`, which is complex conjugation when the
+determinant is negative; on the positive branch `σ` is the identity
+(`UpperHalfPlane.σ_eq_refl_of_det_pos`) and the scalar simply commutes.
+
+This is what makes a Hecke operator `ℂ`-linear: it is a sum of slashes by representatives of
+positive determinant. The scalar generality matches `ModularForm.SL_smul_slash`, the same
+statement for the integral action. -/
+@[simp]
+lemma rat_smul_slash_of_det_pos {α : Type*} [SMul α ℂ] [IsScalarTower α ℂ ℂ] (k : ℤ)
+    {g : GL (Fin 2) ℚ} (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℚ).det) (f : ℍ → ℂ) (c : α) :
+    (c • f) ∣[k] g = c • f ∣[k] g := by
+  rw [rat_slash, rat_slash]
+  exact _root_.ModularForm.smul_slash_of_det_pos k (det_map_ratCast_pos hg) f c
+
+end ModularForm

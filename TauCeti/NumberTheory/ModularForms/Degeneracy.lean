@@ -10,7 +10,7 @@ public import Mathlib.RingTheory.PowerSeries.Expand
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
-public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 
 /-!
 # The level-raising degeneracy maps `V_d`
@@ -125,7 +125,7 @@ lemma scaleGL_mul (d e : ℕ) [NeZero d] [NeZero e] :
 /-- Slashing by `diag(d, 1)` rescales the argument and introduces the factor `d ^ (k - 1)`. -/
 lemma slash_scaleGL_apply [NeZero d] (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
     (f ∣[k] scaleGL d) τ = (d : ℂ) ^ (k - 1) * f (scaleGL d • τ) := by
-  rw [ModularForm.slash_apply, UpperHalfPlane.σ, ite_eq_left val_det_scaleGL_pos]
+  rw [ModularForm.slash_apply, σ_eq_refl_of_det_pos val_det_scaleGL_pos]
   simp [mul_comm]
 
 /-! ### The level-raising operator -/
@@ -414,8 +414,7 @@ lemma ModularForm.slash_levelRaise_eq_smul [𝒢'.HasDetOne] [NeZero d]
   rw [coe_levelRaise_slash hle f γ hc, hf, _root_.ModularForm.smul_slash, coe_levelRaise,
     smul_comm]
   congr 1
-  have hdpos : (0 : ℝ) < d := mod_cast Nat.pos_of_ne_zero (NeZero.ne d)
-  simp [UpperHalfPlane.σ, hdpos]
+  rw [σ_eq_refl_of_det_pos val_det_scaleGL_pos, ContinuousAlgEquiv.refl_apply]
 
 /-- **Eigenvalue transport (cusp forms).** If `f` is an eigenvector of the slash by
 `conjScale d γ` with eigenvalue `z`, then `V_d f` is an eigenvector of the slash by `γ` with
@@ -428,8 +427,7 @@ lemma CuspForm.slash_levelRaise_eq_smul [𝒢'.HasDetOne] [NeZero d]
   rw [coe_levelRaise_slash hle f γ hc, hf, _root_.ModularForm.smul_slash, coe_levelRaise,
     smul_comm]
   congr 1
-  have hdpos : (0 : ℝ) < d := mod_cast Nat.pos_of_ne_zero (NeZero.ne d)
-  simp [UpperHalfPlane.σ, hdpos]
+  rw [σ_eq_refl_of_det_pos val_det_scaleGL_pos, ContinuousAlgEquiv.refl_apply]
 
 end Slash
 
@@ -492,7 +490,7 @@ theorem CuspForm.diamondOpCusp_levelRaise {M d N : ℕ} [NeZero N]
 /-- **The nebentypus of a level-raise.** `V_d` carries `M_k(Γ₁(M), χ)` into
 `M_k(Γ₁(dM), χ ∘ (ZMod (dM))ˣ → (ZMod M)ˣ)`: the character of `V_d f` at level `dM` is the
 character of `f` read along the reduction map. -/
-theorem ModularForm.levelRaise_mem_modFormCharSpace (M d : ℕ) [NeZero M] [NeZero d]
+theorem ModularForm.levelRaise_mem_modFormCharSpace (M d : ℕ) [NeZero d]
     (χ : (ZMod M)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) :
     levelRaise d (Gamma1_map_le_conjAct_scaleGL M d) f ∈
@@ -506,7 +504,7 @@ theorem ModularForm.levelRaise_mem_modFormCharSpace (M d : ℕ) [NeZero M] [NeZe
 /-- **The nebentypus of a level-raise (cusp forms).** `V_d` carries `S_k(Γ₁(M), χ)` into
 `S_k(Γ₁(dM), χ ∘ (ZMod (dM))ˣ → (ZMod M)ˣ)`. This is the inclusion whose images span the old
 subspace of `S_k(Γ₁(N), χ)`. -/
-theorem CuspForm.levelRaise_mem_cuspFormCharSpace (M d : ℕ) [NeZero M] [NeZero d]
+theorem CuspForm.levelRaise_mem_cuspFormCharSpace (M d : ℕ) [NeZero d]
     (χ : (ZMod M)ˣ →* ℂˣ) {f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k}
     (hf : f ∈ cuspFormCharSpace k χ) :
     levelRaise d (Gamma1_map_le_conjAct_scaleGL M d) f ∈

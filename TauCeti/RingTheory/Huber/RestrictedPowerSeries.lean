@@ -30,10 +30,13 @@ namespace, opts into the Lean module system with the definition bodies unexposed
 `Set.mem_setOf_eq` to `Set.mem_ofPred_eq`, renames the predicate from AINTLIB's `IsRestrictedAdic`
 (nothing here is adic), and drops hypotheses that the individual proofs never used.
 
-This is *not* Mathlib's `PowerSeries.IsRestricted`, which asks a one-variable series over a ring
-with a linear topology to be restricted with respect to a submodule filtration. `IsRestricted`
-here is Wedhorn's multivariate cofinite-tendsto condition, and needs only a topology on `A`; the
-nonarchimedean hypothesis enters only for closure under multiplication and hence for the subring.
+This is *not* Mathlib's `MvPowerSeries.IsRestricted`, which is stated over a normed ring and
+relative to a polyradius `c : σ → ℝ`, asking that `‖coeff t f‖ * ∏ i, c i ^ t i` tend to `0` along
+the cofinite filter. The two conditions agree over a normed ring at `c = 1`, but neither is more
+general: Mathlib's varies the radius, while `IsRestricted` here needs only a topology on `A` and
+no norm. It is the latter that Huber theory requires: Huber ring topologies are defined using an
+ideal of definition and need not be induced by a norm. The nonarchimedean hypothesis enters only
+for closure under multiplication and hence for the subring.
 
 ## Implementation notes
 

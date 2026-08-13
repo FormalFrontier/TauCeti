@@ -27,7 +27,7 @@ value is `2πi` times the order at the cusp.
 
 * `TauCeti.ModularForm.fdBoundaryQRadius`: the radius `e^{-2πH}` of the ceiling's
   `q`-circle, with `fdBoundaryQRadius_def`, `_pos`, and `_lt_one`.
-* `TauCeti.ModularForm.qParam_fdBoundary_segment5`: the ceiling parametrizes the
+* `TauCeti.ModularForm.qParam_fdBoundarySegment5`: the ceiling parametrizes the
   `q`-circle.
 * `TauCeti.ModularForm.circleIntegral_logDeriv_cuspFunction`: the `q`-circle integral of
   the cusp function's logarithmic derivative is `2πi` times the cusp order.
@@ -74,11 +74,11 @@ lemma fdBoundaryQRadius_lt_one {H : ℝ} (hH : 0 < H) : fdBoundaryQRadius H < 1 
 /-- Under the level-one `q`-parameter, the ceiling of the boundary contour traces the
 `q`-circle of radius `e^{-2πH}`: the segment parameter `t ∈ [4, 5]` becomes the angle
 `2π(t - 9/2)`, sweeping `[-π, π]` once counterclockwise. -/
-theorem qParam_fdBoundary_segment5 (H t : ℝ) :
-    Periodic.qParam (1 : ℝ) (fdBoundary_segment5 H t) =
+theorem qParam_fdBoundarySegment5 (H t : ℝ) :
+    Periodic.qParam (1 : ℝ) (fdBoundarySegment5 H t) =
       circleMap 0 (fdBoundaryQRadius H) (2 * Real.pi * (t - 9 / 2)) := by
-  have hz : fdBoundary_segment5 H t = ((t - 9 / 2 : ℝ) : ℂ) + H * Complex.I := by
-    rw [fdBoundary_segment5_apply, AffineMap.lineMap_apply, vsub_eq_sub, vadd_eq_add,
+  have hz : fdBoundarySegment5 H t = ((t - 9 / 2 : ℝ) : ℂ) + H * Complex.I := by
+    rw [fdBoundarySegment5_apply, AffineMap.lineMap_apply, vsub_eq_sub, vadd_eq_add,
       Complex.real_smul]
     push_cast
     ring

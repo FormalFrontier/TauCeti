@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Combinatorics.SimpleGraph.Acyclic
+public import TauCeti.Combinatorics.SimpleGraph.Acyclic
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
@@ -37,6 +37,10 @@ the root-system case is irreducibility, which Mathlib packages as
 * `TauCeti.IsFiniteType.isAcyclic_diagramGraph`: **the diagram of a finite-type matrix is a
   forest**. The affine diagrams `Ãₙ` for `n ≥ 2`, the ones whose diagrams are cycles, are excluded
   here in one theorem.
+* `TauCeti.IsFiniteType.exists_chain_of_reachable`: two vertices in the same component are joined
+  by a chain of distinct indices whose consecutive matrix entries are nonzero and whose
+  nonconsecutive entries vanish. This is the bridge from graph paths to the principal-submatrix
+  arguments used in the classification.
 * `TauCeti.IsFiniteType.degree_le_three`: **the degree bound**, in graph form.
 * `TauCeti.IsFiniteType.isTree_diagramGraph` and
   `TauCeti.IsFiniteType.card_edgeFinset_add_one_eq_card`: a connected finite-type diagram is a tree,
@@ -110,6 +114,39 @@ theorem isAcyclic_diagramGraph (h : IsFiniteType A) : (diagramGraph A).IsAcyclic
       Nat.mod_eq_of_lt (by omega)]
     exact Or.inr rfl
   exact (diagramGraph_adj.mp (f.toHom.map_adj hadj)).2.1 hk
+
+/-- **A reachable pair in a finite-type diagram is joined by an induced matrix chain.** More
+precisely, there are vertices `w 0, ..., w n` with the prescribed endpoints, no repetitions,
+nonzero entries between consecutive vertices, and zero entries between vertices separated by at
+least one intermediate vertex.
+
+The no-chord conclusion is the part not supplied merely by choosing a graph path. It follows from
+the diagram being acyclic, and is what lets a classification argument identify the corresponding
+principal submatrix with a chain-shaped model rather than only a matrix containing the chain's
+edges. Nothing is asserted about vertices outside the chain. -/
+theorem exists_chain_of_reachable (h : IsFiniteType A) {u v : B}
+    (huv : (diagramGraph A).Reachable u v) :
+    ∃ (n : ℕ) (w : ℕ → B), w 0 = u ∧ w n = v ∧
+      Set.InjOn w {i | i ≤ n} ∧
+      (∀ i, i < n → A (w i) (w (i + 1)) ≠ 0) ∧
+      ∀ i j, i + 1 < j → j ≤ n → A (w i) (w j) = 0 := by
+  classical
+  let p : (diagramGraph A).Path u v := huv.some.toPath
+  let q : (diagramGraph A).Walk u v := p
+  have hq : q.IsPath := p.isPath
+  refine ⟨q.length, q.getVert, ?_, ?_, ?_, ?_, ?_⟩
+  · exact q.getVert_zero
+  · exact q.getVert_length
+  · exact hq.getVert_injOn
+  · intro i hi
+    exact (h.diagramGraph_adj_iff.mp (q.adj_getVert_succ hi)).2
+  · intro i j hij hj
+    by_contra hne
+    have hne' : q.getVert i ≠ q.getVert j := fun heq ↦ by
+      have := hq.getVert_injOn (by omega : i ≤ q.length) hj heq
+      omega
+    exact h.isAcyclic_diagramGraph.not_adj_getVert_of_add_one_lt hq hij hj
+      (h.diagramGraph_adj_iff.mpr ⟨hne', hne⟩)
 
 /-- **The degree bound in graph form**: no index of a finite-type matrix has four neighbours in the
 diagram, so a finite-type diagram branches into at most three arms. -/
