@@ -68,6 +68,8 @@ private theorem mul_pow_of_commutator_eq {x y z : A} (hxy : x * y = y * x + z)
           simp only [Nat.add_sub_cancel] at ih ⊢
           rw [pow_succ, ← mul_assoc, ih, add_mul, mul_assoc (y ^ (n + 1)) x y,
             hxy, mul_add]
+          -- Expose the final successor separately: rewriting `add_nsmul` on `n + 2` directly
+          -- would split the coefficient as `n` and `2`, rather than the required `n + 1` and `1`.
           rw [show n + 2 = (n + 1) + 1 by omega, add_nsmul, one_nsmul]
           noncomm_ring [hyz.eq, pow_succ]
           simp only [nsmul_eq_mul, Nat.cast_add, Nat.cast_ofNat, mul_one]
