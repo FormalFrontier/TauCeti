@@ -190,8 +190,7 @@ private theorem smeval_descPochhammer_succ
     (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
     (descPochhammer ℤ (n + 1)).smeval a =
       (descPochhammer ℤ n).smeval a * (a - (n : _root_.UniversalEnvelopingAlgebra R L)) := by
-  rw [descPochhammer_succ_right, Polynomial.smeval_mul, Polynomial.smeval_sub,
-    Polynomial.smeval_X, Polynomial.smeval_natCast, pow_one, pow_zero, nsmul_one]
+  simp [descPochhammer_succ_right, Polynomial.smeval_mul, Polynomial.smeval_natCast]
 
 /-- The antipode commutes with the descending Pochhammer polynomial evaluated at an arbitrary
 element. Although the antipode reverses products, the factors of `descPochhammer` evaluated at a
