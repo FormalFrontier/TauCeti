@@ -133,13 +133,11 @@ theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pull
       (algebraMap F[X] W₁.CoordinateRing X)
   have hx₁_over_target :
       @IsIntegral W₂.CoordinateRing W₁.FunctionField _ _
-        φ.pullback.toRingHom.toAlgebra x₁ := by
-    exact (CoordinatePullback.mapsInfinity_iff φ.pullback).1 φ.mapsInfinity
+        φ.pullback.toRingHom.toAlgebra x₁ :=
+    (CoordinatePullback.mapsInfinity_iff φ.pullback).1 φ.mapsInfinity
       (algebraMap F[X] W₁.CoordinateRing X)
-  obtain ⟨Q, hQmonic, hQx⟩ := hx₁_over_target
-  have hx₁ : IsIntegral F x₁ := by
-    exact isIntegral_of_isIntegral_map φ.pullback.toRingHom himage
-      ⟨Q, hQmonic, hQx⟩
+  have hx₁ : IsIntegral F x₁ :=
+    isIntegral_of_isIntegral_map φ.pullback.toRingHom himage hx₁_over_target
   have hx₁_transcendental : Transcendental F x₁ := by
     have hx₁_eq : x₁ = algebraMap F[X] W₁.FunctionField X :=
       (IsScalarTower.algebraMap_apply F[X] W₁.CoordinateRing W₁.FunctionField X).symm

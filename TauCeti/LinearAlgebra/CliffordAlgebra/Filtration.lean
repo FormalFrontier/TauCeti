@@ -517,12 +517,10 @@ variable {N : Type w} [AddCommGroup N] [Module R N] {Q' : QuadraticForm R N}
 to a product of the same length. -/
 theorem map_mem_filtration (f : Q →qᵢ Q') {k : ℕ} {x : CliffordAlgebra Q}
     (hx : x ∈ filtration Q k) : CliffordAlgebra.map f x ∈ filtration Q' k := by
-  have h : filtration Q k ≤ (filtration Q' k).comap (CliffordAlgebra.map f).toLinearMap :=
-    (filtration_le_iff Q).2 fun l hl => by
-      rw [Submodule.mem_comap, AlgHom.toLinearMap_apply, map_list_prod, List.map_map]
-      simpa [Function.comp_def] using
-        prod_map_ι_mem_filtration Q' (l := l.map f) (by simpa using hl)
-  exact h hx
+  apply TauCeti.Algebra.map_mem_wordFiltration (ι Q) (CliffordAlgebra.map f) (ι Q') _ hx
+  intro m
+  rw [CliffordAlgebra.map_apply_ι]
+  exact TauCeti.Algebra.apply_mem_wordFiltration_one (ι Q') (f m)
 
 end Map
 

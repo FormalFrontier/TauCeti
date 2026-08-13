@@ -12,32 +12,32 @@ public import TauCeti.Combinatorics.Young.Diagram
 
 A *corner* of a Young diagram `μ` is a cell of `μ` with neither the cell to its right nor the cell
 below it in `μ`.  Equivalently, the corners are the maximal cells of `μ`
-(`TauCeti.YoungDiagram.IsCorner.eq_of_le`): they are exactly the cells `c` for which removing `c`
+(`YoungDiagram.IsCorner.eq_of_le`): they are exactly the cells `c` for which removing `c`
 alone leaves a set of cells that is still a Young diagram.  So they index the ways of building `μ`
 one cell at a time, and hence the recursions that count standard Young tableaux.  The corners are
 also exactly the cells of hook length `1`, which is
-`TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one` in
+`YoungDiagram.isCorner_iff_hookLength_eq_one` in
 `TauCeti.Combinatorics.Young.HookLength`, downstream of this file.
 
-Deletion is `TauCeti.YoungDiagram.erase`.  It is defined without any hypothesis on the cell — it
+Deletion is `YoungDiagram.erase`.  It is defined without any hypothesis on the cell — it
 removes the whole principal upper set of `c`, that is `c` together with every cell weakly below and
 to the right of it — so that it can be summed over the corners of `μ` with no dependent index.  At a
 corner, and only at a cell of `μ` that is a corner, nothing but `c` itself is removed
-(`TauCeti.YoungDiagram.IsCorner.cells_erase`), and at a cell outside `μ` nothing is removed at all.
+(`YoungDiagram.IsCorner.cells_erase`), and at a cell outside `μ` nothing is removed at all.
 
 ## Main definitions
 
-* `TauCeti.YoungDiagram.IsCorner`: the predicate cutting out the corners of a diagram.
-* `TauCeti.YoungDiagram.corners`: the corners of a diagram, as a `Finset`.
-* `TauCeti.YoungDiagram.erase`: the diagram with the principal upper set of a cell removed.
+* `YoungDiagram.IsCorner`: the predicate cutting out the corners of a diagram.
+* `YoungDiagram.corners`: the corners of a diagram, as a `Finset`.
+* `YoungDiagram.erase`: the diagram with the principal upper set of a cell removed.
 
 ## Main results
 
-* `TauCeti.YoungDiagram.IsCorner.cells_erase`: erasing a corner deletes exactly that cell, and
-  `TauCeti.YoungDiagram.IsCorner.card_erase`: it drops the number of cells by one.
-* `TauCeti.YoungDiagram.exists_isCorner`: a nonempty Young diagram has a corner, so the corner
+* `YoungDiagram.IsCorner.cells_erase`: erasing a corner deletes exactly that cell, and
+  `YoungDiagram.IsCorner.card_erase`: it drops the number of cells by one.
+* `YoungDiagram.exists_isCorner`: a nonempty Young diagram has a corner, so the corner
   recursions are not vacuous.
-* `TauCeti.YoungDiagram.corners_transpose` and `TauCeti.YoungDiagram.erase_transpose`: corners and
+* `YoungDiagram.corners_transpose` and `YoungDiagram.erase_transpose`: corners and
   deletion commute with transposition.
 
 ## References
@@ -51,8 +51,6 @@ corner, and only at a cell of `μ` that is a corner, nothing but `c` itself is r
 
 public section
 
-namespace TauCeti
-
 namespace YoungDiagram
 
 variable {μ : YoungDiagram} {c d : ℕ × ℕ}
@@ -61,12 +59,12 @@ variable {μ : YoungDiagram} {c d : ℕ × ℕ}
 
 /-- A **corner** of a Young diagram: a cell of `μ` with neither the cell to its right nor the cell
 below it in `μ`.  These are exactly the maximal cells of `μ`
-(`TauCeti.YoungDiagram.IsCorner.eq_of_le`), equivalently the cells whose removal on its own leaves a
+(`YoungDiagram.IsCorner.eq_of_le`), equivalently the cells whose removal on its own leaves a
 set of cells that is still a Young diagram. -/
 def IsCorner (μ : YoungDiagram) (c : ℕ × ℕ) : Prop :=
   c ∈ μ ∧ (c.1, c.2 + 1) ∉ μ ∧ (c.1 + 1, c.2) ∉ μ
 
-/-- The defining conjunction of `TauCeti.YoungDiagram.IsCorner`, for introducing and eliminating the
+/-- The defining conjunction of `YoungDiagram.IsCorner`, for introducing and eliminating the
 predicate. -/
 theorem isCorner_def (μ : YoungDiagram) (c : ℕ × ℕ) :
     IsCorner μ c ↔ c ∈ μ ∧ (c.1, c.2 + 1) ∉ μ ∧ (c.1 + 1, c.2) ∉ μ :=
@@ -133,9 +131,9 @@ theorem corners_nonempty (hμ : 0 < μ.card) : (corners μ).Nonempty := by
 below and to the right of it.
 
 The definition is total, so that it can be summed over the corners of `μ` without a dependent index.
-It is `Finset.erase` on cells exactly at a corner (`TauCeti.YoungDiagram.IsCorner.cells_erase`), and
+It is `Finset.erase` on cells exactly at a corner (`YoungDiagram.IsCorner.cells_erase`), and
 it leaves `μ` unchanged at a cell outside `μ`
-(`TauCeti.YoungDiagram.erase_eq_self_of_notMem`); at a cell of `μ` that is not a corner it deletes
+(`YoungDiagram.erase_eq_self_of_notMem`); at a cell of `μ` that is not a corner it deletes
 the entire principal upper set of `c` in `μ`, which is the price of totality. -/
 def erase (μ : YoungDiagram) (c : ℕ × ℕ) : YoungDiagram where
   cells := μ.cells.filter fun d => ¬ c ≤ d
@@ -218,4 +216,3 @@ theorem erase_transpose (μ : YoungDiagram) (c : ℕ × ℕ) :
 
 end YoungDiagram
 
-end TauCeti
