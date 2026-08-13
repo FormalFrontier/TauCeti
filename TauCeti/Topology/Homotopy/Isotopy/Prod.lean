@@ -9,8 +9,8 @@ public import TauCeti.Topology.Homotopy.AmbientIsotopic.Basic
 /-!
 # Products of isotopies and ambient isotopies
 
-An isotopy is a homotopy whose level-preserving total map is a topological embedding, and an
-ambient isotopy is a homotopy from the identity whose total map is a homeomorphism. This file
+An isotopy is a homotopy through topological embeddings, and an ambient isotopy is a homotopy
+from the identity whose total map is a homeomorphism. This file
 records that both notions are closed under taking products: an isotopy `f₀ ≈ f₁` and an isotopy
 `g₀ ≈ g₁` combine, *along the shared time parameter*, into an isotopy `f₀ × g₀ ≈ f₁ × g₁` of the
 product maps, and likewise for ambient isotopies of a product space.
@@ -21,11 +21,9 @@ ambient isotopy are defined once before being specialised to locally flat isotop
 and knot equivalence. It is also the isotopy analogue of the product closure lemmas that the
 roadmap's later local-flatness product API is expected to mirror. For `TauCeti.Isotopy`, the
 construction follows Mathlib's product lemmas for embeddings (`Topology.IsEmbedding.prodMap`) and
-homotopy (`ContinuousMap.Homotopy.prodMap`), the latter of which supplies the underlying homotopy
-here. The single subtlety past the homotopy case is that the two factors share one time coordinate,
-so the level-preserving total map of the product is *not* literally the product of the two total
-maps (which would carry two independent times); the embedding/homeomorphism statements are
-recovered through the time-duplicating embedding `(t, x, x') ↦ ((t, x), (t, x'))`.
+homotopy (`ContinuousMap.Homotopy.prodMap`). For ambient isotopies, the two factors share one time
+coordinate, so the homeomorphism statement uses the time-duplicating embedding
+`(t, x, x') ↦ ((t, x), (t, x'))`.
 
 ## Main definitions
 
@@ -62,8 +60,8 @@ private theorem isEmbedding_dupTime :
   rw [this]
   exact IsEmbedding.id
 
-/-- The core embedding lemma shared by the isotopy and ambient-isotopy products. If `u` and `v` are
-embeddings of `I × X → I × Y` and `I × X' → I × Y'` that preserve the time coordinate, then the
+/-- The core embedding lemma used by the ambient-isotopy product. If `u` and `v` are embeddings of
+`I × X → I × Y` and `I × X' → I × Y'` that preserve the time coordinate, then the
 *merged* total map `(t, (x, x')) ↦ (t, ((u (t, x)).2, (v (t, x')).2))` reading both at the same
 time `t` is an embedding. It factors as the time-duplicating embedding, then `u × v`, then the
 projection identifying the two (equal) time coordinates. -/
@@ -92,17 +90,16 @@ variable {f₀ f₁ : C(X, Y)} {g₀ g₁ : C(X', Y')}
 
 /-- The **product of two isotopies**, sharing the time parameter: from an isotopy `f₀ ≈ f₁` and an
 isotopy `g₀ ≈ g₁` build an isotopy `f₀.prodMap g₀ ≈ f₁.prodMap g₁` whose value at `(t, (x, x'))` is
-`(F (t, x), G (t, x'))`. The underlying homotopy is Mathlib's `ContinuousMap.Homotopy.prodMap`; the
-total map is an embedding by `isEmbedding_mergeTotal`. -/
-@[expose] def prodMap (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) :
+`(F (t, x), G (t, x'))`. The underlying homotopy is Mathlib's `ContinuousMap.Homotopy.prodMap`,
+and each slice is a product of embeddings. -/
+def prodMap (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) :
     Isotopy (f₀.prodMap g₀) (f₁.prodMap g₁) where
   toHomotopy := F.toHomotopy.prodMap G.toHomotopy
-  isEmbedding_total' :=
-    isEmbedding_mergeTotal F.isEmbedding_total G.isEmbedding_total (fun _ => rfl) (fun _ => rfl)
+  prop' := fun t => (F.isEmbedding_apply t).prodMap (G.isEmbedding_apply t)
 
 @[simp]
 theorem prodMap_apply (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) (p : I × (X × X')) :
-    F.prodMap G p = (F (p.1, p.2.1), G (p.1, p.2.2)) := rfl
+    F.prodMap G p = (F (p.1, p.2.1), G (p.1, p.2.2)) := (rfl)
 
 end Isotopy
 
@@ -114,7 +111,7 @@ variable {f₀ f₁ : C(X, Y)} {g₀ g₁ : C(X', Y')}
 `f₀.prodMap g₀ ≈ f₁.prodMap g₁`. -/
 theorem prodMap (h : Isotopic f₀ f₁) (h' : Isotopic g₀ g₁) :
     Isotopic (f₀.prodMap g₀) (f₁.prodMap g₁) :=
-  ⟨h.some.prodMap h'.some⟩
+  of_isotopy ((isotopic_def.mp h).some.prodMap (isotopic_def.mp h').some)
 
 end Isotopic
 
@@ -125,14 +122,15 @@ namespace AmbientIsotopy
 is `(Φ (t, y), Ψ (t, y'))`. Its total map is a homeomorphism, being an embedding (by
 `isEmbedding_mergeTotal`) and surjective (each factor is surjective at every time, by
 `AmbientIsotopy.isHomeomorph_apply`). -/
-@[expose]
 def prodCongr (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') : AmbientIsotopy (Y × Y') where
   toContinuousMap :=
     ⟨fun p => (Φ.toContinuousMap (p.1, p.2.1), Ψ.toContinuousMap (p.1, p.2.2)), by fun_prop⟩
   isHomeomorph_total' := by
     rw [isHomeomorph_iff_isEmbedding_surjective]
-    refine ⟨isEmbedding_mergeTotal Φ.isHomeomorph_total.isEmbedding Ψ.isHomeomorph_total.isEmbedding
-      (fun _ => rfl) (fun _ => rfl), ?_⟩
+    refine ⟨?_, ?_⟩
+    · simpa only [totalMap_apply] using
+        isEmbedding_mergeTotal Φ.isHomeomorph_total.isEmbedding
+          Ψ.isHomeomorph_total.isEmbedding (fun p => by simp) (fun p => by simp)
     rintro ⟨t, z, z'⟩
     obtain ⟨y, hy⟩ := (Φ.isHomeomorph_apply t).surjective z
     obtain ⟨y', hy'⟩ := (Ψ.isHomeomorph_apply t).surjective z'
@@ -142,12 +140,13 @@ def prodCongr (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') : AmbientIsotopy 
 @[simp]
 theorem prodCongr_apply (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') (p : I × (Y × Y')) :
     (Φ.prodCongr Ψ).toContinuousMap p =
-      (Φ.toContinuousMap (p.1, p.2.1), Ψ.toContinuousMap (p.1, p.2.2)) := rfl
+      (Φ.toContinuousMap (p.1, p.2.1), Ψ.toContinuousMap (p.1, p.2.2)) := (rfl)
 
 /-- The final map of a product ambient isotopy is the product of the two final maps. -/
-@[simp]
+@[simp 1100]
 theorem final_prodCongr (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') (y : Y × Y') :
-    (Φ.prodCongr Ψ).final y = (Φ.final y.1, Ψ.final y.2) := rfl
+    (Φ.prodCongr Ψ).final y = (Φ.final y.1, Ψ.final y.2) := by
+  rw [final_apply, prodCongr_apply, final_apply, final_apply]
 
 end AmbientIsotopy
 
@@ -160,9 +159,11 @@ variable {f f' : C(X, Y)} {g g' : C(X', Y')}
 isotopic in `Y × Y'`, via the product ambient isotopy. -/
 theorem prodMap (h : AmbientIsotopic f f') (h' : AmbientIsotopic g g') :
     AmbientIsotopic (f.prodMap g) (f'.prodMap g') := by
-  obtain ⟨Φ, rfl⟩ := h
-  obtain ⟨Ψ, rfl⟩ := h'
-  refine ⟨Φ.prodCongr Ψ, ContinuousMap.ext fun p => ?_⟩
+  obtain ⟨Φ, hΦ⟩ := ambientIsotopic_def.mp h
+  obtain ⟨Ψ, hΨ⟩ := ambientIsotopic_def.mp h'
+  subst f'
+  subst g'
+  refine ambientIsotopic_def.mpr ⟨Φ.prodCongr Ψ, ContinuousMap.ext fun p => ?_⟩
   exact AmbientIsotopy.final_prodCongr Φ Ψ ((f.prodMap g) p)
 
 end AmbientIsotopic
