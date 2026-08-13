@@ -93,22 +93,19 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   rw [hTangent]
   simp only [LieAlgebra.ad_apply]
   have heIsoLieY : ((eIso Y : E) : GroupLieAlgebra I G) = eLie Y := by
-    rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
-      leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
+    exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
+      (I := I) (G := G) BoundarylessManifold.isInteriorPoint Y
   rw [heIsoLieY]
   have hbracket := eLie.map_lie X Y
   -- Expose the bracket-valued model vector produced by `LieAlgebra.ad` so the Lie equivalence's
   -- explicit bracket-preservation theorem can rewrite it.
   change eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) = ⁅X, Y⁆
   rw [← hbracket]
-  have hsymm (v : E) : eIso.symm v = eLie.symm (v : GroupLieAlgebra I G) := by
-    rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
-    exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
-      (I := I) (G := G) BoundarylessManifold.isInteriorPoint
-      (v : GroupLieAlgebra I G)).symm
   -- Expose the model-space coercion so the shared inverse-transport fact applies.
   change eIso.symm (show E from eLie (⁅X, Y⁆)) = ⁅X, Y⁆
-  rw [hsymm, eLie.symm_apply_apply]
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
+      (I := I) (G := G) BoundarylessManifold.isInteriorPoint,
+    eLie.symm_apply_apply]
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/
@@ -156,10 +153,8 @@ theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivatio
   have hCompAY :
       mvfderiv I AY 1 (eLie X) = dOp Y := by
     rw [hAY, mvfderiv_apply_eq_mfderiv_apply, hComp]
-    rw [← mvfderiv_apply_eq_mfderiv_apply]
-    -- `evalY` is bounded-operator evaluation, and `dOp` abbreviates the bundled derivative.
-    change dOp Y = dOp Y
-    exact Eq.refl _
+    change ((ContinuousLinearMap.apply ℝ (LeftInvariantDerivation I G)) Y) dOp = dOp Y
+    rfl
   calc
     dOp Y = mvfderiv I AY 1 (eLie X) := hCompAY.symm
     _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by

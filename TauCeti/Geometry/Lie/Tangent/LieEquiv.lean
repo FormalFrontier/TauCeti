@@ -23,6 +23,8 @@ This advances Deliverable A, Layer 1 of
 * `tangentToLeftInvariantDerivation_lie`: the invariant derivation construction preserves brackets.
 * `leftInvariantDerivationLieEquivGroupLieAlgebra`: the canonical derivation–tangent Lie
   equivalence.
+* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv`: the isometric and Lie
+  equivalences agree after viewing the tangent Lie algebra as the model space.
 
 ## References
 
@@ -144,6 +146,33 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
     e₀ (tangentToLeftInvariantDerivation v) = e₀ (e₀.symm v) := by
       rw [leftInvariantDerivationEquivGroupLieAlgebra_symm_apply]
     _ = v := e₀.apply_symm_apply v
+
+/-- The canonical isometric and Lie equivalences agree after viewing the tangent Lie algebra as
+the model vector space. -/
+@[simp]
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
+    [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
+    (h₁ : I.IsInteriorPoint (1 : G))
+    (D : LeftInvariantDerivation I G) :
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D =
+      (show E from leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D) := by
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
+    leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
+    leftInvariantDerivationEquivGroupLieAlgebra_apply]
+
+/-- The inverses of the canonical isometric and Lie equivalences agree after viewing a model
+vector as an element of the tangent Lie algebra. -/
+@[simp]
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
+    [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
+    (h₁ : I.IsInteriorPoint (1 : G)) (v : E) :
+    (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+      (I := I) (G := G)).symm v =
+      (leftInvariantDerivationLieEquivGroupLieAlgebra h₁).symm
+        (v : GroupLieAlgebra I G) := by
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
+  exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
+    (I := I) (G := G) h₁ (v : GroupLieAlgebra I G)).symm
 
 /-- Evaluation at the identity preserves the Lie bracket. -/
 @[simp]
