@@ -91,7 +91,12 @@ def SporadicName.presentation : SporadicName → GroupPresentation
   | .B => Sporadic.BabyMonster.presentation
   | .M => Sporadic.Monster.presentation
 
-/-- Every sporadic presentation has the generator and relator counts stated in its metadata. -/
+/-- Every sporadic presentation has the generator and relator counts stated in its metadata.
+
+This is deliberately not `@[simp]`: `GroupPresentation.matchesMetadata_iff` is itself a `simp`
+lemma, so the left-hand side `s.presentation.matchesMetadata` simplifies to the pair of count
+equations and is not in simp normal form, which the `simpNF` linter rejects. Apply the theorem
+directly, or pass it to `simp` as an argument. -/
 theorem presentation_matchesMetadata (s : SporadicName) :
     s.presentation.matchesMetadata := by
   cases s with
