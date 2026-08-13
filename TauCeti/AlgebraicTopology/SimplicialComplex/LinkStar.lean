@@ -110,7 +110,8 @@ omit [DecidableEq ι] in
 @[simp]
 theorem mem_deletion {ρ : Finset ι} : ρ ∈ deletion K σ ↔ ρ ∈ K ∧ ¬ σ ⊆ ρ := Iff.rfl
 
-/-- A face belongs to the closed star exactly when adjoining `σ` still gives a face of `K`. -/
+/-- A finset `ρ` belongs to the closed star exactly when `ρ` is a face of `K` and adjoining `σ`
+still gives a face of `K`. -/
 @[simp]
 theorem mem_closedStar {ρ : Finset ι} :
     ρ ∈ closedStar K σ ↔ ρ ∈ K ∧ ρ ∪ σ ∈ K := by
@@ -119,8 +120,8 @@ theorem mem_closedStar {ρ : Finset ι} :
   · exact (K.isRelLowerSet_faces hρ.2).2 subset_union_left hρ.1
   · exact (K.isRelLowerSet_faces hρ.1).1
 
-/-- A face belongs to the link exactly when it is disjoint from `σ` and adjoining `σ` still
-gives a face of `K`. -/
+/-- A finset `ρ` belongs to the link exactly when `ρ` is a face of `K`, is disjoint from `σ`, and
+adjoining `σ` still gives a face of `K`. -/
 @[simp]
 theorem mem_link {ρ : Finset ι} :
     ρ ∈ link K σ ↔ ρ ∈ K ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K := by
