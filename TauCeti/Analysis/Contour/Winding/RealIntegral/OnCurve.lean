@@ -79,10 +79,10 @@ telescoping (`Winding.SegmentSum.re_integral_inv_sub_mul_deriv_eq_log_norm`), wh
 real-part telescoping hypothesis of the aggregation theorem. This file's own content is deriving
 the real winding integrand's boundedness and interval-integrability from the crossing regularity
 rather than assuming them, via `Winding.LipschitzBoundedIntegrand`'s one-sided bounds
-instantiating `Crossing.PVAggregation`'s generic sorted-crossing-list gluing induction
-(`sorted_crossing_gluing_induction`) with that integrability invariant -- the first consumer of
-that combinator outside its own file, instantiating it directly for its own per-crossing-window
-integrability construction rather than re-deriving the induction shape by hand -- and the
+instantiating `Crossing.Windows`'s generic sorted-crossing-list gluing induction
+(`sorted_crossing_gluing_induction`) with that integrability invariant directly, the same way
+`Crossing.PVAggregation`'s own per-window aggregation theorems instantiate it for their
+value-carrying invariants, rather than re-deriving the induction shape by hand -- and the
 assembly of all of the above into the final formula. The per-crossing window value this file
 reads off (`exists_radius_perWindow_tendsto_log_norm_add_arg`), with both its real and imaginary
 parts, is proved once, generically, in `InvSubCPVExistence`.

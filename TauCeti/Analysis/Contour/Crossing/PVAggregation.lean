@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 import Mathlib.Data.Finset.Sort
-import Mathlib.Data.List.Sort
+import TauCeti.Analysis.Contour.Crossing.Windows
 
 /-!
 # Aggregating per-window principal values across finitely many crossings
@@ -40,11 +40,10 @@ simple-pole and higher-order per-window theorems both discharge them.
   difference of a real boundary function `Ψ`, given only the real part of each piece and window
   value. Weaker than the telescoping form's shared complex antiderivative `Φ`, so it applies even
   when different windows need different branch choices for their imaginary part.
-* `Contour.sorted_crossing_gluing_induction` — the sorted-crossing-list geometry underlying all
-  aggregation theorems above, generalized to an arbitrary invariant `Q : ℝ → ℝ → Prop` closed under
-  concatenation; every consumer instantiates it, including the value-carrying ones (existential
-  `HasCauchyPVAt` witnesses, or a known closed form), so none needs its own copy of the
-  recursion.
+All three instantiate `Contour.sorted_crossing_gluing_induction` (`Crossing.Windows`), the
+sorted-crossing-list geometry generalized to an arbitrary invariant `Q : ℝ → ℝ → Prop` closed
+under concatenation, including the value-carrying instantiations here (existential `HasCauchyPVAt`
+witnesses, or a known closed form) — so none needs its own copy of the recursion.
 
 ## Provenance
 
@@ -95,58 +94,6 @@ private theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ 
     exact (h_int_tr ε hε).mono_set (by
       rw [uIcc_of_le hlu, uIcc_of_le hab]
       exact Icc_subset_Icc hA hu)
-
-/-- **Generic sorted-crossing-window gluing induction.** An invariant `Q : ℝ → ℝ → Prop` that
-holds on every plain piece where the curve keeps distance `≥ m` from `s` (`h_piece`) and on every
-crossing window (`h_win`), and is closed under concatenation at a shared endpoint (`hglue`),
-holds on `[a, b]`, by induction on the sorted crossing list. Every consumer below — whether its
-own invariant is a bare `Prop` (interval-integrability) or carries an aggregated value
-(`∃ v, HasCauchyPVAt ... v`, or `HasCauchyPVAt ... (Φ (γ u) - Φ (γ l))` for a known closed form)
-— instantiates this one induction; none needs its own copy of the list recursion. -/
-theorem sorted_crossing_gluing_induction {γ : ℝ → ℂ} {s : ℂ} {Q : ℝ → ℝ → Prop} {A b r m : ℝ}
-    (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) → Q l u)
-    (hglue : ∀ l u₀ u : ℝ, l ≤ u₀ → u₀ ≤ u → Q l u₀ → Q u₀ u → Q l u) :
-    ∀ (sorted : List ℝ), sorted.SortedLT → (sorted ≠ [] → 0 ≤ r) →
-    ∀ a : ℝ, A ≤ a → a ≤ b → (∀ t ∈ sorted, a ≤ t - r) → (∀ t ∈ sorted, t + r ≤ b) →
-      (∀ t ∈ sorted, ∀ t' ∈ sorted, t' ≠ t → 2 * r ≤ |t - t'|) →
-      (∀ t ∈ sorted, Q (t - r) (t + r)) →
-      (∀ u ∈ Icc a b, (∀ t ∈ sorted, u ∉ Ioo (t - r) (t + r)) → m ≤ ‖γ u - s‖) →
-      Q a b := by
-  intro sorted
-  induction sorted with
-  | nil =>
-    intro _ _ a hA hab _ _ _ _ h_far
-    exact h_piece a b hA hab le_rfl
-      fun u hu => h_far u hu fun t ht => absurd ht (List.not_mem_nil)
-  | cons t rest IH =>
-    intro h_sorted hr a hA hab h_lo h_hi h_pair h_win h_far
-    have hr_nonneg : 0 ≤ r := hr (List.cons_ne_nil t rest)
-    have h_head_lo : a ≤ t - r := h_lo t List.mem_cons_self
-    have h_head_hi : t + r ≤ b := h_hi t List.mem_cons_self
-    have h_rest_above : ∀ t' ∈ rest, t + r ≤ t' - r := fun t' ht' => by
-      have h_lt : t < t' := (List.pairwise_cons.mp h_sorted.pairwise).1 t' ht'
-      have h_sep := h_pair t List.mem_cons_self t' (List.mem_cons_of_mem t ht') (ne_of_gt h_lt)
-      rw [abs_sub_comm, abs_of_pos (by linarith)] at h_sep
-      linarith
-    have h_left : Q a (t - r) := by
-      refine h_piece a (t - r) hA h_head_lo (by linarith) fun u hu => ?_
-      refine h_far u ⟨hu.1, by linarith [hu.2]⟩ fun t' ht' h_in => ?_
-      rcases List.mem_cons.mp ht' with rfl | h_rest
-      · linarith [hu.2, h_in.1]
-      · linarith [hu.2, h_in.1, h_rest_above t' h_rest]
-    have h_rest : Q (t + r) b := IH
-      ((List.pairwise_cons.mp h_sorted.pairwise).2).sortedLT (fun _ => hr_nonneg) (t + r)
-      (by linarith) h_head_hi (fun t' ht' => h_rest_above t' ht')
-      (fun t' ht' => h_hi t' (List.mem_cons_of_mem t ht'))
-      (fun t' ht' t'' ht'' hne => h_pair t' (List.mem_cons_of_mem t ht')
-        t'' (List.mem_cons_of_mem t ht'') hne)
-      (fun t' ht' => h_win t' (List.mem_cons_of_mem t ht'))
-      (fun u hu h_avoid => h_far u ⟨by linarith [hu.1], hu.2⟩ fun t' ht' => by
-        rcases List.mem_cons.mp ht' with rfl | h_rest
-        · exact fun h_in => absurd hu.1 (not_le.mpr h_in.2)
-        · exact h_avoid t' h_rest)
-    exact hglue a (t + r) b (h_head_lo.trans (by linarith)) h_head_hi
-      (hglue a (t - r) (t + r) h_head_lo (by linarith) h_left (h_win t List.mem_cons_self)) h_rest
 
 /-- **Real-part boundary aggregation**: like
 `cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint`, but each plain piece and each window

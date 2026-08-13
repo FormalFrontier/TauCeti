@@ -54,8 +54,8 @@ breakpoint of the immersion. Packages the hypotheses of `Winding.LipschitzBounde
 `exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner` other than
 differentiability and each side's non-vanishing velocity, which a caller who already
 has a piecewise-`C¹` immersion in hand gets for free from
-`PwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`/`_left` (differentiability) and
-`PwC1ImmersionOn.derivWithin_ne_zero_right`/`_left` (non-vanishing velocity), and so should not
+`IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`/`_left` (differentiability)
+and `IsPwC1ImmersionOn.derivWithin_ne_zero_right`/`_left` (non-vanishing velocity), so should not
 need to separately supply either. An opaque `def`, not an `abbrev`: consumers destructure it via
 `hasLipschitzDerivOnEachSideAt_iff` below rather than unfolding it directly. -/
 def HasLipschitzDerivOnEachSideAt (γ : ℝ → ℂ) (t : ℝ) : Prop :=
@@ -80,7 +80,8 @@ pieces.** If `derivWithin γ` is Lipschitz on `[c, t]` and on `[t, d]`, `t` itse
 derivative on each side -- the defining `εR`/`εL`-windows are just these same pieces, `εR := d - t`
 and `εL := t - c`. A caller whose one-sided pieces are wider than it ultimately needs must
 transfer `derivWithin` to the narrower piece first (e.g. via
-`PwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`/`_left`): `LipschitzOnWith.mono`
+`IsPwC1ImmersionOn.exists_lipschitzOnWith_derivWithin_shrink_right`/`_left`):
+`LipschitzOnWith.mono`
 alone does not suffice, since `derivWithin` itself depends on the underlying set. -/
 theorem hasLipschitzDerivOnEachSideAt_of_lipschitzOnWith {γ : ℝ → ℂ} {c t d : ℝ} {KR KL : ℝ≥0}
     (hct : c < t) (htd : t < d)
