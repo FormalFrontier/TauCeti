@@ -29,7 +29,7 @@ directly.  As a consequence dot notation on a tableau resolves in the `Equiv` na
 declarations below are to be spelled out, as in `YoungTableau.rowIndex t`.
 
 A `μ`-tableau is not required to be row- or column-increasing.  The strictly row- and
-column-increasing ones are `TauCeti.StandardYoungTableau`, whose `toEquiv` field is a `μ`-tableau
+column-increasing ones are `TauCeti.StandardYoungTableau`, whose `toTableau` field is a `μ`-tableau
 in the present sense; Mathlib's `SemistandardYoungTableau` is a different notion again, a filling
 of `μ` by natural numbers that is weakly increasing along each row and strictly increasing down
 each column (represented as a function `ℕ → ℕ → ℕ` vanishing outside `μ`), with no bijectivity
