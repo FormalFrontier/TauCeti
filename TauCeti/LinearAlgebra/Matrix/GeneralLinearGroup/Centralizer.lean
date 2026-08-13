@@ -128,28 +128,36 @@ theorem notMem_range_scalar_diagGL {k : Type*} [Semiring k] {t : Fin 2 → kˣ} 
   rintro ⟨-, -, h⟩
   exact ht (Units.ext (by simpa using h))
 
-variable {F : Type*} [Field F] {t : Fin 2 → Fˣ}
+section CommRing
+
+variable {k : Type*} [CommRing k] [NoZeroDivisors k] {t : Fin 2 → kˣ}
 
 /-- **The centralizer of a split regular semisimple element of `GL₂`.** An invertible diagonal
 matrix with *distinct* diagonal entries has, as its centralizer, exactly the split torus
-`TauCeti.diagonalTorus F 2` of all invertible diagonal matrices: the maximal torus containing it.
+`TauCeti.diagonalTorus k 2` of all invertible diagonal matrices: the maximal torus containing it.
 
 Both inclusions come from the diagonal API: a matrix commuting with a diagonal matrix of distinct
 entries is diagonal (`TauCeti.isDiag_of_commute_diagonal`), and conversely the torus is
-commutative, so it centralizes each of its own elements. -/
+commutative, so it centralizes each of its own elements. Only the first of these needs anything of
+the ring, and only that a difference of the two diagonal entries be a non-zero-divisor, so the
+statement holds over any integral domain; a field is needed just for the counting below. -/
 theorem centralizer_diagGL (ht : t 0 ≠ t 1) :
-    Subgroup.centralizer {diagGL t} = diagonalTorus F 2 := by
-  have hne : (t 0 : F) ≠ (t 1 : F) := fun h => ht (Units.ext h)
-  have hinj : Function.Injective fun i => (t i : F) := by
+    Subgroup.centralizer {diagGL t} = diagonalTorus k 2 := by
+  have hne : (t 0 : k) ≠ (t 1 : k) := fun h => ht (Units.ext h)
+  have hinj : Function.Injective fun i => (t i : k) := by
     intro i j hij
     fin_cases i <;> fin_cases j <;> simp_all
   refine le_antisymm (fun h hh => mem_diagonalTorus_iff.mpr ?_) ?_
   · refine isDiag_of_commute_diagonal hinj ?_
     have hcomm := mem_centralizer_singleton_iff_commute_val.mp hh
     rwa [diagGL_coe] at hcomm
-  · exact (Subgroup.le_centralizer (diagonalTorus F 2)).trans
+  · exact (Subgroup.le_centralizer (diagonalTorus k 2)).trans
       (Subgroup.centralizer_le (Set.singleton_subset_iff.mpr
         (mem_diagonalTorus_iff_exists_diagGL.mpr ⟨t, rfl⟩)))
+
+end CommRing
+
+variable {F : Type*} [Field F] {t : Fin 2 → Fˣ}
 
 /-- **The order of the centralizer of a split regular semisimple element**: over a field with `q`
 elements the split torus has `(q - 1)²` elements, one invertible scalar per diagonal entry.  No
@@ -252,9 +260,12 @@ theorem centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (algebraMap 
   · rintro ⟨z, rfl⟩
     exact Commute.units_val_iff.mpr ((Commute.all x z).map (GL2NonSplitTorusHom F E hE))
 
-/-- **The order of the centralizer of an elliptic element**: over a field with `q` elements the
-non-split torus is a copy of `E ∖ {0}`, so it has `q² - 1` elements.  As for
-`TauCeti.GL2NonSplitTorus.natCard_eq`, no finiteness is assumed. -/
+/-- **The order of the centralizer of an element of `GL₂` coming from a quadratic extension**: the
+centralizer is `TauCeti.GL2NonSplitTorus F E hE`, a copy of `Eˣ`, so over a field with `q` elements
+it has `q² - 1` elements.  As for `TauCeti.GL2NonSplitTorus.natCard_eq`, no finiteness is assumed:
+over an infinite `F` both sides are `0`.  When `E/F` is separable — always so over a finite field —
+this is the order of the elliptic maximal torus containing the element; nothing here needs that
+hypothesis. -/
 theorem natCard_centralizer_gl2NonSplitTorusHom (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     Nat.card (Subgroup.centralizer {GL2NonSplitTorusHom F E hE x}) = Nat.card F ^ 2 - 1 := by
   rw [centralizer_gl2NonSplitTorusHom hE hx, natCard_eq]
