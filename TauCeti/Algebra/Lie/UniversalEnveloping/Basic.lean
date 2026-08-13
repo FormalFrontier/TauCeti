@@ -9,6 +9,16 @@ public import Mathlib.Algebra.Lie.UniversalEnveloping
 /-!
 # Basic properties of universal enveloping algebras
 
+This file is the home for elementary facts about the canonical map
+`UniversalEnvelopingAlgebra.ι` that are independent of the functoriality API.
+
+It contains the identity that transports Lie-theoretic hypotheses into associative-ring ones:
+a relation `⁅x, y⁆ = z` in a Lie algebra becomes the commutator relation
+`ι x * ι y - ι y * ι x = ι z` in the enveloping algebra, which is the form the purely
+associative theory takes as its input. That is how the `sl₂` bracket relations are fed to the
+ring-level commutation formulas of `TauCeti.Algebra.Lie.Sl2.Associative`, whose divided-power
+consequences are then available in an enveloping algebra over `ℚ`.
+
 ## Main results
 
 * `TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul`: canonical Lie generators satisfy their
