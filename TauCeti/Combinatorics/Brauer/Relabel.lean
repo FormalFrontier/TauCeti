@@ -5,38 +5,28 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Combinatorics.Brauer.Compose
+public import TauCeti.Combinatorics.Brauer.Boundary
 
 /-!
-# Stacking a Brauer diagram with a permutation diagram
+# Relabelling the boundary of a Brauer diagram
 
-A permutation diagram carries no cap and no cup, so stacking it onto a Brauer diagram creates no
-new strand: it only renames the boundary points that the strands of the other diagram end at.
-This file makes that precise. Renaming the bottom points of a diagram by `σ` and its top points by
-`τ` is `TauCeti.BrauerDiagram.relabel`, the conjugation of the underlying perfect matching by
-`Equiv.Perm.sumCongr σ τ`, and the two main results are
+Renaming the bottom points of a Brauer diagram by a permutation `σ` and its top points by a
+permutation `τ` gives another Brauer diagram, `TauCeti.BrauerDiagram.relabel`: the arc joining `x`
+to `y` becomes the arc joining the renamed `x` to the renamed `y`, so the underlying perfect
+matching is conjugated by the renaming `Equiv.Perm.sumCongr σ τ` of the boundary points.
 
-`(permToBrauer σ) ∘ D = D.relabel 1 σ`  and  `D ∘ (permToBrauer τ) = D.relabel τ⁻¹ 1`,
+Relabelling twice is relabelling by the product,
+`(D.relabel σ τ).relabel σ' τ' = D.relabel (σ' * σ) (τ' * τ)`, so relabelling is an action of
+`Sₖ × Sₖ` on the Brauer diagrams on `k` strands. It moves the arcs of a diagram around but does
+not change their kinds, so it preserves the numbers of caps, of cups and of through strands. The
+number of through strands is the statistic that stratifies the Brauer algebra, so that statistic
+is constant on each `Sₖ × Sₖ` orbit.
 
-writing `∘` for `TauCeti.composeDiagram`. Relabelling composes as
-`(D.relabel σ τ).relabel σ' τ' = D.relabel (σ' * σ) (τ' * τ)`, so stacking permutation diagrams on
-the two sides of a diagram is an action of `Sₖ × Sₖ` on the Brauer diagrams; the identity diagram
-being a two-sided identity for stacking is the trivial case.
-
-The consequence that Layer 9 of the Schur--Weyl roadmap is after is the multiplicativity
-`TauCeti.composeDiagram_permToBrauer`: stacking two permutation diagrams gives the permutation
-diagram of the product, so `σ ↦ permToBrauer σ` turns the group law of `Sₖ` into the
-multiplication of the Brauer algebra on the diagram basis. That is the sense in which the
-symmetric group sits inside the Brauer algebra: once the loop-weighted multiplication of the
-Brauer algebra is available, this is what will make it restrict to the group algebra `ℂ[Sₖ]`
-along `permToBrauer`, since no loop can close up in the middle when one of the two diagrams has
-only through strands. The middle-loop count itself is not built here.
-
-Relabelling moves the arcs of a diagram around but does not change their kinds, so it preserves
-the numbers of caps, of cups and of through strands
-(`TauCeti.BrauerDiagram.bottomCap_relabel` and its companions). The number of through strands is
-the statistic that stratifies the Brauer algebra, so it is constant on each `Sₖ × Sₖ` orbit, and
-by the two stacking identities above it is unchanged by stacking a permutation diagram.
+Relabelling is exactly what stacking a permutation diagram onto a Brauer diagram does, since a
+permutation diagram has neither a cap nor a cup and so extends no strand of the other diagram past
+the middle boundary; that is `TauCeti.composeDiagram_permToBrauer_left` and
+`TauCeti.composeDiagram_permToBrauer_right`, in `TauCeti/Combinatorics/Brauer/Compose.lean`, which
+imports this file.
 
 ## Main definitions
 
@@ -45,16 +35,10 @@ by the two stacking identities above it is unchanged by stacking a permutation d
 
 ## Main results
 
-* `TauCeti.composeDiagram_permToBrauer_left` and
-  `TauCeti.composeDiagram_permToBrauer_right`: stacking a permutation diagram above or below a
-  diagram relabels that diagram's top or bottom boundary.
-* `TauCeti.composeDiagram_permToBrauer`: stacking permutation diagrams multiplies the
-  permutations.
-* `TauCeti.composeDiagram_permToBrauer_one_left` and
-  `TauCeti.composeDiagram_permToBrauer_one_right`: the identity diagram is a two-sided identity
-  for stacking.
 * `TauCeti.BrauerDiagram.relabel_relabel`: relabelling twice is relabelling by the product, so
   `Sₖ × Sₖ` acts on the Brauer diagrams.
+* `TauCeti.BrauerDiagram.relabel_permToBrauer`: relabelling a permutation diagram conjugates the
+  permutation.
 * `TauCeti.BrauerDiagram.bottomCap_relabel`, `TauCeti.BrauerDiagram.topCup_relabel`,
   `TauCeti.BrauerDiagram.bottomThrough_relabel` and `TauCeti.BrauerDiagram.topThrough_relabel`:
   relabelling permutes the capped, cupped and through boundary points, so it preserves their
@@ -118,6 +102,7 @@ theorem relabel_one_one : D.relabel 1 1 = D := by
 /-- **Relabelling twice is relabelling by the product.** With
 `TauCeti.BrauerDiagram.relabel_one_one` this makes relabelling an action of `Sₖ × Sₖ` on the
 Brauer diagrams on `k` strands. -/
+@[simp]
 theorem relabel_relabel (σ' τ' : Equiv.Perm (Fin k)) :
     (D.relabel σ τ).relabel σ' τ' = D.relabel (σ' * σ) (τ' * τ) := by
   rw [relabel_def, relabel_def, relabel_def, PerfectMatching.congr_trans,
@@ -137,49 +122,66 @@ theorem relabel_permToBrauer (ρ : Equiv.Perm (Fin k)) :
 
 /-! ### Relabelling preserves the kinds of the arcs -/
 
+/-- **Relabelling carries a through strand to a through strand**: the renamed point lies on a
+through strand of the relabelled diagram exactly when the point lies on a through strand. -/
+@[simp]
+theorem isThrough_relabel (x : Fin k ⊕ Fin k) :
+    (D.relabel σ τ).IsThrough (Sum.map σ τ x) ↔ D.IsThrough x := by
+  rw [isThrough_def, isThrough_def, relabel_val_map, Sum.isLeft_map, Sum.isLeft_map]
+
+/-- **Relabelling carries a cap to a cap.** -/
+@[simp]
+theorem isCap_relabel (x : Fin k ⊕ Fin k) :
+    (D.relabel σ τ).IsCap (Sum.map σ τ x) ↔ D.IsCap x := by
+  rw [isCap_def, isCap_def, relabel_val_map, Sum.isLeft_map, Sum.isLeft_map]
+
+/-- **Relabelling carries a cup to a cup.** -/
+@[simp]
+theorem isCup_relabel (x : Fin k ⊕ Fin k) :
+    (D.relabel σ τ).IsCup (Sum.map σ τ x) ↔ D.IsCup x := by
+  rw [isCup_def, isCup_def, relabel_val_map, Sum.isRight_map, Sum.isRight_map]
+
 /-- Relabelling carries a through strand starting at the bottom to a through strand. -/
 @[simp]
 theorem isThrough_relabel_inl (i : Fin k) :
-    (D.relabel σ τ).IsThrough (Sum.inl (σ i)) ↔ D.IsThrough (Sum.inl i) := by
-  rw [isThrough_def, isThrough_def, relabel_val_inl, Equiv.symm_apply_apply]
-  cases D.val (Sum.inl i) <;> simp
+    (D.relabel σ τ).IsThrough (Sum.inl (σ i)) ↔ D.IsThrough (Sum.inl i) :=
+  Sum.map_inl σ τ i ▸ isThrough_relabel D σ τ (Sum.inl i)
 
 /-- Relabelling carries a through strand starting at the top to a through strand. -/
 @[simp]
 theorem isThrough_relabel_inr (j : Fin k) :
-    (D.relabel σ τ).IsThrough (Sum.inr (τ j)) ↔ D.IsThrough (Sum.inr j) := by
-  rw [isThrough_def, isThrough_def, relabel_val_inr, Equiv.symm_apply_apply]
-  cases D.val (Sum.inr j) <;> simp
+    (D.relabel σ τ).IsThrough (Sum.inr (τ j)) ↔ D.IsThrough (Sum.inr j) :=
+  Sum.map_inr σ τ j ▸ isThrough_relabel D σ τ (Sum.inr j)
 
-/-- Relabelling carries a cap to a cap. -/
+/-- Relabelling carries a cap to a cap, read off at the bottom boundary. -/
 @[simp]
-theorem isCap_relabel (i : Fin k) :
-    (D.relabel σ τ).IsCap (Sum.inl (σ i)) ↔ D.IsCap (Sum.inl i) := by
-  rw [isCap_inl_iff, isCap_inl_iff, isThrough_relabel_inl]
+theorem isCap_relabel_inl (i : Fin k) :
+    (D.relabel σ τ).IsCap (Sum.inl (σ i)) ↔ D.IsCap (Sum.inl i) :=
+  Sum.map_inl σ τ i ▸ isCap_relabel D σ τ (Sum.inl i)
 
-/-- Relabelling carries a cup to a cup. -/
+/-- Relabelling carries a cup to a cup, read off at the top boundary. -/
 @[simp]
-theorem isCup_relabel (j : Fin k) :
-    (D.relabel σ τ).IsCup (Sum.inr (τ j)) ↔ D.IsCup (Sum.inr j) := by
-  rw [isCup_inr_iff, isCup_inr_iff, isThrough_relabel_inr]
+theorem isCup_relabel_inr (j : Fin k) :
+    (D.relabel σ τ).IsCup (Sum.inr (τ j)) ↔ D.IsCup (Sum.inr j) :=
+  Sum.map_inr σ τ j ▸ isCup_relabel D σ τ (Sum.inr j)
 
 /-- The capped bottom points of a relabelled diagram are the renamed capped bottom points. -/
 theorem bottomCap_relabel : (D.relabel σ τ).bottomCap = D.bottomCap.image σ := by
   ext i
   rw [mem_bottomCap, Finset.mem_image]
   refine ⟨fun hi => ⟨σ.symm i, (mem_bottomCap _).mpr ?_, σ.apply_symm_apply i⟩, ?_⟩
-  · rwa [← isCap_relabel D σ τ (σ.symm i), Equiv.apply_symm_apply]
+  · rwa [← isCap_relabel_inl D σ τ (σ.symm i), Equiv.apply_symm_apply]
   · rintro ⟨i', hi', rfl⟩
-    exact (isCap_relabel D σ τ i').mpr ((mem_bottomCap _).mp hi')
+    exact (isCap_relabel_inl D σ τ i').mpr ((mem_bottomCap _).mp hi')
 
 /-- The cupped top points of a relabelled diagram are the renamed cupped top points. -/
 theorem topCup_relabel : (D.relabel σ τ).topCup = D.topCup.image τ := by
   ext j
   rw [mem_topCup, Finset.mem_image]
   refine ⟨fun hj => ⟨τ.symm j, (mem_topCup _).mpr ?_, τ.apply_symm_apply j⟩, ?_⟩
-  · rwa [← isCup_relabel D σ τ (τ.symm j), Equiv.apply_symm_apply]
+  · rwa [← isCup_relabel_inr D σ τ (τ.symm j), Equiv.apply_symm_apply]
   · rintro ⟨j', hj', rfl⟩
-    exact (isCup_relabel D σ τ j').mpr ((mem_topCup _).mp hj')
+    exact (isCup_relabel_inr D σ τ j').mpr ((mem_topCup _).mp hj')
 
 /-- The bottom endpoints of the through strands of a relabelled diagram are the renamed ones. -/
 theorem bottomThrough_relabel : (D.relabel σ τ).bottomThrough = D.bottomThrough.image σ := by
@@ -221,72 +223,5 @@ theorem card_topThrough_relabel : (D.relabel σ τ).topThrough.card = D.topThrou
   rw [topThrough_relabel, Finset.card_image_of_injective _ τ.injective]
 
 end BrauerDiagram
-
-/-! ### Stacking with a permutation diagram -/
-
-variable {k : ℕ} (D : BrauerDiagram k) (σ τ : Equiv.Perm (Fin k))
-
-open BrauerDiagram in
-/-- **Stacking a permutation diagram on top relabels the top boundary.** No strand of `D` is
-extended past the middle boundary, because the permutation diagram has no cap: a through strand of
-`D` ending at the middle point `a` is continued by the single strand of `permToBrauer σ` above it,
-which leaves at the top point `σ a`. -/
-theorem composeDiagram_permToBrauer_left : composeDiagram (permToBrauer σ) D = D.relabel 1 σ := by
-  refine Subtype.ext (Equiv.ext fun x => ?_)
-  rcases x with i | j
-  · rcases h : D.val (Sum.inl i) with i' | a
-    · rw [composeDiagram_val_inl_eq_inl_of_cap_lower _ D h]
-      simp [h, Equiv.Perm.one_def]
-    · rw [composeDiagram_val_inl_eq_inr_of_through (D₁ := permToBrauer σ) (D₂ := D) (j := σ a) h
-        (permToBrauer_val_inl σ a)]
-      simp [h, Equiv.Perm.one_def]
-  · rcases h : D.val (Sum.inr (σ.symm j)) with i | a
-    · rw [composeDiagram_val_inr_eq_inl_of_through (D₁ := permToBrauer σ) (D₂ := D)
-        (a := σ.symm j) (permToBrauer_val_inr σ j) h]
-      simp [h, Equiv.Perm.one_def]
-    · rw [composeDiagram_val_inr_eq_inr_of_cup_lower (D₁ := permToBrauer σ) (D₂ := D)
-        (a := σ.symm j) (j' := σ a) (permToBrauer_val_inr σ j) h (permToBrauer_val_inl σ a)]
-      simp [h, Equiv.Perm.one_def]
-
-open BrauerDiagram in
-/-- **Stacking a permutation diagram underneath relabels the bottom boundary.** No strand of `D`
-is extended past the middle boundary, because the permutation diagram has no cup: the strand of
-`permToBrauer τ` starting at the bottom point `i` reaches the middle point `τ i`, where the arc of
-`D` takes over. -/
-theorem composeDiagram_permToBrauer_right :
-    composeDiagram D (permToBrauer τ) = D.relabel τ⁻¹ 1 := by
-  refine Subtype.ext (Equiv.ext fun x => ?_)
-  rcases x with i | j
-  · rcases h : D.val (Sum.inl (τ i)) with a' | j'
-    · rw [composeDiagram_val_inl_eq_inl_of_cap_upper (D₁ := D) (D₂ := permToBrauer τ) (a := τ i)
-        (i' := τ.symm a') (permToBrauer_val_inl τ i) h (permToBrauer_val_inr τ a')]
-      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
-    · rw [composeDiagram_val_inl_eq_inr_of_through (D₁ := D) (D₂ := permToBrauer τ) (a := τ i)
-        (permToBrauer_val_inl τ i) h]
-      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
-  · rcases h : D.val (Sum.inr j) with a | j'
-    · rw [composeDiagram_val_inr_eq_inl_of_through (D₁ := D) (D₂ := permToBrauer τ) (a := a)
-        h (permToBrauer_val_inr τ a)]
-      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
-    · rw [composeDiagram_val_inr_eq_inr_of_cup_upper (D₁ := D) (D₂ := permToBrauer τ) h]
-      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
-
-/-- **Stacking permutation diagrams multiplies the permutations.** So the inclusion of the
-symmetric group into the Brauer diagrams turns the group law into vertical stacking; no loop
-closes up in the middle, since a permutation diagram has neither a cap nor a cup. -/
-@[simp]
-theorem composeDiagram_permToBrauer :
-    composeDiagram (permToBrauer σ) (permToBrauer τ) = permToBrauer (σ * τ) := by
-  rw [composeDiagram_permToBrauer_left, BrauerDiagram.relabel_permToBrauer, inv_one, mul_one]
-
-/-- **The identity diagram is a left identity for stacking.** -/
-@[simp]
-theorem composeDiagram_permToBrauer_one_left : composeDiagram (permToBrauer 1) D = D := by
-  rw [composeDiagram_permToBrauer_left, BrauerDiagram.relabel_one_one]
-
-/-- **The identity diagram is a right identity for stacking.** -/
-@[simp]
-theorem composeDiagram_permToBrauer_one_right : composeDiagram D (permToBrauer 1) = D := by
-  rw [composeDiagram_permToBrauer_right, inv_one, BrauerDiagram.relabel_one_one]
 
 end TauCeti
