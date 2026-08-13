@@ -37,7 +37,7 @@ semisimplicity is what guarantees a presentation exists in the first place.
 
 The finer uniqueness — that the degrees `nᵢ` and division rings `Dᵢ` match after a permutation — is
 `TauCeti.wedderburn_blocks_unique` in
-`TauCeti/RingTheory/Semisimple/WedderburnUniqueness.lean`.  It upgrades the counting argument here:
+`TauCeti/RingTheory/Semisimple/Wedderburn/Uniqueness.lean`.  It upgrades the counting argument here:
 the coordinate central idempotents themselves determine the factor permutation, after which
 `TauCeti.wedderburn_data_unique` identifies each corresponding pair of matrix blocks.
 

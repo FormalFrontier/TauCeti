@@ -32,7 +32,7 @@ for every nonzero such `M`, with no hypothesis on `R` beyond what makes `M` semi
 This is the shape in which Artin--Wedderburn uniqueness uses endomorphism rings: over a semisimple
 ring the isotypic components of the regular module are exactly the modules this applies to, so
 `End_R R` is a product of simple rings indexed by them, one factor per Wedderburn block.  See
-`TauCeti/RingTheory/Semisimple/WedderburnBlocks.lean`.
+`TauCeti/RingTheory/Semisimple/Wedderburn/Blocks.lean`.
 
 ## Main results
 

@@ -18,7 +18,7 @@ import TauCeti.RingTheory.Semisimple.BlockCount
 import TauCeti.RingTheory.Semisimple.IsotypicEnd
 
 /-!
-# The blocks of a Wedderburn presentation enumerate the simple modules
+# Wedderburn blocks enumerate the simple modules
 
 Artin--Wedderburn presents a semisimple ring `R` as a finite product of matrix algebras over
 division rings,

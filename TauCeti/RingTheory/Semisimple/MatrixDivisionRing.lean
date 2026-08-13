@@ -72,7 +72,7 @@ results, whose types mention only the multiplication and addition of `Matᵢ(D)`
 stated without it and use `classical` internally.
 
 The matching of the blocks of two product presentations is proved downstream in
-`TauCeti/RingTheory/Semisimple/WedderburnUniqueness.lean`: the coordinate central idempotents
+`TauCeti/RingTheory/Semisimple/Wedderburn/Uniqueness.lean`: the coordinate central idempotents
 recover the factor permutation, and the theorem in this file then identifies the data in each
 factor.
 
