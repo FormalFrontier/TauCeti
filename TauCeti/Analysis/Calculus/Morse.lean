@@ -43,10 +43,11 @@ notion; it belongs with the manifold-level material, where smoothness is standin
 results below are stated for the weak predicate because that is all their proofs use.
 
 The point of the definition is that nondegenerate critical points are *isolated*, so a function
-whose critical points in a set are all nondegenerate has a discrete critical locus there, and only
-finitely many critical points on a compact set. That finiteness is what makes the Morse chain
-complex of a compact manifold finitely generated, so it is the first structural input of Morse
-homology.
+whose critical points in a set are all nondegenerate has a discrete critical locus there. On a
+compact set on which `fderiv ℝ f` is moreover continuous, so that the critical locus is closed,
+that discreteness leaves only finitely many critical points. That finiteness is what makes the
+Morse chain complex of a compact manifold finitely generated, so it is the first structural input
+of Morse homology.
 Because the first-order term of the chain rule drops out at a critical point, the second
 derivative there transforms as a bilinear form (`TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`
 in `TauCeti.Analysis.Calculus.SecondDerivative`), and nondegeneracy is unchanged by a change of
@@ -71,7 +72,7 @@ the notion be read off in any chart.
 * `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero`: a critical locus all
   of whose points are nondegenerate is discrete.
 * `TauCeti.HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero`: such a critical locus is
-  finite on a compact set.
+  finite on a compact set on which `fderiv ℝ f` is continuous.
 * `TauCeti.isNondegenerateCriticalPoint_comp_iff` and `TauCeti.IsNondegenerateCriticalPoint.comp`:
   nondegeneracy is invariant under a change of coordinates with invertible differential.
 * `TauCeti.ContinuousLinearMap.isNondegenerateCriticalPoint_apply_self`: the local model. A
@@ -183,7 +184,7 @@ theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
   obtain ⟨e, he⟩ := h.isInvertible
   have hd : HasFDerivAt (fderiv ℝ f) (e : E →L[ℝ] E →L[ℝ] ℝ) x := by
     rw [he]
-    exact (ContDiffAt.hasStrictFDerivAt_fderiv h.contDiffAt le_rfl).hasFDerivAt
+    exact ContDiffAt.hasFDerivAt_fderiv h.contDiffAt le_rfl
   exact hd.eventually_ne ⟨_, e.antilipschitz⟩
 
 /-- A critical locus all of whose points are nondegenerate is discrete. -/
@@ -196,8 +197,10 @@ theorem HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero {s : Se
   filter_upwards [(hM hys hy0).eventually_fderiv_ne_zero] with z hz
   simpa using fun _ ↦ hz
 
-/-- **A function whose critical points on a compact set are all nondegenerate has only finitely
-many of them there.** This is the finiteness that makes the Morse complex of a compact manifold
+/-- **A function whose critical points on a compact set are all nondegenerate, and whose
+differential is continuous there, has only finitely many critical points there.** Continuity of
+`fderiv ℝ f` on `K` is what makes the critical locus closed, hence compact, and nondegeneracy is
+what makes it discrete. This is the finiteness that makes the Morse complex of a compact manifold
 finitely generated. -/
 theorem HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero {K : Set E} (hK : IsCompact K)
     (hcont : ContinuousOn (fderiv ℝ f) K) (hM : HasNondegenerateCriticalPointsOn f K) :

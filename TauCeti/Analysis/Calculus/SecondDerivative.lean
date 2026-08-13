@@ -5,17 +5,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.ContDiff.Comp
-public import Mathlib.Analysis.Calculus.ContDiff.RCLike
 
 /-!
 # The second derivative as a derivative
 
 The second derivative `fderiv 𝕜 (fderiv 𝕜 g) x` of a map between normed spaces is, by definition,
 the derivative at `x` of the map `fderiv 𝕜 g`. Mathlib supplies the differentiability of
-`fderiv 𝕜 g` at a twice continuously differentiable point through `ContDiffAt.fderiv_right`, and
-upgrades differentiability to strict differentiability, over an `RCLike` field, through
-`ContDiffAt.hasStrictFDerivAt`; this file packages the two into the single statement that
-second-order arguments use, so that the identification is made once rather than at each use.
+`fderiv 𝕜 g` at a twice continuously differentiable point through `ContDiffAt.fderiv_right`; this
+file packages that into the single `HasFDerivAt` statement that second-order arguments use, so
+that the identification is made once rather than at each use.
 
 It also records the second-order chain rule at a point where the differential of the outer
 function vanishes: there the first-order term drops out, so the second derivative of a composition
@@ -25,8 +23,8 @@ critical points as such, so both belong here rather than with the Morse theory t
 
 ## Main results
 
-* `TauCeti.ContDiffAt.hasStrictFDerivAt_fderiv`: at a twice continuously differentiable point,
-  `fderiv 𝕜 g` is strictly differentiable, with derivative the second derivative of `g`.
+* `TauCeti.ContDiffAt.hasFDerivAt_fderiv`: at a twice continuously differentiable point,
+  `fderiv 𝕜 g` is differentiable, with derivative the second derivative of `g`.
 * `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`: where the differential of the outer
   function vanishes, the second derivative of a composition is the pullback of the second
   derivative along the differential of the inner function.
@@ -38,22 +36,15 @@ open Filter Topology
 
 namespace TauCeti
 
-section RCLike
-
-variable {𝕜 E F : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-  [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-
-/-- At a twice continuously differentiable point, `fderiv 𝕜 g` is strictly differentiable, with
-derivative the second derivative of `g`. -/
-theorem ContDiffAt.hasStrictFDerivAt_fderiv {n : WithTop ℕ∞} {g : E → F} {x : E}
-    (h : ContDiffAt 𝕜 n g x) (hn : 2 ≤ n) :
-    HasStrictFDerivAt (fderiv 𝕜 g) (fderiv 𝕜 (fderiv 𝕜 g) x) x :=
-  (h.fderiv_right (m := 1) (by exact_mod_cast hn)).hasStrictFDerivAt one_ne_zero
-
-end RCLike
-
 variable {𝕜 E F G : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   [NormedAddCommGroup F] [NormedSpace 𝕜 F] [NormedAddCommGroup G] [NormedSpace 𝕜 G]
+
+/-- At a twice continuously differentiable point, `fderiv 𝕜 g` is differentiable, with derivative
+the second derivative of `g`. -/
+theorem ContDiffAt.hasFDerivAt_fderiv {n : WithTop ℕ∞} {g : E → F} {x : E}
+    (h : ContDiffAt 𝕜 n g x) (hn : 2 ≤ n) :
+    HasFDerivAt (fderiv 𝕜 g) (fderiv 𝕜 (fderiv 𝕜 g) x) x :=
+  ((h.fderiv_right (m := 1) (by exact_mod_cast hn)).differentiableAt one_ne_zero).hasFDerivAt
 
 /-- **The second derivative at a critical point is a bilinear form pullback.** If the differential
 of `f` vanishes at `φ b`, then the second derivative of `f ∘ φ` at `b` is the second derivative of
@@ -63,9 +54,9 @@ theorem fderiv_fderiv_comp_apply_of_fderiv_eq_zero {f : E → G} {φ : F → E} 
     fderiv 𝕜 (fderiv 𝕜 (f ∘ φ)) b v w =
       fderiv 𝕜 (fderiv 𝕜 f) (φ b) (fderiv 𝕜 φ b v) (fderiv 𝕜 φ b w) := by
   have hf1 : HasFDerivAt (fderiv 𝕜 f) (fderiv 𝕜 (fderiv 𝕜 f) (φ b)) (φ b) :=
-    ((hf.fderiv_right (m := 1) le_rfl).differentiableAt one_ne_zero).hasFDerivAt
+    ContDiffAt.hasFDerivAt_fderiv hf le_rfl
   have hφ1 : HasFDerivAt (fderiv 𝕜 φ) (fderiv 𝕜 (fderiv 𝕜 φ) b) b :=
-    ((hφ.fderiv_right (m := 1) le_rfl).differentiableAt one_ne_zero).hasFDerivAt
+    ContDiffAt.hasFDerivAt_fderiv hφ le_rfl
   have hφ0 : HasFDerivAt φ (fderiv 𝕜 φ b) b := (hφ.differentiableAt (by norm_num)).hasFDerivAt
   have hA : HasFDerivAt (fun y ↦ fderiv 𝕜 f (φ y))
       ((fderiv 𝕜 (fderiv 𝕜 f) (φ b)).comp (fderiv 𝕜 φ b)) b := hf1.comp b hφ0
