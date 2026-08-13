@@ -65,7 +65,12 @@ contraction along the quotient map. -/
 @[simp]
 theorem quotientHomeomorphZeroLocus_apply_coe (I : Ideal R) (y : PrimeSpectrum (R ⧸ I)) :
     (quotientHomeomorphZeroLocus I y : PrimeSpectrum R) = comap (Ideal.Quotient.mk I) y := by
-  rfl
+  -- `Homeomorph.setCongr` has no application lemma, so unfold it here; it preserves the
+  -- underlying point while changing only the proof that the point belongs to the target set.
+  simp only [quotientHomeomorphZeroLocus, Homeomorph.trans_apply, Homeomorph.setCongr]
+  exact Topology.IsEmbedding.toHomeomorph_apply_coe
+    (isEmbedding_comap_of_surjective
+      (R ⧸ I) (Ideal.Quotient.mk I) Ideal.Quotient.mk_surjective) y
 
 variable [LocallyConnectedSpace (PrimeSpectrum R)]
 
@@ -196,6 +201,8 @@ theorem primeSpectrumQuotientHomeomorphConnectedComponent_apply_coe
     (x : PrimeSpectrum R) (y : PrimeSpectrum (R ⧸ connectedComponentIdeal x)) :
     (primeSpectrumQuotientHomeomorphConnectedComponent x y : PrimeSpectrum R) =
       comap (Ideal.Quotient.mk (connectedComponentIdeal x)) y := by
-  rfl
+  rw [primeSpectrumQuotientHomeomorphConnectedComponent, Homeomorph.trans_apply]
+  change (quotientHomeomorphZeroLocus (connectedComponentIdeal x) y : PrimeSpectrum R) = _
+  exact quotientHomeomorphZeroLocus_apply_coe _ y
 
 end PrimeSpectrum
