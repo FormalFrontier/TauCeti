@@ -123,6 +123,8 @@ theorem charFun_fintype_sum_mul_conj_nonneg {ι : Type*} [Fintype ι] (c : ι �
 matrix reformulation of the positive-definiteness of `charFun μ`. -/
 theorem charFun_posSemidef {ι : Type*} (t : ι → E) :
     Matrix.PosSemidef fun i j => charFun μ (t i - t j) := by
+  -- Lean does not unfold the semireducible function-to-matrix identification while elaborating
+  -- the `PosSemidef` structure fields, so expose Mathlib's `Matrix.of` representation here.
   change (Matrix.of fun i j => charFun μ (t i - t j)).PosSemidef
   refine ⟨?_, fun x => ?_⟩
   · -- Hermitian: `conj (charFun μ (tⱼ - tᵢ)) = charFun μ (tᵢ - tⱼ)`

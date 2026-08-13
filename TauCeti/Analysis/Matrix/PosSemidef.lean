@@ -235,6 +235,8 @@ theorem posSemidef_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
     {K : ι → α → α → 𝕜} {L : α → α → 𝕜} (hK : ∀ᶠ i in l, Matrix.PosSemidef (K i))
     (hlim : ∀ a b : α, Tendsto (fun i => K i a b) l (𝓝 (L a b))) :
     Matrix.PosSemidef L := by
+  -- Lean does not unfold the semireducible function-to-matrix identification while elaborating
+  -- the `PosSemidef` structure fields, so expose Mathlib's `Matrix.of` representation here.
   change (Matrix.of L).PosSemidef
   refine ⟨?_, ?_⟩
   · ext a b

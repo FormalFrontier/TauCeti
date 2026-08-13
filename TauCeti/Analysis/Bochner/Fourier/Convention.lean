@@ -129,6 +129,8 @@ theorem posSemidef_fourierConventionCharFun_sub :
     rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
     congr 1
     simp [smul_sub]
+  -- The statement uses function syntax, while rewriting by `heq` requires the syntactic
+  -- `Matrix.of` target; exposing it here avoids a second definitional-equality transport.
   change (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν).PosSemidef
   exact heq ▸ hscaled
 
