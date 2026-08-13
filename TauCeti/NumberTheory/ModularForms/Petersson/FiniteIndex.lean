@@ -164,8 +164,8 @@ theorem exists_slash_eq_smul_of_mem_withCenter {γ : SL(2, ℤ)} (hγ : γ ∈ �
   rcases hcase with rfl | rfl
   · exact ⟨1, by simp, fun f ↦ by rw [SlashInvariantFormClass.SL_slash_eq f _ hγ', one_smul]⟩
   · refine ⟨(-1 : ℂ) ^ k, ?_, fun f ↦ ?_⟩
-    · rw [show conj ((-1 : ℂ) ^ k) = (-1 : ℂ) ^ k by simp,
-        ← zpow_add₀ (by norm_num : (-1 : ℂ) ≠ 0), ← two_mul, zpow_mul]
+    · have hreal : conj ((-1 : ℂ) ^ k) = (-1 : ℂ) ^ k := by simp
+      rw [hreal, ← zpow_add₀ (by norm_num : (-1 : ℂ) ≠ 0), ← two_mul, zpow_mul]
       norm_num
     · -- the `SL(2, ℤ)` slash action goes through `mapGL ℝ`, which sends `-I` to `-I`
       have hcoe : ((-1 : SL(2, ℤ)) : GL (Fin 2) ℝ) = -1 := mapGL_neg_one

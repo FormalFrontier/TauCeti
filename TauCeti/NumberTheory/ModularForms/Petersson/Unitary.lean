@@ -71,11 +71,13 @@ private def cosetRightMul {α : SL(2, ℤ)}
   toFun := Quotient.map' (· * α⁻¹) fun a b hab ↦ by
     rw [QuotientGroup.leftRel_apply] at hab ⊢
     have h := (Subgroup.mem_normalizer_iff.mp hα (a⁻¹ * b)).mp hab
-    simpa only [show (a * α⁻¹)⁻¹ * (b * α⁻¹) = α * (a⁻¹ * b) * α⁻¹ by group] using h
+    have hconj : (a * α⁻¹)⁻¹ * (b * α⁻¹) = α * (a⁻¹ * b) * α⁻¹ := by group
+    simpa only [hconj] using h
   invFun := Quotient.map' (· * α) fun a b hab ↦ by
     rw [QuotientGroup.leftRel_apply] at hab ⊢
     have h := (Subgroup.mem_normalizer_iff''.mp hα (a⁻¹ * b)).mp hab
-    simpa only [show (a * α)⁻¹ * (b * α) = α⁻¹ * (a⁻¹ * b) * α by group] using h
+    have hconj : (a * α)⁻¹ * (b * α) = α⁻¹ * (a⁻¹ * b) * α := by group
+    simpa only [hconj] using h
   left_inv q := by
     induction q using QuotientGroup.induction_on
     simp only [Quotient.map'_mk'', inv_mul_cancel_right]
@@ -95,7 +97,7 @@ omit [Γ.FiniteIndex] in
 /-- Slashing by an element of `Γ·{±I}` is invisible to the level-one-domain pairing, even after
 a further slash: the two forms pick up the same unimodular constant, and the pairing is
 conjugate-linear in one argument and linear in the other. -/
-theorem peterssonInner_slash_slash_of_mem_withCenter (f g : CuspForm (Γ.map (mapGL ℝ)) k)
+private theorem peterssonInner_slash_slash_of_mem_withCenter (f g : CuspForm (Γ.map (mapGL ℝ)) k)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Γ.withCenter) (β : SL(2, ℤ)) :
     UpperHalfPlane.peterssonInner k fd ((⇑f ∣[k] γ) ∣[k] β) ((⇑g ∣[k] γ) ∣[k] β) =
       UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] β) (⇑g ∣[k] β) := by
@@ -107,7 +109,7 @@ omit [Γ.FiniteIndex] in
 /-- **The summand of the Petersson product is a function of the coset.** Replacing the chosen
 representative `q.out` of a coset by any other element of it does not change the level-one-domain
 pairing of the correspondingly slashed forms. -/
-theorem peterssonInner_slash_inv_out (f g : CuspForm (Γ.map (mapGL ℝ)) k) (δ : SL(2, ℤ)) :
+private theorem peterssonInner_slash_inv_out (f g : CuspForm (Γ.map (mapGL ℝ)) k) (δ : SL(2, ℤ)) :
     UpperHalfPlane.peterssonInner k fd
         (⇑f ∣[k] ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹)
         (⇑g ∣[k] ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹) =
@@ -115,9 +117,9 @@ theorem peterssonInner_slash_inv_out (f g : CuspForm (Γ.map (mapGL ℝ)) k) (δ
   have hmem : ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹ * δ ∈ Γ.withCenter :=
     QuotientGroup.eq.mp (Quotient.out_eq _)
   have h := peterssonInner_slash_slash_of_mem_withCenter f g hmem δ⁻¹
-  rwa [← SlashAction.slash_mul, ← SlashAction.slash_mul,
-    show ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹ * δ * δ⁻¹ =
-      ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹ by group] at h
+  have hcancel : ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹ * δ * δ⁻¹ =
+      ((QuotientGroup.mk δ : SL(2, ℤ) ⧸ Γ.withCenter).out)⁻¹ := by group
+  rwa [← SlashAction.slash_mul, ← SlashAction.slash_mul, hcancel] at h
 
 /-- **The Petersson product is unitary under a normalising slash.** If `α ∈ SL₂(ℤ)` normalises
 `Γ` and the slashes `f ∣[k] α`, `g ∣[k] α` are again cusp forms `F`, `G` for `Γ`, then
@@ -137,9 +139,9 @@ theorem peterssonInnerCosets_slash {α : SL(2, ℤ)}
       UpperHalfPlane.peterssonInner k fd (⇑F ∣[k] (q.out)⁻¹) (⇑G ∣[k] (q.out)⁻¹) =
         UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] ((cosetRightMul hαW q).out)⁻¹)
           (⇑g ∣[k] ((cosetRightMul hαW q).out)⁻¹) := fun q ↦ by
+    have hinv : (q.out * α⁻¹)⁻¹ = α * (q.out)⁻¹ := by group
     rw [cosetRightMul_apply hαW q, peterssonInner_slash_inv_out f g (q.out * α⁻¹), hF, hG,
-      ← SlashAction.slash_mul, ← SlashAction.slash_mul,
-      show (q.out * α⁻¹)⁻¹ = α * (q.out)⁻¹ by group]
+      ← SlashAction.slash_mul, ← SlashAction.slash_mul, hinv]
   rw [peterssonInnerCosets_def, peterssonInnerCosets_def, Finset.sum_congr rfl fun q _ ↦ hsummand q]
   exact Fintype.sum_equiv (cosetRightMul hαW) _ _ fun _ ↦ rfl
 
@@ -205,8 +207,9 @@ theorem peterssonInnerCosets_eq_zero_of_ne {k : ℤ} {χ ψ : (ZMod N)ˣ →* �
     rw [diamondOpCusp_apply_of_mem_cuspFormCharSpace k χ d hf,
       diamondOpCusp_apply_of_mem_cuspFormCharSpace k ψ d hg,
       peterssonInnerCosets_smul_left, peterssonInnerCosets_smul_right, ← mul_assoc]
-  rcases mul_eq_zero.mp (show (1 - conj (χ d : ℂ) * (ψ d : ℂ)) * peterssonInnerCosets f g = 0 by
-    rw [sub_mul, one_mul, ← key, sub_self]) with h | h
+  have hfactor : (1 - conj (χ d : ℂ) * (ψ d : ℂ)) * peterssonInnerCosets f g = 0 := by
+    rw [sub_mul, one_mul, ← key, sub_self]
+  rcases mul_eq_zero.mp hfactor with h | h
   · exact absurd (sub_eq_zero.mp h).symm hscal
   · exact h
 

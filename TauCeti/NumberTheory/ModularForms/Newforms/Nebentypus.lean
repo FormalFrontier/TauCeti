@@ -79,12 +79,6 @@ theorem diamondOpCusp_mem_cuspFormsNew (u : (ZMod N)ˣ)
   exact CuspForm.diamondOpCusp_mem_peterssonOrthogonal
     (fun _ _ hg ↦ diamondOpCusp_mem_cuspFormsOld _ hg) u hf
 
-/-- The new subspace is diamond-stable, in the `Submodule.map` form. -/
-theorem cuspFormsNew_map_diamondOpCusp_le (u : (ZMod N)ˣ) (k : ℤ) :
-    (cuspFormsNew N k).map (diamondOpCusp k u) ≤ cuspFormsNew N k := by
-  rw [Submodule.map_le_iff_le_comap]
-  exact fun _ hf ↦ diamondOpCusp_mem_cuspFormsNew u hf
-
 /-! ### The nebentypus components of the old and new subspaces -/
 
 /-- **The old subspace is the sum of its nebentypus components.** -/
