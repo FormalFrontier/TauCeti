@@ -476,7 +476,7 @@ theorem restrictToIdeal_ne_zero_of_isAdmissible (v : Valuation A Γ₀) (I : Ide
   have hI : ∀ a ∈ I, R a = 0 := by
     have h : I ≤ Valuation.supp R := by
       refine hadm.trans ?_
-      rw [← (Valuation.instIsPrimeSuppOfNontrivialOfNoZeroDivisors R).radical]
+      rw [← (inferInstance : Ideal.IsPrime (Valuation.supp R)).radical]
       exact Ideal.radical_mono (Ideal.span_le.mpr hsupp)
     exact fun a ha ↦ (Valuation.mem_supp_iff R a).mp (h ha)
   by_cases hne : ∃ a ∈ I, (ofClass v) a ≠ 0
