@@ -18,7 +18,7 @@ Let `x` be an `IsSl2System`, so that its root vectors satisfy
 ⁅x α, x β⁆ = N(α, β) x(α + β).
 ```
 
-This file proves two symmetries of these constants. First, an automorphism exchanging each of the
+This file proves two symmetries of these constants. First, a Lie endomorphism exchanging each of the
 three root vectors with the negative of its opposite sends `N(α, β)` to `-N(-α, -β)`. This is the
 abstract form of the symmetry supplied by the Chevalley involution. Second, invariance of the
 Killing form gives the cyclic relation
@@ -36,7 +36,7 @@ existence of the coherent rescaling is not asserted here.
 
 ## Main results
 
-* `TauCeti.IsSl2System.structureConstant_neg_neg_of_equiv`: compatibility with an automorphism
+* `TauCeti.IsSl2System.structureConstant_neg_neg_of_hom`: compatibility with a Lie endomorphism
   exchanging root vectors with the negatives of their opposites.
 * `TauCeti.IsSl2System.killingForm_root_neg_ne_zero`: opposite normalized root vectors have
   nonzero Killing pairing.
@@ -68,13 +68,13 @@ variable {x : Weight K H L → L} (hx : IsSl2System x)
 
 include hx
 
-/-- If a Lie automorphism sends the root vectors at `α`, `β`, and `γ = α + β` to the negatives of
+/-- If a Lie endomorphism sends the root vectors at `α`, `β`, and `γ = α + β` to the negatives of
 their opposite root vectors, then it sends the corresponding structure constant to the negative
 of the structure constant at `-α`, `-β`, and `-γ`.
 
 Only the three values used in the equation are hypotheses. A later Chevalley involution supplies
 them uniformly for every root. -/
-theorem structureConstant_neg_neg_of_equiv (e : L ≃ₗ⁅K⁆ L)
+theorem structureConstant_neg_neg_of_hom (e : L →ₗ⁅K⁆ L)
     (heα : e (x α) = -x (-α)) (heβ : e (x β) = -x (-β))
     (heγ : e (x γ) = -x (-γ)) :
     hx.structureConstant (-α) (-β) (-γ) hγ.neg (by
