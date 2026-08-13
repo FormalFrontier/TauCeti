@@ -68,18 +68,6 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 abbrev filtrationAssociatedGraded (Q : QuadraticForm R M) : Type max u v :=
   ⨁ k : ℕ, FiltrationGradedPiece Q k
 
-private theorem filtration_eq_wordFiltration (Q : QuadraticForm R M) (k : ℕ) :
-    filtration Q k = TauCeti.Algebra.wordFiltration (ι Q) k := by
-  rw [filtration_eq_pow, TauCeti.Algebra.wordFiltration_eq_pow]
-
-private theorem filtrationPrevious_eq_wordFiltrationPrevious (Q : QuadraticForm R M) (k : ℕ) :
-    filtrationPrevious Q k = TauCeti.Algebra.wordFiltrationPrevious (ι Q) k := by
-  cases k with
-  | zero => rw [filtrationPrevious_zero, TauCeti.Algebra.wordFiltrationPrevious_zero]
-  | succ k =>
-      rw [filtrationPrevious_succ, TauCeti.Algebra.wordFiltrationPrevious_succ,
-        filtration_eq_wordFiltration]
-
 private noncomputable def filtrationMul (Q : QuadraticForm R M) (i j : ℕ) :
     filtration Q i →ₗ[R] filtration Q j →ₗ[R] filtration Q (i + j) :=
   TensorProduct.curry
@@ -110,11 +98,7 @@ private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j
   rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
-  rw [filtrationPrevious_eq_wordFiltrationPrevious Q i] at hprevious
-  rw [filtrationPrevious_eq_wordFiltrationPrevious Q (i + j)]
-  apply TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left (ι Q) hprevious
-  rw [← filtration_eq_wordFiltration Q j]
-  exact y.property
+  exact mul_mem_filtrationPrevious_left Q hprevious y.property
 
 private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i j : ℕ) :
     filtrationPreviousRestricted Q j ≤
@@ -128,11 +112,7 @@ private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i 
   rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
-  rw [filtrationPrevious_eq_wordFiltrationPrevious Q j] at hprevious
-  rw [filtrationPrevious_eq_wordFiltrationPrevious Q (i + j)]
-  apply TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right (ι Q) _ hprevious
-  rw [← filtration_eq_wordFiltration Q i]
-  exact x.property
+  exact mul_mem_filtrationPrevious_right Q x.property hprevious
 
 /-- Multiplication of two homogeneous pieces of the Clifford associated graded algebra. -/
 noncomputable def filtrationGradedMul (Q : QuadraticForm R M) (i j : ℕ) :

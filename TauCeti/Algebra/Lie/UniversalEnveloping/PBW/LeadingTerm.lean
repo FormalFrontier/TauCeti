@@ -61,9 +61,9 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 local notation "ι" => _root_.UniversalEnvelopingAlgebra.ι R
 
-/-- Exchanging two adjacent generators lowers the PBW filtration degree of the resulting
+/-- Exchanging the two leading generators of a word lowers the PBW filtration degree of the
 difference by one. -/
-theorem prod_map_ι_sub_swap_mem_pbwFiltrationPrevious (x y : L) (l : List L) :
+private theorem prod_map_ι_sub_swap_mem_pbwFiltrationPrevious (x y : L) (l : List L) :
     ((x :: y :: l).map ⇑ι).prod - ((y :: x :: l).map ⇑ι).prod ∈
       pbwFiltrationPrevious R L (x :: y :: l).length := by
   simp only [List.length_cons, pbwFiltrationPrevious_succ, List.map_cons, List.prod_cons]
@@ -109,6 +109,13 @@ theorem pbwMonomial_cons (e : ιIndex → L) (i : ιIndex) (word : List ιIndex)
     pbwMonomial R L e (i :: word) = ι (e i) * pbwMonomial R L e word := by
   simp [pbwMonomial]
 
+/-- A PBW monomial is the product of the corresponding canonical Lie generators. -/
+theorem pbwMonomial_def (e : ιIndex → L) (word : List ιIndex) :
+    pbwMonomial R L e word = ((word.map e).map ⇑ι).prod := by
+  induction word with
+  | nil => exact pbwMonomial_nil R L e
+  | cons i word ih => simp only [pbwMonomial_cons, List.map_cons, List.prod_cons, ih]
+
 @[simp]
 theorem pbwMonomial_append (e : ιIndex → L) (word₁ word₂ : List ιIndex) :
     pbwMonomial R L e (word₁ ++ word₂) =
@@ -118,7 +125,7 @@ theorem pbwMonomial_append (e : ιIndex → L) (word₁ word₂ : List ιIndex) 
 /-- A PBW monomial belongs to the filtration step given by the length of its word. -/
 theorem pbwMonomial_mem_pbwFiltration (e : ιIndex → L) (word : List ιIndex) :
     pbwMonomial R L e word ∈ pbwFiltration R L word.length := by
-  rw [pbwMonomial]
+  rw [pbwMonomial_def]
   simpa only [List.length_map] using
     prod_map_ι_mem_pbwFiltration R L (l := word.map e) (by simp)
 
@@ -127,17 +134,17 @@ theorem pbwMonomial_sub_pbwMonomial_mem_pbwFiltrationPrevious_of_perm
     (e : ιIndex → L) {word₁ word₂ : List ιIndex} (h : word₁.Perm word₂) :
     pbwMonomial R L e word₁ - pbwMonomial R L e word₂ ∈
       pbwFiltrationPrevious R L word₁.length := by
-  rw [pbwMonomial, pbwMonomial]
+  rw [pbwMonomial_def, pbwMonomial_def]
   simpa only [List.length_map] using
     prod_map_ι_sub_prod_map_ι_mem_pbwFiltrationPrevious_of_perm R L (h.map e)
 
-/-- Sorting the indices of a PBW monomial preserves its leading term. This is the form used to
-span the associated graded by ordered monomials. -/
-theorem pbwMonomial_sub_insertionSort_mem_pbwFiltrationPrevious [LinearOrder ιIndex]
-    (e : ιIndex → L) (word : List ιIndex) :
-    pbwMonomial R L e word - pbwMonomial R L e (word.insertionSort (· ≤ ·)) ∈
+/-- Sorting the indices of a PBW monomial by a decidable relation preserves its leading term. This
+is the form used to span the associated graded by ordered monomials. -/
+theorem pbwMonomial_sub_insertionSort_mem_pbwFiltrationPrevious
+    (r : ιIndex → ιIndex → Prop) [DecidableRel r] (e : ιIndex → L) (word : List ιIndex) :
+    pbwMonomial R L e word - pbwMonomial R L e (word.insertionSort r) ∈
       pbwFiltrationPrevious R L word.length :=
   pbwMonomial_sub_pbwMonomial_mem_pbwFiltrationPrevious_of_perm R L e
-    (List.perm_insertionSort (· ≤ ·) word).symm
+    (List.perm_insertionSort r word).symm
 
 end TauCeti.UniversalEnvelopingAlgebra
