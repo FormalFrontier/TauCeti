@@ -121,12 +121,7 @@ theorem antipode_ringChoose_mem_kostantForm (j : κ) (n : ℕ) :
   rw [antipode_ringChoose, antipode_ι]
   exact Ring.choose_neg_mem fun k _ => ringChoose_mem_kostantForm e h j k
 
-/-- **The Kostant integral form is stable under the antipode.**
-
-The generators are handled by `antipode_dividedPower_mem_kostantForm` and
-`antipode_ringChoose_mem_kostantForm`, and the universal property `kostantForm_le_iff` then
-propagates them to the whole form, against the subring `antipodeComap` of elements the antipode
-sends into it. -/
+/-- **The Kostant integral form is stable under the antipode.** -/
 theorem antipode_mem_kostantForm {a : _root_.UniversalEnvelopingAlgebra ℚ L}
     (ha : a ∈ kostantForm e h) : antipode ℚ a ∈ kostantForm e h :=
   (mem_antipodeComap ℚ).mp <|
@@ -143,8 +138,7 @@ theorem antipode_mem_kostantForm_iff {a : _root_.UniversalEnvelopingAlgebra ℚ 
   simpa using antipode_mem_kostantForm e h ha
 
 /-- The antipode maps the Kostant integral form *onto* itself: the image of the form under the
-opposite-valued antipode is the opposite subring, not merely contained in it. Involutivity of the
-antipode supplies the missing inclusion. -/
+opposite-valued antipode is the opposite subring, not merely contained in it. -/
 theorem map_antipodeEquiv_kostantForm :
     (kostantForm e h).map ((antipodeEquiv (L := L) ℚ).toRingEquiv.toRingHom) =
       Subring.op (kostantForm e h) := by
@@ -193,6 +187,16 @@ theorem coe_unop_kostantFormAntipode_apply (a : kostantForm e h) :
   simp only [RingEquiv.trans_apply, RingEquiv.apply_symm_apply,
     RingEquiv.coe_subringCongr_apply]
   rw [hsub, antipodeEquiv_apply, antipode_apply, MulOpposite.op_unop]
+
+/-- The inverse of the restricted antipode acts by the antipode on underlying elements. -/
+@[simp]
+theorem coe_unop_kostantFormAntipode_symm_apply (b : (kostantForm e h)ᵐᵒᵖ) :
+    (((kostantFormAntipode e h).symm b : kostantForm e h) :
+        _root_.UniversalEnvelopingAlgebra ℚ L) =
+      antipode ℚ (b.unop : _root_.UniversalEnvelopingAlgebra ℚ L) := by
+  have happ := congrArg (antipode ℚ)
+    (coe_unop_kostantFormAntipode_apply e h ((kostantFormAntipode e h).symm b))
+  simpa only [RingEquiv.apply_symm_apply, antipode_antipode] using happ.symm
 
 end KostantForm
 
