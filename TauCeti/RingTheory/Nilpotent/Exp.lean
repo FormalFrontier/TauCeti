@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import Mathlib.RingTheory.Nilpotent.Exp
-public import Mathlib.Algebra.Lie.OfAssociative
+public import Mathlib.Algebra.Lie.AdjointAction.Basic
 
 /-!
 # The integral exponential of a nilpotent element
@@ -157,18 +157,6 @@ theorem exp_zsmul_conj_mem {x : A} (hx : IsNilpotent x) {S : Subring A}
 
 /-! ## Conjugation and the adjoint action -/
 
-/-- Left multiplication by a nilpotent element is a nilpotent endomorphism. -/
-theorem isNilpotent_mulLeft {a : A} (ha : IsNilpotent a) :
-    IsNilpotent (LinearMap.mulLeft ℚ a) := by
-  obtain ⟨k, hk⟩ := ha
-  exact ⟨k, by simp [LinearMap.pow_mulLeft, hk]⟩
-
-/-- Right multiplication by a nilpotent element is a nilpotent endomorphism. -/
-theorem isNilpotent_mulRight {a : A} (ha : IsNilpotent a) :
-    IsNilpotent (LinearMap.mulRight ℚ a) := by
-  obtain ⟨k, hk⟩ := ha
-  exact ⟨k, by simp [LinearMap.pow_mulRight, hk]⟩
-
 /-- The exponential of left multiplication by a nilpotent element is left multiplication by its
 exponential. -/
 theorem exp_mulLeft {a : A} (ha : IsNilpotent a) :
@@ -193,7 +181,8 @@ theorem exp_mulRight {a : A} (ha : IsNilpotent a) :
 theorem isNilpotent_mulLeft_sub_mulRight {a : A} (ha : IsNilpotent a) :
     IsNilpotent (LinearMap.mulLeft ℚ a - LinearMap.mulRight ℚ a) :=
   (LinearMap.commute_mulLeft_right (R := ℚ) a a).isNilpotent_sub
-    (isNilpotent_mulLeft ha) (isNilpotent_mulRight ha)
+    ((LinearMap.isNilpotent_mulLeft_iff ℚ a).mpr ha)
+    ((LinearMap.isNilpotent_mulRight_iff ℚ a).mpr ha)
 
 /-- **Conjugation is the exponential of the commutator endomorphism.** For a nilpotent `a`, the
 exponential of `b ↦ a * b - b * a` is conjugation by the unit `exp a`.
@@ -208,7 +197,8 @@ theorem exp_mulLeft_sub_mulRight_apply {a : A} (ha : IsNilpotent a) (b : A) :
   have hcomm : Commute (LinearMap.mulLeft ℚ a) (LinearMap.mulRight ℚ (-a)) :=
     LinearMap.commute_mulLeft_right (R := ℚ) a (-a)
   rw [sub_eq_add_neg, ← hneg,
-    exp_add_of_commute hcomm (isNilpotent_mulLeft ha) (isNilpotent_mulRight ha.neg),
+    exp_add_of_commute hcomm ((LinearMap.isNilpotent_mulLeft_iff ℚ a).mpr ha)
+      ((LinearMap.isNilpotent_mulRight_iff ℚ (-a)).mpr ha.neg),
     exp_mulLeft ha, exp_mulRight ha.neg]
   simp [mul_assoc]
 
@@ -217,11 +207,6 @@ multiplication. -/
 theorem ad_eq_mulLeft_sub_mulRight (a : A) :
     LieAlgebra.ad ℚ A a = LinearMap.mulLeft ℚ a - LinearMap.mulRight ℚ a :=
   congrFun (LieAlgebra.ad_eq_lmul_left_sub_lmul_right (R := ℚ) A) a
-
-/-- The inner derivation attached to a nilpotent element is nilpotent. -/
-theorem isNilpotent_ad {a : A} (ha : IsNilpotent a) : IsNilpotent (LieAlgebra.ad ℚ A a) := by
-  rw [ad_eq_mulLeft_sub_mulRight]
-  exact isNilpotent_mulLeft_sub_mulRight ha
 
 /-- **Conjugation is the exponential of the adjoint action.** For a nilpotent `a`, the automorphism
 `exp (ad a)` of the Lie algebra underlying `A` is conjugation by the unit `exp a`. -/
