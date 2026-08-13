@@ -39,11 +39,10 @@ change.
 * `TauCeti.SpecialLinear.rootSubgroupCoordinateMap`: the coordinate morphism
   `O(SLₙ) → O(𝔾ₐ)`.
 * `TauCeti.SpecialLinear.rootSubgroup`: the affine group-scheme morphism `𝔾ₐ → SLₙ`.
-* `TauCeti.SpecialLinear.groupSchemeιGeneralLinear`: the determinant-kernel inclusion with the
-  target presented as Tau Ceti's named general-linear group scheme.
-
 ## Main results
 
+* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup`: the root subgroup is the elementary
+  transvection on scheme-valued points.
 * `TauCeti.SpecialLinear.coordinateMap_comp_rootSubgroupCoordinateMap`: the coordinate-level
   factorization of the general-linear root subgroup.
 * `TauCeti.SpecialLinear.rootSubgroup_comp_groupSchemeιGeneralLinear`: the corresponding
@@ -123,13 +122,11 @@ private theorem map_transvection (φ : A →ₐ[R] B) (hij : i ≠ j) (c : A) :
     Matrix.SpecialLinearGroup.map φ.toRingHom
         (Matrix.SpecialLinearGroup.transvection hij c) =
       Matrix.SpecialLinearGroup.transvection hij (φ c) := by
-  apply Matrix.SpecialLinearGroup.toGL_injective
-  apply Matrix.GeneralLinearGroup.ext
+  apply Matrix.SpecialLinearGroup.ext
   intro k l
-  change φ ((Matrix.transvection i j c) k l) =
-    (Matrix.transvection i j (φ c)) k l
-  simp only [Matrix.transvection, Matrix.add_apply, Matrix.one_apply, Matrix.single_apply,
-    map_add]
+  simp only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+    Matrix.SpecialLinearGroup.transvection_coe, Matrix.add_apply,
+    Matrix.one_apply, Matrix.single_apply, map_add]
   split_ifs <;> simp_all
 
 /-- The special-linear root subgroup on points is natural in the value algebra. -/
@@ -139,6 +136,9 @@ theorem mapValue_rootSubgroupPoints (φ : A →ₐ[R] B) (hij : i ≠ j)
       rootSubgroupPoints hij
         (AlgHom.mapValue (H := AdditiveGroup.coordinateHopfAlgebra R) φ f) := by
   apply (pointsMulEquiv (R := R) (A := B) N).injective
+  -- `AlgHom.mapValue` and `HopfAlgebra.mapPoints` expose the same postcomposition map, but there
+  -- is no comparison lemma between the bundled applications; restate it in the form used by the
+  -- public naturality theorem `pointsMulEquiv_mapValue`.
   change (pointsMulEquiv (R := R) (A := B) N)
       (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R N)
         (CommAlgCat.ofHom φ) (rootSubgroupPoints hij f)) = _
@@ -217,6 +217,9 @@ theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i ≠ j) :
   apply (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R)).map_injective
   rw [op_comp, Functor.map_comp, CommHopfAlgCat.pointsFunctor_map,
     CommHopfAlgCat.pointsFunctor_map, CommHopfAlgCat.pointsFunctor_map]
+  -- Mapping an opposite composite through `pointsFunctor` leaves the same natural
+  -- transformation behind several category and opposite wrappers. There is no API lemma exposing
+  -- that elaborated type, so restate it using the public `mapPointsFunctor` name before rewriting.
   change CommHopfAlgCat.mapPointsFunctor
       (rootSubgroupCoordinateMap (R := R) (N := N) hij) ≫
         CommHopfAlgCat.mapPointsFunctor (coordinateMap R N) =
@@ -227,9 +230,14 @@ theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i ≠ j) :
   ext A f
   rw [NatTrans.comp_app, rootSubgroupPointsMap_app,
     GeneralLinear.rootSubgroupPointsMap_app]
+  -- Components of the rewritten natural transformations are still displayed through bundled
+  -- categorical coercions; expose their pointwise maps to use the point-equivalence API.
   change (CommHopfAlgCat.mapPointsFunctor (coordinateMap R N)).app A
       (rootSubgroupPoints hij f) = GeneralLinear.rootSubgroupPoints hij f
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) N).injective
+  -- `coordinateMap` is the quotient map by definition, but the point-map and quotient-point APIs
+  -- have no comparison theorem whose left side matches this bundled component. Name the quotient
+  -- point explicitly so `pointsMulEquiv_toGL` applies.
   change GeneralLinear.pointsMulEquiv (R := R) (A := A) N
       (CommHopfAlgCat.quotientPointsHom
         (GeneralLinear.coordinateHopfAlgebra R N) (definingHopfIdeal R N) A
@@ -253,18 +261,97 @@ noncomputable def rootSubgroup (hij : i ≠ j) :
     (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
       (rootSubgroupCoordinateMap hij).op
 
-/-- The determinant-kernel inclusion, with its target transported to Tau Ceti's named
-general-linear group scheme. -/
-noncomputable def groupSchemeιGeneralLinear :
-    groupScheme R N ⟶ GeneralLinear.groupScheme R N :=
-  groupSchemeι R N ≫ eqToHom (GeneralLinear.groupScheme_def R N).symm
+section SchemePoints
+
+variable (A : Type u) [CommRing A] [Algebra R A]
+
+private lemma eqToHom_hom_hom_left {G G' : Grp (Over (Spec (CommRingCat.of R)))} (h : G = G') :
+    (eqToHom h).hom.hom.left =
+      eqToHom (congrArg (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left) h) := by
+  subst h
+  rfl
+
+private lemma hopfSpec_map_left {H K : _root_.CommHopfAlgCat.{u} R} (φ : H ⟶ K) :
+    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom.left =
+      Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) :=
+  rfl
+
+private lemma rootSubgroup_hom_hom_left (hij : i ≠ j) :
+    (rootSubgroup (R := R) (N := N) hij).hom.hom.left =
+      eqToHom (AdditiveGroup.groupScheme_X_left R) ≫
+        Spec.map (CommRingCat.ofHom
+          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) := by
+  rw [rootSubgroup]
+  -- The underlying scheme morphism of a composite of group-object morphisms is definitionally
+  -- the composite of the underlying maps; the category API has no projection lemma for it.
+  rw [show ((eqToHom (AdditiveGroup.groupScheme_def R) ≫
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op)).hom.hom.left =
+    (eqToHom (AdditiveGroup.groupScheme_def R)).hom.hom.left ≫
+      ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op).hom.hom.left from rfl]
+  rw [eqToHom_hom_hom_left, hopfSpec_map_left]
+  rfl
+
+private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
+    (q : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
+    AdditiveGroup.groupSchemePointMulEquiv A q ≫ (rootSubgroup hij).hom.hom =
+      groupSchemePointMulEquiv R N A (rootSubgroupPoints hij q) := by
+  have hcomp : (rootSubgroupPoints hij q).ofConv =
+      q.ofConv.comp (rootSubgroupCoordinateMap hij).hom.toAlgHom := by
+    rw [← mapPointsFunctor_rootSubgroupCoordinateMap_app hij (CommAlgCat.of R A) q,
+      CommHopfAlgCat.mapPointsFunctor_app_apply, WithConv.ofConv_toConv]
+  apply Over.OverMorphism.ext
+  rw [groupSchemePointMulEquiv_apply_left]
+  rw [Over.comp_left, AdditiveGroup.groupSchemePointMulEquiv_apply_left,
+    rootSubgroup_hom_hom_left]
+  -- After the named additive presentation is cancelled, the remaining equality is the standard
+  -- contravariant spectrum computation; this restatement only exposes those underlying maps.
+  change (Spec.map (CommRingCat.ofHom q.ofConv.toRingHom) ≫
+      eqToHom (AdditiveGroup.groupScheme_X_left R).symm) ≫
+      eqToHom (AdditiveGroup.groupScheme_X_left R) ≫
+        Spec.map (CommRingCat.ofHom
+          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) =
+    Spec.map (CommRingCat.ofHom (rootSubgroupPoints hij q).ofConv.toRingHom)
+  rw [hcomp]
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  rw [← Spec.map_comp, ← CommRingCat.ofHom_comp]
+  rfl
+
+/-- **The root subgroup on scheme-valued points**: composing an `A`-point of `𝔾ₐ` with the
+special-linear root subgroup gives the determinant-one transvection of its additive parameter. -/
+@[simp]
+theorem schemePointsMulEquiv_rootSubgroup (hij : i ≠ j)
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (AdditiveGroup.groupScheme R).X) :
+    schemePointsMulEquiv R N A (p ≫ (rootSubgroup hij).hom.hom) =
+      Matrix.SpecialLinearGroup.transvection hij
+        (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p)) := by
+  obtain ⟨q, rfl⟩ :=
+    (AdditiveGroup.groupSchemePointMulEquiv (R := R) (A := A)).surjective p
+  have hSL : schemePointsMulEquiv R N A
+      (groupSchemePointMulEquiv R N A (rootSubgroupPoints hij q)) =
+      (pointsMulEquiv (R := R) (A := A) N) (rootSubgroupPoints hij q) := by
+    apply (schemePointsMulEquiv R N A).symm.injective
+    rw [MulEquiv.symm_apply_apply, schemePointsMulEquiv_symm_apply,
+      MulEquiv.symm_apply_apply]
+  have hGa : AdditiveGroup.schemePointsMulEquiv A
+      (AdditiveGroup.groupSchemePointMulEquiv A q) =
+      AdditiveGroup.gaPointsMulEquiv q := by
+    apply (AdditiveGroup.schemePointsMulEquiv (R := R) A).symm.injective
+    rw [MulEquiv.symm_apply_apply, AdditiveGroup.schemePointsMulEquiv_symm_apply,
+      MulEquiv.symm_apply_apply]
+  rw [groupSchemePointMulEquiv_comp_rootSubgroup, hSL, hGa,
+    pointsMulEquiv_rootSubgroupPoints]
+
+end SchemePoints
 
 /-- The special-linear root subgroup followed by the determinant-kernel inclusion is the
 general-linear root subgroup. -/
 theorem rootSubgroup_comp_groupSchemeιGeneralLinear (hij : i ≠ j) :
-    rootSubgroup hij ≫ groupSchemeιGeneralLinear (R := R) (N := N) =
+    rootSubgroup hij ≫ groupSchemeιGeneralLinear R N =
       GeneralLinear.rootSubgroup hij := by
-  rw [rootSubgroup, groupSchemeιGeneralLinear, groupSchemeι,
+  rw [rootSubgroup, groupSchemeιGeneralLinear_def, groupSchemeι,
     CommHopfAlgCat.kernelSpecι_def, CommHopfAlgCat.quotientSpecι_def,
     GeneralLinear.rootSubgroup_def]
   simp only [Category.assoc]
