@@ -313,7 +313,8 @@ aggregated value (`∃ v, HasCauchyPVAt ... v`, or `HasCauchyPVAt ... (Φ (γ u)
 known closed form) — so none needs its own copy of the list recursion. Crossing-window-independent
 of the principal-value machinery it primarily feeds, so it lives here alongside the geometric
 window scaffolding above rather than in `Crossing.PVAggregation`. -/
-theorem sorted_crossing_gluing_induction {γ : ℝ → ℂ} {s : ℂ} {Q : ℝ → ℝ → Prop} {A b r m : ℝ}
+theorem sorted_crossing_gluing_induction {E : Type*} [NormedAddCommGroup E] {γ : ℝ → E} {s : E}
+    {Q : ℝ → ℝ → Prop} {A b r m : ℝ}
     (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) → Q l u)
     (hglue : ∀ l u₀ u : ℝ, l ≤ u₀ → u₀ ≤ u → Q l u₀ → Q u₀ u → Q l u) :
     ∀ (sorted : List ℝ), sorted.SortedLT → (sorted ≠ [] → 0 ≤ r) →
