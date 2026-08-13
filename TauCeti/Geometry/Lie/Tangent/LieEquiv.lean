@@ -149,7 +149,6 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
 
 /-- The canonical isometric and Lie equivalences agree after viewing the tangent Lie algebra as
 the model vector space. -/
-@[simp]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
     [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
     (h₁ : I.IsInteriorPoint (1 : G))
