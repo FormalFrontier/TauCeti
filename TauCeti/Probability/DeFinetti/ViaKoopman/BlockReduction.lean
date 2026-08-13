@@ -12,7 +12,7 @@ public import TauCeti.Probability.Exchangeability.Cylinder
 # Reducing a block to the prefix over an invariant-conditional-law event
 
 The Koopman route's first reduction. A test event cut out by the invariant conditional law is
-shift-invariant, so `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants`
+shift-invariant, so `ContractableLaw.map_restrict_block_eq_prefixProj_of_measurableSet_invariants`
 applies to it: the mass of a block cylinder met with such an event does not depend on which
 strictly increasing selection is used, and may be computed at the prefix `0, 1, …, r - 1`.
 
@@ -72,7 +72,8 @@ theorem measurableSet_invariants_preimage_invariantConditionalProbabilityMeasure
 by the invariant conditional law.
 
 No conditional expectation appears: the event is invariant, so the block is displaced inside the
-integral by `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants`. -/
+integral: both selections push `ρ.restrict A` to the same measure on `Fin r → α`, by
+`ContractableLaw.map_restrict_block_eq_prefixProj_of_measurableSet_invariants`. -/
 theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_invariantConditional
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
@@ -118,10 +119,13 @@ theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_invariantCondit
     simp only [hrw]
     rw [lintegral_indicator (hcyl s), setLIntegral_one, Measure.restrict_apply (hcyl s),
       Set.inter_comm]
-  rw [hmass k, hmass (fun i : Fin r => (i : ℕ)),
-    hρ.setLIntegral_block_eq_prefix_of_measurableSet_invariants hk hA_inv hg_meas,
-    hρ.setLIntegral_block_eq_prefix_of_measurableSet_invariants
-      (k := fun i : Fin r => (i : ℕ)) Fin.val_strictMono hA_inv hg_meas]
+  -- Both selections push `ρ.restrict A` to the same measure, so the integrals agree.
+  rw [hmass k, hmass (fun i : Fin r => (i : ℕ))]
+  have hpp : ∀ x : ℕ → α, (fun i : Fin r => x (i : ℕ)) = prefixProj α r x := fun _ => rfl
+  simp only [hpp]
+  rw [← lintegral_map hg_meas (measurable_pi_lambda _ fun i => measurable_pi_apply (k i)),
+    ← lintegral_map hg_meas (measurable_prefixProj r),
+    hρ.map_restrict_block_eq_prefixProj_of_measurableSet_invariants hk hA_inv]
 
 end Probability
 
