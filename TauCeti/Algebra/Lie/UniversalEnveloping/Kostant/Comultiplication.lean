@@ -121,17 +121,11 @@ theorem tmul_mem_kostantTensorForm (e : ι → L) (h : κ → L) {x y : U}
 
 /-! ## Stability under comultiplication -/
 
-private theorem mem_algHomComap_iff {R A B : Type*} [CommSemiring R] [Ring A] [Ring B]
-    [Algebra R A] [Algebra R B] (S : Subring B) (f : A →ₐ[R] B) (a : A) :
-    a ∈ S.comap f.toRingHom ↔ f a ∈ S := by
-  simp only [Subring.mem_comap, AlgHom.toRingHom_eq_coe, RingHom.coe_coe]
-
 private theorem mem_comulComap_iff (S : Subring (U ⊗[ℚ] U)) (a : U) :
     a ∈ S.comap (Bialgebra.comulAlgHom ℚ U).toRingHom ↔
       Coalgebra.comul (R := ℚ) a ∈ S := by
-  simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
-    Bialgebra.comulAlgHom_apply] using
-    mem_algHomComap_iff S (Bialgebra.comulAlgHom ℚ U) a
+  simp only [Subring.mem_comap, AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+    Bialgebra.comulAlgHom_apply]
 
 /-- **The rational comultiplication is integral on the Kostant form.** Every coproduct of an
 element of `kostantForm e h` lies in the range of its integral tensor square. -/
@@ -181,8 +175,8 @@ theorem coe_kostantFormComul_apply (e : ι → L) (h : κ → L) (a : kostantFor
 private theorem mem_counitComap_iff (a : U) :
     a ∈ (⊥ : Subring ℚ).comap (Bialgebra.counitAlgHom ℚ U).toRingHom ↔
       Coalgebra.counit (R := ℚ) a ∈ (⊥ : Subring ℚ) := by
-  simpa only [Bialgebra.counitAlgHom_apply] using
-    mem_algHomComap_iff (⊥ : Subring ℚ) (Bialgebra.counitAlgHom ℚ U) a
+  simp only [Subring.mem_comap, AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+    Bialgebra.counitAlgHom_apply]
 
 /-- The rational counit of an element of the Kostant form belongs to the integer-cast subring of
 `ℚ`. -/
