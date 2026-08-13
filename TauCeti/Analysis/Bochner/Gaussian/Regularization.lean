@@ -98,8 +98,8 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 has a positive-definite subtraction kernel: it is the Schur product of the original kernel with
 the Gaussian kernel `(a, b) ↦ exp (-ε‖a - b‖²)`. -/
 theorem posSemidef_gaussianRegularize {φ : V → ℂ}
-    (hpd : (Matrix.of fun a b : V => φ (a - b)).PosSemidef) {ε : ℝ} (hε : 0 ≤ ε) :
-    (Matrix.of fun a b : V => gaussianRegularize φ ε (a - b)).PosSemidef :=
+    (hpd : Matrix.PosSemidef fun a b : V => φ (a - b)) {ε : ℝ} (hε : 0 ≤ ε) :
+    Matrix.PosSemidef fun a b : V => gaussianRegularize φ ε (a - b) :=
   hpd.hadamard (posSemidef_cexp_neg_mul_sq_norm hε)
 
 end PositiveDefinite
