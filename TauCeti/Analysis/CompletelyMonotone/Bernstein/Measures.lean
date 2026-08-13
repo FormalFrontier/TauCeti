@@ -467,15 +467,8 @@ private lemma chafaiDensity_neg_derivWithin_pred (f : ℝ → ℝ)
     nlinarith
   rw [hnp, hsub]
   field_simp [ht.ne', hden]
-  calc
-    -(((-1 : ℝ) ^ (n - 1) * t ^ (n - 2) *
-          iteratedDerivWithin n f (Ici 0) t * t))
-        = -((-1 : ℝ) ^ (n - 1)) * (t ^ (n - 2) * t) *
-            iteratedDerivWithin n f (Ici 0) t := by ring
-    _ = (-1 : ℝ) ^ n * t ^ (n - 1) *
-            iteratedDerivWithin n f (Ici 0) t := by rw [hsign, hpow']
-    _ = iteratedDerivWithin n f (Ici 0) t * (-1 : ℝ) ^ n * t ^ (n - 1) := by
-          ring
+  rw [← hsign, ← hpow']
+  ring
 
 private lemma chafaiRescaled_lintegral_coe_eq_chafaiMeasure_neg_derivWithin
     (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f) {n : ℕ} (hn : 2 ≤ n) :
