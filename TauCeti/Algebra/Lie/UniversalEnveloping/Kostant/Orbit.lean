@@ -119,7 +119,6 @@ theorem kostantOrbit_def (e : ι → L) (h : κ → L) (v : V) :
     exact ⟨u, u.property, (Subring.smul_def u v).symm⟩
 
 /-- The generating vector belongs to its Kostant orbit. -/
-@[simp]
 theorem self_mem_kostantOrbit : v ∈ kostantOrbit e h v :=
   mem_kostantOrbit_iff.2 ⟨1, (kostantForm e h).one_mem, one_smul U v⟩
 
