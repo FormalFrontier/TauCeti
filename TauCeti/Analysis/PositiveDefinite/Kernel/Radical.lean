@@ -124,6 +124,7 @@ theorem positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right
     (hy : y ∈ positiveDefiniteKernelFinsuppSesqFormKer K) :
     positiveDefiniteKernelFinsuppForm K x y = 0 :=
   positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right_of_conj_symm
-    (posSemidef_conj_symm hK) hy
+    (fun a b => by
+      simpa only [starRingEnd_apply] using hK.isHermitian.apply b a) hy
 
 end TauCeti

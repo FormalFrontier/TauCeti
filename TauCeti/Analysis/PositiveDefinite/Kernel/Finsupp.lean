@@ -246,7 +246,8 @@ theorem positiveDefiniteKernelFinsuppForm_conj_symm
     conj (positiveDefiniteKernelFinsuppForm K x y)
       = positiveDefiniteKernelFinsuppForm K y x :=
   positiveDefiniteKernelFinsuppForm_conj_symm_of_conj_symm
-    (posSemidef_conj_symm hK) x y
+    (fun a b => by
+      simpa only [starRingEnd_apply] using hK.isHermitian.apply b a) x y
 
 /-- Positive-definite kernels give positive-semidefinite finitely supported sesquilinear forms. -/
 theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : Matrix.PosSemidef K) :

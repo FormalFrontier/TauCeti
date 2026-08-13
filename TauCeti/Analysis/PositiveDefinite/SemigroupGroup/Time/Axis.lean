@@ -75,8 +75,8 @@ theorem timeAxis_posSemidef (hF : IsSemigroupGroupPD F) :
 `conj (F (t + u, 0)) = F (u + t, 0)`. -/
 @[simp]
 theorem timeAxis_conj_symm (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) :
-    conj (F (t + u, 0)) = F (u + t, 0) :=
-  posSemidef_conj_symm hF.timeAxis_posSemidef t u
+    conj (F (t + u, 0)) = F (u + t, 0) := by
+  simpa only [starRingEnd_apply] using hF.timeAxis_posSemidef.isHermitian.apply u t
 
 /-- The finite quadratic form of the zero-spatial time-axis kernel is nonnegative. -/
 theorem timeAxis_sum_nonneg (hF : IsSemigroupGroupPD F) {ι : Type*} [Fintype ι]

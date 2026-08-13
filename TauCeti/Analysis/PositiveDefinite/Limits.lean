@@ -68,7 +68,7 @@ theorem posSemidef_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
       have hswap : Tendsto (fun i => conj (K i b a)) l (𝓝 (L a b)) :=
         (hlim a b).congr' <| by
           filter_upwards [hK] with i hi
-          exact (posSemidef_conj_symm hi b a).symm
+          simpa only [starRingEnd_apply] using (hi.isHermitian.apply a b).symm
       exact tendsto_nhds_unique hconj hswap
     · intro x
       have hquad :

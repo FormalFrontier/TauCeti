@@ -84,6 +84,8 @@ variable {K : α → α → 𝕜}
 semidefinite.  This is the bridge needed by Mathlib's `RKHS.OfKernel` construction. -/
 theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     (positiveDefiniteKernelOperator K).PosSemidef := by
+  have hsymm (a b : α) : conj (K a b) = K b a := by
+    simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
   apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
   refine ⟨?_, ?_⟩
   · apply Matrix.ext
@@ -93,8 +95,7 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     apply (ContinuousLinearMap.eq_adjoint_iff _ _).2
     intro x y
     rw [positiveDefiniteKernelOperator_apply, positiveDefiniteKernelOperator_apply]
-    rw [RCLike.inner_apply', RCLike.inner_apply', map_mul,
-      posSemidef_conj_symm hK]
+    rw [RCLike.inner_apply', RCLike.inner_apply', map_mul, hsymm]
     ring
   · intro f
     have hnonneg := hK.2 f
@@ -102,7 +103,7 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     have hinner (a b : α) (x y : 𝕜) :
         ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜 = star x * K a b * y := by
       rw [positiveDefiniteKernelOperator_apply, RCLike.inner_apply', map_mul,
-        posSemidef_conj_symm hK, RCLike.star_def]
+        hsymm, RCLike.star_def]
       ring
     have hquadratic :
         RCLike.re (f.sum fun a x => f.sum fun b y =>
@@ -134,12 +135,14 @@ original kernel. -/
 @[simp]
 theorem inner_kolmogorovFeature (hK : Matrix.PosSemidef K) (a b : α) :
     ⟪hK.kolmogorovFeature a, hK.kolmogorovFeature b⟫_𝕜 = K a b := by
+  have hsymm (x y : α) : conj (K x y) = K y x := by
+    simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
   let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
   rw [kolmogorovFeature, kolmogorovFeature,
     ← RKHS.kernel_inner hK.KolmogorovSpace b a (1 : 𝕜) 1,
     RKHS.OfKernel.kernel_ofKernel]
-  simp [posSemidef_conj_symm hK]
+  simp [hsymm]
 
 /-- The squared norm of a canonical feature vector is the real part of the corresponding
 diagonal kernel value. -/

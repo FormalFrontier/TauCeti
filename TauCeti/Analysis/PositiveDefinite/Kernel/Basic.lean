@@ -33,8 +33,6 @@ Mathlib's `Matrix.PosSemidef` rather than introducing a second predicate.
 
 ## Main statements
 
-* `TauCeti.posSemidef_conj_symm`: positive-definite kernels are
-  conjugate-symmetric.
 * `TauCeti.posSemidef_one` and
   `TauCeti.posSemidef_const_of_nonneg`: constant positive-definite kernels.
 * `TauCeti.posSemidef_smul`: closure under nonnegative real scalar multiples.
@@ -55,13 +53,6 @@ universe u v z
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 variable {α : Type v}
-
-/-- Positive-definite kernels are conjugate-symmetric. -/
-theorem posSemidef_conj_symm {K : α → α → 𝕜}
-    (hK : Matrix.PosSemidef K) (a b : α) : conj (K a b) = K b a := by
-  have h := hK.isHermitian.apply b a
-  rw [starRingEnd_apply]
-  exact h
 
 private theorem real_smul_kernel_eq (r : ℝ) (K : α → α → 𝕜) :
     (fun a b => r • K a b) = (r : 𝕜) • K := by
@@ -110,9 +101,12 @@ private theorem conj_mul_kernel_isHermitian (g : α → 𝕜) :
   ext a b
   simp [Matrix.conjTranspose_apply, Matrix.vecMulVec_apply, Pi.star_apply, mul_comm]
 
-/-- The rank-one kernels `(a, b) ↦ conj (g a) · g b` are positive definite. With `g ≡ 1` this gives
-the constant kernel `1`; with general `g` these are building blocks whose nonnegative mixtures
-and Schur products generate further positive-definite kernels. -/
+/-- The rank-one kernels `(a, b) ↦ conj (g a) · g b` are positive definite for an arbitrary
+index type. Mathlib's `Matrix.posSemidef_vecMulVec_star_self` supplies the finite-support core but
+requires `Finite α`; this theorem removes that restriction by checking every finitely supported
+principal submatrix. With `g ≡ 1` this gives the constant kernel `1`; with general `g` these are
+building blocks whose nonnegative mixtures and Schur products generate further
+positive-definite kernels. -/
 theorem posSemidef_conj_mul (g : α → 𝕜) :
   Matrix.PosSemidef (fun a b => conj (g a) * g b) := by
   refine posSemidef_of_support_posSemidef _ (conj_mul_kernel_isHermitian g) ?_
@@ -147,7 +141,8 @@ theorem posSemidef_iff {K : α → α → 𝕜} :
         ∀ {ι : Type*} [Fintype ι] (v : ι → α) (x : ι → 𝕜),
           0 ≤ ∑ i, ∑ j, conj (x i) * x j * K (v i) (v j) := by
   classical
-  refine ⟨fun hK => ⟨posSemidef_conj_symm hK, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
+  refine ⟨fun hK => ⟨fun a b => ?_, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
+  · simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
   · intro ι _ v x
     have hgram : (Matrix.of fun i j => K (v i) (v j)).PosSemidef := by
       simpa [Matrix.submatrix, Function.comp_def] using hK.submatrix v

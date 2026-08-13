@@ -65,18 +65,20 @@ private theorem finTwo_posSemidef
 squared norm of an off-diagonal entry is bounded by the product of the two diagonal real parts. -/
 theorem posSemidef_normSq_le (hK : Matrix.PosSemidef K) (a b : α) :
     RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b) := by
+  have hsymm (x y : α) : conj (K x y) = K y x := by
+    simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
   let A : Matrix (Fin 2) (Fin 2) 𝕜 := Matrix.of fun i j => K (![a, b] i) (![a, b] j)
   have hA : A.PosSemidef := finTwo_posSemidef hK a b
   have hdet : 0 ≤ A.det := Matrix.PosSemidef.det_nonneg hA
   have hdet_re : 0 ≤ RCLike.re A.det := by
     simpa using (RCLike.le_iff_re_im.mp hdet).1
   have hconj : K b a = conj (K a b) := by
-    exact (posSemidef_conj_symm hK a b).symm
+    exact (hsymm a b).symm
   have haa_im : RCLike.im (K a a) = 0 := by
-    have h := posSemidef_conj_symm hK a a
+    have h := hsymm a a
     exact RCLike.conj_eq_iff_im.mp h
   have hbb_im : RCLike.im (K b b) = 0 := by
-    have h := posSemidef_conj_symm hK b b
+    have h := hsymm b b
     exact RCLike.conj_eq_iff_im.mp h
   have hdet_eval :
       RCLike.re A.det =
@@ -99,7 +101,8 @@ column entry is zero. -/
 theorem posSemidef_eq_zero_of_apply_self_eq_zero_right
     (hK : Matrix.PosSemidef K) {a b : α} (hb : K b b = 0) : K a b = 0 := by
   have hba := posSemidef_eq_zero_of_apply_self_eq_zero_left hK (a := b) (b := a) hb
-  have hconj := posSemidef_conj_symm hK a b
+  have hconj : conj (K a b) = K b a := by
+    simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
   rw [hba] at hconj
   have := congrArg conj hconj
   simpa using this
@@ -142,7 +145,8 @@ translate `(v, 0)`. -/
 theorem map_neg_eq_conj_of_posSemidef
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) (v : V) :
     ψ (-v) = conj (ψ v) := by
-  simpa using (posSemidef_conj_symm hpd v 0).symm
+  simpa only [sub_zero, zero_sub, starRingEnd_apply] using
+    (hpd.isHermitian.apply 0 v).symm
 
 /-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
 of its value at `0`. -/
