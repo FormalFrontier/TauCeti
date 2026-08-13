@@ -29,33 +29,31 @@ simplex need not contain every vertex even when `K` does.
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.closedStar K σ`: the closed star of `σ` in `K`.
-* `TauCeti.PreAbstractSimplicialComplex.link K σ`: the link of `σ` in `K`.
-* `TauCeti.PreAbstractSimplicialComplex.deletion K σ`: the deletion (anti-star) of `σ` in `K`.
+* `PreAbstractSimplicialComplex.closedStar K σ`: the closed star of `σ` in `K`.
+* `PreAbstractSimplicialComplex.link K σ`: the link of `σ` in `K`.
+* `PreAbstractSimplicialComplex.deletion K σ`: the deletion (anti-star) of `σ` in `K`.
 
 ## Main results
 
-* `TauCeti.PreAbstractSimplicialComplex.closedStar_le` / `link_le` / `deletion_le`: each is a
+* `PreAbstractSimplicialComplex.closedStar_le` / `link_le` / `deletion_le`: each is a
   subcomplex of `K`, and `link_le_closedStar` places the link inside the closed star.
-* `TauCeti.PreAbstractSimplicialComplex.mem_closedStar` / `mem_link`: membership in the
+* `PreAbstractSimplicialComplex.mem_closedStar` / `mem_link`: membership in the
   closed star or link, phrased as membership in `K` plus the local condition.
-* `TauCeti.PreAbstractSimplicialComplex.mem_closedStar_nonempty` / `mem_link_nonempty`: the
+* `PreAbstractSimplicialComplex.mem_closedStar_nonempty` / `mem_link_nonempty`: the
   introduction-friendly membership forms using only nonemptiness and the defining local data.
-* `TauCeti.PreAbstractSimplicialComplex.closedStar_sup_deletion`: the closed star and the deletion
+* `PreAbstractSimplicialComplex.closedStar_sup_deletion`: the closed star and the deletion
   cover `K`, i.e. `closedStar K σ ⊔ deletion K σ = K`.
-* `TauCeti.PreAbstractSimplicialComplex.link_le_deletion_of_nonempty`: for a nonempty `σ`, the
+* `PreAbstractSimplicialComplex.link_le_deletion_of_nonempty`: for a nonempty `σ`, the
   link sits inside the deletion.
-* `TauCeti.PreAbstractSimplicialComplex.closedStar_empty` / `link_empty` / `deletion_empty`: the
+* `PreAbstractSimplicialComplex.closedStar_empty` / `link_empty` / `deletion_empty`: the
   values at the empty simplex (`K`, `K`, and `⊥`), pinning the conventions.
-* `TauCeti.PreAbstractSimplicialComplex.isCone_closedStar` / `isCone_deletion`: the closed star of
+* `PreAbstractSimplicialComplex.isCone_closedStar` / `isCone_deletion`: the closed star of
   a face is a cone with apex any vertex of that face, and deleting a face missing the apex of a
   cone leaves a cone with the same apex.
 * monotonicity of all three constructions in `K`.
 -/
 
 public section
-
-namespace TauCeti
 
 open Finset
 
@@ -242,5 +240,3 @@ theorem isCone_deletion (h : IsCone K v) (hσ : σ.Nonempty) (hv : v ∉ σ) :
 end IsCone
 
 end PreAbstractSimplicialComplex
-
-end TauCeti

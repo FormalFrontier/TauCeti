@@ -39,8 +39,6 @@ public section
 
 noncomputable section
 
-namespace TauCeti
-
 open scoped InnerProductSpace
 
 namespace IsCoercive
@@ -151,5 +149,3 @@ theorem exists_forall_eq (hB : IsCoercive B) (ℓ : StrongDual ℝ V) :
   (existsUnique_forall_eq hB ℓ).exists
 
 end IsCoercive
-
-end TauCeti

@@ -30,8 +30,6 @@ Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 3.
 
 public section
 
-namespace TauCeti
-
 namespace PreAbstractSimplicialComplex
 
 variable {ι : Type*}
@@ -202,4 +200,3 @@ end Collapsible
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

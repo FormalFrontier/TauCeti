@@ -43,8 +43,6 @@ public section
 
 noncomputable section
 
-namespace TauCeti
-
 open Set
 
 namespace AbstractSimplicialComplex
@@ -438,4 +436,3 @@ theorem realizationMap_trans {K L M : AbstractSimplicialComplex ι} (hKL : K ≤
 
 end AbstractSimplicialComplex
 
-end TauCeti

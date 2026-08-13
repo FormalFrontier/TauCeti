@@ -42,8 +42,6 @@ the standard invariance of those definitions under a change of vertex labels.
 
 public section
 
-namespace TauCeti
-
 namespace PreAbstractSimplicialComplex
 
 variable {α β : Type*} [DecidableEq β]
@@ -252,4 +250,3 @@ end Collapsible
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

@@ -308,14 +308,6 @@ private lemma heckeT_prime_pow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
   set Tpp := heckeTScalar p
   have h_lhs1 := heckeT_prime_mul_sum_distrib p hp r s
   have h_lhs2 := heckeT_scalar_mul_sum_shift p hp r s
-  have h_peel1 : ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (Tpp ^ i *
-        (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
-      (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩))) +
-        (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
-          (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * (r + 1)),
-            pow_pos hp.pos (r + 1 + s - 2 * (r + 1))⟩)) :=
-    Finset.sum_range_succ _ _
   have h_sum_split : ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
         (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
       (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
@@ -326,7 +318,7 @@ private lemma heckeT_prime_pow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
     refine Finset.sum_congr rfl fun i hi ↦ ?_
     rw [Finset.mem_range] at hi
     exact heckeT_prime_pow_mul_summand_split p hp r s i (by omega) (by omega)
-  rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
+  rw [h_lhs1, Finset.sum_range_succ, h_sum_split, h_lhs2]
   set A := ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
     heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩)
   set B := ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
