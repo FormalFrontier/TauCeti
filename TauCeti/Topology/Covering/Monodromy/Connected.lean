@@ -57,6 +57,15 @@ def isFiberwisePretransitive (X : TopCat.{u}) :
   fun F => ∀ (x : FundamentalGroupoid X) (a b : F.obj x),
     ∃ γ : x ⟶ x, F.map γ a = b
 
+/-- Membership in the fibrewise pretransitive fundamental-groupoid action property. -/
+@[simp]
+theorem isFiberwisePretransitive_iff (X : TopCat.{u})
+    (F : FundamentalGroupoid X ⥤ Type u) :
+    isFiberwisePretransitive X F ↔
+      ∀ (x : FundamentalGroupoid X) (a b : F.obj x),
+        ∃ γ : x ⟶ x, F.map γ a = b :=
+  Iff.rfl
+
 end FundamentalGroupoidAction
 
 /-- Fundamental-groupoid actions that are pretransitive on every fibre. Morphisms are arbitrary
@@ -109,6 +118,7 @@ theorem monodromy_isFiberwisePretransitive [LocallyPathConnectedSpace X]
     (p : ConnectedCoveringSpace X) :
     FundamentalGroupoidAction.isFiberwisePretransitive X
       ((CoveringSpace.monodromyFunctor X).obj ((forget X).obj p)) := by
+  rw [FundamentalGroupoidAction.isFiberwisePretransitive_iff]
   rw [CoveringSpace.monodromyFunctor_obj]
   intro x e e'
   rcases x with ⟨x⟩
