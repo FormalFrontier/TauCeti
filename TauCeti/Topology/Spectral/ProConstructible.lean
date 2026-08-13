@@ -298,9 +298,7 @@ theorem IsProConstructible.mem_of_isGenericPoint (hs : IsProConstructible s) {η
   have hζη : WithTopology.ofTopology x ∈ closure ({η} : Set X) := by
     rw [hη]; exact subset_closure hζs
   have hζeq : WithTopology.ofTopology x = η :=
-    (inseparable_iff_closure_eq.2 <| subset_antisymm
-      (closure_minimal (by simpa using hζη) isClosed_closure)
-      (closure_minimal (by simpa using hηζ) isClosed_closure)).eq
+    ((specializes_iff_mem_closure.2 hηζ).antisymm (specializes_iff_mem_closure.2 hζη)).eq
   exact hζeq ▸ hζs
 
 /-- The inclusion of a pro-constructible subset of a spectral space is a spectral map: the trace
