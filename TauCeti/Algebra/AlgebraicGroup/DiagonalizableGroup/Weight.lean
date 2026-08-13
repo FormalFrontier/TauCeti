@@ -8,33 +8,32 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra
 
 /-!
-# Weights of a representation along a homomorphism from a diagonalizable group
+# Weight spaces by corestriction to a monoid algebra
 
-A homomorphism of affine group schemes `D(X) → G` is a morphism `π : H → R[X]` of the coordinate
-bialgebras, and a representation of `G` is a right `H`-comodule `V`. Restricting the
-representation along `π` corestricts the comodule along `π`, and the resulting `R[X]`-comodule
-decomposes into the weight submodules of
+Given a right `C`-comodule `V` and a coalgebra morphism `π : C → R[X]`, corestriction along `π`
+makes `V` an `R[X]`-comodule. The resulting comodule decomposes into the weight submodules of
 `TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra`. This file names that decomposition:
 
-`TauCeti.DiagonalizableGroup.weightSpace V π x` is the submodule of `V` on which `D(X)` acts
-through the character `x`, and `V` is the internal direct sum of these submodules.
+`TauCeti.DiagonalizableGroup.weightSpace V π x` is the `x`-weight submodule of the corestricted
+comodule, and `V` is the internal direct sum of these submodules.
 
-Only the coalgebra structure of `π` enters the decomposition, so the definition and the
-decomposition theorems take a `CoalgHom`. The statement identifying the action of a point of
-`D(X)` as multiplication by the value of the character does use that `π` is a morphism of
-bialgebras, since it speaks about points, and takes a `BialgHom`.
+When `C` is the coordinate bialgebra of an affine group scheme `G` and `π` underlies a bialgebra
+morphism, it is the coordinate morphism of a homomorphism `D(X) → G`, and these are the weight
+spaces of a representation restricted along that homomorphism. The statement identifying the
+action of a point of `D(X)` as multiplication by the value of the character therefore takes a
+`BialgHom`.
 
 ## Main definitions
 
-* `TauCeti.DiagonalizableGroup.weightSpace`: the `x`-weight submodule of a representation of `G`
-  restricted along a homomorphism `D(X) → G`.
+* `TauCeti.DiagonalizableGroup.weightSpace`: the `x`-weight submodule after corestricting a
+  comodule along a coalgebra morphism to `R[X]`.
 
 ## Main results
 
-* `TauCeti.DiagonalizableGroup.isInternal_weightSpace`: **a representation restricted along a
-  homomorphism from a diagonalizable group is the internal direct sum of its weight submodules.**
-* `TauCeti.DiagonalizableGroup.finite_setOf_weightSpace_ne_bot`: a representation that is finitely
-  generated as a module has finitely many weights.
+* `TauCeti.DiagonalizableGroup.isInternal_weightSpace`: **the corestricted comodule is the internal
+  direct sum of its weight submodules.**
+* `TauCeti.DiagonalizableGroup.finite_setOf_weightSpace_ne_bot`: a comodule that is finitely
+  generated as a module has finitely many nonzero weight submodules after corestriction.
 * `TauCeti.DiagonalizableGroup.endOfPoint_tmul_of_mem_weightSpace`: a point of `D(X)` acts on the
   `x`-weight submodule by multiplication by the value of the character `x` at that point.
 
@@ -71,12 +70,11 @@ variable {C : Type*} [AddCommMonoid C] [Module R C] [Coalgebra R C]
 variable {X : Type*}
 variable (V : Type*) [AddCommMonoid V] [Module R V] [Comodule R C V]
 
-/-- The `x`-weight submodule of a right `C`-comodule `V` along a coalgebra morphism
-`π : C →ₗc[R] R[X]`.
+/-- The `x`-weight submodule obtained by corestricting a right `C`-comodule `V` along a coalgebra
+morphism `π : C →ₗc[R] R[X]`.
 
-Geometrically `π` is the coordinate morphism of a homomorphism `D(X) → G` of affine group schemes
-and `V` is a representation of `G`; this is the submodule on which `D(X)` acts through the
-character `x`. -/
+If `π` underlies the coordinate-bialgebra morphism of a homomorphism `D(X) → G` and `V` is a
+representation of `G`, this is the submodule on which `D(X)` acts through the character `x`. -/
 noncomputable def weightSpace (π : C →ₗc[R] MonoidAlgebra R X) (x : X) :
     Submodule R V :=
   letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
@@ -97,14 +95,15 @@ theorem mem_weightSpace {π : C →ₗc[R] MonoidAlgebra R X} {x : X} {v : V} :
 
 variable (V)
 
-/-- **A representation restricted along a homomorphism from a diagonalizable group is the internal
-direct sum of its weight submodules.** -/
+/-- **A comodule corestricted along a coalgebra morphism to `R[X]` is the internal direct sum of
+its weight submodules.** -/
 theorem isInternal_weightSpace (π : C →ₗc[R] MonoidAlgebra R X) :
     DirectSum.IsInternal (weightSpace V π) :=
   letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
   Comodule.isInternal_weightSpace R X V
 
-/-- **A representation that is finitely generated as a module has only finitely many weights.** -/
+/-- **A comodule that is finitely generated as a module has only finitely many nonzero weight
+submodules after corestriction.** -/
 theorem finite_setOf_weightSpace_ne_bot [Module.Finite R V] (π : C →ₗc[R] MonoidAlgebra R X) :
     {x : X | weightSpace V π x ≠ ⊥}.Finite :=
   letI : Comodule R (MonoidAlgebra R X) V := Comodule.Corestrict (M := V) π
@@ -133,9 +132,10 @@ theorem endOfPoint_tmul_comp (π : C →ₐc[R] MonoidAlgebra R X)
       (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap := by
     rw [CoalgHom.toLinearMap_eq_coe]
     exact BialgHom.toAlgHom_toLinearMap π
-  rw [Comodule.endOfPoint_tmul, LinearMap.lTensor_def, AlgHom.comp_toLinearMap,
-    hπ, ← LinearMap.id_comp LinearMap.id, TensorProduct.map_comp, LinearMap.comp_apply]
-  rfl
+  rw [Comodule.endOfPoint_tmul]
+  congr 2
+  rw [LinearMap.lTensor_map]
+  congr 1
 
 /-- **A point of `D(X)` acts on the `x`-weight submodule by the value of the character `x`.**
 
