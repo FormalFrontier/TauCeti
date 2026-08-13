@@ -83,13 +83,6 @@ theorem hermiteAnnihilationCLM_apply_hermiteSchwartzMap (n : ℕ) :
   have hs2 : Real.sqrt 2 ≠ 0 := (Real.sqrt_pos.mpr (by norm_num)).ne'
   rw [h2, ← mul_assoc, inv_mul_cancel₀ hs2, one_mul]
 
-/-- Specialization of `hermiteAnnihilationCLM_apply_hermiteSchwartzMap` at `n = 0`. -/
-@[simp]
-theorem hermiteAnnihilationCLM_apply_hermiteSchwartzMap_zero :
-    hermiteAnnihilationCLM (hermiteSchwartzMap 0) = 0 := by
-  rw [hermiteAnnihilationCLM_apply_hermiteSchwartzMap]
-  simp
-
 /-- **Creation action on Hermite functions.**
 `a† (hermiteSchwartzMap n) = √(n + 1) • hermiteSchwartzMap (n + 1)`. -/
 @[simp, grind =]
