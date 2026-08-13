@@ -24,7 +24,8 @@ This is a small prerequisite for the BCR semigroup--Bochner representation miles
 shape before integration: a time kernel multiplied by a spatial Fourier kernel.
 
 No Mathlib infrastructure is vendored. The proof reuses Tau Ceti's positive-definite
-function/kernel correspondence and the Schur product closure for positive-definite kernels.
+function/kernel correspondence together with Mathlib's `Matrix.PosSemidef.submatrix` and
+`Matrix.PosSemidef.hadamard` operations.
 
 ## Main declarations
 

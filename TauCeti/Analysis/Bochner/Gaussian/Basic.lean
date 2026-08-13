@@ -6,7 +6,7 @@ module
 
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import TauCeti.Analysis.Bochner.CharFun.PositiveDefinite
+public import TauCeti.Analysis.Bochner.CharFun.PosDef
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
 -- The remaining import is proof-only: the integrability of the complex Gaussian.
 import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform

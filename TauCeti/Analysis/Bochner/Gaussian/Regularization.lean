@@ -6,7 +6,7 @@ module
 
 public import Mathlib.MeasureTheory.Function.L1Space.Integrable
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import Mathlib.LinearAlgebra.Matrix.PosDef
 -- The remaining import is proof-only: the analytic and positive-definiteness facts about the
 -- Gaussian factor.
 import TauCeti.Analysis.Bochner.Gaussian.Basic

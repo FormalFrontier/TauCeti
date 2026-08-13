@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Analysis.Bochner.CharFun.PosDef
 public import TauCeti.Analysis.PositiveDefinite.Basic
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
 public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.TaylorExpansion
 
 /-!

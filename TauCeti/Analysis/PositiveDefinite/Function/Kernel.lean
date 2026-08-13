@@ -26,9 +26,10 @@ than an instance).
 
 This advances the `OneParameterSemigroups` roadmap, Part C ("Positive-definite functions and
 Bochner's theorem", `TauCetiRoadmap/OneParameterSemigroups/README.md`): the `API to develop` bullet
-"the PD-function ↔ PD-kernel equivalence (`K(a, b) = F(a + b⋆)`; `F(a − b)` for a group)". The two
-component predicates already live in TauCeti; this file is the equivalence connecting them, and the
-group form. No Mathlib code is vendored.
+"the PD-function ↔ PD-kernel equivalence (`K(a, b) = F(a + b⋆)`; `F(a − b)` for a group)".
+The function-side predicate `IsPositiveDefinite` lives in Tau Ceti, while the kernel side uses
+Mathlib's `Matrix.PosSemidef`; this file connects them and records the group form. No Mathlib code
+is vendored.
 
 ## Main declarations
 

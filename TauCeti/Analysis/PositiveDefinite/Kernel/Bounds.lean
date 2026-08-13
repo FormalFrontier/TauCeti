@@ -4,20 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import TauCeti.Analysis.Matrix.PosSemidef
 
 /-!
-# Bounds for positive-definite kernels
+# Bounds for positive-definite subtraction kernels
 
-This file adds the scalar Cauchy--Schwarz estimates for `RCLike`-valued positive-definite
-kernels. If `K` is positive definite, then every `2 × 2` Gram submatrix is positive semidefinite,
-so its determinant is nonnegative. Equivalently,
-`RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b)`.
-
-These estimates are the kernel-level counterpart of
-`TauCeti.IsPositiveDefinite.normSq_le` for positive-definite functions. They are also the basic
-inequalities used when normalizing kernels and when constructing the Kolmogorov/GNS seminorm from
-a positive-definite kernel.
+This file specializes the scalar Cauchy--Schwarz estimates from
+`TauCeti.Analysis.Matrix.PosSemidef` to subtraction kernels `(a, b) ↦ ψ (a - b)`. It records the
+reality and nonnegativity of `ψ 0`, conjugate symmetry under negation, and the uniform norm bound
+`‖ψ z‖ ≤ re (ψ 0)`.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C ("Positive-definite
 functions and Bochner's theorem"), specifically the positive-definite-kernel / GNS-Kolmogorov API
@@ -26,12 +21,6 @@ for positive semidefinite matrices.
 
 ## Main declarations
 
-* `TauCeti.normSq_le_of_posSemidef`: kernel Cauchy--Schwarz.
-* `TauCeti.eq_zero_of_apply_self_eq_zero_left_of_posSemidef` and
-  `TauCeti.eq_zero_of_apply_self_eq_zero_right_of_posSemidef`: zero diagonal entries
-  force the corresponding row or column to vanish.
-* `TauCeti.norm_le_one_of_apply_self_eq_one_of_posSemidef`: normalized diagonal
-  entries bound off-diagonal entries by `1`.
 * `TauCeti.map_zero_re_nonneg_of_posSemidef`,
   `TauCeti.map_zero_eq_ofReal_re_of_posSemidef` and
   `TauCeti.norm_apply_le_map_zero_re_of_posSemidef`: for an `RCLike`-valued function
@@ -53,74 +42,7 @@ open scoped ComplexOrder
 
 namespace TauCeti
 
-variable {𝕜 : Type*} [RCLike 𝕜] {α : Type*} {K : α → α → 𝕜}
-
-/-- The `2 × 2` Gram submatrix of a positive-definite kernel is positive semidefinite. -/
-private theorem finTwo_posSemidef
-    (hK : Matrix.PosSemidef K) (a b : α) :
-    (Matrix.of fun i j : Fin 2 => K (![a, b] i) (![a, b] j)).PosSemidef := by
-  simpa [Matrix.submatrix, Function.comp_def] using hK.submatrix (fun i : Fin 2 => ![a, b] i)
-
-/-- The kernel Cauchy--Schwarz inequality: for an `RCLike`-valued positive-definite kernel, the
-squared norm of an off-diagonal entry is bounded by the product of the two diagonal real parts. -/
-theorem normSq_le_of_posSemidef (hK : Matrix.PosSemidef K) (a b : α) :
-    RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b) := by
-  have hsymm (x y : α) : conj (K x y) = K y x := by
-    simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
-  let A : Matrix (Fin 2) (Fin 2) 𝕜 := Matrix.of fun i j => K (![a, b] i) (![a, b] j)
-  have hA : A.PosSemidef := finTwo_posSemidef hK a b
-  have hdet : 0 ≤ A.det := Matrix.PosSemidef.det_nonneg hA
-  have hdet_re : 0 ≤ RCLike.re A.det := by
-    simpa using (RCLike.le_iff_re_im.mp hdet).1
-  have hconj : K b a = conj (K a b) := by
-    exact (hsymm a b).symm
-  have haa_im : RCLike.im (K a a) = 0 := by
-    have h := hsymm a a
-    exact RCLike.conj_eq_iff_im.mp h
-  have hbb_im : RCLike.im (K b b) = 0 := by
-    have h := hsymm b b
-    exact RCLike.conj_eq_iff_im.mp h
-  have hdet_eval :
-      RCLike.re A.det =
-        RCLike.re (K a a) * RCLike.re (K b b) - RCLike.normSq (K a b) := by
-    simp [A, Matrix.det_fin_two, hconj, RCLike.normSq_apply, haa_im, hbb_im]
-  nlinarith
-
-/-- If the left diagonal entry of a positive-definite kernel is zero, then the corresponding
-row entry is zero. -/
-theorem eq_zero_of_apply_self_eq_zero_left_of_posSemidef
-    (hK : Matrix.PosSemidef K) {a b : α} (ha : K a a = 0) : K a b = 0 := by
-  have hnorm := normSq_le_of_posSemidef hK a b
-  have hdiag : RCLike.re (K a a) * RCLike.re (K b b) = 0 := by simp [ha]
-  have hnorm_zero : RCLike.normSq (K a b) = 0 :=
-    le_antisymm (by simpa [hdiag] using hnorm) (RCLike.normSq_nonneg _)
-  exact RCLike.normSq_eq_zero.mp hnorm_zero
-
-/-- If the right diagonal entry of a positive-definite kernel is zero, then the corresponding
-column entry is zero. -/
-theorem eq_zero_of_apply_self_eq_zero_right_of_posSemidef
-    (hK : Matrix.PosSemidef K) {a b : α} (hb : K b b = 0) : K a b = 0 := by
-  have hba := eq_zero_of_apply_self_eq_zero_left_of_posSemidef hK (a := b) (b := a) hb
-  have hconj : conj (K a b) = K b a := by
-    simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
-  rw [hba] at hconj
-  have := congrArg conj hconj
-  simpa using this
-
-/-- If both diagonal entries are `1`, then the corresponding off-diagonal entry has norm at
-most `1`. This is the common normalized-kernel form of the kernel Cauchy--Schwarz inequality. -/
-theorem norm_le_one_of_apply_self_eq_one_of_posSemidef
-    (hK : Matrix.PosSemidef K) {a b : α} (ha : K a a = 1) (hb : K b b = 1) :
-    ‖K a b‖ ≤ 1 := by
-  refine le_of_sq_le_sq ?_ zero_le_one
-  simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using
-    normSq_le_of_posSemidef hK a b
-
-/-! ### Bounds for subtraction kernels -/
-
-section SubtractionKernel
-
-variable {V : Type*} [AddGroup V] {ψ : V → 𝕜}
+variable {𝕜 : Type*} [RCLike 𝕜] {V : Type*} [AddGroup V] {ψ : V → 𝕜}
 
 /-- The value at `0` of a function with positive-definite subtraction kernel has nonnegative
 real part. -/
@@ -158,7 +80,5 @@ theorem norm_apply_le_map_zero_re_of_posSemidef
   refine le_of_sq_le_sq ?_ (map_zero_re_nonneg_of_posSemidef hpd)
   calc ‖ψ z‖ ^ 2 ≤ RCLike.re (ψ 0) * RCLike.re (ψ 0) := h
     _ = RCLike.re (ψ 0) ^ 2 := (sq (RCLike.re (ψ 0))).symm
-
-end SubtractionKernel
 
 end TauCeti
