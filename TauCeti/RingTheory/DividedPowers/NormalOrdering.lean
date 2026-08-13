@@ -9,12 +9,13 @@ public import TauCeti.RingTheory.DividedPowers.Associative
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Abel
 import Mathlib.Tactic.Module
+import Mathlib.Tactic.NoncommRing
 
 /-!
 # Normal ordering divided powers with a central commutator
 
 Let `x`, `y`, and `z` belong to an associative algebra over `ℚ`, with
-`x * y - y * x = z`. When `z` commutes with both `x` and `y`, the divided powers admit the
+`x * y = y * x + z`. When `z` commutes with both `x` and `y`, the divided powers admit the
 coefficient-one normal-ordering formula
 
 ```text
@@ -23,9 +24,9 @@ x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ k ≤ min(m,n), y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾ x⁽ᵐ�
 
 This is the class-two case of the straightening relations used in a Kostant integral form. For a
 Chevalley basis it applies whenever `[x, y]` is a root vector and both further brackets with `x`
-and `y` vanish; in particular it covers the noncommuting root-vector pairs in a simply-laced root
-system. The coefficient-one form is the integral content: reordering the rational divided powers
-introduces no rational structure constants.
+and `y` vanish; in particular it covers non-opposite roots `α` and `β` in a simply-laced root
+system when `α + β` is a root. The coefficient-one form is the integral content: reordering the
+rational divided powers introduces no rational structure constants.
 
 The preliminary one-sided formula only needs `z` to commute with `y`. The full formula additionally
 needs `z` to commute with `x`, because its normal form places all powers of `z` between those of `y`
@@ -50,33 +51,31 @@ namespace TauCeti.Associative
 
 open Finset
 
-variable {A : Type*} [Ring A]
+variable {A : Type*} [Semiring A]
 
 /-- Moving one element across an ordinary power when its commutator commutes with the element being
 powered. This is kept private because the divided-power form below is the integral interface used by
 normal ordering. -/
-private theorem mul_pow_of_commutator_eq {x y z : A} (hxy : x * y - y * x = z)
+private theorem mul_pow_of_commutator_eq {x y z : A} (hxy : x * y = y * x + z)
     (hyz : Commute y z) (n : ℕ) :
     x * y ^ n = y ^ n * x + n • (y ^ (n - 1) * z) := by
-  have hxy' : x * y = y * x + z := (sub_eq_iff_eq_add.mp hxy).trans (add_comm _ _)
   induction n with
   | zero => simp
   | succ n ih =>
       cases n with
-      | zero => simpa using hxy'
+      | zero => simpa using hxy
       | succ n =>
           simp only [Nat.add_sub_cancel] at ih ⊢
           rw [pow_succ, ← mul_assoc, ih, add_mul, mul_assoc (y ^ (n + 1)) x y,
-            hxy', mul_add, nsmul_eq_mul, mul_assoc (↑(n + 1) : A) (y ^ n * z) y,
-            mul_assoc (y ^ n) z y,
-            ← hyz.eq, ← mul_assoc (y ^ n), ← pow_succ]
-          rw [← nsmul_eq_mul]
-          simp only [← mul_assoc, add_nsmul, one_nsmul, add_comm]
-          abel
+            hxy, mul_add]
+          rw [show n + 2 = (n + 1) + 1 by omega, add_nsmul, one_nsmul]
+          noncomm_ring [hyz.eq, pow_succ]
+          simp only [nsmul_eq_mul, Nat.cast_add, Nat.cast_ofNat, mul_one]
+          noncomm_ring
 
 variable [Algebra ℚ A]
 
-/-- **First-order divided-power normal ordering.** If `x * y - y * x = z` and `z` commutes
+/-- **First-order divided-power normal ordering.** If `x * y = y * x + z` and `z` commutes
 with `y`, then
 
 ```text
@@ -85,7 +84,7 @@ x y⁽ⁿ⁺¹⁾ = y⁽ⁿ⁺¹⁾ x + y⁽ⁿ⁾ z.
 
 Unlike the corresponding ordinary-power identity, the divided-power identity has coefficient one.
 No commutation hypothesis between `x` and `z` is needed for this one-sided formula. -/
-theorem mul_dividedPower_of_commutator_eq {x y z : A} (hxy : x * y - y * x = z)
+theorem mul_dividedPower_of_commutator_eq {x y z : A} (hxy : x * y = y * x + z)
     (hyz : Commute y z) (n : ℕ) :
     x * dividedPower (n + 1) y =
       dividedPower (n + 1) y * x + dividedPower n y * z := by
@@ -129,7 +128,7 @@ private theorem sum_sub_nsmul_add_succ_nsmul (u : ℕ → A) {M C : ℕ} (hMC : 
 -- Multiplying one normal-ordered summand by `x` either lengthens its final `x`-power or uses
 -- the commutator and lengthens its middle `z`-power. These are the two adjacent contributions
 -- combined by `sum_sub_nsmul_add_succ_nsmul`.
-private theorem mul_normalOrderTerm {x y z : A} (hxy : x * y - y * x = z)
+private theorem mul_normalOrderTerm {x y z : A} (hxy : x * y = y * x + z)
     (hxz : Commute x z) (hyz : Commute y z) {m n k : ℕ} (hkm : k ≤ m) (hkn : k < n) :
     x * (dividedPower (n - k) y * dividedPower k z * dividedPower (m - k) x) =
       (m + 1 - k) •
@@ -142,20 +141,49 @@ private theorem mul_normalOrderTerm {x y z : A} (hxy : x * y - y * x = z)
   have hmk' : m + 1 - (k + 1) = m - k := by omega
   have hxzk : Commute x (dividedPower k z) := by
     simpa using commute_dividedPower_dividedPower hxz 1 k
+  have hxy' :
+      x * dividedPower (n - k) y =
+        dividedPower (n - k) y * x + dividedPower (n - (k + 1)) y * z := by
+    rw [hnk]
+    exact mul_dividedPower_of_commutator_eq hxy hyz _
+  have hxx :
+      x * dividedPower (m - k) x =
+        (m + 1 - k) • dividedPower (m + 1 - k) x := by
+    rw [self_mul_dividedPower, hmk]
+  have hzz :
+      z * dividedPower k z = (k + 1) • dividedPower (k + 1) z :=
+    self_mul_dividedPower k z
+  have hxmove :
+      x * (dividedPower k z * dividedPower (m - k) x) =
+        dividedPower k z * (x * dividedPower (m - k) x) := by
+    rw [← mul_assoc, hxzk.eq, mul_assoc]
+  have hzmove :
+      z * (dividedPower k z * dividedPower (m - k) x) =
+        (z * dividedPower k z) * dividedPower (m - k) x := by
+    rw [mul_assoc]
+  have hfirst :
+      dividedPower (n - k) y *
+          (x * (dividedPower k z * dividedPower (m - k) x)) =
+        (m + 1 - k) •
+          (dividedPower (n - k) y * dividedPower k z *
+            dividedPower (m + 1 - k) x) := by
+    rw [hxmove, hxx]
+    simp_rw [← Nat.cast_smul_eq_nsmul ℚ]
+    rw [mul_smul_comm, mul_smul_comm, mul_assoc]
+  have hsecond :
+      dividedPower (n - (k + 1)) y *
+          (z * (dividedPower k z * dividedPower (m - k) x)) =
+        (k + 1) •
+          (dividedPower (n - (k + 1)) y * dividedPower (k + 1) z *
+            dividedPower (m - k) x) := by
+    rw [hzmove, hzz]
+    simp_rw [← Nat.cast_smul_eq_nsmul ℚ]
+    rw [smul_mul_assoc, mul_smul_comm, mul_assoc]
   rw [mul_assoc (dividedPower (n - k) y) (dividedPower k z),
-    ← mul_assoc x (dividedPower (n - k) y), hnk,
-    mul_dividedPower_of_commutator_eq hxy hyz, add_mul]
-  rw [← hnk]
-  congr 1
-  · rw [mul_assoc (dividedPower (n - k) y) x,
-      ← mul_assoc x (dividedPower k z), hxzk.eq,
-      mul_assoc (dividedPower k z) x, ← mul_assoc (dividedPower (n - k) y),
-      self_mul_dividedPower, ← Nat.cast_smul_eq_nsmul ℚ, mul_smul_comm,
-      Nat.cast_smul_eq_nsmul, hmk]
-  · rw [mul_assoc (dividedPower (n - (k + 1)) y) z,
-      ← mul_assoc z (dividedPower k z), self_mul_dividedPower,
-      ← Nat.cast_smul_eq_nsmul ℚ, smul_mul_assoc, mul_smul_comm,
-      Nat.cast_smul_eq_nsmul, hmk', ← mul_assoc]
+    ← mul_assoc x (dividedPower (n - k) y), hxy', add_mul,
+    mul_assoc (dividedPower (n - k) y) x,
+    mul_assoc (dividedPower (n - (k + 1)) y) z]
+  rw [hfirst, hsecond, hmk']
 
 -- At the last summand `k = n`, no commutator term remains because the `y`-power is zero.
 private theorem mul_normalOrderLast {x z : A} (hxz : Commute x z) {m n : ℕ} (hnm : n ≤ m) :
@@ -164,11 +192,16 @@ private theorem mul_normalOrderLast {x z : A} (hxz : Commute x z) {m n : ℕ} (h
   have hmn : m + 1 - n = (m - n) + 1 := by omega
   have hxzn : Commute x (dividedPower n z) := by
     simpa using commute_dividedPower_dividedPower hxz 1 n
-  rw [← mul_assoc, hxzn.eq, mul_assoc, self_mul_dividedPower,
-    ← Nat.cast_smul_eq_nsmul ℚ, mul_smul_comm, Nat.cast_smul_eq_nsmul, hmn]
+  have hxx :
+      x * dividedPower (m - n) x =
+        (m + 1 - n) • dividedPower (m + 1 - n) x := by
+    rw [self_mul_dividedPower, hmn]
+  rw [← mul_assoc, hxzn.eq, mul_assoc, hxx]
+  simp_rw [← Nat.cast_smul_eq_nsmul ℚ]
+  rw [mul_smul_comm]
 
 /-- **Coefficient-one normal ordering for divided powers with central commutator.** Suppose
-`x * y - y * x = z`, and `z` commutes with both `x` and `y`. Then
+`x * y = y * x + z`, and `z` commutes with both `x` and `y`. Then
 
 ```text
 x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ k ≤ min(m,n), y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾ x⁽ᵐ⁻ᵏ⁾.
@@ -177,21 +210,26 @@ x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ k ≤ min(m,n), y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾ x⁽ᵐ�
 The summation is written as `range (min m n + 1)`, so every displayed subtraction is exact. This is
 the integral normal-ordering rule: every coefficient in the divided-power basis is `1`. -/
 theorem dividedPower_mul_dividedPower_of_commutator_eq {x y z : A}
-    (hxy : x * y - y * x = z) (hxz : Commute x z) (hyz : Commute y z) (m n : ℕ) :
+    (hxy : x * y = y * x + z) (hxz : Commute x z) (hyz : Commute y z) (m n : ℕ) :
     dividedPower m x * dividedPower n y =
       ∑ k ∈ range (min m n + 1),
         dividedPower (n - k) y * dividedPower k z * dividedPower (m - k) x := by
   induction m with
   | zero => simp
   | succ m ih =>
-      have hm : (m + 1 : ℚ) ≠ 0 := by positivity
+      have hm : (((m + 1 : ℕ) : ℚ)) ≠ 0 := by positivity
+      have hscaled :
+          ((m + 1 : ℕ) : ℚ) •
+              (dividedPower (m + 1) x * dividedPower n y) =
+            x * (dividedPower m x * dividedPower n y) := by
+        rw [← smul_mul_assoc, Nat.cast_smul_eq_nsmul,
+          ← self_mul_dividedPower, mul_assoc]
       rw [← inv_smul_smul₀ hm (dividedPower (m + 1) x * dividedPower n y),
         ← inv_smul_smul₀ hm
           (∑ k ∈ range (min (m + 1) n + 1),
             dividedPower (n - k) y * dividedPower k z * dividedPower (m + 1 - k) x)]
       congr 1
-      rw [← smul_mul_assoc, ← Nat.cast_one, ← Nat.cast_add, Nat.cast_smul_eq_nsmul,
-        ← self_mul_dividedPower, mul_assoc, ih, Finset.mul_sum]
+      rw [hscaled, ih, Finset.mul_sum, Nat.cast_smul_eq_nsmul]
       by_cases hnm : n ≤ m
       · have hmin : min m n = n := min_eq_right hnm
         have hmin' : min (m + 1) n = n := min_eq_right (le_trans hnm (Nat.le_succ m))
