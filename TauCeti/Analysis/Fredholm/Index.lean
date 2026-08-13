@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Module.LinearMap.Index
+public import TauCeti.Algebra.Module.LinearMap.Index
 public import TauCeti.Analysis.Fredholm.Basic
 
 /-!
@@ -28,43 +28,11 @@ following Mathlib's convention for `LinearMap.index`.
   the index.
 * `TauCeti.ContinuousLinearMap.index_equiv_comp` and `index_comp_equiv`: composition with a
   continuous linear equivalence preserves the index.
-* `LinearMap.index_equiv_comp` and `LinearMap.index_comp_equiv`: the corresponding algebraic
-  statements for arbitrary modules.
-
 The sign convention follows McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
 Appendix A.1.
 -/
 
 public section
-
-namespace LinearMap
-
-variable {𝕜 E F G : Type*} [Ring 𝕜]
-variable [AddCommGroup E] [Module 𝕜 E]
-variable [AddCommGroup F] [Module 𝕜 F]
-variable [AddCommGroup G] [Module 𝕜 G]
-
-/-- Postcomposition with a linear equivalence leaves the index unchanged. -/
-@[simp]
-lemma index_equiv_comp (T : E →ₗ[𝕜] F) (e : F ≃ₗ[𝕜] G) :
-    ((e : F →ₗ[𝕜] G).comp T).index = T.index := by
-  rw [index_eq_finrank_sub, index_eq_finrank_sub]
-  congr 1
-  · rw [ker_comp_of_ker_eq_bot _ (ker_eq_bot.2 e.injective)]
-  · rw [range_comp]
-    exact_mod_cast (LinearEquiv.finrank_eq
-      (Submodule.Quotient.equiv T.range (T.range.map (e : F →ₗ[𝕜] G)) e rfl)).symm
-
-/-- Precomposition with a linear equivalence leaves the index unchanged. -/
-@[simp]
-lemma index_comp_equiv (T : E →ₗ[𝕜] F) (e : G ≃ₗ[𝕜] E) :
-    (T.comp (e : G →ₗ[𝕜] E)).index = T.index := by
-  rw [index_eq_finrank_sub, index_eq_finrank_sub]
-  congr 1
-  · rw [ker_comp, Submodule.comap_equiv_eq_map_symm, LinearEquiv.finrank_map_eq]
-  · rw [range_comp_of_range_eq_top _ (range_eq_top.2 e.surjective)]
-
-end LinearMap
 
 namespace TauCeti
 
@@ -124,17 +92,15 @@ variable {T : E →L[𝕜] F}
 /-- Postcomposing with a continuous linear equivalence leaves the index unchanged. -/
 @[simp] lemma index_equiv_comp (e : F ≃L[𝕜] G) :
     index ((e : F →L[𝕜] G).comp T) = index T := by
-  rw [index_def, index_def, ContinuousLinearMap.toLinearMap_comp]
-  change ((e.toLinearEquiv : F →ₗ[𝕜] G).comp (T : E →ₗ[𝕜] F)).index =
-    (T : E →ₗ[𝕜] F).index
+  rw [index_def, index_def, ContinuousLinearMap.toLinearMap_comp,
+    ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
   rw [LinearMap.index_equiv_comp]
 
 /-- Precomposing with a continuous linear equivalence leaves the index unchanged. -/
 @[simp] lemma index_comp_equiv (e : G ≃L[𝕜] E) :
     index (T.comp (e : G →L[𝕜] E)) = index T := by
-  rw [index_def, index_def, ContinuousLinearMap.toLinearMap_comp]
-  change ((T : E →ₗ[𝕜] F).comp (e.toLinearEquiv : G →ₗ[𝕜] E)).index =
-    (T : E →ₗ[𝕜] F).index
+  rw [index_def, index_def, ContinuousLinearMap.toLinearMap_comp,
+    ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
   rw [LinearMap.index_comp_equiv]
 
 end ContinuousLinearMap
