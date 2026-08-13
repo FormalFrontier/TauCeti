@@ -125,13 +125,6 @@ private theorem sub_nsmul_mul_eq_mul_add {a x c : A} (h : a * x = x * (a + c))
       congr 1
       abel
 
-/-- Moving `a` to the left across `x ^ n` produces the opposite accumulated shift. -/
-private theorem pow_mul_eq_sub_nsmul_mul_pow {a x c : A} (h : a * x = x * (a + c))
-    (hc : Commute c x) (n : ℕ) :
-    x ^ n * a = (a - n • c) * x ^ n := by
-  have hpow := mul_pow_eq_pow_mul_add_nsmul (sub_nsmul_mul_eq_mul_add h hc n) hc n
-  simpa only [sub_add_cancel] using hpow.symm
-
 namespace Polynomial
 
 /-- A polynomial in `a` can be moved to the left across `x ^ n` by shifting its argument by
@@ -141,9 +134,8 @@ theorem pow_mul_smeval {R : Type v} [Semiring R] [Module R A] [IsScalarTower R A
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
     x ^ n * _root_.Polynomial.smeval p a =
       _root_.Polynomial.smeval p (a - n • c) * x ^ n := by
-  have hs : SemiconjBy (x ^ n) a (a - n • c) :=
-    pow_mul_eq_sub_nsmul_mul_pow h hc n
-  exact (hs.smeval_right p).eq
+  simpa only [sub_add_cancel] using
+    (smeval_mul_pow p (sub_nsmul_mul_eq_mul_add h hc n) hc n).symm
 
 end Polynomial
 

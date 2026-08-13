@@ -51,27 +51,33 @@ namespace TauCeti.UniversalEnvelopingAlgebra
 
 universe u
 
-variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
+variable {L : Type u} [LieRing L]
+
+attribute [local instance 100] LieRing.ofAssociativeRing
+
+/-- The associative-ring form of an integral weight relation in a Lie algebra. -/
+theorem ι_mul_ι_eq_ι_mul_ι_add_zsmul_one {R : Type*} [CommRing R] [LieAlgebra R L]
+    {h x : L} {z : ℤ} (hz : ⁅h, x⁆ = z • x) :
+    _root_.UniversalEnvelopingAlgebra.ι R h *
+        _root_.UniversalEnvelopingAlgebra.ι R x =
+      _root_.UniversalEnvelopingAlgebra.ι R x *
+        (_root_.UniversalEnvelopingAlgebra.ι R h +
+          z • (1 : _root_.UniversalEnvelopingAlgebra R L)) := by
+  have hmap := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι R) h x
+  rw [hz, map_zsmul, LieRing.of_associative_ring_bracket] at hmap
+  have hzmul : z • _root_.UniversalEnvelopingAlgebra.ι R x =
+      _root_.UniversalEnvelopingAlgebra.ι R x *
+        (z • (1 : _root_.UniversalEnvelopingAlgebra R L)) := by
+    simp only [zsmul_eq_mul, mul_one]
+    exact (Int.cast_commute z (_root_.UniversalEnvelopingAlgebra.ι R x)).eq
+  rw [mul_add, ← hzmul, add_comm]
+  exact eq_add_of_sub_eq hmap.symm
+
+variable [LieAlgebra ℚ L]
 
 local notation "U" => _root_.UniversalEnvelopingAlgebra ℚ L
 
-attribute [local instance 100] LieRing.ofAssociativeRing
 attribute [local instance] TauCeti.moduleNNRat
-
-/-- The associative-ring form of an integral weight relation in a Lie algebra. -/
-theorem ι_mul_ι_eq_ι_mul_ι_add_zsmul_one {h x : L} {z : ℤ} (hz : ⁅h, x⁆ = z • x) :
-    _root_.UniversalEnvelopingAlgebra.ι ℚ h *
-        _root_.UniversalEnvelopingAlgebra.ι ℚ x =
-      _root_.UniversalEnvelopingAlgebra.ι ℚ x *
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ h + z • (1 : U)) := by
-  have hmap := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) h x
-  rw [hz, map_zsmul, LieRing.of_associative_ring_bracket] at hmap
-  have hzmul : z • _root_.UniversalEnvelopingAlgebra.ι ℚ x =
-      _root_.UniversalEnvelopingAlgebra.ι ℚ x * (z • (1 : U)) := by
-    simp only [zsmul_eq_mul, mul_one]
-    exact (Int.cast_commute z (_root_.UniversalEnvelopingAlgebra.ι ℚ x)).eq
-  rw [mul_add, ← hzmul, add_comm]
-  exact eq_add_of_sub_eq hmap.symm
 
 /-- A Cartan binomial coefficient moves to the right of a root-vector divided power by adding
 `n` copies of the integral weight to its argument. -/
