@@ -6,10 +6,6 @@ module
 
 public import Mathlib
 
-set_option linter.style.longLine false
-set_option linter.style.induction false
-set_option linter.deprecated false
-
 /-!
 # Pure Hodge Structures and the Hodge Decomposition
 
@@ -31,7 +27,8 @@ Hodge decomposition theorem (the L0 milestone of the `HodgeStructures` roadmap).
   vector space `W` equipped with a conjugation `ω`.
 * `TauCeti.Geometry.Hodge.HodgeStructure`: Abbreviation for a pure Hodge structure on the
   complexification of an integral lattice `V`.
-* `TauCeti.Geometry.Hodge.HodgeStructureOn.piece`: The `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$.
+* `TauCeti.Geometry.Hodge.HodgeStructureOn.piece`: The `(p, q)`-piece
+  $H^{p,q} = F^p \cap \overline{F^{n-p}}$.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.IsEffective`: Predicate stating that the Hodge numbers
   are supported in $[0, n]$.
 * `TauCeti.Geometry.Hodge.tate`: The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$.
@@ -85,6 +82,7 @@ theorem rationalificationMap_isBaseChange :
 /-- A conjugation on a `ℂ`-vector space `W`: a conjugate-linear automorphism
 whose square is the identity. -/
 structure Conjugation (W : Type*) [AddCommGroup W] [Module ℂ W] where
+  /-- The underlying conjugate-linear equivalence. -/
   toEquiv : W ≃ₛₗ[starRingEnd ℂ] W
   involutive : Function.Involutive toEquiv
 
@@ -195,7 +193,8 @@ noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
   map_smul' c x := by
     have h_symm : hℂ.equiv.symm (c • x) = c • hℂ.equiv.symm x := map_smul _ _ _
     rw [h_symm]
-    have h_conj : concreteLatticeConj (c • hℂ.equiv.symm x) = (starRingEnd ℂ c) • concreteLatticeConj (hℂ.equiv.symm x) :=
+    have h_conj : concreteLatticeConj (c • hℂ.equiv.symm x) =
+        (starRingEnd ℂ c) • concreteLatticeConj (hℂ.equiv.symm x) :=
       concreteLatticeConj.map_smulₛₗ c _
     rw [h_conj]
     exact map_smul _ _ _
@@ -217,7 +216,9 @@ theorem latticeConj_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
 theorem latticeConj_involutive (hℂ : IsBaseChange ℂ ιℂ) :
     Function.Involutive (latticeConj hℂ) := by
   intro x
-  change hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm (hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x))))) = x
+  change hℂ.equiv
+    (concreteLatticeConj
+      (hℂ.equiv.symm (hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x))))) = x
   rw [LinearEquiv.symm_apply_apply]
   rw [concreteLatticeConj_involutive]
   exact hℂ.equiv.apply_symm_apply x
@@ -270,6 +271,7 @@ conjugation `ω`. The primary datum is a decreasing, bounded filtration `F` whic
 `n`-opposed: `F^p ⊕ ω(F^{n+1-p}) = W`. -/
 structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
     (ω : Conjugation W) (n : ℤ) where
+  /-- The decreasing Hodge filtration. -/
   F : ℤ → Submodule ℂ W
   F_antitone : Antitone F
   F_top : ∃ p, F p = ⊤
@@ -288,7 +290,8 @@ variable (ω : Conjugation W) {n : ℤ} (hs : HodgeStructureOn W ω n)
 noncomputable def piece (p : ℤ) : Submodule ℂ W :=
   hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap
 
-/-- A weight-`n` Hodge structure is **effective** when its Hodge numbers are supported in `[0, n]`. -/
+/-- A weight-`n` Hodge structure is **effective** when its Hodge numbers are supported in
+`[0, n]`. -/
 def IsEffective : Prop :=
   hs.F 0 = ⊤ ∧ hs.F (n + 1) = ⊥
 
@@ -387,7 +390,9 @@ theorem iSupIndep_piece : iSupIndep (hs.piece ω) := by
       have h2 : p + 1 ≤ q := by linarith
       have h3 : hs.F q ≤ hs.F (p + 1) := hs.F_antitone h2
       exact le_trans (le_trans h1 h3) le_sup_left
-  have h_disj : hs.piece ω p ⊓ (hs.F (p + 1) ⊔ (hs.F (n + 1 - p)).map ω.toEquiv.toLinearMap) = ⊥ := by
+  have h_disj :
+      hs.piece ω p ⊓
+          (hs.F (p + 1) ⊔ (hs.F (n + 1 - p)).map ω.toEquiv.toLinearMap) = ⊥ := by
     rw [eq_bot_iff]
     rintro x ⟨hx_piece, hx_sup⟩
     rcases (Submodule.mem_sup).mp hx_sup with ⟨a, ha, b, hb, rfl⟩
@@ -432,22 +437,33 @@ def tate (m : ℤ) : HodgeStructure (complexificationMap_isBaseChange (V := ℤ)
     · exfalso; linarith
     · exact bot_le
     · exact le_rfl
-  F_top := ⟨-m, by exact if_pos (by linarith)⟩
-  F_bot := ⟨-m + 1, by exact if_neg (by linarith)⟩
+  F_top := ⟨-m, by exact ite_eq_left (by linarith)⟩
+  F_bot := ⟨-m + 1, by exact ite_eq_right (by linarith)⟩
   opposed p := by
     have h_eval : -2 * m + 1 - p = 1 - 2 * m - p := by ring
     rw [h_eval]
     by_cases hp : p ≤ -m
-    · have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by exact if_pos hp
-      have h2 : (if 1 - 2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by exact if_neg (by linarith)
+    · have h1 :
+          (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by
+        exact ite_eq_left hp
+      have h2 :
+          (if 1 - 2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) =
+            ⊥ := by
+        exact ite_eq_right (by linarith)
       rw [h1, h2]
       rw [Submodule.map_bot]
       exact isCompl_top_bot
-    · have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by exact if_neg hp
-      have h2 : (if 1 - 2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by exact if_pos (by linarith)
+    · have h1 :
+          (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by
+        exact ite_eq_right hp
+      have h2 :
+          (if 1 - 2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) =
+            ⊤ := by
+        exact ite_eq_left (by linarith)
       rw [h1, h2]
       have h_top_map : (⊤ : Submodule ℂ (Complexification ℤ)).map
-          (latticeConjugation (complexificationMap_isBaseChange (V := ℤ))).toEquiv.toLinearMap = ⊤ := by
+          (latticeConjugation
+            (complexificationMap_isBaseChange (V := ℤ))).toEquiv.toLinearMap = ⊤ := by
         rw [eq_top_iff]
         rintro x -
         rw [Submodule.mem_map]
@@ -462,14 +478,18 @@ theorem tate_piece_apply (m : ℤ) (p : ℤ) :
   dsimp [HodgeStructureOn.piece, tate]
   by_cases hp : p = -m
   · subst hp
-    have h1 : (if -m ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by exact if_pos (by linarith)
+    have h1 :
+        (if -m ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by
+      exact ite_eq_left (by linarith)
     have h_other : -2 * m - -m = -m := by ring
     rw [h1]
     have h2 : (if -2 * m - -m ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by
-      rw [h_other]; exact if_pos (by linarith)
+      rw [h_other]
+      exact ite_eq_left (by linarith)
     rw [h2]
     have h_top_map : (⊤ : Submodule ℂ (Complexification ℤ)).map
-        (latticeConjugation (complexificationMap_isBaseChange (V := ℤ))).toEquiv.toLinearMap = ⊤ := by
+        (latticeConjugation
+          (complexificationMap_isBaseChange (V := ℤ))).toEquiv.toLinearMap = ⊤ := by
       rw [eq_top_iff]
       rintro x -
       rw [Submodule.mem_map]
@@ -479,14 +499,21 @@ theorem tate_piece_apply (m : ℤ) (p : ℤ) :
     split_ifs with h_cond
     · rfl
     · exfalso; exact h_cond rfl
-  · rw [if_neg hp]
+  · rw [ite_eq_right hp]
     rcases lt_or_gt_of_ne hp with hp_lt | hp_gt
-    · have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by exact if_pos (by linarith)
+    · have h1 :
+          (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by
+        exact ite_eq_left (by linarith)
       have h2_cond : ¬ (-2 * m - p ≤ -m) := by linarith
-      have h2 : (if -2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by exact if_neg h2_cond
+      have h2 :
+          (if -2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) =
+            ⊥ := by
+        exact ite_eq_right h2_cond
       rw [h1, h2, Submodule.map_bot, inf_bot_eq]
     · have hp_not_le : ¬ p ≤ -m := by linarith
-      have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by exact if_neg hp_not_le
+      have h1 :
+          (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by
+        exact ite_eq_right hp_not_le
       rw [h1, bot_inf_eq]
 
 end
