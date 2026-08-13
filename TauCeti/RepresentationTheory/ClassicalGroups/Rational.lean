@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.Matrix.Basis
 public import Mathlib.LinearAlgebra.Matrix.MvPolynomial
 public import Mathlib.LinearAlgebra.TensorProduct.Matrix
@@ -14,7 +15,7 @@ public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 /-!
 # Rational and polynomial representations of the general linear group
 
-A representation of `GL n k` is **polynomial** when, in some basis of the carrier, every matrix
+A representation of `GL n ℂ` is **polynomial** when, in some basis of the carrier, every matrix
 entry of `ρ g` is a polynomial in the entries `gᵢⱼ`, and **rational** when every entry is such a
 polynomial divided by a power of `det g`.  The distinction is the one that separates the
 representations arising inside tensor powers of the standard representation from those needing a
@@ -24,7 +25,7 @@ is rational.
 The two definitions quantify existentially over a basis, and the content of this file is that this
 costs nothing: the condition holds in *one* basis exactly when it holds in *every* basis
 (`TauCeti.isRationalRep_iff_forall_mem_rationalFunctions` and its polynomial companion), because a
-change of basis rewrites each entry as a fixed `k`-linear combination of the old entries, with
+change of basis rewrites each entry as a fixed linear combination of the old entries, with
 coefficients read off the two change-of-basis matrices and independent of `g`.  So the existential
 form is a genuinely basis-independent property of `ρ`, and the coordinate-entry form is available
 against whatever basis a computation has in hand.
@@ -43,6 +44,14 @@ over `det ^ m`" is what keeps the subalgebra available over an arbitrary commuta
 inverse is taken.  Over a field the two agree
 (`TauCeti.GeneralLinearGroup.mem_rationalFunctions_iff_inv`), and it is the field form that the
 representation-level definitions are stated in, matching the roadmap.
+
+The two function algebras carry an arbitrary base ring, but the two *representation-level* notions
+are stated over `ℂ`, as the roadmap pins them, and that restriction is not cosmetic.  Over a finite
+field `k` the group `GL n k` is a finite set and every function on it is the evaluation of a
+polynomial in the matrix entries, so `TauCeti.GeneralLinearGroup.polynomialFunctions k n` is then
+the whole function algebra and every finite-dimensional representation would count as polynomial.
+The coordinate-entry condition is faithful to the intended notion only over an infinite field, and
+`ℂ` is the case the roadmap and the layers above this one use.
 
 That the negative determinant powers are rational is
 `TauCeti.GeneralLinearGroup.detZPow_mem_rationalFunctions`.  Whether a *given* representation fails
@@ -253,27 +262,33 @@ section Defs
 
 open GeneralLinearGroup
 
-variable {k : Type u} [Field k] {n : ℕ} {W : Type v} [AddCommGroup W] [Module k W]
+variable {n : ℕ} {W : Type v} [AddCommGroup W] [Module ℂ W]
 
-/-- **A polynomial representation** of `GL n k`: in some basis of the carrier, every matrix entry of
+/-- **A polynomial representation** of `GL n ℂ`: in some basis of the carrier, every matrix entry of
 `ρ g` is a polynomial in the entries of `g`.  The carrier is forced to be finite-dimensional, since
-no basis indexed by `Fin (Module.finrank k W)` exists otherwise.  The condition does not depend on
-the basis: see `TauCeti.isPolynomialRep_iff_forall_mem_polynomialFunctions`. -/
-def IsPolynomialRep (ρ : Representation k (GL (Fin n) k) W) : Prop :=
-  ∃ (b : Module.Basis (Fin (Module.finrank k W)) k W)
-    (P : Fin (Module.finrank k W) → Fin (Module.finrank k W) → MvPolynomial (Fin n × Fin n) k),
-    ∀ (g : GL (Fin n) k) (i j : Fin (Module.finrank k W)),
+no basis indexed by `Fin (Module.finrank ℂ W)` exists otherwise.  The condition does not depend on
+the basis: see `TauCeti.isPolynomialRep_iff_forall_mem_polynomialFunctions`.
+
+The base field is the roadmap's `ℂ` rather than a general field because the coordinate-entry
+condition is faithful only over an infinite field: over a finite `k` the group `GL n k` is finite,
+so every function on it — hence every matrix entry of every representation — is polynomial in the
+entries of `g`. -/
+def IsPolynomialRep (ρ : Representation ℂ (GL (Fin n) ℂ) W) : Prop :=
+  ∃ (b : Module.Basis (Fin (Module.finrank ℂ W)) ℂ W)
+    (P : Fin (Module.finrank ℂ W) → Fin (Module.finrank ℂ W) → MvPolynomial (Fin n × Fin n) ℂ),
+    ∀ (g : GL (Fin n) ℂ) (i j : Fin (Module.finrank ℂ W)),
       LinearMap.toMatrix b b (ρ g) i j = entryEval g (P i j)
 
-/-- **A rational representation** of `GL n k`: in some basis of the carrier, every matrix entry of
+/-- **A rational representation** of `GL n ℂ`: in some basis of the carrier, every matrix entry of
 `ρ g` is a polynomial in the entries of `g` divided by a fixed power of `det g`.  The condition does
-not depend on the basis: see `TauCeti.isRationalRep_iff_forall_mem_rationalFunctions`. -/
-def IsRationalRep (ρ : Representation k (GL (Fin n) k) W) : Prop :=
-  ∃ (b : Module.Basis (Fin (Module.finrank k W)) k W)
-    (P : Fin (Module.finrank k W) → Fin (Module.finrank k W) → MvPolynomial (Fin n × Fin n) k)
-    (m : ℕ), ∀ (g : GL (Fin n) k) (i j : Fin (Module.finrank k W)),
+not depend on the basis: see `TauCeti.isRationalRep_iff_forall_mem_rationalFunctions`.  The base
+field is `ℂ` for the reason recorded on `TauCeti.IsPolynomialRep`. -/
+def IsRationalRep (ρ : Representation ℂ (GL (Fin n) ℂ) W) : Prop :=
+  ∃ (b : Module.Basis (Fin (Module.finrank ℂ W)) ℂ W)
+    (P : Fin (Module.finrank ℂ W) → Fin (Module.finrank ℂ W) → MvPolynomial (Fin n × Fin n) ℂ)
+    (m : ℕ), ∀ (g : GL (Fin n) ℂ) (i j : Fin (Module.finrank ℂ W)),
       LinearMap.toMatrix b b (ρ g) i j
-        = ((g : Matrix (Fin n) (Fin n) k).det ^ m)⁻¹ * entryEval g (P i j)
+        = ((g : Matrix (Fin n) (Fin n) ℂ).det ^ m)⁻¹ * entryEval g (P i j)
 
 end Defs
 
@@ -308,46 +323,53 @@ theorem toMatrix_mem_of_toMatrix_mem (A : Subalgebra k (GL (Fin n) k → k))
   exact Subalgebra.sum_mem _ fun l _ =>
     Subalgebra.sum_mem _ fun p _ => Subalgebra.smul_mem _ (h p l) _
 
-variable {ρ : Representation k (GL (Fin n) k) W}
+end BasisChange
+
+section BasisIndependence
+
+open GeneralLinearGroup
+
+variable {n : ℕ} {W : Type v} [AddCommGroup W] [Module ℂ W]
+variable {ρ : Representation ℂ (GL (Fin n) ℂ) W}
 
 /-- **Polynomiality is basis independent.**  A representation is polynomial exactly when, against
 *any* chosen basis, each matrix entry is a polynomial function of the entries of `g`. -/
 theorem isPolynomialRep_iff_forall_mem_polynomialFunctions {ι : Type w} [Fintype ι] [DecidableEq ι]
-    (b : Module.Basis ι k W) :
+    (b : Module.Basis ι ℂ W) :
     IsPolynomialRep ρ ↔
-      ∀ i j, (fun g => LinearMap.toMatrix b b (ρ g) i j) ∈ polynomialFunctions k n := by
-  have hcard : Module.finrank k W = Fintype.card ι := Module.finrank_eq_card_basis b
+      ∀ i j, (fun g => LinearMap.toMatrix b b (ρ g) i j) ∈ polynomialFunctions ℂ n := by
+  have hcard : Module.finrank ℂ W = Fintype.card ι := Module.finrank_eq_card_basis b
   constructor
   · rintro ⟨b₀, P, hP⟩
-    exact fun i j => toMatrix_mem_of_toMatrix_mem (polynomialFunctions k n) b₀ b ρ
+    exact fun i j => toMatrix_mem_of_toMatrix_mem (polynomialFunctions ℂ n) b₀ b ρ
       (fun p l => ⟨P p l, fun g => hP g p l⟩) i j
   · intro h
-    let e : ι ≃ Fin (Module.finrank k W) := Fintype.equivFinOfCardEq hcard.symm
+    let e : ι ≃ Fin (Module.finrank ℂ W) := Fintype.equivFinOfCardEq hcard.symm
     have hb : ∀ i j, (fun g => LinearMap.toMatrix (b.reindex e) (b.reindex e) (ρ g) i j)
-        ∈ polynomialFunctions k n :=
+        ∈ polynomialFunctions ℂ n :=
       fun i j => toMatrix_mem_of_toMatrix_mem _ b (b.reindex e) ρ h i j
-    choose P hP using fun q : Fin (Module.finrank k W) × Fin (Module.finrank k W) =>
+    choose P hP using fun q : Fin (Module.finrank ℂ W) × Fin (Module.finrank ℂ W) =>
       mem_polynomialFunctions.mp (hb q.1 q.2)
     exact ⟨b.reindex e, fun i j => P (i, j), fun g i j => hP (i, j) g⟩
 
 /-- **Rationality is basis independent.**  A representation is rational exactly when, against *any*
 chosen basis, each matrix entry is a rational function of the entries of `g`. -/
 theorem isRationalRep_iff_forall_mem_rationalFunctions {ι : Type w} [Fintype ι] [DecidableEq ι]
-    (b : Module.Basis ι k W) :
+    (b : Module.Basis ι ℂ W) :
     IsRationalRep ρ ↔
-      ∀ i j, (fun g => LinearMap.toMatrix b b (ρ g) i j) ∈ rationalFunctions k n := by
-  have hcard : Module.finrank k W = Fintype.card ι := Module.finrank_eq_card_basis b
+      ∀ i j, (fun g => LinearMap.toMatrix b b (ρ g) i j) ∈ rationalFunctions ℂ n := by
+  have hcard : Module.finrank ℂ W = Fintype.card ι := Module.finrank_eq_card_basis b
   constructor
   · rintro ⟨b₀, P, m, hP⟩
     refine fun i j => toMatrix_mem_of_toMatrix_mem _ b₀ b ρ (fun p l => ?_) i j
     exact mem_rationalFunctions_iff_inv.mpr ⟨P p l, m, fun g => hP g p l⟩
   · intro h
-    let e : ι ≃ Fin (Module.finrank k W) := Fintype.equivFinOfCardEq hcard.symm
+    let e : ι ≃ Fin (Module.finrank ℂ W) := Fintype.equivFinOfCardEq hcard.symm
     have hb : ∀ i j, (fun g => LinearMap.toMatrix (b.reindex e) (b.reindex e) (ρ g) i j)
-        ∈ rationalFunctions k n :=
+        ∈ rationalFunctions ℂ n :=
       fun i j => toMatrix_mem_of_toMatrix_mem _ b (b.reindex e) ρ h i j
     obtain ⟨P, m, hPm⟩ := exists_forall_eq_inv_mul_of_forall_mem
-      (f := fun q : Fin (Module.finrank k W) × Fin (Module.finrank k W) => fun g =>
+      (f := fun q : Fin (Module.finrank ℂ W) × Fin (Module.finrank ℂ W) => fun g =>
         LinearMap.toMatrix (b.reindex e) (b.reindex e) (ρ g) q.1 q.2)
       (fun q => hb q.1 q.2)
     exact ⟨b.reindex e, fun i j => P (i, j), m, fun g i j => hPm (i, j) g⟩
@@ -358,7 +380,7 @@ theorem IsPolynomialRep.isRationalRep (h : IsPolynomialRep ρ) : IsRationalRep �
   exact (isRationalRep_iff_forall_mem_rationalFunctions b).mpr fun i j =>
     polynomialFunctions_le_rationalFunctions ⟨P i j, fun g => hP g i j⟩
 
-end BasisChange
+end BasisIndependence
 
 /-! ### The basic examples -/
 
@@ -366,39 +388,39 @@ section Examples
 
 open GeneralLinearGroup
 
-variable (k : Type u) [Field k] (n : ℕ)
+variable (n : ℕ)
 
 /-- **The standard representation is polynomial**: in the standard basis its matrix is `g`
 itself. -/
-theorem isPolynomialRep_stdRep : IsPolynomialRep (stdRep k n) := by
+theorem isPolynomialRep_stdRep : IsPolynomialRep (stdRep ℂ n) := by
   refine (isPolynomialRep_iff_forall_mem_polynomialFunctions
-    (Pi.basisFun k (Fin n))).mpr fun i j => ?_
-  have hentry : (fun g : GL (Fin n) k =>
-      LinearMap.toMatrix (Pi.basisFun k (Fin n)) (Pi.basisFun k (Fin n)) (stdRep k n g) i j)
-      = fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k) i j := by
+    (Pi.basisFun ℂ (Fin n))).mpr fun i j => ?_
+  have hentry : (fun g : GL (Fin n) ℂ =>
+      LinearMap.toMatrix (Pi.basisFun ℂ (Fin n)) (Pi.basisFun ℂ (Fin n)) (stdRep ℂ n g) i j)
+      = fun g : GL (Fin n) ℂ => (g : Matrix (Fin n) (Fin n) ℂ) i j := by
     funext g
     simp [Matrix.mulVec_single]
   rw [hentry]
   exact entry_mem_polynomialFunctions i j
 
-variable {k n}
+variable {n}
 
 /-- The one-dimensional carrier `k` has the singleton basis, against which a scalar action has its
 scalar as its only matrix entry. -/
-private theorem toMatrix_singleton (ρ : Representation k (GL (Fin n) k) k) (i j : Unit)
-    (g : GL (Fin n) k) :
+private theorem toMatrix_singleton {k : Type u} [Field k]
+    (ρ : Representation k (GL (Fin n) k) k) (i j : Unit) (g : GL (Fin n) k) :
     LinearMap.toMatrix (Module.Basis.singleton Unit k) (Module.Basis.singleton Unit k) (ρ g) i j
       = ρ g 1 := by
   simp [LinearMap.toMatrix_apply]
 
 /-- **The determinant powers are rational representations.** -/
-theorem isRationalRep_detPowerRep (m : ℤ) : IsRationalRep (detPowerRep k n m) := by
+theorem isRationalRep_detPowerRep (m : ℤ) : IsRationalRep (detPowerRep ℂ n m) := by
   refine (isRationalRep_iff_forall_mem_rationalFunctions
-    (Module.Basis.singleton Unit k)).mpr fun i j => ?_
-  have hentry : (fun g : GL (Fin n) k =>
-      LinearMap.toMatrix (Module.Basis.singleton Unit k) (Module.Basis.singleton Unit k)
-        (detPowerRep k n m g) i j)
-      = fun g : GL (Fin n) k => ((Matrix.GeneralLinearGroup.det g ^ m : kˣ) : k) := by
+    (Module.Basis.singleton Unit ℂ)).mpr fun i j => ?_
+  have hentry : (fun g : GL (Fin n) ℂ =>
+      LinearMap.toMatrix (Module.Basis.singleton Unit ℂ) (Module.Basis.singleton Unit ℂ)
+        (detPowerRep ℂ n m g) i j)
+      = fun g : GL (Fin n) ℂ => ((Matrix.GeneralLinearGroup.det g ^ m : ℂˣ) : ℂ) := by
     funext g
     rw [toMatrix_singleton]
     simp
@@ -406,14 +428,14 @@ theorem isRationalRep_detPowerRep (m : ℤ) : IsRationalRep (detPowerRep k n m) 
   exact detZPow_mem_rationalFunctions m
 
 /-- **The nonnegative determinant powers are polynomial representations.** -/
-theorem isPolynomialRep_detPowerRep {m : ℤ} (hm : 0 ≤ m) : IsPolynomialRep (detPowerRep k n m) := by
+theorem isPolynomialRep_detPowerRep {m : ℤ} (hm : 0 ≤ m) : IsPolynomialRep (detPowerRep ℂ n m) := by
   lift m to ℕ using hm
   refine (isPolynomialRep_iff_forall_mem_polynomialFunctions
-    (Module.Basis.singleton Unit k)).mpr fun i j => ?_
-  have hentry : (fun g : GL (Fin n) k =>
-      LinearMap.toMatrix (Module.Basis.singleton Unit k) (Module.Basis.singleton Unit k)
-        (detPowerRep k n (m : ℤ) g) i j)
-      = fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k).det ^ m := by
+    (Module.Basis.singleton Unit ℂ)).mpr fun i j => ?_
+  have hentry : (fun g : GL (Fin n) ℂ =>
+      LinearMap.toMatrix (Module.Basis.singleton Unit ℂ) (Module.Basis.singleton Unit ℂ)
+        (detPowerRep ℂ n (m : ℤ) g) i j)
+      = fun g : GL (Fin n) ℂ => (g : Matrix (Fin n) (Fin n) ℂ).det ^ m := by
     funext g
     rw [toMatrix_singleton]
     simp [zpow_natCast, Units.val_pow_eq_pow_val]
@@ -426,15 +448,15 @@ section TensorProduct
 
 open GeneralLinearGroup
 
-variable {k : Type u} [Field k] {n : ℕ}
-variable {W : Type v} [AddCommGroup W] [Module k W] {W' : Type x} [AddCommGroup W'] [Module k W']
-variable {ρ : Representation k (GL (Fin n) k) W} {σ : Representation k (GL (Fin n) k) W'}
+variable {n : ℕ}
+variable {W : Type v} [AddCommGroup W] [Module ℂ W] {W' : Type x} [AddCommGroup W'] [Module ℂ W']
+variable {ρ : Representation ℂ (GL (Fin n) ℂ) W} {σ : Representation ℂ (GL (Fin n) ℂ) W'}
 
 /-- Against a tensor product of bases, the entries of a tensor product of representations are the
 products of the entries of the two factors: the Kronecker product, read entrywise. -/
 private theorem toMatrix_tprod {ι : Type y} [Fintype ι] [DecidableEq ι]
     {κ : Type z} [Fintype κ] [DecidableEq κ]
-    (b : Module.Basis ι k W) (c : Module.Basis κ k W') (g : GL (Fin n) k) (i j : ι × κ) :
+    (b : Module.Basis ι ℂ W) (c : Module.Basis κ ℂ W') (g : GL (Fin n) ℂ) (i j : ι × κ) :
     LinearMap.toMatrix (b.tensorProduct c) (b.tensorProduct c) ((ρ.tprod σ) g) i j
       = LinearMap.toMatrix b b (ρ g) i.1 j.1 * LinearMap.toMatrix c c (σ g) i.2 j.2 := by
   rw [Representation.tprod_apply, TensorProduct.toMatrix_map]
