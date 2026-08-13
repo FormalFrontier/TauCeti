@@ -11,6 +11,9 @@ public import Mathlib.Algebra.Module.LinearMap.Index
 
 This file extends Mathlib's algebraic `LinearMap.index` API with its invariance under composing
 with a linear equivalence.
+
+These composition lemmas are absent from `Mathlib.Algebra.Module.LinearMap.Index` and support the
+continuous-linear-map results in `TauCeti.Analysis.Fredholm.Index`.
 -/
 
 public section

@@ -108,6 +108,8 @@ private lemma closedComplemented_map_continuousLinearEquiv (e : E ≃L[𝕜] F)
     ContinuousLinearEquiv.submoduleMap_symm_apply,
     ep.apply_symm_apply] using h
 
+/-- The kernel of `e.comp T` is the kernel of `T`, since `e` is injective. Used by
+`ContinuousLinearMap.IsFredholm.equiv_comp`. -/
 private lemma ker_equiv_comp (T : E →L[𝕜] F) (e : F ≃L[𝕜] G) :
     LinearMap.ker (((e : F →L[𝕜] G).comp T : E →L[𝕜] G) : E →ₗ[𝕜] G) =
       LinearMap.ker (T : E →ₗ[𝕜] F) := by
@@ -115,6 +117,8 @@ private lemma ker_equiv_comp (T : E →L[𝕜] F) (e : F ≃L[𝕜] G) :
   rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
   rw [LinearMap.ker_comp_of_ker_eq_bot _ (LinearMap.ker_eq_bot.2 e.injective)]
 
+/-- The range of `T.comp e` is the range of `T`, since `e` is surjective. Used by
+`ContinuousLinearMap.IsFredholm.comp_equiv`. -/
 private lemma range_comp_equiv (T : E →L[𝕜] F) (e : G ≃L[𝕜] E) :
     LinearMap.range ((T.comp (e : G →L[𝕜] E) : G →L[𝕜] F) : G →ₗ[𝕜] F) =
       LinearMap.range (T : E →ₗ[𝕜] F) := by
@@ -122,6 +126,8 @@ private lemma range_comp_equiv (T : E →L[𝕜] F) (e : G ≃L[𝕜] E) :
   rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
   rw [LinearMap.range_comp_of_range_eq_top _ (LinearMap.range_eq_top.2 e.surjective)]
 
+/-- The kernel of `T.comp e` is the image of the kernel of `T` under `e⁻¹`. Used by
+`ContinuousLinearMap.IsFredholm.comp_equiv`. -/
 private lemma ker_comp_equiv (T : E →L[𝕜] F) (e : G ≃L[𝕜] E) :
     LinearMap.ker ((T.comp (e : G →L[𝕜] E) : G →L[𝕜] F) : G →ₗ[𝕜] F) =
       (LinearMap.ker (T : E →ₗ[𝕜] F)).map (e.toLinearEquiv.symm : E →ₗ[𝕜] G) := by

@@ -66,13 +66,14 @@ lemma index_eq_zero_of_bijective (T : E →L[𝕜] F) (hT : Function.Bijective T
   exact LinearEquiv.index_eq_zero (e := LinearEquiv.ofBijective (T : E →ₗ[𝕜] F) hT)
 
 /-- The identity operator has index `0`. -/
-@[simp] lemma index_id : index (ContinuousLinearMap.id 𝕜 E) = 0 :=
-  index_eq_zero_of_bijective _ Function.bijective_id
+@[simp] lemma index_id : index (ContinuousLinearMap.id 𝕜 E) = 0 := by
+  rw [index_def, ContinuousLinearMap.coe_id, LinearMap.index_id]
 
 /-- A continuous linear equivalence has index `0`. -/
 @[simp] lemma index_continuousLinearEquiv_eq_zero (e : E ≃L[𝕜] F) :
-    index (e : E →L[𝕜] F) = 0 :=
-  index_eq_zero_of_bijective _ e.bijective
+    index (e : E →L[𝕜] F) = 0 := by
+  rw [index_def, ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
+  exact LinearEquiv.index_eq_zero
 
 /-- Between finite-dimensional spaces the index is `dim E − dim F`, for any operator. -/
 lemma index_eq_of_finiteDimensional [FiniteDimensional 𝕜 E] [FiniteDimensional 𝕜 F]
