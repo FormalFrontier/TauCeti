@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Algebra.Algebra.Opposite
 public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import Mathlib.Algebra.Ring.Subring.MulOpposite
 
 /-!
 # The antipode of a universal enveloping algebra
@@ -24,6 +25,8 @@ property of the enveloping algebra is used here.
 * `TauCeti.UniversalEnvelopingAlgebra.antipodeOp`: the algebra homomorphism from an enveloping
   algebra to its opposite.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode`: the same map as a linear endomorphism.
+* `TauCeti.UniversalEnvelopingAlgebra.antipodeComap`: the preimage of a subring under the
+  antipode, again a subring.
 * `TauCeti.UniversalEnvelopingAlgebra.antipodeEquiv`: the resulting algebra equivalence with the
   opposite algebra.
 
@@ -251,6 +254,19 @@ theorem antipode_antipode (a : _root_.UniversalEnvelopingAlgebra R L) :
   -- `AlgHom.opComm` has no application lemma, so expose the composite's underlying function.
   change (antipodeOp R (antipodeOp R a).unop).unop = a
   exact h
+
+/-- The preimage of a subring under the antipode.
+
+Antimultiplicativity is no obstruction: it is the preimage of the opposite subring `Subring.op S`
+under the genuine ring homomorphism `antipodeOp`. -/
+noncomputable def antipodeComap (S : Subring (_root_.UniversalEnvelopingAlgebra R L)) :
+    Subring (_root_.UniversalEnvelopingAlgebra R L) :=
+  (Subring.op S).comap (antipodeOp R).toRingHom
+
+@[simp]
+theorem mem_antipodeComap {S : Subring (_root_.UniversalEnvelopingAlgebra R L)}
+    {a : _root_.UniversalEnvelopingAlgebra R L} :
+    a ∈ antipodeComap R S ↔ antipode R a ∈ S := Iff.rfl
 
 /-- The antipode is bijective. -/
 theorem antipode_bijective : Function.Bijective (antipode (L := L) R) :=

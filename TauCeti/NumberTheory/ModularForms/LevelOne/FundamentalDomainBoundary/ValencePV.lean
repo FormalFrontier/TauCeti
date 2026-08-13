@@ -14,7 +14,7 @@ import Mathlib.NumberTheory.ModularForms.LevelOne.Basic
 import TauCeti.Analysis.Complex.UpperHalfPlane.Rho
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Interior
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
-import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding.I.Value
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding.NonCorner.Arc
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding.Rho.Value
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding.Rho.AddOne.Value
 
@@ -406,7 +406,8 @@ private lemma sum_corner_windingNumber_mul_order {f : ℍ → ℂ} {H : ℝ} (hH
     orderOfVanishingAt_eq_of_coe_eq_add hper
       (by rw [ofComplex_apply_of_im_pos coe_rho_add_one_im_pos])
   rw [Finset.sum_insert corner_notMem.1, Finset.sum_insert corner_notMem.2, Finset.sum_singleton,
-    windingNumber_fdBoundary_I hH, windingNumber_fdBoundary_rho hρH,
+    windingNumber_fdBoundary_arc hH (by norm_num) (by norm_num) (by norm_num),
+    windingNumber_fdBoundary_rho hρH,
     windingNumber_fdBoundary_rho_add_one hρH, hofI, ofComplex_apply ρ, hordρ1]
   ring
 
