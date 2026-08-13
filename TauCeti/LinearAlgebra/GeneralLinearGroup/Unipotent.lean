@@ -201,10 +201,15 @@ theorem isUnipotent_conj_iff (g h : GeneralLinearGroup K V) :
 /-- A unipotent automorphism of a free rank-one module over a reduced commutative ring is the
 identity. -/
 theorem IsUnipotent.eq_one_of_finrank_eq_one
-    {F : Type u} {W : Type v} [CommRing F] [IsReduced F] [Nontrivial F]
+    {F : Type u} {W : Type v} [CommRing F] [IsReduced F]
     [AddCommGroup W] [Module F W] [Module.Free F W]
     {g : GeneralLinearGroup F W} (hg : IsUnipotent g) (hdim : finrank F W = 1) :
     g = 1 := by
+  by_cases hF : Subsingleton F
+  · let _ : Subsingleton F := hF
+    let _ : Subsingleton W := Module.subsingleton F W
+    exact Subsingleton.elim _ _
+  let _ : Nontrivial F := not_subsingleton_iff_nontrivial.mp hF
   let c : F := (LinearEquiv.smul_id_of_finrank_eq_one hdim).symm (g : End F W)
   have hc : (g : End F W) = c • LinearMap.id := by
     simpa only [LinearEquiv.smul_id_of_finrank_eq_one_apply] using
