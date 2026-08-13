@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
+public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
 
 /-!
@@ -69,7 +69,11 @@ theorem map_pbwFiltration_le (f : LieHom R L M) (k : ℕ) :
   simpa only [TauCeti.Algebra.wordFiltration_eq_pow] using
     TauCeti.Algebra.map_wordFiltration_le
       (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap (map R f)
-      (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap f.toLinearMap (map_ι R f) k
+      (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
+      (fun x => by
+        change map R f (_root_.UniversalEnvelopingAlgebra.ι R x) ∈ _
+        rw [map_ι]
+        exact TauCeti.Algebra.apply_mem_wordFiltration_one _ (f x)) k
 
 /-- A homomorphism of Lie algebras sends an element of PBW filtration degree at most `k` to one of
 degree at most `k`. -/
@@ -135,17 +139,16 @@ theorem map_pbwFiltration_eq_inf_range_of_leftInverse (f : LieHom R L M) (g : Li
     (h : g.comp f = LieHom.id) (k : ℕ) :
     (pbwFiltration R L k).map (map R f).toLinearMap =
       pbwFiltration R M k ⊓ LinearMap.range (map R f).toLinearMap := by
-  apply le_antisymm
-  · refine le_inf (map_pbwFiltration_le R f k) ?_
-    rintro _ ⟨x, hx, rfl⟩
-    exact LinearMap.mem_range_self (map R f).toLinearMap x
-  · rintro y ⟨hy, ⟨x, rfl⟩⟩
-    simp only [AlgHom.toLinearMap_apply] at hy
-    have hx : x ∈ pbwFiltration R L k := by
-      have hg := map_mem_pbwFiltration R g hy
+  have hcomap : pbwFiltration R L k =
+      (pbwFiltration R M k).comap (map R f).toLinearMap := by
+    apply le_antisymm
+    · exact Submodule.map_le_iff_le_comap.1 (map_pbwFiltration_le R f k)
+    · intro x hx
+      change map R f x ∈ pbwFiltration R M k at hx
+      have hg := map_mem_pbwFiltration R g hx
       rw [map_leftInverse R h x] at hg
       exact hg
-    exact ⟨x, hx, rfl⟩
+  rw [hcomap, Submodule.map_comap_eq, inf_comm]
 
 /-- A Lie algebra equivalence maps each PBW filtration step exactly onto the corresponding target
 step. -/
@@ -195,6 +198,29 @@ theorem mapEquivFiltration_apply (e : LieEquiv R L M) (k : ℕ)
   rw [mapEquivFiltration]
   exact (AlgHom.congr_fun (mapEquiv_toAlgHom R e) x).symm
 
+/-- The identity Lie equivalence induces the identity on each PBW filtration step. -/
+@[simp]
+theorem mapEquivFiltration_refl (k : ℕ) :
+    mapEquivFiltration R (LieEquiv.refl : LieEquiv R L L) k = LinearEquiv.refl R _ := by
+  apply LinearEquiv.ext
+  intro x
+  apply Subtype.ext
+  simp only [mapEquivFiltration_apply, mapEquiv_refl, LinearEquiv.refl_apply]
+  rfl
+
+/-- Composition of Lie equivalences becomes composition of their equivalences between PBW
+filtration steps. -/
+@[simp]
+theorem mapEquivFiltration_trans (e : LieEquiv R L M) (d : LieEquiv R M N) (k : ℕ) :
+    (mapEquivFiltration R e k).trans (mapEquivFiltration R d k) =
+      mapEquivFiltration R (e.trans d) k := by
+  apply LinearEquiv.ext
+  intro x
+  apply Subtype.ext
+  simp only [LinearEquiv.trans_apply, mapEquivFiltration_apply]
+  change (mapEquiv R e).trans (mapEquiv R d) x = mapEquiv R (e.trans d) x
+  rw [mapEquiv_trans]
+
 /-- Passing to the inverse Lie equivalence gives the inverse linear equivalence between PBW
 filtration steps. -/
 @[simp]
@@ -202,6 +228,11 @@ theorem mapEquivFiltration_symm (e : LieEquiv R L M) (k : ℕ) :
     (mapEquivFiltration R e k).symm = mapEquivFiltration R e.symm k := by
   apply LinearEquiv.ext
   intro x
-  rfl
+  apply (mapEquivFiltration R e k).injective
+  rw [LinearEquiv.apply_symm_apply]
+  apply Subtype.ext
+  simp only [mapEquivFiltration_apply]
+  rw [← mapEquiv_symm]
+  exact ((mapEquiv R e).apply_symm_apply x).symm
 
 end TauCeti.UniversalEnvelopingAlgebra
