@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
+public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 
 /-!
 # Character groups of groups of multiplicative type
@@ -19,6 +20,8 @@ then forces the group of group-like elements to be finitely generated.
 
 * `TauCeti.CommHopfAlgCat.geometricCharacterGroup_fg_of_multiplicativeType`: the geometric
   character group of a group of multiplicative type is finitely generated.
+* `TauCeti.DiagonalizableGroup.geometricCharacterGroupEquiv`: the geometric character group of
+  a diagonalizable coordinate ring is its defining finitely generated commutative group.
 
 ## References
 
@@ -55,5 +58,18 @@ theorem geometricCharacterGroup_fg_of_multiplicativeType
         (AlgebraicClosure k) _).mp hspan)
 
 end CommHopfAlgCat
+
+namespace DiagonalizableGroup
+
+/-- The intrinsic geometric character group of a diagonalizable coordinate ring is the finitely
+generated commutative group used to construct it. -/
+noncomputable def geometricCharacterGroupEquiv
+    (k : Type u) [Field k] (G : FGCommGrpCat.{u}) :
+    CommHopfAlgCat.geometricCharacterGroup (coordinateRing k G).obj ≃* G :=
+  (TauCeti.GroupLike.mapEquiv
+    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) (G := G))).trans
+    (TauCeti.MonoidAlgebra.groupLikeEquiv (R := AlgebraicClosure k) (H := G))
+
+end DiagonalizableGroup
 
 end TauCeti

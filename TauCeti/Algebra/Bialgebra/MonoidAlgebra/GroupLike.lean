@@ -186,20 +186,12 @@ theorem groupLikeEquiv_apply_eq_iff [CommRing R]
 
 /-- A group-like element is the standard basis element indexed by its image under
 `groupLikeEquiv`. -/
+@[simp]
 theorem eq_single_groupLikeEquiv [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
     (x : _root_.GroupLike R (_root_.MonoidAlgebra R H)) :
     x.val = _root_.MonoidAlgebra.single (groupLikeEquiv (R := R) x) 1 :=
   (groupLikeEquiv_apply_eq_iff R x _).mp rfl
-
-/-- The inverse of `groupLikeEquiv` sends an index to its standard basis group-like element. -/
-@[simp]
-theorem groupLikeEquiv_symm_apply_val [CommRing R]
-    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H] (h : H) :
-    ((groupLikeEquiv (R := R) (H := H)).symm h).val =
-      _root_.MonoidAlgebra.single h 1 :=
-  (groupLikeEquiv_apply_eq_iff R _ h).mp
-    ((groupLikeEquiv (R := R) (H := H)).apply_symm_apply h)
 
 /-- Recover the monoid homomorphism inducing a bialgebra morphism between monoid
 algebras over a base with connected prime spectrum. -/

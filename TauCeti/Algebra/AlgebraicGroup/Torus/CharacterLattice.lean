@@ -56,20 +56,6 @@ theorem geometricCharacterGroup_fg_of_torus
 
 end CommHopfAlgCat
 
-/-- The intrinsic geometric character group of a split-torus presentation is the free abelian
-group used to construct its coordinate algebra. -/
-noncomputable def splitTorusGeometricCharacterGroupEquiv
-    (k : Type u) [Field k] (n : ℕ) :
-    CommHopfAlgCat.geometricCharacterGroup
-        (DiagonalizableGroup.coordinateRing k
-          (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj ≃*
-      Multiplicative (ULift.{u} (Fin n) →₀ ℤ) :=
-  (TauCeti.GroupLike.mapEquiv
-    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k)
-      (G := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))).trans
-    (MonoidAlgebra.groupLikeEquiv (R := AlgebraicClosure k)
-      (H := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))
-
 /-- The additive character lattice of a split-torus presentation is its defining finite-rank
 free `ℤ`-module. -/
 noncomputable def splitTorusCharacterLatticeEquiv
@@ -78,7 +64,8 @@ noncomputable def splitTorusCharacterLatticeEquiv
         (DiagonalizableGroup.coordinateRing k
           (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj ≃+
       (ULift.{u} (Fin n) →₀ ℤ) :=
-  (MulEquiv.toAdditive (splitTorusGeometricCharacterGroupEquiv k n)).trans
+  (MulEquiv.toAdditive (DiagonalizableGroup.geometricCharacterGroupEquiv k
+    (SplitTorus.characterGroup (ULift.{u} (Fin n))))).trans
     (AddEquiv.additiveMultiplicative (ULift.{u} (Fin n) →₀ ℤ))
 
 /-- The character lattice of a torus is a finite-rank free abelian group. The equivalence is
