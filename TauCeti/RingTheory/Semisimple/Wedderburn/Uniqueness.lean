@@ -52,9 +52,7 @@ variable {ι : Type u} {κ : Type v} [Finite ι] [Finite κ]
   [∀ i, Ring (A i)] [∀ i, IsSimpleRing (A i)]
   [∀ j, Ring (B j)] [∀ j, IsSimpleRing (B j)]
 
-attribute [local instance] Fintype.ofFinite
-noncomputable local instance : DecidableEq ι := Classical.decEq ι
-noncomputable local instance : DecidableEq κ := Classical.decEq κ
+attribute [local instance] Fintype.ofFinite Classical.decEq
 
 omit [Finite ι] in
 private theorem single_one_ne_zero (i : ι) : Pi.single i (1 : A i) ≠ 0 := by
