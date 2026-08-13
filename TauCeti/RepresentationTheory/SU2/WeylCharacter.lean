@@ -85,9 +85,8 @@ private theorem coe_sub_inv_ne_zero {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
   intro h
   refine hz ?_
   rw [sub_eq_zero] at h
-  rw [sq]
-  nth_rewrite 2 [h]
-  exact mul_inv_cancel₀ z.coe_ne_zero
+  calc (z : ℂ) ^ 2 = (z : ℂ) * (z : ℂ)⁻¹ := by rw [← h, sq]
+    _ = 1 := mul_inv_cancel₀ z.coe_ne_zero
 
 /-- **The Weyl numerator identity.**  Multiplying the weight string of `Symᵈ(ℂ²)` by the Weyl
 denominator `z - z⁻¹` telescopes to `z^{d+1} - z^{-(d+1)}`.
@@ -109,9 +108,10 @@ theorem sub_inv_mul_character_symPower_torusHom (z : Circle) :
     congr 2 <;> push_cast <;> ring
   rw [sum_congr rfl key, sum_range_sub (fun j : ℕ => (z : ℂ) ^ (2 * (j : ℤ) - d - 1)) (d + 1),
     inv_pow, ← zpow_natCast (z : ℂ) (d + 1)]
+  have hbot : (0 : ℤ) - (d : ℤ) - 1 = -((d : ℤ) + 1) := by ring
+  have htop : 2 * ((d : ℤ) + 1) - (d : ℤ) - 1 = (d : ℤ) + 1 := by ring
   push_cast
-  rw [show (0 : ℤ) - (d : ℤ) - 1 = -((d : ℤ) + 1) by ring, zpow_neg,
-    show 2 * ((d : ℤ) + 1) - (d : ℤ) - 1 = (d : ℤ) + 1 by ring]
+  rw [hbot, zpow_neg, htop]
 
 /-- **The Weyl character formula for `SU(2)`.**  Away from the two points `z = ±1` of the maximal
 torus, where the Weyl denominator vanishes, the character of `Symᵈ(ℂ²)` at `diag (z, z⁻¹)` is the
