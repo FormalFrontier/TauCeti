@@ -34,24 +34,21 @@ argument supplies the descent to a vertex simple.
 
 ## Main definitions and results
 
-* `TauCeti.vertexPreReflectionProd`: the composite of the simple reflections along a word in the
+* `TauCeti.vertexPreReflectionList`: the composite of the simple reflections along a word in the
   vertices, as a `ℤ`-linear endomorphism of the dimension-vector lattice. As with
   `TauCeti.vertexPreReflection`, no hypothesis on the vertices is imposed.
-* `TauCeti.vertexReflectionProd`: the same map as a linear automorphism, over a word in loopless
-  vertices, with `TauCeti.coe_vertexReflectionProd_symm` identifying its inverse as the composite
+* `TauCeti.vertexReflectionList`: the same map as a linear automorphism, over a word in loopless
+  vertices, with `TauCeti.coe_vertexReflectionList_symm` identifying its inverse as the composite
   along the reversed word.
-* `TauCeti.titsForm_vertexPreReflectionProd` and
-  `TauCeti.bijOn_vertexPreReflectionProd`: the composite preserves the Tits form, and hence
+* `TauCeti.titsForm_vertexPreReflectionList` and
+  `TauCeti.bijOn_vertexPreReflectionList`: the composite preserves the Tits form, and hence
   permutes each of its level sets, in particular the roots `q(d) = 1`.
-* `TauCeti.titsPolarForm_eq_zero_of_vertexPreReflectionProd_eq_self`: a vector fixed by the
+* `TauCeti.titsPolarForm_eq_zero_of_vertexPreReflectionList_eq_self`: a vector fixed by the
   composite along a repetition-free word in all the vertices lies in the radical of the polarized
   Tits form.
-* `TauCeti.vertexPreReflectionProd_eq_self_iff` and
-  `TauCeti.vertexReflectionProd_eq_self_iff`: consequently, once that radical is trivial the only
-  fixed vector is `0`;
-  `TauCeti.vertexPreReflectionProd_eq_self_iff_of_anisotropic` and
-  `TauCeti.vertexReflectionProd_eq_self_iff_of_anisotropic` are the same statements for an
-  anisotropic Tits form.
+* `TauCeti.vertexPreReflectionList_eq_self_iff`: consequently, once that radical is trivial the only
+  fixed vector is `0`; `TauCeti.vertexPreReflectionList_eq_self_iff_of_anisotropic` is the same
+  statement for an anisotropic Tits form.
 
 ## References
 
@@ -76,65 +73,65 @@ which they are listed, so that `l = [i₁, …, iₙ]` gives `sᵢₙ ∘ ⋯ �
 word running through all the vertices this is the Coxeter transformation.
 
 No hypothesis on the vertices is imposed here, following `TauCeti.vertexPreReflection`; over a
-word in loopless vertices `TauCeti.vertexReflectionProd` packages this map as an
+word in loopless vertices `TauCeti.vertexReflectionList` packages this map as an
 automorphism. -/
-noncomputable def vertexPreReflectionProd (l : List Q) : Module.End ℤ (Q → ℤ) :=
+noncomputable def vertexPreReflectionList (l : List Q) : Module.End ℤ (Q → ℤ) :=
   (l.reverse.map (vertexPreReflection Q)).prod
 
 @[simp]
-theorem vertexPreReflectionProd_nil : vertexPreReflectionProd Q [] = 1 := by
-  simp [vertexPreReflectionProd]
+theorem vertexPreReflectionList_nil : vertexPreReflectionList Q [] = 1 := by
+  simp [vertexPreReflectionList]
 
 /-- The vertex at the head of the word is reflected first. -/
 @[simp]
-theorem vertexPreReflectionProd_cons (i : Q) (l : List Q) :
-    vertexPreReflectionProd Q (i :: l)
-      = vertexPreReflectionProd Q l * vertexPreReflection Q i := by
-  simp [vertexPreReflectionProd]
+theorem vertexPreReflectionList_cons (i : Q) (l : List Q) :
+    vertexPreReflectionList Q (i :: l)
+      = vertexPreReflectionList Q l * vertexPreReflection Q i := by
+  simp [vertexPreReflectionList]
 
 /-- The vertex at the head of the word is reflected first, in applied form. -/
-theorem vertexPreReflectionProd_apply_cons (i : Q) (l : List Q) (d : Q → ℤ) :
-    vertexPreReflectionProd Q (i :: l) d
-      = vertexPreReflectionProd Q l (vertexPreReflection Q i d) := by
-  rw [vertexPreReflectionProd_cons, Module.End.mul_apply]
+theorem vertexPreReflectionList_apply_cons (i : Q) (l : List Q) (d : Q → ℤ) :
+    vertexPreReflectionList Q (i :: l) d
+      = vertexPreReflectionList Q l (vertexPreReflection Q i d) := by
+  rw [vertexPreReflectionList_cons, Module.End.mul_apply]
 
 /-- Concatenating two words composes their reflection products, the first word acting first. -/
-theorem vertexPreReflectionProd_append (l₁ l₂ : List Q) :
-    vertexPreReflectionProd Q (l₁ ++ l₂)
-      = vertexPreReflectionProd Q l₂ * vertexPreReflectionProd Q l₁ := by
-  simp [vertexPreReflectionProd, List.map_append, List.prod_append]
+theorem vertexPreReflectionList_append (l₁ l₂ : List Q) :
+    vertexPreReflectionList Q (l₁ ++ l₂)
+      = vertexPreReflectionList Q l₂ * vertexPreReflectionList Q l₁ := by
+  simp [vertexPreReflectionList, List.map_append, List.prod_append]
 
 /-- Off the word, the reflection product changes no coordinate: each simple reflection in the
 composite alters only the coordinate at its own vertex. -/
-theorem vertexPreReflectionProd_apply_of_notMem {l : List Q} {i : Q} (hi : i ∉ l) (d : Q → ℤ) :
-    vertexPreReflectionProd Q l d i = d i := by
+theorem vertexPreReflectionList_apply_of_notMem {l : List Q} {i : Q} (hi : i ∉ l) (d : Q → ℤ) :
+    vertexPreReflectionList Q l d i = d i := by
   induction l generalizing d with
   | nil => simp
   | cons j l ih =>
     rw [List.mem_cons, not_or] at hi
-    rw [vertexPreReflectionProd_apply_cons, ih hi.2, vertexPreReflection_apply_of_ne Q j d hi.1]
+    rw [vertexPreReflectionList_apply_cons, ih hi.2, vertexPreReflection_apply_of_ne Q j d hi.1]
 
 /-! ### Invariance of the Tits form -/
 
 /-- The reflection product along a word in loopless vertices preserves the Tits form. -/
-theorem titsForm_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i))
-    (d : Q → ℤ) : titsForm Q (vertexPreReflectionProd Q l d) = titsForm Q d := by
+theorem titsForm_vertexPreReflectionList {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i))
+    (d : Q → ℤ) : titsForm Q (vertexPreReflectionList Q l d) = titsForm Q d := by
   induction l generalizing d with
   | nil => simp
   | cons j l ih =>
-    rw [vertexPreReflectionProd_apply_cons, ih (fun i hi ↦ hl i (by simp [hi])),
+    rw [vertexPreReflectionList_apply_cons, ih (fun i hi ↦ hl i (by simp [hi])),
       titsForm_vertexPreReflection Q (hl j (by simp))]
 
 /-- The reflection product along a word in loopless vertices preserves the polarized Tits
 form. -/
-theorem titsPolarForm_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i))
+theorem titsPolarForm_vertexPreReflectionList {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i))
     (d e : Q → ℤ) :
-    titsPolarForm Q (vertexPreReflectionProd Q l d) (vertexPreReflectionProd Q l e)
+    titsPolarForm Q (vertexPreReflectionList Q l d) (vertexPreReflectionList Q l e)
       = titsPolarForm Q d e := by
   induction l generalizing d e with
   | nil => simp
   | cons j l ih =>
-    rw [vertexPreReflectionProd_apply_cons, vertexPreReflectionProd_apply_cons,
+    rw [vertexPreReflectionList_apply_cons, vertexPreReflectionList_apply_cons,
       ih (fun i hi ↦ hl i (by simp [hi])), titsPolarForm_vertexPreReflection Q (hl j (by simp))]
 
 /-! ### The Coxeter transformation as an automorphism -/
@@ -142,65 +139,61 @@ theorem titsPolarForm_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, Is
 /-- The reflection product along a word in loopless vertices, as a linear automorphism of the
 dimension-vector lattice; over a repetition-free word running through all the vertices this is the
 Coxeter transformation. -/
-noncomputable def vertexReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+noncomputable def vertexReflectionList {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     (Q → ℤ) ≃ₗ[ℤ] (Q → ℤ) :=
   ((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).reverse).prod
+
+private theorem map_vertexReflection_toLinearMap {l : List Q}
+    (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    (l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).map
+        (fun e ↦ e.toLinearMap)
+      = l.map (vertexPreReflection Q) := by
+  rw [List.map_map]
+  rw [← List.attach_map_val (f := vertexPreReflection Q)]
+  apply List.map_congr_left
+  intro i hi
+  apply LinearMap.coe_injective
+  exact coe_vertexReflection Q (hl i.1 i.2)
+
+omit [Quiver Q] [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)] [DecidableEq Q] in
+private theorem toLinearMap_list_prod
+    (L : List ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ))) :
+    L.prod.toLinearMap = (L.map fun e ↦ e.toLinearMap).prod := by
+  calc
+    _ = (L.map (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
+        ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))).prod :=
+      map_list_prod (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
+        ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ)) L
+    _ = _ := by
+      apply congrArg List.prod
+      apply List.map_congr_left
+      intro e he
+      exact LinearEquiv.automorphismGroup.toLinearMapMonoidHom_apply e
 
 /-- Coercing the reflection automorphism along a word to a function gives the corresponding
 pre-reflection product. -/
 @[simp]
-theorem coe_vertexReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
-    ⇑(vertexReflectionProd Q hl) = ⇑(vertexPreReflectionProd Q l) := by
-  have hlist :
-      l.attach.map (fun i : {i // i ∈ l} ↦ (vertexReflection Q (hl i.1 i.2)).toLinearMap)
-        = l.map (vertexPreReflection Q) := by
-    rw [← List.attach_map_val (f := vertexPreReflection Q)]
-    apply List.map_congr_left
-    intro i hi
-    apply LinearMap.coe_injective
-    exact coe_vertexReflection Q (hl i.1 i.2)
-  have h : (vertexReflectionProd Q hl).toLinearMap = vertexPreReflectionProd Q l := by
-    rw [vertexReflectionProd, vertexPreReflectionProd]
-    calc
-      _ = (((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).reverse).map
-          (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
-            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))).prod :=
-        map_list_prod (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
-            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))
-            (l.attach.map fun i : {i // i ∈ l} ↦
-              vertexReflection Q (hl i.1 i.2)).reverse
-      _ = (l.attach.map (fun i : {i // i ∈ l} ↦
-          (vertexReflection Q (hl i.1 i.2)).toLinearMap)).reverse.prod := by
-        apply congrArg List.prod
-        rw [List.map_reverse, List.map_map]
-        apply congrArg List.reverse
-        apply List.map_congr_left
-        intro i hi
-        exact LinearEquiv.automorphismGroup.toLinearMapMonoidHom_apply _
-      _ = _ := by rw [hlist, ← List.map_reverse]
+theorem coe_vertexReflectionList {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    ⇑(vertexReflectionList Q hl) = ⇑(vertexPreReflectionList Q l) := by
+  have h : (vertexReflectionList Q hl).toLinearMap = vertexPreReflectionList Q l := by
+    rw [vertexReflectionList, vertexPreReflectionList, toLinearMap_list_prod, List.map_reverse,
+      map_vertexReflection_toLinearMap Q hl, List.map_reverse]
+  rw [← LinearEquiv.coe_coe]
   exact congrArg (fun f : Module.End ℤ (Q → ℤ) ↦ (f : (Q → ℤ) → (Q → ℤ))) h
 
 /-- The reflection product along a word in loopless vertices is bijective. -/
-theorem vertexPreReflectionProd_bijective {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
-    Function.Bijective (vertexPreReflectionProd Q l) := by
-  rw [← coe_vertexReflectionProd Q hl]
-  exact (vertexReflectionProd Q hl).bijective
+theorem vertexPreReflectionList_bijective {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    Function.Bijective (vertexPreReflectionList Q l) := by
+  rw [← coe_vertexReflectionList Q hl]
+  exact (vertexReflectionList Q hl).bijective
 
 /-- The inverse automorphism is the reflection product along the reversed word. -/
 @[simp]
-theorem coe_vertexReflectionProd_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
-    ⇑(vertexReflectionProd Q hl).symm = ⇑(vertexPreReflectionProd Q l.reverse) := by
-  have hlist :
-      l.attach.map (fun i : {i // i ∈ l} ↦ (vertexReflection Q (hl i.1 i.2)).toLinearMap)
-        = l.map (vertexPreReflection Q) := by
-    rw [← List.attach_map_val (f := vertexPreReflection Q)]
-    apply List.map_congr_left
-    intro i hi
-    apply LinearMap.coe_injective
-    exact coe_vertexReflection Q (hl i.1 i.2)
-  have hinv : (vertexReflectionProd Q hl).symm =
+theorem coe_vertexReflectionList_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    ⇑(vertexReflectionList Q hl).symm = ⇑(vertexPreReflectionList Q l.reverse) := by
+  have hinv : (vertexReflectionList Q hl).symm =
       (l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).prod := by
-    rw [vertexReflectionProd]
+    rw [vertexReflectionList]
     -- `LinearEquiv.automorphismGroup` defines group inversion as `LinearEquiv.symm`; exposing that
     -- operation lets `List.prod_reverse_noncomm` compute the inverse of the reversed product.
     change ((l.attach.map fun i : {i // i ∈ l} ↦
@@ -211,36 +204,33 @@ theorem coe_vertexReflectionProd_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i
     apply List.map_congr_left
     intro i hi
     exact vertexReflection_symm Q (hl i.1 i.2)
-  have h : (vertexReflectionProd Q hl).symm.toLinearMap =
-      vertexPreReflectionProd Q l.reverse := by
-    rw [hinv, vertexPreReflectionProd, List.reverse_reverse]
-    calc
-      _ = ((l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).map
-          (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
-            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))).prod :=
-        map_list_prod (LinearEquiv.automorphismGroup.toLinearMapMonoidHom :
-            ((Q → ℤ) ≃ₗ[ℤ] (Q → ℤ)) →* Module.End ℤ (Q → ℤ))
-            (l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2))
-      _ = (l.attach.map (fun i : {i // i ∈ l} ↦
-          (vertexReflection Q (hl i.1 i.2)).toLinearMap)).prod := by
-        apply congrArg List.prod
-        rw [List.map_map]
-        apply List.map_congr_left
-        intro i hi
-        exact LinearEquiv.automorphismGroup.toLinearMapMonoidHom_apply _
-      _ = _ := by rw [hlist]
+  have h : (vertexReflectionList Q hl).symm.toLinearMap =
+      vertexPreReflectionList Q l.reverse := by
+    rw [hinv, vertexPreReflectionList, List.reverse_reverse, toLinearMap_list_prod,
+      map_vertexReflection_toLinearMap Q hl]
+  rw [← LinearEquiv.coe_coe]
   exact congrArg (fun f : Module.End ℤ (Q → ℤ) ↦ (f : (Q → ℤ) → (Q → ℤ))) h
+
+/-- Composing the pre-reflection lists for a word and its reverse gives the identity. -/
+theorem vertexPreReflectionList_reverse_mul {l : List Q}
+    (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    vertexPreReflectionList Q l.reverse * vertexPreReflectionList Q l = 1 := by
+  apply LinearMap.ext
+  intro d
+  change vertexPreReflectionList Q l.reverse (vertexPreReflectionList Q l d) = d
+  rw [← coe_vertexReflectionList_symm Q hl, ← coe_vertexReflectionList Q hl]
+  exact (vertexReflectionList Q hl).symm_apply_apply d
 
 /-- The reflection product along a word in loopless vertices permutes every level set of the
 Tits form; at the level `1` this says that it permutes the roots of `Q`. -/
-theorem bijOn_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (n : ℤ) :
-    Set.BijOn (vertexPreReflectionProd Q l) {d : Q → ℤ | titsForm Q d = n}
+theorem bijOn_vertexPreReflectionList {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (n : ℤ) :
+    Set.BijOn (vertexPreReflectionList Q l) {d : Q → ℤ | titsForm Q d = n}
       {d : Q → ℤ | titsForm Q d = n} := by
-  have h : vertexPreReflectionProd Q l ⁻¹' {d : Q → ℤ | titsForm Q d = n}
+  have h : vertexPreReflectionList Q l ⁻¹' {d : Q → ℤ | titsForm Q d = n}
       = {d : Q → ℤ | titsForm Q d = n} := by
     ext d
-    simp only [Set.mem_preimage, Set.mem_ofPred_eq, titsForm_vertexPreReflectionProd Q hl]
-  have hbij := (vertexPreReflectionProd_bijective Q hl).bijOn_preimage
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, titsForm_vertexPreReflectionList Q hl]
+  have hbij := (vertexPreReflectionList_bijective Q hl).bijOn_preimage
     (t := {d : Q → ℤ | titsForm Q d = n})
   rwa [h] at hbij
 
@@ -248,8 +238,8 @@ theorem bijOn_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i
 
 /-- A vector fixed by the reflection product along a repetition-free word is orthogonal, for the
 polarized Tits form, to the simple dimension vector at every vertex of that word. -/
-theorem titsPolarForm_single_eq_zero_of_vertexPreReflectionProd_eq_self {l : List Q}
-    (hnd : l.Nodup) {v : Q → ℤ} (hv : vertexPreReflectionProd Q l v = v) {i : Q} (hi : i ∈ l) :
+theorem titsPolarForm_single_eq_zero_of_vertexPreReflectionList_eq_self {l : List Q}
+    (hnd : l.Nodup) {v : Q → ℤ} (hv : vertexPreReflectionList Q l v = v) {i : Q} (hi : i ∈ l) :
     titsPolarForm Q (Pi.single i 1) v = 0 := by
   induction l with
   | nil => simp at hi
@@ -257,10 +247,10 @@ theorem titsPolarForm_single_eq_zero_of_vertexPreReflectionProd_eq_self {l : Lis
     obtain ⟨hjl, hnd'⟩ := List.nodup_cons.mp hnd
     -- The head `j` occurs nowhere else in the word, so the remaining reflections leave the `j`-th
     -- coordinate of `sⱼ v` untouched.
-    have hcoord : vertexPreReflectionProd Q (j :: l) v j
+    have hcoord : vertexPreReflectionList Q (j :: l) v j
         = v j - titsPolarForm Q (Pi.single j 1) v := by
-      rw [vertexPreReflectionProd_apply_cons,
-        vertexPreReflectionProd_apply_of_notMem Q hjl, vertexPreReflection_apply]
+      rw [vertexPreReflectionList_apply_cons,
+        vertexPreReflectionList_apply_of_notMem Q hjl, vertexPreReflection_apply]
       simp
     -- The `j`-th coordinate of the fixed-point equation therefore reads `vⱼ - ⟨αⱼ, v⟩ = vⱼ`.
     rw [hv] at hcoord
@@ -268,18 +258,18 @@ theorem titsPolarForm_single_eq_zero_of_vertexPreReflectionProd_eq_self {l : Lis
     -- Then `sⱼ` fixes `v`, so the tail of the word fixes `v` as well.
     have hfix : vertexPreReflection Q j v = v :=
       vertexPreReflection_apply_of_titsPolarForm_eq_zero Q j hj
-    rw [vertexPreReflectionProd_apply_cons, hfix] at hv
+    rw [vertexPreReflectionList_apply_cons, hfix] at hv
     rcases List.mem_cons.mp hi with rfl | hi'
     · exact hj
     · exact ih hnd' hv hi'
 
 /-- A vector fixed by the reflection product along a repetition-free word in *all* the vertices
 lies in the radical of the polarized Tits form. -/
-theorem titsPolarForm_eq_zero_of_vertexPreReflectionProd_eq_self {l : List Q} (hnd : l.Nodup)
-    (hmem : ∀ i : Q, i ∈ l) {v : Q → ℤ} (hv : vertexPreReflectionProd Q l v = v) (d : Q → ℤ) :
+theorem titsPolarForm_eq_zero_of_vertexPreReflectionList_eq_self {l : List Q} (hnd : l.Nodup)
+    (hmem : ∀ i : Q, i ∈ l) {v : Q → ℤ} (hv : vertexPreReflectionList Q l v = v) (d : Q → ℤ) :
     titsPolarForm Q d v = 0 := by
   have hsingle : ∀ i : Q, titsPolarForm Q (Pi.single i 1) v = 0 := fun i ↦
-    titsPolarForm_single_eq_zero_of_vertexPreReflectionProd_eq_self Q hnd hv (hmem i)
+    titsPolarForm_single_eq_zero_of_vertexPreReflectionList_eq_self Q hnd hv (hmem i)
   rw [pi_eq_sum_univ' d, map_sum, LinearMap.sum_apply]
   exact Finset.sum_eq_zero fun i _ ↦ by
     rw [map_smul, LinearMap.smul_apply, smul_eq_mul, hsingle i, mul_zero]
@@ -292,43 +282,25 @@ This fixed-point obstruction is one input to the reflection induction behind Gab
 nonzero dimension vector survives a full pass of the Coxeter functor unchanged. The descent itself
 requires a separate positive-root height argument. An anisotropic Tits form has trivial radical,
 which is the form the hypothesis takes in
-`TauCeti.vertexPreReflectionProd_eq_self_iff_of_anisotropic`. -/
-theorem vertexPreReflectionProd_eq_self_iff
+`TauCeti.vertexPreReflectionList_eq_self_iff_of_anisotropic`. -/
+theorem vertexPreReflectionList_eq_self_iff
     (hsep : LinearMap.SeparatingRight (titsPolarForm Q)) {l : List Q} (hnd : l.Nodup)
     (hmem : ∀ i : Q, i ∈ l) (v : Q → ℤ) :
-    vertexPreReflectionProd Q l v = v ↔ v = 0 :=
-  ⟨fun hv ↦ hsep v (titsPolarForm_eq_zero_of_vertexPreReflectionProd_eq_self Q hnd hmem hv),
+    vertexPreReflectionList Q l v = v ↔ v = 0 :=
+  ⟨fun hv ↦ hsep v (titsPolarForm_eq_zero_of_vertexPreReflectionList_eq_self Q hnd hmem hv),
     fun hv ↦ by rw [hv, map_zero]⟩
-
-/-- **The Coxeter transformation of a quiver whose polarized Tits form has trivial radical fixes
-only the zero vector**, in the automorphism packaging. -/
-theorem vertexReflectionProd_eq_self_iff (hsep : LinearMap.SeparatingRight (titsPolarForm Q))
-    {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l)
-    (v : Q → ℤ) :
-    vertexReflectionProd Q hl v = v ↔ v = 0 := by
-  simp only [coe_vertexReflectionProd]
-  exact vertexPreReflectionProd_eq_self_iff Q hsep hnd hmem v
 
 /-- **The Coxeter transformation of a quiver with anisotropic Tits form fixes only the zero
 vector**: a vector in the radical of the polarized form is isotropic, since `⟨v, v⟩ = 2 q(v)`.
 
 For a quiver of ADE type the Tits form is positive definite, and
 `QuadraticMap.PosDef.anisotropic` supplies the hypothesis. -/
-theorem vertexPreReflectionProd_eq_self_iff_of_anisotropic (hani : (titsForm Q).Anisotropic)
+theorem vertexPreReflectionList_eq_self_iff_of_anisotropic (hani : (titsForm Q).Anisotropic)
     {l : List Q} (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l) (v : Q → ℤ) :
-    vertexPreReflectionProd Q l v = v ↔ v = 0 := by
-  refine vertexPreReflectionProd_eq_self_iff Q (fun w hw ↦ hani w ?_) hnd hmem v
+    vertexPreReflectionList Q l v = v ↔ v = 0 := by
+  refine vertexPreReflectionList_eq_self_iff Q (fun w hw ↦ hani w ?_) hnd hmem v
   have h := hw w
   rw [titsPolarForm_def, ← titsForm_def] at h
   omega
-
-/-- **The Coxeter transformation of a quiver with anisotropic Tits form fixes only the zero
-vector**, in the automorphism packaging. -/
-theorem vertexReflectionProd_eq_self_iff_of_anisotropic (hani : (titsForm Q).Anisotropic)
-    {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (hnd : l.Nodup) (hmem : ∀ i : Q, i ∈ l)
-    (v : Q → ℤ) :
-    vertexReflectionProd Q hl v = v ↔ v = 0 := by
-  simp only [coe_vertexReflectionProd]
-  exact vertexPreReflectionProd_eq_self_iff_of_anisotropic Q hani hnd hmem v
 
 end TauCeti
