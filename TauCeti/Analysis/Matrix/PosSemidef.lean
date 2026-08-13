@@ -121,28 +121,27 @@ theorem posSemidef_const_of_nonneg {R : Type u}
     rw [Finset.sum_comm] at hs
     simpa only [mul_assoc] using hs
 
-variable {𝕜 : Type u} [RCLike 𝕜]
-
 /-- The quadratic-form characterization of an arbitrary-index positive-semidefinite matrix. The
 reverse direction constructs positivity from conjugate symmetry and finite quadratic-form
 nonnegativity without unfolding `Matrix.PosSemidef`. -/
-theorem posSemidef_iff {K : α → α → 𝕜} :
+theorem posSemidef_iff {R : Type u} [CommRing R] [PartialOrder R] [StarRing R]
+    {K : α → α → R} :
     Matrix.PosSemidef K ↔
-      (∀ a b, conj (K a b) = K b a) ∧
-        ∀ {ι : Type*} [Fintype ι] (v : ι → α) (x : ι → 𝕜),
-          0 ≤ ∑ i, ∑ j, conj (x i) * x j * K (v i) (v j) := by
+      (∀ a b, star (K a b) = K b a) ∧
+        ∀ {ι : Type*} [Fintype ι] (v : ι → α) (x : ι → R),
+          0 ≤ ∑ i, ∑ j, star (x i) * x j * K (v i) (v j) := by
   classical
   refine ⟨fun hK => ⟨fun a b => ?_, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
-  · simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
+  · exact hK.isHermitian.apply b a
   · intro ι _ v x
     have hgram : (Matrix.of fun i j => K (v i) (v j)).PosSemidef := by
       simpa [Matrix.submatrix, Function.comp_def] using hK.submatrix v
     have h := (Matrix.posSemidef_iff_dotProduct_mulVec.mp hgram).2 x
     simpa [dotProduct, Matrix.mulVec, Matrix.of_apply, Pi.star_apply, Finset.mul_sum,
-      RCLike.star_def, mul_assoc, mul_left_comm, mul_comm] using h
+      mul_assoc, mul_left_comm, mul_comm] using h
   refine posSemidef_of_support_posSemidef K ?_ ?_
   · ext a b
-    rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply, ← starRingEnd_apply]
+    rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply]
     exact hsymm b a
   · intro x
     let e : ULift (Fin (Fintype.card x.support)) ≃ x.support :=
@@ -152,15 +151,16 @@ theorem posSemidef_iff {K : α → α → 𝕜} :
     refine ⟨?_, fun y => ?_⟩
     · ext i j
       rw [Matrix.conjTranspose_apply, Matrix.submatrix_apply, Matrix.submatrix_apply,
-        Matrix.of_apply, Matrix.of_apply, ← starRingEnd_apply]
+        Matrix.of_apply, Matrix.of_apply]
       exact hsymm (e j : α) (e i : α)
     · refine (hpos (ι := ULift (Fin (Fintype.card x.support)))
         (fun i => (e i : α)) y).trans_eq ?_
       simp only [dotProduct, Matrix.mulVec, Matrix.submatrix_apply, Matrix.of_apply,
         Pi.star_apply, Finset.mul_sum]
       refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-      rw [starRingEnd_apply]
       ring
+
+variable {𝕜 : Type u} [RCLike 𝕜]
 
 /-- Finite pointwise products of positive-semidefinite matrices are positive semidefinite. -/
 theorem posSemidef_prod {ι : Type w} {s : Finset ι}

@@ -150,7 +150,7 @@ characteristic function of the standard Gaussian measure. -/
 theorem posSemidef_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
     Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
   refine posSemidef_iff.mpr ⟨fun a b => ?_, fun {ι : Type} _ v x => ?_⟩
-  · rw [← Complex.exp_conj, map_neg, Complex.conj_ofReal, norm_sub_rev]
+  · rw [RCLike.star_def, ← Complex.exp_conj, map_neg, Complex.conj_ofReal, norm_sub_rev]
   · -- Restrict to the span of the finite family, a finite-dimensional inner-product space.
     let W := Submodule.span ℝ (Set.range v)
     have : FiniteDimensional ℝ W := .span_of_finite ℝ (Set.finite_range v)

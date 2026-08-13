@@ -184,11 +184,12 @@ This is the forward half of the function ↔ kernel correspondence. -/
 theorem posSemidef (hF : IsPositiveDefinite F) :
     Matrix.PosSemidef (fun a b => F (a + star b)) :=
   posSemidef_iff.mpr
-    ⟨fun a b => hF.conj_symm b a, fun {_ι : Type} _ v x => by
+    ⟨fun a b => by simpa only [RCLike.star_def] using hF.conj_symm b a,
+      fun {_ι : Type} _ v x => by
       have h := hF.sum_nonneg (fun i => conj (x i)) v
       refine le_of_le_of_eq h ?_
       refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-      rw [Complex.conj_conj]⟩
+      rw [RCLike.star_def, Complex.conj_conj]⟩
 
 /-- If the kernel `K(a, b) = F(a + b⋆)` is positive definite, then so is the function `F`. This is
 the reverse half of the function ↔ kernel correspondence. -/
@@ -199,7 +200,7 @@ theorem of_posSemidef
   have h := hpos v (fun i => conj (c i))
   refine le_of_le_of_eq h ?_
   refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-  rw [Complex.conj_conj]
+  rw [RCLike.star_def, Complex.conj_conj]
 
 /-- The Cauchy–Schwarz inequality for a positive-definite function: the squared norm of an
 off-diagonal value is bounded by the product of the two diagonal values. -/

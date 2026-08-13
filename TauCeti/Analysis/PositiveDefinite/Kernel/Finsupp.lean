@@ -263,8 +263,9 @@ theorem posSemidef_positiveDefiniteKernelFinsuppForm
     Matrix.PosSemidef fun x y : α →₀ 𝕜 =>
       positiveDefiniteKernelFinsuppForm K x y := by
   classical
-  refine (posSemidef_iff.{u, max u v, 0} (𝕜 := 𝕜) (α := α →₀ 𝕜)).mpr
-    ⟨positiveDefiniteKernelFinsuppForm_conj_symm hK, ?_⟩
+  refine (posSemidef_iff.{u, max u v, 0} (R := 𝕜) (α := α →₀ 𝕜)).mpr
+    ⟨fun x y => by simpa only [RCLike.star_def] using
+        positiveDefiniteKernelFinsuppForm_conj_symm hK x y, ?_⟩
   intro ι _ v c
   let z : α →₀ 𝕜 := ∑ i, c i • v i
   have hz := positiveDefiniteKernelFinsuppForm_self_nonneg hK z

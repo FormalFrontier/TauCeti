@@ -223,16 +223,16 @@ theorem isSemigroupGroupPD_iff :
   constructor
   · intro hF
     refine ⟨fun p q => by
-      simpa only [starRingEnd_apply] using hF.posSemidef.isHermitian.apply q p, ?_⟩
+      simpa only [RCLike.star_def] using hF.posSemidef.isHermitian.apply q p, ?_⟩
     intro ι _ c p
     have hpos := (posSemidef_iff.mp hF.posSemidef).2 p
       (fun i => conj (c i))
-    simpa only [Complex.conj_conj] using hpos
+    simpa only [RCLike.star_def, Complex.conj_conj] using hpos
   · rintro ⟨hsymm, hpos⟩
     exact IsSemigroupGroupPD.of_posSemidef <| posSemidef_iff.mpr
-      ⟨hsymm, fun p x => by
+      ⟨fun p q => by simpa only [RCLike.star_def] using hsymm p q, fun p x => by
         have h := hpos (fun i => conj (x i)) p
-        simpa only [Complex.conj_conj] using h⟩
+        simpa only [RCLike.star_def, Complex.conj_conj] using h⟩
 
 namespace IsSemigroupGroupPD
 
