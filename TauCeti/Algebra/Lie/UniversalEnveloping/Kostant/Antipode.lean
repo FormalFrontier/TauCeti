@@ -66,6 +66,8 @@ universe u w
 variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
 variable {ι : Type w} {κ : Type*}
 
+attribute [local instance] TauCeti.moduleNNRat
+
 /-! ## The antipode on the two families of generators -/
 
 section Generators

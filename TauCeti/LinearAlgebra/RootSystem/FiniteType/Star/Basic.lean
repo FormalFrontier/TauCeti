@@ -53,6 +53,9 @@ exclusion of `D̃₄` that `TauCeti.not_isFiniteType_affineD₄` gets from the d
 * `TauCeti.StarIndex`: the vertices of a star - a centre `none`, and `ℓ i` further vertices on the
   arm `i`, the vertex `some ⟨i, t⟩` sitting at distance `t + 1` from the centre.
 * `TauCeti.starCartanMatrix`: the Cartan matrix of a star, simply laced by construction.
+* `TauCeti.starIndexCongrArms`: the relabelling of the vertices of a star induced by a relabelling
+  of its arms, under which both the Cartan matrix (`TauCeti.starCartanMatrix_comp`) and finite type
+  (`TauCeti.isFiniteType_starCartanMatrix_comp_iff`) are invariant.
 * `TauCeti.starMark`: the marks of a star, the test vector the bound is proved with.
 
 ## Main results
@@ -157,6 +160,70 @@ is a symmetric relation. -/
     rcases eq_or_ne v.1 w.1 with h | h
     · rw [ite_eq_left h, ite_eq_left h.symm, chainEntry_comm]
     · rw [ite_eq_right h, ite_eq_right (Ne.symm h)]
+
+section Relabel
+
+/-! ### Relabelling the arms -/
+
+variable {β : Type*} [DecidableEq β]
+
+omit [DecidableEq α] [DecidableEq β] in
+/-- Relabelling the arms of a star: an equivalence `e : α ≃ β` of arm indices carries the star with
+arms `ℓ ∘ e` isomorphically onto the star with arms `ℓ`, moving the vertex at position `t` of the
+arm `i` to the same position of the arm `e i` and fixing the centre. -/
+def starIndexCongrArms (e : α ≃ β) (ℓ : β → ℕ) : StarIndex (ℓ ∘ e) ≃ StarIndex ℓ :=
+  (Equiv.sigmaCongrLeft (β := fun j ↦ Fin (ℓ j)) e).optionCongr
+
+omit [DecidableEq α] [DecidableEq β] in
+/-- Relabelling the arms fixes the centre. -/
+@[simp] lemma starIndexCongrArms_none (e : α ≃ β) (ℓ : β → ℕ) :
+    starIndexCongrArms e ℓ none = none := (rfl)
+
+omit [DecidableEq α] [DecidableEq β] in
+/-- Relabelling the arms keeps each arm vertex at its position along its (renamed) arm. -/
+@[simp] lemma starIndexCongrArms_some (e : α ≃ β) (ℓ : β → ℕ) (v : (i : α) × Fin (ℓ (e i))) :
+    starIndexCongrArms e ℓ (some v) = some ⟨e v.1, v.2⟩ := (rfl)
+
+/-- Relabelling the arms does not change an entry of the Cartan matrix of a star. -/
+@[simp] theorem starCartanMatrix_comp_apply (e : α ≃ β) (ℓ : β → ℕ)
+    (v w : StarIndex (ℓ ∘ e)) :
+    starCartanMatrix (ℓ ∘ e) v w
+      = starCartanMatrix ℓ (starIndexCongrArms e ℓ v) (starIndexCongrArms e ℓ w) := by
+  rcases v with _ | v <;> rcases w with _ | w <;>
+    simp [e.injective.eq_iff]
+
+/-- Relabelling the arms reindexes the Cartan matrix of a star.
+
+Deliberately not `@[simp]`: it replaces the compact `starCartanMatrix (ℓ ∘ e)` by a submatrix, so
+it would preempt the normalizations that strip the relabelling outright, such as
+`TauCeti.isFiniteType_starCartanMatrix_comp_iff`. The entrywise
+`TauCeti.starCartanMatrix_comp_apply` is the simp-normal form of a relabelled entry. -/
+theorem starCartanMatrix_comp (e : α ≃ β) (ℓ : β → ℕ) :
+    starCartanMatrix (ℓ ∘ e) =
+      (starCartanMatrix ℓ).submatrix (starIndexCongrArms e ℓ) (starIndexCongrArms e ℓ) := by
+  ext v w
+  exact starCartanMatrix_comp_apply e ℓ v w
+
+/-- Finite type is invariant under a relabelling of the arms of a star. -/
+theorem isFiniteType_starCartanMatrix_comp [Fintype α] [Fintype β] {m : β → ℕ} (e : α ≃ β)
+    (h : IsFiniteType (starCartanMatrix m)) : IsFiniteType (starCartanMatrix (m ∘ e)) := by
+  rw [starCartanMatrix_comp]
+  exact h.submatrix (starIndexCongrArms e m).injective
+
+/-- Finite type is invariant under a relabelling of the arms of a star, in either direction. -/
+@[simp] theorem isFiniteType_starCartanMatrix_comp_iff [Fintype α] [Fintype β] {m : β → ℕ}
+    (e : α ≃ β) : IsFiniteType (starCartanMatrix (m ∘ e)) ↔
+      IsFiniteType (starCartanMatrix m) := by
+  constructor
+  · intro h
+    have hm : m = (m ∘ e) ∘ e.symm := by
+      funext b
+      simp
+    rw [hm]
+    exact isFiniteType_starCartanMatrix_comp (e.symm : β ≃ α) h
+  · exact isFiniteType_starCartanMatrix_comp e
+
+end Relabel
 
 variable [Fintype α]
 

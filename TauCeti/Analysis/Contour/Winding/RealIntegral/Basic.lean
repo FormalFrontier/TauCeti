@@ -74,9 +74,7 @@ theorem windingNumber_eq_real_integral_of_closed {γ : ℝ → ℂ} {w : ℂ} {a
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) MeasureTheory.volume a b) :
     windingNumber γ a b w
       = ((1 / (2 * Real.pi)
-          * ∫ t in a..b,
-              ((γ t - w).re * (deriv γ t).im - (γ t - w).im * (deriv γ t).re)
-                / Complex.normSq (γ t - w) : ℝ) : ℂ) := by
+          * ∫ t in a..b, realWindingIntegrand (γ t - w) (deriv γ t) : ℝ) : ℂ) := by
   obtain ⟨n, hn⟩ := exists_int_windingNumber_of_closed hclosed hP hγ_cont hγ_diff h_avoid h_int
   -- The winding number is the ordinary index integral, and it equals the integer `n`.
   have hwind_int : windingNumber γ a b w
@@ -96,13 +94,10 @@ theorem windingNumber_eq_real_integral_of_closed {γ : ℝ → ℂ} {w : ℂ} {a
     rw [hrw]
     simp [Complex.mul_im]
   -- The real integrand is the imaginary part of the winding integrand, so its integral is `2π · n`.
-  have hrealint : (∫ t in a..b,
-        ((γ t - w).re * (deriv γ t).im - (γ t - w).im * (deriv γ t).re)
-          / Complex.normSq (γ t - w)) = 2 * Real.pi * (n : ℝ) := by
-    have hpt : ∀ t, ((γ t - w).re * (deriv γ t).im - (γ t - w).im * (deriv γ t).re)
-        / Complex.normSq (γ t - w) = ((γ t - w)⁻¹ * deriv γ t).im :=
-      fun t ↦ (realWindingIntegrand_eq_div (γ t - w) (deriv γ t)).symm.trans
-        (realWindingIntegrand_def (γ t - w) (deriv γ t))
+  have hrealint : (∫ t in a..b, realWindingIntegrand (γ t - w) (deriv γ t)) =
+      2 * Real.pi * (n : ℝ) := by
+    have hpt : ∀ t, realWindingIntegrand (γ t - w) (deriv γ t) = ((γ t - w)⁻¹ * deriv γ t).im :=
+      fun t ↦ realWindingIntegrand_def (γ t - w) (deriv γ t)
     simp_rw [hpt, ← RCLike.im_to_complex]
     rw [intervalIntegral_im h_int, RCLike.im_to_complex, him]
   -- Assemble: `n_w(γ) = n = (1 / 2π) · (2π · n)`.
