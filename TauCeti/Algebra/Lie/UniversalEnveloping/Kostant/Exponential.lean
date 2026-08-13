@@ -87,7 +87,10 @@ theorem exp_zsmul_mem_map_kostantForm (e : ι → L) (h : κ → L)
     (hnil : IsNilpotent (f (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))) (t : ℤ) :
     IsNilpotent.exp (t • f (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) ∈
       (kostantForm e h).map (f : _root_.UniversalEnvelopingAlgebra ℚ L →+* A) :=
-  exp_zsmul_mem hnil (dividedPower_mem_map_kostantForm e h f i) t
+  exp_zsmul_mem
+    (S := ((kostantForm e h).map
+      (f : _root_.UniversalEnvelopingAlgebra ℚ L →+* A)).toAddSubgroup)
+    hnil (dividedPower_mem_map_kostantForm e h f i) t
 
 /-- The one-parameter group of units `t ↦ exp (t • f (eᵢ))` takes values in the image of the
 Kostant integral form. This is the root subgroup map `x_i` of the Chevalley--Demazure

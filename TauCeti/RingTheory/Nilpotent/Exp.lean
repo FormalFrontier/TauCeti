@@ -20,10 +20,10 @@ divided powers `x⁽ⁱ⁾ = xⁱ / i!` of `TauCeti/RingTheory/DividedPowers/Ass
 exp (t • x) = ∑ i, tⁱ • x⁽ⁱ⁾
 ```
 
-has *integer* coefficients when `t` is an integer. Consequently `exp (t • x)` lies in any subring
-containing the divided powers of `x`, and it fixes any additive subgroup of a module that the
-divided powers of `x` fix. The map `t ↦ exp (t • x)` is a homomorphism from the additive group of
-integers to `Aˣ`, whose values lie in such a subring.
+has *integer* coefficients when `t` is an integer. Consequently `exp (t • x)` lies in any
+additive subgroup containing the divided powers of `x`, and it fixes any additive subgroup of a
+module that the divided powers of `x` fix. The map `t ↦ exp (t • x)` is a homomorphism from the
+additive group of integers to `Aˣ`, whose values lie in such an additive subgroup.
 
 This is the shape of a **root subgroup map** `x_α : 𝔾ₐ → G` of a Chevalley--Demazure group scheme:
 the divided powers of a Chevalley root vector generate the Kostant `ℤ`-form, so the exponentials
@@ -46,7 +46,8 @@ another exponential, so it is the algebraic source of the Chevalley commutator r
 
 * `TauCeti.exp_smul_eq_sum_smul_dividedPower`: the rescaled expansion `exp (r • x) = ∑ rⁱ • x⁽ⁱ⁾`.
 * `TauCeti.exp_zsmul_eq_sum_zsmul_dividedPower`: the same expansion with integer coefficients.
-* `TauCeti.exp_zsmul_mem`: `exp (t • x)` lies in a subring holding the divided powers of `x`.
+* `TauCeti.exp_zsmul_mem`: `exp (t • x)` lies in an additive subgroup holding the divided powers
+  of `x`.
 * `TauCeti.exp_zsmul_apply_mem`: `exp (t • x)` fixes an additive subgroup that the divided powers
   of `x` fix.
 * `TauCeti.expSMulHom`: the one-parameter group of units `t ↦ exp (t • x)`.
@@ -89,9 +90,9 @@ theorem exp_zsmul_eq_sum_zsmul_dividedPower {x : A} {k : ℕ} (hk : x ^ k = 0) (
   refine sum_congr rfl fun i _ => ?_
   rw [← Int.cast_pow, Int.cast_smul_eq_zsmul]
 
-/-- A subring containing every divided power of a nilpotent element contains every integral
-exponential of it. -/
-theorem exp_zsmul_mem {x : A} (hx : IsNilpotent x) {S : Subring A}
+/-- An additive subgroup containing every divided power of a nilpotent element contains every
+integral exponential of it. -/
+theorem exp_zsmul_mem {x : A} (hx : IsNilpotent x) {S : AddSubgroup A}
     (hS : ∀ i, Associative.dividedPower i x ∈ S) (t : ℤ) :
     exp (t • x) ∈ S := by
   obtain ⟨k, hk⟩ := hx
