@@ -10,12 +10,15 @@ public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
 /-!
 # Character lattices of split tori
 
-The intrinsic character lattice of a split torus is its defining finite-rank free abelian group.
+The intrinsic character lattice of a split torus is its defining finite-rank free abelian group,
+and its absolute-Galois action is trivial.
 
 ## Main declarations
 
 * `TauCeti.SplitTorus.characterLatticeEquiv`: the intrinsic character lattice of a split
   presentation is its defining free abelian group.
+* `TauCeti.SplitTorus.smul_characterLattice_eq_self`: the absolute-Galois action on a split
+  torus's character lattice is trivial.
 
 ## References
 
@@ -29,15 +32,6 @@ namespace TauCeti
 universe u
 
 namespace SplitTorus
-
-/-- The absolute-Galois action specialized to the additive character group of a split torus. -/
-noncomputable instance instAdditiveCharacterGroupGaloisAction
-    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
-    DistribMulAction (Field.absoluteGaloisGroup k)
-      (CommHopfAlgCat.additiveCharacterGroup
-        (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj) :=
-  CommHopfAlgCat.instAdditiveCharacterGroupGaloisAction
-    (H := (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj)
 
 /-- The additive character lattice of a split-torus presentation is its defining finite-rank
 free `ℤ`-module. -/
@@ -53,7 +47,7 @@ noncomputable def characterLatticeEquiv
 /-- The split-torus lattice equivalence sends a character to the additive form of its
 diagonalizable-group character. -/
 @[simp]
-theorem characterLatticeEquiv_apply_ofAdd
+theorem ofAdd_characterLatticeEquiv_apply
     (k : Type u) [Field k] (σ : Type u) [Finite σ]
     (x : CommHopfAlgCat.additiveCharacterGroup
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj) :
@@ -62,8 +56,8 @@ theorem characterLatticeEquiv_apply_ofAdd
         (characterGroup σ) x.toMul := by
   rfl
 
-/-- A split-torus character corresponds to `m` exactly when its underlying group-like element is
-the standard monomial indexed by `Multiplicative.ofAdd m`. -/
+/-- A split-torus character corresponds to `m` exactly when base change identifies its underlying
+group-like element with the standard monomial indexed by `Multiplicative.ofAdd m`. -/
 @[simp]
 theorem characterLatticeEquiv_apply_eq_iff
     (k : Type u) [Field k] (σ : Type u) [Finite σ]
@@ -74,7 +68,7 @@ theorem characterLatticeEquiv_apply_eq_iff
       TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) x.toMul.val =
         _root_.MonoidAlgebra.single (Multiplicative.ofAdd m) 1 := by
   rw [← (Multiplicative.ofAdd (α := σ →₀ ℤ)).apply_eq_iff_eq]
-  rw [characterLatticeEquiv_apply_ofAdd]
+  rw [ofAdd_characterLatticeEquiv_apply]
   exact DiagonalizableGroup.geometricCharacterGroupEquiv_apply_eq_iff k
     (characterGroup σ) x.toMul (Multiplicative.ofAdd m)
 
@@ -85,32 +79,19 @@ theorem characterLatticeEquiv_symm_apply_toMul_val
     (k : Type u) [Field k] (σ : Type u) [Finite σ] (m : σ →₀ ℤ) :
     ((characterLatticeEquiv k σ).symm m).toMul.val =
       1 ⊗ₜ[k] _root_.MonoidAlgebra.single (Multiplicative.ofAdd m) 1 := by
-  let e := TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k)
-    (G := characterGroup σ)
-  have h := (characterLatticeEquiv_apply_eq_iff k σ
-    ((characterLatticeEquiv k σ).symm m) m).mp
-      ((characterLatticeEquiv k σ).apply_symm_apply m)
-  calc
-    ((characterLatticeEquiv k σ).symm m).toMul.val =
-        e.symm (e ((characterLatticeEquiv k σ).symm m).toMul.val) :=
-      (e.symm_apply_apply _).symm
-    _ = e.symm (_root_.MonoidAlgebra.single (Multiplicative.ofAdd m) 1) :=
-      congrArg e.symm h
-    _ = 1 ⊗ₜ[k] _root_.MonoidAlgebra.single (Multiplicative.ofAdd m) 1 :=
-      TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_symm_single k
-        (AlgebraicClosure k) (Multiplicative.ofAdd m) 1
+  exact DiagonalizableGroup.geometricCharacterGroupEquiv_symm_apply_val k
+    (characterGroup σ) (Multiplicative.ofAdd m)
 
 /-- The absolute-Galois action on the character lattice of a split torus is trivial. -/
 @[simp]
-theorem smul_eq_self (k : Type u) [Field k] (σ : Type u) [Finite σ]
+theorem smul_characterLattice_eq_self (k : Type u) [Field k] (σ : Type u) [Finite σ]
     (γ : Field.absoluteGaloisGroup k)
     (x : CommHopfAlgCat.additiveCharacterGroup
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj) :
     γ • x = x := by
   apply Additive.toMul.injective
-  -- Expose the generic additive action beneath the split-torus instance bridge.
-  change (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from γ) • x.toMul = x.toMul
-  exact DiagonalizableGroup.smul_eq_self k (characterGroup σ) γ x.toMul
+  rw [CommHopfAlgCat.toMul_smul]
+  exact DiagonalizableGroup.smul_geometricCharacterGroup_eq_self k (characterGroup σ) γ x.toMul
 
 end SplitTorus
 

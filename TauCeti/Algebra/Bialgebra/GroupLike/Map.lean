@@ -63,35 +63,24 @@ theorem map_comp {C : Type*} [Semiring C] [Bialgebra R C]
 /-- A bialgebra equivalence induces a multiplicative equivalence of group-like elements. -/
 def mapEquiv (e : A ≃ₐc[R] B) :
     _root_.GroupLike R A ≃* _root_.GroupLike R B where
-  toEquiv := equivOfCoalgEquiv e.toCoalgEquiv
+  __ := equivOfCoalgEquiv e.toCoalgEquiv
   map_mul' x y := by
     apply _root_.GroupLike.val_injective
-    calc
-      ((equivOfCoalgEquiv e.toCoalgEquiv).toFun (x * y)).val =
-          e.toCoalgEquiv (x * y).val := by
-        simpa only [Equiv.toFun_as_coe] using
-          val_equivOfCoalgEquiv e.toCoalgEquiv (x * y)
-      _ = e.toCoalgEquiv (x.val * y.val) :=
-        congrArg e.toCoalgEquiv (_root_.GroupLike.val_mul x y)
-      _ = e (x.val * y.val) := rfl
-      _ = e x.val * e y.val := map_mul e x.val y.val
-      _ = e.toCoalgEquiv x.val * e.toCoalgEquiv y.val := rfl
-      _ = ((equivOfCoalgEquiv e.toCoalgEquiv).toFun x).val *
-          ((equivOfCoalgEquiv e.toCoalgEquiv).toFun y).val :=
-        congrArg₂ (· * ·)
-          (by simpa only [Equiv.toFun_as_coe] using
-            (val_equivOfCoalgEquiv e.toCoalgEquiv x).symm)
-          (by simpa only [Equiv.toFun_as_coe] using
-            (val_equivOfCoalgEquiv e.toCoalgEquiv y).symm)
-      _ = (((equivOfCoalgEquiv e.toCoalgEquiv).toFun x) *
-          ((equivOfCoalgEquiv e.toCoalgEquiv).toFun y)).val :=
-        (_root_.GroupLike.val_mul _ _).symm
+    simp only [Equiv.toFun_as_coe, val_equivOfCoalgEquiv, _root_.GroupLike.val_mul]
+    rw [_root_.BialgEquiv.toCoalgEquiv_eq_coe]
+    exact map_mul e x.val y.val
 
 /-- The underlying value of `mapEquiv` is the original bialgebra equivalence. -/
 @[simp]
 theorem val_mapEquiv (e : A ≃ₐc[R] B) (x : _root_.GroupLike R A) :
     (mapEquiv e x).val = e x.val :=
   val_equivOfCoalgEquiv e.toCoalgEquiv x
+
+/-- The underlying value of the inverse of `mapEquiv` is the inverse bialgebra equivalence. -/
+@[simp]
+theorem val_mapEquiv_symm (e : A ≃ₐc[R] B) (x : _root_.GroupLike R B) :
+    ((mapEquiv e).symm x).val = e.symm x.val :=
+  val_equivOfCoalgEquiv_symm e.toCoalgEquiv x
 
 /-- Mapping group-like elements along the identity equivalence is the identity equivalence. -/
 @[simp]
@@ -116,8 +105,7 @@ theorem mapEquiv_trans {C : Type*} [Semiring C] [Bialgebra R C]
 theorem mapEquiv_symm (e : A ≃ₐc[R] B) :
     (mapEquiv e).symm = mapEquiv e.symm := by
   ext x
-  exact (val_equivOfCoalgEquiv_symm e.toCoalgEquiv x).trans
-    (val_mapEquiv e.symm x).symm
+  exact (val_mapEquiv_symm e x).trans (val_mapEquiv e.symm x).symm
 
 end GroupLike
 

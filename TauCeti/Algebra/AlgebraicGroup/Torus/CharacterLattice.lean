@@ -23,6 +23,9 @@ classification of non-split tori are not formalized here.
 
 * `TauCeti.exists_characterLattice_addEquiv_of_torus`: the character lattice of any torus is
   finite-rank free.
+* `TauCeti.characterLattice_module_free_of_torus`: a torus character lattice is a free `ℤ`-module.
+* `TauCeti.characterLattice_module_finite_of_torus`: a torus character lattice is a finite
+  `ℤ`-module.
 
 ## References
 
@@ -41,11 +44,27 @@ noncanonical: it uses the splitting over the chosen algebraic closure from the t
 theorem exists_characterLattice_addEquiv_of_torus (k : Type u) [Field k]
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) (hH : torusCommHopfAlgProperty k H) :
     ∃ n : ℕ, Nonempty
-      (CommHopfAlgCat.additiveCharacterGroup H.obj ≃+ (ULift.{u} (Fin n) →₀ ℤ)) := by
+      (CommHopfAlgCat.additiveCharacterGroup H.obj ≃+ (Fin n →₀ ℤ)) := by
   rw [torusCommHopfAlgProperty_iff] at hH
   obtain ⟨n, ⟨i⟩⟩ := hH
-  exact ⟨n, ⟨(CommHopfAlgCat.additiveCharacterGroupEquivOfIso k H
-    (SplitTorus.characterGroup (ULift.{u} (Fin n))) i).trans
-      (AddEquiv.additiveMultiplicative (ULift.{u} (Fin n) →₀ ℤ))⟩⟩
+  exact ⟨n, ⟨(MulEquiv.toAdditive
+    (CommHopfAlgCat.geometricCharacterGroupEquivOfIso k H
+      (SplitTorus.characterGroup (ULift.{u} (Fin n))) i)).trans
+      ((AddEquiv.additiveMultiplicative (ULift.{u} (Fin n) →₀ ℤ)).trans
+        (Finsupp.domCongr Equiv.ulift))⟩⟩
+
+/-- The character lattice of a torus is a free `ℤ`-module. -/
+theorem characterLattice_module_free_of_torus (k : Type u) [Field k]
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (hH : torusCommHopfAlgProperty k H) :
+    Module.Free ℤ (CommHopfAlgCat.additiveCharacterGroup H.obj) := by
+  obtain ⟨n, ⟨e⟩⟩ := exists_characterLattice_addEquiv_of_torus k H hH
+  exact Module.Free.of_equiv e.toIntLinearEquiv.symm
+
+/-- The character lattice of a torus is a finite `ℤ`-module. -/
+theorem characterLattice_module_finite_of_torus (k : Type u) [Field k]
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (hH : torusCommHopfAlgProperty k H) :
+    Module.Finite ℤ (CommHopfAlgCat.additiveCharacterGroup H.obj) := by
+  obtain ⟨n, ⟨e⟩⟩ := exists_characterLattice_addEquiv_of_torus k H hH
+  exact Module.Finite.equiv e.toIntLinearEquiv.symm
 
 end TauCeti

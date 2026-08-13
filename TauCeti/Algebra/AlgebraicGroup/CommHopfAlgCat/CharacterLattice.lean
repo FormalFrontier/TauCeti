@@ -7,7 +7,7 @@ module
 public import Mathlib.Algebra.Category.CommHopfAlgCat
 public import Mathlib.FieldTheory.AbsoluteGaloisGroup
 public import Mathlib.RingTheory.HopfAlgebra.GroupLike
-public import TauCeti.Algebra.Bialgebra.GroupLike.Galois
+public import TauCeti.Algebra.Bialgebra.GroupLike.ScalarAut
 
 /-!
 # Geometric character groups and their Galois action
@@ -19,11 +19,11 @@ elements of its coordinate algebra after extension to an algebraic closure:
 X*(H) = GroupLike k̄ (k̄ ⊗[k] H).
 ```
 
-The generic scalar action from `TauCeti.Algebra.Bialgebra.GroupLike.Galois` specializes to the
+The generic scalar action from `TauCeti.Algebra.Bialgebra.GroupLike.ScalarAut` specializes to the
 absolute Galois group and acts by `σ • (a ⊗ h) = σ(a) ⊗ h`. Its actions on the scalar
 extension, the group-like elements, and their additive form are available through the instances
-`GaloisScalar.instScalarMulSemiringAction`, `GaloisScalar.instGroupLikeDistribMulAction`, and
-`GaloisScalar.instAdditiveDistribMulAction`; this module supplies the instance bridges needed for
+`ScalarAut.instMulSemiringAction`, `ScalarAut.instGroupLikeDistribMulAction`, and
+`ScalarAut.instAdditiveDistribMulAction`; this module supplies the instance bridges needed for
 the opaque `Field.absoluteGaloisGroup` definition.
 
 ## Main declarations
@@ -65,26 +65,71 @@ abbrev geometricCharacterGroup :=
   GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] H)
 
 /-- Bridge the generic scalar action across the opaque `Field.absoluteGaloisGroup` definition. -/
-noncomputable instance instGaloisScalarMulSemiringAction :
-    MulSemiringAction (Field.absoluteGaloisGroup k) (AlgebraicClosure k ⊗[k] H) := by
+noncomputable abbrev instGaloisScalarMulSemiringAction {A : Type u} [Semiring A] [Algebra k A] :
+    MulSemiringAction (Field.absoluteGaloisGroup k) (AlgebraicClosure k ⊗[k] A) := by
   unfold Field.absoluteGaloisGroup
-  exact GaloisScalar.instScalarMulSemiringAction
+  exact ScalarAut.instMulSemiringAction
+
+attribute [instance] instGaloisScalarMulSemiringAction
 
 /-- Bridge the generic group-like action across the opaque absolute-Galois-group definition. -/
-noncomputable instance instGeometricCharacterGroupGaloisAction :
-    MulDistribMulAction (Field.absoluteGaloisGroup k) (geometricCharacterGroup H) := by
+noncomputable abbrev instGeometricCharacterGroupGaloisAction {A : Type u}
+    [Semiring A] [Bialgebra k A] :
+    MulDistribMulAction (Field.absoluteGaloisGroup k)
+      (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A)) := by
   unfold Field.absoluteGaloisGroup
-  exact GaloisScalar.instGroupLikeDistribMulAction
+  exact ScalarAut.instGroupLikeDistribMulAction
+
+attribute [instance] instGeometricCharacterGroupGaloisAction
 
 /-- The additive form of the geometric character group of a commutative Hopf algebra. For a
 torus its underlying additive group is free of finite rank. -/
 abbrev additiveCharacterGroup := Additive (geometricCharacterGroup H)
 
 /-- Bridge the generic additive action across the opaque absolute-Galois-group definition. -/
-noncomputable instance instAdditiveCharacterGroupGaloisAction :
-    DistribMulAction (Field.absoluteGaloisGroup k) (additiveCharacterGroup H) := by
+noncomputable abbrev instAdditiveCharacterGroupGaloisAction {A : Type u}
+    [Semiring A] [Bialgebra k A] :
+    DistribMulAction (Field.absoluteGaloisGroup k)
+      (Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) := by
   unfold Field.absoluteGaloisGroup
-  exact GaloisScalar.instAdditiveDistribMulAction
+  exact ScalarAut.instAdditiveDistribMulAction
+
+attribute [instance] instAdditiveCharacterGroupGaloisAction
+
+/-- The absolute-Galois action on a scalar extension is tensor-product congruence. -/
+@[simp]
+theorem smul_def (H : _root_.CommHopfAlgCat.{u} k)
+    (σ : Field.absoluteGaloisGroup k) (x : AlgebraicClosure k ⊗[k] H) :
+    σ • x = Algebra.TensorProduct.congr
+      (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) .refl x := by
+  rw [show σ • x = ScalarAut.congrHom (A := H)
+    (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) x from rfl]
+  rw [ScalarAut.congrHom_apply]
+
+/-- The absolute-Galois action on the scalar extension is the scalar-factor action. -/
+@[simp]
+theorem smul_tmul (σ : Field.absoluteGaloisGroup k) (a : AlgebraicClosure k) (x : H) :
+    σ • (a ⊗ₜ[k] x) =
+      (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) a ⊗ₜ[k] x := by
+  rw [smul_def]
+  rw [Algebra.TensorProduct.congr_apply, Algebra.TensorProduct.map_tmul]
+  rfl
+
+/-- The underlying value of the absolute-Galois action on a geometric character. -/
+@[simp]
+theorem val_smul (σ : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
+    (σ • x).val = (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) • x.val :=
+  by
+    unfold Field.absoluteGaloisGroup at σ ⊢
+    exact ScalarAut.val_smul σ x
+
+/-- Passing from additive to multiplicative characters commutes with the absolute-Galois action. -/
+@[simp]
+theorem toMul_smul (σ : Field.absoluteGaloisGroup k) (x : additiveCharacterGroup H) :
+    (σ • x).toMul = σ • x.toMul :=
+  by
+    unfold Field.absoluteGaloisGroup at σ ⊢
+    exact ScalarAut.toMul_smul σ x
 
 end CommHopfAlgCat
 

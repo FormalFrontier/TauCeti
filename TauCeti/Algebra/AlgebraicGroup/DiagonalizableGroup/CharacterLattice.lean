@@ -14,7 +14,7 @@ public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 # Character groups of diagonalizable groups
 
 The intrinsic geometric character group of a diagonalizable coordinate ring recovers the
-finitely generated commutative group used to construct it.
+finitely generated commutative group used to construct it. Its absolute-Galois action is trivial.
 
 ## Main declarations
 
@@ -22,6 +22,8 @@ finitely generated commutative group used to construct it.
   group whenever its base change is a monoid algebra.
 * `TauCeti.DiagonalizableGroup.geometricCharacterGroupEquiv`: the geometric character group of
   a diagonalizable coordinate ring is its defining finitely generated commutative group.
+* `TauCeti.DiagonalizableGroup.smul_geometricCharacterGroup_eq_self`: the absolute-Galois action
+  on this character group is trivial.
 
 ## References
 
@@ -50,6 +52,36 @@ noncomputable def bialgEquivOfBaseChangeIso
   _root_.CommHopfAlgCat.ofIso
     ((finiteTypeCommHopfAlgProperty (AlgebraicClosure k)).ι.mapIso i)
 
+/-- The base-change bialgebra equivalence evaluates as the morphism underlying the isomorphism. -/
+@[simp]
+theorem bialgEquivOfBaseChangeIso_apply
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (G : FGCommGrpCat.{u})
+    (i : DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
+      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
+    (x : _root_.MonoidAlgebra (AlgebraicClosure k) G) :
+    bialgEquivOfBaseChangeIso k H G i x = i.hom.hom x :=
+  by
+    rw [bialgEquivOfBaseChangeIso]
+    simpa only [CategoryTheory.Functor.mapIso_hom, CategoryTheory.ObjectProperty.ι_map] using
+      _root_.CommHopfAlgCat.ofIso_apply
+        ((finiteTypeCommHopfAlgProperty (AlgebraicClosure k)).ι.mapIso i) x
+
+/-- The inverse base-change bialgebra equivalence evaluates as the inverse isomorphism. -/
+@[simp]
+theorem bialgEquivOfBaseChangeIso_symm_apply
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (G : FGCommGrpCat.{u})
+    (i : DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
+      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
+    (x : AlgebraicClosure k ⊗[k] H.obj) :
+    (bialgEquivOfBaseChangeIso k H G i).symm x = i.inv.hom x :=
+  by
+    apply (bialgEquivOfBaseChangeIso k H G i).symm_apply_eq.mpr
+    change x = bialgEquivOfBaseChangeIso k H G i (i.inv.hom x)
+    rw [bialgEquivOfBaseChangeIso_apply]
+    exact (i.inv_hom_id_apply x).symm
+
 /-- If the base change of a finite-type commutative Hopf algebra is a diagonalizable coordinate
 ring, its geometric character group is the group indexing that coordinate ring. -/
 noncomputable def geometricCharacterGroupEquivOfIso
@@ -77,26 +109,9 @@ theorem geometricCharacterGroupEquivOfIso_apply_eq_iff
     TauCeti.MonoidAlgebra.groupLikeEquiv_apply_eq_iff, TauCeti.GroupLike.mapEquiv_symm,
     TauCeti.GroupLike.val_mapEquiv]
 
-/-- Additive form of `geometricCharacterGroupEquivOfIso`. -/
-noncomputable def additiveCharacterGroupEquivOfIso
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (G : FGCommGrpCat.{u})
-    (i : DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
-      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :
-    additiveCharacterGroup H.obj ≃+ Additive G :=
-  MulEquiv.toAdditive (geometricCharacterGroupEquivOfIso k H G i)
-
 end CommHopfAlgCat
 
 namespace DiagonalizableGroup
-
-/-- The absolute-Galois action specialized to a diagonalizable coordinate ring. -/
-noncomputable instance instGeometricCharacterGroupGaloisAction
-    (k : Type u) [Field k] (G : FGCommGrpCat.{u}) :
-    MulDistribMulAction (Field.absoluteGaloisGroup k)
-      (CommHopfAlgCat.geometricCharacterGroup (coordinateRing k G).obj) :=
-  CommHopfAlgCat.instGeometricCharacterGroupGaloisAction
-    (H := (coordinateRing k G).obj)
 
 /-- The intrinsic geometric character group of a diagonalizable coordinate ring is the finitely
 generated commutative group used to construct it. -/
@@ -108,22 +123,17 @@ noncomputable def geometricCharacterGroupEquiv
 
 /-- For the canonical base-change isomorphism of a diagonalizable coordinate ring, the inverse
 of `bialgEquivOfBaseChangeIso` is the scalar-tensor equivalence. -/
-theorem bialgEquivOfBaseChangeIso_symm_apply
+@[simp]
+theorem coordinateRing_bialgEquivOfBaseChangeIso_symm_apply
     (k : Type u) [Field k] (G : FGCommGrpCat.{u})
     (x : AlgebraicClosure k ⊗[k] _root_.MonoidAlgebra k G) :
     (CommHopfAlgCat.bialgEquivOfBaseChangeIso k (coordinateRing k G) G
       (baseChangeCoordinateRingIso k (AlgebraicClosure k) G).symm).symm x =
         TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) x := by
-  induction x with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a x =>
-      -- The full-subcategory `mapIso` and `CommHopfAlgCat.ofIso` wrappers expose no
-      -- evaluation lemma. Unfold their shared underlying algebra equivalence here so that
-      -- the canonical scalar-tensor pure-tensor lemma applies.
-      change TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k)
-        (a ⊗ₜ[k] x) = _
-      rw [TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_tmul]
+  rw [CommHopfAlgCat.bialgEquivOfBaseChangeIso_symm_apply]
+  simp only [CategoryTheory.Iso.symm_inv, CategoryTheory.ObjectProperty.isoMk_hom,
+    CategoryTheory.ObjectProperty.homMk_hom, _root_.CommHopfAlgCat.isoMk_hom,
+    _root_.CommHopfAlgCat.hom_ofHom, BialgEquiv.coe_coe]
 
 /-- A geometric character corresponds to `g` exactly when base change identifies its underlying
 group-like element with the standard monomial indexed by `g`. -/
@@ -136,7 +146,7 @@ theorem geometricCharacterGroupEquiv_apply_eq_iff
         _root_.MonoidAlgebra.single g 1 := by
   rw [geometricCharacterGroupEquiv,
     CommHopfAlgCat.geometricCharacterGroupEquivOfIso_apply_eq_iff,
-    bialgEquivOfBaseChangeIso_symm_apply]
+    coordinateRing_bialgEquivOfBaseChangeIso_symm_apply]
 
 /-- The inverse character corresponding to `g` is the standard monomial indexed by `g`, viewed
 in the scalar-extended coordinate ring. -/
@@ -160,19 +170,14 @@ theorem geometricCharacterGroupEquiv_symm_apply_val
 /-- The absolute Galois action on the geometric character group of a diagonalizable coordinate
 ring is trivial. -/
 @[simp]
-theorem smul_eq_self (k : Type u) [Field k] (G : FGCommGrpCat.{u})
+theorem smul_geometricCharacterGroup_eq_self (k : Type u) [Field k] (G : FGCommGrpCat.{u})
     (σ : Field.absoluteGaloisGroup k)
     (x : CommHopfAlgCat.geometricCharacterGroup (coordinateRing k G).obj) :
     σ • x = x := by
   rw [← (geometricCharacterGroupEquiv k G).symm_apply_apply x]
   apply _root_.GroupLike.val_injective
-  -- Expose the generic action beneath the necessary absolute-Galois and coordinate-ring bridges.
-  change GaloisScalar.map
-    (A := (coordinateRing k G).obj)
-    (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ)
-      ((geometricCharacterGroupEquiv k G).symm
-        (geometricCharacterGroupEquiv k G x)).val = _
-  rw [geometricCharacterGroupEquiv_symm_apply_val, GaloisScalar.map_tmul, map_one]
+  rw [CommHopfAlgCat.val_smul, geometricCharacterGroupEquiv_symm_apply_val,
+    ScalarAut.smul_tmul, map_one]
 
 end DiagonalizableGroup
 

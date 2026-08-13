@@ -51,6 +51,28 @@ theorem val_equivOfCoalgEquiv_symm (e : A ≃ₗc[R] B) (x : _root_.GroupLike R 
     ((equivOfCoalgEquiv e).symm x).val = e.symm x.val :=
   (rfl)
 
+/-- Transport along the identity coalgebra equivalence is the identity equivalence. -/
+@[simp]
+theorem equivOfCoalgEquiv_refl :
+    equivOfCoalgEquiv (_root_.CoalgEquiv.refl R A) = Equiv.refl _ := by
+  ext x
+  rfl
+
+/-- Transport along a composite coalgebra equivalence is the composite transport. -/
+@[simp]
+theorem equivOfCoalgEquiv_trans {C : Type*} [AddCommMonoid C] [Module R C] [Coalgebra R C]
+    (e : A ≃ₗc[R] B) (f : B ≃ₗc[R] C) :
+    equivOfCoalgEquiv (e.trans f) = (equivOfCoalgEquiv e).trans (equivOfCoalgEquiv f) := by
+  ext x
+  rfl
+
+/-- Inverting transport is transport along the inverse coalgebra equivalence. -/
+@[simp]
+theorem equivOfCoalgEquiv_symm (e : A ≃ₗc[R] B) :
+    (equivOfCoalgEquiv e).symm = equivOfCoalgEquiv e.symm := by
+  ext x
+  rfl
+
 end GroupLike
 
 end TauCeti
