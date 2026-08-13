@@ -10,6 +10,8 @@ public import Mathlib.RingTheory.Binomial
 public import Mathlib.RingTheory.HopfAlgebra.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Antipode
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Bialgebra
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
+public import TauCeti.Algebra.Lie.UniversalEnveloping.KostantForm
 public import TauCeti.RingTheory.DividedPowers.Associative
 
 /-!
@@ -25,8 +27,6 @@ representations is handled by Mathlib's `Coalgebra.Repr.mul`.
 
 ## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι`: the canonical Lie generators generate the
-  enveloping algebra as an algebra.
 * `TauCeti.UniversalEnvelopingAlgebra.instHopfAlgebra`: the canonical Hopf algebra structure.
 * `TauCeti.UniversalEnvelopingAlgebra.hopfAntipode_eq_antipode`: the Hopf antipode is the
   previously constructed universal-enveloping antipode.
@@ -60,22 +60,6 @@ variable (R : Type u) [CommRing R]
 variable (L : Type v) [LieRing L] [LieAlgebra R L]
 
 local notation "U" => _root_.UniversalEnvelopingAlgebra R L
-
-/-- The canonical Lie generators generate a universal enveloping algebra as an algebra. -/
-theorem adjoin_range_ι :
-    Algebra.adjoin R (Set.range (_root_.UniversalEnvelopingAlgebra.ι R : L → U)) = ⊤ := by
-  rw [← (UniversalEnvelopingAlgebra.mkAlgHom R L).range_eq_top.mpr
-    (RingCon.mk'_surjective (UniversalEnvelopingAlgebra.ringCon R L))]
-  rw [← Algebra.map_top, ← TensorAlgebra.adjoin_range_ι, AlgHom.map_adjoin]
-  congr 1
-  ext x
-  simp only [Set.mem_image, Set.mem_range]
-  constructor
-  · rintro ⟨z, rfl⟩
-    exact ⟨TensorAlgebra.ι R z, ⟨z, rfl⟩,
-      by simp [_root_.UniversalEnvelopingAlgebra.ι_apply]⟩
-  · rintro ⟨y, ⟨z, rfl⟩, rfl⟩
-    exact ⟨z, by simp [_root_.UniversalEnvelopingAlgebra.ι_apply]⟩
 
 private noncomputable def antipodeConv : WithConv (U →ₗ[R] U) :=
   toConv (antipode R)
@@ -286,13 +270,9 @@ variable {L : Type v} [LieRing L] [LieAlgebra ℚ L]
 
 local notation "Uℚ" => _root_.UniversalEnvelopingAlgebra ℚ L
 
-/-- A rational universal enveloping algebra is a `ℚ≥0`-module, by restricting scalars along
-`algebraMap ℚ≥0 ℚ`. This is what makes the `BinomialRing` machinery used for divided powers
-available on `Uℚ`. -/
-noncomputable local instance moduleNNRat : Module ℚ≥0 Uℚ :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
-
-attribute [local instance] BinomialRing.toIsAddTorsionFree
+-- The `ℚ≥0`-action restricted along `algebraMap ℚ≥0 ℚ` is what makes the `BinomialRing`
+-- machinery available on `Uℚ`; it is the same instance the Kostant form is elaborated with.
+attribute [local instance] moduleNNRat BinomialRing.toIsAddTorsionFree
 
 open Polynomial
 
