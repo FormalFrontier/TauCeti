@@ -157,7 +157,8 @@ theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A)
   rw [endOfPoint_tmul, endOfPoint_tmul]
   simp only [corestrict_coact_apply, AlgHom.comp_toLinearMap]
   rw [LinearMap.lTensor_comp, LinearMap.comp_apply]
-  have hφ : φ.toCoalgHom.toLinearMap = (φ : H₁ →ₐ[R] H₂).toLinearMap := rfl
+  have hφ : φ.toCoalgHom.toLinearMap = (φ : H₁ →ₐ[R] H₂).toLinearMap :=
+    (_root_.BialgHom.toAlgHom_toLinearMap φ).symm
   simp only [LinearMap.lTensor_def, hφ]
 
 end Corestrict
