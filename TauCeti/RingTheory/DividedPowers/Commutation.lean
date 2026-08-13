@@ -43,7 +43,7 @@ universe u
 variable {A : Type u} [Ring A] [Algebra ℚ A] [BinomialRing A]
 
 /-- A generalized binomial coefficient can be moved to the right across a divided power by
-shifting its argument by the accumulated commutator. -/
+shifting its argument by `n • c`. -/
 theorem ringChoose_mul_dividedPower (m : ℕ) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
     Ring.choose a m * dividedPower n x =
@@ -51,7 +51,7 @@ theorem ringChoose_mul_dividedPower (m : ℕ) {a x c : A}
   rw [dividedPower_def, mul_smul_comm, smul_mul_assoc, ringChoose_mul_pow m h hc n]
 
 /-- A generalized binomial coefficient can be moved to the left across a divided power by
-shifting its argument by the negative accumulated commutator. -/
+shifting its argument by `-n • c`. -/
 theorem dividedPower_mul_ringChoose (m : ℕ) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
     dividedPower n x * Ring.choose a m =

@@ -28,8 +28,9 @@ it to an additive shift and then to `Ring.choose`.
 ## Main results
 
 * `SemiconjBy.smeval_right`: simultaneous polynomial evaluation preserves semiconjugacy.
-* `TauCeti.Polynomial.smeval_mul_pow` and `TauCeti.Polynomial.pow_mul_smeval`: the
-  corresponding polynomial reordering identities.
+* `TauCeti.Polynomial.smeval_mul_pow_eq_pow_mul_smeval` and
+  `TauCeti.Polynomial.pow_mul_smeval_eq_smeval_mul_pow`: the corresponding polynomial
+  reordering identities.
 * `TauCeti.ringChoose_mul_pow` and `TauCeti.pow_mul_ringChoose`: their two
   binomial-coefficient forms.
 
@@ -51,8 +52,8 @@ variable [IsScalarTower R A A] [SMulCommClass R A A]
 
 /-- Polynomial evaluation preserves the two right-hand entries of a semiconjugacy relation.
 
-This generalizes Mathlib's `Polynomial.smeval_commute` from `Commute` to `SemiconjBy`, following
-its proof. -/
+This generalizes Mathlib's `Polynomial.smeval_commute_left` from `Commute` to `SemiconjBy`,
+following its proof. -/
 theorem smeval_right {a x y : A} (h : SemiconjBy a x y) (p : Polynomial R) :
     SemiconjBy a (Polynomial.smeval p x) (Polynomial.smeval p y) := by
   induction p using Polynomial.induction_on' with
@@ -73,6 +74,12 @@ section Semiring
 
 variable [Semiring A]
 
+private theorem add_mul_eq_mul_add_add {a x c d : A} (h : a * x = x * (a + c))
+    (hd : Commute d x) : (a + d) * x = x * (a + d + c) := by
+  rw [add_mul, h, hd.eq, ← mul_add]
+  congr 1
+  abel
+
 /-- Moving `a` across `x ^ n` accumulates `n` copies of the additive shift `c`, provided `c`
 commutes with `x`. -/
 private theorem mul_pow_eq_pow_mul_add_nsmul {a x c : A} (h : a * x = x * (a + c))
@@ -83,21 +90,16 @@ private theorem mul_pow_eq_pow_mul_add_nsmul {a x c : A} (h : a * x = x * (a + c
   | succ n ih =>
       rw [pow_succ, ← mul_assoc, ih, mul_assoc]
       have hshift : (a + n • c) * x = x * (a + (n + 1) • c) := by
-        calc
-          (a + n • c) * x = a * x + (n • c) * x := add_mul _ _ _
-          _ = x * (a + c) + x * (n • c) := by rw [h, (hc.smul_left n).eq]
-          _ = x * ((a + c) + n • c) := (mul_add _ _ _).symm
-          _ = x * (a + (n + 1) • c) := by
-            congr 1
-            rw [succ_nsmul]
-            abel
+        simpa only [succ_nsmul, add_assoc] using
+          add_mul_eq_mul_add_add h (hc.smul_left n)
       rw [hshift, ← mul_assoc, ← pow_succ]
 
 namespace Polynomial
 
 /-- A polynomial in `a` can be moved to the right across `x ^ n` by shifting its argument by
 `n • c`. -/
-theorem smeval_mul_pow {R : Type v} [Semiring R] [Module R A] [IsScalarTower R A A]
+theorem smeval_mul_pow_eq_pow_mul_smeval {R : Type v} [Semiring R] [Module R A]
+    [IsScalarTower R A A]
     [SMulCommClass R A A] (p : _root_.Polynomial R) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
     _root_.Polynomial.smeval p a * x ^ n =
@@ -117,25 +119,21 @@ variable [Ring A]
 private theorem sub_nsmul_mul_eq_mul_add {a x c : A} (h : a * x = x * (a + c))
     (hc : Commute c x) (n : ℕ) :
     (a - n • c) * x = x * ((a - n • c) + c) := by
-  calc
-    (a - n • c) * x = a * x - (n • c) * x := sub_mul _ _ _
-    _ = x * (a + c) - x * (n • c) := by rw [h, (hc.smul_left n).eq]
-    _ = x * ((a + c) - n • c) := (mul_sub _ _ _).symm
-    _ = x * ((a - n • c) + c) := by
-      congr 1
-      abel
+  simpa only [sub_eq_add_neg] using
+    add_mul_eq_mul_add_add h (hc.smul_left n).neg_left
 
 namespace Polynomial
 
 /-- A polynomial in `a` can be moved to the left across `x ^ n` by shifting its argument by
 `-n • c`. -/
-theorem pow_mul_smeval {R : Type v} [Semiring R] [Module R A] [IsScalarTower R A A]
+theorem pow_mul_smeval_eq_smeval_mul_pow {R : Type v} [Semiring R] [Module R A]
+    [IsScalarTower R A A]
     [SMulCommClass R A A] (p : _root_.Polynomial R) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
     x ^ n * _root_.Polynomial.smeval p a =
       _root_.Polynomial.smeval p (a - n • c) * x ^ n := by
   simpa only [sub_add_cancel] using
-    (smeval_mul_pow p (sub_nsmul_mul_eq_mul_add h hc n) hc n).symm
+    (smeval_mul_pow_eq_pow_mul_smeval p (sub_nsmul_mul_eq_mul_add h hc n) hc n).symm
 
 end Polynomial
 
@@ -154,7 +152,7 @@ theorem ringChoose_mul_pow [BinomialRing A] (m : ℕ) {a x c : A}
     _ = (descPochhammer ℤ m).smeval a * x ^ n := by
       rw [Ring.descPochhammer_eq_factorial_smul_choose]
     _ = x ^ n * (descPochhammer ℤ m).smeval (a + n • c) :=
-      Polynomial.smeval_mul_pow _ h hc n
+      Polynomial.smeval_mul_pow_eq_pow_mul_smeval _ h hc n
     _ = x ^ n * (m.factorial • Ring.choose (a + n • c) m) := by
       rw [Ring.descPochhammer_eq_factorial_smul_choose]
     _ = m.factorial • (x ^ n * Ring.choose (a + n • c) m) := by
