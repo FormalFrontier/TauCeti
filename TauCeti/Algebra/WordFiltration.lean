@@ -129,9 +129,7 @@ theorem span_prod_map_eq_wordFiltration {ι : Type*} (e : ι → M)
   · rw [Submodule.span_le]
     rintro a ⟨word, hword, rfl⟩
     have h := prod_map_mem_wordFiltration f (l := word.map e) (by simpa using hword)
-    rw [show (word.map fun i ↦ f (e i)) = (word.map e).map f by
-      simp [List.map_map, Function.comp_def]]
-    exact h
+    simpa only [List.map_map, Function.comp_def, SetLike.mem_coe] using h
   · rw [wordFiltration_le_iff]
     intro word hword
     induction word generalizing k with
@@ -149,17 +147,15 @@ theorem span_prod_map_eq_wordFiltration {ι : Type*} (e : ι → M)
                   (familyWord.map fun i ↦ f (e i)).prod = a}) ?_ ?_ ?_ ?_ hx
             · intro y hy
               obtain ⟨i, rfl⟩ := hy
-              change (word.map f).prod ∈
-                (Submodule.span R {a | ∃ familyWord : List ι, familyWord.length ≤ k + 1 ∧
-                  (familyWord.map fun i ↦ f (e i)).prod = a}).comap
-                    (LinearMap.mulLeft R (f (e i)))
-              refine (Submodule.span_le.mpr ?_) ih
-              rintro a ⟨tail, htail, rfl⟩
-              exact (show f (e i) * (tail.map fun i ↦ f (e i)).prod ∈
-                Submodule.span R {a | ∃ familyWord : List ι, familyWord.length ≤ k + 1 ∧
-                  (familyWord.map fun i ↦ f (e i)).prod = a} from
-                Submodule.subset_span
-                  ⟨i :: tail, by simpa using Nat.succ_le_succ htail, by simp⟩)
+              have hcomap : (word.map f).prod ∈
+                  (Submodule.span R {a | ∃ familyWord : List ι, familyWord.length ≤ k + 1 ∧
+                    (familyWord.map fun i ↦ f (e i)).prod = a}).comap
+                      (LinearMap.mulLeft R (f (e i))) := by
+                refine (Submodule.span_le.mpr ?_) ih
+                rintro a ⟨tail, htail, rfl⟩
+                exact Submodule.subset_span
+                  ⟨i :: tail, by simpa using Nat.succ_le_succ htail, by simp⟩
+              simpa only [LinearMap.mulLeft_apply] using Submodule.mem_comap.mp hcomap
             · simp
             · intro y z _ _ hy hz
               simpa only [map_add, add_mul] using Submodule.add_mem _ hy hz
