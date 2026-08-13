@@ -7,6 +7,7 @@ module
 public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
 public import Mathlib.RingTheory.Coalgebra.GroupLike
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
+public import TauCeti.Algebra.Bialgebra.GroupLike.Map
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
 public import TauCeti.RingTheory.Idempotents.Connected.Spectrum
 
@@ -184,9 +185,17 @@ theorem groupLikeEquiv_apply_eq_iff [CommRing R]
       x.val = _root_.MonoidAlgebra.single h 1 :=
   groupLikeIndex_eq_iff R x.val x.isGroupLikeElem_val h
 
+/-- The inverse image of an index under `groupLikeEquiv` is the corresponding standard basis
+element. -/
+@[simp]
+theorem val_groupLikeEquiv_symm [CommRing R]
+    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H] (h : H) :
+    ((groupLikeEquiv (R := R) (H := H)).symm h).val =
+      _root_.MonoidAlgebra.single h 1 :=
+  (rfl)
+
 /-- A group-like element is the standard basis element indexed by its image under
 `groupLikeEquiv`. -/
-@[simp]
 theorem eq_single_groupLikeEquiv [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
     (x : _root_.GroupLike R (_root_.MonoidAlgebra R H)) :
@@ -199,36 +208,9 @@ noncomputable def mapDomainBialgHomPreimage [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {G : Type v} {H : Type w}
     [Monoid G] [Monoid H]
     (F : _root_.MonoidAlgebra R G →ₐc[R] _root_.MonoidAlgebra R H) : G →* H :=
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
-  let φ : G → H := fun g ↦
-    groupLikeIndex R (F (_root_.MonoidAlgebra.single g 1))
-      ((_root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g).map F)
-  have hφ (g : G) :
-      F (_root_.MonoidAlgebra.single g 1) =
-        _root_.MonoidAlgebra.single (φ g) 1 :=
-    eq_single_groupLikeIndex R _ _
-  { toFun := φ
-    map_one' := by
-      apply _root_.MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-      calc
-        _root_.MonoidAlgebra.single (φ 1) 1 =
-            F (_root_.MonoidAlgebra.single 1 1) := (hφ 1).symm
-        _ = F 1 := congrArg F _root_.MonoidAlgebra.one_def.symm
-        _ = 1 := map_one F
-        _ = _root_.MonoidAlgebra.single 1 1 := _root_.MonoidAlgebra.one_def
-    map_mul' := by
-      intro g g'
-      apply _root_.MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-      calc
-        _root_.MonoidAlgebra.single (φ (g * g')) 1 =
-            F (_root_.MonoidAlgebra.single (g * g') 1) := (hφ (g * g')).symm
-        _ = F (_root_.MonoidAlgebra.single g 1 *
-            _root_.MonoidAlgebra.single g' 1) := by simp
-        _ = F (_root_.MonoidAlgebra.single g 1) *
-            F (_root_.MonoidAlgebra.single g' 1) := map_mul F _ _
-        _ = _root_.MonoidAlgebra.single (φ g) 1 *
-            _root_.MonoidAlgebra.single (φ g') 1 := by rw [hφ g, hφ g']
-        _ = _root_.MonoidAlgebra.single (φ g * φ g') 1 := by simp }
+  (groupLikeEquiv (R := R) (H := H)).toMonoidHom.comp
+    ((TauCeti.GroupLike.map F).comp
+      (groupLikeEquiv (R := R) (H := G)).symm.toMonoidHom)
 
 /-- The recovered monoid homomorphism takes `g` to `h` exactly when the bialgebra
 morphism takes the corresponding standard basis element to the standard basis element
@@ -240,10 +222,8 @@ theorem mapDomainBialgHomPreimage_apply_eq_iff [CommRing R]
     (g : G) (h : H) :
     mapDomainBialgHomPreimage R F g = h ↔
       F (_root_.MonoidAlgebra.single g 1) = _root_.MonoidAlgebra.single h 1 := by
-  let hx : IsGroupLikeElem R (F (_root_.MonoidAlgebra.single g 1)) :=
-    (_root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g).map F
-  simpa only [mapDomainBialgHomPreimage, MonoidHom.coe_mk, OneHom.coe_mk] using
-    groupLikeIndex_eq_iff R (F (_root_.MonoidAlgebra.single g 1)) hx h
+  simp only [mapDomainBialgHomPreimage, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    groupLikeEquiv_apply_eq_iff, TauCeti.GroupLike.val_map, val_groupLikeEquiv_symm]
 
 /-- The image of a standard basis element under a bialgebra morphism is indexed by
 the recovered monoid homomorphism. -/

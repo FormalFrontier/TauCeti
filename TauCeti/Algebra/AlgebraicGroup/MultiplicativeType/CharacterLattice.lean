@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 
 /-!
@@ -18,13 +17,14 @@ then forces the group of group-like elements to be finitely generated.
 
 ## Main declarations
 
+* `TauCeti.CommHopfAlgCat.exists_geometricCharacterGroup_mulEquiv_of_multiplicativeType`: a
+  multiplicative-type character group is equivalent to a finitely generated commutative group.
 * `TauCeti.CommHopfAlgCat.geometricCharacterGroup_fg_of_multiplicativeType`: the geometric
   character group of a group of multiplicative type is finitely generated.
 
 ## References
 
-See J. S. Milne, *Algebraic Groups* (2017), §§12.14--12.17, and W. C. Waterhouse,
-*Introduction to Affine Group Schemes*, Chapter 2.
+See J. S. Milne, *Algebraic Groups* (2017), Definition 12.14.
 -/
 
 public section
@@ -38,22 +38,24 @@ namespace CommHopfAlgCat
 variable {k : Type u} [Field k]
 
 /-- The geometric character group of a finite-type commutative Hopf algebra of multiplicative
+type is equivalent to a finitely generated commutative group. -/
+theorem exists_geometricCharacterGroup_mulEquiv_of_multiplicativeType
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (hH : multiplicativeTypeCommHopfAlgProperty k H) :
+    ∃ G : FGCommGrpCat.{u}, Nonempty (geometricCharacterGroup H.obj ≃* G) := by
+  rw [multiplicativeTypeCommHopfAlgProperty_iff_exists_iso_coordinateRing] at hH
+  obtain ⟨G, ⟨i⟩⟩ := hH
+  exact ⟨G, ⟨geometricCharacterGroupEquivOfIso k H G i⟩⟩
+
+/-- The geometric character group of a finite-type commutative Hopf algebra of multiplicative
 type is finitely generated. -/
 theorem geometricCharacterGroup_fg_of_multiplicativeType
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : multiplicativeTypeCommHopfAlgProperty k H) :
     Group.FG (geometricCharacterGroup H.obj) := by
-  have hspan : DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
-    (multiplicativeTypeCommHopfAlgProperty_iff k H).mp hH
-  -- `geometricCharacterGroup H.obj` unfolds through two bundled base-change layers; state the
-  -- underlying group-like type so the finite-generation theorem sees its coordinate algebra.
-  change Group.FG (_root_.GroupLike (AlgebraicClosure k)
-    (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H))
-  exact TauCeti.GroupLike.fg_of_finiteType_of_groupLikeSetSpan_eq_top
-    (AlgebraicClosure k) (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
-      inferInstance ((DiagonalizableGroup.groupLikeSpannedProperty_iff
-        (AlgebraicClosure k) _).mp hspan)
+  obtain ⟨G, ⟨e⟩⟩ := exists_geometricCharacterGroup_mulEquiv_of_multiplicativeType H hH
+  let hG : Group.FG G := inferInstance
+  exact @Group.fg_of_surjective G _ _ _ hG e.symm.toMonoidHom e.symm.surjective
 
 end CommHopfAlgCat
 

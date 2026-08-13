@@ -4,10 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
-public import TauCeti.Algebra.Bialgebra.GroupLike.Map
-public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 
 /-!
 # The character lattice of a torus
@@ -16,10 +14,10 @@ The geometric characters of a torus are the group-like elements of its coordinat
 extension to an algebraic closure. The generic construction and its absolute-Galois action are in
 `TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice`.
 
-The defining splitting over the algebraic closure identifies this character group,
-noncanonically, with a finite-rank free abelian group. Thus its additive form is the character
-lattice equipped with the standard absolute-Galois action used in the classification of
-non-split tori.
+The defining splitting over the algebraic closure identifies the underlying additive character
+group, noncanonically, with a finite-rank free abelian group. The absolute-Galois action is
+constructed in the generic character-group module, but its continuity and an equivariant
+classification of non-split tori are not formalized here.
 
 ## Main declarations
 
@@ -28,13 +26,11 @@ non-split tori.
 
 ## References
 
-See J. S. Milne, *Algebraic Groups* (2017), §§12.14--12.17, and W. C. Waterhouse,
+See J. S. Milne, *Algebraic Groups* (2017), Definitions 12.14 and 12.17, and W. C. Waterhouse,
 *Introduction to Affine Group Schemes*, Chapter 2.
 -/
 
 public section
-
-open TensorProduct
 
 namespace TauCeti
 
@@ -45,21 +41,11 @@ noncanonical: it uses the splitting over the chosen algebraic closure from the t
 theorem exists_characterLattice_addEquiv_of_torus (k : Type u) [Field k]
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) (hH : torusCommHopfAlgProperty k H) :
     ∃ n : ℕ, Nonempty
-      (CommHopfAlgCat.characterLattice H.obj ≃+ (ULift.{u} (Fin n) →₀ ℤ)) := by
+      (CommHopfAlgCat.additiveCharacterGroup H.obj ≃+ (ULift.{u} (Fin n) →₀ ℤ)) := by
   rw [torusCommHopfAlgProperty_iff] at hH
   obtain ⟨n, ⟨i⟩⟩ := hH
-  let i' : _root_.CommHopfAlgCat.of (AlgebraicClosure k)
-        (MonoidAlgebra (AlgebraicClosure k)
-          (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) ≅
-      _root_.CommHopfAlgCat.of (AlgebraicClosure k)
-        (AlgebraicClosure k ⊗[k] H) :=
-    (finiteTypeCommHopfAlgProperty (AlgebraicClosure k)).ι.mapIso i
-  let e : CommHopfAlgCat.geometricCharacterGroup H.obj ≃*
-      Multiplicative (ULift.{u} (Fin n) →₀ ℤ) :=
-    (TauCeti.GroupLike.mapEquiv (_root_.CommHopfAlgCat.ofIso i')).symm.trans
-      (MonoidAlgebra.groupLikeEquiv (R := AlgebraicClosure k)
-        (H := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))
-  exact ⟨n, ⟨(MulEquiv.toAdditive e).trans
-    (AddEquiv.additiveMultiplicative (ULift.{u} (Fin n) →₀ ℤ))⟩⟩
+  exact ⟨n, ⟨(CommHopfAlgCat.additiveCharacterGroupEquivOfIso k H
+    (SplitTorus.characterGroup (ULift.{u} (Fin n))) i).trans
+      (AddEquiv.additiveMultiplicative (ULift.{u} (Fin n) →₀ ℤ))⟩⟩
 
 end TauCeti
