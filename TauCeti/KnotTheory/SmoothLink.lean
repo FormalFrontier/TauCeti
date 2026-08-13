@@ -115,7 +115,7 @@ theorem isSmoothEmbedding (K : SmoothKnot I M) :
   SmoothEmbedding.isSmoothEmbedding K
 
 /-- Every smooth knot in a boundaryless manifold is locally flat. -/
-theorem isLocallyFlat [I.Boundaryless] [IsManifold I ∞ M] (K : SmoothKnot I M) :
+theorem isLocallyFlat [I.Boundaryless] (K : SmoothKnot I M) :
     IsLocallyFlat (EuclideanSpace ℝ (Fin 1)) K.isSmoothEmbedding_toFun.isImmersion.complement K :=
   SmoothEmbedding.isLocallyFlat K
 
@@ -131,7 +131,7 @@ def ofKnot (K : SmoothKnot I M) : SmoothLink I M 1 where
   pairwise_disjoint i j hij := (hij (Subsingleton.elim i j)).elim
 
 /-- Every component of a smooth link in a boundaryless manifold is locally flat. -/
-theorem component_isLocallyFlat [I.Boundaryless] [IsManifold I ∞ M] {k : ℕ}
+theorem component_isLocallyFlat [I.Boundaryless] {k : ℕ}
     (L : SmoothLink I M k) (i : Fin k) :
     IsLocallyFlat (EuclideanSpace ℝ (Fin 1))
       (L.component i).isSmoothEmbedding_toFun.isImmersion.complement (L.component i) :=
