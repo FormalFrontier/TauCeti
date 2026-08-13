@@ -166,16 +166,16 @@ private noncomputable def kostantFormComulRingHom (e : ι → L) (h : κ → L) 
   RingHom.codRestrict
     ((Bialgebra.comulAlgHom ℚ U).toRingHom.comp (kostantForm e h).subtype)
     (kostantTensorForm e h) fun a => by
-      change Bialgebra.comulAlgHom ℚ U (a : U) ∈ kostantTensorForm e h
-      rw [Bialgebra.comulAlgHom_apply]
-      exact comul_mem_kostantTensorForm e h a.2
+      simpa only [RingHom.comp_apply, AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+        Subring.coe_subtype, Bialgebra.comulAlgHom_apply] using
+        comul_mem_kostantTensorForm e h a.2
 
 private theorem coe_kostantFormComulRingHom_apply (e : ι → L) (h : κ → L)
     (a : kostantForm e h) :
     (kostantFormComulRingHom e h a : U ⊗[ℚ] U) = Coalgebra.comul (R := ℚ) (a : U) := by
   rw [kostantFormComulRingHom, RingHom.codRestrict_apply, RingHom.comp_apply]
-  change Bialgebra.comulAlgHom ℚ U (a : U) = Coalgebra.comul (R := ℚ) (a : U)
-  rw [Bialgebra.comulAlgHom_apply]
+  simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, Subring.coe_subtype,
+    Bialgebra.comulAlgHom_apply]
 
 /-- The comultiplication of the Kostant form, with codomain restricted to the integral tensor form
 inside the rational tensor square. -/
@@ -232,16 +232,16 @@ private noncomputable def kostantFormCounitRange (e : ι → L) (h : κ → L) :
   RingHom.codRestrict
     ((Bialgebra.counitAlgHom ℚ U).toRingHom.comp (kostantForm e h).subtype)
     (⊥ : Subring ℚ) fun a => by
-      change Bialgebra.counitAlgHom ℚ U (a : U) ∈ (⊥ : Subring ℚ)
-      rw [Bialgebra.counitAlgHom_apply]
-      exact counit_mem_bot e h a.2
+      simpa only [RingHom.comp_apply, AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+        Subring.coe_subtype, Bialgebra.counitAlgHom_apply] using
+        counit_mem_bot e h a.2
 
 private theorem coe_kostantFormCounitRange_apply (e : ι → L) (h : κ → L)
     (a : kostantForm e h) :
     (kostantFormCounitRange e h a : ℚ) = Coalgebra.counit (R := ℚ) (a : U) := by
   rw [kostantFormCounitRange, RingHom.codRestrict_apply, RingHom.comp_apply]
-  change Bialgebra.counitAlgHom ℚ U (a : U) = Coalgebra.counit (R := ℚ) (a : U)
-  rw [Bialgebra.counitAlgHom_apply]
+  simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, Subring.coe_subtype,
+    Bialgebra.counitAlgHom_apply]
 
 -- The canonical ring equivalence from `ℤ` to the integer-cast subring of `ℚ`.
 private theorem intCastRangeRestrict_bijective :
