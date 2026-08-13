@@ -5,11 +5,11 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.RingTheory.Bialgebra.TensorProduct
+import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import Mathlib.RingTheory.HopfAlgebra.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Antipode
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Bialgebra
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
+import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
 
 /-!
 # The Hopf algebra structure on a universal enveloping algebra
@@ -156,24 +156,18 @@ private theorem eq_counit_smul_one_of_ι (f : U →ₗ[R] U)
     (hι : ∀ x : L, f (_root_.UniversalEnvelopingAlgebra.ι R x) =
       (Coalgebra.counit (R := R) (_root_.UniversalEnvelopingAlgebra.ι R x)) • (1 : U))
     (a : U) : f a = (Coalgebra.counit (R := R) a) • (1 : U) := by
-  let s : Subalgebra R U :=
-    { carrier := {a | f a = (Coalgebra.counit (R := R) a) • (1 : U)}
-      mul_mem' := by
-        intro a b ha hb
-        simp only [Set.mem_ofPred_eq] at ha hb ⊢
-        exact hmul a b ha hb
-      add_mem' := by
-        intro a b ha hb
-        simp only [Set.mem_ofPred_eq] at ha hb ⊢
-        simp only [map_add, ha, hb, add_smul]
-      algebraMap_mem' := halg }
-  have hs : Algebra.adjoin R
-      (Set.range (_root_.UniversalEnvelopingAlgebra.ι R : L → U)) ≤ s := by
-    apply Algebra.adjoin_le
-    rintro _ ⟨x, rfl⟩
+  have ha : a ∈ Algebra.adjoin R
+      (Set.range (_root_.UniversalEnvelopingAlgebra.ι R : L → U)) := by
+    rw [adjoin_range_ι R L]
+    exact Set.mem_univ a
+  refine Algebra.adjoin_induction (p := fun x _ ↦
+    f x = (Coalgebra.counit (R := R) x) • (1 : U)) ?_ halg ?_ ?_ ha
+  · rintro _ ⟨x, rfl⟩
     exact hι x
-  rw [adjoin_range_ι R L] at hs
-  exact hs (Set.mem_univ a)
+  · intro x y _ _ hx hy
+    simp only [map_add, hx, hy, add_smul]
+  · intro x y _ _ hx hy
+    exact hmul x y hx hy
 
 private theorem antipodeConv_apply (a : U) :
     (antipodeConv R L * identityConv R L) a =
