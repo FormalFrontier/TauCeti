@@ -42,16 +42,22 @@ def IsTriangulable.{v, u} (X : Type u) [TopologicalSpace X] : Prop :=
 
 universe u v w
 
+end TauCeti
+
 namespace AbstractSimplicialComplex
 
 variable {ι : Type u}
 
 /-- The geometric realization of every abstract simplicial complex is triangulable. -/
 theorem isTriangulable_realization (K : AbstractSimplicialComplex ι) :
-    IsTriangulable.{u} (Realization K) :=
+    TauCeti.IsTriangulable.{u} (Realization K) :=
   ⟨ι, K, ⟨Homeomorph.refl _⟩⟩
 
 end AbstractSimplicialComplex
+
+namespace TauCeti
+
+universe u v w
 
 variable {X : Type u} {Y : Type w} [TopologicalSpace X] [TopologicalSpace Y]
 

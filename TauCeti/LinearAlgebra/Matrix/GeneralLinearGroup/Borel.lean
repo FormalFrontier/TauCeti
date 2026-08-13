@@ -15,10 +15,9 @@ public import Mathlib.GroupTheory.Index
 public import Mathlib.LinearAlgebra.Matrix.Block
 -- `TauCeti.diagGL` is the body of `TauCeti.GL2Borel.torusHom`, so it must be imported publicly.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
--- Non-public: the cardinality of the general linear group over a finite field, and the number of
--- units of a finite field, are used only inside the counting proofs, so downstream importers do
--- not pay for them.
-import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
+-- Non-public: the order of `GL₂` over a finite field, and the number of units of a finite field,
+-- are used only inside the counting proofs, so downstream importers do not pay for them.
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
 
 /-!
@@ -446,22 +445,14 @@ theorem card_eq :
 /-- **The index of the Borel subgroup** of `GL₂(𝔽_q)` is `q + 1`, the number of points of the
 projective line — hence the dimension of the principal series induced from `B`. -/
 theorem index_eq : (GL2Borel F).index = Fintype.card F + 1 := by
-  set q := Fintype.card F with hq
-  have hq2 : 2 ≤ q := Fintype.one_lt_card
-  have hG : Nat.card (GL (Fin 2) F) = (q ^ 2 - 1) * (q ^ 2 - q) := by
-    rw [Matrix.card_GL_field, ← hq]
-    simp [Fin.prod_univ_two]
-  have hcard := Subgroup.card_mul_index (GL2Borel F)
-  rw [card_eq, hG] at hcard
-  have hkey : q * (q - 1) ^ 2 * (q + 1) = (q ^ 2 - 1) * (q ^ 2 - q) := by
-    have h1 : 1 ≤ q := by omega
-    have h2 : 1 ≤ q ^ 2 := Nat.one_le_pow _ _ (by omega)
-    have h3 : q ≤ q ^ 2 := Nat.le_self_pow two_ne_zero q
-    zify [h1, h2, h3]
-    ring
-  have hpos : 0 < q * (q - 1) ^ 2 :=
+  have hq2 : 2 ≤ Fintype.card F := Fintype.one_lt_card
+  have hpos : 0 < Fintype.card F * (Fintype.card F - 1) ^ 2 :=
     Nat.mul_pos (by omega) (pow_pos (by omega) 2)
-  exact Nat.eq_of_mul_eq_mul_left hpos (hcard.trans hkey.symm)
+  have hcard := Subgroup.card_mul_index (GL2Borel F)
+  rw [card_eq, natCard_GL_fin_two] at hcard
+  refine Nat.eq_of_mul_eq_mul_left hpos ?_
+  rw [hcard]
+  ring
 
 end GL2Borel
 

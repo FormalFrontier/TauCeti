@@ -8,7 +8,7 @@ public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
 public import Mathlib.RingTheory.Coalgebra.GroupLike
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
-public import TauCeti.RingTheory.Idempotents.ConnectedSpectrum
+public import TauCeti.RingTheory.Idempotents.Connected.Spectrum
 
 /-!
 # Group-like elements of monoid algebras
