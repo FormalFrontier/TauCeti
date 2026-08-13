@@ -173,24 +173,15 @@ theorem lie_ne_zero_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
     (hβ : β.IsNonZero) (h_ne_bot : rootSpace H (α + β) ≠ ⊥) {e y : L}
     (he : e ∈ rootSpace H α) (he₀ : e ≠ 0) (hy : y ∈ rootSpace H β) (hy₀ : y ≠ 0) :
     ⁅e, y⁆ ≠ 0 := by
-  obtain ⟨h, e', f, t, he', hf'⟩ := exists_isSl2Triple_of_weight_isNonZero hα
-  have h' : ⁅e', y⁆ ≠ 0 := by
-    intro hzero
-    have hmain := lie_f_lie_e_eq_nsmul_of_mem_rootSpace hα hβ t he' hf' hy
-    rw [hzero, lie_zero, eq_comm, ← Nat.cast_smul_eq_nsmul K, smul_eq_zero] at hmain
-    rcases hmain with hmain | hmain
-    · rw [Nat.cast_eq_zero, Nat.mul_eq_zero] at hmain
-      have := chainTopCoeff_pos (β := β) hα h_ne_bot
-      omega
-    · exact hy₀ hmain
-  obtain ⟨c, rfl⟩ : ∃ c : K, c • e' = e :=
+  obtain ⟨a, ha, b, hb, hab⟩ := exists_mem_rootSpace_lie_ne_zero hα h_ne_bot
+  obtain ⟨s, rfl⟩ : ∃ s : K, s • e = a :=
     Submodule.mem_span_singleton.mp <| by
-      rwa [← toSubmodule_rootSpace_eq_span α hα _ t.e_ne_zero he']
-  have hc : c ≠ 0 := by
-    rintro rfl
-    exact he₀ (zero_smul K e')
-  rw [smul_lie]
-  exact smul_ne_zero hc h'
+      rwa [← toSubmodule_rootSpace_eq_span α hα _ he₀ he]
+  obtain ⟨t, rfl⟩ : ∃ t : K, t • y = b :=
+    Submodule.mem_span_singleton.mp <| by
+      rwa [← toSubmodule_rootSpace_eq_span β hβ _ hy₀ hy]
+  contrapose! hab
+  simp [hab]
 
 /-- The bracket with a non-zero root vector of `α` maps the root space of `β` *onto* the root
 space of `α + β`. Together with `TauCeti.lie_ne_zero_of_mem_rootSpace` this is the statement
