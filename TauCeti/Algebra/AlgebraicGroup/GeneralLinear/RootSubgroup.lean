@@ -281,6 +281,7 @@ private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
 /-- **The root subgroup on scheme-valued points**: composing an `A`-point of `𝔾ₐ` with the root
 subgroup morphism gives the elementary matrix `xᵢⱼ(c)` of its parameter `c`, as an `A`-point of
 `GLₙ`. -/
+@[simp]
 theorem schemePointsMulEquiv_rootSubgroup (hij : i ≠ j)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (AdditiveGroup.groupScheme R).X) :
