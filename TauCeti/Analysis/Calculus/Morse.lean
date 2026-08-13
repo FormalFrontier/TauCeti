@@ -45,9 +45,10 @@ compact set on which `fderiv ℝ f` is moreover continuous, so that the critical
 that discreteness leaves only finitely many critical points. That finiteness is what makes the
 Morse chain complex of a compact manifold finitely generated, so it is the first structural input
 of Morse homology. The isolation itself uses no criticality — an invertible second derivative
-already makes the differential locally injective — so it is proved in the stated generality as
-`TauCeti.eventually_fderiv_ne` in `TauCeti.Analysis.Calculus.SecondDerivative`, and only its
-value-zero case is taken here.
+already makes the differential avoid any prescribed value nearby — so it is proved in the stated
+generality as `TauCeti.eventually_fderiv_ne` in `TauCeti.Analysis.Calculus.SecondDerivative`, and
+only its value-zero case is taken here.
+
 Because the first-order term of the chain rule drops out at a critical point, the second
 derivative there transforms as a bilinear form (`TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`
 in `TauCeti.Analysis.Calculus.SecondDerivative`), and nondegeneracy is unchanged by a change of
