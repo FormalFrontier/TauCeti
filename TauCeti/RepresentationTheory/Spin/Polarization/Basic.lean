@@ -85,6 +85,27 @@ theorem decompositionEquiv_symm_apply {K : Type u} [CommRing K] {V : Type v}
   apply P.decompositionEquiv.injective
   rw [P.decompositionEquiv.apply_symm_apply, P.decompositionEquiv_apply]
 
+/-- A vector of the first isotropic summand has only that coordinate. -/
+@[simp, grind =]
+theorem decompositionEquiv_symm_coe_W {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+    (x : P.W) : P.decompositionEquiv.symm (x : V) = ((x, 0), 0) := by
+  simpa using P.decompositionEquiv_symm_apply x 0 0
+
+/-- A vector of the second isotropic summand has only that coordinate. -/
+@[simp, grind =]
+theorem decompositionEquiv_symm_coe_W' {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+    (y : P.W') : P.decompositionEquiv.symm (y : V) = ((0, y), 0) := by
+  simpa using P.decompositionEquiv_symm_apply 0 y 0
+
+/-- A vector of the orthogonal remainder has only that coordinate. -/
+@[simp, grind =]
+theorem decompositionEquiv_symm_coe_line {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+    (z : P.line) : P.decompositionEquiv.symm (z : V) = ((0, 0), z) := by
+  simpa using P.decompositionEquiv_symm_apply 0 0 z
+
 /-- The polar pairing has trivial right radical. -/
 theorem pairing_separatingRight {K : Type u} [CommRing K] {V : Type v}
     [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
