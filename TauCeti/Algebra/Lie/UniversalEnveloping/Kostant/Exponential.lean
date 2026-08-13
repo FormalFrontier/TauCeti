@@ -45,8 +45,6 @@ distinguished vectors, and a pinned root datum will supply the specific ones.
   image of a root vector lie in the image of the Kostant form.
 * `TauCeti.UniversalEnvelopingAlgebra.exp_zsmul_mem_map_kostantForm`: a root subgroup element lies
   in the image of the Kostant form.
-* `TauCeti.UniversalEnvelopingAlgebra.coe_expSMulHom_mem_map_kostantForm`: the whole one-parameter
-  group of root subgroup elements takes values there.
 * `TauCeti.UniversalEnvelopingAlgebra.exp_zsmul_apply_mem_of_kostantForm_apply_mem`: a root
   subgroup element preserves every additive subgroup of a representation that the Kostant form
   preserves.
@@ -91,18 +89,6 @@ theorem exp_zsmul_mem_map_kostantForm (e : ι → L) (h : κ → L)
     (S := ((kostantForm e h).map
       (f : _root_.UniversalEnvelopingAlgebra ℚ L →+* A)).toAddSubgroup)
     hnil (dividedPower_mem_map_kostantForm e h f i) t
-
-/-- The one-parameter group of units `t ↦ exp (t • f (eᵢ))` takes values in the image of the
-Kostant integral form. This is the root subgroup map `x_i` of the Chevalley--Demazure
-construction, evaluated on the integral points of the additive group. -/
-theorem coe_expSMulHom_mem_map_kostantForm (e : ι → L) (h : κ → L)
-    (f : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] A) {i : ι}
-    (hnil : IsNilpotent (f (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
-    (t : Multiplicative ℤ) :
-    ((expSMulHom hnil t : Aˣ) : A) ∈
-      (kostantForm e h).map (f : _root_.UniversalEnvelopingAlgebra ℚ L →+* A) := by
-  rw [coe_expSMulHom]
-  exact exp_zsmul_mem_map_kostantForm e h f hnil _
 
 /-! ## Root subgroup elements act on admissible lattices -/
 
