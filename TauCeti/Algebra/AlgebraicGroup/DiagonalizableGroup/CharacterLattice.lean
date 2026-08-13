@@ -44,6 +44,37 @@ noncomputable def geometricCharacterGroupEquiv
     (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) (G := G))).trans
     (TauCeti.MonoidAlgebra.groupLikeEquiv (R := AlgebraicClosure k) (H := G))
 
+/-- A geometric character corresponds to `g` exactly when base change identifies its underlying
+group-like element with the standard monomial indexed by `g`. -/
+@[simp]
+theorem geometricCharacterGroupEquiv_apply_eq_iff
+    (k : Type u) [Field k] (G : FGCommGrpCat.{u})
+    (x : CommHopfAlgCat.geometricCharacterGroup (coordinateRing k G).obj) (g : G) :
+    geometricCharacterGroupEquiv k G x = g ↔
+      TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) x.val =
+        _root_.MonoidAlgebra.single g 1 := by
+  simp only [geometricCharacterGroupEquiv, MulEquiv.trans_apply,
+    TauCeti.MonoidAlgebra.groupLikeEquiv_apply_eq_iff, TauCeti.GroupLike.val_mapEquiv]
+
+/-- The inverse character corresponding to `g` is the standard monomial indexed by `g`, viewed
+in the scalar-extended coordinate ring. -/
+@[simp]
+theorem geometricCharacterGroupEquiv_symm_apply_val
+    (k : Type u) [Field k] (G : FGCommGrpCat.{u}) (g : G) :
+    ((geometricCharacterGroupEquiv k G).symm g).val =
+      1 ⊗ₜ[k] _root_.MonoidAlgebra.single g 1 := by
+  let e := TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) (G := G)
+  have h := (geometricCharacterGroupEquiv_apply_eq_iff k G
+      ((geometricCharacterGroupEquiv k G).symm g) g).mp
+    ((geometricCharacterGroupEquiv k G).apply_symm_apply g)
+  calc
+    ((geometricCharacterGroupEquiv k G).symm g).val =
+        e.symm (e ((geometricCharacterGroupEquiv k G).symm g).val) :=
+      (e.symm_apply_apply _).symm
+    _ = e.symm (_root_.MonoidAlgebra.single g 1) := congrArg e.symm h
+    _ = 1 ⊗ₜ[k] _root_.MonoidAlgebra.single g 1 :=
+      TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_symm_single k (AlgebraicClosure k) g 1
+
 end DiagonalizableGroup
 
 end TauCeti
