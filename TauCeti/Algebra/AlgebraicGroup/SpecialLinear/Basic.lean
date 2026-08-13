@@ -244,13 +244,43 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
 
 /-- The special linear group scheme, defined as the kernel spectrum of the determinant
 coordinate morphism. -/
-noncomputable abbrev groupScheme :=
-  CommHopfAlgCat.kernelSpec (GeneralLinear.determinantCoordinateMap R n)
+noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
+  (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+    (Opposite.op (coordinateHopfAlgebra R n))
+
+/-- The special linear group scheme is the relative spectrum of its determinant-one coordinate
+Hopf algebra. -/
+lemma groupScheme_def :
+    groupScheme R n =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (coordinateHopfAlgebra R n)) := by
+  unfold groupScheme
+  rfl
+
+/-- The scheme underlying the special linear group scheme is the spectrum of its coordinate Hopf
+algebra. -/
+lemma groupScheme_X_left :
+    (groupScheme R n).X.left = Spec (CommRingCat.of (coordinateHopfAlgebra R n)) := by
+  simpa only [groupScheme] using
+    hopfSpec_obj_X_left R (coordinateHopfAlgebra R n)
 
 /-- The inclusion of the special linear group scheme into the Hopf spectrum of the
 general-linear coordinate Hopf algebra. -/
-noncomputable abbrev groupSchemeι :=
-  CommHopfAlgCat.kernelSpecι (GeneralLinear.determinantCoordinateMap R n)
+noncomputable def groupSchemeι :
+    groupScheme R n ⟶
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
+        (Opposite.op (GeneralLinear.coordinateHopfAlgebra R n)) :=
+  eqToHom (groupScheme_def R n) ≫
+    CommHopfAlgCat.kernelSpecι (GeneralLinear.determinantCoordinateMap R n)
+
+/-- The special-linear inclusion is the generic determinant-kernel inclusion transported from
+the named special-linear presentation. -/
+theorem groupSchemeι_def :
+    groupSchemeι R n =
+      eqToHom (groupScheme_def R n) ≫
+        CommHopfAlgCat.kernelSpecι (GeneralLinear.determinantCoordinateMap R n) := by
+  unfold groupSchemeι
+  rfl
 
 /-- The determinant-kernel inclusion, with its target transported to Tau Ceti's named
 general-linear group scheme. -/
@@ -270,26 +300,37 @@ theorem groupSchemeιGeneralLinear_def :
 spectrum. -/
 instance isClosedImmersion_groupSchemeι :
     AlgebraicGeometry.IsClosedImmersion (groupSchemeι R n).hom.hom.left := by
-  -- `groupSchemeι` abbreviates the generic kernel inclusion; its public equation can rewrite
-  -- only after identifying these two representations of the morphism.
-  change AlgebraicGeometry.IsClosedImmersion
-    (CommHopfAlgCat.kernelSpecι
-      (GeneralLinear.determinantCoordinateMap R n)).hom.hom.left
-  rw [CommHopfAlgCat.kernelSpecι_def]
-  infer_instance
+  let e := (eqToHom (groupScheme_def R n)).hom.hom.left
+  let c := (CommHopfAlgCat.kernelSpecι
+    (GeneralLinear.determinantCoordinateMap R n)).hom.hom.left
+  have he : IsIso e :=
+    ((Over.forget (Spec (CommRingCat.of R))).mapIso
+      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
+        (eqToIso (groupScheme_def R n)))).isIso_hom
+  have hc : AlgebraicGeometry.IsClosedImmersion c := by
+    dsimp only [c]
+    rw [CommHopfAlgCat.kernelSpecι_def]
+    infer_instance
+  have hec : AlgebraicGeometry.IsClosedImmersion (e ≫ c) :=
+    (@MorphismProperty.cancel_left_of_respectsIso
+      Scheme _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ e c he).2 hc
+  rw [groupSchemeι_def]
+  exact hec
 
 /-- The determinant is the unit section after restriction to the special-linear kernel. -/
 theorem groupSchemeι_comp_determinant :
     groupSchemeι R n ≫
         (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
           (GeneralLinear.determinantCoordinateMap R n).op =
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (_root_.CommHopfAlgCat.ofHom
-          ((Bialgebra.unitBialgHom R (coordinateHopfAlgebra R n)).comp
-            (Bialgebra.counitBialgHom R
-              (_root_.CommHopfAlgCat.of R
-                (MonoidAlgebra R (Multiplicative ℤ)))))).op :=
-  CommHopfAlgCat.kernelSpecι_comp (GeneralLinear.determinantCoordinateMap R n)
+      eqToHom (groupScheme_def R n) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (_root_.CommHopfAlgCat.ofHom
+            ((Bialgebra.unitBialgHom R (coordinateHopfAlgebra R n)).comp
+              (Bialgebra.counitBialgHom R
+                (_root_.CommHopfAlgCat.of R
+                  (MonoidAlgebra R (Multiplicative ℤ)))))).op := by
+  rw [groupSchemeι_def, Category.assoc,
+    CommHopfAlgCat.kernelSpecι_comp]
 
 /-- The structural morphism of the special-linear group scheme is locally of finite type. -/
 instance locallyOfFiniteType_groupScheme :
@@ -298,6 +339,7 @@ instance locallyOfFiniteType_groupScheme :
     ⟨GeneralLinear.coordinateHopfAlgebra R n, by
       rw [← GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj]
       exact (GeneralLinear.finiteTypeCoordinateHopfAlgebra R n).property⟩
+  rw [groupScheme_def]
   exact FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
     H (definingHopfIdeal R n)
 
@@ -521,7 +563,8 @@ noncomputable def groupSchemePointMulEquiv :
     WithConv (coordinateHopfAlgebra R n →ₐ[R] A) ≃*
       ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
         (groupScheme R n).X) :=
-  AlgebraicGeometry.Spec.mapMulEquiv
+  CommHopfAlgCat.mapMulEquivOfPresentation
+    (coordinateHopfAlgebra R n) A (groupScheme_def R n)
 
 /-- The underlying spectrum map of the scheme point associated to a special-linear algebra
 point. -/
@@ -529,8 +572,12 @@ point. -/
 lemma groupSchemePointMulEquiv_apply_left
     (f : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
     (groupSchemePointMulEquiv (R := R) n A f).left =
-      Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) :=
-  (rfl)
+      Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
+        eqToHom (groupScheme_X_left R n).symm := by
+  simpa only [groupSchemePointMulEquiv] using
+    CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
+      (coordinateHopfAlgebra R n) A (groupScheme_def R n)
+        (groupScheme_X_left R n) f
 
 /-- The group of scheme-valued points of the special-linear group scheme is the ordinary special
 linear group over the value algebra. -/

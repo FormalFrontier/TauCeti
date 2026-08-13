@@ -259,7 +259,8 @@ noncomputable def rootSubgroup (hij : i ≠ j) :
     AdditiveGroup.groupScheme R ⟶ groupScheme R N :=
   eqToHom (AdditiveGroup.groupScheme_def R) ≫
     (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-      (rootSubgroupCoordinateMap hij).op
+      (rootSubgroupCoordinateMap hij).op ≫
+    eqToHom (groupScheme_def R N).symm
 
 section SchemePoints
 
@@ -280,17 +281,20 @@ private lemma rootSubgroup_hom_hom_left (hij : i ≠ j) :
     (rootSubgroup (R := R) (N := N) hij).hom.hom.left =
       eqToHom (AdditiveGroup.groupScheme_X_left R) ≫
         Spec.map (CommRingCat.ofHom
-          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) := by
+          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) ≫
+        eqToHom (groupScheme_X_left R N).symm := by
   rw [rootSubgroup]
   -- The underlying scheme morphism of a composite of group-object morphisms is definitionally
   -- the composite of the underlying maps; the category API has no projection lemma for it.
   rw [show ((eqToHom (AdditiveGroup.groupScheme_def R) ≫
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op)).hom.hom.left =
+        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op ≫
+      eqToHom (groupScheme_def R N).symm)).hom.hom.left =
     (eqToHom (AdditiveGroup.groupScheme_def R)).hom.hom.left ≫
       ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op).hom.hom.left from rfl]
-  rw [eqToHom_hom_hom_left, hopfSpec_map_left]
+        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op).hom.hom.left ≫
+      (eqToHom (groupScheme_def R N).symm).hom.hom.left from rfl]
+  rw [eqToHom_hom_hom_left, eqToHom_hom_hom_left, hopfSpec_map_left]
   rfl
 
 private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
@@ -311,11 +315,13 @@ private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
       eqToHom (AdditiveGroup.groupScheme_X_left R).symm) ≫
       eqToHom (AdditiveGroup.groupScheme_X_left R) ≫
         Spec.map (CommRingCat.ofHom
-          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) =
-    Spec.map (CommRingCat.ofHom (rootSubgroupPoints hij q).ofConv.toRingHom)
+          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) ≫
+        eqToHom (groupScheme_X_left R N).symm =
+    Spec.map (CommRingCat.ofHom (rootSubgroupPoints hij q).ofConv.toRingHom) ≫
+      eqToHom (groupScheme_X_left R N).symm
   rw [hcomp]
   simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-  rw [← Spec.map_comp, ← CommRingCat.ofHom_comp]
+  rw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
   rfl
 
 /-- **The root subgroup on scheme-valued points**: composing an `A`-point of `𝔾ₐ` with the
@@ -351,10 +357,11 @@ general-linear root subgroup. -/
 theorem rootSubgroup_comp_groupSchemeιGeneralLinear (hij : i ≠ j) :
     rootSubgroup hij ≫ groupSchemeιGeneralLinear R N =
       GeneralLinear.rootSubgroup hij := by
-  rw [rootSubgroup, groupSchemeιGeneralLinear_def, groupSchemeι,
+  rw [rootSubgroup, groupSchemeιGeneralLinear_def, groupSchemeι_def]
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  rw [
     CommHopfAlgCat.kernelSpecι_def, CommHopfAlgCat.quotientSpecι_def,
     GeneralLinear.rootSubgroup_def]
-  simp only [Category.assoc]
   rw [← Category.assoc
     ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
       (rootSubgroupCoordinateMap hij).op)
