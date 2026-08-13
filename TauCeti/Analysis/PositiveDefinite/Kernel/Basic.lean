@@ -87,12 +87,9 @@ private theorem conj_mul_kernel_isHermitian (g : α → 𝕜) :
   ext a b
   simp [Matrix.conjTranspose_apply, Matrix.vecMulVec_apply, Pi.star_apply, mul_comm]
 
-/-- The rank-one kernels `(a, b) ↦ conj (g a) · g b` are positive definite for an arbitrary
-index type. Mathlib's `Matrix.posSemidef_vecMulVec_star_self` supplies the finite-support core but
-requires `Finite α`; this theorem removes that restriction by checking every finitely supported
-principal submatrix. With `g ≡ 1` this gives the constant kernel `1`; with general `g` these are
-building blocks whose nonnegative mixtures and Schur products generate further
-positive-definite kernels. -/
+/-- The rank-one kernel `(a, b) ↦ conj (g a) · g b` is positive semidefinite for an arbitrary
+index type. Such kernels are elementary building blocks for positive-definite kernels; taking
+`g ≡ 1` gives the constant kernel `1`. -/
 theorem posSemidef_conj_mul (g : α → 𝕜) :
   Matrix.PosSemidef (fun a b => conj (g a) * g b) := by
   refine posSemidef_of_support_posSemidef _ (conj_mul_kernel_isHermitian g) ?_

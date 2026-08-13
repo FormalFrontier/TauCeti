@@ -34,7 +34,7 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
   `charFun μ ((-2π) • a)`.
 * `TauCeti.fourier_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
   integral of `F` against the Fourier atom.
-* `TauCeti.fourierConventionCharFun_sub_posSemidef`: the Fourier-convention
+* `TauCeti.posSemidef_fourierConventionCharFun_sub`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: a finite measure is determined by its
   Fourier-convention transform — the uniqueness half of Bochner's theorem.
@@ -116,7 +116,7 @@ theorem fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg [StarAddMonoi
 measure is positive definite. This is the kernel form of
 `fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg`, avoiding any explicit choice of
 involution on the domain. -/
-theorem fourierConventionCharFun_sub_posSemidef :
+theorem posSemidef_fourierConventionCharFun_sub :
     Matrix.PosSemidef fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
   have hscaled := (charFun_posSemidef (μ := ν) (fun x : W => x)).submatrix
     (fun a : W => (-2 * Real.pi) • a)
@@ -129,13 +129,8 @@ theorem fourierConventionCharFun_sub_posSemidef :
     rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
     congr 1
     simp [smul_sub]
-  have htarget : (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν).PosSemidef :=
-    heq ▸ hscaled
-  have hof : (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν) =
-      fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
-    ext a b
-    rfl
-  exact hof ▸ htarget
+  change (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν).PosSemidef
+  exact heq ▸ hscaled
 
 section Topology
 

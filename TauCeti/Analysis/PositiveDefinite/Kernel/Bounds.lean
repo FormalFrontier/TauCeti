@@ -26,11 +26,11 @@ for positive semidefinite matrices.
 
 ## Main declarations
 
-* `TauCeti.posSemidef_normSq_le`: kernel Cauchy--Schwarz.
-* `TauCeti.posSemidef_eq_zero_of_apply_self_eq_zero_left` and
-  `TauCeti.posSemidef_eq_zero_of_apply_self_eq_zero_right`: zero diagonal entries
+* `TauCeti.normSq_le_of_posSemidef`: kernel Cauchy--Schwarz.
+* `TauCeti.eq_zero_of_apply_self_eq_zero_left_of_posSemidef` and
+  `TauCeti.eq_zero_of_apply_self_eq_zero_right_of_posSemidef`: zero diagonal entries
   force the corresponding row or column to vanish.
-* `TauCeti.posSemidef_norm_le_one_of_apply_self_eq_one`: normalized diagonal
+* `TauCeti.norm_le_one_of_apply_self_eq_one_of_posSemidef`: normalized diagonal
   entries bound off-diagonal entries by `1`.
 * `TauCeti.map_zero_re_nonneg_of_posSemidef`,
   `TauCeti.map_zero_eq_ofReal_re_of_posSemidef` and
@@ -63,7 +63,7 @@ private theorem finTwo_posSemidef
 
 /-- The kernel Cauchy--Schwarz inequality: for an `RCLike`-valued positive-definite kernel, the
 squared norm of an off-diagonal entry is bounded by the product of the two diagonal real parts. -/
-theorem posSemidef_normSq_le (hK : Matrix.PosSemidef K) (a b : α) :
+theorem normSq_le_of_posSemidef (hK : Matrix.PosSemidef K) (a b : α) :
     RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b) := by
   have hsymm (x y : α) : conj (K x y) = K y x := by
     simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
@@ -88,9 +88,9 @@ theorem posSemidef_normSq_le (hK : Matrix.PosSemidef K) (a b : α) :
 
 /-- If the left diagonal entry of a positive-definite kernel is zero, then the corresponding
 row entry is zero. -/
-theorem posSemidef_eq_zero_of_apply_self_eq_zero_left
+theorem eq_zero_of_apply_self_eq_zero_left_of_posSemidef
     (hK : Matrix.PosSemidef K) {a b : α} (ha : K a a = 0) : K a b = 0 := by
-  have hnorm := posSemidef_normSq_le hK a b
+  have hnorm := normSq_le_of_posSemidef hK a b
   have hdiag : RCLike.re (K a a) * RCLike.re (K b b) = 0 := by simp [ha]
   have hnorm_zero : RCLike.normSq (K a b) = 0 :=
     le_antisymm (by simpa [hdiag] using hnorm) (RCLike.normSq_nonneg _)
@@ -98,9 +98,9 @@ theorem posSemidef_eq_zero_of_apply_self_eq_zero_left
 
 /-- If the right diagonal entry of a positive-definite kernel is zero, then the corresponding
 column entry is zero. -/
-theorem posSemidef_eq_zero_of_apply_self_eq_zero_right
+theorem eq_zero_of_apply_self_eq_zero_right_of_posSemidef
     (hK : Matrix.PosSemidef K) {a b : α} (hb : K b b = 0) : K a b = 0 := by
-  have hba := posSemidef_eq_zero_of_apply_self_eq_zero_left hK (a := b) (b := a) hb
+  have hba := eq_zero_of_apply_self_eq_zero_left_of_posSemidef hK (a := b) (b := a) hb
   have hconj : conj (K a b) = K b a := by
     simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
   rw [hba] at hconj
@@ -109,12 +109,12 @@ theorem posSemidef_eq_zero_of_apply_self_eq_zero_right
 
 /-- If both diagonal entries are `1`, then the corresponding off-diagonal entry has norm at
 most `1`. This is the common normalized-kernel form of the kernel Cauchy--Schwarz inequality. -/
-theorem posSemidef_norm_le_one_of_apply_self_eq_one
+theorem norm_le_one_of_apply_self_eq_one_of_posSemidef
     (hK : Matrix.PosSemidef K) {a b : α} (ha : K a a = 1) (hb : K b b = 1) :
     ‖K a b‖ ≤ 1 := by
   refine le_of_sq_le_sq ?_ zero_le_one
   simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using
-    posSemidef_normSq_le hK a b
+    normSq_le_of_posSemidef hK a b
 
 /-! ### Bounds for subtraction kernels -/
 
@@ -153,7 +153,7 @@ of its value at `0`. -/
 theorem norm_apply_le_map_zero_re_of_posSemidef
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) (z : V) :
     ‖ψ z‖ ≤ RCLike.re (ψ 0) := by
-  have h := posSemidef_normSq_le hpd z 0
+  have h := normSq_le_of_posSemidef hpd z 0
   simp only [sub_zero, sub_self, RCLike.normSq_eq_def'] at h
   refine le_of_sq_le_sq ?_ (map_zero_re_nonneg_of_posSemidef hpd)
   calc ‖ψ z‖ ^ 2 ≤ RCLike.re (ψ 0) * RCLike.re (ψ 0) := h

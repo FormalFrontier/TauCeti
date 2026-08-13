@@ -210,7 +210,7 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_posSemidef
   · -- degenerate case: `F 0 = 0` forces `F = 0`, represented by the zero measure
     have hF0 : F 0 = 0 := by rw [h0eq, ← hzero, Complex.ofReal_zero]
     have hFv : ∀ v : V, F v = 0 := fun v => by
-      simpa using posSemidef_eq_zero_of_apply_self_eq_zero_right hpd
+      simpa using eq_zero_of_apply_self_eq_zero_right_of_posSemidef hpd
         (a := v) (b := (0 : V)) (by simpa using hF0)
     exact ⟨0, inferInstance, fun v => by simp [hFv v]⟩
   · -- main case: normalize to value `1` at the origin and scale the measure back
@@ -265,7 +265,7 @@ theorem bochner (F : V → ℂ) :
         funext a b
         exact hrep (a - b)
       rw [hfun]
-      exact fourierConventionCharFun_sub_posSemidef
+      exact posSemidef_fourierConventionCharFun_sub
 
 /-- **Bochner's theorem for the involutive predicate.** Under the negation involution
 `star x = -x`, a function is continuous and positive definite in the involutive sense if and

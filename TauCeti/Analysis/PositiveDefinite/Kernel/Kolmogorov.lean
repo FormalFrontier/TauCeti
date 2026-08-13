@@ -31,7 +31,7 @@ scalar-kernel bridge and its characteristic API.
 ## Main declarations
 
 * `TauCeti.positiveDefiniteKernelOperator`: regard a scalar kernel as an operator-valued kernel.
-* `Matrix.PosSemidef.posSemidef_positiveDefiniteKernelOperator`: positivity of that
+* `Matrix.PosSemidef.positiveDefiniteKernelOperator`: positivity of that
   operator kernel.
 * `Matrix.PosSemidef.KolmogorovSpace`: the canonical Hilbert space.
 * `Matrix.PosSemidef.kolmogorovFeature`: its canonical feature map.
@@ -82,11 +82,11 @@ variable {K : α → α → 𝕜}
 
 /-- The operator-valued kernel obtained from a scalar positive-definite kernel is positive
 semidefinite.  This is the bridge needed by Mathlib's `RKHS.OfKernel` construction. -/
-theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
-    (positiveDefiniteKernelOperator K).PosSemidef := by
+theorem positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
+    (TauCeti.positiveDefiniteKernelOperator K).PosSemidef := by
   have hsymm (a b : α) : conj (K a b) = K b a := by
     simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
-  apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
+  apply (RKHS.posSemidef_tfae (K := TauCeti.positiveDefiniteKernelOperator K)).out 2 0 |>.mp
   refine ⟨?_, ?_⟩
   · apply Matrix.ext
     intro a b
@@ -101,13 +101,13 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     have hnonneg := hK.2 f
     have hre := (RCLike.nonneg_iff.mp hnonneg).1
     have hinner (a b : α) (x y : 𝕜) :
-        ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜 = star x * K a b * y := by
+        ⟪TauCeti.positiveDefiniteKernelOperator K b a x, y⟫_𝕜 = star x * K a b * y := by
       rw [positiveDefiniteKernelOperator_apply, RCLike.inner_apply', map_mul,
         hsymm, RCLike.star_def]
       ring
     have hquadratic :
         RCLike.re (f.sum fun a x => f.sum fun b y =>
-          ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜) =
+          ⟪TauCeti.positiveDefiniteKernelOperator K b a x, y⟫_𝕜) =
           RCLike.re (f.sum fun a x => f.sum fun b y => star x * K a b * y) := by
       simp only [hinner]
     rw [hquadratic]
@@ -118,16 +118,16 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
 This is an abbreviation because Mathlib's `RKHS.OfKernel` currently has to be an abbreviation in
 order for its normed-group and inner-product instances to reduce. -/
 noncomputable abbrev KolmogorovSpace (hK : Matrix.PosSemidef K) :=
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
-  RKHS.OfKernel (positiveDefiniteKernelOperator K)
+  letI : Fact (TauCeti.positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator⟩
+  RKHS.OfKernel (TauCeti.positiveDefiniteKernelOperator K)
 
 /-- The canonical feature map into the Kolmogorov space.  It sends `a` to the reproducing-kernel
 vector at `a`, evaluated on the scalar `1`. -/
 noncomputable def kolmogorovFeature (hK : Matrix.PosSemidef K) (a : α) :
     hK.KolmogorovSpace := by
-  letI : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
+  letI : Fact (TauCeti.positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator⟩
   exact RKHS.kerFun hK.KolmogorovSpace a 1
 
 /-- **Kolmogorov identity.** Inner products of the canonical feature vectors recover the
@@ -137,8 +137,8 @@ theorem inner_kolmogorovFeature (hK : Matrix.PosSemidef K) (a b : α) :
     ⟪hK.kolmogorovFeature a, hK.kolmogorovFeature b⟫_𝕜 = K a b := by
   have hsymm (x y : α) : conj (K x y) = K y x := by
     simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
-  let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
+  let : Fact (TauCeti.positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator⟩
   rw [kolmogorovFeature, kolmogorovFeature,
     ← RKHS.kernel_inner hK.KolmogorovSpace b a (1 : 𝕜) 1,
     RKHS.OfKernel.kernel_ofKernel]
@@ -164,8 +164,8 @@ theorem norm_kolmogorovFeature_sub_sq (hK : Matrix.PosSemidef K) (a b : α) :
 construction is minimal: it contains no orthogonal summand invisible to the kernel. -/
 theorem kolmogorovFeature_dense (hK : Matrix.PosSemidef K) :
     (Submodule.span 𝕜 (Set.range hK.kolmogorovFeature)).topologicalClosure = ⊤ := by
-  let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
-    ⟨hK.posSemidef_positiveDefiniteKernelOperator⟩
+  let : Fact (TauCeti.positiveDefiniteKernelOperator K).PosSemidef :=
+    ⟨hK.positiveDefiniteKernelOperator⟩
   have hspan :
       Submodule.span 𝕜
           {y | ∃ (a : α) (z : 𝕜), RKHS.kerFun hK.KolmogorovSpace a z = y} =

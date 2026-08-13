@@ -23,7 +23,7 @@ the `OneParameterSemigroups` roadmap, before the harder converse direction of Bo
 
 ## Main declarations
 
-* `TauCeti.charFun_star_kernel_posSemidef_of_star_eq_neg`: with an explicit
+* `TauCeti.posSemidef_charFun_star_kernel_of_star_eq_neg`: with an explicit
   `star = -` involution, the kernel `K(a, b) = charFun μ (a + star b)` is positive definite.
 * `TauCeti.charFun_isPositiveDefinite_of_star_eq_neg`: `charFun μ` is positive definite for any
   explicit `star = -` involution.
@@ -48,19 +48,14 @@ variable {E : Type*} [SeminormedAddCommGroup E] [InnerProductSpace ℝ E]
 positive-definite-function construction, `(a, b) ↦ charFun μ (a + star b)`, is positive
 definite. Under `hstar` this kernel coincides with the translation-invariant kernel supplied by
 `charFun_posSemidef`. -/
-theorem charFun_star_kernel_posSemidef_of_star_eq_neg [StarAddMonoid E]
+theorem posSemidef_charFun_star_kernel_of_star_eq_neg [StarAddMonoid E]
     (hstar : ∀ x : E, star x = -x) :
     Matrix.PosSemidef (fun a b : E => MeasureTheory.charFun μ (a + star b)) := by
   have h : (fun a b : E => MeasureTheory.charFun μ (a + star b))
       = fun a b : E => MeasureTheory.charFun μ (a - b) := by
     simp only [hstar, sub_eq_add_neg]
   rw [h]
-  have hpd := charFun_posSemidef (μ := μ) (fun x : E => x)
-  have heq : Matrix.of (fun a b : E => MeasureTheory.charFun μ (a - b)) =
-      fun a b : E => MeasureTheory.charFun μ (a - b) := by
-    ext a b
-    rfl
-  exact (congrArg (fun K => Matrix.PosSemidef K) heq).mp hpd
+  simpa using charFun_posSemidef (μ := μ) (fun x : E => x)
 
 /-- The characteristic function of a finite measure is positive definite for any additive-group
 involution that is explicitly negation. This is the generic-predicate form of

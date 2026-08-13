@@ -122,7 +122,8 @@ theorem charFun_fintype_sum_mul_conj_nonneg {ι : Type*} [Fintype ι] (c : ι �
 /-- The matrix `(charFun μ (tᵢ - tⱼ))ᵢⱼ` of a finite measure is positive semidefinite: the
 matrix reformulation of the positive-definiteness of `charFun μ`. -/
 theorem charFun_posSemidef {ι : Type*} (t : ι → E) :
-    (Matrix.of fun i j => charFun μ (t i - t j)).PosSemidef := by
+    Matrix.PosSemidef fun i j => charFun μ (t i - t j) := by
+  change (Matrix.of fun i j => charFun μ (t i - t j)).PosSemidef
   refine ⟨?_, fun x => ?_⟩
   · -- Hermitian: `conj (charFun μ (tⱼ - tᵢ)) = charFun μ (tᵢ - tⱼ)`
     have h : ∀ i j : ι, conj (charFun μ (t j - t i)) = charFun μ (t i - t j) := by

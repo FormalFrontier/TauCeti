@@ -258,7 +258,7 @@ theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : Matrix.PosSemid
 
 /-- The finitely supported Gram form of a positive-definite kernel is itself a positive-definite
 kernel on the finitely supported coefficient space. -/
-theorem positiveDefiniteKernelFinsuppForm_posSemidef
+theorem posSemidef_positiveDefiniteKernelFinsuppForm
     (hK : Matrix.PosSemidef K) :
     Matrix.PosSemidef fun x y : α →₀ 𝕜 =>
       positiveDefiniteKernelFinsuppForm K x y := by

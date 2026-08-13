@@ -207,7 +207,7 @@ off-diagonal value is bounded by the product of the two diagonal values. -/
 theorem normSq_le (hF : IsPositiveDefinite F) (a b : M) :
     Complex.normSq (F (a + star b))
       ≤ (F (a + star a)).re * (F (b + star b)).re :=
-  posSemidef_normSq_le hF.posSemidef a b
+  normSq_le_of_posSemidef hF.posSemidef a b
 
 /-- If `a + star a = 0`, then a positive-definite function is bounded at `a` by its value at
 zero. -/
@@ -227,7 +227,7 @@ involutive additive monoid (`AddMonoid` and `StarAddMonoid`). -/
 theorem apply_eq_zero_of_map_zero_re_eq_zero (hF : IsPositiveDefinite F)
     (h0 : (F 0).re = 0) (a : M) : F a = 0 := by
   have hzero : F (0 + star 0) = 0 := by simpa [h0] using hF.map_zero_eq_ofReal_re
-  simpa using posSemidef_eq_zero_of_apply_self_eq_zero_right
+  simpa using eq_zero_of_apply_self_eq_zero_right_of_posSemidef
     hF.posSemidef (a := a) (b := 0) hzero
 
 section Group
