@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 public import Mathlib.Analysis.Normed.Module.FiniteDimension
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.Topology.DiscreteSubset
@@ -47,7 +46,10 @@ whose critical points in a set are all nondegenerate has a discrete critical loc
 compact set on which `fderiv ℝ f` is moreover continuous, so that the critical locus is closed,
 that discreteness leaves only finitely many critical points. That finiteness is what makes the
 Morse chain complex of a compact manifold finitely generated, so it is the first structural input
-of Morse homology.
+of Morse homology. The isolation itself uses no criticality — an invertible second derivative
+already makes the differential locally injective — so it is proved in the stated generality as
+`TauCeti.eventually_fderiv_ne` in `TauCeti.Analysis.Calculus.SecondDerivative`, and only its
+value-zero case is taken here.
 Because the first-order term of the chain rule drops out at a critical point, the second
 derivative there transforms as a bilinear form (`TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`
 in `TauCeti.Analysis.Calculus.SecondDerivative`), and nondegeneracy is unchanged by a change of
@@ -67,8 +69,6 @@ the notion be read off in any chart.
   condition that the Hessian bilinear form have trivial radical.
 * `TauCeti.IsNondegenerateCriticalPoint.congr_of_eventuallyEq`: nondegeneracy at a point depends
   only on the germ of the function there.
-* `TauCeti.eventually_fderiv_ne`: where the second derivative is invertible, the differential
-  takes each value at most once nearby, with no criticality assumed.
 * `TauCeti.IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero`: a nondegenerate critical point
   is isolated among critical points.
 * `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero`: a critical locus all
@@ -172,20 +172,9 @@ theorem IsNondegenerateCriticalPoint.congr_of_eventuallyEq {g : E → ℝ}
   ⟨h.contDiffAt.congr_of_eventuallyEq hg.symm, by rw [hg.symm.fderiv_eq, h.fderiv_eq_zero],
     by rw [hg.symm.fderiv.fderiv_eq]; exact h.isInvertible⟩
 
-/-- **Where the second derivative is invertible, the differential takes each value at most once
-nearby.** Criticality plays no part: an invertible second derivative makes `fderiv ℝ f` locally
-injective at `x`, so near `x` it avoids any prescribed value `c`. -/
-theorem eventually_fderiv_ne {c : E →L[ℝ] ℝ} (hf : ContDiffAt ℝ 2 f x)
-    (hinv : (fderiv ℝ (fderiv ℝ f) x).IsInvertible) :
-    ∀ᶠ y in 𝓝[≠] x, fderiv ℝ f y ≠ c := by
-  obtain ⟨e, he⟩ := hinv
-  have hd : HasFDerivAt (fderiv ℝ f) (e : E →L[ℝ] E →L[ℝ] ℝ) x := by
-    rw [he]
-    exact ContDiffAt.hasFDerivAt_fderiv hf le_rfl
-  exact hd.eventually_ne ⟨_, e.antilipschitz⟩
-
 /-- **A nondegenerate critical point is isolated.** Near such a point the differential of `f`
-vanishes only at the point itself: the case `c = 0` of `TauCeti.eventually_fderiv_ne`. -/
+vanishes only at the point itself: the case `c = 0` of `TauCeti.eventually_fderiv_ne`, proved in
+`TauCeti.Analysis.Calculus.SecondDerivative` because it uses no criticality. -/
 theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
     (h : IsNondegenerateCriticalPoint f x) :
     ∀ᶠ y in 𝓝[≠] x, fderiv ℝ f y ≠ 0 :=

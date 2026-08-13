@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.ContDiff.Comp
+public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 
 /-!
 # The second derivative as a derivative
@@ -15,16 +16,23 @@ the derivative at `x` of the map `fderiv 𝕜 g`. Mathlib supplies the different
 file packages that into the single `HasFDerivAt` statement that second-order arguments use, so
 that the identification is made once rather than at each use.
 
-It also records the second-order chain rule at a point where the differential of the outer
+An invertible second derivative therefore makes `fderiv 𝕜 g` locally injective at the point, so
+near it the differential avoids any prescribed value; that is the local rigidity behind the
+isolation of nondegenerate critical points, but it asks nothing of the value taken.
+
+The file also records the second-order chain rule at a point where the differential of the outer
 function vanishes: there the first-order term drops out, so the second derivative of a composition
 is the second derivative of the outer function evaluated on the images of the differential of the
-inner one, i.e. the second derivative transforms as a bilinear form. Neither statement mentions
-critical points as such, so both belong here rather than with the Morse theory that uses them.
+inner one, i.e. the second derivative transforms as a bilinear form. No statement here mentions
+critical points as such, so all of them belong here rather than with the Morse theory that uses
+them.
 
 ## Main results
 
 * `TauCeti.ContDiffAt.hasFDerivAt_fderiv`: at a twice continuously differentiable point,
   `fderiv 𝕜 g` is differentiable, with derivative the second derivative of `g`.
+* `TauCeti.eventually_fderiv_ne`: where the second derivative is invertible, the differential
+  takes each value at most once nearby.
 * `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`: for `C²` maps, where the differential of
   the outer function vanishes, the second derivative of a composition is the pullback of the
   second derivative along the differential of the inner function.
@@ -45,6 +53,19 @@ theorem ContDiffAt.hasFDerivAt_fderiv {n : WithTop ℕ∞} {g : E → F} {x : E}
     (h : ContDiffAt 𝕜 n g x) (hn : 2 ≤ n) :
     HasFDerivAt (fderiv 𝕜 g) (fderiv 𝕜 (fderiv 𝕜 g) x) x :=
   ((h.fderiv_right (m := 1) (by exact_mod_cast hn)).differentiableAt one_ne_zero).hasFDerivAt
+
+/-- **Where the second derivative is invertible, the differential takes each value at most once
+nearby.** Nothing is assumed about the value `c`, and in particular the differential need not
+vanish at `x`: an invertible second derivative already makes `fderiv 𝕜 g` locally injective at `x`,
+so near `x` it avoids `c`. -/
+theorem eventually_fderiv_ne {g : E → F} {x : E} {c : E →L[𝕜] F} (hg : ContDiffAt 𝕜 2 g x)
+    (hinv : (fderiv 𝕜 (fderiv 𝕜 g) x).IsInvertible) :
+    ∀ᶠ y in 𝓝[≠] x, fderiv 𝕜 g y ≠ c := by
+  obtain ⟨e, he⟩ := hinv
+  have hd : HasFDerivAt (fderiv 𝕜 g) (e : E →L[𝕜] E →L[𝕜] F) x := by
+    rw [he]
+    exact ContDiffAt.hasFDerivAt_fderiv hg le_rfl
+  exact hd.eventually_ne ⟨_, e.antilipschitz⟩
 
 /-- **The second derivative at a critical point is a bilinear form pullback.** If `f` is `C²` at
 `φ b`, `φ` is `C²` at `b`, and the differential of `f` vanishes at `φ b`, then the second
