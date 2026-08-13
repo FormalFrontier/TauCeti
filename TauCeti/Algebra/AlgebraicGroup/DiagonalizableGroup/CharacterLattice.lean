@@ -118,6 +118,9 @@ theorem bialgEquivOfBaseChangeIso_symm_apply
   | zero => simp
   | add x y hx hy => simp [hx, hy]
   | tmul a x =>
+      -- The full-subcategory `mapIso` and `CommHopfAlgCat.ofIso` wrappers expose no
+      -- evaluation lemma. Unfold their shared underlying algebra equivalence here so that
+      -- the canonical scalar-tensor pure-tensor lemma applies.
       change TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k)
         (a ⊗ₜ[k] x) = _
       rw [TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_tmul]
