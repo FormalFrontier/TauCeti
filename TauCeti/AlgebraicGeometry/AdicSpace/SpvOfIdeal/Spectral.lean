@@ -5,8 +5,10 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.Topology.Spectral.Hom
 public import TauCeti.AlgebraicGeometry.AdicSpace.RestrictToIdeal
 public import TauCeti.AlgebraicGeometry.AdicSpace.PatchPresentation
+import TauCeti.Topology.Spectral.SpectralMap
 import TauCeti.Topology.Spectral.PatchCriterion
 
 /-!
@@ -74,10 +76,10 @@ below is the public neighbourhood interface that merges them.)
 * `TauCeti.ValuationSpectrum.isCompact_of_mem_rationalFamily` : the members of `R` are
   quasi-compact, the other half of what Lemma 7.5(1) asserts about them.
 * `TauCeti.ValuationSpectrum.continuous_restrictToIdealCodRestrict` : **Lemma 7.5(2)**, the
-  continuity half — steps (ii) and (iii) give it at once. Wedhorn's further claim that `r_I` is
-  a *spectral* map is not recorded here; the quasi-compactness and the basis property that claim
-  needs are available as `isCompact_of_mem_rationalFamily` and
-  `isTopologicalBasis_rationalFamily` just above.
+  continuity half — steps (ii) and (iii) give it at once.
+* `TauCeti.ValuationSpectrum.isSpectralMap_restrictToIdealCodRestrict` : **Lemma 7.5(2)**, the
+  spectral-map half, closing out Lemma 7.5: spectrality is tested on the basis `R`, whose
+  preimages step (iii) computes and `isCompact_basicOpenFinset` bounds.
 
 ## References
 
@@ -492,8 +494,7 @@ theorem isCompact_of_mem_rationalFamily (I : Ideal A)
 /-- **Wedhorn Lemma 7.5(2)**, the continuity half: the retraction `r_I : Spv A → Spv (A, I)`
 is continuous.
 
-Wedhorn also calls `r_I` a *spectral* map; that half is not recorded here. The quasi-compactness
-of the rational subsets which it additionally needs is `isCompact_of_mem_rationalFamily` above. -/
+The spectral-map half is `isSpectralMap_restrictToIdealCodRestrict` below. -/
 @[fun_prop]
 theorem continuous_restrictToIdealCodRestrict (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
@@ -505,5 +506,20 @@ theorem continuous_restrictToIdealCodRestrict (I : Ideal A)
     rw [restrictToIdealCodRestrict_preimage I hfg hadm]
     exact isOpen_basicOpenFinset T u
   rwa [← instTopologicalSpace_spvOfIdeal_eq_generateFrom I hfg] at h
+
+/-- **Wedhorn Lemma 7.5(2)**, the spectral-map half: the retraction `r_I : Spv A → Spv (A, I)`
+is a spectral map. This closes out Lemma 7.5.
+
+Spectrality is tested on the basis `R` (`isSpectralMap_of_isTopologicalBasis` with
+`isTopologicalBasis_rationalFamily`), where the preimage of a rational subset is computed by
+step (iii) and is quasi-compact in `Spv A` unconditionally. -/
+theorem isSpectralMap_restrictToIdealCodRestrict (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    IsSpectralMap (restrictToIdealCodRestrict I hfg) := by
+  refine isSpectralMap_of_isTopologicalBasis (isTopologicalBasis_rationalFamily I hfg)
+    (continuous_restrictToIdealCodRestrict I hfg) ?_
+  rintro _ ⟨T, u, hadm, rfl⟩
+  rw [restrictToIdealCodRestrict_preimage I hfg hadm]
+  exact isCompact_basicOpenFinset T u
 
 end TauCeti.ValuationSpectrum
