@@ -16,12 +16,15 @@ embedding, and an *ambient isotopy* of a space `Y` is a
 homotopy from the identity of `Y` whose level-preserving total map `I × Y → I × Y` is a
 homeomorphism. These are the point-set foundations that the geometric-topology roadmap
 (`TauCetiRoadmap/GeometricTopology`) asks for once, in full generality, before specialising.
-The definitions follow Burde--Zieschang, *Knots*, Chapter 1, Definitions 1.1 and 1.2,
-generalized to this continuous topological setting. The non-ambient relation is the general
-point-set notion of isotopy; later knot-equivalence foundations should use ambient isotopy,
-specialized as needed to smooth embeddings `S¹ ↪ M`. Later geometric-topology foundations
-specialize these isotopy and ambient-isotopy notions as appropriate for locally flat isotopy,
-diffeotopies, and concordance.
+`Isotopy` deliberately uses the slice-wise, homotopy-through-embeddings convention.
+Burde--Zieschang, *Knots*, Chapter 1, Definition 1.1 instead requires the associated
+level-preserving map `I × X → I × Y` to be an embedding. The two conditions agree when `X` is
+compact and `Y` is Hausdorff, but the slice-wise condition is weaker for the arbitrary spaces
+allowed here. `AmbientIsotopy` follows their Definition 1.2, generalized to this continuous
+topological setting. The non-ambient relation is a general point-set notion of isotopy; later
+knot-equivalence foundations should use ambient isotopy, specialized as needed to smooth
+embeddings `S¹ ↪ M`. Later geometric-topology foundations specialize these notions as appropriate
+for locally flat isotopy, diffeotopies, and concordance.
 
 ## A warning: non-ambient isotopy is degenerate for knots
 
@@ -32,7 +35,7 @@ knot-theoretic content: an ambient isotopy induces a homeomorphism of complement
 invariants must be built on `AmbientIsotopy` and the `AmbientIsotopic` equivalence from
 `TauCeti.Topology.Homotopy.AmbientIsotopic.Basic`, not on `Isotopy`/`Isotopic`. See
 Burde--Zieschang, *Knots*, Chapter 1 §A, where ambient isotopy (Definition 1.2) is introduced
-after the naive isotopy of Definition 1.1.
+after their stronger level-preserving notion of non-ambient isotopy (Definition 1.1).
 
 ## Main definitions
 
@@ -76,7 +79,7 @@ variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
 As an equivalence this non-ambient relation is too coarse for classical knot theory: it need not
 extend to a motion of the ambient space and therefore need not preserve knot complements. Use
 `AmbientIsotopy`/`AmbientIsotopic` for knot equivalence; see the module docstring and the
-Burde--Zieschang reference. -/
+comparison with the Burde--Zieschang definition there. -/
 structure Isotopy (f₀ f₁ : C(X, Y)) extends
     HomotopyWith f₀ f₁ fun g : C(X, Y) => IsEmbedding g
 

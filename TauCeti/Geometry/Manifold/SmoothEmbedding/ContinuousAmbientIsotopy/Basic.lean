@@ -31,8 +31,8 @@ underlying maps.
 * `TauCeti.SmoothEmbedding.ContinuousAmbientIsotopic.setoid`: continuous ambient isotopy as a
   setoid on bundled smooth embeddings.
 
-The source for the topological notion is Burde--Zieschang, *Knots*, Chapter 1, Definitions 1.1
-and 1.2, via the existing `TauCeti.Topology.Homotopy.Isotopy.Basic` and
+The source for the topological ambient-isotopy notion is Burde--Zieschang, *Knots*, Chapter 1,
+Definition 1.2, via the existing `TauCeti.Topology.Homotopy.Isotopy.Basic` and
 `TauCeti.Topology.Homotopy.AmbientIsotopic.Basic` files.
 -/
 
