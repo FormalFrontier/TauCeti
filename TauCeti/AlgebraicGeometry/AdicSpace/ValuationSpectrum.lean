@@ -28,6 +28,8 @@ We define the valuation spectrum `Spv A` following Wedhorn, *Adic Spaces*
 * `TauCeti.ValuationSpectrum.supp v` : The support ideal `{a ∈ A | v(a) = 0}`.
 * `TauCeti.ValuationSpectrum.basicOpenFinset_inter` : **Wedhorn's step (i)** in the proof of
   Lemma 7.5, that the rational opens are stable under finite intersection.
+* `TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vlt_one` : the sub-unit locus of a set
+  of ring elements is closed — the closedness behind Wedhorn's Corollary 7.12.
 * `TauCeti.ValuationSpectrum.quotientLift 𝔞 h` : Lift the implicitly inferred point `v` with
   `𝔞 ≤ supp v` to `Spv (A ⧸ 𝔞)`.
 * `TauCeti.ValuationSpectrum.localizationComapSection S B v hS` : Lift `v` to a localization
@@ -144,6 +146,29 @@ lemma vle_iff_mem_basicOpen_or (v : Spv A) (f s : A) :
   · rintro (⟨h, _⟩ | ⟨_, hf⟩)
     · exact h
     · exact v.toValuativeRel.vle_trans hf (v.toValuativeRel.zero_vle s)
+
+/-- **The sub-unit locus of a set of ring elements is closed**: demanding `v(a) < 1` at every
+`a ∈ S` cuts out a closed subset of `Spv A`. The complement is the union over `a ∈ S` of the
+basic opens `Spv(A)(1/a)` — the condition `1 ≤ v(a)` already forces `v(a) ≠ 0`, so no separate
+nonvanishing clause survives.
+
+This is the closedness underlying Wedhorn's Corollary 7.12: Theorem 7.10 describes `Cont A`
+inside `Spv (A, IA)` by exactly such conditions, so `Cont A` is the trace of a closed set. -/
+theorem isClosed_setOfPred_forall_vlt_one (S : Set A) :
+    IsClosed {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vlt a 1} := by
+  rw [← isOpen_compl_iff]
+  have h : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vlt a 1}ᶜ = ⋃ a ∈ S, basicOpen 1 a := by
+    ext v
+    simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, ValuativeRel.vlt, not_forall, not_not,
+      Set.mem_iUnion, mem_basicOpen_iff, exists_prop]
+    constructor
+    · rintro ⟨a, haS, h1⟩
+      exact ⟨a, haS, h1, fun h0 ↦ v.toValuativeRel.not_vle_one_zero
+        (v.toValuativeRel.vle_trans h1 h0)⟩
+    · rintro ⟨a, haS, h1, -⟩
+      exact ⟨a, haS, h1⟩
+  rw [h]
+  exact isOpen_biUnion fun a _ ↦ isOpen_basicOpen 1 a
 
 /-- `Spv A` is T0: inseparable points agree on every basic open, hence carry the same
 valuative relation. -/

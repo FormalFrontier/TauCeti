@@ -17,13 +17,11 @@ We build it first on the full multiplicative group `Kˣ` — `fieldUnitSignature
 totally positive units `totallyPositiveUnits` — and then restrict along `(𝓞 K)ˣ → Kˣ` to the
 arithmetic unit group to obtain `unitSignature`, whose kernel is the totally positive integer units.
 
-On `Kˣ` the signature is onto: weak approximation at the infinite places realizes every sign
-pattern, which is `fieldUnitSignature_surjective`. So the integer-unit signature is the archimedean
-input to the narrow class group `Cl⁺(K)` (Layer 3 of the multiquadratic roadmap): its **cokernel**
-— the full sign group modulo `unitSignatures`, the signatures realized by units — is what
-contributes the kernel of the surjection `Cl⁺(K) → Cl(K)` between the narrow and ordinary class
-groups, and the `2`-rank of `Cl⁺(K)` is what the `t - 1` genus-theory formula computes for a real
-quadratic field.
+The integer-unit signature is the archimedean input to the narrow class group `Cl⁺(K)` (Layer 3
+of the multiquadratic roadmap): its **cokernel** — the full sign group modulo `unitSignatures`, the
+signatures realized by units — is what contributes the kernel of the surjection
+`Cl⁺(K) → Cl(K)` between the narrow and ordinary class groups, and the `2`-rank of `Cl⁺(K)` is
+what the `t - 1` genus-theory formula computes for a real quadratic field.
 
 ## Main definitions and results
 
@@ -34,8 +32,6 @@ quadratic field.
   in `TotallyPositive.lean`).
 * `TauCeti.NumberField.fieldUnitSignature_map_algebraMap`: the two signatures agree on an integer
   unit, the form in which the comparison of their ranges is used.
-* `TauCeti.NumberField.fieldUnitSignature_surjective`: **every sign pattern is realized in `Kˣ`**,
-  by weak approximation.
 * `TauCeti.NumberField.unitSignatures`: the sign patterns realized by the units of `𝓞 K`, with
   `card_unitSignatures_mul_index` recording that the ambient sign group has order `2 ^ r₁`. It is
   named because its index measures the narrow-versus-ordinary class-group defect.
@@ -109,64 +105,6 @@ theorem unitSignature_ker :
     MonoidHom.ker (unitSignature (K := K)) = totallyPositiveIntegerUnits := by
   ext u
   rw [MonoidHom.mem_ker, unitSignature_eq_one_iff, mem_totallyPositiveIntegerUnits]
-
-variable [NumberField K] in
-open scoped Classical in
-/-- **Every sign pattern is realized in `Kˣ`.** By weak approximation the diagonal image of `K` is
-dense in the product of its infinite places, so `K` contains an element lying within distance `1`
-of a prescribed `±1` at every infinite place. At a real place that pins its sign to the prescribed
-one, and everywhere it keeps the element away from `0`, so it is a unit. -/
-theorem fieldUnitSignature_surjective : Function.Surjective (fieldUnitSignature (K := K)) := by
-  intro s
-  -- Choose a representing unit of `ℝ` for each prescribed sign, and the corresponding `±1` in `K`.
-  obtain ⟨r, hr⟩ : ∃ r : {w : InfinitePlace K // w.IsReal} → ℝˣ,
-      ∀ w, (QuotientGroup.mk (r w) : ℝˣ ⧸ Units.posSubgroup ℝ) = s w :=
-    ⟨fun w => (QuotientGroup.mk_surjective (s w)).choose,
-      fun w => (QuotientGroup.mk_surjective (s w)).choose_spec⟩
-  set ε : InfinitePlace K → K := fun v =>
-    if h : v.IsReal then (if 0 < ((r ⟨v, h⟩ : ℝˣ) : ℝ) then 1 else -1) else 1 with hε
-  have hone : ∀ v : InfinitePlace K, v (ε v) = 1 := by
-    intro v
-    have h1 : v (1 : K) = 1 := by rw [InfinitePlace.coe_apply, AbsoluteValue.map_one]
-    have h2 : v (-1 : K) = 1 := by
-      rw [InfinitePlace.coe_apply, map_neg_eq_map, AbsoluteValue.map_one]
-    simp only [hε]
-    split
-    · split <;> assumption
-    · assumption
-  -- Weak approximation: some `x : K` lies in the open unit ball around `ε v` at every place `v`.
-  obtain ⟨x, hx⟩ := (InfinitePlace.denseRange_algebraMap_pi K).exists_mem_open
-    (isOpen_set_pi Set.finite_univ fun v _ => Metric.isOpen_ball)
-    ⟨fun v => WithAbs.toAbs v.1 (ε v), fun v _ => Metric.mem_ball_self one_pos⟩
-  have hkey : ∀ v : InfinitePlace K, v (x - ε v) < 1 := fun v => by
-    have h := hx v (Set.mem_univ v)
-    rwa [Metric.mem_ball, dist_eq_norm, WithAbs.norm_eq_apply_ofAbs] at h
-  have hx0 : x ≠ 0 := by
-    obtain ⟨v⟩ := (inferInstance : Nonempty (InfinitePlace K))
-    intro h
-    have hv := hkey v
-    rw [h, zero_sub, InfinitePlace.coe_apply, map_neg_eq_map, ← InfinitePlace.coe_apply,
-      hone v] at hv
-    exact absurd hv (lt_irrefl 1)
-  refine ⟨Units.mk0 x hx0, funext fun w => ?_⟩
-  rw [fieldUnitSignature_apply, ← hr w]
-  refine QuotientGroup.eq.mpr ?_
-  rw [Units.mem_posSubgroup, Units.val_mul, Units.val_inv_eq_inv_val, Units.coe_map]
-  have hεw : ε (w : InfinitePlace K) = if 0 < ((r w : ℝˣ) : ℝ) then 1 else -1 := by
-    simp only [hε, w.2, Subtype.coe_eta, ↓reduceDIte]
-  -- At the real place `w` the embedding of `x` is within `1` of `±1`, hence has that sign.
-  have hball : |embedding_of_isReal w.2 x -
-      embedding_of_isReal w.2 (ε (w : InfinitePlace K))| < 1 := by
-    have h := hkey (w : InfinitePlace K)
-    rwa [← map_sub, ← Real.norm_eq_abs, norm_embedding_of_isReal]
-  by_cases hpos : 0 < ((r w : ℝˣ) : ℝ)
-  · simp only [hεw, hpos, ↓reduceIte, map_one] at hball
-    have hxpos : 0 < embedding_of_isReal w.2 x := by linarith [(abs_lt.mp hball).1]
-    exact mul_pos (inv_pos.mpr hxpos) hpos
-  · have hneg : ((r w : ℝˣ) : ℝ) < 0 := lt_of_le_of_ne (not_lt.mp hpos) (Units.ne_zero _)
-    simp only [hεw, hpos, ↓reduceIte, map_neg, map_one] at hball
-    have hxneg : embedding_of_isReal w.2 x < 0 := by linarith [(abs_lt.mp hball).2]
-    exact mul_pos_of_neg_of_neg (inv_lt_zero.mpr hxneg) hneg
 
 variable (K)
 

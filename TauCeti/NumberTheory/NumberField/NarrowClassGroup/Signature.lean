@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Finite
-public import TauCeti.NumberTheory.NumberField.Units.Signature
+public import TauCeti.NumberTheory.NumberField.Units.Signature.Surjective
 
 /-!
 # The narrow class number formula

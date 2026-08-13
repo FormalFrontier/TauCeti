@@ -198,8 +198,8 @@ theorem contMDiff_mvfderiv_mulRightInvariantVectorField
     (f : C^∞⟮I, G; 𝕜⟯) :
     ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
       (fun g ↦ mvfderiv I f g (mulRightInvariantVectorField v g)) :=
-  f.contMDiff.contMDiff_mvfderiv_apply
-    (contMDiff_mulRightInvariantVectorField_infty v) (by simp)
+  (f.contMDiff.contMDiff_mvfderiv_apply (by simp)).comp
+    (contMDiff_mulRightInvariantVectorField_infty v)
 
 /-- Right-invariant differentiation of a smooth scalar function, bundled as a smooth scalar
 function. -/
