@@ -155,6 +155,14 @@ theorem primeSpectrumQuotientHomeomorphConnectedComponent_apply
     (x : PrimeSpectrum R) (y : PrimeSpectrum (R ⧸ connectedComponentIdeal x)) :
     (primeSpectrumQuotientHomeomorphConnectedComponent x y : PrimeSpectrum R) =
       comap (Ideal.Quotient.mk (connectedComponentIdeal x)) y :=
-  (rfl)
+  by
+    rw [primeSpectrumQuotientHomeomorphConnectedComponent, Homeomorph.trans_apply]
+    change
+      (Equiv.setCongr (range_comap_quotientMk_connectedComponentIdeal x)
+        ((isEmbedding_comap_of_surjective
+          (R ⧸ connectedComponentIdeal x)
+          (Ideal.Quotient.mk (connectedComponentIdeal x))
+          Ideal.Quotient.mk_surjective).toHomeomorph y)).1 = _
+    rw [Equiv.setCongr_apply, Topology.IsEmbedding.toHomeomorph_apply_coe]
 
 end PrimeSpectrum
