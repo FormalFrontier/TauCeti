@@ -166,20 +166,19 @@ wants:
 
 Integrability is not a separate hypothesis: on a finite measure it follows from `MemLp f 2`. -/
 theorem tendsto_integral_abs_birkhoffAverage_sub_condExp (T : Ω → Ω)
-    (hT : MeasurePreserving T μ μ) [IsFiniteMeasure μ]
-    [SigmaFinite (μ.trim (MeasurableSpace.invariants_le T))] {f : Ω → ℝ} (hf : MemLp f 2 μ) :
+    (hT : MeasurePreserving T μ μ) [IsFiniteMeasure μ] {f : Ω → ℝ} (hf : MemLp f 2 μ) :
     Tendsto (fun n => ∫ ω, |birkhoffAverage ℝ T f n ω
         - μ[f | MeasurableSpace.invariants T] ω| ∂μ) atTop (𝓝 0) := by
   have hf_int : Integrable f μ := hf.integrable one_le_two
+  -- Measurability comes from the `Lᵖ` representative, through the same transfer the `L²`
+  -- statement above uses; nothing about `birkhoffAverage` is unfolded here.
   have hBA : ∀ n : ℕ, AEStronglyMeasurable (birkhoffAverage ℝ T f n) μ := by
     intro n
-    have heq : birkhoffAverage ℝ T f n = (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f ∘ T^[i] := by
-      funext x
-      simp [birkhoffAverage, birkhoffSum, Finset.sum_apply]
-    rw [heq]
-    exact (Finset.aestronglyMeasurable_sum _ fun i _ =>
-      hf.aestronglyMeasurable.comp_quasiMeasurePreserving
-        (hT.iterate i).quasiMeasurePreserving).const_smul _
+    refine (Lp.aestronglyMeasurable (birkhoffAverage ℝ
+      (Lp.compMeasurePreservingₗᵢ ℝ T hT).toContinuousLinearMap id n (hf.toLp f))).congr ?_
+    rw [LinearIsometry.coe_toContinuousLinearMap, coe_compMeasurePreservingₗᵢ]
+    exact (coeFn_birkhoffAverage_compMeasurePreserving hT (hf.toLp f) n).trans
+      (hT.quasiMeasurePreserving.birkhoffAverage_ae_eq_of_ae_eq ℝ hf.coeFn_toLp n)
   have hmeas : ∀ n : ℕ, AEStronglyMeasurable
       (birkhoffAverage ℝ T f n - μ[f | MeasurableSpace.invariants T]) μ := fun n =>
     (hBA n).sub integrable_condExp.aestronglyMeasurable
