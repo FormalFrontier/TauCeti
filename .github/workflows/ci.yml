@@ -9,6 +9,17 @@ on:
 permissions:
   contents: read
 
+# Keep the cache publisher live under a burst of main pushes. GitHub retains at
+# most one running and one pending run in this group: the running build is never
+# cancelled before it can publish, while superseded pending commits do not each
+# start an expensive cache-miss rebuild. In a burst, this deliberately coalesces
+# intermediate commits' post-merge checks too; the newest pending tip rechecks
+# the entire tree, though localizing a failure may then require bisection. No
+# merge decision consumes this post-merge workflow's per-commit conclusion.
+concurrency:
+  group: main-ci-cache-publisher
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,6 +37,7 @@ jobs:
           python3 scripts/pr_status/test_pr_labels.py
           python3 scripts/pr_status/test_zulip.py
           python3 scripts/test_structure_nudge.py
+          python3 scripts/test_workflow_pins.py
 
       # The two-library split is build convenience, not a trust boundary.
       # This guard is what actually stops the AI-owned library from inheriting
