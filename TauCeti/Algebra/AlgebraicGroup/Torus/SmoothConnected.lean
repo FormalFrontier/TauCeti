@@ -53,6 +53,16 @@ universe u
 
 namespace SplitTorus
 
+/-- Scalar extension of a split torus's coordinate ring is the corresponding group algebra over
+the extended scalar ring. -/
+private noncomputable def coordinateRingScalarExtensionRingEquiv
+    (k K : Type u) [CommRing k] [CommRing K] [Algebra k K] (σ : Type u) :
+    MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
+      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
+  (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans
+    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K
+      (G := Multiplicative (σ →₀ ℤ))).toAlgEquiv.toRingEquiv
+
 /-- **The coordinate Hopf algebra of a finite-rank split torus is geometrically connected.** -/
 @[grind =>]
 theorem geometricallyConnected_coordinateRing
@@ -61,13 +71,7 @@ theorem geometricallyConnected_coordinateRing
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj := by
   rw [geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one]
   intro K _ _ e he
-  let φ : MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
-      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
-    (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans <|
-    (CommHopfAlgCat.ofIso <| (forget₂
-      (FiniteTypeCommHopfAlgCat.{u, u} K) (CommHopfAlgCat.{u} K)).mapIso <|
-        DiagonalizableGroup.baseChangeCoordinateRingIso k K
-          (characterGroup σ)).toAlgEquiv.toRingEquiv
+  let φ := coordinateRingScalarExtensionRingEquiv k K σ
   have he' : IsIdempotentElem (φ e) := he.map φ.toRingHom
   rcases IsIdempotentElem.iff_eq_zero_or_one.mp he' with h | h
   · left
@@ -83,13 +87,7 @@ theorem geometricallyReduced_coordinateRing
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj := by
   rw [geometricallyReducedCommHopfAlgProperty_iff]
   intro K _ _
-  let φ : MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
-      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
-    (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans <|
-    (CommHopfAlgCat.ofIso <| (forget₂
-      (FiniteTypeCommHopfAlgCat.{u, u} K) (CommHopfAlgCat.{u} K)).mapIso <|
-        DiagonalizableGroup.baseChangeCoordinateRingIso k K
-          (characterGroup σ)).toAlgEquiv.toRingEquiv
+  let φ := coordinateRingScalarExtensionRingEquiv k K σ
   exact isReduced_of_injective φ.toRingHom φ.injective
 
 end SplitTorus
