@@ -37,6 +37,7 @@ The proof uses Junyan Xu's path-lifting and monodromy API in
 public section
 
 open CategoryTheory
+open unitInterval
 
 namespace TauCeti
 
@@ -124,6 +125,14 @@ theorem monodromyNatTrans_app (hp : _root_.IsCoveringMap p)
     (monodromyNatTrans hp hq f hf).app (FundamentalGroupoid.mk x) =
       ↾(fiberMap f hf x) :=
   (rfl)
+
+/-- The natural transformation induced by a map over the base depends only on that map, not on
+the proof that it lies over the base. -/
+theorem monodromyNatTrans_congr (hp : _root_.IsCoveringMap p)
+    (hq : _root_.IsCoveringMap q) {f g : C(E, F)} (hf : q ∘ f = p) (hg : q ∘ g = p)
+    (h : f = g) : monodromyNatTrans hp hq f hf = monodromyNatTrans hp hq g hg := by
+  subst g
+  rfl
 
 /-- The identity map of a cover induces the identity natural transformation. -/
 @[simp]
