@@ -66,12 +66,9 @@ difference by one. -/
 theorem prod_map_ι_sub_swap_mem_pbwFiltrationPrevious (x y : L) (l : List L) :
     ((x :: y :: l).map ⇑ι).prod - ((y :: x :: l).map ⇑ι).prod ∈
       pbwFiltrationPrevious R L (x :: y :: l).length := by
-  rw [show (x :: y :: l).length = (l.length + 1) + 1 by simp,
-    pbwFiltrationPrevious_succ]
-  simp only [List.map_cons, List.prod_cons]
+  simp only [List.length_cons, pbwFiltrationPrevious_succ, List.map_cons, List.prod_cons]
   rw [← mul_assoc, ← mul_assoc, ← sub_mul,
-    show ι x * ι y - ι y * ι x = ι ⁅x, y⁆ by
-      simpa only [LieRing.of_associative_ring_bracket] using (LieHom.map_lie ι x y).symm]
+    ← LieRing.of_associative_ring_bracket, ← LieHom.map_lie]
   simpa only [Nat.add_comm] using
     mul_mem_pbwFiltration (R := R) (L := L) (ι_mem_pbwFiltration_one R L ⁅x, y⁆)
       (prod_map_ι_mem_pbwFiltration R L le_rfl)
