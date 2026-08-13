@@ -44,6 +44,7 @@ positive root is a nonnegative integer combination of the simple coroots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
 * `TauCeti.sum_root_ne_zero_of_mem_posRoots` says a nonempty sum of positive roots is nonzero.
+* `TauCeti.one_le_height_of_mem_posRoots` says every positive root has height at least one.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
 
@@ -87,6 +88,11 @@ variable [CharZero R] (b : P.Base)
 /-- Membership in the set of positive roots. -/
 @[simp]
 lemma mem_posRoots (i : ι) : i ∈ posRoots P b ↔ b.IsPos i := Iff.rfl
+
+/-- A positive root has height at least one. -/
+theorem one_le_height_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) : 1 ≤ b.height i := by
+  rw [mem_posRoots, RootPairing.Base.isPos_iff] at hi
+  omega
 
 /-- Membership in the set of negative roots. -/
 @[simp]

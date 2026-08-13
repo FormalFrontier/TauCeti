@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.BoundedGenerator.Perturbation
 public import TauCeti.Analysis.Semigroups.Dissipative.Basic
+import TauCeti.Analysis.Normed.Operator.Dense
 import TauCeti.Analysis.Normed.Operator.Exponential
 
 /-!
@@ -17,14 +18,27 @@ contraction bound, its Yosida approximation is
 
 `A_lambda = lambda ^ 2 R(lambda, A) - lambda I = lambda A R(lambda, A)`.
 
-The resolvent estimate makes `lambda R(lambda, A)` a contraction. Splitting the exponential of
-`t A_lambda` into the commuting scalar and resolvent parts then proves that
-`exp (t A_lambda)` is a contraction for every `t ≥ 0`. Thus each approximation generates a
-uniformly continuous contraction semigroup. This is the bounded stage of the Yosida construction;
-the approximation estimates below show that `lambda R(lambda, A)` converges strongly to the
-identity for a densely defined m-dissipative operator, and hence that `A_lambda x` converges to
-`A x` on `D(A)`. A sharp exponential comparison then proves that the associated semigroups are
-Cauchy uniformly on compact time intervals. The later generation argument defines their limit.
+The resolvent estimate `lambda ‖R(lambda, A)‖ ≤ 1` makes `lambda R(lambda, A)` a contraction.
+Splitting the exponential of `t A_lambda` into the commuting scalar and resolvent parts then proves
+that `exp (t A_lambda)` is a contraction for every `t ≥ 0`. Thus each approximation generates a
+uniformly continuous contraction semigroup. This is the bounded stage of the Yosida construction.
+
+The convergence stage follows. It is stated against a resolvent bound
+`‖R(lambda, A)‖ ≤ M / lambda` rather than against dissipativity, because the Hille--Yosida
+generation theorem needs the same estimates at a growth constant larger than one: for a densely
+defined operator with that bound, `lambda R(lambda, A)` converges strongly to the identity, hence
+`A_lambda x` converges to `A x` on `D(A)`.
+
+The compact-time Cauchy property of the associated semigroups needs a second, independent
+hypothesis: a uniform bound `‖exp (s A_lambda)‖ ≤ M` on the Yosida exponentials, which the
+Duhamel comparison contributes squared, as the factor `M ^ 2`. Those two statements therefore
+carry two constants, the resolvent constant, written `K` there, and the exponential constant `M`.
+An m-dissipative operator supplies both hypotheses with `K = M = 1`, its exponential bound being
+the contraction estimate
+`TauCeti.Semigroups.norm_exp_smul_yosidaApproximation_le_one`; under the Hille--Yosida bounds on
+all resolvent powers the exponential bound is instead
+`TauCeti.Semigroups.norm_exp_smul_yosidaApproximation_le`. The later generation argument defines
+the limit of the approximating semigroups.
 
 ## Main results
 
@@ -33,14 +47,18 @@ Cauchy uniformly on compact time intervals. The later generation argument define
   `A_lambda x = lambda A R(lambda, A) x`.
 * `TauCeti.Semigroups.yosidaSemigroup`: the uniformly continuous contraction semigroup generated
   by `A_lambda`.
-* `TauCeti.Semigroups.IsMDissipative.tendsto_smul_resolvent_apply_atTop`: the strong convergence
-  `lambda R(lambda, A) x -> x` for a densely defined m-dissipative operator.
-* `TauCeti.Semigroups.IsMDissipative.tendsto_yosidaApproximation_apply_atTop`: the convergence
+* `TauCeti.Semigroups.tendsto_smul_resolvent_apply_atTop`: the strong convergence
+  `lambda R(lambda, A) x -> x` for a densely defined operator obeying the resolvent bound.
+* `TauCeti.Semigroups.tendsto_yosidaApproximation_apply_atTop`: the convergence
   `A_lambda x -> A x` on the domain of `A`.
-* `TauCeti.Semigroups.IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact`: the
-  Yosida semigroups are uniformly Cauchy on compact time intervals on every vector.
-* `TauCeti.Semigroups.IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem`:
-  the corresponding domain-vector uniform Cauchy result.
+* `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact` and
+  `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem`: the Yosida
+  semigroups are uniformly Cauchy on compact time intervals, on every vector and on domain
+  vectors.
+* `TauCeti.Semigroups.IsMDissipative.tendsto_smul_resolvent_apply_atTop`,
+  `TauCeti.Semigroups.IsMDissipative.tendsto_yosidaApproximation_apply_atTop` and
+  `TauCeti.Semigroups.IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact`: the
+  three convergence statements for an m-dissipative operator, the case `K = M = 1`.
 
 ## References
 
@@ -233,22 +251,29 @@ theorem yosidaSemigroup_generator (A : X →ₗ.[ℝ] X) (lambda : ℝ)
   rw [yosidaSemigroup_toStronglyContinuousSemigroup,
     StronglyContinuousSemigroup.ofBounded_generator]
 
-/-! ## Strong convergence of the approximations -/
+/-! ## Strong convergence of the approximations
 
-/-- On the domain of an m-dissipative operator, the scaled resolvent differs from the identity by
-at most `‖A x‖ / lambda`:
+The estimates of this section carry the resolvent bound `‖R(lambda, A)‖ ≤ M / lambda` as an
+explicit hypothesis rather than assuming dissipativity, since the Hille--Yosida generation theorem
+needs them at a growth constant `M` larger than one. An m-dissipative operator is the case
+`M = 1`, recorded by the `IsMDissipative` specializations at the end of the file. -/
 
-`‖lambda R(lambda, A) x - x‖ ≤ ‖A x‖ / lambda`.
+omit [CompleteSpace X] in
+/-- On the domain of `A`, the scaled resolvent differs from the identity by at most
+`M ‖A x‖ / lambda`:
 
-This is the quantitative core of the strong convergence `lambda R(lambda, A) -> I`. -/
-theorem IsMDissipative.norm_smul_resolvent_sub_le {A : X →ₗ.[ℝ] X}
-    (hA : IsMDissipative A) {lambda : ℝ} (hlambda : 0 < lambda) (x : A.domain) :
-    ‖lambda • LinearPMap.resolvent A lambda (x : X) - (x : X)‖ ≤ ‖A x‖ / lambda := by
-  have hmem := hA.mem_resolventSet hlambda
+`‖lambda R(lambda, A) x - x‖ ≤ M ‖A x‖ / lambda`,
+
+whenever `lambda` is a resolvent point with `‖R(lambda, A)‖ ≤ M / lambda`. This is the
+quantitative core of the strong convergence `lambda R(lambda, A) -> I`. -/
+theorem norm_smul_resolvent_apply_sub_self_le {A : X →ₗ.[ℝ] X} {lambda M : ℝ}
+    (hlambda : lambda ∈ LinearPMap.resolventSet A)
+    (hbound : ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda) (x : A.domain) :
+    ‖lambda • LinearPMap.resolvent A lambda (x : X) - (x : X)‖ ≤ M * ‖A x‖ / lambda := by
   have hresolvent :
       lambda • LinearPMap.resolvent A lambda (x : X) - (x : X) =
         LinearPMap.resolvent A lambda (A x) := by
-    have hleft := LinearPMap.resolvent_smul_sub_apply hmem x
+    have hleft := LinearPMap.resolvent_smul_sub_apply hlambda x
     rw [map_sub, map_smul] at hleft
     rw [sub_eq_iff_eq_add] at hleft
     rw [hleft]
@@ -258,20 +283,22 @@ theorem IsMDissipative.norm_smul_resolvent_sub_le {A : X →ₗ.[ℝ] X}
     ‖LinearPMap.resolvent A lambda (A x)‖
         ≤ ‖LinearPMap.resolvent A lambda‖ * ‖A x‖ :=
       ContinuousLinearMap.le_opNorm _ _
-    _ ≤ lambda⁻¹ * ‖A x‖ := by
-      gcongr
-      exact hA.norm_resolvent_le hlambda
-    _ = ‖A x‖ / lambda := by rw [div_eq_mul_inv, mul_comm]
+    _ ≤ M / lambda * ‖A x‖ := by gcongr
+    _ = M * ‖A x‖ / lambda := by ring
 
-/-- On `D(A)`, `lambda R(lambda, A) x` tends to `x` as `lambda -> +∞` for an m-dissipative
-operator. Density of the domain is not needed for this domain-restricted form. -/
-theorem IsMDissipative.tendsto_smul_resolvent_apply_atTop_of_mem {A : X →ₗ.[ℝ] X}
-    (hA : IsMDissipative A) (x : A.domain) :
+omit [CompleteSpace X] in
+/-- On `D(A)`, `lambda R(lambda, A) x` tends to `x` as `lambda -> +∞` under the resolvent bound
+`‖R(lambda, A)‖ ≤ M / lambda`. Density of the domain is not needed for this domain-restricted
+form. -/
+theorem tendsto_smul_resolvent_apply_atTop_of_mem {A : X →ₗ.[ℝ] X} {M : ℝ}
+    (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda)
+    (x : A.domain) :
     Filter.Tendsto (fun lambda : ℝ => lambda • LinearPMap.resolvent A lambda (x : X))
       Filter.atTop (nhds (x : X)) := by
   rw [Metric.tendsto_atTop]
   intro epsilon hepsilon
-  have hquotient : Filter.Tendsto (fun lambda : ℝ => ‖A x‖ / lambda)
+  have hquotient : Filter.Tendsto (fun lambda : ℝ => M * ‖A x‖ / lambda)
       Filter.atTop (nhds 0) :=
     tendsto_const_nhds.div_atTop Filter.tendsto_id
   rw [Metric.tendsto_atTop] at hquotient
@@ -279,60 +306,45 @@ theorem IsMDissipative.tendsto_smul_resolvent_apply_atTop_of_mem {A : X →ₗ.[
   refine ⟨max N 1, fun lambda hlambda => ?_⟩
   have hlambda_pos : 0 < lambda := lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hlambda)
   rw [dist_eq_norm]
-  refine (hA.norm_smul_resolvent_sub_le hlambda_pos x).trans_lt ?_
+  refine (norm_smul_resolvent_apply_sub_self_le (hres lambda hlambda_pos)
+    (hbound lambda hlambda_pos) x).trans_lt ?_
   have hquotient_lt := hN lambda (le_trans (le_max_left _ _) hlambda)
-  simpa [Real.dist_eq, abs_of_pos hlambda_pos,
-    abs_of_nonneg (div_nonneg (norm_nonneg _) hlambda_pos.le)] using
-    hquotient_lt
+  rw [Real.dist_eq, sub_zero] at hquotient_lt
+  exact lt_of_le_of_lt (le_abs_self _) hquotient_lt
 
-/-- For a densely defined m-dissipative operator, the scaled resolvents converge strongly to the
-identity on the whole Banach space:
+omit [CompleteSpace X] in
+/-- Under the resolvent bound `‖R(lambda, A)‖ ≤ M / lambda` at a positive `lambda`, the scaled
+resolvent `lambda R(lambda, A)` has norm at most `M`. -/
+theorem norm_smul_resolvent_le {A : X →ₗ.[ℝ] X} {lambda M : ℝ} (hlambda : 0 < lambda)
+    (hbound : ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda) :
+    ‖lambda • LinearPMap.resolvent A lambda‖ ≤ M := by
+  rw [norm_smul, Real.norm_eq_abs, abs_of_pos hlambda]
+  calc
+    lambda * ‖LinearPMap.resolvent A lambda‖ ≤ lambda * (M / lambda) := by gcongr
+    _ = M := by field_simp
+
+omit [CompleteSpace X] in
+/-- For a densely defined operator obeying the resolvent bound `‖R(lambda, A)‖ ≤ M / lambda`, the
+scaled resolvents converge strongly to the identity on the whole Banach space:
 
 `lambda R(lambda, A) x -> x` as `lambda -> +∞`.
 
-The contraction bound extends the domain estimate to all vectors by density. -/
-theorem IsMDissipative.tendsto_smul_resolvent_apply_atTop {A : X →ₗ.[ℝ] X}
-    (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (x : X) :
+The uniform bound `‖lambda R(lambda, A)‖ ≤ M` extends the domain estimate to all vectors by
+density. -/
+theorem tendsto_smul_resolvent_apply_atTop {A : X →ₗ.[ℝ] X} {M : ℝ}
+    (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda)
+    (hdense : Dense (A.domain : Set X)) (x : X) :
     Filter.Tendsto (fun lambda : ℝ => lambda • LinearPMap.resolvent A lambda x)
       Filter.atTop (nhds x) := by
-  rw [Metric.tendsto_atTop]
-  intro epsilon hepsilon
-  obtain ⟨y, hy, hxy⟩ := hdense.exists_dist_lt x (by positivity : 0 < epsilon / 3)
-  have hxy_norm : ‖x - y‖ < epsilon / 3 := by simpa only [dist_eq_norm] using hxy
-  let y' : A.domain := ⟨y, hy⟩
-  have hy_tendsto := hA.tendsto_smul_resolvent_apply_atTop_of_mem y'
-  rw [Metric.tendsto_atTop] at hy_tendsto
-  obtain ⟨N, hN⟩ := hy_tendsto (epsilon / 3) (by positivity)
-  refine ⟨max N 1, fun lambda hlambda => ?_⟩
-  have hlambda_pos : 0 < lambda := lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hlambda)
-  let T : X →L[ℝ] X := lambda • LinearPMap.resolvent A lambda
-  have hTnorm : ‖T‖ ≤ 1 := by
-    dsimp only [T]
-    rw [norm_smul, Real.norm_eq_abs, abs_of_pos hlambda_pos]
-    exact hA.mul_norm_resolvent_le_one hlambda_pos
-  have hTy : ‖T y - y‖ < epsilon / 3 := by
-    have := hN lambda (le_trans (le_max_left _ _) hlambda)
-    simpa [T, dist_eq_norm] using this
-  have hTxy : ‖T (x - y)‖ ≤ ‖x - y‖ := by
-    calc
-      ‖T (x - y)‖ ≤ ‖T‖ * ‖x - y‖ := ContinuousLinearMap.le_opNorm _ _
-      _ ≤ 1 * ‖x - y‖ := by gcongr
-      _ = ‖x - y‖ := one_mul _
-  have hdecomp : T x - x = T (x - y) + (T y - y) + (y - x) := by
-    rw [map_sub]
-    abel
-  dsimp only [T] at hdecomp ⊢
-  rw [dist_eq_norm, ← smul_apply, hdecomp]
-  calc
-    ‖T (x - y) + (T y - y) + (y - x)‖
-        ≤ ‖T (x - y)‖ + ‖T y - y‖ + ‖y - x‖ := norm_add₃_le
-    _ ≤ ‖x - y‖ + ‖T y - y‖ + ‖y - x‖ := by gcongr
-    _ < epsilon / 3 + epsilon / 3 + epsilon / 3 := by
-      have hyx_norm : ‖y - x‖ < epsilon / 3 := by
-        rw [norm_sub_rev]
-        exact hxy_norm
-      linarith
-    _ = epsilon := by ring
+  refine ContinuousLinearMap.tendsto_apply_of_dense (𝕜 := ℝ)
+    (f := fun lambda => lambda • LinearPMap.resolvent A lambda)
+    (g := (1 : X →L[ℝ] X)) (C := M) hdense ?_ ?_ x
+  · filter_upwards [Filter.eventually_gt_atTop 0] with lambda hlambda
+    exact norm_smul_resolvent_le hlambda (hbound lambda hlambda)
+  · intro y hy
+    simpa only [smul_apply, one_apply_eq_self] using
+      tendsto_smul_resolvent_apply_atTop_of_mem hres hbound (⟨y, hy⟩ : A.domain)
 
 omit [CompleteSpace X] in
 /-- At a resolvent point, the Yosida approximation acts on `x ∈ D(A)` as
@@ -344,37 +356,54 @@ theorem yosidaApproximation_apply_eq_smul_resolvent_apply {A : X →ₗ.[ℝ] X}
   rw [yosidaApproximation_apply_eq_smul_apply_resolvent hlambda]
   exact congrArg (lambda • ·) (LinearPMap.resolvent_apply_comm hlambda x).symm
 
-/-- For a densely defined m-dissipative operator, its Yosida approximations converge strongly to
-the original operator on its domain: `A_lambda x -> A x` for every `x ∈ D(A)`. -/
-theorem IsMDissipative.tendsto_yosidaApproximation_apply_atTop {A : X →ₗ.[ℝ] X}
-    (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (x : A.domain) :
+omit [CompleteSpace X] in
+/-- Under the resolvent bound `‖R(lambda, A)‖ ≤ M / lambda` and density of the domain, the Yosida
+approximations converge strongly to the original operator on its domain: `A_lambda x -> A x` for
+every `x ∈ D(A)`. -/
+theorem tendsto_yosidaApproximation_apply_atTop {A : X →ₗ.[ℝ] X} {M : ℝ}
+    (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ M / lambda)
+    (hdense : Dense (A.domain : Set X)) (x : A.domain) :
     Filter.Tendsto (fun lambda : ℝ => yosidaApproximation A lambda (x : X))
       Filter.atTop (nhds (A x)) := by
-  refine (hA.tendsto_smul_resolvent_apply_atTop hdense (A x)).congr' ?_
+  refine (tendsto_smul_resolvent_apply_atTop hres hbound hdense (A x)).congr' ?_
   filter_upwards [Filter.eventually_gt_atTop 0] with lambda hlambda
-  exact (yosidaApproximation_apply_eq_smul_resolvent_apply
-    (hA.mem_resolventSet hlambda) x).symm
+  exact (yosidaApproximation_apply_eq_smul_resolvent_apply (hres lambda hlambda) x).symm
 
-/-- For a densely defined m-dissipative operator, the bounded Yosida semigroups are Cauchy on
-domain vectors, uniformly on every compact time interval. Explicitly, for `T ≥ 0`, the vectors
-`exp (t A_lambda) x` are uniformly Cauchy for `0 ≤ t ≤ T` as `lambda -> +∞`, whenever
-`x ∈ D(A)`.
+/-! ## Compact-time Cauchy convergence of the approximating semigroups
 
-The comparison estimate reduces this to the convergence `A_lambda x -> A x` proved above. -/
-theorem IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem
-    {A : X →ₗ.[ℝ] X}
-    (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (x : A.domain)
-    {T : ℝ} (hT : 0 ≤ T) :
+The two statements below take independent resolvent and exponential bounds, with constants `K`
+and `M` respectively. For a dissipative operator the exponential bound is the contraction estimate
+`TauCeti.Semigroups.norm_exp_smul_yosidaApproximation_le_one`; under the Hille--Yosida resolvent
+power bounds for a general growth constant it is
+`TauCeti.Semigroups.norm_exp_smul_yosidaApproximation_le`. -/
+
+/-- The bounded Yosida semigroups are Cauchy on domain vectors, uniformly on every compact time
+interval. Explicitly, for `T ≥ 0`, the vectors `exp (t A_lambda) x` are uniformly Cauchy for
+`0 ≤ t ≤ T` as `lambda -> +∞`, whenever `x ∈ D(A)`.
+
+The resolvent bound has constant `K`, while the independent exponential bound has constant `M`.
+The comparison estimate reduces the result to the convergence `A_lambda x -> A x` proved above,
+at the cost of the factor `M ^ 2` from the two exponential factors of the Duhamel formula. -/
+theorem exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem {A : X →ₗ.[ℝ] X} {K M : ℝ}
+    (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ K / lambda)
+    (hexp : ∀ lambda : ℝ, 0 < lambda → ∀ s : ℝ, 0 ≤ s →
+      ‖exp (s • yosidaApproximation A lambda)‖ ≤ M)
+    (hdense : Dense (A.domain : Set X)) (x : A.domain) {T : ℝ} (hT : 0 ≤ T) :
     UniformCauchySeqOn
       (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) (x : X))
       Filter.atTop (Set.Icc 0 T) := by
   rw [Metric.uniformCauchySeqOn_iff]
   intro epsilon hepsilon
-  let C : ℝ := T + 1
-  have hC : 0 < C := by dsimp [C]; linarith
+  let C : ℝ := M * M * (T + 1) + 1
+  have hC : 0 < C := by
+    have : 0 ≤ M * M * (T + 1) := mul_nonneg (mul_self_nonneg M) (by linarith)
+    dsimp only [C]
+    linarith
   let delta : ℝ := epsilon / (2 * C)
   have hdelta : 0 < delta := div_pos hepsilon (mul_pos zero_lt_two hC)
-  have hconv := hA.tendsto_yosidaApproximation_apply_atTop hdense x
+  have hconv := tendsto_yosidaApproximation_apply_atTop hres hbound hdense x
   rw [Metric.tendsto_atTop] at hconv
   obtain ⟨N, hN⟩ := hconv delta hdelta
   refine ⟨max N 1, fun lambda hlambda mu hmu t ht => ?_⟩
@@ -391,90 +420,98 @@ theorem IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem
     exact (dist_triangle_right
       (yosidaApproximation A lambda (x : X))
       (yosidaApproximation A mu (x : X)) (A x)).trans_lt (by linarith)
-  have hexp := norm_exp_smul_sub_exp_smul_apply_le_of_commute
+  have hcompare := norm_exp_smul_sub_exp_smul_apply_le_of_commute
     (yosidaApproximation A lambda) (yosidaApproximation A mu)
-    (yosidaApproximation_comm (hA.mem_resolventSet hlambda_pos)
-      (hA.mem_resolventSet hmu_pos))
-    (fun s hs => norm_exp_smul_yosidaApproximation_le_one
-      (hA.mul_norm_resolvent_le_one hlambda_pos) hlambda_pos hs)
-    (fun s hs => norm_exp_smul_yosidaApproximation_le_one
-      (hA.mul_norm_resolvent_le_one hmu_pos) hmu_pos hs)
+    (yosidaApproximation_comm (hres lambda hlambda_pos) (hres mu hmu_pos))
+    (fun s hs => hexp lambda hlambda_pos s hs) (fun s hs => hexp mu hmu_pos s hs)
     ht.1 (x : X)
   calc
     ‖exp (t • yosidaApproximation A lambda) (x : X) -
         exp (t • yosidaApproximation A mu) (x : X)‖
-        ≤ t * ‖(yosidaApproximation A lambda - yosidaApproximation A mu) (x : X)‖ := hexp
+        ≤ M * M * t * ‖(yosidaApproximation A lambda - yosidaApproximation A mu) (x : X)‖ :=
+      hcompare
     _ ≤ C * ‖(yosidaApproximation A lambda - yosidaApproximation A mu) (x : X)‖ := by
-      gcongr
-      dsimp [C]
-      linarith [ht.2]
+      refine mul_le_mul_of_nonneg_right ?_ (norm_nonneg _)
+      have hmono : M * M * t ≤ M * M * (T + 1) :=
+        mul_le_mul_of_nonneg_left (by linarith [ht.2]) (mul_self_nonneg M)
+      dsimp only [C]
+      linarith
     _ < C * (2 * delta) := mul_lt_mul_of_pos_left hdiff hC
     _ = epsilon := by
-      dsimp [delta]
+      dsimp only [delta]
       field_simp
 
-/-- For a densely defined m-dissipative operator, the bounded Yosida semigroups are Cauchy
-uniformly on every compact time interval, on every vector of the Banach space.
+/-- The bounded Yosida semigroups are Cauchy uniformly on every compact time interval, on every
+vector of the Banach space.
 
-This is the compact-time Cauchy estimate used to define the contraction semigroup generated by
-`A`. The domain case is `exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem`;
-contractivity extends it to the whole space by density of `D(A)`. -/
-theorem IsMDissipative.exp_yosidaApproximation_uniformCauchySeqOn_compact {A : X →ₗ.[ℝ] X}
-    (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (x : X)
-    {T : ℝ} (hT : 0 ≤ T) :
+This is the compact-time Cauchy estimate from which a candidate pointwise limit family is defined;
+later arguments establish its semigroup structure and identify its generator as `A`. The domain
+case is `TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem`; the uniform
+bound `‖exp (s A_lambda)‖ ≤ M` extends it to the whole space by density of `D(A)`, independently
+of the resolvent-bound constant `K`. -/
+theorem exp_yosidaApproximation_uniformCauchySeqOn_compact {A : X →ₗ.[ℝ] X} {K M : ℝ}
+    (hres : ∀ lambda : ℝ, 0 < lambda → lambda ∈ LinearPMap.resolventSet A)
+    (hbound : ∀ lambda : ℝ, 0 < lambda → ‖LinearPMap.resolvent A lambda‖ ≤ K / lambda)
+    (hexp : ∀ lambda : ℝ, 0 < lambda → ∀ s : ℝ, 0 ≤ s →
+      ‖exp (s • yosidaApproximation A lambda)‖ ≤ M)
+    (hdense : Dense (A.domain : Set X)) (x : X) {T : ℝ} (hT : 0 ≤ T) :
     UniformCauchySeqOn
       (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
       Filter.atTop (Set.Icc 0 T) := by
-  rw [Metric.uniformCauchySeqOn_iff]
-  intro epsilon hepsilon
-  obtain ⟨y, hy, hxy⟩ := hdense.exists_dist_lt x (by positivity : 0 < epsilon / 3)
-  have hxy_norm : ‖x - y‖ < epsilon / 3 := by simpa only [dist_eq_norm] using hxy
-  let y' : A.domain := ⟨y, hy⟩
-  have hy_cauchy := hA.exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem hdense y' hT
-  rw [Metric.uniformCauchySeqOn_iff] at hy_cauchy
-  obtain ⟨L, hL⟩ := hy_cauchy (epsilon / 3) (by positivity)
-  refine ⟨max L 1, fun lambda hlambda mu hmu t ht => ?_⟩
-  rw [dist_eq_norm]
-  have hlambda_pos : 0 < lambda :=
-    lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hlambda)
-  have hmu_pos : 0 < mu :=
-    lt_of_lt_of_le zero_lt_one (le_trans (le_max_right _ _) hmu)
-  let Slambda : X →L[ℝ] X := exp (t • yosidaApproximation A lambda)
-  let Smu : X →L[ℝ] X := exp (t • yosidaApproximation A mu)
-  have hSlambda : ‖Slambda‖ ≤ 1 := by
-    exact norm_exp_smul_yosidaApproximation_le_one
-      (hA.mul_norm_resolvent_le_one hlambda_pos) hlambda_pos ht.1
-  have hSmu : ‖Smu‖ ≤ 1 := by
-    exact norm_exp_smul_yosidaApproximation_le_one
-      (hA.mul_norm_resolvent_le_one hmu_pos) hmu_pos ht.1
-  have hleft : ‖Slambda (x - y)‖ ≤ ‖x - y‖ := by
-    exact (ContinuousLinearMap.le_opNorm _ _).trans
-      (by simpa only [one_mul] using
-        mul_le_mul_of_nonneg_right hSlambda (norm_nonneg (x - y)))
-  have hright : ‖Smu (y - x)‖ ≤ ‖y - x‖ := by
-    exact (ContinuousLinearMap.le_opNorm _ _).trans
-      (by simpa only [one_mul] using
-        mul_le_mul_of_nonneg_right hSmu (norm_nonneg (y - x)))
-  have hmiddle : ‖Slambda y - Smu y‖ < epsilon / 3 := by
-    simpa only [Slambda, Smu, dist_eq_norm] using
-      hL lambda (le_trans (le_max_left _ _) hlambda)
-        mu (le_trans (le_max_left _ _) hmu) t ht
-  have hdecomp : Slambda x - Smu x =
-      Slambda (x - y) + (Slambda y - Smu y) + Smu (y - x) := by
-    rw [map_sub, map_sub]
-    abel
-  dsimp only [Slambda, Smu] at hdecomp ⊢
-  rw [hdecomp]
-  calc
-    ‖Slambda (x - y) + (Slambda y - Smu y) + Smu (y - x)‖
-        ≤ ‖Slambda (x - y)‖ + ‖Slambda y - Smu y‖ + ‖Smu (y - x)‖ := norm_add₃_le
-    _ ≤ ‖x - y‖ + ‖Slambda y - Smu y‖ + ‖y - x‖ := by gcongr
-    _ < epsilon / 3 + epsilon / 3 + epsilon / 3 := by
-      have hyx_norm : ‖y - x‖ < epsilon / 3 := by
-        rw [norm_sub_rev]
-        exact hxy_norm
-      linarith
-    _ = epsilon := by ring
+  refine ContinuousLinearMap.uniformCauchySeqOn_apply_of_dense (𝕜 := ℝ)
+    (f := fun lambda t => exp (t • yosidaApproximation A lambda)) (C := M) hdense ?_ ?_ x
+  · filter_upwards [Filter.eventually_gt_atTop 0] with lambda hlambda t ht
+    exact hexp lambda hlambda t ht.1
+  · intro y hy
+    exact exp_yosidaApproximation_uniformCauchySeqOn_compact_of_mem hres hbound hexp hdense
+      (⟨y, hy⟩ : A.domain) hT
+
+/-! ## The m-dissipative case
+
+An m-dissipative operator has every positive `lambda` in its resolvent set with
+`‖R(lambda, A)‖ ≤ 1 / lambda`, and its Yosida exponentials are contractions, so it supplies the
+hypotheses of the results above with both constants equal to one. -/
+
+namespace IsMDissipative
+
+variable {A : X →ₗ.[ℝ] X}
+
+/-- For a densely defined m-dissipative operator, the scaled resolvents converge strongly to the
+identity on the whole Banach space: `lambda R(lambda, A) x -> x` as `lambda -> +∞`. -/
+theorem tendsto_smul_resolvent_apply_atTop (hA : IsMDissipative A)
+    (hdense : Dense (A.domain : Set X)) (x : X) :
+    Filter.Tendsto (fun lambda : ℝ => lambda • LinearPMap.resolvent A lambda x)
+      Filter.atTop (nhds x) :=
+  _root_.TauCeti.Semigroups.tendsto_smul_resolvent_apply_atTop (M := 1)
+    (fun _ h => hA.mem_resolventSet h)
+    (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h) hdense x
+
+/-- For a densely defined m-dissipative operator, the Yosida approximations converge strongly to
+the original operator on its domain: `A_lambda x -> A x` for every `x ∈ D(A)`. -/
+theorem tendsto_yosidaApproximation_apply_atTop (hA : IsMDissipative A)
+    (hdense : Dense (A.domain : Set X)) (x : A.domain) :
+    Filter.Tendsto (fun lambda : ℝ => yosidaApproximation A lambda (x : X))
+      Filter.atTop (nhds (A x)) :=
+  _root_.TauCeti.Semigroups.tendsto_yosidaApproximation_apply_atTop (M := 1)
+    (fun _ h => hA.mem_resolventSet h)
+    (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h) hdense x
+
+/-- For a densely defined m-dissipative operator, the bounded Yosida semigroups are Cauchy
+uniformly on every compact time interval, on every vector of the Banach space. This is the
+compact-time Cauchy estimate from which the contraction semigroup generated by `A` is built. -/
+theorem exp_yosidaApproximation_uniformCauchySeqOn_compact (hA : IsMDissipative A)
+    (hdense : Dense (A.domain : Set X)) (x : X) {T : ℝ} (hT : 0 ≤ T) :
+    UniformCauchySeqOn
+      (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
+      Filter.atTop (Set.Icc 0 T) :=
+  _root_.TauCeti.Semigroups.exp_yosidaApproximation_uniformCauchySeqOn_compact (K := 1) (M := 1)
+    (fun _ h => hA.mem_resolventSet h)
+    (fun _ h => by simpa [one_div] using hA.norm_resolvent_le h)
+    (fun _ h _ hs => norm_exp_smul_yosidaApproximation_le_one
+      (hA.mul_norm_resolvent_le_one h) h hs)
+    hdense x hT
+
+end IsMDissipative
 
 end TauCeti.Semigroups
 
