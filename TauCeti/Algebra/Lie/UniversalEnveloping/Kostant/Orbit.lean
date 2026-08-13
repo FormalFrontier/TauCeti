@@ -114,7 +114,6 @@ theorem kostantOrbit_def (e : ι → L) (h : κ → L) (v : V) :
   rfl
 
 /-- The generating vector belongs to its Kostant orbit. -/
-@[simp]
 theorem mem_kostantOrbit_self : v ∈ kostantOrbit e h v :=
   mem_kostantOrbit_iff.2 ⟨1, (kostantForm e h).one_mem, one_smul U v⟩
 
