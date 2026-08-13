@@ -190,14 +190,22 @@ private theorem map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace
           (WithConv.toConv (ULift.algEquiv (R := R)).symm.toAlgHom)).val
             (1 ⊗ₜ[R] x)) =
       MonoidAlgebra.single α 1 ⊗ₜ[R] x := by
-  rw [mem_adjointWeightSpace] at hx
-  have h := congrArg
-    (TensorProduct.comm R (Module.Dual R (Bialgebra.CotangentSpace R H))
-      (MonoidAlgebra R M)) hx
+  let : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
+    adjointComodule (R := R) (H := H)
+  have h := endOfPoint_tmul_of_mem_adjointWeightSpace π
+    (AlgHom.id R (MonoidAlgebra R M)) 1 hx
+  rw [Comodule.endOfPoint_tmul] at h
+  simp only [one_smul] at h
   rw [adjointComodule_coact_apply, adjointPointRepresentation_action] at h
-  rw [← TensorProduct.map_comm] at h
-  simpa only [TensorProduct.comm_comm, TensorProduct.map_map,
-    LinearMap.comp_id, TensorProduct.comm_tmul] using h
+  rw [LinearMap.lTensor_def, ← TensorProduct.map_comm] at h
+  simp only [AlgHom.id_comp, AlgHom.id_apply, one_mul, TensorProduct.comm_comm,
+    TensorProduct.map_map, LinearMap.comp_id] at h
+  have hπ : (π : H →ₐ[R] MonoidAlgebra R M).toLinearMap =
+      (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap := by
+    rw [CoalgHom.toLinearMap_eq_coe]
+    exact BialgHom.toAlgHom_toLinearMap π
+  rw [hπ] at h
+  exact h
 
 /-- **The bracket of an `α`-weight vector and a `β`-weight vector has weight `α * β`.**
 
@@ -215,16 +223,28 @@ theorem lie_mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α β 
   let q : U →ₐ[R] MonoidAlgebra R M :=
     (π : H →ₐ[R] MonoidAlgebra R M).comp
       (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toAlgHom
-  have hx' := map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace hx
-  have hy' := map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace hy
-  change
-    TensorProduct.map q.toLinearMap LinearMap.id
-        ((adjointAction A g).val (1 ⊗ₜ[R] x)) =
-      MonoidAlgebra.single α 1 ⊗ₜ[R] x at hx'
-  change
-    TensorProduct.map q.toLinearMap LinearMap.id
-        ((adjointAction A g).val (1 ⊗ₜ[R] y)) =
-      MonoidAlgebra.single β 1 ⊗ₜ[R] y at hy'
+  have hq : q.toLinearMap =
+      ((π : H →ₗc[R] MonoidAlgebra R M).toLinearMap ∘ₗ
+        (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap) := by
+    change
+      ((π : H →ₐ[R] MonoidAlgebra R M).toLinearMap ∘ₗ
+          (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap) = _
+    rw [show (π : H →ₐ[R] MonoidAlgebra R M).toLinearMap =
+        (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap by
+      rw [CoalgHom.toLinearMap_eq_coe]
+      exact BialgHom.toAlgHom_toLinearMap π]
+  have hx' :
+      TensorProduct.map q.toLinearMap LinearMap.id
+          ((adjointAction A g).val (1 ⊗ₜ[R] x)) =
+        MonoidAlgebra.single α 1 ⊗ₜ[R] x := by
+    rw [hq]
+    exact map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace hx
+  have hy' :
+      TensorProduct.map q.toLinearMap LinearMap.id
+          ((adjointAction A g).val (1 ⊗ₜ[R] y)) =
+        MonoidAlgebra.single β 1 ⊗ₜ[R] y := by
+    rw [hq]
+    exact map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace hy
   have hbracket := adjointAction_bracket A g (1 ⊗ₜ[R] x) (1 ⊗ₜ[R] y)
   have hmapped := congrArg
     (LieAlgebra.ExtendScalars.map q
@@ -249,23 +269,8 @@ theorem lie_mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α β 
   rw [← TensorProduct.map_comm]
   simp only [TensorProduct.comm_comm, TensorProduct.map_map,
     LinearMap.comp_id, TensorProduct.comm_tmul]
-  change
-    TensorProduct.map q.toLinearMap LinearMap.id
-        ((adjointAction A g).val (1 ⊗ₜ[R] ⁅x, y⁆)) =
-      MonoidAlgebra.single (α * β) 1 ⊗ₜ[R] ⁅x, y⁆
+  rw [hq] at hmapped
   exact hmapped
-
-/-- The bracket of weight vectors vanishes when the product of their weights is neither trivial
-nor a nontrivial adjoint weight. -/
-theorem lie_eq_zero_of_mul_notMem_nontrivialAdjointWeights
-    {π : H →ₐc[R] MonoidAlgebra R M} {α β : M}
-    {x y : Module.Dual R (Bialgebra.CotangentSpace R H)}
-    (hαβ : α * β ≠ 1) (hαβ' : α * β ∉ nontrivialAdjointWeights π)
-    (hx : x ∈ adjointWeightSpace π α) (hy : y ∈ adjointWeightSpace π β) :
-    ⁅x, y⁆ = 0 := by
-  have hxy := lie_mem_adjointWeightSpace hx hy
-  rw [adjointWeightSpace_eq_bot_of_notMem_nontrivialAdjointWeights hαβ hαβ'] at hxy
-  exact hxy
 
 end Derivation
 
