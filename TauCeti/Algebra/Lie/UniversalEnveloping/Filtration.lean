@@ -197,23 +197,6 @@ theorem adjoin_range_ι :
   -- `mkAlgHom R L` is by definition the quotient map `RingCon.mkₐ R (ringCon R L)`.
   exact (AlgHom.range_eq_top _).2 (RingCon.mkₐ_surjective _)
 
-/-- The elements of `L` whose canonical image lies in a given subalgebra `A` of `U(L)`. This is a
-Lie subalgebra because the bracket on `U(L)` is the ring commutator, which `A` is closed under. -/
-private def comapSubalgebra (A : Subalgebra R U) : LieSubalgebra R L where
-  toSubmodule :=
-    (Subalgebra.toSubmodule A).comap (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
-  lie_mem' := @fun x y hx hy => by
-    have hx' : _root_.UniversalEnvelopingAlgebra.ι R x ∈ A := hx
-    have hy' : _root_.UniversalEnvelopingAlgebra.ι R y ∈ A := hy
-    -- Membership in the comap unfolds to membership of the image; exposing it lets the canonical
-    -- Lie-map equation rewrite the bracket into the ring commutator.
-    change _root_.UniversalEnvelopingAlgebra.ι R ⁅x, y⁆ ∈ A
-    rw [LieHom.map_lie, LieRing.of_associative_ring_bracket]
-    exact sub_mem (mul_mem hx' hy') (mul_mem hy' hx')
-
-private theorem mem_comapSubalgebra {A : Subalgebra R U} {x : L} :
-    x ∈ comapSubalgebra R L A ↔ _root_.UniversalEnvelopingAlgebra.ι R x ∈ A := Iff.rfl
-
 /-- **A Lie generating set generates the enveloping algebra.** If `S` generates `L` as a Lie
 algebra, then the image of `S` under the canonical map generates `U(L)` as an `R`-algebra.
 
@@ -223,15 +206,16 @@ theorem adjoin_image_ι_eq_top {S : Set L} (hS : LieSubalgebra.lieSpan R L S = �
     _root_.Algebra.adjoin R (⇑(_root_.UniversalEnvelopingAlgebra.ι R) '' S) =
       (⊤ : Subalgebra R U) := by
   have hle : LieSubalgebra.lieSpan R L S ≤
-      comapSubalgebra R L (_root_.Algebra.adjoin R
-        (⇑(_root_.UniversalEnvelopingAlgebra.ι R) '' S)) :=
+      (lieSubalgebraOfSubalgebra R U (_root_.Algebra.adjoin R
+        (⇑(_root_.UniversalEnvelopingAlgebra.ι R) '' S))).comap
+          (_root_.UniversalEnvelopingAlgebra.ι R) :=
     LieSubalgebra.lieSpan_le.2 fun y hy =>
-      mem_comapSubalgebra R L |>.2 (_root_.Algebra.subset_adjoin ⟨y, hy, rfl⟩)
+      (LieSubalgebra.mem_comap _ _).2 (_root_.Algebra.subset_adjoin ⟨y, hy, rfl⟩)
   rw [hS] at hle
   rw [eq_top_iff, ← adjoin_range_ι R L]
   refine _root_.Algebra.adjoin_le ?_
   rintro _ ⟨x, rfl⟩
-  exact (mem_comapSubalgebra R L).1 (hle (LieSubalgebra.mem_top x))
+  exact (LieSubalgebra.mem_comap _ _).1 (hle (LieSubalgebra.mem_top x))
 
 /-- **The PBW filtration is exhaustive.** The canonical generators generate `U(L)` as an algebra,
 so every element is a combination of words of some finite length. -/
