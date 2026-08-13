@@ -9,8 +9,8 @@ public import TauCeti.Topology.Homotopy.AmbientIsotopic.Basic
 /-!
 # Products of isotopies and ambient isotopies
 
-An isotopy is a homotopy whose level-preserving total map is a topological embedding, and an
-ambient isotopy is a homotopy from the identity whose total map is a homeomorphism. This file
+An isotopy is a homotopy through topological embeddings, and an ambient isotopy is a homotopy
+from the identity whose total map is a homeomorphism. This file
 records that both notions are closed under taking products: an isotopy `f₀ ≈ f₁` and an isotopy
 `g₀ ≈ g₁` combine, *along the shared time parameter*, into an isotopy `f₀ × g₀ ≈ f₁ × g₁` of the
 product maps, and likewise for ambient isotopies of a product space.
@@ -21,11 +21,9 @@ ambient isotopy are defined once before being specialised to locally flat isotop
 and knot equivalence. It is also the isotopy analogue of the product closure lemmas that the
 roadmap's later local-flatness product API is expected to mirror. For `TauCeti.Isotopy`, the
 construction follows Mathlib's product lemmas for embeddings (`Topology.IsEmbedding.prodMap`) and
-homotopy (`ContinuousMap.Homotopy.prodMap`), the latter of which supplies the underlying homotopy
-here. The single subtlety past the homotopy case is that the two factors share one time coordinate,
-so the level-preserving total map of the product is *not* literally the product of the two total
-maps (which would carry two independent times); the embedding/homeomorphism statements are
-recovered through the time-duplicating embedding `(t, x, x') ↦ ((t, x), (t, x'))`.
+homotopy (`ContinuousMap.Homotopy.prodMap`). For ambient isotopies, the two factors share one time
+coordinate, so the homeomorphism statement uses the time-duplicating embedding
+`(t, x, x') ↦ ((t, x), (t, x'))`.
 
 ## Main definitions
 
@@ -92,13 +90,13 @@ variable {f₀ f₁ : C(X, Y)} {g₀ g₁ : C(X', Y')}
 
 /-- The **product of two isotopies**, sharing the time parameter: from an isotopy `f₀ ≈ f₁` and an
 isotopy `g₀ ≈ g₁` build an isotopy `f₀.prodMap g₀ ≈ f₁.prodMap g₁` whose value at `(t, (x, x'))` is
-`(F (t, x), G (t, x'))`. The underlying homotopy is Mathlib's `ContinuousMap.Homotopy.prodMap`; the
-total map is an embedding by `isEmbedding_mergeTotal`. -/
+`(F (t, x), G (t, x'))`. The underlying homotopy is Mathlib's `ContinuousMap.Homotopy.prodMap`,
+and each slice is a product of embeddings. -/
 @[expose] def prodMap (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) :
     Isotopy (f₀.prodMap g₀) (f₁.prodMap g₁) where
-  toHomotopy := F.toHomotopy.prodMap G.toHomotopy
-  isEmbedding_total' :=
-    isEmbedding_mergeTotal F.isEmbedding_total G.isEmbedding_total (fun _ => rfl) (fun _ => rfl)
+  toHomotopyWith :=
+    { toHomotopy := F.toHomotopy.prodMap G.toHomotopy
+      prop' := fun t => (F.isEmbedding_apply t).prodMap (G.isEmbedding_apply t) }
 
 @[simp]
 theorem prodMap_apply (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) (p : I × (X × X')) :

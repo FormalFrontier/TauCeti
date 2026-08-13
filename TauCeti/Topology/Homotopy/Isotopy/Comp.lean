@@ -9,8 +9,8 @@ public import TauCeti.Topology.Homotopy.Isotopy.Basic
 /-!
 # Naturality of isotopy under composition with embeddings
 
-An isotopy is a homotopy whose level-preserving total map is a topological embedding. This
-file records that the isotopy relation is *natural*: composing on either side with a
+An isotopy is a homotopy through topological embeddings. This file records that the isotopy
+relation is *natural*: composing on either side with a
 topological embedding carries an isotopy to an isotopy, and so an isotopy relation to an
 isotopy relation. These are the closure properties the geometric-topology roadmap
 (`TauCetiRoadmap/GeometricTopology/README.md`) asks the general isotopy notion to carry
@@ -59,9 +59,9 @@ variable {f₀ f₁ : C(X, Y)}
 isotopy `g ∘ f₀ ≈ g ∘ f₁`. -/
 @[expose] def postcomp (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) :
     Isotopy (g.comp f₀) (g.comp f₁) where
-  toHomotopy := (Homotopy.refl g).comp F.toHomotopy
-  isEmbedding_total' :=
-    (IsEmbedding.id.prodMap hg).comp F.isEmbedding_total'
+  toHomotopyWith :=
+    { toHomotopy := (Homotopy.refl g).comp F.toHomotopy
+      prop' := fun t => hg.comp (F.isEmbedding_apply t) }
 
 @[simp]
 theorem postcomp_apply (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) (p : I × X) :
@@ -71,9 +71,9 @@ theorem postcomp_apply (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g
 isotopy `f₀ ∘ e ≈ f₁ ∘ e`. -/
 @[expose] def precomp (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) :
     Isotopy (f₀.comp e) (f₁.comp e) where
-  toHomotopy := F.toHomotopy.compContinuousMap e
-  isEmbedding_total' :=
-    F.isEmbedding_total'.comp (IsEmbedding.id.prodMap he)
+  toHomotopyWith :=
+    { toHomotopy := F.toHomotopy.compContinuousMap e
+      prop' := fun t => (F.isEmbedding_apply t).comp he }
 
 @[simp]
 theorem precomp_apply (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) (p : I × W) :
