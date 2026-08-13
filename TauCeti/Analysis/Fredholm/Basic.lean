@@ -146,7 +146,8 @@ lemma _root_.ContinuousLinearMap.IsFredholm.equiv_comp
     simpa [Submodule.map_coe] using e.isClosed_image.2 hT.isClosed_range
   · rw [ker_equiv_comp T e]
     exact hT.finite_ker
-  · rw [ContinuousLinearMap.toLinearMap_comp, LinearMap.range_comp]
+  · rw [ContinuousLinearMap.toLinearMap_comp,
+      ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap, LinearMap.range_comp]
     have := hT.finite_coker
     exact (Submodule.Quotient.equiv _ _ e.toLinearEquiv rfl).finiteDimensional
   · rw [ker_equiv_comp T e]
