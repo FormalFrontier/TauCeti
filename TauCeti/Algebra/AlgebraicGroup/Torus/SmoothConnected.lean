@@ -7,6 +7,8 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.SmoothConnected
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
+import TauCeti.Algebra.AlgebraicGroup.Connected.BaseChange
+import TauCeti.Algebra.AlgebraicGroup.GeometricallyReduced.BaseChange
 
 /-!
 # Smoothness and connectedness of tori
