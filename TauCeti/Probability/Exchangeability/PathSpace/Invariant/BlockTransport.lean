@@ -7,7 +7,6 @@ module
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
-public import TauCeti.Probability.Ergodic.InvariantRestrict
 import TauCeti.Probability.Exchangeability.PermutationExtension
 import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 
@@ -37,13 +36,11 @@ fails outright — take `ρ` a point mass at an alternating path, `A = univ` and
 * `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — its `ℝ≥0∞`
   corollary.
 
-The endomorphism-level content is not here: that an endomorphism fixing a set preserves the
-restriction to it, and the resulting set-integral identity, are
-`MeasurePreserving.restrict_of_preimage_eq` and
-`MeasurePreserving.setLIntegral_comp_eq_of_preimage_eq` in
-`Probability/Ergodic/InvariantRestrict.lean`, stated for an arbitrary endomorphism of an arbitrary
-measurable space. This module only supplies
-the reindexing-and-invariant-event instance.
+The endomorphism-level facts are Mathlib's: `MeasurePreserving.restrict_preimage` gives the
+restricted measure preservation once the invariant event is rewritten by
+`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`, and
+`MeasurePreserving.lintegral_comp` gives the integral identity. This module supplies only the
+reindexing-and-invariant-event instance, and restates no Mathlib API.
 
 Nothing here is specific to a de Finetti route. The statements mention a contractable path law, a
 shift-invariant event and a finite selection, and no Koopman operator; the Koopman route is the
@@ -98,9 +95,9 @@ theorem measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventu
     (hmp : MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) ρ ρ)
     (hφ_add : ∀ n, m ≤ n → φ n = n + C)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
-    MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) (ρ.restrict A) (ρ.restrict A) :=
-  hmp.restrict_of_preimage_eq (MeasurableSpace.measurableSet_invariants.1 hA).1
-    (preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add)
+    MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) (ρ.restrict A) (ρ.restrict A) := by
+  have h := hmp.restrict_preimage (MeasurableSpace.measurableSet_invariants.1 hA).1
+  rwa [preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add] at h
 
 /-- **The `ℝ≥0∞` shadow.** Precomposition with such a reindexing changes no set-integral over an
 invariant event. -/
