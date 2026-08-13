@@ -53,7 +53,8 @@ one, which is not proved here (see the Roadmap section below).
   with the individual relations available as `TauCeti.lie_serreH_serreH` and its companions.
 * `TauCeti.serreLift_serreH`, `TauCeti.serreLift_serreE`, `TauCeti.serreLift_serreF` and
   `TauCeti.serre_hom_ext`: `TauCeti.serreLift` sends the generators to the given Serre system, and
-  is the unique homomorphism doing so.
+  is the unique homomorphism doing so; `TauCeti.serre_equiv_ext` is the same extensionality
+  principle for equivalences out of the presented algebra.
 * `TauCeti.serreLift_eq_id`: lifting the generators along their own Serre system is the identity.
 * `TauCeti.lieSpan_serreGenerators_eq_top`: the generators generate the presented algebra.
 
@@ -347,6 +348,15 @@ theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
     | F i => exact hF i
   refine LieIdeal.lieHom_qext fun x => ?_
   exact congrArg (fun ψ : FreeLieAlgebra R (Generators B) →ₗ⁅R⁆ L => ψ x) hcomp
+
+/-- Two equivalences out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
+@[ext]
+theorem serre_equiv_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM ≃ₗ⁅R⁆ L}
+    (hH : ∀ i, g₁ (serreH R CM i) = g₂ (serreH R CM i))
+    (hE : ∀ i, g₁ (serreE R CM i) = g₂ (serreE R CM i))
+    (hF : ∀ i, g₁ (serreF R CM i) = g₂ (serreF R CM i)) : g₁ = g₂ :=
+  LieEquiv.ext fun x =>
+    DFunLike.congr_fun (serre_hom_ext (g₁ := g₁.toLieHom) (g₂ := g₂.toLieHom) hH hE hF) x
 
 /-- `TauCeti.serreLift` is the unique homomorphism sending the generators to a given Serre
 system. -/
