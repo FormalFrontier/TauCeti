@@ -17,6 +17,11 @@ composition and is natural with respect to the Lie-group exponential.
 
 This advances Layer 3 of the Lie-groups roadmap.
 
+## References
+
+* [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
+  Deliverable A, Layer 3, "The functor on morphisms".
+
 ## Main results
 
 * `lieMap`: the Lie-algebra homomorphism induced by a smooth group homomorphism.
@@ -111,7 +116,7 @@ private theorem lieMapTangent_map_lie
     (v := lieMapTangent φ X) (w := lieMapTangent φ Y)]
   have hsourceBracket :
       mlieBracket I (mulInvariantVectorField X) (mulInvariantVectorField Y) 1 = ⁅X, Y⁆ :=
-    rfl
+    (GroupLieAlgebra.bracket_def X Y).symm
   rw [hsourceBracket]
   have htarget :
       mlieBracket I' (mulInvariantVectorField (lieMapTangent φ X))
