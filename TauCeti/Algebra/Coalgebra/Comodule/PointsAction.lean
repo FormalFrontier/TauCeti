@@ -148,6 +148,7 @@ variable [CommSemiring A] [Algebra R A]
 
 /-- Acting on a comodule corestricted along a bialgebra morphism agrees with acting by the
 point precomposed with the underlying algebra morphism. -/
+@[simp]
 theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A) :
     (letI : Comodule R H₂ V := Corestrict φ.toCoalgHom
      endOfPoint V g) = endOfPoint V (g.comp (φ : H₁ →ₐ[R] H₂)) := by

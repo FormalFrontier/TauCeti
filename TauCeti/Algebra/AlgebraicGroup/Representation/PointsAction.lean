@@ -91,6 +91,16 @@ theorem pointsAction_corestrict (φ : H₁ →ₐc[R] H₂)
           exact (pointsAction_toLinearMap V
             (toConv (g.ofConv.comp (φ : H₁ →ₐ[R] H₂)))).symm)
 
+/-- Simp-normal form of `pointsAction_corestrict`, with the precomposed point written
+after normalization by `AlgHom.mapDomain_apply`. -/
+@[simp]
+theorem pointsAction_corestrict_toConv_comp (φ : H₁ →ₐc[R] H₂)
+    (g : WithConv (H₂ →ₐ[R] A)) :
+    (letI : Comodule R H₂ V := Corestrict φ.toCoalgHom
+     pointsAction V g) =
+      pointsAction V (toConv (g.ofConv.comp (φ : H₁ →ₐ[R] H₂))) := by
+  simpa only [AlgHom.mapDomain_apply] using pointsAction_corestrict φ g
+
 /-- Bundled finite-comodule form of `pointsAction_corestrict`. This avoids exposing the
 definitionally equal comodule instance carried by the corestricted object to callers. -/
 theorem pointsAction_corestrict_obj (φ : H₁ →ₐc[R] H₂)
@@ -102,6 +112,15 @@ theorem pointsAction_corestrict_obj (φ : H₁ →ₐc[R] H₂)
   change (letI : Comodule R H₂ M := Corestrict φ.toCoalgHom
     pointsAction M g) = pointsAction M (AlgHom.mapDomain φ g)
   exact pointsAction_corestrict φ g
+
+/-- Simp-normal form of `pointsAction_corestrict_obj`, with the precomposed point written
+after normalization by `AlgHom.mapDomain_apply`. -/
+@[simp]
+theorem pointsAction_corestrict_obj_toConv_comp (φ : H₁ →ₐc[R] H₂)
+    (M : FGComoduleCat.{u, v, y} R H₁) (g : WithConv (H₂ →ₐ[R] A)) :
+    pointsAction ((FGComoduleCat.corestrict φ.toCoalgHom).obj M) g =
+      pointsAction M (toConv (g.ofConv.comp (φ : H₁ →ₐ[R] H₂))) := by
+  simpa only [AlgHom.mapDomain_apply] using pointsAction_corestrict_obj φ M g
 
 end HopfAlgebra
 
