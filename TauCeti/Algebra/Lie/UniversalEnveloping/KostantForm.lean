@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import Mathlib.RingTheory.Binomial
 
@@ -42,6 +43,8 @@ of pinned root data acts on Chevalley generators.
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantForm`: the generated integral form.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_iff`: its universal property.
+* `TauCeti.UniversalEnvelopingAlgebra.span_kostantForm_eq_top`: under a Lie-generation
+  hypothesis, the form spans the enveloping algebra over `ℚ`.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantForm`: exact functoriality under Lie maps.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormMap`: the restricted map of integral forms.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormEquiv`: transport under a Lie equivalence.
@@ -191,6 +194,33 @@ theorem kostantForm_le_iff (e : ι → L) (h : κ → L)
       exact he i n
     · obtain ⟨⟨i, n⟩, rfl⟩ := hx
       exact hh i n
+
+/-! ## Spanning the enveloping algebra -/
+
+/-- **The Kostant integral form spans the enveloping algebra.** If the supplied root and Cartan
+vectors generate `L` as a Lie algebra, every element of `U(L)` is a `ℚ`-linear combination of
+elements of `kostantForm e h`; equivalently, `ℚ ⊗ℤ U_ℤ → U(L)` is onto.
+
+This is the half of "`U_ℤ` is a `ℤ`-form of `U(L)`" that does not need the integral
+Poincaré--Birkhoff--Witt theorem. The hypothesis is exactly what a Chevalley basis supplies, since
+the root vectors and the Cartan generators generate a semisimple Lie algebra. -/
+theorem span_kostantForm_eq_top (e : ι → L) (h : κ → L)
+    (hgen : LieSubalgebra.lieSpan ℚ L (range e ∪ range h) = ⊤) :
+    Submodule.span ℚ (kostantForm e h : Set (_root_.UniversalEnvelopingAlgebra ℚ L)) = ⊤ := by
+  have hadjoin : _root_.Algebra.adjoin ℚ
+      (kostantForm e h : Set (_root_.UniversalEnvelopingAlgebra ℚ L)) = ⊤ := by
+    rw [eq_top_iff, ← adjoin_image_ι_eq_top ℚ L hgen]
+    refine _root_.Algebra.adjoin_le ?_
+    rintro _ ⟨x, (⟨i, rfl⟩ | ⟨i, rfl⟩), rfl⟩
+    · exact _root_.Algebra.subset_adjoin (rootVector_mem_kostantForm e h i)
+    · exact _root_.Algebra.subset_adjoin (cartanVector_mem_kostantForm e h i)
+  have hspan : Subalgebra.toSubmodule (_root_.Algebra.adjoin ℚ
+      (kostantForm e h : Set (_root_.UniversalEnvelopingAlgebra ℚ L))) =
+      Submodule.span ℚ (kostantForm e h : Set (_root_.UniversalEnvelopingAlgebra ℚ L)) := by
+    apply _root_.Algebra.adjoin_eq_span_of_subset
+    refine Set.Subset.trans ?_ Submodule.subset_span
+    exact Submonoid.closure_le.2 fun _ hx => hx
+  rw [← hspan, hadjoin, _root_.Algebra.top_toSubmodule]
 
 /-! ## Functoriality -/
 
