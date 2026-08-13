@@ -69,10 +69,10 @@ the notion be read off in any chart.
   only on the germ of the function there.
 * `TauCeti.IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero`: a nondegenerate critical point
   is isolated among critical points.
-* `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero`: a critical locus all
-  of whose points are nondegenerate is discrete.
-* `TauCeti.HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero`: such a critical locus is
-  finite on a compact set on which `fderiv ℝ f` is continuous.
+* `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOfPred_fderiv_eq_zero`: a critical
+  locus all of whose points are nondegenerate is discrete.
+* `TauCeti.HasNondegenerateCriticalPointsOn.finite_setOfPred_fderiv_eq_zero`: such a critical
+  locus is finite on a compact set on which `fderiv ℝ f` is continuous.
 * `TauCeti.isNondegenerateCriticalPoint_comp_iff` and `TauCeti.IsNondegenerateCriticalPoint.comp`:
   nondegeneracy is invariant under a change of coordinates with invertible differential.
 * `TauCeti.ContinuousLinearMap.isNondegenerateCriticalPoint_apply_self`: the local model. A
@@ -131,8 +131,8 @@ def HasNondegenerateCriticalPointsOn (f : E → ℝ) (s : Set E) : Prop :=
 /-- The introduction and elimination rule for `HasNondegenerateCriticalPointsOn`. It is
 deliberately not a `simp` lemma: taking the unfolded form as the normal one would move the
 predicate out of the shape `HasNondegenerateCriticalPointsOn.mono`,
-`HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero` and
-`HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero` are stated in, so a `simp` at a
+`HasNondegenerateCriticalPointsOn.isDiscrete_setOfPred_fderiv_eq_zero` and
+`HasNondegenerateCriticalPointsOn.finite_setOfPred_fderiv_eq_zero` are stated in, so a `simp` at a
 hypothesis would strip its API off it. Mathlib leaves the analogous `mapsTo_iff_subset_preimage`
 unannotated for the same reason. -/
 theorem hasNondegenerateCriticalPointsOn_iff {s : Set E} :
@@ -179,7 +179,7 @@ theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
   eventually_fderiv_ne h.contDiffAt h.isInvertible
 
 /-- A critical locus all of whose points are nondegenerate is discrete. -/
-theorem HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E}
+theorem HasNondegenerateCriticalPointsOn.isDiscrete_setOfPred_fderiv_eq_zero {s : Set E}
     (hM : HasNondegenerateCriticalPointsOn f s) :
     IsDiscrete {x ∈ s | fderiv ℝ f x = 0} := by
   rw [isDiscrete_iff_nhdsNE]
@@ -193,8 +193,9 @@ differential is continuous there, has only finitely many critical points there.*
 `fderiv ℝ f` on `K` is what makes the critical locus closed, hence compact, and nondegeneracy is
 what makes it discrete. This is the finiteness that makes the Morse complex of a compact manifold
 finitely generated. -/
-theorem HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero {K : Set E} (hK : IsCompact K)
-    (hcont : ContinuousOn (fderiv ℝ f) K) (hM : HasNondegenerateCriticalPointsOn f K) :
+theorem HasNondegenerateCriticalPointsOn.finite_setOfPred_fderiv_eq_zero {K : Set E}
+    (hK : IsCompact K) (hcont : ContinuousOn (fderiv ℝ f) K)
+    (hM : HasNondegenerateCriticalPointsOn f K) :
     {x ∈ K | fderiv ℝ f x = 0}.Finite := by
   -- Continuity of `fderiv ℝ f` on `K` makes the critical locus a closed subset of `K`.
   have hclosed : IsClosed {x ∈ K | fderiv ℝ f x = 0} := by
@@ -203,7 +204,7 @@ theorem HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero {K : Set E}
     ext y
     simp
   exact (hK.of_isClosed_subset hclosed fun _ hx ↦ hx.1).finite
-    hM.isDiscrete_setOf_fderiv_eq_zero
+    hM.isDiscrete_setOfPred_fderiv_eq_zero
 
 /-! ### Change of coordinates
 
