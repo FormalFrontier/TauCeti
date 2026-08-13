@@ -113,7 +113,7 @@ theorem pbwMonomial_cons (e : ιIndex → L) (i : ιIndex) (word : List ιIndex)
 theorem pbwMonomial_def (e : ιIndex → L) (word : List ιIndex) :
     pbwMonomial R L e word = ((word.map e).map ⇑ι).prod := by
   induction word with
-  | nil => exact pbwMonomial_nil R L e
+  | nil => simpa only [List.map_nil, List.prod_nil] using pbwMonomial_nil R L e
   | cons i word ih => simp only [pbwMonomial_cons, List.map_cons, List.prod_cons, ih]
 
 @[simp]
