@@ -169,7 +169,6 @@ variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Algebra R H] [Coalgebr
 
 /-- A point acts on a pure tensor in a group-like comodule by evaluating the group-like
 element and multiplying the scalar factor by the result. -/
-@[simp]
 theorem endOfPoint_groupLike_tmul (x : GroupLike R H) (g : H →ₐ[R] A) (a : A) (v : V) :
     letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
     endOfPoint V g (a ⊗ₜ[R] v) = (a * g x) ⊗ₜ[R] v := by
