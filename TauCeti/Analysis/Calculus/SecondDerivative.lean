@@ -25,9 +25,9 @@ critical points as such, so both belong here rather than with the Morse theory t
 
 * `TauCeti.ContDiffAt.hasFDerivAt_fderiv`: at a twice continuously differentiable point,
   `fderiv 𝕜 g` is differentiable, with derivative the second derivative of `g`.
-* `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`: where the differential of the outer
-  function vanishes, the second derivative of a composition is the pullback of the second
-  derivative along the differential of the inner function.
+* `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`: for `C²` maps, where the differential of
+  the outer function vanishes, the second derivative of a composition is the pullback of the
+  second derivative along the differential of the inner function.
 -/
 
 public section
@@ -46,9 +46,10 @@ theorem ContDiffAt.hasFDerivAt_fderiv {n : WithTop ℕ∞} {g : E → F} {x : E}
     HasFDerivAt (fderiv 𝕜 g) (fderiv 𝕜 (fderiv 𝕜 g) x) x :=
   ((h.fderiv_right (m := 1) (by exact_mod_cast hn)).differentiableAt one_ne_zero).hasFDerivAt
 
-/-- **The second derivative at a critical point is a bilinear form pullback.** If the differential
-of `f` vanishes at `φ b`, then the second derivative of `f ∘ φ` at `b` is the second derivative of
-`f` at `φ b` evaluated on the images of the differential of `φ`. -/
+/-- **The second derivative at a critical point is a bilinear form pullback.** If `f` is `C²` at
+`φ b`, `φ` is `C²` at `b`, and the differential of `f` vanishes at `φ b`, then the second
+derivative of `f ∘ φ` at `b` is the second derivative of `f` at `φ b` evaluated on the images of
+the differential of `φ`. -/
 theorem fderiv_fderiv_comp_apply_of_fderiv_eq_zero {f : E → G} {φ : F → E} {b : F}
     (hf : ContDiffAt 𝕜 2 f (φ b)) (hφ : ContDiffAt 𝕜 2 φ b) (hc : fderiv 𝕜 f (φ b) = 0) (v w : F) :
     fderiv 𝕜 (fderiv 𝕜 (f ∘ φ)) b v w =

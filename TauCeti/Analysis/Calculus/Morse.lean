@@ -67,6 +67,8 @@ the notion be read off in any chart.
   condition that the Hessian bilinear form have trivial radical.
 * `TauCeti.IsNondegenerateCriticalPoint.congr_of_eventuallyEq`: nondegeneracy at a point depends
   only on the germ of the function there.
+* `TauCeti.eventually_fderiv_ne`: where the second derivative is invertible, the differential
+  takes each value at most once nearby, with no criticality assumed.
 * `TauCeti.IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero`: a nondegenerate critical point
   is isolated among critical points.
 * `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero`: a critical locus all
@@ -160,14 +162,8 @@ theorem isNondegenerateCriticalPoint_iff_separatingLeft [FiniteDimensional ℝ E
         (fderiv ℝ (fderiv ℝ f) x).toBilinForm.SeparatingLeft := by
   refine ⟨fun h ↦ ⟨h.contDiffAt, h.fderiv_eq_zero, h.separatingLeft⟩,
     fun ⟨hd, h0, hnd⟩ ↦ ⟨hd, h0, ?_⟩⟩
-  have hinj : Injective (fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ) :=
-    (ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective _).1 hnd
-  have hrank : finrank ℝ E = finrank ℝ (E →L[ℝ] ℝ) := by
-    rw [← LinearEquiv.finrank_eq
-      (LinearMap.toContinuousLinearMap : (E →ₗ[ℝ] ℝ) ≃ₗ[ℝ] E →L[ℝ] ℝ)]
-    exact Subspace.dual_finrank_eq.symm
-  exact ⟨((fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ).linearEquivOfInjective hinj
-    hrank).toContinuousLinearEquiv, by ext v; simp⟩
+  exact ContinuousLinearMap.isInvertible_of_injective
+    ((ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective _).1 hnd)
 
 /-- Nondegeneracy at a point depends only on the germ of the function there. -/
 theorem IsNondegenerateCriticalPoint.congr_of_eventuallyEq {g : E → ℝ}
@@ -176,16 +172,24 @@ theorem IsNondegenerateCriticalPoint.congr_of_eventuallyEq {g : E → ℝ}
   ⟨h.contDiffAt.congr_of_eventuallyEq hg.symm, by rw [hg.symm.fderiv_eq, h.fderiv_eq_zero],
     by rw [hg.symm.fderiv.fderiv_eq]; exact h.isInvertible⟩
 
-/-- **A nondegenerate critical point is isolated.** Near such a point the differential of `f`
-vanishes only at the point itself. -/
-theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
-    (h : IsNondegenerateCriticalPoint f x) :
-    ∀ᶠ y in 𝓝[≠] x, fderiv ℝ f y ≠ 0 := by
-  obtain ⟨e, he⟩ := h.isInvertible
+/-- **Where the second derivative is invertible, the differential takes each value at most once
+nearby.** Criticality plays no part: an invertible second derivative makes `fderiv ℝ f` locally
+injective at `x`, so near `x` it avoids any prescribed value `c`. -/
+theorem eventually_fderiv_ne {c : E →L[ℝ] ℝ} (hf : ContDiffAt ℝ 2 f x)
+    (hinv : (fderiv ℝ (fderiv ℝ f) x).IsInvertible) :
+    ∀ᶠ y in 𝓝[≠] x, fderiv ℝ f y ≠ c := by
+  obtain ⟨e, he⟩ := hinv
   have hd : HasFDerivAt (fderiv ℝ f) (e : E →L[ℝ] E →L[ℝ] ℝ) x := by
     rw [he]
-    exact ContDiffAt.hasFDerivAt_fderiv h.contDiffAt le_rfl
+    exact ContDiffAt.hasFDerivAt_fderiv hf le_rfl
   exact hd.eventually_ne ⟨_, e.antilipschitz⟩
+
+/-- **A nondegenerate critical point is isolated.** Near such a point the differential of `f`
+vanishes only at the point itself: the case `c = 0` of `TauCeti.eventually_fderiv_ne`. -/
+theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
+    (h : IsNondegenerateCriticalPoint f x) :
+    ∀ᶠ y in 𝓝[≠] x, fderiv ℝ f y ≠ 0 :=
+  eventually_fderiv_ne h.contDiffAt h.isInvertible
 
 /-- A critical locus all of whose points are nondegenerate is discrete. -/
 theorem HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E}
@@ -222,9 +226,9 @@ in `TauCeti.Analysis.Calculus.SecondDerivative` because it involves no nondegene
 Hessian at a critical point, and hence nondegeneracy, does not depend on the choice of chart.
 -/
 
-/-- **Nondegeneracy of a critical point does not depend on the coordinates.** If the differential
-of `φ` at `b` is invertible, then `f ∘ φ` has a nondegenerate critical point at `b` exactly when
-`f` has one at `φ b`. -/
+/-- **Nondegeneracy of a critical point does not depend on the coordinates.** If `f` is `C²` at
+`φ b`, `φ` is `C²` at `b`, and the differential of `φ` at `b` is invertible, then `f ∘ φ` has a
+nondegenerate critical point at `b` exactly when `f` has one at `φ b`. -/
 theorem isNondegenerateCriticalPoint_comp_iff {φ : F → E} {b : F} (hf : ContDiffAt ℝ 2 f (φ b))
     (hφ : ContDiffAt ℝ 2 φ b) (hinv : (fderiv ℝ φ b).IsInvertible) :
     IsNondegenerateCriticalPoint (f ∘ φ) b ↔ IsNondegenerateCriticalPoint f (φ b) := by
@@ -254,7 +258,7 @@ theorem isNondegenerateCriticalPoint_comp_iff {φ : F → E} {b : F} (hf : ContD
     simpa using h.isInvertible
 
 /-- A nondegenerate critical point of `f` at `φ b` pulls back to a nondegenerate critical point of
-`f ∘ φ` at `b`, provided the differential of `φ` at `b` is invertible. -/
+`f ∘ φ` at `b`, provided `φ` is `C²` at `b` and its differential there is invertible. -/
 theorem IsNondegenerateCriticalPoint.comp {φ : F → E} {b : F}
     (h : IsNondegenerateCriticalPoint f (φ b)) (hφ : ContDiffAt ℝ 2 φ b)
     (hinv : (fderiv ℝ φ b).IsInvertible) :

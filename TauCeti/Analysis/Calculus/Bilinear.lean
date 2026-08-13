@@ -15,7 +15,7 @@ smooth, with derivative at `y` the polarization `B.flip y + B y` of `B` evaluate
 that derivative is linear in `y`, the second derivative is the constant continuous linear map
 `B.flip + B`. This is the derivative computation behind the local model of a nondegenerate
 critical point, but it depends on nothing beyond the bilinear chain rule
-`ContinuousLinearMap.hasStrictFDerivAt_of_bilinear`.
+`ContinuousLinearMap.hasStrictFDerivAt_of_bilinear` and the smoothness of bounded bilinear maps.
 
 ## Main results
 
