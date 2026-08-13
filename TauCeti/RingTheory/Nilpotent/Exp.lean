@@ -152,6 +152,7 @@ theorem coe_expSMulHom {x : A} (hx : IsNilpotent x) (t : Multiplicative ℤ) :
 
 /-- The exponential of left multiplication by a nilpotent element is left multiplication by its
 exponential. -/
+@[simp]
 theorem exp_mulLeft {a : A} (ha : IsNilpotent a) :
     exp (LinearMap.mulLeft ℚ a) = LinearMap.mulLeft ℚ (exp a) := by
   have hlmul : ∀ c : A, Algebra.lmul ℚ A c = LinearMap.mulLeft ℚ c := fun c => by
@@ -161,6 +162,7 @@ theorem exp_mulLeft {a : A} (ha : IsNilpotent a) :
 
 /-- The exponential of right multiplication by a nilpotent element is right multiplication by its
 exponential. -/
+@[simp]
 theorem exp_mulRight {a : A} (ha : IsNilpotent a) :
     exp (LinearMap.mulRight ℚ a) = LinearMap.mulRight ℚ (exp a) := by
   obtain ⟨k, hk⟩ := ha
@@ -174,11 +176,11 @@ exponential of `b ↦ a * b - b * a` is conjugation by the unit `exp a`.
 
 This is the identity behind the Chevalley commutator relations: a conjugate of a root subgroup
 element is again an exponential, of an explicitly computable element. -/
+@[simp]
 theorem exp_mulLeft_sub_mulRight_apply {a : A} (ha : IsNilpotent a) (b : A) :
     exp (LinearMap.mulLeft ℚ a - LinearMap.mulRight ℚ a) b = exp a * b * exp (-a) := by
-  have hneg : LinearMap.mulRight ℚ (-a) = -LinearMap.mulRight ℚ a := by
-    ext c
-    simp
+  have hneg : LinearMap.mulRight ℚ (-a) = -LinearMap.mulRight ℚ a :=
+    (LinearMap.mul ℚ A).flip.map_neg a
   have hcomm : Commute (LinearMap.mulLeft ℚ a) (LinearMap.mulRight ℚ (-a)) :=
     LinearMap.commute_mulLeft_right (R := ℚ) a (-a)
   rw [sub_eq_add_neg, ← hneg,
