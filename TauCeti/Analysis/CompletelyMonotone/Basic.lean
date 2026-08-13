@@ -13,9 +13,11 @@ public import TauCeti.Analysis.Calculus.IteratedDerivWithin
 /-!
 # Completely monotone functions
 
-A function `f : ℝ → ℝ` is *completely monotone on a set* if it is smooth there and its iterated
-derivatives alternate in sign. The principal specialization in this development uses the closed
-half-line `[0, ∞)`:
+A function `f : ℝ → ℝ` is *completely monotone on a set* if it admits a Taylor-series witness
+whose coefficients alternate in sign. This formulation remains meaningful on sets that are not
+uniquely differentiable. On a `UniqueDiffOn` set it is equivalent to smoothness together with
+alternating signs for the iterated derivatives within the set. The principal specialization in
+this development uses the closed half-line `[0, ∞)`:
 `(-1)ⁿ f⁽ⁿ⁾(t) ≥ 0` for every `n` and every `t ≥ 0`. Equivalently `f` is nonnegative,
 nonincreasing, convex, and so on through every order. Bernstein's theorem identifies the
 completely monotone functions on the *open* half-line `(0, ∞)` with the Laplace transforms of
@@ -37,6 +39,10 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
 
 * `TauCeti.CompletelyMonotoneOn`: complete monotonicity on an arbitrary set, formulated through a
   Taylor-series witness in parallel with Mathlib's `AbsolutelyMonotoneOn`.
+* `TauCeti.CompletelyMonotoneOn.of_contDiff`: a globally smooth function whose ordinary iterated
+  derivatives have alternating signs on a set is completely monotone there.
+* `TauCeti.CompletelyMonotoneOn.add`, `TauCeti.CompletelyMonotoneOn.smul`: closure under addition
+  and nonnegative scalar multiplication.
 * `TauCeti.IsCompletelyMonotone`: the predicate that `f` is smooth and sign-alternating on
   `[0, ∞)`.
 * `TauCeti.IsCompletelyMonotone.congr`: complete monotonicity only depends on the values of the
@@ -91,6 +97,14 @@ theorem contDiffOn (hf : CompletelyMonotoneOn f s) : ContDiffOn ℝ ∞ f s := b
   obtain ⟨_, hp, _⟩ := hf
   exact hp.contDiffOn
 
+/-- A globally `C^∞` function whose iterated derivatives have alternating signs on `s` is
+completely monotone on `s`. The set `s` need *not* satisfy `UniqueDiffOn`. -/
+theorem of_contDiff (hf : ContDiff ℝ ∞ f)
+    (h : ∀ n : ℕ, ∀ x ∈ s, 0 ≤ (-1) ^ n * iteratedDeriv n f x) :
+    CompletelyMonotoneOn f s := by
+  refine ⟨ftaylorSeries ℝ f, (hf.ftaylorSeries).hasFTaylorSeriesUpToOn s, fun n x hx => ?_⟩
+  exact iteratedDeriv_eq_iteratedFDeriv (𝕜 := ℝ) (f := f) ▸ h n x hx
+
 /-- On a uniquely differentiable set, the iterated derivatives of a completely monotone function
 have the expected alternating signs. -/
 theorem neg_one_pow_mul_iteratedDerivWithin_nonneg (hf : CompletelyMonotoneOn f s)
@@ -113,6 +127,28 @@ theorem iff_iteratedDerivWithin_nonneg (hs : UniqueDiffOn ℝ s) :
   rintro ⟨hcont, hsign⟩
   refine ⟨ftaylorSeriesWithin ℝ f s, hcont.ftaylorSeriesWithin hs, fun n x hx => ?_⟩
   exact iteratedDerivWithin_eq_iteratedFDerivWithin (𝕜 := ℝ) (f := f) (s := s) ▸ hsign n x hx
+
+/-! ### Closure properties -/
+
+/-- The sum of two completely monotone functions is completely monotone. -/
+theorem add {g : ℝ → ℝ} (hf : CompletelyMonotoneOn f s) (hg : CompletelyMonotoneOn g s) :
+    CompletelyMonotoneOn (f + g) s := by
+  obtain ⟨p, hp, hp_nonneg⟩ := hf
+  obtain ⟨q, hq, hq_nonneg⟩ := hg
+  refine ⟨p + q, hp.add hq, fun n x hx => ?_⟩
+  simp only [Pi.add_apply, FormalMultilinearSeries.add_apply, add_apply, mul_add]
+  exact add_nonneg (hp_nonneg n hx) (hq_nonneg n hx)
+
+/-- A nonnegative scalar multiple of a completely monotone function is completely monotone. -/
+theorem smul {c : ℝ} (hf : CompletelyMonotoneOn f s) (hc : 0 ≤ c) :
+    CompletelyMonotoneOn (c • f) s := by
+  obtain ⟨p, hp, hp_nonneg⟩ := hf
+  set T : ℝ →L[ℝ] ℝ := c • ContinuousLinearMap.id ℝ ℝ with hT
+  have hcomp : (T ∘ f) = c • f := by ext x; simp [hT, smul_eq_mul]
+  refine ⟨_, hcomp ▸ hp.continuousLinearMap_comp T, fun n x hx => ?_⟩
+  simp only [ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp_apply, hT,
+    smul_apply, ContinuousLinearMap.id_apply, smul_eq_mul]
+  simpa only [mul_assoc, mul_left_comm, mul_comm] using mul_nonneg hc (hp_nonneg n hx)
 
 end CompletelyMonotoneOn
 
