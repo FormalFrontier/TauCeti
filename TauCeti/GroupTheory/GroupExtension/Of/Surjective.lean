@@ -17,7 +17,8 @@ can be used to choose a different group as the extension's left term.
 * `GroupExtension.ofSurjective`: the canonical extension by the kernel of a surjective
   homomorphism.
 * `GroupExtension.ofMulEquivKer`: `ofSurjective` with its kernel relabelled by `relabelKer`.
-* `GroupExtension.ofMulEquivKer_inl`: its inclusion is the given kernel equivalence.
+* `GroupExtension.ofMulEquivKer_inl`: its inclusion is the given kernel equivalence followed by
+  the kernel subtype.
 * `GroupExtension.ofMulEquivKer_rightHom`: its projection is the original homomorphism.
 
 The constructions are mirrored for additive groups by `to_additive`.
@@ -66,9 +67,11 @@ def ofMulEquivKer {f : E →* G} (hf : Function.Surjective f)
     GroupExtension N E G :=
   (ofSurjective hf).relabelKer e
 
-/-- The inclusion of `GroupExtension.ofMulEquivKer hf e` is the given kernel equivalence. -/
+/-- The inclusion of `GroupExtension.ofMulEquivKer hf e` is the given kernel equivalence followed
+by the kernel subtype. -/
 @[to_additive (attr := simp)
-  /-- The inclusion of `AddGroupExtension.ofAddEquivKer hf e` is the given kernel equivalence. -/]
+  /-- The inclusion of `AddGroupExtension.ofAddEquivKer hf e` is the given kernel equivalence
+  followed by the kernel subtype. -/]
 theorem ofMulEquivKer_inl {f : E →* G} (hf : Function.Surjective f) (e : N ≃* f.ker) :
     (ofMulEquivKer hf e).inl = f.ker.subtype.comp e.toMonoidHom :=
   by rw [ofMulEquivKer, relabelKer_inl, ofSurjective_inl]
