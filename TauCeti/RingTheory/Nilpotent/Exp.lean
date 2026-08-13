@@ -21,8 +21,8 @@ exp (t • x) = ∑ i, tⁱ • x⁽ⁱ⁾
 ```
 
 has *integer* coefficients when `t` is an integer. Consequently `exp (t • x)` lies in any
-additive subgroup containing the divided powers of `x`, and it fixes any additive subgroup of a
-module that the divided powers of `x` fix. The map `t ↦ exp (t • x)` is a homomorphism from the
+additive subgroup containing the divided powers of `x`, and it preserves any additive subgroup of a
+module that the divided powers of `x` preserve. The map `t ↦ exp (t • x)` is a homomorphism from the
 additive group of integers to `Aˣ`, whose values lie in such an additive subgroup.
 
 This is the shape of a **root subgroup map** `x_α : 𝔾ₐ → G` of a Chevalley--Demazure group scheme:
@@ -48,8 +48,8 @@ another exponential, so it is the algebraic source of the Chevalley commutator r
 * `TauCeti.exp_zsmul_eq_sum_zsmul_dividedPower`: the same expansion with integer coefficients.
 * `TauCeti.exp_zsmul_mem`: `exp (t • x)` lies in an additive subgroup holding the divided powers
   of `x`.
-* `TauCeti.exp_zsmul_apply_mem`: `exp (t • x)` fixes an additive subgroup that the divided powers
-  of `x` fix.
+* `TauCeti.exp_zsmul_apply_mem`: `exp (t • x)` preserves an additive subgroup that the divided
+  powers of `x` preserve.
 * `TauCeti.expSMulHom`: the one-parameter group of units `t ↦ exp (t • x)`.
 * `TauCeti.exp_mulLeft_sub_mulRight_apply`: conjugation by `exp a` is the exponential of the
   commutator endomorphism.
