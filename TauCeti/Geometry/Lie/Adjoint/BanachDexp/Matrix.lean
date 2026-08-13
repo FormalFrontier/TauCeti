@@ -67,14 +67,9 @@ theorem fderiv_lieExp_generalLinearGroup_coe_apply_eq_exp_mul_integral (A B : Ma
               ((unitsLieAlgebraEquiv (R := Matrix n n ℝ)).symm C) :
                 Matrix.GeneralLinearGroup n ℝ) : Matrix n n ℝ)) A B =
       exp A * (∫ t in (0 : ℝ)..1, exp (-(t • A)) * B * exp (t • A)) := by
-  have hfun :
-      (fun C : Matrix n n ℝ =>
-        ((lieExp
-            ((unitsLieAlgebraEquiv (R := Matrix n n ℝ)).symm C) :
-              Matrix.GeneralLinearGroup n ℝ) : Matrix n n ℝ)) = exp := by
-    funext C
-    exact lieExp_generalLinearGroup_coe C
-  rw [hfun]
-  exact fderiv_exp_apply_eq_exp_mul_integral A B
+  rw [fderiv_lieExp_generalLinearGroup_coe_eq_exp_mul_banachDexpFactor]
+  change exp A * banachDexpFactor A B = _
+  rw [banachDexpFactor_apply_eq_integral]
+  rfl
 
 end TauCeti.Lie
