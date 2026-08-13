@@ -12,8 +12,8 @@ public section
 # Components left by deleting a branch vertex of a tree
 
 Deleting a vertex `c` from a tree separates it into one component for each neighbour of `c`.
-When `c` has degree three, every other vertex has degree at most two, and `c` is the only branch
-vertex, the three resulting components are paths.  This is the graph-theoretic extraction step
+When `c` has degree three and every other vertex has degree at most two, the three resulting
+components are paths.  This is the graph-theoretic extraction step
 behind the `D` and `E` branches of the finite-type Dynkin-diagram classification.
 
 ## Main results
@@ -35,15 +35,11 @@ open SimpleGraph
 
 variable {V : Type*} {G : SimpleGraph V}
 
-private lemma degree_le_of_injective_map {W : Type*} [Fintype V] [Fintype W]
-    {H : SimpleGraph W} [DecidableRel G.Adj] [DecidableRel H.Adj] (f : V -> W)
-    (hf : Function.Injective f) (hmap : ∀ {x y}, G.Adj x y -> H.Adj (f x) (f y)) (v : V) :
-    G.degree v ≤ H.degree (f v) := by
-  let e : G.neighborFinset v -> H.neighborFinset (f v) := fun x =>
-    ⟨f x, (H.mem_neighborFinset (f v) (f x)).mpr
-      (hmap ((G.mem_neighborFinset v x).mp x.property))⟩
-  have he : Function.Injective e := fun x y h => Subtype.ext (hf (congrArg Subtype.val h))
-  simpa only [degree, Fintype.card_coe] using Fintype.card_le_of_injective e he
+-- `Set.compl` is the protected complement constructor, so its membership rule is not the simp
+-- theorem for the typeclass-based complement notation.
+private lemma mem_compl_singleton_iff {x c : V} :
+    x ∈ Set.compl ({c} : Set V) ↔ x ≠ c := by
+  rfl
 
 /-- **The components of a tree with one vertex deleted are indexed by its neighbours.**
 
@@ -57,7 +53,7 @@ noncomputable def IsTree.neighborFinsetEquivConnectedComponentCompl [Fintype V] 
   let H : SimpleGraph (Set.compl {c}) := G.induce (Set.compl {c})
   let toCompl : ↥(G.neighborFinset c) -> Set.compl {c} := fun x =>
     ⟨x, by
-      change (x : V) ≠ c
+      rw [mem_compl_singleton_iff]
       exact (G.ne_of_adj ((G.mem_neighborFinset c x).mp x.property)).symm⟩
   let f : ↥(G.neighborFinset c) -> H.ConnectedComponent := fun x =>
     H.connectedComponentMk (toCompl x)
@@ -70,6 +66,8 @@ noncomputable def IsTree.neighborFinsetEquivConnectedComponentCompl [Fintype V] 
       (Embedding.induce (G := G) (Set.compl {c})).injective
     have hcq : c ∉ qG.val.support := by
       intro hc
+      -- Unfold the mapped path while retaining its coerced endpoints, so the walk-level
+      -- `support_map` lemma applies.
       change c ∈ (q.val.map (Embedding.induce (G := G) (Set.compl {c})).toHom).support at hc
       rw [Walk.support_map] at hc
       obtain ⟨z, -, hz⟩ := List.mem_map.mp hc
@@ -109,7 +107,7 @@ noncomputable def IsTree.neighborFinsetEquivConnectedComponentCompl [Fintype V] 
       exact (List.nodup_cons.mp hnodup).1
     have htailS : ∀ x ∈ p.val.tail.support, x ∈ Set.compl ({c} : Set V) := by
       intro x hx
-      change x ≠ c
+      rw [mem_compl_singleton_iff]
       exact fun h => htailc (h ▸ hx)
     let pt := p.val.tail.induce (Set.compl {c}) htailS
     have hstart :
@@ -118,7 +116,7 @@ noncomputable def IsTree.neighborFinsetEquivConnectedComponentCompl [Fintype V] 
     have hend :
         (⟨z, htailS _ p.val.tail.end_mem_support⟩ : Set.compl {c}) = z := Subtype.ext rfl
     refine ⟨aN, ?_⟩
-    change H.connectedComponentMk (toCompl aN) = C
+    dsimp only [f]
     rw [← (C.mem_supp_iff z).mp hz]
     apply ConnectedComponent.sound
     exact ⟨pt.copy hstart hend⟩
@@ -129,18 +127,19 @@ noncomputable def IsTree.neighborFinsetEquivConnectedComponentCompl [Fintype V] 
     TauCeti.IsTree.neighborFinsetEquivConnectedComponentCompl hG c x =
       (G.induce (Set.compl {c})).connectedComponentMk
         ⟨x, by
-          change (x : V) ≠ c
+          rw [mem_compl_singleton_iff]
           exact (G.ne_of_adj ((G.mem_neighborFinset c x).mp x.property)).symm⟩ := by
   rfl
 
-/-- **Deleting the unique branch vertex of a finite tree leaves three path components.**
+/-- **Deleting a degree-three vertex of a finite tree leaves three path components when every other
+vertex has degree at most two.**
 
 The equivalence `e` records which component begins at each of the three neighbours of `c`.  The
 second conclusion is deliberately componentwise: each component carries its own natural path
 length, which is the arm length used in the subsequent reindexing onto a three-arm star. -/
 theorem IsTree.exists_three_path_components [Fintype V] [DecidableRel G.Adj]
-    (hG : G.IsTree) (c : V) (hc : G.degree c = 3) (hdeg : ∀ v, G.degree v ≤ 3)
-    (huniq : ∀ v, G.degree v = 3 -> v = c) :
+    (hG : G.IsTree) (c : V) (hc : G.degree c = 3)
+    (hdeg : ∀ v, v ≠ c -> G.degree v ≤ 2) :
     ∃ e : Fin 3 ≃ (G.induce (Set.compl {c})).ConnectedComponent,
       ∀ i, Nonempty ((e i).toSimpleGraph ≃g pathGraph (Nat.card (e i))) := by
   classical
@@ -155,17 +154,10 @@ theorem IsTree.exists_three_path_components [Fintype V] [DecidableRel G.Adj]
     (Embedding.induce (G := G) (Set.compl {c})).injective
   have hdegree (v : e i) : (e i).toSimpleGraph.degree v ≤ 2 := by
     have hleC : (e i).toSimpleGraph.degree v ≤ H.degree v.val := by
-      exact degree_le_of_injective_map (G := (e i).toSimpleGraph) (H := H)
-        Subtype.val Subtype.val_injective (fun h => h) v
+      exact ((e i).toSimpleGraph_hom.toCopy Subtype.val_injective).degree_le v
     have hleH : H.degree v.val ≤ G.degree v.val.val := by
-      exact degree_le_of_injective_map (G := H) (H := G) Subtype.val Subtype.val_injective
-        (fun h => h) v.val
-    have hvne : v.val.val ≠ c := v.val.property
-    have hvG : G.degree v.val.val ≤ 2 := by
-      have hv3 := hdeg v.val.val
-      by_contra hv2
-      have hv : G.degree v.val.val = 3 := by omega
-      exact hvne (huniq _ hv)
+      exact (SimpleGraph.Copy.induce G (Set.compl {c})).degree_le v.val
+    have hvG : G.degree v.val.val ≤ 2 := hdeg v.val.val v.val.property
     omega
   rw [Nat.card_eq_fintype_card]
   exact TauCeti.IsTree.nonempty_iso_pathGraph_of_degree_le_two

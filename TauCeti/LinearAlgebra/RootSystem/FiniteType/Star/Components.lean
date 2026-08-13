@@ -54,11 +54,13 @@ theorem exists_three_path_components_of_isSimplyLaced (h : IsFiniteType A)
     (hc : (diagramGraph A).degree c = 3) :
     ∃ e : Fin 3 ≃ ((diagramGraph A).induce (Set.compl {c})).ConnectedComponent,
       ∀ i, Nonempty ((e i).toSimpleGraph ≃g pathGraph (Nat.card (e i))) := by
-  let G := diagramGraph A
-  have htree : G.IsTree := h.isTree_diagramGraph hconn
-  apply TauCeti.IsTree.exists_three_path_components htree c hc (fun v => h.degree_le_three v)
-  intro v hv
-  exact h.eq_of_degree_eq_three hsl hconn hv hc
+  have htree : (diagramGraph A).IsTree := h.isTree_diagramGraph hconn
+  apply TauCeti.IsTree.exists_three_path_components htree c hc
+  intro v hvc
+  have hv3 := h.degree_le_three v
+  by_contra hv2
+  have hv : (diagramGraph A).degree v = 3 := by omega
+  exact hvc (h.eq_of_degree_eq_three hsl hconn hv hc)
 
 end IsFiniteType
 
