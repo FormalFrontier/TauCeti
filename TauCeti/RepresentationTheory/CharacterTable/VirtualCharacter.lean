@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Table
-public import TauCeti.Algebra.Ring.Subgroup
 
 /-!
 # The virtual-character lattice
@@ -127,10 +126,18 @@ the roadmap prescribes. -/
 theorem mul_mem_virtualCharacters {f g : G → k} (hf : f ∈ virtualCharacters k G)
     (hg : g ∈ virtualCharacters k G) : f * g ∈ virtualCharacters k G := by
   rw [virtualCharacters] at hf hg ⊢
-  refine AddSubgroup.mul_mem_closure_of_mul_mem ?_ hf hg
-  rintro _ ⟨V, rfl⟩ _ ⟨W, rfl⟩
-  rw [← FDRep.char_tensor]
-  exact AddSubgroup.subset_closure ⟨V ⊗ W, rfl⟩
+  induction hf, hg using AddSubgroup.closure_induction₂ with
+  | mem x y hx hy =>
+    obtain ⟨V, rfl⟩ := hx
+    obtain ⟨W, rfl⟩ := hy
+    rw [← FDRep.char_tensor]
+    exact AddSubgroup.subset_closure ⟨V ⊗ W, rfl⟩
+  | zero_left x hx => simp
+  | zero_right x hx => simp
+  | add_left x y z hx hy hz ihx ihy => rw [add_mul]; exact AddSubgroup.add_mem _ ihx ihy
+  | add_right y z x hy hz hx ihy ihz => rw [mul_add]; exact AddSubgroup.add_mem _ ihy ihz
+  | neg_left x y hx hy ih => rw [neg_mul]; exact AddSubgroup.neg_mem _ ih
+  | neg_right x y hx hy ih => rw [mul_neg]; exact AddSubgroup.neg_mem _ ih
 
 /-- **The constant function `1` is a virtual character**, being the character of the trivial
 one-dimensional representation. -/
