@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-import Mathlib.Dynamics.Ergodic.MeasurePreserving
 
 /-!
 # Moving a block through a reindexing, over an invariant event
