@@ -285,24 +285,34 @@ variable {R : Type*} [Ring R] [BinomialRing R]
 cast. In particular, it belongs to every subring.
 
 This is the coefficient input for applying Chu--Vandermonde to an integer translate. -/
+@[simp]
 theorem ringChoose_intCast_mem (S : Subring R) (z : ℤ) (n : ℕ) :
     _root_.Ring.choose (z : R) n ∈ S := by
   exact _root_.Ring.map_choose (Int.castRingHom R) z n ▸
     intCast_mem S (_root_.Ring.choose z n)
+
+/-- A subring containing the generalized binomial coefficients of `r` up to degree `n` contains
+the degree-`n` coefficient after translating `r` by an integer. -/
+theorem choose_add_intCast_mem {S : Subring R} {r : R} {n : ℕ}
+    (hr : ∀ k ≤ n, _root_.Ring.choose r k ∈ S) (z : ℤ) :
+    _root_.Ring.choose (r + (z : R)) n ∈ S := by
+  rw [_root_.Ring.add_choose_eq n (Int.cast_commute z r).symm]
+  exact sum_mem fun ij hij =>
+    S.mul_mem (hr ij.1 (HasAntidiagonal.antidiagonal.fst_le hij))
+      (ringChoose_intCast_mem S z ij.2)
 
 /-- Translating the argument of a generalized binomial coefficient by an integer keeps it in the
 integral span of the coefficients in the original argument.
 
 Chu--Vandermonde expands `(r + z choose n)` as products of `(r choose i)` with integer-valued
 coefficients `(z choose j)`. -/
+@[simp]
 theorem choose_add_intCast_mem_ringChooseSpan (r : R) (z : ℤ) (n : ℕ) :
     _root_.Ring.choose (r + (z : R)) n ∈ ringChooseSpan r := by
-  rw [← mem_subringClosure_range_ringChoose_iff,
-    _root_.Ring.add_choose_eq n (Int.cast_commute z r).symm]
-  exact sum_mem fun ij _ =>
-    (Subring.closure (Set.range (_root_.Ring.choose r))).mul_mem
-      (Subring.subset_closure ⟨ij.1, rfl⟩)
-      (ringChoose_intCast_mem _ z ij.2)
+  rw [← mem_subringClosure_range_ringChoose_iff]
+  exact choose_add_intCast_mem
+    (S := Subring.closure (Set.range (_root_.Ring.choose r)))
+    (fun k _ => Subring.subset_closure ⟨k, rfl⟩) z
 
 /-- Integer translation leaves the integral span of the generalized binomial coefficients
 unchanged. -/
