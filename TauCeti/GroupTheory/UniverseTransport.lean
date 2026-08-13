@@ -32,7 +32,8 @@ statement mentions the group only through `G ≃* Model i`, either replacement l
 
 The downward direction is the one a consumer needs, because a classification is stated once, with a
 family of concrete carriers in `Type`, and is then applied to a group living wherever it happens to
-live. Finiteness is what makes that possible and cannot be dropped:
+live. Finiteness supplies the smallness used by this argument. Without some smallness hypothesis,
+arbitrary groups cannot always be moved down:
 `TauCeti.exists_group_not_mulEquiv_type_zero` exhibits a group in `Type 1` isomorphic to no group in
 `Type 0` at all.
 
@@ -48,7 +49,8 @@ statement, not its content.
 * `TauCeti.forall_exists_nonempty_mulEquiv_iff` and
   `TauCeti.forall_exists_nonempty_mulEquiv_congr`: the classification statement is the same in every
   universe.
-* `TauCeti.exists_group_not_mulEquiv_type_zero`: the finiteness hypothesis is not removable.
+* `TauCeti.exists_group_not_mulEquiv_type_zero`: arbitrary groups cannot always be moved to
+  `Type 0`.
 
 ## Roadmap
 
@@ -155,15 +157,15 @@ theorem forall_exists_nonempty_mulEquiv_congr :
 
 end Family
 
-/-! ## Finiteness is what supplies the transport -/
+/-! ## Why the downward proof uses finiteness -/
 
-/-- **The finiteness hypothesis of the transport is not removable.**
+/-- **Arbitrary groups cannot always be moved to `Type 0`.**
 
 There is a group in `Type 1` isomorphic to no group in `Type 0` whatsoever, namely the free group on
 `Type 0`: an isomorphism to a group in `Type 0` would make it small, hence would make `Type 0`
-small, which it is not. So no argument of the shape above can move an arbitrary group down to
-`Type 0`, and the transport genuinely rests on `Finite G` rather than on the shape of the statement
-being transported. -/
+small, which it is not. Thus the proof above needs a source of smallness, supplied there by
+`Finite G`. This example does not assert that universe transport for simple groups fails without
+the finiteness hypothesis. -/
 theorem exists_group_not_mulEquiv_type_zero :
     ∃ (G : Type 1) (_ : Group G), ∀ (H : Type) [Group H], IsEmpty (G ≃* H) := by
   refine ⟨FreeGroup (Type 0), inferInstance, fun H _ => ⟨fun e => ?_⟩⟩
