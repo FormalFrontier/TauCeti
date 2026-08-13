@@ -8,7 +8,6 @@ public import Mathlib.Algebra.Lie.Sl2
 public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
 import TauCeti.Algebra.Lie.UniversalEnveloping.Functoriality
-import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Module
 
 /-!
@@ -54,7 +53,7 @@ applying the canonical map to the enveloping algebra.
   `⁅E, Fⁿ⁆ = n Fⁿ⁻¹ (H - (n - 1))` and `⁅F, Eⁿ⁆ = -n Eⁿ⁻¹ (H + (n - 1))`, written with the index
   shifted so that no truncated subtraction appears.
 * `TauCeti.Sl2.e_mul_f_dividedPower` and `TauCeti.Sl2.f_mul_e_dividedPower`: their divided-power
-  forms, in which every structure constant is `1`.
+  forms, in which the structure constants are units `±1`.
 * `TauCeti.Sl2.h_mul_f_dividedPower` and `TauCeti.Sl2.h_mul_e_dividedPower`: moving a Cartan
   element past a divided power translates it by `∓2n`.
 * `TauCeti.Sl2.ι_e_mul_dividedPower_ι_f` and `TauCeti.Sl2.ι_f_mul_dividedPower_ι_e`: the two
@@ -258,7 +257,8 @@ open _root_.UniversalEnvelopingAlgebra
 variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
 
 /-- The divided-power relation `e * f⁽ⁿ⁺¹⁾ = f⁽ⁿ⁺¹⁾ * e + f⁽ⁿ⁾ * (h - n)` for an `sl₂` triple,
-inside the universal enveloping algebra over `ℚ` in which the Kostant integral form lives. -/
+inside a universal enveloping algebra over `ℚ`. This is the relation used after specialization
+to the enveloping algebra of a Chevalley Lie algebra. -/
 theorem ι_e_mul_dividedPower_ι_f (t : IsSl2Triple h e f) (n : ℕ) :
     ι ℚ e * dividedPower (n + 1) (ι ℚ f) =
       dividedPower (n + 1) (ι ℚ f) * ι ℚ e + dividedPower n (ι ℚ f) * (ι ℚ h - n) :=
