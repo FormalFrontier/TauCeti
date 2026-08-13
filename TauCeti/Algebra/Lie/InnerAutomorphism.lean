@@ -31,16 +31,17 @@ occurs inside an `sl₂` triple.
 
 The exponential needs to divide by factorials, so `L` must be a `ℚ`-module. Following
 `LieDerivation.exp`, this is carried by an unbundled `[LieAlgebra ℚ L]` hypothesis alongside the
-base ring `K`; no compatibility between the two is assumed, because
-`Rat.cast_smul_eq_qsmul` supplies it and `Mathlib/Algebra/Lie/Basic.lean` proves
-`Subsingleton (LieAlgebra ℚ L)`, so the hypothesis names a structure rather than choosing one.
-Over a field of characteristic zero it is always available: `TauCeti.ratLieAlgebra` builds it by
+base ring `K`. No compatibility between the two actions is assumed, and none is needed: an additive
+group carries at most one `ℚ`-module structure, so the hypothesis names a structure rather than
+choosing one (`Subsingleton (LieAlgebra ℚ L)`, in `Mathlib/Algebra/Lie/Basic.lean`). Where a
+computation does mix the two scalar actions it goes through the `ℕ`-action that both refine, using
+`Nat.cast_smul_eq_nsmul`. Whenever `K` is itself a `ℚ`-algebra — in particular whenever it is a
+field of characteristic zero — such a structure exists: `TauCeti.ratLieAlgebra` builds it by
 restricting scalars along `algebraMap ℚ K`.
 
 ## Main definitions
 
-* `TauCeti.ratLieAlgebra`: the `ℚ`-Lie-algebra structure on a Lie algebra over a
-  characteristic-zero field.
+* `TauCeti.ratLieAlgebra`: the `ℚ`-Lie-algebra structure on a Lie algebra over a `ℚ`-algebra.
 * `TauCeti.expAd`: the inner automorphism `exp (ad x)` of an `ad`-nilpotent element `x`.
 
 ## Main results
@@ -62,19 +63,19 @@ namespace TauCeti
 
 open Finset LieAlgebra
 
-/-- The `ℚ`-Lie-algebra structure on a Lie algebra `L` over a field `K` of characteristic zero,
-obtained by restricting scalars along `algebraMap ℚ K`.
+/-- The `ℚ`-Lie-algebra structure on a Lie algebra `L` over a `ℚ`-algebra `K`, obtained by
+restricting scalars along `algebraMap ℚ K`. A field of characteristic zero is such a `K`.
 
 This is deliberately a `def` and not an `instance`: `K` cannot be recovered from the goal
 `LieAlgebra ℚ L`, so instance search could never use it. It is what a consumer supplies with
 `letI := TauCeti.ratLieAlgebra K L` in order to apply `TauCeti.expAd` and everything built on it,
 and because `LieAlgebra ℚ L` is a subsingleton the choice is harmless. -/
 @[instance_reducible]
-noncomputable def ratLieAlgebra (K L : Type*) [Field K] [CharZero K] [LieRing L]
+noncomputable def ratLieAlgebra (K L : Type*) [CommRing K] [Algebra ℚ K] [LieRing L]
     [LieAlgebra K L] : LieAlgebra ℚ L :=
   letI : Module ℚ L := Module.compHom L (algebraMap ℚ K)
-  { lie_smul := fun q x y ↦
-      show ⁅x, algebraMap ℚ K q • y⁆ = algebraMap ℚ K q • ⁅x, y⁆ from lie_smul _ _ _ }
+  -- by construction `q • y` *is* `algebraMap ℚ K q • y`, so `lie_smul` over `K` is the axiom asked
+  { lie_smul := fun q x y ↦ lie_smul (algebraMap ℚ K q) x y }
 
 variable {K L : Type*} [CommRing K] [LieRing L] [LieAlgebra K L] [LieAlgebra ℚ L]
 
@@ -82,15 +83,12 @@ variable {K L : Type*} [CommRing K] [LieRing L] [LieAlgebra K L] [LieAlgebra ℚ
 It is `LieDerivation.exp` applied to the inner derivation `ad x`. -/
 noncomputable def expAd (x : L) (hx : IsNilpotent (ad K L x)) : L ≃ₗ⁅K⁆ L :=
   LieDerivation.exp (LieDerivation.ad K L x) <| by
-    rwa [show (LieDerivation.ad K L x).toLinearMap = ad K L x from by ext; simp]
+    rwa [LieDerivation.coe_ad_apply_eq_ad_apply]
 
 /-- `TauCeti.expAd` is the exponential of `LieAlgebra.ad x`. -/
 lemma expAd_apply (x : L) (hx : IsNilpotent (ad K L x)) (y : L) :
     expAd x hx y = IsNilpotent.exp (ad K L x) y := by
-  rw [expAd, LieDerivation.exp_map_apply]
-  congr 1
-  ext
-  simp
+  rw [expAd, LieDerivation.exp_map_apply, LieDerivation.coe_ad_apply_eq_ad_apply]
 
 /-- The exponential series for `exp (ad x)`, truncated at any length `k` for which `(ad x) ^ k`
 already annihilates the vector `y`. -/
@@ -107,6 +105,7 @@ lemma expAd_apply_of_lie_eq_zero {x y : L} (hx : IsNilpotent (ad K L x)) (hy : �
   simp
 
 /-- `exp (ad x)` fixes `x`. -/
+@[simp]
 lemma expAd_apply_self (x : L) (hx : IsNilpotent (ad K L x)) : expAd x hx x = x :=
   expAd_apply_of_lie_eq_zero hx (lie_self x)
 
