@@ -8,6 +8,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Connected.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeometricallyReduced.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
+import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
 
 /-!
 # Smoothness and connectedness of tori
@@ -53,16 +54,6 @@ universe u
 
 namespace SplitTorus
 
-/-- Scalar extension of a split torus's coordinate ring is the corresponding group algebra over
-the extended scalar ring. -/
-private noncomputable def coordinateRingScalarExtensionRingEquiv
-    (k K : Type u) [CommRing k] [CommRing K] [Algebra k K] (σ : Type u) :
-    MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
-      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
-  (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans
-    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K
-      (G := Multiplicative (σ →₀ ℤ))).toAlgEquiv.toRingEquiv
-
 /-- **The coordinate Hopf algebra of a finite-rank split torus is geometrically connected.** -/
 @[grind =>]
 theorem geometricallyConnected_coordinateRing
@@ -71,7 +62,12 @@ theorem geometricallyConnected_coordinateRing
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj := by
   rw [geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one]
   intro K _ _ e he
-  let φ := coordinateRingScalarExtensionRingEquiv k K σ
+  let ψ := _root_.CommHopfAlgCat.ofIso
+    ((forget₂ (FiniteTypeCommHopfAlgCat K) (_root_.CommHopfAlgCat K)).mapIso
+      (DiagonalizableGroup.baseChangeCoordinateRingIso k K (characterGroup σ)))
+  let φ : MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
+      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
+    (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans ψ.toAlgEquiv.toRingEquiv
   have he' : IsIdempotentElem (φ e) := he.map φ.toRingHom
   rcases IsIdempotentElem.iff_eq_zero_or_one.mp he' with h | h
   · left
@@ -87,7 +83,12 @@ theorem geometricallyReduced_coordinateRing
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj := by
   rw [geometricallyReducedCommHopfAlgProperty_iff]
   intro K _ _
-  let φ := coordinateRingScalarExtensionRingEquiv k K σ
+  let ψ := _root_.CommHopfAlgCat.ofIso
+    ((forget₂ (FiniteTypeCommHopfAlgCat K) (_root_.CommHopfAlgCat K)).mapIso
+      (DiagonalizableGroup.baseChangeCoordinateRingIso k K (characterGroup σ)))
+  let φ : MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
+      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
+    (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans ψ.toAlgEquiv.toRingEquiv
   exact isReduced_of_injective φ.toRingHom φ.injective
 
 end SplitTorus
