@@ -30,9 +30,7 @@ enveloping algebra applied to a generalized binomial coefficient is such a situa
 namespace TauCeti.Polynomial
 
 /-- Evaluating a polynomial at an element of an opposite monoid and then taking
-`MulOpposite.unop` is the same as evaluating at the `MulOpposite.unop` of that element: only
-sums, scalar multiples and powers of a single element occur, and `MulOpposite.unop` respects all
-three. -/
+`MulOpposite.unop` is the same as evaluating at the `MulOpposite.unop` of that element. -/
 @[simp]
 theorem unop_smeval {R A : Type*} [Semiring R] [Monoid A] [AddCommMonoid A] [Module R A]
     (p : _root_.Polynomial R) (a : Aᵐᵒᵖ) :

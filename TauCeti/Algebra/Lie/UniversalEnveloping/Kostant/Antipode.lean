@@ -101,8 +101,8 @@ section KostantForm
 
 variable (e : ι → L) (h : κ → L)
 
-/-- The antipode negates a designated root vector, so it multiplies each of its divided powers by
-a sign; either way the result is still a generator of the Kostant integral form, up to sign. -/
+/-- The antipode of a divided power of a designated root vector lies in the Kostant integral
+form. -/
 theorem antipode_dividedPower_mem_kostantForm (i : ι) (n : ℕ) :
     antipode ℚ (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) ∈
       kostantForm e h := by
@@ -113,8 +113,8 @@ theorem antipode_dividedPower_mem_kostantForm (i : ι) (n : ℕ) :
   · rw [hn.neg_one_pow, neg_one_smul]
     exact neg_mem (dividedPower_mem_kostantForm e h i n)
 
-/-- The antipode negates a designated Cartan vector, and the binomial coefficients of a negated
-element are integer combinations of those of the element itself. -/
+/-- The antipode of a generalized binomial coefficient of a designated Cartan vector lies in the
+Kostant integral form. -/
 theorem antipode_ringChoose_mem_kostantForm (j : κ) (n : ℕ) :
     antipode ℚ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) n) ∈
       kostantForm e h := by
@@ -151,11 +151,7 @@ theorem map_antipodeEquiv_kostantForm :
     simpa [antipode_apply] using antipode_antipode ℚ b.unop
 
 /-- The antipode restricted to the Kostant integral form, as a ring equivalence onto the opposite
-ring of the form. This is the anti-automorphism a Hopf order carries.
-
-It is the restriction `RingEquiv.subringMap` of `antipodeEquiv`, transported along
-`map_antipodeEquiv_kostantForm` and Mathlib's identification `Subring.mopRingEquivOp` of the
-opposite of a subring with the corresponding subring of the opposite ring. -/
+ring of the form. This is the anti-automorphism a Hopf order carries. -/
 noncomputable def kostantFormAntipode :
     kostantForm e h ≃+* (kostantForm e h)ᵐᵒᵖ :=
   ((RingEquiv.subringMap (s := kostantForm e h) (antipodeEquiv (L := L) ℚ).toRingEquiv).trans

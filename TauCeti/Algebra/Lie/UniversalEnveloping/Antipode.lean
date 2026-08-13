@@ -258,8 +258,7 @@ theorem antipode_antipode (a : _root_.UniversalEnvelopingAlgebra R L) :
 /-- The preimage of a subring under the antipode.
 
 Antimultiplicativity is no obstruction: it is the preimage of the opposite subring `Subring.op S`
-under the genuine ring homomorphism `antipodeOp`. This is the object a stability proof for a
-generated subring runs its universal property against. -/
+under the genuine ring homomorphism `antipodeOp`. -/
 noncomputable def antipodeComap (S : Subring (_root_.UniversalEnvelopingAlgebra R L)) :
     Subring (_root_.UniversalEnvelopingAlgebra R L) :=
   (Subring.op S).comap (antipodeOp R).toRingHom
