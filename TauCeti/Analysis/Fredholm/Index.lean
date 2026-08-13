@@ -50,9 +50,10 @@ lemma index_equiv_comp (T : E →ₗ[𝕜] F) (e : F ≃ₗ[𝕜] G) :
     ((e : F →ₗ[𝕜] G).comp T).index = T.index := by
   rw [index_eq_finrank_sub, index_eq_finrank_sub]
   congr 1
-  · rw [ker_equiv_comp]
-  · rw [range_equiv_comp]
-    exact_mod_cast (LinearEquiv.finrank_eq (TauCeti.quotientEquivMap e T.range)).symm
+  · rw [ker_comp_of_ker_eq_bot _ (ker_eq_bot.2 e.injective)]
+  · rw [range_comp]
+    exact_mod_cast (LinearEquiv.finrank_eq
+      (Submodule.Quotient.equiv T.range (T.range.map (e : F →ₗ[𝕜] G)) e rfl)).symm
 
 /-- Precomposition with a linear equivalence leaves the index unchanged. -/
 @[simp]
@@ -60,8 +61,8 @@ lemma index_comp_equiv (T : E →ₗ[𝕜] F) (e : G ≃ₗ[𝕜] E) :
     (T.comp (e : G →ₗ[𝕜] E)).index = T.index := by
   rw [index_eq_finrank_sub, index_eq_finrank_sub]
   congr 1
-  · rw [ker_comp_equiv, LinearEquiv.finrank_map_eq]
-  · rw [range_comp_equiv]
+  · rw [ker_comp, Submodule.comap_equiv_eq_map_symm, LinearEquiv.finrank_map_eq]
+  · rw [range_comp_of_range_eq_top _ (range_eq_top.2 e.surjective)]
 
 end LinearMap
 

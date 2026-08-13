@@ -31,53 +31,10 @@ intended throughout.
 * `ContinuousLinearMap.IsFredholm.comp_equiv` and
   `ContinuousLinearMap.IsFredholm.equiv_comp`: composing with a continuous linear equivalence on
   either side preserves Fredholmness.
-* `LinearMap.ker_comp_equiv`, `LinearMap.ker_equiv_comp`, `LinearMap.range_comp_equiv`, and
-  `LinearMap.range_equiv_comp`: algebraic kernel and range transport under linear equivalences.
-
 The Fredholm index and its elementary API live in `TauCeti.Analysis.Fredholm.Index`.
 -/
 
 public section
-
-namespace TauCeti
-
-/-- A linear equivalence sends the quotient by a submodule to the quotient by its image. -/
-noncomputable def quotientEquivMap {𝕜 E F : Type*} [DivisionRing 𝕜]
-    [AddCommGroup E] [Module 𝕜 E] [AddCommGroup F] [Module 𝕜 F]
-    (e : E ≃ₗ[𝕜] F) (p : Submodule 𝕜 E) :
-    (E ⧸ p) ≃ₗ[𝕜] F ⧸ p.map (e : E →ₗ[𝕜] F) :=
-  Submodule.Quotient.equiv p (p.map (e : E →ₗ[𝕜] F)) e rfl
-
-end TauCeti
-
-namespace LinearMap
-
-variable {𝕜 E F G : Type*} [DivisionRing 𝕜]
-variable [AddCommGroup E] [Module 𝕜 E]
-variable [AddCommGroup F] [Module 𝕜 F]
-variable [AddCommGroup G] [Module 𝕜 G]
-
-/-- Precomposition with a linear equivalence carries the kernel along its inverse. -/
-lemma ker_comp_equiv (T : E →ₗ[𝕜] F) (e : G ≃ₗ[𝕜] E) :
-    ker (T.comp (e : G →ₗ[𝕜] E)) = (ker T).map (e.symm : E →ₗ[𝕜] G) := by
-  rw [ker_comp, Submodule.comap_equiv_eq_map_symm]
-
-/-- Postcomposition with a linear equivalence leaves the kernel unchanged. -/
-lemma ker_equiv_comp (T : E →ₗ[𝕜] F) (e : F ≃ₗ[𝕜] G) :
-    ker ((e : F →ₗ[𝕜] G).comp T) = ker T := by
-  rw [ker_comp_of_ker_eq_bot _ (ker_eq_bot.2 e.injective)]
-
-/-- Precomposition with a linear equivalence leaves the range unchanged. -/
-lemma range_comp_equiv (T : E →ₗ[𝕜] F) (e : G ≃ₗ[𝕜] E) :
-    range (T.comp (e : G →ₗ[𝕜] E)) = range T := by
-  rw [range_comp_of_range_eq_top _ (range_eq_top.2 e.surjective)]
-
-/-- Postcomposition with a linear equivalence carries the range along that equivalence. -/
-lemma range_equiv_comp (T : E →ₗ[𝕜] F) (e : F ≃ₗ[𝕜] G) :
-    range ((e : F →ₗ[𝕜] G).comp T) = (range T).map (e : F →ₗ[𝕜] G) := by
-  rw [range_comp]
-
-end LinearMap
 
 namespace TauCeti
 
@@ -205,14 +162,16 @@ lemma _root_.ContinuousLinearMap.IsFredholm.equiv_comp
   · -- Expose function composition so the homeomorphism strictness lemma applies.
     change Topology.IsStrictMap (fun x ↦ e (T x))
     exact e.toHomeomorph.comp_isStrictMap_iff.mpr hT.isStrictMap
-  · rw [coe_equiv_comp, LinearMap.range_equiv_comp]
+  · rw [coe_equiv_comp, LinearMap.range_comp]
     simpa [Submodule.map_coe] using e.isClosed_image.2 hT.isClosed_range
-  · rw [coe_equiv_comp, LinearMap.ker_equiv_comp]
+  · rw [coe_equiv_comp,
+      LinearMap.ker_comp_of_ker_eq_bot _ (LinearMap.ker_eq_bot.2 e.injective)]
     exact hT.finite_ker
-  · rw [coe_equiv_comp, LinearMap.range_equiv_comp]
+  · rw [coe_equiv_comp, LinearMap.range_comp]
     have := hT.finite_coker
-    exact (quotientEquivMap e.toLinearEquiv _).finiteDimensional
-  · rw [coe_equiv_comp, LinearMap.ker_equiv_comp]
+    exact (Submodule.Quotient.equiv _ _ e.toLinearEquiv rfl).finiteDimensional
+  · rw [coe_equiv_comp,
+      LinearMap.ker_comp_of_ker_eq_bot _ (LinearMap.ker_eq_bot.2 e.injective)]
     exact hT.closedComplemented_ker
 
 /-- Precomposing a Fredholm operator with a continuous linear equivalence yields a Fredholm
@@ -227,14 +186,16 @@ lemma _root_.ContinuousLinearMap.IsFredholm.comp_equiv (hT : ContinuousLinearMap
   · -- Expose function composition so the homeomorphism strictness lemma applies.
     change Topology.IsStrictMap (fun x ↦ T (e x))
     exact e.toHomeomorph.isStrictMap_comp_iff.mpr hT.isStrictMap
-  · rw [coe_comp_equiv, LinearMap.range_comp_equiv]
+  · rw [coe_comp_equiv,
+      LinearMap.range_comp_of_range_eq_top _ (LinearMap.range_eq_top.2 e.surjective)]
     exact hT.isClosed_range
-  · rw [coe_comp_equiv, LinearMap.ker_comp_equiv]
+  · rw [coe_comp_equiv, LinearMap.ker_comp, Submodule.comap_equiv_eq_map_symm]
     have := hT.finite_ker
     exact (e.symm.submoduleMap _).finiteDimensional
-  · rw [coe_comp_equiv, LinearMap.range_comp_equiv]
+  · rw [coe_comp_equiv,
+      LinearMap.range_comp_of_range_eq_top _ (LinearMap.range_eq_top.2 e.surjective)]
     exact hT.finite_coker
-  · rw [coe_comp_equiv, LinearMap.ker_comp_equiv]
+  · rw [coe_comp_equiv, LinearMap.ker_comp, Submodule.comap_equiv_eq_map_symm]
     exact closedComplemented_map_continuousLinearEquiv e.symm _ hT.closedComplemented_ker
 
 end CompEquiv
