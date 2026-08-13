@@ -57,11 +57,11 @@ theorem fderiv_lieExp_units_coe_eq_exp_mul_banachDexpFactor
           (unitsLieAlgebraEquiv (R := R)).toContinuousLinearEquiv.toContinuousLinearMap) := by
   have hfun : (fun Y : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ =>
       ((lieExp (I := 𝓘(ℝ, R)) (G := Rˣ) Y : Rˣ) : R)) =
-      fun Y => exp (unitsLieAlgebraEquiv Y) := by
+      exp ∘ unitsLieAlgebraEquiv (R := R) := by
     funext Y
     rw [lieExp_eq_expUnit, TauCeti.expUnit_coe]
+    rfl
   rw [hfun]
-  change fderiv ℝ (exp ∘ unitsLieAlgebraEquiv (R := R)) X = _
   rw [fderiv_comp X (TauCeti.hasFDerivAt_exp (unitsLieAlgebraEquiv X)).differentiableAt
     (unitsLieAlgebraEquiv (R := R)).toContinuousLinearEquiv.differentiableAt,
     fderiv_exp_eq_exp_mul_banachDexpFactor]
