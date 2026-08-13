@@ -133,8 +133,9 @@ theorem peterssonInnerCosets_slash {α : SL(2, ℤ)}
     (hα : α ∈ Subgroup.normalizer (Γ : Set SL(2, ℤ)))
     {f g F G : CuspForm (Γ.map (mapGL ℝ)) k} (hF : ⇑F = ⇑f ∣[k] α) (hG : ⇑G = ⇑g ∣[k] α) :
     peterssonInnerCosets F G = peterssonInnerCosets f g := by
-  have hαW : α ∈ Subgroup.normalizer (Γ.withCenter : Set SL(2, ℤ)) :=
-    Subgroup.normalizer_le_normalizer_withCenter Γ hα
+  have hαW : α ∈ Subgroup.normalizer (Γ.withCenter : Set SL(2, ℤ)) := by
+    rw [Subgroup.withCenter_def]
+    exact Subgroup.normalizer_le_normalizer_sup_normal hα
   have hsummand : ∀ q : SL(2, ℤ) ⧸ Γ.withCenter,
       UpperHalfPlane.peterssonInner k fd (⇑F ∣[k] (q.out)⁻¹) (⇑G ∣[k] (q.out)⁻¹) =
         UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] ((cosetRightMul hαW q).out)⁻¹)

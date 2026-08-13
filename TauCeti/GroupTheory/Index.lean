@@ -12,7 +12,7 @@ public import Mathlib.GroupTheory.Index
 The preimage `H.comap f` of a finite-index subgroup along a group homomorphism again has finite
 index: its index is the relative index of `H` in the range of `f`, which is finite. Adjoining
 the centre to a finite-index subgroup also keeps the index finite, since it only enlarges the
-subgroup, and it does not shrink the normaliser either: whatever normalises `Γ` normalises `Γ·Z`.
+subgroup.
 
 Because the order of a subgroup divides the order of the group -- with the index as cofactor --
 invertibility of the order of a finite group in a semiring passes to every subgroup.
@@ -47,14 +47,6 @@ lemma le_withCenter {G : Type*} [Group G] (Γ : Subgroup G) : Γ ≤ Γ.withCent
 instance instFiniteIndexWithCenter {G : Type*} [Group G] (Γ : Subgroup G)
     [Γ.FiniteIndex] : Γ.withCenter.FiniteIndex :=
   Subgroup.finiteIndex_of_le Γ.le_withCenter
-
-/-- **Everything that normalises `Γ` normalises `Γ` with the centre adjoined.** Conjugation is an
-automorphism, so it distributes over the supremum defining `Γ.withCenter`, and it fixes the
-centre. -/
-theorem normalizer_le_normalizer_withCenter {G : Type*} [Group G] (Γ : Subgroup G) :
-    normalizer (Γ : Set G) ≤ normalizer (Γ.withCenter : Set G) := fun g hg ↦ by
-  rw [mem_normalizer_iff_map_conj_eq] at hg ⊢
-  rw [withCenter_def, map_sup, hg, Subgroup.Normal.map_conj_eq (Subgroup.center G) g]
 
 end Subgroup
 
