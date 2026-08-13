@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
-public import TauCeti.Analysis.Matrix.PosSemidef
+public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.Topology.UniformSpace.UniformApproximation
 import Mathlib.Topology.Algebra.Monoid
 import Mathlib.Topology.Order.OrderClosed
@@ -15,7 +15,7 @@ import Mathlib.Topology.Order.OrderClosed
 
 This file derives pointwise- and locally-uniform-limit closure for
 `TauCeti.IsPositiveDefinite`, the positive-definite function predicate on an involutive additive
-monoid, from the matrix limit theorem in `TauCeti.Analysis.Matrix.PosSemidef`.
+monoid, from Mathlib's closedness theorem for the cone of positive-semidefinite matrices.
 
 This is the limit-closure item from Part C of the `OneParameterSemigroups` roadmap. The result is
 about positive-definiteness alone for pointwise limits; as the roadmap notes, continuity needs an
@@ -60,9 +60,9 @@ theorem of_tendsto {ι : Type*} {l : Filter ι} [NeBot l] {F : ι → M → ℂ}
     (hlim : ∀ x : M, Tendsto (fun i => F i x) l (𝓝 (G x))) :
     IsPositiveDefinite G :=
   of_posSemidef <|
-    posSemidef_of_tendsto
+    Matrix.posSemidef_is_closed.mem_of_tendsto
+      (tendsto_pi_nhds.2 fun a => tendsto_pi_nhds.2 fun b => hlim (a + star b))
       (hF.mono fun _ hi => hi.posSemidef)
-      (fun a b => hlim (a + star b))
 
 /-- A pointwise limit of a family of positive-definite functions is positive definite. This is the
 non-eventual form of `TauCeti.IsPositiveDefinite.of_tendsto`. -/

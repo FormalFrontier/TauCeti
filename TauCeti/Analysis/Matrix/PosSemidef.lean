@@ -8,14 +8,13 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.LinearAlgebra.Matrix.PosDef
 public import Mathlib.Topology.Algebra.Monoid
-public import Mathlib.Topology.Order.OrderClosed
 
 /-!
 # Positive-semidefinite matrix API
 
 This file supplements Mathlib's `Matrix.PosSemidef` API for matrices indexed by arbitrary types.
 It provides rank-one and constant matrices, finite Schur products and powers, the quadratic-form
-characterization, scalar Cauchy--Schwarz bounds, and closure under pointwise limits.
+characterization, and scalar Cauchy--Schwarz bounds.
 
 The results apply in particular to positive-definite kernels, represented directly as matrices,
 but do not depend on Tau Ceti's positive-definite-function theory.
@@ -31,7 +30,6 @@ Mathlib code is vendored.
 * `TauCeti.posSemidef_iff`: the quadratic-form characterization.
 * `TauCeti.posSemidef_prod` and `TauCeti.posSemidef_pow`: finite Schur products and powers.
 * `TauCeti.normSq_le_of_posSemidef`: scalar Cauchy--Schwarz.
-* `TauCeti.posSemidef_of_tendsto`: closure under pointwise limits.
 
 ## References
 
@@ -41,8 +39,8 @@ Mathlib code is vendored.
 
 public section
 
-open Filter Matrix
-open scoped ComplexConjugate ComplexOrder Topology
+open Matrix
+open scoped ComplexConjugate ComplexOrder
 
 namespace TauCeti
 
@@ -242,14 +240,5 @@ theorem norm_le_one_of_apply_self_eq_one_of_posSemidef {K : α → α → 𝕜}
     ‖K a b‖ ≤ 1 := by
   refine le_of_sq_le_sq ?_ zero_le_one
   simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using normSq_le_of_posSemidef hK a b
-
-/-- Positive-semidefinite matrices are preserved under pointwise limits along a nontrivial
-filter. The positivity hypothesis need only hold eventually. -/
-theorem posSemidef_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
-    {K : ι → α → α → 𝕜} {L : α → α → 𝕜} (hK : ∀ᶠ i in l, Matrix.PosSemidef (K i))
-    (hlim : ∀ a b : α, Tendsto (fun i => K i a b) l (𝓝 (L a b))) :
-    Matrix.PosSemidef L := by
-  exact Matrix.posSemidef_is_closed.mem_of_tendsto
-    (tendsto_pi_nhds.2 fun a => tendsto_pi_nhds.2 (hlim a)) hK
 
 end TauCeti
