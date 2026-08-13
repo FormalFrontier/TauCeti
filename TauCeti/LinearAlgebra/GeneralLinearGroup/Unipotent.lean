@@ -36,8 +36,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
   its inverse is.
 * `TauCeti.GeneralLinearGroup.IsUnipotent.mul_of_commute`: commuting unipotent automorphisms have
   unipotent product.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.pow`: every natural power of a unipotent automorphism
-  is unipotent.
+* `TauCeti.GeneralLinearGroup.IsUnipotent.pow` and `.zpow`: every natural or integer power of a
+  unipotent automorphism is unipotent.
 * `TauCeti.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
   conjugation.
 
@@ -90,15 +90,13 @@ theorem isUnipotent_ofLinearEquiv_iff (f : V ≃ₗ[K] V) :
     exact congrFun (LinearMap.GeneralLinearGroup.coe_ofLinearEquiv f) x
   rw [h]
 
-/-- The nilpotence criterion for a transported linear automorphism is equivalent to unipotence
-of the original automorphism. -/
-@[simp]
-theorem isNilpotent_congrLinearEquiv_sub_one_iff_isUnipotent
+/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
+theorem isUnipotent_congrLinearEquiv_iff
     {W : Type w} [AddCommGroup W] [Module K W]
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    _root_.IsNilpotent
-      ((e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1) ↔ IsUnipotent g := by
-  rw [isUnipotent_def]
+    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
+      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
+  rw [isUnipotent_ofLinearEquiv_iff, isUnipotent_def]
   have hmap :
       LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
         (e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1 := by
@@ -106,15 +104,6 @@ theorem isNilpotent_congrLinearEquiv_sub_one_iff_isUnipotent
     simp
   rw [← hmap]
   exact IsNilpotent.map_iff (LinearEquiv.conjRingEquiv e).injective
-
-/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
-theorem isUnipotent_congrLinearEquiv_iff
-    {W : Type w} [AddCommGroup W] [Module K W]
-    (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
-  rw [isUnipotent_ofLinearEquiv_iff]
-  exact isNilpotent_congrLinearEquiv_sub_one_iff_isUnipotent e g
 
 /-- The inverse of a unipotent linear automorphism is unipotent. -/
 theorem IsUnipotent.inv {g : GeneralLinearGroup K V} (hg : IsUnipotent g) :
@@ -174,6 +163,13 @@ theorem IsUnipotent.pow {g : GeneralLinearGroup K V} (hg : IsUnipotent g) (n : �
   | succ n hn =>
       rw [pow_succ]
       exact hn.mul_of_commute hg (Commute.self_pow g n).symm
+
+/-- Every integer power of a unipotent linear automorphism is unipotent. -/
+theorem IsUnipotent.zpow {g : GeneralLinearGroup K V} (hg : IsUnipotent g) (n : ℤ) :
+    IsUnipotent (g ^ n) := by
+  cases n with
+  | ofNat n => simpa only [Int.ofNat_eq_natCast, zpow_natCast] using hg.pow n
+  | negSucc n => simpa only [zpow_negSucc] using (hg.pow n.succ).inv
 
 /-- Unipotence is invariant under conjugation by a linear automorphism. -/
 @[simp]

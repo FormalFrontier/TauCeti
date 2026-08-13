@@ -25,10 +25,10 @@ nilpotence in the reduced coordinate ring would instead give the vacuous conditi
 in the ReductiveGroups roadmap.
 
 The predicate is immediately exercised by its basic group-theoretic API. The identity is
-unipotent, as are inverses and natural powers of unipotent points. Products are unipotent when the
-points commute, and unipotence is invariant under conjugation. These statements follow because
-every comodule point action is a group homomorphism and the corresponding closure properties hold
-in the general linear group.
+unipotent, as are inverses and natural or integer powers of unipotent points. Products are
+unipotent when the points commute, and unipotence is invariant under conjugation. These statements
+follow because every comodule point action is a group homomorphism and the corresponding closure
+properties hold in the general linear group.
 
 ## Main declarations
 
@@ -36,8 +36,8 @@ in the general linear group.
   comodule.
 * `TauCeti.HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one`: the equivalent
   nilpotence formulation using the underlying comodule action endomorphisms.
-* `TauCeti.HopfAlgebra.IsUnipotentPoint.inv`, `.mul_of_commute`, and `.pow`: closure under
-  inversion, commuting products, and natural powers.
+* `TauCeti.HopfAlgebra.IsUnipotentPoint.inv`, `.mul_of_commute`, `.pow`, and `.zpow`: closure under
+  inversion, commuting products, and natural or integer powers.
 * `TauCeti.HopfAlgebra.isUnipotentPoint_inv_iff`: a point is unipotent exactly when its inverse is.
 * `TauCeti.HopfAlgebra.isUnipotentPoint_conj_iff`: invariance under conjugation.
 
@@ -150,6 +150,13 @@ theorem IsUnipotentPoint.pow {g : WithConv (H →ₐ[k] K)}
       (Comodule.pointsAction M g ^ n))
   rw [map_pow]
   exact (hg M).pow n
+
+/-- Every integer power of a unipotent point is unipotent. -/
+theorem IsUnipotentPoint.zpow {g : WithConv (H →ₐ[k] K)}
+    (hg : IsUnipotentPoint g) (n : ℤ) : IsUnipotentPoint (g ^ n) := by
+  cases n with
+  | ofNat n => simpa only [Int.ofNat_eq_natCast, zpow_natCast] using hg.pow n
+  | negSucc n => simpa only [zpow_negSucc] using (hg.pow n.succ).inv
 
 /-- Unipotence of points is invariant under conjugation. -/
 @[simp]
