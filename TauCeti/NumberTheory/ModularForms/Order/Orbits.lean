@@ -8,6 +8,7 @@ public import Mathlib.Algebra.BigOperators.Finprod
 public import Mathlib.NumberTheory.Modular
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
+import Mathlib.Algebra.FiniteSupport.Basic
 import TauCeti.NumberTheory.Modular.Orbits
 import TauCeti.NumberTheory.ModularForms.FiniteZeros
 
@@ -33,6 +34,10 @@ formula. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.
   bounds.
 * `TauCeti.ModularForm.orderOfVanishingOnOrbit_eq_zero_of_notMem`: an orbit outside a set of
   orbits complete for `f`'s nonzero-order points on `𝒟` carries vanishing order zero.
+* `TauCeti.ModularForm.NonEllipticOrbit`: the orbits other than those of the elliptic points
+  `i` and `ρ` — the index type of the valence formula's divisor sum.
+* `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic`: the finite
+  support restricted to the non-elliptic orbits.
 
 ## References
 
@@ -161,6 +166,22 @@ lemma orderOfVanishingOnOrbit_eq_zero_of_notMem [SlashInvariantFormClass F 𝒮�
   obtain ⟨p, rfl, hpfd⟩ := ModularGroup.exists_rep_mem_fd q
   rw [orderOfVanishingOnOrbit_mk] at hne
   exact hq (hS p hpfd hne)
+
+/-- The non-elliptic orbits of `SL(2, ℤ)` on `ℍ`: all orbits except the two elliptic ones, of
+`i` and of `ρ`. The valence formula's divisor sum is indexed by this type — the elliptic
+orbits enter the formula through fractional weights instead. -/
+abbrev NonEllipticOrbit : Type :=
+  {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ //
+    q ≠ Quotient.mk'' I ∧ q ≠ Quotient.mk'' ρ}
+
+/-- For a nonzero level-one form only finitely many non-elliptic orbits carry nonzero order:
+the finite support of `orderOfVanishingOnOrbit`, restricted along the inclusion of the
+non-elliptic orbits. -/
+lemma hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic [ModularFormClass F 𝒮ℒ k] {f : F}
+    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+    Function.HasFiniteSupport fun q : NonEllipticOrbit ↦ orderOfVanishingOnOrbit f q.val :=
+  Function.HasFiniteSupport.fun_comp_of_injective Subtype.val_injective
+    (hasFiniteSupport_orderOfVanishingOnOrbit hf)
 
 end ModularForm
 
