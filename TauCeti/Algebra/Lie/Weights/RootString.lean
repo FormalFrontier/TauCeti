@@ -32,8 +32,6 @@ relations among the constants.
 * `TauCeti.lie_f_lie_e_eq_nsmul_of_mem_rootSpace`: the ladder identity above, and
   `TauCeti.lie_e_lie_f_eq_nsmul_of_mem_rootSpace` its mirror
   `⁅e, ⁅f, y⁆⁆ = (p * (q + 1)) • y`.
-* `TauCeti.chainTopCoeff_pos` and `TauCeti.chainBotCoeff_pos`: `α + β` being a root forces `0 < q`,
-  while `-α + β` being a root forces `0 < p`.
 * `TauCeti.lie_ne_zero_of_mem_rootSpace`: if `α + β` is a root then `⁅e, y⁆ ≠ 0` for *every*
   non-zero `e ∈ Lα` and `y ∈ Lβ`.
 * `TauCeti.exists_mem_rootSpace_lie_eq`: `⁅e, ·⁆` maps `Lβ` *onto* `L(α + β)`, so that
@@ -151,20 +149,6 @@ theorem lie_e_lie_f_eq_nsmul_of_mem_rootSpace {α β : Weight K H L} (hα : α.I
     lie_f_lie_e_eq_nsmul_of_mem_rootSpace (α := (-α : Weight K H L)) hα.neg hβ t.symm hf' he' hy
 
 /-! ### Consequences for the structure constants -/
-
-/-- If `α + β` is a root then the `α`-string through `β` extends upwards, that is, its top
-coefficient is positive. -/
-theorem chainTopCoeff_pos {α β : Weight K H L} (hα : α.IsNonZero)
-    (h_ne_bot : rootSpace H (α + β) ≠ ⊥) : 0 < chainTopCoeff α β := by
-  have hmem := (rootSpace_zsmul_add_ne_bot_iff_mem α β hα 1).mp (by simpa using h_ne_bot)
-  rw [Finset.mem_Icc] at hmem
-  omega
-
-/-- If `-α + β` is a root then the `α`-string through `β` extends downwards, that is, its bottom
-coefficient is positive. -/
-theorem chainBotCoeff_pos {α β : Weight K H L} (hα : α.IsNonZero)
-    (h_ne_bot : rootSpace H (-α + β) ≠ ⊥) : 0 < chainBotCoeff α β := by
-  simpa using chainTopCoeff_pos (β := β) hα.neg h_ne_bot
 
 /-- If `α + β` is a root then *every* non-zero root vector of `α` brackets every non-zero root
 vector of `β` to something non-zero. This is the universally quantified form of Mathlib's
