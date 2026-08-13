@@ -18,7 +18,9 @@ from the smaller ring, and the new ideal of definition is the `Ideal.map` of the
 finite generation comes for free. Boundedness of the larger ring is the only real hypothesis, and
 the two applications supply it differently — by induction over a finite set of power-bounded
 elements for `A₀[T]` (`isBounded_subringClosure_union_finset`), and from the lattice structure of
-the subrings for `A₀ ⊔ A₁` (`isBounded_sup`).
+the subrings for `A₀ ⊔ B` (`isBounded_sup`). The join case is `PairOfDefinition.enlargeSup`,
+which takes an arbitrary bounded `B`; joining two rings of definition is the case where `B` is
+one of them.
 
 Taking `T = {a}` in the first application proves that every power-bounded element belongs to some
 ring of definition; the converse holds because every ring of definition is bounded.
@@ -33,6 +35,10 @@ than `Ideal.map`, and a comap of a finitely generated ideal need not be finitely
   a ring of definition.
 * `TauCeti.Huber.PairOfDefinition.adjoin`: adjoining finitely many power-bounded elements gives
   another pair of definition.
+* `TauCeti.Huber.PairOfDefinition.enlargeSup`: joining a ring of definition with any bounded
+  subring gives a ring of definition, with `enlargeSup_ringOfDefinition`,
+  `enlargeSup_idealOfDefinition`, `le_enlargeSup_left` and `le_enlargeSup_right` naming its
+  components and inclusions.
 * `TauCeti.Huber.PairOfDefinition.sup`: the join of two rings of definition is a ring of
   definition.
 * `TauCeti.Huber.isPowerBounded_iff_exists_mem_ringOfDefinition`: the power-bounded subring is
@@ -45,9 +51,9 @@ The `adjoin` construction — and hence the adic-topology argument now extracted
 at commit `37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`. Names and the proof are adjusted to Tau
 Ceti's `PairOfDefinition` and boundedness APIs.
 
-`sup` and its boundedness input `isBounded_sup` are **not** covered by that attribution: AINTLIB
-cites Corollary 6.4 only for its parts (1)–(3) and has no counterpart to the join of two rings of
-definition.
+`enlargeSup`, `sup` and the boundedness input `isBounded_sup` are **not** covered by that
+attribution: AINTLIB cites Corollary 6.4 only for its parts (1)–(3), and has no counterpart to the
+join of a ring of definition with a bounded subring.
 
 ## References
 
@@ -266,36 +272,71 @@ theorem mem_adjoin_of_mem (P : PairOfDefinition A) (T : Finset A)
   rw [adjoin_ringOfDefinition]
   exact Subring.subset_closure (Set.mem_union_right _ (Finset.mem_coe.mpr ht))
 
+/-- **Joining a ring of definition with a bounded subring.** For any bounded `B`, the join
+`A₀ ⊔ B` is again a ring of definition. The join of two rings of definition is the case
+`B = A₁`. -/
+def enlargeSup (P : PairOfDefinition A) (B : Subring A) (hB : IsBounded (B : Set A)) :
+    PairOfDefinition A :=
+  letI := P.toNonarchimedeanRing
+  P.enlarge (P.ringOfDefinition ⊔ B) _root_.le_sup_left
+    (isBounded_sup P.ringOfDefinition B P.isBounded_ringOfDefinition hB)
+
+/-- The ring of definition of `P.enlargeSup B hB` is `A₀ ⊔ B`. -/
+@[simp]
+theorem enlargeSup_ringOfDefinition (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    (P.enlargeSup B hB).ringOfDefinition = P.ringOfDefinition ⊔ B :=
+  P.enlarge_ringOfDefinition _ _ _
+
+/-- The original ring of definition is contained in the join. -/
+theorem le_enlargeSup_left (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    P.ringOfDefinition ≤ (P.enlargeSup B hB).ringOfDefinition := by
+  rw [enlargeSup_ringOfDefinition]
+  exact _root_.le_sup_left
+
+/-- The adjoined subring is contained in the join — the defining property of the construction. -/
+theorem le_enlargeSup_right (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    B ≤ (P.enlargeSup B hB).ringOfDefinition := by
+  rw [enlargeSup_ringOfDefinition]
+  exact _root_.le_sup_right
+
+/-- The ideal of definition of `P.enlargeSup B hB` is the image of `I`, as for any `enlarge`. -/
+@[simp]
+theorem enlargeSup_idealOfDefinition (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    (P.enlargeSup B hB).idealOfDefinition =
+      P.idealOfDefinition.map (Subring.inclusion (P.le_enlargeSup_left B hB)) :=
+  P.enlarge_idealOfDefinition _ _ _
+
 /-- **Wedhorn Corollary 6.4, the product half.** The join of two rings of definition is again a
 ring of definition; its ideal of definition is the image of the first one's. -/
 def sup (P Q : PairOfDefinition A) : PairOfDefinition A :=
-  letI := P.toNonarchimedeanRing
-  P.enlarge (P.ringOfDefinition ⊔ Q.ringOfDefinition) _root_.le_sup_left
-    (isBounded_sup P.ringOfDefinition Q.ringOfDefinition P.isBounded_ringOfDefinition
-      Q.isBounded_ringOfDefinition)
+  P.enlargeSup Q.ringOfDefinition Q.isBounded_ringOfDefinition
 
 /-- The ring of definition of `P.sup Q` is `A₀ ⊔ A₁`. -/
 @[simp]
 theorem sup_ringOfDefinition (P Q : PairOfDefinition A) :
-    (P.sup Q).ringOfDefinition = P.ringOfDefinition ⊔ Q.ringOfDefinition := (rfl)
+    (P.sup Q).ringOfDefinition = P.ringOfDefinition ⊔ Q.ringOfDefinition :=
+  P.enlargeSup_ringOfDefinition _ _
 
 /-- The first ring of definition is contained in the join. -/
 theorem le_sup_left (P Q : PairOfDefinition A) :
-    P.ringOfDefinition ≤ (P.sup Q).ringOfDefinition := by
-  rw [sup_ringOfDefinition]
-  exact _root_.le_sup_left
+    P.ringOfDefinition ≤ (P.sup Q).ringOfDefinition :=
+  P.le_enlargeSup_left _ _
 
 /-- The second ring of definition is contained in the join. -/
 theorem le_sup_right (P Q : PairOfDefinition A) :
-    Q.ringOfDefinition ≤ (P.sup Q).ringOfDefinition := by
-  rw [sup_ringOfDefinition]
-  exact _root_.le_sup_right
+    Q.ringOfDefinition ≤ (P.sup Q).ringOfDefinition :=
+  P.le_enlargeSup_right _ _
 
 /-- The ideal of definition of `P.sup Q` is the image of `P`'s. -/
 @[simp]
 theorem sup_idealOfDefinition (P Q : PairOfDefinition A) :
     (P.sup Q).idealOfDefinition =
-      P.idealOfDefinition.map (Subring.inclusion (P.le_sup_left Q)) := (rfl)
+      P.idealOfDefinition.map (Subring.inclusion (P.le_sup_left Q)) :=
+  P.enlargeSup_idealOfDefinition _ _
 
 end PairOfDefinition
 
