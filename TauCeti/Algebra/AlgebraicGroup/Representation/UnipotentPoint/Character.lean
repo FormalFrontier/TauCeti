@@ -10,9 +10,10 @@ public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
 # Unipotent points and algebraic characters
 
 A group-like element of a coordinate Hopf algebra is the coordinate-ring incarnation of an
-algebraic character. Its associated one-dimensional comodule lets a point act by evaluation at
-that group-like element. Consequently a unipotent point evaluates every algebraic character at
-one: a unipotent automorphism of a one-dimensional vector space is necessarily the identity.
+algebraic character. Its associated rank-one comodule lets a point act by evaluation at that
+group-like element. Consequently a unipotent point valued in a reduced ring evaluates every
+algebraic character at one: the difference between that scalar action and the identity is
+nilpotent, so the scalar itself must be one.
 
 This is the pointwise representation-theoretic input to the theorem that a connected unipotent
 group has no nontrivial characters. Promoting the pointwise conclusion to equality of characters
@@ -48,29 +49,34 @@ universe u v x
 /-- A unipotent point evaluates every group-like element of the coordinate Hopf algebra at one.
 
 Group-like elements are the coordinate-ring incarnation of algebraic characters. The associated
-rank-one comodule turns evaluation at `x` into a one-dimensional point action, which can be
-unipotent only when that scalar is one. -/
+rank-one comodule turns evaluation at `x` into a scalar point action. Its difference from the
+identity is nilpotent, so reducedness forces that scalar to be one. -/
+@[simp]
 theorem IsUnipotentPoint.apply_groupLike
-    {F : Type u} {C : Type v} {L : Type x} [Field F] [Semiring C]
-    [_root_.HopfAlgebra F C] [Field L] [Algebra F L]
+    {F : Type u} {C : Type v} {L : Type x} [CommSemiring F] [Semiring C]
+    [_root_.HopfAlgebra F C] [CommRing L] [IsReduced L] [Algebra F L]
     {g : WithConv (C →ₐ[F] L)} (hg : IsUnipotentPoint g) (x : GroupLike F C) :
     g.ofConv x = 1 := by
   let _ : Comodule F C F := Comodule.groupLike (R := F) (C := C) (M := F) x
   let M : FGComoduleCat.{u, v, u} F C := FGComoduleCat.of (R := F) (C := C) F
-  have hdim : Module.finrank L (L ⊗[F] F) = 1 := by
-    rw [(TensorProduct.AlgebraTensorModule.rid F L L).finrank_eq, Module.finrank_self]
-  have haction := ((isUnipotentPoint_def g).mp hg M).eq_one_of_finrank_eq_one hdim
+  have hnil :=
+    (isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp hg M
+  have haction : Comodule.endOfPoint M g.ofConv - 1 =
+      (g.ofConv x - 1) • LinearMap.id := by
+    rw [Comodule.endOfPoint_groupLike]
+    change g.ofConv x • LinearMap.id - LinearMap.id =
+      (g.ofConv x - 1) • LinearMap.id
+    simpa only [one_smul] using
+      (sub_smul (g.ofConv x) 1
+        (LinearMap.id : Module.End L (L ⊗[F] F))).symm
   let z : L ⊗[F] F := (1 : L) ⊗ₜ[F] (1 : F)
-  have happ := congrArg
-    (fun q : LinearMap.GeneralLinearGroup L (L ⊗[F] F) => q • z) haction
-  simp only [LinearMap.GeneralLinearGroup.ofLinearEquiv_smul, one_smul] at happ
-  have hpoint := DFunLike.congr_fun (Comodule.pointsAction_toLinearMap M g) z
-  have hend : Comodule.endOfPoint M g.ofConv z = z := hpoint.symm.trans happ
-  simp only [z, Comodule.endOfPoint_tmul, Comodule.groupLike_coact, LinearMap.flip_apply,
-    TensorProduct.mk_apply, LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply,
-    TensorProduct.comm_tmul, TensorProduct.smul_tmul', smul_eq_mul, one_mul] at hend
-  have := congrArg (TensorProduct.AlgebraTensorModule.rid F L L) hend
-  simpa using this
+  rw [haction] at hnil
+  obtain ⟨n, hn⟩ := hnil
+  have hz := DFunLike.congr_fun hn z
+  have hp : (g.ofConv x - 1) ^ n = 0 := by
+    have := congrArg (TensorProduct.AlgebraTensorModule.rid F L L) hz
+    simpa [z, smul_pow] using this
+  exact sub_eq_zero.mp (IsReduced.eq_zero _ ⟨n, hp⟩)
 
 end HopfAlgebra
 

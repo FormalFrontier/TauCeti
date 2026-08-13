@@ -162,6 +162,34 @@ theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A)
 
 end Corestrict
 
+section GroupLike
+
+variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Algebra R H] [Coalgebra R H]
+  [AddCommMonoid V] [Module R V] [CommSemiring A] [Algebra R A]
+
+/-- A point acts on a pure tensor in a group-like comodule by evaluating the group-like
+element and multiplying the scalar factor by the result. -/
+@[simp]
+theorem endOfPoint_groupLike_tmul (x : GroupLike R H) (g : H →ₐ[R] A) (a : A) (v : V) :
+    letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
+    endOfPoint V g (a ⊗ₜ[R] v) = (a * g x) ⊗ₜ[R] v := by
+  simp only [endOfPoint_tmul, groupLike_coact_apply, LinearMap.lTensor_tmul,
+    AlgHom.toLinearMap_apply, TensorProduct.comm_tmul, TensorProduct.smul_tmul', smul_eq_mul]
+
+/-- On a group-like comodule, a point acts by scalar multiplication by its value on the
+group-like element. -/
+theorem endOfPoint_groupLike (x : GroupLike R H) (g : H →ₐ[R] A) :
+    letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
+    endOfPoint V g = g x • LinearMap.id := by
+  let _ : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
+  apply LinearMap.restrictScalars_injective R
+  refine TensorProduct.ext' fun a v ↦ ?_
+  simp only [LinearMap.restrictScalars_apply, endOfPoint_groupLike_tmul,
+    LinearMap.smul_apply, LinearMap.id_coe, id_eq, TensorProduct.smul_tmul', smul_eq_mul]
+  rw [mul_comm]
+
+end GroupLike
+
 section Bialgebra
 
 variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Bialgebra R H]

@@ -6,9 +6,9 @@ module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.Dimension.Finite
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
+import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 import Mathlib.Tactic.NoncommRing
 
 /-!
