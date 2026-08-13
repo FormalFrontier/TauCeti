@@ -219,7 +219,8 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
   rcases eq_or_ne t t₀ with rfl | htne
   · have hz0 : γ t - w = 0 := by rw [h_eq, sub_self]
-    rw [hz0, realWindingIntegrand_zero_left, abs_zero]
+    simp only [hz0, realWindingIntegrand_eq_div, Complex.zero_re, Complex.zero_im, zero_mul,
+      sub_zero, Complex.normSq_zero, div_zero, abs_zero]
     exact hr_nonneg
   · have htcd : t ∈ Icc t₀ d := ⟨ht.1, by linarith [ht.2]⟩
     have hDeq : deriv γ t = derivWithin γ (Icc t₀ d) t :=
@@ -336,7 +337,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       -- zeroes it out on both.
       change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
         = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
-      rw [hz2, realWindingIntegrand_zero_left, realWindingIntegrand_zero_left, neg_zero]
+      simp [hz2]
     · have htlt : t₀ < t := lt_of_le_of_ne ht.1 (Ne.symm htne)
       have hint : t ∈ Ioo t₀ (2 * t₀ - c) := ⟨htlt, by linarith [ht.2]⟩
       have hDeq' : deriv γ' t = derivWithin γ' (Icc t₀ (2 * t₀ - c)) t :=
