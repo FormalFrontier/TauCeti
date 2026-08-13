@@ -5,7 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
-public import TauCeti.LinearAlgebra.CliffordAlgebra.AssociatedGraded
+public import TauCeti.Algebra.AssociatedGraded
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.FiltrationGradedEquiv
 
@@ -38,6 +39,8 @@ open scoped DirectSum
 universe u v
 
 namespace TauCeti.CliffordAlgebra
+
+open Algebra.wordFiltration
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]
@@ -87,9 +90,9 @@ private theorem filtrationGradedPieceEquivExteriorPower_apply_mk_zero (r : R) :
 scalar. -/
 @[simp]
 theorem filtrationGradedPieceEquivExteriorPower_apply_algebraMap₀ (r : R) :
-    filtrationGradedPieceEquivExteriorPower Q 0 (filtrationGradedAlgebraMap₀ Q r) =
+    filtrationGradedPieceEquivExteriorPower Q 0 (gradedAlgebraMap₀ (ι Q) r) =
       (exteriorPower.zeroEquiv R M).symm r := by
-  rw [filtrationGradedAlgebraMap₀_apply]
+  rw [gradedAlgebraMap₀_apply]
   exact filtrationGradedPieceEquivExteriorPower_apply_mk_zero Q r
 
 /-- The inverse degree-zero piece equivalence sends an exterior scalar to its scalar class. -/
@@ -97,7 +100,7 @@ theorem filtrationGradedPieceEquivExteriorPower_apply_algebraMap₀ (r : R) :
 theorem filtrationGradedPieceEquivExteriorPower_symm_apply_zeroEquiv_symm (r : R) :
     (filtrationGradedPieceEquivExteriorPower Q 0).symm
         ((exteriorPower.zeroEquiv R M).symm r) =
-      filtrationGradedAlgebraMap₀ Q r := by
+      gradedAlgebraMap₀ (ι Q) r := by
   apply (filtrationGradedPieceEquivExteriorPower Q 0).injective
   rw [LinearEquiv.apply_symm_apply,
     filtrationGradedPieceEquivExteriorPower_apply_algebraMap₀]
@@ -147,7 +150,7 @@ private theorem filtrationLeadingTermAll_apply_ιMulti (n : ℕ) (v : Fin n → 
 
 private noncomputable def filtrationLeadingTermMul (i j : ℕ) :
     ⋀[R]^i M →ₗ[R] ⋀[R]^j M →ₗ[R] FiltrationGradedPiece Q (i + j) :=
-  ((filtrationGradedMul Q i j).compl₂ (filtrationLeadingTermAll Q j)).comp
+  ((gradedMul (ι Q) i j).compl₂ (filtrationLeadingTermAll Q j)).comp
     (filtrationLeadingTermAll Q i)
 
 private noncomputable def exteriorPowerMulLeadingTerm (i j : ℕ) :
@@ -157,7 +160,7 @@ private noncomputable def exteriorPowerMulLeadingTerm (i j : ℕ) :
 
 private theorem filtrationLeadingTermAll_mul (i j : ℕ)
     (x : ⋀[R]^i M) (y : ⋀[R]^j M) :
-    filtrationGradedMul Q i j (filtrationLeadingTermAll Q i x)
+    gradedMul (ι Q) i j (filtrationLeadingTermAll Q i x)
         (filtrationLeadingTermAll Q j y) =
       filtrationLeadingTermAll Q (i + j)
         (exteriorPowerGradedMul i j x y) := by
@@ -169,7 +172,7 @@ private theorem filtrationLeadingTermAll_mul (i j : ℕ)
     apply AlternatingMap.ext
     intro b
     -- Extensionality leaves the two composed bilinear maps; expose their graded products.
-    change filtrationGradedMul Q i j
+    change gradedMul (ι Q) i j
         (filtrationLeadingTermAll Q i (exteriorPower.ιMulti R i a))
         (filtrationLeadingTermAll Q j (exteriorPower.ιMulti R j b)) =
       filtrationLeadingTermAll Q (i + j)
@@ -183,7 +186,7 @@ private theorem filtrationLeadingTermAll_mul (i j : ℕ)
       exact ExteriorAlgebra.ιMulti_mul_ιMulti a b
     rw [filtrationLeadingTermAll_apply_ιMulti,
       filtrationLeadingTermAll_apply_ιMulti, hmul,
-      filtrationLeadingTermAll_apply_ιMulti, filtrationGradedMul_apply_mk]
+      filtrationLeadingTermAll_apply_ιMulti, gradedMul_apply_mk]
     apply congrArg Submodule.Quotient.mk
     apply Subtype.ext
     -- Quotient and subtype extensionality leave the ambient Clifford products.
@@ -195,7 +198,7 @@ private theorem filtrationLeadingTermAll_mul (i j : ℕ)
 
 private theorem filtrationGradedPieceEquivExteriorPower_mul (i j : ℕ)
     (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
-    filtrationGradedPieceEquivExteriorPower Q (i + j) (filtrationGradedMul Q i j x y) =
+    filtrationGradedPieceEquivExteriorPower Q (i + j) (gradedMul (ι Q) i j x y) =
       exteriorPowerGradedMul i j
         (filtrationGradedPieceEquivExteriorPower Q i x)
         (filtrationGradedPieceEquivExteriorPower Q j y) := by
@@ -222,16 +225,16 @@ private theorem filtrationGradedPieceToExteriorDirectSum_one :
     filtrationGradedPieceToExteriorDirectSum Q 0
       (GradedMonoid.GOne.one : FiltrationGradedPiece Q 0) = 1 := by
   -- `DirectSum.toAlgebra` states its unit through `GOne`; expose the named graded unit.
-  change filtrationGradedPieceToExteriorDirectSum Q 0 (filtrationGradedOne Q) = 1
+  change filtrationGradedPieceToExteriorDirectSum Q 0 (gradedOne (ι Q)) = 1
   have honePiece :
-      filtrationGradedPieceEquivExteriorPower Q 0 (filtrationGradedOne Q) =
+      filtrationGradedPieceEquivExteriorPower Q 0 (gradedOne (ι Q)) =
         (exteriorPower.zeroEquiv R M).symm 1 := by
-    rw [filtrationGradedOne_def]
+    rw [gradedOne_def]
     exact filtrationGradedPieceEquivExteriorPower_apply_mk_zero Q 1
   rw [DirectSum.one_def]
   -- Unfold the piece map to compare the two degree-zero summands.
   change DirectSum.of (fun n : ℕ => ⋀[R]^n M) 0
-      (filtrationGradedPieceEquivExteriorPower Q 0 (filtrationGradedOne Q)) =
+      (filtrationGradedPieceEquivExteriorPower Q 0 (gradedOne (ι Q))) =
     DirectSum.of (fun n : ℕ => ⋀[R]^n M) 0 _
   rw [honePiece]
   apply congrArg (DirectSum.of (fun n : ℕ => ⋀[R]^n M) 0)
@@ -245,9 +248,9 @@ private theorem filtrationGradedPieceToExteriorDirectSum_mul {i j : ℕ}
       filtrationGradedPieceToExteriorDirectSum Q i x *
         filtrationGradedPieceToExteriorDirectSum Q j y := by
   -- `DirectSum.toAlgebra` states multiplication through `GMul`; expose its named product and maps.
-  change filtrationGradedPieceToExteriorDirectSum Q (i + j) (filtrationGradedMul Q i j x y) = _
+  change filtrationGradedPieceToExteriorDirectSum Q (i + j) (gradedMul (ι Q) i j x y) = _
   change DirectSum.of (fun n : ℕ => ⋀[R]^n M) (i + j)
-      (filtrationGradedPieceEquivExteriorPower Q (i + j) (filtrationGradedMul Q i j x y)) =
+      (filtrationGradedPieceEquivExteriorPower Q (i + j) (gradedMul (ι Q) i j x y)) =
     DirectSum.of (fun n : ℕ => ⋀[R]^n M) i
         (filtrationGradedPieceEquivExteriorPower Q i x) *
       DirectSum.of (fun n : ℕ => ⋀[R]^n M) j
@@ -256,7 +259,7 @@ private theorem filtrationGradedPieceToExteriorDirectSum_mul {i j : ℕ}
   rfl
 
 private noncomputable def filtrationAssociatedGradedToExteriorDirectSum :
-    filtrationAssociatedGraded Q →ₐ[R] ⨁ n : ℕ, ⋀[R]^n M :=
+    associatedGraded (ι Q) →ₐ[R] ⨁ n : ℕ, ⋀[R]^n M :=
   DirectSum.toAlgebra R (FiltrationGradedPiece Q)
     (filtrationGradedPieceToExteriorDirectSum Q)
     (filtrationGradedPieceToExteriorDirectSum_one Q)
@@ -281,7 +284,7 @@ private theorem filtrationAssociatedGradedToExteriorDirectSum_bijective :
         (filtrationGradedPieceEquivExteriorPower Q n x) = e.toLinearMap (DirectSum.of _ n x)
     rw [DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_of]
     rfl
-  have he_apply (x : filtrationAssociatedGraded Q) :
+  have he_apply (x : associatedGraded (ι Q)) :
       filtrationAssociatedGradedToExteriorDirectSum Q x = e x :=
     LinearMap.congr_fun he x
   constructor
@@ -295,7 +298,7 @@ private theorem filtrationAssociatedGradedToExteriorDirectSum_bijective :
 
 /-- The associated graded of the Clifford filtration is the exterior algebra. -/
 noncomputable def filtrationAssociatedGradedEquivExterior :
-    filtrationAssociatedGraded Q ≃ₐ[R] ExteriorAlgebra R M :=
+    associatedGraded (ι Q) ≃ₐ[R] ExteriorAlgebra R M :=
   (AlgEquiv.ofBijective (filtrationAssociatedGradedToExteriorDirectSum Q)
     (filtrationAssociatedGradedToExteriorDirectSum_bijective Q)).trans
       (DirectSum.decomposeAlgEquiv (fun n : ℕ => ⋀[R]^n M)).symm

@@ -113,7 +113,7 @@ of exactly `k` generators; see `filtration_eq_iSup_pow` for the comparison.
 
 This is `TauCeti.Algebra.wordFiltration` specialized to `ι Q`; the shared API is in
 `TauCeti/Algebra/WordFiltration.lean`. -/
-def filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
+abbrev filtration (Q : QuadraticForm R M) (k : ℕ) : Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltration (ι Q) k
 
 /-- The defining equation of the filtration: degree `k` is the `k`-th submodule power of the
@@ -126,7 +126,7 @@ theorem filtration_eq_pow (Q : QuadraticForm R M) (k : ℕ) :
 /-- The filtration step preceding degree `k`, that is `TauCeti.Algebra.wordFiltrationPrevious`
 specialized to `ι Q`. At degree zero it is bottom, so the degree-zero piece remains the scalar
 filtration step rather than a zero quotient. -/
-def filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q) :=
+abbrev filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltrationPrevious (ι Q)
 
 @[simp]
@@ -145,7 +145,7 @@ instance instIsRingFiltration (Q : QuadraticForm R M) :
 
 /-- The filtration step preceding degree `k`, viewed inside the degree-`k` filtration step. This is
 the relation defining the degree-`k` associated-graded quotient. -/
-def filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
+abbrev filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
     Submodule R (filtration Q k) :=
   (filtrationPrevious Q k).submoduleOf (filtration Q k)
 

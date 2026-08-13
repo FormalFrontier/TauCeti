@@ -74,7 +74,7 @@ Lie generators.
 
 This is `TauCeti.Algebra.wordFiltration` specialized to `UniversalEnvelopingAlgebra.ι R`; the
 shared API is in `TauCeti/Algebra/WordFiltration.lean`. -/
-def pbwFiltration (k : ℕ) : Submodule R U :=
+abbrev pbwFiltration (k : ℕ) : Submodule R U :=
   TauCeti.Algebra.wordFiltration (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap k
 
 /-- PBW filtration degree `k` is the `k`-th power of the scalars and canonical Lie generators. -/
@@ -86,7 +86,7 @@ theorem pbwFiltration_eq_pow (k : ℕ) :
 /-- The step preceding degree `k` in the PBW filtration, that is
 `TauCeti.Algebra.wordFiltrationPrevious` specialized to `UniversalEnvelopingAlgebra.ι R`, with
 bottom in degree zero. -/
-def pbwFiltrationPrevious : ℕ → Submodule R U :=
+abbrev pbwFiltrationPrevious : ℕ → Submodule R U :=
   TauCeti.Algebra.wordFiltrationPrevious (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
 
 /-- The preceding PBW filtration is trivial in degree zero. -/
