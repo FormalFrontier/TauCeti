@@ -8,6 +8,7 @@ module
 public import Mathlib.Data.Nat.Choose.Sum
 public import Mathlib.RingTheory.Binomial
 public import Mathlib.RingTheory.Bialgebra.Basic
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Associative
 
 /-!
@@ -100,10 +101,7 @@ section Choose
 
 variable {A : Type w} [Ring A] [Bialgebra ℚ A]
 
-/-- The nonnegative-rational scalar action on a rational algebra used to interpret binomial
-coefficients. -/
-noncomputable local instance moduleNNRat : Module ℚ≥0 A :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+attribute [local instance] TauCeti.moduleNNRat
 
 /-- The nonnegative-rational scalar action used to interpret binomial coefficients in the tensor
 square of a rational algebra. -/
