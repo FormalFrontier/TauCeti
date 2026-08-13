@@ -183,10 +183,19 @@ ALLOWLIST="scripts/lint-nolints-allowlist.txt"
 UPDATE=0
 [ "${1:-}" = "--update" ] && UPDATE=1
 
-# This script runs inside the required landrun build. Its two direct `lean`
-# invocations do not go through Lake's LAKE_OVERRIDE_LEAN hook, so route them
-# explicitly through the same trusted per-process watchdog as `lake build`.
-run_lean() { lake env "$WATCHDOG_TOOLCHAIN/bin/lean" "$@"; }
+# In the required landrun build, route this script's two direct `lean`
+# invocations through the same trusted watchdog as `lake build`; they do not go
+# through Lake's LAKE_OVERRIDE_LEAN hook themselves. The trusted post-merge CI
+# also runs this script, but deliberately has no watchdog toolchain, so retain
+# its ordinary `lake env lean` path. scripts/sandbox-build.sh independently
+# requires an executable watchdog before any required build reaches this file.
+run_lean() {
+  if [ -n "${WATCHDOG_TOOLCHAIN:-}" ]; then
+    lake env "$WATCHDOG_TOOLCHAIN/bin/lean" "$@"
+  else
+    lake env lean "$@"
+  fi
+}
 
 fail() { echo "::error::lint-env: $*"; echo "LINT-ENV: FAIL — $*"; exit 1; }
 

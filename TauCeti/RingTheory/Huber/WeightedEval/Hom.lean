@@ -16,7 +16,11 @@ than by a hypothesis — they assemble into a ring homomorphism, which is the sh
 needs.
 
 Its continuity is `TauCeti.Huber.continuous_weightedEvalHom` in `WeightedEval/Continuous.lean`.
-The uniqueness that makes 5.50 a *universal* property is still unproved.
+The uniqueness that makes 5.50 a *universal* property is
+`TauCeti.Huber.weightedRestrictedSubring_ringHom_ext_of_continuous` in
+`WeightedRestrictedSeries.lean`; `WeightedEval/UniversalProperty.lean` puts the two together, and
+its `∃!` statement identifies this homomorphism as the only continuous one with these values on
+the generators.
 
 ## Main definitions
 
