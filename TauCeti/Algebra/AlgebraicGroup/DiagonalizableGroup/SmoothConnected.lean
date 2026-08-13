@@ -7,7 +7,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.GeometricallyReduced.CommHopfAlgCat
-import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
+import TauCeti.Algebra.Bialgebra.MonoidAlgebra.BaseChange
 
 /-!
 # Geometric connectedness and reducedness of diagonalizable groups
@@ -50,7 +50,7 @@ private noncomputable def coordinateRingBaseChangeEquiv
     (K : Type u) [Field K] [Algebra k K] :
     MonoidAlgebra k G ⊗[k] K ≃+* MonoidAlgebra K G :=
   (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans
-    (_root_.MonoidAlgebra.scalarTensorEquiv k K (M := G)).toRingEquiv
+    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G)).toAlgEquiv.toRingEquiv
 
 /-- **The coordinate Hopf algebra of a unique-product diagonalizable group is geometrically
 connected.** -/

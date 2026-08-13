@@ -6,9 +6,8 @@ module
 
 -- Public: the common-overfield comparison exposes the coordinate-ring-order tower equivalence.
 public import TauCeti.Algebra.TensorProduct.BaseChange
--- Non-public: these imports supply the residue-field construction, tensor-product nontriviality,
--- and flatness proof used only in definition bodies and proofs below.
-import Mathlib.RingTheory.Flat.Basic
+-- Non-public: these imports supply the residue-field construction and tensor-product
+-- nontriviality used only in definition bodies and proofs below.
 import Mathlib.RingTheory.LocalRing.ResidueField.Ideal
 import Mathlib.RingTheory.TensorProduct.Nontrivial
 
@@ -88,14 +87,6 @@ noncomputable def commonOverfield (k : Type u) (K : Type v) (L : Type w)
       algebraKΩ := inferInstance
       isScalarTower := inferInstance
       right := iL }
-
-/-- Tensoring a map of algebras over a field on the left is injective when the map is injective. -/
-theorem map_injective_of_field (k : Type u) [Field k]
-    (A : Type v) [CommRing A] [Algebra k A]
-    {L : Type w} {Ω : Type x} [CommRing L] [CommRing Ω] [Algebra k L] [Algebra k Ω]
-    (g : L →ₐ[k] Ω) (hg : Function.Injective g) :
-    Function.Injective (Algebra.TensorProduct.map (AlgHom.id k A) g) :=
-  Module.Flat.lTensor_preserves_injective_linearMap g.toLinearMap hg
 
 namespace CommonOverfield
 

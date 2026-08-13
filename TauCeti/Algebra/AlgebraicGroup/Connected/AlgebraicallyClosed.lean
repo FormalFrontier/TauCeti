@@ -7,7 +7,7 @@ module
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
-import TauCeti.Algebra.TensorProduct.CommonOverfield
+import TauCeti.Algebra.TensorProduct.BaseChange
 
 /-!
 # Testing geometric connectedness over algebraically closed fields
