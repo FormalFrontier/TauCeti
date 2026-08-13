@@ -53,8 +53,11 @@ boundary correspondence, where the piece a crosscut cuts off from a Jordan domai
 small. `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short image
 crosscut in an arbitrarily small Jordan curve `J`; what turns that into a bound on the cut-off piece
 is that the piece is a connected set disjoint from `J` and not running off to infinity, hence inside
-`filledHull J`, hence no wider than `J`. That step is carried out in
-`TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean`.
+`filledHull J`, hence no wider than `J`. Knowing that it is the inside of `J` the piece falls on is
+a plane-separation statement about Jordan curves, which neither the pinned Mathlib nor
+`TauCeti/Topology/JordanCurve/` has; that step therefore waits on it, and what is proved here are
+the two facts it will consume, `TauCeti.IsPreconnected.subset_filledHull` and
+`TauCeti.diam_le_diam_of_subset_filledHull`.
 
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
