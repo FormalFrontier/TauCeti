@@ -185,7 +185,7 @@ shape in its first `k` rows. -/
 theorem card_filter_rowIndex_lt (t : YoungTableau μ) (k : ℕ) :
     (Finset.univ.filter fun x => rowIndex t x < k).card = (μ.rowLens.take k).sum := by
   classical
-  rw [TauCeti.YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
+  rw [YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
   refine Finset.card_bij (fun x _ => ((t.symm x : ↥μ.cells) : ℕ × ℕ)) (fun x hx => ?_)
     (fun x _ y _ h => t.symm.injective (Subtype.ext h)) fun c hc => ?_
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and, rowIndex_def] at hx

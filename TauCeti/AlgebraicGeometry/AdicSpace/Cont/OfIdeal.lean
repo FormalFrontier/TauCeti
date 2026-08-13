@@ -12,15 +12,16 @@ import TauCeti.RingTheory.Huber.Continuous.OfCofinal
 import TauCeti.RingTheory.Valuation.Continuous.TopologicallyNilpotent
 
 /-!
-# Continuous points in `Spv (A, I)`: Wedhorn's Theorem 7.10
+# Continuous points in `Spv (A, I)`: Wedhorn's Theorem 7.10 and Corollary 7.12
 
-**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Theorem 7.10.**
+**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Theorem 7.10 and Corollary 7.12.**
 
 Theorem 7.10 identifies `Cont A` inside `Spv (A, IA)` for a pair of definition `(A₀, I)`, as the
 locus where additionally `v(a) < 1` for every `a ∈ I`. This file proves the two conjuncts of the
 inclusion — a continuous point lies in `Spv (A, IA)`, and it is sub-unit on the ideal of
 definition — then the converse, and assembles the identification
-`cont_eq_spvOfIdeal_inter_setOfPred_forall_vlt_one`.
+`cont_eq_spvOfIdeal_inter_setOfPred_forall_vlt_one`. Corollary 7.12 follows: the sub-unit
+condition is closed in `Spv A`, so `Cont A` is a closed subset of the subspace `Spv (A, IA)`.
 
 For the inclusion, the argument needs no estimate and no pair of definition either. Membership in
 `Spv (A, I)` is `cΓ_v(I) = Γ_v`, which by Lemma 7.4 follows from cofinality of `v` at every
@@ -51,10 +52,12 @@ nilpotent — the nilpotence is a property of the generators, not of the ideal t
   `TauCeti.Huber.PairOfDefinition.isContinuous_of_forall_cofinalValue`.
 * `TauCeti.ValuationSpectrum.cont_eq_spvOfIdeal_inter_setOfPred_forall_vlt_one` : **Theorem 7.10**,
   the resulting identification of `Cont A` inside `Spv (A, IA)`.
+* `TauCeti.ValuationSpectrum.isClosed_val_preimage_cont` : **Corollary 7.12**, `Cont A` is a
+  closed subset of `Spv (A, IA)`.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Theorem 7.10 and Lemma 7.4.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Theorem 7.10, Corollary 7.12, and Lemma 7.4.
 -/
 
 public section
@@ -116,13 +119,10 @@ theorem not_vle_one_of_isContinuous_of_mem_idealOfDefinition (P : PairOfDefiniti
     {v : Spv A} (hv : v.IsContinuous) {a : P.ringOfDefinition}
     (ha : a ∈ P.idealOfDefinition) :
     ¬ v.toValuativeRel.vle 1 (a : A) := by
-  intro h
   have hlt : v.valuation (a : A) < 1 :=
     ((isContinuous_def v).mp hv).lt_one_of_isTopologicallyNilpotent
       (P.isTopologicallyNilpotent_of_mem_idealOfDefinition ha)
-  have hle : (1 : _) ≤ v.valuation (a : A) := by
-    simpa using (valuation_le_iff v 1 (a : A)).mpr h
-  exact absurd hle (not_le.mpr hlt)
+  exact (valuation_lt_iff v (a : A) 1).mp (by simpa using hlt)
 
 /-- **Wedhorn Theorem 7.10, the converse inclusion.** A point of `Spv (A, IA)` that is sub-unit
 on the ideal of definition is continuous.
@@ -164,6 +164,23 @@ theorem cont_eq_spvOfIdeal_inter_setOfPred_forall_vlt_one (P : PairOfDefinition 
       not_vle_one_of_isContinuous_of_mem_idealOfDefinition P ((mem_cont_iff v).mp hv) ha⟩
   · rintro ⟨hmem, h1⟩
     exact (mem_cont_iff v).mpr (isContinuous_of_mem_spvOfIdeal_of_forall_vlt_one P hmem h1)
+
+/-- **Wedhorn Corollary 7.12.** `Cont A` is a closed subset of `Spv (A, IA)`: by Theorem 7.10
+its trace on the subspace is the sub-unit locus of the ideal of definition, which is closed
+already in `Spv A`. -/
+theorem isClosed_val_preimage_cont (P : PairOfDefinition A) :
+    IsClosed (Subtype.val ⁻¹' cont A : Set (spvOfIdeal P.extendedIdealOfDefinition
+      ⟨P.extendedIdealOfDefinition, P.fg_extendedIdealOfDefinition, rfl⟩)) := by
+  rw [cont_eq_spvOfIdeal_inter_setOfPred_forall_vlt_one P, Set.preimage_inter,
+    Subtype.coe_preimage_self, Set.univ_inter]
+  have h : {v : Spv A | ∀ a ∈ P.idealOfDefinition,
+      v.toValuativeRel.vlt ((a : P.ringOfDefinition) : A) 1}
+      = {v : Spv A | ∀ b ∈ ((↑) : P.ringOfDefinition → A) ''
+          (P.idealOfDefinition : Set P.ringOfDefinition), v.toValuativeRel.vlt b 1} := by
+    ext v
+    simp
+  rw [h]
+  exact (isClosed_setOfPred_forall_vlt_one _).preimage continuous_subtype_val
 
 end TauCeti.ValuationSpectrum
 

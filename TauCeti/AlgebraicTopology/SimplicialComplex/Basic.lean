@@ -15,8 +15,6 @@ complex API.
 
 public section
 
-namespace TauCeti
-
 namespace AbstractSimplicialComplex
 
 /-- A face of an abstract simplicial complex, bundled with its membership proof. -/
@@ -32,4 +30,3 @@ theorem mem_toPreAbstractSimplicialComplex {ι : Type*} {K : AbstractSimplicialC
 
 end AbstractSimplicialComplex
 
-end TauCeti

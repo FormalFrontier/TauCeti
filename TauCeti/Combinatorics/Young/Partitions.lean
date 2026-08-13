@@ -13,7 +13,7 @@ public import TauCeti.Combinatorics.Young.Diagram
 
 This file gives the equivalence between partitions of `n` and Young diagrams with `n` cells.  It
 sorts the multiset of parts into decreasing row lengths, using
-`TauCeti.Nat.Partition.equivSortedParts` and `TauCeti.YoungDiagram.sum_rowLens`.
+`TauCeti.Nat.Partition.equivSortedParts` and `YoungDiagram.sum_rowLens`.
 -/
 
 public section
