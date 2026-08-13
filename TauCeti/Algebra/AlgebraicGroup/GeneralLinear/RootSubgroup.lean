@@ -4,10 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `TauCeti.GeneralLinear.pointsMulEquiv` is the body of the root subgroup homomorphism.
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
+-- The named scheme presentation and its points equivalence describe the target.
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 -- `TauCeti.AdditiveGroup.gaPointsMulEquiv` and the coordinate Hopf algebra of `𝔾ₐ` are its source.
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
+-- Full faithfulness recovers the coordinate morphism from its natural action on points.
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 -- `TauCeti.transvectionUnit` is the matrix the homomorphism is built from.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 
@@ -20,10 +22,11 @@ schemes
 
 `xᵢⱼ : 𝔾ₐ → GLₙ`
 
-over an arbitrary commutative base ring `R`, in the functor-of-points formulation: on the
+over an arbitrary commutative base ring `R`. On the
 `A`-points of `𝔾ₐ`, which are the additive group of `A`, it is the map `c ↦ xᵢⱼ(c)` into the
-`A`-points of `GLₙ`, which are `GL n A`, and `TauCeti.GeneralLinear.rootSubgroup` packages the
-family over all `A` as a morphism of the two representable group functors.
+`A`-points of `GLₙ`, which are `GL n A`. The natural family of point maps determines a
+coordinate Hopf-algebra morphism by full faithfulness of the functor of points, and relative
+spectrum gives `TauCeti.GeneralLinear.rootSubgroup` as a morphism of affine group schemes.
 
 Reading the index pair `(i, j)` as the root `εᵢ - εⱼ` of the diagonal torus of `GLₙ`, this is the
 **root subgroup** of that root. The relations it satisfies — additivity in the parameter, the
@@ -39,7 +42,9 @@ Chevalley–Demazure group of type `A` base changes from.
 
 * `TauCeti.GeneralLinear.rootSubgroupPoints`: the homomorphism on `A`-points, from the additive
   group of `A` to `GL n A`, read through the two points equivalences.
-* `TauCeti.GeneralLinear.rootSubgroup`: the resulting morphism of representable group functors
+* `TauCeti.GeneralLinear.rootSubgroupCoordinateMap`: the corresponding coordinate Hopf-algebra
+  morphism `O(GLₙ) → O(𝔾ₐ)`.
+* `TauCeti.GeneralLinear.rootSubgroup`: the resulting affine group-scheme morphism
   `𝔾ₐ → GLₙ`.
 
 ## Main results
@@ -47,8 +52,7 @@ Chevalley–Demazure group of type `A` base changes from.
 * `TauCeti.GeneralLinear.pointsMulEquiv_rootSubgroupPoints`: the homomorphism on points is the
   elementary matrix of the parameter.
 * `TauCeti.GeneralLinear.rootSubgroupPoints_injective`: the homomorphism on points is injective.
-* `TauCeti.GeneralLinear.mapValue_rootSubgroupPoints`: it is natural in the value algebra, which
-  is what makes `TauCeti.GeneralLinear.rootSubgroup` a morphism of group functors.
+* `TauCeti.GeneralLinear.mapValue_rootSubgroupPoints`: it is natural in the value algebra.
 
 ## References
 
@@ -125,10 +129,9 @@ end Points
 
 section Functor
 
-/-- **The root subgroup of `GLₙ` attached to the root `εᵢ - εⱼ`**: the homomorphism of affine group
-schemes `𝔾ₐ → GLₙ` whose value on an `A`-point `c` of `𝔾ₐ` is the elementary matrix `xᵢⱼ(c)`. It is
-a morphism of the functors of points of the two coordinate Hopf algebras. -/
-noncomputable def rootSubgroup (hij : i ≠ j) :
+/-- The natural transformation of group-valued functors whose component at an `A`-point sends
+`c` to the elementary matrix `xᵢⱼ(c)`. -/
+noncomputable def rootSubgroupPointsMap (hij : i ≠ j) :
     HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
       HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N) where
   app A := GrpCat.ofHom (rootSubgroupPoints (A := A) hij)
@@ -136,28 +139,88 @@ noncomputable def rootSubgroup (hij : i ≠ j) :
     ext f
     exact (mapValue_rootSubgroupPoints φ.hom hij f).symm
 
-/-- The component of the root subgroup morphism at a value algebra is the homomorphism on
-points. -/
+/-- The component of the natural points map at a value algebra is the root subgroup
+homomorphism on points. -/
 @[simp]
-theorem rootSubgroup_app (hij : i ≠ j) (A : CommAlgCat.{w} R) :
-    (rootSubgroup (R := R) (N := N) hij).app A = GrpCat.ofHom (rootSubgroupPoints hij) :=
+theorem rootSubgroupPointsMap_app (hij : i ≠ j) (A : CommAlgCat.{w} R) :
+    (rootSubgroupPointsMap (R := R) (N := N) hij).app A =
+      GrpCat.ofHom (rootSubgroupPoints hij) :=
   (rfl)
 
-/-- Every component of the root subgroup morphism is injective on points. -/
-theorem rootSubgroup_app_injective (hij : i ≠ j) (A : CommAlgCat.{w} R) :
-    Function.Injective ((rootSubgroup (R := R) (N := N) hij).app A) := by
-  rw [rootSubgroup_app]
+/-- Every component of the natural points map is injective. -/
+theorem rootSubgroupPointsMap_app_injective (hij : i ≠ j) (A : CommAlgCat.{w} R) :
+    Function.Injective ((rootSubgroupPointsMap (R := R) (N := N) hij).app A) := by
+  rw [rootSubgroupPointsMap_app]
   exact rootSubgroupPoints_injective hij
 
-/-- The root subgroup morphism sends an `A`-point of `𝔾ₐ` to the elementary matrix of its
-parameter. -/
-theorem pointsMulEquiv_rootSubgroup_app (hij : i ≠ j) (A : CommAlgCat.{w} R)
+/-- The natural points map sends an `A`-point of `𝔾ₐ` to the elementary matrix of its parameter. -/
+theorem pointsMulEquiv_rootSubgroupPointsMap_app (hij : i ≠ j) (A : CommAlgCat.{w} R)
     (f : HopfAlgebra.points (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) A) :
-    pointsMulEquiv N ((rootSubgroup hij).app A f) =
+    pointsMulEquiv N ((rootSubgroupPointsMap hij).app A f) =
       transvectionUnit hij (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f)) :=
   pointsMulEquiv_rootSubgroupPoints hij f
 
 end Functor
+
+section Scheme
+
+/-- The coordinate morphism of the root subgroup, recovered from its natural action on points.
+Its direction is `O(GLₙ) → O(𝔾ₐ)`, opposite to the represented group-scheme morphism. -/
+noncomputable def rootSubgroupCoordinateMap (hij : i ≠ j) :
+    coordinateHopfAlgebra R N ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
+  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
+      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
+    (rootSubgroupPointsMap.{u, u} (R := R) (N := N) hij)).unop
+
+/-- Precomposition by the root-subgroup coordinate morphism is the previously constructed
+natural map on convolution points. -/
+theorem mapPointsFunctor_rootSubgroupCoordinateMap (hij : i ≠ j) :
+    (CommHopfAlgCat.mapPointsFunctor.{u, u, u}
+      (rootSubgroupCoordinateMap (R := R) (N := N) hij) :
+      HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
+        HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) =
+      (rootSubgroupPointsMap.{u, u} hij :
+        HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
+          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) := by
+  unfold rootSubgroupCoordinateMap
+  rw [← CommHopfAlgCat.pointsFunctor_map]
+  exact Functor.map_preimage
+    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
+      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+
+/-- On every same-universe value algebra, the map induced by the root-subgroup coordinate
+morphism is the elementary root subgroup homomorphism already constructed on points. -/
+@[simp]
+theorem mapPointsFunctor_rootSubgroupCoordinateMap_app (hij : i ≠ j)
+    (A : CommAlgCat.{u} R)
+    (f : HopfAlgebra.points (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) A) :
+    (CommHopfAlgCat.mapPointsFunctor
+      (rootSubgroupCoordinateMap (R := R) (N := N) hij)).app A f =
+      rootSubgroupPoints hij f := by
+  rw [mapPointsFunctor_rootSubgroupCoordinateMap, rootSubgroupPointsMap_app]
+  rfl
+
+/-- **The root subgroup of `GLₙ` attached to the root `εᵢ - εⱼ`**: the affine
+group-scheme morphism `𝔾ₐ → GLₙ` whose value on points is `c ↦ xᵢⱼ(c)`. -/
+noncomputable def rootSubgroup (hij : i ≠ j) :
+    AdditiveGroup.groupScheme R ⟶ groupScheme R N :=
+  eqToHom (AdditiveGroup.groupScheme_def R) ≫
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+      (rootSubgroupCoordinateMap hij).op ≫
+    eqToHom (groupScheme_def R N).symm
+
+/-- The root subgroup is relative spectrum applied contravariantly to its coordinate
+Hopf-algebra morphism, transported across the named presentations of `𝔾ₐ` and `GLₙ`. -/
+theorem rootSubgroup_def (hij : i ≠ j) :
+    rootSubgroup (R := R) (N := N) hij =
+      eqToHom (AdditiveGroup.groupScheme_def R) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (rootSubgroupCoordinateMap hij).op ≫
+        eqToHom (groupScheme_def R N).symm := by
+  unfold rootSubgroup
+  rfl
+
+end Scheme
 
 end GeneralLinear
 
