@@ -46,6 +46,7 @@ Chevalley–Demazure group of type `A` base changes from.
 
 * `TauCeti.GeneralLinear.pointsMulEquiv_rootSubgroupPoints`: the homomorphism on points is the
   elementary matrix of the parameter.
+* `TauCeti.GeneralLinear.rootSubgroupPoints_injective`: the homomorphism on points is injective.
 * `TauCeti.GeneralLinear.mapValue_rootSubgroupPoints`: it is natural in the value algebra, which
   is what makes `TauCeti.GeneralLinear.rootSubgroup` a morphism of group functors.
 
@@ -92,6 +93,21 @@ theorem pointsMulEquiv_rootSubgroupPoints (hij : i ≠ j)
   rw [rootSubgroupPoints]
   simp
 
+/-- The root subgroup homomorphism on points is injective. -/
+theorem rootSubgroupPoints_injective (hij : i ≠ j) :
+    Function.Injective (rootSubgroupPoints (R := R) (A := A) hij) := by
+  intro f g h
+  apply (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A)).injective
+  have h' :
+      transvectionUnit hij
+          (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A) f)) =
+        transvectionUnit hij
+          (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A) g)) := by
+    rw [← pointsMulEquiv_rootSubgroupPoints, ← pointsMulEquiv_rootSubgroupPoints]
+    exact congrArg (pointsMulEquiv (R := R) (A := A) N) h
+  simpa only [ofAdd_toAdd] using
+    congrArg Multiplicative.ofAdd (transvectionUnit_injective (A := A) hij h')
+
 /-- The root subgroup homomorphism is natural in the value algebra: the elementary matrix of the
 image parameter is the image of the elementary matrix. -/
 theorem mapValue_rootSubgroupPoints (φ : A →ₐ[R] B) (hij : i ≠ j)
@@ -126,6 +142,12 @@ points. -/
 theorem rootSubgroup_app (hij : i ≠ j) (A : CommAlgCat.{w} R) :
     (rootSubgroup (R := R) (N := N) hij).app A = GrpCat.ofHom (rootSubgroupPoints hij) :=
   (rfl)
+
+/-- Every component of the root subgroup morphism is injective on points. -/
+theorem rootSubgroup_app_injective (hij : i ≠ j) (A : CommAlgCat.{w} R) :
+    Function.Injective ((rootSubgroup (R := R) (N := N) hij).app A) := by
+  change Function.Injective (rootSubgroupPoints (R := R) (A := A) hij)
+  exact rootSubgroupPoints_injective hij
 
 /-- The root subgroup morphism sends an `A`-point of `𝔾ₐ` to the elementary matrix of its
 parameter. -/

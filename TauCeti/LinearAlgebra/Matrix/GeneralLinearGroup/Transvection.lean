@@ -114,6 +114,7 @@ theorem transvection_mul_transvection_swap (hij : i ≠ j) (hil : i ≠ l) (c d 
 
 /-- A matrix unit conjugated between two diagonal matrices is the matrix unit rescaled by the two
 corresponding diagonal entries. -/
+@[simp]
 theorem diagonal_mul_single_mul_diagonal (v w : n → A) (i j : n) (c : A) :
     diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
   ext a b
@@ -167,6 +168,7 @@ theorem transvectionUnit_zero (hij : i ≠ j) : transvectionUnit hij (0 : A) = 1
   rw [transvectionUnit_eq_toGL, SpecialLinearGroup.transvection_coeff_zero, map_one]
 
 /-- The parameter of a transvection is additive: the root subgroup is one-parameter. -/
+@[simp]
 theorem transvectionUnit_add (hij : i ≠ j) (c d : A) :
     transvectionUnit hij (c + d) = transvectionUnit hij c * transvectionUnit hij d := by
   simp only [transvectionUnit_eq_toGL, SpecialLinearGroup.transvection_add, map_mul]
@@ -200,9 +202,15 @@ theorem transvectionHom_apply (hij : i ≠ j) (c : Multiplicative A) :
 root subgroup is a copy of the additive group of `A` inside `GL n A`, not a quotient of it. -/
 theorem transvectionUnit_injective (hij : i ≠ j) :
     Function.Injective fun c : A => transvectionUnit hij c := fun c d h => by
-  have h' : (transvectionUnit hij c : Matrix n n A) = transvectionUnit hij d := by
-    simp only [show transvectionUnit hij c = transvectionUnit hij d from h]
+  have h' := congrArg Units.val h
   simpa [transvection, Matrix.one_apply, Matrix.single_apply, hij] using congrFun₂ h' i j
+
+/-- The bundled root subgroup homomorphism is injective. -/
+theorem transvectionHom_injective (hij : i ≠ j) :
+    Function.Injective (transvectionHom (A := A) hij) := by
+  intro c d h
+  simpa only [ofAdd_toAdd] using
+    congrArg Multiplicative.ofAdd (transvectionUnit_injective hij h)
 
 /-- Transvections at index pairs that do not chain commute in `GL n A`. -/
 theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
