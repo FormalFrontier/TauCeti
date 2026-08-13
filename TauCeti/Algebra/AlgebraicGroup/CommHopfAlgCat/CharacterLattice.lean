@@ -151,7 +151,7 @@ theorem isGroupLikeElem_galoisScalarMap (σ : Field.absoluteGaloisGroup k)
     rw [counit_galoisScalarMap, hx.counit_eq_one, map_one]
   comul_eq_tmul_self := by
     rw [comul_galoisScalarMap, hx.comul_eq_tmul_self, TensorProduct.map_tmul]
-    rfl
+    simp only [galoisScalarSemilinearMap_apply]
 
 /-- The absolute Galois group acts on a scalar-extended coordinate ring by semilinear ring
 automorphisms. -/

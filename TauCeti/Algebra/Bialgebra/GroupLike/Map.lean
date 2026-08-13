@@ -52,6 +52,7 @@ theorem map_id : map (_root_.BialgHom.id R A) = MonoidHom.id (_root_.GroupLike R
   rfl
 
 /-- Mapping group-like elements respects composition of bialgebra morphisms. -/
+@[simp]
 theorem map_comp {C : Type*} [Semiring C] [Bialgebra R C]
     (g : B →ₐc[R] C) (f : A →ₐc[R] B) :
     map (g.comp f) = (map g).comp (map f) := by
@@ -73,11 +74,26 @@ theorem mapEquiv_apply_val (e : A ≃ₐc[R] B) (x : _root_.GroupLike R A) :
     (mapEquiv e x).val = e x.val :=
   (rfl)
 
-/-- The inverse of `mapEquiv` is induced by the inverse bialgebra equivalence. -/
+/-- Mapping group-like elements along the identity equivalence is the identity equivalence. -/
 @[simp]
-theorem mapEquiv_symm_apply_val (e : A ≃ₐc[R] B) (x : _root_.GroupLike R B) :
-    ((mapEquiv e).symm x).val = e.symm x.val :=
-  (rfl)
+theorem mapEquiv_refl : mapEquiv (_root_.BialgEquiv.refl R A) = MulEquiv.refl _ := by
+  ext x
+  rfl
+
+/-- Mapping group-like elements along a composite equivalence is the composite of the maps. -/
+@[simp]
+theorem mapEquiv_trans {C : Type*} [Semiring C] [Bialgebra R C]
+    (e : A ≃ₐc[R] B) (f : B ≃ₐc[R] C) :
+    mapEquiv (e.trans f) = (mapEquiv e).trans (mapEquiv f) := by
+  ext x
+  rfl
+
+/-- The inverse of the induced equivalence is induced by the inverse equivalence. -/
+@[simp]
+theorem mapEquiv_symm (e : A ≃ₐc[R] B) :
+    (mapEquiv e).symm = mapEquiv e.symm := by
+  ext x
+  rfl
 
 end GroupLike
 
