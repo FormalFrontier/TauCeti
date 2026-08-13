@@ -20,7 +20,7 @@ form
 `∑ᵢ ∑ⱼ cᵢ · conj cⱼ · charFun μ (tᵢ - tⱼ)`
 
 is a nonnegative real number (`charFun_sum_mul_conj_nonneg`), equivalently the matrix
-`(charFun μ (tᵢ - tⱼ))ᵢⱼ` is positive semidefinite (`charFun_posSemidef`). The proof is the
+`(charFun μ (tᵢ - tⱼ))ᵢⱼ` is positive semidefinite (`posSemidef_charFun`). The proof is the
 classical computation: the Hermitian form equals the honest integral
 
 `∫ y, ‖∑ᵢ cᵢ · exp (⟪y, tᵢ⟫ * I)‖² ∂μ`
@@ -121,7 +121,7 @@ theorem charFun_fintype_sum_mul_conj_nonneg {ι : Type*} [Fintype ι] (c : ι �
 
 /-- The matrix `(charFun μ (tᵢ - tⱼ))ᵢⱼ` of a finite measure is positive semidefinite: the
 matrix reformulation of the positive-definiteness of `charFun μ`. -/
-theorem charFun_posSemidef {ι : Type*} (t : ι → E) :
+theorem posSemidef_charFun {ι : Type*} (t : ι → E) :
     Matrix.PosSemidef fun i j => charFun μ (t i - t j) := by
   -- Lean does not unfold the semireducible function-to-matrix identification while elaborating
   -- the `PosSemidef` structure fields, so expose Mathlib's `Matrix.of` representation here.

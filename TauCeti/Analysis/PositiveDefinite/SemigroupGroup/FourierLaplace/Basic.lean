@@ -76,7 +76,8 @@ theorem laplaceAtom_add (p t u : ℝ≥0) :
 theorem posSemidef_laplaceAtom (p : ℝ≥0) :
     Matrix.PosSemidef fun t u : ℝ≥0 => laplaceAtom p (t + u) := by
   simp_rw [laplaceAtom_add]
-  exact posSemidef_conj_mul (fun t : ℝ≥0 => laplaceAtom p t)
+  simpa only [RCLike.star_def] using
+    posSemidef_star_mul (fun t : ℝ≥0 => laplaceAtom p t)
 
 /-- Laplace atoms are continuous in the nonnegative time variable. -/
 theorem continuous_laplaceAtom (p : ℝ≥0) : Continuous (laplaceAtom p) := by

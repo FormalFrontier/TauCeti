@@ -24,7 +24,7 @@ Bochner's theorem"); the representing-measure half is supplied by `TauCeti.bochn
 The positive-definiteness is not proved from scratch: Mathlib's
 `ProbabilityTheory.charFun_stdGaussian` computes the characteristic function of the standard
 Gaussian measure on `V` to be `t ↦ exp (-‖t‖²/2)`, and
-`TauCeti.charFun_posSemidef` (the finite-measure Fourier-transform correspondence)
+`TauCeti.posSemidef_charFun` (the finite-measure Fourier-transform correspondence)
 already records that a characteristic function has a positive-definite kernel. Rescaling the
 argument by `√(2c)` turns `exp (-‖·‖²/2)` into `exp (-c‖·‖²)`. The standard Gaussian measure
 needs a finite-dimensional space, but the kernel form transfers to an arbitrary real
@@ -120,7 +120,7 @@ reduces to this one on the span of a finite family of points. -/
 private theorem posSemidef_cexp_neg_mul_sq_norm_of_finiteDimensional {c : ℝ}
     (hc : 0 ≤ c) :
     Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
-  have hscaled := (charFun_posSemidef (μ := stdGaussian V) (fun x : V => x)).submatrix
+  have hscaled := (posSemidef_charFun (μ := stdGaussian V) (fun x : V => x)).submatrix
     (fun a : V => Real.sqrt (2 * c) • a)
   have heq : (fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)))
       = fun a b : V => charFun (stdGaussian V)

@@ -57,7 +57,7 @@ here. The continuity theory and Bochner's representation theorem are later miles
   positive-definite kernel `fun a b => F (a + star b)`.
 * `TauCeti.IsPositiveDefinite.of_posSemidef`: conversely, if the kernel
   `fun a b => F (a + star b)` is positive definite then `F` is positive definite.
-* `TauCeti.IsPositiveDefinite.gram_posSemidef`: Gram matrices of a positive-definite
+* `TauCeti.IsPositiveDefinite.posSemidef_gram`: Gram matrices of a positive-definite
   function are positive semidefinite.
 * `TauCeti.IsPositiveDefinite.add`, `TauCeti.IsPositiveDefinite.sum`,
   `TauCeti.IsPositiveDefinite.const_mul`, `TauCeti.IsPositiveDefinite.mul`,
@@ -255,7 +255,7 @@ theorem const_mul {k : ℂ} (hk : 0 ≤ k) (hF : IsPositiveDefinite F) :
     hF.posSemidef.smul hk
 
 /-- The Gram matrix of a positive-definite function is positive semidefinite. -/
-theorem gram_posSemidef (hF : IsPositiveDefinite F) {ι : Type*} (v : ι → M) :
+theorem posSemidef_gram (hF : IsPositiveDefinite F) {ι : Type*} (v : ι → M) :
     Matrix.PosSemidef (fun i j => F (v i + star (v j))) :=
   hF.posSemidef.submatrix v
 

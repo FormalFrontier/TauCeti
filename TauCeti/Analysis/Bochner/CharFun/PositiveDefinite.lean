@@ -46,7 +46,7 @@ variable {E : Type*} [SeminormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-- With an explicit `star = -` involution, the kernel associated to `charFun μ` by the generic
 positive-definite-function construction, `(a, b) ↦ charFun μ (a + star b)`, is positive
 definite. Under `hstar` this kernel coincides with the translation-invariant kernel supplied by
-`charFun_posSemidef`. -/
+`posSemidef_charFun`. -/
 theorem posSemidef_charFun_star_kernel_of_star_eq_neg [StarAddMonoid E]
     (hstar : ∀ x : E, star x = -x) :
     Matrix.PosSemidef (fun a b : E => MeasureTheory.charFun μ (a + star b)) := by
@@ -54,7 +54,7 @@ theorem posSemidef_charFun_star_kernel_of_star_eq_neg [StarAddMonoid E]
       = fun a b : E => MeasureTheory.charFun μ (a - b) := by
     simp only [hstar, sub_eq_add_neg]
   rw [h]
-  simpa using charFun_posSemidef (μ := μ) (fun x : E => x)
+  simpa using posSemidef_charFun (μ := μ) (fun x : E => x)
 
 /-- The characteristic function of a finite measure is positive definite for any additive-group
 involution that is explicitly negation. This is the generic-predicate form of
