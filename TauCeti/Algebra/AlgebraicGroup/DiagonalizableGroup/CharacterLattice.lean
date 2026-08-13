@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
+public import TauCeti.Algebra.Bialgebra.GroupLike.Map
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.BaseChange
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 

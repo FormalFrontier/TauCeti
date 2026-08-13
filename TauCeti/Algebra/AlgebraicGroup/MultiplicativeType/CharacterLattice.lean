@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 
 /-!

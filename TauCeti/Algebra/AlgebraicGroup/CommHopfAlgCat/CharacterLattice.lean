@@ -6,7 +6,7 @@ module
 
 public import Mathlib.FieldTheory.AbsoluteGaloisGroup
 public import Mathlib.Algebra.Category.CommHopfAlgCat
-public import TauCeti.Algebra.Bialgebra.GroupLike.Map
+public import Mathlib.RingTheory.HopfAlgebra.GroupLike
 
 /-!
 # Geometric character groups and their Galois action

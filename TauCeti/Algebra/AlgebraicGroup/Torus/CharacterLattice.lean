@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
+public import TauCeti.Algebra.Bialgebra.GroupLike.Map
+public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 
 /-!
 # The character lattice of a torus
@@ -23,8 +25,6 @@ non-split tori.
 
 * `TauCeti.CommHopfAlgCat.geometricCharacterGroup_fg_of_torus`: the geometric character group of
   a torus is finitely generated.
-* `TauCeti.splitTorusCharacterLatticeEquiv`: the intrinsic character lattice of a split
-  presentation is its defining free abelian group.
 * `TauCeti.exists_characterLattice_addEquiv_of_torus`: the character lattice of any torus is
   finite-rank free.
 
@@ -55,17 +55,6 @@ theorem geometricCharacterGroup_fg_of_torus
     (torusCommHopfAlgProperty.multiplicativeType k H hH)
 
 end CommHopfAlgCat
-
-/-- The additive character lattice of a split-torus presentation is its defining finite-rank
-free `ℤ`-module. -/
-noncomputable def splitTorusCharacterLatticeEquiv
-    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
-    CommHopfAlgCat.characterLattice
-        (DiagonalizableGroup.coordinateRing k
-          (SplitTorus.characterGroup σ)).obj ≃+ (σ →₀ ℤ) :=
-  (MulEquiv.toAdditive (DiagonalizableGroup.geometricCharacterGroupEquiv k
-    (SplitTorus.characterGroup σ))).trans
-    (AddEquiv.additiveMultiplicative (σ →₀ ℤ))
 
 /-- The character lattice of a torus is a finite-rank free abelian group. The equivalence is
 noncanonical: it uses the splitting over the chosen algebraic closure from the torus predicate. -/
