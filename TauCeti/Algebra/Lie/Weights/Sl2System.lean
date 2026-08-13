@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.Weights.RootSystem
+public import TauCeti.Algebra.Lie.Weights.Killing
 
 /-!
 # Root vectors normalised against the coroots
@@ -35,8 +35,8 @@ Beyond the definition and the existence theorem, the file records what a system 
 triple at each root, the resulting nonvanishing and the identification of each root space as the
 line it spans, the Cartan relation `⁅β^∨, x α⁆ = α(β^∨) • x α`, the grading `⁅x α, x β⁆ ∈ L₍α+β₎`
 with its vanishing when `α + β` is not a root, that the root vectors together with `H` span `L`,
-the Killing pairing of opposite root vectors, and that two systems differ by scalars `c α` subject
-to `c α * c (-α) = 1`.
+the Killing pairing of opposite normalized root vectors, and that two systems differ by scalars
+`c α` subject to `c α * c (-α) = 1`.
 
 ## What this is not
 
@@ -58,8 +58,6 @@ defined once the root vectors are.
 * `TauCeti.exists_isSl2System`: such a family exists.
 * `TauCeti.IsSl2System.isSl2Triple`: `(α^∨, x α, x (-α))` is an `sl₂` triple.
 * `TauCeti.IsSl2System.toSubmodule_rootSpace_eq_span`: `x α` spans the root space of `α`.
-* `TauCeti.killingForm_ne_zero_of_mem_rootSpace`: nonzero vectors in opposite root spaces have
-  nonzero Killing pairing.
 * `TauCeti.IsSl2System.killingForm_root_neg_eq`: the Killing pairing of opposite normalized root
   vectors is `2 / α((cartanEquivDual H)⁻¹ α)`.
 * `TauCeti.IsSl2System.lie_coroot`: the Cartan relation.
@@ -86,22 +84,6 @@ open LieAlgebra LieModule LieAlgebra.IsKilling
 variable {K L : Type*} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
-
-/-- Nonzero vectors in opposite root spaces have nonzero Killing pairing. -/
-theorem killingForm_ne_zero_of_mem_rootSpace {α : Weight K H L} (hα : α.IsNonZero) {e f : L}
-    (he : e ∈ rootSpace H α) (he₀ : e ≠ 0) (hf : f ∈ rootSpace H (-α)) (hf₀ : f ≠ 0) :
-    killingForm K L e f ≠ 0 := by
-  intro hef
-  have hspan := LieAlgebra.IsKilling.toSubmodule_rootSpace_eq_span (-α) hα.neg f hf₀ hf
-  have heker := mem_ker_killingForm_of_mem_rootSpace_of_forall_rootSpace_neg K L H he fun y hy ↦ by
-    have hspan' : (rootSpace H (-((α : Weight K H L) : H → K))).toSubmodule = K ∙ f := by
-      simpa only [Weight.coe_neg] using hspan
-    change y ∈ (rootSpace H (-((α : Weight K H L) : H → K))).toSubmodule at hy
-    rw [hspan'] at hy
-    obtain ⟨t, rfl⟩ := Submodule.mem_span_singleton.mp hy
-    simp [hef]
-  rw [ker_killingForm_eq_bot] at heker
-  exact he₀ heker
 
 /-- A family of root vectors normalised against the coroots: `x α` lies in the root space of `α`,
 and `⁅x α, x (-α)⁆` is the coroot `α^∨` for every root `α`. Equivalently, `(α^∨, x α, x (-α))` is
@@ -150,9 +132,7 @@ theorem killingForm_root_neg_eq (hα : α.IsNonZero) :
   have hdual : ((cartanEquivDual H).symm α : L) ≠ 0 := by
     simpa only [ne_eq, ZeroMemClass.coe_eq_zero] using fun hzero ↦
       root_apply_cartanEquivDual_symm_ne_zero hα (by rw [hzero, map_zero])
-  apply smul_left_injective K hdual
-  change killingForm K L (x α) (x (-α)) • ((cartanEquivDual H).symm α : L) =
-    (2 * (α ((cartanEquivDual H).symm α))⁻¹) • ((cartanEquivDual H).symm α : L)
+  rw [← (smul_left_injective K hdual).eq_iff]
   rw [← lie_eq_killingForm_smul_of_mem_rootSpace_of_mem_rootSpace_neg
     (hx.mem_rootSpace α) (hx.mem_rootSpace (-α)), hx.lie_neg α hα, coroot]
   rw [← Nat.cast_smul_eq_nsmul K, smul_smul, Submodule.coe_smul_of_tower]
