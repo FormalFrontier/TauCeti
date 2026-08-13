@@ -6,21 +6,18 @@ Authors: Codex
 module
 
 public import Mathlib.RingTheory.Bialgebra.TensorProduct
-public import Mathlib.RingTheory.Binomial
 public import Mathlib.RingTheory.HopfAlgebra.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Antipode
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Bialgebra
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
-public import TauCeti.Algebra.Lie.UniversalEnveloping.KostantForm
-public import TauCeti.RingTheory.DividedPowers.Associative
 
 /-!
 # The Hopf algebra structure on a universal enveloping algebra
 
 The standard bialgebra structure on a universal enveloping algebra is a Hopf algebra. Its
 antipode reverses products and negates the canonical Lie generators. This file joins the
-independently useful bialgebra and antipode constructions and computes the antipode on the two
-families used to generate the Kostant integral form.
+independently useful bialgebra and antipode constructions: the antipode is a two-sided
+convolution inverse of the identity.
 
 The Hopf instance uses Mathlib's `HopfAlgebra.ofConvInverse`; multiplication of coalgebra
 representations is handled by Mathlib's `Coalgebra.Repr.mul`.
@@ -30,16 +27,13 @@ representations is handled by Mathlib's `Coalgebra.Repr.mul`.
 * `TauCeti.UniversalEnvelopingAlgebra.instHopfAlgebra`: the canonical Hopf algebra structure.
 * `TauCeti.UniversalEnvelopingAlgebra.hopfAntipode_eq_antipode`: the Hopf antipode is the
   previously constructed universal-enveloping antipode.
-* `TauCeti.UniversalEnvelopingAlgebra.antipode_dividedPower_ι`: the antipode of a divided-power
-  generator of the Kostant form.
-* `TauCeti.UniversalEnvelopingAlgebra.antipode_choose_ι_succ`: the antipode of a Cartan-binomial
-  generator, expressed as an integral combination of Cartan-binomial generators.
 
 ## Roadmap
 
 This is a prerequisite for the Chevalley--Demazure construction in Layer 9 of the
 ReductiveGroups roadmap. The Kostant integral form must be stable under comultiplication, counit,
-and antipode before it can supply the integral Hopf data used in that construction.
+and antipode before it can supply the integral Hopf data used in that construction; the ambient
+Hopf structure is what those operations restrict from.
 
 ## References
 
@@ -233,109 +227,5 @@ theorem hopfAntipode_ι (x : L) :
       -_root_.UniversalEnvelopingAlgebra.ι R x := by
   rw [hopfAntipode_eq_antipode]
   exact antipode_ι R x
-
-/-- The antipode commutes with the descending Pochhammer polynomial evaluated at an arbitrary
-element. Although the antipode reverses products, the factors of `descPochhammer` evaluated at a
-single element commute, so the reversal has no effect. -/
-theorem antipode_descPochhammer (a : U) (n : ℕ) :
-    antipode R ((descPochhammer ℤ n).smeval a) =
-      (descPochhammer ℤ n).smeval (antipode R a) := by
-  induction n with
-  | zero =>
-      simp [descPochhammer_zero]
-  | succ n ih =>
-      rw [descPochhammer_succ_right, Polynomial.smeval_mul,
-        antipode_mul_antidistrib, ih, Polynomial.smeval_sub, Polynomial.smeval_X,
-        Polynomial.smeval_natCast]
-      simp only [map_sub]
-      rw [Polynomial.smeval_mul, Polynomial.smeval_sub, Polynomial.smeval_X,
-        Polynomial.smeval_natCast]
-      simp only [pow_one, pow_zero, nsmul_one]
-      have hn : antipode R (n : U) = (n : U) := by
-        rw [← map_natCast (algebraMap R U) n]
-        exact antipode_algebraMap R (n : R)
-      rw [hn]
-      have hc := Polynomial.smeval_commute ℤ (Polynomial.X - (n : Polynomial ℤ))
-        (descPochhammer ℤ n) (Commute.refl (antipode R a))
-      have heval :
-          (Polynomial.X - (n : Polynomial ℤ)).smeval (antipode R a) =
-            antipode R a - (n : U) := by
-        simp [Polynomial.smeval_sub, Polynomial.smeval_X, Polynomial.smeval_natCast]
-      rw [heval] at hc
-      exact hc.eq
-
-section Rational
-
-variable {L : Type v} [LieRing L] [LieAlgebra ℚ L]
-
-local notation "Uℚ" => _root_.UniversalEnvelopingAlgebra ℚ L
-
--- The `ℚ≥0`-action restricted along `algebraMap ℚ≥0 ℚ` is what makes the `BinomialRing`
--- machinery available on `Uℚ`; it is the same instance the Kostant form is elaborated with.
-attribute [local instance] moduleNNRat BinomialRing.toIsAddTorsionFree
-
-open Polynomial
-
-/-- The antipode commutes with divided powers of an arbitrary element. Although the antipode
-reverses products, a power involves only one element, so reversal has no effect. -/
-@[simp]
-theorem antipode_dividedPower (n : ℕ) (a : Uℚ) :
-    antipode ℚ (Associative.dividedPower n a) =
-      Associative.dividedPower n (antipode ℚ a) := by
-  rw [Associative.dividedPower_def, map_smul, antipode_pow,
-    Associative.dividedPower_def]
-
-/-- The antipode of a divided-power Lie generator has the integral coefficient `(-1) ^ n`.
-This is the first generator family of the Kostant form. -/
-theorem antipode_dividedPower_ι (x : L) (n : ℕ) :
-    antipode ℚ
-        (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) =
-      (-1 : ℚ) ^ n •
-        Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) := by
-  rw [antipode_dividedPower, antipode_ι, Associative.dividedPower_neg]
-
-/-- The antipode commutes with the binomial polynomial of an arbitrary element. -/
-@[simp]
-theorem antipode_choose (a : Uℚ) (n : ℕ) :
-    antipode ℚ (Ring.choose a n) = Ring.choose (antipode ℚ a) n := by
-  apply (nsmul_right_inj (Nat.factorial_ne_zero n)).mp
-  rw [← map_nsmul, ← Ring.descPochhammer_eq_factorial_smul_choose,
-    ← Ring.descPochhammer_eq_factorial_smul_choose]
-  exact antipode_descPochhammer ℚ L a n
-
-/-- The antipode of a Cartan-binomial Lie generator, in the standard shifted-binomial form. -/
-theorem antipode_choose_ι (x : L) (n : ℕ) :
-    antipode ℚ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) n) =
-      Int.negOnePow n •
-        Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x + n - 1) n := by
-  rw [antipode_choose, antipode_ι, Ring.choose_neg]
-
-/-- The antipode of a positive-degree Cartan-binomial generator is an integral combination of
-Cartan-binomial generators. This is the form that proves stability of the second generator family
-of the Kostant form: all coefficients are ordinary integer binomial coefficients. -/
-theorem antipode_choose_ι_succ (x : L) (n : ℕ) :
-    antipode ℚ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) (n + 1)) =
-      Int.negOnePow (n + 1) •
-        ∑ ij ∈ Finset.antidiagonal (n + 1),
-          Nat.choose n ij.2 •
-            Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) ij.1 := by
-  rw [antipode_choose_ι]
-  have hcomm : Commute (_root_.UniversalEnvelopingAlgebra.ι ℚ x) (n : Uℚ) :=
-    (Algebra.commutes (n : ℚ) _).symm
-  have hshift :
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ x + (n + 1 : ℕ) - 1 : Uℚ) =
-        _root_.UniversalEnvelopingAlgebra.ι ℚ x + n := by
-    rw [Nat.cast_add, Nat.cast_one]
-    abel
-  rw [hshift]
-  rw [Ring.add_choose_eq (n + 1) hcomm]
-  apply congrArg (Int.negOnePow (n + 1) • ·)
-  apply Finset.sum_congr rfl
-  intro ij _
-  rw [Ring.choose_natCast]
-  rw [← Nat.cast_smul_eq_nsmul ℚ, Algebra.smul_def]
-  exact (Algebra.commutes (Nat.choose n ij.2 : ℚ) _).symm
-
-end Rational
 
 end TauCeti.UniversalEnvelopingAlgebra

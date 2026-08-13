@@ -6,6 +6,8 @@ module
 
 public import Mathlib.Algebra.Algebra.Opposite
 public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import Mathlib.Algebra.Polynomial.Smeval
+public import Mathlib.RingTheory.Polynomial.Pochhammer
 
 /-!
 # The antipode of a universal enveloping algebra
@@ -34,6 +36,8 @@ property of the enveloping algebra is used here.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_mul_antidistrib`: the antipode reverses
   multiplication.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_antipode`: the antipode is involutive.
+* `TauCeti.UniversalEnvelopingAlgebra.antipode_descPochhammer`: the antipode commutes with the
+  descending Pochhammer polynomial evaluated at a single element.
 
 ## Roadmap
 
@@ -161,6 +165,13 @@ theorem antipode_algebraMap (r : R) :
   rw [antipode_apply, (antipodeOp R).commutes, MulOpposite.algebraMap_apply,
     MulOpposite.unop_op]
 
+/-- The antipode fixes every natural number. -/
+@[simp]
+theorem antipode_natCast (n : ℕ) :
+    antipode R (n : _root_.UniversalEnvelopingAlgebra R L) = n := by
+  rw [← map_natCast (algebraMap R (_root_.UniversalEnvelopingAlgebra R L)) n]
+  exact antipode_algebraMap R (n : R)
+
 /-- The antipode reverses multiplication. -/
 @[simp]
 theorem antipode_mul_antidistrib (a b : _root_.UniversalEnvelopingAlgebra R L) :
@@ -172,6 +183,29 @@ theorem antipode_mul_antidistrib (a b : _root_.UniversalEnvelopingAlgebra R L) :
 theorem antipode_pow (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
     antipode R (a ^ n) = antipode R a ^ n := by
   rw [antipode_apply, map_pow, MulOpposite.unop_pow, antipode_apply]
+
+/-- The evaluated successor recursion for the descending Pochhammer polynomial: evaluating
+`descPochhammer ℤ (n + 1)` at an element splits off the linear factor `a - n` on the right. -/
+private theorem smeval_descPochhammer_succ
+    (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
+    (descPochhammer ℤ (n + 1)).smeval a =
+      (descPochhammer ℤ n).smeval a * (a - (n : _root_.UniversalEnvelopingAlgebra R L)) := by
+  rw [descPochhammer_succ_right, Polynomial.smeval_mul, Polynomial.smeval_sub,
+    Polynomial.smeval_X, Polynomial.smeval_natCast, pow_one, pow_zero, nsmul_one]
+
+/-- The antipode commutes with the descending Pochhammer polynomial evaluated at an arbitrary
+element. Although the antipode reverses products, the factors of `descPochhammer` evaluated at a
+single element commute, so the reversal has no effect. -/
+theorem antipode_descPochhammer (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
+    antipode R ((descPochhammer ℤ n).smeval a) =
+      (descPochhammer ℤ n).smeval (antipode R a) := by
+  induction n with
+  | zero => simp [descPochhammer_zero]
+  | succ n ih =>
+      rw [smeval_descPochhammer_succ, antipode_mul_antidistrib, map_sub, antipode_natCast, ih,
+        smeval_descPochhammer_succ]
+      exact (Polynomial.smeval_commute_left ℤ (descPochhammer ℤ n)
+        ((Commute.refl (antipode R a)).sub_right (Nat.commute_cast _ n))).symm.eq
 
 /-- Applying the opposite-valued antipode and then its opposite transform is the identity. -/
 private theorem opComm_antipodeOp_comp_antipodeOp :
