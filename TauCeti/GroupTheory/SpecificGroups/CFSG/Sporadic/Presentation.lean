@@ -62,6 +62,7 @@ public section
 namespace TauCeti
 
 /-- The explicit, cited finite presentation attached to each sporadic-group name. -/
+@[simp]
 def SporadicName.presentation : SporadicName → GroupPresentation
   | .M11 => Sporadic.m11Presentation
   | .M12 => Sporadic.m12Presentation
