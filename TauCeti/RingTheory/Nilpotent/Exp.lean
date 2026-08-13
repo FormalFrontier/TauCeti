@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import Mathlib.RingTheory.Nilpotent.Exp
-public import Mathlib.Algebra.Lie.AdjointAction.Basic
+public import Mathlib.Algebra.Lie.OfAssociative
 
 /-!
 # The integral exponential of a nilpotent element
@@ -104,24 +104,6 @@ theorem exp_zsmul_mem {x : A} (hx : IsNilpotent x) {S : Subring A}
 
 /-! ## The one-parameter group of units -/
 
-/-- Exponentiation turns addition of scalars into multiplication. -/
-theorem exp_add_smul {x : A} (hx : IsNilpotent x) (r s : ℚ) :
-    exp ((r + s) • x) = exp (r • x) * exp (s • x) := by
-  rw [add_smul]
-  exact exp_add_of_commute (((Commute.refl x).smul_left r).smul_right s) (hx.smul r) (hx.smul s)
-
-/-- The exponential of the negated scalar multiple is a right inverse. -/
-theorem exp_smul_mul_exp_neg_smul {x : A} (hx : IsNilpotent x) (r : ℚ) :
-    exp (r • x) * exp (-r • x) = 1 := by
-  rw [neg_smul]
-  exact exp_mul_exp_neg_self (hx.smul r)
-
-/-- The exponential of the negated scalar multiple is a left inverse. -/
-theorem exp_neg_smul_mul_exp_smul {x : A} (hx : IsNilpotent x) (r : ℚ) :
-    exp (-r • x) * exp (r • x) = 1 := by
-  rw [neg_smul]
-  exact exp_neg_mul_exp_self (hx.smul r)
-
 /-- The one-parameter group of units `t ↦ exp (t • x)` attached to a nilpotent element `x`.
 
 For a Chevalley root vector this is the root subgroup map `x_α` evaluated on the integral points of
@@ -130,9 +112,9 @@ the additive group. -/
 noncomputable def expSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ →* Aˣ where
   toFun t :=
     { val := exp ((((Multiplicative.toAdd t : ℤ) : ℚ)) • x)
-      inv := exp ((-((Multiplicative.toAdd t : ℤ) : ℚ)) • x)
-      val_inv := exp_smul_mul_exp_neg_smul hx _
-      inv_val := exp_neg_smul_mul_exp_smul hx _ }
+      inv := exp (-((((Multiplicative.toAdd t : ℤ) : ℚ)) • x))
+      val_inv := exp_mul_exp_neg_self (hx.smul _)
+      inv_val := exp_neg_mul_exp_self (hx.smul _) }
   map_one' := by
     ext
     simp
@@ -141,8 +123,9 @@ noncomputable def expSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ �
     have h : ((Multiplicative.toAdd (t * u) : ℤ) : ℚ) =
         ((Multiplicative.toAdd t : ℤ) : ℚ) + ((Multiplicative.toAdd u : ℤ) : ℚ) := by
       rw [_root_.toAdd_mul, Int.cast_add]
-    simpa [h] using exp_add_smul hx ((Multiplicative.toAdd t : ℤ) : ℚ)
-      ((Multiplicative.toAdd u : ℤ) : ℚ)
+    simpa [h, add_smul] using exp_add_of_commute
+      (((Commute.refl x).smul_left ((Multiplicative.toAdd t : ℤ) : ℚ)).smul_right
+        ((Multiplicative.toAdd u : ℤ) : ℚ)) (hx.smul _) (hx.smul _)
 
 @[simp]
 theorem coe_expSMulHom {x : A} (hx : IsNilpotent x) (t : Multiplicative ℤ) :
@@ -160,12 +143,8 @@ theorem exp_zsmul_conj_mem {x : A} (hx : IsNilpotent x) {S : Subring A}
 /-- The exponential of left multiplication by a nilpotent element is left multiplication by its
 exponential. -/
 theorem exp_mulLeft {a : A} (ha : IsNilpotent a) :
-    exp (LinearMap.mulLeft ℚ a) = LinearMap.mulLeft ℚ (exp a) := by
-  obtain ⟨k, hk⟩ := ha
-  have h : (LinearMap.mulLeft ℚ a) ^ k = 0 := by simp [LinearMap.pow_mulLeft, hk]
-  ext b
-  rw [exp_eq_sum h, exp_eq_sum hk]
-  simp [LinearMap.pow_mulLeft, sum_mul]
+    exp (LinearMap.mulLeft ℚ a) = LinearMap.mulLeft ℚ (exp a) :=
+  (map_exp ha (Algebra.lmul ℚ A)).symm
 
 /-- The exponential of right multiplication by a nilpotent element is right multiplication by its
 exponential. -/
@@ -176,13 +155,6 @@ theorem exp_mulRight {a : A} (ha : IsNilpotent a) :
   ext b
   rw [exp_eq_sum h, exp_eq_sum hk]
   simp [LinearMap.pow_mulRight, mul_sum]
-
-/-- The commutator endomorphism attached to a nilpotent element is nilpotent. -/
-theorem isNilpotent_mulLeft_sub_mulRight {a : A} (ha : IsNilpotent a) :
-    IsNilpotent (LinearMap.mulLeft ℚ a - LinearMap.mulRight ℚ a) :=
-  (LinearMap.commute_mulLeft_right (R := ℚ) a a).isNilpotent_sub
-    ((LinearMap.isNilpotent_mulLeft_iff ℚ a).mpr ha)
-    ((LinearMap.isNilpotent_mulRight_iff ℚ a).mpr ha)
 
 /-- **Conjugation is the exponential of the commutator endomorphism.** For a nilpotent `a`, the
 exponential of `b ↦ a * b - b * a` is conjugation by the unit `exp a`.
@@ -202,17 +174,11 @@ theorem exp_mulLeft_sub_mulRight_apply {a : A} (ha : IsNilpotent a) (b : A) :
     exp_mulLeft ha, exp_mulRight ha.neg]
   simp [mul_assoc]
 
-/-- The inner derivation attached to an element, as the difference of left and right
-multiplication. -/
-theorem ad_eq_mulLeft_sub_mulRight (a : A) :
-    LieAlgebra.ad ℚ A a = LinearMap.mulLeft ℚ a - LinearMap.mulRight ℚ a :=
-  congrFun (LieAlgebra.ad_eq_lmul_left_sub_lmul_right (R := ℚ) A) a
-
 /-- **Conjugation is the exponential of the adjoint action.** For a nilpotent `a`, the automorphism
 `exp (ad a)` of the Lie algebra underlying `A` is conjugation by the unit `exp a`. -/
 theorem exp_ad_apply {a : A} (ha : IsNilpotent a) (b : A) :
     exp (LieAlgebra.ad ℚ A a) b = exp a * b * exp (-a) := by
-  rw [ad_eq_mulLeft_sub_mulRight]
+  rw [congrFun (LieAlgebra.ad_eq_lmul_left_sub_lmul_right (R := ℚ) A) a]
   exact exp_mulLeft_sub_mulRight_apply ha b
 
 /-- Moving an exponential of a nilpotent element past a ring element rewrites it through the
