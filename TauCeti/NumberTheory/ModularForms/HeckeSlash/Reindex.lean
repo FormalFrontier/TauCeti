@@ -11,9 +11,9 @@ public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Basic
 # Reindexing the slash sum: slashing by any element of a left coset
 
 `heckeSlashSum` sums `f ∣[k] (σᵢ δ)ᵀ` over the left-coset decomposition of `HδH`. To show that
-sum is unchanged by right multiplication — the statement that turns the sum into an operator —
-one needs to know that the summand depends only on the *coset* of `σᵢ`, not on the
-representative chosen, once `f` is slash-invariant.
+sum is unchanged by right multiplication — the statement that turns the sum into an operator,
+and the proof of Shimura's Proposition 3.37 — one needs to know that the summand depends only on
+the *coset* of `σᵢ`, not on the representative chosen, once `f` is slash-invariant.
 
 That is what this file proves. For `h₁, h₂ ∈ H`,
 
@@ -58,12 +58,13 @@ is used only by the invariance block that follows the ported range.
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
-  §3.4.
+  §3.4 *Action of double cosets on automorphic forms*, Proposition 3.37.
 
-This file cites the section rather than a numbered proposition on purpose. The sibling
-`HeckeSlash/Basic.lean` attributes this material to Proposition 3.30; that number has been
-questioned more than once and nobody working on these files has had the book to hand, so it is
-not asserted here. The mathematics is unaffected either way.
+Shimura states the result this file supports inside the proof of Proposition 3.37: "Let `α ∈ Γ₂`.
+Then `{Γ₁ aᵥ α}` coincides with `{Γ₁ aᵥ}` as a whole", from which `g ∣[α]ₖ = g` for
+`g = f ∣[Γ₁ α Γ₂]ₖ`. He needs no transpose, because his decomposition `Γ₁ α Γ₂ = ⊔ᵥ Γ₁ aᵥ` puts
+the group on the left already; the transpose here is an artefact of the handedness Mathlib's
+`DecompQuotient` supplies, not of the mathematics.
 -/
 
 public section
@@ -111,7 +112,7 @@ representative of its own class the absorbed factor is exactly `h₂ᵀ`, so qua
 already reaches every element of `SLnZ 2`. Note also that `hf` is invariance under the *rational*
 slash action, not one routed through the real `𝒮ℒ`.
 
-This is the per-summand step behind Shimura's double-coset Hecke operator (§3.4). The statement
+This is the per-summand step behind Shimura's Proposition 3.37 (§3.4). The statement
 that right multiplication permutes the summands of `heckeSlashSum` without changing the sum is a
 separate argument, which is not formalised here. Mathlib's `SlashInvariantForm.quotientFunc_mk`
 is the single-subgroup analogue, with no double coset and no transpose. -/
