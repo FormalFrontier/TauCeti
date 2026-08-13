@@ -21,32 +21,25 @@ so that the multiplicity is an invariant of `M` and needs no decomposition to be
 
 The proof is Schur's lemma plus additivity.  A hom space out of `S` into a finite product splits
 as the product of the hom spaces into the factors, and each factor contributes `1` or `0`
-according as it is or is not isomorphic to `S`: `1` because the endomorphism algebra of a
-finite-dimensional simple module over an algebraically closed field is `k` itself
-(`TauCeti.endAlgEquivSelfOfIsSimpleModule`), and `0` because a map between inequivalent simple
-modules vanishes (`TauCeti.hom_eq_zero_of_isEmpty_linearEquiv`).
+according as it is or is not isomorphic to `S`.  Those two values are the dimension forms of
+Schur's lemma, `TauCeti.finrank_linearMap_eq_one_of_nonempty_linearEquiv` and
+`TauCeti.finrank_linearMap_eq_zero_of_isEmpty_linearEquiv`, proved in
+`TauCeti/RingTheory/Semisimple/Schur.lean` alongside the transport of a hom space along an
+isomorphism of its target, `TauCeti.homCongrRight`.
 
 Everything is stated for a `k`-algebra `A` and `A`-modules that are `k`-modules compatibly, which
 is the generality the group-representation application needs: for `A = k[G]` the hom space is the
 space of intertwiners and the theorem is the classical "multiplicity equals the dimension of the
 space of intertwiners".
 
-## Main definitions
-
-* `TauCeti.homCongrRight`: isomorphic `A`-modules have `k`-isomorphic hom spaces out of a fixed
-  module.  This is `LinearEquiv.congrRight` for a noncommutative `A`, with the auxiliary scalars
-  `k` supplying the linear structure that `A` cannot; it is assembled from Mathlib's
-  `LinearMap.compRight`.
-
 ## Main results
 
-* `TauCeti.finrank_linearMap_eq_one_of_nonempty_linearEquiv` and
-  `TauCeti.finrank_linearMap_eq_zero_of_isEmpty_linearEquiv`: Schur's lemma in dimension form.
 * `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi`: **the multiplicity theorem.**  If
   `M ≃ₗ[A] ∀ i, N i` with every `N i` simple, then `finrank k (S →ₗ[A] M)` is the number of
   indices `i` with `N i ≅ S`.
-* `TauCeti.natCard_eq_natCard_of_linearEquiv_pi`: consequently the number of factors isomorphic
-  to `S` is the same for any two such decompositions of `M`, so the multiplicity is well defined.
+* `TauCeti.natCard_eq_natCard_of_linearEquiv_pi`: consequently equivalent finite products of
+  simple modules have the same number of factors isomorphic to `S`; applied to two decompositions
+  of one module, this says that the multiplicity is well defined.
 * `TauCeti.finrank_linearMap_pos_iff_exists_nonempty_linearEquiv`: the multiplicity is positive
   exactly when `S` occurs among the factors, so the hom space detects the constituents.
 * `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi_const`: the isotypic case, where `M` is
@@ -78,94 +71,6 @@ See C. W. Curtis and I. Reiner, *Representation Theory of Finite Groups and Asso
 public section
 
 namespace TauCeti
-
-/-! ### Transporting a hom space along an isomorphism of the target -/
-
-section CongrRight
-
-variable (k : Type*) {A : Type*} [CommSemiring k] [Semiring A] [Algebra k A]
-variable {S : Type*} [AddCommMonoid S] [Module A S]
-variable {N : Type*} [AddCommMonoid N] [Module A N] [Module k N] [IsScalarTower k A N]
-variable {P : Type*} [AddCommMonoid P] [Module A P] [Module k P] [IsScalarTower k A P]
-
-/-- **Isomorphic targets give isomorphic hom spaces.**  An `A`-linear isomorphism `e : N ≃ₗ[A] P`
-carries `S →ₗ[A] N` to `S →ₗ[A] P` by postcomposition, `k`-linearly.
-
-This is `LinearEquiv.congrRight` with the auxiliary scalars `k` in place of a commutativity
-assumption on `A`: since `A` is not assumed commutative the hom spaces are not `A`-modules, and
-`k`, acting on the targets compatibly with `A`, supplies the linear structure instead.  The two
-directions are `LinearMap.compRight`. -/
-def homCongrRight (e : N ≃ₗ[A] P) : (S →ₗ[A] N) ≃ₗ[k] (S →ₗ[A] P) :=
-  LinearEquiv.ofLinearMap (LinearMap.compRight (M := S) k (e : N →ₗ[A] P))
-    (LinearMap.compRight (M := S) k (e.symm : P →ₗ[A] N))
-    (by ext f s; simp) (by ext f s; simp)
-
-@[simp]
-theorem homCongrRight_apply (e : N ≃ₗ[A] P) (f : S →ₗ[A] N) (s : S) :
-    homCongrRight k (S := S) e f s = e (f s) :=
-  (rfl)
-
-@[simp]
-theorem homCongrRight_symm_apply (e : N ≃ₗ[A] P) (f : S →ₗ[A] P) (s : S) :
-    (homCongrRight k (S := S) e).symm f s = e.symm (f s) :=
-  (rfl)
-
-end CongrRight
-
-/-! ### Schur's lemma in dimension form -/
-
-section Vanishing
-
-variable {k A S N : Type*} [Field k] [Ring A] [Algebra k A]
-variable [AddCommGroup S] [Module A S] [IsSimpleModule A S]
-variable [AddCommGroup N] [Module k N] [Module A N] [IsScalarTower k A N] [IsSimpleModule A N]
-
-/-- **Schur's lemma, vanishing form, in dimensions.**  Between inequivalent simple modules the
-hom space is trivial, hence of dimension zero. -/
-theorem finrank_linearMap_eq_zero_of_isEmpty_linearEquiv (h : IsEmpty (S ≃ₗ[A] N)) :
-    Module.finrank k (S →ₗ[A] N) = 0 := by
-  have : Subsingleton (S →ₗ[A] N) := subsingleton_linearMap_of_isEmpty_linearEquiv h
-  exact Module.finrank_zero_of_subsingleton
-
-/-- The hom space between inequivalent simple modules is finite-dimensional, being trivial. -/
-theorem finiteDimensional_linearMap_of_isEmpty_linearEquiv (h : IsEmpty (S ≃ₗ[A] N)) :
-    FiniteDimensional k (S →ₗ[A] N) := by
-  have : Subsingleton (S →ₗ[A] N) := subsingleton_linearMap_of_isEmpty_linearEquiv h
-  exact Module.Finite.of_surjective (0 : k →ₗ[k] (S →ₗ[A] N)) fun _ ↦ ⟨0, Subsingleton.elim _ _⟩
-
-end Vanishing
-
-section Schur
-
-variable {k A S : Type*} [Field k] [IsAlgClosed k] [Ring A] [Algebra k A]
-variable [AddCommGroup S] [Module k S] [Module A S] [IsScalarTower k A S] [IsSimpleModule A S]
-variable [FiniteDimensional k S]
-variable {N : Type*} [AddCommGroup N] [Module k N] [Module A N] [IsScalarTower k A N]
-variable [IsSimpleModule A N]
-
-omit [IsSimpleModule A N] in
-/-- **Schur's lemma over an algebraically closed field, in dimensions.**  Between equivalent
-finite-dimensional simple modules the hom space is a line: every map is a scalar multiple of a
-fixed isomorphism. -/
-theorem finrank_linearMap_eq_one_of_nonempty_linearEquiv (e : S ≃ₗ[A] N) :
-    Module.finrank k (S →ₗ[A] N) = 1 := by
-  have hend : Module.finrank k (Module.End A S) = 1 := by
-    rw [(endAlgEquivSelfOfIsSimpleModule (k := k) (A := A) (S := S)).toLinearEquiv.finrank_eq,
-      Module.finrank_self]
-  rw [← (homCongrRight k (S := S) e).finrank_eq]
-  exact hend
-
-/-- The hom space out of a finite-dimensional simple module into a simple module is
-finite-dimensional: by Schur's lemma it is a line or trivial. -/
-theorem finiteDimensional_linearMap_of_isSimpleModule : FiniteDimensional k (S →ₗ[A] N) := by
-  by_cases h : Nonempty (S ≃ₗ[A] N)
-  · have hend : FiniteDimensional k (S →ₗ[A] S) :=
-      Module.Finite.equiv
-        (endAlgEquivSelfOfIsSimpleModule (k := k) (A := A) (S := S)).toLinearEquiv.symm
-    exact Module.Finite.equiv (homCongrRight k (S := S) h.some)
-  · exact finiteDimensional_linearMap_of_isEmpty_linearEquiv (not_nonempty_iff.mp h)
-
-end Schur
 
 /-! ### The multiplicity of a simple module in a finite direct sum -/
 
@@ -231,19 +136,22 @@ theorem finrank_linearMap_pos_iff_exists_nonempty_linearEquiv {M : Type*} [AddCo
     nonempty_subtype]
   exact and_iff_left inferInstance
 
-/-- **The multiplicity is well defined.**  Two decompositions of the same module into finite
-products of simple modules have the same number of factors isomorphic to a given simple module.
+/-- **The multiplicity is well defined.**  Equivalent finite products of simple modules have the
+same number of factors isomorphic to a given simple module.
+
+For two decompositions `e : M ≃ₗ[A] ∀ i, N i` and `f : M ≃ₗ[A] ∀ j, P j` of one module, apply
+this to `e.symm.trans f` to see that the multiplicity of `S` in `M` does not depend on the
+decomposition.
 
 This is the Jordan-Hölder invariance of the multiplicity, obtained from the multiplicity theorem
 rather than from a refinement argument: both counts compute the same dimension. -/
-theorem natCard_eq_natCard_of_linearEquiv_pi {M : Type*} [AddCommGroup M] [Module k M]
-    [Module A M] [IsScalarTower k A M] {κ : Type*} [Finite κ] {P : κ → Type*}
+theorem natCard_eq_natCard_of_linearEquiv_pi {κ : Type*} [Finite κ] {P : κ → Type*}
     [∀ j, AddCommGroup (P j)] [∀ j, Module k (P j)] [∀ j, Module A (P j)]
     [∀ j, IsScalarTower k A (P j)] [∀ j, IsSimpleModule A (P j)]
-    (e : M ≃ₗ[A] ∀ i, N i) (f : M ≃ₗ[A] ∀ j, P j) :
+    (e : (∀ i, N i) ≃ₗ[A] ∀ j, P j) :
     Nat.card {i // Nonempty (S ≃ₗ[A] N i)} = Nat.card {j // Nonempty (S ≃ₗ[A] P j)} := by
-  rw [← finrank_linearMap_eq_natCard_of_linearEquiv_pi (k := k) (S := S) e,
-    finrank_linearMap_eq_natCard_of_linearEquiv_pi (k := k) (S := S) f]
+  rw [← finrank_linearMap_pi_eq_natCard (k := k) (S := S) (N := N),
+    finrank_linearMap_eq_natCard_of_linearEquiv_pi (k := k) (S := S) e]
 
 end Multiplicity
 
