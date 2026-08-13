@@ -91,10 +91,29 @@ abbrev PretransitiveFundamentalGroupoidAction (X : TopCat.{u}) :=
 
 namespace PretransitiveFundamentalGroupoidAction
 
+variable {X : TopCat.{u}}
+
 /-- The fully faithful inclusion into all fundamental-groupoid actions. -/
 noncomputable abbrev forget (X : TopCat.{u}) :
     PretransitiveFundamentalGroupoidAction X ⥤ (FundamentalGroupoid X ⥤ Type u) :=
   ObjectProperty.ι _
+
+/-- Construct a fibrewise pretransitive fundamental-groupoid action from an action and a proof
+of fibrewise pretransitivity. -/
+noncomputable def mk (F : FundamentalGroupoid X ⥤ Type u)
+    (hF : FundamentalGroupoidAction.isFiberwisePretransitive X F) :
+    PretransitiveFundamentalGroupoidAction X :=
+  ⟨F, hF⟩
+
+/-- The underlying action of a fibrewise pretransitive fundamental-groupoid action satisfies
+fibrewise pretransitivity. -/
+theorem isFiberwisePretransitive (F : PretransitiveFundamentalGroupoidAction X) :
+    FundamentalGroupoidAction.isFiberwisePretransitive X F.obj :=
+  F.property
+
+/-- The inclusion into all fundamental-groupoid actions is fully faithful. -/
+noncomputable def fullyFaithfulForget (X : TopCat.{u}) : (forget X).FullyFaithful :=
+  ObjectProperty.fullyFaithfulι _
 
 end PretransitiveFundamentalGroupoidAction
 
