@@ -64,11 +64,9 @@ theorem IsUnipotentPoint.apply_groupLike
   have haction : Comodule.endOfPoint M g.ofConv - 1 =
       (g.ofConv x - 1) • LinearMap.id := by
     rw [Comodule.endOfPoint_groupLike]
-    change g.ofConv x • LinearMap.id - LinearMap.id =
-      (g.ofConv x - 1) • LinearMap.id
-    simpa only [one_smul] using
-      (sub_smul (g.ofConv x) 1
-        (LinearMap.id : Module.End L (L ⊗[F] F))).symm
+    apply LinearMap.ext
+    intro z
+    simp [sub_smul]
   let z : L ⊗[F] F := (1 : L) ⊗ₜ[F] (1 : F)
   rw [haction] at hnil
   obtain ⟨n, hn⟩ := hnil

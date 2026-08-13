@@ -167,23 +167,17 @@ section GroupLike
 variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Algebra R H] [Coalgebra R H]
   [AddCommMonoid V] [Module R V] [CommSemiring A] [Algebra R A]
 
-/-- A point acts on a pure tensor in a group-like comodule by evaluating the group-like
-element and multiplying the scalar factor by the result. -/
-theorem endOfPoint_groupLike_tmul (x : GroupLike R H) (g : H →ₐ[R] A) (a : A) (v : V) :
-    letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
-    endOfPoint V g (a ⊗ₜ[R] v) = (a * g x) ⊗ₜ[R] v := by
-  simp only [endOfPoint_tmul, groupLike_coact_apply, LinearMap.lTensor_tmul,
-    AlgHom.toLinearMap_apply, TensorProduct.comm_tmul, TensorProduct.smul_tmul', smul_eq_mul]
-
 /-- On a group-like comodule, a point acts by scalar multiplication by its value on the
 group-like element. -/
+@[simp]
 theorem endOfPoint_groupLike (x : GroupLike R H) (g : H →ₐ[R] A) :
     letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
     endOfPoint V g = g x • LinearMap.id := by
   let _ : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
   apply LinearMap.restrictScalars_injective R
   refine TensorProduct.ext' fun a v ↦ ?_
-  simp only [LinearMap.restrictScalars_apply, endOfPoint_groupLike_tmul,
+  simp only [LinearMap.restrictScalars_apply, endOfPoint_tmul, groupLike_coact_apply,
+    LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply, TensorProduct.comm_tmul,
     LinearMap.smul_apply, LinearMap.id_coe, id_eq, TensorProduct.smul_tmul', smul_eq_mul]
   rw [mul_comm]
 
@@ -406,18 +400,8 @@ variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Bialgebra R H]
 attribute [local instance] trivial
 
 /-- Every point acts as the identity on a trivial comodule. -/
-@[simp]
 theorem endOfPoint_trivial (g : H →ₐ[R] A) : endOfPoint V g = LinearMap.id := by
-  apply LinearMap.ext
-  intro x
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a v =>
-      simp only [endOfPoint_tmul, trivial_coact_apply, LinearMap.lTensor_tmul,
-        AlgHom.toLinearMap_apply, map_one, TensorProduct.comm_tmul]
-      rw [TensorProduct.smul_tmul']
-      simp
+  simp only [endOfPoint_groupLike, GroupLike.val_one, map_one, one_smul]
 
 end Trivial
 
