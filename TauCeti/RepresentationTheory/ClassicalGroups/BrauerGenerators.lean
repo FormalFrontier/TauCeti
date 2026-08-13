@@ -51,7 +51,8 @@ statement that the symmetric group sits inside the Brauer algebra as the diagram
   invariant.
 * `TauCeti.commute_orthogonalCapCup_tensorPower` and
   `TauCeti.commute_permTensorAction_tensorPower_stdOrthogonalRep`: both Brauer generators commute
-  with the diagonal action of the orthogonal group.
+  with the diagonal action of the orthogonal group, the latter for the factor permutations of an
+  arbitrary tensor power.
 
 ## References
 
@@ -64,7 +65,7 @@ statement that the symmetric group sits inside the Brauer algebra as the diagram
   on `(ℂ³)^{⊗2}` for `O(3)`".
 -/
 
-@[expose] public section
+public section
 
 open Matrix
 open scoped TensorProduct
@@ -77,14 +78,15 @@ variable (k : Type u) (n : ℕ) [CommRing k]
 
 section Cap
 
-/-- The coordinate dot product as a multilinear map on two copies of `kⁿ`. -/
-noncomputable def orthogonalCapMultilinear :
+/-- The coordinate dot product as a multilinear map on two copies of `kⁿ`. This is an
+implementation detail of `TauCeti.orthogonalCap`; the public interface is
+`TauCeti.orthogonalCap_tprod`. -/
+private noncomputable def orthogonalCapMultilinear :
     MultilinearMap k (fun _ : Fin 2 => (Fin n → k)) k :=
   ∑ j : Fin n,
     (MultilinearMap.mkPiAlgebra k (Fin 2) k).compLinearMap fun _ : Fin 2 => LinearMap.proj j
 
-@[simp]
-theorem orthogonalCapMultilinear_apply (v : Fin 2 → (Fin n → k)) :
+private theorem orthogonalCapMultilinear_apply (v : Fin 2 → (Fin n → k)) :
     orthogonalCapMultilinear k n v = v 0 ⬝ᵥ v 1 := by
   simp [orthogonalCapMultilinear, Fin.prod_univ_two, dotProduct]
 
@@ -109,12 +111,12 @@ noncomputable def orthogonalCup : k →ₗ[k] (⨂[k]^2 (Fin n → k)) :=
   LinearMap.toSpanSingleton k _
     (∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k))
 
+@[simp]
 theorem orthogonalCup_apply (c : k) :
     orthogonalCup k n c =
       c • ∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k) :=
   (rfl)
 
-@[simp]
 theorem orthogonalCup_one :
     orthogonalCup k n 1 =
       ∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k) := by
@@ -126,7 +128,7 @@ section Loop
 
 /-- **The loop value.** A cup stacked under a cap closes into a loop, and the loop evaluates to
 the trace `n` of the coordinate dot product. -/
-theorem orthogonalCap_orthogonalCup (c : k) :
+theorem orthogonalCap_comp_orthogonalCup_apply (c : k) :
     orthogonalCap k n (orthogonalCup k n c) = (n : k) * c := by
   rw [orthogonalCup_apply, map_smul, map_sum]
   have h : ∀ j : Fin n,
@@ -139,8 +141,9 @@ theorem orthogonalCap_orthogonalCup (c : k) :
 /-- The loop value, as an identity of linear maps: `cap ∘ cup` is multiplication by `n`. -/
 theorem orthogonalCap_comp_orthogonalCup :
     orthogonalCap k n ∘ₗ orthogonalCup k n = (n : k) • LinearMap.id := by
-  ext
-  simp
+  refine LinearMap.ext fun c => ?_
+  rw [LinearMap.comp_apply, orthogonalCap_comp_orthogonalCup_apply, LinearMap.smul_apply,
+    LinearMap.id_apply, smul_eq_mul]
 
 end Loop
 
@@ -151,19 +154,25 @@ two outputs. -/
 noncomputable def orthogonalCapCup : Module.End k (⨂[k]^2 (Fin n → k)) :=
   orthogonalCup k n ∘ₗ orthogonalCap k n
 
+@[simp]
 theorem orthogonalCapCup_apply (x : ⨂[k]^2 (Fin n → k)) :
     orthogonalCapCup k n x = orthogonalCup k n (orthogonalCap k n x) :=
   (rfl)
 
 /-- **The relation `e² = δ e`** at the loop value `δ = n`: the middle of `e * e` is a closed
 loop. -/
+@[simp]
 theorem orthogonalCapCup_mul_self :
     orthogonalCapCup k n * orthogonalCapCup k n = (n : k) • orthogonalCapCup k n := by
   refine LinearMap.ext fun x => ?_
   rw [Module.End.mul_apply, LinearMap.smul_apply, orthogonalCapCup_apply, orthogonalCapCup_apply,
-    orthogonalCap_orthogonalCup, ← smul_eq_mul, map_smul]
+    orthogonalCap_comp_orthogonalCup_apply, ← smul_eq_mul, map_smul]
 
-/-- **The relation `s² = 1`**: the crossing is an involution. -/
+/-- **The relation `s² = 1`**: the crossing is an involution.
+
+This and the two absorption relations below are deliberately not `simp` lemmas: the existing
+`TauCeti.permTensorAction_apply` rewrites `permTensorAction k n 2 (Equiv.swap 0 1)` to a
+`PiTensorProduct.reindex`, so their left-hand sides are not in `simp`-normal form. -/
 theorem permTensorAction_swap_mul_self :
     permTensorAction k n 2 (Equiv.swap 0 1) * permTensorAction k n 2 (Equiv.swap 0 1) = 1 := by
   rw [← map_mul, Equiv.swap_mul_self, map_one]
@@ -318,13 +327,15 @@ theorem commute_orthogonalCapCup_tensorPower (g : Matrix.orthogonalGroup (Fin n)
   rw [Module.End.mul_apply, Module.End.mul_apply, orthogonalCapCup_apply, orthogonalCapCup_apply,
     hcap x, hcup (orthogonalCap k n x)]
 
-/-- **The crossing commutes with the orthogonal group**, the two-strand case of the commuting
-symmetric-group and orthogonal actions. It is the restriction along `O(n) ↪ GL(n)` of the
-general-linear statement `TauCeti.commute_permTensorAction_tensorPowerRep`. -/
-theorem commute_permTensorAction_tensorPower_stdOrthogonalRep (σ : Equiv.Perm (Fin 2))
+/-- **The factor permutations commute with the orthogonal group** on every tensor power: the
+symmetric-group and orthogonal actions on `(kⁿ)^{⊗d}` centralize one another. It is the
+restriction along `O(n) ↪ GL(n)` of the general-linear statement
+`TauCeti.commute_permTensorAction_tensorPowerRep`; at `d = 2` and `σ = Equiv.swap 0 1` it is the
+crossing generator `s` of the Brauer algebra. -/
+theorem commute_permTensorAction_tensorPower_stdOrthogonalRep (d : ℕ) (σ : Equiv.Perm (Fin d))
     (g : Matrix.orthogonalGroup (Fin n) k) :
-    Commute (permTensorAction k n 2 σ) ((stdOrthogonalRep k n).tensorPower 2 g) := by
-  have h := commute_permTensorAction_tensorPowerRep k n 2 σ (orthogonalGroupToGL k n g)
+    Commute (permTensorAction k n d σ) ((stdOrthogonalRep k n).tensorPower d g) := by
+  have h := commute_permTensorAction_tensorPowerRep k n d σ (orthogonalGroupToGL k n g)
   rwa [tensorPowerRep, Representation.tensorPower_apply, stdRep_apply, orthogonalGroupToGL_coe,
     ← stdOrthogonalRep_apply k n g, ← Representation.tensorPower_apply] at h
 
