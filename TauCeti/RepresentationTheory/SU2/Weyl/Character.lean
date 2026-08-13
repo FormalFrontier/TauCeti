@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
+import TauCeti.Topology.Circle.Basic
 import TauCeti.Topology.Circle.Metric
 
 /-!

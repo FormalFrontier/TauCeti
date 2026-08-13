@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.Matrix.Trace
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import TauCeti.LinearAlgebra.UnitaryGroup
 public import TauCeti.Topology.Algebra.UnitaryGroup
+import TauCeti.Topology.Circle.Basic
 
 /-!
 # `SU(2)` and its maximal torus
@@ -282,21 +283,10 @@ private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
   rw [coe_circleI, Complex.I_sq]
   norm_num
 
-/-- **The two entries of a torus element are distinct once `z² ≠ 1`**: `z - z⁻¹` vanishes only at
-the two points `z = ±1` of the circle. This is the separation that makes `diag (z, z⁻¹)` a regular
-element. -/
-theorem circle_sub_inv_ne_zero {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) :
-    (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := by
-  intro hc
-  refine hz ?_
-  rw [sub_eq_zero] at hc
-  calc (z : ℂ) ^ 2 = (z : ℂ) * ((z : ℂ))⁻¹ := by rw [← hc, sq]
-    _ = 1 := mul_inv_cancel₀ z.coe_ne_zero
-
 /-- **An element of `SU(2)` commuting with a single torus element `diag (z, z⁻¹)` with `z² ≠ 1`
 already lies in the maximal torus.** Reading off the off-diagonal entries of
 `diag (z, z⁻¹) g = g diag (z, z⁻¹)` gives `g₀₁ (z - z⁻¹) = 0` and `g₁₀ (z⁻¹ - z) = 0`, and
-`z² ≠ 1` gives `z ≠ z⁻¹` (`TauCeti.SU2.circle_sub_inv_ne_zero`). -/
+`z² ≠ 1` gives `z ≠ z⁻¹` (`TauCeti.circle_sub_inv_ne_zero`). -/
 theorem mem_torus_of_commute_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) {g : SU2}
     (h : torusHom z * g = g * torusHom z) : g ∈ torus := by
   have hsub : (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := circle_sub_inv_ne_zero hz
