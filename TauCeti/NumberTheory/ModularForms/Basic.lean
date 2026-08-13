@@ -102,6 +102,40 @@ theorem _root_.ModularForm.slash_neg_one (k : ℤ) (f : ℍ → ℂ) :
   rw [ModularForm.slash_apply, σ_eq_refl_of_det_pos (by simp [Matrix.det_neg])]
   simp [hzpow, hdet, mul_comm]
 
+/-- **The weight-`k` slash formula at a positive-determinant matrix**, free of the `σ` twist:
+
+`f ∣[k] g = fun τ ↦ f (g • τ) * |det g| ^ (k - 1) * denom g τ ^ (-k)`.
+
+Mathlib's `ModularForm.slash_def` carries `σ g` around the value of `f`, which is complex
+conjugation on the negative-determinant branch. `ModularForm.SL_slash_def` drops it because
+`det = 1`; here positivity alone is what does it. -/
+theorem _root_.ModularForm.slash_def_of_det_pos (k : ℤ) {g : GL (Fin 2) ℝ}
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det) (f : ℍ → ℂ) :
+    f ∣[k] g = fun τ ↦ f (g • τ) * |(g.det : ℝ)| ^ (k - 1) * denom g τ ^ (-k) := by
+  rw [ModularForm.slash_def, σ_eq_refl_of_det_pos hg]
+  rfl
+
+/-- The pointwise form of `ModularForm.slash_def_of_det_pos`, matching
+`ModularForm.SL_slash_apply`. -/
+theorem _root_.ModularForm.slash_apply_of_det_pos (k : ℤ) {g : GL (Fin 2) ℝ}
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det) (f : ℍ → ℂ) (τ : ℍ) :
+    (f ∣[k] g) τ = f (g • τ) * |(g.det : ℝ)| ^ (k - 1) * denom g τ ^ (-k) :=
+  congrFun (ModularForm.slash_def_of_det_pos k hg f) τ
+
+/-- **Scalars pass through the slash of a positive-determinant matrix.** Mathlib's
+`ModularForm.smul_slash` carries the twist `σ A c`, which is complex conjugation when the
+determinant is negative, so scalars do not commute past a general slash. On the positive branch
+they do.
+
+This is what makes a Hecke operator `ℂ`-linear: it is a sum of slashes by representatives of
+positive determinant. The scalar generality matches `ModularForm.SL_smul_slash`. -/
+@[simp]
+theorem _root_.ModularForm.smul_slash_of_det_pos {α : Type*} [SMul α ℂ] [IsScalarTower α ℂ ℂ]
+    (k : ℤ) {g : GL (Fin 2) ℝ} (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det) (f : ℍ → ℂ)
+    (c : α) : (c • f) ∣[k] g = c • f ∣[k] g := by
+  ext τ : 1
+  simp [ModularForm.slash_apply_of_det_pos k hg, smul_mul_assoc]
+
 /-- A form invariant under the image in `GL(2, ℝ)` of a subgroup `Γ ≤ SL(2, ℤ)` is fixed by
 the weight-`k` slash action of every element of `Γ` — the invariance condition read back at
 the `SL₂(ℤ)` level, where congruence subgroups are given. -/
