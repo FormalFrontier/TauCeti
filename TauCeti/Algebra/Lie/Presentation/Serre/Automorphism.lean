@@ -28,11 +28,12 @@ raising and lowering generators with a sign: `Hᵢ ↦ -Hᵢ`, `Eᵢ ↦ -Fᵢ`,
 Serre's relations are invariant under that exchange, and it is an involution because the exchange
 is. The two families commute (`TauCeti.serreChevalleyInvolution_comm_serreDiagramAut`).
 
-Both are instances of one observation, isolated here as stability properties of the predicate
-`TauCeti.IsSerreSystem`: a Serre system in *any* Lie algebra stays a Serre system after reindexing
-along an injective map of index sets (`TauCeti.IsSerreSystem.submatrix`, of which reindexing along a
-symmetry of the matrix is the special case `TauCeti.IsSerreSystem.perm`) or after the signed
-exchange (`TauCeti.IsSerreSystem.neg_swap`). Stated at that generality they also give the
+Both are instances of one observation, recorded with the predicate itself in
+`TauCeti/Algebra/Lie/Presentation/Serre.lean` as stability properties of `TauCeti.IsSerreSystem`: a
+Serre system in *any* Lie algebra stays a Serre system after reindexing along an injective map of
+index sets (`TauCeti.IsSerreSystem.submatrix`, of which reindexing along a symmetry of the matrix is
+the special case `TauCeti.IsSerreSystem.perm`) or after the signed exchange
+(`TauCeti.IsSerreSystem.neg_swap`). Stated at that generality they also give the
 *naturality* of the two automorphisms — `TauCeti.serreLift_comp_serreDiagramAut` and
 `TauCeti.serreLift_comp_serreChevalleyInvolution` — which say that any realisation of the
 presentation transports them, and are how a downstream identification of the presented algebra with
@@ -49,9 +50,6 @@ Nothing here assumes that `CM` is a Cartan matrix, matching
 
 ## Main results
 
-* `TauCeti.IsSerreSystem.submatrix`, `TauCeti.IsSerreSystem.perm` and
-  `TauCeti.IsSerreSystem.neg_swap`: the stability properties of Serre systems the automorphisms are
-  built from.
 * `TauCeti.serreDiagramAut_serreH` and its companions, `TauCeti.serreChevalleyInvolution_serreH` and
   its companions: the values on the generators, together with the uniqueness statements
   `TauCeti.eq_serreDiagramAut` and `TauCeti.eq_serreChevalleyInvolution`.
@@ -120,66 +118,8 @@ public section
 
 namespace TauCeti
 
-open LieAlgebra
-
 variable {B : Type*} [DecidableEq B] (R : Type*) [CommRing R] (CM : Matrix B B ℤ)
 variable {L : Type*} [LieRing L] [LieAlgebra R L]
-
-/-! ## Stability of Serre systems -/
-
-section SerreSystem
-
-variable {R CM} {H E F : B → L} {σ : Equiv.Perm B}
-
-omit [DecidableEq B] in
-/-- If the `n`-fold adjoint action of `x` annihilates `y`, then so does that of `-x`. -/
-private theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (ad R L x ^ n) y = 0) :
-    (ad R L (-x) ^ n) y = 0 := by
-  have hneg : ad R L (-x) = (-1 : R) • ad R L x := by rw [map_neg, neg_smul, one_smul]
-  rw [hneg, smul_pow, LinearMap.smul_apply, h, smul_zero]
-
-omit [DecidableEq B] in
-/-- Reindexing a Serre system along an injective map of index sets gives a Serre system for the
-matrix reindexed the same way. -/
-theorem IsSerreSystem.submatrix {B' : Type*} {f : B' → B} (hf : Function.Injective f)
-    (h : IsSerreSystem R CM H E F) :
-    IsSerreSystem R (CM.submatrix f f) (H ∘ f) (E ∘ f) (F ∘ f) where
-  lie_H_H i j := h.lie_H_H (f i) (f j)
-  lie_E_F_self i := h.lie_E_F_self (f i)
-  lie_E_F_of_ne i j hij := h.lie_E_F_of_ne (f i) (f j) fun hc => hij (hf hc)
-  lie_H_E i j := h.lie_H_E (f i) (f j)
-  lie_H_F i j := h.lie_H_F (f i) (f j)
-  ad_pow_lie_E_E i j := h.ad_pow_lie_E_E (f i) (f j)
-  ad_pow_lie_F_F i j := h.ad_pow_lie_F_F (f i) (f j)
-
-omit [DecidableEq B] in
-/-- Reindexing a Serre system along a permutation `σ` of the index set that preserves the matrix
-gives a Serre system for the same matrix. -/
-theorem IsSerreSystem.perm (h : IsSerreSystem R CM H E F) (hσ : CM.submatrix σ σ = CM) :
-    IsSerreSystem R CM (H ∘ σ) (E ∘ σ) (F ∘ σ) :=
-  hσ ▸ h.submatrix σ.injective
-
-omit [DecidableEq B] in
-/-- Negating the Cartan family of a Serre system and exchanging its raising and lowering families,
-again with a sign, gives a Serre system for the same matrix. This is the symmetry of Serre's
-relations behind the Chevalley involution. -/
-theorem IsSerreSystem.neg_swap (h : IsSerreSystem R CM H E F) :
-    IsSerreSystem R CM (fun i => -H i) (fun i => -F i) (fun i => -E i) where
-  lie_H_H i j := by simp [h.lie_H_H i j]
-  lie_E_F_self i := by
-    rw [neg_lie, lie_neg, neg_neg, ← lie_skew, h.lie_E_F_self i]
-  lie_E_F_of_ne i j hij := by
-    rw [neg_lie, lie_neg, neg_neg, ← lie_skew, h.lie_E_F_of_ne j i (Ne.symm hij), neg_zero]
-  lie_H_E i j := by rw [neg_lie, lie_neg, neg_neg, h.lie_H_F i j, smul_neg]
-  lie_H_F i j := by rw [neg_lie, lie_neg, neg_neg, h.lie_H_E i j, smul_neg, neg_neg]
-  ad_pow_lie_E_E i j := by
-    rw [neg_lie, lie_neg, neg_neg]
-    exact ad_neg_pow_apply_eq_zero (h.ad_pow_lie_F_F i j)
-  ad_pow_lie_F_F i j := by
-    rw [neg_lie, lie_neg, neg_neg]
-    exact ad_neg_pow_apply_eq_zero (h.ad_pow_lie_E_E i j)
-
-end SerreSystem
 
 /-! ## The diagram automorphisms
 
