@@ -6,8 +6,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
-import Mathlib.MeasureTheory.Integral.Lebesgue.Map
+import Mathlib.Dynamics.Ergodic.MeasurePreserving
 
 /-!
 # Moving a block through a reindexing, over an invariant event
@@ -27,7 +26,7 @@ integral identity, which needs only `T ⁻¹' A = A`.
 * `measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventually_add` — the
   primitive: such a reindexing preserves the restricted law, so Koopman-side consumers get a
   `MeasurePreserving`, not only an integral identity;
-* `ContractableLaw.restrict_map_block_eq_prefixProj_of_measurableSet_invariants` — the
+* `ContractableLaw.map_restrict_block_eq_prefixProj_of_measurableSet_invariants` — the
   finite-selection form as a measure equality on the **restricted** law: reading a strictly
   increasing block and reading the prefix push `ρ.restrict A` to the same measure, so Bochner and
   `Lᵖ` statements follow as well. The unrestricted counterpart is the existing
@@ -102,9 +101,9 @@ theorem measurePreserving_restrict_reindex_of_measurableSet_invariants_of_eventu
 /-- **The primitive measure equality.** Over an invariant event, reading a strictly increasing
 block and reading the prefix push the restricted law to the same measure on `Fin m → α`.
 
-This is the form that gives Bochner integrals and `Lᵖ` statements as well; the `ℝ≥0∞` identity
-below is its corollary. -/
-theorem ContractableLaw.restrict_map_block_eq_prefixProj_of_measurableSet_invariants
+This is the form that gives Bochner integrals and `Lᵖ` statements as well; an `ℝ≥0∞` identity
+follows by rewriting with `lintegral_map`, and is not restated here. -/
+theorem ContractableLaw.map_restrict_block_eq_prefixProj_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
     (ρ.restrict A).map (fun x : ℕ → α => fun i : Fin m => x (k i))
