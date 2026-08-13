@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Topology.Connected.LocallyPathConnected
 public import TauCeti.Topology.Covering.Monodromy.Full
 public import TauCeti.Topology.Homotopy.Monodromy.Basic
 
@@ -96,8 +95,7 @@ private theorem locallyPathConnectedSpace_of_isLocalHomeomorph
     φ.continuousOn_toFun.isOpen_inter_preimage φ.open_source hWopen
   have hpe : p e ∈ φ.source ∩ φ ⁻¹' W := by
     refine ⟨hpe_source, ?_⟩
-    change φ (p e) ∈ W
-    simpa only [φ, hp.localInverseAt_apply_self] using heW
+    simpa only [Set.mem_preimage, φ, hp.localInverseAt_apply_self] using heW
   obtain ⟨V, ⟨hVopen, hpeV, hVpath⟩, hVsub⟩ :=
     (isOpen_isPathConnected_basis (p e)).mem_iff.mp (hsource.mem_nhds hpe)
   refine ⟨φ '' V, ?_, hVpath.image' (φ.continuousOn_toFun.mono fun _ hv => (hVsub hv).1), ?_⟩
@@ -124,7 +122,7 @@ fundamental-groupoid actions.
 
 The underlying action is the ordinary covering-space monodromy functor, and the underlying map
 of every morphism is its fibrewise natural transformation. -/
-@[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) [LocallyPathConnectedSpace X] :
+noncomputable def monodromyFunctor (X : TopCat.{u}) [LocallyPathConnectedSpace X] :
     ConnectedCoveringSpace X ⥤ PretransitiveFundamentalGroupoidAction X where
   obj p := ⟨(CoveringSpace.monodromyFunctor X).obj ((forget X).obj p),
     monodromy_isFiberwisePretransitive p⟩
@@ -145,7 +143,7 @@ connected covers into all covers. -/
 theorem monodromyFunctor_comp_forget [LocallyPathConnectedSpace X] :
     monodromyFunctor X ⋙ PretransitiveFundamentalGroupoidAction.forget X =
       forget X ⋙ CoveringSpace.monodromyFunctor X :=
-  rfl
+  (rfl)
 
 /-- The underlying action of connected-cover monodromy is the ordinary monodromy action. -/
 @[simp]
@@ -153,17 +151,18 @@ theorem monodromyFunctor_obj_obj [LocallyPathConnectedSpace X]
     (p : ConnectedCoveringSpace X) :
     ((monodromyFunctor X).obj p).obj =
       (CoveringSpace.monodromyFunctor X).obj ((forget X).obj p) :=
-  rfl
+  (rfl)
 
 /-- The underlying natural transformation assigned to a map of connected covers is the one
 assigned by ordinary covering-space monodromy. -/
+@[simp]
 theorem monodromyFunctor_map_hom [LocallyPathConnectedSpace X]
     {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
     ((monodromyFunctor X).map f).hom =
       eqToHom (monodromyFunctor_obj_obj p) ≫
         (CoveringSpace.monodromyFunctor X).map ((forget X).map f) ≫
         eqToHom (monodromyFunctor_obj_obj q).symm :=
-  rfl
+  (rfl)
 
 /-- Connected-cover monodromy is faithful. -/
 instance monodromyFunctor_faithful [LocallyPathConnectedSpace X] :
