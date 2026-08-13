@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.SmoothConnected
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.SmoothConnected
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
 import TauCeti.Algebra.AlgebraicGroup.Connected.BaseChange
@@ -54,8 +54,8 @@ theorem torusCommHopfAlgProperty.geometricallyConnected
   exact (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
     ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
       (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso i)
-    (SplitTorus.geometricallyConnected_coordinateRing
-      (AlgebraicClosure k) (ULift.{u} (Fin n)))
+    (DiagonalizableGroup.geometricallyConnected_coordinateRing
+      (AlgebraicClosure k) (SplitTorus.characterGroup (ULift.{u} (Fin n))))
 
 /-- **Every torus over a field is geometrically reduced.** -/
 @[grind →]
@@ -70,8 +70,8 @@ theorem torusCommHopfAlgProperty.geometricallyReduced
   exact (geometricallyReducedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
     ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
       (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso i)
-    (SplitTorus.geometricallyReduced_coordinateRing
-      (AlgebraicClosure k) (ULift.{u} (Fin n)))
+    (DiagonalizableGroup.geometricallyReduced_coordinateRing
+      (AlgebraicClosure k) (SplitTorus.characterGroup (ULift.{u} (Fin n))))
 
 /-- **Every torus over a field is smooth.** -/
 @[grind →]

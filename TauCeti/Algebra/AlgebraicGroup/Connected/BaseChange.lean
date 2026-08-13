@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.Connected.AlgebraicallyClosed
-import TauCeti.Algebra.TensorProduct.BaseChange
+import TauCeti.Algebra.TensorProduct.CommonOverfield
 
 /-!
 # Geometric connectedness under base change
@@ -66,11 +66,9 @@ theorem geometricallyConnectedCommHopfAlgProperty.baseChange
   intro L _ _
   let _ : Algebra k L := Algebra.compHom L (algebraMap k K)
   let _ : IsScalarTower k K L := IsScalarTower.of_algebraMap_eq' rfl
-  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) L).toRingEquiv |>.trans
-    ((Algebra.TensorProduct.cancelBaseChange k K L L H).toRingEquiv.trans
-      (Algebra.TensorProduct.comm k L H).toRingEquiv)
   rw [geometricallyConnectedCommHopfAlgProperty_iff] at hH
-  exact (PrimeSpectrum.homeomorphOfRingEquiv e).connectedSpace_iff.mpr (hH L)
+  exact (PrimeSpectrum.homeomorphOfRingEquiv
+    (Algebra.TensorProduct.baseChangeTowerRingEquiv k K H L)).connectedSpace_iff.mpr (hH L)
 
 /-- **Geometric connectedness descends from an extension of the base field.**
 
@@ -86,10 +84,6 @@ theorem geometricallyConnectedCommHopfAlgProperty.of_baseChange
   rw [geometricallyConnectedCommHopfAlgProperty_iff_connectedSpace_of_isAlgClosed]
   intro L _ _ _
   let d := Algebra.TensorProduct.commonOverfield k K L
-  let _ := d.fieldΩ
-  let _ := d.algebraOmega
-  let _ := d.algebraKΩ
-  let _ := d.isScalarTower
   have hΩ : ConnectedSpace (PrimeSpectrum ((H : Type u) ⊗[k] d.Ω)) :=
     (PrimeSpectrum.homeomorphOfRingEquiv (d.comparison H)).connectedSpace_iff.mp (hH d.Ω)
   exact connectedSpace_primeSpectrum_of_injective (d.map H).toRingHom (d.map_injective H)

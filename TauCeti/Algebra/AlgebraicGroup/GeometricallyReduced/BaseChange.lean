@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeometricallyReduced.CommHopfAlgCat
-import TauCeti.Algebra.TensorProduct.BaseChange
+import TauCeti.Algebra.TensorProduct.CommonOverfield
 
 /-!
 # Geometric reducedness under base change
@@ -55,11 +55,10 @@ theorem geometricallyReducedCommHopfAlgProperty.baseChange
   intro L _ _
   let _ : Algebra k L := Algebra.compHom L (algebraMap k K)
   let _ : IsScalarTower k K L := IsScalarTower.of_algebraMap_eq' rfl
-  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) L).toRingEquiv.trans
-    ((Algebra.TensorProduct.cancelBaseChange k K L L H).toRingEquiv.trans
-      (Algebra.TensorProduct.comm k L H).toRingEquiv)
   let _ := hH L
-  exact isReduced_of_injective e.toRingHom e.injective
+  exact isReduced_of_injective
+    (Algebra.TensorProduct.baseChangeTowerRingEquiv k K H L).toRingHom
+    (Algebra.TensorProduct.baseChangeTowerRingEquiv k K H L).injective
 
 /-- **Geometric reducedness descends from an extension of the base field.**
 
@@ -74,10 +73,6 @@ theorem geometricallyReducedCommHopfAlgProperty.of_baseChange
   rw [geometricallyReducedCommHopfAlgProperty_iff] at hH ⊢
   intro L _ _
   let d := Algebra.TensorProduct.commonOverfield k K L
-  let _ := d.fieldΩ
-  let _ := d.algebraOmega
-  let _ := d.algebraKΩ
-  let _ := d.isScalarTower
   let _ := hH d.Ω
   have hΩ : IsReduced ((H : Type v) ⊗[k] d.Ω) :=
     isReduced_of_injective (d.comparison H).symm.toRingHom (d.comparison H).symm.injective
