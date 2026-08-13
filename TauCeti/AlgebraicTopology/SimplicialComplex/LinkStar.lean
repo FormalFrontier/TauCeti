@@ -134,9 +134,8 @@ theorem mem_link {ρ : Finset ι} :
 
 /-- The closed star of `σ` is a subcomplex of `K`. -/
 theorem closedStar_le : closedStar K σ ≤ K := by
-  intro ρ hρ
-  obtain ⟨hne, hρ⟩ := mem_closedStar_nonempty.mp
-    (show ρ ∈ closedStar K σ from hρ)
+  rintro ρ (hρ : ρ ∈ closedStar K σ)
+  obtain ⟨hne, hρ⟩ := mem_closedStar_nonempty.mp hρ
   exact (K.isRelLowerSet_faces hρ).2 subset_union_left hne
 
 /-- The link of `σ` is a subcomplex of its closed star. -/
@@ -152,7 +151,7 @@ theorem link_le : link K σ ≤ K :=
 omit [DecidableEq ι] in
 /-- The deletion of `σ` is a subcomplex of `K`. -/
 theorem deletion_le : deletion K σ ≤ K :=
-  fun ρ hρ => (mem_deletion.mp (show ρ ∈ deletion K σ from hρ)).1
+  fun _ hρ => (mem_deletion.mp hρ).1
 
 /-- The closed star and the deletion of `σ` cover `K`: every face either survives in the deletion
 (it does not contain `σ`) or lies in the closed star (it, hence its union with `σ`, is a face). -/
@@ -166,9 +165,8 @@ theorem closedStar_sup_deletion : closedStar K σ ⊔ deletion K σ = K := by
 /-- For a nonempty simplex `σ`, the link lies inside the deletion: a face disjoint from a nonempty
 `σ` cannot contain it. -/
 theorem link_le_deletion_of_nonempty (hσ : σ.Nonempty) : link K σ ≤ deletion K σ := by
-  intro ρ hρ
-  obtain ⟨hne, hdis, hρ⟩ :=
-    mem_link_nonempty.mp (show ρ ∈ link K σ from hρ)
+  rintro ρ (hρ : ρ ∈ link K σ)
+  obtain ⟨hne, hdis, hρ⟩ := mem_link_nonempty.mp hρ
   exact mem_deletion.mpr ⟨(K.isRelLowerSet_faces hρ).2 subset_union_left hne,
     fun hsub => hσ.ne_empty (disjoint_self_iff_empty σ |>.mp (hdis.mono_left hsub))⟩
 
@@ -205,8 +203,8 @@ theorem link_mono (h : K ≤ L) : link K σ ≤ link L σ :=
 omit [DecidableEq ι] in
 /-- The deletion is monotone in the complex. -/
 theorem deletion_mono (h : K ≤ L) : deletion K σ ≤ deletion L σ :=
-  fun ρ hρ => by
-    obtain ⟨hρ, hσ⟩ := mem_deletion.mp (show ρ ∈ deletion K σ from hρ)
+  fun _ hρ => by
+    obtain ⟨hρ, hσ⟩ := mem_deletion.mp hρ
     exact mem_deletion.mpr ⟨h hρ, hσ⟩
 
 section IsCone
