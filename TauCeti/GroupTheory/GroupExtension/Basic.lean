@@ -46,13 +46,6 @@ theorem relabelKer_inl (S : GroupExtension N E G) {N' : Type*} [Group N'] (e : N
     (S.relabelKer e).inl = S.inl.comp e.toMonoidHom :=
   (rfl)
 
-/-- The inclusion of `S.relabelKer e` applied to an element. -/
-@[to_additive (attr := simp)
-  /-- The inclusion of `S.relabelKer e` applied to an element. -/]
-theorem relabelKer_inl_apply (S : GroupExtension N E G) {N' : Type*} [Group N'] (e : N' ≃* N)
-    (n : N') : (S.relabelKer e).inl n = S.inl (e n) :=
-  (rfl)
-
 /-- Relabelling the kernel does not change the projection. -/
 @[to_additive (attr := simp) /-- Relabelling the kernel does not change the projection. -/]
 theorem relabelKer_rightHom (S : GroupExtension N E G) {N' : Type*} [Group N'] (e : N' ≃* N) :

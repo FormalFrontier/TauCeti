@@ -18,7 +18,6 @@ can be used to choose a different group as the extension's left term.
   homomorphism.
 * `GroupExtension.ofMulEquivKer`: `ofSurjective` with its kernel relabelled by `relabelKer`.
 * `GroupExtension.ofMulEquivKer_inl`: its inclusion is the given kernel equivalence.
-* `GroupExtension.ofMulEquivKer_inl_apply`: its inclusion is the given kernel equivalence.
 * `GroupExtension.ofMulEquivKer_rightHom`: its projection is the original homomorphism.
 
 The constructions are mirrored for additive groups by `to_additive`.
@@ -50,13 +49,6 @@ theorem ofSurjective_inl {f : E →* G} (hf : Function.Surjective f) :
     (ofSurjective hf).inl = f.ker.subtype :=
   (rfl)
 
-/-- The inclusion in `GroupExtension.ofSurjective hf` applied to an element. -/
-@[to_additive (attr := simp)
-  /-- The inclusion in `AddGroupExtension.ofSurjective hf` applied to an element. -/]
-theorem ofSurjective_inl_apply {f : E →* G} (hf : Function.Surjective f) (x : f.ker) :
-    (ofSurjective hf).inl x = x :=
-  (rfl)
-
 /-- The projection in `GroupExtension.ofSurjective hf` is the original homomorphism. -/
 @[to_additive (attr := simp)
   /-- The projection in `AddGroupExtension.ofSurjective hf` is the original homomorphism. -/]
@@ -80,13 +72,6 @@ def ofMulEquivKer {f : E →* G} (hf : Function.Surjective f)
 theorem ofMulEquivKer_inl {f : E →* G} (hf : Function.Surjective f) (e : N ≃* f.ker) :
     (ofMulEquivKer hf e).inl = f.ker.subtype.comp e.toMonoidHom :=
   by rw [ofMulEquivKer, relabelKer_inl, ofSurjective_inl]
-
-/-- The inclusion of `GroupExtension.ofMulEquivKer hf e` applied to an element. -/
-@[to_additive (attr := simp)
-  /-- The inclusion of `AddGroupExtension.ofAddEquivKer hf e` applied to an element. -/]
-theorem ofMulEquivKer_inl_apply {f : E →* G} (hf : Function.Surjective f) (e : N ≃* f.ker)
-    (n : N) : (ofMulEquivKer hf e).inl n = (e n : E) :=
-  by rw [ofMulEquivKer, relabelKer_inl_apply, ofSurjective_inl_apply]
 
 /-- The projection of `GroupExtension.ofMulEquivKer hf e` is the original homomorphism. -/
 @[to_additive (attr := simp)
