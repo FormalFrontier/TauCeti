@@ -24,7 +24,7 @@ arbitrary `2`-cocycle need not be normalized, but dividing it by the coboundary 
 function `f (1, 1)` normalizes it without moving its class
 (`TauCeti.FactorSet.ofIsMulCocycle₂`).
 
-Read through the group extensions of `TauCeti/GroupTheory/GroupExtension/OfFactorSet.lean` and
+Read through the group extensions of `TauCeti/GroupTheory/GroupExtension/Of/FactorSet.lean` and
 `TauCeti/GroupTheory/GroupExtension/FactorSetOfSection.lean`, this says several things about
 extensions of `G` by an abelian kernel `M` inducing the given action: the class read off an
 extension does not depend on the normalized section it is read from

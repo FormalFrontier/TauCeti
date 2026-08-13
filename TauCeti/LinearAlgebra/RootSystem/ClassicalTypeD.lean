@@ -857,9 +857,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
     have htot : ∑ i : Fin n, x.1 i = 0 := by
       simp [hv, Finset.sum_sub_distrib]
     have hhalf : typeDHalfTotal x = 0 := by
-      have h2 := two_mul_typeDHalfTotal x
-      rw [htot] at h2
-      linarith
+      linarith [two_mul_typeDHalfTotal x, htot]
     simp only [typeDSimpleRootCoordinates]
     split_ifs
     · rw [hv]
@@ -875,9 +873,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
     have htot : ∑ i : Fin n, x.1 i = 2 := by
       simp [hv, Finset.sum_add_distrib]
     have hhalf : typeDHalfTotal x = 1 := by
-      have h2 := two_mul_typeDHalfTotal x
-      rw [htot] at h2
-      linarith
+      linarith [two_mul_typeDHalfTotal x, htot]
     simp only [typeDSimpleRootCoordinates]
     split_ifs
     · rw [hv]

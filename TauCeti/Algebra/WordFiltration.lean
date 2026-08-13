@@ -156,6 +156,37 @@ theorem mul_mem_wordFiltration {i j : ℕ} {x y : A} (hx : x ∈ wordFiltration 
   rw [← wordFiltration_mul f i j]
   exact Submodule.mul_mem_mul hx hy
 
+/-- Multiplying an element of degree strictly below `i` by an element of degree at most `j`
+produces an element of degree strictly below `i + j`. -/
+theorem mul_mem_wordFiltrationPrevious_left {i j : ℕ} {x y : A}
+    (hx : x ∈ wordFiltrationPrevious f i) (hy : y ∈ wordFiltration f j) :
+    x * y ∈ wordFiltrationPrevious f (i + j) := by
+  cases i with
+  | zero =>
+      simp only [wordFiltrationPrevious_zero, Submodule.mem_bot] at hx
+      subst x
+      simp
+  | succ i =>
+      rw [wordFiltrationPrevious_succ] at hx
+      rw [Nat.add_assoc, Nat.add_comm 1 j, ← Nat.add_assoc,
+        wordFiltrationPrevious_succ]
+      exact mul_mem_wordFiltration f hx hy
+
+/-- Multiplying an element of degree at most `i` by an element of degree strictly below `j`
+produces an element of degree strictly below `i + j`. -/
+theorem mul_mem_wordFiltrationPrevious_right {i j : ℕ} {x y : A}
+    (hx : x ∈ wordFiltration f i) (hy : y ∈ wordFiltrationPrevious f j) :
+    x * y ∈ wordFiltrationPrevious f (i + j) := by
+  cases j with
+  | zero =>
+      simp only [wordFiltrationPrevious_zero, Submodule.mem_bot] at hy
+      subst y
+      simp
+  | succ j =>
+      rw [wordFiltrationPrevious_succ] at hy
+      rw [← Nat.add_assoc, wordFiltrationPrevious_succ]
+      exact mul_mem_wordFiltration f hx hy
+
 /-- The `n`-th power of the generator range lies in filtration degree `n`. -/
 theorem range_pow_le_wordFiltration (n : ℕ) : LinearMap.range f ^ n ≤ wordFiltration f n :=
   pow_le_pow_left' le_sup_right n

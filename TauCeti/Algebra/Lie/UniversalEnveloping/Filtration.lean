@@ -154,6 +154,18 @@ theorem mul_mem_pbwFiltration {i j : ℕ} {x y : U} (hx : x ∈ pbwFiltration R 
     (hy : y ∈ pbwFiltration R L j) : x * y ∈ pbwFiltration R L (i + j) :=
   TauCeti.Algebra.mul_mem_wordFiltration _ hx hy
 
+/-- Multiplication preserves a strict degree drop in the left factor of the PBW filtration. -/
+theorem mul_mem_pbwFiltrationPrevious_left {i j : ℕ} {x y : U}
+    (hx : x ∈ pbwFiltrationPrevious R L i) (hy : y ∈ pbwFiltration R L j) :
+    x * y ∈ pbwFiltrationPrevious R L (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left _ hx hy
+
+/-- Multiplication preserves a strict degree drop in the right factor of the PBW filtration. -/
+theorem mul_mem_pbwFiltrationPrevious_right {i j : ℕ} {x y : U}
+    (hx : x ∈ pbwFiltration R L i) (hy : y ∈ pbwFiltrationPrevious R L j) :
+    x * y ∈ pbwFiltrationPrevious R L (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right _ hx hy
+
 /-- Iterating `pbwFiltration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
 theorem pbwFiltration_pow (i n : ℕ) :

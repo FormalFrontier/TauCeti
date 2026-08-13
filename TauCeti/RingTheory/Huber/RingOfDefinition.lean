@@ -154,58 +154,67 @@ namespace PairOfDefinition
 
 variable [IsTopologicalRing A]
 
+/-- Every power of the ideal of definition, carried into a larger subring `B`, is open in `B`.
+
+Boundedness of `B` is not needed; only that `B` contains the ring of definition. -/
+private theorem isOpen_idealOfDefinition_map_pow (P : PairOfDefinition A) (B : Subring A)
+    (hle : P.ringOfDefinition ≤ B) (n : ℕ) :
+    IsOpen (((P.idealOfDefinition.map (Subring.inclusion hle)) ^ n : Ideal B) : Set B) :=
+  AddSubgroup.isOpen_of_mem_nhds
+    ((P.idealOfDefinition.map (Subring.inclusion hle) ^ n).toAddSubgroup) <| by
+    rw [Submodule.coe_toAddSubgroup]
+    have hnhd : Subtype.val ⁻¹' (P.idealImage n : Set A) ∈ 𝓝 (0 : B) :=
+      continuous_subtype_val.continuousAt.preimage_mem_nhds <|
+        (P.isOpen_idealImage n).mem_nhds (P.idealImage n).zero_mem
+    refine mem_of_superset hnhd ?_
+    rintro ⟨x, hxB⟩ hx
+    obtain ⟨y, hy, hxy⟩ := (P.mem_idealImage n).mp hx
+    have heq : (⟨x, hxB⟩ : B) = Subring.inclusion hle y := Subtype.ext hxy.symm
+    rw [heq, ← Ideal.map_pow]
+    exact Ideal.mem_map_of_mem _ hy
+
+/-- Every neighbourhood of `0` in a bounded subring `B` containing the ring of definition
+contains a power of the ideal of definition carried into `B`. -/
+private theorem exists_idealOfDefinition_map_pow_subset (P : PairOfDefinition A) (B : Subring A)
+    (hle : P.ringOfDefinition ≤ B) (hB : IsBounded (B : Set A)) (s : Set B) (hs : s ∈ 𝓝 (0 : B)) :
+    ∃ n : ℕ, (((P.idealOfDefinition.map (Subring.inclusion hle)) ^ n : Ideal B) : Set B) ⊆ s := by
+  let := P.toNonarchimedeanRing
+  rw [nhds_induced] at hs
+  obtain ⟨U, hU, hUs⟩ := mem_comap.mp hs
+  obtain ⟨G, hGU⟩ := NonarchimedeanRing.is_nonarchimedean U hU
+  obtain ⟨V, hV, hVB⟩ := isBounded_iff.mp hB (G : Set A) (G.isOpen.mem_nhds G.zero_mem)
+  obtain ⟨n, -, hn⟩ := P.hasBasis_nhds_zero.mem_iff.mp hV
+  refine ⟨n, fun x hx ↦ hUs (hGU ?_)⟩
+  have hx' : x ∈ P.idealOfDefinition.map (Subring.inclusion hle) ^ n := hx
+  rw [← Ideal.map_pow] at hx'
+  obtain ⟨f, hf, rfl⟩ := Submodule.mem_span_set.mp hx'
+  simp only [Finsupp.sum, smul_eq_mul]
+  have hcoe_sum : ((∑ i ∈ f.support, f i * i : B) : A) =
+      ∑ i ∈ f.support, ((f i * i : B) : A) := map_sum B.subtype _ _
+  rw [hcoe_sum]
+  apply G.toAddSubgroup.sum_mem
+  intro i hi
+  obtain ⟨a, ha, rfl⟩ := hf (Finset.mem_coe.mpr hi)
+  have hcoe : ((f (Subring.inclusion hle a) * Subring.inclusion hle a : B) : A) =
+      (f (Subring.inclusion hle a) : A) * (a : A) := by
+    rw [MulMemClass.coe_mul, Subring.coe_inclusion]
+  rw [hcoe, mul_comm]
+  exact hVB <| Set.mul_mem_mul (hn ((P.mem_idealImage n).mpr ⟨a, ha, rfl⟩))
+    (f (Subring.inclusion hle a)).property
+
 /-- **Enlarging a ring of definition.** Any bounded subring `B` containing a ring of definition
 `A₀` is itself one, with the image of `I` as its ideal of definition. -/
 def enlarge (P : PairOfDefinition A) (B : Subring A) (hle : P.ringOfDefinition ≤ B)
-    (hB : IsBounded (B : Set A)) : PairOfDefinition A := by
-  letI := P.toNonarchimedeanRing
-  exact
-    { ringOfDefinition := B
-      isOpen_ringOfDefinition := AddSubgroup.isOpen_of_mem_nhds B.toAddSubgroup <|
-        mem_of_superset
-          (P.isOpen_ringOfDefinition.mem_nhds P.ringOfDefinition.zero_mem) hle
-      idealOfDefinition := P.idealOfDefinition.map (Subring.inclusion hle)
-      fg_idealOfDefinition := P.fg_idealOfDefinition.map _
-      isAdic_idealOfDefinition := by
-        let incl := Subring.inclusion hle
-        let J := P.idealOfDefinition.map incl
-        rw [isAdic_iff]
-        constructor
-        · intro n
-          exact AddSubgroup.isOpen_of_mem_nhds (J ^ n).toAddSubgroup <| by
-            rw [Submodule.coe_toAddSubgroup]
-            have hnhd : Subtype.val ⁻¹' (P.idealImage n : Set A) ∈ 𝓝 (0 : B) :=
-              continuous_subtype_val.continuousAt.preimage_mem_nhds <|
-                (P.isOpen_idealImage n).mem_nhds (P.idealImage n).zero_mem
-            refine mem_of_superset hnhd ?_
-            rintro ⟨x, hxB⟩ hx
-            obtain ⟨y, hy, hxy⟩ := (P.mem_idealImage n).mp hx
-            have heq : (⟨x, hxB⟩ : B) = incl y := Subtype.ext hxy.symm
-            rw [heq, ← Ideal.map_pow]
-            exact Ideal.mem_map_of_mem incl hy
-        · intro s hs
-          rw [nhds_induced] at hs
-          obtain ⟨U, hU, hUs⟩ := mem_comap.mp hs
-          obtain ⟨G, hGU⟩ := NonarchimedeanRing.is_nonarchimedean U hU
-          obtain ⟨V, hV, hVB⟩ := isBounded_iff.mp hB (G : Set A) (G.isOpen.mem_nhds G.zero_mem)
-          obtain ⟨n, -, hn⟩ := P.hasBasis_nhds_zero.mem_iff.mp hV
-          refine ⟨n, fun x hx ↦ hUs (hGU ?_)⟩
-          have hx' : x ∈ P.idealOfDefinition.map incl ^ n := hx
-          rw [← Ideal.map_pow] at hx'
-          obtain ⟨f, hf, rfl⟩ := Submodule.mem_span_set.mp hx'
-          simp only [Finsupp.sum, smul_eq_mul]
-          have hcoe_sum : ((∑ i ∈ f.support, f i * i : B) : A) =
-              ∑ i ∈ f.support, ((f i * i : B) : A) := by
-            exact map_sum B.subtype _ _
-          rw [hcoe_sum]
-          apply G.toAddSubgroup.sum_mem
-          intro i hi
-          obtain ⟨a, ha, rfl⟩ := hf (Finset.mem_coe.mpr hi)
-          have hcoe : ((f (incl a) * incl a : B) : A) = (f (incl a) : A) * (a : A) := by
-            rw [MulMemClass.coe_mul, Subring.coe_inclusion]
-          rw [hcoe, mul_comm]
-          exact hVB <| Set.mul_mem_mul (hn ((P.mem_idealImage n).mpr ⟨a, ha, rfl⟩))
-            (f (incl a)).property }
+    (hB : IsBounded (B : Set A)) : PairOfDefinition A where
+  ringOfDefinition := B
+  isOpen_ringOfDefinition := AddSubgroup.isOpen_of_mem_nhds B.toAddSubgroup <|
+    mem_of_superset
+      (P.isOpen_ringOfDefinition.mem_nhds P.ringOfDefinition.zero_mem) hle
+  idealOfDefinition := P.idealOfDefinition.map (Subring.inclusion hle)
+  fg_idealOfDefinition := P.fg_idealOfDefinition.map _
+  isAdic_idealOfDefinition :=
+    isAdic_iff.mpr ⟨P.isOpen_idealOfDefinition_map_pow B hle,
+      P.exists_idealOfDefinition_map_pow_subset B hle hB⟩
 
 /-- The ring of definition of `P.enlarge B hle hB` is `B`. -/
 @[simp]

@@ -239,6 +239,18 @@ theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ fil
     (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) :=
   TauCeti.Algebra.mul_mem_wordFiltration (ι Q) hx hy
 
+/-- Multiplication preserves a strict degree drop in the left factor of the Clifford filtration. -/
+theorem mul_mem_filtrationPrevious_left {i j : ℕ} {x y : CliffordAlgebra Q}
+    (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
+    x * y ∈ filtrationPrevious Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left (ι Q) hx hy
+
+/-- Multiplication preserves a strict degree drop in the right factor of the Clifford filtration. -/
+theorem mul_mem_filtrationPrevious_right {i j : ℕ} {x y : CliffordAlgebra Q}
+    (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
+    x * y ∈ filtrationPrevious Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right (ι Q) hx hy
+
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
 theorem filtration_pow (i n : ℕ) : filtration Q i ^ n = filtration Q (i * n) :=

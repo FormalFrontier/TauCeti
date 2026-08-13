@@ -74,6 +74,78 @@ class GhStreamTest(unittest.TestCase):
                          ["TauCeti/Foo.lean", "lean-toolchain"])
 
 
+class MainRedTest(unittest.TestCase):
+    """A moving main tip must not hide the last conclusive red CI run."""
+
+    @staticmethod
+    def _run(head, status="completed", conclusion="success"):
+        return {"head_sha": head, "status": status, "conclusion": conclusion}
+
+    def _install_runs(self, runs, tip="tip"):
+        import json
+        payload = "".join(json.dumps(run) + "\n" for run in runs)
+        return _install(self, [("/commits/main", tip), ("ci.yml/runs", payload)])
+
+    def test_tip_failure_alerts(self):
+        fake = self._install_runs([self._run("tip", conclusion="failure")])
+        self.assertEqual([a["key"] for a in sa.detect_main_red()], ["main-red"])
+        runs_request = next(path for path, _jq, _paginate in fake.requests
+                            if "ci.yml/runs" in path)
+        self.assertIn("branch=main", runs_request)
+        self.assertIn("event=push", runs_request)
+        self.assertIn("per_page=100", runs_request)
+        self.assertFalse(next(paginate for path, _jq, paginate in fake.requests
+                              if "ci.yml/runs" in path))
+
+    def test_moving_tip_does_not_hide_previous_failure(self):
+        # Regression: the old detector returned early because `tip` was still
+        # running, even though every completed main run behind it was red.
+        self._install_runs([
+            self._run("tip", status="in_progress", conclusion=""),
+            self._run("bad", conclusion="failure"),
+        ])
+        alert = sa.detect_main_red()[0]
+        self.assertIn("`bad`", alert["body"])
+        self.assertIn("current tip `tip`", alert["body"])
+
+    def test_known_green_before_running_tip_is_not_an_alert(self):
+        self._install_runs([
+            self._run("tip", status="queued", conclusion=""),
+            self._run("green"),
+            self._run("old-bad", conclusion="failure"),
+        ])
+        self.assertEqual(sa.detect_main_red(), [])
+
+    def test_cancellation_does_not_clear_known_red(self):
+        self._install_runs([
+            self._run("tip", conclusion="cancelled"),
+            self._run("bad", conclusion="timed_out"),
+        ])
+        self.assertEqual([a["key"] for a in sa.detect_main_red()], ["main-red"])
+
+    def test_new_success_clears_older_failure(self):
+        self._install_runs([
+            self._run("tip"),
+            self._run("old-bad", conclusion="startup_failure"),
+        ])
+        self.assertEqual(sa.detect_main_red(), [])
+
+    def test_no_conclusive_run_is_not_an_alert(self):
+        self._install_runs([
+            self._run("tip", status="in_progress", conclusion=""),
+            self._run("old", conclusion="cancelled"),
+        ])
+        self.assertEqual(sa.detect_main_red(), [])
+
+    def test_full_inconclusive_window_fails_closed(self):
+        self._install_runs([
+            self._run(f"run-{i}", conclusion="cancelled")
+            for i in range(sa.MAIN_CI_WINDOW)
+        ])
+        with self.assertRaisesRegex(RuntimeError, "no conclusive main CI run"):
+            sa.detect_main_red()
+
+
 class FailClosedTest(unittest.TestCase):
     def test_failing_detector_records_prefix_and_keeps_others(self):
         self.addCleanup(setattr, sa, "DETECTORS", sa.DETECTORS)
@@ -229,8 +301,10 @@ class RoutedGh:
 
     def __init__(self, routes):
         self.routes = routes
+        self.requests = []
 
     def __call__(self, path, jq=None, paginate=False):
+        self.requests.append((path, jq, paginate))
         request = f"{path} {jq or ''}"
         for needle, payload in self.routes:
             if needle in request:
@@ -240,7 +314,9 @@ class RoutedGh:
 
 def _install(test, routes):
     test.addCleanup(setattr, core, "gh_api", core.gh_api)
-    core.gh_api = RoutedGh(routes)
+    fake = RoutedGh(routes)
+    core.gh_api = fake
+    return fake
 
 
 class ReadyLabelClockTest(unittest.TestCase):
