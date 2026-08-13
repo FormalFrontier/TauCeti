@@ -85,7 +85,7 @@ theorem sum_real_const_mul {ι : Type*} {s : Finset ι} {w : ι → ℝ} {F : ι
 /-- Schur powers of a positive-definite function are positive definite. -/
 theorem pow {F : M → ℂ} (hF : IsPositiveDefinite F) (n : ℕ) :
     IsPositiveDefinite (fun x => F x ^ n) :=
-  of_isPositiveDefiniteKernel (isPositiveDefiniteKernel_pow hF.isPositiveDefiniteKernel n)
+  of_posSemidef (posSemidef_pow hF.posSemidef n)
 
 section Values
 

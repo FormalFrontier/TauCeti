@@ -34,7 +34,7 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
   `charFun μ ((-2π) • a)`.
 * `TauCeti.fourier_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
   integral of `F` against the Fourier atom.
-* `TauCeti.fourierConventionCharFun_isPositiveDefiniteKernel`: the Fourier-convention
+* `TauCeti.fourierConventionCharFun_sub_posSemidef`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: a finite measure is determined by its
   Fourier-convention transform — the uniqueness half of Bochner's theorem.
@@ -116,21 +116,26 @@ theorem fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg [StarAddMonoi
 measure is positive definite. This is the kernel form of
 `fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg`, avoiding any explicit choice of
 involution on the domain. -/
-theorem fourierConventionCharFun_isPositiveDefiniteKernel :
+theorem fourierConventionCharFun_sub_posSemidef :
     Matrix.PosSemidef fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
-  change (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν).PosSemidef
-  have hscaled := isPositiveDefiniteKernel_comp
-    (charFun_isPositiveDefiniteKernel (μ := ν))
+  have hscaled := (charFun_sub_posSemidef (μ := ν)).submatrix
     (fun a : W => (-2 * Real.pi) • a)
-  rw [show Matrix.of (fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν) =
-      Matrix.of (fun a b : W => MeasureTheory.charFun ν
-        ((-2 * Real.pi) • a - (-2 * Real.pi) • b)) by
+  have heq : Matrix.submatrix
+      (Matrix.of fun a b : W => MeasureTheory.charFun ν (a - b))
+      (fun a : W => (-2 * Real.pi) • a) (fun a => (-2 * Real.pi) • a) =
+      Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
     ext a b
-    simp only [Matrix.of_apply]
+    simp only [Matrix.submatrix_apply, Matrix.of_apply]
     rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
     congr 1
-    simp [smul_sub]]
-  exact hscaled
+    simp [smul_sub]
+  have htarget : (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν).PosSemidef :=
+    heq ▸ hscaled
+  have hof : (Matrix.of fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν) =
+      fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
+    ext a b
+    rfl
+  exact hof ▸ htarget
 
 section Topology
 

@@ -63,7 +63,7 @@ and the representation is stated in the `fourierAtom` convention rather than thr
 * `TauCeti.integral_fourierAtom_withDensity_re_fourierInv`: the measure
   `volume.withDensity (ENNReal.ofReal (𝓕⁻ F ·).re)` recovers `F` through the Fourier atom — the
   `L¹` case of Bochner's theorem.
-* `TauCeti.exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel`:
+* `TauCeti.exists_isFiniteMeasure_integral_fourierAtom_eq_of_posSemidef`:
   existence of a finite representing measure for a continuous positive-definite function.
 * `TauCeti.bochner`, with the Euclidean specialization
   `TauCeti.bochner_euclideanSpace`:
@@ -101,11 +101,11 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     (hint : Integrable F) (hcont : Continuous F) (v : V) :
     ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
   have hft_int : Integrable (𝓕 F) :=
-    integrable_fourier_of_isPositiveDefiniteKernel F hpd hint hcont
+    integrable_fourier_of_posSemidef F hpd hint hcont
   have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re :=
-    fourierInv_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont
+    fourierInv_re_nonneg_of_posSemidef F hpd hint hcont
   have hreal : ∀ ξ, 𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) :=
-    fourierInv_eq_re_of_isPositiveDefiniteKernel F hpd hint
+    fourierInv_eq_re_of_posSemidef F hpd hint
   rw [integral_withDensity_eq_integral_toReal_smul₀
     (measurable_ofReal_re_fourierInv hint).aemeasurable
     (ae_of_all _ fun ξ => ENNReal.ofReal_lt_top) _]
@@ -135,9 +135,9 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
     volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ (gaussianRegularize G (ε n)) ξ).re
   have hGn_pd : ∀ n, Matrix.PosSemidef
       fun a b : V => gaussianRegularize G (ε n) (a - b) := fun n =>
-    isPositiveDefiniteKernel_gaussianRegularize hpd (hε_pos n).le
+    posSemidef_gaussianRegularize hpd (hε_pos n).le
   have hGn_int : ∀ n, Integrable (gaussianRegularize G (ε n)) := fun n =>
-    integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
+    integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_posSemidef hpd)
       hcont.aestronglyMeasurable (hε_pos n)
   have hGn_cont : ∀ n, Continuous (gaussianRegularize G (ε n)) := fun n =>
     continuous_gaussianRegularize hcont (ε n)
@@ -146,7 +146,7 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
   have hν_prob : ∀ n, IsProbabilityMeasure (ν n) := by
     intro n
     have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_ofReal
-      (integrable_fourierInv_of_isPositiveDefiniteKernel _ (hGn_pd n) (hGn_int n)
+      (integrable_fourierInv_of_posSemidef _ (hGn_pd n) (hGn_int n)
         (hGn_cont n)).re.2
     -- at `v = 0` the Fourier atom is `1` and the regularization keeps `G 0 = 1`, so the
     -- representation reads `μ.real univ = 1`
@@ -198,19 +198,19 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
 real inner-product space whose subtraction kernel `(a, b) ↦ F (a - b)` is positive definite is
 the Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a finite Borel measure `μ`.
 Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3. -/
-theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel
+theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_posSemidef
     (F : V → ℂ) (hcont : Continuous F)
     (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) :
     ∃ μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
   have h0re : 0 ≤ (F 0).re := by
-    simpa using map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
+    simpa using map_zero_re_nonneg_of_posSemidef hpd
   have h0eq : F 0 = ((F 0).re : ℂ) := by
-    simpa using map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel hpd
+    simpa using map_zero_eq_ofReal_re_of_posSemidef hpd
   rcases h0re.eq_or_lt with hzero | hpos
   · -- degenerate case: `F 0 = 0` forces `F = 0`, represented by the zero measure
     have hF0 : F 0 = 0 := by rw [h0eq, ← hzero, Complex.ofReal_zero]
     have hFv : ∀ v : V, F v = 0 := fun v => by
-      simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right hpd
+      simpa using posSemidef_eq_zero_of_apply_self_eq_zero_right hpd
         (a := v) (b := (0 : V)) (by simpa using hF0)
     exact ⟨0, inferInstance, fun v => by simp [hFv v]⟩
   · -- main case: normalize to value `1` at the origin and scale the measure back
@@ -218,10 +218,13 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
     have hcne : (c : ℂ) ≠ 0 := by exact_mod_cast hpos.ne'
     set G : V → ℂ := fun v => (c : ℂ)⁻¹ * F v with hG_def
     have hG_pd : Matrix.PosSemidef fun a b : V => G (a - b) := by
-      have h := isPositiveDefiniteKernel_smul_of_nonneg (K := fun a b : V => F (a - b))
-        (c := ((c : ℂ))⁻¹)
-        (inv_nonneg.mpr ((RCLike.ofReal_nonneg (K := ℂ)).mpr hpos.le)) hpd
-      simpa only [smul_eq_mul] using h
+      have h := hpd.smul
+        (inv_nonneg.mpr ((RCLike.ofReal_nonneg (K := ℂ)).mpr hpos.le))
+      have heq : (c : ℂ)⁻¹ • (fun a b : V => F (a - b)) =
+          fun a b : V => G (a - b) := by
+        ext a b
+        simp only [Pi.smul_apply, smul_eq_mul, hG_def]
+      exact heq ▸ h
     have hG_cont : Continuous G := continuous_const.mul hcont
     have hG0 : G 0 = 1 := by
       rw [hG_def]
@@ -245,7 +248,7 @@ theorem bochner (F : V → ℂ) :
   constructor
   · rintro ⟨hcont, hpd⟩
     obtain ⟨μ, hfin, hrep⟩ :=
-      exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel F hcont hpd
+      exists_isFiniteMeasure_integral_fourierAtom_eq_of_posSemidef F hcont hpd
     refine ⟨μ, ⟨hfin, hrep⟩, ?_⟩
     rintro ν ⟨hνfin, hνrep⟩
     have := hfin
@@ -262,7 +265,7 @@ theorem bochner (F : V → ℂ) :
         funext a b
         exact hrep (a - b)
       rw [hfun]
-      exact fourierConventionCharFun_isPositiveDefiniteKernel
+      exact fourierConventionCharFun_sub_posSemidef
 
 /-- **Bochner's theorem for the involutive predicate.** Under the negation involution
 `star x = -x`, a function is continuous and positive definite in the involutive sense if and
@@ -272,7 +275,7 @@ theorem bochner_of_forall_star_eq_neg [StarAddMonoid V] (hstar : ∀ x : V, star
     (Continuous F ∧ IsPositiveDefinite F) ↔
       ∃! μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ :=
   (and_congr_right fun _ =>
-    isPositiveDefinite_iff_isPositiveDefiniteKernel_sub hstar).trans (bochner F)
+    isPositiveDefinite_iff_posSemidef_sub hstar).trans (bochner F)
 
 /-- **Bochner's theorem on `ℝᵈ`**: the specialization of `bochner` to Euclidean space. A
 function on `EuclideanSpace ℝ (Fin d)` is continuous with positive-definite subtraction kernel

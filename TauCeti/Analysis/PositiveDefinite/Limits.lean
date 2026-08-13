@@ -25,7 +25,7 @@ provides the positive-definiteness conclusion.
 
 ## Main declarations
 
-* `TauCeti.isPositiveDefiniteKernel_of_tendsto`: filter-level pointwise-limit closure for
+* `TauCeti.posSemidef_of_tendsto`: filter-level pointwise-limit closure for
   positive-definite kernels.
 * `TauCeti.IsPositiveDefinite.of_tendsto`: filter-level pointwise-limit closure for
   positive-definite functions.
@@ -55,35 +55,39 @@ variable {𝕜 : Type*} [RCLike 𝕜] {α : Type*}
 /-- Positive-definite kernels are preserved under pointwise limits along a nontrivial filter. The
 hypothesis on positive-definiteness is eventual, so this applies equally to nets that are
 eventually positive definite. -/
-theorem isPositiveDefiniteKernel_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
+theorem posSemidef_of_tendsto {ι : Type*} {l : Filter ι} [NeBot l]
     {K : ι → α → α → 𝕜} {L : α → α → 𝕜} (hK : ∀ᶠ i in l, Matrix.PosSemidef (K i))
     (hlim : ∀ a b : α, Tendsto (fun i => K i a b) l (𝓝 (L a b))) :
     Matrix.PosSemidef L := by
-  change (Matrix.of L).PosSemidef
-  refine ⟨?_, ?_⟩
-  · ext a b
-    rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply, ← starRingEnd_apply]
-    have hconj : Tendsto (fun i => conj (K i b a)) l (𝓝 (conj (L b a))) :=
-      RCLike.continuous_conj.tendsto (L b a) |>.comp (hlim b a)
-    have hswap : Tendsto (fun i => conj (K i b a)) l (𝓝 (L a b)) :=
-      (hlim a b).congr' <| by
+  have hOf : (Matrix.of L).PosSemidef := by
+    refine ⟨?_, ?_⟩
+    · ext a b
+      rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply, ← starRingEnd_apply]
+      have hconj : Tendsto (fun i => conj (K i b a)) l (𝓝 (conj (L b a))) :=
+        RCLike.continuous_conj.tendsto (L b a) |>.comp (hlim b a)
+      have hswap : Tendsto (fun i => conj (K i b a)) l (𝓝 (L a b)) :=
+        (hlim a b).congr' <| by
+          filter_upwards [hK] with i hi
+          exact (posSemidef_conj_symm hi b a).symm
+      exact tendsto_nhds_unique hconj hswap
+    · intro x
+      have hquad :
+          Tendsto
+            (fun i => x.support.sum fun a =>
+              x.support.sum fun b => star (x a) * K i a b * x b) l
+            (𝓝 (x.support.sum fun a => x.support.sum fun b => star (x a) * L a b * x b)) := by
+        refine tendsto_finsetSum _ fun a _ => tendsto_finsetSum _ fun b _ => ?_
+        exact ((tendsto_const_nhds.mul (hlim a b)).mul tendsto_const_nhds)
+      have hnonneg : 0 ≤ x.support.sum fun a =>
+          x.support.sum fun b => star (x a) * L a b * x b := by
+        refine ge_of_tendsto hquad ?_
         filter_upwards [hK] with i hi
-        exact (isPositiveDefiniteKernel_conj_symm hi b a).symm
-    exact tendsto_nhds_unique hconj hswap
-  · intro x
-    have hquad :
-        Tendsto
-          (fun i => x.support.sum fun a =>
-            x.support.sum fun b => star (x a) * K i a b * x b) l
-          (𝓝 (x.support.sum fun a => x.support.sum fun b => star (x a) * L a b * x b)) := by
-      refine tendsto_finsetSum _ fun a _ => tendsto_finsetSum _ fun b _ => ?_
-      exact ((tendsto_const_nhds.mul (hlim a b)).mul tendsto_const_nhds)
-    have hnonneg : 0 ≤ x.support.sum fun a =>
-        x.support.sum fun b => star (x a) * L a b * x b := by
-      refine ge_of_tendsto hquad ?_
-      filter_upwards [hK] with i hi
-      simpa [Finsupp.sum] using hi.2 x
-    simpa [Finsupp.sum] using hnonneg
+        simpa [Finsupp.sum] using hi.2 x
+      simpa [Finsupp.sum, Matrix.of_apply] using hnonneg
+  have hof : Matrix.of L = L := by
+    ext a b
+    rfl
+  exact hof ▸ hOf
 
 namespace IsPositiveDefinite
 
@@ -96,9 +100,9 @@ theorem of_tendsto {ι : Type*} {l : Filter ι} [NeBot l] {F : ι → M → ℂ}
     (hF : ∀ᶠ i in l, IsPositiveDefinite (F i))
     (hlim : ∀ x : M, Tendsto (fun i => F i x) l (𝓝 (G x))) :
     IsPositiveDefinite G :=
-  of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_of_tendsto
-      (hF.mono fun _ hi => hi.isPositiveDefiniteKernel)
+  of_posSemidef <|
+    posSemidef_of_tendsto
+      (hF.mono fun _ hi => hi.posSemidef)
       (fun a b => hlim (a + star b))
 
 /-- A pointwise limit of a family of positive-definite functions is positive definite. This is the

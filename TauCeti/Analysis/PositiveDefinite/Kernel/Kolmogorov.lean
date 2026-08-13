@@ -94,7 +94,7 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     intro x y
     rw [positiveDefiniteKernelOperator_apply, positiveDefiniteKernelOperator_apply]
     rw [RCLike.inner_apply', RCLike.inner_apply', map_mul,
-      isPositiveDefiniteKernel_conj_symm hK]
+      posSemidef_conj_symm hK]
     ring
   · intro f
     have hnonneg := hK.2 f
@@ -102,7 +102,7 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     have hinner (a b : α) (x y : 𝕜) :
         ⟪positiveDefiniteKernelOperator K b a x, y⟫_𝕜 = star x * K a b * y := by
       rw [positiveDefiniteKernelOperator_apply, RCLike.inner_apply', map_mul,
-        isPositiveDefiniteKernel_conj_symm hK, RCLike.star_def]
+        posSemidef_conj_symm hK, RCLike.star_def]
       ring
     have hquadratic :
         RCLike.re (f.sum fun a x => f.sum fun b y =>
@@ -139,7 +139,7 @@ theorem inner_kolmogorovFeature (hK : Matrix.PosSemidef K) (a b : α) :
   rw [kolmogorovFeature, kolmogorovFeature,
     ← RKHS.kernel_inner hK.KolmogorovSpace b a (1 : 𝕜) 1,
     RKHS.OfKernel.kernel_ofKernel]
-  simp [isPositiveDefiniteKernel_conj_symm hK]
+  simp [posSemidef_conj_symm hK]
 
 /-- The squared norm of a canonical feature vector is the real part of the corresponding
 diagonal kernel value. -/

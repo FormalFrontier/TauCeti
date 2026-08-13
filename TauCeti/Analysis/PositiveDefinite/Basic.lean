@@ -54,9 +54,9 @@ here. The continuity theory and Bochner's representation theorem are later miles
   `TauCeti.IsPositiveDefinite.norm_apply_le_map_zero_re_of_star_eq_neg` for `star a = -a`.
 * `TauCeti.IsPositiveDefinite.apply_eq_zero_of_map_zero_re_eq_zero`: `(F 0).re = 0` forces
   `F` to vanish identically.
-* `TauCeti.IsPositiveDefinite.isPositiveDefiniteKernel`: a positive-definite function gives the
+* `TauCeti.IsPositiveDefinite.posSemidef`: a positive-definite function gives the
   positive-definite kernel `fun a b => F (a + star b)`.
-* `TauCeti.IsPositiveDefinite.of_isPositiveDefiniteKernel`: conversely, if the kernel
+* `TauCeti.IsPositiveDefinite.of_posSemidef`: conversely, if the kernel
   `fun a b => F (a + star b)` is positive definite then `F` is positive definite.
 * `TauCeti.IsPositiveDefinite.gram_posSemidef`: Gram matrices of a positive-definite
   function are positive semidefinite.
@@ -182,9 +182,9 @@ theorem conj_symm (hF : IsPositiveDefinite F) (a b : M) :
 
 /-- A positive-definite function `F` induces the positive-definite kernel `K(a, b) = F(a + b⋆)`.
 This is the forward half of the function ↔ kernel correspondence. -/
-theorem isPositiveDefiniteKernel (hF : IsPositiveDefinite F) :
+theorem posSemidef (hF : IsPositiveDefinite F) :
     Matrix.PosSemidef (fun a b => F (a + star b)) :=
-  isPositiveDefiniteKernel_iff.mpr
+  posSemidef_iff.mpr
     ⟨fun a b => hF.conj_symm b a, fun {_ι : Type} _ v x => by
       have h := hF.sum_nonneg (fun i => conj (x i)) v
       refine le_of_le_of_eq h ?_
@@ -193,9 +193,9 @@ theorem isPositiveDefiniteKernel (hF : IsPositiveDefinite F) :
 
 /-- If the kernel `K(a, b) = F(a + b⋆)` is positive definite, then so is the function `F`. This is
 the reverse half of the function ↔ kernel correspondence. -/
-theorem of_isPositiveDefiniteKernel
+theorem of_posSemidef
     (hK : Matrix.PosSemidef (fun a b => F (a + star b))) : IsPositiveDefinite F := by
-  obtain ⟨_, hpos⟩ := isPositiveDefiniteKernel_iff.mp hK
+  obtain ⟨_, hpos⟩ := posSemidef_iff.mp hK
   intro n c v
   have h := hpos v (fun i => conj (c i))
   refine le_of_le_of_eq h ?_
@@ -207,7 +207,7 @@ off-diagonal value is bounded by the product of the two diagonal values. -/
 theorem normSq_le (hF : IsPositiveDefinite F) (a b : M) :
     Complex.normSq (F (a + star b))
       ≤ (F (a + star a)).re * (F (b + star b)).re :=
-  isPositiveDefiniteKernel_normSq_le hF.isPositiveDefiniteKernel a b
+  posSemidef_normSq_le hF.posSemidef a b
 
 /-- If `a + star a = 0`, then a positive-definite function is bounded at `a` by its value at
 zero. -/
@@ -227,8 +227,8 @@ involutive additive monoid (`AddMonoid` and `StarAddMonoid`). -/
 theorem apply_eq_zero_of_map_zero_re_eq_zero (hF : IsPositiveDefinite F)
     (h0 : (F 0).re = 0) (a : M) : F a = 0 := by
   have hzero : F (0 + star 0) = 0 := by simpa [h0] using hF.map_zero_eq_ofReal_re
-  simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right
-    hF.isPositiveDefiniteKernel (a := a) (b := 0) hzero
+  simpa using posSemidef_eq_zero_of_apply_self_eq_zero_right
+    hF.posSemidef (a := a) (b := 0) hzero
 
 section Group
 
@@ -246,33 +246,33 @@ end Group
 /-- Positive-definite functions are closed under addition. -/
 theorem add (hF : IsPositiveDefinite F) (hG : IsPositiveDefinite G) :
     IsPositiveDefinite (fun x => F x + G x) :=
-  of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_add hF.isPositiveDefiniteKernel hG.isPositiveDefiniteKernel
+  of_posSemidef <|
+    hF.posSemidef.add hG.posSemidef
 
 /-- Positive-definite functions are closed under multiplication by a nonnegative complex scalar. -/
 theorem const_mul {k : ℂ} (hk : 0 ≤ k) (hF : IsPositiveDefinite F) :
     IsPositiveDefinite (fun x => k * F x) :=
-  of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_smul_of_nonneg hk hF.isPositiveDefiniteKernel
+  of_posSemidef <|
+    hF.posSemidef.smul hk
 
 /-- The Gram matrix of a positive-definite function is positive semidefinite. -/
 theorem gram_posSemidef (hF : IsPositiveDefinite F) {ι : Type*} (v : ι → M) :
     Matrix.PosSemidef (fun i j => F (v i + star (v j))) :=
-  isPositiveDefiniteKernel_comp hF.isPositiveDefiniteKernel v
+  hF.posSemidef.submatrix v
 
 /-- Positive-definite functions are closed under pointwise multiplication (Schur product). -/
 theorem mul (hF : IsPositiveDefinite F) (hG : IsPositiveDefinite G) :
     IsPositiveDefinite (fun x => F x * G x) :=
-  of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_mul hF.isPositiveDefiniteKernel hG.isPositiveDefiniteKernel
+  of_posSemidef <|
+    hF.posSemidef.hadamard hG.posSemidef
 
 end IsPositiveDefinite
 
 /-- A nonnegative real constant is a positive-definite function. -/
 theorem isPositiveDefinite_const {k : ℂ} (hk : 0 ≤ k) :
     IsPositiveDefinite (fun _ : M => k) :=
-  IsPositiveDefinite.of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_const_of_nonneg hk
+  IsPositiveDefinite.of_posSemidef <|
+    posSemidef_const_of_nonneg hk
 
 /-- The zero function is positive definite. -/
 theorem isPositiveDefinite_zero : IsPositiveDefinite (fun _ : M => (0 : ℂ)) :=
@@ -283,14 +283,14 @@ namespace IsPositiveDefinite
 /-- Positive-definite functions are closed under finite sums. -/
 theorem sum {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∑ i ∈ s, F i x) :=
-  of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_sum fun i hi => (hF i hi).isPositiveDefiniteKernel
+  of_posSemidef <|
+    posSemidef_sum fun i hi => (hF i hi).posSemidef
 
 /-- Positive-definite functions are closed under finite products (Schur product). -/
 theorem prod {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∏ i ∈ s, F i x) :=
-  of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_prod fun i hi => (hF i hi).isPositiveDefiniteKernel
+  of_posSemidef <|
+    posSemidef_prod fun i hi => (hF i hi).posSemidef
 
 end IsPositiveDefinite
 

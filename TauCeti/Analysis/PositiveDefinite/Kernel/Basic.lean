@@ -33,20 +33,16 @@ Mathlib's `Matrix.PosSemidef` rather than introducing a second predicate.
 
 ## Main statements
 
-* `TauCeti.isPositiveDefiniteKernel_apply_self_nonneg`: diagonal entries of a positive-definite
+* `TauCeti.posSemidef_apply_self_nonneg`: diagonal entries of a positive-definite
   kernel are nonnegative.
-* `TauCeti.isPositiveDefiniteKernel_conj_symm`: positive-definite kernels are
+* `TauCeti.posSemidef_conj_symm`: positive-definite kernels are
   conjugate-symmetric.
-* `TauCeti.isPositiveDefiniteKernel_comp`: positive definiteness is preserved by pullback.
-* `TauCeti.isPositiveDefiniteKernel_zero`, `TauCeti.isPositiveDefiniteKernel_one`, and
-  `TauCeti.isPositiveDefiniteKernel_const_of_nonneg`: constant positive-definite kernels.
-* `TauCeti.isPositiveDefiniteKernel_add`, `TauCeti.isPositiveDefiniteKernel_smul`, and
-  `TauCeti.isPositiveDefiniteKernel_smul_of_nonneg`: closure under sums, nonnegative real scalar
-  multiples, and nonnegative scalar multiples in the codomain.
-* `TauCeti.isPositiveDefiniteKernel_mul`: closure under pointwise products.
-* `TauCeti.isPositiveDefiniteKernel_iff`: the quadratic-form characterization, whose reverse
+* `TauCeti.posSemidef_zero`, `TauCeti.posSemidef_one`, and
+  `TauCeti.posSemidef_const_of_nonneg`: constant positive-definite kernels.
+* `TauCeti.posSemidef_smul`: closure under nonnegative real scalar multiples.
+* `TauCeti.posSemidef_iff`: the quadratic-form characterization, whose reverse
   direction builds a positive-definite kernel from conjugate symmetry and form nonnegativity.
-* `TauCeti.isPositiveDefiniteKernel_conj_mul`: the rank-one kernels
+* `TauCeti.posSemidef_conj_mul`: the rank-one kernels
   `(a, b) ↦ conj(g a) · g b`.
 -/
 
@@ -63,62 +59,29 @@ variable {𝕜 : Type u} [RCLike 𝕜]
 variable {α : Type v}
 
 /-- Diagonal values of a positive-definite kernel are nonnegative. -/
-theorem isPositiveDefiniteKernel_apply_self_nonneg {K : α → α → 𝕜}
+theorem posSemidef_apply_self_nonneg {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a : α) : 0 ≤ K a a := by
   simpa [Finsupp.sum_single_index] using hK.2 (Finsupp.single a 1)
 
 /-- Positive-definite kernels are conjugate-symmetric. -/
-theorem isPositiveDefiniteKernel_conj_symm {K : α → α → 𝕜}
+theorem posSemidef_conj_symm {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a b : α) : conj (K a b) = K b a := by
   have h := hK.isHermitian.apply b a
   rw [starRingEnd_apply]
   exact h
 
-/-- Pulling back a positive-definite kernel along a map preserves positive definiteness. -/
-theorem isPositiveDefiniteKernel_comp {β : Type z} {K : α → α → 𝕜}
-    (hK : Matrix.PosSemidef K) (f : β → α) :
-    Matrix.PosSemidef (fun a b => K (f a) (f b)) := by
-  change (Matrix.of fun a b => K (f a) (f b)).PosSemidef
-  rw [show Matrix.of (fun a b => K (f a) (f b)) =
-      (Matrix.of K).submatrix f f by ext; rfl]
-  exact hK.submatrix f
-
-/-- Sums of positive-definite kernels are positive definite. -/
-theorem isPositiveDefiniteKernel_add {K L : α → α → 𝕜}
-    (hK : Matrix.PosSemidef K) (hL : Matrix.PosSemidef L) :
-    Matrix.PosSemidef (fun a b => K a b + L a b) := by
-  change (Matrix.of fun a b => K a b + L a b).PosSemidef
-  rw [show Matrix.of (fun a b => K a b + L a b) = Matrix.of K + Matrix.of L by ext; rfl]
-  exact hK.add hL
-
-/-- Nonnegative scalar multiples in the codomain of positive-definite kernels are positive
-definite. -/
-theorem isPositiveDefiniteKernel_smul_of_nonneg {K : α → α → 𝕜} {c : 𝕜} (hc : 0 ≤ c)
-    (hK : Matrix.PosSemidef K) :
-    Matrix.PosSemidef (fun a b => c • K a b) := by
-  change (Matrix.of fun a b => c • K a b).PosSemidef
-  rw [show Matrix.of (fun a b => c • K a b) = c • Matrix.of K by ext; rfl]
-  exact hK.smul hc
+private theorem real_smul_kernel_eq (r : ℝ) (K : α → α → 𝕜) :
+    (fun a b => r • K a b) = (r : 𝕜) • K := by
+  ext a b
+  exact Algebra.smul_def r (K a b)
 
 /-- Nonnegative real scalar multiples of positive-definite kernels are positive definite. -/
-theorem isPositiveDefiniteKernel_smul {K : α → α → 𝕜} {r : ℝ} (hr : 0 ≤ r)
+theorem posSemidef_smul {K : α → α → 𝕜} {r : ℝ} (hr : 0 ≤ r)
     (hK : Matrix.PosSemidef K) :
     Matrix.PosSemidef (fun a b => r • K a b) := by
-  change (Matrix.of fun a b => r • K a b).PosSemidef
-  rw [show Matrix.of (fun a b => r • K a b) =
-      Matrix.of (fun a b => (r : 𝕜) • K a b) by
-    ext a b
-    exact Algebra.smul_def r (K a b)]
-  exact isPositiveDefiniteKernel_smul_of_nonneg (𝕜 := 𝕜) (α := α) (K := K)
-    (c := (r : 𝕜)) (by exact_mod_cast hr) hK
-
-/-- Pointwise products of positive-definite kernels are positive definite. -/
-theorem isPositiveDefiniteKernel_mul {K L : α → α → 𝕜}
-    (hK : Matrix.PosSemidef K) (hL : Matrix.PosSemidef L) :
-    Matrix.PosSemidef (fun a b => K a b * L a b) := by
-  change (Matrix.of fun a b => K a b * L a b).PosSemidef
-  rw [show Matrix.of (fun a b => K a b * L a b) = Matrix.of K ⊙ Matrix.of L by ext; rfl]
-  exact hK.hadamard hL
+  have hr' : 0 ≤ (r : 𝕜) := by exact_mod_cast hr
+  rw [real_smul_kernel_eq]
+  exact hK.smul hr'
 
 private theorem posSemidef_of_support_posSemidef (K : α → α → 𝕜)
     (hHerm : (Matrix.of fun a b => K a b).IsHermitian) (hgram : ∀ x : α →₀ 𝕜,
@@ -143,58 +106,60 @@ private theorem posSemidef_of_support_posSemidef (K : α → α → 𝕜)
     rw [Finset.sum_subtype x.support (by intro a; rfl)]
   simpa only [Matrix.of_apply, Finsupp.sum, mul_assoc] using h''
 
+private theorem matrixOf_conj_mul_eq_vecMulVec (g : α → 𝕜) :
+    Matrix.of (fun a b => conj (g a) * g b) = Matrix.vecMulVec (star g) g := by
+  ext a b
+  simp only [Matrix.of_apply, Matrix.vecMulVec_apply, Pi.star_apply, starRingEnd_apply]
+
+private theorem conj_mul_kernel_isHermitian (g : α → 𝕜) :
+    (Matrix.of fun a b => conj (g a) * g b).IsHermitian := by
+  rw [matrixOf_conj_mul_eq_vecMulVec]
+  ext a b
+  simp [Matrix.conjTranspose_apply, Matrix.vecMulVec_apply, Pi.star_apply, mul_comm]
+
 /-- The rank-one kernels `(a, b) ↦ conj (g a) · g b` are positive definite. With `g ≡ 1` this gives
 the constant kernel `1`; with general `g` these are building blocks whose nonnegative mixtures
 and Schur products generate further positive-definite kernels. -/
-theorem isPositiveDefiniteKernel_conj_mul (g : α → 𝕜) :
+theorem posSemidef_conj_mul (g : α → 𝕜) :
   Matrix.PosSemidef (fun a b => conj (g a) * g b) := by
-  classical
-  refine posSemidef_of_support_posSemidef _ ?_ ?_
-  · ext a b
-    change star (conj (g b) * g a) = conj (g a) * g b
-    rw [RCLike.star_def, map_mul, starRingEnd_self_apply]
-    exact mul_comm (g b) (conj (g a))
-  · intro x
-    change (Matrix.of fun i j : x.support => conj (g (i : α)) * g (j : α)).PosSemidef
-    have e : (Matrix.of fun i j : x.support => conj (g (i : α)) * g (j : α))
-        = Matrix.vecMulVec (star fun i : x.support => g (i : α))
-            (fun i : x.support => g (i : α)) := by
-      ext i j
-      simp only [Matrix.of_apply, Matrix.vecMulVec_apply, Pi.star_apply, starRingEnd_apply]
-    rw [e]
-    exact Matrix.posSemidef_vecMulVec_star_self _
+  refine posSemidef_of_support_posSemidef _ (conj_mul_kernel_isHermitian g) ?_
+  intro x
+  exact (matrixOf_conj_mul_eq_vecMulVec (g := fun i : x.support => g (i : α))).symm ▸
+    Matrix.posSemidef_vecMulVec_star_self _
 
 /-- The zero kernel is positive definite. -/
-theorem isPositiveDefiniteKernel_zero :
+theorem posSemidef_zero :
     Matrix.PosSemidef (fun _ _ : α => (0 : 𝕜)) := by
-  simpa using isPositiveDefiniteKernel_conj_mul (𝕜 := 𝕜) (α := α) (fun _ => (0 : 𝕜))
+  simpa using posSemidef_conj_mul (𝕜 := 𝕜) (α := α) (fun _ => (0 : 𝕜))
 
 /-- The constant kernel with value `1` is positive definite. -/
-theorem isPositiveDefiniteKernel_one :
+theorem posSemidef_one :
     Matrix.PosSemidef (fun _ _ : α => (1 : 𝕜)) := by
-  simpa using isPositiveDefiniteKernel_conj_mul (𝕜 := 𝕜) (α := α) (fun _ => (1 : 𝕜))
+  simpa using posSemidef_conj_mul (𝕜 := 𝕜) (α := α) (fun _ => (1 : 𝕜))
+
+private theorem smul_one_kernel_eq (c : 𝕜) :
+    c • (fun _ _ : α => (1 : 𝕜)) = fun _ _ : α => c := by
+  ext a b
+  simp
 
 /-- A nonnegative constant gives a positive-definite constant kernel. -/
-theorem isPositiveDefiniteKernel_const_of_nonneg {c : 𝕜} (hc : 0 ≤ c) :
+theorem posSemidef_const_of_nonneg {c : 𝕜} (hc : 0 ≤ c) :
     Matrix.PosSemidef (fun _ _ : α => c) := by
-  change (Matrix.of fun _ _ : α => c).PosSemidef
-  rw [show Matrix.of (fun _ _ : α => c) =
-      Matrix.of (fun a b : α => c • (1 : 𝕜)) by ext; simp]
-  exact isPositiveDefiniteKernel_smul_of_nonneg (𝕜 := 𝕜) (α := α)
-    (K := fun _ _ : α => (1 : 𝕜)) hc isPositiveDefiniteKernel_one
+  rw [← smul_one_kernel_eq]
+  exact (posSemidef_one (𝕜 := 𝕜) (α := α)).smul hc
 
 /-- The quadratic-form characterization of a positive-definite kernel: `K` is positive definite if
 and only if it is conjugate-symmetric and every Hermitian form
 `∑ᵢⱼ conj (x i) · x j · K (v i) (v j)` is nonnegative. The reverse direction is the introduction
 rule that builds a positive-definite kernel directly from the quadratic-form condition (for
 instance for the `K(a, b) = F(a + b⋆)` construction), without unfolding `Matrix.PosSemidef`. -/
-theorem isPositiveDefiniteKernel_iff {K : α → α → 𝕜} :
+theorem posSemidef_iff {K : α → α → 𝕜} :
     Matrix.PosSemidef K ↔
       (∀ a b, conj (K a b) = K b a) ∧
         ∀ {ι : Type*} [Fintype ι] (v : ι → α) (x : ι → 𝕜),
           0 ≤ ∑ i, ∑ j, conj (x i) * x j * K (v i) (v j) := by
   classical
-  refine ⟨fun hK => ⟨isPositiveDefiniteKernel_conj_symm hK, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
+  refine ⟨fun hK => ⟨posSemidef_conj_symm hK, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
   · intro ι _ v x
     have hgram : (Matrix.of fun i j => K (v i) (v j)).PosSemidef := by
       simpa [Matrix.submatrix, Function.comp_def] using hK.submatrix v

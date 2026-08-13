@@ -246,7 +246,7 @@ theorem positiveDefiniteKernelFinsuppForm_conj_symm
     conj (positiveDefiniteKernelFinsuppForm K x y)
       = positiveDefiniteKernelFinsuppForm K y x :=
   positiveDefiniteKernelFinsuppForm_conj_symm_of_conj_symm
-    (isPositiveDefiniteKernel_conj_symm hK) x y
+    (posSemidef_conj_symm hK) x y
 
 /-- Positive-definite kernels give positive-semidefinite finitely supported sesquilinear forms. -/
 theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : Matrix.PosSemidef K) :
@@ -257,12 +257,12 @@ theorem positiveDefiniteKernelFinsuppSesqForm_isPosSemidef (hK : Matrix.PosSemid
 
 /-- The finitely supported Gram form of a positive-definite kernel is itself a positive-definite
 kernel on the finitely supported coefficient space. -/
-theorem positiveDefiniteKernelFinsuppForm_isPositiveDefiniteKernel
+theorem positiveDefiniteKernelFinsuppForm_posSemidef
     (hK : Matrix.PosSemidef K) :
     Matrix.PosSemidef fun x y : α →₀ 𝕜 =>
       positiveDefiniteKernelFinsuppForm K x y := by
   classical
-  refine (isPositiveDefiniteKernel_iff.{u, max u v, 0} (𝕜 := 𝕜) (α := α →₀ 𝕜)).mpr
+  refine (posSemidef_iff.{u, max u v, 0} (𝕜 := 𝕜) (α := α →₀ 𝕜)).mpr
     ⟨positiveDefiniteKernelFinsuppForm_conj_symm hK, ?_⟩
   intro ι _ v c
   let z : α →₀ 𝕜 := ∑ i, c i • v i

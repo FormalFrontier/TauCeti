@@ -58,12 +58,19 @@ theorem isSemigroupGroupPD_mul_time_spatial_of_kernels {f : ℝ≥0 → ℂ} {g 
     (hf : Matrix.PosSemidef fun t u : ℝ≥0 => f (t + u))
     (hg : Matrix.PosSemidef fun v w : V => g (v - w)) :
     IsSemigroupGroupPD fun p : ℝ≥0 × V => f p.1 * g p.2 := by
-  refine IsSemigroupGroupPD.of_isPositiveDefiniteKernel ?_
+  refine IsSemigroupGroupPD.of_posSemidef ?_
   have htime : Matrix.PosSemidef fun p q : ℝ≥0 × V => f (p.1 + q.1) :=
-    isPositiveDefiniteKernel_comp hf Prod.fst
+    hf.submatrix Prod.fst
   have hspace : Matrix.PosSemidef fun p q : ℝ≥0 × V => g (p.2 - q.2) :=
-    isPositiveDefiniteKernel_comp hg Prod.snd
-  simpa using isPositiveDefiniteKernel_mul htime hspace
+    hg.submatrix Prod.snd
+  have h := htime.hadamard hspace
+  have heq : Matrix.hadamard
+      (fun p q : ℝ≥0 × V => f (p.1 + q.1))
+      (fun p q : ℝ≥0 × V => g (p.2 - q.2)) =
+      fun p q => f (p.1 + q.1) * g (p.2 - q.2) := by
+    ext p q
+    rfl
+  exact heq ▸ h
 
 /-- A separated product of a time positive-definite function and a spatial positive-definite
 function is semigroup-group positive definite. The time factor uses Mathlib's trivial involution
@@ -71,8 +78,8 @@ on `ℝ≥0`; the spatial factor uses the supplied negation-involution hypothesi
 theorem isSemigroupGroupPD_mul_time_spatial [StarAddMonoid V] {f : ℝ≥0 → ℂ} {g : V → ℂ}
     (hf : IsPositiveDefinite f) (hg : IsPositiveDefinite g) (hstar : ∀ v : V, star v = -v) :
     IsSemigroupGroupPD fun p : ℝ≥0 × V => f p.1 * g p.2 := by
-  refine isSemigroupGroupPD_mul_time_spatial_of_kernels ?_ (hg.isPositiveDefiniteKernel_sub hstar)
-  have hK := hf.isPositiveDefiniteKernel
+  refine isSemigroupGroupPD_mul_time_spatial_of_kernels ?_ (hg.posSemidef_sub hstar)
+  have hK := hf.posSemidef
   simpa [star_trivial] using hK
 
 section Topology

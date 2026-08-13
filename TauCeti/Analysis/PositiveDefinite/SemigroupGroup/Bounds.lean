@@ -56,7 +56,7 @@ time-diagonal real parts. -/
 theorem normSq_le (hF : IsSemigroupGroupPD F) (p q : ℝ≥0 × V) :
     RCLike.normSq (F (p.1 + q.1, p.2 - q.2))
       ≤ RCLike.re (F (p.1 + p.1, 0)) * RCLike.re (F (q.1 + q.1, 0)) := by
-  simpa using isPositiveDefiniteKernel_normSq_le hF.isPositiveDefiniteKernel p q
+  simpa using posSemidef_normSq_le hF.posSemidef p q
 
 /-- Coordinate form of the BCR Cauchy--Schwarz estimate. -/
 theorem normSq_apply_le (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) (v w : V) :
@@ -68,8 +68,8 @@ theorem normSq_apply_le (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) (v w : V) :
 zero. -/
 theorem eq_zero_of_diagonal_eq_zero_left (hF : IsSemigroupGroupPD F) {p q : ℝ≥0 × V}
     (hp : F (p.1 + p.1, 0) = 0) : F (p.1 + q.1, p.2 - q.2) = 0 := by
-  simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_left
-    hF.isPositiveDefiniteKernel (a := p) (b := q) (by simpa using hp)
+  simpa using posSemidef_eq_zero_of_apply_self_eq_zero_left
+    hF.posSemidef (a := p) (b := q) (by simpa using hp)
 
 /-- Coordinate form of `eq_zero_of_diagonal_eq_zero_left`. -/
 theorem apply_eq_zero_of_diagonal_eq_zero_left (hF : IsSemigroupGroupPD F)
@@ -80,8 +80,8 @@ theorem apply_eq_zero_of_diagonal_eq_zero_left (hF : IsSemigroupGroupPD F)
 zero. -/
 theorem eq_zero_of_diagonal_eq_zero_right (hF : IsSemigroupGroupPD F) {p q : ℝ≥0 × V}
     (hq : F (q.1 + q.1, 0) = 0) : F (p.1 + q.1, p.2 - q.2) = 0 := by
-  simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right
-    hF.isPositiveDefiniteKernel (a := p) (b := q) (by simpa using hq)
+  simpa using posSemidef_eq_zero_of_apply_self_eq_zero_right
+    hF.posSemidef (a := p) (b := q) (by simpa using hq)
 
 /-- Coordinate form of `eq_zero_of_diagonal_eq_zero_right`. -/
 theorem apply_eq_zero_of_diagonal_eq_zero_right (hF : IsSemigroupGroupPD F)
@@ -93,8 +93,8 @@ has norm at most `1`. -/
 theorem norm_le_one_of_diagonal_eq_one (hF : IsSemigroupGroupPD F) {p q : ℝ≥0 × V}
     (hp : F (p.1 + p.1, 0) = 1) (hq : F (q.1 + q.1, 0) = 1) :
     ‖F (p.1 + q.1, p.2 - q.2)‖ ≤ 1 := by
-  simpa using isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one
-    hF.isPositiveDefiniteKernel (a := p) (b := q) (by simpa using hp) (by simpa using hq)
+  simpa using posSemidef_norm_le_one_of_apply_self_eq_one
+    hF.posSemidef (a := p) (b := q) (by simpa using hp) (by simpa using hq)
 
 /-- Coordinate form of the normalized BCR-kernel bound. -/
 theorem norm_apply_le_one_of_diagonal_eq_one (hF : IsSemigroupGroupPD F)
