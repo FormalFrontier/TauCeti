@@ -43,7 +43,8 @@ theorem AddSubgroup.mul_mem_closure_of_mul_mem {R : Type*} [NonUnitalNonAssocRin
 
 /-- If the additive closure of a set contains one and products of generators lie in that closure,
 then it is the underlying additive subgroup of the subring closure of the set. -/
-theorem Subring.toAddSubgroup_closure_of_one_mem_of_mul_mem {R : Type*} [Ring R] {s : Set R}
+theorem Subring.toAddSubgroup_closure_of_one_mem_of_mul_mem {R : Type*} [NonAssocRing R]
+    {s : Set R}
     (h1 : (1 : R) ∈ AddSubgroup.closure s)
     (hmul : ∀ x ∈ s, ∀ y ∈ s, x * y ∈ AddSubgroup.closure s) :
     (Subring.closure s).toAddSubgroup = AddSubgroup.closure s := by
