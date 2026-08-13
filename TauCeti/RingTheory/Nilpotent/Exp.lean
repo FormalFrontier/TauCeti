@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import Mathlib.RingTheory.Nilpotent.Exp
-public import Mathlib.Algebra.Lie.OfAssociative
+public import Mathlib.RingTheory.Nilpotent.Lemmas
 
 /-!
 # The integral exponential of a nilpotent element
@@ -21,25 +21,27 @@ exp (t • x) = ∑ i, tⁱ • x⁽ⁱ⁾
 ```
 
 has *integer* coefficients when `t` is an integer. Consequently `exp (t • x)` lies in any subring
-containing the divided powers of `x`, and `t ↦ exp (t • x)` is a homomorphism from the additive
-group of integers to the units of that subring.
+containing the divided powers of `x`, and it fixes any additive subgroup of a module that the
+divided powers of `x` fix. The map `t ↦ exp (t • x)` is a homomorphism from the additive group of
+integers to `Aˣ`, whose values lie in such a subring.
 
 This is the shape of a **root subgroup map** `x_α : 𝔾ₐ → G` of a Chevalley--Demazure group scheme:
 the divided powers of a Chevalley root vector generate the Kostant `ℤ`-form, so the exponentials
-above are exactly the elements that preserve an integral lattice. The application to the Kostant
-form is in `TauCeti/Algebra/Lie/UniversalEnveloping/Exponential.lean`.
+above preserve an integral lattice. The application to the Kostant form is in
+`TauCeti/Algebra/Lie/UniversalEnveloping/Exponential.lean`.
 
-The second half of the file identifies conjugation by `exp a` with the exponential of the inner
-derivation `ad a`:
+The second half of the file identifies conjugation by `exp a` with the exponential of the
+commutator endomorphism `b ↦ a * b - b * a`:
 
 ```text
-exp (ad a) b = exp a * b * exp (-a).
+exp (mulLeft a - mulRight a) b = exp a * b * exp (-a).
 ```
 
 Mathlib already knows that the exponential of a nilpotent derivation is a Lie algebra automorphism
 (`LieDerivation.exp`); what is added here is that for an *inner* derivation that automorphism is an
 explicit conjugation. This is the identity that rewrites a conjugate of a root subgroup element as
-another exponential, so it is the algebraic source of the Chevalley commutator relations.
+another exponential, so it is the algebraic source of the Chevalley commutator relations; the
+restatement for `LieAlgebra.ad` is in `TauCeti/Algebra/Lie/OfAssociative.lean`.
 
 ## Main results
 
@@ -47,9 +49,11 @@ another exponential, so it is the algebraic source of the Chevalley commutator r
 * `TauCeti.exp_smul_eq_sum_smul_dividedPower`: the rescaled expansion `exp (r • x) = ∑ rⁱ • x⁽ⁱ⁾`.
 * `TauCeti.exp_zsmul_eq_sum_zsmul_dividedPower`: the same expansion with integer coefficients.
 * `TauCeti.exp_zsmul_mem`: `exp (t • x)` lies in a subring holding the divided powers of `x`.
+* `TauCeti.exp_zsmul_apply_mem`: `exp (t • x)` fixes an additive subgroup that the divided powers
+  of `x` fix.
 * `TauCeti.expSMulHom`: the one-parameter group of units `t ↦ exp (t • x)`.
 * `TauCeti.exp_mulLeft_sub_mulRight_apply`: conjugation by `exp a` is the exponential of the
-  commutator endomorphism, and `TauCeti.exp_ad_apply` restates it for `LieAlgebra.ad`.
+  commutator endomorphism.
 
 ## References
 
@@ -62,8 +66,6 @@ public section
 namespace TauCeti
 
 open Finset IsNilpotent
-
-attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {A : Type*} [Ring A] [Algebra ℚ A]
 
@@ -88,8 +90,8 @@ theorem exp_smul_eq_sum_smul_dividedPower {x : A} {k : ℕ} (hk : x ^ k = 0) (r 
 /-- The exponential of an integer multiple of a nilpotent element has integer coefficients on the
 divided powers. This is the integrality that lets a root subgroup map be defined over `ℤ`. -/
 theorem exp_zsmul_eq_sum_zsmul_dividedPower {x : A} {k : ℕ} (hk : x ^ k = 0) (t : ℤ) :
-    exp ((t : ℚ) • x) = ∑ i ∈ range k, t ^ i • Associative.dividedPower i x := by
-  rw [exp_smul_eq_sum_smul_dividedPower hk]
+    exp (t • x) = ∑ i ∈ range k, t ^ i • Associative.dividedPower i x := by
+  rw [← Int.cast_smul_eq_zsmul ℚ t x, exp_smul_eq_sum_smul_dividedPower hk]
   refine sum_congr rfl fun i _ => ?_
   rw [← Int.cast_pow, Int.cast_smul_eq_zsmul]
 
@@ -97,10 +99,29 @@ theorem exp_zsmul_eq_sum_zsmul_dividedPower {x : A} {k : ℕ} (hk : x ^ k = 0) (
 exponential of it. -/
 theorem exp_zsmul_mem {x : A} (hx : IsNilpotent x) {S : Subring A}
     (hS : ∀ i, Associative.dividedPower i x ∈ S) (t : ℤ) :
-    exp ((t : ℚ) • x) ∈ S := by
+    exp (t • x) ∈ S := by
   obtain ⟨k, hk⟩ := hx
   rw [exp_zsmul_eq_sum_zsmul_dividedPower hk]
   exact sum_mem fun i _ => zsmul_mem (hS i) _
+
+section Endomorphisms
+
+variable {V : Type*} [AddCommGroup V] [Module ℚ V]
+
+/-- An additive subgroup of a module that is stable under every divided power of a nilpotent
+endomorphism is stable under every integral exponential of it.
+
+For the divided powers of a Chevalley root vector this says that a root subgroup element preserves
+an admissible lattice. -/
+theorem exp_zsmul_apply_mem {x : Module.End ℚ V} (hx : IsNilpotent x) {M : AddSubgroup V}
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (t : ℤ) {v : V} (hv : v ∈ M) :
+    exp (t • x) v ∈ M := by
+  obtain ⟨k, hk⟩ := hx
+  rw [exp_zsmul_eq_sum_zsmul_dividedPower hk]
+  simp only [LinearMap.sum_apply, LinearMap.smul_apply]
+  exact sum_mem fun n _ => zsmul_mem (hM n v hv) _
+
+end Endomorphisms
 
 /-! ## The one-parameter group of units -/
 
@@ -111,8 +132,8 @@ the additive group. -/
 @[expose]
 noncomputable def expSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ →* Aˣ where
   toFun t :=
-    { val := exp ((((Multiplicative.toAdd t : ℤ) : ℚ)) • x)
-      inv := exp (-((((Multiplicative.toAdd t : ℤ) : ℚ)) • x))
+    { val := exp ((Multiplicative.toAdd t : ℤ) • x)
+      inv := exp (-((Multiplicative.toAdd t : ℤ) • x))
       val_inv := exp_mul_exp_neg_self (hx.smul _)
       inv_val := exp_neg_mul_exp_self (hx.smul _) }
   map_one' := by
@@ -120,31 +141,25 @@ noncomputable def expSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ �
     simp
   map_mul' t u := by
     ext
-    have h : ((Multiplicative.toAdd (t * u) : ℤ) : ℚ) =
-        ((Multiplicative.toAdd t : ℤ) : ℚ) + ((Multiplicative.toAdd u : ℤ) : ℚ) := by
-      rw [_root_.toAdd_mul, Int.cast_add]
-    simpa [h, add_smul] using exp_add_of_commute
-      (((Commute.refl x).smul_left ((Multiplicative.toAdd t : ℤ) : ℚ)).smul_right
-        ((Multiplicative.toAdd u : ℤ) : ℚ)) (hx.smul _) (hx.smul _)
+    simpa [_root_.toAdd_mul, add_zsmul, add_mul] using exp_add_of_commute
+      (((Commute.refl x).smul_left (Multiplicative.toAdd t : ℤ)).smul_right
+        (Multiplicative.toAdd u : ℤ)) (hx.smul _) (hx.smul _)
 
 @[simp]
 theorem coe_expSMulHom {x : A} (hx : IsNilpotent x) (t : Multiplicative ℤ) :
-    ((expSMulHom hx t : Aˣ) : A) = exp ((((Multiplicative.toAdd t : ℤ) : ℚ)) • x) :=
+    ((expSMulHom hx t : Aˣ) : A) = exp ((Multiplicative.toAdd t : ℤ) • x) :=
   rfl
 
-/-- Conjugating by an integral exponential stays inside any subring holding the divided powers. -/
-theorem exp_zsmul_conj_mem {x : A} (hx : IsNilpotent x) {S : Subring A}
-    (hS : ∀ i, Associative.dividedPower i x ∈ S) (t : ℤ) {b : A} (hb : b ∈ S) :
-    exp ((t : ℚ) • x) * b * exp (((-t : ℤ) : ℚ) • x) ∈ S :=
-  mul_mem (mul_mem (exp_zsmul_mem hx hS t) hb) (exp_zsmul_mem hx hS (-t))
-
-/-! ## Conjugation and the adjoint action -/
+/-! ## Conjugation and the commutator endomorphism -/
 
 /-- The exponential of left multiplication by a nilpotent element is left multiplication by its
 exponential. -/
 theorem exp_mulLeft {a : A} (ha : IsNilpotent a) :
-    exp (LinearMap.mulLeft ℚ a) = LinearMap.mulLeft ℚ (exp a) :=
-  (map_exp ha (Algebra.lmul ℚ A)).symm
+    exp (LinearMap.mulLeft ℚ a) = LinearMap.mulLeft ℚ (exp a) := by
+  have hlmul : ∀ c : A, Algebra.lmul ℚ A c = LinearMap.mulLeft ℚ c := fun c => by
+    ext b
+    simp
+  rw [← hlmul a, ← hlmul (exp a), map_exp ha (Algebra.lmul ℚ A)]
 
 /-- The exponential of right multiplication by a nilpotent element is right multiplication by its
 exponential. -/
@@ -173,18 +188,5 @@ theorem exp_mulLeft_sub_mulRight_apply {a : A} (ha : IsNilpotent a) (b : A) :
       ((LinearMap.isNilpotent_mulRight_iff ℚ (-a)).mpr ha.neg),
     exp_mulLeft ha, exp_mulRight ha.neg]
   simp [mul_assoc]
-
-/-- **Conjugation is the exponential of the adjoint action.** For a nilpotent `a`, the automorphism
-`exp (ad a)` of the Lie algebra underlying `A` is conjugation by the unit `exp a`. -/
-theorem exp_ad_apply {a : A} (ha : IsNilpotent a) (b : A) :
-    exp (LieAlgebra.ad ℚ A a) b = exp a * b * exp (-a) := by
-  rw [congrFun (LieAlgebra.ad_eq_lmul_left_sub_lmul_right (R := ℚ) A) a]
-  exact exp_mulLeft_sub_mulRight_apply ha b
-
-/-- Moving an exponential of a nilpotent element past a ring element rewrites it through the
-adjoint action. -/
-theorem exp_mul_eq_exp_ad_mul {a : A} (ha : IsNilpotent a) (b : A) :
-    exp a * b = exp (LieAlgebra.ad ℚ A a) b * exp a := by
-  rw [exp_ad_apply ha, mul_assoc, exp_neg_mul_exp_self ha, mul_one]
 
 end TauCeti
