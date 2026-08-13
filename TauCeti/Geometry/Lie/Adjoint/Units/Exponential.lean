@@ -43,7 +43,6 @@ variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
 /-- On algebra units, the tangent adjoint of an exponential is the exponential of the continuous
 commutator by its exponent. -/
-@[simp]
 theorem tangentAd_expUnit (x y : R) :
     tangentAd (I := 𝓘(ℝ, R)) (TauCeti.expUnit x)
         (y : GroupLieAlgebra 𝓘(ℝ, R) Rˣ) =
@@ -68,7 +67,6 @@ local instance finiteDimensionalLeftInvariantDerivationAdjointUnitsExponential :
 
 /-- On algebra units, the abstract adjoint of `lieExp X` is the bounded-operator exponential of
 Mathlib's Lie-algebra adjoint `ad X`. -/
-@[simp]
 theorem Ad_lieExp_units (X : LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) :
     let adX := LinearMap.toContinuousLinearMap
       (LieAlgebra.ad ℝ (LeftInvariantDerivation 𝓘(ℝ, R) Rˣ) X)
