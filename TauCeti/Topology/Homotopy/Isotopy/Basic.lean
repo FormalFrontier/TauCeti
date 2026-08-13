@@ -54,6 +54,8 @@ after their stronger level-preserving notion of non-ambient isotopy (Definition 
   embeddings.
 * `TauCeti.Isotopy.toHomotopyWith`: an isotopy is, in particular, a Mathlib homotopy through
   embeddings.
+* `TauCeti.Isotopy.refl` / `TauCeti.Isotopy.symm` / `TauCeti.Isotopy.trans`: bundled
+  constructors for constant, reversed, and concatenated isotopies.
 * `TauCeti.Isotopic.refl` / `TauCeti.Isotopic.symm` / `TauCeti.Isotopic.trans`: isotopy is
   reflexive on embeddings, symmetric, and transitive.
 * `TauCeti.Isotopic.homotopic`: isotopic maps are homotopic.
@@ -121,6 +123,14 @@ theorem isEmbedding_left (F : Isotopy f₀ f₁) : IsEmbedding f₀ := by
 theorem isEmbedding_right (F : Isotopy f₀ f₁) : IsEmbedding f₁ := by
   simpa using F.isEmbedding_apply 1
 
+/-- The constant homotopy at an embedding is an isotopy. -/
+def refl (f : C(X, Y)) (hf : IsEmbedding f) : Isotopy f f where
+  toHomotopyWith := HomotopyWith.refl f hf
+
+/-- Reverse an isotopy by reversing its time parameter. -/
+def symm (F : Isotopy f₀ f₁) : Isotopy f₁ f₀ where
+  toHomotopyWith := F.toHomotopyWith.symm
+
 /-- Concatenate two isotopies: the result follows `F` on `[0, 1 / 2]` and `G` on `[1 / 2, 1]`,
 with the time parameter rescaled linearly. -/
 noncomputable def trans {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) :
@@ -165,12 +175,12 @@ theorem of_isotopy (F : Isotopy f₀ f₁) : Isotopic f₀ f₁ := ⟨F⟩
 
 /-- Isotopy is reflexive on embeddings. -/
 theorem refl (f : C(X, Y)) (hf : IsEmbedding f) : Isotopic f f :=
-  ⟨{ toHomotopyWith := HomotopyWith.refl f hf }⟩
+  ⟨Isotopy.refl f hf⟩
 
 /-- Isotopy is symmetric. -/
 @[symm]
 theorem symm (h : Isotopic f₀ f₁) : Isotopic f₁ f₀ :=
-  ⟨{ toHomotopyWith := h.some.toHomotopyWith.symm }⟩
+  ⟨h.some.symm⟩
 
 /-- Isotopy is transitive. -/
 @[trans]

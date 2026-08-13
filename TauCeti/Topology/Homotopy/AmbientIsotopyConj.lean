@@ -60,7 +60,7 @@ variable (Φ : AmbientIsotopy Y)
 at each time `t` run the homeomorphism `Φ t` in the coordinates supplied by `h`, giving
 `z ↦ h (Φ (t, h⁻¹ z))`. The total map is a homeomorphism because it is `Φ`'s total homeomorphism
 pre- and post-composed with the product homeomorphisms `id ×ₜ h⁻¹` and `id ×ₜ h`. -/
-@[expose] noncomputable def transport (h : Y ≃ₜ Z) : AmbientIsotopy Z where
+noncomputable def transport (h : Y ≃ₜ Z) : AmbientIsotopy Z where
   toContinuousMap := ⟨fun p => h (Φ.toContinuousMap (p.1, h.symm p.2)), by fun_prop⟩
   isHomeomorph_total' := by
     have heq : (fun p : I × Z => (p.1, h (Φ.toContinuousMap (p.1, h.symm p.2))))
@@ -77,7 +77,7 @@ pre- and post-composed with the product homeomorphisms `id ×ₜ h⁻¹` and `id
 
 @[simp]
 theorem transport_apply (h : Y ≃ₜ Z) (p : I × Z) :
-    (Φ.transport h).toContinuousMap p = h (Φ.toContinuousMap (p.1, h.symm p.2)) := rfl
+    (Φ.transport h).toContinuousMap p = h (Φ.toContinuousMap (p.1, h.symm p.2)) := (rfl)
 
 @[simp 1100]
 theorem final_transport (h : Y ≃ₜ Z) (z : Z) :
@@ -106,11 +106,11 @@ theorem finalHomeomorph_transport (h : Y ≃ₜ Z) :
 `AmbientIsotopy.transport` in which the change of coordinates fixes the ambient space, so the
 endpoint slices conjugate inside the group `Y ≃ₜ Y`. The total map is
 `(t, y) ↦ (t, h (Φ (t, h⁻¹ y)))`. -/
-@[expose] noncomputable def conj (h : Y ≃ₜ Y) : AmbientIsotopy Y := Φ.transport h
+noncomputable def conj (h : Y ≃ₜ Y) : AmbientIsotopy Y := Φ.transport h
 
 @[simp]
 theorem conj_apply (h : Y ≃ₜ Y) (p : I × Y) :
-    (Φ.conj h).toContinuousMap p = h (Φ.toContinuousMap (p.1, h.symm p.2)) := rfl
+    (Φ.conj h).toContinuousMap p = h (Φ.toContinuousMap (p.1, h.symm p.2)) := (rfl)
 
 @[simp 1100]
 theorem final_conj (h : Y ≃ₜ Y) (y : Y) : (Φ.conj h).final y = h (Φ.final (h.symm y)) := by
