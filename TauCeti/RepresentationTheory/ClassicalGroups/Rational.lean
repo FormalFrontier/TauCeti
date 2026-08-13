@@ -8,9 +8,14 @@ module
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.Matrix.Basis
 public import Mathlib.LinearAlgebra.Matrix.MvPolynomial
+public import Mathlib.LinearAlgebra.PiTensorProduct.Basis
 public import Mathlib.LinearAlgebra.TensorProduct.Matrix
+public import Mathlib.RepresentationTheory.Intertwining
 public import TauCeti.RepresentationTheory.ClassicalGroups.Determinant
+public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
+public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
+public import TauCeti.RepresentationTheory.ClassicalGroups.TensorPower
 
 /-!
 # Rational and polynomial representations of the general linear group
@@ -19,8 +24,8 @@ A representation of `GL n ℂ` is **polynomial** when, in some basis of the carr
 entry of `ρ g` is a polynomial in the entries `gᵢⱼ`, and **rational** when every entry is such a
 polynomial divided by a power of `det g`.  The distinction is the one that separates the
 representations arising inside tensor powers of the standard representation from those needing a
-determinant twist: `TauCeti.stdRep` is polynomial, as is `det ^ m` for `m ≥ 0`, whereas `det ^ (-1)`
-is rational.
+determinant twist: `TauCeti.stdRep` and its tensor, symmetric and exterior powers are polynomial, as
+is `det ^ m` for `m ≥ 0`, whereas `det ^ (-1)` is rational.
 
 The two definitions quantify existentially over a basis, and the content of this file is that this
 costs nothing: the condition holds in *one* basis exactly when it holds in *every* basis
@@ -77,10 +82,14 @@ layer.
   condition against an arbitrary basis characterises the property.
 * `TauCeti.IsPolynomialRep.isRationalRep`: a polynomial representation is rational.
 * `TauCeti.isPolynomialRep_stdRep`: the standard representation is polynomial.
-* `TauCeti.isRationalRep_detPowerRep` and `TauCeti.isPolynomialRep_detPowerRep`: `det ^ m` is
-  rational, and polynomial when `0 ≤ m`.
+* `TauCeti.isRationalRep_detPowerRep` and `TauCeti.isPolynomialRep_detPowerRep_of_nonneg`:
+  `det ^ m` is rational, and polynomial when `0 ≤ m`.
 * `TauCeti.IsPolynomialRep.tprod` and `TauCeti.IsRationalRep.tprod`: both properties pass to tensor
   products.
+* `TauCeti.IsPolynomialRep.of_surjective`: polynomiality passes to quotients.
+* `TauCeti.isPolynomialRep_tensorPowerRep`, `TauCeti.isPolynomialRep_symPowerRep` and
+  `TauCeti.isPolynomialRep_extPowerRep`: the functorial powers of the standard representation are
+  polynomial.
 
 ## References
 
@@ -198,8 +207,9 @@ theorem det_mem_polynomialFunctions :
     (fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k).det) ∈ polynomialFunctions k n :=
   ⟨detPoly k n, fun g => by simp⟩
 
-/-- **Every integral determinant power is a rational function.**  For `m < 0` these are the basic
-examples separating the rational functions from the polynomial ones. -/
+/-- **Every integral determinant power is a rational function.**  For `0 ≤ m` it is even a
+polynomial function, being a power of `TauCeti.GeneralLinearGroup.det_mem_polynomialFunctions`;
+for `m < 0` the determinant power supplied by the definition is what clears the denominator. -/
 theorem detZPow_mem_rationalFunctions (m : ℤ) :
     (fun g : GL (Fin n) k => ((Matrix.GeneralLinearGroup.det g ^ m : kˣ) : k))
       ∈ rationalFunctions k n := by
@@ -297,31 +307,55 @@ section BasisChange
 open GeneralLinearGroup
 
 variable {k : Type u} [Field k] {n : ℕ} {W : Type v} [AddCommGroup W] [Module k W]
+variable {V : Type y} [AddCommGroup V] [Module k V]
 
-/-- **Changing basis keeps the entries inside any subalgebra of functions.**  An entry of `ρ g` in a
-new basis is a fixed `k`-linear combination of its entries in an old one, the coefficients being
-entries of the two change-of-basis matrices and so independent of `g`; hence any subalgebra of
-functions containing the old entries contains the new ones.  This is the mechanism behind basis
+/-- **The entries of a quotient representation stay inside any subalgebra of functions.**  If `f`
+is a surjective intertwining map, a basis vector of the target is `f w` for some `w`, and expanding
+`w` in a basis of the source rewrites each entry of `σ g` as a fixed `k`-linear combination of
+entries of `ρ g`, the coefficients being coordinates of `w` and of the images `f (b p)` and so
+independent of `g`. -/
+theorem toMatrix_mem_of_toMatrix_mem_of_surjective (A : Subalgebra k (GL (Fin n) k → k))
+    {ι : Type w} [Fintype ι] [DecidableEq ι] {κ : Type x} [Fintype κ] [DecidableEq κ]
+    (b : Module.Basis ι k W) (c : Module.Basis κ k V)
+    {ρ : Representation k (GL (Fin n) k) W} {σ : Representation k (GL (Fin n) k) V}
+    (f : Representation.IntertwiningMap ρ σ) (hf : Function.Surjective f)
+    (h : ∀ p l, (fun g => LinearMap.toMatrix b b (ρ g) p l) ∈ A) (i j : κ) :
+    (fun g => LinearMap.toMatrix c c (σ g) i j) ∈ A := by
+  obtain ⟨w, hw⟩ := hf (c j)
+  have key : (fun g => LinearMap.toMatrix c c (σ g) i j)
+      = ∑ p : ι, ∑ l : ι, (b.repr w l * c.repr (f (b p)) i) •
+          fun g => LinearMap.toMatrix b b (ρ g) p l := by
+    funext g
+    have hfg : σ g (c j) = f (ρ g w) := by
+      rw [← hw]
+      simpa using (LinearMap.congr_fun (f.isIntertwining' g) w).symm
+    have hexp : ∀ p, b.repr (ρ g w) p = ∑ l, b.repr w l * LinearMap.toMatrix b b (ρ g) p l := by
+      intro p
+      conv_lhs => rw [← b.sum_repr w]
+      simp only [map_sum, map_smul, Finsupp.coe_finsetSum, Finset.sum_apply, Finsupp.coe_smul,
+        Pi.smul_apply, smul_eq_mul, LinearMap.toMatrix_apply]
+    rw [LinearMap.toMatrix_apply, hfg]
+    conv_lhs => rw [← b.sum_repr (ρ g w)]
+    simp only [map_sum, map_smul, Finsupp.coe_finsetSum, Finset.sum_apply, Finsupp.coe_smul,
+      Pi.smul_apply, smul_eq_mul, hexp]
+    refine Finset.sum_congr rfl fun p _ => ?_
+    rw [Finset.sum_mul]
+    exact Finset.sum_congr rfl fun l _ => by ring
+  rw [key]
+  exact Subalgebra.sum_mem _ fun p _ =>
+    Subalgebra.sum_mem _ fun l _ => Subalgebra.smul_mem _ (h p l) _
+
+/-- **Changing basis keeps the entries inside any subalgebra of functions**: the identity is a
+surjective intertwining map of `ρ` with itself, so this is the case `σ = ρ` of
+`TauCeti.toMatrix_mem_of_toMatrix_mem_of_surjective`.  This is the mechanism behind basis
 independence of both `TauCeti.IsPolynomialRep` and `TauCeti.IsRationalRep`. -/
 theorem toMatrix_mem_of_toMatrix_mem (A : Subalgebra k (GL (Fin n) k → k))
     {ι : Type w} [Fintype ι] [DecidableEq ι] {κ : Type x} [Fintype κ] [DecidableEq κ]
     (b : Module.Basis ι k W) (c : Module.Basis κ k W)
     (ρ : Representation k (GL (Fin n) k) W)
     (h : ∀ p l, (fun g => LinearMap.toMatrix b b (ρ g) p l) ∈ A) (i j : κ) :
-    (fun g => LinearMap.toMatrix c c (ρ g) i j) ∈ A := by
-  have key : (fun g => LinearMap.toMatrix c c (ρ g) i j)
-      = ∑ l : ι, ∑ p : ι, (c.toMatrix b i p * b.toMatrix c l j) •
-          fun g => LinearMap.toMatrix b b (ρ g) p l := by
-    funext g
-    rw [← basis_toMatrix_mul_linearMap_toMatrix_mul_basis_toMatrix c b c b (ρ g),
-      Matrix.mul_apply]
-    simp only [Matrix.mul_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-    refine Finset.sum_congr rfl fun l _ => ?_
-    rw [Finset.sum_mul]
-    exact Finset.sum_congr rfl fun p _ => by ring
-  rw [key]
-  exact Subalgebra.sum_mem _ fun l _ =>
-    Subalgebra.sum_mem _ fun p _ => Subalgebra.smul_mem _ (h p l) _
+    (fun g => LinearMap.toMatrix c c (ρ g) i j) ∈ A :=
+  toMatrix_mem_of_toMatrix_mem_of_surjective A b c (.id ρ) (fun v => ⟨v, rfl⟩) h i j
 
 end BasisChange
 
@@ -380,6 +414,18 @@ theorem IsPolynomialRep.isRationalRep (h : IsPolynomialRep ρ) : IsRationalRep �
   exact (isRationalRep_iff_forall_mem_rationalFunctions b).mpr fun i j =>
     polynomialFunctions_le_rationalFunctions ⟨P i j, fun g => hP g i j⟩
 
+/-- **A quotient of a polynomial representation is polynomial.**  This is the form in which the
+functorial powers below inherit polynomiality from the tensor power. -/
+theorem IsPolynomialRep.of_surjective {V : Type y} [AddCommGroup V] [Module ℂ V]
+    {σ : Representation ℂ (GL (Fin n) ℂ) V} (h : IsPolynomialRep ρ)
+    (f : Representation.IntertwiningMap ρ σ) (hf : Function.Surjective f) : IsPolynomialRep σ := by
+  obtain ⟨b, P, hP⟩ := h
+  have : Module.Finite ℂ W := Module.Finite.of_basis b
+  have : Module.Finite ℂ V := Module.Finite.of_surjective f.toLinearMap hf
+  exact (isPolynomialRep_iff_forall_mem_polynomialFunctions (Module.finBasis ℂ V)).mpr fun i j =>
+    toMatrix_mem_of_toMatrix_mem_of_surjective (polynomialFunctions ℂ n) b (Module.finBasis ℂ V)
+      f hf (fun p l => ⟨P p l, fun g => hP g p l⟩) i j
+
 end BasisIndependence
 
 /-! ### The basic examples -/
@@ -420,7 +466,8 @@ theorem isRationalRep_detPowerRep (m : ℤ) : IsRationalRep (detPowerRep ℂ n m
   exact detZPow_mem_rationalFunctions m
 
 /-- **The nonnegative determinant powers are polynomial representations.** -/
-theorem isPolynomialRep_detPowerRep {m : ℤ} (hm : 0 ≤ m) : IsPolynomialRep (detPowerRep ℂ n m) := by
+theorem isPolynomialRep_detPowerRep_of_nonneg {m : ℤ} (hm : 0 ≤ m) :
+    IsPolynomialRep (detPowerRep ℂ n m) := by
   lift m to ℕ using hm
   refine (isPolynomialRep_iff_forall_mem_polynomialFunctions
     (Module.Basis.singleton Unit ℂ)).mpr fun i j => ?_
@@ -484,5 +531,52 @@ theorem IsRationalRep.tprod (hρ : IsRationalRep ρ) (hσ : IsRationalRep σ) :
     (mem_rationalFunctions_iff_inv.mpr ⟨Q i.2 j.2, mQ, fun g => hQ g i.2 j.2⟩)
 
 end TensorProduct
+
+/-! ### The functorial powers of the standard representation -/
+
+section FunctorialPowers
+
+open GeneralLinearGroup
+
+variable (n d : ℕ)
+
+/-- **The tensor powers of the standard representation are polynomial**: against the basis of pure
+tensors of standard basis vectors, an entry of the tensor power is the product of the `d` entries
+of `g` listed by the two indices. -/
+theorem isPolynomialRep_tensorPowerRep : IsPolynomialRep (tensorPowerRep ℂ n d) := by
+  refine (isPolynomialRep_iff_forall_mem_polynomialFunctions
+    (Basis.piTensorProduct fun _ : Fin d => Pi.basisFun ℂ (Fin n))).mpr fun i j => ?_
+  have hentry : (fun g : GL (Fin n) ℂ =>
+      LinearMap.toMatrix (Basis.piTensorProduct fun _ : Fin d => Pi.basisFun ℂ (Fin n))
+        (Basis.piTensorProduct fun _ : Fin d => Pi.basisFun ℂ (Fin n))
+        (tensorPowerRep ℂ n d g) i j)
+      = ∏ l : Fin d, fun g : GL (Fin n) ℂ => (g : Matrix (Fin n) (Fin n) ℂ) (i l) (j l) := by
+    funext g
+    rw [LinearMap.toMatrix_apply, Basis.piTensorProduct_apply,
+      Representation.tensorPower_apply, PiTensorProduct.map_tprod,
+      Basis.piTensorProduct_repr_tprod_apply]
+    simp [Matrix.mulVec_single]
+  rw [hentry]
+  exact prod_mem fun l _ => entry_mem_polynomialFunctions (i l) (j l)
+
+/-- **The symmetric powers of the standard representation are polynomial**, being quotients of the
+tensor powers. -/
+theorem isPolynomialRep_symPowerRep : IsPolynomialRep (symPowerRep ℂ n d) :=
+  (isPolynomialRep_tensorPowerRep n d).of_surjective
+    (LinearMap.intertwiningMap_of_isIntertwiningMap _ _ (SymmetricPower.mk ℂ (Fin d) (Fin n → ℂ))
+      fun g x => by simp)
+    (LinearMap.range_eq_top.mp (SymmetricPower.range_mk ℂ (Fin d) (Fin n → ℂ)))
+
+/-- **The exterior powers of the standard representation are polynomial**, being quotients of the
+tensor powers. -/
+theorem isPolynomialRep_extPowerRep : IsPolynomialRep (extPowerRep ℂ n d) :=
+  (isPolynomialRep_tensorPowerRep n d).of_surjective
+    (LinearMap.intertwiningMap_of_isIntertwiningMap _ _
+      (exteriorPower.fromTensorPower ℂ (Fin n → ℂ) d) fun g x => by
+        simpa using (LinearMap.congr_fun
+          (exteriorPower.map_comp_fromTensorPower d (stdRep ℂ n g)) x).symm)
+    (exteriorPower.fromTensorPower_surjective d)
+
+end FunctorialPowers
 
 end TauCeti
