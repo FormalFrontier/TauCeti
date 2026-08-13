@@ -113,6 +113,16 @@ theorem pointsAction_corestrict_obj (φ : H₁ →ₐc[R] H₂)
     pointsAction M g) = pointsAction M (AlgHom.mapDomain φ g)
   exact pointsAction_corestrict φ g
 
+/-- Simp-normal form of `pointsAction_corestrict_obj`, with the precomposed point written
+after normalization by `AlgHom.mapDomain_apply`. -/
+-- Prefer this bundled normal form before `corestrict_obj_coe` exposes the carrier.
+@[simp↓ high]
+theorem pointsAction_corestrict_obj_toConv_comp (φ : H₁ →ₐc[R] H₂)
+    (M : FGComoduleCat.{u, v, y} R H₁) (g : WithConv (H₂ →ₐ[R] A)) :
+    pointsAction ((FGComoduleCat.corestrict φ.toCoalgHom).obj M) g =
+      pointsAction M (toConv (g.ofConv.comp (φ : H₁ →ₐ[R] H₂))) := by
+  simpa only [AlgHom.mapDomain_apply] using pointsAction_corestrict_obj φ M g
+
 end HopfAlgebra
 
 end Corestrict
