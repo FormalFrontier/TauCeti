@@ -79,28 +79,13 @@ private theorem basisProjection_mem_actionRange {n : ℕ} (b : Module.Basis (Fin
   · exact occupationProjection_mem_actionRange b i
   · exact vacancyProjection_mem_actionRange b i
 
-private theorem occupationProjection_basis_of_not_mem {n : ℕ}
-    (b : Module.Basis (Fin n) K W) (i : Fin n) (s : Finset (Fin n)) (hi : i ∉ s) :
-    occupationProjection b i (b.ExteriorAlgebra s) = 0 := by
-  rw [occupationProjection, LinearMap.comp_apply, LinearMap.mulLeft_apply,
-    ι_mul_contractLeft_coord_basis]
-  simp only [hi, ↓reduceIte]
-
-private theorem occupationProjection_basis_of_mem {n : ℕ}
-    (b : Module.Basis (Fin n) K W) (i : Fin n) (s : Finset (Fin n)) (hi : i ∈ s) :
-    occupationProjection b i (b.ExteriorAlgebra s) = b.ExteriorAlgebra s := by
-  rw [occupationProjection, LinearMap.comp_apply, LinearMap.mulLeft_apply,
-    ι_mul_contractLeft_coord_basis]
-  simp only [hi, ↓reduceIte]
-
 private theorem vacancyProjection_basis {n : ℕ}
     (b : Module.Basis (Fin n) K W) (i : Fin n) (s : Finset (Fin n)) :
     vacancyProjection b i (b.ExteriorAlgebra s) =
       if i ∈ s then 0 else b.ExteriorAlgebra s := by
-  rw [vacancyProjection, LinearMap.sub_apply, LinearMap.id_apply]
-  split_ifs with hi
-  · rw [occupationProjection_basis_of_mem b i s hi, sub_self]
-  · rw [occupationProjection_basis_of_not_mem b i s hi, sub_zero]
+  rw [vacancyProjection, LinearMap.sub_apply, LinearMap.id_apply, occupationProjection,
+    LinearMap.comp_apply, LinearMap.mulLeft_apply, ι_mul_contractLeft_coord_basis]
+  split_ifs <;> simp
 
 private theorem basisFactor_apply {n : ℕ}
     (b : Module.Basis (Fin n) K W) (s t : Finset (Fin n)) (i : Fin n) :
@@ -108,8 +93,8 @@ private theorem basisFactor_apply {n : ℕ}
         (b.ExteriorAlgebra t) =
       (if (i ∈ s ↔ i ∈ t) then 1 else 0) • b.ExteriorAlgebra t := by
   by_cases his : i ∈ s <;> by_cases hit : i ∈ t <;>
-    simp [his, hit, occupationProjection_basis_of_mem,
-      occupationProjection_basis_of_not_mem, vacancyProjection_basis]
+    simp [his, hit, occupationProjection, ι_mul_contractLeft_coord_basis,
+      vacancyProjection_basis]
 
 private theorem listProd_basisFactor_apply {n : ℕ}
     (b : Module.Basis (Fin n) K W) (s t : Finset (Fin n)) (l : List (Fin n)) :
