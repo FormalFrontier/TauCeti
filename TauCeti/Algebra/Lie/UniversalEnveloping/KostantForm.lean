@@ -295,19 +295,22 @@ theorem antipode_mapsTo_kostantForm (e : ι → L) (h : κ → L) :
         intro a ha
         simp only [Set.mem_ofPred_eq, map_neg] at ha ⊢
         exact neg_mem ha }
+  -- `S` carries exactly the membership statement it was built from.
+  have mem_S (a : _root_.UniversalEnvelopingAlgebra ℚ L) :
+      a ∈ S ↔ antipode ℚ a ∈ kostantForm e h := Iff.rfl
   have hle : kostantForm e h ≤ S := by
     rw [kostantForm_le_iff]
     constructor
     · intro i n
-      -- membership in `S` is, by definition, membership of the antipode in the form
-      change antipode ℚ _ ∈ kostantForm e h
-      -- the sign is an integer, so it acts on the form by `zsmul`
-      rw [antipode_dividedPower_ι,
-        show ((-1 : ℚ) ^ n) = ((((-1 : ℤ) ^ n : ℤ) : ℚ)) by push_cast; ring,
-        Int.cast_smul_eq_zsmul]
-      exact zsmul_mem (dividedPower_mem_kostantForm e h i n) _
+      rw [mem_S, antipode_dividedPower_ι]
+      -- the sign is `1` or `-1`, and the form is closed under negation
+      rcases Nat.even_or_odd n with hn | hn
+      · rw [hn.neg_one_pow, one_smul]
+        exact dividedPower_mem_kostantForm e h i n
+      · rw [hn.neg_one_pow, neg_one_smul]
+        exact neg_mem (dividedPower_mem_kostantForm e h i n)
     · intro i n
-      change antipode ℚ _ ∈ kostantForm e h
+      rw [mem_S]
       match n with
       | 0 =>
           rw [Ring.choose_zero_right, antipode_one]
@@ -316,7 +319,7 @@ theorem antipode_mapsTo_kostantForm (e : ι → L) (h : κ → L) :
           rw [antipode_choose_ι_succ, Units.smul_def]
           exact zsmul_mem (sum_mem fun ij _ =>
             nsmul_mem (ringChoose_mem_kostantForm e h i ij.1) _) _
-  exact fun a ha => hle ha
+  exact fun a ha => (mem_S a).mp (hle ha)
 
 /-! ## Functoriality -/
 
