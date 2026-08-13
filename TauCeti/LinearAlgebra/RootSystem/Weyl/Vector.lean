@@ -135,10 +135,7 @@ end Reduced
 roots onto the positive ones. -/
 theorem sum_root_negRootsFinset :
     ∑ i ∈ negRootsFinset P b, P.root i = -twoWeylVector P b := by
-  have hinv : Function.Involutive fun j : ι ↦ P.reflectionPerm j j := by
-    intro j
-    let := P.indexNeg
-    simp only [← RootPairing.indexNeg_neg, neg_neg]
+  have hinv := reflectionPerm_self_involutive P
   rw [twoWeylVector_def, ← Finset.sum_neg_distrib]
   refine Finset.sum_equiv hinv.toPerm (fun j ↦ ?_) fun j _ ↦ ?_
   · rw [mem_negRootsFinset, mem_posRootsFinset, Function.Involutive.coe_toPerm]
