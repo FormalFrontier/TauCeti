@@ -14,8 +14,8 @@ This file gives streamlined Fredholm criteria when an operator is already known 
 or surjective. Between Banach spaces over an `IsRCLikeNormedField`, a surjective continuous linear
 map is Fredholm exactly when its kernel is finite dimensional. Between Banach spaces over any
 nontrivially normed field, an injective continuous linear map with closed range is Fredholm exactly
-when its cokernel is finite dimensional. Specialising both sides gives the bijective corollaries:
-a bijective continuous linear map between Banach spaces is Fredholm of index zero.
+when its cokernel is finite dimensional. Specialising both sides gives the bijective corollary:
+a bijective continuous linear map between Banach spaces is Fredholm.
 
 These criteria are the elementary endpoints of the finite-dimensional reductions used throughout
 Fredholm theory. As an application of the injective closed-range criterion, the inclusion of the
