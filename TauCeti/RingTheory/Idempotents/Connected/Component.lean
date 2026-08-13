@@ -150,6 +150,8 @@ noncomputable def primeSpectrumQuotientHomeomorphConnectedComponent
       Ideal.Quotient.mk_surjective).toHomeomorph.trans
     (Homeomorph.setCongr (range_comap_quotientMk_connectedComponentIdeal x))
 
+/-- After coercion to `PrimeSpectrum R`, the quotient-spectrum homeomorphism sends a point to its
+contraction along the quotient map. -/
 @[simp]
 theorem primeSpectrumQuotientHomeomorphConnectedComponent_apply
     (x : PrimeSpectrum R) (y : PrimeSpectrum (R ⧸ connectedComponentIdeal x)) :
@@ -157,6 +159,8 @@ theorem primeSpectrumQuotientHomeomorphConnectedComponent_apply
       comap (Ideal.Quotient.mk (connectedComponentIdeal x)) y :=
   by
     rw [primeSpectrumQuotientHomeomorphConnectedComponent, Homeomorph.trans_apply]
+    -- `Homeomorph.setCongr` has no application lemma, so expose its underlying `Equiv.setCongr`
+    -- before using that equivalence's public application lemma.
     change
       (Equiv.setCongr (range_comap_quotientMk_connectedComponentIdeal x)
         ((isEmbedding_comap_of_surjective
