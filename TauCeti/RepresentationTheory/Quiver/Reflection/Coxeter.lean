@@ -85,12 +85,8 @@ noncomputable def vertexPreReflectionProd (l : List Q) : Module.End ℤ (Q → �
 theorem vertexPreReflectionProd_nil : vertexPreReflectionProd Q [] = 1 := by
   simp [vertexPreReflectionProd]
 
-@[simp]
-theorem vertexPreReflectionProd_singleton (i : Q) :
-    vertexPreReflectionProd Q [i] = vertexPreReflection Q i := by
-  simp [vertexPreReflectionProd]
-
 /-- The vertex at the head of the word is reflected first. -/
+@[simp]
 theorem vertexPreReflectionProd_cons (i : Q) (l : List Q) :
     vertexPreReflectionProd Q (i :: l)
       = vertexPreReflectionProd Q l * vertexPreReflection Q i := by
@@ -195,11 +191,13 @@ Tits form; at the level `1` this says that it permutes the roots of `Q`. -/
 theorem bijOn_vertexPreReflectionProd {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) (n : ℤ) :
     Set.BijOn (vertexPreReflectionProd Q l) {d : Q → ℤ | titsForm Q d = n}
       {d : Q → ℤ | titsForm Q d = n} := by
-  refine ⟨fun d hd ↦ ?_, (vertexPreReflectionProd_bijective Q hl).injective.injOn, fun d hd ↦ ?_⟩
-  · simpa only [Set.mem_ofPred_eq, titsForm_vertexPreReflectionProd Q hl] using hd
-  · obtain ⟨e, rfl⟩ := (vertexPreReflectionProd_bijective Q hl).surjective d
-    exact ⟨e, by simpa only [Set.mem_ofPred_eq, titsForm_vertexPreReflectionProd Q hl] using hd,
-      rfl⟩
+  have h : vertexPreReflectionProd Q l ⁻¹' {d : Q → ℤ | titsForm Q d = n}
+      = {d : Q → ℤ | titsForm Q d = n} := by
+    ext d
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, titsForm_vertexPreReflectionProd Q hl]
+  have hbij := (vertexPreReflectionProd_bijective Q hl).bijOn_preimage
+    (t := {d : Q → ℤ | titsForm Q d = n})
+  rwa [h] at hbij
 
 /-! ### Fixed vectors -/
 
@@ -237,10 +235,7 @@ theorem titsPolarForm_eq_zero_of_vertexPreReflectionProd_eq_self {l : List Q} (h
     titsPolarForm Q d v = 0 := by
   have hsingle : ∀ i : Q, titsPolarForm Q (Pi.single i 1) v = 0 := fun i ↦
     titsPolarForm_single_eq_zero_of_vertexPreReflectionProd_eq_self Q hnd hv (hmem i)
-  have hd : d = ∑ i : Q, d i • Pi.single i (1 : ℤ) := by
-    ext j
-    simp [Pi.single_apply, mul_ite]
-  rw [hd, map_sum, LinearMap.sum_apply]
+  rw [pi_eq_sum_univ' d, map_sum, LinearMap.sum_apply]
   exact Finset.sum_eq_zero fun i _ ↦ by
     rw [map_smul, LinearMap.smul_apply, smul_eq_mul, hsingle i, mul_zero]
 
