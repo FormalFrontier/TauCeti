@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
-public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 
@@ -25,9 +25,9 @@ than by an antipode computation.
 
 * `TauCeti.Comodule.pointsAction`: the action of the group of points by linear
   automorphisms of `A ⊗[R] V`.
-* `TauCeti.Comodule.endOfPoint_corestrict` and
-  `TauCeti.Comodule.pointsAction_corestrict`: compatibility of point actions with
-  corestriction and precomposition.
+* `TauCeti.Comodule.pointsAction_corestrict`: compatibility of point actions with
+  corestriction and precomposition, also provided for bundled finite comodules by
+  `TauCeti.Comodule.pointsAction_corestrict_obj`.
 -/
 
 public section
@@ -62,34 +62,13 @@ lemma pointsAction_toLinearMap (g : WithConv (H →ₐ[R] A)) :
   rw [LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap,
     Representation.asGroupHom_apply, pointsRepresentation_apply]
 
-universe u v w x
+universe u v w x y
 
 section Corestrict
 
 variable {R : Type u} {H₁ : Type v} {H₂ : Type w} {A : Type x}
 variable [CommSemiring R] [Semiring H₁] [Semiring H₂]
 variable [CommSemiring A] [Algebra R A]
-
-section Bialgebra
-
-variable [Bialgebra R H₁] [Bialgebra R H₂]
-variable {V : Type*} [AddCommMonoid V] [Module R V] [Comodule R H₁ V]
-
-/-- Acting on a comodule by a point precomposed with a bialgebra morphism is the same as
-corestricting the comodule along that morphism and acting by the original point. -/
-theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂)
-    (g : WithConv (H₂ →ₐ[R] A)) :
-    (letI : Comodule R H₂ V := Corestrict φ.toCoalgHom
-     endOfPoint V g.ofConv) = endOfPoint V (AlgHom.mapDomain φ g).ofConv := by
-  apply TensorProduct.AlgebraTensorModule.ext
-  intro a v
-  rw [endOfPoint_tmul, endOfPoint_tmul]
-  simp only [corestrict_coact_apply, AlgHom.mapDomain_apply,
-    AlgHom.comp_toLinearMap]
-  rw [LinearMap.lTensor_comp, LinearMap.comp_apply]
-  rfl
-
-end Bialgebra
 
 section HopfAlgebra
 
@@ -106,8 +85,23 @@ theorem pointsAction_corestrict (φ : H₁ →ₐc[R] H₂)
   apply LinearEquiv.ext
   exact LinearMap.congr_fun <|
     (pointsAction_toLinearMap V g).trans <|
-      (endOfPoint_corestrict φ g).trans <|
-        (pointsAction_toLinearMap V (AlgHom.mapDomain φ g)).symm
+      (endOfPoint_corestrict φ g.ofConv).trans <|
+        (by
+          rw [AlgHom.mapDomain_apply, ofConv_toConv]
+          exact (pointsAction_toLinearMap V
+            (toConv (g.ofConv.comp (φ : H₁ →ₐ[R] H₂)))).symm)
+
+/-- Bundled finite-comodule form of `pointsAction_corestrict`. This avoids exposing the
+definitionally equal comodule instance carried by the corestricted object to callers. -/
+theorem pointsAction_corestrict_obj (φ : H₁ →ₐc[R] H₂)
+    (M : FGComoduleCat.{u, v, y} R H₁) (g : WithConv (H₂ →ₐ[R] A)) :
+    pointsAction ((FGComoduleCat.corestrict φ.toCoalgHom).obj M) g =
+      pointsAction M (AlgHom.mapDomain φ g) := by
+  -- The bundled object's comodule instance is definitionally `Corestrict`; expose that
+  -- identification once here so downstream proofs can rewrite by a named theorem.
+  change (letI : Comodule R H₂ M := Corestrict φ.toCoalgHom
+    pointsAction M g) = pointsAction M (AlgHom.mapDomain φ g)
+  exact pointsAction_corestrict φ g
 
 end HopfAlgebra
 

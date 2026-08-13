@@ -29,7 +29,8 @@ ReductiveGroups roadmap.
 * `TauCeti.HopfAlgebra.Point.jordanDecomposition_mapDomain`: Jordan decomposition commutes with
   a homomorphism of affine groups.
 * `TauCeti.HopfAlgebra.Point.semisimplePart_mapDomain` and
-  `TauCeti.HopfAlgebra.Point.unipotentPart_mapDomain`: the two component formulas.
+  `TauCeti.HopfAlgebra.Point.unipotentPart_mapDomain`: the two component formulas, with
+  `semisimplePart_toConv_comp` and `unipotentPart_toConv_comp` as their simp-normal forms.
 
 ## References
 
@@ -72,29 +73,47 @@ theorem jordanDecomposition_mapDomain (φ : H₁ →ₐc[k] H₂)
     rw [isSemisimplePoint_def]
     exact fun M ↦ isSemisimple_pointsAction_semisimplePart k H₂ K g M
   · intro M
-    rw [← Comodule.pointsAction_corestrict (V := M) φ]
+    rw [← Comodule.pointsAction_corestrict_obj φ M]
     exact isUnipotent_pointsAction_unipotentPart k H₂ K g
       ((FGComoduleCat.corestrict φ.toCoalgHom).obj M)
   · exact (commute_semisimplePart_unipotentPart k H₂ K g).map (AlgHom.mapDomain φ)
   · rw [← map_mul, semisimplePart_mul_unipotentPart]
 
-/-- The semisimple part of a point is preserved by homomorphisms of affine groups. -/
-@[simp]
+/-- Taking the semisimple part commutes with precomposition by a bialgebra morphism, the
+contravariant coordinate-algebra form of an affine-group homomorphism. -/
 theorem semisimplePart_mapDomain (φ : H₁ →ₐc[k] H₂)
+    (g : WithConv (H₂ →ₐ[k] K)) :
+    semisimplePart k H₁ K (AlgHom.mapDomain φ g) =
+      AlgHom.mapDomain φ (semisimplePart k H₂ K g) := by
+  simpa only [jordanDecomposition_fst] using
+      congrArg Prod.fst (jordanDecomposition_mapDomain φ g)
+
+/-- Taking the unipotent part commutes with precomposition by a bialgebra morphism, the
+contravariant coordinate-algebra form of an affine-group homomorphism. -/
+theorem unipotentPart_mapDomain (φ : H₁ →ₐc[k] H₂)
+    (g : WithConv (H₂ →ₐ[k] K)) :
+    unipotentPart k H₁ K (AlgHom.mapDomain φ g) =
+      AlgHom.mapDomain φ (unipotentPart k H₂ K g) := by
+  simpa only [jordanDecomposition_snd] using
+      congrArg Prod.snd (jordanDecomposition_mapDomain φ g)
+
+/-- Simp-normal form of `semisimplePart_mapDomain`: taking the semisimple part commutes
+with `AlgHom.mapDomain φ`, written after normalization by `AlgHom.mapDomain_apply`. -/
+@[simp]
+theorem semisimplePart_toConv_comp (φ : H₁ →ₐc[k] H₂)
     (g : WithConv (H₂ →ₐ[k] K)) :
     semisimplePart k H₁ K (toConv (g.ofConv.comp (φ : H₁ →ₐ[k] H₂))) =
       toConv ((semisimplePart k H₂ K g).ofConv.comp (φ : H₁ →ₐ[k] H₂)) := by
-  simpa only [jordanDecomposition_fst, AlgHom.mapDomain_apply] using
-      congrArg Prod.fst (jordanDecomposition_mapDomain φ g)
+  simpa only [AlgHom.mapDomain_apply] using semisimplePart_mapDomain φ g
 
-/-- The unipotent part of a point is preserved by homomorphisms of affine groups. -/
+/-- Simp-normal form of `unipotentPart_mapDomain`: taking the unipotent part commutes
+with `AlgHom.mapDomain φ`, written after normalization by `AlgHom.mapDomain_apply`. -/
 @[simp]
-theorem unipotentPart_mapDomain (φ : H₁ →ₐc[k] H₂)
+theorem unipotentPart_toConv_comp (φ : H₁ →ₐc[k] H₂)
     (g : WithConv (H₂ →ₐ[k] K)) :
     unipotentPart k H₁ K (toConv (g.ofConv.comp (φ : H₁ →ₐ[k] H₂))) =
       toConv ((unipotentPart k H₂ K g).ofConv.comp (φ : H₁ →ₐ[k] H₂)) := by
-  simpa only [jordanDecomposition_snd, AlgHom.mapDomain_apply] using
-      congrArg Prod.snd (jordanDecomposition_mapDomain φ g)
+  simpa only [AlgHom.mapDomain_apply] using unipotentPart_mapDomain φ g
 
 end Point
 end HopfAlgebra

@@ -94,7 +94,7 @@ theorem IsSemisimplePoint.mapDomain {g : WithConv (H₂ →ₐ[k] K)}
     IsSemisimplePoint (AlgHom.mapDomain φ g) := by
   rw [isSemisimplePoint_def] at hg ⊢
   intro M
-  rw [← Comodule.pointsAction_corestrict (V := M) φ g]
+  rw [← Comodule.pointsAction_corestrict_obj φ M g]
   exact hg ((FGComoduleCat.corestrict φ.toCoalgHom).obj M)
 
 end MapDomain
