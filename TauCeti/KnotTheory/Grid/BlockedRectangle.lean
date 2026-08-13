@@ -16,7 +16,8 @@ import TauCeti.KnotTheory.Grid.Rectangle.Swap
 This file packages the finite rectangle counts used by the fully blocked grid differential.
 For grid states `x` and `y`, the already-defined `GridRectangleBetween x y` records an
 oriented toroidal rectangle from `x` to `y`. Here we filter the generic empty-rectangle
-enumeration to rectangles whose interiors avoid all `O` and `X` markings of a grid diagram.
+enumeration to rectangles none of whose covered squares carries an `O` or `X` marking of a
+grid diagram.
 
 The final count is valued in `ZMod 2`, matching the first coefficient system used in the grid
 homology roadmap.
@@ -32,8 +33,6 @@ homology roadmap.
 
 * `TauCeti.GridDiagram.fullyBlockedRectangleCount_transpose`: the count is invariant under the
   diagonal reflection of a grid diagram and its two states.
-* `TauCeti.GridDiagram.fullyBlockedRectangleCount_rotate`: the count is invariant under the
-  half-turn rotation of a grid diagram and its two states.
 * `TauCeti.GridDiagram.fullyBlockedRectangles_swapMarkings` and
   `TauCeti.GridDiagram.fullyBlockedRectangleCount_swapMarkings`: the rectangle set and its count
   are unchanged by swapping the `O` and `X` markings.
@@ -57,9 +56,9 @@ variable {n : ℕ} (G : GridDiagram n) (x y : GridState n)
 
 /-- The finite set of fully blocked empty rectangles from `x` to `y` in a grid diagram.
 
-"Fully blocked" means that the rectangle is empty for the source grid state and its interior
-avoids every `O` and `X` marking. This is the rectangle set whose parity gives the coefficient
-of `y` in the fully blocked grid differential applied to `x`. -/
+"Fully blocked" means that the rectangle is empty for the source grid state and none of the
+squares it covers carries an `O` or `X` marking. This is the rectangle set whose parity gives
+the coefficient of `y` in the fully blocked grid differential applied to `x`. -/
 @[expose] noncomputable def fullyBlockedRectangles : Finset (GridRectangleBetween x y) := by
   classical
   exact (GridRectangleBetween.emptyRectangles x y).filter fun R => R.AvoidsMarkings G
@@ -155,25 +154,6 @@ theorem fullyBlockedRectangleCount_transpose (x y : GridState n) :
   congr 1
   exact (Finset.card_equiv (GridRectangleBetween.transposeEquiv x y) fun R =>
     (G.mem_fullyBlockedRectangles_transpose x y R).symm).symm
-
-/-- The half-turn rotation of a fully blocked rectangle is a fully blocked rectangle for the
-rotated diagram and rotated states. -/
-theorem mem_fullyBlockedRectangles_rotate (x y : GridState n) (R : GridRectangleBetween x y) :
-    R.rotate ∈ G.rotate.fullyBlockedRectangles x.rotate y.rotate ↔
-      R ∈ G.fullyBlockedRectangles x y := by
-  simp only [mem_fullyBlockedRectangles, GridRectangleBetween.isEmpty_rotate,
-    GridRectangleBetween.avoidsMarkings_rotate]
-
-/-- The fully blocked rectangle count is invariant under the half-turn rotation of a grid diagram
-and its two states. This is the matrix-coefficient form of the statement that the half-turn
-rotation is a chain symmetry of the fully blocked grid complex. -/
-theorem fullyBlockedRectangleCount_rotate (x y : GridState n) :
-    G.rotate.fullyBlockedRectangleCount x.rotate y.rotate =
-      G.fullyBlockedRectangleCount x y := by
-  rw [fullyBlockedRectangleCount_def, fullyBlockedRectangleCount_def]
-  congr 1
-  exact (Finset.card_equiv (GridRectangleBetween.rotateEquiv x y) fun R =>
-    (G.mem_fullyBlockedRectangles_rotate x y R).symm).symm
 
 /-- The fully blocked rectangles are unchanged by swapping the `O` and `X` markings, since
 marking avoidance only refers to the union of the two marking sets. -/
