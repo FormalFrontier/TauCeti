@@ -46,16 +46,17 @@ the point being that invertibility upgrades the diagonal entries of a diagonal m
 `GL n k` contains it and is commutative.
 
 The embedding, the torus, the equivalence and the membership criterion ask only that `k` be a
-semiring; commutativity of `k` enters with the determinant, the absence of zero divisors with
-the self-centralization, and the order asks for a division ring, where the nonzero elements are
-exactly the units.
+semiring; commutativity of `k` enters with the self-centralization and with the determinant,
+cancellation by nonzero elements with the self-centralization as well, and the order asks for a
+division ring, where the nonzero elements are exactly the units.
 
-Self-centralization is proved under two hypotheses, neither of them idle.  The absence of zero
-divisors is a sufficient hypothesis rather than a necessary one: an off-diagonal entry `g i j` of
-a centralizing matrix satisfies `g i j * (t i - t j) = 0` for diagonal entries `t i ≠ t j`, and
-`NoZeroDivisors k` is what cancels the second factor — not invertibility of that factor, which it
-need not have (`TauCeti.apply_eq_zero_of_commute_diagonal`).  All the argument asks of the ring is
-that the two units it separates the coordinates with differ by a regular element.  The second
+Self-centralization is proved under two hypotheses, neither of them idle.  Cancellation is a
+sufficient hypothesis rather than a necessary one: an off-diagonal entry `g i j` of a centralizing
+matrix satisfies `g i j * t i = g i j * t j` for diagonal entries `t i ≠ t j`, and
+`IsCancelMulZero k` is what forces that entry to vanish — no subtraction is involved, so a
+commutative semiring suffices, and the two diagonal entries need not differ by a unit
+(`TauCeti.apply_eq_zero_of_commute_diagonal`).  Over a ring, `IsCancelMulZero` is exactly
+`NoZeroDivisors`.  The second
 hypothesis, that the unit group has two distinct elements, is there because a diagonal matrix can
 only separate the coordinate lines it distinguishes; two units already suffice, because only one
 pair of coordinates is separated at a time.  That one cannot simply be dropped, and what happens
@@ -252,27 +253,9 @@ instance instIsMulCommutativeDiagonalTorus : IsMulCommutative (diagonalTorus k n
     refine Subtype.ext ?_
     rw [Subgroup.coe_mul, Subgroup.coe_mul, ← map_mul, ← map_mul, mul_comm]⟩⟩
 
-end CommSemiring
+section IsCancelMulZero
 
-variable [CommRing k]
-
-/-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
-@[simp]
-theorem det_diagGL (t : Fin n → kˣ) :
-    Matrix.GeneralLinearGroup.det (diagGL t) = ∏ i, t i := by
-  apply Units.ext
-  simp [Matrix.GeneralLinearGroup.val_det_apply, diagGL_coe, Matrix.det_diagonal]
-
-/-- The determinant of an element of the diagonal torus is the product of its diagonal entries. -/
-theorem det_of_mem_diagonalTorus {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k n) :
-    (Matrix.GeneralLinearGroup.det g : k) = ∏ i, (g : Matrix (Fin n) (Fin n) k) i i := by
-  rw [Matrix.GeneralLinearGroup.val_det_apply,
-    ← (isDiag_of_mem_diagonalTorus hg).diagonal_diag, Matrix.det_diagonal]
-  simp [Matrix.diag]
-
-section NoZeroDivisors
-
-variable [NoZeroDivisors k]
+variable [IsCancelMulZero k]
 
 section Diagonal
 
@@ -284,10 +267,9 @@ theorem apply_eq_zero_of_commute_diagonal {t : ι → k} {g : Matrix ι ι k}
     (hg : Commute (Matrix.diagonal t) g) {i j : ι} (hij : t i ≠ t j) : g i j = 0 := by
   have hentry : (Matrix.diagonal t * g) i j = (g * Matrix.diagonal t) i j := by rw [hg.eq]
   rw [Matrix.diagonal_mul, Matrix.mul_diagonal] at hentry
-  have hzero : g i j * (t i - t j) = 0 := by
-    rw [mul_sub, ← hentry]
-    ring
-  exact (mul_eq_zero.mp hzero).resolve_right (sub_ne_zero.mpr hij)
+  -- `hentry : t i * g i j = g i j * t j`; cancelling `g i j` on the left would give `t i = t j`.
+  by_contra h
+  exact hij (mul_left_cancel₀ h (by rw [mul_comm (g i j) (t i)]; exact hentry))
 
 /-- **A matrix commuting with a diagonal matrix of pairwise distinct entries is diagonal.** -/
 theorem isDiag_of_commute_diagonal {t : ι → k} (ht : Function.Injective t)
@@ -321,7 +303,25 @@ theorem eq_diagonalTorus_of_le_of_isMulCommutative (H : Subgroup (GL (Fin n) k))
         (Subgroup.centralizer_le (SetLike.coe_subset_coe.mpr hle)))
     hle
 
-end NoZeroDivisors
+end IsCancelMulZero
+
+end CommSemiring
+
+variable [CommRing k]
+
+/-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
+@[simp]
+theorem det_diagGL (t : Fin n → kˣ) :
+    Matrix.GeneralLinearGroup.det (diagGL t) = ∏ i, t i := by
+  apply Units.ext
+  simp [Matrix.GeneralLinearGroup.val_det_apply, diagGL_coe, Matrix.det_diagonal]
+
+/-- The determinant of an element of the diagonal torus is the product of its diagonal entries. -/
+theorem det_of_mem_diagonalTorus {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k n) :
+    (Matrix.GeneralLinearGroup.det g : k) = ∏ i, (g : Matrix (Fin n) (Fin n) k) i i := by
+  rw [Matrix.GeneralLinearGroup.val_det_apply,
+    ← (isDiag_of_mem_diagonalTorus hg).diagonal_diag, Matrix.det_diagonal]
+  simp [Matrix.diag]
 
 /-- **The order of the diagonal torus**: over a division ring with `q` elements it has `(q - 1)ⁿ`
 elements, one invertible scalar per diagonal entry.  Over an infinite division ring both sides

@@ -117,28 +117,34 @@ end GeneralLinearGroup
 
 section SplitTorus
 
-/-- An invertible diagonal matrix with distinct diagonal entries is not scalar, so
-`TauCeti.isMulCommutative_centralizer_of_notMem_range_scalar` applies to it.  Like `diagGL`
-itself, this needs only a semiring. -/
+/-- An invertible diagonal matrix with distinct diagonal entries is not scalar.  Like `diagGL`
+itself, this needs only a semiring; specialized to a field it is what supplies the non-scalarity
+hypothesis of `TauCeti.isMulCommutative_centralizer_of_notMem_range_scalar`, which is stated over
+a field. -/
 theorem notMem_range_scalar_diagGL {k : Type*} [Semiring k] {t : Fin 2 → kˣ} (ht : t 0 ≠ t 1) :
     (diagGL t : Matrix (Fin 2) (Fin 2) k) ∉ Set.range (Matrix.scalar (Fin 2)) := by
   rw [mem_range_scalar_fin_two_iff]
   rintro ⟨-, -, h⟩
   exact ht (Units.ext (by simpa using h))
 
-section CommRing
+section CommSemiring
 
-variable {k : Type*} [CommRing k] [NoZeroDivisors k] {t : Fin 2 → kˣ}
+variable {k : Type*} [CommSemiring k] [IsCancelMulZero k] {t : Fin 2 → kˣ}
 
-/-- **The centralizer of a split regular semisimple element of `GL₂`.** An invertible diagonal
-matrix with *distinct* diagonal entries has, as its centralizer, exactly the split torus
-`TauCeti.diagonalTorus k 2` of all invertible diagonal matrices: the maximal torus containing it.
+/-- **The centralizer of an invertible diagonal matrix with distinct entries.** Over a commutative
+semiring in which every nonzero element cancels, such a matrix has, as its centralizer, exactly the
+diagonal torus `TauCeti.diagonalTorus k 2` of all invertible diagonal matrices.
 
 Both inclusions come from the diagonal API: a matrix commuting with a diagonal matrix of distinct
 entries is diagonal (`TauCeti.isDiag_of_commute_diagonal`), and conversely the torus is
 commutative, so it centralizes each of its own elements. Only the first of these needs anything of
-the ring, and only that a difference of the two diagonal entries be a non-zero-divisor, so the
-statement holds over any integral domain; a field is needed just for the counting below. -/
+`k`, and only that its two distinct diagonal entries be separated by cancellation, so neither
+subtraction nor inverses are used; a field is needed just for the counting below.
+
+Over a field — where `IsCancelMulZero` is automatic — this is **the centralizer of a split regular
+semisimple element of `GL₂`**: a diagonal matrix with distinct entries is then regular semisimple,
+`TauCeti.diagonalTorus k 2` is the split maximal torus, and the theorem says that the centralizer
+of the element is the maximal torus containing it. -/
 theorem centralizer_diagGL (ht : t 0 ≠ t 1) :
     Subgroup.centralizer {diagGL t} = diagonalTorus k 2 := by
   have hne : (t 0 : k) ≠ (t 1 : k) := fun h => ht (Units.ext h)
@@ -153,7 +159,7 @@ theorem centralizer_diagGL (ht : t 0 ≠ t 1) :
       (Subgroup.centralizer_le (Set.singleton_subset_iff.mpr
         (mem_diagonalTorus_iff_exists_diagGL.mpr ⟨t, rfl⟩)))
 
-end CommRing
+end CommSemiring
 
 variable {F : Type*} [Field F] {t : Fin 2 → Fˣ}
 
