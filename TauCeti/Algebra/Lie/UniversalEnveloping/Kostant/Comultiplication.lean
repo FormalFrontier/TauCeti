@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Bialgebra
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import TauCeti.Algebra.TensorProduct.Subring
 
 /-!
 # Comultiplication and counit of the Kostant integral form
@@ -45,6 +46,8 @@ to the integer-cast subring of `ℚ`. The map `kostantFormCounit` is its canonic
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTensorForm`: the range of that map.
 * `TauCeti.UniversalEnvelopingAlgebra.comul_mem_kostantTensorForm`: the rational coproduct of an
   element of the Kostant form has an integral tensor representative.
+* `TauCeti.UniversalEnvelopingAlgebra.counit_mem_bot_of_mem_kostantForm`: the rational counit of an
+  element of the Kostant form is an integer.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormComul`: the rational comultiplication restricted
   to the integral tensor form.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormCounit`: the counit of the Kostant form, valued
@@ -79,20 +82,10 @@ attribute [local instance] TauCeti.moduleNNRat
 /-- The canonical map from the tensor square of a Kostant form over `ℤ` to the tensor square of
 the ambient universal enveloping algebra over `ℚ`.
 
-On pure tensors this is `x ⊗ y ↦ (x : U(L)) ⊗ (y : U(L))`. The two maps into the rational tensor
-square commute because they land in its left and right tensor factors. -/
+On pure tensors this is `x ⊗ y ↦ (x : U(L)) ⊗ (y : U(L))`. -/
 noncomputable def kostantTensorMap (e : ι → L) (h : κ → L) :
     kostantForm e h ⊗[ℤ] kostantForm e h →ₐ[ℤ] U ⊗[ℚ] U :=
-  Algebra.TensorProduct.lift
-    ((Algebra.TensorProduct.includeLeft : U →ₐ[ℚ] U ⊗[ℚ] U).restrictScalars ℤ |>.comp
-      (kostantForm e h).subtype.toIntAlgHom)
-    ((Algebra.TensorProduct.includeRight : U →ₐ[ℚ] U ⊗[ℚ] U).restrictScalars ℤ |>.comp
-      (kostantForm e h).subtype.toIntAlgHom)
-    fun x y => by
-      -- `lift` presents the composed algebra maps opaquely; expose their two pure tensors so the
-      -- standard tensor-factor commutation lemma applies.
-      change Commute ((x : U) ⊗ₜ[ℚ] (1 : U)) ((1 : U) ⊗ₜ[ℚ] (y : U))
-      exact (Commute.one_right _).tmul (Commute.one_left _)
+  TauCeti.Subring.tensorSquareMap ℚ (kostantForm e h)
 
 /-- The canonical integral tensor map sends a pure tensor to the pure tensor of the underlying
 elements in the rational tensor square. -/
@@ -107,7 +100,7 @@ from `kostantForm e h ⊗[ℤ] kostantForm e h`.
 This range formulation records existence of an integral tensor representative without assuming
 injectivity of the canonical map. -/
 noncomputable def kostantTensorForm (e : ι → L) (h : κ → L) : Subring (U ⊗[ℚ] U) :=
-  (kostantTensorMap e h).toRingHom.range
+  TauCeti.Subring.tensorSquareRange ℚ (kostantForm e h)
 
 /-- Membership in the integral tensor form is equivalent to having an integral tensor
 representative under the canonical tensor map. -/
@@ -115,67 +108,55 @@ representative under the canonical tensor map. -/
 theorem mem_kostantTensorForm_iff (e : ι → L) (h : κ → L) (z : U ⊗[ℚ] U) :
     z ∈ kostantTensorForm e h ↔
       ∃ t : kostantForm e h ⊗[ℤ] kostantForm e h, kostantTensorMap e h t = z := by
-  rfl
+  simpa only [kostantTensorForm, kostantTensorMap] using
+    TauCeti.Subring.mem_tensorSquareRange_iff ℚ (kostantForm e h) z
 
 /-- A pure rational tensor whose two factors lie in the Kostant form belongs to the integral
 tensor form. -/
 theorem tmul_mem_kostantTensorForm (e : ι → L) (h : κ → L) {x y : U}
     (hx : x ∈ kostantForm e h) (hy : y ∈ kostantForm e h) :
     x ⊗ₜ[ℚ] y ∈ kostantTensorForm e h := by
-  rw [mem_kostantTensorForm_iff]
-  refine ⟨(⟨x, hx⟩ : kostantForm e h) ⊗ₜ[ℤ] (⟨y, hy⟩ : kostantForm e h), ?_⟩
-  simp
+  simpa only [kostantTensorForm] using
+    TauCeti.Subring.tmul_mem_tensorSquareRange ℚ (kostantForm e h) hx hy
 
 /-! ## Stability under comultiplication -/
+
+private theorem mem_algHomComap_iff {R A B : Type*} [CommSemiring R] [Ring A] [Ring B]
+    [Algebra R A] [Algebra R B] (S : Subring B) (f : A →ₐ[R] B) (a : A) :
+    a ∈ S.comap f.toRingHom ↔ f a ∈ S := by
+  simp only [Subring.mem_comap, AlgHom.toRingHom_eq_coe, RingHom.coe_coe]
 
 private theorem mem_comulComap_iff (S : Subring (U ⊗[ℚ] U)) (a : U) :
     a ∈ S.comap (Bialgebra.comulAlgHom ℚ U).toRingHom ↔
       Coalgebra.comul (R := ℚ) a ∈ S := by
-  rw [Subring.mem_comap]
-  -- The goal contains the ring-hom wrapper while the public computation theorem is stated for
-  -- the algebra hom; exposing that wrapper is the only conversion needed here.
-  change (Bialgebra.comulAlgHom ℚ U a ∈ S) ↔ _
-  rw [Bialgebra.comulAlgHom_apply]
+  simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+    Bialgebra.comulAlgHom_apply] using
+    mem_algHomComap_iff S (Bialgebra.comulAlgHom ℚ U) a
 
 /-- **The rational comultiplication is integral on the Kostant form.** Every coproduct of an
-element of `kostantForm e h` lies in the range of its integral tensor square.
-
-The proof checks the two generator families. Their coefficient-one antidiagonal coproduct formulas
-write each coproduct as a finite sum of pure tensors of generators of the same form. -/
+element of `kostantForm e h` lies in the range of its integral tensor square. -/
 theorem comul_mem_kostantTensorForm (e : ι → L) (h : κ → L) {a : U}
     (ha : a ∈ kostantForm e h) :
     Coalgebra.comul (R := ℚ) a ∈ kostantTensorForm e h := by
-  apply (kostantForm_le_iff e h
+  rw [← mem_comulComap_iff]
+  exact (kostantForm_le_iff e h
     ((kostantTensorForm e h).comap (Bialgebra.comulAlgHom ℚ U).toRingHom)).mpr
-  constructor
-  · intro i n
-    rw [mem_comulComap_iff, comul_ι_dividedPower]
-    exact sum_mem fun ij _ =>
-      tmul_mem_kostantTensorForm e h (dividedPower_mem_kostantForm e h i ij.1)
-        (dividedPower_mem_kostantForm e h i ij.2)
-  · intro j n
-    rw [mem_comulComap_iff, comul_ι_choose]
-    exact sum_mem fun ij _ =>
-      tmul_mem_kostantTensorForm e h (ringChoose_mem_kostantForm e h j ij.1)
-        (ringChoose_mem_kostantForm e h j ij.2)
-  exact ha
+      ⟨fun i n => by
+        rw [mem_comulComap_iff, comul_ι_dividedPower]
+        exact sum_mem fun ij _ =>
+          tmul_mem_kostantTensorForm e h (dividedPower_mem_kostantForm e h i ij.1)
+            (dividedPower_mem_kostantForm e h i ij.2),
+      fun j n => by
+        rw [mem_comulComap_iff, comul_ι_choose]
+        exact sum_mem fun ij _ =>
+          tmul_mem_kostantTensorForm e h (ringChoose_mem_kostantForm e h j ij.1)
+            (ringChoose_mem_kostantForm e h j ij.2)⟩ ha
 
 -- The rational comultiplication restricted to the integral tensor form.
 private noncomputable def kostantFormComulRingHom (e : ι → L) (h : κ → L) :
     kostantForm e h →+* kostantTensorForm e h :=
-  RingHom.codRestrict
-    ((Bialgebra.comulAlgHom ℚ U).toRingHom.comp (kostantForm e h).subtype)
-    (kostantTensorForm e h) fun a => by
-      simpa only [RingHom.comp_apply, AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
-        Subring.coe_subtype, Bialgebra.comulAlgHom_apply] using
-        comul_mem_kostantTensorForm e h a.2
-
-private theorem coe_kostantFormComulRingHom_apply (e : ι → L) (h : κ → L)
-    (a : kostantForm e h) :
-    (kostantFormComulRingHom e h a : U ⊗[ℚ] U) = Coalgebra.comul (R := ℚ) (a : U) := by
-  rw [kostantFormComulRingHom, RingHom.codRestrict_apply, RingHom.comp_apply]
-  simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, Subring.coe_subtype,
-    Bialgebra.comulAlgHom_apply]
+  (Bialgebra.comulAlgHom ℚ U).toRingHom.restrict (kostantForm e h) (kostantTensorForm e h)
+    fun _ ha => comul_mem_kostantTensorForm e h ha
 
 /-- The comultiplication of the Kostant form, with codomain restricted to the integral tensor form
 inside the rational tensor square. -/
@@ -188,73 +169,55 @@ underlying elements. -/
 @[simp]
 theorem coe_kostantFormComul_apply (e : ι → L) (h : κ → L) (a : kostantForm e h) :
     (kostantFormComul e h a : U ⊗[ℚ] U) = Coalgebra.comul (R := ℚ) (a : U) := by
-  rw [kostantFormComul, RingHom.toIntAlgHom_apply, coe_kostantFormComulRingHom_apply]
+  rw [kostantFormComul, RingHom.toIntAlgHom_apply, kostantFormComulRingHom]
+  simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+    Bialgebra.comulAlgHom_apply] using
+    RingHom.coe_restrict_apply (Bialgebra.comulAlgHom ℚ U).toRingHom
+      (kostantForm e h) (kostantTensorForm e h)
+      (fun _ ha => comul_mem_kostantTensorForm e h ha) a
 
 /-! ## The integral counit -/
 
 private theorem mem_counitComap_iff (a : U) :
     a ∈ (⊥ : Subring ℚ).comap (Bialgebra.counitAlgHom ℚ U).toRingHom ↔
       Coalgebra.counit (R := ℚ) a ∈ (⊥ : Subring ℚ) := by
-  rw [Subring.mem_comap]
-  -- As above, expose the ring-hom wrapper so the public algebra-hom computation theorem applies.
-  change (Bialgebra.counitAlgHom ℚ U a ∈ (⊥ : Subring ℚ)) ↔ _
-  rw [Bialgebra.counitAlgHom_apply]
+  simpa only [Bialgebra.counitAlgHom_apply] using
+    mem_algHomComap_iff (⊥ : Subring ℚ) (Bialgebra.counitAlgHom ℚ U) a
 
--- The rational counit maps the Kostant form into the integer-cast subring of `ℚ`.
-private theorem counit_mem_bot (e : ι → L) (h : κ → L) {a : U}
+/-- The rational counit of an element of the Kostant form belongs to the integer-cast subring of
+`ℚ`. -/
+theorem counit_mem_bot_of_mem_kostantForm (e : ι → L) (h : κ → L) {a : U}
     (ha : a ∈ kostantForm e h) : Coalgebra.counit (R := ℚ) a ∈ (⊥ : Subring ℚ) := by
-  apply (kostantForm_le_iff e h
+  rw [← mem_counitComap_iff]
+  exact (kostantForm_le_iff e h
     ((⊥ : Subring ℚ).comap (Bialgebra.counitAlgHom ℚ U).toRingHom)).mpr
-  constructor
-  · intro i n
-    cases n with
-    | zero =>
-        rw [mem_counitComap_iff,
-          Associative.dividedPower_zero, Bialgebra.counit_one]
-        exact one_mem _
-    | succ n =>
-        rw [mem_counitComap_iff, counit_ι_dividedPower]
-        exact zero_mem _
-  · intro j n
-    cases n with
-    | zero =>
-        rw [mem_counitComap_iff,
-          Ring.choose_zero_right, Bialgebra.counit_one]
-        exact one_mem _
-    | succ n =>
-        rw [mem_counitComap_iff, counit_ι_choose]
-        exact zero_mem _
-  exact ha
+      ⟨fun i n => by
+        cases n with
+        | zero =>
+            rw [mem_counitComap_iff, Associative.dividedPower_zero, Bialgebra.counit_one]
+            exact one_mem _
+        | succ n =>
+            rw [mem_counitComap_iff, counit_ι_dividedPower]
+            exact zero_mem _,
+      fun j n => by
+        cases n with
+        | zero =>
+            rw [mem_counitComap_iff, Ring.choose_zero_right, Bialgebra.counit_one]
+            exact one_mem _
+        | succ n =>
+            rw [mem_counitComap_iff, counit_ι_choose]
+            exact zero_mem _⟩ ha
 
 -- The rational counit restricted to the integer-cast subring of `ℚ`.
 private noncomputable def kostantFormCounitRange (e : ι → L) (h : κ → L) :
     kostantForm e h →+* (⊥ : Subring ℚ) :=
-  RingHom.codRestrict
-    ((Bialgebra.counitAlgHom ℚ U).toRingHom.comp (kostantForm e h).subtype)
-    (⊥ : Subring ℚ) fun a => by
-      simpa only [RingHom.comp_apply, AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
-        Subring.coe_subtype, Bialgebra.counitAlgHom_apply] using
-        counit_mem_bot e h a.2
-
-private theorem coe_kostantFormCounitRange_apply (e : ι → L) (h : κ → L)
-    (a : kostantForm e h) :
-    (kostantFormCounitRange e h a : ℚ) = Coalgebra.counit (R := ℚ) (a : U) := by
-  rw [kostantFormCounitRange, RingHom.codRestrict_apply, RingHom.comp_apply]
-  simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, Subring.coe_subtype,
-    Bialgebra.counitAlgHom_apply]
+  (Bialgebra.counitAlgHom ℚ U).toRingHom.restrict (kostantForm e h) (⊥ : Subring ℚ)
+    fun _ ha => counit_mem_bot_of_mem_kostantForm e h ha
 
 -- The canonical ring equivalence from `ℤ` to the integer-cast subring of `ℚ`.
-private theorem intCastRangeRestrict_bijective :
-    Function.Bijective (Int.castRingHom ℚ).rangeRestrict :=
-  ⟨RingHom.injective_codRestrict.mpr Int.cast_injective,
-    RingHom.rangeRestrict_surjective _⟩
-
+-- For subrings of `ℚ`, `⊥` is definitionally the range of `Int.castRingHom ℚ`.
 private noncomputable def intEquivBot : ℤ ≃+* (⊥ : Subring ℚ) :=
-  RingEquiv.ofBijective (Int.castRingHom ℚ).rangeRestrict intCastRangeRestrict_bijective
-
-private theorem coe_intEquivBot_apply (z : ℤ) : (intEquivBot z : ℚ) = (z : ℚ) := by
-  rw [intEquivBot, RingEquiv.ofBijective_apply, RingHom.coe_rangeRestrict]
-  exact congr_fun Int.coe_castRingHom z
+  RingEquiv.ofLeftInverse (f := Int.castRingHom ℚ) (g := Rat.num) fun n => Rat.num_intCast n
 
 /-- The counit of the Kostant integral form, valued in `ℤ`.
 
@@ -274,10 +237,16 @@ theorem intCast_kostantFormCounit_apply (e : ι → L) (h : κ → L) (a : kosta
     (kostantFormCounit e h a : ℚ) = Coalgebra.counit (R := ℚ) (a : U) := by
   calc
     (kostantFormCounit e h a : ℚ) = (intEquivBot (kostantFormCounit e h a) : ℚ) :=
-      (coe_intEquivBot_apply _).symm
+      by simp [intEquivBot]
     _ = (intEquivBot (intEquivBot.symm (kostantFormCounitRange e h a)) : ℚ) := by
       rw [kostantFormCounit_apply]
     _ = (kostantFormCounitRange e h a : ℚ) := by rw [intEquivBot.apply_symm_apply]
-    _ = Coalgebra.counit (R := ℚ) (a : U) := coe_kostantFormCounitRange_apply e h a
+    _ = Coalgebra.counit (R := ℚ) (a : U) := by
+      rw [kostantFormCounitRange]
+      simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+        Bialgebra.counitAlgHom_apply] using
+        RingHom.coe_restrict_apply (Bialgebra.counitAlgHom ℚ U).toRingHom
+          (kostantForm e h) (⊥ : Subring ℚ)
+          (fun _ ha => counit_mem_bot_of_mem_kostantForm e h ha) a
 
 end TauCeti.UniversalEnvelopingAlgebra

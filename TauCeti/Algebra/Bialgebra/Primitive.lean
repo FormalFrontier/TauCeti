@@ -37,6 +37,8 @@ namespace TauCeti.Bialgebra
 
 universe u w
 
+attribute [local instance] TauCeti.moduleNNRat
+
 /-- The comultiplication of a power of a primitive element is its binomial expansion. -/
 theorem comul_pow_of_primitive
     {R : Type u} {A : Type w} [CommSemiring R] [Semiring A] [Bialgebra R A]
@@ -54,11 +56,6 @@ theorem comul_pow_of_primitive
 section DividedPower
 
 variable {A : Type w} [Semiring A] [Bialgebra ℚ A]
-
-/-- The nonnegative-rational scalar action used to interpret divided powers in the tensor square
-of a rational algebra. -/
-noncomputable local instance tensorProductModuleNNRat : Module ℚ≥0 (A ⊗[ℚ] A) :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
 /-- The comultiplication of a divided power of a primitive element has integral structure
 constants:
@@ -100,13 +97,6 @@ end DividedPower
 section Choose
 
 variable {A : Type w} [Ring A] [Bialgebra ℚ A]
-
-attribute [local instance] TauCeti.moduleNNRat
-
-/-- The nonnegative-rational scalar action used to interpret binomial coefficients in the tensor
-square of a rational algebra. -/
-noncomputable local instance tensorProductModuleNNRatChoose : Module ℚ≥0 (A ⊗[ℚ] A) :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
 /-- The comultiplication of a binomial coefficient in a primitive element has integral
 structure constants:
