@@ -29,8 +29,6 @@ The definitions follow Rourke--Sanderson, *Introduction to Piecewise-Linear Topo
 
 public section
 
-namespace TauCeti
-
 namespace PreAbstractSimplicialComplex
 
 variable {ι : Type*}
@@ -215,4 +213,3 @@ theorem mem_simplex_iff_mem_simplexBoundary_or_eq :
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

@@ -21,7 +21,7 @@ The argument runs in three steps.  The tabloid `q = gH` has rows the fibers of
 `youngBlock μ ∘ g⁻¹`, and its stabilizer is exactly the group of permutations preserving those
 fibers (`TauCeti.stabilizer_quotientGroup_mk_youngSubgroup`); counting the labels in the first `k`
 of those rows recovers the partial sums of `μ` (`TauCeti.card_filter_youngBlock_lt`), which is
-what feeds the counting core `TauCeti.YoungDiagram.card_filter_le_sum_take_rowLens` of
+what feeds the counting core `YoungDiagram.card_filter_le_sum_take_rowLens` of
 `TauCeti/Combinatorics/Young/Dominance.lean` and yields dominance from the row/column condition.
 That condition is then supplied by the sign cancellation: if two labels sharing a column of `t`
 lie in a common row of `q`, their transposition is an odd element of the column group fixing `q`,

@@ -22,15 +22,15 @@ intended throughout.
 
 ## Main declarations
 
-* `TauCeti.isFredholm_id`: the identity is Fredholm.
-* `ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv` and
-  `TauCeti.isFredholm_of_finiteDimensional`: continuous linear equivalences and every operator
-  between finite-dimensional spaces are Fredholm.
+* `TauCeti.isFredholm_of_finiteDimensional`: every operator between finite-dimensional spaces is
+  Fredholm.
 * `ContinuousLinearMap.IsFredholm.neg`, `ContinuousLinearMap.IsFredholm.smul`: Fredholmness is
   preserved by negation and by nonzero scalar multiples.
 * `ContinuousLinearMap.IsFredholm.comp_equiv` and
   `ContinuousLinearMap.IsFredholm.equiv_comp`: composing with a continuous linear equivalence on
-  either side preserves Fredholmness.
+  either side preserves Fredholmness. Mathlib provides stronger `↔` versions over complete scalar
+  fields; these implications hold over any `NontriviallyNormedField`.
+
 The Fredholm index and its elementary API live in `TauCeti.Analysis.Fredholm.Index`.
 -/
 
@@ -45,31 +45,6 @@ variable {E F G : Type*}
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 variable [NormedAddCommGroup G] [NormedSpace 𝕜 G]
-
-/-- A continuous linear equivalence is a Fredholm operator.
-
-This is proved directly from the structure fields because Mathlib's quasi-inverse
-characterization currently assumes that the scalar field is complete, whereas this result does
-not need that assumption. -/
-lemma _root_.ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv (e : E ≃L[𝕜] F) :
-    ContinuousLinearMap.IsFredholm (e : E →L[𝕜] F) where
-  isStrictMap := e.isHomeomorph.isStrictMap
-  isClosed_range := by
-    rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap, LinearEquiv.range]
-    simp
-  finite_ker := by
-    rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap, LinearEquiv.ker]
-    infer_instance
-  finite_coker := by
-    rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap, LinearEquiv.range]
-    infer_instance
-  closedComplemented_ker := by
-    rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap, LinearEquiv.ker]
-    exact Submodule.closedComplemented_bot
-
-/-- The identity operator is Fredholm: its kernel is trivial and its range is everything. -/
-lemma isFredholm_id : ContinuousLinearMap.IsFredholm (ContinuousLinearMap.id 𝕜 E) := by
-  simpa using ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv (.refl 𝕜 E)
 
 section FiniteDimensional
 
@@ -157,8 +132,9 @@ private lemma ker_comp_equiv (T : E →L[𝕜] F) (e : G ≃L[𝕜] E) :
 /-- Postcomposing a Fredholm operator with a continuous linear equivalence yields a Fredholm
 operator.
 
-The structure fields are transported directly to avoid the complete-scalar-field assumption on
-Mathlib's quasi-inverse characterization. -/
+This is the `mpr` direction of Mathlib's `ContinuousLinearMap.isFredholm_equiv_comp`, which
+states the `↔` and so is stronger, but assumes a complete scalar field. Transporting the structure
+fields directly proves this implication over any `NontriviallyNormedField`. -/
 lemma _root_.ContinuousLinearMap.IsFredholm.equiv_comp
     (hT : ContinuousLinearMap.IsFredholm T) (e : F ≃L[𝕜] G) :
     ContinuousLinearMap.IsFredholm ((e : F →L[𝕜] G).comp T) := by
@@ -179,8 +155,9 @@ lemma _root_.ContinuousLinearMap.IsFredholm.equiv_comp
 /-- Precomposing a Fredholm operator with a continuous linear equivalence yields a Fredholm
 operator.
 
-The structure fields are transported directly to avoid the complete-scalar-field assumption on
-Mathlib's quasi-inverse characterization. -/
+This is the `mpr` direction of Mathlib's `ContinuousLinearMap.isFredholm_comp_equiv`, which
+states the `↔` and so is stronger, but assumes a complete scalar field. Transporting the structure
+fields directly proves this implication over any `NontriviallyNormedField`. -/
 lemma _root_.ContinuousLinearMap.IsFredholm.comp_equiv (hT : ContinuousLinearMap.IsFredholm T)
     (e : G ≃L[𝕜] E) :
     ContinuousLinearMap.IsFredholm (T.comp (e : G →L[𝕜] E)) := by

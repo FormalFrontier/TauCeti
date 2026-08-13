@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.AlgebraicGeometry.AugmentationPoint.Basic
 public import TauCeti.AlgebraicGeometry.TangentSpace.Basic
 public import TauCeti.RingTheory.Ideal.Cotangent.Localization
 
@@ -23,7 +24,6 @@ of a commutative bialgebra with the Zariski cotangent space at its augmentation 
 
 ## Main declarations
 
-* `AlgHom.kernelPoint`: the point of `Spec H` cut out by the kernel of an augmentation.
 * `AlgHom.kernelResidueFieldRingEquiv`: the canonical identification of its residue field with
   `k`.
 * `AlgHom.kernelCotangentLinearEquivZariski`: the kernel cotangent space is the Zariski cotangent
@@ -50,21 +50,6 @@ variable (f : H →ₐ[k] k)
 
 private theorem surjective : Function.Surjective (f : H →+* k) := fun r ↦
   ⟨algebraMap k H r, by simp⟩
-
-/-- The point of `Spec H` defined by an augmentation `f : H →ₐ[k] k`. Its prime ideal is
-`ker f`. -/
-def kernelPoint : Spec (CommRingCat.of H) :=
-  PrimeSpectrum.comap (f : H →+* k) (closedPoint k)
-
-/-- The prime ideal of an augmentation point is the kernel of the augmentation. -/
-@[simp]
-theorem kernelPoint_asIdeal :
-    (kernelPoint f).asIdeal = RingHom.ker (f : H →+* k) :=
-  by
-    rw [kernelPoint, PrimeSpectrum.comap_asIdeal]
-    dsimp only [closedPoint]
-    rw [IsLocalRing.maximalIdeal_eq_bot]
-    rfl
 
 /-- The kernel of an augmentation to a field is canonically maximal. -/
 instance kernelIsMaximal : (RingHom.ker (f : H →+* k)).IsMaximal :=
