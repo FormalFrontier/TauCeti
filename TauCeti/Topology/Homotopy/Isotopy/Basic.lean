@@ -208,6 +208,7 @@ theorem map_zero_left (y : Y) : Φ.toContinuousMap (0, y) = y :=
 /-- The time-`1` homeomorphism produced by an ambient isotopy, as a continuous map. -/
 def final : C(Y, Y) := ⟨fun y => Φ.toContinuousMap (1, y), by fun_prop⟩
 
+@[simp]
 theorem final_apply (y : Y) : Φ.final y = Φ.toContinuousMap (1, y) := (rfl)
 
 /-- The final map produced by an ambient isotopy is a homeomorphism. -/
@@ -353,7 +354,7 @@ theorem symm_apply (p : I × Y) :
 
 /-- The inverse ambient isotopy undoes the original: its final map is a left inverse of the
 original final map. -/
-@[simp 1100]
+@[simp↓ 1100]
 theorem symm_final_final (y : Y) : Φ.symm.final (Φ.final y) = y := by
   have h1 : Φ.totalHomeomorph (1, y) = (1, Φ.toContinuousMap (1, y)) := by
     rw [totalHomeomorph_apply]
@@ -362,7 +363,7 @@ theorem symm_final_final (y : Y) : Φ.symm.final (Φ.final y) = y := by
 
 /-- The original ambient isotopy undoes its inverse: the original final map is a left inverse of
 the inverse final map. -/
-@[simp 1100]
+@[simp↓ 1100]
 theorem final_symm_final (y : Y) : Φ.final (Φ.symm.final y) = y := by
   have hfst : (Φ.totalHomeomorph.symm (1, y)).1 = 1 := Φ.totalHomeomorph_symm_fst (1, y)
   have happ := Φ.totalHomeomorph.apply_symm_apply (1, y)
