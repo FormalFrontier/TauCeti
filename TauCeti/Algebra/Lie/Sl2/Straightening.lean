@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.Sl2.Associative
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.Binomial
 public import TauCeti.RingTheory.DividedPowers.Commutation
 import Mathlib.Tactic.Module
@@ -18,6 +19,8 @@ This file proves the rank-one straightening formula for divided powers in an ass
 `ℚ`-algebra. If `H`, `E`, and `F` satisfy the `sl₂` commutator relations, then
 
 ```text
+E * F - F * E = H,   H * E - E * H = 2 • E,   H * F - F * H = -(2 • F),
+
 E⁽ᵐ⁾ F⁽ⁿ⁾ =
   ∑ k ≤ min(m,n), F⁽ⁿ⁻ᵏ⁾ (H - m - n + 2k choose k) E⁽ᵐ⁻ᵏ⁾.
 ```
@@ -30,10 +33,12 @@ The proof follows the usual induction on `m`. Moving one additional `E` through 
 divided power produces two adjacent summands. `TauCeti.Ring.mul_weighted_choose_add_mul_choose`
 combines their Cartan coefficients without division.
 
-## Main result
+## Main results
 
-* `TauCeti.Sl2.dividedPower_mul_dividedPower`: the rank-one Kostant straightening formula in an
+* `TauCeti.Sl2.dividedPower_e_mul_dividedPower_f`: the rank-one Kostant straightening formula in an
   arbitrary associative `ℚ`-algebra satisfying the three displayed commutator relations.
+* `TauCeti.Sl2.ι_dividedPower_e_mul_dividedPower_f`: its specialization to the canonical map into
+  a universal enveloping algebra, stated from the corresponding Lie-bracket relations.
 
 ## References
 
@@ -131,7 +136,8 @@ private theorem e_mul_straighteningSummand_of_lt {H E F : A}
     rw [hmn, htwo]
     abel
   have hnkCast : ((n - k - 1 : ℕ) : A) = (n : A) - (k : A) - 1 := by
-    rw [show n - k - 1 = n - (k + 1) by omega, Nat.cast_sub (by omega : k + 1 ≤ n)]
+    have hsub : n - k - 1 = n - (k + 1) := by omega
+    rw [hsub, Nat.cast_sub (by omega : k + 1 ≤ n)]
     push_cast
     abel
   have hmkCast : ((m - k : ℕ) : A) = (m : A) - (k : A) := by
@@ -142,7 +148,8 @@ private theorem e_mul_straighteningSummand_of_lt {H E F : A}
     rw [hnkCast, hmkCast]
     have hmn : ((m + 1 + n : ℕ) : A) = (m : A) + 1 + n := by push_cast; rfl
     have hk2 : ((2 * (k + 1) : ℕ) : A) = (k : A) + k + 2 := by
-      rw [show 2 * (k + 1) = k + k + 2 by omega]
+      have hdouble : 2 * (k + 1) = k + k + 2 := by omega
+      rw [hdouble]
       push_cast
       rfl
     have htwo : (2 : A) = 1 + 1 := by norm_num
@@ -219,7 +226,8 @@ private theorem kept_add_raised_pred {H E F : A} (m n j : ℕ) (hj0 : 0 < j)
       push_cast
       abel
     have htwoj : ((2 * j : ℕ) : A) = (2 * (j - 1) : ℕ) + 2 := by
-      rw [show 2 * j = 2 * (j - 1) + 2 by omega]
+      have hdouble : 2 * j = 2 * (j - 1) + 2 := by omega
+      rw [hdouble]
       push_cast
       rfl
     have htwo : (2 : A) = 1 + 1 := by norm_num
@@ -233,6 +241,8 @@ private theorem kept_add_raised_pred {H E F : A} (m n j : ℕ) (hj0 : 0 < j)
   let c₀ := Ring.choose (r - 1) j
   let c₁ := Ring.choose (r - 1) (j - 1)
   let c := Ring.choose r j
+  -- Refold the expanded summands and coefficient identity into the abbreviations above so the
+  -- final noncommutative calculation displays only the algebraic structure of the argument.
   change (m + 1 - j) • (X * c₀ * Y) + X * (r + (m + 1 - j : ℕ)) * c₁ * Y =
     (m + 1) • (X * c * Y)
   change (m + 1 - j) • c₀ + (r + (m + 1 - j : ℕ)) * c₁ = (m + 1) • c at hcoef
@@ -253,7 +263,8 @@ private theorem sum_range_adjacent_with_zero {B : Type*} [AddCommMonoid B]
     (hstep : ∀ j, 0 < j → j ≤ r + 1 → T j = K j + R (j - 1))
     (hbound : K (r + 1) = 0) :
     ∑ j ∈ range (r + 2), T j = ∑ k ∈ range (r + 1), (K k + R k) := by
-  rw [show r + 2 = (r + 1) + 1 by omega, sum_range_succ']
+  have hr : r + 2 = (r + 1) + 1 := by omega
+  rw [hr, sum_range_succ']
   rw [h₀]
   have hsum : ∑ k ∈ range (r + 1), T (k + 1) =
       ∑ k ∈ range (r + 1), (K (k + 1) + R k) := by
@@ -342,15 +353,11 @@ private theorem straightening_step {H E F : A}
         exact (kept_add_raised_pred m n j hj0 hjm).symm
       · simp [K, keptStraighteningSummand]
     rw [Finset.smul_sum]
-    change (∑ k ∈ range (m + 1), E * straighteningSummand H E F m n k) =
-      ∑ j ∈ range (m + 2), T j
     rw [hcombine]
     apply sum_congr rfl
     intro k hk
-    change k ∈ range (m + 1) at hk
     have hkm := mem_range.mp hk
-    change E * straighteningSummand H E F m n k =
-      keptStraighteningSummand H E F m n k + raisedStraighteningSummand H E F m n k
+    dsimp only [K, R]
     exact e_mul_straighteningSummand_of_lt hef hhe hhf
       (Nat.le_of_lt_succ hkm) (by omega)
   · have hnm : n ≤ m := by omega
@@ -367,8 +374,6 @@ private theorem straightening_step {H E F : A}
       · intro j hj0 _hjn
         exact (kept_add_raised_pred m n j hj0 (by omega)).symm
     rw [Finset.smul_sum]
-    change (∑ k ∈ range (n + 1), E * straighteningSummand H E F m n k) =
-      ∑ j ∈ range (n + 1), T j
     rw [hcombine, sum_range_succ]
     congr 1
     · apply sum_congr rfl
@@ -384,7 +389,7 @@ and a lowering divided power is an integral sum in PBW order `F`, `H`, `E`.
 
 The argument of the Cartan binomial is written as `H - (m + n) + 2 * k`; the natural numbers are
 coerced to the algebra, so this is the standard coefficient `(H - m - n + 2k choose k)`. -/
-theorem dividedPower_mul_dividedPower {H E F : A}
+theorem dividedPower_e_mul_dividedPower_f {H E F : A}
     (hef : E * F - F * E = H) (hhe : H * E - E * H = 2 • E)
     (hhf : H * F - F * H = -(2 • F)) (m n : ℕ) :
     dividedPower m E * dividedPower n F =
@@ -392,10 +397,40 @@ theorem dividedPower_mul_dividedPower {H E F : A}
         dividedPower (n - k) F *
           Ring.choose (H - (m + n : ℕ) + (2 * k : ℕ)) k *
             dividedPower (m - k) E := by
-  change dividedPower m E * dividedPower n F =
-    ∑ k ∈ range (min m n + 1), straighteningSummand H E F m n k
+  suffices dividedPower m E * dividedPower n F =
+      ∑ k ∈ range (min m n + 1), straighteningSummand H E F m n k by
+    simpa only [straighteningSummand]
   induction m with
   | zero => simp [straighteningSummand_zero_left]
   | succ m ih => exact straightening_step hef hhe hhf m n ih
+
+section UniversalEnveloping
+
+open _root_.UniversalEnvelopingAlgebra
+
+attribute [local instance 100] LieRing.ofAssociativeRing
+
+variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
+
+noncomputable local instance : Module ℚ≥0 (_root_.UniversalEnvelopingAlgebra ℚ L) :=
+  TauCeti.moduleNNRat
+
+/-- The rank-one Kostant straightening formula in a universal enveloping algebra over `ℚ`,
+stated from the three `sl₂` Lie-bracket relations. -/
+theorem ι_dividedPower_e_mul_dividedPower_f (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+    (hhf : ⁅h, f⁆ = -(2 • f)) (m n : ℕ) :
+    dividedPower m (ι ℚ e) * dividedPower n (ι ℚ f) =
+      ∑ k ∈ range (min m n + 1),
+        dividedPower (n - k) (ι ℚ f) *
+          Ring.choose (ι ℚ h - (m + n : ℕ) + (2 * k : ℕ)) k *
+            dividedPower (m - k) (ι ℚ e) := by
+  apply dividedPower_e_mul_dividedPower_f
+  · simpa only [LieRing.of_associative_ring_bracket, hef] using ((ι ℚ).map_lie e f).symm
+  · simpa only [LieRing.of_associative_ring_bracket, hhe, map_nsmul] using
+      ((ι ℚ).map_lie h e).symm
+  · simpa only [LieRing.of_associative_ring_bracket, hhf, map_neg, map_nsmul] using
+      ((ι ℚ).map_lie h f).symm
+
+end UniversalEnveloping
 
 end TauCeti.Sl2
