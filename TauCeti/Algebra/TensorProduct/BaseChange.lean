@@ -137,6 +137,20 @@ noncomputable def comparison (d : CommonOverfield k K L) (A : Type v)
     ((Algebra.TensorProduct.cancelBaseChange k K d.Ω d.Ω A).toRingEquiv.trans
       (Algebra.TensorProduct.comm k d.Ω A).toRingEquiv)
 
+/-- The common-overfield comparison sends nested pure tensors to pure tensors. -/
+@[simp]
+theorem comparison_tmul_tmul (d : CommonOverfield k K L) (A : Type v)
+    [CommRing A] [Algebra k A] (x : K) (a : A) (ω : d.Ω) :
+    d.comparison A ((x ⊗ₜ[k] a) ⊗ₜ[K] ω) = a ⊗ₜ[k] (x • ω) := by
+  simp [comparison]
+
+/-- The inverse common-overfield comparison sends pure tensors to nested pure tensors. -/
+@[simp]
+theorem comparison_symm_tmul (d : CommonOverfield k K L) (A : Type v)
+    [CommRing A] [Algebra k A] (a : A) (ω : d.Ω) :
+    (d.comparison A).symm (a ⊗ₜ[k] ω) = (1 ⊗ₜ[k] a) ⊗ₜ[K] ω := by
+  simp [comparison]
+
 /-- Scalar extension along the embedding of `L` into a common overfield. -/
 noncomputable def map (d : CommonOverfield k K L) (A : Type v)
     [CommRing A] [Algebra k A] :
@@ -144,6 +158,13 @@ noncomputable def map (d : CommonOverfield k K L) (A : Type v)
   let _ := d.fieldΩ
   let _ := d.algebraOmega
   Algebra.TensorProduct.map (AlgHom.id k A) d.right
+
+/-- Scalar extension to a common overfield maps each pure tensor componentwise. -/
+@[simp]
+theorem map_tmul (d : CommonOverfield k K L) (A : Type v)
+    [CommRing A] [Algebra k A] (a : A) (l : L) :
+    d.map A (a ⊗ₜ[k] l) = a ⊗ₜ[k] d.right l := by
+  simp [map]
 
 /-- Scalar extension from `L` to a common overfield is injective. -/
 theorem map_injective (d : CommonOverfield k K L) (A : Type v)
