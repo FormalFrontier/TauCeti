@@ -120,6 +120,23 @@ variable {X : Type*} [Monoid X]
 variable (V : Type*) [AddCommMonoid V] [Module R V] [Comodule R C V]
 variable {A : Type*} [CommSemiring A] [Algebra R A]
 
+/-- Acting through a composite point agrees on pure tensors with first corestricting the coaction
+along the bialgebra morphism and then applying the point. -/
+theorem endOfPoint_tmul_comp (π : C →ₐc[R] MonoidAlgebra R X)
+    (f : MonoidAlgebra R X →ₐ[R] A) (a : A) (v : V) :
+    Comodule.endOfPoint V (f.comp (π : C →ₐ[R] MonoidAlgebra R X)) (a ⊗ₜ[R] v) =
+      a • TensorProduct.comm R V A
+        (LinearMap.lTensor V f.toLinearMap
+          (TensorProduct.map LinearMap.id (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap
+            (Comodule.coact (R := R) (C := C) (M := V) v))) := by
+  have hπ : (π : C →ₐ[R] MonoidAlgebra R X).toLinearMap =
+      (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap := by
+    rw [CoalgHom.toLinearMap_eq_coe]
+    exact BialgHom.toAlgHom_toLinearMap π
+  rw [Comodule.endOfPoint_tmul, LinearMap.lTensor_def, AlgHom.comp_toLinearMap,
+    hπ, ← LinearMap.id_comp LinearMap.id, TensorProduct.map_comp, LinearMap.comp_apply]
+  rfl
+
 /-- **A point of `D(X)` acts on the `x`-weight submodule by the value of the character `x`.**
 
 The point of `G` in question is the composite of the homomorphism `D(X) → G` with the given point
@@ -129,11 +146,7 @@ theorem endOfPoint_tmul_of_mem_weightSpace (π : C →ₐc[R] MonoidAlgebra R X)
     (hv : v ∈ weightSpace V (π : C →ₗc[R] MonoidAlgebra R X) x) :
     Comodule.endOfPoint V (f.comp (π : C →ₐ[R] MonoidAlgebra R X)) (a ⊗ₜ[R] v) =
       (a * f (MonoidAlgebra.single x (1 : R))) ⊗ₜ[R] v := by
-  have hπ : (π : C →ₐ[R] MonoidAlgebra R X).toLinearMap =
-      (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap := rfl
-  rw [Comodule.endOfPoint_tmul, LinearMap.lTensor_def, AlgHom.comp_toLinearMap,
-    hπ, ← LinearMap.id_comp LinearMap.id, TensorProduct.map_comp, LinearMap.comp_apply,
-    mem_weightSpace.mp hv]
+  rw [endOfPoint_tmul_comp, mem_weightSpace.mp hv]
   simp [TensorProduct.smul_tmul']
 
 end Points
