@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.Sl2
 public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
 import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
