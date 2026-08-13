@@ -68,11 +68,6 @@ noncomputable def evalTensorEquiv :
     FiniteDual k H ⊗[k] FiniteDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) :=
   (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
 
-/-- Evaluate a tensor of finite-dual functionals on a tensor of elements of `H`. -/
-noncomputable def evalTensor :
-    FiniteDual k H ⊗[k] FiniteDual k H →ₗ[k] Module.Dual k (H ⊗[k] H) :=
-  (evalTensorEquiv k H).toLinearMap
-
 /-- The comultiplication on the finite dual, obtained by transposing multiplication on `H`. -/
 noncomputable def comul : FiniteDual k H →ₗ[k] FiniteDual k H ⊗[k] FiniteDual k H :=
   (evalTensorEquiv k H).symm.toLinearMap ∘ₗ
@@ -85,10 +80,10 @@ def counit : FiniteDual k H →ₗ[k] k :=
 
 /-- Evaluating the transposed comultiplication on `x tensor y` gives `phi (x * y)`. -/
 @[simp]
-theorem dualDistrib_comul (phi : FiniteDual k H) :
-    evalTensor k H (comul k H phi) =
+theorem evalTensor_comul (phi : FiniteDual k H) :
+    evalTensorEquiv k H (comul k H phi) =
       phi.ofConv.comp (LinearMap.mul' k H) := by
-  simp only [evalTensor, comul, LinearMap.comp_apply]
+  simp only [comul, LinearMap.comp_apply]
   simp only [LinearEquiv.coe_toLinearMap]
   let psi : Module.Dual k (H ⊗[k] H) :=
     phi.ofConv.comp (LinearMap.mul' k H)
@@ -98,16 +93,16 @@ theorem dualDistrib_comul (phi : FiniteDual k H) :
 /-- A pure tensor of finite-dual functionals evaluates componentwise. -/
 @[simp]
 theorem evalTensor_tmul_apply (phi psi : FiniteDual k H) (x y : H) :
-    evalTensor k H (phi ⊗ₜ[k] psi) (x ⊗ₜ[k] y) =
+    evalTensorEquiv k H (phi ⊗ₜ[k] psi) (x ⊗ₜ[k] y) =
       phi.ofConv x * psi.ofConv y := by
-  simp [evalTensor, evalTensorEquiv, tensorUnwrap]
+  simp [evalTensorEquiv, tensorUnwrap]
 
 /-- Pointwise form of the characteristic equation for the finite-dual comultiplication. -/
-theorem dualDistrib_comul_apply (phi : FiniteDual k H) (x y : H) :
-    evalTensor k H (comul k H phi) (x ⊗ₜ[k] y) =
+theorem evalTensor_comul_apply (phi : FiniteDual k H) (x y : H) :
+    evalTensorEquiv k H (comul k H phi) (x ⊗ₜ[k] y) =
       phi.ofConv (x * y) := by
-  rw [dualDistrib_comul]
-  rfl
+  rw [evalTensor_comul]
+  simp only [LinearMap.comp_apply, LinearMap.mul'_apply]
 
 omit [FiniteDimensional k H] in
 /-- The finite-dual counit is evaluation at one. -/
@@ -131,7 +126,7 @@ private theorem evalTripleEquiv_tmul_tmul_apply
 private theorem evalTripleEquiv_tmul_apply
     (phi : FiniteDual k H) (w : FiniteDual k H ⊗[k] FiniteDual k H) (x y z : H) :
     evalTripleEquiv k H (phi ⊗ₜ[k] w) (x ⊗ₜ[k] (y ⊗ₜ[k] z)) =
-      phi.ofConv x * evalTensor k H w (y ⊗ₜ[k] z) := by
+      phi.ofConv x * evalTensorEquiv k H w (y ⊗ₜ[k] z) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ =>
@@ -143,7 +138,7 @@ private theorem evalTripleEquiv_assoc_tmul_apply
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (chi : FiniteDual k H) (x y z : H) :
     evalTripleEquiv k H ((TensorProduct.assoc k _ _ _).toLinearMap (w ⊗ₜ[k] chi))
         (x ⊗ₜ[k] (y ⊗ₜ[k] z)) =
-      evalTensor k H w (x ⊗ₜ[k] y) * chi.ofConv z := by
+      evalTensorEquiv k H w (x ⊗ₜ[k] y) * chi.ofConv z := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ =>
@@ -158,25 +153,25 @@ private theorem evalTriple_assoc_comul_rTensor
     evalTripleEquiv k H
         ((TensorProduct.assoc k _ _ _).toLinearMap ((comul k H).rTensor _ w))
         (x ⊗ₜ[k] (y ⊗ₜ[k] z)) =
-      evalTensor k H w ((x * y) ⊗ₜ[k] z) := by
+      evalTensorEquiv k H w ((x * y) ⊗ₜ[k] z) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ => simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hw₁ hw₂
   | tmul phi psi =>
       rw [LinearMap.rTensor_tmul, evalTripleEquiv_assoc_tmul_apply,
-        dualDistrib_comul_apply, evalTensor_tmul_apply]
+        evalTensor_comul_apply, evalTensor_tmul_apply]
 
 private theorem evalTriple_comul_lTensor
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (x y z : H) :
     evalTripleEquiv k H ((comul k H).lTensor _ w)
         (x ⊗ₜ[k] (y ⊗ₜ[k] z)) =
-      evalTensor k H w (x ⊗ₜ[k] (y * z)) := by
+      evalTensorEquiv k H w (x ⊗ₜ[k] (y * z)) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ => simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hw₁ hw₂
   | tmul phi psi =>
       rw [LinearMap.lTensor_tmul, evalTripleEquiv_tmul_apply,
-        dualDistrib_comul_apply, evalTensor_tmul_apply]
+        evalTensor_comul_apply, evalTensor_tmul_apply]
 
 /-- The transposed multiplication is coassociative. -/
 theorem comul_coassoc :
@@ -200,13 +195,13 @@ theorem comul_coassoc :
       | tmul y z =>
           simp only [LinearMap.comp_apply]
           rw [evalTriple_assoc_comul_rTensor, evalTriple_comul_lTensor,
-            dualDistrib_comul_apply, dualDistrib_comul_apply]
+            evalTensor_comul_apply, evalTensor_comul_apply]
           simp only [mul_assoc]
 
 private theorem lid_counit_rTensor_apply
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (x : H) :
     ((TensorProduct.lid k (FiniteDual k H)) ((counit k H).rTensor _ w)).ofConv x =
-      evalTensor k H w ((1 : H) ⊗ₜ[k] x) := by
+      evalTensorEquiv k H w ((1 : H) ⊗ₜ[k] x) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ =>
@@ -220,7 +215,7 @@ private theorem lid_counit_rTensor_apply
 private theorem rid_counit_lTensor_apply
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (x : H) :
     ((TensorProduct.rid k (FiniteDual k H)) ((counit k H).lTensor _ w)).ofConv x =
-      evalTensor k H w (x ⊗ₜ[k] (1 : H)) := by
+      evalTensorEquiv k H w (x ⊗ₜ[k] (1 : H)) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ =>
@@ -239,7 +234,7 @@ theorem rTensor_counit_comp_comul :
   apply (TensorProduct.lid k (FiniteDual k H)).injective
   apply WithConv.ofConv_injective
   ext x
-  rw [LinearMap.comp_apply, lid_counit_rTensor_apply, dualDistrib_comul_apply]
+  rw [LinearMap.comp_apply, lid_counit_rTensor_apply, evalTensor_comul_apply]
   simp only [one_mul, TensorProduct.lid_tmul, TensorProduct.mk_apply, one_smul]
 
 /-- Evaluation at one is a right counit for the transposed multiplication. -/
@@ -250,7 +245,7 @@ theorem lTensor_counit_comp_comul :
   apply (TensorProduct.rid k (FiniteDual k H)).injective
   apply WithConv.ofConv_injective
   ext x
-  rw [LinearMap.comp_apply, rid_counit_lTensor_apply, dualDistrib_comul_apply]
+  rw [LinearMap.comp_apply, rid_counit_lTensor_apply, evalTensor_comul_apply]
   simp only [mul_one, TensorProduct.rid_tmul, LinearMap.flip_apply,
     TensorProduct.mk_apply, one_smul]
 
@@ -263,11 +258,11 @@ noncomputable instance instCoalgebra : Coalgebra k (FiniteDual k H) where
   rTensor_counit_comp_comul := rTensor_counit_comp_comul k H
   lTensor_counit_comp_comul := lTensor_counit_comp_comul k H
 
-/-- `evalTensor` packaged in the convolution algebra on functionals on the tensor square. -/
+/-- `evalTensorEquiv` packaged in the convolution algebra on functionals on the tensor square. -/
 private noncomputable def evalTensorConv :
     FiniteDual k H ⊗[k] FiniteDual k H →ₗ[k]
       WithConv (Module.Dual k (H ⊗[k] H)) :=
-  (WithConv.linearEquiv k _).symm.toLinearMap ∘ₗ evalTensor k H
+  (WithConv.linearEquiv k _).symm.toLinearMap ∘ₗ (evalTensorEquiv k H).toLinearMap
 
 private theorem evalTensorConv_tmul (phi psi : FiniteDual k H) :
     evalTensorConv k H (phi ⊗ₜ[k] psi) = LinearMap.mulTensor phi psi := by
@@ -288,7 +283,17 @@ private theorem evalTensorConv_comul (phi : FiniteDual k H) :
     evalTensorConv k H (comul k H phi) =
       WithConv.toConv (phi.ofConv.comp (LinearMap.mul' k H)) := by
   apply WithConv.ofConv_injective
-  exact dualDistrib_comul k H phi
+  exact evalTensor_comul k H phi
+
+@[simp]
+private theorem evalTensorConv_ofConv (w : FiniteDual k H ⊗[k] FiniteDual k H) :
+    (evalTensorConv k H w).ofConv = evalTensorEquiv k H w :=
+  rfl
+
+omit [FiniteDimensional k H] in
+private theorem mulCoalgHom_toLinearMap :
+    (Bialgebra.mulCoalgHom k H).toLinearMap = LinearMap.mul' k H :=
+  rfl
 
 omit [FiniteDimensional k H] in
 /-- The finite-dual counit preserves one. -/
@@ -315,15 +320,9 @@ theorem comul_one : comul k H (1 : FiniteDual k H) = 1 := by
   | add xy₁ xy₂ hxy₁ hxy₂ =>
       simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hxy₁ hxy₂
   | tmul x y =>
-      rw [show (evalTensorEquiv k H) (comul k H (1 : FiniteDual k H)) =
-          evalTensor k H (comul k H (1 : FiniteDual k H)) from rfl,
-        show (evalTensorEquiv k H) (1 : FiniteDual k H ⊗[k] FiniteDual k H) =
-          evalTensor k H (1 : FiniteDual k H ⊗[k] FiniteDual k H) from rfl]
-      rw [dualDistrib_comul_apply]
+      rw [evalTensor_comul_apply]
       simp only [LinearMap.convOne_apply, Bialgebra.counit_mul, map_mul]
-      rw [show (1 : FiniteDual k H ⊗[k] FiniteDual k H) =
-        (1 : FiniteDual k H) ⊗ₜ[k] (1 : FiniteDual k H) from rfl,
-        evalTensor_tmul_apply]
+      rw [Algebra.TensorProduct.one_def, evalTensor_tmul_apply]
       simp only [LinearMap.convOne_apply]
 
 /-- The finite-dual comultiplication preserves multiplication. -/
@@ -331,16 +330,11 @@ theorem comul_one : comul k H (1 : FiniteDual k H) = 1 := by
 theorem comul_mul (phi psi : FiniteDual k H) :
     comul k H (phi * psi) = comul k H phi * comul k H psi := by
   apply (evalTensorEquiv k H).injective
-  apply congrArg WithConv.ofConv
-  rw [show WithConv.toConv ((evalTensorEquiv k H) (comul k H (phi * psi))) =
-      evalTensorConv k H (comul k H (phi * psi)) from rfl,
-    show WithConv.toConv ((evalTensorEquiv k H) (comul k H phi * comul k H psi)) =
-      evalTensorConv k H (comul k H phi * comul k H psi) from rfl,
-    evalTensorConv_mul, evalTensorConv_comul, evalTensorConv_comul,
-    evalTensorConv_comul]
+  rw [← evalTensorConv_ofConv, ← evalTensorConv_ofConv, evalTensorConv_mul,
+    evalTensorConv_comul, evalTensorConv_comul, evalTensorConv_comul]
   have h := LinearMap.convMul_comp_coalgHom_distrib phi psi (Bialgebra.mulCoalgHom k H)
-  rw [show (Bialgebra.mulCoalgHom k H).toLinearMap = LinearMap.mul' k H from rfl] at h
-  simpa only [WithConv.toConv_ofConv] using congrArg WithConv.toConv h
+  rw [mulCoalgHom_toLinearMap] at h
+  simpa only [WithConv.toConv_ofConv] using h
 
 /-- The bialgebra structure on the finite dual. Multiplication is convolution and the coalgebra
 operations are transposes of multiplication and unit on the original bialgebra. -/
@@ -357,8 +351,8 @@ variable (k : Type u) (H : Type v) [Field k] [CommRing H] [Bialgebra k H]
 
 private theorem evalTensor_comm_apply
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (x y : H) :
-    evalTensor k H (TensorProduct.comm k _ _ w) (x ⊗ₜ[k] y) =
-      evalTensor k H w (y ⊗ₜ[k] x) := by
+    evalTensorEquiv k H (TensorProduct.comm k _ _ w) (x ⊗ₜ[k] y) =
+      evalTensorEquiv k H w (y ⊗ₜ[k] x) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ =>
@@ -381,12 +375,7 @@ theorem comm_comp_comul :
   | tmul x y =>
       simp only [LinearMap.comp_apply]
       rw [LinearEquiv.coe_toLinearMap]
-      rw [show (evalTensorEquiv k H)
-          ((TensorProduct.comm k (FiniteDual k H) (FiniteDual k H)) (comul k H phi)) =
-        evalTensor k H
-          ((TensorProduct.comm k (FiniteDual k H) (FiniteDual k H)) (comul k H phi)) from rfl,
-        show (evalTensorEquiv k H) (comul k H phi) = evalTensor k H (comul k H phi) from rfl,
-        evalTensor_comm_apply, dualDistrib_comul_apply, dualDistrib_comul_apply]
+      rw [evalTensor_comm_apply, evalTensor_comul_apply, evalTensor_comul_apply]
       simp only [mul_comm]
 
 /-- The coalgebra underlying the finite dual is cocommutative. -/
@@ -415,10 +404,20 @@ theorem antipode_apply (phi : FiniteDual k H) (x : H) :
     (antipode k H phi).ofConv x = phi.ofConv (HopfAlgebra.antipode k x) :=
   by simp [antipode]
 
-private theorem mul_apply_eq_evalTensor
+@[simp]
+private theorem coalgebra_comul_eq_comul (phi : FiniteDual k H) :
+    Coalgebra.comul (R := k) (A := FiniteDual k H) phi = comul k H phi :=
+  rfl
+
+@[simp]
+private theorem coalgebra_counit_eq_counit (phi : FiniteDual k H) :
+    Coalgebra.counit (R := k) (A := FiniteDual k H) phi = counit k H phi :=
+  rfl
+
+private theorem mul_apply_eq_evalTensorEquiv
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (x : H) :
     (LinearMap.mul' k (FiniteDual k H) w).ofConv x =
-      evalTensor k H w (Coalgebra.comul x) := by
+      evalTensorEquiv k H w (Coalgebra.comul x) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
   | add w₁ w₂ hw₁ hw₂ =>
@@ -436,9 +435,9 @@ private theorem mul_apply_eq_evalTensor
 
 private theorem evalTensor_map_antipode_left
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (z : H ⊗[k] H) :
-    evalTensor k H
+    evalTensorEquiv k H
         (TensorProduct.map (antipode k H) LinearMap.id w) z =
-      evalTensor k H w
+      evalTensorEquiv k H w
         (TensorProduct.map (HopfAlgebra.antipode k (A := H)) LinearMap.id z) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
@@ -456,9 +455,9 @@ private theorem evalTensor_map_antipode_left
 
 private theorem evalTensor_map_antipode_right
     (w : FiniteDual k H ⊗[k] FiniteDual k H) (z : H ⊗[k] H) :
-    evalTensor k H
+    evalTensorEquiv k H
         (TensorProduct.map LinearMap.id (antipode k H) w) z =
-      evalTensor k H w
+      evalTensorEquiv k H w
         (TensorProduct.map LinearMap.id (HopfAlgebra.antipode k (A := H)) z) := by
   induction w using TensorProduct.induction_on with
   | zero => simp
@@ -476,53 +475,44 @@ private theorem evalTensor_map_antipode_right
 
 /-- Precomposition by the original antipode is a left convolution inverse to the identity on the
 finite dual. -/
-theorem antipode_convMul_id :
+theorem antipode_mul_id :
     WithConv.toConv (antipode k H) *
         WithConv.toConv (LinearMap.id : FiniteDual k H →ₗ[k] FiniteDual k H) = 1 := by
   apply WithConv.ofConv_injective
   ext phi x
-  rw [LinearMap.convMul_apply, mul_apply_eq_evalTensor,
+  rw [LinearMap.convMul_apply, mul_apply_eq_evalTensorEquiv,
     evalTensor_map_antipode_left]
-  change evalTensor k H (comul k H phi)
-      (TensorProduct.map (HopfAlgebra.antipode k (A := H)) LinearMap.id
-        (Coalgebra.comul x)) = _
-  rw [dualDistrib_comul]
+  rw [coalgebra_comul_eq_comul, evalTensor_comul]
   simp only [LinearMap.comp_apply]
   rw [← LinearMap.rTensor_def, HopfAlgebra.mul_antipode_rTensor_comul_apply]
-  change phi.ofConv (algebraMap k H (Coalgebra.counit x)) =
-    (algebraMap k (FiniteDual k H) (counit k H phi)).ofConv x
-  rw [counit_apply, LinearMap.convAlgebraMap_apply,
+  rw [LinearMap.convOne_apply, coalgebra_counit_eq_counit, counit_apply,
+    LinearMap.convAlgebraMap_apply,
     Algebra.algebraMap_eq_smul_one, map_smul]
   simp only [smul_eq_mul, Algebra.algebraMap_self_apply]
   rw [mul_comm]
 
 /-- Precomposition by the original antipode is a right convolution inverse to the identity on the
 finite dual. -/
-theorem id_convMul_antipode :
+theorem id_mul_antipode :
     WithConv.toConv (LinearMap.id : FiniteDual k H →ₗ[k] FiniteDual k H) *
         WithConv.toConv (antipode k H) = 1 := by
   apply WithConv.ofConv_injective
   ext phi x
-  rw [LinearMap.convMul_apply, mul_apply_eq_evalTensor,
+  rw [LinearMap.convMul_apply, mul_apply_eq_evalTensorEquiv,
     evalTensor_map_antipode_right]
-  change evalTensor k H (comul k H phi)
-      (TensorProduct.map LinearMap.id (HopfAlgebra.antipode k (A := H))
-        (Coalgebra.comul x)) = _
-  rw [dualDistrib_comul]
+  rw [coalgebra_comul_eq_comul, evalTensor_comul]
   simp only [LinearMap.comp_apply]
   rw [← LinearMap.lTensor_def, HopfAlgebra.mul_antipode_lTensor_comul_apply]
-  change phi.ofConv (algebraMap k H (Coalgebra.counit x)) =
-    (algebraMap k (FiniteDual k H) (counit k H phi)).ofConv x
-  rw [counit_apply, LinearMap.convAlgebraMap_apply,
+  rw [LinearMap.convOne_apply, coalgebra_counit_eq_counit, counit_apply,
+    LinearMap.convAlgebraMap_apply,
     Algebra.algebraMap_eq_smul_one, map_smul]
   simp only [smul_eq_mul, Algebra.algebraMap_self_apply]
   rw [mul_comm]
 
 /-- The Hopf algebra structure on the finite dual. Its antipode is precomposition with the
-antipode of the original finite-dimensional commutative and cocommutative Hopf algebra. -/
+antipode of the original finite-dimensional Hopf algebra. -/
 noncomputable instance instHopfAlgebra : HopfAlgebra k (FiniteDual k H) :=
-  HopfAlgebra.ofConvInverse (antipode k H) (antipode_convMul_id k H)
-    (id_convMul_antipode k H)
+  HopfAlgebra.ofConvInverse (antipode k H) (antipode_mul_id k H) (id_mul_antipode k H)
 
 end HopfAlgebra
 
