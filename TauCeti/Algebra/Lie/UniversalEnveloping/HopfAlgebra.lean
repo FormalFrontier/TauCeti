@@ -25,8 +25,8 @@ representations is handled by Mathlib's `Coalgebra.Repr.mul`.
 ## Main declarations
 
 * `TauCeti.UniversalEnvelopingAlgebra.instHopfAlgebra`: the canonical Hopf algebra structure.
-* `TauCeti.UniversalEnvelopingAlgebra.hopfAntipode_eq_antipode`: the Hopf antipode is the
-  previously constructed universal-enveloping antipode.
+* `TauCeti.UniversalEnvelopingAlgebra.hopfAlgebraStructAntipode_eq_antipode`: the Hopf
+  antipode is the previously constructed universal-enveloping antipode.
 
 ## Roadmap
 
@@ -208,7 +208,7 @@ noncomputable instance instHopfAlgebra : HopfAlgebra R U :=
 /-- The antipode supplied by the Hopf algebra instance is the canonical universal-enveloping
 antipode constructed independently of the bialgebra structure. -/
 @[simp]
-theorem hopfAntipode_eq_antipode :
+theorem hopfAlgebraStructAntipode_eq_antipode :
     HopfAlgebraStruct.antipode R (A := U) =
       UniversalEnvelopingAlgebra.antipode R := rfl
 
