@@ -147,16 +147,12 @@ private lemma range_comp_equiv (T : E →L[𝕜] F) (e : G ≃L[𝕜] E) :
   rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
   rw [LinearMap.range_comp_of_range_eq_top _ (LinearMap.range_eq_top.2 e.surjective)]
 
-private lemma toLinearEquiv_symm (e : G ≃L[𝕜] E) :
-    e.toLinearEquiv.symm = e.symm.toLinearEquiv := rfl
-
 private lemma ker_comp_equiv (T : E →L[𝕜] F) (e : G ≃L[𝕜] E) :
     LinearMap.ker ((T.comp (e : G →L[𝕜] E) : G →L[𝕜] F) : G →ₗ[𝕜] F) =
-      (LinearMap.ker (T : E →ₗ[𝕜] F)).map (e.symm : E →ₗ[𝕜] G) := by
+      (LinearMap.ker (T : E →ₗ[𝕜] F)).map (e.toLinearEquiv.symm : E →ₗ[𝕜] G) := by
   rw [ContinuousLinearMap.toLinearMap_comp, LinearMap.ker_comp]
   rw [ContinuousLinearEquiv.toLinearMap_toContinuousLinearMap]
   rw [Submodule.comap_equiv_eq_map_symm]
-  rw [toLinearEquiv_symm]
 
 /-- Postcomposing a Fredholm operator with a continuous linear equivalence yields a Fredholm
 operator.
