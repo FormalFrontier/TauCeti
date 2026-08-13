@@ -199,6 +199,8 @@ theorem coe_vertexReflectionProd_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i
   have hinv : (vertexReflectionProd Q hl).symm =
       (l.attach.map fun i : {i // i ∈ l} ↦ vertexReflection Q (hl i.1 i.2)).prod := by
     rw [vertexReflectionProd]
+    -- `LinearEquiv.automorphismGroup` defines group inversion as `LinearEquiv.symm`; exposing that
+    -- operation lets `List.prod_reverse_noncomm` compute the inverse of the reversed product.
     change ((l.attach.map fun i : {i // i ∈ l} ↦
       vertexReflection Q (hl i.1 i.2)).reverse.prod)⁻¹ = _
     rw [List.prod_reverse_noncomm]
