@@ -405,14 +405,6 @@ theorem isPolynomialRep_stdRep : IsPolynomialRep (stdRep ℂ n) := by
 
 variable {n}
 
-/-- The one-dimensional carrier `k` has the singleton basis, against which a scalar action has its
-scalar as its only matrix entry. -/
-private theorem toMatrix_singleton {k : Type u} [Field k]
-    (ρ : Representation k (GL (Fin n) k) k) (i j : Unit) (g : GL (Fin n) k) :
-    LinearMap.toMatrix (Module.Basis.singleton Unit k) (Module.Basis.singleton Unit k) (ρ g) i j
-      = ρ g 1 := by
-  simp [LinearMap.toMatrix_apply]
-
 /-- **The determinant powers are rational representations.** -/
 theorem isRationalRep_detPowerRep (m : ℤ) : IsRationalRep (detPowerRep ℂ n m) := by
   refine (isRationalRep_iff_forall_mem_rationalFunctions
@@ -422,7 +414,7 @@ theorem isRationalRep_detPowerRep (m : ℤ) : IsRationalRep (detPowerRep ℂ n m
         (detPowerRep ℂ n m g) i j)
       = fun g : GL (Fin n) ℂ => ((Matrix.GeneralLinearGroup.det g ^ m : ℂˣ) : ℂ) := by
     funext g
-    rw [toMatrix_singleton]
+    rw [LinearMap.toMatrix_singleton]
     simp
   rw [hentry]
   exact detZPow_mem_rationalFunctions m
@@ -437,7 +429,7 @@ theorem isPolynomialRep_detPowerRep {m : ℤ} (hm : 0 ≤ m) : IsPolynomialRep (
         (detPowerRep ℂ n (m : ℤ) g) i j)
       = fun g : GL (Fin n) ℂ => (g : Matrix (Fin n) (Fin n) ℂ).det ^ m := by
     funext g
-    rw [toMatrix_singleton]
+    rw [LinearMap.toMatrix_singleton]
     simp [zpow_natCast, Units.val_pow_eq_pow_val]
   rw [hentry]
   exact pow_mem det_mem_polynomialFunctions m
