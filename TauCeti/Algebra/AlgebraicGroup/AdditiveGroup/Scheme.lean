@@ -127,7 +127,7 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
     (Opposite.op (coordinateHopfAlgebra R))
 
 /-- The additive group scheme is the relative spectrum of its coordinate Hopf algebra. -/
-lemma groupScheme_def :
+public lemma groupScheme_def :
     groupScheme R =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R)) := by
