@@ -173,11 +173,8 @@ theorem ringChoose_mem_kostantForm (e : ι → L) (h : κ → L) (i : κ) (n : �
 /-- The integral subring spanned by the binomial coefficients in one designated Cartan vector is
 contained in the Kostant form. -/
 theorem ringChooseSubring_le_kostantForm (e : ι → L) (h : κ → L) (i : κ) :
-    ringChooseSubring (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) ≤ kostantForm e h := by
-  rw [← subringClosure_range_ringChoose]
-  refine Subring.closure_le.2 ?_
-  rintro _ ⟨n, rfl⟩
-  exact ringChoose_mem_kostantForm e h i n
+    ringChooseSubring (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) ≤ kostantForm e h :=
+  ringChooseSubring_le_iff.2 (ringChoose_mem_kostantForm e h i)
 
 /-- Each designated root vector itself belongs to the Kostant form. -/
 theorem rootVector_mem_kostantForm (e : ι → L) (h : κ → L) (i : ι) :

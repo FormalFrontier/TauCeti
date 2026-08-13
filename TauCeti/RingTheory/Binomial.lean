@@ -118,6 +118,7 @@ section One
 variable [NonAssocRing R] [Pow R ℕ] [NatPowAssoc R] [BinomialRing R]
 
 /-- The integral span of the generalized binomial coefficients contains one. -/
+@[simp]
 theorem one_mem_ringChooseSpan (r : R) : 1 ∈ ringChooseSpan r := by
   rw [← Ring.choose_zero_right r]
   exact ringChoose_mem_ringChooseSpan r 0
@@ -188,6 +189,7 @@ theorem subringClosure_range_ringChoose (r : R) :
 
 /-- The integral binomial subring in `r` lies in a subring exactly when that subring contains
 every generalized binomial coefficient in `r`. -/
+@[simp]
 theorem ringChooseSubring_le_iff {S : Subring R} {r : R} :
     ringChooseSubring r ≤ S ↔ ∀ n, Ring.choose r n ∈ S := by
   constructor
