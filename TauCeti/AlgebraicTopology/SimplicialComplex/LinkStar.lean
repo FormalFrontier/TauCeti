@@ -37,7 +37,7 @@ simplex need not contain every vertex even when `K` does.
 
 * `TauCeti.PreAbstractSimplicialComplex.closedStar_le` / `link_le` / `deletion_le`: each is a
   subcomplex of `K`, and `link_le_closedStar` places the link inside the closed star.
-* `TauCeti.PreAbstractSimplicialComplex.mem_closedStar_iff` / `mem_link_iff`: membership in the
+* `TauCeti.PreAbstractSimplicialComplex.mem_closedStar` / `mem_link`: membership in the
   closed star or link, phrased as membership in `K` plus the local condition.
 * `TauCeti.PreAbstractSimplicialComplex.closedStar_sup_deletion`: the closed star and the deletion
   cover `K`, i.e. `closedStar K σ ⊔ deletion K σ = K`.
@@ -98,27 +98,25 @@ def deletion : PreAbstractSimplicialComplex ι where
 
 variable {K L σ}
 
-@[simp]
-theorem mem_closedStar {ρ : Finset ι} : ρ ∈ closedStar K σ ↔ ρ.Nonempty ∧ ρ ∪ σ ∈ K := Iff.rfl
-
-@[simp]
-theorem mem_link {ρ : Finset ι} :
-    ρ ∈ link K σ ↔ ρ.Nonempty ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K := Iff.rfl
-
 omit [DecidableEq ι] in
 @[simp]
 theorem mem_deletion {ρ : Finset ι} : ρ ∈ deletion K σ ↔ ρ ∈ K ∧ ¬ σ ⊆ ρ := Iff.rfl
 
-/-- Membership in the closed star, with the underlying `K`-face exposed. -/
-theorem mem_closedStar_iff {ρ : Finset ι} :
+/-- A face belongs to the closed star exactly when adjoining `σ` still gives a face of `K`. -/
+@[simp]
+theorem mem_closedStar {ρ : Finset ι} :
     ρ ∈ closedStar K σ ↔ ρ ∈ K ∧ ρ ∪ σ ∈ K := by
+  change (ρ.Nonempty ∧ ρ ∪ σ ∈ K) ↔ _
   refine ⟨fun hρ => ⟨?_, hρ.2⟩, fun hρ => ⟨?_, hρ.2⟩⟩
   · exact (K.isRelLowerSet_faces hρ.2).2 subset_union_left hρ.1
   · exact (K.isRelLowerSet_faces hρ.1).1
 
-/-- Membership in the link, with the underlying `K`-face exposed. -/
-theorem mem_link_iff {ρ : Finset ι} :
+/-- A face belongs to the link exactly when it is disjoint from `σ` and adjoining `σ` still
+gives a face of `K`. -/
+@[simp]
+theorem mem_link {ρ : Finset ι} :
     ρ ∈ link K σ ↔ ρ ∈ K ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K := by
+  change (ρ.Nonempty ∧ Disjoint ρ σ ∧ ρ ∪ σ ∈ K) ↔ _
   refine ⟨fun hρ => ⟨?_, hρ.2.1, hρ.2.2⟩, fun hρ => ⟨?_, hρ.2⟩⟩
   · exact (K.isRelLowerSet_faces hρ.2.2).2 subset_union_left hρ.1
   · exact (K.isRelLowerSet_faces hρ.1).1
@@ -160,13 +158,13 @@ theorem link_le_deletion_of_nonempty (hσ : σ.Nonempty) : link K σ ≤ deletio
 `v` for which `insert v ρ` is a face. This is the form the combinatorial-manifold link condition
 uses. -/
 theorem mem_link_singleton {v : ι} {ρ : Finset ι} :
-    ρ ∈ link K {v} ↔ ρ.Nonempty ∧ v ∉ ρ ∧ insert v ρ ∈ K := by
+    ρ ∈ link K {v} ↔ ρ ∈ K ∧ v ∉ ρ ∧ insert v ρ ∈ K := by
   rw [mem_link, disjoint_singleton_right, union_comm, ← insert_eq]
 
 /-- The closed star of a single vertex `{v}`, written with `insert`. -/
 theorem mem_closedStar_singleton {v : ι} {ρ : Finset ι} :
     ρ ∈ closedStar K {v} ↔ ρ ∈ K ∧ insert v ρ ∈ K := by
-  rw [mem_closedStar_iff, union_comm, ← insert_eq]
+  rw [mem_closedStar, union_comm, ← insert_eq]
 
 omit [DecidableEq ι] in
 /-- The deletion of a single vertex `{v}` consists of the faces not containing `v`. -/
@@ -179,14 +177,14 @@ theorem mem_deletion_singleton {v : ι} {ρ : Finset ι} :
 theorem closedStar_empty : closedStar K ∅ = K := by
   refine SetLike.ext fun ρ => ?_
   simp only [mem_closedStar, union_empty]
-  exact ⟨fun h => h.2, fun h => ⟨(K.isRelLowerSet_faces h).1, h⟩⟩
+  exact ⟨And.left, fun hρ => ⟨hρ, hρ⟩⟩
 
 /-- The link at the empty simplex is the whole complex. -/
 @[simp]
 theorem link_empty : link K ∅ = K := by
   refine SetLike.ext fun ρ => ?_
   simp only [mem_link, disjoint_empty_right, union_empty, true_and]
-  exact ⟨fun h => h.2, fun h => ⟨(K.isRelLowerSet_faces h).1, h⟩⟩
+  exact ⟨And.left, fun hρ => ⟨hρ, hρ⟩⟩
 
 omit [DecidableEq ι] in
 /-- The deletion at the empty simplex is empty: every face contains `∅`. -/
@@ -196,11 +194,12 @@ theorem deletion_empty : deletion K ∅ = ⊥ :=
 
 /-- The closed star is monotone in the complex. -/
 theorem closedStar_mono (h : K ≤ L) : closedStar K σ ≤ closedStar L σ :=
-  fun _ ⟨hne, hρ⟩ => ⟨hne, h hρ⟩
+  fun _ hρ => mem_closedStar.mpr ⟨h (mem_closedStar.mp hρ).1, h (mem_closedStar.mp hρ).2⟩
 
 /-- The link is monotone in the complex. -/
 theorem link_mono (h : K ≤ L) : link K σ ≤ link L σ :=
-  fun _ ⟨hne, hdis, hρ⟩ => ⟨hne, hdis, h hρ⟩
+  fun _ hρ => mem_link.mpr ⟨h (mem_link.mp hρ).1, (mem_link.mp hρ).2.1,
+    h (mem_link.mp hρ).2.2⟩
 
 omit [DecidableEq ι] in
 /-- The deletion is monotone in the complex. -/
@@ -214,13 +213,15 @@ variable {v : ι}
 /-- The closed star of a face is a cone with apex any vertex of that face: adjoining `v ∈ σ` to
 a face `ρ` of the closed star leaves the defining union `ρ ∪ σ` unchanged. -/
 theorem isCone_closedStar (hσ : σ ∈ K) (hv : v ∈ σ) : IsCone (closedStar K σ) v where
-  apex_mem :=
-    mem_closedStar.mpr ⟨Finset.singleton_nonempty v, by
+  apex_mem := by
+    change Finset.Nonempty {v} ∧ {v} ∪ σ ∈ K
+    exact ⟨Finset.singleton_nonempty v, by
       rwa [Finset.singleton_union, Finset.insert_eq_self.mpr hv]⟩
-  insert_mem ρ hρ :=
-    mem_closedStar.mpr ⟨Finset.insert_nonempty v ρ, by
+  insert_mem ρ hρ := by
+    change (insert v ρ).Nonempty ∧ insert v ρ ∪ σ ∈ K
+    exact ⟨Finset.insert_nonempty v ρ, by
       rw [Finset.insert_union, Finset.insert_eq_self.mpr (Finset.mem_union_right _ hv)]
-      exact (mem_closedStar.mp hρ).2⟩
+      exact hρ.2⟩
 
 /-- Deleting a nonempty face that misses the apex of a cone leaves a cone with the same apex.
 Note that the deletion of a face *containing* the apex need not be a cone: deleting `{v}` itself
