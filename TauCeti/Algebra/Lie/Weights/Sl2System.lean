@@ -33,10 +33,9 @@ is negated, and `(-α)^∨ = -α^∨`.
 
 Beyond the definition and the existence theorem, the file records what a system gives: the `sl₂`
 triple at each root, the resulting nonvanishing and the identification of each root space as the
-line it spans, the Cartan relation `⁅β^∨, x α⁆ = α(β^∨) • x α` with its **integral** coefficient,
-the grading `⁅x α, x β⁆ ∈ L₍α+β₎` with its vanishing when `α + β` is not a root, ad-nilpotency of a
-root vector, that the root vectors together with `H` span `L`, and that two systems differ by
-scalars `c α` subject to `c α * c (-α) = 1`.
+line it spans, the Cartan relation `⁅β^∨, x α⁆ = α(β^∨) • x α`, the grading `⁅x α, x β⁆ ∈ L₍α+β₎`
+with its vanishing when `α + β` is not a root, that the root vectors together with `H` span `L`,
+and that two systems differ by scalars `c α` subject to `c α * c (-α) = 1`.
 
 ## What this is not
 
@@ -51,18 +50,19 @@ defined once the root vectors are.
 ## Main definitions
 
 * `TauCeti.IsSl2System`: a family of root vectors, one for each weight, normalised so that
-  `⁅x α, x (-α)⁆ = α^∨` at every root.
+  `⁅x α, x (-α)⁆ = α^∨` at every root and carrying no data at a zero weight.
 
 ## Main results
 
 * `TauCeti.exists_isSl2System`: such a family exists.
 * `TauCeti.IsSl2System.isSl2Triple`: `(α^∨, x α, x (-α))` is an `sl₂` triple.
 * `TauCeti.IsSl2System.toSubmodule_rootSpace_eq_span`: `x α` spans the root space of `α`.
-* `TauCeti.IsSl2System.exists_int_lie_coroot`: the Cartan relation has integral coefficients.
+* `TauCeti.IsSl2System.lie_coroot`: the Cartan relation.
 * `TauCeti.IsSl2System.lie_mem_rootSpace_add` and
   `TauCeti.IsSl2System.lie_eq_zero_of_rootSpace_add_eq_bot`: the root grading of the bracket.
-* `TauCeti.IsSl2System.exists_eq_smul_of_coe_add_eq`: the structure constants exist.
+* `TauCeti.IsSl2System.exists_lie_eq_smul_of_coe_eq_add`: the structure constants exist.
 * `TauCeti.IsSl2System.span_range_sup_toSubmodule_eq_top`: the root vectors and `H` span `L`.
+* `TauCeti.IsSl2System.eq_of_forall_isNonZero`: a system is determined by its root vectors.
 * `TauCeti.IsSl2System.mul_eq_one_of_eq_smul`: two systems differ by scalars `c` with
   `c α * c (-α) = 1`.
 
@@ -86,12 +86,15 @@ variable {K L : Type*} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
 and `⁅x α, x (-α)⁆` is the coroot `α^∨` for every root `α`. Equivalently, `(α^∨, x α, x (-α))` is
 an `sl₂` triple for every root `α`, whence the name.
 
-The value at a zero weight is unconstrained beyond lying in the zero root space, which is `H`. -/
+Only the roots carry data: the value at a zero weight is pinned to `0`, so that a system is
+determined by its root vectors, as `TauCeti.IsSl2System.eq_of_forall_isNonZero` records. -/
 structure IsSl2System (x : Weight K H L → L) : Prop where
   /-- Each member of the family is a root vector for its own root. -/
   mem_rootSpace (α : Weight K H L) : x α ∈ rootSpace H α
   /-- The members at `α` and `-α` are normalised so that their bracket is the coroot of `α`. -/
   lie_neg (α : Weight K H L) (hα : α.IsNonZero) : ⁅x α, x (-α)⁆ = (coroot α : L)
+  /-- The family carries no data at a zero weight. -/
+  eq_zero_of_isZero (α : Weight K H L) (hα : α.IsZero) : x α = 0
 
 namespace IsSl2System
 
@@ -124,12 +127,6 @@ theorem toSubmodule_rootSpace_eq_span (hα : α.IsNonZero) :
   LieAlgebra.IsKilling.toSubmodule_rootSpace_eq_span α hα _ (hx.ne_zero α hα)
     (hx.mem_rootSpace α)
 
-/-- The Cartan numbers appearing in `TauCeti.IsSl2System.lie_coroot` are integers, so the Cartan
-relation between the root vectors and the coroots is integral. -/
-theorem exists_int_lie_coroot : ∃ n : ℤ, ⁅(coroot β : L), x α⁆ = n • x α := by
-  refine ⟨chainBotCoeff β α - chainTopCoeff β α, ?_⟩
-  rw [hx.lie_coroot α β, apply_coroot_eq_cast β α, Int.cast_smul_eq_zsmul]
-
 omit [CharZero K] in
 /-- The root grading: the bracket of two root vectors lies in the root space of the sum. -/
 theorem lie_mem_rootSpace_add : ⁅x α, x β⁆ ∈ rootSpace H ((α : H → K) + β) :=
@@ -146,17 +143,13 @@ theorem lie_eq_zero_of_rootSpace_add_eq_bot (h : rootSpace H ((α : H → K) + �
 bracket of the two root vectors is a multiple of the root vector at the sum. The normalisation says
 nothing about the constants themselves; pinning them to the integers `±(p + 1)` is exactly what
 upgrades a normalised family to a Chevalley basis. -/
-theorem exists_eq_smul_of_coe_add_eq (γ : Weight K H L) (hγ : γ.IsNonZero)
+theorem exists_lie_eq_smul_of_coe_eq_add (γ : Weight K H L) (hγ : γ.IsNonZero)
     (h : (γ : H → K) = (α : H → K) + β) : ∃ c : K, ⁅x α, x β⁆ = c • x γ := by
   have hmem : ⁅x α, x β⁆ ∈ K ∙ x γ := by
     rw [← hx.toSubmodule_rootSpace_eq_span γ hγ, h]
     exact hx.lie_mem_rootSpace_add α β
   obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.mp hmem
   exact ⟨c, hc.symm⟩
-
-/-- A root vector acts nilpotently in the adjoint representation. -/
-theorem isNilpotent_ad (hα : α.IsNonZero) : IsNilpotent (ad K L (x α)) :=
-  LieAlgebra.isNilpotent_ad_of_mem_rootSpace H hα (hx.mem_rootSpace α)
 
 /-- The root vectors of a normalised family span `L` over the Cartan subalgebra: together with `H`
 they span the whole Lie algebra. -/
@@ -172,12 +165,21 @@ theorem span_range_sup_toSubmodule_eq_top :
     exact Submodule.subset_span (Set.mem_range_self α)
   · refine le_sup_of_le_right (le_of_eq ?_)
     have h0 : (α : H → K) = 0 := not_not.mp hα
-    rw [show rootSpace H α = rootSpace H (0 : H → K) from by rw [h0], rootSpace_zero_eq K L H]
+    rw [h0, rootSpace_zero_eq K L H]
     simp
 
 variable (hy : IsSl2System y)
 
 include hy
+
+omit [CharZero K] in
+/-- A normalised family is determined by its root vectors: two systems agreeing at every root
+agree everywhere, since both vanish at a zero weight. -/
+theorem eq_of_forall_isNonZero (h : ∀ α : Weight K H L, α.IsNonZero → x α = y α) : x = y := by
+  funext α
+  by_cases hα : α.IsNonZero
+  · exact h α hα
+  · rw [hx.eq_zero_of_isZero α (not_not.mp hα), hy.eq_zero_of_isZero α (not_not.mp hα)]
 
 /-- Two normalised families differ by a scalar at each root, since the root spaces are lines. -/
 theorem exists_ne_zero_eq_smul (hα : α.IsNonZero) : ∃ c : K, c ≠ 0 ∧ y α = c • x α := by
@@ -197,9 +199,8 @@ theorem mul_eq_one_of_eq_smul (hα : α.IsNonZero) {c d : K} (hc : y α = c • 
   have key : (coroot α : L) = (c * d) • (coroot α : L) := by
     conv_lhs => rw [← hy.lie_neg α hα]
     rw [hc, hd, smul_lie, lie_smul, smul_smul, hx.lie_neg α hα]
-  refine smul_left_injective K hcoroot (show (c * d) • (coroot α : L) = (1 : K) • _ from ?_)
-  rw [one_smul]
-  exact key.symm
+  refine smul_left_injective K hcoroot ?_
+  simpa only [one_smul] using key.symm
 
 end IsSl2System
 
@@ -208,7 +209,7 @@ variable (K H) in
 at once so that `⁅x α, x (-α)⁆ = α^∨` holds at every root, and not merely one root at a time.
 
 The construction picks one root from each pair `{α, -α}`, takes the `sl₂` triple Mathlib attaches
-to it, and assigns `e` to the chosen root and `f` to its negative. -/
+to it, assigns `e` to the chosen root and `f` to its negative, and `0` to a zero weight. -/
 theorem exists_isSl2System : ∃ x : Weight K H L → L, IsSl2System x := by
   classical
   -- A set `s` of roots containing exactly one of `α` and `-α`, obtained as a set of
@@ -264,13 +265,19 @@ theorem exists_isSl2System : ∃ x : Weight K H L → L, IsSl2System x := by
       exact ⟨(e, f), fun _ ↦ ht, he, hf⟩
     · exact ⟨(0, 0), fun h ↦ absurd h hγ, zero_mem _, zero_mem _⟩
   choose p hp hp₁ hp₂ using key
-  refine ⟨fun α ↦ if α ∈ s then (p α).1 else (p (-α)).2, ⟨fun α ↦ ?_, fun α hα ↦ ?_⟩⟩
-  · by_cases h : α ∈ s
-    · rw [ite_eq_left h]
-      exact hp₁ α
-    · rw [ite_eq_right h]
-      simpa only [Weight.coe_neg, neg_neg] using hp₂ (-α)
-  · by_cases h : α ∈ s
+  refine ⟨fun α ↦ if α.IsNonZero then (if α ∈ s then (p α).1 else (p (-α)).2) else 0,
+    ⟨fun α ↦ ?_, fun α hα ↦ ?_, fun α hα ↦ ite_eq_right (not_not_intro hα)⟩⟩
+  · by_cases hα : α.IsNonZero
+    · rw [ite_eq_left hα]
+      by_cases h : α ∈ s
+      · rw [ite_eq_left h]
+        exact hp₁ α
+      · rw [ite_eq_right h]
+        simpa only [Weight.coe_neg, neg_neg] using hp₂ (-α)
+    · rw [ite_eq_right hα]
+      exact zero_mem _
+  · rw [ite_eq_left hα, ite_eq_left hα.neg]
+    by_cases h : α ∈ s
     · have h' : (-α) ∉ s := fun h' ↦ hnot α hα ⟨h, h'⟩
       rw [ite_eq_left h, ite_eq_right h', neg_neg]
       exact (hp α hα).lie_e_f
