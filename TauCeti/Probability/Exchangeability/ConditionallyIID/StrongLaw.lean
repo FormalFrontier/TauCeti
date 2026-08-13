@@ -19,12 +19,20 @@ import Mathlib.MeasureTheory.Constructions.Polish.Basic
 
 A conditionally i.i.d. process obeys the strong law of large numbers **conditionally**: almost
 surely, the averages of a bounded observable along the process converge to that observable's
-integral against the *directing measure*, not against a deterministic law. Equivalently, the
-empirical measures converge to the directing measure, setwise and almost surely.
+integral against the *directing measure*, not against a deterministic law. Taking the observable to
+be an indicator: for each *fixed* measurable set, the empirical frequency of that set converges
+almost surely to the mass the directing measure gives it.
 
 `ConditionallyIID/EmpiricalMeasure.lean` already gives the mean-square form of this, with the exact
 finite-sample error. What is new here is almost-sure convergence, and the strengthening from a
 single observable to a whole countable family under one null set.
+
+The quantifier order matters, and `∀ B, ∀ᵐ ω` is the strongest order available here: the null set
+genuinely depends on the set tested. Setwise almost-sure convergence — one null set outside which
+the empirical measures converge on *every* measurable set at once — is false as soon as the
+directing measure is nonatomic, since the countable range of the sample path then carries empirical
+mass `1` and directing mass `0`. Countability is exactly the room there is to improve the order,
+and `tendsto_empiricalMeasure_apply_ae_forall` takes all of it.
 
 ## Main results
 
@@ -33,11 +41,11 @@ single observable to a whole countable family under one null set.
 * `ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae` — its reading through
   `empiricalMeasure`;
 * `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae` and
-  `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall` — the setwise form, for one
-  measurable set and for a countable family of them under a single null set;
+  `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall` — the empirical frequencies, for
+  one fixed measurable set and for a countable family of them under a single null set;
 * `deFinetti_tendsto_empiricalMeasure_apply` — for an exchangeable process on a standard Borel
-  state space, a directing measure that is recovered as the almost-sure setwise limit of the
-  empirical measures.
+  state space, a directing measure whose mass on each fixed measurable set is recovered as the
+  almost-sure limit of the empirical frequencies.
 
 ## Implementation
 
@@ -65,7 +73,7 @@ against *every* probability measure at once, and it is all the empirical-measure
   empirical-measure form of the directing-measure theorem. The roadmap's target there is weak
   convergence in `ProbabilityMeasure α` against bounded continuous test functions; that form needs
   a compatible Polish topology on `α`, which `[StandardBorelSpace α]` does not select, so it is not
-  attempted here. The setwise almost-sure convergence below is its analytic core, and
+  attempted here. The fixed-set almost-sure convergence below is its analytic core, and
   `tendsto_empiricalMeasure_apply_ae_forall` is the "one null set for a countable determining
   class" step such an upgrade consumes.
 * O. Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), §1.1.
@@ -158,9 +166,12 @@ theorem ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae [IsFiniteMeasu
   refine Tendsto.congr (fun n => ?_) (hω.comp (tendsto_add_atTop_nat 1))
   rw [Function.comp_apply, integral_empiricalMeasure hf.stronglyMeasurable, smul_eq_mul]
 
-/-- **Empirical measures converge setwise, almost surely.** For a conditionally i.i.d. process and
-a fixed measurable set, the empirical frequency of that set converges almost surely to the mass the
-directing measure gives it.
+/-- **Empirical frequencies converge almost surely, on each fixed measurable set.** For a
+conditionally i.i.d. process and a fixed measurable set `B`, the empirical frequency of `B`
+converges almost surely to the mass the directing measure gives it.
+
+The null set depends on `B`, and outside a countable family of sets it must:
+`tendsto_empiricalMeasure_apply_ae_forall` is as far as the quantifiers can be interchanged.
 
 The mean-square form of the same convergence, with its exact finite-sample error, is
 `ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq`. -/
@@ -190,13 +201,14 @@ theorem ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall [IsFiniteM
       (𝓝 (((ν ω : Measure α) (B j)).toReal)) :=
   ae_all_iff.2 fun j => h.tendsto_empiricalMeasure_apply_ae hX (hB j)
 
-/-- **De Finetti's theorem in setwise empirical-measure form.** An exchangeable process valued in a
-nonempty standard Borel space has a directing measure which is recovered, almost surely and on
-every measurable set, as the limit of the empirical measures of the process.
+/-- **De Finetti's theorem in empirical-frequency form.** An exchangeable process valued in a
+nonempty standard Borel space has a directing measure whose mass on each fixed measurable set is
+recovered, almost surely, as the limit of the empirical frequencies of the process.
 
-The directing measure is thus not merely asserted to exist: it is the pathwise limit of an explicit
-statistic of the process. The weak-topology form of the same statement, testing against bounded
-continuous functions, needs a compatible Polish topology on `α` and is not proved here. -/
+The directing measure is thus not merely asserted to exist: each of its values is the pathwise
+limit of an explicit statistic of the process. The null set depends on the set tested, as it must.
+The weak-topology form of the same statement, testing against bounded continuous functions, needs a
+compatible Polish topology on `α` and is not proved here. -/
 theorem deFinetti_tendsto_empiricalMeasure_apply [StandardBorelSpace α] [Nonempty α]
     [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν ∧

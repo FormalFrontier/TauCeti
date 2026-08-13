@@ -40,9 +40,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
 * `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
   its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
   point masses with the extreme laws;
-* `deFinetti_tendsto_empiricalMeasure_apply` — the directing measure of an exchangeable process is
-  the almost-sure setwise limit of the empirical measures, with
-  `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it.
+* `deFinetti_tendsto_empiricalMeasure_apply` — on each fixed measurable set, the mass given by the
+  directing measure of an exchangeable process is the almost-sure limit of the empirical
+  frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a
