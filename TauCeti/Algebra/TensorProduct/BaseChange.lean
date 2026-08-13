@@ -13,10 +13,8 @@ public import Mathlib.LinearAlgebra.TensorProduct.Opposite
 public import Mathlib.RingTheory.TensorProduct.Basic
 -- Non-public: none appears in the type of an exported declaration. Mathlib's
 -- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct`,
--- `LinearMap.map_mul_of_map_mul_tmul`, `congr`, vector-space bases, and flatness API are used only
--- inside definition bodies and proofs, and no definition below is `@[expose]`d.
-import Mathlib.LinearAlgebra.Basis.VectorSpace
-import Mathlib.RingTheory.Flat.Basic
+-- `LinearMap.map_mul_of_map_mul_tmul` and `congr` are used only inside definition bodies and
+-- proofs, and no definition below is `@[expose]`d.
 import Mathlib.LinearAlgebra.TensorProduct.Tower
 import Mathlib.RingTheory.TensorProduct.Maps
 
@@ -33,8 +31,6 @@ with passing to the opposite algebra, and composes in stages:
   `M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A` for a tower `K → L → M`.
 * `TauCeti.Algebra.TensorProduct.baseChangeTowerRingEquiv`: the same tower comparison with tensor
   factors in coordinate-ring order, `(L ⊗[K] A) ⊗[L] M ≃+* A ⊗[K] M`.
-* `TauCeti.Algebra.TensorProduct.map_injective_of_field`: tensoring an injective algebra map over
-  a field on the left preserves injectivity.
 
 None is reproved from scratch: the first and third upgrade Mathlib's linear equivalences
 `TensorProduct.AlgebraTensorModule.distribBaseChange` and
@@ -75,15 +71,6 @@ open scoped TensorProduct
 namespace Algebra.TensorProduct
 
 universe u v w x
-
-attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free in
-/-- Tensoring a map of algebras over a field on the left is injective when the map is injective. -/
-theorem map_injective_of_field (k : Type u) [Field k]
-    (A : Type v) [CommRing A] [Algebra k A]
-    {L : Type w} {M : Type x} [CommRing L] [CommRing M] [Algebra k L] [Algebra k M]
-    (g : L →ₐ[k] M) (hg : Function.Injective g) :
-    Function.Injective (Algebra.TensorProduct.map (AlgHom.id k A) g) :=
-  Module.Flat.lTensor_preserves_injective_linearMap g.toLinearMap hg
 
 variable (K L A B : Type*) [CommSemiring K] [CommSemiring L] [Algebra K L]
   [Semiring A] [Algebra K A] [Semiring B] [Algebra K B]

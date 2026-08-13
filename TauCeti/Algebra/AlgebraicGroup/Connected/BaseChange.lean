@@ -89,6 +89,7 @@ theorem geometricallyConnectedCommHopfAlgProperty.of_baseChange
   exact connectedSpace_primeSpectrum_of_injective (d.map H).toRingHom (d.map_injective H)
 
 /-- Geometric connectedness is equivalent before and after extension of the base field. -/
+@[simp]
 theorem geometricallyConnectedCommHopfAlgProperty.baseChange_iff
     (k K : Type u) [Field k] [Field K] [Algebra k K]
     (H : CommHopfAlgCat.{u} k) :

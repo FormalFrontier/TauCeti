@@ -6,8 +6,10 @@ module
 
 -- Public: the common-overfield comparison exposes the coordinate-ring-order tower equivalence.
 public import TauCeti.Algebra.TensorProduct.BaseChange
--- Non-public: these imports supply the residue-field construction and tensor-product
--- nontriviality used only in definition bodies and proofs below.
+-- Non-public: these imports supply the residue-field construction, tensor-product
+-- nontriviality, and flatness proof used only in definition bodies and proofs below.
+import Mathlib.LinearAlgebra.Basis.VectorSpace
+import Mathlib.RingTheory.Flat.Basic
 import Mathlib.RingTheory.LocalRing.ResidueField.Ideal
 import Mathlib.RingTheory.TensorProduct.Nontrivial
 
@@ -96,41 +98,43 @@ variable {k : Type u} {K : Type v} {L : Type w} [Field k] [Field K] [Field L]
 /-- Successive scalar extension through `K` agrees with direct scalar extension to a common
 overfield. -/
 noncomputable def comparison (d : CommonOverfield k K L) (A : Type x)
-    [CommRing A] [Algebra k A] :
+    [CommSemiring A] [Algebra k A] :
     ((K ⊗[k] A) ⊗[K] d.Ω) ≃+* (A ⊗[k] d.Ω) :=
   baseChangeTowerRingEquiv k K A d.Ω
 
 /-- The common-overfield comparison sends nested pure tensors to pure tensors. -/
 @[simp]
 theorem comparison_tmul_tmul (d : CommonOverfield k K L) (A : Type x)
-    [CommRing A] [Algebra k A] (x : K) (a : A) (ω : d.Ω) :
+    [CommSemiring A] [Algebra k A] (x : K) (a : A) (ω : d.Ω) :
     d.comparison A ((x ⊗ₜ[k] a) ⊗ₜ[K] ω) = a ⊗ₜ[k] (x • ω) :=
   baseChangeTowerRingEquiv_tmul_tmul k K A d.Ω x a ω
 
 /-- The inverse common-overfield comparison sends pure tensors to nested pure tensors. -/
 @[simp]
 theorem comparison_symm_tmul (d : CommonOverfield k K L) (A : Type x)
-    [CommRing A] [Algebra k A] (a : A) (ω : d.Ω) :
+    [CommSemiring A] [Algebra k A] (a : A) (ω : d.Ω) :
     (d.comparison A).symm (a ⊗ₜ[k] ω) = (1 ⊗ₜ[k] a) ⊗ₜ[K] ω :=
   baseChangeTowerRingEquiv_symm_tmul k K A d.Ω a ω
 
 /-- Scalar extension along the embedding of `L` into a common overfield. -/
 noncomputable def map (d : CommonOverfield k K L) (A : Type x)
-    [CommRing A] [Algebra k A] :
+    [CommSemiring A] [Algebra k A] :
     A ⊗[k] L →ₐ[k] A ⊗[k] d.Ω :=
   Algebra.TensorProduct.map (AlgHom.id k A) d.right
 
 /-- Scalar extension to a common overfield maps each pure tensor componentwise. -/
 @[simp]
 theorem map_tmul (d : CommonOverfield k K L) (A : Type x)
-    [CommRing A] [Algebra k A] (a : A) (l : L) :
+    [CommSemiring A] [Algebra k A] (a : A) (l : L) :
     d.map A (a ⊗ₜ[k] l) = a ⊗ₜ[k] d.right l := by
   simp [map]
 
+attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free in
 /-- Scalar extension from `L` to a common overfield is injective. -/
 theorem map_injective (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] : Function.Injective (d.map A) :=
-  Algebra.TensorProduct.map_injective_of_field k A d.right (RingHom.injective d.right.toRingHom)
+  Module.Flat.lTensor_preserves_injective_linearMap d.right.toLinearMap
+    (RingHom.injective d.right.toRingHom)
 
 end CommonOverfield
 

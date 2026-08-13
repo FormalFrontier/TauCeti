@@ -79,6 +79,7 @@ theorem geometricallyReducedCommHopfAlgProperty.of_baseChange
   exact isReduced_of_injective (d.map H).toRingHom (d.map_injective H)
 
 /-- Geometric reducedness is equivalent before and after extension of the base field. -/
+@[simp]
 theorem geometricallyReducedCommHopfAlgProperty.baseChange_iff
     {k : Type u} (K : Type (max u v)) [Field k] [Field K] [Algebra k K]
     (H : CommHopfAlgCat.{v} k) :
