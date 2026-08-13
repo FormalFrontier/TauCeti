@@ -6,8 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.Connected.AlgebraicallyClosed
-import Mathlib.RingTheory.LocalRing.ResidueField.Ideal
-import Mathlib.RingTheory.TensorProduct.Nontrivial
 
 /-!
 # Geometric connectedness under base change
@@ -81,27 +79,13 @@ theorem geometricallyConnectedCommHopfAlgProperty.of_baseChange
   rw [geometricallyConnectedCommHopfAlgProperty_iff] at hH
   rw [geometricallyConnectedCommHopfAlgProperty_iff_connectedSpace_of_isAlgClosed]
   intro L _ _ _
-  let R := K ⊗[k] L
-  let _ : Nontrivial R :=
-    Algebra.TensorProduct.nontrivial_of_algebraMap_injective_of_isDomain k K L
-      (algebraMap k K).injective (algebraMap k L).injective
-  obtain ⟨P, hP⟩ := Ideal.exists_maximal R
-  let _ : P.IsMaximal := hP
-  let Ω := P.ResidueField
-  let iK : K →ₐ[k] Ω := (IsScalarTower.toAlgHom k R Ω).comp Algebra.TensorProduct.includeLeft
-  let iL : L →ₐ[k] Ω := (IsScalarTower.toAlgHom k R Ω).comp Algebra.TensorProduct.includeRight
-  let _ : Algebra K Ω := iK.toRingHom.toAlgebra
-  let _ : IsScalarTower k K Ω := IsScalarTower.of_algHom iK
-  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) Ω).toRingEquiv |>.trans
-    ((Algebra.TensorProduct.cancelBaseChange k K Ω Ω H).toRingEquiv.trans
-      (Algebra.TensorProduct.comm k Ω H).toRingEquiv)
-  have hΩ : ConnectedSpace (PrimeSpectrum ((H : Type u) ⊗[k] Ω)) :=
-    (PrimeSpectrum.homeomorphOfRingEquiv e).connectedSpace_iff.mp (hH Ω)
-  let f : (H : Type u) ⊗[k] L →ₐ[k] (H : Type u) ⊗[k] Ω :=
-    Algebra.TensorProduct.map (AlgHom.id k H) iL
-  have hf : Function.Injective f :=
-    Module.Flat.lTensor_preserves_injective_linearMap iL.toLinearMap
-      (RingHom.injective iL.toRingHom)
-  exact connectedSpace_primeSpectrum_of_injective f.toRingHom hf
+  let d := CommHopfAlgCat.baseChangeDescentData k K L H
+  let _ := d.fieldΩ
+  let _ := d.algebraOmega
+  let _ := d.algebraKΩ
+  let _ := d.isScalarTower
+  have hΩ : ConnectedSpace (PrimeSpectrum ((H : Type u) ⊗[k] d.Ω)) :=
+    (PrimeSpectrum.homeomorphOfRingEquiv d.comparison).connectedSpace_iff.mp (hH d.Ω)
+  exact connectedSpace_primeSpectrum_of_injective d.map.toRingHom d.map_injective
 
 end TauCeti

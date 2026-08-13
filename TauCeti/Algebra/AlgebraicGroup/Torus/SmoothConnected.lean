@@ -53,11 +53,7 @@ universe u
 
 namespace SplitTorus
 
-/-- **The coordinate Hopf algebra of a finite-rank split torus is geometrically connected.**
-
-After any field extension, scalar extension identifies the coordinate ring with the group
-algebra of the same free abelian character group. This group algebra is a domain, so its only
-idempotents are zero and one. -/
+/-- **The coordinate Hopf algebra of a finite-rank split torus is geometrically connected.** -/
 @[grind =>]
 theorem geometricallyConnected_coordinateRing
     (k : Type u) [Field k] (σ : Type u) [Finite σ] :
@@ -79,10 +75,7 @@ theorem geometricallyConnected_coordinateRing
   · right
     exact φ.injective (by simpa using h)
 
-/-- **The coordinate Hopf algebra of a finite-rank split torus is geometrically reduced.**
-
-After any field extension, scalar extension identifies the coordinate ring with a group algebra
-of a free abelian group, which is a domain. -/
+/-- **The coordinate Hopf algebra of a finite-rank split torus is geometrically reduced.** -/
 @[grind =>]
 theorem geometricallyReduced_coordinateRing
     (k : Type u) [Field k] (σ : Type u) [Finite σ] :
@@ -100,38 +93,6 @@ theorem geometricallyReduced_coordinateRing
   exact isReduced_of_injective φ.toRingHom φ.injective
 
 end SplitTorus
-
-/-- Every finite-type split torus is geometrically connected. -/
-@[grind →]
-theorem splitTorusCommHopfAlgProperty.geometricallyConnected
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (hH : splitTorusCommHopfAlgProperty k H) :
-    geometricallyConnectedCommHopfAlgProperty k H.obj := by
-  rw [splitTorusCommHopfAlgProperty_iff] at hH
-  obtain ⟨n, ⟨i⟩⟩ := hH
-  exact (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
-    ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k)).mapIso i)
-    (SplitTorus.geometricallyConnected_coordinateRing k (ULift.{u} (Fin n)))
-
-/-- Every finite-type split torus is geometrically reduced. -/
-@[grind →]
-theorem splitTorusCommHopfAlgProperty.geometricallyReduced
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (hH : splitTorusCommHopfAlgProperty k H) :
-    geometricallyReducedCommHopfAlgProperty k H.obj := by
-  rw [splitTorusCommHopfAlgProperty_iff] at hH
-  obtain ⟨n, ⟨i⟩⟩ := hH
-  exact (geometricallyReducedCommHopfAlgProperty k).prop_of_iso
-    ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k)).mapIso i)
-    (SplitTorus.geometricallyReduced_coordinateRing k (ULift.{u} (Fin n)))
-
-/-- Every finite-type split torus is smooth. -/
-@[grind →]
-theorem splitTorusCommHopfAlgProperty.smooth
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (hH : splitTorusCommHopfAlgProperty k H) :
-    smoothCommHopfAlgProperty k H.obj :=
-  smoothCommHopfAlgProperty_of_geometricallyReduced k H.obj hH.geometricallyReduced
 
 /-- **Every torus over a field is geometrically connected.** -/
 @[grind →]

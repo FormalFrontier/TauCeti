@@ -6,9 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeometricallyReduced.CommHopfAlgCat
-import Mathlib.RingTheory.Flat.Basic
-import Mathlib.RingTheory.LocalRing.ResidueField.Ideal
-import Mathlib.RingTheory.TensorProduct.Nontrivial
 
 /-!
 # Geometric reducedness under base change
@@ -72,26 +69,14 @@ theorem geometricallyReducedCommHopfAlgProperty.of_baseChange
     geometricallyReducedCommHopfAlgProperty k H := by
   rw [geometricallyReducedCommHopfAlgProperty_iff] at hH ⊢
   intro L _ _
-  let R := K ⊗[k] L
-  let _ : Nontrivial R :=
-    Algebra.TensorProduct.nontrivial_of_algebraMap_injective_of_isDomain k K L
-      (algebraMap k K).injective (algebraMap k L).injective
-  obtain ⟨P, hP⟩ := Ideal.exists_maximal R
-  let _ : P.IsMaximal := hP
-  let Ω := P.ResidueField
-  let iK : K →ₐ[k] Ω := (IsScalarTower.toAlgHom k R Ω).comp Algebra.TensorProduct.includeLeft
-  let iL : L →ₐ[k] Ω := (IsScalarTower.toAlgHom k R Ω).comp Algebra.TensorProduct.includeRight
-  let _ : Algebra K Ω := iK.toRingHom.toAlgebra
-  let _ : IsScalarTower k K Ω := IsScalarTower.of_algHom iK
-  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) Ω).toRingEquiv |>.trans
-    ((Algebra.TensorProduct.cancelBaseChange k K Ω Ω H).toRingEquiv.trans
-      (Algebra.TensorProduct.comm k Ω H).toRingEquiv)
-  have hΩ : IsReduced ((H : Type v) ⊗[k] Ω) :=
-    isReduced_of_injective e.symm.toRingHom e.symm.injective
-  let f : (H : Type v) ⊗[k] L →ₐ[k] (H : Type v) ⊗[k] Ω :=
-    Algebra.TensorProduct.map (AlgHom.id k H) iL
-  exact isReduced_of_injective f.toRingHom
-    (Module.Flat.lTensor_preserves_injective_linearMap iL.toLinearMap
-      (RingHom.injective iL.toRingHom))
+  let d := CommHopfAlgCat.baseChangeDescentData k K L H
+  let _ := d.fieldΩ
+  let _ := d.algebraOmega
+  let _ := d.algebraKΩ
+  let _ := d.isScalarTower
+  let _ := hH d.Ω
+  have hΩ : IsReduced ((H : Type v) ⊗[k] d.Ω) :=
+    isReduced_of_injective d.comparison.symm.toRingHom d.comparison.symm.injective
+  exact isReduced_of_injective d.map.toRingHom d.map_injective
 
 end TauCeti
