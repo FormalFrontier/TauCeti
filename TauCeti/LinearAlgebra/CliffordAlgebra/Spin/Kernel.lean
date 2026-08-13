@@ -316,8 +316,8 @@ theorem zmodTwoMulEquivKerSpinToSpecialOrthogonal_symm_apply_negOne
           spinGroup.negOne_mem_ker_spinToSpecialOrthogonal Q
             (hQ.ne_zero_of_finrank_pos hM)⟩ =
       Multiplicative.ofAdd 1 := by
-  rw [MulEquiv.symm_apply_eq,
-    zmodTwoMulEquivKerSpinToSpecialOrthogonal_apply_ofAdd_one]
+  simp only [zmodTwoMulEquivKerSpinToSpecialOrthogonal,
+    zmodMulEquivOfGenerator_symm_apply_generator]
 
 end Kernel
 
