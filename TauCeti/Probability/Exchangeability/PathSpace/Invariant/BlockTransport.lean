@@ -14,9 +14,13 @@ import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 /-!
 # Moving a block through a reindexing, over an invariant event
 
-Over a shift-invariant event, a reindexing that is eventually a translation changes no
-set-integral, and a strictly increasing finite selection may therefore be displaced onto the
-prefix `0, 1, …, m - 1`.
+Over a shift-invariant event, a **law-preserving** reindexing that is eventually a translation
+changes no set-integral; so for a **contractable** law, where strict monotonicity supplies that
+preservation, a strictly increasing finite selection may be displaced onto the prefix
+`0, 1, …, m - 1`.
+
+Both hypotheses are essential rather than incidental. Without measure preservation the first claim
+fails outright — take `ρ` a point mass at an alternating path, `A = univ` and `φ = (· + 1)`.
 
 ## Main results
 
@@ -25,9 +29,11 @@ prefix `0, 1, …, m - 1`.
   `MeasurePreserving`, not only an integral identity;
 * `setLIntegral_comp_reindex_eq_of_measurableSet_invariants_of_eventually_add` — its `ℝ≥0∞`
   shadow;
-* `ContractableLaw.map_block_eq_prefix_of_measurableSet_invariants` — the finite-selection form as
-  a measure equality: reading a strictly increasing block and reading the prefix push the
-  restricted law to the same measure, so Bochner and `Lᵖ` statements follow as well;
+* `ContractableLaw.restrict_map_block_eq_prefixProj_of_measurableSet_invariants` — the
+  finite-selection form as a measure equality on the **restricted** law: reading a strictly
+  increasing block and reading the prefix push `ρ.restrict A` to the same measure, so Bochner and
+  `Lᵖ` statements follow as well. The unrestricted counterpart is the existing
+  `ContractableLaw.map_prefixProj_of_strictMono`;
 * `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — its `ℝ≥0∞`
   corollary.
 
@@ -113,7 +119,7 @@ block and reading the prefix push the restricted law to the same measure on `Fin
 
 This is the form that gives Bochner integrals and `Lᵖ` statements as well; the `ℝ≥0∞` identity
 below is its corollary. -/
-theorem ContractableLaw.map_block_eq_prefix_of_measurableSet_invariants
+theorem ContractableLaw.restrict_map_block_eq_prefixProj_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
     (ρ.restrict A).map (fun x : ℕ → α => fun i : Fin m => x (k i))
@@ -138,7 +144,7 @@ theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
     ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (prefixProj α m x) ∂ρ := by
   rw [← lintegral_map hg (measurable_pi_lambda _ fun i => measurable_pi_apply (k i)),
     ← lintegral_map hg (measurable_prefixProj m),
-    hρ.map_block_eq_prefix_of_measurableSet_invariants hk hA]
+    hρ.restrict_map_block_eq_prefixProj_of_measurableSet_invariants hk hA]
 
 end Probability
 
