@@ -52,14 +52,18 @@ onto `TauCeti.starCartanMatrix`. -/
 theorem exists_three_path_components_of_isSimplyLaced (h : IsFiniteType A)
     (hconn : (diagramGraph A).Connected) (hsl : A.IsSimplyLaced) {c : B}
     (hc : (diagramGraph A).degree c = 3) :
-    ∃ e : Fin 3 ≃ ((diagramGraph A).induce (Set.compl {c})).ConnectedComponent,
+    ∃ e : Fin 3 ≃ ((diagramGraph A).induce ({c}ᶜ : Set B)).ConnectedComponent,
       ∀ i, Nonempty ((e i).toSimpleGraph ≃g pathGraph (Nat.card (e i))) := by
   have htree : (diagramGraph A).IsTree := h.isTree_diagramGraph hconn
-  apply TauCeti.IsTree.exists_three_path_components htree c hc
-  intro v hvc
-  have hv3 := h.degree_le_three v
+  refine TauCeti.IsTree.exists_equiv_pathGraph_components htree c hc fun v => ?_
+  -- Deleting a vertex only removes edges, so it is enough to bound the degree in the diagram.
+  have hle : ((diagramGraph A).induce ({c}ᶜ : Set B)).degree v ≤ (diagramGraph A).degree (v : B) :=
+    (SimpleGraph.Copy.induce (diagramGraph A) ({c}ᶜ : Set B)).degree_le v
+  refine le_trans hle ?_
+  have hvc : (v : B) ≠ c := Set.mem_compl_singleton_iff.mp v.property
+  have hv3 := h.degree_le_three (v : B)
   by_contra hv2
-  have hv : (diagramGraph A).degree v = 3 := by omega
+  have hv : (diagramGraph A).degree (v : B) = 3 := by omega
   exact hvc (h.eq_of_degree_eq_three hsl hconn hv hc)
 
 end IsFiniteType
