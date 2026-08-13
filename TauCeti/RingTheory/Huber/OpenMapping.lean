@@ -40,6 +40,11 @@ Tate condition is used, and a Huber ring that is not Tate need not admit such a 
 Countable generation of the uniformity gives it for `𝓝 0`, which is the first countability Henkel
 asks of the source.
 
+The target's action hypothesis is `ContinuousConstSMul A N`, which is Henkel's own binder rather
+than a strengthening of it. The asymmetry with `ContinuousSMul A M` on the source is not an
+oversight: the source needs continuity in the *scalar* variable to discharge `hc`, whereas the
+target needs only continuity in the *module* variable, and `ContinuousConstSMul` is exactly that.
+
 The target's completeness deserves a word, since it is not what one would guess Henkel needs.
 Henkel asks the target to be a **Baire** space, and completeness plus a countably generated
 uniformity is how that is obtained here: the two together make `N` completely pseudometrisable
@@ -84,7 +89,7 @@ variable {A M N : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
   [AddCommGroup M] [UniformSpace M] [IsUniformAddGroup M] [CompleteSpace M]
   [(𝓤 M).IsCountablyGenerated] [NonarchimedeanAddGroup M] [Module A M] [ContinuousSMul A M]
   [AddCommGroup N] [UniformSpace N] [IsUniformAddGroup N] [CompleteSpace N]
-  [(𝓤 N).IsCountablyGenerated] [T0Space N] [Module A N] [ContinuousSMul A N]
+  [(𝓤 N).IsCountablyGenerated] [T0Space N] [Module A N] [ContinuousConstSMul A N]
 
 /-- **The open mapping theorem over a Tate ring.** A surjective `A`-linear map from a complete
 pseudometrisable topological `A`-module onto a complete metrisable one is open, when `A` is a Tate
