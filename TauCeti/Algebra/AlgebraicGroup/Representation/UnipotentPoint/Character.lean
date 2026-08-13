@@ -59,14 +59,16 @@ theorem IsUnipotentPoint.apply_groupLike
   let M : FGComoduleCat.{u, v, u} F C := FGComoduleCat.of (R := F) (C := C) F
   have hdim : Module.finrank L (L ⊗[F] F) = 1 := by
     rw [(TensorProduct.AlgebraTensorModule.rid F L L).finrank_eq, Module.finrank_self]
-  have haction := (hg M).eq_one_of_finrank_eq_one hdim
+  have haction := ((isUnipotentPoint_def g).mp hg M).eq_one_of_finrank_eq_one hdim
   let z : L ⊗[F] F := (1 : L) ⊗ₜ[F] (1 : F)
   have happ := congrArg
     (fun q : LinearMap.GeneralLinearGroup L (L ⊗[F] F) => q • z) haction
   simp only [LinearMap.GeneralLinearGroup.ofLinearEquiv_smul, one_smul] at happ
   have hpoint := DFunLike.congr_fun (Comodule.pointsAction_toLinearMap M g) z
   have hend : Comodule.endOfPoint M g.ofConv z = z := hpoint.symm.trans happ
-  simp only [z, Comodule.endOfPoint_groupLike_tmul, one_mul] at hend
+  simp only [z, Comodule.endOfPoint_tmul, Comodule.groupLike_coact, LinearMap.flip_apply,
+    TensorProduct.mk_apply, LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply,
+    TensorProduct.comm_tmul, TensorProduct.smul_tmul', smul_eq_mul, one_mul] at hend
   have := congrArg (TensorProduct.AlgebraTensorModule.rid F L L) hend
   simpa using this
 

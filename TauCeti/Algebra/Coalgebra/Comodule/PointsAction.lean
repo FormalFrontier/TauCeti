@@ -31,8 +31,6 @@ the functor of points on scalar extensions of `V`.
 
 * `TauCeti.Comodule.endOfPoint`: the endomorphism of `A ⊗[R] V` attached to a point.
 * `TauCeti.Comodule.endOfPoint_corestrict`: compatibility with corestriction in the coalgebra.
-* `TauCeti.Comodule.endOfPoint_groupLike_tmul`: a point acts on a group-like comodule by
-  evaluation at its defining group-like element.
 * `TauCeti.Comodule.endOfPoint_tensor`: point actions preserve the diagonal tensor product.
 * `TauCeti.Comodule.endOfPoint_trivial`: every point acts identically on a trivial comodule.
 * `TauCeti.Comodule.pointsRepresentation`: the action, as a `Representation` of the
@@ -76,15 +74,6 @@ lemma endOfPoint_tmul (g : H →ₐ[R] A) (a : A) (v : V) :
     endOfPoint V g (a ⊗ₜ[R] v) =
       a • TensorProduct.comm R V A (LinearMap.lTensor V g.toLinearMap (coact v)) := by
   simp [endOfPoint]
-
-omit [Comodule R H V] in
-/-- On the comodule with coaction `v ↦ v ⊗ x`, a point acts by the scalar `g x`. -/
-@[simp]
-theorem endOfPoint_groupLike_tmul (x : GroupLike R H) (g : H →ₐ[R] A) (a : A) (v : V) :
-    letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
-    endOfPoint V g (a ⊗ₜ[R] v) = (a * g x) ⊗ₜ[R] v := by
-  simp [endOfPoint_tmul, TensorProduct.smul_tmul', smul_eq_mul]
-
 
 section BaseChange
 
