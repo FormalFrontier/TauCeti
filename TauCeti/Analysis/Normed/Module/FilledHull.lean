@@ -8,29 +8,32 @@ module
 public import Mathlib.Analysis.Normed.Module.Convex
 public import Mathlib.Topology.Connected.Basic
 import Mathlib.Analysis.LocallyConvex.Separation
+-- `NormedSpace.toLocallyConvexSpace`, needed to apply `geometric_hahn_banach_point_closed`.
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 
 /-!
 # Filling in the bounded complementary components of a set
 
-The **filled hull** `TauCeti.filledHull K` of a subset `K` of a real normed space is `K` together
-with the bounded connected components of its complement: the points whose component in `Kᶜ` is
-bounded. Points of `K` qualify vacuously, their component in `Kᶜ` being empty. Filling a circle
-gives the closed disc it bounds; filling a segment, or any set whose complement is connected and
-unbounded, changes nothing.
+The **filled hull** `TauCeti.filledHull K` of a subset `K` of a topological space with a bornology
+is `K` together with the bounded connected components of its complement: the points whose component
+in `Kᶜ` is bounded. Points of `K` qualify vacuously, their component in `Kᶜ` being empty. Filling a
+circle gives the closed disc it bounds; filling a segment, or any set whose complement is connected
+and unbounded, changes nothing.
 
-The one substantial fact is that filling does not make a set wider:
+In a real normed space the one substantial fact is that filling does not make a set wider:
 
 > `TauCeti.filledHull_subset_closure_convexHull` — `filledHull K ⊆ closure (convexHull ℝ K)`,
 
-whence `TauCeti.diam_filledHull`: a bounded nonempty `K` and its filled hull have the same
-diameter. The mechanism is separation: a point `x` outside the closed convex hull of `K` is cut off
+whence `TauCeti.diam_filledHull`: a bounded `K` and its filled hull have the same diameter. The
+mechanism is separation: a point `x` outside the closed convex hull of `K` is cut off
 from it by a continuous linear functional (`geometric_hahn_banach_point_closed`), and the open
 half-space `{y | φ y < u}` so produced is a convex — hence preconnected — subset of `Kᶜ` containing
 `x`, and it is unbounded, running off to infinity along any direction on which `φ` is negative. So
 the component of `x` in `Kᶜ` is unbounded and `x` is not in the filled hull. Nonemptiness of `K` is
-needed only to know that `φ ≠ 0`; for `K = ∅` and a zero-dimensional space the statement is false,
-the hull then being everything and the convex hull empty.
+needed only to know that `φ ≠ 0`; for `K = ∅` and a zero-dimensional space the convex-hull statement
+is false, the hull then being everything and the convex hull empty. The diameter statements survive
+that case unhypothesised, because `TauCeti.subsingleton_filledHull_empty` says `filledHull ∅` is
+empty in a nontrivial space and a point in the zero space, of diameter `0` either way.
 
 Because the width of a filled hull is controlled, so is that of anything inside it, and the shape
 in which this is spent is `TauCeti.IsPreconnected.subset_filledHull`: a preconnected set disjoint
@@ -66,10 +69,12 @@ only that the set is cut off from infinity. Neither implies the other.
 
 ## Generality
 
-Everything is stated for an arbitrary real normed space; nothing about the plane is used, and the
-separation argument is the general Hahn–Banach one. In particular the hull is *not* claimed to be
-closed, connected, or idempotent — none of which is needed downstream, and the first two of which
-fail without hypotheses on `K`.
+The definition and its structural lemmas, up to `TauCeti.IsPreconnected.subset_filledHull`, ask only
+for a topology and a bornology: they are about components and boundedness and use nothing else. The
+width statements are those that need a real normed space, and even they are stated for an arbitrary
+one — nothing about the plane is used, and the separation argument is the general Hahn–Banach one.
+In particular the hull is *not* claimed to be closed, connected, or idempotent — none of which is
+needed downstream, and the first two of which fail without hypotheses on `K`.
 
 ## Main results
 
@@ -77,7 +82,7 @@ fail without hypotheses on `K`.
   `TauCeti.filledHull_mono` its two structural properties.
 * `TauCeti.filledHull_subset_closure_convexHull` — a filled hull lies in the closed convex hull.
 * `TauCeti.diam_filledHull` and `TauCeti.isBounded_filledHull` — filling preserves the diameter of a
-  bounded nonempty set, and in particular its boundedness.
+  bounded set, and in particular its boundedness.
 * `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
   filled hull lies in it.
 * `TauCeti.diam_le_diam_of_subset_filledHull` — hence such a set is no wider than `K`.
@@ -89,13 +94,18 @@ namespace TauCeti
 
 open Bornology Metric Set
 
-variable {E : Type*} [NormedAddCommGroup E] {K L S : Set E} {x : E}
+variable {E : Type*} {K L S : Set E} {x : E}
+
+section Basic
+
+variable [TopologicalSpace E] [Bornology E]
 
 /-- The **filled hull** of a set `K`: the points whose connected component in the complement of `K`
 is bounded. Equivalently, `K` together with the bounded connected components of `Kᶜ`; a point of
 `K` belongs because its component in `Kᶜ` is empty. -/
 def filledHull (K : Set E) : Set E := {x | IsBounded (connectedComponentIn Kᶜ x)}
 
+@[simp]
 theorem mem_filledHull_iff : x ∈ filledHull K ↔ IsBounded (connectedComponentIn Kᶜ x) := Iff.rfl
 
 /-- **A set lies in its filled hull.** For `x ∈ K` the component of `x` in `Kᶜ` is empty, and the
@@ -127,9 +137,13 @@ theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint
   rw [mem_filledHull_iff, ← connectedComponentIn_eq (hScomp hy)]
   exact hxH
 
+end Basic
+
 /-! ## The width of a filled hull -/
 
-variable [NormedSpace ℝ E]
+section Normed
+
+variable [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- **The filled hull lies in the closed convex hull.** A point outside the closed convex hull of a
 nonempty `K` is separated from it by a continuous linear functional; the open half-space this
@@ -178,8 +192,7 @@ theorem filledHull_subset_closure_convexHull (hK : K.Nonempty) :
     have hval : φ (x + t • v) = φ x - t := by
       rw [map_add, map_smul, hφv, smul_eq_mul, mul_neg_one]
       ring
-    change φ (x + t • v) < u
-    rw [hval]
+    simp only [mem_ofPred_eq, hval]
     linarith
   have hbig : t * ‖v‖ ≤ ‖x + t • v‖ + ‖x‖ := by
     have h := norm_sub_le (x + t • v) x
@@ -188,22 +201,40 @@ theorem filledHull_subset_closure_convexHull (hK : K.Nonempty) :
   rw [htv] at hbig
   linarith [norm_nonneg x]
 
+/-- **The filled hull of the empty set is a subsingleton.** In a nontrivial space it is empty: the
+whole space is convex, hence preconnected, and unbounded, so every component of `∅ᶜ = univ` is
+unbounded. In the zero space it is that space, a single point. Either way it is as wide as `∅`,
+which is why the diameter statements below need no nonemptiness hypothesis. -/
+theorem subsingleton_filledHull_empty : (filledHull (∅ : Set E)).Subsingleton := by
+  rcases subsingleton_or_nontrivial E with _ | _
+  · exact fun a _ b _ => Subsingleton.elim a b
+  · intro y hy
+    rw [mem_filledHull_iff, compl_empty] at hy
+    exact absurd (hy.subset ((convex_univ (𝕜 := ℝ)).isPreconnected.subset_connectedComponentIn
+      (mem_univ y) subset_rfl)) (NormedSpace.unbounded_univ ℝ E)
+
 /-- **A bounded set has a bounded filled hull.** -/
-theorem isBounded_filledHull (hKb : IsBounded K) (hK : K.Nonempty) : IsBounded (filledHull K) :=
-  ((isBounded_convexHull.mpr hKb).closure).subset (filledHull_subset_closure_convexHull hK)
+theorem isBounded_filledHull (hKb : IsBounded K) : IsBounded (filledHull K) := by
+  rcases K.eq_empty_or_nonempty with rfl | hK
+  · exact subsingleton_filledHull_empty.finite.isBounded
+  · exact ((isBounded_convexHull.mpr hKb).closure).subset (filledHull_subset_closure_convexHull hK)
 
 /-- **Filling preserves the diameter.** The hull contains `K`, and is contained in the closed convex
 hull of `K`, which by `convexHull_diam` and `Metric.diam_closure` is exactly as wide as `K`. -/
-theorem diam_filledHull (hKb : IsBounded K) (hK : K.Nonempty) : diam (filledHull K) = diam K := by
-  refine le_antisymm ?_ (diam_mono subset_filledHull (isBounded_filledHull hKb hK))
+theorem diam_filledHull (hKb : IsBounded K) : diam (filledHull K) = diam K := by
+  rcases K.eq_empty_or_nonempty with rfl | hK
+  · rw [diam_subsingleton subsingleton_filledHull_empty, diam_empty]
+  refine le_antisymm ?_ (diam_mono subset_filledHull (isBounded_filledHull hKb))
   calc diam (filledHull K) ≤ diam (closure (convexHull ℝ K)) :=
         diam_mono (filledHull_subset_closure_convexHull hK) ((isBounded_convexHull.mpr hKb).closure)
     _ = diam K := by rw [diam_closure, convexHull_diam]
 
 /-- **A set inside a filled hull is no wider than the set filled.** This is the form the diameter
 bound is spent in: it converts "cut off from infinity by a small set" into "small". -/
-theorem diam_le_diam_of_subset_filledHull (hKb : IsBounded K) (hK : K.Nonempty)
-    (h : S ⊆ filledHull K) : diam S ≤ diam K :=
-  (diam_mono h (isBounded_filledHull hKb hK)).trans (diam_filledHull hKb hK).le
+theorem diam_le_diam_of_subset_filledHull (hKb : IsBounded K) (h : S ⊆ filledHull K) :
+    diam S ≤ diam K :=
+  (diam_mono h (isBounded_filledHull hKb)).trans (diam_filledHull hKb).le
+
+end Normed
 
 end TauCeti
