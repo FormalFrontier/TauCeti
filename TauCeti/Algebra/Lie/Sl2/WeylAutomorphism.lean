@@ -16,7 +16,7 @@ public section
 Let `t : IsSl2Triple h e f` be an `sl₂` triple in a Lie algebra `L` whose raising and lowering
 elements act nilpotently. Its **Weyl automorphism** is the inner automorphism
 
-`TauCeti.weylAut he hf = exp (ad e) ∘ exp (ad (-f)) ∘ exp (ad e)`,
+`TauCeti.weylAut t he hf = exp (ad e) ∘ exp (ad (-f)) ∘ exp (ad e)`,
 
 Chevalley's `τ` and the Lie-algebra shadow of the group element `n_α = x_α(1) x_{-α}(-1) x_α(1)`
 that represents the reflection `s_α` in the Weyl group. It negates the whole triple,
@@ -29,9 +29,9 @@ and `f` by the opposite scalars `c` and `-c` is sent to `y - c • h`, which on 
 is the coreflection in `α`, and `TauCeti.lie_weylAut_apply` then transports a simultaneous
 eigenvector along it: a `z` with `⁅y, z⁆ = d • z` and `⁅h, z⁆ = m • z` has
 
-`⁅y, weylAut he hf z⁆ = (d - c * m) • weylAut he hf z`,
+`⁅y, weylAut t he hf z⁆ = (d - c * m) • weylAut t he hf z`,
 
-so `weylAut he hf z` is again an eigenvector, now for the reflected weight `β - β(h) • α`.
+so `weylAut t he hf z` is again an eigenvector, now for the reflected weight `β - β(h) • α`.
 
 Everything up to that point is stated for a bare `sl₂` triple over a commutative ring `K`, in terms
 of brackets alone: no Cartan subalgebra, no weight-space decomposition and no finiteness. What it
@@ -53,7 +53,8 @@ structure constants (Humphreys §25.2).
 
 ## Main definitions
 
-* `TauCeti.weylAut`: the automorphism `exp (ad e) ∘ exp (ad (-f)) ∘ exp (ad e)`.
+* `TauCeti.weylAut`: the automorphism `exp (ad e) ∘ exp (ad (-f)) ∘ exp (ad e)` of an `sl₂`
+  triple `t : IsSl2Triple h e f`.
 
 ## Main results
 
@@ -81,22 +82,25 @@ section CommRing
 
 variable {K L : Type*} [CommRing K] [LieRing L] [LieAlgebra K L] [LieAlgebra ℚ L] {h e f : L}
 
-/-- The **Weyl automorphism** `exp (ad e) ∘ exp (ad (-f)) ∘ exp (ad e)` of a pair of
-`ad`-nilpotent elements.
+/-- The **Weyl automorphism** `exp (ad e) ∘ exp (ad (-f)) ∘ exp (ad e)` of an `sl₂` triple
+`t : IsSl2Triple h e f` whose raising and lowering elements act nilpotently: the automorphism
+realising the reflection in the root of `e`.
 
-The name records the intended input, an `sl₂` triple `IsSl2Triple h e f`, for which this is the
-automorphism realising the reflection in the root of `e`; the construction itself does not need the
-triple relations, and every result below that uses them assumes them explicitly. -/
-noncomputable def weylAut (he : IsNilpotent (ad K L e)) (hf : IsNilpotent (ad K L f)) :
-    L ≃ₗ⁅K⁆ L :=
+The triple is an argument although the composite itself is a function of `e` and `f` alone, so that
+the interface asks for the input the name and the results below are about; the reflection is visible
+only in the presence of the triple relations, which every result below assumes through `t`. -/
+noncomputable def weylAut (_t : IsSl2Triple h e f) (he : IsNilpotent (ad K L e))
+    (hf : IsNilpotent (ad K L f)) : L ≃ₗ⁅K⁆ L :=
   (expAd e he).trans ((expAd (-f) (by simpa using hf.neg)).trans (expAd e he))
 
 variable (he : IsNilpotent (ad K L e)) (hf : IsNilpotent (ad K L f))
   (hf' : IsNilpotent (ad K L (-f)))
 
-/-- The Weyl automorphism as the threefold composite it is defined to be. -/
-lemma weylAut_apply (y : L) :
-    weylAut he hf y = expAd e he (expAd (-f) hf' (expAd e he y)) := by
+/-- The Weyl automorphism as the threefold composite it is defined to be. The nilpotency of
+`ad (-f)` is not asked of the caller: it is `hf.neg`, and any two proofs of it agree. -/
+lemma weylAut_apply (t : IsSl2Triple h e f) (y : L) :
+    weylAut t he hf y =
+      expAd e he (expAd (K := K) (-f) (by simpa using hf.neg) (expAd e he y)) := by
   rw [weylAut]
   rfl
 
@@ -144,7 +148,7 @@ lemma expAd_neg_f_apply_e (t : IsSl2Triple h e f) : expAd (-f) hf' e = e + h - f
 
 /-- The Weyl automorphism negates `h`. -/
 @[simp]
-lemma weylAut_apply_h (t : IsSl2Triple h e f) : weylAut he hf h = -h := by
+lemma weylAut_apply_h (t : IsSl2Triple h e f) : weylAut t he hf h = -h := by
   have hf' : IsNilpotent (ad K L (-f)) := by simpa using hf.neg
   have s₁ : expAd (-f) hf' (h - 2 • e) = -h - 2 • e := by
     simp only [map_sub, map_nsmul, expAd_neg_f_apply_h hf' t, expAd_neg_f_apply_e hf' t]
@@ -152,32 +156,35 @@ lemma weylAut_apply_h (t : IsSl2Triple h e f) : weylAut he hf h = -h := by
   have s₂ : expAd e he (-h - 2 • e) = -h := by
     simp only [map_sub, map_neg, map_nsmul, expAd_e_apply_h he t, expAd_apply_self e he]
     abel
-  rw [weylAut_apply he hf hf', expAd_e_apply_h he t, s₁, s₂]
+  rw [weylAut_apply he hf t, expAd_e_apply_h he t, s₁, s₂]
 
 /-- The Weyl automorphism sends the raising element to minus the lowering element. -/
-lemma weylAut_apply_e (t : IsSl2Triple h e f) : weylAut he hf e = -f := by
+@[simp]
+lemma weylAut_apply_e (t : IsSl2Triple h e f) : weylAut t he hf e = -f := by
   have hf' : IsNilpotent (ad K L (-f)) := by simpa using hf.neg
   have s₁ : expAd e he (e + h - f) = -f := by
     simp only [map_sub, map_add, expAd_apply_self e he, expAd_e_apply_h he t,
       expAd_e_apply_f he t]
     abel
-  rw [weylAut_apply he hf hf', expAd_apply_self e he, expAd_neg_f_apply_e hf' t, s₁]
+  rw [weylAut_apply he hf t, expAd_apply_self e he, expAd_neg_f_apply_e hf' t, s₁]
 
 /-- The Weyl automorphism sends the lowering element to minus the raising element. -/
-lemma weylAut_apply_f (t : IsSl2Triple h e f) : weylAut he hf f = -e := by
+@[simp]
+lemma weylAut_apply_f (t : IsSl2Triple h e f) : weylAut t he hf f = -e := by
   have hf' : IsNilpotent (ad K L (-f)) := by simpa using hf.neg
   have hff : expAd (-f) hf' f = f := expAd_apply_of_lie_eq_zero hf' (by simp)
   have s₁ : expAd (-f) hf' (f + h - e) = -e := by
     simp only [map_sub, map_add, hff, expAd_neg_f_apply_h hf' t, expAd_neg_f_apply_e hf' t]
     abel
-  rw [weylAut_apply he hf hf', expAd_e_apply_f he t, s₁, map_neg, expAd_apply_self e he]
+  rw [weylAut_apply he hf t, expAd_e_apply_f he t, s₁, map_neg, expAd_apply_self e he]
 
 /-- The Weyl automorphism fixes the joint centraliser of `e` and `f`. -/
-lemma weylAut_apply_of_lie_eq_zero {y : L} (hye : ⁅y, e⁆ = 0) (hyf : ⁅y, f⁆ = 0) :
-    weylAut he hf y = y := by
+lemma weylAut_apply_of_lie_eq_zero (t : IsSl2Triple h e f) {y : L} (hye : ⁅y, e⁆ = 0)
+    (hyf : ⁅y, f⁆ = 0) :
+    weylAut t he hf y = y := by
   have hf' : IsNilpotent (ad K L (-f)) := by simpa using hf.neg
   have hey : ⁅e, y⁆ = 0 := by rw [← lie_skew e y, hye, neg_zero]
-  rw [weylAut_apply he hf hf', expAd_apply_of_lie_eq_zero he hey,
+  rw [weylAut_apply he hf t, expAd_apply_of_lie_eq_zero he hey,
     expAd_apply_of_lie_eq_zero hf' (by rw [neg_lie, ← lie_skew f y, hyf]; simp),
     expAd_apply_of_lie_eq_zero he hey]
 
@@ -188,7 +195,7 @@ an `sl₂` triple of a root `α` inside a Cartan subalgebra, an element `y` with
 by the Weyl automorphism to `y - c • h`. This is the coreflection `y ↦ y - α y • α^∨`. -/
 lemma weylAut_apply_of_lie_eq_smul (t : IsSl2Triple h e f) {y : L} {c : K}
     (hye : ⁅y, e⁆ = c • e) (hyf : ⁅y, f⁆ = -(c • f)) :
-    weylAut he hf y = y - c • h := by
+    weylAut t he hf y = y - c • h := by
   have hf' : IsNilpotent (ad K L (-f)) := by simpa using hf.neg
   have hey : ⁅e, y⁆ = -(c • e) := by rw [← lie_skew e y, hye]
   have hfy : ⁅-f, y⁆ = -(c • f) := by rw [neg_lie, ← lie_skew f y, hyf]; simp
@@ -202,12 +209,12 @@ lemma weylAut_apply_of_lie_eq_smul (t : IsSl2Triple h e f) {y : L} {c : K}
     simp only [map_sub, map_add, map_smul, h₁, expAd_apply_self e he, expAd_e_apply_h he t,
       expAd_e_apply_f he t]
     module
-  rw [weylAut_apply he hf hf', h₁, h₃, h₄]
+  rw [weylAut_apply he hf t, h₁, h₃, h₄]
 
 /-- The Weyl automorphism is an involution on the elements the reflection formula applies to. -/
 lemma weylAut_apply_sub_smul (t : IsSl2Triple h e f) {y : L} {c : K}
     (hye : ⁅y, e⁆ = c • e) (hyf : ⁅y, f⁆ = -(c • f)) :
-    weylAut he hf (y - c • h) = y := by
+    weylAut t he hf (y - c • h) = y := by
   have h₁ : ⁅y - c • h, e⁆ = (-c) • e := by
     rw [sub_lie, hye, smul_lie, t.lie_h_e_smul K, smul_smul, neg_smul]
     module
@@ -223,14 +230,14 @@ automorphism is again an eigenvector of `y`, with the reflected eigenvalue `d - 
 lemma lie_weylAut_apply (t : IsSl2Triple h e f) {y z : L} {c d m : K}
     (hye : ⁅y, e⁆ = c • e) (hyf : ⁅y, f⁆ = -(c • f)) (hyz : ⁅y, z⁆ = d • z)
     (hhz : ⁅h, z⁆ = m • z) :
-    ⁅y, weylAut he hf z⁆ = (d - c * m) • weylAut he hf z := by
+    ⁅y, weylAut t he hf z⁆ = (d - c * m) • weylAut t he hf z := by
   have key : ⁅y - c • h, z⁆ = (d - c * m) • z := by
     rw [sub_lie, hyz, smul_lie, hhz, smul_smul, sub_smul]
-  calc ⁅y, weylAut he hf z⁆
-      = ⁅weylAut he hf (y - c • h), weylAut he hf z⁆ := by
+  calc ⁅y, weylAut t he hf z⁆
+      = ⁅weylAut t he hf (y - c • h), weylAut t he hf z⁆ := by
         rw [weylAut_apply_sub_smul he hf t hye hyf]
-    _ = weylAut he hf ⁅y - c • h, z⁆ := (LieEquiv.map_lie _ _ _).symm
-    _ = (d - c * m) • weylAut he hf z := by rw [key, map_smul]
+    _ = weylAut t he hf ⁅y - c • h, z⁆ := (LieEquiv.map_lie _ _ _).symm
+    _ = (d - c * m) • weylAut t he hf z := by rw [key, map_smul]
 
 end CommRing
 
@@ -248,7 +255,7 @@ hypotheses, so it is supplied here rather than asked of the caller. -/
 theorem weylAut_mem_rootSpace [LieAlgebra ℚ L] {α : Weight K H L} (t : IsSl2Triple h e f)
     (heα : e ∈ rootSpace H α) (hfα : f ∈ rootSpace H (-α)) (hα : α.IsNonZero)
     {β : H → K} {z : L} (hz : z ∈ rootSpace H β) :
-    weylAut (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
+    weylAut t (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
         (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑(-α)) hα.neg hfα) z ∈
       rootSpace H (β - β (coroot α) • ⇑α) := by
   set he := isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα
@@ -274,11 +281,11 @@ back into the root space of `β`, together with a dimension count. -/
 theorem weylAut_map_rootSpace [LieAlgebra ℚ L] {α : Weight K H L} (t : IsSl2Triple h e f)
     (heα : e ∈ rootSpace H α) (hfα : f ∈ rootSpace H (-α)) (hα : α.IsNonZero) (β : H → K) :
     (rootSpace H β).toSubmodule.map
-        ((weylAut (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
+        ((weylAut t (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
           (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑(-α)) hα.neg hfα)).toLinearEquiv :
             L →ₗ[K] L) =
       (rootSpace H (β - β (coroot α) • ⇑α)).toSubmodule := by
-  set τ := (weylAut (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
+  set τ := (weylAut t (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
     (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑(-α)) hα.neg hfα)).toLinearEquiv
   -- the reflection is an involution on weights, so `τ` sends the reflected root space back
   have hrefl : ∀ γ : H → K,
@@ -308,7 +315,7 @@ theorem exists_lieEquiv_forall_mem_rootSpace {α : Weight K H L} (hα : α.IsNon
       τ z ∈ rootSpace H (β - β (coroot α) • ⇑α) := by
   let _ : LieAlgebra ℚ L := ratLieAlgebra K L
   obtain ⟨h, e, f, t, heα, hfα⟩ := exists_isSl2Triple_of_weight_isNonZero hα
-  exact ⟨weylAut (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
+  exact ⟨weylAut t (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑α) hα heα)
     (isNilpotent_ad_of_mem_rootSpace H (χ := ⇑(-α)) hα.neg hfα),
     fun β z hz ↦ weylAut_mem_rootSpace t heα hfα hα hz⟩
 
