@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Combinatorics.SimpleGraph.PathGraph
+import Mathlib.Combinatorics.SimpleGraph.Ends.Defs
 
 public section
 
@@ -77,32 +78,17 @@ noncomputable def IsTree.neighborSetEquivConnectedComponentCompl (hG : G.IsTree)
     have heq := hG.isAcyclic.subsingleton_path x y |>.elim qG ⟨r, hr⟩
     have hsupp := congrArg (fun p : G.Path x y => p.val.support) heq
     exact hcq (by rw [hsupp]; simp [r])
-  -- Surjectivity: the unique path from `c` to a vertex of the component starts with a neighbour of
-  -- `c`, and its tail stays in the complement.
+  -- Surjectivity follows from the boundary pair supplied by connectedness.
   · intro C
-    obtain ⟨z, hz⟩ := C.nonempty_supp
-    let p : G.Path c z := (hG.connected.preconnected c z).some.toPath
-    have hcz : c ≠ (z : V) := (Set.mem_compl_singleton_iff.mp z.property).symm
-    have hpnon : ¬p.val.Nil := Walk.not_nil_of_ne hcz
-    let a : V := p.val.snd
-    have hca : G.Adj c a := p.val.adj_snd hpnon
-    let aN : ↥(G.neighborSet c) := ⟨a, hca⟩
-    have htailc : c ∉ p.val.tail.support := by
-      have hnodup := p.isPath.support_nodup
-      rw [← p.val.cons_tail_support] at hnodup
-      rw [p.val.support_tail_of_not_nil hpnon]
-      exact (List.nodup_cons.mp hnodup).1
-    have htailS : ∀ x ∈ p.val.tail.support, x ∈ ({c}ᶜ : Set V) := fun x hx =>
-      Set.mem_compl_singleton_iff.mpr fun h => htailc (h ▸ hx)
-    let pt := p.val.tail.induce ({c}ᶜ : Set V) htailS
-    have hstart :
-        (⟨p.val.snd, htailS _ p.val.tail.start_mem_support⟩ : ↥({c}ᶜ : Set V)) = toCompl aN :=
-      Subtype.ext rfl
-    have hend : (⟨z, htailS _ p.val.tail.end_mem_support⟩ : ↥({c}ᶜ : Set V)) = z := Subtype.ext rfl
+    obtain ⟨⟨a, z⟩, haC, hzc, haz⟩ :=
+      ComponentCompl.exists_adj_boundary_pair (G := G) (K := {c})
+        hG.connected.preconnected (Set.singleton_nonempty c) C
+    have hzc' : z = c := Set.mem_singleton_iff.mp hzc
+    subst z
+    let aN : ↥(G.neighborSet c) := ⟨a, haz.symm⟩
     refine ⟨aN, ?_⟩
     dsimp only [f]
-    rw [← (C.mem_supp_iff z).mp hz]
-    exact ConnectedComponent.sound ⟨pt.copy hstart hend⟩
+    rw [← haC.choose_spec]
 
 /-- The equivalence sends a neighbour to the connected component containing that neighbour. -/
 @[simp] theorem IsTree.neighborSetEquivConnectedComponentCompl_apply (hG : G.IsTree) (c : V)
@@ -122,19 +108,20 @@ theorem IsTree.exists_equiv_pathGraph_components [Fintype V] [DecidableEq V] [De
     (hG : G.IsTree) (c : V) {n : ℕ} (hc : G.degree c = n)
     (hdeg : ∀ v, (G.induce ({c}ᶜ : Set V)).degree v ≤ 2) :
     ∃ e : Fin n ≃ (G.induce ({c}ᶜ : Set V)).ConnectedComponent,
-      ∀ i, Nonempty ((e i).toSimpleGraph ≃g pathGraph (Nat.card (e i))) := by
+      ∀ i, Nonempty ((e i).toSimpleGraph ≃g
+        pathGraph (Nat.card ↥(ConnectedComponent.supp (e i)))) := by
   let H : SimpleGraph ↥({c}ᶜ : Set V) := G.induce ({c}ᶜ : Set V)
   have hcard : Fintype.card ↥(G.neighborSet c) = n := by
     rw [card_neighborSet_eq_degree, hc]
   let e := (Fintype.equivFinOfCardEq hcard).symm.trans
     (TauCeti.IsTree.neighborSetEquivConnectedComponentCompl hG c)
   refine ⟨e, fun i => ?_⟩
-  let _ : Fintype (e i) := Fintype.ofFinite _
+  let _ : Fintype ↥(ConnectedComponent.supp (e i)) := Fintype.ofFinite _
   let _ : DecidableRel (e i).toSimpleGraph.Adj := Classical.decRel _
   have hH : H.IsAcyclic := hG.isAcyclic.comap
     (Embedding.induce (G := G) ({c}ᶜ : Set V)).toHom
     (Embedding.induce (G := G) ({c}ᶜ : Set V)).injective
-  have hdegree (v : e i) : (e i).toSimpleGraph.degree v ≤ 2 :=
+  have hdegree (v : ↥(ConnectedComponent.supp (e i))) : (e i).toSimpleGraph.degree v ≤ 2 :=
     le_trans (((e i).toSimpleGraph_hom.toCopy Subtype.val_injective).degree_le v) (hdeg v.val)
   rw [Nat.card_eq_fintype_card]
   exact TauCeti.IsTree.nonempty_iso_pathGraph_of_degree_le_two
