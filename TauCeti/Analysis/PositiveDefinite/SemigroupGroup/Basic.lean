@@ -349,7 +349,7 @@ nonnegative real scalar. -/
 theorem smul_of_nonneg {r : ℝ} (hr : 0 ≤ r) (hF : IsSemigroupGroupPD F) :
     IsSemigroupGroupPD fun x => r • F x :=
   IsSemigroupGroupPD.of_posSemidef <|
-    posSemidef_smul hr hF.posSemidef
+    hF.posSemidef.smul (α := ℝ) hr
 
 /-- Semigroup-group positive-definite functions are closed under pointwise multiplication
 (Schur product). -/

@@ -35,7 +35,6 @@ Mathlib's `Matrix.PosSemidef` rather than introducing a second predicate.
 
 * `TauCeti.posSemidef_one` and
   `TauCeti.posSemidef_const_of_nonneg`: constant positive-definite kernels.
-* `TauCeti.posSemidef_smul`: closure under nonnegative real scalar multiples.
 * `TauCeti.posSemidef_iff`: the quadratic-form characterization, whose reverse
   direction builds a positive-definite kernel from conjugate symmetry and form nonnegativity.
 * `TauCeti.posSemidef_conj_mul`: the rank-one kernels
@@ -53,19 +52,6 @@ universe u v z
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 variable {α : Type v}
-
-private theorem real_smul_kernel_eq (r : ℝ) (K : α → α → 𝕜) :
-    (fun a b => r • K a b) = (r : 𝕜) • K := by
-  ext a b
-  exact Algebra.smul_def r (K a b)
-
-/-- Nonnegative real scalar multiples of positive-definite kernels are positive definite. -/
-theorem posSemidef_smul {K : α → α → 𝕜} {r : ℝ} (hr : 0 ≤ r)
-    (hK : Matrix.PosSemidef K) :
-    Matrix.PosSemidef (fun a b => r • K a b) := by
-  have hr' : 0 ≤ (r : 𝕜) := by exact_mod_cast hr
-  rw [real_smul_kernel_eq]
-  exact hK.smul hr'
 
 private theorem posSemidef_of_support_posSemidef (K : α → α → 𝕜)
     (hHerm : (Matrix.of fun a b => K a b).IsHermitian) (hgram : ∀ x : α →₀ 𝕜,
