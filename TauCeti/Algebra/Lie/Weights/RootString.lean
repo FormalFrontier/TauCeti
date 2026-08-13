@@ -170,33 +170,30 @@ theorem lie_ne_zero_of_mem_rootSpace {α β : Weight K H L} (hα : α.IsNonZero)
 /-- The bracket with a non-zero root vector of `α` maps the root space of `β` *onto* the root
 space of `α + β`. Together with `TauCeti.lie_ne_zero_of_mem_rootSpace` this is the statement
 `⁅Lα, Lβ⁆ = L(α + β)` for roots `α`, `β` whose sum is a root. -/
-theorem exists_mem_rootSpace_lie_eq {α β γ : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero)
-    (hγ₀ : γ.IsNonZero) (hγ : (γ : H → K) = ⇑α + ⇑β) {e : L} (he : e ∈ rootSpace H α)
-    (he₀ : e ≠ 0) {z : L} (hz : z ∈ rootSpace H γ) : ∃ y ∈ rootSpace H β, ⁅e, y⁆ = z := by
+theorem exists_mem_rootSpace_lie_eq {α β : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero)
+    (hαβ : ⇑α + ⇑β ≠ 0) (h_ne_bot : rootSpace H (α + β) ≠ ⊥) {e : L} (he : e ∈ rootSpace H α)
+    (he₀ : e ≠ 0) {z : L} (hz : z ∈ rootSpace H (α + β)) :
+    ∃ y ∈ rootSpace H β, ⁅e, y⁆ = z := by
   obtain ⟨y₀, hy₀, hy₀'⟩ := β.exists_ne_zero
-  have h_ne_bot : rootSpace H (α + β) ≠ ⊥ := by
-    rw [← hγ]
-    exact γ.genWeightSpace_ne_bot
   have h₁ : ⁅e, y₀⁆ ≠ 0 :=
     lie_ne_zero_of_mem_rootSpace hα hβ h_ne_bot he he₀ hy₀ hy₀'
-  have h₂ : ⁅e, y₀⁆ ∈ rootSpace H γ := by
-    rw [hγ]
-    exact lie_mem_genWeightSpace_of_mem_genWeightSpace he hy₀
+  have h₂ : ⁅e, y₀⁆ ∈ rootSpace H (α + β) :=
+    lie_mem_genWeightSpace_of_mem_genWeightSpace he hy₀
   obtain ⟨c, rfl⟩ : ∃ c : K, c • ⁅e, y₀⁆ = z :=
     Submodule.mem_span_singleton.mp <| by
-      rwa [← toSubmodule_rootSpace_eq_span γ hγ₀ _ h₁ h₂]
+      rwa [← toSubmodule_rootSpace_eq_span (⟨_, h_ne_bot⟩ : Weight K H L) hαβ _ h₁ h₂]
   exact ⟨c • y₀, SMulMemClass.smul_mem c hy₀, lie_smul c e y₀⟩
 
 /-- The structure constant of a triple of root vectors exists: the bracket of a root vector of `α`
 with one of `β` is a multiple of any non-zero root vector of `α + β`. -/
-theorem exists_lie_eq_smul {α β γ : Weight K H L} (hγ₀ : γ.IsNonZero)
-    (hγ : (γ : H → K) = ⇑α + ⇑β) {e y z : L} (he : e ∈ rootSpace H α) (hy : y ∈ rootSpace H β)
-    (hz : z ∈ rootSpace H γ) (hz₀ : z ≠ 0) : ∃ N : K, ⁅e, y⁆ = N • z := by
-  have h₂ : ⁅e, y⁆ ∈ rootSpace H γ := by
-    rw [hγ]
-    exact lie_mem_genWeightSpace_of_mem_genWeightSpace he hy
+theorem exists_lie_eq_smul {α β : Weight K H L} (hαβ : ⇑α + ⇑β ≠ 0) {e y z : L}
+    (he : e ∈ rootSpace H α) (hy : y ∈ rootSpace H β) (hz : z ∈ rootSpace H (α + β))
+    (hz₀ : z ≠ 0) : ∃ N : K, ⁅e, y⁆ = N • z := by
+  have h_ne_bot : rootSpace H (α + β) ≠ ⊥ := fun h => hz₀ (by simpa [h] using hz)
+  have h₂ : ⁅e, y⁆ ∈ rootSpace H (α + β) :=
+    lie_mem_genWeightSpace_of_mem_genWeightSpace he hy
   refine (Submodule.mem_span_singleton.mp ?_).imp fun c hc => hc.symm
-  rwa [← toSubmodule_rootSpace_eq_span γ hγ₀ _ hz₀ hz]
+  rwa [← toSubmodule_rootSpace_eq_span (⟨_, h_ne_bot⟩ : Weight K H L) hαβ _ hz₀ hz]
 
 /-- A structure constant of a pair of roots whose sum is a root is non-zero. -/
 theorem ne_zero_of_lie_eq_smul {α β : Weight K H L} (hα : α.IsNonZero)
