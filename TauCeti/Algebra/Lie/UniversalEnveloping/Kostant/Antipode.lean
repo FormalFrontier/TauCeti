@@ -6,8 +6,8 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Antipode
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import TauCeti.Algebra.Polynomial.Smeval
 public import TauCeti.RingTheory.Binomial
-public import Mathlib.Algebra.Ring.Subring.MulOpposite
 
 public section
 
@@ -91,11 +91,7 @@ theorem antipode_ringChoose (n : ℕ) :
   simp only [Nat.cast_smul_eq_nsmul]
   rw [← MulOpposite.unop_smul, ← Ring.descPochhammer_eq_factorial_smul_choose,
     ← Ring.descPochhammer_eq_factorial_smul_choose]
-  generalize descPochhammer ℤ n = p
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => simp only [Polynomial.smeval_add, MulOpposite.unop_add, hp, hq]
-  | monomial k c => simp only [Polynomial.smeval_monomial, MulOpposite.unop_smul,
-      MulOpposite.unop_pow]
+  exact Polynomial.unop_smeval _ _
 
 end Generators
 
