@@ -150,19 +150,6 @@ theorem rootSubgroupPointsMap_app (hij : i ≠ j) (A : CommAlgCat.{w} R) :
       GrpCat.ofHom (rootSubgroupPoints hij) :=
   (rfl)
 
-/-- Every component of the natural points map is injective. -/
-theorem rootSubgroupPointsMap_app_injective (hij : i ≠ j) (A : CommAlgCat.{w} R) :
-    Function.Injective ((rootSubgroupPointsMap (R := R) (N := N) hij).app A) := by
-  rw [rootSubgroupPointsMap_app]
-  exact rootSubgroupPoints_injective hij
-
-/-- The natural points map sends an `A`-point of `𝔾ₐ` to the elementary matrix of its parameter. -/
-theorem pointsMulEquiv_rootSubgroupPointsMap_app (hij : i ≠ j) (A : CommAlgCat.{w} R)
-    (f : HopfAlgebra.points (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) A) :
-    pointsMulEquiv N ((rootSubgroupPointsMap hij).app A f) =
-      transvectionUnit hij (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f)) :=
-  pointsMulEquiv_rootSubgroupPoints hij f
-
 end Functor
 
 section Scheme
