@@ -70,6 +70,12 @@ noncomputable def evalTensorEquiv :
     ConvolutionDual k H ⊗[k] ConvolutionDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) :=
   (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
 
+private theorem evalTensorEquiv_apply
+    (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (z : H ⊗[k] H) :
+    evalTensorEquiv k H w z =
+      TensorProduct.dualDistrib k H H ((tensorUnwrap k H) w) z :=
+  rfl
+
 /-- The private construction used for the finite-dimensional dual comultiplication. -/
 private noncomputable def comulAux :
     ConvolutionDual k H →ₗ[k] ConvolutionDual k H ⊗[k] ConvolutionDual k H :=
@@ -338,7 +344,9 @@ noncomputable instance instBialgebra : Bialgebra k (ConvolutionDual k H) :=
       rw [← evalTensorConv_ofConv, ← evalTensorConv_ofConv, evalTensorConv_mul,
         evalTensorConv_comul, evalTensorConv_comul, evalTensorConv_comul]
       have h := LinearMap.convMul_comp_coalgHom_distrib phi psi (Bialgebra.mulCoalgHom k H)
-      rw [show (Bialgebra.mulCoalgHom k H).toLinearMap = LinearMap.mul' k H from rfl] at h
+      have hmul : (Bialgebra.mulCoalgHom k H).toLinearMap = LinearMap.mul' k H :=
+        Bialgebra.toLinearMap_mulCoalgHom
+      rw [hmul] at h
       simpa only [WithConv.toConv_ofConv] using h)
 
 end ConvolutionDual
@@ -359,10 +367,7 @@ private theorem evalTensorEquiv_comm_apply
     | zero => simp
     | add w₁ w₂ hw₁ hw₂ => simpa only [map_add] using congrArg₂ (· + ·) hw₁ hw₂
     | tmul phi psi => simp [tensorUnwrap]
-  change TensorProduct.dualDistrib k H H
-      ((tensorUnwrap k H) (TensorProduct.comm k _ _ w)) (x ⊗ₜ[k] y) =
-    TensorProduct.dualDistrib k H H ((tensorUnwrap k H) w) (y ⊗ₜ[k] x)
-  rw [hcomm]
+  rw [evalTensorEquiv_apply, evalTensorEquiv_apply, hcomm]
   exact (TensorProduct.dualDistrib_apply_comm ((tensorUnwrap k H) w) (x ⊗ₜ[k] y)).symm
 
 /-- The coalgebra underlying the finite dual is cocommutative. -/
