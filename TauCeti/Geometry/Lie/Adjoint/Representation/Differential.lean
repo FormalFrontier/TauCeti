@@ -154,7 +154,7 @@ theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivatio
       mvfderiv I AY 1 (eLie X) = dOp Y := by
     rw [hAY, mvfderiv_apply_eq_mfderiv_apply, hComp]
     change ((ContinuousLinearMap.apply ℝ (LeftInvariantDerivation I G)) Y) dOp = dOp Y
-    rfl
+    exact ContinuousLinearMap.apply_apply Y dOp
   calc
     dOp Y = mvfderiv I AY 1 (eLie X) := hCompAY.symm
     _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
