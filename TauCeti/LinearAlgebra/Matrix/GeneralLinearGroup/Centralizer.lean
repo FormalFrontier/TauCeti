@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `Matrix.scalar` occurs in the statements below.
-public import Mathlib.LinearAlgebra.Matrix.Notation
 -- `Subgroup.centralizer` occurs in the statements below, and
 -- `TauCeti.mem_centralizer_singleton_iff_commute_val` reads membership in it on matrices.
 public import TauCeti.Algebra.Group.Subgroup.Centralizer

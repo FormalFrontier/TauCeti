@@ -15,8 +15,8 @@ public import Mathlib.LinearAlgebra.Matrix.IsDiag
 public import Mathlib.GroupTheory.Subgroup.Centralizer
 -- `Nat.card` occurs in the statement of `TauCeti.natCard_diagonalTorus`.
 public import Mathlib.SetTheory.Cardinal.Finite
--- Non-public: the number of units of a field is used only inside the proof of
--- `TauCeti.natCard_diagonalTorus`, so downstream importers do not pay for it.
+-- Non-public: `Nat.card_units`, the number of units of a `GroupWithZero`, is used only inside the
+-- proof of `TauCeti.natCard_diagonalTorus`, so downstream importers do not pay for it.
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
 
 /-!
@@ -37,7 +37,7 @@ the **diagonal torus** of `GL n k`, and what makes it a *maximal* torus is prove
 
 Three descriptions of the same subgroup are given.  It is the range of `diagGL`, so it is
 isomorphic as a group to the coordinatewise units `Fin n → kˣ`
-(`TauCeti.diagonalTorusEquiv`), whence its order `(q - 1)ⁿ` over a field with `q` elements
+(`TauCeti.diagonalTorusEquiv`), whence its order `(q - 1)ⁿ` over a division ring with `q` elements
 (`TauCeti.natCard_diagonalTorus`).  It is cut out inside `GL n k` by a condition on matrix entries:
 an invertible matrix lies in it exactly when it is diagonal (`TauCeti.mem_diagonalTorus_iff`),
 the point being that invertibility upgrades the diagonal entries of a diagonal matrix to units
@@ -46,8 +46,9 @@ the point being that invertibility upgrades the diagonal entries of a diagonal m
 `GL n k` contains it and is commutative.
 
 The embedding, the torus, the equivalence and the membership criterion ask only that `k` be a
-semiring; commutativity of `k` enters with the determinant, and the absence of zero divisors with
-the self-centralization.
+semiring; commutativity of `k` enters with the determinant, the absence of zero divisors with
+the self-centralization, and the order asks for a division ring, where the nonzero elements are
+exactly the units.
 
 Self-centralization is proved under two hypotheses, neither of them idle.  The absence of zero
 divisors is a sufficient hypothesis rather than a necessary one: an off-diagonal entry `g i j` of
@@ -81,7 +82,7 @@ The action of the torus on the coordinate lines of the standard representation i
 * `TauCeti.isDiag_of_commute_diagonal`: a matrix commuting with a diagonal matrix of pairwise
   distinct entries is itself diagonal.
 * `TauCeti.mem_diagonalTorus_iff`: membership in the torus is diagonality of the matrix.
-* `TauCeti.natCard_diagonalTorus`: the torus has `(q - 1)ⁿ` elements over a field with `q`
+* `TauCeti.natCard_diagonalTorus`: the torus has `(q - 1)ⁿ` elements over a division ring with `q`
   elements.
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
 * `TauCeti.centralizer_diagonalTorus_eq_top`: over a ring with a single unit the centralizer is
@@ -322,9 +323,10 @@ theorem eq_diagonalTorus_of_le_of_isMulCommutative (H : Subgroup (GL (Fin n) k))
 
 end NoZeroDivisors
 
-/-- **The order of the diagonal torus**: over a field with `q` elements it has `(q - 1)ⁿ`
-elements, one invertible scalar per diagonal entry.  Over an infinite field both sides vanish. -/
-theorem natCard_diagonalTorus (k : Type u) [Field k] (n : ℕ) :
+/-- **The order of the diagonal torus**: over a division ring with `q` elements it has `(q - 1)ⁿ`
+elements, one invertible scalar per diagonal entry.  Over an infinite division ring both sides
+vanish. -/
+theorem natCard_diagonalTorus (k : Type u) [DivisionRing k] (n : ℕ) :
     Nat.card (diagonalTorus k n) = (Nat.card k - 1) ^ n := by
   rw [← Nat.card_congr (diagonalTorusEquiv k n).toEquiv, Nat.card_fun, Nat.card_units,
     Nat.card_fin]

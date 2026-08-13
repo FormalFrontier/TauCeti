@@ -26,14 +26,13 @@ with *everything*; what is proved here is the commutant of a *single* matrix, in
 the three independent entry equations of `M * N = N * M` by splitting on which of the two
 off-diagonal entries or the diagonal difference is nonzero.
 
-Being scalar, and the entrywise reading of the normal form `a • 1 + b • M`, are recorded over a
-semiring; only the commutant computation itself, which divides by a matrix entry, needs a field.
+Being scalar is recorded over a semiring; only the commutant computation itself, which divides by a
+matrix entry, needs a field.
 
 ## Main results
 
 * `TauCeti.mem_range_scalar_fin_two_iff`: a `2 × 2` matrix is scalar exactly when its off-diagonal
   entries vanish and its two diagonal entries agree.
-* `TauCeti.scalar_add_smul_apply`: the entries of the normal form `a • 1 + b • M`.
 * `TauCeti.commute_fin_two_iff`: a matrix commutes with a non-scalar `2 × 2` matrix `M` exactly when
   it is of the form `a • 1 + b • M`.
 * `TauCeti.commute_of_commute_fin_two`: two matrices commuting with a common non-scalar `2 × 2`
@@ -71,19 +70,12 @@ theorem mem_range_scalar_fin_two_iff :
     ext i j
     fin_cases i <;> fin_cases j <;> simp [Matrix.scalar_apply, h01, h10, h00]
 
-/-- The entries of `a • 1 + b • M`, for a `2 × 2` matrix `M`: this reads the normal form handed
-out by `TauCeti.commute_fin_two_iff` entrywise. -/
-theorem scalar_add_smul_apply (a b : F) (i j : Fin 2) :
-    (Matrix.scalar (Fin 2) a + b • M) i j = (if i = j then a else 0) + b * M i j := by
-  simp [Matrix.scalar_apply, Matrix.diagonal_apply]
-
 /-- A `2 × 2` matrix is `a • 1 + b • M` as soon as its four entries are. -/
 private theorem eq_scalar_add_smul_fin_two {a b : F} (h00 : N 0 0 = a + b * M 0 0)
     (h01 : N 0 1 = b * M 0 1) (h10 : N 1 0 = b * M 1 0) (h11 : N 1 1 = a + b * M 1 1) :
     N = Matrix.scalar (Fin 2) a + b • M := by
   ext i j
-  rw [scalar_add_smul_apply]
-  fin_cases i <;> fin_cases j <;> simp [h00, h01, h10, h11]
+  fin_cases i <;> fin_cases j <;> simp [Matrix.scalar_apply, h00, h01, h10, h11]
 
 end Semiring
 
