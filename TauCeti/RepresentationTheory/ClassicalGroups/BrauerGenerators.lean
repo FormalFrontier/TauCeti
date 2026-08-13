@@ -55,8 +55,8 @@ statement that the symmetric group sits inside the Brauer algebra as the diagram
 * `TauCeti.permTensorAction_swap_mul_orthogonalCupCap` and
   `TauCeti.orthogonalCupCap_mul_permTensorAction_swap`: `s * e = e` and `e * s = e`.
 * `TauCeti.permTensorAction_swap_mul_self`: `s * s = 1`.
-* `TauCeti.orthogonalCap_comp_map` and `TauCeti.map_comp_orthogonalCup`: the cap and the cup are
-  invariant.
+* `TauCeti.orthogonalCap_comp_piTensorProductMap` and
+  `TauCeti.piTensorProductMap_comp_orthogonalCup`: the cap and the cup are invariant.
 * `TauCeti.commute_orthogonalCupCap_tensorPower`: the generator `e` commutes with the diagonal
   action of the orthogonal group. The corresponding statement for the crossing `s` is the
   restriction along `TauCeti.orthogonalGroupToGL` of the general-linear
@@ -132,7 +132,7 @@ theorem orthogonalCup_apply (c : k) :
       c • ∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k) :=
   (rfl)
 
-theorem orthogonalCup_one :
+theorem orthogonalCup_apply_one :
     orthogonalCup k n 1 =
       ∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k) := by
   rw [orthogonalCup_apply, one_smul]
@@ -198,7 +198,7 @@ arc. -/
 theorem permTensorAction_swap_comp_orthogonalCup :
     permTensorAction k n 2 (Equiv.swap 0 1) ∘ₗ orthogonalCup k n = orthogonalCup k n := by
   refine LinearMap.ext_ring ?_
-  simp only [LinearMap.coe_comp, Function.comp_apply, orthogonalCup_one, map_sum,
+  simp only [LinearMap.coe_comp, Function.comp_apply, orthogonalCup_apply_one, map_sum,
     permTensorAction_apply, LinearEquiv.coe_coe, PiTensorProduct.reindex_tprod]
 
 /-- The crossing fixes the cap: the coordinate dot product is symmetric. -/
@@ -240,7 +240,7 @@ the coordinate dot product, which is what the cap contracts against.
 `TauCeti.stdOrthogonalRep_dotProduct_stdOrthogonalRep` is the same computation for an element of
 the orthogonal group, but it is unavailable at this generality: the orthogonal group needs a
 commutative ring. -/
-theorem orthogonalCap_comp_map {A : Matrix (Fin n) (Fin n) k} (hA : Aᵀ * A = 1) :
+theorem orthogonalCap_comp_piTensorProductMap {A : Matrix (Fin n) (Fin n) k} (hA : Aᵀ * A = 1) :
     orthogonalCap k n ∘ₗ PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A) =
       orthogonalCap k n := by
   refine PiTensorProduct.ext ?_
@@ -267,11 +267,11 @@ private theorem tprod_single_pi_fin_two (r : Fin 2 → Fin n) :
 
 /-- **The cup is invariant** under every matrix `A` with `A * Aᵀ = 1`. This is the other one-sided
 identity: the cap consumes `Aᵀ * A = 1` and the cup consumes `A * Aᵀ = 1`. -/
-theorem map_comp_orthogonalCup {A : Matrix (Fin n) (Fin n) k} (hA : A * Aᵀ = 1) :
+theorem piTensorProductMap_comp_orthogonalCup {A : Matrix (Fin n) (Fin n) k} (hA : A * Aᵀ = 1) :
     PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A) ∘ₗ orthogonalCup k n =
       orthogonalCup k n := by
   refine LinearMap.ext_ring ?_
-  simp only [LinearMap.coe_comp, Function.comp_apply, orthogonalCup_one, map_sum,
+  simp only [LinearMap.coe_comp, Function.comp_apply, orthogonalCup_apply_one, map_sum,
     PiTensorProduct.map_tprod, Matrix.mulVecLin_apply]
   -- Expand each column of `A` in the standard basis and collect the coefficients.
   calc
@@ -326,14 +326,14 @@ theorem orthogonalCap_comp_tensorPower (g : Matrix.orthogonalGroup (Fin n) k) :
     orthogonalCap k n ∘ₗ (stdOrthogonalRep k n).tensorPower 2 g = orthogonalCap k n := by
   rw [Representation.tensorPower_apply]
   simpa only [stdOrthogonalRep_apply] using
-    orthogonalCap_comp_map ((Matrix.mem_orthogonalGroup_iff' (Fin n) k).mp g.prop)
+    orthogonalCap_comp_piTensorProductMap ((Matrix.mem_orthogonalGroup_iff' (Fin n) k).mp g.prop)
 
 /-- The cup is invariant under the diagonal action of the orthogonal group. -/
 theorem tensorPower_comp_orthogonalCup (g : Matrix.orthogonalGroup (Fin n) k) :
     ((stdOrthogonalRep k n).tensorPower 2 g) ∘ₗ orthogonalCup k n = orthogonalCup k n := by
   rw [Representation.tensorPower_apply]
   simpa only [stdOrthogonalRep_apply] using
-    map_comp_orthogonalCup ((Matrix.mem_orthogonalGroup_iff (Fin n) k).mp g.prop)
+    piTensorProductMap_comp_orthogonalCup ((Matrix.mem_orthogonalGroup_iff (Fin n) k).mp g.prop)
 
 /-- **The Brauer generator `e` commutes with the orthogonal group.** This is the two-strand case
 of the statement that the diagram action and the orthogonal action centralize one another. -/
