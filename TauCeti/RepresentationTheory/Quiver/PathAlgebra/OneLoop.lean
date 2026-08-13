@@ -20,8 +20,17 @@ that this path algebra is infinite-dimensional over a division ring.
 
 * `TauCeti.Quiver.OneLoop`: the quiver with one vertex and one loop.
 * `TauCeti.PathAlgebra.oneLoopAlgEquiv`: its path algebra is `AddMonoidAlgebra k ℕ`.
+* `TauCeti.PathAlgebra.oneLoopAlgEquiv_ofPath`,
+  `TauCeti.PathAlgebra.oneLoopAlgEquiv_single`,
+  `TauCeti.PathAlgebra.oneLoopAlgEquiv_loop`: characteristic formulas for the equivalence.
 * `TauCeti.not_finiteDimensional_pathAlgebra_oneLoop`: the one-loop path algebra is
   infinite-dimensional.
+
+## References
+
+This file implements the one-loop example from Layer 0 of
+`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`. See Assem--Simson--
+Skowroński, *Elements of the Representation Theory of Associative Algebras I*, Ch. II.
 -/
 
 public section
@@ -154,6 +163,27 @@ noncomputable def oneLoopAlgEquiv :
     pathAlgebra k Quiver.OneLoop ≃ₐ[k] AddMonoidAlgebra k ℕ :=
   AlgEquiv.ofLinearEquiv (oneLoopLinearEquiv k) (oneLoopLinearEquiv_map_one k)
     (oneLoopLinearEquiv_map_mul k)
+
+/-- The one-loop algebra equivalence sends a basis path to the monomial indexed by its length. -/
+@[simp]
+theorem oneLoopAlgEquiv_ofPath (x : Quiver.TotalPath Quiver.OneLoop) :
+    oneLoopAlgEquiv k (ofPath x) = AddMonoidAlgebra.single x.2.2.length 1 := by
+  change oneLoopLinearEquiv k (ofPath x) = _
+  simpa [Quiver.OneLoop.totalPathEquivNat] using oneLoopLinearEquiv_ofPath k x
+
+/-- The one-loop algebra equivalence sends a scaled basis path to the monomial indexed by its
+length, with the same coefficient. -/
+@[simp]
+theorem oneLoopAlgEquiv_single (x : Quiver.TotalPath Quiver.OneLoop) (c : k) :
+    oneLoopAlgEquiv k (single x c) = AddMonoidAlgebra.single x.2.2.length c := by
+  change oneLoopLinearEquiv k (single x c) = _
+  simpa [Quiver.OneLoop.totalPathEquivNat] using oneLoopLinearEquiv_single k x c
+
+/-- The unique loop corresponds to the degree-one monomial. -/
+theorem oneLoopAlgEquiv_loop :
+    oneLoopAlgEquiv k (ofArrow Quiver.OneLoop.loop) = AddMonoidAlgebra.single 1 1 := by
+  rw [ofArrow_eq_ofPath, oneLoopAlgEquiv_ofPath]
+  rfl
 
 end PathAlgebra
 
