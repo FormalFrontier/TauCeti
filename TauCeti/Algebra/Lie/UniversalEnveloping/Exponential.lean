@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.KostantForm
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
 public import TauCeti.RingTheory.Nilpotent.Exp
 
 /-!
