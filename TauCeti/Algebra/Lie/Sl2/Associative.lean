@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
-import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Module
 
@@ -213,17 +212,18 @@ variable (R : Type*) [CommRing R] {L : Type*} [LieRing L] [LieAlgebra R L] {h e 
 /-- The image of a bracket relation `⁅e, f⁆ = h` under the canonical map. -/
 private theorem ι_e_mul_ι_f_sub_mul (hef : ⁅e, f⁆ = h) :
     ι R e * ι R f - ι R f * ι R e = ι R h := by
-  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, hef]
+  simpa only [LieRing.of_associative_ring_bracket, hef] using ((ι R).map_lie e f).symm
 
 /-- The image of a bracket relation `⁅h, e⁆ = 2 • e` under the canonical map. -/
 private theorem ι_h_mul_ι_e_sub_mul (hhe : ⁅h, e⁆ = 2 • e) :
     ι R h * ι R e - ι R e * ι R h = 2 • ι R e := by
-  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, hhe, map_nsmul]
+  simpa only [LieRing.of_associative_ring_bracket, hhe, map_nsmul] using ((ι R).map_lie h e).symm
 
 /-- The image of a bracket relation `⁅h, f⁆ = -(2 • f)` under the canonical map. -/
 private theorem ι_h_mul_ι_f_sub_mul (hhf : ⁅h, f⁆ = -(2 • f)) :
     ι R h * ι R f - ι R f * ι R h = -(2 • ι R f) := by
-  rw [_root_.TauCeti.UniversalEnvelopingAlgebra.ι_mul_sub_mul R, hhf, map_neg, map_nsmul]
+  simpa only [LieRing.of_associative_ring_bracket, hhf, map_neg, map_nsmul] using
+    ((ι R).map_lie h f).symm
 
 end UniversalEnveloping
 
