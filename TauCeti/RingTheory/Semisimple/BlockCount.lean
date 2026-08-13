@@ -35,15 +35,11 @@ is not simple, and a presentation could be padded with any number of such blocks
 needed anywhere: the count is an invariant of any ring admitting such a presentation, and
 semisimplicity is what guarantees a presentation exists in the first place.
 
-What is *not* proved here is the finer uniqueness — that the multiset of degrees `nᵢ` and the
-division rings `Dᵢ` are determined too — which needs the identification of the blocks with the
-isomorphism classes of simple `R`-modules rather than a mere count.  That identification is
-`TauCeti.blocks_equiv_simpleModules` in
-`TauCeti/RingTheory/Semisimple/WedderburnBlocks.lean`, which recovers the count below as a count of
-simple modules but still says nothing about the degrees or the division rings.  For a *single*
-block those two are settled by `TauCeti.wedderburn_data_unique` in
-`TauCeti/RingTheory/Semisimple/MatrixDivisionRing.lean`; what remains open is the matching of the
-blocks of two presentations of a product.
+The finer uniqueness — that the degrees `nᵢ` and division rings `Dᵢ` match after a permutation — is
+`TauCeti.wedderburn_blocks_unique` in
+`TauCeti/RingTheory/Semisimple/WedderburnUniqueness.lean`.  It upgrades the counting argument here:
+the coordinate central idempotents themselves determine the factor permutation, after which
+`TauCeti.wedderburn_data_unique` identifies each corresponding pair of matrix blocks.
 
 ## Main results
 
