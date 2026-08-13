@@ -17,9 +17,9 @@ Over a field this group algebra is a domain, so it is reduced and has connected 
 The same argument survives every field extension, proving that split tori are geometrically
 reduced and geometrically connected.
 
-A torus becomes split over an algebraic closure. The algebraic-base-change descent theorems
-transport both geometric properties back to the ground field. Finally, geometric reducedness of
-a finite-type affine group over a field implies smoothness, so every torus is smooth.
+A torus becomes split over an algebraic closure. The base-change descent theorems transport both
+geometric properties back to the ground field. Finally, geometric reducedness of a finite-type
+affine group over a field implies smoothness, so every torus is smooth.
 
 ## Main declarations
 
@@ -65,10 +65,13 @@ theorem geometricallyConnected_coordinateRing
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj := by
   rw [geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one]
   intro K _ _ e he
-  let φ := (Algebra.TensorProduct.comm k
-      (MonoidAlgebra k (Multiplicative (σ →₀ ℤ))) K).toRingEquiv.trans
-    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K
-      (G := Multiplicative (σ →₀ ℤ))).toAlgEquiv.toRingEquiv
+  let φ : MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
+      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
+    (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans <|
+    (CommHopfAlgCat.ofIso <| (forget₂
+      (FiniteTypeCommHopfAlgCat.{u, u} K) (CommHopfAlgCat.{u} K)).mapIso <|
+        DiagonalizableGroup.baseChangeCoordinateRingIso k K
+          (characterGroup σ)).toAlgEquiv.toRingEquiv
   have he' : IsIdempotentElem (φ e) := he.map φ.toRingHom
   rcases IsIdempotentElem.iff_eq_zero_or_one.mp he' with h | h
   · left
@@ -87,10 +90,13 @@ theorem geometricallyReduced_coordinateRing
       (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj := by
   rw [geometricallyReducedCommHopfAlgProperty_iff]
   intro K _ _
-  let φ := (Algebra.TensorProduct.comm k
-      (MonoidAlgebra k (Multiplicative (σ →₀ ℤ))) K).toRingEquiv.trans
-    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K
-      (G := Multiplicative (σ →₀ ℤ))).toAlgEquiv.toRingEquiv
+  let φ : MonoidAlgebra k (Multiplicative (σ →₀ ℤ)) ⊗[k] K ≃+*
+      MonoidAlgebra K (Multiplicative (σ →₀ ℤ)) :=
+    (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans <|
+    (CommHopfAlgCat.ofIso <| (forget₂
+      (FiniteTypeCommHopfAlgCat.{u, u} K) (CommHopfAlgCat.{u} K)).mapIso <|
+        DiagonalizableGroup.baseChangeCoordinateRingIso k K
+          (characterGroup σ)).toAlgEquiv.toRingEquiv
   exact isReduced_of_injective φ.toRingHom φ.injective
 
 end SplitTorus
@@ -135,7 +141,7 @@ theorem torusCommHopfAlgProperty.geometricallyConnected
     geometricallyConnectedCommHopfAlgProperty k H.obj := by
   rw [torusCommHopfAlgProperty_iff] at hH
   obtain ⟨n, ⟨i⟩⟩ := hH
-  apply geometricallyConnectedCommHopfAlgProperty.of_baseChange_of_isAlgebraic
+  apply geometricallyConnectedCommHopfAlgProperty.of_baseChange
     k (AlgebraicClosure k) H.obj
   exact (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
     ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
@@ -151,7 +157,7 @@ theorem torusCommHopfAlgProperty.geometricallyReduced
     geometricallyReducedCommHopfAlgProperty k H.obj := by
   rw [torusCommHopfAlgProperty_iff] at hH
   obtain ⟨n, ⟨i⟩⟩ := hH
-  apply geometricallyReducedCommHopfAlgProperty.of_baseChange_of_isAlgebraic
+  apply geometricallyReducedCommHopfAlgProperty.of_baseChange
     (AlgebraicClosure k) H.obj
   exact (geometricallyReducedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
     ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
