@@ -8,6 +8,7 @@ public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.Dimension.Finite
 public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
+import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -17,6 +18,9 @@ A linear automorphism is unipotent when its underlying endomorphism minus the id
 nilpotent. This file records the elementary group-theoretic closure properties needed to use
 unipotent elements in algebraic groups: inverses, products of commuting elements, powers, and
 conjugates are unipotent.
+
+It also records the rank-one rigidity statement: over a reduced base, a unipotent automorphism
+of a free rank-one module is the identity.
 
 Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, their product is
 `1 + (x + y + xy)`; when `g` and `h` commute, the three displayed nilpotent endomorphisms commute.
@@ -197,21 +201,15 @@ theorem isUnipotent_conj_iff (g h : GeneralLinearGroup K V) :
 /-- A unipotent automorphism of a free rank-one module over a reduced commutative ring is the
 identity. -/
 theorem IsUnipotent.eq_one_of_finrank_eq_one
-    {F : Type u} {W : Type v} [CommRing F] [IsReduced F] [StrongRankCondition F]
+    {F : Type u} {W : Type v} [CommRing F] [IsReduced F] [Nontrivial F]
     [AddCommGroup W] [Module F W] [Module.Free F W]
     {g : GeneralLinearGroup F W} (hg : IsUnipotent g) (hdim : finrank F W = 1) :
     g = 1 := by
-  by_cases hF : Subsingleton F
-  · let _ : Subsingleton F := hF
-    let _ : Subsingleton W := Module.subsingleton F W
-    exact Subsingleton.elim _ _
-  let _ : Nontrivial F := not_subsingleton_iff_nontrivial.mp hF
-  let c : F := ((g : End F W).existsUnique_eq_smul_id_of_finrank_eq_one hdim).choose
-  have hc : (g : End F W) = c • LinearMap.id :=
-    ((g : End F W).existsUnique_eq_smul_id_of_finrank_eq_one hdim).choose_spec.1
-  let _ : Nontrivial W :=
-    Module.nontrivial_of_finrank_pos (R := F) (by rw [hdim]; exact one_pos)
-  let _ : FaithfulSMul F W := Module.Free.instFaithfulSMulOfNontrivial F W
+  let c : F := (LinearEquiv.smul_id_of_finrank_eq_one hdim).symm (g : End F W)
+  have hc : (g : End F W) = c • LinearMap.id := by
+    simpa only [LinearEquiv.smul_id_of_finrank_eq_one_apply] using
+      ((LinearEquiv.smul_id_of_finrank_eq_one hdim).apply_symm_apply
+        (g : End F W)).symm
   have hEnd : (g : End F W) - 1 = algebraMap F (End F W) (c - 1) := by
     rw [hc, Module.algebraMap_end_eq_smul_id]
     ext w
@@ -220,9 +218,9 @@ theorem IsUnipotent.eq_one_of_finrank_eq_one
     rw [isUnipotent_def, hEnd] at hg
     apply (IsNilpotent.map_iff ?_).mp hg
     intro a b hab
-    apply FaithfulSMul.eq_of_smul_eq_smul (α := W)
-    intro w
-    exact LinearMap.congr_fun hab w
+    apply (LinearEquiv.smul_id_of_finrank_eq_one hdim).injective
+    simpa only [LinearEquiv.smul_id_of_finrank_eq_one_apply,
+      Module.algebraMap_end_eq_smul_id] using hab
   have hc_one : c = 1 := sub_eq_zero.mp hnil.eq_zero
   apply Units.ext
   rw [hc, hc_one, one_smul]

@@ -21,7 +21,8 @@ are exactly the two monoid-action laws: the counit law sends the convolution uni
 the identity, and coassociativity sends convolution products to composites. (The
 upgrade to automorphisms over a Hopf algebra is in
 `TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction`, with the group of
-points.)
+points.) On the comodule attached to a group-like element `x`, this action is scalar
+multiplication by `g x`.
 
 This is the comodule-to-representation direction of the "representations = comodules"
 dictionary (ReductiveGroups roadmap, Layer 1): it realizes a comodule as an action of
@@ -32,6 +33,8 @@ the functor of points on scalar extensions of `V`.
 * `TauCeti.Comodule.endOfPoint`: the endomorphism of `A ⊗[R] V` attached to a point.
 * `TauCeti.Comodule.endOfPoint_corestrict`: compatibility with corestriction in the coalgebra.
 * `TauCeti.Comodule.endOfPoint_tensor`: point actions preserve the diagonal tensor product.
+* `TauCeti.Comodule.endOfPoint_groupLike`: on a group-like comodule a point acts by the scalar
+  given by its value on the group-like element.
 * `TauCeti.Comodule.endOfPoint_trivial`: every point acts identically on a trivial comodule.
 * `TauCeti.Comodule.pointsRepresentation`: the action, as a `Representation` of the
   convolution monoid of points on the scalar extension.

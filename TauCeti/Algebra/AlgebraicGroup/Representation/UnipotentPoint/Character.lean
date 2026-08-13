@@ -22,8 +22,8 @@ finite-type affine group.
 
 ## Main declaration
 
-* `TauCeti.HopfAlgebra.IsUnipotentPoint.apply_groupLike`: a unipotent point evaluates every
-  group-like element at one.
+* `TauCeti.HopfAlgebra.IsUnipotentPoint.apply_groupLike_eq_one`: a unipotent point evaluates
+  every group-like element at one.
 
 ## References
 
@@ -44,37 +44,42 @@ namespace TauCeti
 
 namespace HopfAlgebra
 
-universe u v x
+universe u v w
 
 /-- A unipotent point evaluates every group-like element of the coordinate Hopf algebra at one.
 
 Group-like elements are the coordinate-ring incarnation of algebraic characters. The associated
-rank-one comodule turns evaluation at `x` into a scalar point action. Its difference from the
-identity is nilpotent, so reducedness forces that scalar to be one. -/
+rank-one comodule turns evaluation at the group-like element into a scalar point action. -/
 @[simp]
-theorem IsUnipotentPoint.apply_groupLike
-    {F : Type u} {C : Type v} {L : Type x} [CommSemiring F] [Semiring C]
+theorem IsUnipotentPoint.apply_groupLike_eq_one
+    {F : Type u} {C : Type v} {L : Type w} [CommSemiring F] [Semiring C]
     [_root_.HopfAlgebra F C] [CommRing L] [IsReduced L] [Algebra F L]
     {g : WithConv (C →ₐ[F] L)} (hg : IsUnipotentPoint g) (x : GroupLike F C) :
     g.ofConv x = 1 := by
+  by_cases hL : Subsingleton L
+  · let _ : Subsingleton L := hL
+    exact Subsingleton.elim _ _
+  let _ : Nontrivial L := not_subsingleton_iff_nontrivial.mp hL
   let _ : Comodule F C F := Comodule.groupLike (R := F) (C := C) (M := F) x
   let M : FGComoduleCat.{u, v, u} F C := FGComoduleCat.of (R := F) (C := C) F
-  have hnil :=
-    (isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp hg M
-  have haction : Comodule.endOfPoint M g.ofConv - 1 =
-      (g.ofConv x - 1) • LinearMap.id := by
-    rw [Comodule.endOfPoint_groupLike]
+  let e := TensorProduct.AlgebraTensorModule.rid F L L
+  let _ : Module.Free L (L ⊗[F] F) := Module.Free.of_equiv e.symm
+  have hdim : Module.finrank L (L ⊗[F] F) = 1 := by
+    calc
+      Module.finrank L (L ⊗[F] F) = Module.finrank L L := e.finrank_eq
+      _ = 1 := Module.finrank_self L
+  have hone := ((isUnipotentPoint_def g).mp hg M).eq_one_of_finrank_eq_one hdim
+  have haction : Comodule.endOfPoint M g.ofConv = LinearMap.id := by
     apply LinearMap.ext
     intro z
-    simp [sub_smul]
-  let z : L ⊗[F] F := (1 : L) ⊗ₜ[F] (1 : F)
-  rw [haction] at hnil
-  obtain ⟨n, hn⟩ := hnil
-  have hz := DFunLike.congr_fun hn z
-  have hp : (g.ofConv x - 1) ^ n = 0 := by
-    have := congrArg (TensorProduct.AlgebraTensorModule.rid F L L) hz
-    simpa [z, smul_pow] using this
-  exact sub_eq_zero.mp (IsReduced.eq_zero _ ⟨n, hp⟩)
+    rw [← Comodule.pointsAction_toLinearMap]
+    have := congrArg (fun f : LinearMap.GeneralLinearGroup L (L ⊗[F] F) ↦ f • z) hone
+    simpa only [LinearMap.GeneralLinearGroup.ofLinearEquiv_smul, one_smul,
+      LinearEquiv.coe_toLinearMap, LinearMap.id_coe, id_eq] using this
+  -- The comodule instance on `M` is definitionally the local group-like instance above.
+  rw [Comodule.endOfPoint_groupLike] at haction
+  apply (LinearEquiv.smul_id_of_finrank_eq_one hdim).injective
+  simpa only [LinearEquiv.smul_id_of_finrank_eq_one_apply, one_smul] using haction
 
 end HopfAlgebra
 
