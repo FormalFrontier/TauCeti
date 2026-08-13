@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.Bialgebra.Basic
-public import TauCeti.AlgebraicGeometry.AugmentationPoint
+public import TauCeti.AlgebraicGeometry.AugmentationPoint.Basic
 
 /-!
 # The augmentation point of a commutative bialgebra
