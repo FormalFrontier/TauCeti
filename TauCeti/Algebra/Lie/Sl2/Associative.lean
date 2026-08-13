@@ -7,6 +7,7 @@ module
 public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
 import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
+import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Module
 
 /-!
@@ -68,9 +69,10 @@ pinned group rather than an existence theorem.
 
 Mathlib's `IsSl2Triple.HasPrimitiveVectorWith.lie_e_pow_succ_toEnd_f` and `lie_h_pow_toEnd_f`
 prove the corresponding identities *applied to a primitive vector*, that is under the extra
-hypothesis `⁅e, m⁆ = 0`. The identities below are the unconditional operator identities, which is
-what closure of an integral form under multiplication requires; neither statement follows from the
-other.
+hypothesis `⁅e, m⁆ = 0`, and follow by applying the unconditional operator identities below to that
+vector. The converse does not follow: identities on one primitive vector do not determine the
+operators. The operator identities are what closure of an integral form under multiplication
+requires.
 
 ## References
 
@@ -157,6 +159,15 @@ end CommutingPowers
 section DividedPowers
 
 variable {A : Type*} [Ring A] [Algebra ℚ A] {H E F : A}
+
+private theorem inv_factorial_succ_nsmul (n : ℕ) (x : A) :
+    (((n + 1).factorial : ℚ))⁻¹ • ((n + 1) • x) = ((n.factorial : ℚ))⁻¹ • x := by
+  have hfac : (n.factorial : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr n.factorial_ne_zero
+  rw [← Nat.cast_smul_eq_nsmul ℚ, smul_smul]
+  congr 1
+  rw [Nat.factorial_succ]
+  push_cast
+  field_simp
 
 /-- Moving a Cartan element past a divided power of the lowering element translates it by
 `-2n`. -/

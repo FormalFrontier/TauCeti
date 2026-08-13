@@ -148,16 +148,6 @@ theorem dividedPower_succ (n : ℕ) (x : A) :
   rw [dividedPower_mul_self, ← Nat.cast_smul_eq_nsmul ℚ, smul_smul]
   rw [inv_mul_cancel₀ hn, one_smul]
 
-/-- Dividing by `(n + 1)!` absorbs an additive factor of `n + 1`, leaving `1 / n!`. -/
-theorem inv_factorial_succ_nsmul (n : ℕ) (x : A) :
-    (((n + 1).factorial : ℚ))⁻¹ • ((n + 1) • x) = ((n.factorial : ℚ))⁻¹ • x := by
-  rw [← Nat.cast_smul_eq_nsmul ℚ, smul_smul]
-  congr 1
-  have h := inv_factorial_mul_inv_factorial 1 n
-  simp only [Nat.factorial_one, Nat.cast_one, inv_one, one_mul, Nat.choose_one_right] at h
-  rw [mul_comm]
-  simpa [Nat.add_comm] using h.symm
-
 /-- Iterating divided powers has the integral uniform-Bell-number structure constant. -/
 theorem dividedPower_comp (m n : ℕ) (hn : n ≠ 0) (x : A) :
     dividedPower m (dividedPower n x) =
