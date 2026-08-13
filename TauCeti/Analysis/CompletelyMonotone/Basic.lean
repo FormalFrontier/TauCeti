@@ -271,19 +271,14 @@ lemma hasDerivAt_iteratedDerivWithin_succ
 /-- Completely monotone functions are closed under addition. -/
 lemma add (hf : IsCompletelyMonotone f) (hg : IsCompletelyMonotone g) :
     IsCompletelyMonotone (f + g) := by
-  rw [isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg]
-  convert (isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg.mp hf).add
-    (isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg.mp hg) using 1
-  ext u
-  simp [Pi.add_apply]
+  rw [isCompletelyMonotone_iff_completelyMonotoneOn] at hf hg ⊢
+  exact hf.add hg
 
 /-- Completely monotone functions are closed under multiplication by a nonnegative constant. -/
 lemma smul (hf : IsCompletelyMonotone f) {c : ℝ} (hc : 0 ≤ c) :
     IsCompletelyMonotone (c • f) := by
-  rw [isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg]
-  convert (isCompletelyMonotone_iff_absolutelyMonotoneOn_comp_neg.mp hf).smul hc using 1
-  ext u
-  simp [Pi.smul_apply, smul_eq_mul]
+  rw [isCompletelyMonotone_iff_completelyMonotoneOn] at hf ⊢
+  exact hf.smul hc
 
 end IsCompletelyMonotone
 
