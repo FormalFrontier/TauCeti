@@ -39,7 +39,7 @@ public section
 
 namespace LinearMap
 
-variable {𝕜 E F G : Type*} [DivisionRing 𝕜]
+variable {𝕜 E F G : Type*} [Ring 𝕜]
 variable [AddCommGroup E] [Module 𝕜 E]
 variable [AddCommGroup F] [Module 𝕜 F]
 variable [AddCommGroup G] [Module 𝕜 G]
@@ -124,12 +124,18 @@ variable {T : E →L[𝕜] F}
 /-- Postcomposing with a continuous linear equivalence leaves the index unchanged. -/
 @[simp] lemma index_equiv_comp (e : F ≃L[𝕜] G) :
     index ((e : F →L[𝕜] G).comp T) = index T := by
-  rw [index_def, index_def, coe_equiv_comp, LinearMap.index_equiv_comp]
+  rw [index_def, index_def, ContinuousLinearMap.toLinearMap_comp]
+  change ((e.toLinearEquiv : F →ₗ[𝕜] G).comp (T : E →ₗ[𝕜] F)).index =
+    (T : E →ₗ[𝕜] F).index
+  rw [LinearMap.index_equiv_comp]
 
 /-- Precomposing with a continuous linear equivalence leaves the index unchanged. -/
 @[simp] lemma index_comp_equiv (e : G ≃L[𝕜] E) :
     index (T.comp (e : G →L[𝕜] E)) = index T := by
-  rw [index_def, index_def, coe_comp_equiv, LinearMap.index_comp_equiv]
+  rw [index_def, index_def, ContinuousLinearMap.toLinearMap_comp]
+  change ((T : E →ₗ[𝕜] F).comp (e.toLinearEquiv : G →ₗ[𝕜] E)).index =
+    (T : E →ₗ[𝕜] F).index
+  rw [LinearMap.index_comp_equiv]
 
 end ContinuousLinearMap
 
