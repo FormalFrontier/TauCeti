@@ -8,6 +8,7 @@ public import Mathlib.Algebra.Lie.UniversalEnveloping
 public import TauCeti.RingTheory.DividedPowers.Associative
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Module
+import Mathlib.Tactic.NoncommRing
 
 /-!
 # `sl₂` commutation relations in an associative algebra
@@ -57,6 +58,8 @@ algebra; a genuine `IsSl2Triple` supplies them through its bracket fields.
 * `TauCeti.Sl2.ι_e_mul_dividedPower_succ_ι_f` and
   `TauCeti.Sl2.ι_f_mul_dividedPower_succ_ι_e`: the two divided-power relations in a universal
   enveloping algebra over `ℚ`.
+* `TauCeti.Sl2.dividedPower_succ_e_mul_f_cartan_left` and
+  `TauCeti.Sl2.e_mul_dividedPower_succ_f_cartan_left`: the corresponding Cartan-left normal forms.
 
 ## Roadmap
 
@@ -249,6 +252,31 @@ theorem ι_f_mul_dividedPower_succ_ι_e (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆
     ι ℚ f * dividedPower (n + 1) (ι ℚ e) =
       dividedPower (n + 1) (ι ℚ e) * ι ℚ f - dividedPower n (ι ℚ e) * (ι ℚ h + n) :=
   f_mul_dividedPower_succ_e (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_e_sub_mul ℚ hhe) n
+
+/-- The Cartan-left normal form of `ι_f_mul_dividedPower_succ_ι_e`:
+`e⁽ⁿ⁺¹⁾ f = f e⁽ⁿ⁺¹⁾ + (h - n) e⁽ⁿ⁾`. This is the orientation that occurs as the
+one-lowering-vector case of the full Kostant straightening formula. -/
+theorem dividedPower_succ_e_mul_f_cartan_left (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+    (n : ℕ) :
+    dividedPower (n + 1) (ι ℚ e) * ι ℚ f =
+      ι ℚ f * dividedPower (n + 1) (ι ℚ e) +
+        (ι ℚ h - n) * dividedPower n (ι ℚ e) := by
+  have hs := ι_f_mul_dividedPower_succ_ι_e hef hhe n
+  have hmove := h_mul_dividedPower_e (ι_h_mul_ι_e_sub_mul ℚ hhe) n
+  have hncomm := (Nat.cast_commute n (dividedPower n (ι ℚ e))).eq
+  noncomm_ring [hs, hmove, hncomm]
+
+/-- The Cartan-left normal form of `ι_e_mul_dividedPower_succ_ι_f`:
+`e f⁽ⁿ⁺¹⁾ = f⁽ⁿ⁺¹⁾ e + (h + n) f⁽ⁿ⁾`. -/
+theorem e_mul_dividedPower_succ_f_cartan_left (hef : ⁅e, f⁆ = h) (hhf : ⁅h, f⁆ = -(2 • f))
+    (n : ℕ) :
+    ι ℚ e * dividedPower (n + 1) (ι ℚ f) =
+      dividedPower (n + 1) (ι ℚ f) * ι ℚ e +
+        (ι ℚ h + n) * dividedPower n (ι ℚ f) := by
+  have hs := ι_e_mul_dividedPower_succ_ι_f hef hhf n
+  have hmove := h_mul_dividedPower_f (ι_h_mul_ι_f_sub_mul ℚ hhf) n
+  have hncomm := (Nat.cast_commute n (dividedPower n (ι ℚ f))).eq
+  noncomm_ring [hs, hmove, hncomm]
 
 end UniversalEnvelopingRat
 
