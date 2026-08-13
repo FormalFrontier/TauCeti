@@ -28,9 +28,9 @@ Writing `xᵢⱼ(c)` for the transvection, the relations are
 
 They are the **Chevalley commutator relations** of the general linear group. Reading the pair
 `(i, j)` as the root `εᵢ - εⱼ` of the diagonal torus, the first covers every pair of roots whose
-sum is not a root, and the second every pair whose sum is a root: `(εᵢ - εⱼ) + (εⱼ - εₗ)` is
-`εᵢ - εₗ`. In type `A` all the structure constants are `1`, which is why the right-hand side is
-`xᵢₗ(cd)` on the nose rather than `xᵢₗ(± cd)`.
+sum is neither a root nor zero, and the second every pair whose sum is a root:
+`(εᵢ - εⱼ) + (εⱼ - εₗ)` is `εᵢ - εₗ`. In type `A` the structure constants are `±1`; the chosen
+orientation in the second relation gives `1`, which is why its right-hand side is `xᵢₗ(cd)`.
 
 The one remaining case, `xᵢⱼ(c)` against `xⱼᵢ(d)`, is deliberately absent: there the two roots sum
 to zero, no commutator relation holds, and the product generates a copy of `SL₂` instead. That is
