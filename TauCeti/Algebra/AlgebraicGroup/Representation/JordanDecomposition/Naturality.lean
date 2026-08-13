@@ -80,6 +80,16 @@ theorem jordanDecomposition_mapDomain (φ : H₁ →ₐc[k] H₂)
   · exact (commute_semisimplePart_unipotentPart k H₂ K g).map (AlgHom.mapDomain φ)
   · rw [← map_mul, semisimplePart_mul_unipotentPart]
 
+/-- Simp-normal form of `jordanDecomposition_mapDomain`, with each precomposed point written
+after normalization by `AlgHom.mapDomain_apply`. -/
+@[simp]
+theorem jordanDecomposition_toConv_comp (φ : H₁ →ₐc[k] H₂)
+    (g : WithConv (H₂ →ₐ[k] K)) :
+    jordanDecomposition k H₁ K (toConv (g.ofConv.comp (φ : H₁ →ₐ[k] H₂))) =
+      (toConv ((semisimplePart k H₂ K g).ofConv.comp (φ : H₁ →ₐ[k] H₂)),
+        toConv ((unipotentPart k H₂ K g).ofConv.comp (φ : H₁ →ₐ[k] H₂))) := by
+  simpa only [AlgHom.mapDomain_apply] using jordanDecomposition_mapDomain φ g
+
 /-- Taking the semisimple part commutes with precomposition by a bialgebra morphism, the
 contravariant coordinate-algebra form of an affine-group homomorphism. -/
 theorem semisimplePart_mapDomain (φ : H₁ →ₐc[k] H₂)
