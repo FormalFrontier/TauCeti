@@ -81,7 +81,7 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
 @[simp] theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
     mvfderiv I f x v = mfderiv I 𝓘(𝕜, F) f x v := by
   rw [mvfderiv, ContinuousLinearMap.comp_apply]
-  -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
+  -- For a normed vector space, `fromTangentSpace` is the identity on underlying values.
   rfl
 
 /-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
@@ -101,8 +101,11 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
   have htangent (p : TangentBundle I M) :
       NormedSpace.fromTangentSpace (f p.1) ((tangentMap% f p).2) =
         mvfderiv I f p.1 p.2 := by
-    rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
-    rfl
+    rw [tangentMap_snd]
+    calc
+      _ = (show F from mfderiv I 𝓘(𝕜, F) f p.1 p.2) := by rfl
+      _ = mvfderiv I f p.1 p.2 :=
+        (mvfderiv_apply_eq_mfderiv_apply (I := I) f p.1 p.2).symm
   -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
   -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
   exact h.congr fun p => (htangent p).symm

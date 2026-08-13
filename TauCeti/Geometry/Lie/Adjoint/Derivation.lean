@@ -101,6 +101,8 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
       tangentAd (I := I) g
         (leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D) := by
   have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g D
+  -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it to compare the
+  -- Lie-equivalence identity with the isometric model-space identification.
   have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
   rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv,
     leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv]

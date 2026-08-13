@@ -20,8 +20,8 @@ This advances Deliverable A, Layer 1 of
 
 ## Main results
 
-* `TauCeti.Lie.mvfderiv_Ad_apply_one`: the identity `d(Ad)_1(X)(Y) = ad X Y`.
-* `TauCeti.Lie.mvfderiv_continuousAdjointRepresentation_one`: the operator identity
+* `TauCeti.Lie.mfderiv_Ad_apply_one`: the identity `d(Ad)_1(X)(Y) = ad X Y`.
+* `TauCeti.Lie.mfderiv_continuousAdjointRepresentation_one`: the operator identity
   `d(Ad)_1(X) = ad X`.
 
 ## References
@@ -48,11 +48,13 @@ attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
 the Lie-algebra adjoint `ad X Y`. -/
-theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
+@[simp]
+theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    mvfderiv I (fun g : G => Ad (I := I) g Y) 1
+    NormedSpace.fromTangentSpace (Ad (I := I) (1 : G) Y)
+      (mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) (fun g : G => Ad (I := I) g Y) 1
         (leftInvariantDerivationLieEquivGroupLieAlgebra
-          (I := I) (G := G) BoundarylessManifold.isInteriorPoint X) =
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint X)) =
       LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
@@ -61,6 +63,8 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
     (I := I) (G := G)
   let L : E → LeftInvariantDerivation I G := eIso.symm.toContinuousLinearEquiv
+  -- `GroupLieAlgebra I G` is definitionally the model space `E`, so the tangent orbit is
+  -- model-space-valued here.
   let T : G → E := fun g => show E from tangentAd (I := I) g (eIso Y)
   have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
     contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
@@ -68,11 +72,16 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     funext g
     apply eIso.injective
     rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad]
-    -- Unfold the local composition and use the explicit inverse law of the model equivalence.
-    change tangentAd (I := I) g (eIso Y) = eIso (eIso.symm (T g))
+    rw [Function.comp_apply]
+    simp only [L, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
     rw [eIso.apply_symm_apply]
   have hL : ContMDiff 𝓘(ℝ, E) 𝓘(ℝ, LeftInvariantDerivation I G) ∞ L :=
     eIso.symm.toContinuousLinearEquiv.contDiff.contMDiff
+  -- Factor the adjoint orbit as the inverse model isometry after the tangent adjoint orbit, then
+  -- apply the chain rule and identify the tangent differential and transported bracket.
+  rw [← mvfderiv_apply_eq_mfderiv_apply]
+  -- Rewrite the function in `mvfderiv` form: unlike `mfderiv`, its result type is not indexed by
+  -- the function's value at the base point.
   rw [hEq]
   rw [mvfderiv_apply_eq_mfderiv_apply]
   rw [mfderiv_comp_apply (1 : G)
@@ -80,43 +89,36 @@ theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     (hT.mdifferentiable (by simp) 1) (eLie X)]
   have hLmf :=
     (eIso.symm.toContinuousLinearEquiv.hasFDerivAt (x := T 1)).hasMFDerivAt
-  simp only [L]
   rw [hLmf.mfderiv]
+  simp only [L, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
   have hTangent := mvfderiv_tangentAd_apply_one (I := I) (G := G) (eLie X)
     ((eIso Y : E) : GroupLieAlgebra I G)
-  -- `GroupLieAlgebra I G` is definitionally the model vector space `E`; expose that canonical
-  -- identification so the tangent-level derivative theorem can rewrite the model-valued map `T`.
-  change
-    (mfderiv I 𝓘(ℝ, E) T 1) (eLie X) =
-      (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) (eLie X)
-        ((eIso Y : E) : GroupLieAlgebra I G)) at hTangent
+  rw [mvfderiv_apply_eq_mfderiv_apply] at hTangent
   rw [hTangent]
   simp only [LieAlgebra.ad_apply]
+  -- `GroupLieAlgebra I G` is definitionally `E`; this ascription exposes the tangent bracket to
+  -- the canonical derivation/model equivalence.
   have heIsoLieY : ((eIso Y : E) : GroupLieAlgebra I G) = eLie Y := by
     exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
       (I := I) (G := G) BoundarylessManifold.isInteriorPoint Y
   rw [heIsoLieY]
-  have hbracket := eLie.map_lie X Y
-  -- Expose the bracket-valued model vector produced by `LieAlgebra.ad` so the Lie equivalence's
-  -- explicit bracket-preservation theorem can rewrite it.
-  change eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) = ⁅X, Y⁆
-  rw [← hbracket]
-  -- Expose the model-space coercion so the shared inverse-transport fact applies.
-  change eIso.symm (show E from eLie (⁅X, Y⁆)) = ⁅X, Y⁆
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
-      (I := I) (G := G) BoundarylessManifold.isInteriorPoint,
-    eLie.symm_apply_apply]
+  exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie
+    (I := I) (G := G) BoundarylessManifold.isInteriorPoint X Y
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/
-theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation I G) :
+@[simp]
+theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
       finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
-    mvfderiv I
-      (continuousAdjointRepresentation (I := I) (G := G)) 1
-      (leftInvariantDerivationLieEquivGroupLieAlgebra
-        (I := I) (G := G) BoundarylessManifold.isInteriorPoint X) =
+    NormedSpace.fromTangentSpace
+      (continuousAdjointRepresentation (I := I) (G := G) 1)
+      (mfderiv I
+        𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+        (continuousAdjointRepresentation (I := I) (G := G)) 1
+        (leftInvariantDerivationLieEquivGroupLieAlgebra
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint X)) =
       LinearMap.toContinuousLinearMap
         (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
@@ -128,9 +130,20 @@ theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivatio
   let dOp : LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G :=
     mvfderiv I
       (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)
-  -- Unfold only the local abbreviation; the target stays in Mathlib's canonical operator API.
-  change dOp = LinearMap.toContinuousLinearMap
-    (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X)
+  have hmodelDerivative :
+      NormedSpace.fromTangentSpace
+          (continuousAdjointRepresentation (I := I) (G := G) 1)
+          (mfderiv I
+            𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+            (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) =
+        dOp := by
+    calc
+      _ = (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from mfderiv I
+          𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+          (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) := by rfl
+      _ = dOp := (mvfderiv_apply_eq_mfderiv_apply
+        (I := I) (f := continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)).symm
+  rw [hmodelDerivative]
   apply ContinuousLinearMap.ext
   intro Y
   let evalY :
@@ -153,12 +166,21 @@ theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivatio
   have hCompAY :
       mvfderiv I AY 1 (eLie X) = dOp Y := by
     rw [hAY, mvfderiv_apply_eq_mfderiv_apply, hComp]
-    change ((ContinuousLinearMap.apply ℝ (LeftInvariantDerivation I G)) Y) dOp = dOp Y
-    exact ContinuousLinearMap.apply_apply Y dOp
+    dsimp only [evalY, dOp]
+    rw [← mvfderiv_apply_eq_mfderiv_apply]
+    exact ContinuousLinearMap.apply_apply Y _
   calc
     dOp Y = mvfderiv I AY 1 (eLie X) := hCompAY.symm
     _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
-      simpa only [AY, eLie] using mvfderiv_Ad_apply_one (I := I) (G := G) X Y
+      calc
+        _ = (show LeftInvariantDerivation I G from
+            mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) :=
+          mvfderiv_apply_eq_mfderiv_apply (I := I) AY 1 (eLie X)
+        _ = NormedSpace.fromTangentSpace (AY 1)
+            (mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) := by rfl
+        _ = _ := by
+          simpa only [AY, eLie, ContinuousLinearEquiv.coe_coe] using
+            mfderiv_Ad_apply_one (I := I) (G := G) X Y
     _ = LinearMap.toContinuousLinearMap
         (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X) Y := by
       rw [LinearMap.coe_toContinuousLinearMap']

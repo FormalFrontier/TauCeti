@@ -161,7 +161,6 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
 
 /-- The inverses of the canonical isometric and Lie equivalences agree after viewing a model
 vector as an element of the tangent Lie algebra. -/
-@[simp]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
     [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
     (h₁ : I.IsInteriorPoint (1 : G)) (v : E) :
@@ -172,6 +171,22 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEq
   rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
   exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
     (I := I) (G := G) h₁ (v : GroupLieAlgebra I G)).symm
+
+/-- Transporting a bracket through the inverse model-space isometry recovers the bracket of the
+original left-invariant derivations. -/
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie
+    [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
+    (h₁ : I.IsInteriorPoint (1 : G)) (D D' : LeftInvariantDerivation I G) :
+    (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+      (I := I) (G := G)).symm
+        (show E from (⁅leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D,
+          leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D'⁆ : GroupLieAlgebra I G)) =
+      ⁅D, D'⁆ := by
+  let e := leftInvariantDerivationLieEquivGroupLieAlgebra h₁
+  rw [← e.map_lie]
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
+      (I := I) (G := G) h₁,
+    e.symm_apply_apply]
 
 /-- Evaluation at the identity preserves the Lie bracket. -/
 @[simp]
