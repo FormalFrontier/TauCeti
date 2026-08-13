@@ -16,13 +16,17 @@ therefore induces a natural transformation of monodromy functors. This file asse
 and morphism-level constructions into a functor on `TauCeti.CoveringSpace X`.
 
 The resulting functor is faithful: a map over `X` is determined by all of its restrictions to the
-fibres. Fullness and the characterization of its essential image are the remaining topological
-content of the classification of covering spaces by fundamental-groupoid actions.
+fibres. Over a locally path-connected base, its fullness is proved in
+`TauCeti.Topology.Covering.Monodromy.Full`; reconstruction and the characterization of the
+essential image are the remaining topological content of the classification of covering spaces by
+fundamental-groupoid actions.
 
 ## Main declarations
 
 * `TauCeti.CoveringSpace.monodromyFunctor`: the functor from covering spaces over `X` to functors
   from the fundamental groupoid of `X` to types.
+* `TauCeti.CoveringSpace.monodromyFunctor_map`: after transport along the object equations, the
+  functor maps a covering-space morphism to its induced monodromy natural transformation.
 * `TauCeti.CoveringSpace.monodromyFunctor_map_app`: the natural transformation induced by a map of
   covering spaces, evaluated at a base point.
 * `TauCeti.CoveringSpace.monodromyFunctor_faithful`: monodromy is faithful on maps of covers.
@@ -49,10 +53,10 @@ variable {X : TopCat.{u}}
 groupoid of `X` to types.
 
 A covering space is sent to its own monodromy functor, and a map of covering spaces to the natural
-transformation restricting that map to every fibre. The definition is exposed, so downstream files
-may unfold its object and morphism values; the intended interface for doing so is
-`monodromyFunctor_obj` and `monodromyFunctor_map_app` rather than the record fields. -/
-@[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
+transformation restricting that map to every fibre. The definition is opaque; its object and map
+values are characterized by `monodromyFunctor_obj`, `monodromyFunctor_map`, and
+`monodromyFunctor_map_app`. -/
+noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
   map {p q} f := IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
@@ -67,16 +71,31 @@ may unfold its object and morphism values; the intended interface for doing so i
 @[simp]
 theorem monodromyFunctor_obj (p : CoveringSpace X) :
     (monodromyFunctor X).obj p = p.isCoveringMap_proj.monodromyFunctor :=
-  rfl
+  (rfl)
 
-/-- At a base point, the natural transformation assigned by monodromy is the restriction of the
-underlying map of total spaces to the corresponding fibre. -/
+/-- After transporting along the object equations, the natural transformation assigned to a map
+of covering spaces is the one induced by its underlying map of total spaces. -/
+theorem monodromyFunctor_map {p q : CoveringSpace X} (f : p ⟶ q) :
+    (monodromyFunctor X).map f =
+      eqToHom (monodromyFunctor_obj p) ≫
+        IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+          f.hom.left.hom (proj_hom_comp_hom_left_hom f) ≫
+        eqToHom (monodromyFunctor_obj q).symm :=
+  (rfl)
+
+/-- After transporting along the object equations, the natural transformation assigned by
+monodromy at a base point is the restriction of the underlying map of total spaces to the
+corresponding fibre. -/
 @[simp]
 theorem monodromyFunctor_map_app {p q : CoveringSpace X} (f : p ⟶ q) (x : X) :
     ((monodromyFunctor X).map f).app (FundamentalGroupoid.mk x) =
-      ↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) x) := by
-  exact IsCoveringMap.monodromyNatTrans_app p.isCoveringMap_proj q.isCoveringMap_proj
-    f.hom.left.hom (proj_hom_comp_hom_left_hom f) x
+      eqToHom (Functor.congr_obj (monodromyFunctor_obj p) (FundamentalGroupoid.mk x)) ≫
+        ↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) x) ≫
+        eqToHom (Functor.congr_obj (monodromyFunctor_obj q).symm
+          (FundamentalGroupoid.mk x)) := by
+  rw [monodromyFunctor_map]
+  simp only [NatTrans.comp_app, eqToHom_app, IsCoveringMap.monodromyNatTrans_app]
+  congr
 
 /-- The monodromy functor is faithful: a map of covering spaces is determined by its restrictions
 to all fibres. -/
@@ -84,8 +103,17 @@ instance monodromyFunctor_faithful (X : TopCat.{u}) : (monodromyFunctor X).Faith
   map_injective {p q} f g h := by
     apply ObjectProperty.hom_ext
     ext e
-    have happ := NatTrans.congr_app h (FundamentalGroupoid.mk (p.proj e))
-    rw [monodromyFunctor_map_app, monodromyFunctor_map_app] at happ
+    rw [monodromyFunctor_map, monodromyFunctor_map] at h
+    have htrans :
+        IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+            f.hom.left.hom (proj_hom_comp_hom_left_hom f) =
+          IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+            g.hom.left.hom (proj_hom_comp_hom_left_hom g) := by
+      apply (cancel_epi (eqToHom (monodromyFunctor_obj p))).1
+      apply (cancel_mono (eqToHom (monodromyFunctor_obj q).symm)).1
+      simpa only [Category.assoc] using h
+    have happ := NatTrans.congr_app htrans (FundamentalGroupoid.mk (p.proj e))
+    simp only [IsCoveringMap.monodromyNatTrans_app] at happ
     let e' : p.proj ⁻¹' {p.proj e} := ⟨e, rfl⟩
     have happ := ConcreteCategory.congr_hom happ e'
     calc
