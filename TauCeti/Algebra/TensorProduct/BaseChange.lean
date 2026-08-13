@@ -71,7 +71,7 @@ open scoped TensorProduct
 
 namespace Algebra.TensorProduct
 
-universe u v w
+universe u v w x
 
 /-! ### Common overfields -/
 
@@ -79,10 +79,10 @@ universe u v w
 
 The `K`-algebra structure on `Ω` is compatible with its `k`-algebra structure, while `right`
 embeds `L` into `Ω` as a `k`-algebra. -/
-structure CommonOverfield (k : Type u) (K L : Type w)
+structure CommonOverfield (k : Type u) (K : Type v) (L : Type w)
     [Field k] [Field K] [Field L] [Algebra k K] [Algebra k L] where
   /-- The common overfield. -/
-  Ω : Type w
+  Ω : Type (max v w)
   /-- The field structure on the common overfield. -/
   [fieldΩ : Field Ω]
   /-- The common overfield as a `k`-algebra. -/
@@ -94,7 +94,7 @@ structure CommonOverfield (k : Type u) (K L : Type w)
   right : L →ₐ[k] Ω
 
 /-- Construct a common overfield of two extensions of a field. -/
-noncomputable def commonOverfield (k : Type u) (K L : Type w)
+noncomputable def commonOverfield (k : Type u) (K : Type v) (L : Type w)
     [Field k] [Field K] [Field L] [Algebra k K] [Algebra k L] :
     CommonOverfield k K L := by
   let R := K ⊗[k] L
@@ -119,14 +119,14 @@ noncomputable def commonOverfield (k : Type u) (K L : Type w)
 
 namespace CommonOverfield
 
-variable {k : Type u} {K L : Type w} [Field k] [Field K] [Field L]
+variable {k : Type u} {K : Type v} {L : Type w} [Field k] [Field K] [Field L]
   [Algebra k K] [Algebra k L]
 
 attribute [local instance] fieldΩ algebraOmega algebraKΩ isScalarTower
 
 /-- Successive scalar extension through `K` agrees with direct scalar extension to a common
 overfield. -/
-noncomputable def comparison (d : CommonOverfield k K L) (A : Type v)
+noncomputable def comparison (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] :
     ((K ⊗[k] A) ⊗[K] d.Ω) ≃+* (A ⊗[k] d.Ω) :=
   let _ := d.fieldΩ
@@ -139,20 +139,20 @@ noncomputable def comparison (d : CommonOverfield k K L) (A : Type v)
 
 /-- The common-overfield comparison sends nested pure tensors to pure tensors. -/
 @[simp]
-theorem comparison_tmul_tmul (d : CommonOverfield k K L) (A : Type v)
+theorem comparison_tmul_tmul (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] (x : K) (a : A) (ω : d.Ω) :
     d.comparison A ((x ⊗ₜ[k] a) ⊗ₜ[K] ω) = a ⊗ₜ[k] (x • ω) := by
   simp [comparison]
 
 /-- The inverse common-overfield comparison sends pure tensors to nested pure tensors. -/
 @[simp]
-theorem comparison_symm_tmul (d : CommonOverfield k K L) (A : Type v)
+theorem comparison_symm_tmul (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] (a : A) (ω : d.Ω) :
     (d.comparison A).symm (a ⊗ₜ[k] ω) = (1 ⊗ₜ[k] a) ⊗ₜ[K] ω := by
   simp [comparison]
 
 /-- Scalar extension along the embedding of `L` into a common overfield. -/
-noncomputable def map (d : CommonOverfield k K L) (A : Type v)
+noncomputable def map (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] :
     A ⊗[k] L →ₐ[k] A ⊗[k] d.Ω :=
   let _ := d.fieldΩ
@@ -161,13 +161,13 @@ noncomputable def map (d : CommonOverfield k K L) (A : Type v)
 
 /-- Scalar extension to a common overfield maps each pure tensor componentwise. -/
 @[simp]
-theorem map_tmul (d : CommonOverfield k K L) (A : Type v)
+theorem map_tmul (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] (a : A) (l : L) :
     d.map A (a ⊗ₜ[k] l) = a ⊗ₜ[k] d.right l := by
   simp [map]
 
 /-- Scalar extension from `L` to a common overfield is injective. -/
-theorem map_injective (d : CommonOverfield k K L) (A : Type v)
+theorem map_injective (d : CommonOverfield k K L) (A : Type x)
     [CommRing A] [Algebra k A] : Function.Injective (d.map A) :=
   let _ := d.fieldΩ
   let _ := d.algebraOmega
