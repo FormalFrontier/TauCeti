@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
+public import Mathlib.LinearAlgebra.Dimension.Finite
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
 import Mathlib.Tactic.NoncommRing
@@ -40,6 +42,8 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
   unipotent automorphism is unipotent.
 * `TauCeti.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
   conjugation.
+* `TauCeti.GeneralLinearGroup.IsUnipotent.eq_one_of_finrank_eq_one`: a unipotent
+  automorphism of a one-dimensional vector space is the identity.
 
 ## References
 
@@ -190,6 +194,30 @@ theorem isUnipotent_conj_iff (g h : GeneralLinearGroup K V) :
   rw [← hconj]
   simpa only [isUnipotent_ofLinearEquiv_iff] using
     isUnipotent_congrLinearEquiv_iff h.toLinearEquiv g
+
+/-- A unipotent automorphism of a one-dimensional vector space is the identity. -/
+theorem IsUnipotent.eq_one_of_finrank_eq_one
+    {F : Type u} {W : Type v} [Field F] [AddCommGroup W] [Module F W]
+    {g : GeneralLinearGroup F W} (hg : IsUnipotent g) (hdim : finrank F W = 1) :
+    g = 1 := by
+  let c : F := ((g : End F W).existsUnique_eq_smul_id_of_finrank_eq_one hdim).choose
+  have hc : (g : End F W) = c • LinearMap.id :=
+    ((g : End F W).existsUnique_eq_smul_id_of_finrank_eq_one hdim).choose_spec.1
+  let _ : Nontrivial W :=
+    Module.nontrivial_of_finrank_pos (R := F) (by rw [hdim]; exact one_pos)
+  have hEnd : (g : End F W) - 1 = algebraMap F (End F W) (c - 1) := by
+    rw [hc, Module.algebraMap_end_eq_smul_id]
+    ext w
+    simp [sub_smul]
+  have hnil : _root_.IsNilpotent (c - 1) := by
+    rw [isUnipotent_def, hEnd] at hg
+    exact (IsNilpotent.map_iff
+      (FaithfulSMul.algebraMap_injective F (End F W))).mp hg
+  have hc_one : c = 1 := sub_eq_zero.mp hnil.eq_zero
+  apply Units.ext
+  rw [hc, hc_one, one_smul]
+  ext w
+  simp
 
 end GeneralLinearGroup
 
