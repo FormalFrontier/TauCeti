@@ -66,21 +66,18 @@ abbrev pbwFiltrationPreviousRestricted (k : ℕ) : Submodule R (pbwFiltration R 
 
 /-- Membership in the restricted preceding PBW step is ambient membership in the preceding
 step. -/
-@[simp]
 theorem mem_pbwFiltrationPreviousRestricted_iff (k : ℕ) (x : pbwFiltration R L k) :
     x ∈ pbwFiltrationPreviousRestricted R L k ↔
       (x : U) ∈ pbwFiltrationPrevious R L k :=
   mem_previousRestricted_iff ιU k x
 
 /-- The restricted preceding PBW filtration is trivial in degree zero. -/
-@[simp]
 theorem pbwFiltrationPreviousRestricted_zero :
     pbwFiltrationPreviousRestricted R L 0 = ⊥ :=
   previousRestricted_zero ιU
 
 /-- In successor degree, the restricted preceding PBW filtration is the previous step viewed
 inside the current step. -/
-@[simp]
 theorem pbwFiltrationPreviousRestricted_succ (k : ℕ) :
     pbwFiltrationPreviousRestricted R L (k + 1) =
       Submodule.comap (pbwFiltration R L (k + 1)).subtype (pbwFiltration R L k) :=
@@ -104,7 +101,6 @@ noncomputable abbrev pbwGradedMul (i j : ℕ) :
 
 /-- On quotient representatives, homogeneous PBW multiplication is induced by multiplication in
 the universal enveloping algebra. -/
-@[simp]
 theorem pbwGradedMul_apply_mk (i j : ℕ) (x : pbwFiltration R L i)
     (y : pbwFiltration R L j) :
     pbwGradedMul R L i j (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) =
@@ -123,7 +119,6 @@ noncomputable abbrev pbwGradedAlgebraMap₀ :
   gradedAlgebraMap₀ ιU
 
 /-- A scalar class multiplied by a homogeneous PBW class is scalar multiplication. -/
-@[simp]
 theorem pbwGradedAlgebraMap₀_mul (r : R) (k : ℕ)
     (x : PBWGradedPiece (R := R) (L := L) k) :
     cast (congrArg (PBWGradedPiece (R := R) (L := L)) (Nat.zero_add k))
@@ -132,7 +127,6 @@ theorem pbwGradedAlgebraMap₀_mul (r : R) (k : ℕ)
   gradedAlgebraMap₀_mul ιU r k x
 
 /-- A homogeneous PBW class multiplied by a scalar class is scalar multiplication. -/
-@[simp]
 theorem pbwGradedMul_algebraMap₀ (r : R) (k : ℕ)
     (x : PBWGradedPiece (R := R) (L := L) k) :
     pbwGradedMul (R := R) (L := L) k 0 x

@@ -129,11 +129,9 @@ filtration step rather than a zero quotient. -/
 abbrev filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltrationPrevious (ι Q)
 
-@[simp]
 theorem filtrationPrevious_zero (Q : QuadraticForm R M) : filtrationPrevious Q 0 = ⊥ :=
   TauCeti.Algebra.wordFiltrationPrevious_zero (ι Q)
 
-@[simp]
 theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPrevious Q (k + 1) = filtration Q k :=
   TauCeti.Algebra.wordFiltrationPrevious_succ (ι Q) k
@@ -151,7 +149,6 @@ abbrev filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
 
 /-- Membership in the restricted preceding filtration is ambient membership in the preceding
 filtration step. -/
-@[simp]
 theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
     (x : filtration Q k) :
     x ∈ filtrationPreviousRestricted Q k ↔
@@ -159,7 +156,6 @@ theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
   Iff.rfl
 
 /-- The restricted preceding filtration is trivial in degree zero. -/
-@[simp]
 theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
     filtrationPreviousRestricted Q 0 = ⊥ := by
   ext x
@@ -167,7 +163,6 @@ theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
 
 /-- In successor degree, the restricted preceding filtration is the preceding filtration step
 viewed inside the successor step. -/
-@[simp]
 theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPreviousRestricted Q (k + 1) =
       Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k) := by
@@ -198,7 +193,6 @@ theorem filtration_mono : Monotone (filtration Q) :=
   TauCeti.Algebra.wordFiltration_mono (ι Q)
 
 /-- The zeroth step of the filtration is the module of scalars, the span of the empty product. -/
-@[simp]
 theorem filtration_zero : filtration Q 0 = 1 :=
   TauCeti.Algebra.wordFiltration_zero (ι Q)
 
@@ -268,7 +262,6 @@ theorem filtration_succ_eq_sup (k : ℕ) :
   TauCeti.Algebra.wordFiltration_succ_eq_sup (ι Q) k
 
 /-- The first step of the filtration is the scalars together with the generators. -/
-@[simp]
 theorem filtration_one : filtration Q 1 = 1 ⊔ LinearMap.range (ι Q) :=
   TauCeti.Algebra.wordFiltration_one (ι Q)
 

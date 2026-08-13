@@ -90,12 +90,10 @@ abbrev pbwFiltrationPrevious : ℕ → Submodule R U :=
   TauCeti.Algebra.wordFiltrationPrevious (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
 
 /-- The preceding PBW filtration is trivial in degree zero. -/
-@[simp]
 theorem pbwFiltrationPrevious_zero : pbwFiltrationPrevious R L 0 = ⊥ :=
   TauCeti.Algebra.wordFiltrationPrevious_zero _
 
 /-- In successor degree, the preceding PBW filtration is the previous filtration step. -/
-@[simp]
 theorem pbwFiltrationPrevious_succ (k : ℕ) :
     pbwFiltrationPrevious R L (k + 1) = pbwFiltration R L k :=
   TauCeti.Algebra.wordFiltrationPrevious_succ _ k
@@ -120,7 +118,6 @@ theorem pbwFiltration_mono : Monotone (pbwFiltration R L) :=
   TauCeti.Algebra.wordFiltration_mono _
 
 /-- PBW filtration degree zero consists of scalars. -/
-@[simp]
 theorem pbwFiltration_zero : pbwFiltration R L 0 = 1 :=
   TauCeti.Algebra.wordFiltration_zero _
 
@@ -176,7 +173,6 @@ theorem pbwFiltration_succ_eq_sup (k : ℕ) :
   TauCeti.Algebra.wordFiltration_succ_eq_sup _ k
 
 /-- PBW filtration degree one consists of the scalars and the canonical Lie generators. -/
-@[simp]
 theorem pbwFiltration_one :
     pbwFiltration R L 1 = 1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap :=
   TauCeti.Algebra.wordFiltration_one _
