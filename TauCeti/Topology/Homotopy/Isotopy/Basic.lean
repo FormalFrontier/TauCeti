@@ -70,12 +70,6 @@ open unitInterval ContinuousMap Topology
 
 variable {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
 
-private theorem isEmbedding_const_prod (t : I) : IsEmbedding fun x : X => (t, x) :=
-  IsEmbedding.of_comp (by fun_prop) continuous_snd (by
-    convert (IsEmbedding.id : IsEmbedding (id : X → X)) using 1
-    ext x
-    rfl)
-
 /-- An **isotopy** between `f₀ f₁ : C(X, Y)` is a homotopy for which every time slice
 `x ↦ F(t, x)` is a topological embedding.
 
@@ -97,14 +91,6 @@ instance instFunLike : FunLike (Isotopy f₀ f₁) (I × X) Y where
     obtain ⟨G, _⟩ := G
     congr
     exact DFunLike.coe_injective h
-
-/-- The level-preserving total map of an isotopy. -/
-@[expose] def totalMap (F : Isotopy f₀ f₁) : C(I × X, I × Y) :=
-  ⟨fun p => (p.1, F.toHomotopy p), by fun_prop⟩
-
-@[simp]
-theorem totalMap_apply (F : Isotopy f₀ f₁) (p : I × X) :
-    F.totalMap p = (p.1, F.toHomotopy p) := rfl
 
 @[simp]
 theorem apply_zero (F : Isotopy f₀ f₁) (x : X) : F (0, x) = f₀ x :=
@@ -229,7 +215,7 @@ theorem isHomeomorph_apply (t : I) : IsHomeomorph fun y => Φ.toContinuousMap (t
   · let k : Y → I × Y := fun y => (t, y)
     have hk_cont : Continuous k := by fun_prop
     have hcomp : IsEmbedding (k ∘ fun y => Φ.toContinuousMap (t, y)) := by
-      convert Φ.isHomeomorph_total.isEmbedding.comp (isEmbedding_const_prod (X := Y) t) using 1
+      convert Φ.isHomeomorph_total.isEmbedding.comp (isEmbedding_prodMkRight t) using 1
       ext y <;> rfl
     exact IsEmbedding.of_comp (by fun_prop) hk_cont hcomp
   · intro y
@@ -295,7 +281,7 @@ instance : Inhabited (AmbientIsotopy Y) := ⟨refl Y⟩
 
 /-- An ambient isotopy carries any embedding `f` to the embedding `Φ.final ∘ f` through an
 explicit isotopy: at time `t` the embedding is the homeomorphism `Φ t` postcomposed with `f`. -/
-@[expose] def isotopy {f : C(X, Y)} (hf : IsEmbedding f) : Isotopy f (Φ.final.comp f) where
+def isotopy {f : C(X, Y)} (hf : IsEmbedding f) : Isotopy f (Φ.final.comp f) where
   toHomotopyWith :=
     { toFun := fun p => Φ.toContinuousMap (p.1, f p.2)
       continuous_toFun := by fun_prop
@@ -306,7 +292,7 @@ explicit isotopy: at time `t` the embedding is the homeomorphism `Φ t` postcomp
 @[simp]
 theorem isotopy_apply {f : C(X, Y)} (hf : IsEmbedding f) (t : I) (x : X) :
     Φ.isotopy hf (t, x) = Φ.toContinuousMap (t, f x) :=
-  rfl
+  (rfl)
 
 /-- **Ambient isotopy implies isotopy**: an ambient isotopy of `Y` carries any embedding `f`
 into `Y` to the isotopic embedding `Φ.final ∘ f`. -/

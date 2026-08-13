@@ -60,8 +60,8 @@ private theorem isEmbedding_dupTime :
   rw [this]
   exact IsEmbedding.id
 
-/-- The core embedding lemma shared by the isotopy and ambient-isotopy products. If `u` and `v` are
-embeddings of `I × X → I × Y` and `I × X' → I × Y'` that preserve the time coordinate, then the
+/-- The core embedding lemma used by the ambient-isotopy product. If `u` and `v` are embeddings of
+`I × X → I × Y` and `I × X' → I × Y'` that preserve the time coordinate, then the
 *merged* total map `(t, (x, x')) ↦ (t, ((u (t, x)).2, (v (t, x')).2))` reading both at the same
 time `t` is an embedding. It factors as the time-duplicating embedding, then `u × v`, then the
 projection identifying the two (equal) time coordinates. -/
@@ -92,7 +92,7 @@ variable {f₀ f₁ : C(X, Y)} {g₀ g₁ : C(X', Y')}
 isotopy `g₀ ≈ g₁` build an isotopy `f₀.prodMap g₀ ≈ f₁.prodMap g₁` whose value at `(t, (x, x'))` is
 `(F (t, x), G (t, x'))`. The underlying homotopy is Mathlib's `ContinuousMap.Homotopy.prodMap`,
 and each slice is a product of embeddings. -/
-@[expose] def prodMap (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) :
+def prodMap (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) :
     Isotopy (f₀.prodMap g₀) (f₁.prodMap g₁) where
   toHomotopyWith :=
     { toHomotopy := F.toHomotopy.prodMap G.toHomotopy
@@ -100,7 +100,7 @@ and each slice is a product of embeddings. -/
 
 @[simp]
 theorem prodMap_apply (F : Isotopy f₀ f₁) (G : Isotopy g₀ g₁) (p : I × (X × X')) :
-    F.prodMap G p = (F (p.1, p.2.1), G (p.1, p.2.2)) := rfl
+    F.prodMap G p = (F (p.1, p.2.1), G (p.1, p.2.2)) := (rfl)
 
 end Isotopy
 

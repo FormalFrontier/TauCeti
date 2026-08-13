@@ -57,7 +57,7 @@ variable {f₀ f₁ : C(X, Y)}
 
 /-- Postcompose an isotopy `f₀ ≈ f₁` with a topological embedding `g : Y ↪ Z` to get an
 isotopy `g ∘ f₀ ≈ g ∘ f₁`. -/
-@[expose] def postcomp (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) :
+def postcomp (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) :
     Isotopy (g.comp f₀) (g.comp f₁) where
   toHomotopyWith :=
     { toHomotopy := (Homotopy.refl g).comp F.toHomotopy
@@ -65,11 +65,11 @@ isotopy `g ∘ f₀ ≈ g ∘ f₁`. -/
 
 @[simp]
 theorem postcomp_apply (F : Isotopy f₀ f₁) (g : C(Y, Z)) (hg : IsEmbedding g) (p : I × X) :
-    F.postcomp g hg p = g (F p) := rfl
+    F.postcomp g hg p = g (F p) := (rfl)
 
 /-- Precompose an isotopy `f₀ ≈ f₁` with a topological embedding `e : W ↪ X` to get an
 isotopy `f₀ ∘ e ≈ f₁ ∘ e`. -/
-@[expose] def precomp (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) :
+def precomp (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) :
     Isotopy (f₀.comp e) (f₁.comp e) where
   toHomotopyWith :=
     { toHomotopy := F.toHomotopy.compContinuousMap e
@@ -77,7 +77,7 @@ isotopy `f₀ ∘ e ≈ f₁ ∘ e`. -/
 
 @[simp]
 theorem precomp_apply (F : Isotopy f₀ f₁) (e : C(W, X)) (he : IsEmbedding e) (p : I × W) :
-    F.precomp e he p = F (p.1, e p.2) := rfl
+    F.precomp e he p = F (p.1, e p.2) := (rfl)
 
 end Isotopy
 
