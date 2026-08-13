@@ -68,7 +68,7 @@ pre- and post-composed with the product homeomorphisms `id ×ₜ h⁻¹` and `id
           ⇑((Homeomorph.refl I).prodCongr h.symm) := by
       funext p
       obtain ⟨t, z⟩ := p
-      simp [Homeomorph.coe_prodCongr, Function.comp_def, totalMap]
+      simp [Homeomorph.coe_prodCongr, Function.comp_def]
     rw [heq]
     exact (((Homeomorph.refl I).prodCongr h).isHomeomorph.comp Φ.isHomeomorph_total).comp
       ((Homeomorph.refl I).prodCongr h.symm).isHomeomorph
@@ -79,9 +79,10 @@ pre- and post-composed with the product homeomorphisms `id ×ₜ h⁻¹` and `id
 theorem transport_apply (h : Y ≃ₜ Z) (p : I × Z) :
     (Φ.transport h).toContinuousMap p = h (Φ.toContinuousMap (p.1, h.symm p.2)) := rfl
 
-@[simp]
+@[simp 1100]
 theorem final_transport (h : Y ≃ₜ Z) (z : Z) :
-    (Φ.transport h).final z = h (Φ.final (h.symm z)) := rfl
+    (Φ.transport h).final z = h (Φ.final (h.symm z)) := by
+  rw [final_apply, transport_apply, final_apply]
 
 /-- Every time slice of a transported ambient isotopy is the corresponding slice of `Φ` read in
 the coordinates supplied by `h`:
@@ -98,7 +99,8 @@ read in the coordinates supplied by `h`:
 @[simp]
 theorem finalHomeomorph_transport (h : Y ≃ₜ Z) :
     (Φ.transport h).finalHomeomorph = (h.symm.trans Φ.finalHomeomorph).trans h := by
-  rw [finalHomeomorph, finalHomeomorph, homeomorph_transport]
+  ext z
+  simp only [finalHomeomorph_apply, final_transport, Homeomorph.trans_apply]
 
 /-- **Conjugation of an ambient isotopy** by a self-homeomorphism `h`: the special case of
 `AmbientIsotopy.transport` in which the change of coordinates fixes the ambient space, so the
@@ -110,8 +112,9 @@ endpoint slices conjugate inside the group `Y ≃ₜ Y`. The total map is
 theorem conj_apply (h : Y ≃ₜ Y) (p : I × Y) :
     (Φ.conj h).toContinuousMap p = h (Φ.toContinuousMap (p.1, h.symm p.2)) := rfl
 
-@[simp]
-theorem final_conj (h : Y ≃ₜ Y) (y : Y) : (Φ.conj h).final y = h (Φ.final (h.symm y)) := rfl
+@[simp 1100]
+theorem final_conj (h : Y ≃ₜ Y) (y : Y) : (Φ.conj h).final y = h (Φ.final (h.symm y)) := by
+  rw [final_apply, conj_apply, final_apply]
 
 /-- Every time slice of a conjugated ambient isotopy is the conjugate of the corresponding time
 slice: `(Φ.conj h).homeomorph t = h * Φ.homeomorph t * h⁻¹`. -/
@@ -126,7 +129,8 @@ homeomorphism: `(Φ.conj h).finalHomeomorph = h * Φ.finalHomeomorph * h⁻¹`. 
 @[simp]
 theorem finalHomeomorph_conj (h : Y ≃ₜ Y) :
     (Φ.conj h).finalHomeomorph = h * Φ.finalHomeomorph * h⁻¹ := by
-  rw [finalHomeomorph, finalHomeomorph, homeomorph_conj]
+  ext y
+  simp only [finalHomeomorph_apply, final_conj, Homeomorph.mul_apply, Homeomorph.inv_apply]
 
 end AmbientIsotopy
 

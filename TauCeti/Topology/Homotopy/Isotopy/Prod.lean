@@ -112,7 +112,7 @@ variable {f₀ f₁ : C(X, Y)} {g₀ g₁ : C(X', Y')}
 `f₀.prodMap g₀ ≈ f₁.prodMap g₁`. -/
 theorem prodMap (h : Isotopic f₀ f₁) (h' : Isotopic g₀ g₁) :
     Isotopic (f₀.prodMap g₀) (f₁.prodMap g₁) :=
-  ⟨h.some.prodMap h'.some⟩
+  isotopic_def.mpr ⟨(isotopic_def.mp h).some.prodMap (isotopic_def.mp h').some⟩
 
 end Isotopic
 
@@ -123,14 +123,15 @@ namespace AmbientIsotopy
 is `(Φ (t, y), Ψ (t, y'))`. Its total map is a homeomorphism, being an embedding (by
 `isEmbedding_mergeTotal`) and surjective (each factor is surjective at every time, by
 `AmbientIsotopy.isHomeomorph_apply`). -/
-@[expose]
 def prodCongr (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') : AmbientIsotopy (Y × Y') where
   toContinuousMap :=
     ⟨fun p => (Φ.toContinuousMap (p.1, p.2.1), Ψ.toContinuousMap (p.1, p.2.2)), by fun_prop⟩
   isHomeomorph_total' := by
     rw [isHomeomorph_iff_isEmbedding_surjective]
-    refine ⟨isEmbedding_mergeTotal Φ.isHomeomorph_total.isEmbedding Ψ.isHomeomorph_total.isEmbedding
-      (fun _ => rfl) (fun _ => rfl), ?_⟩
+    refine ⟨?_, ?_⟩
+    · simpa only [totalMap_apply] using
+        isEmbedding_mergeTotal Φ.isHomeomorph_total.isEmbedding
+          Ψ.isHomeomorph_total.isEmbedding (fun p => by simp) (fun p => by simp)
     rintro ⟨t, z, z'⟩
     obtain ⟨y, hy⟩ := (Φ.isHomeomorph_apply t).surjective z
     obtain ⟨y', hy'⟩ := (Ψ.isHomeomorph_apply t).surjective z'
@@ -140,12 +141,13 @@ def prodCongr (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') : AmbientIsotopy 
 @[simp]
 theorem prodCongr_apply (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') (p : I × (Y × Y')) :
     (Φ.prodCongr Ψ).toContinuousMap p =
-      (Φ.toContinuousMap (p.1, p.2.1), Ψ.toContinuousMap (p.1, p.2.2)) := rfl
+      (Φ.toContinuousMap (p.1, p.2.1), Ψ.toContinuousMap (p.1, p.2.2)) := (rfl)
 
 /-- The final map of a product ambient isotopy is the product of the two final maps. -/
-@[simp]
+@[simp 1100]
 theorem final_prodCongr (Φ : AmbientIsotopy Y) (Ψ : AmbientIsotopy Y') (y : Y × Y') :
-    (Φ.prodCongr Ψ).final y = (Φ.final y.1, Ψ.final y.2) := rfl
+    (Φ.prodCongr Ψ).final y = (Φ.final y.1, Ψ.final y.2) := by
+  rw [final_apply, prodCongr_apply, final_apply, final_apply]
 
 end AmbientIsotopy
 
@@ -158,9 +160,11 @@ variable {f f' : C(X, Y)} {g g' : C(X', Y')}
 isotopic in `Y × Y'`, via the product ambient isotopy. -/
 theorem prodMap (h : AmbientIsotopic f f') (h' : AmbientIsotopic g g') :
     AmbientIsotopic (f.prodMap g) (f'.prodMap g') := by
-  obtain ⟨Φ, rfl⟩ := h
-  obtain ⟨Ψ, rfl⟩ := h'
-  refine ⟨Φ.prodCongr Ψ, ContinuousMap.ext fun p => ?_⟩
+  obtain ⟨Φ, hΦ⟩ := ambientIsotopic_def.mp h
+  obtain ⟨Ψ, hΨ⟩ := ambientIsotopic_def.mp h'
+  subst f'
+  subst g'
+  refine ambientIsotopic_def.mpr ⟨Φ.prodCongr Ψ, ContinuousMap.ext fun p => ?_⟩
   exact AmbientIsotopy.final_prodCongr Φ Ψ ((f.prodMap g) p)
 
 end AmbientIsotopic

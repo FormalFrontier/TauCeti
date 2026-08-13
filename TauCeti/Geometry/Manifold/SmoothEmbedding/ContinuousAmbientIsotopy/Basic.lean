@@ -75,7 +75,7 @@ namespace ContinuousAmbientIsotopic
 the two bundled smooth embeddings. -/
 theorem of_ambientIsotopy (Φ : TauCeti.AmbientIsotopy N)
     (hΦ : Φ.final.comp f.toContinuousMap = g.toContinuousMap) : ContinuousAmbientIsotopic f g :=
-  ⟨Φ, hΦ⟩
+  continuousAmbientIsotopic_def.mpr ⟨Φ, hΦ⟩
 
 /-- A symmetric form of `SmoothEmbedding.ContinuousAmbientIsotopic.of_ambientIsotopy`, useful when
 the endpoint equation is oriented as `g = Φ.final ∘ f`. -/
