@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.Data.List.Sort
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
+public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.Basic
 
 /-!
 # Permuting PBW words modulo lower filtration

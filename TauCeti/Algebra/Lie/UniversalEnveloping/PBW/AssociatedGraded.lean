@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AssociatedGraded
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
+public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.Basic
 
 /-!
 # The associated-graded algebra of the PBW filtration
