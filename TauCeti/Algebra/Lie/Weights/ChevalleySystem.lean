@@ -158,14 +158,6 @@ theorem involutive : Function.Involutive ω := by
   rw [LinearMap.mem_ker] at hz
   exact sub_eq_zero.mp (by simpa [f] using hz)
 
-/-- A Chevalley-system automorphism is its own inverse. -/
-theorem symm_eq : ω.symm = ω := by
-  ext z
-  apply ω.injective
-  -- Expose the applications hidden by the `LieEquiv` coercions after applying injectivity.
-  change ω (ω.symm z) = ω (ω z)
-  rw [ω.apply_symm_apply, hx.involutive z]
-
 /-- **Chevalley normalization of structure constants.** If `γ = α + β` is a genuine root sum,
 then the structure constant of a Chevalley system is `p + 1` or its negative, where
 `p = chainBotCoeff α β`.
@@ -186,21 +178,35 @@ theorem structureConstant_eq_natCast_or_eq_neg_natCast
 /-- The structure constant of a genuine root-sum bracket in a Chevalley system is the cast of an
 integer. The preceding theorem identifies that integer more precisely as `±(p + 1)`. -/
 theorem exists_int_structureConstant
-    (α β γ : Weight K H L) (hα : α.IsNonZero) (hβ : β.IsNonZero) (hγ : γ.IsNonZero)
+    (α β γ : Weight K H L) (hγ : γ.IsNonZero)
     (hαβ : (γ : H → K) = (α : H → K) + β) :
     ∃ z : ℤ, hx.toIsSl2System.structureConstant α β γ hγ hαβ = (z : K) := by
-  rcases hx.structureConstant_eq_natCast_or_eq_neg_natCast α β γ hα hβ hγ hαβ with h | h
-  · exact ⟨chainBotCoeff α β + 1, by simpa using h⟩
-  · exact ⟨-(chainBotCoeff α β + 1 : ℤ), by simpa using h⟩
+  by_cases hα : α.IsNonZero
+  · by_cases hβ : β.IsNonZero
+    · rcases hx.structureConstant_eq_natCast_or_eq_neg_natCast α β γ hα hβ hγ hαβ with h | h
+      · exact ⟨chainBotCoeff α β + 1, by simpa using h⟩
+      · exact ⟨-(chainBotCoeff α β + 1 : ℤ), by simpa using h⟩
+    · refine ⟨0, ?_⟩
+      push_cast
+      have hxβ : x β = 0 := hx.toIsSl2System.eq_zero_of_isZero β (not_not.mp hβ)
+      have hlie : ⁅x α, x β⁆ = 0 := by rw [hxβ, lie_zero]
+      rw [hx.toIsSl2System.lie_eq_structureConstant_smul α β γ hγ hαβ] at hlie
+      exact smul_eq_zero.mp hlie |>.resolve_right (hx.toIsSl2System.ne_zero γ hγ)
+  · refine ⟨0, ?_⟩
+    push_cast
+    have hxα : x α = 0 := hx.toIsSl2System.eq_zero_of_isZero α (not_not.mp hα)
+    have hlie : ⁅x α, x β⁆ = 0 := by rw [hxα, zero_lie]
+    rw [hx.toIsSl2System.lie_eq_structureConstant_smul α β γ hγ hαβ] at hlie
+    exact smul_eq_zero.mp hlie |>.resolve_right (hx.toIsSl2System.ne_zero γ hγ)
 
 /-- Every genuine root-sum bracket in a Chevalley system has an integral coefficient. This is the
 form needed to prove that the integral span of root vectors and coroots is closed under the Lie
 bracket. -/
 theorem exists_int_lie_eq_smul
-    (α β γ : Weight K H L) (hα : α.IsNonZero) (hβ : β.IsNonZero) (hγ : γ.IsNonZero)
+    (α β γ : Weight K H L) (hγ : γ.IsNonZero)
     (hαβ : (γ : H → K) = (α : H → K) + β) :
     ∃ z : ℤ, ⁅x α, x β⁆ = (z : K) • x γ := by
-  obtain ⟨z, hz⟩ := hx.exists_int_structureConstant α β γ hα hβ hγ hαβ
+  obtain ⟨z, hz⟩ := hx.exists_int_structureConstant α β γ hγ hαβ
   refine ⟨z, ?_⟩
   rw [hx.toIsSl2System.lie_eq_structureConstant_smul α β γ hγ hαβ, hz]
 
