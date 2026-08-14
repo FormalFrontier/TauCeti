@@ -186,6 +186,19 @@ lemma constSmooth_apply (omegaForm : SymplecticForm V) (x v w : V) :
     (SmoothTwoForm.const_toContMDiffSection_apply _ _ x)).trans
       (LinearMap.toContinuousBilinearMap_apply _ v w)
 
+/-- Under the canonical identification of a self-model tangent fiber with the model space,
+evaluating a constant smooth symplectic form is evaluating its defining bilinear form. -/
+@[simp]
+lemma fromTangentSpace_constSmooth_apply (omegaForm : SymplecticForm V) (x : V)
+    (v w : TangentSpace 𝓘(ℝ, V) x) :
+    omegaForm.constSmooth x v w =
+      omegaForm (NormedSpace.fromTangentSpace x v) (NormedSpace.fromTangentSpace x w) := by
+  exact (congrArg
+    (fun B : V →L[ℝ] V →L[ℝ] ℝ ↦
+      B (NormedSpace.fromTangentSpace x v) (NormedSpace.fromTangentSpace x w))
+    (SmoothTwoForm.const_toContMDiffSection_apply _ _ x)).trans
+      (LinearMap.toContinuousBilinearMap_apply _ _ _)
+
 /-- A constant smooth symplectic form is fiberwise nondegenerate. -/
 @[simp]
 lemma isNondegenerate_constSmooth (omegaForm : SymplecticForm V) :
@@ -204,10 +217,11 @@ lemma tames_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComplexStr
   · intro h v hv
     simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h 0 v hv
   · intro h x v hv
-    -- On the self-model manifold `TangentSpace 𝓘(ℝ, V) x` is definitionally `V`, so there is
-    -- no identification map or transport lemma to rewrite by before using the exposed API.
-    change V at v
-    simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h v hv
+    -- Use Mathlib's explicit canonical identification of a self-model tangent fiber with `V`.
+    let e : TangentSpace 𝓘(ℝ, V) x ≃L[ℝ] V := NormedSpace.fromTangentSpace x
+    have hev : e v ≠ 0 := fun hev ↦ hv (e.injective (hev.trans e.map_zero.symm))
+    simpa only [e, fromTangentSpace_constSmooth_apply,
+      AlmostComplexStructure.fromTangentSpace_constSmooth_apply] using h (e v) hev
 
 /-- Invariance of a pair of constant smooth structures is exactly invariance of the underlying
 linear pair. -/
@@ -219,9 +233,10 @@ lemma invariant_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComple
   · intro h v w
     simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h 0 v w
   · intro h x v w
-    -- As above, both tangent vectors are definitionally vectors in the self-model space.
-    change V at v w
-    simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h v w
+    -- Use the same canonical identification for both tangent vectors.
+    let e : TangentSpace 𝓘(ℝ, V) x ≃L[ℝ] V := NormedSpace.fromTangentSpace x
+    simpa only [e, fromTangentSpace_constSmooth_apply,
+      AlmostComplexStructure.fromTangentSpace_constSmooth_apply] using h (e v) (e w)
 
 /-- Compatibility of a pair of constant smooth structures is exactly compatibility of the
 underlying linear pair. -/
