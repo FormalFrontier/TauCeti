@@ -106,20 +106,11 @@ theorem posSemidef_const_one {R : Type u}
 theorem posSemidef_const_of_nonneg {R : Type u}
     [CommRing R] [PartialOrder R] [StarRing R] [StarOrderedRing R]
     {c : R} (hc : 0 ≤ c) : Matrix.PosSemidef (fun _ _ : α => c) := by
-  refine ⟨?_, fun x => ?_⟩
-  · have hHerm : (Matrix.of fun _ _ : α => c).IsHermitian := by
-      ext a b
-      rw [Matrix.conjTranspose_apply, Matrix.of_apply, Matrix.of_apply]
-      exact hc.star_eq
-    exact hHerm
-  · let s := x.sum fun _ xi => xi
-    have hs := star_left_conjugate_nonneg hc s
-    dsimp only [s] at hs
-    simp only [Finsupp.sum] at hs ⊢
-    rw [star_sum] at hs
-    simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc] at hs
-    rw [Finset.sum_comm] at hs
-    simpa only [mul_assoc] using hs
+  have h := (posSemidef_const_one (R := R) (α := α)).smul hc
+  have heq : c • (fun _ _ : α => (1 : R)) = fun _ _ : α => c := by
+    ext
+    simp
+  exact heq ▸ h
 
 /-- The quadratic-form characterization of an arbitrary-index positive-semidefinite matrix. The
 reverse direction constructs positivity from conjugate symmetry and finite quadratic-form
