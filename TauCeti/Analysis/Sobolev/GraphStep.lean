@@ -42,7 +42,7 @@ variable {E F X : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProduc
 
 /-- The ambient graph space obtained by adjoining an `Lᵖ` candidate weak derivative to `X`. -/
 abbrev WeakDerivStepJetLp (mu : Measure E) (Omega : Opens E) (p : ENNReal) (X F : Type*)
-    [NormedAddCommGroup X] [NormedSpace ℝ X] [NormedAddCommGroup F] [NormedSpace ℝ F] :=
+    [NormedAddCommGroup F] [NormedSpace ℝ F] :=
   WithLp 2 (X × Lp (E →L[ℝ] F) p (mu.restrict Omega))
 
 private def weakDerivStepBaseL

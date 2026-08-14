@@ -67,7 +67,7 @@ abbrev Sobolev3JetLp (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p
 Fréchet derivative of the weak Hessian in its second-order component. -/
 def w3pSubmodule (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] : ClosedSubmodule ℝ (Sobolev3JetLp mu Omega p) :=
-  weakDerivStepSubmodule mu Omega p
+  weakDerivStepSubmodule (X := W2p mu Omega p) mu Omega p
     (W2p.hessianL (mu := mu) (Omega := Omega) (p := p))
 
 /-- Membership in `w3pSubmodule` is the family of third-derivative integration-by-parts
@@ -77,11 +77,7 @@ theorem mem_w3pSubmodule_iff (J : Sobolev3JetLp mu Omega p) :
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
         (∫ x, lineDeriv ℝ (phi : E → ℝ) x v • W2p.hessian (WithLp.fst J) x ∂mu) +
           ∫ x, phi x • WithLp.snd J x v ∂mu = 0 := by
-  simpa only [w3pSubmodule, W2p.hessianL_apply] using
-    (@mem_weakDerivStepSubmodule_iff E (E →L[ℝ] E) (W2p mu Omega p)
-      inferInstance inferInstance inferInstance inferInstance inferInstance inferInstance
-      inferInstance inferInstance (W2p mu Omega p).normedSpace mu inferInstance Omega p
-      inferInstance (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) J)
+  simp only [w3pSubmodule, mem_weakDerivStepSubmodule_iff, W2p.hessianL_apply]
 
 /-- A jet belongs to `w3pSubmodule` exactly when its third derivative is the weak Fréchet
 derivative of its weak Hessian. -/
@@ -89,11 +85,7 @@ theorem mem_w3pSubmodule_iff_hasWeakFDerivOn (J : Sobolev3JetLp mu Omega p) :
     J ∈ w3pSubmodule mu Omega p ↔
       HasWeakFDerivOn mu Omega (W2p.hessian (WithLp.fst J))
         (WithLp.snd J : Lp (E →L[ℝ] (E →L[ℝ] E)) p (mu.restrict Omega)) := by
-  simpa only [w3pSubmodule, W2p.hessianL_apply] using
-    (@mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn E (E →L[ℝ] E) (W2p mu Omega p)
-      inferInstance inferInstance inferInstance inferInstance inferInstance inferInstance
-      inferInstance inferInstance inferInstance (W2p mu Omega p).normedSpace mu inferInstance
-      Omega p inferInstance (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) J)
+  simp only [w3pSubmodule, mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn, W2p.hessianL_apply]
 
 /-- The third-order, real-valued weak Sobolev space `W^{3,p}(Ω)`, represented by its second-order
 Sobolev jet and weak third derivative. -/
