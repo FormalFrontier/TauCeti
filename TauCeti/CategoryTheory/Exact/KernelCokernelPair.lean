@@ -13,8 +13,9 @@ public import Mathlib.CategoryTheory.Limits.Shapes.Opposites.Kernels
 
 A *kernel–cokernel pair* in a category with zero morphisms is a pair of composable morphisms
 `X ⟶ Y ⟶ Z` with zero composite in which the first morphism is a kernel of the second **and**
-the second is a cokernel of the first. Quillen exact structures are, by definition,
-isomorphism-closed classes of such pairs, so this file supplies the objects an
+the second is a cokernel of the first. Following Bühler, the first morphism of such a pair is
+called its *inflation* and the second its *deflation*. Quillen exact structures are, by
+definition, isomorphism-closed classes of such pairs, so this file supplies the objects an
 `ExactStructure` will range over, together with the calculus those axioms are stated in.
 
 The point of the notion is that it makes sense in an arbitrary additive category: neither
@@ -40,10 +41,12 @@ category with homology the notion coincides with Mathlib's
   structure requires.
 * `TauCeti.IsKernelCokernelPair.map`: a functor preserving the two relevant (co)limits carries
   kernel–cokernel pairs to kernel–cokernel pairs.
-* `TauCeti.IsKernelCokernelPair.op` and `TauCeti.IsKernelCokernelPair.op_iff`: the notion is
-  self-dual, which is what makes the Bühler axioms transport to the opposite category.
-* `TauCeti.IsKernelCokernelPair.of_isIso_f` and `TauCeti.IsKernelCokernelPair.of_isIso_g`:
-  an isomorphism is both an inflation and a deflation.
+* `TauCeti.IsKernelCokernelPair.op`, `TauCeti.isKernelCokernelPair_op_iff` and
+  `TauCeti.isKernelCokernelPair_unop_iff`: the notion is self-dual, which is what makes the
+  Bühler axioms transport to the opposite category.
+* `TauCeti.IsKernelCokernelPair.of_isIso_f_of_isZero` and
+  `TauCeti.IsKernelCokernelPair.of_isIso_g_of_isZero`: an isomorphism is both an inflation and
+  a deflation.
 * `TauCeti.IsKernelCokernelPair.of_splitting` and
   `TauCeti.IsKernelCokernelPair.of_hasBinaryBiproduct`: split short complexes, in particular
   `X₁ ⟶ X₁ ⊞ X₂ ⟶ X₂`, are kernel–cokernel pairs. These are the conflations of the split
@@ -51,8 +54,8 @@ category with homology the notion coincides with Mathlib's
 * `TauCeti.IsKernelCokernelPair.biprod`: a direct sum of kernel–cokernel pairs is a
   kernel–cokernel pair.
 * `TauCeti.isKernelCokernelPair_iff_shortExact`: in a balanced preadditive category the
-  kernel–cokernel pairs are exactly the short exact short complexes. These are the conflations
-  of the canonical exact structure on an abelian category.
+  kernel–cokernel pairs among the short complexes with homology are exactly the short exact
+  ones. These are the conflations of the canonical exact structure on an abelian category.
 
 ## Implementation notes
 
@@ -61,12 +64,16 @@ category with homology the notion coincides with Mathlib's
 so membership has to be a proposition; the universal properties are recovered by choice, which
 is harmless because `CategoryTheory.Limits.IsLimit` is a subsingleton.
 
-`of_isIso_f` and `of_isIso_g` are proved directly rather than deduced from
+`of_isIso_f_of_isZero` and `of_isIso_g_of_isZero` are proved directly rather than deduced from
 `CategoryTheory.ShortComplex.Splitting.ofIsIsoOfIsZero` and its sibling together with
 `of_splitting`, which would need a preadditive category with a zero object. The direct proofs
 are no longer, and they keep these two statements — Bühler's axiom E0, that an isomorphism is
 both an inflation and a deflation — in the same bare `CategoryTheory.Limits.HasZeroMorphisms`
-generality as the rest of the core API.
+generality as the rest of the core API. For the same reason `of_hasBinaryBiproduct` and
+`biprod` are stated for a bare `CategoryTheory.Limits.HasZeroMorphisms` category with the
+biproducts they mention: Mathlib's `CategoryTheory.Limits.biprod.isKernelSndKernelFork` and
+its siblings already provide the witnesses there, so routing through `of_splitting` would
+gratuitously assume a preadditive category with a zero object.
 
 ## References
 
@@ -159,24 +166,10 @@ end Factorizations
 /-- Being a kernel–cokernel pair is invariant under isomorphism of short complexes; this is the
 closure property an exact structure demands of its class of conflations. -/
 theorem of_iso (h : IsKernelCokernelPair S₁) (e : S₁ ≅ S₂) : IsKernelCokernelPair S₂ where
-  nonempty_fIsKernel := ⟨IsLimit.ofIsoLimit
-    (KernelFork.isLimitOfIsLimitOfIff h.fIsKernel S₂.g (asIso e.hom.τ₂) fun _ φ => by
-      rw [asIso_hom, e.hom.comm₂₃, ← Category.assoc]
-      refine ⟨fun hφ => by rw [hφ, zero_comp], fun hφ => ?_⟩
-      rw [← cancel_mono e.hom.τ₃, zero_comp]
-      exact hφ)
-    (Fork.ext (asIso e.hom.τ₁) (by simpa using e.hom.comm₁₂))⟩
-  nonempty_gIsCokernel := ⟨IsColimit.ofIsoColimit
-    (CokernelCofork.isColimitOfIsColimitOfIff h.gIsCokernel S₂.f (asIso e.inv.τ₂) fun _ φ => by
-      rw [asIso_hom, ← Category.assoc, ← e.inv.comm₁₂, Category.assoc]
-      refine ⟨fun hφ => by rw [hφ, comp_zero], fun hφ => ?_⟩
-      rw [← cancel_epi e.inv.τ₁, comp_zero]
-      exact hφ)
-    (Cofork.ext (asIso e.hom.τ₃) (by
-      have h₂ : e.inv.τ₂ ≫ e.hom.τ₂ = 𝟙 S₂.X₂ := by
-        rw [← ShortComplex.comp_τ₂, e.inv_hom_id, ShortComplex.id_τ₂]
-      simp only [Cofork.π_ofπ, asIso_hom]
-      rw [Category.assoc, ← e.hom.comm₂₃, ← Category.assoc, h₂, Category.id_comp]))⟩
+  nonempty_fIsKernel := ⟨IsKernel.ofIso _ h.fIsKernel _ (asIso e.hom.τ₂) (asIso e.hom.τ₃)
+    (asIso e.hom.τ₁) e.hom.comm₂₃ (by simpa using e.hom.comm₁₂)⟩
+  nonempty_gIsCokernel := ⟨IsCokernel.ofIso _ h.gIsCokernel _ (asIso e.hom.τ₁) (asIso e.hom.τ₂)
+    (asIso e.hom.τ₃) e.hom.comm₁₂ (by simpa using e.hom.comm₂₃)⟩
 
 /-- A functor preserving zero morphisms and the two relevant (co)limits — for instance an
 equivalence, or an exact functor between abelian categories — carries kernel–cokernel pairs to
@@ -188,14 +181,14 @@ theorem map {D : Type u'} [Category.{v'} D] [HasZeroMorphisms D] (h : IsKernelCo
 
 /-- A short complex whose first morphism is an isomorphism and whose last object is zero is a
 kernel–cokernel pair: an isomorphism is an inflation. -/
-theorem of_isIso_f (S : ShortComplex C) [IsIso S.f] (h₃ : IsZero S.X₃) :
+theorem of_isIso_f_of_isZero (S : ShortComplex C) [IsIso S.f] (h₃ : IsZero S.X₃) :
     IsKernelCokernelPair S where
   nonempty_fIsKernel := ⟨KernelFork.IsLimit.ofι' _ _ fun k _ => ⟨k ≫ inv S.f, by simp⟩⟩
   nonempty_gIsCokernel := ⟨CokernelCofork.IsColimit.ofEpiOfIsZero _ inferInstance h₃⟩
 
 /-- A short complex whose second morphism is an isomorphism and whose first object is zero is a
 kernel–cokernel pair: an isomorphism is a deflation. -/
-theorem of_isIso_g (S : ShortComplex C) [IsIso S.g] (h₁ : IsZero S.X₁) :
+theorem of_isIso_g_of_isZero (S : ShortComplex C) [IsIso S.g] (h₁ : IsZero S.X₁) :
     IsKernelCokernelPair S where
   nonempty_fIsKernel := ⟨KernelFork.IsLimit.ofMonoOfIsZero _ inferInstance h₁⟩
   nonempty_gIsCokernel := ⟨CokernelCofork.IsColimit.ofπ' _ _ fun k _ => ⟨inv S.g ≫ k, by simp⟩⟩
@@ -211,37 +204,14 @@ theorem unop {S : ShortComplex Cᵒᵖ} (h : IsKernelCokernelPair S) :
   ⟨⟨CokernelCofork.IsColimit.ofπUnop S.g S.zero h.gIsCokernel⟩,
     ⟨KernelFork.IsLimit.ofιUnop S.f S.zero h.fIsKernel⟩⟩
 
-@[simp]
-theorem op_iff : IsKernelCokernelPair S.op ↔ IsKernelCokernelPair S :=
-  ⟨fun h => h.unop.of_iso S.opUnop, fun h => h.op⟩
-
-end IsKernelCokernelPair
-
-/-- Being a kernel–cokernel pair only depends on the isomorphism class of a short complex. -/
-theorem isKernelCokernelPair_iff_of_iso (e : S₁ ≅ S₂) :
-    IsKernelCokernelPair S₁ ↔ IsKernelCokernelPair S₂ :=
-  ⟨fun h => h.of_iso e, fun h => h.of_iso e.symm⟩
-
-end HasZeroMorphisms
-
-section Preadditive
-
-variable [Preadditive C] {S S₁ S₂ : ShortComplex C}
-
-namespace IsKernelCokernelPair
-
-/-- A split short complex is a kernel–cokernel pair. These are the conflations of the split
-exact structure on an additive category. -/
-theorem of_splitting [HasZeroObject C] (s : S.Splitting) : IsKernelCokernelPair S :=
-  ⟨⟨s.fIsKernel⟩, ⟨s.gIsCokernel⟩⟩
-
 /-- The biproduct short complex `X₁ ⟶ X₁ ⊞ X₂ ⟶ X₂` is a kernel–cokernel pair. -/
-theorem of_hasBinaryBiproduct [HasZeroObject C] (X₁ X₂ : C) [HasBinaryBiproduct X₁ X₂] :
+theorem of_hasBinaryBiproduct (X₁ X₂ : C) [HasBinaryBiproduct X₁ X₂] :
     IsKernelCokernelPair (ShortComplex.mk (biprod.inl : X₁ ⟶ _) (biprod.snd : _ ⟶ X₂) (by simp)) :=
-  of_splitting (ShortComplex.Splitting.ofHasBinaryBiproduct X₁ X₂)
+  ⟨⟨biprod.isKernelSndKernelFork X₁ X₂⟩, ⟨biprod.isCokernelInlCokernelFork X₁ X₂⟩⟩
 
 /-- A direct sum of two kernel–cokernel pairs is a kernel–cokernel pair. -/
-theorem biprod [HasBinaryBiproducts C] (h₁ : IsKernelCokernelPair S₁)
+theorem biprod [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
+    [HasBinaryBiproduct S₁.X₃ S₂.X₃] (h₁ : IsKernelCokernelPair S₁)
     (h₂ : IsKernelCokernelPair S₂) :
     IsKernelCokernelPair (ShortComplex.mk (biprod.map S₁.f S₂.f)
       (biprod.map S₁.g S₂.g) (by ext <;> simp [reassoc_of% S₁.zero, reassoc_of% S₂.zero])) :=
@@ -252,19 +222,52 @@ theorem biprod [HasBinaryBiproducts C] (h₁ : IsKernelCokernelPair S₁)
   { nonempty_fIsKernel := ⟨KernelFork.IsLimit.ofι' _ _ fun k hk =>
       ⟨biprod.lift
         (h₁.lift (k ≫ biprod.fst) (by
-          rw [Category.assoc, ← biprod.map_fst, ← Category.assoc, hk, zero_comp]))
+          rw [Category.assoc, ← biprod.map_fst S₁.g S₂.g, ← Category.assoc, hk, zero_comp]))
         (h₂.lift (k ≫ biprod.snd) (by
-          rw [Category.assoc, ← biprod.map_snd, ← Category.assoc, hk, zero_comp])),
+          rw [Category.assoc, ← biprod.map_snd S₁.g S₂.g, ← Category.assoc, hk, zero_comp])),
         by apply biprod.hom_ext <;> simp⟩⟩
     nonempty_gIsCokernel := ⟨CokernelCofork.IsColimit.ofπ' _ _ fun k hk =>
       ⟨biprod.desc
         (h₁.desc (biprod.inl ≫ k) (by
-          rw [← Category.assoc, ← biprod.inl_map, Category.assoc, hk, comp_zero]))
+          rw [← Category.assoc, ← biprod.inl_map S₁.f S₂.f, Category.assoc, hk, comp_zero]))
         (h₂.desc (biprod.inr ≫ k) (by
-          rw [← Category.assoc, ← biprod.inr_map, Category.assoc, hk, comp_zero])),
+          rw [← Category.assoc, ← biprod.inr_map S₁.f S₂.f, Category.assoc, hk, comp_zero])),
         by apply biprod.hom_ext' <;> simp⟩⟩ }
 
-/-- A kernel–cokernel pair is a short exact short complex. -/
+end IsKernelCokernelPair
+
+/-- Being a kernel–cokernel pair only depends on the isomorphism class of a short complex. -/
+theorem isKernelCokernelPair_iff_of_iso (e : S₁ ≅ S₂) :
+    IsKernelCokernelPair S₁ ↔ IsKernelCokernelPair S₂ :=
+  ⟨fun h => h.of_iso e, fun h => h.of_iso e.symm⟩
+
+/-- A short complex is a kernel–cokernel pair if and only if its opposite is; the notion is
+self-dual. -/
+@[simp]
+theorem isKernelCokernelPair_op_iff : IsKernelCokernelPair S.op ↔ IsKernelCokernelPair S :=
+  ⟨fun h => h.unop.of_iso S.opUnop, fun h => h.op⟩
+
+/-- A short complex in `Cᵒᵖ` is a kernel–cokernel pair if and only if its un-opposite is; the
+notion is self-dual. -/
+@[simp]
+theorem isKernelCokernelPair_unop_iff {S : ShortComplex Cᵒᵖ} :
+    IsKernelCokernelPair S.unop ↔ IsKernelCokernelPair S :=
+  ⟨fun h => h.op.of_iso S.unopOp, fun h => h.unop⟩
+
+end HasZeroMorphisms
+
+section Preadditive
+
+variable [Preadditive C] {S : ShortComplex C}
+
+namespace IsKernelCokernelPair
+
+/-- A split short complex is a kernel–cokernel pair. These are the conflations of the split
+exact structure on an additive category. -/
+theorem of_splitting [HasZeroObject C] (s : S.Splitting) : IsKernelCokernelPair S :=
+  ⟨⟨s.fIsKernel⟩, ⟨s.gIsCokernel⟩⟩
+
+/-- A kernel–cokernel pair with homology is a short exact short complex. -/
 theorem shortExact [S.HasHomology] (h : IsKernelCokernelPair S) : S.ShortExact where
   exact := ShortComplex.exact_of_f_is_kernel S h.fIsKernel
   mono_f := h.mono_f
@@ -277,9 +280,10 @@ theorem of_shortExact [Balanced C] (h : S.ShortExact) : IsKernelCokernelPair S :
 
 end IsKernelCokernelPair
 
-/-- **In a balanced preadditive category the kernel–cokernel pairs are exactly the short exact
-short complexes.** This identifies the conflations of the canonical exact structure of an
-abelian category with Mathlib's `CategoryTheory.ShortComplex.ShortExact`. -/
+/-- **In a balanced preadditive category the kernel–cokernel pairs among the short complexes
+with homology are exactly the short exact ones.** This identifies the conflations of the
+canonical exact structure of an abelian category with Mathlib's
+`CategoryTheory.ShortComplex.ShortExact`. -/
 theorem isKernelCokernelPair_iff_shortExact [Balanced C] (S : ShortComplex C) [S.HasHomology] :
     IsKernelCokernelPair S ↔ S.ShortExact :=
   ⟨fun h => h.shortExact, fun h => .of_shortExact h⟩
