@@ -71,7 +71,7 @@ namespace Conjugation
 
 variable {W : Type*} [AddCommGroup W] [Module ℂ W] (ω : Conjugation W)
 
-@[simp]
+/-- The image of `⊤` under a conjugation automorphism is `⊤`. -/
 theorem map_top : (⊤ : Submodule ℂ W).map ω.toEquiv.toLinearMap = ⊤ := by
   rw [Submodule.map_top]
   exact LinearEquiv.range _
