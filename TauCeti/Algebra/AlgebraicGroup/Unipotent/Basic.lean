@@ -105,7 +105,7 @@ theorem unipotentPointsCommHopfAlgProperty_iff_forall_isNilpotent_endOfPoint_sub
 
 /-- Every geometric point is unipotent exactly when its unipotent part is the point itself. -/
 theorem unipotentPointsCommHopfAlgProperty_iff_unipotentPart_eq_self
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) :
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
     unipotentPointsCommHopfAlgProperty k H ↔
       ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
         HopfAlgebra.Point.unipotentPart k H (AlgebraicClosure k) g = g := by
@@ -116,7 +116,7 @@ theorem unipotentPointsCommHopfAlgProperty_iff_unipotentPart_eq_self
 
 /-- Every geometric point is unipotent exactly when its semisimple part is the identity. -/
 theorem unipotentPointsCommHopfAlgProperty_iff_semisimplePart_eq_one
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) :
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
     unipotentPointsCommHopfAlgProperty k H ↔
       ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
         HopfAlgebra.Point.semisimplePart k H (AlgebraicClosure k) g = 1 := by
