@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.DeFinetti.ViaKoopman.BlockReduction
+public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTransport
+public import TauCeti.Probability.DeFinetti.ViaKoopman.InvariantConditionalLaw
 public import Mathlib.Dynamics.BirkhoffSum.Average
 public import TauCeti.Probability.Ergodic.CondExpProjection
 

@@ -20,7 +20,7 @@ form
 `∑ᵢ ∑ⱼ cᵢ · conj cⱼ · charFun μ (tᵢ - tⱼ)`
 
 is a nonnegative real number (`charFun_sum_mul_conj_nonneg`), equivalently the matrix
-`(charFun μ (tᵢ - tⱼ))ᵢⱼ` is positive semidefinite (`charFun_posSemidef`). The proof is the
+`(charFun μ (tᵢ - tⱼ))ᵢⱼ` is positive semidefinite (`posSemidef_charFun`). The proof is the
 classical computation: the Hermitian form equals the honest integral
 
 `∫ y, ‖∑ᵢ cᵢ · exp (⟪y, tᵢ⟫ * I)‖² ∂μ`
@@ -119,26 +119,29 @@ theorem charFun_fintype_sum_mul_conj_nonneg {ι : Type*} [Fintype ι] (c : ι �
     0 ≤ ∑ i, ∑ j, c i * conj (c j) * charFun μ (t i - t j) :=
   charFun_sum_mul_conj_nonneg Finset.univ c t
 
-/-- The matrix `(charFun μ (tᵢ - tⱼ))ᵢⱼ` of a finite measure is positive semidefinite: the
-matrix reformulation of the positive-definiteness of `charFun μ`. -/
-theorem charFun_posSemidef {ι : Type*} (t : ι → E) :
-    (Matrix.of fun i j => charFun μ (t i - t j)).PosSemidef := by
-  refine ⟨?_, fun x => ?_⟩
-  · -- Hermitian: `conj (charFun μ (tⱼ - tᵢ)) = charFun μ (tᵢ - tⱼ)`
-    have h : ∀ i j : ι, conj (charFun μ (t j - t i)) = charFun μ (t i - t j) := by
-      intro i j
-      have hsub : t j - t i = -(t i - t j) := by abel
-      rw [hsub, charFun_neg, Complex.conj_conj]
-    ext i j
-    simpa only [Matrix.conjTranspose_apply, Matrix.of_apply, ← starRingEnd_apply] using h i j
-  · -- the Hermitian form is nonnegative
-    simp only [Finsupp.sum, Matrix.of_apply, ← starRingEnd_apply]
-    have h := charFun_sum_mul_conj_nonneg (μ := μ) x.support (fun i => conj (x i)) t
-    have heq : (∑ i ∈ x.support, ∑ j ∈ x.support, conj (x i) * charFun μ (t i - t j) * x j)
-        = ∑ i ∈ x.support, ∑ j ∈ x.support,
-            conj (x i) * conj (conj (x j)) * charFun μ (t i - t j) := by
-      refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-      rw [Complex.conj_conj]; ring
-    rw [heq]; exact h
+/-- The subtraction kernel `(x, y) ↦ charFun μ (x - y)` of a finite measure is positive
+semidefinite: the matrix reformulation of the positive-definiteness of `charFun μ`. -/
+theorem posSemidef_charFun : Matrix.PosSemidef fun x y : E => charFun μ (x - y) := by
+  have hK : (Matrix.of fun x y : E => charFun μ (x - y)).PosSemidef := by
+    refine ⟨?_, fun x => ?_⟩
+    · -- Hermitian: `conj (charFun μ (y - x)) = charFun μ (x - y)`
+      have h : ∀ x y : E, conj (charFun μ (y - x)) = charFun μ (x - y) := by
+        intro x y
+        have hsub : y - x = -(x - y) := by abel
+        rw [hsub, charFun_neg, Complex.conj_conj]
+      ext x y
+      simpa only [Matrix.conjTranspose_apply, Matrix.of_apply, ← starRingEnd_apply] using h x y
+    · -- the Hermitian form is nonnegative
+      simp only [Finsupp.sum, Matrix.of_apply, ← starRingEnd_apply]
+      have h := charFun_sum_mul_conj_nonneg (μ := μ) x.support (fun i => conj (x i)) id
+      have heq : (∑ i ∈ x.support, ∑ j ∈ x.support, conj (x i) * charFun μ (i - j) * x j)
+          = ∑ i ∈ x.support, ∑ j ∈ x.support,
+              conj (x i) * conj (conj (x j)) * charFun μ (i - j) := by
+        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+        rw [Complex.conj_conj]
+        ring
+      rw [heq]
+      exact h
+  exact hK
 
 end TauCeti

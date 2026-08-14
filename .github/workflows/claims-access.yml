@@ -1,0 +1,68 @@
+name: Claims Access
+
+# Admits contributors to the shared claim namespace, TauCetiProject/tauceti-claims, so that workers
+# run by different people do not spend two subscriptions on the same job. The rule is: anyone whose
+# pull request has been merged here. See scripts/claims_access.py for why, and for what `sweep` does.
+#
+# The claim repository holds leases and nothing else. It is separate from this one on purpose —
+# coordinating workers must never need write access to the library — and its Actions are disabled,
+# because everyone who coordinates through it can push to it, and a repository with both write access
+# and CI is one where anyone can run anything.
+#
+# Setup (once). This uses its OWN GitHub App, not the org's general APP_ID: inviting collaborators
+# needs `Administration: write`, and that permission on an App installed across the org would be a
+# far bigger hammer than this job needs.
+#   1. Create an org-owned App, e.g. "tauceti-claims-access", with repository permissions
+#      `Administration: write` (invite) and `Contents: write` (delete expired refs).
+#   2. Install it on TauCetiProject/tauceti-claims, and on nothing else.
+#   3. Add this repository's secrets CLAIMS_APP_ID and CLAIMS_APP_PRIVATE_KEY.
+# Then run it once from the Actions tab with dry-run to see who it would invite.
+
+on:
+  schedule:
+  - cron: "23 * * * *"   # hourly; a new contributor waits at most that long, and claims in their fork meanwhile
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "List who would be invited and which leases would be swept, changing nothing"
+        type: boolean
+        default: false
+
+concurrency:
+  group: claims-access
+  cancel-in-progress: false
+
+jobs:
+  claims-access:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Require the claims App
+        env:
+          APP_ID: ${{ secrets.CLAIMS_APP_ID }}
+        run: |
+          if [ -z "$APP_ID" ]; then
+            echo "::error::CLAIMS_APP_ID / CLAIMS_APP_PRIVATE_KEY are unset, so nobody can be admitted to the" \
+                 "claim namespace and every fleet is coordinating only with itself. See the setup notes at the" \
+                 "top of .github/workflows/claims-access.yml."
+            exit 1
+          fi
+
+      - uses: actions/create-github-app-token@v1
+        id: claims-token
+        with:
+          app-id: ${{ secrets.CLAIMS_APP_ID }}
+          private-key: ${{ secrets.CLAIMS_APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: tauceti-claims
+
+      - uses: actions/checkout@v4
+
+      - name: Reconcile access and sweep dead leases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAIMS_TOKEN: ${{ steps.claims-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry-run && '1' || '' }}
+        run: python3 scripts/claims_access.py
