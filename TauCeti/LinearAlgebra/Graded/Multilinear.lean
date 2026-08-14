@@ -106,7 +106,7 @@ theorem IsHomogeneous.add [AddMemClass σN N] {f g : MultilinearMap R M N}
 
 /-- Precomposing each input by a homogeneous linear map adds all of their degrees to the degree
 of the multilinear map. -/
-@[grind]
+@[grind .]
 theorem IsHomogeneous.compLinearMap
     {M' : κ → Type uP} {σM' : κ → Type*} [∀ i, AddCommMonoid (M' i)] [∀ i, Module R (M' i)]
     [∀ i, SetLike (σM' i) (M' i)]
@@ -153,7 +153,7 @@ theorem IsHomogeneous.compMultilinearMap
 
 /-- Reindexing the inputs of a homogeneous multilinear map along an equivalence of index types
 preserves its degree. -/
-@[grind]
+@[grind .]
 theorem IsHomogeneous.domDomCongrLinearEquiv' {κ' : Type*} [Fintype κ']
     {S : Type*} [Semiring S] [Module S N] [SMulCommClass R S N] (σ : κ ≃ κ')
     {f : MultilinearMap R M N} {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι}
