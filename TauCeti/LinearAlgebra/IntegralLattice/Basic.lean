@@ -94,6 +94,13 @@ instance (L : IntegralLattice V) : L.carrier.IsLattice ℚ := L.isLattice
 /-- An integral lattice coerces to the type of its vectors. -/
 instance : CoeSort (IntegralLattice V) (Type u) := ⟨fun L ↦ L.carrier⟩
 
+/-- An integral lattice coerces to its rational bilinear form. -/
+instance : CoeFun (IntegralLattice V) fun _ ↦ V → V → ℚ :=
+  ⟨fun L x y ↦ L.form x y⟩
+
+@[simp]
+theorem coeFun_apply (L : IntegralLattice V) (x y : V) : L x y = L.form x y := rfl
+
 /-- The carrier of an integral lattice is a free `ℤ`-module. -/
 instance (L : IntegralLattice V) : Module.Free ℤ L := inferInstance
 
@@ -188,8 +195,7 @@ noncomputable def ofBasis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (
   le_dual := by
     rw [Submodule.span_le]
     rintro _ ⟨i, rfl⟩
-    change b i ∈ B.dualSubmodule (Submodule.span ℤ (Set.range b))
-    rw [LinearMap.BilinForm.mem_dualSubmodule]
+    rw [SetLike.mem_coe, LinearMap.BilinForm.mem_dualSubmodule]
     intro y hy
     induction hy using Submodule.span_induction with
     | mem z hz =>
