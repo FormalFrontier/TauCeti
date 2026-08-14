@@ -130,6 +130,7 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
   let dOp : LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G :=
     mvfderiv I
       (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)
+  -- First identify the representation's model-space derivative with the operator `dOp`.
   have hmodelDerivative :
       NormedSpace.fromTangentSpace
           (continuousAdjointRepresentation (I := I) (G := G) 1)
@@ -140,10 +141,13 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
     calc
       _ = (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from mfderiv I
           𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
-          (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) := by rfl
+          (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) := by
+        -- The target is a normed vector space, so `fromTangentSpace` is the identity on values.
+        rfl
       _ = dOp := (mvfderiv_apply_eq_mfderiv_apply
         (I := I) (f := continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)).symm
   rw [hmodelDerivative]
+  -- Evaluate the operator identity at an arbitrary derivation `Y`.
   apply ContinuousLinearMap.ext
   intro Y
   let evalY :
@@ -151,6 +155,7 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
         LeftInvariantDerivation I G :=
     (ContinuousLinearMap.apply ℝ (LeftInvariantDerivation I G)) Y
   let AY : G → LeftInvariantDerivation I G := fun g => Ad (I := I) g Y
+  -- Transport the representation derivative through evaluation at `Y` by the chain rule.
   have hComp := mfderiv_comp_apply (I := I) (I' :=
       𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G))
     (I'' := 𝓘(ℝ, LeftInvariantDerivation I G))
@@ -167,8 +172,11 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
       mvfderiv I AY 1 (eLie X) = dOp Y := by
     rw [hAY, mvfderiv_apply_eq_mfderiv_apply, hComp]
     dsimp only [evalY, dOp]
+    -- Undo the conversion because `mfderiv` has a dependent result type, while evaluation here
+    -- requires the model-space-valued `mvfderiv` expression.
     rw [← mvfderiv_apply_eq_mfderiv_apply]
     exact ContinuousLinearMap.apply_apply Y _
+  -- Close the pointwise identity with the already established differential of `Ad` applied to `Y`.
   calc
     dOp Y = mvfderiv I AY 1 (eLie X) := hCompAY.symm
     _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
@@ -177,7 +185,9 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
             mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) :=
           mvfderiv_apply_eq_mfderiv_apply (I := I) AY 1 (eLie X)
         _ = NormedSpace.fromTangentSpace (AY 1)
-            (mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) := by rfl
+            (mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) := by
+          -- The target is a normed vector space, so `fromTangentSpace` is the identity on values.
+          rfl
         _ = _ := by
           simpa only [AY, eLie, ContinuousLinearEquiv.coe_coe] using
             mfderiv_Ad_apply_one (I := I) (G := G) X Y
