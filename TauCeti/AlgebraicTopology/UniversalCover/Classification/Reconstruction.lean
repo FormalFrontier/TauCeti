@@ -68,27 +68,6 @@ reconstructed from the action. -/
 abbrev stabilizerCover (a : A) : ConnectedCoveringSpace (TopCat.of X) :=
   subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
-/-- The total space of the cover reconstructed from `a` is the quotient of the universal cover
-by the stabilizer of `a`. -/
-@[simp]
-theorem stabilizerCover_coe (a : A) :
-    (stabilizerCover x0 a : TopCat) =
-      TopCat.of (SubgroupQuotient x0
-        (MulAction.stabilizer (FundamentalGroup X x0) a)) := by
-  simpa only [stabilizerCover] using
-    subgroupCover_coe x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
-
-/-- The projection of the cover reconstructed from `a` is the descended endpoint projection. -/
-@[simp]
-theorem stabilizerCover_proj (a : A) :
-    (stabilizerCover x0 a).proj =
-      eqToHom (stabilizerCover_coe x0 a) ≫
-        TopCat.ofHom
-          ⟨subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a),
-            continuous_subgroupQuotientProj x0 _⟩ := by
-  simpa only [stabilizerCover] using
-    subgroupCover_proj x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
-
 /-- The distinguished point of the fibre over `x₀` of the cover reconstructed from `a`: the
 class of the constant path at the basepoint. -/
 abbrev stabilizerCoverBasepointFiber (a : A) : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} :=
