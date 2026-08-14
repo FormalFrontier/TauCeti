@@ -34,7 +34,6 @@ unconditional computation, is being developed upstream in Mathlib PR #28246.
 
 ## Main declarations
 
-* `TauCeti.RealProjectiveSpace.pathConnectedSpace_sphere`: `Sⁿ` is path-connected for `1 ≤ n`.
 * `TauCeti.RealProjectiveSpace.pathConnectedSpace`: `RPⁿ` is path-connected for `1 ≤ n`.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`: for `2 ≤ n` and a simply connected
   covering sphere, `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ` for any basepoint `x`
@@ -65,7 +64,8 @@ This is the deck-to-fundamental-group part of the `π₁(RPⁿ)` milestone in
 `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk` and
 `TauCeti.RealProjectiveSpace.deckMulEquiv` from
 `TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Deck`, and the regular-cover comparison
-of Stage 1.
+of Stage 1. The equivalence construction and monodromy proof pattern are adapted from
+`TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup` for the antipodal cover.
 -/
 
 public section
@@ -80,20 +80,15 @@ noncomputable section
 
 variable (n : ℕ)
 
-/-- The unit sphere of `EuclideanSpace ℝ (Fin (n + 1))` is path-connected once `1 ≤ n`. -/
-theorem pathConnectedSpace_sphere (hn : 1 ≤ n) :
-    PathConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
-  have hrank : 1 < Module.rank ℝ (EuclideanSpace ℝ (Fin (n + 1))) := by
-    rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
-    omega
-  have hpc := isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1))) zero_le_one
-  exact isPathConnected_iff_pathConnectedSpace.mp hpc
-
 /-- Real projective space is path-connected once `1 ≤ n`, as the continuous image of the
 path-connected unit sphere `Sⁿ`. -/
 theorem pathConnectedSpace (hn : 1 ≤ n) :
     PathConnectedSpace (RealProjectiveSpace n) := by
-  have hpc := pathConnectedSpace_sphere n hn
+  have hrank : 1 < Module.rank ℝ (EuclideanSpace ℝ (Fin (n + 1))) := by
+    rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
+    omega
+  have hpc := isPathConnected_iff_pathConnectedSpace.mp
+    (isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1))) zero_le_one)
   exact (mk_surjective n).pathConnectedSpace (continuous_mk n)
 
 /-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) with a simply connected
