@@ -123,6 +123,8 @@ theorem contMDiff_tangentAd_apply :
     ContMDiff (I.prod 𝓘(ℝ, E)) 𝓘(ℝ, E) ∞
       (fun p : G × E ↦
         show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) := by
+  -- `GroupLieAlgebra I G` definitionally reduces to the model space `E`; expose that model-space
+  -- presentation so the continuous-linear-map smoothness API applies.
   rw [show (fun p : G × E ↦
       show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) =
     fun p ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2 by
@@ -135,6 +137,8 @@ theorem contMDiff_tangentAd_apply :
 theorem contMDiff_tangentAd_apply_right (Y : E) :
     ContMDiff I 𝓘(ℝ, E) ∞
       (fun g : G ↦ show E from tangentAd (I := I) g (Y : GroupLieAlgebra I G)) := by
+  -- `GroupLieAlgebra I G` definitionally reduces to the model space `E`; expose that model-space
+  -- presentation when specializing the jointly smooth action to `Y`.
   exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp
     (contMDiff_id.prodMk contMDiff_const)
 
