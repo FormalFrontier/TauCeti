@@ -28,9 +28,9 @@ eventually a translation leaves every exactly shift-invariant event unchanged
 `preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` the invariant-measurable form).
 That is one of the two independent inputs a Koopman-style block argument needs — the other,
 measure preservation, comes from contractability and needs strict monotonicity, which this one does
-not. `comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add` is the function-level form: a
-shift-invariant function is unchanged by such a reindexing, pointwise. Its invariants-measurable
-corollary is Mathlib's `MeasurableSpace.comp_eq_of_measurable_invariants` composed with it.
+not. The function-level form lives beside its set-level counterpart in `PathSpace/Shift.lean`: a
+shift-invariant function is unchanged by such a reindexing, pointwise. The invariants-measurable
+corollary here is Mathlib's `MeasurableSpace.comp_eq_of_measurable_invariants` composed with it.
 
 The Layer 2 exchangeability roadmap warns against silently identifying the tail σ-algebra with the
 shift-invariant σ-algebra for one-sided sequences; these two results are the exact form of that
@@ -52,9 +52,9 @@ Reindexing under an eventual translation:
 
 * `preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` — such a reindexing fixes
   every invariants-measurable event;
-* `comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add` and its invariants-measurable
-  corollary `comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add` — and leaves every
-  shift-invariant function unchanged, pointwise.
+* `comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add` — and leaves every
+  invariants-measurable function unchanged, pointwise. The raw form,
+  `comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add`, is in `PathSpace/Shift.lean`.
 
 * `tailFamily_coord_eq_comap_shift_iterate`
 * `pathTail_eq_iInf_comap_shift_iterate`
@@ -230,29 +230,6 @@ theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C :
   preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add
     (MeasurableSpace.measurableSet_invariants.1 hA).2 hφ
 
-
-omit [MeasurableSpace α] in
-/-- **A shift-invariant function is unchanged by such a reindexing**, pointwise.
-
-Each level set `w ⁻¹' {c}` is shift-invariant, so
-`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` sends the reindexed point into the
-same level set as the original. Taking `c = w x` gives the claim.
-
-No measure and no measurable structure appears: this is the raw form, paired with the
-invariants-measurable one below exactly as the set-level results in this file are paired. -/
-theorem comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
-    {β : Type*} {w : (ℕ → α) → β} (hw : w ∘ shift α = w)
-    (hφ : ∀ n, m ≤ n → φ n = n + C) (x : ℕ → α) :
-    w (fun k => x (φ k)) = w x := by
-  have hshift : ∀ y : ℕ → α, w (shift α y) = w y := fun y => by
-    simpa only [Function.comp_apply] using congrFun hw y
-  have hinv : (shift α) ⁻¹' (w ⁻¹' {w x}) = w ⁻¹' {w x} := by
-    ext y
-    simp only [Set.mem_preimage, Set.mem_singleton_iff, hshift]
-  have hx : x ∈ (fun y : ℕ → α => fun k => y (φ k)) ⁻¹' (w ⁻¹' {w x}) := by
-    rw [preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add hinv hφ]
-    rfl
-  simpa using hx
 
 /-- **An invariants-measurable function is unchanged by such a reindexing**, pointwise.
 
