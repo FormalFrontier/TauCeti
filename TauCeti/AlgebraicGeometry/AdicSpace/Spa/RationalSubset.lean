@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
-public import TauCeti.RingTheory.Huber.Basic
+public import TauCeti.RingTheory.Huber.OpenIdeal
 
 /-!
 # Rational subsets of the adic spectrum
@@ -26,12 +26,14 @@ As with `spa` itself, the definition is stated for arbitrary data: no hypothesis
 topology of `A` to its ring operations, the subring is arbitrary, and Wedhorn's standing
 condition that the ideal `T · A` be open is not assumed. It is Wedhorn's rational subset of
 `Spa (A, A⁺)` under his hypotheses (a Huber ring, a ring of integral elements, `T · A` open);
-the open-ideal condition enters only in the results that need it — the basis claims of
-Definition 7.29 and the quasi-compactness of Theorem 7.35 — none of which is in this file.
+the open-ideal condition enters only in the results that need it — the standard-cover theorem
+below, the basis claims of Definition 7.29, and the quasi-compactness of Theorem 7.35. Of these,
+only the standard-cover theorem is in this file.
 
-What is here is what holds with no hypotheses at all: the exported interface of the
-definition, the normalizations and the intersection identity inherited from `Spv(A)(T/s)`,
-the whole-space case, containment in `spa A⁺`, and relative openness in the subspace.
+The exported interface of the definition, the normalizations and the intersection identity
+inherited from `Spv(A)(T/s)`, the whole-space case, containment in `spa A⁺`, and relative
+openness in the subspace all hold with no extra hypotheses. The file also proves the forward
+standard-cover implication of Corollary 7.53 and its open-ideal specialization for Tate rings.
 
 On the intersection identity, writing `Uᵢ = insert sᵢ Tᵢ` for each numerator set augmented by
 its own denominator (which costs nothing, by `rationalSubset_insert_self`),
@@ -67,6 +69,9 @@ layer deferred above.
   relatively open in the subspace `spa A⁺`.
 * `TauCeti.ValuationSpectrum.rationalSubset_inter` : the intersection identity above — the
   set-level half of Remark 7.30(5).
+* `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top` : a finite set
+  generating the unit ideal gives a standard rational cover, the forward implication of
+  Corollary 7.53.
 
 ## References
 
@@ -92,7 +97,8 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A]
 /-- The rational subset `R(T/s)` of the adic spectrum: the trace on `spa A⁺` of the basic open
 `Spv(A)(T/s)`. Under Wedhorn's hypotheses — a Huber ring, a ring of integral elements, and the
 ideal `T · A` open — this is his Definition 7.29; the definition itself asks for none of them,
-and the open-ideal condition first matters for the basis claims, which are not in this file. -/
+and the open-ideal condition matters only for later results such as the standard-cover theorem
+below and the basis claims, not for the definition. -/
 def rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) : Set (Spv A) :=
   spa Aplus ∩ basicOpenFinset T s
 
@@ -169,10 +175,9 @@ theorem mem_rationalSubset_of_mem_spa_of_span_eq_top (Aplus : Subring A) {T : Fi
     have h1 : (1 : A) ∈ (⊥ : Ideal A) := hT ▸ Submodule.mem_top
     rw [Ideal.mem_bot] at h1
     exact v.toValuativeRel.not_vle_one_zero (h1 ▸ v.toValuativeRel.vle_refl 0)
-  let _ : ValuativeRel A := v.toValuativeRel
-  obtain ⟨s, hs, hmax'⟩ := Finset.exists_max_image T v.toValuativeRel.valuation hT_ne
+  obtain ⟨s, hs, hmax'⟩ := Finset.exists_max_image T v.valuation hT_ne
   have hmax : ∀ t ∈ T, v.toValuativeRel.vle t s := fun t ht ↦
-    (Valuation.vle_iff_le v.toValuativeRel.valuation).mpr (hmax' t ht)
+    (valuation_le_iff v t s).mp (hmax' t ht)
   refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun h_zero ↦ ?_⟩⟩
   have h_supp : (T : Set A) ⊆ (v.supp : Set A) := fun t ht ↦
     (mem_supp_iff v t).mpr (v.toValuativeRel.vle_trans (hmax t ht) h_zero)
@@ -204,7 +209,7 @@ theorem spa_eq_biUnion_rationalSubset_of_isTateRing_of_isOpen (Aplus : Subring A
     (hT : IsOpen ((Ideal.span (T : Set A) : Ideal A) : Set A)) :
     spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t :=
   spa_eq_biUnion_rationalSubset_of_span_eq_top Aplus
-    ((TauCeti.Huber.IsTateRing.isOpen_ideal_iff_eq_top (Ideal.span (T : Set A))).mp hT)
+    ((TauCeti.Huber.IsTateRing.isOpen_iff_eq_top (Ideal.span (T : Set A))).mp hT)
 
 end Tate
 

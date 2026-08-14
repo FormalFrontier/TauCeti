@@ -380,24 +380,6 @@ theorem IsTateRing.exists_hasBasis_nhds_zero (A : Type*) [CommRing A] [Topologic
   obtain ⟨P⟩ := IsHuberRing.nonempty_pairOfDefinition (A := A)
   exact ⟨a, P, ha, ha.hasBasis_nhds_zero P⟩
 
-/-- **An open ideal in a Tate ring is the whole ring `⊤`.** A Tate ring contains a topologically
-nilpotent unit `ϖ`, so any neighbourhood of zero contains some power `ϖⁿ A₀`. Since `ϖⁿ` is a
-unit, the ideal contains a unit and is therefore `⊤`. -/
-theorem IsTateRing.eq_top_of_isOpen_ideal [IsTateRing A] {J : Ideal A}
-    (hJ : IsOpen (J : Set A)) : J = ⊤ := by
-  obtain ⟨ϖ, P, hϖ, hbasis⟩ := IsTateRing.exists_hasBasis_nhds_zero A
-  obtain ⟨n, -, hn⟩ := hbasis.mem_iff.mp (hJ.mem_nhds J.zero_mem)
-  have h_mem : ϖ ^ n ∈ J := by
-    refine hn ⟨1, P.ringOfDefinition.one_mem, ?_⟩
-    simp
-  have h_unit : IsUnit (ϖ ^ n) := hϖ.isUnit.pow n
-  exact Ideal.eq_top_of_isUnit_mem J h_mem h_unit
-
-/-- In a Tate ring, an ideal is open if and only if it is the whole ring `⊤`. -/
-theorem IsTateRing.isOpen_ideal_iff_eq_top [IsTateRing A] (J : Ideal A) :
-    IsOpen (J : Set A) ↔ J = ⊤ :=
-  ⟨IsTateRing.eq_top_of_isOpen_ideal, fun h ↦ h.symm ▸ isOpen_univ⟩
-
 end Tate
 
 end TauCeti.Huber
