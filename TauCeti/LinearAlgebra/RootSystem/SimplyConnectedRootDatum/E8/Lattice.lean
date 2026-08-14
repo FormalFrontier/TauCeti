@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic
 import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
 
@@ -30,8 +31,10 @@ norm-two vectors are the minimal vectors of the `E₈` lattice, read in that bas
 in the Euclidean model instead, where the lattice is described by congruences rather than by a Gram
 matrix. To keep the coordinates integral the model is scaled by two: `IsDoubledE8` describes
 `2 · Γ₈`, whose vectors of norm eight are of exactly two shapes, `(±2)` in two coordinates and
-`(±1)` in all eight with an even number of minus signs. Those shapes are enumerated by
-`e8DoubledMinimalVector`, whose index type has two hundred and forty elements.
+`(±1)` in all eight with an even number of minus signs. Those shapes are the 112 even minimal
+vectors (the norm-two roots of type `D₈` scaled by two, supplied by
+`TauCeti.DynkinType.typeDRootEquiv`) and the 128 odd minimal vectors with an even number of minus
+signs.
 
 The map `e8DoubledEmbed` sends the simple-coroot coordinates to the doubled Euclidean model by
 multiplying with `TauCeti.DynkinType.e8DoubledSimpleRoot`, the shared integral table of
@@ -75,23 +78,32 @@ exactly the doubled lattice. -/
 private def IsDoubledE8 (x : Fin 8 → ℤ) : Prop :=
   (∀ j, (2 : ℤ) ∣ x j - x 0) ∧ (4 : ℤ) ∣ ∑ j, x j
 
-/-- The index type of the enumeration below: either an ordered pair of distinct coordinates
-carrying a sign each, or a sign for every coordinate with an even number of minus signs. -/
-private abbrev E8DoubledMinimalIndex : Type :=
-  ({p : Fin 8 × Fin 8 // p.1 < p.2} × Bool × Bool) ⊕
-    {s : Fin 8 → Bool // Even (Finset.univ.filter fun j ↦ s j = true).card}
+/-- The vectors `(2 : ℤ) • y` where `y` is a norm-two vector of type `D₈`. -/
+private noncomputable def e8DoubledEvenMinimalVector (k : Fin 112) : Fin 8 → ℤ :=
+  (2 : ℤ) • (typeDRootEquiv 8 (by omega) k).1
 
-/-- The two shapes of norm eight in the doubled lattice `2 · Γ₈`: the vectors `±2 eᵢ ± 2 eⱼ` for
-`i < j`, and the vectors with all coordinates `±1` and an even number of minus signs. -/
-private def e8DoubledMinimalVector : E8DoubledMinimalIndex → (Fin 8 → ℤ)
-  | .inl (p, s, t) => fun j ↦
-      if j = p.1.1 then (if s then 2 else -2) else if j = p.1.2 then (if t then 2 else -2) else 0
-  | .inr s => fun j ↦ if s.1 j then 1 else -1
+/-- The index type for odd minimal vectors: a choice of signs with an even number of minus signs. -/
+private abbrev E8DoubledOddIndex : Type :=
+  {s : Fin 8 → Bool // Even (Finset.univ.filter fun j ↦ s j = true).card}
 
-/-- The index type has two hundred and forty elements: `4 * 28` of the first shape and `128` of the
-second. -/
-private theorem card_e8DoubledMinimalIndex : Fintype.card E8DoubledMinimalIndex = 240 := by
-  decide +kernel
+/-- The vectors with all coordinates `±1` and an even number of minus signs. -/
+private def e8DoubledOddMinimalVector (s : E8DoubledOddIndex) : Fin 8 → ℤ :=
+  fun j ↦ if s.1 j then 1 else -1
+
+/-- The 240 minimal vectors in the doubled Euclidean model: the 112 even minimal vectors and the 128
+odd minimal vectors. -/
+private noncomputable def e8DoubledMinimalSet : Finset (Fin 8 → ℤ) :=
+  (Finset.univ.image e8DoubledEvenMinimalVector) ∪ (Finset.univ.image e8DoubledOddMinimalVector)
+
+private theorem card_e8DoubledMinimalSet_le : e8DoubledMinimalSet.card ≤ 240 := by
+  refine le_trans (Finset.card_union_le _ _) ?_
+  have h1 : (Finset.univ.image e8DoubledEvenMinimalVector).card ≤ 112 := by
+    refine le_trans (Finset.card_image_le) (by simp)
+  have h2 : (Finset.univ.image e8DoubledOddMinimalVector).card ≤ 128 := by
+    refine le_trans (Finset.card_image_le) ?_
+    rw [Finset.card_univ]
+    decide +kernel
+  omega
 
 /-- A coordinate of a norm-eight vector is at most two in absolute value. -/
 private lemma abs_le_two_of_dotProduct_self {x : Fin 8 → ℤ} (hx : x ⬝ᵥ x = 8) (j : Fin 8) :
@@ -101,65 +113,33 @@ private lemma abs_le_two_of_dotProduct_self {x : Fin 8 → ℤ} (hx : x ⬝ᵥ x
     exact Finset.single_le_sum (fun i _ ↦ mul_self_nonneg (x i)) (Finset.mem_univ j)
   constructor <;> nlinarith [hsq]
 
-/-- A vector supported on two coordinates, with the value `±2` there, is listed. -/
-private lemma exists_e8DoubledMinimalVector_eq_of_pair {x : Fin 8 → ℤ} {a b : Fin 8} (hab : a < b)
-    (hvals : ∀ j, x j = -2 ∨ x j = 0 ∨ x j = 2)
-    (hsupp : ∀ j, x j ≠ 0 ↔ (j = a ∨ j = b)) : ∃ i, e8DoubledMinimalVector i = x := by
-  refine ⟨.inl (⟨(a, b), hab⟩, x a = 2, x b = 2), funext fun j ↦ ?_⟩
-  by_cases hja : j = a
-  · subst hja
-    have ha : x j ≠ 0 := (hsupp j).mpr (Or.inl rfl)
-    rcases hvals j with h | h | h
-    · simp [e8DoubledMinimalVector, h]
-    · exact absurd h ha
-    · simp [e8DoubledMinimalVector, h]
-  · by_cases hjb : j = b
-    · subst hjb
-      have hb : x j ≠ 0 := (hsupp j).mpr (Or.inr rfl)
-      rcases hvals j with h | h | h
-      · simp [e8DoubledMinimalVector, h, hja]
-      · exact absurd h hb
-      · simp [e8DoubledMinimalVector, h, hja]
-    · have hzero : x j = 0 := not_not.mp ((hsupp j).not.mpr (by tauto))
-      simp [e8DoubledMinimalVector, hja, hjb, hzero]
-
-/-- **A vector of the doubled lattice of norm eight is one of the listed ones.** A vector
-satisfying `IsDoubledE8` with `x ⬝ᵥ x = 8` is `±2 eᵢ ± 2 eⱼ` with `i < j`, or has all coordinates
-`±1` with an even number of minus signs. Only this inclusion is proved: that the listed vectors lie
-in `2 · Γ₈`, and that eight is the minimal norm there, are not needed below. -/
-private theorem exists_e8DoubledMinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x)
-    (hnorm : x ⬝ᵥ x = 8) : ∃ i, e8DoubledMinimalVector i = x := by
+/-- A vector of the doubled lattice of norm eight is in the candidate minimal set. -/
+private theorem mem_e8DoubledMinimalSet_of_isDoubledE8 {x : Fin 8 → ℤ} (hlat : IsDoubledE8 x)
+    (hnorm : x ⬝ᵥ x = 8) : x ∈ e8DoubledMinimalSet := by
   classical
   obtain ⟨hpar, hsum⟩ := hlat
   have hbound := abs_le_two_of_dotProduct_self hnorm
   rcases Int.even_or_odd (x 0) with h0 | h0
-  · -- Every coordinate is even, hence `0` or `±2`, and exactly two of them are nonzero.
-    have hvals : ∀ j, x j = -2 ∨ x j = 0 ∨ x j = 2 := fun j ↦ by
+  · -- Every coordinate is even, so `x = 2 • y` with `y ⬝ᵥ y = 2`.
+    have heven (j : Fin 8) : (2 : ℤ) ∣ x j := by
       obtain ⟨c, hc⟩ := h0
       obtain ⟨d, hd⟩ := hpar j
-      have := hbound j
+      exact ⟨c + d, by omega⟩
+    choose y hy using fun j ↦ heven j
+    have hx2y : x = (2 : ℤ) • y := funext fun j ↦ by
+      simp only [Pi.smul_apply, smul_eq_mul, hy j]
+    have hnorm_y : y ⬝ᵥ y = 2 := by
+      have h : x ⬝ᵥ x = 4 * (y ⬝ᵥ y) := by
+        rw [hx2y]
+        simp only [smul_dotProduct, dotProduct_smul, smul_eq_mul]
+        ring
       omega
-    set s : Finset (Fin 8) := Finset.univ.filter (fun j ↦ x j ≠ 0) with hs
-    have hmem : ∀ j, j ∈ s ↔ x j ≠ 0 := by simp [hs]
-    have hcard : s.card = 2 := by
-      have hrestrict : ∑ j ∈ s, x j * x j = 8 := by
-        rw [← hnorm, dotProduct]
-        refine Finset.sum_subset (f := fun j ↦ x j * x j)
-          (Finset.filter_subset (fun j ↦ x j ≠ 0) Finset.univ) fun j _ hj ↦ ?_
-        rw [not_not.mp ((hmem j).not.mp hj), mul_zero]
-      have hconst : ∀ j ∈ s, x j * x j = 4 := fun j hj ↦ by
-        have := (hmem j).mp hj
-        rcases hvals j with h | h | h <;> simp_all
-      rw [Finset.sum_congr rfl hconst, Finset.sum_const, nsmul_eq_mul] at hrestrict
-      omega
-    obtain ⟨a, b, hab, hs2⟩ := Finset.card_eq_two.mp hcard
-    have hsupp : ∀ j, x j ≠ 0 ↔ (j = a ∨ j = b) := by
-      intro j
-      rw [← hmem j, hs2]
-      simp
-    rcases lt_or_gt_of_ne hab with hlt | hlt
-    · exact exists_e8DoubledMinimalVector_eq_of_pair hlt hvals hsupp
-    · exact exists_e8DoubledMinimalVector_eq_of_pair hlt hvals fun j ↦ (hsupp j).trans or_comm
+    obtain ⟨k, hk⟩ := (typeDRootEquiv 8 (by omega)).surjective ⟨y, hnorm_y⟩
+    rw [e8DoubledMinimalSet, Finset.mem_union]
+    left
+    refine Finset.mem_image.mpr ⟨k, Finset.mem_univ k, ?_⟩
+    dsimp [e8DoubledEvenMinimalVector]
+    rw [hk, hx2y]
   · -- Every coordinate is odd, hence `±1`, and the sum condition makes the sign count even.
     have hvals : ∀ j, x j = 1 ∨ x j = -1 := fun j ↦ by
       obtain ⟨c, hc⟩ := h0
@@ -177,9 +157,13 @@ private theorem exists_e8DoubledMinimalVector_eq {x : Fin 8 → ℤ} (hlat : IsD
       obtain ⟨c, hc⟩ := hsum
       rw [Nat.even_iff]
       omega
-    refine ⟨.inr ⟨fun j ↦ x j = 1, ?_⟩, funext fun j ↦ ?_⟩
+    rw [e8DoubledMinimalSet, Finset.mem_union]
+    right
+    refine Finset.mem_image.mpr ⟨⟨fun j ↦ x j = 1, ?_⟩, Finset.mem_univ _, ?_⟩
     · simpa [ht] using hparity
-    · rcases hvals j with h | h <;> simp [e8DoubledMinimalVector, h]
+    · ext j
+      dsimp [e8DoubledOddMinimalVector]
+      rcases hvals j with h | h <;> simp [h]
 
 /-! ## The doubled Euclidean model -/
 
@@ -235,12 +219,11 @@ theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E₈) 
     ∃ k, e8Coroot k = v := by
   classical
   have hmin : ∀ w : Fin 8 → ℤ, (w ᵥ* CartanMatrix.E₈) ⬝ᵥ w = 2 →
-      e8DoubledEmbed w ∈ Finset.univ.image e8DoubledMinimalVector := by
+      e8DoubledEmbed w ∈ e8DoubledMinimalSet := by
     intro w hw
-    obtain ⟨i, hi⟩ := exists_e8DoubledMinimalVector_eq (isDoubledE8_e8DoubledEmbed w)
+    exact mem_e8DoubledMinimalSet_of_isDoubledE8 (isDoubledE8_e8DoubledEmbed w)
       (by rw [e8DoubledEmbed_dotProduct_self, hw]; norm_num)
-    exact Finset.mem_image.mpr ⟨i, Finset.mem_univ i, hi⟩
-  set T : Finset (Fin 8 → ℤ) := Finset.univ.image e8DoubledMinimalVector with hT
+  set T : Finset (Fin 8 → ℤ) := e8DoubledMinimalSet with hT
   set C : Finset (Fin 8 → ℤ) := Finset.univ.image fun k ↦ e8DoubledEmbed (e8Coroot k) with hC
   have hCT : C ⊆ T := by
     rw [hC]
@@ -251,10 +234,7 @@ theorem exists_e8Coroot_eq {v : Fin 8 → ℤ} (hv : (v ᵥ* CartanMatrix.E₈) 
     fun _ _ h ↦ e8Coroot.injective (e8DoubledEmbed_injective h)
   have hCcard : C.card = 240 := by
     rw [hC, Finset.card_image_of_injective _ hinj, Finset.card_univ, Fintype.card_fin]
-  have hTcard : T.card ≤ 240 := by
-    rw [hT]
-    refine le_trans Finset.card_image_le ?_
-    rw [Finset.card_univ, card_e8DoubledMinimalIndex]
+  have hTcard : T.card ≤ 240 := card_e8DoubledMinimalSet_le
   have hCT' : C = T := Finset.eq_of_subset_of_card_le hCT (by omega)
   obtain ⟨k, -, hk⟩ := Finset.mem_image.mp (hCT' ▸ hmin v hv)
   exact ⟨k, e8DoubledEmbed_injective hk⟩
