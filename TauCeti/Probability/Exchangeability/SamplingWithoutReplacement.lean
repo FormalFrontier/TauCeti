@@ -81,16 +81,15 @@ private theorem measurable_samplePopulation {ι κ : Type*} [Countable κ] [Meas
 First draw a population `x : κ → α` with law `ρ`; independently and uniformly draw an injective
 selection `k : ι → κ`; then return the sample `i ↦ x (k i)`. If no injective selection exists,
 Mathlib's `uniformOn` convention makes this the zero measure. -/
-def sampleWithoutReplacement {ι κ : Type*} [Finite ι] [Finite κ]
-    [MeasurableSpace κ] [MeasurableSingletonClass κ]
+def sampleWithoutReplacement {ι κ : Type*} [MeasurableSpace κ]
     (ρ : Measure (κ → α)) : Measure (ι → α) :=
   ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
     fun p i => p.2 (p.1 i)
 
 /-- The defining pushforward form of `sampleWithoutReplacement`. -/
 @[simp]
-theorem sampleWithoutReplacement_def {ι κ : Type*} [Finite ι] [Finite κ]
-    [MeasurableSpace κ] [MeasurableSingletonClass κ] (ρ : Measure (κ → α)) :
+theorem sampleWithoutReplacement_def {ι κ : Type*} [MeasurableSpace κ]
+    (ρ : Measure (κ → α)) :
     sampleWithoutReplacement ρ =
       ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
         fun p i => p.2 (p.1 i) :=
@@ -111,7 +110,7 @@ theorem isProbabilityMeasure_sampleWithoutReplacement {ι κ : Type*} [Finite ι
 
 /-- Evaluating the without-replacement law averages the selected population laws over uniform
 injective selections. -/
-theorem sampleWithoutReplacement_apply {ι κ : Type*} [Finite ι] [Finite κ]
+theorem sampleWithoutReplacement_apply {ι κ : Type*} [Finite κ]
     [MeasurableSpace κ] [MeasurableSingletonClass κ] {ρ : Measure (κ → α)} [SFinite ρ]
     {A : Set (ι → α)} (hA : MeasurableSet A) :
     sampleWithoutReplacement ρ A =
