@@ -9,6 +9,7 @@ public import Mathlib.MeasureTheory.Function.Holder
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.SpecificCodomains.WithLp
 public import Mathlib.Analysis.InnerProductSpace.ProdL2
+import Mathlib.Analysis.InnerProductSpace.Dual
 
 /-!
 # First-order weak Sobolev spaces
@@ -481,12 +482,7 @@ theorem W1p.ext_value {u v : W1p mu Omega p} (hvalue : W1p.value u = W1p.value v
     apply (W1p.hasWeakFDerivOn u).ae_eq
     simpa only [hvalue] using W1p.hasWeakFDerivOn v
   filter_upwards [hderiv] with x hx
-  have heval := DFunLike.congr_fun hx (W1p.gradient u x - W1p.gradient v x)
-  have hzero : ⟪W1p.gradient u x - W1p.gradient v x,
-      W1p.gradient u x - W1p.gradient v x⟫_ℝ = 0 := by
-    rw [inner_sub_left]
-    exact sub_eq_zero.mpr (by simpa only [innerSL_apply_apply] using heval)
-  exact sub_eq_zero.mp (inner_self_eq_zero.mp hzero)
+  exact innerSL_inj.mp hx
 
 omit [FiniteDimensional ℝ E] in
 /-- The norm of a Sobolev function controls the norm of its value component. -/
