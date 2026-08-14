@@ -86,11 +86,9 @@ the model half-space into its boundary model and the inward normal coordinate.
 `collarDiffeomorph` is taken at the top regularity because only its underlying homeomorphism is
 used here; the map does not depend on the exponent.
 
-`@[expose]`, here and on the two charted-space definitions below, is what lets
-`collarModelChartedSpace_chartAt` and `collarChartedSpace_chartAt` hold by `rfl`: those are
-exported, so every definition their proof unfolds must be exposed. They are the only consumers
-that need the bodies — downstream code should rewrite with them instead. -/
-@[expose]
+No body here or below is exposed: `collarModelChartedSpace_chartAt` and
+`collarChartedSpace_chartAt` name the charts of both charted spaces, so downstream code rewrites
+with those instead of unfolding a definition. -/
 noncomputable def collarChart (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))) :
     OpenPartialHomeomorph M (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) :=
   e ≫ₕ (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph
@@ -118,7 +116,7 @@ theorem collarChart_snd_apply_zero (e : OpenPartialHomeomorph M (EuclideanHalfSp
 `collarChartedSpace` below is the composition of this with the atlas of `M`.
 
 Deliberately not an instance, for the reason given at `collarChartedSpace`. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def collarModelChartedSpace (n : ℕ) :
     ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1)
       (EuclideanHalfSpace (n + 1)) :=
@@ -132,7 +130,7 @@ theorem collarModelChartedSpace_chartAt (n : ℕ) (y : EuclideanHalfSpace (n + 1
     @chartAt (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ (EuclideanHalfSpace (n + 1)) _
         (collarModelChartedSpace n) y =
       (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph :=
-  rfl
+  (rfl)
 
 section Atlas
 
@@ -169,7 +167,7 @@ apply to it — `HasGroupoid.comp` is the route to the `C^k` transitions named a
 Deliberately not an instance: `M` already carries a `ChartedSpace` over
 `EuclideanHalfSpace (n + 1)`, and letting a second one be found by instance search would make
 every statement about charts of `M` ambiguous. Use it explicitly with `letI`. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def collarChartedSpace :
     ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) M :=
   letI := collarModelChartedSpace n
@@ -182,7 +180,7 @@ or re-derive it from `chartAt_comp`. -/
 theorem collarChartedSpace_chartAt (x : M) :
     @chartAt (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ M _ collarChartedSpace x =
       collarChart (chartAt (EuclideanHalfSpace (n + 1)) x) :=
-  rfl
+  (rfl)
 
 end Atlas
 
