@@ -118,22 +118,19 @@ theorem apply_diag (g : upperUnitriangularGroup m R) (i : m) :
 upper-unitriangular subgroup. -/
 theorem toGL_mem_upperUnitriangularGroup {M : Matrix m m R}
     (hM : M.IsUpperUnitriangular) : hM.toGL ∈ upperUnitriangularGroup m R := by
-  change (hM.toGL : Matrix m m R).IsUpperUnitriangular
-  rw [hM.coe_toGL]
-  exact hM
+  simpa only [mem_iff, hM.coe_toGL] using hM
 
 /-- Applying a ring homomorphism entrywise gives the base-change homomorphism between
 upper-unitriangular groups. -/
 def map {S : Type*} [CommRing S] (f : R →+* S) :
     upperUnitriangularGroup m R →* upperUnitriangularGroup m S where
   toFun g := ⟨Matrix.GeneralLinearGroup.map (n := m) f g, by
-    change ((Matrix.GeneralLinearGroup.map (n := m) f g : GL m S) :
-      Matrix m m S).IsUpperUnitriangular
-    rw [show ((Matrix.GeneralLinearGroup.map (n := m) f g : GL m S) : Matrix m m S) =
-      (((g : GL m R) : Matrix m m R).map f) by
-        ext i j
-        exact Matrix.GeneralLinearGroup.map_apply f i j g]
-    exact (isUpperUnitriangular g).map f⟩
+    rw [mem_iff, Matrix.isUpperUnitriangular_def]
+    constructor
+    · intro i j hji
+      rw [Matrix.GeneralLinearGroup.map_apply, isUpperTriangular g hji, map_zero]
+    · intro i
+      rw [Matrix.GeneralLinearGroup.map_apply, apply_diag g i, map_one]⟩
   map_one' := Subtype.ext (map_one _)
   map_mul' g h := Subtype.ext ((Matrix.GeneralLinearGroup.map (n := m) f).map_mul g h)
 
