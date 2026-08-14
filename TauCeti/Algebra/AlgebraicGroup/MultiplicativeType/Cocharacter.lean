@@ -379,7 +379,7 @@ theorem cocharacterGaloisRepresentation_apply_apply (T : MultiplicativeTypeCommH
 
 /-- The character--cocharacter pairing transported through the canonical dual comparison. It is
 evaluation of a functional in `X_*(T) = Hom_ℤ(X*(T), ℤ)` on a character. -/
-@[expose] noncomputable def characterCocharacterPairing
+noncomputable def characterCocharacterPairing
     (T : MultiplicativeTypeCommHopfAlgCat k) :
     CommHopfAlgCat.additiveCharacterGroup T.obj.obj →ₗ[ℤ] cocharacterLattice T →ₗ[ℤ] ℤ :=
   (cocharacterLatticeLinearEquivDual T).toLinearMap.flip

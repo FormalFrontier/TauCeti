@@ -53,8 +53,12 @@ noncomputable instance instCharacterCocharacterPairingIsPerfPair (T : TorusCommH
       (toMultiplicativeTypeCommHopfAlgCat T)).IsPerfPair := by
   let _ := characterLattice_module_free_of_torus k T.obj T.property
   let _ := characterLattice_module_finite_of_torus k T.obj T.property
-  unfold MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing
-  infer_instance
+  apply LinearMap.IsPerfPair.congr
+    (p := Module.Dual.eval ℤ (CommHopfAlgCat.additiveCharacterGroup T.obj.obj))
+    (LinearEquiv.refl ℤ _) (MultiplicativeTypeCommHopfAlgCat.cocharacterLatticeLinearEquivDual
+      (toMultiplicativeTypeCommHopfAlgCat T))
+  ext x f
+  simp
 
 /-- The cocharacter lattice of a torus is free over the integers. -/
 theorem cocharacterLattice_module_free (T : TorusCommHopfAlgCat k) :
