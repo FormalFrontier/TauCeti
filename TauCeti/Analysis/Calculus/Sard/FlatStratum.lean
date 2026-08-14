@@ -29,8 +29,8 @@ into the Taylor-type bound `‖f y - f x‖ ≤ M * ‖y - x‖ ^ (k + 1)`, vali
 with exponent `k + 1`, so Mathlib's `dimH_image_le_of_locally_holder_on` divides the Hausdorff
 dimension of the source by `k + 1`, and `measure_zero_of_dimH_lt` finishes.
 
-Since a point of the stratum with `1 ≤ k` has vanishing first derivative, the stratum consists of
-critical points, so this is a statement about critical values; see
+When `[Nontrivial F]`, a point of the stratum with `1 ≤ k` has vanishing first derivative, so the
+stratum consists of critical points and this is a statement about critical values; see
 `TauCeti.not_surjective_fderiv_of_iteratedFDeriv_one_eq_zero`.
 
 This is Lane F0 of the analytic Heegaard Floer roadmap, where finite-dimensional Sard is the
@@ -53,6 +53,8 @@ prerequisite for Sard--Smale and hence for every transversality argument downstr
 
 The proof is the first step of Morse's argument as presented in J. Milnor, *Topology from the
 Differentiable Viewpoint*, §3, and in M. Hirsch, *Differential Topology*, Chapter 3.
+The Hausdorff-dimension proof architecture is adapted from the sibling module
+`TauCeti/Analysis/Calculus/Sard/LowDimension.lean`.
 -/
 
 public section
@@ -209,7 +211,8 @@ iterated derivative of order `1 ≤ i ≤ k` vanishes. If `finrank ℝ E < (k + 
 `f '' s` has additive Haar measure zero.
 
 This is the slice of finite-dimensional Sard that higher regularity buys: for a fixed pair of
-dimensions the hypothesis holds as soon as `k` is large enough, whatever the two dimensions are. -/
+dimensions with positive-dimensional target, the hypothesis holds as soon as `k` is large enough.
+-/
 theorem addHaar_image_eq_zero_of_iteratedFDeriv_eq_zero (hU : IsOpen U)
     (hf : ContDiffOn ℝ (k + 1 : ℕ) f U) (hsU : s ⊆ U)
     (hzero : ∀ x ∈ s, ∀ i, 1 ≤ i → i ≤ k → iteratedFDeriv ℝ i f x = 0)
