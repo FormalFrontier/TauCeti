@@ -198,7 +198,8 @@ theorem coe_expZSMulAddAut {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     (t : Multiplicative ℤ) (v : M) :
     ((Multiplicative.toAdd (expZSMulAddAut hx M hM t) v : M) : V) =
-      exp ((Multiplicative.toAdd t : ℤ) • x) • (v : V) :=
-  (rfl)
+      exp ((Multiplicative.toAdd t : ℤ) • x) • (v : V) := by
+  simp only [expZSMulAddAut, MonoidHom.coe_mk, OneHom.coe_mk, toAdd_ofAdd, coe_expZSMulAddEquiv,
+    Units.smul_def, coe_expZSMulHom]
 
 end TauCeti
