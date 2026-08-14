@@ -104,8 +104,8 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
   -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it to compare the
   -- Lie-equivalence identity with the isometric model-space identification.
   have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv,
-    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv]
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply,
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply]
   exact hE
 
 /-- The identity element acts trivially on left-invariant derivations. -/
