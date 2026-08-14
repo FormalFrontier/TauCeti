@@ -39,8 +39,6 @@ arbitrary commutative base ring.
   commute.
 * `TauCeti.GeneralLinear.commutatorElement_rootSubgroupPoints`: the type-A Chevalley commutator
   relation on algebra-valued points.
-* `TauCeti.GeneralLinear.commutatorElement_rootSubgroupPoints_reverse`: the reverse-chaining
-  relation, with the inverse parameter encoding the structure constant `-1`.
 
 ## References
 
@@ -99,27 +97,5 @@ theorem commutatorElement_rootSubgroupPoints (hij : i ≠ j) (hjl : j ≠ l)
     AdditiveGroup.toAdd_gaPointsMulEquiv (AdditiveGroup.gaPointMul f g),
     AdditiveGroup.gaPointMul_apply_ι]
   exact commutatorElement_transvectionUnit hij hjl hil _ _
-
-/-- **The reverse-chaining type-A Chevalley commutator relation.** For three distinct indices,
-
-```text
-⁅xᵢⱼ(c), xₖᵢ(d)⁆ = xₖⱼ(-dc).
-```
-
-The inverse on the right negates the parameter because inversion in `𝔾ₐ(A)` is negation. This is
-the orientation of the type-A relation whose structure constant is `-1`. -/
-theorem commutatorElement_rootSubgroupPoints_reverse (hij : i ≠ j) (hki : k ≠ i)
-    (hkj : k ≠ j)
-    (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
-    ⁅rootSubgroupPoints hij f, rootSubgroupPoints hki g⁆ =
-      rootSubgroupPoints hkj (AdditiveGroup.gaPointMul g f)⁻¹ := by
-  calc
-    ⁅rootSubgroupPoints hij f, rootSubgroupPoints hki g⁆ =
-        ⁅rootSubgroupPoints hki g, rootSubgroupPoints hij f⁆⁻¹ :=
-      (commutatorElement_inv _ _).symm
-    _ = (rootSubgroupPoints hkj (AdditiveGroup.gaPointMul g f))⁻¹ := by
-      rw [commutatorElement_rootSubgroupPoints hki hij hkj g f]
-    _ = rootSubgroupPoints hkj (AdditiveGroup.gaPointMul g f)⁻¹ :=
-      (map_inv (rootSubgroupPoints (R := R) (A := A) hkj) _).symm
 
 end TauCeti.GeneralLinear
