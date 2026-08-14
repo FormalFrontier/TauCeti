@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Instances.Sphere
-public import Mathlib.LinearAlgebra.Orientation
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
+import Mathlib.Geometry.Manifold.VectorBundle.ContMDiffSection
 
 /-!
 # Geometric presentation of knots and links
@@ -15,8 +15,9 @@ This file builds the geometric presentation layer of knot theory, as specified i
 GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4, "knot theory,
 done properly"). Knots have no single privileged representation; the geometric presentation
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
-manifold $M$. Oriented presentations carry an orientation of the one-dimensional source model,
-and framed presentations in a 3-manifold additionally carry a framed tubular embedding.
+manifold $M$. Oriented presentations carry a manifold orientation of the circle source,
+represented by a smooth nowhere-zero tangent vector field, and framed presentations in a
+3-manifold additionally carry a framed tubular embedding.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
@@ -65,18 +66,43 @@ public abbrev UnorientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [T
   SmoothEmbedding (𝓡 1) I ∞ Sphere1 M
 
 /-- An oriented smooth-knot presentation consists of an underlying smooth embedding together with
-an orientation of its one-dimensional source model. -/
+a smooth nowhere-zero tangent vector field on its circle source. In one dimension, such a field is
+equivalent to a manifold orientation and records a direction around the knot. -/
 structure OrientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
     [ChartedSpace H M] where
   /-- The underlying unoriented smooth knot. -/
   knot : UnorientedSmoothKnot I M
-  /-- The chosen direction on the knot. -/
-  orientation : Orientation ℝ (EuclideanSpace ℝ (Fin 1)) (Fin 1)
+  /-- The chosen tangent direction at each point of the circle source. -/
+  direction : ∀ x : Sphere1, TangentSpace (𝓡 1) x
+  /-- The chosen tangent direction never vanishes. -/
+  direction_ne_zero (x : Sphere1) : direction x ≠ 0
+  /-- The chosen tangent direction varies smoothly around the circle. -/
+  direction_smooth : ContMDiff (𝓡 1) (𝓡 1).tangent ∞
+    (fun x ↦ (⟨x, direction x⟩ : TangentBundle (𝓡 1) Sphere1))
 
 namespace OrientedSmoothKnot
 
 /-- Forget the orientation of an oriented smooth knot. -/
 def forgetOrientation (K : OrientedSmoothKnot I M) : UnorientedSmoothKnot I M := K.knot
+
+/-- The tangent direction along the embedded knot induced by its source orientation. -/
+noncomputable def tangentDirection (K : OrientedSmoothKnot I M) (x : Sphere1) :
+    TangentSpace I (K.knot x) :=
+  mfderiv (𝓡 1) I K.knot x (K.direction x)
+
+/-- Reverse the orientation of an oriented smooth knot. -/
+noncomputable def reverseOrientation (K : OrientedSmoothKnot I M) : OrientedSmoothKnot I M where
+  knot := K.knot
+  direction x := -K.direction x
+  direction_ne_zero x := neg_ne_zero.mpr (K.direction_ne_zero x)
+  direction_smooth := K.direction_smooth.neg_section
+
+@[simp]
+theorem tangentDirection_reverseOrientation (K : OrientedSmoothKnot I M) (x : Sphere1) :
+    tangentDirection I M (reverseOrientation I M K) x = -tangentDirection I M K x := by
+  change (mfderiv (𝓡 1) I K.knot x) (-K.direction x) =
+    -(mfderiv (𝓡 1) I K.knot x) (K.direction x)
+  exact map_neg _ _
 
 end OrientedSmoothKnot
 
