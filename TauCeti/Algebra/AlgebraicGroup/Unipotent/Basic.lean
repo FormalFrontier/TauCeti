@@ -7,7 +7,7 @@ module
 public import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 public import Mathlib.CategoryTheory.ObjectProperty.CompleteLattice
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
-public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition
+public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
 
 /-!

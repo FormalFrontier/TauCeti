@@ -131,8 +131,8 @@ theorem endOfPoint_tmul_comp (π : C →ₐc[R] MonoidAlgebra R X)
           (TensorProduct.map LinearMap.id (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap
             (Comodule.coact (R := R) (C := C) (M := V) v))) := by
   have h := DFunLike.congr_fun
-    (Comodule.endOfPoint_corestrict (R := R) (H := C)
-      (H' := MonoidAlgebra R X) (V := V) (A := A) π f)
+    (Comodule.endOfPoint_corestrict (R := R) (H₁ := C)
+      (H₂ := MonoidAlgebra R X) (V := V) (A := A) π f)
     (a ⊗ₜ[R] v)
   rw [Comodule.endOfPoint_tmul, Comodule.corestrict_coact_apply] at h
   exact h.symm

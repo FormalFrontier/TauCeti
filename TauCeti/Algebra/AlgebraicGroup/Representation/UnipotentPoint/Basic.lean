@@ -113,7 +113,7 @@ theorem IsUnipotentPoint.mapDomain {H' : Type w} [Semiring H'] [_root_.HopfAlgeb
     ((FGComoduleCat.corestrict (f : H →ₗc[k] H')).obj M)
   have hN' : _root_.IsNilpotent
       (Comodule.endOfPoint M (g.ofConv.comp (f : H →ₐ[k] H')) - 1) := by
-    rw [← Comodule.endOfPoint_corestrict_obj (f := f) (g := g.ofConv)]
+    rw [← Comodule.endOfPoint_corestrict_obj (φ := f) (g := g.ofConv)]
     exact hN
   simpa only [AlgHom.mapDomain_apply, ofConv_toConv] using hN'
 
