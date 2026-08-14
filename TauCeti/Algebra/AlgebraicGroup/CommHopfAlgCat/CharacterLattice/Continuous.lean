@@ -23,11 +23,11 @@ For tori, this makes the finite free character lattice constructed in
 
 * `TauCeti.CommHopfAlgCat.instTopologicalSpaceGeometricCharacterGroup`: the discrete topology on
   geometric characters.
-* `TauCeti.CommHopfAlgCat.stabilizer_geometricCharacterGroup_isOpen`: every character stabilizer
-  is open.
+* `TauCeti.CommHopfAlgCat.stabilizer_groupLike_isOpen`: every scalar-extended group-like
+  stabilizer is open.
 * `TauCeti.CommHopfAlgCat.instContinuousSMulGeometricCharacterGroup`: continuity of the
   absolute-Galois action.
-* `TauCeti.CommHopfAlgCat.stabilizer_additiveCharacterGroup_isOpen`: every additive-character
+* `TauCeti.CommHopfAlgCat.stabilizer_additiveGroupLike_isOpen`: every additive group-like
   stabilizer is open.
 * `TauCeti.CommHopfAlgCat.instContinuousSMulAdditiveCharacterGroup`: continuity of the additive
   character-lattice action.
@@ -52,12 +52,6 @@ variable {k : Type u} [Field k]
 
 variable (H : _root_.CommHopfAlgCat.{u} k)
 
-/-- Bridge the opaque absolute-Galois-group wrapper to Mathlib's evaluation action. -/
-private noncomputable local instance instGaloisAlgebraicClosureMulAction :
-    MulAction (Field.absoluteGaloisGroup k) (AlgebraicClosure k) := by
-  unfold Field.absoluteGaloisGroup
-  exact AlgEquiv.applyMulSemiringAction.toDistribMulAction.toMulAction
-
 /-- The geometric character group carries its natural discrete topology. -/
 noncomputable instance instTopologicalSpaceGeometricCharacterGroup :
     TopologicalSpace (geometricCharacterGroup H) := ⊥
@@ -65,38 +59,6 @@ noncomputable instance instTopologicalSpaceGeometricCharacterGroup :
 /-- The topology on the geometric character group is discrete. -/
 instance instDiscreteTopologyGeometricCharacterGroup :
     DiscreteTopology (geometricCharacterGroup H) := ⟨rfl⟩
-
-/-- Evaluation through the absolute-Galois wrapper agrees with the underlying algebra
-equivalence. -/
-private theorem smul_algebraicClosure (σ : Field.absoluteGaloisGroup k)
-    (a : AlgebraicClosure k) :
-    σ • a = (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) a := by
-  unfold Field.absoluteGaloisGroup at σ ⊢
-  exact AlgEquiv.smul_def σ a
-
-/-- The scalar-extension action crosses the absolute-Galois wrapper on pure tensors. -/
-private theorem smul_tmul_absoluteGalois {A : Type u} [Semiring A] [Algebra k A]
-    (σ : Field.absoluteGaloisGroup k) (a : AlgebraicClosure k) (x : A) :
-    σ • (a ⊗ₜ[k] x) =
-      (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) a ⊗ₜ[k] x := by
-  unfold Field.absoluteGaloisGroup at σ ⊢
-  exact ScalarAut.smul_tmul σ a x
-
-/-- Taking the value of a group-like element crosses the absolute-Galois wrapper. -/
-private theorem val_smul_groupLike {A : Type u} [Semiring A] [Bialgebra k A]
-    (σ : Field.absoluteGaloisGroup k)
-    (x : _root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A)) :
-    (σ • x).val = σ • x.val := by
-  unfold Field.absoluteGaloisGroup at σ ⊢
-  exact ScalarAut.val_smul σ x
-
-/-- Taking `toMul` of an additive group-like element crosses the absolute-Galois wrapper. -/
-private theorem toMul_smul_additiveGroupLike {A : Type u} [Semiring A] [Bialgebra k A]
-    (σ : Field.absoluteGaloisGroup k)
-    (x : Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) :
-    (σ • x).toMul = σ • x.toMul := by
-  unfold Field.absoluteGaloisGroup at σ ⊢
-  exact ScalarAut.toMul_smul σ x
 
 private theorem stabilizer_algebraicClosure_isOpen (a : AlgebraicClosure k) :
     IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) a :
@@ -149,13 +111,10 @@ theorem stabilizer_groupLike_isOpen {A : Type u} [Semiring A] [Bialgebra k A]
   intro σ hσ
   rw [MulAction.mem_stabilizer_iff] at hσ ⊢
   apply _root_.GroupLike.val_injective
-  rw [val_smul_groupLike, hσ]
-
-/-- The stabilizer of every geometric character is open in the absolute Galois group. -/
-theorem stabilizer_geometricCharacterGroup_isOpen (x : geometricCharacterGroup H) :
-    IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
-      Set (Field.absoluteGaloisGroup k)) :=
-  stabilizer_groupLike_isOpen x
+  rw [val_smul]
+  -- `val_smul` exposes the algebra equivalence underlying the opaque Galois wrapper.
+  change (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) • x.val = x.val at hσ
+  exact hσ
 
 /-- The absolute-Galois action on scalar-extended group-like elements is continuous whenever
 they carry the discrete topology. -/
@@ -176,21 +135,8 @@ noncomputable instance instContinuousSMulGeometricCharacterGroup :
 theorem stabilizer_additiveGroupLike_isOpen {A : Type u} [Semiring A] [Bialgebra k A]
     (x : Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) :
     IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
-      Set (Field.absoluteGaloisGroup k)) := by
-  apply Subgroup.isOpen_mono
-    (H₁ := MulAction.stabilizer (Field.absoluteGaloisGroup k) x.toMul)
-    (H₂ := MulAction.stabilizer (Field.absoluteGaloisGroup k) x)
-    ?_ (stabilizer_groupLike_isOpen x.toMul)
-  intro σ hσ
-  rw [MulAction.mem_stabilizer_iff] at hσ ⊢
-  apply Additive.toMul.injective
-  rw [toMul_smul_additiveGroupLike, hσ]
-
-/-- The stabilizer of every additive character is open in the absolute Galois group. -/
-theorem stabilizer_additiveCharacterGroup_isOpen (x : additiveCharacterGroup H) :
-    IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
       Set (Field.absoluteGaloisGroup k)) :=
-  stabilizer_additiveGroupLike_isOpen x
+  stabilizer_groupLike_isOpen x.toMul
 
 /-- The absolute-Galois action on additive scalar-extended group-like elements is continuous
 whenever they carry the discrete topology. -/
