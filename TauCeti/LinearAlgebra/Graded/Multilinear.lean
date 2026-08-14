@@ -43,7 +43,7 @@ namespace LinearMap
 section Semiring
 
 variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN}
-  [CommSemiring R] [AddMonoid ι] [AddCommMonoid M] [AddCommMonoid N]
+  [Semiring R] [AddMonoid ι] [AddCommMonoid M] [AddCommMonoid N]
   [Module R M] [Module R N]
 
 /-- A linear map is homogeneous of degree `q` if it maps the degree-`p` submodule into the
@@ -51,6 +51,13 @@ degree-`p + q` submodule. No direct-sum hypothesis on the families of submodules
 def IsHomogeneousOfDegree (f : M →ₗ[R] N) (𝒜 : ι → Submodule R M)
     (ℬ : ι → Submodule R N) (q : ι) : Prop :=
   ∀ ⦃p : ι⦄ ⦃x : M⦄, x ∈ 𝒜 p → f x ∈ ℬ (p + q)
+
+/-- Homogeneity of degree `q` is exactly the mapping condition on homogeneous elements; use this
+to build a homogeneous linear map, and `IsHomogeneousOfDegree.map_mem` to use one. -/
+theorem isHomogeneousOfDegree_def {f : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
+    {ℬ : ι → Submodule R N} {q : ι} :
+    IsHomogeneousOfDegree f 𝒜 ℬ q ↔ ∀ (p : ι) (x : M), x ∈ 𝒜 p → f x ∈ ℬ (p + q) :=
+  ⟨fun hf _ _ hx ↦ hf hx, fun hf _ _ hx ↦ hf _ _ hx⟩
 
 /-- Apply a homogeneous linear map to a homogeneous element. -/
 theorem IsHomogeneousOfDegree.map_mem {f : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
@@ -73,6 +80,51 @@ theorem IsHomogeneousOfDegree.add {f g : M →ₗ[R] N} {𝒜 : ι → Submodule
   intro p x hx
   exact Submodule.add_mem _ (hf hx) (hg hx)
 
+/-- The identity linear map is homogeneous of degree zero. -/
+theorem isHomogeneousOfDegree_id (𝒜 : ι → Submodule R M) :
+    IsHomogeneousOfDegree (LinearMap.id : M →ₗ[R] M) 𝒜 𝒜 0 := by
+  intro p x hx
+  simpa using hx
+
+/-- Degrees add under composition of linear maps. -/
+theorem IsHomogeneousOfDegree.comp {P : Type uP} [AddCommMonoid P] [Module R P]
+    {f : M →ₗ[R] N} {g : N →ₗ[R] P} {𝒜 : ι → Submodule R M}
+    {ℬ : ι → Submodule R N} {𝒞 : ι → Submodule R P} {q r : ι}
+    (hg : IsHomogeneousOfDegree g ℬ 𝒞 r) (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) :
+    IsHomogeneousOfDegree (g.comp f) 𝒜 𝒞 (q + r) := by
+  intro p x hx
+  simpa only [_root_.LinearMap.comp_apply, add_assoc] using hg (hf hx)
+
+end Semiring
+
+section Ring
+
+variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN}
+  [Ring R] [AddMonoid ι] [AddCommMonoid M] [AddCommGroup N]
+  [Module R M] [Module R N]
+
+/-- The negative of a homogeneous linear map has the same degree. -/
+theorem IsHomogeneousOfDegree.neg {f : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
+    {ℬ : ι → Submodule R N} {q : ι} (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) :
+    IsHomogeneousOfDegree (-f) 𝒜 ℬ q := by
+  intro p x hx
+  exact Submodule.neg_mem _ (hf hx)
+
+/-- A difference of linear maps of the same degree has that degree. -/
+theorem IsHomogeneousOfDegree.sub {f g : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
+    {ℬ : ι → Submodule R N} {q : ι} (hf : IsHomogeneousOfDegree f 𝒜 ℬ q)
+    (hg : IsHomogeneousOfDegree g 𝒜 ℬ q) :
+    IsHomogeneousOfDegree (f - g) 𝒜 ℬ q := by
+  simpa only [sub_eq_add_neg] using hf.add hg.neg
+
+end Ring
+
+section CommSemiring
+
+variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN}
+  [CommSemiring R] [AddMonoid ι] [AddCommMonoid M] [AddCommMonoid N]
+  [Module R M] [Module R N]
+
 /-- A scalar multiple of a homogeneous linear map has the same degree. -/
 theorem IsHomogeneousOfDegree.smul {f : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
     {ℬ : ι → Submodule R N} {q : ι} (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) (r : R) :
@@ -94,44 +146,7 @@ theorem mem_homogeneousSubmodule {f : M →ₗ[R] N} {𝒜 : ι → Submodule R 
     f ∈ homogeneousSubmodule 𝒜 ℬ q ↔ IsHomogeneousOfDegree f 𝒜 ℬ q :=
   Iff.rfl
 
-/-- The identity linear map is homogeneous of degree zero. -/
-theorem isHomogeneousOfDegree_id (𝒜 : ι → Submodule R M) :
-    IsHomogeneousOfDegree (LinearMap.id : M →ₗ[R] M) 𝒜 𝒜 0 := by
-  intro p x hx
-  simpa using hx
-
-/-- Degrees add under composition of linear maps. -/
-theorem IsHomogeneousOfDegree.comp {P : Type uP} [AddCommMonoid P] [Module R P]
-    {f : M →ₗ[R] N} {g : N →ₗ[R] P} {𝒜 : ι → Submodule R M}
-    {ℬ : ι → Submodule R N} {𝒞 : ι → Submodule R P} {q r : ι}
-    (hg : IsHomogeneousOfDegree g ℬ 𝒞 r) (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) :
-    IsHomogeneousOfDegree (g.comp f) 𝒜 𝒞 (q + r) := by
-  intro p x hx
-  simpa only [_root_.LinearMap.comp_apply, add_assoc] using hg (hf hx)
-
-end Semiring
-
-section Ring
-
-variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN}
-  [CommRing R] [AddMonoid ι] [AddCommGroup M] [AddCommGroup N]
-  [Module R M] [Module R N]
-
-/-- The negative of a homogeneous linear map has the same degree. -/
-theorem IsHomogeneousOfDegree.neg {f : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
-    {ℬ : ι → Submodule R N} {q : ι} (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) :
-    IsHomogeneousOfDegree (-f) 𝒜 ℬ q := by
-  intro p x hx
-  exact Submodule.neg_mem _ (hf hx)
-
-/-- A difference of linear maps of the same degree has that degree. -/
-theorem IsHomogeneousOfDegree.sub {f g : M →ₗ[R] N} {𝒜 : ι → Submodule R M}
-    {ℬ : ι → Submodule R N} {q : ι} (hf : IsHomogeneousOfDegree f 𝒜 ℬ q)
-    (hg : IsHomogeneousOfDegree g 𝒜 ℬ q) :
-    IsHomogeneousOfDegree (f - g) 𝒜 ℬ q := by
-  simpa only [sub_eq_add_neg] using hf.add hg.neg
-
-end Ring
+end CommSemiring
 
 end LinearMap
 
@@ -141,7 +156,7 @@ section Semiring
 
 variable {R : Type uR} {ι : Type uι} {κ : Type uκ}
   {M : κ → Type uM} {N : Type uN}
-  [CommSemiring R] [AddCommMonoid ι] [Fintype κ]
+  [Semiring R] [AddCommMonoid ι] [Fintype κ]
   [∀ i, AddCommMonoid (M i)] [AddCommMonoid N]
   [∀ i, Module R (M i)] [Module R N]
 
@@ -152,6 +167,14 @@ def IsHomogeneousOfDegree (f : MultilinearMap R M N)
     (𝒜 : (i : κ) → ι → Submodule R (M i)) (ℬ : ι → Submodule R N) (q : ι) : Prop :=
   ∀ (d : κ → ι) (x : ∀ i, M i),
     (∀ i, x i ∈ 𝒜 i (d i)) → f x ∈ ℬ ((∑ i, d i) + q)
+
+/-- Homogeneity of degree `q` is exactly the mapping condition on homogeneous inputs; use this
+to build a homogeneous multilinear map, and `IsHomogeneousOfDegree.map_mem` to use one. -/
+theorem isHomogeneousOfDegree_def {f : MultilinearMap R M N}
+    {𝒜 : (i : κ) → ι → Submodule R (M i)} {ℬ : ι → Submodule R N} {q : ι} :
+    IsHomogeneousOfDegree f 𝒜 ℬ q ↔
+      ∀ (d : κ → ι) (x : ∀ i, M i), (∀ i, x i ∈ 𝒜 i (d i)) → f x ∈ ℬ ((∑ i, d i) + q) :=
+  Iff.rfl
 
 /-- Apply a homogeneous multilinear map to homogeneous inputs. -/
 theorem IsHomogeneousOfDegree.map_mem {f : MultilinearMap R M N}
@@ -175,28 +198,6 @@ theorem IsHomogeneousOfDegree.add {f g : MultilinearMap R M N}
     IsHomogeneousOfDegree (f + g) 𝒜 ℬ q := by
   intro d x hx
   exact Submodule.add_mem _ (hf d x hx) (hg d x hx)
-
-/-- A scalar multiple of a homogeneous multilinear map has the same degree. -/
-theorem IsHomogeneousOfDegree.smul {f : MultilinearMap R M N}
-    {𝒜 : (i : κ) → ι → Submodule R (M i)} {ℬ : ι → Submodule R N} {q : ι}
-    (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) (r : R) :
-    IsHomogeneousOfDegree (r • f) 𝒜 ℬ q := by
-  intro d x hx
-  exact Submodule.smul_mem _ r (hf d x hx)
-
-/-- Multilinear maps of a fixed degree form a submodule. -/
-def homogeneousSubmodule (𝒜 : (i : κ) → ι → Submodule R (M i))
-    (ℬ : ι → Submodule R N) (q : ι) : Submodule R (MultilinearMap R M N) where
-  carrier := {f | IsHomogeneousOfDegree f 𝒜 ℬ q}
-  zero_mem' := isHomogeneousOfDegree_zero 𝒜 ℬ q
-  add_mem' hf hg := hf.add hg
-  smul_mem' r _ hf := hf.smul r
-
-@[simp]
-theorem mem_homogeneousSubmodule {f : MultilinearMap R M N}
-    {𝒜 : (i : κ) → ι → Submodule R (M i)} {ℬ : ι → Submodule R N} {q : ι} :
-    f ∈ homogeneousSubmodule 𝒜 ℬ q ↔ IsHomogeneousOfDegree f 𝒜 ℬ q :=
-  Iff.rfl
 
 /-- Precomposing each input by a homogeneous linear map adds all of their degrees to the degree
 of the multilinear map. -/
@@ -237,8 +238,8 @@ section Ring
 
 variable {R : Type uR} {ι : Type uι} {κ : Type uκ}
   {M : κ → Type uM} {N : Type uN}
-  [CommRing R] [AddCommMonoid ι] [Fintype κ]
-  [∀ i, AddCommGroup (M i)] [AddCommGroup N]
+  [Ring R] [AddCommMonoid ι] [Fintype κ]
+  [∀ i, AddCommMonoid (M i)] [AddCommGroup N]
   [∀ i, Module R (M i)] [Module R N]
 
 /-- The negative of a homogeneous multilinear map has the same degree. -/
@@ -257,6 +258,38 @@ theorem IsHomogeneousOfDegree.sub {f g : MultilinearMap R M N}
   simpa only [sub_eq_add_neg] using hf.add hg.neg
 
 end Ring
+
+section CommSemiring
+
+variable {R : Type uR} {ι : Type uι} {κ : Type uκ}
+  {M : κ → Type uM} {N : Type uN}
+  [CommSemiring R] [AddCommMonoid ι] [Fintype κ]
+  [∀ i, AddCommMonoid (M i)] [AddCommMonoid N]
+  [∀ i, Module R (M i)] [Module R N]
+
+/-- A scalar multiple of a homogeneous multilinear map has the same degree. -/
+theorem IsHomogeneousOfDegree.smul {f : MultilinearMap R M N}
+    {𝒜 : (i : κ) → ι → Submodule R (M i)} {ℬ : ι → Submodule R N} {q : ι}
+    (hf : IsHomogeneousOfDegree f 𝒜 ℬ q) (r : R) :
+    IsHomogeneousOfDegree (r • f) 𝒜 ℬ q := by
+  intro d x hx
+  exact Submodule.smul_mem _ r (hf d x hx)
+
+/-- Multilinear maps of a fixed degree form a submodule. -/
+def homogeneousSubmodule (𝒜 : (i : κ) → ι → Submodule R (M i))
+    (ℬ : ι → Submodule R N) (q : ι) : Submodule R (MultilinearMap R M N) where
+  carrier := {f | IsHomogeneousOfDegree f 𝒜 ℬ q}
+  zero_mem' := isHomogeneousOfDegree_zero 𝒜 ℬ q
+  add_mem' hf hg := hf.add hg
+  smul_mem' r _ hf := hf.smul r
+
+@[simp]
+theorem mem_homogeneousSubmodule {f : MultilinearMap R M N}
+    {𝒜 : (i : κ) → ι → Submodule R (M i)} {ℬ : ι → Submodule R N} {q : ι} :
+    f ∈ homogeneousSubmodule 𝒜 ℬ q ↔ IsHomogeneousOfDegree f 𝒜 ℬ q :=
+  Iff.rfl
+
+end CommSemiring
 
 end MultilinearMap
 
