@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Instances.Sphere
-public import TauCeti.Geometry.Manifold.LocallyFlat.Basic
-public import TauCeti.Geometry.Manifold.LocallyFlat.Smooth
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
 
 /-!
@@ -32,20 +30,15 @@ This file introduces:
 * `TauCeti.SmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.SmoothLink`: type of $k$-component links in $M$.
 
-## Main results
-
-* `TauCeti.SmoothKnot.isLocallyFlat`: every smooth knot in a boundaryless manifold is locally flat.
-
 ## References
 
 * W. B. R. Lickorish, *An Introduction to Knot Theory*, Springer GTM 175 (1997).
-* R. Daverman and G. Venema, *Embeddings in Manifolds*, AMS GSM 106 (2009).
 -/
 
 public section
 
 open scoped Manifold ContDiff
-open Set Topology
+open Set
 
 namespace TauCeti
 
@@ -82,30 +75,6 @@ structure SmoothLink (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpac
 /-- A `k`-component smooth link in the standard 3-sphere `Sphere3`. -/
 public abbrev SmoothLink3 (k : ℕ) : Type _ := SmoothLink (𝓡 3) Sphere3 k
 
-namespace SmoothKnot
-
-variable {I M}
-
-/-- A smooth knot is a topological embedding. -/
-theorem isEmbedding (K : SmoothKnot I M) : IsEmbedding K :=
-  SmoothEmbedding.isEmbedding K
-
-/-- A smooth knot is an immersion. -/
-theorem isImmersion (K : SmoothKnot I M) : Manifold.IsImmersion (𝓡 1) I ∞ K :=
-  SmoothEmbedding.isImmersion K
-
-/-- A smooth knot is a smooth embedding in Mathlib's predicate sense. -/
-theorem isSmoothEmbedding (K : SmoothKnot I M) :
-    Manifold.IsSmoothEmbedding (𝓡 1) I ∞ K :=
-  SmoothEmbedding.isSmoothEmbedding K
-
-/-- Every smooth knot in a boundaryless manifold is locally flat. -/
-theorem isLocallyFlat [I.Boundaryless] (K : SmoothKnot I M) :
-    IsLocallyFlat (EuclideanSpace ℝ (Fin 1)) K.isSmoothEmbedding_toFun.isImmersion.complement K :=
-  SmoothEmbedding.isLocallyFlat K
-
-end SmoothKnot
-
 namespace SmoothLink
 
 variable {I M}
@@ -113,14 +82,18 @@ variable {I M}
 /-- Convert a single smooth knot into a 1-component smooth link. -/
 def ofKnot (K : SmoothKnot I M) : SmoothLink I M 1 where
   component _ := K
-  pairwise_disjoint i j hij := (hij (Subsingleton.elim i j)).elim
+  pairwise_disjoint := Subsingleton.pairwise
 
-/-- Every component of a smooth link in a boundaryless manifold is locally flat. -/
-theorem component_isLocallyFlat [I.Boundaryless] {k : ℕ}
-    (L : SmoothLink I M k) (i : Fin k) :
-    IsLocallyFlat (EuclideanSpace ℝ (Fin 1))
-      (L.component i).isSmoothEmbedding_toFun.isImmersion.complement (L.component i) :=
-  (L.component i).isLocallyFlat
+/-- Distinct components of a smooth link are distinct smooth embeddings. -/
+theorem component_injective {k : ℕ} (L : SmoothLink I M k) : Function.Injective L.component := by
+  let _ : Nonempty Sphere1 := NormedSpace.sphere_nonempty_rclike ℝ zero_le_one
+  intro i j hij
+  by_contra hne
+  have hdisjoint := L.pairwise_disjoint hne
+  have hrange : range (L.component i : Sphere1 → M) =
+      range (L.component j : Sphere1 → M) :=
+    congrArg (fun K : SmoothKnot I M ↦ range (K : Sphere1 → M)) hij
+  exact hdisjoint.ne (range_nonempty (L.component i : Sphere1 → M)).ne_empty hrange
 
 end SmoothLink
 
