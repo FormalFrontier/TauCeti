@@ -47,10 +47,14 @@ it; the subspace form here needs no such comparison.)
   module boundary, so these two are the exported interface.
 * `TauCeti.ValuationSpectrum.spa_antitone` : the spectrum shrinks as the plus ring grows. Its
   inclusion into `Cont A` is `spa_def ▸ Set.inter_subset_left`.
+* `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
+  topological additive group `A`, then `Spa(A, A⁺) = ∅` for any plus ring `A⁺`
+  (Wedhorn Proposition 7.49(1), forward direction).
+* `TauCeti.ValuationSpectrum.spa_eq_empty_of_subsingleton` : over a zero ring `A`, `Spa(A, A⁺) = ∅`.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23 and Proposition 7.49.
 -/
 
 public section
@@ -87,6 +91,24 @@ theorem mem_spa_iff (Aplus : Subring A) (v : Spv A) :
 theorem spa_antitone : Antitone (spa (A := A)) := fun _ _ hle ↦ by
   rw [spa_def, spa_def]
   exact Set.inter_subset_inter_right _ fun _ hv a ha ↦ hv a (hle ha)
+
+section TopologicalAddGroup
+
+variable [IsTopologicalAddGroup A]
+
+/-- **Wedhorn Proposition 7.49(1) (forward direction for `Spa`).** If `1 ∈ closure {0}` in a
+topological additive group `A`, then `Spa (A, A⁺) = ∅` for any plus ring `A⁺`. -/
+theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
+    (h : (1 : A) ∈ closure ({0} : Set A)) : spa Aplus = ∅ := by
+  rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
+
+end TopologicalAddGroup
+
+/-- Over a zero ring, `Spa (A, A⁺) = ∅`. -/
+@[simp]
+theorem spa_eq_empty_of_subsingleton [Subsingleton A] (Aplus : Subring A) :
+    spa Aplus = ∅ := by
+  rw [spa_def, cont_eq_empty_of_subsingleton, Set.empty_inter]
 
 end TauCeti.ValuationSpectrum
 

@@ -9,13 +9,12 @@ public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
 public import TauCeti.RingTheory.Huber.Basic
 
 /-!
-# Analytic points, the analytic locus, and emptiness of `Spa(A, A⁺)`
+# Analytic points and the analytic locus of `Spa(A, A⁺)`
 
 **Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Definition 7.39, Remark 7.40(3), and
 Proposition 7.49.**
 
-This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)` and the forward
-direction of the emptiness criterion for `Spa(A, A⁺)`.
+This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)`.
 
 ## Main definitions
 
@@ -26,10 +25,6 @@ direction of the emptiness criterion for `Spa(A, A⁺)`.
 
 ## Main results
 
-* `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
-  topological additive group `A`, then `Spa(A, A⁺) = ∅` for any plus ring `A⁺`
-  (Wedhorn Proposition 7.49(1)).
-* `TauCeti.ValuationSpectrum.spa_eq_empty_of_subsingleton` : over a zero ring `A`, `Spa(A, A⁺) = ∅`.
 * `TauCeti.ValuationSpectrum.isAnalyticPoint_of_isTateRing` : over a Tate ring every point of
   `Spv A` (and hence `Spa(A, A⁺)`) is analytic.
 * `TauCeti.ValuationSpectrum.spaAnalytic_eq_spa_of_isTateRing` : **Wedhorn Remark 7.40(3)**,
@@ -81,24 +76,6 @@ theorem mem_spaAnalytic_iff (Aplus : Subring A) (v : Spv A) :
 theorem spaAnalytic_subset_spa (Aplus : Subring A) :
     spaAnalytic Aplus ⊆ spa Aplus :=
   spaAnalytic_def Aplus ▸ Set.inter_subset_left
-
-section TopologicalAddGroup
-
-variable [IsTopologicalAddGroup A]
-
-/-- **Wedhorn Proposition 7.49(1) (forward direction for `Spa`).** If `1 ∈ closure {0}` in a
-topological additive group `A`, then `Spa (A, A⁺) = ∅` for any plus ring `A⁺`. -/
-theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
-    (h : (1 : A) ∈ closure ({0} : Set A)) : spa Aplus = ∅ := by
-  rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
-
-end TopologicalAddGroup
-
-/-- Over a zero ring, `Spa (A, A⁺) = ∅`. -/
-@[simp]
-theorem spa_eq_empty_of_subsingleton [Subsingleton A] (Aplus : Subring A) :
-    spa Aplus = ∅ := by
-  rw [spa_def, cont_eq_empty_of_subsingleton, Set.empty_inter]
 
 /-- Over a zero ring, the analytic locus `Spa (A, A⁺)ᵃ` is empty. -/
 @[simp]
