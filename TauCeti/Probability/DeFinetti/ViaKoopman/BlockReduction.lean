@@ -19,10 +19,12 @@ strictly increasing selection is used, and may be computed at the prefix `0, 1, 
 
 ## Main results
 
-* `measurableSet_invariants_preimage_invariantConditionalProbabilityMeasure` — a test event cut out
-  by the witness is invariants-measurable;
-* `ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_invariantConditional` — over such an
-  event, an arbitrary strictly increasing block has the same mass as the prefix block.
+Both in the `ContractableLaw` namespace:
+
+* `measure_inter_blockCylinder_eq_prefix_of_strictMono` — over any shift-invariant event, an
+  arbitrary strictly increasing block has the same mass as the prefix block;
+* `measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_prefix` — the
+  specialisation to a test event cut out by the witness.
 
 ## Why this route does not need conditional expectations here
 
@@ -31,11 +33,19 @@ The `L²` route reaches the corresponding statement through
 expectations*: two selections have the same conditional law given the tail, which is a
 distributional statement about real-valued observables.
 
-Here the test event is genuinely invariant — `shift ⁻¹' A = A` — so the block may be displaced
-inside the integral itself, and the whole reduction stays in `ℝ≥0∞` with no conditional
-expectation and no integrability side conditions. That is the concrete form of the difference
+Here the test event is genuinely invariant — `shift ⁻¹' A = A` — so the block may be displaced at
+the level of the measure itself: both selections push `ρ.restrict A` to the same law on
+`Fin r → α`, and the cylinder is read on that law as a rectangle. No conditional expectation and no
+integrability side condition appears. That is the concrete form of the difference
 between the two routes; they are deliberately not unified into a σ-algebra-parametric statement,
 since `invariants_shift_lt_pathTail` shows the underlying σ-algebras genuinely differ.
+
+## Source
+
+No material is adapted from `cameronfreer/exchangeability`. That development carries its own
+`DeFinetti/ViaKoopman` material covering this step; the reduction here is assembled from Tau Ceti's
+own pieces — the block transport of `PathSpace/Invariant/BlockTransport.lean` and the
+cylinder-rectangle bridge `blockCylinder_eq_preimage_univ_pi`.
 
 ## References
 
@@ -49,33 +59,47 @@ noncomputable section
 
 open MeasureTheory
 
-open scoped ENNReal
-
 namespace TauCeti
 
 namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- **A test event cut out by the invariant conditional law is invariant.** The witness is
-measurable for `MeasurableSpace.invariants (shift α)`, so preimages of measurable sets of
-probability measures are invariants-measurable — which is exactly the hypothesis the block
-transport wants. -/
-theorem measurableSet_invariants_preimage_invariantConditionalProbabilityMeasure
-    [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] {S : Set (ProbabilityMeasure α)}
-    (hS : MeasurableSet S) :
-    MeasurableSet[MeasurableSpace.invariants (shift α)]
-      (invariantConditionalProbabilityMeasure ρ ⁻¹' S) :=
-  measurable_invariants_invariantConditionalProbabilityMeasure hS
+namespace ContractableLaw
 
-/-- **An arbitrary strictly increasing block may be read at the prefix**, over a test event cut out
-by the invariant conditional law.
+/-- **An arbitrary strictly increasing block may be read at the prefix**, over any shift-invariant
+event.
 
-No conditional expectation appears: the event is invariant, so the block is displaced inside the
-integral: both selections push `ρ.restrict A` to the same measure on `Fin r → α`, by
-`ContractableLaw.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants`. -/
-theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_invariantConditional
+The event being invariant, the identity holds at the level of the measure itself: both selections
+push `ρ.restrict A` to the same law on `Fin r → α`, by
+`ContractableLaw.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants`. No conditional
+expectation and no integrability hypothesis appears. -/
+theorem measure_inter_blockCylinder_eq_prefix_of_strictMono
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ)
+    {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
+    (hB : ∀ i, MeasurableSet (B i))
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
+    ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
+      = ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B) := by
+  have hpi : MeasurableSet (Set.univ.pi B) := MeasurableSet.univ_pi hB
+  have hsel : ∀ s : Fin r → ℕ, Measurable fun (x : ℕ → α) (i : Fin r) => x (s i) :=
+    fun s => measurable_pi_lambda _ fun i => measurable_pi_apply (s i)
+  -- Cross the `prefixProj` wrapper through its API, not by unfolding the definition.
+  have hprefix : (fun (x : ℕ → α) (i : Fin r) => x (i : ℕ)) = prefixProj α r :=
+    funext fun x => funext fun i => (prefixProj_apply r x i).symm
+  -- Each side is the pushforward of the restricted law, read on the rectangle.
+  have hkey : ∀ s : Fin r → ℕ,
+      ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) s B)
+        = ((ρ.restrict A).map fun (x : ℕ → α) (i : Fin r) => x (s i)) (Set.univ.pi B) := by
+    intro s
+    rw [Measure.map_apply (hsel s) hpi, Measure.restrict_apply ((hsel s) hpi),
+      blockCylinder_eq_preimage_univ_pi, Set.inter_comm]
+  rw [hkey k, hkey (fun i : Fin r => (i : ℕ)), hprefix]
+  exact congrArg (fun μ : Measure (Fin r → α) => μ (Set.univ.pi B))
+    (hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA)
+
+/-- The same, over a test event cut out by the invariant conditional law. -/
+theorem measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_prefix
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
     {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
@@ -83,50 +107,11 @@ theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_invariantCondit
     ρ ((invariantConditionalProbabilityMeasure ρ ⁻¹' S)
         ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
       = ρ ((invariantConditionalProbabilityMeasure ρ ⁻¹' S)
-        ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B) := by
-  classical
-  set A : Set (ℕ → α) := invariantConditionalProbabilityMeasure ρ ⁻¹' S with hA
-  have hA_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] A :=
-    measurableSet_invariants_preimage_invariantConditionalProbabilityMeasure hS
-  -- The cylinder indicator is a block observable of the coordinates, in `ℝ≥0∞`.
-  set g : (Fin r → α) → ℝ≥0∞ := fun y => ∏ i, (B i).indicator (fun _ => (1 : ℝ≥0∞)) (y i) with hg
-  have hg_meas : Measurable g :=
-    Finset.measurable_prod _ fun i _ =>
-      (measurable_const.indicator (hB i)).comp (measurable_pi_apply i)
-  -- On each side the indicator of the cylinder is that observable read along the selection.
-  have hind : ∀ (s : Fin r → ℕ) (x : ℕ → α),
-      (blockCylinder (fun j (y : ℕ → α) => y j) s B).indicator (fun _ => (1 : ℝ≥0∞)) x
-        = g (fun i => x (s i)) := by
-    intro s x
-    by_cases hx : x ∈ blockCylinder (fun j (y : ℕ → α) => y j) s B
-    · rw [Set.indicator_of_mem hx, hg]
-      exact (Finset.prod_eq_one fun i _ =>
-        Set.indicator_of_mem (mem_blockCylinder.mp hx i) _).symm
-    · rw [Set.indicator_of_notMem hx, hg]
-      simp only [mem_blockCylinder, not_forall] at hx
-      obtain ⟨i, hi⟩ := hx
-      exact (Finset.prod_eq_zero (Finset.mem_univ i) (Set.indicator_of_notMem hi _)).symm
-  have hcyl : ∀ s : Fin r → ℕ,
-      MeasurableSet (blockCylinder (fun j (y : ℕ → α) => y j) s B) := fun s =>
-    measurableSet_blockCylinder (fun i => measurable_pi_apply _) hB
-  -- The mass of the intersection is the set-integral of the block observable over `A`.
-  have hmass : ∀ s : Fin r → ℕ,
-      ρ (A ∩ blockCylinder (fun j (y : ℕ → α) => y j) s B)
-        = ∫⁻ x in A, g (fun i => x (s i)) ∂ρ := by
-    intro s
-    have hrw : ∀ x : ℕ → α, g (fun i => x (s i))
-        = (blockCylinder (fun j (y : ℕ → α) => y j) s B).indicator (fun _ => (1 : ℝ≥0∞)) x :=
-      fun x => (hind s x).symm
-    simp only [hrw]
-    rw [lintegral_indicator (hcyl s), setLIntegral_one, Measure.restrict_apply (hcyl s),
-      Set.inter_comm]
-  -- Both selections push `ρ.restrict A` to the same measure, so the integrals agree.
-  rw [hmass k, hmass (fun i : Fin r => (i : ℕ))]
-  have hpp : ∀ x : ℕ → α, (fun i : Fin r => x (i : ℕ)) = prefixProj α r x := fun _ => rfl
-  simp only [hpp]
-  rw [← lintegral_map hg_meas (measurable_pi_lambda _ fun i => measurable_pi_apply (k i)),
-    ← lintegral_map hg_meas (measurable_prefixProj r),
-    hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA_inv]
+        ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B) :=
+  hρ.measure_inter_blockCylinder_eq_prefix_of_strictMono hk hB
+    (measurable_invariants_invariantConditionalProbabilityMeasure hS)
+
+end ContractableLaw
 
 end Probability
 
