@@ -16,7 +16,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Deck
 
 For `2 ≤ n`, real projective `n`-space `RPⁿ` is covered by the unit sphere `Sⁿ` via the two-sheeted
 antipodal quotient `mk n`. The antipodal cover is a regular covering map with deck group `ℤˣ`.
-Assuming the covering sphere is simply connected, the regular-cover comparison
+Assuming the covering sphere is simply connected, by the regular-cover comparison
 `TauCeti.Deck.IsRegular.fundamentalGroupEquiv`, the fundamental group of `RPⁿ` at any basepoint is
 isomorphic to the opposite of the deck group. Since `ℤˣ` is commutative, the opposite drops out,
 yielding
