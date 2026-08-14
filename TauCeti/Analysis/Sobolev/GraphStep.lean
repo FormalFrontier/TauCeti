@@ -50,9 +50,15 @@ namespace TauCeti
 open MeasureTheory Set TopologicalSpace
 open scoped ContDiff Distributions ENNReal
 
+-- `normedX` is named so that a caller iterating the step can pass it explicitly.  Left to be
+-- inferred, it is still an unassigned metavariable while `NormedSpace ℝ X` is being synthesized
+-- inside the unification of `base`'s type, and synthesizing a `NormedSpace` whose group
+-- structure is itself pending costs an extra level of pending instance depth per iteration.
+-- Handing the group structure over up front keeps that search a concrete one; see
+-- `TauCeti.W3p.secondOrderL`.
 variable {E F X : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
   [FiniteDimensional ℝ E] [BorelSpace E] [NormedAddCommGroup F] [NormedSpace ℝ F]
-  [CompleteSpace F] [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
+  [CompleteSpace F] [normedX : NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
   {mu : Measure E} [mu.IsAddHaarMeasure] {Omega : Opens E} {p : ENNReal} [Fact (1 <= p)]
 
 /-- The ambient graph space obtained by adjoining an `Lᵖ` candidate weak derivative to `X`,

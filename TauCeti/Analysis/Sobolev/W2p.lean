@@ -203,6 +203,11 @@ theorem W2p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq_add_norm_hessian_sq
   rw [W2p.norm_sq_eq_norm_firstOrder_sq_add_norm_hessian_sq,
     W1p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq]
 
+/-- The normed `ℝ`-space structure of `W^{2,p}(Ω)`, recorded as an instance in its own right.
+Rediscovering it through the subspace-of-product structures underneath is what makes a further
+graph step over `W^{2,p}(Ω)` expensive to elaborate. -/
+instance : NormedSpace ℝ (W2p mu Omega p) := inferInstance
+
 /-- `W^{2,p}(Ω)` is complete in its iterated weak-derivative graph norm. -/
 instance : CompleteSpace (W2p mu Omega p) :=
   inferInstanceAs
