@@ -61,17 +61,6 @@ private def doubleEdgePathEquiv (p q n : ℕ) (hpq : p + q = n) :
   simp [doubleEdgePathEquiv, Fin.rev]
   omega
 
-/-- Reversal is an automorphism of a finite path graph. -/
-private def pathGraphRevIso (n : ℕ) : pathGraph n ≃g pathGraph n where
-  toEquiv := Fin.revPerm
-  map_rel_iff' := by
-    intro i j
-    simp only [pathGraph_adj, Fin.revPerm_apply, Fin.rev]
-    omega
-
-@[simp] private lemma pathGraphRevIso_apply {n : ℕ} (i : Fin n) :
-    pathGraphRevIso n i = i.rev := rfl
-
 /-- The entries of a double-edge model, read along its underlying path. The only oriented
 exception to the value `-1` on adjacent vertices is the `-2` half of the double edge. -/
 private lemma doubleEdgeCartanMatrix_apply_eq_path (p q n : ℕ) (hp : 0 < p) (hq : 0 < q)
@@ -185,21 +174,15 @@ theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix [DecidableEq 
       ∀ i j, A i j = doubleEdgeCartanMatrix p q (e i) (e j) := by
   obtain ⟨iso⟩ := IsTree.nonempty_iso_pathGraph_of_degree_le_two
     (h.isTree_diagramGraph hconn) hdeg
-  -- Adjacency read through any numbering of the diagram as a path.
-  have hnum : ∀ (m : ℕ) (f : diagramGraph A ≃g pathGraph m) (i j : B),
-      (diagramGraph A).Adj i j ↔ (f i : ℕ) + 1 = (f j : ℕ) ∨ (f j : ℕ) + 1 = (f i : ℕ) :=
-    fun _ f i j ↦ by simpa only [pathGraph_adj] using f.map_adj_iff.symm
   have hvu_ne : v ≠ u := by
     rintro rfl
     rw [h.apply_self] at hvu
     omega
   have hadj : (diagramGraph A).Adj u v :=
     (h.diagramGraph_adj_iff.mpr ⟨hvu_ne, by simp [hvu]⟩).symm
-  have hpath : (iso u : ℕ) + 1 = (iso v : ℕ) ∨ (iso v : ℕ) + 1 = (iso u : ℕ) := by
-    rwa [← iso.map_adj_iff, pathGraph_adj] at hadj
-  rcases hpath with horder | horder
+  rcases (adj_iff_of_iso_pathGraph iso u v).mp hadj with horder | horder
   · exact exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv h iso.toEquiv
-      (hnum _ iso) horder hvu hsimple
+      (adj_iff_of_iso_pathGraph iso) horder hvu hsimple
   · let iso' : diagramGraph A ≃g pathGraph (Fintype.card B) :=
       iso.trans (pathGraphRevIso (Fintype.card B))
     have horder' : (iso' u : ℕ) + 1 = (iso' v : ℕ) := by
@@ -208,6 +191,6 @@ theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix [DecidableEq 
       have hv := (iso v).isLt
       omega
     exact exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv h iso'.toEquiv
-      (hnum _ iso') horder' hvu hsimple
+      (adj_iff_of_iso_pathGraph iso') horder' hvu hsimple
 
 end TauCeti
