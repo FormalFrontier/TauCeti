@@ -45,12 +45,6 @@ theorem val_equivOfCoalgEquiv (e : A ≃ₗc[R] B) (x : _root_.GroupLike R A) :
     (equivOfCoalgEquiv e x).val = e x.val :=
   (rfl)
 
-/-- The value of the inverse transport is the image under the inverse coalgebra equivalence. -/
-@[simp]
-theorem val_equivOfCoalgEquiv_symm (e : A ≃ₗc[R] B) (x : _root_.GroupLike R B) :
-    ((equivOfCoalgEquiv e).symm x).val = e.symm x.val :=
-  (rfl)
-
 /-- Transport along the identity coalgebra equivalence is the identity equivalence. -/
 @[simp]
 theorem equivOfCoalgEquiv_refl :
