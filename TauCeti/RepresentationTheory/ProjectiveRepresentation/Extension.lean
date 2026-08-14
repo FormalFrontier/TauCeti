@@ -6,7 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.RepresentationTheory.Basic
-public import TauCeti.GroupTheory.GroupExtension.OfFactorSet
+public import TauCeti.GroupTheory.GroupExtension.Of.FactorSet
 public import TauCeti.RepresentationTheory.ProjectiveRepresentation.Basic
 
 /-!
@@ -15,7 +15,7 @@ public import TauCeti.RepresentationTheory.ProjectiveRepresentation.Basic
 A projective representation `ρ : G → (V ≃ₗ[k] V)` with factor set `α` is multiplicative only up to
 the scalars `α`, so it is not a homomorphism. Enlarging `G` by those scalars repairs this: the
 central extension `1 → kˣ → E_α → G → 1` built from `α` in
-`TauCeti/GroupTheory/GroupExtension/OfFactorSet.lean` carries a genuine homomorphism
+`TauCeti/GroupTheory/GroupExtension/Of/FactorSet.lean` carries a genuine homomorphism
 
 `E_α → (V ≃ₗ[k] V)`, `⟨a, g⟩ ↦ a • ρ g`,
 
@@ -113,6 +113,21 @@ used to supply one where the ambient theory has none. -/
 abbrev trivialMulDistribMulAction (G M : Type*) [Monoid G] [Monoid M] :
     MulDistribMulAction G M :=
   MulDistribMulAction.compHom M (1 : G →* MulAut M)
+
+section TrivialActionSmul
+
+attribute [local instance] trivialMulDistribMulAction
+
+/-- Under `TauCeti.trivialMulDistribMulAction` every element is fixed. This is the triviality
+hypothesis that `TauCeti.FactorSet.isFactorSet_curry`, `TauCeti.IsFactorSet.toFactorSet` and
+`TauCeti.FactorSet.inl_range_le_center` take, supplied once so that their callers can name a
+constant rather than an inlined proof. -/
+@[simp]
+theorem trivialMulDistribMulAction_smul {G M : Type*} [Monoid G] [Monoid M] (g : G) (a : M) :
+    g • a = a :=
+  rfl
+
+end TrivialActionSmul
 
 section GeneralAction
 
@@ -384,7 +399,7 @@ theorem IsProjectiveRep.exists_factorSet_linearization {α : G → G → kˣ}
         (∀ a : kˣ, π (FactorSet.inl β a) = LinearEquiv.smulOfUnit a) ∧
           ∀ g : G, π (β.canonicalSection g) = ρ g := by
   have hα : IsFactorSet α := hρ.isFactorSet
-  have htriv (g : G) (a : kˣ) : g • a = a := rfl
+  have htriv (g : G) (a : kˣ) : g • a = a := trivialMulDistribMulAction_smul g a
   have hρ' : IsProjectiveRep ρ (Function.curry ⇑(IsFactorSet.toFactorSet α htriv)) := by
     rwa [IsFactorSet.curry_coe_toFactorSet]
   exact ⟨IsFactorSet.toFactorSet α htriv, hρ'.linearization htriv,

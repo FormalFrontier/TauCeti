@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.CliffordAlgebra.PinAction
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Pin.Action
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 
 /-!
@@ -19,6 +19,8 @@ remains canonical.
 
 * `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal` is the Spin action with codomain restricted to
   the special orthogonal group.
+* `TauCeti.CliffordAlgebra.ker_spinToSpecialOrthogonal` identifies its kernel with that of the
+  orthogonal Spin action.
 * `TauCeti.CliffordAlgebra.coe_spinToSpecialOrthogonal_apply` identifies its underlying action
   with the Spin action on the quadratic module.
 
@@ -231,6 +233,14 @@ noncomputable def spinToSpecialOrthogonal (Q : QuadraticForm R M) :
     (QuadraticMap.specialOrthogonalGroup Q) fun x =>
       (QuadraticMap.mem_specialOrthogonalGroup_iff).2
         ⟨(spinToOrthogonal Q x).2, det_spinToOrthogonal_eq_one Q x⟩)
+
+/-- Restricting the codomain of the Spin action to the special orthogonal group does not change
+its kernel. -/
+@[simp]
+theorem ker_spinToSpecialOrthogonal (Q : QuadraticForm R M) :
+    MonoidHom.ker (spinToSpecialOrthogonal Q) = MonoidHom.ker (spinToOrthogonal Q) := by
+  rw [spinToSpecialOrthogonal, MonoidHom.ker_codRestrict,
+    MonoidHom.ker_comp_of_injective _ _ (Subgroup.subtype_injective _)]
 
 /-- A Spin element has the same underlying action whether regarded as orthogonal or special
 orthogonal. -/

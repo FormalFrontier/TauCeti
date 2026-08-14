@@ -32,8 +32,8 @@ Detectors (each names the infra failure it implies):
   5. dead-scheduler  A scheduled workflow is missing, disabled, or its last
                      SCHEDULED run is older than its cadence + slack. GitHub
                      disabled the cron (60-day inactivity), or it errors at dispatch.
-  6. main-red        The CI run for main's tip commit reached a non-success terminal
-                     conclusion. The "main is always green" invariant is broken.
+  6. main-red        The newest conclusive CI run on main is red, with no newer
+                     successful run. The "main is always green" invariant is broken.
   7. stale-fkb       An open first-known-bad issue (label `dependency-incompatibility`)
                      has been open past a grace window. A regression against TauCeti
                      nobody has landed the fix for.
@@ -152,6 +152,8 @@ HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
 FKB_LABEL = "dependency-incompatibility"
 # CI conclusions that mean main is broken (not just `failure`).
 RED_CONCLUSIONS = {"failure", "timed_out", "startup_failure"}
+CONCLUSIVE_CI = RED_CONCLUSIONS | {"success"}
+MAIN_CI_WINDOW = 100
 
 
 def now_utc():
@@ -363,7 +365,7 @@ def detect_missing_required_status():
     A MISSING required status is worse than a red one and cannot self-heal. GitHub holds the PR
     at BLOCKED because the required check never arrives; core.derive sees no `build` status, so
     labels.py takes its ci=None branch and pins the PR at `awaiting-CI` instead of moving it to
-    `awaiting-author`; and nothing re-runs pr-build without a push, so no event ever corrects
+    `ci-failed`; and nothing re-runs pr-build without a push, so no event ever corrects
     it. PR #1358 sat wedged this way for seven days, invisible to the author and review paths
     alike, after a transient API error killed the status-reporting step mid-way.
     """
@@ -611,22 +613,40 @@ def detect_main_red():
     tip = gh_scalar(f"/repos/{REPO}/commits/main", jq='.sha // ""')
     if not tip:
         return []
-    # Evaluate the CI run for main's CURRENT tip specifically, so an old green run
-    # cannot mask a red (or never-completed) run on the commit that is actually
-    # main right now.
-    run = gh_obj(
-        f"/repos/{REPO}/actions/workflows/ci.yml/runs?head_sha={tip}&per_page=1",
-        jq='.workflow_runs[0] | {status: (.status // ""), conclusion: (.conclusion // "")}')
-    if not run or run.get("status") != "completed":
-        return []  # in progress or not yet run — not (yet) a red-main emergency
-    if run.get("conclusion") not in RED_CONCLUSIONS:
+
+    # Runs are newest first. Do not look only at the instantaneous tip: when main
+    # advances faster than CI finishes, every failed run may stop being "the tip"
+    # before this hourly detector observes it. Keep a known-red state active until
+    # a newer successful run proves recovery. Cancelled/skipped runs are not
+    # evidence either way (the main-CI concurrency policy may supersede pending
+    # runs deliberately), so scan past every non-conclusive result as well as
+    # queued/in-progress runs. Serialization keeps completed runs in creation
+    # order; do not remove that policy without revisiting this detector.
+    runs = gh_stream(
+        f"/repos/{REPO}/actions/workflows/ci.yml/runs?branch=main&event=push"
+        f"&per_page={MAIN_CI_WINDOW}",
+        jq='.workflow_runs[] | {head_sha: (.head_sha // ""), '
+           'status: (.status // ""), conclusion: (.conclusion // "")}',
+        paginate=False)
+    run = next((r for r in runs
+                if r.get("status") == "completed"
+                and r.get("conclusion") in CONCLUSIVE_CI), None)
+    if not run and len(runs) >= MAIN_CI_WINDOW:
+        # A full page with no success or red result proves only that the last
+        # known state fell outside our bounded window. Raise so reconciliation
+        # retains any live alert instead of silently declaring recovery.
+        raise RuntimeError(
+            f"no conclusive main CI run in the newest {MAIN_CI_WINDOW} runs")
+    if not run or run.get("conclusion") not in RED_CONCLUSIONS:
         return []
+    failed = run.get("head_sha", "")
     return [{
         "key": "main-red",
         "title": "main is RED",
         "body": (
-            f"CI on main's tip (`{tip[:10]}`) concluded `{run['conclusion']}`. The "
-            f"\"main is always green\" invariant is broken.\n\n"
+            f"The newest conclusive CI run on main (`{failed[:10]}`) concluded "
+            f"`{run['conclusion']}`, and current tip `{tip[:10]}` has no newer "
+            f"successful run. The \"main is always green\" invariant is broken.\n\n"
             f"**Fix:** identify the merge or environment change that broke it and land a "
             f"revert or forward-fix immediately — a red main blocks every bump and merge."),
     }]

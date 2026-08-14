@@ -32,8 +32,14 @@ the two sets have the same normal closure, which is what
 `TauCeti.normalClosure_relatorSet_coxeterRelators` proves and what makes the presented groups the
 same.
 
+A published diagram is usually simply laced: every edge carries the label three and every non-edge
+the label two. `TauCeti.coxeterMatrixOfEdges` builds the `CoxeterMatrix` of such a diagram from the
+list of its edges, so that a transcribed row records the edges the source draws rather than a
+hand-built matrix.
+
 ## Main definitions
 
+* `TauCeti.coxeterMatrixOfEdges`: the Coxeter matrix of a simply laced diagram, from its edges.
 * `TauCeti.coxeterRelator`: the relator expression `(sᵢ sⱼ) ^ M i j`.
 * `TauCeti.coxeterRelatorsOfList` and `TauCeti.coxeterRelators`: one Coxeter relator per unordered
   pair of nodes, the diagonal included.
@@ -73,6 +79,36 @@ section Coxeter
 
 variable {B : Type*}
 
+/-- The Coxeter matrix of the simply laced diagram with the given edges: a node with itself has
+entry one, a pair of distinct nodes joined by an edge has entry three, and every other pair of
+distinct nodes has entry two.
+
+The edge list is read symmetrically, so each edge may be oriented either way, and repeated edges are
+harmless. The body is exposed so that the checks a transcribed diagram runs on its own matrix
+reduce. -/
+@[expose]
+def coxeterMatrixOfEdges [DecidableEq B] (edges : List (B × B)) : CoxeterMatrix B where
+  M := Matrix.of fun i j =>
+    if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2
+  isSymm := by
+    ext i j
+    simp only [Matrix.transpose_apply, Matrix.of_apply]
+    rcases eq_or_ne i j with rfl | h
+    · rfl
+    · simp only [h, Ne.symm h, ↓reduceIte]
+      exact if_congr or_comm rfl rfl
+  diagonal i := by simp
+  off_diagonal i j h := by
+    simp only [Matrix.of_apply, h, ↓reduceIte]
+    split <;> omega
+
+/-- Evaluation of the Coxeter matrix of a simply laced diagram directly from its edge list. -/
+@[simp]
+theorem coxeterMatrixOfEdges_apply [DecidableEq B] (edges : List (B × B)) (i j : B) :
+    coxeterMatrixOfEdges edges i j =
+      if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2 := by
+  simp only [coxeterMatrixOfEdges, Matrix.of_apply]
+
 /-- The Coxeter relator `(sᵢ sⱼ) ^ M i j`, as an auditable relator expression. On the diagonal
 `M i i = 1`, so this is the involution relator `sᵢ ^ 2` written as `(sᵢ sᵢ) ^ 1`. -/
 def coxeterRelator (M : CoxeterMatrix B) (i j : B) : Relator B :=
@@ -84,6 +120,19 @@ theorem toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
     (coxeterRelator M i j).toWord =
       (List.replicate (M i j) [(i, true), (j, true)]).flatten := by
   simp [coxeterRelator]
+
+/-- A Coxeter relator contains twice as many signed letters as its matrix entry. -/
+theorem length_toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
+    (coxeterRelator M i j).toWord.length = 2 * M i j := by
+  rw [toWord_coxeterRelator, List.length_flatten]
+  simp [Nat.mul_comm]
+
+/-- The signed word of a Coxeter relator is cyclically reduced. -/
+theorem isCyclicallyReduced_toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
+    FreeGroup.IsCyclicallyReduced (coxeterRelator M i j).toWord := by
+  rw [toWord_coxeterRelator]
+  apply FreeGroup.IsCyclicallyReduced.flatten_replicate
+  simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]
 
 /-- Interpreting a Coxeter relator in the free group yields Mathlib's Coxeter relation. -/
 @[simp]
@@ -101,6 +150,16 @@ The unordered pairs are Mathlib's `List.sym2`; `Sym2.inf` and `Sym2.sup` name th
 larger node, which is the choice of order the free group forces on the transcription. -/
 def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : List (Relator B) :=
   l.sym2.map fun z => coxeterRelator M z.inf z.sup
+
+/-- The Coxeter relator list is obtained by mapping the canonically ordered representative of
+each unordered pair of list positions to its Coxeter relator.
+
+This is the unfolding lemma for the sealed body, and like `TauCeti.GroupPresentation.relators_def`
+it is deliberately not `@[simp]`: it lets a concrete finite presentation audit the compiled words
+without the definition being exposed. -/
+theorem coxeterRelatorsOfList_def [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
+    coxeterRelatorsOfList M l = l.sym2.map fun z => coxeterRelator M z.inf z.sup := by
+  rw [coxeterRelatorsOfList]
 
 /-- A list of length `n` yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
 of list positions with repetition allowed. -/
@@ -144,6 +203,12 @@ private theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatri
 numbering `0, 1, …, n - 1`. -/
 def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n)) :=
   coxeterRelatorsOfList M (List.finRange n)
+
+/-- The numbered Coxeter relator list uses the nodes `0, …, n - 1` in that order. This is the
+unfolding lemma for the sealed body, and like `coxeterRelatorsOfList_def` it is not `@[simp]`. -/
+theorem coxeterRelators_def {n : ℕ} (M : CoxeterMatrix (Fin n)) :
+    coxeterRelators M = coxeterRelatorsOfList M (List.finRange n) := by
+  rw [coxeterRelators]
 
 /-- Membership in the Coxeter relator list of a `Fin n`-indexed matrix: every pair of nodes
 contributes, so the only condition is that the relator be the one of a pair, written in the

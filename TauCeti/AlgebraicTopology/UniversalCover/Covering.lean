@@ -113,6 +113,39 @@ instance pathConnectedSpace (x₀ : X) :
   obtain ⟨α₂, rfl⟩ := surjective_ofBasedPath x₀ z₂
   exact (joined_basepoint_ofBasedPath α₁).symm.trans (joined_basepoint_ofBasedPath α₂)
 
+/-- At time `0` the family of initial segments of `γ` appended to `α` is the class of `α`
+itself. -/
+private theorem ofBasedPath_append_initialSegmentFamily_zero {α : BasedPath x₀} {y : X}
+    (γ : Path (BasedPath.endpoint α) y) :
+    ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ 0)) = ofBasedPath x₀ α := by
+  have h0_hom :
+      Path.Homotopic
+        ((α.toPath.trans (Path.initialSegmentFamily γ 0)).cast rfl
+          (by simp))
+        α.toPath := by
+    rw [Path.initialSegmentFamily_zero]
+    simpa using! Path.Homotopic.trans_refl α.toPath
+  have h0_end : BasedPath.endpoint (BasedPath.append α (Path.initialSegmentFamily γ 0)) =
+      BasedPath.endpoint α := by
+    rw [BasedPath.endpoint_append]
+    simp
+  exact ofBasedPath_eq_of_homotopic_toPath (x₀ := x₀) h0_end h0_hom
+
+/-- At time `1` the family of initial segments of `γ` appended to `α` is the class of
+`α.append γ`. -/
+private theorem ofBasedPath_append_initialSegmentFamily_one {α : BasedPath x₀} {y : X}
+    (γ : Path (BasedPath.endpoint α) y) :
+    ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ 1)) =
+      ofBasedPath x₀ (BasedPath.append α γ) := by
+  rw [Path.initialSegmentFamily_one]
+  apply congrArg (ofBasedPath x₀)
+  apply BasedPath.ext
+  intro t
+  -- `BasedPath.append` inserts endpoint casts definitionally; expose the underlying paths.
+  change (α.toPath.trans (γ.cast _ _)) t = (α.toPath.trans γ) t
+  rw [Path.trans_apply, Path.trans_apply]
+  split_ifs <;> simp only [Path.cast_coe]
+
 /-- The lift through `proj` of a path `γ` starting at the class of `α` ends at the class of
 the concatenated based path `α.append γ`. -/
 theorem liftPath_apply_one_eq_ofBasedPath_append
@@ -132,19 +165,8 @@ theorem liftPath_apply_one_eq_ofBasedPath_append
     rw [Function.comp_apply, show Γ t =
       ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ t)) from rfl,
       proj_ofBasedPath, BasedPath.endpoint_append]
-  have hΓ_zero : Γ 0 = ofBasedPath x₀ α := by
-    have h0_hom :
-        Path.Homotopic
-          ((α.toPath.trans (Path.initialSegmentFamily γ 0)).cast rfl
-            (by simp))
-          α.toPath := by
-      rw [Path.initialSegmentFamily_zero]
-      simpa using! Path.Homotopic.trans_refl α.toPath
-    have h0_end : BasedPath.endpoint (BasedPath.append α (Path.initialSegmentFamily γ 0)) =
-        BasedPath.endpoint α := by
-      rw [BasedPath.endpoint_append]
-      simp
-    exact ofBasedPath_eq_of_homotopic_toPath (x₀ := x₀) h0_end h0_hom
+  have hΓ_zero : Γ 0 = ofBasedPath x₀ α :=
+    ofBasedPath_append_initialSegmentFamily_zero γ
   have hΓ_eq_lift :
       Γ = (isCoveringMap x₀).liftPath γ (ofBasedPath x₀ α)
         (by simp) :=
@@ -156,14 +178,7 @@ theorem liftPath_apply_one_eq_ofBasedPath_append
   -- Both sides are values of the local lift wrapper; unfolding exposes the appended paths.
   change ofBasedPath x₀ (BasedPath.append α (Path.initialSegmentFamily γ 1)) =
     ofBasedPath x₀ (BasedPath.append α γ)
-  rw [Path.initialSegmentFamily_one]
-  apply congrArg (ofBasedPath x₀)
-  apply BasedPath.ext
-  intro t
-  -- `BasedPath.append` inserts endpoint casts definitionally; expose the underlying paths.
-  change (α.toPath.trans (γ.cast _ _)) t = (α.toPath.trans γ) t
-  rw [Path.trans_apply, Path.trans_apply]
-  split_ifs <;> simp only [Path.cast_coe]
+  exact ofBasedPath_append_initialSegmentFamily_one γ
 
 /-- The universal cover is simply connected. -/
 instance simplyConnectedSpace [LocallyPathConnectedSpace X] [PathConnectedSpace X]

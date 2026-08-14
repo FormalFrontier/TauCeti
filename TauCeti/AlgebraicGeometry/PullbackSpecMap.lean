@@ -19,7 +19,7 @@ along `Spec.map (𝟙 R)` is the identity functor on schemes over `Spec R`, and 
 
 Nothing here mentions affineness or group objects: these are statements about arbitrary schemes
 over an affine base, and they are the underlying comparisons of the base-change functors on
-affine group schemes in `TauCeti/AlgebraicGeometry/AffineGroupScheme/BaseChange.lean`.
+affine group schemes in `TauCeti/AlgebraicGeometry/AffineGroupScheme/BaseChange/Basic.lean`.
 
 ## Main declarations
 

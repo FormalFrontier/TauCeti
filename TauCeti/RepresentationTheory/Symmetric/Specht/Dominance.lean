@@ -117,18 +117,11 @@ theorem exists_mem_asAlgebraHom_columnAntisymmetrizer_eq_polytabloid (t : YoungT
       exact (add_sub_cancel_left _ _).symm
     rw [this]
     exact Submodule.sub_mem _ (polytabloid_mem_spechtSubrepresentation t) hmemS
-  have hbot := congrArg Subrepresentation.toSubmodule hc.inf_eq_bot
-  rw [Subrepresentation.toSubmodule_inf, Subrepresentation.toSubmodule_bot] at hbot
-  have hzero : (permutationModule (shapePartition lam)).ρ.asAlgebraHom
-      (columnAntisymmetrizer t) w = 0 := by
-    have hmem : (permutationModule (shapePartition lam)).ρ.asAlgebraHom
-        (columnAntisymmetrizer t) w ∈
-        (spechtSubrepresentation lam).toSubmodule ⊓
-          (orthogonalSubrepresentation (spechtSubrepresentation lam)).toSubmodule :=
-      Submodule.mem_inf.mpr ⟨hmemW', hmemW⟩
-    rw [hbot, Submodule.mem_bot] at hmem
-    exact hmem
-  rw [← hadd, hzero, add_zero]
+  have hdisj : Disjoint (spechtSubrepresentation lam).toSubmodule
+      (orthogonalSubrepresentation (spechtSubrepresentation lam)).toSubmodule :=
+    disjoint_iff.mpr (by
+      rw [← Subrepresentation.toSubmodule_inf, hc.inf_eq_bot, Subrepresentation.toSubmodule_bot])
+  rw [← hadd, Submodule.disjoint_def.mp hdisj _ hmemW' hmemW, add_zero]
 
 end YoungTableau
 

@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.RingTheory.DividedPowers.RatAlgebra
+public import TauCeti.Algebra.Ring.Commutator
 import Mathlib.Data.Nat.Choose.Cast
 import Mathlib.Tactic.FieldSimp
 
@@ -31,6 +32,8 @@ definition is made here.
 ## Main definitions and results
 
 * `TauCeti.Associative.dividedPower`: the normalized power `x ^ n / n!`.
+* `TauCeti.Associative.mul_dividedPower_eq_dividedPower_mul_add_zsmul`: moving an element past a
+  divided power of an integer-eigenvector for its commutator.
 * `TauCeti.Associative.mul_dividedPower`: products of divided powers of one element have a
   binomial coefficient as structure constant.
 * `TauCeti.Associative.dividedPower_add`: divided powers turn a sum of commuting elements into an
@@ -187,7 +190,25 @@ end Semiring
 
 section Ring
 
-variable {A : Type*} [Ring A] [Algebra ℚ A]
+variable {A : Type*} [Ring A] [Algebra ℚ A] {x y : A} {c : ℤ}
+
+/-- Moving an element past a divided power of an integer-eigenvector for its commutator adds the
+same integral multiple of that divided power. -/
+theorem mul_dividedPower_eq_dividedPower_mul_add_zsmul
+    (hxy : x * y - y * x = c • y) (n : ℕ) :
+    x * dividedPower n y =
+      dividedPower n y * x + ((n : ℤ) * c) • dividedPower n y := by
+  simp only [dividedPower_def, mul_smul_comm, smul_mul_assoc,
+    mul_pow_eq_pow_mul_add_zsmul hxy, smul_add]
+  rw [smul_comm]
+
+/-- The shifted-factor form of `mul_dividedPower_eq_dividedPower_mul_add_zsmul`. -/
+theorem mul_dividedPower_eq_dividedPower_mul_add_intCast
+    (hxy : x * y - y * x = c • y) (n : ℕ) :
+    x * dividedPower n y =
+      dividedPower n y * (x + (c : A) * (n : A)) := by
+  rw [mul_dividedPower_eq_dividedPower_mul_add_zsmul hxy, zsmul_eq_mul', mul_add,
+    Int.cast_mul, Int.cast_natCast, (Nat.cast_commute n (c : A)).eq]
 
 /-- Divided powers of a negated element acquire the expected sign. -/
 @[simp]

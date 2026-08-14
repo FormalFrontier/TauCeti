@@ -31,6 +31,9 @@ neighbourhood, and feed the result to the group-theoretic criterion for openness
 ## Main results
 
 * `TauCeti.HasZeroSequenceOfUnits.isOpenMap`: Henkel's open mapping theorem.
+* `TauCeti.HasZeroSequenceOfUnits.isQuotientMap`: the same map induces the quotient topology on
+  its target — the form the strict-morphism material will consume, where what matters is not that
+  images are open but that the target's topology is determined by the source's.
 
 Mathlib's `MonoidHom.isOpenMap_of_sigmaCompact` proves openness for a continuous surjection from
 a σ-compact source onto a T2 Baire target group (locally compact groups being the standard
@@ -42,7 +45,7 @@ asks it to be σ-compact, and neither of those conditions implies the other.
 
 * L. Henkel, *An Open Mapping Theorem for rings which have a zero sequence of units*,
   [arXiv:1407.5647](https://arxiv.org/abs/1407.5647).
-* T. Wedhorn, *Adic Spaces*, Proposition 6.16.
+* T. Wedhorn, *Adic Spaces*, Theorem 6.16.
 -/
 
 public section
@@ -82,6 +85,22 @@ theorem HasZeroSequenceOfUnits.isOpenMap {F : Type*} [FunLike F M N] [MulActionH
   refine Filter.mem_of_superset (hnhds 0) fun y hy ↦ ?_
   obtain ⟨x, hx, rfl⟩ := mem_image_of_mem_closure_image f hfc hW (fun n ↦ hnhds (n + 1)) hy
   exact hn₀ hx
+
+/-- **Henkel's theorem in quotient form.** Under exactly the hypotheses of
+`TauCeti.HasZeroSequenceOfUnits.isOpenMap`, the map does not merely carry open sets to open sets:
+the topology of `N` is the one coinduced from `M`, so a map out of `N` is continuous exactly when
+its composite with `f` is.
+
+The quotient conclusion needs `f` continuous everywhere, but that is not an extra hypothesis: an
+additive homomorphism out of a topological group is continuous as soon as it is continuous at `0`
+(`continuous_of_continuousAt_zero`), so `hfc` is the same assumption the open-mapping theorem
+makes. This is the shape Wedhorn's strict morphisms will use. -/
+theorem HasZeroSequenceOfUnits.isQuotientMap {F : Type*} [FunLike F M N]
+    [MulActionHomClass F A M N] [AddMonoidHomClass F M N] (f : F) (hf : Function.Surjective f)
+    (hfc : ContinuousAt (f : M → N) 0) (hc : ∀ x : M, ContinuousAt (fun a : A ↦ a • x) 0) :
+    IsQuotientMap (f : M → N) :=
+  have hcont : Continuous (f : M → N) := continuous_of_continuousAt_zero f hfc
+  (HasZeroSequenceOfUnits.isOpenMap f hf hfc hc).isQuotientMap hcont hf
 
 end TauCeti
 

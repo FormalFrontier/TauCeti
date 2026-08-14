@@ -18,7 +18,9 @@ from the smaller ring, and the new ideal of definition is the `Ideal.map` of the
 finite generation comes for free. Boundedness of the larger ring is the only real hypothesis, and
 the two applications supply it differently — by induction over a finite set of power-bounded
 elements for `A₀[T]` (`isBounded_subringClosure_union_finset`), and from the lattice structure of
-the subrings for `A₀ ⊔ A₁` (`isBounded_sup`).
+the subrings for `A₀ ⊔ B` (`isBounded_sup`). The join case is `PairOfDefinition.enlargeSup`,
+which takes an arbitrary bounded `B`; joining two rings of definition is the case where `B` is
+one of them.
 
 Taking `T = {a}` in the first application proves that every power-bounded element belongs to some
 ring of definition; the converse holds because every ring of definition is bounded.
@@ -33,6 +35,10 @@ than `Ideal.map`, and a comap of a finitely generated ideal need not be finitely
   a ring of definition.
 * `TauCeti.Huber.PairOfDefinition.adjoin`: adjoining finitely many power-bounded elements gives
   another pair of definition.
+* `TauCeti.Huber.PairOfDefinition.enlargeSup`: joining a ring of definition with any bounded
+  subring gives a ring of definition, with `enlargeSup_ringOfDefinition`,
+  `enlargeSup_idealOfDefinition`, `le_enlargeSup_left` and `le_enlargeSup_right` naming its
+  components and inclusions.
 * `TauCeti.Huber.PairOfDefinition.sup`: the join of two rings of definition is a ring of
   definition.
 * `TauCeti.Huber.isPowerBounded_iff_exists_mem_ringOfDefinition`: the power-bounded subring is
@@ -45,9 +51,9 @@ The `adjoin` construction — and hence the adic-topology argument now extracted
 at commit `37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`. Names and the proof are adjusted to Tau
 Ceti's `PairOfDefinition` and boundedness APIs.
 
-`sup` and its boundedness input `isBounded_sup` are **not** covered by that attribution: AINTLIB
-cites Corollary 6.4 only for its parts (1)–(3) and has no counterpart to the join of two rings of
-definition.
+`enlargeSup`, `sup` and the boundedness input `isBounded_sup` are **not** covered by that
+attribution: AINTLIB cites Corollary 6.4 only for its parts (1)–(3), and has no counterpart to the
+join of a ring of definition with a bounded subring.
 
 ## References
 
@@ -148,58 +154,67 @@ namespace PairOfDefinition
 
 variable [IsTopologicalRing A]
 
+/-- Every power of the ideal of definition, carried into a larger subring `B`, is open in `B`.
+
+Boundedness of `B` is not needed; only that `B` contains the ring of definition. -/
+private theorem isOpen_idealOfDefinition_map_pow (P : PairOfDefinition A) (B : Subring A)
+    (hle : P.ringOfDefinition ≤ B) (n : ℕ) :
+    IsOpen (((P.idealOfDefinition.map (Subring.inclusion hle)) ^ n : Ideal B) : Set B) :=
+  AddSubgroup.isOpen_of_mem_nhds
+    ((P.idealOfDefinition.map (Subring.inclusion hle) ^ n).toAddSubgroup) <| by
+    rw [Submodule.coe_toAddSubgroup]
+    have hnhd : Subtype.val ⁻¹' (P.idealImage n : Set A) ∈ 𝓝 (0 : B) :=
+      continuous_subtype_val.continuousAt.preimage_mem_nhds <|
+        (P.isOpen_idealImage n).mem_nhds (P.idealImage n).zero_mem
+    refine mem_of_superset hnhd ?_
+    rintro ⟨x, hxB⟩ hx
+    obtain ⟨y, hy, hxy⟩ := (P.mem_idealImage n).mp hx
+    have heq : (⟨x, hxB⟩ : B) = Subring.inclusion hle y := Subtype.ext hxy.symm
+    rw [heq, ← Ideal.map_pow]
+    exact Ideal.mem_map_of_mem _ hy
+
+/-- Every neighbourhood of `0` in a bounded subring `B` containing the ring of definition
+contains a power of the ideal of definition carried into `B`. -/
+private theorem exists_idealOfDefinition_map_pow_subset (P : PairOfDefinition A) (B : Subring A)
+    (hle : P.ringOfDefinition ≤ B) (hB : IsBounded (B : Set A)) (s : Set B) (hs : s ∈ 𝓝 (0 : B)) :
+    ∃ n : ℕ, (((P.idealOfDefinition.map (Subring.inclusion hle)) ^ n : Ideal B) : Set B) ⊆ s := by
+  let := P.toNonarchimedeanRing
+  rw [nhds_induced] at hs
+  obtain ⟨U, hU, hUs⟩ := mem_comap.mp hs
+  obtain ⟨G, hGU⟩ := NonarchimedeanRing.is_nonarchimedean U hU
+  obtain ⟨V, hV, hVB⟩ := isBounded_iff.mp hB (G : Set A) (G.isOpen.mem_nhds G.zero_mem)
+  obtain ⟨n, -, hn⟩ := P.hasBasis_nhds_zero.mem_iff.mp hV
+  refine ⟨n, fun x hx ↦ hUs (hGU ?_)⟩
+  have hx' : x ∈ P.idealOfDefinition.map (Subring.inclusion hle) ^ n := hx
+  rw [← Ideal.map_pow] at hx'
+  obtain ⟨f, hf, rfl⟩ := Submodule.mem_span_set.mp hx'
+  simp only [Finsupp.sum, smul_eq_mul]
+  have hcoe_sum : ((∑ i ∈ f.support, f i * i : B) : A) =
+      ∑ i ∈ f.support, ((f i * i : B) : A) := map_sum B.subtype _ _
+  rw [hcoe_sum]
+  apply G.toAddSubgroup.sum_mem
+  intro i hi
+  obtain ⟨a, ha, rfl⟩ := hf (Finset.mem_coe.mpr hi)
+  have hcoe : ((f (Subring.inclusion hle a) * Subring.inclusion hle a : B) : A) =
+      (f (Subring.inclusion hle a) : A) * (a : A) := by
+    rw [MulMemClass.coe_mul, Subring.coe_inclusion]
+  rw [hcoe, mul_comm]
+  exact hVB <| Set.mul_mem_mul (hn ((P.mem_idealImage n).mpr ⟨a, ha, rfl⟩))
+    (f (Subring.inclusion hle a)).property
+
 /-- **Enlarging a ring of definition.** Any bounded subring `B` containing a ring of definition
 `A₀` is itself one, with the image of `I` as its ideal of definition. -/
 def enlarge (P : PairOfDefinition A) (B : Subring A) (hle : P.ringOfDefinition ≤ B)
-    (hB : IsBounded (B : Set A)) : PairOfDefinition A := by
-  letI := P.toNonarchimedeanRing
-  exact
-    { ringOfDefinition := B
-      isOpen_ringOfDefinition := AddSubgroup.isOpen_of_mem_nhds B.toAddSubgroup <|
-        mem_of_superset
-          (P.isOpen_ringOfDefinition.mem_nhds P.ringOfDefinition.zero_mem) hle
-      idealOfDefinition := P.idealOfDefinition.map (Subring.inclusion hle)
-      fg_idealOfDefinition := P.fg_idealOfDefinition.map _
-      isAdic_idealOfDefinition := by
-        let incl := Subring.inclusion hle
-        let J := P.idealOfDefinition.map incl
-        rw [isAdic_iff]
-        constructor
-        · intro n
-          exact AddSubgroup.isOpen_of_mem_nhds (J ^ n).toAddSubgroup <| by
-            rw [Submodule.coe_toAddSubgroup]
-            have hnhd : Subtype.val ⁻¹' (P.idealImage n : Set A) ∈ 𝓝 (0 : B) :=
-              continuous_subtype_val.continuousAt.preimage_mem_nhds <|
-                (P.isOpen_idealImage n).mem_nhds (P.idealImage n).zero_mem
-            refine mem_of_superset hnhd ?_
-            rintro ⟨x, hxB⟩ hx
-            obtain ⟨y, hy, hxy⟩ := (P.mem_idealImage n).mp hx
-            have heq : (⟨x, hxB⟩ : B) = incl y := Subtype.ext hxy.symm
-            rw [heq, ← Ideal.map_pow]
-            exact Ideal.mem_map_of_mem incl hy
-        · intro s hs
-          rw [nhds_induced] at hs
-          obtain ⟨U, hU, hUs⟩ := mem_comap.mp hs
-          obtain ⟨G, hGU⟩ := NonarchimedeanRing.is_nonarchimedean U hU
-          obtain ⟨V, hV, hVB⟩ := isBounded_iff.mp hB (G : Set A) (G.isOpen.mem_nhds G.zero_mem)
-          obtain ⟨n, -, hn⟩ := P.hasBasis_nhds_zero.mem_iff.mp hV
-          refine ⟨n, fun x hx ↦ hUs (hGU ?_)⟩
-          have hx' : x ∈ P.idealOfDefinition.map incl ^ n := hx
-          rw [← Ideal.map_pow] at hx'
-          obtain ⟨f, hf, rfl⟩ := Submodule.mem_span_set.mp hx'
-          simp only [Finsupp.sum, smul_eq_mul]
-          have hcoe_sum : ((∑ i ∈ f.support, f i * i : B) : A) =
-              ∑ i ∈ f.support, ((f i * i : B) : A) := by
-            exact map_sum B.subtype _ _
-          rw [hcoe_sum]
-          apply G.toAddSubgroup.sum_mem
-          intro i hi
-          obtain ⟨a, ha, rfl⟩ := hf (Finset.mem_coe.mpr hi)
-          have hcoe : ((f (incl a) * incl a : B) : A) = (f (incl a) : A) * (a : A) := by
-            rw [MulMemClass.coe_mul, Subring.coe_inclusion]
-          rw [hcoe, mul_comm]
-          exact hVB <| Set.mul_mem_mul (hn ((P.mem_idealImage n).mpr ⟨a, ha, rfl⟩))
-            (f (incl a)).property }
+    (hB : IsBounded (B : Set A)) : PairOfDefinition A where
+  ringOfDefinition := B
+  isOpen_ringOfDefinition := AddSubgroup.isOpen_of_mem_nhds B.toAddSubgroup <|
+    mem_of_superset
+      (P.isOpen_ringOfDefinition.mem_nhds P.ringOfDefinition.zero_mem) hle
+  idealOfDefinition := P.idealOfDefinition.map (Subring.inclusion hle)
+  fg_idealOfDefinition := P.fg_idealOfDefinition.map _
+  isAdic_idealOfDefinition :=
+    isAdic_iff.mpr ⟨P.isOpen_idealOfDefinition_map_pow B hle,
+      P.exists_idealOfDefinition_map_pow_subset B hle hB⟩
 
 /-- The ring of definition of `P.enlarge B hle hB` is `B`. -/
 @[simp]
@@ -266,36 +281,71 @@ theorem mem_adjoin_of_mem (P : PairOfDefinition A) (T : Finset A)
   rw [adjoin_ringOfDefinition]
   exact Subring.subset_closure (Set.mem_union_right _ (Finset.mem_coe.mpr ht))
 
+/-- **Joining a ring of definition with a bounded subring.** For any bounded `B`, the join
+`A₀ ⊔ B` is again a ring of definition. The join of two rings of definition is the case
+`B = A₁`. -/
+def enlargeSup (P : PairOfDefinition A) (B : Subring A) (hB : IsBounded (B : Set A)) :
+    PairOfDefinition A :=
+  letI := P.toNonarchimedeanRing
+  P.enlarge (P.ringOfDefinition ⊔ B) _root_.le_sup_left
+    (isBounded_sup P.ringOfDefinition B P.isBounded_ringOfDefinition hB)
+
+/-- The ring of definition of `P.enlargeSup B hB` is `A₀ ⊔ B`. -/
+@[simp]
+theorem enlargeSup_ringOfDefinition (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    (P.enlargeSup B hB).ringOfDefinition = P.ringOfDefinition ⊔ B :=
+  P.enlarge_ringOfDefinition _ _ _
+
+/-- The original ring of definition is contained in the join. -/
+theorem le_enlargeSup_left (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    P.ringOfDefinition ≤ (P.enlargeSup B hB).ringOfDefinition := by
+  rw [enlargeSup_ringOfDefinition]
+  exact _root_.le_sup_left
+
+/-- The adjoined subring is contained in the join — the defining property of the construction. -/
+theorem le_enlargeSup_right (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    B ≤ (P.enlargeSup B hB).ringOfDefinition := by
+  rw [enlargeSup_ringOfDefinition]
+  exact _root_.le_sup_right
+
+/-- The ideal of definition of `P.enlargeSup B hB` is the image of `I`, as for any `enlarge`. -/
+@[simp]
+theorem enlargeSup_idealOfDefinition (P : PairOfDefinition A) (B : Subring A)
+    (hB : IsBounded (B : Set A)) :
+    (P.enlargeSup B hB).idealOfDefinition =
+      P.idealOfDefinition.map (Subring.inclusion (P.le_enlargeSup_left B hB)) :=
+  P.enlarge_idealOfDefinition _ _ _
+
 /-- **Wedhorn Corollary 6.4, the product half.** The join of two rings of definition is again a
 ring of definition; its ideal of definition is the image of the first one's. -/
 def sup (P Q : PairOfDefinition A) : PairOfDefinition A :=
-  letI := P.toNonarchimedeanRing
-  P.enlarge (P.ringOfDefinition ⊔ Q.ringOfDefinition) _root_.le_sup_left
-    (isBounded_sup P.ringOfDefinition Q.ringOfDefinition P.isBounded_ringOfDefinition
-      Q.isBounded_ringOfDefinition)
+  P.enlargeSup Q.ringOfDefinition Q.isBounded_ringOfDefinition
 
 /-- The ring of definition of `P.sup Q` is `A₀ ⊔ A₁`. -/
 @[simp]
 theorem sup_ringOfDefinition (P Q : PairOfDefinition A) :
-    (P.sup Q).ringOfDefinition = P.ringOfDefinition ⊔ Q.ringOfDefinition := (rfl)
+    (P.sup Q).ringOfDefinition = P.ringOfDefinition ⊔ Q.ringOfDefinition :=
+  P.enlargeSup_ringOfDefinition _ _
 
 /-- The first ring of definition is contained in the join. -/
 theorem le_sup_left (P Q : PairOfDefinition A) :
-    P.ringOfDefinition ≤ (P.sup Q).ringOfDefinition := by
-  rw [sup_ringOfDefinition]
-  exact _root_.le_sup_left
+    P.ringOfDefinition ≤ (P.sup Q).ringOfDefinition :=
+  P.le_enlargeSup_left _ _
 
 /-- The second ring of definition is contained in the join. -/
 theorem le_sup_right (P Q : PairOfDefinition A) :
-    Q.ringOfDefinition ≤ (P.sup Q).ringOfDefinition := by
-  rw [sup_ringOfDefinition]
-  exact _root_.le_sup_right
+    Q.ringOfDefinition ≤ (P.sup Q).ringOfDefinition :=
+  P.le_enlargeSup_right _ _
 
 /-- The ideal of definition of `P.sup Q` is the image of `P`'s. -/
 @[simp]
 theorem sup_idealOfDefinition (P Q : PairOfDefinition A) :
     (P.sup Q).idealOfDefinition =
-      P.idealOfDefinition.map (Subring.inclusion (P.le_sup_left Q)) := (rfl)
+      P.idealOfDefinition.map (Subring.inclusion (P.le_sup_left Q)) :=
+  P.enlargeSup_idealOfDefinition _ _
 
 end PairOfDefinition
 

@@ -11,21 +11,26 @@ import TauCeti.Analysis.SpecialFunctions.Exponential
 # Comparing commuting bounded-generator semigroups
 
 This file gives the perturbation estimate needed to compare the bounded semigroups in the
-Yosida approximation. If bounded operators `A` and `B` commute and both exponentials are
-contractive at nonnegative times, then
+Yosida approximation. If bounded operators `A` and `B` commute and their exponentials are bounded
+by `M` and `N` at nonnegative times, then
 
-`‖exp (t A) x - exp (t B) x‖ ≤ t ‖(A - B) x‖`.
+`‖exp (t A) x - exp (t B) x‖ ≤ M * N * t * ‖(A - B) x‖`.
 
 The proof applies Duhamel's formula to the difference of the two exponentials. Commutativity
-moves `A - B` through the second exponential, after which both exponential factors are bounded
-by one. This pointwise estimate is sharper than the generic Banach-algebra bound involving
+moves `A - B` through the second exponential, after which the two exponential factors contribute
+their bounds. This pointwise estimate is sharper than the generic Banach-algebra bound involving
 `exp (t ‖A‖)` and `exp (t ‖B‖)`; that generic bound is useless for Yosida approximations because
 their operator norms grow with the approximation parameter.
+
+The two constants are kept separate rather than fixed to one: the Yosida approximations of a
+dissipative operator have contractive exponentials, but under the Hille--Yosida hypotheses for a
+general growth constant `M` they only satisfy `‖exp (t A_lambda)‖ ≤ M`, and the resulting
+comparison carries the factor `M ^ 2`.
 
 ## Main result
 
 * `TauCeti.Semigroups.norm_exp_smul_sub_exp_smul_apply_le_of_commute`: the pointwise comparison
-  estimate for commuting contraction exponentials.
+  estimate for commuting exponentials with uniform bounds.
 
 ## References
 
@@ -44,19 +49,20 @@ namespace TauCeti.Semigroups
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 
-/-- If `A` and `B` commute and their bounded-generator semigroups are contractive, then their
-orbits differ by at most time times the difference of the generators:
+/-- If `A` and `B` commute and their bounded-generator semigroups obey the uniform bounds `M` and
+`N` at nonnegative times, then their orbits differ by at most
 
-`‖exp (t A) x - exp (t B) x‖ ≤ t ‖(A - B) x‖` for `t ≥ 0`.
+`‖exp (t A) x - exp (t B) x‖ ≤ M * N * t * ‖(A - B) x‖` for `t ≥ 0`.
 
-This is the bounded Duhamel estimate in the commuting case. -/
-theorem norm_exp_smul_sub_exp_smul_apply_le_of_commute (A B : X →L[ℝ] X)
+This is the bounded Duhamel estimate in the commuting case; the contraction case is `M = N = 1`. -/
+theorem norm_exp_smul_sub_exp_smul_apply_le_of_commute {M N : ℝ} (A B : X →L[ℝ] X)
     (hcomm : Commute A B)
-    (hA : ∀ s : ℝ, 0 ≤ s → ‖exp (s • A)‖ ≤ 1)
-    (hB : ∀ s : ℝ, 0 ≤ s → ‖exp (s • B)‖ ≤ 1)
+    (hA : ∀ s : ℝ, 0 ≤ s → ‖exp (s • A)‖ ≤ M)
+    (hB : ∀ s : ℝ, 0 ≤ s → ‖exp (s • B)‖ ≤ N)
     {t : ℝ} (ht : 0 ≤ t) (x : X) :
-    ‖exp (t • A) x - exp (t • B) x‖ ≤ t * ‖(A - B) x‖ := by
+    ‖exp (t • A) x - exp (t • B) x‖ ≤ M * N * t * ‖(A - B) x‖ := by
   let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
+  have hN : 0 ≤ N := (norm_nonneg _).trans (hB 0 le_rfl)
   have hsum : t • A + t • (B - A) = t • B := by module
   have hint := TauCeti.intervalIntegrable_exp_smul_mul_mul_exp_smul
     (t • A + t • (B - A)) (t • (B - A)) (t • A)
@@ -67,7 +73,7 @@ theorem norm_exp_smul_sub_exp_smul_apply_le_of_commute (A B : X →L[ℝ] X)
   simp only [sub_apply] at happly
   rw [norm_sub_rev, happly]
   refine (intervalIntegral.norm_integral_le_of_norm_le_const
-    (C := t * ‖(A - B) x‖) ?_).trans_eq ?_
+    (C := M * N * t * ‖(A - B) x‖) ?_).trans_eq ?_
   · intro s hs
     rw [uIoc_of_le zero_le_one] at hs
     have hs_nonneg : 0 ≤ s := hs.1.le
@@ -82,16 +88,18 @@ theorem norm_exp_smul_sub_exp_smul_apply_le_of_commute (A B : X →L[ℝ] X)
       ‖exp (((1 - s) * t) • B) (exp ((s * t) • A) ((t • (B - A)) x))‖
           ≤ ‖exp (((1 - s) * t) • B)‖ *
               ‖exp ((s * t) • A) ((t • (B - A)) x)‖ := ContinuousLinearMap.le_opNorm _ _
-      _ ≤ 1 * ‖exp ((s * t) • A) ((t • (B - A)) x)‖ := by
+      _ ≤ N * ‖exp ((s * t) • A) ((t • (B - A)) x)‖ := by
         gcongr
         exact hB ((1 - s) * t) (mul_nonneg hone_sub_nonneg ht)
-      _ ≤ 1 * (1 * ‖(t • (B - A)) x‖) := by
-        gcongr
-        exact (ContinuousLinearMap.le_opNorm _ _).trans
-          (mul_le_mul_of_nonneg_right (hA (s * t) (mul_nonneg hs_nonneg ht)) (norm_nonneg _))
-      _ = t * ‖(A - B) x‖ := by
-        rw [one_mul, one_mul, smul_apply, norm_smul, Real.norm_eq_abs, abs_of_nonneg ht,
+      _ ≤ N * (M * ‖(t • (B - A)) x‖) :=
+        mul_le_mul_of_nonneg_left
+          ((ContinuousLinearMap.le_opNorm _ _).trans
+            (mul_le_mul_of_nonneg_right (hA (s * t) (mul_nonneg hs_nonneg ht)) (norm_nonneg _)))
+          hN
+      _ = M * N * t * ‖(A - B) x‖ := by
+        rw [smul_apply, norm_smul, Real.norm_eq_abs, abs_of_nonneg ht,
           ← neg_sub, neg_apply, norm_neg]
+        ring
   · simp
 
 end TauCeti.Semigroups
