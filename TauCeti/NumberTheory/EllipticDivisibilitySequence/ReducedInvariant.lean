@@ -47,13 +47,16 @@ Both route through the fact that `normEDS` is an elliptic sequence, along
 
 for the first, and `invarDenom_eq_redInvarDenom_mul ← normEDS_mul_complEDS_div ←
 normEDS_mul_complEDS ← normEDS_mul_complEDS_of_mem ← IsEllipticSequence.normEDS` for the second.
-That fact is not in the pinned Mathlib, which records it as an open TODO
+That fact is `isEllipticSequence_normEDS` in `NormEDS.lean`, proved here through the descent of
+`Descent.lean`; the pinned Mathlib still records it as an open TODO
 (`Mathlib/NumberTheory/EllipticDivisibilitySequence.lean`: "prove that `normEDS` satisfies
-`IsEllipticDvdSequence`"), and proving it needs the parity-transfer machinery of Mathlib PR #42453.
-Carrying the bare definition across now would add a formula that no consumer can state anything
-about, so it waits for the layer that gives it meaning. Everything below is independent of that
-fact: nothing carries an ellipticity hypothesis, and the source discharges the ellipticity
-variables over exactly this block.
+`IsEllipticDvdSequence`"). What the denominator side still lacks is the rest of each chain above:
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS` for the first, and
+`normEDS_mul_complEDS_div ← normEDS_mul_complEDS ← normEDS_mul_complEDS_of_mem` for the second.
+Carrying the bare definition across before them would add a formula that no consumer can state
+anything about, so it waits for the layer that gives it meaning. Everything below is independent
+of that fact: nothing carries an ellipticity hypothesis, and the source discharges the
+ellipticity variables over exactly this block.
 
 ## Provenance
 
