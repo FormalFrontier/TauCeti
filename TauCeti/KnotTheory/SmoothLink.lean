@@ -18,7 +18,9 @@ done properly"). Knots have no single privileged representation; the geometric p
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
 manifold $M$. Oriented presentations carry a manifold orientation of the circle source,
 represented as an equivalence class of smooth nowhere-zero tangent vector fields modulo positive
-scaling, and framed presentations in a 3-manifold additionally carry a framed tubular embedding.
+scaling, and framed presentations in a 3-manifold carry a framing of the normal bundle,
+represented as an equivalence class of tubular neighborhood embeddings modulo agreement of their
+induced normal derivative along the core.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
@@ -27,7 +29,10 @@ This file introduces:
   tangent fields under pointwise positive scaling.
 * `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: smooth knots carrying a source orientation.
-* `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth knots carrying a tubular embedding.
+* `TauCeti.KnotTubularEmbedding`: tubular neighborhood embeddings of an oriented knot.
+* `TauCeti.KnotFraming`: framings of an oriented knot as the quotient of tubular embeddings
+  modulo equality of induced normal derivatives.
+* `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth knots in a 3-manifold.
 * `TauCeti.FramedOrientedSmoothKnot3`: framed, oriented smooth knots in the 3-sphere $S^3$.
 * `TauCeti.FramedOrientedSmoothLink`: $k$-component framed oriented smooth links in a 3-manifold
   $M$, bundling $k$ component knots with pairwise disjoint core embedding images.
@@ -38,6 +43,8 @@ This file introduces:
 * `TauCeti.Sphere1.Orientation`: manifold orientation of $S^1$.
 * `TauCeti.UnorientedSmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: oriented smooth geometric presentations.
+* `TauCeti.KnotTubularEmbedding`: tubular neighborhood embeddings of an oriented knot.
+* `TauCeti.KnotFraming`: framing quotient for oriented smooth knots.
 * `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth geometric presentations.
 * `TauCeti.FramedOrientedSmoothLink`: type of $k$-component framed oriented links in $M$.
 
@@ -237,23 +244,113 @@ theorem reverseOrientation_reverseOrientation (K : OrientedSmoothKnot I M) :
 
 end OrientedSmoothKnot
 
-/-- A framed oriented smooth knot in a 3-manifold consists of an oriented core together with an
-embedding of its trivial rank-two normal bundle as a tubular neighborhood. The two normal
-coordinates record the framing. -/
+variable {H₃ : Type*} [TopologicalSpace H₃]
+  {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
+  {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
+
+/-- A tubular neighborhood embedding for an oriented smooth knot `K` in a 3-manifold `M`. -/
+structure KnotTubularEmbedding (K : OrientedSmoothKnot I₃ M₃) where
+  /-- The ambient smooth embedding of the solid torus `Sphere1 × ℝ²` into `M`. -/
+  toSmoothEmbedding :
+    SmoothEmbedding
+      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
+        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I₃ ∞
+      (Sphere1 × EuclideanSpace ℝ (Fin 2)) M₃
+  /-- The zero section of the tubular embedding coincides with the underlying knot. -/
+  zero_section (x : Sphere1) : toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) = K.knot x
+
+namespace KnotTubularEmbedding
+
+variable {K : OrientedSmoothKnot I₃ M₃}
+
+/-- Two tubular neighborhood embeddings of an oriented smooth knot define the same normal framing
+if their differentials along the zero section agree in the normal coordinates. -/
+def SameNormalFraming (T₁ T₂ : KnotTubularEmbedding K) : Prop :=
+  ∀ (x : Sphere1) (w : EuclideanSpace ℝ (Fin 2)),
+    mfderiv
+      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
+        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I₃
+      T₁.toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) ((0 : TangentSpace (𝓡 1) x), w) =
+    mfderiv
+      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
+        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I₃
+      T₂.toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) ((0 : TangentSpace (𝓡 1) x), w)
+
+theorem sameNormalFraming_refl (T : KnotTubularEmbedding K) :
+    SameNormalFraming T T :=
+  fun _ _ ↦ rfl
+
+theorem sameNormalFraming_symm {T₁ T₂ : KnotTubularEmbedding K}
+    (h : SameNormalFraming T₁ T₂) : SameNormalFraming T₂ T₁ :=
+  fun x w ↦ (h x w).symm
+
+theorem sameNormalFraming_trans {T₁ T₂ T₃ : KnotTubularEmbedding K}
+    (h₁ : SameNormalFraming T₁ T₂) (h₂ : SameNormalFraming T₂ T₃) :
+    SameNormalFraming T₁ T₃ :=
+  fun x w ↦ (h₁ x w).trans (h₂ x w)
+
+/-- Equivalence relation for tubular embeddings with the same induced normal framing. -/
+instance setoid (K : OrientedSmoothKnot I₃ M₃) : Setoid (KnotTubularEmbedding K) where
+  r := SameNormalFraming
+  iseqv := {
+    refl := sameNormalFraming_refl
+    symm := sameNormalFraming_symm
+    trans := sameNormalFraming_trans
+  }
+
+end KnotTubularEmbedding
+
+/-- A framing of an oriented smooth knot `K` in a 3-manifold `M`, defined as the equivalence
+class of tubular neighborhood embeddings modulo equality of their induced normal derivative
+along the zero section. -/
+def KnotFraming (K : OrientedSmoothKnot I₃ M₃) : Type _ :=
+  Quotient (KnotTubularEmbedding.setoid K)
+
+namespace KnotFraming
+
+variable {K : OrientedSmoothKnot I₃ M₃}
+
+/-- The framing represented by a tubular neighborhood embedding. -/
+def ofTubularEmbedding (T : KnotTubularEmbedding K) :
+    KnotFraming K :=
+  Quotient.mk (KnotTubularEmbedding.setoid K) T
+
+theorem ofTubularEmbedding_eq_ofTubularEmbedding
+    {T₁ T₂ : KnotTubularEmbedding K}
+    (h : KnotTubularEmbedding.SameNormalFraming T₁ T₂) :
+    ofTubularEmbedding T₁ = ofTubularEmbedding T₂ :=
+  Quotient.sound (s := KnotTubularEmbedding.setoid K) h
+
+/-- Two tubular embeddings represent the same knot framing if and only if their normal
+differentials along the zero section agree. -/
+@[simp]
+theorem ofTubularEmbedding_inj
+    {T₁ T₂ : KnotTubularEmbedding K} :
+    ofTubularEmbedding T₁ = ofTubularEmbedding T₂ ↔
+      KnotTubularEmbedding.SameNormalFraming T₁ T₂ := by
+  constructor
+  · exact Quotient.exact (s := KnotTubularEmbedding.setoid K)
+  · exact ofTubularEmbedding_eq_ofTubularEmbedding
+
+/-- Induction principle for knot framings. -/
+@[elab_as_elim]
+theorem induction {P : KnotFraming K → Prop}
+    (h : ∀ T : KnotTubularEmbedding K, P (ofTubularEmbedding T))
+    (F : KnotFraming K) : P F :=
+  Quotient.inductionOn (s := KnotTubularEmbedding.setoid K) F h
+
+end KnotFraming
+
+/-- A framed oriented smooth knot in a 3-manifold consists of an oriented core together with a
+framing of its normal bundle. -/
 @[ext]
 structure FramedOrientedSmoothKnot
     (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] where
   /-- The underlying oriented smooth knot. -/
   knot : OrientedSmoothKnot I M
-  /-- A tubular embedding with two framed normal coordinates. -/
-  tubularEmbedding :
-    SmoothEmbedding
-      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
-        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I ∞
-      (Sphere1 × EuclideanSpace ℝ (Fin 2)) M
-  /-- The zero section of the tubular embedding is the underlying knot. -/
-  tubularEmbedding_zero (x : Sphere1) : tubularEmbedding (x, 0) = knot.knot x
+  /-- The framing of the oriented knot. -/
+  framing : KnotFraming knot
 
 namespace FramedOrientedSmoothKnot
 
@@ -269,20 +366,20 @@ def forget (K : FramedOrientedSmoothKnot I₃ M₃) : UnorientedSmoothKnot I₃ 
   K.knot.knot
 
 @[simp]
-theorem knot_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
-    (mk (I := I₃) (M := M₃) k t h).knot = k := (rfl)
+theorem knot_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
+    (mk (I := I₃) (M := M₃) k f).knot = k := (rfl)
 
 @[simp]
-theorem tubularEmbedding_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
-    (mk (I := I₃) (M := M₃) k t h).tubularEmbedding = t := (rfl)
+theorem framing_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
+    (mk (I := I₃) (M := M₃) k f).framing = f := (rfl)
 
 @[simp]
-theorem forgetFraming_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
-    (mk (I := I₃) (M := M₃) k t h).forgetFraming = k := (rfl)
+theorem forgetFraming_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
+    (mk (I := I₃) (M := M₃) k f).forgetFraming = k := (rfl)
 
 @[simp]
-theorem forget_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
-    (mk (I := I₃) (M := M₃) k t h).forget = k.knot := (rfl)
+theorem forget_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
+    (mk (I := I₃) (M := M₃) k f).forget = k.knot := (rfl)
 
 theorem forgetFraming_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
     K.forgetFraming = K.knot := (rfl)
