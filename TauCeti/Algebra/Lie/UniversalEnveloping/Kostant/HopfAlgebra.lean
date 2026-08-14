@@ -148,15 +148,11 @@ private theorem coe_lid_counit_rTensor (e : I → L) (h : J → L)
   induction t using TensorProduct.induction_on with
   | zero => simp
   | add x y hx hy =>
-      simp only [map_add]
-      change (↑((TensorProduct.lid ℤ (K e h))
-        ((kostantFormCounit e h).toLinearMap.rTensor (K e h) x)) : U) +
-          ↑((TensorProduct.lid ℤ (K e h))
-            ((kostantFormCounit e h).toLinearMap.rTensor (K e h) y)) = _
-      exact congrArg₂ (· + ·) hx hy
+      simp only [map_add, Subring.coe_add, hx, hy]
   | tmul x y =>
       rw [LinearMap.rTensor_tmul, TensorProduct.lid_tmul, kostantTensorMap_tmul,
         LinearMap.rTensor_tmul, TensorProduct.lid_tmul]
+      -- Definitional reduction of integral scalar action in the rational ambient module.
       change ((kostantFormCounit e h x : ℤ) : ℚ) • (y : U) =
         Coalgebra.counit (R := ℚ) (x : U) • (y : U)
       rw [intCast_kostantFormCounit_apply]
@@ -169,15 +165,11 @@ private theorem coe_rid_counit_lTensor (e : I → L) (h : J → L)
   induction t using TensorProduct.induction_on with
   | zero => simp
   | add x y hx hy =>
-      simp only [map_add]
-      change (↑((TensorProduct.rid ℤ (K e h))
-        ((kostantFormCounit e h).toLinearMap.lTensor (K e h) x)) : U) +
-          ↑((TensorProduct.rid ℤ (K e h))
-            ((kostantFormCounit e h).toLinearMap.lTensor (K e h) y)) = _
-      exact congrArg₂ (· + ·) hx hy
+      simp only [map_add, Subring.coe_add, hx, hy]
   | tmul x y =>
       rw [LinearMap.lTensor_tmul, TensorProduct.rid_tmul, kostantTensorMap_tmul,
         LinearMap.lTensor_tmul, TensorProduct.rid_tmul]
+      -- Definitional reduction of integral scalar action in the rational ambient module.
       change ((kostantFormCounit e h y : ℤ) : ℚ) • (x : U) =
         Coalgebra.counit (R := ℚ) (y : U) • (x : U)
       rw [intCast_kostantFormCounit_apply]
@@ -191,6 +183,7 @@ noncomputable instance instBialgebraKostantForm (e : I → L) (h : J → L) :
   Bialgebra.ofAlgHom (kostantFormComul e h) (kostantFormCounit e h)
     (by
       ext a
+      -- Definitional reduction from bundled AlgHom tensor maps to linear tensor operations.
       change TensorProduct.assoc ℤ (K e h) (K e h) (K e h)
           ((kostantFormComul e h).toLinearMap.rTensor (K e h)
             (kostantFormComul e h a)) =
@@ -202,11 +195,13 @@ noncomputable instance instBialgebraKostantForm (e : I → L) (h : J → L) :
       exact Coalgebra.coassoc_apply (R := ℚ) (a : U))
     (by
       ext a
+      -- Definitional reduction from AlgHom map to linear rTensor and AlgEquiv to LinearEquiv.
       change (kostantFormCounit e h).toLinearMap.rTensor (K e h)
           (kostantFormComul e h a) = (TensorProduct.lid ℤ (K e h)).symm a
       apply (TensorProduct.lid ℤ (K e h)).injective
       apply (K e h).subtype_injective
       rw [LinearEquiv.apply_symm_apply]
+      -- Definitional reduction across subtype coercion.
       change ((TensorProduct.lid ℤ (K e h))
           ((kostantFormCounit e h).toLinearMap.rTensor (K e h)
             (kostantFormComul e h a)) : K e h) = (a : U)
@@ -214,11 +209,13 @@ noncomputable instance instBialgebraKostantForm (e : I → L) (h : J → L) :
         Coalgebra.rTensor_counit_comul, TensorProduct.lid_tmul, one_smul])
     (by
       ext a
+      -- Definitional reduction from AlgHom map to linear lTensor and AlgEquiv to LinearEquiv.
       change (kostantFormCounit e h).toLinearMap.lTensor (K e h)
           (kostantFormComul e h a) = (TensorProduct.rid ℤ (K e h)).symm a
       apply (TensorProduct.rid ℤ (K e h)).injective
       apply (K e h).subtype_injective
       rw [LinearEquiv.apply_symm_apply]
+      -- Definitional reduction across subtype coercion.
       change ((TensorProduct.rid ℤ (K e h))
           ((kostantFormCounit e h).toLinearMap.lTensor (K e h)
             (kostantFormComul e h a)) : K e h) = (a : U)
@@ -227,10 +224,12 @@ noncomputable instance instBialgebraKostantForm (e : I → L) (h : J → L) :
 
 /-- The bialgebra comultiplication on the Kostant form is its canonical integral
 comultiplication. -/
+@[simp low]
 theorem kostantForm_comul (e : I → L) (h : J → L) :
     Coalgebra.comul (R := ℤ) = (kostantFormComul e h).toLinearMap := rfl
 
 /-- The bialgebra counit on the Kostant form is its canonical integral counit. -/
+@[simp low]
 theorem kostantForm_counit (e : I → L) (h : J → L) :
     Coalgebra.counit (R := ℤ) = (kostantFormCounit e h).toLinearMap := rfl
 
@@ -253,9 +252,8 @@ instance instIsCocommKostantForm (e : I → L) (h : J → L) :
   comm_comp_comul := by
     apply LinearMap.ext
     intro a
-    simp only [LinearMap.comp_apply]
-    change TensorProduct.comm ℤ (K e h) (K e h) (kostantFormComul e h a) =
-      kostantFormComul e h a
+    simp only [LinearMap.comp_apply, kostantForm_comul, AlgHom.toLinearMap_apply,
+      LinearEquiv.coe_toLinearMap]
     apply kostantTensorMap_injective e h
     rw [kostantTensorMap_comm, kostantTensorMap_kostantFormComul_apply,
       Coalgebra.comm_comul]
@@ -287,12 +285,7 @@ private theorem coe_mul_antipode_rTensor (e : I → L) (h : J → L)
   induction t using TensorProduct.induction_on with
   | zero => simp
   | add x y hx hy =>
-      simp only [map_add]
-      change (↑(LinearMap.mul' ℤ (K e h)
-          ((kostantFormAntipodeLinearMap e h).rTensor (K e h) x)) : U) +
-        ↑(LinearMap.mul' ℤ (K e h)
-          ((kostantFormAntipodeLinearMap e h).rTensor (K e h) y)) = _
-      exact congrArg₂ (· + ·) hx hy
+      simp only [map_add, Subring.coe_add, hx, hy]
   | tmul x y =>
       rw [LinearMap.rTensor_tmul, LinearMap.mul'_apply, kostantTensorMap_tmul,
         LinearMap.rTensor_tmul, LinearMap.mul'_apply, Subring.coe_mul,
@@ -307,12 +300,7 @@ private theorem coe_mul_antipode_lTensor (e : I → L) (h : J → L)
   induction t using TensorProduct.induction_on with
   | zero => simp
   | add x y hx hy =>
-      simp only [map_add]
-      change (↑(LinearMap.mul' ℤ (K e h)
-          ((kostantFormAntipodeLinearMap e h).lTensor (K e h) x)) : U) +
-        ↑(LinearMap.mul' ℤ (K e h)
-          ((kostantFormAntipodeLinearMap e h).lTensor (K e h) y)) = _
-      exact congrArg₂ (· + ·) hx hy
+      simp only [map_add, Subring.coe_add, hx, hy]
   | tmul x y =>
       rw [LinearMap.lTensor_tmul, LinearMap.mul'_apply, kostantTensorMap_tmul,
         LinearMap.lTensor_tmul, LinearMap.mul'_apply, Subring.coe_mul,
@@ -341,6 +329,7 @@ noncomputable instance instHopfAlgebraKostantForm (e : I → L) (h : J → L) :
         rw [kostantTensorMap_kostantFormComul_apply,
           HopfAlgebra.mul_antipode_rTensor_comul_apply]
       _ = (K e h).subtype (algebraMap ℤ (K e h) (kostantFormCounit e h a)) := by
+        -- Definitional agreement of the rationalized counit scalar with the integral scalar.
         change algebraMap ℚ U (Coalgebra.counit (R := ℚ) (a : U)) =
           algebraMap ℚ U ((kostantFormCounit e h a : ℤ) : ℚ)
         rw [intCast_kostantFormCounit_apply]
@@ -362,12 +351,14 @@ noncomputable instance instHopfAlgebraKostantForm (e : I → L) (h : J → L) :
         rw [kostantTensorMap_kostantFormComul_apply,
           HopfAlgebra.mul_antipode_lTensor_comul_apply]
       _ = (K e h).subtype (algebraMap ℤ (K e h) (kostantFormCounit e h a)) := by
+        -- Definitional agreement of the rationalized counit scalar with the integral scalar.
         change algebraMap ℚ U (Coalgebra.counit (R := ℚ) (a : U)) =
           algebraMap ℚ U ((kostantFormCounit e h a : ℤ) : ℚ)
         rw [intCast_kostantFormCounit_apply]
 
 /-- The Hopf algebra antipode on the Kostant form is the restriction of the rational
 universal-enveloping antipode. -/
+@[simp low]
 theorem kostantForm_antipode (e : I → L) (h : J → L) :
     HopfAlgebra.antipode ℤ (A := K e h) = kostantFormAntipodeLinearMap e h := rfl
 
