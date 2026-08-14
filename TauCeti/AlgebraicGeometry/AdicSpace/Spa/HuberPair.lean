@@ -126,7 +126,7 @@ private theorem spaComap_quotientHom_eq (S : Pair A) (J : Ideal A) :
   calc
     ((quotientHom S J).spaComap v).1 =
         ValuationSpectrum.comap (Ideal.Quotient.mk J) v.1 := by
-      rw [spaComap_val, quotientHom_toRingHom]
+      rw [spaComap_val, toRingHom_quotientHom]
     _ = ValuationSpectrum.comap (Ideal.Quotient.mk J) ((quotientSpaHomeomorph S J) v).1 :=
       congr_arg (ValuationSpectrum.comap (Ideal.Quotient.mk J)) hev.symm
     _ = (ValuationSpectrum.spaComap (Ideal.Quotient.mk J) continuous_quotient_mk' S.plus

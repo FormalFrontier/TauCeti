@@ -51,7 +51,7 @@ of the image plus ring; this file bundles the construction with the current Tau 
 
 ## References
 
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], Definition 7.14, Remark 7.15, and Proposition 7.38.
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], Definition 7.14, Remark 7.15, and Definition 7.22.
 * [AINTLIB](https://github.com/CBirkbeck/AINTLIB), branch `dev/adic-spaces`,
   `projects/AdicSpaces/Adic spaces/AffinoidRings.lean`.
 -/
@@ -202,7 +202,7 @@ theorem powerBounded_plus : (powerBounded A).plus = powerBoundedSubring A := (rf
 
 section Quotient
 
-/-- **Wedhorn Proposition 7.38.** The quotient of a Huber pair by `J`. Its plus ring is the
+/-- The quotient of a Huber pair by `J` (Wedhorn Definition 7.22). Its plus ring is the
 integral closure of the image of the original plus ring in the quotient. -/
 noncomputable def quotient (S : Pair A) (J : Ideal A) : Pair (A ⧸ J) where
   plus := (integralClosure (S.plus.map (Ideal.Quotient.mk J)) (A ⧸ J)).toSubring
@@ -245,11 +245,10 @@ noncomputable def quotientHom (S : Pair A) (J : Ideal A) : Hom S (S.quotient J) 
 
 /-- The underlying map of the canonical quotient-pair morphism is the quotient map. -/
 @[simp]
-theorem quotientHom_toRingHom (S : Pair A) (J : Ideal A) :
+theorem Hom.toRingHom_quotientHom (S : Pair A) (J : Ideal A) :
     (quotientHom S J).toRingHom = Ideal.Quotient.mk J := (rfl)
 
-/-- **Wedhorn Proposition 7.38.** A morphism of Huber pairs annihilating `J` factors through the
-quotient pair. -/
+/-- A morphism of Huber pairs annihilating `J` factors through the quotient pair. -/
 noncomputable def Hom.quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
     (hJ : J ≤ RingHom.ker f.toRingHom) : Hom (S.quotient J) T where
   toRingHom := Ideal.Quotient.lift J f.toRingHom fun a ha ↦ RingHom.mem_ker.mp (hJ ha)
@@ -275,7 +274,7 @@ noncomputable def Hom.quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : 
 
 /-- The underlying ring homomorphism of the quotient factorisation is `Ideal.Quotient.lift`. -/
 @[simp]
-theorem Hom.quotientLift_toRingHom {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
+theorem Hom.toRingHom_quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
     (hJ : J ≤ RingHom.ker f.toRingHom) :
     (f.quotientLift J hJ).toRingHom =
       Ideal.Quotient.lift J f.toRingHom (fun _a ha ↦ RingHom.mem_ker.mp (hJ ha)) := (rfl)
@@ -286,7 +285,7 @@ theorem Hom.quotientLift_comp_quotientHom {S : Pair A} {T : Pair B} (J : Ideal A
     (f : Hom S T) (hJ : J ≤ RingHom.ker f.toRingHom) :
     (f.quotientLift J hJ).comp (quotientHom S J) = f := by
   apply Hom.ext
-  rw [Hom.toRingHom_comp, Hom.quotientLift_toRingHom, quotientHom_toRingHom]
+  rw [Hom.toRingHom_comp, Hom.toRingHom_quotientLift, Hom.toRingHom_quotientHom]
   exact Ideal.Quotient.lift_comp_mk J f.toRingHom _
 
 /-- The factorisation through a quotient Huber pair is unique. -/
@@ -299,7 +298,7 @@ theorem Hom.quotientLift_unique {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom
     g.toRingHom.comp (Ideal.Quotient.mk J) = f.toRingHom := congr_arg Hom.toRingHom hg
     _ = (f.quotientLift J hJ).toRingHom.comp (Ideal.Quotient.mk J) :=
       (by
-        rw [Hom.quotientLift_toRingHom]
+        rw [Hom.toRingHom_quotientLift]
         exact (Ideal.Quotient.lift_comp_mk J f.toRingHom _).symm)
 
 end Quotient
