@@ -469,7 +469,7 @@ theorem characterCocharacterPairing_eq_iff_comp_eq_powEndGroupSchemeMap
     exact h
 
 /-- The character--cocharacter pairing is invariant under the diagonal absolute-Galois action. -/
-theorem characterCocharacterPairing_galois (T : MultiplicativeTypeCommHopfAlgCat k)
+theorem characterCocharacterPairing_galois_invariant (T : MultiplicativeTypeCommHopfAlgCat k)
     (σ : Field.absoluteGaloisGroup k)
     (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) (f : cocharacterLattice T) :
     characterCocharacterPairing T (σ • x) (cocharacterGaloisRepresentation T σ f) =
