@@ -18,24 +18,24 @@ The construction is made for `PreAbstractSimplicialComplex`, since links, deleti
 subcomplexes need not contain every ambient singleton. Its result is an
 `AbstractSimplicialComplex`: every face of the original complex is genuinely a vertex of the
 subdivision. Simplicial maps act on face posets by taking vertexwise images, yielding the
-functorial map `barycentricMap`.
+functorial map `barycentricSubdivisionMap`.
 
 This supplies the subdivision primitive required by Layer 11 of the GeometricTopology roadmap
 before combinatorial spheres and balls can be defined up to subdivision. The definition follows
 Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 2, "Derived
 Subdivisions". Identifying the realizations of a complex and its subdivision is separate geometric
-realization work.
+realization work. The functoriality here is only at the level of abstract complexes: the canonical
+identification of a subdivision's realization with the original realization is not natural in
+arbitrary simplicial maps.
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.BarycentricVertex`: a nonempty face of the original
-  complex, regarded as a vertex of its subdivision.
 * `TauCeti.PreAbstractSimplicialComplex.barycentricSubdivision`: the order complex of the face
   poset.
 * `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.faceOrderHom`: the monotone map on face
   posets induced by a simplicial map.
-* `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.barycentricMap`: the induced simplicial map
-  between barycentric subdivisions.
+* `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.barycentricSubdivisionMap`: the induced
+  simplicial map between barycentric subdivisions.
 
 ## Main results
 
@@ -43,8 +43,9 @@ realization work.
   criterion.
 * `TauCeti.PreAbstractSimplicialComplex.pair_mem_barycentricSubdivision_iff`: two original faces
   span an edge exactly when one contains the other.
-* `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.barycentricMap_id` and
-  `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.barycentricMap_comp`: functoriality laws.
+* `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.barycentricSubdivisionMap_id` and
+  `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.barycentricSubdivisionMap_comp`:
+  functoriality laws.
 -/
 
 public section
@@ -57,142 +58,121 @@ namespace PreAbstractSimplicialComplex
 
 variable {α β γ : Type*}
 
-/-- A vertex of the barycentric subdivision of `K` is a face of `K`. Faces of a pre-abstract
-simplicial complex are nonempty by definition. -/
-abbrev BarycentricVertex (K : PreAbstractSimplicialComplex α) := {σ : Finset α // σ ∈ K}
-
 /-- The first **barycentric subdivision** of `K`: its vertices are the faces of `K`, and its faces
 are the nonempty finite chains of faces under inclusion. -/
-noncomputable def barycentricSubdivision (K : PreAbstractSimplicialComplex α) :
-    AbstractSimplicialComplex (BarycentricVertex K) :=
-  AbstractSimplicialComplex.orderComplex (BarycentricVertex K)
+@[expose] noncomputable def barycentricSubdivision (K : PreAbstractSimplicialComplex α) :
+    AbstractSimplicialComplex (_root_.AbstractSimplicialComplex.Face K) :=
+  AbstractSimplicialComplex.orderComplex (_root_.AbstractSimplicialComplex.Face K)
+
+/-- Barycentric subdivision is the order complex of the face poset. -/
+@[simp]
+theorem barycentricSubdivision_eq_orderComplex (K : PreAbstractSimplicialComplex α) :
+    barycentricSubdivision K =
+      AbstractSimplicialComplex.orderComplex (_root_.AbstractSimplicialComplex.Face K) :=
+  rfl
 
 variable {K : PreAbstractSimplicialComplex α}
 
 /-- A collection of faces of `K` is a face of its barycentric subdivision exactly when it is
 nonempty and totally ordered by inclusion. -/
 @[simp]
-theorem mem_barycentricSubdivision_iff {τ : Finset (BarycentricVertex K)} :
+theorem mem_barycentricSubdivision_iff
+    {τ : Finset (_root_.AbstractSimplicialComplex.Face K)} :
     τ ∈ barycentricSubdivision K ↔
-      τ.Nonempty ∧ IsChain (· ≤ ·) (↑τ : Set (BarycentricVertex K)) :=
-  AbstractSimplicialComplex.mem_orderComplex_iff
+      τ.Nonempty ∧
+        IsChain (· ≤ ·) (↑τ : Set (_root_.AbstractSimplicialComplex.Face K)) := by
+  rw [barycentricSubdivision_eq_orderComplex,
+    AbstractSimplicialComplex.mem_orderComplex_iff]
+
+/-- A collection is a face of the barycentric subdivision exactly when it is nonempty and every
+two original faces in the collection are nested. -/
+theorem mem_barycentricSubdivision_iff'
+    {ρ : Finset (_root_.AbstractSimplicialComplex.Face K)} :
+    ρ ∈ barycentricSubdivision K ↔
+      ρ.Nonempty ∧ ∀ σ ∈ ρ, ∀ τ ∈ ρ,
+        (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ := by
+  rw [barycentricSubdivision_eq_orderComplex,
+    AbstractSimplicialComplex.mem_orderComplex_iff']
+  simp only [TauCeti.AbstractSimplicialComplex.face_le_iff]
 
 /-- Two faces of `K` span an edge in its barycentric subdivision exactly when one is contained in
 the other.
 
 This is not a `simp` lemma: `mem_barycentricSubdivision_iff` already rewrites the left-hand
 side. -/
-theorem pair_mem_barycentricSubdivision_iff [DecidableEq α] (σ τ : BarycentricVertex K) :
-    {σ, τ} ∈ barycentricSubdivision K ↔ (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ :=
-  AbstractSimplicialComplex.pair_mem_orderComplex_iff σ τ
+theorem pair_mem_barycentricSubdivision_iff [DecidableEq α]
+    (σ τ : _root_.AbstractSimplicialComplex.Face K) :
+    {σ, τ} ∈ barycentricSubdivision K ↔
+      (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ := by
+  rw [barycentricSubdivision_eq_orderComplex,
+    AbstractSimplicialComplex.pair_mem_orderComplex_iff]
+  simp only [TauCeti.AbstractSimplicialComplex.face_le_iff]
 
 /-- Every two original faces occurring in one face of the barycentric subdivision are nested. -/
-theorem comparable_of_mem_barycentricSubdivision {ρ : Finset (BarycentricVertex K)}
-    (hρ : ρ ∈ barycentricSubdivision K) {σ τ : BarycentricVertex K}
-    (hσ : σ ∈ ρ) (hτ : τ ∈ ρ) : (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ :=
-  AbstractSimplicialComplex.comparable_of_mem_orderComplex hρ hσ hτ
+theorem subset_or_subset_of_mem_barycentricSubdivision
+    {ρ : Finset (_root_.AbstractSimplicialComplex.Face K)}
+    (hρ : ρ ∈ barycentricSubdivision K)
+    {σ τ : _root_.AbstractSimplicialComplex.Face K}
+    (hσ : σ ∈ ρ) (hτ : τ ∈ ρ) :
+    (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ := by
+  rw [barycentricSubdivision_eq_orderComplex] at hρ
+  simpa only [TauCeti.AbstractSimplicialComplex.face_le_iff] using
+    AbstractSimplicialComplex.le_or_le_of_mem_orderComplex hρ hσ hτ
 
 namespace SimplicialMap
 
 variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
   {M : PreAbstractSimplicialComplex γ}
 
-/-- A simplicial map induces a monotone map between face posets by taking the image of every face.
--/
-def faceOrderHom [DecidableEq β]
-    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
-    BarycentricVertex K →o BarycentricVertex L where
-  toFun σ := ⟨σ.1.image f, f.map_face σ.2⟩
-  monotone' _ _ h := Finset.image_mono f h
-
--- Not a `simp` lemma: its right-hand side is a lambda building a subtype, so
--- `faceOrderHom_apply_coe` is the pointwise `simp`-normal form.
-theorem coe_faceOrderHom [DecidableEq β]
-    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
-    ⇑(faceOrderHom f) = fun σ => ⟨σ.1.image f, f.map_face σ.2⟩ :=
-  (rfl)
-
-@[simp]
-theorem faceOrderHom_apply_coe [DecidableEq β]
-    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
-    (σ : BarycentricVertex K) :
-    (faceOrderHom f σ : Finset β) = σ.1.image f :=
-  (rfl)
-
 /-- A simplicial map induces a simplicial map between barycentric subdivisions by mapping every
 face-vertex to its vertexwise image. -/
-def barycentricMap [DecidableEq β]
+@[expose] def barycentricSubdivisionMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
     _root_.PreAbstractSimplicialComplex.SimplicialMap
       (barycentricSubdivision K).toPreAbstractSimplicialComplex
       (barycentricSubdivision L).toPreAbstractSimplicialComplex :=
   AbstractSimplicialComplex.orderComplexMap (faceOrderHom f)
 
--- Not a `simp` lemma: it would reduce `barycentricMap_apply_coe`, the pointwise
--- `simp`-normal form, to a duplicate.
-theorem coe_barycentricMap [DecidableEq β]
+/-- The subdivision map is the order-complex map induced by the map on face posets. -/
+theorem barycentricSubdivisionMap_eq_orderComplexMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
-    ⇑(barycentricMap f) = faceOrderHom f :=
-  by
-    rw [barycentricMap]
-    exact AbstractSimplicialComplex.coe_orderComplexMap (faceOrderHom f)
+    barycentricSubdivisionMap f = AbstractSimplicialComplex.orderComplexMap (faceOrderHom f) :=
+  rfl
 
-@[simp]
-theorem barycentricMap_apply_coe [DecidableEq β]
-    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
-    (σ : BarycentricVertex K) :
-    (barycentricMap f σ : Finset β) = σ.1.image f :=
-  by
-    rw [← faceOrderHom_apply_coe, ← coe_barycentricMap]
-
-private theorem faceOrderHom_comp_apply [DecidableEq β] [DecidableEq γ]
-    (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
-    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
-    (σ : BarycentricVertex K) :
-    faceOrderHom (g.comp f) σ = faceOrderHom g (faceOrderHom f σ) := by
-  apply Subtype.ext
-  rw [faceOrderHom_apply_coe, faceOrderHom_apply_coe, faceOrderHom_apply_coe]
-  rw [← Finset.image_comp]
-  exact congrArg (fun h : α → γ => σ.1.image h)
-    (_root_.PreAbstractSimplicialComplex.SimplicialMap.coe_comp g f)
-
-/-- Mapping face posets along the identity is the identity order homomorphism. -/
-@[simp]
-theorem faceOrderHom_id [DecidableEq α] :
-    faceOrderHom (_root_.PreAbstractSimplicialComplex.SimplicialMap.id K) = OrderHom.id := by
-  apply OrderHom.ext
-  funext σ
-  apply Subtype.ext
-  rw [faceOrderHom_apply_coe]
-  simp
-
-/-- Mapping face posets along a composite is composition of the face-poset maps. -/
-@[simp]
-theorem faceOrderHom_comp [DecidableEq β] [DecidableEq γ]
-    (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
+theorem coe_barycentricSubdivisionMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
-    faceOrderHom (g.comp f) = (faceOrderHom g).comp (faceOrderHom f) := by
-  apply OrderHom.ext
-  funext σ
-  exact faceOrderHom_comp_apply g f σ
+    ⇑(barycentricSubdivisionMap f) = faceOrderHom f := by
+  rw [barycentricSubdivisionMap_eq_orderComplexMap]
+  exact AbstractSimplicialComplex.coe_orderComplexMap (faceOrderHom f)
+
+@[simp]
+theorem coe_barycentricSubdivisionMap_apply [DecidableEq β]
+    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
+    (σ : _root_.AbstractSimplicialComplex.Face K) :
+    (barycentricSubdivisionMap f σ : Finset β) = σ.1.image f := by
+  rw [← coe_faceOrderHom_apply, ← coe_barycentricSubdivisionMap]
 
 /-- Barycentric subdivision sends the identity simplicial map to the identity simplicial map. -/
 @[simp]
-theorem barycentricMap_id [DecidableEq α] :
-    barycentricMap (_root_.PreAbstractSimplicialComplex.SimplicialMap.id K) =
+theorem barycentricSubdivisionMap_id [DecidableEq α] :
+    barycentricSubdivisionMap (_root_.PreAbstractSimplicialComplex.SimplicialMap.id K) =
       _root_.PreAbstractSimplicialComplex.SimplicialMap.id
         (barycentricSubdivision K).toPreAbstractSimplicialComplex := by
-  rw [barycentricMap, faceOrderHom_id, AbstractSimplicialComplex.orderComplexMap_id]
+  rw [barycentricSubdivisionMap_eq_orderComplexMap, faceOrderHom_id,
+    AbstractSimplicialComplex.orderComplexMap_id]
   rfl
 
 /-- Barycentric subdivision sends a composite of simplicial maps to the composite of their
 induced maps. -/
 @[simp]
-theorem barycentricMap_comp [DecidableEq β] [DecidableEq γ]
+theorem barycentricSubdivisionMap_comp [DecidableEq β] [DecidableEq γ]
     (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
-    barycentricMap (g.comp f) = (barycentricMap g).comp (barycentricMap f) := by
-  rw [barycentricMap, faceOrderHom_comp, AbstractSimplicialComplex.orderComplexMap_comp]
+    barycentricSubdivisionMap (g.comp f) =
+      (barycentricSubdivisionMap g).comp (barycentricSubdivisionMap f) := by
+  rw [barycentricSubdivisionMap_eq_orderComplexMap, faceOrderHom_comp,
+    AbstractSimplicialComplex.orderComplexMap_comp,
+    barycentricSubdivisionMap_eq_orderComplexMap, barycentricSubdivisionMap_eq_orderComplexMap]
   rfl
 
 end SimplicialMap

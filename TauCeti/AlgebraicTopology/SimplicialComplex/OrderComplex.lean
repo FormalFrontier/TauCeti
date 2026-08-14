@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Order.Preorder.Chain
-public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Maps
 
 /-!
@@ -17,9 +16,10 @@ subdivision: applying it to the face poset of a simplicial complex gives its fir
 subdivision.
 
 This file also records functoriality. A monotone map sends a chain to a chain, and hence induces a
-simplicial map of order complexes. The construction and its functoriality follow the description
-of derived subdivisions in Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*,
-Chapter 2.
+simplicial map of order complexes. The barycentric-subdivision specialization in the next module
+models the derived subdivision described by Rourke--Sanderson, *Introduction to Piecewise-Linear
+Topology*, Chapter 2; the generic order-complex formulation and its functoriality are not taken
+from that source.
 
 ## Main definitions
 
@@ -66,11 +66,23 @@ noncomputable def orderComplex (P : Type*) [Preorder P] : AbstractSimplicialComp
 @[simp]
 theorem mem_orderComplex_iff {σ : Finset P} :
     σ ∈ orderComplex P ↔ σ.Nonempty ∧ IsChain (· ≤ ·) (↑σ : Set P) :=
-  by
-    -- `SetLike` membership hides the defining predicate behind the structure's `faces` projection.
-    change σ ∈ (orderComplex P).faces ↔ _
-    rw [orderComplex]
-    rfl
+  Iff.rfl
+
+/-- A finite set is a face of the order complex exactly when it is nonempty and every two of its
+elements are comparable. -/
+theorem mem_orderComplex_iff' {σ : Finset P} :
+    σ ∈ orderComplex P ↔
+      σ.Nonempty ∧ ∀ p ∈ σ, ∀ q ∈ σ, p ≤ q ∨ q ≤ p := by
+  rw [mem_orderComplex_iff]
+  refine and_congr_right fun _ => ⟨fun h p hp q hq => ?_, fun h => ?_⟩
+  · exact h.total (by exact_mod_cast hp) (by exact_mod_cast hq)
+  · intro p hp q hq _
+    exact h p (by exact_mod_cast hp) q (by exact_mod_cast hq)
+
+/-- In a face of an order complex, every two vertices are comparable. -/
+theorem le_or_le_of_mem_orderComplex {σ : Finset P} (hσ : σ ∈ orderComplex P)
+    {p q : P} (hp : p ∈ σ) (hq : q ∈ σ) : p ≤ q ∨ q ≤ p :=
+  (mem_orderComplex_iff.mp hσ).2.total (by exact_mod_cast hp) (by exact_mod_cast hq)
 
 /-- Two elements span an edge of the order complex exactly when they are comparable. This also
 covers the degenerate case `p = q`, when the pair is a singleton face.
@@ -78,25 +90,15 @@ covers the degenerate case `p = q`, when the pair is a singleton face.
 This is not a `simp` lemma: `mem_orderComplex_iff` already rewrites the left-hand side. -/
 theorem pair_mem_orderComplex_iff [DecidableEq P] (p q : P) :
     {p, q} ∈ orderComplex P ↔ p ≤ q ∨ q ≤ p := by
-  rw [mem_orderComplex_iff]
   constructor
   · intro h
-    by_cases hpq : p = q
-    · exact Or.inl hpq.le
-    · exact h.2 (by simp) (by simp) hpq
+    exact le_or_le_of_mem_orderComplex h (by simp) (by simp)
   · intro hpq
+    rw [mem_orderComplex_iff]
     refine ⟨⟨p, by simp⟩, ?_⟩
     rcases hpq with hpq | hqp
-    · simpa only [Finset.coe_insert, Finset.coe_singleton] using IsChain.pair hpq
-    · simpa only [Finset.pair_comm, Finset.coe_insert, Finset.coe_singleton] using
-        IsChain.pair hqp
-
-/-- In a face of an order complex, every two vertices are comparable. -/
-theorem comparable_of_mem_orderComplex {σ : Finset P} (hσ : σ ∈ orderComplex P)
-    {p q : P} (hp : p ∈ σ) (hq : q ∈ σ) : p ≤ q ∨ q ≤ p := by
-  by_cases hpq : p = q
-  · exact Or.inl hpq.le
-  · exact (mem_orderComplex_iff.mp hσ).2 (by exact_mod_cast hp) (by exact_mod_cast hq) hpq
+    · simpa only [Finset.coe_pair] using IsChain.pair hpq
+    · simpa only [Finset.pair_comm, Finset.coe_pair] using IsChain.pair hqp
 
 /-- If the preorder on `P` is total, every nonempty finite set is a chain, so its order complex is
 the full abstract simplicial complex. -/
@@ -106,11 +108,8 @@ theorem orderComplex_eq_top (P : Type*) [Preorder P]
     orderComplex P = (⊤ : AbstractSimplicialComplex P) := by
   apply le_antisymm le_top
   intro σ hσ
-  -- Expose the two `faces` projections before unfolding the order complex and the lattice top.
-  change σ ∈ (orderComplex P).faces
-  rw [orderComplex]
-  change σ.Nonempty at hσ
-  exact ⟨hσ, fun p _ q _ _ => total_of (· ≤ ·) p q⟩
+  exact mem_orderComplex_iff.mpr
+    ⟨mem_top_iff.mp hσ, fun p _ q _ _ => total_of (· ≤ ·) p q⟩
 
 /-- A monotone map induces a simplicial map between order complexes. -/
 def orderComplexMap [DecidableEq Q] (f : P →o Q) :
@@ -144,12 +143,8 @@ theorem orderComplexMap_id [DecidableEq P] :
   orderComplexMap OrderHom.id =
       PreAbstractSimplicialComplex.SimplicialMap.id
         (orderComplex P).toPreAbstractSimplicialComplex := by
-  ext p
-  -- `SimplicialMap.ext` leaves `toFun` projections; recover applications to use the public API.
-  change orderComplexMap OrderHom.id p =
-    PreAbstractSimplicialComplex.SimplicialMap.id
-      (orderComplex P).toPreAbstractSimplicialComplex p
-  rw [orderComplexMap_apply, PreAbstractSimplicialComplex.SimplicialMap.id_apply]
+  apply DFunLike.coe_injective
+  rw [coe_orderComplexMap, PreAbstractSimplicialComplex.SimplicialMap.coe_id]
   rfl
 
 /-- The simplicial map of order complexes induced by a composite is the composite of the induced
@@ -158,11 +153,9 @@ simplicial maps. -/
 theorem orderComplexMap_comp [DecidableEq Q] [DecidableEq R] (g : Q →o R) (f : P →o Q) :
     orderComplexMap (g.comp f) =
       (orderComplexMap g).comp (orderComplexMap f) := by
-  ext p
-  -- `SimplicialMap.ext` leaves `toFun` projections; recover applications to use the public API.
-  change orderComplexMap (g.comp f) p = (orderComplexMap g).comp (orderComplexMap f) p
-  rw [orderComplexMap_apply, PreAbstractSimplicialComplex.SimplicialMap.comp_apply,
-    orderComplexMap_apply, orderComplexMap_apply]
+  apply DFunLike.coe_injective
+  rw [coe_orderComplexMap, PreAbstractSimplicialComplex.SimplicialMap.coe_comp,
+    coe_orderComplexMap, coe_orderComplexMap]
   rfl
 
 end AbstractSimplicialComplex
