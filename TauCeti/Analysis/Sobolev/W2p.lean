@@ -323,29 +323,27 @@ def W2p.mk (u : W1p mu Omega p) (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
 theorem W2p.firstOrder_mk (u : W1p mu Omega p)
     (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) :
-    W2p.firstOrder (W2p.mk u H h) = u := by
-  simp [W2p.firstOrder, W2p.firstOrderL, W2p.mk, Sobolev2JetLp.firstOrderL]
+    WithLp.fst (W2p.mk u H h).1 = u := by
+  simp [W2p.mk]
 
-@[simp]
 theorem W2p.value_mk (u : W1p mu Omega p)
     (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) :
     W2p.value (W2p.mk u H h) = W1p.value u := by
-  rw [W2p.value_eq_value_firstOrder, W2p.firstOrder_mk]
+  simp
 
-@[simp]
 theorem W2p.gradient_mk (u : W1p mu Omega p)
     (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) :
     W2p.gradient (W2p.mk u H h) = W1p.gradient u := by
-  rw [W2p.gradient_eq_gradient_firstOrder, W2p.firstOrder_mk]
+  simp
 
 @[simp]
 theorem W2p.hessian_mk (u : W1p mu Omega p)
     (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) :
-    W2p.hessian (W2p.mk u H h) = H := by
-  simp [W2p.hessian, W2p.hessianL, W2p.mk, Sobolev2JetLp.hessianL]
+    WithLp.snd (W2p.mk u H h).1 = H := by
+  simp [W2p.mk]
 
 /-- Two second-order Sobolev functions are equal when their first-order components and weak
 Hessians are equal. -/
