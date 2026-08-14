@@ -114,7 +114,6 @@ noncomputable abbrev tensorSquareRange (S : Subring A) : Subring (A ⊗[R] A) :=
   (tensorSquareMap R S).toRingHom.range
 
 /-- Membership in the tensor-square range is equivalent to having an integral tensor preimage. -/
-@[simp]
 theorem mem_tensorSquareRange_iff (S : Subring A) (z : A ⊗[R] A) :
     z ∈ tensorSquareRange R S ↔ ∃ t : S ⊗[ℤ] S, tensorSquareMap R S t = z := by
   rfl

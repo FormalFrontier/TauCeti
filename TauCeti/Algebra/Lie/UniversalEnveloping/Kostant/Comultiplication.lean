@@ -110,7 +110,6 @@ noncomputable abbrev kostantTensorForm (e : ι → L) (h : κ → L) : Subring (
 
 /-- Membership in the integral tensor form is equivalent to having an integral tensor
 representative under the canonical tensor map. -/
-@[simp]
 theorem mem_kostantTensorForm_iff (e : ι → L) (h : κ → L) (z : U ⊗[ℚ] U) :
     z ∈ kostantTensorForm e h ↔
       ∃ t : kostantForm e h ⊗[ℤ] kostantForm e h, kostantTensorMap e h t = z := by
@@ -228,15 +227,19 @@ theorem kostantFormComul_unique (e : ι → L) (h : κ → L)
 @[simp]
 theorem kostantFormComul_dividedPower (e : ι → L) (h : κ → L) (i : ι) (n : ℕ) :
     kostantFormComul e h
-        ⟨Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)),
-          dividedPower_mem_kostantForm e h i n⟩ =
+        ⟨Associative.dividedPower n
+            ((UniversalEnvelopingAlgebra.mkAlgHom ℚ L) ((TensorAlgebra.ι ℚ) (e i))),
+          by simpa only [UniversalEnvelopingAlgebra.ι_apply] using
+            dividedPower_mem_kostantForm e h i n⟩ =
       ∑ ij ∈ Finset.antidiagonal n,
         (⟨Associative.dividedPower ij.1 (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)),
             dividedPower_mem_kostantForm e h i ij.1⟩ : kostantForm e h) ⊗ₜ[ℤ]
           (⟨Associative.dividedPower ij.2 (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)),
             dividedPower_mem_kostantForm e h i ij.2⟩ : kostantForm e h) := by
   apply kostantTensorMap_injective e h
-  rw [kostantTensorMap_kostantFormComul_apply, comul_ι_dividedPower]
+  rw [kostantTensorMap_kostantFormComul_apply]
+  simp only [← UniversalEnvelopingAlgebra.ι_apply]
+  rw [comul_ι_dividedPower]
   simp only [map_sum, kostantTensorMap_tmul]
 
 /-- The integral coproduct of a generalized Cartan binomial is the coefficient-one antidiagonal
@@ -244,15 +247,19 @@ sum. -/
 @[simp]
 theorem kostantFormComul_ringChoose (e : ι → L) (h : κ → L) (j : κ) (n : ℕ) :
     kostantFormComul e h
-        ⟨Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) n,
-          ringChoose_mem_kostantForm e h j n⟩ =
+        ⟨Ring.choose
+            ((UniversalEnvelopingAlgebra.mkAlgHom ℚ L) ((TensorAlgebra.ι ℚ) (h j))) n,
+          by simpa only [UniversalEnvelopingAlgebra.ι_apply] using
+            ringChoose_mem_kostantForm e h j n⟩ =
       ∑ ij ∈ Finset.antidiagonal n,
         (⟨Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) ij.1,
             ringChoose_mem_kostantForm e h j ij.1⟩ : kostantForm e h) ⊗ₜ[ℤ]
           (⟨Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) ij.2,
             ringChoose_mem_kostantForm e h j ij.2⟩ : kostantForm e h) := by
   apply kostantTensorMap_injective e h
-  rw [kostantTensorMap_kostantFormComul_apply, comul_ι_choose]
+  rw [kostantTensorMap_kostantFormComul_apply]
+  simp only [← UniversalEnvelopingAlgebra.ι_apply]
+  rw [comul_ι_choose]
   simp only [map_sum, kostantTensorMap_tmul]
 
 /-! ## The integral counit -/
