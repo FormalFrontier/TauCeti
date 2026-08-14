@@ -74,9 +74,7 @@ namespace PairOfDefinition
 /-- The candidate ring of definition `D = A₀[t₁/s, …, tₙ/s]` of `S`. -/
 noncomputable def locSubring (P : PairOfDefinition A) (T : Finset A)
     (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] : Subring S :=
-  Subring.closure
-    ((algebraMap A S) '' (P.ringOfDefinition : Set A) ∪
-     Set.range (fun t : T ↦ divBy (t : A) s))
+  (Algebra.adjoin ↥P.ringOfDefinition (Set.range fun t : T ↦ divBy (t : A) s)).toSubring
 
 /-- The subring coercion carries the `D`-action on itself to multiplication in `Aₛ`. -/
 private theorem coe_smul_locSubring (P : PairOfDefinition A) (T : Finset A) (s : A)
@@ -93,21 +91,32 @@ theorem locSubring_def (P : PairOfDefinition A) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
     locSubring P T s S = Subring.closure
       ((algebraMap A S) '' (P.ringOfDefinition : Set A) ∪
-       Set.range (fun t : T ↦ divBy (t : A) s)) := (rfl)
+       Set.range (fun t : T ↦ divBy (t : A) s)) := by
+  rw [locSubring, Algebra.adjoin_eq_ring_closure]
+  congr 1
+  ext x
+  constructor
+  · rintro (⟨⟨a, ha⟩, rfl⟩ | h)
+    · exact Or.inl ⟨a, ha, rfl⟩
+    · exact Or.inr h
+  · rintro (⟨a, ha, rfl⟩ | h)
+    · exact Or.inl ⟨⟨a, ha⟩, rfl⟩
+    · exact Or.inr h
 
 /-- The image of `A₀` under `algebraMap` is contained in `D`. -/
 theorem algebraMap_ringOfDefinition_subset_locSubring (P : PairOfDefinition A)
     (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
     (algebraMap A S) '' (P.ringOfDefinition : Set A) ⊆
-      (locSubring P T s S : Set S) :=
-  Set.subset_union_left.trans Subring.subset_closure
+      (locSubring P T s S : Set S) := by
+  rw [locSubring_def]
+  exact Set.subset_union_left.trans Subring.subset_closure
 
 /-- Each element `t/s` (for `t ∈ T`) belongs to `D`. -/
 theorem divBy_mem_locSubring (P : PairOfDefinition A)
     (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] {t : A} (ht : t ∈ T) :
     divBy t s ∈ locSubring P T s S :=
-  Subring.subset_closure (Set.mem_union_right _ ⟨⟨t, ht⟩, rfl⟩)
+  Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩
 
 /-- An element of `A₀` maps into `D` under `algebraMap`. -/
 theorem algebraMap_mem_locSubring (P : PairOfDefinition A)
