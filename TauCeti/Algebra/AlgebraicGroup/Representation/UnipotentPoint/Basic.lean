@@ -29,7 +29,8 @@ The predicate is immediately exercised by its basic group-theoretic API. The ide
 unipotent, as are inverses and natural or integer powers of unipotent points. Products are
 unipotent when the points commute, and unipotence is invariant under conjugation. These statements
 follow because every comodule point action is a group homomorphism and the corresponding closure
-properties hold in the general linear group.
+properties hold in the general linear group. Unipotence is also preserved by precomposition along
+bialgebra morphisms, and hence invariant under bialgebra isomorphisms.
 
 ## Main declarations
 
@@ -41,6 +42,8 @@ properties hold in the general linear group.
   inversion, commuting products, and natural or integer powers.
 * `TauCeti.HopfAlgebra.isUnipotentPoint_inv_iff`: a point is unipotent exactly when its inverse is.
 * `TauCeti.HopfAlgebra.isUnipotentPoint_conj_iff`: invariance under conjugation.
+* `TauCeti.HopfAlgebra.IsUnipotentPoint.mapDomain`: functoriality under precomposition by a
+  bialgebra morphism.
 * `TauCeti.HopfAlgebra.isUnipotentPoint_mapDomain_iff`: invariance under a bialgebra
   isomorphism of the coordinate algebra.
 
@@ -61,7 +64,7 @@ namespace TauCeti
 
 namespace HopfAlgebra
 
-universe u v x
+universe u v w x
 
 variable {k : Type u} {H : Type v} {K : Type x}
 variable [CommSemiring k] [Semiring H] [_root_.HopfAlgebra k H] [CommRing K] [Algebra k K]
@@ -101,33 +104,28 @@ theorem isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one
     Comodule.pointsAction_toLinearMap]
 
 /-- Precomposing a unipotent point with a bialgebra morphism gives a unipotent point. -/
-theorem IsUnipotentPoint.mapDomain {H' : Type v} [Semiring H'] [_root_.HopfAlgebra k H']
+theorem IsUnipotentPoint.mapDomain {H' : Type w} [Semiring H'] [_root_.HopfAlgebra k H']
     {g : WithConv (H' →ₐ[k] K)} (hg : IsUnipotentPoint g) (f : H →ₐc[k] H') :
     IsUnipotentPoint (AlgHom.mapDomain f g) := by
-  rw [isUnipotentPoint_def]
+  rw [isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one]
   intro M
-  let _ : Comodule k H' M := Comodule.Corestrict (f : H →ₗc[k] H')
-  let N := (FGComoduleCat.corestrict (f : H →ₗc[k] H')).obj M
-  have hN := (isUnipotentPoint_def g).mp hg N
-  dsimp only [N] at hN
-  rw [GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff,
-    Comodule.pointsAction_toLinearMap] at hN ⊢
-  change _root_.IsNilpotent (Comodule.endOfPoint M g.ofConv - 1) at hN
-  rw [Comodule.endOfPoint_corestrict (R := k) (H := H) (V := M) (A := K)
-    (f := f) (g := g.ofConv)] at hN
-  change _root_.IsNilpotent
-    (Comodule.endOfPoint M (g.ofConv.comp (f : H →ₐ[k] H')) - 1)
-  exact hN
+  have hN := (isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp hg
+    ((FGComoduleCat.corestrict (f : H →ₗc[k] H')).obj M)
+  have hN' : _root_.IsNilpotent
+      (Comodule.endOfPoint M (g.ofConv.comp (f : H →ₐ[k] H')) - 1) := by
+    rw [← Comodule.endOfPoint_corestrict_obj (f := f) (g := g.ofConv)]
+    exact hN
+  simpa only [AlgHom.mapDomain_apply, ofConv_toConv] using hN'
 
 /-- Unipotence of a point is invariant under precomposition by a bialgebra isomorphism. -/
-theorem isUnipotentPoint_mapDomain_iff {H' : Type v} [Semiring H']
+theorem isUnipotentPoint_mapDomain_iff {H' : Type w} [Semiring H']
     [_root_.HopfAlgebra k H'] (e : H ≃ₐc[k] H') (g : WithConv (H' →ₐ[k] K)) :
     IsUnipotentPoint (AlgHom.mapDomain (e : H →ₐc[k] H') g) ↔ IsUnipotentPoint g := by
   constructor
   · intro hg
     have h := hg.mapDomain (e.symm : H' →ₐc[k] H)
-    change IsUnipotentPoint ((AlgHom.mapDomainMulEquiv (A := K) e).symm
-      ((AlgHom.mapDomainMulEquiv (A := K) e) g)) at h
+    rw [← AlgHom.mapDomainMulEquiv_symm_apply e,
+      ← AlgHom.mapDomainMulEquiv_apply e] at h
     simpa only [MulEquiv.symm_apply_apply] using h
   · intro hg
     exact hg.mapDomain (e : H →ₐc[k] H')

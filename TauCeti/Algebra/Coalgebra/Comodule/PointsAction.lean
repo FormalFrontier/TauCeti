@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 public import Mathlib.RingTheory.Bialgebra.Convolution
@@ -144,7 +144,8 @@ end Coalgebra
 section Corestrict
 
 variable {R H₁ H₂ V A : Type*} [CommSemiring R]
-variable [Semiring H₁] [Semiring H₂] [Bialgebra R H₁] [Bialgebra R H₂]
+variable [Semiring H₁] [Algebra R H₁] [Coalgebra R H₁]
+variable [Semiring H₂] [Algebra R H₂] [Coalgebra R H₂]
 variable [AddCommMonoid V] [Module R V] [Comodule R H₁ V]
 variable [CommSemiring A] [Algebra R A]
 
@@ -162,6 +163,14 @@ theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A)
   have hφ : φ.toCoalgHom.toLinearMap = (φ : H₁ →ₐ[R] H₂).toLinearMap :=
     (_root_.BialgHom.toAlgHom_toLinearMap φ).symm
   simp only [LinearMap.lTensor_def, hφ]
+
+/-- Acting on a finitely generated comodule corestricted along a bialgebra morphism agrees with
+acting on the original comodule by the composite point. -/
+theorem endOfPoint_corestrict_obj (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A)
+    (M : FGComoduleCat R H₁) :
+    endOfPoint ((FGComoduleCat.corestrict (φ : H₁ →ₗc[R] H₂)).obj M) g =
+      endOfPoint M (g.comp (φ : H₁ →ₐ[R] H₂)) :=
+  endOfPoint_corestrict (V := M) φ g
 
 end Corestrict
 
