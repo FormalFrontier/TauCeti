@@ -23,9 +23,9 @@ R(T/s) = {v ∈ Spa(A,A⁺) : v(t) ≤ v(s) ≠ 0 for every t ∈ T}
 
 for which the ideal `T · A` is open form a basis of quasi-compact opens of `Spa(A,A⁺)`.
 The proof compares them with the rational basis of `Spv(A,IA)`. By Wedhorn Lemma 6.6,
-openness of `T · A` is exactly admissibility for `IA`; conversely, an admissible pair `(T,s)`
-becomes open after inserting `s` among the numerators, which does not change its rational
-subset. This comparison also transports closure under intersections and quasi-compactness.
+openness of `T · A` implies admissibility for `IA`; conversely, an admissible pair `(T,s)`
+has open numerator ideal after inserting `s` among the numerators, which does not change its
+rational subset. This comparison also transports closure under intersections and quasi-compactness.
 
 The plus ring is arbitrary here. The additional condition that it be a ring of integral
 elements is part of calling the resulting space the adic spectrum of a Huber pair, but none of
@@ -106,8 +106,9 @@ theorem mem_spaRationalFamily_iff {Aplus : Subring A} {U : Set (spa Aplus)} :
 theorem univ_mem_spaRationalFamily (Aplus : Subring A) :
     Set.univ ∈ spaRationalFamily Aplus := by
   refine ⟨{1}, 1, ?_, ?_⟩
-  · rw [show Ideal.span (({1} : Finset A) : Set A) = ⊤ by
-      exact (Ideal.eq_top_iff_one _).mpr (Ideal.subset_span (by simp))]
+  · have hspan : Ideal.span (({1} : Finset A) : Set A) = ⊤ :=
+      (Ideal.eq_top_iff_one _).mpr (Ideal.subset_span (by simp))
+    rw [hspan]
     exact isOpen_univ
   · rw [rationalSubset_singleton_one]
     exact (Subtype.coe_preimage_self (spa Aplus)).symm
@@ -120,7 +121,8 @@ open Classical in
 /-- If two numerator ideals are open, then so is the ideal spanned by the product of the
 numerator sets after adjoining their respective denominators. This is the admissibility half of
 the intersection formula for rational subsets. -/
-theorem isOpen_span_insert_mul_insert (P : PairOfDefinition A) {T₁ T₂ : Finset A} {s₁ s₂ : A}
+private theorem isOpen_span_insert_mul_insert (P : PairOfDefinition A)
+    {T₁ T₂ : Finset A} {s₁ s₂ : A}
     (hT₁ : IsOpen (Ideal.span (T₁ : Set A) : Set A))
     (hT₂ : IsOpen (Ideal.span (T₂ : Set A) : Set A)) :
     IsOpen (Ideal.span ((insert s₁ T₁ * insert s₂ T₂ : Finset A) : Set A) : Set A) := by
@@ -187,12 +189,12 @@ theorem isTopologicalBasis_spaRationalFamily_of_pairOfDefinition
     have hW : W ∈ spaRationalFamily Aplus :=
       mem_spaRationalFamily_iff.mpr ⟨insert s T, s, hOpen, rfl⟩
     refine ⟨W, hW, ?_, ?_⟩
-    · rw [show W = Subtype.val ⁻¹' rationalSubset Aplus (insert s T) s from rfl,
-        rationalSubset_insert_self, val_preimage_rationalSubset]
+    · simp only [W]
+      rw [rationalSubset_insert_self, val_preimage_rationalSubset]
       exact hxV
     · intro y hy
-      rw [show W = Subtype.val ⁻¹' rationalSubset Aplus (insert s T) s from rfl,
-        rationalSubset_insert_self, val_preimage_rationalSubset] at hy
+      simp only [W] at hy
+      rw [rationalSubset_insert_self, val_preimage_rationalSubset] at hy
       let yI : spvOfIdeal P.extendedIdealOfDefinition hfg :=
         ⟨y, spa_subset_spvOfIdeal P Aplus y.property⟩
       exact hVO (a := yI) hy
@@ -228,11 +230,17 @@ theorem isCompact_of_mem_spaRationalFamily_of_pairOfDefinition
   let e : S ≃ₜ spa Aplus := Topology.IsEmbedding.subtypeVal.homeomorphOfSubsetRange
     (fun x hx ↦ ⟨⟨x, spa_subset_spvOfIdeal P Aplus hx⟩, rfl⟩)
   apply e.isCompact_preimage.mp
+  have heval (x : S) : ((e x : spa Aplus) : Spv A) =
+      ((x : spvOfIdeal P.extendedIdealOfDefinition hfg) : Spv A) := by
+    simpa only [e] using
+      (Topology.IsEmbedding.homeomorphOfSubsetRange_apply_coe
+        Topology.IsEmbedding.subtypeVal
+        (fun x hx ↦ ⟨⟨x, spa_subset_spvOfIdeal P Aplus hx⟩, rfl⟩) x)
   have hpre : e ⁻¹' (Subtype.val ⁻¹' rationalSubset Aplus T s : Set (spa Aplus)) =
       Subtype.val ⁻¹' V := by
     ext x
-    simp only [Set.mem_preimage, val_preimage_rationalSubset]
-    rfl
+    simp only [Set.mem_preimage, val_preimage_rationalSubset, V]
+    rw [heval]
   rw [hpre]
   exact hS.isSpectralMap_subtypeVal.isCompact_preimage_of_isOpen hVopen hVcompact
 
