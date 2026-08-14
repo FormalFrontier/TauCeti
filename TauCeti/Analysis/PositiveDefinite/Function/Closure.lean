@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PositiveDefinite.Basic
-import TauCeti.Analysis.Matrix.PosSemidef
 
 /-!
 # Weighted closure for positive-definite functions

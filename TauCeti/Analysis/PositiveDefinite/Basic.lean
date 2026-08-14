@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Complex.Order
-public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.Algebra.BigOperators.Fin
 public import TauCeti.Analysis.Matrix.PosSemidef
 

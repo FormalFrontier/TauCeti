@@ -123,9 +123,10 @@ theorem posSemidef_fourierConventionCharFun_sub :
       (fun a : W => (-2 * Real.pi) • a) (fun a => (-2 * Real.pi) • a) =
       fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
     ext a b
-    change MeasureTheory.charFun ν
-      ((-2 * Real.pi) • a - (-2 * Real.pi) • b) = ∫ q, fourierAtom (a - b) q ∂ν
-    rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
+    change (Matrix.submatrix (Matrix.of fun x y : W => MeasureTheory.charFun ν (x - y))
+      (fun x : W => (-2 * Real.pi) • x) (fun x => (-2 * Real.pi) • x)) a b = _
+    rw [Matrix.submatrix_apply, Matrix.of_apply,
+      integral_fourierAtom_eq_charFun_neg_two_pi_smul]
     congr 1
     simp [smul_sub]
   exact heq ▸ h

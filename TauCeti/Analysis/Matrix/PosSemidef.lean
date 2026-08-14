@@ -174,9 +174,11 @@ theorem posSemidef_schur_pow {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
   | zero =>
       simpa using posSemidef_const_one (R := 𝕜) (α := α)
   | succ n ih =>
-      rw [show (fun a b => K a b ^ (n + 1)) = fun a b => K a b ^ n * K a b by
-        ext; simp only [pow_succ]]
-      exact ih.hadamard hK
+      have heq : (fun a b => K a b ^ (n + 1)) = (fun a b => K a b ^ n) ⊙ K := by
+        ext a b
+        change K a b ^ (n + 1) = K a b ^ n * K a b
+        exact pow_succ (K a b) n
+      exact heq.symm ▸ ih.hadamard hK
 
 /-- The `2 × 2` principal submatrix at two indices is positive semidefinite. -/
 private theorem finTwo_posSemidef {K : α → α → 𝕜}
