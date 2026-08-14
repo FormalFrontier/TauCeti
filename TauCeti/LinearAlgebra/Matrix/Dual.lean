@@ -19,8 +19,8 @@ public section
 Mathlib's `dotProductEquiv` identifies `ι → R`, for `ι` finite, with its own dual under the dot
 product. This file records the same fact in the form asked for by `LinearMap.IsPerfPair`, so that
 the dot product may be used directly as the pairing of a `RootPairing` or a `RootDatum` on `ι → R`.
-It also records the basic symmetry and reflection-isometry identities for the bilinear form
-associated to a symmetric matrix.
+It also records the basic symmetry and quadratic-form preservation identities for a symmetric
+matrix.
 
 ## Main results
 
@@ -28,8 +28,8 @@ associated to a symmetric matrix.
   perfect pairing of that module with itself.
 * `TauCeti.vecMul_dotProduct_comm`: the bilinear form `(v, w) ↦ (v ᵥ* M) ⬝ᵥ w` of a symmetric matrix
   `M` is symmetric.
-* `TauCeti.reflect_vecMul_dotProduct_self`: reflection in a vector of norm two preserves the
-  bilinear form of a symmetric matrix.
+* `TauCeti.reflect_vecMul_dotProduct_self`: reflection in a vector of norm two preserves the value
+  `(v ᵥ* M) ⬝ᵥ v` of the form at every vector.
 -/
 
 namespace TauCeti
@@ -50,17 +50,20 @@ instance dotProductBilin_isPerfPair (R ι : Type*) [CommRing R] [Fintype ι] :
 
 section Gram
 
-variable {n R : Type*} [Fintype n] [CommRing R] {M : Matrix n n R}
+variable {n : Type*} [Fintype n]
 
 /-- The bilinear form carried by a symmetric matrix is symmetric. -/
-theorem vecMul_dotProduct_comm (hM : M.IsSymm) (v w : n → R) :
+theorem vecMul_dotProduct_comm {R : Type*} [NonUnitalCommSemiring R] {M : Matrix n n R}
+    (hM : M.IsSymm) (v w : n → R) :
     (v ᵥ* M) ⬝ᵥ w = (w ᵥ* M) ⬝ᵥ v := by
   rw [← dotProduct_mulVec, dotProduct_comm, ← mulVec_transpose, hM.eq]
 
-/-- **Reflection in a vector of norm two preserves the form.** For a symmetric matrix `M` and a
-vector `u` with `⟨u, u⟩ = 2`, the reflection `v ↦ v - ⟨v, u⟩ • u` is an isometry of the form
-carried by `M`. This is what makes a family of norm-two vectors stable under its own reflections
-once the family exhausts the norm-two vectors. -/
+variable {R : Type*} [CommRing R] {M : Matrix n n R}
+
+/-- **Reflection in a vector of norm two preserves the value of the quadratic form.** For a
+symmetric matrix `M` and a vector `u` with `(u ᵥ* M) ⬝ᵥ u = 2`, reflection in `u` preserves the
+value `(v ᵥ* M) ⬝ᵥ v` of the form at every vector `v`. This is what makes a family of norm-two
+vectors stable under its own reflections once the family exhausts the norm-two vectors. -/
 theorem reflect_vecMul_dotProduct_self (hM : M.IsSymm) {u : n → R} (hu : (u ᵥ* M) ⬝ᵥ u = 2)
     (v : n → R) :
     ((v - ((v ᵥ* M) ⬝ᵥ u) • u) ᵥ* M) ⬝ᵥ (v - ((v ᵥ* M) ⬝ᵥ u) • u) = (v ᵥ* M) ⬝ᵥ v := by

@@ -94,7 +94,7 @@ private lemma exists_e8Coroot_reflection (i j : Fin 240) :
 
 Both lattices are `Fin 8 → ℤ`: the character lattice in the fundamental-weight basis and the
 cocharacter lattice in the simple-coroot basis. Root indices `0` through `7` are the Bourbaki
-simple roots; see `TauCeti.DynkinType.e8Root_simple`. -/
+simple roots; see `TauCeti.DynkinType.root_e8SimpleIndex`. -/
 noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → ℤ) (Fin 8 → ℤ) :=
   RootPairing.mk' (dotProductEquiv ℤ (Fin 8)).toLinearMap e8Root e8Coroot
     e8Root_dotProduct_coroot
@@ -131,23 +131,6 @@ fundamental-weight and simple-coroot bases being dual to one another. -/
     e8SimplyConnectedRootDatum.pairing i j = e8Root i ⬝ᵥ e8Coroot j := (rfl)
 
 /-! ## The pinned base -/
-
-/-- The index of the `i`-th Bourbaki simple root in the pinned `E₈` enumeration. -/
-def e8SimpleIndex (i : Fin 8) : Fin 240 := Fin.castAdd 232 i
-
-@[simp] lemma e8SimpleIndex_val (i : Fin 8) : (e8SimpleIndex i : ℕ) = i := (rfl)
-
-lemma e8SimpleIndex_injective : Function.Injective e8SimpleIndex :=
-  Fin.castAdd_injective _ _
-
-/-- The simple roots of the pinned `E₈` datum are the rows of the Bourbaki Cartan matrix. -/
-@[simp] theorem root_e8SimpleIndex (i : Fin 8) :
-    e8Root (e8SimpleIndex i) = CartanMatrix.E₈ i :=
-  (e8Root_simple i).trans (Matrix.row_apply' _ i)
-
-/-- The simple coroots of the pinned `E₈` datum are the standard basis vectors. -/
-@[simp] theorem coroot_e8SimpleIndex (i : Fin 8) :
-    e8Coroot (e8SimpleIndex i) = Pi.single i 1 := e8Coroot_simple i
 
 /-- **The coroots of the pinned type `E₈` datum span the cocharacter lattice.** This is the simply
 connected lattice condition required by the pinned Chevalley--Demazure construction. -/

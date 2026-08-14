@@ -62,13 +62,21 @@ four that doubling introduces. -/
 lemma e8DoubledSimpleRoot_mul_transpose :
     e8DoubledSimpleRoot * e8DoubledSimpleRootᵀ = (4 : ℤ) • CartanMatrix.E₈ := by decide
 
-/-- Two entries in the same row of the doubled simple roots are congruent modulo two. -/
-lemma e8DoubledSimpleRoot_sub_emod :
+private lemma e8DoubledSimpleRoot_sub_emod :
     ∀ i j : Fin 8, (e8DoubledSimpleRoot i j - e8DoubledSimpleRoot i 0) % 2 = 0 := by decide
 
-/-- Every doubled simple root has coordinate sum divisible by four. -/
-lemma e8DoubledSimpleRoot_sum_emod :
+private lemma e8DoubledSimpleRoot_sum_emod :
     ∀ i : Fin 8, (∑ j, e8DoubledSimpleRoot i j) % 4 = 0 := by decide
+
+/-- Two entries in the same row of the doubled simple roots are congruent modulo two. -/
+theorem e8DoubledSimpleRoot_two_dvd_sub (i j : Fin 8) :
+    (2 : ℤ) ∣ e8DoubledSimpleRoot i j - e8DoubledSimpleRoot i 0 :=
+  Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sub_emod i j)
+
+/-- Every doubled simple root has coordinate sum divisible by four. -/
+theorem e8DoubledSimpleRoot_four_dvd_sum (i : Fin 8) :
+    (4 : ℤ) ∣ ∑ j, e8DoubledSimpleRoot i j :=
+  Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sum_emod i)
 
 end DynkinType
 

@@ -218,13 +218,13 @@ private theorem isDoubledE8_e8DoubledEmbed (v : Fin 8 → ℤ) : IsDoubledE8 (e8
       simp only [e8DoubledEmbed, Matrix.vecMul, dotProduct, mul_sub, Finset.sum_sub_distrib]
     rw [hexpand]
     exact Finset.dvd_sum fun i _ ↦
-      Dvd.dvd.mul_left (Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sub_emod i j)) _
+      Dvd.dvd.mul_left (e8DoubledSimpleRoot_two_dvd_sub i j) _
   · have hexpand : ∑ j, e8DoubledEmbed v j = ∑ i, v i * ∑ j, e8DoubledSimpleRoot i j := by
       simp only [e8DoubledEmbed, Matrix.vecMul, dotProduct, Finset.mul_sum]
       exact Finset.sum_comm
     rw [hexpand]
     exact Finset.dvd_sum fun i _ ↦
-      Dvd.dvd.mul_left (Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sum_emod i)) _
+      Dvd.dvd.mul_left (e8DoubledSimpleRoot_four_dvd_sum i) _
 
 /-! ## Completeness of the enumeration -/
 

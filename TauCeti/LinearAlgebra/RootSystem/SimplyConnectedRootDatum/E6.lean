@@ -429,19 +429,14 @@ theorem corootSpan_e6SimplyConnectedRootDatum_eq_top :
 
 /-- The support of the pinned base of type `E₆`: the first six root indices. -/
 private def e6SimpleSupport : Finset (Fin 72) :=
-  Finset.univ.map ⟨e6SimpleIndex, e6SimpleIndex_injective⟩
+  simpleSupport e6SimpleIndex_injective
 
-private lemma mem_e6SimpleSupport {k : Fin 72} : k ∈ e6SimpleSupport ↔ (k : ℕ) < 6 := by
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+private lemma mem_e6SimpleSupport {k : Fin 72} : k ∈ e6SimpleSupport ↔ (k : ℕ) < 6 :=
+  mem_simpleSupport_iff_lt e6SimpleIndex_injective (fun _ ↦ e6SimpleIndex_val _)
 
 private lemma coe_e6SimpleSupport :
-    (e6SimpleSupport : Set (Fin 72)) = range e6SimpleIndex := by
-  simp [e6SimpleSupport]
+    (e6SimpleSupport : Set (Fin 72)) = range e6SimpleIndex :=
+  coe_simpleSupport _
 
 /-- The nonnegative simple-root coordinates of the `i`-th positive root of type `E₆`. Both lattices
 carry them: the coroot is `∑ k, cₖ αₖ^∨` by the choice of basis, and the root is `∑ k, cₖ αₖ`

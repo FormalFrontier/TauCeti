@@ -284,14 +284,22 @@ private theorem e8Coroot_coe :
 @[simp] theorem e8Root_dotProduct_coroot (i : Fin 240) : e8Root i ⬝ᵥ e8Coroot i = 2 := by
   fin_cases i <;> decide
 
-/-- The first eight roots are the rows of the Bourbaki `E8` Cartan matrix. -/
-@[simp] theorem e8Root_simple (i : Fin 8) :
-    e8Root (Fin.castAdd 232 i) = CartanMatrix.E₈.row i := by
+/-- The index of the `i`-th Bourbaki simple root in the pinned `E₈` enumeration. -/
+def e8SimpleIndex (i : Fin 8) : Fin 240 := Fin.castAdd 232 i
+
+@[simp] lemma e8SimpleIndex_val (i : Fin 8) : (e8SimpleIndex i : ℕ) = i := (rfl)
+
+lemma e8SimpleIndex_injective : Function.Injective e8SimpleIndex :=
+  Fin.castAdd_injective 8 232
+
+/-- The simple roots of the pinned `E₈` datum are the rows of the Bourbaki Cartan matrix. -/
+@[simp] theorem root_e8SimpleIndex (i : Fin 8) :
+    e8Root (e8SimpleIndex i) = CartanMatrix.E₈ i := by
   fin_cases i <;> decide
 
-/-- The first eight coroots are the standard basis of the simple-coroot lattice. -/
-@[simp] theorem e8Coroot_simple (i : Fin 8) :
-    e8Coroot (Fin.castAdd 232 i) = Pi.single i 1 := by
+/-- The simple coroots of the pinned `E₈` datum are the standard basis vectors. -/
+@[simp] theorem coroot_e8SimpleIndex (i : Fin 8) :
+    e8Coroot (e8SimpleIndex i) = Pi.single i 1 := by
   fin_cases i <;> decide
 
 /-- The last positive `E8` coroot has Bourbaki marks `(2, 3, 4, 6, 5, 4, 3, 2)`. -/
