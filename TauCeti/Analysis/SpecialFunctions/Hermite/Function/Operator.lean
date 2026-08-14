@@ -19,8 +19,7 @@ functions `TauCeti.hermiteSchwartzMap n`.
 
 * `TauCeti.hermiteAnnihilationCLM` — the annihilation operator `a = (x + d/dx) / √2`.
 * `TauCeti.hermiteCreationCLM` — the creation operator `a† = (x - d/dx) / √2`.
-* `TauCeti.hermiteAnnihilationCLM_comp_hermiteCreationCLM_sub_creation_comp_annihilation`
-  — canonical commutation relation `[a, a†] = id` (`a ∘L a† - a† ∘L a = id`).
+* The canonical commutation relation `[a, a†] = id` (`a ∘L a† - a† ∘L a = id`).
 * `TauCeti.hermiteAnnihilationCLM_apply_hermiteSchwartzMap` — `a ψₙ = √n • ψ_{n-1}`.
 * `TauCeti.hermiteCreationCLM_apply_hermiteSchwartzMap` — `a† ψₙ = √(n+1) • ψ_{n+1}`.
 * `TauCeti.hermiteNumberCLM` — the number operator `N = a† ∘L a`.
@@ -97,7 +96,7 @@ theorem hermiteCreationCLM_apply_hermiteSchwartzMap (n : ℕ) :
 /-- The commutator of differentiation with multiplication by the position coordinate is the
 identity operator on the real Schwartz space. -/
 @[simp]
-theorem derivCLM_comp_smulLeftCLM_id_sub_smulLeftCLM_id_comp_derivCLM :
+private theorem derivCLM_comp_smulLeftCLM_id_sub_smulLeftCLM_id_comp_derivCLM :
     (SchwartzMap.derivCLM ℝ ℝ).comp
           (SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x)) -
         (SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x)).comp
@@ -120,7 +119,8 @@ theorem derivCLM_comp_smulLeftCLM_id_sub_smulLeftCLM_id_comp_derivCLM :
 /-- **Canonical Commutator Relation (CCR) for the Hermite ladder operators.**
 `[a, a†] = a ∘L a† - a† ∘L a = id`. -/
 @[simp]
-theorem hermiteAnnihilationCLM_comp_hermiteCreationCLM_sub_creation_comp_annihilation :
+theorem
+hermiteAnnihilationCLM_comp_hermiteCreationCLM_sub_hermiteCreationCLM_comp_hermiteAnnihilationCLM :
     hermiteAnnihilationCLM.comp hermiteCreationCLM -
         hermiteCreationCLM.comp hermiteAnnihilationCLM =
       ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ) := by
@@ -132,8 +132,11 @@ theorem hermiteAnnihilationCLM_comp_hermiteCreationCLM_sub_creation_comp_annihil
   have hc : c * c = (1 / 2 : ℝ) := by
     dsimp only [c]
     rw [← mul_inv, Real.mul_self_sqrt (by positivity), inv_eq_one_div]
-  change (c • (X + D)).comp (c • (X - D)) -
-      (c • (X - D)).comp (c • (X + D)) = ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ)
+  have hA : hermiteAnnihilationCLM = c • (X + D) := by
+    simp only [hermiteAnnihilationCLM, c, X, D]
+  have hC : hermiteCreationCLM = c • (X - D) := by
+    simp only [hermiteCreationCLM, c, X, D]
+  rw [hA, hC]
   calc
     (c • (X + D)).comp (c • (X - D)) - (c • (X - D)).comp (c • (X + D)) =
         (c * c * 2) • (D.comp X - X.comp D) := by
@@ -146,6 +149,45 @@ theorem hermiteAnnihilationCLM_comp_hermiteCreationCLM_sub_creation_comp_annihil
 /-- The Hermite number operator `N = a† ∘L a` as a continuous linear operator on `𝓢(ℝ, ℝ)`. -/
 noncomputable def hermiteNumberCLM : 𝓢(ℝ, ℝ) →L[ℝ] 𝓢(ℝ, ℝ) :=
   hermiteCreationCLM.comp hermiteAnnihilationCLM
+
+/-- The number operator is the composition of creation after annihilation. -/
+theorem hermiteNumberCLM_def :
+    hermiteNumberCLM = hermiteCreationCLM.comp hermiteAnnihilationCLM := by
+  rfl
+
+/-- Pointwise differential action of the number operator:
+`Nf = (x²f - f - f'') / 2`. -/
+@[simp]
+theorem hermiteNumberCLM_apply_apply (f : 𝓢(ℝ, ℝ)) (x : ℝ) :
+    hermiteNumberCLM f x = ((x ^ 2 - 1) * f x - deriv (deriv f) x) / 2 := by
+  let X := SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x)
+  let D := SchwartzMap.derivCLM ℝ ℝ
+  let c := (Real.sqrt 2)⁻¹
+  have hcomm : D.comp X - X.comp D = ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ) := by
+    simpa only [X, D] using derivCLM_comp_smulLeftCLM_id_sub_smulLeftCLM_id_comp_derivCLM
+  have hDX : D.comp X = X.comp D + ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ) :=
+    sub_eq_iff_eq_add'.mp hcomm
+  have hc : c * c = (1 / 2 : ℝ) := by
+    dsimp only [c]
+    rw [← mul_inv, Real.mul_self_sqrt (by positivity), inv_eq_one_div]
+  have hA : hermiteAnnihilationCLM = c • (X + D) := by
+    simp only [hermiteAnnihilationCLM, c, X, D]
+  have hC : hermiteCreationCLM = c • (X - D) := by
+    simp only [hermiteCreationCLM, c, X, D]
+  have hnumber : hermiteNumberCLM =
+      (1 / 2 : ℝ) • (X.comp X - D.comp D - ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ)) := by
+    rw [hermiteNumberCLM_def, hA, hC]
+    simp only [ContinuousLinearMap.comp_smul, ContinuousLinearMap.smul_comp,
+      ContinuousLinearMap.comp_add, ContinuousLinearMap.sub_comp]
+    rw [hDX, ← hc]
+    module
+  rw [hnumber]
+  dsimp only [X, D]
+  simp only [smul_apply, sub_apply, comp_apply, id_apply, derivCLM_apply,
+    smulLeftCLM_apply_apply Function.HasTemperateGrowth.id', smul_eq_mul]
+  rw [show ⇑(SchwartzMap.derivCLM ℝ ℝ f) = deriv f from
+    funext fun y => SchwartzMap.derivCLM_apply ℝ f y]
+  ring
 
 /-- **Action of the number operator on Hermite functions.**
 `N (hermiteSchwartzMap n) = n • hermiteSchwartzMap n`. -/
@@ -172,31 +214,8 @@ noncomputable def hermiteOscillatorCLM : 𝓢(ℝ, ℝ) →L[ℝ] 𝓢(ℝ, ℝ)
 @[simp]
 theorem hermiteOscillatorCLM_apply_apply (f : 𝓢(ℝ, ℝ)) (x : ℝ) :
     hermiteOscillatorCLM f x = (-deriv (deriv f) x + x ^ 2 * f x) / 2 := by
-  let X := SchwartzMap.smulLeftCLM ℝ (fun x : ℝ => x)
-  let D := SchwartzMap.derivCLM ℝ ℝ
-  let c := (Real.sqrt 2)⁻¹
-  have hcomm : D.comp X - X.comp D = ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ) := by
-    simpa only [X, D] using derivCLM_comp_smulLeftCLM_id_sub_smulLeftCLM_id_comp_derivCLM
-  have hDX : D.comp X = X.comp D + ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ) :=
-    sub_eq_iff_eq_add'.mp hcomm
-  have hc : c * c = (1 / 2 : ℝ) := by
-    dsimp only [c]
-    rw [← mul_inv, Real.mul_self_sqrt (by positivity), inv_eq_one_div]
-  have hoscillator : hermiteOscillatorCLM = (1 / 2 : ℝ) • (X.comp X - D.comp D) := by
-    change (c • (X - D)).comp (c • (X + D)) +
-        (1 / 2 : ℝ) • ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ) =
-      (1 / 2 : ℝ) • (X.comp X - D.comp D)
-    simp only [ContinuousLinearMap.comp_smul, ContinuousLinearMap.smul_comp,
-      ContinuousLinearMap.comp_add, ContinuousLinearMap.sub_comp]
-    rw [hDX, ← hc]
-    module
-  rw [hoscillator]
-  dsimp only [X, D]
-  simp only [smul_apply, sub_apply, comp_apply, derivCLM_apply,
-    smulLeftCLM_apply_apply Function.HasTemperateGrowth.id', smul_eq_mul]
-  have hderiv : ⇑(SchwartzMap.derivCLM ℝ ℝ f) = deriv f := by
-    rfl
-  rw [hderiv]
+  simp only [hermiteOscillatorCLM, add_apply, smul_apply, id_apply,
+    hermiteNumberCLM_apply_apply, smul_eq_mul]
   ring
 
 /-- **Action of the harmonic oscillator operator on Hermite functions.**
