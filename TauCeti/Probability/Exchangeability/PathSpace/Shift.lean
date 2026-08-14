@@ -162,8 +162,10 @@ Each level set `w ⁻¹' {c}` is shift-invariant, so
 `preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` sends the reindexed point into the
 same level set as the original. Taking `c = w x` gives the claim.
 
-No measure and no measurable structure appears: this is the raw form, paired with the
-invariants-measurable one below exactly as the set-level results in this file are paired. -/
+No measure and no measurable structure appears: this is the raw form. Its invariants-measurable
+counterpart, `comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add`, is in
+`PathSpace/Invariant/Tail.lean`, mirroring how the set-level raw and invariants-measurable forms
+are split between the two files. -/
 theorem comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
     {β : Type*} {w : (ℕ → α) → β} (hw : w ∘ shift α = w)
     (hφ : ∀ n, m ≤ n → φ n = n + C) (x : ℕ → α) :
