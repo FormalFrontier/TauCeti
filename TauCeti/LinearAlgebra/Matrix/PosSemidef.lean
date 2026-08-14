@@ -156,11 +156,11 @@ theorem posSemidef_iff_finite_sum {R : Type u} [Ring R] [PartialOrder R] [StarRi
       refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
       exact mul_assoc _ _ _
 
-variable {𝕜 : Type u} [RCLike 𝕜]
-
 /-- Finite pointwise sums of positive-semidefinite matrices are positive semidefinite. -/
-theorem posSemidef_finset_sum {ι : Type w} {s : Finset ι}
-    {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
+theorem posSemidef_finset_sum {R : Type u}
+    [Ring R] [PartialOrder R] [StarRing R] [AddLeftMono R]
+    {ι : Type w} {s : Finset ι}
+    {K : ι → α → α → R} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
     Matrix.PosSemidef (fun a b => ∑ i ∈ s, K i a b) := by
   have h := Matrix.posSemidef_sum s hK
   have heq : (∑ i ∈ s, K i) = fun a b => ∑ i ∈ s, K i a b := by
@@ -168,6 +168,8 @@ theorem posSemidef_finset_sum {ι : Type w} {s : Finset ι}
     intro a b
     simp
   exact heq ▸ h
+
+variable {𝕜 : Type u} [RCLike 𝕜]
 
 /-- Finite pointwise Schur products of positive-semidefinite matrices are positive semidefinite. -/
 theorem posSemidef_schur_finset_prod {ι : Type w} {s : Finset ι}
