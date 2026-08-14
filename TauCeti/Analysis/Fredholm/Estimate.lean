@@ -139,7 +139,7 @@ continuous projection `P` of `E` onto `ker T` and a constant `C > 0` with
 
 Since `ker T` is finite-dimensional, the correction term `‖P x‖` ranges over a finite-dimensional
 space; this is the sense in which a Fredholm operator is bounded below "up to a compact error". -/
-theorem _root_.ContinuousLinearMap.IsFredholm.exists_projection_norm_le [CompleteSpace 𝕜]
+theorem _root_.ContinuousLinearMap.IsFredholm.exists_projection_norm_le
     (hT : T.IsFredholm) :
     ∃ (P : E →L[𝕜] E) (C : ℝ), 0 < C ∧ P.range = T.ker ∧
       ∀ x, ‖x‖ ≤ C * ‖T x‖ + ‖P x‖ := by
