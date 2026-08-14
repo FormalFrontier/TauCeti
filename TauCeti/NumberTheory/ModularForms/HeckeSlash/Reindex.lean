@@ -11,9 +11,9 @@ public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Basic
 # Reindexing the slash sum: slashing by any element of a left coset
 
 `heckeSlashSum` sums `f ∣[k] (σᵢ δ)ᵀ` over the left-coset decomposition of `HδH`. To show that
-sum is unchanged by right multiplication — the statement that turns the sum into an operator —
-one needs to know that the summand depends only on the *coset* of `σᵢ`, not on the
-representative chosen, once `f` is slash-invariant.
+sum is unchanged by right multiplication — the statement that turns the sum into an operator,
+and the proof of Shimura's Proposition 3.37 — one needs to know that the summand depends only on
+the *coset* of `σᵢ`, not on the representative chosen, once `f` is slash-invariant.
 
 That is what this file proves. For `h₁, h₂ ∈ H`,
 
@@ -45,8 +45,8 @@ commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck), 
 Restated against TauCeti's `SLnZ` / `posDetInt` Hecke pair, `DoubleCoset.DecompQuotient`,
 `transposeGLEquiv` and `transposeRep`, rather than AINTLIB's `GL_pair`, `decompQuot`,
 `GL_transposeEquiv` and `tRep`. AINTLIB's `h_coset_mem_H` is not reproduced as a declaration: this
-repository already owns its two steps, as `QuotientGroup.eq` and
-`DoubleCoset.conj_mem_of_stabilizer`, so it is inlined at its one use site.
+repository already owns exactly that statement as `DoubleCoset.conj_mem_of_mk_eq`, which is what
+the proof below calls.
 
 One deliberate deviation: the slash-invariance hypothesis is carried at `SLnZ 2` under the
 rational slash action, rather than routed through the real `𝒮ℒ`. AINTLIB's
@@ -58,12 +58,13 @@ is used only by the invariance block that follows the ported range.
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
-  §3.4.
+  §3.4 *Action of double cosets on automorphic forms*, Proposition 3.37.
 
-This file cites the section rather than a numbered proposition on purpose. The sibling
-`HeckeSlash/Basic.lean` attributes this material to Proposition 3.30; that number has been
-questioned more than once and nobody working on these files has had the book to hand, so it is
-not asserted here. The mathematics is unaffected either way.
+Shimura states the result this file supports inside the proof of Proposition 3.37: "Let `α ∈ Γ₂`.
+Then `{Γ₁ aᵥ α}` coincides with `{Γ₁ aᵥ}` as a whole", from which `g ∣[α]ₖ = g` for
+`g = f ∣[Γ₁ α Γ₂]ₖ`. He needs no transpose, because his decomposition `Γ₁ α Γ₂ = ⊔ᵥ Γ₁ aᵥ` puts
+the group on the left already; the transpose here is an artefact of the handedness Mathlib's
+`DecompQuotient` supplies, not of the mathematics.
 -/
 
 public section
@@ -111,7 +112,7 @@ representative of its own class the absorbed factor is exactly `h₂ᵀ`, so qua
 already reaches every element of `SLnZ 2`. Note also that `hf` is invariance under the *rational*
 slash action, not one routed through the real `𝒮ℒ`.
 
-This is the per-summand step behind Shimura's double-coset Hecke operator (§3.4). The statement
+This is the per-summand step behind Shimura's Proposition 3.37 (§3.4). The statement
 that right multiplication permutes the summands of `heckeSlashSum` without changing the sum is a
 separate argument, which is not formalised here. Mathlib's `SlashInvariantForm.quotientFunc_mk`
 is the single-subgroup analogue, with no double coset and no transpose. -/
@@ -120,9 +121,9 @@ lemma slash_transposeRep_of_mem_SLnZ {h₁ h₂ : GL (Fin 2) ℚ} (hh₁ : h₁ 
     f ∣[k] (transposeGLEquiv 2 (h₁ * ↑D.out * h₂)).unop = f ∣[k] transposeRep D ⟦⟨h₁, hh₁⟩⟧ := by
   rw [transposeGLEquiv_eq_mul_transposeRep D ⟦⟨h₁, hh₁⟩⟧ h₁ h₂]
   -- The leftover factor lies in `H`: `Quotient.out_eq` says the chosen representative of `⟦h₁⟧`
-  -- is in `h₁`'s own class, so `QuotientGroup.eq` puts `σ⁻¹ h₁` in the stabilizer indexing the
-  -- decomposition, and `conj_mem_of_stabilizer` conjugates that by `δ` back into `H`.
+  -- is in `h₁`'s own class, and `conj_mem_of_mk_eq` turns that class equality into the
+  -- conjugated membership in one step.
   exact slash_transpose_mul_of_mem_SLnZ k
-    (mul_mem (conj_mem_of_stabilizer _ ⟨_, QuotientGroup.eq.mp (Quotient.out_eq _)⟩) hh₂) _ f hf
+    (mul_mem (conj_mem_of_mk_eq _ (Quotient.out_eq _)) hh₂) _ f hf
 
 end HeckeRing.GL2
