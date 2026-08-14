@@ -140,4 +140,5 @@ theorem _root_.SlashInvariantFormClass.slash_eq_of_mem_SLnZ {F : Type*} [FunLike
     (hγ : γ ∈ SLnZ 2) : ⇑f ∣[k] γ = ⇑f := by
   obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff 2).mp hγ
   have h_mem : mapGL ℝ σ ∈ 𝒮ℒ := MonoidHom.mem_range.mpr ⟨σ, rfl⟩
+  rw [ModularForm.rat_slash, map_mapGL]
   exact SlashInvariantFormClass.slash_action_eq f (mapGL ℝ σ) h_mem
