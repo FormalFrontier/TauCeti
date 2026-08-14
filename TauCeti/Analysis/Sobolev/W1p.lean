@@ -197,6 +197,24 @@ theorem Sobolev1JetLp.candidateWeakFDeriv_apply (J : Sobolev1JetLp mu Omega p) (
     Sobolev1JetLp.candidateWeakFDeriv J x v = ⟪v, Sobolev1JetLp.gradient J x⟫_ℝ := by
   rw [Sobolev1JetLp.candidateWeakFDeriv, innerSL_apply_apply, real_inner_comm]
 
+omit [FiniteDimensional ℝ E] in
+/-- A test function on `Ω` lies in every `Lᵠ(Ω)`: it is continuous with compact support. -/
+theorem memLp_testFunction (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
+    MemLp (phi : E → ℝ) q (mu.restrict Omega) :=
+  phi.continuous.memLp_of_hasCompactSupport phi.hasCompactSupport
+
+omit [FiniteDimensional ℝ E] in
+/-- A test function on `Ω` as an element of `Lᵠ(Ω)`.  It is used at the exponent
+Hölder-conjugate to `p` to pair a test function with the `Lᵖ` components of a Sobolev jet. -/
+def testFunctionLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) : Lp ℝ q (mu.restrict Omega) :=
+  (memLp_testFunction (mu := mu) q phi).toLp phi
+
+omit [FiniteDimensional ℝ E] in
+@[simp]
+theorem testFunctionLp_apply_ae (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
+    ∀ᵐ x ∂mu.restrict Omega, testFunctionLp (mu := mu) q phi x = phi x :=
+  (memLp_testFunction (mu := mu) q phi).coeFn_toLp
+
 private def weakDerivativeTestFunction (phi : 𝓓(Omega, ℝ)) (v : E) (x : E) :
     Sobolev1Jet E :=
   WithLp.toLp 2 (lineDeriv ℝ (phi : E → ℝ) x v, phi x • v)
@@ -204,37 +222,18 @@ private def weakDerivativeTestFunction (phi : 𝓓(Omega, ℝ)) (v : E) (x : E) 
 omit [FiniteDimensional ℝ E] in
 private theorem weakDerivativeTestFunction_memLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
     MemLp (weakDerivativeTestFunction phi v) q (mu.restrict Omega) := by
-  let dphi : 𝓓(Omega, ℝ) := TestFunction.lineDerivCLM ℝ v phi
-  have hdphi : (dphi : E → ℝ) = fun x => lineDeriv ℝ (phi : E → ℝ) x v := by
-    funext x
-    exact TestFunction.lineDerivCLM_apply_of_le le_top
-  let f : E → Sobolev1Jet E := fun x => WithLp.toLp 2 (dphi x, phi x • v)
-  have hf_cont : Continuous f :=
-    (WithLp.prodContinuousLinearEquiv 2 ℝ ℝ E).symm.continuous.comp
-      (dphi.continuous.prodMk (phi.continuous.smul continuous_const))
-  have hd_support : HasCompactSupport (fun x => WithLp.toLp 2 (dphi x, (0 : E))) :=
-    dphi.hasCompactSupport.mono fun x hx hzero => hx (by simp [hzero])
-  have hv_support : HasCompactSupport (fun x => WithLp.toLp 2 ((0 : ℝ), phi x • v)) :=
-    phi.hasCompactSupport.mono fun x hx hzero => hx (by simp [hzero])
-  have hf_support : HasCompactSupport f := by
-    have hf_eq : f = (fun x => WithLp.toLp 2 (dphi x, (0 : E))) +
-        fun x => WithLp.toLp 2 ((0 : ℝ), phi x • v) := by
-      funext x
-      -- Reduce pointwise addition to the product equality consumed by the linear equivalence.
-      change WithLp.toLp 2 (dphi x, phi x • v) =
-        WithLp.toLp 2 (dphi x, 0) + WithLp.toLp 2 (0, phi x • v)
-      -- This product identity supplies the input to `map_add`; `WithLp.toLp` is otherwise opaque.
-      rw [show (dphi x, phi x • v) =
-          (dphi x, (0 : E)) + ((0 : ℝ), phi x • v) by ext <;> simp]
-      exact (WithLp.prodContinuousLinearEquiv 2 ℝ ℝ E).symm.map_add _ _
-    rw [hf_eq]
-    exact hd_support.add hv_support
-  have hfun : weakDerivativeTestFunction phi v = f := by
-    funext x
-    simp only [weakDerivativeTestFunction, f]
-    rw [congrFun hdphi x]
-  rw [hfun]
-  exact hf_cont.memLp_of_hasCompactSupport (μ := mu.restrict Omega) (p := q) hf_support
+  have hdphi : ((TestFunction.lineDerivCLM ℝ v phi : 𝓓(Omega, ℝ)) : E → ℝ) =
+      fun x => lineDeriv ℝ (phi : E → ℝ) x v :=
+    funext fun _ => TestFunction.lineDerivCLM_apply_of_le le_top
+  have hsmul : MemLp (fun x => (phi : E → ℝ) x • v) q (mu.restrict Omega) :=
+    (phi.continuous.smul continuous_const).memLp_of_hasCompactSupport
+      (phi.hasCompactSupport.mono fun x hx hzero => hx (by simp [hzero]))
+  -- A jet is `Lᵠ` exactly when both of its coordinates are, and both are test-function multiples.
+  refine MemLp.of_fst_of_snd_prodLp ⟨?_, ?_⟩ <;>
+    simp only [weakDerivativeTestFunction, WithLp.toLp_fst, WithLp.toLp_snd]
+  · have hmem := memLp_testFunction (mu := mu) q (TestFunction.lineDerivCLM ℝ v phi)
+    rwa [hdphi] at hmem
+  · exact hsmul
 
 /-- The compactly supported jet `(∂_v φ, φ v)` used to test whether an `Lᵖ` jet is a weak
 derivative.  Its exponent is Hölder-conjugate to `p`, including the endpoints `p = 1, ∞`. -/
@@ -320,16 +319,10 @@ private theorem testIntegral_eq_zero_iff
     simpa only [smul_eq_mul] using integrable_lineDeriv_smul_of_locallyIntegrableOn hf phi v
   have hright : Integrable (fun x => phi x * f' x) mu := by
     simpa only [smul_eq_mul] using integrable_smul_of_locallyIntegrableOn hf' phi
-  have hsupport : ∀ x, x ∉ (Omega : Set E) →
-      lineDeriv ℝ (phi : E → ℝ) x v * f x + phi x * f' x = 0 := by
-    intro x hx
-    have hxt : x ∉ tsupport (phi : E → ℝ) := fun hmem => hx (phi.tsupport_subset hmem)
-    rw [lineDeriv_eq_zero_of_notMem_tsupport phi hxt v,
-      image_eq_zero_of_notMem_tsupport hxt]
-    simp
-  rw [setIntegral_eq_integral_of_forall_compl_eq_zero hsupport,
-    integral_add hleft hright]
-  simp only [smul_eq_mul]
+  rw [integral_add hleft.integrableOn hright.integrableOn]
+  simp only [← smul_eq_mul]
+  rw [setIntegral_lineDeriv_smul_eq_integral_lineDeriv_smul,
+    setIntegral_smul_eq_integral_smul]
   constructor <;> intro h <;> linarith
 
 /-- A jet belongs to `w1pSubmodule` exactly when its value component has the recorded gradient as
