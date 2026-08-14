@@ -52,11 +52,8 @@ variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
 
 /-! ## A path has at most one multiple edge -/
 
-/-- Starting from a multiple edge at position `a` in a path numbering, every later edge is single.
-
-The proof is strong induction on the distance from `a`. For the edge at `r`, the intervening edges
-are single by induction, so `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_chain_of_two_le`
-applies to the subpath from `a` through `r + 1`. -/
+/-- Starting from a multiple edge at position `a` in a path numbering, every later edge is
+single. -/
 private theorem apply_mul_apply_eq_one_of_pathEquiv_of_lt (h : IsFiniteType A)
     (k : B ≃ Fin n)
     (hk : ∀ i j, (diagramGraph A).Adj i j ↔
@@ -67,6 +64,8 @@ private theorem apply_mul_apply_eq_one_of_pathEquiv_of_lt (h : IsFiniteType A)
     {r : ℕ} (hr : r + 1 < n) (har : a < r) :
     A (k.symm ⟨r, by omega⟩) (k.symm ⟨r + 1, hr⟩) *
       A (k.symm ⟨r + 1, hr⟩) (k.symm ⟨r, by omega⟩) = 1 := by
+  -- Strong induction on the distance from `a`: the intervening edges are single by induction.
+  -- Thus the two-multiple-edge exclusion applies to the subpath from `a` through `r + 1`.
   induction r using Nat.strong_induction_on with
   | h r ih =>
       let m := r - a - 1
@@ -245,10 +244,12 @@ assume that every other off-diagonal entry is `-1`. The preceding path argument 
 chosen edge is the only multiple edge, and the finite-type sign conditions then determine every
 remaining nonzero entry. -/
 theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_degree_le_two
-    [DecidableEq B] (h : IsFiniteType A) (hconn : (diagramGraph A).Connected)
-    (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2) {u v : B} (hvu : A v u = -2) :
+    (h : IsFiniteType A) (hconn : (diagramGraph A).Connected)
+    (hdeg : ∀ i, ((diagramGraph A).neighborSet i).ncard ≤ 2)
+    {u v : B} (hvu : A v u = -2) :
     ∃ p q : ℕ, 0 < p ∧ 0 < q ∧ ∃ e : B ≃ Fin p ⊕ Fin q,
       ∀ i j, A i j = doubleEdgeCartanMatrix p q (e i) (e j) := by
+  classical
   have hvu_ne : v ≠ u := by
     rintro rfl
     rw [h.apply_self] at hvu
@@ -266,8 +267,12 @@ theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_degree_le_
     simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hmem
     rcases hmem with hzero | hone | htwo | hthree <;> ring_nf at * <;> omega
   have hprod : A u v * A v u = 2 := by rw [hAuv_eq, hvu]; norm_num
+  have hdeg' : ∀ i, (diagramGraph A).degree i ≤ 2 := by
+    intro i
+    rw [← card_neighborSet_eq_degree, Set.fintypeCard_eq_ncard]
+    exact hdeg i
   obtain ⟨k⟩ := IsTree.nonempty_iso_pathGraph_of_degree_le_two
-    (h.isTree_diagramGraph hconn) hdeg
+    (h.isTree_diagramGraph hconn) hdeg'
   have hk : ∀ i j, (diagramGraph A).Adj i j ↔
       (k i : ℕ) + 1 = (k j : ℕ) ∨ (k j : ℕ) + 1 = (k i : ℕ) :=
     fun i j => by simpa only [pathGraph_adj] using k.map_adj_iff.symm
@@ -279,7 +284,7 @@ theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_degree_le_
     · exact apply_mul_apply_eq_one_of_pathEquiv h k.toEquiv hk huv (by omega) hij hne
     · exact apply_mul_apply_eq_one_of_pathEquiv h k.toEquiv hk huv
         (by simpa only [mul_comm] using (show 2 ≤ A u v * A v u by omega)) hij (by tauto)
-  refine h.exists_equiv_forall_eq_doubleEdgeCartanMatrix hconn hdeg hvu ?_
+  refine h.exists_equiv_forall_eq_doubleEdgeCartanMatrix hconn hdeg' hvu ?_
   intro i j hij hAij
   by_cases hforward : i = v ∧ j = u
   · exact Or.inl hforward
@@ -299,12 +304,14 @@ theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_degree_le_
 nonempty arms have one of the three shapes in the Cartan--Killing list: the second arm is a
 singleton (type `C`), the first arm is a singleton (type `B`), or both have two vertices (type
 `F_4`). -/
-theorem IsFiniteType.exists_doubleEdgeCartanMatrix_shape_of_degree_le_two [DecidableEq B]
+theorem IsFiniteType.exists_doubleEdgeCartanMatrix_shape_of_degree_le_two
     (h : IsFiniteType A) (hconn : (diagramGraph A).Connected)
-    (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2) {u v : B} (hvu : A v u = -2) :
+    (hdeg : ∀ i, ((diagramGraph A).neighborSet i).ncard ≤ 2)
+    {u v : B} (hvu : A v u = -2) :
     ∃ p q : ℕ, 0 < p ∧ 0 < q ∧ (q = 1 ∨ p = 1 ∨ (p = 2 ∧ q = 2)) ∧
       ∃ e : B ≃ Fin p ⊕ Fin q,
         ∀ i j, A i j = doubleEdgeCartanMatrix p q (e i) (e j) := by
+  classical
   obtain ⟨p, q, hp, hq, e, he⟩ :=
     h.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_degree_le_two hconn hdeg hvu
   have hmatrix : doubleEdgeCartanMatrix p q = A.submatrix e.symm e.symm := by
