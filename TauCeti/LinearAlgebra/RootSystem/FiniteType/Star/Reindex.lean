@@ -91,12 +91,13 @@ private theorem exists_iso_pathGraph_apply_eq_zero {V : Type*} [Fintype V]
     simp only [RelIso.trans_apply, pathGraphRevIso_apply, Fin.val_rev]
     omega
 
-private noncomputable def starVertexEquiv {B : Type*} (c : B) [DecidableEq B]
+private noncomputable def starVertexEquiv {B : Type*} (c : B)
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
     (f : ∀ i, (e i).toSimpleGraph ≃g
       pathGraph (Nat.card ↑(ConnectedComponent.supp (e i)))) :
     StarIndex (fun i ↦ Nat.card ↑(ConnectedComponent.supp (e i))) ≃ B :=
+  letI : DecidableEq B := Classical.decEq B
   let H := G.induce ({c}ᶜ : Set B)
   let arms : ((i : Fin 3) × Fin (Nat.card ↑(ConnectedComponent.supp (e i)))) ≃
       {x : B // x ≠ c} :=
@@ -106,21 +107,23 @@ private noncomputable def starVertexEquiv {B : Type*} (c : B) [DecidableEq B]
           (Equiv.subtypeEquivRight fun _ ↦ Set.mem_compl_singleton_iff)))
   (Equiv.optionCongr arms).trans (Equiv.optionSubtypeNe c)
 
-private theorem starVertexEquiv_none {B : Type*} (c : B) [DecidableEq B]
+private theorem starVertexEquiv_none {B : Type*} (c : B)
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
     (f : ∀ i, (e i).toSimpleGraph ≃g
       pathGraph (Nat.card ↑(ConnectedComponent.supp (e i)))) :
     starVertexEquiv c G e f none = c := by
+  classical
   rfl
 
-private theorem starVertexEquiv_some {B : Type*} (c : B) [DecidableEq B]
+private theorem starVertexEquiv_some {B : Type*} (c : B)
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
     (f : ∀ i, (e i).toSimpleGraph ≃g
       pathGraph (Nat.card ↑(ConnectedComponent.supp (e i))))
     (v : (i : Fin 3) × Fin (Nat.card ↑(ConnectedComponent.supp (e i)))) :
     starVertexEquiv c G e f (some v) = ((f v.1).symm v.2).1.1 := by
+  classical
   rfl
 
 @[simp] private theorem connectedComponent_toSimpleGraph_adj {V : Type*}
@@ -185,7 +188,9 @@ private theorem apply_eq_chainEntry_of_component_iso {B : Type*} [Fintype B]
 
 namespace IsFiniteType
 
-variable {B : Type*} [Fintype B] [DecidableEq B] {A : Matrix B B ℤ}
+variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
+
+noncomputable local instance : DecidableEq B := Classical.decEq B
 
 /-- **A connected simply-laced finite-type matrix with a branch vertex is a three-armed star.**
 
@@ -266,7 +271,7 @@ theorem exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three
       have hcomp : eC i = eC j :=
         v.property.symm.trans ((congrArg H.connectedComponentMk hvwH).trans w.property)
       exact hij (eC.injective hcomp), hA⟩
-    have hadjH : H.Adj v.1 w.1 := hadjG
+    have hadjH : H.Adj v.1 w.1 := induce_adj.mpr hadjG
     have hcomp := ConnectedComponent.connectedComponentMk_eq_of_adj hadjH
     have heq : eC i = eC j := v.property.symm.trans (hcomp.trans w.property)
     exact hij (eC.injective heq)
@@ -353,8 +358,10 @@ end IsFiniteType
 section RootPairing
 
 variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R] [DecidableEq ι]
+  {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R]
   [P.IsRootSystem] [P.IsCrystallographic] [P.IsReduced] [P.IsIrreducible]
+
+noncomputable local instance (b : P.Base) : DecidableEq (↥b.support) := Classical.decEq _
 
 /-- **An irreducible simply-laced root system with a branch vertex has a unique valid Dynkin
 type.** The type is `Dₙ`, `E₆`, `E₇`, or `E₈`, with the three arms of the branch diagram
@@ -363,6 +370,7 @@ theorem existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three (b : P.Base)
     (hsl : b.cartanMatrix.IsSimplyLaced) {c : b.support}
     (hc : (diagramGraph b.cartanMatrix).degree c = 3) :
     ∃! t : DynkinType, t.Valid ∧ HasCartanType P b t := by
+  classical
   have : Nonempty ι := ⟨c.1⟩
   obtain ⟨t, ⟨ht, e, he⟩, -⟩ :=
     (isFiniteType_cartanMatrix b).existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three
