@@ -139,8 +139,16 @@ noncomputable instance instContinuousSMulGeometricCharacterGroup :
 theorem stabilizer_additiveGroupLike_isOpen {A : Type v} [Semiring A] [Bialgebra k A]
     (x : Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) :
     IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
-      Set (Field.absoluteGaloisGroup k)) :=
-  stabilizer_groupLike_isOpen x.toMul
+      Set (Field.absoluteGaloisGroup k)) := by
+  apply Subgroup.isOpen_mono
+    (H₁ := MulAction.stabilizer (Field.absoluteGaloisGroup k) x.toMul)
+    (H₂ := MulAction.stabilizer (Field.absoluteGaloisGroup k) x)
+    ?_ (stabilizer_groupLike_isOpen x.toMul)
+  intro σ hσ
+  rw [MulAction.mem_stabilizer_iff] at hσ ⊢
+  apply Additive.toMul.injective
+  rw [toMul_smul]
+  exact hσ
 
 /-- The absolute-Galois action on additive scalar-extended group-like elements is continuous
 whenever they carry the discrete topology. -/
