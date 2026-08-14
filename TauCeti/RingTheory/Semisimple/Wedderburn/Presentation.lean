@@ -52,7 +52,7 @@ public section
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 /-- A chosen Artin--Wedderburn presentation of a ring as a finite product of matrix rings over
 division rings.
@@ -62,7 +62,7 @@ structure WedderburnPresentation (R : Type u) [Ring R] where
   /-- The number of matrix blocks. -/
   blockCount : ℕ
   /-- The division ring underlying each block. -/
-  divisionRing : Fin blockCount → Type u
+  divisionRing : Fin blockCount → Type w
   /-- The degree of each matrix block. -/
   degree : Fin blockCount → ℕ
   /-- Each coefficient ring is a division ring. -/
@@ -79,7 +79,7 @@ structure WedderburnAlgebraPresentation (K : Type v) (A : Type u) [CommSemiring 
   /-- The number of matrix blocks. -/
   blockCount : ℕ
   /-- The division algebra underlying each block. -/
-  divisionRing : Fin blockCount → Type u
+  divisionRing : Fin blockCount → Type w
   /-- The degree of each matrix block. -/
   degree : Fin blockCount → ℕ
   /-- Each coefficient ring is a division ring. -/
@@ -140,7 +140,7 @@ def toWedderburnPresentation (P : WedderburnAlgebraPresentation K A) :
   letI : ∀ i, DivisionRing (P.divisionRing i) := P.instDivisionRing
   letI : ∀ i, Algebra K (P.divisionRing i) := P.instAlgebra
   letI : ∀ i, NeZero (P.degree i) := P.instNeZeroDegree
-  exact @WedderburnPresentation.mk A _ P.blockCount P.divisionRing P.degree
+  exact @WedderburnPresentation.mk.{u, _} A _ P.blockCount P.divisionRing P.degree
     P.instDivisionRing P.instNeZeroDegree P.equiv.toRingEquiv
 
 @[simp]
@@ -169,14 +169,14 @@ end WedderburnAlgebraPresentation
 
 namespace SplitWedderburnAlgebraPresentation
 
-variable {K : Type u} {A : Type u} [Field K] [Ring A] [Algebra K A]
+variable {K : Type v} {A : Type u} [Field K] [Ring A] [Algebra K A]
 
 /-- View a split Wedderburn presentation as a general algebraic Wedderburn presentation whose
 division rings are all `K`. -/
 @[expose]
 def toWedderburnAlgebraPresentation (P : SplitWedderburnAlgebraPresentation K A) :
-    WedderburnAlgebraPresentation K A :=
-  @WedderburnAlgebraPresentation.mk K A _ _ _
+    WedderburnAlgebraPresentation.{u, v, v} K A :=
+  @WedderburnAlgebraPresentation.mk.{u, v, v} K A _ _ _
     P.blockCount
     (fun _ ↦ K)
     P.degree
@@ -188,7 +188,7 @@ def toWedderburnAlgebraPresentation (P : SplitWedderburnAlgebraPresentation K A)
 /-- Forget the algebra structures in a split Wedderburn presentation. -/
 @[expose]
 def toWedderburnPresentation (P : SplitWedderburnAlgebraPresentation K A) :
-    WedderburnPresentation A :=
+    WedderburnPresentation.{u, v} A :=
   P.toWedderburnAlgebraPresentation.toWedderburnPresentation
 
 @[simp]
@@ -243,12 +243,12 @@ variable {K : Type v} {A : Type u} [CommSemiring K] [Ring A] [Algebra K A]
 whose division rings are opposites of endomorphism rings of simple left ideals. -/
 @[expose]
 noncomputable def toWedderburnAlgebraPresentation (P : WedderburnEndomorphismPresentation K A) :
-    WedderburnAlgebraPresentation K A :=
+    WedderburnAlgebraPresentation.{u, v, u} K A :=
   open Classical in
   let _ : ∀ i, IsSimpleModule A (P.simpleIdeal i) := P.instIsSimpleModule
   let _ : ∀ i, DivisionRing (Module.End A (P.simpleIdeal i))ᵐᵒᵖ := fun _ ↦ inferInstance
   let _ : ∀ i, Algebra K (Module.End A (P.simpleIdeal i))ᵐᵒᵖ := fun _ ↦ inferInstance
-  @WedderburnAlgebraPresentation.mk K A _ _ _
+  @WedderburnAlgebraPresentation.mk.{u, v, u} K A _ _ _
     P.blockCount
     (fun i ↦ (Module.End A (P.simpleIdeal i))ᵐᵒᵖ)
     P.degree
@@ -260,7 +260,7 @@ noncomputable def toWedderburnAlgebraPresentation (P : WedderburnEndomorphismPre
 /-- Forget the algebra structures in an endomorphism Wedderburn presentation. -/
 @[expose]
 noncomputable def toWedderburnPresentation (P : WedderburnEndomorphismPresentation K A) :
-    WedderburnPresentation A :=
+    WedderburnPresentation.{u, u} A :=
   P.toWedderburnAlgebraPresentation.toWedderburnPresentation
 
 @[simp]
@@ -310,41 +310,41 @@ end WedderburnEndomorphismPresentation
 namespace IsSemisimpleRing
 
 private theorem nonempty_wedderburnPresentation (R : Type u) [Ring R] [IsSemisimpleRing R] :
-    Nonempty (WedderburnPresentation R) := by
+    Nonempty (WedderburnPresentation.{u, u} R) := by
   obtain ⟨n, D, d, hD, hd, ⟨e⟩⟩ :=
     _root_.IsSemisimpleRing.exists_ringEquiv_pi_matrix_divisionRing R
-  exact ⟨@WedderburnPresentation.mk R _ n D d hD hd e⟩
+  exact ⟨@WedderburnPresentation.mk.{u, u} R _ n D d hD hd e⟩
 
 /-- Choose an Artin--Wedderburn presentation of a semisimple ring. -/
 noncomputable def wedderburnPresentation (R : Type u) [Ring R] [IsSemisimpleRing R] :
-    WedderburnPresentation R :=
+    WedderburnPresentation.{u, u} R :=
   Classical.choice (nonempty_wedderburnPresentation R)
 
 private theorem nonempty_wedderburnAlgebraPresentation (K : Type v) (A : Type u)
     [CommSemiring K] [Ring A] [Algebra K A] [IsSemisimpleRing A] :
-    Nonempty (WedderburnAlgebraPresentation K A) := by
+    Nonempty (WedderburnAlgebraPresentation.{u, v, u} K A) := by
   obtain ⟨n, D, d, hD, hKA, hd, ⟨e⟩⟩ :=
     _root_.IsSemisimpleRing.exists_algEquiv_pi_matrix_divisionRing K A
-  exact ⟨@WedderburnAlgebraPresentation.mk K A _ _ _ n D d hD hKA hd e⟩
+  exact ⟨@WedderburnAlgebraPresentation.mk.{u, v, u} K A _ _ _ n D d hD hKA hd e⟩
 
 /-- Choose an algebraic Artin--Wedderburn presentation of a semisimple algebra. -/
 noncomputable def wedderburnAlgebraPresentation (K : Type v) (A : Type u) [CommSemiring K]
-    [Ring A] [Algebra K A] [IsSemisimpleRing A] : WedderburnAlgebraPresentation K A :=
+    [Ring A] [Algebra K A] [IsSemisimpleRing A] : WedderburnAlgebraPresentation.{u, v, u} K A :=
   Classical.choice (nonempty_wedderburnAlgebraPresentation K A)
 
 private theorem nonempty_finiteWedderburnAlgebraPresentation (K : Type v) (A : Type u)
     [CommSemiring K] [Ring A] [Algebra K A] [IsSemisimpleRing A] [Module.Finite K A] :
-    Nonempty (FiniteWedderburnAlgebraPresentation K A) := by
+    Nonempty (FiniteWedderburnAlgebraPresentation.{u, v, u} K A) := by
   obtain ⟨n, D, d, hD, hKA, hfinite, hd, ⟨e⟩⟩ :=
     _root_.IsSemisimpleRing.exists_algEquiv_pi_matrix_divisionRing_finite K A
-  exact ⟨@FiniteWedderburnAlgebraPresentation.mk K A _ _ _
-    (@WedderburnAlgebraPresentation.mk K A _ _ _ n D d hD hKA hd e) hfinite⟩
+  exact ⟨@FiniteWedderburnAlgebraPresentation.mk.{u, v, u} K A _ _ _
+    (@WedderburnAlgebraPresentation.mk.{u, v, u} K A _ _ _ n D d hD hKA hd e) hfinite⟩
 
 /-- Choose an algebraic Artin--Wedderburn presentation whose coefficient division algebras are
 finite over the base. -/
 noncomputable def finiteWedderburnAlgebraPresentation (K : Type v) (A : Type u)
     [CommSemiring K] [Ring A] [Algebra K A] [IsSemisimpleRing A] [Module.Finite K A] :
-    FiniteWedderburnAlgebraPresentation K A :=
+    FiniteWedderburnAlgebraPresentation.{u, v, u} K A :=
   Classical.choice (nonempty_finiteWedderburnAlgebraPresentation K A)
 
 private theorem nonempty_splitWedderburnAlgebraPresentation (K : Type v) (A : Type u) [Field K]
@@ -352,7 +352,7 @@ private theorem nonempty_splitWedderburnAlgebraPresentation (K : Type v) (A : Ty
     Nonempty (SplitWedderburnAlgebraPresentation K A) := by
   obtain ⟨n, d, hd, ⟨e⟩⟩ :=
     _root_.IsSemisimpleRing.exists_algEquiv_pi_matrix_of_isAlgClosed K A
-  exact ⟨@SplitWedderburnAlgebraPresentation.mk K A _ _ _ n d hd e⟩
+  exact ⟨@SplitWedderburnAlgebraPresentation.mk.{u, v} K A _ _ _ n d hd e⟩
 
 /-- Choose a split Artin--Wedderburn presentation of a finite-dimensional semisimple algebra over
 an algebraically closed field. -/
@@ -366,7 +366,7 @@ private theorem nonempty_wedderburnEndomorphismPresentation (K : Type v) (A : Ty
     Nonempty (WedderburnEndomorphismPresentation K A) := by
   obtain ⟨n, S, d, hS, hd, ⟨e⟩⟩ :=
     _root_.IsSemisimpleRing.exists_algEquiv_pi_matrix_end_mulOpposite K A
-  exact ⟨@WedderburnEndomorphismPresentation.mk K A _ _ _ n S d hS hd e⟩
+  exact ⟨@WedderburnEndomorphismPresentation.mk.{u, v} K A _ _ _ n S d hS hd e⟩
 
 /-- Choose the endomorphism form of an algebraic Artin--Wedderburn presentation. -/
 noncomputable def wedderburnEndomorphismPresentation (K : Type v) (A : Type u)
