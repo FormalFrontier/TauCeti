@@ -226,7 +226,7 @@ theorem isSemigroupGroupPD_iff :
   constructor
   · intro hF
     refine ⟨fun p q => by
-      simpa only [RCLike.star_def] using star_apply_eq_of_posSemidef hF.posSemidef p q, ?_⟩
+      simpa only [RCLike.star_def] using hF.posSemidef.isHermitian.apply q p, ?_⟩
     intro ι _ c p
     have hpos := (posSemidef_iff_finite_sum.mp hF.posSemidef).2 p
       (fun i => conj (c i))
@@ -262,7 +262,7 @@ theorem quadForm_two_nonneg (hF : IsSemigroupGroupPD F) (p q : ℝ≥0 × V) (c�
 @[simp]
 theorem conj_symm (hF : IsSemigroupGroupPD F) (p q : ℝ≥0 × V) :
     conj (F (p.1 + q.1, p.2 - q.2)) = F (q.1 + p.1, q.2 - p.2) := by
-  simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hF.posSemidef p q
+  simpa only [starRingEnd_apply] using hF.posSemidef.isHermitian.apply q p
 
 /-- Values of a semigroup-group positive-definite function on the time diagonal `(t + t, 0)` are
 real and nonnegative. -/

@@ -68,7 +68,7 @@ theorem map_neg_eq_conj_of_posSemidef
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) (v : V) :
     ψ (-v) = conj (ψ v) := by
   simpa only [sub_zero, zero_sub, starRingEnd_apply] using
-    (star_apply_eq_of_posSemidef hpd v 0).symm
+    (hpd.isHermitian.apply 0 v).symm
 
 /-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
 of its value at `0`. -/

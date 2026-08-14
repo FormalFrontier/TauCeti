@@ -153,11 +153,6 @@ theorem posSemidef_iff_finite_sum {R : Type u} [CommRing R] [PartialOrder R] [St
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 
-/-- Conjugate symmetry of a positive-semidefinite matrix, in pointwise form. -/
-theorem star_apply_eq_of_posSemidef {K : α → α → 𝕜} (hK : Matrix.PosSemidef K) (a b : α) :
-    star (K a b) = K b a :=
-  hK.isHermitian.apply b a
-
 /-- Finite pointwise Schur products of positive-semidefinite matrices are positive semidefinite. -/
 theorem posSemidef_schur_finset_prod {ι : Type w} {s : Finset ι}
     {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
@@ -192,7 +187,7 @@ theorem normSq_le_of_posSemidef {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a b : α) :
     RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b) := by
   have hsymm (x y : α) : conj (K x y) = K y x := by
-    simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK x y
+    simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
   let A : Matrix (Fin 2) (Fin 2) 𝕜 := Matrix.of fun i j => K (![a, b] i) (![a, b] j)
   have hA : A.PosSemidef := finTwo_posSemidef hK a b
   have hdet : 0 ≤ A.det := Matrix.PosSemidef.det_nonneg hA
@@ -221,7 +216,7 @@ theorem eq_zero_of_apply_self_eq_zero_right_of_posSemidef {K : α → α → �
     (hK : Matrix.PosSemidef K) {a b : α} (hb : K b b = 0) : K a b = 0 := by
   have hba := eq_zero_of_apply_self_eq_zero_left_of_posSemidef hK (a := b) (b := a) hb
   have hconj : conj (K a b) = K b a := by
-    simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK a b
+    simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
   rw [hba] at hconj
   have := congrArg conj hconj
   simpa using this

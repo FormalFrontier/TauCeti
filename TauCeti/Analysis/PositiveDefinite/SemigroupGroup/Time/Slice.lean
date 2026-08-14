@@ -80,7 +80,7 @@ theorem posSemidef_timeSlice (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
 theorem timeSlice_conj_symm (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :
     conj (F (t, v - w)) = F (t, w - v) := by
   simpa only [starRingEnd_apply] using
-    star_apply_eq_of_posSemidef (hF.posSemidef_timeSlice t) v w
+    (hF.posSemidef_timeSlice t).isHermitian.apply w v
 
 /-- The diagonal value `F (t, 0)` of a fixed-time slice is real and nonnegative. -/
 theorem timeSlice_diagonal_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) : 0 ≤ F (t, 0) := by
