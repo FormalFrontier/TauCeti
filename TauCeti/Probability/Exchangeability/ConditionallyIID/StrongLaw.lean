@@ -37,7 +37,7 @@ and `tendsto_empiricalMeasure_apply_ae_forall` takes all of it.
 ## Main results
 
 * `ConditionallyIIDWith.tendsto_average_ae` — the conditional strong law for a bounded measurable
-  observable;
+  observable valued in a Banach space;
 * `ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae` — its reading through
   `empiricalMeasure`;
 * `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae` and
@@ -97,29 +97,31 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
   {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E] [MeasurableSpace E]
+  [BorelSpace E] [SecondCountableTopology E]
 
 /-- **The conditional strong law of large numbers.** For a conditionally i.i.d. process and a
-bounded measurable observable `f`, the averages of `f` along the process converge almost surely to
-the integral of `f` against the directing measure.
+bounded measurable observable `f` valued in a Banach space, the averages of `f` along the process
+converge almost surely to the integral of `f` against the directing measure.
 
 The limit is random: it is `∫ f dν(ω)`. It reduces to a constant when the directing measure is
 almost everywhere constant, but also for observables — `f = 0`, say — whose integral happens not to
 see the randomness of `ν`. -/
 theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
-    {f : α → ℝ} (hf : Measurable f) {C : ℝ} (hbdd : ∀ x, |f x| ≤ C) :
-    ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, f (X i ω)) atTop
+    {f : α → E} (hf : Measurable f) {C : ℝ} (hbdd : ∀ x, ‖f x‖ ≤ C) :
+    ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (X i ω)) atTop
       (𝓝 (∫ y, f y ∂(ν ω : Measure α))) := by
   -- The event, on the joint space of the directing measure and the path, that the averages
   -- converge to the integral against the first coordinate.
   set G : Set (ProbabilityMeasure α × (ℕ → α)) :=
-    {z | Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, f (z.2 i)) atTop
+    {z | Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (z.2 i)) atTop
       (𝓝 (∫ y, f y ∂(z.1 : Measure α)))} with hG
   have hGmeas : MeasurableSet G := by
     rw [hG]
     exact MeasureTheory.measurableSet_tendsto_fun
-      (fun n => measurable_const.mul (Finset.measurable_sum _ fun i _ =>
-        hf.comp ((measurable_pi_apply i).comp measurable_snd)))
+      (fun n => (Finset.measurable_sum _ fun i _ =>
+        hf.comp ((measurable_pi_apply i).comp measurable_snd)).const_smul _)
       -- `Q ↦ ∫ f dQ` is measurable: it is the integral against the coercion kernel
       -- `ProbabilityMeasure α → Measure α`.
       ((hf.stronglyMeasurable.integral_kernel
@@ -130,12 +132,11 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
       ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))) Gᶜ = 0 := by
     intro Q
     have hint : Integrable f (Q : Measure α) :=
-      Integrable.of_bound hf.aestronglyMeasurable C
-        (.of_forall fun x => by simpa only [Real.norm_eq_abs] using hbdd x)
+      Integrable.of_bound hf.aestronglyMeasurable C (.of_forall hbdd)
     have hsl : ∀ᵐ x ∂(Measure.infinitePi fun _ : ℕ => (Q : Measure α)), (Q, x) ∈ G := by
       filter_upwards [strong_law_ae_infinitePi (Q : Measure α) hf hint] with x hx
       rw [hG]
-      simpa only [Set.mem_ofPred_eq, smul_eq_mul] using hx
+      simpa only [Set.mem_ofPred_eq] using hx
     rw [Measure.dirac_prod, Measure.map_apply measurable_prodMk_left hGmeas.compl]
     exact ae_iff.mp hsl
   have hker : Measurable fun Q : ProbabilityMeasure α =>
@@ -166,11 +167,12 @@ theorem ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae [IsFiniteMeasu
     ∀ᵐ ω ∂μ, Tendsto
       (fun n : ℕ => ∫ y, f y ∂(empiricalMeasure (fun i => X i ω) n : Measure α)) atTop
       (𝓝 (∫ y, f y ∂(ν ω : Measure α))) := by
-  filter_upwards [h.tendsto_average_ae hX hf hbdd] with ω hω
+  have hbdd' : ∀ x, ‖f x‖ ≤ C := fun x => by simpa only [Real.norm_eq_abs] using hbdd x
+  filter_upwards [h.tendsto_average_ae hX hf hbdd'] with ω hω
   -- `empiricalMeasure … n` averages the first `n + 1` terms, so the limit is along the shifted
   -- sequence.
   refine Tendsto.congr (fun n => ?_) (hω.comp (tendsto_add_atTop_nat 1))
-  rw [Function.comp_apply, integral_empiricalMeasure hf.stronglyMeasurable, smul_eq_mul]
+  rw [Function.comp_apply, integral_empiricalMeasure hf.stronglyMeasurable]
 
 /-- **Empirical frequencies converge almost surely, on each fixed measurable set.** For a
 conditionally i.i.d. process and a fixed measurable set `B`, the empirical frequency of `B`

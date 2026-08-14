@@ -18,8 +18,8 @@ and this file specializes the strong law to it.
 
 ## Main results
 
-* `TauCeti.Probability.strong_law_ae_infinitePi` — for `f` integrable against `Q`, the averages
-  `n⁻¹ • ∑_{i < n} f (xᵢ)` converge `Q^{⊗ℕ}`-almost everywhere to `∫ f dQ`.
+* `TauCeti.Probability.strong_law_ae_infinitePi` — for `f` measurable and integrable against `Q`,
+  the averages `n⁻¹ • ∑_{i < n} f (xᵢ)` converge `Q^{⊗ℕ}`-almost everywhere to `∫ f dQ`.
 
 ## Implementation
 
@@ -30,6 +30,10 @@ The strong law itself is then Mathlib's, applied to `x ↦ f (x i)`: the three h
 that independence and from `measurePreserving_eval_infinitePi`, which makes the coordinates
 identically distributed, transports integrability, and identifies the limit `𝔼[f ∘ eval 0]` with
 `∫ f dQ`.
+
+`f` is assumed measurable, not merely almost-everywhere strongly measurable as `Integrable f Q`
+gives: it has to be composed with the coordinate maps, so that independence and identical
+distribution of the coordinates transfer to the summands.
 
 This is general probability theory with no exchangeability in its statements. It is used by the
 conditional strong law for conditionally i.i.d. processes in
@@ -54,8 +58,9 @@ namespace Probability
 variable {α : Type*} [MeasurableSpace α] {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [CompleteSpace E] [MeasurableSpace E] [BorelSpace E]
 
-/-- **The strong law of large numbers on the canonical i.i.d. model.** For an integrable `f`, the
-averages of `f` along the coordinates of `Q^{⊗ℕ}` converge almost everywhere to `∫ f dQ`.
+/-- **The strong law of large numbers on the canonical i.i.d. model.** For an `f` that is measurable
+and integrable against `Q`, the averages of `f` along the coordinates of `Q^{⊗ℕ}` converge almost
+everywhere to `∫ f dQ`.
 
 This is Mathlib's `ProbabilityTheory.strong_law_ae` for the coordinate process of a countable
 power; it is the form in which a statement about *some* i.i.d. sequence becomes a statement about
