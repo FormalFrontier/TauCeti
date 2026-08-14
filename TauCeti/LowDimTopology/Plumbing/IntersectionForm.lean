@@ -54,6 +54,8 @@ of Seifert-fibred examples), with edge multiplicities a later refinement.
   framing negative.
 * `TauCeti.PlumbingGraph.intersectionForm_self_add`: a symmetric-pairing expansion for the
   intersection form on a sum.
+* `TauCeti.PlumbingGraph.intersectionForm_single_right_eq_mulVec`: pairing against a basis sphere
+  reads off one coordinate of the matrix-vector product.
 
 ## References
 
@@ -203,6 +205,16 @@ theorem sum_intersectionMatrix_mulVec_mul (m x : V → ℤ) :
     ∑ v, (P.intersectionMatrix.mulVec m) v * x v = P.intersectionForm x m := by
   rw [intersectionForm, Matrix.toBilin'_apply']
   exact dotProduct_comm _ _
+
+/-- The intersection pairing of a lattice point against a basis sphere is the corresponding
+coordinate of the matrix-vector product `A x`. The two sums differ by the transposition of the
+intersection matrix, which is symmetric. -/
+theorem intersectionForm_single_right_eq_mulVec (x : V → ℤ) (v : V) :
+    P.intersectionForm x (Pi.single v 1) = P.intersectionMatrix.mulVec x v := by
+  rw [P.intersectionForm_single_right x v]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  change x i * P.intersectionMatrix i v = P.intersectionMatrix v i * x i
+  rw [P.intersectionMatrix_isSymm.apply i v, mul_comm]
 
 /-- The intersection pairing of a lattice point against a finite sum of basis spheres, as a sum of
 the individual column sums. -/

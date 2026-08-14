@@ -5,6 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.Tactic.Linarith
+import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.Int.Interval
+import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
+public import Mathlib.Data.Set.Finite.Basic
 public import TauCeti.LowDimTopology.Plumbing.IntersectionForm
 
 /-!
@@ -25,6 +29,13 @@ criterion, nondegeneracy, and the injectivity of multiplication by the intersect
 self-validating example the `A₂` plumbing (two `-2`-framed spheres joined by an edge) is shown to
 be negative definite.
 
+The last two results are the quantitative half of the same hypothesis. Cauchy--Schwarz for the
+form bounds every pairing by the two self-pairings, and applying it to the basis spheres bounds
+each coordinate of `A x` in terms of `P.intersectionForm x x`. Since `A` acts injectively, only
+finitely many lattice points can have their self-pairing above a fixed bound: the self-pairing is
+a proper function to `-∞`. This finiteness is what makes the sublevel sets of Némethi's weight
+function finite, hence what makes lattice homology a limit of finite computations.
+
 ## Main results
 
 * `TauCeti.PlumbingGraph.IsNegativeDefinite.intersectionForm_self_neg`: the intersection form is
@@ -39,6 +50,12 @@ be negative definite.
   nondegenerate.
 * `TauCeti.PlumbingGraph.IsNegativeDefinite.mulVec_injective`: multiplication by the intersection
   matrix is injective, so the lattice embeds along the form.
+* `TauCeti.PlumbingGraph.IsNegativeDefinite.det_intersectionMatrix_ne_zero`: the intersection
+  matrix has nonzero determinant.
+* `TauCeti.PlumbingGraph.IsNegativeDefinite.sq_intersectionForm_le`: Cauchy--Schwarz for the
+  intersection form.
+* `TauCeti.PlumbingGraph.IsNegativeDefinite.finite_setOf_le_intersectionForm_self`: only finitely
+  many lattice points have self-pairing above a fixed bound.
 * `TauCeti.a2Plumbing_isNegativeDefinite`: the `A₂` plumbing is negative definite.
 
 ## References
@@ -137,6 +154,77 @@ theorem IsNegativeDefinite.mulVec_injective (h : P.IsNegativeDefinite) :
       Matrix.toBilin'_apply', hz]
     simp
   exact sub_eq_zero.mp ((h.intersectionForm_self_eq_zero_iff (x - y)).mp hzero)
+
+/-- The intersection matrix of a negative-definite plumbing has nonzero determinant: it kills no
+nonzero lattice vector. -/
+theorem IsNegativeDefinite.det_intersectionMatrix_ne_zero (h : P.IsNegativeDefinite) :
+    P.intersectionMatrix.det ≠ 0 := by
+  intro hdet
+  obtain ⟨v, hv, hmv⟩ := Matrix.exists_mulVec_eq_zero_iff.mpr hdet
+  exact hv (h.mulVec_injective (hmv.trans (Matrix.mulVec_zero _).symm))
+
+/-- Cauchy--Schwarz for the intersection form of a negative-definite plumbing: the square of a
+pairing is at most the product of the two self-pairings.
+
+Both self-pairings are nonpositive, so the right-hand side is a product of two nonpositive
+integers; the statement is the usual Cauchy--Schwarz inequality for the positive-definite form
+`-P.intersectionForm`, written without the signs. The proof expands the self-pairing of the
+auxiliary vector `A(x, x) • y - A(x, y) • x`, which negative-definiteness makes nonpositive. -/
+theorem IsNegativeDefinite.sq_intersectionForm_le (h : P.IsNegativeDefinite) (x y : V → ℤ) :
+    P.intersectionForm x y ^ 2 ≤ P.intersectionForm x x * P.intersectionForm y y := by
+  have hexp : P.intersectionForm
+        (P.intersectionForm x x • y - P.intersectionForm x y • x)
+        (P.intersectionForm x x • y - P.intersectionForm x y • x) =
+      P.intersectionForm x x *
+        (P.intersectionForm x x * P.intersectionForm y y - P.intersectionForm x y ^ 2) := by
+    simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul]
+    rw [P.intersectionForm_isSymm.eq y x]
+    ring
+  have hnonpos := h.intersectionForm_self_nonpos
+    (P.intersectionForm x x • y - P.intersectionForm x y • x)
+  rw [hexp] at hnonpos
+  rcases (h.intersectionForm_self_nonpos x).lt_or_eq with hlt | heq
+  · nlinarith
+  · rw [(h.intersectionForm_self_eq_zero_iff x).mp heq]
+    simp
+
+/-- On a negative-definite plumbing only finitely many lattice points have intersection-form
+self-pairing above a fixed bound.
+
+Cauchy--Schwarz against the basis sphere `e v` bounds the square of the `v`-th coordinate of
+`A x` by `P.intersectionForm x x * P.weight v`, hence by a constant depending only on `c`; so
+`A x` ranges over a finite box, and `x ↦ A x` is injective. Equivalently, the self-pairing is a
+proper function `(V → ℤ) → ℤ` tending to `-∞`. -/
+theorem IsNegativeDefinite.finite_setOf_le_intersectionForm_self (h : P.IsNegativeDefinite)
+    (c : ℤ) : {x : V → ℤ | c ≤ P.intersectionForm x x}.Finite := by
+  classical
+  set N : ℤ := ∑ v, |c * P.weight v| with hN
+  have hN0 : 0 ≤ N := Finset.sum_nonneg fun v _ => abs_nonneg _
+  have hbox : {y : V → ℤ | ∀ v, y v ∈ Set.Icc (-N) N}.Finite :=
+    Set.Finite.pi' fun _ => Set.finite_Icc _ _
+  refine (Set.Finite.preimage (f := P.intersectionMatrix.mulVec)
+    h.mulVec_injective.injOn hbox).subset fun x hx => ?_
+  have hxx : c ≤ P.intersectionForm x x := hx
+  have habs : ∀ v : V, |(P.intersectionMatrix *ᵥ x) v| ≤ N := by
+    intro v
+    have hweight : P.weight v < 0 := IsNegativeDefinite.weight_neg P h v
+    -- the square of the `v`-th coordinate of `A x` is bounded by a constant depending on `c`
+    have hcs : (P.intersectionMatrix *ᵥ x) v ^ 2 ≤ P.intersectionForm x x * P.weight v := by
+      have hle := h.sq_intersectionForm_le x (Pi.single v 1)
+      rwa [P.intersectionForm_single_right_eq_mulVec x v, P.intersectionForm_single v v,
+        P.intersectionMatrix_diag] at hle
+    have hbound : (P.intersectionMatrix *ᵥ x) v ^ 2 ≤ N := by
+      refine hcs.trans ((mul_le_mul_of_nonpos_right hxx hweight.le).trans ?_)
+      refine le_trans (le_abs_self _) ?_
+      exact Finset.single_le_sum (f := fun w => |c * P.weight w|)
+        (fun w _ => abs_nonneg _) (Finset.mem_univ v)
+    rcases eq_or_ne ((P.intersectionMatrix *ᵥ x) v) 0 with hzero | hne
+    · rw [hzero]
+      simpa using hN0
+    · refine le_trans ?_ hbound
+      have h1 : 1 ≤ |(P.intersectionMatrix *ᵥ x) v| := Int.one_le_abs hne
+      nlinarith [sq_abs ((P.intersectionMatrix *ᵥ x) v)]
+  exact fun v => Set.mem_Icc.mpr (abs_le.mp (habs v))
 
 end PlumbingGraph
 
