@@ -10,7 +10,7 @@ import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 /-!
 # The norm of the Lipschitz group
 
-The Clifford norm `star x * x` of a Lipschitz element is a nonzero scalar. This defines a
+The Clifford norm `star x * x` of a Lipschitz element is a unit scalar. This defines a
 homomorphism from the Lipschitz group to the units of the base ring. Generating vectors have norm
 the negative of their quadratic norm.
 
