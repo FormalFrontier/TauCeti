@@ -194,13 +194,20 @@ theorem collarChartedSpace_chartAt (x : M) :
   rfl
 
 /-- The atlas of `collarChartedSpace` is the collar chart of every ambient chart. -/
+@[simp]
 theorem collarChartedSpace_atlas :
     @atlas (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ M _ (collarChartedSpace n M) =
       collarChart '' atlas (EuclideanHalfSpace (n + 1)) M := by
   let := EuclideanHalfSpace.collarModelChartedSpace n
   rw [collarChartedSpace]
-  change Set.image2 _ _ _ = _
+  -- `ChartedSpace.comp` stores its atlas as `image2 trans (atlas H' M) (atlas H H')`. That is
+  -- the field itself, not a rewrite target, so name it with `change` before the `image2` lemmas
+  -- can apply; `rw` cannot reach through the structure projection on its own.
+  change Set.image2 OpenPartialHomeomorph.trans (atlas (EuclideanHalfSpace (n + 1)) M) _ = _
   rw [EuclideanHalfSpace.collarModelChartedSpace_atlas, Set.image2_singleton_right]
+  -- what remains is that composing with the collar identification *is* `collarChart`; after
+  -- unfolding, the two sides differ only in the name of the bound chart.
+  unfold collarChart
   rfl
 
 end Atlas
