@@ -59,8 +59,6 @@ to `k + 2 · A m` shifts it by `-χ_k(m)`, and spin^c conjugation leaves it fixe
 * `TauCeti.PlumbingGraph.sInfCharacteristicWeight_add_two_mulVec` and
   `TauCeti.PlumbingGraph.sInfCharacteristicWeight_conjugate`: how that value transforms under the
   two moves on the representative of a spin^c structure.
-* `TauCeti.PlumbingGraph.two_mul_characteristicWeight_smul_single`: the weight along a single basis
-  sphere, as an explicit quadratic.
 * `TauCeti.PlumbingGraph.not_bddAbove_range_characteristicWeight`: one negatively framed vertex
   makes the weight unbounded above, so the sublevel sets are proper, and
   `TauCeti.PlumbingGraph.IsNegativeDefinite.not_bddAbove_range_characteristicWeight`: its
@@ -254,37 +252,19 @@ Conjugation is an involution on characteristic covectors, and
 `characteristicWeight_conjugate_neg` says `χ_{-k}(-x) = χ_k(x)`; hence the two weight functions
 have the same range, and in particular the same infimum. -/
 @[simp]
-theorem sInfCharacteristicWeight_conjugate (h : P.IsNegativeDefinite)
-    (k : P.characteristicVectors) :
+theorem sInfCharacteristicWeight_conjugate (k : P.characteristicVectors) :
     P.sInfCharacteristicWeight (P.conjugate k) = P.sInfCharacteristicWeight k := by
-  refine le_antisymm ?_ ?_
-  · obtain ⟨x, hx⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h k
-    have hle := P.sInfCharacteristicWeight_le h (P.conjugate k) (-x)
-    rwa [P.characteristicWeight_conjugate_neg k x, hx] at hle
-  · obtain ⟨x, hx⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h (P.conjugate k)
-    have hle := P.sInfCharacteristicWeight_le h k (-x)
-    have hsym : P.characteristicWeight k (-x) = P.characteristicWeight (P.conjugate k) x := by
-      rw [← P.characteristicWeight_conjugate_neg (P.conjugate k) x, P.conjugate_conjugate]
-    rwa [hsym, hx] at hle
-
-/-- The characteristic weight along a single basis sphere, as an explicit quadratic in the
-multiplier: `2 χ_k(m • e_v) = -(m ⟪k, e_v⟫ + m² (e_v · e_v))`. -/
-theorem two_mul_characteristicWeight_smul_single (k : P.characteristicVectors) (v : V) (m : ℤ) :
-    2 * P.characteristicWeight k (m • Pi.single v 1) =
-      -(m * k.val v + m ^ 2 * P.weight v) := by
-  rw [P.two_mul_characteristicWeight k (m • Pi.single v 1), P.characteristicWeightNumerator_def]
-  have hlin : ∑ u, k.val u * (m • (Pi.single v 1 : V → ℤ)) u = m * k.val v := by
-    rw [Finset.sum_eq_single v (fun u _ hu => by
-      rw [Pi.smul_apply, Pi.single_eq_of_ne hu, smul_zero, mul_zero])
-      (fun hv => absurd (Finset.mem_univ v) hv)]
-    rw [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one]
-    ring
-  have hquad : P.intersectionForm (m • Pi.single v 1) (m • Pi.single v 1) =
-      m ^ 2 * P.weight v := by
-    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
-    rw [P.intersectionForm_single v v, P.intersectionMatrix_diag]
-    ring
-  rw [hlin, hquad]
+  have hrange : Set.range (P.characteristicWeight (P.conjugate k)) =
+      Set.range (P.characteristicWeight k) := by
+    ext c
+    constructor
+    · rintro ⟨x, rfl⟩
+      refine ⟨-x, ?_⟩
+      have hsym := P.characteristicWeight_conjugate_neg (P.conjugate k) x
+      rwa [P.conjugate_conjugate] at hsym
+    · rintro ⟨x, rfl⟩
+      exact ⟨-x, P.characteristicWeight_conjugate_neg k x⟩
+  rw [sInfCharacteristicWeight, sInfCharacteristicWeight, hrange]
 
 /-- A single negatively framed vertex makes the characteristic weight function unbounded above:
 pushing a lattice point far along that basis sphere sends `χ_k` to `+∞`, because the quadratic
