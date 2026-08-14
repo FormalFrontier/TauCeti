@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Sobolev.W1p
+public import TauCeti.Analysis.Sobolev.GraphStep
 
 /-!
 # Second-order weak Sobolev spaces
@@ -61,88 +61,13 @@ and an `Lᵖ` candidate Hessian, with their Euclidean product norm.  Its two com
 projected out by `WithLp.fst` and `WithLp.snd`. -/
 abbrev Sobolev2JetLp (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] :=
-  WithLp 2 (W1p mu Omega p × Lp (E →L[ℝ] E) p (mu.restrict Omega))
-
-/-- The continuous functional expressing that the candidate Hessian is the weak derivative of
-the first-order jet's gradient, tested against `phi` in the direction `v`. -/
-private def weakHessianTestFunctional (p : ENNReal) [Fact (1 <= p)]
-    (phi : 𝓓(Omega, ℝ)) (v : E) : Sobolev2JetLp mu Omega p →L[ℝ] E := by
-  let _ : (ENNReal.conjExponent p).HolderConjugate p := ENNReal.HolderConjugate.symm
-  let _ : Fact (1 <= ENNReal.conjExponent p) :=
-    ⟨ENNReal.HolderConjugate.one_le _ p⟩
-  let dphi : 𝓓(Omega, ℝ) := TestFunction.lineDerivCLM ℝ v phi
-  let gradientL : Sobolev2JetLp mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
-    W1p.gradientL.comp (WithLp.fstL 2 ℝ _ _)
-  let hessianDirectionL :
-      Sobolev2JetLp mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
-    (ContinuousLinearMap.apply ℝ E v).compLpL p (mu.restrict Omega) |>.comp
-      (WithLp.sndL 2 ℝ _ _)
-  let smulPairing :=
-    (ContinuousLinearMap.lsmul ℝ ℝ : ℝ →L[ℝ] E →L[ℝ] E).lpPairing
-      (mu.restrict Omega) (ENNReal.conjExponent p) p
-  exact (smulPairing (testFunctionLp (mu := mu) (ENNReal.conjExponent p) dphi)).comp
-      gradientL +
-    (smulPairing (testFunctionLp (mu := mu) (ENNReal.conjExponent p) phi)).comp
-      hessianDirectionL
-
-private theorem weakHessianTestFunctional_apply (J : Sobolev2JetLp mu Omega p)
-    (phi : 𝓓(Omega, ℝ)) (v : E) :
-    weakHessianTestFunctional (mu := mu) p phi v J =
-      (∫ x, lineDeriv ℝ (phi : E → ℝ) x v • W1p.gradient (WithLp.fst J) x ∂mu) +
-        ∫ x, phi x • WithLp.snd J x v ∂mu := by
-  let _ : (ENNReal.conjExponent p).HolderConjugate p := ENNReal.HolderConjugate.symm
-  let _ : Fact (1 <= ENNReal.conjExponent p) :=
-    ⟨ENNReal.HolderConjugate.one_le _ p⟩
-  let dphi : 𝓓(Omega, ℝ) := TestFunction.lineDerivCLM ℝ v phi
-  let gradientL : Sobolev2JetLp mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
-    W1p.gradientL.comp (WithLp.fstL 2 ℝ _ _)
-  let hessianDirectionL :
-      Sobolev2JetLp mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
-    (ContinuousLinearMap.apply ℝ E v).compLpL p (mu.restrict Omega) |>.comp
-      (WithLp.sndL 2 ℝ _ _)
-  let smulPairing :=
-    (ContinuousLinearMap.lsmul ℝ ℝ : ℝ →L[ℝ] E →L[ℝ] E).lpPairing
-      (mu.restrict Omega) (ENNReal.conjExponent p) p
-  have hdphi : (dphi : E → ℝ) = fun x => lineDeriv ℝ (phi : E → ℝ) x v := by
-    funext x
-    exact TestFunction.lineDerivCLM_apply_of_le le_top
-  have hgradient : gradientL J = W1p.gradient (WithLp.fst J) := by
-    simp only [gradientL, ContinuousLinearMap.comp_apply, WithLp.fstL_apply, W1p.gradientL_apply]
-  have hhessian : hessianDirectionL J =
-      (ContinuousLinearMap.apply ℝ E v).compLp (WithLp.snd J) := rfl
-  -- Expose the private functional as the two `lpPairing`s whose integral theorem applies.
-  rw [show weakHessianTestFunctional (mu := mu) p phi v J =
-      smulPairing (testFunctionLp (mu := mu) (ENNReal.conjExponent p) dphi) (gradientL J) +
-        smulPairing (testFunctionLp (mu := mu) (ENNReal.conjExponent p) phi)
-          (hessianDirectionL J) by rfl,
-    ContinuousLinearMap.lpPairing_eq_integral,
-    ContinuousLinearMap.lpPairing_eq_integral]
-  have hfirst :
-      (∫ x, testFunctionLp (mu := mu) (ENNReal.conjExponent p) dphi x • gradientL J x
-          ∂mu.restrict Omega) =
-        ∫ x in Omega, lineDeriv ℝ (phi : E → ℝ) x v • W1p.gradient (WithLp.fst J) x ∂mu := by
-    apply integral_congr_ae
-    filter_upwards [testFunctionLp_apply_ae (mu := mu) (ENNReal.conjExponent p) dphi]
-      with x hx
-    rw [hx, hgradient, congrFun hdphi x]
-  have hsecond :
-      (∫ x, testFunctionLp (mu := mu) (ENNReal.conjExponent p) phi x •
-          hessianDirectionL J x ∂mu.restrict Omega) =
-        ∫ x in Omega, phi x • WithLp.snd J x v ∂mu := by
-    apply integral_congr_ae
-    filter_upwards [testFunctionLp_apply_ae (mu := mu) (ENNReal.conjExponent p) phi,
-      (ContinuousLinearMap.apply ℝ E v).coeFn_compLp (WithLp.snd J)] with x hphi hx
-    rw [hphi, hhessian, hx, ContinuousLinearMap.apply_apply]
-  simp only [ContinuousLinearMap.lsmul_apply]
-  rw [hfirst, hsecond, setIntegral_lineDeriv_smul_eq_integral_lineDeriv_smul,
-    setIntegral_smul_eq_integral_smul]
+  WeakDerivStepJetLp mu Omega p (W1p mu Omega p) E
 
 /-- The second-order weak Sobolev subspace.  Its Hessian component is required to be the weak
 Fréchet derivative of the weak gradient in its first-order component. -/
 def w2pSubmodule (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] : ClosedSubmodule ℝ (Sobolev2JetLp mu Omega p) :=
-  ⨅ phi : 𝓓(Omega, ℝ), ⨅ v : E,
-    (⊥ : ClosedSubmodule ℝ E).comap (weakHessianTestFunctional (mu := mu) p phi v)
+  weakDerivStepSubmodule mu Omega p W1p.gradientL
 
 /-- Membership in `w2pSubmodule` is the family of weak Hessian integration-by-parts identities. -/
 theorem mem_w2pSubmodule_iff (J : Sobolev2JetLp mu Omega p) :
@@ -150,13 +75,8 @@ theorem mem_w2pSubmodule_iff (J : Sobolev2JetLp mu Omega p) :
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
         (∫ x, lineDeriv ℝ (phi : E → ℝ) x v • W1p.gradient (WithLp.fst J) x ∂mu) +
           ∫ x, phi x • WithLp.snd J x v ∂mu = 0 := by
-  -- Pass through the private kernel presentation once, keeping it out of the public statement.
-  rw [show J ∈ w2pSubmodule mu Omega p ↔
-      ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
-        weakHessianTestFunctional (mu := mu) p phi v J = 0 by
-    simp only [w2pSubmodule, ClosedSubmodule.mem_iInf, ClosedSubmodule.mem_comap,
-      ClosedSubmodule.mem_bot]]
-  simp only [weakHessianTestFunctional_apply]
+  simpa only [w2pSubmodule, W1p.gradientL_apply] using
+    (mem_weakDerivStepSubmodule_iff (mu := mu) (Omega := Omega) W1p.gradientL J)
 
 /-- A jet belongs to `w2pSubmodule` exactly when its Hessian is the weak Fréchet derivative of
 its weak gradient. -/
@@ -164,23 +84,9 @@ theorem mem_w2pSubmodule_iff_hasWeakFDerivOn (J : Sobolev2JetLp mu Omega p) :
     J ∈ w2pSubmodule mu Omega p ↔
       HasWeakFDerivOn mu Omega (W1p.gradient (WithLp.fst J))
         (WithLp.snd J : Lp (E →L[ℝ] E) p (mu.restrict Omega)) := by
-  have hgradient : LocallyIntegrableOn (W1p.gradient (WithLp.fst J)) Omega mu :=
-    locallyIntegrableOn_of_locallyIntegrable_restrict
-      ((Lp.memLp (W1p.gradient (WithLp.fst J))).locallyIntegrable Fact.out)
-  have hhessian (v : E) :
-      LocallyIntegrableOn (fun x => WithLp.snd J x v) Omega mu := by
-    apply locallyIntegrableOn_of_locallyIntegrable_restrict
-    exact (((Lp.memLp (WithLp.snd J)).continuousLinearMap_comp
-      (ContinuousLinearMap.apply ℝ E v)).locallyIntegrable Fact.out)
-  rw [mem_w2pSubmodule_iff, hasWeakFDerivOn_iff]
-  constructor
-  · intro h v
-    rw [hasWeakLineDerivOn_iff_testFunction]
-    exact ⟨inferInstance, hgradient, hhessian v, fun phi =>
-      add_eq_zero_iff_eq_neg.mp (h phi v)⟩
-  · intro h phi v
-    exact add_eq_zero_iff_eq_neg.mpr
-      ((h v).integral_lineDeriv_smul_eq_neg_integral_smul phi)
+  simpa only [w2pSubmodule, W1p.gradientL_apply] using
+    (mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn
+      (mu := mu) (Omega := Omega) W1p.gradientL J)
 
 /-- The second-order, real-valued weak Sobolev space `W^{2,p}(Ω)`, represented by its first-order
 Sobolev jet and weak Hessian. -/
@@ -285,17 +191,12 @@ theorem W2p.norm_hessian_le (u : W2p mu Omega p) : ‖W2p.hessian u‖ ≤ ‖u�
   rw [W2p.hessian_coe]
   exact WithLp.norm_snd_le (W1p mu Omega p) u.1
 
-/-- At exponent two, the norm on `W2p` is the graph norm of the first-order Sobolev component and
-the weak Hessian. -/
-theorem W2p.norm_sq_eq_norm_firstOrder_sq_add_norm_hessian_sq (u : W2p mu Omega 2) :
-    ‖u‖ ^ 2 = ‖W2p.firstOrder u‖ ^ 2 + ‖W2p.hessian u‖ ^ 2 :=
-  by
-    have hnorm := WithLp.prod_norm_eq_add (by norm_num : 0 < (2 : ENNReal).toReal) u.1
-    simp only [ENNReal.toReal_ofNat, Real.rpow_two, one_div] at hnorm
-    -- `W2p` inherits the subtype norm, while its projections are the two `WithLp` coordinates.
-    change ‖u.1‖ ^ 2 = ‖WithLp.fst u.1‖ ^ 2 + ‖WithLp.snd u.1‖ ^ 2
-    rw [hnorm]
-    exact Real.rpow_inv_natCast_pow (by positivity) (by norm_num)
+/-- The norm on `W2p` is the Euclidean graph norm of the first-order Sobolev component and the
+weak Hessian. -/
+theorem W2p.norm_sq_eq_norm_firstOrder_sq_add_norm_hessian_sq (u : W2p mu Omega p) :
+    ‖u‖ ^ 2 = ‖W2p.firstOrder u‖ ^ 2 + ‖W2p.hessian u‖ ^ 2 := by
+  rw [Submodule.coe_norm, W2p.firstOrder_coe, W2p.hessian_coe]
+  exact WithLp.prod_norm_sq_eq_of_L2 u.1
 
 /-- At exponent two, the norm on `W2p` is the sum-of-squares graph norm of the value, weak
 gradient, and weak Hessian. -/
