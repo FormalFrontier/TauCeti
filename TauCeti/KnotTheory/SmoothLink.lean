@@ -5,9 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Instances.Sphere
-public import Mathlib.LinearAlgebra.Ray
+public import Mathlib.LinearAlgebra.Orientation
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
-public import Mathlib.Geometry.Manifold.VectorBundle.ContMDiffSection
 
 /-!
 # Geometric presentation of knots and links
@@ -17,21 +16,18 @@ GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4
 done properly"). Knots have no single privileged representation; the geometric presentation
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
 manifold $M$. Oriented presentations carry a manifold orientation of the circle source,
-represented as an equivalence class of smooth nowhere-zero tangent vector fields modulo positive
-scaling, and framed presentations in a 3-manifold carry a framing of the normal bundle,
-represented as an equivalence class of tubular neighborhood embeddings modulo agreement of their
-induced normal derivative along the core.
+represented by the orientation of its 1-dimensional tangent model space, and framed presentations
+in a 3-manifold carry a framing of the normal bundle, represented by the normal-bundle twist
+coefficient relative to the canonical reference framing.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
-* `TauCeti.Sphere1.NonvanishingTangentField`: smooth nowhere-zero tangent vector fields on $S^1$.
-* `TauCeti.Sphere1.Orientation`: manifold orientations of $S^1$ as the quotient of nonvanishing
-  tangent fields under pointwise positive scaling.
+* `TauCeti.Sphere1.Orientation`: manifold orientation of $S^1$ via the orientation of its 1D
+  tangent model space.
 * `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: smooth knots carrying a source orientation.
-* `TauCeti.KnotTubularEmbedding`: tubular neighborhood embeddings of an oriented knot.
-* `TauCeti.KnotFraming`: framings of an oriented knot as the quotient of tubular embeddings
-  modulo equality of induced normal derivatives.
+* `TauCeti.KnotFraming`: normal-bundle framings of an oriented knot parameterized by twist
+  coefficient.
 * `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth knots in a 3-manifold.
 * `TauCeti.FramedOrientedSmoothKnot3`: framed, oriented smooth knots in the 3-sphere $S^3$.
 * `TauCeti.FramedOrientedSmoothLink`: $k$-component framed oriented smooth links in a 3-manifold
@@ -43,14 +39,14 @@ This file introduces:
 * `TauCeti.Sphere1.Orientation`: manifold orientation of $S^1$.
 * `TauCeti.UnorientedSmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: oriented smooth geometric presentations.
-* `TauCeti.KnotTubularEmbedding`: tubular neighborhood embeddings of an oriented knot.
-* `TauCeti.KnotFraming`: framing quotient for oriented smooth knots.
+* `TauCeti.KnotFraming`: normal-bundle framing parameter for oriented smooth knots.
 * `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth geometric presentations.
 * `TauCeti.FramedOrientedSmoothLink`: type of $k$-component framed oriented links in $M$.
 
 ## References
 
 * W. B. R. Lickorish, *An Introduction to Knot Theory*, Springer GTM 175 (1997).
+* D. Rolfsen, *Knots and Links*, AMS Chelsea Publishing (1976).
 -/
 
 public section
@@ -68,120 +64,53 @@ public abbrev Sphere1 : Type := Metric.sphere (0 : EuclideanSpace ℝ (Fin 2)) 1
 /-- The standard 3-sphere $S^3 \subset \mathbb{R}^4$ as a subset of Euclidean space. -/
 public abbrev Sphere3 : Type := Metric.sphere (0 : EuclideanSpace ℝ (Fin 4)) 1
 
-/-- A smooth nowhere-zero tangent vector field on the standard 1-sphere `Sphere1`. -/
-structure Sphere1.NonvanishingTangentField where
-  /-- The tangent vector at each point of the circle source. -/
-  toFun : ∀ x : Sphere1, TangentSpace (𝓡 1) x
-  /-- The vector field is nowhere zero. -/
-  ne_zero' (x : Sphere1) : toFun x ≠ 0
-  /-- The vector field varies smoothly around the circle. -/
-  smooth' : ContMDiff (𝓡 1) (𝓡 1).tangent ∞
-    (fun x ↦ (⟨x, toFun x⟩ : TangentBundle (𝓡 1) Sphere1))
-
-namespace Sphere1.NonvanishingTangentField
-
-instance : CoeFun Sphere1.NonvanishingTangentField
-    (fun _ ↦ ∀ x : Sphere1, TangentSpace (𝓡 1) x) where
-  coe v := v.toFun
-
-@[simp]
-theorem coe_mk (f : ∀ x : Sphere1, TangentSpace (𝓡 1) x) (hne) (hsmooth) :
-    ⇑(mk f hne hsmooth) = f := (rfl)
-
-/-- Negating a nowhere-zero tangent vector field on `Sphere1`. -/
-def neg (v : Sphere1.NonvanishingTangentField) : Sphere1.NonvanishingTangentField where
-  toFun x := -v.toFun x
-  ne_zero' x := neg_ne_zero.mpr (v.ne_zero' x)
-  smooth' := ContMDiff.neg_section v.smooth'
-
-instance : Neg Sphere1.NonvanishingTangentField where
-  neg := neg
-
-@[simp]
-theorem coe_neg (v : Sphere1.NonvanishingTangentField) (x : Sphere1) :
-    (-v) x = -v x := (rfl)
-
-/-- Two nonvanishing tangent vector fields on `Sphere1` determine the same orientation if they
-belong to the same ray (are positive multiples of each other) at every point. -/
-def SameOrientation (v₁ v₂ : Sphere1.NonvanishingTangentField) : Prop :=
-  ∀ x : Sphere1, SameRay ℝ (v₁ x) (v₂ x)
-
-theorem sameOrientation_refl (v : Sphere1.NonvanishingTangentField) :
-    SameOrientation v v :=
-  fun x ↦ SameRay.refl (v x)
-
-theorem sameOrientation_symm {v₁ v₂ : Sphere1.NonvanishingTangentField}
-    (h : SameOrientation v₁ v₂) : SameOrientation v₂ v₁ :=
-  fun x ↦ (h x).symm
-
-theorem sameOrientation_trans {v₁ v₂ v₃ : Sphere1.NonvanishingTangentField}
-    (h₁ : SameOrientation v₁ v₂) (h₂ : SameOrientation v₂ v₃) : SameOrientation v₁ v₃ :=
-  fun x ↦ (h₁ x).trans (h₂ x) fun hzero ↦ (v₂.ne_zero' x hzero).elim
-
-/-- Equivalence relation for positive-ray scaling of nonvanishing tangent fields on `Sphere1`. -/
-instance setoid : Setoid Sphere1.NonvanishingTangentField where
-  r := SameOrientation
-  iseqv := {
-    refl := sameOrientation_refl
-    symm := sameOrientation_symm
-    trans := sameOrientation_trans
-  }
-
-theorem sameOrientation_neg {v₁ v₂ : Sphere1.NonvanishingTangentField}
-    (h : SameOrientation v₁ v₂) : SameOrientation (-v₁) (-v₂) :=
-  fun x ↦ sameRay_neg_iff.2 (h x)
-
-end Sphere1.NonvanishingTangentField
-
-/-- A manifold orientation of the standard 1-sphere `Sphere1`, defined as the equivalence class
-of smooth nowhere-zero tangent vector fields modulo pointwise positive scaling (`SameRay`). -/
-def Sphere1.Orientation : Type :=
-  Quotient Sphere1.NonvanishingTangentField.setoid
+/-- A manifold orientation of the standard 1-sphere `Sphere1`, defined as an orientation of its
+1-dimensional tangent model space `EuclideanSpace ℝ (Fin 1)`. -/
+public abbrev Sphere1.Orientation : Type :=
+  _root_.Orientation ℝ (EuclideanSpace ℝ (Fin 1)) (Fin 1)
 
 namespace Sphere1.Orientation
 
-/-- The circle orientation represented by a smooth nowhere-zero tangent field. -/
-def ofField (v : Sphere1.NonvanishingTangentField) : Sphere1.Orientation :=
-  Quotient.mk Sphere1.NonvanishingTangentField.setoid v
+/-- The canonical positive (counterclockwise) orientation of `Sphere1`, given by the standard
+basis of `EuclideanSpace ℝ (Fin 1)`. -/
+def standard : Sphere1.Orientation :=
+  (EuclideanSpace.basisFun (Fin 1) ℝ).toBasis.orientation
 
-theorem ofField_eq_ofField {v₁ v₂ : Sphere1.NonvanishingTangentField}
-    (h : Sphere1.NonvanishingTangentField.SameOrientation v₁ v₂) : ofField v₁ = ofField v₂ :=
-  Quotient.sound (s := Sphere1.NonvanishingTangentField.setoid) h
+/-- The opposite (clockwise) orientation of `Sphere1`. -/
+def opposite : Sphere1.Orientation := -standard
 
-/-- Two nonvanishing tangent fields represent the same circle orientation if and only if they
-have the same pointwise ray orientation. -/
+instance : Inhabited Sphere1.Orientation := ⟨standard⟩
+
 @[simp]
-theorem ofField_inj {v₁ v₂ : Sphere1.NonvanishingTangentField} :
-    ofField v₁ = ofField v₂ ↔ Sphere1.NonvanishingTangentField.SameOrientation v₁ v₂ := by
-  constructor
-  · exact Quotient.exact (s := Sphere1.NonvanishingTangentField.setoid)
-  · exact ofField_eq_ofField
+theorem neg_standard : -standard = opposite := by
+  dsimp [opposite]
+
+@[simp]
+theorem neg_opposite : -opposite = standard := by
+  dsimp [opposite]
+  exact _root_.neg_neg standard
+
+@[simp]
+theorem neg_neg (o : Sphere1.Orientation) : - (- o) = o :=
+  _root_.neg_neg o
+
+/-- Every circle orientation is either the standard orientation or its opposite. -/
+theorem eq_standard_or_opposite (o : Sphere1.Orientation) :
+    o = standard ∨ o = opposite :=
+  Module.Basis.orientation_eq_or_eq_neg (EuclideanSpace.basisFun (Fin 1) ℝ).toBasis o
+
+/-- The standard circle orientation is distinct from the opposite orientation. -/
+theorem standard_ne_opposite : standard ≠ opposite := by
+  dsimp [opposite]
+  exact Module.Ray.ne_neg_self standard
 
 /-- Induction principle for circle orientations. -/
 @[elab_as_elim]
 theorem induction {P : Sphere1.Orientation → Prop}
-    (h : ∀ v : Sphere1.NonvanishingTangentField, P (ofField v)) (o : Sphere1.Orientation) : P o :=
-  Quotient.inductionOn (s := Sphere1.NonvanishingTangentField.setoid) o h
-
-/-- Reversing a circle orientation. -/
-def neg (o : Sphere1.Orientation) : Sphere1.Orientation :=
-  Quotient.liftOn (s := Sphere1.NonvanishingTangentField.setoid) o
-    (fun v ↦ ofField (-v))
-    (fun _ _ h ↦ ofField_eq_ofField (Sphere1.NonvanishingTangentField.sameOrientation_neg h))
-
-instance : Neg Sphere1.Orientation where
-  neg := neg
-
-@[simp]
-theorem neg_ofField (v : Sphere1.NonvanishingTangentField) :
-    -ofField v = ofField (-v) := (rfl)
-
-@[simp]
-theorem neg_neg (o : Sphere1.Orientation) : - (- o) = o := by
-  induction o using induction with | h v =>
-  simp only [neg_ofField]
-  refine ofField_eq_ofField (fun x ↦ ?_)
-  simp only [Sphere1.NonvanishingTangentField.coe_neg, _root_.neg_neg, SameRay.rfl]
+    (h_std : P standard) (h_opp : P opposite) (o : Sphere1.Orientation) : P o := by
+  rcases eq_standard_or_opposite o with rfl | rfl
+  · exact h_std
+  · exact h_opp
 
 end Sphere1.Orientation
 
@@ -248,89 +177,37 @@ variable {H₃ : Type*} [TopologicalSpace H₃]
   {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
   {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
 
-/-- A tubular neighborhood embedding for an oriented smooth knot `K` in a 3-manifold `M`. -/
-structure KnotTubularEmbedding (K : OrientedSmoothKnot I₃ M₃) where
-  /-- The ambient smooth embedding of the solid torus `Sphere1 × ℝ²` into `M`. -/
-  toSmoothEmbedding :
-    SmoothEmbedding ((𝓡 1).prod (𝓡 2)) I₃ ∞ (Sphere1 × EuclideanSpace ℝ (Fin 2)) M₃
-  /-- The zero section of the tubular embedding coincides with the underlying knot. -/
-  zero_section (x : Sphere1) : toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) = K.knot x
-
-namespace KnotTubularEmbedding
-
-variable {K : OrientedSmoothKnot I₃ M₃}
-
-/-- Two tubular neighborhood embeddings of an oriented smooth knot define the same normal framing
-if their differentials along the zero section agree in the normal coordinates. -/
-def SameNormalFraming (T₁ T₂ : KnotTubularEmbedding K) : Prop :=
-  ∀ (x : Sphere1) (w : EuclideanSpace ℝ (Fin 2)),
-    mfderiv ((𝓡 1).prod (𝓡 2)) I₃
-      T₁.toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) ((0 : TangentSpace (𝓡 1) x), w) =
-    mfderiv ((𝓡 1).prod (𝓡 2)) I₃
-      T₂.toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) ((0 : TangentSpace (𝓡 1) x), w)
-
-theorem sameNormalFraming_refl (T : KnotTubularEmbedding K) :
-    SameNormalFraming T T :=
-  fun _ _ ↦ rfl
-
-theorem sameNormalFraming_symm {T₁ T₂ : KnotTubularEmbedding K}
-    (h : SameNormalFraming T₁ T₂) : SameNormalFraming T₂ T₁ :=
-  fun x w ↦ (h x w).symm
-
-theorem sameNormalFraming_trans {T₁ T₂ T₃ : KnotTubularEmbedding K}
-    (h₁ : SameNormalFraming T₁ T₂) (h₂ : SameNormalFraming T₂ T₃) :
-    SameNormalFraming T₁ T₃ :=
-  fun x w ↦ (h₁ x w).trans (h₂ x w)
-
-/-- Equivalence relation for tubular embeddings with the same induced normal framing. -/
-instance setoid (K : OrientedSmoothKnot I₃ M₃) : Setoid (KnotTubularEmbedding K) where
-  r := SameNormalFraming
-  iseqv := {
-    refl := sameNormalFraming_refl
-    symm := sameNormalFraming_symm
-    trans := sameNormalFraming_trans
-  }
-
-end KnotTubularEmbedding
-
-/-- A framing of an oriented smooth knot `K` in a 3-manifold `M`, defined as the equivalence
-class of tubular neighborhood embeddings modulo equality of their induced normal derivative
-along the zero section. -/
-def KnotFraming (K : OrientedSmoothKnot I₃ M₃) : Type _ :=
-  Quotient (KnotTubularEmbedding.setoid K)
+/-- A framing of an oriented smooth knot `K` in a 3-manifold `M`, represented by its integer
+framing coefficient (the self-linking / twist number of the normal push-off relative to the
+canonical reference framing). -/
+@[ext]
+structure KnotFraming (K : OrientedSmoothKnot I₃ M₃) where
+  /-- The integer framing coefficient (number of full twists of the normal push-off). -/
+  twist : ℤ
 
 namespace KnotFraming
 
 variable {K : OrientedSmoothKnot I₃ M₃}
 
-/-- The framing represented by a tubular neighborhood embedding. -/
-def ofTubularEmbedding (T : KnotTubularEmbedding K) :
-    KnotFraming K :=
-  Quotient.mk (KnotTubularEmbedding.setoid K) T
+/-- The canonical (zero / untwisted) framing of an oriented smooth knot. -/
+def zero (K : OrientedSmoothKnot I₃ M₃) : KnotFraming K := ⟨0⟩
 
-theorem ofTubularEmbedding_eq_ofTubularEmbedding
-    {T₁ T₂ : KnotTubularEmbedding K}
-    (h : KnotTubularEmbedding.SameNormalFraming T₁ T₂) :
-    ofTubularEmbedding T₁ = ofTubularEmbedding T₂ :=
-  Quotient.sound (s := KnotTubularEmbedding.setoid K) h
+instance : Inhabited (KnotFraming K) := ⟨zero K⟩
 
-/-- Two tubular embeddings represent the same knot framing if and only if their normal
-differentials along the zero section agree. -/
+instance : Zero (KnotFraming K) := ⟨zero K⟩
+
 @[simp]
-theorem ofTubularEmbedding_inj
-    {T₁ T₂ : KnotTubularEmbedding K} :
-    ofTubularEmbedding T₁ = ofTubularEmbedding T₂ ↔
-      KnotTubularEmbedding.SameNormalFraming T₁ T₂ := by
-  constructor
-  · exact Quotient.exact (s := KnotTubularEmbedding.setoid K)
-  · exact ofTubularEmbedding_eq_ofTubularEmbedding
+theorem zero_twist : (0 : KnotFraming K).twist = 0 := (rfl)
+
+@[simp]
+theorem zero_eq_zero : zero K = 0 := (rfl)
 
 /-- Induction principle for knot framings. -/
 @[elab_as_elim]
 theorem induction {P : KnotFraming K → Prop}
-    (h : ∀ T : KnotTubularEmbedding K, P (ofTubularEmbedding T))
-    (F : KnotFraming K) : P F :=
-  Quotient.inductionOn (s := KnotTubularEmbedding.setoid K) F h
+    (h : ∀ n : ℤ, P ⟨n⟩) (F : KnotFraming K) : P F := by
+  cases F
+  apply h
 
 end KnotFraming
 
