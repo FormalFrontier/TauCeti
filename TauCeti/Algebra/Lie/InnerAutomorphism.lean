@@ -5,7 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Algebra.Rat
+public import Mathlib.Algebra.Lie.AdjointAction.Basic
 public import Mathlib.Algebra.Lie.AdjointAction.Derivation
+import Mathlib.Algebra.Ring.Action.ConjAct
 
 public section
 
@@ -17,6 +19,22 @@ base in which the factorials are invertible the finite sum `exp (ad x) = ∑ (i 
 automorphism of `L`. These are the generators of the group `Int L` of inner automorphisms, and they
 are the Lie-algebra shadow of the root subgroups of a Chevalley group: for a root vector `e` of a
 split semisimple Lie algebra, `exp (ad e)` is the adjoint action of `x_α(1)`.
+
+For an element `x` of an associative `ℚ`-algebra, this shadow is identified with the actual
+conjugation action of the nilpotent exponential:
+
+```text
+exp (ad x) y = exp(x) y exp(-x).
+```
+
+As an application, if `[x, y] = z` and `z` commutes with both `x` and `y`, then
+
+```text
+exp(x) exp(y) = exp(y) exp(z) exp(x).
+```
+
+This is the central-commutator case of the Chevalley commutator formula. It is the relation for an
+`A₂` pair of root vectors and is also a building block for the longer rank-two formulas.
 
 Mathlib already exponentiates a nilpotent *derivation* (`LieDerivation.exp`) and knows that a root
 vector is `ad`-nilpotent (`LieAlgebra.isNilpotent_ad_of_mem_rootSpace`). This file specialises the
@@ -50,6 +68,10 @@ restricting scalars along `algebraMap ℚ K`.
 * `TauCeti.expAd_apply_of_lie_eq_zero`, `TauCeti.expAd_apply_of_lie_lie_eq_zero`,
   `TauCeti.expAd_apply_of_lie_lie_lie_eq_zero`: the resulting one-, two- and three-term formulas.
 * `TauCeti.expAd_apply_self`: `exp (ad x)` fixes `x`.
+* `TauCeti.expAd_apply_eq_exp_mul_exp_neg`: on an associative algebra, `exp (ad x)` is
+  conjugation by `exp x`.
+* `TauCeti.exp_mul_exp_eq_exp_mul_exp_mul_of_lie_eq_of_commute`: the exponential relation for a
+  central commutator.
 
 ## References
 
@@ -122,5 +144,116 @@ lemma expAd_apply_of_lie_lie_lie_eq_zero {x y : L} (hx : IsNilpotent (ad K L x))
     expAd x hx y = y + ⁅x, y⁆ + (2⁻¹ : ℚ) • ⁅x, ⁅x, y⁆⁆ := by
   rw [expAd_apply_eq_sum (k := 3) hx (by simpa [pow_succ] using hy)]
   simp [Finset.sum_range_succ, pow_succ]
+
+/-! ## Conjugation by nilpotent exponentials -/
+
+section Associative
+
+attribute [local instance 100] LieRing.ofAssociativeRing
+
+variable {A : Type*} [Ring A] [Algebra ℚ A]
+
+/-- In an associative `ℚ`-algebra, the inner automorphism `exp (ad x)` is conjugation by the
+nilpotent exponential `exp x`.
+
+The inverse of `exp x` is written explicitly as `exp (-x)`. This form is the bridge between the
+Lie-algebra automorphisms above and root subgroup elements in a Chevalley group. -/
+theorem expAd_apply_eq_exp_mul_exp_neg {x y : A} (hx : IsNilpotent x) :
+    expAd (K := ℚ) x (LieAlgebra.ad_nilpotent_of_nilpotent (R := ℚ) hx) y =
+      IsNilpotent.exp x * y * IsNilpotent.exp (-x) := by
+  rw [expAd_apply, LieAlgebra.ad_eq_lmul_left_sub_lmul_right (R := ℚ)]
+  have hleft : IsNilpotent (LinearMap.mulLeft ℚ x) := by
+    rwa [LinearMap.isNilpotent_mulLeft_iff]
+  have hright : IsNilpotent (LinearMap.mulRight ℚ x) := by
+    rwa [LinearMap.isNilpotent_mulRight_iff]
+  have had : ((LinearMap.mulLeft ℚ : A → Module.End ℚ A) -
+        (LinearMap.mulRight ℚ : A → Module.End ℚ A)) x =
+      LinearMap.mulLeft ℚ x - LinearMap.mulRight ℚ x := rfl
+  rw [had, sub_eq_add_neg, IsNilpotent.exp_add_of_commute
+    ((LinearMap.commute_mulLeft_right x x).neg_right) hleft hright.neg]
+  have hl := IsNilpotent.map_exp hx (Algebra.lsmul ℚ ℚ A)
+  have hxop : IsNilpotent (MulOpposite.op (-x)) := hx.neg.op
+  let rsmul : Aᵐᵒᵖ →ₐ[ℚ] Module.End ℚ A := Algebra.lsmul ℚ ℚ A
+  have hr := IsNilpotent.map_exp hxop rsmul
+  have hmulLeft : (Algebra.lsmul ℚ ℚ A) x = LinearMap.mulLeft ℚ x := by
+    ext a
+    simp
+  have hmulRight : rsmul (MulOpposite.op (-x)) = LinearMap.mulRight ℚ (-x) := by
+    ext a
+    rfl
+  have hexpOp : MulOpposite.unop (IsNilpotent.exp (MulOpposite.op (-x))) =
+      IsNilpotent.exp (-x) := by
+    obtain ⟨k, hk⟩ := hx.neg
+    rw [IsNilpotent.exp_eq_sum hk,
+      IsNilpotent.exp_eq_sum
+        (show MulOpposite.op (-x) ^ k = 0 by simpa using congrArg MulOpposite.op hk)]
+    simp
+  have hl' (a : A) : IsNilpotent.exp (LinearMap.mulLeft ℚ x) a =
+      IsNilpotent.exp x * a := by
+    rw [← hmulLeft]
+    simpa [Algebra.smul_def] using LinearMap.congr_fun hl.symm a
+  have hr' (a : A) : IsNilpotent.exp (LinearMap.mulRight ℚ (-x)) a =
+      a * IsNilpotent.exp (-x) := by
+    calc
+      IsNilpotent.exp (LinearMap.mulRight ℚ (-x)) a =
+          IsNilpotent.exp (rsmul (MulOpposite.op (-x))) a := by rw [hmulRight]
+      _ = rsmul (IsNilpotent.exp (MulOpposite.op (-x))) a :=
+        LinearMap.congr_fun hr.symm a
+      _ = a * MulOpposite.unop (IsNilpotent.exp (MulOpposite.op (-x))) := rfl
+      _ = a * IsNilpotent.exp (-x) := by rw [hexpOp]
+  have hnegRight : -(LinearMap.mulRight ℚ x) = LinearMap.mulRight ℚ (-x) := by
+    ext a
+    simp
+  rw [Module.End.mul_apply, hnegRight, hr', hl']
+  exact (mul_assoc _ _ _).symm
+
+private theorem exp_mul_exp_mul_exp_neg {x y : A} (hx : IsNilpotent x)
+    (hy : IsNilpotent y) :
+    IsNilpotent.exp x * IsNilpotent.exp y * IsNilpotent.exp (-x) =
+      IsNilpotent.exp
+        (expAd (K := ℚ) x (LieAlgebra.ad_nilpotent_of_nilpotent (R := ℚ) hx) y) := by
+  let u : Aˣ :=
+    { val := IsNilpotent.exp x
+      inv := IsNilpotent.exp (-x)
+      val_inv := IsNilpotent.exp_mul_exp_neg_self hx
+      inv_val := IsNilpotent.exp_neg_mul_exp_self hx }
+  let e : A →+* A :=
+    MulSemiringAction.toRingHom (ConjAct Aˣ) A (ConjAct.toConjAct u)
+  have hmap := IsNilpotent.map_exp hy e
+  calc
+    IsNilpotent.exp x * IsNilpotent.exp y * IsNilpotent.exp (-x) =
+        e (IsNilpotent.exp y) := by simp [e, u, ConjAct.units_smul_def]
+    _ = IsNilpotent.exp (e y) := hmap
+    _ = IsNilpotent.exp
+        (expAd (K := ℚ) x (LieAlgebra.ad_nilpotent_of_nilpotent (R := ℚ) hx) y) := by
+      rw [expAd_apply_eq_exp_mul_exp_neg hx]
+      simp [e, u, ConjAct.units_smul_def]
+
+/-- **The central-commutator exponential relation.** If `[x, y] = z`, the element `z` commutes
+with `x` and `y`, and all three elements are nilpotent, then
+`exp(x) exp(y) = exp(y) exp(z) exp(x)`.
+
+For root vectors whose roots form an `A₂` pair, this is the Chevalley commutator relation. The
+hypotheses are stated for arbitrary elements of an associative `ℚ`-algebra so the result also
+applies directly to their images in finite-dimensional representations. -/
+theorem exp_mul_exp_eq_exp_mul_exp_mul_of_lie_eq_of_commute {x y z : A}
+    (hxy : ⁅x, y⁆ = z) (hxz : Commute x z) (hyz : Commute y z)
+    (hx : IsNilpotent x) (hy : IsNilpotent y) (hz : IsNilpotent z) :
+    IsNilpotent.exp x * IsNilpotent.exp y =
+      IsNilpotent.exp y * IsNilpotent.exp z * IsNilpotent.exp x := by
+  have hconj : IsNilpotent.exp x * IsNilpotent.exp y * IsNilpotent.exp (-x) =
+      IsNilpotent.exp y * IsNilpotent.exp z := by
+    rw [exp_mul_exp_mul_exp_neg hx hy,
+      expAd_apply_of_lie_lie_eq_zero
+        (LieAlgebra.ad_nilpotent_of_nilpotent (R := ℚ) hx) (by rw [hxy]; exact hxz.lie_eq),
+      hxy, IsNilpotent.exp_add_of_commute hyz hy hz]
+  calc
+    IsNilpotent.exp x * IsNilpotent.exp y =
+        (IsNilpotent.exp x * IsNilpotent.exp y * IsNilpotent.exp (-x)) *
+          IsNilpotent.exp x := by
+            rw [mul_assoc, IsNilpotent.exp_neg_mul_exp_self hx, mul_one]
+    _ = IsNilpotent.exp y * IsNilpotent.exp z * IsNilpotent.exp x := by rw [hconj]
+
+end Associative
 
 end TauCeti
