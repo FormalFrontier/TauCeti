@@ -66,12 +66,8 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   -- `GroupLieAlgebra I G` is definitionally the model space `E`, so the tangent orbit is
   -- model-space-valued here.
   let T : G → E := fun g => show E from tangentAd (I := I) g (eIso Y)
-  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T := by
-    rw [show T = fun g =>
-        (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) (eIso Y) by
-      funext g
-      exact tangentAd_apply (I := I) g (eIso Y)]
-    exact contMDiff_adjointContinuousLinearMap_apply_right (I := I) (G := G) (eIso Y)
+  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
+    contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
   have hEq : (fun g : G => Ad (I := I) g Y) = L ∘ T := by
     funext g
     apply eIso.injective
