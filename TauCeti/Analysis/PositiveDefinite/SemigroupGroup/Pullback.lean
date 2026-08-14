@@ -81,10 +81,17 @@ equivalences, continuous linear maps, and similar maps. -/
 theorem comp_spatial {Φ : Type*} [FunLike Φ W V] [AddHomClass Φ W V]
     (hF : IsSemigroupGroupPD F) (φ : Φ) :
     IsSemigroupGroupPD fun p : ℝ≥0 × W => F (p.1, φ p.2) := by
-  refine IsSemigroupGroupPD.of_isPositiveDefiniteKernel ?_
-  have hK := isPositiveDefiniteKernel_comp hF.isPositiveDefiniteKernel
+  refine IsSemigroupGroupPD.of_posSemidef ?_
+  have h := hF.posSemidef.submatrix
     (fun p : ℝ≥0 × W => (p.1, φ p.2))
-  simpa [map_sub_of_addHomClass φ] using hK
+  have heq : Matrix.submatrix
+      (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+      (fun p : ℝ≥0 × W => (p.1, φ p.2)) (fun p => (p.1, φ p.2)) =
+      fun p q : ℝ≥0 × W => F (p.1 + q.1, φ (p.2 - q.2)) := by
+    ext p q
+    rw [Matrix.submatrix_apply, Matrix.of_apply]
+    rw [map_sub_of_addHomClass]
+  exact heq ▸ h
 
 /-- The explicit `AddMonoidHom` form of spatial pullback. -/
 theorem comp_spatial_addMonoidHom (hF : IsSemigroupGroupPD F) (φ : W →+ V) :
@@ -104,11 +111,19 @@ theorem of_comp_spatial_surjective {Φ : Type*} [FunLike Φ W V] [AddHomClass Φ
     (hcomp : IsSemigroupGroupPD fun p : ℝ≥0 × W => F (p.1, φ p.2)) :
     IsSemigroupGroupPD F := by
   classical
-  refine IsSemigroupGroupPD.of_isPositiveDefiniteKernel ?_
+  refine IsSemigroupGroupPD.of_posSemidef ?_
   choose w hw using hsurj
-  have hK := isPositiveDefiniteKernel_comp hcomp.isPositiveDefiniteKernel
+  have h := hcomp.posSemidef.submatrix
     (fun p : ℝ≥0 × V => (p.1, w p.2))
-  simpa [hw, map_sub_of_addHomClass φ] using hK
+  have heq : Matrix.submatrix
+      (Matrix.of fun p q : ℝ≥0 × W =>
+        (fun x : ℝ≥0 × W => F (x.1, φ x.2)) (p.1 + q.1, p.2 - q.2))
+      (fun p : ℝ≥0 × V => (p.1, w p.2)) (fun p => (p.1, w p.2)) =
+      fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
+    ext p q
+    rw [Matrix.submatrix_apply, Matrix.of_apply]
+    simp [hw, map_sub_of_addHomClass φ]
+  exact heq ▸ h
 
 /-- Along a surjective spatial additive homomorphism, a function is semigroup-group positive
 definite if and only if its spatial pullback is. -/

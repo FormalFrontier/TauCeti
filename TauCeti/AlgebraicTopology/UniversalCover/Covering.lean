@@ -180,6 +180,25 @@ theorem liftPath_apply_one_eq_ofBasedPath_append
     ofBasedPath x₀ (BasedPath.append α γ)
   exact ofBasedPath_append_initialSegmentFamily_one γ
 
+/-- **A loop whose appended class returns to `α` is nullhomotopic.** If appending the loop `γ` to
+`α` leaves the class of `α` unchanged in the universal cover, then `γ` is trivial in the
+path-homotopy quotient. -/
+private theorem quotient_mk_eq_refl_of_ofBasedPath_append_eq {α : BasedPath x₀}
+    (γ : Path (BasedPath.endpoint α) (BasedPath.endpoint α))
+    (h_end : ofBasedPath x₀ (BasedPath.append α γ) = ofBasedPath x₀ α) :
+    (Path.Homotopic.Quotient.mk γ : Path.Homotopic.Quotient
+        (BasedPath.endpoint α) (BasedPath.endpoint α)) =
+      Path.Homotopic.Quotient.refl (BasedPath.endpoint α) := by
+  apply Quotient.sound
+  apply Path.Homotopic.trans_left_cancel (e := α.toPath)
+  have h := toPath_homotopic_of_ofBasedPath_eq h_end
+  simp only [BasedPath.toPath_append] at h
+  have h' : Path.Homotopic (α.toPath.trans γ) α.toPath := by
+    convert h using 2
+    ext t
+    rfl
+  exact h'.trans (Path.Homotopic.trans_refl α.toPath).symm
+
 /-- The universal cover is simply connected. -/
 instance simplyConnectedSpace [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] (x₀ : X) :
@@ -203,22 +222,7 @@ instance simplyConnectedSpace [LocallyPathConnectedSpace X] [PathConnectedSpace 
   have h_end : ofBasedPath x₀ (BasedPath.append α γ) = ofBasedPath x₀ α := by
     rw [← liftPath_apply_one_eq_ofBasedPath_append, ← hp_eq_lift]
     exact p.target
-  have h_append_eq :
-      Path.Homotopic.Quotient.mk (α.toPath.trans γ) = Path.Homotopic.Quotient.mk α.toPath := by
-    have h_end' : ofBasedPath x₀ (BasedPath.ofPath (α.toPath.trans γ)) =
-        ofBasedPath x₀ (BasedPath.ofPath α.toPath) := by
-      rw [BasedPath.ofPath_toPath_self]
-      exact h_end
-    rw [ofBasedPath_ofPath, ofBasedPath_ofPath] at h_end'
-    simpa using h_end'
-  have hγ_null :
-      (Path.Homotopic.Quotient.mk γ : Path.Homotopic.Quotient
-          (BasedPath.endpoint α) (BasedPath.endpoint α)) =
-        Path.Homotopic.Quotient.refl (BasedPath.endpoint α) := by
-    apply Quotient.sound
-    apply Path.Homotopic.trans_left_cancel (e := α.toPath)
-    exact (Path.Homotopic.Quotient.exact h_append_eq).trans
-      (Path.Homotopic.trans_refl α.toPath).symm
+  have hγ_null := quotient_mk_eq_refl_of_ofBasedPath_append_eq γ h_end
   rw [← Path.Homotopic.Quotient.eq]
   apply (isCoveringMap x₀).injective_path_homotopic_map
     (ofBasedPath x₀ α) (ofBasedPath x₀ α)
