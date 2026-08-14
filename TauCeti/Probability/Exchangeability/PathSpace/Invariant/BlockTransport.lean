@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
+public import TauCeti.Probability.Exchangeability.Cylinder
 
 /-!
 # Moving a block through a reindexing, over an invariant event
@@ -30,6 +31,10 @@ integral identity, which needs only `T ⁻¹' A = A`.
   increasing block and reading the prefix push `ρ.restrict A` to the same measure, so Bochner and
   `Lᵖ` statements follow as well. The unrestricted counterpart is the existing
   `ContractableLaw.map_prefixProj_of_strictMono`.
+
+* `ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono` — the block-cylinder
+  corollary: over an invariant event, the mass of a block cylinder does not depend on which
+  strictly increasing selection cuts it, and may be read at the prefix.
 
 `ℝ≥0∞` statements are not restated here: a consumer wanting one applies `.lintegral_comp` to the
 `MeasurePreserving` above, or rewrites with `lintegral_map` through the measure equality.
@@ -115,6 +120,36 @@ theorem ContractableLaw.map_restrict_prefixProj_of_strictMono_of_measurableSet_i
     funext x i
     simp only [Function.comp_apply, prefixProj_apply, hφ_eq]
   rw [hcomp, ← Measure.map_map (measurable_prefixProj m) hmp.measurable, hmp.map_eq]
+
+/-- **The mass of a block cylinder met with an invariant event may be read at the prefix.**
+
+The measure-level corollary of the transport above: `blockLaw_blockCylinder` identifies each side
+with the block law of the restricted measure on a rectangle, and those two block laws are equal. -/
+theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ)
+    {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
+    (hB : ∀ i, MeasurableSet (B i))
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
+    ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
+      = ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B) := by
+  have hAm : MeasurableSet A := MeasurableSpace.invariants_le _ _ hA
+  have hcoord : ∀ (s : Fin r → ℕ) (i : Fin r),
+      AEMeasurable (fun x : ℕ → α => x (s i)) (ρ.restrict A) :=
+    fun s i => (measurable_pi_apply (s i)).aemeasurable
+  -- Each side is the block law of the restricted measure, read on a rectangle.
+  have hkey : ∀ s : Fin r → ℕ,
+      ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) s B)
+        = blockLaw (ρ.restrict A) (fun j (x : ℕ → α) => x j) s (Set.univ.pi B) := by
+    intro s
+    rw [blockLaw_blockCylinder _ (hcoord s) hB, Measure.restrict_apply
+      (measurableSet_blockCylinder (fun i => measurable_pi_apply _) hB), Set.inter_comm]
+  rw [hkey k, hkey (fun i : Fin r => (i : ℕ))]
+  -- The two block laws agree, by the transport of the restricted law onto the prefix.
+  have hprefix : (fun (x : ℕ → α) (i : Fin r) => x (i : ℕ)) = prefixProj α r :=
+    funext fun x => funext fun i => (prefixProj_apply r x i).symm
+  rw [blockLaw_def, blockLaw_def, hprefix]
+  exact congrArg (fun μ : Measure (Fin r → α) => μ (Set.univ.pi B))
+    (hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA)
 
 end Probability
 

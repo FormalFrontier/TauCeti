@@ -19,12 +19,14 @@ strictly increasing selection is used, and may be computed at the prefix `0, 1, 
 
 ## Main results
 
-Both in the `ContractableLaw` namespace:
+* `measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_prefix` (in the
+  `ContractableLaw` namespace) — the specialisation of the generic block reduction to a test event
+  cut out by the witness.
 
-* `measure_inter_blockCylinder_eq_prefix_of_strictMono` — over any shift-invariant event, an
-  arbitrary strictly increasing block has the same mass as the prefix block;
-* `measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_prefix` — the
-  specialisation to a test event cut out by the witness.
+The generic statement, for an arbitrary shift-invariant event, is
+`ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono` in
+`PathSpace/Invariant/BlockTransport.lean`: it mentions no de Finetti route and belongs with the
+reusable transport API.
 
 ## Why this route does not need conditional expectations here
 
@@ -67,38 +69,11 @@ variable {α : Type*} [MeasurableSpace α]
 
 namespace ContractableLaw
 
-/-- **An arbitrary strictly increasing block may be read at the prefix**, over any shift-invariant
-event.
+/-- The block reduction over a test event cut out by the invariant conditional law.
 
-The event being invariant, the identity holds at the level of the measure itself: both selections
-push `ρ.restrict A` to the same law on `Fin r → α`, by
-`ContractableLaw.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants`. No conditional
-expectation and no integrability hypothesis appears. -/
-theorem measure_inter_blockCylinder_eq_prefix_of_strictMono
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ)
-    {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
-    (hB : ∀ i, MeasurableSet (B i))
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
-    ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
-      = ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B) := by
-  have hpi : MeasurableSet (Set.univ.pi B) := MeasurableSet.univ_pi hB
-  have hsel : ∀ s : Fin r → ℕ, Measurable fun (x : ℕ → α) (i : Fin r) => x (s i) :=
-    fun s => measurable_pi_lambda _ fun i => measurable_pi_apply (s i)
-  -- Cross the `prefixProj` wrapper through its API, not by unfolding the definition.
-  have hprefix : (fun (x : ℕ → α) (i : Fin r) => x (i : ℕ)) = prefixProj α r :=
-    funext fun x => funext fun i => (prefixProj_apply r x i).symm
-  -- Each side is the pushforward of the restricted law, read on the rectangle.
-  have hkey : ∀ s : Fin r → ℕ,
-      ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) s B)
-        = ((ρ.restrict A).map fun (x : ℕ → α) (i : Fin r) => x (s i)) (Set.univ.pi B) := by
-    intro s
-    rw [Measure.map_apply (hsel s) hpi, Measure.restrict_apply ((hsel s) hpi),
-      blockCylinder_eq_preimage_univ_pi, Set.inter_comm]
-  rw [hkey k, hkey (fun i : Fin r => (i : ℕ)), hprefix]
-  exact congrArg (fun μ : Measure (Fin r → α) => μ (Set.univ.pi B))
-    (hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA)
-
-/-- The same, over a test event cut out by the invariant conditional law. -/
+The generic statement is `ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono`, in
+`PathSpace/Invariant/BlockTransport.lean`; all this adds is that the witness cuts out an
+invariants-measurable event. -/
 theorem measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_prefix
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
