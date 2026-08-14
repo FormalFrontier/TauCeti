@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- The named additive presentation is used explicitly in the scheme morphism.
-public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
 -- The ambient root subgroup supplies the matrix calculation and the named `GLₙ` presentation.
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
 -- The determinant-one quotient supplies the special-linear coordinate Hopf algebra and points.
