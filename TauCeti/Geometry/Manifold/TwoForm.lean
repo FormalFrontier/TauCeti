@@ -172,13 +172,13 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
           Trivial.continuousLinearMapAt_trivialization, TangentBundle.symmL_model_space,
           ContinuousLinearMap.id_comp]
         rfl
-      rw [show (fun y => ContinuousLinearMap.inCoordinates V (TangentSpace 𝓘(ℝ, V))
-        (V →L[ℝ] ℝ) (fun b : V => TangentSpace 𝓘(ℝ, V) b →L[ℝ] ℝ) x y x y B) = coord
-          from rfl, hcoord]
+      change ContMDiffAt 𝓘(ℝ, V) 𝓘(ℝ, V →L[ℝ] V →L[ℝ] ℝ) ∞ coord x
+      rw [hcoord]
       exact contMDiffAt_const⟩
   isAlt _ v := hB v
 
 /-- The smooth bilinear section of a constant two-form has its defining value in every fiber. -/
+@[simp]
 lemma const_toContMDiffSection_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) (x : V) :
     (const B hB).toContMDiffSection x = B :=

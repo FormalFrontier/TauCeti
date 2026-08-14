@@ -163,6 +163,7 @@ lemma constSmooth_apply (omegaForm : SymplecticForm V) (x v w : V) :
   SmoothTwoForm.const_apply _ _ x v w
 
 /-- A constant smooth symplectic form is fiberwise nondegenerate. -/
+@[simp]
 lemma isNondegenerate_constSmooth (omegaForm : SymplecticForm V) :
     omegaForm.constSmooth.IsNondegenerate := fun x => by
   have hx : omegaForm.constSmooth.bilinFormAt x = omegaForm.toBilinForm :=
@@ -172,17 +173,21 @@ lemma isNondegenerate_constSmooth (omegaForm : SymplecticForm V) :
 
 /-- Tameness of a pair of constant smooth structures is exactly tameness of the underlying linear
 pair. -/
+@[simp]
 lemma tames_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComplexStructure V} :
     omegaForm.constSmooth.Tames J.constSmooth ↔ omegaForm.Tames J := by
   constructor
   · intro h v hv
     simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h 0 v hv
   · intro h x v hv
+    -- On the self-model manifold `TangentSpace 𝓘(ℝ, V) x` is definitionally `V`, so there is
+    -- no identification map or transport lemma to rewrite by before using the exposed API.
     change V at v
     simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h v hv
 
 /-- Invariance of a pair of constant smooth structures is exactly invariance of the underlying
 linear pair. -/
+@[simp]
 lemma invariant_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComplexStructure V} :
     omegaForm.constSmooth.Invariant J.constSmooth ↔ omegaForm.Invariant J := by
   rw [SymplecticForm.invariant_iff]
@@ -190,11 +195,13 @@ lemma invariant_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComple
   · intro h v w
     simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h 0 v w
   · intro h x v w
+    -- As above, both tangent vectors are definitionally vectors in the self-model space.
     change V at v w
     simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h v w
 
 /-- Compatibility of a pair of constant smooth structures is exactly compatibility of the
 underlying linear pair. -/
+@[simp]
 lemma compatible_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComplexStructure V} :
     omegaForm.constSmooth.Compatible J.constSmooth ↔ omegaForm.Compatible J := by
   rw [SymplecticForm.compatible_iff]

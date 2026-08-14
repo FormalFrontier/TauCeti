@@ -212,6 +212,7 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
 
 /-- The endomorphism section of a constant smooth almost complex structure has its defining value
 in every fiber. -/
+@[simp]
 lemma const_toEndomorphism_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x : V) :
     (const Jc hJc).toEndomorphism x = Jc :=
