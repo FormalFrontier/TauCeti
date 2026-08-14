@@ -126,6 +126,7 @@ theorem ne_zero (hα : α.IsNonZero) : x α ≠ 0 := (hx.isSl2Triple α hα).e_n
 
 /-- The Killing pairing of opposite vectors in a normalised root-vector system is
 `2 / α((cartanEquivDual H)⁻¹ α)`. -/
+@[simp]
 theorem killingForm_root_neg_eq (hα : α.IsNonZero) :
     killingForm K L (x α) (x (-α)) =
       2 * (α ((cartanEquivDual H).symm α))⁻¹ := by
