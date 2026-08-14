@@ -6,10 +6,10 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.Sl2.Associative
+public import Mathlib.RingTheory.Binomial
 public import TauCeti.Algebra.Module.Rat
-public import TauCeti.RingTheory.Binomial
-public import TauCeti.RingTheory.DividedPowers.Commutation
-import Mathlib.Tactic.Module
+import TauCeti.RingTheory.Binomial
+import TauCeti.RingTheory.DividedPowers.Commutation
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -37,8 +37,8 @@ combines their Cartan coefficients without division.
 
 * `TauCeti.Sl2.dividedPower_e_mul_dividedPower_f`: the rank-one Kostant straightening formula in an
   arbitrary associative `ℚ`-algebra satisfying the three displayed commutator relations.
-* `TauCeti.Sl2.ι_dividedPower_e_mul_dividedPower_f`: its specialization to the canonical map into
-  a universal enveloping algebra, stated from the corresponding Lie-bracket relations.
+* `TauCeti.Sl2.dividedPower_ι_e_mul_dividedPower_ι_f`: its specialization to the canonical map
+  into a universal enveloping algebra, stated from the corresponding Lie-bracket relations.
 
 ## References
 
@@ -414,7 +414,7 @@ variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
 
 /-- The rank-one Kostant straightening formula in a universal enveloping algebra over `ℚ`,
 stated from the three `sl₂` Lie-bracket relations. -/
-theorem ι_dividedPower_e_mul_dividedPower_f (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+theorem dividedPower_ι_e_mul_dividedPower_ι_f (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
     (hhf : ⁅h, f⁆ = -(2 • f)) (m n : ℕ) :
     dividedPower m (ι ℚ e) * dividedPower n (ι ℚ f) =
       ∑ k ∈ range (min m n + 1),
