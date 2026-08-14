@@ -11,6 +11,7 @@ public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
 public import TauCeti.AlgebraicTopology.UniversalCover.ComplexCircleFundamentalGroup
 public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Basic
+public import TauCeti.Geometry.Sphere.LinearIsometry
 
 /-!
 # The fundamental group of the real projective line
@@ -68,23 +69,11 @@ noncomputable section
 /-- The unit sphere in the two-dimensional real Euclidean space is homeomorphic to Mathlib's
 complex unit circle. -/
 def sphereOneHomeomorphCircle :
-    sphere (0 : EuclideanSpace ℝ (Fin 2)) 1 ≃ₜ Circle where
-  toFun x :=
-    ⟨Complex.orthonormalBasisOneI.repr.symm x,
-      mem_sphere_zero_iff_norm.mpr <| by
-        rw [LinearIsometryEquiv.norm_map]
-        exact mem_sphere_zero_iff_norm.mp x.property⟩
-  invFun z :=
-    ⟨Complex.orthonormalBasisOneI.repr z,
-      mem_sphere_zero_iff_norm.mpr <| by
-        rw [LinearIsometryEquiv.norm_map]
-        exact mem_sphere_zero_iff_norm.mp z.property⟩
-  left_inv x := Subtype.ext <| Complex.orthonormalBasisOneI.repr.apply_symm_apply x
-  right_inv z := Circle.ext <| Complex.orthonormalBasisOneI.repr.symm_apply_apply z
-  continuous_toFun :=
-    (Complex.orthonormalBasisOneI.repr.symm.continuous.comp continuous_subtype_val).subtype_mk _
-  continuous_invFun :=
-    (Complex.orthonormalBasisOneI.repr.continuous.comp continuous_subtype_val).subtype_mk _
+    sphere (0 : EuclideanSpace ℝ (Fin 2)) 1 ≃ₜ Circle :=
+  (IsometryEquiv.mk
+    (LinearIsometryEquiv.unitSphereEquiv Complex.orthonormalBasisOneI.repr.symm)
+    (LinearIsometryEquiv.isometry_unitSphereEquiv
+      Complex.orthonormalBasisOneI.repr.symm)).toHomeomorph
 
 /-- The Euclidean-circle homeomorphism is the standard orthonormal-coordinate isometry on
 underlying points. -/
@@ -92,7 +81,7 @@ underlying points. -/
 lemma sphereOneHomeomorphCircle_coe
     (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     (sphereOneHomeomorphCircle x : ℂ) = Complex.orthonormalBasisOneI.repr.symm x :=
-  (rfl)
+  LinearIsometryEquiv.coe_unitSphereEquiv_apply Complex.orthonormalBasisOneI.repr.symm x
 
 /-- The Euclidean-circle homeomorphism intertwines the antipodal maps. -/
 @[simp]
@@ -142,10 +131,6 @@ lemma surjective_toCircle : Function.Surjective toCircle := by
   refine ⟨mk 1 (sphereOneHomeomorphCircle.symm w), ?_⟩
   rw [toCircle_mk, sphereOneHomeomorphCircle.apply_symm_apply]
   exact hw
-
-/-- Real projective one-space is compact as the continuous image of the compact unit circle. -/
-instance instCompactSpaceOne : CompactSpace (RealProjectiveSpace 1) :=
-  Function.Surjective.compactSpace (continuous_mk 1) (mk_surjective 1)
 
 /-- **The real projective line is homeomorphic to the circle.** The map sends the antipodal class
 of a unit vector, viewed as a complex number `z`, to `z²`. -/
