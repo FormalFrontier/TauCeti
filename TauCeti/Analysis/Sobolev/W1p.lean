@@ -375,6 +375,10 @@ def W1p.valueL : W1p mu Omega p →L[ℝ] Lp ℝ p (mu.restrict Omega) :=
 def W1p.value (u : W1p mu Omega p) : Lp ℝ p (mu.restrict Omega) :=
   W1p.valueL u
 
+omit [FiniteDimensional ℝ E] in
+@[simp]
+theorem W1p.valueL_apply (u : W1p mu Omega p) : W1p.valueL u = W1p.value u := (rfl)
+
 /-- The continuous linear projection from `W1p` to its `Lᵖ` weak-gradient component. -/
 def W1p.gradientL : W1p mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
   Sobolev1JetLp.gradientL.comp (w1pSubmodule mu Omega p).toSubmodule.subtypeL
@@ -382,6 +386,10 @@ def W1p.gradientL : W1p mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
 /-- The `Lᵖ` weak-gradient component of a Sobolev function. -/
 def W1p.gradient (u : W1p mu Omega p) : Lp E p (mu.restrict Omega) :=
   W1p.gradientL u
+
+omit [FiniteDimensional ℝ E] in
+@[simp]
+theorem W1p.gradientL_apply (u : W1p mu Omega p) : W1p.gradientL u = W1p.gradient u := (rfl)
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
     [Fact (1 <= p)] in
@@ -460,6 +468,25 @@ theorem W1p.hasWeakFDerivOn (u : W1p mu Omega p) :
     HasWeakFDerivOn mu Omega (W1p.value u)
       (fun x => innerSL ℝ (W1p.gradient u x)) :=
   (mem_w1pSubmodule_iff_hasWeakFDerivOn u.1).mp u.2
+
+/-- Two Sobolev functions are equal when their `Lᵖ` value components are equal.  Uniqueness of
+weak derivatives determines the gradient component. -/
+@[ext]
+theorem W1p.ext_value {u v : W1p mu Omega p} (hvalue : W1p.value u = W1p.value v) : u = v := by
+  apply W1p.ext hvalue
+  apply Lp.ext
+  have hderiv :
+      (fun x => innerSL ℝ (W1p.gradient u x)) =ᵐ[mu.restrict Omega]
+        fun x => innerSL ℝ (W1p.gradient v x) := by
+    apply (W1p.hasWeakFDerivOn u).ae_eq
+    simpa only [hvalue] using W1p.hasWeakFDerivOn v
+  filter_upwards [hderiv] with x hx
+  have heval := DFunLike.congr_fun hx (W1p.gradient u x - W1p.gradient v x)
+  have hzero : ⟪W1p.gradient u x - W1p.gradient v x,
+      W1p.gradient u x - W1p.gradient v x⟫_ℝ = 0 := by
+    rw [inner_sub_left]
+    exact sub_eq_zero.mpr (by simpa only [innerSL_apply_apply] using heval)
+  exact sub_eq_zero.mp (inner_self_eq_zero.mp hzero)
 
 omit [FiniteDimensional ℝ E] in
 /-- The norm of a Sobolev function controls the norm of its value component. -/
