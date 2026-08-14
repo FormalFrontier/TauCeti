@@ -70,7 +70,9 @@ private noncomputable def intTensorToRatTensor : A ⊗[ℤ] A ≃ₐ[ℚ] A ⊗[
 @[simp]
 private theorem intTensorToRatTensor_tmul (x y : A) :
     intTensorToRatTensor (A := A) (x ⊗ₜ[ℤ] y) = x ⊗ₜ[ℚ] y := by
-  rfl
+  rw [intTensorToRatTensor, AlgEquiv.symm_apply_eq]
+  exact (Algebra.TensorProduct.mapOfCompatibleSMul_tmul
+    (R := ℤ) (S := ℚ) (T := ℚ) (A := A) (B := A) x y).symm
 
 private theorem tensorSquareMap_eq_intTensorToRatTensor (S : Subring A) :
     tensorSquareMap ℚ S =
@@ -79,23 +81,12 @@ private theorem tensorSquareMap_eq_intTensorToRatTensor (S : Subring A) :
           S.subtype.toIntAlgHom S.subtype.toIntAlgHom) := by
   ext x <;> simp
 
-omit [Algebra ℚ A] in
-private theorem tensorProductMap_apply_eq_algebraTensorProductMap_apply (S : Subring A)
-    (t : S ⊗[ℤ] S) :
-    TensorProduct.map S.subtype.toIntAlgHom.toLinearMap S.subtype.toIntAlgHom.toLinearMap t =
-      Algebra.TensorProduct.map (R := ℤ) (S := ℤ)
-        S.subtype.toIntAlgHom S.subtype.toIntAlgHom t := by
-  induction t using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul x y => rfl
-
 /-- The canonical map from the integer tensor square of a subring of a rational algebra to the
-rational tensor square of the ambient algebra is injective.
-
-The subring is torsion-free as an abelian group because it embeds in a rational vector space, hence
-flat over `ℤ`. Therefore tensoring its inclusion with itself is injective. The target of that map is
-initially `A ⊗[ℤ] A`; the canonical equivalence `A ⊗[ℤ] A ≃ A ⊗[ℚ] A` then gives the stated map. -/
+rational tensor square of the ambient algebra is injective. -/
+-- The subring is torsion-free as an abelian group because it embeds in a rational vector space,
+-- hence flat over `ℤ`. Therefore tensoring its inclusion with itself is injective. The target
+-- of that map is initially `A ⊗[ℤ] A`; the canonical equivalence `A ⊗[ℤ] A ≃ A ⊗[ℚ] A` then
+-- gives the stated map.
 theorem tensorSquareMap_injective (S : Subring A) :
     Function.Injective (tensorSquareMap ℚ S) := by
   let : IsAddTorsionFree A := .of_module_rat A
@@ -116,7 +107,10 @@ theorem tensorSquareMap_injective (S : Subring A) :
     apply (intTensorToRatTensor (A := A)).injective
     rw [tensorSquareMap_eq_intTensorToRatTensor] at hxy
     exact hxy
-  simpa only [f, tensorProductMap_apply_eq_algebraTensorProductMap_apply] using hmap
+  change TensorProduct.AlgebraTensorModule.map f f x =
+    TensorProduct.AlgebraTensorModule.map f f y at hmap
+  rw [TensorProduct.AlgebraTensorModule.map_eq] at hmap
+  exact hmap
 
 end Rational
 
@@ -126,6 +120,7 @@ noncomputable def tensorSquareRange (S : Subring A) : Subring (A ⊗[R] A) :=
   (tensorSquareMap R S).toRingHom.range
 
 /-- Membership in the tensor-square range is equivalent to having an integral tensor preimage. -/
+@[simp]
 theorem mem_tensorSquareRange_iff (S : Subring A) (z : A ⊗[R] A) :
     z ∈ tensorSquareRange R S ↔ ∃ t : S ⊗[ℤ] S, tensorSquareMap R S t = z := by
   rfl
@@ -149,8 +144,8 @@ noncomputable def tensorSquareEquivRange (S : Subring A) :
 /-- The equivalence onto the tensor-square range acts by the canonical tensor-square map. -/
 @[simp]
 theorem coe_tensorSquareEquivRange_apply (S : Subring A) (t : S ⊗[ℤ] S) :
-    (tensorSquareEquivRange S t : A ⊗[ℚ] A) = tensorSquareMap ℚ S t := by
-  rfl
+    (tensorSquareEquivRange S t : A ⊗[ℚ] A) = tensorSquareMap ℚ S t :=
+  AlgEquiv.ofInjective_apply (tensorSquareMap ℚ S) (tensorSquareMap_injective S) t
 
 end RationalRange
 

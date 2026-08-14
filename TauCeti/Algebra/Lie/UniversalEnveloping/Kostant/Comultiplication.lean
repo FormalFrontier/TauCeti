@@ -110,6 +110,7 @@ noncomputable def kostantTensorForm (e : ι → L) (h : κ → L) : Subring (U �
 
 /-- Membership in the integral tensor form is equivalent to having an integral tensor
 representative under the canonical tensor map. -/
+@[simp]
 theorem mem_kostantTensorForm_iff (e : ι → L) (h : κ → L) (z : U ⊗[ℚ] U) :
     z ∈ kostantTensorForm e h ↔
       ∃ t : kostantForm e h ⊗[ℤ] kostantForm e h, kostantTensorMap e h t = z := by
