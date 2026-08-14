@@ -38,6 +38,10 @@ Hopf algebra.
   transport across a named presentation.
 * `TauCeti.CommHopfAlgCat.mapMulEquiv_mapDomain`: a coordinate Hopf morphism
   becomes postcomposition by its contravariant `hopfSpec` image.
+* `TauCeti.CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain`: contravariance for arbitrary
+  named point equivalences characterized by their underlying spectrum maps.
+* `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation_mapDomain`: the same contravariance after
+  transporting both Hopf spectra across named presentations.
 -/
 
 public section
@@ -180,6 +184,92 @@ theorem mapMulEquiv_mapDomain
   simp only [mapMulEquiv_left, hopfSpec_map_left]
   erw [← Spec.map_comp]
   rfl
+
+private lemma transportedHopfSpecMap_left
+    {H K : _root_.CommHopfAlgCat.{u} R}
+    {G H' : Grp (Over (Spec (CommRingCat.of R)))}
+    (hG : G = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H))
+    (hH' : H' = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K))
+    (hGX : G.X.left = Spec (CommRingCat.of H))
+    (hH'X : H'.X.left = Spec (CommRingCat.of K))
+    (φ : H ⟶ K) :
+    (eqToHom hH' ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op ≫
+        eqToHom hG.symm).hom.hom.left =
+      eqToHom hH'X ≫
+        Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) ≫
+        eqToHom hGX.symm := by
+  subst G
+  subst H'
+  rfl
+
+/-- Contravariant naturality in the coordinate Hopf algebra for named point equivalences.
+
+The two equivalences may be public wrappers around `mapMulEquivOfPresentation`; it is enough to
+characterize their underlying scheme maps. This lets named affine group schemes reuse the
+presentation compatibility without unfolding their definitions. -/
+theorem pointMulEquivOfPresentation_mapDomain
+    {H K : _root_.CommHopfAlgCat.{u} R} (A : Type u) [CommRing A] [Algebra R A]
+    {G H' : Grp (Over (Spec (CommRingCat.of R)))}
+    (hG : G = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H))
+    (hH' : H' = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K))
+    (hGX : G.X.left = Spec (CommRingCat.of H))
+    (hH'X : H'.X.left = Spec (CommRingCat.of K))
+    (eG : WithConv (H →ₐ[R] A) ≃*
+      ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶ G.X))
+    (eH' : WithConv (K →ₐ[R] A) ≃*
+      ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶ H'.X))
+    (eG_apply_left : ∀ f, (eG f).left =
+      Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫ eqToHom hGX.symm)
+    (eH'_apply_left : ∀ f, (eH' f).left =
+      Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫ eqToHom hH'X.symm)
+    (φ : H ⟶ K) (p : HopfAlgebra.points (R := R) (H := K) (CommAlgCat.of R A)) :
+    eH' p ≫
+        (eqToHom hH' ≫
+          (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op ≫
+          eqToHom hG.symm).hom.hom =
+      eG ((mapPointsFunctor φ).app (CommAlgCat.of R A) p) := by
+  apply Over.OverMorphism.ext
+  erw [Over.comp_left, eH'_apply_left,
+    transportedHopfSpecMap_left hG hH' hGX hH'X φ, eG_apply_left]
+  -- The public computations expose the same spectrum maps behind differently wrapped `Over`
+  -- sources; restate them explicitly so the two presentation transports can cancel.
+  change (Spec.map (CommRingCat.ofHom p.ofConv.toRingHom) ≫ eqToHom hH'X.symm) ≫
+      eqToHom hH'X ≫ Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) ≫
+        eqToHom hGX.symm =
+    Spec.map (CommRingCat.ofHom
+      (((mapPointsFunctor φ).app (CommAlgCat.of R A) p).ofConv.toRingHom)) ≫
+        eqToHom hGX.symm
+  erw [mapPointsFunctor_app_apply, WithConv.ofConv_toConv]
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  erw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
+  rfl
+
+/-- Contravariant naturality in the coordinate Hopf algebra after transporting both spectra
+across named presentations. Precomposing a `K`-point by `φ : H ⟶ K` corresponds to
+postcomposing its transported spectrum point by the transported `hopfSpec` morphism. -/
+theorem mapMulEquivOfPresentation_mapDomain
+    {H K : _root_.CommHopfAlgCat.{u} R} (A : Type u) [CommRing A] [Algebra R A]
+    {G H' : Grp (Over (Spec (CommRingCat.of R)))}
+    (hG : G = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H))
+    (hH' : H' = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K))
+    (φ : H ⟶ K) (p : HopfAlgebra.points (R := R) (H := K) (CommAlgCat.of R A)) :
+    mapMulEquivOfPresentation K A hH' p ≫
+        (eqToHom hH' ≫
+          (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op ≫
+          eqToHom hG.symm).hom.hom =
+      mapMulEquivOfPresentation H A hG
+        ((mapPointsFunctor φ).app (CommAlgCat.of R A) p) := by
+  let hGX : G.X.left = Spec (CommRingCat.of H) := by
+    rw [hG]
+    rfl
+  let hH'X : H'.X.left = Spec (CommRingCat.of K) := by
+    rw [hH']
+    rfl
+  exact pointMulEquivOfPresentation_mapDomain A hG hH' hGX hH'X
+    (mapMulEquivOfPresentation H A hG) (mapMulEquivOfPresentation K A hH')
+    (mapMulEquivOfPresentation_apply_left H A hG hGX)
+    (mapMulEquivOfPresentation_apply_left K A hH' hH'X) φ p
 
 end CommHopfAlgCat
 
