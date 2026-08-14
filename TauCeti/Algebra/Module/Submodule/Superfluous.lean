@@ -13,9 +13,10 @@ public import Mathlib.RingTheory.Jacobson.Radical
 
 A submodule `N` of `M` is **superfluous** (also called *small*) when it is dispensable for
 generating `M`: whenever `N ⊔ K = ⊤` for a submodule `K`, already `K = ⊤`. Superfluous submodules
-are the dual notion to essential submodules, and they are what makes a *projective cover* a
-minimal projective presentation: an epimorphism `P ↠ M` is a projective cover exactly when `P` is
-projective and its kernel is superfluous in `P`.
+are the dual notion to essential submodules, and an epimorphism `P ↠ M` is a projective cover
+exactly when `P` is projective and its kernel is superfluous in `P`. Over a ring — the setting of
+`TauCeti.IsSuperfluous.surjective_of_surjective_comp`, whose proof takes differences — a
+superfluous kernel is what makes such a presentation minimal.
 
 Mathlib has neither this predicate nor projective covers. This file supplies the predicate with
 its lattice API and identifies it, on the modules where the comparison is available, with being
@@ -27,8 +28,9 @@ contained in the radical `Module.jacobson`.
 
 ## Main results
 
-* `TauCeti.isSuperfluous_bot`, `TauCeti.IsSuperfluous.mono`, `TauCeti.IsSuperfluous.sup`: the
+* `TauCeti.isSuperfluous_bot`, `TauCeti.IsSuperfluous.mono`, `TauCeti.isSuperfluous_sup_iff`: the
   superfluous submodules of `M` are closed downwards and under binary suprema, and contain `⊥`.
+* `TauCeti.isSuperfluous_top_iff`: `⊤` is superfluous exactly for the zero module.
 * `TauCeti.IsSuperfluous.le_jacobson`: a superfluous submodule lies in every coatom, hence in the
   radical `Module.jacobson R M`.
 * `TauCeti.isSuperfluous_iff_le_jacobson`: over a module whose submodule lattice is coatomic — in
@@ -36,7 +38,8 @@ contained in the radical `Module.jacobson`.
   are exactly the submodules of the radical, and
   `TauCeti.isSuperfluous_jacobson` records that the radical itself is then superfluous.
 * `TauCeti.IsSuperfluous.map`: the image of a superfluous submodule under a surjection is
-  superfluous.
+  superfluous; `TauCeti.isSuperfluous_map_equiv_iff` records that along an equivalence this is an
+  equivalence.
 * `TauCeti.IsSuperfluous.comap`: the preimage of a superfluous submodule under a surjection whose
   kernel is superfluous is again superfluous. This is what makes projective covers compose.
 * `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: a map into the source of a linear map with
@@ -94,12 +97,23 @@ theorem IsSuperfluous.sup {N N' : Submodule R M} (hN : IsSuperfluous N) (hN' : I
   refine hN'.eq_top (hN.eq_top ?_)
   rwa [← sup_assoc]
 
-/-- The whole module is superfluous in itself only when it is zero: `⊥ = ⊤` is exactly what
-superfluity of `⊤` says. -/
+/-- A supremum of two submodules is superfluous exactly when both of them are. -/
 @[simp]
-theorem not_isSuperfluous_top [Nontrivial M] : ¬ IsSuperfluous (⊤ : Submodule R M) := by
-  intro h
-  exact absurd (h.eq_top (by simp)) (bot_ne_top (α := Submodule R M))
+theorem isSuperfluous_sup_iff {N N' : Submodule R M} :
+    IsSuperfluous (N ⊔ N') ↔ IsSuperfluous N ∧ IsSuperfluous N' :=
+  ⟨fun h => ⟨h.mono le_sup_left, h.mono le_sup_right⟩, fun h => h.1.sup h.2⟩
+
+/-- The whole module is superfluous in itself exactly when it is zero: superfluity of `⊤` says
+precisely that `⊥ = ⊤`. -/
+@[simp]
+theorem isSuperfluous_top_iff : IsSuperfluous (⊤ : Submodule R M) ↔ Subsingleton M := by
+  refine ⟨fun h => (Submodule.subsingleton_iff R).mp (subsingleton_iff_bot_eq_top.mp ?_),
+    fun _ K _ => Subsingleton.elim K ⊤⟩
+  exact h.eq_top (by simp)
+
+/-- The whole module is not superfluous in a nonzero module. -/
+theorem not_isSuperfluous_top [Nontrivial M] : ¬ IsSuperfluous (⊤ : Submodule R M) := fun h =>
+  not_subsingleton M (isSuperfluous_top_iff.mp h)
 
 /-- A superfluous submodule of a nonzero module is proper. -/
 theorem IsSuperfluous.ne_top [Nontrivial M] {N : Submodule R M} (hN : IsSuperfluous N) : N ≠ ⊤ := by
@@ -169,10 +183,13 @@ theorem IsSuperfluous.map {N : Submodule R M} (hN : IsSuperfluous N) {f : M →�
   rw [hcomapK, Submodule.map_top, LinearMap.range_eq_top.mpr hf] at hmapcomap
   exact hmapcomap.symm
 
-/-- A superfluous submodule stays superfluous after transport along a linear equivalence. -/
-theorem IsSuperfluous.map_equiv {N : Submodule R M} (hN : IsSuperfluous N) (e : M ≃ₗ[R] M₂) :
-    IsSuperfluous (N.map (e : M →ₗ[R] M₂)) :=
-  hN.map e.surjective
+/-- Transport along a linear equivalence both preserves and reflects superfluity. -/
+@[simp]
+theorem isSuperfluous_map_equiv_iff {N : Submodule R M} (e : M ≃ₗ[R] M₂) :
+    IsSuperfluous (N.map (e : M →ₗ[R] M₂)) ↔ IsSuperfluous N := by
+  refine ⟨fun h => ?_, fun h => h.map e.surjective⟩
+  have hback := h.map e.symm.surjective
+  rwa [(Submodule.map_symm_eq_iff e).mpr rfl] at hback
 
 /-- The preimage of a superfluous submodule under a surjection whose kernel is itself superfluous
 is superfluous. Pushing a complement forward makes it a complement of the superfluous submodule

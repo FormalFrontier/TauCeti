@@ -12,14 +12,15 @@ public import TauCeti.Algebra.Module.Submodule.Superfluous
 # Projective covers
 
 A **projective cover** of a module `M` is a surjection `f : P →ₗ[R] M` from a projective module
-whose kernel is superfluous in `P` (`TauCeti.IsSuperfluous`). The superfluous-kernel condition is
-what makes the cover *minimal*: no proper submodule of `P` still surjects onto `M`. Mathlib has
-projective objects but no projective covers; this file supplies the predicate and the two facts
-everything downstream rests on.
+whose kernel is superfluous in `P` (`TauCeti.IsSuperfluous`). Mathlib has projective objects but no
+projective covers; this file supplies the predicate and the two facts everything downstream rests
+on.
 
-Both rest on the minimality packaged in `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: a
-map into the source of a cover whose composite with the cover is onto is itself onto, the kernel of
-a cover being too small for the image of such a map to miss it.
+Both rest on the minimality packaged in `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: over
+a ring, a map into the source of a cover whose composite with the cover is onto is itself onto, the
+kernel of a cover being too small for the image of such a map to miss it. This is the sense in
+which the superfluous-kernel condition makes a cover *minimal*, and it is why everything but the
+definition and `TauCeti.isProjectiveCover_id` below is stated over a ring.
 
 The first is that a projective cover receives every projective presentation: if `Q` is projective
 and `g : Q →ₗ[R] M` is surjective, then `g` factors as `f ∘ₗ h` with `h : Q →ₗ[R] P` **surjective**
@@ -77,7 +78,8 @@ variable {R : Type u} {M : Type v} {P : Type w}
   [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid P] [Module R P]
 
 /-- A **projective cover** of `M`: a surjection from a projective module whose kernel is
-superfluous, so that no proper submodule of the source still surjects onto `M`. -/
+superfluous. Over a ring the superfluous kernel says exactly that no proper submodule of the source
+still surjects onto `M`; see `TauCeti.IsSuperfluous.surjective_of_surjective_comp`. -/
 structure IsProjectiveCover (f : P →ₗ[R] M) : Prop where
   /-- The covering module is projective. -/
   projective : Module.Projective R P
@@ -198,11 +200,6 @@ theorem isProjectiveCover_mkQ_iff {I : Submodule R R} :
         isSuperfluous_ker := by
           rw [Submodule.ker_mkQ]
           exact isSuperfluous_of_le_jacobson hI }
-
-/-- The quotient of a ring by an ideal inside its Jacobson radical is covered by the ring itself. -/
-theorem isProjectiveCover_mkQ {I : Submodule R R} (hI : I ≤ Ring.jacobson R) :
-    IsProjectiveCover I.mkQ :=
-  isProjectiveCover_mkQ_iff.mpr hI
 
 end Ring
 
