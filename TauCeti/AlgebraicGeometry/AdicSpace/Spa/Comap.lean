@@ -187,7 +187,7 @@ theorem range_spaComap_quotientMk (J : Ideal A) (Aplus : Subring A) :
       rw [mem_spa_iff]
       refine ⟨IsContinuous.quotientLift J hJ (mem_spa_iff Aplus v |>.mp hv).1, ?_⟩
       rintro _ ⟨a, ha, rfl⟩
-      rw [← map_one (Ideal.Quotient.mk J), vle_quotientLift J hJ]
+      rw [← map_one (Ideal.Quotient.mk J), ← comap_vle, comap_quotientLift]
       exact (mem_spa_iff Aplus v |>.mp hv).2 a ha
     refine ⟨⟨quotientLift J hJ, hlift_spa⟩, ?_⟩
     apply Subtype.ext

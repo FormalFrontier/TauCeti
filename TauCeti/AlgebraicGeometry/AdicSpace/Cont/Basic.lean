@@ -146,7 +146,7 @@ theorem IsContinuous.quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.su
       {y : A | v.valuation y < v.valuation a} := by
     ext y
     simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
-    rw [vlt_quotientLift J hJ, ← valuation_lt_iff]
+    rw [← comap_vlt, comap_quotientLift, ← valuation_lt_iff]
   have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
         {x : A ⧸ J | (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation x <
           (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by

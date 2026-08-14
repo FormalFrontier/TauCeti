@@ -93,14 +93,6 @@ theorem spa_antitone : Antitone (spa (A := A)) := fun _ _ hle ↦ by
   rw [spa_def, spa_def]
   exact Set.inter_subset_inter_right _ fun _ hv a ha ↦ hv a (hle ha)
 
-omit [TopologicalSpace A] in
-/-- Membership in the integer subring of the canonical valuation is the non-strict valuative
-relation with `1`. -/
-@[simp]
-theorem mem_integer_iff_vle_one (v : Spv A) (x : A) :
-    x ∈ v.valuation.integer ↔ v.toValuativeRel.vle x 1 := by
-  rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff]
-
 /-- Replacing a subring by its integral closure does not change the sub-unit valuation locus. -/
 @[simp]
 theorem spa_integralClosure (R : Subring A) :
@@ -111,12 +103,14 @@ theorem spa_integralClosure (R : Subring A) :
   · exact h r (algebraMap_mem (integralClosure R A) ⟨r, hr⟩)
   · let φ : R →+* v.valuation.integer :=
       R.subtype.codRestrict v.valuation.integer fun r ↦ by
-        exact (mem_integer_iff_vle_one v r).mpr (h r r.2)
+        rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff]
+        exact h r r.2
     rw [Subalgebra.mem_toSubring, mem_integralClosure_iff] at hx
     have hint : IsIntegral v.valuation.integer x :=
       hx.map_of_comp_eq φ (RingHom.id A) (by ext r; rfl)
     have hxint := (Valuation.integer.integers v.valuation).mem_of_integral hint
-    exact (mem_integer_iff_vle_one v x).mp hxint
+    rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
+    exact hxint
 
 end TauCeti.ValuationSpectrum
 

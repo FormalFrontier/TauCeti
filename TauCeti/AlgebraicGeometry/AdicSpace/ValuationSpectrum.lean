@@ -335,22 +335,6 @@ lemma comap_quotientLift ⦃v : Spv A⦄ (h : 𝔞 ≤ v.supp) :
     Valuation.onQuot_comap_eq v.valuation (v.supp_eq_valuation_supp ▸ h)]
   exact ofValuation_valuation v
 
-/-- The non-strict valuative relation of a quotient lift on representatives is the original
-relation. -/
-@[simp]
-lemma vle_quotientLift ⦃v : Spv A⦄ (h : 𝔞 ≤ v.supp) (a b : A) :
-    (quotientLift 𝔞 h).toValuativeRel.vle (Ideal.Quotient.mk 𝔞 a)
-      (Ideal.Quotient.mk 𝔞 b) ↔ v.toValuativeRel.vle a b := by
-  rw [← comap_vle, comap_quotientLift]
-
-/-- The strict valuative relation of a quotient lift on representatives is the original
-relation. -/
-@[simp]
-lemma vlt_quotientLift ⦃v : Spv A⦄ (h : 𝔞 ≤ v.supp) (a b : A) :
-    (quotientLift 𝔞 h).toValuativeRel.vlt (Ideal.Quotient.mk 𝔞 a)
-      (Ideal.Quotient.mk 𝔞 b) ↔ v.toValuativeRel.vlt a b := by
-  rw [← comap_vlt, comap_quotientLift]
-
 /-- `quotientLift 𝔞 (self_le_supp_comap 𝔞 w) = w`. -/
 @[simp]
 lemma quotientLift_comap (w : Spv (A ⧸ 𝔞)) :
