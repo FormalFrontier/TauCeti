@@ -31,8 +31,8 @@ invariant under conjugation.
   formulation using the underlying comodule action endomorphisms.
 * `TauCeti.HopfAlgebra.IsSemisimplePoint.inv`, `.mul_of_commute`, and `.zpow`: closure under
   inversion, commuting products, and integer powers.
-* `TauCeti.HopfAlgebra.IsSemisimplePoint.mapDomain`: a homomorphism of affine groups preserves
-  semisimple points.
+* `TauCeti.HopfAlgebra.IsSemisimplePoint.mapDomain`: precomposition by a bialgebra morphism
+  preserves semisimple points.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_conj_iff`: invariance under conjugation.
 
 ## References
@@ -85,8 +85,9 @@ variable {H₁ : Type v} {H₂ : Type w}
 variable [Semiring H₁] [Semiring H₂]
 variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂]
 
-/-- A homomorphism of affine groups sends semisimple points to semisimple points. In coordinate
-algebras the homomorphism is represented contravariantly by a bialgebra morphism. -/
+/-- Precomposition by a bialgebra morphism preserves semisimple points. For commutative coordinate
+Hopf algebras, this says that a homomorphism of affine groups sends semisimple points to semisimple
+points. -/
 theorem IsSemisimplePoint.mapDomain {g : WithConv (H₂ →ₐ[k] K)}
     (hg : IsSemisimplePoint g) (φ : H₁ →ₐc[k] H₂) :
     IsSemisimplePoint (AlgHom.mapDomain φ g) := by
