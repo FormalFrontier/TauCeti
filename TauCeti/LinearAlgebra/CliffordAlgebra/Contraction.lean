@@ -18,8 +18,9 @@ but never with a contraction, and `evenOdd` is never related to `contractLeft` a
 This file proves both. That a contraction carries `evenOdd Q i` into `evenOdd Q (i + 1)` is the
 grading statement itself, and it is what makes an annihilation operator odd; anticommutation with
 the grade involution is its operator shadow, and is what makes the grade involution usable as an
-*even* operator alongside exterior multiplication and contraction — for instance as the operator
-by which an anisotropic vector orthogonal to a polarization acts on a spinor module.
+*even* operator alongside exterior multiplication and contraction — for instance because an
+anisotropic vector orthogonal to a polarization acts on a spinor module by its scalar coordinate
+times the grade involution.
 
 The degree bookkeeping is in `ZMod 2`, where lowering and raising the degree by one are the same
 map, so the statement is `contractLeft d ⁻¹` of `evenOdd Q (i + 1)` rather than of `evenOdd Q

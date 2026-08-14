@@ -6,8 +6,10 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.SpinGroup
 public import Mathlib.RepresentationTheory.Subrepresentation
-public import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
 public import TauCeti.RepresentationTheory.Spin.Polarization.CliffordAction
+-- Private: `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` is used only inside a proof, and
+-- `CliffordAction` imports this module privately too, so it is not available transitively.
+import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
 
 /-!
 # The pin and spin representations, and the half-spin summands
@@ -15,11 +17,13 @@ public import TauCeti.RepresentationTheory.Spin.Polarization.CliffordAction
 `TauCeti.spinAction` makes the exterior algebra `S = ⋀·W` of the isotropic summand of a
 polarization a module over the Clifford algebra. The pin and spin groups sit inside that Clifford
 algebra, so restricting the action along their inclusions turns `S` into a representation of
-each: `TauCeti.pinRep` and `TauCeti.spinRep`. These are the spin representations. What makes them
-worth constructing is classical: over `ℂ`, for a nondegenerate `Q`, they do not factor through the
-special orthogonal group, so they are not summands of any tensor power of the vector
-representation. That is motivation for the construction; it is not proved here, and it is not a
-statement about the arbitrary commutative ring this file works over.
+each: `TauCeti.pinRep`, of `pinGroup Q`, and `TauCeti.spinRep`, of `spinGroup Q` — the latter is
+the spin representation proper. What makes them worth constructing is classical: over `ℂ`, for a
+nondegenerate `Q`, `spinRep` does not factor through the covering `Spin → SO` of the special
+orthogonal group, so it is not a summand of any tensor power of the vector representation; and
+`pinRep` likewise does not factor through the covering `Pin → O` of the orthogonal group. That is
+motivation for the construction; it is not proved here, and it is not a statement about the
+arbitrary commutative ring this file works over.
 
 The exterior algebra is itself `ℤ/2`-graded, by exterior parity, and `S` splits as the sum
 `S⁺ ⊕ S⁻` of the even and the odd part. Whether that splitting is a splitting *of
@@ -29,8 +33,9 @@ representations* is the substance of this file, and it depends on the polarizati
   reverse parity. So **when the polarization has no line summand** every vector acts by a
   parity-reversing operator, an even Clifford element acts by a parity-*preserving* one, and —
   since the spin group is even — `S⁺` and `S⁻` are subrepresentations of `spinRep`.
-* A vector of the line summand acts by the grade involution, which *preserves* parity, so with a
-  line present an even Clifford element need not preserve parity at all. Concretely, over `ℂ`
+* A vector `z` of the line summand acts by `P.lineCoordinate z` times the grade involution, an
+  operator that *preserves* parity, so with a line present an even Clifford element need not
+  preserve parity at all. Concretely, over `ℂ`
   with `dim V = 3` the spin group is a copy of `SL₂` acting on the two-dimensional `S` by its
   standard representation, which has no one-dimensional subrepresentation, so the parity
   splitting is not invariant there. The hypothesis `P.line = ⊥` below is therefore not a
@@ -167,8 +172,8 @@ all. -/
 
 /-- **Without a line summand every vector acts oddly.** Exterior multiplication raises the
 exterior degree by one and contraction lowers it by one, and in `ZMod 2` those are the same
-shift; the grade involution, which would preserve the degree, is the operator of a line vector
-and is absent here. -/
+shift; the grade involution, which would preserve the degree, is — up to the scalar coordinate —
+the operator of a line vector, and is absent here. -/
 private theorem cliffordOperator_mem_evenOdd (hline : P.line = ⊥) (v : V) {j : ZMod 2}
     {s : ExteriorAlgebra K P.W} (hs : s ∈ evenOdd (0 : QuadraticForm K P.W) j) :
     P.cliffordOperator v s ∈ evenOdd (0 : QuadraticForm K P.W) (j + 1) := by
