@@ -40,7 +40,7 @@ of the coefficients `(H choose k)`.
 * `TauCeti.serreDiagramKostantEquiv`: a diagram automorphism restricted to the integral form,
   with `refl`, `trans`, and `symm` laws.
 * `TauCeti.serreChevalleyKostantEquiv`: the Chevalley involution restricted to the integral form,
-  with involutive, self-inverse, and commutation laws.
+  with self-inverse and commutation laws.
 
 ## Roadmap
 
@@ -95,6 +95,7 @@ theorem serreKostantForm_def :
     serreKostantForm CM = kostantForm (serreRootGenerator CM) (serreH ℚ CM) := (rfl)
 
 /-- Every divided power of a raising generator belongs to the Serre Kostant form. -/
+@[simp]
 theorem dividedPower_serreE_mem (i : B) (n : ℕ) :
     Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (serreE ℚ CM i)) ∈
       serreKostantForm CM := by
@@ -103,6 +104,7 @@ theorem dividedPower_serreE_mem (i : B) (n : ℕ) :
       dividedPower_mem_kostantForm (serreRootGenerator CM) (serreH ℚ CM) (Sum.inl i) n
 
 /-- Every divided power of a lowering generator belongs to the Serre Kostant form. -/
+@[simp]
 theorem dividedPower_serreF_mem (i : B) (n : ℕ) :
     Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (serreF ℚ CM i)) ∈
       serreKostantForm CM := by
@@ -111,6 +113,7 @@ theorem dividedPower_serreF_mem (i : B) (n : ℕ) :
       dividedPower_mem_kostantForm (serreRootGenerator CM) (serreH ℚ CM) (Sum.inr i) n
 
 /-- Every binomial coefficient in a Cartan generator belongs to the Serre Kostant form. -/
+@[simp]
 theorem ringChoose_serreH_mem (i : B) (n : ℕ) :
     Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (serreH ℚ CM i)) n ∈
       serreKostantForm CM := by
@@ -217,13 +220,24 @@ theorem coe_serreDiagramKostantEquiv_apply (x : serreKostantForm CM) :
       (serreH ℚ CM) ((RingEquiv.subringCongr (serreKostantForm_def CM)) x)
 
 /-- The inverse restricted diagram automorphism acts through the inverse Lie automorphism. -/
+@[simp]
 theorem coe_serreDiagramKostantEquiv_symm_apply (x : serreKostantForm CM) :
     ((serreDiagramKostantEquiv CM hσ).symm x : U) =
       map ℚ (serreDiagramAut ℚ CM hσ).symm.toLieHom x := by
-  rw [serreDiagramKostantEquiv, RingEquiv.symm_trans_apply, RingEquiv.symm_trans_apply,
-    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply,
-    coe_kostantFormEquiv_symm_apply,
-    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply]
+  have hcomp : (map ℚ (serreDiagramAut ℚ CM hσ).symm.toLieHom).comp
+      (map ℚ (serreDiagramAut ℚ CM hσ).toLieHom) = AlgHom.id ℚ U := by
+    rw [← map_comp]
+    have hlie : (serreDiagramAut ℚ CM hσ).symm.toLieHom.comp
+        (serreDiagramAut ℚ CM hσ).toLieHom = LieHom.id := by
+      apply LieHom.ext
+      intro y
+      simp only [LieHom.comp_apply, LieEquiv.coe_toLieHom, LieEquiv.symm_apply_apply,
+        LieHom.id_apply]
+    rw [hlie, map_id]
+  have h := congrArg (map ℚ (serreDiagramAut ℚ CM hσ).symm.toLieHom)
+    (coe_serreDiagramKostantEquiv_apply CM hσ ((serreDiagramKostantEquiv CM hσ).symm x))
+  rw [RingEquiv.apply_symm_apply] at h
+  rw [h, ← AlgHom.comp_apply, hcomp, AlgHom.id_apply]
 
 /-- The identity diagram automorphism restricts to the identity of the Kostant form. -/
 @[simp]
@@ -346,13 +360,24 @@ theorem coe_serreChevalleyKostantEquiv_apply (x : serreKostantForm CM) :
       (serreH ℚ CM) ((RingEquiv.subringCongr (serreKostantForm_def CM)) x)
 
 /-- The inverse restricted Chevalley involution acts through the inverse Lie automorphism. -/
+@[simp]
 theorem coe_serreChevalleyKostantEquiv_symm_apply (x : serreKostantForm CM) :
     ((serreChevalleyKostantEquiv CM).symm x : U) =
       map ℚ (serreChevalleyInvolution ℚ CM).symm.toLieHom x := by
-  rw [serreChevalleyKostantEquiv, RingEquiv.symm_trans_apply, RingEquiv.symm_trans_apply,
-    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply,
-    coe_kostantFormEquiv_symm_apply,
-    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply]
+  have hcomp : (map ℚ (serreChevalleyInvolution ℚ CM).symm.toLieHom).comp
+      (map ℚ (serreChevalleyInvolution ℚ CM).toLieHom) = AlgHom.id ℚ U := by
+    rw [← map_comp]
+    have hlie : (serreChevalleyInvolution ℚ CM).symm.toLieHom.comp
+        (serreChevalleyInvolution ℚ CM).toLieHom = LieHom.id := by
+      apply LieHom.ext
+      intro y
+      simp only [LieHom.comp_apply, LieEquiv.coe_toLieHom, LieEquiv.symm_apply_apply,
+        LieHom.id_apply]
+    rw [hlie, map_id]
+  have h := congrArg (map ℚ (serreChevalleyInvolution ℚ CM).symm.toLieHom)
+    (coe_serreChevalleyKostantEquiv_apply CM ((serreChevalleyKostantEquiv CM).symm x))
+  rw [RingEquiv.apply_symm_apply] at h
+  rw [h, ← AlgHom.comp_apply, hcomp, AlgHom.id_apply]
 
 /-- Applying the restricted Chevalley involution twice returns the original element. -/
 @[simp]
@@ -367,11 +392,6 @@ theorem serreChevalleyKostantEquiv_serreChevalleyKostantEquiv (x : serreKostantF
     simp only [LieHom.comp_apply, LieEquiv.coe_toLieHom,
       serreChevalleyInvolution_serreChevalleyInvolution, LieHom.id_apply]
   rw [← AlgHom.comp_apply, ← map_comp, hcomp, map_id, AlgHom.id_apply]
-
-/-- The restricted Chevalley involution is an involution. -/
-theorem serreChevalleyKostantEquiv_involutive :
-    Function.Involutive (serreChevalleyKostantEquiv CM) :=
-  serreChevalleyKostantEquiv_serreChevalleyKostantEquiv CM
 
 /-- The restricted Chevalley involution is its own inverse. -/
 @[simp]
