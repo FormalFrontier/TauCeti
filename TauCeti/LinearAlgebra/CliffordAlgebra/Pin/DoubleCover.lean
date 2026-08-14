@@ -32,7 +32,8 @@ separably closed field.
 
 This supplies the Pin short exact sequence of Layer 2 over a separably closed field. See
 `TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`. H. B. Lawson and
-M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
+M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2. The API and proof structure are adapted
+from `TauCeti.LinearAlgebra.CliffordAlgebra.Spin.DoubleCover`.
 -/
 
 public section
