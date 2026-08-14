@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Finsupp
 
 /-!
@@ -125,6 +124,6 @@ theorem positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right
     positiveDefiniteKernelFinsuppForm K x y = 0 :=
   positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right_of_conj_symm
     (fun a b => by
-      simpa only [starRingEnd_apply] using hK.isHermitian.apply b a) hy
+      simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK a b) hy
 
 end TauCeti

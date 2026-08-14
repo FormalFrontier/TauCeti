@@ -174,7 +174,7 @@ private theorem re_sum_nonneg_of_kernel
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) {ι : Type*} [Fintype ι]
     (x : ι → V) (c : ι → ℂ) :
     0 ≤ (∑ i, ∑ j, conj (c i) * c j * ψ (x i - x j)).re := by
-  have h := (posSemidef_iff.mp hpd).2 x c
+  have h := (posSemidef_iff_finite_sum.mp hpd).2 x c
   exact (Complex.nonneg_iff.mp h).1
 
 end KernelConsequences
@@ -582,7 +582,7 @@ theorem fourier_re_nonneg_of_posSemidef (F : V → ℂ)
   -- Step 2: the twisted function is positive definite (Schur product with the Fourier atom).
   have hψ_pd : Matrix.PosSemidef
       fun a b : V => (fun v => fourierAtom ξ v * F v) (a - b) :=
-    (posSemidef_fourierAtom ξ).hadamard hpd
+    posSemidef_hadamard_apply (posSemidef_fourierAtom ξ) hpd
   -- Step 3: the twisted function is continuous and integrable.
   have hψ_cont : Continuous fun v => fourierAtom ξ v * F v :=
     (continuous_fourierAtom ξ).mul hcont

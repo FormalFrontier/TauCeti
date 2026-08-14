@@ -8,7 +8,6 @@ public import Mathlib.Analysis.Complex.Order
 public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.Algebra.BigOperators.Fin
 public import TauCeti.Analysis.Matrix.PosSemidef
-import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 /-!
 # Positive-definite functions on an involutive additive monoid
@@ -57,8 +56,6 @@ here. The continuity theory and Bochner's representation theorem are later miles
   positive-definite kernel `fun a b => F (a + star b)`.
 * `TauCeti.IsPositiveDefinite.of_posSemidef`: conversely, if the kernel
   `fun a b => F (a + star b)` is positive definite then `F` is positive definite.
-* `TauCeti.IsPositiveDefinite.posSemidef_gram`: Gram matrices of a positive-definite
-  function are positive semidefinite.
 * `TauCeti.IsPositiveDefinite.add`, `TauCeti.IsPositiveDefinite.sum`,
   `TauCeti.IsPositiveDefinite.const_mul`, `TauCeti.IsPositiveDefinite.mul`,
   `TauCeti.IsPositiveDefinite.prod`, `TauCeti.isPositiveDefinite_const`: closure properties and
@@ -183,7 +180,7 @@ theorem conj_symm (hF : IsPositiveDefinite F) (a b : M) :
 This is the forward half of the function ↔ kernel correspondence. -/
 theorem posSemidef (hF : IsPositiveDefinite F) :
     Matrix.PosSemidef (fun a b => F (a + star b)) :=
-  posSemidef_iff.mpr
+  posSemidef_iff_finite_sum.mpr
     ⟨fun a b => by simpa only [RCLike.star_def] using hF.conj_symm b a,
       fun {_ι : Type} _ v x => by
       have h := hF.sum_nonneg (fun i => conj (x i)) v
@@ -195,7 +192,7 @@ theorem posSemidef (hF : IsPositiveDefinite F) :
 the reverse half of the function ↔ kernel correspondence. -/
 theorem of_posSemidef
     (hK : Matrix.PosSemidef (fun a b => F (a + star b))) : IsPositiveDefinite F := by
-  obtain ⟨_, hpos⟩ := posSemidef_iff.mp hK
+  obtain ⟨_, hpos⟩ := posSemidef_iff_finite_sum.mp hK
   intro n c v
   have h := hpos v (fun i => conj (c i))
   refine le_of_le_of_eq h ?_
@@ -247,24 +244,19 @@ end Group
 theorem add (hF : IsPositiveDefinite F) (hG : IsPositiveDefinite G) :
     IsPositiveDefinite (fun x => F x + G x) :=
   of_posSemidef <|
-    hF.posSemidef.add hG.posSemidef
+    posSemidef_add_apply hF.posSemidef hG.posSemidef
 
 /-- Positive-definite functions are closed under multiplication by a nonnegative complex scalar. -/
 theorem const_mul {k : ℂ} (hk : 0 ≤ k) (hF : IsPositiveDefinite F) :
     IsPositiveDefinite (fun x => k * F x) :=
   of_posSemidef <|
-    hF.posSemidef.smul hk
-
-/-- The Gram matrix of a positive-definite function is positive semidefinite. -/
-theorem posSemidef_gram (hF : IsPositiveDefinite F) {ι : Type*} (v : ι → M) :
-    Matrix.PosSemidef (fun i j => F (v i + star (v j))) :=
-  hF.posSemidef.submatrix v
+    posSemidef_smul_apply hF.posSemidef hk
 
 /-- Positive-definite functions are closed under pointwise multiplication (Schur product). -/
 theorem mul (hF : IsPositiveDefinite F) (hG : IsPositiveDefinite G) :
     IsPositiveDefinite (fun x => F x * G x) :=
   of_posSemidef <|
-    hF.posSemidef.hadamard hG.posSemidef
+    posSemidef_hadamard_apply hF.posSemidef hG.posSemidef
 
 end IsPositiveDefinite
 
@@ -283,19 +275,13 @@ namespace IsPositiveDefinite
 /-- Positive-definite functions are closed under finite sums. -/
 theorem sum {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∑ i ∈ s, F i x) :=
-  of_posSemidef <| by
-    have h := Matrix.posSemidef_sum s fun i hi => (hF i hi).posSemidef
-    have heq : (∑ i ∈ s, fun a b : M => F i (a + star b)) =
-        fun a b => ∑ i ∈ s, F i (a + star b) := by
-      ext a b
-      simp
-    exact heq ▸ h
+  of_posSemidef <| posSemidef_finset_sum_apply fun i hi => (hF i hi).posSemidef
 
 /-- Positive-definite functions are closed under finite products (Schur product). -/
 theorem prod {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∏ i ∈ s, F i x) :=
   of_posSemidef <|
-    posSemidef_prod fun i hi => (hF i hi).posSemidef
+    posSemidef_schur_finset_prod fun i hi => (hF i hi).posSemidef
 
 end IsPositiveDefinite
 

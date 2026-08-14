@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 public import Mathlib.Topology.Constructions.SumProd
 
@@ -65,21 +64,16 @@ namespace IsSemigroupGroupPD
 positive-definite kernel `(v, w) ↦ F (t, v - w)`. -/
 theorem posSemidef_timeSlice (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
     Matrix.PosSemidef fun v w : V => F (t, v - w) := by
-  have hK := hF.posSemidef.submatrix (fun v : V => (t / 2, v))
-  have heq : Matrix.submatrix
-      (fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
-      (fun v : V => (t / 2, v)) (fun v => (t / 2, v)) =
-      fun v w : V => F (t, v - w) := by
-    ext v w
-    simp [Matrix.submatrix, add_halves]
-  exact heq ▸ hK
+  simpa [add_halves] using
+    posSemidef_submatrix_apply hF.posSemidef (fun v : V => (t / 2, v))
 
 /-- Fixed-time slices are conjugate-symmetric in the spatial variable:
 `conj (F (t, v - w)) = F (t, w - v)`. -/
 @[simp]
 theorem timeSlice_conj_symm (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :
     conj (F (t, v - w)) = F (t, w - v) := by
-  simpa only [starRingEnd_apply] using (hF.posSemidef_timeSlice t).isHermitian.apply w v
+  simpa only [starRingEnd_apply] using
+    star_apply_eq_of_posSemidef (hF.posSemidef_timeSlice t) v w
 
 /-- The diagonal value `F (t, 0)` of a fixed-time slice is real and nonnegative. -/
 theorem timeSlice_diagonal_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) : 0 ≤ F (t, 0) := by
@@ -107,7 +101,7 @@ theorem timeSlice_diagonal_eq_ofReal_re (hF : IsSemigroupGroupPD F) (t : ℝ≥0
 theorem timeSlice_sum_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) {ι : Type*} [Fintype ι]
     (v : ι → V) (x : ι → ℂ) :
     0 ≤ ∑ i, ∑ j, conj (x i) * x j * F (t, v i - v j) :=
-  (posSemidef_iff.mp (hF.posSemidef_timeSlice t)).2 v x
+  (posSemidef_iff_finite_sum.mp (hF.posSemidef_timeSlice t)).2 v x
 
 /-- The fixed-time spatial Cauchy--Schwarz bound for the kernel entry `F (t, v - w)`. -/
 theorem timeSlice_normSq_le (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.PosDef
+public import TauCeti.Analysis.Matrix.PosSemidef
 public import Mathlib.Analysis.InnerProductSpace.Reproducing
 import Mathlib.Analysis.Normed.Operator.Extend
 
@@ -79,7 +79,7 @@ semidefinite.  This is the bridge needed by Mathlib's `RKHS.OfKernel` constructi
 theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     (positiveDefiniteKernelOperator K).PosSemidef := by
   have hsymm (a b : α) : conj (K a b) = K b a := by
-    simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
+    simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK a b
   apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
   refine ⟨?_, ?_⟩
   · apply Matrix.ext
@@ -130,7 +130,7 @@ original kernel. -/
 theorem inner_kolmogorovFeature (hK : Matrix.PosSemidef K) (a b : α) :
     ⟪kolmogorovFeature hK a, kolmogorovFeature hK b⟫_𝕜 = K a b := by
   have hsymm (x y : α) : conj (K x y) = K y x := by
-    simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
+    simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK x y
   let : Fact (positiveDefiniteKernelOperator K).PosSemidef :=
     ⟨posSemidef_positiveDefiniteKernelOperator hK⟩
   rw [kolmogorovFeature, kolmogorovFeature,

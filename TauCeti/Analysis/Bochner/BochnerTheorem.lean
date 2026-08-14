@@ -14,8 +14,7 @@ public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
 -- Lévy continuity theorem, Prokhorov's theorem with the Lévy–Prokhorov metrizability of the
 -- space of probability measures, sequential compactness, the Fourier-convention bridge with its
 -- uniqueness theorem, the nonnegativity and integrability of the Fourier transform of a
--- positive-definite function, the Gaussian regularization, and the kernel Cauchy–Schwarz
--- bounds.
+-- positive-definite function, Gaussian regularization, and the kernel Cauchy–Schwarz bounds.
 import Mathlib.Analysis.Fourier.Inversion
 import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 import Mathlib.MeasureTheory.Measure.LevyConvergence
@@ -218,13 +217,9 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_posSemidef
     have hcne : (c : ℂ) ≠ 0 := by exact_mod_cast hpos.ne'
     set G : V → ℂ := fun v => (c : ℂ)⁻¹ * F v with hG_def
     have hG_pd : Matrix.PosSemidef fun a b : V => G (a - b) := by
-      have h := hpd.smul
+      simp only [hG_def]
+      exact posSemidef_smul_apply hpd
         (inv_nonneg.mpr ((RCLike.ofReal_nonneg (K := ℂ)).mpr hpos.le))
-      have heq : (c : ℂ)⁻¹ • (fun a b : V => F (a - b)) =
-          fun a b : V => G (a - b) := by
-        ext a b
-        simp only [Pi.smul_apply, smul_eq_mul, hG_def]
-      exact heq ▸ h
     have hG_cont : Continuous G := continuous_const.mul hcont
     have hG0 : G 0 = 1 := by
       rw [hG_def]

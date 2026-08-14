@@ -100,7 +100,7 @@ the Gaussian kernel `(a, b) ↦ exp (-ε‖a - b‖²)`. -/
 theorem posSemidef_gaussianRegularize {φ : V → ℂ}
     (hpd : Matrix.PosSemidef fun a b : V => φ (a - b)) {ε : ℝ} (hε : 0 ≤ ε) :
     Matrix.PosSemidef fun a b : V => gaussianRegularize φ ε (a - b) :=
-  hpd.hadamard (posSemidef_cexp_neg_mul_sq_norm hε)
+  posSemidef_hadamard_apply hpd (posSemidef_cexp_neg_mul_sq_norm hε)
 
 end PositiveDefinite
 

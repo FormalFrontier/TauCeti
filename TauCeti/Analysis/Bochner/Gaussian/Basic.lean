@@ -120,15 +120,9 @@ reduces to this one on the span of a finite family of points. -/
 private theorem posSemidef_cexp_neg_mul_sq_norm_of_finiteDimensional {c : ℝ}
     (hc : 0 ≤ c) :
     Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
-  have hscaled := (posSemidef_charFun (μ := stdGaussian V) (fun x : V => x)).submatrix
-    (fun a : V => Real.sqrt (2 * c) • a)
-  have heq : (fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)))
-      = fun a b : V => charFun (stdGaussian V)
-        (Real.sqrt (2 * c) • a - Real.sqrt (2 * c) • b) := by
-    funext a b
-    rw [← smul_sub, charFun_stdGaussian_sqrt_smul hc]
-  rw [heq]
-  exact hscaled
+  simpa only [← smul_sub, charFun_stdGaussian_sqrt_smul hc] using
+    posSemidef_submatrix_apply (posSemidef_charFun (μ := stdGaussian V))
+      (fun a : V => Real.sqrt (2 * c) • a)
 
 end FiniteDimensional
 
@@ -149,7 +143,7 @@ subspace; so the statement follows from the finite-dimensional case, where the G
 characteristic function of the standard Gaussian measure. -/
 theorem posSemidef_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
     Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
-  refine posSemidef_iff.mpr ⟨fun a b => ?_, fun {ι : Type} _ v x => ?_⟩
+  refine posSemidef_iff_finite_sum.mpr ⟨fun a b => ?_, fun {ι : Type} _ v x => ?_⟩
   · rw [RCLike.star_def, ← Complex.exp_conj, map_neg, Complex.conj_ofReal, norm_sub_rev]
   · -- Restrict to the span of the finite family, a finite-dimensional inner-product space.
     let W := Submodule.span ℝ (Set.range v)
@@ -159,7 +153,7 @@ theorem posSemidef_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
     let w : ι → W := fun i => ⟨v i, Submodule.subset_span (Set.mem_range_self i)⟩
     have hnorm : ∀ i j, ‖w i - w j‖ = ‖v i - v j‖ := fun i j => by
       simp [w, Submodule.coe_norm]
-    have h := (posSemidef_iff.mp
+    have h := (posSemidef_iff_finite_sum.mp
       (posSemidef_cexp_neg_mul_sq_norm_of_finiteDimensional (V := W) hc)).2 w x
     simpa only [hnorm] using h
 

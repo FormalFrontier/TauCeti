@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 public import Mathlib.Data.NNReal.Star
 public import Mathlib.Topology.Constructions.SumProd
@@ -62,27 +61,20 @@ namespace IsSemigroupGroupPD
 definite: `(t, u) ↦ F (t + u, 0)`. -/
 theorem posSemidef_timeAxis (hF : IsSemigroupGroupPD F) :
     Matrix.PosSemidef fun t u : ℝ≥0 => F (t + u, 0) := by
-  have hK := hF.posSemidef.submatrix (fun t : ℝ≥0 => (t, (0 : V)))
-  have heq : Matrix.submatrix
-      (fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
-      (fun t : ℝ≥0 => (t, (0 : V))) (fun t => (t, (0 : V))) =
-      fun t u : ℝ≥0 => F (t + u, 0) := by
-    ext t u
-    simp [Matrix.submatrix]
-  exact heq ▸ hK
+  simpa using posSemidef_submatrix_apply hF.posSemidef (fun t : ℝ≥0 => (t, (0 : V)))
 
 /-- The zero-spatial time-axis kernel is conjugate symmetric:
 `conj (F (t + u, 0)) = F (u + t, 0)`. -/
 @[simp]
 theorem timeAxis_conj_symm (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) :
     conj (F (t + u, 0)) = F (u + t, 0) := by
-  simpa only [starRingEnd_apply] using hF.posSemidef_timeAxis.isHermitian.apply u t
+  simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hF.posSemidef_timeAxis t u
 
 /-- The finite quadratic form of the zero-spatial time-axis kernel is nonnegative. -/
 theorem timeAxis_sum_nonneg (hF : IsSemigroupGroupPD F) {ι : Type*} [Fintype ι]
     (t : ι → ℝ≥0) (x : ι → ℂ) :
     0 ≤ ∑ i, ∑ j, conj (x i) * x j * F (t i + t j, 0) :=
-  (posSemidef_iff.mp hF.posSemidef_timeAxis).2 t x
+  (posSemidef_iff_finite_sum.mp hF.posSemidef_timeAxis).2 t x
 
 /-- The zero-spatial time-axis function `t ↦ F (t, 0)` is positive definite for the trivial
 involution on `ℝ≥0`. -/

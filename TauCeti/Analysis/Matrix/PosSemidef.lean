@@ -7,7 +7,6 @@ module
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.LinearAlgebra.Matrix.PosDef
-public import Mathlib.Topology.Algebra.Monoid
 
 /-!
 # Positive-semidefinite matrix API
@@ -25,10 +24,11 @@ Mathlib code is vendored.
 
 ## Main declarations
 
-* `TauCeti.posSemidef_star_mul`: rank-one positive-semidefinite matrices.
-* `TauCeti.posSemidef_one` and `TauCeti.posSemidef_const_of_nonneg`: constant matrices.
-* `TauCeti.posSemidef_iff`: the quadratic-form characterization.
-* `TauCeti.posSemidef_prod` and `TauCeti.posSemidef_pow`: finite Schur products and powers.
+* `TauCeti.posSemidef_rankOne`: rank-one positive-semidefinite matrices.
+* `TauCeti.posSemidef_const_one` and `TauCeti.posSemidef_const_of_nonneg`: constant matrices.
+* `TauCeti.posSemidef_iff_finite_sum`: the quadratic-form characterization.
+* `TauCeti.posSemidef_finset_sum_apply`, `TauCeti.posSemidef_schur_finset_prod`, and
+  `TauCeti.posSemidef_schur_pow`: pointwise finite sums, Schur products, and Schur powers.
 * `TauCeti.normSq_le_of_posSemidef`: scalar Cauchy--Schwarz.
 
 ## References
@@ -88,7 +88,7 @@ private theorem star_mul_matrix_isHermitian {R : Type u}
 /-- The rank-one matrix `(a, b) ↦ star (g a) · g b` is positive semidefinite for an arbitrary
 index type. Such matrices are elementary building blocks for positive-semidefinite matrices;
 taking `g ≡ 1` gives the constant matrix `1`. -/
-theorem posSemidef_star_mul {R : Type u}
+theorem posSemidef_rankOne {R : Type u}
     [CommRing R] [PartialOrder R] [StarRing R] [StarOrderedRing R] (g : α → R) :
     Matrix.PosSemidef (fun a b => star (g a) * g b) := by
   refine posSemidef_of_support_posSemidef _ (star_mul_matrix_isHermitian g) ?_
@@ -97,10 +97,10 @@ theorem posSemidef_star_mul {R : Type u}
     Matrix.posSemidef_vecMulVec_star_self _
 
 /-- The constant matrix with value `1` is positive semidefinite. -/
-theorem posSemidef_one {R : Type u}
+theorem posSemidef_const_one {R : Type u}
     [CommRing R] [PartialOrder R] [StarRing R] [StarOrderedRing R] :
     Matrix.PosSemidef (fun _ _ : α => (1 : R)) := by
-  simpa using posSemidef_star_mul (R := R) (α := α) (fun _ => (1 : R))
+  simpa using posSemidef_rankOne (R := R) (α := α) (fun _ => (1 : R))
 
 /-- A nonnegative constant gives a positive-semidefinite constant matrix. -/
 theorem posSemidef_const_of_nonneg {R : Type u}
@@ -124,7 +124,7 @@ theorem posSemidef_const_of_nonneg {R : Type u}
 /-- The quadratic-form characterization of an arbitrary-index positive-semidefinite matrix. The
 reverse direction constructs positivity from conjugate symmetry and finite quadratic-form
 nonnegativity without unfolding `Matrix.PosSemidef`. -/
-theorem posSemidef_iff {R : Type u} [CommRing R] [PartialOrder R] [StarRing R]
+theorem posSemidef_iff_finite_sum {R : Type u} [CommRing R] [PartialOrder R] [StarRing R]
     {K : α → α → R} :
     Matrix.PosSemidef K ↔
       (∀ a b, star (K a b) = K b a) ∧
@@ -162,31 +162,60 @@ theorem posSemidef_iff {R : Type u} [CommRing R] [PartialOrder R] [StarRing R]
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 
-/-- Finite pointwise products of positive-semidefinite matrices are positive semidefinite. -/
-theorem posSemidef_prod {ι : Type w} {s : Finset ι}
+/-- Conjugate symmetry of a positive-semidefinite matrix, in pointwise form. -/
+theorem star_apply_eq_of_posSemidef {K : α → α → 𝕜} (hK : Matrix.PosSemidef K) (a b : α) :
+    star (K a b) = K b a :=
+  hK.isHermitian.apply b a
+
+/-- Pulling back both indices of a positive-semidefinite matrix preserves positive semidefiniteness,
+stated directly in function syntax. -/
+theorem posSemidef_submatrix_apply {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
+    {β : Type w} (f : β → α) : Matrix.PosSemidef (fun a b => K (f a) (f b)) := by
+  have heq : Matrix.submatrix K f f = fun a b => K (f a) (f b) := by ext; rfl
+  exact heq ▸ hK.submatrix f
+
+/-- Pointwise sums of positive-semidefinite matrices are positive semidefinite. -/
+theorem posSemidef_add_apply {K L : α → α → 𝕜} (hK : Matrix.PosSemidef K)
+    (hL : Matrix.PosSemidef L) : Matrix.PosSemidef (fun a b => K a b + L a b) := by
+  have heq : K + L = fun a b => K a b + L a b := by ext; rfl
+  exact heq ▸ hK.add hL
+
+/-- A nonnegative scalar multiple, written pointwise, is positive semidefinite. -/
+theorem posSemidef_smul_apply {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
+    {c : 𝕜} (hc : 0 ≤ c) : Matrix.PosSemidef (fun a b => c * K a b) := by
+  have heq : c • K = fun a b => c * K a b := by ext; simp
+  exact heq ▸ hK.smul hc
+
+/-- The pointwise product of positive-semidefinite matrices is positive semidefinite. -/
+theorem posSemidef_hadamard_apply {K L : α → α → 𝕜} (hK : Matrix.PosSemidef K)
+    (hL : Matrix.PosSemidef L) : Matrix.PosSemidef (fun a b => K a b * L a b) := by
+  have heq : Matrix.hadamard K L = fun a b => K a b * L a b := by ext; rfl
+  exact heq ▸ hK.hadamard hL
+
+/-- Finite pointwise sums of positive-semidefinite matrices are positive semidefinite. -/
+theorem posSemidef_finset_sum_apply {ι : Type w} {s : Finset ι}
+    {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
+    Matrix.PosSemidef (fun a b => ∑ i ∈ s, K i a b) := by
+  have heq : (∑ i ∈ s, K i) = fun a b => ∑ i ∈ s, K i a b := by ext; simp
+  exact heq ▸ Matrix.posSemidef_sum s hK
+
+/-- Finite pointwise Schur products of positive-semidefinite matrices are positive semidefinite. -/
+theorem posSemidef_schur_finset_prod {ι : Type w} {s : Finset ι}
     {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
     Matrix.PosSemidef (fun a b => ∏ i ∈ s, K i a b) := by
   have h := Finset.prod_induction K Matrix.PosSemidef
-    (fun _ _ hA hB => hA.hadamard hB) posSemidef_one hK
-  have heq : (∏ i ∈ s, K i) = fun a b => ∏ i ∈ s, K i a b := by
-    ext a b
-    simp
-  rwa [heq] at h
+    (fun _ _ hA hB => hA.hadamard hB) posSemidef_const_one hK
+  have heq : (∏ i ∈ s, K i) = fun a b => ∏ i ∈ s, K i a b := by ext; simp
+  exact heq ▸ h
 
 /-- Schur powers of a positive-semidefinite matrix are positive semidefinite. -/
-theorem posSemidef_pow {K : α → α → 𝕜} (hK : Matrix.PosSemidef K) (n : ℕ) :
+theorem posSemidef_schur_pow {K : α → α → 𝕜} (hK : Matrix.PosSemidef K) (n : ℕ) :
     Matrix.PosSemidef (fun a b => K a b ^ n) := by
   induction n with
   | zero =>
-      simpa using posSemidef_one (R := 𝕜) (α := α)
+      simpa using posSemidef_const_one (R := 𝕜) (α := α)
   | succ n ih =>
-      have h := ih.hadamard hK
-      have heq : Matrix.hadamard (fun a b => K a b ^ n) K =
-          fun a b => K a b ^ n * K a b := by
-        ext a b
-        rfl
-      rw [heq] at h
-      simpa [pow_succ] using h
+      simpa only [pow_succ] using posSemidef_hadamard_apply ih hK
 
 /-- The `2 × 2` principal submatrix at two indices is positive semidefinite. -/
 private theorem finTwo_posSemidef {K : α → α → 𝕜}
@@ -199,7 +228,7 @@ theorem normSq_le_of_posSemidef {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a b : α) :
     RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b) := by
   have hsymm (x y : α) : conj (K x y) = K y x := by
-    simpa only [starRingEnd_apply] using hK.isHermitian.apply y x
+    simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK x y
   let A : Matrix (Fin 2) (Fin 2) 𝕜 := Matrix.of fun i j => K (![a, b] i) (![a, b] j)
   have hA : A.PosSemidef := finTwo_posSemidef hK a b
   have hdet : 0 ≤ A.det := Matrix.PosSemidef.det_nonneg hA
@@ -228,7 +257,7 @@ theorem eq_zero_of_apply_self_eq_zero_right_of_posSemidef {K : α → α → �
     (hK : Matrix.PosSemidef K) {a b : α} (hb : K b b = 0) : K a b = 0 := by
   have hba := eq_zero_of_apply_self_eq_zero_left_of_posSemidef hK (a := b) (b := a) hb
   have hconj : conj (K a b) = K b a := by
-    simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
+    simpa only [starRingEnd_apply] using star_apply_eq_of_posSemidef hK a b
   rw [hba] at hconj
   have := congrArg conj hconj
   simpa using this

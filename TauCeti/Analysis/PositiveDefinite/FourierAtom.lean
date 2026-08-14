@@ -80,7 +80,7 @@ theorem fourierAtom_sub (q v w : V) :
 theorem posSemidef_fourierAtom (q : V) :
     Matrix.PosSemidef fun v w : V => fourierAtom q (v - w) := by
   simp_rw [fourierAtom_sub]
-  simpa only [RCLike.star_def] using posSemidef_star_mul
+  simpa only [RCLike.star_def] using posSemidef_rankOne
     (fun v : V => Complex.exp (2 * ((Real.pi : ℝ) : ℂ) * Complex.I * ((inner ℝ v q : ℝ) : ℂ)))
 
 /-- Fourier atoms are continuous in the spatial variable. -/
