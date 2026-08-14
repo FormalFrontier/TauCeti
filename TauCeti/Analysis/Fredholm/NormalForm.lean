@@ -108,7 +108,6 @@ theorem normalFormMap_apply (f : E → F) (a x : E) :
 
 omit [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
 /-- The normal-form coordinate map evaluated at its base point. -/
-@[simp]
 theorem normalFormMap_self (f : E → F) (a : E) :
     pkg.normalFormMap f a a = (pkg.decCodom.proj (f a), 0) := by
   simp [normalFormMap]
@@ -178,7 +177,10 @@ omit [CompleteSpace 𝕜] [CompleteSpace F] in
 the base point. -/
 @[simp]
 theorem normalForm_symm_self {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
-    (pkg.normalForm hf).symm (pkg.decCodom.proj (f a), 0) = a := by
+    (pkg.normalForm hf).symm
+      (pkg.decCodom.X₁.projectionOnto pkg.decCodom.X₀ pkg.decCodom.isTopCompl.isCompl (f a), 0) =
+        a := by
+  change (pkg.normalForm hf).symm (pkg.decCodom.proj (f a), 0) = a
   rw [← pkg.normalFormMap_self f a, ← pkg.normalForm_apply hf]
   exact (pkg.normalForm hf).left_inv (pkg.mem_normalForm_source hf)
 
@@ -239,6 +241,7 @@ theorem hasStrictFDerivAt_normalForm_symm_self {f : E → F} {a : E}
       (pkg.decCodom.proj (f a), 0) := by
   refine OpenPartialHomeomorph.hasStrictFDerivAt_symm (pkg.normalForm hf)
     (pkg.normalForm_self_mem_target hf) ?_
+  simp only [Submodule.coe_projectionOntoL]
   rw [pkg.normalForm_symm_self hf]
   apply (pkg.hasStrictFDerivAt_normalFormMap hf).congr_of_eventuallyEq
   filter_upwards [] with x
@@ -257,7 +260,7 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
   have hinv := pkg.hasStrictFDerivAt_normalForm_symm_self hf
   have hf' : HasStrictFDerivAt f T
       ((pkg.normalForm hf).symm (pkg.decCodom.proj (f a), 0)) := by
-    simpa only [pkg.normalForm_symm_self hf] using hf
+    simpa only [Submodule.coe_projectionOntoL, pkg.normalForm_symm_self hf] using hf
   have hcomp : HasStrictFDerivAt
       (fun y ↦ P (f ((pkg.normalForm hf).symm y)))
       (P.comp (T.comp (pkg.normalFormLinearEquiv.symm :
