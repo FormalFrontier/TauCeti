@@ -18,7 +18,7 @@ two are inverse only after the *positive* entries are singled out, since `rowLen
 a row of length `0`.
 
 Indexing the row lengths by `Fin n` rather than by a list removes that mismatch: a weakly
-decreasing `f : Fin n → ℕ` is allowed to end in zeros, and `TauCeti.YoungDiagram.ofRowLensFin`
+decreasing `f : Fin n → ℕ` is allowed to end in zeros, and `YoungDiagram.ofRowLensFin`
 turns any such family into the diagram whose `i`-th row has length `f i` for `i < n` and which has
 no row beyond. Reading the first `n` row lengths back off is then an honest inverse on the
 diagrams with at most `n` rows — the form consumed when partitions with a bounded number of rows
@@ -26,23 +26,21 @@ are matched against weight data for `GL n`.
 
 ## Main definitions
 
-* `TauCeti.YoungDiagram.ofRowLensFin`: the Young diagram with prescribed weakly decreasing row
+* `YoungDiagram.ofRowLensFin`: the Young diagram with prescribed weakly decreasing row
   lengths `f : Fin n → ℕ` and no further rows.
 
 ## Main results
 
-* `TauCeti.YoungDiagram.rowLen_ofRowLensFin` and
-  `TauCeti.YoungDiagram.rowLen_ofRowLensFin_eq_zero_of_le`: the row lengths of `ofRowLensFin f hf`
+* `YoungDiagram.rowLen_ofRowLensFin` and
+  `YoungDiagram.rowLen_ofRowLensFin_eq_zero_of_le`: the row lengths of `ofRowLensFin f hf`
   are `f` on `Fin n` and `0` beyond it.
-* `TauCeti.YoungDiagram.colLen_zero_ofRowLensFin_le` and
-  `TauCeti.YoungDiagram.ofRowLensFin_rowLen`: `ofRowLensFin` lands in the diagrams with at most
+* `YoungDiagram.colLen_zero_ofRowLensFin_le` and
+  `YoungDiagram.ofRowLensFin_rowLen`: `ofRowLensFin` lands in the diagrams with at most
   `n` rows, and is there inverse to reading off the first `n` row lengths.
-* `TauCeti.YoungDiagram.card_ofRowLensFin`: its number of cells is `∑ i, f i`.
+* `YoungDiagram.card_ofRowLensFin`: its number of cells is `∑ i, f i`.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace YoungDiagram
 
@@ -103,4 +101,3 @@ theorem card_ofRowLensFin (f : Fin n → ℕ) (hf : Antitone f) :
 
 end YoungDiagram
 
-end TauCeti

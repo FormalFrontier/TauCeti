@@ -21,8 +21,6 @@ and elementary collapses naturally change the set of vertices represented by sin
 
 public section
 
-namespace TauCeti
-
 namespace PreAbstractSimplicialComplex
 
 variable {α β γ δ : Type*} [DecidableEq β] [DecidableEq γ]
@@ -172,4 +170,3 @@ end SimplicialMap
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

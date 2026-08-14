@@ -22,9 +22,10 @@ answer: replacing `σᵢ` by `hσᵢ` for `h ∈ SL₂(ℤ)` multiplies the repr
 slash by `hᵀ` is trivial on that function. Even the identity double coset can therefore send a
 raw `f` to `f ∣[k] h` rather than to `f`.
 
-What repairs it is slash-invariance of `f`, and that is Shimura's Proposition 3.30: for `f`
-invariant under `SL₂(ℤ)` the sum is again invariant, and right multiplication merely permutes
-the representatives. That theorem, and the descent of this sum to a genuine operator on
+What repairs it is slash-invariance of `f`, and that is the proof of Shimura's Proposition
+3.37: for `f` invariant under `SL₂(ℤ)` the sum is again invariant, because right multiplication
+merely permutes the representatives. That theorem, and the descent of this sum to a genuine
+operator on
 `SlashInvariantForm` and `ModularForm`, are deliberately **not** in this file — the reindexing
 argument is substantial and is a different claim. Until then this is an auxiliary sum, named to
 say so, and every consumer must supply the invariance hypothesis itself.
@@ -39,7 +40,11 @@ that is, the `Xᵢ` must represent **right** cosets `HXᵢ`.
 
 Transposition exchanges the two: if `HδH = ⊔ᵢ (σᵢδ)H` then `HδH = ⊔ᵢ H(δᵀσᵢᵀ)`, because
 transposition is an anti-automorphism preserving `SL₂(ℤ)` and fixing every double coset. So the
-representative used here is `(σᵢδ)ᵀ`, which is `transposeRep`. This is Shimura's Prop 3.30.
+representative used here is `(σᵢδ)ᵀ`, which is `transposeRep`.
+
+The transpose is an artefact of which handedness Mathlib's `DecompQuotient` supplies, not of the
+mathematics. Shimura decomposes `Γ₁αΓ₂ = ⊔ᵥ Γ₁aᵥ` — the group on the **left** — so his slash,
+being a right action, permutes those representatives directly and no transpose ever appears.
 
 ⚠ Conventions: `gH` is a left coset and `Hg` a right one, as in Mathlib and in
 `LeftCosetModule/Basic.lean`. AINTLIB's `HeckeAction.lean` uses the opposite labels for the
@@ -63,8 +68,10 @@ and scalars commute past it (`ModularForm.rat_smul_slash_of_det_pos`). Over a ge
 
 ## Main results
 
-* `HeckeRing.GL2.transposeRep_def`, `HeckeRing.GL2.heckeSlashSum_apply`: the characteristic
-  equations, which are the interface since neither definition is `@[expose]`.
+* `HeckeRing.GL2.transposeRep_def`, `HeckeRing.GL2.heckeSlashSum_def` and
+  `HeckeRing.GL2.heckeSlashSum_apply`: the characteristic equations, which are the interface
+  since neither definition is `@[expose]`. The last two are the function-level and pointwise
+  forms of the same equation.
 * `HeckeRing.GL2.det_transposeRep_pos`: the representatives have positive determinant.
 * `HeckeRing.GL2.heckeSlashSum_add`, `heckeSlashSum_zero`, `heckeSlashSum_smul`: `ℂ`-linearity.
 
@@ -81,7 +88,9 @@ against TauCeti's `SLnZ`/`posDetInt` Hecke pair and `transposeGLEquiv` rather th
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
-  §3.4, Proposition 3.30.
+  §3.4 *Action of double cosets on automorphic forms*: equation (3.4.1) defines the operator
+  `f ∣[Γ₁ α Γ₂]ₖ` as the sum below, and Proposition 3.37 is the statement that it maps
+  automorphic forms to automorphic forms — the invariance this file stops short of.
 -/
 
 public section
@@ -127,7 +136,7 @@ lemma det_transposeRep_pos (i : DecompQuotient (SLnZ 2) (SLnZ 2) (D.out : GL (Fi
 
 /-- **The slash sum over a chosen decomposition of a double coset**:
 `∑ᵢ f ∣[k] (σᵢ δ)ᵀ`, over the transposed representatives of the left-coset decomposition of
-`HδH` (Shimura Prop 3.30).
+`HδH` (Shimura's `f ∣[Γ₁ α Γ₂]ₖ`, §3.4 (3.4.1), up to the `det` normalising factor).
 
 ⚠ This depends on the chosen representatives `D.out` and `i.out`, and on a general
 `f : ℍ → ℂ` the value changes with them — see the module docstring. Slash-invariance of `f` is
@@ -138,8 +147,14 @@ sufficiency theorem is available. -/
 noncomputable def heckeSlashSum (f : ℍ → ℂ) : ℍ → ℂ :=
   ∑ i : DecompQuotient (SLnZ 2) (SLnZ 2) (D.out : GL (Fin 2) ℚ), f ∣[k] transposeRep D i
 
+/-- Defining equation for `heckeSlashSum` at the level of functions. Since `heckeSlashSum` is
+not `@[expose]`, a downstream module rewrites with this instead of unfolding the body; the
+pointwise `heckeSlashSum_apply` below is the companion for arguments that work at a point. -/
+lemma heckeSlashSum_def (f : ℍ → ℂ) : heckeSlashSum k D f =
+    ∑ i : DecompQuotient (SLnZ 2) (SLnZ 2) (D.out : GL (Fin 2) ℚ), f ∣[k] transposeRep D i := (rfl)
+
 /-- The pointwise value of the slash sum: the sum of the slashed values. This is the equation
-the reindexing proof of Prop 3.30 works from. -/
+the reindexing proof of Prop 3.37 works from. -/
 lemma heckeSlashSum_apply (f : ℍ → ℂ) (τ : ℍ) : heckeSlashSum k D f τ =
     ∑ i : DecompQuotient (SLnZ 2) (SLnZ 2) (D.out : GL (Fin 2) ℚ), (f ∣[k] transposeRep D i) τ :=
   Finset.sum_apply ..
