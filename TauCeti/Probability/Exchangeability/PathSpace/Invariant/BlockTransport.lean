@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-public import TauCeti.Probability.Exchangeability.Cylinder
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
 
 /-!
@@ -41,10 +40,6 @@ integral identity, which needs only `T ⁻¹' A = A`.
   change of variables. An invariant event is a special invariant weight, so the second follows
   from the first by applying it to `A.indicator w`. This is the form an induction peeling one
   coordinate at a time needs, since the factors already peeled accumulate as such a weight.
-
-* `ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono` — the block-cylinder
-  corollary: over an invariant event, the mass of a block cylinder does not depend on which
-  strictly increasing selection cuts it, and may be read at the prefix.
 
 `ℝ≥0∞` statements are not restated here. For the *unweighted* results a consumer applies
 `.lintegral_comp` to the `MeasurePreserving` above, or rewrites with `lintegral_map` through the
@@ -193,37 +188,6 @@ theorem setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurable_invarian
     (hw.indicator hA) hf
 
 end ContractableLaw
-
-/-- **The mass of a block cylinder met with an invariant event may be read at the prefix.**
-
-For a contractable law, a shift-invariant event, measurable coordinate sets and a strictly
-increasing selection, the mass of the intersection equals that of the intersection with the prefix
-cylinder. -/
-theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ)
-    {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
-    (hB : ∀ i, MeasurableSet (B i))
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
-    ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
-      = ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B) := by
-  have hAm : MeasurableSet A := MeasurableSpace.invariants_le _ _ hA
-  have hcoord : ∀ (s : Fin r → ℕ) (i : Fin r),
-      AEMeasurable (fun x : ℕ → α => x (s i)) (ρ.restrict A) :=
-    fun s i => (measurable_pi_apply (s i)).aemeasurable
-  -- Each side is the block law of the restricted measure, read on a rectangle.
-  have hkey : ∀ s : Fin r → ℕ,
-      ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) s B)
-        = blockLaw (ρ.restrict A) (fun j (x : ℕ → α) => x j) s (Set.univ.pi B) := by
-    intro s
-    rw [blockLaw_blockCylinder _ (hcoord s) hB, Measure.restrict_apply
-      (measurableSet_blockCylinder (fun i => measurable_pi_apply _) hB), Set.inter_comm]
-  rw [hkey k, hkey (fun i : Fin r => (i : ℕ))]
-  -- The two block laws agree, by the transport of the restricted law onto the prefix.
-  have hprefix : (fun (x : ℕ → α) (i : Fin r) => x (i : ℕ)) = prefixProj α r :=
-    funext fun x => funext fun i => (prefixProj_apply r x i).symm
-  rw [blockLaw_def, blockLaw_def, hprefix]
-  exact congrArg (fun μ : Measure (Fin r → α) => μ (Set.univ.pi B))
-    (hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA)
 
 /-- **Every coordinate has the same set-integral over an invariant event.** The single-coordinate
 instance of the block transport: reading coordinate `r` and reading coordinate `0` give the same
