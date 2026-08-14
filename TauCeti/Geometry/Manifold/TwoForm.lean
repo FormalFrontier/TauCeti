@@ -150,14 +150,16 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
       intro x
       rw [contMDiffAt_hom_bundle]
       refine ⟨contMDiffAt_id, ?_⟩
-      let coord := fun y : V =>
-        ContinuousLinearMap.inCoordinates V (TangentSpace 𝓘(ℝ, V)) (V →L[ℝ] ℝ)
-          (fun b : V => TangentSpace 𝓘(ℝ, V) b →L[ℝ] ℝ) x y x y B
-      have hcoord : coord = fun _ => B := by
+      -- The base and fiber components of the constant section are the projections of an explicit
+      -- pair, so `dsimp only` reduces the goal to the coordinate expression rewritten below.
+      dsimp only
+      have hcoord : (fun y : V =>
+          ContinuousLinearMap.inCoordinates V (TangentSpace 𝓘(ℝ, V)) (V →L[ℝ] ℝ)
+            (fun b : V => TangentSpace 𝓘(ℝ, V) b →L[ℝ] ℝ) x y x y B) = fun _ => B := by
         funext y
         ext v w
         simp only [ContinuousLinearMap.inCoordinates, TangentBundle.symmL_model_space,
-          ContinuousLinearMap.comp_apply, Trivialization.continuousLinearMapAt_apply, coord]
+          ContinuousLinearMap.comp_apply, Trivialization.continuousLinearMapAt_apply]
         have htan : y ∈ (trivializationAt V (TangentSpace 𝓘(ℝ, V)) x).baseSet := by
           rw [TangentBundle.trivializationAt_baseSet, chartAt_self_eq]
           exact Set.mem_univ y
@@ -172,7 +174,6 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
           Trivial.continuousLinearMapAt_trivialization, TangentBundle.symmL_model_space,
           ContinuousLinearMap.id_comp]
         rfl
-      change ContMDiffAt 𝓘(ℝ, V) 𝓘(ℝ, V →L[ℝ] V →L[ℝ] ℝ) ∞ coord x
       rw [hcoord]
       exact contMDiffAt_const⟩
   isAlt _ v := hB v

@@ -32,6 +32,8 @@ defined here and the separate closedness predicate once that exterior-calculus l
 * `TauCeti.SmoothTwoForm.IsNondegenerate.symplecticFormAt`: the symplectic form on a tangent fiber.
 * `TauCeti.SmoothTwoForm.Tames` and `TauCeti.SmoothTwoForm.Compatible`: the unbundled pointwise
   relations to a smooth almost complex structure.
+* `TauCeti.SmoothTwoForm.IsNondegenerate.tames_iff`, `invariant_iff`, and `compatible_iff`: these
+  relations characterized fiber by fiber through the linear theory.
 * `TauCeti.SymplecticForm.constSmooth`: a symplectic form as a constant smooth two-form.
 
 The definitions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
@@ -120,6 +122,17 @@ structure in both tangent arguments leaves the form unchanged. -/
 def Invariant (form : SmoothTwoForm I M) (J : SmoothAlmostComplexStructure I M) : Prop :=
   ∀ (x : M) (v w : TangentSpace I x), form x (J x v) (J x w) = form x v w
 
+/-- Manifold-level invariance is the pointwise linear invariance condition once nondegeneracy has
+identified each tangent-space form as a `SymplecticForm`. -/
+lemma IsNondegenerate.invariant_iff (h : form.IsNondegenerate) :
+    form.Invariant J ↔ ∀ x, (h.symplecticFormAt x).Invariant (J.almostComplexStructureAt x) := by
+  simp only [SymplecticForm.invariant_iff]
+  constructor <;> intro hinv x v w
+  · simpa only [IsNondegenerate.symplecticFormAt_apply,
+      SmoothAlmostComplexStructure.almostComplexStructureAt_apply] using hinv x v w
+  · simpa only [IsNondegenerate.symplecticFormAt_apply,
+      SmoothAlmostComplexStructure.almostComplexStructureAt_apply] using hinv x v w
+
 /-- Compatibility is the conjunction of invariance and tameness. Neither relation is stored in
 the smooth two-form or almost complex structure. -/
 structure Compatible (form : SmoothTwoForm I M) (J : SmoothAlmostComplexStructure I M) : Prop where
@@ -132,17 +145,22 @@ structure Compatible (form : SmoothTwoForm I M) (J : SmoothAlmostComplexStructur
 lemma Compatible.isNondegenerate (h : form.Compatible J) : form.IsNondegenerate :=
   h.tames.isNondegenerate
 
+/-- Manifold-level compatibility is compatibility of the induced linear pair on every tangent
+space. -/
+lemma IsNondegenerate.compatible_iff (h : form.IsNondegenerate) :
+    form.Compatible J ↔ ∀ x, (h.symplecticFormAt x).Compatible (J.almostComplexStructureAt x) := by
+  simp only [SymplecticForm.compatible_iff, forall_and]
+  constructor
+  · intro hcompat
+    exact ⟨h.invariant_iff.mp hcompat.invariant, h.tames_iff.mp hcompat.tames⟩
+  · rintro ⟨hinv, htame⟩
+    exact ⟨h.invariant_iff.mpr hinv, h.tames_iff.mpr htame⟩
+
 /-- Manifold-level compatibility gives the existing compatible-pair structure on each tangent
 space. -/
 lemma Compatible.compatibleAt (h : form.Compatible J) (x : M) :
     (h.isNondegenerate.symplecticFormAt x).Compatible (J.almostComplexStructureAt x) :=
-  SymplecticForm.Compatible.of_tames
-    ((h.isNondegenerate.symplecticFormAt x).invariant_iff _ |>.mpr fun v w => by
-      simpa only [IsNondegenerate.symplecticFormAt_apply,
-        SmoothAlmostComplexStructure.almostComplexStructureAt_apply] using h.invariant x v w)
-    (fun v hv => by
-      simpa only [IsNondegenerate.symplecticFormAt_apply,
-        SmoothAlmostComplexStructure.almostComplexStructureAt_apply] using h.tames x v hv)
+  h.isNondegenerate.compatible_iff.mp h x
 
 end SmoothTwoForm
 
@@ -159,12 +177,14 @@ def constSmooth (omegaForm : SymplecticForm V) :
 /-- A constant smooth symplectic form evaluates as its defining algebraic form. -/
 @[simp]
 lemma constSmooth_apply (omegaForm : SymplecticForm V) (x v w : V) :
-    omegaForm.constSmooth x v w = omegaForm v w :=
-  by
-    change ((SmoothTwoForm.const omegaForm.toBilinForm.toContinuousBilinearMap
-      omegaForm.isAlt).toContMDiffSection x) v w = omegaForm.toBilinForm v w
-    exact congrArg (fun B : V →L[ℝ] V →L[ℝ] ℝ ↦ B v w)
-      (SmoothTwoForm.const_toContMDiffSection_apply _ _ x)
+    omegaForm.constSmooth x v w = omegaForm v w := by
+  simp only [constSmooth]
+  -- The two sides of `SmoothTwoForm.const_toContMDiffSection_apply` live in the fiber type
+  -- `TangentSpace 𝓘(ℝ, V) x →L[ℝ] _` and in `V →L[ℝ] _`, so `rw` cannot rewrite underneath the
+  -- application; the equality is transported by `congrArg` instead.
+  exact (congrArg (fun B : V →L[ℝ] V →L[ℝ] ℝ ↦ B v w)
+    (SmoothTwoForm.const_toContMDiffSection_apply _ _ x)).trans
+      (LinearMap.toContinuousBilinearMap_apply _ v w)
 
 /-- A constant smooth symplectic form is fiberwise nondegenerate. -/
 @[simp]
