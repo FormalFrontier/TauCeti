@@ -164,14 +164,6 @@ theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A)
     (_root_.BialgHom.toAlgHom_toLinearMap φ).symm
   simp only [LinearMap.lTensor_def, hφ]
 
-/-- Acting on a finitely generated comodule corestricted along a bialgebra morphism agrees with
-acting on the original comodule by the composite point. -/
-theorem endOfPoint_corestrict_obj (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A)
-    (M : FGComoduleCat R H₁) :
-    endOfPoint ((FGComoduleCat.corestrict (φ : H₁ →ₗc[R] H₂)).obj M) g =
-      endOfPoint M (g.comp (φ : H₁ →ₐ[R] H₂)) :=
-  endOfPoint_corestrict (V := M) φ g
-
 end Corestrict
 
 section GroupLike

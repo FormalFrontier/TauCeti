@@ -22,7 +22,7 @@ points alone do not detect infinitesimal structure in nonreduced group schemes.
 This file packages the geometric-point criterion as an object property on commutative Hopf
 algebras, separately from smoothness, and combines the two properties for the finite-type smooth
 case. It also packages the smooth conjunction as a full subcategory. The equivalent nilpotence
-and Jordan-factor characterizations make both properties usable without unfolding them.
+and Jordan-factor characterizations make the pointwise property usable without unfolding it.
 
 This pointwise criterion is not offered as a definition for nonreduced group schemes: for example,
 both `αₚ` and `μₚ` have only the identity as an algebraic-closure-valued point in characteristic
@@ -40,10 +40,6 @@ must instead detect infinitesimal points.
 * `TauCeti.unipotentPointsCommHopfAlgProperty_iff_unipotentPart_eq_self` and
   `TauCeti.unipotentPointsCommHopfAlgProperty_iff_semisimplePart_eq_one`: the pointwise Jordan
   characterizations.
-* `TauCeti.smoothUnipotentCommHopfAlgProperty_iff_smooth_and_forall_isNilpotent_endOfPoint_sub_one`,
-  `TauCeti.smoothUnipotentCommHopfAlgProperty_iff_smooth_and_unipotentPart_eq_self`, and
-  `TauCeti.smoothUnipotentCommHopfAlgProperty_iff_smooth_and_semisimplePart_eq_one`: the parallel
-  characterizations for the smooth finite-type conjunction.
 * `TauCeti.SmoothUnipotentCommHopfAlgCat`: the full subcategory of smooth unipotent coordinate
   Hopf algebras.
 
@@ -62,7 +58,7 @@ open CategoryTheory WithConv
 
 namespace TauCeti
 
-universe u
+universe u v
 
 /-- The object property asserting that every algebraic-closure-valued point acts unipotently in
 every finite-dimensional representation.
@@ -71,7 +67,7 @@ This geometric-point criterion is kept separate from smoothness, as required by 
 is not by itself a definition of unipotence for nonreduced group schemes, whose infinitesimal
 structure is invisible to algebraic-closure-valued points. -/
 def unipotentPointsCommHopfAlgProperty (k : Type u) [Field k] :
-    ObjectProperty (CommHopfAlgCat.{u} k) :=
+    ObjectProperty (CommHopfAlgCat.{v} k) :=
   fun H ↦ ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
     HopfAlgebra.IsUnipotentPoint g
 
@@ -79,7 +75,7 @@ def unipotentPointsCommHopfAlgProperty (k : Type u) [Field k] :
 algebraic-closure-valued point acts unipotently in every finite-dimensional representation. -/
 @[simp]
 theorem unipotentPointsCommHopfAlgProperty_iff (k : Type u) [Field k]
-    (H : CommHopfAlgCat.{u} k) :
+    (H : CommHopfAlgCat.{v} k) :
     unipotentPointsCommHopfAlgProperty k H ↔
       ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
         HopfAlgebra.IsUnipotentPoint g :=
@@ -88,7 +84,8 @@ theorem unipotentPointsCommHopfAlgProperty_iff (k : Type u) [Field k]
 /-- The geometric-point unipotence property is invariant under isomorphisms of commutative Hopf
 algebras. -/
 instance (k : Type u) [Field k] :
-    (unipotentPointsCommHopfAlgProperty k).IsClosedUnderIsomorphisms where
+    (unipotentPointsCommHopfAlgProperty k :
+      ObjectProperty (CommHopfAlgCat.{v} k)).IsClosedUnderIsomorphisms where
   of_iso {H K} e hH g := by
     let e' : H ≃ₐc[k] K := CommHopfAlgCat.ofIso e
     apply (HopfAlgebra.isUnipotentPoint_mapDomain_iff e' g).mp
@@ -97,10 +94,10 @@ instance (k : Type u) [Field k] :
 /-- Every geometric point is unipotent exactly when every such point acts with nilpotent
 difference from the identity in every finite-dimensional comodule. -/
 theorem unipotentPointsCommHopfAlgProperty_iff_forall_isNilpotent_endOfPoint_sub_one
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) :
     unipotentPointsCommHopfAlgProperty k H ↔
       ∀ (g : WithConv (H →ₐ[k] AlgebraicClosure k))
-        (M : FGComoduleCat.{u, u, u} k H),
+        (M : FGComoduleCat.{u, v, u} k H),
           _root_.IsNilpotent (Comodule.endOfPoint M g.ofConv - 1) := by
   rw [unipotentPointsCommHopfAlgProperty_iff]
   apply forall_congr'
@@ -108,7 +105,7 @@ theorem unipotentPointsCommHopfAlgProperty_iff_forall_isNilpotent_endOfPoint_sub
 
 /-- Every geometric point is unipotent exactly when its unipotent part is the point itself. -/
 theorem unipotentPointsCommHopfAlgProperty_iff_unipotentPart_eq_self
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) :
     unipotentPointsCommHopfAlgProperty k H ↔
       ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
         HopfAlgebra.Point.unipotentPart k H (AlgebraicClosure k) g = g := by
@@ -119,7 +116,7 @@ theorem unipotentPointsCommHopfAlgProperty_iff_unipotentPart_eq_self
 
 /-- Every geometric point is unipotent exactly when its semisimple part is the identity. -/
 theorem unipotentPointsCommHopfAlgProperty_iff_semisimplePart_eq_one
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) :
     unipotentPointsCommHopfAlgProperty k H ↔
       ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
         HopfAlgebra.Point.semisimplePart k H (AlgebraicClosure k) g = 1 := by
@@ -135,15 +132,15 @@ The point predicate tests the action on every finitely generated comodule, which
 the finite-dimensional representation-theoretic definition. The smoothness condition ensures that
 the algebraic-closure-valued points detect the group scheme. -/
 def smoothUnipotentCommHopfAlgProperty (k : Type u) [Field k] :
-    ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k) :=
+    ObjectProperty (FiniteTypeCommHopfAlgCat.{u, v} k) :=
   ((smoothCommHopfAlgProperty k) ⊓ unipotentPointsCommHopfAlgProperty k).inverseImage
-    (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k))
+    (forget₂ (FiniteTypeCommHopfAlgCat.{u, v} k) (CommHopfAlgCat.{v} k))
 
 /-- Membership in the smooth unipotent property means smoothness together with every
 algebraic-closure-valued point acting unipotently in every finite-dimensional representation. -/
 @[simp]
 theorem smoothUnipotentCommHopfAlgProperty_iff (k : Type u) [Field k]
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    (H : FiniteTypeCommHopfAlgCat.{u, v} k) :
     smoothUnipotentCommHopfAlgProperty k H ↔
       Algebra.Smooth k H ∧
         ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
@@ -156,58 +153,10 @@ theorem smoothUnipotentCommHopfAlgProperty_iff (k : Type u) [Field k]
 /-- Smooth geometric-point unipotence is invariant under isomorphisms of finite-type commutative
 Hopf algebras. -/
 instance (k : Type u) [Field k] :
-    (smoothUnipotentCommHopfAlgProperty k).IsClosedUnderIsomorphisms := by
+    (smoothUnipotentCommHopfAlgProperty k :
+      ObjectProperty (FiniteTypeCommHopfAlgCat.{u, v} k)).IsClosedUnderIsomorphisms := by
   unfold smoothUnipotentCommHopfAlgProperty
   infer_instance
-
-/-- A smooth finite-type affine group is unipotent exactly when every geometric point acts on
-every finite-dimensional comodule with nilpotent difference from the identity. -/
-theorem smoothUnipotentCommHopfAlgProperty_iff_smooth_and_forall_isNilpotent_endOfPoint_sub_one
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    smoothUnipotentCommHopfAlgProperty k H ↔
-      Algebra.Smooth k H ∧
-        ∀ (g : WithConv (H →ₐ[k] AlgebraicClosure k))
-          (M : FGComoduleCat.{u, u, u} k H),
-            _root_.IsNilpotent (Comodule.endOfPoint M g.ofConv - 1) := by
-  rw [smoothUnipotentCommHopfAlgProperty_iff]
-  exact and_congr_right fun _ ↦ by
-    simpa only [FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj] using
-      (unipotentPointsCommHopfAlgProperty_iff k
-        ((forget₂ (FiniteTypeCommHopfAlgCat k) (CommHopfAlgCat k)).obj H)).symm.trans
-      (unipotentPointsCommHopfAlgProperty_iff_forall_isNilpotent_endOfPoint_sub_one k
-        ((forget₂ (FiniteTypeCommHopfAlgCat k) (CommHopfAlgCat k)).obj H))
-
-/-- A smooth finite-type affine group is unipotent exactly when the unipotent part of every
-geometric point is the point itself. -/
-theorem smoothUnipotentCommHopfAlgProperty_iff_smooth_and_unipotentPart_eq_self
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    smoothUnipotentCommHopfAlgProperty k H ↔
-      Algebra.Smooth k H ∧
-        ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
-          HopfAlgebra.Point.unipotentPart k H (AlgebraicClosure k) g = g := by
-  rw [smoothUnipotentCommHopfAlgProperty_iff]
-  exact and_congr_right fun _ ↦ by
-    simpa only [FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj] using
-      (unipotentPointsCommHopfAlgProperty_iff k
-        ((forget₂ (FiniteTypeCommHopfAlgCat k) (CommHopfAlgCat k)).obj H)).symm.trans
-      (unipotentPointsCommHopfAlgProperty_iff_unipotentPart_eq_self k
-        ((forget₂ (FiniteTypeCommHopfAlgCat k) (CommHopfAlgCat k)).obj H))
-
-/-- A smooth finite-type affine group is unipotent exactly when the semisimple part of every
-geometric point is the identity. -/
-theorem smoothUnipotentCommHopfAlgProperty_iff_smooth_and_semisimplePart_eq_one
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    smoothUnipotentCommHopfAlgProperty k H ↔
-      Algebra.Smooth k H ∧
-        ∀ g : WithConv (H →ₐ[k] AlgebraicClosure k),
-          HopfAlgebra.Point.semisimplePart k H (AlgebraicClosure k) g = 1 := by
-  rw [smoothUnipotentCommHopfAlgProperty_iff]
-  exact and_congr_right fun _ ↦ by
-    simpa only [FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj] using
-      (unipotentPointsCommHopfAlgProperty_iff k
-        ((forget₂ (FiniteTypeCommHopfAlgCat k) (CommHopfAlgCat k)).obj H)).symm.trans
-      (unipotentPointsCommHopfAlgProperty_iff_semisimplePart_eq_one k
-        ((forget₂ (FiniteTypeCommHopfAlgCat k) (CommHopfAlgCat k)).obj H))
 
 /-- The category of smooth finite-type unipotent coordinate Hopf algebras over a field. -/
 abbrev SmoothUnipotentCommHopfAlgCat (k : Type u) [Field k] :=
