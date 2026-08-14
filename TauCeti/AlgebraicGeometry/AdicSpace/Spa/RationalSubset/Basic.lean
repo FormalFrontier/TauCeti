@@ -10,6 +10,7 @@ public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
 /-!
 # Rational subsets of the adic spectrum
 
+
 **The set-level constructions beneath Wedhorn, *Adic Spaces* (arXiv:1910.05934v1),
 Definition 7.29 and Remark 7.30.**
 
@@ -24,12 +25,14 @@ As with `spa` itself, the definition is stated for arbitrary data: no hypothesis
 topology of `A` to its ring operations, the subring is arbitrary, and Wedhorn's standing
 condition that the ideal `T · A` be open is not assumed. It is Wedhorn's rational subset of
 `Spa (A, A⁺)` under his hypotheses (a Huber ring, a ring of integral elements, `T · A` open);
-the open-ideal condition enters only in the results that need it — the basis claims of
-Definition 7.29 and the quasi-compactness of Theorem 7.35 — none of which is in this file.
+the open-ideal condition enters only in the results that need it — Wedhorn's admissibility
+setting, the basis claims of Definition 7.29, and the quasi-compactness of Theorem 7.35. The
+generalized unit-ideal standard-cover theorem itself requires no openness hypothesis.
 
-What is here is what holds with no hypotheses at all: the exported interface of the
-definition, the normalizations and the intersection identity inherited from `Spv(A)(T/s)`,
-the whole-space case, containment in `spa A⁺`, and relative openness in the subspace.
+The exported interface of the definition, the normalizations and the intersection identity
+inherited from `Spv(A)(T/s)`, the whole-space case, containment in `spa A⁺`, and relative
+openness in the subspace all hold with no extra hypotheses. The file also proves the forward
+standard-cover implication of Corollary 7.53.
 
 On the intersection identity, writing `Uᵢ = insert sᵢ Tᵢ` for each numerator set augmented by
 its own denominator (which costs nothing, by `rationalSubset_insert_self`),
@@ -61,14 +64,20 @@ layer deferred above.
   among the numerators.
 * `TauCeti.ValuationSpectrum.rationalSubset_singleton_one` : the whole spectrum is the
   rational subset `R({1}/1)` — Wedhorn's "`Spa (A, A⁺)` itself is rational".
+* `TauCeti.ValuationSpectrum.val_preimage_rationalSubset` : on the subtype `spa A⁺`, a
+  rational subset is just the trace of its ambient basic open.
 * `TauCeti.ValuationSpectrum.isOpen_val_preimage_rationalSubset` : a rational subset is
   relatively open in the subspace `spa A⁺`.
 * `TauCeti.ValuationSpectrum.rationalSubset_inter` : the intersection identity above — the
   set-level half of Remark 7.30(5).
+* `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top` : a finite set
+  generating the unit ideal gives a standard rational cover, the forward implication of
+  Corollary 7.53.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.29 and Remark 7.30.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.29, Remark 7.30, and
+  Corollary 7.53.
 * AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0) at commit
   `2baa76f742bdb4fb8ee323fabba41203bd390e08`,
   `projects/AdicSpaces/Adic spaces/RationalSubsets.lean`, is the roadmap's designated prior
@@ -90,7 +99,8 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A]
 /-- The rational subset `R(T/s)` of the adic spectrum: the trace on `spa A⁺` of the basic open
 `Spv(A)(T/s)`. Under Wedhorn's hypotheses — a Huber ring, a ring of integral elements, and the
 ideal `T · A` open — this is his Definition 7.29; the definition itself asks for none of them,
-and the open-ideal condition first matters for the basis claims, which are not in this file. -/
+and the open-ideal condition matters only for results such as Wedhorn's admissibility setting
+or the basis claims, not for the definition nor the generalized unit-ideal cover. -/
 def rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) : Set (Spv A) :=
   spa Aplus ∩ basicOpenFinset T s
 
@@ -133,11 +143,20 @@ theorem rationalSubset_singleton_one (Aplus : Subring A) :
   exact ⟨fun t ht => by simp [Finset.mem_singleton.mp ht],
     v.toValuativeRel.not_vle_one_zero⟩
 
+/-- On the subtype `spa A⁺`, the preimage of `R(T/s)` is the preimage of the ambient basic
+open `Spv(A)(T/s)`: the `spa A⁺` condition is automatic from the subtype. This is the form used
+to compare the rational bases of `Spa(A,A⁺)` and `Spv(A,I)`. -/
+@[simp]
+theorem val_preimage_rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) :
+    (Subtype.val ⁻¹' rationalSubset Aplus T s : Set (spa Aplus)) =
+      Subtype.val ⁻¹' basicOpenFinset T s := by
+  rw [rationalSubset_def, Set.preimage_inter, Subtype.coe_preimage_self, Set.univ_inter]
+
 /-- The preimage of `R(T/s)` under the coercion of the subtype `spa A⁺` is open: a rational
 subset is relatively open in the adic spectrum. -/
 theorem isOpen_val_preimage_rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) :
     IsOpen (Subtype.val ⁻¹' rationalSubset Aplus T s : Set (spa Aplus)) := by
-  rw [rationalSubset_def, Set.preimage_inter, Subtype.coe_preimage_self, Set.univ_inter]
+  rw [val_preimage_rationalSubset]
   exact (isOpen_basicOpenFinset T s).preimage continuous_subtype_val
 
 open scoped Classical Pointwise in
@@ -154,6 +173,44 @@ theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s�
       = rationalSubset Aplus (insert s₁ T₁ * insert s₂ T₂) (s₁ * s₂) := by
   rw [rationalSubset_def, rationalSubset_def, rationalSubset_def, ← basicOpenFinset_inter]
   exact (Set.inter_inter_distrib_left _ _ _).symm
+
+/-- Generalization of the pointwise forward implication of Wedhorn Corollary 7.53 (which assumes
+a complete Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if `T`
+generates the unit ideal of `A`, then every point `v ∈ spa Aplus` belongs to the standard rational
+subset `R(T/s)` for some `s ∈ T`. -/
+theorem mem_rationalSubset_of_span_eq_top_of_mem_spa (Aplus : Subring A) {T : Finset A}
+    (hT : Ideal.span (T : Set A) = ⊤) {v : Spv A} (hv : v ∈ spa Aplus) :
+    ∃ s ∈ T, v ∈ rationalSubset Aplus T s := by
+  have hT_ne : T.Nonempty := by
+    by_contra h_empty
+    rw [Finset.not_nonempty_iff_eq_empty.mp h_empty, Finset.coe_empty, Ideal.span_empty] at hT
+    have h1 : (1 : A) ∈ (⊥ : Ideal A) := hT ▸ Submodule.mem_top
+    rw [Ideal.mem_bot] at h1
+    exact v.toValuativeRel.not_vle_one_zero (h1 ▸ v.toValuativeRel.vle_refl 0)
+  obtain ⟨s, hs, hmax'⟩ := Finset.exists_max_image T v.valuation hT_ne
+  have hmax : ∀ t ∈ T, v.toValuativeRel.vle t s := fun t ht ↦
+    (valuation_le_iff v t s).mp (hmax' t ht)
+  refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun h_zero ↦ ?_⟩⟩
+  have h_supp : (T : Set A) ⊆ (v.supp : Set A) := fun t ht ↦
+    (mem_supp_iff v t).mpr (v.toValuativeRel.vle_trans (hmax t ht) h_zero)
+  have h_top_supp : Ideal.span (T : Set A) ≤ v.supp := Ideal.span_le.mpr h_supp
+  rw [hT] at h_top_supp
+  have h1 : (1 : A) ∈ v.supp := h_top_supp Submodule.mem_top
+  have h1_vle : v.toValuativeRel.vle 1 0 := (mem_supp_iff v 1).mp h1
+  exact v.toValuativeRel.not_vle_one_zero h1_vle
+
+/-- Generalization of the forward implication of Wedhorn Corollary 7.53 (which assumes a complete
+Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if a finite set
+`T` generates the unit ideal of `A`, then the standard rational subsets `(R(T/t))_{t ∈ T}` cover
+`spa Aplus`. -/
+theorem spa_eq_biUnion_rationalSubset_of_span_eq_top (Aplus : Subring A) {T : Finset A}
+    (hT : Ideal.span (T : Set A) = ⊤) :
+    spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t := by
+  apply Set.Subset.antisymm
+  · intro v hv
+    obtain ⟨s, hs, hmem⟩ := mem_rationalSubset_of_span_eq_top_of_mem_spa Aplus hT hv
+    exact Set.mem_iUnion₂_of_mem hs hmem
+  · exact Set.iUnion₂_subset fun t _ ↦ rationalSubset_subset_spa Aplus T t
 
 end TauCeti.ValuationSpectrum
 

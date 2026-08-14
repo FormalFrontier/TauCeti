@@ -12,13 +12,18 @@ public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Formula
 An admissible change of variables `C : VariableChange R` carries a point `(x, y)` of `C • W` to
 the point `(u²x + r, u³y + u²sx + t)` of `W`. This file records what that substitution does to
 each formula Mathlib's `Affine/Formula.lean` defines — `negY`, `addX`, `negAddY`, `addY` and
-`slope` — and to the two predicates `Equation` and `Nonsingular` that cut the curve out.
+`slope` — to the two partial derivatives `polynomialX` and `polynomialY`, and to the two
+predicates `Equation` and `Nonsingular` that cut the curve out.
 
 ## Main statements
 
 * `WeierstrassCurve.Affine.variableChange_negY`, `_addX`, `_negAddY`, `_addY`: each formula
   transforms by an explicit power of `u`, together with the shear and translation the change of
   variables applies to the coordinate concerned.
+* `WeierstrassCurve.Affine.variableChange_evalEval_polynomialX`, `_polynomialY`: the two partial
+  derivatives transform by the matrix `![![u⁴, -su³], ![0, u³]]` — the `Y`-partial simply scales
+  by `u³`, while the `X`-partial scales by `u⁴` and is sheared by an `s`-multiple of the
+  `Y`-partial. Invertibility of that matrix is what `variableChange_nonsingular` runs on.
 * `WeierstrassCurve.Affine.variableChange_equation`, `_nonsingular`: `(x, y)` lies on `C • W`,
   respectively is a smooth point of it, exactly when its image lies on `W`. Both are `@[simp]`.
   These are what make the change of variables carry points to points.
@@ -151,9 +156,37 @@ change of variables scales the Weierstrass polynomial by `u⁶`, and `u` is a un
       - (C.u : R) ^ 3 * y * u_pow_mul_variableChange_a₃ W C
       + (C.u : R) ^ 2 * x * u_pow_mul_variableChange_a₄ W C + u_pow_mul_variableChange_a₆ W C
 
+/-- **`polynomialY` under the change of variables**, scaling by `u³`. The `Y`-partial derivative
+of the Weierstrass polynomial, evaluated at the image point, is `u³` times the corresponding
+derivative of `C • W` evaluated at the source point. This is the second row `(0, u³)` of the
+matrix in `variableChange_nonsingular` below. -/
+lemma variableChange_evalEval_polynomialY (x y : R) :
+    W.toAffine.polynomialY.evalEval ((C.u : R) ^ 2 * x + C.r)
+        ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
+      = (C.u : R) ^ 3 * (C • W).toAffine.polynomialY.evalEval x y := by
+  simp only [evalEval_polynomialY]
+  linear_combination (-(C.u : R) ^ 2 * x) * u_mul_variableChange_a₁ W C
+    - u_pow_mul_variableChange_a₃ W C
+
+/-- **`polynomialX` under the change of variables**, scaling by `u⁴` and picking up a shear. The
+`X`-partial derivative, evaluated at the image point, is `u⁴` times the corresponding derivative
+of `C • W` at the source point, *minus* `s` times the `u³`-scaled `Y`-partial there. That extra
+shear term is the one asymmetry between the two derivative laws, and it makes this the first row
+`(u⁴, -su³)` of the matrix in `variableChange_nonsingular` below. -/
+lemma variableChange_evalEval_polynomialX (x y : R) :
+    W.toAffine.polynomialX.evalEval ((C.u : R) ^ 2 * x + C.r)
+        ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
+      = (C.u : R) ^ 4 * (C • W).toAffine.polynomialX.evalEval x y
+        - C.s * ((C.u : R) ^ 3 * (C • W).toAffine.polynomialY.evalEval x y) := by
+  simp only [evalEval_polynomialX, evalEval_polynomialY]
+  linear_combination (-(C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x) * u_mul_variableChange_a₁ W C
+    + (2 * (C.u : R) ^ 2 * x) * u_pow_mul_variableChange_a₂ W C
+    + C.s * u_pow_mul_variableChange_a₃ W C + u_pow_mul_variableChange_a₄ W C
+
 /-- **Nonsingularity transfers across the change of variables.** The two partial derivatives
-transform by the matrix `![![u⁴, -su³], ![0, u³]]`, which is invertible because `u` is, so
-`W_X ≠ 0 ∨ W_Y ≠ 0` holds at the image exactly when it holds at the source.
+transform by the matrix `![![u⁴, -su³], ![0, u³]]` — the two lemmas just above — which is
+invertible because `u` is, so `W_X ≠ 0 ∨ W_Y ≠ 0` holds at the image exactly when it holds at the
+source.
 
 This is what lets the point map of `Affine/Point/VariableChange.lean` avoid `[W.IsElliptic]`:
 `equation_iff_nonsingular` would supply nonsingularity from the equation, but only for an elliptic
@@ -162,23 +195,10 @@ curve, whereas carrying a point to a point needs no such hypothesis. -/
     W.toAffine.Nonsingular ((C.u : R) ^ 2 * x + C.r)
         ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
       ↔ (C • W).toAffine.Nonsingular x y := by
-  -- `W_Y` scales by `u³`
-  have hY : 2 * ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
-        + W.a₁ * ((C.u : R) ^ 2 * x + C.r) + W.a₃
-      = (C.u : R) ^ 3 * (2 * y + (C • W).a₁ * x + (C • W).a₃) := by
-    linear_combination (-(C.u : R) ^ 2 * x) * u_mul_variableChange_a₁ W C
-      - u_pow_mul_variableChange_a₃ W C
-  -- `W_X` scales by `u⁴`, shifted by an `s`-multiple of `W_Y`
-  have hX : W.a₁ * ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
-        - (3 * ((C.u : R) ^ 2 * x + C.r) ^ 2 + 2 * W.a₂ * ((C.u : R) ^ 2 * x + C.r) + W.a₄)
-      = (C.u : R) ^ 4 * ((C • W).a₁ * y - (3 * x ^ 2 + 2 * (C • W).a₂ * x + (C • W).a₄))
-        - C.s * ((C.u : R) ^ 3 * (2 * y + (C • W).a₁ * x + (C • W).a₃)) := by
-    linear_combination (-(C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x) * u_mul_variableChange_a₁ W C
-      + (2 * (C.u : R) ^ 2 * x) * u_pow_mul_variableChange_a₂ W C
-      + C.s * u_pow_mul_variableChange_a₃ W C + u_pow_mul_variableChange_a₄ W C
-  rw [nonsingular_iff', nonsingular_iff', variableChange_equation]
+  rw [Nonsingular, Nonsingular, variableChange_equation]
   refine and_congr_right fun _ ↦ ?_
-  rw [hX, hY, ← not_and_or, ← not_and_or]
+  rw [variableChange_evalEval_polynomialX W C x y, variableChange_evalEval_polynomialY W C x y,
+    ← not_and_or, ← not_and_or]
   refine not_congr ⟨fun ⟨h1, h2⟩ ↦ ?_, fun ⟨h1, h2⟩ ↦ ?_⟩
   · have hB := (C.u.isUnit.pow 3).mul_right_eq_zero.mp h2
     rw [hB, mul_zero, mul_zero, sub_zero] at h1

@@ -12,7 +12,7 @@ public import Mathlib.Dynamics.Ergodic.Extreme
 -- Non-public: the zero-one input for the i.i.d. direction and the comparison between invariant
 -- and exchangeable events.
 import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
-import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
+import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 -- Non-public: exchangeable path laws are shift-preserving.
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
 -- Non-public: a zero-one law on `ProbabilityMeasure α` is Dirac.

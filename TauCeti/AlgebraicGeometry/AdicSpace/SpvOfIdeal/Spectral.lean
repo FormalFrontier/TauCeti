@@ -8,7 +8,7 @@ module
 public import Mathlib.Topology.Spectral.Hom
 public import TauCeti.AlgebraicGeometry.AdicSpace.RestrictToIdeal
 public import TauCeti.AlgebraicGeometry.AdicSpace.PatchPresentation
-import TauCeti.Topology.Spectral.SpectralMap
+public import TauCeti.Topology.Spectral.SpectralMap
 import TauCeti.Topology.Spectral.PatchCriterion
 
 /-!

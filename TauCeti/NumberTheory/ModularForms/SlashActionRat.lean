@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
 public import TauCeti.NumberTheory.ModularForms.Basic
 
 /-!
@@ -24,14 +25,29 @@ not want `f ∣[k] g` to elaborate at rational `g` simply does not open the scop
 applies after rewriting with `rat_slash`; the point of the instance is that consumers need
 not insert the coercion by hand.
 
+## The `SLnZ 2` / `𝒮ℒ` bridge
+
+`SlashInvariantForm` and friends are indexed by subgroups of `GL(2, ℝ)`, while the Hecke
+development works at `SLnZ 2 ≤ GL(2, ℚ)` under the rational action defined here. Both `SLnZ 2`
+and `𝒮ℒ` are ranges of `mapGL` out of the same `SL₂(ℤ)`, so mathlib's
+`Matrix.SpecialLinearGroup.map_mapGL` relates them directly and the two membership directions are
+corollaries of it. `slash_eq_of_mem_SLnZ` is the form consumers want: real invariance under `𝒮ℒ`
+gives rational invariance under `SLnZ 2`.
+
 ## Main results
 
 * `ModularForm.rat_slash`: the rational action is the real one at the mapped matrix.
+* `SlashInvariantFormClass.slash_eq_of_mem_SLnZ`: a form invariant under `𝒮ℒ` is fixed by the
+  rational slash action of every element of `SLnZ 2`.
 * `ModularForm.rat_slash_def_of_det_pos`, `ModularForm.rat_slash_apply_of_det_pos`: the expanded
   formula at positive determinant, free of the `σ` twist.
 * `ModularForm.det_map_ratCast_pos`: positivity of the determinant survives the embedding.
 * `ModularForm.rat_smul_slash_of_det_pos`: scalars pass through the slash of a
   positive-determinant rational matrix, with no `σ` twist.
+* `ModularForm.map_ratCast_mem_SL`, `ModularForm.exists_mem_SLnZ_of_mem_SL`: the two directions
+  of the `SLnZ 2` / `𝒮ℒ` correspondence.
+* `ModularForm.slash_eq_of_mem_SLnZ`: real slash-invariance under `𝒮ℒ` gives rational
+  slash-invariance under `SLnZ 2`.
 
 ## Provenance
 
@@ -44,6 +60,10 @@ is a one-use wrapper around Mathlib's `Matrix.GeneralLinearGroup.map`, so it is 
 the map is spelled out instead. The scalar lemma is stated here at the `SMul`/`IsScalarTower`
 generality of Mathlib's `ModularForm.SL_smul_slash` rather than AINTLIB's `c : ℂ`.
 
+The `SLnZ 2` / `𝒮ℒ` bridge corresponds to AINTLIB's `glMap_mem_SL` and `mem_SL_exists_H` (same
+file). AINTLIB's `glMap_mapGL_eq` has no counterpart: mathlib's
+`Matrix.SpecialLinearGroup.map_mapGL` already states it for an arbitrary scalar tower.
+
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
@@ -52,7 +72,7 @@ generality of Mathlib's `ModularForm.SL_smul_slash` rather than AINTLIB's `c : �
 
 public section
 
-open Matrix UpperHalfPlane
+open Matrix Matrix.SpecialLinearGroup UpperHalfPlane HeckeRing.GLn
 
 open scoped MatrixGroups ModularForm
 
@@ -128,4 +148,33 @@ lemma rat_smul_slash_of_det_pos {α : Type*} [SMul α ℂ] [IsScalarTower α ℂ
   rw [rat_slash, rat_slash]
   exact _root_.ModularForm.smul_slash_of_det_pos k (det_map_ratCast_pos hg) f c
 
+/-- An element of `SL₂(ℤ) ≤ GL(2, ℚ)` maps into `𝒮ℒ`. -/
+lemma map_ratCast_mem_SL {δ : GL (Fin 2) ℚ} (hδ : δ ∈ SLnZ 2) :
+    Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) δ ∈ 𝒮ℒ := by
+  obtain ⟨s, rfl⟩ := (mem_SLnZ_iff 2).mp hδ
+  exact ⟨s, (map_mapGL (R := ℤ) (S := ℚ) (T := ℝ) s).symm⟩
+
+/-- Every element of `𝒮ℒ` is the image of one of `SLnZ 2`. -/
+lemma exists_mem_SLnZ_of_mem_SL {γ : GL (Fin 2) ℝ} (hγ : γ ∈ 𝒮ℒ) :
+    ∃ δ ∈ SLnZ 2, Matrix.GeneralLinearGroup.map (algebraMap ℚ ℝ) δ = γ := by
+  obtain ⟨s, rfl⟩ := MonoidHom.mem_range.mp hγ
+  exact ⟨mapGL ℚ s, (mem_SLnZ_iff 2).mpr ⟨s, rfl⟩, map_mapGL (R := ℤ) (S := ℚ) (T := ℝ) s⟩
+
+/-- Real slash-invariance under `𝒮ℒ` gives rational slash-invariance under `SLnZ 2`. -/
+lemma slash_eq_of_mem_SLnZ (k : ℤ) {f : ℍ → ℂ} (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f)
+    {δ : GL (Fin 2) ℚ}
+    (hδ : δ ∈ SLnZ 2) : f ∣[k] δ = f := by
+  rw [rat_slash]
+  exact hf _ (map_ratCast_mem_SL hδ)
+
 end ModularForm
+
+/-- A form invariant under `𝒮ℒ` is fixed by the rational slash action of every element of
+`SLnZ 2`. -/
+theorem _root_.SlashInvariantFormClass.slash_eq_of_mem_SLnZ {F : Type*} [FunLike F ℍ ℂ]
+    {k : ℤ} [SlashInvariantFormClass F 𝒮ℒ k] (f : F) (γ : GL (Fin 2) ℚ)
+    (hγ : γ ∈ SLnZ 2) : ⇑f ∣[k] γ = ⇑f := by
+  obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff 2).mp hγ
+  have h_mem : mapGL ℝ σ ∈ 𝒮ℒ := MonoidHom.mem_range.mpr ⟨σ, rfl⟩
+  rw [ModularForm.rat_slash, map_mapGL]
+  exact SlashInvariantFormClass.slash_action_eq f (mapGL ℝ σ) h_mem

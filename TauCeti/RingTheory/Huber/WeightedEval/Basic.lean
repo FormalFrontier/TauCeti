@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RingTheory.Huber.PowerBounded
-public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries
+public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
 public import Mathlib.Topology.Algebra.InfiniteSum.Nonarchimedean
 
 /-!
@@ -54,8 +54,9 @@ This file proves only the summability that the evaluation needs. The evaluation 
 `TauCeti.Huber.continuous_weightedEvalHom` in `WeightedEval/Continuous.lean`. The uniqueness that
 makes Proposition 5.50 a universal property is
 `TauCeti.Huber.weightedRestrictedSubring_ringHom_ext_of_continuous` in
-`WeightedRestrictedSeries.lean`. `WeightedEval/UniversalProperty.lean` assembles the two into an
-`∃!`, and states Proposition 5.50 itself — under Wedhorn's own coordinatewise hypothesis — as
+`WeightedRestrictedSeries/Basic.lean`. `WeightedEval/UniversalProperty.lean` assembles the two
+into an `∃!`, and states Proposition 5.50 itself — under Wedhorn's own coordinatewise
+hypothesis — as
 `existsUnique_continuous_ringHom_weightedRestrictedSubring_of_isWeightedVarPowerBounded`.
 
 ## References
