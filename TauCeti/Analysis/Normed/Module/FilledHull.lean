@@ -51,16 +51,25 @@ unbounded side, which needs no name, whereas everything below is about the fille
 
 ## Roadmap role
 
-The consumer is layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory
-boundary correspondence, where the piece a crosscut cuts off from a Jordan domain has to be shown
-small. `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short image
-crosscut in an arbitrarily small Jordan curve `J`; what turns that into a bound on the cut-off piece
-is that the piece is a connected set disjoint from `J` and not running off to infinity, hence inside
-`filledHull J`, hence no wider than `J`. Knowing that it is the inside of `J` the piece falls on is
-a plane-separation statement about Jordan curves, which neither the pinned Mathlib nor
-`TauCeti/Topology/JordanCurve/` has; that step therefore waits on it, and what is proved here are
-the two facts it will consume, `TauCeti.IsPreconnected.subset_filledHull` and
-`TauCeti.diam_le_diam_of_subset_filledHull`.
+Plane separation for Jordan curves is the open frontier item of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence:
+`ConformalMapping/STATUS.md` records that nothing in the repository establishes that a Jordan curve
+separates the plane, and asks that how much of it the boundary work needs be settled first. What
+that work needs is the single statement that every point of a Jordan curve is a limit of points
+inside it,
+
+> `J ⊆ closure (filledHull J \ J)`,
+
+which is written in the vocabulary defined here — the inside of `J` is `filledHull J \ J`. So this
+file supplies what the missing stage is stated with rather than presuming it: nothing below assumes
+separation, or any other regularity of `K`.
+
+Beyond that stage, the step waiting on it is the one bounding the piece a crosscut cuts off from a
+Jordan domain. `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short
+image crosscut in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected set
+disjoint from `J`; once separation says it is the inside of `J` that the piece falls on,
+`TauCeti.IsPreconnected.subset_filledHull` and `TauCeti.diam_le_diam_of_subset_filledHull` make it
+no wider than `J`.
 
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
