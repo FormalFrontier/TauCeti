@@ -95,7 +95,6 @@ theorem serreKostantForm_def :
     serreKostantForm CM = kostantForm (serreRootGenerator CM) (serreH ℚ CM) := (rfl)
 
 /-- Every divided power of a raising generator belongs to the Serre Kostant form. -/
-@[simp]
 theorem dividedPower_serreE_mem (i : B) (n : ℕ) :
     Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (serreE ℚ CM i)) ∈
       serreKostantForm CM := by
@@ -104,7 +103,6 @@ theorem dividedPower_serreE_mem (i : B) (n : ℕ) :
       dividedPower_mem_kostantForm (serreRootGenerator CM) (serreH ℚ CM) (Sum.inl i) n
 
 /-- Every divided power of a lowering generator belongs to the Serre Kostant form. -/
-@[simp]
 theorem dividedPower_serreF_mem (i : B) (n : ℕ) :
     Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (serreF ℚ CM i)) ∈
       serreKostantForm CM := by
@@ -113,7 +111,6 @@ theorem dividedPower_serreF_mem (i : B) (n : ℕ) :
       dividedPower_mem_kostantForm (serreRootGenerator CM) (serreH ℚ CM) (Sum.inr i) n
 
 /-- Every binomial coefficient in a Cartan generator belongs to the Serre Kostant form. -/
-@[simp]
 theorem ringChoose_serreH_mem (i : B) (n : ℕ) :
     Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (serreH ℚ CM i)) n ∈
       serreKostantForm CM := by
@@ -220,7 +217,6 @@ theorem coe_serreDiagramKostantEquiv_apply (x : serreKostantForm CM) :
       (serreH ℚ CM) ((RingEquiv.subringCongr (serreKostantForm_def CM)) x)
 
 /-- The inverse restricted diagram automorphism acts through the inverse Lie automorphism. -/
-@[simp]
 theorem coe_serreDiagramKostantEquiv_symm_apply (x : serreKostantForm CM) :
     ((serreDiagramKostantEquiv CM hσ).symm x : U) =
       map ℚ (serreDiagramAut ℚ CM hσ).symm.toLieHom x := by
@@ -360,7 +356,6 @@ theorem coe_serreChevalleyKostantEquiv_apply (x : serreKostantForm CM) :
       (serreH ℚ CM) ((RingEquiv.subringCongr (serreKostantForm_def CM)) x)
 
 /-- The inverse restricted Chevalley involution acts through the inverse Lie automorphism. -/
-@[simp]
 theorem coe_serreChevalleyKostantEquiv_symm_apply (x : serreKostantForm CM) :
     ((serreChevalleyKostantEquiv CM).symm x : U) =
       map ℚ (serreChevalleyInvolution ℚ CM).symm.toLieHom x := by
