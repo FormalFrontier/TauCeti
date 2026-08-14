@@ -37,7 +37,7 @@ source ring without a separate uniqueness theorem.
 
 * `IsSemisimpleRing.wedderburnPresentation` and its algebraic refinements choose the corresponding
   presentations for a semisimple ring.
-* `TauCeti.WedderburnPresentation.exists_simpleModules` shows that the chosen blocks enumerate the
+* `TauCeti.WedderburnPresentation.exists_simpleSubmodule` shows that the chosen blocks enumerate the
   isomorphism classes of simple left ideals, by applying `TauCeti.blocks_equiv_simpleModules`.
 
 ## References
@@ -100,7 +100,7 @@ structure FiniteWedderburnAlgebraPresentation (K : Type v) (A : Type u) [CommSem
 
 /-- A chosen split Wedderburn presentation over a field: all coefficient division algebras are the
 base field itself. -/
-structure SplitWedderburnAlgebraPresentation (K : Type u) (A : Type u) [Field K] [Ring A]
+structure SplitWedderburnAlgebraPresentation (K : Type v) (A : Type u) [Field K] [Ring A]
     [Algebra K A] where
   /-- The number of matrix blocks. -/
   blockCount : ℕ
@@ -347,7 +347,7 @@ noncomputable def finiteWedderburnAlgebraPresentation (K : Type v) (A : Type u)
     FiniteWedderburnAlgebraPresentation K A :=
   Classical.choice (nonempty_finiteWedderburnAlgebraPresentation K A)
 
-private theorem nonempty_splitWedderburnAlgebraPresentation (K : Type u) (A : Type u) [Field K]
+private theorem nonempty_splitWedderburnAlgebraPresentation (K : Type v) (A : Type u) [Field K]
     [IsAlgClosed K] [Ring A] [Algebra K A] [IsSemisimpleRing A] [FiniteDimensional K A] :
     Nonempty (SplitWedderburnAlgebraPresentation K A) := by
   obtain ⟨n, d, hd, ⟨e⟩⟩ :=
@@ -356,7 +356,7 @@ private theorem nonempty_splitWedderburnAlgebraPresentation (K : Type u) (A : Ty
 
 /-- Choose a split Artin--Wedderburn presentation of a finite-dimensional semisimple algebra over
 an algebraically closed field. -/
-noncomputable def splitWedderburnAlgebraPresentation (K : Type u) (A : Type u) [Field K]
+noncomputable def splitWedderburnAlgebraPresentation (K : Type v) (A : Type u) [Field K]
     [IsAlgClosed K] [Ring A] [Algebra K A] [IsSemisimpleRing A] [FiniteDimensional K A] :
     SplitWedderburnAlgebraPresentation K A :=
   Classical.choice (nonempty_splitWedderburnAlgebraPresentation K A)
@@ -382,7 +382,7 @@ variable {R : Type u} [Ring R]
 
 /-- The blocks in a chosen Wedderburn presentation enumerate the isomorphism classes of simple
 left ideals: they determine a pairwise non-isomorphic, exhaustive family of simple left ideals. -/
-theorem exists_simpleModules (P : WedderburnPresentation R) :
+theorem exists_simpleSubmodule (P : WedderburnPresentation R) :
     ∃ S : Fin P.blockCount → Submodule R R,
       (∀ i, IsSimpleModule R (S i)) ∧
       (∀ i j, Nonempty (S i ≃ₗ[R] S j) → i = j) ∧
