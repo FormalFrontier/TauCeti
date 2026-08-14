@@ -167,7 +167,7 @@ def subgroupCoverBasepointFiber [LocallyPathConnectedSpace X] [PathConnectedSpac
 /-- Fibre transport identifies the bundled distinguished point with the quotient distinguished
 point. -/
 @[simp]
-theorem subgroupCoverFiberEquivSubgroupQuotient_basepoint
+theorem subgroupCoverFiberEquivSubgroupQuotient_apply_basepoint
     [LocallyPathConnectedSpace X] [PathConnectedSpace X] [SemilocallySimplyConnectedSpace X]
     (x₀ : X) (H : Subgroup (FundamentalGroup X x₀)) :
     subgroupCoverFiberEquivSubgroupQuotient x₀ H (subgroupCoverBasepointFiber x₀ H) =

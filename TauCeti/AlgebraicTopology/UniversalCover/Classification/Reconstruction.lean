@@ -177,7 +177,7 @@ theorem stabilizerCoverFiberEquivOrbit_apply_basepoint (a : A) :
   change ((fiberEquivOrbitAux x0 a) (subgroupCoverFiberEquivSubgroupQuotient x0
     (MulAction.stabilizer (FundamentalGroup X x0) a)
     (subgroupCoverBasepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a))) : A) = a
-  rw [subgroupCoverFiberEquivSubgroupQuotient_basepoint]
+  rw [subgroupCoverFiberEquivSubgroupQuotient_apply_basepoint]
   -- the distinguished point is its own translate by the identity loop class
   have h := fiberEquivOrbitAux_apply_monodromy_basepoint x0 a 1
   rwa [one_smul, FundamentalGroup.one_def,
