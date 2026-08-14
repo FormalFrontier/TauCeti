@@ -19,9 +19,10 @@ Let `A` be an unbounded operator and suppose that the bounded semigroups
 
 `exp (t A_lambda)`, where `A_lambda = lambda ^ 2 R(lambda, A) - lambda I`,
 
-converge uniformly on compact time intervals to a strongly continuous semigroup `S`. If the
-operators `A_lambda` converge to `A` on `D(A)` and the approximating semigroups have a common
-operator-norm bound, then `A` is a restriction of the generator of `S`.
+converge to a strongly continuous semigroup `S`: at each nonnegative time on a vector `x` of
+`D(A)`, and uniformly on compact time intervals on its image `A x`. If the operators `A_lambda`
+converge to `A` on `D(A)` and the approximating semigroups have a common operator-norm bound,
+then `A` is a restriction of the generator of `S`.
 
 The proof passes the bounded Duhamel identity
 
@@ -29,9 +30,10 @@ The proof passes the bounded Duhamel identity
 
 to the limit. For `x in D(A)`, the integrands converge uniformly to `S(u) (A x)`: one error is
 the compact-time convergence of the orbit of `A x`, and the other is controlled by the common
-operator bound and `A_lambda x -> A x`. The resulting integrated identity makes the generator
-difference quotients converge to `A x`. A shared resolvent point of `A` and the generator then
-upgrades the restriction to equality.
+operator bound and `A_lambda x -> A x`. Only the integrand needs uniform convergence; the left
+side of the identity passes to the limit at the single time `t`. The resulting integrated
+identity makes the generator difference quotients converge to `A x`. A shared resolvent point of
+`A` and the generator then upgrades the restriction to equality.
 
 This is the generator-identification rung used after constructing the limit semigroup in both
 the Lumer--Phillips and Hille--Yosida generation theorems. The existing Lumer--Phillips theorem
@@ -138,15 +140,16 @@ and `t ≥ 0`,
 
 `S(t) x - x = integral_0^t S(u) (A x) du`.
 
-This is the analytic core of generator identification. -/
+This is the analytic core of generator identification. Only the orbit of `A x` is integrated, so
+only it has to converge uniformly on `[0, t]`; for `x` itself convergence at the single time `t`
+suffices. -/
 theorem StronglyContinuousSemigroup.sub_eq_intervalIntegral_of_yosidaApproximation
     (S : StronglyContinuousSemigroup X) {A : X →ₗ.[ℝ] X} {K t : ℝ} (hK : 0 < K)
     (x : A.domain) (ht : 0 ≤ t)
     (happrox : Tendsto (fun lambda : ℝ => yosidaApproximation A lambda (x : X)) atTop
       (𝓝 (A x)))
-    (huniform_x : TendstoUniformlyOn
-      (fun lambda u : ℝ => exp (u • yosidaApproximation A lambda) (x : X))
-      (fun u : ℝ => S.realOperator u (x : X)) atTop (Set.Icc 0 t))
+    (hpoint_x : Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) (x : X)) atTop
+      (𝓝 (S.realOperator t (x : X))))
     (huniform_Ax : TendstoUniformlyOn
       (fun lambda u : ℝ => exp (u • yosidaApproximation A lambda) (A x))
       (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 t))
@@ -173,11 +176,12 @@ theorem StronglyContinuousSemigroup.sub_eq_intervalIntegral_of_yosidaApproximati
     (ContinuousLinearMap.exp_smul_apply_sub_eq_intervalIntegral
       (yosidaApproximation A lambda) t (x : X)).symm
   simp only [heq]
-  exact (huniform_x.tendsto_at (Set.right_mem_Icc.mpr ht)).sub_const _
+  exact hpoint_x.sub_const _
 
 /-! ## Identification of the generator -/
 
-/-- If Yosida exponentials converge to `S` uniformly on compact time intervals, the approximating
+/-- If Yosida exponentials converge to `S` — at each nonnegative time on the orbit of a domain
+vector, and uniformly on compact time intervals on the orbit of its image — the approximating
 generators converge to `A` on its domain, and the exponentials have a common bound `K`, then `A`
 is a restriction of the generator of `S`.
 
@@ -187,13 +191,12 @@ theorem StronglyContinuousSemigroup.le_generator_of_yosidaApproximation
     (S : StronglyContinuousSemigroup X) {A : X →ₗ.[ℝ] X} {K : ℝ} (hK : 0 < K)
     (happrox : ∀ x : A.domain,
       Tendsto (fun lambda : ℝ => yosidaApproximation A lambda (x : X)) atTop (𝓝 (A x)))
-    (huniform : ∀ (x : A.domain) {T : ℝ}, 0 ≤ T →
-      TendstoUniformlyOn
-        (fun lambda u : ℝ => exp (u • yosidaApproximation A lambda) (x : X))
-        (fun u : ℝ => S.realOperator u (x : X)) atTop (Set.Icc 0 T) ∧
+    (hconv : ∀ (x : A.domain) {t : ℝ}, 0 ≤ t →
+      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) (x : X)) atTop
+        (𝓝 (S.realOperator t (x : X))) ∧
       TendstoUniformlyOn
         (fun lambda u : ℝ => exp (u • yosidaApproximation A lambda) (A x))
-        (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 T))
+        (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 t))
     (hbound : ∀ {T : ℝ}, 0 ≤ T →
       ∀ᶠ lambda in atTop, ∀ u ∈ Set.Icc (0 : ℝ) T,
         ‖exp (u • yosidaApproximation A lambda)‖ ≤ K) :
@@ -206,7 +209,7 @@ theorem StronglyContinuousSemigroup.le_generator_of_yosidaApproximation
     filter_upwards [self_mem_nhdsWithin] with t (ht : (0 : ℝ) < t)
     refine congrArg _ ?_
     rw [S.sub_eq_intervalIntegral_of_yosidaApproximation hK x ht.le (happrox x)
-      (huniform x ht.le).1 (huniform x ht.le).2 (hbound ht.le),
+      (hconv x ht.le).1 (hconv x ht.le).2 (hbound ht.le),
       intervalIntegral.integral_of_le ht.le]
   have hmem : ∀ x : A.domain, (x : X) ∈ S.domain := fun x =>
     (S.mem_domain_iff_tendsto (x : X)).mpr ⟨A x, htend x⟩
@@ -228,19 +231,18 @@ theorem StronglyContinuousSemigroup.generator_eq_of_yosidaApproximation
     (hgenres : lambda ∈ LinearPMap.resolventSet S.generator)
     (happrox : ∀ x : A.domain,
       Tendsto (fun mu : ℝ => yosidaApproximation A mu (x : X)) atTop (𝓝 (A x)))
-    (huniform : ∀ (x : A.domain) {T : ℝ}, 0 ≤ T →
-      TendstoUniformlyOn
-        (fun mu u : ℝ => exp (u • yosidaApproximation A mu) (x : X))
-        (fun u : ℝ => S.realOperator u (x : X)) atTop (Set.Icc 0 T) ∧
+    (hconv : ∀ (x : A.domain) {t : ℝ}, 0 ≤ t →
+      Tendsto (fun mu : ℝ => exp (t • yosidaApproximation A mu) (x : X)) atTop
+        (𝓝 (S.realOperator t (x : X))) ∧
       TendstoUniformlyOn
         (fun mu u : ℝ => exp (u • yosidaApproximation A mu) (A x))
-        (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 T))
+        (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 t))
     (hbound : ∀ {T : ℝ}, 0 ≤ T →
       ∀ᶠ mu in atTop, ∀ u ∈ Set.Icc (0 : ℝ) T,
         ‖exp (u • yosidaApproximation A mu)‖ ≤ K) :
     S.generator = A :=
   (LinearPMap.eq_of_le_of_mem_resolventSet
-    (S.le_generator_of_yosidaApproximation hK happrox huniform hbound)
+    (S.le_generator_of_yosidaApproximation hK happrox hconv hbound)
     hres hgenres).symm
 
 end TauCeti.Semigroups

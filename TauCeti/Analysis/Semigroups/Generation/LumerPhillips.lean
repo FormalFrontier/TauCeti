@@ -65,11 +65,11 @@ theorem yosidaLimitSemigroup_generator (hA : IsMDissipative A)
     (hA.mem_resolventSet one_pos)
     ((ContractionSemigroup.isMDissipative_generator _).mem_resolventSet one_pos)
   · exact hA.tendsto_yosidaApproximation_apply_atTop hdense
-  · intro x T hT
+  · intro x t ht
     constructor
-    · exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (x : X) hT).congr_right
-        fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (x : X)).symm
-    · exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (A x) hT).congr_right
+    · have hx := hA.tendsto_yosidaLimit hdense ht (x : X)
+      rwa [← hA.yosidaLimitSemigroup_realOperator_apply hdense ht (x : X)] at hx
+    · exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (A x) ht).congr_right
         fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (A x)).symm
   · intro T hT
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with lambda hlambda u hu
