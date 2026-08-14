@@ -44,6 +44,7 @@ def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ
 @[simp]
 theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : M₂) :
     congrAut e f m = e (f (e.symm m)) := by
+  -- Expose the composite once so named evaluation lemmas, rather than reduction, drive the proof.
   change (generalLinearEquiv R M₂
     (congrLinearEquiv e ((generalLinearEquiv R M₁).symm f))) m = _
   simp only [congrLinearEquiv_apply, coeFn_generalLinearEquiv, coe_ofLinearEquiv,
@@ -54,6 +55,7 @@ theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : 
 @[simp]
 theorem congrAut_symm_apply (e : M₁ ≃ₗ[R] M₂) (g : M₂ ≃ₗ[R] M₂) (m : M₁) :
     (congrAut e).symm g m = e.symm (g (e m)) := by
+  -- Expose the composite once so named evaluation lemmas, rather than reduction, drive the proof.
   change (generalLinearEquiv R M₁
     ((congrLinearEquiv e).symm ((generalLinearEquiv R M₂).symm g))) m = _
   rw [congrLinearEquiv_symm]
