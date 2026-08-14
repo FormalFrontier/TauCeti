@@ -5,6 +5,7 @@ Authors: Codex
 -/
 module
 
+public import TauCeti.Algebra.Lie.Weights.Killing
 public import TauCeti.Algebra.Lie.Weights.StructureConstant.Basic
 
 /-!
