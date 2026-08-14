@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset
+public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basic
 
 /-!
 # Pullbacks and quotient embeddings of sub-unit valuation loci
