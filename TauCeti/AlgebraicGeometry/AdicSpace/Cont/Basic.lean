@@ -158,7 +158,6 @@ theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Se
 end TopologicalAddGroup
 
 /-- Over a zero ring, `Cont A = ∅`. -/
-@[simp]
 theorem cont_eq_empty_of_subsingleton [Subsingleton A] : cont A = ∅ := by
   ext v
   simp only [Set.mem_empty_iff_false, iff_false]
