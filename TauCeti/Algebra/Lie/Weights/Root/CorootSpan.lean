@@ -228,9 +228,9 @@ theorem rootCorootLieSubalgebra_le_iff
     {M : LieSubalgebra ℤ L} :
     hx.rootCorootLieSubalgebra hIntegral ≤ M ↔
       (∀ α, x α ∈ M) ∧ ∀ α, (IsKilling.coroot (K := K) (L := L) (H := H) α : L) ∈ M := by
-  change (hx.rootCorootLieSubalgebra hIntegral).toSubmodule ≤ M.toSubmodule ↔ _
-  rw [rootCorootLieSubalgebra_toSubmodule, rootCorootSpan_le_iff]
-  rfl
+  rw [← LieSubalgebra.toSubmodule_le_toSubmodule, rootCorootLieSubalgebra_toSubmodule,
+    rootCorootSpan_le_iff]
+  simp_rw [LieSubalgebra.mem_toSubmodule]
 
 /-- A root vector belongs to the integral root--coroot Lie subalgebra. -/
 theorem rootVector_mem_rootCorootLieSubalgebra
