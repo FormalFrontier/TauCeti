@@ -126,10 +126,6 @@ pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 
 * `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn` — the closure of the image of
   the cut is that image together with the cluster sets of `f` along it.
-* `TauCeti.closure_image_inter_sphere_inter_image_subset` and
-  `TauCeti.disjoint_image_closure_image_inter_sphere` — so that closure meets the image of the
-  domain only in the image of the cut, and is disjoint from the image of any part of the domain
-  avoiding the cutting circle.
 * `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — at an endpoint of a crosscut of a disc a
   cluster set is a continuum once `f` is continuous along the crosscut with bounded image; its
   nonemptiness for a general domain is the generic `TauCeti.clusterSetOn_nonempty`, applied to the
@@ -234,41 +230,6 @@ theorem clusterSetOn_inter_sphere_subset_frontier_inter_closure_image (hUo : IsO
     (fun _ hv => clusterSetOn_subset_frontier_image hUo hd hinj he
       (clusterSetOn_mono inter_subset_left hv))
     fun _ hv => clusterSetOn_subset_closure_image hv
-
-/-- **Closing up an image cut adds no interior point.** For `f` holomorphic and injective on an
-open `U`, the closure of `f '' (U ∩ sphere ζ ρ)` meets `f '' U` only in `f '' (U ∩ sphere ζ ρ)`.
-
-By `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn` the points that closing adds
-are cluster values of `f` at points of `frontier U` on the circle, and properness of a conformal map
-(`TauCeti.clusterSetOn_inter_sphere_subset_frontier_inter_closure_image`) puts those on
-`frontier (f '' U)`, which is disjoint from the open set `f '' U`. -/
-theorem closure_image_inter_sphere_inter_image_subset (hUo : IsOpen U)
-    (hfd : DifferentiableOn ℂ f U) (hinj : InjOn f U) :
-    closure (f '' (U ∩ sphere ζ ρ)) ∩ f '' U ⊆ f '' (U ∩ sphere ζ ρ) := by
-  rintro w ⟨hwcl, hwU⟩
-  rw [closure_image_inter_sphere_eq_union_biUnion_clusterSetOn
-    (hfd.continuousOn.mono inter_subset_left)] at hwcl
-  rcases hwcl with hw | hw
-  · exact hw
-  · obtain ⟨e, he, hwe⟩ := mem_iUnion₂.mp hw
-    have hfr := (clusterSetOn_inter_sphere_subset_frontier_inter_closure_image hUo hfd hinj he.1
-      hwe).1
-    rw [(isOpen_image_of_differentiableOn_of_injOn hUo hfd hinj).frontier_eq] at hfr
-    exact absurd hwU hfr.2
-
-/-- **A part of the domain avoiding the cutting circle has image disjoint from the closed image
-cut.** This is `TauCeti.closure_image_inter_sphere_inter_image_subset` read through injectivity: a
-common point would be the image both of a point of `V` and of a point of the circle, hence of a
-single point lying on both. -/
-theorem disjoint_image_closure_image_inter_sphere (hUo : IsOpen U) (hfd : DifferentiableOn ℂ f U)
-    (hinj : InjOn f U) {V : Set ℂ} (hVU : V ⊆ U) (hV : Disjoint V (sphere ζ ρ)) :
-    Disjoint (f '' V) (closure (f '' (U ∩ sphere ζ ρ))) := by
-  rw [Set.disjoint_left]
-  rintro _ ⟨z, hzV, rfl⟩ hcl
-  obtain ⟨w, hw, hfw⟩ := closure_image_inter_sphere_inter_image_subset hUo hfd hinj
-    ⟨hcl, mem_image_of_mem f (hVU hzV)⟩
-  have hzw : z = w := hinj (hVU hzV) hw.1 hfw.symm
-  exact Set.disjoint_left.mp hV hzV (hzw ▸ hw.2)
 
 /-- **Each end of an image crosscut of a disc is a continuum.** For `f` continuous along a genuine
 circular crosscut of a disc and with bounded image *of the crosscut*, the cluster set at either

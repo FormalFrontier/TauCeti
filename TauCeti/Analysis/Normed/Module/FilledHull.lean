@@ -68,8 +68,7 @@ Beyond that stage, the step waiting on it is the one bounding the piece a crossc
 Jordan domain. `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short
 image crosscut in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected set
 disjoint from `J`; once separation says it is the inside of `J` that the piece falls on,
-`TauCeti.IsPreconnected.subset_filledHull` and `TauCeti.diam_le_diam_of_subset_filledHull` make it
-no wider than `J`.
+`TauCeti.IsPreconnected.subset_filledHull` and `TauCeti.diam_filledHull` make it no wider than `J`.
 
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
@@ -93,8 +92,7 @@ needed downstream, and the first two of which fail without hypotheses on `K`.
 * `TauCeti.diam_filledHull` and `TauCeti.isBounded_filledHull` — filling preserves the diameter of a
   bounded set, and in particular its boundedness.
 * `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
-  filled hull lies in it.
-* `TauCeti.diam_le_diam_of_subset_filledHull` — hence such a set is no wider than `K`.
+  filled hull lies in it, and so, with `TauCeti.diam_filledHull`, is no wider than `K`.
 -/
 
 public section
@@ -168,11 +166,11 @@ theorem filledHull_subset_closure_convexHull (hK : K.Nonempty) :
   obtain ⟨φ, u, hφx, hφC⟩ := geometric_hahn_banach_point_closed
     ((convex_convexHull ℝ K).closure) isClosed_closure hxC
   have hKC : K ⊆ closure (convexHull ℝ K) := (subset_convexHull ℝ K).trans subset_closure
-  have hlin : IsLinearMap ℝ fun y => φ y := ⟨fun a b => φ.map_add a b, fun s a => φ.map_smul s a⟩
   -- The open half-space cut off by `φ` is a preconnected subset of `Kᶜ` containing `x`.
   have hHK : {y | φ y < u} ⊆ Kᶜ := fun y hy hyK => absurd (hφC y (hKC hyK)) (not_lt.mpr hy.le)
   have hsub : {y | φ y < u} ⊆ connectedComponentIn Kᶜ x :=
-    (convex_halfSpace_lt hlin u).isPreconnected.subset_connectedComponentIn hφx hHK
+    (convex_halfSpace_lt φ.toLinearMap.isLinear u).isPreconnected.subset_connectedComponentIn
+      hφx hHK
   -- It is unbounded: `φ` is nonzero, so some direction decreases it without bound.
   obtain ⟨b, hb⟩ := hK
   have hφne : φ ≠ 0 := by
@@ -237,12 +235,6 @@ theorem diam_filledHull (hKb : IsBounded K) : diam (filledHull K) = diam K := by
   calc diam (filledHull K) ≤ diam (closure (convexHull ℝ K)) :=
         diam_mono (filledHull_subset_closure_convexHull hK) ((isBounded_convexHull.mpr hKb).closure)
     _ = diam K := by rw [diam_closure, convexHull_diam]
-
-/-- **A set inside a filled hull is no wider than the set filled.** This is the form the diameter
-bound is spent in: it converts "cut off from infinity by a small set" into "small". -/
-theorem diam_le_diam_of_subset_filledHull (hKb : IsBounded K) (h : S ⊆ filledHull K) :
-    diam S ≤ diam K :=
-  (diam_mono h (isBounded_filledHull hKb)).trans (diam_filledHull hKb).le
 
 end Normed
 
