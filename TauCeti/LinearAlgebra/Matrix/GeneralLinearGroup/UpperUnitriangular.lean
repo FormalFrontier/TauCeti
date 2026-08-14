@@ -83,11 +83,11 @@ theorem IsUpperUnitriangular.map {S : Type*} [CommRing S] (f : R →+* S)
 
 section Fin
 
-variable {n : ℕ}
+variable {S : Type*} [Semiring S] {n : ℕ}
 
 /-- A power of a strictly upper-triangular matrix vanishes at `(i, j)` when the exponent is
 larger than the distance from `i` to `j`. -/
-private theorem pow_apply_eq_zero_of_lt_add {M : Matrix (Fin n) (Fin n) R}
+private theorem pow_apply_eq_zero_of_lt_add {M : Matrix (Fin n) (Fin n) S}
     (hM : ∀ i j, j ≤ i → M i j = 0) (k : ℕ) (i j : Fin n)
     (hji : j.1 < i.1 + k) : (M ^ k) i j = 0 := by
   induction k generalizing i j with
@@ -107,7 +107,7 @@ private theorem pow_apply_eq_zero_of_lt_add {M : Matrix (Fin n) (Fin n) R}
 
 /-- A strictly upper-triangular `n × n` matrix has `n`-th power zero. -/
 theorem pow_card_eq_zero_of_isUpperTriangular_of_diag_eq_zero
-    {M : Matrix (Fin n) (Fin n) R} (htri : M.IsUpperTriangular)
+    {M : Matrix (Fin n) (Fin n) S} (htri : M.IsUpperTriangular)
     (hdiag : ∀ i, M i i = 0) : M ^ n = 0 := by
   apply Matrix.ext
   intro i j
@@ -121,7 +121,7 @@ theorem pow_card_eq_zero_of_isUpperTriangular_of_diag_eq_zero
 
 /-- A strictly upper-triangular square matrix is nilpotent. -/
 theorem isNilpotent_of_isUpperTriangular_of_diag_eq_zero
-    {M : Matrix (Fin n) (Fin n) R} (htri : M.IsUpperTriangular)
+    {M : Matrix (Fin n) (Fin n) S} (htri : M.IsUpperTriangular)
     (hdiag : ∀ i, M i i = 0) : _root_.IsNilpotent M :=
   ⟨n, pow_card_eq_zero_of_isUpperTriangular_of_diag_eq_zero htri hdiag⟩
 
