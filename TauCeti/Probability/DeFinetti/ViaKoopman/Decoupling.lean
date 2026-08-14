@@ -21,12 +21,29 @@ where the mean ergodic theorem enters.
 
 ## Main results
 
-* `strictMono_snoc_prefix` — appending `r + m` to the prefix is strictly increasing;
-* `ContractableLaw.setLIntegral_prefix_mul_indicator_eq_of_displaced` — the resulting set-integral
-  does not depend on the displacement `m`.
+Transport side:
 
-This is the engine of the Koopman factorization: the `m`-independence is what allows an average
+* `strictMono_snoc_prefix` — appending `r + m` to the prefix is strictly increasing;
+* `ContractableLaw.map_restrict_snoc_prefix_eq_prefixProj` — so every displacement pushes the
+  restricted law to the same measure;
+* `ContractableLaw.setIntegral_prefix_mul_indicator_displaced_eq` — hence the weighted set-integral
+  does not depend on the displacement `m`;
+* `ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage` — so an average over
+  `m < n` may be inserted for free, turning the integrand into a Birkhoff average.
+
+Analytic side:
+
+* `birkhoffAverage_shift_coord_eq` — the displaced coordinates *are* that Birkhoff average;
+* `ContractableLaw.tendsto_integral_abs_birkhoffAverage_indicator_coord` — it converges in `L¹` to
+  the conditional expectation given the invariants;
+* `ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditional` — and that limit is the
+  invariant conditional law, by
+  `ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants`.
+
+This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
+
+The induction that combines the two sides is not here yet.
 -/
 
 public section
@@ -96,7 +113,7 @@ theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ → α)
 /-- **Every coordinate has the same set-integral over an invariant event.** The single-coordinate
 instance of the block transport: reading coordinate `r` and reading coordinate `0` give the same
 integral of any measurable real observable, over any invariant event. -/
-theorem ContractableLaw.setIntegral_comp_coord_eq_zero_of_measurableSet_invariants
+theorem ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) (r : ℕ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {f : α → ℝ} (hf : Measurable f) :
@@ -174,7 +191,7 @@ theorem ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditional
         setIntegral_condExp hle hint0 hs]
       rfl
     rw [h0]
-    exact (hρ.setIntegral_comp_coord_eq_zero_of_measurableSet_invariants r hs
+    exact (hρ.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants r hs
       (measurable_const.indicator hB)).symm
   · exact stronglyMeasurable_condExp.aestronglyMeasurable.congr hwit.symm
 
@@ -219,6 +236,57 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_displaced_eq
       integral_map (hsel d).aemeasurable hG_meas.aestronglyMeasurable]
     exact integral_congr_ae (Filter.Eventually.of_forall fun x => (hcomp d x).symm)
   rw [key m, ← key 0, Nat.add_zero]
+
+/-- **The weighted integral equals its own Birkhoff average.** Because the displaced integrals all
+agree, averaging over `m < n` changes nothing on the left while turning the integrand on the right
+into a Birkhoff average — for every `n ≠ 0`.
+
+This is the step that hands the argument to the mean ergodic theorem. -/
+theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
+    {B : Set α} (hB : MeasurableSet B)
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+    {n : ℕ} (hn : n ≠ 0) :
+    ∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ
+      = ∫ x in A, g (prefixProj α r x)
+          * birkhoffAverage ℝ (shift α)
+              (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x ∂ρ := by
+  classical
+  have hAm : MeasurableSet A := MeasurableSpace.invariants_le _ _ hA
+  have hgm : Measurable fun x : ℕ → α => g (prefixProj α r x) :=
+    hg.comp (measurable_prefixProj r)
+  have hterm : ∀ d : ℕ, Integrable
+      (fun x : ℕ → α => g (prefixProj α r x)
+        * B.indicator (fun _ => (1 : ℝ)) (x (r + d))) (ρ.restrict A) := by
+    intro d
+    have hm : Measurable fun x : ℕ → α => g (prefixProj α r x)
+        * B.indicator (fun _ => (1 : ℝ)) (x (r + d)) :=
+      hgm.mul ((measurable_const.indicator hB).comp (measurable_pi_apply (r + d)))
+    refine ⟨hm.aestronglyMeasurable, .of_bounded (C := 1) (Filter.Eventually.of_forall ?_)⟩
+    intro x
+    have h0 : (0 : ℝ) ≤ B.indicator (fun _ => (1 : ℝ)) (x (r + d)) :=
+      Set.indicator_apply_nonneg fun _ => zero_le_one
+    have h1 : B.indicator (fun _ => (1 : ℝ)) (x (r + d)) ≤ 1 :=
+      Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg h0]
+    calc |g (prefixProj α r x)| * B.indicator (fun _ => (1 : ℝ)) (x (r + d))
+        ≤ 1 * 1 := mul_le_mul (hg_bdd _) h1 h0 zero_le_one
+      _ = 1 := one_mul 1
+  -- Expand the Birkhoff average and integrate term by term.
+  have hrhs : ∫ x in A, g (prefixProj α r x)
+      * birkhoffAverage ℝ (shift α)
+          (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x ∂ρ
+      = (n : ℝ)⁻¹ * ∑ m ∈ Finset.range n, ∫ x in A, g (prefixProj α r x)
+          * B.indicator (fun _ => (1 : ℝ)) (x (r + m)) ∂ρ := by
+    rw [← integral_finsetSum _ fun m _ => hterm m, ← integral_const_mul]
+    refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
+    simp only [birkhoffAverage_shift_coord_eq, ← Finset.mul_sum]
+    ring
+  rw [hrhs]
+  simp only [hρ.setIntegral_prefix_mul_indicator_displaced_eq hg hB hA]
+  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← mul_assoc,
+    inv_mul_cancel₀ (Nat.cast_ne_zero.mpr hn), one_mul]
 
 end Probability
 
