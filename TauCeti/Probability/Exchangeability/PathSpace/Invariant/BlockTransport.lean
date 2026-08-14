@@ -194,7 +194,6 @@ theorem setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurable_invarian
 
 end ContractableLaw
 
-<<<<<<< HEAD
 /-- **The mass of a block cylinder met with an invariant event may be read at the prefix.**
 
 For a contractable law, a shift-invariant event, measurable coordinate sets and a strictly
@@ -225,7 +224,7 @@ theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono
   rw [blockLaw_def, blockLaw_def, hprefix]
   exact congrArg (fun μ : Measure (Fin r → α) => μ (Set.univ.pi B))
     (hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA)
-=======
+
 /-- **Every coordinate has the same set-integral over an invariant event.** The single-coordinate
 instance of the block transport: reading coordinate `r` and reading coordinate `0` give the same
 integral of any measurable real observable, over any invariant event. -/
@@ -248,7 +247,6 @@ theorem ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_inv
     rw [← hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hs hA,
       integral_map (hcoord s).aemeasurable hg.aestronglyMeasurable]
   rw [key r (Subsingleton.strictMono _), key 0 (Subsingleton.strictMono _)]
->>>>>>> feat/koopman-block-induction
 
 end Probability
 
