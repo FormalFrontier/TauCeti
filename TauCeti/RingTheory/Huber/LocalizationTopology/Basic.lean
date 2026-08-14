@@ -38,10 +38,18 @@ universal property in `LocalizationTopology.UniversalProperty`, the completion `
   `nonarchimedeanRing_locTopology`: the contract of `locTopology`, to be used in place of
   unfolding the construction.
 * `isHuberRing_locTopology`: `Aₛ` under `locTopology` is a Huber ring.
+* `isBounded_image_algebraMap_of_isBounded` and `isPowerBounded_algebraMap_of_isPowerBounded`:
+  bounded sets have bounded image, so power-orbits transfer and each power-bounded *element*
+  stays power-bounded. The `locSubring` route reaches only a ring of definition, whose
+  boundedness it uses; a ring of integral elements `A⁺` need not be bounded at all, so it is the
+  elementwise statement — not a bounded-set statement about `A⁺` — that carries over.
 
 ## Provenance
 
-This is a port of AINTLIB's `LocalizationTopology.lean`, at commit `d9f2fbbb`. The main changes
+This is a port of AINTLIB's `LocalizationTopology.lean`, at commit `d9f2fbbb`.
+`locIdealImage_mul_algebraMap_subset`, `isBounded_image_algebraMap_of_isBounded` and
+`isPowerBounded_algebraMap_of_isPowerBounded` are later additions, following the skeleton at
+`LocalizationTopology.lean:690-753` of commit `37bbdaeb9`. The main changes
 are: adapted `PairOfDefinition` field names to TauCeti conventions (`A₀`→`ringOfDefinition`,
 `I`→`ideal`, etc.); uses characteristic lemmas instead of destructuring definitions; removed
 unused hypotheses to satisfy `#lint` checks; stated over an arbitrary localisation `S` away from
@@ -412,8 +420,36 @@ private theorem locIdealImage_invSelf_step (P : PairOfDefinition A) (T : Finset 
     simp only [AddMemClass.coe_add, mul_add]
     exact (locIdealImage P T s S n).add_mem h₁ h₂
 
+/-- The multiplicative step behind `isBounded_image_algebraMap_of_isBounded`: if multiplying by
+`x` carries `Iᵐ` into `Iⁿ`, then it carries the `m`-th basic neighbourhood of `Aₛ` into the
+`n`-th. -/
+private theorem locIdealImage_mul_algebraMap_subset (P : PairOfDefinition A)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    {m n : ℕ} {x : A} (hx : ∀ w ∈ P.idealImage m, w * x ∈ P.idealImage n)
+    {d : locSubring P T s S} (hd : d ∈ (locIdeal P T s S ^ m : Ideal (locSubring P T s S))) :
+    (d : S) * algebraMap A S x ∈ locIdealImage P T s S n := by
+  rw [locIdeal_pow_eq_span] at hd
+  induction hd using Submodule.span_induction with
+  | mem z hz =>
+    obtain ⟨b, hb, rfl⟩ := hz
+    rw [toLocSubring_apply, ← map_mul]
+    obtain ⟨b', hb', hbx⟩ := (P.mem_idealImage n).mp
+      (hx _ ((P.mem_idealImage m).mpr ⟨b, hb, rfl⟩))
+    rw [← hbx]
+    exact algebraMap_mem_locIdealImage P T s S hb'
+  | zero => simp
+  | add u v _ _ hu hv => simpa [add_mul] using (locIdealImage P T s S n).add_mem hu hv
+  | smul c u _ hu =>
+    have : ((c • u : locSubring P T s S) : S) * algebraMap A S x
+        = (c : S) * ((u : S) * algebraMap A S x) := by
+      push_cast [smul_eq_mul]; ring
+    rw [this, mul_comm]
+    exact locIdealImage_mul_locSubring_subset P T s S n
+      (Set.mul_mem_mul hu c.2)
+
 /-- Multiplying `algebraMap a` by an element of a suitable `locIdealImage j` lands in
-`locIdealImage i`. -/
+`locIdealImage i`. The single-element case of `locIdealImage_mul_algebraMap_subset`, with the
+index supplied by continuity of `· * a` rather than assumed. -/
 private theorem locIdealImage_algMap_step [IsTopologicalRing A] (P : PairOfDefinition A)
     (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] (i : ℕ) (a : A) :
@@ -424,24 +460,9 @@ private theorem locIdealImage_algMap_step [IsTopologicalRing A] (P : PairOfDefin
       (by rw [mul_zero]; exact P.hasBasis_nhds_zero.mem_of_mem trivial (i := i)))
   refine ⟨m₀, fun y hy ↦ ?_⟩
   obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P T s S _).mp hy
-  rw [locIdeal_pow_eq_span] at hd
-  refine Submodule.span_induction (p := fun d _ ↦
-    algebraMap A S a * ↑d ∈ locIdealImage P T s S i) ?_ ?_ ?_ ?_ hd
-  · rintro d ⟨b, hb, rfl⟩
-    obtain ⟨c, hc, hval⟩ := (P.mem_idealImage i).mp (hm₀ ((P.mem_idealImage m₀).mpr ⟨b, hb, rfl⟩))
-    rw [toLocSubring_apply]
-    -- `hval`'s right side is the beta-redex `(fun x => a * x) ↑b`, which `rw` cannot match;
-    -- `show` states the reduced form and is the only step that reaches this goal.
-    rw [← map_mul, show a * (↑b : A) = ↑c from hval.symm]
-    exact algebraMap_mem_locIdealImage P T s S hc
-  · simp [(locIdealImage P T s S i).zero_mem]
-  · intro d₁ d₂ _ _ h₁ h₂
-    simp only [AddMemClass.coe_add, mul_add]
-    exact (locIdealImage P T s S i).add_mem h₁ h₂
-  · intro r d₁ _ h₁
-    -- `D` absorbs `locIdealImage i` on the right, which the file already states.
-    rw [coe_smul_locSubring, mul_left_comm, mul_comm]
-    exact locIdealImage_mul_locSubring_subset P T s S i (Set.mul_mem_mul h₁ r.property)
+  rw [mul_comm]
+  exact locIdealImage_mul_algebraMap_subset P T s S
+    (fun w hw ↦ by rw [mul_comm]; exact hm₀ hw) hd
 
 /-- **Left multiplication is continuous** for the localization topology: multiplication by a
 fixed `x` pulls some neighbourhood `locIdealImage j` back inside `locIdealImage i`. -/
@@ -578,6 +599,40 @@ theorem isPowerBounded_of_mem_locSubring [IsTopologicalRing A] (P : PairOfDefini
     IsPowerBounded x := by
   let _ := locTopology P T s S hden
   exact (isBounded_locSubring P T s S hden).isPowerBounded_of_mem hx
+
+/-- **The image of a bounded subset of `A` is bounded in `Aₛ`.** -/
+theorem isBounded_image_algebraMap_of_isBounded [IsTopologicalRing A] (P : PairOfDefinition A)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) {X : Set A} (hX : IsBounded X) :
+    letI := locTopology P T s S hden
+    IsBounded (algebraMap A S '' X) := by
+  let _ := locTopology P T s S hden
+  rw [isBounded_iff]
+  intro U hU
+  obtain ⟨n, -, hnU⟩ := (hasBasis_nhds_zero_locTopology P T s S hden).mem_iff.mp hU
+  obtain ⟨W, hW, hXW⟩ := isBounded_iff.mp hX (P.idealImage n)
+    ((P.isOpen_idealImage n).mem_nhds (P.idealImage n).zero_mem)
+  obtain ⟨m, -, hmW⟩ := P.hasBasis_nhds_zero.mem_iff.mp hW
+  refine ⟨_, (hasBasis_nhds_zero_locTopology P T s S hden).mem_of_mem (i := m) trivial,
+    Set.Subset.trans ?_ hnU⟩
+  rintro _ ⟨y, hy, _, ⟨x, hxX, rfl⟩, rfl⟩
+  obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P T s S m).mp hy
+  exact locIdealImage_mul_algebraMap_subset P T s S
+    (fun w hw ↦ hXW (Set.mul_mem_mul (hmW hw) hxX)) hd
+
+/-- **A power-bounded element of `A` stays power-bounded in `Aₛ`.** -/
+theorem isPowerBounded_algebraMap_of_isPowerBounded [IsTopologicalRing A] (P : PairOfDefinition A)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) {a : A} (ha : IsPowerBounded a) :
+    letI := locTopology P T s S hden
+    IsPowerBounded (algebraMap A S a) := by
+  let _ := locTopology P T s S hden
+  have h : Set.range ((algebraMap A S a) ^ · : ℕ → S)
+      = algebraMap A S '' Set.range (a ^ · : ℕ → A) := by
+    simpa only [← map_pow] using Set.range_comp' (algebraMap A S) (a ^ ·)
+  rw [isPowerBounded_iff, h]
+  exact isBounded_image_algebraMap_of_isBounded P T s S hden (isPowerBounded_iff.mp ha)
+
 
 /-- The distinguished fractions `t/s` are power-bounded: they lie in `D`, and every element of
 `D` is. -/
