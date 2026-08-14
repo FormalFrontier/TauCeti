@@ -58,15 +58,16 @@ theorem adj_iff_of_iso_pathGraph {n : ℕ} (f : G ≃g pathGraph n) (i j : V) :
   simpa only [pathGraph_adj] using f.map_adj_iff.symm
 
 /-- **Reversal is an automorphism of a path graph.** Composing with it reverses a numbering of a
-graph as a path. -/
-@[expose] def pathGraphRevIso (n : ℕ) : pathGraph n ≃g pathGraph n where
+graph as a path. The body is exported unexposed, so `pathGraphRevIso_apply` is the interface an
+importing module computes with. -/
+def pathGraphRevIso (n : ℕ) : pathGraph n ≃g pathGraph n where
   toEquiv := Fin.revPerm
   map_rel_iff' := by
     intro i j
     simp only [pathGraph_adj, Fin.revPerm_apply, Fin.rev]
     omega
 
-@[simp] theorem pathGraphRevIso_apply {n : ℕ} (i : Fin n) : pathGraphRevIso n i = i.rev := rfl
+@[simp] theorem pathGraphRevIso_apply {n : ℕ} (i : Fin n) : pathGraphRevIso n i = i.rev := (rfl)
 
 /-! ## A finite tree of maximum degree two -/
 

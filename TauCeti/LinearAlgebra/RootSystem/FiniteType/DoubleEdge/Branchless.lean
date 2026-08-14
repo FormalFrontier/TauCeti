@@ -72,7 +72,8 @@ private theorem apply_mul_apply_eq_one_of_isoPathGraph_of_lt (h : IsFiniteType A
       let v : ℕ → B := fun s =>
         if hs : a + s < n then k.symm ⟨a + s, hs⟩ else k.symm ⟨0, hn⟩
       have hv_apply {s : ℕ} (hs : s < m + 3) : k (v s) = ⟨a + s, by omega⟩ := by
-        simp [v, show a + s < n by omega]
+        have hs' : a + s < n := by omega
+        simp [v, hs']
       -- The same fact read backwards, naming the vertex of the interval at each position.
       have hv_eq {s : ℕ} (hs : s < m + 3) {t : ℕ} (ht : t < n) (hst : a + s = t) :
           v s = k.symm ⟨t, ht⟩ := by
@@ -152,18 +153,22 @@ private theorem apply_mul_apply_eq_one_of_isoPathGraph_of_lt_min (h : IsFiniteTy
   have hone := apply_mul_apply_eq_one_of_isoPathGraph_of_lt h k ha hbase hr har
   rcases hpath with hp | hp
   · have hi : k.symm ⟨r, by omega⟩ = i := by
-      rw [show (⟨r, by omega⟩ : Fin n) = k i from Fin.ext (by simp only [r]; omega),
-        k.symm_apply_apply]
+      apply k.injective
+      rw [k.apply_symm_apply]
+      exact Fin.ext (by simp only [r]; omega)
     have hj : k.symm ⟨r + 1, hr⟩ = j := by
-      rw [show (⟨r + 1, hr⟩ : Fin n) = k j from Fin.ext (by simp only [r]; omega),
-        k.symm_apply_apply]
+      apply k.injective
+      rw [k.apply_symm_apply]
+      exact Fin.ext (by simp only [r]; omega)
     simpa only [hi, hj] using hone
   · have hj : k.symm ⟨r, by omega⟩ = j := by
-      rw [show (⟨r, by omega⟩ : Fin n) = k j from Fin.ext (by simp only [r]; omega),
-        k.symm_apply_apply]
+      apply k.injective
+      rw [k.apply_symm_apply]
+      exact Fin.ext (by simp only [r]; omega)
     have hi : k.symm ⟨r + 1, hr⟩ = i := by
-      rw [show (⟨r + 1, hr⟩ : Fin n) = k i from Fin.ext (by simp only [r]; omega),
-        k.symm_apply_apply]
+      apply k.injective
+      rw [k.apply_symm_apply]
+      exact Fin.ext (by simp only [r]; omega)
     simpa only [hi, hj, mul_comm] using hone
 
 /-- In a path numbering, every edge other than a fixed multiple edge has Cartan product one. -/
@@ -236,6 +241,7 @@ private theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_de
     simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hmem
     rcases hmem with hc | hc | hc | hc <;> omega
   have hprod : A u v * A v u = 2 := by rw [hAuv_eq, hvu]; norm_num
+  have hprod' : A v u * A u v = 2 := by rw [mul_comm]; exact hprod
   obtain ⟨k⟩ := IsTree.nonempty_iso_pathGraph_of_degree_le_two
     (h.isTree_diagramGraph hconn') hdeg
   have hpath := (adj_iff_of_iso_pathGraph k u v).mp hadj
@@ -244,8 +250,7 @@ private theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_de
     intro i j hij hne
     rcases hpath with huv | huv
     · exact apply_mul_apply_eq_one_of_isoPathGraph h k huv (by omega) hij hne
-    · exact apply_mul_apply_eq_one_of_isoPathGraph h k huv
-        (by simpa only [mul_comm] using (show 2 ≤ A u v * A v u by omega)) hij (by tauto)
+    · exact apply_mul_apply_eq_one_of_isoPathGraph h k huv (by omega) hij (by tauto)
   refine h.exists_equiv_forall_eq_doubleEdgeCartanMatrix hconn' hdeg hvu ?_
   intro i j hij hAij
   by_cases hforward : i = v ∧ j = u
