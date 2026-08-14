@@ -78,8 +78,10 @@ theorem mem_barycentricSubdivision_iff {τ : Finset (BarycentricVertex K)} :
   AbstractSimplicialComplex.mem_orderComplex_iff
 
 /-- Two faces of `K` span an edge in its barycentric subdivision exactly when one is contained in
-the other. -/
-@[simp]
+the other.
+
+This is not a `simp` lemma: `mem_barycentricSubdivision_iff` already rewrites the left-hand
+side. -/
 theorem pair_mem_barycentricSubdivision_iff [DecidableEq α] (σ τ : BarycentricVertex K) :
     {σ, τ} ∈ barycentricSubdivision K ↔ (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ :=
   AbstractSimplicialComplex.pair_mem_orderComplex_iff σ τ
@@ -103,7 +105,8 @@ def faceOrderHom [DecidableEq β]
   toFun σ := ⟨σ.1.image f, f.map_face σ.2⟩
   monotone' _ _ h := Finset.image_mono f h
 
-@[simp]
+-- Not a `simp` lemma: its right-hand side is a lambda building a subtype, so
+-- `faceOrderHom_apply_coe` is the pointwise `simp`-normal form.
 theorem coe_faceOrderHom [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
     ⇑(faceOrderHom f) = fun σ => ⟨σ.1.image f, f.map_face σ.2⟩ :=
@@ -125,7 +128,8 @@ def barycentricMap [DecidableEq β]
       (barycentricSubdivision L).toPreAbstractSimplicialComplex :=
   AbstractSimplicialComplex.orderComplexMap (faceOrderHom f)
 
-@[simp]
+-- Not a `simp` lemma: it would reduce `barycentricMap_apply_coe`, the pointwise
+-- `simp`-normal form, to a duplicate.
 theorem coe_barycentricMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
     ⇑(barycentricMap f) = faceOrderHom f :=

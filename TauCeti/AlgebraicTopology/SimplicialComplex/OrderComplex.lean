@@ -73,8 +73,9 @@ theorem mem_orderComplex_iff {σ : Finset P} :
     rfl
 
 /-- Two elements span an edge of the order complex exactly when they are comparable. This also
-covers the degenerate case `p = q`, when the pair is a singleton face. -/
-@[simp]
+covers the degenerate case `p = q`, when the pair is a singleton face.
+
+This is not a `simp` lemma: `mem_orderComplex_iff` already rewrites the left-hand side. -/
 theorem pair_mem_orderComplex_iff [DecidableEq P] (p q : P) :
     {p, q} ∈ orderComplex P ↔ p ≤ q ∨ q ≤ p := by
   rw [mem_orderComplex_iff]
