@@ -6,7 +6,6 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Reindex
-public import TauCeti.NumberTheory.ModularForms.Basic
 
 /-!
 # Slash-invariance of the double-coset Hecke slash sum
@@ -27,7 +26,6 @@ permuted class `γᵀ • i`. Reindexing the sum over the permutation recovers `
 
 ## Main definitions
 
-* `HeckeRing.GL2.transposeSLnZ`: the transposed element `γᵀ ∈ SLnZ 2` attached to `γ ∈ SLnZ 2`.
 * `HeckeRing.GL2.heckeSlashSumForm`: the double-coset Hecke operator on `SlashInvariantForm`.
 * `HeckeRing.GL2.heckeSlashSumFormₗ`: `heckeSlashSumForm` as a `ℂ`-linear operator.
 
@@ -59,20 +57,12 @@ namespace HeckeRing.GL2
 
 variable (k : ℤ) (D : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
 
-/-- The transposed element `γᵀ ∈ SLnZ 2` attached to `γ ∈ SLnZ 2`. -/
-noncomputable def transposeSLnZ (γ : SLnZ 2) : SLnZ 2 :=
-  ⟨(transposeGLEquiv 2 (γ : GL (Fin 2) ℚ)).unop,
-    transposeGLEquiv_mem_SLnZ 2 γ.2⟩
-
-lemma coe_transposeSLnZ (γ : SLnZ 2) :
-    (transposeSLnZ γ : GL (Fin 2) ℚ) = (transposeGLEquiv 2 (γ : GL (Fin 2) ℚ)).unop := (rfl)
-
 /-- Right multiplication by `γ` on transposed representatives is left multiplication by
 `transposeSLnZ γ` before transposition. -/
 lemma transposeRep_mul_eq (i : DecompQuotient (SLnZ 2) (SLnZ 2) D.out) (γ : SLnZ 2) :
     transposeRep D i * (γ : GL (Fin 2) ℚ) =
       (transposeGLEquiv 2
-        ((transposeSLnZ γ : GL (Fin 2) ℚ) * (i.out : GL (Fin 2) ℚ) * D.out)).unop := by
+        ((transposeSLnZ 2 γ : GL (Fin 2) ℚ) * (i.out : GL (Fin 2) ℚ) * D.out)).unop := by
   rw [transposeRep_def, coe_transposeSLnZ]
   have h_trans : (transposeGLEquiv 2 (transposeGLEquiv 2 (γ : GL (Fin 2) ℚ)).unop).unop =
       (γ : GL (Fin 2) ℚ) := transposeGLEquiv_transposeGLEquiv 2 (γ : GL (Fin 2) ℚ)
@@ -89,7 +79,7 @@ under the weight-`k` slash action of `SLnZ 2`, then the double-coset slash sum
 `heckeSlashSum k D f` is also invariant under `SLnZ 2`. -/
 theorem heckeSlashSum_slash_eq (f : ℍ → ℂ) (hf : ∀ γ ∈ SLnZ 2, f ∣[k] γ = f) (γ : SLnZ 2) :
     heckeSlashSum k D f ∣[k] (γ : GL (Fin 2) ℚ) = heckeSlashSum k D f := by
-  let B := transposeSLnZ γ
+  let B := transposeSLnZ 2 γ
   let e : DecompQuotient (SLnZ 2) (SLnZ 2) D.out ≃ DecompQuotient (SLnZ 2) (SLnZ 2) D.out :=
     MulAction.toPerm B
   have h_summand (i : DecompQuotient (SLnZ 2) (SLnZ 2) D.out) :
@@ -103,18 +93,13 @@ theorem heckeSlashSum_slash_eq (f : ℍ → ℂ) (hf : ∀ γ ∈ SLnZ 2, f ∣[
     rw [h_assoc, h_slash]
     have h_ei : e i = ⟦⟨(B : GL (Fin 2) ℚ) * (i.out : GL (Fin 2) ℚ), h_mem⟩⟧ := by
       change B • i = _
-      conv_lhs => rw [← Quotient.out_eq i]
-      rfl
+      calc
+        B • i = QuotientGroup.mk (B * i.out) :=
+          (MulAction.Quotient.mk_smul_out _ B i).symm
+        _ = _ := congrArg QuotientGroup.mk (Subtype.ext (by rfl))
     rw [h_ei]
   rw [heckeSlashSum_def, SlashAction.sum_slash, Finset.sum_congr rfl fun i _ ↦ h_summand i]
   exact Equiv.sum_comp e (fun j ↦ f ∣[k] transposeRep D j)
-
-/-- A form in `SlashInvariantForm 𝒮ℒ k` is invariant under `SLnZ 2`. -/
-lemma slash_eq_of_mem_SLnZ (f : SlashInvariantForm 𝒮ℒ k)
-    (γ : GL (Fin 2) ℚ) (hγ : γ ∈ SLnZ 2) : ⇑f ∣[k] γ = ⇑f := by
-  obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff 2).mp hγ
-  have h_mem : mapGL ℝ σ ∈ 𝒮ℒ := MonoidHom.mem_range.mpr ⟨σ, rfl⟩
-  exact f.slash_action_eq' (mapGL ℝ σ) h_mem
 
 /-- **The Hecke operator on `SlashInvariantForm`**: descending `heckeSlashSum` to
 `SlashInvariantForm 𝒮ℒ k`. -/
@@ -125,7 +110,8 @@ noncomputable def heckeSlashSumForm (f : SlashInvariantForm 𝒮ℒ k) :
     obtain ⟨σ, rfl⟩ := MonoidHom.mem_range.mp hγ
     have h_SLnZ : (mapGL ℚ σ : GL (Fin 2) ℚ) ∈ SLnZ 2 := coe_mem_SLnZ 2 σ
     exact heckeSlashSum_slash_eq k D (⇑f)
-      (fun g hg ↦ slash_eq_of_mem_SLnZ k f g hg) ⟨mapGL ℚ σ, h_SLnZ⟩
+      (fun g hg ↦ SlashInvariantFormClass.slash_eq_of_mem_SLnZ f g hg)
+      ⟨mapGL ℚ σ, h_SLnZ⟩
 
 @[simp]
 lemma coe_heckeSlashSumForm (f : SlashInvariantForm 𝒮ℒ k) :

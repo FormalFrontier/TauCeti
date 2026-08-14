@@ -21,6 +21,7 @@ integral Hecke ring of `GL_n` is commutative.
 ## Main definitions
 
 * `HeckeRing.GLn.transposeGLEquiv`: transposition as an isomorphism `GL_n(ℚ) ≃* GL_n(ℚ)ᵐᵒᵖ`.
+* `HeckeRing.GLn.transposeSLnZ`: transposition as a self-map of `SL_n(ℤ)`.
 * `HeckeRing.GLn.transposeAntiInvolution`: the induced `HeckeAntiInvolution` of `(Δ, SL_n(ℤ))`.
 
 ## Main results
@@ -73,6 +74,16 @@ lemma transposeGLEquiv_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ n) :
   refine (mem_SLnZ_iff n).mpr ⟨σ.transpose, Units.ext ?_⟩
   ext i j
   simp [mapGL_coe_matrix, algebraMap_int_eq, SpecialLinearGroup.coe_transpose]
+
+/-- The transposed element `γᵀ ∈ SLnZ n` attached to `γ ∈ SLnZ n`. -/
+noncomputable def transposeSLnZ (γ : SLnZ n) : SLnZ n :=
+  ⟨(transposeGLEquiv n (γ : GL (Fin n) ℚ)).unop,
+    transposeGLEquiv_mem_SLnZ n γ.2⟩
+
+@[simp]
+lemma coe_transposeSLnZ (γ : SLnZ n) :
+    (transposeSLnZ n γ : GL (Fin n) ℚ) = (transposeGLEquiv n (γ : GL (Fin n) ℚ)).unop :=
+  (rfl)
 
 /-- Transposition preserves `Δ`: it transposes the integral witness and leaves the
 determinant unchanged. -/

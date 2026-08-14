@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
 public import TauCeti.NumberTheory.ModularForms.Basic
 
 /-!
@@ -27,6 +28,8 @@ not insert the coercion by hand.
 ## Main results
 
 * `ModularForm.rat_slash`: the rational action is the real one at the mapped matrix.
+* `SlashInvariantFormClass.slash_eq_of_mem_SLnZ`: a form invariant under `𝒮ℒ` is fixed by the
+  rational slash action of every element of `SLnZ 2`.
 * `ModularForm.rat_slash_def_of_det_pos`, `ModularForm.rat_slash_apply_of_det_pos`: the expanded
   formula at positive determinant, free of the `σ` twist.
 * `ModularForm.det_map_ratCast_pos`: positivity of the determinant survives the embedding.
@@ -52,7 +55,7 @@ generality of Mathlib's `ModularForm.SL_smul_slash` rather than AINTLIB's `c : �
 
 public section
 
-open Matrix UpperHalfPlane
+open Matrix Matrix.SpecialLinearGroup UpperHalfPlane HeckeRing.GLn
 
 open scoped MatrixGroups ModularForm
 
@@ -129,3 +132,12 @@ lemma rat_smul_slash_of_det_pos {α : Type*} [SMul α ℂ] [IsScalarTower α ℂ
   exact _root_.ModularForm.smul_slash_of_det_pos k (det_map_ratCast_pos hg) f c
 
 end ModularForm
+
+/-- A form invariant under `𝒮ℒ` is fixed by the rational slash action of every element of
+`SLnZ 2`. -/
+theorem _root_.SlashInvariantFormClass.slash_eq_of_mem_SLnZ {F : Type*} [FunLike F ℍ ℂ]
+    {k : ℤ} [SlashInvariantFormClass F 𝒮ℒ k] (f : F) (γ : GL (Fin 2) ℚ)
+    (hγ : γ ∈ SLnZ 2) : ⇑f ∣[k] γ = ⇑f := by
+  obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff 2).mp hγ
+  have h_mem : mapGL ℝ σ ∈ 𝒮ℒ := MonoidHom.mem_range.mpr ⟨σ, rfl⟩
+  exact SlashInvariantFormClass.slash_action_eq f (mapGL ℝ σ) h_mem
