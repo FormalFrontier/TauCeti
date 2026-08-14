@@ -686,11 +686,11 @@ private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
 
 /-- The support of the pinned base of type `Cₙ`: the first `n` root indices. -/
 private def typeCSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
-  Finset.univ.map ⟨typeCSimpleIndex n, typeCSimpleIndex_injective⟩
+  simpleSupport (typeCSimpleIndex_injective (n := n))
 
 private lemma coe_typeCSimpleSupport :
-    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) := by
-  simp [typeCSimpleSupport]
+    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) :=
+  coe_simpleSupport _
 
 private lemma image_root_typeCSimpleSupport :
     (typeCSimplyConnectedRootDatum n).root '' (typeCSimpleSupport n : Set (Fin (2 * n ^ 2)))
@@ -744,16 +744,8 @@ def typeCSimplyConnectedBase (n : ℕ) : (typeCSimplyConnectedRootDatum n).Base 
 /-- **The support of the pinned base of type `Cₙ` is the set of the first `n` root indices**, which
 by `TauCeti.DynkinType.root_typeCSimpleIndex` carry the simple roots in Bourbaki order. -/
 @[simp] theorem mem_support_typeCSimplyConnectedBase {k : Fin (2 * n ^ 2)} :
-    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n := by
-  -- The support of the base is `typeCSimpleSupport n` by definition.
-  change k ∈ typeCSimpleSupport n ↔ (k : ℕ) < n
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simp only [Function.Embedding.coeFn_mk, typeCSimpleIndex_val]
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeCSimpleIndex_injective (n := n)) (fun _ ↦ typeCSimpleIndex_val _)
 
 /-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
 private def typeCBaseEquiv (n : ℕ) : (typeCSimplyConnectedBase n).support ≃ Fin n where

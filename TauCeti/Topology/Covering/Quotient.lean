@@ -79,7 +79,7 @@ private theorem image_smul_eq_image_smul_of_inter_nonempty
   obtain ⟨⟨h, hh⟩, hhu'⟩ := horbit.mp hww'.symm
   -- `H` acts through the coercion to `G` — `MulAction.subgroup_smul_def` — so the orbit witness is
   -- an element of `G` fixing `qH`, and `hhu'` retypes to the ambient action.
-  have hhu : h • (g' • u') = g • u := hhu'
+  have hhu : h • (g' • u') = g • u := by simpa only [MulAction.subgroup_smul_def] using hhu'
   have hmap : ∀ e : E, qH (h • e) = qH e := fun e =>
     horbit.mpr ⟨⟨h, hh⟩, MulAction.subgroup_smul_def ⟨h, hh⟩ e⟩
   have hgg' : g = h * g' := eq_of_inv_mul_eq_one <| by
