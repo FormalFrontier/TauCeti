@@ -28,6 +28,9 @@ translates of `f` times a `1`-periodic remainder analytic at `∞`.
 * `TauCeti.ModularForm.normRest_def`: the remainder as a product of coset factors.
 * `TauCeti.ModularForm.normRest_apply_eq_div`: how to compute the remainder off the zeros of
   the Galois product.
+* `TauCeti.ModularForm.normRest_ne_zero_of_norm_ne_zero`, with
+  `TauCeti.ModularForm.normRest_ne_zero` as its modular-form corollary: the remainder of a
+  nonzero form is nonzero.
 
 The remainder and the decomposition itself are algebraic, so they are stated for
 `SlashInvariantForm.norm` under `SlashInvariantFormClass`; only analyticity at the cusp
@@ -268,6 +271,20 @@ public lemma normRest_apply_eq_div {τ : ℍ}
       galoisProd (Subgroup.integerCuspWidth 𝒢) (f : ℍ → ℂ) τ := by
   rw [eq_div_iff h, slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest, mul_comm]
 
+/-- If the norm does not vanish identically then neither does its remainder factor: the
+remainder is a factor of the norm, so a vanishing remainder would kill the whole product.
+
+This is the algebraic content; `normRest_ne_zero` is the modular-form corollary. Order
+arguments over `normRest` need one of the two, since `orderOfVanishingAt_prod` and the rest
+of the vanishing-order API are stated only for factors that are not identically zero. -/
+public lemma normRest_ne_zero_of_norm_ne_zero
+    (hf : (⇑(_root_.SlashInvariantForm.norm 𝒮ℒ f) : ℍ → ℂ) ≠ 0) : normRest f ≠ 0 := by
+  refine right_ne_zero_of_mul (a := galoisProd (Subgroup.integerCuspWidth 𝒢) (⇑f)) ?_
+  have hprod : galoisProd (Subgroup.integerCuspWidth 𝒢) (⇑f) * normRest f
+      = (⇑(_root_.SlashInvariantForm.norm 𝒮ℒ f) : ℍ → ℂ) :=
+    (funext (slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest f)).symm
+  rwa [hprod]
+
 end Algebraic
 
 /-! ### The analytic layer
@@ -302,6 +319,16 @@ public lemma norm_apply_eq_galoisProd_mul_normRest (τ : ℍ) :
   have hcoe : _root_.ModularForm.norm 𝒮ℒ f τ = _root_.SlashInvariantForm.norm 𝒮ℒ f τ := by
     rw [_root_.ModularForm.coe_norm, _root_.SlashInvariantForm.coe_norm]
   rw [hcoe, slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest]
+
+/-- The remainder factor of a nonzero modular form is itself nonzero: the modular-form
+corollary of `normRest_ne_zero_of_norm_ne_zero`, discharged by `ModularForm.norm_ne_zero`. -/
+public lemma normRest_ne_zero (hf : (⇑f : ℍ → ℂ) ≠ 0) : normRest f ≠ 0 := by
+  refine normRest_ne_zero_of_norm_ne_zero f ?_
+  -- The two norms share an underlying function but not a spelling; both `coe_norm` lemmas
+  -- unfold to the same coset product, which is the bridge.
+  have h : (⇑(_root_.ModularForm.norm 𝒮ℒ f) : ℍ → ℂ) ≠ 0 := fun hz =>
+    _root_.ModularForm.norm_ne_zero 𝒮ℒ hf (DFunLike.coe_injective (by simpa using hz))
+  rwa [_root_.ModularForm.coe_norm, ← _root_.SlashInvariantForm.coe_norm] at h
 
 end Analytic
 

@@ -194,6 +194,7 @@ theorem setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurable_invarian
 
 end ContractableLaw
 
+<<<<<<< HEAD
 /-- **The mass of a block cylinder met with an invariant event may be read at the prefix.**
 
 For a contractable law, a shift-invariant event, measurable coordinate sets and a strictly
@@ -224,6 +225,30 @@ theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono
   rw [blockLaw_def, blockLaw_def, hprefix]
   exact congrArg (fun μ : Measure (Fin r → α) => μ (Set.univ.pi B))
     (hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hk hA)
+=======
+/-- **Every coordinate has the same set-integral over an invariant event.** The single-coordinate
+instance of the block transport: reading coordinate `r` and reading coordinate `0` give the same
+integral of any measurable real observable, over any invariant event. -/
+theorem ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) (r : ℕ)
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+    {f : α → ℝ} (hf : Measurable f) :
+    ∫ x in A, f (x r) ∂ρ = ∫ x in A, f (x 0) ∂ρ := by
+  classical
+  have hmap := hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants
+    (k := fun _ : Fin 1 => r) (Subsingleton.strictMono _) hA
+  have hmap0 := hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants
+    (k := fun _ : Fin 1 => 0) (Subsingleton.strictMono _) hA
+  have hg : Measurable fun y : Fin 1 → α => f (y 0) := hf.comp (measurable_pi_apply 0)
+  have hcoord : ∀ (s : ℕ), Measurable fun x : ℕ → α => fun _ : Fin 1 => x s :=
+    fun s => measurable_pi_lambda _ fun _ => measurable_pi_apply s
+  have key : ∀ s : ℕ, StrictMono (fun _ : Fin 1 => s) → ∫ x in A, f (x s) ∂ρ
+      = ∫ y, f (y 0) ∂((ρ.restrict A).map (prefixProj α 1)) := by
+    intro s hs
+    rw [← hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hs hA,
+      integral_map (hcoord s).aemeasurable hg.aestronglyMeasurable]
+  rw [key r (Subsingleton.strictMono _), key 0 (Subsingleton.strictMono _)]
+>>>>>>> feat/koopman-block-induction
 
 end Probability
 

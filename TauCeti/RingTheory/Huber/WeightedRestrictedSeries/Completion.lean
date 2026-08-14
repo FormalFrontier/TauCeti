@@ -18,9 +18,10 @@ at the trivial weight family `Tᵢ = {1}` (Wedhorn *Adic Spaces*, arXiv:1910.059
 completion of `A` itself.
 
 Being a completion, `A⟨X₁,…,Xₖ⟩` is a complete Hausdorff topological `A`-algebra with all of
-that structure found by instance search, which is why this module is short: it fixes the
-notation and records the one fact instance search does not supply, continuity of the structure
-map.
+that structure found by instance search, so this module fixes the notation and records what
+instance search does not supply: continuity of the structure map, and — at `k = 0`, where the
+construction degenerates to the separated completion of `A` — the identification of `A⟨⟩` with
+`Â` together with its topological API.
 
 The predicate that every `A⟨X₁,…,Xₖ⟩` is noetherian is
 `TauCeti.Huber.IsStronglyNoetherian`, in `TauCeti.RingTheory.Huber.StronglyNoetherian`; the
@@ -33,11 +34,17 @@ Hausdorff — over a complete Hausdorff base, and over a discrete one — is
 
 * `TauCeti.Huber.restrictedMvPowerSeriesCompletion`: the completed restricted power-series
   algebra `A⟨X₁,…,Xₖ⟩`.
+* `TauCeti.Huber.restrictedMvPowerSeriesCompletionFinZeroEquiv`: at `k = 0`, the identification
+  of `A⟨⟩` with the separated completion `Â`, carried across the completions from the
+  ring-level `TauCeti.Huber.weightedRestrictedSubringFinZeroEquiv`.
 
 ## Main results
 
 * `TauCeti.Huber.continuous_algebraMap_restrictedMvPowerSeriesCompletion`: the structure map
   `A → A⟨X₁,…,Xₖ⟩` is continuous.
+* `TauCeti.Huber.restrictedMvPowerSeriesCompletionFinZeroEquiv_coe`,
+  `…_symm_coe`, `continuous_restrictedMvPowerSeriesCompletionFinZeroEquiv` and its `_symm`: the
+  zero-variable identification on canonical images, and its continuity in both directions.
 
 ## Provenance
 
@@ -79,5 +86,81 @@ theorem continuous_algebraMap_restrictedMvPowerSeriesCompletion :
     (continuous_weightedC isWeightFamily_one_weight).congr fun a ↦ Subtype.ext (by simp)
   exact ((UniformSpace.Completion.continuous_coe _).comp h).congr fun a ↦
     (UniformSpace.Completion.algebraMap_def _ _ a).symm
+
+/-! ### Zero variables -/
+
+section ZeroVariables
+
+variable {A}
+
+/-- **`A⟨⟩` is the separated completion of `A`**, as topological rings: the ring isomorphism
+between the two completions induced by the zero-variable comparison
+`weightedRestrictedSubringFinZeroEquiv`, which is a homeomorphism, through
+`UniformSpace.Completion.mapRingEquiv`. -/
+noncomputable def restrictedMvPowerSeriesCompletionFinZeroEquiv :
+    letI := IsTopologicalAddGroup.rightUniformSpace A
+    letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+    restrictedMvPowerSeriesCompletion 0 A ≃+* UniformSpace.Completion A :=
+  letI := IsTopologicalAddGroup.rightUniformSpace A
+  letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  UniformSpace.Completion.mapRingEquiv
+    (weightedRestrictedSubringFinZeroEquiv (fun _ : Fin 0 ↦ ({1} : Set A)))
+    (continuous_weightedRestrictedSubringFinZeroEquiv _)
+    (continuous_weightedRestrictedSubringFinZeroEquiv_symm _)
+
+/-- On the canonical image of a restricted series, the comparison of completions is the
+comparison of the rings underneath. -/
+@[simp]
+theorem restrictedMvPowerSeriesCompletionFinZeroEquiv_coe
+    (f : weightedRestrictedSubring (fun _ : Fin 0 ↦ ({1} : Set A)) isWeightFamily_one_weight) :
+    letI := IsTopologicalAddGroup.rightUniformSpace A
+    letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+    restrictedMvPowerSeriesCompletionFinZeroEquiv (f : restrictedMvPowerSeriesCompletion 0 A) =
+      ((weightedRestrictedSubringFinZeroEquiv (fun _ : Fin 0 ↦ ({1} : Set A)) f : A) :
+        UniformSpace.Completion A) := by
+  let _ := IsTopologicalAddGroup.rightUniformSpace A
+  let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  simp only [restrictedMvPowerSeriesCompletionFinZeroEquiv]
+  exact UniformSpace.Completion.map_coe (uniformContinuous_addMonoidHom_of_continuous
+    (continuous_weightedRestrictedSubringFinZeroEquiv _)) f
+
+/-- On the canonical image of an element of `A`, the inverse comparison is the canonical image of
+the inverse ring comparison. -/
+@[simp]
+theorem restrictedMvPowerSeriesCompletionFinZeroEquiv_symm_coe (a : A) :
+    letI := IsTopologicalAddGroup.rightUniformSpace A
+    letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+    (restrictedMvPowerSeriesCompletionFinZeroEquiv (A := A)).symm (a : UniformSpace.Completion A) =
+      ((weightedRestrictedSubringFinZeroEquiv (fun _ : Fin 0 ↦ ({1} : Set A))).symm a :
+        restrictedMvPowerSeriesCompletion 0 A) := by
+  let _ := IsTopologicalAddGroup.rightUniformSpace A
+  let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  simp only [restrictedMvPowerSeriesCompletionFinZeroEquiv]
+  exact UniformSpace.Completion.map_coe (uniformContinuous_addMonoidHom_of_continuous
+    (continuous_weightedRestrictedSubringFinZeroEquiv_symm _)) a
+
+/-- The comparison of completions is continuous. -/
+theorem continuous_restrictedMvPowerSeriesCompletionFinZeroEquiv :
+    letI := IsTopologicalAddGroup.rightUniformSpace A
+    letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+    Continuous (restrictedMvPowerSeriesCompletionFinZeroEquiv (A := A)) := by
+  let _ := IsTopologicalAddGroup.rightUniformSpace A
+  let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  simp only [restrictedMvPowerSeriesCompletionFinZeroEquiv]
+  exact UniformSpace.Completion.continuous_map.congr fun x ↦
+    (UniformSpace.Completion.mapRingEquiv_apply _ _ _ x).symm
+
+/-- Its inverse is continuous. -/
+theorem continuous_restrictedMvPowerSeriesCompletionFinZeroEquiv_symm :
+    letI := IsTopologicalAddGroup.rightUniformSpace A
+    letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+    Continuous (restrictedMvPowerSeriesCompletionFinZeroEquiv (A := A)).symm := by
+  let _ := IsTopologicalAddGroup.rightUniformSpace A
+  let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  simp only [restrictedMvPowerSeriesCompletionFinZeroEquiv]
+  exact UniformSpace.Completion.continuous_map.congr fun x ↦
+    (UniformSpace.Completion.mapRingEquiv_symm_apply _ _ _ x).symm
+
+end ZeroVariables
 
 end TauCeti.Huber

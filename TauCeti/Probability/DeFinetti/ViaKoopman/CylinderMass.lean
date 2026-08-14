@@ -82,7 +82,7 @@ theorem measure_preimage_invariantConditional_inter_blockCylinder_eq_setLIntegra
         ρ[fun y : ℕ → α => (B i).indicator (fun _ => (1 : ℝ)) (y (i : ℕ)) |
           MeasurableSpace.invariants (shift α)] x
           = ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real (B i) :=
-      ae_all_iff.2 fun i => hρ.condExp_indicator_coord_ae_eq_invariantConditional (hB i) (i : ℕ)
+      ae_all_iff.2 fun i => hρ.condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure (hB i) (i : ℕ)
     filter_upwards [hall] with x hx
     simp only [hPdef, hQdef]
     exact Finset.prod_congr rfl fun i _ => hx i
