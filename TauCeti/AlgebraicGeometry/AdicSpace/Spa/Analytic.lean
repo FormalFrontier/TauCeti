@@ -77,6 +77,11 @@ theorem spaAnalytic_subset_spa (Aplus : Subring A) :
     spaAnalytic Aplus ⊆ spa Aplus :=
   spaAnalytic_def Aplus ▸ Set.inter_subset_left
 
+/-- Enlarging the plus ring shrinks the analytic locus. -/
+theorem spaAnalytic_antitone : Antitone (spaAnalytic (A := A)) := fun _ _ hle ↦ by
+  rw [spaAnalytic_def, spaAnalytic_def]
+  exact Set.inter_subset_inter_left _ (spa_antitone hle)
+
 /-- Over a zero ring, the analytic locus `Spa (A, A⁺)ᵃ` is empty. -/
 @[simp]
 theorem spaAnalytic_eq_empty_of_subsingleton [Subsingleton A] (Aplus : Subring A) :
