@@ -111,12 +111,15 @@ private theorem derivCLM_comp_smulLeftCLM_id_sub_smulLeftCLM_id_comp_derivCLM :
     simp only [smulLeftCLM_apply_apply Function.HasTemperateGrowth.id', smul_eq_mul]
   rw [hmul]
   have hderiv : deriv (fun y => y * f y) x = f x + x * deriv f x := by
-    change deriv ((fun y : ℝ => y) * ⇑f) x = _
+    have hfun : (fun y : ℝ => y * f y) = (fun y : ℝ => y) * ⇑f := by
+      ext y
+      simp only [Pi.mul_apply]
+    rw [hfun]
     simpa using ((hasDerivAt_id' (x := x)).mul f.differentiableAt.hasDerivAt).deriv
   rw [hderiv]
   ring
 
-/-- **Canonical Commutator Relation (CCR) for the Hermite ladder operators.**
+/-- **Canonical Commutation Relation (CCR) for the Hermite ladder operators.**
 `[a, a†] = a ∘L a† - a† ∘L a = id`. -/
 @[simp]
 theorem
@@ -150,11 +153,6 @@ hermiteAnnihilationCLM_comp_hermiteCreationCLM_sub_hermiteCreationCLM_comp_hermi
 noncomputable def hermiteNumberCLM : 𝓢(ℝ, ℝ) →L[ℝ] 𝓢(ℝ, ℝ) :=
   hermiteCreationCLM.comp hermiteAnnihilationCLM
 
-/-- The number operator is the composition of creation after annihilation. -/
-theorem hermiteNumberCLM_def :
-    hermiteNumberCLM = hermiteCreationCLM.comp hermiteAnnihilationCLM := by
-  rfl
-
 /-- Pointwise differential action of the number operator:
 `Nf = (x²f - f - f'') / 2`. -/
 @[simp]
@@ -176,7 +174,7 @@ theorem hermiteNumberCLM_apply_apply (f : 𝓢(ℝ, ℝ)) (x : ℝ) :
     simp only [hermiteCreationCLM, c, X, D]
   have hnumber : hermiteNumberCLM =
       (1 / 2 : ℝ) • (X.comp X - D.comp D - ContinuousLinearMap.id ℝ 𝓢(ℝ, ℝ)) := by
-    rw [hermiteNumberCLM_def, hA, hC]
+    rw [hermiteNumberCLM, hA, hC]
     simp only [ContinuousLinearMap.comp_smul, ContinuousLinearMap.smul_comp,
       ContinuousLinearMap.comp_add, ContinuousLinearMap.sub_comp]
     rw [hDX, ← hc]
@@ -185,8 +183,9 @@ theorem hermiteNumberCLM_apply_apply (f : 𝓢(ℝ, ℝ)) (x : ℝ) :
   dsimp only [X, D]
   simp only [smul_apply, sub_apply, comp_apply, id_apply, derivCLM_apply,
     smulLeftCLM_apply_apply Function.HasTemperateGrowth.id', smul_eq_mul]
-  rw [show ⇑(SchwartzMap.derivCLM ℝ ℝ f) = deriv f from
-    funext fun y => SchwartzMap.derivCLM_apply ℝ f y]
+  have hderivCLM : ⇑(SchwartzMap.derivCLM ℝ ℝ f) = deriv f :=
+    funext (SchwartzMap.derivCLM_apply ℝ f)
+  rw [hderivCLM]
   ring
 
 /-- **Action of the number operator on Hermite functions.**
