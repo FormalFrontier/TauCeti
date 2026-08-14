@@ -17,6 +17,10 @@ what makes the cover *minimal*: no proper submodule of `P` still surjects onto `
 projective objects but no projective covers; this file supplies the predicate and the two facts
 everything downstream rests on.
 
+Both rest on the minimality packaged in `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: a
+map into the source of a cover whose composite with the cover is onto is itself onto, the kernel of
+a cover being too small for the image of such a map to miss it.
+
 The first is that a projective cover receives every projective presentation: if `Q` is projective
 and `g : Q →ₗ[R] M` is surjective, then `g` factors as `f ∘ₗ h` with `h : Q →ₗ[R] P` **surjective**
 (`TauCeti.IsProjectiveCover.exists_surjective`). The second is that a projective cover is unique:
@@ -37,9 +41,6 @@ conditional on a cover being given.
 ## Main results
 
 * `TauCeti.isProjectiveCover_id`: a projective module is its own projective cover.
-* `TauCeti.IsProjectiveCover.surjective_of_surjective_comp`: a map into the source of a projective
-  cover whose composite with the cover is surjective is itself surjective. This is the workhorse:
-  the kernel of a cover is too small for the image of such a map to miss it.
 * `TauCeti.IsProjectiveCover.exists_surjective`: every surjection onto `M` from a projective module
   factors through a projective cover by a surjection.
 * `TauCeti.IsProjectiveCover.bijective_of_comp_eq` and
@@ -70,9 +71,10 @@ namespace TauCeti
 
 universe u v w w'
 
-variable {R : Type u} {M : Type v} {P : Type w} {Q : Type w'}
-  [Ring R] [AddCommGroup M] [Module R M] [AddCommGroup P] [Module R P]
-  [AddCommGroup Q] [Module R Q]
+section Semiring
+
+variable {R : Type u} {M : Type v} {P : Type w}
+  [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid P] [Module R P]
 
 /-- A **projective cover** of `M`: a surjection from a projective module whose kernel is
 superfluous, so that no proper submodule of the source still surjects onto `M`. -/
@@ -93,27 +95,19 @@ theorem isProjectiveCover_id [Module.Projective R M] :
     rw [LinearMap.ker_id]
     exact isSuperfluous_bot
 
+end Semiring
+
+section Ring
+
+variable {R : Type u} {M : Type v} {P : Type w} {Q : Type w'}
+  [Ring R] [AddCommGroup M] [Module R M] [AddCommGroup P] [Module R P]
+  [AddCommGroup Q] [Module R Q]
+
 /-- The kernel of a projective cover lies in the radical of the covering module, being
 superfluous. -/
 theorem IsProjectiveCover.ker_le_jacobson {f : P →ₗ[R] M} (hf : IsProjectiveCover f) :
     LinearMap.ker f ≤ Module.jacobson R P :=
   hf.isSuperfluous_ker.le_jacobson
-
-/-- **The defining minimality, in usable form.** If `f : P →ₗ[R] M` is a projective cover and
-`h : Q →ₗ[R] P` is such that `f ∘ₗ h` is onto, then `h` is already onto: the range of `h` together
-with the superfluous `ker f` spans `P`, so the range is everything.
-
-Projectivity of `P` plays no role here; only the superfluous kernel does. -/
-theorem IsProjectiveCover.surjective_of_surjective_comp {f : P →ₗ[R] M}
-    (hf : IsProjectiveCover f) {h : Q →ₗ[R] P} (hfh : Function.Surjective (f ∘ₗ h)) :
-    Function.Surjective h := by
-  rw [← LinearMap.range_eq_top]
-  refine hf.isSuperfluous_ker.eq_top (Submodule.eq_top_iff'.mpr fun p => ?_)
-  obtain ⟨q, hq⟩ := hfh (f p)
-  have hfhq : f (h q) = f p := by simpa using hq
-  have hker : p - h q ∈ LinearMap.ker f := by
-    simp [LinearMap.mem_ker, map_sub, hfhq]
-  simpa using Submodule.add_mem_sup hker (LinearMap.mem_range_self h q)
 
 /-- **A projective cover receives every projective presentation.** A surjection onto `M` from a
 projective module factors through a projective cover of `M`, by a surjection. -/
@@ -121,7 +115,7 @@ theorem IsProjectiveCover.exists_surjective [Module.Projective R Q] {f : P →�
     (hf : IsProjectiveCover f) {g : Q →ₗ[R] M} (hg : Function.Surjective g) :
     ∃ h : Q →ₗ[R] P, f ∘ₗ h = g ∧ Function.Surjective h := by
   obtain ⟨h, hh⟩ := Module.projective_lifting_property f g hf.surjective
-  exact ⟨h, hh, hf.surjective_of_surjective_comp (by rw [hh]; exact hg)⟩
+  exact ⟨h, hh, hf.isSuperfluous_ker.surjective_of_surjective_comp (by rw [hh]; exact hg)⟩
 
 /-- **Uniqueness of the projective cover, in comparison-map form.** A map between the sources of
 two projective covers of `M` that commutes with the covering maps is automatically an isomorphism.
@@ -134,7 +128,7 @@ theorem IsProjectiveCover.bijective_of_comp_eq {P' : Type*} [AddCommGroup P'] [M
     {f : P →ₗ[R] M} {f' : P' →ₗ[R] M} (hf : IsProjectiveCover f) (hf' : IsProjectiveCover f')
     {h : P →ₗ[R] P'} (hcomp : f' ∘ₗ h = f) : Function.Bijective h := by
   have hsurj : Function.Surjective h :=
-    hf'.surjective_of_surjective_comp (by rw [hcomp]; exact hf.surjective)
+    hf'.isSuperfluous_ker.surjective_of_surjective_comp (by rw [hcomp]; exact hf.surjective)
   refine ⟨?_, hsurj⟩
   have hkerle : LinearMap.ker h ≤ LinearMap.ker f := by
     intro x hx
@@ -189,6 +183,7 @@ in the Jacobson radical. Over a local ring this covers the residue field by `R`.
 
 /-- **The projective cover of a cyclic module.** The quotient map `R →ₗ[R] R ⧸ I` is a projective
 cover precisely when `I` lies in the Jacobson radical of `R`. -/
+@[simp]
 theorem isProjectiveCover_mkQ_iff {I : Submodule R R} :
     IsProjectiveCover I.mkQ ↔ I ≤ Ring.jacobson R := by
   constructor
@@ -208,5 +203,7 @@ theorem isProjectiveCover_mkQ_iff {I : Submodule R R} :
 theorem isProjectiveCover_mkQ {I : Submodule R R} (hI : I ≤ Ring.jacobson R) :
     IsProjectiveCover I.mkQ :=
   isProjectiveCover_mkQ_iff.mpr hI
+
+end Ring
 
 end TauCeti

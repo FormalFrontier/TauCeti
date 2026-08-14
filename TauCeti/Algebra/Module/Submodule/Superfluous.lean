@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import Mathlib.Order.Radical
 public import Mathlib.RingTheory.Jacobson.Radical
 
 /-!
@@ -38,6 +39,9 @@ contained in the radical `Module.jacobson`.
   superfluous.
 * `TauCeti.IsSuperfluous.comap`: the preimage of a superfluous submodule under a surjection whose
   kernel is superfluous is again superfluous. This is what makes projective covers compose.
+* `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: a map into the source of a linear map with
+  superfluous kernel whose composite with that map is surjective is itself surjective. This is the
+  minimality that makes a projective cover a projective cover.
 
 ## References
 
@@ -70,6 +74,7 @@ theorem IsSuperfluous.eq_top {N K : Submodule R M} (hN : IsSuperfluous N) (h : N
   hN K h
 
 /-- The zero submodule is superfluous. -/
+@[simp]
 theorem isSuperfluous_bot : IsSuperfluous (⊥ : Submodule R M) := by
   intro K hK
   simpa using hK
@@ -91,6 +96,7 @@ theorem IsSuperfluous.sup {N N' : Submodule R M} (hN : IsSuperfluous N) (hN' : I
 
 /-- The whole module is superfluous in itself only when it is zero: `⊥ = ⊤` is exactly what
 superfluity of `⊤` says. -/
+@[simp]
 theorem not_isSuperfluous_top [Nontrivial M] : ¬ IsSuperfluous (⊤ : Submodule R M) := by
   intro h
   exact absurd (h.eq_top (by simp)) (bot_ne_top (α := Submodule R M))
@@ -121,19 +127,20 @@ theorem IsSuperfluous.le_jacobson {N : Submodule R M} (hN : IsSuperfluous N) :
   exact hm.1 (hN.eq_top (hm.2 _ hlt))
 
 /-- Conversely, when every proper submodule of `M` sits under a maximal one, every submodule of the
-radical is superfluous. -/
+radical is superfluous. This is `Order.radical_nongenerating`, the nongenerating property of the
+order radical of a coatomic lattice, read through the fact that `Module.jacobson R M` *is* the
+order radical of `Submodule R M`: both are the infimum of the coatoms. -/
 theorem isSuperfluous_of_le_jacobson [IsCoatomic (Submodule R M)] {N : Submodule R M}
     (h : N ≤ Module.jacobson R M) : IsSuperfluous N := by
+  have hrad : Module.jacobson R M = Order.radical (Submodule R M) := sInf_eq_iInf
   intro K hK
-  rcases eq_top_or_exists_le_coatom K with hKtop | ⟨m, hm, hKm⟩
-  · exact hKtop
-  · refine absurd ?_ hm.1
-    have hle : N ⊔ K ≤ m := sup_le (h.trans (sInf_le hm)) hKm
-    rw [hK] at hle
-    exact top_le_iff.mp hle
+  refine Order.radical_nongenerating (top_le_iff.mp ?_)
+  rw [← hK, ← hrad]
+  exact sup_le (le_sup_of_le_right h) le_sup_left
 
 /-- Over a module with coatomic submodule lattice — for instance a finitely generated one — the
 superfluous submodules are exactly the submodules of the radical. -/
+@[simp]
 theorem isSuperfluous_iff_le_jacobson [IsCoatomic (Submodule R M)] {N : Submodule R M} :
     IsSuperfluous N ↔ N ≤ Module.jacobson R M :=
   ⟨IsSuperfluous.le_jacobson, isSuperfluous_of_le_jacobson⟩
@@ -184,6 +191,23 @@ theorem IsSuperfluous.comap {K : Submodule R M₂} (hK : IsSuperfluous K) {f : M
   have hmem : m - l ∈ LinearMap.ker f := by
     simp [LinearMap.mem_ker, map_sub, hfl]
   simpa using Submodule.add_mem_sup hmem hl
+
+/-- **A superfluous kernel is a minimality condition.** If `f : M →ₗ[R] M₂` has superfluous kernel
+and `h : M₃ →ₗ[R] M` is such that `f ∘ₗ h` is onto, then `h` is already onto: the range of `h`
+together with the superfluous `ker f` spans `M`, so the range is everything.
+
+This is what makes a projective cover minimal; it is `TauCeti.IsProjectiveCover`'s workhorse, and
+uses nothing about `f` beyond its kernel. -/
+theorem IsSuperfluous.surjective_of_surjective_comp {M₃ : Type*} [AddCommGroup M₃] [Module R M₃]
+    {f : M →ₗ[R] M₂} (hf : IsSuperfluous (LinearMap.ker f)) {h : M₃ →ₗ[R] M}
+    (hfh : Function.Surjective (f ∘ₗ h)) : Function.Surjective h := by
+  rw [← LinearMap.range_eq_top]
+  refine hf.eq_top (Submodule.eq_top_iff'.mpr fun m => ?_)
+  obtain ⟨x, hx⟩ := hfh (f m)
+  have hfhx : f (h x) = f m := by simpa using hx
+  have hker : m - h x ∈ LinearMap.ker f := by
+    simp [LinearMap.mem_ker, map_sub, hfhx]
+  simpa using Submodule.add_mem_sup hker (LinearMap.mem_range_self h x)
 
 end Ring
 
