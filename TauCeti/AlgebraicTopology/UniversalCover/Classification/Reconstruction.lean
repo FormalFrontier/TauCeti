@@ -68,7 +68,7 @@ def stabilizerCover (a : A) : ConnectedCoveringSpace (TopCat.of X) :=
   subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
 /-- The stabilizer cover is the subgroup cover associated to the stabilizer of `a`. -/
-theorem stabilizerCover_eq_subgroupCover (a : A) :
+theorem stabilizerCover_def (a : A) :
     stabilizerCover x0 a =
       subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a) :=
   (rfl)
