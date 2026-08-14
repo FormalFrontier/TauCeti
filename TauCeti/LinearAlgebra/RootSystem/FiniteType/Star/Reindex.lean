@@ -102,7 +102,7 @@ private noncomputable def starVertexEquiv {B : Type*} (c : B) [DecidableEq B]
           (Equiv.subtypeEquivRight fun _ ↦ Set.mem_compl_singleton_iff)))
   (Equiv.optionCongr arms).trans (Equiv.optionSubtypeNe c)
 
-@[simp] private theorem starVertexEquiv_none {B : Type*} (c : B) [DecidableEq B]
+private theorem starVertexEquiv_none {B : Type*} (c : B) [DecidableEq B]
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
     (f : ∀ i, (e i).toSimpleGraph ≃g
@@ -110,7 +110,7 @@ private noncomputable def starVertexEquiv {B : Type*} (c : B) [DecidableEq B]
     starVertexEquiv c G e f none = c := by
   rfl
 
-@[simp] private theorem starVertexEquiv_some {B : Type*} (c : B) [DecidableEq B]
+private theorem starVertexEquiv_some {B : Type*} (c : B) [DecidableEq B]
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
     (f : ∀ i, (e i).toSimpleGraph ≃g
