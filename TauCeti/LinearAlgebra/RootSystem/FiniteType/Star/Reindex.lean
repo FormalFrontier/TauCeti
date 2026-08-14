@@ -103,7 +103,7 @@ private noncomputable def starArmsEquiv {B : Type*} (c : B)
       ((Equiv.sigmaFiberEquiv H.connectedComponentMk).trans
         (Equiv.subtypeEquivRight fun _ ↦ Set.mem_compl_singleton_iff)))
 
-@[simp] private theorem starArmsEquiv_apply {B : Type*} (c : B)
+private theorem starArmsEquiv_apply {B : Type*} (c : B)
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
     (f : ∀ i, (e i).toSimpleGraph ≃g
