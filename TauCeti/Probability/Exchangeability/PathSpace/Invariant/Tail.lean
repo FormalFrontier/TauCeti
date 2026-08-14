@@ -244,10 +244,11 @@ theorem comp_reindex_apply_eq_of_comp_shift_eq_of_eventually_add {m C : ℕ} {φ
     {β : Type*} {w : (ℕ → α) → β} (hw : w ∘ shift α = w)
     (hφ : ∀ n, m ≤ n → φ n = n + C) (x : ℕ → α) :
     w (fun k => x (φ k)) = w x := by
+  have hshift : ∀ y : ℕ → α, w (shift α y) = w y := fun y => by
+    simpa only [Function.comp_apply] using congrFun hw y
   have hinv : (shift α) ⁻¹' (w ⁻¹' {w x}) = w ⁻¹' {w x} := by
     ext y
-    simp only [Set.mem_preimage, Set.mem_singleton_iff]
-    rw [show w (shift α y) = w y from congrFun hw y]
+    simp only [Set.mem_preimage, Set.mem_singleton_iff, hshift]
   have hx : x ∈ (fun y : ℕ → α => fun k => y (φ k)) ⁻¹' (w ⁻¹' {w x}) := by
     rw [preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add hinv hφ]
     rfl
