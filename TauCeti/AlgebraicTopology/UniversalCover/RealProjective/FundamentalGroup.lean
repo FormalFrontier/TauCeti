@@ -99,7 +99,6 @@ def fundamentalGroupMulEquiv (hn : 2 ≤ n)
 
 /-- The canonical isomorphism `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends the opposite of a deck
 transformation `op (deckMulEquiv n hn u)` to the corresponding unit `u`. -/
-@[simp]
 lemma deckMulEquiv_symm_op_symm_apply (hn : 1 ≤ n) (u : ℤˣ) :
     (((MulEquiv.op (deckMulEquiv n hn).symm).trans
       (MulOpposite.opMulEquiv (M := ℤˣ)).symm) (MulOpposite.op (deckMulEquiv n hn u))) = u := by
@@ -107,7 +106,6 @@ lemma deckMulEquiv_symm_op_symm_apply (hn : 1 ≤ n) (u : ℤˣ) :
 
 /-- The inverse of the canonical isomorphism `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends `u` to
 `op (deckMulEquiv n hn u)`. -/
-@[simp]
 lemma deckMulEquiv_symm_op_symm_symm_apply (hn : 1 ≤ n) (u : ℤˣ) :
     (((MulEquiv.op (deckMulEquiv n hn).symm).trans
       (MulOpposite.opMulEquiv (M := ℤˣ)).symm).symm u) =
