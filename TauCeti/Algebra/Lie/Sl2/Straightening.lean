@@ -55,7 +55,9 @@ open Associative
 
 universe u
 
-variable {A : Type u} [Ring A] [Algebra ℚ A] [BinomialRing A]
+attribute [local instance] TauCeti.moduleNNRat
+
+variable {A : Type u} [Ring A] [Algebra ℚ A]
 
 private noncomputable def straighteningSummand (H E F : A) (m n k : ℕ) : A :=
   dividedPower (n - k) F *
@@ -66,7 +68,6 @@ private theorem straighteningSummand_zero_left (H E F : A) (n : ℕ) :
     straighteningSummand H E F 0 n 0 = dividedPower n F := by
   simp [straighteningSummand]
 
-omit [Algebra ℚ A] in
 private theorem weighted_straightening_coefficient (r : A) (m j : ℕ) (hj : j ≤ m + 1)
     (hj0 : 0 < j) :
     (m + 1 - j) • Ring.choose (r - 1) j +
@@ -94,7 +95,7 @@ private theorem e_mul_ringChoose_of_commutator {E a : A}
   have h := Associative.dividedPower_mul_ringChoose k ha (Nat.cast_commute 2 E) 1
   simpa using h
 
-omit [Algebra ℚ A] [BinomialRing A] in
+omit [Algebra ℚ A] in
 private theorem shifted_cartan_mul_e {H E : A} (hhe : H * E - E * H = 2 • E)
     (a b : ℕ) :
     (H - (a : A) + (b : A)) * E = E * (H - (a : A) + (b : A) + 2) := by
@@ -310,7 +311,6 @@ private theorem sum_range_adjacent_capped {B : Type*} [AddCommMonoid B]
     _ = ((∑ k ∈ range r, K k) + K r) + ∑ k ∈ range r, R k := by rw [hshift]
     _ = ((∑ k ∈ range r, K k) + ∑ k ∈ range r, R k) + K r := by ac_rfl
 
-omit [BinomialRing A] in
 private theorem eq_of_succ_nsmul_eq (m : ℕ) {x y : A}
     (h : (m + 1) • x = (m + 1) • y) : x = y := by
   simp only [← Nat.cast_smul_eq_nsmul ℚ] at h
@@ -411,8 +411,6 @@ open _root_.UniversalEnvelopingAlgebra
 attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
-
-attribute [local instance] TauCeti.moduleNNRat
 
 /-- The rank-one Kostant straightening formula in a universal enveloping algebra over `ℚ`,
 stated from the three `sl₂` Lie-bracket relations. -/
