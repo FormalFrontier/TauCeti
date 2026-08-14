@@ -123,15 +123,6 @@ theorem isUnipotentPoint_mapDomain_iff {H' : Type w} [Semiring H']
   · intro hg
     exact hg.mapDomain (e : H →ₐc[k] H')
 
-/-- Simp-normal form of `isUnipotentPoint_mapDomain_iff`, with the precomposed point normalized by
-`AlgHom.mapDomain_apply`. -/
-@[simp]
-theorem isUnipotentPoint_toConv_comp_iff {H' : Type w} [Semiring H']
-    [_root_.HopfAlgebra k H'] (e : H ≃ₐc[k] H') (g : WithConv (H' →ₐ[k] K)) :
-    IsUnipotentPoint
-      (toConv (g.ofConv.comp ((e : H →ₐc[k] H') : H →ₐ[k] H'))) ↔ IsUnipotentPoint g := by
-  simpa only [AlgHom.mapDomain_apply] using isUnipotentPoint_mapDomain_iff e g
-
 /-- The identity point is unipotent. -/
 @[simp]
 theorem isUnipotentPoint_one :
