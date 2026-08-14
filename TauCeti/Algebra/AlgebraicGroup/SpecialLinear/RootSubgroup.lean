@@ -120,12 +120,16 @@ private theorem map_transvection (φ : A →ₐ[R] B) (hij : i ≠ j) (c : A) :
     Matrix.SpecialLinearGroup.map φ.toRingHom
         (Matrix.SpecialLinearGroup.transvection hij c) =
       Matrix.SpecialLinearGroup.transvection hij (φ c) := by
-  apply Matrix.SpecialLinearGroup.ext
+  apply Matrix.SpecialLinearGroup.toGL_injective
+  apply Matrix.GeneralLinearGroup.ext
   intro k l
-  simp only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-    Matrix.SpecialLinearGroup.transvection_coe, Matrix.add_apply,
-    Matrix.one_apply, Matrix.single_apply, map_add]
-  split_ifs <;> simp_all
+  have hφ : φ.toRingHom c = φ c := rfl
+  simpa only [Matrix.SpecialLinearGroup.coe_GL_coe_matrix,
+    Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply,
+    Matrix.SpecialLinearGroup.transvection_coe, Matrix.transvection,
+    Matrix.GeneralLinearGroup.map_apply, coe_transvectionUnit, hφ] using
+    congrArg (fun g : GL (Fin N) B ↦ (g : Matrix (Fin N) (Fin N) B) k l)
+      (map_transvectionUnit φ.toRingHom hij c)
 
 /-- The special-linear root subgroup on points is natural in the value algebra. -/
 theorem mapValue_rootSubgroupPoints (φ : A →ₐ[R] B) (hij : i ≠ j)
