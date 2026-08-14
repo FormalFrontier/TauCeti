@@ -105,7 +105,7 @@ from `kostantForm e h ⊗[ℤ] kostantForm e h`.
 
 This range is the codomain of the rational restriction; `kostantTensorEquiv` below identifies it
 with the integral tensor square. -/
-noncomputable abbrev kostantTensorForm (e : ι → L) (h : κ → L) : Subring (U ⊗[ℚ] U) :=
+noncomputable def kostantTensorForm (e : ι → L) (h : κ → L) : Subring (U ⊗[ℚ] U) :=
   TauCeti.Subring.tensorSquareRange ℚ (kostantForm e h)
 
 /-- Membership in the integral tensor form is equivalent to having an integral tensor
@@ -189,8 +189,7 @@ noncomputable def kostantTensorEquiv (e : ι → L) (h : κ → L) :
 theorem coe_kostantTensorEquiv_apply (e : ι → L) (h : κ → L)
     (t : kostantForm e h ⊗[ℤ] kostantForm e h) :
     (kostantTensorEquiv e h t : U ⊗[ℚ] U) = kostantTensorMap e h t := by
-  simp only [kostantTensorEquiv, TauCeti.Subring.coe_tensorSquareEquivRange_apply,
-    kostantTensorMap]
+  exact TauCeti.Subring.coe_tensorSquareEquivRange_apply (kostantForm e h) t
 
 /-- The integral comultiplication of a Kostant form. It is the unique algebra homomorphism whose
 composition with `kostantTensorMap` is the rational enveloping-algebra comultiplication. -/
@@ -205,13 +204,17 @@ theorem kostantTensorMap_kostantFormComul_apply (e : ι → L) (h : κ → L)
     (a : kostantForm e h) :
     kostantTensorMap e h (kostantFormComul e h a) =
       Coalgebra.comul (R := ℚ) (a : U) := by
-  rw [kostantFormComul, AlgHom.comp_apply, ← coe_kostantTensorEquiv_apply]
-  change
-    (kostantTensorEquiv e h
-      ((kostantTensorEquiv e h).symm (kostantFormComulRange e h a)) :
-        U ⊗[ℚ] U) = _
-  rw [(kostantTensorEquiv e h).apply_symm_apply]
-  exact coe_kostantFormComulRange_apply e h a
+  rw [kostantFormComul, AlgHom.comp_apply]
+  calc
+    kostantTensorMap e h
+        ((kostantTensorEquiv e h).symm (kostantFormComulRange e h a)) =
+        (kostantTensorEquiv e h
+          ((kostantTensorEquiv e h).symm (kostantFormComulRange e h a)) : U ⊗[ℚ] U) :=
+      (coe_kostantTensorEquiv_apply e h _).symm
+    _ = (kostantFormComulRange e h a : U ⊗[ℚ] U) :=
+      congrArg Subtype.val
+        ((kostantTensorEquiv e h).apply_symm_apply (kostantFormComulRange e h a))
+    _ = _ := coe_kostantFormComulRange_apply e h a
 
 /-- The integral comultiplication is uniquely determined by its agreement with the rational
 enveloping-algebra comultiplication. -/

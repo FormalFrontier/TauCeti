@@ -79,6 +79,17 @@ private theorem tensorSquareMap_eq_intTensorToRatTensor (S : Subring A) :
           S.subtype.toIntAlgHom S.subtype.toIntAlgHom) := by
   ext x <;> simp
 
+omit [Algebra ℚ A] in
+private theorem tensorProductMap_apply_eq_algebraTensorProductMap_apply (S : Subring A)
+    (t : S ⊗[ℤ] S) :
+    TensorProduct.map S.subtype.toIntAlgHom.toLinearMap S.subtype.toIntAlgHom.toLinearMap t =
+      Algebra.TensorProduct.map (R := ℤ) (S := ℤ)
+        S.subtype.toIntAlgHom S.subtype.toIntAlgHom t := by
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul x y => rfl
+
 /-- The canonical map from the integer tensor square of a subring of a rational algebra to the
 rational tensor square of the ambient algebra is injective.
 
@@ -97,20 +108,21 @@ theorem tensorSquareMap_injective (S : Subring A) :
       (R := ℤ) f f S.subtype_injective S.subtype_injective
   intro x y hxy
   apply hinjective
-  change
-    Algebra.TensorProduct.map (R := ℤ) (S := ℤ)
+  have hmap :
+      Algebra.TensorProduct.map (R := ℤ) (S := ℤ)
         S.subtype.toIntAlgHom S.subtype.toIntAlgHom x =
       Algebra.TensorProduct.map (R := ℤ) (S := ℤ)
-        S.subtype.toIntAlgHom S.subtype.toIntAlgHom y
-  apply (intTensorToRatTensor (A := A)).injective
-  rw [tensorSquareMap_eq_intTensorToRatTensor] at hxy
-  exact hxy
+        S.subtype.toIntAlgHom S.subtype.toIntAlgHom y := by
+    apply (intTensorToRatTensor (A := A)).injective
+    rw [tensorSquareMap_eq_intTensorToRatTensor] at hxy
+    exact hxy
+  simpa only [f, tensorProductMap_apply_eq_algebraTensorProductMap_apply] using hmap
 
 end Rational
 
 /-- The range of the canonical map from the integral tensor square of a subring to the tensor
 square of the ambient algebra. -/
-noncomputable abbrev tensorSquareRange (S : Subring A) : Subring (A ⊗[R] A) :=
+noncomputable def tensorSquareRange (S : Subring A) : Subring (A ⊗[R] A) :=
   (tensorSquareMap R S).toRingHom.range
 
 /-- Membership in the tensor-square range is equivalent to having an integral tensor preimage. -/
