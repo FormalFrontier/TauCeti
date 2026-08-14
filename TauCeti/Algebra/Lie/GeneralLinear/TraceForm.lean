@@ -246,8 +246,10 @@ theorem coe_traceAdjointSO (X : Matrix n n R) :
 
 variable (R n) in
 /-- The kernel of the trace-form adjoint homomorphism is the centre of `gl n R`, which for nonempty
-`n` over a nontrivial ring is nonzero: the map is not injective, the reductive-not-semisimple
-behaviour of `gl n R`, and the reason the form here is the trace form and not the Killing form. -/
+`n` over a nontrivial ring is nonzero: the map is not injective, and the adjoint representation of
+`gl n R` is therefore unfaithful — the reason the form here is the trace form of the standard
+representation and not the Killing form. Over a field of characteristic zero that failure is the
+reductive-not-semisimple behaviour of `gl n R`. -/
 @[simp]
 theorem ker_traceAdjointSO :
     (traceAdjointSO R n).ker = _root_.LieAlgebra.center R (Matrix n n R) :=
