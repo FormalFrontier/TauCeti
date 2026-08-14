@@ -99,9 +99,13 @@ theorem mapEquiv_trans {C : Type*} [Semiring C] [Bialgebra R C]
 theorem mapEquiv_symm (e : A ≃ₐc[R] B) :
     (mapEquiv e).symm = mapEquiv e.symm := by
   ext x
-  change ((equivOfCoalgEquiv e.toCoalgEquiv).symm x).val = (mapEquiv e.symm x).val
-  rw [equivOfCoalgEquiv_symm, val_equivOfCoalgEquiv, val_mapEquiv]
-  rfl
+  apply e.injective
+  calc
+    e ((mapEquiv e).symm x).val = (mapEquiv e ((mapEquiv e).symm x)).val :=
+      (val_mapEquiv e _).symm
+    _ = x.val := congrArg _ ((mapEquiv e).apply_symm_apply x)
+    _ = e (e.symm x.val) := (e.apply_symm_apply x.val).symm
+    _ = e (mapEquiv e.symm x).val := congrArg e (val_mapEquiv e.symm x).symm
 
 end GroupLike
 
