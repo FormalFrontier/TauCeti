@@ -252,10 +252,7 @@ variable {H₃ : Type*} [TopologicalSpace H₃]
 structure KnotTubularEmbedding (K : OrientedSmoothKnot I₃ M₃) where
   /-- The ambient smooth embedding of the solid torus `Sphere1 × ℝ²` into `M`. -/
   toSmoothEmbedding :
-    SmoothEmbedding
-      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
-        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I₃ ∞
-      (Sphere1 × EuclideanSpace ℝ (Fin 2)) M₃
+    SmoothEmbedding ((𝓡 1).prod (𝓡 2)) I₃ ∞ (Sphere1 × EuclideanSpace ℝ (Fin 2)) M₃
   /-- The zero section of the tubular embedding coincides with the underlying knot. -/
   zero_section (x : Sphere1) : toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) = K.knot x
 
@@ -267,13 +264,9 @@ variable {K : OrientedSmoothKnot I₃ M₃}
 if their differentials along the zero section agree in the normal coordinates. -/
 def SameNormalFraming (T₁ T₂ : KnotTubularEmbedding K) : Prop :=
   ∀ (x : Sphere1) (w : EuclideanSpace ℝ (Fin 2)),
-    mfderiv
-      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
-        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I₃
+    mfderiv ((𝓡 1).prod (𝓡 2)) I₃
       T₁.toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) ((0 : TangentSpace (𝓡 1) x), w) =
-    mfderiv
-      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
-        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I₃
+    mfderiv ((𝓡 1).prod (𝓡 2)) I₃
       T₂.toSmoothEmbedding (x, (0 : EuclideanSpace ℝ (Fin 2))) ((0 : TangentSpace (𝓡 1) x), w)
 
 theorem sameNormalFraming_refl (T : KnotTubularEmbedding K) :
