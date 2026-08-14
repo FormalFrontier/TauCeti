@@ -99,7 +99,6 @@ include hx
 
 /-- A Chevalley-system automorphism sends every coroot to its negative. This follows from the
 normalization of opposite root vectors, rather than being separate data. -/
-@[simp]
 theorem map_coroot (α : Weight K H L) :
     ω (coroot α : L) = -(coroot α : L) := by
   by_cases hα : α.IsNonZero
@@ -115,7 +114,6 @@ theorem map_coroot (α : Weight K H L) :
 
 /-- A Chevalley-system automorphism acts by negation on the splitting Cartan subalgebra. It is
 enough to check the coroots because they span `H`. -/
-@[simp]
 theorem map_cartan (h : H) : ω (h : L) = -(h : L) := by
   have hh : h ∈ Submodule.span K (Set.range (rootSystem H).coroot) := by
     rw [RootPairing.IsRootSystem.span_coroot_eq_top]
@@ -161,7 +159,6 @@ theorem involutive : Function.Involutive ω := by
   exact sub_eq_zero.mp (by simpa [f] using hz)
 
 /-- A Chevalley-system automorphism is its own inverse. -/
-@[simp]
 theorem symm_eq : ω.symm = ω := by
   ext z
   apply ω.injective
