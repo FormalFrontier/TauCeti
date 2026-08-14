@@ -57,9 +57,9 @@ variable {I : Type v} {J : Type w}
 local notation "U" => _root_.UniversalEnvelopingAlgebra ℚ L
 local notation "K" => kostantForm (L := L)
 
--- Keep the module structure on the tensor square definitionally aligned with its algebra
--- structure; both canonical instances have the same action, but iterated tensor maps must use
--- one consistently.
+/-- The module structure on the tensor square of the Kostant form definitionally
+aligned with its algebra structure; both canonical instances have the same action,
+but iterated tensor maps must use one consistently. -/
 local instance kostantTensorModule (e : I → L) (h : J → L) :
     Module ℤ (K e h ⊗[ℤ] K e h) := Algebra.toModule
 
