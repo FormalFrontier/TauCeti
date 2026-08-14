@@ -56,14 +56,12 @@ namespace IntegralLattice
 def norm (L : IntegralLattice V) (x : V) : ℚ := L.form x x
 
 /-- Evaluating the rational norm of an ambient vector yields its self-pairing. -/
-@[simp]
 theorem norm_apply (L : IntegralLattice V) (x : V) : L.norm x = L.form x x := (rfl)
 
 /-- The canonical integer lift of the norm of a lattice vector. -/
 noncomputable def integralNorm (L : IntegralLattice V) (x : L) : ℤ := L.integralForm x x
 
 /-- Evaluating the integral norm of a lattice vector yields its integral self-pairing. -/
-@[simp]
 theorem integralNorm_apply (L : IntegralLattice V) (x : L) :
     L.integralNorm x = L.integralForm x x := (rfl)
 
