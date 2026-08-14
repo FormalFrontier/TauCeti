@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
 import TauCeti.Topology.Circle.Basic
 import TauCeti.Topology.Circle.Metric
@@ -42,9 +41,10 @@ the angle coordinate, so the description in that coordinate is complete as well.
 
 These formulas compute the character of `Symᵈ(ℂ²)` everywhere, no declaration here being needed
 for that: a character is conjugation invariant (`Representation.char_conj`), and
-`TauCeti.SU2.exists_mem_Icc_eq_torusExp_of_conjInvariant` carries a conjugation-invariant function
-to the angle in the Weyl chamber `[0, π]` of the torus element that the given element is conjugate
-to, where the closed forms below apply.
+`TauCeti.SU2.exists_mem_Icc_eq_torusExp_of_conjInvariant`
+(`TauCeti/RepresentationTheory/SU2/ConjugacyClasses.lean`, not imported here) carries a
+conjugation-invariant function to the angle in the Weyl chamber `[0, π]` of the torus element that
+the given element is conjugate to, where the closed forms below apply.
 
 ## Main results
 
