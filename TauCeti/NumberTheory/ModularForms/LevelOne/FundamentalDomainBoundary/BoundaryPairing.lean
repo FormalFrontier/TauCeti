@@ -7,6 +7,7 @@ module
 public import Mathlib.NumberTheory.Modular
 public import TauCeti.Analysis.Complex.UpperHalfPlane.Rho
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
+import TauCeti.NumberTheory.Modular.Orbits
 
 /-!
 # Pairing the boundary divisor points of the fundamental domain
@@ -126,25 +127,6 @@ section Arc
 
 variable {g : ℍ → ℂ} {p : ℍ}
 
-private lemma coe_S_smul (p : ℍ) : ((ModularGroup.S • p : ℍ) : ℂ) = (-(p : ℂ))⁻¹ := by
-  rw [modular_S_smul]
-
-private lemma norm_coe_S_smul (hp : ‖(p : ℂ)‖ = 1) : ‖((ModularGroup.S • p : ℍ) : ℂ)‖ = 1 := by
-  rw [coe_S_smul, norm_inv, norm_neg, hp, inv_one]
-
--- On the unit arc the inversion is `z ↦ -conj z`, so it flips the real part.
-private lemma re_coe_S_smul (hp : ‖(p : ℂ)‖ = 1) :
-    ((ModularGroup.S • p : ℍ) : ℂ).re = -(p : ℂ).re := by
-  rw [coe_S_smul, inv_re, normSq_neg, Complex.normSq_eq_norm_sq, hp, one_pow, neg_re, div_one]
-
-private lemma S_smul_mem_fd (hp : p ∈ 𝒟) (hnorm : ‖(p : ℂ)‖ = 1) : ModularGroup.S • p ∈ 𝒟 :=
-  ⟨Complex.one_le_normSq_iff.mpr (norm_coe_S_smul hnorm).ge,
-    by simpa only [← coe_re, re_coe_S_smul hnorm, abs_neg] using hp.2⟩
-
-/-- The inversion is an involution of `ℍ`. -/
-private lemma S_smul_S_smul (p : ℍ) : ModularGroup.S • (ModularGroup.S • p) = p :=
-  UpperHalfPlane.ext (by rw [coe_S_smul, coe_S_smul, neg_inv, neg_neg, inv_inv])
-
 /-- Slash-invariance carries the vanishing order along the inversion. -/
 private lemma orderOfVanishingAt_S_smul [SlashInvariantFormClass F Γ k] (f : F)
     (hSmem : ModularGroup.S ∈ Γ) (p : ℍ) :
@@ -163,8 +145,9 @@ private lemma S_smul_mem_of_norm_eq_one (hS : ∀ q ∈ S, orderOfVanishingAt g 
     (hnorm : ‖(p : ℂ)‖ = 1) (hne : orderOfVanishingAt g p ≠ 0) :
     ModularGroup.S • p ∈ S ∧ ‖((ModularGroup.S • p : ℍ) : ℂ)‖ = 1 ∧
       ((ModularGroup.S • p : ℍ) : ℂ).re = -(p : ℂ).re :=
-  ⟨hcomp _ (S_smul_mem_fd (hS p hp hne) hnorm) (hord ▸ hne), norm_coe_S_smul hnorm,
-    re_coe_S_smul hnorm⟩
+  ⟨hcomp _ (ModularGroup.S_smul_mem_fd_of_norm_eq_one (hS p hp hne).2 hnorm) (hord ▸ hne),
+    ModularGroup.norm_coe_S_smul_of_norm_eq_one hnorm,
+    by rw [coe_re, ModularGroup.re_S_smul_of_norm_eq_one hnorm, coe_re]⟩
 
 end Arc
 
@@ -182,7 +165,8 @@ theorem sum_orderOfVanishingAt_rightArc_eq_leftArc [SlashInvariantFormClass F Γ
   rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero
     (s := S.filter (fun p : ℍ ↦ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0))]
   refine Finset.sum_nbij' (ModularGroup.S • ·) (ModularGroup.S • ·) (fun q hq ↦ ?_)
-    (fun q hq ↦ ?_) (fun q _ ↦ S_smul_S_smul q) (fun q _ ↦ S_smul_S_smul q)
+    (fun q hq ↦ ?_) (fun q _ ↦ ModularGroup.S_smul_S_smul q)
+    (fun q _ ↦ ModularGroup.S_smul_S_smul q)
     (fun q _ ↦ (hord q).symm)
   -- the two halves of the arc are interchanged by the same argument, `re` flipping sign
   all_goals

@@ -105,7 +105,7 @@ reference to the group action. -/
 lemma Subgroup.mk_T_pow_eq_iff {n : ℕ} :
     (⟦(mapGL ℝ).rangeRestrict ((ModularGroup.T : SL(2, ℤ)))^n⟧ :
         𝒮ℒ ⧸ (𝒢.subgroupOf 𝒮ℒ)) = ⟦1⟧ ↔ (n : ℝ) ∈ 𝒢.strictPeriods := by
-  rw [Quotient.eq, QuotientGroup.leftRel_apply]
+  rw [QuotientGroup.eq]
   simp only [mul_one, inv_mem_iff, Subgroup.mem_subgroupOf,
     MonoidHom.coe_rangeRestrict, ← map_pow, ModularGroup.mapGL_T_pow_eq_upperRightHom,
     Subgroup.mem_strictPeriods_iff]
@@ -120,7 +120,7 @@ lemma Subgroup.exists_pos_nat_mem_strictPeriods (𝒢 : Subgroup (GL (Fin 2) ℝ
     (Subgroup.FiniteIndex.index_ne_zero (H := (𝒢 : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ))
     ((mapGL ℝ).rangeRestrict ModularGroup.T)
   refine ⟨n, hn_pos, Subgroup.mk_T_pow_eq_iff.mp ?_⟩
-  rw [Quotient.eq, QuotientGroup.leftRel_apply]
+  rw [QuotientGroup.eq]
   simpa using inv_mem hn_mem
 
 omit [𝒢.IsFiniteRelIndex 𝒮ℒ] in
@@ -158,6 +158,17 @@ lemma Subgroup.integerCuspWidth_mem_strictPeriods :
   let _ : MulAction 𝒮ℒ (𝒮ℒ ⧸ (𝒢.subgroupOf 𝒮ℒ)) := quotientTAction (𝒢 := 𝒢)
   exact Subgroup.mk_T_pow_eq_iff.mp
     ((quotientTAction_pow_smul_mk_one _).symm.trans (MulAction.pow_period_smul _ _))
+
+/-- `∞` is a cusp of a subgroup of finite relative index in `𝒮ℒ`: its integer cusp width is
+a positive strict period, which is exactly the criterion.
+
+This is the group-theoretic half of every "a form for `𝒢` is bounded at `∞`" argument; the
+form-theoretic half is one application of `ModularFormClass.bdd_at_cusps` on top of it. -/
+lemma Subgroup.isCusp_infty_of_finiteRelIndex : IsCusp OnePoint.infty 𝒢 :=
+  Subgroup.isCusp_of_mem_strictPeriods
+    (by exact_mod_cast Subgroup.integerCuspWidth_pos (𝒢 := 𝒢) :
+      (0 : ℝ) < Subgroup.integerCuspWidth 𝒢)
+    Subgroup.integerCuspWidth_mem_strictPeriods
 
 omit [𝒢.IsFiniteRelIndex 𝒮ℒ] in
 /-- The integer cusp width is minimal among positive integer strict periods. -/
