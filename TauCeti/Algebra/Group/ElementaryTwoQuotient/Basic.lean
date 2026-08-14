@@ -212,6 +212,15 @@ noncomputable def elementaryTwoQuotientMap (f : G →* H) :
       elementaryTwoQuotientMk (f g) := by
   rfl
 
+/-- A surjective homomorphism of commutative groups induces a surjective map on their maximal
+elementary-2 quotients. -/
+theorem elementaryTwoQuotientMap_surjective (f : G →* H) (hf : Function.Surjective f) :
+    Function.Surjective (elementaryTwoQuotientMap f) := by
+  intro y
+  obtain ⟨h, rfl⟩ := elementaryTwoQuotientMk_surjective (G := H) y
+  obtain ⟨g, rfl⟩ := hf h
+  exact ⟨elementaryTwoQuotientMk g, elementaryTwoQuotientMap_mk f g⟩
+
 /-- The map induced by the identity homomorphism fixes each class in the elementary-2 quotient. -/
 @[simp] theorem elementaryTwoQuotientMap_id_apply (x : ElementaryTwoQuotient G) :
     elementaryTwoQuotientMap (MonoidHom.id G) x = x := by

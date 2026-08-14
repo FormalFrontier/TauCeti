@@ -1,0 +1,192 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient
+public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Finite
+public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.TotallyComplex
+
+/-!
+# The elementary-2 quotient of the narrow class group
+
+For a number field `K`, genus theory computes the maximal elementary-2 quotient
+
+```text
+Cl⁺(K) / Cl⁺(K)²
+```
+
+of the narrow class group. This quotient, rather than the ordinary class-group quotient, is the
+object whose dimension is `t - 1` for a real quadratic field with `t` ramified rational primes.
+For a totally complex field the positivity condition is vacuous, so the narrow and ordinary
+elementary-2 quotients are linearly equivalent and their 2-ranks agree.
+
+The underlying construction is the general `TauCeti.ElementaryTwoQuotient`. This file specializes
+it to the finite group `NarrowClassGroup K`, records its induced map to
+`TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K)`, and exposes the rank and cardinality statements
+used by the genus-field milestone of `TauCetiRoadmap/Multiquadratic/README.md`.
+
+## Main definitions and results
+
+* `TauCeti.NumberField.NarrowClassGroup.ElementaryTwoQuotient`: the quotient
+  `Cl⁺(K) / Cl⁺(K)²`.
+* `TauCeti.NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotient`: the surjective linear
+  map to `Cl(K) / Cl(K)²` induced by forgetting positivity.
+* `TauCeti.NumberField.NarrowClassGroup.twoRank`: the `ZMod 2`-dimension of the quotient, with
+  cardinality `2 ^ twoRank K`.
+* `TauCeti.NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotientEquiv`: for a totally
+  complex field, the linear equivalence with the ordinary class-group quotient.
+* `TauCeti.NumberField.NarrowClassGroup.twoRank_eq_classGroup_twoRank`: for a totally complex
+  field, the narrow and ordinary class-group 2-ranks agree.
+
+## References
+
+* D. A. Cox, *Primes of the Form x² + ny²*, Chapter 3.
+* F. Lemmermeyer, *Reciprocity Laws*, Chapter 6.
+-/
+
+public section
+
+open NumberField
+
+namespace TauCeti.NumberField.NarrowClassGroup
+
+variable (K : Type*) [Field K] [NumberField K]
+
+/-- **The maximal elementary-2 quotient of the narrow class group**,
+`Cl⁺(K) / Cl⁺(K)²`. This is a finite-dimensional vector space over `ZMod 2`. -/
+abbrev ElementaryTwoQuotient : Type _ :=
+  TauCeti.ElementaryTwoQuotient (NarrowClassGroup K)
+
+/-- The class of a narrow ideal class in `Cl⁺(K) / Cl⁺(K)²`. -/
+noncomputable def elementaryTwoQuotientMk (C : NarrowClassGroup K) :
+    ElementaryTwoQuotient K :=
+  TauCeti.elementaryTwoQuotientMk C
+
+/-- A narrow ideal class has trivial image in `Cl⁺(K) / Cl⁺(K)²` exactly when it is a square. -/
+@[simp] theorem elementaryTwoQuotientMk_eq_zero_iff (C : NarrowClassGroup K) :
+    elementaryTwoQuotientMk K C = 0 ↔ IsSquare C :=
+  TauCeti.elementaryTwoQuotientMk_eq_zero_iff C
+
+/-- The quotient map sends a product of narrow ideal classes to the sum of their square classes. -/
+@[simp] theorem elementaryTwoQuotientMk_mul (C D : NarrowClassGroup K) :
+    elementaryTwoQuotientMk K (C * D) =
+      elementaryTwoQuotientMk K C + elementaryTwoQuotientMk K D :=
+  TauCeti.elementaryTwoQuotientMk_mul C D
+
+/-- The trivial narrow ideal class maps to zero in `Cl⁺(K) / Cl⁺(K)²`. -/
+@[simp] theorem elementaryTwoQuotientMk_one :
+    elementaryTwoQuotientMk K (1 : NarrowClassGroup K) = 0 :=
+  TauCeti.elementaryTwoQuotientMk_one
+
+/-- Inversion of narrow ideal classes becomes negation in `Cl⁺(K) / Cl⁺(K)²`. -/
+@[simp] theorem elementaryTwoQuotientMk_inv (C : NarrowClassGroup K) :
+    elementaryTwoQuotientMk K C⁻¹ = -elementaryTwoQuotientMk K C :=
+  TauCeti.elementaryTwoQuotientMk_inv C
+
+/-- Division of narrow ideal classes becomes subtraction in `Cl⁺(K) / Cl⁺(K)²`. -/
+@[simp] theorem elementaryTwoQuotientMk_div (C D : NarrowClassGroup K) :
+    elementaryTwoQuotientMk K (C / D) =
+      elementaryTwoQuotientMk K C - elementaryTwoQuotientMk K D :=
+  TauCeti.elementaryTwoQuotientMk_div C D
+
+/-- Taking a power of a narrow ideal class becomes natural-number scalar multiplication in the
+elementary-2 quotient. -/
+@[simp] theorem elementaryTwoQuotientMk_pow (C : NarrowClassGroup K) (n : ℕ) :
+    elementaryTwoQuotientMk K (C ^ n) = n • elementaryTwoQuotientMk K C :=
+  TauCeti.elementaryTwoQuotientMk_pow C n
+
+/-- The class of a finite product of narrow ideal classes is the sum of their square classes. -/
+theorem elementaryTwoQuotientMk_prod {ι : Type*} (S : Finset ι)
+    (C : ι → NarrowClassGroup K) :
+    elementaryTwoQuotientMk K (∏ i ∈ S, C i) =
+      ∑ i ∈ S, elementaryTwoQuotientMk K (C i) :=
+  TauCeti.elementaryTwoQuotientMk_prod S C
+
+/-- Every element of `Cl⁺(K) / Cl⁺(K)²` is represented by a narrow ideal class. -/
+theorem elementaryTwoQuotientMk_surjective :
+    Function.Surjective (elementaryTwoQuotientMk K) :=
+  TauCeti.elementaryTwoQuotientMk_surjective
+
+/-- Two narrow ideal classes have the same image in `Cl⁺(K) / Cl⁺(K)²` exactly when their
+quotient is a square. -/
+theorem elementaryTwoQuotientMk_eq_iff (C D : NarrowClassGroup K) :
+    elementaryTwoQuotientMk K C = elementaryTwoQuotientMk K D ↔ IsSquare (C / D) :=
+  TauCeti.elementaryTwoQuotientMk_eq_iff C D
+
+/-- Forgetting positivity induces a `ZMod 2`-linear map
+`Cl⁺(K) / Cl⁺(K)² → Cl(K) / Cl(K)²`. -/
+noncomputable def toClassGroupElementaryTwoQuotient :
+    ElementaryTwoQuotient K →ₗ[ZMod 2] TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K) :=
+  TauCeti.elementaryTwoQuotientMap (toClassGroup (K := K))
+
+/-- The map on elementary-2 quotients induced by forgetting positivity sends the class of `C` to
+the square class of its image in the ordinary class group. -/
+@[simp] theorem toClassGroupElementaryTwoQuotient_mk (C : NarrowClassGroup K) :
+    toClassGroupElementaryTwoQuotient K (elementaryTwoQuotientMk K C) =
+      TauCeti.elementaryTwoQuotientMk (toClassGroup C) := by
+  -- Expose the narrow-class wrapper so that the generic functoriality lemma applies.
+  change TauCeti.elementaryTwoQuotientMap (toClassGroup (K := K))
+    (TauCeti.elementaryTwoQuotientMk C) = TauCeti.elementaryTwoQuotientMk (toClassGroup C)
+  exact TauCeti.elementaryTwoQuotientMap_mk (toClassGroup (K := K)) C
+
+/-- The induced map `Cl⁺(K) / Cl⁺(K)² → Cl(K) / Cl(K)²` is surjective. -/
+theorem toClassGroupElementaryTwoQuotient_surjective :
+    Function.Surjective (toClassGroupElementaryTwoQuotient K) :=
+  TauCeti.elementaryTwoQuotientMap_surjective
+    (toClassGroup (K := K)) toClassGroup_surjective
+
+/-- **The narrow class-group 2-rank**: the dimension over `ZMod 2` of
+`Cl⁺(K) / Cl⁺(K)²`. -/
+noncomputable def twoRank : ℕ :=
+  TauCeti.twoRank (NarrowClassGroup K)
+
+/-- The narrow class-group 2-rank is the dimension of its maximal elementary-2 quotient. -/
+@[simp] theorem twoRank_def :
+    twoRank K = Module.finrank (ZMod 2) (ElementaryTwoQuotient K) :=
+  TauCeti.twoRank_def (NarrowClassGroup K)
+
+/-- The maximal elementary-2 quotient of the narrow class group has `2 ^ twoRank K` elements. -/
+theorem card_elementaryTwoQuotient_eq_two_pow_twoRank :
+    Nat.card (ElementaryTwoQuotient K) = 2 ^ twoRank K :=
+  TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank (NarrowClassGroup K)
+
+/-- The cardinality of `Cl⁺(K) / Cl⁺(K)²` divides the narrow class number. -/
+theorem card_elementaryTwoQuotient_dvd_card :
+    Nat.card (ElementaryTwoQuotient K) ∣ Nat.card (NarrowClassGroup K) :=
+  TauCeti.card_elementaryTwoQuotient_dvd_card (NarrowClassGroup K)
+
+/-- The ordinary class-group 2-rank is at most the narrow class-group 2-rank. The inequality can
+be strict for real fields because forgetting positivity is only a surjection. -/
+theorem classGroup_twoRank_le_twoRank :
+    TauCeti.ClassGroup.twoRank (𝓞 K) ≤ twoRank K := by
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
+  exact LinearMap.finrank_le_finrank_of_surjective
+    (toClassGroupElementaryTwoQuotient_surjective K)
+
+/-- For a totally complex field, the elementary-2 quotients of the narrow and ordinary class
+groups are linearly equivalent over `ZMod 2`. -/
+noncomputable def toClassGroupElementaryTwoQuotientEquiv [IsTotallyComplex K] :
+    ElementaryTwoQuotient K ≃ₗ[ZMod 2] TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K) :=
+  TauCeti.elementaryTwoQuotientCongr (toClassGroupEquiv (K := K))
+
+/-- For a totally complex field, the elementary-2 quotient equivalence is the linear map induced
+by forgetting positivity. -/
+@[simp] theorem toClassGroupElementaryTwoQuotientEquiv_apply [IsTotallyComplex K]
+    (x : ElementaryTwoQuotient K) :
+    toClassGroupElementaryTwoQuotientEquiv K x = toClassGroupElementaryTwoQuotient K x := by
+  obtain ⟨C, rfl⟩ := elementaryTwoQuotientMk_surjective K x
+  rw [toClassGroupElementaryTwoQuotient_mk]
+  -- Expose the narrow-class wrapper so that the generic equivalence lemma applies.
+  change TauCeti.elementaryTwoQuotientCongr (toClassGroupEquiv (K := K))
+    (TauCeti.elementaryTwoQuotientMk C) = TauCeti.elementaryTwoQuotientMk (toClassGroup C)
+  rw [TauCeti.elementaryTwoQuotientCongr_mk, toClassGroupEquiv_apply]
+
+/-- **For a totally complex field, the narrow and ordinary class-group 2-ranks agree.** -/
+theorem twoRank_eq_classGroup_twoRank [IsTotallyComplex K] :
+    twoRank K = TauCeti.ClassGroup.twoRank (𝓞 K) := by
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
+  exact (toClassGroupElementaryTwoQuotientEquiv K).finrank_eq
+
+end TauCeti.NumberField.NarrowClassGroup
