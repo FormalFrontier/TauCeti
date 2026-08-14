@@ -9,7 +9,7 @@ import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import Mathlib.RingTheory.HopfAlgebra.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Antipode
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Bialgebra
-import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
 /-!
 # The Hopf algebra structure on a universal enveloping algebra
