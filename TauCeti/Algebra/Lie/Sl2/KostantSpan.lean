@@ -82,7 +82,6 @@ theorem orderedKostantMonomial_def (H E F : A) (a b c : ℕ) :
     orderedKostantMonomial H E F a b c = dividedPower a F * Ring.choose H b * dividedPower c E :=
   (rfl)
 
-@[simp]
 theorem orderedKostantMonomial_zero_zero_zero (H E F : A) :
     orderedKostantMonomial H E F 0 0 0 = 1 := by
   simp [orderedKostantMonomial_def]
