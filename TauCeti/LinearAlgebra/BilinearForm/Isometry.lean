@@ -10,14 +10,16 @@ public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 public import Mathlib.LinearAlgebra.BilinearForm.TensorProduct
 public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
+public import TauCeti.LinearAlgebra.BilinearForm.Isometry.Basic
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Congr
 
 /-!
 # The isometry group of a bilinear form
 
 An endomorphism `f` of a module `M` is an *isometry* of a bilinear form `B` when
-`B (f x) (f y) = B x y`. This file introduces that predicate, `TauCeti.BilinForm.IsIsometry`, and
-the group it cuts out inside the linear automorphisms of `M`, `TauCeti.BilinForm.isometryGroup B`,
+`B (f x) (f y) = B x y`. Starting from the predicate `TauCeti.BilinForm.IsIsometry` defined in the
+dependency-light module `TauCeti.LinearAlgebra.BilinearForm.Isometry.Basic`, this file builds the
+group it cuts out inside the linear automorphisms of `M`, `TauCeti.BilinForm.isometryGroup B`,
 together with the API a consumer of the group needs: a Gram-matrix criterion, the resulting
 constraint `(det f) ^ 2 = 1`, functoriality in the module and in the base ring, and stability of
 orthogonal complements.
@@ -34,7 +36,7 @@ action, none of which a bare type of bundled equivalences provides.
 
 Two statements are worth singling out.
 
-* Over an integral domain, isometries of a nondegenerate form on a finite free module are
+* Over an integral domain, isometries of a left-separating form on a finite free module are
   *automatically* invertible, so they already form elements of the group
   (`TauCeti.BilinForm.IsIsometry.toIsometryGroup`, `TauCeti.BilinForm.IsIsometry.bijective`):
   preserving `B` forces `(det f) ^ 2 = 1`, so `det f` is a unit. For a `ℤ`-lattice this says that a
@@ -50,7 +52,7 @@ Two statements are worth singling out.
 
 * `TauCeti.BilinForm.IsIsometry`: an endomorphism preserves a bilinear form.
 * `TauCeti.BilinForm.isometryGroup`: the isometry group `Aut(M, B) ≤ M ≃ₗ[R] M`.
-* `TauCeti.BilinForm.IsIsometry.toIsometryGroup`: an isometry of a nondegenerate form on a finite
+* `TauCeti.BilinForm.IsIsometry.toIsometryGroup`: an isometry of a left-separating form on a finite
   free module over an integral domain, as an element of the isometry group.
 * `TauCeti.BilinForm.isometryGroupBaseChange`: base change of isometries, as a group homomorphism.
 * `TauCeti.BilinForm.isometryGroupCongr`: transport of the isometry group along a linear
@@ -61,19 +63,19 @@ Two statements are worth singling out.
 * `TauCeti.BilinForm.isIsometry_iff_toMatrix`: the Gram-matrix criterion `Aᵀ * G * A = G`.
 * `TauCeti.BilinForm.IsIsometry.det_sq_eq_one`: `(det f) ^ 2 = 1` for an isometry of a form whose
   Gram determinant is a non-zero-divisor.
-* `TauCeti.BilinForm.IsIsometry.bijective`: over an integral domain, an isometry of a nondegenerate
-  form on a finite free module is bijective.
+* `TauCeti.BilinForm.IsIsometry.bijective`: over an integral domain, an isometry of a
+  left-separating form on a finite free module is bijective.
 * `TauCeti.BilinForm.IsIsometry.map_orthogonal`: a surjective isometry carries `B`-orthogonal
   complements to `B`-orthogonal complements.
 
 ## Implementation notes
 
-The file is laid out by hypothesis strength: the predicate, the group, the bridges to Mathlib's
-bundled isometries, the transport along a linear equivalence, the Gram-matrix criterion and base
+The API is laid out by hypothesis strength: the imported predicate and elementary bridge to
+Mathlib, the group, transport along a linear equivalence, the Gram-matrix criterion, and base
 change need only a `CommSemiring` and additive monoids, which is where every Mathlib ingredient
 they consume is stated; injectivity needs subtraction in `M`; the determinant results need `M` to
 be an additive group over a `CommRing`; the automatic invertibility of an isometry of a
-nondegenerate form needs an integral domain and a finite free module.
+left-separating form needs an integral domain and a finite free module.
 
 This is the bilinear-form counterpart of `TauCeti.QuadraticMap.orthogonalGroup` in
 `TauCeti/LinearAlgebra/QuadraticForm/OrthogonalGroup.lean`, whose API it follows; for a quadratic
@@ -83,7 +85,7 @@ group of `Q.polarBilin`, `TauCeti.QuadraticMap.orthogonalGroup_eq_isometryGroup_
 The roadmap names the predicate `IsLatticeIsometry Qint`, on a lattice automorphism `e : V ≃ₗ[ℤ] V`.
 Preserving a bilinear form is not lattice-specific, so it is stated here for an endomorphism of a
 module over an arbitrary commutative ring, with the roadmap's integral case `R = ℤ` the intended
-specialisation and the automatic invertibility of an isometry of a nondegenerate integral form
+specialisation and the automatic invertibility of an isometry of a left-separating integral form
 (`TauCeti.BilinForm.IsIsometry.toIsometryGroup`) recovering the automorphism form; the declaration
 is named after the general statement rather than after the lattice. For the same reason the file
 sits with the repository's other bilinear-form material rather than under `TauCeti/Geometry/Hodge/`.
@@ -110,57 +112,15 @@ section CommSemiring
 variable {R M M' : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid M']
   [Module R M']
 
-/-- An endomorphism `f` of `M` is an *isometry* of the bilinear form `B` when it preserves `B`,
-that is, when `B (f x) (f y) = B x y` for all `x` and `y`.
-
-Isometric endomorphisms form a monoid, not a group: for the zero form on `ℤ ^ 2` every endomorphism
-is one. For a finite free `ℤ`-module `V` and a *nondegenerate* integral form `Q` an isometric
-endomorphism is automatically invertible (`TauCeti.BilinForm.IsIsometry.toIsometryGroup`), and the
-resulting automorphisms are the arithmetic group `Aut(V, Q)`; see
-`TauCeti.BilinForm.isometryGroup`. -/
-def IsIsometry (B : BilinForm R M) (f : M →ₗ[R] M) : Prop :=
-  ∀ x y, B (f x) (f y) = B x y
-
 variable {B : BilinForm R M} {f g : M →ₗ[R] M}
-
-/-- An endomorphism is an isometry of `B` exactly when it preserves `B` pointwise. -/
-theorem isIsometry_iff : IsIsometry B f ↔ ∀ x y, B (f x) (f y) = B x y := (Iff.rfl)
-
-/-- An endomorphism is an isometry of `B` exactly when precomposing `B` with it on both sides
-returns `B`. -/
-theorem isIsometry_iff_comp : IsIsometry B f ↔ B.comp f f = B :=
-  ⟨fun h => LinearMap.BilinForm.ext fun x y => h x y, fun h x y =>
-    LinearMap.BilinForm.congr_fun h x y⟩
-
-/-- The underlying map of one of Mathlib's isometric maps `B →bᵢ B` is an isometry. -/
-theorem isIsometry_toLinearMap (φ : B →bᵢ B) : IsIsometry B φ.toLinearMap := φ.map_app
 
 namespace IsIsometry
 
-/-- An isometry takes the same value under `B` after applying the endomorphism to both inputs. -/
-@[grind =]
-protected theorem apply (hf : IsIsometry B f) (x y : M) : B (f x) (f y) = B x y :=
-  isIsometry_iff.mp hf x y
-
-/-- An isometry, bundled as one of Mathlib's isometric maps `B →bᵢ B`. -/
-def toIsometry (hf : IsIsometry B f) : B →bᵢ B := ⟨f, hf⟩
-
-@[simp]
-theorem toIsometry_apply (hf : IsIsometry B f) (x : M) : hf.toIsometry x = f x := (rfl)
-
-@[simp]
-theorem toIsometry_toLinearMap (hf : IsIsometry B f) : hf.toIsometry.toLinearMap = f := (rfl)
-
-protected theorem id : IsIsometry B LinearMap.id := fun _ _ => rfl
-
-protected theorem comp (hf : IsIsometry B f) (hg : IsIsometry B g) : IsIsometry B (f ∘ₗ g) :=
-  fun x y => (hf (g x) (g y)).trans (hg x y)
-
 /-- An isometry preserving a submodule restricts to an isometry of the restricted form. -/
 theorem restrict {N : Submodule R M} (hf : IsIsometry B f) (hN : ∀ x ∈ N, f x ∈ N) :
-    IsIsometry (B.restrict N) (f.restrict hN) := fun x y => by
+    IsIsometry (B.restrict N) (f.restrict hN) := isIsometry_iff.mpr fun x y => by
   simp only [LinearMap.BilinForm.restrict_apply, LinearMap.coe_restrict_apply]
-  exact hf x y
+  exact hf.apply x y
 
 /-- An isometry maps the `B`-orthogonal complement of `N` into the `B`-orthogonal complement of
 the image of `N`. -/
@@ -169,7 +129,7 @@ theorem map_orthogonal_le (hf : IsIsometry B f) (N : Submodule R M) :
   rintro - ⟨x, hx, rfl⟩
   rw [LinearMap.BilinForm.mem_orthogonal_iff]
   rintro - ⟨n, hn, rfl⟩
-  rw [hf n x]
+  rw [hf.apply n x]
   exact (LinearMap.BilinForm.mem_orthogonal_iff.mp hx) n hn
 
 /-- A surjective isometry carries `B`-orthogonal complements to `B`-orthogonal complements. -/
@@ -180,7 +140,7 @@ theorem map_orthogonal (hf : IsIsometry B f) (hsurj : Function.Surjective f) (N 
   refine Submodule.mem_map_of_mem ?_
   rw [LinearMap.BilinForm.mem_orthogonal_iff]
   intro n hn
-  rw [← hf n z]
+  rw [← hf.apply n z]
   exact (LinearMap.BilinForm.mem_orthogonal_iff.mp hx) _ ⟨n, hn, rfl⟩
 
 end IsIsometry
@@ -193,10 +153,11 @@ For a finite free `ℤ`-module `V` carrying an integral form `Q` this is the ari
 the complexification through `TauCeti.BilinForm.isometryGroupBaseChange`. -/
 def isometryGroup (B : BilinForm R M) : Subgroup (M ≃ₗ[R] M) where
   carrier := {e | IsIsometry B (e : M →ₗ[R] M)}
-  one_mem' := fun _ _ => rfl
-  mul_mem' := fun {a b} ha hb x y => (ha (b x) (b y)).trans (hb x y)
-  inv_mem' := fun {a} ha x y => by
-    simpa using (ha (a.symm x) (a.symm y)).symm
+  one_mem' := isIsometry_iff.mpr fun _ _ => rfl
+  mul_mem' := fun {a b} ha hb => isIsometry_iff.mpr fun x y =>
+    (ha.apply (b x) (b y)).trans (hb.apply x y)
+  inv_mem' := fun {a} ha => isIsometry_iff.mpr fun x y => by
+    simpa using (ha.apply (a.symm x) (a.symm y)).symm
 
 /-- Membership in the isometry group is the isometry predicate. -/
 theorem mem_isometryGroup {e : M ≃ₗ[R] M} :
@@ -212,8 +173,9 @@ theorem mem_isometryGroup_iff {e : M ≃ₗ[R] M} :
 same data, the subgroup adding the group structure. -/
 def isometryGroupEquivIsometryEquiv (B : BilinForm R M) :
     isometryGroup B ≃ B.IsometryEquiv B where
-  toFun e := ⟨e.1, fun x y => mem_isometryGroup.mp e.2 x y⟩
-  invFun e := ⟨e.toLinearEquiv, mem_isometryGroup.mpr fun x y => e.map_app y x⟩
+  toFun e := ⟨e.1, fun x y => (mem_isometryGroup.mp e.2).apply x y⟩
+  invFun e := ⟨e.toLinearEquiv,
+    mem_isometryGroup.mpr (isIsometry_iff.mpr fun x y => e.map_app y x)⟩
   left_inv _ := rfl
   right_inv _ := rfl
 
@@ -292,6 +254,7 @@ variable (A : Type*) [CommSemiring A] [Algebra R A]
 base-changed form. -/
 theorem IsIsometry.baseChange (hf : IsIsometry B f) :
     IsIsometry (LinearMap.BilinForm.baseChange A B) (f.baseChange A) := by
+  rw [isIsometry_iff]
   intro x y
   induction x using TensorProduct.induction_on with
   | zero => simp
@@ -300,7 +263,7 @@ theorem IsIsometry.baseChange (hf : IsIsometry B f) :
       induction y using TensorProduct.induction_on with
       | zero => simp
       | add y₁ y₂ h₁ h₂ => simp only [map_add, h₁, h₂]
-      | tmul a' m' => simp [hf m m']
+      | tmul a' m' => simp [hf.apply m m']
 
 /-- Base change along an `R`-algebra `A` is a group homomorphism
 `Aut(M, B) →* Aut(A ⊗[R] M, B_A)`. For `R = ℤ` and `A = ℂ` this is the action of the arithmetic
@@ -317,6 +280,7 @@ theorem coe_isometryGroupBaseChange (B : BilinForm R M) (e : isometryGroup B) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M)
       = LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M) := (rfl)
 
+@[simp]
 theorem isometryGroupBaseChange_tmul (B : BilinForm R M) (e : isometryGroup B) (a : A) (m : M) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M) (a ⊗ₜ m)
       = a ⊗ₜ (e : M ≃ₗ[R] M) m := by
@@ -339,7 +303,7 @@ theorem IsIsometry.injective (hB : B.SeparatingLeft) (hf : IsIsometry B f) :
   intro x y hxy
   rw [← sub_eq_zero]
   refine hB (x - y) fun z => ?_
-  rw [← hf (x - y) z, map_sub, hxy, sub_self, LinearMap.map_zero₂]
+  rw [← hf.apply (x - y) z, map_sub, hxy, sub_self, LinearMap.map_zero₂]
 
 end AddCommGroup
 
@@ -385,10 +349,12 @@ theorem isUnit_det (b : Basis ι R M)
 
 end IsIsometry
 
-/-- Over an integral domain, the Gram determinant of a nondegenerate form is a non-zero-divisor. -/
-theorem det_toMatrix_mem_nonZeroDivisors [IsDomain R] (b : Basis ι R M) (hB : B.Nondegenerate) :
+/-- Over an integral domain, the Gram determinant of a left-separating form is a
+non-zero-divisor. -/
+theorem det_toMatrix_mem_nonZeroDivisors [IsDomain R] (b : Basis ι R M)
+    (hB : B.SeparatingLeft) :
     (LinearMap.BilinForm.toMatrix b B).det ∈ nonZeroDivisors R :=
-  mem_nonZeroDivisors_of_ne_zero ((LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b).mp hB)
+  mem_nonZeroDivisors_of_ne_zero ((LinearMap.separatingLeft_iff_det_ne_zero b).mp hB)
 
 end Matrix
 
@@ -403,7 +369,7 @@ group. -/
 noncomputable def toIsometryGroupOfIsUnitDet (hf : IsIsometry B f)
     (hdet : IsUnit (LinearMap.det f)) : isometryGroup B :=
   ⟨LinearMap.equivOfIsUnitDet hdet,
-    mem_isometryGroup.mpr fun x y => by simpa using hf.apply x y⟩
+    mem_isometryGroup.mpr (isIsometry_iff.mpr fun x y => by simpa using hf.apply x y)⟩
 
 @[simp]
 theorem coe_toIsometryGroupOfIsUnitDet (hf : IsIsometry B f)
@@ -421,46 +387,46 @@ end IsIsometry
 
 end UnitDeterminant
 
-section Nondegenerate
+section SeparatingLeft
 
 variable [IsDomain R] [Module.Free R M] [Module.Finite R M]
 
 namespace IsIsometry
 
-/-- An isometry of a nondegenerate form on a finite free module over an integral domain has unit
+/-- An isometry of a left-separating form on a finite free module over an integral domain has unit
 determinant. -/
-theorem isUnit_det_of_nondegenerate (hB : B.Nondegenerate) (hf : IsIsometry B f) :
+theorem isUnit_det_of_separatingLeft (hB : B.SeparatingLeft) (hf : IsIsometry B f) :
     IsUnit (LinearMap.det f) :=
   hf.isUnit_det (Module.Free.chooseBasis R M)
     (det_toMatrix_mem_nonZeroDivisors (Module.Free.chooseBasis R M) hB)
 
-/-- Over an integral domain, an endomorphism of a finite free module preserving a nondegenerate
+/-- Over an integral domain, an endomorphism of a finite free module preserving a left-separating
 bilinear form is automatically invertible, hence an element of the isometry group. This is how an
 element of `Aut(V, Q)` usually presents itself: as an endomorphism of the lattice `V` preserving
 `Q`, with invertibility a consequence rather than a hypothesis. -/
-noncomputable def toIsometryGroup (hB : B.Nondegenerate) (hf : IsIsometry B f) :
+noncomputable def toIsometryGroup (hB : B.SeparatingLeft) (hf : IsIsometry B f) :
     isometryGroup B :=
-  hf.toIsometryGroupOfIsUnitDet (hf.isUnit_det_of_nondegenerate hB)
+  hf.toIsometryGroupOfIsUnitDet (hf.isUnit_det_of_separatingLeft hB)
 
 @[simp]
-theorem coe_toIsometryGroup (hB : B.Nondegenerate) (hf : IsIsometry B f) :
+theorem coe_toIsometryGroup (hB : B.SeparatingLeft) (hf : IsIsometry B f) :
     ((hf.toIsometryGroup hB : isometryGroup B) : M →ₗ[R] M) = f :=
-  LinearMap.coe_equivOfIsUnitDet (hf.isUnit_det_of_nondegenerate hB)
+  LinearMap.coe_equivOfIsUnitDet (hf.isUnit_det_of_separatingLeft hB)
 
 @[simp]
-theorem toIsometryGroup_apply (hB : B.Nondegenerate) (hf : IsIsometry B f) (x : M) :
+theorem toIsometryGroup_apply (hB : B.SeparatingLeft) (hf : IsIsometry B f) (x : M) :
     (hf.toIsometryGroup hB : M ≃ₗ[R] M) x = f x :=
-  LinearMap.equivOfIsUnitDet_apply (hf.isUnit_det_of_nondegenerate hB) x
+  LinearMap.equivOfIsUnitDet_apply (hf.isUnit_det_of_separatingLeft hB) x
 
-/-- Over an integral domain, an endomorphism of a finite free module preserving a nondegenerate
+/-- Over an integral domain, an endomorphism of a finite free module preserving a left-separating
 bilinear form is automatically bijective. -/
-theorem bijective (hB : B.Nondegenerate) (hf : IsIsometry B f) : Function.Bijective f :=
+theorem bijective (hB : B.SeparatingLeft) (hf : IsIsometry B f) : Function.Bijective f :=
   (Module.End.isUnit_iff f).mp
-    ((LinearMap.isUnit_iff_isUnit_det f).mpr (hf.isUnit_det_of_nondegenerate hB))
+    ((LinearMap.isUnit_iff_isUnit_det f).mpr (hf.isUnit_det_of_separatingLeft hB))
 
 end IsIsometry
 
-end Nondegenerate
+end SeparatingLeft
 
 end CommRing
 

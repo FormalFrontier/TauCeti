@@ -7,7 +7,7 @@ module
 public import Mathlib.RepresentationTheory.Invariants
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.LinearAlgebra.BilinearForm.Basic
-public import TauCeti.LinearAlgebra.BilinearForm.Isometry
+public import TauCeti.LinearAlgebra.BilinearForm.Isometry.Basic
 
 /-!
 # Invariant bilinear forms on a representation

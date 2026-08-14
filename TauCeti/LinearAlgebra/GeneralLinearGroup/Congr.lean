@@ -41,6 +41,7 @@ The two evaluation lemmas below are its characteristic API. -/
 def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ[R] M₂) :=
   ((generalLinearEquiv R M₁).symm.trans (congrLinearEquiv e)).trans (generalLinearEquiv R M₂)
 
+/-- Conjugating `f` by `e` sends `m` to `e (f (e.symm m))`. -/
 @[simp]
 theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : M₂) :
     congrAut e f m = e (f (e.symm m)) := by
@@ -55,6 +56,7 @@ theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : 
         (generalLinearEquiv_to_linearMap ((generalLinearEquiv R M₁).symm f)) (e.symm m)).symm
     _ = f (e.symm m) := by rw [(generalLinearEquiv R M₁).apply_symm_apply]
 
+/-- Inverse conjugation by `e` sends `m` to `e.symm (g (e m))`. -/
 @[simp]
 theorem congrAut_symm_apply (e : M₁ ≃ₗ[R] M₂) (g : M₂ ≃ₗ[R] M₂) (m : M₁) :
     (congrAut e).symm g m = e.symm (g (e m)) := by
