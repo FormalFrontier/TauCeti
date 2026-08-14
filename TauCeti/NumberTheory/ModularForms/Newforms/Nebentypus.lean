@@ -123,7 +123,7 @@ theorem mem_cuspFormsNew_iff_of_mem_cuspFormCharSpace
   rcases eq_or_ne ψ χ with rfl | hψ
   · exact h
   · exact CuspForm.mem_peterssonOrthogonal_iff.mpr fun g hg ↦
-      CuspForm.peterssonInnerCosets_eq_zero_of_ne hψ hg.2 hf
+      CuspForm.peterssonInnerCosets_eq_zero_of_mem_cuspFormCharSpace_of_ne hψ hg.2 hf
 
 /-- **The new subspace of `S_k(N, χ)`.** The orthogonal complement of the old forms of
 nebentypus `χ`, taken inside `S_k(N, χ)`, is what one gets by intersecting the new subspace of

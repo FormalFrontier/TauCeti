@@ -12,8 +12,8 @@ public import TauCeti.NumberTheory.ModularForms.Petersson.Orthogonal
 
 The Petersson product `CuspForm.peterssonInnerCosets` on `S_k(Γ)` is a sum over the cosets of
 `Γ·{±I}` in `SL₂(ℤ)` of level-one-domain pairings of slashed forms. Slashing both arguments by
-an `α ∈ SL₂(ℤ)` that *normalises* `Γ` permutes those cosets — right multiplication by `α⁻¹` is
-a well-defined permutation of `SL₂(ℤ)/Γ·{±I}` exactly because `α` normalises the group — so it
+an `α ∈ SL₂(ℤ)` that *normalises* `Γ·{±I}` permutes those cosets — right multiplication by `α⁻¹`
+is a well-defined permutation of `SL₂(ℤ)/Γ·{±I}` exactly because `α` normalises the group — so it
 leaves the whole sum unchanged: such a slash is **unitary** for the Petersson product.
 
 The case this roadmap needs is `Γ = Γ₁(N)` and `α ∈ Γ₀(N)`, that is, the **diamond operators**
@@ -28,12 +28,13 @@ Petersson-orthogonal, since the diamond eigenvalues `χ(d)` are roots of unity: 
 ## Main results
 
 * `TauCeti.CuspForm.peterssonInnerCosets_slash`: the Petersson product is unchanged by slashing
-  both arguments with an element of the normaliser of `Γ`.
+  both arguments with an element of the normaliser of `Γ·{±I}`.
 * `TauCeti.CuspForm.peterssonInnerCosets_diamondOpCusp`: the diamond operators are
   Petersson-unitary.
 * `TauCeti.CuspForm.diamondOpCusp_mem_peterssonOrthogonal`: the Petersson-orthogonal complement
   of a diamond-stable subspace is diamond-stable.
-* `TauCeti.CuspForm.peterssonInnerCosets_eq_zero_of_ne` and its submodule form
+* `TauCeti.CuspForm.peterssonInnerCosets_eq_zero_of_mem_cuspFormCharSpace_of_ne` and its
+  submodule form
   `TauCeti.CuspForm.cuspFormCharSpace_le_peterssonOrthogonal_of_ne`: cusp forms with distinct
   nebentypus characters are Petersson-orthogonal, so the nebentypus decomposition of
   `S_k(Γ₁(N))` is an orthogonal one.
@@ -122,42 +123,48 @@ private theorem peterssonInner_slash_inv_out (f g : CuspForm (Γ.map (mapGL ℝ)
   rwa [← SlashAction.slash_mul, ← SlashAction.slash_mul, hcancel] at h
 
 /-- **The Petersson product is unitary under a normalising slash.** If `α ∈ SL₂(ℤ)` normalises
-`Γ` and the slashes `f ∣[k] α`, `g ∣[k] α` are again cusp forms `F`, `G` for `Γ`, then
+`Γ·{±I}` and the slashes `f ∣[k] α`, `g ∣[k] α` are again cusp forms `F`, `G` for `Γ`, then
 `⟪F, G⟫ = ⟪f, g⟫`: right multiplication by `α⁻¹` permutes the cosets of `Γ·{±I}` indexing the
 defining sum, and the summands match up term by term.
+
+It is `Γ·{±I}`, not `Γ`, that the hypothesis constrains, that being the group whose cosets the
+sum runs over; an `α` normalising `Γ` normalises `Γ·{±I}` too, by
+`Subgroup.normalizer_le_normalizer_sup_normal`.
 
 The forms `F` and `G` are taken as data with their defining equations, rather than built here,
 because the operators that arise this way — the diamond operators of Layer 0, the Atkin–Lehner
 involutions later — each package the slashed function as a cusp form in their own way. -/
 theorem peterssonInnerCosets_slash {α : SL(2, ℤ)}
-    (hα : α ∈ Subgroup.normalizer (Γ : Set SL(2, ℤ)))
+    (hα : α ∈ Subgroup.normalizer (Γ.withCenter : Set SL(2, ℤ)))
     {f g F G : CuspForm (Γ.map (mapGL ℝ)) k} (hF : ⇑F = ⇑f ∣[k] α) (hG : ⇑G = ⇑g ∣[k] α) :
     peterssonInnerCosets F G = peterssonInnerCosets f g := by
-  have hαW : α ∈ Subgroup.normalizer (Γ.withCenter : Set SL(2, ℤ)) := by
-    rw [Subgroup.withCenter_def]
-    exact Subgroup.normalizer_le_normalizer_sup_normal hα
   have hsummand : ∀ q : SL(2, ℤ) ⧸ Γ.withCenter,
       UpperHalfPlane.peterssonInner k fd (⇑F ∣[k] (q.out)⁻¹) (⇑G ∣[k] (q.out)⁻¹) =
-        UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] ((cosetRightMul hαW q).out)⁻¹)
-          (⇑g ∣[k] ((cosetRightMul hαW q).out)⁻¹) := fun q ↦ by
+        UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] ((cosetRightMul hα q).out)⁻¹)
+          (⇑g ∣[k] ((cosetRightMul hα q).out)⁻¹) := fun q ↦ by
     have hinv : (q.out * α⁻¹)⁻¹ = α * (q.out)⁻¹ := by group
-    rw [cosetRightMul_apply hαW q, peterssonInner_slash_inv_out f g (q.out * α⁻¹), hF, hG,
+    rw [cosetRightMul_apply hα q, peterssonInner_slash_inv_out f g (q.out * α⁻¹), hF, hG,
       ← SlashAction.slash_mul, ← SlashAction.slash_mul, hinv]
   rw [peterssonInnerCosets_def, peterssonInnerCosets_def, Finset.sum_congr rfl fun q _ ↦ hsummand q]
-  exact Fintype.sum_equiv (cosetRightMul hαW) _ _ fun _ ↦ rfl
+  exact Fintype.sum_equiv (cosetRightMul hα) _ _ fun _ ↦ rfl
 
 /-! ### The diamond operators are unitary -/
 
 variable {N : ℕ} [NeZero N]
 
 /-- **The diamond operators are Petersson-unitary**: `⟪⟨d⟩f, ⟨d⟩g⟫ = ⟪f, g⟫`. The operator
-`⟨d⟩` is slashing by a representative of `d` in `Γ₀(N)`, and `Γ₀(N)` normalises `Γ₁(N)`. -/
+`⟨d⟩` is slashing by a representative of `d` in `Γ₀(N)`, and `Γ₀(N)` normalises `Γ₁(N)`, hence
+also `Γ₁(N)·{±I}`. -/
+@[simp]
 theorem peterssonInnerCosets_diamondOpCusp (k : ℤ) (d : (ZMod N)ˣ)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     peterssonInnerCosets (diamondOpCusp k d f) (diamondOpCusp k d g) =
       peterssonInnerCosets f g := by
   obtain ⟨γ, hγ⟩ := Gamma0Map_toHomUnits_surjective (N := N) d
-  exact peterssonInnerCosets_slash (Gamma0_le_normalizer_Gamma1 N γ.2)
+  have hnorm : (γ : SL(2, ℤ)) ∈ Subgroup.normalizer ((Gamma1 N).withCenter : Set SL(2, ℤ)) := by
+    rw [Subgroup.withCenter_def]
+    exact Subgroup.normalizer_le_normalizer_sup_normal (Gamma0_le_normalizer_Gamma1 N γ.2)
+  exact peterssonInnerCosets_slash hnorm
     (coe_diamondOpCusp k d γ hγ f) (coe_diamondOpCusp k d γ hγ g)
 
 /-- **The Petersson-orthogonal complement of a diamond-stable subspace is diamond-stable.**
@@ -192,7 +199,8 @@ operators are unitary and act on the two forms by the scalars `χ(d)` and `ψ(d)
 is multiplied by `conj (χ d) * ψ d`; at a `d` where the characters differ this scalar is not `1`,
 the values being unimodular. Hence the nebentypus decomposition of `S_k(Γ₁(N))` is an orthogonal
 decomposition. -/
-theorem peterssonInnerCosets_eq_zero_of_ne {k : ℤ} {χ ψ : (ZMod N)ˣ →* ℂˣ} (hne : χ ≠ ψ)
+theorem peterssonInnerCosets_eq_zero_of_mem_cuspFormCharSpace_of_ne {k : ℤ}
+    {χ ψ : (ZMod N)ˣ →* ℂˣ} (hne : χ ≠ ψ)
     {f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormCharSpace k χ)
     (hg : g ∈ cuspFormCharSpace k ψ) : peterssonInnerCosets f g = 0 := by
   obtain ⟨d, hd⟩ : ∃ d, χ d ≠ ψ d := by
@@ -215,11 +223,13 @@ theorem peterssonInnerCosets_eq_zero_of_ne {k : ℤ} {χ ψ : (ZMod N)ˣ →* �
   · exact h
 
 /-- **The nebentypus decomposition of `S_k(Γ₁(N))` is orthogonal**: distinct nebentypus spaces
-are Petersson-orthogonal, the submodule form of `peterssonInnerCosets_eq_zero_of_ne`. -/
+are Petersson-orthogonal, the submodule form of
+`peterssonInnerCosets_eq_zero_of_mem_cuspFormCharSpace_of_ne`. -/
 theorem cuspFormCharSpace_le_peterssonOrthogonal_of_ne {k : ℤ} {χ ψ : (ZMod N)ˣ →* ℂˣ}
     (hne : χ ≠ ψ) :
     cuspFormCharSpace k ψ ≤ peterssonOrthogonal (cuspFormCharSpace (N := N) k χ) := fun _ hg ↦
-  mem_peterssonOrthogonal_iff.mpr fun _ hf ↦ peterssonInnerCosets_eq_zero_of_ne hne hf hg
+  mem_peterssonOrthogonal_iff.mpr fun _ hf ↦
+    peterssonInnerCosets_eq_zero_of_mem_cuspFormCharSpace_of_ne hne hf hg
 
 end CuspForm
 
