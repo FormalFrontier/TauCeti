@@ -24,12 +24,10 @@ where the mean ergodic theorem enters.
 Transport side:
 
 * `strictMono_snoc_prefix` — appending `r + m` to the prefix is strictly increasing;
-* `ContractableLaw.map_restrict_snoc_prefix_eq_prefixProj` — so every displacement pushes the
-  restricted law to the same measure;
-* `ContractableLaw.setIntegral_prefix_mul_indicator_displaced_eq` — hence the weighted set-integral
-  does not depend on the displacement `m`;
-* `ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage` — so an average over
-  `m < n` may be inserted for free, turning the integrand into a Birkhoff average.
+* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq` — so the weighted
+  integral does not depend on the displacement `m`, by the weighted block transport;
+* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage` — hence an
+  average over `m < n` may be inserted for free, turning the integrand into a Birkhoff average.
 
 Analytic side:
 
@@ -42,9 +40,13 @@ Analytic side:
 
 Where they meet:
 
-* `ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional` — the averaged
-  sequence is constant by the transport side and convergent by the analytic side, so its one limit
-  identifies the weighted integral of `𝟙_B` at coordinate `r` with that of `ν(B)`.
+* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditional` — the
+  averaged sequence is constant by the transport side and convergent by the analytic side, so its
+  one limit identifies the weighted integral of `𝟙_B` at coordinate `r` with that of `ν(B)`.
+
+Every statement carries an invariants-measurable weight `w`. That is what makes the chain usable
+in an induction across a block: the factors already peeled off accumulate as exactly such a weight,
+which the unweighted forms cannot express.
 
 This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
@@ -83,23 +85,6 @@ theorem strictMono_snoc_prefix (r m : ℕ) :
     exact_mod_cast this
   · rw [hj, Fin.snoc_last]
     exact lt_of_lt_of_le i.isLt (Nat.le_add_right r m)
-
-/-- **The displaced block has a law independent of the displacement.** Over an invariant event,
-pushing the restricted law forward along the prefix-plus-`r + m` selection gives the same measure
-for every `m` — namely the pushforward along the plain prefix of length `r + 1`.
-
-This is the `m`-independence the decoupling runs on: because the right-hand side does not mention
-`m`, an average over `m < n` may be inserted on the left without changing anything, and that
-average is a Birkhoff average of the last coordinate under the shift. -/
-theorem ContractableLaw.map_restrict_snoc_prefix_eq_prefixProj
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) (r m : ℕ)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
-    (ρ.restrict A).map
-        (fun x : ℕ → α => fun i : Fin (r + 1) =>
-          x ((Fin.snoc (fun j : Fin r => (j : ℕ)) (r + m) : Fin (r + 1) → ℕ) i))
-      = (ρ.restrict A).map (prefixProj α (r + 1)) :=
-  hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants
-    (strictMono_snoc_prefix r m) hA
 
 omit [MeasurableSpace α] in
 /-- **The displaced coordinates are a Birkhoff average.** Reading coordinate `r` along the shift
@@ -202,18 +187,19 @@ theorem ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditional
       (measurable_const.indicator hB)).symm
   · exact stronglyMeasurable_condExp.aestronglyMeasurable.congr hwit.symm
 
-/-- **A weighted block integral does not depend on the displacement.** For a weight `g` reading
-only the first `r` coordinates, the integral over an invariant event of `g` times the indicator at
-coordinate `r + m` is the same for every `m` — in particular equal to its value at `m = 0`.
+/-- **The displaced weighted integral does not depend on the displacement.** Appending `r + m` to
+the prefix is strictly increasing for every `m`, so the weighted block transport carries each
+displaced integral onto the same prefix integral.
 
-This is the `m`-independence in the form the induction consumes: the left-hand side may therefore
-be replaced by an average over `m < n` at no cost, and that average is a Birkhoff average. -/
-theorem ContractableLaw.setIntegral_prefix_mul_indicator_displaced_eq
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {r : ℕ} {g : (Fin r → α) → ℝ}
-    (hg : Measurable g) {B : Set α} (hB : MeasurableSet B)
+The invariant weight `w` is what makes this usable in an induction: the factors already peeled off
+a block accumulate as exactly such a weight. -/
+theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {r : ℕ}
+    {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
+    {g : (Fin r → α) → ℝ} (hg : Measurable g) {B : Set α} (hB : MeasurableSet B)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) (m : ℕ) :
-    ∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x (r + m)) ∂ρ
-      = ∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ := by
+    ∫ x in A, w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x (r + m))) ∂ρ
+      = ∫ x in A, w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r)) ∂ρ := by
   classical
   -- The combined observable on a block of length `r + 1`.
   set G : (Fin (r + 1) → α) → ℝ := fun y =>
@@ -222,10 +208,6 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_displaced_eq
     refine Measurable.mul ?_ ?_
     · exact hg.comp (measurable_pi_lambda _ fun j => measurable_pi_apply j.castSucc)
     · exact (measurable_const.indicator hB).comp (measurable_pi_apply (Fin.last r))
-  have hsel : ∀ (d : ℕ), Measurable
-      (fun x : ℕ → α => fun i : Fin (r + 1) =>
-        x ((Fin.snoc (fun j : Fin r => (j : ℕ)) (r + d) : Fin (r + 1) → ℕ) i)) :=
-    fun d => measurable_pi_lambda _ fun i => measurable_pi_apply _
   -- Reading the combined observable along the displaced selection is the integrand.
   have hcomp : ∀ (d : ℕ) (x : ℕ → α),
       G (fun i : Fin (r + 1) =>
@@ -234,14 +216,19 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_displaced_eq
     intro d x
     simp only [hG, Fin.snoc_castSucc, Fin.snoc_last]
     rfl
-  -- Every displacement pushes the restricted law to the same measure.
-  have key : ∀ d : ℕ, ∫ x in A, g (prefixProj α r x)
-      * B.indicator (fun _ => (1 : ℝ)) (x (r + d)) ∂ρ
-      = ∫ y, G y ∂((ρ.restrict A).map (prefixProj α (r + 1))) := by
+  -- Every displacement transports onto the prefix, weight and all.
+  have key : ∀ d : ℕ,
+      ∫ x in A, w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x (r + d))) ∂ρ
+        = ∫ x in A, w x * G (prefixProj α (r + 1) x) ∂ρ := by
     intro d
-    rw [← hρ.map_restrict_snoc_prefix_eq_prefixProj r d hA,
-      integral_map (hsel d).aemeasurable hG_meas.aestronglyMeasurable]
-    exact integral_congr_ae (Filter.Eventually.of_forall fun x => (hcomp d x).symm)
+    calc ∫ x in A, w x * (g (prefixProj α r x)
+            * B.indicator (fun _ => (1 : ℝ)) (x (r + d))) ∂ρ
+        = ∫ x in A, w x * G (fun i : Fin (r + 1) =>
+            x ((Fin.snoc (fun j : Fin r => (j : ℕ)) (r + d) : Fin (r + 1) → ℕ) i)) ∂ρ :=
+          integral_congr_ae (Filter.Eventually.of_forall fun x => by simp only [hcomp])
+      _ = ∫ x in A, w x * G (prefixProj α (r + 1) x) ∂ρ :=
+          hρ.setIntegral_mul_block_eq_prefix_of_strictMono_of_measurableSet_invariants
+            (strictMono_snoc_prefix r d) hA hw hG_meas
   rw [key m, ← key 0, Nat.add_zero]
 
 /-- **The weighted integral equals its own Birkhoff average.** Because the displaced integrals all
@@ -249,49 +236,52 @@ agree, averaging over `m < n` changes nothing on the left while turning the inte
 into a Birkhoff average — for every `n ≠ 0`.
 
 This is the step that hands the argument to the mean ergodic theorem. -/
-theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage
+theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage
     {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
+    (hw_bdd : ∀ x, |w x| ≤ 1)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
     {B : Set α} (hB : MeasurableSet B)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {n : ℕ} (hn : n ≠ 0) :
-    ∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ
-      = ∫ x in A, g (prefixProj α r x)
+    ∫ x in A, w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r)) ∂ρ
+      = ∫ x in A, w x * (g (prefixProj α r x)
           * birkhoffAverage ℝ (shift α)
-              (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x ∂ρ := by
+              (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x) ∂ρ := by
   classical
-  have hAm : MeasurableSet A := MeasurableSpace.invariants_le _ _ hA
-  have hgm : Measurable fun x : ℕ → α => g (prefixProj α r x) :=
-    hg.comp (measurable_prefixProj r)
-  have hterm : ∀ d : ℕ, Integrable
-      (fun x : ℕ → α => g (prefixProj α r x)
-        * B.indicator (fun _ => (1 : ℝ)) (x (r + d))) (ρ.restrict A) := by
-    intro d
-    have hm : Measurable fun x : ℕ → α => g (prefixProj α r x)
-        * B.indicator (fun _ => (1 : ℝ)) (x (r + d)) :=
-      hgm.mul ((measurable_const.indicator hB).comp (measurable_pi_apply (r + d)))
-    refine ⟨hm.aestronglyMeasurable, .of_bounded (C := 1) (Filter.Eventually.of_forall ?_)⟩
-    intro x
+  have hw' : Measurable w := hw.mono (MeasurableSpace.invariants_le _) le_rfl
+  have hgm : Measurable fun x : ℕ → α => g (prefixProj α r x) := hg.comp (measurable_prefixProj r)
+  have hbd : ∀ (d : ℕ) (x : ℕ → α),
+      ‖w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x (r + d)))‖ ≤ 1 := by
+    intro d x
     have h0 : (0 : ℝ) ≤ B.indicator (fun _ => (1 : ℝ)) (x (r + d)) :=
       Set.indicator_apply_nonneg fun _ => zero_le_one
     have h1 : B.indicator (fun _ => (1 : ℝ)) (x (r + d)) ≤ 1 :=
       Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
-    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg h0]
-    calc |g (prefixProj α r x)| * B.indicator (fun _ => (1 : ℝ)) (x (r + d))
-        ≤ 1 * 1 := mul_le_mul (hg_bdd _) h1 h0 zero_le_one
-      _ = 1 := one_mul 1
-  -- Expand the Birkhoff average and integrate term by term.
-  have hrhs : ∫ x in A, g (prefixProj α r x)
+    rw [Real.norm_eq_abs, abs_mul, abs_mul, abs_of_nonneg h0]
+    have hinner : |g (prefixProj α r x)| * B.indicator (fun _ => (1 : ℝ)) (x (r + d)) ≤ 1 :=
+      (mul_le_mul (hg_bdd _) h1 h0 zero_le_one).trans_eq (one_mul 1)
+    exact (mul_le_mul (hw_bdd _) hinner (by positivity) zero_le_one).trans_eq (one_mul 1)
+  have hterm : ∀ d : ℕ, Integrable
+      (fun x : ℕ → α => w x * (g (prefixProj α r x)
+        * B.indicator (fun _ => (1 : ℝ)) (x (r + d)))) (ρ.restrict A) := by
+    intro d
+    have hm : Measurable fun x : ℕ → α => w x * (g (prefixProj α r x)
+        * B.indicator (fun _ => (1 : ℝ)) (x (r + d))) :=
+      hw'.mul (hgm.mul ((measurable_const.indicator hB).comp (measurable_pi_apply (r + d))))
+    exact ⟨hm.aestronglyMeasurable,
+      .of_bounded (C := 1) (Filter.Eventually.of_forall (hbd d))⟩
+  have hrhs : ∫ x in A, w x * (g (prefixProj α r x)
       * birkhoffAverage ℝ (shift α)
-          (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x ∂ρ
-      = (n : ℝ)⁻¹ * ∑ m ∈ Finset.range n, ∫ x in A, g (prefixProj α r x)
-          * B.indicator (fun _ => (1 : ℝ)) (x (r + m)) ∂ρ := by
+          (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x) ∂ρ
+      = (n : ℝ)⁻¹ * ∑ m ∈ Finset.range n, ∫ x in A, w x * (g (prefixProj α r x)
+          * B.indicator (fun _ => (1 : ℝ)) (x (r + m))) ∂ρ := by
     rw [← integral_finsetSum _ fun m _ => hterm m, ← integral_const_mul]
     refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
     simp only [birkhoffAverage_shift_coord_eq, ← Finset.mul_sum]
     ring
   rw [hrhs]
-  simp only [hρ.setIntegral_prefix_mul_indicator_displaced_eq hg hB hA]
+  simp only [hρ.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq hw hg hB hA]
   rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← mul_assoc,
     inv_mul_cancel₀ (Nat.cast_ne_zero.mpr hn), one_mul]
 
@@ -300,19 +290,22 @@ the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral
 is the invariant conditional law.
 
 Where the two halves meet: the averaged sequence is *constant* in `n` by
-`ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage`, and the same sequence
-converges to the right-hand side by the `L¹` mean ergodic theorem; a sequence has one limit. -/
-theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional
+`ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage`, and the same
+sequence converges to the right-hand side by the `L¹` mean ergodic theorem; a sequence has one
+limit. -/
+theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditional
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
+    (hw_bdd : ∀ x, |w x| ≤ 1)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
     {B : Set α} (hB : MeasurableSet B)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
-    ∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ
-      = ∫ x in A, g (prefixProj α r x)
-          * ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real B ∂ρ := by
+    ∫ x in A, w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r)) ∂ρ
+      = ∫ x in A, w x * (g (prefixProj α r x)
+          * ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real B) ∂ρ := by
   classical
-  have hAm : MeasurableSet A := MeasurableSpace.invariants_le _ _ hA
+  have hw' : Measurable w := hw.mono (MeasurableSpace.invariants_le _) le_rfl
   have hgm : Measurable fun x : ℕ → α => g (prefixProj α r x) := hg.comp (measurable_prefixProj r)
   have hind_nonneg : ∀ y : α, 0 ≤ B.indicator (fun _ => (1 : ℝ)) y := fun _ =>
     Set.indicator_apply_nonneg fun _ => zero_le_one
@@ -321,7 +314,6 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional
   set φ : (ℕ → α) → ℝ := fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r) with hφdef
   have hφ_meas : Measurable φ := (measurable_const.indicator hB).comp (measurable_pi_apply r)
   set F : (ℕ → α) → ℝ := ρ[φ | MeasurableSpace.invariants (shift α)] with hFdef
-  -- The Birkhoff averages are bounded by `1`, hence integrable on a probability space.
   have havg_meas : ∀ n : ℕ, Measurable (birkhoffAverage ℝ (shift α) φ n) := by
     intro n
     have hsum : Measurable fun x : ℕ → α => ∑ m ∈ Finset.range n, φ ((shift α)^[m] x) :=
@@ -346,22 +338,30 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional
     ⟨(havg_meas n).aestronglyMeasurable,
       .of_bounded (C := 1) (Filter.Eventually.of_forall (havg_bdd n))⟩
   have hF_int : Integrable F ρ := integrable_condExp
-  -- Weighting by the bounded prefix observable preserves integrability.
-  have hw : ∀ (h : (ℕ → α) → ℝ), Integrable h ρ →
-      Integrable (fun x => g (prefixProj α r x) * h x) (ρ.restrict A) := fun h hh =>
-    (hh.restrict.bdd_mul hgm.aestronglyMeasurable
-      (Filter.Eventually.of_forall fun x => (Real.norm_eq_abs _).trans_le (hg_bdd _)))
-  -- The averaged sequence is constant, so it converges to the left-hand side.
-  set c : ℕ → ℝ := fun n => ∫ x in A, g (prefixProj α r x)
-    * birkhoffAverage ℝ (shift α) φ n x ∂ρ with hcdef
+  -- Weighting by the bounded observables preserves integrability.
+  have hw2 : ∀ h : (ℕ → α) → ℝ, Integrable h ρ →
+      Integrable (fun x => w x * (g (prefixProj α r x) * h x)) (ρ.restrict A) := by
+    intro h hh
+    have hbound : ∀ x : ℕ → α, ‖w x * g (prefixProj α r x)‖ ≤ 1 := by
+      intro x
+      rw [Real.norm_eq_abs, abs_mul]
+      exact (mul_le_mul (hw_bdd _) (hg_bdd _) (abs_nonneg _) zero_le_one).trans_eq (one_mul 1)
+    have hassoc : Integrable (fun x => w x * g (prefixProj α r x) * h x) (ρ.restrict A) :=
+      hh.restrict.bdd_mul (hw'.mul hgm).aestronglyMeasurable
+        (Filter.Eventually.of_forall hbound)
+    exact hassoc.congr (Filter.Eventually.of_forall fun x => by ring)
+  set c : ℕ → ℝ := fun n => ∫ x in A, w x * (g (prefixProj α r x)
+    * birkhoffAverage ℝ (shift α) φ n x) ∂ρ with hcdef
   have hL : Filter.Tendsto c Filter.atTop
-      (nhds (∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ)) := by
+      (nhds (∫ x in A, w x
+        * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r)) ∂ρ)) := by
     refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
     filter_upwards [Filter.eventually_gt_atTop 0] with n hn
     simp only [hcdef, hφdef]
-    exact hρ.setIntegral_prefix_mul_indicator_eq_birkhoffAverage hg hg_bdd hB hA hn.ne'
-  -- The same sequence converges to the conditional-expectation integral.
-  have hR : Filter.Tendsto c Filter.atTop (nhds (∫ x in A, g (prefixProj α r x) * F x ∂ρ)) := by
+    exact hρ.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage hw hw_bdd hg hg_bdd
+      hB hA hn.ne'
+  have hR : Filter.Tendsto c Filter.atTop
+      (nhds (∫ x in A, w x * (g (prefixProj α r x) * F x) ∂ρ)) := by
     rw [Metric.tendsto_atTop]
     intro ε hε
     have hconv := hρ.tendsto_integral_abs_birkhoffAverage_indicator_coord hB r
@@ -369,28 +369,32 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional
     obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hconv ε hε
     refine ⟨N, fun n hn => ?_⟩
     have hb := hN n hn
-    rw [Real.dist_eq, sub_zero,
-      abs_of_nonneg (integral_nonneg fun _ => abs_nonneg _)] at hb
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (integral_nonneg fun _ => abs_nonneg _)] at hb
     have hdiff_int : Integrable (fun x => birkhoffAverage ℝ (shift α) φ n x - F x) ρ :=
       (havg_int n).sub hF_int
     rw [Real.dist_eq, hcdef]
-    calc |(∫ x in A, g (prefixProj α r x) * birkhoffAverage ℝ (shift α) φ n x ∂ρ)
-            - ∫ x in A, g (prefixProj α r x) * F x ∂ρ|
-        = |∫ x in A, g (prefixProj α r x)
-            * (birkhoffAverage ℝ (shift α) φ n x - F x) ∂ρ| := by
-          rw [← integral_sub (hw _ (havg_int n)) (hw _ hF_int)]
+    calc |(∫ x in A, w x * (g (prefixProj α r x)
+            * birkhoffAverage ℝ (shift α) φ n x) ∂ρ)
+            - ∫ x in A, w x * (g (prefixProj α r x) * F x) ∂ρ|
+        = |∫ x in A, w x * (g (prefixProj α r x)
+            * (birkhoffAverage ℝ (shift α) φ n x - F x)) ∂ρ| := by
+          rw [← integral_sub (hw2 _ (havg_int n)) (hw2 _ hF_int)]
           congr 1
           exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
-      _ ≤ ∫ x in A, |g (prefixProj α r x)
-            * (birkhoffAverage ℝ (shift α) φ n x - F x)| ∂ρ := abs_integral_le_integral_abs
+      _ ≤ ∫ x in A, |w x * (g (prefixProj α r x)
+            * (birkhoffAverage ℝ (shift α) φ n x - F x))| ∂ρ := abs_integral_le_integral_abs
       _ ≤ ∫ x in A, |birkhoffAverage ℝ (shift α) φ n x - F x| ∂ρ := by
-          refine integral_mono ((hw _ hdiff_int).abs) hdiff_int.abs.restrict fun x => ?_
-          rw [abs_mul]
-          exact mul_le_of_le_one_left (abs_nonneg _) (hg_bdd _)
+          refine integral_mono ((hw2 _ hdiff_int).abs) hdiff_int.abs.restrict fun x => ?_
+          rw [abs_mul, abs_mul]
+          have hd : (0 : ℝ) ≤ |birkhoffAverage ℝ (shift α) φ n x - F x| := abs_nonneg _
+          calc |w x| * (|g (prefixProj α r x)| * |birkhoffAverage ℝ (shift α) φ n x - F x|)
+              ≤ 1 * (1 * |birkhoffAverage ℝ (shift α) φ n x - F x|) :=
+                mul_le_mul (hw_bdd _) (mul_le_mul (hg_bdd _) le_rfl hd zero_le_one)
+                  (by positivity) zero_le_one
+            _ = |birkhoffAverage ℝ (shift α) φ n x - F x| := by ring
       _ ≤ ∫ x, |birkhoffAverage ℝ (shift α) φ n x - F x| ∂ρ :=
           setIntegral_le_integral hdiff_int.abs (Filter.Eventually.of_forall fun _ => abs_nonneg _)
       _ < ε := hb
-  -- One limit, then name it.
   rw [tendsto_nhds_unique hL hR]
   refine integral_congr_ae ?_
   filter_upwards [ae_restrict_of_ae
