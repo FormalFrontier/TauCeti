@@ -6,7 +6,6 @@ module
 
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
-public import TauCeti.Topology.Covering.Category
 public import TauCeti.Topology.Homotopy.Monodromy.Basic
 import TauCeti.Topology.Homotopy.Monodromy.Functoriality
 
@@ -66,12 +65,8 @@ universal cover modulo the stabilizer of `a`.
 
 Its fibre over `x₀` is the orbit of `a`, so for a transitive action it is the cover
 reconstructed from the action. -/
-def stabilizerCover (a : A) : ConnectedCoveringSpace (TopCat.of X) :=
-  ConnectedCoveringSpace.mk
-    (TopCat.ofHom
-      ⟨subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a),
-        continuous_subgroupQuotientProj x0 _⟩)
-    (isCoveringMap_subgroupQuotientProj x0 _)
+abbrev stabilizerCover (a : A) : ConnectedCoveringSpace (TopCat.of X) :=
+  subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
 /-- The total space of the cover reconstructed from `a` is the quotient of the universal cover
 by the stabilizer of `a`. -/
@@ -80,10 +75,11 @@ theorem stabilizerCover_coe (a : A) :
     (stabilizerCover x0 a : TopCat) =
       TopCat.of (SubgroupQuotient x0
         (MulAction.stabilizer (FundamentalGroup X x0) a)) := by
-  rw [stabilizerCover]
-  exact ConnectedCoveringSpace.mk_coe _ _
+  simpa only [stabilizerCover] using
+    subgroupCover_coe x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
 /-- The projection of the cover reconstructed from `a` is the descended endpoint projection. -/
+@[simp]
 theorem stabilizerCover_proj (a : A) :
     (stabilizerCover x0 a).proj =
       eqToHom (stabilizerCover_coe x0 a) ≫
@@ -91,83 +87,12 @@ theorem stabilizerCover_proj (a : A) :
           ⟨subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a),
             continuous_subgroupQuotientProj x0 _⟩ := by
   simpa only [stabilizerCover] using
-    ConnectedCoveringSpace.mk_proj
-      (TopCat.ofHom
-        ⟨subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a),
-          continuous_subgroupQuotientProj x0 _⟩)
-      (isCoveringMap_subgroupQuotientProj x0 _)
-
-/-- The characteristic total-space equality for `stabilizerCover`, viewed as a homeomorphism. -/
-private def stabilizerCoverTotalSpaceHomeomorph (a : A) :
-    (stabilizerCover x0 a : TopCat) ≃ₜ
-      SubgroupQuotient x0 (MulAction.stabilizer (FundamentalGroup X x0) a) :=
-  TopCat.homeoOfIso (eqToIso (stabilizerCover_coe x0 a))
-
-/-- The characteristic total-space homeomorphism commutes with the two projections. -/
-private theorem subgroupQuotientProj_stabilizerCoverTotalSpaceHomeomorph (a : A)
-    (e : (stabilizerCover x0 a : TopCat)) :
-    subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
-        (stabilizerCoverTotalSpaceHomeomorph x0 a e) =
-      (stabilizerCover x0 a).proj e := by
-  have h := DFunLike.congr_fun
-    (congrArg TopCat.Hom.hom (stabilizerCover_proj x0 a)) e
-  exact h.symm
-
-/-- Transport from the fibre of the bundled cover to the fibre of its quotient projection. -/
-private def stabilizerCoverFiberEquivSubgroupQuotient (a : A) :
-    ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃
-      subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a) ⁻¹' {x0} :=
-  ((stabilizerCoverTotalSpaceHomeomorph x0 a).subtype fun e => by
-    simp only [Set.mem_preimage, Set.mem_singleton_iff]
-    rw [subgroupQuotientProj_stabilizerCoverTotalSpaceHomeomorph x0 a e]).toEquiv
-
-/-- On underlying points, fibre transport applies the characteristic homeomorphism. -/
-@[simp]
-private theorem stabilizerCoverFiberEquivSubgroupQuotient_apply_coe (a : A)
-    (e : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0}) :
-    (stabilizerCoverFiberEquivSubgroupQuotient x0 a e :
-        SubgroupQuotient x0 (MulAction.stabilizer (FundamentalGroup X x0) a)) =
-      stabilizerCoverTotalSpaceHomeomorph x0 a e :=
-  rfl
-
-/-- Fibre transport from the bundled cover to the quotient projection commutes with monodromy. -/
-private theorem stabilizerCoverFiberEquivSubgroupQuotient_apply_monodromy (a : A)
-    (g : FundamentalGroup X x0) (e : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0}) :
-    stabilizerCoverFiberEquivSubgroupQuotient x0 a
-        ((stabilizerCover x0 a).isCoveringMap_proj.monodromy g e) =
-      (isCoveringMap_subgroupQuotientProj x0
-          (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy g
-        (stabilizerCoverFiberEquivSubgroupQuotient x0 a e) := by
-  have hmonodromy := TauCeti.IsCoveringMap.fiberMap_monodromy
-    (stabilizerCover x0 a).isCoveringMap_proj
-    (isCoveringMap_subgroupQuotientProj x0
-      (MulAction.stabilizer (FundamentalGroup X x0) a))
-    (stabilizerCoverTotalSpaceHomeomorph x0 a)
-    (funext (subgroupQuotientProj_stabilizerCoverTotalSpaceHomeomorph x0 a)) g e
-  have hfiberMap (e' : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0}) :
-      TauCeti.IsCoveringMap.fiberMap (stabilizerCoverTotalSpaceHomeomorph x0 a)
-          (funext (subgroupQuotientProj_stabilizerCoverTotalSpaceHomeomorph x0 a)) x0 e' =
-        stabilizerCoverFiberEquivSubgroupQuotient x0 a e' := by
-    apply Subtype.ext
-    rw [TauCeti.IsCoveringMap.fiberMap_apply_coe]
-    exact (stabilizerCoverFiberEquivSubgroupQuotient_apply_coe x0 a e').symm
-  simpa only [hfiberMap] using hmonodromy
+    subgroupCover_proj x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
 /-- The distinguished point of the fibre over `x₀` of the cover reconstructed from `a`: the
 class of the constant path at the basepoint. -/
-def stabilizerCoverBasepointFiber (a : A) : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} :=
-  (stabilizerCoverFiberEquivSubgroupQuotient x0 a).symm
-    (SubgroupQuotient.basepointFiber x0
-      (MulAction.stabilizer (FundamentalGroup X x0) a))
-
-/-- Transport identifies the bundled distinguished point with the quotient distinguished point. -/
-@[simp]
-private theorem stabilizerCoverFiberEquivSubgroupQuotient_basepoint (a : A) :
-    stabilizerCoverFiberEquivSubgroupQuotient x0 a
-        (stabilizerCoverBasepointFiber x0 a) =
-      SubgroupQuotient.basepointFiber x0
-        (MulAction.stabilizer (FundamentalGroup X x0) a) :=
-  Equiv.apply_symm_apply _ _
+abbrev stabilizerCoverBasepointFiber (a : A) : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} :=
+  subgroupCoverBasepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
 /-! ### The fibre as an orbit
 
@@ -254,7 +179,8 @@ Under this equivalence the distinguished point of the fibre corresponds to `a`, 
 `stabilizerCoverFiberEquivOrbit_apply_monodromy`. -/
 def stabilizerCoverFiberEquivOrbit (a : A) :
     ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃ MulAction.orbit (FundamentalGroup X x0) a :=
-  (stabilizerCoverFiberEquivSubgroupQuotient x0 a).trans (fiberEquivOrbitAux x0 a)
+  (subgroupCoverFiberEquivSubgroupQuotient x0
+    (MulAction.stabilizer (FundamentalGroup X x0) a)).trans (fiberEquivOrbitAux x0 a)
 
 /-- The fibre equivalence sends the distinguished point of the fibre to `a`. -/
 @[simp]
@@ -263,7 +189,7 @@ theorem stabilizerCoverFiberEquivOrbit_apply_basepoint (a : A) :
       ⟨a, MulAction.mem_orbit_self a⟩ := by
   refine Subtype.ext ?_
   simp only [stabilizerCoverFiberEquivOrbit, Equiv.trans_apply]
-  rw [stabilizerCoverFiberEquivSubgroupQuotient_basepoint]
+  rw [subgroupCoverFiberEquivSubgroupQuotient_basepoint]
   -- the distinguished point is its own translate by the identity loop class
   have h := fiberEquivOrbitAux_apply_monodromy_basepoint x0 a 1
   rwa [one_smul, FundamentalGroup.one_def,
@@ -279,9 +205,10 @@ theorem stabilizerCoverFiberEquivOrbit_apply_monodromy (a : A) (g : FundamentalG
         ((stabilizerCover x0 a).isCoveringMap_proj.monodromy g e) =
       g • stabilizerCoverFiberEquivOrbit x0 a e := by
   simp only [stabilizerCoverFiberEquivOrbit, Equiv.trans_apply]
-  rw [stabilizerCoverFiberEquivSubgroupQuotient_apply_monodromy]
+  rw [subgroupCoverFiberEquivSubgroupQuotient_apply_monodromy]
   exact fiberEquivOrbitAux_apply_monodromy x0 a g
-    (stabilizerCoverFiberEquivSubgroupQuotient x0 a e)
+    (subgroupCoverFiberEquivSubgroupQuotient x0
+      (MulAction.stabilizer (FundamentalGroup X x0) a) e)
 
 /-! ### Transitive actions -/
 
