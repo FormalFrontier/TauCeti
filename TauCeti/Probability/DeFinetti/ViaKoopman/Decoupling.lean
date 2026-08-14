@@ -240,7 +240,7 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
             x ((Fin.snoc (fun j : Fin r => (j : ℕ)) (r + d) : Fin (r + 1) → ℕ) i)) ∂ρ :=
           integral_congr_ae (Filter.Eventually.of_forall fun x => by simp only [hcomp])
       _ = ∫ x in A, w x * G (prefixProj α (r + 1) x) ∂ρ :=
-          hρ.setIntegral_mul_block_eq_prefix_of_strictMono_of_measurableSet_invariants
+          hρ.setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurableSet_invariants
             (strictMono_snoc_prefix r d) hA hw hG_meas
   rw [key m, ← key 0, Nat.add_zero]
 
