@@ -96,7 +96,7 @@ theorem isHomogeneous_zero [ZeroMemClass σN N] (𝒜 : (i : κ) → ι → σM 
   simp
 
 /-- A sum of multilinear maps of the same degree has that degree. -/
-@[grind →]
+@[grind ←]
 theorem IsHomogeneous.add [AddMemClass σN N] {f g : MultilinearMap R M N}
     {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι}
     (hf : IsHomogeneous f 𝒜 ℬ q) (hg : IsHomogeneous g 𝒜 ℬ q) :
@@ -106,6 +106,7 @@ theorem IsHomogeneous.add [AddMemClass σN N] {f g : MultilinearMap R M N}
 
 /-- Precomposing each input by a homogeneous linear map adds all of their degrees to the degree
 of the multilinear map. -/
+@[grind]
 theorem IsHomogeneous.compLinearMap
     {M' : κ → Type uP} {σM' : κ → Type*} [∀ i, AddCommMonoid (M' i)] [∀ i, Module R (M' i)]
     [∀ i, SetLike (σM' i) (M' i)]
@@ -152,6 +153,7 @@ theorem IsHomogeneous.compMultilinearMap
 
 /-- Reindexing the inputs of a homogeneous multilinear map along an equivalence of index types
 preserves its degree. -/
+@[grind]
 theorem IsHomogeneous.domDomCongrLinearEquiv' {κ' : Type*} [Fintype κ']
     {S : Type*} [Semiring S] [Module S N] [SMulCommClass R S N] (σ : κ ≃ κ')
     {f : MultilinearMap R M N} {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι}
@@ -180,7 +182,7 @@ variable {R : Type uR} {ι : Type uι} {κ : Type uκ}
   [∀ i, SetLike (σM i) (M i)] [SetLike σN N]
 
 /-- The negative of a homogeneous multilinear map has the same degree. -/
-@[grind →]
+@[grind ←]
 theorem IsHomogeneous.neg [NegMemClass σN N] {f : MultilinearMap R M N}
     {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι}
     (hf : IsHomogeneous f 𝒜 ℬ q) :
@@ -189,7 +191,7 @@ theorem IsHomogeneous.neg [NegMemClass σN N] {f : MultilinearMap R M N}
   simpa using neg_mem (hf d x hx)
 
 /-- A difference of multilinear maps of the same degree has that degree. -/
-@[grind →]
+@[grind ←]
 theorem IsHomogeneous.sub [AddMemClass σN N] [NegMemClass σN N] {f g : MultilinearMap R M N}
     {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι}
     (hf : IsHomogeneous f 𝒜 ℬ q) (hg : IsHomogeneous g 𝒜 ℬ q) :
@@ -198,41 +200,45 @@ theorem IsHomogeneous.sub [AddMemClass σN N] [NegMemClass σN N] {f g : Multili
 
 end Neg
 
-section CommSemiring
+section Scalars
 
-variable {R : Type uR} {ι : Type uι} {κ : Type uκ}
+variable {R : Type uR} {S : Type*} {ι : Type uι} {κ : Type uκ}
   {M : κ → Type uM} {N : Type uN} {σM : κ → Type*} {σN : Type*}
-  [CommSemiring R] [AddCommMonoid ι] [Fintype κ]
+  [Semiring R] [AddCommMonoid ι] [Fintype κ]
   [∀ i, AddCommMonoid (M i)] [AddCommMonoid N]
   [∀ i, Module R (M i)] [Module R N]
   [∀ i, SetLike (σM i) (M i)] [SetLike σN N]
 
 /-- A scalar multiple of a homogeneous multilinear map has the same degree. -/
 @[grind ←]
-theorem IsHomogeneous.smul [SMulMemClass σN R N] {f : MultilinearMap R M N}
+theorem IsHomogeneous.smul [Monoid S] [DistribMulAction S N] [SMulCommClass R S N]
+    [SMulMemClass σN S N] {f : MultilinearMap R M N}
     {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι}
-    (hf : IsHomogeneous f 𝒜 ℬ q) (r : R) :
-    IsHomogeneous (r • f) 𝒜 ℬ q := by
+    (hf : IsHomogeneous f 𝒜 ℬ q) (s : S) :
+    IsHomogeneous (s • f) 𝒜 ℬ q := by
   intro d x hx
-  simpa using SMulMemClass.smul_mem r (hf d x hx)
+  simpa using SMulMemClass.smul_mem s (hf d x hx)
 
-/-- Multilinear maps of a fixed degree form a submodule. -/
-def homogeneousSubmodule [AddSubmonoidClass σN N] [SMulMemClass σN R N]
+/-- Multilinear maps of a fixed degree form a submodule over any scalar ring acting on the
+target. -/
+def homogeneousSubmodule [Semiring S] [Module S N] [SMulCommClass R S N]
+    [AddSubmonoidClass σN N] [SMulMemClass σN S N]
     (𝒜 : (i : κ) → ι → σM i) (ℬ : ι → σN) (q : ι) :
-    Submodule R (MultilinearMap R M N) where
+    Submodule S (MultilinearMap R M N) where
   carrier := {f | IsHomogeneous f 𝒜 ℬ q}
   zero_mem' := isHomogeneous_zero 𝒜 ℬ q
   add_mem' hf hg := hf.add hg
-  smul_mem' r _ hf := hf.smul r
+  smul_mem' s _ hf := hf.smul s
 
-@[simp]
-theorem mem_homogeneousSubmodule [AddSubmonoidClass σN N] [SMulMemClass σN R N]
+@[simp, grind =]
+theorem mem_homogeneousSubmodule [Semiring S] [Module S N] [SMulCommClass R S N]
+    [AddSubmonoidClass σN N] [SMulMemClass σN S N]
     {f : MultilinearMap R M N}
     {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι} :
-    f ∈ homogeneousSubmodule 𝒜 ℬ q ↔ IsHomogeneous f 𝒜 ℬ q :=
+    f ∈ homogeneousSubmodule (S := S) 𝒜 ℬ q ↔ IsHomogeneous f 𝒜 ℬ q :=
   Iff.rfl
 
-end CommSemiring
+end Scalars
 
 end MultilinearMap
 

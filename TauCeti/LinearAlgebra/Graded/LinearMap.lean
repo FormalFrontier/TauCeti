@@ -11,9 +11,12 @@ public import Mathlib.Algebra.Module.Submodule.LinearMap
 
 This file records the degree of a linear map between modules equipped with families of graded
 subobjects. A linear map has degree `q` when it maps everything in the degree-`p` piece of the
-source into the degree-`p + q` piece of the target. The families are indexed by an arbitrary
-`SetLike` type, so gradings by submodules, additive subgroups or additive submonoids are all
-covered, and no direct-sum hypothesis is imposed.
+source into the degree-`p + q` piece of the target. This is a containment condition, so no
+direct-sum hypothesis is imposed and a map can be homogeneous of several degrees at once. The
+families are indexed by an arbitrary `SetLike` type, so the homogeneity predicate and the additive
+closure lemmas cover gradings by submodules, additive subgroups and additive submonoids alike;
+`LinearMap.IsHomogeneous.smul` and `LinearMap.homogeneousSubmodule` additionally need the target
+pieces to be closed under the scalar action, i.e. a submodule-valued grading.
 
 The multilinear counterpart, and the degree calculus for substitution, are in
 `TauCeti.LinearAlgebra.Graded.Multilinear`.
@@ -72,7 +75,7 @@ theorem isHomogeneous_zero [ZeroMemClass σN N] (𝒜 : ι → σM) (ℬ : ι �
   simp
 
 /-- A sum of linear maps of the same degree has that degree. -/
-@[grind →]
+@[grind ←]
 theorem IsHomogeneous.add [AddMemClass σN N] {f g : M →ₗ[R] N} {𝒜 : ι → σM}
     {ℬ : ι → σN} {q : ι} (hf : IsHomogeneous f 𝒜 ℬ q) (hg : IsHomogeneous g 𝒜 ℬ q) :
     IsHomogeneous (f + g) 𝒜 ℬ q := by
@@ -105,7 +108,7 @@ variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN} {σM : Type*}
   [Module R M] [Module R N] [SetLike σM M] [SetLike σN N]
 
 /-- The negative of a homogeneous linear map has the same degree. -/
-@[grind →]
+@[grind ←]
 theorem IsHomogeneous.neg [NegMemClass σN N] {f : M →ₗ[R] N} {𝒜 : ι → σM}
     {ℬ : ι → σN} {q : ι} (hf : IsHomogeneous f 𝒜 ℬ q) :
     IsHomogeneous (-f) 𝒜 ℬ q := by
@@ -113,7 +116,7 @@ theorem IsHomogeneous.neg [NegMemClass σN N] {f : M →ₗ[R] N} {𝒜 : ι →
   simpa using neg_mem (hf hx)
 
 /-- A difference of linear maps of the same degree has that degree. -/
-@[grind →]
+@[grind ←]
 theorem IsHomogeneous.sub [AddMemClass σN N] [NegMemClass σN N] {f g : M →ₗ[R] N}
     {𝒜 : ι → σM} {ℬ : ι → σN} {q : ι} (hf : IsHomogeneous f 𝒜 ℬ q)
     (hg : IsHomogeneous g 𝒜 ℬ q) :
@@ -122,35 +125,39 @@ theorem IsHomogeneous.sub [AddMemClass σN N] [NegMemClass σN N] {f g : M →�
 
 end Neg
 
-section CommSemiring
+section Scalars
 
-variable {R : Type uR} {ι : Type uι} {M : Type uM} {N : Type uN} {σM : Type*} {σN : Type*}
-  [CommSemiring R] [AddMonoid ι] [AddCommMonoid M] [AddCommMonoid N]
+variable {R : Type uR} {S : Type*} {ι : Type uι} {M : Type uM} {N : Type uN}
+  {σM : Type*} {σN : Type*}
+  [Semiring R] [AddMonoid ι] [AddCommMonoid M] [AddCommMonoid N]
   [Module R M] [Module R N] [SetLike σM M] [SetLike σN N]
 
 /-- A scalar multiple of a homogeneous linear map has the same degree. -/
 @[grind ←]
-theorem IsHomogeneous.smul [SMulMemClass σN R N] {f : M →ₗ[R] N} {𝒜 : ι → σM}
-    {ℬ : ι → σN} {q : ι} (hf : IsHomogeneous f 𝒜 ℬ q) (r : R) :
-    IsHomogeneous (r • f) 𝒜 ℬ q := by
+theorem IsHomogeneous.smul [Monoid S] [DistribMulAction S N] [SMulCommClass R S N]
+    [SMulMemClass σN S N] {f : M →ₗ[R] N} {𝒜 : ι → σM}
+    {ℬ : ι → σN} {q : ι} (hf : IsHomogeneous f 𝒜 ℬ q) (s : S) :
+    IsHomogeneous (s • f) 𝒜 ℬ q := by
   intro p x hx
-  simpa using SMulMemClass.smul_mem r (hf hx)
+  simpa using SMulMemClass.smul_mem s (hf hx)
 
-/-- Linear maps of a fixed degree form a submodule. -/
-def homogeneousSubmodule [AddSubmonoidClass σN N] [SMulMemClass σN R N] (𝒜 : ι → σM)
-    (ℬ : ι → σN) (q : ι) : Submodule R (M →ₗ[R] N) where
+/-- Linear maps of a fixed degree form a submodule over any scalar ring acting on the target. -/
+def homogeneousSubmodule [Semiring S] [Module S N] [SMulCommClass R S N]
+    [AddSubmonoidClass σN N] [SMulMemClass σN S N] (𝒜 : ι → σM)
+    (ℬ : ι → σN) (q : ι) : Submodule S (M →ₗ[R] N) where
   carrier := {f | IsHomogeneous f 𝒜 ℬ q}
   zero_mem' := isHomogeneous_zero 𝒜 ℬ q
   add_mem' hf hg := hf.add hg
-  smul_mem' r _ hf := hf.smul r
+  smul_mem' s _ hf := hf.smul s
 
-@[simp]
-theorem mem_homogeneousSubmodule [AddSubmonoidClass σN N] [SMulMemClass σN R N]
+@[simp, grind =]
+theorem mem_homogeneousSubmodule [Semiring S] [Module S N] [SMulCommClass R S N]
+    [AddSubmonoidClass σN N] [SMulMemClass σN S N]
     {f : M →ₗ[R] N} {𝒜 : ι → σM} {ℬ : ι → σN} {q : ι} :
-    f ∈ homogeneousSubmodule 𝒜 ℬ q ↔ IsHomogeneous f 𝒜 ℬ q :=
+    f ∈ homogeneousSubmodule (S := S) 𝒜 ℬ q ↔ IsHomogeneous f 𝒜 ℬ q :=
   Iff.rfl
 
-end CommSemiring
+end Scalars
 
 end LinearMap
 
