@@ -45,8 +45,8 @@ Two statements are worth singling out.
   `Aᵀ * G * A = G`.
 * Base change along an algebra `R → A` is a group homomorphism
   `Aut(M, B) →* Aut(A ⊗[R] M, B_A)` (`TauCeti.BilinForm.isometryGroupBaseChange`). For `R = ℤ` and
-  `A = ℂ` this is the action of `Aut(V, Q)` on the complexification of the lattice, through which
-  the monodromy of a variation of Hodge structure acts.
+  `A = ℂ` this is the action of `Aut(V, Q)` on the complexification of the lattice. When `Q` is
+  preserved by monodromy, the monodromy of a variation of Hodge structure acts through this map.
 
 ## Main definitions
 
@@ -149,8 +149,9 @@ end IsIsometry
 that preserve `B`.
 
 For a finite free `ℤ`-module `V` carrying an integral form `Q` this is the arithmetic group
-`Aut(V, Q)`; a variation of Hodge structure has its monodromy representation land in it, acting on
-the complexification through `TauCeti.BilinForm.isometryGroupBaseChange`. -/
+`Aut(V, Q)`; when `Q` is preserved by monodromy, a variation of Hodge structure has its monodromy
+representation land in this group and act on the complexification through
+`TauCeti.BilinForm.isometryGroupBaseChange`. -/
 def isometryGroup (B : BilinForm R M) : Subgroup (M ≃ₗ[R] M) where
   carrier := {e | IsIsometry B (e : M →ₗ[R] M)}
   one_mem' := isIsometry_iff.mpr fun _ _ => rfl
@@ -267,7 +268,8 @@ theorem IsIsometry.baseChange (hf : IsIsometry B f) :
 
 /-- Base change along an `R`-algebra `A` is a group homomorphism
 `Aut(M, B) →* Aut(A ⊗[R] M, B_A)`. For `R = ℤ` and `A = ℂ` this is the action of the arithmetic
-group `Aut(V, Q)` on the complexification of the lattice. -/
+group `Aut(V, Q)` on the complexification of the lattice, through which monodromy acts when it
+preserves `Q`. -/
 def isometryGroupBaseChange (B : BilinForm R M) :
     isometryGroup B →* isometryGroup (LinearMap.BilinForm.baseChange A B) where
   toFun e := ⟨LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M),
