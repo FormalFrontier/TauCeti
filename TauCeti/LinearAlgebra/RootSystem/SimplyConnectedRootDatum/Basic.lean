@@ -38,8 +38,6 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
 * `TauCeti.sub_mem_closure_of_le`: a difference of two members of a family telescopes into the
   additive closure of the consecutive differences. This is the shape in which those same axioms are
   met by the pinned data written in a coordinate potential.
-* `TauCeti.sum_smul_eq_of_eq_single`: a family whose members are the standard basis of `κ → R`
-  expands every vector in its own coordinates.
 
 Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
 by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`. The symmetry
@@ -99,22 +97,6 @@ theorem mem_simpleSupport_iff_lt (he : Injective e) (h : ∀ i, ((e i : Fin N) :
 
 end SimpleSupportFin
 
-/-! ## Families that are the standard basis -/
-
-section StandardBasis
-
-variable {κ R : Type*} [DecidableEq κ] [Fintype κ] [Semiring R] {b : κ → κ → R}
-
-/-- **A vector expands in its own coordinates over the standard basis.** This is the shape in which
-`RootPairing.Base` asks a coroot to be a combination of the simple coroots, the simple coroots of a
-simply connected datum being the standard basis. -/
-theorem sum_smul_eq_of_eq_single (hb : ∀ i, b i = Pi.single i 1) (v : κ → R) :
-    ∑ i, v i • b i = v := by
-  have hi (i : κ) : v i • b i = Pi.single i (v i) := by
-    rw [hb i, ← Pi.single_smul', smul_eq_mul, mul_one]
-  simpa only [hi] using Finset.univ_sum_single v
-
-end StandardBasis
 
 /-! ## Combinations with coefficients of one sign -/
 

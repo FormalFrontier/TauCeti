@@ -175,8 +175,8 @@ private lemma e8Coroot_nonneg_or_nonpos (j : Fin 240) :
 /-- In the cocharacter lattice a coroot is the combination of the simple coroots recorded by its
 own coordinates, the simple coroots being the standard basis. -/
 private lemma sum_smul_coroot_e8SimpleIndex (j : Fin 240) :
-    ∑ k : Fin 8, e8Coroot j k • e8Coroot (e8SimpleIndex k) = e8Coroot j :=
-  sum_smul_eq_of_eq_single coroot_e8SimpleIndex (e8Coroot j)
+    ∑ k : Fin 8, e8Coroot j k • e8Coroot (e8SimpleIndex k) = e8Coroot j := by
+  simpa only [coroot_e8SimpleIndex] using (pi_eq_sum_univ' (e8Coroot j)).symm
 
 /-- In the character lattice a root is the combination of the simple roots recorded by the same
 coordinates, the two tables differing by the Cartan-matrix map. -/
