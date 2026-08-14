@@ -27,7 +27,7 @@ group"), in the same spirit as the multiplicative group `𝔾ₘ`.
   `SymmetricAlgebra R M →ₐ[R] A` is the additive monoid `M →ₗ[R] A`.
 * `TauCeti.AdditiveGroup.gaPointsMulEquiv`: the monoid of `A`-valued points of `𝔾ₐ` over `R`
   is the additive monoid of `A`.
-* `TauCeti.AdditiveGroup.gaPointMul`: multiplication of the parameters of two `𝔾ₐ`-points.
+* `TauCeti.AdditiveGroup.gaPointParamMul`: multiplication of the parameters of two `𝔾ₐ`-points.
 * `TauCeti.AdditiveGroup.pointsMulEquiv_mapValue`: the points equivalence is natural in the
   value algebra.
 
@@ -213,8 +213,8 @@ theorem mapValue_gaPointsMulEquiv_symm_apply (φ : A →ₐ[R] B) (a : Multiplic
 `G`.
 
 This is not the convolution multiplication of `𝔾ₐ(A)`: convolution corresponds to addition,
-whereas `gaPointMul F G` records multiplication in the value algebra. -/
-noncomputable def gaPointMul
+whereas `gaPointParamMul F G` records multiplication in the value algebra. -/
+noncomputable def gaPointParamMul
     (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
     WithConv (SymmetricAlgebra R R →ₐ[R] A) :=
   (gaPointsMulEquiv (R := R) (A := A)).symm <|
@@ -222,88 +222,36 @@ noncomputable def gaPointMul
       (Multiplicative.toAdd (gaPointsMulEquiv F) *
         Multiplicative.toAdd (gaPointsMulEquiv G))
 
-/-- Under the points equivalence, `gaPointMul` is multiplication in the value algebra. -/
+/-- Under the points equivalence, `gaPointParamMul` is multiplication in the value algebra. -/
 @[simp]
-theorem gaPointsMulEquiv_gaPointMul
+theorem gaPointsMulEquiv_gaPointParamMul
     (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointsMulEquiv (gaPointMul F G) =
+    gaPointsMulEquiv (gaPointParamMul F G) =
       Multiplicative.ofAdd
         (Multiplicative.toAdd (gaPointsMulEquiv F) *
           Multiplicative.toAdd (gaPointsMulEquiv G)) := by
-  rw [gaPointMul, MulEquiv.apply_symm_apply]
+  rw [gaPointParamMul, MulEquiv.apply_symm_apply]
 
-/-- The value of `gaPointMul F G` on the additive coordinate is the product of the two original
+/-- The value of `gaPointParamMul F G` on the additive coordinate is the product of the two original
 coordinate values. -/
 @[simp]
-theorem gaPointMul_apply_ι (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    (gaPointMul F G).ofConv (ι R R 1) =
+theorem gaPointParamMul_apply_ι (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
+    (gaPointParamMul F G).ofConv (ι R R 1) =
       F.ofConv (ι R R 1) * G.ofConv (ι R R 1) := by
-  rw [← toAdd_gaPointsMulEquiv, gaPointsMulEquiv_gaPointMul, toAdd_ofAdd,
-    toAdd_gaPointsMulEquiv, toAdd_gaPointsMulEquiv]
+  simpa only [toAdd_gaPointsMulEquiv, toAdd_ofAdd] using
+    congrArg Multiplicative.toAdd (gaPointsMulEquiv_gaPointParamMul F G)
 
 /-- Multiplication of `𝔾ₐ`-point parameters is natural in the value algebra. -/
-theorem mapValue_gaPointMul (φ : A →ₐ[R] B)
+theorem mapValue_gaPointParamMul (φ : A →ₐ[R] B)
     (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    AlgHom.mapValue (H := SymmetricAlgebra R R) φ (gaPointMul F G) =
-      gaPointMul
+    AlgHom.mapValue (H := SymmetricAlgebra R R) φ (gaPointParamMul F G) =
+      gaPointParamMul
         (AlgHom.mapValue (H := SymmetricAlgebra R R) φ F)
         (AlgHom.mapValue (H := SymmetricAlgebra R R) φ G) := by
-  rw [gaPointMul, mapValue_gaPointsMulEquiv_symm_apply, gaPointMul,
+  rw [gaPointParamMul, mapValue_gaPointsMulEquiv_symm_apply, gaPointParamMul,
     toAdd_gaPointsMulEquiv_mapValue, toAdd_gaPointsMulEquiv_mapValue]
   exact congrArg (gaPointsMulEquiv (R := R) (A := B)).symm
     (congrArg Multiplicative.ofAdd (map_mul φ _ _))
-
-/-- Multiplying the zero parameter on the left gives the zero parameter; the zero point is the
-convolution identity. -/
-@[simp]
-theorem gaPointMul_one_left (F : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointMul 1 F = 1 := by
-  apply (gaPointsMulEquiv (R := R) (A := A)).injective
-  simp
-
-/-- Multiplying the zero parameter on the right gives the zero parameter; the zero point is the
-convolution identity. -/
-@[simp]
-theorem gaPointMul_one_right (F : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointMul F 1 = 1 := by
-  apply (gaPointsMulEquiv (R := R) (A := A)).injective
-  simp
-
-/-- Multiplication of `𝔾ₐ`-point parameters is commutative. -/
-theorem gaPointMul_comm (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointMul F G = gaPointMul G F := by
-  apply (gaPointsMulEquiv (R := R) (A := A)).injective
-  simp only [gaPointsMulEquiv_gaPointMul]
-  exact congrArg Multiplicative.ofAdd (mul_comm _ _)
-
-/-- Multiplication of `𝔾ₐ`-point parameters is associative. -/
-theorem gaPointMul_assoc (F G K : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointMul (gaPointMul F G) K = gaPointMul F (gaPointMul G K) := by
-  apply (gaPointsMulEquiv (R := R) (A := A)).injective
-  simp only [gaPointsMulEquiv_gaPointMul, toAdd_ofAdd]
-  exact congrArg Multiplicative.ofAdd (mul_assoc _ _ _)
-
-/-- Multiplication of `𝔾ₐ`-point parameters distributes over convolution in the left input. -/
-@[simp]
-theorem gaPointMul_mul_left (F G K : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointMul (F * G) K = gaPointMul F K * gaPointMul G K := by
-  apply (gaPointsMulEquiv (R := R) (A := A)).injective
-  simpa only [gaPointsMulEquiv_gaPointMul, map_mul, toAdd_mul, ofAdd_add] using
-    congrArg Multiplicative.ofAdd (add_mul
-      (Multiplicative.toAdd (gaPointsMulEquiv F))
-      (Multiplicative.toAdd (gaPointsMulEquiv G))
-      (Multiplicative.toAdd (gaPointsMulEquiv K)))
-
-/-- Multiplication of `𝔾ₐ`-point parameters distributes over convolution in the right input. -/
-@[simp]
-theorem gaPointMul_mul_right (F G K : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
-    gaPointMul F (G * K) = gaPointMul F G * gaPointMul F K := by
-  apply (gaPointsMulEquiv (R := R) (A := A)).injective
-  simpa only [gaPointsMulEquiv_gaPointMul, map_mul, toAdd_mul, ofAdd_add] using
-    congrArg Multiplicative.ofAdd (mul_add
-      (Multiplicative.toAdd (gaPointsMulEquiv F))
-      (Multiplicative.toAdd (gaPointsMulEquiv G))
-      (Multiplicative.toAdd (gaPointsMulEquiv K)))
 
 end Ga
 
