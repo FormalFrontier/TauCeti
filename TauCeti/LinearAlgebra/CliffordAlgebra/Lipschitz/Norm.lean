@@ -20,6 +20,8 @@ norm: the Clifford norm descends modulo squares through the kernel of that actio
 ## Main results
 
 * `TauCeti.CliffordAlgebra.lipschitzNorm`: the unit-valued Clifford norm.
+* `TauCeti.CliffordAlgebra.self_mul_star_eq_algebraMap_lipschitzNorm`: its second
+  characteristic Clifford-product equation.
 * `TauCeti.CliffordAlgebra.lipschitzNorm_unitι`: its value on a generating vector.
 
 ## References
@@ -141,6 +143,15 @@ theorem star_mul_self_eq_algebraMap_lipschitzNorm
         ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
       algebraMap R (CliffordAlgebra Q) (lipschitzNorm Q x : R) :=
   star_mul_self_eq_lipschitzNormUnit Q x
+
+/-- The product of a Lipschitz element with its Clifford conjugate is its scalar norm. -/
+@[simp]
+theorem self_mul_star_eq_algebraMap_lipschitzNorm
+    (Q : QuadraticForm R V) (x : lipschitzGroup Q) :
+    ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) *
+        star ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (lipschitzNorm Q x : R) :=
+  (Classical.choose_spec (exists_lipschitzNormUnit Q x x.2)).2
 
 /-- A generating vector has Clifford norm equal to the negative of its quadratic norm. -/
 @[simp]
