@@ -98,7 +98,7 @@ theorem timeAxis_isPositiveDefinite (hF : IsSemigroupGroupPD F) :
 theorem timeAxis_normSq_le (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) :
     RCLike.normSq (F (t + u, 0))
       ≤ RCLike.re (F (t + t, 0)) * RCLike.re (F (u + u, 0)) :=
-  normSq_le_of_posSemidef hF.posSemidef_timeAxis t u
+  hF.posSemidef_timeAxis.normSq_le t u
 
 end IsSemigroupGroupPD
 

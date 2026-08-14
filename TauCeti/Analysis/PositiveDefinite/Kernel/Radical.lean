@@ -97,8 +97,7 @@ theorem positiveDefiniteKernelFinsuppForm_self_eq_zero_iff_mem_ker
   intro hx
   rw [mem_positiveDefiniteKernelFinsuppSesqFormKer]
   intro y
-  exact eq_zero_of_apply_self_eq_zero_left_of_posSemidef
-    (posSemidef_positiveDefiniteKernelFinsuppForm hK) hx
+  exact (posSemidef_positiveDefiniteKernelFinsuppForm hK).eq_zero_of_apply_self_eq_zero_left hx
 
 /-- For a conjugate-symmetric kernel, a vector in the null submodule also pairs to zero on the
 right. This is the column-vanishing form obtained from symmetry of the bundled sesquilinear

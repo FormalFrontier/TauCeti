@@ -116,7 +116,7 @@ theorem timeSlice_sum_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) {ι : Typ
 /-- The fixed-time spatial Cauchy--Schwarz bound for the kernel entry `F (t, v - w)`. -/
 theorem timeSlice_normSq_le (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :
     RCLike.normSq (F (t, v - w)) ≤ RCLike.re (F (t, 0)) * RCLike.re (F (t, 0)) := by
-  simpa using normSq_le_of_posSemidef (hF.posSemidef_timeSlice t) v w
+  simpa using (hF.posSemidef_timeSlice t).normSq_le v w
 
 /-- At a fixed time, a semigroup-group positive-definite function is bounded by the real part of
 its zero-spatial value. -/
@@ -129,8 +129,8 @@ theorem norm_apply_le_timeSlice_diagonal_re (hF : IsSemigroupGroupPD F) (t : ℝ
 /-- If the fixed-time diagonal value is zero, then the whole fixed-time spatial slice is zero. -/
 theorem timeSlice_eq_zero_of_timeSlice_diagonal_eq_zero (hF : IsSemigroupGroupPD F)
     {t : ℝ≥0} (ht : F (t, 0) = 0) (v : V) : F (t, v) = 0 := by
-  simpa using eq_zero_of_apply_self_eq_zero_left_of_posSemidef
-    (hF.posSemidef_timeSlice t) (a := v) (b := 0) (by simpa using ht)
+  simpa using (hF.posSemidef_timeSlice t).eq_zero_of_apply_self_eq_zero_left
+    (a := v) (b := 0) (by simpa using ht)
 
 /-- Normalized fixed-time slices are bounded by `1`. -/
 theorem norm_apply_le_one_of_timeSlice_diagonal_eq_one (hF : IsSemigroupGroupPD F)

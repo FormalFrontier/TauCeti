@@ -21,10 +21,10 @@ Mathlib code is vendored.
 
 ## Main declarations
 
-* `TauCeti.normSq_le_of_posSemidef`: scalar Cauchy--Schwarz.
-* `TauCeti.eq_zero_of_apply_self_eq_zero_left_of_posSemidef` and
-  `TauCeti.eq_zero_of_apply_self_eq_zero_right_of_posSemidef`: zero-diagonal vanishing.
-* `TauCeti.norm_le_one_of_apply_self_eq_one_of_posSemidef`: the normalized scalar bound.
+* `Matrix.PosSemidef.normSq_le`: scalar Cauchy--Schwarz.
+* `Matrix.PosSemidef.eq_zero_of_apply_self_eq_zero_left` and
+  `Matrix.PosSemidef.eq_zero_of_apply_self_eq_zero_right`: zero-diagonal vanishing.
+* `Matrix.PosSemidef.norm_le_one_of_apply_self_eq_one`: the normalized scalar bound.
 
 ## References
 
@@ -37,7 +37,7 @@ public section
 open Matrix
 open scoped ComplexConjugate ComplexOrder
 
-namespace TauCeti
+namespace Matrix.PosSemidef
 
 universe u v
 
@@ -59,7 +59,7 @@ private theorem finTwo_posSemidef {K : α → α → 𝕜}
   exact heq ▸ h
 
 /-- Scalar Cauchy--Schwarz for an `RCLike`-valued positive-semidefinite matrix. -/
-theorem normSq_le_of_posSemidef {K : α → α → 𝕜}
+theorem normSq_le {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a b : α) :
     RCLike.normSq (K a b) ≤ RCLike.re (K a a) * RCLike.re (K b b) := by
   have hsymm (x y : α) : conj (K x y) = K y x := by
@@ -79,18 +79,18 @@ theorem normSq_le_of_posSemidef {K : α → α → 𝕜}
   nlinarith
 
 /-- A zero diagonal entry forces the corresponding row entry to vanish. -/
-theorem eq_zero_of_apply_self_eq_zero_left_of_posSemidef {K : α → α → 𝕜}
+theorem eq_zero_of_apply_self_eq_zero_left {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) {a b : α} (ha : K a a = 0) : K a b = 0 := by
-  have hnorm := normSq_le_of_posSemidef hK a b
+  have hnorm := hK.normSq_le a b
   have hdiag : RCLike.re (K a a) * RCLike.re (K b b) = 0 := by simp [ha]
   have hnorm_zero : RCLike.normSq (K a b) = 0 :=
     le_antisymm (by simpa [hdiag] using hnorm) (RCLike.normSq_nonneg _)
   exact RCLike.normSq_eq_zero.mp hnorm_zero
 
 /-- A zero diagonal entry forces the corresponding column entry to vanish. -/
-theorem eq_zero_of_apply_self_eq_zero_right_of_posSemidef {K : α → α → 𝕜}
+theorem eq_zero_of_apply_self_eq_zero_right {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) {a b : α} (hb : K b b = 0) : K a b = 0 := by
-  have hba := eq_zero_of_apply_self_eq_zero_left_of_posSemidef hK (a := b) (b := a) hb
+  have hba := hK.eq_zero_of_apply_self_eq_zero_left (a := b) (b := a) hb
   have hconj : conj (K a b) = K b a := by
     simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
   rw [hba] at hconj
@@ -99,10 +99,10 @@ theorem eq_zero_of_apply_self_eq_zero_right_of_posSemidef {K : α → α → �
 
 /-- If two diagonal entries are `1`, then the corresponding off-diagonal entry has norm at most
 `1`. -/
-theorem norm_le_one_of_apply_self_eq_one_of_posSemidef {K : α → α → 𝕜}
+theorem norm_le_one_of_apply_self_eq_one {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) {a b : α} (ha : K a a = 1) (hb : K b b = 1) :
     ‖K a b‖ ≤ 1 := by
   refine le_of_sq_le_sq ?_ zero_le_one
-  simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using normSq_le_of_posSemidef hK a b
+  simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using hK.normSq_le a b
 
-end TauCeti
+end Matrix.PosSemidef

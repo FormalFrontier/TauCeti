@@ -75,7 +75,7 @@ of its value at `0`. -/
 theorem norm_apply_le_map_zero_re_of_posSemidef
     (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) (z : V) :
     ‖ψ z‖ ≤ RCLike.re (ψ 0) := by
-  have h := normSq_le_of_posSemidef hpd z 0
+  have h := hpd.normSq_le z 0
   simp only [sub_zero, sub_self, RCLike.normSq_eq_def'] at h
   refine le_of_sq_le_sq ?_ (map_zero_re_nonneg_of_posSemidef hpd)
   calc ‖ψ z‖ ^ 2 ≤ RCLike.re (ψ 0) * RCLike.re (ψ 0) := h

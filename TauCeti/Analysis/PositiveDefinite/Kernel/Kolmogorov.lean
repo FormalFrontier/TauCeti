@@ -32,12 +32,12 @@ scalar-kernel bridge and its characteristic API.
 * `TauCeti.positiveDefiniteKernelOperator`: regard a scalar kernel as an operator-valued kernel.
 * `TauCeti.posSemidef_positiveDefiniteKernelOperator`: positivity of that
   operator kernel.
-* `TauCeti.KolmogorovSpace`: the canonical Hilbert space.
-* `TauCeti.kolmogorovFeature`: its canonical feature map.
-* `TauCeti.inner_kolmogorovFeature`: the Kolmogorov identity.
-* `TauCeti.kolmogorovFeature_dense`: minimality of the decomposition.
-* `TauCeti.kolmogorovIsometry`: the universal comparison isometry.
-* `TauCeti.kolmogorovEquiv`: equivalence with any other minimal
+* `Matrix.PosSemidef.KolmogorovSpace`: the canonical Hilbert space.
+* `Matrix.PosSemidef.kolmogorovFeature`: its canonical feature map.
+* `Matrix.PosSemidef.inner_kolmogorovFeature`: the Kolmogorov identity.
+* `Matrix.PosSemidef.kolmogorovFeature_dense`: minimality of the decomposition.
+* `Matrix.PosSemidef.kolmogorovIsometry`: the universal comparison isometry.
+* `Matrix.PosSemidef.kolmogorovEquiv`: equivalence with any other minimal
   realization.
 
 ## References
@@ -108,7 +108,9 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
 
 end TauCeti
 
-namespace TauCeti
+namespace Matrix.PosSemidef
+
+open TauCeti
 
 universe u v w
 
@@ -298,6 +300,6 @@ theorem kolmogorovEquiv_apply {E : Type w} [NormedAddCommGroup E]
   rw [kolmogorovEquiv, LinearIsometryEquiv.coe_ofSurjective]
   exact kolmogorovIsometry_apply hK φ hφ a
 
-end TauCeti
+end Matrix.PosSemidef
 
 end
