@@ -228,7 +228,7 @@ indices. -/
 /-- **The Cartan integers at the first eight root indices are Mathlib's Bourbaki-numbered `E₈`
 matrix.** This pins the node order independently of the existential relabelling in
 `TauCeti.HasCartanType`. -/
-@[simp] theorem pairing_e8SimpleIndex (i j : Fin 8) :
+theorem pairing_e8SimpleIndex (i j : Fin 8) :
     e8SimplyConnectedRootDatum.pairing (e8SimpleIndex i) (e8SimpleIndex j) =
       CartanMatrix.E₈ i j := by
   rw [e8SimplyConnectedRootDatum_pairing, root_e8SimpleIndex, coroot_e8SimpleIndex,
