@@ -210,6 +210,14 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
       ContinuousLinearMap.coe_id', id_eq]
     exact hJc v
 
+/-- The endomorphism section of a constant smooth almost complex structure has its defining value
+in every fiber. -/
+@[simp]
+lemma const_toEndomorphism_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x : V) :
+    (const Jc hJc).toEndomorphism x = Jc :=
+  (rfl)
+
 /-- The constant smooth almost complex structure of `Jc` evaluates to `Jc`. -/
 @[simp]
 lemma const_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
@@ -229,6 +237,22 @@ def constSmooth (J : AlmostComplexStructure V) :
     SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V :=
   SmoothAlmostComplexStructure.const (LinearMap.toContinuousLinearMap J.toLinearMap)
     J.apply_apply
+
+/-- The endomorphism section of the constant smooth structure has its defining linear value in
+every fiber. -/
+@[simp]
+lemma constSmooth_toEndomorphism (J : AlmostComplexStructure V) (x : V) :
+    J.constSmooth.toEndomorphism x = LinearMap.toContinuousLinearMap J.toLinearMap := by
+  rw [constSmooth]
+  exact SmoothAlmostComplexStructure.const_toEndomorphism_apply _ _ x
+
+/-- The endomorphism section of the constant smooth structure acts as the defining linear
+structure. -/
+@[simp]
+lemma constSmooth_toEndomorphism_apply (J : AlmostComplexStructure V) (x v : V) :
+    (J.constSmooth.toEndomorphism x) v = J v := by
+  rw [constSmooth_toEndomorphism]
+  rfl
 
 @[simp]
 lemma constSmooth_apply (J : AlmostComplexStructure V) (x v : V) :
