@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Matrix.PosSemidef
 public import Mathlib.Analysis.InnerProductSpace.Reproducing
 import Mathlib.Analysis.Normed.Operator.Extend
 

@@ -125,8 +125,13 @@ theorem posSemidef_iff_finite_sum {R : Type u} [Ring R] [PartialOrder R] [StarRi
   refine ⟨fun hK => ⟨fun a b => ?_, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
   · exact hK.isHermitian.apply b a
   · intro ι _ v x
-    have hgram : (Matrix.of fun i j => K (v i) (v j)).PosSemidef := by
-      simpa [Matrix.submatrix, Function.comp_def] using hK.submatrix v
+    have hgram : Matrix.PosSemidef fun i j => K (v i) (v j) := by
+      have h := (show (Matrix.of K).PosSemidef from hK).submatrix v
+      have heq : Matrix.submatrix (Matrix.of K) v v = fun i j => K (v i) (v j) := by
+        apply Matrix.ext
+        intro i j
+        rw [Matrix.submatrix_apply, Matrix.of_apply]
+      exact heq ▸ h
     have h := (Matrix.posSemidef_iff_dotProduct_mulVec.mp hgram).2 x
     simpa [dotProduct, Matrix.mulVec, Matrix.of_apply, Pi.star_apply, Finset.mul_sum,
       mul_assoc, mul_left_comm, mul_comm] using h
@@ -152,6 +157,17 @@ theorem posSemidef_iff_finite_sum {R : Type u} [Ring R] [PartialOrder R] [StarRi
       exact mul_assoc _ _ _
 
 variable {𝕜 : Type u} [RCLike 𝕜]
+
+/-- Finite pointwise sums of positive-semidefinite matrices are positive semidefinite. -/
+theorem posSemidef_finset_sum {ι : Type w} {s : Finset ι}
+    {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
+    Matrix.PosSemidef (fun a b => ∑ i ∈ s, K i a b) := by
+  have h := Matrix.posSemidef_sum s hK
+  have heq : (∑ i ∈ s, K i) = fun a b => ∑ i ∈ s, K i a b := by
+    apply Matrix.ext
+    intro a b
+    simp
+  exact heq ▸ h
 
 /-- Finite pointwise Schur products of positive-semidefinite matrices are positive semidefinite. -/
 theorem posSemidef_schur_finset_prod {ι : Type w} {s : Finset ι}
@@ -180,7 +196,14 @@ theorem posSemidef_schur_pow {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
 private theorem finTwo_posSemidef {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a b : α) :
     (Matrix.of fun i j : Fin 2 => K (![a, b] i) (![a, b] j)).PosSemidef := by
-  simpa [Matrix.submatrix, Function.comp_def] using hK.submatrix (fun i : Fin 2 => ![a, b] i)
+  have h := (show (Matrix.of K).PosSemidef from hK).submatrix (fun i : Fin 2 => ![a, b] i)
+  have heq : Matrix.submatrix (Matrix.of K) (fun i : Fin 2 => ![a, b] i)
+      (fun i : Fin 2 => ![a, b] i) =
+      Matrix.of fun i j : Fin 2 => K (![a, b] i) (![a, b] j) := by
+    apply Matrix.ext
+    intro i j
+    simp only [Matrix.submatrix_apply, Matrix.of_apply]
+  exact heq ▸ h
 
 /-- Scalar Cauchy--Schwarz for an `RCLike`-valued positive-semidefinite matrix. -/
 theorem normSq_le_of_posSemidef {K : α → α → 𝕜}

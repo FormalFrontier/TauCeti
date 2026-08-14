@@ -64,13 +64,15 @@ namespace IsSemigroupGroupPD
 positive-definite kernel `(v, w) ↦ F (t, v - w)`. -/
 theorem posSemidef_timeSlice (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
     Matrix.PosSemidef fun v w : V => F (t, v - w) := by
-  have h := hF.posSemidef.submatrix (fun v : V => (t / 2, v))
+  have h := (show (Matrix.of fun p q : ℝ≥0 × V =>
+      F (p.1 + q.1, p.2 - q.2)).PosSemidef from hF.posSemidef).submatrix
+    (fun v : V => (t / 2, v))
   have heq : Matrix.submatrix
-      (fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+      (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
       (fun v : V => (t / 2, v)) (fun v => (t / 2, v)) =
       fun v w : V => F (t, v - w) := by
     ext v w
-    change F (t / 2 + t / 2, v - w) = F (t, v - w)
+    rw [Matrix.submatrix_apply, Matrix.of_apply]
     rw [add_halves]
   exact heq ▸ h
 

@@ -61,13 +61,15 @@ namespace IsSemigroupGroupPD
 definite: `(t, u) ↦ F (t + u, 0)`. -/
 theorem posSemidef_timeAxis (hF : IsSemigroupGroupPD F) :
     Matrix.PosSemidef fun t u : ℝ≥0 => F (t + u, 0) := by
-  have h := hF.posSemidef.submatrix (fun t : ℝ≥0 => (t, (0 : V)))
+  have h := (show (Matrix.of fun p q : ℝ≥0 × V =>
+      F (p.1 + q.1, p.2 - q.2)).PosSemidef from hF.posSemidef).submatrix
+    (fun t : ℝ≥0 => (t, (0 : V)))
   have heq : Matrix.submatrix
-      (fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+      (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
       (fun t : ℝ≥0 => (t, (0 : V))) (fun t => (t, (0 : V))) =
       fun t u : ℝ≥0 => F (t + u, 0) := by
     ext t u
-    change F (t + u, 0 - 0) = F (t + u, 0)
+    rw [Matrix.submatrix_apply, Matrix.of_apply]
     simp
   exact heq ▸ h
 
