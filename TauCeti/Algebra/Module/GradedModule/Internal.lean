@@ -108,7 +108,6 @@ theorem isHomogeneous_component (G : InternalGrading R M) (p : ℤ) (x : M) :
     G.IsHomogeneous p (G.component p x : M) :=
   (G.component p x).property
 
-@[simp]
 theorem isHomogeneous_zero (G : InternalGrading R M) (p : ℤ) :
     G.IsHomogeneous p (0 : M) :=
   (G.piece p).zero_mem
@@ -135,14 +134,12 @@ theorem IsHomogeneous.sub {G : InternalGrading S N} {p : ℤ} {x y : N}
 
 end Ring
 
-@[simp]
 theorem component_same (G : InternalGrading R M) (p : ℤ) (x : G.piece p) :
     G.component p (x : M) = x := by
   ext
   simp only [component_apply]
   exact DirectSum.decompose_of_mem_same G.piece x.property
 
-@[simp]
 theorem component_ne (G : InternalGrading R M) {p q : ℤ} (hpq : p ≠ q) (x : G.piece p) :
     G.component q (x : M) = 0 := by
   ext
