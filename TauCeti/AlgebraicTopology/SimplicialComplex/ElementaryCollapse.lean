@@ -32,8 +32,6 @@ pre-complex type.
 
 public section
 
-namespace TauCeti
-
 namespace PreAbstractSimplicialComplex
 
 variable {ι : Type*} (K : _root_.PreAbstractSimplicialComplex ι)
@@ -129,4 +127,3 @@ end ElementaryCollapsesTo
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

@@ -45,7 +45,8 @@ infrastructure independent of the diamond operators.
   `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
 * `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
   unit upper-left entry modulo `N`.
-* `CongruenceSubgroup.Gamma0_normalizes_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
+* `CongruenceSubgroup.Gamma0_normalizes_Gamma1` and
+  `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
   `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL ℝ)` is invariant
@@ -130,6 +131,15 @@ theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N)) (h : SL(2, ℤ)) (hh : h �
   (Gamma1_mem _ _).mpr <| (Gamma1_to_Gamma0_mem _).mp <|
     (Gamma0Map N).normal_ker.conj_mem ⟨h, Gamma1_in_Gamma0 N hh⟩
       ((Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp hh)) g
+
+/-- `Γ₀(N)` lies in the normaliser of `Γ₁(N)`: the statement of `Gamma0_normalizes_Gamma1` in
+the form the coset combinatorics of the Petersson product consumes. -/
+theorem Gamma0_le_normalizer_Gamma1 (N : ℕ) :
+    Gamma0 N ≤ Subgroup.normalizer (Gamma1 N : Set SL(2, ℤ)) := fun g hg ↦
+  Subgroup.mem_normalizer_iff.mpr fun h ↦
+    ⟨Gamma0_normalizes_Gamma1 ⟨g, hg⟩ h, fun hh ↦ by
+      simpa [mul_assoc] using
+        Gamma0_normalizes_Gamma1 ⟨g⁻¹, (Gamma0 N).inv_mem hg⟩ _ hh⟩
 
 /-- The inclusion `Γ₁(N) ≤ Γ₀(N)`, transported to `GL₂(ℝ)`. -/
 theorem Gamma1_map_le_Gamma0_map (N : ℕ) :

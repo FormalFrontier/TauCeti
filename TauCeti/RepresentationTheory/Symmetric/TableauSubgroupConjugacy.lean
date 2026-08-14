@@ -97,9 +97,11 @@ theorem rowIndex_rowYoungConjugator {μ : YoungDiagram} (t : YoungTableau μ)
     Equiv.symm_apply_apply, x]
   exact sortedBlocksEquivRows_fst μ x
 
+-- Not `@[simp]`: with `shapePartition_parts` and `Multiset.coe_sort` in the default simp set,
+-- the left-hand side is no longer in simp normal form (the sorted parts reduce to `μ.rowLens`),
+-- so the tag would be a `simpNF` violation. The lemma is for explicit `rw`/`exact` use.
 /-- On consecutive-block coordinates, `rowYoungConjugator t` sends position `j` in block `i`
 to the label in position `j` of row `i` of `t`. -/
-@[simp]
 theorem rowYoungConjugator_youngBlocksEquiv {μ : YoungDiagram} (t : YoungTableau μ)
     (x : Σ i : Fin
         ((shapePartition μ).parts.sort (· ≥ ·)).length,
@@ -127,8 +129,8 @@ carried to the relabeled tableau by first carrying it to `t` and then applying `
 theorem rowYoungConjugator_relabel {μ : YoungDiagram} (σ : Equiv.Perm (Fin μ.card))
     (t : YoungTableau μ) :
     rowYoungConjugator (relabel σ t) = σ * rowYoungConjugator t := by
-  ext k
-  simp [rowYoungConjugator, Equiv.Perm.mul_def]
+  have h : relabel σ t = t.trans σ := Equiv.ext fun c => relabel_apply σ t c
+  simp only [rowYoungConjugator, Equiv.Perm.mul_def, Equiv.trans_assoc, h]
 
 /-- Conjugation by `rowYoungConjugator t` carries the Young subgroup of the shape partition
 onto the row group of `t`. -/
