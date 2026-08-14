@@ -41,7 +41,6 @@ bridge of `Ergodic/CondExpProjection.lean`, and the invariant conditional law of
 
 Transport side:
 
-* `snoc_prefix_strictMono` — appending `r + m` to the prefix is strictly increasing;
 * `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq` — so the weighted
   integral does not depend on the displacement `m`, by the weighted block transport;
 * `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage` — hence an
@@ -50,7 +49,7 @@ Transport side:
 Analytic side:
 
 * `birkhoffAverage_shift_coord_eq` — the displaced coordinates *are* that Birkhoff average;
-* `ContractableLaw.tendsto_integral_abs_birkhoffAverage_indicator_coord` — it converges in `L¹` to
+* `tendsto_integral_abs_birkhoffAverage_indicator_coord` — it converges in `L¹` to
   the conditional expectation given the invariants;
 * `condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure` — and, where the
   witness exists, that limit is the invariant conditional law, by
@@ -104,7 +103,7 @@ variable {α : Type*} [MeasurableSpace α]
 /-- **Appending a later coordinate to the prefix is strictly increasing.** The prefix occupies
 `0, 1, …, r - 1` and the appended coordinate is `r + m`, so the selection is strictly increasing
 whatever the displacement `m`. -/
-theorem snoc_prefix_strictMono (r m : ℕ) :
+private theorem snoc_prefix_strictMono (r m : ℕ) :
     StrictMono (Fin.snoc (fun i : Fin r => (i : ℕ)) (r + m) : Fin (r + 1) → ℕ) := by
   refine Fin.strictMono_iff_lt_succ.2 fun i => ?_
   rw [Fin.snoc_castSucc]
@@ -135,13 +134,11 @@ theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ → α)
   rw [shift_iterate_apply]
 
 
-namespace ContractableLaw
-
 /-- **The Birkhoff averages of a coordinate indicator converge in `L¹`.** The mean ergodic bridge,
 applied to the indicator of `B` at coordinate `r`: the limit is the conditional expectation of that
 same indicator given the shift-invariant σ-algebra. -/
 theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hmp : MeasurePreserving (shift α) ρ ρ)
     {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     Filter.Tendsto (fun n => ∫ x,
         |birkhoffAverage ℝ (shift α) (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x
@@ -156,8 +153,10 @@ theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
       Set.indicator_apply_nonneg fun _ => zero_le_one
     rw [Real.norm_eq_abs, abs_of_nonneg h0]
     exact Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
-  exact tendsto_integral_abs_birkhoffAverage_sub_condExp (shift α) hρ.measurePreserving_shift
+  exact tendsto_integral_abs_birkhoffAverage_sub_condExp (shift α) hmp
     (MemLp.of_bound hmeas.aestronglyMeasurable 1 (Filter.Eventually.of_forall hbdd))
+
+namespace ContractableLaw
 
 /-- **The invariant conditional law computes every coordinate, not just the first.** Combining the
 witness's characteristic property at coordinate `0` with the transport fact that all coordinates
@@ -397,7 +396,8 @@ theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
       hB hA hn.ne'
   have hR : Filter.Tendsto c Filter.atTop
       (nhds (∫ x in A, w x * (g (prefixProj α r x) * F x) ∂ρ)) := by
-    have hconv := hρ.tendsto_integral_abs_birkhoffAverage_indicator_coord hB r
+    have hconv := tendsto_integral_abs_birkhoffAverage_indicator_coord
+      hρ.measurePreserving_shift hB r
     rw [← hφdef, ← hFdef] at hconv
     have hp_bdd : ∀ᵐ x ∂ρ, ‖w x * g (prefixProj α r x)‖ ≤ 1 := by
       filter_upwards [hw_bdd] with x hwx
