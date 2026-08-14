@@ -18,10 +18,13 @@ carries.
 
 ## Main results
 
-* `ContractableLaw.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp` — the induction, in
-  conditional-expectation form;
-* `ContractableLaw.setIntegral_prefixIndicatorProd_eq_prod_invariantConditional` — the same with
-  the weight specialised to `1` and the factors named as the invariant conditional law.
+Both in the `ContractableLaw` namespace:
+
+* `setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp` — the induction, in
+  conditional-expectation form, against an invariants-measurable weight;
+* `setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure` — its `w = 1`
+  specialisation, with each conditional expectation replaced by the invariant conditional law it
+  computes. This is the form a cylinder-mass computation consumes.
 
 ## Why the conditional expectation, not the witness
 
@@ -31,6 +34,26 @@ A conditional expectation is, by `stronglyMeasurable_condExp`. The invariant con
 is only characterised up to a null set, so it cannot serve. Conversion happens once, at the end.
 
 Everything stays in `ℝ`; the crossing to `ℝ≥0∞` belongs to the common ending, not here.
+
+## Relation to the other `BlockFactorization` files
+
+`DeFinetti/BlockFactorization.lean` and `DeFinetti/ViaL2/BlockFactorization.lean` prove the
+corresponding step for the martingale and `L²` routes, conditioning on the tail rather than on the
+shift-invariant σ-algebra. Nothing is shared: `invariants_shift_lt_pathTail` shows those σ-algebras
+genuinely differ, and this file imports neither.
+
+## Source
+
+The Koopman route follows Kallenberg's first proof (see References). No material is adapted from
+`cameronfreer/exchangeability`; the induction here is assembled from this repository's own weighted
+decoupling chain in `ViaKoopman/Decoupling.lean`.
+
+## References
+
+* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles*, Springer, 2005, Chapter 1,
+  Theorem 1.1.
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 5** (Koopman operators and
+  invariant σ-algebras), whose milestone is `deFinetti_viaKoopman`.
 -/
 
 public section
@@ -44,38 +67,6 @@ namespace TauCeti
 namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
-
-private theorem coordCondExp_nonneg {ρ : Measure (ℕ → α)} (B : Set α) (j : ℕ) :
-    0 ≤ᵐ[ρ] ρ[fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y j) |
-      MeasurableSpace.invariants (shift α)] :=
-  condExp_nonneg (Filter.Eventually.of_forall fun _ =>
-    Set.indicator_apply_nonneg fun _ => zero_le_one)
-
-private theorem integrable_coordIndicator {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
-    {B : Set α} (hB : MeasurableSet B) (j : ℕ) :
-    Integrable (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y j)) ρ := by
-  have hmeas : Measurable fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y j) :=
-    (measurable_const.indicator hB).comp (measurable_pi_apply j)
-  refine ⟨hmeas.aestronglyMeasurable,
-    .of_bounded (C := 1) (Filter.Eventually.of_forall fun y => ?_)⟩
-  have h0 : (0 : ℝ) ≤ B.indicator (fun _ => (1 : ℝ)) (y j) :=
-    Set.indicator_apply_nonneg fun _ => zero_le_one
-  have h1 : B.indicator (fun _ => (1 : ℝ)) (y j) ≤ 1 :=
-    Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
-  rw [Real.norm_eq_abs, abs_of_nonneg h0]
-  exact h1
-
-private theorem coordCondExp_le_one {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
-    {B : Set α} (hB : MeasurableSet B) (j : ℕ) :
-    ρ[fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y j) |
-        MeasurableSpace.invariants (shift α)] ≤ᵐ[ρ] fun _ => (1 : ℝ) := by
-  have hle : (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y j))
-      ≤ᵐ[ρ] fun _ : ℕ → α => (1 : ℝ) :=
-    Filter.Eventually.of_forall fun _ =>
-      Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
-  have hmono := condExp_mono (m := MeasurableSpace.invariants (shift α))
-    (integrable_coordIndicator hB j) (integrable_const (1 : ℝ)) hle
-  rwa [condExp_const (MeasurableSpace.invariants_le (shift α)) (1 : ℝ)] at hmono
 
 /-- **A block factorizes over an invariant event**, in conditional-expectation form.
 
@@ -119,11 +110,17 @@ theorem ContractableLaw.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condE
     -- The weight for the inductive step: the peeled factor joins it.
     have hwE : Measurable[MeasurableSpace.invariants (shift α)] fun x => w x * E x :=
       hw.mul (stronglyMeasurable_condExp).measurable
+    have hE_bdd : ∀ᵐ x ∂ρ, ‖E x‖ ≤ 1 :=
+      ae_bdd_norm_condExp_of_ae_bdd_norm (Filter.Eventually.of_forall fun y => by
+        have h0 : (0 : ℝ) ≤ (B (Fin.last r)).indicator (fun _ => (1 : ℝ)) (y r) :=
+          Set.indicator_apply_nonneg fun _ => zero_le_one
+        rw [Real.norm_eq_abs, abs_of_nonneg h0]
+        exact Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one)
     have hwE_bdd : ∀ᵐ x ∂ρ, |w x * E x| ≤ 1 := by
-      filter_upwards [hw_bdd, coordCondExp_nonneg (ρ := ρ) (B (Fin.last r)) r,
-        coordCondExp_le_one (ρ := ρ) (hB (Fin.last r)) r] with x hwx hE0 hE1
-      rw [abs_mul, abs_of_nonneg hE0]
-      exact (mul_le_mul hwx hE1 hE0 zero_le_one).trans_eq (one_mul 1)
+      filter_upwards [hw_bdd, hE_bdd] with x hwx hEx
+      rw [abs_mul]
+      exact (mul_le_mul hwx ((Real.norm_eq_abs _) ▸ hEx) (abs_nonneg _)
+        zero_le_one).trans_eq (one_mul 1)
     calc ∫ x in A, w x * ∏ i : Fin (r + 1),
           (B i).indicator (fun _ => (1 : ℝ)) (x (i : ℕ)) ∂ρ
         = ∫ x in A, w x * (g (prefixProj α r x)
@@ -149,6 +146,32 @@ theorem ContractableLaw.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condE
           refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
           simp only [Fin.prod_univ_castSucc, hEdef, Fin.val_castSucc, Fin.val_last]
           ring
+
+/-- **The block factorization, with the factors named as the invariant conditional law.**
+
+The `w = 1` specialisation of the theorem above, with each conditional expectation replaced by the
+invariant conditional law it computes. This is the form a cylinder-mass computation consumes. -/
+theorem setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure
+    [StandardBorelSpace α] [Nonempty α]
+    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+    (r : ℕ) (B : Fin r → Set α) (hB : ∀ i, MeasurableSet (B i)) :
+    ∫ x in A, ∏ i : Fin r, (B i).indicator (fun _ => (1 : ℝ)) (x (i : ℕ)) ∂ρ
+      = ∫ x in A, ∏ i : Fin r,
+          ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real (B i) ∂ρ := by
+  have hone := hρ.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp hA r B hB
+    (fun _ => (1 : ℝ)) measurable_const (Filter.Eventually.of_forall fun _ => by norm_num)
+  simp only [one_mul] at hone
+  rw [hone]
+  refine integral_congr_ae ?_
+  have hall : ∀ᵐ x ∂ρ, ∀ i : Fin r,
+      ρ[fun y : ℕ → α => (B i).indicator (fun _ => (1 : ℝ)) (y (i : ℕ)) |
+        MeasurableSpace.invariants (shift α)] x
+        = ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real (B i) :=
+    ae_all_iff.2 fun i =>
+      hρ.condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure (hB i) (i : ℕ)
+  filter_upwards [ae_restrict_of_ae hall] with x hx
+  exact Finset.prod_congr rfl fun i _ => hx i
 
 end Probability
 
