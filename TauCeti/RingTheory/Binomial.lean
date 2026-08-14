@@ -368,7 +368,10 @@ theorem choose_neg_mem {G : Type*} [SetLike G R] [AddSubgroupClass G R]
     _root_.Ring.choose (-r) n ∈ A := by
   rw [_root_.Ring.choose_neg, Units.smul_def]
   refine zsmul_mem ?_ _
-  rw [show r + (n : R) - 1 = r + (((n : ℤ) - 1 : ℤ) : R) by push_cast; abel]
+  have hshift : r + (n : R) - 1 = r + (((n : ℤ) - 1 : ℤ) : R) := by
+    push_cast
+    abel
+  rw [hshift]
   exact choose_add_intCast_mem hr _
 
 end Ring
