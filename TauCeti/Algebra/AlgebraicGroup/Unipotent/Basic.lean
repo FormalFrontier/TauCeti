@@ -129,8 +129,8 @@ theorem unipotentPointsCommHopfAlgProperty_iff_semisimplePart_eq_one
 unipotent.
 
 The point predicate tests the action on every finitely generated comodule, which over a field is
-the finite-dimensional representation-theoretic definition. The smoothness condition ensures that
-the algebraic-closure-valued points detect the group scheme. -/
+the finite-dimensional representation-theoretic definition. The smoothness condition excludes the
+infinitesimal nonreduced obstruction that algebraic-closure-valued points cannot detect. -/
 def smoothUnipotentCommHopfAlgProperty (k : Type u) [Field k] :
     ObjectProperty (FiniteTypeCommHopfAlgCat.{u, v} k) :=
   ((smoothCommHopfAlgProperty k) ⊓ unipotentPointsCommHopfAlgProperty k).inverseImage
