@@ -80,9 +80,7 @@ theorem coe_expZSMulKostantAddAut (e : ι → L) (h : κ → L)
     ((Multiplicative.toAdd (expZSMulKostantAddAut e h ρ M hM i hnil t) v : M) : V) =
       IsNilpotent.exp ((Multiplicative.toAdd t : ℤ) •
         ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) (v : V) := by
-  rw [expZSMulKostantAddAut, TauCeti.expZSMulAddAut_apply,
-    TauCeti.coe_expZSMulAddEquiv, Units.smul_def, TauCeti.coe_expZSMulHom]
-  rfl
+  simp only [expZSMulKostantAddAut, TauCeti.coe_expZSMulAddAut, Module.End.smul_def]
 
 /-! ## The action on the canonical Kostant orbit -/
 

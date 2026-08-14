@@ -147,7 +147,7 @@ nilpotent element.
 The inverse is the action of the inverse unit, equivalently the exponential with the negated
 integer parameter. The preservation hypothesis is deliberately stated only for the divided powers
 of `x`; `exp_zsmul_smul_mem` supplies preservation by every integral exponential. -/
-noncomputable def expZSMulAddEquiv {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
+private noncomputable def expZSMulAddEquiv {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     (t : Multiplicative ℤ) : M ≃+ M where
   toFun v := ⟨(expZSMulHom hx t : Aˣ) • (v : V), by
@@ -166,14 +166,11 @@ noncomputable def expZSMulAddEquiv {x : A} (hx : IsNilpotent x) (M : AddSubgroup
     apply Subtype.ext
     exact smul_add _ _ _
 
-/-- The automorphism `expZSMulAddEquiv hx M hM t` acts by the unit `expZSMulHom hx t` on the
-ambient module. -/
-@[simp]
-theorem coe_expZSMulAddEquiv {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
+private theorem coe_expZSMulAddEquiv {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     (t : Multiplicative ℤ) (v : M) :
     (expZSMulAddEquiv hx M hM t v : V) = (expZSMulHom hx t : Aˣ) • (v : V) :=
-  (rfl)
+  rfl
 
 /-- Integral exponentials act on a divided-power-stable additive subgroup by additive
 automorphisms. This is the restriction of `expZSMulHom hx` from units of the ambient algebra to
@@ -184,19 +181,24 @@ noncomputable def expZSMulAddAut {x : A} (hx : IsNilpotent x) (M : AddSubgroup V
   toFun t := Multiplicative.ofAdd (expZSMulAddEquiv hx M hM t)
   map_one' := by
     apply Multiplicative.toAdd.injective
-    ext v
-    simp
+    ext v : 1
+    apply Subtype.ext
+    exact (coe_expZSMulAddEquiv hx M hM 1 v).trans (by simp)
   map_mul' t u := by
     apply Multiplicative.toAdd.injective
-    ext v
-    simp [mul_smul]
+    ext v : 1
+    apply Subtype.ext
+    exact (coe_expZSMulAddEquiv hx M hM (t * u) v).trans (by
+      simp [coe_expZSMulAddEquiv, mul_smul])
 
-/-- Evaluating `expZSMulAddAut` recovers the corresponding restricted additive equivalence. -/
+/-- The action of `expZSMulAddAut` on the invariant subgroup is the ambient nilpotent
+exponential. -/
 @[simp]
-theorem expZSMulAddAut_apply {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
+theorem coe_expZSMulAddAut {x : A} (hx : IsNilpotent x) (M : AddSubgroup V)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    (t : Multiplicative ℤ) :
-    Multiplicative.toAdd (expZSMulAddAut hx M hM t) = expZSMulAddEquiv hx M hM t :=
+    (t : Multiplicative ℤ) (v : M) :
+    ((Multiplicative.toAdd (expZSMulAddAut hx M hM t) v : M) : V) =
+      exp ((Multiplicative.toAdd t : ℤ) • x) • (v : V) :=
   (rfl)
 
 end TauCeti
