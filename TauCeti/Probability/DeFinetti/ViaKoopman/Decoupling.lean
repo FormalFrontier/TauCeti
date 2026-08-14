@@ -40,10 +40,17 @@ Analytic side:
   invariant conditional law, by
   `ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants`.
 
+Where they meet:
+
+* `ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional` — the averaged
+  sequence is constant by the transport side and convergent by the analytic side, so its one limit
+  identifies the weighted integral of `𝟙_B` at coordinate `r` with that of `ν(B)`.
+
 This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
 
-The induction that combines the two sides is not here yet.
+The induction on `r` that iterates this decoupling across a whole block, and the `ℝ≥0∞` ending it
+feeds, are not here yet.
 -/
 
 public section
@@ -287,6 +294,108 @@ theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage
   simp only [hρ.setIntegral_prefix_mul_indicator_displaced_eq hg hB hA]
   rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← mul_assoc,
     inv_mul_cancel₀ (Nat.cast_ne_zero.mpr hn), one_mul]
+
+/-- **The last coordinate decouples into the invariant conditional law.** Over an invariant event,
+the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral of `ν(B)`, where `ν`
+is the invariant conditional law.
+
+Where the two halves meet: the averaged sequence is *constant* in `n` by
+`ContractableLaw.setIntegral_prefix_mul_indicator_eq_birkhoffAverage`, and the same sequence
+converges to the right-hand side by the `L¹` mean ergodic theorem; a sequence has one limit. -/
+theorem ContractableLaw.setIntegral_prefix_mul_indicator_eq_invariantConditional
+    [StandardBorelSpace α] [Nonempty α]
+    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
+    {B : Set α} (hB : MeasurableSet B)
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
+    ∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ
+      = ∫ x in A, g (prefixProj α r x)
+          * ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real B ∂ρ := by
+  classical
+  have hAm : MeasurableSet A := MeasurableSpace.invariants_le _ _ hA
+  have hgm : Measurable fun x : ℕ → α => g (prefixProj α r x) := hg.comp (measurable_prefixProj r)
+  have hind_nonneg : ∀ y : α, 0 ≤ B.indicator (fun _ => (1 : ℝ)) y := fun _ =>
+    Set.indicator_apply_nonneg fun _ => zero_le_one
+  have hind_le : ∀ y : α, B.indicator (fun _ => (1 : ℝ)) y ≤ 1 := fun _ =>
+    Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
+  set φ : (ℕ → α) → ℝ := fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r) with hφdef
+  have hφ_meas : Measurable φ := (measurable_const.indicator hB).comp (measurable_pi_apply r)
+  set F : (ℕ → α) → ℝ := ρ[φ | MeasurableSpace.invariants (shift α)] with hFdef
+  -- The Birkhoff averages are bounded by `1`, hence integrable on a probability space.
+  have havg_meas : ∀ n : ℕ, Measurable (birkhoffAverage ℝ (shift α) φ n) := by
+    intro n
+    have hsum : Measurable fun x : ℕ → α => ∑ m ∈ Finset.range n, φ ((shift α)^[m] x) :=
+      Finset.measurable_sum _ fun m _ => hφ_meas.comp (measurable_shift.iterate m)
+    exact hsum.const_smul ((n : ℝ)⁻¹)
+  have havg_bdd : ∀ (n : ℕ) (x : ℕ → α), ‖birkhoffAverage ℝ (shift α) φ n x‖ ≤ 1 := by
+    intro n x
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp [birkhoffAverage, birkhoffSum]
+    · have hs0 : 0 ≤ ∑ m ∈ Finset.range n, φ ((shift α)^[m] x) :=
+        Finset.sum_nonneg fun m _ => hind_nonneg _
+      have hsn : ∑ m ∈ Finset.range n, φ ((shift α)^[m] x) ≤ (n : ℝ) := by
+        calc ∑ m ∈ Finset.range n, φ ((shift α)^[m] x)
+            ≤ ∑ _m ∈ Finset.range n, (1 : ℝ) := Finset.sum_le_sum fun m _ => hind_le _
+          _ = (n : ℝ) := by simp
+      rw [birkhoffAverage, birkhoffSum, smul_eq_mul, Real.norm_eq_abs,
+        abs_of_nonneg (by positivity)]
+      calc (n : ℝ)⁻¹ * ∑ m ∈ Finset.range n, φ ((shift α)^[m] x)
+          ≤ (n : ℝ)⁻¹ * (n : ℝ) := by gcongr
+        _ = 1 := inv_mul_cancel₀ (Nat.cast_ne_zero.mpr hn.ne')
+  have havg_int : ∀ n : ℕ, Integrable (birkhoffAverage ℝ (shift α) φ n) ρ := fun n =>
+    ⟨(havg_meas n).aestronglyMeasurable,
+      .of_bounded (C := 1) (Filter.Eventually.of_forall (havg_bdd n))⟩
+  have hF_int : Integrable F ρ := integrable_condExp
+  -- Weighting by the bounded prefix observable preserves integrability.
+  have hw : ∀ (h : (ℕ → α) → ℝ), Integrable h ρ →
+      Integrable (fun x => g (prefixProj α r x) * h x) (ρ.restrict A) := fun h hh =>
+    (hh.restrict.bdd_mul hgm.aestronglyMeasurable
+      (Filter.Eventually.of_forall fun x => (Real.norm_eq_abs _).trans_le (hg_bdd _)))
+  -- The averaged sequence is constant, so it converges to the left-hand side.
+  set c : ℕ → ℝ := fun n => ∫ x in A, g (prefixProj α r x)
+    * birkhoffAverage ℝ (shift α) φ n x ∂ρ with hcdef
+  have hL : Filter.Tendsto c Filter.atTop
+      (nhds (∫ x in A, g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x r) ∂ρ)) := by
+    refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
+    filter_upwards [Filter.eventually_gt_atTop 0] with n hn
+    simp only [hcdef, hφdef]
+    exact hρ.setIntegral_prefix_mul_indicator_eq_birkhoffAverage hg hg_bdd hB hA hn.ne'
+  -- The same sequence converges to the conditional-expectation integral.
+  have hR : Filter.Tendsto c Filter.atTop (nhds (∫ x in A, g (prefixProj α r x) * F x ∂ρ)) := by
+    rw [Metric.tendsto_atTop]
+    intro ε hε
+    have hconv := hρ.tendsto_integral_abs_birkhoffAverage_indicator_coord hB r
+    rw [← hφdef, ← hFdef] at hconv
+    obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hconv ε hε
+    refine ⟨N, fun n hn => ?_⟩
+    have hb := hN n hn
+    rw [Real.dist_eq, sub_zero,
+      abs_of_nonneg (integral_nonneg fun _ => abs_nonneg _)] at hb
+    have hdiff_int : Integrable (fun x => birkhoffAverage ℝ (shift α) φ n x - F x) ρ :=
+      (havg_int n).sub hF_int
+    rw [Real.dist_eq, hcdef]
+    calc |(∫ x in A, g (prefixProj α r x) * birkhoffAverage ℝ (shift α) φ n x ∂ρ)
+            - ∫ x in A, g (prefixProj α r x) * F x ∂ρ|
+        = |∫ x in A, g (prefixProj α r x)
+            * (birkhoffAverage ℝ (shift α) φ n x - F x) ∂ρ| := by
+          rw [← integral_sub (hw _ (havg_int n)) (hw _ hF_int)]
+          congr 1
+          exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
+      _ ≤ ∫ x in A, |g (prefixProj α r x)
+            * (birkhoffAverage ℝ (shift α) φ n x - F x)| ∂ρ := abs_integral_le_integral_abs
+      _ ≤ ∫ x in A, |birkhoffAverage ℝ (shift α) φ n x - F x| ∂ρ := by
+          refine integral_mono ((hw _ hdiff_int).abs) hdiff_int.abs.restrict fun x => ?_
+          rw [abs_mul]
+          exact mul_le_of_le_one_left (abs_nonneg _) (hg_bdd _)
+      _ ≤ ∫ x, |birkhoffAverage ℝ (shift α) φ n x - F x| ∂ρ :=
+          setIntegral_le_integral hdiff_int.abs (Filter.Eventually.of_forall fun _ => abs_nonneg _)
+      _ < ε := hb
+  -- One limit, then name it.
+  rw [tendsto_nhds_unique hL hR]
+  refine integral_congr_ae ?_
+  filter_upwards [ae_restrict_of_ae
+    (hρ.condExp_indicator_coord_ae_eq_invariantConditional hB r)] with x hx
+  rw [hFdef, hx]
 
 end Probability
 
