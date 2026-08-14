@@ -25,7 +25,7 @@ Hodge decomposition theorem (the L0 milestone of the `HodgeStructures` roadmap).
   space `Vℂ` exhibiting base change `IsBaseChange ℂ ιℂ`.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn`: Pure Hodge structure of weight `n` on a complex
   vector space `W` equipped with a conjugation `ω`.
-* `TauCeti.Geometry.Hodge.HodgeStructure`: Abbreviation for a pure Hodge structure on the
+* `TauCeti.Geometry.Hodge.HodgeStructure`: Pure Hodge structure on the
   complexification of an integral lattice `V`.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.piece`: The `(p, q)`-piece
   $H^{p,q} = F^p \cap \overline{F^{n-p}}$.
@@ -279,8 +279,12 @@ structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
 /-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of an integral lattice `V`. -/
-abbrev HodgeStructure [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) :=
-  HodgeStructureOn Vℂ (latticeConjugation hℂ) n
+structure HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ)
+    extends HodgeStructureOn Vℂ (latticeConjugation hℂ) n where
+  /-- The underlying lattice is a free `ℤ`-module. -/
+  free : Module.Free ℤ V := by infer_instance
+  /-- The underlying lattice is a finitely generated `ℤ`-module. -/
+  finite : Module.Finite ℤ V := by infer_instance
 
 namespace HodgeStructureOn
 
