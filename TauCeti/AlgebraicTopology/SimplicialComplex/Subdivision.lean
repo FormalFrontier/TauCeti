@@ -61,13 +61,13 @@ variable {α β γ : Type*}
 /-- The first **barycentric subdivision** of `K`: its vertices are the faces of `K`, and its faces
 are the nonempty finite chains of faces under inclusion. -/
 @[expose] noncomputable def barycentricSubdivision (K : PreAbstractSimplicialComplex α) :
-    AbstractSimplicialComplex (_root_.AbstractSimplicialComplex.Face K) :=
-  AbstractSimplicialComplex.orderComplex (_root_.AbstractSimplicialComplex.Face K)
+    AbstractSimplicialComplex (SetLike.Face K) :=
+  AbstractSimplicialComplex.orderComplex (SetLike.Face K)
 
 /-- Barycentric subdivision is the order complex of the face poset. -/
 theorem barycentricSubdivision_eq_orderComplex (K : PreAbstractSimplicialComplex α) :
     barycentricSubdivision K =
-      AbstractSimplicialComplex.orderComplex (_root_.AbstractSimplicialComplex.Face K) :=
+      AbstractSimplicialComplex.orderComplex (SetLike.Face K) :=
   rfl
 
 variable {K : PreAbstractSimplicialComplex α}
@@ -75,47 +75,44 @@ variable {K : PreAbstractSimplicialComplex α}
 /-- A collection of faces of `K` is a face of its barycentric subdivision exactly when it is
 nonempty and totally ordered by inclusion. -/
 @[simp]
-theorem mem_barycentricSubdivision_iff
-    {τ : Finset (_root_.AbstractSimplicialComplex.Face K)} :
+theorem mem_barycentricSubdivision_iff {τ : Finset (SetLike.Face K)} :
     τ ∈ barycentricSubdivision K ↔
       τ.Nonempty ∧
-        IsChain (· ≤ ·) (↑τ : Set (_root_.AbstractSimplicialComplex.Face K)) := by
+        IsChain (· ≤ ·) (↑τ : Set (SetLike.Face K)) := by
   rw [barycentricSubdivision_eq_orderComplex,
     AbstractSimplicialComplex.mem_orderComplex_iff]
 
 /-- A collection is a face of the barycentric subdivision exactly when it is nonempty and every
 two original faces in the collection are nested. -/
-theorem mem_barycentricSubdivision_iff'
-    {ρ : Finset (_root_.AbstractSimplicialComplex.Face K)} :
+theorem mem_barycentricSubdivision_iff' {ρ : Finset (SetLike.Face K)} :
     ρ ∈ barycentricSubdivision K ↔
       ρ.Nonempty ∧ ∀ σ ∈ ρ, ∀ τ ∈ ρ,
         (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ := by
   rw [barycentricSubdivision_eq_orderComplex,
     AbstractSimplicialComplex.mem_orderComplex_iff']
-  simp only [TauCeti.AbstractSimplicialComplex.face_le_iff]
+  simp only [SetLike.face_le_iff]
 
 /-- Two faces of `K` span an edge in its barycentric subdivision exactly when one is contained in
 the other.
 
 This is not a `simp` lemma: `mem_barycentricSubdivision_iff` already rewrites the left-hand
 side. -/
-theorem pair_mem_barycentricSubdivision_iff [DecidableEq α]
-    (σ τ : _root_.AbstractSimplicialComplex.Face K) :
+theorem pair_mem_barycentricSubdivision_iff [DecidableEq α] (σ τ : SetLike.Face K) :
     {σ, τ} ∈ barycentricSubdivision K ↔
       (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ := by
   rw [barycentricSubdivision_eq_orderComplex,
     AbstractSimplicialComplex.pair_mem_orderComplex_iff]
-  simp only [TauCeti.AbstractSimplicialComplex.face_le_iff]
+  simp only [SetLike.face_le_iff]
 
 /-- Every two original faces occurring in one face of the barycentric subdivision are nested. -/
 theorem subset_or_subset_of_mem_barycentricSubdivision
-    {ρ : Finset (_root_.AbstractSimplicialComplex.Face K)}
+    {ρ : Finset (SetLike.Face K)}
     (hρ : ρ ∈ barycentricSubdivision K)
-    {σ τ : _root_.AbstractSimplicialComplex.Face K}
+    {σ τ : SetLike.Face K}
     (hσ : σ ∈ ρ) (hτ : τ ∈ ρ) :
     (σ : Finset α) ⊆ τ ∨ (τ : Finset α) ⊆ σ := by
   rw [barycentricSubdivision_eq_orderComplex] at hρ
-  simpa only [TauCeti.AbstractSimplicialComplex.face_le_iff] using
+  simpa only [SetLike.face_le_iff] using
     AbstractSimplicialComplex.le_or_le_of_mem_orderComplex hρ hσ hτ
 
 namespace SimplicialMap
@@ -147,7 +144,7 @@ theorem coe_barycentricSubdivisionMap [DecidableEq β]
 @[simp]
 theorem coe_barycentricSubdivisionMap_apply [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
-    (σ : _root_.AbstractSimplicialComplex.Face K) :
+    (σ : SetLike.Face K) :
     (barycentricSubdivisionMap f σ : Finset β) = σ.1.image f := by
   rw [← coe_faceOrderHom_apply, ← coe_barycentricSubdivisionMap]
 

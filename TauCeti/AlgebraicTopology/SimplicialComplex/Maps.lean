@@ -181,21 +181,21 @@ variable {M : _root_.PreAbstractSimplicialComplex γ}
 -/
 def faceOrderHom [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
-    _root_.AbstractSimplicialComplex.Face K →o _root_.AbstractSimplicialComplex.Face L where
+    SetLike.Face K →o SetLike.Face L where
   toFun σ := ⟨σ.1.image f, f.map_face σ.2⟩
   monotone' _ _ h := Finset.image_mono f h
 
 @[simp]
 theorem coe_faceOrderHom_apply [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
-    (σ : _root_.AbstractSimplicialComplex.Face K) :
+    (σ : SetLike.Face K) :
     (faceOrderHom f σ : Finset β) = σ.1.image f :=
   (rfl)
 
 private theorem faceOrderHom_comp_apply [DecidableEq β] [DecidableEq γ]
     (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
-    (σ : _root_.AbstractSimplicialComplex.Face K) :
+    (σ : SetLike.Face K) :
     faceOrderHom (g.comp f) σ = faceOrderHom g (faceOrderHom f σ) := by
   apply Subtype.ext
   rw [coe_faceOrderHom_apply, coe_faceOrderHom_apply, coe_faceOrderHom_apply]

@@ -43,7 +43,7 @@ public section
 
 noncomputable section
 
-open Set
+open Set TauCeti.SetLike
 
 namespace AbstractSimplicialComplex
 
