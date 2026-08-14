@@ -45,9 +45,11 @@ coordinates patched with a partition of unity.
 ## Main definitions
 
 * `TauCeti.collarChart`: the collar chart induced by an ambient chart.
-* `TauCeti.collarChartedSpace`: `M` as a charted space over the product, via the collar charts.
-  This is a `def`, not an `instance`: `M` already carries a `ChartedSpace` over the half-space,
-  and the two must not compete in instance search.
+* `TauCeti.collarModelChartedSpace`: the model half-space charted over the product by the single
+  collar identification.
+* `TauCeti.collarChartedSpace`: `M` as a charted space over the product, obtained from the
+  previous two by `ChartedSpace.comp`. Both are `def`s, not `instance`s: `M` already carries a
+  `ChartedSpace` over the half-space, and the two must not compete in instance search.
 
 ## Main results
 
@@ -103,10 +105,17 @@ theorem collarChart_snd_apply_zero (e : OpenPartialHomeomorph M (EuclideanHalfSp
     (x : M) : (collarChart e x).2.1 0 = (e x).1 0 :=
   EuclideanHalfSpace.collarDiffeomorph_symm_apply_snd_apply_zero (k := ⊤) n (e x)
 
-/-- The normal coordinate is inward: it is nonnegative, being a point of a half-space. -/
-theorem collarChart_snd_apply_zero_nonneg
-    (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))) (x : M) :
-    0 ≤ (collarChart e x).2.1 0 := (collarChart e x).2.2
+/-- The model half-space as a charted space over the product, with the collar identification of
+`Boundary.Collar` as its single chart. This is what makes a chart of `M` into a collar chart:
+`collarChartedSpace` below is the composition of this with the atlas of `M`.
+
+Deliberately not an instance, for the reason given at `collarChartedSpace`. -/
+@[expose, instance_reducible]
+noncomputable def collarModelChartedSpace (n : ℕ) :
+    ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1)
+      (EuclideanHalfSpace (n + 1)) :=
+  (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph
+    |>.singletonChartedSpace (by simp)
 
 section Atlas
 
@@ -136,18 +145,18 @@ theorem collarChart_fst_eq_chartAt_boundary [IsManifold (𝓡∂ (n + 1)) 1 M]
 /-- The collar charts present `M` as a charted space over the product of the boundary model and
 the one-dimensional half-space.
 
+It is `ChartedSpace.comp` applied to `collarModelChartedSpace`, rather than an atlas written out
+by hand, so that `chartAt_comp`, the `extChartAt` composition lemmas and `HasGroupoid.comp` all
+apply to it — `HasGroupoid.comp` is the route to the `C^k` transitions named above.
+
 Deliberately not an instance: `M` already carries a `ChartedSpace` over
 `EuclideanHalfSpace (n + 1)`, and letting a second one be found by instance search would make
 every statement about charts of `M` ambiguous. Use it explicitly with `letI`. -/
-@[instance_reducible]
+@[expose, instance_reducible]
 noncomputable def collarChartedSpace :
-    ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) M where
-  atlas := collarChart '' atlas (EuclideanHalfSpace (n + 1)) M
-  chartAt x := collarChart (chartAt (EuclideanHalfSpace (n + 1)) x)
-  mem_chart_source x := by
-    rw [collarChart_source]
-    exact mem_chart_source _ x
-  chart_mem_atlas x := ⟨_, chart_mem_atlas _ x, rfl⟩
+    ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) M :=
+  letI := collarModelChartedSpace n
+  ChartedSpace.comp _ (EuclideanHalfSpace (n + 1)) M
 
 end Atlas
 
