@@ -46,7 +46,7 @@ coroot-side condition as its siblings, which is what the per-type dispatcher wil
 
 ## Main results
 
-* `TauCeti.DynkinType.e8Root_dotProduct_coroot_comm`: the pairing of the pinned tables is
+* `TauCeti.DynkinType.e8Root_dotProduct_e8Coroot_comm`: the pairing of the pinned tables is
   symmetric, type `E₈` being simply laced.
 * `TauCeti.DynkinType.hasCartanType_e8SimplyConnectedRootDatum`: the pinned base has Cartan type
   `E8`.
@@ -73,7 +73,7 @@ namespace DynkinType
 /-- **The pairing of the pinned tables is symmetric.** This is the simply-laced feature of `E₈`:
 both sides are the value at the simple-coroot coordinates of the symmetric form carried by
 `CartanMatrix.E₈`. -/
-theorem e8Root_dotProduct_coroot_comm (i j : Fin 240) :
+theorem e8Root_dotProduct_e8Coroot_comm (i j : Fin 240) :
     e8Root i ⬝ᵥ e8Coroot j = e8Root j ⬝ᵥ e8Coroot i := by
   rw [e8Root_apply, e8Root_apply, vecMul_dotProduct_comm CartanMatrix.E₈_isSymm]
 
@@ -106,7 +106,7 @@ noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → �
           e8Root j - (e8Root i ⬝ᵥ e8Coroot j) • e8Root i := by
         simpa only [sub_vecMul, smul_vecMul, ← e8Root_apply] using
           congrArg (fun x : Fin 8 → ℤ ↦ x ᵥ* CartanMatrix.E₈) hk
-      rw [e8Root_dotProduct_coroot_comm] at hroot
+      rw [e8Root_dotProduct_e8Coroot_comm] at hroot
       simpa [Module.preReflection_apply, dotProductEquiv_apply_apply] using hroot)
     (by
       rintro i _ ⟨j, rfl⟩
@@ -123,7 +123,7 @@ noncomputable def e8SimplyConnectedRootDatum : RootDatum (Fin 240) (Fin 8 → �
 
 /-- The perfect pairing of the pinned `E₈` datum is the dot product of coordinate vectors, the
 fundamental-weight and simple-coroot bases being dual to one another. -/
-@[simp] lemma e8SimplyConnectedRootDatum_toLinearMap (x y : Fin 8 → ℤ) :
+@[simp] lemma e8SimplyConnectedRootDatum_toLinearMap_apply (x y : Fin 8 → ℤ) :
     e8SimplyConnectedRootDatum.toLinearMap x y = x ⬝ᵥ y := (rfl)
 
 /-- Pairing a pinned `E₈` root with a coroot computes as their coordinate dot product. -/
@@ -228,7 +228,7 @@ indices. -/
 /-- **The Cartan integers at the first eight root indices are Mathlib's Bourbaki-numbered `E₈`
 matrix.** This pins the node order independently of the existential relabelling in
 `TauCeti.HasCartanType`. -/
-theorem pairing_e8SimpleIndex (i j : Fin 8) :
+@[simp] theorem pairing_e8SimpleIndex (i j : Fin 8) :
     e8SimplyConnectedRootDatum.pairing (e8SimpleIndex i) (e8SimpleIndex j) =
       CartanMatrix.E₈ i j := by
   rw [e8SimplyConnectedRootDatum_pairing, root_e8SimpleIndex, coroot_e8SimpleIndex,
