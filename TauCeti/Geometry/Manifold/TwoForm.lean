@@ -179,7 +179,6 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
   isAlt _ v := hB v
 
 /-- The smooth bilinear section of a constant two-form has its defining value in every fiber. -/
-@[simp]
 lemma const_toContMDiffSection_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) (x : V) :
     (const B hB).toContMDiffSection x = B :=

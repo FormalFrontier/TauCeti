@@ -163,19 +163,11 @@ def constSmooth (omegaForm : SymplecticForm V) :
 
 /-- The bilinear section of a constant smooth symplectic form has its defining value in every
 fiber. -/
-@[simp]
 lemma constSmooth_toContMDiffSection (omegaForm : SymplecticForm V) (x : V) :
     omegaForm.constSmooth.toContMDiffSection x =
       omegaForm.toBilinForm.toContinuousBilinearMap := by
   rw [constSmooth]
   exact SmoothTwoForm.const_toContMDiffSection_apply _ _ x
-
-/-- The bilinear section of a constant smooth symplectic form evaluates as the defining form. -/
-@[simp]
-lemma constSmooth_toContMDiffSection_apply (omegaForm : SymplecticForm V) (x v w : V) :
-    omegaForm.constSmooth.toContMDiffSection x v w = omegaForm v w := by
-  rw [constSmooth_toContMDiffSection]
-  rfl
 
 /-- A constant smooth symplectic form evaluates as its defining algebraic form. -/
 @[simp]
@@ -191,7 +183,7 @@ lemma isNondegenerate_constSmooth (omegaForm : SymplecticForm V) :
   change V at v
   apply omegaForm.nondegenerate.1 v
   intro w
-  simpa only [constSmooth_toContMDiffSection_apply] using hv w
+  simpa only [constSmooth_apply] using hv w
 
 /-- Tameness of a pair of constant smooth structures is exactly tameness of the underlying linear
 pair. -/
@@ -199,12 +191,10 @@ lemma tames_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComplexStr
     omegaForm.constSmooth.Tames J.constSmooth ↔ omegaForm.Tames J := by
   constructor
   · intro h v hv
-    simpa only [constSmooth_toContMDiffSection_apply,
-      AlmostComplexStructure.constSmooth_toEndomorphism_apply] using h 0 v hv
+    simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h 0 v hv
   · intro h x v hv
     change V at v
-    simpa only [constSmooth_toContMDiffSection_apply,
-      AlmostComplexStructure.constSmooth_toEndomorphism_apply] using h v hv
+    simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h v hv
 
 /-- Invariance of a pair of constant smooth structures is exactly invariance of the underlying
 linear pair. -/
@@ -213,12 +203,10 @@ lemma invariant_constSmooth_iff {omegaForm : SymplecticForm V} {J : AlmostComple
   rw [SymplecticForm.invariant_iff]
   constructor
   · intro h v w
-    simpa only [constSmooth_toContMDiffSection_apply,
-      AlmostComplexStructure.constSmooth_toEndomorphism_apply] using h 0 v w
+    simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h 0 v w
   · intro h x v w
     change V at v w
-    simpa only [constSmooth_toContMDiffSection_apply,
-      AlmostComplexStructure.constSmooth_toEndomorphism_apply] using h v w
+    simpa only [constSmooth_apply, AlmostComplexStructure.constSmooth_apply] using h v w
 
 /-- Compatibility of a pair of constant smooth structures is exactly compatibility of the
 underlying linear pair. -/
