@@ -13,14 +13,16 @@ import TauCeti.LinearAlgebra.ExteriorAlgebra.End
 /-!
 # The Spin-group representation on the exterior model
 
-This file restricts the Fock action of a Clifford algebra to its Spin group and proves that the
-underlying Clifford action generates every endomorphism of the exterior model.
+This file restricts the Fock action of a Clifford algebra to its Spin group and proves, when the
+first isotropic summand is finite free, that the underlying Clifford action generates every
+endomorphism of the exterior model.
 
 ## Main definitions and results
 
 * `TauCeti.spinRep` and `TauCeti.pinRep` are the representations of `spinGroup Q` and `pinGroup Q`
   on the exterior model.
-* `TauCeti.spinAction_surjective` identifies the Fock action as onto the full endomorphism algebra.
+* `TauCeti.spinAction_surjective` identifies the Fock action as onto the full endomorphism algebra
+  when the first isotropic summand is finite free.
 
 ## References
 
@@ -62,8 +64,8 @@ theorem pinRep_apply (Q : QuadraticForm K V) (P : SpinPolarizationData Q) (g : p
     pinRep Q P g = spinAction Q P g := by
   simp [pinRep]
 
-/-- The Fock action of a Clifford algebra on its exterior model is onto the full endomorphism
-algebra. -/
+/-- When the first isotropic summand is finite free, the Fock action of a Clifford algebra on its
+exterior model is onto the full endomorphism algebra. -/
 theorem spinAction_surjective {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
     [Module.Free K P.W] [Module.Finite K P.W] :
     Function.Surjective (spinAction Q P) := by
