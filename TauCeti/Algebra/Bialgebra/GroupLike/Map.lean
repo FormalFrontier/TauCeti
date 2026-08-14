@@ -76,6 +76,16 @@ theorem val_mapEquiv (e : A ≃ₐc[R] B) (x : _root_.GroupLike R A) :
     (mapEquiv e x).val = e x.val :=
   val_equivOfCoalgEquiv e.toCoalgEquiv x
 
+/-- The underlying value under the inverse of `mapEquiv` is the inverse bialgebra equivalence. -/
+@[simp]
+theorem val_mapEquiv_symm (e : A ≃ₐc[R] B) (x : _root_.GroupLike R B) :
+    ((mapEquiv e).symm x).val = e.symm x.val := by
+  -- `mapEquiv` reuses the coalgebra equivalence as its underlying `Equiv`; expose that field
+  -- before applying the coalgebra-level inverse evaluation lemma.
+  change ((equivOfCoalgEquiv e.toCoalgEquiv).symm x).val = e.symm x.val
+  rw [equivOfCoalgEquiv_symm, val_equivOfCoalgEquiv]
+  rfl
+
 /-- Mapping group-like elements along the identity equivalence is the identity equivalence. -/
 @[simp]
 theorem mapEquiv_refl : mapEquiv (_root_.BialgEquiv.refl R A) = MulEquiv.refl _ := by
@@ -99,12 +109,7 @@ theorem mapEquiv_trans {C : Type*} [Semiring C] [Bialgebra R C]
 theorem mapEquiv_symm (e : A ≃ₐc[R] B) :
     (mapEquiv e).symm = mapEquiv e.symm := by
   ext x
-  change ((equivOfCoalgEquiv e.toCoalgEquiv).symm x).val =
-    (equivOfCoalgEquiv e.symm.toCoalgEquiv x).val
-  have h : e.toCoalgEquiv.symm = e.symm.toCoalgEquiv := by
-    ext y
-    rfl
-  rw [equivOfCoalgEquiv_symm, h]
+  rw [val_mapEquiv_symm, val_mapEquiv]
 
 end GroupLike
 

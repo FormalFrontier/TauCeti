@@ -109,10 +109,9 @@ theorem smul_def (H : _root_.CommHopfAlgCat.{u} k)
 /-- The absolute-Galois action on the scalar extension is the scalar-factor action. -/
 @[simp]
 theorem smul_tmul (σ : Field.absoluteGaloisGroup k) (a : AlgebraicClosure k) (x : H) :
-    Algebra.TensorProduct.congr
-        (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) .refl (a ⊗ₜ[k] x) =
+    σ • (a ⊗ₜ[k] x) =
       (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) a ⊗ₜ[k] x := by
-  rw [Algebra.TensorProduct.congr_apply, Algebra.TensorProduct.map_tmul]
+  rw [smul_def, Algebra.TensorProduct.congr_apply, Algebra.TensorProduct.map_tmul]
   rfl
 
 /-- The underlying value of the absolute-Galois action on a geometric character. -/

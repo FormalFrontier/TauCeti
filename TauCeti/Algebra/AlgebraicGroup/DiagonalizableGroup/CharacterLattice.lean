@@ -78,9 +78,10 @@ theorem bialgEquivOfBaseChangeIso_symm_apply
     (bialgEquivOfBaseChangeIso k H G i).symm x = i.inv.hom x :=
   by
     apply (bialgEquivOfBaseChangeIso k H G i).symm_apply_eq.mpr
-    change x = bialgEquivOfBaseChangeIso k H G i (i.inv.hom x)
-    rw [bialgEquivOfBaseChangeIso_apply]
-    exact (i.inv_hom_id_apply x).symm
+    calc
+      x = i.hom.hom (i.inv.hom x) := (i.inv_hom_id_apply x).symm
+      _ = bialgEquivOfBaseChangeIso k H G i (i.inv.hom x) :=
+        (bialgEquivOfBaseChangeIso_apply k H G i (i.inv.hom x)).symm
 
 /-- If the base change of a finite-type commutative Hopf algebra is a diagonalizable coordinate
 ring, its geometric character group is the group indexing that coordinate ring. -/

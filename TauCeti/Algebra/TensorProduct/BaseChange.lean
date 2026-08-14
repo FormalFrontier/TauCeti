@@ -213,6 +213,8 @@ noncomputable def congrHom :
   toFun σ := Algebra.TensorProduct.congr σ .refl
   map_one' := Algebra.TensorProduct.congr_refl
   map_mul' σ τ := by
+    -- Multiplication of algebra equivalences is composition in the opposite textual order;
+    -- expose that representation so `congr_trans` can state the required compatibility.
     change Algebra.TensorProduct.congr (τ.trans σ) .refl =
       (Algebra.TensorProduct.congr τ (.refl : A ≃ₐ[K] A)).trans
         (Algebra.TensorProduct.congr σ .refl)
@@ -260,6 +262,8 @@ noncomputable def semilinearMap (σ : L ≃ₐ[K] L) :
 theorem semilinearMap_apply (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
     semilinearMap (A := A) σ x = σ • x :=
   by
+    -- Exported semilinear-map application unfolds to `TensorProduct.map`, whereas the action
+    -- unfolds to `TensorProduct.congr`; expose both representations before comparing them.
     change Algebra.TensorProduct.map σ.toAlgHom (AlgHom.id K A) x = σ • x
     rw [smul_def, Algebra.TensorProduct.congr_apply]
     rw [AlgEquiv.refl_toAlgHom]

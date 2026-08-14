@@ -70,63 +70,33 @@ theorem isGroupLikeElem_smul (σ : L ≃ₐ[K] L) {x : L ⊗[K] A}
     rw [comul_smul, hx.comul_eq_tmul_self, TensorProduct.map_tmul]
     simp only [semilinearMap_apply]
 
-/-- Apply a scalar automorphism to a group-like element. -/
-noncomputable def groupLikeMap (σ : L ≃ₐ[K] L)
-    (x : _root_.GroupLike L (L ⊗[K] A)) : _root_.GroupLike L (L ⊗[K] A) :=
-  ⟨σ • x.val, isGroupLikeElem_smul (A := A) σ x.isGroupLikeElem_val⟩
-
-/-- The underlying value of `groupLikeMap` is the scalar-factor action. -/
-@[simp]
-theorem val_groupLikeMap (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
-    (groupLikeMap (A := A) σ x).val = σ • x.val := by
-  simp [groupLikeMap]
-
-/-- `groupLikeMap` respects the identity scalar automorphism. -/
-theorem groupLikeMap_one (x : _root_.GroupLike L (L ⊗[K] A)) :
-    groupLikeMap (A := A) (1 : L ≃ₐ[K] L) x = x := by
-  apply _root_.GroupLike.val_injective
-  rw [val_groupLikeMap, one_smul]
-
-/-- `groupLikeMap` respects multiplication of scalar automorphisms. -/
-theorem groupLikeMap_mul (σ τ : L ≃ₐ[K] L)
-    (x : _root_.GroupLike L (L ⊗[K] A)) :
-    groupLikeMap (A := A) (σ * τ) x =
-      groupLikeMap (A := A) σ (groupLikeMap (A := A) τ x) := by
-  apply _root_.GroupLike.val_injective
-  rw [val_groupLikeMap, val_groupLikeMap, val_groupLikeMap, mul_smul]
-
-/-- `groupLikeMap` preserves the identity group-like element. -/
-theorem groupLikeMap_one_elem (σ : L ≃ₐ[K] L) :
-    groupLikeMap (A := A) σ 1 = 1 := by
-  apply _root_.GroupLike.val_injective
-  rw [val_groupLikeMap, _root_.GroupLike.val_one, smul_def, map_one]
-
-/-- `groupLikeMap` preserves multiplication of group-like elements. -/
-theorem groupLikeMap_mul_elem (σ : L ≃ₐ[K] L)
-    (x y : _root_.GroupLike L (L ⊗[K] A)) :
-    groupLikeMap (A := A) σ (x * y) =
-      groupLikeMap (A := A) σ x * groupLikeMap (A := A) σ y := by
-  apply _root_.GroupLike.val_injective
-  rw [val_groupLikeMap, _root_.GroupLike.val_mul, _root_.GroupLike.val_mul,
-    val_groupLikeMap, val_groupLikeMap]
-  simp only [smul_def, map_mul]
-
 /-- Scalar automorphisms act multiplicatively on group-like elements. -/
 noncomputable instance instGroupLikeDistribMulAction :
     MulDistribMulAction (L ≃ₐ[K] L) (_root_.GroupLike L (L ⊗[K] A)) where
-  smul := groupLikeMap
-  one_smul := groupLikeMap_one
-  mul_smul := groupLikeMap_mul
-  smul_one := groupLikeMap_one_elem
-  smul_mul := groupLikeMap_mul_elem
+  smul σ x := ⟨σ • x.val, isGroupLikeElem_smul (A := A) σ x.isGroupLikeElem_val⟩
+  -- The action is defined inline, so its laws reduce to the corresponding laws on values.
+  one_smul x := by
+    apply _root_.GroupLike.val_injective
+    change (1 : L ≃ₐ[K] L) • x.val = x.val
+    exact one_smul _ x.val
+  mul_smul σ τ x := by
+    apply _root_.GroupLike.val_injective
+    change (σ * τ) • x.val = σ • τ • x.val
+    exact mul_smul σ τ x.val
+  smul_one σ := by
+    apply _root_.GroupLike.val_injective
+    change σ • (1 : L ⊗[K] A) = 1
+    rw [smul_def, map_one]
+  smul_mul σ x y := by
+    apply _root_.GroupLike.val_injective
+    change σ • (x.val * y.val) = σ • x.val * σ • y.val
+    simp only [smul_def, map_mul]
 
 /-- The value of the scalar action on a group-like element is the scalar-factor action. -/
 @[simp]
 theorem val_smul (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
     (σ • x).val = σ • x.val :=
-  by
-    change (groupLikeMap (A := A) σ x).val = σ • x.val
-    exact val_groupLikeMap σ x
+  rfl
 
 /-- The scalar action transported to the additive form of the group-like monoid. -/
 noncomputable instance instAdditiveDistribMulAction :
