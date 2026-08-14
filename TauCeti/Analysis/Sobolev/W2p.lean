@@ -96,87 +96,84 @@ abbrev W2p (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal
 /-- The continuous linear projection from `W2p` to its first-order Sobolev component.  Its value
 and weak gradient are the value and weak gradient of the second-order function. -/
 def W2p.firstOrderL : W2p mu Omega p →L[ℝ] W1p mu Omega p :=
-  (WithLp.fstL 2 ℝ _ _).comp (w2pSubmodule mu Omega p).toSubmodule.subtypeL
+  WeakDerivStep.prevL (W1p.gradientL (mu := mu) (Omega := Omega) (p := p))
 
 /-- The first-order Sobolev component of a second-order Sobolev function. -/
 def W2p.firstOrder (u : W2p mu Omega p) : W1p mu Omega p :=
-  W2p.firstOrderL u
+  WeakDerivStep.prev (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 @[simp]
 theorem W2p.firstOrderL_apply (u : W2p mu Omega p) :
-    W2p.firstOrderL u = W2p.firstOrder u := (rfl)
+    W2p.firstOrderL u = W2p.firstOrder u :=
+  WeakDerivStep.prevL_apply (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 theorem W2p.firstOrder_coe (u : W2p mu Omega p) :
-    W2p.firstOrder u = WithLp.fst (u : Sobolev2JetLp mu Omega p) := (rfl)
+    W2p.firstOrder u = WithLp.fst (u : Sobolev2JetLp mu Omega p) :=
+  WeakDerivStep.prev_coe (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- The continuous linear projection from `W2p` to its weak Hessian. -/
 def W2p.hessianL : W2p mu Omega p →L[ℝ] Lp (E →L[ℝ] E) p (mu.restrict Omega) :=
-  (WithLp.sndL 2 ℝ _ _).comp (w2pSubmodule mu Omega p).toSubmodule.subtypeL
+  WeakDerivStep.weakFDerivL (W1p.gradientL (mu := mu) (Omega := Omega) (p := p))
 
 /-- The `Lᵖ` weak Hessian of a second-order Sobolev function. -/
 def W2p.hessian (u : W2p mu Omega p) : Lp (E →L[ℝ] E) p (mu.restrict Omega) :=
-  W2p.hessianL u
+  WeakDerivStep.weakFDeriv (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 @[simp]
 theorem W2p.hessianL_apply (u : W2p mu Omega p) :
-    W2p.hessianL u = W2p.hessian u := (rfl)
+    W2p.hessianL u = W2p.hessian u :=
+  WeakDerivStep.weakFDerivL_apply (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 theorem W2p.hessian_coe (u : W2p mu Omega p) :
-    W2p.hessian u = WithLp.snd (u : Sobolev2JetLp mu Omega p) := (rfl)
+    W2p.hessian u = WithLp.snd (u : Sobolev2JetLp mu Omega p) :=
+  WeakDerivStep.weakFDeriv_coe (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- Construct a second-order Sobolev function from a first-order Sobolev function and a weak
 Hessian. -/
 def W2p.mk (u : W1p mu Omega p) (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) : W2p mu Omega p :=
-  ⟨WithLp.toLp 2 (u, H), (mem_w2pSubmodule_iff_hasWeakFDerivOn _).mpr (by simpa)⟩
+  WeakDerivStep.mk (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u H (by simpa using h)
 
 @[simp]
 theorem W2p.firstOrder_mk (u : W1p mu Omega p)
     (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) :
-    W2p.firstOrder (W2p.mk u H h) = u := by
-  rw [W2p.firstOrder_coe]
-  simp [W2p.mk]
+    W2p.firstOrder (W2p.mk u H h) = u :=
+  WeakDerivStep.prev_mk (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u H
+    (by simpa using h)
 
 @[simp]
 theorem W2p.hessian_mk (u : W1p mu Omega p)
     (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W1p.gradient u) H) :
-    W2p.hessian (W2p.mk u H h) = H := by
-  rw [W2p.hessian_coe]
-  simp [W2p.mk]
+    W2p.hessian (W2p.mk u H h) = H :=
+  WeakDerivStep.weakFDeriv_mk (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u H
+    (by simpa using h)
 
 /-- Two second-order Sobolev functions are equal when their first-order components and weak
 Hessians are equal. -/
 theorem W2p.ext_firstOrder {u v : W2p mu Omega p}
     (hfirstOrder : W2p.firstOrder u = W2p.firstOrder v)
-    (hhessian : W2p.hessian u = W2p.hessian v) : u = v := by
-  refine Subtype.ext ((WithLp.prodContinuousLinearEquiv 2 ℝ _ _).injective ?_)
-  exact Prod.ext hfirstOrder hhessian
+    (hhessian : W2p.hessian u = W2p.hessian v) : u = v :=
+  WeakDerivStep.ext_prev hfirstOrder hhessian
 
 /-- The Hessian of a second-order Sobolev function is the weak Fréchet derivative of its weak
 gradient. -/
 theorem W2p.hasWeakFDerivOn_gradient (u : W2p mu Omega p) :
-    HasWeakFDerivOn mu Omega (W1p.gradient (W2p.firstOrder u)) (W2p.hessian u) :=
-  (mem_w2pSubmodule_iff_hasWeakFDerivOn u.1).mp u.2
+    HasWeakFDerivOn mu Omega (W1p.gradient (W2p.firstOrder u)) (W2p.hessian u) := by
+  simpa [W2p.firstOrder, W2p.hessian] using
+    WeakDerivStep.hasWeakFDerivOn_prev (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- Two second-order Sobolev functions are equal when their `Lᵖ` value components are equal.
 Successive uniqueness of weak derivatives determines both the gradient and Hessian components. -/
 @[ext]
 theorem W2p.ext {u v : W2p mu Omega p}
-    (hvalue : W1p.value (W2p.firstOrder u) = W1p.value (W2p.firstOrder v)) : u = v := by
-  have hfirstOrder : W2p.firstOrder u = W2p.firstOrder v := W1p.ext_value hvalue
-  have hv : HasWeakFDerivOn mu Omega (W1p.gradient (W2p.firstOrder u)) (W2p.hessian v) := by
-    rw [hfirstOrder]
-    exact W2p.hasWeakFDerivOn_gradient v
-  have hhessian : W2p.hessian u = W2p.hessian v :=
-    Lp.ext ((W2p.hasWeakFDerivOn_gradient u).ae_eq hv)
-  exact W2p.ext_firstOrder hfirstOrder hhessian
+    (hvalue : W1p.value (W2p.firstOrder u) = W1p.value (W2p.firstOrder v)) : u = v :=
+  WeakDerivStep.ext (W1p.ext_value hvalue)
 
 /-- The norm of a second-order Sobolev function controls the norm of its first-order component. -/
-theorem W2p.norm_firstOrder_le (u : W2p mu Omega p) : ‖W2p.firstOrder u‖ ≤ ‖u‖ := by
-  rw [W2p.firstOrder_coe]
-  exact WithLp.norm_fst_le (W1p mu Omega p) u.1
+theorem W2p.norm_firstOrder_le (u : W2p mu Omega p) : ‖W2p.firstOrder u‖ ≤ ‖u‖ :=
+  WeakDerivStep.norm_prev_le (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- The norm of a second-order Sobolev function controls the norm of its value component. -/
 theorem W2p.norm_value_le (u : W2p mu Omega p) : ‖W1p.value (W2p.firstOrder u)‖ ≤ ‖u‖ :=
@@ -187,16 +184,15 @@ theorem W2p.norm_gradient_le (u : W2p mu Omega p) : ‖W1p.gradient (W2p.firstOr
   (W1p.norm_gradient_le (W2p.firstOrder u)).trans (W2p.norm_firstOrder_le u)
 
 /-- The norm of a second-order Sobolev function controls the norm of its weak Hessian. -/
-theorem W2p.norm_hessian_le (u : W2p mu Omega p) : ‖W2p.hessian u‖ ≤ ‖u‖ := by
-  rw [W2p.hessian_coe]
-  exact WithLp.norm_snd_le (W1p mu Omega p) u.1
+theorem W2p.norm_hessian_le (u : W2p mu Omega p) : ‖W2p.hessian u‖ ≤ ‖u‖ :=
+  WeakDerivStep.norm_weakFDeriv_le (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- The norm on `W2p` is the Euclidean graph norm of the first-order Sobolev component and the
 weak Hessian. -/
 theorem W2p.norm_sq_eq_norm_firstOrder_sq_add_norm_hessian_sq (u : W2p mu Omega p) :
-    ‖u‖ ^ 2 = ‖W2p.firstOrder u‖ ^ 2 + ‖W2p.hessian u‖ ^ 2 := by
-  rw [Submodule.coe_norm, W2p.firstOrder_coe, W2p.hessian_coe]
-  exact WithLp.prod_norm_sq_eq_of_L2 u.1
+    ‖u‖ ^ 2 = ‖W2p.firstOrder u‖ ^ 2 + ‖W2p.hessian u‖ ^ 2 :=
+  WeakDerivStep.norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq
+    (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- At exponent two, the norm on `W2p` is the sum-of-squares graph norm of the value, weak
 gradient, and weak Hessian. -/
@@ -209,6 +205,7 @@ theorem W2p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq_add_norm_hessian_sq
 
 /-- `W^{2,p}(Ω)` is complete in its iterated weak-derivative graph norm. -/
 instance : CompleteSpace (W2p mu Omega p) :=
-  (w2pSubmodule mu Omega p).isClosed.completeSpace_coe
+  inferInstanceAs
+    (CompleteSpace (WeakDerivStep mu Omega p (W1p.gradientL (mu := mu) (Omega := Omega) (p := p))))
 
 end TauCeti

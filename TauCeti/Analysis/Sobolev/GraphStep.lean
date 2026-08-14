@@ -16,14 +16,29 @@ complete normed space `X` and a continuous map from `X` to an `Lᵖ` space of `F
 condition is a closed subspace, so the resulting graph space is complete.
 
 The construction is independent of the order of differentiation. It is instantiated by `W2p`
-with the weak gradient and by `W3p` with the weak Hessian, and supplies the reusable successor
-needed for the arbitrary-order construction in Lane A.1 of `TauCetiRoadmap/PDE/README.md`.
+with the weak gradient and by `W3p` with the weak Hessian, whose projections, constructor,
+norm bounds and completeness are specializations of the ones proved here.
+
+The graph carries the Euclidean (`WithLp 2`) product norm
+
+`(∥x∥_X² + ∥Du∥_p²)¹⁄²`,
+
+whose exponent is two whatever `p` is.  That is what makes the squared-norm identity
+`TauCeti.WeakDerivStep.norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq` available for every `p`.
 
 ## Main declarations
 
 * `TauCeti.weakDerivStepSubmodule`: the closed graph of one weak-derivative step.
 * `TauCeti.mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn`: its intrinsic characterization.
-* `TauCeti.WeakDerivStep`: the resulting complete normed space.
+* `TauCeti.WeakDerivStep`: the resulting complete normed space, with projections
+  `TauCeti.WeakDerivStep.prev` and `TauCeti.WeakDerivStep.weakFDeriv`, constructor
+  `TauCeti.WeakDerivStep.mk`, and extensionality `TauCeti.WeakDerivStep.ext`.
+
+## References
+
+This supplies the order-independent successor step for Lane A.1, target 1, in
+`TauCetiRoadmap/PDE/README.md`.  The iterated weak-derivative definition and the closed-graph
+completeness argument follow L. C. Evans, *Partial Differential Equations*, Chapter 5, §5.2.
 -/
 
 public section
@@ -40,7 +55,9 @@ variable {E F X : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProduc
   [CompleteSpace F] [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
   {mu : Measure E} [mu.IsAddHaarMeasure] {Omega : Opens E} {p : ENNReal} [Fact (1 <= p)]
 
-/-- The ambient graph space obtained by adjoining an `Lᵖ` candidate weak derivative to `X`. -/
+/-- The ambient graph space obtained by adjoining an `Lᵖ` candidate weak derivative to `X`,
+carrying the Euclidean (`WithLp 2`) product norm of its two components.  They are projected out
+by `WithLp.fst` and `WithLp.snd`. -/
 abbrev WeakDerivStepJetLp (mu : Measure E) (Omega : Opens E) (p : ENNReal) (X F : Type*)
     [NormedAddCommGroup F] [NormedSpace ℝ F] :=
   WithLp 2 (X × Lp (E →L[ℝ] F) p (mu.restrict Omega))
@@ -79,6 +96,8 @@ private def weakDerivStepSmulPairing (p : ENNReal) [Fact (1 <= p)]
   exact (ContinuousLinearMap.lsmul ℝ ℝ : ℝ →L[ℝ] F →L[ℝ] F).lpPairing
     (mu.restrict Omega) (ENNReal.conjExponent p) p
 
+/-- The continuous functional expressing that the adjoined field is the weak derivative of the
+field selected by `base`, tested against `phi` in the direction `v`. -/
 private def weakDerivStepTestFunctional
     (base : X →L[ℝ] Lp F p (mu.restrict Omega))
     (phi : 𝓓(Omega, ℝ)) (v : E) : WeakDerivStepJetLp mu Omega p X F →L[ℝ] F := by
@@ -106,14 +125,18 @@ private theorem weakDerivStepTestFunctional_apply
   have hdphi : (dphi : E → ℝ) = fun x => lineDeriv ℝ (phi : E → ℝ) x v := by
     funext x
     exact TestFunction.lineDerivCLM_apply_of_le le_top
-  rw [show weakDerivStepTestFunctional base phi v J =
+  -- `weakDerivStepTestFunctional` is assembled from `ContinuousLinearMap.comp` and `+` inside a
+  -- tactic block that `let`-binds the Hölder-conjugate instances, so `simp` cannot rewrite it.
+  -- Evaluating it at `J` is definitionally the sum of the two Hölder pairings.
+  have happly : weakDerivStepTestFunctional base phi v J =
       weakDerivStepSmulPairing (mu := mu) (Omega := Omega) (F := F) p
           (testFunctionLp (mu := mu) (ENNReal.conjExponent p) dphi)
           (weakDerivStepBaseL base J) +
         weakDerivStepSmulPairing (mu := mu) (Omega := Omega) (F := F) p
           (testFunctionLp (mu := mu) (ENNReal.conjExponent p) phi)
-          (weakDerivStepDirectionL (mu := mu) (Omega := Omega) (p := p) (X := X) (F := F) v J)
-      by rfl, weakDerivStepSmulPairing, ContinuousLinearMap.lpPairing_eq_integral,
+          (weakDerivStepDirectionL (mu := mu) (Omega := Omega) (p := p) (X := X) (F := F) v J) :=
+    rfl
+  rw [happly, weakDerivStepSmulPairing, ContinuousLinearMap.lpPairing_eq_integral,
     ContinuousLinearMap.lpPairing_eq_integral]
   have hfirst :
       (∫ x, testFunctionLp (mu := mu) (ENNReal.conjExponent p) dphi x •
@@ -152,10 +175,11 @@ theorem mem_weakDerivStepSubmodule_iff
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
         (∫ x, lineDeriv ℝ (phi : E → ℝ) x v • base (WithLp.fst J) x ∂mu) +
           ∫ x, phi x • WithLp.snd J x v ∂mu = 0 := by
-  rw [show J ∈ weakDerivStepSubmodule mu Omega p base ↔
-      ∀ (phi : 𝓓(Omega, ℝ)) (v : E), weakDerivStepTestFunctional base phi v J = 0 by
+  have hmem : J ∈ weakDerivStepSubmodule mu Omega p base ↔
+      ∀ (phi : 𝓓(Omega, ℝ)) (v : E), weakDerivStepTestFunctional base phi v J = 0 := by
     simp only [weakDerivStepSubmodule, ClosedSubmodule.mem_iInf, ClosedSubmodule.mem_comap,
-      ClosedSubmodule.mem_bot]]
+      ClosedSubmodule.mem_bot]
+  rw [hmem]
   simp only [weakDerivStepTestFunctional_apply]
 
 omit [CompleteSpace X] in
@@ -211,26 +235,26 @@ theorem prev_coe (base : X →L[ℝ] Lp F p (mu.restrict Omega))
     (u : WeakDerivStep mu Omega p base) : prev base u = WithLp.fst u.1 := by
   simp [prev, prevL]
 
-/-- The continuous projection to the adjoined weak derivative. -/
-def derivL (base : X →L[ℝ] Lp F p (mu.restrict Omega)) :
+/-- The continuous projection to the adjoined weak Fréchet derivative. -/
+def weakFDerivL (base : X →L[ℝ] Lp F p (mu.restrict Omega)) :
     WeakDerivStep mu Omega p base →L[ℝ] Lp (E →L[ℝ] F) p (mu.restrict Omega) :=
   (WithLp.sndL 2 ℝ _ _).comp (weakDerivStepSubmodule mu Omega p base).toSubmodule.subtypeL
 
-/-- The adjoined `Lᵖ` weak derivative. -/
-def deriv (base : X →L[ℝ] Lp F p (mu.restrict Omega))
+/-- The adjoined `Lᵖ` weak Fréchet derivative. -/
+def weakFDeriv (base : X →L[ℝ] Lp F p (mu.restrict Omega))
     (u : WeakDerivStep mu Omega p base) : Lp (E →L[ℝ] F) p (mu.restrict Omega) :=
-  derivL base u
+  weakFDerivL base u
 
 omit [FiniteDimensional ℝ E] [CompleteSpace X] in
 @[simp]
-theorem derivL_apply (base : X →L[ℝ] Lp F p (mu.restrict Omega))
-    (u : WeakDerivStep mu Omega p base) : derivL base u = deriv base u := by
-  rw [deriv]
+theorem weakFDerivL_apply (base : X →L[ℝ] Lp F p (mu.restrict Omega))
+    (u : WeakDerivStep mu Omega p base) : weakFDerivL base u = weakFDeriv base u := by
+  rw [weakFDeriv]
 
 omit [FiniteDimensional ℝ E] [CompleteSpace X] in
-theorem deriv_coe (base : X →L[ℝ] Lp F p (mu.restrict Omega))
-    (u : WeakDerivStep mu Omega p base) : deriv base u = WithLp.snd u.1 := by
-  simp [deriv, derivL]
+theorem weakFDeriv_coe (base : X →L[ℝ] Lp F p (mu.restrict Omega))
+    (u : WeakDerivStep mu Omega p base) : weakFDeriv base u = WithLp.snd u.1 := by
+  simp [weakFDeriv, weakFDerivL]
 
 /-- Construct an element of a weak-derivative graph from its two components. -/
 def mk (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (x : X)
@@ -248,18 +272,41 @@ theorem prev_mk (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (x : X)
 
 omit [CompleteSpace X] in
 @[simp]
-theorem deriv_mk (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (x : X)
+theorem weakFDeriv_mk (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (x : X)
     (D : Lp (E →L[ℝ] F) p (mu.restrict Omega))
-    (h : HasWeakFDerivOn mu Omega (base x) D) : deriv base (mk base x D h) = D := by
-  rw [deriv_coe]
+    (h : HasWeakFDerivOn mu Omega (base x) D) : weakFDeriv base (mk base x D h) = D := by
+  rw [weakFDeriv_coe]
   simp [mk]
 
 omit [CompleteSpace X] in
 /-- The adjoined field is the weak derivative of the field selected by `base`. -/
 theorem hasWeakFDerivOn_prev (base : X →L[ℝ] Lp F p (mu.restrict Omega))
     (u : WeakDerivStep mu Omega p base) :
-    HasWeakFDerivOn mu Omega (base (prev base u)) (deriv base u) :=
+    HasWeakFDerivOn mu Omega (base (prev base u)) (weakFDeriv base u) :=
   (mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn base u.1).mp u.2
+
+omit [FiniteDimensional ℝ E] [CompleteSpace X] in
+/-- Two elements of a weak-derivative graph are equal when their preceding components and their
+adjoined weak derivatives are equal. -/
+theorem ext_prev {base : X →L[ℝ] Lp F p (mu.restrict Omega)}
+    {u v : WeakDerivStep mu Omega p base} (hprev : prev base u = prev base v)
+    (hweakFDeriv : weakFDeriv base u = weakFDeriv base v) : u = v := by
+  refine Subtype.ext ((WithLp.prodContinuousLinearEquiv 2 ℝ _ _).injective ?_)
+  refine Prod.ext ?_ ?_
+  · simpa only [WithLp.prodContinuousLinearEquiv_apply, WithLp.ofLp_fst, prev_coe] using hprev
+  · simpa only [WithLp.prodContinuousLinearEquiv_apply, WithLp.ofLp_snd, weakFDeriv_coe] using
+      hweakFDeriv
+
+omit [CompleteSpace X] in
+/-- Two elements of a weak-derivative graph are equal when their preceding components are equal:
+uniqueness of the weak derivative then forces the adjoined components to agree. -/
+@[ext]
+theorem ext {base : X →L[ℝ] Lp F p (mu.restrict Omega)}
+    {u v : WeakDerivStep mu Omega p base} (hprev : prev base u = prev base v) : u = v := by
+  have hv : HasWeakFDerivOn mu Omega (base (prev base u)) (weakFDeriv base v) := by
+    rw [hprev]
+    exact hasWeakFDerivOn_prev base v
+  exact ext_prev hprev (Lp.ext ((hasWeakFDerivOn_prev base u).ae_eq hv))
 
 omit [FiniteDimensional ℝ E] [CompleteSpace X] in
 /-- The graph norm controls the preceding component. -/
@@ -270,17 +317,17 @@ theorem norm_prev_le (base : X →L[ℝ] Lp F p (mu.restrict Omega))
 
 omit [FiniteDimensional ℝ E] [CompleteSpace X] in
 /-- The graph norm controls the adjoined weak derivative. -/
-theorem norm_deriv_le (base : X →L[ℝ] Lp F p (mu.restrict Omega))
-    (u : WeakDerivStep mu Omega p base) : ‖deriv base u‖ ≤ ‖u‖ := by
-  rw [deriv_coe]
+theorem norm_weakFDeriv_le (base : X →L[ℝ] Lp F p (mu.restrict Omega))
+    (u : WeakDerivStep mu Omega p base) : ‖weakFDeriv base u‖ ≤ ‖u‖ := by
+  rw [weakFDeriv_coe]
   exact WithLp.norm_snd_le X u.1
 
 omit [FiniteDimensional ℝ E] [CompleteSpace X] in
 /-- The squared graph norm is the sum of the squared component norms. -/
-theorem norm_sq_eq_norm_prev_sq_add_norm_deriv_sq
+theorem norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq
     (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (u : WeakDerivStep mu Omega p base) :
-    ‖u‖ ^ 2 = ‖prev base u‖ ^ 2 + ‖deriv base u‖ ^ 2 := by
-  rw [Submodule.coe_norm, prev_coe, deriv_coe]
+    ‖u‖ ^ 2 = ‖prev base u‖ ^ 2 + ‖weakFDeriv base u‖ ^ 2 := by
+  rw [Submodule.coe_norm, prev_coe, weakFDeriv_coe]
   exact WithLp.prod_norm_sq_eq_of_L2 u.1
 
 instance (base : X →L[ℝ] Lp F p (mu.restrict Omega)) :

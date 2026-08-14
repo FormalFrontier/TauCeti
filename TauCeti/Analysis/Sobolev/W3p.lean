@@ -48,6 +48,12 @@ public section
 
 noncomputable section
 
+-- Specializing the generic graph step to `W2p` stacks three levels of subspace-of-product
+-- normed structures, so synthesizing `NormedSpace ℝ (W2p mu Omega p)` while the earlier
+-- instance arguments are still pending needs one extra level of pending depth.  Mathlib's own
+-- build sets this option to `3` globally.
+set_option maxSynthPendingDepth 2
+
 namespace TauCeti
 
 open MeasureTheory Set TopologicalSpace
@@ -94,99 +100,88 @@ abbrev W3p (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal
 
 /-- The continuous projection from `W3p` to its second-order Sobolev component. -/
 def W3p.secondOrderL : W3p mu Omega p →L[ℝ] W2p mu Omega p :=
-  (WithLp.fstL 2 ℝ _ _).comp (w3pSubmodule mu Omega p).toSubmodule.subtypeL
+  WeakDerivStep.prevL (W2p.hessianL (mu := mu) (Omega := Omega) (p := p))
 
 /-- The second-order Sobolev component of a third-order Sobolev function. -/
 def W3p.secondOrder (u : W3p mu Omega p) : W2p mu Omega p :=
-  W3p.secondOrderL (mu := mu) (Omega := Omega) (p := p) u
+  WeakDerivStep.prev (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 @[simp]
 theorem W3p.secondOrderL_apply (u : W3p mu Omega p) :
-    W3p.secondOrderL (mu := mu) (Omega := Omega) (p := p) u =
-      W3p.secondOrder u := (rfl)
+    W3p.secondOrderL (mu := mu) (Omega := Omega) (p := p) u = W3p.secondOrder u :=
+  WeakDerivStep.prevL_apply (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 theorem W3p.secondOrder_coe (u : W3p mu Omega p) :
-    W3p.secondOrder u = WithLp.fst (u : Sobolev3JetLp mu Omega p) := (rfl)
+    W3p.secondOrder u = WithLp.fst (u : Sobolev3JetLp mu Omega p) :=
+  WeakDerivStep.prev_coe (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- The continuous projection from `W3p` to its weak third derivative. -/
 def W3p.thirdDerivativeL : W3p mu Omega p →L[ℝ]
     Lp (E →L[ℝ] (E →L[ℝ] E)) p (mu.restrict Omega) :=
-  (WithLp.sndL 2 ℝ _ _).comp (w3pSubmodule mu Omega p).toSubmodule.subtypeL
+  WeakDerivStep.weakFDerivL (W2p.hessianL (mu := mu) (Omega := Omega) (p := p))
 
 /-- The `Lᵖ` weak third derivative of a third-order Sobolev function. -/
 def W3p.thirdDerivative (u : W3p mu Omega p) :
     Lp (E →L[ℝ] (E →L[ℝ] E)) p (mu.restrict Omega) :=
-  W3p.thirdDerivativeL (mu := mu) (Omega := Omega) (p := p) u
+  WeakDerivStep.weakFDeriv (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 @[simp]
 theorem W3p.thirdDerivativeL_apply (u : W3p mu Omega p) :
-    W3p.thirdDerivativeL (mu := mu) (Omega := Omega) (p := p) u =
-      W3p.thirdDerivative u := (rfl)
+    W3p.thirdDerivativeL (mu := mu) (Omega := Omega) (p := p) u = W3p.thirdDerivative u :=
+  WeakDerivStep.weakFDerivL_apply (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 theorem W3p.thirdDerivative_coe (u : W3p mu Omega p) :
-    W3p.thirdDerivative u = WithLp.snd (u : Sobolev3JetLp mu Omega p) := (rfl)
+    W3p.thirdDerivative u = WithLp.snd (u : Sobolev3JetLp mu Omega p) :=
+  WeakDerivStep.weakFDeriv_coe (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- Construct a third-order Sobolev function from a second-order Sobolev function and a weak
 third derivative. -/
 def W3p.mk (u : W2p mu Omega p)
     (T : Lp (E →L[ℝ] (E →L[ℝ] E)) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W2p.hessian u) T) : W3p mu Omega p :=
-  ⟨WithLp.toLp 2 (u, T), (mem_w3pSubmodule_iff_hasWeakFDerivOn _).mpr (by simpa)⟩
+  WeakDerivStep.mk (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u T (by simpa using h)
 
 @[simp]
 theorem W3p.secondOrder_mk (u : W2p mu Omega p)
     (T : Lp (E →L[ℝ] (E →L[ℝ] E)) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W2p.hessian u) T) :
-    W3p.secondOrder (W3p.mk u T h) = u := by
-  rw [W3p.secondOrder_coe]
-  simp [W3p.mk]
+    W3p.secondOrder (W3p.mk u T h) = u :=
+  WeakDerivStep.prev_mk (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u T
+    (by simpa using h)
 
 @[simp]
 theorem W3p.thirdDerivative_mk (u : W2p mu Omega p)
     (T : Lp (E →L[ℝ] (E →L[ℝ] E)) p (mu.restrict Omega))
     (h : HasWeakFDerivOn mu Omega (W2p.hessian u) T) :
-    W3p.thirdDerivative (W3p.mk u T h) = T := by
-  rw [W3p.thirdDerivative_coe]
-  simp [W3p.mk]
+    W3p.thirdDerivative (W3p.mk u T h) = T :=
+  WeakDerivStep.weakFDeriv_mk (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u T
+    (by simpa using h)
 
 /-- Two third-order Sobolev functions are equal when their second-order components and weak
 third derivatives are equal. -/
 theorem W3p.ext_secondOrder {u v : W3p mu Omega p}
     (hsecondOrder : W3p.secondOrder u = W3p.secondOrder v)
-    (hthird : W3p.thirdDerivative u = W3p.thirdDerivative v) : u = v := by
-  refine Subtype.ext ((WithLp.prodContinuousLinearEquiv 2 ℝ _ _).injective ?_)
-  apply Prod.ext
-  · simpa only [WithLp.prodContinuousLinearEquiv_apply, WithLp.ofLp_fst,
-      W3p.secondOrder_coe] using hsecondOrder
-  · simpa only [WithLp.prodContinuousLinearEquiv_apply, WithLp.ofLp_snd,
-      W3p.thirdDerivative_coe] using hthird
+    (hthird : W3p.thirdDerivative u = W3p.thirdDerivative v) : u = v :=
+  WeakDerivStep.ext_prev hsecondOrder hthird
 
 /-- The third derivative of a third-order Sobolev function is the weak Fréchet derivative of its
 weak Hessian. -/
 theorem W3p.hasWeakFDerivOn_hessian (u : W3p mu Omega p) :
     HasWeakFDerivOn mu Omega (W2p.hessian (W3p.secondOrder u)) (W3p.thirdDerivative u) := by
-  rw [W3p.secondOrder_coe, W3p.thirdDerivative_coe]
-  exact (mem_w3pSubmodule_iff_hasWeakFDerivOn u.1).mp u.2
+  simpa [W3p.secondOrder, W3p.thirdDerivative] using
+    WeakDerivStep.hasWeakFDerivOn_prev (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- Two third-order Sobolev functions are equal when their `Lᵖ` value components are equal.
 Successive uniqueness of weak derivatives determines every higher component. -/
 @[ext]
 theorem W3p.ext {u v : W3p mu Omega p}
     (hvalue : W1p.value (W2p.firstOrder (W3p.secondOrder u)) =
-      W1p.value (W2p.firstOrder (W3p.secondOrder v))) : u = v := by
-  have hsecondOrder : W3p.secondOrder u = W3p.secondOrder v := W2p.ext hvalue
-  have hv : HasWeakFDerivOn mu Omega (W2p.hessian (W3p.secondOrder u))
-      (W3p.thirdDerivative v) := by
-    rw [hsecondOrder]
-    exact W3p.hasWeakFDerivOn_hessian v
-  have hthird : W3p.thirdDerivative u = W3p.thirdDerivative v :=
-    Lp.ext ((W3p.hasWeakFDerivOn_hessian u).ae_eq hv)
-  exact W3p.ext_secondOrder hsecondOrder hthird
+      W1p.value (W2p.firstOrder (W3p.secondOrder v))) : u = v :=
+  WeakDerivStep.ext (W2p.ext hvalue)
 
 /-- The norm of a third-order Sobolev function controls its second-order component. -/
-theorem W3p.norm_secondOrder_le (u : W3p mu Omega p) : ‖W3p.secondOrder u‖ ≤ ‖u‖ := by
-  rw [W3p.secondOrder_coe]
-  exact WithLp.norm_fst_le (W2p mu Omega p) u.1
+theorem W3p.norm_secondOrder_le (u : W3p mu Omega p) : ‖W3p.secondOrder u‖ ≤ ‖u‖ :=
+  WeakDerivStep.norm_prev_le (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- The norm of a third-order Sobolev function controls its value component. -/
 theorem W3p.norm_value_le (u : W3p mu Omega p) :
@@ -205,16 +200,15 @@ theorem W3p.norm_hessian_le (u : W3p mu Omega p) :
 
 /-- The norm of a third-order Sobolev function controls its weak third derivative. -/
 theorem W3p.norm_thirdDerivative_le (u : W3p mu Omega p) :
-    ‖W3p.thirdDerivative u‖ ≤ ‖u‖ := by
-  rw [W3p.thirdDerivative_coe]
-  exact WithLp.norm_snd_le (W2p mu Omega p) u.1
+    ‖W3p.thirdDerivative u‖ ≤ ‖u‖ :=
+  WeakDerivStep.norm_weakFDeriv_le (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- The norm on `W3p` is the Euclidean graph norm of the second-order Sobolev component and the
 weak third derivative. -/
 theorem W3p.norm_sq_eq_norm_secondOrder_sq_add_norm_thirdDerivative_sq (u : W3p mu Omega p) :
-    ‖u‖ ^ 2 = ‖W3p.secondOrder u‖ ^ 2 + ‖W3p.thirdDerivative u‖ ^ 2 := by
-  rw [Submodule.coe_norm, W3p.secondOrder_coe, W3p.thirdDerivative_coe]
-  exact WithLp.prod_norm_sq_eq_of_L2 u.1
+    ‖u‖ ^ 2 = ‖W3p.secondOrder u‖ ^ 2 + ‖W3p.thirdDerivative u‖ ^ 2 :=
+  WeakDerivStep.norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq
+    (W2p.hessianL (mu := mu) (Omega := Omega) (p := p)) u
 
 namespace W3p
 
@@ -232,6 +226,8 @@ end W3p
 
 /-- `W^{3,p}(Ω)` is complete in its iterated weak-derivative graph norm. -/
 instance : CompleteSpace (W3p mu Omega p) :=
-  (w3pSubmodule mu Omega p).isClosed.completeSpace_coe
+  inferInstanceAs
+    (CompleteSpace (WeakDerivStep mu Omega p
+      (W2p.hessianL (mu := mu) (Omega := Omega) (p := p))))
 
 end TauCeti
