@@ -514,12 +514,8 @@ private abbrev typeBSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
   simpleSupport (typeBSimpleIndex_injective (n := n))
 
 private lemma mem_typeBSimpleSupport {k : Fin (2 * n ^ 2)} :
-    k ∈ typeBSimpleSupport n ↔ (k : ℕ) < n := by
-  rw [typeBSimpleSupport, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    simpa only [typeBSimpleIndex_val] using i.isLt
-  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext rfl⟩
+    k ∈ typeBSimpleSupport n ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeBSimpleIndex_injective (n := n)) (fun _ ↦ typeBSimpleIndex_val _)
 
 private lemma coe_typeBSimpleSupport :
     (typeBSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeBSimpleIndex n) :=

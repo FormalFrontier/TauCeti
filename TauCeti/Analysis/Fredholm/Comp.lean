@@ -45,8 +45,6 @@ variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 variable [NormedAddCommGroup G] [NormedSpace 𝕜 G]
 
-variable {T : E →L[𝕜] F} {S : F →L[𝕜] G}
-
 namespace ContinuousLinearMap
 
 omit [CompleteSpace 𝕜] in

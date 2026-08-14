@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.AlgebraicTopology.SimplicialComplex.Basic
+public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
 
 /-!
 # Maps of abstract simplicial complexes
@@ -170,3 +170,57 @@ end SimplicialMap
 
 end PreAbstractSimplicialComplex
 
+namespace TauCeti.PreAbstractSimplicialComplex.SimplicialMap
+
+variable {α β γ : Type*}
+variable {K : _root_.PreAbstractSimplicialComplex α}
+variable {L : _root_.PreAbstractSimplicialComplex β}
+variable {M : _root_.PreAbstractSimplicialComplex γ}
+
+/-- A simplicial map induces a monotone map between face posets by taking the image of every face.
+-/
+def faceOrderHom [DecidableEq β]
+    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
+    SetLike.Face K →o SetLike.Face L where
+  toFun σ := ⟨σ.1.image f, f.map_face σ.2⟩
+  monotone' _ _ h := Finset.image_mono f h
+
+@[simp]
+theorem coe_faceOrderHom_apply [DecidableEq β]
+    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
+    (σ : SetLike.Face K) :
+    (faceOrderHom f σ : Finset β) = σ.1.image f :=
+  (rfl)
+
+private theorem faceOrderHom_comp_apply [DecidableEq β] [DecidableEq γ]
+    (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
+    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
+    (σ : SetLike.Face K) :
+    faceOrderHom (g.comp f) σ = faceOrderHom g (faceOrderHom f σ) := by
+  apply Subtype.ext
+  rw [coe_faceOrderHom_apply, coe_faceOrderHom_apply, coe_faceOrderHom_apply]
+  rw [← Finset.image_comp]
+  exact congrArg (fun h : α → γ => σ.1.image h)
+    (_root_.PreAbstractSimplicialComplex.SimplicialMap.coe_comp g f)
+
+/-- Mapping face posets along the identity is the identity order homomorphism. -/
+@[simp]
+theorem faceOrderHom_id [DecidableEq α] :
+    faceOrderHom (_root_.PreAbstractSimplicialComplex.SimplicialMap.id K) = OrderHom.id := by
+  apply OrderHom.ext
+  funext σ
+  apply Subtype.ext
+  rw [coe_faceOrderHom_apply]
+  simp
+
+/-- Mapping face posets along a composite is composition of the face-poset maps. -/
+@[simp]
+theorem faceOrderHom_comp [DecidableEq β] [DecidableEq γ]
+    (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
+    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
+    faceOrderHom (g.comp f) = (faceOrderHom g).comp (faceOrderHom f) := by
+  apply OrderHom.ext
+  funext σ
+  exact faceOrderHom_comp_apply g f σ
+
+end TauCeti.PreAbstractSimplicialComplex.SimplicialMap
