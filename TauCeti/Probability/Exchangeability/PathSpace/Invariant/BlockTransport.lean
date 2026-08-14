@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-public import Mathlib.MeasureTheory.Integral.Bochner.Set
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 /-!
 # Moving a block through a reindexing, over an invariant event
@@ -32,15 +32,18 @@ integral identity, which needs only `T ⁻¹' A = A`.
   `Lᵖ` statements follow as well. The unrestricted counterpart is the existing
   `ContractableLaw.map_prefixProj_of_strictMono`.
 
-* `ContractableLaw.setIntegral_mul_block_eq_prefix_of_strictMono_of_measurableSet_invariants` —
-  the same displacement against an **invariant weight**. A measure equality cannot carry a weight,
-  but an invariants-measurable one is unchanged by the reindexing
-  (`comp_reindex_eq_of_measurable_invariants_of_eventually_add`), so it rides through the change of
-  variables. This is the form an induction peeling one coordinate at a time needs, since the
-  factors already peeled accumulate as exactly such a weight.
+* `setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurableSet_invariants` (in the
+  `ContractableLaw` namespace) — the same displacement against an **invariant weight**. A measure
+  equality cannot carry a weight, but an invariants-measurable one is unchanged by the reindexing
+  (`comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add`), so it rides through the
+  change of variables. This is the form an induction peeling one coordinate at a time needs,
+  since the factors already peeled accumulate as exactly such a weight.
 
-`ℝ≥0∞` statements are not restated here: a consumer wanting one applies `.lintegral_comp` to the
-`MeasurePreserving` above, or rewrites with `lintegral_map` through the measure equality.
+`ℝ≥0∞` statements are not restated here. For the *unweighted* results a consumer applies
+`.lintegral_comp` to the `MeasurePreserving` above, or rewrites with `lintegral_map` through the
+measure equality. For the *weighted* one only the first route is available — a measure equality
+cannot carry a weight — and it additionally needs
+`comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add` to move the weight through.
 
 The endomorphism-level facts are Mathlib's: `MeasurePreserving.restrict_preimage` gives the
 restricted measure preservation once the invariant event is rewritten by
@@ -124,15 +127,19 @@ theorem ContractableLaw.map_restrict_prefixProj_of_strictMono_of_measurableSet_i
     simp only [Function.comp_apply, prefixProj_apply, hφ_eq]
   rw [hcomp, ← Measure.map_map (measurable_prefixProj m) hmp.measurable, hmp.map_eq]
 
-/-- **A block may be displaced onto the prefix even against an invariant weight.** The
-unweighted statement is a measure equality, which a weight would break; but an invariants-measurable
-weight is itself unchanged by the reindexing
-(`comp_reindex_eq_of_measurable_invariants_of_eventually_add`), so it may be carried through the
-measure-preserving change of variables along with the block observable.
+namespace ContractableLaw
+
+/-- **Over an invariant event, the set integral of an invariants-measurable weight against a
+strictly increasing block equals the same integral against the prefix.**
+
+The unweighted statement is a measure equality, which a weight would break; but an
+invariants-measurable weight is itself unchanged by the reindexing
+(`comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add`), so it may be carried
+through the measure-preserving change of variables along with the block observable.
 
 This is what an induction peeling one coordinate at a time needs: the factors already peeled
 accumulate as exactly such a weight. -/
-theorem ContractableLaw.setIntegral_mul_block_eq_prefix_of_strictMono_of_measurableSet_invariants
+theorem setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
@@ -151,7 +158,7 @@ theorem ContractableLaw.setIntegral_mul_block_eq_prefix_of_strictMono_of_measura
     have harg : (prefixProj α m fun j => x (φ j)) = fun i => x (k i) := by
       funext i
       simp only [prefixProj_apply, hφ_eq]
-    rw [comp_reindex_eq_of_measurable_invariants_of_eventually_add hw hφ_add, harg]
+    rw [comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add hw hφ_add, harg]
   -- Change variables along the reindexing, which preserves the restricted law.
   have key : ∫ x, w x * f (prefixProj α m x) ∂ρ.restrict A
       = ∫ x, w (fun j => x (φ j)) * f (prefixProj α m fun j => x (φ j)) ∂ρ.restrict A := by
@@ -159,6 +166,8 @@ theorem ContractableLaw.setIntegral_mul_block_eq_prefix_of_strictMono_of_measura
     exact integral_map hmp.measurable.aemeasurable hgm.aestronglyMeasurable
   rw [key]
   exact (integral_congr_ae (Filter.Eventually.of_forall hpt)).symm
+
+end ContractableLaw
 
 end Probability
 
