@@ -207,31 +207,22 @@ namespace ScalarAut
 variable {K L A : Type*} [CommSemiring K] [CommSemiring L] [Algebra K L]
   [Semiring A] [Algebra K A]
 
-/-- Scalar automorphisms induce algebra automorphisms of a scalar extension. -/
-noncomputable def congrHom :
-    (L ≃ₐ[K] L) →* (L ⊗[K] A ≃ₐ[K] L ⊗[K] A) where
-  toFun σ := Algebra.TensorProduct.congr σ .refl
-  map_one' := Algebra.TensorProduct.congr_refl
-  map_mul' σ τ := by
-    -- Multiplication of algebra equivalences is composition in the opposite textual order;
-    -- expose that representation so `congr_trans` can state the required compatibility.
-    change Algebra.TensorProduct.congr (τ.trans σ) .refl =
-      (Algebra.TensorProduct.congr τ (.refl : A ≃ₐ[K] A)).trans
-        (Algebra.TensorProduct.congr σ .refl)
-    convert Algebra.TensorProduct.congr_trans τ σ (.refl : A ≃ₐ[K] A) .refl using 1
-    ext
-    rfl
-
-/-- The algebra equivalence supplied by `congrHom` is tensor-product congruence. -/
-@[simp]
-theorem congrHom_apply (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
-    congrHom (A := A) σ x = Algebra.TensorProduct.congr σ (.refl : A ≃ₐ[K] A) x := by
-  simp [congrHom]
-
 /-- Scalar automorphisms act on a scalar extension through the scalar factor. -/
 noncomputable instance instMulSemiringAction :
     MulSemiringAction (L ≃ₐ[K] L) (L ⊗[K] A) :=
-  MulSemiringAction.compHom _ (congrHom (A := A))
+  let congrHom : (L ≃ₐ[K] L) →* (L ⊗[K] A ≃ₐ[K] L ⊗[K] A) :=
+    { toFun σ := Algebra.TensorProduct.congr σ .refl
+      map_one' := Algebra.TensorProduct.congr_refl
+      map_mul' σ τ := by
+        -- Multiplication of algebra equivalences is composition in the opposite textual order;
+        -- expose that representation so `congr_trans` can state the required compatibility.
+        change Algebra.TensorProduct.congr (τ.trans σ) .refl =
+          (Algebra.TensorProduct.congr τ (.refl : A ≃ₐ[K] A)).trans
+            (Algebra.TensorProduct.congr σ .refl)
+        convert Algebra.TensorProduct.congr_trans τ σ (.refl : A ≃ₐ[K] A) .refl using 1
+        ext
+        rfl }
+  MulSemiringAction.compHom _ congrHom
 
 /-- Scalar multiplication on a base change is the tensor-product congruence. -/
 @[simp]
