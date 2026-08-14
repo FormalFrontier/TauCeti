@@ -38,8 +38,8 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
 * `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk`: the unit-sphere quotient is a quotient
   covering map with group `ℤˣ`.
 * `TauCeti.RealProjectiveSpace.isCoveringMap_mk`: the underlying covering-map statement.
-* `TauCeti.RealProjectiveSpace.instPathConnectedSpace` and
-  `TauCeti.RealProjectiveSpace.pathConnectedSpace`: `RPⁿ` is path-connected for every `n`.
+* `TauCeti.RealProjectiveSpace.subsingleton_zero`: `RP⁰` is a subsingleton.
+* `TauCeti.RealProjectiveSpace.instPathConnectedSpace`: `RPⁿ` is path-connected for every `n`.
 -/
 
 public section
@@ -175,6 +175,7 @@ theorem continuous_mk : Continuous (mk n) :=
 instance instNonempty : Nonempty (RealProjectiveSpace n) :=
   ⟨mk n (instNonemptySphere n).some⟩
 
+/-- Real projective space of dimension 0, `RP⁰`, is a subsingleton consisting of a single point. -/
 lemma subsingleton_zero : Subsingleton (RealProjectiveSpace 0) := by
   constructor
   intro a b
@@ -240,11 +241,6 @@ instance instPathConnectedSpace :
       (isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1 + 1))) zero_le_one)
     have : PathConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1 + 1))) 1) := hpc
     exact (mk_surjective (n + 1)).pathConnectedSpace (continuous_mk (n + 1))
-
-/-- Real projective space is path-connected for every `n`. -/
-theorem pathConnectedSpace :
-    PathConnectedSpace (RealProjectiveSpace n) :=
-  inferInstance
 
 /-- The unit-sphere projection onto real projective space is a covering map. -/
 theorem isCoveringMap_mk : IsCoveringMap (mk n) :=
