@@ -145,8 +145,7 @@ theorem barycentricMap_apply_coe [DecidableEq β]
   by
     rw [← faceOrderHom_apply_coe, ← coe_barycentricMap]
 
-/-- Mapping face posets along a composite agrees pointwise with composing the face-poset maps. -/
-theorem faceOrderHom_comp_apply [DecidableEq β] [DecidableEq γ]
+private theorem faceOrderHom_comp_apply [DecidableEq β] [DecidableEq γ]
     (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L)
     (σ : BarycentricVertex K) :
@@ -156,6 +155,26 @@ theorem faceOrderHom_comp_apply [DecidableEq β] [DecidableEq γ]
   rw [← Finset.image_comp]
   exact congrArg (fun h : α → γ => σ.1.image h)
     (_root_.PreAbstractSimplicialComplex.SimplicialMap.coe_comp g f)
+
+/-- Mapping face posets along the identity is the identity order homomorphism. -/
+@[simp]
+theorem faceOrderHom_id [DecidableEq α] :
+    faceOrderHom (_root_.PreAbstractSimplicialComplex.SimplicialMap.id K) = OrderHom.id := by
+  apply OrderHom.ext
+  funext σ
+  apply Subtype.ext
+  rw [faceOrderHom_apply_coe]
+  simp
+
+/-- Mapping face posets along a composite is composition of the face-poset maps. -/
+@[simp]
+theorem faceOrderHom_comp [DecidableEq β] [DecidableEq γ]
+    (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
+    (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
+    faceOrderHom (g.comp f) = (faceOrderHom g).comp (faceOrderHom f) := by
+  apply OrderHom.ext
+  funext σ
+  exact faceOrderHom_comp_apply g f σ
 
 /-- Barycentric subdivision sends the identity simplicial map to the identity simplicial map. -/
 @[simp]

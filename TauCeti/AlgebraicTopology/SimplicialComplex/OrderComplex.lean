@@ -11,7 +11,7 @@ public import TauCeti.AlgebraicTopology.SimplicialComplex.Maps
 /-!
 # Order complexes
 
-The order complex of a partially ordered type has the elements of the type as vertices and the
+The order complex of a preordered type has the elements of the type as vertices and the
 nonempty finite chains as faces. This is the general construction underlying barycentric
 subdivision: applying it to the face poset of a simplicial complex gives its first barycentric
 subdivision.
@@ -48,12 +48,12 @@ namespace TauCeti
 
 namespace AbstractSimplicialComplex
 
-variable {P Q R : Type*} [PartialOrder P] [PartialOrder Q] [PartialOrder R]
+variable {P Q R : Type*} [Preorder P] [Preorder Q] [Preorder R]
 
-/-- The **order complex** of a partially ordered type `P`. Its vertices are the elements of `P`,
+/-- The **order complex** of a preordered type `P`. Its vertices are the elements of `P`,
 and a nonempty finite set of vertices is a face exactly when its elements are pairwise comparable.
 -/
-noncomputable def orderComplex (P : Type*) [PartialOrder P] : AbstractSimplicialComplex P where
+noncomputable def orderComplex (P : Type*) [Preorder P] : AbstractSimplicialComplex P where
   faces := {σ | σ.Nonempty ∧ IsChain (· ≤ ·) (↑σ : Set P)}
   isRelLowerSet_faces := fun {_} hσ =>
     ⟨hσ.1, fun _ hsub hne =>
