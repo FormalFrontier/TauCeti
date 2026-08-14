@@ -10,6 +10,9 @@ public import TauCeti.RepresentationTheory.Spin.Polarization.CliffordAction
 -- Private: `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` is used only inside a proof, and
 -- `CliffordAction` imports this module privately too, so it is not available transitively.
 import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
+-- Private: `Subrepresentation.toSubmodule_bot` and `Subrepresentation.toSubmodule_top` are used
+-- only inside a proof.
+import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # The pin and spin representations, and the half-spin summands
@@ -272,12 +275,10 @@ it says that the parity splitting of `S` is a splitting of the spin representati
 theorem isCompl_spinPlusSubrep_spinMinusSubrep (hline : P.line = ⊥) :
     IsCompl (spinPlusSubrep P hline) (spinMinusSubrep P hline) := by
   have h := isCompl_spinPlus_spinMinus P
-  have hbot : (⊥ : Subrepresentation (spinRep Q P)).toSubmodule = ⊥ := rfl
-  have htop : (⊤ : Subrepresentation (spinRep Q P)).toSubmodule = ⊤ := rfl
   rw [isCompl_iff, disjoint_iff, codisjoint_iff] at h ⊢
   refine ⟨Subrepresentation.toSubmodule_injective ?_, Subrepresentation.toSubmodule_injective ?_⟩
-  · simpa [hbot] using h.1
-  · simpa [htop] using h.2
+  · simpa using h.1
+  · simpa using h.2
 
 /-! ### Odd elements carry each summand into the other
 
