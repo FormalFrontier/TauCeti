@@ -309,6 +309,7 @@ noncomputable def evalBialgEquiv :
     bH.toAlgebra bHH.toAlgebra bH.toCoalgebra.toCoalgebraStruct
       bHH.toCoalgebra.toCoalgebraStruct
   have hbij : Function.Bijective (evalBialgHom k H) := by
+    -- The bundled bialgebra morphism was built with `evalLinearEquiv` as its underlying function.
     change Function.Bijective (evalLinearEquiv k H)
     exact (evalLinearEquiv k H).bijective
   exact @BialgEquiv.ofBijective k H (ConvolutionDual k (ConvolutionDual k H)) _ _ _
