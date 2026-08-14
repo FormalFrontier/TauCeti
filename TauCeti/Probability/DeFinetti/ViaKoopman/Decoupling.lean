@@ -39,30 +39,23 @@ bridge of `Ergodic/CondExpProjection.lean`, and the invariant conditional law of
 
 ## Main results
 
-Transport side:
+* `ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure` — the
+  invariant conditional law computes the conditional expectation of *every* coordinate indicator,
+  not just the first;
+* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp` — over an invariant
+  event, the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral of its
+  conditional expectation given the shift-invariant σ-algebra. This form needs no standard-Borel
+  hypothesis;
+* `setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditionalProbabilityMeasure` (same
+  namespace) — and, where the witness exists, that limit is the invariant conditional law `ν(B)`.
 
-* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq` — so the weighted
-  integral does not depend on the displacement `m`, by the weighted block transport;
-* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage` — hence an
-  average over `m < n` may be inserted for free, turning the integrand into a Birkhoff average.
+The transport and averaging stages behind these — the displacement identity, its Birkhoff-average
+form, the coordinate/Birkhoff bridge and the `L¹` convergence — are private: they are steps of this
+file's argument, not API.
 
-Analytic side:
-
-* `birkhoffAverage_shift_coord_eq` — the displaced coordinates *are* that Birkhoff average;
-* `tendsto_integral_abs_birkhoffAverage_indicator_coord` — it converges in `L¹` to
-  the conditional expectation given the invariants;
-* `condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure` — and, where the
-  witness exists, that limit is the invariant conditional law, by
-  `ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants`.
-
-Where they meet:
-
-* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp` — the averaged sequence
-  is constant by the transport side and convergent by the analytic side, so its one limit
-  identifies the weighted integral of `𝟙_B` at coordinate `r` with that of the conditional
-  expectation given the invariants. This form needs no standard-Borel hypothesis;
-* `setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditionalProbabilityMeasure` — and,
-  where the witness exists, that limit is the invariant conditional law `ν(B)`.
+The weighted transport and decoupling statements carry an invariants-measurable weight `w`. The
+weight is what makes the chain usable in an induction across a block: the factors already peeled
+off accumulate as exactly such a weight, which an unweighted form cannot express.
 
 The limit passage itself is one private estimate,
 `tendsto_setIntegral_mul_of_tendsto_integral_abs`: `L¹` convergence plus `|p| ≤ 1` gives
@@ -125,7 +118,7 @@ orbit gives exactly the displaced coordinates `r, r + 1, …`, so the average ov
 This is where the two halves of the argument meet: the left side is what the invariant transport
 controls (each term has the same integral over an invariant event), and the right side is what the
 mean ergodic theorem converges. -/
-theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ → α) :
+private theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ → α) :
     birkhoffAverage ℝ (shift α) (fun y : ℕ → α => (B.indicator (fun _ => (1 : ℝ)) (y r))) n x
       = (n : ℝ)⁻¹ * ∑ m ∈ Finset.range n, B.indicator (fun _ => (1 : ℝ)) (x (r + m)) := by
   rw [birkhoffAverage, birkhoffSum, smul_eq_mul]
@@ -137,7 +130,7 @@ theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ → α)
 /-- **The Birkhoff averages of a coordinate indicator converge in `L¹`.** The mean ergodic bridge,
 applied to the indicator of `B` at coordinate `r`: the limit is the conditional expectation of that
 same indicator given the shift-invariant σ-algebra. -/
-theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
+private theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hmp : MeasurePreserving (shift α) ρ ρ)
     {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     Filter.Tendsto (fun n => ∫ x,
@@ -203,7 +196,7 @@ displaced integral onto the same prefix integral.
 
 The invariant weight `w` is what makes this usable in an induction: the factors already peeled off
 a block accumulate as exactly such a weight. -/
-theorem setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
+private theorem setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) {B : Set α} (hB : MeasurableSet B)
@@ -247,7 +240,7 @@ agree, averaging over `m < n` changes nothing on the left while turning the inte
 into a Birkhoff average — for every `n ≠ 0`.
 
 This is the step that hands the argument to the mean ergodic theorem. -/
-theorem setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage
+private theorem setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage
     {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
