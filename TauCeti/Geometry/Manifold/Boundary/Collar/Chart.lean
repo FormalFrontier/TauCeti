@@ -20,10 +20,9 @@ The resulting *collar chart* reads a point of `M` as a pair: a tangential coordi
 boundary model, and a normal coordinate in `[0, ∞)`. Two facts make it deserve the name, and they
 are the content of the file.
 
-* **The boundary is the zero slice.** A point in the source of a collar chart lies on
-  `I.boundary M` exactly when its normal coordinate vanishes. So in collar coordinates the
-  boundary is cut out by a single equation, rather than detected chartwise as in
-  `Boundary.Charts`.
+* **The boundary is the zero slice.** For an atlas chart `e` and a point of `e.source`, lying on
+  `I.boundary M` becomes the vanishing of one product factor — the normal coordinate — of the
+  collar chart of `e`.
 * **The tangential coordinate is the boundary chart.** On boundary points the first component of
   the collar chart induced by the preferred ambient chart is the preferred chart of the boundary
   manifold built in `Boundary.Charts`. The two files therefore describe one coordinate system,
@@ -45,20 +44,21 @@ coordinates patched with a partition of unity.
 ## Main definitions
 
 * `TauCeti.collarChart`: the collar chart induced by an ambient chart.
-* `TauCeti.collarModelChartedSpace`: the model half-space charted over the product by the single
-  collar identification.
-* `TauCeti.collarChartedSpace`: `M` as a charted space over the product, obtained from the
-  previous two by `ChartedSpace.comp`. Both are `def`s, not `instance`s: `M` already carries a
-  `ChartedSpace` over the half-space, and the two must not compete in instance search.
+* `TauCeti.collarChartedSpace`: `M` as a charted space over the product, composing
+  `EuclideanHalfSpace.collarModelChartedSpace` with the ambient atlas of `M`. It is a `def`, not
+  an `instance`: `M` already carries a `ChartedSpace` over the half-space, and the two must not
+  compete in instance search.
 
 ## Main results
 
 * `TauCeti.mem_boundary_iff_collarChart_snd_apply_zero_eq_zero`: the boundary is the zero slice
   of the normal coordinate.
-* `TauCeti.collarChart_fst_eq_chartAt_boundary`: on the boundary, the tangential coordinate is
-  the preferred boundary chart of `Boundary.Charts`.
-* `TauCeti.collarModelChartedSpace_chartAt` and `TauCeti.collarChartedSpace_chartAt`: the
-  characteristic charts of the two charted spaces above, so that neither has to be unfolded.
+* `TauCeti.collarChart_fst_eq_boundaryChartedSpace_chartAt_apply`: on the boundary, the
+  tangential coordinate is the preferred boundary chart of `Boundary.Charts`.
+* `TauCeti.collarChart_apply`, `_target` and `_symm_apply`: the value, target and inverse of a
+  collar chart, so it never has to be unfolded.
+* `TauCeti.collarChartedSpace_chartAt` and `TauCeti.collarChartedSpace_atlas`: its preferred
+  charts and its atlas.
 
 ## References
 
@@ -86,12 +86,22 @@ the model half-space into its boundary model and the inward normal coordinate.
 `collarDiffeomorph` is taken at the top regularity because only its underlying homeomorphism is
 used here; the map does not depend on the exponent.
 
-No body here or below is exposed: `collarModelChartedSpace_chartAt` and
-`collarChartedSpace_chartAt` name the charts of both charted spaces, so downstream code rewrites
-with those instead of unfolding a definition. -/
+No body here or below is exposed: the lemmas in this section name the value, source, target and
+inverse of a collar chart, so downstream code rewrites with those instead of unfolding. -/
 noncomputable def collarChart (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))) :
     OpenPartialHomeomorph M (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) :=
   e ≫ₕ (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph
+
+/-- Reading a point through a collar chart is reading it through the ambient chart and then
+applying the inverse collar identification.
+
+Not `@[simp]`: it would rewrite the collar phrasing of the two main results back into ambient
+coordinates via `Boundary.Collar.Basic`'s simp lemmas, which is the normal-form clash the collar
+statements exist to avoid. Use it explicitly, as `collarChart_fst` and `collarChart_snd_apply_zero`
+do. -/
+theorem collarChart_apply (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))) (x : M) :
+    collarChart e x = (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm (e x) := by
+  simp [collarChart]
 
 /-- A collar chart sees exactly what the ambient chart it comes from sees. -/
 @[simp]
@@ -99,47 +109,42 @@ theorem collarChart_source (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n +
     (collarChart e).source = e.source := by
   simp [collarChart]
 
-/-- The tangential coordinate of a collar chart deletes the zeroth ambient coordinate. -/
+/-- A collar chart lands where the collar identification carries the ambient chart's target. -/
 @[simp]
+theorem collarChart_target (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))) :
+    (collarChart e).target = ⇑(EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n) ⁻¹' e.target := by
+  simp [collarChart]
+
+/-- The inverse of a collar chart reassembles the pair and reads it back through the ambient
+chart. -/
+@[simp]
+theorem collarChart_symm_apply (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1)))
+    (p : EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) :
+    (collarChart e).symm p = e.symm (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n p) := by
+  simp [collarChart]
+
+/-- The tangential coordinate of a collar chart deletes the zeroth ambient coordinate.
+
+Not `@[simp]`: the collar phrasing is the user-facing normal form here, so this must not rewrite
+`collarChart_fst_eq_boundaryChartedSpace_chartAt_apply`'s left-hand side away. -/
 theorem collarChart_fst (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))) (x : M) :
-    (collarChart e x).1 = EuclideanHalfSpace.boundaryProj n (e x) :=
-  EuclideanHalfSpace.collarDiffeomorph_symm_apply_fst (k := ⊤) n (e x)
+    (collarChart e x).1 = EuclideanHalfSpace.boundaryProj n (e x) := by
+  rw [collarChart_apply, EuclideanHalfSpace.collarDiffeomorph_symm_apply_fst]
 
-/-- The normal coordinate of a collar chart is the zeroth ambient coordinate. -/
-@[simp]
+/-- The normal coordinate of a collar chart is the zeroth ambient coordinate.
+
+Not `@[simp]`, for the reason given at `collarChart_fst`. -/
 theorem collarChart_snd_apply_zero (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1)))
-    (x : M) : (collarChart e x).2.1 0 = (e x).1 0 :=
-  EuclideanHalfSpace.collarDiffeomorph_symm_apply_snd_apply_zero (k := ⊤) n (e x)
-
-/-- The model half-space as a charted space over the product, with the collar identification of
-`Boundary.Collar.Basic` as its single chart. This is what makes a chart of `M` into a collar chart:
-`collarChartedSpace` below is the composition of this with the atlas of `M`.
-
-Deliberately not an instance, for the reason given at `collarChartedSpace`. -/
-@[instance_reducible]
-noncomputable def collarModelChartedSpace (n : ℕ) :
-    ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1)
-      (EuclideanHalfSpace (n + 1)) :=
-  (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph
-    |>.singletonChartedSpace (by simp)
-
-/-- The only chart of `collarModelChartedSpace` is the collar identification itself. This is the
-characteristic property; consumers should rewrite with it rather than unfold the definition. -/
-@[simp]
-theorem collarModelChartedSpace_chartAt (n : ℕ) (y : EuclideanHalfSpace (n + 1)) :
-    @chartAt (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ (EuclideanHalfSpace (n + 1)) _
-        (collarModelChartedSpace n) y =
-      (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph :=
-  (rfl)
+    (x : M) : (collarChart e x).2.1 0 = (e x).1 0 := by
+  rw [collarChart_apply, EuclideanHalfSpace.collarDiffeomorph_symm_apply_snd_apply_zero]
 
 section Atlas
 
 variable [ChartedSpace (EuclideanHalfSpace (n + 1)) M]
 
-/-- **In collar coordinates the boundary is the zero slice of the normal coordinate.** Where
-`Boundary.Charts` detects a boundary point by the vanishing of a coordinate of the ambient chart,
-the collar chart isolates that coordinate as a factor, so the boundary is cut out by one
-equation. -/
+/-- **In collar coordinates the boundary is the zero slice of the normal coordinate.** For an
+atlas chart `e` and a point of `e.source`, the collar chart isolates the coordinate that
+`Boundary.Charts` tests as a product factor, so the boundary condition is one equation in it. -/
 theorem mem_boundary_iff_collarChart_snd_apply_zero_eq_zero [IsManifold (𝓡∂ (n + 1)) k M]
     (hk : k ≠ 0) {e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))}
     (he : e ∈ atlas (EuclideanHalfSpace (n + 1)) M) {x : M} (hx : x ∈ e.source) :
@@ -151,7 +156,7 @@ theorem mem_boundary_iff_collarChart_snd_apply_zero_eq_zero [IsManifold (𝓡∂
 collar coordinates of `Boundary.Collar.Basic` and the boundary manifold structure of
 `Boundary.Charts` are the same coordinate system: the boundary chart is the restriction of the
 collar chart's first component. -/
-theorem collarChart_fst_eq_chartAt_boundary [IsManifold (𝓡∂ (n + 1)) 1 M]
+theorem collarChart_fst_eq_boundaryChartedSpace_chartAt_apply [IsManifold (𝓡∂ (n + 1)) 1 M]
     (p q : ↥((𝓡∂ (n + 1)).boundary M)) :
     (collarChart (chartAt (EuclideanHalfSpace (n + 1)) (p : M)) (q : M)).1 =
       chartAt (EuclideanSpace ℝ (Fin n)) p q := by
@@ -160,27 +165,43 @@ theorem collarChart_fst_eq_chartAt_boundary [IsManifold (𝓡∂ (n + 1)) 1 M]
 /-- The collar charts present `M` as a charted space over the product of the boundary model and
 the one-dimensional half-space.
 
-It is `ChartedSpace.comp` applied to `collarModelChartedSpace`, rather than an atlas written out
-by hand, so that `chartAt_comp`, the `extChartAt` composition lemmas and `HasGroupoid.comp` all
-apply to it — `HasGroupoid.comp` is the route to the `C^k` transitions named above.
+It is `ChartedSpace.comp` applied to `EuclideanHalfSpace.collarModelChartedSpace`, rather than an
+atlas written out by hand, so that `chartAt_comp`, the `extChartAt` composition lemmas and
+`HasGroupoid.comp` all apply to it — `HasGroupoid.comp` is the route to the `C^k` transitions
+named above.
+
+`n` and `M` are explicit so that `letI := collarChartedSpace n M` determines both; there is no
+expected type at a `letI` to solve them from.
 
 Deliberately not an instance: `M` already carries a `ChartedSpace` over
 `EuclideanHalfSpace (n + 1)`, and letting a second one be found by instance search would make
-every statement about charts of `M` ambiguous. Use it explicitly with `letI`. -/
+every statement about charts of `M` ambiguous. -/
 @[instance_reducible]
-noncomputable def collarChartedSpace :
+noncomputable def collarChartedSpace (n : ℕ) (M : Type*) [TopologicalSpace M]
+    [ChartedSpace (EuclideanHalfSpace (n + 1)) M] :
     ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) M :=
-  letI := collarModelChartedSpace n
+  letI := EuclideanHalfSpace.collarModelChartedSpace n
   ChartedSpace.comp _ (EuclideanHalfSpace (n + 1)) M
 
-/-- **The charts of `collarChartedSpace` are the collar charts of the ambient charts.** This is
-the characteristic property; consumers should rewrite with it rather than unfold the definition
-or re-derive it from `chartAt_comp`. -/
+/-- **The preferred chart of `collarChartedSpace` is the collar chart of the preferred ambient
+chart.** Consumers should rewrite with this rather than unfold the definition. -/
 @[simp]
 theorem collarChartedSpace_chartAt (x : M) :
-    @chartAt (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ M _ collarChartedSpace x =
-      collarChart (chartAt (EuclideanHalfSpace (n + 1)) x) :=
-  (rfl)
+    @chartAt (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ M _ (collarChartedSpace n M) x =
+      collarChart (chartAt (EuclideanHalfSpace (n + 1)) x) := by
+  let := EuclideanHalfSpace.collarModelChartedSpace n
+  rw [collarChartedSpace, chartAt_comp, EuclideanHalfSpace.collarModelChartedSpace_chartAt]
+  rfl
+
+/-- The atlas of `collarChartedSpace` is the collar chart of every ambient chart. -/
+theorem collarChartedSpace_atlas :
+    @atlas (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ M _ (collarChartedSpace n M) =
+      collarChart '' atlas (EuclideanHalfSpace (n + 1)) M := by
+  let := EuclideanHalfSpace.collarModelChartedSpace n
+  rw [collarChartedSpace]
+  change Set.image2 _ _ _ = _
+  rw [EuclideanHalfSpace.collarModelChartedSpace_atlas, Set.image2_singleton_right]
+  rfl
 
 end Atlas
 
