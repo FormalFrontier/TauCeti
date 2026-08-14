@@ -185,7 +185,7 @@ theorem range_spaComap_quotientMk (J : Ideal A) (Aplus : Subring A) :
   · intro hJ
     have hlift_spa : quotientLift J hJ ∈ spa (Aplus.map (Ideal.Quotient.mk J)) := by
       rw [mem_spa_iff]
-      refine ⟨isContinuous_quotientLift J hJ (mem_spa_iff Aplus v |>.mp hv).1, ?_⟩
+      refine ⟨IsContinuous.quotientLift J hJ (mem_spa_iff Aplus v |>.mp hv).1, ?_⟩
       rintro _ ⟨a, ha, rfl⟩
       rw [← map_one (Ideal.Quotient.mk J), vle_quotientLift J hJ]
       exact (mem_spa_iff Aplus v |>.mp hv).2 a ha

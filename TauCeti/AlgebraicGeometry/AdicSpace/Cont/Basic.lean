@@ -51,7 +51,7 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
   homomorphism pulls continuous points back to continuous points. Combined with `mem_cont_iff`
   this is exactly the statement that `comap φ` restricts to a map `Cont B → Cont A`; no separate
   set-level lemma is kept for it, since that would be this one after unfolding.
-* `TauCeti.ValuationSpectrum.isContinuous_quotientLift` : continuity descends to the canonical
+* `TauCeti.ValuationSpectrum.IsContinuous.quotientLift` : continuity descends to the canonical
   lift through a quotient.
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
 
@@ -132,8 +132,8 @@ theorem IsContinuous.comap {B : Type*} [CommRing B] [TopologicalSpace B] {φ : A
   exact (isContinuous_def v |>.mp hv).comap hφ
 
 /-- Continuity of the lifted valuation on the quotient ring `A ⧸ J`. -/
-theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
-    (hv : v.IsContinuous) : (quotientLift J hJ).IsContinuous := by
+theorem IsContinuous.quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
+    (hv : v.IsContinuous) : (TauCeti.ValuationSpectrum.quotientLift J hJ).IsContinuous := by
   have hv_cont : Valuation.IsContinuous v.valuation := (isContinuous_def v).mp hv
   have hv_open : ∀ a : A, IsOpen {y : A | v.valuation y < v.valuation a} :=
     Valuation.isContinuous_def.mp hv_cont
@@ -141,15 +141,15 @@ theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.su
   intro b
   obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective b
   have h_eq : Ideal.Quotient.mk J ⁻¹'
-        {x : A ⧸ J | (quotientLift J hJ).valuation x <
-          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
+        {x : A ⧸ J | (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation x <
+          (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
       {y : A | v.valuation y < v.valuation a} := by
     ext y
     simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
     rw [vlt_quotientLift J hJ, ← valuation_lt_iff]
   have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
-        {x : A ⧸ J | (quotientLift J hJ).valuation x <
-          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
+        {x : A ⧸ J | (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation x <
+          (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
     rw [h_eq]
     exact hv_open a
   -- The quotient topology here is definitionally the coinduced topology. The named
