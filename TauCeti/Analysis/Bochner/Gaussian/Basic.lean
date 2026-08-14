@@ -123,12 +123,11 @@ private theorem posSemidef_cexp_neg_mul_sq_norm_of_finiteDimensional {c : ℝ}
   have h := (posSemidef_charFun (μ := stdGaussian V)).submatrix
     (fun a : V => Real.sqrt (2 * c) • a)
   have heq : Matrix.submatrix
-      (fun x y : V => charFun (stdGaussian V) (x - y))
+      (Matrix.of fun x y : V => charFun (stdGaussian V) (x - y))
       (fun a : V => Real.sqrt (2 * c) • a) (fun a => Real.sqrt (2 * c) • a) =
       fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
-    ext a b
-    change (Matrix.submatrix (Matrix.of fun x y : V => charFun (stdGaussian V) (x - y))
-      (fun x : V => Real.sqrt (2 * c) • x) (fun x => Real.sqrt (2 * c) • x)) a b = _
+    apply Matrix.ext
+    intro a b
     rw [Matrix.submatrix_apply, Matrix.of_apply, ← smul_sub,
       charFun_stdGaussian_sqrt_smul hc]
   exact heq ▸ h
