@@ -184,13 +184,6 @@ lemma const_toContMDiffSection_apply {V : Type*} [NormedAddCommGroup V] [NormedS
     (const B hB).toContMDiffSection x = B :=
   (rfl)
 
-/-- A constant smooth two-form evaluates to its defining bilinear form. -/
-@[simp]
-lemma const_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-    (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) (x v w : V) :
-    const B hB x v w = B v w :=
-  (rfl)
-
 /-- The pointwise bilinear form of a constant smooth two-form is its defining bilinear form with
 continuity forgotten. -/
 @[simp]
@@ -198,7 +191,7 @@ lemma const_bilinFormAt {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) (x : V) :
     (const B hB).bilinFormAt x = B.toBilinForm := by
   ext v w
-  exact const_apply B hB x v w
+  rfl
 
 /-- The zero smooth two-form. -/
 protected def zero : SmoothTwoForm I M where

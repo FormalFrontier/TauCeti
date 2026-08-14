@@ -218,13 +218,6 @@ lemma const_toEndomorphism_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace
     (const Jc hJc).toEndomorphism x = Jc :=
   (rfl)
 
-/-- The constant smooth almost complex structure of `Jc` evaluates to `Jc`. -/
-@[simp]
-lemma const_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-    (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x v : V) :
-    const Jc hJc x v = Jc v :=
-  (rfl)
-
 end SmoothAlmostComplexStructure
 
 namespace AlmostComplexStructure
@@ -241,7 +234,7 @@ def constSmooth (J : AlmostComplexStructure V) :
 @[simp]
 lemma constSmooth_apply (J : AlmostComplexStructure V) (x v : V) :
     J.constSmooth x v = J v :=
-  SmoothAlmostComplexStructure.const_apply _ _ x v
+  (rfl)
 
 @[simp]
 lemma constSmooth_almostComplexStructureAt (J : AlmostComplexStructure V) (x : V) :
@@ -262,7 +255,7 @@ noncomputable def product (V : Type*) [NormedAddCommGroup V] [NormedSpace ℝ V]
 @[simp]
 lemma product_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x v : V × V) :
     product V x v = (-v.2, v.1) :=
-  const_apply _ _ x v
+  (rfl)
 
 @[simp]
 lemma product_almostComplexStructureAt {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]

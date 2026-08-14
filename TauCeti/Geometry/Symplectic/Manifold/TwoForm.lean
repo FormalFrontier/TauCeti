@@ -160,7 +160,11 @@ def constSmooth (omegaForm : SymplecticForm V) :
 @[simp]
 lemma constSmooth_apply (omegaForm : SymplecticForm V) (x v w : V) :
     omegaForm.constSmooth x v w = omegaForm v w :=
-  SmoothTwoForm.const_apply _ _ x v w
+  by
+    change ((SmoothTwoForm.const omegaForm.toBilinForm.toContinuousBilinearMap
+      omegaForm.isAlt).toContMDiffSection x) v w = omegaForm.toBilinForm v w
+    exact congrArg (fun B : V →L[ℝ] V →L[ℝ] ℝ ↦ B v w)
+      (SmoothTwoForm.const_toContMDiffSection_apply _ _ x)
 
 /-- A constant smooth symplectic form is fiberwise nondegenerate. -/
 @[simp]
