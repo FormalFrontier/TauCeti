@@ -167,26 +167,17 @@ theorem IsNegativeDefinite.det_intersectionMatrix_ne_zero (h : P.IsNegativeDefin
 pairing is at most the product of the two self-pairings.
 
 Both self-pairings are nonpositive, so the right-hand side is a product of two nonpositive
-integers; the statement is the usual Cauchy--Schwarz inequality for the positive-definite form
-`-P.intersectionForm`, written without the signs. The proof expands the self-pairing of the
-auxiliary vector `A(x, x) • y - A(x, y) • x`, which negative-definiteness makes nonpositive. -/
+integers; the statement is Mathlib's Cauchy--Schwarz inequality
+`LinearMap.BilinForm.apply_sq_le_of_symm` for the positive semidefinite symmetric form
+`-P.intersectionForm`, written without the signs. -/
 theorem IsNegativeDefinite.sq_intersectionForm_le (h : P.IsNegativeDefinite) (x y : V → ℤ) :
     P.intersectionForm x y ^ 2 ≤ P.intersectionForm x x * P.intersectionForm y y := by
-  have hexp : P.intersectionForm
-        (P.intersectionForm x x • y - P.intersectionForm x y • x)
-        (P.intersectionForm x x • y - P.intersectionForm x y • x) =
-      P.intersectionForm x x *
-        (P.intersectionForm x x * P.intersectionForm y y - P.intersectionForm x y ^ 2) := by
-    simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul]
-    rw [P.intersectionForm_isSymm.eq y x]
-    ring
-  have hnonpos := h.intersectionForm_self_nonpos
-    (P.intersectionForm x x • y - P.intersectionForm x y • x)
-  rw [hexp] at hnonpos
-  rcases (h.intersectionForm_self_nonpos x).lt_or_eq with hlt | heq
-  · nlinarith
-  · rw [(h.intersectionForm_self_eq_zero_iff x).mp heq]
-    simp
+  have hsymm : LinearMap.IsSymm (-P.intersectionForm) :=
+    LinearMap.BilinForm.isSymm_iff.mp P.intersectionForm_isSymm.neg
+  have hnonneg : ∀ u : V → ℤ, 0 ≤ (-P.intersectionForm) u u := fun u => by
+    simpa using h.intersectionForm_self_nonpos u
+  have hcs := LinearMap.BilinForm.apply_sq_le_of_symm (-P.intersectionForm) hnonneg hsymm x y
+  simpa using hcs
 
 /-- On a negative-definite plumbing only finitely many lattice points have intersection-form
 self-pairing above a fixed bound.

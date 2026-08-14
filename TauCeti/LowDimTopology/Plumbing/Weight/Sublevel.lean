@@ -7,8 +7,9 @@ module
 import Mathlib.Data.Set.Finite.Lemmas
 public import Mathlib.Data.Int.ConditionallyCompleteOrder
 public import Mathlib.LinearAlgebra.Matrix.Adjugate
+public import TauCeti.LowDimTopology.Plumbing.Conjugation
 public import TauCeti.LowDimTopology.Plumbing.NegativeDefinite
-public import TauCeti.LowDimTopology.Plumbing.Weight.Basic
+public import TauCeti.LowDimTopology.Plumbing.Weight.Translation
 
 /-!
 # Sublevel sets of the plumbing-lattice weight function
@@ -25,15 +26,18 @@ self-pairing of `2d • x + u` therefore gives
 
 `A(2d • x + u, 2d • x + u) = 4 d² (⟪k, x⟫ + A(x, x)) + A(u, u)`,
 
-whose middle factor is exactly the weight numerator `2 χ_k(x) = -(⟪k, x⟫ + A(x, x))`. So a
-sublevel set of `χ_k` is carried, by the injective affine map `x ↦ 2d • x + u`, into a superlevel
-set of the intersection-form self-pairing, and those are finite on a negative-definite plumbing by
+whose middle factor `⟪k, x⟫ + A(x, x)` is exactly the weight numerator
+`characteristicWeightNumerator k x`, which is `-2 χ_k(x)`. So a sublevel set of `χ_k` is carried,
+by the injective affine map `x ↦ 2d • x + u`, into a superlevel set of the intersection-form
+self-pairing, and those are finite on a negative-definite plumbing by
 `IsNegativeDefinite.finite_setOf_le_intersectionForm_self`. Negative-definiteness enters twice: it
 makes `d ≠ 0`, so the affine map is injective, and it makes the target set finite.
 
 Finiteness immediately yields a minimizer: the lattice points with `χ_k(x) ≤ χ_k(0)` form a finite
 nonempty set, and a minimum over it is a global minimum. That minimum is the numerical input to the
-`d`-invariant of the plumbed three-manifold in the spin^c structure recorded by `k`.
+`d`-invariant of the plumbed three-manifold in the spin^c structure recorded by `k`, and it
+transforms under the two moves that change the representative `k` of a spin^c structure: passing
+to `k + 2 · A m` shifts it by `-χ_k(m)`, and spin^c conjugation leaves it fixed.
 
 ## Main results
 
@@ -48,14 +52,19 @@ nonempty set, and a minimum over it is a global minimum. That minimum is the num
 * `TauCeti.PlumbingGraph.exists_forall_characteristicWeight_le`: the characteristic weight attains
   a global minimum, and `TauCeti.PlumbingGraph.bddBelow_range_characteristicWeight`: its range is
   bounded below.
-* `TauCeti.PlumbingGraph.minCharacteristicWeight`: that minimum as an integer, with
-  `TauCeti.PlumbingGraph.minCharacteristicWeight_le` and
-  `TauCeti.PlumbingGraph.exists_characteristicWeight_eq_minCharacteristicWeight` saying it is a
-  lower bound and that it is attained.
+* `TauCeti.PlumbingGraph.sInfCharacteristicWeight`: the infimum of the weight as an integer, with
+  `TauCeti.PlumbingGraph.sInfCharacteristicWeight_le` and
+  `TauCeti.PlumbingGraph.exists_characteristicWeight_eq_sInfCharacteristicWeight` saying that on a
+  negative-definite plumbing it is a lower bound and that it is attained.
+* `TauCeti.PlumbingGraph.sInfCharacteristicWeight_add_two_mulVec` and
+  `TauCeti.PlumbingGraph.sInfCharacteristicWeight_conjugate`: how that value transforms under the
+  two moves on the representative of a spin^c structure.
 * `TauCeti.PlumbingGraph.two_mul_characteristicWeight_smul_single`: the weight along a single basis
   sphere, as an explicit quadratic.
-* `TauCeti.PlumbingGraph.not_bddAbove_range_characteristicWeight`: on a nonempty vertex set the
-  weight is unbounded above, so the sublevel sets are proper.
+* `TauCeti.PlumbingGraph.not_bddAbove_range_characteristicWeight`: one negatively framed vertex
+  makes the weight unbounded above, so the sublevel sets are proper, and
+  `TauCeti.PlumbingGraph.IsNegativeDefinite.not_bddAbove_range_characteristicWeight`: its
+  negative-definite specialization.
 
 ## References
 
@@ -190,29 +199,72 @@ theorem bddBelow_range_characteristicWeight (h : P.IsNegativeDefinite)
   obtain ⟨x₀, hx₀⟩ := P.exists_forall_characteristicWeight_le h k
   exact ⟨P.characteristicWeight k x₀, by rintro _ ⟨x, rfl⟩; exact hx₀ x⟩
 
-/-- The minimum value of the characteristic weight function, as an integer: the infimum of its
-range.
+/-- The infimum of the characteristic weight function, as an integer.
 
-On a negative-definite plumbing this is a genuine minimum — `minCharacteristicWeight_le` bounds
-the weight below by it and `exists_characteristicWeight_eq_minCharacteristicWeight` attains it —
+On a negative-definite plumbing this is a genuine minimum — `sInfCharacteristicWeight_le` bounds
+the weight below by it and `exists_characteristicWeight_eq_sInfCharacteristicWeight` attains it —
 and it is the numerical input to the `d`-invariant of the plumbed three-manifold in the spin^c
 structure recorded by `k`. Without negative-definiteness the range need not be bounded below and
-the value is the junk value `0` of `Int.csInf_of_not_bddBelow`. -/
-noncomputable def minCharacteristicWeight (k : P.characteristicVectors) : ℤ :=
+the value is the junk value `0` of `Int.csInf_of_not_bddBelow`, which is why the name records the
+infimum rather than a minimum. -/
+noncomputable def sInfCharacteristicWeight (k : P.characteristicVectors) : ℤ :=
   sInf (Set.range (P.characteristicWeight k))
 
-/-- On a negative-definite plumbing the minimum characteristic weight is a lower bound for the
-characteristic weight. -/
-theorem minCharacteristicWeight_le (h : P.IsNegativeDefinite) (k : P.characteristicVectors)
-    (x : V → ℤ) : P.minCharacteristicWeight k ≤ P.characteristicWeight k x :=
+/-- On a negative-definite plumbing the infimum of the characteristic weight is a lower bound for
+the characteristic weight. -/
+theorem sInfCharacteristicWeight_le (h : P.IsNegativeDefinite) (k : P.characteristicVectors)
+    (x : V → ℤ) : P.sInfCharacteristicWeight k ≤ P.characteristicWeight k x :=
   csInf_le (P.bddBelow_range_characteristicWeight h k) ⟨x, rfl⟩
 
-/-- On a negative-definite plumbing the minimum characteristic weight is attained: some lattice
-point has that exact weight. -/
-theorem exists_characteristicWeight_eq_minCharacteristicWeight (h : P.IsNegativeDefinite)
+/-- On a negative-definite plumbing the infimum of the characteristic weight is attained: some
+lattice point has that exact weight, so it is a minimum. -/
+theorem exists_characteristicWeight_eq_sInfCharacteristicWeight (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) :
-    ∃ x : V → ℤ, P.characteristicWeight k x = P.minCharacteristicWeight k :=
+    ∃ x : V → ℤ, P.characteristicWeight k x = P.sInfCharacteristicWeight k :=
   Int.csInf_mem (Set.range_nonempty _) (P.bddBelow_range_characteristicWeight h k)
+
+/-- Passing to the other representative `k + 2 · A m` of the same spin^c structure shifts the
+minimal characteristic weight by the constant `-χ_k(m)`.
+
+The two weight functions differ by the translation `χ_{k + 2·A m}(x) = χ_k(x + m) - χ_k(m)` of
+`characteristicWeight_add_two_mulVec_eq_sub`, and translating the lattice argument permutes the
+range; so the minimum picks up exactly the constant. This is what lets a `d`-invariant computed
+from a chosen representative be transported to any other. -/
+theorem sInfCharacteristicWeight_add_two_mulVec (h : P.IsNegativeDefinite)
+    (k : P.characteristicVectors) (m : V → ℤ) :
+    P.sInfCharacteristicWeight
+        ⟨fun v => k.val v + 2 * (P.intersectionMatrix.mulVec m) v, k.property.add_two_mul⟩ =
+      P.sInfCharacteristicWeight k - P.characteristicWeight k m := by
+  obtain ⟨x₀, hx₀⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h
+    ⟨fun v => k.val v + 2 * (P.intersectionMatrix.mulVec m) v, k.property.add_two_mul⟩
+  obtain ⟨x₁, hx₁⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h k
+  -- the shifted weight at `x₀` and at `x₁ - m` compares the two infima in both directions
+  have hx₀' := P.characteristicWeight_add_two_mulVec_eq_sub k m x₀
+  have hx₁' := P.characteristicWeight_add_two_mulVec_eq_sub k m (x₁ - m)
+  rw [sub_add_cancel] at hx₁'
+  have hle := P.sInfCharacteristicWeight_le h
+    ⟨fun v => k.val v + 2 * (P.intersectionMatrix.mulVec m) v, k.property.add_two_mul⟩ (x₁ - m)
+  have hge := P.sInfCharacteristicWeight_le h k (x₀ + m)
+  omega
+
+/-- The minimal characteristic weight is invariant under spin^c conjugation: negating the covector
+and the lattice point together preserves the weight, so it permutes the range.
+
+Conjugation is an involution on characteristic covectors, and
+`characteristicWeight_conjugate_neg` says `χ_{-k}(-x) = χ_k(x)`; hence the two weight functions
+have the same range, and in particular the same infimum. -/
+theorem sInfCharacteristicWeight_conjugate (h : P.IsNegativeDefinite)
+    (k : P.characteristicVectors) :
+    P.sInfCharacteristicWeight (P.conjugate k) = P.sInfCharacteristicWeight k := by
+  refine le_antisymm ?_ ?_
+  · obtain ⟨x, hx⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h k
+    have hle := P.sInfCharacteristicWeight_le h (P.conjugate k) (-x)
+    rwa [P.characteristicWeight_conjugate_neg k x, hx] at hle
+  · obtain ⟨x, hx⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h (P.conjugate k)
+    have hle := P.sInfCharacteristicWeight_le h k (-x)
+    have hsym : P.characteristicWeight k (-x) = P.characteristicWeight (P.conjugate k) x := by
+      rw [← P.characteristicWeight_conjugate_neg (P.conjugate k) x, P.conjugate_conjugate]
+    rwa [hsym, hx] at hle
 
 /-- The characteristic weight along a single basis sphere, as an explicit quadratic in the
 multiplier: `2 χ_k(m • e_v) = -(m ⟪k, e_v⟫ + m² (e_v · e_v))`. -/
@@ -233,17 +285,16 @@ theorem two_mul_characteristicWeight_smul_single (k : P.characteristicVectors) (
     ring
   rw [hlin, hquad]
 
-/-- On a negative-definite plumbing with at least one vertex the characteristic weight function is
-unbounded above: pushing a lattice point far along a single basis sphere sends `χ_k` to `+∞`,
-because that sphere's framing is negative.
+/-- A single negatively framed vertex makes the characteristic weight function unbounded above:
+pushing a lattice point far along that basis sphere sends `χ_k` to `+∞`, because the quadratic
+term `-m² (e_v · e_v)` outgrows the linear one.
 
 Together with `finite_setOf_characteristicWeight_le` this says that the weight sublevel sets form a
 genuine exhaustion of the lattice by finite subsets each of which is *proper*: no single sublevel
 set is the whole lattice. -/
-theorem not_bddAbove_range_characteristicWeight (h : P.IsNegativeDefinite) [Nonempty V]
+theorem not_bddAbove_range_characteristicWeight {v : V} (hv : P.weight v < 0)
     (k : P.characteristicVectors) : ¬ BddAbove (Set.range (P.characteristicWeight k)) := by
   rintro ⟨N, hN⟩
-  obtain ⟨v⟩ := ‹Nonempty V›
   set m : ℤ := |k.val v| + |2 * N| + 1 with hm
   have hm1 : 1 ≤ m := by
     have := abs_nonneg (k.val v)
@@ -252,9 +303,7 @@ theorem not_bddAbove_range_characteristicWeight (h : P.IsNegativeDefinite) [None
   have hgap : |2 * N| + 1 ≤ m - k.val v := by
     have := le_abs_self (k.val v)
     omega
-  have hweight : 1 ≤ -P.weight v := by
-    have := IsNegativeDefinite.weight_neg P h v
-    omega
+  have hweight : 1 ≤ -P.weight v := by omega
   have hval : 2 * P.characteristicWeight k (m • Pi.single v 1) =
       m * (m * -P.weight v - k.val v) := by
     rw [P.two_mul_characteristicWeight_smul_single k v m]
@@ -271,6 +320,15 @@ theorem not_bddAbove_range_characteristicWeight (h : P.IsNegativeDefinite) [None
       nlinarith [mul_nonneg (by linarith : (0 : ℤ) ≤ m - 1) hstep0]
     linarith [le_abs_self (2 * N)]
   exact absurd (hN ⟨m • Pi.single v 1, rfl⟩) (by omega)
+
+/-- On a negative-definite plumbing with at least one vertex the characteristic weight function is
+unbounded above: every framing of a negative-definite plumbing is negative, so
+`not_bddAbove_range_characteristicWeight` applies at any vertex. -/
+theorem IsNegativeDefinite.not_bddAbove_range_characteristicWeight (h : P.IsNegativeDefinite)
+    [Nonempty V] (k : P.characteristicVectors) :
+    ¬ BddAbove (Set.range (P.characteristicWeight k)) :=
+  P.not_bddAbove_range_characteristicWeight
+    (IsNegativeDefinite.weight_neg P h (Classical.arbitrary V)) k
 
 end PlumbingGraph
 
