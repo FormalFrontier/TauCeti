@@ -50,43 +50,32 @@ its restriction to continuous points is his predicate. -/
 def IsAnalyticPoint (v : Spv A) : Prop :=
   ¬ IsOpen (v.supp : Set A)
 
-/-- A point of `Spv A` is analytic exactly when its support is not open. -/
-@[simp]
-theorem isAnalyticPoint_def (v : Spv A) :
-    IsAnalyticPoint v ↔ ¬ IsOpen (v.supp : Set A) :=
-  Iff.rfl
-
 /-- **Wedhorn's Analytic Locus `Spa(A, A⁺)ᵃ`**: the subset of `spa Aplus` consisting of analytic
 points (Definition 7.39). -/
 def spaAnalytic (Aplus : Subring A) : Set (Spv A) :=
   spa Aplus ∩ {v : Spv A | IsAnalyticPoint v}
 
-/-- The set-level characterization of the analytic locus. -/
-theorem spaAnalytic_def (Aplus : Subring A) :
-    spaAnalytic Aplus = spa Aplus ∩ {v : Spv A | IsAnalyticPoint v} := (rfl)
-
 /-- Membership in the analytic locus: `v ∈ Spa(A, A⁺)ᵃ` iff `v ∈ Spa(A, A⁺)` and `v` is an
 analytic point. -/
 @[simp]
 theorem mem_spaAnalytic_iff (Aplus : Subring A) (v : Spv A) :
-    v ∈ spaAnalytic Aplus ↔ v ∈ spa Aplus ∧ IsAnalyticPoint v := by
-  rw [spaAnalytic_def, Set.mem_inter_iff, Set.mem_ofPred_eq]
+    v ∈ spaAnalytic Aplus ↔ v ∈ spa Aplus ∧ IsAnalyticPoint v :=
+  Iff.rfl
 
 /-- The analytic locus is contained in the adic spectrum. -/
 theorem spaAnalytic_subset_spa (Aplus : Subring A) :
     spaAnalytic Aplus ⊆ spa Aplus :=
-  spaAnalytic_def Aplus ▸ Set.inter_subset_left
+  Set.inter_subset_left
 
 /-- Enlarging the plus ring shrinks the analytic locus. -/
-theorem spaAnalytic_antitone : Antitone (spaAnalytic (A := A)) := fun _ _ hle ↦ by
-  rw [spaAnalytic_def, spaAnalytic_def]
-  exact Set.inter_subset_inter_left _ (spa_antitone hle)
+theorem spaAnalytic_antitone : Antitone (spaAnalytic (A := A)) := fun _ _ hle ↦
+  Set.inter_subset_inter_left _ (spa_antitone hle)
 
 /-- Over a zero ring, the analytic locus `Spa (A, A⁺)ᵃ` is empty. -/
 @[simp]
 theorem spaAnalytic_eq_empty_of_subsingleton [Subsingleton A] (Aplus : Subring A) :
     spaAnalytic Aplus = ∅ := by
-  rw [spaAnalytic_def, spa_eq_empty_of_subsingleton, Set.empty_inter]
+  rw [spaAnalytic, spa_eq_empty_of_subsingleton, Set.empty_inter]
 
 section TateRing
 
