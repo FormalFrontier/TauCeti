@@ -222,7 +222,6 @@ private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
     ← mapPointsFunctor_rootSubgroupCoordinateMap_app hij (CommAlgCat.of R A) q]
   exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
     (R := R) A (groupScheme_def R N) (AdditiveGroup.groupScheme_def R)
-      (groupScheme_X_left R N) (AdditiveGroup.groupScheme_X_left R)
       (groupSchemePointMulEquiv N A) (AdditiveGroup.groupSchemePointMulEquiv A)
       (groupSchemePointMulEquiv_apply_left N A)
       (AdditiveGroup.groupSchemePointMulEquiv_apply_left A)

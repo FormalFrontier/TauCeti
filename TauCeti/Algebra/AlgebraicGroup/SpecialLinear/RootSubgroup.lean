@@ -189,6 +189,7 @@ theorem mapPointsFunctor_rootSubgroupCoordinateMap_app (hij : i ≠ j)
 
 /-- The quotient coordinate map followed by the special-linear root coordinate map is the
 general-linear root coordinate map. -/
+@[simp]
 theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i ≠ j) :
     coordinateMap R N ≫ rootSubgroupCoordinateMap hij =
       GeneralLinear.rootSubgroupCoordinateMap hij := by
@@ -260,7 +261,6 @@ private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
     ← mapPointsFunctor_rootSubgroupCoordinateMap_app hij (CommAlgCat.of R A) q]
   exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
     (R := R) A (groupScheme_def R N) (AdditiveGroup.groupScheme_def R)
-      (groupScheme_X_left R N) (AdditiveGroup.groupScheme_X_left R)
       (groupSchemePointMulEquiv N A) (AdditiveGroup.groupSchemePointMulEquiv A)
       (groupSchemePointMulEquiv_apply_left N A)
       (AdditiveGroup.groupSchemePointMulEquiv_apply_left A)
@@ -285,6 +285,7 @@ end SchemePoints
 
 /-- The special-linear root subgroup followed by the determinant-kernel inclusion is the
 general-linear root subgroup. -/
+@[simp]
 theorem rootSubgroup_comp_groupSchemeι (hij : i ≠ j) :
     rootSubgroup (R := R) (N := N) hij ≫ groupSchemeι R N =
       GeneralLinear.rootSubgroup (R := R) (N := N) hij := by

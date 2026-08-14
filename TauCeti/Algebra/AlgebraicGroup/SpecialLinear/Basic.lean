@@ -8,7 +8,6 @@ public import Mathlib.Algebra.Ring.GeomSum
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Determinant
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Kernel
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Kernel
 
 /-!
 # The special linear group coordinate Hopf algebra
@@ -55,8 +54,7 @@ API; it is not adapted from either reference.
 
 public section
 
-open AlgebraicGeometry CategoryTheory WithConv
-open scoped CategoryTheory.MonObj
+open CategoryTheory WithConv
 
 namespace TauCeti
 

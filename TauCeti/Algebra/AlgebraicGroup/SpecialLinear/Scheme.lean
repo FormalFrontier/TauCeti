@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Kernel
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
 
 /-!
