@@ -8,6 +8,7 @@ public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTrans
 public import TauCeti.Probability.DeFinetti.ViaKoopman.InvariantConditionalLaw
 public import Mathlib.Dynamics.BirkhoffSum.Average
 public import TauCeti.Probability.Ergodic.CondExpProjection
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
 /-!
 # Displacing the last coordinate of a block
@@ -19,6 +20,22 @@ selection for *every* `m`, so the block transport makes the set-integral of the 
 independent of `m`. Averaging over `m < n` therefore leaves the left-hand side unchanged while
 turning the right-hand side into a Birkhoff average of `𝟙_B ∘ (· r)` under the shift — which is
 where the mean ergodic theorem enters.
+
+## Source
+
+The Koopman route to de Finetti follows Kallenberg's first proof (see References). No material is
+adapted from `cameronfreer/exchangeability`: that development carries its own `ViaKoopman` subtree
+covering this argument, but the lemmas here are assembled from Tau Ceti's own pieces — the
+invariant block transport of `PathSpace/Invariant/BlockTransport.lean`, the `L¹` mean ergodic
+bridge of `Ergodic/CondExpProjection.lean`, and the invariant conditional law of
+`ViaKoopman/InvariantConditionalLaw.lean`.
+
+## References
+
+* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles*, Springer, 2005, Chapter 1,
+  Theorem 1.1.
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 5** (Koopman operators and
+  invariant σ-algebras), whose milestone is `deFinetti_viaKoopman`.
 
 ## Main results
 
@@ -314,30 +331,24 @@ private theorem tendsto_setIntegral_mul_of_tendsto_integral_abs
     (hconv : Filter.Tendsto (fun n => ∫ x, |u n x - v x| ∂μ) Filter.atTop (nhds 0)) :
     Filter.Tendsto (fun n => ∫ x in A, p x * u n x ∂μ) Filter.atTop
       (nhds (∫ x in A, p x * v x ∂μ)) := by
-  rw [Metric.tendsto_atTop]
-  intro ε hε
-  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hconv ε hε
-  refine ⟨N, fun n hn => ?_⟩
-  have hb := hN n hn
-  rw [Real.dist_eq, sub_zero, abs_of_nonneg (integral_nonneg fun _ => abs_nonneg _)] at hb
-  have hpu : ∀ h : Ω → ℝ, Integrable h μ → Integrable (fun x => p x * h x) (μ.restrict A) :=
-    fun h hh => hh.restrict.bdd_mul hp.restrict (ae_restrict_of_ae hp_bdd)
-  have hdiff : Integrable (fun x => u n x - v x) μ := (hu n).sub hv
-  rw [Real.dist_eq]
-  calc |(∫ x in A, p x * u n x ∂μ) - ∫ x in A, p x * v x ∂μ|
-      = |∫ x in A, p x * (u n x - v x) ∂μ| := by
-        rw [← integral_sub (hpu _ (hu n)) (hpu _ hv)]
-        congr 1
-        exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
-    _ ≤ ∫ x in A, |p x * (u n x - v x)| ∂μ := abs_integral_le_integral_abs
-    _ ≤ ∫ x in A, |u n x - v x| ∂μ := by
-        refine integral_mono_ae ((hpu _ hdiff).abs) hdiff.abs.restrict ?_
-        filter_upwards [ae_restrict_of_ae hp_bdd] with x hpx
-        rw [abs_mul, Real.norm_eq_abs] at *
-        exact mul_le_of_le_one_left (abs_nonneg _) hpx
-    _ ≤ ∫ x, |u n x - v x| ∂μ :=
-        setIntegral_le_integral hdiff.abs (Filter.Eventually.of_forall fun _ => abs_nonneg _)
-    _ < ε := hb
+  -- Weighting by `p` does not increase the `L¹` distance, since `|p| ≤ 1`.
+  have hmono : ∀ n, eLpNorm ((fun x => p x * u n x) - fun x => p x * v x) 1 μ
+      ≤ eLpNorm ((u n) - v) 1 μ := by
+    intro n
+    refine eLpNorm_mono_ae ?_
+    filter_upwards [hp_bdd] with x hpx
+    simp only [Pi.sub_apply, Real.norm_eq_abs, ← mul_sub, abs_mul]
+    exact mul_le_of_le_one_left (abs_nonneg _) ((Real.norm_eq_abs _) ▸ hpx)
+  have hbase : Filter.Tendsto (fun n => eLpNorm ((u n) - v) 1 μ) Filter.atTop (nhds 0) := by
+    refine TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hu hv ?_
+    simpa only [Real.norm_eq_abs] using hconv
+  have hL1 : Filter.Tendsto
+      (fun n => eLpNorm ((fun x => p x * u n x) - fun x => p x * v x) 1 μ)
+      Filter.atTop (nhds 0) :=
+    tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hbase
+      (fun _ => zero_le) hmono
+  exact tendsto_setIntegral_of_L1' _ (hp.mul hv.aestronglyMeasurable)
+    (Filter.Eventually.of_forall fun n => (hu n).bdd_mul hp hp_bdd) hL1 A
 
 /-- **The last coordinate decouples into the invariant conditional law.** Over an invariant event,
 the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral of `ν(B)`, where `ν`
