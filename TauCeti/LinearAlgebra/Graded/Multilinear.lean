@@ -70,9 +70,8 @@ def IsHomogeneous (f : MultilinearMap R M N)
   ∀ (d : κ → ι) (x : ∀ i, M i),
     (∀ i, x i ∈ 𝒜 i (d i)) → f x ∈ ℬ ((∑ i, d i) + q)
 
-/-- Homogeneity of degree `q` is exactly the mapping condition on homogeneous inputs. The
-definition is not exposed, so this is the introduction rule available to importing modules, and
-`IsHomogeneous.map_mem` the corresponding elimination rule. -/
+/-- Homogeneity of degree `q` is exactly the mapping condition on homogeneous inputs. This is a
+convenient introduction rule, and `IsHomogeneous.map_mem` is the corresponding elimination rule. -/
 theorem isHomogeneous_def {f : MultilinearMap R M N}
     {𝒜 : (i : κ) → ι → σM i} {ℬ : ι → σN} {q : ι} :
     IsHomogeneous f 𝒜 ℬ q ↔

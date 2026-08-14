@@ -54,9 +54,8 @@ degree-`p + q` piece of `ℬ`. No direct-sum hypothesis on the families is neede
 def IsHomogeneous (f : M →ₗ[R] N) (𝒜 : ι → σM) (ℬ : ι → σN) (q : ι) : Prop :=
   ∀ ⦃p : ι⦄ ⦃x : M⦄, x ∈ 𝒜 p → f x ∈ ℬ (p + q)
 
-/-- Homogeneity of degree `q` is exactly the mapping condition on homogeneous elements. The
-definition is not exposed, so this is the introduction rule available to importing modules, and
-`IsHomogeneous.map_mem` the corresponding elimination rule. -/
+/-- Homogeneity of degree `q` is exactly the mapping condition on homogeneous elements. This is a
+convenient introduction rule, and `IsHomogeneous.map_mem` is the corresponding elimination rule. -/
 theorem isHomogeneous_def {f : M →ₗ[R] N} {𝒜 : ι → σM} {ℬ : ι → σN} {q : ι} :
     IsHomogeneous f 𝒜 ℬ q ↔ ∀ (p : ι) (x : M), x ∈ 𝒜 p → f x ∈ ℬ (p + q) :=
   ⟨fun hf _ _ hx ↦ hf hx, fun hf _ _ hx ↦ hf _ _ hx⟩
