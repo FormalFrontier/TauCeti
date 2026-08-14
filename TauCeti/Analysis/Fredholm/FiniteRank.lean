@@ -8,19 +8,19 @@ public import TauCeti.Analysis.Fredholm.Comp
 public import TauCeti.Analysis.Fredholm.Criteria
 
 /-!
-# Finite-rank perturbations of Fredholm operators
+# The index under finite-rank perturbations of Fredholm operators
 
-Mathlib's `ContinuousLinearMap.IsFredholm` API characterizes Fredholm operators by the existence
-of a continuous quasi-inverse. This file uses that characterization directly to prove that
-finite-rank perturbations over a complete nontrivially normed field preserve Fredholmness. The
-index statement then follows by restricting both operators to the kernel of the perturbation.
+That a finite-rank perturbation of a Fredholm operator is again Fredholm is Mathlib's
+`ContinuousLinearMap.IsFredholm.add_hasFiniteRange`. This file records the corresponding index
+statement, which follows by restricting both operators to the kernel of the perturbation.
+
+Finiteness of the rank is spelled with Mathlib's `LinearMap.HasFiniteRange`, matching the
+hypothesis of `ContinuousLinearMap.IsFredholm.add_hasFiniteRange`.
 
 ## Main declarations
 
-* `ContinuousLinearMap.IsFredholm.add_of_finiteDimensional_range`: over a complete nontrivially
-  normed field, adding an operator with finite-dimensional range preserves Fredholmness.
-* `TauCeti.ContinuousLinearMap.index_add_of_finiteDimensional_range`: over a complete nontrivially
-  normed field, adding an operator with finite-dimensional range preserves the Fredholm index.
+* `TauCeti.ContinuousLinearMap.index_add_of_hasFiniteRange`: over a complete nontrivially normed
+  field, adding an operator of finite rank preserves the Fredholm index.
 -/
 
 public section
@@ -28,34 +28,6 @@ public section
 namespace TauCeti
 
 open Module
-
-section Topological
-
-variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
-variable [AddCommGroup E] [Module 𝕜 E] [TopologicalSpace E]
-  [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [T2Space E]
-variable [AddCommGroup F] [Module 𝕜 F] [TopologicalSpace F]
-  [IsTopologicalAddGroup F] [ContinuousSMul 𝕜 F] [T2Space F]
-variable {T K : E →L[𝕜] F}
-
-/-- Over a complete nontrivially normed field, perturbing a Fredholm operator between Hausdorff
-topological vector spaces by an operator of finite rank leaves it Fredholm. -/
-theorem _root_.ContinuousLinearMap.IsFredholm.add_of_finiteDimensional_range
-    (hT : ContinuousLinearMap.IsFredholm T)
-    (hK : FiniteDimensional 𝕜 (LinearMap.range (K : E →ₗ[𝕜] F))) :
-    ContinuousLinearMap.IsFredholm (T + K) := by
-  open scoped LinearMap.FiniteRangeSetoid in
-    obtain ⟨S, hS⟩ := hT.exists_isQuasiInverse
-    refine ContinuousLinearMap.IsFredholm.of_isQuasiInverse (v := S) ?_
-    apply hS.congr (Setoid.refl _)
-    rw [LinearMap.FiniteRangeSetoid.equiv_iff_hasFiniteRange]
-    -- Unfold the finite-range setoid goal to the range of the perturbation `K`.
-    change
-      (((T + K : E →L[𝕜] F) : E →ₗ[𝕜] F) - (T : E →ₗ[𝕜] F)).range.FG
-    simpa only [ContinuousLinearMap.toLinearMap_add, add_sub_cancel_left]
-      using (Submodule.fg_iff_finiteDimensional _).mpr hK
-
-end Topological
 
 variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
@@ -68,17 +40,16 @@ namespace ContinuousLinearMap
 finite rank leaves its index unchanged: both operators restrict to the same map on the closed,
 finite-codimensional subspace `ker K`, and additivity of the index cancels the index shift of that
 restriction. -/
-theorem index_add_of_finiteDimensional_range (hT : ContinuousLinearMap.IsFredholm T)
-    (hK : FiniteDimensional 𝕜 (LinearMap.range (K : E →ₗ[𝕜] F))) :
+theorem index_add_of_hasFiniteRange (hT : ContinuousLinearMap.IsFredholm T)
+    (hK : LinearMap.HasFiniteRange (K : E →ₗ[𝕜] F)) :
     index (T + K) = index T := by
-  have := hK
   set ι := (LinearMap.ker (K : E →ₗ[𝕜] F)).subtypeL with hι
   have hιF : ContinuousLinearMap.IsFredholm ι := isFredholm_ker_subtypeL hK
   have hcomp : (T + K).comp ι = T.comp ι := by
     ext x
     have hx : K (x : E) = 0 := LinearMap.mem_ker.mp x.2
     simp [hι, hx]
-  have h₁ := index_comp (T + K) ι (hT.add_of_finiteDimensional_range hK) hιF
+  have h₁ := index_comp (T + K) ι (hT.add_hasFiniteRange hK) hιF
   have h₂ := index_comp T ι hT hιF
   rw [hcomp, h₂] at h₁
   omega

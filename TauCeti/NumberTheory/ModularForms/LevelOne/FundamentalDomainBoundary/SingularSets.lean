@@ -201,9 +201,7 @@ verticals of the boundary contour: on unit-norm points the reflection coincides 
 inversion `z ↦ -1/z`, and the set is inversion-closed. -/
 theorem neg_conj_mem_arcSingularSet {S : Finset ℍ} {s : ℂ}
     (hs : s ∈ arcSingularSet S) : -(starRingEnd ℂ) s ∈ arcSingularSet S := by
-  have h : -(starRingEnd ℂ) s = -1 / s := by
-    rw [neg_div, one_div, Complex.inv_eq_conj (norm_eq_one_of_mem_arcSingularSet hs)]
-  rw [h]
+  rw [← Complex.inv_eq_conj (norm_eq_one_of_mem_arcSingularSet hs), ← one_div, ← neg_div]
   exact neg_one_div_mem_arcSingularSet hs
 
 /-- The vertical singular set is closed under the reflection `z ↦ -conj z` that exchanges the
@@ -212,16 +210,10 @@ the translation onto the opposite line, and the set is translation-paired. -/
 theorem neg_conj_mem_verticalSingularSet {S : Finset ℍ} {s : ℂ}
     (hs : s ∈ verticalSingularSet S) : -(starRingEnd ℂ) s ∈ verticalSingularSet S := by
   rcases re_eq_of_mem_verticalSingularSet hs with hre | hre
-  · have h : -(starRingEnd ℂ) s = s - 1 := by
-      refine Complex.ext ?_ ?_ <;> simp [hre]
-      norm_num
-    rw [h]
-    exact sub_one_mem_verticalSingularSet hs hre
-  · have h : -(starRingEnd ℂ) s = s + 1 := by
-      refine Complex.ext ?_ ?_ <;> simp [hre]
-      norm_num
-    rw [h]
-    exact add_one_mem_verticalSingularSet hs hre
+  · have h : -(starRingEnd ℂ) s = s - 1 := by norm_num [Complex.ext_iff, hre]
+    exact h ▸ sub_one_mem_verticalSingularSet hs hre
+  · have h : -(starRingEnd ℂ) s = s + 1 := by norm_num [Complex.ext_iff, hre]
+    exact h ▸ add_one_mem_verticalSingularSet hs hre
 
 /-- The union of the two singular sets is closed under the reflection `z ↦ -conj z` — the
 reflection invariance the excised vertical cancellation
