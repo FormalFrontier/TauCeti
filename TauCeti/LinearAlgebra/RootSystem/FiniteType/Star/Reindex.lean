@@ -91,6 +91,27 @@ private theorem exists_iso_pathGraph_apply_eq_zero {V : Type*} [Fintype V]
     simp only [RelIso.trans_apply, pathGraphRevIso_apply, Fin.val_rev]
     omega
 
+private noncomputable def starArmsEquiv {B : Type*} (c : B)
+    (G : SimpleGraph B)
+    (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
+    (f : ∀ i, (e i).toSimpleGraph ≃g
+      pathGraph (Nat.card ↑(ConnectedComponent.supp (e i)))) :
+    ((i : Fin 3) × Fin (Nat.card ↑(ConnectedComponent.supp (e i)))) ≃ {x : B // x ≠ c} :=
+  let H := G.induce ({c}ᶜ : Set B)
+  (Equiv.sigmaCongrRight fun i ↦ (f i).toEquiv.symm).trans
+    ((Equiv.sigmaCongrLeft e).trans
+      ((Equiv.sigmaFiberEquiv H.connectedComponentMk).trans
+        (Equiv.subtypeEquivRight fun _ ↦ Set.mem_compl_singleton_iff)))
+
+@[simp] private theorem starArmsEquiv_apply {B : Type*} (c : B)
+    (G : SimpleGraph B)
+    (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
+    (f : ∀ i, (e i).toSimpleGraph ≃g
+      pathGraph (Nat.card ↑(ConnectedComponent.supp (e i))))
+    (v : (i : Fin 3) × Fin (Nat.card ↑(ConnectedComponent.supp (e i)))) :
+    (starArmsEquiv c G e f v).1 = ((f v.1).symm v.2).1.1 :=
+  rfl
+
 private noncomputable def starVertexEquiv {B : Type*} (c : B)
     (G : SimpleGraph B)
     (e : Fin 3 ≃ (G.induce ({c}ᶜ : Set B)).ConnectedComponent)
@@ -98,14 +119,7 @@ private noncomputable def starVertexEquiv {B : Type*} (c : B)
       pathGraph (Nat.card ↑(ConnectedComponent.supp (e i)))) :
     StarIndex (fun i ↦ Nat.card ↑(ConnectedComponent.supp (e i))) ≃ B :=
   letI : DecidableEq B := Classical.decEq B
-  let H := G.induce ({c}ᶜ : Set B)
-  let arms : ((i : Fin 3) × Fin (Nat.card ↑(ConnectedComponent.supp (e i)))) ≃
-      {x : B // x ≠ c} :=
-    (Equiv.sigmaCongrRight fun i ↦ (f i).toEquiv.symm).trans
-      ((Equiv.sigmaCongrLeft e).trans
-        ((Equiv.sigmaFiberEquiv H.connectedComponentMk).trans
-          (Equiv.subtypeEquivRight fun _ ↦ Set.mem_compl_singleton_iff)))
-  (Equiv.optionCongr arms).trans (Equiv.optionSubtypeNe c)
+  (Equiv.optionCongr (starArmsEquiv c G e f)).trans (Equiv.optionSubtypeNe c)
 
 private theorem starVertexEquiv_none {B : Type*} (c : B)
     (G : SimpleGraph B)
@@ -126,8 +140,8 @@ private theorem starVertexEquiv_some {B : Type*} (c : B)
     starVertexEquiv c G e f (some v) = ((f v.1).symm v.2).1.1 := by
   classical
   dsimp only [starVertexEquiv]
-  rw [Equiv.trans_apply, Equiv.optionCongr_apply, Option.map_some, Equiv.optionSubtypeNe_some]
-  rfl
+  rw [Equiv.trans_apply, Equiv.optionCongr_apply, Option.map_some, Equiv.optionSubtypeNe_some,
+    starArmsEquiv_apply]
 
 @[simp] private theorem connectedComponent_toSimpleGraph_adj {V : Type*}
     {G : SimpleGraph V} {s : Set V} (C : (G.induce s).ConnectedComponent)
