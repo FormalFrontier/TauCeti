@@ -25,8 +25,8 @@ general base are separate steps.
 * `TauCeti.FiniteBicommutativeHopfAlgCat`: finite-dimensional commutative, cocommutative Hopf
   algebras over a field.
 * `TauCeti.FiniteBicommutativeHopfAlgCat.dualFunctor`: contravariant finite dualization.
-* `TauCeti.FiniteBicommutativeHopfAlgCat.evalIso`: the natural objectwise double-dual
-  isomorphism.
+* `TauCeti.FiniteBicommutativeHopfAlgCat.evalIso`: the objectwise double-dual evaluation
+  isomorphism, natural in morphisms by `evalIso_hom_naturality`.
 * `TauCeti.FiniteBicommutativeHopfAlgCat.cartierDuality`: the resulting anti-equivalence.
 
 ## References
@@ -49,7 +49,7 @@ universe u
 
 The ambient `CommHopfAlgCat` supplies commutativity of multiplication; the second conjunct is
 cocommutativity of comultiplication. -/
-@[expose] def finiteBicommutativeHopfAlgProperty (k : Type u) [Field k] :
+def finiteBicommutativeHopfAlgProperty (k : Type u) [Field k] :
     ObjectProperty (_root_.CommHopfAlgCat.{u} k) :=
   fun H => Module.Finite k H ∧ Coalgebra.IsCocomm k H
 
@@ -92,7 +92,8 @@ variable (k) in
 `FiniteBicommutativeHopfAlgCat`. -/
 abbrev of (H : Type u) [CommRing H] [HopfAlgebra k H] [Module.Finite k H]
     [Coalgebra.IsCocomm k H] : FiniteBicommutativeHopfAlgCat.{u} k :=
-  ⟨_root_.CommHopfAlgCat.of k H, ⟨inferInstance, inferInstance⟩⟩
+  ⟨_root_.CommHopfAlgCat.of k H,
+    (finiteBicommutativeHopfAlgProperty_iff k _).2 ⟨inferInstance, inferInstance⟩⟩
 
 /-- The bialgebra morphism underlying a morphism of finite bicommutative Hopf algebras. -/
 abbrev toBialgHom {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
@@ -144,7 +145,7 @@ theorem toBialgHom_dualMap {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H �
 
 /-- Finite dualization as a contravariant endofunctor on finite-dimensional bicommutative Hopf
 algebras. -/
-@[expose] noncomputable def dualFunctor :
+noncomputable def dualFunctor :
     (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ ⥤
       FiniteBicommutativeHopfAlgCat.{u} k where
   obj H := dual H.unop
@@ -161,15 +162,15 @@ algebras. -/
 @[simp]
 theorem dualFunctor_obj (H : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
     (dualFunctor (k := k)).obj H = dual H.unop :=
-  rfl
+  (rfl)
 
 /-- The morphism part of `dualFunctor` is precomposition on the finite dual. -/
 @[simp]
 theorem dualFunctor_map {H K : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
     (f : H ⟶ K) :
-    toBialgHom ((dualFunctor (k := k)).map f) =
-      ConvolutionDual.map k (toBialgHom f.unop) :=
-  rfl
+    (dualFunctor (k := k)).map f =
+      eqToHom (dualFunctor_obj H) ≫ dualMap f.unop ≫ eqToHom (dualFunctor_obj K).symm :=
+  (rfl)
 
 /-- Evaluation identifies a finite bicommutative Hopf algebra with its double finite dual. -/
 noncomputable def evalIso (H : FiniteBicommutativeHopfAlgCat.{u} k) :
@@ -190,6 +191,13 @@ theorem evalIso_inv_apply_apply (H : FiniteBicommutativeHopfAlgCat.{u} k)
     (Phi : ConvolutionDual k (ConvolutionDual k H)) (phi : ConvolutionDual k H) :
     phi.ofConv ((evalIso H).inv Phi) = Phi.ofConv phi :=
   ConvolutionDual.evalBialgEquiv_symm_apply_apply k H Phi phi
+
+/-- Double-dual evaluation is natural in finite-dimensional bicommutative Hopf algebras. -/
+@[simp, reassoc]
+theorem evalIso_hom_naturality {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
+    f ≫ (evalIso K).hom = (evalIso H).hom ≫ dualMap (dualMap f) := by
+  apply hom_ext
+  exact ConvolutionDual.evalBialgEquiv_naturality k H (toBialgHom f)
 
 /-- Recover the preimage of a morphism between finite duals by double-dual evaluation. -/
 private noncomputable def dualMapPreimage
@@ -214,7 +222,7 @@ private theorem dualFunctor_map_dualMapPreimage
     (f : dual H.unop ⟶ dual K.unop) :
     (dualFunctor (k := k)).map (dualMapPreimage f) = f := by
   apply hom_ext
-  rw [dualFunctor_map]
+  change ConvolutionDual.map k (toBialgHom (dualMapPreimage f).unop) = toBialgHom f
   apply BialgHom.ext
   intro phi
   apply WithConv.ofConv_injective
@@ -261,13 +269,15 @@ instance dualFunctorFull : (dualFunctor (k := k)).Full where
   map_surjective f := ⟨dualMapPreimage f, dualFunctor_map_dualMapPreimage f⟩
 
 instance dualFunctorEssSurj : (dualFunctor (k := k)).EssSurj where
-  mem_essImage H := ⟨Opposite.op (dual H), ⟨(evalIso H).symm⟩⟩
+  mem_essImage H :=
+    ⟨Opposite.op (dual H),
+      ⟨eqToIso (dualFunctor_obj (Opposite.op (dual H))) ≪≫ (evalIso H).symm⟩⟩
 
 instance dualFunctorIsEquivalence : (dualFunctor (k := k)).IsEquivalence where
 
 /-- **Finite-dimensional Cartier duality.** Finite dualization is an anti-equivalence of the
 category of finite-dimensional bicommutative Hopf algebras over a field. -/
-@[expose] noncomputable def cartierDuality :
+noncomputable def cartierDuality :
     (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
       FiniteBicommutativeHopfAlgCat.{u} k :=
   (dualFunctor (k := k)).asEquivalence
@@ -275,7 +285,7 @@ category of finite-dimensional bicommutative Hopf algebras over a field. -/
 /-- The forward functor of `cartierDuality` is finite dualization. -/
 @[simp]
 theorem cartierDuality_functor : (cartierDuality (k := k)).functor = dualFunctor :=
-  rfl
+  (rfl)
 
 end FiniteBicommutativeHopfAlgCat
 
