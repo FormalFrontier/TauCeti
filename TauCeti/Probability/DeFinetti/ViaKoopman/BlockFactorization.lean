@@ -11,10 +11,11 @@ public import TauCeti.Probability.DeFinetti.ViaKoopman.Decoupling
 
 Iterating the one-coordinate decoupling across a block of length `r`.
 
-Each step peels the last coordinate off the block, replacing `𝟙_{B_r}(x_r)` by its conditional
-expectation given the shift-invariant σ-algebra. The factors already peeled do not vanish: they
-accumulate as an invariants-measurable weight, which is exactly what the weighted decoupling chain
-carries.
+The inductive step takes a block of length `r + 1` and peels its last coordinate, replacing
+`𝟙_{B_r}(x_r)` — the factor at index `Fin.last r` — by its conditional expectation given the
+shift-invariant σ-algebra, leaving a block of length `r`. The factors already peeled do not vanish:
+they accumulate as an invariants-measurable weight, which is exactly what the weighted decoupling
+chain carries.
 
 ## Main results
 
