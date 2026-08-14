@@ -163,11 +163,15 @@ to `1 : ℂ`. -/
 def oneBasepoint : RealProjectiveSpace 1 :=
   mk 1 (sphereOneHomeomorphCircle.symm 1)
 
+/-- The squared-coordinate map on `RP¹` sends the natural basepoint to `1 : Circle`. -/
+@[simp]
+lemma toCircle_oneBasepoint : toCircle oneBasepoint = 1 := by
+  simp [oneBasepoint]
+
 /-- The homeomorphism from the real projective line to the circle sends the natural basepoint to
 `1 : Circle`. -/
-@[simp]
-lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 := by
-  simp [oneBasepoint]
+lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 :=
+  toCircle_oneBasepoint
 
 /-- **The fundamental group of the real projective line is infinite cyclic.** The isomorphism is
 obtained by transporting the existing computation `π₁(Circle, 1) ≅ ℤ` across
