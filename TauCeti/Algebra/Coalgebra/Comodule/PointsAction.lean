@@ -144,8 +144,7 @@ end Coalgebra
 section Corestrict
 
 variable {R H₁ H₂ V A : Type*} [CommSemiring R]
-variable [Semiring H₁] [Algebra R H₁] [Coalgebra R H₁]
-variable [Semiring H₂] [Algebra R H₂] [Coalgebra R H₂]
+variable [Semiring H₁] [Semiring H₂] [Bialgebra R H₁] [Bialgebra R H₂]
 variable [AddCommMonoid V] [Module R V] [Comodule R H₁ V]
 variable [CommSemiring A] [Algebra R A]
 

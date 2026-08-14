@@ -130,12 +130,13 @@ theorem endOfPoint_tmul_comp (π : C →ₐc[R] MonoidAlgebra R X)
         (LinearMap.lTensor V f.toLinearMap
           (TensorProduct.map LinearMap.id (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap
             (Comodule.coact (R := R) (C := C) (M := V) v))) := by
-  have h := DFunLike.congr_fun
-    (Comodule.endOfPoint_corestrict (R := R) (H₁ := C)
-      (H₂ := MonoidAlgebra R X) (V := V) (A := A) π f)
-    (a ⊗ₜ[R] v)
-  rw [Comodule.endOfPoint_tmul, Comodule.corestrict_coact_apply] at h
-  exact h.symm
+  have hπ : (π : C →ₐ[R] MonoidAlgebra R X).toLinearMap =
+      (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap := by
+    rw [CoalgHom.toLinearMap_eq_coe]
+    exact BialgHom.toAlgHom_toLinearMap π
+  rw [Comodule.endOfPoint_tmul]
+  congr 2
+  rw [LinearMap.lTensor_map, AlgHom.comp_toLinearMap, hπ, LinearMap.lTensor_def]
 
 /-- **A monoid-algebra point acts on the `x`-weight submodule by its value on `x`.**
 
