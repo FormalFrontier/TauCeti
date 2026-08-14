@@ -27,9 +27,9 @@ map, so the statement is `contractLeft d ⁻¹` of `evenOdd Q (i + 1)` rather th
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.map_contractLeft_evenOdd_le` and
-  `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd`: **contraction shifts the parity**, in
-  submodule and in membership form.
+* `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` and
+  `TauCeti.CliffordAlgebra.map_contractLeft_evenOdd_le`: **contraction shifts the parity**, in
+  membership and in submodule form.
 * `TauCeti.CliffordAlgebra.involute_contractLeft`: `involute (d ⌋ x) = -(d ⌋ involute x)`.
 
 ## References
@@ -66,41 +66,44 @@ theorem involute_contractLeft (d : Module.Dual R M) (x : CliffordAlgebra Q) :
       rw [map_mul, involute_ι, neg_mul]
     rw [hlhs, hrhs, map_neg, neg_neg, contractLeft_ι_mul]
 
-/-- Contracting a product of at most `n` generators lands in the parity opposite to `n`. This is
-the graded statement on a single power of `range (ι Q)`; `map_contractLeft_evenOdd_le` assembles
-the powers into the two halves of the grading. -/
-private theorem contractLeft_mem_evenOdd_pow (d : Module.Dual R M) {n : ℕ}
-    {x : CliffordAlgebra Q} (hx : x ∈ LinearMap.range (ι Q) ^ n) :
-    contractLeft d x ∈ evenOdd Q ((n : ZMod 2) + 1) := by
-  have hpow : ∀ (m : ℕ) (y : CliffordAlgebra Q), y ∈ LinearMap.range (ι Q) ^ m →
-      y ∈ evenOdd Q (m : ZMod 2) := fun m y hy =>
-    Submodule.mem_iSup_of_mem (⟨m, rfl⟩ : {k : ℕ // (k : ZMod 2) = (m : ZMod 2)}) hy
-  have hsucc : ∀ c : ZMod 2, c + 1 + 1 = c := by decide
-  have hmul : ∀ c : ZMod 2, (1 : ZMod 2) + (c + 1) = c := by decide
-  induction hx using Submodule.pow_induction_on_left' with
-  | algebraMap r => simp
-  | add x y i hx hy ihx ihy => simpa only [map_add] using add_mem ihx ihy
-  | mem_mul m hm i x hx ih =>
-    obtain ⟨a, rfl⟩ := hm
-    -- In `ZMod 2` the index of the successor step collapses back to the index of `x`.
-    have hind : ((i.succ : ℕ) : ZMod 2) + 1 = ((i : ℕ) : ZMod 2) := by
-      push_cast; exact hsucc _
-    rw [contractLeft_ι_mul, hind]
-    refine sub_mem (Submodule.smul_mem _ _ (hpow i x hx)) ?_
-    simpa only [hmul] using SetLike.mul_mem_graded (ι_mem_evenOdd_one Q a) ih
-
 /-- **Contraction shifts the parity.** Contracting against a linear functional lowers the degree
-of a multivector by one, so it carries the `i`-th half of the `ℤ/2`-grading into the other one. -/
+of a multivector by one, so it carries the `i`-th half of the `ℤ/2`-grading into the other one.
+
+The induction is Mathlib's `CliffordAlgebra.evenOdd_induction`: a scalar is annihilated, a vector
+is contracted to a scalar, and multiplying by a pair of vectors changes the parity twice, which in
+`ZMod 2` is not at all. -/
+theorem contractLeft_mem_evenOdd (d : Module.Dual R M) {i : ZMod 2} {x : CliffordAlgebra Q}
+    (hx : x ∈ evenOdd Q i) : contractLeft d x ∈ evenOdd Q (i + 1) := by
+  -- Two parity facts, used to keep the indices in `ZMod 2` honest.
+  have hone : (1 : ZMod 2) + 1 = 0 := by decide
+  have hshift : ∀ c : ZMod 2, (1 : ZMod 2) + (c + 1) = c := by decide
+  induction x, hx using CliffordAlgebra.evenOdd_induction with
+  | range_ι_pow v hv =>
+    -- `i.val` is `0` or `1`, so `v` is a scalar or a vector.
+    rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl
+    · obtain ⟨r, rfl⟩ := Submodule.mem_one.mp (by simpa using hv)
+      simp
+    · obtain ⟨a, rfl⟩ : ∃ a, ι Q a = v := by simpa [ZMod.val_one] using hv
+      rw [contractLeft_ι, hone]
+      exact SetLike.algebraMap_mem_graded _ _
+  | add x y hx hy ihx ihy => simpa only [map_add] using add_mem ihx ihy
+  | ι_mul_ι_mul m₁ m₂ x hx ih =>
+    have h₂ : ι Q m₂ * x ∈ evenOdd Q (i + 1) := by
+      rw [add_comm]
+      exact SetLike.mul_mem_graded (ι_mem_evenOdd_one Q m₂) hx
+    have h₁ : contractLeft d (ι Q m₂ * x) ∈ evenOdd Q i := by
+      rw [contractLeft_ι_mul]
+      refine sub_mem (Submodule.smul_mem _ _ hx) ?_
+      simpa only [hshift] using SetLike.mul_mem_graded (ι_mem_evenOdd_one Q m₂) ih
+    rw [mul_assoc, contractLeft_ι_mul]
+    refine sub_mem (Submodule.smul_mem _ _ h₂) ?_
+    rw [add_comm]
+    exact SetLike.mul_mem_graded (ι_mem_evenOdd_one Q m₁) h₁
+
+/-- **Contraction shifts the parity**, in submodule form. -/
 theorem map_contractLeft_evenOdd_le (d : Module.Dual R M) (i : ZMod 2) :
     (evenOdd Q i).map (contractLeft d) ≤ evenOdd Q (i + 1) := by
-  rw [evenOdd, Submodule.map_iSup]
-  refine iSup_le fun n => ?_
   rintro _ ⟨y, hy, rfl⟩
-  simpa only [n.2] using contractLeft_mem_evenOdd_pow d hy
-
-/-- **Contraction shifts the parity**, in membership form. -/
-theorem contractLeft_mem_evenOdd (d : Module.Dual R M) {i : ZMod 2} {x : CliffordAlgebra Q}
-    (hx : x ∈ evenOdd Q i) : contractLeft d x ∈ evenOdd Q (i + 1) :=
-  map_contractLeft_evenOdd_le d i ⟨x, hx, rfl⟩
+  exact contractLeft_mem_evenOdd d hy
 
 end TauCeti.CliffordAlgebra
