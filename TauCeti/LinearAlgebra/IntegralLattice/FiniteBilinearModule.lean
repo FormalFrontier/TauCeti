@@ -63,7 +63,6 @@ instance : CoeSort FiniteBilinearModule (Type u) := ⟨FiniteBilinearModule.carr
 
 variable (A : FiniteBilinearModule)
 
-@[simp]
 theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
   rw [map_zero]
   rfl
@@ -71,7 +70,6 @@ theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
 @[simp]
 theorem pairing_zero_right (x : A) : A.pairing x 0 = 0 := map_zero _
 
-@[simp]
 theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.pairing y z :=
   DFunLike.congr_fun (map_add A.pairing x y) z
 
@@ -79,7 +77,6 @@ theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.p
 theorem pairing_add_right (x y z : A) : A.pairing x (y + z) = A.pairing x y + A.pairing x z :=
   map_add (A.pairing x) y z
 
-@[simp]
 theorem pairing_neg_left (x y : A) : A.pairing (-x) y = -A.pairing x y :=
   DFunLike.congr_fun (map_neg A.pairing x) y
 
@@ -194,7 +191,6 @@ abbrev restrict (H : AddSubgroup A) : FiniteBilinearModule where
         exact A.pairing_add_left x y z }
   pairing_comm x y := A.pairing_comm x y
 
-@[simp]
 theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x y := (rfl)
 
@@ -204,7 +200,6 @@ abbrev neg : FiniteBilinearModule where
   pairing := -A.pairing
   pairing_comm x y := congrArg Neg.neg (A.pairing_comm x y)
 
-@[simp]
 theorem neg_pairing (x y : A) : A.neg.pairing x y = -A.pairing x y := (rfl)
 
 /-- The orthogonal direct sum of two finite bilinear modules. -/
@@ -241,7 +236,6 @@ abbrev prod (B : FiniteBilinearModule) : FiniteBilinearModule where
       A.pairing y.1 x.1 + B.pairing y.2 x.2
     rw [A.pairing_comm x.1 y.1, B.pairing_comm x.2 y.2]
 
-@[simp]
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A × B) :
     (prod A B).pairing x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 := (rfl)
 
