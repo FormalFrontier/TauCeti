@@ -4,12 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- Public: the common-overfield comparison exposes the coordinate-ring-order tower equivalence.
+-- Public: consumers combine the common-overfield construction with the generic base-change
+-- equivalence and injectivity lemma.
 public import TauCeti.Algebra.TensorProduct.BaseChange
--- Non-public: these imports supply the residue-field construction, tensor-product
--- nontriviality, and flatness proof used only in definition bodies and proofs below.
-import Mathlib.LinearAlgebra.Basis.VectorSpace
-import Mathlib.RingTheory.Flat.Basic
+-- Non-public: these imports supply the residue-field construction and tensor-product
+-- nontriviality used only in the definition body below.
 import Mathlib.RingTheory.LocalRing.ResidueField.Ideal
 import Mathlib.RingTheory.TensorProduct.Nontrivial
 
@@ -17,18 +16,13 @@ import Mathlib.RingTheory.TensorProduct.Nontrivial
 # A common overfield of two field extensions
 
 Two extensions `K / k` and `L / k` embed into a common overfield: take a residue field of a
-maximal ideal of `K ⊗[k] L`. This file records that construction together with the comparison
-between successive and direct scalar extension, and the injective map induced by either field
-embedding.
+maximal ideal of `K ⊗[k] L`. This file records that field-theoretic construction; consumers use
+the generic tensor-product base-change API to compare scalar extensions and obtain the injective
+map induced by the embedding of `L`.
 
 ## Main declarations
 
-* `TauCeti.Algebra.TensorProduct.commonOverfield`: constructs a common overfield of two field
-  extensions.
-* `TauCeti.Algebra.TensorProduct.CommonOverfield.comparison`: compares scalar extension through
-  the first field with direct scalar extension to the common overfield.
-* `TauCeti.Algebra.TensorProduct.CommonOverfield.map`: extends scalars along the embedding of the
-  second field.
+* `TauCeti.Field.commonOverfield`: constructs a common overfield of two field extensions.
 
 This is base-change descent infrastructure for geometric connectedness and reducedness in the
 ReductiveGroups roadmap.
@@ -40,14 +34,14 @@ namespace TauCeti
 
 open scoped TensorProduct
 
-namespace Algebra.TensorProduct
+namespace Field
 
-universe u v w x
+universe u v w
 
 /-- A common overfield of two extensions `K / k` and `L / k`.
 
-The `K`-algebra structure on `Ω` is compatible with its `k`-algebra structure, while `right`
-embeds `L` into `Ω` as a `k`-algebra. -/
+The `K`-algebra structure on `Ω` is compatible with its `k`-algebra structure, while
+`includeRight` embeds `L` into `Ω` as a `k`-algebra. -/
 structure CommonOverfield (k : Type u) (K : Type v) (L : Type w)
     [Field k] [Field K] [Field L] [Algebra k K] [Algebra k L] where
   /-- The common overfield. -/
@@ -55,16 +49,16 @@ structure CommonOverfield (k : Type u) (K : Type v) (L : Type w)
   /-- The field structure on the common overfield. -/
   [fieldΩ : Field Ω]
   /-- The common overfield as a `k`-algebra. -/
-  [algebraOmega : Algebra k Ω]
+  [algebraBase : Algebra k Ω]
   /-- The common overfield as a `K`-algebra. -/
-  [algebraKΩ : Algebra K Ω]
+  [algebraLeft : Algebra K Ω]
   /-- Compatibility of the `k`- and `K`-algebra structures on the common overfield. -/
   [isScalarTower : IsScalarTower k K Ω]
   /-- The embedding of the second field extension into the common overfield. -/
-  right : L →ₐ[k] Ω
+  includeRight : L →ₐ[k] Ω
 
-attribute [instance] CommonOverfield.fieldΩ CommonOverfield.algebraOmega
-  CommonOverfield.algebraKΩ CommonOverfield.isScalarTower
+attribute [instance] CommonOverfield.fieldΩ CommonOverfield.algebraBase
+  CommonOverfield.algebraLeft CommonOverfield.isScalarTower
 
 /-- Construct a common overfield of two extensions of a field. -/
 noncomputable def commonOverfield (k : Type u) (K : Type v) (L : Type w)
@@ -85,59 +79,11 @@ noncomputable def commonOverfield (k : Type u) (K : Type v) (L : Type w)
   exact
     { Ω := Ω
       fieldΩ := inferInstance
-      algebraOmega := inferInstance
-      algebraKΩ := inferInstance
+      algebraBase := inferInstance
+      algebraLeft := inferInstance
       isScalarTower := inferInstance
-      right := iL }
+      includeRight := iL }
 
-namespace CommonOverfield
-
-variable {k : Type u} {K : Type v} {L : Type w} [Field k] [Field K] [Field L]
-  [Algebra k K] [Algebra k L]
-
-/-- Successive scalar extension through `K` agrees with direct scalar extension to a common
-overfield. -/
-noncomputable def comparison (d : CommonOverfield k K L) (A : Type x)
-    [CommSemiring A] [Algebra k A] :
-    ((K ⊗[k] A) ⊗[K] d.Ω) ≃+* (A ⊗[k] d.Ω) :=
-  baseChangeTowerRingEquiv k K A d.Ω
-
-/-- The common-overfield comparison sends nested pure tensors to pure tensors. -/
-@[simp]
-theorem comparison_tmul_tmul (d : CommonOverfield k K L) (A : Type x)
-    [CommSemiring A] [Algebra k A] (x : K) (a : A) (ω : d.Ω) :
-    d.comparison A ((x ⊗ₜ[k] a) ⊗ₜ[K] ω) = a ⊗ₜ[k] (x • ω) :=
-  baseChangeTowerRingEquiv_tmul_tmul k K A d.Ω x a ω
-
-/-- The inverse common-overfield comparison sends pure tensors to nested pure tensors. -/
-@[simp]
-theorem comparison_symm_tmul (d : CommonOverfield k K L) (A : Type x)
-    [CommSemiring A] [Algebra k A] (a : A) (ω : d.Ω) :
-    (d.comparison A).symm (a ⊗ₜ[k] ω) = (1 ⊗ₜ[k] a) ⊗ₜ[K] ω :=
-  baseChangeTowerRingEquiv_symm_tmul k K A d.Ω a ω
-
-/-- Scalar extension along the embedding of `L` into a common overfield. -/
-noncomputable def map (d : CommonOverfield k K L) (A : Type x)
-    [CommSemiring A] [Algebra k A] :
-    A ⊗[k] L →ₐ[k] A ⊗[k] d.Ω :=
-  Algebra.TensorProduct.map (AlgHom.id k A) d.right
-
-/-- Scalar extension to a common overfield maps each pure tensor componentwise. -/
-@[simp]
-theorem map_tmul (d : CommonOverfield k K L) (A : Type x)
-    [CommSemiring A] [Algebra k A] (a : A) (l : L) :
-    d.map A (a ⊗ₜ[k] l) = a ⊗ₜ[k] d.right l := by
-  simp [map]
-
-attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free in
-/-- Scalar extension from `L` to a common overfield is injective. -/
-theorem map_injective (d : CommonOverfield k K L) (A : Type x)
-    [CommRing A] [Algebra k A] : Function.Injective (d.map A) :=
-  Module.Flat.lTensor_preserves_injective_linearMap d.right.toLinearMap
-    (RingHom.injective d.right.toRingHom)
-
-end CommonOverfield
-
-end Algebra.TensorProduct
+end Field
 
 end TauCeti

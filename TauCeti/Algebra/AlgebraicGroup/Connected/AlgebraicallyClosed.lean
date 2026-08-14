@@ -7,7 +7,7 @@ module
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
-import Mathlib.RingTheory.Flat.Basic
+import TauCeti.Algebra.TensorProduct.BaseChange
 
 /-!
 # Testing geometric connectedness over algebraically closed fields
@@ -64,7 +64,7 @@ theorem geometricallyConnectedCommHopfAlgProperty_iff_connectedSpace_of_isAlgClo
       Algebra.TensorProduct.map (AlgHom.id k H) g
     have hg : Function.Injective g := RingHom.injective g.toRingHom
     have hf : Function.Injective f :=
-      Module.Flat.lTensor_preserves_injective_linearMap g.toLinearMap hg
+      Algebra.TensorProduct.map_id_left_injective k H K Ω g hg
     exact connectedSpace_primeSpectrum_of_injective f.toRingHom hf
 
 end TauCeti

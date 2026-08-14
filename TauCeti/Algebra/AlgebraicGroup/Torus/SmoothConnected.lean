@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.SmoothConnected
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.GeometricallyConnectedReduced
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
 import TauCeti.Algebra.AlgebraicGroup.Connected.BaseChange
@@ -26,8 +26,10 @@ affine group over a field implies smoothness, so every torus is smooth.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Definitions 12.14 and 12.17.
-* W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
+* J. S. Milne, *Algebraic Groups* (2017), Remark 12.5 and Definitions 12.14 and 12.17: `D(M)`
+  is smooth and connected when `M` is free, and tori are the smooth connected groups of
+  multiplicative type.
+* W. C. Waterhouse, *Introduction to Affine Group Schemes*, §2.2.
 
 This completes the smoothness and geometric-connectedness part of Layer 4, "Tori: split and
 non-split", of the ReductiveGroups roadmap. The character lattice of a non-split torus with its

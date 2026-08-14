@@ -15,7 +15,9 @@ public import Mathlib.RingTheory.TensorProduct.Basic
 -- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct`,
 -- `LinearMap.map_mul_of_map_mul_tmul` and `congr` are used only inside definition bodies and
 -- proofs, and no definition below is `@[expose]`d.
+import Mathlib.LinearAlgebra.Basis.VectorSpace
 import Mathlib.LinearAlgebra.TensorProduct.Tower
+import Mathlib.RingTheory.Flat.Basic
 import Mathlib.RingTheory.TensorProduct.Maps
 
 /-!
@@ -29,10 +31,13 @@ with passing to the opposite algebra, and composes in stages:
 * `TauCeti.Algebra.TensorProduct.baseChangeOpAlgEquiv`: `L ⊗[K] Aᵐᵒᵖ ≃ₐ[L] (L ⊗[K] A)ᵐᵒᵖ`;
 * `TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`:
   `M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A` for a tower `K → L → M`.
-* `TauCeti.Algebra.TensorProduct.baseChangeTowerRingEquiv`: the same tower comparison with tensor
-  factors in coordinate-ring order, `(L ⊗[K] A) ⊗[L] M ≃+* A ⊗[K] M`.
+* `TauCeti.Algebra.TensorProduct.baseChangeTowerRightAlgEquiv`: the same tower comparison with
+  tensor factors in coordinate-ring order, `(L ⊗[K] A) ⊗[L] M ≃ₐ[K] A ⊗[K] M`.
+* `TauCeti.Algebra.TensorProduct.map_id_left_injective`: tensoring an injective algebra map on the
+  right with the identity on the left remains injective over a field.
 
-None is reproved from scratch: the first and third upgrade Mathlib's linear equivalences
+None of the equivalences is reproved from scratch: the first and third upgrade Mathlib's linear
+equivalences
 `TensorProduct.AlgebraTensorModule.distribBaseChange` and
 `TensorProduct.AlgebraTensorModule.cancelBaseChange` to algebra equivalences, and the second
 composes `AlgEquiv.toOpposite` with Mathlib's `Algebra.TensorProduct.opAlgEquiv`. The fourth
@@ -44,9 +49,9 @@ All four equivalences are opaque: their bodies are not `@[expose]`d, and the `_t
 `_symm_tmul` simp lemmas below are the whole public interface, in both directions.
 
 Mathlib's `Algebra.TensorProduct.cancelBaseChange` is the third equivalence for a **commutative**
-algebra being extended; the algebras this file exists to serve are central simple, so they are not
-commutative in general, and the hypothesis has to go along with the chance to reuse that
-definition.
+algebra being extended. The third equivalence here drops that restriction for the central-simple
+consumers, while the fourth repackages it in coordinate-ring order for the commutative
+connectedness and reducedness consumers.
 
 These are statements about scalar extension as such, with no central-simplicity hypotheses. The
 first three are consumed by `TauCeti/Algebra/CentralSimple/BaseChange.lean`, which re-exports them
@@ -69,8 +74,6 @@ namespace TauCeti
 open scoped TensorProduct
 
 namespace Algebra.TensorProduct
-
-universe u v w x
 
 variable (K L A B : Type*) [CommSemiring K] [CommSemiring L] [Algebra K L]
   [Semiring A] [Algebra K A] [Semiring B] [Algebra K B]
@@ -148,8 +151,8 @@ here is that it is multiplicative. That is checked in the easy direction, on the
 that `LinearMap.map_mul_of_map_mul_tmul` reduces it to `simp`; this is how Mathlib's
 `Algebra.TensorProduct.cancelBaseChange` is built.
 
-That equivalence of Mathlib's is this one under the extra hypothesis that `A` is commutative, which
-the central simple algebras this serves are not. -/
+That equivalence of Mathlib's is this one under the extra hypothesis that `A` is commutative. The
+central-simple consumers of this declaration do not satisfy that hypothesis. -/
 def baseChangeTowerAlgEquiv : M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A :=
   (AlgEquiv.ofLinearEquiv (_root_.TensorProduct.AlgebraTensorModule.cancelBaseChange K L M M A).symm
     (by simp [Algebra.TensorProduct.one_def])
@@ -174,29 +177,41 @@ variable (K L A M : Type*) [CommSemiring K] [CommSemiring L] [Algebra K L]
   [CommSemiring A] [Algebra K A] [CommSemiring M] [Algebra K M] [Algebra L M]
   [IsScalarTower K L M]
 
-/-- Successive scalar extension, with tensor factors in coordinate-ring order, agrees with direct
-scalar extension. -/
-noncomputable def baseChangeTowerRingEquiv :
-    ((L ⊗[K] A) ⊗[L] M) ≃+* (A ⊗[K] M) :=
-  (Algebra.TensorProduct.comm L (L ⊗[K] A) M).toRingEquiv.trans
-    ((baseChangeTowerAlgEquiv K L A M).toRingEquiv.trans
-      (Algebra.TensorProduct.comm K M A).toRingEquiv)
+/-- Successive scalar extension, with the extended algebra on the left and the new scalars on the
+right, agrees with direct scalar extension. -/
+noncomputable def baseChangeTowerRightAlgEquiv :
+    ((L ⊗[K] A) ⊗[L] M) ≃ₐ[K] (A ⊗[K] M) :=
+  (Algebra.TensorProduct.comm L (L ⊗[K] A) M).restrictScalars K |>.trans
+    ((baseChangeTowerAlgEquiv K L A M).restrictScalars K |>.trans
+      (Algebra.TensorProduct.comm K M A))
 
 /-- The coordinate-ring-order tower comparison sends nested pure tensors to pure tensors. -/
 @[simp]
-theorem baseChangeTowerRingEquiv_tmul_tmul (l : L) (a : A) (m : M) :
-    baseChangeTowerRingEquiv K L A M ((l ⊗ₜ[K] a) ⊗ₜ[L] m) = a ⊗ₜ[K] (l • m) := by
-  simp [baseChangeTowerRingEquiv]
+theorem baseChangeTowerRightAlgEquiv_tmul_tmul (l : L) (a : A) (m : M) :
+    baseChangeTowerRightAlgEquiv K L A M ((l ⊗ₜ[K] a) ⊗ₜ[L] m) =
+      a ⊗ₜ[K] (l • m) := by
+  simp [baseChangeTowerRightAlgEquiv]
 
 /-- The inverse coordinate-ring-order tower comparison sends pure tensors to nested pure
 tensors. -/
 @[simp]
-theorem baseChangeTowerRingEquiv_symm_tmul (a : A) (m : M) :
-    (baseChangeTowerRingEquiv K L A M).symm (a ⊗ₜ[K] m) =
+theorem baseChangeTowerRightAlgEquiv_symm_tmul (a : A) (m : M) :
+    (baseChangeTowerRightAlgEquiv K L A M).symm (a ⊗ₜ[K] m) =
       (1 ⊗ₜ[K] a) ⊗ₜ[L] m := by
-  simp [baseChangeTowerRingEquiv]
+  simp [baseChangeTowerRightAlgEquiv]
 
 end CommTower
+
+attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free in
+/-- Tensoring an injective algebra map on the right with the identity on the left remains
+injective over a field. -/
+theorem map_id_left_injective (k A L Ω : Type*) [Field k] [CommRing A] [Algebra k A]
+    [CommSemiring L] [Algebra k L] [CommSemiring Ω] [Algebra k Ω]
+    (f : L →ₐ[k] Ω) (hf : Function.Injective f) :
+    Function.Injective (Algebra.TensorProduct.map (AlgHom.id k A) f) := by
+  -- On underlying functions, this tensor-product map is `lTensor` by `f`.
+  change Function.Injective (LinearMap.lTensor A f.toLinearMap)
+  exact Module.Flat.lTensor_preserves_injective_linearMap f.toLinearMap hf
 
 end Algebra.TensorProduct
 

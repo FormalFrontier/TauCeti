@@ -26,8 +26,9 @@ of every split torus.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Definitions 12.14 and 12.17.
-* W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
+* J. S. Milne, *Algebraic Groups* (2017), Definition 12.7, Theorems 12.8–12.9, and Remark
+  12.5, which characterizes when `D(M)` is connected, smooth, or both.
+* W. C. Waterhouse, *Introduction to Affine Group Schemes*, §2.2.
 
 This establishes the geometric connectedness and reducedness of the split-torus case in Layer 4,
 "Tori: split and non-split", of the ReductiveGroups roadmap.
@@ -50,9 +51,7 @@ private noncomputable def coordinateRingBaseChangeEquiv
     (K : Type u) [Field K] [Algebra k K] :
     MonoidAlgebra k G ⊗[k] K ≃+* MonoidAlgebra K G :=
   (Algebra.TensorProduct.comm k _ K).toRingEquiv.trans
-    (_root_.CommHopfAlgCat.ofIso
-      ((finiteTypeCommHopfAlgProperty K).ι.mapIso
-        (baseChangeCoordinateRingIso k K G))).toAlgEquiv.toRingEquiv
+    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G)).toAlgEquiv.toRingEquiv
 
 /-- **The coordinate Hopf algebra of a unique-product diagonalizable group is geometrically
 connected.** -/

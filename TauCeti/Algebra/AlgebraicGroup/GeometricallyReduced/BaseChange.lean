@@ -27,6 +27,8 @@ extension `K ⊗[k] H` is geometrically reduced over any field extension `K / k`
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), for the geometric-reducedness terminology.
+* The Stacks Project, Lemma 33.6.6, for invariance of geometric reducedness under extension of
+  the ground field.
 
 For preservation, reducedness is transported along the equivalence cancelling successive scalar
 extensions. For descent, the two scalar extensions are compared in a common overfield, then
@@ -57,8 +59,8 @@ theorem geometricallyReducedCommHopfAlgProperty.baseChange
   let _ : IsScalarTower k K L := IsScalarTower.of_algebraMap_eq' rfl
   let _ := hH L
   exact isReduced_of_injective
-    (Algebra.TensorProduct.baseChangeTowerRingEquiv k K H L).toRingHom
-    (Algebra.TensorProduct.baseChangeTowerRingEquiv k K H L).injective
+    (Algebra.TensorProduct.baseChangeTowerRightAlgEquiv k K H L).toRingHom
+    (Algebra.TensorProduct.baseChangeTowerRightAlgEquiv k K H L).injective
 
 /-- **Geometric reducedness descends from an extension of the base field.**
 
@@ -72,11 +74,17 @@ theorem geometricallyReducedCommHopfAlgProperty.of_baseChange
     geometricallyReducedCommHopfAlgProperty k H := by
   rw [geometricallyReducedCommHopfAlgProperty_iff] at hH ⊢
   intro L _ _
-  let d := Algebra.TensorProduct.commonOverfield k K L
+  let d := Field.commonOverfield k K L
+  let f : (H : Type v) ⊗[k] L →ₐ[k] (H : Type v) ⊗[k] d.Ω :=
+    Algebra.TensorProduct.map (AlgHom.id k H) d.includeRight
   let _ := hH d.Ω
   have hΩ : IsReduced ((H : Type v) ⊗[k] d.Ω) :=
-    isReduced_of_injective (d.comparison H).symm.toRingHom (d.comparison H).symm.injective
-  exact isReduced_of_injective (d.map H).toRingHom (d.map_injective H)
+    isReduced_of_injective
+      (Algebra.TensorProduct.baseChangeTowerRightAlgEquiv k K H d.Ω).symm.toRingHom
+      (Algebra.TensorProduct.baseChangeTowerRightAlgEquiv k K H d.Ω).symm.injective
+  exact isReduced_of_injective f.toRingHom
+    (Algebra.TensorProduct.map_id_left_injective k H L d.Ω d.includeRight
+      (RingHom.injective d.includeRight.toRingHom))
 
 /-- Geometric reducedness is equivalent before and after extension of the base field. -/
 theorem geometricallyReducedCommHopfAlgProperty.baseChange_iff
