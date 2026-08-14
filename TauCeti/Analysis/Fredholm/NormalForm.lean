@@ -225,8 +225,12 @@ the base point. -/
 @[simp]
 theorem normalFormOpenPartialHomeomorph_symm_self {f : E → F} {a : E}
     (hf : HasStrictFDerivAt f T a) :
-    (pkg.normalFormOpenPartialHomeomorph hf).symm (pkg.decCodom.proj (f a), 0) = a := by
-  rw [← pkg.normalFormMap_self f a, ← pkg.normalFormOpenPartialHomeomorph_apply hf]
+    (pkg.normalFormOpenPartialHomeomorph hf).symm
+      (pkg.decCodom.X₁.projectionOnto pkg.decCodom.X₀ pkg.decCodom.isTopCompl.isCompl (f a), 0) =
+        a := by
+  rw [← Submodule.coe_projectionOntoL pkg.decCodom.isTopCompl,
+    ← pkg.normalFormMap_self f a,
+    ← pkg.normalFormOpenPartialHomeomorph_apply hf]
   exact (pkg.normalFormOpenPartialHomeomorph hf).left_inv
     (pkg.mem_normalFormOpenPartialHomeomorph_source hf)
 
@@ -330,7 +334,8 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
   have hinv := pkg.hasStrictFDerivAt_normalFormOpenPartialHomeomorph_symm_self hf
   have hf' : HasStrictFDerivAt f T
       ((pkg.normalFormOpenPartialHomeomorph hf).symm (pkg.decCodom.proj (f a), 0)) := by
-    simpa only [pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
+    simpa only [Submodule.coe_projectionOntoL,
+      pkg.normalFormOpenPartialHomeomorph_symm_self hf] using hf
   have hcomp : HasStrictFDerivAt
       (fun y ↦ P (f ((pkg.normalFormOpenPartialHomeomorph hf).symm y)))
       (P.comp (T.comp (pkg.normalFormEquivL.symm :
