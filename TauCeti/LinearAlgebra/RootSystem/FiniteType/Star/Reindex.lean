@@ -114,7 +114,8 @@ private theorem starVertexEquiv_none {B : Type*} (c : B)
       pathGraph (Nat.card ↑(ConnectedComponent.supp (e i)))) :
     starVertexEquiv c G e f none = c := by
   classical
-  rfl
+  dsimp only [starVertexEquiv]
+  rw [Equiv.trans_apply, Equiv.optionCongr_apply, Option.map_none, Equiv.optionSubtypeNe_none]
 
 private theorem starVertexEquiv_some {B : Type*} (c : B)
     (G : SimpleGraph B)
@@ -124,13 +125,15 @@ private theorem starVertexEquiv_some {B : Type*} (c : B)
     (v : (i : Fin 3) × Fin (Nat.card ↑(ConnectedComponent.supp (e i)))) :
     starVertexEquiv c G e f (some v) = ((f v.1).symm v.2).1.1 := by
   classical
+  dsimp only [starVertexEquiv]
+  rw [Equiv.trans_apply, Equiv.optionCongr_apply, Option.map_some, Equiv.optionSubtypeNe_some]
   rfl
 
 @[simp] private theorem connectedComponent_toSimpleGraph_adj {V : Type*}
     {G : SimpleGraph V} {s : Set V} (C : (G.induce s).ConnectedComponent)
     (u v : ↑C.supp) :
     C.toSimpleGraph.Adj u v ↔ G.Adj u.1.1 v.1.1 :=
-  Iff.rfl
+  (C.toSimpleGraph_adj u.2 v.2).trans induce_adj
 
 private theorem degree_toSimpleGraph_le_one_of_adj_branch {B : Type*} [Fintype B]
     {G : SimpleGraph B} [DecidableRel G.Adj] (c : B) (hdeg : ∀ x, G.degree x ≤ 3)
