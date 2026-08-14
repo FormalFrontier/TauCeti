@@ -118,7 +118,9 @@ noncomputable def map (f : H →ₐc[k] K) :
   BialgHom.ofAlgHom (mapAlgHom k f.toCoalgHom)
     (by
       ext phi
-      rw [AlgHom.comp_apply, counit_apply, mapAlgHom_apply, counit_apply]
+      change Coalgebra.counit (R := k) (mapAlgHom k f.toCoalgHom phi) =
+        Coalgebra.counit (R := k) phi
+      rw [counit_apply, mapAlgHom_apply, counit_apply]
       exact congrArg phi.ofConv f.map_one)
     (by
       ext phi
@@ -278,7 +280,9 @@ private theorem evalAlgHom_map_comp_comul :
 /-- Evaluation into the double finite dual as a bialgebra morphism. -/
 private noncomputable def evalBialgHom :
     H →ₐc[k] ConvolutionDual k (ConvolutionDual k H) :=
-  BialgHom.ofAlgHom (evalAlgHom k H) (evalAlgHom_counit_comp k H)
+  BialgHom.ofAlgHom (R := k) (A := H)
+    (B := ConvolutionDual k (ConvolutionDual k H))
+    (evalAlgHom k H) (evalAlgHom_counit_comp k H)
     (evalAlgHom_map_comp_comul k H)
 
 private theorem evalBialgHom_apply (x : H) :
@@ -289,20 +293,21 @@ private theorem evalBialgHom_apply (x : H) :
 
 The equivalence sends `x` to evaluation at `x`. -/
 noncomputable def evalBialgEquiv :
-    H ≃ₐc[k] ConvolutionDual k (ConvolutionDual k H) :=
-  BialgEquiv.ofBijective (evalBialgHom k H) (by
-    constructor
-    · intro x y h
-      apply (evalLinearEquiv k H).injective
-      rw [← evalBialgHom_apply, ← evalBialgHom_apply]
-      exact h
-    · intro y
-      obtain ⟨x, hx⟩ := (evalLinearEquiv k H).surjective y
-      exact ⟨x, by rw [evalBialgHom_apply]; exact hx⟩)
+    H ≃ₐc[k] ConvolutionDual k (ConvolutionDual k H) := by
+  let bH : Bialgebra k H := inferInstance
+  let bHH : Bialgebra k (ConvolutionDual k (ConvolutionDual k H)) := inferInstance
+  change @BialgEquiv k _ H (ConvolutionDual k (ConvolutionDual k H)) _ _
+    bH.toAlgebra bHH.toAlgebra bH.toCoalgebra.toCoalgebraStruct
+      bHH.toCoalgebra.toCoalgebraStruct
+  have hbij : Function.Bijective (evalBialgHom k H) := by
+    change Function.Bijective (evalLinearEquiv k H)
+    exact (evalLinearEquiv k H).bijective
+  exact @BialgEquiv.ofBijective k H (ConvolutionDual k (ConvolutionDual k H)) _ _ _
+    bH bHH (evalBialgHom k H) hbij
 
 private theorem evalBialgEquiv_eq_evalBialgHom (x : H) :
     evalBialgEquiv k H x = evalBialgHom k H x := by
-  simp only [evalBialgEquiv, BialgEquiv.ofBijective_apply]
+  simp only [evalBialgEquiv, id_eq, BialgEquiv.ofBijective_apply]
 
 /-- The double-dual equivalence evaluates a functional at the original element. -/
 @[simp, grind =]
