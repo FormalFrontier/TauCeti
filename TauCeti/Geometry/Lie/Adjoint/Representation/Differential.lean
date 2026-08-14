@@ -106,8 +106,18 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
       (I := I) (G := G) BoundarylessManifold.isInteriorPoint Y
   rw [heIsoLieY]
-  exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie
-    (I := I) (G := G) BoundarylessManifold.isInteriorPoint X Y
+  calc
+    eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) =
+        ⁅eIso.symm (show E from eLie X), eIso.symm (show E from eLie Y)⁆ :=
+      leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie
+        (I := I) (G := G) BoundarylessManifold.isInteriorPoint (eLie X) (eLie Y)
+    _ = ⁅X, Y⁆ := by
+      rw [← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint X,
+        eIso.symm_apply_apply,
+        ← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint Y,
+        eIso.symm_apply_apply]
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/

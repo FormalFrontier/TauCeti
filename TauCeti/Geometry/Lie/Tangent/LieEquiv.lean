@@ -25,6 +25,8 @@ This advances Deliverable A, Layer 1 of
   equivalence.
 * `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv`: the isometric and Lie
   equivalences agree after viewing the tangent Lie algebra as the model space.
+* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie`: the inverse model-space
+  isometry preserves arbitrary tangent Lie brackets.
 
 ## References
 
@@ -172,21 +174,26 @@ private theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_
   exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
     (I := I) (G := G) h₁ (v : GroupLieAlgebra I G)).symm
 
-/-- Transporting a bracket through the inverse model-space isometry recovers the bracket of the
-original left-invariant derivations. -/
+/-- The inverse model-space isometry preserves the bracket of arbitrary tangent Lie-algebra
+vectors. -/
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie
     [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
-    (h₁ : I.IsInteriorPoint (1 : G)) (D D' : LeftInvariantDerivation I G) :
+    (h₁ : I.IsInteriorPoint (1 : G)) (v w : GroupLieAlgebra I G) :
     (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
       (I := I) (G := G)).symm
-        (show E from (⁅leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D,
-          leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D'⁆ : GroupLieAlgebra I G)) =
-      ⁅D, D'⁆ := by
+        (show E from (⁅v, w⁆ : GroupLieAlgebra I G)) =
+      ⁅(leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+          (I := I) (G := G)).symm (show E from v),
+        (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+          (I := I) (G := G)).symm (show E from w)⁆ := by
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra h₁
-  rw [← e.map_lie]
   rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
-      (I := I) (G := G) h₁,
-    e.symm_apply_apply]
+      (I := I) (G := G) h₁ (show E from (⁅v, w⁆ : GroupLieAlgebra I G))]
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
+      (I := I) (G := G) h₁ (show E from v)]
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
+      (I := I) (G := G) h₁ (show E from w)]
+  exact e.symm.map_lie v w
 
 /-- Evaluation at the identity preserves the Lie bracket. -/
 @[simp]
