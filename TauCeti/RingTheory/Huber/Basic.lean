@@ -48,6 +48,8 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   Tate-ring form is `TauCeti.Huber.IsTateRing.exists_hasBasis_nhds_zero`.
 * `TauCeti.Huber.IsHuberRing.of_discreteTopology`: a discrete ring is Huber, the first of the
   roadmap's Layer-0 examples.
+* `TauCeti.Huber.IsPseudoUniformizer.not_isOpen_of_ne_top`: an ideal that is open in the
+  presence of a pseudouniformiser is the unit ideal.
 * `TauCeti.Huber.not_isOpen_of_isPrime`: no prime ideal of a Tate ring is open.
 
 ## Provenance
@@ -130,18 +132,22 @@ class IsTateRing (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRin
   /-- A Tate ring contains a topologically nilpotent unit. -/
   exists_isPseudoUniformizer : ∃ a : A, IsPseudoUniformizer a
 
-/-- **In a Tate ring, no prime ideal is open.** A Tate ring contains a topologically nilpotent
-unit `ϖ`. If a prime ideal `I` were open, it would contain some power `ϖⁿ`, hence `ϖ` itself
-(by primality). Since `ϖ` is a unit, this would make `I = ⊤`, contradicting primality. -/
+/-- An open ideal in a topological ring with a pseudouniformiser is the unit ideal. -/
+theorem IsPseudoUniformizer.not_isOpen_of_ne_top {A : Type*} [CommRing A]
+    [TopologicalSpace A] {ϖ : A} (hϖ : IsPseudoUniformizer ϖ) (I : Ideal A) (hI : I ≠ ⊤) :
+    ¬ IsOpen (I : Set A) := by
+  intro hopen
+  have hnhds : (I : Set A) ∈ nhds (0 : A) := hopen.mem_nhds I.zero_mem
+  obtain ⟨n, hn⟩ := hϖ.isTopologicallyNilpotent.exists_pow_mem_of_mem_nhds hnhds
+  exact hI (I.eq_top_of_isUnit_mem hn (hϖ.isUnit.pow n))
+
+/-- **In a Tate ring, no prime ideal is open.** This ensures that every point of the valuation
+spectrum of a Tate ring is analytic. -/
 theorem not_isOpen_of_isPrime {A : Type*} [CommRing A] [TopologicalSpace A]
     [IsTopologicalRing A] [IsTateRing A] (I : Ideal A) [hI : I.IsPrime] :
     ¬ IsOpen (I : Set A) := by
-  intro hopen
   obtain ⟨ϖ, hϖ⟩ := IsTateRing.exists_isPseudoUniformizer (A := A)
-  have hnhds : (I : Set A) ∈ nhds (0 : A) := hopen.mem_nhds I.zero_mem
-  obtain ⟨n, hn⟩ := hϖ.isTopologicallyNilpotent.exists_pow_mem_of_mem_nhds hnhds
-  have hϖ_mem : ϖ ∈ I := hI.mem_of_pow_mem n hn
-  exact hI.ne_top (I.eq_top_of_isUnit_mem hϖ_mem hϖ.isUnit)
+  exact hϖ.not_isOpen_of_ne_top I hI.ne_top
 
 section Transport
 

@@ -187,10 +187,8 @@ theorem isClosed_setOfPred_forall_vle_zero (S : Set A) :
   rw [← isOpen_compl_iff]
   have h : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0}ᶜ = ⋃ a ∈ S, basicOpen a a := by
     ext v
-    simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, not_forall, Set.mem_iUnion,
-      mem_basicOpen_iff, exists_prop]
-    refine ⟨fun ⟨a, haS, h0⟩ ↦ ⟨a, haS, v.toValuativeRel.vle_refl a, h0⟩,
-      fun ⟨a, haS, _, h0⟩ ↦ ⟨a, haS, h0⟩⟩
+    simp only [basicOpen_self, Set.mem_compl_iff, Set.mem_ofPred_eq, not_forall,
+      Set.mem_iUnion, exists_prop]
   rw [h]
   exact isOpen_biUnion fun a _ ↦ isOpen_basicOpen a a
 

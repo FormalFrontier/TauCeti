@@ -11,15 +11,16 @@ public import TauCeti.RingTheory.Huber.Basic
 /-!
 # Analytic points, the analytic locus, and emptiness of `Spa(A, A⁺)`
 
-**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Definition 7.39 and Proposition 7.49.**
+**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Definition 7.39, Remark 7.40(3), and
+Proposition 7.49.**
 
 This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)` and the forward
 direction of the emptiness criterion for `Spa(A, A⁺)`.
 
 ## Main definitions
 
-* `TauCeti.ValuationSpectrum.IsAnalyticPoint` : a point `v : Spv A` is *analytic* if its support
-  `v.supp` is not an open ideal of `A`.
+* `TauCeti.ValuationSpectrum.IsAnalyticPoint` : extends Wedhorn's analytic-point predicate from
+  `Cont A` to `Spv A`; on continuous points it is Definition 7.39.
 * `TauCeti.ValuationSpectrum.spaAnalytic` : **Wedhorn's `Spa(A, A⁺)ᵃ`**, the analytic locus of
   `Spa(A, A⁺)` as a `Set (Spv A)`.
 
@@ -29,14 +30,15 @@ direction of the emptiness criterion for `Spa(A, A⁺)`.
   topological additive group `A`, then `Spa(A, A⁺) = ∅` for any plus ring `A⁺`
   (Wedhorn Proposition 7.49(1)).
 * `TauCeti.ValuationSpectrum.spa_eq_empty_of_subsingleton` : over a zero ring `A`, `Spa(A, A⁺) = ∅`.
-* `TauCeti.ValuationSpectrum.isAnalyticPoint_of_isTateRing` : **Wedhorn Proposition 7.49(2)**,
-  over a Tate ring every point of `Spv A` (and hence `Spa(A, A⁺)`) is analytic.
-* `TauCeti.ValuationSpectrum.spaAnalytic_eq_spa_of_isTateRing` : for a Tate ring `A`, the
-  analytic locus is the entire adic spectrum `spaAnalytic Aplus = spa Aplus`.
+* `TauCeti.ValuationSpectrum.isAnalyticPoint_of_isTateRing` : over a Tate ring every point of
+  `Spv A` (and hence `Spa(A, A⁺)`) is analytic.
+* `TauCeti.ValuationSpectrum.spaAnalytic_eq_spa_of_isTateRing` : **Wedhorn Remark 7.40(3)**,
+  for a Tate ring `A`, the analytic locus is the entire adic spectrum.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.39 and Proposition 7.49.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.39, Remark 7.40(3), and
+  Proposition 7.49.
 -/
 
 public section
@@ -47,8 +49,9 @@ open TauCeti TauCeti.Huber TauCeti.Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
-/-- **Analytic points of `Spv A` (Wedhorn Definition 7.39).** A point `v : Spv A` is *analytic*
-if its support `v.supp` is not an open ideal of `A`. -/
+/-- **Analytic points of `Spv A`.** A point `v : Spv A` is *analytic* if its support `v.supp` is
+not an open ideal of `A`. This extends Wedhorn's Definition 7.39 from `Cont A` to all of `Spv A`;
+its restriction to continuous points is his predicate. -/
 def IsAnalyticPoint (v : Spv A) : Prop :=
   ¬ IsOpen (v.supp : Set A)
 
@@ -107,11 +110,12 @@ section TateRing
 
 variable [IsTopologicalRing A] [IsTateRing A]
 
-/-- **Wedhorn Proposition 7.49(2).** Over a Tate ring, every point of `Spv A` is analytic. -/
+/-- Over a Tate ring, every point of `Spv A` is analytic, extending Wedhorn Remark 7.40(3) beyond
+continuous points. -/
 theorem isAnalyticPoint_of_isTateRing (v : Spv A) : IsAnalyticPoint v :=
   Huber.not_isOpen_of_isPrime v.supp
 
-/-- **Wedhorn Proposition 7.49(2).** Over a Tate ring, the analytic locus is the entire adic
+/-- **Wedhorn Remark 7.40(3).** Over a Tate ring, the analytic locus is the entire adic
 spectrum: `Spa (A, A⁺)ᵃ = Spa (A, A⁺)`. -/
 @[simp]
 theorem spaAnalytic_eq_spa_of_isTateRing (Aplus : Subring A) :
