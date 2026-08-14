@@ -22,23 +22,24 @@ of coordinate Hopf algebras
 O(T_bar) → O(G_m).
 ```
 
-The geometric fibre of a torus is canonically reconstructed from its group-like characters.
-Full faithfulness of the diagonalizable-group coordinate-ring functor therefore identifies these
-geometric morphisms with the integral dual of the geometric character lattice. This comparison,
-rather than the definition of cocharacters, supplies the perfect pairing. The dual description is
-specific to tori: a semisimple group can have trivial character group and nontrivial cocharacters.
+A chosen split presentation reconstructs the geometric fibre of a torus from its group-like
+characters. Full faithfulness of the diagonalizable-group coordinate-ring functor then identifies
+these geometric morphisms with the integral dual of the geometric character lattice. This chosen
+comparison, rather than the definition of cocharacters, supplies the perfect pairing. The dual
+description is specific to tori: a semisimple group can have trivial character group and nontrivial
+cocharacters.
 
 The absolute Galois action on `X_*(T)` is the contragredient of its action on `X*(T)`. The
 evaluation pairing is invariant under the diagonal action and is perfect over `ℤ`. For the
-standard split torus, the intrinsic dual is identified with the existing group of genuine
+standard split torus, the chosen dual comparison is related to the existing group of genuine
 cocharacters, and the Galois representation is shown to be trivial.
 
 ## Main declarations
 
 * `TauCeti.TorusCommHopfAlgCat.cocharacterLattice`: geometric group-scheme morphisms
   `G_m → T_bar`.
-* `TauCeti.TorusCommHopfAlgCat.cocharacterLatticeLinearEquivDual`: the canonical comparison
-  between geometric cocharacters and the integral character dual.
+* `TauCeti.TorusCommHopfAlgCat.cocharacterLatticeLinearEquivDual`: a comparison, obtained from a
+  chosen geometric splitting, between geometric cocharacters and the integral character dual.
 * `TauCeti.TorusCommHopfAlgCat.cocharacterGaloisRepresentation`: its contragredient absolute
   Galois representation.
 * `TauCeti.TorusCommHopfAlgCat.characterCocharacterPairing`: the evaluation pairing between
@@ -82,8 +83,8 @@ private noncomputable def geometricCharacterFG (T : TorusCommHopfAlgCat k) :
       (torusCommHopfAlgProperty.multiplicativeType k T.obj T.property)
   exact FGCommGrpCat.of (CommHopfAlgCat.geometricCharacterGroup T.obj.obj)
 
-/-- The canonical reconstruction of the geometric coordinate algebra of a torus from its
-geometric characters. -/
+/-- A reconstruction of the geometric coordinate algebra of a torus from its geometric
+characters, obtained from a chosen split presentation. -/
 private noncomputable def geometricCoordinateIso (T : TorusCommHopfAlgCat k) :
     DiagonalizableGroup.coordinateRing (AlgebraicClosure k) (geometricCharacterFG T) ≅
       FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj := by
@@ -151,9 +152,8 @@ private noncomputable def characterHomDualEquiv (T : TorusCommHopfAlgCat k) :
       (MulEquiv.ulift : ULift.{u} (Multiplicative ℤ) ≃* Multiplicative ℤ))).trans
     (MonoidHom.toAdditiveLeft.trans (addMonoidHomLequivInt ℤ).toEquiv)
 
-/-- Geometric cocharacters are canonically the integral dual of geometric characters. The
-equivalence comes from the canonical group-like reconstruction of the split geometric fibre,
-not from the definition of `cocharacterLattice`. -/
+/-- A chosen split presentation identifies geometric cocharacters with the integral dual of
+geometric characters. This comparison is not the definition of `cocharacterLattice`. -/
 noncomputable def cocharacterLatticeEquivDual (T : TorusCommHopfAlgCat k) :
     cocharacterLattice T ≃
       Module.Dual ℤ (CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :=
@@ -172,8 +172,8 @@ noncomputable instance instCocharacterLatticeModule (T : TorusCommHopfAlgCat k) 
     Module ℤ (cocharacterLattice T) :=
   (cocharacterLatticeEquivDual T).addEquiv.module ℤ
 
-/-- The canonical equivalence from geometric cocharacters to the character dual, as a linear
-equivalence. -/
+/-- The equivalence from geometric cocharacters to the character dual induced by the chosen
+geometric splitting, as a linear equivalence. -/
 noncomputable def cocharacterLatticeLinearEquivDual (T : TorusCommHopfAlgCat k) :
     cocharacterLattice T ≃ₗ[ℤ]
       Module.Dual ℤ (CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :=
@@ -189,11 +189,15 @@ noncomputable def cocharacterGaloisRepresentation (T : TorusCommHopfAlgCat k) :
 
 /-- The contragredient Galois representation evaluates by applying the inverse Galois element
 to the character. -/
+@[simp]
 theorem cocharacterGaloisRepresentation_apply_apply (T : TorusCommHopfAlgCat k)
     (σ : Field.absoluteGaloisGroup k)
     (f : cocharacterLattice T) (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :
     cocharacterLatticeLinearEquivDual T (cocharacterGaloisRepresentation T σ f) x =
       cocharacterLatticeLinearEquivDual T f (σ⁻¹ • x) := by
+  -- The representation is packaged as a composite monoid hom, whereas
+  -- `LinearEquiv.conj_apply_apply` rewrites a bare conjugation. This definitional step exposes
+  -- that single representation-wrapper boundary before applying the public conjugation lemma.
   rw [show cocharacterGaloisRepresentation T σ f =
       (cocharacterLatticeLinearEquivDual T).symm.conj
         ((Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
@@ -202,8 +206,8 @@ theorem cocharacterGaloisRepresentation_apply_apply (T : TorusCommHopfAlgCat k)
   rw [LinearEquiv.conj_apply_apply, LinearEquiv.apply_symm_apply]
   rfl
 
-/-- The canonical character--cocharacter pairing of a torus. It is evaluation of a functional
-in `X_*(T) = Hom_ℤ(X*(T), ℤ)` on a character. -/
+/-- The character--cocharacter pairing transported through the chosen dual comparison. It is
+evaluation of a functional in `X_*(T) = Hom_ℤ(X*(T), ℤ)` on a character. -/
 noncomputable def characterCocharacterPairing (T : TorusCommHopfAlgCat k) :
     CommHopfAlgCat.additiveCharacterGroup T.obj.obj →ₗ[ℤ] cocharacterLattice T →ₗ[ℤ] ℤ :=
   (cocharacterLatticeLinearEquivDual T).toLinearMap.flip
@@ -285,7 +289,7 @@ noncomputable local instance cocharacterLatticeModule
     Module ℤ (TorusCommHopfAlgCat.cocharacterLattice (toTorusCommHopfAlgCat k σ)) :=
   TorusCommHopfAlgCat.instCocharacterLatticeModule _
 
-/-- The intrinsic cocharacter lattice of a standard split torus in the coordinates `σ → ℤ`. -/
+/-- The chosen dual comparison for a standard split torus, expressed in coordinates `σ → ℤ`. -/
 noncomputable def cocharacterLatticeCoordEquiv
     (k : Type u) [Field k] (σ : Type u) [Finite σ] :
     TorusCommHopfAlgCat.cocharacterLattice (toTorusCommHopfAlgCat k σ) ≃ₗ[ℤ]
@@ -295,16 +299,16 @@ noncomputable def cocharacterLatticeCoordEquiv
     (characterLatticeEquiv k σ).toIntLinearEquiv.symm.dualMap |>.trans
       (Finsupp.llift ℤ ℤ ℤ σ).symm
 
-/-- The intrinsic cocharacter lattice of a standard split torus is its existing group of genuine
-cocharacters `Multiplicative (σ →₀ ℤ) →* Multiplicative ℤ`. -/
+/-- The chosen dual comparison for a standard split torus, expressed in its existing group of
+genuine cocharacters `Multiplicative (σ →₀ ℤ) →* Multiplicative ℤ`. -/
 noncomputable def cocharacterLatticeEquiv
     (k : Type u) [Field k] (σ : Type u) [Finite σ] :
     TorusCommHopfAlgCat.cocharacterLattice (toTorusCommHopfAlgCat k σ) ≃ₗ[ℤ]
       Additive (Multiplicative (σ →₀ ℤ) →* Multiplicative ℤ) :=
   (cocharacterLatticeCoordEquiv k σ).trans cocharAddEquiv.toIntLinearEquiv.symm
 
-/-- Under the intrinsic split-torus cocharacter equivalence, the usual cocharacter coordinates
-are obtained by applying the functional to the corresponding standard characters. -/
+/-- Under the chosen split-torus cocharacter equivalence, the usual cocharacter coordinates are
+obtained by applying the functional to the corresponding standard characters. -/
 @[simp]
 theorem cocharAddEquiv_cocharacterLatticeEquiv_apply
     (k : Type u) [Field k] (σ : Type u) [Finite σ]
@@ -315,8 +319,8 @@ theorem cocharAddEquiv_cocharacterLatticeEquiv_apply
           ((characterLatticeEquiv k σ).symm (Finsupp.single i 1)) := by
   simp [cocharacterLatticeEquiv, cocharacterLatticeCoordEquiv, Finsupp.llift_symm_apply]
 
-/-- For a standard split torus, the intrinsic character--cocharacter pairing agrees with the
-existing pairing on the explicit character and cocharacter lattices. -/
+/-- For a standard split torus, the pairing transported through the chosen comparison agrees with
+the existing pairing on the explicit character and cocharacter lattices. -/
 theorem characterCocharacterPairing_eq_latticePairing
     (k : Type u) [Field k] (σ : Type u) [Finite σ]
     (x : CommHopfAlgCat.additiveCharacterGroup
@@ -328,38 +332,15 @@ theorem characterCocharacterPairing_eq_latticePairing
   rw [TorusCommHopfAlgCat.characterCocharacterPairing_apply,
     ← ofMul_toMul (cocharacterLatticeEquiv k σ f), latticePairing_ofMul,
     pairing_eq_dotPairing, dotPairing_apply]
-  have hcoords (i : σ) :
-      cocharEquiv (cocharacterLatticeEquiv k σ f).toMul i =
-        TorusCommHopfAlgCat.cocharacterLatticeLinearEquivDual
-          (toTorusCommHopfAlgCat k σ) f
-            ((characterLatticeEquiv k σ).symm (Finsupp.single i 1)) := by
-    rw [← cocharAddEquiv_apply]
-    exact cocharAddEquiv_cocharacterLatticeEquiv_apply k σ f i
-  simp_rw [hcoords]
-  let e := characterLatticeEquiv k σ
-  let g := TorusCommHopfAlgCat.cocharacterLatticeLinearEquivDual
-    (toTorusCommHopfAlgCat k σ) f
-  change g x = (e x).sum fun i c => c * g (e.symm (Finsupp.single i 1))
-  rw [← e.symm_apply_apply x]
-  generalize e x = m
-  induction m using Finsupp.induction with
-  | zero => simp
-  | single_add i c m hi hc ih =>
-      simp only [map_add, e.apply_symm_apply] at ih ⊢
-      rw [Finsupp.sum_add_index']
-      · rw [ih]
-        simp only [Finsupp.sum_single_index, zero_mul]
-        have hsingle : Finsupp.single i c = c • Finsupp.single i (1 : ℤ) := by
-          ext j
-          by_cases h : i = j <;> simp [h]
-        rw [hsingle, map_zsmul, map_zsmul, smul_eq_mul]
-      · intro
-        simp
-      · intro
-        simp [add_mul]
+  simp_rw [← cocharAddEquiv_apply]
+  simp only [ofMul_toMul, ← smul_eq_mul]
+  rw [← Finsupp.lift_apply,
+    ← Finsupp.llift_apply (M := ℤ) (R := ℤ) (X := σ) (S := ℤ)]
+  simp [cocharacterLatticeEquiv, cocharacterLatticeCoordEquiv]
 
-/-- The absolute-Galois representation on the intrinsic cocharacter lattice of a standard split
+/-- The absolute-Galois representation on the geometric cocharacter lattice of a standard split
 torus is trivial. -/
+@[simp]
 theorem cocharacterGaloisRepresentation_apply_eq_self
     (k : Type u) [Field k] (σ : Type u) [Finite σ]
     (γ : Field.absoluteGaloisGroup k)
