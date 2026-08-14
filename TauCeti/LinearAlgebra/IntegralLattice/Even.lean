@@ -55,33 +55,42 @@ namespace IntegralLattice
 /-- The rational norm of an ambient vector with respect to an integral lattice. -/
 def norm (L : IntegralLattice V) (x : V) : ℚ := L.form x x
 
+/-- Evaluating the rational norm of an ambient vector yields its self-pairing. -/
+@[simp]
+theorem norm_apply (L : IntegralLattice V) (x : V) : L.norm x = L.form x x := (rfl)
+
 /-- The canonical integer lift of the norm of a lattice vector. -/
 noncomputable def integralNorm (L : IntegralLattice V) (x : L) : ℤ := L.integralForm x x
+
+/-- Evaluating the integral norm of a lattice vector yields its integral self-pairing. -/
+@[simp]
+theorem integralNorm_apply (L : IntegralLattice V) (x : L) :
+    L.integralNorm x = L.integralForm x x := (rfl)
 
 /-- The integral norm recovers the rational norm after coercion to `ℚ`. -/
 @[simp]
 theorem integralNorm_cast (L : IntegralLattice V) (x : L) :
     (L.integralNorm x : ℚ) = L.norm x := by
-  exact L.integralForm_cast x x
+  simpa only [integralNorm_apply, norm_apply] using L.integralForm_cast x x
 
 @[simp]
 theorem norm_zero (L : IntegralLattice V) : L.norm 0 = 0 := by
-  simp [norm]
+  simp [norm_apply]
 
 @[simp]
 theorem norm_neg (L : IntegralLattice V) (x : V) : L.norm (-x) = L.norm x := by
-  simp [norm]
+  simp [norm_apply]
 
 @[simp]
 theorem norm_smul (L : IntegralLattice V) (a : ℚ) (x : V) :
     L.norm (a • x) = a ^ 2 * L.norm x := by
-  simp only [norm, map_smul, LinearMap.smul_apply, smul_eq_mul, pow_two]
+  simp only [norm_apply, map_smul, LinearMap.smul_apply, smul_eq_mul, pow_two]
   ring
 
 /-- Polarization of the norm using symmetry of the lattice form. -/
 theorem norm_add (L : IntegralLattice V) (x y : V) :
     L.norm (x + y) = L.norm x + L.norm y + 2 * L.form x y := by
-  simp only [norm, map_add, LinearMap.add_apply]
+  simp only [norm_apply, map_add, LinearMap.add_apply]
   rw [L.isSymm.eq y x]
   ring
 
@@ -94,23 +103,23 @@ theorem norm_sub (L : IntegralLattice V) (x y : V) :
 
 @[simp]
 theorem integralNorm_zero (L : IntegralLattice V) : L.integralNorm 0 = 0 := by
-  simp [integralNorm]
+  simp [integralNorm_apply]
 
 @[simp]
 theorem integralNorm_neg (L : IntegralLattice V) (x : L) :
     L.integralNorm (-x) = L.integralNorm x := by
-  simp [integralNorm]
+  simp [integralNorm_apply]
 
 @[simp]
 theorem integralNorm_zsmul (L : IntegralLattice V) (a : ℤ) (x : L) :
     L.integralNorm (a • x) = a ^ 2 * L.integralNorm x := by
-  simp [integralNorm, pow_two, mul_assoc]
+  simp [integralNorm_apply, pow_two, mul_assoc]
 
 /-- Integral polarization of the norm. -/
 theorem integralNorm_add (L : IntegralLattice V) (x y : L) :
     L.integralNorm (x + y) =
       L.integralNorm x + L.integralNorm y + 2 * L.integralForm x y := by
-  simp only [integralNorm, map_add, LinearMap.add_apply]
+  simp only [integralNorm_apply, map_add, LinearMap.add_apply]
   rw [L.isSymm_integralForm.eq y x]
   ring
 
@@ -189,7 +198,7 @@ theorem isEven_ofGramMatrix_iff {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
   have hb : bInt i = ofGramMatrix.basisElem b G hG i := by
     apply Subtype.ext
     simp [bInt]
-  rw [hb, integralNorm, integralForm_ofGramMatrix_apply]
+  rw [hb, integralNorm_apply, integralForm_ofGramMatrix_apply]
 
 /-! ## Vectors of prescribed norm -/
 
