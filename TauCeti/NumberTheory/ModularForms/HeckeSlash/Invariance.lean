@@ -96,22 +96,18 @@ theorem heckeSlashSum_slash_invariant_of_mem_SLnZ (f : ℍ → ℂ) (hf : ∀ δ
 /-- The double-coset slash sum as a `ℂ`-linear operator on `SlashInvariantForm`. -/
 noncomputable def heckeSlashSumFormₗ : SlashInvariantForm 𝒮ℒ k →ₗ[ℂ] SlashInvariantForm 𝒮ℒ k where
   toFun f :=
-    { toFun := heckeSlashSum k D ⇑f
-      slash_action_eq' := fun γ hγ ↦ by
-        obtain ⟨σ, rfl⟩ := MonoidHom.mem_range.mp hγ
-        have hSLnZ : (mapGL ℚ σ : GL (Fin 2) ℚ) ∈ SLnZ 2 := coe_mem_SLnZ 2 σ
-        rw [← map_mapGL (S := ℚ) (T := ℝ) σ, ← ModularForm.rat_slash]
-        exact heckeSlashSum_slash_invariant_of_mem_SLnZ k D (⇑f) (γ := mapGL ℚ σ)
-          (fun g hg ↦ SlashInvariantFormClass.slash_eq_of_mem_SLnZ f g hg) hSLnZ }
-  map_add' f g := SlashInvariantForm.ext (fun τ ↦ by
-    change heckeSlashSum k D ⇑(f + g) τ =
-      heckeSlashSum k D ⇑f τ + heckeSlashSum k D ⇑g τ
-    rw [FunLike.coe_add, heckeSlashSum_add]
-    rfl)
-  map_smul' c f := SlashInvariantForm.ext (fun τ ↦ by
-    change heckeSlashSum k D ⇑(c • f) τ = c * heckeSlashSum k D ⇑f τ
-    rw [FunLike.coe_smul, heckeSlashSum_smul]
-    rfl)
+    SlashInvariantForm.mk (heckeSlashSum k D ⇑f) fun γ hγ ↦ by
+      obtain ⟨σ, rfl⟩ := MonoidHom.mem_range.mp hγ
+      have hSLnZ : (mapGL ℚ σ : GL (Fin 2) ℚ) ∈ SLnZ 2 := coe_mem_SLnZ 2 σ
+      rw [← map_mapGL (S := ℚ) (T := ℝ) σ, ← ModularForm.rat_slash]
+      exact heckeSlashSum_slash_invariant_of_mem_SLnZ k D (⇑f) (γ := mapGL ℚ σ)
+        (fun g hg ↦ SlashInvariantFormClass.slash_eq_of_mem_SLnZ f g hg) hSLnZ
+  map_add' f g := SlashInvariantForm.ext fun τ ↦ by
+    simp only [SlashInvariantForm.coe_mk, FunLike.coe_add]
+    exact congrFun (heckeSlashSum_add k D ⇑f ⇑g) τ
+  map_smul' c f := SlashInvariantForm.ext fun τ ↦ by
+    simp only [SlashInvariantForm.coe_mk, FunLike.coe_smul]
+    exact congrFun (heckeSlashSum_smul k D c ⇑f) τ
 
 @[simp]
 lemma coe_heckeSlashSumFormₗ (f : SlashInvariantForm 𝒮ℒ k) :
