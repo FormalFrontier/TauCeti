@@ -37,8 +37,6 @@ Topology*, Appendix A. The local chart is Mathlib's
 * `ContinuousLinearMap.FredholmPackage.normalFormEquivL`: the linear coordinate change
   determined by a Fredholm package.
 * `ContinuousLinearMap.FredholmPackage.normalFormMap`: the nonlinear coordinate map.
-* `ContinuousLinearMap.FredholmPackage.normalFormImplicitFunctionData`: the data feeding that map
-  into Mathlib's implicit function theorem.
 * `ContinuousLinearMap.FredholmPackage.normalFormOpenPartialHomeomorph`: the local homeomorphism
   defined by that map.
 * `ContinuousLinearMap.FredholmPackage.obstructionMap`: the remainder valued in the
@@ -119,7 +117,8 @@ theorem normalFormMap_self (f : E → F) (a : E) :
 
 /-- The derivative of the nonlinear normal-form coordinate map at any point is the product of the
 projected derivative of `f` and the fixed projection onto the inessential domain summand. -/
-theorem hasStrictFDerivAt_normalFormMap_of {f : E → F} {a x : E} {T' : E →L[𝕜] F}
+theorem hasStrictFDerivAt_normalFormMap_of_hasStrictFDerivAt
+    {f : E → F} {a x : E} {T' : E →L[𝕜] F}
     (hf : HasStrictFDerivAt f T' x) :
     HasStrictFDerivAt (pkg.normalFormMap f a)
       ((pkg.decCodom.proj.comp T').prod
@@ -149,7 +148,7 @@ theorem hasStrictFDerivAt_normalFormMap {f : E → F} {a : E}
     (hf : HasStrictFDerivAt f T a) :
     HasStrictFDerivAt (pkg.normalFormMap f a)
       (pkg.normalFormEquivL : E →L[𝕜] pkg.decCodom.X₁ × pkg.decDom.X₀) a :=
-  (pkg.hasStrictFDerivAt_normalFormMap_of hf).congr_fderiv
+  (pkg.hasStrictFDerivAt_normalFormMap_of_hasStrictFDerivAt hf).congr_fderiv
     pkg.prod_projection_eq_normalFormEquivL
 
 /-- The essential component of the Fredholm operator factors through the package equivalence. -/
@@ -178,7 +177,7 @@ local instance : CompleteSpace pkg.decCodom.X₁ :=
 /-- The data feeding the Fredholm normal-form coordinates into Mathlib's implicit function
 theorem: the essential component of `f` on the left, the inessential coordinate of `x - a` on the
 right. Its `ImplicitFunctionData.prodFun` is `pkg.normalFormMap f a`. -/
-def normalFormImplicitFunctionData {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
+private def normalFormImplicitFunctionData {f : E → F} {a : E} (hf : HasStrictFDerivAt f T a) :
     ImplicitFunctionData 𝕜 E pkg.decCodom.X₁ pkg.decDom.X₀ where
   leftFun x := pkg.decCodom.proj (f x)
   leftDeriv := pkg.decCodom.proj.comp T
@@ -195,9 +194,10 @@ def normalFormImplicitFunctionData {f : E → F} {a : E} (hf : HasStrictFDerivAt
     simp [LinearMap.range_comp]
   range_rightDeriv := Submodule.range_projectionOntoL _
   isCompl_ker := by
-    rw [pkg.proj_comp_eq, show ((pkg.equiv : pkg.decDom.X₁ →L[𝕜] pkg.decCodom.X₁).comp
-        pkg.decDom.proj).ker = pkg.decDom.X₀ by simp [LinearMap.ker_comp],
-      Submodule.ker_projectionOntoL]
+    have hker : ((pkg.equiv : pkg.decDom.X₁ →L[𝕜] pkg.decCodom.X₁).comp
+        pkg.decDom.proj).ker = pkg.decDom.X₀ := by
+      simp [LinearMap.ker_comp]
+    rw [pkg.proj_comp_eq, hker, Submodule.ker_projectionOntoL]
     exact pkg.decDom.isTopCompl.isCompl.symm
 
 /-- The local homeomorphism putting a map into Fredholm normal-form coordinates near a point where
