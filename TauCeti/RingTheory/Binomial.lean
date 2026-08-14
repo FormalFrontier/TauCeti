@@ -338,14 +338,11 @@ theorem choose_add_intCast_mem {A : AddSubgroup R} {r : R} {n : ℕ}
     _root_.Ring.choose (r + (z : R)) n ∈ A := by
   rw [_root_.Ring.add_choose_eq n (Int.cast_commute z r).symm]
   exact sum_mem fun ij hij => by
-    change _root_.Ring.choose r ij.1 *
-      _root_.Ring.choose ((Int.castRingHom R) z) ij.2 ∈ A
-    have hz := _root_.Ring.map_choose (Int.castRingHom R) z ij.2
-    rw [← hz]
-    change _root_.Ring.choose r ij.1 *
-      (_root_.Ring.choose (R := ℤ) z ij.2 : R) ∈ A
-    rw [← (Int.cast_commute (_root_.Ring.choose (R := ℤ) z ij.2)
-        (_root_.Ring.choose r ij.1)).eq, ← zsmul_eq_mul]
+    have hz : (_root_.Ring.choose (R := ℤ) z ij.2 : R) =
+        _root_.Ring.choose (z : R) ij.2 := by
+      simpa only [Int.coe_castRingHom] using
+        _root_.Ring.map_choose (Int.castRingHom R) z ij.2
+    rw [← hz, ← zsmul_eq_mul']
     exact A.zsmul_mem (hr ij.1 (HasAntidiagonal.antidiagonal.fst_le hij)) _
 
 /-- Translating the argument of a generalized binomial coefficient by an integer keeps it in the
