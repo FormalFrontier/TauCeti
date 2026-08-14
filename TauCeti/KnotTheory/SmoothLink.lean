@@ -7,7 +7,6 @@ module
 public import Mathlib.Geometry.Manifold.Instances.Sphere
 public import Mathlib.LinearAlgebra.Orientation
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
-public import TauCeti.Geometry.Manifold.SmoothEmbedding.ContinuousAmbientIsotopy.Basic
 
 /-!
 # Geometric presentation of knots and links
@@ -17,16 +16,16 @@ GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4
 done properly"). Knots have no single privileged representation; the geometric presentation
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
 manifold $M$. Oriented presentations carry an orientation of the one-dimensional source model,
-and framed presentations additionally carry a disjoint, ambient-isotopic push-off.
+and framed presentations in a 3-manifold additionally carry a framed tubular embedding.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
 * `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: smooth knots carrying a source orientation.
-* `TauCeti.SmoothKnot`: framed, oriented smooth knots carrying a chosen push-off.
+* `TauCeti.SmoothKnot`: framed, oriented smooth knots carrying a tubular embedding.
 * `TauCeti.SmoothKnot3`: smooth knots in the 3-sphere $S^3$.
-* `TauCeti.SmoothLink`: $k$-component smooth links in a general manifold $M$, bundling $k$
-  component knots with pairwise disjoint images.
+* `TauCeti.SmoothLink`: $k$-component smooth links in a 3-manifold $M$, bundling $k$
+  component knots with pairwise disjoint tubular neighborhoods.
 * `TauCeti.SmoothLink3`: smooth $k$-component links in $S^3$.
 
 ## Main definitions
@@ -81,35 +80,41 @@ def forgetOrientation (K : OrientedSmoothKnot I M) : UnorientedSmoothKnot I M :=
 
 end OrientedSmoothKnot
 
-/-- A framing of an oriented smooth knot is a disjoint, continuously ambient-isotopic push-off.
-The push-off itself records the framing choice; continuous ambient isotopy verifies that it is a
-parallel copy of the original knot rather than an unrelated component. -/
-structure FramedOrientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*)
+/-- A framed oriented smooth knot in a 3-manifold consists of an oriented core together with an
+embedding of its trivial rank-two normal bundle as a tubular neighborhood. The two normal
+coordinates record the framing. -/
+structure FramedOrientedSmoothKnot
+    (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] where
   /-- The underlying oriented smooth knot. -/
   knot : OrientedSmoothKnot I M
-  /-- The chosen push-off representing the framing. -/
-  pushOff : UnorientedSmoothKnot I M
-  /-- The push-off represents the same knot up to continuous ambient isotopy. -/
-  isPushOff : SmoothEmbedding.ContinuousAmbientIsotopic knot.knot pushOff
-  /-- The push-off is disjoint from the original knot. -/
-  disjoint_pushOff :
-    Disjoint (range (knot.knot : Sphere1 → M)) (range (pushOff : Sphere1 → M))
+  /-- A tubular embedding with two framed normal coordinates. -/
+  tubularEmbedding :
+    SmoothEmbedding
+      ((modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 1))).prod
+        (modelWithCornersSelf ℝ (EuclideanSpace ℝ (Fin 2)))) I ∞
+      (Sphere1 × EuclideanSpace ℝ (Fin 2)) M
+  /-- The zero section of the tubular embedding is the underlying knot. -/
+  tubularEmbedding_zero (x : Sphere1) : tubularEmbedding (x, 0) = knot.knot x
 
 namespace FramedOrientedSmoothKnot
 
+variable {H₃ : Type*} [TopologicalSpace H₃]
+  {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
+  {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
+
 /-- Forget the framing of a framed, oriented smooth knot. -/
-def forgetFraming (K : FramedOrientedSmoothKnot I M) : OrientedSmoothKnot I M := K.knot
+def forgetFraming (K : FramedOrientedSmoothKnot I₃ M₃) : OrientedSmoothKnot I₃ M₃ := K.knot
 
 /-- Forget both the framing and orientation of a framed, oriented smooth knot. -/
-def forget (K : FramedOrientedSmoothKnot I M) : UnorientedSmoothKnot I M :=
-  K.knot.forgetOrientation
+def forget (K : FramedOrientedSmoothKnot I₃ M₃) : UnorientedSmoothKnot I₃ M₃ :=
+  K.knot.knot
 
 end FramedOrientedSmoothKnot
 
 /-- The default smooth-knot presentation carries both orientation and framing data. -/
-public abbrev SmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
-    [ChartedSpace H M] : Type _ :=
+public abbrev SmoothKnot (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H)
+    (M : Type*) [TopologicalSpace M] [ChartedSpace H M] : Type _ :=
   FramedOrientedSmoothKnot I M
 
 /-- An unoriented smooth knot in the standard 3-sphere `Sphere3`. -/
@@ -121,37 +126,41 @@ public abbrev OrientedSmoothKnot3 : Type _ := OrientedSmoothKnot (𝓡 3) Sphere
 /-- A framed, oriented smooth knot in the standard 3-sphere `Sphere3`. -/
 public abbrev SmoothKnot3 : Type _ := SmoothKnot (𝓡 3) Sphere3
 
-/-- A `k`-component smooth link in an ambient manifold `M` consists of `k` smooth embeddings of
-`Sphere1` into `M` with pairwise disjoint images. -/
-structure SmoothLink (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
-    [ChartedSpace H M] (k : ℕ) where
+/-- A `k`-component smooth link in a 3-manifold `M` consists of `k` framed oriented knots with
+pairwise disjoint tubular neighborhoods. -/
+structure SmoothLink (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H)
+    (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) where
   /-- The individual component knots of the link. -/
   component : Fin k → SmoothKnot I M
-  /-- Different component knots have disjoint images in `M`. -/
+  /-- Different components have disjoint tubular neighborhoods in `M`. -/
   pairwise_disjoint : Pairwise fun i j =>
-    Disjoint (range (component i).forget) (range (component j).forget)
+    Disjoint (range (component i).tubularEmbedding) (range (component j).tubularEmbedding)
 
 /-- A `k`-component smooth link in the standard 3-sphere `Sphere3`. -/
 public abbrev SmoothLink3 (k : ℕ) : Type _ := SmoothLink (𝓡 3) Sphere3 k
 
 namespace SmoothLink
 
-variable {I M}
+variable {H₃ : Type*} [TopologicalSpace H₃]
+  {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
+  {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
 
 /-- Convert a single smooth knot into a 1-component smooth link. -/
-def ofKnot (K : SmoothKnot I M) : SmoothLink I M 1 where
+def ofKnot (K : SmoothKnot I₃ M₃) : SmoothLink I₃ M₃ 1 where
   component _ := K
   pairwise_disjoint := Subsingleton.pairwise
 
-/-- Distinct components of a smooth link are distinct smooth embeddings. -/
-theorem component_injective {k : ℕ} (L : SmoothLink I M k) : Function.Injective L.component := by
+/-- Distinct components of a smooth link are distinct framed knot presentations. -/
+theorem component_injective {k : ℕ} (L : SmoothLink I₃ M₃ k) :
+    Function.Injective L.component := by
   let _ : Nonempty Sphere1 := NormedSpace.sphere_nonempty_rclike ℝ zero_le_one
   intro i j hij
   by_contra hne
   have hdisjoint := L.pairwise_disjoint hne
-  have hrange : range (L.component i).forget = range (L.component j).forget :=
-    congrArg (fun K : SmoothKnot I M ↦ range K.forget) hij
-  exact hdisjoint.ne (range_nonempty (L.component i).forget).ne_empty hrange
+  have hrange : range (L.component i).tubularEmbedding =
+      range (L.component j).tubularEmbedding :=
+    congrArg (fun K : SmoothKnot I₃ M₃ ↦ range K.tubularEmbedding) hij
+  exact hdisjoint.ne (range_nonempty (L.component i).tubularEmbedding).ne_empty hrange
 
 end SmoothLink
 
