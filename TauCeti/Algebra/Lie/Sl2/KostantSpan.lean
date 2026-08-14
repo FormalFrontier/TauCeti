@@ -6,8 +6,11 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.Sl2.Straightening
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import TauCeti.Algebra.Ring.Subgroup
 public import TauCeti.RingTheory.Binomial
 public import TauCeti.RingTheory.DividedPowers.Commutation
+import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -32,15 +35,24 @@ This is the rank-one spanning step toward the integral PBW theorem for the Kosta
 the explicit Chevalley--Demazure construction of Layer 9 of the ReductiveGroups roadmap. Linear
 independence of these monomials is not asserted here.
 
+In the universal enveloping algebra `UniversalEnvelopingAlgebra ℚ L` of a Lie algebra `L` with an
+`sl₂` triple `(h, e, f)`, the abstract rank-one generator set `TauCeti.Sl2.kostantGenerators`
+identifies with `TauCeti.UniversalEnvelopingAlgebra.kostantGenerators ![e, f] ![h]`, and the
+subring closure identifies with `TauCeti.UniversalEnvelopingAlgebra.kostantForm ![e, f] ![h]`.
+
 ## Main definitions and results
 
 * `TauCeti.Sl2.orderedKostantMonomial` is `F⁽ᵃ⁾ (H choose b) E⁽ᶜ⁾`.
 * `TauCeti.Sl2.orderedKostantSpan` is their additive `ℤ`-span.
 * `TauCeti.Sl2.mul_mem_orderedKostantSpan` proves that span is closed under multiplication.
 * `TauCeti.Sl2.kostantGenerators` is the set of rank-one divided-power and Cartan-binomial
-  generators.
-* `TauCeti.Sl2.toAddSubgroup_closure_kostantGenerators` identifies the additive group of the
+  generators in an abstract associative `ℚ`-algebra.
+* `TauCeti.Sl2.toAddSubgroup_subringClosure_kostantGenerators` identifies the additive group of the
   generated subring with the ordered span.
+* `TauCeti.Sl2.kostantGenerators_eq_universalEnveloping` bridges the abstract rank-one generators to
+  `TauCeti.UniversalEnvelopingAlgebra.kostantGenerators`.
+* `TauCeti.Sl2.toAddSubgroup_kostantForm` identifies the additive group of the enveloping-algebra
+  Kostant form `kostantForm ![e, f] ![h]` with the ordered span.
 
 ## References
 
@@ -65,6 +77,31 @@ variable {A : Type u} [Ring A] [Algebra ℚ A]
 noncomputable def orderedKostantMonomial (H E F : A) (a b c : ℕ) : A :=
   dividedPower a F * Ring.choose H b * dividedPower c E
 
+/-- Unfolding equation for `orderedKostantMonomial`. -/
+theorem orderedKostantMonomial_def (H E F : A) (a b c : ℕ) :
+    orderedKostantMonomial H E F a b c = dividedPower a F * Ring.choose H b * dividedPower c E :=
+  (rfl)
+
+@[simp]
+theorem orderedKostantMonomial_zero_zero_zero (H E F : A) :
+    orderedKostantMonomial H E F 0 0 0 = 1 := by
+  simp [orderedKostantMonomial_def]
+
+@[simp]
+theorem orderedKostantMonomial_left (H E F : A) (n : ℕ) :
+    orderedKostantMonomial H E F n 0 0 = dividedPower n F := by
+  simp [orderedKostantMonomial_def]
+
+@[simp]
+theorem orderedKostantMonomial_middle (H E F : A) (n : ℕ) :
+    orderedKostantMonomial H E F 0 n 0 = Ring.choose H n := by
+  simp [orderedKostantMonomial_def]
+
+@[simp]
+theorem orderedKostantMonomial_right (H E F : A) (n : ℕ) :
+    orderedKostantMonomial H E F 0 0 n = dividedPower n E := by
+  simp [orderedKostantMonomial_def]
+
 /-- The set of ordered rank-one Kostant monomials. -/
 noncomputable def orderedKostantMonomials (H E F : A) : Set A :=
   {x | ∃ a b c : ℕ, orderedKostantMonomial H E F a b c = x}
@@ -82,17 +119,31 @@ noncomputable def orderedKostantSpan (H E F : A) : AddSubgroup A :=
 
 /-- The ordered Kostant span is the additive closure of the ordered monomials. -/
 theorem orderedKostantSpan_def (H E F : A) :
-    orderedKostantSpan H E F = AddSubgroup.closure (orderedKostantMonomials H E F) := by
-  rw [orderedKostantSpan]
+    orderedKostantSpan H E F = AddSubgroup.closure (orderedKostantMonomials H E F) :=
+  (rfl)
 
 /-- Every ordered Kostant monomial belongs to its additive span. -/
+@[simp]
 theorem orderedKostantMonomial_mem_orderedKostantSpan (H E F : A) (a b c : ℕ) :
     orderedKostantMonomial H E F a b c ∈ orderedKostantSpan H E F :=
   AddSubgroup.subset_closure ⟨a, b, c, rfl⟩
 
+/-- The ordered Kostant span lies in an additive subgroup exactly when that subgroup contains
+every ordered Kostant monomial. -/
+@[simp]
+theorem orderedKostantSpan_le_iff {S : AddSubgroup A} {H E F : A} :
+    orderedKostantSpan H E F ≤ S ↔ ∀ a b c, orderedKostantMonomial H E F a b c ∈ S :=
+  ⟨fun h a b c => h (orderedKostantMonomial_mem_orderedKostantSpan H E F a b c),
+    fun h => (AddSubgroup.closure_le _).2 fun _ ⟨a, b, c, heq⟩ => heq ▸ h a b c⟩
+
+/-- The ordered Kostant span contains one. -/
+@[simp]
+theorem one_mem_orderedKostantSpan (H E F : A) : (1 : A) ∈ orderedKostantSpan H E F := by
+  simpa using orderedKostantMonomial_mem_orderedKostantSpan H E F 0 0 0
+
 /-- An ordered product with any integral combination of Cartan binomial coefficients in the
 middle belongs to the ordered Kostant span. -/
-theorem dividedPower_mul_mem_mul_dividedPower_orderedKostantSpan (H E F : A) (a c : ℕ)
+theorem dividedPower_mul_mul_dividedPower_mem_orderedKostantSpan (H E F : A) (a c : ℕ)
     {r : A} (hr : r ∈ ringChooseSpan H) :
     dividedPower a F * r * dividedPower c E ∈ orderedKostantSpan H E F := by
   rw [ringChooseSpan_def] at hr
@@ -104,91 +155,107 @@ theorem dividedPower_mul_mem_mul_dividedPower_orderedKostantSpan (H E F : A) (a 
   | add x y _ _ hx hy => simpa [mul_add, add_mul] using add_mem hx hy
   | neg x _ hx => simpa using neg_mem hx
 
-private theorem ringChoose_nat_sub_add_mem (H : A) (p q b : ℕ) :
-    Ring.choose (H - (p : A) + (q : A)) b ∈ ringChooseSpan H := by
-  have h := ringChoose_add_intCast_mem_ringChooseSpan H ((q : ℤ) - p) b
-  convert h using 1
-  push_cast
-  abel_nf
+omit [Algebra ℚ A] in
+/-- Commutation of `H` past `F` expressed as a right-translation by `-2`. -/
+theorem cartan_mul_f {H F : A} (hhf : H * F - F * H = -(2 • F)) :
+    H * F = F * (H + (-2 : A)) := by
+  have htwo : F * (2 : A) = 2 • F := by simpa using (nsmul_eq_mul' F 2).symm
+  calc
+    H * F = (H * F - F * H) + F * H := (sub_add_cancel _ _).symm
+    _ = -(2 • F) + F * H := by rw [hhf]
+    _ = F * H + -(2 • F) := add_comm _ _
+    _ = F * (H + (-2 : A)) := by
+      rw [mul_add, mul_neg, htwo]
 
-private theorem orderedKostantMonomial_mul_mem_span {H E F : A}
+omit [Algebra ℚ A] in
+/-- Commutation of `H` past `E` expressed as a right-translation by `2`. -/
+theorem cartan_mul_e {H E : A} (hhe : H * E - E * H = 2 • E) :
+    H * E = E * (H + (2 : A)) := by
+  have htwo : E * (2 : A) = 2 • E := by simpa using (nsmul_eq_mul' E 2).symm
+  calc
+    H * E = (H * E - E * H) + E * H := (sub_add_cancel _ _).symm
+    _ = 2 • E + E * H := by rw [hhe]
+    _ = E * H + 2 • E := add_comm _ _
+    _ = E * (H + (2 : A)) := by
+      rw [mul_add, htwo]
+
+/-- Translating `r` by a multiple of an integer leaves `Ring.choose` in `ringChooseSpan r`. -/
+theorem ringChoose_add_nsmul_intCast_mem_ringChooseSpan (r : A) (n : ℕ) (z : ℤ) (m : ℕ) :
+    Ring.choose (r + n • (z : A)) m ∈ ringChooseSpan r := by
+  have h := ringChoose_add_intCast_mem_ringChooseSpan r ((n : ℤ) * z) m
+  rw [show r + (((n : ℤ) * z : ℤ) : A) = r + n • (z : A) by
+    push_cast; simp [nsmul_eq_mul]] at h
+  exact h
+
+/-- Subtracting a multiple of a natural number from `r` leaves `Ring.choose` in
+`ringChooseSpan r`. -/
+theorem ringChoose_sub_nsmul_natCast_mem_ringChooseSpan (r : A) (n : ℕ) (z : ℕ) (m : ℕ) :
+    Ring.choose (r - n • (z : A)) m ∈ ringChooseSpan r := by
+  have h := ringChoose_add_intCast_mem_ringChooseSpan r (-((n : ℤ) * (z : ℤ))) m
+  rw [show r + ((-((n : ℤ) * (z : ℤ)) : ℤ) : A) = r - n • (z : A) by
+    push_cast; simp [nsmul_eq_mul, sub_eq_add_neg]] at h
+  exact h
+
+/-- Translating `r` by an integer difference of natural numbers leaves `Ring.choose` in
+`ringChooseSpan r`. -/
+theorem ringChoose_sub_natCast_add_natCast_mem_ringChooseSpan (r : A) (p q b : ℕ) :
+    Ring.choose (r - (p : A) + (q : A)) b ∈ ringChooseSpan r := by
+  have h := ringChoose_add_intCast_mem_ringChooseSpan r ((q : ℤ) - (p : ℤ)) b
+  rw [show r + (((q : ℤ) - (p : ℤ) : ℤ) : A) = r - (p : A) + (q : A) by
+    push_cast; abel] at h
+  exact h
+
+private theorem orderedKostantMonomial_mul_mem_orderedKostantSpan {H E F : A}
     (hef : E * F - F * E = H) (hhe : H * E - E * H = 2 • E)
     (hhf : H * F - F * H = -(2 • F)) (a b c d e f : ℕ) :
     orderedKostantMonomial H E F a b c * orderedKostantMonomial H E F d e f ∈
       orderedKostantSpan H E F := by
+  -- Unfold the product of two ordered monomials and straighten the middle E⁽ᶜ⁾ F⁽ᵈ⁾.
   have hfactor :
       orderedKostantMonomial H E F a b c * orderedKostantMonomial H E F d e f =
         dividedPower a F * Ring.choose H b *
           (dividedPower c E * dividedPower d F) * Ring.choose H e * dividedPower f E := by
-    simp only [orderedKostantMonomial, mul_assoc]
+    simp only [orderedKostantMonomial_def, mul_assoc]
   rw [hfactor, dividedPower_e_mul_dividedPower_f hef hhe hhf]
   rw [mul_sum, sum_mul, sum_mul]
-  exact sum_mem fun k hk => by
-    have hkmin : k ≤ min c d := Nat.lt_succ_iff.mp (mem_range.mp hk)
-    have hkc : k ≤ c := hkmin.trans (min_le_left c d)
-    have hkd : k ≤ d := hkmin.trans (min_le_right c d)
-    have hhf' : H * F = F * (H + (-2 : A)) := by
-      calc
-        H * F = (H * F - F * H) + F * H := (sub_add_cancel _ _).symm
-        _ = -(2 • F) + F * H := by rw [hhf]
-        _ = F * H + -(2 • F) := add_comm _ _
-        _ = F * (H + (-2 : A)) := by
-          simpa [mul_add] using (Nat.cast_commute 2 F).eq
-    have hhe' : H * E = E * (H + (2 : A)) := by
-      calc
-        H * E = (H * E - E * H) + E * H := (sub_add_cancel _ _).symm
-        _ = 2 • E + E * H := by rw [hhe]
-        _ = E * H + 2 • E := add_comm _ _
-        _ = E * (H + (2 : A)) := by
-          simpa [mul_add] using (Nat.cast_commute 2 E).eq
-    have hmoveF := ringChoose_mul_dividedPower b hhf'
-      (by simpa using (Nat.cast_commute 2 F).neg_left) (d - k)
-    have hmoveE := dividedPower_mul_ringChoose e hhe' (Nat.cast_commute 2 E)
-      (c - k)
-    have hmiddle₁ :
-        Ring.choose (H + (d - k) • (-2 : A)) b ∈ ringChooseSpan H := by
-      have h := ringChoose_add_intCast_mem_ringChooseSpan H (-2 * (d - k : ℤ)) b
-      rw [← Int.ofNat_sub hkd] at h
-      simpa only [Int.cast_mul, Int.cast_neg, Int.cast_ofNat, Int.cast_natCast,
-        nsmul_eq_mul'] using h
-    have hmiddle₂ :
-        Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k ∈
-          ringChooseSpan H :=
-      ringChoose_nat_sub_add_mem H (c + d) (2 * k) k
-    have hmiddle₃ :
-        Ring.choose (H - (c - k) • (2 : A)) e ∈ ringChooseSpan H := by
-      have h := ringChoose_add_intCast_mem_ringChooseSpan H (-2 * (c - k : ℤ)) e
-      rw [← Int.ofNat_sub hkc] at h
-      simpa only [sub_eq_add_neg, Int.cast_mul, Int.cast_neg, Int.cast_ofNat,
-        Int.cast_natCast, nsmul_eq_mul', neg_mul] using h
+  -- Show that each summand in the straightening formula is in the ordered span.
+  have hhf' := cartan_mul_f hhf
+  have hhe' := cartan_mul_e hhe
+  have hmoveF (k : ℕ) := ringChoose_mul_dividedPower b hhf'
+    ((Nat.cast_commute 2 F).neg_left) (d - k)
+  have hmoveE (k : ℕ) := dividedPower_mul_ringChoose e hhe' (Nat.cast_commute 2 E) (c - k)
+  exact sum_mem fun k _ => by
+    -- Step 1: Establish span membership of the central Cartan factor.
+    have hmid₁ : Ring.choose (H + (d - k) • (-2 : A)) b ∈ ringChooseSpan H := by
+      have h := ringChoose_add_nsmul_intCast_mem_ringChooseSpan H (d - k) (-2) b
+      simpa using h
+    have hmid₂ : Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k ∈ ringChooseSpan H :=
+      ringChoose_sub_natCast_add_natCast_mem_ringChooseSpan H (c + d) (2 * k) k
+    have hmid₃ : Ring.choose (H - (c - k) • (2 : A)) e ∈ ringChooseSpan H :=
+      ringChoose_sub_nsmul_natCast_mem_ringChooseSpan H (c - k) 2 e
     have hmiddle :
         Ring.choose (H + (d - k) • (-2 : A)) b *
             Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
               Ring.choose (H - (c - k) • (2 : A)) e ∈ ringChooseSpan H :=
-      mul_mem_ringChooseSpan H (mul_mem_ringChooseSpan H hmiddle₁ hmiddle₂) hmiddle₃
-    have hordered := dividedPower_mul_mem_mul_dividedPower_orderedKostantSpan H E F
+      mul_mem_ringChooseSpan H (mul_mem_ringChooseSpan H hmid₁ hmid₂) hmid₃
+    have hordered := dividedPower_mul_mul_dividedPower_mem_orderedKostantSpan H E F
       (a + (d - k)) ((c - k) + f) hmiddle
-    have hmulF := mul_dividedPower a (d - k) F
-    have hmulE := mul_dividedPower (c - k) f E
+    -- Step 2: Commute divided powers and reorder the product.
     have hreorder :
-        dividedPower a F *
-              (Ring.choose H b *
-                (dividedPower (d - k) F *
-                  Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
-                    dividedPower (c - k) E)) *
-            Ring.choose H e * dividedPower f E =
+        dividedPower a F * Ring.choose H b *
+            (dividedPower (d - k) F *
+              Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
+                dividedPower (c - k) E) * Ring.choose H e * dividedPower f E =
           (dividedPower a F * dividedPower (d - k) F) *
             (Ring.choose (H + (d - k) • (-2 : A)) b *
                 Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
                   Ring.choose (H - (c - k) • (2 : A)) e) *
               (dividedPower (c - k) E * dividedPower f E) := by
       calc
-        dividedPower a F *
-                (Ring.choose H b *
-                  (dividedPower (d - k) F *
-                    Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
-                      dividedPower (c - k) E)) *
-              Ring.choose H e * dividedPower f E =
+        dividedPower a F * Ring.choose H b *
+              (dividedPower (d - k) F *
+                Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
+                  dividedPower (c - k) E) * Ring.choose H e * dividedPower f E =
             dividedPower a F * (Ring.choose H b * dividedPower (d - k) F) *
               Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
                 (dividedPower (c - k) E * Ring.choose H e) * dividedPower f E := by
@@ -197,20 +264,20 @@ private theorem orderedKostantMonomial_mul_mem_span {H E F : A}
               (dividedPower (d - k) F * Ring.choose (H + (d - k) • (-2 : A)) b) *
                 Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
                   (Ring.choose (H - (c - k) • (2 : A)) e * dividedPower (c - k) E) *
-                    dividedPower f E := by rw [hmoveF, hmoveE]
+                    dividedPower f E := by rw [hmoveF k, hmoveE k]
         _ = (dividedPower a F * dividedPower (d - k) F) *
               (Ring.choose (H + (d - k) • (-2 : A)) b *
                   Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
                     Ring.choose (H - (c - k) • (2 : A)) e) *
                 (dividedPower (c - k) E * dividedPower f E) := by
           noncomm_ring
+    -- Step 3: Combine divided powers and extract the integer binomial scalars.
     have hnormal :
-        dividedPower a F *
-              (Ring.choose H b *
-                (dividedPower (d - k) F *
-                  Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
-                    dividedPower (c - k) E)) *
-            Ring.choose H e * dividedPower f E =
+        (dividedPower a F * dividedPower (d - k) F) *
+            (Ring.choose (H + (d - k) • (-2 : A)) b *
+                Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
+                  Ring.choose (H - (c - k) • (2 : A)) e) *
+              (dividedPower (c - k) E * dividedPower f E) =
           Nat.choose (a + (d - k)) a •
             (Nat.choose ((c - k) + f) (c - k) •
               (dividedPower (a + (d - k)) F *
@@ -218,31 +285,10 @@ private theorem orderedKostantMonomial_mul_mem_span {H E F : A}
                     Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
                       Ring.choose (H - (c - k) • (2 : A)) e) *
                   dividedPower ((c - k) + f) E)) := by
-      rw [hreorder, hmulF, hmulE]
-      simp only [nsmul_eq_mul']
-      let tail :=
-        (Ring.choose (H + (d - k) • (-2 : A)) b *
-            Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
-              Ring.choose (H - (c - k) • (2 : A)) e) *
-          dividedPower ((c - k) + f) E *
-            (Nat.choose ((c - k) + f) (c - k) : A)
-      have hcentral :
-          (Nat.choose (a + (d - k)) a : A) * tail =
-            tail * (Nat.choose (a + (d - k)) a : A) :=
-        (Nat.cast_commute _ tail).eq
-      dsimp only [tail] at hcentral
-      simpa only [mul_assoc, nsmul_eq_mul'] using
-        congrArg (fun z : A => dividedPower (a + (d - k)) F * z) hcentral
-    rw [show dividedPower a F * Ring.choose H b *
-          (dividedPower (d - k) F *
-            Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
-              dividedPower (c - k) E) * Ring.choose H e * dividedPower f E =
-        dividedPower a F *
-              (Ring.choose H b *
-                (dividedPower (d - k) F *
-                  Ring.choose (H - ((c + d : ℕ) : A) + ((2 * k : ℕ) : A)) k *
-                    dividedPower (c - k) E)) *
-            Ring.choose H e * dividedPower f E by simp only [mul_assoc], hnormal]
+      rw [mul_dividedPower a (d - k) F, mul_dividedPower (c - k) f E]
+      simp only [smul_mul_assoc, mul_smul_comm]
+      rw [smul_comm]
+    rw [hreorder, hnormal]
     exact AddSubgroup.nsmul_mem _ (AddSubgroup.nsmul_mem _ hordered _) _
 
 /-- The ordered rank-one Kostant span is closed under multiplication when `H`, `E`, and `F`
@@ -255,10 +301,16 @@ theorem mul_mem_orderedKostantSpan {H E F x y : A}
   rw [orderedKostantSpan] at hx hy ⊢
   refine AddSubgroup.mul_mem_closure_of_mul_mem ?_ hx hy
   rintro _ ⟨a, b, c, rfl⟩ _ ⟨d, e, f, rfl⟩
-  exact orderedKostantMonomial_mul_mem_span hef hhe hhf a b c d e f
+  exact orderedKostantMonomial_mul_mem_orderedKostantSpan hef hhe hhf a b c d e f
 
-/-- The three families of generators of the rank-one Kostant form: lowering and raising divided
-powers and generalized binomial coefficients in the Cartan element. -/
+/-- The three families of generators of the rank-one Kostant form in an abstract `ℚ`-algebra:
+lowering and raising divided powers and generalized binomial coefficients in the Cartan element.
+
+This is the rank-one generator set attached to a single `sl₂` triple `(H, E, F)` in an arbitrary
+`ℚ`-algebra, distinct from the indexed family
+`TauCeti.UniversalEnvelopingAlgebra.kostantGenerators`.
+In the universal enveloping algebra `U(L)`, it identifies with
+`TauCeti.UniversalEnvelopingAlgebra.kostantGenerators ![e, f] ![h]`. -/
 noncomputable def kostantGenerators (H E F : A) : Set A :=
   Set.range (fun n => dividedPower n F) ∪
     Set.range (Ring.choose H) ∪ Set.range (fun n => dividedPower n E)
@@ -271,39 +323,119 @@ theorem mem_kostantGenerators_iff {H E F x : A} :
         ∃ n, dividedPower n E = x := by
   simp [kostantGenerators, or_assoc]
 
+/-- The subring generated by the rank-one Kostant generators coincides with the subring generated
+by the ordered Kostant monomials. -/
+theorem subringClosure_kostantGenerators_eq_subringClosure_orderedKostantMonomials
+    (H E F : A) :
+    Subring.closure (kostantGenerators H E F) =
+      Subring.closure (orderedKostantMonomials H E F) := by
+  apply le_antisymm
+  · rw [Subring.closure_le]
+    rintro x (hx | hx)
+    · rcases hx with hx | hx
+      · obtain ⟨n, rfl⟩ := hx
+        have hmem : orderedKostantMonomial H E F n 0 0 ∈ orderedKostantMonomials H E F :=
+          mem_orderedKostantMonomials_iff.2 ⟨n, 0, 0, rfl⟩
+        simpa using Subring.subset_closure hmem
+      · obtain ⟨n, rfl⟩ := hx
+        have hmem : orderedKostantMonomial H E F 0 n 0 ∈ orderedKostantMonomials H E F :=
+          mem_orderedKostantMonomials_iff.2 ⟨0, n, 0, rfl⟩
+        simpa using Subring.subset_closure hmem
+    · obtain ⟨n, rfl⟩ := hx
+      have hmem : orderedKostantMonomial H E F 0 0 n ∈ orderedKostantMonomials H E F :=
+        mem_orderedKostantMonomials_iff.2 ⟨0, 0, n, rfl⟩
+      simpa using Subring.subset_closure hmem
+  · rw [Subring.closure_le]
+    rintro x ⟨a, b, c, rfl⟩
+    rw [orderedKostantMonomial_def]
+    exact Subring.mul_mem _ (Subring.mul_mem _
+      (Subring.subset_closure (Or.inl (Or.inl ⟨a, rfl⟩)))
+      (Subring.subset_closure (Or.inl (Or.inr ⟨b, rfl⟩))))
+      (Subring.subset_closure (Or.inr ⟨c, rfl⟩))
+
 /-- The additive group of the subring generated by the rank-one Kostant generators is exactly the
 span of ordered `F`--`H`--`E` monomials. -/
-theorem toAddSubgroup_closure_kostantGenerators {H E F : A}
+theorem toAddSubgroup_subringClosure_kostantGenerators {H E F : A}
     (hef : E * F - F * E = H) (hhe : H * E - E * H = 2 • E)
     (hhf : H * F - F * H = -(2 • F)) :
     (Subring.closure (kostantGenerators H E F)).toAddSubgroup = orderedKostantSpan H E F := by
+  rw [subringClosure_kostantGenerators_eq_subringClosure_orderedKostantMonomials,
+    orderedKostantSpan_def, Subring.toAddSubgroup_closure_of_one_mem_of_mul_mem]
+  · exact one_mem_orderedKostantSpan H E F
+  · rintro _ ⟨a, b, c, rfl⟩ _ ⟨d, e, f, rfl⟩
+    exact orderedKostantMonomial_mul_mem_orderedKostantSpan hef hhe hhf a b c d e f
+
+/-- Membership in the subring generated by the rank-one Kostant generators is membership in the
+ordered Kostant span. -/
+theorem mem_subringClosure_kostantGenerators_iff {H E F x : A}
+    (hef : E * F - F * E = H) (hhe : H * E - E * H = 2 • E)
+    (hhf : H * F - F * H = -(2 • F)) :
+    x ∈ Subring.closure (kostantGenerators H E F) ↔ x ∈ orderedKostantSpan H E F := by
+  rw [← Subring.mem_toAddSubgroup, toAddSubgroup_subringClosure_kostantGenerators hef hhe hhf]
+
+section UniversalEnveloping
+
+open _root_.UniversalEnvelopingAlgebra
+
+attribute [local instance 100] LieRing.ofAssociativeRing
+
+variable {L : Type*} [LieRing L] [LieAlgebra ℚ L] {h e f : L}
+
+/-- The abstract rank-one Kostant generators coincide with the enveloping-algebra Kostant generators
+attached to the two-element root family `![e, f]` and the one-element Cartan family `![h]`. -/
+theorem kostantGenerators_eq_universalEnveloping :
+    kostantGenerators (ι ℚ h) (ι ℚ e) (ι ℚ f) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantGenerators ![e, f] ![h] := by
+  ext x
+  simp only [mem_kostantGenerators_iff,
+    TauCeti.UniversalEnvelopingAlgebra.mem_kostantGenerators_iff,
+    Fin.exists_fin_two, Matrix.cons_val_zero, Matrix.cons_val_one,
+    Fin.exists_fin_one]
+  tauto
+
+/-- The enveloping-algebra Kostant form `kostantForm ![e, f] ![h]` is the subring closure of the
+rank-one Kostant generators. -/
+theorem kostantForm_eq_subringClosure_kostantGenerators :
+    TauCeti.UniversalEnvelopingAlgebra.kostantForm ![e, f] ![h] =
+      Subring.closure (kostantGenerators (ι ℚ h) (ι ℚ e) (ι ℚ f)) := by
   apply le_antisymm
-  · let S : Subring A :=
-      { orderedKostantSpan H E F with
-        one_mem' := by
-          simpa [orderedKostantMonomial] using
-            orderedKostantMonomial_mem_orderedKostantSpan H E F 0 0 0
-        mul_mem' := mul_mem_orderedKostantSpan hef hhe hhf }
-    have hclosure : Subring.closure (kostantGenerators H E F) ≤ S :=
-      Subring.closure_le.2 <| by
-        rintro x (hx | hx)
-        · rcases hx with hx | hx
-          · obtain ⟨n, rfl⟩ := hx
-            simpa [S, orderedKostantMonomial] using
-              orderedKostantMonomial_mem_orderedKostantSpan H E F n 0 0
-          · obtain ⟨n, rfl⟩ := hx
-            simpa [S, orderedKostantMonomial] using
-              orderedKostantMonomial_mem_orderedKostantSpan H E F 0 n 0
-        · obtain ⟨n, rfl⟩ := hx
-          simpa [S, orderedKostantMonomial] using
-            orderedKostantMonomial_mem_orderedKostantSpan H E F 0 0 n
-    exact hclosure
-  · rw [orderedKostantSpan, AddSubgroup.closure_le]
-    rintro x ⟨a, b, c, rfl⟩
-    exact (Subring.closure (kostantGenerators H E F)).mul_mem
-      ((Subring.closure (kostantGenerators H E F)).mul_mem
-        (Subring.subset_closure (Or.inl (Or.inl ⟨a, rfl⟩)))
-        (Subring.subset_closure (Or.inl (Or.inr ⟨b, rfl⟩))))
-      (Subring.subset_closure (Or.inr ⟨c, rfl⟩))
+  · rw [TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_iff]
+    constructor
+    · intro i n
+      fin_cases i
+      · exact Subring.subset_closure (mem_kostantGenerators_iff.2 (Or.inr (Or.inr ⟨n, rfl⟩)))
+      · exact Subring.subset_closure (mem_kostantGenerators_iff.2 (Or.inl ⟨n, rfl⟩))
+    · intro i n
+      fin_cases i
+      exact Subring.subset_closure (mem_kostantGenerators_iff.2 (Or.inr (Or.inl ⟨n, rfl⟩)))
+  · rw [Subring.closure_le]
+    rintro x ((⟨n, rfl⟩ | ⟨n, rfl⟩) | ⟨n, rfl⟩)
+    · exact TauCeti.UniversalEnvelopingAlgebra.dividedPower_mem_kostantForm ![e, f] ![h] 1 n
+    · exact TauCeti.UniversalEnvelopingAlgebra.ringChoose_mem_kostantForm ![e, f] ![h] 0 n
+    · exact TauCeti.UniversalEnvelopingAlgebra.dividedPower_mem_kostantForm ![e, f] ![h] 0 n
+
+/-- The additive group of the Kostant integral form `kostantForm ![e, f] ![h]` in the universal
+enveloping algebra is spanned by ordered `F`--`H`--`E` monomials. -/
+theorem toAddSubgroup_kostantForm (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+    (hhf : ⁅h, f⁆ = -(2 • f)) :
+    (TauCeti.UniversalEnvelopingAlgebra.kostantForm ![e, f] ![h]).toAddSubgroup =
+      orderedKostantSpan (ι ℚ h) (ι ℚ e) (ι ℚ f) := by
+  rw [kostantForm_eq_subringClosure_kostantGenerators,
+    toAddSubgroup_subringClosure_kostantGenerators]
+  · simpa only [LieRing.of_associative_ring_bracket, hef] using ((ι ℚ).map_lie e f).symm
+  · simpa only [LieRing.of_associative_ring_bracket, hhe, map_nsmul] using
+      ((ι ℚ).map_lie h e).symm
+  · simpa only [LieRing.of_associative_ring_bracket, hhf, map_neg, map_nsmul] using
+      ((ι ℚ).map_lie h f).symm
+
+/-- Membership in the Kostant integral form `kostantForm ![e, f] ![h]` is membership in the
+ordered Kostant span. -/
+theorem mem_kostantForm_iff (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+    (hhf : ⁅h, f⁆ = -(2 • f)) {x : _root_.UniversalEnvelopingAlgebra ℚ L} :
+    x ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm ![e, f] ![h] ↔
+      x ∈ orderedKostantSpan (ι ℚ h) (ι ℚ e) (ι ℚ f) := by
+  rw [← Subring.mem_toAddSubgroup, toAddSubgroup_kostantForm hef hhe hhf]
+
+end UniversalEnveloping
 
 end TauCeti.Sl2
