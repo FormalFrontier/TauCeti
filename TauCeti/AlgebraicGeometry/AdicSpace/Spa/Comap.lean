@@ -5,10 +5,8 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import Mathlib.RingTheory.Valuation.Integral
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset
 public import TauCeti.RingTheory.Huber.Pair
-public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
 /-!
 # Pullbacks and quotient embeddings of the adic spectrum `Spa(A, A⁺)`
@@ -146,49 +144,6 @@ theorem spaComap_preimage_rationalSubset (φ : A →+* B) (hφ : Continuous φ) 
 
 section Quotient
 
-/-- Replacing a subring by its integral closure does not change the sub-unit valuation locus. -/
-theorem spa_integralClosure (R : Subring A) :
-    spa (integralClosure R A).toSubring = spa R := by
-  ext v
-  rw [mem_spa_iff, mem_spa_iff]
-  refine and_congr_right fun _ ↦ ⟨fun h r hr ↦ ?_, fun h x hx ↦ ?_⟩
-  · exact h r (algebraMap_mem (integralClosure R A) ⟨r, hr⟩)
-  · let φ : R →+* v.valuation.integer :=
-      R.subtype.codRestrict v.valuation.integer fun r ↦ by
-        rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff]
-        exact h r r.2
-    have hint : IsIntegral v.valuation.integer x :=
-      (show IsIntegral R x from hx).map_of_comp_eq φ (RingHom.id A) (by ext r; rfl)
-    have hxint := (Valuation.integer.integers v.valuation).mem_of_integral hint
-    rwa [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
-
-/-- Continuity of the lifted valuation on the quotient ring `A ⧸ J`. -/
-theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
-    (hv : v.IsContinuous) : (quotientLift J hJ).IsContinuous := by
-  have hv_cont : Valuation.IsContinuous v.valuation := (isContinuous_def v).mp hv
-  have hv_open : ∀ a : A, IsOpen {y : A | v.valuation y < v.valuation a} :=
-    Valuation.isContinuous_def.mp hv_cont
-  rw [isContinuous_def, Valuation.isContinuous_def]
-  intro b
-  obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective b
-  have h_eq : Ideal.Quotient.mk J ⁻¹'
-        {x : A ⧸ J | (quotientLift J hJ).valuation x <
-          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
-      {y : A | v.valuation y < v.valuation a} := by
-    ext y
-    simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
-    have h1 : (quotientLift J hJ).toValuativeRel.vlt
-          (Ideal.Quotient.mk J y) (Ideal.Quotient.mk J a) ↔
-        (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).toValuativeRel.vlt y a := by
-      rw [comap_vlt]
-    rw [h1, comap_quotientLift J hJ, ← valuation_lt_iff]
-  have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
-        {x : A ⧸ J | (quotientLift J hJ).valuation x <
-          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
-    rw [h_eq]
-    exact hv_open a
-  exact isOpen_coinduced.mp h_open
-
 /-- The map on sub-unit valuation loci for the quotient homomorphism and the image plus ring is a
 topological embedding. The canonical quotient-pair version is
 `TauCeti.Huber.Pair.Hom.isClosedEmbedding_spaComap_quotient`. -/
@@ -256,78 +211,68 @@ variable {A B C : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
 def spaComap (f : Hom S T) : spa T.plus → spa S.plus :=
   TauCeti.ValuationSpectrum.spaComap f.toRingHom f.continuous_toRingHom f.map_mem_plus
 
+/-- The underlying valuation of `f.spaComap v` is the pullback of `v` along the underlying ring
+homomorphism of `f`. -/
+@[simp]
+theorem spaComap_val (f : Hom S T) (v : spa T.plus) :
+    (f.spaComap v).1 = ValuationSpectrum.comap f.toRingHom v.1 := (rfl)
+
 /-- `f.spaComap` is continuous. -/
 theorem continuous_spaComap (f : Hom S T) : Continuous f.spaComap :=
   TauCeti.ValuationSpectrum.continuous_spaComap f.toRingHom f.continuous_toRingHom f.map_mem_plus
 
 /-- `spaComap` for the identity morphism is the identity map on `Spa(S)`. -/
 theorem spaComap_id (S : Pair A) : (Hom.id S).spaComap = _root_.id := by
-  funext ⟨v, hv⟩
+  funext v
   apply Subtype.ext
-  dsimp [spaComap, TauCeti.ValuationSpectrum.spaComap]
-  rw [Hom.toRingHom_id, comap_id]
-  rfl
+  rw [spaComap_val, Hom.toRingHom_id]
+  exact congr_arg Subtype.val
+    (congr_fun (TauCeti.ValuationSpectrum.spaComap_id (Aplus := S.plus)) v)
 
 /-- `spaComap` is contravariantly functorial for composition of morphisms of Huber pairs:
 `(g ∘ f).spaComap = f.spaComap ∘ g.spaComap`. -/
 theorem spaComap_comp (g : Hom T U) (f : Hom S T) :
     (g.comp f).spaComap = f.spaComap ∘ g.spaComap := by
-  funext ⟨v, hv⟩
+  funext v
   apply Subtype.ext
-  dsimp [spaComap, TauCeti.ValuationSpectrum.spaComap]
-  rw [Hom.toRingHom_comp, comap_comp]
-  rfl
+  simp only [spaComap_val, Hom.toRingHom_comp, Function.comp_apply]
+  exact congr_arg Subtype.val (congr_fun
+    (TauCeti.ValuationSpectrum.spaComap_comp
+      (φ := f.toRingHom) f.continuous_toRingHom
+      (ψ := g.toRingHom) g.continuous_toRingHom S.plus f.map_mem_plus g.map_mem_plus) v)
 
 section Quotient
+
+/-- The quotient pair's `Spa` is canonically homeomorphic to the `Spa` for the image plus ring. -/
+private noncomputable def quotientSpaHomeomorph (S : Pair A) (J : Ideal A) :
+    spa (S.quotient J).plus ≃ₜ spa (S.plus.map (Ideal.Quotient.mk J)) :=
+  Homeomorph.setCongr (by rw [quotient_plus, ValuationSpectrum.spa_integralClosure])
+
+private theorem spaComap_quotient_eq (S : Pair A) (J : Ideal A) :
+    (quotientHom S J).spaComap =
+      ValuationSpectrum.spaComap (Ideal.Quotient.mk J) continuous_quotient_mk'
+        (fun (a : A) (ha : a ∈ S.plus) ↦
+          (Subring.mem_map (f := Ideal.Quotient.mk J)).mpr ⟨a, ha, rfl⟩) ∘
+        quotientSpaHomeomorph S J := by
+  funext v
+  apply Subtype.ext
+  rw [spaComap_val, quotientHom_toRingHom, Function.comp_apply]
+  have hev : ((quotientSpaHomeomorph S J) v).1 = v.1 := (rfl)
+  exact congr_arg (ValuationSpectrum.comap (Ideal.Quotient.mk J)) hev.symm
 
 /-- The map on adic spectra induced by the canonical quotient-pair morphism is an embedding. -/
 theorem isEmbedding_spaComap_quotient (S : Pair A) (J : Ideal A) :
     Topology.IsEmbedding (quotientHom S J).spaComap := by
-  have hcomp : Subtype.val ∘ (quotientHom S J).spaComap =
-      ValuationSpectrum.comap (Ideal.Quotient.mk J) ∘ Subtype.val := by
-    funext ⟨v, hv⟩
-    change ValuationSpectrum.comap (quotientHom S J).toRingHom v =
-      ValuationSpectrum.comap (Ideal.Quotient.mk J) v
-    rw [quotientHom_toRingHom]
-  refine Topology.IsEmbedding.of_comp_iff Topology.IsEmbedding.subtypeVal |>.mp ?_
-  rw [hcomp]
-  exact (ValuationSpectrum.isEmbedding_comap_quotientMk J).comp
-    Topology.IsEmbedding.subtypeVal
+  rw [spaComap_quotient_eq]
+  exact (ValuationSpectrum.isEmbedding_spaComap_quotient J S.plus).comp
+    (quotientSpaHomeomorph S J).isEmbedding
 
 /-- The range of the quotient-pair map on adic spectra is the support locus containing `J`. -/
 theorem range_spaComap_quotient (S : Pair A) (J : Ideal A) :
     Set.range (quotientHom S J).spaComap =
       Subtype.val ⁻¹' {v : Spv A | J ≤ v.supp} := by
-  ext ⟨v, hv⟩
-  simp only [Set.mem_range, Set.mem_preimage, Set.mem_ofPred_eq]
-  constructor
-  · rintro ⟨⟨w, hw⟩, heq⟩
-    have hval := Subtype.ext_iff.mp heq
-    simp only [spaComap, TauCeti.ValuationSpectrum.spaComap, quotientHom_toRingHom] at hval
-    rw [← hval]
-    exact ValuationSpectrum.self_le_supp_comap J w
-  · intro hJ
-    have hlift_spa_image : ValuationSpectrum.quotientLift J hJ ∈
-        spa (S.plus.map (Ideal.Quotient.mk J)) := by
-      rw [ValuationSpectrum.mem_spa_iff]
-      refine ⟨ValuationSpectrum.isContinuous_quotientLift J hJ
-        (ValuationSpectrum.mem_spa_iff S.plus v |>.mp hv).1, ?_⟩
-      rintro _ ⟨a, ha, rfl⟩
-      have h1 : (ValuationSpectrum.quotientLift J hJ).toValuativeRel.vle
-          (Ideal.Quotient.mk J a) 1 ↔
-          (ValuationSpectrum.comap (Ideal.Quotient.mk J)
-            (ValuationSpectrum.quotientLift J hJ)).toValuativeRel.vle a 1 := by
-        rw [ValuationSpectrum.comap_vle, map_one]
-      rw [h1, ValuationSpectrum.comap_quotientLift J hJ]
-      exact (ValuationSpectrum.mem_spa_iff S.plus v |>.mp hv).2 a ha
-    have hlift_spa : ValuationSpectrum.quotientLift J hJ ∈ spa (S.quotient J).plus := by
-      rw [quotient_plus]
-      rw [ValuationSpectrum.spa_integralClosure]
-      exact hlift_spa_image
-    refine ⟨⟨ValuationSpectrum.quotientLift J hJ, hlift_spa⟩, ?_⟩
-    apply Subtype.ext
-    simpa only [spaComap, TauCeti.ValuationSpectrum.spaComap, quotientHom_toRingHom] using
-      ValuationSpectrum.comap_quotientLift J hJ
+  rw [spaComap_quotient_eq, (quotientSpaHomeomorph S J).surjective.range_comp]
+  exact ValuationSpectrum.range_spaComap_quotient J S.plus
 
 private theorem isClosed_support_locus (S : Pair A) (J : Ideal A) :
     IsClosed (Subtype.val ⁻¹' {v : Spv A | J ≤ v.supp} : Set (spa S.plus)) := by

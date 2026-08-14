@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
 public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
@@ -50,6 +51,8 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
   homomorphism pulls continuous points back to continuous points. Combined with `mem_cont_iff`
   this is exactly the statement that `comap φ` restricts to a map `Cont B → Cont A`; no separate
   set-level lemma is kept for it, since that would be this one after unfolding.
+* `TauCeti.ValuationSpectrum.isContinuous_quotientLift` : continuity descends to the canonical
+  lift through a quotient.
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
 
 ## References
@@ -127,5 +130,32 @@ theorem IsContinuous.comap {B : Type*} [CommRing B] [TopologicalSpace B] {φ : A
     (hφ : Continuous φ) {v : Spv B} (hv : v.IsContinuous) : (comap φ v).IsContinuous := by
   rw [← ofValuation_valuation v, comap_ofValuation, isContinuous_ofValuation_iff]
   exact (isContinuous_def v |>.mp hv).comap hφ
+
+/-- Continuity of the lifted valuation on the quotient ring `A ⧸ J`. -/
+theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
+    (hv : v.IsContinuous) : (quotientLift J hJ).IsContinuous := by
+  have hv_cont : Valuation.IsContinuous v.valuation := (isContinuous_def v).mp hv
+  have hv_open : ∀ a : A, IsOpen {y : A | v.valuation y < v.valuation a} :=
+    Valuation.isContinuous_def.mp hv_cont
+  rw [isContinuous_def, Valuation.isContinuous_def]
+  intro b
+  obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective b
+  have h_eq : Ideal.Quotient.mk J ⁻¹'
+        {x : A ⧸ J | (quotientLift J hJ).valuation x <
+          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
+      {y : A | v.valuation y < v.valuation a} := by
+    ext y
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
+    have h1 : (quotientLift J hJ).toValuativeRel.vlt
+          (Ideal.Quotient.mk J y) (Ideal.Quotient.mk J a) ↔
+        (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).toValuativeRel.vlt y a := by
+      rw [comap_vlt]
+    rw [h1, comap_quotientLift J hJ, ← valuation_lt_iff]
+  have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
+        {x : A ⧸ J | (quotientLift J hJ).valuation x <
+          (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
+    rw [h_eq]
+    exact hv_open a
+  exact isOpen_coinduced.mp h_open
 
 end TauCeti.ValuationSpectrum
