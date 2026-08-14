@@ -23,10 +23,11 @@ Both in the `ContractableLaw` namespace:
 
 * `setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp` — the induction, in
   conditional-expectation form, against an invariants-measurable weight;
-* `setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantCondProbMeasure` — the same with
-  each conditional expectation replaced by the invariant conditional law it computes;
-* `setIntegral_prefixIndicatorProd_eq_prod_invariantCondProbMeasure` — its `w = 1` specialisation,
-  which is the form a cylinder-mass computation consumes.
+* `setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure`
+  — the same with each conditional expectation replaced by the invariant conditional law it
+  computes;
+* `setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure`
+  — its `w = 1` specialisation, which is the form a cylinder-mass computation consumes.
 
 ## Why the conditional expectation, not the witness
 
@@ -156,7 +157,7 @@ theorem setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp
 The conditional expectations of the theorem above are replaced by the invariant conditional law
 they compute. The weight is unchanged: the conversion is a pointwise a.e. identity between the
 factors, so it does not care what multiplies them. -/
-theorem setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantCondProbMeasure
+theorem setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
@@ -179,7 +180,7 @@ theorem setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantCondProbMeas
 
 /-- **The unweighted form**, which is what a cylinder-mass computation consumes: the `w = 1`
 specialisation of the theorem above. -/
-theorem setIntegral_prefixIndicatorProd_eq_prod_invariantCondProbMeasure
+theorem setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
@@ -188,8 +189,9 @@ theorem setIntegral_prefixIndicatorProd_eq_prod_invariantCondProbMeasure
       = ∫ x in A, ∏ i : Fin r,
           ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real (B i) ∂ρ := by
   simpa only [one_mul] using
-    hρ.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantCondProbMeasure hA r B hB
-      (fun _ => (1 : ℝ)) measurable_const (Filter.Eventually.of_forall fun _ => by norm_num)
+    hρ.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure
+      hA r B hB (fun _ => (1 : ℝ)) measurable_const
+      (Filter.Eventually.of_forall fun _ => by norm_num)
 
 end ContractableLaw
 

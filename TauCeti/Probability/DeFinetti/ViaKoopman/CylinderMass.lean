@@ -127,7 +127,7 @@ theorem measure_preimage_invariantConditional_inter_blockCylinder_eq_setLIntegra
   -- The block factorization, already specialised to weight one and named as the witness.
   have hmass : (ρ (A ∩ C)).toReal = ∫ x in A, Q x ∂ρ :=
     hstep3.trans
-      (hρ.setIntegral_prefixIndicatorProd_eq_prod_invariantCondProbMeasure
+      (hρ.setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure
         hA_inv r B hB)
   -- Cross to `ℝ≥0∞`, once.
   have hne : ∀ᵐ x ∂ρ.restrict A,
