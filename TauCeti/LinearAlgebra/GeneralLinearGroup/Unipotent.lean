@@ -82,7 +82,7 @@ theorem isUnipotent_def (g : GeneralLinearGroup K V) :
 /-- An element of the general linear group is unipotent in its natural representation exactly
 when subtracting the identity from its underlying matrix gives a nilpotent matrix. -/
 theorem isUnipotent_toLin_iff
-    (m : Type*) [Fintype m] [LinearOrder m] (R : Type u) [CommRing R] (g : GL m R) :
+    (m : Type*) [Fintype m] [DecidableEq m] (R : Type u) [CommRing R] (g : GL m R) :
     IsUnipotent (Matrix.GeneralLinearGroup.toLin g) ↔
       _root_.IsNilpotent ((g : Matrix m m R) - 1) := by
   rw [isUnipotent_def, ← Matrix.isNilpotent_toLin'_iff, map_sub, Matrix.toLin'_one]

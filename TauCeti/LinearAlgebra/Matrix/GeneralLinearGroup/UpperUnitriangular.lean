@@ -6,7 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 public import TauCeti.LinearAlgebra.Matrix.Triangular
-public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 
 /-!
 # Upper-unitriangular matrix groups
@@ -110,13 +109,8 @@ theorem toGL_mem_upperUnitriangularGroup {M : Matrix m m R}
 upper-unitriangular groups. -/
 def map {S : Type*} [CommRing S] (f : R →+* S) :
     upperUnitriangularGroup m R →* upperUnitriangularGroup m S where
-  toFun g := ⟨Matrix.GeneralLinearGroup.map (n := m) f g, by
-    rw [mem_iff, Matrix.isUpperUnitriangular_def]
-    constructor
-    · intro i j hji
-      rw [Matrix.GeneralLinearGroup.map_apply, isUpperTriangular g hji, map_zero]
-    · intro i
-      rw [Matrix.GeneralLinearGroup.map_apply, apply_diag g i, map_one]⟩
+  toFun g := ⟨Matrix.GeneralLinearGroup.map (n := m) f g,
+    (isUpperUnitriangular g).map f⟩
   map_one' := Subtype.ext (map_one _)
   map_mul' g h := Subtype.ext ((Matrix.GeneralLinearGroup.map (n := m) f).map_mul g h)
 
