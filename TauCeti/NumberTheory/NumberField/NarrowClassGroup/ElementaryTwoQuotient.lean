@@ -33,7 +33,9 @@ genus-field milestone of `TauCetiRoadmap/Multiquadratic/README.md`.
   `Cl⁺(K) / Cl⁺(K)²`.
 * `TauCeti.NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotient`: the surjective linear
   map to `Cl(K) / Cl(K)²` induced by forgetting positivity.
-* `TauCeti.NumberField.NarrowClassGroup.twoRank`: the `ZMod 2`-dimension of the quotient.
+* `TauCeti.NumberField.NarrowClassGroup.twoRank` and
+  `TauCeti.NumberField.NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the
+  `ZMod 2`-dimension of the quotient, with cardinality `2 ^ twoRank K`.
 * `TauCeti.NumberField.NarrowClassGroup.classGroup_twoRank_le_twoRank`: the ordinary class-group
   2-rank is at most the narrow class-group 2-rank.
 * `TauCeti.NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotientEquiv`: for a totally
@@ -84,11 +86,21 @@ theorem toClassGroupElementaryTwoQuotient_surjective :
 noncomputable def twoRank : ℕ :=
   TauCeti.twoRank (NarrowClassGroup K)
 
+/-- The narrow class-group 2-rank is the dimension of its maximal elementary-2 quotient. -/
+@[simp] theorem twoRank_def :
+    twoRank K = Module.finrank (ZMod 2) (ElementaryTwoQuotient K) :=
+  TauCeti.twoRank_def (NarrowClassGroup K)
+
+/-- The maximal elementary-2 quotient of the narrow class group has `2 ^ twoRank K` elements. -/
+theorem card_elementaryTwoQuotient_eq_two_pow_twoRank :
+    Nat.card (ElementaryTwoQuotient K) = 2 ^ twoRank K :=
+  TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank (NarrowClassGroup K)
+
 /-- The ordinary class-group 2-rank is at most the narrow class-group 2-rank. The inequality can
 be strict for real fields because forgetting positivity is only a surjection. -/
 theorem classGroup_twoRank_le_twoRank :
     TauCeti.ClassGroup.twoRank (𝓞 K) ≤ twoRank K := by
-  rw [twoRank, TauCeti.twoRank_def, TauCeti.ClassGroup.twoRank_def]
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
   exact LinearMap.finrank_le_finrank_of_surjective
     (toClassGroupElementaryTwoQuotient_surjective K)
 
@@ -111,7 +123,8 @@ by forgetting positivity. -/
 /-- **For a totally complex field, the narrow and ordinary class-group 2-ranks agree.** -/
 theorem twoRank_eq_classGroup_twoRank [IsTotallyComplex K] :
     twoRank K = TauCeti.ClassGroup.twoRank (𝓞 K) := by
-  rw [twoRank, TauCeti.twoRank_def, TauCeti.ClassGroup.twoRank_def]
-  exact (toClassGroupElementaryTwoQuotientEquiv K).finrank_eq
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
+  exact TauCeti.finrank_elementaryTwoQuotient_eq_of_mulEquiv
+    (G := NarrowClassGroup K) (toClassGroupEquiv (K := K))
 
 end TauCeti.NumberField.NarrowClassGroup
