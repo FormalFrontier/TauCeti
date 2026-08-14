@@ -734,7 +734,7 @@ theorem weightedRestrictedSubring_one_weight [NonarchimedeanRing A] :
       = restrictedMvPowerSeriesSubring k A := by
   ext f
   rw [mem_weightedRestrictedSubring, mem_restrictedMvPowerSeriesSubring,
-    isWeightedRestricted_one_weight_iff, isRestricted_iff]
+    isWeightedRestricted_one_weight_iff, isRestricted_iff_coeff]
 
 /-- The neighbourhood subgroups are monotone in `U`. -/
 theorem weightedNhd_mono [NonarchimedeanRing A] {T : Fin k → Set A} {hT : IsWeightFamily T}

@@ -378,6 +378,30 @@ private theorem not_mem_characteristicSubgroup_of_pow_mem {v : Valuation A Γ₀
   rw [hclass]
   exact pow_mem hmem n
 
+/-- **A generator of greatest value, not in the support.** If `I` and `Ideal.span T` have the same
+radical and `v` does not vanish identically on `I`, then some `t₀ ∈ T` maximises `v.restrict` over
+`T` and has `v t₀ ≠ 0`.
+
+Nonvanishing is what needs the radical hypothesis: were every generator in the support, so would
+be everything of `I`, contradicting the witness. Maximality is then `Finset.exists_max_image`, and
+the maximiser inherits nonvanishing because it dominates every generator. -/
+private theorem exists_mem_max_restrict_ne_zero {v : Valuation A Γ₀} {I J : Ideal A} {T : Finset A}
+    (hT : Ideal.span (T : Set A) = J) (hrad : I.radical = J.radical) {a₀ : A} (ha₀I : a₀ ∈ I)
+    (ha₀0 : (MonoidWithZeroHom.ofClass v) a₀ ≠ 0) :
+    ∃ t₀ ∈ T, (MonoidWithZeroHom.ofClass v) t₀ ≠ 0 ∧ ∀ t ∈ T, v.restrict t ≤ v.restrict t₀ := by
+  have hsupp : ¬ ∀ t ∈ T, t ∈ v.supp := fun hall ↦
+    ha₀0 ((v.mem_supp_iff _).mp (mem_supp_of_radical_eq_of_forall_mem_supp hT hrad hall ha₀I))
+  have hTne : T.Nonempty := by
+    rcases T.eq_empty_or_nonempty with rfl | hne'
+    · exact absurd (by simp) hsupp
+    · exact hne'
+  obtain ⟨t₀, ht₀T, ht₀max⟩ := T.exists_max_image (fun t ↦ v.restrict t) hTne
+  refine ⟨t₀, ht₀T, fun hz ↦ hsupp fun t ht ↦ ?_, ht₀max⟩
+  rw [v.mem_supp_iff]
+  have hle : v.restrict t ≤ v.restrict t₀ := ht₀max t ht
+  rw [v.restrict_eq_zero_iff.mpr hz] at hle
+  exact v.restrict_eq_zero_iff.mp (le_antisymm hle zero_le)
+
 /-- **Wedhorn Lemma 7.2, existence form of the greatest-cofinal conclusion.** Under the standing
 hypothesis of §7.1 — that `I` has the same radical as some finitely generated ideal — with `v(I)`
 missing `cΓ_v` and not identically zero, a greatest convex subgroup for which `I` is cofinal
@@ -393,20 +417,7 @@ private theorem exists_isGreatestIdealCofinal {v : Valuation A Γ₀} {I : Ideal
       ∃ γ ∈ valueSet v I, γ ∈ H := by
   obtain ⟨J, ⟨T, hT⟩, hrad⟩ := hfg
   obtain ⟨a₀, ha₀I, ha₀0⟩ := hne
-  -- a generator off the support exists, else `v` would vanish on all of `I`
-  have hsupp : ¬ ∀ t ∈ T, t ∈ v.supp := fun hall ↦
-    ha₀0 ((v.mem_supp_iff _).mp (mem_supp_of_radical_eq_of_forall_mem_supp hT hrad hall ha₀I))
-  have hTne : T.Nonempty := by
-    rcases T.eq_empty_or_nonempty with rfl | hne'
-    · exact absurd (by simp) hsupp
-    · exact hne'
-  obtain ⟨t₀, ht₀T, ht₀max⟩ := T.exists_max_image (fun t ↦ v.restrict t) hTne
-  -- the maximising value cannot vanish: it dominates every generator
-  have ht₀0 : (MonoidWithZeroHom.ofClass v) t₀ ≠ 0 := fun hz ↦ hsupp fun t ht ↦ by
-    rw [v.mem_supp_iff]
-    have hle : v.restrict t ≤ v.restrict t₀ := ht₀max t ht
-    rw [v.restrict_eq_zero_iff.mpr hz] at hle
-    exact v.restrict_eq_zero_iff.mp (le_antisymm hle zero_le)
+  obtain ⟨t₀, ht₀T, ht₀0, ht₀max⟩ := exists_mem_max_restrict_ne_zero hT hrad ha₀I ha₀0
   -- the witness and the power of it that lands in `I`
   set h : valueGroup (.ofClass v) := valueGroup.mk (.ofClass v) 1 t₀ (by simp) ht₀0 with hdef
   have hrestr : v.restrict t₀ = (h : ValueGroup₀ (.ofClass v)) := v.restrict_eq_mk ht₀0
