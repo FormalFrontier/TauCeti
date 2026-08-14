@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
+public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 public import Mathlib.Tactic.LinearCombination
 
 /-!
@@ -22,6 +23,10 @@ field, or over any domain, `IsRegular.of_ne_zero` supplies the hypothesis from `
 
 * `TauCeti.BilinForm.eq_zero_of_isSymm_of_isAlt`: a symmetric alternating form over a ring in which
   `2` is regular is zero.
+* `TauCeti.BilinForm.IsSymm.toQuadraticMap_add`: polarization identity for the quadratic form
+  associated to a symmetric bilinear form.
+* `TauCeti.BilinForm.IsSymm.toQuadraticMap_sub`: subtraction polarization identity for the quadratic
+  form associated to a symmetric bilinear form.
 -/
 
 public section
@@ -29,6 +34,7 @@ public section
 namespace TauCeti
 
 open LinearMap (BilinForm)
+open QuadraticMap (polar)
 
 namespace BilinForm
 
@@ -42,6 +48,23 @@ theorem eq_zero_of_isSymm_of_isAlt {R M : Type*} [CommRing R] [AddCommGroup M]
     rw [mul_zero]
     linear_combination hsymm.eq x y - halt.neg_eq x y
   simpa using h2 hzero
+
+/-- Polarization identity for the quadratic form associated to a symmetric bilinear form. -/
+theorem _root_.LinearMap.BilinForm.IsSymm.toQuadraticMap_add {R M : Type*} [CommRing R]
+    [AddCommGroup M] [Module R M] {B : BilinForm R M} (hB : B.IsSymm) (x y : M) :
+    B.toQuadraticMap (x + y) = B.toQuadraticMap x + B.toQuadraticMap y + 2 * B x y := by
+  have hpolar : polar B.toQuadraticMap x y = 2 * B x y := by
+    rw [LinearMap.BilinMap.polar_toQuadraticMap, hB.eq y x, two_mul]
+  rw [← hpolar, polar]
+  abel
+
+/-- Subtraction polarization identity for the quadratic form associated to a symmetric
+bilinear form. -/
+theorem _root_.LinearMap.BilinForm.IsSymm.toQuadraticMap_sub {R M : Type*} [CommRing R]
+    [AddCommGroup M] [Module R M] {B : BilinForm R M} (hB : B.IsSymm) (x y : M) :
+    B.toQuadraticMap (x - y) = B.toQuadraticMap x + B.toQuadraticMap y - 2 * B x y := by
+  rw [sub_eq_add_neg, hB.toQuadraticMap_add, B.toQuadraticMap.map_neg, map_neg, mul_neg,
+    sub_eq_add_neg]
 
 end BilinForm
 

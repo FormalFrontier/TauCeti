@@ -5,8 +5,10 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.Algebra.Group.Int.Even
+public import Mathlib.Algebra.Ring.Parity
 public import Mathlib.LinearAlgebra.Basis.Submodule
+public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.LinearAlgebra.BilinearForm.Basic
 public import TauCeti.LinearAlgebra.IntegralLattice.Basic
 
 /-!
@@ -23,19 +25,26 @@ condition, because they occur twice in the norm of an integral linear combinatio
 
 ## Main definitions and results
 
-* `TauCeti.IntegralLattice.norm`: the rational self-pairing of an ambient vector.
-* `TauCeti.IntegralLattice.integralNorm`: its canonical integer value on a lattice vector.
+* `TauCeti.IntegralLattice.norm`: the rational quadratic form on ambient vectors.
+* `TauCeti.IntegralLattice.integralNorm`: the induced integer quadratic form on lattice vectors.
 * `TauCeti.IntegralLattice.IsEven`: every lattice-vector norm is even.
-* `TauCeti.IntegralLattice.isEven_iff_forall_basis`: evenness can be checked on any integral
-  basis.
+* `TauCeti.IntegralLattice.isEven_iff`: characteristic iff restating `IsEven`.
+* `TauCeti.IntegralLattice.even_integralNorm_iff`: rational characterization of pointwise evenness.
+* `TauCeti.IntegralLattice.isEven_iff_forall_norm`: rational characterization of lattice evenness.
+* `TauCeti.IntegralLattice.isEven_of_span`: evenness can be checked on any generating set.
+* `TauCeti.IntegralLattice.isEven_iff_basis`: evenness can be checked on any integral basis.
+* `TauCeti.IntegralLattice.isEven_ofBasis_iff`: an `ofBasis` lattice is even iff basis norms are
+  even.
 * `TauCeti.IntegralLattice.isEven_ofGramMatrix_iff`: a Gram lattice is even exactly when its
   diagonal entries are even.
-* `TauCeti.IntegralLattice.roots`: the lattice vectors of a specified rational norm.
+* `TauCeti.IntegralLattice.vectorsOfNorm`: the lattice vectors of a specified rational norm.
 
 ## References
 
 * V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.1.
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
+* `TauCetiRoadmap/IntegralLattices/README.md`
+* `TauCetiRoadmap/IntegralLattices/Suggested.lean`
 -/
 
 public section
@@ -52,18 +61,21 @@ namespace IntegralLattice
 
 /-! ## Norms -/
 
-/-- The rational norm of an ambient vector with respect to an integral lattice. -/
-def norm (L : IntegralLattice V) (x : V) : ℚ := L.form x x
+/-- The rational quadratic form on ambient vectors given by self-pairing. -/
+def norm (L : IntegralLattice V) : QuadraticForm ℚ V := L.form.toQuadraticMap
 
 /-- Evaluating the rational norm of an ambient vector yields its self-pairing. -/
-theorem norm_apply (L : IntegralLattice V) (x : V) : L.norm x = L.form x x := (rfl)
+theorem norm_apply (L : IntegralLattice V) (x : V) : L.norm x = L.form x x :=
+  LinearMap.BilinMap.toQuadraticMap_apply L.form x
 
-/-- The canonical integer lift of the norm of a lattice vector. -/
-noncomputable def integralNorm (L : IntegralLattice V) (x : L) : ℤ := L.integralForm x x
+/-- The canonical integer quadratic form induced on the lattice carrier. -/
+noncomputable def integralNorm (L : IntegralLattice V) : QuadraticForm ℤ L :=
+  L.integralForm.toQuadraticMap
 
 /-- Evaluating the integral norm of a lattice vector yields its integral self-pairing. -/
 theorem integralNorm_apply (L : IntegralLattice V) (x : L) :
-    L.integralNorm x = L.integralForm x x := (rfl)
+    L.integralNorm x = L.integralForm x x :=
+  LinearMap.BilinMap.toQuadraticMap_apply L.integralForm x
 
 /-- The integral norm recovers the rational norm after coercion to `ℚ`. -/
 @[simp]
@@ -72,163 +84,197 @@ theorem integralNorm_cast (L : IntegralLattice V) (x : L) :
   simpa only [integralNorm_apply, norm_apply] using L.integralForm_cast x x
 
 @[simp]
-theorem norm_zero (L : IntegralLattice V) : L.norm 0 = 0 := by
-  simp [norm_apply]
+theorem norm_zero (L : IntegralLattice V) : L.norm 0 = 0 :=
+  L.norm.map_zero
 
 @[simp]
-theorem norm_neg (L : IntegralLattice V) (x : V) : L.norm (-x) = L.norm x := by
-  simp [norm_apply]
+theorem norm_neg (L : IntegralLattice V) (x : V) : L.norm (-x) = L.norm x :=
+  L.norm.map_neg x
 
 @[simp]
 theorem norm_smul (L : IntegralLattice V) (a : ℚ) (x : V) :
     L.norm (a • x) = a ^ 2 * L.norm x := by
-  simp only [norm_apply, map_smul, LinearMap.smul_apply, smul_eq_mul, pow_two]
-  ring
+  rw [QuadraticMap.map_smul, smul_eq_mul, pow_two]
 
 /-- Polarization of the norm using symmetry of the lattice form. -/
 theorem norm_add (L : IntegralLattice V) (x y : V) :
-    L.norm (x + y) = L.norm x + L.norm y + 2 * L.form x y := by
-  simp only [norm_apply, map_add, LinearMap.add_apply]
-  rw [L.isSymm.eq y x]
-  ring
+    L.norm (x + y) = L.norm x + L.norm y + 2 * L.form x y :=
+  L.isSymm.toQuadraticMap_add x y
 
 /-- The subtraction form of the norm polarization identity. -/
 theorem norm_sub (L : IntegralLattice V) (x y : V) :
-    L.norm (x - y) = L.norm x + L.norm y - 2 * L.form x y := by
-  rw [sub_eq_add_neg, L.norm_add, L.norm_neg]
-  simp only [map_neg]
-  ring
+    L.norm (x - y) = L.norm x + L.norm y - 2 * L.form x y :=
+  L.isSymm.toQuadraticMap_sub x y
 
 @[simp]
-theorem integralNorm_zero (L : IntegralLattice V) : L.integralNorm 0 = 0 := by
-  simp [integralNorm_apply]
+theorem integralNorm_zero (L : IntegralLattice V) : L.integralNorm 0 = 0 :=
+  L.integralNorm.map_zero
 
 @[simp]
 theorem integralNorm_neg (L : IntegralLattice V) (x : L) :
-    L.integralNorm (-x) = L.integralNorm x := by
-  simp [integralNorm_apply]
+    L.integralNorm (-x) = L.integralNorm x :=
+  L.integralNorm.map_neg x
 
 @[simp]
 theorem integralNorm_zsmul (L : IntegralLattice V) (a : ℤ) (x : L) :
     L.integralNorm (a • x) = a ^ 2 * L.integralNorm x := by
-  simp [integralNorm_apply, pow_two, mul_assoc]
+  rw [QuadraticMap.map_smul, smul_eq_mul, pow_two]
 
 /-- Integral polarization of the norm. -/
 theorem integralNorm_add (L : IntegralLattice V) (x y : L) :
     L.integralNorm (x + y) =
-      L.integralNorm x + L.integralNorm y + 2 * L.integralForm x y := by
-  simp only [integralNorm_apply, map_add, LinearMap.add_apply]
-  rw [L.isSymm_integralForm.eq y x]
-  ring
+      L.integralNorm x + L.integralNorm y + 2 * L.integralForm x y :=
+  L.isSymm_integralForm.toQuadraticMap_add x y
 
 /-- Integral polarization for a difference. -/
 theorem integralNorm_sub (L : IntegralLattice V) (x y : L) :
     L.integralNorm (x - y) =
-      L.integralNorm x + L.integralNorm y - 2 * L.integralForm x y := by
-  rw [sub_eq_add_neg, L.integralNorm_add, L.integralNorm_neg]
-  simp only [map_neg]
-  ring
+      L.integralNorm x + L.integralNorm y - 2 * L.integralForm x y :=
+  L.isSymm_integralForm.toQuadraticMap_sub x y
 
 /-! ## Evenness -/
 
 /-- An integral lattice is even when the norm of every lattice vector is an even integer. -/
 def IsEven (L : IntegralLattice V) : Prop := ∀ x : L, Even (L.integralNorm x)
 
-/-- Evenness is equivalently divisibility of every integral norm by two. -/
-theorem isEven_iff_two_dvd (L : IntegralLattice V) :
-    L.IsEven ↔ ∀ x : L, 2 ∣ L.integralNorm x := by
-  simp only [IsEven, even_iff_two_dvd]
+/-- Characteristic equivalence for `IsEven`. -/
+theorem isEven_iff (L : IntegralLattice V) :
+    L.IsEven ↔ ∀ x : L, Even (L.integralNorm x) := Iff.rfl
+
+/-- Pointwise equivalence between evenness of the integral norm and two-divisibility of the
+rational norm in `ℚ`. -/
+theorem even_integralNorm_iff (L : IntegralLattice V) (x : L) :
+    Even (L.integralNorm x) ↔ ∃ z : ℤ, L.norm x = 2 * z := by
+  constructor
+  · rintro ⟨z, hz⟩
+    refine ⟨z, ?_⟩
+    rw [← L.integralNorm_cast x, hz]
+    push_cast
+    ring
+  · rintro ⟨z, hz⟩
+    refine ⟨z, ?_⟩
+    apply Int.cast_injective (α := ℚ)
+    push_cast
+    rw [L.integralNorm_cast, hz]
+    ring
+
+/-- Evenness is equivalently the existence of an integer halving every lattice-vector norm. -/
+theorem isEven_iff_forall_norm (L : IntegralLattice V) :
+    L.IsEven ↔ ∀ x : L, ∃ z : ℤ, L.norm x = 2 * z := by
+  simp only [isEven_iff, even_integralNorm_iff]
 
 /-- The norm of a vector in an even lattice is twice an integer, as an equality in `ℚ`. -/
 theorem IsEven.exists_norm_eq_two_mul {L : IntegralLattice V} (hL : L.IsEven) (x : L) :
-    ∃ z : ℤ, L.norm x = 2 * z := by
-  obtain ⟨z, hz⟩ := hL x
-  refine ⟨z, ?_⟩
-  rw [← L.integralNorm_cast x, hz]
-  norm_num
-  ring
+    ∃ z : ℤ, L.norm x = 2 * z :=
+  (L.even_integralNorm_iff x).mp (hL x)
 
 /-- The sum of two vectors with even integral norm again has even integral norm. -/
 theorem even_integralNorm_add (L : IntegralLattice V) {x y : L}
     (hx : Even (L.integralNorm x)) (hy : Even (L.integralNorm y)) :
     Even (L.integralNorm (x + y)) := by
-  obtain ⟨a, ha⟩ := hx
-  obtain ⟨b, hb⟩ := hy
-  refine ⟨a + b + L.integralForm x y, ?_⟩
-  rw [L.integralNorm_add, ha, hb]
-  ring
+  rw [L.integralNorm_add]
+  exact (hx.add hy).add (even_two_mul _)
 
 /-- Every integer multiple of a vector with even integral norm has even integral norm. -/
 theorem even_integralNorm_zsmul (L : IntegralLattice V) {x : L}
     (hx : Even (L.integralNorm x)) (a : ℤ) : Even (L.integralNorm (a • x)) := by
-  obtain ⟨z, hz⟩ := hx
-  refine ⟨a ^ 2 * z, ?_⟩
-  rw [L.integralNorm_zsmul, hz]
-  ring
+  rw [L.integralNorm_zsmul]
+  exact hx.mul_left _
+
+/-- It is enough to check evenness on any `ℤ`-spanning subset of lattice vectors. -/
+theorem isEven_of_span (L : IntegralLattice V) {s : Set L} (hs : Submodule.span ℤ s = ⊤)
+    (h : ∀ x ∈ s, Even (L.integralNorm x)) : L.IsEven := by
+  intro x
+  have hx : x ∈ Submodule.span ℤ s := by rw [hs]; exact Submodule.mem_top
+  induction hx using Submodule.span_induction with
+  | mem v hv => exact h v hv
+  | zero => exact ⟨0, by simp⟩
+  | add u v _ _ hu hv => exact L.even_integralNorm_add hu hv
+  | smul a u _ hu => exact L.even_integralNorm_zsmul hu a
 
 /-- It is enough to check evenness on the vectors of any integral basis. -/
-theorem isEven_iff_forall_basis {ι : Type*} (L : IntegralLattice V) (b : Basis ι ℤ L) :
+theorem isEven_iff_basis {ι : Type*} (L : IntegralLattice V) (b : Basis ι ℤ L) :
     L.IsEven ↔ ∀ i, Even (L.integralNorm (b i)) := by
   constructor
   · exact fun h i ↦ h (b i)
-  · intro h x
-    have hx : x ∈ Submodule.span ℤ (Set.range b) := by
-      rw [b.span_eq]
-      exact Submodule.mem_top
-    induction hx using Submodule.span_induction with
-    | mem x hx =>
-        obtain ⟨i, rfl⟩ := hx
-        exact h i
-    | zero => exact ⟨0, by simp⟩
-    | add x y _ _ hx hy => exact L.even_integralNorm_add hx hy
-    | smul a x _ hx => exact L.even_integralNorm_zsmul hx a
+  · intro h
+    exact L.isEven_of_span b.span_eq (by rintro x ⟨i, rfl⟩; exact h i)
+
+/-- An `ofBasis` lattice is even exactly when every basis vector has an even self-pairing. -/
+theorem isEven_ofBasis_iff {ι : Type*} [Finite ι] (b : Basis ι ℚ V)
+    (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
+    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) :
+    (ofBasis b B hB hint).IsEven ↔ ∀ i, ∃ z : ℤ, B (b i) (b i) = 2 * z := by
+  rw [isEven_iff_basis (ofBasis b B hB hint) (ofBasis.basis b B hB hint)]
+  apply forall_congr'
+  intro i
+  rw [ofBasis.basis_apply, even_integralNorm_iff, norm_apply, ofBasis_form, ofBasis.coe_basisElem]
 
 /-- A lattice constructed from a Gram matrix is even exactly when every diagonal entry is even. -/
 theorem isEven_ofGramMatrix_iff {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
     (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
     (ofGramMatrix b G hG).IsEven ↔ ∀ i, Even (G i i) := by
-  let bInt : Basis ι ℤ (ofGramMatrix b G hG).carrier :=
-    (b.restrictScalars ℤ).map
-      (LinearEquiv.ofEq _ _ (ofGramMatrix_carrier b G hG).symm)
-  rw [isEven_iff_forall_basis (ofGramMatrix b G hG) bInt]
+  rw [isEven_iff_basis (ofGramMatrix b G hG) (ofGramMatrix.basis b G hG)]
   apply forall_congr'
   intro i
-  have hb : bInt i = ofGramMatrix.basisElem b G hG i := by
-    apply Subtype.ext
-    simp [bInt]
-  rw [hb, integralNorm_apply, integralForm_ofGramMatrix_apply]
+  rw [ofGramMatrix.basis_apply, integralNorm_apply, integralForm_ofGramMatrix_apply]
 
 /-! ## Vectors of prescribed norm -/
 
 /-- The lattice vectors having the prescribed rational norm. -/
-def roots (L : IntegralLattice V) (n : ℚ) : Set L := {x | L.norm x = n}
+def vectorsOfNorm (L : IntegralLattice V) (n : ℚ) : Set L := {x | L.norm x = n}
 
 @[simp]
-theorem mem_roots {L : IntegralLattice V} {n : ℚ} {x : L} :
-    x ∈ L.roots n ↔ L.norm x = n := Iff.rfl
+theorem mem_vectorsOfNorm {L : IntegralLattice V} {n : ℚ} {x : L} :
+    x ∈ L.vectorsOfNorm n ↔ L.norm x = n := Iff.rfl
+
+/-- Membership in `vectorsOfNorm (n : ℚ)` for an integer `n` is equivalent to having integral norm
+equal to `n`. -/
+@[simp]
+theorem mem_vectorsOfNorm_intCast (L : IntegralLattice V) {n : ℤ} {x : L} :
+    x ∈ L.vectorsOfNorm (n : ℚ) ↔ L.integralNorm x = n := by
+  rw [mem_vectorsOfNorm, ← L.integralNorm_cast x]
+  exact Int.cast_inj
 
 /-- The zero vector in an integral lattice has norm zero. -/
-theorem zero_mem_roots (L : IntegralLattice V) : (0 : L) ∈ L.roots 0 := by
+theorem zero_mem_vectorsOfNorm (L : IntegralLattice V) : (0 : L) ∈ L.vectorsOfNorm 0 := by
   simp
 
 /-- A lattice vector has norm `n` if and only if its negation does. -/
-theorem neg_mem_roots {L : IntegralLattice V} {n : ℚ} (x : L) :
-    -x ∈ L.roots n ↔ x ∈ L.roots n := by
-  simp [mem_roots]
+@[simp]
+theorem neg_mem_vectorsOfNorm_iff {L : IntegralLattice V} {n : ℚ} (x : L) :
+    -x ∈ L.vectorsOfNorm n ↔ x ∈ L.vectorsOfNorm n := by
+  simp [mem_vectorsOfNorm]
+
+/-- If a rational number is not an integer, no lattice vector has that norm. -/
+theorem vectorsOfNorm_eq_empty_of_not_isInt (L : IntegralLattice V) {n : ℚ}
+    (hn : ∀ z : ℤ, n ≠ z) : L.vectorsOfNorm n = ∅ := by
+  ext x
+  simp only [mem_vectorsOfNorm, Set.mem_empty_iff_false, iff_false]
+  intro hx
+  exact hn (L.integralNorm x) (hx.symm.trans (L.integralNorm_cast x).symm)
 
 /-- A norm represented by an even lattice is twice an integer. -/
-theorem IsEven.exists_eq_two_mul_of_mem_roots {L : IntegralLattice V} (hL : L.IsEven)
-    {n : ℚ} {x : L} (hx : x ∈ L.roots n) : ∃ z : ℤ, n = 2 * z := by
+theorem IsEven.exists_eq_two_mul_of_mem_vectorsOfNorm {L : IntegralLattice V} (hL : L.IsEven)
+    {n : ℚ} {x : L} (hx : x ∈ L.vectorsOfNorm n) : ∃ z : ℤ, n = 2 * z := by
   obtain ⟨z, hz⟩ := hL.exists_norm_eq_two_mul x
   exact ⟨z, hx.symm.trans hz⟩
 
-/-- An even lattice has no vector of a norm that is not twice an integer. -/
-theorem IsEven.roots_eq_empty {L : IntegralLattice V} (hL : L.IsEven) {n : ℚ}
-    (hn : ¬∃ z : ℤ, n = 2 * z) : L.roots n = ∅ := by
+/-- An even lattice has no vector of integer norm that is odd. -/
+theorem IsEven.vectorsOfNorm_eq_empty (L : IntegralLattice V) (hL : L.IsEven) {n : ℤ}
+    (hn : ¬ Even n) : L.vectorsOfNorm (n : ℚ) = ∅ := by
   ext x
-  simp only [mem_roots, Set.mem_empty_iff_false, iff_false]
+  simp only [mem_vectorsOfNorm_intCast, Set.mem_empty_iff_false, iff_false]
   intro hx
-  exact hn (hL.exists_eq_two_mul_of_mem_roots hx)
+  exact hn (hx ▸ hL x)
+
+/-- An even lattice has no vector of a rational norm that is not twice an integer. -/
+theorem IsEven.vectorsOfNorm_eq_empty_of_not_exists_two_mul (L : IntegralLattice V) (hL : L.IsEven)
+    {n : ℚ} (hn : ¬∃ z : ℤ, n = 2 * z) : L.vectorsOfNorm n = ∅ := by
+  ext x
+  simp only [mem_vectorsOfNorm, Set.mem_empty_iff_false, iff_false]
+  intro hx
+  exact hn (hL.exists_eq_two_mul_of_mem_vectorsOfNorm hx)
 
 end IntegralLattice
 

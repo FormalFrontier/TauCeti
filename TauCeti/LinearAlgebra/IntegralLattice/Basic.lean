@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Module.Lattice
+public import Mathlib.LinearAlgebra.Basis.Submodule
 public import Mathlib.LinearAlgebra.BilinearForm.DualLattice
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 
@@ -35,8 +36,9 @@ The form restricts to a canonical `ℤ`-bilinear form on the carrier.  Conversel
   integrality proof.
 * `TauCeti.IntegralLattice.ofBasis`: the lattice spanned by a basis on which a given form is
   integral.
-* `TauCeti.IntegralLattice.ofGramMatrix`: the lattice and form determined by an integral
-  symmetric Gram matrix.
+* `TauCeti.IntegralLattice.ofBasis.basis`: the canonical `ℤ`-basis of an `ofBasis` lattice.
+* `TauCeti.IntegralLattice.ofGramMatrix.basis`: the canonical `ℤ`-basis of an `ofGramMatrix`
+  lattice.
 -/
 
 public section
@@ -214,6 +216,19 @@ theorem ofBasis.coe_basisElem (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ 
   unfold ofBasis.basisElem
   rfl
 
+/-- The canonical `ℤ`-basis of `ofBasis b B hB hint` induced by the ambient `ℚ`-basis. -/
+noncomputable def ofBasis.basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
+    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) :
+    Basis ι ℤ (ofBasis b B hB hint) :=
+  (b.restrictScalars ℤ).map
+    (LinearEquiv.ofEq _ _ (ofBasis_carrier b B hB hint).symm)
+
+@[simp]
+theorem ofBasis.basis_apply (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
+    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
+    ofBasis.basis b B hB hint i = ofBasis.basisElem b B hB hint i :=
+  Subtype.ext (b.restrictScalars_apply ℤ i)
+
 end Basis
 
 section GramMatrix
@@ -254,6 +269,19 @@ theorem ofGramMatrix.coe_basisElem (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (
     (i : ι) : (ofGramMatrix.basisElem b G hG i : V) = b i := by
   unfold ofGramMatrix.basisElem
   rfl
+
+open Classical in
+/-- The canonical `ℤ`-basis of `ofGramMatrix b G hG` induced by the ambient `ℚ`-basis. -/
+noncomputable def ofGramMatrix.basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
+    Basis ι ℤ (ofGramMatrix b G hG) :=
+  (b.restrictScalars ℤ).map
+    (LinearEquiv.ofEq _ _ (ofGramMatrix_carrier b G hG).symm)
+
+open Classical in
+@[simp]
+theorem ofGramMatrix.basis_apply (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (i : ι) :
+    ofGramMatrix.basis b G hG i = ofGramMatrix.basisElem b G hG i :=
+  Subtype.ext (b.restrictScalars_apply ℤ i)
 
 open Classical in
 /-- Evaluating the induced integral form of `ofGramMatrix` on embedded basis vectors recovers
