@@ -41,7 +41,10 @@ theory it rests on.
 * `TauCeti.diamondOpCusp_mem_cuspFormsNew`: the new subspace is diamond-stable.
 * `TauCeti.iSup_inf_cuspFormsOld_cuspFormCharSpace`,
   `TauCeti.iSup_inf_cuspFormsNew_cuspFormCharSpace`: the old and the new subspace are each the
-  supremum of their nebentypus components, an independent family in both cases.
+  supremum of their nebentypus components.
+* `TauCeti.iSupIndep_inf_cuspFormsOld_cuspFormCharSpace`,
+  `TauCeti.iSupIndep_inf_cuspFormsNew_cuspFormCharSpace`: those components form an independent
+  family in both cases.
 * `TauCeti.mem_cuspFormsNew_iff_of_mem_cuspFormCharSpace`: a form of nebentypus `χ` is new
   exactly when it is orthogonal to the old forms of nebentypus `χ`.
 * `TauCeti.cuspFormsNew_inf_cuspFormCharSpace`: `S_k(N, χ)ⁿᵉʷ = S_k(Γ₁(N))ⁿᵉʷ ⊓ S_k(N, χ)`.
