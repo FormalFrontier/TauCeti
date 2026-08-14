@@ -27,9 +27,10 @@ As with `spa` itself, the definition is stated for arbitrary data: no hypothesis
 topology of `A` to its ring operations, the subring is arbitrary, and Wedhorn's standing
 condition that the ideal `T · A` be open is not assumed. It is Wedhorn's rational subset of
 `Spa (A, A⁺)` under his hypotheses (a Huber ring, a ring of integral elements, `T · A` open);
-the open-ideal condition enters only in the results that need it — the standard-cover theorem
-below, the basis claims of Definition 7.29, and the quasi-compactness of Theorem 7.35. Of these,
-only the standard-cover theorem is in this file.
+the open-ideal condition enters only in the results that need it — Wedhorn's admissibility
+setting, the Tate-ring specialization of the standard cover below, the basis claims of
+Definition 7.29, and the quasi-compactness of Theorem 7.35. The generalized unit-ideal
+standard-cover theorem itself requires no openness hypothesis.
 
 The exported interface of the definition, the normalizations and the intersection identity
 inherited from `Spv(A)(T/s)`, the whole-space case, containment in `spa A⁺`, and relative
@@ -98,8 +99,9 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A]
 /-- The rational subset `R(T/s)` of the adic spectrum: the trace on `spa A⁺` of the basic open
 `Spv(A)(T/s)`. Under Wedhorn's hypotheses — a Huber ring, a ring of integral elements, and the
 ideal `T · A` open — this is his Definition 7.29; the definition itself asks for none of them,
-and the open-ideal condition matters only for later results such as the standard-cover theorem
-below and the basis claims, not for the definition. -/
+and the open-ideal condition matters only for results such as Wedhorn's admissibility setting,
+the Tate-ring cover specialization below, or the basis claims, not for the definition nor the
+generalized unit-ideal cover. -/
 def rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) : Set (Spv A) :=
   spa Aplus ∩ basicOpenFinset T s
 
