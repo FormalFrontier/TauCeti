@@ -157,32 +157,6 @@ theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s�
   rw [rationalSubset_def, rationalSubset_def, rationalSubset_def, ← basicOpenFinset_inter]
   exact (Set.inter_inter_distrib_left _ _ _).symm
 
-omit [TopologicalSpace A] in
-/-- A finite non-empty set of ring elements has a maximal element with respect to any point's
-valuative relation. -/
-lemma exists_max_vle (v : Spv A) {T : Finset A} (hT : T.Nonempty) :
-    ∃ s ∈ T, ∀ t ∈ T, v.toValuativeRel.vle t s := by
-  classical
-  induction T using Finset.induction_on with
-  | empty => exact (Finset.not_nonempty_empty hT).elim
-  | insert x S hx ih =>
-    by_cases hS : S.Nonempty
-    · obtain ⟨s, hs, max_s⟩ := ih hS
-      rcases v.toValuativeRel.vle_total x s with h1 | h2
-      · refine ⟨s, Finset.mem_insert_of_mem hs, fun t ht ↦ ?_⟩
-        rcases Finset.mem_insert.mp ht with rfl | ht'
-        · exact h1
-        · exact max_s t ht'
-      · refine ⟨x, Finset.mem_insert_self x S, fun t ht ↦ ?_⟩
-        rcases Finset.mem_insert.mp ht with rfl | ht'
-        · exact v.toValuativeRel.vle_refl t
-        · exact v.toValuativeRel.vle_trans (max_s t ht') h2
-    · rw [Finset.not_nonempty_iff_eq_empty.mp hS, Finset.insert_empty]
-      refine ⟨x, Finset.mem_singleton_self x, fun t ht ↦ ?_⟩
-      rw [Finset.mem_singleton.mp ht]
-      exact v.toValuativeRel.vle_refl x
-
-
 /-- **Wedhorn Corollary 7.53 (pointwise statement)**: If `T` generates the unit ideal of `A`,
 then every point `v ∈ spa Aplus` belongs to the standard rational subset `R(T/s)` for some
 `s ∈ T`. -/
@@ -195,7 +169,10 @@ theorem mem_rationalSubset_of_mem_spa_of_span_eq_top (Aplus : Subring A) {T : Fi
     have h1 : (1 : A) ∈ (⊥ : Ideal A) := hT ▸ Submodule.mem_top
     rw [Ideal.mem_bot] at h1
     exact v.toValuativeRel.not_vle_one_zero (h1 ▸ v.toValuativeRel.vle_refl 0)
-  obtain ⟨s, hs, hmax⟩ := exists_max_vle v hT_ne
+  let _ : ValuativeRel A := v.toValuativeRel
+  obtain ⟨s, hs, hmax'⟩ := Finset.exists_max_image T v.toValuativeRel.valuation hT_ne
+  have hmax : ∀ t ∈ T, v.toValuativeRel.vle t s := fun t ht ↦
+    (Valuation.vle_iff_le v.toValuativeRel.valuation).mpr (hmax' t ht)
   refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun h_zero ↦ ?_⟩⟩
   have h_supp : (T : Set A) ⊆ (v.supp : Set A) := fun t ht ↦
     (mem_supp_iff v t).mpr (v.toValuativeRel.vle_trans (hmax t ht) h_zero)
@@ -210,33 +187,11 @@ then the standard rational subsets `(R(T/t))_{t ∈ T}` cover `spa Aplus`. -/
 theorem spa_eq_biUnion_rationalSubset_of_span_eq_top (Aplus : Subring A) {T : Finset A}
     (hT : Ideal.span (T : Set A) = ⊤) :
     spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t := by
-  ext v
-  simp only [Set.mem_iUnion]
-  constructor
-  · intro hv
+  apply Set.Subset.antisymm
+  · intro v hv
     obtain ⟨s, hs, hmem⟩ := mem_rationalSubset_of_mem_spa_of_span_eq_top Aplus hT hv
-    exact ⟨s, ⟨hs, hmem⟩⟩
-  · rintro ⟨t, ht, hmem⟩
-    exact rationalSubset_subset_spa Aplus T t hmem
-
-/-- The union of any family of rational subsets `R(T/t)` is contained in `spa Aplus`. -/
-theorem biUnion_rationalSubset_subset_spa (Aplus : Subring A) (T : Finset A) :
-    (⋃ t ∈ T, rationalSubset Aplus T t) ⊆ spa Aplus := by
-  intro v hv
-  rw [Set.mem_iUnion] at hv
-  obtain ⟨t, ht⟩ := hv
-  rw [Set.mem_iUnion] at ht
-  exact rationalSubset_subset_spa Aplus T t ht.2
-
-/-- In a rational subset `R(T/s)`, the denominator evaluates non-zero. -/
-theorem not_vle_zero_of_mem_rationalSubset {Aplus : Subring A} {T : Finset A} {s : A} {v : Spv A}
-    (h : v ∈ rationalSubset Aplus T s) : ¬ v.toValuativeRel.vle s 0 :=
-  ((mem_rationalSubset_iff Aplus T s v).mp h).2.2
-
-/-- In a rational subset `R(T/s)`, the denominator dominates every numerator. -/
-theorem vle_of_mem_rationalSubset {Aplus : Subring A} {T : Finset A} {s : A} {v : Spv A}
-    (h : v ∈ rationalSubset Aplus T s) {t : A} (ht : t ∈ T) : v.toValuativeRel.vle t s :=
-  ((mem_rationalSubset_iff Aplus T s v).mp h).2.1 t ht
+    exact Set.mem_iUnion₂_of_mem hs hmem
+  · exact Set.iUnion₂_subset fun t _ ↦ rationalSubset_subset_spa Aplus T t
 
 section Tate
 
