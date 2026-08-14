@@ -12,6 +12,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegr
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 public import TauCeti.Probability.DeFinetti.Correspondence
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
 
 /-!
 # De Finetti's theorem
@@ -38,7 +39,10 @@ This module declares nothing of its own; it is a curated re-export, and it build
   exchangeable σ-algebra is trivial;
 * `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
   its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
-  point masses with the extreme laws.
+  point masses with the extreme laws;
+* `deFinetti_tendsto_empiricalMeasure_apply` — on each fixed measurable set, the mass given by the
+  directing measure of an exchangeable process is the almost-sure limit of the empirical
+  frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a
