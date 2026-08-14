@@ -65,19 +65,6 @@ instance (L : IntegralLattice V) : L.carrier.IsLattice ℚ := L.isLattice
 /-- An integral lattice coerces to the type of its vectors. -/
 instance : CoeSort (IntegralLattice V) (Type u) := ⟨fun L ↦ L.carrier⟩
 
-/-- Membership in an integral lattice means membership in its carrier. -/
-instance : Membership V (IntegralLattice V) := ⟨fun L x ↦ x ∈ L.carrier⟩
-
-/-- An integral lattice coerces to its rational bilinear form. -/
-instance : CoeFun (IntegralLattice V) fun _ ↦ V → V → ℚ :=
-  ⟨fun L x y ↦ L.form x y⟩
-
-@[simp]
-theorem mem_carrier {L : IntegralLattice V} {x : V} : x ∈ L.carrier ↔ x ∈ L := Iff.rfl
-
-@[simp]
-theorem coeFun_apply (L : IntegralLattice V) (x y : V) : L x y = L.form x y := rfl
-
 /-- Two integral lattices are equal if their carriers and rational forms are equal. -/
 @[ext]
 theorem ext {L M : IntegralLattice V} (hcarrier : L.carrier = M.carrier)
@@ -92,50 +79,24 @@ theorem ext {L M : IntegralLattice V} (hcarrier : L.carrier = M.carrier)
 theorem form_comm (L : IntegralLattice V) (x y : V) : L.form x y = L.form y x :=
   L.isSymm.eq x y
 
-/-- The inclusion of the carrier into its dual submodule. -/
-def toDualSubmodule (L : IntegralLattice V) :
-    L.carrier →ₗ[ℤ] L.form.dualSubmodule L.carrier :=
-  L.carrier.subtype.codRestrict (L.form.dualSubmodule L.carrier) fun x ↦ L.le_dual x.property
-
-@[simp]
-theorem coe_toDualSubmodule (L : IntegralLattice V) (x : L) :
-    (L.toDualSubmodule x : V) = x := rfl
-
-/-- The inclusion of an integral lattice into its dual submodule is injective. -/
-theorem toDualSubmodule_injective (L : IntegralLattice V) :
-    Function.Injective L.toDualSubmodule := by
-  intro x y hxy
-  apply Subtype.ext
-  exact congr_arg (fun z : L.form.dualSubmodule L.carrier ↦ (z : V)) hxy
-
 /-- The integral bilinear form induced on the carrier.
 
 This is the integral-valued restriction of `L.form`, obtained from Mathlib's canonical pairing
 between a submodule and its dual submodule. -/
 noncomputable def integralForm (L : IntegralLattice V) : LinearMap.BilinForm ℤ L :=
-  (L.form.dualSubmoduleToDual L.carrier).comp L.toDualSubmodule
+  (L.form.dualSubmoduleToDual L.carrier).comp (Submodule.inclusion L.le_dual)
 
 /-- The integral form recovers the rational form after coercion to `ℚ`. -/
 @[simp]
 theorem integralForm_cast (L : IntegralLattice V) (x y : L) :
     (L.integralForm x y : ℚ) = L.form x y := by
-  exact L.form.dualSubmoduleParing_spec (L.toDualSubmodule x) y
+  exact L.form.dualSubmoduleParing_spec (Submodule.inclusion L.le_dual x) y
 
 /-- The induced integral form is symmetric. -/
 theorem integralForm_isSymm (L : IntegralLattice V) : L.integralForm.IsSymm := by
   constructor
   intro x y
   exact Int.cast_injective (by rw [L.integralForm_cast, L.integralForm_cast, L.form_comm])
-
-/-- The rational form takes an integer value on every pair of lattice vectors. -/
-theorem exists_int_eq_form (L : IntegralLattice V) (x y : L) :
-    ∃ z : ℤ, (z : ℚ) = L.form x y :=
-  Submodule.mem_one.mp (L.le_dual x.property y y.property)
-
-/-- The rank of the carrier equals the rational rank of the ambient space. -/
-theorem rank_carrier (L : IntegralLattice V) :
-    Module.rank ℤ L.carrier = Module.rank ℚ V :=
-  Submodule.IsLattice.rank' ℚ L.carrier
 
 section Basis
 
@@ -160,16 +121,12 @@ noncomputable def ofBasis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (
   isSymm := hB
   le_dual := by
     rw [Submodule.span_le]
-    rintro x ⟨i, rfl⟩ y hy
-    induction hy using Submodule.span_induction with
-    | mem y hy =>
-        obtain ⟨j, rfl⟩ := hy
-        exact hint i j
-    | zero => simp
-    | add x y _ _ hx hy =>
-        simpa using (1 : Submodule ℤ ℚ).add_mem hx hy
-    | smul z x _ hx =>
-        simpa using (1 : Submodule ℤ ℚ).smul_mem z hx
+    rintro x ⟨i, rfl⟩
+    change Submodule.span ℤ (Set.range b) ≤
+      Submodule.comap ((B (b i)).restrictScalars ℤ) (1 : Submodule ℤ ℚ)
+    rw [Submodule.span_le]
+    rintro _ ⟨j, rfl⟩
+    exact hint i j
 
 @[simp]
 theorem carrier_ofBasis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
