@@ -257,10 +257,10 @@ private noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
       root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
     have hai := (dualKillingForm_symm (H := H)).eq a i.1
     have hbi := (dualKillingForm_symm (H := H)).eq b i.1
-    -- Definitional equality: `(rootSystem H).reflection i` expands to reflection along `i.1`.
-    change dualKillingForm (a - a (coroot i.1) • (i.1 : Module.Dual K H))
-      (b - b (coroot i.1) • (i.1 : Module.Dual K H)) = dualKillingForm a b
-    simp only [map_sub, LinearMap.sub_apply, map_smul, map_nsmul, LinearMap.smul_apply,
+    rw [RootPairing.reflection_apply, RootPairing.reflection_apply]
+    simp only [rootSystem_root_apply, rootSystem_coroot_apply, RootPairing.coroot',
+      LinearMap.flip_apply, rootSystem_toLinearMap_apply,
+      map_sub, LinearMap.sub_apply, map_smul, map_nsmul, LinearMap.smul_apply,
       dualKillingForm_apply, smul_eq_mul, nsmul_eq_mul, Nat.cast_ofNat, coroot]
     simp only [dualKillingForm_apply] at hai hbi
     rw [hai, hbi]
@@ -295,12 +295,11 @@ private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
       let c : Weight K H L := ⟨n • (a : H → K) + b, h⟩
       have hc : c.IsNonZero := by
         intro hc₀
-        -- Definitional equality: `c.IsNonZero` is `(c : H → K) ≠ 0`, so `hc₀` means `c.1 = 0`.
-        change n • (a : H → K) + b = 0 at hc₀
+        have hc₀' : n • (a : H → K) + b = 0 := hc₀.eq
         have hrel : (n : K) • (a : Module.Dual K H) +
             (1 : K) • (b : Module.Dual K H) = 0 := by
           ext z
-          simpa [Weight.toLinear_apply] using congrFun hc₀ z
+          simpa [Weight.toLinear_apply] using congrFun hc₀' z
         exact one_ne_zero (hab.eq_zero_of_pair hrel).2
       refine ⟨⟨c, by simpa [LieSubalgebra.root] using hc⟩, ?_⟩
       ext z
@@ -368,14 +367,9 @@ theorem chainTopCoeff_mul_killingForm_root_neg_eq
       (P := P) (rootInvariantForm (H := H)) hk
   have hβkill := hx.killingForm_root_neg_eq β hβ
   have hγkill := hx.killingForm_root_neg_eq γ hγ
-  simp only [rootInvariantForm, dualKillingForm_apply] at hlength
+  simp only [rootInvariantForm, dualKillingForm_apply, P, k, j, rootSystem_root_apply,
+    Weight.toLinear_apply] at hlength
   rw [hcoeff.1, hcoeff.2] at hlength
-  -- Definitional equality: `P.root k` reduces to `γ` and `P.root j` to `β`.
-  change (chainTopCoeff α β : K) *
-      (γ : Module.Dual K H) ((cartanEquivDual H).symm (γ : Module.Dual K H)) =
-    (chainBotCoeff α β + 1 : ℕ) *
-      (β : Module.Dual K H) ((cartanEquivDual H).symm (β : Module.Dual K H)) at hlength
-  simp only [Weight.toLinear_apply] at hlength
   rw [hβkill, hγkill]
   have hβne := root_apply_cartanEquivDual_symm_ne_zero hβ
   have hγne := root_apply_cartanEquivDual_symm_ne_zero hγ
