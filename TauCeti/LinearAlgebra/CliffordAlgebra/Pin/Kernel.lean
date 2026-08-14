@@ -77,6 +77,13 @@ private noncomputable def kerSpinToSpecialOrthogonalEquivKerPinToOrthogonal
     apply Subtype.ext
     exact congrArg Subtype.val (map_mul (spinToPin Q) x.1 y.1)
 
+private theorem kerSpinToSpecialOrthogonalEquivKerPinToOrthogonal_apply
+    (Q : QuadraticForm K M) [Invertible (2 : K)]
+    (x : MonoidHom.ker (spinToSpecialOrthogonal Q)) :
+    (kerSpinToSpecialOrthogonalEquivKerPinToOrthogonal Q x).1 =
+      spinToPin Q x.1 :=
+  rfl
+
 /-- The kernel of the Pin action on a positive-dimensional nondegenerate quadratic space over a
 field in which `2` is invertible is canonically the cyclic group of order two, with its generator
 sent to the scalar `-1`. -/
@@ -98,8 +105,10 @@ theorem zmodTwoMulEquivKerPinToOrthogonal_apply_ofAdd_one [Nontrivial M]
         rw [MonoidHom.mem_ker, pinToOrthogonal_spinToPin,
           spinGroup.spinToOrthogonal_negOne]⟩ := by
   apply Subtype.ext
-  simp [zmodTwoMulEquivKerPinToOrthogonal,
-    kerSpinToSpecialOrthogonalEquivKerPinToOrthogonal]
+  rw [zmodTwoMulEquivKerPinToOrthogonal, MulEquiv.trans_apply,
+    kerSpinToSpecialOrthogonalEquivKerPinToOrthogonal_apply]
+  exact congrArg (spinToPin Q) <| congrArg Subtype.val
+    (zmodTwoMulEquivKerSpinToSpecialOrthogonal_apply_ofAdd_one Q hQ)
 
 /-- The inverse kernel equivalence sends the scalar `-1` to the chosen generator of
 `Multiplicative (ZMod 2)`. -/
