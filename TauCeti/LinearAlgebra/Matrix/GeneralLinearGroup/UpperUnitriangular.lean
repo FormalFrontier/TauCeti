@@ -7,7 +7,6 @@ module
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 public import TauCeti.LinearAlgebra.Matrix.Triangular
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
-import Mathlib.RingTheory.Nilpotent.Lemmas
 
 /-!
 # Upper-unitriangular matrix groups
@@ -73,19 +72,6 @@ def upperUnitriangularGroup : Subgroup (GL m R) where
     intro g hg
     let _ : Invertible (g : Matrix m m R) := g.invertible
     simpa only [Set.mem_ofPred_eq, Matrix.GeneralLinearGroup.coe_inv] using hg.inv
-
-namespace GeneralLinearGroup
-
-/-- A matrix unit is unipotent in its natural representation exactly when subtracting the
-identity from its underlying matrix gives a nilpotent matrix. -/
-theorem isUnipotent_toLin_iff (g : GL m R) :
-    IsUnipotent (Matrix.GeneralLinearGroup.toLin g) ↔
-      _root_.IsNilpotent ((g : Matrix m m R) - 1) := by
-  rw [isUnipotent_def, ← Matrix.isNilpotent_toLin'_iff, map_sub, Matrix.toLin'_one]
-  simp only [Matrix.GeneralLinearGroup.coe_toLin, Matrix.toLin'_apply',
-    Module.End.one_eq_id]
-
-end GeneralLinearGroup
 
 namespace UpperUnitriangularGroup
 

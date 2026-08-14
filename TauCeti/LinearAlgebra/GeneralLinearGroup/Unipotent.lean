@@ -6,9 +6,11 @@ module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.Dimension.Finite
+public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
 import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
+import Mathlib.RingTheory.Nilpotent.Lemmas
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -76,6 +78,16 @@ identity is nilpotent. -/
 theorem isUnipotent_def (g : GeneralLinearGroup K V) :
     IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
   Iff.rfl
+
+/-- An element of the general linear group is unipotent in its natural representation exactly
+when subtracting the identity from its underlying matrix gives a nilpotent matrix. -/
+theorem isUnipotent_toLin_iff
+    (m : Type*) [Fintype m] [LinearOrder m] (R : Type u) [CommRing R] (g : GL m R) :
+    IsUnipotent (Matrix.GeneralLinearGroup.toLin g) ↔
+      _root_.IsNilpotent ((g : Matrix m m R) - 1) := by
+  rw [isUnipotent_def, ← Matrix.isNilpotent_toLin'_iff, map_sub, Matrix.toLin'_one]
+  simp only [Matrix.GeneralLinearGroup.coe_toLin, Matrix.toLin'_apply',
+    Module.End.one_eq_id]
 
 /-- The identity automorphism is unipotent. -/
 @[simp]
