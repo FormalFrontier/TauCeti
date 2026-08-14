@@ -49,8 +49,8 @@ section Map
 
 variable (k : Type u) [Field k]
 variable {H : Type v} {K : Type w}
-variable [Ring H] [Bialgebra k H]
-variable [Ring K] [Bialgebra k K]
+variable [Semiring H] [Bialgebra k H]
+variable [Semiring K] [Bialgebra k K]
 
 /-- The linear dual of a bialgebra morphism, with convolution wrappers on its source and target. -/
 private noncomputable def mapLinear (f : H →ₐc[k] K) :
@@ -87,7 +87,7 @@ private theorem mapAlgHom_apply_apply (f : H →ₐc[k] K)
     (mapAlgHom k f phi).ofConv x = phi.ofConv (f x) :=
   rfl
 
-variable [FiniteDimensional k H] [FiniteDimensional k K]
+variable [Module.Finite k H] [Module.Finite k K]
 
 private theorem dualDistribEquiv_tensor_map_apply (f : H →ₐc[k] K)
     (z : ConvolutionDual k K ⊗[k] ConvolutionDual k K) (x y : H) :
@@ -141,8 +141,8 @@ theorem map_id :
 
 /-- Dualizing a composite reverses the order of the dual morphisms. -/
 @[simp]
-theorem map_comp {L : Type*} [Ring L] [Bialgebra k L]
-    [FiniteDimensional k L] (g : K →ₐc[k] L) (f : H →ₐc[k] K) :
+theorem map_comp {L : Type*} [Semiring L] [Bialgebra k L]
+    [Module.Finite k L] (g : K →ₐc[k] L) (f : H →ₐc[k] K) :
     map k (g.comp f) = (map k f).comp (map k g) := by
   ext phi x
   simp
@@ -161,23 +161,40 @@ theorem mapEquiv_apply (e : H ≃ₐc[k] K) (phi : ConvolutionDual k K) :
     mapEquiv k e phi = map k e phi :=
   (rfl)
 
+/-- The inverse of the dual equivalence is induced by the inverse bialgebra equivalence. -/
+@[simp]
+theorem mapEquiv_symm (e : H ≃ₐc[k] K) :
+    (mapEquiv k e).symm = mapEquiv k e.symm := by
+  apply BialgEquiv.ext
+  intro phi
+  apply (mapEquiv k e).injective
+  calc
+    mapEquiv k e ((mapEquiv k e).symm phi) = phi := BialgEquiv.apply_symm_apply _ _
+    _ = mapEquiv k e (mapEquiv k e.symm phi) := by
+      ext x
+      simp
+
 end Map
 
 section Evaluation
 
 variable (k : Type u) [Field k]
-variable (H : Type v) [Ring H] [Bialgebra k H] [FiniteDimensional k H]
+variable (H : Type v) [Semiring H] [Bialgebra k H] [Module.Finite k H]
 
 /-- Evaluation into the double convolution dual as a linear equivalence. -/
 private noncomputable def evalLinearEquiv :
-    H ≃ₗ[k] ConvolutionDual k (ConvolutionDual k H) :=
-  (Module.evalEquiv k H).trans
-    ((WithConv.linearEquiv k (Module.Dual k H)).dualMap.trans
-      (WithConv.linearEquiv k (Module.Dual k (ConvolutionDual k H))).symm)
+    H ≃ₗ[k] ConvolutionDual k (ConvolutionDual k H) := by
+  letI : Ring H := Algebra.semiringToRing k
+  exact
+    (Module.evalEquiv k H).trans
+      ((WithConv.linearEquiv k (Module.Dual k H)).dualMap.trans
+        (WithConv.linearEquiv k (Module.Dual k (ConvolutionDual k H))).symm)
 
 private theorem evalLinearEquiv_apply_apply (x : H) (phi : ConvolutionDual k H) :
     (evalLinearEquiv k H x).ofConv phi = phi.ofConv x :=
-  rfl
+  by
+    let _ : Ring H := Algebra.semiringToRing k
+    rfl
 
 /-- Evaluation into the double finite dual as an algebra morphism. -/
 private noncomputable def evalAlgHom :
@@ -215,7 +232,9 @@ private noncomputable def evalAlgHom :
 @[simp]
 private theorem evalAlgHom_apply_apply (x : H) (phi : ConvolutionDual k H) :
     (evalAlgHom k H x).ofConv phi = phi.ofConv x :=
-  rfl
+  by
+    let _ : Ring H := Algebra.semiringToRing k
+    rfl
 
 private theorem convMul_apply_eq_dualDistribEquiv
     (phi psi : ConvolutionDual k H) (x : H) :
@@ -282,20 +301,42 @@ private noncomputable def evalBialgHom :
 The equivalence sends `x` to evaluation at `x`. -/
 noncomputable def evalBialgEquiv :
     H ≃ₐc[k] ConvolutionDual k (ConvolutionDual k H) := by
-  let hbij : Function.Bijective (evalBialgHom k H) := (evalLinearEquiv k H).bijective
-  exact
-    { CoalgEquiv.ofBijective (f := (evalBialgHom k H).toCoalgHom) hbij,
-      (AlgEquiv.ofBijective (evalAlgHom k H) hbij).toMulEquiv with }
+  let bH : Bialgebra k H := inferInstance
+  let bHH : Bialgebra k (ConvolutionDual k (ConvolutionDual k H)) := inferInstance
+  -- `ofBijective` selects coalgebra structures through these bialgebra parent instances.
+  -- Make the definitionally equal structures explicit to avoid the finite-dual instance diamond.
+  change @BialgEquiv k _ H (ConvolutionDual k (ConvolutionDual k H)) _ _
+    bH.toAlgebra bHH.toAlgebra bH.toCoalgebra.toCoalgebraStruct
+      bHH.toCoalgebra.toCoalgebraStruct
+  have hbij : Function.Bijective (evalBialgHom k H) := by
+    change Function.Bijective (evalLinearEquiv k H)
+    exact (evalLinearEquiv k H).bijective
+  exact @BialgEquiv.ofBijective k H (ConvolutionDual k (ConvolutionDual k H)) _ _ _
+    bH bHH (evalBialgHom k H) hbij
+
+private theorem evalBialgEquiv_apply (x : H) :
+    evalBialgEquiv k H x = evalBialgHom k H x := by
+  simp only [evalBialgEquiv, id_eq, BialgEquiv.ofBijective_apply]
 
 /-- The double-dual equivalence evaluates a functional at the original element. -/
 @[simp, grind =]
 theorem evalBialgEquiv_apply_apply (x : H) (phi : ConvolutionDual k H) :
     (evalBialgEquiv k H x).ofConv phi = phi.ofConv x :=
-  evalAlgHom_apply_apply k H x phi
+  by
+    rw [evalBialgEquiv_apply]
+    exact evalAlgHom_apply_apply k H x phi
+
+/-- The inverse double-dual equivalence is characterized by evaluation. -/
+@[simp, grind =]
+theorem evalBialgEquiv_symm_apply_apply
+    (Phi : ConvolutionDual k (ConvolutionDual k H)) (phi : ConvolutionDual k H) :
+    phi.ofConv ((evalBialgEquiv k H).symm Phi) = Phi.ofConv phi := by
+  rw [← evalBialgEquiv_apply_apply]
+  simp
 
 /-- Evaluation into the double dual is natural in finite-dimensional bialgebras. -/
-theorem evalBialgEquiv_naturality {K : Type w} [Ring K] [Bialgebra k K]
-    [FiniteDimensional k K] (f : H →ₐc[k] K) :
+theorem evalBialgEquiv_naturality {K : Type w} [Semiring K] [Bialgebra k K]
+    [Module.Finite k K] (f : H →ₐc[k] K) :
     (evalBialgEquiv k K : K →ₐc[k] ConvolutionDual k (ConvolutionDual k K)).comp f =
       (map k (map k f)).comp (evalBialgEquiv k H) := by
   ext x phi
