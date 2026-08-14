@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.Topology.Algebra.Group.Basic
 public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
 public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
@@ -51,6 +52,8 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
   this is exactly the statement that `comap φ` restricts to a map `Cont B → Cont A`; no separate
   set-level lemma is kept for it, since that would be this one after unfolding.
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
+* `TauCeti.ValuationSpectrum.cont_eq_empty_of_one_mem_closure_zero` : if `1` belongs to the
+  closure of zero, then `Cont A` is empty.
 
 ## References
 
@@ -120,6 +123,48 @@ theorem isContinuous_ofValuation_iff {Γ₀ : Type*} [LinearOrderedCommGroupWith
 theorem cont_eq_univ [DiscreteTopology A] : cont A = Set.univ :=
   Set.eq_univ_of_forall fun v ↦
     (mem_cont_iff v).mpr ((isContinuous_def v).mpr (isContinuous_of_discreteTopology v.valuation))
+
+section TopologicalAddGroup
+
+variable [IsTopologicalAddGroup A]
+
+/-- **Wedhorn Proposition 7.49(1) (forward direction).** If `1 ∈ closure {0}` in a topological
+additive group `A`, then `Cont A = ∅`. -/
+theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Set A)) :
+    cont A = ∅ := by
+  ext v
+  simp only [Set.mem_empty_iff_false, iff_false, mem_cont_iff]
+  intro hv
+  have h_open : IsOpen {a : A | v.valuation a < 1} := by
+    have h1 : v.valuation 1 = 1 := v.valuation.map_one
+    have hcont : v.valuation.IsContinuous := (isContinuous_def v).mp hv
+    rw [← h1]
+    exact Valuation.isContinuous_def.mp hcont 1
+  have h_sub_open : IsOpen {a : A | v.valuation (a - 1) < 1} :=
+    h_open.preimage (continuous_sub_right 1)
+  have h1_mem : (1 : A) ∈ {a : A | v.valuation (a - 1) < 1} := by
+    simp only [Set.mem_ofPred_eq, sub_self, Valuation.map_zero]
+    exact zero_lt_one
+  have h0_mem : (0 : A) ∈ {a : A | v.valuation (a - 1) < 1} := by
+    obtain ⟨x, hx_sub, hx_zero⟩ := mem_closure_iff.mp h _ h_sub_open h1_mem
+    rw [Set.mem_singleton_iff] at hx_zero
+    subst hx_zero
+    exact hx_sub
+  rw [Set.mem_ofPred_eq, zero_sub, Valuation.map_neg] at h0_mem
+  have h1_val : v.valuation 1 = 1 := v.valuation.map_one
+  rw [h1_val] at h0_mem
+  exact lt_irrefl 1 h0_mem
+
+end TopologicalAddGroup
+
+/-- Over a zero ring, `Cont A = ∅`. -/
+theorem cont_eq_empty_of_subsingleton [Subsingleton A] : cont A = ∅ := by
+  ext v
+  simp only [Set.mem_empty_iff_false, iff_false]
+  intro _
+  exact v.toValuativeRel.not_vle_one_zero (by
+    rw [Subsingleton.elim (1 : A) 0]
+    exact v.toValuativeRel.vle_refl 0)
 
 /-- **Wedhorn Remark 7.9.** A continuous ring homomorphism pulls continuous points back to
 continuous points, so it restricts to a map `Cont B → Cont A`. -/

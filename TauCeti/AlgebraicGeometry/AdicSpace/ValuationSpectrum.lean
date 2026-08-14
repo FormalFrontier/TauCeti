@@ -30,6 +30,8 @@ We define the valuation spectrum `Spv A` following Wedhorn, *Adic Spaces*
   Lemma 7.5, that the rational opens are stable under finite intersection.
 * `TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vlt_one` : the sub-unit locus of a set
   of ring elements is closed — the closedness behind Wedhorn's Corollary 7.12.
+* `TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vle_zero` : the locus where every
+  element of a set has value at most zero is closed.
 * `TauCeti.ValuationSpectrum.quotientLift 𝔞 h` : Lift the implicitly inferred point `v` with
   `𝔞 ≤ supp v` to `Spv (A ⧸ 𝔞)`.
 * `TauCeti.ValuationSpectrum.localizationComapSection S B v hS` : Lift `v` to a localization
@@ -177,6 +179,20 @@ theorem isClosed_setOfPred_forall_vlt_one (S : Set A) :
       exact ⟨a, haS, h1⟩
   rw [h]
   exact isOpen_biUnion fun a _ ↦ isOpen_basicOpen 1 a
+
+/-- **The locus of points where `v(a) ≤ 0` for all `a ∈ S` is closed in `Spv A`.** The complement
+is the union over `a ∈ S` of the basic opens `Spv(A)(a/a)` = `{v | ¬ v(a) ≤ 0}`. -/
+theorem isClosed_setOfPred_forall_vle_zero (S : Set A) :
+    IsClosed {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0} := by
+  rw [← isOpen_compl_iff]
+  have h : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0}ᶜ = ⋃ a ∈ S, basicOpen a a := by
+    ext v
+    simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, not_forall, Set.mem_iUnion,
+      mem_basicOpen_iff, exists_prop]
+    refine ⟨fun ⟨a, haS, h0⟩ ↦ ⟨a, haS, v.toValuativeRel.vle_refl a, h0⟩,
+      fun ⟨a, haS, _, h0⟩ ↦ ⟨a, haS, h0⟩⟩
+  rw [h]
+  exact isOpen_biUnion fun a _ ↦ isOpen_basicOpen a a
 
 /-- `Spv A` is T0: inseparable points agree on every basic open, hence carry the same
 valuative relation. -/
