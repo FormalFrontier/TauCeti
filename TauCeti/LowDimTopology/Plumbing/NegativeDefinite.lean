@@ -202,7 +202,7 @@ theorem IsNegativeDefinite.finite_setOf_le_intersectionForm_self (h : P.IsNegati
     -- the square of the `v`-th coordinate of `A x` is bounded by a constant depending on `c`
     have hcs : (P.intersectionMatrix *ᵥ x) v ^ 2 ≤ P.intersectionForm x x * P.weight v := by
       have hle := h.sq_intersectionForm_le x (Pi.single v 1)
-      rwa [P.intersectionForm_single_right_eq_mulVec x v, P.intersectionForm_single v v,
+      rwa [P.intersectionForm_single_right_eq_mulVec_apply x v, P.intersectionForm_single v v,
         P.intersectionMatrix_diag] at hle
     have hbound : (P.intersectionMatrix *ᵥ x) v ^ 2 ≤ N := by
       refine hcs.trans ((mul_le_mul_of_nonpos_right hxx hweight.le).trans ?_)

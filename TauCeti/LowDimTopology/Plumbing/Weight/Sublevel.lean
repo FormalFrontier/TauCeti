@@ -253,6 +253,7 @@ and the lattice point together preserves the weight, so it permutes the range.
 Conjugation is an involution on characteristic covectors, and
 `characteristicWeight_conjugate_neg` says `χ_{-k}(-x) = χ_k(x)`; hence the two weight functions
 have the same range, and in particular the same infimum. -/
+@[simp]
 theorem sInfCharacteristicWeight_conjugate (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) :
     P.sInfCharacteristicWeight (P.conjugate k) = P.sInfCharacteristicWeight k := by
