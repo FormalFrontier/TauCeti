@@ -5,8 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Instances.Sphere
+public import Mathlib.LinearAlgebra.Ray
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
-import Mathlib.Geometry.Manifold.VectorBundle.ContMDiffSection
+public import Mathlib.Geometry.Manifold.VectorBundle.ContMDiffSection
 
 /-!
 # Geometric presentation of knots and links
@@ -16,11 +17,14 @@ GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4
 done properly"). Knots have no single privileged representation; the geometric presentation
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
 manifold $M$. Oriented presentations carry a manifold orientation of the circle source,
-represented by a smooth nowhere-zero tangent vector field, and framed presentations in a
-3-manifold additionally carry a framed tubular embedding.
+represented as an equivalence class of smooth nowhere-zero tangent vector fields modulo positive
+scaling, and framed presentations in a 3-manifold additionally carry a framed tubular embedding.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
+* `TauCeti.Sphere1.NonvanishingTangentField`: smooth nowhere-zero tangent vector fields on $S^1$.
+* `TauCeti.Sphere1.Orientation`: manifold orientations of $S^1$ as the quotient of nonvanishing
+  tangent fields under pointwise positive scaling.
 * `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: smooth knots carrying a source orientation.
 * `TauCeti.SmoothKnot`: framed, oriented smooth knots carrying a tubular embedding.
@@ -31,6 +35,7 @@ This file introduces:
 
 ## Main definitions
 
+* `TauCeti.Sphere1.Orientation`: manifold orientation of $S^1$.
 * `TauCeti.UnorientedSmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: oriented smooth geometric presentations.
 * `TauCeti.SmoothKnot`: framed, oriented smooth geometric presentations.
@@ -41,7 +46,9 @@ This file introduces:
 * W. B. R. Lickorish, *An Introduction to Knot Theory*, Springer GTM 175 (1997).
 -/
 
-public section
+@[expose] public section
+
+noncomputable section
 
 open scoped Manifold ContDiff
 open Set
@@ -53,6 +60,94 @@ public abbrev Sphere1 : Type := Metric.sphere (0 : EuclideanSpace ℝ (Fin 2)) 1
 
 /-- The standard 3-sphere $S^3 \subset \mathbb{R}^4$ as a subset of Euclidean space. -/
 public abbrev Sphere3 : Type := Metric.sphere (0 : EuclideanSpace ℝ (Fin 4)) 1
+
+/-- A smooth nowhere-zero tangent vector field on the standard 1-sphere `Sphere1`. -/
+structure Sphere1.NonvanishingTangentField where
+  /-- The tangent vector at each point of the circle source. -/
+  toFun : ∀ x : Sphere1, TangentSpace (𝓡 1) x
+  /-- The vector field is nowhere zero. -/
+  ne_zero' (x : Sphere1) : toFun x ≠ 0
+  /-- The vector field varies smoothly around the circle. -/
+  smooth' : ContMDiff (𝓡 1) (𝓡 1).tangent ∞
+    (fun x ↦ (⟨x, toFun x⟩ : TangentBundle (𝓡 1) Sphere1))
+
+namespace Sphere1.NonvanishingTangentField
+
+instance : CoeFun Sphere1.NonvanishingTangentField
+    (fun _ ↦ ∀ x : Sphere1, TangentSpace (𝓡 1) x) where
+  coe v := v.toFun
+
+@[simp]
+theorem coe_mk (f : ∀ x : Sphere1, TangentSpace (𝓡 1) x) (hne) (hsmooth) :
+    ⇑(mk f hne hsmooth) = f := rfl
+
+/-- Negating a nowhere-zero tangent vector field on `Sphere1`. -/
+def neg (v : Sphere1.NonvanishingTangentField) : Sphere1.NonvanishingTangentField where
+  toFun x := -v.toFun x
+  ne_zero' x := neg_ne_zero.mpr (v.ne_zero' x)
+  smooth' := ContMDiff.neg_section v.smooth'
+
+instance : Neg Sphere1.NonvanishingTangentField where
+  neg := neg
+
+@[simp]
+theorem coe_neg (v : Sphere1.NonvanishingTangentField) (x : Sphere1) :
+    (-v) x = -v x := rfl
+
+/-- Two nonvanishing tangent vector fields on `Sphere1` determine the same orientation if they
+belong to the same ray (are positive multiples of each other) at every point. -/
+def SameOrientation (v₁ v₂ : Sphere1.NonvanishingTangentField) : Prop :=
+  ∀ x : Sphere1, SameRay ℝ (v₁ x) (v₂ x)
+
+/-- Equivalence relation for positive-ray scaling of nonvanishing tangent fields on `Sphere1`. -/
+instance setoid : Setoid Sphere1.NonvanishingTangentField where
+  r := SameOrientation
+  iseqv := {
+    refl := fun v x ↦ SameRay.refl (v x)
+    symm := fun {_ _} h x ↦ (h x).symm
+    trans := fun {_ v₂ _} h₁ h₂ x ↦ (h₁ x).trans (h₂ x) fun hzero ↦ (v₂.ne_zero' x hzero).elim
+  }
+
+theorem sameOrientation_neg {v₁ v₂ : Sphere1.NonvanishingTangentField}
+    (h : SameOrientation v₁ v₂) : SameOrientation (-v₁) (-v₂) :=
+  fun x ↦ sameRay_neg_iff.2 (h x)
+
+end Sphere1.NonvanishingTangentField
+
+/-- A manifold orientation of the standard 1-sphere `Sphere1`, defined as the equivalence class
+of smooth nowhere-zero tangent vector fields modulo pointwise positive scaling (`SameRay`). -/
+def Sphere1.Orientation : Type :=
+  Quotient Sphere1.NonvanishingTangentField.setoid
+
+namespace Sphere1.Orientation
+
+/-- The circle orientation represented by a smooth nowhere-zero tangent field. -/
+def ofField (v : Sphere1.NonvanishingTangentField) : Sphere1.Orientation :=
+  ⟦v⟧
+
+/-- Induction principle for circle orientations. -/
+@[elab_as_elim]
+theorem ind {P : Sphere1.Orientation → Prop}
+    (h : ∀ v : Sphere1.NonvanishingTangentField, P (ofField v)) (o : Sphere1.Orientation) : P o :=
+  Quotient.ind h o
+
+/-- Reversing a circle orientation. -/
+instance : Neg Sphere1.Orientation where
+  neg := Quotient.map (fun v ↦ -v)
+    (fun _ _ h ↦ Sphere1.NonvanishingTangentField.sameOrientation_neg h)
+
+@[simp]
+theorem neg_ofField (v : Sphere1.NonvanishingTangentField) :
+    -ofField v = ofField (-v) := rfl
+
+@[simp]
+theorem neg_neg (o : Sphere1.Orientation) : - (- o) = o := by
+  induction o using ind with | h v =>
+  simp only [neg_ofField]
+  refine Quotient.sound (fun x ↦ ?_)
+  simp only [Sphere1.NonvanishingTangentField.coe_neg, _root_.neg_neg, SameRay.rfl]
+
+end Sphere1.Orientation
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H]
@@ -66,43 +161,37 @@ public abbrev UnorientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [T
   SmoothEmbedding (𝓡 1) I ∞ Sphere1 M
 
 /-- An oriented smooth-knot presentation consists of an underlying smooth embedding together with
-a smooth nowhere-zero tangent vector field on its circle source. In one dimension, such a field is
-equivalent to a manifold orientation and records a direction around the knot. -/
+a manifold orientation of its circle source `Sphere1`. -/
 structure OrientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
     [ChartedSpace H M] where
   /-- The underlying unoriented smooth knot. -/
   knot : UnorientedSmoothKnot I M
-  /-- The chosen tangent direction at each point of the circle source. -/
-  direction : ∀ x : Sphere1, TangentSpace (𝓡 1) x
-  /-- The chosen tangent direction never vanishes. -/
-  direction_ne_zero (x : Sphere1) : direction x ≠ 0
-  /-- The chosen tangent direction varies smoothly around the circle. -/
-  direction_smooth : ContMDiff (𝓡 1) (𝓡 1).tangent ∞
-    (fun x ↦ (⟨x, direction x⟩ : TangentBundle (𝓡 1) Sphere1))
+  /-- The chosen manifold orientation of the circle source. -/
+  orientation : Sphere1.Orientation
 
 namespace OrientedSmoothKnot
 
 /-- Forget the orientation of an oriented smooth knot. -/
 def forgetOrientation (K : OrientedSmoothKnot I M) : UnorientedSmoothKnot I M := K.knot
 
-/-- The tangent direction along the embedded knot induced by its source orientation. -/
-noncomputable def tangentDirection (K : OrientedSmoothKnot I M) (x : Sphere1) :
-    TangentSpace I (K.knot x) :=
-  mfderiv (𝓡 1) I K.knot x (K.direction x)
-
 /-- Reverse the orientation of an oriented smooth knot. -/
-noncomputable def reverseOrientation (K : OrientedSmoothKnot I M) : OrientedSmoothKnot I M where
+def reverseOrientation (K : OrientedSmoothKnot I M) : OrientedSmoothKnot I M where
   knot := K.knot
-  direction x := -K.direction x
-  direction_ne_zero x := neg_ne_zero.mpr (K.direction_ne_zero x)
-  direction_smooth := K.direction_smooth.neg_section
+  orientation := -K.orientation
 
 @[simp]
-theorem tangentDirection_reverseOrientation (K : OrientedSmoothKnot I M) (x : Sphere1) :
-    tangentDirection I M (reverseOrientation I M K) x = -tangentDirection I M K x := by
-  change (mfderiv (𝓡 1) I K.knot x) (-K.direction x) =
-    -(mfderiv (𝓡 1) I K.knot x) (K.direction x)
-  exact map_neg _ _
+theorem forgetOrientation_reverseOrientation (K : OrientedSmoothKnot I M) :
+    (reverseOrientation I M K).forgetOrientation = K.forgetOrientation := rfl
+
+@[simp]
+theorem orientation_reverseOrientation (K : OrientedSmoothKnot I M) :
+    (reverseOrientation I M K).orientation = -K.orientation := rfl
+
+@[simp]
+theorem reverseOrientation_reverseOrientation (K : OrientedSmoothKnot I M) :
+    reverseOrientation I M (reverseOrientation I M K) = K := by
+  cases K
+  simp [reverseOrientation]
 
 end OrientedSmoothKnot
 
