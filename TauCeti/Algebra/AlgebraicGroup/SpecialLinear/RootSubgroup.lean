@@ -227,7 +227,11 @@ theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i ≠ j) :
     (R := R) (A := A) hij f
   have hGL := GeneralLinear.pointsMulEquiv_rootSubgroupPoints
     (R := R) (A := A) hij f
-  rw [hSL, hGL, transvectionUnit_def]
+  rw [hSL, hGL]
+  apply Matrix.GeneralLinearGroup.ext
+  intro a b
+  rw [coe_transvectionUnit]
+  rfl
 
 /-- **The root subgroup of `SLₙ` attached to `εᵢ - εⱼ`**, as a morphism of affine group
 schemes over the base ring. -/

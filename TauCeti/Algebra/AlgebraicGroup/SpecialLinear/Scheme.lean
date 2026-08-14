@@ -80,6 +80,23 @@ theorem groupSchemeι_def :
   unfold groupSchemeι
   rfl
 
+/-- The determinant is the unit section after restricting it along the named special-linear
+inclusion. -/
+theorem groupSchemeι_comp_determinant :
+    groupSchemeι R n ≫ eqToHom (GeneralLinear.groupScheme_def R n) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (GeneralLinear.determinantCoordinateMap R n).op =
+      eqToHom (groupScheme_def R n) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (_root_.CommHopfAlgCat.ofHom
+            ((Bialgebra.unitBialgHom R (coordinateHopfAlgebra R n)).comp
+              (Bialgebra.counitBialgHom R
+                (_root_.CommHopfAlgCat.of R
+                  (MonoidAlgebra R (Multiplicative ℤ)))))).op := by
+  rw [groupSchemeι_def]
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  rw [CommHopfAlgCat.kernelSpecι_comp]
+
 /-- The special-linear group scheme is a closed subgroup scheme of the named general-linear
 group scheme. -/
 instance isClosedImmersion_groupSchemeι :
@@ -182,6 +199,35 @@ theorem schemePointsMulEquiv_apply
         ((groupSchemePointMulEquiv n A).symm p) := by
   unfold schemePointsMulEquiv
   rfl
+
+private lemma groupSchemePointMulEquiv_comp_groupSchemeι
+    (q : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
+    groupSchemePointMulEquiv n A q ≫ (groupSchemeι R n).hom.hom =
+      GeneralLinear.groupSchemePointMulEquiv n A
+        (CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
+          (CommAlgCat.of R A) q) := by
+  rw [groupSchemeι_def, CommHopfAlgCat.kernelSpecι_def,
+    CommHopfAlgCat.quotientSpecι_def]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
+    (R := R) A (GeneralLinear.groupScheme_def R n) (groupScheme_def R n)
+      (GeneralLinear.groupSchemePointMulEquiv n A) (groupSchemePointMulEquiv n A)
+      (GeneralLinear.groupSchemePointMulEquiv_apply_left n A)
+      (groupSchemePointMulEquiv_apply_left n A) (coordinateMap R n) q
+
+/-- Composing a special-linear scheme point with the named inclusion into the general-linear
+group scheme is Mathlib's canonical inclusion `Matrix.SpecialLinearGroup.toGL`. -/
+@[simp]
+theorem schemePointsMulEquiv_comp_groupSchemeι
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R n).X) :
+    GeneralLinear.schemePointsMulEquiv n A (p ≫ (groupSchemeι R n).hom.hom) =
+      Matrix.SpecialLinearGroup.toGL (schemePointsMulEquiv n A p) := by
+  obtain ⟨q, rfl⟩ := (groupSchemePointMulEquiv n A).surjective p
+  rw [groupSchemePointMulEquiv_comp_groupSchemeι,
+    GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
+    schemePointsMulEquiv_groupSchemePointMulEquiv]
+  exact pointsMulEquiv_toGL (R := R) (A := A) n q
 
 end SchemePoints
 

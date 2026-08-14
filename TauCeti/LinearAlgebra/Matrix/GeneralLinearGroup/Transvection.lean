@@ -5,10 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- `Matrix.transvection` and its product law are the subject of this file.
-public import Mathlib.LinearAlgebra.Matrix.Transvection
--- `Matrix.SpecialLinearGroup.transvection` and `Matrix.SpecialLinearGroup.toGL` are what the
--- invertible transvection below is assembled from.
-public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
+public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 -- The group-commutator bracket `⁅x, y⁆` occurs in the statements below.
@@ -144,12 +141,6 @@ torus. -/
 def transvectionUnit (hij : i ≠ j) (c : A) : GL n A :=
   SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c)
 
-/-- Unfolding `transvectionUnit` to `SpecialLinearGroup.transvection`. -/
-theorem transvectionUnit_def (hij : i ≠ j) (c : A) :
-    transvectionUnit hij c = SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c) := by
-  unfold transvectionUnit
-  rfl
-
 /-- The matrix underlying `TauCeti.transvectionUnit` is the transvection itself. -/
 @[simp]
 theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
@@ -180,25 +171,6 @@ theorem det_transvectionUnit (hij : i ≠ j) (c : A) :
   SpecialLinearGroup.coeToGL_det _
 
 /-- The transvections at a fixed pair of distinct indices form a one-parameter subgroup of
-`Matrix.SpecialLinearGroup n A`, isomorphic to the additive group of `A`. -/
-def _root_.Matrix.SpecialLinearGroup.transvectionHom (hij : i ≠ j) :
-    Multiplicative A →* Matrix.SpecialLinearGroup n A where
-  toFun c := Matrix.SpecialLinearGroup.transvection hij (Multiplicative.toAdd c)
-  map_one' := Matrix.SpecialLinearGroup.transvection_coeff_zero hij
-  map_mul' c d := Matrix.SpecialLinearGroup.transvection_add hij
-    (Multiplicative.toAdd c) (Multiplicative.toAdd d)
-
-/-- The value of the determinant-one root subgroup homomorphism is the transvection of the
-parameter. -/
-@[simp]
-theorem _root_.Matrix.SpecialLinearGroup.transvectionHom_apply (hij : i ≠ j)
-    (c : Multiplicative A) :
-    Matrix.SpecialLinearGroup.transvectionHom hij c =
-      Matrix.SpecialLinearGroup.transvection hij (Multiplicative.toAdd c) := by
-  unfold Matrix.SpecialLinearGroup.transvectionHom
-  rfl
-
-/-- The transvections at a fixed pair of distinct indices form a one-parameter subgroup of
 `GL n A`, isomorphic to the additive group of `A`. This is the root subgroup of `εᵢ - εⱼ`. -/
 def transvectionHom (hij : i ≠ j) : Multiplicative A →* GL n A :=
   (SpecialLinearGroup.toGL (n := n) (R := A)).comp (SpecialLinearGroup.transvectionHom hij)
@@ -207,15 +179,7 @@ def transvectionHom (hij : i ≠ j) : Multiplicative A →* GL n A :=
 @[simp]
 theorem transvectionHom_apply (hij : i ≠ j) (c : Multiplicative A) :
     transvectionHom hij c = transvectionUnit hij (Multiplicative.toAdd c) :=
-  (rfl)
-
-/-- Distinct parameters give distinct determinant-one transvections. -/
-theorem _root_.Matrix.SpecialLinearGroup.transvection_injective (hij : i ≠ j) :
-    Function.Injective
-      (SpecialLinearGroup.transvection hij : A → Matrix.SpecialLinearGroup n A) := fun c d h => by
-  have h' := congrArg (fun s : Matrix.SpecialLinearGroup n A => (s : Matrix n n A) i j) h
-  simpa [Matrix.SpecialLinearGroup.transvection_coe, Matrix.one_apply,
-    Matrix.single_apply, hij] using h'
+  by simp [transvectionHom, transvectionUnit]
 
 /-- Distinct parameters give distinct transvections: the parameter is the `(i, j)` entry. So the
 root subgroup is a copy of the additive group of `A` inside `GL n A`, not a quotient of it. -/
@@ -227,8 +191,9 @@ theorem transvectionUnit_injective (hij : i ≠ j) :
 theorem transvectionHom_injective (hij : i ≠ j) :
     Function.Injective (transvectionHom (A := A) hij) := by
   intro c d h
-  simpa only [ofAdd_toAdd] using
-    congrArg Multiplicative.ofAdd (transvectionUnit_injective hij h)
+  apply Multiplicative.toAdd.injective
+  apply transvectionUnit_injective hij
+  simpa only [transvectionHom_apply] using h
 
 /-- Transvections at index pairs that do not chain commute in `GL n A`. -/
 theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
@@ -265,18 +230,6 @@ end Unit
 section Map
 
 variable [Fintype n] {B : Type v} [CommRing B]
-
-/-- A determinant-one transvection is natural in the base ring: applying a ring homomorphism
-entrywise to `SpecialLinearGroup.transvection hij c` gives
-`SpecialLinearGroup.transvection hij (f c)`. -/
-@[simp]
-theorem _root_.Matrix.SpecialLinearGroup.map_transvection (f : A →+* B) (hij : i ≠ j) (c : A) :
-    SpecialLinearGroup.map f (SpecialLinearGroup.transvection hij c) =
-      SpecialLinearGroup.transvection hij (f c) := by
-  ext a b
-  simp [SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply,
-    SpecialLinearGroup.transvection_coe, Matrix.one_apply, Matrix.single_apply,
-    apply_ite f]
 
 /-- A transvection is natural in the base ring: applying a ring homomorphism entrywise to
 `xᵢⱼ(c)` gives `xᵢⱼ(f c)`. -/
