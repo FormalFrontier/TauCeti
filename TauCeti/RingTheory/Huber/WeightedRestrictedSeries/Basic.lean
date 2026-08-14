@@ -68,8 +68,8 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
   ring of restricted power series (Wedhorn Example 5.54).
 * `TauCeti.Huber.weightedPolynomials`, the polynomials as a subring of `A⟨X⟩_T`, with
   `mem_weightedPolynomials_iff` identifying it with finite support and the generators
-  `weightedC`/`weightedX` in it; `TauCeti.Huber.dense_weightedPolynomials` is Wedhorn 5.49, read
-  off the predicate-level `exists_mvPolynomial_forall_coeff_sub_mem`.
+  `weightedC`/`weightedX` in it; `TauCeti.Huber.dense_weightedPolynomials` is Wedhorn 5.49(1),
+  read off the predicate-level `exists_mvPolynomial_forall_coeff_sub_mem`.
 * `TauCeti.Huber.weightedPolynomialEquiv`, with `discreteTopology_weightedRestrictedSubring`
   and `weightedPolynomials_eq_top`: over a discrete ring the weighted topology is discrete and
   `A⟨X⟩_T` is exactly the polynomial ring.
@@ -106,6 +106,21 @@ those coefficients to vanish; the closure lemmas below need no nonemptiness hypo
 This construction is not the same as retopologising the ordinary `A⟨X⟩` by transporting along a
 substitution `X ↦ f X`: there the weight multiplies the coefficient rather than the
 neighbourhood, and the carrier does not vary with `T`. Here the carrier itself depends on `T`.
+
+Nor is it Mathlib's `MvPowerSeries.IsRestricted`, despite that also being a weighted condition.
+Mathlib weights by a polyradius `c : σ → ℝ` over a *normed* ring, asking that
+`‖coeff t f‖ * ∏ i, c i ^ t i` tend to `0` along the cofinite filter. A Huber ring's topology is
+nonarchimedean but in general carries no norm, so no polyradius is available to state that
+condition, and the weight family here is a family of *subsets* `Tᵢ ⊆ A` acting on neighbourhood
+subgroups rather than a family of reals scaling coefficient norms. The two do agree at the
+trivial weight when the norm is *ultrametric*: the balls `{a ; ‖a‖ < r}` are then additive
+subgroups, and every open subgroup contains one, so quantifying over all open subgroups is the
+same as quantifying over the balls and the condition becomes `‖coeff ν f‖ → 0` along the
+cofinite filter. Over a general normed ring they do not agree: over `ℝ`, as above, the condition
+here is vacuous while Mathlib's still asks for `‖coeff ν f‖ → 0`. The unweighted predicate of
+`TauCeti/RingTheory/Huber/RestrictedPowerSeries.lean` is a topological limit rather than a
+condition on subgroups, and that file remarks on the comparison for it — in prose, not as a
+proved declaration. Neither notion is a special case of the other in general.
 
 The finite-family absorption fact the multiplicative arguments run on — finitely many fixed
 elements are absorbed into their own targets by a single open subgroup — mentions no weight, so
@@ -144,8 +159,9 @@ The API layout — the `isWeightedRestricted_zero/one/add/neg/mul` series, the s
 
 ## References
 
-* [T. Wedhorn, *Adic Spaces*][wedhorn_adic], Remark and Definition 5.48, equation (5.6.1), and
-  Example 5.54 for the case `Tᵢ = {1}`.
+* [T. Wedhorn, *Adic Spaces*][wedhorn_adic], Remark and Definition 5.48, equation (5.6.1),
+  Proposition 5.49(1) for the density of the polynomials, and Example 5.54 for the case
+  `Tᵢ = {1}`.
 -/
 
 open Filter Pointwise Topology
@@ -718,7 +734,7 @@ theorem weightedRestrictedSubring_one_weight [NonarchimedeanRing A] :
       = restrictedMvPowerSeriesSubring k A := by
   ext f
   rw [mem_weightedRestrictedSubring, mem_restrictedMvPowerSeriesSubring,
-    isWeightedRestricted_one_weight_iff, isRestricted_iff]
+    isWeightedRestricted_one_weight_iff, isRestricted_iff_coeff]
 
 /-- The neighbourhood subgroups are monotone in `U`. -/
 theorem weightedNhd_mono [NonarchimedeanRing A] {T : Fin k → Set A} {hT : IsWeightFamily T}
@@ -862,7 +878,7 @@ theorem isWeightedRestricted_toMvPowerSeries (T : Fin k → Set A) (p : MvPolyno
     IsWeightedRestricted T (p : MvPowerSeries (Fin k) A) :=
   isWeightedRestricted_of_finite_support T (finite_support_toMvPowerSeries p)
 
-/-- **Wedhorn 5.49, the approximation step**, at predicate level: a `T`-restricted series is
+/-- **Wedhorn 5.49(1), the approximation step**, at predicate level: a `T`-restricted series is
 approximated by a polynomial, coefficientwise inside `Tν · U`. Neither a nonarchimedean
 hypothesis on `A` nor `IsWeightFamily T` is needed — only the ambient `[CommRing A]` and
 `[TopologicalSpace A]` that `OpenAddSubgroup A` already asks for. -/
@@ -951,7 +967,7 @@ theorem weightedX_mem_weightedPolynomials [NonarchimedeanRing A] {T : Fin k → 
     {hT : IsWeightFamily T} (i : Fin k) : weightedX T hT i ∈ weightedPolynomials T hT :=
   ⟨MvPolynomial.X i, weightedPolynomialHom_X i⟩
 
-/-- **Wedhorn 5.49**: the polynomials are dense in `A⟨X⟩_T`. -/
+/-- **Wedhorn 5.49(1)**: the polynomials are dense in `A⟨X⟩_T`. -/
 theorem dense_weightedPolynomials [NonarchimedeanRing A] {T : Fin k → Set A}
     (hT : IsWeightFamily T) :
     Dense (weightedPolynomials T hT : Set (weightedRestrictedSubring T hT)) := by
