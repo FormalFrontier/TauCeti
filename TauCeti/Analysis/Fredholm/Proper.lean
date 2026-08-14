@@ -9,11 +9,12 @@ public import Mathlib.Analysis.Normed.Module.FiniteDimension
 public import TauCeti.Analysis.Fredholm.Estimate
 
 /-!
-# A map with Fredholm derivative is proper near the point
+# A map with upper semi-Fredholm derivative is proper near the point
 
 A continuous map between infinite-dimensional Banach spaces need not be proper: a Fredholm linear
 map with nonzero kernel has a noncompact fibre over zero. A map whose derivative at a point `a` is
-**Fredholm** is nonetheless proper on a neighbourhood of `a`:
+closed-range with finite-dimensional complemented kernel — in particular, a **Fredholm**
+operator — is nonetheless proper on a neighbourhood of `a`:
 
 `∃ N ∈ 𝓝 a, ∀ L compact, N ∩ f ⁻¹' L is compact`.
 
@@ -25,7 +26,7 @@ recorded here is that the preimage `f ⁻¹' L` of a compact set — in particul
 **locally compact** space, even though the Banach space it sits inside is not.
 
 The proof is quantitative rather than chart-theoretic. The a priori estimate
-`ContinuousLinearMap.IsFredholm.exists_projection_norm_le` supplies a continuous projection `P`
+`ContinuousLinearMap.exists_projection_norm_le` supplies a continuous projection `P`
 of `E` onto `ker f'` and a constant `C > 0` with `‖x‖ ≤ C * ‖f' x‖ + ‖P x‖`. On a small enough
 closed ball `N` around `a`, strict differentiability turns this into the two-sided bound
 
@@ -39,8 +40,8 @@ sends `N ∩ f ⁻¹' L` into a compact box; being anti-Lipschitz, it reflects t
 ## Main declarations
 
 * `HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage`: local properness.
-* `HasStrictFDerivAt.exists_mem_nhds_isCompact_inter_preimage_singleton`: the fibre through
-  a point is compact near that point.
+* `HasStrictFDerivAt.exists_mem_nhds_isCompact_inter_preimage_singleton`: an arbitrary fibre is
+  compact near the point of differentiation.
 * `TauCeti.locallyCompactSpace_preimage` and `TauCeti.locallyCompactSpace_preimage_singleton`: the
   preimage of a compact set, and in particular a level set, along which the derivative is Fredholm
   is locally compact.
@@ -64,17 +65,20 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpac
   [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
 variable {f : E → F} {f' : E →L[𝕜] F} {a : E}
 
-/-- **Local properness of a map with Fredholm derivative.** If `f` is strictly differentiable at
-`a` and its derivative there is a Fredholm operator, then `f` is proper on a neighbourhood `N` of
-`a`: the part of the preimage of any compact set lying in `N` is compact.
+/-- **Local properness of a map with upper semi-Fredholm derivative.** If `f` is strictly
+differentiable at `a` and its derivative there has closed range and finite-dimensional
+complemented kernel, then `f` is proper on a neighbourhood `N` of `a`: the part of the preimage of
+any compact set lying in `N` is compact.
 
-Compare `ContinuousLinearMap.IsFredholm.exists_projection_norm_le`, the linear estimate this is
-read off from: the kernel direction, in which `f'` loses all control, is finite-dimensional, so
-the loss of compactness it causes is harmless. -/
+Compare `ContinuousLinearMap.exists_projection_norm_le`, the linear estimate this is read off
+from: the kernel direction, in which `f'` loses all control, is finite-dimensional, so the loss of
+compactness it causes is harmless. -/
 theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
-    (hf : HasStrictFDerivAt f f' a) (hf' : f'.IsFredholm) :
+    (hf : HasStrictFDerivAt f f' a) (hclosed : IsClosed (f'.range : Set F))
+    (hfinite : FiniteDimensional 𝕜 f'.ker) (hcompl : f'.ker.ClosedComplemented) :
     ∃ N ∈ 𝓝 a, ∀ L : Set F, IsCompact L → IsCompact (N ∩ f ⁻¹' L) := by
-  obtain ⟨P, C, hC, _hPidemp, hPrange, hest⟩ := hf'.exists_projection_norm_le
+  obtain ⟨P, C, hC, _hPidemp, hPrange, hest⟩ :=
+    f'.exists_projection_norm_le hclosed hcompl
   have hCpos : (0 : ℝ) < 2 * C := by linarith
   set ε : ℝ≥0 := ⟨(2 * C)⁻¹, inv_nonneg.2 hCpos.le⟩
   have hεcoe : (ε : ℝ) = (2 * C)⁻¹ := rfl
@@ -112,7 +116,7 @@ theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
     intro x
     rw [← hPrange]
     exact ⟨x, rfl⟩
-  have : FiniteDimensional 𝕜 f'.ker := hf'.finite_ker
+  let _ : FiniteDimensional 𝕜 f'.ker := hfinite
   have : ProperSpace f'.ker := FiniteDimensional.proper 𝕜 f'.ker
   set Kp : Set E := f'.ker.subtypeL '' Metric.closedBall (0 : f'.ker) (‖P‖ * (‖a‖ + δ / 2))
   have hKpc : IsCompact Kp :=
@@ -165,30 +169,37 @@ theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
   exact htb.isCompact_of_isClosed
     (hcontOn.preimage_isClosed_of_isClosed Metric.isClosed_closedBall hL.isClosed)
 
-/-- The fibre of `f` through a point at which the derivative is Fredholm is compact near that
-point. This is the case `L = {f a}` of local properness, and it is the local finiteness statement
-that a moduli space of a Fredholm problem inherits before any global energy bound is imposed. -/
+/-- An arbitrary fibre of `f` is compact near a point where the derivative has closed range and
+finite-dimensional complemented kernel. This is the case `L = {c}` of local properness, and it is
+the local finiteness statement that a moduli space of a Fredholm problem inherits before any
+global energy bound is imposed. -/
 theorem _root_.HasStrictFDerivAt.exists_mem_nhds_isCompact_inter_preimage_singleton
-    (hf : HasStrictFDerivAt f f' a) (hf' : f'.IsFredholm) (c : F) :
+    (hf : HasStrictFDerivAt f f' a) (hclosed : IsClosed (f'.range : Set F))
+    (hfinite : FiniteDimensional 𝕜 f'.ker) (hcompl : f'.ker.ClosedComplemented) (c : F) :
     ∃ N ∈ 𝓝 a, IsCompact (N ∩ f ⁻¹' {c}) := by
-  obtain ⟨N, hN, hprop⟩ := hf.exists_mem_nhds_forall_isCompact_inter_preimage hf'
+  obtain ⟨N, hN, hprop⟩ :=
+    hf.exists_mem_nhds_forall_isCompact_inter_preimage hclosed hfinite hcompl
   exact ⟨N, hN, hprop {c} isCompact_singleton⟩
 
-/-- **The preimage of a compact set under a map with Fredholm derivative is locally compact.** If
-`f` is strictly differentiable at each point of `f ⁻¹' L` with Fredholm derivative there, and `L`
-is compact, then `f ⁻¹' L`, with the topology induced from `E`, is a locally compact space.
+/-- **The preimage of a compact set under a map with upper semi-Fredholm derivative is locally
+compact.** If `f` is strictly differentiable at each point of `f ⁻¹' L`, its derivative there has
+closed range and finite-dimensional complemented kernel, and `L` is compact, then `f ⁻¹' L`, with
+the topology induced from `E`, is a locally compact space.
 
 No compactness is assumed of the ambient Banach space, and none is available: the point is that
-the Fredholm condition confines the failure of local compactness to the finite-dimensional kernel
-direction, which is itself locally compact and is controlled locally by the kernel projection. -/
+the hypotheses confine the failure of local compactness to the finite-dimensional kernel
+direction, which is itself locally compact and is controlled by the kernel projection. -/
 theorem locallyCompactSpace_preimage {D : E → E →L[𝕜] F} {L : Set F} (hL : IsCompact L)
     (hf : ∀ x ∈ f ⁻¹' L, HasStrictFDerivAt f (D x) x)
-    (hD : ∀ x ∈ f ⁻¹' L, (D x).IsFredholm) :
+    (hclosed : ∀ x ∈ f ⁻¹' L, IsClosed ((D x).range : Set F))
+    (hfinite : ∀ x ∈ f ⁻¹' L, FiniteDimensional 𝕜 (D x).ker)
+    (hcompl : ∀ x ∈ f ⁻¹' L, (D x).ker.ClosedComplemented) :
     LocallyCompactSpace (f ⁻¹' L) := by
   have : WeaklyLocallyCompactSpace (f ⁻¹' L) := by
     refine ⟨fun x => ?_⟩
     obtain ⟨N, hN, hprop⟩ :=
-      (hf x x.2).exists_mem_nhds_forall_isCompact_inter_preimage (hD x x.2)
+      (hf x x.2).exists_mem_nhds_forall_isCompact_inter_preimage
+        (hclosed x x.2) (hfinite x x.2) (hcompl x x.2)
     refine ⟨(Subtype.val : (f ⁻¹' L) → E) ⁻¹' N, ?_, ?_⟩
     · rw [Topology.IsEmbedding.subtypeVal.isCompact_iff, Subtype.image_preimage_coe,
         Set.inter_comm]
@@ -196,13 +207,15 @@ theorem locallyCompactSpace_preimage {D : E → E →L[𝕜] F} {L : Set F} (hL 
     · exact continuous_subtype_val.continuousAt.preimage_mem_nhds hN
   infer_instance
 
-/-- **A level set of a map with Fredholm derivative is locally compact**: the case `L = {c}` of
-`TauCeti.locallyCompactSpace_preimage`, and the shape every moduli space of a Fredholm problem
-takes. -/
+/-- **A level set of a map with upper semi-Fredholm derivative is locally compact**: the case
+`L = {c}` of `TauCeti.locallyCompactSpace_preimage`, and the shape every moduli space of a Fredholm
+problem takes. -/
 theorem locallyCompactSpace_preimage_singleton {D : E → E →L[𝕜] F} {c : F}
     (hf : ∀ x ∈ f ⁻¹' {c}, HasStrictFDerivAt f (D x) x)
-    (hD : ∀ x ∈ f ⁻¹' {c}, (D x).IsFredholm) :
+    (hclosed : ∀ x ∈ f ⁻¹' {c}, IsClosed ((D x).range : Set F))
+    (hfinite : ∀ x ∈ f ⁻¹' {c}, FiniteDimensional 𝕜 (D x).ker)
+    (hcompl : ∀ x ∈ f ⁻¹' {c}, (D x).ker.ClosedComplemented) :
     LocallyCompactSpace (f ⁻¹' {c}) :=
-  locallyCompactSpace_preimage isCompact_singleton hf hD
+  locallyCompactSpace_preimage isCompact_singleton hf hclosed hfinite hcompl
 
 end TauCeti
