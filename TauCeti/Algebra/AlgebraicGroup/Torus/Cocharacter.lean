@@ -10,7 +10,6 @@ public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Cocharacter
 public import TauCeti.Algebra.AlgebraicGroup.Torus.CharacterLattice
-public import TauCeti.Algebra.Bialgebra.GroupLike.Evaluation
 
 /-!
 # Cocharacter lattices of tori
@@ -74,21 +73,6 @@ namespace TorusCommHopfAlgCat
 
 variable {k : Type u} [Field k]
 
-private theorem baseChange_groupLikeSpanned (T : TorusCommHopfAlgCat k) :
-    DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj) := by
-  exact (multiplicativeTypeCommHopfAlgProperty_iff k T.obj).1
-    (torusCommHopfAlgProperty.multiplicativeType k T.obj T.property)
-
-private theorem baseChange_groupLike_span_eq_top (T : TorusCommHopfAlgCat k) :
-    Submodule.span (AlgebraicClosure k)
-        (Set.range (_root_.GroupLike.val (R := AlgebraicClosure k)
-          (A := FiniteTypeCommHopfAlgCat.baseChange
-            (K := AlgebraicClosure k) T.obj))) = ⊤ := by
-  rw [← Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top]
-  exact (DiagonalizableGroup.groupLikeSpannedProperty_iff _ _).1
-    (baseChange_groupLikeSpanned T)
-
 /-- The geometric character group of a torus, bundled as a finitely generated commutative
 group for use with the diagonalizable coordinate-ring functor. -/
 private noncomputable def geometricCharacterFG (T : TorusCommHopfAlgCat k) :
@@ -102,11 +86,26 @@ private noncomputable def geometricCharacterFG (T : TorusCommHopfAlgCat k) :
 geometric characters. -/
 private noncomputable def geometricCoordinateIso (T : TorusCommHopfAlgCat k) :
     DiagonalizableGroup.coordinateRing (AlgebraicClosure k) (geometricCharacterFG T) ≅
-      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj :=
-  ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
-    TauCeti.GroupLike.evaluationBialgEquiv (AlgebraicClosure k)
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj)
-      (baseChange_groupLike_span_eq_top T)
+      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj := by
+  let hT := (torusCommHopfAlgProperty_iff k T.obj).1 T.property
+  let n := Classical.choose hT
+  let i := Classical.choice (Classical.choose_spec hT)
+  let e := CommHopfAlgCat.geometricCharacterGroupEquivOfIso k T.obj
+    (SplitTorus.characterGroup (ULift.{u} (Fin n))) i
+  let j : geometricCharacterFG T ≅ SplitTorus.characterGroup (ULift.{u} (Fin n)) :=
+    { hom := ObjectProperty.homMk (CommGrpCat.ofHom e.toMonoidHom)
+      inv := ObjectProperty.homMk (CommGrpCat.ofHom e.symm.toMonoidHom)
+      hom_inv_id := by
+        apply FGCommGrpCat.hom_ext
+        apply DFunLike.ext _ _
+        intro x
+        exact e.symm_apply_apply x
+      inv_hom_id := by
+        apply FGCommGrpCat.hom_ext
+        apply DFunLike.ext _ _
+        intro x
+        exact e.apply_symm_apply x }
+  exact (DiagonalizableGroup.coordinateRingFunctor (AlgebraicClosure k)).mapIso j ≪≫ i
 
 /-- The geometric fibre of a torus as an affine group scheme over the chosen algebraic closure. -/
 noncomputable abbrev geometricFiberGroupScheme (T : TorusCommHopfAlgCat k) :=
@@ -114,18 +113,11 @@ noncomputable abbrev geometricFiberGroupScheme (T : TorusCommHopfAlgCat k) :=
     Opposite.op (FiniteTypeCommHopfAlgCat.baseChange
       (K := AlgebraicClosure k) T.obj).obj
 
-/-- The multiplicative group over the chosen algebraic closure, in the relative-spectrum
-presentation used for geometric cocharacters. -/
-noncomputable abbrev geometricMultiplicativeGroupScheme :=
-  (AlgebraicGeometry.hopfSpec (CommRingCat.of (AlgebraicClosure k))).obj <|
-    Opposite.op
-      (DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
-        DiagonalizableGroup.multiplicativeCharacterGroup).obj
-
 /-- The geometric cocharacter lattice of a torus: group-scheme morphisms `G_m → T_bar` over
 the chosen algebraic closure. -/
 abbrev cocharacterLattice (T : TorusCommHopfAlgCat k) :=
-  geometricMultiplicativeGroupScheme (k := k) ⟶ geometricFiberGroupScheme T
+  DiagonalizableGroup.multiplicativeGroupScheme (AlgebraicClosure k) ⟶
+    geometricFiberGroupScheme T
 
 /-- Under the fully faithful relative-spectrum functor, a geometric cocharacter is equivalently
 the contravariant morphism from the geometric coordinate algebra of the torus to that of `G_m`. -/
@@ -134,6 +126,10 @@ private noncomputable def cocharacterLatticeEquivCoordinate (T : TorusCommHopfAl
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj ⟶
         DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
           DiagonalizableGroup.multiplicativeCharacterGroup) :=
+  (Equiv.cast (by
+    unfold cocharacterLattice geometricFiberGroupScheme
+    unfold DiagonalizableGroup.multiplicativeGroupScheme
+    rw [DiagonalizableGroup.groupScheme_def])).trans <|
   (Quiver.Hom.opEquiv.trans <| by
     let hF : ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
         (_root_.CommHopfAlgCat.{u} (AlgebraicClosure k))).op ⋙
@@ -185,7 +181,7 @@ noncomputable def cocharacterLatticeLinearEquivDual (T : TorusCommHopfAlgCat k) 
 
 /-- The contragredient absolute-Galois representation on the cocharacter lattice. Thus a
 Galois element `σ` sends a cocharacter functional `f` to `x ↦ f (σ⁻¹ • x)`. -/
-noncomputable abbrev cocharacterGaloisRepresentation (T : TorusCommHopfAlgCat k) :
+noncomputable def cocharacterGaloisRepresentation (T : TorusCommHopfAlgCat k) :
     Representation ℤ (Field.absoluteGaloisGroup k) (cocharacterLattice T) :=
   (cocharacterLatticeLinearEquivDual T).symm.conjRingEquiv.toMonoidHom.comp <|
     (Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
@@ -198,18 +194,17 @@ theorem cocharacterGaloisRepresentation_apply_apply (T : TorusCommHopfAlgCat k)
     (f : cocharacterLattice T) (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :
     cocharacterLatticeLinearEquivDual T (cocharacterGaloisRepresentation T σ f) x =
       cocharacterLatticeLinearEquivDual T f (σ⁻¹ • x) := by
-  -- The representation is an abbreviation for transport by this equivalence; exposing that
-  -- conjugation is necessary before its application lemma can rewrite the goal.
-  change cocharacterLatticeLinearEquivDual T
-      ((cocharacterLatticeLinearEquivDual T).symm.conj
+  rw [show cocharacterGaloisRepresentation T σ f =
+      (cocharacterLatticeLinearEquivDual T).symm.conj
         ((Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
-          (CommHopfAlgCat.geometricCharacterGroup T.obj.obj)).dual σ) f) x = _
+          (CommHopfAlgCat.geometricCharacterGroup T.obj.obj)).dual σ) f by
+    rfl]
   rw [LinearEquiv.conj_apply_apply, LinearEquiv.apply_symm_apply]
   rfl
 
 /-- The canonical character--cocharacter pairing of a torus. It is evaluation of a functional
 in `X_*(T) = Hom_ℤ(X*(T), ℤ)` on a character. -/
-noncomputable abbrev characterCocharacterPairing (T : TorusCommHopfAlgCat k) :
+noncomputable def characterCocharacterPairing (T : TorusCommHopfAlgCat k) :
     CommHopfAlgCat.additiveCharacterGroup T.obj.obj →ₗ[ℤ] cocharacterLattice T →ₗ[ℤ] ℤ :=
   (cocharacterLatticeLinearEquivDual T).toLinearMap.flip
 
@@ -218,6 +213,7 @@ noncomputable abbrev characterCocharacterPairing (T : TorusCommHopfAlgCat k) :
 theorem characterCocharacterPairing_apply (T : TorusCommHopfAlgCat k)
     (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) (f : cocharacterLattice T) :
     characterCocharacterPairing T x f = cocharacterLatticeLinearEquivDual T f x := by
+  unfold characterCocharacterPairing
   rfl
 
 /-- The character--cocharacter pairing is invariant under the diagonal absolute-Galois action. -/
@@ -234,6 +230,7 @@ noncomputable instance instCharacterCocharacterPairingIsPerfPair (T : TorusCommH
     (characterCocharacterPairing T).IsPerfPair := by
   let _ := characterLattice_module_free_of_torus k T.obj T.property
   let _ := characterLattice_module_finite_of_torus k T.obj T.property
+  unfold characterCocharacterPairing
   infer_instance
 
 /-- The cocharacter lattice of a torus is free over the integers. -/
@@ -317,6 +314,49 @@ theorem cocharAddEquiv_cocharacterLatticeEquiv_apply
         (toTorusCommHopfAlgCat k σ) f
           ((characterLatticeEquiv k σ).symm (Finsupp.single i 1)) := by
   simp [cocharacterLatticeEquiv, cocharacterLatticeCoordEquiv, Finsupp.llift_symm_apply]
+
+/-- For a standard split torus, the intrinsic character--cocharacter pairing agrees with the
+existing pairing on the explicit character and cocharacter lattices. -/
+theorem characterCocharacterPairing_eq_latticePairing
+    (k : Type u) [Field k] (σ : Type u) [Finite σ]
+    (x : CommHopfAlgCat.additiveCharacterGroup
+      (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj)
+    (f : TorusCommHopfAlgCat.cocharacterLattice (toTorusCommHopfAlgCat k σ)) :
+    TorusCommHopfAlgCat.characterCocharacterPairing
+        (toTorusCommHopfAlgCat k σ) x f =
+      latticePairing (characterLatticeEquiv k σ x) (cocharacterLatticeEquiv k σ f) := by
+  rw [TorusCommHopfAlgCat.characterCocharacterPairing_apply,
+    ← ofMul_toMul (cocharacterLatticeEquiv k σ f), latticePairing_ofMul,
+    pairing_eq_dotPairing, dotPairing_apply]
+  have hcoords (i : σ) :
+      cocharEquiv (cocharacterLatticeEquiv k σ f).toMul i =
+        TorusCommHopfAlgCat.cocharacterLatticeLinearEquivDual
+          (toTorusCommHopfAlgCat k σ) f
+            ((characterLatticeEquiv k σ).symm (Finsupp.single i 1)) := by
+    rw [← cocharAddEquiv_apply]
+    exact cocharAddEquiv_cocharacterLatticeEquiv_apply k σ f i
+  simp_rw [hcoords]
+  let e := characterLatticeEquiv k σ
+  let g := TorusCommHopfAlgCat.cocharacterLatticeLinearEquivDual
+    (toTorusCommHopfAlgCat k σ) f
+  change g x = (e x).sum fun i c => c * g (e.symm (Finsupp.single i 1))
+  rw [← e.symm_apply_apply x]
+  generalize e x = m
+  induction m using Finsupp.induction with
+  | zero => simp
+  | single_add i c m hi hc ih =>
+      simp only [map_add, e.apply_symm_apply] at ih ⊢
+      rw [Finsupp.sum_add_index']
+      · rw [ih]
+        simp only [Finsupp.sum_single_index, zero_mul]
+        have hsingle : Finsupp.single i c = c • Finsupp.single i (1 : ℤ) := by
+          ext j
+          by_cases h : i = j <;> simp [h]
+        rw [hsingle, map_zsmul, map_zsmul, smul_eq_mul]
+      · intro
+        simp
+      · intro
+        simp [add_mul]
 
 /-- The absolute-Galois representation on the intrinsic cocharacter lattice of a standard split
 torus is trivial. -/
