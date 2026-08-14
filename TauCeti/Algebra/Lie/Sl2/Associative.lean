@@ -55,13 +55,13 @@ algebra; a genuine `IsSl2Triple` supplies them through its bracket fields.
   divided-power forms, in which the structure constants are units `±1`.
 * `TauCeti.Sl2.h_mul_dividedPower_f` and `TauCeti.Sl2.h_mul_dividedPower_e`: moving a Cartan
   element past a divided power translates it by `∓2n`.
-* `TauCeti.Sl2.dividedPower_succ_e_mul_f_cartan_left` and
-  `TauCeti.Sl2.e_mul_dividedPower_succ_f_cartan_left`: the corresponding Cartan-left normal forms.
+* `TauCeti.Sl2.dividedPower_succ_e_mul_f` and `TauCeti.Sl2.dividedPower_succ_f_mul_e`: the
+  reversed-product forms, with the Cartan factor on the left.
 * `TauCeti.Sl2.ι_e_mul_dividedPower_succ_ι_f` and
   `TauCeti.Sl2.ι_f_mul_dividedPower_succ_ι_e`: the two divided-power relations in a universal
   enveloping algebra over `ℚ`.
-* `TauCeti.Sl2.dividedPower_succ_ι_e_mul_ι_f_cartan_left` and
-  `TauCeti.Sl2.ι_e_mul_dividedPower_succ_ι_f_cartan_left`: their Cartan-left specializations.
+* `TauCeti.Sl2.dividedPower_succ_ι_e_mul_ι_f` and
+  `TauCeti.Sl2.dividedPower_succ_ι_f_mul_ι_e`: their reversed-product specializations.
 
 ## Roadmap
 
@@ -204,10 +204,10 @@ theorem f_mul_dividedPower_succ_e (hef : E * F - F * E = H)
   rw [dividedPower_def, dividedPower_def, mul_smul_comm, f_mul_e_pow_succ hef hhe, smul_sub,
     smul_mul_assoc, smul_mul_assoc, inv_factorial_succ_nsmul]
 
-/-- The Cartan-left normal form of `f_mul_dividedPower_succ_e`:
+/-- The reversed-product form of `f_mul_dividedPower_succ_e`:
 `E⁽ⁿ⁺¹⁾ F = F E⁽ⁿ⁺¹⁾ + (H - n) E⁽ⁿ⁾`. This is the orientation that occurs as the
 one-lowering-vector case of the full Kostant straightening formula. -/
-theorem dividedPower_succ_e_mul_f_cartan_left (hef : E * F - F * E = H)
+theorem dividedPower_succ_e_mul_f (hef : E * F - F * E = H)
     (hhe : H * E - E * H = 2 • E) (n : ℕ) :
     dividedPower (n + 1) E * F =
       F * dividedPower (n + 1) E + (H - n) * dividedPower n E := by
@@ -216,12 +216,12 @@ theorem dividedPower_succ_e_mul_f_cartan_left (hef : E * F - F * E = H)
   have hncomm := (Nat.cast_commute n (dividedPower n E)).eq
   noncomm_ring [hs, hmove, hncomm]
 
-/-- The Cartan-left normal form of `e_mul_dividedPower_succ_f`:
-`E F⁽ⁿ⁺¹⁾ = F⁽ⁿ⁺¹⁾ E + (H + n) F⁽ⁿ⁾`. -/
-theorem e_mul_dividedPower_succ_f_cartan_left (hef : E * F - F * E = H)
+/-- The reversed-product form of `e_mul_dividedPower_succ_f`:
+`F⁽ⁿ⁺¹⁾ E = E F⁽ⁿ⁺¹⁾ - (H + n) F⁽ⁿ⁾`. -/
+theorem dividedPower_succ_f_mul_e (hef : E * F - F * E = H)
     (hhf : H * F - F * H = -(2 • F)) (n : ℕ) :
-    E * dividedPower (n + 1) F =
-      dividedPower (n + 1) F * E + (H + n) * dividedPower n F := by
+    dividedPower (n + 1) F * E =
+      E * dividedPower (n + 1) F - (H + n) * dividedPower n F := by
   have hs := e_mul_dividedPower_succ_f hef hhf n
   have hmove := h_mul_dividedPower_f hhf n
   have hncomm := (Nat.cast_commute n (dividedPower n F)).eq
@@ -278,26 +278,26 @@ theorem ι_f_mul_dividedPower_succ_ι_e (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆
       dividedPower (n + 1) (ι ℚ e) * ι ℚ f - dividedPower n (ι ℚ e) * (ι ℚ h + n) :=
   f_mul_dividedPower_succ_e (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_e_sub_mul ℚ hhe) n
 
-/-- The Cartan-left normal form of `ι_f_mul_dividedPower_succ_ι_e`:
+/-- The reversed-product form of `ι_f_mul_dividedPower_succ_ι_e`:
 `e⁽ⁿ⁺¹⁾ f = f e⁽ⁿ⁺¹⁾ + (h - n) e⁽ⁿ⁾`. This is the orientation that occurs as the
 one-lowering-vector case of the full Kostant straightening formula. -/
-theorem dividedPower_succ_ι_e_mul_ι_f_cartan_left (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
+theorem dividedPower_succ_ι_e_mul_ι_f (hef : ⁅e, f⁆ = h) (hhe : ⁅h, e⁆ = 2 • e)
     (n : ℕ) :
     dividedPower (n + 1) (ι ℚ e) * ι ℚ f =
       ι ℚ f * dividedPower (n + 1) (ι ℚ e) +
         (ι ℚ h - n) * dividedPower n (ι ℚ e) :=
-  dividedPower_succ_e_mul_f_cartan_left
+  dividedPower_succ_e_mul_f
     (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_e_sub_mul ℚ hhe) n
 
-/-- The Cartan-left normal form of `ι_e_mul_dividedPower_succ_ι_f`:
-`e f⁽ⁿ⁺¹⁾ = f⁽ⁿ⁺¹⁾ e + (h + n) f⁽ⁿ⁾`. -/
-theorem ι_e_mul_dividedPower_succ_ι_f_cartan_left (hef : ⁅e, f⁆ = h)
+/-- The reversed-product form of `ι_e_mul_dividedPower_succ_ι_f`:
+`f⁽ⁿ⁺¹⁾ e = e f⁽ⁿ⁺¹⁾ - (h + n) f⁽ⁿ⁾`. -/
+theorem dividedPower_succ_ι_f_mul_ι_e (hef : ⁅e, f⁆ = h)
     (hhf : ⁅h, f⁆ = -(2 • f))
     (n : ℕ) :
-    ι ℚ e * dividedPower (n + 1) (ι ℚ f) =
-      dividedPower (n + 1) (ι ℚ f) * ι ℚ e +
+    dividedPower (n + 1) (ι ℚ f) * ι ℚ e =
+      ι ℚ e * dividedPower (n + 1) (ι ℚ f) -
         (ι ℚ h + n) * dividedPower n (ι ℚ f) :=
-  e_mul_dividedPower_succ_f_cartan_left
+  dividedPower_succ_f_mul_e
     (ι_e_mul_ι_f_sub_mul ℚ hef) (ι_h_mul_ι_f_sub_mul ℚ hhf) n
 
 end UniversalEnvelopingRat
