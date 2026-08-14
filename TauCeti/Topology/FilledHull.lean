@@ -26,7 +26,7 @@ The shape in which the structural side is spent is `TauCeti.IsPreconnected.subse
 preconnected set disjoint from `K` is trapped inside the filled hull as soon as it meets it, since
 it then lies in a single bounded component. Together with the width bound of the normed file it
 says that *a connected set that a small `K` cuts off from infinity is itself small*, with no
-regularity asked of `K`.
+regularity asked of `K`; that composite is `TauCeti.IsPreconnected.diam_le_diam_of_disjoint` there.
 
 The negation of membership — that the component of a point in the complement of `K` is *unbounded*
 — already occurs, unfolded, in the winding-number layer: it is the hypothesis of
@@ -59,6 +59,8 @@ separation, or any other regularity of `K`.
 
 * `TauCeti.filledHull` — the filled hull, and `TauCeti.subset_filledHull`,
   `TauCeti.filledHull_mono` its two structural properties.
+* `TauCeti.filledHull_eq_self` — filling a set whose complement is preconnected and unbounded
+  changes nothing.
 * `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
   filled hull lies in it.
 -/
@@ -88,9 +90,19 @@ theorem subset_filledHull : K ⊆ filledHull K := by
 
 /-- **Filling is monotone.** Enlarging `K` shrinks the complement, hence shrinks each component of
 it, hence can only turn unbounded components into bounded ones. -/
+@[gcongr]
 theorem filledHull_mono (h : K ⊆ L) : filledHull K ⊆ filledHull L := fun _ hx =>
   mem_filledHull_iff.mpr <|
     (mem_filledHull_iff.mp hx).subset (connectedComponentIn_mono _ (compl_subset_compl.mpr h))
+
+/-- **Filling changes nothing when the complement is connected and unbounded.** The complement is
+then a single component and that component is unbounded, so no point outside `K` is filled in. This
+is the case of a segment in the plane, and of any set that does not separate the space. -/
+theorem filledHull_eq_self (h : IsPreconnected Kᶜ) (hu : ¬ IsBounded Kᶜ) : filledHull K = K := by
+  refine Subset.antisymm (fun x hx => ?_) subset_filledHull
+  by_contra hxK
+  exact hu ((mem_filledHull_iff.mp hx).subset
+    (h.subset_connectedComponentIn (mem_compl hxK) subset_rfl))
 
 /-- **A preconnected set that a set cuts off from infinity lies in its filled hull.** If `S` is
 preconnected and disjoint from `K`, then `S` lies in a single connected component of `Kᶜ`; meeting
