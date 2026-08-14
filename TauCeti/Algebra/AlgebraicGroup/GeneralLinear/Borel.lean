@@ -134,11 +134,18 @@ noncomputable abbrev coordinateMap :
   CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
     (definingHopfIdeal R)
 
+/-- The Borel coordinate morphism sends an ambient coordinate to its quotient class. -/
+theorem coordinateMap_apply (h : GeneralLinear.coordinateHopfAlgebra R 2) :
+    (coordinateMap R).hom h =
+      Ideal.Quotient.mkₐ R (definingHopfIdeal R).toIdeal h :=
+  CommHopfAlgCat.mkQuotient_apply
+    (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R) h
+
 /-- The lower-left coordinate vanishes in the Borel coordinate Hopf algebra. -/
-@[simp]
+@[simp↓]
 theorem coordinateMap_lowerLeftCoordinate :
     (coordinateMap R).hom (lowerLeftCoordinate R) = 0 := by
-  rw [CommHopfAlgCat.mkQuotient_apply]
+  rw [coordinateMap_apply, Ideal.Quotient.mkₐ_eq_mk]
   exact Ideal.Quotient.eq_zero_iff_mem.mpr
     (definingHopfIdeal_toIdeal R ▸ Ideal.mem_span_singleton_self _)
 
