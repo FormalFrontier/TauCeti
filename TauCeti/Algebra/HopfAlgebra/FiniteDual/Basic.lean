@@ -56,6 +56,12 @@ abbrev ConvolutionDual (k : Type u) (H : Type v) [CommSemiring k] [AddCommMonoid
 
 namespace ConvolutionDual
 
+/-- The convolution dual of a finite-dimensional vector space is finite-dimensional. -/
+noncomputable instance instFiniteDimensional (k : Type u) (H : Type v) [Field k]
+    [AddCommGroup H] [Module k H] [FiniteDimensional k H] :
+    FiniteDimensional k (ConvolutionDual k H) :=
+  LinearEquiv.finiteDimensional (WithConv.linearEquiv k (Module.Dual k H)).symm
+
 section LinearAlgebra
 
 variable (k : Type u) (H : Type v) [Field k] [AddCommGroup H] [Module k H]
