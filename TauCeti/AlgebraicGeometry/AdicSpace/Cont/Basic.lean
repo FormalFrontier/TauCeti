@@ -146,16 +146,15 @@ theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.su
       {y : A | v.valuation y < v.valuation a} := by
     ext y
     simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
-    have h1 : (quotientLift J hJ).toValuativeRel.vlt
-          (Ideal.Quotient.mk J y) (Ideal.Quotient.mk J a) ↔
-        (comap (Ideal.Quotient.mk J) (quotientLift J hJ)).toValuativeRel.vlt y a := by
-      rw [comap_vlt]
-    rw [h1, comap_quotientLift J hJ, ← valuation_lt_iff]
+    rw [vlt_quotientLift J hJ, ← valuation_lt_iff]
   have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
         {x : A ⧸ J | (quotientLift J hJ).valuation x <
           (quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
     rw [h_eq]
     exact hv_open a
+  -- The quotient topology here is definitionally the coinduced topology. The named
+  -- `QuotientRing.isOpenQuotientMap_mk` requires `IsTopologicalRing A`, which this general
+  -- continuity statement deliberately does not assume.
   exact isOpen_coinduced.mp h_open
 
 end TauCeti.ValuationSpectrum

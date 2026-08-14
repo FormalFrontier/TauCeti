@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.IntegralClosure.IntegrallyClosed
 public import TauCeti.RingTheory.Huber.Basic
 
 /-!
@@ -46,11 +45,13 @@ explicit.
 The shape of these declarations follows the roadmap's own prototype in
 `TauCetiRoadmap/AdicSpaces/Suggested.lean`, which fixes the design choice that the plus ring is
 explicit data rather than a typeclass, and the selection of results follows AINTLIB's
-`AffinoidRings.lean`; neither's proofs were used.
+`AffinoidRings.lean`; neither's proofs were used. That AINTLIB file was also consulted for the
+quotient-pair construction and its universal property. Its quotient uses the same integral closure
+of the image plus ring; this file bundles the construction with the current Tau Ceti Huber-pair API.
 
 ## References
 
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], Definition 7.14 and Remark 7.15.
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], Definition 7.14, Remark 7.15, and Proposition 7.38.
 * [AINTLIB](https://github.com/CBirkbeck/AINTLIB), branch `dev/adic-spaces`,
   `projects/AdicSpaces/Adic spaces/AffinoidRings.lean`.
 -/
@@ -201,8 +202,8 @@ theorem powerBounded_plus : (powerBounded A).plus = powerBoundedSubring A := (rf
 
 section Quotient
 
-/-- The quotient of a Huber pair by `J`. Its plus ring is the integral closure of the image of
-the original plus ring in the quotient. -/
+/-- **Wedhorn Proposition 7.38.** The quotient of a Huber pair by `J`. Its plus ring is the
+integral closure of the image of the original plus ring in the quotient. -/
 noncomputable def quotient (S : Pair A) (J : Ideal A) : Pair (A ⧸ J) where
   plus := (integralClosure (S.plus.map (Ideal.Quotient.mk J)) (A ⧸ J)).toSubring
   isRingOfIntegralElements := by
@@ -220,10 +221,10 @@ noncomputable def quotient (S : Pair A) (J : Ideal A) : Pair (A ⧸ J) where
         ha_power.map_of_isOpenMap continuous_quotient_mk'.continuousAt
           (QuotientRing.isOpenMap_coe J)
     refine
-      { isOpen := AddSubgroup.isOpen_of_mem_nhds
-          (integralClosure R (A ⧸ J)).toSubring.toAddSubgroup <|
-          Filter.mem_of_superset (hR_open.mem_nhds R.zero_mem) fun x hx ↦
-            algebraMap_mem (integralClosure R (A ⧸ J)) ⟨x, hx⟩
+      { isOpen := AddSubgroup.isOpen_mono
+          (H₁ := R.toAddSubgroup)
+          (H₂ := (integralClosure R (A ⧸ J)).toSubring.toAddSubgroup)
+          (fun x hx ↦ algebraMap_mem (integralClosure R (A ⧸ J)) ⟨x, hx⟩) hR_open
         isIntegrallyClosedIn := inferInstance
         le_powerBoundedSubring := ?_ }
     exact Subring.integralClosure_subring_le_iff.mpr hR_power
@@ -247,7 +248,8 @@ noncomputable def quotientHom (S : Pair A) (J : Ideal A) : Hom S (S.quotient J) 
 theorem quotientHom_toRingHom (S : Pair A) (J : Ideal A) :
     (quotientHom S J).toRingHom = Ideal.Quotient.mk J := (rfl)
 
-/-- A morphism of Huber pairs annihilating `J` factors through the quotient pair. -/
+/-- **Wedhorn Proposition 7.38.** A morphism of Huber pairs annihilating `J` factors through the
+quotient pair. -/
 noncomputable def Hom.quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
     (hJ : J ≤ RingHom.ker f.toRingHom) : Hom (S.quotient J) T where
   toRingHom := Ideal.Quotient.lift J f.toRingHom fun a ha ↦ RingHom.mem_ker.mp (hJ ha)
@@ -268,8 +270,8 @@ noncomputable def Hom.quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : 
         exact f.map_mem_plus a ha
     intro x hx
     apply Subring.isIntegrallyClosedIn_iff.mp T.isRingOfIntegralElements.isIntegrallyClosedIn
-    have hx' : IsIntegral R x := hx
-    exact hx'.map_of_comp_eq φ ψ (by ext y; rfl)
+    rw [quotient_plus, Subalgebra.mem_toSubring, mem_integralClosure_iff] at hx
+    exact hx.map_of_comp_eq φ ψ (by ext y; rfl)
 
 /-- The underlying ring homomorphism of the quotient factorisation is `Ideal.Quotient.lift`. -/
 @[simp]
@@ -278,6 +280,7 @@ theorem Hom.quotientLift_toRingHom {S : Pair A} {T : Pair B} (J : Ideal A) (f : 
     (f.quotientLift J hJ).toRingHom =
       Ideal.Quotient.lift J f.toRingHom (fun _a ha ↦ RingHom.mem_ker.mp (hJ ha)) := (rfl)
 
+/-- The factorisation through the quotient pair recovers the original morphism. -/
 @[simp]
 theorem Hom.quotientLift_comp_quotientHom {S : Pair A} {T : Pair B} (J : Ideal A)
     (f : Hom S T) (hJ : J ≤ RingHom.ker f.toRingHom) :
