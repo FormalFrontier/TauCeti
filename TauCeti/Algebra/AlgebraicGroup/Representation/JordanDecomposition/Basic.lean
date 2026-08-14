@@ -39,6 +39,9 @@ inside each ambient general linear group.
 * `TauCeti.HopfAlgebra.Point.endOfPoint_semisimplePart` and
   `TauCeti.HopfAlgebra.Point.endOfPoint_unipotentPart`: every finite-dimensional representation
   sees the corresponding linear Jordan factors.
+* `TauCeti.HopfAlgebra.Point.isUnipotentPoint_iff_unipotentPart_eq_self` and
+  `TauCeti.HopfAlgebra.Point.isUnipotentPoint_iff_semisimplePart_eq_one`: pointwise
+  characterizations of unipotence by the Jordan factors.
 
 ## References
 
@@ -341,6 +344,29 @@ theorem unipotentPart_eq_self {g : WithConv (H →ₐ[k] K)}
     unipotentPart k H K g = g :=
   ((isSemisimple_isUnipotent_unique k H K g 1 g (Commute.one_left g) (one_mul g)
     (by intro M; rw [map_one]; exact GeneralLinearGroup.isSemisimple_one) hg).2).symm
+
+/-- A point is unipotent exactly when its unipotent part is the point itself. -/
+theorem isUnipotentPoint_iff_unipotentPart_eq_self (g : WithConv (H →ₐ[k] K)) :
+    IsUnipotentPoint g ↔ unipotentPart k H K g = g := by
+  constructor
+  · exact unipotentPart_eq_self k H K
+  · intro hg
+    rw [isUnipotentPoint_def]
+    intro M
+    rw [← hg]
+    exact isUnipotent_pointsAction_unipotentPart k H K g M
+
+/-- A point is unipotent exactly when its semisimple part is the identity. -/
+theorem isUnipotentPoint_iff_semisimplePart_eq_one (g : WithConv (H →ₐ[k] K)) :
+    IsUnipotentPoint g ↔ semisimplePart k H K g = 1 := by
+  constructor
+  · exact semisimplePart_eq_one_of_isUnipotent k H K
+  · intro hg
+    rw [isUnipotentPoint_iff_unipotentPart_eq_self]
+    calc
+      unipotentPart k H K g = 1 * unipotentPart k H K g := (one_mul _).symm
+      _ = semisimplePart k H K g * unipotentPart k H K g := by rw [hg]
+      _ = g := semisimplePart_mul_unipotentPart k H K g
 
 /-- The semisimple part of the identity point is the identity. -/
 theorem semisimplePart_one :

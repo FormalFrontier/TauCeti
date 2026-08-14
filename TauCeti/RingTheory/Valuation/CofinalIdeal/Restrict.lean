@@ -82,7 +82,7 @@ variable {A : Type*} [CommRing A] {Γ₀ : Type*} [LinearOrderedCommGroupWithZer
 names. This is the bridge between membership in a transported convex subgroup, which is phrased
 through `OrderMonoidIso.unitsWithZero`, and the introduction rules for `cΓ_v(I)`, which are
 phrased through `valueGroup.mk`. -/
-private theorem unitsWithZeroEquiv_mk0_restrict (v : Valuation A Γ₀) {a : A}
+private theorem unitsWithZero_mk0_restrict (v : Valuation A Γ₀) {a : A}
     (h0 : (MonoidWithZeroHom.ofClass v) a ≠ 0) (ha : v.restrict a ≠ 0) :
     OrderMonoidIso.unitsWithZero (Units.mk0 (v.restrict a) ha) =
       valueGroup.mk (.ofClass v) 1 a (by simp) h0 := by
@@ -98,7 +98,7 @@ private theorem mk0_restrict_mem_comapUnitsWithZero (v : Valuation A Γ₀) (I :
     Units.mk0 (v.restrict a) ha ∈
       ConvexSubgroup.comapUnitsWithZero (characteristicSubgroupOfIdeal v I hfg) := by
   have h0 : (MonoidWithZeroHom.ofClass v) a ≠ 0 := fun h => ha (v.restrict_eq_zero_iff.mpr h)
-  rw [ConvexSubgroup.mem_comapUnitsWithZero, unitsWithZeroEquiv_mk0_restrict v h0 ha]
+  rw [ConvexSubgroup.mem_comapUnitsWithZero, unitsWithZero_mk0_restrict v h0 ha]
   refine characteristicSubgroup_le_characteristicSubgroupOfIdeal v I hfg
     (valueGroup_mk_mem_characteristicSubgroup_of_one_le_value h0 ?_)
   have hr : v.restrict 1 ≤ v.restrict a := by simpa using h1
@@ -163,7 +163,7 @@ private theorem mk0_restrict_mem_comapUnitsWithZero_iff (v : Valuation A Γ₀) 
     Units.mk0 (v.restrict a) (fun h => h0 (v.restrict_eq_zero_iff.mp h)) ∈
         ConvexSubgroup.comapUnitsWithZero (characteristicSubgroupOfIdeal v I hfg) ↔
       valueGroup.mk (.ofClass v) 1 a (by simp) h0 ∈ characteristicSubgroupOfIdeal v I hfg := by
-  rw [ConvexSubgroup.mem_comapUnitsWithZero, unitsWithZeroEquiv_mk0_restrict v h0 _]
+  rw [ConvexSubgroup.mem_comapUnitsWithZero, unitsWithZero_mk0_restrict v h0 _]
 
 /-- Off `cΓ_v(I)`, the restriction vanishes. The hypothesis is non-membership in `cΓ_v(I)`
 itself; the transport is applied internally.
