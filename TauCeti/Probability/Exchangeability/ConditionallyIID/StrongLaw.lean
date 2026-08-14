@@ -100,6 +100,44 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E] [MeasurableSpace E]
   [BorelSpace E] [SecondCountableTopology E]
 
+omit [CompleteSpace E] in
+/-- The set of pairs `(Q, x)` for which the averages of `f` along the path `x` converge to the
+integral of `f` against `Q` is measurable. -/
+private theorem measurableSet_tendsto_average_integral {f : α → E} (hf : Measurable f) :
+    MeasurableSet {z : ProbabilityMeasure α × (ℕ → α) |
+      Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (z.2 i)) atTop
+        (𝓝 (∫ y, f y ∂(z.1 : Measure α)))} :=
+  MeasureTheory.measurableSet_tendsto_fun
+    (fun _n => (Finset.measurable_sum _ fun i _ =>
+      hf.comp ((measurable_pi_apply i).comp measurable_snd)).const_smul _)
+    -- `Q ↦ ∫ f dQ` is measurable: it is the integral against the coercion kernel
+    -- `ProbabilityMeasure α → Measure α`.
+    ((hf.stronglyMeasurable.integral_kernel
+      (κ := ⟨((↑) : ProbabilityMeasure α → Measure α), measurable_subtype_coe⟩)).measurable.comp
+        measurable_fst)
+
+/-- **On each fibre of the mixture the averages converge almost surely.** For `f` measurable and
+integrable against a probability measure `Q`, the pairing of `Q` with an i.i.d. `Q`-path lands
+almost surely in the set where the averages of `f` converge to `∫ f dQ`.
+
+This is the classical strong law, read on the fibre `(δ_Q, Q^{⊗ℕ})`; nothing about the directing
+measure or the process is involved. -/
+private theorem measure_compl_tendsto_average_integral_eq_zero {f : α → E} (hf : Measurable f)
+    (Q : ProbabilityMeasure α) (hint : Integrable f (Q : Measure α)) :
+    ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α)))
+      {z : ProbabilityMeasure α × (ℕ → α) |
+        Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (z.2 i)) atTop
+          (𝓝 (∫ y, f y ∂(z.1 : Measure α)))}ᶜ = 0 := by
+  have hsl : ∀ᵐ x ∂(Measure.infinitePi fun _ : ℕ => (Q : Measure α)),
+      (Q, x) ∈ {z : ProbabilityMeasure α × (ℕ → α) |
+        Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (z.2 i)) atTop
+          (𝓝 (∫ y, f y ∂(z.1 : Measure α)))} := by
+    filter_upwards [strong_law_ae_infinitePi (Q : Measure α) hf hint] with x hx
+    simpa only [Set.mem_ofPred_eq] using hx
+  rw [Measure.dirac_prod, Measure.map_apply measurable_prodMk_left
+    (measurableSet_tendsto_average_integral hf).compl]
+  exact ae_iff.mp hsl
+
 /-- **The conditional strong law of large numbers.** For a conditionally i.i.d. process and a
 bounded measurable observable `f` valued in a Banach space, the averages of `f` along the process
 converge almost surely to the integral of `f` against the directing measure.
@@ -119,26 +157,13 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
       (𝓝 (∫ y, f y ∂(z.1 : Measure α)))} with hG
   have hGmeas : MeasurableSet G := by
     rw [hG]
-    exact MeasureTheory.measurableSet_tendsto_fun
-      (fun n => (Finset.measurable_sum _ fun i _ =>
-        hf.comp ((measurable_pi_apply i).comp measurable_snd)).const_smul _)
-      -- `Q ↦ ∫ f dQ` is measurable: it is the integral against the coercion kernel
-      -- `ProbabilityMeasure α → Measure α`.
-      ((hf.stronglyMeasurable.integral_kernel
-        (κ := ⟨((↑) : ProbabilityMeasure α → Measure α), measurable_subtype_coe⟩)).measurable.comp
-          measurable_fst)
+    exact measurableSet_tendsto_average_integral hf
   -- Every fibre of the mixture is an i.i.d. law, where the strong law applies.
   have hfibre : ∀ Q : ProbabilityMeasure α,
       ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))) Gᶜ = 0 := by
-    intro Q
-    have hint : Integrable f (Q : Measure α) :=
-      Integrable.of_bound hf.aestronglyMeasurable C (.of_forall hbdd)
-    have hsl : ∀ᵐ x ∂(Measure.infinitePi fun _ : ℕ => (Q : Measure α)), (Q, x) ∈ G := by
-      filter_upwards [strong_law_ae_infinitePi (Q : Measure α) hf hint] with x hx
-      rw [hG]
-      simpa only [Set.mem_ofPred_eq] using hx
-    rw [Measure.dirac_prod, Measure.map_apply measurable_prodMk_left hGmeas.compl]
-    exact ae_iff.mp hsl
+    rw [hG]
+    exact fun Q => measure_compl_tendsto_average_integral_eq_zero hf Q
+      (Integrable.of_bound hf.aestronglyMeasurable C (.of_forall hbdd))
   have hker : Measurable fun Q : ProbabilityMeasure α =>
       (Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α)) :=
     TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const
