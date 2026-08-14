@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Finsupp
+import TauCeti.Analysis.Matrix.PosSemidef
 
 /-!
 # The kernel of a positive-definite kernel Gram form
@@ -90,15 +90,14 @@ theorem positiveDefiniteKernelFinsuppForm_self_eq_zero_of_mem_ker
 /-- For a positive-definite kernel, zero finitely supported Gram seminorm characterizes the null
 submodule. -/
 theorem positiveDefiniteKernelFinsuppForm_self_eq_zero_iff_mem_ker
-    (hK : IsPositiveDefiniteKernel K) {x : α →₀ 𝕜} :
+    (hK : Matrix.PosSemidef K) {x : α →₀ 𝕜} :
     positiveDefiniteKernelFinsuppForm K x x = 0 ↔
       x ∈ positiveDefiniteKernelFinsuppSesqFormKer K := by
   refine ⟨?_, positiveDefiniteKernelFinsuppForm_self_eq_zero_of_mem_ker⟩
   intro hx
   rw [mem_positiveDefiniteKernelFinsuppSesqFormKer]
   intro y
-  exact isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_left
-    (positiveDefiniteKernelFinsuppForm_isPositiveDefiniteKernel hK) hx
+  exact (posSemidef_positiveDefiniteKernelFinsuppForm hK).eq_zero_of_apply_self_eq_zero_left hx
 
 /-- For a conjugate-symmetric kernel, a vector in the null submodule also pairs to zero on the
 right. This is the column-vanishing form obtained from symmetry of the bundled sesquilinear
@@ -120,10 +119,11 @@ theorem positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right_of_conj_symm
 /-- For a positive-definite kernel, a vector in the null submodule also pairs to zero on the
 right. This is the column-vanishing form obtained from conjugate symmetry. -/
 theorem positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right
-    (hK : IsPositiveDefiniteKernel K) {x y : α →₀ 𝕜}
+    (hK : Matrix.PosSemidef K) {x y : α →₀ 𝕜}
     (hy : y ∈ positiveDefiniteKernelFinsuppSesqFormKer K) :
     positiveDefiniteKernelFinsuppForm K x y = 0 :=
   positiveDefiniteKernelFinsuppForm_eq_zero_of_mem_ker_right_of_conj_symm
-    (isPositiveDefiniteKernel_conj_symm hK) hy
+    (fun a b => by
+      simpa only [starRingEnd_apply] using hK.isHermitian.apply b a) hy
 
 end TauCeti

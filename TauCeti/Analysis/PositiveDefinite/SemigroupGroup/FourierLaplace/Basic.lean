@@ -26,7 +26,7 @@ mixture of these atoms.
 
 ## Main declarations
 
-* `TauCeti.isPositiveDefiniteKernel_laplaceAtom`: the time kernel
+* `TauCeti.posSemidef_laplaceAtom`: the time kernel
   `(t, u) ↦ exp (-(t + u) p)` is positive definite.
 * `TauCeti.isSemigroupGroupPD_laplaceFourierAtom`: the separated BCR atom is positive definite.
 * `TauCeti.isSemigroupGroupPD_laplaceFourierAtom_and_continuous`: the same result packaged with
@@ -73,10 +73,11 @@ theorem laplaceAtom_add (p t u : ℝ≥0) :
   ring
 
 /-- The time kernel supplied by a Laplace atom is positive definite. -/
-theorem isPositiveDefiniteKernel_laplaceAtom (p : ℝ≥0) :
-    IsPositiveDefiniteKernel fun t u : ℝ≥0 => laplaceAtom p (t + u) := by
+theorem posSemidef_laplaceAtom (p : ℝ≥0) :
+    Matrix.PosSemidef fun t u : ℝ≥0 => laplaceAtom p (t + u) := by
   simp_rw [laplaceAtom_add]
-  exact isPositiveDefiniteKernel_conj_mul (fun t : ℝ≥0 => laplaceAtom p t)
+  simpa only [RCLike.star_def] using
+    posSemidef_rankOne (fun t : ℝ≥0 => laplaceAtom p t)
 
 /-- Laplace atoms are continuous in the nonnegative time variable. -/
 theorem continuous_laplaceAtom (p : ℝ≥0) : Continuous (laplaceAtom p) := by
@@ -90,14 +91,14 @@ theorem continuous_laplaceAtom (p : ℝ≥0) : Continuous (laplaceAtom p) := by
 theorem isSemigroupGroupPD_laplaceFourierAtom (p : ℝ≥0) (q : V) :
     IsSemigroupGroupPD fun x : ℝ≥0 × V => laplaceAtom p x.1 * fourierAtom q x.2 :=
   isSemigroupGroupPD_mul_time_spatial_of_kernels
-    (isPositiveDefiniteKernel_laplaceAtom p) (isPositiveDefiniteKernel_fourierAtom q)
+    (posSemidef_laplaceAtom p) (posSemidef_fourierAtom q)
 
 /-- The separated Laplace--Fourier atom is semigroup-group positive definite and continuous. -/
 theorem isSemigroupGroupPD_laplaceFourierAtom_and_continuous (p : ℝ≥0) (q : V) :
     IsSemigroupGroupPD (fun x : ℝ≥0 × V => laplaceAtom p x.1 * fourierAtom q x.2) ∧
       Continuous (fun x : ℝ≥0 × V => laplaceAtom p x.1 * fourierAtom q x.2) :=
   isSemigroupGroupPD_mul_time_spatial_of_kernels_and_continuous
-    (isPositiveDefiniteKernel_laplaceAtom p) (isPositiveDefiniteKernel_fourierAtom q)
+    (posSemidef_laplaceAtom p) (posSemidef_fourierAtom q)
     (continuous_laplaceAtom p) (continuous_fourierAtom q)
 
 end TauCeti

@@ -6,7 +6,7 @@ module
 
 public import Mathlib.NumberTheory.ModularForms.LevelOne.DimensionFormula
 public import Mathlib.RingTheory.Polynomial.DegreeLT
-public import TauCeti.NumberTheory.ModularForms.NormTrace
+public import TauCeti.NumberTheory.ModularForms.Norm.Trace
 public import TauCeti.NumberTheory.ModularForms.QExpansion.Basic
 
 /-!

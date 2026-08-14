@@ -24,6 +24,8 @@ That is the content of the proof of Shimura's Proposition 3.37 — right multipl
 
 * `HeckeRing.GL2.heckeSlashSum_slash_invariant_of_mem_SLnZ`: for `γ ∈ SL₂(ℤ)` and
   slash-invariant `f`, `heckeSlashSum k D f ∣[k] γ = heckeSlashSum k D f`.
+* `HeckeRing.GL2.heckeSlashSumFormₗ`: the slash sum as a `ℂ`-linear operator on
+  `SlashInvariantForm`.
 
 ## Provenance
 
@@ -45,7 +47,7 @@ proof — is not needed here and the statement quantifies over `γ ∈ SLnZ 2` d
 
 public section
 
-open Matrix UpperHalfPlane DoubleCoset HeckeRing.GLn
+open Matrix Matrix.SpecialLinearGroup UpperHalfPlane DoubleCoset HeckeRing.GLn
 
 open scoped MatrixGroups ModularForm
 
@@ -90,5 +92,30 @@ theorem heckeSlashSum_slash_invariant_of_mem_SLnZ (f : ℍ → ℂ) (hf : ∀ δ
   -- hypothesis is `hperm` up to `toPerm_apply`, which is stated rather than left to defeq.
   exact Fintype.sum_equiv (MulAction.toPerm (⟨_, hγT⟩ : SLnZ 2)) _ _ fun i ↦ by
     simpa only [MulAction.toPerm_apply] using hperm i
+
+/-- The double-coset slash sum as a `ℂ`-linear operator on `SlashInvariantForm`. -/
+noncomputable def heckeSlashSumFormₗ : SlashInvariantForm 𝒮ℒ k →ₗ[ℂ] SlashInvariantForm 𝒮ℒ k where
+  toFun f :=
+    SlashInvariantForm.mk (heckeSlashSum k D ⇑f) fun γ hγ ↦ by
+      obtain ⟨σ, rfl⟩ := MonoidHom.mem_range.mp hγ
+      have hSLnZ : (mapGL ℚ σ : GL (Fin 2) ℚ) ∈ SLnZ 2 := coe_mem_SLnZ 2 σ
+      rw [← map_mapGL (S := ℚ) (T := ℝ) σ, ← ModularForm.rat_slash]
+      exact heckeSlashSum_slash_invariant_of_mem_SLnZ k D (⇑f) (γ := mapGL ℚ σ)
+        (fun g hg ↦ SlashInvariantFormClass.slash_eq_of_mem_SLnZ f g hg) hSLnZ
+  map_add' f g := SlashInvariantForm.ext fun τ ↦ by
+    simp only [SlashInvariantForm.coe_mk, FunLike.coe_add]
+    exact congrFun (heckeSlashSum_add k D ⇑f ⇑g) τ
+  map_smul' c f := SlashInvariantForm.ext fun τ ↦ by
+    simp only [SlashInvariantForm.coe_mk, FunLike.coe_smul]
+    exact congrFun (heckeSlashSum_smul k D c ⇑f) τ
+
+@[simp]
+lemma coe_heckeSlashSumFormₗ (f : SlashInvariantForm 𝒮ℒ k) :
+    ⇑(heckeSlashSumFormₗ k D f) = heckeSlashSum k D ⇑f := (rfl)
+
+/-- Pointwise evaluation of `heckeSlashSumFormₗ`. -/
+@[simp]
+lemma heckeSlashSumFormₗ_apply (f : SlashInvariantForm 𝒮ℒ k) (τ : ℍ) :
+    heckeSlashSumFormₗ k D f τ = heckeSlashSum k D (⇑f) τ := (rfl)
 
 end HeckeRing.GL2
