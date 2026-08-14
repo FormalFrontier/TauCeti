@@ -87,21 +87,12 @@ theorem pairing_neg_right (x y : A) : A.pairing x (-y) = -A.pairing x y :=
   map_neg (A.pairing x) y
 
 /-- The bilinear pairing associated to a finite bilinear module, viewed as a `ℤ`-bilinear map. -/
-def toBilin : A →ₗ[ℤ] A →ₗ[ℤ] AddCircle (1 : ℚ) where
-  toFun x :=
-    { toFun := fun y ↦ A.pairing x y
-      map_add' := A.pairing_add_right x
-      map_smul' := fun r y ↦ by
-        simp only [RingHom.id_apply]
-        exact map_zsmul (A.pairing x) r y }
-  map_add' x y := by
-    ext z
-    exact A.pairing_add_left x y z
-  map_smul' r x := by
-    ext z
-    rw [LinearMap.smul_apply]
-    change (A.pairing (r • x)) z = r • (A.pairing x z)
-    rw [A.pairing_comm (r • x) z, map_zsmul, A.pairing_comm z x]
+def toBilin : A →ₗ[ℤ] A →ₗ[ℤ] AddCircle (1 : ℚ) :=
+  LinearMap.mk₂' ℤ ℤ (fun x y ↦ A.pairing x y)
+    (fun x y z ↦ A.pairing_add_left x y z)
+    (fun r x y ↦ by rw [A.pairing_comm (r • x) y, map_zsmul, A.pairing_comm y x])
+    (fun x y z ↦ A.pairing_add_right x y z)
+    (fun r x y ↦ map_zsmul (A.pairing x) r y)
 
 @[simp]
 theorem toBilin_apply (x y : A) : A.toBilin x y = A.pairing x y := by
@@ -127,36 +118,58 @@ structure Isometry (A : FiniteBilinearModule.{u}) (B : FiniteBilinearModule.{v})
   /-- The underlying additive equivalence. -/
   toAddEquiv : A ≃+ B
   /-- The equivalence preserves the bilinear pairing. -/
-  map_pairing : ∀ x y, B.pairing (toAddEquiv x) (toAddEquiv y) = A.pairing x y
+  map_pairing' : ∀ x y, B.pairing (toAddEquiv x) (toAddEquiv y) = A.pairing x y
 
 namespace Isometry
 
 variable {A : FiniteBilinearModule.{u}} {B : FiniteBilinearModule.{v}}
   {C : FiniteBilinearModule.{w}}
 
-/-- Two isometries are equal when their underlying additive equivalences are equal. -/
+theorem toAddEquiv_injective : Function.Injective (toAddEquiv : Isometry A B → A ≃+ B)
+  | ⟨_, _⟩, ⟨_, _⟩, rfl => rfl
+
+@[simp]
+theorem toAddEquiv_inj {f g : Isometry A B} : f.toAddEquiv = g.toAddEquiv ↔ f = g :=
+  toAddEquiv_injective.eq_iff
+
+instance : EquivLike (Isometry A B) A B where
+  coe f := f.toAddEquiv
+  inv f := f.toAddEquiv.symm
+  left_inv f := f.toAddEquiv.left_inv
+  right_inv f := f.toAddEquiv.right_inv
+  coe_injective' _ _ h _ := toAddEquiv_injective (DFunLike.coe_injective h)
+
+instance : AddEquivClass (Isometry A B) A B where
+  map_add f := f.toAddEquiv.map_add'
+
+@[simp]
+theorem coe_toAddEquiv (f : Isometry A B) : ⇑f.toAddEquiv = f := rfl
+
+@[simp]
+theorem map_pairing (f : Isometry A B) (x y : A) : B.pairing (f x) (f y) = A.pairing x y :=
+  f.map_pairing' x y
+
+/-- Two isometries are equal when they agree on all elements. -/
 @[ext]
-theorem ext {f g : Isometry A B} (h : f.toAddEquiv = g.toAddEquiv) : f = g := by
-  cases f
-  cases g
-  cases h
-  rfl
+theorem ext {f g : Isometry A B} (h : ∀ x, f x = g x) : f = g :=
+  DFunLike.ext f g h
 
 /-- The identity isometry. -/
 def refl (A : FiniteBilinearModule) : Isometry A A where
   toAddEquiv := AddEquiv.refl A
-  map_pairing := by simp
+  map_pairing' := by simp
 
 /-- The inverse of an isometry. -/
 def symm (f : Isometry A B) : Isometry B A where
   toAddEquiv := f.toAddEquiv.symm
-  map_pairing x y := by
-    simpa using (f.map_pairing (f.toAddEquiv.symm x) (f.toAddEquiv.symm y)).symm
+  map_pairing' x y := by
+    have := (f.map_pairing' (f.toAddEquiv.symm x) (f.toAddEquiv.symm y)).symm
+    simpa using this
 
 /-- The composite of two isometries. -/
 def trans (f : Isometry A B) (g : Isometry B C) : Isometry A C where
   toAddEquiv := f.toAddEquiv.trans g.toAddEquiv
-  map_pairing x y := (g.map_pairing _ _).trans (f.map_pairing x y)
+  map_pairing' x y := (g.map_pairing' (f.toAddEquiv x) (f.toAddEquiv y)).trans (f.map_pairing' x y)
 
 @[simp]
 theorem refl_toAddEquiv (A : FiniteBilinearModule) : (refl A).toAddEquiv = AddEquiv.refl A := (rfl)
@@ -168,24 +181,40 @@ theorem symm_toAddEquiv (f : Isometry A B) : f.symm.toAddEquiv = f.toAddEquiv.sy
 theorem trans_toAddEquiv (f : Isometry A B) (g : Isometry B C) :
     (f.trans g).toAddEquiv = f.toAddEquiv.trans g.toAddEquiv := (rfl)
 
+@[simp]
+theorem apply_refl (A : FiniteBilinearModule) (x : A) : refl A x = x :=
+  AddEquiv.refl_apply x
+
+@[simp]
+theorem symm_apply_apply (f : Isometry A B) (x : A) : f.symm (f x) = x :=
+  f.toAddEquiv.symm_apply_apply x
+
+@[simp]
+theorem apply_symm_apply (f : Isometry A B) (x : B) : f (f.symm x) = x :=
+  f.toAddEquiv.apply_symm_apply x
+
+@[simp]
+theorem apply_trans (f : Isometry A B) (g : Isometry B C) (x : A) : (f.trans g) x = g (f x) :=
+  f.toAddEquiv.trans_apply g.toAddEquiv x
+
 private theorem isNondegenerate_of_isometry (f : Isometry A B) (hA : A.IsNondegenerate) :
     B.IsNondegenerate := by
   obtain ⟨hinj, hsurj⟩ := hA
   constructor
   · intro x y hxy
-    obtain ⟨x, rfl⟩ := f.toAddEquiv.surjective x
-    obtain ⟨y, rfl⟩ := f.toAddEquiv.surjective y
-    apply congrArg f.toAddEquiv
+    obtain ⟨x, rfl⟩ := (EquivLike.surjective f) x
+    obtain ⟨y, rfl⟩ := (EquivLike.surjective f) y
+    apply congrArg f
     apply hinj
     ext z
     exact (f.map_pairing x z).symm.trans <|
-      (DFunLike.congr_fun hxy (f.toAddEquiv z)).trans (f.map_pairing y z)
+      (DFunLike.congr_fun hxy (f z)).trans (f.map_pairing y z)
   · intro c
     let c' : CharacterModule A := c.comp f.toAddEquiv.toAddMonoidHom
     obtain ⟨x, hx⟩ := hsurj c'
-    refine ⟨f.toAddEquiv x, ?_⟩
+    refine ⟨f x, ?_⟩
     ext y
-    obtain ⟨y, rfl⟩ := f.toAddEquiv.surjective y
+    obtain ⟨y, rfl⟩ := (EquivLike.surjective f) y
     rw [f.map_pairing]
     exact DFunLike.congr_fun hx y
 
@@ -195,6 +224,13 @@ theorem isNondegenerate_iff (f : Isometry A B) : A.IsNondegenerate ↔ B.IsNonde
 
 end Isometry
 
+/-- The adjoint pairing on a restricted finite bilinear module. -/
+abbrev restrictPairing (H : AddSubgroup A) (x : H) : CharacterModule H where
+  toFun y := A.pairing x.1 y.1
+  map_zero' := A.pairing_zero_right x.1
+  map_add' y z := by
+    simp only [AddSubgroup.coe_add, pairing_add_right]
+
 /-- Restrict a finite bilinear module to an additive subgroup.
 
 No nondegeneracy conclusion is asserted: a subgroup of a nondegenerate module can have a
@@ -202,21 +238,14 @@ degenerate restricted pairing. -/
 abbrev restrict (H : AddSubgroup A) : FiniteBilinearModule where
   carrier := H
   pairing :=
-    { toFun := fun x ↦
-        show CharacterModule H from
-          { toFun := fun y ↦ A.pairing x y
-            map_zero' := A.pairing_zero_right x
-            map_add' := by
-              intro y z
-              simpa only [AddSubgroup.coe_add] using A.pairing_add_right x y z }
+    { toFun := A.restrictPairing H
       map_zero' := by
         ext x
-        exact A.pairing_zero_left x
-      map_add' := by
-        intro x y
+        exact A.pairing_zero_left x.1
+      map_add' := fun x y ↦ by
         ext z
-        exact A.pairing_add_left x y z }
-  pairing_comm x y := A.pairing_comm x y
+        exact A.pairing_add_left x.1 y.1 z.1 }
+  pairing_comm x y := A.pairing_comm x.1 y.1
 
 theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x y := (rfl)
@@ -229,39 +258,32 @@ abbrev neg : FiniteBilinearModule where
 
 theorem neg_pairing (x y : A) : A.neg.pairing x y = -A.pairing x y := (rfl)
 
+/-- The adjoint pairing on the product of two finite bilinear modules. -/
+abbrev prodPairing (B : FiniteBilinearModule) (x : A × B) : CharacterModule (A × B) where
+  toFun y := A.pairing x.1 y.1 + B.pairing x.2 y.2
+  map_zero' := by simp
+  map_add' y z := by
+    simp only [Prod.fst_add, Prod.snd_add, pairing_add_right]
+    abel
+
 /-- The orthogonal direct sum of two finite bilinear modules. -/
 abbrev prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   carrier := A × B
   pairing :=
-    { toFun := fun x ↦
-        show CharacterModule (A × B) from
-          { toFun := fun y ↦ A.pairing x.1 y.1 + B.pairing x.2 y.2
-            map_zero' := by simp
-            map_add' := by
-              intro y z
-              simp only [Prod.fst_add, Prod.snd_add, pairing_add_right]
-              abel }
+    { toFun := A.prodPairing B
       map_zero' := by
         ext z
-        -- `CharacterModule` has a custom `FunLike` instance, so expose the pointwise goal
-        -- explicitly.
-        change A.pairing (0 : A) z.1 + B.pairing (0 : B) z.2 = 0
         exact (congrArg₂ (· + ·) (A.pairing_zero_left z.1) (B.pairing_zero_left z.2)).trans
           (zero_add 0)
-      map_add' := by
-        intro x y
+      map_add' := fun x y ↦ by
         ext z
-        -- See the corresponding comment in `map_zero'`.
-        change A.pairing (x.1 + y.1) z.1 + B.pairing (x.2 + y.2) z.2 =
-          (A.pairing x.1 z.1 + B.pairing x.2 z.2) +
-            (A.pairing y.1 z.1 + B.pairing y.2 z.2)
-        rw [A.pairing_add_left, B.pairing_add_left]
-        abel }
-  pairing_comm x y := by
-    -- See the corresponding comment in `map_zero'`.
-    change A.pairing x.1 y.1 + B.pairing x.2 y.2 =
-      A.pairing y.1 x.1 + B.pairing y.2 x.2
-    rw [A.pairing_comm x.1 y.1, B.pairing_comm x.2 y.2]
+        exact (congrArg₂ (· + ·)
+          (congrArg (fun t ↦ A.pairing t z.1) (Prod.fst_add x y) ▸
+            A.pairing_add_left x.1 y.1 z.1)
+          (congrArg (fun t ↦ B.pairing t z.2) (Prod.snd_add x y) ▸
+            B.pairing_add_left x.2 y.2 z.2)).trans
+          (add_add_add_comm _ _ _ _) }
+  pairing_comm x y := congrArg₂ (· + ·) (A.pairing_comm x.1 y.1) (B.pairing_comm x.2 y.2)
 
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A × B) :
     (prod A B).pairing x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 := (rfl)
@@ -306,7 +328,7 @@ theorem mem_orthogonalComplement_iff (H : AddSubgroup A) (x : A) :
   exact ⟨fun h y hy ↦ h y hy, fun h y hy ↦ h y hy⟩
 
 /-- Orthogonal complements reverse inclusions. -/
-theorem orthogonalComplement_mono {H K : AddSubgroup A} (h : H ≤ K) :
+theorem orthogonalComplement_anti {H K : AddSubgroup A} (h : H ≤ K) :
     A.orthogonalComplement K ≤ A.orthogonalComplement H :=
   Submodule.orthogonalBilin_le (AddSubgroup.toIntSubmodule.monotone h)
 
