@@ -47,6 +47,11 @@ Where they meet:
 * `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditional` — and,
   where the witness exists, that limit is the invariant conditional law `ν(B)`.
 
+The limit passage itself is one private estimate,
+`tendsto_setIntegral_mul_of_tendsto_integral_abs`: `L¹` convergence plus `|p| ≤ 1` gives
+convergence of the weighted set-integrals. Keeping it separate localises the integrability
+obligations instead of rediscovering them inside the Koopman calculation.
+
 The `condExp` form is the one an induction consumes, because `stronglyMeasurable_condExp` makes it
 *strictly* measurable for the invariants σ-algebra, which is what the weight hypothesis demands;
 the `ν` form is only an a.e. identity and cannot serve as a weight. Conversion happens once, at the
@@ -293,6 +298,46 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffA
   rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← mul_assoc,
     inv_mul_cancel₀ (Nat.cast_ne_zero.mpr hn), one_mul]
 
+/-- **Passing a bounded weight through an `L¹` limit.** If `u n → v` in `L¹` and `|p| ≤ 1`, the
+weighted set-integrals converge. The whole content is one estimate:
+
+`|∫_A p (u n - v)| ≤ ∫_A |u n - v| ≤ ∫ |u n - v| → 0`.
+
+Isolating it keeps the integrability obligations in one place rather than rediscovering them inside
+the Koopman calculation. Private: the Koopman limit passage is the only consumer. -/
+private theorem tendsto_setIntegral_mul_of_tendsto_integral_abs
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {A : Set Ω} {p : Ω → ℝ}
+    {u : ℕ → Ω → ℝ} {v : Ω → ℝ}
+    (hp : AEStronglyMeasurable p μ) (hp_bdd : ∀ᵐ x ∂μ, ‖p x‖ ≤ 1)
+    (hu : ∀ n, Integrable (u n) μ) (hv : Integrable v μ)
+    (hconv : Filter.Tendsto (fun n => ∫ x, |u n x - v x| ∂μ) Filter.atTop (nhds 0)) :
+    Filter.Tendsto (fun n => ∫ x in A, p x * u n x ∂μ) Filter.atTop
+      (nhds (∫ x in A, p x * v x ∂μ)) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hconv ε hε
+  refine ⟨N, fun n hn => ?_⟩
+  have hb := hN n hn
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (integral_nonneg fun _ => abs_nonneg _)] at hb
+  have hpu : ∀ h : Ω → ℝ, Integrable h μ → Integrable (fun x => p x * h x) (μ.restrict A) :=
+    fun h hh => hh.restrict.bdd_mul hp.restrict (ae_restrict_of_ae hp_bdd)
+  have hdiff : Integrable (fun x => u n x - v x) μ := (hu n).sub hv
+  rw [Real.dist_eq]
+  calc |(∫ x in A, p x * u n x ∂μ) - ∫ x in A, p x * v x ∂μ|
+      = |∫ x in A, p x * (u n x - v x) ∂μ| := by
+        rw [← integral_sub (hpu _ (hu n)) (hpu _ hv)]
+        congr 1
+        exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
+    _ ≤ ∫ x in A, |p x * (u n x - v x)| ∂μ := abs_integral_le_integral_abs
+    _ ≤ ∫ x in A, |u n x - v x| ∂μ := by
+        refine integral_mono_ae ((hpu _ hdiff).abs) hdiff.abs.restrict ?_
+        filter_upwards [ae_restrict_of_ae hp_bdd] with x hpx
+        rw [abs_mul, Real.norm_eq_abs] at *
+        exact mul_le_of_le_one_left (abs_nonneg _) hpx
+    _ ≤ ∫ x, |u n x - v x| ∂μ :=
+        setIntegral_le_integral hdiff.abs (Filter.Eventually.of_forall fun _ => abs_nonneg _)
+    _ < ε := hb
+
 /-- **The last coordinate decouples into the invariant conditional law.** Over an invariant event,
 the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral of `ν(B)`, where `ν`
 is the invariant conditional law.
@@ -346,17 +391,6 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
     ⟨(havg_meas n).aestronglyMeasurable,
       .of_bounded (C := 1) (Filter.Eventually.of_forall (havg_bdd n))⟩
   have hF_int : Integrable F ρ := integrable_condExp
-  -- Weighting by the bounded observables preserves integrability.
-  have hw2 : ∀ h : (ℕ → α) → ℝ, Integrable h ρ →
-      Integrable (fun x => w x * (g (prefixProj α r x) * h x)) (ρ.restrict A) := by
-    intro h hh
-    have hbound : ∀ᵐ x ∂ρ.restrict A, ‖w x * g (prefixProj α r x)‖ ≤ 1 := by
-      filter_upwards [ae_restrict_of_ae hw_bdd] with x hwx
-      rw [Real.norm_eq_abs, abs_mul]
-      exact (mul_le_mul hwx (hg_bdd _) (abs_nonneg _) zero_le_one).trans_eq (one_mul 1)
-    have hassoc : Integrable (fun x => w x * g (prefixProj α r x) * h x) (ρ.restrict A) :=
-      hh.restrict.bdd_mul (hw'.mul hgm).aestronglyMeasurable hbound
-    exact hassoc.congr (Filter.Eventually.of_forall fun x => by ring)
   set c : ℕ → ℝ := fun n => ∫ x in A, w x * (g (prefixProj α r x)
     * birkhoffAverage ℝ (shift α) φ n x) ∂ρ with hcdef
   have hL : Filter.Tendsto c Filter.atTop
@@ -369,40 +403,16 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
       hB hA hn.ne'
   have hR : Filter.Tendsto c Filter.atTop
       (nhds (∫ x in A, w x * (g (prefixProj α r x) * F x) ∂ρ)) := by
-    rw [Metric.tendsto_atTop]
-    intro ε hε
     have hconv := hρ.tendsto_integral_abs_birkhoffAverage_indicator_coord hB r
     rw [← hφdef, ← hFdef] at hconv
-    obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hconv ε hε
-    refine ⟨N, fun n hn => ?_⟩
-    have hb := hN n hn
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (integral_nonneg fun _ => abs_nonneg _)] at hb
-    have hdiff_int : Integrable (fun x => birkhoffAverage ℝ (shift α) φ n x - F x) ρ :=
-      (havg_int n).sub hF_int
-    rw [Real.dist_eq, hcdef]
-    calc |(∫ x in A, w x * (g (prefixProj α r x)
-            * birkhoffAverage ℝ (shift α) φ n x) ∂ρ)
-            - ∫ x in A, w x * (g (prefixProj α r x) * F x) ∂ρ|
-        = |∫ x in A, w x * (g (prefixProj α r x)
-            * (birkhoffAverage ℝ (shift α) φ n x - F x)) ∂ρ| := by
-          rw [← integral_sub (hw2 _ (havg_int n)) (hw2 _ hF_int)]
-          congr 1
-          exact integral_congr_ae (Filter.Eventually.of_forall fun x => by ring)
-      _ ≤ ∫ x in A, |w x * (g (prefixProj α r x)
-            * (birkhoffAverage ℝ (shift α) φ n x - F x))| ∂ρ := abs_integral_le_integral_abs
-      _ ≤ ∫ x in A, |birkhoffAverage ℝ (shift α) φ n x - F x| ∂ρ := by
-          refine integral_mono_ae ((hw2 _ hdiff_int).abs) hdiff_int.abs.restrict ?_
-          filter_upwards [ae_restrict_of_ae hw_bdd] with x hwx
-          rw [abs_mul, abs_mul]
-          have hd : (0 : ℝ) ≤ |birkhoffAverage ℝ (shift α) φ n x - F x| := abs_nonneg _
-          calc |w x| * (|g (prefixProj α r x)| * |birkhoffAverage ℝ (shift α) φ n x - F x|)
-              ≤ 1 * (1 * |birkhoffAverage ℝ (shift α) φ n x - F x|) :=
-                mul_le_mul hwx (mul_le_mul (hg_bdd _) le_rfl hd zero_le_one)
-                  (by positivity) zero_le_one
-            _ = |birkhoffAverage ℝ (shift α) φ n x - F x| := by ring
-      _ ≤ ∫ x, |birkhoffAverage ℝ (shift α) φ n x - F x| ∂ρ :=
-          setIntegral_le_integral hdiff_int.abs (Filter.Eventually.of_forall fun _ => abs_nonneg _)
-      _ < ε := hb
+    have hp_bdd : ∀ᵐ x ∂ρ, ‖w x * g (prefixProj α r x)‖ ≤ 1 := by
+      filter_upwards [hw_bdd] with x hwx
+      rw [Real.norm_eq_abs, abs_mul]
+      exact (mul_le_mul hwx (hg_bdd _) (abs_nonneg _) zero_le_one).trans_eq (one_mul 1)
+    have hpm : Measurable fun x : ℕ → α => w x * g (prefixProj α r x) := hw'.mul hgm
+    simpa only [hcdef, mul_assoc] using
+      tendsto_setIntegral_mul_of_tendsto_integral_abs (A := A)
+        hpm.aestronglyMeasurable hp_bdd havg_int hF_int hconv
   rw [tendsto_nhds_unique hL hR, hFdef]
 
 /-- **Naming the limit as the invariant conditional law.** The `condExp` form above says the last
