@@ -64,6 +64,7 @@ def tangentAdContinuousLinearMap (X : GroupLieAlgebra I G) : E →L[ℝ] E :=
 theorem tangentAdContinuousLinearMap_apply (X Y : GroupLieAlgebra I G) :
     tangentAdContinuousLinearMap (I := I) X (show E from Y) =
       (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X Y) := by
+  -- `GroupLieAlgebra I G` is definitionally the model space `E`.
   rfl
 
 /-- The tangent adjoint generator respects scalar multiplication in its Lie-algebra argument. -/
@@ -73,6 +74,8 @@ theorem tangentAdContinuousLinearMap_smul (r : ℝ) (X : GroupLieAlgebra I G) :
       r • tangentAdContinuousLinearMap (I := I) X := by
   apply ContinuousLinearMap.ext
   intro Y
+  -- Unfold the bounded adjoint operator and expose the definitional model-space presentation of
+  -- `GroupLieAlgebra I G` so the Lie-linear scalar rule applies.
   change (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) (r • X)
       (show GroupLieAlgebra I G from Y)) =
     r • (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X
@@ -91,12 +94,15 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
   dsimp only
   let f : ℝ → E := fun s => (show E from tangentAd (I := I)
     (mulInvariantExp (I := I) (G := G) (s • X)) Y)
+  -- The orbit is model-space-valued because `GroupLieAlgebra I G` definitionally reduces to `E`;
+  -- the explicit ascriptions below expose that boundary to the normed derivative API.
   have hzero := hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     (I := I) (G := G) X (show GroupLieAlgebra I G from f t)
   have hshift : f = fun s => (show E from tangentAd (I := I)
       (mulInvariantExp (I := I) (G := G) ((s - t) • X))
       (show GroupLieAlgebra I G from f t)) := by
     funext s
+    -- Unfold the local orbit `f` and present both tangent values in the model space.
     change (show E from tangentAd (I := I)
         (mulInvariantExp (I := I) (G := G) (s • X)) Y) =
       (show E from tangentAd (I := I)
@@ -118,6 +124,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
         (show GroupLieAlgebra I G from f t)))
       (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X
         (show GroupLieAlgebra I G from f t)) t := by
+    -- Expose the shifted curve produced by scalar composition in the same model-space form.
     change HasDerivAt
       (fun s => (show E from tangentAd (I := I)
         (mulInvariantExp (I := I) (G := G) ((s - t) • X))
@@ -126,6 +133,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
     exact (one_smul ℝ (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X
       (show GroupLieAlgebra I G from f t))).symm
   rw [← hshift] at hderiv
+  -- Fold the local orbit and bounded adjoint operator back into the theorem's target.
   change HasDerivAt f (tangentAdContinuousLinearMap (I := I) X (f t)) t
   apply hderiv.congr_deriv
   rfl
@@ -141,6 +149,8 @@ private theorem hasDerivAt_exp_tangentAdContinuousLinearMap_apply
   have hexp := hasDerivAt_exp_smul_const' A t
   have heval := (ContinuousLinearMap.apply ℝ E (show E from Y)).hasFDerivAt
     |>.comp_hasDerivAt t hexp
+  -- Evaluation of the operator exponential has the displayed derivative by definitional
+  -- reduction of continuous-linear-map application.
   convert heval using 1 <;> rfl
 
 /-- The tangent adjoint action of `mulInvariantExp X`, evaluated on `Y`, is the operator
@@ -165,6 +175,7 @@ theorem tangentAd_mulInvariantExp_apply (X Y : GroupLieAlgebra I G) :
     fun _ => A.lipschitz.lipschitzOnWith
   have hinitial : f 0 = g 0 := by
     dsimp only [f, g]
+    -- Expose the two local curve definitions at zero before applying their unit laws.
     change (show E from tangentAd (I := I)
       (mulInvariantExp (I := I) (G := G) (0 • X)) Y) =
       NormedSpace.exp (0 • A) (show E from Y)
@@ -189,6 +200,7 @@ theorem tangentAd_mulInvariantExp_smul_self (X : GroupLieAlgebra I G) (t : ℝ) 
     simpa only [f, A] using
       hasDerivAt_tangentAd_mulInvariantExp_smul_apply (I := I) (G := G) X X s
   have hAX : A (show E from X) = 0 := by
+    -- Unfold the bounded adjoint operator in the definitional model-space presentation.
     change (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X X) = 0
     simp only [LieAlgebra.ad_apply, lie_self]
     rfl
@@ -203,6 +215,7 @@ theorem tangentAd_mulInvariantExp_smul_self (X : GroupLieAlgebra I G) (t : ℝ) 
   have hfg : f = g := ODE_solution_unique_univ (K := ‖A‖₊)
     (v := fun _ => A) (s := fun _ => univ) (t₀ := 0) hv
     (fun s => ⟨hf s, mem_univ _⟩) (fun s => ⟨hg s, mem_univ _⟩) hinitial
+  -- Unfold the two local curves at `t`, retaining the explicit model-space ascriptions.
   change (show E from tangentAd (I := I)
     (mulInvariantExp (I := I) (G := G) (t • X)) X) = (show E from X)
   exact congrFun hfg t
