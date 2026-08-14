@@ -125,7 +125,7 @@ variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex
 
 /-- A simplicial map induces a simplicial map between barycentric subdivisions by mapping every
 face-vertex to its vertexwise image. -/
-@[expose] def barycentricSubdivisionMap [DecidableEq β]
+def barycentricSubdivisionMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
     _root_.PreAbstractSimplicialComplex.SimplicialMap
       (barycentricSubdivision K).toPreAbstractSimplicialComplex
@@ -136,7 +136,7 @@ face-vertex to its vertexwise image. -/
 theorem barycentricSubdivisionMap_eq_orderComplexMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
     barycentricSubdivisionMap f = AbstractSimplicialComplex.orderComplexMap (faceOrderHom f) :=
-  rfl
+  (rfl)
 
 theorem coe_barycentricSubdivisionMap [DecidableEq β]
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
