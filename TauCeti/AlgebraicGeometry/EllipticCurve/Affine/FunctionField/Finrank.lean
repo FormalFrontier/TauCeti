@@ -186,7 +186,8 @@ theorem mem_ratFuncRange {z : W.FunctionField} :
 @[simp]
 theorem finrank_ratFuncRange : Module.finrank (ratFuncRange W) W.FunctionField = 2 :=
   (TauCeti.AlgHom.finrank_fieldRange (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField)
-    fun _ ↦ rfl).trans (finrank_functionField W (RatFunc F))
+    fun z ↦ (IsScalarTower.toAlgHom_apply F (RatFunc F) W.FunctionField z).symm).trans
+      (finrank_functionField W (RatFunc F))
 
 end Field
 

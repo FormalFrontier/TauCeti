@@ -116,7 +116,9 @@ instance finiteDimensional (φ : Isogeny W₁ W₂) :
     FunctionField.finiteDimensional_of_adjoin_transcendental φ.transcendental_pullback_X
   let _ := (IntermediateField.inclusion hle).toRingHom.toAlgebra
   have : IsScalarTower F⟮t⟯ φ.fieldPullback.fieldRange W₁.FunctionField :=
-    IsScalarTower.of_algebraMap_eq fun _ ↦ rfl
+    IsScalarTower.of_algebraMap_eq fun z ↦ by
+      rw [RingHom.algebraMap_toAlgebra]
+      exact (IntermediateField.coe_inclusion hle z).symm
   exact Module.Finite.of_restrictScalars_finite F⟮t⟯ _ _
 
 /-- **The degree read off any algebra structure induced by the pullback.** The function-field
@@ -163,8 +165,15 @@ theorem degree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
   have htower : IsScalarTower W₃.FunctionField W₂.FunctionField W₁.FunctionField :=
     IsScalarTower.of_algebraMap_eq fun z ↦ by
       simp [RingHom.algebraMap_toAlgebra, comp_fieldPullback]
-  rw [φ.degree_eq_finrank fun _ ↦ rfl, ψ.degree_eq_finrank fun _ ↦ rfl,
-    (ψ.comp φ).degree_eq_finrank fun _ ↦ rfl]
+  rw [φ.degree_eq_finrank fun z ↦ by
+      rw [RingHom.algebraMap_toAlgebra]
+      exact congrFun (AlgHom.coe_toRingHom φ.fieldPullback) z,
+    ψ.degree_eq_finrank fun z ↦ by
+      rw [RingHom.algebraMap_toAlgebra]
+      exact congrFun (AlgHom.coe_toRingHom ψ.fieldPullback) z,
+    (ψ.comp φ).degree_eq_finrank fun z ↦ by
+      rw [RingHom.algebraMap_toAlgebra]
+      exact congrFun (AlgHom.coe_toRingHom (ψ.comp φ).fieldPullback) z]
   exact (Module.finrank_mul_finrank W₃.FunctionField W₂.FunctionField W₁.FunctionField).symm
 
 end Isogeny
