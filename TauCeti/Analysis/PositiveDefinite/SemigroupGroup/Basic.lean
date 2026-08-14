@@ -163,13 +163,28 @@ theorem isSemigroupGroupPD_iff_posSemidef :
       Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
   constructor
   · intro hF
-    simpa [BCRPoint.ofProd, sub_eq_add_neg] using
-      posSemidef_submatrix_apply (IsPositiveDefinite.posSemidef hF)
-        (fun p : ℝ≥0 × V => BCRPoint.ofProd p)
+    have h := (IsPositiveDefinite.posSemidef hF).submatrix
+      (fun p : ℝ≥0 × V => BCRPoint.ofProd p)
+    have heq : Matrix.submatrix
+        (fun a b : BCRPoint V => F ((a + star b).time, (a + star b).point))
+        (fun p : ℝ≥0 × V => BCRPoint.ofProd p) (fun p => BCRPoint.ofProd p) =
+        fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
+      ext p q
+      change F (p.1 + q.1, p.2 + -q.2) = F (p.1 + q.1, p.2 - q.2)
+      simp [sub_eq_add_neg]
+    exact heq ▸ h
   · intro hK
     refine IsPositiveDefinite.of_posSemidef ?_
-    simpa [BCRPoint.toProd, sub_eq_add_neg] using
-      posSemidef_submatrix_apply hK (fun p : BCRPoint V => BCRPoint.toProd p)
+    have h := hK.submatrix (fun p : BCRPoint V => BCRPoint.toProd p)
+    have heq : Matrix.submatrix
+        (fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+        (fun p : BCRPoint V => BCRPoint.toProd p) (fun p => BCRPoint.toProd p) =
+        fun a b : BCRPoint V => F (a.time + b.time, a.point + -b.point) := by
+      ext a b
+      change F (a.time + b.time, a.point - b.point) =
+        F (a.time + b.time, a.point + -b.point)
+      simp [sub_eq_add_neg]
+    exact heq ▸ h
 
 /-- The kernel associated to a semigroup-group positive-definite function is positive definite. -/
 theorem IsSemigroupGroupPD.posSemidef (hF : IsSemigroupGroupPD F) :
@@ -309,13 +324,13 @@ theorem map_zero_re_pos_of_ne_zero (hF : IsSemigroupGroupPD F) (h0 : F (0, 0) �
 /-- Semigroup-group positive-definite functions are closed under addition. -/
 theorem add (hF : IsSemigroupGroupPD F) (hG : IsSemigroupGroupPD G) :
     IsSemigroupGroupPD fun x => F x + G x :=
-  IsSemigroupGroupPD.of_posSemidef <| posSemidef_add_apply hF.posSemidef hG.posSemidef
+  IsSemigroupGroupPD.of_posSemidef <| hF.posSemidef.add hG.posSemidef
 
 /-- Semigroup-group positive-definite functions are closed under multiplication by a
 nonnegative complex scalar. -/
 theorem const_mul {k : ℂ} (hk : 0 ≤ k) (hF : IsSemigroupGroupPD F) :
     IsSemigroupGroupPD fun x => k * F x :=
-  IsSemigroupGroupPD.of_posSemidef <| posSemidef_smul_apply hF.posSemidef hk
+  IsSemigroupGroupPD.of_posSemidef <| hF.posSemidef.smul hk
 
 /-- Semigroup-group positive-definite functions are closed under multiplication by a
 nonnegative real scalar. -/
@@ -328,14 +343,19 @@ theorem smul_of_nonneg {r : ℝ} (hr : 0 ≤ r) (hF : IsSemigroupGroupPD F) :
 (Schur product). -/
 theorem mul (hF : IsSemigroupGroupPD F) (hG : IsSemigroupGroupPD G) :
     IsSemigroupGroupPD fun x => F x * G x :=
-  IsSemigroupGroupPD.of_posSemidef <| posSemidef_hadamard_apply hF.posSemidef hG.posSemidef
+  IsSemigroupGroupPD.of_posSemidef <| hF.posSemidef.hadamard hG.posSemidef
 
 /-- Semigroup-group positive-definite functions are closed under finite sums. -/
 theorem sum {ι : Type*} {s : Finset ι} {F : ι → ℝ≥0 × V → ℂ}
     (hF : ∀ i ∈ s, IsSemigroupGroupPD (F i)) :
     IsSemigroupGroupPD fun x => ∑ i ∈ s, F i x :=
-  IsSemigroupGroupPD.of_posSemidef <|
-    posSemidef_finset_sum_apply fun i hi => (hF i hi).posSemidef
+  IsSemigroupGroupPD.of_posSemidef <| by
+    have h := Matrix.posSemidef_sum s fun i hi => (hF i hi).posSemidef
+    have heq : (∑ i ∈ s, fun p q : ℝ≥0 × V => F i (p.1 + q.1, p.2 - q.2)) =
+        fun p q => ∑ i ∈ s, F i (p.1 + q.1, p.2 - q.2) := by
+      ext
+      simp
+    exact heq ▸ h
 
 /-- Semigroup-group positive-definite functions are closed under finite products
 (Schur products). -/

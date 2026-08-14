@@ -61,7 +61,15 @@ namespace IsSemigroupGroupPD
 definite: `(t, u) ↦ F (t + u, 0)`. -/
 theorem posSemidef_timeAxis (hF : IsSemigroupGroupPD F) :
     Matrix.PosSemidef fun t u : ℝ≥0 => F (t + u, 0) := by
-  simpa using posSemidef_submatrix_apply hF.posSemidef (fun t : ℝ≥0 => (t, (0 : V)))
+  have h := hF.posSemidef.submatrix (fun t : ℝ≥0 => (t, (0 : V)))
+  have heq : Matrix.submatrix
+      (fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+      (fun t : ℝ≥0 => (t, (0 : V))) (fun t => (t, (0 : V))) =
+      fun t u : ℝ≥0 => F (t + u, 0) := by
+    ext t u
+    change F (t + u, 0 - 0) = F (t + u, 0)
+    simp
+  exact heq ▸ h
 
 /-- The zero-spatial time-axis kernel is conjugate symmetric:
 `conj (F (t + u, 0)) = F (u + t, 0)`. -/

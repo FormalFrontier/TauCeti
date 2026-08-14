@@ -218,7 +218,7 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_posSemidef
     set G : V → ℂ := fun v => (c : ℂ)⁻¹ * F v with hG_def
     have hG_pd : Matrix.PosSemidef fun a b : V => G (a - b) := by
       simp only [hG_def]
-      exact posSemidef_smul_apply hpd
+      exact hpd.smul
         (inv_nonneg.mpr ((RCLike.ofReal_nonneg (K := ℂ)).mpr hpos.le))
     have hG_cont : Continuous G := continuous_const.mul hcont
     have hG0 : G 0 = 1 := by

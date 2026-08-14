@@ -118,9 +118,17 @@ measure is positive definite. This is the kernel form of
 involution on the domain. -/
 theorem posSemidef_fourierConventionCharFun_sub :
     Matrix.PosSemidef fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
-  simpa only [integral_fourierAtom_eq_charFun_neg_two_pi_smul, smul_sub] using
-    posSemidef_submatrix_apply (posSemidef_charFun (μ := ν))
-      (fun a : W => (-2 * Real.pi) • a)
+  have h := (posSemidef_charFun (μ := ν)).submatrix (fun a : W => (-2 * Real.pi) • a)
+  have heq : Matrix.submatrix (fun x y : W => MeasureTheory.charFun ν (x - y))
+      (fun a : W => (-2 * Real.pi) • a) (fun a => (-2 * Real.pi) • a) =
+      fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
+    ext a b
+    change MeasureTheory.charFun ν
+      ((-2 * Real.pi) • a - (-2 * Real.pi) • b) = ∫ q, fourierAtom (a - b) q ∂ν
+    rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
+    congr 1
+    simp [smul_sub]
+  exact heq ▸ h
 
 section Topology
 

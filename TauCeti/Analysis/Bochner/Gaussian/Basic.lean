@@ -120,9 +120,17 @@ reduces to this one on the span of a finite family of points. -/
 private theorem posSemidef_cexp_neg_mul_sq_norm_of_finiteDimensional {c : ℝ}
     (hc : 0 ≤ c) :
     Matrix.PosSemidef fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
-  simpa only [← smul_sub, charFun_stdGaussian_sqrt_smul hc] using
-    posSemidef_submatrix_apply (posSemidef_charFun (μ := stdGaussian V))
-      (fun a : V => Real.sqrt (2 * c) • a)
+  have h := (posSemidef_charFun (μ := stdGaussian V)).submatrix
+    (fun a : V => Real.sqrt (2 * c) • a)
+  have heq : Matrix.submatrix
+      (fun x y : V => charFun (stdGaussian V) (x - y))
+      (fun a : V => Real.sqrt (2 * c) • a) (fun a => Real.sqrt (2 * c) • a) =
+      fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
+    ext a b
+    change charFun (stdGaussian V)
+      (Real.sqrt (2 * c) • a - Real.sqrt (2 * c) • b) = _
+    rw [← smul_sub, charFun_stdGaussian_sqrt_smul hc]
+  exact heq ▸ h
 
 end FiniteDimensional
 

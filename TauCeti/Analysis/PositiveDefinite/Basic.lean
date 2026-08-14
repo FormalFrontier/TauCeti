@@ -244,19 +244,19 @@ end Group
 theorem add (hF : IsPositiveDefinite F) (hG : IsPositiveDefinite G) :
     IsPositiveDefinite (fun x => F x + G x) :=
   of_posSemidef <|
-    posSemidef_add_apply hF.posSemidef hG.posSemidef
+    hF.posSemidef.add hG.posSemidef
 
 /-- Positive-definite functions are closed under multiplication by a nonnegative complex scalar. -/
 theorem const_mul {k : ℂ} (hk : 0 ≤ k) (hF : IsPositiveDefinite F) :
     IsPositiveDefinite (fun x => k * F x) :=
   of_posSemidef <|
-    posSemidef_smul_apply hF.posSemidef hk
+    hF.posSemidef.smul hk
 
 /-- Positive-definite functions are closed under pointwise multiplication (Schur product). -/
 theorem mul (hF : IsPositiveDefinite F) (hG : IsPositiveDefinite G) :
     IsPositiveDefinite (fun x => F x * G x) :=
   of_posSemidef <|
-    posSemidef_hadamard_apply hF.posSemidef hG.posSemidef
+    hF.posSemidef.hadamard hG.posSemidef
 
 end IsPositiveDefinite
 
@@ -275,7 +275,13 @@ namespace IsPositiveDefinite
 /-- Positive-definite functions are closed under finite sums. -/
 theorem sum {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :
     IsPositiveDefinite (fun x => ∑ i ∈ s, F i x) :=
-  of_posSemidef <| posSemidef_finset_sum_apply fun i hi => (hF i hi).posSemidef
+  of_posSemidef <| by
+    have h := Matrix.posSemidef_sum s fun i hi => (hF i hi).posSemidef
+    have heq : (∑ i ∈ s, fun a b : M => F i (a + star b)) =
+        fun a b => ∑ i ∈ s, F i (a + star b) := by
+      ext
+      simp
+    exact heq ▸ h
 
 /-- Positive-definite functions are closed under finite products (Schur product). -/
 theorem prod {ι : Type*} {s : Finset ι} {F : ι → M → ℂ} (hF : ∀ i ∈ s, IsPositiveDefinite (F i)) :

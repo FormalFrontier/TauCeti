@@ -582,7 +582,7 @@ theorem fourier_re_nonneg_of_posSemidef (F : V → ℂ)
   -- Step 2: the twisted function is positive definite (Schur product with the Fourier atom).
   have hψ_pd : Matrix.PosSemidef
       fun a b : V => (fun v => fourierAtom ξ v * F v) (a - b) :=
-    posSemidef_hadamard_apply (posSemidef_fourierAtom ξ) hpd
+    (posSemidef_fourierAtom ξ).hadamard hpd
   -- Step 3: the twisted function is continuous and integrable.
   have hψ_cont : Continuous fun v => fourierAtom ξ v * F v :=
     (continuous_fourierAtom ξ).mul hcont

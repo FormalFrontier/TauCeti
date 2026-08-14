@@ -27,8 +27,8 @@ Mathlib code is vendored.
 * `TauCeti.posSemidef_rankOne`: rank-one positive-semidefinite matrices.
 * `TauCeti.posSemidef_const_one` and `TauCeti.posSemidef_const_of_nonneg`: constant matrices.
 * `TauCeti.posSemidef_iff_finite_sum`: the quadratic-form characterization.
-* `TauCeti.posSemidef_finset_sum_apply`, `TauCeti.posSemidef_schur_finset_prod`, and
-  `TauCeti.posSemidef_schur_pow`: pointwise finite sums, Schur products, and Schur powers.
+* `TauCeti.posSemidef_schur_finset_prod` and `TauCeti.posSemidef_schur_pow`: finite Schur
+  products and Schur powers.
 * `TauCeti.normSq_le_of_posSemidef`: scalar Cauchy--Schwarz.
 
 ## References
@@ -167,38 +167,6 @@ theorem star_apply_eq_of_posSemidef {K : α → α → 𝕜} (hK : Matrix.PosSem
     star (K a b) = K b a :=
   hK.isHermitian.apply b a
 
-/-- Pulling back both indices of a positive-semidefinite matrix preserves positive semidefiniteness,
-stated directly in function syntax. -/
-theorem posSemidef_submatrix_apply {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
-    {β : Type w} (f : β → α) : Matrix.PosSemidef (fun a b => K (f a) (f b)) := by
-  have heq : Matrix.submatrix K f f = fun a b => K (f a) (f b) := by ext; rfl
-  exact heq ▸ hK.submatrix f
-
-/-- Pointwise sums of positive-semidefinite matrices are positive semidefinite. -/
-theorem posSemidef_add_apply {K L : α → α → 𝕜} (hK : Matrix.PosSemidef K)
-    (hL : Matrix.PosSemidef L) : Matrix.PosSemidef (fun a b => K a b + L a b) := by
-  have heq : K + L = fun a b => K a b + L a b := by ext; rfl
-  exact heq ▸ hK.add hL
-
-/-- A nonnegative scalar multiple, written pointwise, is positive semidefinite. -/
-theorem posSemidef_smul_apply {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
-    {c : 𝕜} (hc : 0 ≤ c) : Matrix.PosSemidef (fun a b => c * K a b) := by
-  have heq : c • K = fun a b => c * K a b := by ext; simp
-  exact heq ▸ hK.smul hc
-
-/-- The pointwise product of positive-semidefinite matrices is positive semidefinite. -/
-theorem posSemidef_hadamard_apply {K L : α → α → 𝕜} (hK : Matrix.PosSemidef K)
-    (hL : Matrix.PosSemidef L) : Matrix.PosSemidef (fun a b => K a b * L a b) := by
-  have heq : Matrix.hadamard K L = fun a b => K a b * L a b := by ext; rfl
-  exact heq ▸ hK.hadamard hL
-
-/-- Finite pointwise sums of positive-semidefinite matrices are positive semidefinite. -/
-theorem posSemidef_finset_sum_apply {ι : Type w} {s : Finset ι}
-    {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
-    Matrix.PosSemidef (fun a b => ∑ i ∈ s, K i a b) := by
-  have heq : (∑ i ∈ s, K i) = fun a b => ∑ i ∈ s, K i a b := by ext; simp
-  exact heq ▸ Matrix.posSemidef_sum s hK
-
 /-- Finite pointwise Schur products of positive-semidefinite matrices are positive semidefinite. -/
 theorem posSemidef_schur_finset_prod {ι : Type w} {s : Finset ι}
     {K : ι → α → α → 𝕜} (hK : ∀ i ∈ s, Matrix.PosSemidef (K i)) :
@@ -215,7 +183,9 @@ theorem posSemidef_schur_pow {K : α → α → 𝕜} (hK : Matrix.PosSemidef K)
   | zero =>
       simpa using posSemidef_const_one (R := 𝕜) (α := α)
   | succ n ih =>
-      simpa only [pow_succ] using posSemidef_hadamard_apply ih hK
+      rw [show (fun a b => K a b ^ (n + 1)) = fun a b => K a b ^ n * K a b by
+        ext; simp only [pow_succ]]
+      exact ih.hadamard hK
 
 /-- The `2 × 2` principal submatrix at two indices is positive semidefinite. -/
 private theorem finTwo_posSemidef {K : α → α → 𝕜}
