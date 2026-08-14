@@ -54,6 +54,7 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
 * `TauCeti.ValuationSpectrum.cont_eq_empty_of_one_mem_closure_zero` : if `1` belongs to the
   closure of zero, then `Cont A` is empty.
+* `TauCeti.ValuationSpectrum.cont_eq_empty_of_subsingleton` : over a zero ring, `Cont A = ∅`.
 
 ## References
 
@@ -158,7 +159,6 @@ theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Se
 end TopologicalAddGroup
 
 /-- Over a zero ring, `Cont A = ∅`. -/
-@[simp]
 theorem cont_eq_empty_of_subsingleton [Subsingleton A] : cont A = ∅ := by
   ext v
   simp only [Set.mem_empty_iff_false, iff_false]
