@@ -107,9 +107,9 @@ theorem tensorSquareMap_injective (S : Subring A) :
     apply (intTensorToRatTensor (A := A)).injective
     rw [tensorSquareMap_eq_intTensorToRatTensor] at hxy
     exact hxy
-  change TensorProduct.AlgebraTensorModule.map f f x =
-    TensorProduct.AlgebraTensorModule.map f f y at hmap
-  rw [TensorProduct.AlgebraTensorModule.map_eq] at hmap
+  rw [← AlgHom.toLinearMap_apply, ← AlgHom.toLinearMap_apply,
+      Algebra.TensorProduct.toLinearMap_map,
+      TensorProduct.AlgebraTensorModule.map_eq] at hmap
   exact hmap
 
 end Rational
