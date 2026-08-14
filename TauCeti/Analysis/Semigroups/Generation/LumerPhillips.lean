@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Semigroups.Generation.LimitSemigroup
-public import TauCeti.Analysis.Semigroups.Generation.YosidaGenerator
+public import TauCeti.Analysis.Semigroups.Generation.Yosida.Generator
 
 /-!
 # The Lumer--Phillips generation theorem
@@ -16,7 +16,7 @@ continuous contraction semigroup. The semigroup itself is built in
 `S(t) x = lim_{lambda -> ∞} exp (t A_lambda) x` of the Yosida exponentials.
 
 The reusable generator-identification argument lives in
-`TauCeti/Analysis/Semigroups/Generation/YosidaGenerator.lean`. This file supplies its hypotheses:
+`TauCeti/Analysis/Semigroups/Generation/Yosida/Generator.lean`. This file supplies its hypotheses:
 the compact-time convergence defining `yosidaLimitSemigroup`, convergence of `A_lambda x` to
 `A x` on the dense domain, the contraction bound on the approximating semigroups, and the shared
 resolvent point `1`. Thus the generator of the limit semigroup is `A`.
@@ -61,13 +61,16 @@ theorem yosidaLimitSemigroup_generator (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) :
     (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup.generator = A := by
   let S := (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup
-  apply S.generator_eq_of_yosidaApproximation (K := 1) (omega := 0) (M := 1) (lambda := 1)
-    zero_lt_one (hA.yosidaLimitSemigroup hdense).hasGrowthBound zero_lt_one
+  apply S.generator_eq_of_yosidaApproximation (K := 1) (lambda := 1) zero_lt_one
     (hA.mem_resolventSet one_pos)
+    ((ContractionSemigroup.isMDissipative_generator _).mem_resolventSet one_pos)
   · exact hA.tendsto_yosidaApproximation_apply_atTop hdense
-  · intro y T hT
-    exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense y hT).congr_right fun u hu =>
-      (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 y).symm
+  · intro x T hT
+    constructor
+    · exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (x : X) hT).congr_right
+        fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (x : X)).symm
+    · exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (A x) hT).congr_right
+        fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (A x)).symm
   · intro T hT
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with lambda hlambda u hu
     exact norm_exp_smul_yosidaApproximation_le_one
