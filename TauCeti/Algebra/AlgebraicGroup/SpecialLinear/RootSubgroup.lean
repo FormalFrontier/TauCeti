@@ -6,8 +6,8 @@ module
 
 -- The ambient root subgroup supplies the matrix calculation and the named `GLₙ` presentation.
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
--- The determinant-one quotient supplies the special-linear coordinate Hopf algebra and points.
-public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
+-- The special-linear scheme supplies the group scheme, inclusion, and scheme points.
+public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Scheme
 
 /-!
 # The root subgroups of the special linear group
@@ -28,23 +28,30 @@ faithfulness of the functor of points then recovers the coordinate Hopf-algebra 
 The resulting morphism is not merely another presentation of the already constructed
 general-linear root subgroup. Its composite with the determinant-kernel inclusion is proved to
 be `TauCeti.GeneralLinear.rootSubgroup`. Thus the construction records scheme-theoretically that
-the type-A root subgroup lands in determinant one, over every base ring and after every base
-change.
+the type-A root subgroup lands in determinant one, over every base ring.
 
 ## Main definitions
 
 * `TauCeti.SpecialLinear.rootSubgroupPoints`: the homomorphism on algebra-valued points.
+* `TauCeti.SpecialLinear.rootSubgroupPointsMap`: the natural transformation on Hopf-points
+  functors.
 * `TauCeti.SpecialLinear.rootSubgroupCoordinateMap`: the coordinate morphism
   `O(SLₙ) → O(𝔾ₐ)`.
 * `TauCeti.SpecialLinear.rootSubgroup`: the affine group-scheme morphism `𝔾ₐ → SLₙ`.
+
 ## Main results
 
-* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup`: the root subgroup is the elementary
-  transvection on scheme-valued points.
+* `TauCeti.SpecialLinear.pointsMulEquiv_rootSubgroupPoints`: under the special-linear point
+  equivalence, the root subgroup point is the elementary transvection of its additive parameter.
+* `TauCeti.SpecialLinear.rootSubgroupPoints_injective`: the root subgroup is injective on points.
+* `TauCeti.SpecialLinear.mapValue_rootSubgroupPoints`: the root subgroup on points is natural in the
+  value algebra.
 * `TauCeti.SpecialLinear.coordinateMap_comp_rootSubgroupCoordinateMap`: the coordinate-level
   factorization of the general-linear root subgroup.
-* `TauCeti.SpecialLinear.rootSubgroup_comp_groupSchemeιGeneralLinear`: the corresponding
-  factorization of group schemes.
+* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup`: the root subgroup is the elementary
+  transvection on scheme-valued points.
+* `TauCeti.SpecialLinear.rootSubgroup_comp_groupSchemeι`: the corresponding factorization of group
+  schemes.
 
 ## References
 
@@ -70,33 +77,25 @@ section Points
 variable {A : Type w} [CommRing A] [Algebra R A]
 variable {B : Type w} [CommRing B] [Algebra R B]
 
-/-- The elementary determinant-one matrices at a fixed pair of indices form a one-parameter
-subgroup. -/
-private def transvectionHom (hij : i ≠ j) :
-    Multiplicative A →* Matrix.SpecialLinearGroup (Fin N) A where
-  toFun c := Matrix.SpecialLinearGroup.transvection hij (Multiplicative.toAdd c)
-  map_one' := Matrix.SpecialLinearGroup.transvection_coeff_zero hij
-  map_mul' c d := Matrix.SpecialLinearGroup.transvection_add hij
-    (Multiplicative.toAdd c) (Multiplicative.toAdd d)
-
 /-- The root subgroup homomorphism on `A`-points, sending the additive parameter to its
 determinant-one elementary matrix. -/
 noncomputable def rootSubgroupPoints (hij : i ≠ j) :
     WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R N →ₐ[R] A) :=
   ((pointsMulEquiv (R := R) (A := A) N).symm.toMonoidHom.comp
-    ((transvectionHom hij).comp
+    ((Matrix.SpecialLinearGroup.transvectionHom hij).comp
       (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A)).toMonoidHom))
 
 /-- Under the special-linear point equivalence, the root subgroup point is the elementary
 transvection of its additive parameter. -/
+@[simp]
 theorem pointsMulEquiv_rootSubgroupPoints (hij : i ≠ j)
     (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     pointsMulEquiv (R := R) (A := A) N (rootSubgroupPoints hij f) =
       Matrix.SpecialLinearGroup.transvection hij
         (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A) f)) := by
   rw [rootSubgroupPoints]
-  simp [transvectionHom]
+  simp
 
 /-- The special-linear root subgroup is a monomorphism on algebra-valued points. -/
 theorem rootSubgroupPoints_injective (hij : i ≠ j) :
@@ -104,32 +103,9 @@ theorem rootSubgroupPoints_injective (hij : i ≠ j) :
   intro f g h
   have hSL := congrArg (pointsMulEquiv (R := R) (A := A) N) h
   rw [pointsMulEquiv_rootSubgroupPoints, pointsMulEquiv_rootSubgroupPoints] at hSL
-  have hentry := congrArg
-    (fun s : Matrix.SpecialLinearGroup (Fin N) A => (s : Matrix (Fin N) (Fin N) A) i j) hSL
-  refine (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A)).injective ?_
-  have hparameter :
-      Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A) f) =
-        Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A) g) := by
-    simpa [Matrix.SpecialLinearGroup.transvection_coe, Matrix.one_apply,
-      Matrix.single_apply, hij] using hentry
-  simpa only [ofAdd_toAdd] using
-    congrArg (Multiplicative.ofAdd : A → Multiplicative A) hparameter
-
-/-- Entrywise mapping of a determinant-one transvection maps its parameter. -/
-private theorem map_transvection (φ : A →ₐ[R] B) (hij : i ≠ j) (c : A) :
-    Matrix.SpecialLinearGroup.map φ.toRingHom
-        (Matrix.SpecialLinearGroup.transvection hij c) =
-      Matrix.SpecialLinearGroup.transvection hij (φ c) := by
-  apply Matrix.SpecialLinearGroup.toGL_injective
-  apply Matrix.GeneralLinearGroup.ext
-  intro k l
-  have hφ : φ.toRingHom c = φ c := rfl
-  simpa only [Matrix.SpecialLinearGroup.coe_GL_coe_matrix,
-    Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply,
-    Matrix.SpecialLinearGroup.transvection_coe, Matrix.transvection,
-    Matrix.GeneralLinearGroup.map_apply, coe_transvectionUnit, hφ] using
-    congrArg (fun g : GL (Fin N) B ↦ (g : Matrix (Fin N) (Fin N) B) k l)
-      (map_transvectionUnit φ.toRingHom hij c)
+  have hparam := Matrix.SpecialLinearGroup.transvection_injective hij hSL
+  apply (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A)).injective
+  exact Multiplicative.toAdd.injective hparam
 
 /-- The special-linear root subgroup on points is natural in the value algebra. -/
 theorem mapValue_rootSubgroupPoints (φ : A →ₐ[R] B) (hij : i ≠ j)
@@ -146,8 +122,9 @@ theorem mapValue_rootSubgroupPoints (φ : A →ₐ[R] B) (hij : i ≠ j)
         (CommAlgCat.ofHom φ) (rootSubgroupPoints hij f)) = _
   rw [pointsMulEquiv_mapValue,
     pointsMulEquiv_rootSubgroupPoints,
-    pointsMulEquiv_rootSubgroupPoints, map_transvection,
+    pointsMulEquiv_rootSubgroupPoints, Matrix.SpecialLinearGroup.map_transvection,
     AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
+  rfl
 
 end Points
 
@@ -249,11 +226,7 @@ theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i ≠ j) :
     (R := R) (A := A) hij f
   have hGL := GeneralLinear.pointsMulEquiv_rootSubgroupPoints
     (R := R) (A := A) hij f
-  rw [hSL, hGL]
-  apply Matrix.GeneralLinearGroup.ext
-  intro k l
-  rw [coe_transvectionUnit]
-  rfl
+  rw [hSL, hGL, transvectionUnit_def]
 
 /-- **The root subgroup of `SLₙ` attached to `εᵢ - εⱼ`**, as a morphism of affine group
 schemes over the base ring. -/
@@ -282,14 +255,14 @@ variable (A : Type u) [CommRing A] [Algebra R A]
 private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
     (q : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     AdditiveGroup.groupSchemePointMulEquiv A q ≫ (rootSubgroup hij).hom.hom =
-      groupSchemePointMulEquiv R N A (rootSubgroupPoints hij q) := by
+      groupSchemePointMulEquiv N A (rootSubgroupPoints hij q) := by
   rw [rootSubgroup_def,
     ← mapPointsFunctor_rootSubgroupCoordinateMap_app hij (CommAlgCat.of R A) q]
   exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
     (R := R) A (groupScheme_def R N) (AdditiveGroup.groupScheme_def R)
       (groupScheme_X_left R N) (AdditiveGroup.groupScheme_X_left R)
-      (groupSchemePointMulEquiv R N A) (AdditiveGroup.groupSchemePointMulEquiv A)
-      (groupSchemePointMulEquiv_apply_left R N A)
+      (groupSchemePointMulEquiv N A) (AdditiveGroup.groupSchemePointMulEquiv A)
+      (groupSchemePointMulEquiv_apply_left N A)
       (AdditiveGroup.groupSchemePointMulEquiv_apply_left A)
       (rootSubgroupCoordinateMap hij) q
 
@@ -299,35 +272,25 @@ special-linear root subgroup gives the determinant-one transvection of its addit
 theorem schemePointsMulEquiv_rootSubgroup (hij : i ≠ j)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (AdditiveGroup.groupScheme R).X) :
-    schemePointsMulEquiv R N A (p ≫ (rootSubgroup hij).hom.hom) =
+    schemePointsMulEquiv N A (p ≫ (rootSubgroup hij).hom.hom) =
       Matrix.SpecialLinearGroup.transvection hij
         (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p)) := by
-  exact CommHopfAlgCat.transportPointwiseFormula
-    (AdditiveGroup.groupSchemePointMulEquiv (R := R) (A := A))
-    (groupSchemePointMulEquiv (R := R) N A)
-    (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A))
-    (pointsMulEquiv (R := R) (A := A) N)
-    (AdditiveGroup.schemePointsMulEquiv (R := R) A)
-    (schemePointsMulEquiv (R := R) N A)
-    (AdditiveGroup.schemePointsMulEquiv_symm_apply (R := R) A)
-    (schemePointsMulEquiv_symm_apply (R := R) N A)
-    (fun p ↦ p ≫ (rootSubgroup hij).hom.hom) (rootSubgroupPoints hij)
-    (fun a ↦ Matrix.SpecialLinearGroup.transvection hij (Multiplicative.toAdd a))
-    (groupSchemePointMulEquiv_comp_rootSubgroup (R := R) (N := N) A hij)
-    (pointsMulEquiv_rootSubgroupPoints (R := R) (A := A) hij) p
+  obtain ⟨q, rfl⟩ := (AdditiveGroup.groupSchemePointMulEquiv A).surjective p
+  rw [groupSchemePointMulEquiv_comp_rootSubgroup,
+    schemePointsMulEquiv_groupSchemePointMulEquiv,
+    pointsMulEquiv_rootSubgroupPoints,
+    AdditiveGroup.schemePointsMulEquiv_groupSchemePointMulEquiv]
 
 end SchemePoints
 
 /-- The special-linear root subgroup followed by the determinant-kernel inclusion is the
 general-linear root subgroup. -/
-theorem rootSubgroup_comp_groupSchemeιGeneralLinear (hij : i ≠ j) :
-    rootSubgroup hij ≫ groupSchemeιGeneralLinear R N =
-      GeneralLinear.rootSubgroup hij := by
-  rw [rootSubgroup, groupSchemeιGeneralLinear_def, groupSchemeι_def]
+theorem rootSubgroup_comp_groupSchemeι (hij : i ≠ j) :
+    rootSubgroup (R := R) (N := N) hij ≫ groupSchemeι R N =
+      GeneralLinear.rootSubgroup (R := R) (N := N) hij := by
+  rw [rootSubgroup_def, groupSchemeι_def, GeneralLinear.rootSubgroup_def]
   simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-  rw [
-    CommHopfAlgCat.kernelSpecι_def, CommHopfAlgCat.quotientSpecι_def,
-    GeneralLinear.rootSubgroup_def]
+  rw [CommHopfAlgCat.kernelSpecι_def, CommHopfAlgCat.quotientSpecι_def]
   rw [← Category.assoc
     ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
       (rootSubgroupCoordinateMap hij).op)

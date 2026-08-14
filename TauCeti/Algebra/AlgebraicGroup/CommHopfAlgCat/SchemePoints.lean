@@ -230,6 +230,7 @@ theorem pointMulEquivOfPresentation_mapDomain
           eqToHom hG.symm).hom.hom =
       eG ((mapPointsFunctor φ).app (CommAlgCat.of R A) p) := by
   apply Over.OverMorphism.ext
+  -- `erw` matches across `.asOver.left` which is definitionally `Spec A`.
   erw [Over.comp_left, eH'_apply_left,
     transportedHopfSpecMap_left hG hH' hGX hH'X φ, eG_apply_left]
   -- The public computations expose the same spectrum maps behind differently wrapped `Over`
@@ -240,41 +241,12 @@ theorem pointMulEquivOfPresentation_mapDomain
     Spec.map (CommRingCat.ofHom
       (((mapPointsFunctor φ).app (CommAlgCat.of R A) p).ofConv.toRingHom)) ≫
         eqToHom hGX.symm
-  erw [mapPointsFunctor_app_apply, WithConv.ofConv_toConv]
+  rw [mapPointsFunctor_app_apply, WithConv.ofConv_toConv]
   simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-  erw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
+  rw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
   rfl
-
-/-- Transport a formula on algebra-valued points across named presentations of its source and
-target point groups. The first hypothesis identifies composition on presented points, while the
-second supplies the concrete formula before transport. -/
-theorem transportPointwiseFormula
-    {P Q S T X Y : Type*} [Group P] [Group Q] [Group S] [Group T] [Group X] [Group Y]
-    (sourcePresentation : Q ≃* P) (targetPresentation : T ≃* S)
-    (sourcePoints : Q ≃* X) (targetPoints : T ≃* Y)
-    (sourceSchemePoints : P ≃* X) (targetSchemePoints : S ≃* Y)
-    (sourceSchemePoints_symm_apply : ∀ x, sourceSchemePoints.symm x =
-      sourcePresentation (sourcePoints.symm x))
-    (targetSchemePoints_symm_apply : ∀ y, targetSchemePoints.symm y =
-      targetPresentation (targetPoints.symm y))
-    (mapPresentation : P → S) (mapPoints : Q → T) (mapConcrete : X → Y)
-    (mapPresentation_apply : ∀ q, mapPresentation (sourcePresentation q) =
-      targetPresentation (mapPoints q))
-    (mapPoints_apply : ∀ q, targetPoints (mapPoints q) = mapConcrete (sourcePoints q))
-    (p : P) :
-    targetSchemePoints (mapPresentation p) = mapConcrete (sourceSchemePoints p) := by
-  obtain ⟨q, rfl⟩ := sourcePresentation.surjective p
-  have source_compat : sourceSchemePoints (sourcePresentation q) = sourcePoints q := by
-    apply sourceSchemePoints.symm.injective
-    rw [sourceSchemePoints.symm_apply_apply, sourceSchemePoints_symm_apply,
-      sourcePoints.symm_apply_apply]
-  have target_compat : targetSchemePoints (targetPresentation (mapPoints q)) =
-      targetPoints (mapPoints q) := by
-    apply targetSchemePoints.symm.injective
-    rw [targetSchemePoints.symm_apply_apply, targetSchemePoints_symm_apply,
-      targetPoints.symm_apply_apply]
-  rw [mapPresentation_apply, target_compat, source_compat, mapPoints_apply]
 
 end CommHopfAlgCat
 
 end TauCeti
+

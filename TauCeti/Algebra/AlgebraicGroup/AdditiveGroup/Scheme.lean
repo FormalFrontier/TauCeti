@@ -325,6 +325,25 @@ lemma toAdd_schemePointsMulEquiv
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   exact toAdd_gaPointsMulEquiv _
 
+/-- Evaluating the scheme-points equivalence on a point presented by `groupSchemePointMulEquiv`
+recovers the canonical algebra point. -/
+@[simp]
+theorem schemePointsMulEquiv_groupSchemePointMulEquiv
+    (q : WithConv (coordinateHopfAlgebra R →ₐ[R] A)) :
+    schemePointsMulEquiv A (groupSchemePointMulEquiv A q) =
+      gaPointsMulEquiv (R := R) (A := A) q := by
+  simp [schemePointsMulEquiv]
+
+/-- Evaluating the scheme-points equivalence directly on a scheme morphism. -/
+theorem schemePointsMulEquiv_apply
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    schemePointsMulEquiv A p =
+      gaPointsMulEquiv (R := R) (A := A)
+        ((groupSchemePointMulEquiv A).symm p) := by
+  unfold schemePointsMulEquiv
+  rfl
+
 /-- The inverse scheme-points equivalence sends an element of the value algebra to the spectrum
 map induced by the corresponding symmetric-algebra point. -/
 @[simp]
