@@ -56,7 +56,6 @@ theorem isUpperUnitriangular_iff [Zero R] [One R] (M : Matrix m m R) :
   Iff.rfl
 
 /-- The identity matrix is upper unitriangular. -/
-@[simp]
 theorem isUpperUnitriangular_one [Zero R] [One R] :
     IsUpperUnitriangular (1 : Matrix m m R) := by
   refine ⟨blockTriangular_one, ?_⟩
