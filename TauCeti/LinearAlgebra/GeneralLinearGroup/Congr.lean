@@ -43,11 +43,24 @@ def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ
 
 @[simp]
 theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : M₂) :
-    congrAut e f m = e (f (e.symm m)) := (rfl)
+    congrAut e f m = e (f (e.symm m)) := by
+  change (generalLinearEquiv R M₂
+    (congrLinearEquiv e ((generalLinearEquiv R M₁).symm f))) m = _
+  simp only [congrLinearEquiv_apply, coeFn_generalLinearEquiv, coe_ofLinearEquiv,
+    LinearEquiv.trans_apply]
+  rw [show ((generalLinearEquiv R M₁).symm f).toLinearEquiv = f from
+    (generalLinearEquiv R M₁).apply_symm_apply f]
 
 @[simp]
 theorem congrAut_symm_apply (e : M₁ ≃ₗ[R] M₂) (g : M₂ ≃ₗ[R] M₂) (m : M₁) :
-    (congrAut e).symm g m = e.symm (g (e m)) := (rfl)
+    (congrAut e).symm g m = e.symm (g (e m)) := by
+  change (generalLinearEquiv R M₁
+    ((congrLinearEquiv e).symm ((generalLinearEquiv R M₂).symm g))) m = _
+  rw [congrLinearEquiv_symm]
+  simp only [congrLinearEquiv_apply, coeFn_generalLinearEquiv, coe_ofLinearEquiv,
+    LinearEquiv.trans_apply, LinearEquiv.symm_symm]
+  rw [show ((generalLinearEquiv R M₂).symm g).toLinearEquiv = g from
+    (generalLinearEquiv R M₂).apply_symm_apply g]
 
 end LinearEquiv
 

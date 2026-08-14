@@ -138,6 +138,7 @@ theorem isIsometry_toLinearMap (φ : B →bᵢ B) : IsIsometry B φ.toLinearMap 
 namespace IsIsometry
 
 /-- An isometry takes the same value under `B` after applying the endomorphism to both inputs. -/
+@[grind =]
 protected theorem apply (hf : IsIsometry B f) (x y : M) : B (f x) (f y) = B x y :=
   isIsometry_iff.mp hf x y
 
@@ -316,9 +317,12 @@ theorem coe_isometryGroupBaseChange (B : BilinForm R M) (e : isometryGroup B) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M)
       = LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M) := (rfl)
 
+@[simp]
 theorem isometryGroupBaseChange_tmul (B : BilinForm R M) (e : isometryGroup B) (a : A) (m : M) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M) (a ⊗ₜ m)
-      = a ⊗ₜ (e : M ≃ₗ[R] M) m := (rfl)
+      = a ⊗ₜ (e : M ≃ₗ[R] M) m := by
+  rw [coe_isometryGroupBaseChange]
+  exact LinearEquiv.baseChange_tmul R A M M a m
 
 end BaseChange
 
