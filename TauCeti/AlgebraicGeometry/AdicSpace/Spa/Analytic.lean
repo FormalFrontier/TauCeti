@@ -50,6 +50,12 @@ its restriction to continuous points is his predicate. -/
 def IsAnalyticPoint (v : Spv A) : Prop :=
   ¬ IsOpen (v.supp : Set A)
 
+/-- A point of `Spv A` is analytic exactly when its support is not open. -/
+@[simp]
+theorem isAnalyticPoint_def (v : Spv A) :
+    IsAnalyticPoint v ↔ ¬ IsOpen (v.supp : Set A) :=
+  Iff.rfl
+
 /-- **Wedhorn's Analytic Locus `Spa(A, A⁺)ᵃ`**: the subset of `spa Aplus` consisting of analytic
 points (Definition 7.39). -/
 def spaAnalytic (Aplus : Subring A) : Set (Spv A) :=
