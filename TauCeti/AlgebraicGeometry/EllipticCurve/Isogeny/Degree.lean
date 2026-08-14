@@ -7,6 +7,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
 import Mathlib.NumberTheory.FunctionField
+import TauCeti.FieldTheory.IntermediateField.FieldRange
 
 /-!
 # The degree of an isogeny
@@ -21,8 +22,8 @@ of an infinite extension reads `0`. Finiteness holds for every isogeny, and this
 it: the pullback of the affine coordinate is transcendental over `F`
 (`TauCeti.Isogeny.transcendental_pullback_X`), so the pulled-back function field already
 contains a transcendental element `t`, and `F(W₁)` is finite over `F(t)` because it is finite
-over the rational function field. Positivity of the degree follows at once, and so does the
-converse reading of degree one: an isogeny of degree one is an isomorphism on function fields.
+over the rational function field. Positivity of the degree follows at once, and degree one reads
+as an isomorphism on function fields.
 
 Multiplicativity under composition is the `finrank` tower formula, applied to
 `F(W₃) → F(W₂) → F(W₁)`. The pulled-back copies of `F(W₂)` and `F(W₃)` are subfields of
@@ -36,22 +37,27 @@ degree off any algebra structure whose structure map is the pullback.
 
 ## Main results
 
-* `TauCeti.Isogeny.exists_transcendental_mem_fieldRange`: the pulled-back function field is not
-  contained in the constants.
 * `TauCeti.Isogeny.finiteDimensional`: **automatic finiteness** — the extension a degree
   measures is finite, the inseparable case included.
 * `TauCeti.Isogeny.degree_eq_finrank`: the degree read off an arbitrary algebra structure
   induced by the pullback.
-* `TauCeti.Isogeny.degree_pos`: an isogeny has positive degree; `TauCeti.Isogeny.degree_id`
-  computes the identity's, and is the `@[simp]` normal form of a degree.
+* `TauCeti.Isogeny.degree_pos`: an isogeny has positive degree.
+* `TauCeti.Isogeny.degree_eq_one_iff`: degree one means the function-field pullback is onto;
+  `TauCeti.Isogeny.degree_id` is the identity's case, and is the `@[simp]` normal form of a
+  degree.
 * `TauCeti.Isogeny.degree_comp`: **the tower formula** `deg (ψ ∘ φ) = deg ψ * deg φ`.
-* `TauCeti.Isogeny.degree_eq_one_iff`: degree one means the function-field pullback is onto.
 
 These are the `Isogeny.finiteDimensional` and `degree_pos` seeds of
 `TauCetiRoadmap/EllipticCurves/Suggested.lean` together with the degree multiplicativity named
-in `README.md` §Layer 1; the proofs are original. The mathematics is Silverman, *The Arithmetic
-of Elliptic Curves*, II.2.4(a) and II.2.4(c) — where finiteness of the extension is exactly what
-makes a nonconstant map of curves finite.
+in `README.md` §Layer 1. The mathematics is Silverman, *The Arithmetic of Elliptic Curves*,
+II.2.4(a) and II.2.4(c) — where finiteness of the extension is exactly what makes a nonconstant
+map of curves finite.
+
+`degree` is the coordinate-ring form of D. Angdinata's function-field definition, as the
+`Isogeny` structure itself is, and `finiteDimensional` is ⚠ mathlib-track material: it is proved
+in that shared upstream development, in its function-field form, ahead of the mathlib PRs
+(`TauCetiRoadmap/EllipticCurves/README.md` §Provenance). It is built here until those land; the
+proofs below are written against the coordinate-ring form rather than ported.
 
 ## References
 
@@ -85,36 +91,29 @@ left-hand side, so tagging both fails `simpNF`. -/
 theorem degree_def (φ : Isogeny W₁ W₂) :
     φ.degree = Module.finrank φ.fieldPullback.fieldRange W₁.FunctionField := (rfl)
 
-/-- **The pulled-back function field contains a transcendental element**: the pullback of the
-affine coordinate `x` of the target, which `transcendental_pullback_X` places outside the
-constants. This is the input to finiteness, and it is where the isogeny hypotheses are spent —
-a merely arbitrary subfield of `W₁.FunctionField` need not sit under a finite extension. -/
-theorem exists_transcendental_mem_fieldRange (φ : Isogeny W₁ W₂) :
-    ∃ t ∈ φ.fieldPullback.fieldRange, Transcendental F t :=
-  ⟨φ.pullback (algebraMap F[X] W₂.CoordinateRing X),
-    ⟨algebraMap W₂.CoordinateRing W₂.FunctionField (algebraMap F[X] W₂.CoordinateRing X), by
-      simp⟩,
-    φ.transcendental_pullback_X⟩
-
+-- `RatFunc` is opened for the duration of this declaration alone: the algebra structure of
+-- `W₁.FunctionField` over the rational function field is a scoped instance upstream, because it
+-- is a diamond when the two coincide.
 open scoped RatFunc in
 /-- **An isogeny has finite degree** (Silverman II.2.4(a)): the extension of `W₁.FunctionField`
 over the pulled-back copy of `W₂.FunctionField` is finite, with no separability hypothesis —
 purely inseparable isogenies such as Frobenius are covered.
 
-The pulled-back copy contains an element `t` transcendental over `F`, and `W₁.FunctionField` is
-finite over `F(t)`, because it is a function field over `F`: finite over the rational function
-field, by `WeierstrassCurve.Affine.finiteDimensional_functionField`. Enlarging the base field
-from `F(t)` to the whole pulled-back copy keeps it finite.
-
-`RatFunc` is opened for the duration of this declaration alone: the algebra structure of
-`W₁.FunctionField` over the rational function field is a scoped instance upstream, because it
-is a diamond when the two coincide. -/
+The pulled-back copy contains the pullback `t` of the target's affine coordinate, transcendental
+over `F` by `transcendental_pullback_X`, and `W₁.FunctionField` is finite over `F(t)`, because it
+is a function field over `F`: finite over the rational function field, by
+`WeierstrassCurve.Affine.finiteDimensional_functionField`. Enlarging the base field from `F(t)`
+to the whole pulled-back copy keeps it finite. This is where the isogeny hypotheses are spent — a
+merely arbitrary subfield of `W₁.FunctionField` need not sit under a finite extension. -/
 instance finiteDimensional (φ : Isogeny W₁ W₂) :
     FiniteDimensional φ.fieldPullback.fieldRange W₁.FunctionField := by
-  obtain ⟨t, htmem, ht⟩ := φ.exists_transcendental_mem_fieldRange
-  have hle : F⟮t⟯ ≤ φ.fieldPullback.fieldRange := adjoin_simple_le_iff.2 htmem
+  set t := φ.pullback (algebraMap F[X] W₂.CoordinateRing X) with ht_def
+  have hle : F⟮t⟯ ≤ φ.fieldPullback.fieldRange :=
+    adjoin_simple_le_iff.2
+      ⟨algebraMap W₂.CoordinateRing W₂.FunctionField (algebraMap F[X] W₂.CoordinateRing X), by
+        simp [ht_def]⟩
   have : FiniteDimensional F⟮t⟯ W₁.FunctionField :=
-    FunctionField.finiteDimensional_of_adjoin_transcendental ht
+    FunctionField.finiteDimensional_of_adjoin_transcendental φ.transcendental_pullback_X
   let _ := (IntermediateField.inclusion hle).toRingHom.toAlgebra
   have : IsScalarTower F⟮t⟯ φ.fieldPullback.fieldRange W₁.FunctionField :=
     IsScalarTower.of_algebraMap_eq fun _ ↦ rfl
@@ -127,15 +126,8 @@ structure map is the pullback, rather than for one fixed choice: registering suc
 globally would create a diamond, since different isogenies induce different ones. -/
 theorem degree_eq_finrank (φ : Isogeny W₁ W₂) [Algebra W₂.FunctionField W₁.FunctionField]
     (h : ∀ z, algebraMap W₂.FunctionField W₁.FunctionField z = φ.fieldPullback z) :
-    φ.degree = Module.finrank W₂.FunctionField W₁.FunctionField := by
-  have hsquare : (algebraMap φ.fieldPullback.fieldRange W₁.FunctionField).comp
-      φ.fieldPullback.equivFieldRange.toRingEquiv.toRingHom =
-      (RingEquiv.refl W₁.FunctionField).toRingHom.comp
-        (algebraMap W₂.FunctionField W₁.FunctionField) := by
-    ext z
-    exact (AlgHom.equivFieldRange_apply_coe φ.fieldPullback z).trans (h z).symm
-  exact (Algebra.finrank_eq_of_equiv_equiv φ.fieldPullback.equivFieldRange.toRingEquiv
-    (RingEquiv.refl W₁.FunctionField) hsquare).symm
+    φ.degree = Module.finrank W₂.FunctionField W₁.FunctionField :=
+  φ.degree_def.trans (AlgHom.finrank_fieldRange φ.fieldPullback h)
 
 /-- **The degree of an isogeny is positive.** The extension is finite and the source function
 field is nontrivial. -/
@@ -147,18 +139,22 @@ theorem degree_pos (φ : Isogeny W₁ W₂) : 0 < φ.degree :=
 theorem degree_ne_zero (φ : Isogeny W₁ W₂) : φ.degree ≠ 0 :=
   φ.degree_pos.ne'
 
+/-- **Degree one means an isomorphism of function fields.** The degree measures
+`W₁.FunctionField` over the image of `fieldPullback`, so it is one exactly when that image is
+everything. -/
+theorem degree_eq_one_iff (φ : Isogeny W₁ W₂) :
+    φ.degree = 1 ↔ Function.Surjective φ.fieldPullback := by
+  rw [degree_def, IntermediateField.finrank_eq_one_iff_eq_top, AlgHom.fieldRange_eq_top]
+
 /-- The identity isogeny has degree one: its function-field pullback is the identity, so the
 extension it measures is trivial. -/
 @[simp]
-theorem degree_id (W : WeierstrassCurve.Affine F) : (id W).degree = 1 := by
-  have hrange : (id W).fieldPullback.fieldRange = ⊤ := by
-    rw [id_fieldPullback]
-    exact AlgHom.fieldRange_eq_top.mpr Function.surjective_id
-  rw [degree_def, hrange]
-  exact IntermediateField.finrank_top
+theorem degree_id (W : WeierstrassCurve.Affine F) : (id W).degree = 1 :=
+  (degree_eq_one_iff _).2 <| by rw [id_fieldPullback]; exact Function.surjective_id
 
 /-- **The degree is multiplicative under composition** (Silverman II.2.4(c)): the tower formula
 for `F(W₃) ⊆ F(W₂) ⊆ F(W₁)`, the inclusions being the pullbacks. -/
+@[simp]
 theorem degree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
     (ψ.comp φ).degree = ψ.degree * φ.degree := by
   let _ := φ.fieldPullback.toRingHom.toAlgebra
@@ -166,24 +162,10 @@ theorem degree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
   let _ := (ψ.comp φ).fieldPullback.toRingHom.toAlgebra
   have htower : IsScalarTower W₃.FunctionField W₂.FunctionField W₁.FunctionField :=
     IsScalarTower.of_algebraMap_eq fun z ↦ by
-      change (ψ.comp φ).fieldPullback z = φ.fieldPullback (ψ.fieldPullback z)
-      rw [comp_fieldPullback]
-      rfl
+      simp [RingHom.algebraMap_toAlgebra, comp_fieldPullback]
   rw [φ.degree_eq_finrank fun _ ↦ rfl, ψ.degree_eq_finrank fun _ ↦ rfl,
     (ψ.comp φ).degree_eq_finrank fun _ ↦ rfl]
   exact (Module.finrank_mul_finrank W₃.FunctionField W₂.FunctionField W₁.FunctionField).symm
-
-/-- **Degree one means an isomorphism of function fields.** The degree measures
-`W₁.FunctionField` over the image of `fieldPullback`, so it is one exactly when that image is
-everything — the finiteness of the extension being what rules out the degenerate reading of
-`finrank`. -/
-theorem degree_eq_one_iff (φ : Isogeny W₁ W₂) :
-    φ.degree = 1 ↔ Function.Surjective φ.fieldPullback := by
-  rw [← AlgHom.fieldRange_eq_top]
-  refine ⟨fun h ↦ IntermediateField.eq_of_le_of_finrank_eq' le_top ?_, fun h ↦ ?_⟩
-  · rw [IntermediateField.finrank_top, ← degree_def, h]
-  · rw [degree_def, h]
-    exact IntermediateField.finrank_top
 
 end Isogeny
 
