@@ -187,7 +187,6 @@ instance : CoeSort FiniteBilinearModule (Type u) := ⟨FiniteBilinearModule.carr
 
 variable (A : FiniteBilinearModule)
 
-@[simp]
 theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
   rw [map_zero]
   rfl
@@ -195,7 +194,6 @@ theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
 @[simp]
 theorem pairing_zero_right (x : A) : A.pairing x 0 = 0 := map_zero _
 
-@[simp]
 theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.pairing y z :=
   DFunLike.congr_fun (map_add A.pairing x y) z
 
@@ -203,7 +201,6 @@ theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.p
 theorem pairing_add_right (x y z : A) : A.pairing x (y + z) = A.pairing x y + A.pairing x z :=
   map_add (A.pairing x) y z
 
-@[simp]
 theorem pairing_neg_left (x y : A) : A.pairing (-x) y = -A.pairing x y :=
   DFunLike.congr_fun (map_neg A.pairing x) y
 
