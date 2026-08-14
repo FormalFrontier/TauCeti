@@ -6,7 +6,8 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
-public import TauCeti.RingTheory.Huber.OpenIdeal
+public import TauCeti.RingTheory.Huber.Basic
+import TauCeti.RingTheory.Huber.OpenIdeal
 
 /-!
 # Rational subsets of the adic spectrum
@@ -163,9 +164,10 @@ theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s�
   rw [rationalSubset_def, rationalSubset_def, rationalSubset_def, ← basicOpenFinset_inter]
   exact (Set.inter_inter_distrib_left _ _ _).symm
 
-/-- **Wedhorn Corollary 7.53 (pointwise statement)**: If `T` generates the unit ideal of `A`,
-then every point `v ∈ spa Aplus` belongs to the standard rational subset `R(T/s)` for some
-`s ∈ T`. -/
+/-- Generalization of the pointwise forward implication of Wedhorn Corollary 7.53 (which assumes
+a complete Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if `T`
+generates the unit ideal of `A`, then every point `v ∈ spa Aplus` belongs to the standard rational
+subset `R(T/s)` for some `s ∈ T`. -/
 theorem mem_rationalSubset_of_mem_spa_of_span_eq_top (Aplus : Subring A) {T : Finset A}
     (hT : Ideal.span (T : Set A) = ⊤) {v : Spv A} (hv : v ∈ spa Aplus) :
     ∃ s ∈ T, v ∈ rationalSubset Aplus T s := by
@@ -187,8 +189,10 @@ theorem mem_rationalSubset_of_mem_spa_of_span_eq_top (Aplus : Subring A) {T : Fi
   have h1_vle : v.toValuativeRel.vle 1 0 := (mem_supp_iff v 1).mp h1
   exact v.toValuativeRel.not_vle_one_zero h1_vle
 
-/-- **Wedhorn Corollary 7.53 (First Half)**: If a finite set `T` generates the unit ideal of `A`,
-then the standard rational subsets `(R(T/t))_{t ∈ T}` cover `spa Aplus`. -/
+/-- Generalization of the forward implication of Wedhorn Corollary 7.53 (which assumes a complete
+Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if a finite set
+`T` generates the unit ideal of `A`, then the standard rational subsets `(R(T/t))_{t ∈ T}` cover
+`spa Aplus`. -/
 theorem spa_eq_biUnion_rationalSubset_of_span_eq_top (Aplus : Subring A) {T : Finset A}
     (hT : Ideal.span (T : Set A) = ⊤) :
     spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t := by
