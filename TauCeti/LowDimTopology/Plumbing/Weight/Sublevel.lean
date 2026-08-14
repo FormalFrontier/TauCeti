@@ -6,7 +6,6 @@ module
 
 import Mathlib.Data.Set.Finite.Lemmas
 public import Mathlib.Data.Int.ConditionallyCompleteOrder
-public import Mathlib.LinearAlgebra.Matrix.Adjugate
 public import TauCeti.LowDimTopology.Plumbing.Conjugation
 public import TauCeti.LowDimTopology.Plumbing.NegativeDefinite
 public import TauCeti.LowDimTopology.Plumbing.Weight.Translation
@@ -30,8 +29,8 @@ whose middle factor `⟪k, x⟫ + A(x, x)` is exactly the weight numerator
 `characteristicWeightNumerator k x`, which is `-2 χ_k(x)`. So a sublevel set of `χ_k` is carried,
 by the injective affine map `x ↦ 2d • x + u`, into a superlevel set of the intersection-form
 self-pairing, and those are finite on a negative-definite plumbing by
-`IsNegativeDefinite.finite_setOf_le_intersectionForm_self`. Negative-definiteness enters twice: it
-makes `d ≠ 0`, so the affine map is injective, and it makes the target set finite.
+`IsNegativeDefinite.finite_setOfPred_le_intersectionForm_self`. Negative-definiteness enters twice:
+it makes `d ≠ 0`, so the affine map is injective, and it makes the target set finite.
 
 Finiteness immediately yields a minimizer: the lattice points with `χ_k(x) ≤ χ_k(0)` form a finite
 nonempty set, and a minimum over it is a global minimum. That minimum is the numerical input to the
@@ -41,28 +40,24 @@ to `k + 2 · A m` shifts it by `-χ_k(m)`, and spin^c conjugation leaves it fixe
 
 ## Main results
 
-* `TauCeti.PlumbingGraph.intersectionForm_adjugate_mulVec`: pairing against `adjugate A *ᵥ k`
-  computes `det A` times the linear form `⟪k, -⟫`.
-* `TauCeti.PlumbingGraph.intersectionForm_self_smul_add_adjugate_mulVec`: the completed square
-  relating the self-pairing of `2d • x + u` to the weight numerator.
-* `TauCeti.PlumbingGraph.finite_setOf_le_characteristicWeightNumerator`: superlevel sets of the
+* `TauCeti.PlumbingGraph.finite_setOfPred_le_characteristicWeightNumerator`: superlevel sets of the
   weight numerator are finite.
-* `TauCeti.PlumbingGraph.finite_setOf_characteristicWeight_le`: sublevel sets of the
+* `TauCeti.PlumbingGraph.finite_setOfPred_characteristicWeight_le`: sublevel sets of the
   characteristic weight are finite.
 * `TauCeti.PlumbingGraph.exists_forall_characteristicWeight_le`: the characteristic weight attains
   a global minimum, and `TauCeti.PlumbingGraph.bddBelow_range_characteristicWeight`: its range is
   bounded below.
 * `TauCeti.PlumbingGraph.sInfCharacteristicWeight`: the infimum of the weight as an integer, with
+  `TauCeti.PlumbingGraph.sInfCharacteristicWeight_def` unfolding it,
+  `TauCeti.PlumbingGraph.le_sInfCharacteristicWeight` the greatest-lower-bound rule, and
   `TauCeti.PlumbingGraph.sInfCharacteristicWeight_le` and
   `TauCeti.PlumbingGraph.exists_characteristicWeight_eq_sInfCharacteristicWeight` saying that on a
   negative-definite plumbing it is a lower bound and that it is attained.
 * `TauCeti.PlumbingGraph.sInfCharacteristicWeight_add_two_mulVec` and
   `TauCeti.PlumbingGraph.sInfCharacteristicWeight_conjugate`: how that value transforms under the
   two moves on the representative of a spin^c structure.
-* `TauCeti.PlumbingGraph.not_bddAbove_range_characteristicWeight`: one negatively framed vertex
-  makes the weight unbounded above, so the sublevel sets are proper, and
-  `TauCeti.PlumbingGraph.IsNegativeDefinite.not_bddAbove_range_characteristicWeight`: its
-  negative-definite specialization.
+* `TauCeti.PlumbingGraph.IsNegativeDefinite.not_bddAbove_range_characteristicWeight`: on a nonempty
+  vertex set the weight is unbounded above, so the sublevel sets are proper.
 
 ## References
 
@@ -84,47 +79,27 @@ namespace PlumbingGraph
 
 variable {V : Type*} [DecidableEq V] [Fintype V] (P : PlumbingGraph V)
 
-/-- Pairing a lattice point against the covector `adjugate A *ᵥ k` computes `det A` times the
-linear form `⟪k, -⟫`.
-
-This is the integral substitute for "`k` is `A` applied to a rational vector": multiplying by the
-adjugate clears the denominators, at the cost of the factor `det A`. -/
-theorem intersectionForm_adjugate_mulVec (k x : V → ℤ) :
-    P.intersectionForm x (P.intersectionMatrix.adjugate *ᵥ k) =
-      P.intersectionMatrix.det * ∑ v, k v * x v := by
-  rw [← P.sum_intersectionMatrix_mulVec_mul (P.intersectionMatrix.adjugate *ᵥ k) x]
-  have hmul : P.intersectionMatrix *ᵥ (P.intersectionMatrix.adjugate *ᵥ k) =
-      P.intersectionMatrix.det • k := by
-    rw [Matrix.mulVec_mulVec, Matrix.mul_adjugate, Matrix.smul_mulVec, Matrix.one_mulVec]
-  rw [hmul, Finset.mul_sum]
-  exact Finset.sum_congr rfl fun v _ => by
-    rw [Pi.smul_apply, smul_eq_mul, mul_assoc]
-
 /-- The completed square for the characteristic-weight numerator: with `d = det A` and
 `u = adjugate A *ᵥ k`, the self-pairing of `2d • x + u` is `4 d²` times the weight numerator at
 `x`, up to the constant `A(u, u)`.
 
 Every dependence on `x` is now inside a single self-pairing, which is what turns a level set of the
 weight into a level set of the intersection form. -/
-theorem intersectionForm_self_smul_add_adjugate_mulVec (k x : V → ℤ) :
+private theorem intersectionForm_self_smul_add_adjugate_mulVec (k x : V → ℤ) :
     P.intersectionForm
         ((2 * P.intersectionMatrix.det) • x + P.intersectionMatrix.adjugate *ᵥ k)
         ((2 * P.intersectionMatrix.det) • x + P.intersectionMatrix.adjugate *ᵥ k) =
       4 * P.intersectionMatrix.det ^ 2 * P.characteristicWeightNumerator k x +
         P.intersectionForm (P.intersectionMatrix.adjugate *ᵥ k)
           (P.intersectionMatrix.adjugate *ᵥ k) := by
-  rw [P.intersectionForm_self_add]
-  have hleft : P.intersectionForm ((2 * P.intersectionMatrix.det) • x)
-      ((2 * P.intersectionMatrix.det) • x) =
-      (2 * P.intersectionMatrix.det) ^ 2 * P.intersectionForm x x := by
-    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
-    ring
+  rw [P.intersectionForm_self_add, P.intersectionForm_self_smul]
   have hcross : P.intersectionForm ((2 * P.intersectionMatrix.det) • x)
       (P.intersectionMatrix.adjugate *ᵥ k) =
       2 * P.intersectionMatrix.det *
         P.intersectionForm x (P.intersectionMatrix.adjugate *ᵥ k) := by
     simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
-  rw [hleft, hcross, P.intersectionForm_adjugate_mulVec k x, P.characteristicWeightNumerator_def]
+  rw [hcross, P.intersectionForm_adjugate_mulVec_right k x,
+    P.characteristicWeightNumerator_def]
   ring
 
 /-- On a negative-definite plumbing only finitely many lattice points have characteristic-weight
@@ -133,7 +108,7 @@ numerator above a fixed bound.
 The affine map `x ↦ 2 (det A) • x + adjugate A *ᵥ k` is injective because negative-definiteness
 forces `det A ≠ 0`, and by the completed square it carries the superlevel set into a superlevel
 set of the intersection-form self-pairing, which is finite. -/
-theorem finite_setOf_le_characteristicWeightNumerator (h : P.IsNegativeDefinite) (k : V → ℤ)
+theorem finite_setOfPred_le_characteristicWeightNumerator (h : P.IsNegativeDefinite) (k : V → ℤ)
     (c : ℤ) : {x : V → ℤ | c ≤ P.characteristicWeightNumerator k x}.Finite := by
   have hd : P.intersectionMatrix.det ≠ 0 := h.det_intersectionMatrix_ne_zero
   have hd2 : (2 : ℤ) * P.intersectionMatrix.det ≠ 0 := mul_ne_zero two_ne_zero hd
@@ -141,36 +116,30 @@ theorem finite_setOf_le_characteristicWeightNumerator (h : P.IsNegativeDefinite)
       fun x : V → ℤ => (2 * P.intersectionMatrix.det) • x + P.intersectionMatrix.adjugate *ᵥ k := by
     intro a b hab
     exact smul_right_injective (V → ℤ) hd2 (add_left_injective _ hab)
-  have hfin := h.finite_setOf_le_intersectionForm_self
+  have hfin := h.finite_setOfPred_le_intersectionForm_self
     (4 * P.intersectionMatrix.det ^ 2 * c +
       P.intersectionForm (P.intersectionMatrix.adjugate *ᵥ k)
         (P.intersectionMatrix.adjugate *ᵥ k))
   refine (Set.Finite.preimage hinj.injOn hfin).subset fun x hx => ?_
-  have hxc : c ≤ P.characteristicWeightNumerator k x := hx
+  simp only [Set.mem_ofPred_eq] at hx
+  simp only [Set.mem_preimage, Set.mem_ofPred_eq]
   have hsq : (0 : ℤ) ≤ 4 * P.intersectionMatrix.det ^ 2 := by positivity
-  have hgoal : 4 * P.intersectionMatrix.det ^ 2 * c +
-      P.intersectionForm (P.intersectionMatrix.adjugate *ᵥ k)
-        (P.intersectionMatrix.adjugate *ᵥ k) ≤
-      P.intersectionForm
-        ((2 * P.intersectionMatrix.det) • x + P.intersectionMatrix.adjugate *ᵥ k)
-        ((2 * P.intersectionMatrix.det) • x + P.intersectionMatrix.adjugate *ᵥ k) := by
-    rw [P.intersectionForm_self_smul_add_adjugate_mulVec k x]
-    linarith [mul_le_mul_of_nonneg_left hxc hsq]
-  exact hgoal
+  rw [P.intersectionForm_self_smul_add_adjugate_mulVec k x]
+  linarith [mul_le_mul_of_nonneg_left hx hsq]
 
 /-- On a negative-definite plumbing every sublevel set of the characteristic weight function is
 finite: only finitely many lattice points satisfy `χ_k(x) ≤ N`.
 
 This is the finiteness that makes Némethi's filtration of the lattice complex by weight sublevel
 sets a filtration by *finitely generated* pieces. -/
-theorem finite_setOf_characteristicWeight_le (h : P.IsNegativeDefinite)
+theorem finite_setOfPred_characteristicWeight_le (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) (N : ℤ) :
     {x : V → ℤ | P.characteristicWeight k x ≤ N}.Finite := by
-  refine (P.finite_setOf_le_characteristicWeightNumerator h k.val (-(2 * N))).subset fun x hx => ?_
-  have hxN : P.characteristicWeight k x ≤ N := hx
+  refine (P.finite_setOfPred_le_characteristicWeightNumerator h k.val (-(2 * N))).subset
+    fun x hx => ?_
+  simp only [Set.mem_ofPred_eq] at hx ⊢
   have hnum := P.two_mul_characteristicWeight k x
-  have hgoal : -(2 * N) ≤ P.characteristicWeightNumerator k.val x := by linarith
-  exact hgoal
+  linarith
 
 /-- On a negative-definite plumbing the characteristic weight function attains a global minimum.
 
@@ -180,10 +149,10 @@ over it minimizes `χ_k` everywhere. The value at such a point is the numerical 
 theorem exists_forall_characteristicWeight_le (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) :
     ∃ x₀ : V → ℤ, ∀ x : V → ℤ, P.characteristicWeight k x₀ ≤ P.characteristicWeight k x := by
-  have hfin := P.finite_setOf_characteristicWeight_le h k (P.characteristicWeight k 0)
+  have hfin := P.finite_setOfPred_characteristicWeight_le h k (P.characteristicWeight k 0)
   have hmem : (0 : V → ℤ) ∈ {x : V → ℤ | P.characteristicWeight k x ≤
       P.characteristicWeight k 0} :=
-    le_refl (P.characteristicWeight k 0)
+    Set.mem_ofPred.mpr (le_refl (P.characteristicWeight k 0))
   obtain ⟨x₀, _, hx₀⟩ :=
     Set.exists_min_image _ (P.characteristicWeight k) hfin ⟨0, hmem⟩
   refine ⟨x₀, fun x => ?_⟩
@@ -207,6 +176,23 @@ the value is the junk value `0` of `Int.csInf_of_not_bddBelow`, which is why the
 infimum rather than a minimum. -/
 noncomputable def sInfCharacteristicWeight (k : P.characteristicVectors) : ℤ :=
   sInf (Set.range (P.characteristicWeight k))
+
+/-- The infimum of the characteristic weight, as the infimum of its range. -/
+private theorem sInfCharacteristicWeight_def_aux (k : P.characteristicVectors) :
+    P.sInfCharacteristicWeight k = sInf (Set.range (P.characteristicWeight k)) :=
+  rfl
+
+/-- The infimum of the characteristic weight, as the infimum of its range. -/
+theorem sInfCharacteristicWeight_def (k : P.characteristicVectors) :
+    P.sInfCharacteristicWeight k = sInf (Set.range (P.characteristicWeight k)) :=
+  sInfCharacteristicWeight_def_aux P k
+
+/-- The greatest-lower-bound rule for the infimum of the characteristic weight: any lower bound
+for the weight is a lower bound for the infimum. No hypothesis on the plumbing is needed, since
+the range is nonempty. -/
+theorem le_sInfCharacteristicWeight {c : ℤ} (k : P.characteristicVectors)
+    (hc : ∀ x : V → ℤ, c ≤ P.characteristicWeight k x) : c ≤ P.sInfCharacteristicWeight k :=
+  le_csInf (Set.range_nonempty _) (Set.forall_mem_range.mpr hc)
 
 /-- On a negative-definite plumbing the infimum of the characteristic weight is a lower bound for
 the characteristic weight. -/
@@ -245,8 +231,8 @@ theorem sInfCharacteristicWeight_add_two_mulVec (h : P.IsNegativeDefinite)
   have hge := P.sInfCharacteristicWeight_le h k (x₀ + m)
   omega
 
-/-- The minimal characteristic weight is invariant under spin^c conjugation: negating the covector
-and the lattice point together preserves the weight, so it permutes the range.
+/-- The infimum of the characteristic weight is invariant under spin^c conjugation: negating the
+covector and the lattice point together preserves the weight, so it permutes the range.
 
 Conjugation is an involution on characteristic covectors, and
 `characteristicWeight_conjugate_neg` says `χ_{-k}(-x) = χ_k(x)`; hence the two weight functions
@@ -264,52 +250,21 @@ theorem sInfCharacteristicWeight_conjugate (k : P.characteristicVectors) :
       rwa [P.conjugate_conjugate] at hsym
     · rintro ⟨x, rfl⟩
       exact ⟨-x, P.characteristicWeight_conjugate_neg k x⟩
-  rw [sInfCharacteristicWeight, sInfCharacteristicWeight, hrange]
-
-/-- A single negatively framed vertex makes the characteristic weight function unbounded above:
-pushing a lattice point far along that basis sphere sends `χ_k` to `+∞`, because the quadratic
-term `-m² (e_v · e_v)` outgrows the linear one.
-
-Together with `finite_setOf_characteristicWeight_le` this says that the weight sublevel sets form a
-genuine exhaustion of the lattice by finite subsets each of which is *proper*: no single sublevel
-set is the whole lattice. -/
-theorem not_bddAbove_range_characteristicWeight {v : V} (hv : P.weight v < 0)
-    (k : P.characteristicVectors) : ¬ BddAbove (Set.range (P.characteristicWeight k)) := by
-  rintro ⟨N, hN⟩
-  set m : ℤ := |k.val v| + |2 * N| + 1 with hm
-  have hm1 : 1 ≤ m := by
-    have := abs_nonneg (k.val v)
-    have := abs_nonneg (2 * N)
-    omega
-  have hgap : |2 * N| + 1 ≤ m - k.val v := by
-    have := le_abs_self (k.val v)
-    omega
-  have hweight : 1 ≤ -P.weight v := by omega
-  have hval : 2 * P.characteristicWeight k (m • Pi.single v 1) =
-      m * (m * -P.weight v - k.val v) := by
-    rw [P.two_mul_characteristicWeight_smul_single k v m]
-    ring
-  have hbig : 2 * N < 2 * P.characteristicWeight k (m • Pi.single v 1) := by
-    rw [hval]
-    -- the linear factor already exceeds `2 N`, and the multiplier `m` is at least one
-    have hstep : |2 * N| + 1 ≤ m * -P.weight v - k.val v := by
-      nlinarith [mul_nonneg (by linarith : (0 : ℤ) ≤ m) (by linarith : (0 : ℤ) ≤ -P.weight v - 1)]
-    have hstep0 : (0 : ℤ) ≤ m * -P.weight v - k.val v := by
-      have := abs_nonneg (2 * N)
-      linarith
-    have hgrow : m * -P.weight v - k.val v ≤ m * (m * -P.weight v - k.val v) := by
-      nlinarith [mul_nonneg (by linarith : (0 : ℤ) ≤ m - 1) hstep0]
-    linarith [le_abs_self (2 * N)]
-  exact absurd (hN ⟨m • Pi.single v 1, rfl⟩) (by omega)
+  rw [P.sInfCharacteristicWeight_def, P.sInfCharacteristicWeight_def, hrange]
 
 /-- On a negative-definite plumbing with at least one vertex the characteristic weight function is
-unbounded above: every framing of a negative-definite plumbing is negative, so
-`not_bddAbove_range_characteristicWeight` applies at any vertex. -/
+unbounded above: a bound would make every lattice point lie in one sublevel set, which is finite
+while the lattice is infinite.
+
+Together with `finite_setOfPred_characteristicWeight_le` this says that the weight sublevel sets
+form a genuine exhaustion of the lattice by finite subsets each of which is *proper*: no single
+sublevel set is the whole lattice. -/
 theorem IsNegativeDefinite.not_bddAbove_range_characteristicWeight (h : P.IsNegativeDefinite)
     [Nonempty V] (k : P.characteristicVectors) :
-    ¬ BddAbove (Set.range (P.characteristicWeight k)) :=
-  P.not_bddAbove_range_characteristicWeight
-    (IsNegativeDefinite.weight_neg P h (Classical.arbitrary V)) k
+    ¬ BddAbove (Set.range (P.characteristicWeight k)) := by
+  rintro ⟨N, hN⟩
+  exact Set.infinite_univ ((P.finite_setOfPred_characteristicWeight_le h k N).subset
+    fun x _ => Set.mem_ofPred.mpr (hN ⟨x, rfl⟩))
 
 end PlumbingGraph
 

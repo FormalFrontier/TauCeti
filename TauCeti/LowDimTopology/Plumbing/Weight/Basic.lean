@@ -40,8 +40,6 @@ characteristic covectors so that the division by `2` has the expected integer me
   `2 * χ_k(x) = - (⟨k, x⟩ + x · x)`.
 * `TauCeti.PlumbingGraph.characteristicWeight_add_two_mul`: shifting a covector by `2l`
   subtracts `⟨l, x⟩` from the weight.
-* `TauCeti.PlumbingGraph.two_mul_characteristicWeight_smul_single`: the weight along a single
-  basis sphere, as an explicit quadratic in the multiplier.
 * `TauCeti.PlumbingGraph.characteristicWeight_canonical_single`: the canonical characteristic
   covector gives weight `1` on each basis sphere.
 
@@ -182,25 +180,6 @@ theorem characteristicWeightNumerator_canonical_single (v : V) :
 theorem characteristicWeight_single (k : P.characteristicVectors) (v : V) :
     P.characteristicWeight k (Pi.single v 1) = -((k.val v + P.weight v) / 2) := by
   rw [characteristicWeight_def, characteristicWeightNumerator_single]
-
-/-- The characteristic weight along a single basis sphere, as an explicit quadratic in the
-multiplier: `2 χ_k(m • e_v) = -(m ⟪k, e_v⟫ + m² (e_v · e_v))`. -/
-theorem two_mul_characteristicWeight_smul_single (k : P.characteristicVectors) (v : V) (m : ℤ) :
-    2 * P.characteristicWeight k (m • Pi.single v 1) =
-      -(m * k.val v + m ^ 2 * P.weight v) := by
-  rw [P.two_mul_characteristicWeight k (m • Pi.single v 1), P.characteristicWeightNumerator_def]
-  have hlin : ∑ u, k.val u * (m • (Pi.single v 1 : V → ℤ)) u = m * k.val v := by
-    rw [Finset.sum_eq_single v (fun u _ hu => by
-      rw [Pi.smul_apply, Pi.single_eq_of_ne hu, smul_zero, mul_zero])
-      (fun hv => absurd (Finset.mem_univ v) hv)]
-    rw [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one]
-    ring
-  have hquad : P.intersectionForm (m • Pi.single v 1) (m • Pi.single v 1) =
-      m ^ 2 * P.weight v := by
-    simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
-    rw [P.intersectionForm_single v v, P.intersectionMatrix_diag]
-    ring
-  rw [hlin, hquad]
 
 /-- The canonical characteristic covector has characteristic weight `1` on each basis sphere. -/
 @[simp]
