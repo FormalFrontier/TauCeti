@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+public import Mathlib.Topology.Homeomorph.Lemmas
 public import Mathlib.Topology.MetricSpace.ProperSpace
 public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
@@ -66,7 +67,7 @@ noncomputable section
 
 /-- The unit sphere in the two-dimensional real Euclidean space is homeomorphic to Mathlib's
 complex unit circle. -/
-@[expose] def sphereOneHomeomorphCircle :
+def sphereOneHomeomorphCircle :
     sphere (0 : EuclideanSpace ℝ (Fin 2)) 1 ≃ₜ Circle where
   toFun x :=
     ⟨Complex.orthonormalBasisOneI.repr.symm x,
@@ -91,17 +92,16 @@ underlying points. -/
 lemma sphereOneHomeomorphCircle_coe
     (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     (sphereOneHomeomorphCircle x : ℂ) = Complex.orthonormalBasisOneI.repr.symm x :=
-  rfl
+  (rfl)
 
 /-- The Euclidean-circle homeomorphism intertwines the antipodal maps. -/
 @[simp]
 lemma sphereOneHomeomorphCircle_neg
     (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     sphereOneHomeomorphCircle (-x) = -sphereOneHomeomorphCircle x := by
-  apply Circle.ext
-  change Complex.orthonormalBasisOneI.repr.symm (-x) =
-    -Complex.orthonormalBasisOneI.repr.symm x
-  exact Complex.orthonormalBasisOneI.repr.symm.map_neg (x : EuclideanSpace ℝ (Fin 2))
+  ext
+  rw [sphereOneHomeomorphCircle_coe, Circle.coe_neg, sphereOneHomeomorphCircle_coe]
+  exact map_neg Complex.orthonormalBasisOneI.repr.symm (x : EuclideanSpace ℝ (Fin 2))
 
 /-- The map from `RP¹` to the complex circle induced by squaring a unit-vector representative.
 Squaring makes the value independent of the choice between the two antipodal representatives. -/
@@ -117,9 +117,8 @@ lemma toCircle_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is continuous. -/
 lemma continuous_toCircle : Continuous toCircle :=
-  (isQuotientMap_mk 1).continuous_iff.mpr <| by
-    change Continuous fun x => toCircle (mk 1 x)
-    exact (sphereOneHomeomorphCircle.continuous.pow 2).congr fun x => (toCircle_mk x).symm
+  (isQuotientMap_mk 1).continuous_iff.mpr
+    ((sphereOneHomeomorphCircle.continuous.pow 2).congr fun x => (toCircle_mk x).symm)
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is injective. -/
 lemma injective_toCircle : Function.Injective toCircle := by
@@ -141,22 +140,27 @@ lemma surjective_toCircle : Function.Surjective toCircle := by
   intro z
   obtain ⟨w, hw⟩ := (Circle.isQuotientCoveringMap_npow 2).surjective z
   refine ⟨mk 1 (sphereOneHomeomorphCircle.symm w), ?_⟩
-  simpa using hw
+  rw [toCircle_mk, sphereOneHomeomorphCircle.apply_symm_apply]
+  exact hw
+
+/-- Real projective one-space is compact as the continuous image of the compact unit circle. -/
+instance instCompactSpaceOne : CompactSpace (RealProjectiveSpace 1) :=
+  Function.Surjective.compactSpace (continuous_mk 1) (mk_surjective 1)
 
 /-- **The real projective line is homeomorphic to the circle.** The map sends the antipodal class
 of a unit vector, viewed as a complex number `z`, to `z²`. -/
-@[expose] def oneHomeomorphCircle : RealProjectiveSpace 1 ≃ₜ Circle :=
-  letI : CompactSpace (RealProjectiveSpace 1) :=
-    Function.Surjective.compactSpace (continuous_mk 1) (mk_surjective 1)
+def oneHomeomorphCircle : RealProjectiveSpace 1 ≃ₜ Circle :=
   Continuous.homeoOfEquivCompactToT2
     (f := Equiv.ofBijective toCircle ⟨injective_toCircle, surjective_toCircle⟩)
     continuous_toCircle
 
 /-- The homeomorphism `RP¹ ≃ₜ Circle` evaluates as the squared-coordinate map. -/
-@[simp]
 lemma oneHomeomorphCircle_apply (x : RealProjectiveSpace 1) :
-    oneHomeomorphCircle x = toCircle x :=
-  rfl
+    oneHomeomorphCircle x = toCircle x := by
+  have h : oneHomeomorphCircle.toEquiv =
+      Equiv.ofBijective toCircle ⟨injective_toCircle, surjective_toCircle⟩ :=
+    Continuous.toEquiv_homeoOfEquivCompactToT2 continuous_toCircle
+  exact congrFun (congrArg Equiv.toFun h) x
 
 /-- A natural basepoint of `RP¹`: the antipodal class of the Euclidean unit vector corresponding
 to `1 : ℂ`. -/
@@ -170,8 +174,9 @@ lemma toCircle_oneBasepoint : toCircle oneBasepoint = 1 := by
 
 /-- The homeomorphism from the real projective line to the circle sends the natural basepoint to
 `1 : Circle`. -/
-lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 :=
-  toCircle_oneBasepoint
+@[simp]
+lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 := by
+  rw [oneHomeomorphCircle_apply, toCircle_oneBasepoint]
 
 /-- **The fundamental group of the real projective line is infinite cyclic.** The isomorphism is
 obtained by transporting the existing computation `π₁(Circle, 1) ≅ ℤ` across
