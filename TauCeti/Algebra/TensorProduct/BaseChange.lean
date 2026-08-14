@@ -11,12 +11,12 @@ module
 -- `Algebra.TensorProduct.opAlgEquiv`, used in its body, to be public.
 public import Mathlib.LinearAlgebra.TensorProduct.Opposite
 public import Mathlib.RingTheory.TensorProduct.Basic
--- Non-public: none appears in the type of an exported declaration. Mathlib's
--- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct`,
--- `LinearMap.map_mul_of_map_mul_tmul` and `congr` are used only inside definition bodies and
--- proofs, and no definition below is `@[expose]`d.
+-- Non-public: the declarations from `Tower` appear only inside definition bodies and proofs,
+-- and no definition below is `@[expose]`d.
 import Mathlib.LinearAlgebra.TensorProduct.Tower
-import Mathlib.RingTheory.TensorProduct.Maps
+-- Public: `Algebra.TensorProduct.congr` supplies the scalar-automorphism action exported below,
+-- and `TensorProduct.map` occurs in the type of `ScalarAut.comul_smul` downstream.
+public import Mathlib.RingTheory.TensorProduct.Maps
 
 /-!
 # Base change is compatible with `⊗`, with `ᵐᵒᵖ`, and with itself
