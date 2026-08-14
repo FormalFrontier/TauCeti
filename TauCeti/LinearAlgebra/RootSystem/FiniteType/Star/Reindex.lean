@@ -196,7 +196,7 @@ theorem exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three
     (h : IsFiniteType A) (hconn : (diagramGraph A).Connected) (hsl : A.IsSimplyLaced)
     {c : B} (hc : (diagramGraph A).degree c = 3) :
     ∃ (ℓ : Fin 3 → ℕ) (e : B ≃ StarIndex ℓ),
-      (∀ i, ℓ i ≠ 0) ∧ ∀ i j, A i j = starCartanMatrix ℓ (e i) (e j) := by
+      (∀ i, ℓ i ≠ 0) ∧ e c = none ∧ ∀ i j, A i j = starCartanMatrix ℓ (e i) (e j) := by
   classical
   let G := diagramGraph A
   let H := G.induce ({c}ᶜ : Set B)
@@ -270,7 +270,7 @@ theorem exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three
     have hcomp := ConnectedComponent.connectedComponentMk_eq_of_adj hadjH
     have heq : eC i = eC j := v.property.symm.trans (hcomp.trans w.property)
     exact hij (eC.injective heq)
-  refine ⟨ℓ, E.symm, ?_, ?_⟩
+  refine ⟨ℓ, E.symm, ?_, E.symm_apply_eq.mpr (starVertexEquiv_none c G eC f), ?_⟩
   · intro i hzero
     have hpos : 0 < Nat.card ↑(ConnectedComponent.supp (eC i)) :=
       Nat.card_pos_iff.mpr ⟨⟨x i, hxC i⟩, inferInstance⟩
@@ -332,7 +332,7 @@ theorem existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three
     ∃! t : DynkinType, t.Valid ∧
       ∃ e : B ≃ Fin t.rank, ∀ i j, A i j = t.cartanMatrix (e i) (e j) := by
   classical
-  obtain ⟨ℓ, e, hℓ, he⟩ :=
+  obtain ⟨ℓ, e, hℓ, -, he⟩ :=
     h.exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three hconn hsl hc
   have hstar : IsFiniteType (starCartanMatrix ℓ) := by
     have hreindex : starCartanMatrix ℓ = A.submatrix e.symm e.symm := by
