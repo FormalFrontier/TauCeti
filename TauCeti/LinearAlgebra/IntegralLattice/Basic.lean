@@ -27,6 +27,7 @@ The form restricts to a canonical `ℤ`-bilinear form on the carrier.  Conversel
 ## Main definitions
 
 * `TauCeti.IntegralLattice`: an integral symmetric lattice in a rational vector space.
+* `TauCeti.IntegralLattice.IsNondegenerate`: the nondegeneracy mixin for an integral lattice.
 * `TauCeti.IntegralLattice.form_mem_one`: the rational form takes integer values on lattice vectors.
 * `TauCeti.IntegralLattice.rationalBasis`: the ambient `ℚ`-basis extending a chosen `ℤ`-basis of
   the carrier.
@@ -112,6 +113,18 @@ theorem ext {L M : IntegralLattice V} (hcarrier : L.carrier = M.carrier)
   cases hcarrier
   cases hform
   rfl
+
+/-- An integral lattice is nondegenerate when its ambient rational bilinear form is
+nondegenerate. This is a mixin rather than a field of `IntegralLattice`, so degenerate lattices
+remain objects of the same type. -/
+class IsNondegenerate (L : IntegralLattice V) : Prop where
+  /-- The rational bilinear form has trivial kernel. -/
+  nondegenerate : L.form.Nondegenerate
+
+/-- The ambient form of a nondegenerate integral lattice is nondegenerate. -/
+theorem form_nondegenerate (L : IntegralLattice V) [L.IsNondegenerate] :
+    L.form.Nondegenerate :=
+  IsNondegenerate.nondegenerate
 
 /-- The integral bilinear form induced on the carrier.
 
