@@ -110,7 +110,6 @@ lemma diag_comp_add (A : AbelianVariety K) :
 
 /-- The pairing `⟨𝟙, [-1]⟩` composed with addition is the identity element of the group of
 homomorphisms `A ⟶ A`: `x + (-x) = 0` for the group law. -/
-@[simp]
 lemma lift_id_neg_one_comp_add (A : AbelianVariety K) :
     prod.lift (𝟙 A) (mulBy A (-1)) ≫ add A = 1 := by
   rw [lift_comp_add, mulBy_eq_zpow]
@@ -119,21 +118,18 @@ lemma lift_id_neg_one_comp_add (A : AbelianVariety K) :
 
 /-- The pairing of two multiplication endomorphisms `⟨[m], [n]⟩` composed with addition is
 multiplication by their sum: `m·x + n·x = (m + n)·x` for the group law of an abelian variety. -/
-@[simp]
 lemma lift_mulBy_mulBy_comp_add (A : AbelianVariety K) (m n : ℤ) :
     prod.lift (mulBy A m) (mulBy A n) ≫ add A = mulBy A (m + n) := by
   rw [lift_comp_add, mulBy_add]
 
 /-- The pairing `⟨1, 𝟙⟩` composed with addition is the identity: the identity element of the
 pointwise group law on `A ⟶ A` is a left neutral for addition. -/
-@[simp]
 lemma lift_one_id_comp_add (A : AbelianVariety K) :
     prod.lift (1 : A ⟶ A) (𝟙 A) ≫ add A = 𝟙 A := by
   rw [lift_comp_add, _root_.one_mul]
 
 /-- The pairing `⟨𝟙, 1⟩` composed with addition is the identity: the identity element of the
 pointwise group law on `A ⟶ A` is a right neutral for addition. -/
-@[simp]
 lemma lift_id_one_comp_add (A : AbelianVariety K) :
     prod.lift (𝟙 A) (1 : A ⟶ A) ≫ add A = 𝟙 A := by
   rw [lift_comp_add, _root_.mul_one]
@@ -177,7 +173,6 @@ reindexed so the multiplication-by-`n` API of `AbelianVariety.End.Basic` is dire
 
 /-- An endomorphism paired with the multiplication-by-`n` endomorphism, followed by addition, is
 multiplication by `n + 1`, when the first component is the identity. -/
-@[simp]
 lemma lift_id_mulBy_comp_add (A : AbelianVariety K) (n : ℤ) :
     prod.lift (𝟙 A) (mulBy A n) ≫ add A = mulBy A (n + 1) := by
   rw [add_comm n 1, ← mulBy_one A]
@@ -185,7 +180,6 @@ lemma lift_id_mulBy_comp_add (A : AbelianVariety K) (n : ℤ) :
 
 /-- The multiplication-by-`n` endomorphism paired with an endomorphism, followed by addition, is
 multiplication by `n + 1`, when the second component is the identity. -/
-@[simp]
 lemma lift_mulBy_id_comp_add (A : AbelianVariety K) (n : ℤ) :
     prod.lift (mulBy A n) (𝟙 A) ≫ add A = mulBy A (n + 1) := by
   rw [← mulBy_one A]
