@@ -81,7 +81,7 @@ private theorem measurable_samplePopulation {ι κ : Type*} [Countable κ] [Meas
 First draw a population `x : κ → α` with law `ρ`; independently and uniformly draw an injective
 selection `k : ι → κ`; then return the sample `i ↦ x (k i)`. If no injective selection exists,
 Mathlib's `uniformOn` convention makes this the zero measure. -/
-def sampleWithoutReplacement {ι κ : Type*} [MeasurableSpace κ]
+def sampleWithoutReplacement {ι κ : Type*} [MeasurableSpace κ] [MeasurableSingletonClass κ]
     (ρ : Measure (κ → α)) : Measure (ι → α) :=
   ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
     fun p i => p.2 (p.1 i)
@@ -89,7 +89,7 @@ def sampleWithoutReplacement {ι κ : Type*} [MeasurableSpace κ]
 /-- The defining pushforward form of `sampleWithoutReplacement`. -/
 @[simp]
 theorem sampleWithoutReplacement_def {ι κ : Type*} [MeasurableSpace κ]
-    (ρ : Measure (κ → α)) :
+    [MeasurableSingletonClass κ] (ρ : Measure (κ → α)) :
     sampleWithoutReplacement ρ =
       ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
         fun p i => p.2 (p.1 i) :=
