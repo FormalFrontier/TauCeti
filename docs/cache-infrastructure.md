@@ -2,6 +2,39 @@
 
 Where the build cache lives, who owns it, and which knob feeds which workflow.
 
+## Mathlib download cache (GitHub Actions)
+
+The main `ci.yml` workflow maintains a narrow snapshot of Mathlib's compressed download store:
+`$MATHLIB_CACHE_DIR/*.ltar`. The `.ltar` files are content-addressed; cache-tool scratch files,
+executables, and the unpacked `.lake` tree are not included. The local
+`.github/actions/restore-mathlib-ltars` action sets `MATHLIB_CACHE_DIR` job-wide through
+`$GITHUB_ENV`, defaulting to `$GITHUB_WORKSPACE/.mathlib-ltar-cache`; its `cache-dir` input can
+override that location. Main publishes only after a non-exact restore: an exact key is immutable
+and already contains this pin's snapshot. Before publishing, main runs `lake exe cache clean` so
+the snapshot contains only files needed by the current pin; if pruning fails, it skips publication
+instead of saving an unpruned snapshot. PR and merge-group jobs in `pr-build.yml` may restore this
+trusted snapshot but never publish one. `pages.yml` and
+`pr-profile.yml` are intentionally outside this initial rollout: `ci.yml` is included as the sole
+publisher and `pr-build.yml` as the highest-volume consumer. `pr-profile.yml` has comparable
+per-PR fetch volume but remains outside as a rollout control. Both excluded workflows continue
+fetching into Mathlib's default cache directory.
+
+Keys have the shape
+`mathlib-ltar-v1-<os>-<arch>-<lean-toolchain hash>-<lake-manifest hash>`. An exact match reuses the
+current pin. The restore prefix omits the manifest hash, so a Mathlib-only pin bump can start from
+the newest snapshot for the same Lean toolchain and fetch only missing files. A toolchain bump has
+no prefix match. In every case, `lake exe cache get` remains authoritative and downloads whatever
+the snapshot lacks. This design mirrors Mathlib's own cache-snapshot warming in
+`.github/workflows/build_template.yml` and `.github/actions/get-cache`, using `actions/cache`
+instead of per-run artifacts.
+
+GitHub Actions cache entries are immutable. If an entry is poisoned or the format becomes
+incompatible, bump `mathlib-ltar-v1` once in
+`.github/actions/restore-mathlib-ltars/action.yml`. To discard a single entry instead, find it with
+`gh cache list --repo TauCetiProject/TauCeti` and delete its exact key with
+`gh cache delete <key> --repo TauCetiProject/TauCeti`. A failed fetch also retries once with
+`lake exe cache get!`, which forces every linked file to be downloaded and unpacked again.
+
 ## Cloudflare account
 
 | | |

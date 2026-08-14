@@ -107,18 +107,19 @@ private lemma smul_mem_tPowCosets [DecidableEq (𝒮ℒ ⧸ (𝒢.subgroupOf �
     obtain ⟨j, -, hj⟩ := Finset.mem_image.mp hq
     -- The action lemma below produces the `QuotientGroup.mk` spelling of the coset, while the
     -- image members are spelled `⟦·⟧`; the two are definitionally but not syntactically equal,
-    -- so this bridge is proved by `Quotient.sound` rather than reached by rewriting.
+    -- so this bridge is proved rather than reached by rewriting. `QuotientGroup.eq` is the
+    -- membership criterion for that equality — its own proof is `rw [leftRel_apply]`, so
+    -- opening `Quotient.exact`/`leftRel_apply` by hand only redoes it.
     have hmk : ((t * x : 𝒮ℒ) : 𝒮ℒ ⧸ (𝒢.subgroupOf 𝒮ℒ)) =
         ⟦(mapGL ℝ).rangeRestrict ((ModularGroup.T : SL(2, ℤ))^((j : ℕ) + 1))⟧ :=
-      Quotient.sound (QuotientGroup.leftRel_apply.mpr (by
+      QuotientGroup.eq.mpr (by
         rw [pow_succ', map_mul, ← ht_def]
-        convert inv_mem (QuotientGroup.leftRel_apply.mp (Quotient.exact hj)) using 1
-        group))
+        convert inv_mem (QuotientGroup.eq.mp hj) using 1
+        group)
     rw [MulAction.Quotient.smul_mk, smul_eq_mul, Finset.mem_image, hmk]
     by_cases hj1 : (j : ℕ) + 1 < Subgroup.integerCuspWidth 𝒢
     · exact ⟨⟨(j : ℕ) + 1, hj1⟩, Finset.mem_univ _, rfl⟩
-    · refine ⟨⟨0, Subgroup.integerCuspWidth_pos⟩, Finset.mem_univ _,
-        Quotient.sound (QuotientGroup.leftRel_apply.mpr ?_)⟩
+    · refine ⟨⟨0, Subgroup.integerCuspWidth_pos⟩, Finset.mem_univ _, QuotientGroup.eq.mpr ?_⟩
       have hw : (j : ℕ) + 1 = Subgroup.integerCuspWidth 𝒢 := by lia
       rw [hw]
       simp only [pow_zero, map_one, inv_one, one_mul, Subgroup.mem_subgroupOf, map_pow]
