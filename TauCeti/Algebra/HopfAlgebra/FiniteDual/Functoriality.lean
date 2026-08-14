@@ -165,14 +165,9 @@ theorem mapEquiv_apply (e : H ≃ₐc[k] K) (phi : ConvolutionDual k K) :
 @[simp]
 theorem mapEquiv_symm (e : H ≃ₐc[k] K) :
     (mapEquiv k e).symm = mapEquiv k e.symm := by
-  apply BialgEquiv.ext
-  intro phi
-  apply (mapEquiv k e).injective
-  calc
-    mapEquiv k e ((mapEquiv k e).symm phi) = phi := BialgEquiv.apply_symm_apply _ _
-    _ = mapEquiv k e (mapEquiv k e.symm phi) := by
-      ext x
-      simp
+  unfold mapEquiv
+  rw [BialgEquiv.ofBialgHom_symm]
+  congr 1
 
 end Map
 
