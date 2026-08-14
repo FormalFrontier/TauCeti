@@ -56,17 +56,16 @@ abbrev ConvolutionDual (k : Type u) (H : Type v) [CommSemiring k] [AddCommMonoid
 
 namespace ConvolutionDual
 
-/-- The convolution dual of a finite-dimensional vector space is finite-dimensional. -/
-noncomputable instance instFinite (k : Type u) (H : Type v) [Field k]
-    [AddCommMonoid H] [Module k H] [Module.Finite k H] :
-    Module.Finite k (ConvolutionDual k H) := by
-  let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-  exact LinearEquiv.finiteDimensional (WithConv.linearEquiv k (Module.Dual k H)).symm
+/-- The convolution wrapper of a finite module is finite. -/
+instance instFinite (k : Type u) (H : Type v) [CommSemiring k]
+    [AddCommMonoid H] [Module k H] [Module.Finite k (Module.Dual k H)] :
+    Module.Finite k (ConvolutionDual k H) :=
+  Module.Finite.equiv (WithConv.linearEquiv k (Module.Dual k H)).symm
 
 section LinearAlgebra
 
-variable (k : Type u) (H : Type v) [Field k] [AddCommMonoid H] [Module k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [Field k] [AddCommGroup H] [Module k H]
+  [FiniteDimensional k H]
 
 /-- Forget the convolution wrappers on both factors of a tensor of finite-dual elements. -/
 private noncomputable def tensorUnwrap :
@@ -76,24 +75,52 @@ private noncomputable def tensorUnwrap :
 
 /-- A tensor of finite-dual functionals is equivalently a functional on the tensor square. -/
 noncomputable def dualDistribEquiv :
-    ConvolutionDual k H ⊗[k] ConvolutionDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) := by
-  letI : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-  exact (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
+    ConvolutionDual k H ⊗[k] ConvolutionDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) :=
+  (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
 
 private theorem dualDistribEquiv_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (z : H ⊗[k] H) :
     dualDistribEquiv k H w z =
       TensorProduct.dualDistrib k H H ((tensorUnwrap k H) w) z :=
-  by
-    let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-    rfl
+  rfl
+
+/-- A pure tensor of finite-dual functionals evaluates componentwise. -/
+@[simp, grind =]
+theorem dualDistribEquiv_tmul_apply (phi psi : ConvolutionDual k H) (x y : H) :
+    dualDistribEquiv k H (phi ⊗ₜ[k] psi) (x ⊗ₜ[k] y) =
+      phi.ofConv x * psi.ofConv y := by
+  simp [dualDistribEquiv, tensorUnwrap]
+
+/-- Precomposition on both dual factors corresponds to applying the original maps on both
+tensor factors. -/
+theorem dualDistribEquiv_map_apply {K : Type*} [AddCommGroup K] [Module k K]
+    [FiniteDimensional k K]
+    (f g : ConvolutionDual k K →ₗ[k] ConvolutionDual k H) (a b : H →ₗ[k] K)
+    (hf : ∀ phi x, (f phi).ofConv x = phi.ofConv (a x))
+    (hg : ∀ phi x, (g phi).ofConv x = phi.ofConv (b x))
+    (w : ConvolutionDual k K ⊗[k] ConvolutionDual k K) (z : H ⊗[k] H) :
+    dualDistribEquiv k H (TensorProduct.map f g w) z =
+      dualDistribEquiv k K w (TensorProduct.map a b z) := by
+  induction w using TensorProduct.induction_on with
+  | zero => simp
+  | add w₁ w₂ hw₁ hw₂ =>
+      simpa only [map_add, LinearMap.add_apply] using congrArg₂ (fun x y ↦ x + y) hw₁ hw₂
+  | tmul phi psi =>
+      induction z using TensorProduct.induction_on with
+      | zero => simp
+      | add z₁ z₂ hz₁ hz₂ =>
+          simpa only [map_add, LinearMap.add_apply] using
+            congrArg₂ (fun x y ↦ x + y) hz₁ hz₂
+      | tmul x y =>
+          rw [TensorProduct.map_tmul, TensorProduct.map_tmul,
+            dualDistribEquiv_tmul_apply, dualDistribEquiv_tmul_apply, hf, hg]
 
 end LinearAlgebra
 
 section Coalgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Semiring H] [Algebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [Field k] [Ring H] [Algebra k H]
+  [FiniteDimensional k H]
 
 /-- The comultiplication and counit on the finite dual, obtained by transposing multiplication
 and unit on the original algebra. -/
@@ -112,13 +139,6 @@ private theorem dualDistribEquiv_comul' (phi : ConvolutionDual k H) :
   simpa only [psi, LinearMap.dualMap_apply', WithConv.linearEquiv_apply]
     using (dualDistribEquiv k H).apply_symm_apply psi
 
-/-- A pure tensor of finite-dual functionals evaluates componentwise. -/
-@[simp, grind =]
-theorem dualDistribEquiv_tmul_apply (phi psi : ConvolutionDual k H) (x y : H) :
-    dualDistribEquiv k H (phi ⊗ₜ[k] psi) (x ⊗ₜ[k] y) =
-      phi.ofConv x * psi.ofConv y := by
-  simp [dualDistribEquiv, tensorUnwrap]
-
 private theorem dualDistribEquiv_comul_apply' (phi : ConvolutionDual k H) (x y : H) :
     dualDistribEquiv k H (Coalgebra.comul phi) (x ⊗ₜ[k] y) =
       phi.ofConv (x * y) := by
@@ -132,17 +152,14 @@ private theorem counit_apply' (phi : ConvolutionDual k H) :
 /-- Evaluate three finite-dual functionals on a right-associated triple tensor. -/
 private noncomputable def evalTripleEquiv :
     ConvolutionDual k H ⊗[k] (ConvolutionDual k H ⊗[k] ConvolutionDual k H) ≃ₗ[k]
-      Module.Dual k (H ⊗[k] (H ⊗[k] H)) := by
-  letI : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-  exact
-    (TensorProduct.congr (WithConv.linearEquiv k _) (dualDistribEquiv k H)).trans
-      (TensorProduct.dualDistribEquiv k H (H ⊗[k] H))
+      Module.Dual k (H ⊗[k] (H ⊗[k] H)) :=
+  (TensorProduct.congr (WithConv.linearEquiv k _) (dualDistribEquiv k H)).trans
+    (TensorProduct.dualDistribEquiv k H (H ⊗[k] H))
 
 private theorem evalTripleEquiv_tmul_tmul_apply
     (phi psi chi : ConvolutionDual k H) (x y z : H) :
     evalTripleEquiv k H (phi ⊗ₜ[k] (psi ⊗ₜ[k] chi)) (x ⊗ₜ[k] (y ⊗ₜ[k] z)) =
       phi.ofConv x * (psi.ofConv y * chi.ofConv z) := by
-  let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
   simp [evalTripleEquiv, dualDistribEquiv, tensorUnwrap]
 
 private theorem evalTripleEquiv_tmul_apply
@@ -292,8 +309,8 @@ end Coalgebra
 
 section Bialgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Semiring H] [Bialgebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [Field k] [Ring H] [Bialgebra k H]
+  [FiniteDimensional k H]
 
 /-- `dualDistribEquiv` packaged in the convolution algebra on functionals on the tensor square. -/
 private noncomputable def evalTensorConv :
@@ -361,14 +378,43 @@ noncomputable instance instBialgebra : Bialgebra k (ConvolutionDual k H) :=
       rw [hmul] at h
       simpa only [WithConv.toConv_ofConv] using h)
 
+/-- Multiplication in the finite dual evaluates by pairing with the original
+comultiplication. -/
+theorem ofConv_mul_apply
+    (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (x : H) :
+    (LinearMap.mul' k (ConvolutionDual k H) w).ofConv x =
+      dualDistribEquiv k H w (Coalgebra.comul x) := by
+  induction w using TensorProduct.induction_on with
+  | zero => simp
+  | add w₁ w₂ hw₁ hw₂ =>
+      simpa only [map_add, WithConv.ofConv_add, LinearMap.add_apply]
+        using congrArg₂ (fun a b ↦ a + b) hw₁ hw₂
+  | tmul phi psi =>
+      rw [LinearMap.mul'_apply, LinearMap.convMul_apply]
+      generalize Coalgebra.comul (R := k) (A := H) x = z
+      induction z using TensorProduct.induction_on with
+      | zero => simp
+      | add z₁ z₂ hz₁ hz₂ =>
+          simpa only [map_add, LinearMap.add_apply] using
+            congrArg₂ (fun a b ↦ a + b) hz₁ hz₂
+      | tmul y z =>
+          rw [TensorProduct.map_tmul, LinearMap.mul'_apply, dualDistribEquiv_tmul_apply]
+
+/-- Pointwise form of the characteristic equation for multiplication in the finite dual. -/
+@[grind =]
+theorem convMul_apply (phi psi : ConvolutionDual k H) (x : H) :
+    (phi * psi).ofConv x =
+      dualDistribEquiv k H (phi ⊗ₜ[k] psi) (Coalgebra.comul x) := by
+  simpa only [LinearMap.mul'_apply] using ofConv_mul_apply k H (phi ⊗ₜ[k] psi) x
+
 end Bialgebra
 
 end ConvolutionDual
 
 namespace ConvolutionDual
 
-variable (k : Type u) (H : Type v) [Field k] [CommSemiring H] [Algebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [Field k] [CommRing H] [Algebra k H]
+  [FiniteDimensional k H]
 
 private theorem dualDistribEquiv_comm_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (x y : H) :
@@ -408,8 +454,8 @@ namespace ConvolutionDual
 
 section HopfAlgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Semiring H] [HopfAlgebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [Field k] [Ring H] [HopfAlgebra k H]
+  [FiniteDimensional k H]
 
 /-- The antipode operation on the finite dual, obtained by transposing the antipode of the
 original Hopf algebra. -/
@@ -424,46 +470,17 @@ private theorem antipode_apply' (phi : ConvolutionDual k H) (x : H) :
       phi.ofConv (HopfAlgebra.antipode k x) := by
   simp [HopfAlgebraStruct.antipode]
 
-private theorem ofConv_mul_apply
-    (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (x : H) :
-    (LinearMap.mul' k (ConvolutionDual k H) w).ofConv x =
-      dualDistribEquiv k H w (Coalgebra.comul x) := by
-  induction w using TensorProduct.induction_on with
-  | zero => simp
-  | add w₁ w₂ hw₁ hw₂ =>
-      simpa only [map_add, WithConv.ofConv_add, LinearMap.add_apply]
-        using congrArg₂ (· + ·) hw₁ hw₂
-  | tmul phi psi =>
-      rw [LinearMap.mul'_apply]
-      rw [LinearMap.convMul_apply]
-      generalize Coalgebra.comul (R := k) (A := H) x = z
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | add z₁ z₂ hz₁ hz₂ =>
-          simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hz₁ hz₂
-      | tmul y z =>
-          rw [TensorProduct.map_tmul, LinearMap.mul'_apply, dualDistribEquiv_tmul_apply]
-
 private theorem dualDistribEquiv_map_antipode_left_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (z : H ⊗[k] H) :
     dualDistribEquiv k H
         (TensorProduct.map (HopfAlgebra.antipode k (A := ConvolutionDual k H))
           LinearMap.id w) z =
       dualDistribEquiv k H w
-        (TensorProduct.map (HopfAlgebra.antipode k (A := H)) LinearMap.id z) := by
-  induction w using TensorProduct.induction_on with
-  | zero => simp
-  | add w₁ w₂ hw₁ hw₂ =>
-      simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hw₁ hw₂
-  | tmul phi psi =>
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | add z₁ z₂ hz₁ hz₂ =>
-          simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hz₁ hz₂
-      | tmul x y =>
-          rw [TensorProduct.map_tmul, TensorProduct.map_tmul, dualDistribEquiv_tmul_apply,
-            dualDistribEquiv_tmul_apply, antipode_apply']
-          rfl
+        (TensorProduct.map (HopfAlgebra.antipode k (A := H)) LinearMap.id z) :=
+  dualDistribEquiv_map_apply k H
+    (HopfAlgebra.antipode k (A := ConvolutionDual k H)) LinearMap.id
+    (HopfAlgebra.antipode k (A := H)) LinearMap.id
+    (antipode_apply' k H) (fun _ _ ↦ rfl) w z
 
 private theorem dualDistribEquiv_map_antipode_right_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (z : H ⊗[k] H) :
@@ -471,20 +488,10 @@ private theorem dualDistribEquiv_map_antipode_right_apply
         (TensorProduct.map LinearMap.id
           (HopfAlgebra.antipode k (A := ConvolutionDual k H)) w) z =
       dualDistribEquiv k H w
-        (TensorProduct.map LinearMap.id (HopfAlgebra.antipode k (A := H)) z) := by
-  induction w using TensorProduct.induction_on with
-  | zero => simp
-  | add w₁ w₂ hw₁ hw₂ =>
-      simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hw₁ hw₂
-  | tmul phi psi =>
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | add z₁ z₂ hz₁ hz₂ =>
-          simpa only [map_add, LinearMap.add_apply] using congrArg₂ (· + ·) hz₁ hz₂
-      | tmul x y =>
-          rw [TensorProduct.map_tmul, TensorProduct.map_tmul, dualDistribEquiv_tmul_apply,
-            dualDistribEquiv_tmul_apply, antipode_apply']
-          rfl
+        (TensorProduct.map LinearMap.id (HopfAlgebra.antipode k (A := H)) z) :=
+  dualDistribEquiv_map_apply k H LinearMap.id
+    (HopfAlgebra.antipode k (A := ConvolutionDual k H)) LinearMap.id
+    (HopfAlgebra.antipode k (A := H)) (fun _ _ ↦ rfl) (antipode_apply' k H) w z
 
 /-- The Hopf algebra structure on the finite dual. Its antipode is precomposition with the
 antipode of the original finite-dimensional Hopf algebra. -/
