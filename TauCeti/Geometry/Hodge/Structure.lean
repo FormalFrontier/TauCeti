@@ -4,7 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib
+public import Mathlib.Algebra.DirectSum.Module
+public import Mathlib.Data.Complex.Basic
+public import Mathlib.Data.Int.Interval
+public import Mathlib.LinearAlgebra.TensorProduct.Basic
+public import Mathlib.Order.ModularLattice
+public import Mathlib.Order.Monotone.Basic
+public import Mathlib.RingTheory.IsTensorProduct
+public import Mathlib.Tactic
 
 /-!
 # Pure Hodge Structures and the Hodge Decomposition
@@ -25,19 +32,27 @@ Hodge decomposition theorem (the L0 milestone of the `HodgeStructures` roadmap).
 * `TauCeti.Geometry.Hodge.HodgeStructureOn`: Pure Hodge structure of weight `n` on a complex
   vector space `W` equipped with a conjugation `ω`.
 * `TauCeti.Geometry.Hodge.HodgeStructure`: Pure Hodge structure on the
-  complexification of an integral lattice `V`.
+  complexification of an integral lattice `V` (an abbreviation for `HodgeStructureOn`).
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.piece`: The `(p, q)`-piece
   $H^{p,q} = F^p \cap \overline{F^{n-p}}$.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.IsEffective`: Predicate stating that the Hodge numbers
   are supported in $[0, n]$.
+* `TauCeti.Geometry.Hodge.HodgeStructureOn.twist`: The Tate twist $W(m)$ of a pure Hodge structure.
+* `TauCeti.Geometry.Hodge.Morphism`: Morphisms of pure Hodge structures.
 * `TauCeti.Geometry.Hodge.tate`: The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$.
 
 ## Main Theorems
 
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.isInternal_piece`: **(L0 Milestone)** The `(p, q)`-pieces
   of a pure Hodge structure form an internal direct sum $W = \bigoplus_p H^{p,q}$.
+* `TauCeti.Geometry.Hodge.HodgeStructureOn.map_conj_piece`: Conjugation symmetry of the Hodge
+  pieces $\overline{H^{p,q}} = H^{n-p, p}$.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.isEffective_iff_piece_eq_bot`: Characterization of
   effective Hodge structures in terms of their vanishing pieces outside $[0, n]$.
+* `TauCeti.Geometry.Hodge.isEffective_tate_iff`: Classification of effective Tate structures
+  $(\mathbb{Z}(m)\text{ is effective} \leftrightarrow m \le 0)$.
+* `TauCeti.Geometry.Hodge.tate_piece_apply`: Explicit description of the Hodge pieces of
+  $\mathbb{Z}(m)$.
 * `TauCeti.Geometry.Hodge.latticeConj_unique`: Uniqueness of the lattice-induced conjugation.
 * `TauCeti.Geometry.Hodge.concreteLatticeConj_eq_latticeConj`: Identification of the concrete
   and abstract lattice conjugations on `ℂ ⊗[ℤ] V`.
@@ -102,11 +117,13 @@ def concreteLatticeConj : Complexification V →ₛₗ[starRingEnd ℂ] Complexi
   toFun := concreteLatticeConjIntLinear
   map_add' := concreteLatticeConjIntLinear.map_add
   map_smul' c x := by
+    -- Definitional reduction: evaluate concreteLatticeConjIntLinear on scalar multiplication
     change concreteLatticeConjIntLinear (c • x) =
       (starRingEnd ℂ) c • concreteLatticeConjIntLinear x
     refine TensorProduct.induction_on x ?hz ?ht ?ha
     · rw [smul_zero, map_zero, smul_zero]
     · intro z v
+      -- Definitional reduction: expand concreteLatticeConjIntLinear to tensor map on simple tensors
       change (TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
           (LinearMap.id : V →ₗ[ℤ] V)) (c • (z ⊗ₜ[ℤ] v : Complexification V)) =
         (starRingEnd ℂ) c •
@@ -117,6 +134,7 @@ def concreteLatticeConj : Complexification V →ₛₗ[starRingEnd ℂ] Complexi
       rw [TensorProduct.map_tmul]
       simp only [LinearMap.id_coe, id_eq]
       rw [Algebra.smul_def]
+      -- Definitional reduction: evaluate conjugate-linear scalar action on complex numbers
       change (starRingEnd ℂ) (c * z) ⊗ₜ[ℤ] v =
         (starRingEnd ℂ) c • ((starRingEnd ℂ) z ⊗ₜ[ℤ] v : Complexification V)
       rw [map_mul]
@@ -139,12 +157,14 @@ def concreteLatticeConj : Complexification V →ₛₗ[starRingEnd ℂ] Complexi
         _ = (starRingEnd ℂ) c • concreteLatticeConjIntLinear (x + y) := by
           rw [map_add]
 
+@[simp]
 theorem concreteLatticeConj_tmul (z : ℂ) (v : V) :
     concreteLatticeConj (V := V) (z ⊗ₜ[ℤ] v) = (starRingEnd ℂ z) ⊗ₜ[ℤ] v :=
   TensorProduct.map_tmul _ _ z v
 
 theorem concreteLatticeConjIntLinear_comp_self :
     (concreteLatticeConjIntLinear (V := V)).comp concreteLatticeConjIntLinear = LinearMap.id := by
+  -- Definitional reduction: expand composite of tensor maps to underlying linear components
   change (TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
       (LinearMap.id : V →ₗ[ℤ] V)).comp
     (TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
@@ -160,6 +180,7 @@ theorem concreteLatticeConjIntLinear_comp_self :
 theorem concreteLatticeConj_involutive :
     Function.Involutive (concreteLatticeConj (V := V)) := by
   intro x
+  -- Definitional reduction: apply the involution equality of the underlying ℤ-linear map
   change ((concreteLatticeConjIntLinear (V := V)).comp concreteLatticeConjIntLinear) x = x
   rw [concreteLatticeConjIntLinear_comp_self, LinearMap.id_apply]
 
@@ -183,6 +204,7 @@ noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
     rw [h_conj]
     exact map_smul _ _ _
 
+@[simp]
 theorem latticeConj_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     latticeConj hℂ (ιℂ v) = ιℂ v := by
   have hιv : hℂ.equiv.symm (ιℂ v) = (1 : ℂ) ⊗ₜ[ℤ] v := by
@@ -191,6 +213,7 @@ theorem latticeConj_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     have h_eq := hℂ.equiv_tmul 1 v
     rw [one_smul] at h_eq
     exact h_eq.symm
+  -- Definitional reduction: expand abstract latticeConj via transported concrete model
   change hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm (ιℂ v))) = ιℂ v
   rw [hιv, concreteLatticeConj_tmul, map_one]
   have h_eq := hℂ.equiv_tmul 1 v
@@ -200,6 +223,7 @@ theorem latticeConj_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
 theorem latticeConj_involutive (hℂ : IsBaseChange ℂ ιℂ) :
     Function.Involutive (latticeConj hℂ) := by
   intro x
+  -- Definitional reduction: expand two applications of the transported equivalence
   change hℂ.equiv
     (concreteLatticeConj
       (hℂ.equiv.symm (hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x))))) = x
@@ -244,6 +268,7 @@ theorem latticeConj_unique (f : Vℂ →ₛₗ[starRingEnd ℂ] Vℂ)
 theorem concreteLatticeConj_eq_latticeConj :
     concreteLatticeConj (V := V) = latticeConj (TensorProduct.isBaseChange ℤ V ℂ) :=
   latticeConj_unique (hℂ := TensorProduct.isBaseChange ℤ V ℂ) concreteLatticeConj (fun v => by
+    -- Definitional reduction: evaluating on the canonical base-change inclusion ι(v) = 1 ⊗ v
     change concreteLatticeConj ((1 : ℂ) ⊗ₜ[ℤ] v) = (1 : ℂ) ⊗ₜ[ℤ] v
     rw [concreteLatticeConj_tmul, map_one])
 
@@ -261,13 +286,10 @@ structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   F_bot : ∃ p, F p = ⊥
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
-/-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of an integral lattice `V`. -/
-structure HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ)
-    extends HodgeStructureOn Vℂ (latticeConjugation hℂ) n where
-  /-- The underlying lattice is a free `ℤ`-module. -/
-  free : Module.Free ℤ V := by infer_instance
-  /-- The underlying lattice is a finitely generated `ℤ`-module. -/
-  finite : Module.Finite ℤ V := by infer_instance
+/-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of an integral lattice `V`.
+This is an abbreviation for `HodgeStructureOn Vℂ (latticeConjugation hℂ) n`. -/
+abbrev HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
+  HodgeStructureOn Vℂ (latticeConjugation hℂ) n
 
 namespace HodgeStructureOn
 
@@ -276,6 +298,18 @@ variable (ω : Conjugation W) {n : ℤ} (hs : HodgeStructureOn W ω n)
 /-- The `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$ of a pure Hodge structure. -/
 noncomputable def piece (p : ℤ) : Submodule ℂ W :=
   hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap
+
+/-- Definitional restatement of the `(p, q)`-piece of a pure Hodge structure. -/
+theorem piece_def (p : ℤ) :
+    hs.piece ω p = hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap := by
+  dsimp [piece]
+
+/-- Membership in the `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$ is characterized
+by membership in both filtration submodules. -/
+@[simp]
+theorem mem_piece_iff (p : ℤ) (x : W) :
+    x ∈ hs.piece ω p ↔ x ∈ hs.F p ∧ x ∈ (hs.F (n - p)).map ω.toEquiv.toLinearMap :=
+  Submodule.mem_inf
 
 /-- A weight-`n` Hodge structure is **effective** when its Hodge numbers are supported in
 `[0, n]`. -/
@@ -289,6 +323,8 @@ theorem piece_le_conj_F (p : ℤ) :
     hs.piece ω p ≤ (hs.F (n - p)).map ω.toEquiv.toLinearMap :=
   inf_le_right
 
+/-- Conjugation symmetry of the Hodge pieces: $\overline{H^{p,q}} = H^{n-p, p} = H^{q, p}$. -/
+@[simp]
 theorem map_conj_piece (p : ℤ) :
     (hs.piece ω p).map ω.toEquiv.toLinearMap = hs.piece ω (n - p) := by
   dsimp [piece]
@@ -433,7 +469,74 @@ theorem isEffective_iff_piece_eq_bot :
       exact eq_top_of_isCompl_bot h_opp
     exact ⟨h_top, h_bot⟩
 
+/-- The Tate twist $W(m)$ of a pure Hodge structure of weight $n$ by $m \in \mathbb{Z}$,
+yielding a pure Hodge structure of weight $n - 2m$ on the same underlying space and conjugation,
+with filtration shifted by $F^p(W(m)) = F^{p+m}(W)$. -/
+def twist (m : ℤ) : HodgeStructureOn W ω (n - 2 * m) where
+  F p := hs.F (p + m)
+  F_antitone := by
+    intro p q hpq
+    exact hs.F_antitone (by omega)
+  F_top := by
+    rcases hs.F_top with ⟨p, hp⟩
+    exact ⟨p - m, by rw [sub_add_cancel, hp]⟩
+  F_bot := by
+    rcases hs.F_bot with ⟨p, hp⟩
+    exact ⟨p - m, by rw [sub_add_cancel, hp]⟩
+  opposed p := by
+    have h_eval : n - 2 * m + 1 - p + m = n + 1 - (p + m) := by ring
+    have h_opp := hs.opposed (p + m)
+    rw [← h_eval] at h_opp
+    exact h_opp
+
+@[simp]
+theorem twist_F (m : ℤ) (p : ℤ) :
+    (hs.twist ω m).F p = hs.F (p + m) := by
+  dsimp [twist]
+
+@[simp]
+theorem twist_piece (m : ℤ) (p : ℤ) :
+    (hs.twist ω m).piece ω p = hs.piece ω (p + m) := by
+  dsimp [piece, twist]
+  have h_sub : n - 2 * m - p + m = n - (p + m) := by ring
+  rw [h_sub]
+
 end HodgeStructureOn
+
+/-- A morphism of pure Hodge structures: a `ℂ`-linear map commuting with conjugation
+and preserving the Hodge filtrations. -/
+structure Morphism {W₁ : Type*} [AddCommGroup W₁] [Module ℂ W₁] {ω₁ : Conjugation W₁}
+    {W₂ : Type*} [AddCommGroup W₂] [Module ℂ W₂] {ω₂ : Conjugation W₂}
+    {n : ℤ} (hs₁ : HodgeStructureOn W₁ ω₁ n) (hs₂ : HodgeStructureOn W₂ ω₂ n) where
+  /-- The underlying `ℂ`-linear map. -/
+  toLinearMap : W₁ →ₗ[ℂ] W₂
+  /-- Preservation of the Hodge filtration: $f(F_1^p) \subseteq F_2^p$. -/
+  map_F_le : ∀ p : ℤ, (hs₁.F p).map toLinearMap ≤ hs₂.F p
+  /-- Commutation with conjugation: $f(\overline{x}) = \overline{f(x)}$. -/
+  map_conj : ∀ x : W₁,
+    toLinearMap (ω₁.toEquiv.toLinearMap x) = ω₂.toEquiv.toLinearMap (toLinearMap x)
+
+namespace Morphism
+
+variable {W₁ : Type*} [AddCommGroup W₁] [Module ℂ W₁] {ω₁ : Conjugation W₁}
+  {W₂ : Type*} [AddCommGroup W₂] [Module ℂ W₂] {ω₂ : Conjugation W₂}
+  {n : ℤ} {hs₁ : HodgeStructureOn W₁ ω₁ n} {hs₂ : HodgeStructureOn W₂ ω₂ n}
+
+/-- A morphism of pure Hodge structures preserves the `(p, q)`-pieces:
+$f(H^{p,q}) \subseteq H^{p,q}$. -/
+theorem map_piece_le (f : Morphism hs₁ hs₂) (p : ℤ) :
+    (hs₁.piece ω₁ p).map f.toLinearMap ≤ hs₂.piece ω₂ p := by
+  dsimp [HodgeStructureOn.piece]
+  rintro x ⟨y, ⟨hyF, hyconj⟩, rfl⟩
+  rw [Submodule.mem_inf]
+  constructor
+  · exact f.map_F_le p ⟨y, hyF, rfl⟩
+  · rcases (Submodule.mem_map).mp hyconj with ⟨z, hz, rfl⟩
+    rw [Submodule.mem_map]
+    refine ⟨f.toLinearMap z, f.map_F_le (n - p) ⟨z, hz, rfl⟩, ?_⟩
+    exact (f.map_conj z).symm
+
+end Morphism
 
 /-- The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$ on $V = \mathbb{Z}$. -/
 def tate (m : ℤ) : HodgeStructure (TensorProduct.isBaseChange ℤ ℤ ℂ) (-2 * m) where
@@ -471,6 +574,9 @@ def tate (m : ℤ) : HodgeStructure (TensorProduct.isBaseChange ℤ ℤ ℂ) (-2
       rw [h1, h2, Conjugation.map_top]
       exact isCompl_bot_top
 
+/-- The `(p, q)`-pieces of the Tate Hodge structure $\mathbb{Z}(m)$: the unique nonzero piece
+is $H^{-m, -m} = \mathbb{C}$ at $p = -m$, and all other pieces vanish. -/
+@[simp]
 theorem tate_piece_apply (m : ℤ) (p : ℤ) :
     (tate m).piece (latticeConjugation (TensorProduct.isBaseChange ℤ ℤ ℂ)) p =
       if p = -m then ⊤ else ⊥ := by
@@ -506,10 +612,35 @@ theorem tate_piece_apply (m : ℤ) (p : ℤ) :
         exact ite_eq_right hp_not_le
       rw [h1, bot_inf_eq]
 
-/-- The Tate structure `ℤ(0)` is effective (weight 0). -/
-theorem isEffective_tate_zero : (tate 0).IsEffective := by
+/-- The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$ is effective if and only
+if $m \le 0$. -/
+theorem isEffective_tate_iff (m : ℤ) : (tate m).IsEffective ↔ m ≤ 0 := by
   dsimp [HodgeStructureOn.IsEffective, tate]
-  exact ⟨rfl, rfl⟩
+  constructor
+  · rintro ⟨h0, _⟩
+    split_ifs at h0 with hle
+    · omega
+    · exfalso
+      have h_mem : (1 : ℂ) ⊗ₜ[ℤ] (1 : ℤ) ∈ (⊤ : Submodule ℂ (Complexification ℤ)) :=
+        Submodule.mem_top
+      rw [← h0, Submodule.mem_bot] at h_mem
+      have h_ne : (1 : ℂ) ⊗ₜ[ℤ] (1 : ℤ) ≠ 0 := by
+        intro h_zero
+        have h_eval := congr_arg (TensorProduct.lift (LinearMap.lsmul ℤ ℂ).flip) h_zero
+        rw [map_zero, TensorProduct.lift.tmul, LinearMap.flip_apply,
+          LinearMap.lsmul_apply] at h_eval
+        norm_num at h_eval
+      exact h_ne h_mem
+  · intro hm
+    have h1 : (if 0 ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ :=
+      ite_eq_left (by omega)
+    have h2 : (if -2 * m + 1 ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ :=
+      ite_eq_right (by omega)
+    exact ⟨h1, h2⟩
+
+/-- The Tate structure `ℤ(0)` is effective (weight 0). -/
+theorem isEffective_tate_zero : (tate 0).IsEffective :=
+  (isEffective_tate_iff 0).mpr le_rfl
 
 end
 
