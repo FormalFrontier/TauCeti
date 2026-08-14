@@ -14,10 +14,11 @@ public import Mathlib.LinearAlgebra.Matrix.Trace
 The general linear Lie algebra `gl n R` is `Matrix n n R` with the commutator bracket. Over a
 field of characteristic zero, and for nonempty finite `n`, it is reductive rather than semisimple
 (in characteristic `p` it need not even be that: for `n` of cardinality `2` in characteristic `2`,
-`sl n` is a solvable ideal strictly larger than the centre). Whatever the characteristic, its
-Killing form is degenerate: the identity matrix is central, so it lies in the radical of every
-invariant form built from the adjoint representation. The form that replaces it is the trace form
-of the *standard* representation, `⟨X, Y⟩ = trace (X * Y)`.
+`sl n` is a solvable ideal strictly larger than the centre). Whatever the characteristic, and again
+for nonempty `n` over a nontrivial ring, its Killing form is degenerate: the identity matrix is
+central and nonzero, so it lies in the radical of every invariant form built from the adjoint
+representation. The form that replaces it is the trace form of the *standard* representation,
+`⟨X, Y⟩ = trace (X * Y)`.
 
 That motivation is what singles the form out; none of the hypotheses behind it are needed to build
 it. The trace form is symmetric and nondegenerate over an arbitrary commutative semiring and an
