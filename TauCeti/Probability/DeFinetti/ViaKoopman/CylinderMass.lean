@@ -124,12 +124,11 @@ theorem measure_preimage_invariantConditional_inter_blockCylinder_eq_setLIntegra
         (fun i : Fin r => (i : ℕ)) B, blockIndicatorProd_apply]
     simp only [hrw]
     rw [setIntegral_indicator hcyl, setIntegral_const, smul_eq_mul, mul_one, measureReal_def]
-  -- The induction, at weight one.
-  have hind := hρ.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp hA_inv r B hB
-    (fun _ => (1 : ℝ)) measurable_const (Filter.Eventually.of_forall fun _ => by norm_num)
-  simp only [one_mul] at hind
+  -- The block factorization, already specialised to weight one and named as the witness.
   have hmass : (ρ (A ∩ C)).toReal = ∫ x in A, Q x ∂ρ :=
-    hstep3.trans (hind.trans (integral_congr_ae (ae_restrict_of_ae hPQ)))
+    hstep3.trans
+      (hρ.setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityMeasure
+        hA_inv r B hB)
   -- Cross to `ℝ≥0∞`, once.
   have hne : ∀ᵐ x ∂ρ.restrict A,
       (∏ i : Fin r, (invariantConditionalProbabilityMeasure ρ x : Measure α) (B i)) ≠ ∞ :=
