@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Analysis.Bochner.CharFun.PosDef
 public import TauCeti.Analysis.PositiveDefinite.Basic
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
 public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.TaylorExpansion
 
 /-!
@@ -23,10 +22,6 @@ the `OneParameterSemigroups` roadmap, before the harder converse direction of Bo
 
 ## Main declarations
 
-* `TauCeti.charFun_isPositiveDefiniteKernel`: the translation-invariant kernel
-  `K(a, b) = charFun μ (a - b)` is positive definite.
-* `TauCeti.charFun_star_kernel_isPositiveDefiniteKernel_of_star_eq_neg`: with an explicit
-  `star = -` involution, the kernel `K(a, b) = charFun μ (a + star b)` is positive definite.
 * `TauCeti.charFun_isPositiveDefinite_of_star_eq_neg`: `charFun μ` is positive definite for any
   explicit `star = -` involution.
 * `TauCeti.continuous_charFun_and_isPositiveDefinite_of_star_eq_neg`: the paired continuity and
@@ -45,27 +40,6 @@ section Seminormed
 
 variable {E : Type*} [SeminormedAddCommGroup E] [InnerProductSpace ℝ E]
   [MeasurableSpace E] [OpensMeasurableSpace E] {μ : Measure E} [IsFiniteMeasure μ]
-
-/-- The translation-invariant characteristic-function kernel
-`(a, b) ↦ charFun μ (a - b)` is positive definite. This repackages the existing Gram-matrix
-statement `charFun_posSemidef` as a `TauCeti.IsPositiveDefiniteKernel`. -/
-theorem charFun_isPositiveDefiniteKernel :
-    IsPositiveDefiniteKernel (fun a b : E => MeasureTheory.charFun μ (a - b)) := by
-  rw [isPositiveDefiniteKernel_def]
-  simpa using charFun_posSemidef (μ := μ) (fun x : E => x)
-
-/-- With an explicit `star = -` involution, the kernel associated to `charFun μ` by the generic
-positive-definite-function construction, `(a, b) ↦ charFun μ (a + star b)`, is positive
-definite. Under `hstar` this kernel coincides with the translation-invariant kernel of
-`charFun_isPositiveDefiniteKernel`. -/
-theorem charFun_star_kernel_isPositiveDefiniteKernel_of_star_eq_neg [StarAddMonoid E]
-    (hstar : ∀ x : E, star x = -x) :
-    IsPositiveDefiniteKernel (fun a b : E => MeasureTheory.charFun μ (a + star b)) := by
-  have h : (fun a b : E => MeasureTheory.charFun μ (a + star b))
-      = fun a b : E => MeasureTheory.charFun μ (a - b) := by
-    simp only [hstar, sub_eq_add_neg]
-  rw [h]
-  exact charFun_isPositiveDefiniteKernel
 
 /-- The characteristic function of a finite measure is positive definite for any additive-group
 involution that is explicitly negation. This is the generic-predicate form of
