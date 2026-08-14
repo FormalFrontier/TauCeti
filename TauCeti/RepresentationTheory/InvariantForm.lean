@@ -7,6 +7,7 @@ module
 public import Mathlib.RepresentationTheory.Invariants
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.LinearAlgebra.BilinearForm.Basic
+public import TauCeti.LinearAlgebra.BilinearForm.Isometry
 
 /-!
 # Invariant bilinear forms on a representation
@@ -73,7 +74,9 @@ representation, is what makes `G` a group.
 
 ## Implementation notes
 
-`TauCeti.Representation.IsInvariantForm` is a plain `∀`-statement, but its body is not exposed:
+`TauCeti.Representation.IsInvariantForm` is the statement that every `ρ g` is an isometry of the
+form, `TauCeti.BilinForm.IsIsometry B (ρ g)`, so that the invariant forms of a representation and
+the isometry group of a form are the same notion read two ways.  Its body is not exposed:
 `TauCeti.Representation.isInvariantForm_iff` introduces it and
 `TauCeti.Representation.IsInvariantForm.apply` eliminates it, so nothing outside this file has to
 unfold the definition.  The `iff` is deliberately not a `simp` lemma: unfolding invariance into its
@@ -134,9 +137,9 @@ section Monoid
 variable {k G V : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V]
 
 /-- A bilinear form `B` is **invariant** for a representation `ρ` when every `ρ g` preserves it:
-`B (ρ g x) (ρ g y) = B x y`. -/
+`B (ρ g x) (ρ g y) = B x y`; that is, when every `ρ g` is an isometry of `B`. -/
 def IsInvariantForm (ρ : Representation k G V) (B : BilinForm k V) : Prop :=
-  ∀ (g : G) (x y : V), B (ρ g x) (ρ g y) = B x y
+  ∀ g : G, BilinForm.IsIsometry B (ρ g)
 
 variable {ρ : Representation k G V} {B C : BilinForm k V}
 
