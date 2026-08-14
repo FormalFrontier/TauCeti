@@ -182,11 +182,8 @@ theorem barycentricMap_id [DecidableEq α] :
     barycentricMap (_root_.PreAbstractSimplicialComplex.SimplicialMap.id K) =
       _root_.PreAbstractSimplicialComplex.SimplicialMap.id
         (barycentricSubdivision K).toPreAbstractSimplicialComplex := by
-  apply DFunLike.coe_injective
-  funext σ
-  apply Subtype.ext
-  rw [barycentricMap_apply_coe]
-  simp
+  rw [barycentricMap, faceOrderHom_id, AbstractSimplicialComplex.orderComplexMap_id]
+  rfl
 
 /-- Barycentric subdivision sends a composite of simplicial maps to the composite of their
 induced maps. -/
@@ -195,12 +192,8 @@ theorem barycentricMap_comp [DecidableEq β] [DecidableEq γ]
     (g : _root_.PreAbstractSimplicialComplex.SimplicialMap L M)
     (f : _root_.PreAbstractSimplicialComplex.SimplicialMap K L) :
     barycentricMap (g.comp f) = (barycentricMap g).comp (barycentricMap f) := by
-  apply DFunLike.coe_injective
-  funext σ
-  rw [coe_barycentricMap,
-    _root_.PreAbstractSimplicialComplex.SimplicialMap.coe_comp,
-    coe_barycentricMap, coe_barycentricMap]
-  exact faceOrderHom_comp_apply g f σ
+  rw [barycentricMap, faceOrderHom_comp, AbstractSimplicialComplex.orderComplexMap_comp]
+  rfl
 
 end SimplicialMap
 

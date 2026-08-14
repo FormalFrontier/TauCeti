@@ -34,7 +34,7 @@ Chapter 2.
   chains.
 * `TauCeti.AbstractSimplicialComplex.pair_mem_orderComplex_iff`: two vertices span an edge exactly
   when they are comparable.
-* `TauCeti.AbstractSimplicialComplex.orderComplex_eq_top`: the order complex of a linear order is
+* `TauCeti.AbstractSimplicialComplex.orderComplex_eq_top`: the order complex of a total preorder is
   the full simplicial complex.
 * `TauCeti.AbstractSimplicialComplex.orderComplexMap_id` and
   `TauCeti.AbstractSimplicialComplex.orderComplexMap_comp`: functoriality laws.
@@ -98,10 +98,11 @@ theorem comparable_of_mem_orderComplex {σ : Finset P} (hσ : σ ∈ orderComple
   · exact Or.inl hpq.le
   · exact (mem_orderComplex_iff.mp hσ).2 (by exact_mod_cast hp) (by exact_mod_cast hq) hpq
 
-/-- If the order on `P` is linear, every nonempty finite set is a chain, so its order complex is
+/-- If the preorder on `P` is total, every nonempty finite set is a chain, so its order complex is
 the full abstract simplicial complex. -/
 @[simp]
-theorem orderComplex_eq_top (P : Type*) [LinearOrder P] :
+theorem orderComplex_eq_top (P : Type*) [Preorder P]
+    [Std.Total ((· ≤ ·) : P → P → Prop)] :
     orderComplex P = (⊤ : AbstractSimplicialComplex P) := by
   apply le_antisymm le_top
   intro σ hσ
@@ -109,7 +110,7 @@ theorem orderComplex_eq_top (P : Type*) [LinearOrder P] :
   change σ ∈ (orderComplex P).faces
   rw [orderComplex]
   change σ.Nonempty at hσ
-  exact ⟨hσ, isChain_of_trichotomous _⟩
+  exact ⟨hσ, fun p _ q _ _ => total_of (· ≤ ·) p q⟩
 
 /-- A monotone map induces a simplicial map between order complexes. -/
 def orderComplexMap [DecidableEq Q] (f : P →o Q) :
