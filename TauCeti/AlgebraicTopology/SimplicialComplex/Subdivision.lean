@@ -9,10 +9,11 @@ public import TauCeti.AlgebraicTopology.SimplicialComplex.OrderComplex
 /-!
 # Barycentric subdivision of abstract simplicial complexes
 
-The vertices of the first barycentric subdivision of a simplicial complex `K` are its faces. For a
-precomplex, these may include the empty face. A collection of these new vertices spans a face
-exactly when the corresponding faces of `K` form a chain under inclusion. Equivalently, the
-barycentric subdivision is the order complex of the face poset.
+The vertices of the first barycentric subdivision of a simplicial complex `K` are its faces, which
+are always nonempty: `PreAbstractSimplicialComplex` requires its face collection to be a lower set
+relative to `Finset.Nonempty`, so the empty face never occurs. A collection of these new vertices
+spans a face exactly when the corresponding faces of `K` form a chain under inclusion.
+Equivalently, the barycentric subdivision is the order complex of the face poset.
 
 The construction is made for `PreAbstractSimplicialComplex`, since links, deletions, and collapse
 subcomplexes need not contain every ambient singleton. Its result is an
