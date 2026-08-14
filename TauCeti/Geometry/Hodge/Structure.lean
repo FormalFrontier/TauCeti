@@ -16,7 +16,6 @@ Hodge decomposition theorem (the L0 milestone of the `HodgeStructures` roadmap).
 
 * `TauCeti.Geometry.Hodge.Complexification`: The canonical complexification `ℂ ⊗[ℤ] V` of an
   integral lattice `V`.
-* `TauCeti.Geometry.Hodge.Rationalification`: The canonical rationalification `ℚ ⊗[ℤ] V`.
 * `TauCeti.Geometry.Hodge.Conjugation`: Structure packaging a conjugate-linear automorphism
   whose square is the identity.
 * `TauCeti.Geometry.Hodge.concreteLatticeConj`: The canonical conjugate-linear involution on
@@ -37,7 +36,11 @@ Hodge decomposition theorem (the L0 milestone of the `HodgeStructures` roadmap).
 
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.isInternal_piece`: **(L0 Milestone)** The `(p, q)`-pieces
   of a pure Hodge structure form an internal direct sum $W = \bigoplus_p H^{p,q}$.
+* `TauCeti.Geometry.Hodge.HodgeStructureOn.isEffective_iff_piece_eq_bot`: Characterization of
+  effective Hodge structures in terms of their vanishing pieces outside $[0, n]$.
 * `TauCeti.Geometry.Hodge.latticeConj_unique`: Uniqueness of the lattice-induced conjugation.
+* `TauCeti.Geometry.Hodge.concreteLatticeConj_eq_latticeConj`: Identification of the concrete
+  and abstract lattice conjugations on `ℂ ⊗[ℤ] V`.
 
 ## References
 
@@ -55,29 +58,7 @@ open Complex
 abbrev Complexification (V : Type*) [AddCommGroup V] [Module ℤ V] : Type _ :=
   TensorProduct ℤ ℂ V
 
-/-- The canonical rationalification `ℚ ⊗[ℤ] V` of an integral lattice `V`. -/
-abbrev Rationalification (V : Type*) [AddCommGroup V] [Module ℤ V] : Type _ :=
-  TensorProduct ℤ ℚ V
-
 variable {V : Type*} [AddCommGroup V] [Module ℤ V]
-
-/-- The canonical inclusion of the lattice into its concrete complexification. -/
-def complexificationMap : V →ₗ[ℤ] Complexification V :=
-  (TensorProduct.mk ℤ ℂ V) 1
-
-/-- The concrete tensor `ℂ ⊗[ℤ] V` is the canonical `IsBaseChange` model. -/
-theorem complexificationMap_isBaseChange :
-    IsBaseChange ℂ (complexificationMap (V := V)) :=
-  TensorProduct.isBaseChange ℤ V ℂ
-
-/-- The canonical inclusion of the lattice into its concrete rationalification. -/
-def rationalificationMap : V →ₗ[ℤ] Rationalification V :=
-  (TensorProduct.mk ℤ ℚ V) 1
-
-/-- The concrete tensor `ℚ ⊗[ℤ] V` is the canonical rational `IsBaseChange` model. -/
-theorem rationalificationMap_isBaseChange :
-    IsBaseChange ℚ (rationalificationMap (V := V)) :=
-  TensorProduct.isBaseChange ℤ V ℚ
 
 /-- A conjugation on a `ℂ`-vector space `W`: a conjugate-linear automorphism
 whose square is the identity. -/
@@ -85,6 +66,30 @@ structure Conjugation (W : Type*) [AddCommGroup W] [Module ℂ W] where
   /-- The underlying conjugate-linear equivalence. -/
   toEquiv : W ≃ₛₗ[starRingEnd ℂ] W
   involutive : Function.Involutive toEquiv
+
+namespace Conjugation
+
+variable {W : Type*} [AddCommGroup W] [Module ℂ W] (ω : Conjugation W)
+
+@[simp]
+theorem map_top : (⊤ : Submodule ℂ W).map ω.toEquiv.toLinearMap = ⊤ := by
+  rw [Submodule.map_top]
+  exact LinearEquiv.range _
+
+@[simp]
+theorem map_map (p : Submodule ℂ W) :
+    (p.map ω.toEquiv.toLinearMap).map ω.toEquiv.toLinearMap = p := by
+  ext x
+  simp only [Submodule.mem_map]
+  constructor
+  · rintro ⟨y, ⟨z, hz, rfl⟩, rfl⟩
+    have h : (ω.toEquiv.toLinearMap (ω.toEquiv.toLinearMap z) : W) = z := ω.involutive z
+    rw [h]
+    exact hz
+  · intro hx
+    exact ⟨ω.toEquiv x, ⟨x, hx, rfl⟩, ω.involutive x⟩
+
+end Conjugation
 
 /-- The underlying `ℤ`-linear map for lattice-induced complex conjugation on
 `ℂ ⊗[ℤ] V`. -/
@@ -138,46 +143,25 @@ theorem concreteLatticeConj_tmul (z : ℂ) (v : V) :
     concreteLatticeConj (V := V) (z ⊗ₜ[ℤ] v) = (starRingEnd ℂ z) ⊗ₜ[ℤ] v :=
   TensorProduct.map_tmul _ _ z v
 
+theorem concreteLatticeConjIntLinear_comp_self :
+    (concreteLatticeConjIntLinear (V := V)).comp concreteLatticeConjIntLinear = LinearMap.id := by
+  change (TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
+      (LinearMap.id : V →ₗ[ℤ] V)).comp
+    (TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
+      (LinearMap.id : V →ₗ[ℤ] V)) = LinearMap.id
+  rw [← TensorProduct.map_comp]
+  have h_conj : (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap.comp
+      (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap = LinearMap.id := by
+    ext z
+    simp
+  have h_id : (LinearMap.id : V →ₗ[ℤ] V).comp LinearMap.id = LinearMap.id := LinearMap.id_comp _
+  rw [h_conj, h_id, TensorProduct.map_id]
+
 theorem concreteLatticeConj_involutive :
     Function.Involutive (concreteLatticeConj (V := V)) := by
   intro x
-  change concreteLatticeConjIntLinear (concreteLatticeConjIntLinear x) = x
-  refine TensorProduct.induction_on x ?hz ?ht ?ha
-  · rw [map_zero, map_zero]
-  · intro z v
-    change (TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
-        (LinearMap.id : V →ₗ[ℤ] V))
-        ((TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
-          (LinearMap.id : V →ₗ[ℤ] V)) (z ⊗ₜ[ℤ] v)) = z ⊗ₜ[ℤ] v
-    rw [TensorProduct.map_tmul]
-    simp only [LinearMap.id_coe, id_eq]
-    rw [TensorProduct.map_tmul]
-    simp
-  · intro x y hx hy
-    calc
-      concreteLatticeConjIntLinear (concreteLatticeConjIntLinear (x + y)) =
-          concreteLatticeConjIntLinear
-            (concreteLatticeConjIntLinear x + concreteLatticeConjIntLinear y) := by
-        rw [map_add]
-      _ = concreteLatticeConjIntLinear (concreteLatticeConjIntLinear x) +
-          concreteLatticeConjIntLinear (concreteLatticeConjIntLinear y) := by
-        rw [map_add]
-      _ = x + y := by
-        rw [hx, hy]
-
-/-- Conjugation equivalence on `Complexification V`. -/
-def concreteLatticeConjEquiv (V : Type*) [AddCommGroup V] [Module ℤ V] :
-    Complexification V ≃ₛₗ[starRingEnd ℂ] Complexification V :=
-  { concreteLatticeConj with
-    invFun := concreteLatticeConj
-    left_inv := concreteLatticeConj_involutive
-    right_inv := concreteLatticeConj_involutive }
-
-/-- The concrete conjugation structure on `Complexification V`. -/
-noncomputable def concreteConjugation (V : Type*) [AddCommGroup V] [Module ℤ V] :
-    Conjugation (Complexification V) where
-  toEquiv := concreteLatticeConjEquiv V
-  involutive := concreteLatticeConj_involutive
+  change ((concreteLatticeConjIntLinear (V := V)).comp concreteLatticeConjIntLinear) x = x
+  rw [concreteLatticeConjIntLinear_comp_self, LinearMap.id_apply]
 
 variable {Vℂ : Type*} [AddCommGroup Vℂ] [Module ℂ Vℂ]
   {ιℂ : V →ₗ[ℤ] Vℂ}
@@ -264,6 +248,13 @@ theorem latticeConj_unique (f : Vℂ →ₛₗ[starRingEnd ℂ] Vℂ)
     simp only [map_add] at hu hw ⊢
     rw [hu, hw]
 
+/-- The concrete conjugation on `ℂ ⊗[ℤ] V` agrees with the abstract base-change conjugation. -/
+theorem concreteLatticeConj_eq_latticeConj :
+    concreteLatticeConj (V := V) = latticeConj (TensorProduct.isBaseChange ℤ V ℂ) :=
+  latticeConj_unique (hℂ := TensorProduct.isBaseChange ℤ V ℂ) concreteLatticeConj (fun v => by
+    change concreteLatticeConj ((1 : ℂ) ⊗ₜ[ℤ] v) = (1 : ℂ) ⊗ₜ[ℤ] v
+    rw [concreteLatticeConj_tmul, map_one])
+
 variable {W : Type*} [AddCommGroup W] [Module ℂ W]
 
 /-- Pure Hodge structure of weight `n` on a complex vector space `W` equipped with a
@@ -308,40 +299,21 @@ theorem piece_le_conj_F (p : ℤ) :
 
 theorem map_conj_piece (p : ℤ) :
     (hs.piece ω p).map ω.toEquiv.toLinearMap = hs.piece ω (n - p) := by
-  ext x
-  rw [Submodule.mem_map]
-  constructor
-  · rintro ⟨y, ⟨hy1, ⟨z, hz, hz_eq⟩⟩, rfl⟩
-    dsimp [piece]
-    have h_inv : z = ω.toEquiv y := by
-      rw [← hz_eq]
-      exact (ω.involutive z).symm
-    subst h_inv
-    refine ⟨hz, ?_⟩
-    have h_sub : n - (n - p) = p := by ring
-    have h_map : ω.toEquiv y ∈ (hs.F p).map ω.toEquiv.toLinearMap := by
-      rw [Submodule.mem_map]
-      exact ⟨y, hy1, rfl⟩
-    rw [h_sub]
-    exact h_map
-  · intro hx
-    dsimp [piece] at hx
-    rcases hx.2 with ⟨z, hz, hz_eq⟩
-    have h_inv : z = ω.toEquiv x := by
-      rw [← hz_eq]
-      exact (ω.involutive z).symm
-    subst h_inv
-    have h_sub : n - (n - p) = p := by ring
-    rw [h_sub] at hz
-    refine ⟨ω.toEquiv x, ⟨hz, ?_⟩, ω.involutive x⟩
-    exact ⟨x, hx.1, rfl⟩
+  dsimp [piece]
+  rw [Submodule.map_inf _ ω.toEquiv.injective, ω.map_map, inf_comm]
+  have h_sub : n - (n - p) = p := by ring
+  rw [h_sub]
+
+/-- Opposition shifted by one: `F^{p+1}` is complementary to `ω(F^{n-p})`. -/
+theorem opposed_add_one (p : ℤ) :
+    IsCompl (hs.F (p + 1)) ((hs.F (n - p)).map ω.toEquiv.toLinearMap) := by
+  have h_sub : n + 1 - (p + 1) = n - p := by ring
+  rw [← h_sub]
+  exact hs.opposed (p + 1)
 
 theorem F_eq_F_add_one_sup_piece (p : ℤ) :
     hs.F p = hs.F (p + 1) ⊔ hs.piece ω p := by
-  have h_opp : IsCompl (hs.F (p + 1)) ((hs.F (n - p)).map ω.toEquiv.toLinearMap) := by
-    have h_sub : n + 1 - (p + 1) = n - p := by ring
-    rw [← h_sub]
-    exact hs.opposed (p + 1)
+  have h_opp := hs.opposed_add_one ω p
   have h_le : hs.F (p + 1) ≤ hs.F p := hs.F_antitone (by omega)
   have h_mod := sup_inf_assoc_of_le ((hs.F (n - p)).map ω.toEquiv.toLinearMap) h_le
   rw [h_opp.codisjoint.eq_top, top_inf_eq, inf_comm] at h_mod
@@ -350,25 +322,20 @@ theorem F_eq_F_add_one_sup_piece (p : ℤ) :
 theorem F_le_iSup_piece (p : ℤ) :
     hs.F p ≤ ⨆ q, hs.piece ω q := by
   rcases hs.F_bot with ⟨p_bot, hp_bot⟩
-  have h_bot (k : ℤ) (hk : p_bot ≤ k) : hs.F k = ⊥ := by
-    exact le_bot_iff.mp (hp_bot ▸ hs.F_antitone hk)
-  have h_rec (n_nat : ℕ) (k : ℤ) (hk : p_bot - k ≤ (n_nat : ℤ)) :
-      hs.F k ≤ ⨆ q, hs.piece ω q := by
-    induction n_nat generalizing k with
-    | zero =>
-      have : p_bot ≤ k := by omega
-      rw [h_bot k this]
+  have h_bot (k : ℤ) (hk : p_bot ≤ k) : hs.F k = ⊥ :=
+    le_bot_iff.mp (hp_bot ▸ hs.F_antitone hk)
+  by_cases hp : p_bot ≤ p
+  · rw [h_bot p hp]
+    exact bot_le
+  · have hp_le : p ≤ p_bot := le_of_not_ge hp
+    refine Int.leInductionDown (motive := fun n _ => hs.F n ≤ ⨆ q, hs.piece ω q) ?base ?pred p hp_le
+    · rw [hp_bot]
       exact bot_le
-    | succ n_nat ih =>
-      by_cases hk_bot : p_bot ≤ k
-      · rw [h_bot k hk_bot]
-        exact bot_le
-      · rw [hs.F_eq_F_add_one_sup_piece ω k]
-        refine sup_le ?_ (le_iSup (hs.piece ω) k)
-        apply ih (k + 1)
-        omega
-  rcases hs.F_top with ⟨p_top, _⟩
-  exact h_rec (p_bot - p).toNat p (by omega)
+    · intro k _ ih
+      rw [hs.F_eq_F_add_one_sup_piece ω (k - 1)]
+      have : k - 1 + 1 = k := by ring
+      rw [this]
+      exact sup_le ih (le_iSup (hs.piece ω) (k - 1))
 
 theorem iSup_piece_eq_top : ⨆ q, hs.piece ω q = ⊤ := by
   rcases hs.F_top with ⟨p_top, hp_top⟩
@@ -413,10 +380,7 @@ theorem iSupIndep_piece : iSupIndep (hs.piece ω) := by
     rw [add_zero] at hx_piece ⊢
     have ha_conj : a ∈ (hs.F (n - p)).map ω.toEquiv.toLinearMap := hx_piece.2
     have ha_disj : a ∈ hs.F (p + 1) ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap := ⟨ha, ha_conj⟩
-    have h_opp_p1 : IsCompl (hs.F (p + 1)) ((hs.F (n - p)).map ω.toEquiv.toLinearMap) := by
-      have : n + 1 - (p + 1) = n - p := by ring
-      rw [← this]
-      exact hs.opposed (p + 1)
+    have h_opp_p1 := hs.opposed_add_one ω p
     have h_opp_p1_disj := h_opp_p1.disjoint.eq_bot
     rw [h_opp_p1_disj] at ha_disj
     exact ha_disj
@@ -428,10 +392,59 @@ theorem isInternal_piece : DirectSum.IsInternal (hs.piece ω) := by
   rw [DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top]
   exact ⟨hs.iSupIndep_piece ω, hs.iSup_piece_eq_top ω⟩
 
+theorem piece_eq_bot_of_lt_zero (h : hs.IsEffective) {p : ℤ} (hp : p < 0) :
+    hs.piece ω p = ⊥ := by
+  dsimp [piece]
+  have hp' : n + 1 ≤ n - p := by omega
+  have hF : hs.F (n - p) = ⊥ := le_bot_iff.mp (h.2 ▸ hs.F_antitone hp')
+  rw [hF, Submodule.map_bot, inf_bot_eq]
+
+theorem piece_eq_bot_of_gt_weight (h : hs.IsEffective) {p : ℤ} (hp : n < p) :
+    hs.piece ω p = ⊥ := by
+  dsimp [piece]
+  have hp' : n + 1 ≤ p := by omega
+  have hF : hs.F p = ⊥ := le_bot_iff.mp (h.2 ▸ hs.F_antitone hp')
+  rw [hF, bot_inf_eq]
+
+theorem piece_eq_bot_of_not_mem_interval (h : hs.IsEffective) {p : ℤ}
+    (hp : p < 0 ∨ n < p) : hs.piece ω p = ⊥ := by
+  rcases hp with hp_lt | hp_gt
+  · exact hs.piece_eq_bot_of_lt_zero ω h hp_lt
+  · exact hs.piece_eq_bot_of_gt_weight ω h hp_gt
+
+/-- Characterization of effective Hodge structures in terms of vanishing pieces outside `[0, n]`. -/
+theorem isEffective_iff_piece_eq_bot :
+    hs.IsEffective ↔ ∀ p : ℤ, p < 0 ∨ n < p → hs.piece ω p = ⊥ := by
+  constructor
+  · intro h p hp
+    exact hs.piece_eq_bot_of_not_mem_interval ω h hp
+  · intro hp_bot
+    have h_bot : hs.F (n + 1) = ⊥ := by
+      rcases hs.F_bot with ⟨p_bot, hp_bot'⟩
+      by_cases hp_le : p_bot ≤ n + 1
+      · exact le_bot_iff.mp (hp_bot' ▸ hs.F_antitone hp_le)
+      · have hle : n + 1 ≤ p_bot := le_of_not_ge hp_le
+        refine (Int.leInductionDown (motive := fun k _ => n + 1 ≤ k → hs.F k = ⊥)
+          ?base ?pred (n + 1) hle) le_rfl
+        · intro _
+          exact hp_bot'
+        · intro k _ ih h_le
+          have hk : n + 1 ≤ k := by omega
+          have hFk : hs.F k = ⊥ := ih hk
+          rw [hs.F_eq_F_add_one_sup_piece ω (k - 1)]
+          have : k - 1 + 1 = k := by ring
+          rw [this, hFk, hp_bot (k - 1) (Or.inr (by omega)), bot_sup_eq]
+    have h_top : hs.F 0 = ⊤ := by
+      have h_opp := hs.opposed 0
+      have h_sub : n + 1 - 0 = n + 1 := by ring
+      rw [h_sub, h_bot, Submodule.map_bot] at h_opp
+      exact eq_top_of_isCompl_bot h_opp
+    exact ⟨h_top, h_bot⟩
+
 end HodgeStructureOn
 
 /-- The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$ on $V = \mathbb{Z}$. -/
-def tate (m : ℤ) : HodgeStructure (complexificationMap_isBaseChange (V := ℤ)) (-2 * m) where
+def tate (m : ℤ) : HodgeStructure (TensorProduct.isBaseChange ℤ ℤ ℂ) (-2 * m) where
   F p := if p ≤ -m then ⊤ else ⊥
   F_antitone := by
     intro p q hpq
@@ -454,8 +467,7 @@ def tate (m : ℤ) : HodgeStructure (complexificationMap_isBaseChange (V := ℤ)
           (if 1 - 2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) =
             ⊥ := by
         exact ite_eq_right (by linarith)
-      rw [h1, h2]
-      rw [Submodule.map_bot]
+      rw [h1, h2, Submodule.map_bot]
       exact isCompl_top_bot
     · have h1 :
           (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by
@@ -464,20 +476,11 @@ def tate (m : ℤ) : HodgeStructure (complexificationMap_isBaseChange (V := ℤ)
           (if 1 - 2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) =
             ⊤ := by
         exact ite_eq_left (by linarith)
-      rw [h1, h2]
-      have h_top_map : (⊤ : Submodule ℂ (Complexification ℤ)).map
-          (latticeConjugation
-            (complexificationMap_isBaseChange (V := ℤ))).toEquiv.toLinearMap = ⊤ := by
-        rw [eq_top_iff]
-        rintro x -
-        rw [Submodule.mem_map]
-        refine ⟨latticeConj (complexificationMap_isBaseChange (V := ℤ)) x, trivial, ?_⟩
-        exact latticeConj_involutive _ x
-      rw [h_top_map]
+      rw [h1, h2, Conjugation.map_top]
       exact isCompl_bot_top
 
 theorem tate_piece_apply (m : ℤ) (p : ℤ) :
-    (tate m).piece (latticeConjugation (complexificationMap_isBaseChange (V := ℤ))) p =
+    (tate m).piece (latticeConjugation (TensorProduct.isBaseChange ℤ ℤ ℂ)) p =
       if p = -m then ⊤ else ⊥ := by
   dsimp [HodgeStructureOn.piece, tate]
   by_cases hp : p = -m
@@ -490,16 +493,7 @@ theorem tate_piece_apply (m : ℤ) (p : ℤ) :
     have h2 : (if -2 * m - -m ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ := by
       rw [h_other]
       exact ite_eq_left (by linarith)
-    rw [h2]
-    have h_top_map : (⊤ : Submodule ℂ (Complexification ℤ)).map
-        (latticeConjugation
-          (complexificationMap_isBaseChange (V := ℤ))).toEquiv.toLinearMap = ⊤ := by
-      rw [eq_top_iff]
-      rintro x -
-      rw [Submodule.mem_map]
-      refine ⟨latticeConj (complexificationMap_isBaseChange (V := ℤ)) x, trivial, ?_⟩
-      exact latticeConj_involutive _ x
-    rw [h_top_map, inf_top_eq]
+    rw [h2, Conjugation.map_top, inf_top_eq]
     split_ifs with h_cond
     · rfl
     · exfalso; exact h_cond rfl
@@ -519,6 +513,11 @@ theorem tate_piece_apply (m : ℤ) (p : ℤ) :
           (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ := by
         exact ite_eq_right hp_not_le
       rw [h1, bot_inf_eq]
+
+/-- The Tate structure `ℤ(0)` is effective (weight 0). -/
+theorem isEffective_tate_zero : (tate 0).IsEffective := by
+  dsimp [HodgeStructureOn.IsEffective, tate]
+  exact ⟨rfl, rfl⟩
 
 end
 
