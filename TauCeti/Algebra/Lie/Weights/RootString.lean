@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.Weights.RootSystem
+public import TauCeti.Algebra.Lie.Weights.Sl2System
+public import TauCeti.LinearAlgebra.RootSystem.InvariantForm.RootString
 
 public section
 
@@ -40,6 +41,8 @@ relations among the constants.
   pair of root vectors exists and is non-zero.
 * `TauCeti.mul_eq_of_lie_eq_smul`: the two structure constants of a root string multiply to
   `q * (p + 1)`.
+* `TauCeti.IsSl2System.chainTopCoeff_mul_killingForm_root_neg_eq`: normalized Killing pairings at
+  consecutive roots have the reciprocal root-length ratio.
 
 ## Implementation notes
 
@@ -64,7 +67,7 @@ Chevalley basis are the numbers `N` above. The product constraint `N * N' = q * 
 with a coherent normalization of root vectors and additional symmetry relations, leads to the
 integral normalization `N = ±(p + 1)`.
 
-* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §25.1.
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §25.1--25.2.
 * R. W. Carter, *Simple Groups of Lie Type*, §4.1.
 -/
 
@@ -219,5 +222,167 @@ theorem mul_eq_of_lie_eq_smul {α β : Weight K H L} (hα : α.IsNonZero) (hβ :
   have hsub := sub_eq_zero.mpr hmain
   rw [← sub_smul, smul_eq_zero] at hsub
   exact sub_eq_zero.mp (hsub.resolve_right hy₀)
+
+/-! ### The root-length ratio -/
+
+private noncomputable def dualKillingForm : LinearMap.BilinForm K (Module.Dual K H) :=
+  (LinearMap.id : Module.Dual K H →ₗ[K] Module.Dual K H).compl₂
+    (cartanEquivDual H).symm.toLinearMap
+
+omit [CharZero K] [IsTriangularizable K H L] in
+@[simp]
+private lemma dualKillingForm_apply (a b : Module.Dual K H) :
+    dualKillingForm (H := H) a b = a ((cartanEquivDual H).symm b) :=
+  rfl
+
+omit [CharZero K] [IsTriangularizable K H L] in
+private lemma dualKillingForm_symm :
+    (dualKillingForm (H := H)).IsSymm := by
+  constructor
+  intro a b
+  have h := (LieModule.traceForm_isSymm K H L).eq
+    ((cartanEquivDual H).symm a) ((cartanEquivDual H).symm b)
+  simpa only [dualKillingForm_apply, cartanEquivDual,
+    LinearMap.BilinForm.apply_toDual_symm_apply, RingHom.id_apply] using h
+
+private noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
+  form := dualKillingForm
+  symm := LinearMap.BilinForm.isSymm_iff.mp dualKillingForm_symm
+  ne_zero i := by
+    simpa only [dualKillingForm_apply, rootSystem_root_apply, Weight.toLinear_apply] using
+      root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
+  isOrthogonal_reflection i := by
+    intro a b
+    have hd : i.1 ((cartanEquivDual H).symm i.1) ≠ 0 :=
+      root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
+    have hai := (dualKillingForm_symm (H := H)).eq a i.1
+    have hbi := (dualKillingForm_symm (H := H)).eq b i.1
+    -- Definitional equality: `(rootSystem H).reflection i` expands to reflection along `i.1`.
+    change dualKillingForm (a - a (coroot i.1) • (i.1 : Module.Dual K H))
+      (b - b (coroot i.1) • (i.1 : Module.Dual K H)) = dualKillingForm a b
+    simp only [map_sub, LinearMap.sub_apply, map_smul, map_nsmul, LinearMap.smul_apply,
+      dualKillingForm_apply, smul_eq_mul, nsmul_eq_mul, Nat.cast_ofNat, coroot]
+    simp only [dualKillingForm_apply] at hai hbi
+    rw [hai, hbi]
+    simp only [Weight.toLinear_apply]
+    field_simp
+    ring
+
+private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
+    (ha : a.IsNonZero) (hb : b.IsNonZero)
+    (hab : LinearIndependent K ![(a : Module.Dual K H), (b : Module.Dual K H)]) :
+    (rootSystem H).chainTopCoeff ⟨a, by simpa [LieSubalgebra.root] using ha⟩
+        ⟨b, by simpa [LieSubalgebra.root] using hb⟩ = chainTopCoeff a b ∧
+      (rootSystem H).chainBotCoeff ⟨a, by simpa [LieSubalgebra.root] using ha⟩
+        ⟨b, by simpa [LieSubalgebra.root] using hb⟩ = chainBotCoeff a b := by
+  let P := rootSystem H
+  let ia : H.root := ⟨a, by simpa [LieSubalgebra.root] using ha⟩
+  let ib : H.root := ⟨b, by simpa [LieSubalgebra.root] using hb⟩
+  have hlin : LinearIndependent K ![P.root ia, P.root ib] := by
+    simpa only [P, rootSystem_root_apply, ia, ib] using hab
+  -- Step 1: Equivalence between range membership in `P.root` and Lie weight space non-triviality.
+  have hmem (n : ℤ) :
+      P.root ib + n • P.root ia ∈ Set.range P.root ↔ rootSpace H (n • a + b) ≠ ⊥ := by
+    constructor
+    · rintro ⟨c, hc⟩
+      have hc' : (c.1 : H → K) = n • (a : H → K) + b := by
+        ext z
+        simpa only [P, rootSystem_root_apply, ia, ib, Weight.toLinear_apply,
+          LinearMap.add_apply, LinearMap.smul_apply, Pi.add_apply, Pi.smul_apply,
+          smul_eq_mul, add_comm] using DFunLike.congr_fun hc z
+      simpa only [hc'] using c.1.genWeightSpace_ne_bot
+    · intro h
+      let c : Weight K H L := ⟨n • (a : H → K) + b, h⟩
+      have hc : c.IsNonZero := by
+        intro hc₀
+        -- Definitional equality: `c.IsNonZero` is `(c : H → K) ≠ 0`, so `hc₀` means `c.1 = 0`.
+        change n • (a : H → K) + b = 0 at hc₀
+        have hrel : (n : K) • (a : Module.Dual K H) +
+            (1 : K) • (b : Module.Dual K H) = 0 := by
+          ext z
+          simpa [Weight.toLinear_apply] using congrFun hc₀ z
+        exact one_ne_zero (hab.eq_zero_of_pair hrel).2
+      refine ⟨⟨c, by simpa [LieSubalgebra.root] using hc⟩, ?_⟩
+      ext z
+      simp [P, ia, ib, c, Weight.toLinear_apply, add_comm]
+  -- Step 2: Compare `chainTopCoeff` via characterization by maximal non-vanishing.
+  constructor
+  · apply le_antisymm
+    · have hz := (rootSpace_zsmul_add_ne_bot_iff a b ha
+          (P.chainTopCoeff ia ib)).1 <| (hmem _).1 <| by
+          simpa [Nat.cast_smul_eq_nsmul] using
+            (P.root_add_nsmul_mem_range_iff_le_chainTopCoeff hlin).2 le_rfl
+      exact_mod_cast hz.1
+    · rw [← P.root_add_nsmul_mem_range_iff_le_chainTopCoeff hlin]
+      have := (hmem (chainTopCoeff a b)).2 <| by
+        simpa [Nat.cast_smul_eq_nsmul] using
+          genWeightSpace_nsmul_add_ne_bot_of_le a b (le_refl (chainTopCoeff a b))
+      simpa [Nat.cast_smul_eq_nsmul] using this
+  -- Step 3: Compare `chainBotCoeff` via characterization by minimal non-vanishing.
+  · apply le_antisymm
+    · have hroot := (P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff hlin).2 le_rfl
+      have := (hmem (-(P.chainBotCoeff ia ib : ℤ))).1 (by
+        simpa [Nat.cast_smul_eq_nsmul, sub_eq_add_neg, neg_smul] using hroot)
+      have hz := (rootSpace_zsmul_add_ne_bot_iff a b ha _).1 this |>.2
+      simp only [neg_neg] at hz
+      exact_mod_cast hz
+    · rw [← P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff hlin]
+      have hroot := (rootSpace_zsmul_add_ne_bot_iff a b ha
+        (-(chainBotCoeff a b : ℤ))).2 (by simp)
+      have := (hmem (-(chainBotCoeff a b : ℤ))).2 hroot
+      simpa [Nat.cast_smul_eq_nsmul, sub_eq_add_neg, neg_smul] using this
+
+namespace IsSl2System
+
+variable {x : Weight K H L → L} (hx : IsSl2System x)
+
+include hx
+
+/-- **Root-string ratio for normalized Killing pairings.** If `γ = α + β`, then
+
+```text
+q B(x β, x (-β)) = (p + 1) B(x γ, x (-γ)),
+```
+
+where `p = chainBotCoeff α β` and `q = chainTopCoeff α β`. This reciprocal form of the
+invariant root-length identity supplies the cancellation used to normalize Chevalley structure
+constants. -/
+theorem chainTopCoeff_mul_killingForm_root_neg_eq
+    (α β γ : Weight K H L) (hα : α.IsNonZero) (hβ : β.IsNonZero) (hγ : γ.IsNonZero)
+    (hαβ : (γ : H → K) = (α : H → K) + β) :
+    (chainTopCoeff α β : K) * killingForm K L (x β) (x (-β)) =
+      (chainBotCoeff α β + 1 : ℕ) * killingForm K L (x γ) (x (-γ)) := by
+  let P := rootSystem H
+  let i : H.root := ⟨α, by simpa [LieSubalgebra.root] using hα⟩
+  let j : H.root := ⟨β, by simpa [LieSubalgebra.root] using hβ⟩
+  let k : H.root := ⟨γ, by simpa [LieSubalgebra.root] using hγ⟩
+  have hk : P.root k = P.root i + P.root j := by
+    ext z
+    simpa only [P, rootSystem_root_apply, i, j, k, Weight.toLinear_apply,
+      LinearMap.add_apply, Pi.add_apply] using congrFun hαβ z
+  have hlin := P.linearIndependent_of_add_mem_range_root' ⟨k, hk⟩
+  have hcoeff := rootSystem_chainCoeffs_eq hα hβ (by
+    simpa only [P, rootSystem_root_apply, i, j] using hlin)
+  have hlength :=
+    TauCeti.RootPairing.InvariantForm.chainTopCoeff_mul_apply_root_self_eq
+      (P := P) (rootInvariantForm (H := H)) hk
+  have hβkill := hx.killingForm_root_neg_eq β hβ
+  have hγkill := hx.killingForm_root_neg_eq γ hγ
+  simp only [rootInvariantForm, dualKillingForm_apply] at hlength
+  rw [hcoeff.1, hcoeff.2] at hlength
+  -- Definitional equality: `P.root k` reduces to `γ` and `P.root j` to `β`.
+  change (chainTopCoeff α β : K) *
+      (γ : Module.Dual K H) ((cartanEquivDual H).symm (γ : Module.Dual K H)) =
+    (chainBotCoeff α β + 1 : ℕ) *
+      (β : Module.Dual K H) ((cartanEquivDual H).symm (β : Module.Dual K H)) at hlength
+  simp only [Weight.toLinear_apply] at hlength
+  rw [hβkill, hγkill]
+  have hβne := root_apply_cartanEquivDual_symm_ne_zero hβ
+  have hγne := root_apply_cartanEquivDual_symm_ne_zero hγ
+  field_simp
+  rw [hlength]
+  ring
+
+end IsSl2System
 
 end TauCeti

@@ -216,6 +216,43 @@ variable {F : Type*} [Field F] (W : WeierstrassCurve F) (C : VariableChange F)
 The slope of the chord or tangent is a quotient, so this is the first statement that needs to
 divide, and the only one here that asks for a field. -/
 
+/-- **The tangent case of `variableChange_slope`**: at a single point that is not its own
+negation, the tangent slope scales by `u` and translates by `s`. The curve equations are not
+needed — they are what `variableChange_slope` uses to reach this case. -/
+private lemma variableChange_slope_of_Y_ne [DecidableEq F] {x y : F}
+    (hy : y ≠ (C • W).toAffine.negY x y) :
+    W.toAffine.slope ((C.u : F) ^ 2 * x + C.r) ((C.u : F) ^ 2 * x + C.r)
+        ((C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t)
+        ((C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t)
+      = (C.u : F) * (C • W).toAffine.slope x x y y + C.s := by
+  have hu : (C.u : F) ≠ 0 := C.u.ne_zero
+  have hΦy : (C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t
+      ≠ W.toAffine.negY ((C.u : F) ^ 2 * x + C.r)
+          ((C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t) := by
+    rw [variableChange_negY]
+    exact fun h ↦ hy (mul_left_cancel₀ (pow_ne_zero 3 hu) (by linear_combination h))
+  rw [W.toAffine.slope_of_Y_ne rfl hΦy, (C • W).toAffine.slope_of_Y_ne rfl hy,
+    ← mul_div_assoc, div_add' _ _ _ (sub_ne_zero.mpr hy),
+    div_eq_div_iff (sub_ne_zero.mpr hΦy) (sub_ne_zero.mpr hy)]
+  simp [negY, variableChange_a₁, variableChange_a₂, variableChange_a₃, variableChange_a₄]
+  field
+
+/-- **The chord case of `variableChange_slope`**: through two points with distinct
+`x`-coordinates, which stay distinct after the change of variables because `u` is a unit. The
+curve equations are not needed here either. -/
+private lemma variableChange_slope_of_X_ne [DecidableEq F] {x₁ x₂ y₁ y₂ : F} (hx : x₁ ≠ x₂) :
+    W.toAffine.slope ((C.u : F) ^ 2 * x₁ + C.r) ((C.u : F) ^ 2 * x₂ + C.r)
+        ((C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t)
+        ((C.u : F) ^ 3 * y₂ + (C.u : F) ^ 2 * C.s * x₂ + C.t)
+      = (C.u : F) * (C • W).toAffine.slope x₁ x₂ y₁ y₂ + C.s := by
+  have hu : (C.u : F) ≠ 0 := C.u.ne_zero
+  have hΦx : (C.u : F) ^ 2 * x₁ + C.r ≠ (C.u : F) ^ 2 * x₂ + C.r := by
+    simpa [mul_right_inj' (pow_ne_zero 2 hu)] using hx
+  rw [W.toAffine.slope_of_X_ne hΦx, (C • W).toAffine.slope_of_X_ne hx]
+  have h1 := sub_ne_zero.mpr hΦx
+  have h2 := sub_ne_zero.mpr hx
+  field
+
 /-- **The slope under the change of variables**, scaling by `u` and translating by `s` — the law
 the change of variables applies to a slope, as `y` scales by `u³` and `x` by `u²`. Stated for two
 points of `C • W` on the curve, excluding the degenerate case `x₁ = x₂ ∧ y₁ = negY x₂ y₂` —
@@ -227,26 +264,11 @@ lemma variableChange_slope [DecidableEq F] {x₁ x₂ y₁ y₂ : F}
         ((C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t)
         ((C.u : F) ^ 3 * y₂ + (C.u : F) ^ 2 * C.s * x₂ + C.t)
       = (C.u : F) * (C • W).toAffine.slope x₁ x₂ y₁ y₂ + C.s := by
-  have hu : (C.u : F) ≠ 0 := C.u.ne_zero
   rcases eq_or_ne x₁ x₂ with rfl | hx
   · have hy : y₁ ≠ (C • W).toAffine.negY x₁ y₂ := fun h ↦ hxy ⟨rfl, h⟩
     obtain rfl := Y_eq_of_Y_ne h₁ h₂ rfl hy
-    have hΦy : (C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t
-        ≠ W.toAffine.negY ((C.u : F) ^ 2 * x₁ + C.r)
-            ((C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t) := by
-      rw [variableChange_negY]
-      exact fun h ↦ hy (mul_left_cancel₀ (pow_ne_zero 3 hu) (by linear_combination h))
-    rw [W.toAffine.slope_of_Y_ne rfl hΦy, (C • W).toAffine.slope_of_Y_ne rfl hy,
-      ← mul_div_assoc, div_add' _ _ _ (sub_ne_zero.mpr hy),
-      div_eq_div_iff (sub_ne_zero.mpr hΦy) (sub_ne_zero.mpr hy)]
-    simp [negY, variableChange_a₁, variableChange_a₂, variableChange_a₃, variableChange_a₄]
-    field
-  · have hΦx : (C.u : F) ^ 2 * x₁ + C.r ≠ (C.u : F) ^ 2 * x₂ + C.r := by
-      simpa [mul_right_inj' (pow_ne_zero 2 hu)] using hx
-    rw [W.toAffine.slope_of_X_ne hΦx, (C • W).toAffine.slope_of_X_ne hx]
-    have h1 := sub_ne_zero.mpr hΦx
-    have h2 := sub_ne_zero.mpr hx
-    field
+    exact variableChange_slope_of_Y_ne W C hy
+  · exact variableChange_slope_of_X_ne W C hx
 
 end Field
 

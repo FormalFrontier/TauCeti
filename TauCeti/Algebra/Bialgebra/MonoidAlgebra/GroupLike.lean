@@ -7,6 +7,7 @@ module
 public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
 public import Mathlib.RingTheory.Coalgebra.GroupLike
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
+public import TauCeti.Algebra.Bialgebra.GroupLike.Map
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
 public import TauCeti.RingTheory.Idempotents.Connected.Spectrum
 
@@ -29,6 +30,8 @@ inverse to `MonoidAlgebra.mapDomainBialgHom` on the corresponding hom-sets.
   algebra.
 * `TauCeti.MonoidAlgebra.isGroupLikeElem_iff_eq_single`: classification of group-like
   elements in a monoid algebra over a connected base.
+* `TauCeti.MonoidAlgebra.groupLikeEquiv`: the group-like elements are multiplicatively
+  equivalent to the index monoid.
 * `TauCeti.MonoidAlgebra.mapDomainBialgHomPreimage`: recover the monoid homomorphism
   inducing a bialgebra morphism between monoid algebras over a connected base.
 * `TauCeti.MonoidAlgebra.mapDomainBialgHom_surjective`: every bialgebra morphism between
@@ -119,30 +122,74 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
   · rintro ⟨h, rfl, -⟩
     exact _root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) h
 
-/-- The unique index of a group-like element in a monoid algebra over a base with
-connected prime spectrum. -/
-private noncomputable def groupLikeIndex [CommRing R]
-    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
-    (x : _root_.MonoidAlgebra R H) (hx : IsGroupLikeElem R x) : H :=
-  Classical.choose ((isGroupLikeElem_iff_eq_single R x).mp hx)
+/-- The group-like elements of a monoid algebra over a connected base are its standard basis
+elements, multiplicatively identified with the index monoid. -/
+noncomputable def groupLikeEquiv [CommRing R]
+    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H] :
+    _root_.GroupLike R (_root_.MonoidAlgebra R H) ≃* H where
+  toFun x := Classical.choose
+    ((isGroupLikeElem_iff_eq_single R x.val).mp x.isGroupLikeElem_val)
+  invFun h :=
+    ⟨_root_.MonoidAlgebra.single h 1,
+      _root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) h⟩
+  left_inv x := by
+    apply _root_.GroupLike.val_injective
+    exact (Classical.choose_spec
+      ((isGroupLikeElem_iff_eq_single R x.val).mp x.isGroupLikeElem_val)).1.symm
+  right_inv h := by
+    let hx : IsGroupLikeElem R (_root_.MonoidAlgebra.single h (1 : R)) :=
+      _root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) h
+    exact (Classical.choose_spec
+      ((isGroupLikeElem_iff_eq_single R
+        (_root_.MonoidAlgebra.single h (1 : R))).mp hx)).2 h rfl |>.symm
+  map_mul' x y := by
+    let hx := Classical.choose_spec
+      ((isGroupLikeElem_iff_eq_single R x.val).mp x.isGroupLikeElem_val)
+    let hy := Classical.choose_spec
+      ((isGroupLikeElem_iff_eq_single R y.val).mp y.isGroupLikeElem_val)
+    have hxy : (x * y).val = _root_.MonoidAlgebra.single
+        (Classical.choose
+            ((isGroupLikeElem_iff_eq_single R x.val).mp x.isGroupLikeElem_val) *
+          Classical.choose
+            ((isGroupLikeElem_iff_eq_single R y.val).mp y.isGroupLikeElem_val)) 1 := by
+      calc
+        (x * y).val = x.val * y.val := _root_.GroupLike.val_mul x y
+        _ = _root_.MonoidAlgebra.single
+              (Classical.choose
+                ((isGroupLikeElem_iff_eq_single R x.val).mp x.isGroupLikeElem_val)) 1 *
+            _root_.MonoidAlgebra.single
+              (Classical.choose
+                ((isGroupLikeElem_iff_eq_single R y.val).mp y.isGroupLikeElem_val)) 1 :=
+          congrArg₂ (· * ·) hx.1 hy.1
+        _ = _ := by simp
+    exact ((Classical.choose_spec
+      ((isGroupLikeElem_iff_eq_single R (x * y).val).mp
+        (x * y).isGroupLikeElem_val)).2 _ hxy).symm
 
-private theorem eq_single_groupLikeIndex [CommRing R]
+/-- The standard basis index recovered from a group-like element is characterized by its
+underlying value. -/
+@[simp]
+theorem groupLikeEquiv_apply_eq_iff [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
-    (x : _root_.MonoidAlgebra R H) (hx : IsGroupLikeElem R x) :
-    x = _root_.MonoidAlgebra.single (groupLikeIndex R x hx) 1 :=
-  Classical.choose_spec ((isGroupLikeElem_iff_eq_single R x).mp hx) |>.1
+    (x : _root_.GroupLike R (_root_.MonoidAlgebra R H)) (h : H) :
+    groupLikeEquiv (R := R) x = h ↔
+      x.val = _root_.MonoidAlgebra.single h 1 :=
+  by
+    let hx := Classical.choose_spec
+      ((isGroupLikeElem_iff_eq_single R x.val).mp x.isGroupLikeElem_val)
+    constructor
+    · rintro rfl
+      exact hx.1
+    · exact fun hsingle ↦ (hx.2 h hsingle).symm
 
-private theorem groupLikeIndex_eq_iff [CommRing R]
-    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
-    (x : _root_.MonoidAlgebra R H) (hx : IsGroupLikeElem R x) (h : H) :
-    groupLikeIndex R x hx = h ↔ x = _root_.MonoidAlgebra.single h 1 := by
-  let : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
-  constructor
-  · rintro rfl
-    exact eq_single_groupLikeIndex R x hx
-  · intro hx_single
-    apply _root_.MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-    exact (eq_single_groupLikeIndex R x hx).symm.trans hx_single
+/-- The inverse image of an index under `groupLikeEquiv` is the corresponding standard basis
+element. -/
+@[simp]
+theorem val_groupLikeEquiv_symm [CommRing R]
+    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H] (h : H) :
+    ((groupLikeEquiv (R := R) (H := H)).symm h).val =
+      _root_.MonoidAlgebra.single h 1 :=
+  (rfl)
 
 /-- Recover the monoid homomorphism inducing a bialgebra morphism between monoid
 algebras over a base with connected prime spectrum. -/
@@ -150,36 +197,9 @@ noncomputable def mapDomainBialgHomPreimage [CommRing R]
     [ConnectedSpace (PrimeSpectrum R)] {G : Type v} {H : Type w}
     [Monoid G] [Monoid H]
     (F : _root_.MonoidAlgebra R G →ₐc[R] _root_.MonoidAlgebra R H) : G →* H :=
-  letI : Nontrivial R := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
-  let φ : G → H := fun g ↦
-    groupLikeIndex R (F (_root_.MonoidAlgebra.single g 1))
-      ((_root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g).map F)
-  have hφ (g : G) :
-      F (_root_.MonoidAlgebra.single g 1) =
-        _root_.MonoidAlgebra.single (φ g) 1 :=
-    eq_single_groupLikeIndex R _ _
-  { toFun := φ
-    map_one' := by
-      apply _root_.MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-      calc
-        _root_.MonoidAlgebra.single (φ 1) 1 =
-            F (_root_.MonoidAlgebra.single 1 1) := (hφ 1).symm
-        _ = F 1 := congrArg F _root_.MonoidAlgebra.one_def.symm
-        _ = 1 := map_one F
-        _ = _root_.MonoidAlgebra.single 1 1 := _root_.MonoidAlgebra.one_def
-    map_mul' := by
-      intro g g'
-      apply _root_.MonoidAlgebra.single_left_injective (R := R) (M := H) one_ne_zero
-      calc
-        _root_.MonoidAlgebra.single (φ (g * g')) 1 =
-            F (_root_.MonoidAlgebra.single (g * g') 1) := (hφ (g * g')).symm
-        _ = F (_root_.MonoidAlgebra.single g 1 *
-            _root_.MonoidAlgebra.single g' 1) := by simp
-        _ = F (_root_.MonoidAlgebra.single g 1) *
-            F (_root_.MonoidAlgebra.single g' 1) := map_mul F _ _
-        _ = _root_.MonoidAlgebra.single (φ g) 1 *
-            _root_.MonoidAlgebra.single (φ g') 1 := by rw [hφ g, hφ g']
-        _ = _root_.MonoidAlgebra.single (φ g * φ g') 1 := by simp }
+  (groupLikeEquiv (R := R) (H := H)).toMonoidHom.comp
+    ((TauCeti.GroupLike.map F).comp
+      (groupLikeEquiv (R := R) (H := G)).symm.toMonoidHom)
 
 /-- The recovered monoid homomorphism takes `g` to `h` exactly when the bialgebra
 morphism takes the corresponding standard basis element to the standard basis element
@@ -191,10 +211,8 @@ theorem mapDomainBialgHomPreimage_apply_eq_iff [CommRing R]
     (g : G) (h : H) :
     mapDomainBialgHomPreimage R F g = h ↔
       F (_root_.MonoidAlgebra.single g 1) = _root_.MonoidAlgebra.single h 1 := by
-  let hx : IsGroupLikeElem R (F (_root_.MonoidAlgebra.single g 1)) :=
-    (_root_.MonoidAlgebra.isGroupLikeElem_single_one (R := R) (A := R) g).map F
-  simpa only [mapDomainBialgHomPreimage, MonoidHom.coe_mk, OneHom.coe_mk] using
-    groupLikeIndex_eq_iff R (F (_root_.MonoidAlgebra.single g 1)) hx h
+  simp only [mapDomainBialgHomPreimage, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    groupLikeEquiv_apply_eq_iff, TauCeti.GroupLike.val_map, val_groupLikeEquiv_symm]
 
 /-- The image of a standard basis element under a bialgebra morphism is indexed by
 the recovered monoid homomorphism. -/
