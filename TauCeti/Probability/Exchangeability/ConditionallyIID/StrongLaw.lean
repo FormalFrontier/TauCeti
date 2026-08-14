@@ -11,7 +11,7 @@ public import TauCeti.Probability.DeFinetti.Theorem
 -- Non-public: the fibrewise strong law, the measurability of an observable's integral, and the
 -- measurability of a convergence set are used only inside proofs.
 import TauCeti.Probability.StrongLaw
-import TauCeti.MeasureTheory.Integral.ProbabilityMeasure
+import Mathlib.Probability.Kernel.MeasurableIntegral
 import Mathlib.MeasureTheory.Constructions.Polish.Basic
 
 /-!
@@ -25,7 +25,7 @@ almost surely to the mass the directing measure gives it.
 
 `ConditionallyIID/EmpiricalMeasure.lean` already gives the mean-square form of this, with the exact
 finite-sample error. What is new here is almost-sure convergence, and the strengthening from a
-single observable to a whole countable family under one null set.
+single measurable set to a countable family of sets under one null set.
 
 The quantifier order matters, and `∀ B, ∀ᵐ ω` is the strongest order available here: the null set
 genuinely depends on the set tested. Setwise almost-sure convergence — one null set outside which
@@ -57,8 +57,9 @@ The conditional statement is reduced to an unconditional one by the full-path jo
 G = {(Q, x) | the averages of `f` along `x` converge to `∫ f dQ`}
 ```
 
-is measurable — `measurableSet_tendsto_fun`, using that `Q ↦ ∫ f dQ` is measurable for a bounded
-observable (`measurable_probabilityMeasure_integral`) — and every fibre `δ_Q ⊗ Q^{⊗ℕ}` of the
+is measurable — `measurableSet_tendsto_fun`, using that `Q ↦ ∫ f dQ` is measurable, which is
+Mathlib's `MeasureTheory.StronglyMeasurable.integral_kernel` for the coercion kernel
+`ProbabilityMeasure α → Measure α` — and every fibre `δ_Q ⊗ Q^{⊗ℕ}` of the
 mixture puts full mass on it, which is exactly `strong_law_ae_infinitePi` at the law `Q`. Mixing
 over `Q` and transporting the resulting almost-sure statement back along `ω ↦ (ν ω, X · ω)` gives
 the conditional strong law. No martingale or ergodic input is used: the joint disintegration
@@ -101,8 +102,9 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 bounded measurable observable `f`, the averages of `f` along the process converge almost surely to
 the integral of `f` against the directing measure.
 
-The limit is random: it is `∫ f dν(ω)`, and reduces to a constant exactly when the directing
-measure is. -/
+The limit is random: it is `∫ f dν(ω)`. It reduces to a constant when the directing measure is
+almost everywhere constant, but also for observables — `f = 0`, say — whose integral happens not to
+see the randomness of `ν`. -/
 theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) {C : ℝ} (hbdd : ∀ x, |f x| ≤ C) :
@@ -118,7 +120,11 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
     exact MeasureTheory.measurableSet_tendsto_fun
       (fun n => measurable_const.mul (Finset.measurable_sum _ fun i _ =>
         hf.comp ((measurable_pi_apply i).comp measurable_snd)))
-      ((TauCeti.MeasureTheory.measurable_probabilityMeasure_integral hf hbdd).comp measurable_fst)
+      -- `Q ↦ ∫ f dQ` is measurable: it is the integral against the coercion kernel
+      -- `ProbabilityMeasure α → Measure α`.
+      ((hf.stronglyMeasurable.integral_kernel
+        (κ := ⟨((↑) : ProbabilityMeasure α → Measure α), measurable_subtype_coe⟩)).measurable.comp
+          measurable_fst)
   -- Every fibre of the mixture is an i.i.d. law, where the strong law applies.
   have hfibre : ∀ Q : ProbabilityMeasure α,
       ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))) Gᶜ = 0 := by
@@ -173,8 +179,10 @@ converges almost surely to the mass the directing measure gives it.
 The null set depends on `B`, and outside a countable family of sets it must:
 `tendsto_empiricalMeasure_apply_ae_forall` is as far as the quantifiers can be interchanged.
 
-The mean-square form of the same convergence, with its exact finite-sample error, is
-`ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq`. -/
+The mean-square form of the same convergence is
+`ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq`, and
+`ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq` computes its exact finite-sample
+error. -/
 theorem ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
     {B : Set α} (hB : MeasurableSet B) :

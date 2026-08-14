@@ -27,9 +27,9 @@ Independence of the coordinates is Mathlib's `ProbabilityTheory.iIndepFun_infini
 identity variables. Nothing is reproved about product measures.
 
 The strong law itself is then Mathlib's, applied to `x ↦ f (x i)`: the three hypotheses come from
-that independence, from `Measure.infinitePi_map_eval` (which makes the coordinates identically
-distributed and transports integrability), and from `integral_map` (which identifies the limit
-`𝔼[f ∘ eval 0]` with `∫ f dQ`).
+that independence and from `measurePreserving_eval_infinitePi`, which makes the coordinates
+identically distributed, transports integrability, and identifies the limit `𝔼[f ∘ eval 0]` with
+`∫ f dQ`.
 
 This is general probability theory with no exchangeability in its statements. It is used by the
 conditional strong law for conditionally i.i.d. processes in
@@ -66,26 +66,24 @@ theorem strong_law_ae_infinitePi (Q : Measure α) [IsProbabilityMeasure Q] {f : 
       Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (x i)) atTop
         (𝓝 (∫ y, f y ∂Q)) := by
   set P : Measure (ℕ → α) := Measure.infinitePi fun _ : ℕ => Q with hP
-  have hcoord : ∀ i : ℕ, Measurable fun x : ℕ → α => x i := fun i => measurable_pi_apply i
-  have hmap : ∀ i : ℕ, P.map (fun x : ℕ → α => x i) = Q := fun i =>
-    Measure.infinitePi_map_eval (fun _ : ℕ => Q) i
-  -- Composing with `f` keeps the coordinates integrable and identically distributed.
-  have hmapf : ∀ i : ℕ, P.map (fun x : ℕ → α => f (x i)) = Q.map f := fun i => by
-    rw [show (fun x : ℕ → α => f (x i)) = f ∘ fun x : ℕ → α => x i from rfl,
-      ← AEMeasurable.map_map_of_aemeasurable (by rw [hmap i]; exact hint.1.aemeasurable)
-        (hcoord i).aemeasurable, hmap i]
+  -- Every coordinate is measure preserving onto `Q`; integrability, identical distribution and the
+  -- value of the limit all come from that one fact.
+  have heval : ∀ i : ℕ, MeasurePreserving (fun x : ℕ → α => x i) P Q := fun i =>
+    measurePreserving_eval_infinitePi (fun _ : ℕ => Q) i
   have hint' : ∀ i : ℕ, Integrable (fun x : ℕ → α => f (x i)) P := fun i =>
-    ((measurePreserving_eval_infinitePi (fun _ : ℕ => Q) i).integrable_comp hint.1).2 hint
+    ((heval i).integrable_comp hint.1).2 hint
   have hident : ∀ i : ℕ,
       IdentDistrib (fun x : ℕ → α => f (x i)) (fun x : ℕ → α => f (x 0)) P P := fun i =>
-    ⟨(hint' i).1.aemeasurable, (hint' 0).1.aemeasurable, by rw [hmapf i, hmapf 0]⟩
+    IdentDistrib.comp ⟨(measurable_pi_apply i).aemeasurable, (measurable_pi_apply 0).aemeasurable,
+      by rw [(heval i).map_eq, (heval 0).map_eq]⟩ hf
   have hindep : ∀ i j : ℕ, i ≠ j →
       IndepFun (fun x : ℕ → α => f (x i)) (fun x : ℕ → α => f (x j)) P :=
     fun _ _ hij =>
       ((iIndepFun_infinitePi (P := fun _ : ℕ => Q) (X := fun _ x => x)
         fun _ => measurable_id).comp (fun _ => f) fun _ => hf).indepFun hij
   have hlimit : ∫ x, f (x 0) ∂P = ∫ y, f y ∂Q := by
-    rw [← hmap 0, integral_map (hcoord 0).aemeasurable (by rw [hmap 0]; exact hint.1)]
+    rw [← (heval 0).map_eq, integral_map (measurable_pi_apply 0).aemeasurable
+      (by rw [(heval 0).map_eq]; exact hint.1)]
   simpa only [hlimit] using
     strong_law_ae (fun i (x : ℕ → α) => f (x i)) (hint' 0) hindep hident
 
