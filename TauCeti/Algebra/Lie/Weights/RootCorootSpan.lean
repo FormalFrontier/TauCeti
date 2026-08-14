@@ -57,13 +57,13 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
 
-/-- The set consisting of a family of root vectors and all coroots, regarded as elements of the
-ambient Lie algebra. Zero weights cause no duplication problem: a normalized system and the
-coroot construction both vanish there. -/
+/-- The set consisting of a weight-indexed family `x` and all coroots, regarded as elements of the
+ambient Lie algebra. When `x` is a normalized system (such as `IsSl2System x`), its zero-weight
+value vanishes alongside the zero coroot. -/
 def rootCorootGenerators (x : Weight K H L → L) : Set L :=
   Set.range x ∪ Set.range fun α : Weight K H L => (coroot α : L)
 
-/-- The integral span of a family of root vectors and all coroots in the ambient Lie algebra. -/
+/-- The integral span of a weight-indexed family `x` and all coroots in the ambient Lie algebra. -/
 def rootCorootSpan (x : Weight K H L → L) : Submodule ℤ L :=
   Submodule.span ℤ (rootCorootGenerators x)
 
