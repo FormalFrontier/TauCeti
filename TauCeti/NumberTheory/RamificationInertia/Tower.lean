@@ -86,7 +86,7 @@ of `S`. If their absolute ramification indices over `R` agree, then the relative
 index `e(r / q)` is one. Indeed, multiplicativity gives
 `e(r / R) = e(q / R) * e(r / S)`, and `e(q / R)` is positive in a finite extension. -/
 theorem ramificationIdx_eq_one_of_eq_ramificationIdx (q : Ideal S) (r : Ideal T)
-    [q.IsPrime] [r.IsPrime] [r.LiesOver q] (h : r.ramificationIdx R = q.ramificationIdx R) :
+    [q.IsPrime] [r.LiesOver q] (h : r.ramificationIdx R = q.ramificationIdx R) :
     r.ramificationIdx S = 1 := by
   apply Nat.eq_of_mul_eq_mul_left (q.ramificationIdx_pos R)
   rw [mul_one, ← Ideal.ramificationIdx_tower (R := R) q r, h]
