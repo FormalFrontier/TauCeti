@@ -44,7 +44,7 @@ open TensorProduct
 
 namespace TauCeti
 
-universe u
+universe u v
 
 namespace CommHopfAlgCat
 
@@ -70,7 +70,7 @@ private theorem stabilizer_algebraicClosure_isOpen (a : AlgebraicClosure k) :
     (MulAction.stabilizer (AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k) a : Set _)
   exact stabilizer_isOpen_of_isIntegral a
 
-private theorem stabilizer_scalarExtension_isOpen {A : Type u} [Semiring A] [Algebra k A]
+private theorem stabilizer_scalarExtension_isOpen {A : Type v} [Semiring A] [Algebra k A]
     (x : AlgebraicClosure k ⊗[k] A) :
     IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
       Set (Field.absoluteGaloisGroup k)) := by
@@ -100,7 +100,7 @@ private theorem stabilizer_scalarExtension_isOpen {A : Type u} [Semiring A] [Alg
       rw [MulAction.mem_stabilizer_iff, smul_add, hσ.1, hσ.2]
 
 /-- The stabilizer of every group-like element after scalar extension is open. -/
-theorem stabilizer_groupLike_isOpen {A : Type u} [Semiring A] [Bialgebra k A]
+theorem stabilizer_groupLike_isOpen {A : Type v} [Semiring A] [Bialgebra k A]
     (x : _root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A)) :
     IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
       Set (Field.absoluteGaloisGroup k)) := by
@@ -118,7 +118,7 @@ theorem stabilizer_groupLike_isOpen {A : Type u} [Semiring A] [Bialgebra k A]
 
 /-- The absolute-Galois action on scalar-extended group-like elements is continuous whenever
 they carry the discrete topology. -/
-theorem continuousSMul_groupLike {A : Type u} [Semiring A] [Bialgebra k A]
+theorem continuousSMul_groupLike {A : Type v} [Semiring A] [Bialgebra k A]
     [TopologicalSpace (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))]
     [DiscreteTopology (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))] :
     ContinuousSMul (Field.absoluteGaloisGroup k)
@@ -132,7 +132,7 @@ noncomputable instance instContinuousSMulGeometricCharacterGroup :
   continuousSMul_groupLike
 
 /-- The stabilizer of every additive group-like element after scalar extension is open. -/
-theorem stabilizer_additiveGroupLike_isOpen {A : Type u} [Semiring A] [Bialgebra k A]
+theorem stabilizer_additiveGroupLike_isOpen {A : Type v} [Semiring A] [Bialgebra k A]
     (x : Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) :
     IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
       Set (Field.absoluteGaloisGroup k)) :=
@@ -140,7 +140,7 @@ theorem stabilizer_additiveGroupLike_isOpen {A : Type u} [Semiring A] [Bialgebra
 
 /-- The absolute-Galois action on additive scalar-extended group-like elements is continuous
 whenever they carry the discrete topology. -/
-theorem continuousSMul_additiveGroupLike {A : Type u} [Semiring A] [Bialgebra k A]
+theorem continuousSMul_additiveGroupLike {A : Type v} [Semiring A] [Bialgebra k A]
     [TopologicalSpace (Additive (_root_.GroupLike (AlgebraicClosure k)
       (AlgebraicClosure k ⊗[k] A)))]
     [DiscreteTopology (Additive (_root_.GroupLike (AlgebraicClosure k)
