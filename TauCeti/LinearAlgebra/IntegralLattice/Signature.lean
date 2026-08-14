@@ -46,6 +46,16 @@ variable {V : Type u} [AddCommGroup V] [Module ℚ V] (L : IntegralLattice V)
 /-- The radical of an integral lattice is the kernel of its rational bilinear form. -/
 def radical : Submodule ℚ V := L.form.ker
 
+/-- The radical of an integral lattice is the kernel of its rational bilinear form. -/
+theorem radical_def : L.radical = L.form.ker := by
+  rfl
+
+/-- A vector lies in the radical of an integral lattice if and only if it annihilates all
+vectors under the rational bilinear form. -/
+@[simp]
+theorem mem_radical_iff (x : V) : x ∈ L.radical ↔ ∀ y : V, L.form x y = 0 := by
+  simp only [radical, LinearMap.mem_ker, LinearMap.ext_iff, LinearMap.zero_apply]
+
 /-- The radical of the quadratic form associated to a lattice is its bilinear radical. -/
 @[simp]
 theorem radical_toQuadraticMap : L.form.toQuadraticMap.radical = L.radical := by
@@ -93,14 +103,8 @@ abbrev IsNegativeSemidefinite : Prop := (-L.form).IsPosSemidef
 /-- An integral lattice is degenerate when its radical is nontrivial. -/
 def IsDegenerate : Prop := L.radical ≠ ⊥
 
-/-- Degeneracy means that the radical is not the zero submodule. -/
-theorem isDegenerate_def : L.IsDegenerate ↔ L.radical ≠ ⊥ := Iff.rfl
-
 /-- An integral lattice is indefinite when both its positive and negative indices are nonzero. -/
 def IsIndefinite : Prop := 0 < L.sigPos ∧ 0 < L.sigNeg
-
-/-- Indefiniteness means that both the positive and negative indices are nonzero. -/
-theorem isIndefinite_def : L.IsIndefinite ↔ 0 < L.sigPos ∧ 0 < L.sigNeg := Iff.rfl
 
 /-- Positive-definiteness has its usual elementwise characterization. -/
 theorem isPositiveDefinite_iff :
