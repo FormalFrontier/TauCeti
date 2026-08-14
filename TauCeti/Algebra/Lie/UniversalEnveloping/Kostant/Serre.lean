@@ -37,8 +37,10 @@ of the coefficients `(H choose k)`.
 * `TauCeti.serreRootGenerator`: the combined family of simple raising and lowering generators.
 * `TauCeti.serreKostantForm`: the canonical integral form of the Serre presentation.
 * `TauCeti.span_serreKostantForm_eq_top`: the form spans the rational enveloping algebra.
-* `TauCeti.serreDiagramKostantEquiv`: a diagram automorphism restricted to the integral form.
-* `TauCeti.serreChevalleyKostantEquiv`: the Chevalley involution restricted to the integral form.
+* `TauCeti.serreDiagramKostantEquiv`: a diagram automorphism restricted to the integral form,
+  with `refl`, `trans`, and `symm` laws.
+* `TauCeti.serreChevalleyKostantEquiv`: the Chevalley involution restricted to the integral form,
+  with involutive, self-inverse, and commutation laws.
 
 ## Roadmap
 
@@ -214,6 +216,54 @@ theorem coe_serreDiagramKostantEquiv_apply (x : serreKostantForm CM) :
     coe_kostantFormEquiv_apply (serreDiagramAut ℚ CM hσ) (serreRootGenerator CM)
       (serreH ℚ CM) ((RingEquiv.subringCongr (serreKostantForm_def CM)) x)
 
+/-- The inverse restricted diagram automorphism acts through the inverse Lie automorphism. -/
+@[simp]
+theorem coe_serreDiagramKostantEquiv_symm_apply (x : serreKostantForm CM) :
+    ((serreDiagramKostantEquiv CM hσ).symm x : U) =
+      map ℚ (serreDiagramAut ℚ CM hσ).symm.toLieHom x := by
+  rw [serreDiagramKostantEquiv, RingEquiv.symm_trans_apply, RingEquiv.symm_trans_apply,
+    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply,
+    coe_kostantFormEquiv_symm_apply,
+    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply]
+
+/-- The identity diagram automorphism restricts to the identity of the Kostant form. -/
+@[simp]
+theorem serreDiagramKostantEquiv_refl :
+    serreDiagramKostantEquiv CM (submatrix_perm_refl CM) = RingEquiv.refl _ := by
+  ext x
+  simp only [coe_serreDiagramKostantEquiv_apply, RingEquiv.refl_apply]
+  have hrefl : (serreDiagramAut ℚ CM (submatrix_perm_refl CM)).toLieHom = LieHom.id := by
+    rw [serreDiagramAut_refl]
+    apply LieHom.ext
+    intro y
+    rfl
+  rw [hrefl, map_id, AlgHom.id_apply]
+
+/-- Restricted diagram automorphisms compose along the composition of permutations. -/
+@[simp]
+theorem serreDiagramKostantEquiv_trans {τ : Equiv.Perm B} (hτ : CM.submatrix τ τ = CM) :
+    (serreDiagramKostantEquiv CM hσ).trans (serreDiagramKostantEquiv CM hτ) =
+      serreDiagramKostantEquiv CM (submatrix_perm_trans hσ hτ) := by
+  ext x
+  simp only [RingEquiv.trans_apply, coe_serreDiagramKostantEquiv_apply]
+  have hcomp : (serreDiagramAut ℚ CM hτ).toLieHom.comp (serreDiagramAut ℚ CM hσ).toLieHom =
+      (serreDiagramAut ℚ CM (submatrix_perm_trans hσ hτ)).toLieHom := by
+    apply LieHom.ext
+    intro y
+    simp only [LieHom.comp_apply, LieEquiv.coe_toLieHom, ← LieEquiv.trans_apply,
+      serreDiagramAut_trans]
+  rw [← AlgHom.comp_apply, ← map_comp, hcomp]
+
+/-- The inverse of a restricted diagram automorphism is the restricted automorphism of the
+inverse permutation. -/
+@[simp]
+theorem serreDiagramKostantEquiv_symm :
+    (serreDiagramKostantEquiv CM hσ).symm =
+      serreDiagramKostantEquiv CM (submatrix_perm_symm hσ) := by
+  ext x
+  simp only [coe_serreDiagramKostantEquiv_symm_apply, coe_serreDiagramKostantEquiv_apply,
+    serreDiagramAut_symm]
+
 end Diagram
 
 /-! ## The Chevalley involution -/
@@ -295,5 +345,60 @@ theorem coe_serreChevalleyKostantEquiv_apply (x : serreKostantForm CM) :
   simpa only [RingEquiv.coe_subringCongr_apply] using
     coe_kostantFormEquiv_apply (serreChevalleyInvolution ℚ CM) (serreRootGenerator CM)
       (serreH ℚ CM) ((RingEquiv.subringCongr (serreKostantForm_def CM)) x)
+
+/-- The inverse restricted Chevalley involution acts through the inverse Lie automorphism. -/
+@[simp]
+theorem coe_serreChevalleyKostantEquiv_symm_apply (x : serreKostantForm CM) :
+    ((serreChevalleyKostantEquiv CM).symm x : U) =
+      map ℚ (serreChevalleyInvolution ℚ CM).symm.toLieHom x := by
+  rw [serreChevalleyKostantEquiv, RingEquiv.symm_trans_apply, RingEquiv.symm_trans_apply,
+    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply,
+    coe_kostantFormEquiv_symm_apply,
+    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply]
+
+/-- Applying the restricted Chevalley involution twice returns the original element. -/
+@[simp]
+theorem serreChevalleyKostantEquiv_serreChevalleyKostantEquiv (x : serreKostantForm CM) :
+    serreChevalleyKostantEquiv CM (serreChevalleyKostantEquiv CM x) = x := by
+  apply Subtype.ext
+  simp only [coe_serreChevalleyKostantEquiv_apply]
+  have hcomp : (serreChevalleyInvolution ℚ CM).toLieHom.comp
+      (serreChevalleyInvolution ℚ CM).toLieHom = LieHom.id := by
+    apply LieHom.ext
+    intro y
+    simp only [LieHom.comp_apply, LieEquiv.coe_toLieHom,
+      serreChevalleyInvolution_serreChevalleyInvolution, LieHom.id_apply]
+  rw [← AlgHom.comp_apply, ← map_comp, hcomp, map_id, AlgHom.id_apply]
+
+/-- The restricted Chevalley involution is an involution. -/
+theorem serreChevalleyKostantEquiv_involutive :
+    Function.Involutive (serreChevalleyKostantEquiv CM) :=
+  serreChevalleyKostantEquiv_serreChevalleyKostantEquiv CM
+
+/-- The restricted Chevalley involution is its own inverse. -/
+@[simp]
+theorem serreChevalleyKostantEquiv_symm :
+    (serreChevalleyKostantEquiv CM).symm = serreChevalleyKostantEquiv CM := by
+  ext x
+  simp only [coe_serreChevalleyKostantEquiv_symm_apply, coe_serreChevalleyKostantEquiv_apply,
+    serreChevalleyInvolution_symm]
+
+/-- The restricted Chevalley involution commutes with every restricted diagram automorphism. -/
+theorem serreChevalleyKostantEquiv_comm_serreDiagramKostantEquiv {σ : Equiv.Perm B}
+    (hσ : CM.submatrix σ σ = CM) :
+    (serreChevalleyKostantEquiv CM).trans (serreDiagramKostantEquiv CM hσ) =
+      (serreDiagramKostantEquiv CM hσ).trans (serreChevalleyKostantEquiv CM) := by
+  ext x
+  simp only [RingEquiv.trans_apply, coe_serreDiagramKostantEquiv_apply,
+    coe_serreChevalleyKostantEquiv_apply]
+  have hcomp : (serreDiagramAut ℚ CM hσ).toLieHom.comp
+      (serreChevalleyInvolution ℚ CM).toLieHom =
+      (serreChevalleyInvolution ℚ CM).toLieHom.comp
+        (serreDiagramAut ℚ CM hσ).toLieHom := by
+    apply LieHom.ext
+    intro y
+    simp only [LieHom.comp_apply, LieEquiv.coe_toLieHom, ← LieEquiv.trans_apply,
+      serreChevalleyInvolution_comm_serreDiagramAut]
+  rw [← AlgHom.comp_apply, ← AlgHom.comp_apply, ← map_comp, ← map_comp, hcomp]
 
 end TauCeti
