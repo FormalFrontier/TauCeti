@@ -118,25 +118,21 @@ theorem contMDiff_adjointContinuousLinearMap :
   exact cancel_inCoordinates_at (I := I) (M := G) (x := 1)
     (ϕ := mfderiv I I (f x) 1)
 
+omit [CompleteSpace E] in
 /-- The tangent adjoint action is jointly smooth in the group element and tangent vector. -/
 theorem contMDiff_tangentAd_apply :
     ContMDiff (I.prod 𝓘(ℝ, E)) 𝓘(ℝ, E) ∞
       (fun p : G × E ↦
-        show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) := by
-  -- `GroupLieAlgebra I G` is definitionally the model `E`; these ascriptions expose the model on
-  -- both sides so the continuous-linear-map application theorem can be used.
-  rw [show (fun p : G × E ↦
-      show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) =
-      fun p ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2 by
-    funext p
-    exact tangentAd_apply (I := I) p.1 p.2]
+        (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2) := by
   exact ((contMDiff_adjointContinuousLinearMap (I := I) (G := G)).comp contMDiff_fst).clm_apply
     contMDiff_snd
 
+omit [CompleteSpace E] in
 /-- The tangent adjoint action on a fixed tangent vector is smooth in the group element. -/
 theorem contMDiff_tangentAd_apply_right (Y : GroupLieAlgebra I G) :
     ContMDiff I 𝓘(ℝ, E) ∞
-      (fun g : G ↦ show E from tangentAd (I := I) g Y) := by
+      (fun g : G ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g)
+        (show E from Y)) := by
   exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp
     (contMDiff_id.prodMk contMDiff_const)
 

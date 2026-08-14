@@ -161,7 +161,7 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_eq_lieEquiv
 
 /-- The inverses of the canonical isometric and Lie equivalences agree after viewing a model
 vector as an element of the tangent Lie algebra. -/
-theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
+private theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_eq_lieEquiv_symm
     [FiniteDimensional ℝ E] [T2Space G] [BoundarylessManifold I G]
     (h₁ : I.IsInteriorPoint (1 : G)) (v : E) :
     (leftInvariantDerivationLinearIsometryEquivModelVectorSpace

@@ -217,7 +217,14 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
   have hA : ContDiff ℝ ∞ A := by
     have hpair : ContMDiff 𝓘(ℝ, ℝ) (I.prod 𝓘(ℝ, E)) ∞
         (fun t => (γX t, @id E Y)) := hγX.prodMk contMDiff_const
-    exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair |>.contDiff
+    have hmodel :=
+      ((contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair).contDiff
+    rw [show A = (fun p : G × E =>
+        (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2) ∘
+          fun t => (γX t, @id E Y) by
+      funext t
+      exact tangentAd_apply (I := I) (γX t) Y]
+    exact hmodel
   have hAder : HasDerivAt A (deriv A 0) 0 :=
     (hA.differentiable (by simp) 0).hasDerivAt
   let bracketTangent : GroupLieAlgebra I G :=
@@ -347,8 +354,12 @@ theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
   let T : G → E := fun g => show E from tangentAd (I := I) g Y
-  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
-    contMDiff_tangentAd_apply_right (I := I) (G := G) Y
+  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T := by
+    rw [show T = fun g =>
+        (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) Y by
+      funext g
+      exact tangentAd_apply (I := I) g Y]
+    exact contMDiff_tangentAd_apply_right (I := I) (G := G) Y
   have hTmf := hT.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
   have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hTmf X
   have hchain : HasDerivAt

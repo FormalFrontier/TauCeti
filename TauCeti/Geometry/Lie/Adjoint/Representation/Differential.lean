@@ -51,8 +51,8 @@ the Lie-algebra adjoint `ad X Y`. -/
 @[simp]
 theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    NormedSpace.fromTangentSpace (Ad (I := I) (1 : G) Y)
-      (mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) (fun g : G => Ad (I := I) g Y) 1
+    (show LeftInvariantDerivation I G from
+      mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) (fun g : G => Ad (I := I) g Y) 1
         (leftInvariantDerivationLieEquivGroupLieAlgebra
           (I := I) (G := G) BoundarylessManifold.isInteriorPoint X)) =
       LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
@@ -66,8 +66,12 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   -- `GroupLieAlgebra I G` is definitionally the model space `E`, so the tangent orbit is
   -- model-space-valued here.
   let T : G → E := fun g => show E from tangentAd (I := I) g (eIso Y)
-  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
-    contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
+  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T := by
+    rw [show T = fun g =>
+        (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) (eIso Y) by
+      funext g
+      exact tangentAd_apply (I := I) g (eIso Y)]
+    exact contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
   have hEq : (fun g : G => Ad (I := I) g Y) = L ∘ T := by
     funext g
     apply eIso.injective
@@ -112,9 +116,8 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
       finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
-    NormedSpace.fromTangentSpace
-      (continuousAdjointRepresentation (I := I) (G := G) 1)
-      (mfderiv I
+    (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from
+      mfderiv I
         𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
         (continuousAdjointRepresentation (I := I) (G := G)) 1
         (leftInvariantDerivationLieEquivGroupLieAlgebra
@@ -132,20 +135,18 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
       (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)
   -- First identify the representation's model-space derivative with the operator `dOp`.
   have hmodelDerivative :
-      NormedSpace.fromTangentSpace
-          (continuousAdjointRepresentation (I := I) (G := G) 1)
-          (mfderiv I
-            𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
-            (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) =
-        dOp := by
-    calc
-      _ = (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from mfderiv I
+      (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from
+        mfderiv I
           𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
-          (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) := by
-        -- The target is a normed vector space, so `fromTangentSpace` is the identity on values.
-        rfl
-      _ = dOp := (mvfderiv_apply_eq_mfderiv_apply
-        (I := I) (f := continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)).symm
+          (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) =
+        dOp := by
+    exact (mvfderiv_apply_eq_mfderiv_apply
+      (I := I) (f := continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)).symm
+  -- Fold the local Lie equivalence and expose the normed model of the target tangent space so the
+  -- model-space derivative identity matches the theorem goal.
+  change (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from
+    mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+      (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)) = _
   rw [hmodelDerivative]
   -- Evaluate the operator identity at an arbitrary derivation `Y`.
   apply ContinuousLinearMap.ext
@@ -184,10 +185,6 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
         _ = (show LeftInvariantDerivation I G from
             mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) :=
           mvfderiv_apply_eq_mfderiv_apply (I := I) AY 1 (eLie X)
-        _ = NormedSpace.fromTangentSpace (AY 1)
-            (mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1 (eLie X)) := by
-          -- The target is a normed vector space, so `fromTangentSpace` is the identity on values.
-          rfl
         _ = _ := by
           simpa only [AY, eLie, ContinuousLinearEquiv.coe_coe] using
             mfderiv_Ad_apply_one (I := I) (G := G) X Y
