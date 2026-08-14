@@ -21,7 +21,7 @@ wider:
 
 > `TauCeti.filledHull_subset_closedConvexHull` — `filledHull K ⊆ closedConvexHull ℝ K`,
 
-whence `TauCeti.diam_filledHull`: a bounded `K` and its filled hull have the same diameter. The
+whence `TauCeti.diam_filledHull`: a set and its filled hull have the same diameter. The
 mechanism is separation: a point `x` outside the closed convex hull of `K` is cut off
 from it by a continuous linear functional (`geometric_hahn_banach_point_closed`), and the open
 half-space `{y | φ y < u}` so produced is a convex — hence preconnected — subset of `Kᶜ` containing
@@ -63,8 +63,8 @@ used, and the separation argument is the general Hahn–Banach one.
 ## Main results
 
 * `TauCeti.filledHull_subset_closedConvexHull` — a filled hull lies in the closed convex hull.
-* `TauCeti.diam_filledHull` and `TauCeti.isBounded_filledHull` — filling preserves the diameter of a
-  bounded set, and a filled hull is bounded exactly when the set filled is.
+* `TauCeti.diam_filledHull` and `TauCeti.isBounded_filledHull` — filling preserves the diameter, and
+  a filled hull is bounded exactly when the set filled is.
 -/
 
 public section
@@ -156,18 +156,22 @@ theorem isBounded_filledHull : IsBounded (filledHull K) ↔ IsBounded K := by
     exact (isBounded_convexHull.mpr hKb).closure
 
 /-- **Filling preserves the diameter.** The hull contains `K`, and is contained in the closed convex
-hull of `K`, which by `convexHull_diam` and `Metric.diam_closure` is exactly as wide as `K`. -/
+hull of `K`, which by `convexHull_diam` and `Metric.diam_closure` is exactly as wide as `K`. An
+unbounded `K` has an unbounded hull by `TauCeti.isBounded_filledHull`, and both diameters are then
+`0`. -/
 @[simp]
-theorem diam_filledHull (hKb : IsBounded K) : diam (filledHull K) = diam K := by
-  rcases K.eq_empty_or_nonempty with rfl | hK
-  · rw [diam_subsingleton subsingleton_filledHull_empty, diam_empty]
-  have hbdd : IsBounded (closedConvexHull ℝ K) := by
-    rw [closedConvexHull_eq_closure_convexHull]
-    exact (isBounded_convexHull.mpr hKb).closure
-  refine le_antisymm ?_ (diam_mono subset_filledHull (isBounded_filledHull.mpr hKb))
-  calc diam (filledHull K) ≤ diam (closedConvexHull ℝ K) :=
-        diam_mono (filledHull_subset_closedConvexHull hK) hbdd
-    _ = diam K := by
-        rw [closedConvexHull_eq_closure_convexHull, diam_closure, convexHull_diam]
+theorem diam_filledHull : diam (filledHull K) = diam K := by
+  by_cases hKb : IsBounded K
+  · rcases K.eq_empty_or_nonempty with rfl | hK
+    · rw [diam_subsingleton subsingleton_filledHull_empty, diam_empty]
+    have hbdd : IsBounded (closedConvexHull ℝ K) := by
+      rw [closedConvexHull_eq_closure_convexHull]
+      exact (isBounded_convexHull.mpr hKb).closure
+    refine le_antisymm ?_ (diam_mono subset_filledHull (isBounded_filledHull.mpr hKb))
+    calc diam (filledHull K) ≤ diam (closedConvexHull ℝ K) :=
+          diam_mono (filledHull_subset_closedConvexHull hK) hbdd
+      _ = diam K := by
+          rw [closedConvexHull_eq_closure_convexHull, diam_closure, convexHull_diam]
+  · rw [diam_eq_zero_of_unbounded (mt isBounded_filledHull.mp hKb), diam_eq_zero_of_unbounded hKb]
 
 end TauCeti
