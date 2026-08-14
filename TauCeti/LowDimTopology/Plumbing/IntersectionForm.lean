@@ -211,9 +211,8 @@ coordinate of the matrix-vector product `A x`. The two sums differ by the transp
 intersection matrix, which is symmetric. -/
 theorem intersectionForm_single_right_eq_mulVec (x : V → ℤ) (v : V) :
     P.intersectionForm x (Pi.single v 1) = P.intersectionMatrix.mulVec x v := by
-  rw [P.intersectionForm_single_right x v]
+  rw [P.intersectionForm_single_right x v, Matrix.mulVec_apply_eq_sum]
   refine Finset.sum_congr rfl fun i _ => ?_
-  change x i * P.intersectionMatrix i v = P.intersectionMatrix v i * x i
   rw [P.intersectionMatrix_isSymm.apply i v, mul_comm]
 
 /-- The intersection pairing of a lattice point against a finite sum of basis spheres, as a sum of
