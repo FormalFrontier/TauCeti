@@ -188,9 +188,7 @@ private theorem apply_eq_chainEntry_of_component_iso {B : Type*} [Fintype B]
 
 namespace IsFiniteType
 
-variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
-
-noncomputable local instance : DecidableEq B := Classical.decEq B
+variable {B : Type*} [Fintype B] [DecidableEq B] {A : Matrix B B ℤ}
 
 /-- **A connected simply-laced finite-type matrix with a branch vertex is a three-armed star.**
 
@@ -358,10 +356,8 @@ end IsFiniteType
 section RootPairing
 
 variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R]
+  {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R] [DecidableEq ι]
   [P.IsRootSystem] [P.IsCrystallographic] [P.IsReduced] [P.IsIrreducible]
-
-noncomputable local instance (b : P.Base) : DecidableEq (↥b.support) := Classical.decEq _
 
 /-- **An irreducible simply-laced root system with a branch vertex has a unique valid Dynkin
 type.** The type is `Dₙ`, `E₆`, `E₇`, or `E₈`, with the three arms of the branch diagram
@@ -370,7 +366,6 @@ theorem existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three (b : P.Base)
     (hsl : b.cartanMatrix.IsSimplyLaced) {c : b.support}
     (hc : (diagramGraph b.cartanMatrix).degree c = 3) :
     ∃! t : DynkinType, t.Valid ∧ HasCartanType P b t := by
-  classical
   have : Nonempty ι := ⟨c.1⟩
   obtain ⟨t, ⟨ht, e, he⟩, -⟩ :=
     (isFiniteType_cartanMatrix b).existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three
