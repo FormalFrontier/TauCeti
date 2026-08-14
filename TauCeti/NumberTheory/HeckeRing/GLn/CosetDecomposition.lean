@@ -255,16 +255,14 @@ lemma eq_of_dvd_comparison {a : Fin n → ℕ} {B₁ B₂ : UpperTriEntries n a}
     B₁ = B₂ := by
   have : Invertible (unitriMat B₂) :=
     Matrix.invertibleOfIsUnitDet _ (by rw [det_unitriMat]; exact isUnit_one)
-  have hup₂ : Matrix.IsUpperTriangular (unitriMat B₂)⁻¹ :=
-    Matrix.blockTriangular_inv_of_blockTriangular (isUpperTriangular_unitriMat B₂)
   set C : Matrix (Fin n) (Fin n) ℤ := unitriMat B₁ * (unitriMat B₂)⁻¹ with hC
-  have hup : Matrix.IsUpperTriangular C :=
-    Matrix.BlockTriangular.mul (isUpperTriangular_unitriMat B₁) hup₂
-  have hdiag : ∀ i, C i i = 1 := fun i ↦ by
-    rw [hC, Matrix.mul_apply_diag_of_isUpperTriangular (isUpperTriangular_unitriMat B₁) hup₂ i,
-      unitriMat_apply_diag,
-      Matrix.inv_apply_diag_of_isUpperTriangular (isUpperTriangular_unitriMat B₂)
-        (unitriMat_apply_diag B₂ i), one_mul]
+  have hunit : C.IsUpperUnitriangular := hC ▸
+    ((Matrix.isUpperUnitriangular_def (unitriMat B₁)).2
+      ⟨isUpperTriangular_unitriMat B₁, unitriMat_apply_diag B₁⟩).mul
+      ((Matrix.isUpperUnitriangular_def (unitriMat B₂)).2
+        ⟨isUpperTriangular_unitriMat B₂, unitriMat_apply_diag B₂⟩).inv
+  have hup : Matrix.IsUpperTriangular C := hunit.isUpperTriangular
+  have hdiag : ∀ i, C i i = 1 := hunit.apply_diag
   have hmul : C * unitriMat B₂ = unitriMat B₁ := by
     rw [hC, Matrix.mul_assoc, Matrix.nonsing_inv_mul _ (Matrix.isUnit_det_of_invertible _),
       Matrix.mul_one]
