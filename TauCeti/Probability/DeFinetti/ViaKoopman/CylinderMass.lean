@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.DeFinetti.ViaKoopman.BlockFactorization
+public import TauCeti.Probability.Exchangeability.Cylinder
+import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTransport
 public import TauCeti.MeasureTheory.Integral.ENNRealProd
 
 /-!
