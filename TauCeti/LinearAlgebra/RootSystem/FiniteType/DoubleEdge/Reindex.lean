@@ -69,6 +69,9 @@ private def pathGraphRevIso (n : ℕ) : pathGraph n ≃g pathGraph n where
     simp only [pathGraph_adj, Fin.revPerm_apply, Fin.rev]
     omega
 
+@[simp] private lemma pathGraphRevIso_apply {n : ℕ} (i : Fin n) :
+    pathGraphRevIso n i = i.rev := rfl
+
 /-- The entries of a double-edge model, read along its underlying path. The only oriented
 exception to the value `-1` on adjacent vertices is the `-2` half of the double edge. -/
 private lemma doubleEdgeCartanMatrix_apply_eq_path (p q n : ℕ) (hp : 0 < p) (hq : 0 < q)
@@ -108,8 +111,7 @@ private theorem exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv
     (h : IsFiniteType A) (k : B ≃ Fin n)
     (hk : ∀ i j, (diagramGraph A).Adj i j ↔
       (k i : ℕ) + 1 = (k j : ℕ) ∨ (k j : ℕ) + 1 = (k i : ℕ))
-    {u v : B} (horder : (k u : ℕ) + 1 = (k v : ℕ))
-    (huv : A u v = -1) (hvu : A v u = -2)
+    {u v : B} (horder : (k u : ℕ) + 1 = (k v : ℕ)) (hvu : A v u = -2)
     (hsimple : ∀ {i j}, i ≠ j → A i j ≠ 0 → (i = v ∧ j = u) ∨ A i j = -1) :
     ∃ p q : ℕ, 0 < p ∧ 0 < q ∧ ∃ e : B ≃ Fin p ⊕ Fin q,
       ∀ i j, A i j = doubleEdgeCartanMatrix p q (e i) (e j) := by
@@ -122,38 +124,30 @@ private theorem exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv
   have hq : 0 < q := by
     simp only [q]
     omega
-  let g := doubleEdgePathEquiv p q n hpq
-  let e : B ≃ Fin p ⊕ Fin q := k.trans g.symm
-  let left : Fin p := ⟨p - 1, by omega⟩
-  let right : Fin q := ⟨q - 1, by omega⟩
-  have hge (i : B) : g (e i) = k i := by simp [e]
+  let e : B ≃ Fin p ⊕ Fin q := k.trans (doubleEdgePathEquiv p q n hpq).symm
+  have hge (i : B) : doubleEdgePathEquiv p q n hpq (e i) = k i := by simp [e]
   -- The two endpoints of the cut become the last vertices of the two model chains.
-  have heu : e u = Sum.inl left := by
-    apply g.injective
+  have heu : e u = Sum.inl ⟨p - 1, by omega⟩ := by
+    apply (doubleEdgePathEquiv p q n hpq).injective
     rw [hge]
     apply Fin.ext
-    simp [g, left, p]
-  have hev : e v = Sum.inr right := by
-    apply g.injective
+    simp [p]
+  have hev : e v = Sum.inr ⟨q - 1, by omega⟩ := by
+    apply (doubleEdgePathEquiv p q n hpq).injective
     rw [hge]
     apply Fin.ext
-    simp [g, right, p, q]
+    simp [p, q]
     omega
   refine ⟨p, q, hp, hq, e, fun i j ↦ ?_⟩
   -- Read both matrices along the same path. Equality, the exceptional oriented edge, and
   -- adjacency are all reflected by `e`; the finite-type axioms then determine the entry.
-  rw [doubleEdgeCartanMatrix_apply_eq_path p q n hp hq hpq]
-  have hrev : (e i = Sum.inr ⟨q - 1, by omega⟩ ∧
-      e j = Sum.inl ⟨p - 1, by omega⟩) ↔ (i = v ∧ j = u) := by
-    change (e i = Sum.inr right ∧ e j = Sum.inl left) ↔ _
-    rw [← hev, ← heu]
-    exact and_congr e.injective.eq_iff e.injective.eq_iff
+  rw [doubleEdgeCartanMatrix_apply_eq_path p q n hp hq hpq, ← hev, ← heu]
+  have hrev : (e i = e v ∧ e j = e u) ↔ (i = v ∧ j = u) :=
+    and_congr e.injective.eq_iff e.injective.eq_iff
   have hadj : ((doubleEdgePathEquiv p q n hpq (e i) : ℕ) + 1 =
       (doubleEdgePathEquiv p q n hpq (e j) : ℕ) ∨
       (doubleEdgePathEquiv p q n hpq (e j) : ℕ) + 1 =
         (doubleEdgePathEquiv p q n hpq (e i) : ℕ)) ↔ (diagramGraph A).Adj i j := by
-    change ((g (e i) : ℕ) + 1 = (g (e j) : ℕ) ∨
-      (g (e j) : ℕ) + 1 = (g (e i) : ℕ)) ↔ _
     rw [hge, hge, hk]
   rcases eq_or_ne i j with rfl | hij
   · rw [ite_eq_left rfl, h.apply_self]
@@ -173,55 +167,47 @@ private theorem exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv
     exact ha (h.diagramGraph_adj_iff.mpr ⟨hij, hne⟩)
 
 /-- **A path-shaped finite-type matrix with one oriented double edge is a double-edge model.**
-Suppose the diagram is connected, every vertex has degree at most two, `u -- v` is oriented with
-entries `-1, -2`, and the reverse entry `A v u` is the only nonzero off-diagonal entry that is not
-`-1`. Then there are nonempty chains of lengths `p` and `q` and a simultaneous relabelling under
-which `A` is `TauCeti.doubleEdgeCartanMatrix p q`.
+Suppose the diagram is connected, every vertex has degree at most two, the edge `u -- v` carries
+`A v u = -2`, and that entry is the only nonzero off-diagonal entry that is not `-1`. Then there
+are nonempty chains of lengths `p` and `q` and a simultaneous relabelling under which `A` is
+`TauCeti.doubleEdgeCartanMatrix p q`.
 
 The hypothesis on off-diagonal entries is the matrix form of saying that the chosen edge is the
-only multiple edge. The global classification supplies it by excluding two multiple edges along a
-chain; this theorem performs the subsequent reindexing. -/
+only multiple edge; in particular it already forces the opposite entry `A u v` to be `-1`. The
+global classification supplies it by excluding two multiple edges along a chain; this theorem
+performs the subsequent reindexing. -/
 theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix [DecidableEq B]
     (h : IsFiniteType A)
     (hconn : (diagramGraph A).Connected) (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2)
-    {u v : B} (huv : A u v = -1) (hvu : A v u = -2)
+    {u v : B} (hvu : A v u = -2)
     (hsimple : ∀ {i j}, i ≠ j → A i j ≠ 0 → (i = v ∧ j = u) ∨ A i j = -1) :
     ∃ p q : ℕ, 0 < p ∧ 0 < q ∧ ∃ e : B ≃ Fin p ⊕ Fin q,
       ∀ i j, A i j = doubleEdgeCartanMatrix p q (e i) (e j) := by
   obtain ⟨iso⟩ := IsTree.nonempty_iso_pathGraph_of_degree_le_two
     (h.isTree_diagramGraph hconn) hdeg
-  have huv_ne : u ≠ v := by
+  -- Adjacency read through any numbering of the diagram as a path.
+  have hnum : ∀ (m : ℕ) (f : diagramGraph A ≃g pathGraph m) (i j : B),
+      (diagramGraph A).Adj i j ↔ (f i : ℕ) + 1 = (f j : ℕ) ∨ (f j : ℕ) + 1 = (f i : ℕ) :=
+    fun _ f i j ↦ by simpa only [pathGraph_adj] using f.map_adj_iff.symm
+  have hvu_ne : v ≠ u := by
     rintro rfl
-    rw [h.apply_self] at huv
+    rw [h.apply_self] at hvu
     omega
   have hadj : (diagramGraph A).Adj u v :=
-    h.diagramGraph_adj_iff.mpr ⟨huv_ne, by simp [huv]⟩
+    (h.diagramGraph_adj_iff.mpr ⟨hvu_ne, by simp [hvu]⟩).symm
   have hpath : (iso u : ℕ) + 1 = (iso v : ℕ) ∨ (iso v : ℕ) + 1 = (iso u : ℕ) := by
     rwa [← iso.map_adj_iff, pathGraph_adj] at hadj
   rcases hpath with horder | horder
-  · let k : B ≃ Fin (Fintype.card B) := iso.toEquiv
-    apply exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv h k
-        (u := u) (v := v) (huv := huv) (hvu := hvu) (hsimple := hsimple)
-    · intro i j
-      change (diagramGraph A).Adj i j ↔
-        (iso i : ℕ) + 1 = (iso j : ℕ) ∨ (iso j : ℕ) + 1 = (iso i : ℕ)
-      simpa only [pathGraph_adj] using iso.map_adj_iff.symm
-    · exact horder
+  · exact exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv h iso.toEquiv
+      (hnum _ iso) horder hvu hsimple
   · let iso' : diagramGraph A ≃g pathGraph (Fintype.card B) :=
       iso.trans (pathGraphRevIso (Fintype.card B))
     have horder' : (iso' u : ℕ) + 1 = (iso' v : ℕ) := by
-      change ((iso u).rev : ℕ) + 1 = ((iso v).rev : ℕ)
-      simp only [Fin.rev]
+      simp only [iso', RelIso.trans_apply, pathGraphRevIso_apply, Fin.val_rev]
       have hu := (iso u).isLt
       have hv := (iso v).isLt
       omega
-    let k : B ≃ Fin (Fintype.card B) := iso'.toEquiv
-    apply exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv h k
-        (u := u) (v := v) (huv := huv) (hvu := hvu) (hsimple := hsimple)
-    · intro i j
-      change (diagramGraph A).Adj i j ↔
-        (iso' i : ℕ) + 1 = (iso' j : ℕ) ∨ (iso' j : ℕ) + 1 = (iso' i : ℕ)
-      simpa only [pathGraph_adj] using iso'.map_adj_iff.symm
-    · exact horder'
+    exact exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_pathEquiv h iso'.toEquiv
+      (hnum _ iso') horder' hvu hsimple
 
 end TauCeti
