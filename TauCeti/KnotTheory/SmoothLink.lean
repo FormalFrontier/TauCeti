@@ -284,11 +284,9 @@ theorem forgetFraming_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
 theorem forget_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
     (mk (I := I₃) (M := M₃) k t h).forget = k.knot := (rfl)
 
-@[simp]
 theorem forgetFraming_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
     K.forgetFraming = K.knot := (rfl)
 
-@[simp]
 theorem forget_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
     K.forget = K.knot.knot := (rfl)
 
