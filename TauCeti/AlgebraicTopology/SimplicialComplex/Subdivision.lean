@@ -65,7 +65,6 @@ are the nonempty finite chains of faces under inclusion. -/
   AbstractSimplicialComplex.orderComplex (_root_.AbstractSimplicialComplex.Face K)
 
 /-- Barycentric subdivision is the order complex of the face poset. -/
-@[simp]
 theorem barycentricSubdivision_eq_orderComplex (K : PreAbstractSimplicialComplex α) :
     barycentricSubdivision K =
       AbstractSimplicialComplex.orderComplex (_root_.AbstractSimplicialComplex.Face K) :=
