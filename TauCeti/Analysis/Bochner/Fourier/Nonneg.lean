@@ -175,7 +175,8 @@ private theorem re_sum_nonneg_of_kernel
     (x : ι → V) (c : ι → ℂ) :
     0 ≤ (∑ i, ∑ j, conj (c i) * c j * ψ (x i - x j)).re := by
   have h := (posSemidef_iff_finite_sum.mp hpd).2 x c
-  exact (Complex.nonneg_iff.mp h).1
+  simpa only [RCLike.star_def, mul_comm, mul_left_comm, mul_assoc] using
+    (Complex.nonneg_iff.mp h).1
 
 end KernelConsequences
 

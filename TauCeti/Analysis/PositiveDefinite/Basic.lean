@@ -185,7 +185,8 @@ theorem posSemidef (hF : IsPositiveDefinite F) :
       have h := hF.sum_nonneg (fun i => conj (x i)) v
       refine le_of_le_of_eq h ?_
       refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-      rw [RCLike.star_def, Complex.conj_conj]⟩
+      rw [RCLike.star_def, Complex.conj_conj]
+      ring⟩
 
 /-- If the kernel `K(a, b) = F(a + b⋆)` is positive definite, then so is the function `F`. This is
 the reverse half of the function ↔ kernel correspondence. -/
@@ -197,6 +198,7 @@ theorem of_posSemidef
   refine le_of_le_of_eq h ?_
   refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
   rw [RCLike.star_def, Complex.conj_conj]
+  ring
 
 /-- The Cauchy–Schwarz inequality for a positive-definite function: the squared norm of an
 off-diagonal value is bounded by the product of the two diagonal values. -/

@@ -230,12 +230,12 @@ theorem isSemigroupGroupPD_iff :
     intro ι _ c p
     have hpos := (posSemidef_iff_finite_sum.mp hF.posSemidef).2 p
       (fun i => conj (c i))
-    simpa only [RCLike.star_def, Complex.conj_conj] using hpos
+    simpa only [RCLike.star_def, Complex.conj_conj, mul_comm, mul_left_comm, mul_assoc] using hpos
   · rintro ⟨hsymm, hpos⟩
     exact IsSemigroupGroupPD.of_posSemidef <| posSemidef_iff_finite_sum.mpr
       ⟨fun p q => by simpa only [RCLike.star_def] using hsymm p q, fun p x => by
         have h := hpos (fun i => conj (x i)) p
-        simpa only [RCLike.star_def, Complex.conj_conj] using h⟩
+        simpa only [RCLike.star_def, Complex.conj_conj, mul_comm, mul_left_comm, mul_assoc] using h⟩
 
 namespace IsSemigroupGroupPD
 

@@ -82,7 +82,9 @@ theorem timeAxis_conj_symm (hF : IsSemigroupGroupPD F) (t u : ℝ≥0) :
 theorem timeAxis_sum_nonneg (hF : IsSemigroupGroupPD F) {ι : Type*} [Fintype ι]
     (t : ι → ℝ≥0) (x : ι → ℂ) :
     0 ≤ ∑ i, ∑ j, conj (x i) * x j * F (t i + t j, 0) :=
-  (posSemidef_iff_finite_sum.mp hF.posSemidef_timeAxis).2 t x
+  by
+    simpa only [RCLike.star_def, mul_comm, mul_left_comm, mul_assoc] using
+      (posSemidef_iff_finite_sum.mp hF.posSemidef_timeAxis).2 t x
 
 /-- The zero-spatial time-axis function `t ↦ F (t, 0)` is positive definite for the trivial
 involution on `ℝ≥0`. -/

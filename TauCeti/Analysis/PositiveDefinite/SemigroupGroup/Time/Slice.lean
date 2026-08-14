@@ -108,7 +108,9 @@ theorem timeSlice_diagonal_eq_ofReal_re (hF : IsSemigroupGroupPD F) (t : ℝ≥0
 theorem timeSlice_sum_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) {ι : Type*} [Fintype ι]
     (v : ι → V) (x : ι → ℂ) :
     0 ≤ ∑ i, ∑ j, conj (x i) * x j * F (t, v i - v j) :=
-  (posSemidef_iff_finite_sum.mp (hF.posSemidef_timeSlice t)).2 v x
+  by
+    simpa only [RCLike.star_def, mul_comm, mul_left_comm, mul_assoc] using
+      (posSemidef_iff_finite_sum.mp (hF.posSemidef_timeSlice t)).2 v x
 
 /-- The fixed-time spatial Cauchy--Schwarz bound for the kernel entry `F (t, v - w)`. -/
 theorem timeSlice_normSq_le (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :

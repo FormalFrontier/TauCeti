@@ -273,8 +273,7 @@ theorem posSemidef_positiveDefiniteKernelFinsuppForm
     simpa [positiveDefiniteKernelFinsuppSesqForm_apply] using hz
   convert hz' using 1
   · rw [Finset.sum_comm]
-    simp [z, positiveDefiniteKernelFinsuppSesqForm_apply, Finset.mul_sum, mul_left_comm,
-      mul_comm]
+    simp [z, positiveDefiniteKernelFinsuppSesqForm_apply, Finset.mul_sum, mul_comm]
 
 /-- The finitely supported Gram form takes the expected value on two basis vectors. -/
 @[simp]

@@ -49,7 +49,7 @@ universe u v w
 variable {α : Type v}
 
 private theorem posSemidef_of_support_posSemidef {R : Type u}
-    [CommRing R] [PartialOrder R] [StarRing R] (K : α → α → R)
+    [Ring R] [PartialOrder R] [StarRing R] (K : α → α → R)
     (hHerm : (Matrix.of fun a b => K a b).IsHermitian) (hgram : ∀ x : α →₀ R,
       (Matrix.of fun i j : x.support => K (i : α) (j : α)).PosSemidef) :
     (Matrix.of fun a b => K a b).PosSemidef := by
@@ -73,23 +73,23 @@ private theorem posSemidef_of_support_posSemidef {R : Type u}
   simpa only [Matrix.of_apply, Finsupp.sum, mul_assoc] using h''
 
 private theorem matrixOf_star_mul_eq_vecMulVec {R : Type u}
-    [CommRing R] [StarRing R] (g : α → R) :
+    [Ring R] [StarRing R] (g : α → R) :
     Matrix.of (fun a b => star (g a) * g b) = Matrix.vecMulVec (star g) g := by
   ext a b
   simp only [Matrix.of_apply, Matrix.vecMulVec_apply, Pi.star_apply]
 
 private theorem star_mul_matrix_isHermitian {R : Type u}
-    [CommRing R] [StarRing R] (g : α → R) :
+    [Ring R] [StarRing R] (g : α → R) :
     (Matrix.of fun a b => star (g a) * g b).IsHermitian := by
   rw [matrixOf_star_mul_eq_vecMulVec]
   ext a b
-  simp [Matrix.conjTranspose_apply, Matrix.vecMulVec_apply, Pi.star_apply, mul_comm]
+  simp [Matrix.conjTranspose_apply, Matrix.vecMulVec_apply, Pi.star_apply]
 
 /-- The rank-one matrix `(a, b) ↦ star (g a) · g b` is positive semidefinite for an arbitrary
 index type. Such matrices are elementary building blocks for positive-semidefinite matrices;
 taking `g ≡ 1` gives the constant matrix `1`. -/
 theorem posSemidef_rankOne {R : Type u}
-    [CommRing R] [PartialOrder R] [StarRing R] [StarOrderedRing R] (g : α → R) :
+    [Ring R] [PartialOrder R] [StarRing R] [StarOrderedRing R] (g : α → R) :
     Matrix.PosSemidef (fun a b => star (g a) * g b) := by
   refine posSemidef_of_support_posSemidef _ (star_mul_matrix_isHermitian g) ?_
   intro x
@@ -98,7 +98,7 @@ theorem posSemidef_rankOne {R : Type u}
 
 /-- The constant matrix with value `1` is positive semidefinite. -/
 theorem posSemidef_const_one {R : Type u}
-    [CommRing R] [PartialOrder R] [StarRing R] [StarOrderedRing R] :
+    [Ring R] [PartialOrder R] [StarRing R] [StarOrderedRing R] :
     Matrix.PosSemidef (fun _ _ : α => (1 : R)) := by
   simpa using posSemidef_rankOne (R := R) (α := α) (fun _ => (1 : R))
 
@@ -115,12 +115,12 @@ theorem posSemidef_const_of_nonneg {R : Type u}
 /-- The quadratic-form characterization of an arbitrary-index positive-semidefinite matrix. The
 reverse direction constructs positivity from conjugate symmetry and finite quadratic-form
 nonnegativity without unfolding `Matrix.PosSemidef`. -/
-theorem posSemidef_iff_finite_sum {R : Type u} [CommRing R] [PartialOrder R] [StarRing R]
+theorem posSemidef_iff_finite_sum {R : Type u} [Ring R] [PartialOrder R] [StarRing R]
     {K : α → α → R} :
     Matrix.PosSemidef K ↔
       (∀ a b, star (K a b) = K b a) ∧
         ∀ {ι : Type*} [Fintype ι] (v : ι → α) (x : ι → R),
-          0 ≤ ∑ i, ∑ j, star (x i) * x j * K (v i) (v j) := by
+          0 ≤ ∑ i, ∑ j, star (x i) * K (v i) (v j) * x j := by
   classical
   refine ⟨fun hK => ⟨fun a b => ?_, ?_⟩, fun ⟨hsymm, hpos⟩ => ?_⟩
   · exact hK.isHermitian.apply b a
@@ -149,7 +149,7 @@ theorem posSemidef_iff_finite_sum {R : Type u} [CommRing R] [PartialOrder R] [St
       simp only [dotProduct, Matrix.mulVec, Matrix.submatrix_apply, Matrix.of_apply,
         Pi.star_apply, Finset.mul_sum]
       refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-      ring
+      exact mul_assoc _ _ _
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 
