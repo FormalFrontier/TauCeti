@@ -186,7 +186,6 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- Evaluating the rational bilinear form associated with a matrix on basis vectors recovers
 the matrix entry. -/
-@[simp]
 theorem toBilin_map_apply_basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (i j : ι) :
     Matrix.toBilin b (G.map (algebraMap ℤ ℚ)) (b i) (b j) = (G i j : ℚ) := by
   rw [← LinearMap.BilinForm.toMatrix_apply (b := b), LinearMap.BilinForm.toMatrix_toBilin,
