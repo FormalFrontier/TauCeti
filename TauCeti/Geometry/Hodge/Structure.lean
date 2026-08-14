@@ -279,7 +279,7 @@ structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
 /-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of an integral lattice `V`. -/
-abbrev HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) :=
+abbrev HodgeStructure [Module.Free ℤ V] [Module.Finite ℤ V] (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) :=
   HodgeStructureOn Vℂ (latticeConjugation hℂ) n
 
 namespace HodgeStructureOn
