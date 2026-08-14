@@ -56,15 +56,15 @@ section GramMatrix
 variable (L : IntegralLattice V)
 
 /-- The integral Gram matrix of a carrier basis. -/
-noncomputable def gramMatrix {ι : Type v} [Fintype ι] (e : Basis ι ℤ L) : Matrix ι ι ℤ :=
+@[expose]
+noncomputable def gramMatrix {ι : Type v} (e : Basis ι ℤ L) : Matrix ι ι ℤ :=
   fun i j ↦ L.integralForm (e i) (e j)
 
-open Classical in
 /-- A Gram-matrix entry is the value of the integral form on the corresponding basis vectors. -/
 @[simp]
-theorem gramMatrix_apply {ι : Type v} [Fintype ι] (e : Basis ι ℤ L) (i j : ι) :
+theorem gramMatrix_apply {ι : Type v} (e : Basis ι ℤ L) (i j : ι) :
     L.gramMatrix e i j = L.integralForm (e i) (e j) :=
-  (rfl)
+  rfl
 
 /-- The Gram matrix is Mathlib's matrix of the restricted integral bilinear form. -/
 theorem gramMatrix_eq_toMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
@@ -73,18 +73,16 @@ theorem gramMatrix_eq_toMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
   ext i j
   rw [gramMatrix_apply, LinearMap.BilinForm.toMatrix_apply]
 
-open Classical in
 /-- Casting a Gram-matrix entry to `ℚ` recovers the ambient rational form. -/
-theorem intCast_gramMatrix_apply {ι : Type v} [Fintype ι] (e : Basis ι ℤ L) (i j : ι) :
+theorem intCast_gramMatrix_apply {ι : Type v} (e : Basis ι ℤ L) (i j : ι) :
     (L.gramMatrix e i j : ℚ) = L.form (e i : V) (e j : V) := by
   rw [gramMatrix_apply, integralForm_cast]
 
-open Classical in
 /-- The Gram matrix of a symmetric integral lattice is symmetric. -/
-theorem gramMatrix_isSymm {ι : Type v} [Fintype ι] (e : Basis ι ℤ L) :
+theorem gramMatrix_isSymm {ι : Type v} (e : Basis ι ℤ L) :
     (L.gramMatrix e).IsSymm := by
-  rw [gramMatrix_eq_toMatrix, LinearMap.BilinForm.isSymm_toMatrix_iff_isSymm]
-  exact L.isSymm_integralForm
+  ext i j
+  rw [Matrix.transpose_apply, gramMatrix_apply, gramMatrix_apply, L.isSymm_integralForm.eq]
 
 /-- Extending the carrier basis and the entries of its Gram matrix to `ℚ` gives the matrix of the
 ambient rational form. -/
@@ -114,12 +112,10 @@ theorem intCast_gramDet {ι : Type v} [Fintype ι] [DecidableEq ι]
   rw [gramDet, Int.cast_det]
   exact congrArg Matrix.det (map_gramMatrix L e)
 
-open Classical in
 /-- Reindexing a carrier basis simultaneously reindexes the rows and columns of its Gram matrix. -/
-theorem gramMatrix_reindex {ι : Type v} {κ : Type w} [Fintype ι] [Fintype κ]
+theorem gramMatrix_reindex {ι : Type v} {κ : Type w}
     (e : Basis ι ℤ L) (σ : ι ≃ κ) :
     L.gramMatrix (e.reindex σ) = (L.gramMatrix e).submatrix σ.symm σ.symm := by
-  classical
   ext i j
   simp only [gramMatrix_apply, Basis.reindex_apply, Matrix.submatrix_apply]
 
