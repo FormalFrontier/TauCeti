@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.SesquilinearForm.Basic
-public import TauCeti.Analysis.Matrix.PosSemidef
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 
 /-!
 # The finitely supported Gram form of a positive-definite kernel

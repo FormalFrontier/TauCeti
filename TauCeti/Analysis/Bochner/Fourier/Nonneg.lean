@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Analysis.Fourier.FourierTransform
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
-public import TauCeti.Analysis.Matrix.PosSemidef
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 -- The remaining imports are proof-only: the Fejér averaging argument uses dominated convergence,
 -- Fubini, simple-function approximation, the Haar ball formulas and negation invariance, the
 -- Fourier atom kernel with its Fourier-transform bridge, the continuity of `𝓕`/`𝓕⁻`, and the

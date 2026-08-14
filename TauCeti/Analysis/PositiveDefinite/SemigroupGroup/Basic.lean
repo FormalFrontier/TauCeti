@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
-public import TauCeti.Analysis.Matrix.PosSemidef
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 public import Mathlib.Data.NNReal.Basic
 
 /-!
@@ -163,9 +163,7 @@ theorem isSemigroupGroupPD_iff_posSemidef :
       Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
   constructor
   · intro hF
-    have h := (show (Matrix.of fun a b : BCRPoint V =>
-        F ((a + star b).time, (a + star b).point)).PosSemidef
-      from IsPositiveDefinite.posSemidef hF).submatrix
+    have h := (posSemidef_matrixOf (IsPositiveDefinite.posSemidef hF)).submatrix
         (fun p : ℝ≥0 × V => BCRPoint.ofProd p)
     have heq : Matrix.submatrix
         (Matrix.of fun a b : BCRPoint V => F ((a + star b).time, (a + star b).point))
@@ -177,8 +175,7 @@ theorem isSemigroupGroupPD_iff_posSemidef :
     exact heq ▸ h
   · intro hK
     refine IsPositiveDefinite.of_posSemidef ?_
-    have h := (show (Matrix.of fun p q : ℝ≥0 × V =>
-        F (p.1 + q.1, p.2 - q.2)).PosSemidef from hK).submatrix
+    have h := (posSemidef_matrixOf hK).submatrix
       (fun p : BCRPoint V => BCRPoint.toProd p)
     have heq : Matrix.submatrix
         (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))

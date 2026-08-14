@@ -82,8 +82,7 @@ theorem comp_spatial {Φ : Type*} [FunLike Φ W V] [AddHomClass Φ W V]
     (hF : IsSemigroupGroupPD F) (φ : Φ) :
     IsSemigroupGroupPD fun p : ℝ≥0 × W => F (p.1, φ p.2) := by
   refine IsSemigroupGroupPD.of_posSemidef ?_
-  have h := (show (Matrix.of fun p q : ℝ≥0 × V =>
-      F (p.1 + q.1, p.2 - q.2)).PosSemidef from hF.posSemidef).submatrix
+  have h := (posSemidef_matrixOf hF.posSemidef).submatrix
     (fun p : ℝ≥0 × W => (p.1, φ p.2))
   have heq : Matrix.submatrix
       (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
@@ -114,9 +113,8 @@ theorem of_comp_spatial_surjective {Φ : Type*} [FunLike Φ W V] [AddHomClass Φ
   classical
   refine IsSemigroupGroupPD.of_posSemidef ?_
   choose w hw using hsurj
-  have h := (show (Matrix.of fun p q : ℝ≥0 × W =>
-      (fun x : ℝ≥0 × W => F (x.1, φ x.2)) (p.1 + q.1, p.2 - q.2)).PosSemidef
-    from hcomp.posSemidef).submatrix (fun p : ℝ≥0 × V => (p.1, w p.2))
+  have h := (posSemidef_matrixOf hcomp.posSemidef).submatrix
+    (fun p : ℝ≥0 × V => (p.1, w p.2))
   have heq : Matrix.submatrix
       (Matrix.of fun p q : ℝ≥0 × W =>
         (fun x : ℝ≥0 × W => F (x.1, φ x.2)) (p.1 + q.1, p.2 - q.2))
