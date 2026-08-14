@@ -59,19 +59,23 @@ variable {T : E →L[𝕜] F} {X₁ : Submodule 𝕜 E}
 
 /-- The projection of `E` onto `ker T` along a topological complement lands, as its name promises,
 in the kernel, so `T` kills it. -/
+@[simp]
 theorem apply_projectionL_ker (h : IsTopCompl (T.ker) X₁) (x : E) :
-    T ((T.ker).projectionL X₁ h x) = 0 :=
-  LinearMap.mem_ker.1 ((T.ker).projectionOntoL X₁ h x).2
+    T ((T.ker).projection X₁ h.isCompl x) = 0 :=
+  LinearMap.mem_ker.1 ((T.ker).projectionOnto X₁ h.isCompl x).2
 
 /-- `T` takes the same value on `x` and on the component of `x` in a topological complement of the
 kernel. -/
+@[simp]
 theorem apply_projectionL_of_isTopCompl (h : IsTopCompl (T.ker) X₁) (x : E) :
-    T (X₁.projectionL (T.ker) h.symm x) = T x := by
+    T (X₁.projection (T.ker) h.symm.isCompl x) = T x := by
   have hsum : (T.ker).projectionL X₁ h x + X₁.projectionL (T.ker) h.symm x = x :=
     projectionL_add_projectionL_eq_self h x
   have hadd : T ((T.ker).projectionL X₁ h x) + T (X₁.projectionL (T.ker) h.symm x) = T x := by
     rw [← map_add, hsum]
-  rwa [apply_projectionL_ker h, zero_add] at hadd
+  have hker : T ((T.ker).projectionL X₁ h x) = 0 := by
+    simpa only [Submodule.coe_projectionL] using apply_projectionL_ker h x
+  rwa [hker, zero_add] at hadd
 
 /-- A continuous linear map restricted to a topological complement of its kernel still has the
 whole range of the map as its range: the kernel direction contributes nothing. -/
@@ -79,7 +83,10 @@ theorem range_comp_subtypeL_of_isTopCompl (h : IsTopCompl (T.ker) X₁) :
     Set.range (T ∘L X₁.subtypeL) = Set.range T := by
   refine Set.Subset.antisymm (by rintro _ ⟨x, rfl⟩; exact ⟨x, rfl⟩) ?_
   rintro _ ⟨x, rfl⟩
-  exact ⟨X₁.projectionOntoL (T.ker) h.symm x, apply_projectionL_of_isTopCompl h x⟩
+  refine ⟨X₁.projectionOntoL (T.ker) h.symm x, ?_⟩
+  simpa only [ContinuousLinearMap.comp_apply, Submodule.coe_subtypeL, Submodule.coe_subtype,
+    Submodule.coe_projectionOntoL_apply, Submodule.coe_projectionL] using
+    apply_projectionL_of_isTopCompl h x
 
 /-! ### The estimate -/
 
@@ -127,7 +134,9 @@ theorem _root_.ContinuousLinearMap.IsFredholm.exists_norm_le_mul_norm_add_norm_p
     projectionL_add_projectionL_eq_self h x
   have hq := hbound (X₁.projectionL (T.ker) h.symm x)
     (X₁.projectionOntoL (T.ker) h.symm x).2
-  rw [apply_projectionL_of_isTopCompl h] at hq
+  have hTx : T (X₁.projectionL (T.ker) h.symm x) = T x := by
+    simpa only [Submodule.coe_projectionL] using apply_projectionL_of_isTopCompl h x
+  rw [hTx] at hq
   calc ‖x‖ = ‖(T.ker).projectionL X₁ h x + X₁.projectionL (T.ker) h.symm x‖ := by rw [hsum]
     _ ≤ ‖(T.ker).projectionL X₁ h x‖ + ‖X₁.projectionL (T.ker) h.symm x‖ := norm_add_le _ _
     _ ≤ ‖(T.ker).projectionL X₁ h x‖ + C * ‖T x‖ := by gcongr
@@ -141,10 +150,11 @@ Since `ker T` is finite-dimensional, the correction term `‖P x‖` ranges over
 space; this is the sense in which a Fredholm operator is bounded below "up to a compact error". -/
 theorem _root_.ContinuousLinearMap.IsFredholm.exists_projection_norm_le
     (hT : T.IsFredholm) :
-    ∃ (P : E →L[𝕜] E) (C : ℝ), 0 < C ∧ P.range = T.ker ∧
+    ∃ (P : E →L[𝕜] E) (C : ℝ), 0 < C ∧ IsIdempotentElem P ∧ P.range = T.ker ∧
       ∀ x, ‖x‖ ≤ C * ‖T x‖ + ‖P x‖ := by
   obtain ⟨X₁, h⟩ := hT.closedComplemented_ker.exists_isTopCompl
   obtain ⟨C, hC, hbound⟩ := hT.exists_norm_le_mul_norm_add_norm_projectionL h
-  exact ⟨(T.ker).projectionL X₁ h, C, hC, range_projectionL h, hbound⟩
+  exact ⟨(T.ker).projectionL X₁ h, C, hC, isIdempotentElem_projectionL h,
+    range_projectionL h, hbound⟩
 
 end TauCeti

@@ -11,9 +11,9 @@ public import TauCeti.Analysis.Fredholm.Estimate
 /-!
 # A map with Fredholm derivative is proper near the point
 
-A continuous map between infinite-dimensional Banach spaces is essentially never proper: closed
-balls are not compact, so even a linear isomorphism has noncompact fibres of compact sets. A map
-whose derivative at a point `a` is **Fredholm** is nonetheless proper on a neighbourhood of `a`:
+A continuous map between infinite-dimensional Banach spaces need not be proper: a Fredholm linear
+map with nonzero kernel has a noncompact fibre over zero. A map whose derivative at a point `a` is
+**Fredholm** is nonetheless proper on a neighbourhood of `a`:
 
 `∃ N ∈ 𝓝 a, ∀ L compact, N ∩ f ⁻¹' L is compact`.
 
@@ -74,7 +74,7 @@ the loss of compactness it causes is harmless. -/
 theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
     (hf : HasStrictFDerivAt f f' a) (hf' : f'.IsFredholm) :
     ∃ N ∈ 𝓝 a, ∀ L : Set F, IsCompact L → IsCompact (N ∩ f ⁻¹' L) := by
-  obtain ⟨P, C, hC, hPrange, hest⟩ := hf'.exists_projection_norm_le
+  obtain ⟨P, C, hC, _hPidemp, hPrange, hest⟩ := hf'.exists_projection_norm_le
   have hCpos : (0 : ℝ) < 2 * C := by linarith
   set ε : ℝ≥0 := ⟨(2 * C)⁻¹, inv_nonneg.2 hCpos.le⟩
   have hεcoe : (ε : ℝ) = (2 * C)⁻¹ := rfl
@@ -145,22 +145,23 @@ theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
     have hCd : C * ‖f (x : E) - f (y : E)‖ ≤ C * dist (Θ x) (Θ y) :=
       mul_le_mul_of_nonneg_left hd1 hC.le
     rw [Subtype.dist_eq, dist_eq_norm]
-    change ‖(x : E) - (y : E)‖ ≤ (2 * C + 2) * dist (Θ x) (Θ y)
-    nlinarith [dist_nonneg (x := Θ x) (y := Θ y)]
+    calc
+      ‖(x : E) - (y : E)‖ ≤ 2 * (C * ‖f (x : E) - f (y : E)‖) +
+          2 * ‖P (x : E) - P (y : E)‖ := hk
+      _ ≤ (2 * C + 2) * dist (Θ x) (Θ y) := by
+        nlinarith [dist_nonneg (x := Θ x) (y := Θ y)]
   have hΘlip : LipschitzWith (‖f'‖₊ + ε + ‖P‖₊) Θ := by
     have h1 : LipschitzWith (‖f'‖₊ + ε) fun x : N => f (x : E) := happN.lipschitz
     have h2 : LipschitzWith ‖P‖₊ fun x : N => P (x : E) := P.lipschitz.restrict N
     exact (h1.prodMk h2).weaken (by simp)
   have hind : IsUniformInducing Θ := hanti.isUniformInducing hΘlip.uniformContinuous
   -- total boundedness, then compactness
-  have htb : TotallyBounded ((Subtype.val : N → E) '' {x : N | f (x : E) ∈ L}) := by
+  have htb : TotallyBounded
+      ((Subtype.val : N → E) '' (Subtype.val : N → E) ⁻¹' (f ⁻¹' L)) := by
     refine TotallyBounded.image ?_ uniformContinuous_subtype_val
     refine (totallyBounded_preimage hind (hL.prod hKpc).totallyBounded).subset ?_
     exact fun x hx => ⟨hx, hPN (x : E) x.2⟩
-  have himg : (Subtype.val : N → E) '' {x : N | f (x : E) ∈ L} = N ∩ f ⁻¹' L := by
-    rw [show {x : N | f (x : E) ∈ L} = (Subtype.val : N → E) ⁻¹' (f ⁻¹' L) from rfl,
-      Subtype.image_preimage_coe, Set.inter_comm]
-  rw [himg] at htb
+  rw [Subtype.image_preimage_coe] at htb
   exact htb.isCompact_of_isClosed
     (hcontOn.preimage_isClosed_of_isClosed Metric.isClosed_closedBall hL.isClosed)
 
@@ -179,7 +180,7 @@ is compact, then `f ⁻¹' L`, with the topology induced from `E`, is a locally 
 
 No compactness is assumed of the ambient Banach space, and none is available: the point is that
 the Fredholm condition confines the failure of local compactness to the finite-dimensional kernel
-direction, which the preimage does not see. -/
+direction, which is itself locally compact and is controlled locally by the kernel projection. -/
 theorem locallyCompactSpace_preimage {D : E → E →L[𝕜] F} {L : Set F} (hL : IsCompact L)
     (hf : ∀ x ∈ f ⁻¹' L, HasStrictFDerivAt f (D x) x)
     (hD : ∀ x ∈ f ⁻¹' L, (D x).IsFredholm) :
