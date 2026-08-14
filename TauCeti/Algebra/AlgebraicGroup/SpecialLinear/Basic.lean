@@ -317,6 +317,25 @@ instance isClosedImmersion_groupSchemeι :
   rw [groupSchemeι_def]
   exact hec
 
+/-- The special-linear group scheme is a closed subgroup scheme of the named general-linear
+group scheme. -/
+instance isClosedImmersion_groupSchemeιGeneralLinear :
+    AlgebraicGeometry.IsClosedImmersion (groupSchemeιGeneralLinear R n).hom.hom.left := by
+  let c := (groupSchemeι R n).hom.hom.left
+  let e := (eqToHom (GeneralLinear.groupScheme_def R n).symm).hom.hom.left
+  have he : IsIso e :=
+    ((Over.forget (Spec (CommRingCat.of R))).mapIso
+      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
+        (eqToIso (GeneralLinear.groupScheme_def R n).symm))).isIso_hom
+  have hc : AlgebraicGeometry.IsClosedImmersion c := by
+    dsimp only [c]
+    infer_instance
+  have hce : AlgebraicGeometry.IsClosedImmersion (c ≫ e) :=
+    (@MorphismProperty.cancel_right_of_respectsIso
+      Scheme _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ c e he).2 hc
+  rw [groupSchemeιGeneralLinear_def]
+  exact hce
+
 /-- The determinant is the unit section after restriction to the special-linear kernel. -/
 theorem groupSchemeι_comp_determinant :
     groupSchemeι R n ≫

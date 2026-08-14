@@ -262,6 +262,17 @@ noncomputable def rootSubgroup (hij : i ≠ j) :
       (rootSubgroupCoordinateMap hij).op ≫
     eqToHom (groupScheme_def R N).symm
 
+/-- The root subgroup is relative spectrum applied contravariantly to its coordinate
+Hopf-algebra morphism, transported across the named presentations of `𝔾ₐ` and `SLₙ`. -/
+theorem rootSubgroup_def (hij : i ≠ j) :
+    rootSubgroup (R := R) (N := N) hij =
+      eqToHom (AdditiveGroup.groupScheme_def R) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (rootSubgroupCoordinateMap hij).op ≫
+        eqToHom (groupScheme_def R N).symm := by
+  unfold rootSubgroup
+  rfl
+
 section SchemePoints
 
 variable (A : Type u) [CommRing A] [Algebra R A]
