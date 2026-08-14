@@ -134,6 +134,7 @@ noncomputable def lift (h : IsKernelCokernelPair S) (k : A ⟶ S.X₂) (hk : k �
     A ⟶ S.X₁ :=
   (KernelFork.IsLimit.lift' h.fIsKernel k hk).1
 
+/-- The kernel factorization `lift` satisfies `lift ≫ S.f = k`. -/
 @[reassoc (attr := simp)]
 theorem lift_f (h : IsKernelCokernelPair S) (k : A ⟶ S.X₂) (hk : k ≫ S.g = 0) :
     h.lift k hk ≫ S.f = k :=
@@ -150,6 +151,7 @@ noncomputable def desc (h : IsKernelCokernelPair S) (k : S.X₂ ⟶ A) (hk : S.f
     S.X₃ ⟶ A :=
   (CokernelCofork.IsColimit.desc' h.gIsCokernel k hk).1
 
+/-- The cokernel factorization `desc` satisfies `S.g ≫ desc = k`. -/
 @[reassoc (attr := simp)]
 theorem g_desc (h : IsKernelCokernelPair S) (k : S.X₂ ⟶ A) (hk : S.f ≫ k = 0) :
     S.g ≫ h.desc k hk = k :=
@@ -264,8 +266,17 @@ namespace IsKernelCokernelPair
 
 /-- A split short complex is a kernel–cokernel pair. These are the conflations of the split
 exact structure on an additive category. -/
-theorem of_splitting [HasZeroObject C] (s : S.Splitting) : IsKernelCokernelPair S :=
-  ⟨⟨s.fIsKernel⟩, ⟨s.gIsCokernel⟩⟩
+theorem of_splitting (s : S.Splitting) : IsKernelCokernelPair S where
+  nonempty_fIsKernel := ⟨KernelFork.IsLimit.ofι S.f S.zero
+    (fun k _ => k ≫ s.r)
+    (fun k hk => by simp only [Category.assoc, s.r_f, Preadditive.comp_sub, Category.comp_id,
+      sub_eq_self, reassoc_of% hk, zero_comp])
+    (fun k _ l hl => by simp only [← hl, Category.assoc, s.f_r, Category.comp_id])⟩
+  nonempty_gIsCokernel := ⟨CokernelCofork.IsColimit.ofπ S.g S.zero
+    (fun k _ => s.s ≫ k)
+    (fun k hk => by simp only [s.g_s_assoc, Preadditive.sub_comp, Category.id_comp, sub_eq_self,
+      Category.assoc, hk, comp_zero])
+    (fun k _ l hl => by simp only [← hl, s.s_g_assoc])⟩
 
 /-- A kernel–cokernel pair with homology is a short exact short complex. -/
 theorem shortExact [S.HasHomology] (h : IsKernelCokernelPair S) : S.ShortExact where
