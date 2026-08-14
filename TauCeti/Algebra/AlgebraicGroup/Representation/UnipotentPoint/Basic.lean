@@ -105,15 +105,10 @@ theorem isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one
 theorem IsUnipotentPoint.mapDomain {H' : Type w} [Semiring H'] [_root_.HopfAlgebra k H']
     {g : WithConv (H' →ₐ[k] K)} (hg : IsUnipotentPoint g) (f : H →ₐc[k] H') :
     IsUnipotentPoint (AlgHom.mapDomain f g) := by
-  rw [isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one]
+  rw [isUnipotentPoint_def] at hg ⊢
   intro M
-  have hN := (isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp hg
-    ((FGComoduleCat.corestrict (f : H →ₗc[k] H')).obj M)
-  have hN' : _root_.IsNilpotent
-      (Comodule.endOfPoint M (g.ofConv.comp (f : H →ₐ[k] H')) - 1) := by
-    rw [← Comodule.endOfPoint_corestrict (V := M) (φ := f) (g := g.ofConv)]
-    exact hN
-  simpa only [AlgHom.mapDomain_apply, ofConv_toConv] using hN'
+  rw [← Comodule.pointsAction_corestrict_obj f M g]
+  exact hg ((FGComoduleCat.corestrict f.toCoalgHom).obj M)
 
 /-- Unipotence of a point is invariant under precomposition by a bialgebra isomorphism. -/
 theorem isUnipotentPoint_mapDomain_iff {H' : Type w} [Semiring H']
@@ -127,6 +122,15 @@ theorem isUnipotentPoint_mapDomain_iff {H' : Type w} [Semiring H']
     simpa only [MulEquiv.symm_apply_apply] using h
   · intro hg
     exact hg.mapDomain (e : H →ₐc[k] H')
+
+/-- Simp-normal form of `isUnipotentPoint_mapDomain_iff`, with the precomposed point normalized by
+`AlgHom.mapDomain_apply`. -/
+@[simp]
+theorem isUnipotentPoint_toConv_comp_iff {H' : Type w} [Semiring H']
+    [_root_.HopfAlgebra k H'] (e : H ≃ₐc[k] H') (g : WithConv (H' →ₐ[k] K)) :
+    IsUnipotentPoint
+      (toConv (g.ofConv.comp ((e : H →ₐc[k] H') : H →ₐ[k] H'))) ↔ IsUnipotentPoint g := by
+  simpa only [AlgHom.mapDomain_apply] using isUnipotentPoint_mapDomain_iff e g
 
 /-- The identity point is unipotent. -/
 @[simp]
