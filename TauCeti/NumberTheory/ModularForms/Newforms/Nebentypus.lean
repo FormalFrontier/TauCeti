@@ -42,9 +42,6 @@ theory it rests on.
 * `TauCeti.iSup_inf_cuspFormsOld_cuspFormCharSpace`,
   `TauCeti.iSup_inf_cuspFormsNew_cuspFormCharSpace`: the old and the new subspace are each the
   supremum of their nebentypus components.
-* `TauCeti.iSupIndep_inf_cuspFormsOld_cuspFormCharSpace`,
-  `TauCeti.iSupIndep_inf_cuspFormsNew_cuspFormCharSpace`: those components form an independent
-  family in both cases.
 * `TauCeti.mem_cuspFormsNew_iff_of_mem_cuspFormCharSpace`: a form of nebentypus `χ` is new
   exactly when it is orthogonal to the old forms of nebentypus `χ`.
 * `TauCeti.cuspFormsNew_inf_cuspFormCharSpace`: `S_k(N, χ)ⁿᵉʷ = S_k(Γ₁(N))ⁿᵉʷ ⊓ S_k(N, χ)`.
@@ -95,17 +92,6 @@ theorem iSup_inf_cuspFormsNew_cuspFormCharSpace (N : ℕ) [NeZero N] (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsNew N k ⊓ cuspFormCharSpace k χ) = cuspFormsNew N k :=
   iSup_inf_cuspFormCharSpace_of_invariant k _ fun _ _ hf ↦ by
     rw [diamondOpCuspHom_apply]; exact diamondOpCusp_mem_cuspFormsNew _ hf
-
-/-- The nebentypus components of the old subspace form an independent family, being contained
-in the independent family of nebentypus spaces. -/
-theorem iSupIndep_inf_cuspFormsOld_cuspFormCharSpace (N : ℕ) [NeZero N] (k : ℤ) :
-    iSupIndep fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ :=
-  (iSupIndep_cuspFormCharSpace k).mono fun _ ↦ inf_le_right
-
-/-- The nebentypus components of the new subspace form an independent family. -/
-theorem iSupIndep_inf_cuspFormsNew_cuspFormCharSpace (N : ℕ) [NeZero N] (k : ℤ) :
-    iSupIndep fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ :=
-  (iSupIndep_cuspFormCharSpace k).mono fun _ ↦ inf_le_right
 
 /-! ### Newness at a fixed nebentypus -/
 
