@@ -38,7 +38,7 @@ source ring without a separate uniqueness theorem.
 * `IsSemisimpleRing.wedderburnPresentation` and its algebraic refinements choose the corresponding
   presentations for a semisimple ring.
 * `TauCeti.WedderburnPresentation.exists_simpleModules` shows that the chosen blocks enumerate the
-  simple modules, by applying `TauCeti.blocks_equiv_simpleModules`.
+  isomorphism classes of simple left ideals, by applying `TauCeti.blocks_equiv_simpleModules`.
 
 ## References
 
@@ -189,16 +189,11 @@ def toWedderburnAlgebraPresentation (P : SplitWedderburnAlgebraPresentation K A)
 @[expose]
 def toWedderburnPresentation (P : SplitWedderburnAlgebraPresentation K A) :
     WedderburnPresentation A :=
-  @WedderburnPresentation.mk A _
-    P.blockCount
-    (fun _ ↦ K)
-    P.degree
-    (fun _ ↦ inferInstance)
-    P.instNeZeroDegree
-    P.equiv.toRingEquiv
+  P.toWedderburnAlgebraPresentation.toWedderburnPresentation
 
-theorem toWedderburnPresentation_def (P : SplitWedderburnAlgebraPresentation K A) :
-    P.toWedderburnPresentation = P.toWedderburnAlgebraPresentation.toWedderburnPresentation :=
+theorem toWedderburnAlgebraPresentation_toWedderburnPresentation
+    (P : SplitWedderburnAlgebraPresentation K A) :
+    P.toWedderburnAlgebraPresentation.toWedderburnPresentation = P.toWedderburnPresentation :=
   rfl
 
 @[simp]
@@ -271,19 +266,11 @@ noncomputable def toWedderburnAlgebraPresentation (P : WedderburnEndomorphismPre
 @[expose]
 noncomputable def toWedderburnPresentation (P : WedderburnEndomorphismPresentation K A) :
     WedderburnPresentation A :=
-  open Classical in
-  let _ : ∀ i, IsSimpleModule A (P.simpleIdeal i) := P.instIsSimpleModule
-  let _ : ∀ i, DivisionRing (Module.End A (P.simpleIdeal i))ᵐᵒᵖ := fun _ ↦ inferInstance
-  @WedderburnPresentation.mk A _
-    P.blockCount
-    (fun i ↦ (Module.End A (P.simpleIdeal i))ᵐᵒᵖ)
-    P.degree
-    (fun _ ↦ inferInstance)
-    P.instNeZeroDegree
-    P.equiv.toRingEquiv
+  P.toWedderburnAlgebraPresentation.toWedderburnPresentation
 
-theorem toWedderburnPresentation_def (P : WedderburnEndomorphismPresentation K A) :
-    P.toWedderburnPresentation = P.toWedderburnAlgebraPresentation.toWedderburnPresentation :=
+theorem toWedderburnAlgebraPresentation_toWedderburnPresentation
+    (P : WedderburnEndomorphismPresentation K A) :
+    P.toWedderburnAlgebraPresentation.toWedderburnPresentation = P.toWedderburnPresentation :=
   rfl
 
 @[simp]
@@ -401,10 +388,10 @@ end IsSemisimpleRing
 
 namespace WedderburnPresentation
 
-variable {R : Type u} [Ring R] [IsSemisimpleRing R]
+variable {R : Type u} [Ring R]
 
-/-- The blocks in a chosen Wedderburn presentation enumerate the simple modules: they determine a
-pairwise non-isomorphic, exhaustive family of simple left ideals. -/
+/-- The blocks in a chosen Wedderburn presentation enumerate the isomorphism classes of simple
+left ideals: they determine a pairwise non-isomorphic, exhaustive family of simple left ideals. -/
 theorem exists_simpleModules (P : WedderburnPresentation R) :
     ∃ S : Fin P.blockCount → Submodule R R,
       (∀ i, IsSimpleModule R (S i)) ∧
@@ -412,6 +399,7 @@ theorem exists_simpleModules (P : WedderburnPresentation R) :
       ∀ I : Submodule R R, IsSimpleModule R I → ∃ i, Nonempty (I ≃ₗ[R] S i) := by
   let _ : ∀ i, DivisionRing (P.divisionRing i) := P.instDivisionRing
   let _ : ∀ i, NeZero (P.degree i) := P.instNeZeroDegree
+  have : IsSemisimpleRing R := P.equiv.symm.isSemisimpleRing
   exact blocks_equiv_simpleModules P.equiv
 
 end WedderburnPresentation
