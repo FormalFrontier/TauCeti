@@ -106,24 +106,6 @@ noncomputable abbrev instAdditiveCharacterGroupGaloisAction {A : Type v}
 
 attribute [instance] instAdditiveCharacterGroupGaloisAction
 
-/-- Evaluation through the absolute-Galois wrapper agrees with the underlying algebra
-equivalence. -/
-@[simp]
-theorem smul_algebraicClosure (sigma : Field.absoluteGaloisGroup k)
-    (a : AlgebraicClosure k) :
-    sigma • a = (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from sigma) a := by
-  unfold Field.absoluteGaloisGroup at sigma ⊢
-  exact AlgEquiv.smul_def sigma a
-
-/-- The scalar-extension action crosses the absolute-Galois wrapper on pure tensors. -/
-@[simp]
-theorem smul_tmul_absoluteGalois {A : Type v} [Semiring A] [Algebra k A]
-    (sigma : Field.absoluteGaloisGroup k) (a : AlgebraicClosure k) (x : A) :
-    sigma • (a ⊗ₜ[k] x) =
-      (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from sigma) a ⊗ₜ[k] x := by
-  unfold Field.absoluteGaloisGroup at sigma ⊢
-  exact ScalarAut.smul_tmul sigma a x
-
 /-- The underlying value of the absolute-Galois action on a scalar-extended group-like element. -/
 @[simp]
 theorem val_smul {A : Type v} [Semiring A] [Bialgebra k A]

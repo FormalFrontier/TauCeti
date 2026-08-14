@@ -86,8 +86,12 @@ private theorem stabilizer_scalarExtension_isOpen {A : Type v} [Semiring A] [Alg
         ?_ (stabilizer_algebraicClosure_isOpen a)
       intro σ hσ
       rw [MulAction.mem_stabilizer_iff] at hσ ⊢
-      rw [smul_algebraicClosure] at hσ
-      rw [smul_tmul_absoluteGalois, hσ]
+      -- Expose the algebra equivalence behind the opaque absolute-Galois wrapper only here.
+      change (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) • a = a at hσ
+      rw [AlgEquiv.smul_def] at hσ
+      change (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) • (a ⊗ₜ[k] x) =
+        a ⊗ₜ[k] x
+      rw [ScalarAut.smul_tmul, hσ]
   | add x y hx hy =>
       apply Subgroup.isOpen_mono
         (H₁ := MulAction.stabilizer (Field.absoluteGaloisGroup k) x ⊓
