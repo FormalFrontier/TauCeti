@@ -61,6 +61,8 @@ layer deferred above.
   among the numerators.
 * `TauCeti.ValuationSpectrum.rationalSubset_singleton_one` : the whole spectrum is the
   rational subset `R({1}/1)` — Wedhorn's "`Spa (A, A⁺)` itself is rational".
+* `TauCeti.ValuationSpectrum.val_preimage_rationalSubset` : on the subtype `spa A⁺`, a
+  rational subset is just the trace of its ambient basic open.
 * `TauCeti.ValuationSpectrum.isOpen_val_preimage_rationalSubset` : a rational subset is
   relatively open in the subspace `spa A⁺`.
 * `TauCeti.ValuationSpectrum.rationalSubset_inter` : the intersection identity above — the
@@ -133,11 +135,20 @@ theorem rationalSubset_singleton_one (Aplus : Subring A) :
   exact ⟨fun t ht => by simp [Finset.mem_singleton.mp ht],
     v.toValuativeRel.not_vle_one_zero⟩
 
+/-- On the subtype `spa A⁺`, the preimage of `R(T/s)` is the preimage of the ambient basic
+open `Spv(A)(T/s)`: the `spa A⁺` condition is automatic from the subtype. This is the form used
+to compare the rational bases of `Spa(A,A⁺)` and `Spv(A,I)`. -/
+@[simp]
+theorem val_preimage_rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) :
+    (Subtype.val ⁻¹' rationalSubset Aplus T s : Set (spa Aplus)) =
+      Subtype.val ⁻¹' basicOpenFinset T s := by
+  rw [rationalSubset_def, Set.preimage_inter, Subtype.coe_preimage_self, Set.univ_inter]
+
 /-- The preimage of `R(T/s)` under the coercion of the subtype `spa A⁺` is open: a rational
 subset is relatively open in the adic spectrum. -/
 theorem isOpen_val_preimage_rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) :
     IsOpen (Subtype.val ⁻¹' rationalSubset Aplus T s : Set (spa Aplus)) := by
-  rw [rationalSubset_def, Set.preimage_inter, Subtype.coe_preimage_self, Set.univ_inter]
+  rw [val_preimage_rationalSubset]
   exact (isOpen_basicOpenFinset T s).preimage continuous_subtype_val
 
 open scoped Classical Pointwise in
