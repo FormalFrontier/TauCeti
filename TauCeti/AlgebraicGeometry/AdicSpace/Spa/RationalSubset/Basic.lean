@@ -6,8 +6,6 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
-public import TauCeti.RingTheory.Huber.Basic
-import TauCeti.RingTheory.Huber.OpenIdeal
 
 /-!
 # Rational subsets of the adic spectrum
@@ -28,14 +26,13 @@ topology of `A` to its ring operations, the subring is arbitrary, and Wedhorn's 
 condition that the ideal `T · A` be open is not assumed. It is Wedhorn's rational subset of
 `Spa (A, A⁺)` under his hypotheses (a Huber ring, a ring of integral elements, `T · A` open);
 the open-ideal condition enters only in the results that need it — Wedhorn's admissibility
-setting, the Tate-ring specialization of the standard cover below, the basis claims of
-Definition 7.29, and the quasi-compactness of Theorem 7.35. The generalized unit-ideal
-standard-cover theorem itself requires no openness hypothesis.
+setting, the basis claims of Definition 7.29, and the quasi-compactness of Theorem 7.35. The
+generalized unit-ideal standard-cover theorem itself requires no openness hypothesis.
 
 The exported interface of the definition, the normalizations and the intersection identity
 inherited from `Spv(A)(T/s)`, the whole-space case, containment in `spa A⁺`, and relative
 openness in the subspace all hold with no extra hypotheses. The file also proves the forward
-standard-cover implication of Corollary 7.53 and its open-ideal specialization for Tate rings.
+standard-cover implication of Corollary 7.53.
 
 On the intersection identity, writing `Uᵢ = insert sᵢ Tᵢ` for each numerator set augmented by
 its own denominator (which costs nothing, by `rationalSubset_insert_self`),
@@ -79,7 +76,8 @@ layer deferred above.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.29 and Remark 7.30.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.29, Remark 7.30, and
+  Corollary 7.53.
 * AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0) at commit
   `2baa76f742bdb4fb8ee323fabba41203bd390e08`,
   `projects/AdicSpaces/Adic spaces/RationalSubsets.lean`, is the roadmap's designated prior
@@ -101,9 +99,8 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A]
 /-- The rational subset `R(T/s)` of the adic spectrum: the trace on `spa A⁺` of the basic open
 `Spv(A)(T/s)`. Under Wedhorn's hypotheses — a Huber ring, a ring of integral elements, and the
 ideal `T · A` open — this is his Definition 7.29; the definition itself asks for none of them,
-and the open-ideal condition matters only for results such as Wedhorn's admissibility setting,
-the Tate-ring cover specialization below, or the basis claims, not for the definition nor the
-generalized unit-ideal cover. -/
+and the open-ideal condition matters only for results such as Wedhorn's admissibility setting
+or the basis claims, not for the definition nor the generalized unit-ideal cover. -/
 def rationalSubset (Aplus : Subring A) (T : Finset A) (s : A) : Set (Spv A) :=
   spa Aplus ∩ basicOpenFinset T s
 
@@ -181,7 +178,7 @@ theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s�
 a complete Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if `T`
 generates the unit ideal of `A`, then every point `v ∈ spa Aplus` belongs to the standard rational
 subset `R(T/s)` for some `s ∈ T`. -/
-theorem mem_rationalSubset_of_mem_spa_of_span_eq_top (Aplus : Subring A) {T : Finset A}
+theorem mem_rationalSubset_of_span_eq_top_of_mem_spa (Aplus : Subring A) {T : Finset A}
     (hT : Ideal.span (T : Set A) = ⊤) {v : Spv A} (hv : v ∈ spa Aplus) :
     ∃ s ∈ T, v ∈ rationalSubset Aplus T s := by
   have hT_ne : T.Nonempty := by
@@ -211,24 +208,9 @@ theorem spa_eq_biUnion_rationalSubset_of_span_eq_top (Aplus : Subring A) {T : Fi
     spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t := by
   apply Set.Subset.antisymm
   · intro v hv
-    obtain ⟨s, hs, hmem⟩ := mem_rationalSubset_of_mem_spa_of_span_eq_top Aplus hT hv
+    obtain ⟨s, hs, hmem⟩ := mem_rationalSubset_of_span_eq_top_of_mem_spa Aplus hT hv
     exact Set.mem_iUnion₂_of_mem hs hmem
   · exact Set.iUnion₂_subset fun t _ ↦ rationalSubset_subset_spa Aplus T t
-
-section Tate
-
-variable [IsTopologicalRing A]
-variable [TauCeti.Huber.IsTateRing A]
-
-/-- Over a Tate ring, if a finite set `T` generates an open ideal, then the standard rational
-subsets `(R(T/t))_{t ∈ T}` cover `spa Aplus`. -/
-theorem spa_eq_biUnion_rationalSubset_of_isTateRing_of_isOpen (Aplus : Subring A) {T : Finset A}
-    (hT : IsOpen ((Ideal.span (T : Set A) : Ideal A) : Set A)) :
-    spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t :=
-  spa_eq_biUnion_rationalSubset_of_span_eq_top Aplus
-    ((TauCeti.Huber.IsTateRing.isOpen_iff_eq_top (Ideal.span (T : Set A))).mp hT)
-
-end Tate
 
 end TauCeti.ValuationSpectrum
 
