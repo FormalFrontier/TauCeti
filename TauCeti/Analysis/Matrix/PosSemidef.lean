@@ -49,7 +49,7 @@ variable {𝕜 : Type u} [RCLike 𝕜]
 private theorem finTwo_posSemidef {K : α → α → 𝕜}
     (hK : Matrix.PosSemidef K) (a b : α) :
     (Matrix.of fun i j : Fin 2 => K (![a, b] i) (![a, b] j)).PosSemidef := by
-  have h := (posSemidef_matrixOf hK).submatrix (fun i : Fin 2 => ![a, b] i)
+  have h := hK.submatrix (fun i : Fin 2 => ![a, b] i)
   have heq : Matrix.submatrix (Matrix.of K) (fun i : Fin 2 => ![a, b] i)
       (fun i : Fin 2 => ![a, b] i) =
       Matrix.of fun i j : Fin 2 => K (![a, b] i) (![a, b] j) := by

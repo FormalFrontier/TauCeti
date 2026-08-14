@@ -48,13 +48,6 @@ universe u v w
 
 variable {α : Type v}
 
-/-- Make the definitional identification between a two-variable function and its explicit
-`Matrix.of` presentation visible before applying matrix API such as `Matrix.PosSemidef.submatrix`.
--/
-theorem posSemidef_matrixOf {R : Type u} [Ring R] [PartialOrder R] [StarRing R]
-    {K : α → α → R} (hK : Matrix.PosSemidef K) : (Matrix.of K).PosSemidef :=
-  hK
-
 private theorem posSemidef_of_support_posSemidef {R : Type u}
     [Ring R] [PartialOrder R] [StarRing R] (K : α → α → R)
     (hHerm : (Matrix.of fun a b => K a b).IsHermitian) (hgram : ∀ x : α →₀ R,
@@ -133,7 +126,7 @@ theorem posSemidef_iff_finite_sum {R : Type u} [Ring R] [PartialOrder R] [StarRi
   · exact hK.isHermitian.apply b a
   · intro ι _ v x
     have hgram : Matrix.PosSemidef fun i j => K (v i) (v j) := by
-      have h := (posSemidef_matrixOf hK).submatrix v
+      have h := hK.submatrix v
       have heq : Matrix.submatrix (Matrix.of K) v v = fun i j => K (v i) (v j) := by
         apply Matrix.ext
         intro i j
