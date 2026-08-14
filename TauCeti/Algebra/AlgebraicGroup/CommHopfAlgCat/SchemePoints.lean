@@ -40,8 +40,8 @@ Hopf algebra.
   becomes postcomposition by its contravariant `hopfSpec` image.
 * `TauCeti.CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain`: contravariance for arbitrary
   named point equivalences characterized by their underlying spectrum maps.
-* `TauCeti.CommHopfAlgCat.mapMulEquivOfPresentation_mapDomain`: the same contravariance after
-  transporting both Hopf spectra across named presentations.
+* `TauCeti.CommHopfAlgCat.transportPointwiseFormula`: transport a formula on algebra-valued
+  points across named presentations of the source and target point groups.
 -/
 
 public section
@@ -245,31 +245,35 @@ theorem pointMulEquivOfPresentation_mapDomain
   erw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
   rfl
 
-/-- Contravariant naturality in the coordinate Hopf algebra after transporting both spectra
-across named presentations. Precomposing a `K`-point by `φ : H ⟶ K` corresponds to
-postcomposing its transported spectrum point by the transported `hopfSpec` morphism. -/
-theorem mapMulEquivOfPresentation_mapDomain
-    {H K : _root_.CommHopfAlgCat.{u} R} (A : Type u) [CommRing A] [Algebra R A]
-    {G H' : Grp (Over (Spec (CommRingCat.of R)))}
-    (hG : G = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H))
-    (hH' : H' = (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op K))
-    (φ : H ⟶ K) (p : HopfAlgebra.points (R := R) (H := K) (CommAlgCat.of R A)) :
-    mapMulEquivOfPresentation K A hH' p ≫
-        (eqToHom hH' ≫
-          (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op ≫
-          eqToHom hG.symm).hom.hom =
-      mapMulEquivOfPresentation H A hG
-        ((mapPointsFunctor φ).app (CommAlgCat.of R A) p) := by
-  let hGX : G.X.left = Spec (CommRingCat.of H) := by
-    rw [hG]
-    rfl
-  let hH'X : H'.X.left = Spec (CommRingCat.of K) := by
-    rw [hH']
-    rfl
-  exact pointMulEquivOfPresentation_mapDomain A hG hH' hGX hH'X
-    (mapMulEquivOfPresentation H A hG) (mapMulEquivOfPresentation K A hH')
-    (mapMulEquivOfPresentation_apply_left H A hG hGX)
-    (mapMulEquivOfPresentation_apply_left K A hH' hH'X) φ p
+/-- Transport a formula on algebra-valued points across named presentations of its source and
+target point groups. The first hypothesis identifies composition on presented points, while the
+second supplies the concrete formula before transport. -/
+theorem transportPointwiseFormula
+    {P Q S T X Y : Type*} [Group P] [Group Q] [Group S] [Group T] [Group X] [Group Y]
+    (sourcePresentation : Q ≃* P) (targetPresentation : T ≃* S)
+    (sourcePoints : Q ≃* X) (targetPoints : T ≃* Y)
+    (sourceSchemePoints : P ≃* X) (targetSchemePoints : S ≃* Y)
+    (sourceSchemePoints_symm_apply : ∀ x, sourceSchemePoints.symm x =
+      sourcePresentation (sourcePoints.symm x))
+    (targetSchemePoints_symm_apply : ∀ y, targetSchemePoints.symm y =
+      targetPresentation (targetPoints.symm y))
+    (mapPresentation : P → S) (mapPoints : Q → T) (mapConcrete : X → Y)
+    (mapPresentation_apply : ∀ q, mapPresentation (sourcePresentation q) =
+      targetPresentation (mapPoints q))
+    (mapPoints_apply : ∀ q, targetPoints (mapPoints q) = mapConcrete (sourcePoints q))
+    (p : P) :
+    targetSchemePoints (mapPresentation p) = mapConcrete (sourceSchemePoints p) := by
+  obtain ⟨q, rfl⟩ := sourcePresentation.surjective p
+  have source_compat : sourceSchemePoints (sourcePresentation q) = sourcePoints q := by
+    apply sourceSchemePoints.symm.injective
+    rw [sourceSchemePoints.symm_apply_apply, sourceSchemePoints_symm_apply,
+      sourcePoints.symm_apply_apply]
+  have target_compat : targetSchemePoints (targetPresentation (mapPoints q)) =
+      targetPoints (mapPoints q) := by
+    apply targetSchemePoints.symm.injective
+    rw [targetSchemePoints.symm_apply_apply, targetSchemePoints_symm_apply,
+      targetPoints.symm_apply_apply]
+  rw [mapPresentation_apply, target_compat, source_compat, mapPoints_apply]
 
 end CommHopfAlgCat
 

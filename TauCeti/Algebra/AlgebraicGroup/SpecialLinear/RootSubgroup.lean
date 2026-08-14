@@ -298,22 +298,19 @@ theorem schemePointsMulEquiv_rootSubgroup (hij : i ≠ j)
     schemePointsMulEquiv R N A (p ≫ (rootSubgroup hij).hom.hom) =
       Matrix.SpecialLinearGroup.transvection hij
         (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p)) := by
-  obtain ⟨q, rfl⟩ :=
-    (AdditiveGroup.groupSchemePointMulEquiv (R := R) (A := A)).surjective p
-  have hSL : schemePointsMulEquiv R N A
-      (groupSchemePointMulEquiv R N A (rootSubgroupPoints hij q)) =
-      (pointsMulEquiv (R := R) (A := A) N) (rootSubgroupPoints hij q) := by
-    apply (schemePointsMulEquiv R N A).symm.injective
-    rw [MulEquiv.symm_apply_apply, schemePointsMulEquiv_symm_apply,
-      MulEquiv.symm_apply_apply]
-  have hGa : AdditiveGroup.schemePointsMulEquiv A
-      (AdditiveGroup.groupSchemePointMulEquiv A q) =
-      AdditiveGroup.gaPointsMulEquiv q := by
-    apply (AdditiveGroup.schemePointsMulEquiv (R := R) A).symm.injective
-    rw [MulEquiv.symm_apply_apply, AdditiveGroup.schemePointsMulEquiv_symm_apply,
-      MulEquiv.symm_apply_apply]
-  rw [groupSchemePointMulEquiv_comp_rootSubgroup, hSL, hGa,
-    pointsMulEquiv_rootSubgroupPoints]
+  exact CommHopfAlgCat.transportPointwiseFormula
+    (AdditiveGroup.groupSchemePointMulEquiv (R := R) (A := A))
+    (groupSchemePointMulEquiv (R := R) N A)
+    (AdditiveGroup.gaPointsMulEquiv (R := R) (A := A))
+    (pointsMulEquiv (R := R) (A := A) N)
+    (AdditiveGroup.schemePointsMulEquiv (R := R) A)
+    (schemePointsMulEquiv (R := R) N A)
+    (AdditiveGroup.schemePointsMulEquiv_symm_apply (R := R) A)
+    (schemePointsMulEquiv_symm_apply (R := R) N A)
+    (fun p ↦ p ≫ (rootSubgroup hij).hom.hom) (rootSubgroupPoints hij)
+    (fun a ↦ Matrix.SpecialLinearGroup.transvection hij (Multiplicative.toAdd a))
+    (groupSchemePointMulEquiv_comp_rootSubgroup (R := R) (N := N) A hij)
+    (pointsMulEquiv_rootSubgroupPoints (R := R) (A := A) hij) p
 
 end SchemePoints
 
