@@ -262,15 +262,6 @@ theorem hasStrictFDerivAt_normalFormOpenPartialHomeomorph_symm_self {f : E → F
   rw [HasStrictFDerivAt.localInverse_def] at hinv
   simpa only [normalFormOpenPartialHomeomorph, normalFormMap_self] using hinv
 
-omit [CompleteSpace E] in
-/-- The projection onto the inessential codomain summand vanishes on the image of the Fredholm
-operator. -/
-theorem projectionOntoL_apply_eq_zero (x : E) :
-    pkg.decCodom.X₀.projectionOntoL pkg.decCodom.X₁ pkg.decCodom.isTopCompl.symm (T x) = 0 :=
-  Submodule.projectionOntoL_apply_eq_zero_of_mem_right _ (by
-    rw [← pkg.range_eq]
-    exact LinearMap.mem_range_self (T : E →ₗ[𝕜] F) x)
-
 /-- The finite-dimensional obstruction has zero derivative at the coordinate of the base point.
 This is the differential statement that the chosen essential coordinate absorbs the entire
 linear part of `f`. -/
@@ -295,7 +286,9 @@ theorem hasStrictFDerivAt_obstructionMap_self {f : E → F} {a : E}
       (pkg.decCodom.X₁ × pkg.decDom.X₀) →L[𝕜] E)) = 0 := by
     apply ContinuousLinearMap.ext
     intro y
-    exact pkg.projectionOntoL_apply_eq_zero _
+    change P (T (pkg.normalFormEquivL.symm y)) = 0
+    apply Submodule.projectionOntoL_apply_eq_zero_of_mem_right
+    exact pkg.range_eq.le (LinearMap.mem_range_self (T : E →ₗ[𝕜] F) _)
   apply (hcomp.congr_fderiv hzero).congr_of_eventuallyEq
   filter_upwards [] with y
   exact (pkg.obstructionMap_apply hf y).symm
