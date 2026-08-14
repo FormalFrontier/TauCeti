@@ -27,17 +27,17 @@ commutative ring.
 
 This file builds that form, both as a bilinear form (`TauCeti.traceBilinForm`) and as the quadratic
 form `X ↦ trace (X * X)` (`TauCeti.traceQuadraticForm`), whose Clifford algebra is the one carrying
-the canonical anticommutation relations below, and records the three facts a Clifford construction
-consumes: the polar form is `2 • ⟨·, ·⟩`, the form is nondegenerate once `2` is invertible, and the
-adjoint action lands in the skew-adjoint endomorphisms of the polar form.
+the anticommutation relations below, and records the three facts a Clifford construction consumes:
+the polar form is `2 • ⟨·, ·⟩`, the form is nondegenerate once `2` is invertible, and the adjoint
+action lands in the skew-adjoint endomorphisms of the polar form.
 
 The factors of two are then pinned once and for all on the matrix units. Writing `d_ij` for
-`ι (Eᵢⱼ)`, the Clifford relation `ι v * ι v = Q v` polarizes to the canonical anticommutation
-relations
+`ι (Eᵢⱼ)`, the Clifford relation `ι v * ι v = Q v` polarizes to the anticommutation relations
 `d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li`, `d_ij d_ij = δ_ij`.
-These are relations in the Clifford algebra of the trace form; over `ℂ` they are the defining
-relations of the CAR algebra on `n × n` matrices, but no identification of that Clifford algebra
-with a CAR algebra is made here.
+These are relations in the Clifford algebra of the trace form, and nothing beyond that is claimed of
+them here. Reading them, as the roadmap does, as the relations of a CAR algebra would need a
+splitting of the generators into creation and annihilation operators, an involution, and an
+identification of this Clifford algebra with a CAR algebra; none of that is supplied.
 
 ## Main definitions
 
@@ -60,8 +60,8 @@ with a CAR algebra is made here.
   invertible.
 * `TauCeti.traceQuadraticForm_ι_mul_ι_add_swap`: the anticommutation relation
   `ι X ι Y + ι Y ι X = 2 trace (X * Y)` for arbitrary generators, of which
-  `TauCeti.traceQuadraticForm_ι_single_mul_ι_single_add_swap`, the canonical anticommutation
-  relations `d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li` on the matrix units, is the specialization; and
+  `TauCeti.traceQuadraticForm_ι_single_mul_ι_single_add_swap`, the anticommutation relations
+  `d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li` on the matrix units, is the specialization; and
   `TauCeti.traceQuadraticForm_ι_single_mul_self`: the squares `d_ij d_ij = δ_ij`.
 
 ## Implementation notes
@@ -182,7 +182,7 @@ variable [CommSemiring R]
 
 variable (R n) in
 /-- **The trace quadratic form of `gl n R`**, `X ↦ trace (X * X)`. Its Clifford algebra is the one
-whose generators satisfy the canonical anticommutation relations
+whose generators satisfy the anticommutation relations
 `TauCeti.traceQuadraticForm_ι_single_mul_ι_single_add_swap`. -/
 def traceQuadraticForm : QuadraticForm R (Matrix n n R) :=
   LinearMap.BilinMap.toQuadraticMap (traceBilinForm R n)
@@ -273,7 +273,7 @@ theorem traceQuadraticForm_ι_mul_ι_add_swap (X Y : Matrix n n R) :
       = algebraMap R _ (2 * (X * Y).trace) := by
   rw [ι_mul_ι_add_swap, ← QuadraticMap.polarBilin_apply_apply, polarBilin_traceQuadraticForm]
 
-/-- **The canonical anticommutation relations** on the matrix units: writing `d_ij` for
+/-- **The anticommutation relations of the matrix-unit generators**: writing `d_ij` for
 `ι (Eᵢⱼ)` in the Clifford algebra of the trace quadratic form,
 `d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li`,
 the matrix units being paired by the trace form exactly when `j = k` and `l = i`. -/
