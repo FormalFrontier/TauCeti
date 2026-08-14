@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.FieldTheory.IsSepClosed
-public import TauCeti.LinearAlgebra.CliffordAlgebra.PinAction
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Pin.Action
 
 /-!
 # Lifting reflections to the Pin and Spin groups
