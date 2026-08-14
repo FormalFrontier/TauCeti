@@ -27,26 +27,26 @@ This file introduces:
   tangent fields under pointwise positive scaling.
 * `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: smooth knots carrying a source orientation.
-* `TauCeti.SmoothKnot`: framed, oriented smooth knots carrying a tubular embedding.
-* `TauCeti.SmoothKnot3`: smooth knots in the 3-sphere $S^3$.
-* `TauCeti.SmoothLink`: $k$-component smooth links in a 3-manifold $M$, bundling $k$
-  component knots with pairwise disjoint tubular neighborhoods.
-* `TauCeti.SmoothLink3`: smooth $k$-component links in $S^3$.
+* `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth knots carrying a tubular embedding.
+* `TauCeti.FramedOrientedSmoothKnot3`: framed, oriented smooth knots in the 3-sphere $S^3$.
+* `TauCeti.FramedOrientedSmoothLink`: $k$-component framed oriented smooth links in a 3-manifold
+  $M$, bundling $k$ component knots with pairwise disjoint core embedding images.
+* `TauCeti.FramedOrientedSmoothLink3`: framed oriented smooth $k$-component links in $S^3$.
 
 ## Main definitions
 
 * `TauCeti.Sphere1.Orientation`: manifold orientation of $S^1$.
 * `TauCeti.UnorientedSmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: oriented smooth geometric presentations.
-* `TauCeti.SmoothKnot`: framed, oriented smooth geometric presentations.
-* `TauCeti.SmoothLink`: type of $k$-component links in $M$.
+* `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth geometric presentations.
+* `TauCeti.FramedOrientedSmoothLink`: type of $k$-component framed oriented links in $M$.
 
 ## References
 
 * W. B. R. Lickorish, *An Introduction to Knot Theory*, Springer GTM 175 (1997).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -79,7 +79,7 @@ instance : CoeFun Sphere1.NonvanishingTangentField
 
 @[simp]
 theorem coe_mk (f : ∀ x : Sphere1, TangentSpace (𝓡 1) x) (hne) (hsmooth) :
-    ⇑(mk f hne hsmooth) = f := rfl
+    ⇑(mk f hne hsmooth) = f := (rfl)
 
 /-- Negating a nowhere-zero tangent vector field on `Sphere1`. -/
 def neg (v : Sphere1.NonvanishingTangentField) : Sphere1.NonvanishingTangentField where
@@ -92,20 +92,32 @@ instance : Neg Sphere1.NonvanishingTangentField where
 
 @[simp]
 theorem coe_neg (v : Sphere1.NonvanishingTangentField) (x : Sphere1) :
-    (-v) x = -v x := rfl
+    (-v) x = -v x := (rfl)
 
 /-- Two nonvanishing tangent vector fields on `Sphere1` determine the same orientation if they
 belong to the same ray (are positive multiples of each other) at every point. -/
 def SameOrientation (v₁ v₂ : Sphere1.NonvanishingTangentField) : Prop :=
   ∀ x : Sphere1, SameRay ℝ (v₁ x) (v₂ x)
 
+theorem sameOrientation_refl (v : Sphere1.NonvanishingTangentField) :
+    SameOrientation v v :=
+  fun x ↦ SameRay.refl (v x)
+
+theorem sameOrientation_symm {v₁ v₂ : Sphere1.NonvanishingTangentField}
+    (h : SameOrientation v₁ v₂) : SameOrientation v₂ v₁ :=
+  fun x ↦ (h x).symm
+
+theorem sameOrientation_trans {v₁ v₂ v₃ : Sphere1.NonvanishingTangentField}
+    (h₁ : SameOrientation v₁ v₂) (h₂ : SameOrientation v₂ v₃) : SameOrientation v₁ v₃ :=
+  fun x ↦ (h₁ x).trans (h₂ x) fun hzero ↦ (v₂.ne_zero' x hzero).elim
+
 /-- Equivalence relation for positive-ray scaling of nonvanishing tangent fields on `Sphere1`. -/
 instance setoid : Setoid Sphere1.NonvanishingTangentField where
   r := SameOrientation
   iseqv := {
-    refl := fun v x ↦ SameRay.refl (v x)
-    symm := fun {_ _} h x ↦ (h x).symm
-    trans := fun {_ v₂ _} h₁ h₂ x ↦ (h₁ x).trans (h₂ x) fun hzero ↦ (v₂.ne_zero' x hzero).elim
+    refl := sameOrientation_refl
+    symm := sameOrientation_symm
+    trans := sameOrientation_trans
   }
 
 theorem sameOrientation_neg {v₁ v₂ : Sphere1.NonvanishingTangentField}
@@ -123,28 +135,45 @@ namespace Sphere1.Orientation
 
 /-- The circle orientation represented by a smooth nowhere-zero tangent field. -/
 def ofField (v : Sphere1.NonvanishingTangentField) : Sphere1.Orientation :=
-  ⟦v⟧
+  Quotient.mk Sphere1.NonvanishingTangentField.setoid v
+
+theorem ofField_eq_ofField {v₁ v₂ : Sphere1.NonvanishingTangentField}
+    (h : Sphere1.NonvanishingTangentField.SameOrientation v₁ v₂) : ofField v₁ = ofField v₂ :=
+  Quotient.sound (s := Sphere1.NonvanishingTangentField.setoid) h
+
+/-- Two nonvanishing tangent fields represent the same circle orientation if and only if they
+have the same pointwise ray orientation. -/
+@[simp]
+theorem ofField_inj {v₁ v₂ : Sphere1.NonvanishingTangentField} :
+    ofField v₁ = ofField v₂ ↔ Sphere1.NonvanishingTangentField.SameOrientation v₁ v₂ := by
+  constructor
+  · exact Quotient.exact (s := Sphere1.NonvanishingTangentField.setoid)
+  · exact ofField_eq_ofField
 
 /-- Induction principle for circle orientations. -/
 @[elab_as_elim]
-theorem ind {P : Sphere1.Orientation → Prop}
+theorem induction {P : Sphere1.Orientation → Prop}
     (h : ∀ v : Sphere1.NonvanishingTangentField, P (ofField v)) (o : Sphere1.Orientation) : P o :=
-  Quotient.ind h o
+  Quotient.inductionOn (s := Sphere1.NonvanishingTangentField.setoid) o h
 
 /-- Reversing a circle orientation. -/
+def neg (o : Sphere1.Orientation) : Sphere1.Orientation :=
+  Quotient.liftOn (s := Sphere1.NonvanishingTangentField.setoid) o
+    (fun v ↦ ofField (-v))
+    (fun _ _ h ↦ ofField_eq_ofField (Sphere1.NonvanishingTangentField.sameOrientation_neg h))
+
 instance : Neg Sphere1.Orientation where
-  neg := Quotient.map (fun v ↦ -v)
-    (fun _ _ h ↦ Sphere1.NonvanishingTangentField.sameOrientation_neg h)
+  neg := neg
 
 @[simp]
 theorem neg_ofField (v : Sphere1.NonvanishingTangentField) :
-    -ofField v = ofField (-v) := rfl
+    -ofField v = ofField (-v) := (rfl)
 
 @[simp]
 theorem neg_neg (o : Sphere1.Orientation) : - (- o) = o := by
-  induction o using ind with | h v =>
+  induction o using induction with | h v =>
   simp only [neg_ofField]
-  refine Quotient.sound (fun x ↦ ?_)
+  refine ofField_eq_ofField (fun x ↦ ?_)
   simp only [Sphere1.NonvanishingTangentField.coe_neg, _root_.neg_neg, SameRay.rfl]
 
 end Sphere1.Orientation
@@ -162,6 +191,7 @@ public abbrev UnorientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [T
 
 /-- An oriented smooth-knot presentation consists of an underlying smooth embedding together with
 a manifold orientation of its circle source `Sphere1`. -/
+@[ext]
 structure OrientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
     [ChartedSpace H M] where
   /-- The underlying unoriented smooth knot. -/
@@ -174,18 +204,30 @@ namespace OrientedSmoothKnot
 /-- Forget the orientation of an oriented smooth knot. -/
 def forgetOrientation (K : OrientedSmoothKnot I M) : UnorientedSmoothKnot I M := K.knot
 
+@[simp]
+theorem forgetOrientation_mk (k : UnorientedSmoothKnot I M) (o : Sphere1.Orientation) :
+    (mk k o).forgetOrientation = k := (rfl)
+
+@[simp]
+theorem orientation_mk (k : UnorientedSmoothKnot I M) (o : Sphere1.Orientation) :
+    (mk k o).orientation = o := (rfl)
+
 /-- Reverse the orientation of an oriented smooth knot. -/
 def reverseOrientation (K : OrientedSmoothKnot I M) : OrientedSmoothKnot I M where
   knot := K.knot
   orientation := -K.orientation
 
 @[simp]
+theorem knot_reverseOrientation (K : OrientedSmoothKnot I M) :
+    (reverseOrientation I M K).knot = K.knot := (rfl)
+
+@[simp]
 theorem forgetOrientation_reverseOrientation (K : OrientedSmoothKnot I M) :
-    (reverseOrientation I M K).forgetOrientation = K.forgetOrientation := rfl
+    (reverseOrientation I M K).forgetOrientation = K.forgetOrientation := (rfl)
 
 @[simp]
 theorem orientation_reverseOrientation (K : OrientedSmoothKnot I M) :
-    (reverseOrientation I M K).orientation = -K.orientation := rfl
+    (reverseOrientation I M K).orientation = -K.orientation := (rfl)
 
 @[simp]
 theorem reverseOrientation_reverseOrientation (K : OrientedSmoothKnot I M) :
@@ -198,6 +240,7 @@ end OrientedSmoothKnot
 /-- A framed oriented smooth knot in a 3-manifold consists of an oriented core together with an
 embedding of its trivial rank-two normal bundle as a tubular neighborhood. The two normal
 coordinates record the framing. -/
+@[ext]
 structure FramedOrientedSmoothKnot
     (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] where
@@ -225,12 +268,35 @@ def forgetFraming (K : FramedOrientedSmoothKnot I₃ M₃) : OrientedSmoothKnot 
 def forget (K : FramedOrientedSmoothKnot I₃ M₃) : UnorientedSmoothKnot I₃ M₃ :=
   K.knot.knot
 
-end FramedOrientedSmoothKnot
+@[simp]
+theorem knot_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
+    (mk (I := I₃) (M := M₃) k t h).knot = k := (rfl)
 
-/-- The default smooth-knot presentation carries both orientation and framing data. -/
-public abbrev SmoothKnot (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H)
-    (M : Type*) [TopologicalSpace M] [ChartedSpace H M] : Type _ :=
-  FramedOrientedSmoothKnot I M
+@[simp]
+theorem tubularEmbedding_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
+    (mk (I := I₃) (M := M₃) k t h).tubularEmbedding = t := (rfl)
+
+@[simp]
+theorem forgetFraming_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
+    (mk (I := I₃) (M := M₃) k t h).forgetFraming = k := (rfl)
+
+@[simp]
+theorem forget_mk (k : OrientedSmoothKnot I₃ M₃) (t) (h) :
+    (mk (I := I₃) (M := M₃) k t h).forget = k.knot := (rfl)
+
+@[simp]
+theorem forgetFraming_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
+    K.forgetFraming = K.knot := (rfl)
+
+@[simp]
+theorem forget_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
+    K.forget = K.knot.knot := (rfl)
+
+@[simp]
+theorem forget_forgetFraming (K : FramedOrientedSmoothKnot I₃ M₃) :
+    K.forgetFraming.forgetOrientation = K.forget := (rfl)
+
+end FramedOrientedSmoothKnot
 
 /-- An unoriented smooth knot in the standard 3-sphere `Sphere3`. -/
 public abbrev UnorientedSmoothKnot3 : Type _ := UnorientedSmoothKnot (𝓡 3) Sphere3
@@ -239,44 +305,49 @@ public abbrev UnorientedSmoothKnot3 : Type _ := UnorientedSmoothKnot (𝓡 3) Sp
 public abbrev OrientedSmoothKnot3 : Type _ := OrientedSmoothKnot (𝓡 3) Sphere3
 
 /-- A framed, oriented smooth knot in the standard 3-sphere `Sphere3`. -/
-public abbrev SmoothKnot3 : Type _ := SmoothKnot (𝓡 3) Sphere3
+public abbrev FramedOrientedSmoothKnot3 : Type _ := FramedOrientedSmoothKnot (𝓡 3) Sphere3
 
-/-- A `k`-component smooth link in a 3-manifold `M` consists of `k` framed oriented knots with
-pairwise disjoint tubular neighborhoods. -/
-structure SmoothLink (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H)
+/-- A `k`-component framed oriented smooth link in a 3-manifold `M` consists of `k` framed oriented
+knots with pairwise disjoint core embedding images. -/
+@[ext]
+structure FramedOrientedSmoothLink (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H)
     (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) where
   /-- The individual component knots of the link. -/
-  component : Fin k → SmoothKnot I M
-  /-- Different components have disjoint tubular neighborhoods in `M`. -/
+  component : Fin k → FramedOrientedSmoothKnot I M
+  /-- Different components have pairwise disjoint core embedding images in `M`. -/
   pairwise_disjoint : Pairwise fun i j =>
-    Disjoint (range (component i).tubularEmbedding) (range (component j).tubularEmbedding)
+    Disjoint (range (component i).knot.knot) (range (component j).knot.knot)
 
-/-- A `k`-component smooth link in the standard 3-sphere `Sphere3`. -/
-public abbrev SmoothLink3 (k : ℕ) : Type _ := SmoothLink (𝓡 3) Sphere3 k
+/-- A `k`-component framed oriented smooth link in the standard 3-sphere `Sphere3`. -/
+public abbrev FramedOrientedSmoothLink3 (k : ℕ) : Type _ := FramedOrientedSmoothLink (𝓡 3) Sphere3 k
 
-namespace SmoothLink
+namespace FramedOrientedSmoothLink
 
 variable {H₃ : Type*} [TopologicalSpace H₃]
   {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
   {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
 
-/-- Convert a single smooth knot into a 1-component smooth link. -/
-def ofKnot (K : SmoothKnot I₃ M₃) : SmoothLink I₃ M₃ 1 where
+/-- Convert a single framed oriented smooth knot into a 1-component framed oriented smooth link. -/
+def ofKnot (K : FramedOrientedSmoothKnot I₃ M₃) : FramedOrientedSmoothLink I₃ M₃ 1 where
   component _ := K
   pairwise_disjoint := Subsingleton.pairwise
 
-/-- Distinct components of a smooth link are distinct framed knot presentations. -/
-theorem component_injective {k : ℕ} (L : SmoothLink I₃ M₃ k) :
+@[simp]
+theorem ofKnot_component (K : FramedOrientedSmoothKnot I₃ M₃) (i : Fin 1) :
+    (ofKnot K).component i = K := (rfl)
+
+/-- Distinct components of a framed oriented smooth link are distinct framed knot presentations. -/
+theorem component_injective {k : ℕ} (L : FramedOrientedSmoothLink I₃ M₃ k) :
     Function.Injective L.component := by
   let _ : Nonempty Sphere1 := NormedSpace.sphere_nonempty_rclike ℝ zero_le_one
   intro i j hij
-  by_contra hne
-  have hdisjoint := L.pairwise_disjoint hne
-  have hrange : range (L.component i).tubularEmbedding =
-      range (L.component j).tubularEmbedding :=
-    congrArg (fun K : SmoothKnot I₃ M₃ ↦ range K.tubularEmbedding) hij
-  exact hdisjoint.ne (range_nonempty (L.component i).tubularEmbedding).ne_empty hrange
+  apply L.pairwise_disjoint.eq
+  intro hdisj
+  have hrange : range (L.component i).knot.knot = range (L.component j).knot.knot :=
+    congrArg (fun K : FramedOrientedSmoothKnot I₃ M₃ ↦ range K.knot.knot) hij
+  rw [hrange, disjoint_self] at hdisj
+  exact (range_nonempty (L.component j).knot.knot).ne_empty hdisj
 
-end SmoothLink
+end FramedOrientedSmoothLink
 
 end TauCeti
