@@ -68,8 +68,10 @@ and scalars commute past it (`ModularForm.rat_smul_slash_of_det_pos`). Over a ge
 
 ## Main results
 
-* `HeckeRing.GL2.transposeRep_def`, `HeckeRing.GL2.heckeSlashSum_apply`: the characteristic
-  equations, which are the interface since neither definition is `@[expose]`.
+* `HeckeRing.GL2.transposeRep_def`, `HeckeRing.GL2.heckeSlashSum_def` and
+  `HeckeRing.GL2.heckeSlashSum_apply`: the characteristic equations, which are the interface
+  since neither definition is `@[expose]`. The last two are the function-level and pointwise
+  forms of the same equation.
 * `HeckeRing.GL2.det_transposeRep_pos`: the representatives have positive determinant.
 * `HeckeRing.GL2.heckeSlashSum_add`, `heckeSlashSum_zero`, `heckeSlashSum_smul`: `ℂ`-linearity.
 
@@ -144,6 +146,12 @@ independent by cancellation. Do not read this definition as "the Hecke operator"
 sufficiency theorem is available. -/
 noncomputable def heckeSlashSum (f : ℍ → ℂ) : ℍ → ℂ :=
   ∑ i : DecompQuotient (SLnZ 2) (SLnZ 2) (D.out : GL (Fin 2) ℚ), f ∣[k] transposeRep D i
+
+/-- Defining equation for `heckeSlashSum` at the level of functions. Since `heckeSlashSum` is
+not `@[expose]`, a downstream module rewrites with this instead of unfolding the body; the
+pointwise `heckeSlashSum_apply` below is the companion for arguments that work at a point. -/
+lemma heckeSlashSum_def (f : ℍ → ℂ) : heckeSlashSum k D f =
+    ∑ i : DecompQuotient (SLnZ 2) (SLnZ 2) (D.out : GL (Fin 2) ℚ), f ∣[k] transposeRep D i := (rfl)
 
 /-- The pointwise value of the slash sum: the sum of the slashed values. This is the equation
 the reindexing proof of Prop 3.37 works from. -/

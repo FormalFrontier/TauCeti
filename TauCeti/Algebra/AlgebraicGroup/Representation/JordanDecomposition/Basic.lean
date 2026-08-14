@@ -95,6 +95,18 @@ noncomputable def jordanDecomposition (g : WithConv (H →ₐ[k] K)) :
     WithConv (H →ₐ[k] K) × WithConv (H →ₐ[k] K) :=
   (semisimplePart k H K g, unipotentPart k H K g)
 
+/-- The first component of the Jordan decomposition is the semisimple part. -/
+@[simp]
+theorem jordanDecomposition_fst (g : WithConv (H →ₐ[k] K)) :
+    (jordanDecomposition k H K g).1 = semisimplePart k H K g :=
+  (rfl)
+
+/-- The second component of the Jordan decomposition is the unipotent part. -/
+@[simp]
+theorem jordanDecomposition_snd (g : WithConv (H →ₐ[k] K)) :
+    (jordanDecomposition k H K g).2 = unipotentPart k H K g :=
+  (rfl)
+
 /-- The Tannakian action of the semisimple part is the semisimple-factor tensor
 automorphism. -/
 @[simp]

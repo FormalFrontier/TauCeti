@@ -179,9 +179,112 @@ end CoordinateRing
 
 /-! ## The divisibility core -/
 
+section CommRing
+
+variable {R : Type*} [CommRing R] (W : _root_.WeierstrassCurve.Affine R)
+
+/-- **The `X`-derivative vanishes as well.** Write `H = g² - gs - c` for the Weierstrass polynomial
+read at `Y = -g`. A square divisor of `H` divides its derivative, and that derivative splits as
+`H' = g'(2g - s) - (a₁g + c')`, so a divisor of `2g - s` is left dividing `a₁g + c'`. Modulo `π`
+this says `W_X` vanishes at the point once `W_Y` does.
+
+Neither primality of `π` nor any field structure is used: this is the chain rule and
+`Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd`. -/
+private theorem dvd_a₁_mul_add_of_dvd_two_mul_sub_of_sq_dvd {π g : R[X]}
+    (hs : π ∣ 2 * g - (C W.a₁ * X + C W.a₃))
+    (hsq : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) :
+    π ∣ C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄) := by
+  have hd : derivative (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) =
+      derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
+        (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
+    simp only [derivative_sub, derivative_mul, derivative_pow, derivative_add, derivative_C,
+      derivative_X, map_ofNat, Nat.cast_ofNat]
+    ring1
+  have hd' : π ∣ derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
+      (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
+    rw [← hd]
+    simpa using Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd hsq
+  simpa using dvd_sub (hs.mul_left (derivative g)) hd'
+
+end CommRing
+
 section Field
 
 variable {F : Type*} [Field F] (W : _root_.WeierstrassCurve.Affine F)
+
+/-- **No prime square divides `H = g² - gs - c` once the prime divides `2g - s`.** This is where
+the curve enters, and it is the one step that uses ellipticity. In the residue field
+`k = F[X]/(π)` the three divisibilities say that `(x₀, β)` lies on `W` over `k`, with `x₀` the
+image of `X` and `β` that of `-g`, and that both partial derivatives vanish there:
+
+* `π ∣ H` gives the equation of `W`;
+* `π ∣ 2g - s` gives `W_Y(x₀, β) = 2β + a₁x₀ + a₃ = 0`;
+* `π ∣ a₁g + c'` gives `W_X(x₀, β) = a₁β - (3x₀² + 2a₂x₀ + a₄) = 0`; this is the third divisibility
+  and it comes from the other two, by `dvd_a₁_mul_add_of_dvd_two_mul_sub_of_sq_dvd`.
+
+That is a singular point of an elliptic curve. The argument is uniform in the characteristic,
+unlike the route through `Squarefree (4X³ + b₂X² + 2b₄X + b₆)`. -/
+private theorem not_sq_dvd_of_dvd_two_mul_sub [W.IsElliptic] {π g : F[X]} (hπ : Prime π)
+    (hs : π ∣ 2 * g - (C W.a₁ * X + C W.a₃)) :
+    ¬π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+  intro hsq
+  have : Fact (Irreducible π) := ⟨hπ.irreducible⟩
+  have hev : ∀ r : F[X], π ∣ r → aeval (AdjoinRoot.root π) r = 0 := fun r hr => by
+    rw [AdjoinRoot.aeval_eq]; exact AdjoinRoot.mk_eq_zero.mpr hr
+  have h₁ := hev _ ((dvd_pow_self π two_ne_zero).trans hsq)
+  have h₂ := hev _ hs
+  have h₃ := hev _ (dvd_a₁_mul_add_of_dvd_two_mul_sub_of_sq_dvd W hs hsq)
+  simp only [map_sub, map_add, map_mul, map_pow, map_ofNat, aeval_C, aeval_X] at h₁ h₂ h₃
+  have key : (W.map (algebraMap F (AdjoinRoot π))).Nonsingular (AdjoinRoot.root π)
+      (-aeval (AdjoinRoot.root π) g) := equation_iff_nonsingular.mp <| by
+    rw [equation_iff']
+    simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
+      _root_.WeierstrassCurve.map_a₃, _root_.WeierstrassCurve.map_a₄,
+      _root_.WeierstrassCurve.map_a₆]
+    linear_combination h₁
+  rw [nonsingular_iff'] at key
+  refine key.2.elim (fun h => h ?_) fun h => h ?_
+  · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
+      _root_.WeierstrassCurve.map_a₄]
+    linear_combination -h₃
+  · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₃]
+    linear_combination -h₂
+
+/-- **Away from `q`, the pair `(p, q)` collapses to a single `g`.** A prime not dividing `q` is
+invertible in the residue field, so `p ≡ gq` modulo `π` for some `g`; substituting that into the
+trace and norm divisibilities and cancelling the factors of `q` — legitimate since `π` is prime
+and misses `q` — leaves the same two divisibilities for the pair `(g, 1)`.
+
+This step is pure divisibility bookkeeping: the curve is not used, and `W` need not be
+elliptic. -/
+private theorem exists_dvd_two_mul_sub_and_sq_dvd_of_not_dvd {π p q : F[X]} (hπ : Prime π)
+    (hq : ¬π ∣ q) (ht : π ∣ 2 * p - q * (C W.a₁ * X + C W.a₃))
+    (hn : π ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) :
+    ∃ g : F[X], π ∣ 2 * g - (C W.a₁ * X + C W.a₃) ∧
+      π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+        (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+  have : Fact (Irreducible π) := ⟨hπ.irreducible⟩
+  have hqk : AdjoinRoot.mk π q ≠ 0 := fun h => hq (AdjoinRoot.mk_eq_zero.mp h)
+  -- choose `g` with `p ≡ g * q` modulo `π`
+  obtain ⟨g, hg⟩ := AdjoinRoot.mk_surjective (AdjoinRoot.mk π p / AdjoinRoot.mk π q)
+  obtain ⟨p₁, hp₁⟩ : π ∣ p - g * q := AdjoinRoot.mk_eq_zero.mp <| by
+    rw [map_sub, map_mul, hg, div_mul_cancel₀ _ hqk, sub_self]
+  -- transport the two divisibilities to `g`
+  obtain ⟨f, hf⟩ : π ∣ 2 * g - (C W.a₁ * X + C W.a₃) := by
+    have hprod : π ∣ q * (2 * g - (C W.a₁ * X + C W.a₃)) := by
+      obtain ⟨t₁, ht₁⟩ := ht
+      exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
+    exact (hπ.dvd_or_dvd hprod).resolve_left hq
+  refine ⟨g, ⟨f, hf⟩, ?_⟩
+  refine hπ.pow_dvd_of_dvd_mul_left (a := q ^ 2) 2 (fun h => hq (hπ.dvd_of_dvd_pow h)) ?_
+  obtain ⟨n₁, hn₁⟩ := hn
+  exact ⟨n₁ - p₁ * q * f - p₁ ^ 2, by
+    linear_combination hn₁ -
+      (p + g * q + π * p₁ - q * (C W.a₁ * X + C W.a₃)) * hp₁ - π * p₁ * q * hf⟩
 
 /-- Over a field, a prime dividing the trace `2p - qs` and whose square divides the norm
 `p² - pqs - q²c` divides both `p` and `q`. This is where the curve enters: the alternative is a
@@ -193,62 +296,8 @@ private theorem dvd_and_dvd_of_prime [W.IsElliptic] {π p q : F[X]} (hπ : Prime
     π ∣ p ∧ π ∣ q := by
   have hq : π ∣ q := by
     by_contra hq
-    have : Fact (Irreducible π) := ⟨hπ.irreducible⟩
-    have hqk : AdjoinRoot.mk π q ≠ 0 := fun h => hq (AdjoinRoot.mk_eq_zero.mp h)
-    -- choose `g` with `p ≡ g * q` modulo `π`
-    obtain ⟨g, hg⟩ := AdjoinRoot.mk_surjective (AdjoinRoot.mk π p / AdjoinRoot.mk π q)
-    obtain ⟨p₁, hp₁⟩ : π ∣ p - g * q := AdjoinRoot.mk_eq_zero.mp <| by
-      rw [map_sub, map_mul, hg, div_mul_cancel₀ _ hqk, sub_self]
-    -- transport the two divisibilities to `g`
-    obtain ⟨f, hf⟩ : π ∣ 2 * g - (C W.a₁ * X + C W.a₃) := by
-      have hprod : π ∣ q * (2 * g - (C W.a₁ * X + C W.a₃)) := by
-        obtain ⟨t₁, ht₁⟩ := ht
-        exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
-      refine (hπ.dvd_or_dvd hprod).resolve_left hq
-    have hm : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-        (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
-      refine hπ.pow_dvd_of_dvd_mul_left (a := q ^ 2) 2 (fun h => hq (hπ.dvd_of_dvd_pow h)) ?_
-      obtain ⟨n₁, hn₁⟩ := hn
-      exact ⟨n₁ - p₁ * q * f - p₁ ^ 2, by
-        linear_combination hn₁ -
-          (p + g * q + π * p₁ - q * (C W.a₁ * X + C W.a₃)) * hp₁ - π * p₁ * q * hf⟩
-    -- `π ∣ H` and `π ∣ H'`, the latter read through `H' = g'(2g - s) - (a₁g + c')`
-    have hH₁ : π ∣ C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄) := by
-      have hd : derivative (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-          (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) =
-          derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
-            (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
-        simp only [derivative_sub, derivative_mul, derivative_pow, derivative_add, derivative_C,
-          derivative_X, map_ofNat, Nat.cast_ofNat]
-        ring1
-      have hd' : π ∣ derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
-          (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
-        rw [← hd]
-        simpa using Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd hm
-      simpa using dvd_sub (Dvd.dvd.mul_left ⟨f, hf⟩ (derivative g)) hd'
-    -- the three vanishings, read in the residue field
-    have hev : ∀ r : F[X], π ∣ r → aeval (AdjoinRoot.root π) r = 0 := fun r hr => by
-      rw [AdjoinRoot.aeval_eq]; exact AdjoinRoot.mk_eq_zero.mpr hr
-    have h₁ := hev (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆))
-        ((dvd_pow_self π two_ne_zero).trans hm)
-    have h₂ := hev (2 * g - (C W.a₁ * X + C W.a₃)) ⟨f, hf⟩
-    have h₃ := hev _ hH₁
-    simp only [map_sub, map_add, map_mul, map_pow, map_ofNat, aeval_C, aeval_X] at h₁ h₂ h₃
-    have key : (W.map (algebraMap F (AdjoinRoot π))).Nonsingular (AdjoinRoot.root π)
-        (-aeval (AdjoinRoot.root π) g) := equation_iff_nonsingular.mp <| by
-      rw [equation_iff']
-      simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
-        _root_.WeierstrassCurve.map_a₃, _root_.WeierstrassCurve.map_a₄,
-        _root_.WeierstrassCurve.map_a₆]
-      linear_combination h₁
-    rw [nonsingular_iff'] at key
-    refine key.2.elim (fun h => h ?_) fun h => h ?_
-    · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
-        _root_.WeierstrassCurve.map_a₄]
-      linear_combination -h₃
-    · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₃]
-      linear_combination -h₂
+    obtain ⟨g, hs, hsq⟩ := exists_dvd_two_mul_sub_and_sq_dvd_of_not_dvd W hπ hq ht hn
+    exact not_sq_dvd_of_dvd_two_mul_sub W hπ hs hsq
   refine ⟨?_, hq⟩
   obtain ⟨q₁, rfl⟩ := hq
   refine hπ.dvd_of_dvd_pow (n := 2) ?_

@@ -11,7 +11,7 @@ module
 -- `Algebra.TensorProduct.opAlgEquiv`, used in its body, to be public.
 public import Mathlib.LinearAlgebra.TensorProduct.Opposite
 public import Mathlib.RingTheory.TensorProduct.Basic
--- Non-public: neither appears in the type of an exported declaration. Mathlib's
+-- Non-public: none appears in the type of an exported declaration. Mathlib's
 -- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct`,
 -- `LinearMap.map_mul_of_map_mul_tmul` and `congr` are used only inside definition bodies and
 -- proofs, and no definition below is `@[expose]`d.
@@ -29,15 +29,18 @@ with passing to the opposite algebra, and composes in stages:
 * `TauCeti.Algebra.TensorProduct.baseChangeOpAlgEquiv`: `L ⊗[K] Aᵐᵒᵖ ≃ₐ[L] (L ⊗[K] A)ᵐᵒᵖ`;
 * `TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`:
   `M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A` for a tower `K → L → M`.
+* `TauCeti.Algebra.TensorProduct.baseChangeTowerRingEquiv`: the same tower comparison with tensor
+  factors in coordinate-ring order, `(L ⊗[K] A) ⊗[L] M ≃+* A ⊗[K] M`.
 
 None is reproved from scratch: the first and third upgrade Mathlib's linear equivalences
 `TensorProduct.AlgebraTensorModule.distribBaseChange` and
 `TensorProduct.AlgebraTensorModule.cancelBaseChange` to algebra equivalences, and the second
-composes `AlgEquiv.toOpposite` with Mathlib's `Algebra.TensorProduct.opAlgEquiv`.
+composes `AlgEquiv.toOpposite` with Mathlib's `Algebra.TensorProduct.opAlgEquiv`. The fourth
+reorders the factors of the third using `Algebra.TensorProduct.comm`.
 
 ## Implementation notes
 
-All three equivalences are opaque: their bodies are not `@[expose]`d, and the `_tmul` and
+All four equivalences are opaque: their bodies are not `@[expose]`d, and the `_tmul` and
 `_symm_tmul` simp lemmas below are the whole public interface, in both directions.
 
 Mathlib's `Algebra.TensorProduct.cancelBaseChange` is the third equivalence for a **commutative**
@@ -45,17 +48,18 @@ algebra being extended; the algebras this file exists to serve are central simpl
 commutative in general, and the hypothesis has to go along with the chance to reuse that
 definition.
 
-These are statements about scalar extension as such, with no central-simplicity hypotheses. Their
-first consumer is `TauCeti/Algebra/CentralSimple/BaseChange.lean`, which re-exports them for
-`TauCeti/Algebra/BrauerGroup/BaseChange.lean`, where they are what makes base change respect the
-multiplication and the inversion of Brauer classes and compose along a tower of fields.
+These are statements about scalar extension as such, with no central-simplicity hypotheses. The
+first three are consumed by `TauCeti/Algebra/CentralSimple/BaseChange.lean`, which re-exports them
+for `TauCeti/Algebra/BrauerGroup/BaseChange.lean`. The coordinate-ring-order comparison is consumed
+by the geometric connectedness and reducedness base-change modules.
 
 ## References
 
-These are the compatibilities asked for by the **Base change preserves central simplicity, then
-is a homomorphism** bullet of Layer 6 of the
+The first three are the compatibilities asked for by the **Base change preserves central
+simplicity, then is a homomorphism** bullet of Layer 6 of the
 [semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md).
-See P. Gille, T. Szamuely, *Central Simple Algebras and Galois Cohomology*, Section 2.2.
+See P. Gille, T. Szamuely, *Central Simple Algebras and Galois Cohomology*, Section 2.2. The final
+comparison supplies base-change infrastructure for the ReductiveGroups roadmap.
 -/
 
 public section
@@ -65,6 +69,8 @@ namespace TauCeti
 open scoped TensorProduct
 
 namespace Algebra.TensorProduct
+
+universe u v w x
 
 variable (K L A B : Type*) [CommSemiring K] [CommSemiring L] [Algebra K L]
   [Semiring A] [Algebra K A] [Semiring B] [Algebra K B]
@@ -161,6 +167,36 @@ theorem baseChangeTowerAlgEquiv_symm_tmul (m : M) (a : A) :
     rw [baseChangeTowerAlgEquiv_tmul, one_smul]
 
 end Tower
+
+section CommTower
+
+variable (K L A M : Type*) [CommSemiring K] [CommSemiring L] [Algebra K L]
+  [CommSemiring A] [Algebra K A] [CommSemiring M] [Algebra K M] [Algebra L M]
+  [IsScalarTower K L M]
+
+/-- Successive scalar extension, with tensor factors in coordinate-ring order, agrees with direct
+scalar extension. -/
+noncomputable def baseChangeTowerRingEquiv :
+    ((L ⊗[K] A) ⊗[L] M) ≃+* (A ⊗[K] M) :=
+  (Algebra.TensorProduct.comm L (L ⊗[K] A) M).toRingEquiv.trans
+    ((baseChangeTowerAlgEquiv K L A M).toRingEquiv.trans
+      (Algebra.TensorProduct.comm K M A).toRingEquiv)
+
+/-- The coordinate-ring-order tower comparison sends nested pure tensors to pure tensors. -/
+@[simp]
+theorem baseChangeTowerRingEquiv_tmul_tmul (l : L) (a : A) (m : M) :
+    baseChangeTowerRingEquiv K L A M ((l ⊗ₜ[K] a) ⊗ₜ[L] m) = a ⊗ₜ[K] (l • m) := by
+  simp [baseChangeTowerRingEquiv]
+
+/-- The inverse coordinate-ring-order tower comparison sends pure tensors to nested pure
+tensors. -/
+@[simp]
+theorem baseChangeTowerRingEquiv_symm_tmul (a : A) (m : M) :
+    (baseChangeTowerRingEquiv K L A M).symm (a ⊗ₜ[K] m) =
+      (1 ⊗ₜ[K] a) ⊗ₜ[L] m := by
+  simp [baseChangeTowerRingEquiv]
+
+end CommTower
 
 end Algebra.TensorProduct
 

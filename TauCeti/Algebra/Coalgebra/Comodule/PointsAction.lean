@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 public import Mathlib.RingTheory.Bialgebra.Convolution
@@ -29,6 +30,7 @@ the functor of points on scalar extensions of `V`.
 ## Main declarations
 
 * `TauCeti.Comodule.endOfPoint`: the endomorphism of `A ⊗[R] V` attached to a point.
+* `TauCeti.Comodule.endOfPoint_corestrict`: compatibility with corestriction in the coalgebra.
 * `TauCeti.Comodule.endOfPoint_tensor`: point actions preserve the diagonal tensor product.
 * `TauCeti.Comodule.endOfPoint_trivial`: every point acts identically on a trivial comodule.
 * `TauCeti.Comodule.pointsRepresentation`: the action, as a `Representation` of the
@@ -136,6 +138,30 @@ lemma baseChange_comp_endOfPoint (f : Hom R H V W) (g : H →ₐ[R] A) :
 end Functorial
 
 end Coalgebra
+
+section Corestrict
+
+variable {R H₁ H₂ V A : Type*} [CommSemiring R]
+variable [Semiring H₁] [Semiring H₂] [Bialgebra R H₁] [Bialgebra R H₂]
+variable [AddCommMonoid V] [Module R V] [Comodule R H₁ V]
+variable [CommSemiring A] [Algebra R A]
+
+/-- Acting on a comodule corestricted along a bialgebra morphism agrees with acting by the
+point precomposed with the underlying algebra morphism. -/
+@[simp]
+theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A) :
+    (letI : Comodule R H₂ V := Corestrict φ.toCoalgHom
+     endOfPoint V g) = endOfPoint V (g.comp (φ : H₁ →ₐ[R] H₂)) := by
+  apply TensorProduct.AlgebraTensorModule.ext
+  intro a v
+  rw [endOfPoint_tmul, endOfPoint_tmul]
+  simp only [corestrict_coact_apply, AlgHom.comp_toLinearMap]
+  rw [LinearMap.lTensor_comp, LinearMap.comp_apply]
+  have hφ : φ.toCoalgHom.toLinearMap = (φ : H₁ →ₐ[R] H₂).toLinearMap :=
+    (_root_.BialgHom.toAlgHom_toLinearMap φ).symm
+  simp only [LinearMap.lTensor_def, hφ]
+
+end Corestrict
 
 section Bialgebra
 

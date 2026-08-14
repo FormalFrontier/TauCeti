@@ -224,8 +224,8 @@ theorem dividedPower_mul_dividedPower_of_commutator_eq {x y z : A}
           ((m + 1 : ℕ) : ℚ) •
               (dividedPower (m + 1) x * dividedPower n y) =
             x * (dividedPower m x * dividedPower n y) := by
-        rw [← smul_mul_assoc, Nat.cast_smul_eq_nsmul,
-          ← self_mul_dividedPower, mul_assoc]
+        rw [Nat.cast_smul_eq_nsmul]
+        exact succ_nsmul_dividedPower_succ_mul m x (dividedPower n y)
       rw [← inv_smul_smul₀ hm (dividedPower (m + 1) x * dividedPower n y),
         ← inv_smul_smul₀ hm
           (∑ k ∈ range (min (m + 1) n + 1),
