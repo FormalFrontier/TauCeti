@@ -191,11 +191,6 @@ def toWedderburnPresentation (P : SplitWedderburnAlgebraPresentation K A) :
     WedderburnPresentation A :=
   P.toWedderburnAlgebraPresentation.toWedderburnPresentation
 
-theorem toWedderburnAlgebraPresentation_toWedderburnPresentation
-    (P : SplitWedderburnAlgebraPresentation K A) :
-    P.toWedderburnAlgebraPresentation.toWedderburnPresentation = P.toWedderburnPresentation :=
-  rfl
-
 @[simp]
 theorem toWedderburnAlgebraPresentation_blockCount (P : SplitWedderburnAlgebraPresentation K A) :
     P.toWedderburnAlgebraPresentation.blockCount = P.blockCount :=
@@ -267,11 +262,6 @@ noncomputable def toWedderburnAlgebraPresentation (P : WedderburnEndomorphismPre
 noncomputable def toWedderburnPresentation (P : WedderburnEndomorphismPresentation K A) :
     WedderburnPresentation A :=
   P.toWedderburnAlgebraPresentation.toWedderburnPresentation
-
-theorem toWedderburnAlgebraPresentation_toWedderburnPresentation
-    (P : WedderburnEndomorphismPresentation K A) :
-    P.toWedderburnAlgebraPresentation.toWedderburnPresentation = P.toWedderburnPresentation :=
-  rfl
 
 @[simp]
 theorem toWedderburnAlgebraPresentation_blockCount (P : WedderburnEndomorphismPresentation K A) :
