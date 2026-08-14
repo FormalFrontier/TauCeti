@@ -180,18 +180,6 @@ theorem isClosed_setOfPred_forall_vlt_one (S : Set A) :
   rw [h]
   exact isOpen_biUnion fun a _ ↦ isOpen_basicOpen 1 a
 
-/-- **The locus of points where `v(a) ≤ 0` for all `a ∈ S` is closed in `Spv A`.** The complement
-is the union over `a ∈ S` of the basic opens `Spv(A)(a/a)` = `{v | ¬ v(a) ≤ 0}`. -/
-theorem isClosed_setOfPred_forall_vle_zero (S : Set A) :
-    IsClosed {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0} := by
-  rw [← isOpen_compl_iff]
-  have h : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0}ᶜ = ⋃ a ∈ S, basicOpen a a := by
-    ext v
-    simp only [basicOpen_self, Set.mem_compl_iff, Set.mem_ofPred_eq, not_forall,
-      Set.mem_iUnion, exists_prop]
-  rw [h]
-  exact isOpen_biUnion fun a _ ↦ isOpen_basicOpen a a
-
 /-- `Spv A` is T0: inseparable points agree on every basic open, hence carry the same
 valuative relation. -/
 instance : T0Space (Spv A) := by
@@ -444,6 +432,23 @@ lemma suppFun_preimage_basicOpen (f : A) :
 theorem continuous_suppFun : Continuous (suppFun : Spv A → PrimeSpectrum A) :=
   PrimeSpectrum.isTopologicalBasis_basic_opens.continuous_iff.mpr fun _ ⟨f, hf⟩ ↦
     hf ▸ suppFun_preimage_basicOpen f ▸ isOpen_basicOpen f f
+
+/-- **The locus of points where `v(a) ≤ 0` for all `a ∈ S` is closed in `Spv A`.** Equivalently,
+it is the preimage under `suppFun` of the zero locus of `S`, so it is the locus where `S` lies in
+the support. -/
+theorem isClosed_setOfPred_forall_vle_zero (S : Set A) :
+    IsClosed {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0} := by
+  have hset : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0} =
+      suppFun ⁻¹' PrimeSpectrum.zeroLocus S := by
+    ext v
+    simp only [Set.mem_ofPred_eq, Set.mem_preimage, PrimeSpectrum.mem_zeroLocus, suppFun_asIdeal]
+    constructor
+    · intro h a ha
+      exact (mem_supp_iff v a).2 (h a ha)
+    · intro h a ha
+      exact (mem_supp_iff v a).1 (h ha)
+  rw [hset]
+  exact (PrimeSpectrum.isClosed_zeroLocus S).preimage continuous_suppFun
 
 /-- `supp ∘ Spv(φ) = Spec(φ) ∘ supp`. -/
 theorem suppFun_comap {B : Type*} [CommRing B] (φ : A →+* B) (v : Spv B) :

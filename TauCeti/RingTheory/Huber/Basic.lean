@@ -133,7 +133,7 @@ class IsTateRing (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRin
   exists_isPseudoUniformizer : ∃ a : A, IsPseudoUniformizer a
 
 /-- An open ideal in a topological ring with a pseudouniformiser is the unit ideal. -/
-theorem IsPseudoUniformizer.not_isOpen_of_ne_top {A : Type*} [CommRing A]
+theorem IsPseudoUniformizer.not_isOpen_of_ne_top {A : Type*} [Semiring A]
     [TopologicalSpace A] {ϖ : A} (hϖ : IsPseudoUniformizer ϖ) (I : Ideal A) (hI : I ≠ ⊤) :
     ¬ IsOpen (I : Set A) := by
   intro hopen
@@ -143,6 +143,7 @@ theorem IsPseudoUniformizer.not_isOpen_of_ne_top {A : Type*} [CommRing A]
 
 /-- **In a Tate ring, no prime ideal is open.** This ensures that every point of the valuation
 spectrum of a Tate ring is analytic. -/
+@[simp]
 theorem not_isOpen_of_isPrime {A : Type*} [CommRing A] [TopologicalSpace A]
     [IsTopologicalRing A] [IsTateRing A] (I : Ideal A) [hI : I.IsPrime] :
     ¬ IsOpen (I : Set A) := by
