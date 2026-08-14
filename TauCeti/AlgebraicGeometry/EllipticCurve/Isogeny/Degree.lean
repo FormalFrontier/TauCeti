@@ -133,8 +133,9 @@ theorem degree_eq_finrank (φ : Isogeny W₁ W₂) [Algebra W₂.FunctionField W
 
 /-- **The degree of an isogeny is positive.** The extension is finite and the source function
 field is nontrivial. -/
-theorem degree_pos (φ : Isogeny W₁ W₂) : 0 < φ.degree :=
-  Module.finrank_pos
+theorem degree_pos (φ : Isogeny W₁ W₂) : 0 < φ.degree := by
+  rw [degree_def]
+  exact Module.finrank_pos
 
 /-- The degree of an isogeny is nonzero, the `≠` form of `degree_pos`. -/
 @[simp]
