@@ -83,7 +83,8 @@ theorem conditionallyIID_of_contractable_viaKoopman [StandardBorelSpace α] [Non
     (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     ConditionallyIID μ X := by
   have hXae : ∀ i, AEMeasurable (X i) μ := fun i => (hX_meas i).aemeasurable
-  have hprob : IsProbabilityMeasure (pathLaw μ X) := by
+  -- Supplied for instance resolution below, not referenced by name.
+  have : IsProbabilityMeasure (pathLaw μ X) := by
     rw [pathLaw_def]
     exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hXae)
   exact ConditionallyIID.of_directing (ConditionallyIIDWith.of_pathLaw hX_meas

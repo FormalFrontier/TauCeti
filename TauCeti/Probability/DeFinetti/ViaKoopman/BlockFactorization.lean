@@ -97,7 +97,6 @@ theorem ContractableLaw.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condE
   | zero => intro B _ w _ _; simp
   | succ r ih =>
     intro B hB w hw hw_bdd
-    classical
     set E : (ℕ → α) → ℝ :=
       ρ[fun y : ℕ → α => (B (Fin.last r)).indicator (fun _ => (1 : ℝ)) (y r) |
         MeasurableSpace.invariants (shift α)] with hEdef
