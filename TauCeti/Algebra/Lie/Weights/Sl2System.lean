@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.Lie.Weights.Killing
+public import Mathlib.Algebra.Lie.Weights.RootSystem
 
 /-!
 # Root vectors normalised against the coroots
