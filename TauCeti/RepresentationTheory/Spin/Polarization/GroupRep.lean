@@ -15,8 +15,11 @@ public import TauCeti.RepresentationTheory.Spin.Polarization.CliffordAction
 `TauCeti.spinAction` makes the exterior algebra `S = ⋀·W` of the isotropic summand of a
 polarization a module over the Clifford algebra. The pin and spin groups sit inside that Clifford
 algebra, so restricting the action along their inclusions turns `S` into a representation of
-each: `TauCeti.pinRep` and `TauCeti.spinRep`. These are the spin representations, and the point
-of the whole construction — no tensor power of the vector representation carries them.
+each: `TauCeti.pinRep` and `TauCeti.spinRep`. These are the spin representations. What makes them
+worth constructing is classical: over `ℂ`, for a nondegenerate `Q`, they do not factor through the
+special orthogonal group, so they are not summands of any tensor power of the vector
+representation. That is motivation for the construction; it is not proved here, and it is not a
+statement about the arbitrary commutative ring this file works over.
 
 The exterior algebra is itself `ℤ/2`-graded, by exterior parity, and `S` splits as the sum
 `S⁺ ⊕ S⁻` of the even and the odd part. Whether that splitting is a splitting *of
@@ -34,8 +37,8 @@ representations* is the substance of this file, and it depends on the polarizati
   convenience; the statement is false without it.
 
 The grading statement `TauCeti.spinAction_mem_evenOdd` is proved once, for an arbitrary parity of
-the acting Clifford element, and the half-spin invariance and the parity exchange by odd elements
-are both read off it. Its two inputs are that exterior multiplication raises the exterior degree
+the acting Clifford element, and the half-spin invariance and the parity shift by odd elements are
+both read off it. Its two inputs are that exterior multiplication raises the exterior degree
 (Mathlib's `CliffordAlgebra.evenOdd_mul_le`) and that contraction lowers it
 (`TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd`); the induction that propagates them from a
 single vector to a general Clifford element runs over the powers of `range (ι Q)` out of which
@@ -62,10 +65,15 @@ belong to the complex theory and are not proved here.
   invariant** under the spin representation.
 * `TauCeti.isCompl_spinPlus_spinMinus`: the two summands are complementary, so `S = S⁺ ⊕ S⁻`.
 * `TauCeti.map_spinAction_spinPlus_le` and `TauCeti.map_spinAction_spinMinus_le`: an odd Clifford
-  element exchanges the two summands, which is what stops the pin group from preserving them.
+  element carries each of the two summands into the other, which is why the splitting is stated
+  for `spinRep` and not for `pinRep`.
 
 ## References
 
+* W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), Lecture 20, especially
+  §20.3: the spin module `S = ⋀·W` of a maximal isotropic subspace, the pin and spin groups acting
+  on it, and its splitting into the half-spin summands `S⁺` and `S⁻` — the construction formalised
+  here.
 * [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
   Layer 4, "The spin representation of the group" and "The half-spin summands".
 -/
@@ -109,12 +117,6 @@ theorem spinRep_apply (g : spinGroup Q) :
     spinRep Q P g = spinAction Q P (g : CliffordAlgebra Q) :=
   -- `(rfl)`, not `rfl`: the body of `spinRep` is not `@[expose]`d.
   (rfl)
-
-/-- The spin representation is the restriction of the pin representation along the inclusion of
-the spin group in the pin group. -/
-theorem spinRep_eq_pinRep (g : spinGroup Q) :
-    spinRep Q P g = pinRep Q P ⟨(g : CliffordAlgebra Q), spinGroup.mem_pin g.2⟩ := by
-  rw [spinRep_apply, pinRep_apply]
 
 /-! ### The half-spin summands -/
 
@@ -281,11 +283,13 @@ theorem spinMinusSubrep_toSubmodule (hline : P.line = ⊥) :
   -- `(rfl)`, not `rfl`: the body of `spinMinusSubrep` is not `@[expose]`d.
   (rfl)
 
-/-! ### Odd elements exchange the two summands
+/-! ### Odd elements carry each summand into the other
 
-The pin group is not contained in the even subalgebra, and an odd Clifford element swaps `S⁺`
-with `S⁻`. So the half-spin splitting is a splitting of `spinRep` and not of `pinRep`; the pin
-representation is the one that mixes the two summands. -/
+An odd Clifford element maps `S⁺` into `S⁻` and `S⁻` into `S⁺`. The pin group is not contained in
+the even subalgebra, so this is why the half-spin splitting is stated for `spinRep` and not for
+`pinRep`. Concluding that `pinRep` really does fail to preserve the splitting takes more than
+these inclusions — it needs an odd element of the pin group whose action does not kill the
+summand — and that is not proved here. -/
 
 /-- **An odd Clifford element carries `S⁺` into `S⁻`.** -/
 theorem map_spinAction_spinPlus_le (hline : P.line = ⊥) {x : CliffordAlgebra Q}
