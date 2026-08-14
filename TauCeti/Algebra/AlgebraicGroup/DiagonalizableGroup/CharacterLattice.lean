@@ -6,8 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
-public import TauCeti.Algebra.Bialgebra.GroupLike.Map
-public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.BaseChange
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.GroupLike
 
 /-!
@@ -42,7 +40,7 @@ namespace CommHopfAlgCat
 
 /-- The bialgebra equivalence underlying an isomorphism from a diagonalizable coordinate ring to
 the base change of a finite-type commutative Hopf algebra. -/
-noncomputable def bialgEquivOfBaseChangeIso
+private noncomputable def bialgEquivOfBaseChangeIso
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (G : FGCommGrpCat.{u})
     (i : DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
@@ -54,7 +52,7 @@ noncomputable def bialgEquivOfBaseChangeIso
 
 /-- The base-change bialgebra equivalence evaluates as the morphism underlying the isomorphism. -/
 @[simp]
-theorem bialgEquivOfBaseChangeIso_apply
+private theorem bialgEquivOfBaseChangeIso_apply
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (G : FGCommGrpCat.{u})
     (i : DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
@@ -69,7 +67,7 @@ theorem bialgEquivOfBaseChangeIso_apply
 
 /-- The inverse base-change bialgebra equivalence evaluates as the inverse isomorphism. -/
 @[simp]
-theorem bialgEquivOfBaseChangeIso_symm_apply
+private theorem bialgEquivOfBaseChangeIso_symm_apply
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (G : FGCommGrpCat.{u})
     (i : DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
@@ -104,11 +102,10 @@ theorem geometricCharacterGroupEquivOfIso_apply_eq_iff
       FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
     (x : geometricCharacterGroup H.obj) (g : G) :
     geometricCharacterGroupEquivOfIso k H G i x = g ↔
-      (bialgEquivOfBaseChangeIso k H G i).symm x.val =
-        _root_.MonoidAlgebra.single g 1 := by
+      i.inv.hom x.val = _root_.MonoidAlgebra.single g 1 := by
   simp only [geometricCharacterGroupEquivOfIso, MulEquiv.trans_apply,
     TauCeti.MonoidAlgebra.groupLikeEquiv_apply_eq_iff, TauCeti.GroupLike.mapEquiv_symm,
-    TauCeti.GroupLike.val_mapEquiv]
+    TauCeti.GroupLike.val_mapEquiv, bialgEquivOfBaseChangeIso_symm_apply]
 
 end CommHopfAlgCat
 
@@ -122,16 +119,11 @@ noncomputable def geometricCharacterGroupEquiv
   CommHopfAlgCat.geometricCharacterGroupEquivOfIso k (coordinateRing k G) G
     (baseChangeCoordinateRingIso k (AlgebraicClosure k) G).symm
 
-/-- For the canonical base-change isomorphism of a diagonalizable coordinate ring, the inverse
-of `bialgEquivOfBaseChangeIso` is the scalar-tensor equivalence. -/
-@[simp]
-theorem coordinateRing_bialgEquivOfBaseChangeIso_symm_apply
+private theorem coordinateRing_baseChangeIso_inv_apply
     (k : Type u) [Field k] (G : FGCommGrpCat.{u})
     (x : AlgebraicClosure k ⊗[k] _root_.MonoidAlgebra k G) :
-    (CommHopfAlgCat.bialgEquivOfBaseChangeIso k (coordinateRing k G) G
-      (baseChangeCoordinateRingIso k (AlgebraicClosure k) G).symm).symm x =
-        TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) x := by
-  rw [CommHopfAlgCat.bialgEquivOfBaseChangeIso_symm_apply]
+    (baseChangeCoordinateRingIso k (AlgebraicClosure k) G).symm.inv.hom x =
+      TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k (AlgebraicClosure k) x := by
   simp only [CategoryTheory.Iso.symm_inv, CategoryTheory.ObjectProperty.isoMk_hom,
     CategoryTheory.ObjectProperty.homMk_hom, _root_.CommHopfAlgCat.isoMk_hom,
     _root_.CommHopfAlgCat.hom_ofHom, BialgEquiv.coe_coe]
@@ -147,7 +139,7 @@ theorem geometricCharacterGroupEquiv_apply_eq_iff
         _root_.MonoidAlgebra.single g 1 := by
   rw [geometricCharacterGroupEquiv,
     CommHopfAlgCat.geometricCharacterGroupEquivOfIso_apply_eq_iff,
-    coordinateRing_bialgEquivOfBaseChangeIso_symm_apply]
+    coordinateRing_baseChangeIso_inv_apply]
 
 /-- The inverse character corresponding to `g` is the standard monomial indexed by `g`, viewed
 in the scalar-extended coordinate ring. -/

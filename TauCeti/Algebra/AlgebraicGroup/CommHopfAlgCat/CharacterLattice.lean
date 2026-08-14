@@ -101,6 +101,9 @@ attribute [instance] instAdditiveCharacterGroupGaloisAction
 theorem val_smul (σ : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
     (σ • x).val = (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) • x.val :=
   by
+    -- Mathlib exposes `absoluteGaloisGroup` as an opaque `def`, with no conversion lemma to the
+    -- underlying algebra equivalence. The `show` selects the generic scalar-automorphism action;
+    -- this boundary is therefore the one place where the wrapper must be unfolded.
     unfold Field.absoluteGaloisGroup at σ ⊢
     exact ScalarAut.val_smul σ x
 

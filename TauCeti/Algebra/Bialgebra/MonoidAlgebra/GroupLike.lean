@@ -191,14 +191,6 @@ theorem val_groupLikeEquiv_symm [CommRing R]
       _root_.MonoidAlgebra.single h 1 :=
   (rfl)
 
-/-- A group-like element is the standard basis element indexed by its image under
-`groupLikeEquiv`. -/
-theorem val_eq_single_groupLikeEquiv [CommRing R]
-    [ConnectedSpace (PrimeSpectrum R)] {H : Type w} [Monoid H]
-    (x : _root_.GroupLike R (_root_.MonoidAlgebra R H)) :
-    x.val = _root_.MonoidAlgebra.single (groupLikeEquiv (R := R) x) 1 :=
-  (groupLikeEquiv_apply_eq_iff R x _).mp rfl
-
 /-- Recover the monoid homomorphism inducing a bialgebra morphism between monoid
 algebras over a base with connected prime spectrum. -/
 noncomputable def mapDomainBialgHomPreimage [CommRing R]
