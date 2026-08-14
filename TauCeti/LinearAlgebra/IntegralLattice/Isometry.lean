@@ -79,7 +79,7 @@ instance : LinearEquivClass (Isometry L M) ℚ V W where
   map_add e := map_add e.toIsometryEquiv
   map_smulₛₗ e := map_smulₛₗ e.toIsometryEquiv
 
-@[simp]
+/-- Coercion of an isometry to a linear equivalence acts the same as the isometry. -/
 theorem coe_toLinearEquiv (e : Isometry L M) : ⇑(e : V ≃ₗ[ℚ] W) = e := rfl
 
 /-- An integral-lattice isometry preserves the ambient bilinear forms. -/
@@ -94,7 +94,6 @@ theorem map_carrier_eq (e : Isometry L M) :
 
 /-- A vector belongs to the target carrier exactly when its inverse image belongs to the source
 carrier. -/
-@[simp]
 theorem mem_carrier_iff_symm_mem (e : Isometry L M) (y : W) :
     y ∈ M.carrier ↔ (e : V ≃ₗ[ℚ] W).symm y ∈ L.carrier := by
   rw [← e.map_carrier_eq]
@@ -248,7 +247,6 @@ private theorem isometryEquivOfCarrierEquiv_apply (e : L ≃ₗ[ℤ] M)
     (hform : ∀ x y, M.integralForm (e x) (e y) = L.integralForm x y) (x : V) :
     isometryEquivOfCarrierEquiv e hform x = extendCarrierEquiv e x := (rfl)
 
-@[simp]
 private theorem isometryEquivOfCarrierEquiv_restrictScalars_apply (e : L ≃ₗ[ℤ] M)
     (hform : ∀ x y, M.integralForm (e x) (e y) = L.integralForm x y) (x : V) :
     ((isometryEquivOfCarrierEquiv e hform).toLinearEquiv.restrictScalars ℤ).toLinearMap x =
@@ -336,7 +334,7 @@ theorem transport_carrier (L : IntegralLattice V) (e : V ≃ₗ[ℚ] W) :
 theorem transport_form (L : IntegralLattice V) (e : V ≃ₗ[ℚ] W) :
     (L.transport e).form = L.form.comp e.symm.toLinearMap e.symm.toLinearMap := (rfl)
 
-@[simp]
+/-- Evaluation of the transported form on vectors. -/
 theorem transport_apply (L : IntegralLattice V) (e : V ≃ₗ[ℚ] W) (x y : W) :
     L.transport e x y = L.form (e.symm x) (e.symm y) := (rfl)
 
