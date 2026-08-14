@@ -38,6 +38,7 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
 * `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk`: the unit-sphere quotient is a quotient
   covering map with group `ℤˣ`.
 * `TauCeti.RealProjectiveSpace.isCoveringMap_mk`: the underlying covering-map statement.
+* `TauCeti.RealProjectiveSpace.pathConnectedSpace`: `RPⁿ` is path-connected for `1 ≤ n`.
 -/
 
 public section
@@ -168,6 +169,17 @@ theorem isQuotientMap_mk : IsQuotientMap (mk n) :=
 /-- The unit-sphere projection onto real projective space is continuous. -/
 theorem continuous_mk : Continuous (mk n) :=
   (isQuotientMap_mk n).continuous
+
+/-- Real projective space is path-connected once `1 ≤ n`, as the continuous image of the
+path-connected unit sphere `Sⁿ`. -/
+theorem pathConnectedSpace (hn : 1 ≤ n) :
+    PathConnectedSpace (RealProjectiveSpace n) := by
+  have hrank : 1 < Module.rank ℝ (EuclideanSpace ℝ (Fin (n + 1))) := by
+    rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
+    omega
+  have hpc := isPathConnected_iff_pathConnectedSpace.mp
+    (isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1))) zero_le_one)
+  exact (mk_surjective n).pathConnectedSpace (continuous_mk n)
 
 /-- The unit-sphere projection onto real projective space is a covering map. -/
 theorem isCoveringMap_mk : IsCoveringMap (mk n) :=

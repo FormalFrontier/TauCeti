@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Normed.Module.Connected
 public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
 public import Mathlib.Algebra.Group.Equiv.Opposite
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
@@ -34,21 +33,16 @@ unconditional computation, is being developed upstream in Mathlib PR #28246.
 
 ## Main declarations
 
-* `TauCeti.RealProjectiveSpace.pathConnectedSpace`: `RPⁿ` is path-connected for `1 ≤ n`.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`: for `2 ≤ n` and a simply connected
   covering sphere, `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ` for any basepoint `x`
   with a chosen lift `e`.
-* `TauCeti.RealProjectiveSpace.deckMulEquiv_symm_op_symm_apply`: canonical isomorphism
-  `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends `op (deckMulEquiv n hn u)` to `u`.
-* `TauCeti.RealProjectiveSpace.deckMulEquiv_symm_op_symm_symm_apply`: inverse of canonical
-  isomorphism `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends `u` to `op (deckMulEquiv n hn u)`.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_apply_eq_iff`: characterization of the
   isomorphism on monodromy.
-* `TauCeti.RealProjectiveSpace.monodromy_fundamentalGroupMulEquiv_symm`: inverse equivalence on
+* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_symm_monodromy`: inverse equivalence on
   monodromy.
 * `TauCeti.RealProjectiveSpace.monodromy_eq_self_iff`: loop class is identity iff monodromy fixes
   lift.
-* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv'`: basepoint-unconscious version
+* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquivAt`: basepoint-unconscious version
   for any `x`.
 * `TauCeti.RealProjectiveSpace.card_fundamentalGroup`:
   `Nat.card (FundamentalGroup (RealProjectiveSpace n) x) = 2`.
@@ -80,17 +74,6 @@ noncomputable section
 
 variable (n : ℕ)
 
-/-- Real projective space is path-connected once `1 ≤ n`, as the continuous image of the
-path-connected unit sphere `Sⁿ`. -/
-theorem pathConnectedSpace (hn : 1 ≤ n) :
-    PathConnectedSpace (RealProjectiveSpace n) := by
-  have hrank : 1 < Module.rank ℝ (EuclideanSpace ℝ (Fin (n + 1))) := by
-    rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
-    omega
-  have hpc := isPathConnected_iff_pathConnectedSpace.mp
-    (isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1))) zero_le_one)
-  exact (mk_surjective n).pathConnectedSpace (continuous_mk n)
-
 /-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) with a simply connected
 covering sphere is isomorphic to `ℤˣ`**, for any basepoint `x` with a chosen lift `e` in the sphere:
 `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`. -/
@@ -101,21 +84,6 @@ def fundamentalGroupMulEquiv (hn : 2 ≤ n)
   (Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e).trans
     ((MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
       (MulOpposite.opMulEquiv (M := ℤˣ)).symm)
-
-/-- The canonical isomorphism `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends the opposite of a deck
-transformation `op (deckMulEquiv n hn u)` to the corresponding unit `u`. -/
-lemma deckMulEquiv_symm_op_symm_apply (hn : 1 ≤ n) (u : ℤˣ) :
-    (((MulEquiv.op (deckMulEquiv n hn).symm).trans
-      (MulOpposite.opMulEquiv (M := ℤˣ)).symm) (MulOpposite.op (deckMulEquiv n hn u))) = u := by
-  simp
-
-/-- The inverse of the canonical isomorphism `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends `u` to
-`op (deckMulEquiv n hn u)`. -/
-lemma deckMulEquiv_symm_op_symm_symm_apply (hn : 1 ≤ n) (u : ℤˣ) :
-    (((MulEquiv.op (deckMulEquiv n hn).symm).trans
-      (MulOpposite.opMulEquiv (M := ℤˣ)).symm).symm u) =
-        MulOpposite.op (deckMulEquiv n hn u) := by
-  simp
 
 /-- Characterization of the element of `ℤˣ` assigned by `fundamentalGroupMulEquiv`: a loop
 class `γ` maps to `u : ℤˣ` exactly when its monodromy translate of the chosen lift `e` is
@@ -132,9 +100,11 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
   let T := (MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
     (MulOpposite.opMulEquiv (M := ℤˣ)).symm
   have hT (g : (Deck (mk n))ᵐᵒᵖ) : T g = u ↔ g = MulOpposite.op (deckMulEquiv n (by omega) u) := by
-    rw [T.eq_symm_apply.symm, deckMulEquiv_symm_op_symm_symm_apply]
+    rw [T.eq_symm_apply.symm]
+    simp [T]
   calc
-    fundamentalGroupMulEquiv n hn e γ = u ↔ T (F γ) = u := Iff.rfl
+    fundamentalGroupMulEquiv n hn e γ = u ↔ T (F γ) = u := by
+      simp only [fundamentalGroupMulEquiv, F, T, MulEquiv.trans_apply]
     _ ↔ F γ = MulOpposite.op (deckMulEquiv n (by omega) u) := hT (F γ)
     _ ↔ ((MulOpposite.op (deckMulEquiv n (by omega) u)).unop •
           (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)) =
@@ -147,7 +117,7 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
 /-- The inverse equivalence sends an integer unit `u` to the loop class whose monodromy
 translates the chosen lift by `u`. -/
 @[simp]
-lemma monodromy_fundamentalGroupMulEquiv_symm (hn : 2 ≤ n)
+lemma fundamentalGroupMulEquiv_symm_monodromy (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) (u : ℤˣ) :
     ((isCoveringMap_mk n).monodromy ((fundamentalGroupMulEquiv n hn e).symm u) e :
@@ -181,7 +151,7 @@ lemma monodromy_eq_self_iff (hn : 2 ≤ n)
 /-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) with a simply connected
 covering sphere is isomorphic to `ℤˣ` for any basepoint `x`**:
 `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`. -/
-def fundamentalGroupMulEquiv' (hn : 2 ≤ n)
+def fundamentalGroupMulEquivAt (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     (x : RealProjectiveSpace n) :
     FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ :=
@@ -194,7 +164,7 @@ theorem card_fundamentalGroup (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     (x : RealProjectiveSpace n) :
     Nat.card (FundamentalGroup (RealProjectiveSpace n) x) = 2 := by
-  rw [Nat.card_congr (fundamentalGroupMulEquiv' n hn x).toEquiv, Nat.card_eq_fintype_card,
+  rw [Nat.card_congr (fundamentalGroupMulEquivAt n hn x).toEquiv, Nat.card_eq_fintype_card,
     Fintype.card_units_int]
 
 /-- For `2 ≤ n` and a simply connected covering sphere, the fundamental group of `RPⁿ` is
@@ -204,7 +174,7 @@ theorem nontrivial_fundamentalGroup (hn : 2 ≤ n)
     (x : RealProjectiveSpace n) :
     Nontrivial (FundamentalGroup (RealProjectiveSpace n) x) := by
   have hunit : Nontrivial ℤˣ := ⟨(1 : ℤˣ), (-1 : ℤˣ), by decide⟩
-  exact @Equiv.nontrivial _ _ (fundamentalGroupMulEquiv' n hn x).toEquiv hunit
+  exact @Equiv.nontrivial _ _ (fundamentalGroupMulEquivAt n hn x).toEquiv hunit
 
 /-- For `2 ≤ n` and a simply connected covering sphere, real projective space `RPⁿ` is not
 simply connected. -/
