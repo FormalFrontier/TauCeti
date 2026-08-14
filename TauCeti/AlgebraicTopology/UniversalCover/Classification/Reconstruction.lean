@@ -7,7 +7,6 @@ module
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
 public import TauCeti.Topology.Homotopy.Monodromy.Basic
-import TauCeti.Topology.Homotopy.Monodromy.Functoriality
 
 /-!
 # Reconstructing a connected cover from a fundamental-group action
@@ -74,72 +73,16 @@ theorem stabilizerCover_eq_subgroupCover (a : A) :
       subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a) :=
   (rfl)
 
-/-- The projection of the stabilizer cover is the projection of its subgroup cover, after
-transporting along the characteristic equality of covers. -/
-@[simp]
-theorem stabilizerCover_proj (a : A) :
-    (stabilizerCover x0 a).proj =
-      eqToHom (congrArg (fun p : ConnectedCoveringSpace (TopCat.of X) => (p : TopCat))
-        (stabilizerCover_eq_subgroupCover x0 a)) ≫
-        (subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a)).proj :=
-  (rfl)
-
-/-- Transport from the fibre of the stabilizer cover to the fibre of the corresponding subgroup
-cover. -/
-def stabilizerCoverFiberEquivSubgroupCover (a : A) :
-    ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃
-      ⇑(subgroupCover x0 (MulAction.stabilizer (FundamentalGroup X x0) a)).proj ⁻¹' {x0} :=
-  Equiv.cast <| congrArg
-    (fun p : ConnectedCoveringSpace (TopCat.of X) =>
-      p.isCoveringMap_proj.monodromyFunctor.obj (FundamentalGroupoid.mk x0))
-    (stabilizerCover_eq_subgroupCover x0 a)
-
 /-- The distinguished point of the fibre over `x₀` of the cover reconstructed from `a`: the
 class of the constant path at the basepoint. -/
 def stabilizerCoverBasepointFiber (a : A) : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} :=
-  (stabilizerCoverFiberEquivSubgroupCover x0 a).symm <|
-    subgroupCoverBasepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
-
-/-- Fibre transport identifies the distinguished point of the stabilizer cover with that of its
-subgroup cover. -/
-@[simp]
-theorem stabilizerCoverFiberEquivSubgroupCover_basepoint (a : A) :
-    stabilizerCoverFiberEquivSubgroupCover x0 a (stabilizerCoverBasepointFiber x0 a) =
-      subgroupCoverBasepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a) :=
-  Equiv.apply_symm_apply _ _
-
-omit [LocallyPathConnectedSpace X] [PathConnectedSpace X]
-  [SemilocallySimplyConnectedSpace X] in
-/-- Fibre transport to an equal connected cover commutes with monodromy. -/
-private theorem fiberCast_apply_monodromy (p q : ConnectedCoveringSpace (TopCat.of X))
-    (h : p = q) (g : FundamentalGroup X x0) (e : ⇑p.proj ⁻¹' {x0}) :
-    Equiv.cast (congrArg
-        (fun r : ConnectedCoveringSpace (TopCat.of X) =>
-          r.isCoveringMap_proj.monodromyFunctor.obj (FundamentalGroupoid.mk x0)) h)
-        (p.isCoveringMap_proj.monodromy g e) =
-      q.isCoveringMap_proj.monodromy g
-        (Equiv.cast (congrArg
-          (fun r : ConnectedCoveringSpace (TopCat.of X) =>
-            r.isCoveringMap_proj.monodromyFunctor.obj (FundamentalGroupoid.mk x0)) h) e) := by
-  subst q
-  rfl
-
-/-- Fibre transport from the stabilizer cover to its subgroup cover commutes with monodromy. -/
-@[simp]
-theorem stabilizerCoverFiberEquivSubgroupCover_apply_monodromy (a : A)
-    (g : FundamentalGroup X x0) (e : ⇑(stabilizerCover x0 a).proj ⁻¹' {x0}) :
-    stabilizerCoverFiberEquivSubgroupCover x0 a
-        ((stabilizerCover x0 a).isCoveringMap_proj.monodromy g e) =
-      (subgroupCover x0
-        (MulAction.stabilizer (FundamentalGroup X x0) a)).isCoveringMap_proj.monodromy g
-        (stabilizerCoverFiberEquivSubgroupCover x0 a e) :=
-  fiberCast_apply_monodromy x0 _ _ (stabilizerCover_eq_subgroupCover x0 a) g e
+  subgroupCoverBasepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a)
 
 /-! ### The fibre as an orbit
 
 The equivalence and its equivariance are first proved for the underlying quotient projection,
 which carries the instances the orbit-stabilizer API needs, and are then transported to the
-bundled cover along the fibre transport above. -/
+bundled cover along `subgroupCoverFiberEquivSubgroupQuotient`. -/
 
 /-- Raw-projection form of `stabilizerCoverFiberEquivOrbit`. -/
 private def fiberEquivOrbitAux (a : A) :
@@ -220,9 +163,8 @@ Under this equivalence the distinguished point of the fibre corresponds to `a`, 
 `stabilizerCoverFiberEquivOrbit_apply_monodromy`. -/
 def stabilizerCoverFiberEquivOrbit (a : A) :
     ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃ MulAction.orbit (FundamentalGroup X x0) a :=
-  (stabilizerCoverFiberEquivSubgroupCover x0 a).trans <|
-    (subgroupCoverFiberEquivSubgroupQuotient x0
-      (MulAction.stabilizer (FundamentalGroup X x0) a)).trans (fiberEquivOrbitAux x0 a)
+  (subgroupCoverFiberEquivSubgroupQuotient x0
+    (MulAction.stabilizer (FundamentalGroup X x0) a)).trans (fiberEquivOrbitAux x0 a)
 
 /-- The fibre equivalence sends the distinguished point of the fibre to `a`. -/
 @[simp]
@@ -230,9 +172,12 @@ theorem stabilizerCoverFiberEquivOrbit_apply_basepoint (a : A) :
     stabilizerCoverFiberEquivOrbit x0 a (stabilizerCoverBasepointFiber x0 a) =
       ⟨a, MulAction.mem_orbit_self a⟩ := by
   refine Subtype.ext ?_
-  simp only [stabilizerCoverFiberEquivOrbit, Equiv.trans_apply]
-  rw [stabilizerCoverFiberEquivSubgroupCover_basepoint,
-    subgroupCoverFiberEquivSubgroupQuotient_basepoint]
+  -- the reconstructed cover is by definition the subgroup cover of the stabilizer, so both sides
+  -- may be read at that cover, where the fibre transport lemmas apply
+  change ((fiberEquivOrbitAux x0 a) (subgroupCoverFiberEquivSubgroupQuotient x0
+    (MulAction.stabilizer (FundamentalGroup X x0) a)
+    (subgroupCoverBasepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a))) : A) = a
+  rw [subgroupCoverFiberEquivSubgroupQuotient_basepoint]
   -- the distinguished point is its own translate by the identity loop class
   have h := fiberEquivOrbitAux_apply_monodromy_basepoint x0 a 1
   rwa [one_smul, FundamentalGroup.one_def,
@@ -247,13 +192,19 @@ theorem stabilizerCoverFiberEquivOrbit_apply_monodromy (a : A) (g : FundamentalG
     stabilizerCoverFiberEquivOrbit x0 a
         ((stabilizerCover x0 a).isCoveringMap_proj.monodromy g e) =
       g • stabilizerCoverFiberEquivOrbit x0 a e := by
-  simp only [stabilizerCoverFiberEquivOrbit, Equiv.trans_apply]
-  rw [stabilizerCoverFiberEquivSubgroupCover_apply_monodromy]
-  rw [subgroupCoverFiberEquivSubgroupQuotient_apply_monodromy]
-  exact fiberEquivOrbitAux_apply_monodromy x0 a g
-    (subgroupCoverFiberEquivSubgroupQuotient x0
-      (MulAction.stabilizer (FundamentalGroup X x0) a)
-      (stabilizerCoverFiberEquivSubgroupCover x0 a e))
+  -- the reconstructed cover is by definition the subgroup cover of the stabilizer, so it suffices
+  -- to prove the statement there, where the fibre transport lemma applies
+  have key (e' : ⇑(subgroupCover x0
+      (MulAction.stabilizer (FundamentalGroup X x0) a)).proj ⁻¹' {x0}) :
+      fiberEquivOrbitAux x0 a (subgroupCoverFiberEquivSubgroupQuotient x0
+          (MulAction.stabilizer (FundamentalGroup X x0) a)
+          ((subgroupCover x0 (MulAction.stabilizer
+            (FundamentalGroup X x0) a)).isCoveringMap_proj.monodromy g e')) =
+        g • fiberEquivOrbitAux x0 a (subgroupCoverFiberEquivSubgroupQuotient x0
+          (MulAction.stabilizer (FundamentalGroup X x0) a) e') := by
+    rw [subgroupCoverFiberEquivSubgroupQuotient_apply_monodromy]
+    exact fiberEquivOrbitAux_apply_monodromy x0 a g _
+  exact key e
 
 /-! ### Transitive actions -/
 
