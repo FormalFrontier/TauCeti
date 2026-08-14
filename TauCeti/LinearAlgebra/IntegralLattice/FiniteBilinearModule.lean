@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Module.CharacterModule
+public import Mathlib.LinearAlgebra.SesquilinearForm.Orthogonal
 
 /-!
 # Finite bilinear modules
@@ -27,6 +28,7 @@ degenerate.
 ## Main definitions
 
 * `TauCeti.FiniteBilinearModule`: a finite abelian group with a symmetric `ℚ/ℤ`-valued pairing.
+* `TauCeti.FiniteBilinearModule.toBilin`: the pairing as a `ℤ`-bilinear map.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate`: bijectivity of the adjoint pairing.
 * `TauCeti.FiniteBilinearModule.Isometry`: a pairing-preserving additive equivalence.
 * `TauCeti.FiniteBilinearModule.orthogonalComplement`: the orthogonal complement of a subgroup.
@@ -83,6 +85,31 @@ theorem pairing_neg_left (x y : A) : A.pairing (-x) y = -A.pairing x y :=
 @[simp]
 theorem pairing_neg_right (x y : A) : A.pairing x (-y) = -A.pairing x y :=
   map_neg (A.pairing x) y
+
+/-- The bilinear pairing associated to a finite bilinear module, viewed as a `ℤ`-bilinear map. -/
+def toBilin : A →ₗ[ℤ] A →ₗ[ℤ] AddCircle (1 : ℚ) where
+  toFun x :=
+    { toFun := fun y ↦ A.pairing x y
+      map_add' := A.pairing_add_right x
+      map_smul' := fun r y ↦ by
+        simp only [RingHom.id_apply]
+        exact map_zsmul (A.pairing x) r y }
+  map_add' x y := by
+    ext z
+    exact A.pairing_add_left x y z
+  map_smul' r x := by
+    ext z
+    rw [LinearMap.smul_apply]
+    change (A.pairing (r • x)) z = r • (A.pairing x z)
+    rw [A.pairing_comm (r • x) z, map_zsmul, A.pairing_comm z x]
+
+@[simp]
+theorem toBilin_apply (x y : A) : A.toBilin x y = A.pairing x y := by
+  rfl
+
+theorem toBilin_isRefl : A.toBilin.IsRefl := fun x y h ↦ by
+  rw [toBilin_apply, A.pairing_comm, ← toBilin_apply]
+  exact h
 
 /-- A finite bilinear module is nondegenerate when its adjoint pairing is bijective. -/
 def IsNondegenerate : Prop := Function.Bijective A.pairing
@@ -268,27 +295,20 @@ theorem IsNondegenerate.radical_eq_bot (hA : A.IsNondegenerate) : A.radical = �
   · exact bot_le
 
 /-- The orthogonal complement of a subgroup consists of the elements pairing trivially with it. -/
-def orthogonalComplement (H : AddSubgroup A) : AddSubgroup A where
-  carrier := {x | ∀ y ∈ H, A.pairing x y = 0}
-  zero_mem' := by
-    intro y hy
-    exact A.pairing_zero_left y
-  add_mem' := by
-    intro x y hx hy z hz
-    rw [A.pairing_add_left, hx z hz, hy z hz, zero_add]
-  neg_mem' := by
-    intro x hx y hy
-    rw [A.pairing_neg_left, hx y hy, neg_zero]
+def orthogonalComplement (H : AddSubgroup A) : AddSubgroup A :=
+  (H.toIntSubmodule.orthogonalBilin A.toBilin).toAddSubgroup
 
 @[simp]
 theorem mem_orthogonalComplement_iff (H : AddSubgroup A) (x : A) :
-    x ∈ A.orthogonalComplement H ↔ ∀ y ∈ H, A.pairing x y = 0 := Iff.rfl
+    x ∈ A.orthogonalComplement H ↔ ∀ y ∈ H, A.pairing x y = 0 := by
+  rw [orthogonalComplement, Submodule.mem_toAddSubgroup, Submodule.mem_orthogonalBilin_iff]
+  simp_rw [toBilin_apply, A.pairing_comm]
+  exact ⟨fun h y hy ↦ h y hy, fun h y hy ↦ h y hy⟩
 
 /-- Orthogonal complements reverse inclusions. -/
 theorem orthogonalComplement_mono {H K : AddSubgroup A} (h : H ≤ K) :
-    A.orthogonalComplement K ≤ A.orthogonalComplement H := by
-  intro x hx y hy
-  exact hx y (h hy)
+    A.orthogonalComplement K ≤ A.orthogonalComplement H :=
+  Submodule.orthogonalBilin_le (AddSubgroup.toIntSubmodule.monotone h)
 
 @[simp]
 theorem orthogonalComplement_bot : A.orthogonalComplement ⊥ = ⊤ := by
@@ -308,16 +328,18 @@ theorem IsNondegenerate.orthogonalComplement_top_eq_bot (hA : A.IsNondegenerate)
 /-- Every subgroup is contained in its double orthogonal complement. -/
 theorem le_orthogonalComplement_orthogonalComplement (H : AddSubgroup A) :
     H ≤ A.orthogonalComplement (A.orthogonalComplement H) := by
-  intro x hx y hy
-  rw [A.pairing_comm]
-  exact hy x hx
+  intro x hx
+  have h := Submodule.le_orthogonalBilin_orthogonalBilin (S := H.toIntSubmodule) A.toBilin_isRefl
+  rw [← Submodule.toAddSubgroup_toIntSubmodule (H.toIntSubmodule.orthogonalBilin A.toBilin)] at h
+  exact h hx
 
 /-- A subgroup is bilinearly isotropic when the pairing vanishes on the subgroup square. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, ∀ y ∈ H, A.pairing x y = 0
 
 /-- Isotropy is equivalently inclusion in the orthogonal complement. -/
 theorem isIsotropic_iff_le_orthogonalComplement (H : AddSubgroup A) :
-    A.IsIsotropic H ↔ H ≤ A.orthogonalComplement H := Iff.rfl
+    A.IsIsotropic H ↔ H ≤ A.orthogonalComplement H := by
+  simp only [IsIsotropic, SetLike.le_def, mem_orthogonalComplement_iff]
 
 /-- Isotropy passes to additive subgroups. -/
 theorem IsIsotropic.mono {H K : AddSubgroup A} (hK : A.IsIsotropic K) (h : H ≤ K) :
