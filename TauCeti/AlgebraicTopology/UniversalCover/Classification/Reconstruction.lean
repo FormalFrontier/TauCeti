@@ -172,40 +172,8 @@ private theorem stabilizerCoverFiberEquivSubgroupQuotient_basepoint (a : A) :
 /-! ### The fibre as an orbit
 
 The equivalence and its equivariance are first proved for the underlying quotient projection,
-which carries the instances the orbit-stabilizer API needs; the bundled cover of the API is
-definitionally that projection. -/
-
-/-- The fibre–coset identification of a subgroup quotient sends the monodromy translate of the
-distinguished point of the fibre to the coset of the loop class. -/
-private theorem fiberEquivQuotientRange_monodromy_basepointFiber
-    (H : Subgroup (FundamentalGroup X x0)) (g : FundamentalGroup X x0) :
-    TauCeti.IsCoveringMap.fiberEquivQuotientRange (isCoveringMap_subgroupQuotientProj x0 H)
-        (SubgroupQuotient.basepointFiber x0 H)
-        ((isCoveringMap_subgroupQuotientProj x0 H).monodromy g
-          (SubgroupQuotient.basepointFiber x0 H)) =
-      QuotientGroup.mk g := by
-  apply (TauCeti.IsCoveringMap.fiberEquivQuotientRange
-    (isCoveringMap_subgroupQuotientProj x0 H) (SubgroupQuotient.basepointFiber x0 H)).symm.injective
-  rw [Equiv.symm_apply_apply]
-  exact (TauCeti.IsCoveringMap.fiberEquivQuotientRange_symm_apply_mk _ _ g).symm
-
-/-- The subgroup that the subgroup quotient recovers at the distinguished point of its fibre is
-`H` itself. This is `range_mapOfEq_subgroupQuotientProj`, phrased with the data appearing in the
-codomain of `fiberEquivQuotientRange` so that the two compose. -/
-private theorem range_mapOfEq_basepointFiber (H : Subgroup (FundamentalGroup X x0)) :
-    (FundamentalGroup.mapOfEq
-      ⟨subgroupQuotientProj x0 H, (isCoveringMap_subgroupQuotientProj x0 H).continuous⟩
-      (SubgroupQuotient.basepointFiber x0 H).2).range = H :=
-  by
-    let e0 : subgroupQuotientProj x0 H ⁻¹' {x0} :=
-      ⟨SubgroupQuotient.basepoint x0 H, by
-        simpa only [Set.mem_preimage, Set.mem_singleton_iff] using
-          subgroupQuotientProj_basepoint x0 H⟩
-    have he0 : SubgroupQuotient.basepointFiber x0 H = e0 := by
-      apply Subtype.ext
-      exact SubgroupQuotient.basepointFiber_coe x0 H
-    rw [he0]
-    exact range_mapOfEq_subgroupQuotientProj x0 H
+which carries the instances the orbit-stabilizer API needs, and are then transported to the
+bundled cover along the fibre transport above. -/
 
 /-- Raw-projection form of `stabilizerCoverFiberEquivOrbit`. -/
 private def fiberEquivOrbitAux (a : A) :
@@ -215,8 +183,16 @@ private def fiberEquivOrbitAux (a : A) :
         (isCoveringMap_subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a))
         (SubgroupQuotient.basepointFiber x0
           (MulAction.stabilizer (FundamentalGroup X x0) a))).trans <|
-    (Subgroup.quotientEquivOfEq (range_mapOfEq_basepointFiber x0
-        (MulAction.stabilizer (FundamentalGroup X x0) a))).trans
+    (Subgroup.quotientEquivOfEq (by
+        -- the recovered subgroup is the stabilizer by `range_mapOfEq_subgroupQuotientProj`, which
+        -- is stated at the distinguished point rather than at the point of the fibre carrying it
+        rw [show SubgroupQuotient.basepointFiber x0
+              (MulAction.stabilizer (FundamentalGroup X x0) a) =
+            ⟨SubgroupQuotient.basepoint x0 (MulAction.stabilizer (FundamentalGroup X x0) a), by
+              simpa only [Set.mem_preimage, Set.mem_singleton_iff] using
+                subgroupQuotientProj_basepoint x0 _⟩ from
+          Subtype.ext (SubgroupQuotient.basepointFiber_coe x0 _)]
+        exact range_mapOfEq_subgroupQuotientProj x0 _)).trans
       (MulAction.orbitEquivQuotientStabilizer (FundamentalGroup X x0) a).symm
 
 /-- Raw-projection form of `stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint`. -/
@@ -228,10 +204,14 @@ private theorem fiberEquivOrbitAux_apply_monodromy_basepoint (a : A)
           (SubgroupQuotient.basepointFiber x0
             (MulAction.stabilizer (FundamentalGroup X x0) a))) : A) =
       g • a := by
-  -- the fibre–coset identification sends the translate to the coset of `g`, and transporting
-  -- along the equality of subgroups leaves that coset alone,
-  simp only [fiberEquivOrbitAux, Equiv.trans_apply,
-    fiberEquivQuotientRange_monodromy_basepointFiber, Subgroup.quotientEquivOfEq_mk]
+  -- the monodromy translate of the distinguished point is the fibre–coset identification of the
+  -- coset of `g`,
+  rw [← TauCeti.IsCoveringMap.fiberEquivQuotientRange_symm_apply_mk
+    (isCoveringMap_subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a))
+    (SubgroupQuotient.basepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a)) g]
+  -- transporting along the equality of subgroups leaves that coset alone,
+  simp only [fiberEquivOrbitAux, Equiv.trans_apply, Equiv.apply_symm_apply,
+    Subgroup.quotientEquivOfEq_mk]
   -- so orbit-stabilizer sends it to the translate of `a` by `g`.
   exact MulAction.orbitEquivQuotientStabilizer_symm_apply (FundamentalGroup X x0) a g
 
@@ -247,19 +227,20 @@ private theorem fiberEquivOrbitAux_apply_monodromy (a : A) (g : FundamentalGroup
   obtain ⟨d, rfl⟩ := TauCeti.IsCoveringMap.exists_monodromy_eq
     (isCoveringMap_subgroupQuotientProj x0 (MulAction.stabilizer (FundamentalGroup X x0) a))
     (SubgroupQuotient.basepointFiber x0 (MulAction.stabilizer (FundamentalGroup X x0) a)) e
-  rw [← (isCoveringMap_subgroupQuotientProj x0
-    (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy_trans_apply d g]
-  -- Fundamental-group multiplication reverses path concatenation, so `d.trans g = g * d`.
-  change fiberEquivOrbitAux x0 a
-      ((isCoveringMap_subgroupQuotientProj x0
-        (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy (g * d)
-        (SubgroupQuotient.basepointFiber x0
-          (MulAction.stabilizer (FundamentalGroup X x0) a))) =
-    g • fiberEquivOrbitAux x0 a
+  -- so the iterated translate is the translate by a product, fundamental-group multiplication
+  -- reversing path concatenation,
+  have hmul : (isCoveringMap_subgroupQuotientProj x0
+        (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy g
       ((isCoveringMap_subgroupQuotientProj x0
         (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy d
         (SubgroupQuotient.basepointFiber x0
-          (MulAction.stabilizer (FundamentalGroup X x0) a)))
+          (MulAction.stabilizer (FundamentalGroup X x0) a))) =
+      (isCoveringMap_subgroupQuotientProj x0
+        (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy (g * d)
+        (SubgroupQuotient.basepointFiber x0
+          (MulAction.stabilizer (FundamentalGroup X x0) a)) := by
+    rw [FundamentalGroup.mul_def, IsCoveringMap.monodromy_trans_apply]
+  rw [hmul]
   -- and both sides are then computed by the basepoint case.
   refine Subtype.ext ?_
   rw [MulAction.orbit.coe_smul, fiberEquivOrbitAux_apply_monodromy_basepoint,
@@ -267,8 +248,9 @@ private theorem fiberEquivOrbitAux_apply_monodromy (a : A) (g : FundamentalGroup
 
 /-- The fibre over `x₀` of the cover reconstructed from `a` is equivalent to the orbit of `a`.
 
-Under this equivalence the distinguished point of the fibre corresponds to `a`; the equivariance
-statements are `stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint` and
+Under this equivalence the distinguished point of the fibre corresponds to `a`, by
+`stabilizerCoverFiberEquivOrbit_apply_basepoint`; the equivariance statements are
+`stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint` and
 `stabilizerCoverFiberEquivOrbit_apply_monodromy`. -/
 def stabilizerCoverFiberEquivOrbit (a : A) :
     ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃ MulAction.orbit (FundamentalGroup X x0) a :=
@@ -288,6 +270,17 @@ theorem stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint (a : A)
     stabilizerCoverFiberEquivSubgroupQuotient_basepoint]
   exact fiberEquivOrbitAux_apply_monodromy_basepoint x0 a g
 
+/-- The fibre equivalence sends the distinguished point of the fibre to `a`. -/
+@[simp]
+theorem stabilizerCoverFiberEquivOrbit_apply_basepoint (a : A) :
+    stabilizerCoverFiberEquivOrbit x0 a (stabilizerCoverBasepointFiber x0 a) =
+      ⟨a, MulAction.mem_orbit_self a⟩ := by
+  refine Subtype.ext ?_
+  -- the distinguished point is its own translate by the identity loop class
+  have h := stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint x0 a 1
+  rwa [one_smul, FundamentalGroup.one_def,
+    (stabilizerCover x0 a).isCoveringMap_proj.monodromy_refl, id_eq] at h
+
 /-- The fibre equivalence is equivariant: monodromy of the reconstructed cover agrees with the
 given action of the fundamental group on the orbit of `a`. -/
 @[simp]
@@ -304,12 +297,24 @@ theorem stabilizerCoverFiberEquivOrbit_apply_monodromy (a : A) (g : FundamentalG
 /-! ### Transitive actions -/
 
 /-- For a transitive action, the fibre over `x₀` of the cover reconstructed from `a` is
-equivalent to the whole `π₁(X, x₀)`-set, the orbit of `a` being everything. -/
+equivalent to the whole `π₁(X, x₀)`-set, the orbit of `a` being everything.
+
+Under this equivalence the distinguished point of the fibre corresponds to `a`, by
+`transitiveActionFiberEquiv_apply_basepoint`. -/
 def transitiveActionFiberEquiv [MulAction.IsPretransitive (FundamentalGroup X x0) A] (a : A) :
     ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃ A :=
   (stabilizerCoverFiberEquivOrbit x0 a).trans <|
     Equiv.subtypeUnivEquiv fun b : A =>
       (MulAction.orbit_eq_univ (FundamentalGroup X x0) a).symm ▸ Set.mem_univ b
+
+/-- The fibre equivalence of a transitive action sends the distinguished point of the fibre
+to `a`. -/
+@[simp]
+theorem transitiveActionFiberEquiv_apply_basepoint
+    [MulAction.IsPretransitive (FundamentalGroup X x0) A] (a : A) :
+    transitiveActionFiberEquiv x0 a (stabilizerCoverBasepointFiber x0 a) = a := by
+  simpa only [transitiveActionFiberEquiv, Equiv.trans_apply, Equiv.subtypeUnivEquiv_apply] using
+    congrArg Subtype.val (stabilizerCoverFiberEquivOrbit_apply_basepoint x0 a)
 
 /-- The fibre equivalence of a transitive action sends the monodromy translate of the
 distinguished point of the fibre to the corresponding translate of `a`. -/
