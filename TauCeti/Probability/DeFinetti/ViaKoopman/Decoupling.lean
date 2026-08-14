@@ -41,7 +41,7 @@ bridge of `Ergodic/CondExpProjection.lean`, and the invariant conditional law of
 
 Transport side:
 
-* `strictMono_snoc_prefix` — appending `r + m` to the prefix is strictly increasing;
+* `snoc_prefix_strictMono` — appending `r + m` to the prefix is strictly increasing;
 * `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq` — so the weighted
   integral does not depend on the displacement `m`, by the weighted block transport;
 * `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage` — hence an
@@ -52,8 +52,8 @@ Analytic side:
 * `birkhoffAverage_shift_coord_eq` — the displaced coordinates *are* that Birkhoff average;
 * `ContractableLaw.tendsto_integral_abs_birkhoffAverage_indicator_coord` — it converges in `L¹` to
   the conditional expectation given the invariants;
-* `ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditional` — and that limit is the
-  invariant conditional law, by
+* `condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure` — and, where the
+  witness exists, that limit is the invariant conditional law, by
   `ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants`.
 
 Where they meet:
@@ -62,7 +62,7 @@ Where they meet:
   is constant by the transport side and convergent by the analytic side, so its one limit
   identifies the weighted integral of `𝟙_B` at coordinate `r` with that of the conditional
   expectation given the invariants. This form needs no standard-Borel hypothesis;
-* `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditional` — and,
+* `setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditionalProbabilityMeasure` — and,
   where the witness exists, that limit is the invariant conditional law `ν(B)`.
 
 The limit passage itself is one private estimate,
@@ -75,9 +75,10 @@ The `condExp` form is the one an induction consumes, because `stronglyMeasurable
 the `ν` form is only an a.e. identity and cannot serve as a weight. Conversion happens once, at the
 end.
 
-Every statement carries an invariants-measurable weight `w`. That is what makes the chain usable
-in an induction across a block: the factors already peeled off accumulate as exactly such a weight,
-which the unweighted forms cannot express.
+The weighted transport and decoupling statements carry an invariants-measurable weight `w`; the
+preliminary and analytic lemmas do not. The weight is what makes the chain usable in an induction
+across a block: the factors already peeled off accumulate as exactly such a weight, which an
+unweighted form cannot express.
 
 This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
@@ -103,7 +104,7 @@ variable {α : Type*} [MeasurableSpace α]
 /-- **Appending a later coordinate to the prefix is strictly increasing.** The prefix occupies
 `0, 1, …, r - 1` and the appended coordinate is `r + m`, so the selection is strictly increasing
 whatever the displacement `m`. -/
-theorem strictMono_snoc_prefix (r m : ℕ) :
+theorem snoc_prefix_strictMono (r m : ℕ) :
     StrictMono (Fin.snoc (fun i : Fin r => (i : ℕ)) (r + m) : Fin (r + 1) → ℕ) := by
   refine Fin.strictMono_iff_lt_succ.2 fun i => ?_
   rw [Fin.snoc_castSucc]
@@ -133,34 +134,13 @@ theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ → α)
   refine Finset.sum_congr rfl fun m _ => ?_
   rw [shift_iterate_apply]
 
-/-- **Every coordinate has the same set-integral over an invariant event.** The single-coordinate
-instance of the block transport: reading coordinate `r` and reading coordinate `0` give the same
-integral of any measurable real observable, over any invariant event. -/
-theorem ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) (r : ℕ)
-    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {f : α → ℝ} (hf : Measurable f) :
-    ∫ x in A, f (x r) ∂ρ = ∫ x in A, f (x 0) ∂ρ := by
-  classical
-  have hmap := hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants
-    (k := fun _ : Fin 1 => r) (Subsingleton.strictMono _) hA
-  have hmap0 := hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants
-    (k := fun _ : Fin 1 => 0) (Subsingleton.strictMono _) hA
-  have hg : Measurable fun y : Fin 1 → α => f (y 0) := hf.comp (measurable_pi_apply 0)
-  have hcoord : ∀ (s : ℕ), Measurable fun x : ℕ → α => fun _ : Fin 1 => x s :=
-    fun s => measurable_pi_lambda _ fun _ => measurable_pi_apply s
-  have key : ∀ s : ℕ, StrictMono (fun _ : Fin 1 => s) → ∫ x in A, f (x s) ∂ρ
-      = ∫ y, f (y 0) ∂((ρ.restrict A).map (prefixProj α 1)) := by
-    intro s hs
-    rw [← hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants hs hA,
-      integral_map (hcoord s).aemeasurable hg.aestronglyMeasurable]
-  rw [key r (Subsingleton.strictMono _), key 0 (Subsingleton.strictMono _)]
 
-/-- **The Birkhoff averages of a coordinate indicator converge to the invariant conditional
-expectation of the first coordinate.** Combining the mean ergodic bridge with the fact that every
-coordinate agrees with the first: the limit is named at coordinate `0`, which is where the
-invariant conditional law is defined. -/
-theorem ContractableLaw.tendsto_integral_abs_birkhoffAverage_indicator_coord
+namespace ContractableLaw
+
+/-- **The Birkhoff averages of a coordinate indicator converge in `L¹`.** The mean ergodic bridge,
+applied to the indicator of `B` at coordinate `r`: the limit is the conditional expectation of that
+same indicator given the shift-invariant σ-algebra. -/
+theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
     {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     Filter.Tendsto (fun n => ∫ x,
@@ -183,7 +163,7 @@ theorem ContractableLaw.tendsto_integral_abs_birkhoffAverage_indicator_coord
 witness's characteristic property at coordinate `0` with the transport fact that all coordinates
 agree over invariant events. This is what lets the Birkhoff limit at coordinate `r` be named as the
 witness. -/
-theorem ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditional
+theorem condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α] {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
     (hρ : ContractableLaw ρ) {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     ρ[fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r) |
@@ -210,9 +190,9 @@ theorem ContractableLaw.condExp_indicator_coord_ae_eq_invariantConditional
     have h0 : ∫ x in s, ((invariantConditionalProbabilityMeasure ρ x : Measure α)).real B ∂ρ
         = ∫ x in s, B.indicator (fun _ => (1 : ℝ)) (x 0) ∂ρ := by
       have hint0 : Integrable ((B.indicator fun _ => (1 : ℝ)) ∘ fun x : ℕ → α => x 0) ρ := hint 0
-      rw [setIntegral_congr_ae (hle _ hs) (hwit.mono fun x hx _ => hx),
-        setIntegral_condExp hle hint0 hs]
-      rfl
+      simpa only [Function.comp_apply] using
+        (setIntegral_congr_ae (hle _ hs) (hwit.mono fun x hx _ => hx)).trans
+          (setIntegral_condExp hle hint0 hs)
     rw [h0]
     exact (hρ.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_invariants r hs
       (measurable_const.indicator hB)).symm
@@ -224,7 +204,7 @@ displaced integral onto the same prefix integral.
 
 The invariant weight `w` is what makes this usable in an induction: the factors already peeled off
 a block accumulate as exactly such a weight. -/
-theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
+theorem setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) {B : Set α} (hB : MeasurableSet B)
@@ -245,8 +225,9 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
           x ((Fin.snoc (fun j : Fin r => (j : ℕ)) (r + d) : Fin (r + 1) → ℕ) i))
         = g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x (r + d)) := by
     intro d x
-    simp only [hG, Fin.snoc_castSucc, Fin.snoc_last]
-    rfl
+    have hpp : (fun j : Fin r => x (j : ℕ)) = prefixProj α r x :=
+      (funext fun i => prefixProj_apply r x i).symm
+    simp only [hG, Fin.snoc_castSucc, Fin.snoc_last, hpp]
   -- Every displacement transports onto the prefix, weight and all.
   have key : ∀ d : ℕ,
       ∫ x in A, w x * (g (prefixProj α r x) * B.indicator (fun _ => (1 : ℝ)) (x (r + d))) ∂ρ
@@ -259,7 +240,7 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
           integral_congr_ae (Filter.Eventually.of_forall fun x => by simp only [hcomp])
       _ = ∫ x in A, w x * G (prefixProj α (r + 1) x) ∂ρ :=
           hρ.setIntegral_mul_block_eq_prefixProj_of_strictMono_of_measurable_invariants
-            (strictMono_snoc_prefix r d) hA hw hG_meas
+            (snoc_prefix_strictMono r d) hA hw hG_meas
   rw [key m, ← key 0, Nat.add_zero]
 
 /-- **The weighted integral equals its own Birkhoff average.** Because the displaced integrals all
@@ -267,7 +248,7 @@ agree, averaging over `m < n` changes nothing on the left while turning the inte
 into a Birkhoff average — for every `n ≠ 0`.
 
 This is the step that hands the argument to the mean ergodic theorem. -/
-theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage
+theorem setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage
     {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
@@ -350,15 +331,16 @@ private theorem tendsto_setIntegral_mul_of_tendsto_integral_abs
   exact tendsto_setIntegral_of_L1' _ (hp.mul hv.aestronglyMeasurable)
     (Filter.Eventually.of_forall fun n => (hu n).bdd_mul hp hp_bdd) hL1 A
 
-/-- **The last coordinate decouples into the invariant conditional law.** Over an invariant event,
-the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral of `ν(B)`, where `ν`
-is the invariant conditional law.
+/-- **The last coordinate decouples into the invariant conditional expectation.** Over an invariant
+event, the weighted integral of `𝟙_B` at coordinate `r` equals the weighted integral of its
+conditional expectation given the shift-invariant σ-algebra. No standard-Borel hypothesis is
+needed, since no witness is named; that is the following theorem.
 
 Where the two halves meet: the averaged sequence is *constant* in `n` by
 `ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_birkhoffAverage`, and the same
 sequence converges to the right-hand side by the `L¹` mean ergodic theorem; a sequence has one
 limit. -/
-theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
+theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
@@ -429,7 +411,7 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
 
 /-- **Naming the limit as the invariant conditional law.** The `condExp` form above says the last
 coordinate decouples; this says what it decouples into. -/
-theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditional
+theorem setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
@@ -443,8 +425,10 @@ theorem ContractableLaw.setIntegral_weight_mul_prefix_mul_indicator_eq_invariant
   rw [hρ.setIntegral_weight_mul_prefix_mul_indicator_eq_condExp hw hw_bdd hg hg_bdd hB hA]
   refine integral_congr_ae ?_
   filter_upwards [ae_restrict_of_ae
-    (hρ.condExp_indicator_coord_ae_eq_invariantConditional hB r)] with x hx
+    (hρ.condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure hB r)] with x hx
   rw [hx]
+
+end ContractableLaw
 
 end Probability
 
