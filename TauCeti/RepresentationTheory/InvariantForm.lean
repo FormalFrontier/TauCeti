@@ -77,10 +77,13 @@ representation, is what makes `G` a group.
 `TauCeti.Representation.IsInvariantForm` is the statement that every `ρ g` is an isometry of the
 form, `TauCeti.BilinForm.IsIsometry B (ρ g)`, so that the invariant forms of a representation and
 the isometry group of a form are the same notion read two ways.  Its body is not exposed:
-`TauCeti.Representation.isInvariantForm_iff` introduces it and
-`TauCeti.Representation.IsInvariantForm.apply` eliminates it, so nothing outside this file has to
-unfold the definition.  The `iff` is deliberately not a `simp` lemma: unfolding invariance into its
-quantified equation would take `TauCeti.Representation.isInvariantForm_zero` and
+`TauCeti.Representation.isInvariantForm_iff_isIsometry` and
+`TauCeti.Representation.isInvariantForm_iff` introduce its isometry and pointwise forms, while
+`TauCeti.Representation.IsInvariantForm.isIsometry` and
+`TauCeti.Representation.IsInvariantForm.apply` eliminate them, so nothing outside this file has to
+unfold the definition.  The pointwise `iff` is deliberately not a `simp` lemma: unfolding
+invariance into its quantified equation would take
+`TauCeti.Representation.isInvariantForm_zero` and
 `TauCeti.Representation.mem_invariantForms` out of simp-normal form, which the `simpNF` linter
 rejects.  What the file adds around that pair is the two rewritings that are *not*
 immediate -- moving a single `ρ g` across the form at the cost of an inverse
@@ -142,6 +145,15 @@ def IsInvariantForm (ρ : Representation k G V) (B : BilinForm k V) : Prop :=
   ∀ g : G, BilinForm.IsIsometry B (ρ g)
 
 variable {ρ : Representation k G V} {B C : BilinForm k V}
+
+/-- A form is invariant for `ρ` exactly when every `ρ g` is an isometry of the form. -/
+theorem isInvariantForm_iff_isIsometry :
+    IsInvariantForm ρ B ↔ ∀ g : G, BilinForm.IsIsometry B (ρ g) := Iff.rfl
+
+/-- Every element of a representation is an isometry of an invariant form. -/
+theorem IsInvariantForm.isIsometry (hB : IsInvariantForm ρ B) (g : G) :
+    BilinForm.IsIsometry B (ρ g) :=
+  isInvariantForm_iff_isIsometry.mp hB g
 
 /-- A form is invariant for `ρ` exactly when it satisfies the pointwise equation
 `B (ρ g x) (ρ g y) = B x y`. -/

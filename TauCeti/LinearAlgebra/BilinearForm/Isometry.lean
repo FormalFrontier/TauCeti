@@ -327,21 +327,28 @@ end BaseChange
 
 end CommSemiring
 
+section AddCommGroup
+
+variable {R M : Type*} [CommSemiring R] [AddCommGroup M] [Module R M]
+  {B : BilinForm R M} {f : M →ₗ[R] M}
+
+/-- An isometry of a left-separating form is injective: it cannot collapse a vector that pairs
+nontrivially with something. -/
+theorem IsIsometry.injective (hB : B.SeparatingLeft) (hf : IsIsometry B f) :
+    Function.Injective f := by
+  intro x y hxy
+  rw [← sub_eq_zero]
+  refine hB (x - y) fun z => ?_
+  rw [← hf (x - y) z, map_sub, hxy, sub_self, LinearMap.map_zero₂]
+
+end AddCommGroup
+
 /-! ### Determinants -/
 
 section CommRing
 
 variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M] {B : BilinForm R M}
   {f : M →ₗ[R] M}
-
-/-- An isometry of a left-separating form is injective: it cannot collapse a vector that pairs
-nontrivially with something. -/
-theorem IsIsometry.injective (hB : B.SeparatingLeft) (hf : IsIsometry B f) :
-    Function.Injective f := by
-  rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
-  intro x hx
-  refine hB x fun y => ?_
-  rw [← hf x y, LinearMap.mem_ker.mp hx, LinearMap.map_zero₂]
 
 section Matrix
 
@@ -410,13 +417,6 @@ theorem toIsometryGroupOfIsUnitDet_apply (hf : IsIsometry B f)
     (hf.toIsometryGroupOfIsUnitDet hdet : M ≃ₗ[R] M) x = f x :=
   LinearMap.equivOfIsUnitDet_apply hdet x
 
-/-- An endomorphism of a finite free module with unit determinant is bijective. -/
-theorem bijective_of_isUnit_det (hf : IsIsometry B f) (hdet : IsUnit (LinearMap.det f)) :
-    Function.Bijective f := by
-  have h : ⇑(hf.toIsometryGroupOfIsUnitDet hdet : M ≃ₗ[R] M) = ⇑f :=
-    funext (hf.toIsometryGroupOfIsUnitDet_apply hdet)
-  exact h ▸ (hf.toIsometryGroupOfIsUnitDet hdet : M ≃ₗ[R] M).bijective
-
 end IsIsometry
 
 end UnitDeterminant
@@ -454,8 +454,9 @@ theorem toIsometryGroup_apply (hB : B.Nondegenerate) (hf : IsIsometry B f) (x : 
 
 /-- Over an integral domain, an endomorphism of a finite free module preserving a nondegenerate
 bilinear form is automatically bijective. -/
-theorem bijective (hB : B.Nondegenerate) (hf : IsIsometry B f) : Function.Bijective f := by
-  exact hf.bijective_of_isUnit_det (hf.isUnit_det_of_nondegenerate hB)
+theorem bijective (hB : B.Nondegenerate) (hf : IsIsometry B f) : Function.Bijective f :=
+  (Module.End.isUnit_iff f).mp
+    ((LinearMap.isUnit_iff_isUnit_det f).mpr (hf.isUnit_det_of_nondegenerate hB))
 
 end IsIsometry
 
