@@ -50,7 +50,7 @@ since that is where Jordan's lemma enters.
 
 ## Main results
 
-* `TauCeti.Contour.hasCauchyPVAt_dirichletIntegrand_realSegment` — the principal value of
+* `TauCeti.Contour.hasCauchyPVAt_realSegment_dirichlet` — the principal value of
   `e^{iat}/t` along `[-R, R]` is `i · ∫_{-R}^{R} sin (a t) / t dt`, for every frequency.
 * `TauCeti.Contour.integral_sin_mul_div_symm_eq` — comparing the two evaluations of that
   principal value: the symmetric integral is `π` minus the arc contribution.
@@ -90,17 +90,20 @@ division-by-zero convention, so no hypothesis on `t` is needed. -/
 theorem dirichletIntegrand_ofReal (a t : ℝ) :
     dirichletIntegrand a (t : ℂ) =
       ((Real.cos (a * t) / t : ℝ) : ℂ) + ((Real.sin (a * t) / t : ℝ) : ℂ) * Complex.I := by
+  -- reassociate the exponent into the real multiple of `I` that `Complex.exp_mul_I` consumes
+  have hexponent : Complex.I * (a : ℂ) * (t : ℂ) = ((a * t : ℝ) : ℂ) * Complex.I := by
+    push_cast
+    ring
   have hexp : Complex.exp (Complex.I * (a : ℂ) * (t : ℂ))
       = ((Real.cos (a * t) : ℝ) : ℂ) + ((Real.sin (a * t) : ℝ) : ℂ) * Complex.I := by
-    rw [show Complex.I * (a : ℂ) * (t : ℂ) = ((a * t : ℝ) : ℂ) * Complex.I by push_cast; ring,
-      Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin]
+    rw [hexponent, Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin]
   rw [dirichletIntegrand_eq, hexp, Complex.ofReal_div, Complex.ofReal_div]
   ring
 
 /-- The imaginary part of the Dirichlet integrand along the real axis is bounded by the frequency:
 `|sin (a t) / t| ≤ |a|`, since `|sin u| ≤ |u|`. This is what keeps the imaginary part an ordinary
 integral rather than a principal value. -/
-theorem abs_sin_mul_div_le (a t : ℝ) : |Real.sin (a * t) / t| ≤ |a| := by
+private theorem abs_sin_mul_div_le (a t : ℝ) : |Real.sin (a * t) / t| ≤ |a| := by
   rcases eq_or_ne t 0 with rfl | ht
   · simp
   · rw [abs_div, div_le_iff₀ (abs_pos.mpr ht)]
@@ -140,7 +143,7 @@ private theorem intervalIntegrable_ofReal {g : ℝ → ℝ} {x y : ℝ}
   ⟨h.1.ofReal, h.2.ofReal⟩
 
 /-- `t ↦ sin (a t) / t` is interval-integrable: measurable and bounded by `|a|`. -/
-theorem intervalIntegrable_sin_mul_div (a x y : ℝ) :
+private theorem intervalIntegrable_sin_mul_div (a x y : ℝ) :
     IntervalIntegrable (fun t => Real.sin (a * t) / t) volume x y :=
   intervalIntegrable_of_measurable_of_abs_le (by fun_prop) (abs_sin_mul_div_le a)
 
@@ -164,21 +167,22 @@ private theorem intervalIntegrable_truncated_cos (a x y : ℝ) (hε : 0 < ε) :
 to `0` over the symmetric interval `[-R, R]` — for every `ε` and every `R`. This exact
 cancellation is what makes the principal value exist even though `∫ dt / t` diverges at the
 origin. -/
-theorem integral_truncated_cos_mul_div_eq_zero (a ε R : ℝ) :
+private theorem integral_truncated_cos_mul_div_eq_zero (a ε R : ℝ) :
     (∫ t in -R..R, if ε < |t| then Real.cos (a * t) / t else 0) = 0 := by
   set g : ℝ → ℝ := fun t => if ε < |t| then Real.cos (a * t) / t else 0 with hg
   have hodd : ∀ t : ℝ, g (-t) = -g t := by
     intro t
     simp only [hg, abs_neg, mul_neg, Real.cos_neg, div_neg]
     split <;> simp
-  have hneg : (∫ t in -R..R, g (-t)) = ∫ t in -R..R, g t := by simp
-  rw [show (∫ t in -R..R, g (-t)) = ∫ t in -R..R, -g t from by simp only [hodd],
-    intervalIntegral.integral_neg] at hneg
-  linarith
+  -- reflecting the symmetric interval leaves the integral alone, while oddness negates it
+  have hrefl : (∫ t in -R..R, g (-t)) = ∫ t in -R..R, g t := by simp
+  have hodd_integral : (∫ t in -R..R, g (-t)) = -∫ t in -R..R, g t := by
+    simp only [hodd, intervalIntegral.integral_neg]
+  linarith [hrefl, hodd_integral]
 
 /-- The imaginary part needs **no** excision in the limit: `sin (a t) / t` is bounded by `|a|`, so
 dominated convergence lets the excised integrals converge to the ordinary integral as `ε → 0⁺`. -/
-theorem tendsto_integral_truncated_sin_mul_div (a : ℝ) (hR : 0 ≤ R) :
+private theorem tendsto_integral_truncated_sin_mul_div (a : ℝ) (hR : 0 ≤ R) :
     Tendsto (fun ε : ℝ => ∫ t in -R..R, if ε < |t| then Real.sin (a * t) / t else 0)
       (𝓝[>] 0) (𝓝 (∫ t in -R..R, Real.sin (a * t) / t)) := by
   have hle : (-R : ℝ) ≤ R := by linarith
@@ -250,7 +254,7 @@ Both defining clauses come from the split of the integrand into `cos (a t)/t + i
 the excised real part integrates to `0` by oddness for every `ε`, while the imaginary part is
 bounded and its excised integrals converge by dominated convergence. No positivity of `a` is
 needed. -/
-theorem hasCauchyPVAt_dirichletIntegrand_realSegment (a : ℝ) (hR : 0 ≤ R) :
+theorem hasCauchyPVAt_realSegment_dirichlet (a : ℝ) (hR : 0 ≤ R) :
     HasCauchyPVAt (fun t : ℝ => (t : ℂ)) (-R) R (dirichletIntegrand a) 0
       (((∫ t in -R..R, Real.sin (a * t) / t : ℝ) : ℂ) * Complex.I) := by
   refine HasCauchyPVAt.intro ?_ ?_
@@ -270,7 +274,7 @@ theorem integral_sin_mul_div_symm_eq (a : ℝ) (hR : 0 < R) :
       = (Real.pi : ℂ) * Complex.I
         - ∫ θ in (0 : ℝ)..Real.pi,
             dirichletIntegrand a (circleMap 0 R θ) * deriv (circleMap 0 R) θ :=
-  HasCauchyPV.unique (hasCauchyPVAt_dirichletIntegrand_realSegment a hR.le).hasCauchyPV
+  HasCauchyPV.unique (hasCauchyPVAt_realSegment_dirichlet a hR.le).hasCauchyPV
     (hasCauchyPV_realSegment_dirichlet a hR)
 
 /-! ### The improper integral -/
@@ -330,7 +334,8 @@ theorem tendsto_integral_sin_mul_div_atTop (ha : 0 < a) :
   have hfun : ∀ R : ℝ, (2 : ℝ)⁻¹ * (2 * ∫ x in (0 : ℝ)..R, Real.sin (a * x) / x)
       = ∫ x in (0 : ℝ)..R, Real.sin (a * x) / x := fun R => by ring
   simp only [hfun] at h2
-  rwa [show Real.pi / 2 = 2⁻¹ * Real.pi from by ring]
+  have hlimit : (2 : ℝ)⁻¹ * Real.pi = Real.pi / 2 := by ring
+  rwa [hlimit] at h2
 
 /-- **The Dirichlet integral**: `∫_0^R sin x / x dx → π / 2` as `R → ∞`. -/
 theorem tendsto_integral_sin_div_atTop :
