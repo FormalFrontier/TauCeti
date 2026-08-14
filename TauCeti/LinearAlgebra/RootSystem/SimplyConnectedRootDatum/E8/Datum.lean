@@ -6,6 +6,7 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Lattice
+import TauCeti.LinearAlgebra.Matrix.Gram
 
 public section
 
@@ -203,7 +204,7 @@ private lemma e8SimplyConnectedBase_support :
 
 /-- Membership in the pinned base support is exactly membership among the first eight root
 indices. -/
-@[simp] theorem mem_e8SimplyConnectedBase_support {k : Fin 240} :
+@[simp] theorem mem_support_e8SimplyConnectedBase {k : Fin 240} :
     k ∈ e8SimplyConnectedBase.support ↔ (k : ℕ) < 8 := by
   rw [e8SimplyConnectedBase_support]
   exact mem_simpleSupport_iff_lt e8SimpleIndex_injective e8SimpleIndex_val

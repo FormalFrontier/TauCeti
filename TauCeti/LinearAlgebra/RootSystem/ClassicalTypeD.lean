@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.Matrix.Dual
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+import Mathlib.LinearAlgebra.Matrix.Dual
+import TauCeti.LinearAlgebra.Matrix.Gram
 
 public section
 

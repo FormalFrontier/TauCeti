@@ -42,7 +42,8 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
 Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
 by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`. The symmetry
 and reflection preservation of the quadratic form carried by the Cartan matrix are supplied by
-`TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self` from the same module.
+`TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self` in
+`TauCeti/LinearAlgebra/Matrix/Gram.lean`.
 -/
 
 namespace TauCeti
