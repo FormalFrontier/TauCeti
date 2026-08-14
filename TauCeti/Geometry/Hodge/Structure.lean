@@ -207,17 +207,9 @@ theorem latticeConj_involutive (hℂ : IsBaseChange ℂ ιℂ) :
   rw [concreteLatticeConj_involutive]
   exact hℂ.equiv.apply_symm_apply x
 
-/-- Abstract conjugation equivalence on `Vℂ`. -/
-noncomputable def latticeConjEquiv (hℂ : IsBaseChange ℂ ιℂ) :
-    Vℂ ≃ₛₗ[starRingEnd ℂ] Vℂ :=
-  { latticeConj hℂ with
-    invFun := latticeConj hℂ
-    left_inv := latticeConj_involutive hℂ
-    right_inv := latticeConj_involutive hℂ }
-
 /-- Abstract conjugation structure on `Vℂ`. -/
 noncomputable def latticeConjugation (hℂ : IsBaseChange ℂ ιℂ) : Conjugation Vℂ where
-  toEquiv := latticeConjEquiv hℂ
+  toEquiv := LinearEquiv.ofInvolutive (latticeConj hℂ) (latticeConj_involutive hℂ)
   involutive := latticeConj_involutive hℂ
 
 /-- Companion uniqueness theorem: any conjugate-linear endomorphism fixing `ιℂ V` is
