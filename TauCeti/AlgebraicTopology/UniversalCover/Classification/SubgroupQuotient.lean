@@ -152,9 +152,7 @@ theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) 
 namespace SubgroupQuotient
 
 /-- The distinguished point of the subgroup quotient, regarded as a point of the fibre over the
-basepoint. The body is exposed so that an importing file can recognise the underlying point as
-`basepoint x₀ H`. -/
-@[expose]
+basepoint. -/
 def basepointFiber (H : Subgroup (FundamentalGroup X x₀)) :
     subgroupQuotientProj x₀ H ⁻¹' {x₀} :=
   ⟨basepoint x₀ H, by

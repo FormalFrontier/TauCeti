@@ -62,9 +62,7 @@ open CategoryTheory
 
 namespace Over
 
-/-- The property of an object of `TopCat / X` that its structure morphism is a covering map.
-The body is exposed: the property is meant to be unfolded to the covering-map statement. -/
-@[expose]
+/-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
 def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
 
@@ -226,11 +224,7 @@ abbrev totalSpace (X : TopCat.{u}) : ConnectedCoveringSpace X ⥤ TopCat :=
 instance : CoeOut (ConnectedCoveringSpace X) TopCat where
   coe p := p.obj.left
 
-/-- Construct a connected covering space from a covering map with connected total space.
-
-The body is exposed so that an importing file can still recognise the total space of a cover it
-builds this way as the space it started from. -/
-@[expose]
+/-- Construct a connected covering space from a covering map with connected total space. -/
 def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
     [ConnectedSpace E] :
     ConnectedCoveringSpace X where
