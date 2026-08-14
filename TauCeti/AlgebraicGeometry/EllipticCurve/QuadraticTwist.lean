@@ -702,6 +702,28 @@ theorem not_exists_smul_quadraticTwist_eq (hj₀ : E.j ≠ 0) (hj₁₇₂₈ : 
       _ = a * C₁ := haC.symm
   exact mul_right_cancel (((mul_left_cancel hchain).trans (one_mul C₁).symm))
 
+omit [E.IsElliptic] in
+/-- **An `L`-isomorphism `E'ᴸ ≅ Eᴸ` whose Galois conjugate differs from it by `[-1]` makes `E'`
+`K`-isomorphic to the quadratic twist of `E`.** -/
+private theorem exists_smul_eq_quadraticTwist_of_map_eq_negVariableChange_mul
+    {E' : WeierstrassCurve K} {ρ : VariableChange L}
+    (hρ : ρ • E'.baseChange L = E.baseChange L) {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1)
+    (hρmap : ρ.map (σ : L →+* L) = (E.baseChange L).negVariableChange * ρ) :
+    ∃ C : VariableChange K, C • E' = E.quadraticTwist L := by
+  -- the twist's own change of variables carries the opposite cocycle, so `T · ρ` is
+  -- `σ`-invariant and descends to `K`
+  have hχiso : (E.quadraticTwistVariableChange L * ρ) • E'.baseChange L
+      = (E.quadraticTwist L).baseChange L := by
+    rw [mul_smul, hρ, E.quadraticTwistVariableChange_smul L]
+  have hχinv : (E.quadraticTwistVariableChange L * ρ).map (σ : L →+* L)
+      = E.quadraticTwistVariableChange L * ρ := by
+    rw [VariableChange.map_mul, E.map_quadraticTwistVariableChange L hσ, hρmap, mul_assoc,
+      ← mul_assoc (E.baseChange L).negVariableChange,
+      (E.baseChange L).negVariableChange_mul_self, one_mul]
+  obtain ⟨χK, hχK⟩ := VariableChange.exists_baseChange_eq_of_map_eq L hσ hχinv
+  exact ⟨χK, smul_eq_of_baseChange_smul_eq L (FaithfulSMul.algebraMap_injective K L) χK
+    (by rw [hχK]; exact hχiso)⟩
+
 variable (L) in
 /-- **Classification of the forms of `E` split by `L/K`, for `j(E) ∉ {0, 1728}`.** A curve over `K`
 that becomes isomorphic to `E` over `L` is isomorphic over `K` either to `E` or to its quadratic
@@ -718,9 +740,6 @@ theorem exists_smul_eq_or_exists_smul_eq_quadraticTwist (hj₀ : E.j ≠ 0) (hj�
       ∃ C : VariableChange K, C • E' = E.quadraticTwist L := by
   obtain ⟨ρ, hρ⟩ := h
   obtain ⟨σ, hσ⟩ := Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L
-  obtain ⟨θ, hθ⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap K L
-  set C₁ := E.quadraticTwistOfTraceNormVariableChange hθ hσ with hC₁
-  have hcoc := E.map_quadraticTwistOfTraceNormVariableChange hθ hσ
   have hinj := FaithfulSMul.algebraMap_injective K L
   -- the Galois conjugate of `ρ` is again an isomorphism `E'ᴸ ≅ Eᴸ`, so `σρ · ρ⁻¹` fixes `Eᴸ`
   have hσρ : (ρ.map (σ : L →+* L)) • E'.baseChange L = E.baseChange L :=
@@ -735,23 +754,9 @@ theorem exists_smul_eq_or_exists_smul_eq_quadraticTwist (hj₀ : E.j ≠ 0) (hj�
     obtain ⟨ρK, hρK⟩ :=
       VariableChange.exists_baseChange_eq_of_map_eq L hσ (mul_inv_eq_one.mp hbcase)
     exact ⟨ρK, smul_eq_of_baseChange_smul_eq L hinj ρK (by rw [hρK]; exact hρ)⟩
-  · -- nontrivial cocycle: `C₁⁻¹ · ρ` is `σ`-invariant, its cocycle cancelling that of `C₁`
-    right
-    have hρmap : ρ.map (σ : L →+* L) = (E.baseChange L).negVariableChange * ρ :=
-      mul_inv_eq_iff_eq_mul.mp hbcase
-    have hχiso : (C₁⁻¹ * ρ) • E'.baseChange L
-        = (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L := by
-      rw [mul_smul, hρ, hC₁, E.inv_quadraticTwistOfTraceNormVariableChange_smul hθ hσ]
-    have hχinv : (C₁⁻¹ * ρ).map (σ : L →+* L) = C₁⁻¹ * ρ := by
-      rw [VariableChange.map_mul, VariableChange.map_inv, hcoc, hρmap, mul_inv_rev,
-        (E.baseChange L).negVariableChange_inv, mul_assoc,
-        ← mul_assoc (E.baseChange L).negVariableChange,
-        (E.baseChange L).negVariableChange_mul_self, one_mul]
-    obtain ⟨χK, hχK⟩ := VariableChange.exists_baseChange_eq_of_map_eq L hσ hχinv
-    have hE'T : χK • E' = E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) :=
-      smul_eq_of_baseChange_smul_eq L hinj χK (by rw [hχK]; exact hχiso)
-    obtain ⟨C₀, hC₀⟩ := E.exists_smul_quadraticTwist_eq hθ
-    exact ⟨C₀⁻¹ * χK, by rw [mul_smul, hE'T, ← hC₀, inv_smul_smul]⟩
+  · -- nontrivial cocycle: `E'` is the twist
+    exact .inr (E.exists_smul_eq_quadraticTwist_of_map_eq_negVariableChange_mul hρ hσ
+      (mul_inv_eq_iff_eq_mul.mp hbcase))
 
 end Classification
 

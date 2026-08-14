@@ -19,7 +19,7 @@ For `𝒢 ≤ GL(2, ℝ)` of finite relative index in `𝒮ℒ` with discrete st
 
 The proof lifts the level-one bound `ModularForm.sturm_bound_levelOne` through the norm map:
 the norm of `f` vanishes exactly when `f` does, and by the decomposition
-`TauCeti.ModularForm.exists_norm_decomposition` sufficient vanishing of `f` at `∞`
+`TauCeti.ModularForm.norm_apply_eq_galoisProd_mul_normRest` sufficient vanishing of `f` at `∞`
 propagates to the norm.
 
 ## Main declarations
@@ -74,16 +74,16 @@ private lemma qExpansion_order_le_qExpansion_norm_order [DiscreteTopology 𝒢.s
       ((Subgroup.integerCuspWidth 𝒢 : ℕ) : ℝ) := by
     rw [hnRw]
     exact_mod_cast hf_w_per.nat_mul m'
-  obtain ⟨rest, _, h_rest_an, h_decomp⟩ := exists_norm_decomposition f
-  -- `h_decomp` is a pointwise identity; `funext` converts it to an equality of functions so
-  -- the `q`-expansion of the norm literally becomes that of the product, and `qExpansion_mul`
-  -- (with both cusp functions analytic at `0`) splits it.
+  -- `norm_apply_eq_galoisProd_mul_normRest` is a pointwise identity; `funext` converts it to an
+  -- equality of functions so the `q`-expansion of the norm literally becomes that of the
+  -- product, and `qExpansion_mul` (with both cusp functions analytic at `0`) splits it.
   have h_qexp : qExpansion 1 (_root_.ModularForm.norm 𝒮ℒ f) =
-      qExpansion 1 (galoisProd (Subgroup.integerCuspWidth 𝒢) ⇑f) * qExpansion 1 rest := by
-    rw [funext h_decomp]
+      qExpansion 1 (galoisProd (Subgroup.integerCuspWidth 𝒢) ⇑f) *
+        qExpansion 1 (normRest f) := by
+    rw [funext (norm_apply_eq_galoisProd_mul_normRest f)]
     exact qExpansion_mul (analyticAt_cuspFunction_zero one_pos
       (galoisProd_periodic_one hf_n_per) (mdifferentiable_galoisProd f.holo')
-      (isBoundedAtImInfty_galoisProd hf_bdd)) h_rest_an
+      (isBoundedAtImInfty_galoisProd hf_bdd)) (analyticAt_cuspFunction_normRest f)
   rw [h_qexp, PowerSeries.order_mul,
     qExpansion_one_galoisProd_order_eq hn_pos hf_n_per hf_bdd f.holo']
   refine le_trans ?_ le_self_add
