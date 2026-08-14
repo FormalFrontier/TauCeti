@@ -28,7 +28,8 @@ eventually a translation leaves every exactly shift-invariant event unchanged
 `preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` the invariant-measurable form).
 That is one of the two independent inputs a Koopman-style block argument needs — the other,
 measure preservation, comes from contractability and needs strict monotonicity, which this one does
-not.
+not. `comp_reindex_eq_of_measurable_invariants_of_eventually_add` is the function-level form: an
+invariants-measurable function is unchanged by such a reindexing, pointwise.
 
 The Layer 2 exchangeability roadmap warns against silently identifying the tail σ-algebra with the
 shift-invariant σ-algebra for one-sided sequences; these two results are the exact form of that
@@ -220,6 +221,26 @@ theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C :
   preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add
     (MeasurableSpace.measurableSet_invariants.1 hA).2 hφ
 
+
+/-- **An invariants-measurable function is unchanged by such a reindexing**, pointwise.
+
+Each level set `w ⁻¹' {c}` is an invariant set, so
+`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` sends the reindexed point into
+the same level set as the original. Taking `c = w x` gives the claim.
+
+The conclusion is a genuine pointwise identity, not an a.e. one: no measure appears. It needs
+measurable singletons in the codomain, which is what identifies a point by its level set. -/
+theorem comp_reindex_eq_of_measurable_invariants_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
+    {β : Type*} [MeasurableSpace β] [MeasurableSingletonClass β] {w : (ℕ → α) → β}
+    (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
+    (hφ : ∀ n, m ≤ n → φ n = n + C) (x : ℕ → α) :
+    w (fun k => x (φ k)) = w x := by
+  have hlevel : MeasurableSet[MeasurableSpace.invariants (shift α)] (w ⁻¹' {w x}) :=
+    hw (measurableSet_singleton _)
+  have hpre := preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hlevel hφ
+  have hx : x ∈ (fun y : ℕ → α => fun k => y (φ k)) ⁻¹' (w ⁻¹' {w x}) := by
+    rw [hpre]; rfl
+  simpa using hx
 
 end Probability
 
