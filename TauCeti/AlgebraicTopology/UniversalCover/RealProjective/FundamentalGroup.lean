@@ -107,29 +107,33 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
     fundamentalGroupMulEquiv n hn e γ = u ↔
       ((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
         u • (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
-  have h1 : fundamentalGroupMulEquiv n hn e γ = u ↔
-      (deckMulEquiv n (by omega)).symm (Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n)
-        (isCoveringMap_mk n) e γ).unop = u := Iff.rfl
-  have h2 : (deckMulEquiv n (by omega)).symm (Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n)
-        (isCoveringMap_mk n) e γ).unop = u ↔
-      Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n)
-        (isCoveringMap_mk n) e γ = MulOpposite.op (deckMulEquiv n (by omega) u) := by
-    rw [MulEquiv.symm_apply_eq]
-    constructor
-    · intro h
-      rw [← MulOpposite.op_unop (Deck.IsRegular.fundamentalGroupEquiv _ _ e γ), h]
-    · intro h
-      rw [h, MulOpposite.unop_op]
-  rw [h1, h2, Deck.IsRegular.fundamentalGroupEquiv_apply_eq_iff, MulOpposite.unop_op]
-  change (deckMulEquiv n (by omega) u).1 (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
-    ((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) ↔ _
-  rw [deckMulEquiv_apply n (by omega) u (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
-  exact eq_comm
+  let F := Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e
+  let T := (MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
+    (MulOpposite.opMulEquiv (M := ℤˣ)).symm
+  dsimp [fundamentalGroupMulEquiv]
+  constructor
+  · intro h
+    have hf : F γ = MulOpposite.op (deckMulEquiv n (by omega) u) := by
+      apply T.injective
+      simpa [F, T] using h
+    have hs := (Deck.IsRegular.fundamentalGroupEquiv_apply_eq_iff (isRegular_mk n)
+      (isCoveringMap_mk n) e γ (MulOpposite.op (deckMulEquiv n (by omega) u))).1 hf
+    simpa using hs.symm
+  · intro hm
+    have hs : (MulOpposite.op (deckMulEquiv n (by omega) u)).unop •
+        (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
+          (isCoveringMap_mk n).monodromy γ e := by
+      simpa using hm.symm
+    have hf : F γ = MulOpposite.op (deckMulEquiv n (by omega) u) :=
+      (Deck.IsRegular.fundamentalGroupEquiv_apply_eq_iff (isRegular_mk n)
+        (isCoveringMap_mk n) e γ (MulOpposite.op (deckMulEquiv n (by omega) u))).2 hs
+    apply T.symm.injective
+    simpa [F, T] using hf
 
 /-- The inverse equivalence sends an integer unit `u` to the loop class whose monodromy
 translates the chosen lift by `u`. -/
 @[simp]
-lemma fundamentalGroupMulEquiv_symm_monodromy (hn : 2 ≤ n)
+lemma monodromy_fundamentalGroupMulEquiv_symm (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) (u : ℤˣ) :
     ((isCoveringMap_mk n).monodromy ((fundamentalGroupMulEquiv n hn e).symm u) e :
@@ -141,6 +145,7 @@ lemma fundamentalGroupMulEquiv_symm_monodromy (hn : 2 ≤ n)
 
 /-- A loop class maps to `1` under `fundamentalGroupMulEquiv` exactly when its monodromy fixes
 the chosen lift. -/
+@[simp]
 lemma fundamentalGroupMulEquiv_eq_one_iff (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x})
