@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.PerfectPairing.Basic
 public import Mathlib.RepresentationTheory.Basic
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.EssentialImage
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Points
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.CharacterLattice
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.CharacterLattice
@@ -79,10 +77,8 @@ variable {k : Type u} [Field k]
 private theorem baseChange_groupLikeSpanned (T : TorusCommHopfAlgCat k) :
     DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) T.obj) := by
-  rw [← DiagonalizableGroup.essImage_coordinateRingFunctor]
-  have hT := (torusCommHopfAlgProperty_iff k T.obj).1 T.property
-  obtain ⟨n, ⟨i⟩⟩ := hT
-  exact ⟨SplitTorus.characterGroup (ULift.{u} (Fin n)), ⟨i⟩⟩
+  exact (multiplicativeTypeCommHopfAlgProperty_iff k T.obj).1
+    (torusCommHopfAlgProperty.multiplicativeType k T.obj T.property)
 
 private theorem baseChange_groupLike_span_eq_top (T : TorusCommHopfAlgCat k) :
     Submodule.span (AlgebraicClosure k)
@@ -202,6 +198,8 @@ theorem cocharacterGaloisRepresentation_apply_apply (T : TorusCommHopfAlgCat k)
     (f : cocharacterLattice T) (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :
     cocharacterLatticeLinearEquivDual T (cocharacterGaloisRepresentation T σ f) x =
       cocharacterLatticeLinearEquivDual T f (σ⁻¹ • x) := by
+  -- The representation is an abbreviation for transport by this equivalence; exposing that
+  -- conjugation is necessary before its application lemma can rewrite the goal.
   change cocharacterLatticeLinearEquivDual T
       ((cocharacterLatticeLinearEquivDual T).symm.conj
         ((Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
@@ -260,8 +258,7 @@ theorem finrank_cocharacterLattice_eq_characterLattice (T : TorusCommHopfAlgCat 
   let _ := characterLattice_module_finite_of_torus k T.obj T.property
   exact (Module.finrank_of_isPerfPair (characterCocharacterPairing T)).symm
 
-/-- A torus cocharacter lattice is noncanonically a finite-rank free abelian group, of the same
-rank as its character lattice. -/
+/-- A torus cocharacter lattice is noncanonically a finite-rank free abelian group. -/
 theorem exists_cocharacterLattice_linearEquiv (T : TorusCommHopfAlgCat k) :
     ∃ n : ℕ, Nonempty (cocharacterLattice T ≃ₗ[ℤ] (Fin n → ℤ)) := by
   obtain ⟨n, ⟨e⟩⟩ := exists_characterLattice_addEquiv_of_torus k T.obj T.property
