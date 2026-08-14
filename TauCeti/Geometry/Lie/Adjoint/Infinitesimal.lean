@@ -218,7 +218,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
     have hpair : ContMDiff 𝓘(ℝ, ℝ) (I.prod 𝓘(ℝ, E)) ∞
         (fun t => (γX t, @id E Y)) := hγX.prodMk contMDiff_const
     have hmodel :=
-      ((contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair).contDiff
+      ((contMDiff_adjointContinuousLinearMap_apply (I := I) (G := G)).comp hpair).contDiff
     rw [show A = (fun p : G × E =>
         (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2) ∘
           fun t => (γX t, @id E Y) by
@@ -359,7 +359,7 @@ theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
         (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) Y by
       funext g
       exact tangentAd_apply (I := I) g Y]
-    exact contMDiff_tangentAd_apply_right (I := I) (G := G) Y
+    exact contMDiff_adjointContinuousLinearMap_apply_right (I := I) (G := G) Y
   have hTmf := hT.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
   have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hTmf X
   have hchain : HasDerivAt

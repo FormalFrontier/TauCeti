@@ -22,9 +22,10 @@ This advances Deliverable A, Layer 1 of
 
 * `TauCeti.Lie.contMDiff_adjointContinuousLinearMap`: the adjoint operator depends smoothly on the
   group element.
-* `TauCeti.Lie.contMDiff_tangentAd_apply`: the joint action `(g, X) ↦ tangentAd g X` is smooth.
-* `TauCeti.Lie.contMDiff_tangentAd_apply_right`: the tangent adjoint action on a fixed vector is
-  smooth in the group element.
+* `TauCeti.Lie.contMDiff_adjointContinuousLinearMap_apply`: joint evaluation of the adjoint operator
+  is smooth.
+* `TauCeti.Lie.contMDiff_adjointContinuousLinearMap_apply_right`: evaluation on a fixed model vector
+  is smooth in the group element.
 
 ## References
 
@@ -119,8 +120,9 @@ theorem contMDiff_adjointContinuousLinearMap :
     (ϕ := mfderiv I I (f x) 1)
 
 omit [CompleteSpace E] in
-/-- The tangent adjoint action is jointly smooth in the group element and tangent vector. -/
-theorem contMDiff_tangentAd_apply :
+/-- Evaluation of the adjoint continuous linear map is jointly smooth in the group element and model
+vector. -/
+theorem contMDiff_adjointContinuousLinearMap_apply :
     ContMDiff (I.prod 𝓘(ℝ, E)) 𝓘(ℝ, E) ∞
       (fun p : G × E ↦
         (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2) := by
@@ -128,12 +130,13 @@ theorem contMDiff_tangentAd_apply :
     contMDiff_snd
 
 omit [CompleteSpace E] in
-/-- The tangent adjoint action on a fixed tangent vector is smooth in the group element. -/
-theorem contMDiff_tangentAd_apply_right (Y : GroupLieAlgebra I G) :
+/-- The adjoint continuous linear map evaluated on a fixed model vector is smooth in the group
+element. -/
+theorem contMDiff_adjointContinuousLinearMap_apply_right (Y : E) :
     ContMDiff I 𝓘(ℝ, E) ∞
       (fun g : G ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g)
         (show E from Y)) := by
-  exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp
+  exact (contMDiff_adjointContinuousLinearMap_apply (I := I) (G := G)).comp
     (contMDiff_id.prodMk contMDiff_const)
 
 end TauCeti.Lie
