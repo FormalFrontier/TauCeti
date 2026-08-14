@@ -38,15 +38,13 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
 * `TauCeti.sub_mem_closure_of_le`: a difference of two members of a family telescopes into the
   additive closure of the consecutive differences. This is the shape in which those same axioms are
   met by the pinned data written in a coordinate potential.
-* `TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self`: the bilinear form
-  of a symmetric matrix is symmetric, and reflection in a vector of norm two preserves it. For a
-  simply laced type this is the form the Cartan matrix carries on the simple-coroot coordinates,
-  and reflection stability of a root enumeration is read off it.
 * `TauCeti.sum_smul_eq_of_eq_single`: a family whose members are the standard basis of `κ → R`
   expands every vector in its own coordinates.
 
 Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
-by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`.
+by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`. The symmetry
+and reflection isometry of the bilinear form carried by the Cartan matrix are supplied by
+`TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self` from the same module.
 -/
 
 namespace TauCeti
@@ -100,32 +98,6 @@ theorem mem_simpleSupport_iff_lt (he : Injective e) (h : ∀ i, ((e i : Fin N) :
   exact i.isLt
 
 end SimpleSupportFin
-
-/-! ## The bilinear form of a symmetric matrix -/
-
-section Gram
-
-open _root_.Matrix
-
-variable {n R : Type*} [Fintype n] [CommRing R] {M : Matrix n n R}
-
-/-- The bilinear form carried by a symmetric matrix is symmetric. -/
-theorem vecMul_dotProduct_comm (hM : M.IsSymm) (v w : n → R) :
-    (v ᵥ* M) ⬝ᵥ w = (w ᵥ* M) ⬝ᵥ v := by
-  rw [← dotProduct_mulVec, dotProduct_comm, ← mulVec_transpose, hM.eq]
-
-/-- **Reflection in a vector of norm two preserves the form.** For a symmetric matrix `M` and a
-vector `u` with `⟨u, u⟩ = 2`, the reflection `v ↦ v - ⟨v, u⟩ • u` is an isometry of the form
-carried by `M`. This is what makes a family of norm-two vectors stable under its own reflections
-once the family exhausts the norm-two vectors. -/
-theorem reflect_vecMul_dotProduct_self (hM : M.IsSymm) {u : n → R} (hu : (u ᵥ* M) ⬝ᵥ u = 2)
-    (v : n → R) :
-    ((v - ((v ᵥ* M) ⬝ᵥ u) • u) ᵥ* M) ⬝ᵥ (v - ((v ᵥ* M) ⬝ᵥ u) • u) = (v ᵥ* M) ⬝ᵥ v := by
-  simp only [sub_vecMul, smul_vecMul, sub_dotProduct, dotProduct_sub, smul_dotProduct,
-    dotProduct_smul, smul_eq_mul, hu, vecMul_dotProduct_comm hM u v]
-  ring
-
-end Gram
 
 /-! ## Families that are the standard basis -/
 
