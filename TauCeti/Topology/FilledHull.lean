@@ -89,7 +89,8 @@ theorem subset_filledHull : K ⊆ filledHull K := by
 /-- **Filling is monotone.** Enlarging `K` shrinks the complement, hence shrinks each component of
 it, hence can only turn unbounded components into bounded ones. -/
 theorem filledHull_mono (h : K ⊆ L) : filledHull K ⊆ filledHull L := fun _ hx =>
-  hx.subset (connectedComponentIn_mono _ (compl_subset_compl.mpr h))
+  mem_filledHull_iff.mpr <|
+    (mem_filledHull_iff.mp hx).subset (connectedComponentIn_mono _ (compl_subset_compl.mpr h))
 
 /-- **A preconnected set that a set cuts off from infinity lies in its filled hull.** If `S` is
 preconnected and disjoint from `K`, then `S` lies in a single connected component of `Kᶜ`; meeting
@@ -101,6 +102,6 @@ theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint
   have hScomp : S ⊆ connectedComponentIn Kᶜ x := hS.subset_connectedComponentIn hxS hScompl
   intro y hy
   rw [mem_filledHull_iff, ← connectedComponentIn_eq (hScomp hy)]
-  exact hxH
+  exact mem_filledHull_iff.mp hxH
 
 end TauCeti
