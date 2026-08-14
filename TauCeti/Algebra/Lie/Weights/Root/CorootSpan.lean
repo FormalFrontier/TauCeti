@@ -34,10 +34,14 @@ ReductiveGroups roadmap, which is in turn consumed by CFSGStatement milestone L0
 ## Main definitions and results
 
 * `TauCeti.rootCorootGenerators`: the root vectors and coroots as a set in `L`.
+* `TauCeti.mem_rootCorootGenerators_iff`: characteristic membership in the generator set.
 * `TauCeti.rootCorootSpan`: their span over `ℤ`.
 * `TauCeti.IsSl2System.lie_mem_rootCorootSpan`: closure under the bracket when the root-vector
   coefficients are integral.
 * `TauCeti.IsSl2System.rootCorootLieSubalgebra`: the resulting integral Lie subalgebra.
+* `TauCeti.IsSl2System.mem_rootCorootLieSubalgebra_iff`: membership in the Lie subalgebra.
+* `TauCeti.IsSl2System.rootCorootLieSubalgebra_le_iff`: the universal property of the Lie
+  subalgebra.
 
 ## References
 
@@ -62,6 +66,14 @@ ambient Lie algebra. When `x` is a normalized system (such as `IsSl2System x`), 
 value vanishes alongside the zero coroot. -/
 def rootCorootGenerators (x : Weight K H L → L) : Set L :=
   Set.range x ∪ Set.range fun α : Weight K H L => (coroot α : L)
+
+omit [CharZero K] [LieModule.IsTriangularizable K H L] in
+/-- Membership in the set of root--coroot generators. -/
+@[simp]
+theorem mem_rootCorootGenerators_iff {x : Weight K H L → L} {v : L} :
+    v ∈ rootCorootGenerators x ↔
+      (∃ α, x α = v) ∨ ∃ α, (IsKilling.coroot (K := K) (L := L) (H := H) α : L) = v := by
+  rw [rootCorootGenerators, Set.mem_union, Set.mem_range, Set.mem_range]
 
 /-- The integral span of a weight-indexed family `x` and all coroots in the ambient Lie algebra. -/
 def rootCorootSpan (x : Weight K H L → L) : Submodule ℤ L :=
@@ -195,6 +207,48 @@ theorem rootCorootLieSubalgebra_toSubmodule
         ∃ z : ℤ, ⁅x α, x β⁆ = (z : K) • x γ) :
     (hx.rootCorootLieSubalgebra hIntegral).toSubmodule = rootCorootSpan x :=
   (rfl)
+
+/-- Membership in `rootCorootLieSubalgebra` coincides with membership in `rootCorootSpan`. -/
+@[simp]
+theorem mem_rootCorootLieSubalgebra_iff
+    (hIntegral : ∀ (α β γ : Weight K H L), α.IsNonZero → β.IsNonZero → γ.IsNonZero →
+      (γ : H → K) = (α : H → K) + (β : H → K) →
+        ∃ z : ℤ, ⁅x α, x β⁆ = (z : K) • x γ)
+    {v : L} :
+    v ∈ hx.rootCorootLieSubalgebra hIntegral ↔ v ∈ rootCorootSpan x :=
+  Iff.rfl
+
+/-- The universal property of `rootCorootLieSubalgebra`: it is the least Lie subalgebra containing
+the root vectors and coroots. -/
+@[simp]
+theorem rootCorootLieSubalgebra_le_iff
+    (hIntegral : ∀ (α β γ : Weight K H L), α.IsNonZero → β.IsNonZero → γ.IsNonZero →
+      (γ : H → K) = (α : H → K) + (β : H → K) →
+        ∃ z : ℤ, ⁅x α, x β⁆ = (z : K) • x γ)
+    {M : LieSubalgebra ℤ L} :
+    hx.rootCorootLieSubalgebra hIntegral ≤ M ↔
+      (∀ α, x α ∈ M) ∧ ∀ α, (IsKilling.coroot (K := K) (L := L) (H := H) α : L) ∈ M := by
+  change (hx.rootCorootLieSubalgebra hIntegral).toSubmodule ≤ M.toSubmodule ↔ _
+  rw [rootCorootLieSubalgebra_toSubmodule, rootCorootSpan_le_iff]
+  rfl
+
+/-- A root vector belongs to the integral root--coroot Lie subalgebra. -/
+theorem rootVector_mem_rootCorootLieSubalgebra
+    (hIntegral : ∀ (α β γ : Weight K H L), α.IsNonZero → β.IsNonZero → γ.IsNonZero →
+      (γ : H → K) = (α : H → K) + (β : H → K) →
+        ∃ z : ℤ, ⁅x α, x β⁆ = (z : K) • x γ)
+    (α : Weight K H L) :
+    x α ∈ hx.rootCorootLieSubalgebra hIntegral :=
+  rootVector_mem_rootCorootSpan x α
+
+/-- A coroot belongs to the integral root--coroot Lie subalgebra. -/
+theorem coroot_mem_rootCorootLieSubalgebra
+    (hIntegral : ∀ (α β γ : Weight K H L), α.IsNonZero → β.IsNonZero → γ.IsNonZero →
+      (γ : H → K) = (α : H → K) + (β : H → K) →
+        ∃ z : ℤ, ⁅x α, x β⁆ = (z : K) • x γ)
+    (α : Weight K H L) :
+    (coroot α : L) ∈ hx.rootCorootLieSubalgebra hIntegral :=
+  coroot_mem_rootCorootSpan x α
 
 end IsSl2System
 
