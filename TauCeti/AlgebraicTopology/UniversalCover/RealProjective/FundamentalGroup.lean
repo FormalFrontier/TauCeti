@@ -38,7 +38,7 @@ unconditional computation, is being developed upstream in Mathlib PR #28246.
   with a chosen lift `e`.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_apply_eq_iff`: characterization of the
   isomorphism on monodromy.
-* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_symm_monodromy`: inverse equivalence on
+* `TauCeti.RealProjectiveSpace.monodromy_fundamentalGroupMulEquiv_symm`: inverse equivalence on
   monodromy.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_eq_one_iff`: loop class maps to `1`
   iff monodromy fixes lift.
@@ -117,7 +117,7 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
 /-- The inverse equivalence sends an integer unit `u` to the loop class whose monodromy
 translates the chosen lift by `u`. -/
 @[simp]
-lemma fundamentalGroupMulEquiv_symm_monodromy (hn : 2 ≤ n)
+lemma monodromy_fundamentalGroupMulEquiv_symm (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) (u : ℤˣ) :
     ((isCoveringMap_mk n).monodromy ((fundamentalGroupMulEquiv n hn e).symm u) e :
