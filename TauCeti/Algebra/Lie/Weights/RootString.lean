@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.Weights.RootSystem
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 public import TauCeti.LinearAlgebra.RootSystem.InvariantForm.RootString
 
@@ -258,6 +257,7 @@ private noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
       root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
     have hai := (dualKillingForm_symm (H := H)).eq a i.1
     have hbi := (dualKillingForm_symm (H := H)).eq b i.1
+    -- Definitional equality: `(rootSystem H).reflection i` expands to reflection along `i.1`.
     change dualKillingForm (a - a (coroot i.1) • (i.1 : Module.Dual K H))
       (b - b (coroot i.1) • (i.1 : Module.Dual K H)) = dualKillingForm a b
     simp only [map_sub, LinearMap.sub_apply, map_smul, map_nsmul, LinearMap.smul_apply,
@@ -280,6 +280,7 @@ private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
   let ib : H.root := ⟨b, by simpa [LieSubalgebra.root] using hb⟩
   have hlin : LinearIndependent K ![P.root ia, P.root ib] := by
     simpa only [P, rootSystem_root_apply, ia, ib] using hab
+  -- Step 1: Equivalence between range membership in `P.root` and Lie weight space non-triviality.
   have hmem (n : ℤ) :
       P.root ib + n • P.root ia ∈ Set.range P.root ↔ rootSpace H (n • a + b) ≠ ⊥ := by
     constructor
@@ -294,6 +295,7 @@ private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
       let c : Weight K H L := ⟨n • (a : H → K) + b, h⟩
       have hc : c.IsNonZero := by
         intro hc₀
+        -- Definitional equality: `c.IsNonZero` is `(c : H → K) ≠ 0`, so `hc₀` means `c.1 = 0`.
         change n • (a : H → K) + b = 0 at hc₀
         have hrel : (n : K) • (a : Module.Dual K H) +
             (1 : K) • (b : Module.Dual K H) = 0 := by
@@ -303,6 +305,7 @@ private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
       refine ⟨⟨c, by simpa [LieSubalgebra.root] using hc⟩, ?_⟩
       ext z
       simp [P, ia, ib, c, Weight.toLinear_apply, add_comm]
+  -- Step 2: Compare `chainTopCoeff` via characterization by maximal non-vanishing.
   constructor
   · apply le_antisymm
     · have hz := (rootSpace_zsmul_add_ne_bot_iff a b ha
@@ -315,6 +318,7 @@ private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
         simpa [Nat.cast_smul_eq_nsmul] using
           genWeightSpace_nsmul_add_ne_bot_of_le a b (le_refl (chainTopCoeff a b))
       simpa [Nat.cast_smul_eq_nsmul] using this
+  -- Step 3: Compare `chainBotCoeff` via characterization by minimal non-vanishing.
   · apply le_antisymm
     · have hroot := (P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff hlin).2 le_rfl
       have := (hmem (-(P.chainBotCoeff ia ib : ℤ))).1 (by
@@ -360,12 +364,13 @@ theorem chainTopCoeff_mul_killingForm_root_neg_eq
   have hcoeff := rootSystem_chainCoeffs_eq hα hβ (by
     simpa only [P, rootSystem_root_apply, i, j] using hlin)
   have hlength :=
-    TauCeti.RootPairing.InvariantForm.chainTopCoeff_mul_apply_add_self_eq
+    TauCeti.RootPairing.InvariantForm.chainTopCoeff_mul_apply_root_self_eq
       (P := P) (rootInvariantForm (H := H)) hk
   have hβkill := hx.killingForm_root_neg_eq β hβ
   have hγkill := hx.killingForm_root_neg_eq γ hγ
   simp only [rootInvariantForm, dualKillingForm_apply] at hlength
   rw [hcoeff.1, hcoeff.2] at hlength
+  -- Definitional equality: `P.root k` reduces to `γ` and `P.root j` to `β`.
   change (chainTopCoeff α β : K) *
       (γ : Module.Dual K H) ((cartanEquivDual H).symm (γ : Module.Dual K H)) =
     (chainBotCoeff α β + 1 : ℕ) *
