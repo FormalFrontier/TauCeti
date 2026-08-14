@@ -68,12 +68,14 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
+namespace ContractableLaw
+
 /-- **A block factorizes over an invariant event**, in conditional-expectation form.
 
 Peeling the last coordinate replaces `𝟙_{B_r}(x_r)` by its conditional expectation given the
 shift-invariant σ-algebra; the factors already peeled ride along as the weight of the next step,
 which is why the whole chain is stated against one. -/
-theorem ContractableLaw.setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp
+theorem setIntegral_weight_mul_prefixIndicatorProd_eq_prod_condExp
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
     ∀ (r : ℕ) (B : Fin r → Set α), (∀ i, MeasurableSet (B i)) →
@@ -172,6 +174,8 @@ theorem setIntegral_prefixIndicatorProd_eq_prod_invariantConditionalProbabilityM
       hρ.condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure (hB i) (i : ℕ)
   filter_upwards [ae_restrict_of_ae hall] with x hx
   exact Finset.prod_congr rfl fun i _ => hx i
+
+end ContractableLaw
 
 end Probability
 
