@@ -280,13 +280,6 @@ theorem coe_isometryGroupBaseChange (B : BilinForm R M) (e : isometryGroup B) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M)
       = LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M) := (rfl)
 
-@[simp]
-theorem isometryGroupBaseChange_tmul (B : BilinForm R M) (e : isometryGroup B) (a : A) (m : M) :
-    (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M) (a ⊗ₜ m)
-      = a ⊗ₜ (e : M ≃ₗ[R] M) m := by
-  rw [coe_isometryGroupBaseChange]
-  exact LinearEquiv.baseChange_tmul R A M M a m
-
 end BaseChange
 
 end CommSemiring
