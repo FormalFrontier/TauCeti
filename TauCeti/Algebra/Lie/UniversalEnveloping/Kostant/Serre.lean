@@ -214,7 +214,6 @@ theorem coe_serreDiagramKostantEquiv_apply (x : serreKostantForm CM) :
     (serreH ℚ CM) (kostantForm_serreDiagramAut_eq CM hσ) x
 
 /-- The inverse restricted diagram automorphism acts through the inverse Lie automorphism. -/
-@[simp]
 theorem coe_serreDiagramKostantEquiv_symm_apply (x : serreKostantForm CM) :
     ((serreDiagramKostantEquiv CM hσ).symm x : U) =
       map ℚ (serreDiagramAut ℚ CM hσ).symm.toLieHom x :=
@@ -338,7 +337,6 @@ theorem coe_serreChevalleyKostantEquiv_apply (x : serreKostantForm CM) :
     (serreH ℚ CM) (kostantForm_serreChevalleyInvolution_eq CM) x
 
 /-- The inverse restricted Chevalley involution acts through the inverse Lie automorphism. -/
-@[simp]
 theorem coe_serreChevalleyKostantEquiv_symm_apply (x : serreKostantForm CM) :
     ((serreChevalleyKostantEquiv CM).symm x : U) =
       map ℚ (serreChevalleyInvolution ℚ CM).symm.toLieHom x :=
