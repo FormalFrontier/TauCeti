@@ -32,12 +32,15 @@ column of the identity holds the degrees.
 The general half of the argument is stated for an arbitrary rational representation of a finite
 group, as `TauCeti.FDRep.intCharacter`, and is what this file specializes. Nothing here computes
 an entry of the table: the recursion that does is the Murnaghan--Nakayama rule, which needs rim
-hooks and is not proved here.
+hooks and is not proved here. Neither is `symmetricCharacterTable n` compared with the library's
+general `TauCeti.characterTable k G`, which lives over an algebraically closed field and enumerates
+its rows by `Fin (Nat.card (ConjClasses G))`, nor is any of the table properties that one carries —
+the orthogonality relations, the specification `TauCeti.IsCharacterTableSpec` — proved for it.
 
 ## Main definitions
 
 * `TauCeti.spechtChar`: the `ℤ`-valued character `χ^μ` of the Specht module `S^μ`.
-* `TauCeti.spechtCharClass`: its descent to the conjugacy classes of `Sₙ`.
+* `TauCeti.spechtCharConjClasses`: its descent to the conjugacy classes of `Sₙ`.
 * `TauCeti.spechtCharValue`: its value on the class of cycle type `ν`.
 * `TauCeti.symmetricCharacterTable`: the character table of `Sₙ`, a
   `Matrix (Nat.Partition n) (Nat.Partition n) ℤ`.
@@ -46,10 +49,12 @@ hooks and is not proved here.
 
 * `TauCeti.spechtChar_cast`: the integer character casts to the rational character of `S^μ`.
 * `TauCeti.spechtChar_eq_of_partition_eq`: it depends only on the cycle type.
-* `TauCeti.spechtChar_eq_value`: it is read off the character table.
-* `TauCeti.character_spechtModule_eq_intCast`: conversely the table recovers the rational
+* `TauCeti.spechtChar_one`: the value at the identity is the degree `dim_ℚ S^μ`.
+* `TauCeti.spechtChar_one_pos`: that degree is positive.
+* `TauCeti.spechtChar_eq_value`: the character is read off the character table.
+* `TauCeti.intCast_symmetricCharacterTable_apply`: conversely the table recovers the rational
   character, so no information is lost in passing to `ℤ`.
-* `TauCeti.spechtChar_one`: the value at the identity is the degree `dim_ℚ S^μ`, which is positive.
+* `TauCeti.symmetricCharacterTable_one`: the column of the identity class holds the degrees.
 
 ## References
 
@@ -85,24 +90,16 @@ theorem spechtChar_cast (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     (spechtChar μ σ : ℚ) = (spechtModule μ).character σ := by
   rw [spechtChar_def, FDRep.intCharacter_cast]
 
-/-- The integer character carries exactly the information of the rational one: two permutations
-share an integer character value precisely when they share the rational one. -/
-theorem spechtChar_eq_iff (μ : n.Partition) (σ τ : Equiv.Perm (Fin n)) :
-    spechtChar μ σ = spechtChar μ τ ↔
-      (spechtModule μ).character σ = (spechtModule μ).character τ := by
-  rw [← spechtChar_cast, ← spechtChar_cast]
-  exact ⟨fun h => by rw [h], fun h => Int.cast_injective h⟩
-
 /-- **The integer character is a class function.** -/
+@[simp]
 theorem spechtChar_conj (μ : n.Partition) (σ τ : Equiv.Perm (Fin n)) :
     spechtChar μ (τ * σ * τ⁻¹) = spechtChar μ σ :=
   FDRep.intCharacter_conj (spechtModule μ) σ τ
 
 /-- Conjugate permutations have the same integer character. -/
 theorem spechtChar_eq_of_isConj (μ : n.Partition) {σ τ : Equiv.Perm (Fin n)} (h : IsConj σ τ) :
-    spechtChar μ σ = spechtChar μ τ := by
-  obtain ⟨c, rfl⟩ := isConj_iff.1 h
-  exact (spechtChar_conj μ σ c).symm
+    spechtChar μ σ = spechtChar μ τ :=
+  FDRep.intCharacter_eq_of_isConj (spechtModule μ) h
 
 /-- **The integer character depends only on the cycle type**, two permutations of `Fin n` being
 conjugate exactly when they have the same partition. -/
@@ -115,42 +112,49 @@ theorem spechtChar_eq_of_partition_eq (μ : n.Partition) {σ τ : Equiv.Perm (Fi
 theorem spechtChar_one (μ : n.Partition) : spechtChar μ 1 = finrank ℚ (spechtModule μ) :=
   FDRep.intCharacter_one (spechtModule μ)
 
-/-- The degree of `S^μ` is positive, so the identity column of the character table has positive
-entries. -/
+/-- **The value at the identity is positive**, the Specht module `S^μ` being nonzero. -/
 theorem spechtChar_one_pos (μ : n.Partition) : 0 < spechtChar μ 1 := by
   rw [spechtChar_one]
   exact_mod_cast finrank_spechtModule_pos μ
 
 /-! ## Descent to the conjugacy classes -/
 
-/-- **The integer character as a function of the conjugacy class.** -/
-noncomputable def spechtCharClass (μ : n.Partition) : ConjClasses (Equiv.Perm (Fin n)) → ℤ :=
-  Quotient.lift (spechtChar μ) fun _ _ h => spechtChar_eq_of_isConj μ h
+/-- **The integer character as a function of the conjugacy class**, the descent
+(`TauCeti.ClassFunction.toConjClasses`) of the class function `TauCeti.FDRep.intClassFunction` of
+`S^μ`. -/
+noncomputable def spechtCharConjClasses (μ : n.Partition) : ConjClasses (Equiv.Perm (Fin n)) → ℤ :=
+  ClassFunction.toConjClasses (FDRep.intClassFunction (spechtModule μ))
+
+theorem spechtCharConjClasses_def (μ : n.Partition) :
+    spechtCharConjClasses μ =
+      ClassFunction.toConjClasses (FDRep.intClassFunction (spechtModule μ)) := (rfl)
 
 @[simp]
-theorem spechtCharClass_mk (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
-    spechtCharClass μ (ConjClasses.mk σ) = spechtChar μ σ := (rfl)
+theorem spechtCharConjClasses_mk (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
+    spechtCharConjClasses μ (ConjClasses.mk σ) = spechtChar μ σ := by
+  rw [spechtCharConjClasses_def, ClassFunction.toConjClasses_mk, FDRep.intClassFunction_apply,
+    spechtChar_def]
 
 /-- **The character value of `S^μ` on the class of cycle type `ν`**, the entry `χ^μ(ν)` of the
 character table. -/
 noncomputable def spechtCharValue (μ ν : n.Partition) : ℤ :=
-  spechtCharClass μ (partitionEquivConjClasses n ν)
+  spechtCharConjClasses μ (partitionEquivConjClasses n ν)
 
 theorem spechtCharValue_def (μ ν : n.Partition) :
-    spechtCharValue μ ν = spechtCharClass μ (partitionEquivConjClasses n ν) := (rfl)
+    spechtCharValue μ ν = spechtCharConjClasses μ (partitionEquivConjClasses n ν) := (rfl)
 
 /-- The character value is computed at any permutation representing the class of `ν`. -/
 theorem spechtCharValue_eq_spechtChar (μ ν : n.Partition) {σ : Equiv.Perm (Fin n)}
     (hσ : ConjClasses.mk σ = partitionEquivConjClasses n ν) :
     spechtCharValue μ ν = spechtChar μ σ := by
-  rw [spechtCharValue_def, ← hσ, spechtCharClass_mk]
+  rw [spechtCharValue_def, ← hσ, spechtCharConjClasses_mk]
 
 /-- **The integer character is read off the character table**, at the partition indexing the class
 of the permutation. -/
 theorem spechtChar_eq_value (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     spechtChar μ σ =
       spechtCharValue μ ((partitionEquivConjClasses n).symm (ConjClasses.mk σ)) := by
-  rw [spechtCharValue_def, Equiv.apply_symm_apply, spechtCharClass_mk]
+  rw [spechtCharValue_def, Equiv.apply_symm_apply, spechtCharConjClasses_mk]
 
 /-! ## The character table -/
 
@@ -158,7 +162,15 @@ theorem spechtChar_eq_value (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
 the value `χ^μ(ν)` of the character of the Specht module `S^μ` on the conjugacy class of cycle
 type `ν`. Both indices are partitions of `n`, which index the irreducible rational representations
 (`TauCeti.partitionEquivSimpleModuleClasses`) and the conjugacy classes
-(`TauCeti.partitionEquivConjClasses`) respectively. -/
+(`TauCeti.partitionEquivConjClasses`) respectively.
+
+Implementation note: this is not the library's general `TauCeti.characterTable k G`, which is
+defined over an algebraically closed field, takes values there, and enumerates its rows by
+`Fin (Nat.card (ConjClasses G))` through an arbitrary choice of ordering of the irreducible
+characters. This matrix is the `ℤ`-valued table of `Sₙ` re-indexed on both sides by the partitions
+of `n`. No comparison with `TauCeti.characterTable ℂ (Equiv.Perm (Fin n))` is proved here, and
+neither are any of the table properties — the orthogonality relations, or the character-table
+specification `TauCeti.IsCharacterTableSpec` — which the general table carries. -/
 noncomputable def symmetricCharacterTable (n : ℕ) : Matrix n.Partition n.Partition ℤ :=
   Matrix.of fun μ ν => spechtCharValue μ ν
 
@@ -168,14 +180,14 @@ theorem symmetricCharacterTable_apply (μ ν : n.Partition) :
 
 /-- **The character table recovers the rational characters of the Specht modules**, so passing from
 `ℚ` to `ℤ` and from permutations to cycle types loses nothing. -/
-theorem character_spechtModule_eq_intCast (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
-    (spechtModule μ).character σ =
-      ((symmetricCharacterTable n μ
-        ((partitionEquivConjClasses n).symm (ConjClasses.mk σ)) : ℤ) : ℚ) := by
+theorem intCast_symmetricCharacterTable_apply (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
+    ((symmetricCharacterTable n μ
+        ((partitionEquivConjClasses n).symm (ConjClasses.mk σ)) : ℤ) : ℚ) =
+      (spechtModule μ).character σ := by
   rw [symmetricCharacterTable_apply, ← spechtChar_eq_value, spechtChar_cast]
 
 /-- **The column of the identity holds the degrees** `dim_ℚ S^μ`. -/
-theorem symmetricCharacterTable_apply_one_class (μ : n.Partition) :
+theorem symmetricCharacterTable_one (μ : n.Partition) :
     symmetricCharacterTable n μ ((partitionEquivConjClasses n).symm (ConjClasses.mk 1)) =
       finrank ℚ (spechtModule μ) := by
   rw [symmetricCharacterTable_apply, ← spechtChar_eq_value, spechtChar_one]

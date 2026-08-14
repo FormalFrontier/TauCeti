@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.LinearAlgebra.End.FiniteOrder
+public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 public import Mathlib.Algebra.GCDMonoid.IntegrallyClosed
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
@@ -47,10 +48,11 @@ representation of a group, from the eigenvalues alone, with no invariant inner p
   algebraically closed field.
 * `TauCeti.Representation.isIntegral_char` and `TauCeti.FDRep.isIntegral_char`: **character values
   are algebraic integers**, over an arbitrary field.
-* `TauCeti.Representation.exists_intCast_eq_character` and
-  `TauCeti.FDRep.exists_intCast_eq_character`: **a rational character is integer-valued**.
+* `TauCeti.Representation.exists_char_eq_intCast` and `TauCeti.FDRep.exists_char_eq_intCast`:
+  **a rational character is integer-valued**.
 * `TauCeti.FDRep.intCharacter`: the resulting `ℤ`-valued character of a rational representation of
-  a finite group, a class function taking the degree at the identity.
+  a finite group, taking the degree at the identity, and `TauCeti.FDRep.intClassFunction`: the same
+  character read as an element of `TauCeti.ClassFunction ℤ G`.
 * `TauCeti.FDRep.char_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
   a primitive root of unity of order the exponent of the group.
 * `TauCeti.FDRep.norm_char_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
@@ -132,8 +134,9 @@ this is the statement that a sum of roots of unity is an algebraic integer, and 
 follows from that one by base change to an algebraic closure
 (`TauCeti.End.isIntegral_trace_of_pow_eq_one`). -/
 theorem isIntegral_char (ρ : Representation k G V) {g : G} {n : ℕ}
-    (hn : n ≠ 0) (hg : g ^ n = 1) : IsIntegral ℤ (ρ.character g) :=
-  End.isIntegral_trace_of_pow_eq_one hn (show ρ g ^ n = 1 by rw [← map_pow, hg, map_one])
+    (hn : n ≠ 0) (hg : g ^ n = 1) : IsIntegral ℤ (ρ.character g) := by
+  have hf : ρ g ^ n = 1 := by rw [← map_pow, hg, map_one]
+  exact End.isIntegral_trace_of_pow_eq_one hn hf
 
 end Field
 
@@ -144,10 +147,10 @@ variable {G : Type v} {V : Type w} [Monoid G] [AddCommGroup V] [Module ℚ V] [F
 /-- **A rational character value is an integer.** The character of a representation over `ℚ` takes
 at an element of finite order a value that is integral over `ℤ`, and `ℤ` is integrally closed in
 its fraction field `ℚ`, so that value is the cast of an integer. -/
-theorem exists_intCast_eq_character (ρ : Representation ℚ G V) {g : G} {n : ℕ} (hn : n ≠ 0)
-    (hg : g ^ n = 1) : ∃ m : ℤ, (m : ℚ) = ρ.character g := by
+theorem exists_char_eq_intCast (ρ : Representation ℚ G V) {g : G} {n : ℕ} (hn : n ≠ 0)
+    (hg : g ^ n = 1) : ∃ m : ℤ, ρ.character g = (m : ℚ) := by
   obtain ⟨m, hm⟩ := IsIntegrallyClosed.isIntegral_iff.1 (isIntegral_char ρ hn hg)
-  exact ⟨m, by simpa using hm⟩
+  exact ⟨m, by simpa using hm.symm⟩
 
 end Rat
 
@@ -226,19 +229,20 @@ namespace FDRep
 variable {G : Type v} [Group G] [Finite G]
 
 /-- **Character values are algebraic integers.** For a finite group, every value of the character
-of a finite-dimensional complex representation is integral over `ℤ`. -/
-theorem isIntegral_char (V : FDRep ℂ G) (g : G) : IsIntegral ℤ (V.character g) :=
+of a finite-dimensional representation over any field is integral over `ℤ`. -/
+theorem isIntegral_char {k : Type u} [Field k] (V : FDRep k G) (g : G) :
+    IsIntegral ℤ (V.character g) :=
   Representation.isIntegral_char V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
     (pow_orderOf_eq_one g)
 
 /-- **A rational character is integer-valued.** For a finite group, every value of the character of
 a finite-dimensional representation over `ℚ` is the cast of an integer. -/
-theorem exists_intCast_eq_character (V : FDRep ℚ G) (g : G) : ∃ m : ℤ, (m : ℚ) = V.character g :=
-  Representation.exists_intCast_eq_character V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
+theorem exists_char_eq_intCast (V : FDRep ℚ G) (g : G) : ∃ m : ℤ, V.character g = (m : ℚ) :=
+  Representation.exists_char_eq_intCast V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
     (pow_orderOf_eq_one g)
 
 /-- **The integer character** of a rational representation of a finite group: the character value
-`V.character g` is the cast of an integer (`TauCeti.FDRep.exists_intCast_eq_character`), and this is
+`V.character g` is the cast of an integer (`TauCeti.FDRep.exists_char_eq_intCast`), and this is
 that integer, extracted as the numerator of the rational value. Read it only through
 `TauCeti.FDRep.intCharacter_cast`, which is what pins it down; the numerator is a way of naming the
 integer, not extra information.
@@ -248,31 +252,45 @@ notation on an `FDRep ℚ G`, and is written `intCharacter V g` throughout. -/
 noncomputable def intCharacter (V : FDRep ℚ G) (g : G) : ℤ := (V.character g).num
 
 omit [Finite G] in
-theorem intCharacter_def (V : FDRep ℚ G) (g : G) : intCharacter V g = (V.character g).num := (rfl)
+private theorem intCharacter_def (V : FDRep ℚ G) (g : G) :
+    intCharacter V g = (V.character g).num := (rfl)
 
 /-- **The integer character casts back to the character.** -/
 @[simp]
 theorem intCharacter_cast (V : FDRep ℚ G) (g : G) : (intCharacter V g : ℚ) = V.character g := by
-  obtain ⟨m, hm⟩ := exists_intCast_eq_character V g
-  rw [intCharacter_def, ← hm, Rat.num_intCast]
+  obtain ⟨m, hm⟩ := exists_char_eq_intCast V g
+  rw [intCharacter_def, hm, Rat.num_intCast]
 
-/-- Representations with the same character have the same integer character. -/
-theorem intCharacter_eq_of_character_eq {V W : FDRep ℚ G} (h : V.character = W.character) :
-    intCharacter V = intCharacter W := by
-  funext g
-  exact Int.cast_injective (α := ℚ) (by rw [intCharacter_cast, intCharacter_cast, h])
+/-- **The integer character carries exactly the information of the rational one**: this is the
+elimination principle for `TauCeti.FDRep.intCharacter`, an integer equation between its values
+being the corresponding equation between character values. -/
+theorem intCharacter_eq_iff {V W : FDRep ℚ G} {g h : G} :
+    intCharacter V g = intCharacter W h ↔ V.character g = W.character h := by
+  rw [← Int.cast_inj (α := ℚ), intCharacter_cast, intCharacter_cast]
 
 /-- **The integer character is a class function.** -/
+@[simp]
 theorem intCharacter_conj (V : FDRep ℚ G) (g h : G) :
     intCharacter V (h * g * h⁻¹) = intCharacter V g :=
-  Int.cast_injective (α := ℚ)
-    (by rw [intCharacter_cast, intCharacter_cast, _root_.FDRep.char_conj])
+  intCharacter_eq_iff.2 (_root_.FDRep.char_conj V g h)
+
+/-- **The integer character of a rational representation, as a class function.** -/
+noncomputable def intClassFunction (V : FDRep ℚ G) : ClassFunction ℤ G :=
+  ⟨intCharacter V, ClassFunction.mem_iff.2 (intCharacter_conj V)⟩
+
+@[simp]
+theorem intClassFunction_apply (V : FDRep ℚ G) (g : G) :
+    (intClassFunction V).1 g = intCharacter V g := (rfl)
+
+/-- Conjugate elements have the same integer character. -/
+theorem intCharacter_eq_of_isConj (V : FDRep ℚ G) {g h : G} (hgh : IsConj g h) :
+    intCharacter V g = intCharacter V h :=
+  ClassFunction.eq_of_isConj (intClassFunction V) hgh
 
 /-- **The integer character at the identity is the degree.** -/
 @[simp]
 theorem intCharacter_one (V : FDRep ℚ G) : intCharacter V 1 = Module.finrank ℚ V :=
-  Int.cast_injective (α := ℚ)
-    (by rw [intCharacter_cast, _root_.FDRep.char_one]; push_cast; ring)
+  Int.cast_injective (α := ℚ) (by simp)
 
 /-- **Character values are cyclotomic integers.** For a finite group of exponent `e` and a
 primitive `e`-th root of unity `ζ`, every value of a complex character lies in `ℤ[ζ]`. -/

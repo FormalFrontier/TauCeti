@@ -85,10 +85,11 @@ theorem pow_eq_one_of_isRoot_charpoly {f : End k V} {n : ℕ} (hf : f ^ n = 1) {
     rw [hf, spectrum.one_eq] at hpow
     simpa using hpow
 
-/-- **The trace of an endomorphism of finite order is an algebraic integer**, once its
-characteristic polynomial splits: the trace is then the sum of the roots, and each of those is an
-`n`-th root of unity. -/
-theorem isIntegral_trace_of_pow_eq_one_of_splits {f : End k V} {n : ℕ} (hn : n ≠ 0)
+/-- The trace of an endomorphism of finite order is an algebraic integer once its characteristic
+polynomial splits: the trace is then the sum of the roots, and each of those is an `n`-th root of
+unity. This is the splitting case of `TauCeti.End.isIntegral_trace_of_pow_eq_one`, which subsumes
+it, so it stays private. -/
+private theorem isIntegral_trace_of_pow_eq_one_of_splits {f : End k V} {n : ℕ} (hn : n ≠ 0)
     (hf : f ^ n = 1) (hsplits : f.charpoly.Splits) : IsIntegral ℤ (LinearMap.trace k V f) := by
   rw [Module.End.trace_eq_sum_roots_charpoly_of_splits hsplits]
   refine IsIntegral.multiset_sum fun μ hμ => IsIntegral.of_pow (Nat.pos_of_ne_zero hn) ?_
@@ -96,10 +97,10 @@ theorem isIntegral_trace_of_pow_eq_one_of_splits {f : End k V} {n : ℕ} (hn : n
   exact isIntegral_one
 
 /-- **The trace of an endomorphism of finite order is an algebraic integer**, over an arbitrary
-field. The splitting hypothesis of `TauCeti.End.isIntegral_trace_of_pow_eq_one_of_splits` is
-removed by base change to an algebraic closure: base change preserves both the order of `f` and,
-up to the field embedding, its trace, and an element of `k` whose image in the closure is integral
-over `ℤ` is itself integral over `ℤ`. -/
+field. When the characteristic polynomial splits the trace is a sum of roots of unity; that
+splitting hypothesis is removed by base change to an algebraic closure, which preserves both the
+order of `f` and, up to the field embedding, its trace, and an element of `k` whose image in the
+closure is integral over `ℤ` is itself integral over `ℤ`. -/
 theorem isIntegral_trace_of_pow_eq_one {f : End k V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1) :
     IsIntegral ℤ (LinearMap.trace k V f) := by
   have hbase : f.baseChange (AlgebraicClosure k) ^ n = 1 := by
