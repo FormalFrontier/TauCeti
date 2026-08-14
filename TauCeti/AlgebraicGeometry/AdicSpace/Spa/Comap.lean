@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.RingTheory.Valuation.Integral
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset
 public import TauCeti.RingTheory.Huber.Pair
 public import TauCeti.RingTheory.Valuation.Continuous.Basic
@@ -27,10 +28,9 @@ and establishes its fundamental properties:
 2. **Continuity and functoriality** (`continuous_spaComap`, `spaComap_id`, `spaComap_comp`).
 3. **Preimages of rational subsets** (`comap_preimage_rationalSubset`,
    `spaComap_preimage_rationalSubset`).
-4. **Quotient embeddings (Wedhorn Proposition 7.38)** (`isEmbedding_spaComap_quotient`,
-   `range_spaComap_quotient`): for an ideal `J ⊆ A`, the quotient map `A → A ⧸ J` induces a
-   topological embedding `Spa(A ⧸ J, A⁺ ⧸ J) → Spa(A, A⁺)` whose image is the closed subset
-   `{v ∈ Spa(A, A⁺) | J ≤ supp v}`.
+4. **Quotient closed embeddings (Wedhorn Proposition 7.38)**
+   (`Huber.Pair.Hom.isClosedEmbedding_spaComap_quotient`): for an ideal `J ⊆ A`, the quotient
+   pair map induces a closed embedding whose image is `{v ∈ Spa(A, A⁺) | J ≤ supp v}`.
 
 ## Main definitions
 
@@ -48,10 +48,10 @@ and establishes its fundamental properties:
   functorial.
 * `TauCeti.ValuationSpectrum.comap_preimage_rationalSubset`,
   `spaComap_preimage_rationalSubset` : preimages of rational subsets under `spaComap`.
-* `TauCeti.ValuationSpectrum.isEmbedding_spaComap_quotient` : **Wedhorn Proposition 7.38**, the
-  quotient map induces a topological embedding on adic spectra.
-* `TauCeti.ValuationSpectrum.range_spaComap_quotient` : the image of the quotient embedding is
-  the sub-locus of valuations whose support contains `J`.
+* `TauCeti.Huber.Pair.Hom.isClosedEmbedding_spaComap_quotient` : **Wedhorn Proposition 7.38**,
+  the canonical quotient-pair map induces a closed embedding on adic spectra.
+* `TauCeti.Huber.Pair.Hom.range_spaComap_quotient` : the image of the quotient-pair embedding is
+  the closed sub-locus of valuations whose support contains `J`.
 
 ## References
 
@@ -146,6 +146,22 @@ theorem spaComap_preimage_rationalSubset (φ : A →+* B) (hφ : Continuous φ) 
 
 section Quotient
 
+/-- Replacing a subring by its integral closure does not change the sub-unit valuation locus. -/
+theorem spa_integralClosure (R : Subring A) :
+    spa (integralClosure R A).toSubring = spa R := by
+  ext v
+  rw [mem_spa_iff, mem_spa_iff]
+  refine and_congr_right fun _ ↦ ⟨fun h r hr ↦ ?_, fun h x hx ↦ ?_⟩
+  · exact h r (algebraMap_mem (integralClosure R A) ⟨r, hr⟩)
+  · let φ : R →+* v.valuation.integer :=
+      R.subtype.codRestrict v.valuation.integer fun r ↦ by
+        rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff]
+        exact h r r.2
+    have hint : IsIntegral v.valuation.integer x :=
+      (show IsIntegral R x from hx).map_of_comp_eq φ (RingHom.id A) (by ext r; rfl)
+    have hxint := (Valuation.integer.integers v.valuation).mem_of_integral hint
+    rwa [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
+
 /-- Continuity of the lifted valuation on the quotient ring `A ⧸ J`. -/
 theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
     (hv : v.IsContinuous) : (quotientLift J hJ).IsContinuous := by
@@ -173,8 +189,9 @@ theorem isContinuous_quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.su
     exact hv_open a
   exact isOpen_coinduced.mp h_open
 
-/-- **Wedhorn Proposition 7.38 (Part 1)**: The contravariant map on adic spectra induced by the
-quotient homomorphism `A → A ⧸ J` is a topological embedding. -/
+/-- The map on sub-unit valuation loci for the quotient homomorphism and the image plus ring is a
+topological embedding. The canonical quotient-pair version is
+`TauCeti.Huber.Pair.Hom.isClosedEmbedding_spaComap_quotient`. -/
 theorem isEmbedding_spaComap_quotient (J : Ideal A) (Aplus : Subring A) :
     Topology.IsEmbedding
       (spaComap (Ideal.Quotient.mk J) continuous_quotient_mk'
@@ -191,8 +208,8 @@ theorem isEmbedding_spaComap_quotient (J : Ideal A) (Aplus : Subring A) :
   rw [hcomp]
   exact (isEmbedding_comap_quotientMk J).comp Topology.IsEmbedding.subtypeVal
 
-/-- **Wedhorn Proposition 7.38 (Part 2)**: The range of the quotient map on adic spectra is the
-closed subset of points whose support contains `J`. -/
+/-- The range of the quotient map with the image plus ring is the points whose support contains
+`J`. -/
 theorem range_spaComap_quotient (J : Ideal A) (Aplus : Subring A) :
     Set.range (spaComap (Ideal.Quotient.mk J) continuous_quotient_mk'
       (fun (a : A) (ha : a ∈ Aplus) ↦
@@ -260,5 +277,75 @@ theorem spaComap_comp (g : Hom T U) (f : Hom S T) :
   dsimp [spaComap, TauCeti.ValuationSpectrum.spaComap]
   rw [Hom.toRingHom_comp, comap_comp]
   rfl
+
+section Quotient
+
+/-- The map on adic spectra induced by the canonical quotient-pair morphism is an embedding. -/
+theorem isEmbedding_spaComap_quotient (S : Pair A) (J : Ideal A) :
+    Topology.IsEmbedding (quotientHom S J).spaComap := by
+  have hcomp : Subtype.val ∘ (quotientHom S J).spaComap =
+      ValuationSpectrum.comap (Ideal.Quotient.mk J) ∘ Subtype.val := by
+    funext ⟨v, hv⟩
+    change ValuationSpectrum.comap (quotientHom S J).toRingHom v =
+      ValuationSpectrum.comap (Ideal.Quotient.mk J) v
+    rw [quotientHom_toRingHom]
+  refine Topology.IsEmbedding.of_comp_iff Topology.IsEmbedding.subtypeVal |>.mp ?_
+  rw [hcomp]
+  exact (ValuationSpectrum.isEmbedding_comap_quotientMk J).comp
+    Topology.IsEmbedding.subtypeVal
+
+/-- The range of the quotient-pair map on adic spectra is the support locus containing `J`. -/
+theorem range_spaComap_quotient (S : Pair A) (J : Ideal A) :
+    Set.range (quotientHom S J).spaComap =
+      Subtype.val ⁻¹' {v : Spv A | J ≤ v.supp} := by
+  ext ⟨v, hv⟩
+  simp only [Set.mem_range, Set.mem_preimage, Set.mem_ofPred_eq]
+  constructor
+  · rintro ⟨⟨w, hw⟩, heq⟩
+    have hval := Subtype.ext_iff.mp heq
+    simp only [spaComap, TauCeti.ValuationSpectrum.spaComap, quotientHom_toRingHom] at hval
+    rw [← hval]
+    exact ValuationSpectrum.self_le_supp_comap J w
+  · intro hJ
+    have hlift_spa_image : ValuationSpectrum.quotientLift J hJ ∈
+        spa (S.plus.map (Ideal.Quotient.mk J)) := by
+      rw [ValuationSpectrum.mem_spa_iff]
+      refine ⟨ValuationSpectrum.isContinuous_quotientLift J hJ
+        (ValuationSpectrum.mem_spa_iff S.plus v |>.mp hv).1, ?_⟩
+      rintro _ ⟨a, ha, rfl⟩
+      have h1 : (ValuationSpectrum.quotientLift J hJ).toValuativeRel.vle
+          (Ideal.Quotient.mk J a) 1 ↔
+          (ValuationSpectrum.comap (Ideal.Quotient.mk J)
+            (ValuationSpectrum.quotientLift J hJ)).toValuativeRel.vle a 1 := by
+        rw [ValuationSpectrum.comap_vle, map_one]
+      rw [h1, ValuationSpectrum.comap_quotientLift J hJ]
+      exact (ValuationSpectrum.mem_spa_iff S.plus v |>.mp hv).2 a ha
+    have hlift_spa : ValuationSpectrum.quotientLift J hJ ∈ spa (S.quotient J).plus := by
+      rw [quotient_plus]
+      rw [ValuationSpectrum.spa_integralClosure]
+      exact hlift_spa_image
+    refine ⟨⟨ValuationSpectrum.quotientLift J hJ, hlift_spa⟩, ?_⟩
+    apply Subtype.ext
+    simpa only [spaComap, TauCeti.ValuationSpectrum.spaComap, quotientHom_toRingHom] using
+      ValuationSpectrum.comap_quotientLift J hJ
+
+private theorem isClosed_support_locus (S : Pair A) (J : Ideal A) :
+    IsClosed (Subtype.val ⁻¹' {v : Spv A | J ≤ v.supp} : Set (spa S.plus)) := by
+  have hlocus : {v : Spv A | J ≤ v.supp} =
+      ValuationSpectrum.suppFun ⁻¹' PrimeSpectrum.zeroLocus (J : Set A) := by
+    ext v
+    simp [PrimeSpectrum.mem_zeroLocus, ValuationSpectrum.suppFun_asIdeal]
+  rw [hlocus, ← Set.preimage_comp]
+  exact (PrimeSpectrum.isClosed_zeroLocus (J : Set A)).preimage
+    (ValuationSpectrum.continuous_suppFun.comp continuous_subtype_val)
+
+/-- **Wedhorn Proposition 7.38**: the canonical quotient-pair morphism induces a closed
+embedding of adic spectra, with image the points whose support contains the quotient ideal. -/
+theorem isClosedEmbedding_spaComap_quotient (S : Pair A) (J : Ideal A) :
+    Topology.IsClosedEmbedding (quotientHom S J).spaComap :=
+  ⟨isEmbedding_spaComap_quotient S J,
+    range_spaComap_quotient S J ▸ isClosed_support_locus S J⟩
+
+end Quotient
 
 end TauCeti.Huber.Pair.Hom
