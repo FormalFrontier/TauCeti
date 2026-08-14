@@ -4,10 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTransport
+public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
+import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTransport
 public import TauCeti.Probability.DeFinetti.ViaKoopman.InvariantConditionalLaw
-public import Mathlib.Dynamics.BirkhoffSum.Average
-public import TauCeti.Probability.Ergodic.CondExpProjection
+import Mathlib.Dynamics.BirkhoffSum.Average
+import TauCeti.Probability.Ergodic.CondExpProjection
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
 /-!
@@ -53,9 +54,11 @@ The transport and averaging stages behind these — the displacement identity, i
 form, the coordinate/Birkhoff bridge and the `L¹` convergence — are private: they are steps of this
 file's argument, not API.
 
-The weighted transport and decoupling statements carry an invariants-measurable weight `w`. The
-weight is what makes the chain usable in an induction across a block: the factors already peeled
-off accumulate as exactly such a weight, which an unweighted form cannot express.
+The displacement and averaging lemmas carry an invariants-measurable weight `w`, as do the two
+decoupling interfaces; the coordinate/Birkhoff bridge and the `L¹` convergence do not, since
+neither mentions a weight. The weight is what makes the chain usable in an induction across a
+block: the factors already peeled off accumulate as exactly such a weight, which an unweighted form
+cannot express.
 
 The limit passage itself is one private estimate,
 `tendsto_setIntegral_mul_of_tendsto_integral_abs`: `L¹` convergence plus `|p| ≤ 1` gives
@@ -66,11 +69,6 @@ The `condExp` form is the one an induction consumes, because `stronglyMeasurable
 *strictly* measurable for the invariants σ-algebra, which is what the weight hypothesis demands;
 the `ν` form is only an a.e. identity and cannot serve as a weight. Conversion happens once, at the
 end.
-
-The weighted transport and decoupling statements carry an invariants-measurable weight `w`; the
-preliminary and analytic lemmas do not. The weight is what makes the chain usable in an induction
-across a block: the factors already peeled off accumulate as exactly such a weight, which an
-unweighted form cannot express.
 
 This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
