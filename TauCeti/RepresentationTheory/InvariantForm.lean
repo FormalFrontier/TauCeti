@@ -146,19 +146,23 @@ variable {ρ : Representation k G V} {B C : BilinForm k V}
 /-- A form is invariant for `ρ` exactly when it satisfies the pointwise equation
 `B (ρ g x) (ρ g y) = B x y`. -/
 theorem isInvariantForm_iff :
-    IsInvariantForm ρ B ↔ ∀ (g : G) (x y : V), B (ρ g x) (ρ g y) = B x y := Iff.rfl
+    IsInvariantForm ρ B ↔ ∀ (g : G) (x y : V), B (ρ g x) (ρ g y) = B x y :=
+  ⟨fun h g => BilinForm.isIsometry_iff.mp (h g),
+    fun h g => BilinForm.isIsometry_iff.mpr (h g)⟩
 
 /-- An invariant form takes the same value on `ρ g x` and `ρ g y` as it does on `x` and `y`. -/
 @[grind =]
 theorem IsInvariantForm.apply (hB : IsInvariantForm ρ B) (g : G) (x y : V) :
-    B (ρ g x) (ρ g y) = B x y := hB g x y
+    B (ρ g x) (ρ g y) = B x y := (hB g).apply x y
 
 /-- The invariant bilinear forms of `ρ`, as a submodule of all bilinear forms on `V`. -/
 def invariantForms (ρ : Representation k G V) : Submodule k (BilinForm k V) where
   carrier := {B | IsInvariantForm ρ B}
-  add_mem' hB hC g x y := by simp only [LinearMap.add_apply, hB g x y, hC g x y]
-  zero_mem' _ _ _ := rfl
-  smul_mem' c _ hB g x y := by simp only [LinearMap.smul_apply, hB g x y]
+  add_mem' hB hC g := BilinForm.isIsometry_iff.mpr fun x y => by
+    simp only [LinearMap.add_apply, hB.apply g x y, hC.apply g x y]
+  zero_mem' _ := BilinForm.isIsometry_iff.mpr fun _ _ => rfl
+  smul_mem' c _ hB g := BilinForm.isIsometry_iff.mpr fun x y => by
+    simp only [LinearMap.smul_apply, hB.apply g x y]
 
 /-- Membership in `TauCeti.Representation.invariantForms` is invariance. -/
 @[simp]
@@ -166,7 +170,8 @@ theorem mem_invariantForms : B ∈ invariantForms ρ ↔ IsInvariantForm ρ B :=
 
 /-- The zero form is invariant. -/
 @[simp]
-theorem isInvariantForm_zero : IsInvariantForm ρ (0 : BilinForm k V) := fun _ _ _ => rfl
+theorem isInvariantForm_zero : IsInvariantForm ρ (0 : BilinForm k V) :=
+  fun _ => BilinForm.isIsometry_iff.mpr fun _ _ => rfl
 
 /-- A sum of invariant forms is invariant. -/
 theorem IsInvariantForm.add (hB : IsInvariantForm ρ B) (hC : IsInvariantForm ρ C) :
@@ -179,13 +184,13 @@ theorem IsInvariantForm.smul (c : k) (hB : IsInvariantForm ρ B) : IsInvariantFo
 
 /-- Exchanging the two arguments of an invariant form leaves it invariant. -/
 theorem IsInvariantForm.flip (hB : IsInvariantForm ρ B) : IsInvariantForm ρ B.flip :=
-  fun g x y => hB.apply g y x
+  fun g => BilinForm.isIsometry_iff.mpr fun x y => hB.apply g y x
 
 /-- Every bilinear form is invariant for the trivial representation, which acts by the identity. -/
 @[simp]
 theorem isInvariantForm_trivial (B : BilinForm k V) :
     IsInvariantForm (Representation.trivial k G V) B :=
-  fun _ _ _ => rfl
+  fun _ => BilinForm.isIsometry_iff.mpr fun _ _ => rfl
 
 end Monoid
 
@@ -274,7 +279,8 @@ theorem isInvariantForm_iff_isIntertwiningMap (ρ : Representation k G V) (B : B
   · refine fun hB => ⟨fun g v => ?_⟩
     ext w
     simpa [Module.Dual.transpose_apply] using hB.apply_left g v w
-  · intro hB g x y
+  · intro hB g
+    refine BilinForm.isIsometry_iff.mpr fun x y => ?_
     have h := DFunLike.congr_fun (hB.isIntertwining g x) (ρ g y)
     simpa [Module.Dual.transpose_apply] using h
 

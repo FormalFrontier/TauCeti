@@ -37,17 +37,17 @@ variable {R M₁ M₂ : Type*} [CommSemiring R] [AddCommMonoid M₁] [Module R M
 groups: Mathlib's `LinearMap.GeneralLinearGroup.congrLinearEquiv` read through
 `LinearMap.GeneralLinearGroup.generalLinearEquiv`.
 
-The body is exposed so that the two evaluation lemmas below hold by `rfl` downstream. -/
-@[expose] def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ[R] M₂) :=
+The two evaluation lemmas below are its characteristic API. -/
+def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ[R] M₂) :=
   ((generalLinearEquiv R M₁).symm.trans (congrLinearEquiv e)).trans (generalLinearEquiv R M₂)
 
 @[simp]
 theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : M₂) :
-    congrAut e f m = e (f (e.symm m)) := rfl
+    congrAut e f m = e (f (e.symm m)) := (rfl)
 
 @[simp]
 theorem congrAut_symm_apply (e : M₁ ≃ₗ[R] M₂) (g : M₂ ≃ₗ[R] M₂) (m : M₁) :
-    (congrAut e).symm g m = e.symm (g (e m)) := rfl
+    (congrAut e).symm g m = e.symm (g (e m)) := (rfl)
 
 end LinearEquiv
 

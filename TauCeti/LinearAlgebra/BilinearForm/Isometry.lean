@@ -118,10 +118,13 @@ is one. For a finite free `ℤ`-module `V` and a *nondegenerate* integral form `
 endomorphism is automatically invertible (`TauCeti.BilinForm.IsIsometry.toIsometryGroup`), and the
 resulting automorphisms are the arithmetic group `Aut(V, Q)`; see
 `TauCeti.BilinForm.isometryGroup`. -/
-@[expose] def IsIsometry (B : BilinForm R M) (f : M →ₗ[R] M) : Prop :=
+def IsIsometry (B : BilinForm R M) (f : M →ₗ[R] M) : Prop :=
   ∀ x y, B (f x) (f y) = B x y
 
 variable {B : BilinForm R M} {f g : M →ₗ[R] M}
+
+/-- An endomorphism is an isometry of `B` exactly when it preserves `B` pointwise. -/
+theorem isIsometry_iff : IsIsometry B f ↔ ∀ x y, B (f x) (f y) = B x y := (Iff.rfl)
 
 /-- An endomorphism is an isometry of `B` exactly when precomposing `B` with it on both sides
 returns `B`. -/
@@ -134,15 +137,18 @@ theorem isIsometry_toLinearMap (φ : B →bᵢ B) : IsIsometry B φ.toLinearMap 
 
 namespace IsIsometry
 
-/-- An isometry, bundled as one of Mathlib's isometric maps `B →bᵢ B`. The body is exposed so that
-the two evaluation lemmas below hold by `rfl` downstream. -/
-@[expose] def toIsometry (hf : IsIsometry B f) : B →bᵢ B := ⟨f, hf⟩
+/-- An isometry takes the same value under `B` after applying the endomorphism to both inputs. -/
+protected theorem apply (hf : IsIsometry B f) (x y : M) : B (f x) (f y) = B x y :=
+  isIsometry_iff.mp hf x y
+
+/-- An isometry, bundled as one of Mathlib's isometric maps `B →bᵢ B`. -/
+def toIsometry (hf : IsIsometry B f) : B →bᵢ B := ⟨f, hf⟩
 
 @[simp]
-theorem toIsometry_apply (hf : IsIsometry B f) (x : M) : hf.toIsometry x = f x := rfl
+theorem toIsometry_apply (hf : IsIsometry B f) (x : M) : hf.toIsometry x = f x := (rfl)
 
 @[simp]
-theorem toIsometry_toLinearMap (hf : IsIsometry B f) : hf.toIsometry.toLinearMap = f := rfl
+theorem toIsometry_toLinearMap (hf : IsIsometry B f) : hf.toIsometry.toLinearMap = f := (rfl)
 
 protected theorem id : IsIsometry B LinearMap.id := fun _ _ => rfl
 
@@ -197,12 +203,13 @@ theorem mem_isometryGroup {e : M ≃ₗ[R] M} :
 
 @[simp]
 theorem mem_isometryGroup_iff {e : M ≃ₗ[R] M} :
-    e ∈ isometryGroup B ↔ ∀ x y, B (e x) (e y) = B x y := Iff.rfl
+    e ∈ isometryGroup B ↔ ∀ x y, B (e x) (e y) = B x y :=
+  mem_isometryGroup.trans isIsometry_iff
 
 /-- Membership in `Aut(M, B)` is exactly Mathlib's notion of a self-isometry of `B`: the subgroup
 `TauCeti.BilinForm.isometryGroup B` and the type `LinearMap.BilinForm.IsometryEquiv B B` carry the
 same data, the subgroup adding the group structure. -/
-@[expose] def isometryGroupEquivIsometryEquiv (B : BilinForm R M) :
+def isometryGroupEquivIsometryEquiv (B : BilinForm R M) :
     isometryGroup B ≃ B.IsometryEquiv B where
   toFun e := ⟨e.1, fun x y => mem_isometryGroup.mp e.2 x y⟩
   invFun e := ⟨e.toLinearEquiv, mem_isometryGroup.mpr fun x y => e.map_app y x⟩
@@ -211,11 +218,11 @@ same data, the subgroup adding the group structure. -/
 
 @[simp]
 theorem coe_isometryGroupEquivIsometryEquiv (B : BilinForm R M) (e : isometryGroup B) :
-    ⇑(isometryGroupEquivIsometryEquiv B e) = ⇑(e : M ≃ₗ[R] M) := rfl
+    ⇑(isometryGroupEquivIsometryEquiv B e) = ⇑(e : M ≃ₗ[R] M) := (rfl)
 
 @[simp]
 theorem coe_isometryGroupEquivIsometryEquiv_symm (B : BilinForm R M) (e : B.IsometryEquiv B) :
-    (((isometryGroupEquivIsometryEquiv B).symm e : M ≃ₗ[R] M) : M → M) = ⇑e := rfl
+    (((isometryGroupEquivIsometryEquiv B).symm e : M ≃ₗ[R] M) : M → M) = ⇑e := (rfl)
 
 section Congr
 
@@ -297,7 +304,7 @@ theorem IsIsometry.baseChange (hf : IsIsometry B f) :
 /-- Base change along an `R`-algebra `A` is a group homomorphism
 `Aut(M, B) →* Aut(A ⊗[R] M, B_A)`. For `R = ℤ` and `A = ℂ` this is the action of the arithmetic
 group `Aut(V, Q)` on the complexification of the lattice. -/
-@[expose] def isometryGroupBaseChange (B : BilinForm R M) :
+def isometryGroupBaseChange (B : BilinForm R M) :
     isometryGroup B →* isometryGroup (LinearMap.BilinForm.baseChange A B) where
   toFun e := ⟨LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M),
     mem_isometryGroup.mpr (IsIsometry.baseChange A (mem_isometryGroup.mp e.2))⟩
@@ -307,12 +314,12 @@ group `Aut(V, Q)` on the complexification of the lattice. -/
 @[simp]
 theorem coe_isometryGroupBaseChange (B : BilinForm R M) (e : isometryGroup B) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M)
-      = LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M) := rfl
+      = LinearEquiv.baseChange R A M M (e : M ≃ₗ[R] M) := (rfl)
 
 @[simp]
 theorem isometryGroupBaseChange_tmul (B : BilinForm R M) (e : isometryGroup B) (a : A) (m : M) :
     (isometryGroupBaseChange A B e : A ⊗[R] M ≃ₗ[A] A ⊗[R] M) (a ⊗ₜ m)
-      = a ⊗ₜ (e : M ≃ₗ[R] M) m := rfl
+      = a ⊗ₜ (e : M ≃ₗ[R] M) m := (rfl)
 
 end BaseChange
 
@@ -376,6 +383,42 @@ theorem det_toMatrix_mem_nonZeroDivisors [IsDomain R] (b : Basis ι R M) (hB : B
 
 end Matrix
 
+section UnitDeterminant
+
+variable [Module.Free R M] [Module.Finite R M]
+
+namespace IsIsometry
+
+/-- An isometry whose underlying endomorphism has unit determinant, as an element of the isometry
+group. -/
+noncomputable def toIsometryGroupOfIsUnitDet (hf : IsIsometry B f)
+    (hdet : IsUnit (LinearMap.det f)) : isometryGroup B :=
+  ⟨LinearMap.equivOfIsUnitDet hdet,
+    mem_isometryGroup.mpr fun x y => by simpa using hf.apply x y⟩
+
+@[simp]
+theorem coe_toIsometryGroupOfIsUnitDet (hf : IsIsometry B f)
+    (hdet : IsUnit (LinearMap.det f)) :
+    ((hf.toIsometryGroupOfIsUnitDet hdet : isometryGroup B) : M →ₗ[R] M) = f :=
+  LinearMap.coe_equivOfIsUnitDet hdet
+
+@[simp]
+theorem toIsometryGroupOfIsUnitDet_apply (hf : IsIsometry B f)
+    (hdet : IsUnit (LinearMap.det f)) (x : M) :
+    (hf.toIsometryGroupOfIsUnitDet hdet : M ≃ₗ[R] M) x = f x :=
+  LinearMap.equivOfIsUnitDet_apply hdet x
+
+/-- An endomorphism of a finite free module with unit determinant is bijective. -/
+theorem bijective_of_isUnit_det (hf : IsIsometry B f) (hdet : IsUnit (LinearMap.det f)) :
+    Function.Bijective f := by
+  have h : ⇑(hf.toIsometryGroupOfIsUnitDet hdet : M ≃ₗ[R] M) = ⇑f :=
+    funext (hf.toIsometryGroupOfIsUnitDet_apply hdet)
+  exact h ▸ (hf.toIsometryGroupOfIsUnitDet hdet : M ≃ₗ[R] M).bijective
+
+end IsIsometry
+
+end UnitDeterminant
+
 section Nondegenerate
 
 variable [IsDomain R] [Module.Free R M] [Module.Finite R M]
@@ -393,10 +436,9 @@ theorem isUnit_det_of_nondegenerate (hB : B.Nondegenerate) (hf : IsIsometry B f)
 bilinear form is automatically invertible, hence an element of the isometry group. This is how an
 element of `Aut(V, Q)` usually presents itself: as an endomorphism of the lattice `V` preserving
 `Q`, with invertibility a consequence rather than a hypothesis. -/
-@[expose] noncomputable def toIsometryGroup (hB : B.Nondegenerate) (hf : IsIsometry B f) :
+noncomputable def toIsometryGroup (hB : B.Nondegenerate) (hf : IsIsometry B f) :
     isometryGroup B :=
-  ⟨LinearMap.equivOfIsUnitDet (hf.isUnit_det_of_nondegenerate hB),
-    mem_isometryGroup.mpr fun x y => by simpa using hf x y⟩
+  hf.toIsometryGroupOfIsUnitDet (hf.isUnit_det_of_nondegenerate hB)
 
 @[simp]
 theorem coe_toIsometryGroup (hB : B.Nondegenerate) (hf : IsIsometry B f) :
@@ -411,8 +453,7 @@ theorem toIsometryGroup_apply (hB : B.Nondegenerate) (hf : IsIsometry B f) (x : 
 /-- Over an integral domain, an endomorphism of a finite free module preserving a nondegenerate
 bilinear form is automatically bijective. -/
 theorem bijective (hB : B.Nondegenerate) (hf : IsIsometry B f) : Function.Bijective f := by
-  have h : ⇑(hf.toIsometryGroup hB : M ≃ₗ[R] M) = ⇑f := funext (toIsometryGroup_apply hB hf)
-  exact h ▸ (hf.toIsometryGroup hB : M ≃ₗ[R] M).bijective
+  exact hf.bijective_of_isUnit_det (hf.isUnit_det_of_nondegenerate hB)
 
 end IsIsometry
 

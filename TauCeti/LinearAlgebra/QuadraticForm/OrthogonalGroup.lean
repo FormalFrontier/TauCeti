@@ -6,7 +6,6 @@ module
 
 public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
 public import TauCeti.LinearAlgebra.BilinearForm.Isometry
-public import TauCeti.LinearAlgebra.GeneralLinearGroup.Congr
 public import TauCeti.LinearAlgebra.Reflection
 
 /-!
