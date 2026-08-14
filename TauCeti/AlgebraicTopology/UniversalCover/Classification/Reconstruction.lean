@@ -195,7 +195,8 @@ private def fiberEquivOrbitAux (a : A) :
         exact range_mapOfEq_subgroupQuotientProj x0 _)).trans
       (MulAction.orbitEquivQuotientStabilizer (FundamentalGroup X x0) a).symm
 
-/-- Raw-projection form of `stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint`. -/
+/-- The raw fibre equivalence sends a monodromy translate of the quotient basepoint to the
+corresponding translate of `a`. -/
 private theorem fiberEquivOrbitAux_apply_monodromy_basepoint (a : A)
     (g : FundamentalGroup X x0) :
     (fiberEquivOrbitAux x0 a
@@ -249,26 +250,11 @@ private theorem fiberEquivOrbitAux_apply_monodromy (a : A) (g : FundamentalGroup
 /-- The fibre over `x₀` of the cover reconstructed from `a` is equivalent to the orbit of `a`.
 
 Under this equivalence the distinguished point of the fibre corresponds to `a`, by
-`stabilizerCoverFiberEquivOrbit_apply_basepoint`; the equivariance statements are
-`stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint` and
+`stabilizerCoverFiberEquivOrbit_apply_basepoint`; the equivariance statement is
 `stabilizerCoverFiberEquivOrbit_apply_monodromy`. -/
 def stabilizerCoverFiberEquivOrbit (a : A) :
     ⇑(stabilizerCover x0 a).proj ⁻¹' {x0} ≃ MulAction.orbit (FundamentalGroup X x0) a :=
   (stabilizerCoverFiberEquivSubgroupQuotient x0 a).trans (fiberEquivOrbitAux x0 a)
-
-/-- The fibre equivalence sends the monodromy translate of the distinguished point of the fibre
-to the corresponding translate of `a`. -/
-@[simp]
-theorem stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint (a : A)
-    (g : FundamentalGroup X x0) :
-    (stabilizerCoverFiberEquivOrbit x0 a
-        ((stabilizerCover x0 a).isCoveringMap_proj.monodromy g
-          (stabilizerCoverBasepointFiber x0 a)) : A) =
-      g • a := by
-  simp only [stabilizerCoverFiberEquivOrbit, Equiv.trans_apply]
-  rw [stabilizerCoverFiberEquivSubgroupQuotient_apply_monodromy,
-    stabilizerCoverFiberEquivSubgroupQuotient_basepoint]
-  exact fiberEquivOrbitAux_apply_monodromy_basepoint x0 a g
 
 /-- The fibre equivalence sends the distinguished point of the fibre to `a`. -/
 @[simp]
@@ -276,10 +262,13 @@ theorem stabilizerCoverFiberEquivOrbit_apply_basepoint (a : A) :
     stabilizerCoverFiberEquivOrbit x0 a (stabilizerCoverBasepointFiber x0 a) =
       ⟨a, MulAction.mem_orbit_self a⟩ := by
   refine Subtype.ext ?_
+  simp only [stabilizerCoverFiberEquivOrbit, Equiv.trans_apply]
+  rw [stabilizerCoverFiberEquivSubgroupQuotient_basepoint]
   -- the distinguished point is its own translate by the identity loop class
-  have h := stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint x0 a 1
+  have h := fiberEquivOrbitAux_apply_monodromy_basepoint x0 a 1
   rwa [one_smul, FundamentalGroup.one_def,
-    (stabilizerCover x0 a).isCoveringMap_proj.monodromy_refl, id_eq] at h
+    (isCoveringMap_subgroupQuotientProj x0
+      (MulAction.stabilizer (FundamentalGroup X x0) a)).monodromy_refl, id_eq] at h
 
 /-- The fibre equivalence is equivariant: monodromy of the reconstructed cover agrees with the
 given action of the fundamental group on the orbit of `a`. -/
@@ -315,19 +304,6 @@ theorem transitiveActionFiberEquiv_apply_basepoint
     transitiveActionFiberEquiv x0 a (stabilizerCoverBasepointFiber x0 a) = a := by
   simpa only [transitiveActionFiberEquiv, Equiv.trans_apply, Equiv.subtypeUnivEquiv_apply] using
     congrArg Subtype.val (stabilizerCoverFiberEquivOrbit_apply_basepoint x0 a)
-
-/-- The fibre equivalence of a transitive action sends the monodromy translate of the
-distinguished point of the fibre to the corresponding translate of `a`. -/
-@[simp]
-theorem transitiveActionFiberEquiv_apply_monodromy_basepoint
-    [MulAction.IsPretransitive (FundamentalGroup X x0) A] (a : A)
-    (g : FundamentalGroup X x0) :
-    transitiveActionFiberEquiv x0 a
-        ((stabilizerCover x0 a).isCoveringMap_proj.monodromy g
-          (stabilizerCoverBasepointFiber x0 a)) =
-      g • a := by
-  simpa only [transitiveActionFiberEquiv, Equiv.trans_apply, Equiv.subtypeUnivEquiv_apply] using
-    stabilizerCoverFiberEquivOrbit_apply_monodromy_basepoint x0 a g
 
 /-- The fibre equivalence of a transitive action is equivariant: monodromy of the reconstructed
 cover agrees with the given action of the fundamental group on `A`. -/
