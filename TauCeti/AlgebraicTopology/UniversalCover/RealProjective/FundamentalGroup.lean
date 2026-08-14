@@ -143,19 +143,26 @@ lemma monodromy_fundamentalGroupMulEquiv_symm (hn : 2 ≤ n)
     ((fundamentalGroupMulEquiv n hn e).symm u) u).1
       (MulEquiv.apply_symm_apply _ _)
 
-/-- A loop class maps to `1` under `fundamentalGroupMulEquiv` exactly when its monodromy fixes
-the chosen lift. -/
+/-- A loop class is the identity exactly when its monodromy fixes the chosen lift. -/
 @[simp]
-lemma fundamentalGroupMulEquiv_eq_one_iff (hn : 2 ≤ n)
+lemma monodromy_eq_self_iff (hn : 2 ≤ n)
     [SimplyConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)]
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x})
     (γ : FundamentalGroup (RealProjectiveSpace n) x) :
-    fundamentalGroupMulEquiv n hn e γ = 1 ↔ (isCoveringMap_mk n).monodromy γ e = e := by
-  rw [fundamentalGroupMulEquiv_apply_eq_iff]
-  simpa using (Iff.symm Subtype.ext_iff :
-    (((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
-      (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) ↔
-        (isCoveringMap_mk n).monodromy γ e = e))
+    (isCoveringMap_mk n).monodromy γ e = e ↔
+      γ = CategoryTheory.CategoryStruct.id (FundamentalGroupoid.mk x) := by
+  symm
+  calc
+    _ ↔ fundamentalGroupMulEquiv n hn e γ = 1 := by
+      simpa only [CategoryTheory.End.one_def] using
+        (Iff.symm (fundamentalGroupMulEquiv n hn e).map_eq_one_iff)
+    _ ↔ _ := by
+      rw [fundamentalGroupMulEquiv_apply_eq_iff]
+      simpa using (Iff.symm Subtype.ext_iff :
+        (((isCoveringMap_mk n).monodromy γ e :
+              sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
+            (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) ↔
+          (isCoveringMap_mk n).monodromy γ e = e))
 
 /-- **The fundamental group of real projective space `RPⁿ` (for `2 ≤ n`) with a simply connected
 covering sphere is isomorphic to `ℤˣ` for any basepoint `x`**:
