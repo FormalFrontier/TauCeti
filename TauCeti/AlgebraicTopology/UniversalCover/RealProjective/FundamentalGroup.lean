@@ -39,6 +39,16 @@ unconditional computation, is being developed upstream in Mathlib PR #28246.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`: for `2 ≤ n` and a simply connected
   covering sphere, `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ` for any basepoint `x`
   with a chosen lift `e`.
+* `TauCeti.RealProjectiveSpace.deckMulEquiv_symm_op_symm_apply`: canonical isomorphism
+  `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends `op (deckMulEquiv n hn u)` to `u`.
+* `TauCeti.RealProjectiveSpace.deckMulEquiv_symm_op_symm_symm_apply`: inverse of canonical
+  isomorphism `(Deck (mk n))ᵐᵒᵖ ≃* ℤˣ` sends `u` to `op (deckMulEquiv n hn u)`.
+* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv_apply_eq_iff`: characterization of the
+  isomorphism on monodromy.
+* `TauCeti.RealProjectiveSpace.monodromy_fundamentalGroupMulEquiv_symm`: inverse equivalence on
+  monodromy.
+* `TauCeti.RealProjectiveSpace.monodromy_eq_self_iff`: loop class is identity iff monodromy fixes
+  lift.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv'`: basepoint-unconscious version
   for any `x`.
 * `TauCeti.RealProjectiveSpace.card_fundamentalGroup`:
