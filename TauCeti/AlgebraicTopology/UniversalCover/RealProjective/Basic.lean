@@ -240,7 +240,7 @@ instance instPathConnectedSpace :
     have hpc := isPathConnected_iff_pathConnectedSpace.mp
       (isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1 + 1))) zero_le_one)
     have : PathConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1 + 1))) 1) := hpc
-    exact (mk_surjective (n + 1)).pathConnectedSpace (continuous_mk (n + 1))
+    exact Quotient.instPathConnectedSpace
 
 /-- The unit-sphere projection onto real projective space is a covering map. -/
 theorem isCoveringMap_mk : IsCoveringMap (mk n) :=
