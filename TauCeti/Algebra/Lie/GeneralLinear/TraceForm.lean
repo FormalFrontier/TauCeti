@@ -57,9 +57,11 @@ with a CAR algebra is made here.
   bilinear forms, `2 • traceBilinForm`.
 * `TauCeti.traceQuadraticForm_nondegenerate`: the quadratic form is nondegenerate when `2` is
   invertible.
-* `TauCeti.ι_single_mul_ι_single_add_swap`: the canonical anticommutation relations
-  `d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li` on the matrix units, and
-  `TauCeti.ι_single_mul_self`: the squares `d_ij d_ij = δ_ij`.
+* `TauCeti.traceQuadraticForm_ι_mul_ι_add_swap`: the anticommutation relation
+  `ι X ι Y + ι Y ι X = 2 trace (X * Y)` for arbitrary generators, of which
+  `TauCeti.traceQuadraticForm_ι_single_mul_ι_single_add_swap`, the canonical anticommutation
+  relations `d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li` on the matrix units, is the specialization; and
+  `TauCeti.traceQuadraticForm_ι_single_mul_self`: the squares `d_ij d_ij = δ_ij`.
 
 ## Implementation notes
 
@@ -79,6 +81,14 @@ reparametrization of it; and `LieModule.traceForm`, which does specialize to thi
 standard representation, is unavailable without the non-instance
 `LieRingModule.ofAssociativeModule`. The form is therefore assembled directly from
 `Matrix.traceLinearMap` and `LinearMap.mul`.
+
+The two steps that the trace form shares with the Killing form — the polar form of the quadratic
+form of a symmetric `B` is `2 • B`, and nondegeneracy passes from `B` to that quadratic form once
+`2` is invertible — are general facts about a bilinear form, stated once in
+`TauCeti/LinearAlgebra/QuadraticForm/Radical.lean`
+(`LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip` and
+`LinearMap.BilinForm.Nondegenerate.toQuadraticMap`); the declarations here and their Killing
+counterparts in `TauCeti/Algebra/Lie/SkewAdjoint.lean` are applications of them.
 
 Mathlib does not register `LieRing.ofAssociativeRing` as a global instance, so, as in
 `Mathlib/Algebra/Lie/Matrix.lean`, it is a local instance here.
@@ -117,21 +127,20 @@ theorem traceBilinForm_apply (X Y : Matrix n n R) :
     traceBilinForm R n X Y = (X * Y).trace := (rfl)
 
 variable (R n) in
-/-- The trace form is its own flip, by cyclicity of the trace. This is what collapses `B + B.flip`
-to `2 • B` in `TauCeti.polarBilin_traceQuadraticForm`. -/
-theorem flip_traceBilinForm : LinearMap.flip (traceBilinForm R n) = traceBilinForm R n := by
+/-- The trace form is its own flip, by cyclicity of the trace. -/
+@[simp]
+theorem traceBilinForm_flip : LinearMap.flip (traceBilinForm R n) = traceBilinForm R n := by
   ext X Y
   simp [Matrix.trace_mul_comm Y X]
 
 variable (R n) in
-/-- The trace form is symmetric, the predicate form of `TauCeti.flip_traceBilinForm`. -/
+/-- The trace form is symmetric, the predicate form of `TauCeti.traceBilinForm_flip`. -/
 theorem traceBilinForm_isSymm : LinearMap.BilinForm.IsSymm (traceBilinForm R n) :=
-  LinearMap.BilinForm.isSymm_iff_flip.mpr (flip_traceBilinForm R n)
+  LinearMap.BilinForm.isSymm_iff_flip.mpr (traceBilinForm_flip R n)
 
 variable (R n) in
 /-- **The trace form is nondegenerate**, over any commutative semiring and any finite index type: a
-matrix is determined by the traces of its products, by `Matrix.ext_iff_trace_mul_right` and
-`Matrix.ext_iff_trace_mul_left`. -/
+matrix is determined by the traces of its products. -/
 theorem traceBilinForm_nondegenerate : (traceBilinForm R n).Nondegenerate :=
   ⟨fun _ hX => Matrix.ext_iff_trace_mul_right.mpr fun Y => by simpa using hX Y,
     fun _ hY => Matrix.ext_iff_trace_mul_left.mpr fun X => by simpa using hY X⟩
@@ -140,6 +149,7 @@ variable [DecidableEq n]
 
 /-- The trace form pairs the matrix units perfectly: `⟨Eᵢⱼ a, E_kl b⟩ = δ_jk δ_li a b`. This is the
 `δ` bookkeeping that the anticommutation relations inherit. -/
+@[simp high]
 theorem traceBilinForm_single_single (i j k l : n) (a b : R) :
     traceBilinForm R n (Matrix.single i j a) (Matrix.single k l b)
       = if j = k ∧ l = i then a * b else 0 := by
@@ -172,7 +182,7 @@ variable [CommSemiring R]
 variable (R n) in
 /-- **The trace quadratic form of `gl n R`**, `X ↦ trace (X * X)`. Its Clifford algebra is the one
 whose generators satisfy the canonical anticommutation relations
-`TauCeti.ι_single_mul_ι_single_add_swap`. -/
+`TauCeti.traceQuadraticForm_ι_single_mul_ι_single_add_swap`. -/
 def traceQuadraticForm : QuadraticForm R (Matrix n n R) :=
   LinearMap.BilinMap.toQuadraticMap (traceBilinForm R n)
 
@@ -188,14 +198,13 @@ end
 variable [CommRing R]
 
 variable (R n) in
-/-- **The polar form of the trace quadratic form is `2 • ⟨·, ·⟩`**: here the symmetry of the trace
-form does the work, collapsing `B + B.flip`. Every factor of two in the anticommutation relations
-comes from this one equation. -/
+/-- **The polar form of the trace quadratic form is `2 • ⟨·, ·⟩`**, the trace form being symmetric.
+Every factor of two in the anticommutation relations comes from this one equation. -/
 @[simp]
 theorem polarBilin_traceQuadraticForm_eq_two_smul :
     QuadraticMap.polarBilin (traceQuadraticForm R n) = (2 : R) • traceBilinForm R n := by
-  rw [traceQuadraticForm, LinearMap.BilinMap.polarBilin_toQuadraticMap, flip_traceBilinForm,
-    two_smul]
+  rw [traceQuadraticForm]
+  exact LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip (traceBilinForm_flip R n)
 
 /-- **The polar form of the trace quadratic form, read pointwise**: `2 * trace (X * Y)`. This is the
 normalization the roadmap pins, and the equation from which the anticommutation relations follow;
@@ -207,17 +216,15 @@ theorem polarBilin_traceQuadraticForm (X Y : Matrix n n R) :
   simp
 
 variable (R n) in
-/-- **The trace quadratic form is nondegenerate** over a ring in which `2` is invertible. Some
-hypothesis on `2` is needed: a quadratic form is a finer invariant than its polar form, and it is
-the polar form that `TauCeti.traceBilinForm_nondegenerate` controls. -/
+/-- **The trace quadratic form is nondegenerate** over a ring in which `2` is invertible. What
+`TauCeti.traceBilinForm_nondegenerate` controls is the trace form `B` itself; `2` must be invertible
+both to transfer nondegeneracy from `B` to the polar form `2 • B` and to pass from the polar form
+back to the quadratic form, a quadratic form being a finer invariant than its polar form. -/
 theorem traceQuadraticForm_nondegenerate [Invertible (2 : R)] :
     (traceQuadraticForm R n).Nondegenerate := by
-  have h2 : IsUnit (2 : R) := isUnit_of_invertible 2
-  obtain ⟨hl, hr⟩ := traceBilinForm_nondegenerate R n
-  rw [← QuadraticMap.nondegenerate_polar_iff, polarBilin_traceQuadraticForm_eq_two_smul]
-  refine ⟨fun X hX => hl X fun Y => ?_, fun Y hY => hr Y fun X => ?_⟩
-  · simpa only [LinearMap.smul_apply, smul_eq_mul, h2.mul_right_eq_zero] using hX Y
-  · simpa only [LinearMap.smul_apply, smul_eq_mul, h2.mul_right_eq_zero] using hY X
+  rw [traceQuadraticForm]
+  exact LinearMap.BilinForm.Nondegenerate.toQuadraticMap (traceBilinForm_nondegenerate R n)
+    (traceBilinForm_flip R n)
 
 variable [DecidableEq n]
 
@@ -254,26 +261,32 @@ open CliffordAlgebra
 
 variable [CommRing R] [DecidableEq n]
 
+omit [DecidableEq n] in
+/-- **The anticommutation relation in the Clifford algebra of the trace form**: any two generators
+anticommute up to `2 trace (X * Y)`, the polar-form normalization. -/
+theorem traceQuadraticForm_ι_mul_ι_add_swap (X Y : Matrix n n R) :
+    ι (traceQuadraticForm R n) X * ι (traceQuadraticForm R n) Y
+      + ι (traceQuadraticForm R n) Y * ι (traceQuadraticForm R n) X
+      = algebraMap R _ (2 * (X * Y).trace) := by
+  rw [ι_mul_ι_add_swap, ← QuadraticMap.polarBilin_apply_apply, polarBilin_traceQuadraticForm]
+
 /-- **The canonical anticommutation relations** on the matrix units: writing `d_ij` for
 `ι (Eᵢⱼ)` in the Clifford algebra of the trace quadratic form,
-`d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li`.
-This is the Clifford relation `ι v * ι v = Q v` polarized
-(`CliffordAlgebra.ι_mul_ι_add_swap`) against the polar-form normalization
-`TauCeti.polarBilin_traceQuadraticForm`. -/
-theorem ι_single_mul_ι_single_add_swap (i j k l : n) (a b : R) :
+`d_ij d_kl + d_kl d_ij = 2 δ_jk δ_li`,
+the matrix units being paired by the trace form exactly when `j = k` and `l = i`. -/
+theorem traceQuadraticForm_ι_single_mul_ι_single_add_swap (i j k l : n) (a b : R) :
     ι (traceQuadraticForm R n) (Matrix.single i j a)
         * ι (traceQuadraticForm R n) (Matrix.single k l b)
       + ι (traceQuadraticForm R n) (Matrix.single k l b)
         * ι (traceQuadraticForm R n) (Matrix.single i j a)
       = algebraMap R _ (if j = k ∧ l = i then 2 * (a * b) else 0) := by
-  rw [ι_mul_ι_add_swap, ← QuadraticMap.polarBilin_apply_apply,
-    polarBilin_traceQuadraticForm_eq_two_smul, LinearMap.smul_apply, LinearMap.smul_apply,
-    smul_eq_mul, traceBilinForm_single_single]
+  rw [traceQuadraticForm_ι_mul_ι_add_swap, ← traceBilinForm_apply, traceBilinForm_single_single]
   split <;> simp
 
 /-- **The squares of the matrix-unit generators**: `d_ij d_ij = δ_ij`, so the off-diagonal units
 square to zero in the Clifford algebra and the diagonal ones square to a scalar. -/
-theorem ι_single_mul_self (i j : n) (a : R) :
+@[simp high]
+theorem traceQuadraticForm_ι_single_mul_self (i j : n) (a : R) :
     ι (traceQuadraticForm R n) (Matrix.single i j a)
         * ι (traceQuadraticForm R n) (Matrix.single i j a)
       = algebraMap R _ (if i = j then a * a else 0) := by
@@ -282,13 +295,14 @@ theorem ι_single_mul_self (i j : n) (a : R) :
   simp [eq_comm, and_self]
 
 /-- Two matrix-unit generators anticommute whenever they are not paired by the trace form: the
-`δ_jk δ_li` of `TauCeti.ι_single_mul_ι_single_add_swap` vanishes. -/
-theorem ι_single_mul_ι_single_eq_neg_of_ne (i j k l : n) (a b : R) (h : ¬(j = k ∧ l = i)) :
+`δ_jk δ_li` of `TauCeti.traceQuadraticForm_ι_single_mul_ι_single_add_swap` vanishes. -/
+theorem traceQuadraticForm_ι_single_mul_ι_single_comm_of_not_paired (i j k l : n) (a b : R)
+    (h : ¬(j = k ∧ l = i)) :
     ι (traceQuadraticForm R n) (Matrix.single i j a)
         * ι (traceQuadraticForm R n) (Matrix.single k l b)
       = -(ι (traceQuadraticForm R n) (Matrix.single k l b)
         * ι (traceQuadraticForm R n) (Matrix.single i j a)) := by
-  rw [eq_neg_iff_add_eq_zero, ι_single_mul_ι_single_add_swap]
+  rw [eq_neg_iff_add_eq_zero, traceQuadraticForm_ι_single_mul_ι_single_add_swap]
   simp [h]
 
 end CAR
