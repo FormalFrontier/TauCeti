@@ -150,24 +150,11 @@ namespace SymplecticForm
 
 variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
 
-private lemma constSmooth_isAlt (omegaForm : SymplecticForm V) :
-    ∀ v, omegaForm.toBilinForm.toContinuousBilinearMap v v = 0 :=
-  omegaForm.isAlt
-
 /-- A symplectic form on a finite-dimensional normed vector space, regarded as a constant smooth
 two-form on the corresponding model manifold. -/
 def constSmooth (omegaForm : SymplecticForm V) :
     SmoothTwoForm (modelWithCornersSelf ℝ V) V :=
-  SmoothTwoForm.const omegaForm.toBilinForm.toContinuousBilinearMap
-    (constSmooth_isAlt omegaForm)
-
-/-- The bilinear section of a constant smooth symplectic form has its defining value in every
-fiber. -/
-lemma constSmooth_toContMDiffSection (omegaForm : SymplecticForm V) (x : V) :
-    omegaForm.constSmooth.toContMDiffSection x =
-      omegaForm.toBilinForm.toContinuousBilinearMap := by
-  rw [constSmooth]
-  exact SmoothTwoForm.const_toContMDiffSection_apply _ _ x
+  SmoothTwoForm.const omegaForm.toBilinForm.toContinuousBilinearMap omegaForm.isAlt
 
 /-- A constant smooth symplectic form evaluates as its defining algebraic form. -/
 @[simp]
@@ -177,13 +164,11 @@ lemma constSmooth_apply (omegaForm : SymplecticForm V) (x v w : V) :
 
 /-- A constant smooth symplectic form is fiberwise nondegenerate. -/
 lemma isNondegenerate_constSmooth (omegaForm : SymplecticForm V) :
-    omegaForm.constSmooth.IsNondegenerate := by
-  rw [SmoothTwoForm.isNondegenerate_iff_separatingLeft]
-  intro x v hv
-  change V at v
-  apply omegaForm.nondegenerate.1 v
-  intro w
-  simpa only [constSmooth_apply] using hv w
+    omegaForm.constSmooth.IsNondegenerate := fun x => by
+  have hx : omegaForm.constSmooth.bilinFormAt x = omegaForm.toBilinForm :=
+    SmoothTwoForm.const_bilinFormAt _ _ x
+  rw [hx]
+  exact omegaForm.nondegenerate
 
 /-- Tameness of a pair of constant smooth structures is exactly tameness of the underlying linear
 pair. -/

@@ -237,13 +237,6 @@ def constSmooth (J : AlmostComplexStructure V) :
   SmoothAlmostComplexStructure.const (LinearMap.toContinuousLinearMap J.toLinearMap)
     J.apply_apply
 
-/-- The endomorphism section of the constant smooth structure has its defining linear value in
-every fiber. -/
-lemma constSmooth_toEndomorphism (J : AlmostComplexStructure V) (x : V) :
-    J.constSmooth.toEndomorphism x = LinearMap.toContinuousLinearMap J.toLinearMap := by
-  rw [constSmooth]
-  exact SmoothAlmostComplexStructure.const_toEndomorphism_apply _ _ x
-
 @[simp]
 lemma constSmooth_apply (J : AlmostComplexStructure V) (x v : V) :
     J.constSmooth x v = J v :=
