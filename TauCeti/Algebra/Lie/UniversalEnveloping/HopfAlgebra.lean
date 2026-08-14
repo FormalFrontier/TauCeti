@@ -54,12 +54,8 @@ variable (R : Type u) [CommRing R]
 variable (L : Type v) [LieRing L] [LieAlgebra R L]
 
 local notation "U" => _root_.UniversalEnvelopingAlgebra R L
-
-private noncomputable def antipodeConv : WithConv (U →ₗ[R] U) :=
-  toConv (antipode R)
-
-private noncomputable def idConv : WithConv (U →ₗ[R] U) :=
-  toConv LinearMap.id
+local notation "convAntipode" => (toConv (antipode R) : WithConv (U →ₗ[R] U))
+local notation "convId" => (toConv LinearMap.id : WithConv (U →ₗ[R] U))
 
 /-- The sum manipulation common to the two convolution computations below: an inner sum that
 collapses to a scalar multiple of `1` factors out of the surrounding products. -/
@@ -75,23 +71,22 @@ private theorem sum_sum_mul_mul_eq_smul_sum {ια ιβ : Type*} (s : Finset ια
   rw [← Finset.sum_mul, ← Finset.mul_sum, h, mul_smul_comm, mul_one, smul_mul_assoc]
 
 private theorem antipodeConv_mul_idConv_mul_apply (a b : U)
-    (ha : (antipodeConv R L * idConv R L) a =
+    (ha : (convAntipode * convId) a =
       (Coalgebra.counit (R := R) a) • (1 : U)) :
-    (antipodeConv R L * idConv R L) (a * b) =
+    (convAntipode * convId) (a * b) =
       (Coalgebra.counit (R := R) a) •
-        (antipodeConv R L * idConv R L) b := by
+        (convAntipode * convId) b := by
   let ra := Coalgebra.Repr.arbitrary R a
   let rb := Coalgebra.Repr.arbitrary R b
   have hra : ∑ i ∈ ra.index, antipode R (ra.left i) * ra.right i =
       (Coalgebra.counit (R := R) a) • (1 : U) := by
     rw [← ha]
-    simpa [antipodeConv, idConv] using
+    simpa using
       (ra.convMul_apply (toConv (antipode R)) (toConv LinearMap.id)).symm
   rw [Coalgebra.Repr.convMul_apply (ra.mul rb)
-    (antipodeConv R L) (idConv R L),
-    rb.convMul_apply (antipodeConv R L) (idConv R L)]
+    convAntipode convId, rb.convMul_apply convAntipode convId]
   simp only [Coalgebra.Repr.mul_index, Coalgebra.Repr.mul_left,
-    Coalgebra.Repr.mul_right, antipodeConv, idConv, ofConv_toConv,
+    Coalgebra.Repr.mul_right,
     UniversalEnvelopingAlgebra.antipode_mul_antidistrib, LinearMap.id_apply,
     Finset.sum_product]
   rw [Finset.sum_comm]
@@ -99,50 +94,27 @@ private theorem antipodeConv_mul_idConv_mul_apply (a b : U)
     (fun i => antipode R (ra.left i)) ra.right (fun j => antipode R (rb.left j)) rb.right _ hra
 
 private theorem idConv_mul_antipodeConv_mul_apply (a b : U)
-    (hb : (idConv R L * antipodeConv R L) b =
+    (hb : (convId * convAntipode) b =
       (Coalgebra.counit (R := R) b) • (1 : U)) :
-    (idConv R L * antipodeConv R L) (a * b) =
+    (convId * convAntipode) (a * b) =
       (Coalgebra.counit (R := R) b) •
-        (idConv R L * antipodeConv R L) a := by
+        (convId * convAntipode) a := by
   let ra := Coalgebra.Repr.arbitrary R a
   let rb := Coalgebra.Repr.arbitrary R b
   have hrb : ∑ j ∈ rb.index, rb.left j * antipode R (rb.right j) =
       (Coalgebra.counit (R := R) b) • (1 : U) := by
     rw [← hb]
-    simpa [antipodeConv, idConv] using
+    simpa using
       (rb.convMul_apply (toConv LinearMap.id) (toConv (antipode R))).symm
   rw [Coalgebra.Repr.convMul_apply (ra.mul rb)
-    (idConv R L) (antipodeConv R L),
-    ra.convMul_apply (idConv R L) (antipodeConv R L)]
+    convId convAntipode, ra.convMul_apply convId convAntipode]
   simp only [Coalgebra.Repr.mul_index, Coalgebra.Repr.mul_left,
-    Coalgebra.Repr.mul_right, antipodeConv, idConv, ofConv_toConv,
+    Coalgebra.Repr.mul_right,
     UniversalEnvelopingAlgebra.antipode_mul_antidistrib, LinearMap.id_apply,
     Finset.sum_product]
   exact sum_sum_mul_mul_eq_smul_sum R L rb.index ra.index
     rb.left (fun j => antipode R (rb.right j)) ra.left
     (fun i => antipode R (ra.right i)) _ hrb
-
-private theorem antipodeConv_mul_idConv_algebraMap (r : R) :
-    (antipodeConv R L * idConv R L) (algebraMap R U r) =
-      (Coalgebra.counit (R := R) (algebraMap R U r)) • (1 : U) := by
-  simp [antipodeConv, idConv, LinearMap.convMul_apply, Algebra.smul_def]
-
-private theorem antipodeConv_mul_idConv_ι (x : L) :
-    (antipodeConv R L * idConv R L)
-        (_root_.UniversalEnvelopingAlgebra.ι R x) =
-      (Coalgebra.counit (R := R) (_root_.UniversalEnvelopingAlgebra.ι R x)) • (1 : U) := by
-  simp [antipodeConv, idConv, LinearMap.convMul_apply]
-
-private theorem idConv_mul_antipodeConv_algebraMap (r : R) :
-    (idConv R L * antipodeConv R L) (algebraMap R U r) =
-      (Coalgebra.counit (R := R) (algebraMap R U r)) • (1 : U) := by
-  simp [antipodeConv, idConv, LinearMap.convMul_apply, Algebra.smul_def]
-
-private theorem idConv_mul_antipodeConv_ι (x : L) :
-    (idConv R L * antipodeConv R L)
-        (_root_.UniversalEnvelopingAlgebra.ι R x) =
-      (Coalgebra.counit (R := R) (_root_.UniversalEnvelopingAlgebra.ι R x)) • (1 : U) := by
-  simp [antipodeConv, idConv, LinearMap.convMul_apply]
 
 /-- A linear endomorphism that agrees with `a ↦ ε a • 1` on scalars and on the canonical Lie
 generators, and whose agreement set is closed under multiplication, agrees with it everywhere:
@@ -170,22 +142,24 @@ private theorem eq_counit_smul_one_of_ι (f : U →ₗ[R] U)
     exact hmul x y hx hy
 
 private theorem antipodeConv_mul_idConv_apply (a : U) :
-    (antipodeConv R L * idConv R L) a =
+    (convAntipode * convId) a =
       (Coalgebra.counit (R := R) a) • (1 : U) :=
-  eq_counit_smul_one_of_ι R L (antipodeConv R L * idConv R L).ofConv
+  eq_counit_smul_one_of_ι R L (convAntipode * convId).ofConv
     (fun a b ha hb => by
       rw [antipodeConv_mul_idConv_mul_apply R L a b ha, hb, Bialgebra.counit_mul]
       simp [smul_smul])
-    (antipodeConv_mul_idConv_algebraMap R L) (antipodeConv_mul_idConv_ι R L) a
+    (fun r => by simp [LinearMap.convMul_apply, Algebra.smul_def])
+    (fun x => by simp [LinearMap.convMul_apply]) a
 
 private theorem idConv_mul_antipodeConv_apply (a : U) :
-    (idConv R L * antipodeConv R L) a =
+    (convId * convAntipode) a =
       (Coalgebra.counit (R := R) a) • (1 : U) :=
-  eq_counit_smul_one_of_ι R L (idConv R L * antipodeConv R L).ofConv
+  eq_counit_smul_one_of_ι R L (convId * convAntipode).ofConv
     (fun a b ha hb => by
       rw [idConv_mul_antipodeConv_mul_apply R L a b hb, ha, Bialgebra.counit_mul]
       simp [smul_smul, mul_comm])
-    (idConv_mul_antipodeConv_algebraMap R L) (idConv_mul_antipodeConv_ι R L) a
+    (fun r => by simp [LinearMap.convMul_apply, Algebra.smul_def])
+    (fun x => by simp [LinearMap.convMul_apply]) a
 
 /-- A universal enveloping algebra with its standard bialgebra structure is a Hopf algebra.
 
@@ -198,13 +172,13 @@ noncomputable instance instHopfAlgebra : HopfAlgebra R U :=
       apply WithConv.ext
       apply LinearMap.ext
       intro a
-      simpa [antipodeConv, idConv, Algebra.smul_def] using
+      simpa [Algebra.smul_def] using
         antipodeConv_mul_idConv_apply R L a)
     (by
       apply WithConv.ext
       apply LinearMap.ext
       intro a
-      simpa [antipodeConv, idConv, Algebra.smul_def] using
+      simpa [Algebra.smul_def] using
         idConv_mul_antipodeConv_apply R L a)
 
 /-- The antipode supplied by the Hopf algebra instance is the canonical universal-enveloping
