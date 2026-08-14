@@ -42,40 +42,42 @@ public section
 
 namespace Matrix
 
-variable {R : Type*} {m : Type*} [CommRing R] [LinearOrder m]
+variable {R : Type*} {m : Type*} [LinearOrder m]
 
 /-- A square matrix is upper unitriangular when it is upper triangular and every diagonal entry
 is one. -/
-def IsUpperUnitriangular (M : Matrix m m R) : Prop :=
+def IsUpperUnitriangular [Zero R] [One R] (M : Matrix m m R) : Prop :=
   M.IsUpperTriangular ∧ ∀ i, M i i = 1
 
 /-- Characterization of upper-unitriangular matrices by triangularity and their diagonal. -/
-theorem isUpperUnitriangular_iff (M : Matrix m m R) :
+@[simp]
+theorem isUpperUnitriangular_iff [Zero R] [One R] (M : Matrix m m R) :
     M.IsUpperUnitriangular ↔ M.IsUpperTriangular ∧ ∀ i, M i i = 1 :=
   Iff.rfl
 
 /-- The identity matrix is upper unitriangular. -/
 @[simp]
-theorem isUpperUnitriangular_one : IsUpperUnitriangular (1 : Matrix m m R) := by
+theorem isUpperUnitriangular_one [Zero R] [One R] :
+    IsUpperUnitriangular (1 : Matrix m m R) := by
   refine ⟨blockTriangular_one, ?_⟩
   simp
 
 /-- A product of upper-unitriangular matrices is upper unitriangular. -/
 theorem IsUpperUnitriangular.mul {M N : Matrix m m R}
-    [Fintype m]
+    [Semiring R] [Fintype m]
     (hM : M.IsUpperUnitriangular) (hN : N.IsUpperUnitriangular) :
     (M * N).IsUpperUnitriangular := by
   refine ⟨hM.1.mul hN.1, fun i ↦ ?_⟩
   rw [mul_apply_diag_of_isUpperTriangular hM.1 hN.1, hM.2 i, hN.2 i, one_mul]
 
 /-- The inverse of an invertible upper-unitriangular matrix is upper unitriangular. -/
-theorem IsUpperUnitriangular.inv {M : Matrix m m R} [Fintype m] [Invertible M]
+theorem IsUpperUnitriangular.inv [CommRing R] {M : Matrix m m R} [Fintype m] [Invertible M]
     (hM : M.IsUpperUnitriangular) : M⁻¹.IsUpperUnitriangular := by
   refine ⟨blockTriangular_inv_of_blockTriangular hM.1, fun i ↦ ?_⟩
   exact inv_apply_diag_of_isUpperTriangular hM.1 (hM.2 i)
 
 /-- Applying a ring homomorphism entrywise preserves upper-unitriangular matrices. -/
-theorem IsUpperUnitriangular.map {S : Type*} [CommRing S] (f : R →+* S)
+theorem IsUpperUnitriangular.map [Semiring R] {S : Type*} [Semiring S] (f : R →+* S)
     {M : Matrix m m R} (hM : M.IsUpperUnitriangular) :
     (M.map f).IsUpperUnitriangular := by
   refine ⟨hM.1.map f, fun i ↦ ?_⟩
@@ -182,7 +184,7 @@ theorem apply_self (g : UpperUnitriangularGroup n R) (i : Fin n) :
 
 /-- Applying a ring homomorphism entrywise gives the base-change homomorphism between
 upper-unitriangular groups. -/
-@[expose] def map {S : Type*} [CommRing S] (f : R →+* S) :
+def map {S : Type*} [CommRing S] (f : R →+* S) :
     UpperUnitriangularGroup n R →* UpperUnitriangularGroup n S where
   toFun g := ⟨Matrix.GeneralLinearGroup.map (n := Fin n) f g,
     (mem_iff).2 ((Matrix.isUpperUnitriangular_iff _).1
@@ -197,14 +199,14 @@ theorem map_apply_coe {S : Type*} [CommRing S] (f : R →+* S)
     (((map f g : UpperUnitriangularGroup n S) : GL (Fin n) S) :
       Matrix (Fin n) (Fin n) S) =
       (((g : GL (Fin n) R) : Matrix (Fin n) (Fin n) R).map f) :=
-  rfl
+  by simp [map]
 
 /-- Base change along the identity ring homomorphism is the identity. -/
 @[simp]
 theorem map_id :
     map (RingHom.id R) = MonoidHom.id (UpperUnitriangularGroup n R) := by
   ext g i j
-  rfl
+  simp only [map_apply_coe, Matrix.map_apply, RingHom.id_apply, MonoidHom.id_apply]
 
 /-- Successive base changes agree with base change along the composite ring homomorphism. -/
 @[simp]
@@ -215,7 +217,8 @@ theorem map_comp {S T : Type*} [CommRing S] [CommRing T]
   intro x
   apply Subtype.ext
   ext i j
-  rfl
+  simp only [map_apply_coe, Matrix.map_apply, RingHom.coe_comp, Function.comp_apply,
+    MonoidHom.coe_comp]
 
 /-- The natural linear action of every upper-unitriangular matrix is unipotent. -/
 theorem isUnipotent_toLin (g : UpperUnitriangularGroup n R) :
