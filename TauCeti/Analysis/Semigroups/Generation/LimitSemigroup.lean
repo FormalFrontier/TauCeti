@@ -21,9 +21,11 @@ Completeness of the Banach space turns the Cauchy estimate into a limit vector
 `exp (t A_lambda) x`, so it makes sense for every real `t`, but it is only *proved* to be the
 limit when `A` is m-dissipative with dense domain (or satisfies the Hille--Yosida bounds) and
 `t ≥ 0`; every statement below that appeals to convergence carries those hypotheses. On that range
-it is linear and contractive in `x`, satisfies `S(0) = I` and `S(s + t) = S(s) S(t)`, and — because
-the convergence is uniform on compact time intervals — depends continuously on `t`. Packaging
-these facts gives a genuine contraction semigroup `yosidaLimitSemigroup`.
+it is linear in `x`, satisfies `S(0) = I` and `S(s + t) = S(s) S(t)`, and — because
+the convergence is uniform on compact time intervals — depends continuously on `t`. Under
+m-dissipativity it is contractive and yields a genuine contraction semigroup
+`yosidaLimitSemigroup`, while under general Hille--Yosida bounds with parameter `M ≥ 1` it satisfies
+`‖yosidaLimit A t x‖ ≤ M * ‖x‖`.
 
 This file also provides the general limit-semigroup scaffolding parameterized by pointwise and
 uniform convergence and an eventual norm bound, shared between the Lumer--Phillips and
@@ -33,14 +35,10 @@ Hille--Yosida constructions.
 
 * `TauCeti.Semigroups.yosidaLimit`: the value chosen from the family `exp (t A_lambda) x` as
   `lambda -> ∞`, which is its limit at nonnegative times.
-* `TauCeti.Semigroups.yosidaLimitCLMOf`: packages the Yosida limit as a continuous linear map.
-* `TauCeti.Semigroups.yosidaLimitSemigroupOf`: packages the Yosida limit into a strongly continuous
-  semigroup given pointwise and uniform convergence and an operator bound.
 * `TauCeti.Semigroups.IsMDissipative.yosidaLimitSemigroup`: the resulting contraction semigroup.
 
 ## Main results
 
-* `TauCeti.Semigroups.exp_add_smul_apply`: splitting `exp ((s + t) B) x = exp (s B) (exp (t B) x)`.
 * `TauCeti.Semigroups.yosidaLimit_add_of_tendsto`, `TauCeti.Semigroups.yosidaLimit_smul_of_tendsto`:
   vector-space linearity of the limit.
 * `TauCeti.Semigroups.norm_yosidaLimit_le_of_tendsto_of_norm_le`: passing an operator bound to the
@@ -48,6 +46,10 @@ Hille--Yosida constructions.
 * `TauCeti.Semigroups.yosidaLimit_time_add_of_tendsto`: the semigroup law for the limit.
 * `TauCeti.Semigroups.continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn`: continuity in time on
   compact intervals.
+* `TauCeti.Semigroups.continuousOn_yosidaLimit_of_continuousOn_Icc`: continuity on `[0, ∞)` from
+  compact intervals.
+* `TauCeti.Semigroups.continuousAt_yosidaLimit_zero_of_continuousOn_Ici`: strong continuity at time
+  zero.
 * `TauCeti.Semigroups.IsMDissipative.tendsto_yosidaLimit`: the defining convergence
   `exp (t A_lambda) x -> yosidaLimit A t x`.
 * `TauCeti.Semigroups.IsMDissipative.tendstoUniformlyOn_exp_yosidaApproximation`: that
@@ -117,7 +119,7 @@ theorem yosidaLimit_zero (A : X →ₗ.[ℝ] X) (x : X) : yosidaLimit A 0 x = x 
 
 /-- Splitting the exponential of a sum of commuting times: `exp ((s + t) B) = exp (s B) exp (t B)`
 pointwise, for a bounded operator `B`. -/
-theorem exp_add_smul_apply (B : X →L[ℝ] X) (s t : ℝ) (x : X) :
+private theorem exp_add_smul_apply (B : X →L[ℝ] X) (s t : ℝ) (x : X) :
     exp ((s + t) • B) x = exp (s • B) (exp (t • B) x) := by
   let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
   rw [add_smul, exp_add_of_commute (((Commute.refl B).smul_left s).smul_right t),
@@ -233,102 +235,6 @@ theorem continuousAt_yosidaLimit_zero_of_continuousOn_Ici (A : X →ₗ.[ℝ] X)
     NNReal.continuous_coe.continuousWithinAt
   exact continuousWithinAt_univ _ _ |>.mp
     (hIci.comp hcoe fun t _ => t.coe_nonneg)
-
-omit [CompleteSpace X] in
-/-- Packaging the Yosida limit as a continuous linear map from pointwise convergence and an
-operator norm bound. -/
-def yosidaLimitCLMOf (A : X →ₗ.[ℝ] X) (M : ℝ) (_hM : 0 ≤ M)
-    (htend : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X),
-      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-        (𝓝 (yosidaLimit A t x)))
-    (hbound : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X), ‖yosidaLimit A t x‖ ≤ M * ‖x‖)
-    (t : ℝ≥0) : X →L[ℝ] X :=
-  LinearMap.mkContinuous
-    { toFun := fun x => yosidaLimit A t x
-      map_add' := fun x y => yosidaLimit_add_of_tendsto (htend t t.coe_nonneg) x y
-      map_smul' := fun c x => yosidaLimit_smul_of_tendsto (htend t t.coe_nonneg) c x }
-    M (hbound t t.coe_nonneg)
-
-omit [CompleteSpace X] in
-@[simp]
-theorem yosidaLimitCLMOf_apply (A : X →ₗ.[ℝ] X) (M : ℝ) (hM : 0 ≤ M)
-    (htend : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X),
-      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-        (𝓝 (yosidaLimit A t x)))
-    (hbound : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X), ‖yosidaLimit A t x‖ ≤ M * ‖x‖)
-    (t : ℝ≥0) (x : X) :
-    yosidaLimitCLMOf A M hM htend hbound t x = yosidaLimit A t x :=
-  (rfl)
-
-omit [CompleteSpace X] in
-theorem norm_yosidaLimitCLMOf_le (A : X →ₗ.[ℝ] X) (M : ℝ) (hM : 0 ≤ M)
-    (htend : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X),
-      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-        (𝓝 (yosidaLimit A t x)))
-    (hbound : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X), ‖yosidaLimit A t x‖ ≤ M * ‖x‖)
-    (t : ℝ≥0) :
-    ‖yosidaLimitCLMOf A M hM htend hbound t‖ ≤ M :=
-  LinearMap.mkContinuous_norm_le _ hM _
-
-/-- Construct a strongly continuous semigroup from pointwise convergence, uniform
-convergence on compact intervals, and an eventual operator bound on the Yosida approximations. -/
-def yosidaLimitSemigroupOf (A : X →ₗ.[ℝ] X) (M : ℝ) (hM : 1 ≤ M)
-    (htend : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X),
-      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-        (𝓝 (yosidaLimit A t x)))
-    (hunif : ∀ (x : X) {T : ℝ}, 0 ≤ T →
-      TendstoUniformlyOn (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
-        (fun t : ℝ => yosidaLimit A t x) atTop (Set.Icc 0 T))
-    (hevent : ∀ (t : ℝ), 0 ≤ t →
-      ∀ᶠ lambda in atTop, ‖exp (t • yosidaApproximation A lambda)‖ ≤ M) :
-    StronglyContinuousSemigroup X where
-  toFun := yosidaLimitCLMOf A M (zero_le_one.trans hM) htend fun t ht x =>
-    norm_yosidaLimit_le_of_tendsto_of_norm_le (htend t ht x) (hevent t ht)
-  map_zero' := by
-    ext x
-    simp [yosidaLimitCLMOf_apply]
-  map_add' s t := by
-    ext x
-    simp only [ContinuousLinearMap.comp_apply, yosidaLimitCLMOf_apply, NNReal.coe_add]
-    exact yosidaLimit_time_add_of_tendsto x (htend t t.coe_nonneg x)
-      (htend s s.coe_nonneg (yosidaLimit A t x))
-      (htend (s + t) (add_nonneg s.coe_nonneg t.coe_nonneg) x) (hevent s s.coe_nonneg)
-  continuousAt_zero' x := by
-    simpa only [yosidaLimitCLMOf_apply] using
-      continuousAt_yosidaLimit_zero_of_continuousOn_Ici A x
-        (continuousOn_yosidaLimit_of_continuousOn_Icc A x fun _T hT =>
-          continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn A x (hunif x hT))
-
-@[simp]
-theorem yosidaLimitSemigroupOf_apply (A : X →ₗ.[ℝ] X) (M : ℝ) (hM : 1 ≤ M)
-    (htend : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X),
-      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-        (𝓝 (yosidaLimit A t x)))
-    (hunif : ∀ (x : X) {T : ℝ}, 0 ≤ T →
-      TendstoUniformlyOn (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
-        (fun t : ℝ => yosidaLimit A t x) atTop (Set.Icc 0 T))
-    (hevent : ∀ (t : ℝ), 0 ≤ t →
-      ∀ᶠ lambda in atTop, ‖exp (t • yosidaApproximation A lambda)‖ ≤ M)
-    (t : ℝ≥0) (x : X) :
-    yosidaLimitSemigroupOf A M hM htend hunif hevent t x = yosidaLimit A t x :=
-  (rfl)
-
-/-- The semigroup constructed by `yosidaLimitSemigroupOf` has growth bound `(0, M)`. -/
-theorem yosidaLimitSemigroupOf_hasGrowthBound (A : X →ₗ.[ℝ] X) (M : ℝ) (hM : 1 ≤ M)
-    (htend : ∀ (t : ℝ), 0 ≤ t → ∀ (x : X),
-      Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-        (𝓝 (yosidaLimit A t x)))
-    (hunif : ∀ (x : X) {T : ℝ}, 0 ≤ T →
-      TendstoUniformlyOn (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
-        (fun t : ℝ => yosidaLimit A t x) atTop (Set.Icc 0 T))
-    (hevent : ∀ (t : ℝ), 0 ≤ t →
-      ∀ᶠ lambda in atTop, ‖exp (t • yosidaApproximation A lambda)‖ ≤ M) :
-    (yosidaLimitSemigroupOf A M hM htend hunif hevent).HasGrowthBound 0 M := by
-  refine StronglyContinuousSemigroup.hasGrowthBound_of_bound hM fun t _ht => ?_
-  rw [zero_mul, Real.exp_zero, mul_one, StronglyContinuousSemigroup.realOperator_def]
-  exact norm_yosidaLimitCLMOf_le A M (zero_le_one.trans hM) htend
-    (fun s hs x => norm_yosidaLimit_le_of_tendsto_of_norm_le (htend s hs x) (hevent s hs))
-    t.toNNReal
 
 namespace IsMDissipative
 
