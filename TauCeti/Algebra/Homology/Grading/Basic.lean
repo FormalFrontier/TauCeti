@@ -128,13 +128,11 @@ theorem IsHomogeneous.sub {G : InternalGrading S N} {p : ℤ} {x y : N}
 
 end Ring
 
-@[simp]
 theorem decompose_coe (G : InternalGrading R M) (p : ℤ) (x : G.piece p) :
     G.decompose (x : M) = DirectSum.lof R ℤ (fun q ↦ G.piece q) p x := by
   rw [decompose_apply]
   exact DirectSum.decompose_coe G.piece x
 
-@[simp]
 theorem component_coe_same (G : InternalGrading R M) (p : ℤ) (x : G.piece p) :
     G.component p x = x := by
   apply Subtype.ext
