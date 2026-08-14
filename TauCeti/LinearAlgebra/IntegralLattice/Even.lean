@@ -200,11 +200,11 @@ def roots (L : IntegralLattice V) (n : ℚ) : Set L := {x | L.norm x = n}
 theorem mem_roots {L : IntegralLattice V} {n : ℚ} {x : L} :
     x ∈ L.roots n ↔ L.norm x = n := Iff.rfl
 
-@[simp]
+/-- The zero vector in an integral lattice has norm zero. -/
 theorem zero_mem_roots (L : IntegralLattice V) : (0 : L) ∈ L.roots 0 := by
   simp
 
-@[simp]
+/-- A lattice vector has norm `n` if and only if its negation does. -/
 theorem neg_mem_roots {L : IntegralLattice V} {n : ℚ} (x : L) :
     -x ∈ L.roots n ↔ x ∈ L.roots n := by
   simp [mem_roots]
