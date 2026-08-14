@@ -196,8 +196,9 @@ end ContractableLaw
 
 /-- **The mass of a block cylinder met with an invariant event may be read at the prefix.**
 
-The measure-level corollary of the transport above: `blockLaw_blockCylinder` identifies each side
-with the block law of the restricted measure on a rectangle, and those two block laws are equal. -/
+For a contractable law, a shift-invariant event, measurable coordinate sets and a strictly
+increasing selection, the mass of the intersection equals that of the intersection with the prefix
+cylinder. -/
 theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ)
     {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
