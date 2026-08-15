@@ -39,7 +39,7 @@ degenerate.
 * `TauCeti.FiniteBilinearModule.IsLagrangian`: equality with the orthogonal complement.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -137,9 +137,7 @@ private theorem characterModuleEval_injective (M : Type*) [AddCommGroup M] :
     Function.Injective (characterModuleEval M) := by
   intro x y hxy
   have h : ∀ c : CharacterModule M, c (x - y) = 0 := fun c ↦ by
-    have hc : (characterModuleEval M x) c = (characterModuleEval M y) c :=
-      DFunLike.congr_fun hxy c
-    change c x = c y at hc
+    have hc : c x = c y := DFunLike.congr_fun hxy c
     rw [map_sub, hc, sub_self]
   have hzero := CharacterModule.eq_zero_of_character_apply h
   exact sub_eq_zero.mp hzero
@@ -187,6 +185,7 @@ instance : CoeSort FiniteBilinearModule (Type u) := ⟨FiniteBilinearModule.carr
 
 variable (A : FiniteBilinearModule)
 
+@[simp]
 theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
   rw [map_zero]
   rfl
@@ -194,6 +193,7 @@ theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
 @[simp]
 theorem pairing_zero_right (x : A) : A.pairing x 0 = 0 := map_zero _
 
+@[simp]
 theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.pairing y z :=
   DFunLike.congr_fun (map_add A.pairing x y) z
 
@@ -201,6 +201,7 @@ theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.p
 theorem pairing_add_right (x y z : A) : A.pairing x (y + z) = A.pairing x y + A.pairing x z :=
   map_add (A.pairing x) y z
 
+@[simp]
 theorem pairing_neg_left (x y : A) : A.pairing (-x) y = -A.pairing x y :=
   DFunLike.congr_fun (map_neg A.pairing x) y
 
@@ -220,7 +221,7 @@ def toBilin : A →ₗ[ℤ] A →ₗ[ℤ] AddCircle (1 : ℚ) :=
 theorem toBilin_apply (x y : A) : A.toBilin x y = A.pairing x y := by
   rfl
 
-theorem toBilin_isRefl : A.toBilin.IsRefl := fun x y h ↦ by
+theorem isRefl_toBilin : A.toBilin.IsRefl := fun x y h ↦ by
   rw [toBilin_apply, A.pairing_comm, ← toBilin_apply]
   exact h
 
@@ -351,7 +352,7 @@ end Isometry
 
 No nondegeneracy conclusion is asserted: a subgroup of a nondegenerate module can have a
 degenerate restricted pairing. -/
-def restrict (H : AddSubgroup A) : FiniteBilinearModule where
+@[expose] def restrict (H : AddSubgroup A) : FiniteBilinearModule where
   carrier := H
   pairing :=
     { toFun := fun (x : H) ↦
@@ -372,7 +373,7 @@ theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x.1 y.1 := (rfl)
 
 /-- Negate the pairing of a finite bilinear module. -/
-def neg : FiniteBilinearModule where
+@[expose] def neg : FiniteBilinearModule where
   carrier := A
   pairing := -A.pairing
   pairing_comm x y := congrArg Neg.neg (A.pairing_comm x y)
@@ -394,7 +395,7 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
     exact neg_inj.mp this
 
 /-- The orthogonal direct sum of two finite bilinear modules. -/
-def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
+@[expose] def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   carrier := A.carrier × B.carrier
   pairing :=
     { toFun := fun (x : A.carrier × B.carrier) ↦
@@ -410,10 +411,12 @@ def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
         rfl
       map_add' := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
         ext ⟨z₁, z₂⟩
+        -- Unfold the definition of the product pairing on components
         change A.pairing (x₁ + y₁) z₁ + B.pairing (x₂ + y₂) z₂ =
           (A.pairing x₁ z₁ + B.pairing x₂ z₂) + (A.pairing y₁ z₁ + B.pairing y₂ z₂)
         simp only [pairing_add_left]
         abel }
+  -- Unfold the definition of the product pairing to apply componentwise symmetry
   pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
     change A.pairing x₁ y₁ + B.pairing x₂ y₂ = A.pairing y₁ x₁ + B.pairing y₂ x₂
     rw [A.pairing_comm x₁ y₁, B.pairing_comm x₂ y₂]
@@ -433,11 +436,9 @@ theorem isNondegenerate_prod (B : FiniteBilinearModule) :
       have heq : (A.prod B).pairing (x, 0) = (A.prod B).pairing (y, 0) := by
         ext ⟨u, v⟩
         have h1 : (A.prod B).pairing (x, 0) (u, v) = A.pairing x u := by
-          change A.pairing x u + B.pairing 0 v = A.pairing x u
-          rw [pairing_zero_left, add_zero]
+          rw [prod_pairing, pairing_zero_left, add_zero]
         have h2 : (A.prod B).pairing (y, 0) (u, v) = A.pairing y u := by
-          change A.pairing y u + B.pairing 0 v = A.pairing y u
-          rw [pairing_zero_left, add_zero]
+          rw [prod_pairing, pairing_zero_left, add_zero]
         rw [h1, h2, DFunLike.congr_fun hxy u]
       have := h heq
       exact Prod.ext_iff.mp this |>.1
@@ -445,11 +446,9 @@ theorem isNondegenerate_prod (B : FiniteBilinearModule) :
       have heq : (A.prod B).pairing (0, x) = (A.prod B).pairing (0, y) := by
         ext ⟨u, v⟩
         have h1 : (A.prod B).pairing (0, x) (u, v) = B.pairing x v := by
-          change A.pairing 0 u + B.pairing x v = B.pairing x v
-          rw [pairing_zero_left, zero_add]
+          rw [prod_pairing, pairing_zero_left, zero_add]
         have h2 : (A.prod B).pairing (0, y) (u, v) = B.pairing y v := by
-          change A.pairing 0 u + B.pairing y v = B.pairing y v
-          rw [pairing_zero_left, zero_add]
+          rw [prod_pairing, pairing_zero_left, zero_add]
         rw [h1, h2, DFunLike.congr_fun hxy v]
       have := h heq
       exact Prod.ext_iff.mp this |>.2
@@ -457,13 +456,19 @@ theorem isNondegenerate_prod (B : FiniteBilinearModule) :
     have hx : A.pairing x₁ = A.pairing x₂ := by
       ext u
       have heq := DFunLike.congr_fun hxy (u, 0)
-      change A.pairing x₁ u + B.pairing y₁ 0 = A.pairing x₂ u + B.pairing y₂ 0 at heq
-      simpa only [pairing_zero_right, add_zero] using heq
+      have h1 : (A.prod B).pairing (x₁, y₁) (u, 0) = A.pairing x₁ u := by
+        rw [prod_pairing, pairing_zero_right, add_zero]
+      have h2 : (A.prod B).pairing (x₂, y₂) (u, 0) = A.pairing x₂ u := by
+        rw [prod_pairing, pairing_zero_right, add_zero]
+      exact h1.symm.trans (heq.trans h2)
     have hy : B.pairing y₁ = B.pairing y₂ := by
       ext v
       have heq := DFunLike.congr_fun hxy (0, v)
-      change A.pairing x₁ 0 + B.pairing y₁ v = A.pairing x₂ 0 + B.pairing y₂ v at heq
-      simpa only [pairing_zero_right, zero_add] using heq
+      have h1 : (A.prod B).pairing (x₁, y₁) (0, v) = B.pairing y₁ v := by
+        rw [prod_pairing, pairing_zero_right, zero_add]
+      have h2 : (A.prod B).pairing (x₂, y₂) (0, v) = B.pairing y₂ v := by
+        rw [prod_pairing, pairing_zero_right, zero_add]
+      exact h1.symm.trans (heq.trans h2)
     exact Prod.ext (hA hx) (hB hy)
 
 /-- The radical is the kernel of the adjoint pairing. -/
@@ -529,7 +534,7 @@ theorem IsNondegenerate.orthogonalComplement_top_eq_bot (hA : A.IsNondegenerate)
 theorem le_orthogonalComplement_orthogonalComplement (H : AddSubgroup A) :
     H ≤ A.orthogonalComplement (A.orthogonalComplement H) := by
   intro x hx
-  have h := Submodule.le_orthogonalBilin_orthogonalBilin (S := H.toIntSubmodule) A.toBilin_isRefl
+  have h := Submodule.le_orthogonalBilin_orthogonalBilin (S := H.toIntSubmodule) A.isRefl_toBilin
   rw [← Submodule.toAddSubgroup_toIntSubmodule (H.toIntSubmodule.orthogonalBilin A.toBilin)] at h
   exact h hx
 
