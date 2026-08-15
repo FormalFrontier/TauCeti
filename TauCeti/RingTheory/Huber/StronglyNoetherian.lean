@@ -39,9 +39,19 @@ discrete case below is proved through it.
   discrete topology is strongly noetherian — over a discrete ring the restricted series are
   the polynomials, already complete, and the Hilbert basis theorem applies. In particular
   `ℤ`, every field, and every noetherian ring discretely topologised witness the predicate.
+* `TauCeti.Huber.isNoetherianRing_completion_of_isStronglyNoetherian`: the zero-variable
+  *consequence* of the predicate — strong noetherianness quantifies over every `k`, and its
+  `k = 0` component says the separated completion `Â` is noetherian. The identification behind it,
+  `TauCeti.Huber.restrictedMvPowerSeriesCompletionFinZeroEquiv` in
+  `TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion`, is topological and not merely a
+  ring isomorphism: at `k = 0` the coefficient index `Fin 0 →₀ ℕ` is a singleton, so a basic
+  neighbourhood is cut out by the single coefficient and the two neighbourhood bases correspond.
 
-The iteration `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` and the stability of noetherianness under quotients belong
-to the later roadmap milestones of Layer 0.5 and are not proved here.
+The second half of that roadmap sentence — that `A` itself is noetherian when it is already
+complete and Hausdorff — needs completeness stated against the group uniformity introduced
+below rather than an ambient instance, and is not proved here. Neither is the iteration
+`A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` nor the stability of noetherianness under quotients; those belong to the
+later roadmap milestones of Layer 0.5.
 
 ## Provenance
 
@@ -92,5 +102,25 @@ instance IsStronglyNoetherian.of_discreteTopology [DiscreteTopology A] [IsNoethe
     exact isNoetherianRing_of_ringEquiv _
       ((weightedPolynomialEquiv _ isWeightFamily_one_weight).trans
         (restrictedMvPowerSeriesCompletionEquiv k A).symm)
+
+/-! ### Zero variables -/
+
+section ZeroVariables
+
+variable {A}
+
+/-- **The zero-variable consequence of strong noetherianness: the separated completion `Â` is
+noetherian.** This is the `k = 0` component of `TauCeti.Huber.IsStronglyNoetherian` — which
+quantifies over every `k`, so this is one consequence of it rather than a characterisation —
+transported along the identification of `A⟨⟩` with `Â`. -/
+theorem isNoetherianRing_completion_of_isStronglyNoetherian [IsStronglyNoetherian A] :
+    letI := IsTopologicalAddGroup.rightUniformSpace A
+    letI : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+    IsNoetherianRing (UniformSpace.Completion A) :=
+  let _ := IsTopologicalAddGroup.rightUniformSpace A
+  let _ : IsUniformAddGroup A := isUniformAddGroup_of_addCommGroup
+  isNoetherianRing_of_ringEquiv _ restrictedMvPowerSeriesCompletionFinZeroEquiv
+
+end ZeroVariables
 
 end TauCeti.Huber

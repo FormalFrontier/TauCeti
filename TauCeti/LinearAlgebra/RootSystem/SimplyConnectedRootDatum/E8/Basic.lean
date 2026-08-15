@@ -13,8 +13,11 @@ public section
 /-!
 # The integral roots of type E8
 
-This file enumerates the 240 roots of type `E8` in the lattices used by the future pinned simply
-connected root datum. Coroots are expressed in the simple-coroot basis and roots in the
+This file enumerates the 240 roots of type `E8` in the lattices used by the pinned simply connected
+root datum, which is built from these tables in
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum`; that the enumeration below
+misses no root is proved in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Lattice`.
+Coroots are expressed in the simple-coroot basis and roots in the
 fundamental-weight basis. Both tables are indexed by the same `Fin 240`: the first eight entries
 of the root table are the Bourbaki simple roots and the first eight entries of the coroot table
 are the corresponding simple coroots. The remaining positive entries are ordered by height, and
@@ -252,6 +255,11 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
 theorem e8Root_apply (i : Fin 240) :
     e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
 
+/-- The `E8` roots are the images of the coroots under the Cartan matrix, read on the left or,
+equivalently, on the right, the matrix being symmetric. -/
+theorem e8Root_eq_mulVec (i : Fin 240) : e8Root i = CartanMatrix.E₈ *ᵥ e8Coroot i := by
+  rw [e8Root_apply, ← mulVec_transpose, CartanMatrix.E₈_isSymm]
+
 /-- The coroot table is the concatenation of the positive coroots with their negatives. -/
 private theorem e8Coroot_coe :
     ⇑e8Coroot = Fin.append (⇑e8PositiveCoroot) fun i ↦ -e8PositiveCoroot i :=
@@ -276,14 +284,22 @@ private theorem e8Coroot_coe :
 @[simp] theorem e8Root_dotProduct_coroot (i : Fin 240) : e8Root i ⬝ᵥ e8Coroot i = 2 := by
   fin_cases i <;> decide
 
-/-- The first eight roots are the rows of the Bourbaki `E8` Cartan matrix. -/
-@[simp] theorem e8Root_simple (i : Fin 8) :
-    e8Root (Fin.castAdd 232 i) = CartanMatrix.E₈.row i := by
+/-- The index of the `i`-th Bourbaki simple root in the pinned `E₈` enumeration. -/
+def e8SimpleIndex (i : Fin 8) : Fin 240 := Fin.castAdd 232 i
+
+@[simp] lemma e8SimpleIndex_val (i : Fin 8) : (e8SimpleIndex i : ℕ) = i := (rfl)
+
+lemma e8SimpleIndex_injective : Function.Injective e8SimpleIndex :=
+  Fin.castAdd_injective 8 232
+
+/-- The simple roots of the pinned `E₈` datum are the rows of the Bourbaki Cartan matrix. -/
+@[simp] theorem root_e8SimpleIndex (i : Fin 8) :
+    e8Root (e8SimpleIndex i) = CartanMatrix.E₈ i := by
   fin_cases i <;> decide
 
-/-- The first eight coroots are the standard basis of the simple-coroot lattice. -/
-@[simp] theorem e8Coroot_simple (i : Fin 8) :
-    e8Coroot (Fin.castAdd 232 i) = Pi.single i 1 := by
+/-- The simple coroots of the pinned `E₈` datum are the standard basis vectors. -/
+@[simp] theorem coroot_e8SimpleIndex (i : Fin 8) :
+    e8Coroot (e8SimpleIndex i) = Pi.single i 1 := by
   fin_cases i <;> decide
 
 /-- The last positive `E8` coroot has Bourbaki marks `(2, 3, 4, 6, 5, 4, 3, 2)`. -/
