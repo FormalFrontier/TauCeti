@@ -14,15 +14,15 @@ This file builds the geometric presentation layer of knot theory, as specified i
 GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4, "knot theory,
 done properly"). Knots have no single privileged representation; the geometric presentation
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
-manifold $M$. Oriented and framed presentations are deferred until their prerequisite differential
-topology (manifold orientations and tubular neighbourhoods) is available.
+charted space $M$. Oriented and framed presentations are deferred until their prerequisite
+differential topology (manifold orientations and tubular neighbourhoods) is available.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
 * `TauCeti.SmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.SmoothKnot3`: unoriented smooth knots in the 3-sphere $S^3$.
-* `TauCeti.SmoothLink`: $k$-component smooth links in a manifold $M$, bundling $k$ component knots
-  with pairwise disjoint embedding images.
+* `TauCeti.SmoothLink`: $k$-component smooth-link presentations in a charted space $M$, bundling
+  $k$ component knots with pairwise disjoint embedding images.
 * `TauCeti.SmoothLink3`: smooth $k$-component links in $S^3$.
 
 ## Main definitions
@@ -58,7 +58,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   (I : ModelWithCorners ℝ E H)
   (M : Type*) [TopologicalSpace M] [ChartedSpace H M]
 
-/-- An unoriented smooth-knot presentation in an ambient manifold `M` is a bundled `C^∞` smooth
+/-- An unoriented smooth-knot presentation in an ambient charted space `M` is a bundled `C^∞` smooth
 embedding of the standard 1-sphere `Sphere1` into `M`. -/
 public abbrev SmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
     [ChartedSpace H M] : Type _ :=
@@ -67,8 +67,8 @@ public abbrev SmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [Topological
 /-- An unoriented smooth knot in the standard 3-sphere `Sphere3`. -/
 public abbrev SmoothKnot3 : Type _ := SmoothKnot (𝓡 3) Sphere3
 
-/-- A `k`-component smooth link in a manifold `M` consists of `k` unoriented component knots with
-pairwise disjoint embedding images. -/
+/-- A `k`-component smooth-link presentation in a charted space `M` consists of `k` unoriented
+component knots with pairwise disjoint embedding images. -/
 @[ext]
 structure SmoothLink (I : ModelWithCorners ℝ E H)
     (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) where
