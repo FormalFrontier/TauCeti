@@ -29,12 +29,18 @@ quotient.
 
 * `TauCeti.UpperUnitriangular.CoordinateRing`: the polynomial coordinate ring of `U_m`.
 * `TauCeti.UpperUnitriangular.genericMatrix`: the generic upper-unitriangular matrix.
+* `TauCeti.UpperUnitriangular.comul`, `TauCeti.UpperUnitriangular.counit`, and
+  `TauCeti.UpperUnitriangular.antipode`: the raw structure maps.
+* `TauCeti.UpperUnitriangular.bialgebra` and `TauCeti.UpperUnitriangular.hopfAlgebra`: named
+  structure dictionaries; these are deliberately not global instances.
 * `TauCeti.UpperUnitriangular.coordinateHopfAlgebra`: its bundled commutative Hopf algebra.
 * `TauCeti.UpperUnitriangular.finiteTypeCoordinateHopfAlgebra`: its finite-type package.
 * `TauCeti.UpperUnitriangular.pointsMulEquiv`: its convolution points are the existing
   `TauCeti.upperUnitriangularGroup`.
 * `TauCeti.UpperUnitriangular.pointToUpperUnitriangular_mapValue`: the point identification is
   natural in the value algebra.
+* `TauCeti.UpperUnitriangular.pointsMulEquiv_mapValue`: the bundled point equivalence is natural
+  in the value algebra.
 
 ## References
 
@@ -95,26 +101,15 @@ theorem isUpperUnitriangular_genericMatrix : (genericMatrix R m).IsUpperUnitrian
     exact genericMatrix_apply_eq_zero_of_gt R m h
   · exact genericMatrix_apply_diag R m
 
-private theorem matrix_eq_of_isUpperUnitriangular_of_apply_of_lt {A : Type*} [Semiring A]
-    {M N : Matrix m m A} (hM : M.IsUpperUnitriangular) (hN : N.IsUpperUnitriangular)
-    (h : ∀ i j, i < j → M i j = N i j) : M = N := by
-  ext i j
-  by_cases hij : i < j
-  · exact h i j hij
-  · obtain hji | rfl := lt_or_eq_of_le (le_of_not_gt hij)
-    · exact (hM.isUpperTriangular hji).trans (hN.isUpperTriangular hji).symm
-    · exact (hM.apply_diag _).trans (hN.apply_diag _).symm
-
 /-- Evaluating the strict-upper coordinates of the generic matrix at an upper-unitriangular
 matrix recovers that matrix. -/
 theorem map_aeval_genericMatrix {A : Type w} [CommSemiring A] [Algebra R A]
     (M : Matrix m m A) (hM : M.IsUpperUnitriangular) :
     (genericMatrix R m).map
         (MvPolynomial.aeval fun ij : Index m => M ij.1.1 ij.1.2) = M := by
-  apply matrix_eq_of_isUpperUnitriangular_of_apply_of_lt (m := m)
-    ((isUpperUnitriangular_genericMatrix R m).map _) hM
+  apply ((isUpperUnitriangular_genericMatrix R m).map _).ext_of_lt hM
   intro i j hij
-  simp [Matrix.map_apply, genericMatrix, hij]
+  simp [Matrix.map_apply, genericMatrix_apply_of_lt R m hij]
 
 variable [Fintype m]
 
@@ -232,7 +227,11 @@ private theorem comul_lTensor_counit :
     simp [hkj]
   · simp
 
-/-- The bialgebra structure dual to multiplication of upper-unitriangular matrices. -/
+/-- The bialgebra structure dual to multiplication of upper-unitriangular matrices.
+
+This is intentionally a named value, not an instance. Callers that need typeclass-selected
+coalgebra operations should use `coordinateHopfAlgebra`, or install this value in a deliberately
+local scope. -/
 @[instance_reducible]
 noncomputable def bialgebra : Bialgebra R (CoordinateRing R m) :=
   Bialgebra.ofAlgHom (comul R m) (counit R m)
@@ -255,33 +254,29 @@ noncomputable def antipode : CoordinateRing R m →ₐ[R] CoordinateRing R m :=
 @[simp]
 theorem map_antipode_genericMatrix :
     (genericMatrix R m).map (antipode R m) =
+      (genericMatrix R m)⁻¹ := by
+  have hinv :
       (↑((isUpperUnitriangular_genericMatrix R m).toGL⁻¹) :
-        Matrix m m (CoordinateRing R m)) := by
-  let h := isUpperUnitriangular_genericMatrix R m
-  let g : upperUnitriangularGroup m (CoordinateRing R m) :=
-    ⟨h.toGL⁻¹, (upperUnitriangularGroup m (CoordinateRing R m)).inv_mem
-      (UpperUnitriangularGroup.toGL_mem_upperUnitriangularGroup h)⟩
+        Matrix m m (CoordinateRing R m)).IsUpperUnitriangular :=
+    UpperUnitriangularGroup.mem_iff.mp
+      ((upperUnitriangularGroup m (CoordinateRing R m)).inv_mem
+        (UpperUnitriangularGroup.toGL_mem_upperUnitriangularGroup
+          (isUpperUnitriangular_genericMatrix R m)))
   rw [antipode]
-  simpa only [g] using
-    map_aeval_genericMatrix R m
-      ((g : Matrix.GeneralLinearGroup m (CoordinateRing R m)) :
-        Matrix m m (CoordinateRing R m))
-      (UpperUnitriangularGroup.isUpperUnitriangular g)
+  simpa using map_aeval_genericMatrix R m _ hinv
 
 /-- The antipode on every generic matrix entry is the corresponding inverse-matrix entry. -/
 @[simp]
 theorem antipode_genericMatrix_apply (i j : m) :
     antipode R m (genericMatrix R m i j) =
-      (↑((isUpperUnitriangular_genericMatrix R m).toGL⁻¹) :
-        Matrix m m (CoordinateRing R m)) i j := by
+      (genericMatrix R m)⁻¹ i j := by
   exact congrFun (congrFun (map_antipode_genericMatrix R m) i) j
 
 /-- The antipode sends a strict-upper coordinate to the corresponding inverse-matrix entry. -/
 @[simp]
 theorem antipode_X (ij : Index m) :
     antipode R m (MvPolynomial.X ij) =
-      (↑((isUpperUnitriangular_genericMatrix R m).toGL⁻¹) :
-        Matrix m m (CoordinateRing R m)) ij.1.1 ij.1.2 := by
+      (genericMatrix R m)⁻¹ ij.1.1 ij.1.2 := by
   rw [← genericMatrix_apply_of_lt R m ij.2]
   exact antipode_genericMatrix_apply R m ij.1.1 ij.1.2
 
@@ -292,9 +287,9 @@ private theorem mul_antipode_rTensor_comul :
   apply MvPolynomial.algHom_ext
   rintro ij
   simp only [AlgHom.comp_apply, comul_X, map_sum, counit_X]
-  let h := isUpperUnitriangular_genericMatrix R m
-  have hentry := congrFun (congrFun h.toGL.inv_mul ij.1.1) ij.1.2
-  simpa [antipode_genericMatrix_apply, h, Matrix.mul_apply,
+  have hentry := congrFun (congrFun
+    (isUpperUnitriangular_genericMatrix R m).toGL.inv_mul ij.1.1) ij.1.2
+  simpa [antipode_genericMatrix_apply, Matrix.mul_apply,
     Matrix.one_apply, ij.2.ne] using hentry
 
 private theorem mul_antipode_lTensor_comul :
@@ -304,12 +299,16 @@ private theorem mul_antipode_lTensor_comul :
   apply MvPolynomial.algHom_ext
   intro ij
   simp only [AlgHom.comp_apply, comul_X, map_sum, counit_X]
-  let h := isUpperUnitriangular_genericMatrix R m
-  have hentry := congrFun (congrFun h.toGL.mul_inv ij.1.1) ij.1.2
-  simpa [antipode_genericMatrix_apply, h, Matrix.mul_apply,
+  have hentry := congrFun (congrFun
+    (isUpperUnitriangular_genericMatrix R m).toGL.mul_inv ij.1.1) ij.1.2
+  simpa [antipode_genericMatrix_apply, Matrix.mul_apply,
     Matrix.one_apply, ij.2.ne] using hentry
 
-/-- The Hopf-algebra structure dual to the upper-unitriangular group law. -/
+/-- The Hopf-algebra structure dual to the upper-unitriangular group law.
+
+This is intentionally a named value, not an instance. Callers that need typeclass-selected Hopf
+operations should use `coordinateHopfAlgebra`, or install this value in a deliberately local
+scope. -/
 @[instance_reducible]
 noncomputable def hopfAlgebra : HopfAlgebra R (CoordinateRing R m) := by
   letI : Bialgebra R (CoordinateRing R m) := bialgebra R m
@@ -438,8 +437,7 @@ theorem coordinateHopfAlgebra_antipode_X (ij : Index m) :
     HopfAlgebra.antipode R (A := coordinateHopfAlgebra R m)
         (coordinateHopfAlgebraAlgEquiv R m (MvPolynomial.X ij)) =
       coordinateHopfAlgebraAlgEquiv R m
-        ((↑((isUpperUnitriangular_genericMatrix R m).toGL⁻¹) :
-          Matrix m m (CoordinateRing R m)) ij.1.1 ij.1.2) := by
+        ((genericMatrix R m)⁻¹ ij.1.1 ij.1.2) := by
   rw [coordinateHopfAlgebra_antipode_apply, antipode_X]
 
 /-- The bundled antipode sends a generic entry to the corresponding inverse-matrix entry. -/
@@ -448,8 +446,7 @@ theorem coordinateHopfAlgebra_antipode_genericMatrix_apply (i j : m) :
     HopfAlgebra.antipode R (A := coordinateHopfAlgebra R m)
         (coordinateHopfAlgebraAlgEquiv R m (genericMatrix R m i j)) =
       coordinateHopfAlgebraAlgEquiv R m
-        ((↑((isUpperUnitriangular_genericMatrix R m).toGL⁻¹) :
-          Matrix m m (CoordinateRing R m)) i j) := by
+        ((genericMatrix R m)⁻¹ i j) := by
   rw [coordinateHopfAlgebra_antipode_apply, antipode_genericMatrix_apply]
 
 /-- `coordinateHopfAlgebra` bundled as a finite-type commutative Hopf algebra, using that its
@@ -484,19 +481,6 @@ theorem coordinateHopfAlgebra_algHom_ext {T : Type*} [Semiring T] [Algebra R T]
 section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
-
-private theorem upperUnitriangularGroup_ext_of_lt
-    (g h : upperUnitriangularGroup m A)
-    (heq : ∀ i j, i < j →
-      ((g : Matrix.GeneralLinearGroup m A) : Matrix m m A) i j =
-        ((h : Matrix.GeneralLinearGroup m A) : Matrix m m A) i j) : g = h := by
-  apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  exact congrFun (congrFun
-    (matrix_eq_of_isUpperUnitriangular_of_apply_of_lt (m := m)
-      (UpperUnitriangularGroup.isUpperUnitriangular g)
-      (UpperUnitriangularGroup.isUpperUnitriangular h) heq) i) j
 
 /-- Evaluate a point of the coordinate Hopf algebra on the generic matrix. -/
 private noncomputable def matrixOfPoint
@@ -539,7 +523,8 @@ theorem pointToUpperUnitriangular_apply_of_lt
         Matrix.GeneralLinearGroup m A) i j =
       f.ofConv (coordinateHopfAlgebraAlgEquiv R m
         (MvPolynomial.X (show Index m from ⟨(i, j), h⟩))) := by
-  simp [pointToUpperUnitriangular, matrixOfPoint, genericMatrix_apply_of_lt, h]
+  rw [coe_pointToUpperUnitriangular, matrixOfPoint_apply,
+    genericMatrix_apply_of_lt R m h]
 
 /-- Evaluate the strict-upper polynomial coordinates at an upper-unitriangular matrix. -/
 noncomputable def upperUnitriangularToPoint
@@ -563,7 +548,7 @@ theorem upperUnitriangularToPoint_apply
 theorem pointToUpperUnitriangular_upperUnitriangularToPoint
     (g : upperUnitriangularGroup m A) :
     pointToUpperUnitriangular R m (upperUnitriangularToPoint R m g) = g := by
-  apply upperUnitriangularGroup_ext_of_lt
+  apply UpperUnitriangularGroup.ext_of_lt
   intro i j hij
   rw [coe_pointToUpperUnitriangular]
   rw [matrixOfPoint_apply, genericMatrix_apply_of_lt R m hij,
@@ -576,8 +561,8 @@ theorem upperUnitriangularToPoint_pointToUpperUnitriangular
   apply WithConv.ext
   apply coordinateHopfAlgebra_algHom_ext R m
   intro ij
-  simp [upperUnitriangularToPoint, pointToUpperUnitriangular, matrixOfPoint,
-    genericMatrix, ij.2]
+  rw [upperUnitriangularToPoint_apply, coe_pointToUpperUnitriangular,
+    matrixOfPoint_apply, genericMatrix_apply_of_lt R m ij.2]
 
 /-- Evaluation on the generic matrix carries convolution to matrix multiplication. -/
 @[simp]
@@ -585,7 +570,7 @@ theorem pointToUpperUnitriangular_mul
     (f g : WithConv (coordinateHopfAlgebra R m →ₐ[R] A)) :
     pointToUpperUnitriangular R m (f * g) =
       pointToUpperUnitriangular R m f * pointToUpperUnitriangular R m g := by
-  apply upperUnitriangularGroup_ext_of_lt
+  apply UpperUnitriangularGroup.ext_of_lt
   intro i j hij
   simp only [pointToUpperUnitriangular_apply_of_lt R m _ hij]
   rw [AlgHom.convMul_apply, coordinateHopfAlgebra_comul_X]
@@ -622,12 +607,29 @@ theorem pointToUpperUnitriangular_mapValue {B : Type*} [CommRing B] [Algebra R B
     pointToUpperUnitriangular R m
         (AlgHom.mapValue (H := coordinateHopfAlgebra R m) φ f) =
       UpperUnitriangularGroup.map φ.toRingHom (pointToUpperUnitriangular R m f) := by
-  apply upperUnitriangularGroup_ext_of_lt
+  apply UpperUnitriangularGroup.ext_of_lt
   intro i j hij
   rw [pointToUpperUnitriangular_apply_of_lt R m _ hij,
     UpperUnitriangularGroup.map_apply,
     pointToUpperUnitriangular_apply_of_lt R m f hij]
-  rfl
+  simp only [AlgHom.mapValue_apply, WithConv.ofConv_toConv, AlgHom.comp_apply,
+    AlgHom.toRingHom_eq_coe, RingHom.coe_coe]
+
+/-- The pointwise group equivalence is natural in the value algebra. -/
+theorem pointsMulEquiv_mapValue {B : Type*} [CommRing B] [Algebra R B]
+    (φ : A →ₐ[R] B) (f : WithConv (coordinateHopfAlgebra R m →ₐ[R] A)) :
+    pointsMulEquiv R m (AlgHom.mapValue (H := coordinateHopfAlgebra R m) φ f) =
+      UpperUnitriangularGroup.map φ.toRingHom (pointsMulEquiv R m f) := by
+  exact pointToUpperUnitriangular_mapValue R m φ f
+
+/-- Naturality of the inverse pointwise equivalence in the value algebra. -/
+theorem mapValue_pointsMulEquiv_symm_apply {B : Type*} [CommRing B] [Algebra R B]
+    (φ : A →ₐ[R] B) (g : upperUnitriangularGroup m A) :
+    AlgHom.mapValue (H := coordinateHopfAlgebra R m) φ ((pointsMulEquiv R m).symm g) =
+      (pointsMulEquiv R m).symm (UpperUnitriangularGroup.map φ.toRingHom g) := by
+  apply (pointsMulEquiv (R := R) (A := B) m).injective
+  rw [pointsMulEquiv_mapValue]
+  simp
 
 end Points
 
