@@ -24,7 +24,7 @@ the `D` and `E` branch of the finite-type Cartan-matrix classification.
 
 ## Main results
 
-* `TauCeti.IsFiniteType.exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three`:
+* `IsFiniteType.exists_equiv_forall_eq_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three`:
   a connected simply-laced finite-type matrix with a branch vertex is a three-armed star.
 * `TauCeti.IsFiniteType.existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three`: such a
   matrix carries a unique valid Dynkin type.
@@ -202,7 +202,7 @@ open Classical in
 The arm lengths are the cardinalities of the three components left after deleting the branch
 vertex. They are nonzero, and the equivalence sends the branch vertex to the centre and roots each
 arm at its unique neighbour of the centre. -/
-theorem exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three
+theorem exists_equiv_forall_eq_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three
     (h : IsFiniteType A) (hconn : (diagramGraph A).Connected) (hsl : A.IsSimplyLaced)
     {c : B} (hc : (diagramGraph A).degree c = 3) :
     ∃ (ℓ : Fin 3 → ℕ) (e : B ≃ StarIndex ℓ),
@@ -344,7 +344,7 @@ theorem existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three
       ∃ e : B ≃ Fin t.rank, ∀ i j, A i j = t.cartanMatrix (e i) (e j) := by
   classical
   obtain ⟨ℓ, e, hℓ, -, he⟩ :=
-    h.exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three hconn hsl hc
+    h.exists_equiv_forall_eq_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three hconn hsl hc
   have hstar : IsFiniteType (starCartanMatrix ℓ) := by
     have hreindex : starCartanMatrix ℓ = A.submatrix e.symm e.symm := by
       ext v w
