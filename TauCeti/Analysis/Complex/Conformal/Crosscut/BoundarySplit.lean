@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.ClusterSet
-public import TauCeti.Topology.JordanCurve.SmallArc
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 import TauCeti.Analysis.Normed.Module.Ball.Cut
 
@@ -21,7 +20,7 @@ piece* `frontier Ω ∩ closure γ`. This file studies the other two pieces,
 
 > `P = frontier Ω ∩ closure A` and `Q = frontier Ω ∩ closure B`,
 
-and proves the two facts about them that the Carathéodory boundary correspondence — layer **L5** of
+and proves two facts about them that the Carathéodory boundary correspondence — layer **L5** of
 `TauCetiRoadmap/ConformalMapping/README.md` — needs of the cut:
 
 * **the two pieces already cover, with no leftover**: `frontier Ω = P ∪ Q`
@@ -33,26 +32,21 @@ and proves the two facts about them that the Carathéodory boundary corresponden
   `frontier Ω \ S` is preconnected, then `P ⊆ S` or `Q ⊆ S`
   (`TauCeti.subset_or_subset_of_isPreconnected_frontier_image_sdiff`).
 
-The second is the *choice of boundary arc* that `Conformal/Crosscut/Jordan.lean` and
-`Conformal/Crosscut/Arc.lean` both name as the step left open: those files close a short image
-crosscut into a Jordan curve, or into an arc that may be joined to an arc of the image boundary,
-but say nothing about *which* arc of the boundary is the one cut off. Here that choice is made, and
-it is made by connectivity alone: cutting a Jordan `frontier Ω` at the two ends of the image
-crosscut leaves two arcs, and putting one of them into `S`
-(`TauCeti.IsJordanCurve.exists_pos_forall_exists_diam_le` makes it small) leaves the other
-preconnected, so the dichotomy applies and one of the two boundary pieces is small
-(`TauCeti.exists_pos_forall_diam_le_of_isJordanCurve_frontier_image`).
+## What is settled here, and what is not
 
-## What the dichotomy still asks for, and what it does not
+Both facts are proved outright: no statement below takes an unproved input as a hypothesis, and
+none asks for a Jordan curve theorem, for local connectedness of `Ω` at its boundary, or for an
+estimate on `f`. The dichotomy is a statement about an arbitrary set `S`, and its hypotheses —
+that `S` swallows `P ∩ Q` and that what is left of the image boundary is preconnected — are
+conditions on `S`, discharged by whoever supplies one.
 
-The dichotomy asks that `P ∩ Q` be contained in `S`. Since the middle piece lies in `P ∩ Q`, and
-`S` is the small arc joining the two ends of the image crosscut, this is the assertion that the two
-sides of the crosscut cling to the image boundary *only along the crosscut*:
-`frontier Ω ∩ closure A ∩ closure B ⊆ closure γ`. That is a genuine planar-separation input and is
-**not** proved here or anywhere yet in this development; it is carried as a hypothesis, named at
-every statement that uses it. What the dichotomy does *not* ask for is any relation between the two
-sides beyond it: no local connectedness of `Ω` at its boundary, no Jordan curve theorem, and no
-estimate on `f`.
+What is *not* settled here is the *choice of boundary arc* that `Conformal/Crosscut/Jordan.lean`
+and `Conformal/Crosscut/Arc.lean` both name as the step left open, namely which arc of `frontier Ω`
+a short image crosscut cuts off. Feeding a boundary arc to the dichotomy needs `P ∩ Q` to be no
+larger than the middle piece, `frontier Ω ∩ closure A ∩ closure B ⊆ closure γ` — the assertion that
+the two sides of the crosscut cling to the image boundary only along the crosscut. That is a
+planar-separation statement this development does not have, and it is a prerequisite to be proved
+on its own, not something to assume; so no theorem here is stated in a shape that presumes it.
 
 The two pieces are stated with `closure A` rather than `frontier A`, which is the shape the crosscut
 criterion `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
@@ -70,7 +64,8 @@ boundary point strictly outside lies in `Q`
 (`TauCeti.clusterSetOn_subset_frontier_inter_closure_image_inter_ball` and its far-side companion).
 Together with the surjectivity of the boundary correspondence
 (`TauCeti.biUnion_clusterSetOn_eq_frontier_image`) this says which part of `frontier Ω` each piece
-is responsible for, and it is how a caller checks that the far piece is *not* the small one.
+is responsible for, and it is how a caller who has confined one piece to a small `S` tells which of
+the two alternatives of the dichotomy it is in.
 
 ## Generality
 
@@ -79,10 +74,10 @@ every theorem added in layers L0–L6, everything below is stated for maps of `�
 `U`, as in `Conformal/CutDiameter.lean`; nothing asks `U ∩ sphere ζ ρ` to be a crosscut, or `ζ` to
 lie on `frontier U`. The metric step that never mentions a map — that both sides of a cut cling to
 the cutting sphere — is stated for a seminormed real vector space in
-`TauCeti/Analysis/Normed/Module/Ball/Cut.lean` and consumed here. Only the last two theorems ask
-`f` to be holomorphic and injective; the splitting itself needs no more than continuity, and the
-radius is unrestricted apart from `ρ ≠ 0`, which is what makes the cutting sphere adherent to the
-ball.
+`TauCeti/Analysis/Normed/Module/Ball/Cut.lean` and consumed here. Only the frontier-shape lemmas and
+the cluster-set lemmas ask `f` to be holomorphic and injective; the splitting and the dichotomy need
+no more than continuity, and the radius is unrestricted apart from `ρ ≠ 0`, which is what makes the
+cutting sphere adherent to the ball.
 
 ## Main results
 
@@ -104,8 +99,6 @@ ball.
 * `TauCeti.subset_or_subset_of_isPreconnected_frontier_image_sdiff` — **the dichotomy**: a set
   containing the intersection of the two pieces and with preconnected complement in the image
   boundary contains one of the two pieces.
-* `TauCeti.exists_pos_forall_diam_le_of_isJordanCurve_frontier_image` — its Jordan-boundary form:
-  one of the two pieces is small as soon as they meet in a pair of nearby points.
 
 ## Coordination with upstream Mathlib
 
@@ -130,7 +123,7 @@ public section
 
 namespace TauCeti
 
-open Bornology Metric Set Topology
+open Metric Set Topology
 
 variable {f : ℂ → ℂ} {U : Set ℂ} {ζ w : ℂ} {ρ : ℝ}
 
@@ -308,17 +301,17 @@ theorem clusterSetOn_subset_frontier_inter_closure_image_sdiff_closedBall (hUo :
 intersection `P ∩ Q` of the two pieces and `frontier (f '' U) \ S` is preconnected, then `P ⊆ S` or
 `Q ⊆ S`.
 
-This is the *choice of boundary arc* left open by `Conformal/Crosscut/Jordan.lean` and
-`Conformal/Crosscut/Arc.lean`, and it is pure connectivity: the two pieces are closed and cover
-`frontier (f '' U)` by `TauCeti.frontier_image_eq_union_inter_closure_image`, so they cover
-`frontier (f '' U) \ S`, on which they are disjoint because their intersection was put into `S`;
+It is pure connectivity: the two pieces are closed and cover `frontier (f '' U)` by
+`TauCeti.frontier_image_eq_union_inter_closure_image`, so they cover `frontier (f '' U) \ S`, on
+which they are disjoint because their intersection was put into `S`;
 `isPreconnected_iff_subset_of_disjoint_closed` therefore confines that difference to one of them,
 and the *other* piece is then trapped inside `S`.
 
-The hypothesis `hS` is the one genuine planar-separation input. Since the middle piece lies in
-`P ∩ Q` (`TauCeti.frontier_inter_closure_image_inter_sphere_subset_inter`), taking for `S` a small
-set containing the middle piece makes `hS` the assertion that the two sides of the cut cling to the
-image boundary only along the cut; nothing here proves that. -/
+Both hypotheses are conditions on `S` alone, so a caller supplies them for the `S` it has in hand;
+a small `S` then makes one of the two pieces small. Nothing here says which sets `S` a crosscut
+admits: that needs `P ∩ Q` to be no larger than the middle piece
+(`TauCeti.frontier_inter_closure_image_inter_sphere_subset_inter` gives only the other inclusion),
+which is the planar-separation prerequisite this development does not yet have. -/
 theorem subset_or_subset_of_isPreconnected_frontier_image_sdiff (hUo : IsOpen U)
     (hfc : ContinuousOn f U) (hρ : ρ ≠ 0) {S : Set ℂ}
     (hS : frontier (f '' U) ∩ closure (f '' (U ∩ ball ζ ρ)) ∩
@@ -345,48 +338,5 @@ theorem subset_or_subset_of_isPreconnected_frontier_image_sdiff (hUo : IsOpen U)
   · refine Or.inl fun p hp => ?_
     by_contra hpS
     exact hpS (hS ⟨hp, (h ⟨hp.1, hpS⟩).2⟩)
-
-/-- **For a Jordan image boundary, one of the two pieces is small.** Let `f` be conformal on an open
-`U` whose image has a Jordan curve for its boundary. For every `ε > 0` there is a `δ > 0` such that,
-at every cutting circle whose two boundary pieces meet in a pair `{u, v}` of distinct points of
-`frontier (f '' U)` less than `δ` apart, one of the two pieces has diameter at most `ε`.
-
-The pair hypothesis is the planar-separation input of
-`TauCeti.subset_or_subset_of_isPreconnected_frontier_image_sdiff`, in the shape the length--area
-method delivers it: `Conformal/Crosscut/BoundaryEnds.lean` produces, at every boundary point and
-below every radius, a crosscut whose *middle* piece is a pair `{u, v}` at distance at most `ε`, and
-the middle piece lies in `P ∩ Q`; what is not proved anywhere yet is that `P ∩ Q` is no larger than
-the middle piece, which is why it is a hypothesis here.
-
-Everything else is discharged: `TauCeti.IsJordanCurve.exists_pos_forall_exists_diam_le` cuts the
-boundary at `u` and `v` into two arcs `A` and `B` with `diam (A ∪ {u, v}) ≤ ε`, and
-`S = A ∪ {u, v}` leaves `frontier (f '' U) \ S = B`, which is path connected. So the dichotomy
-applies with that `S`, and whichever piece it confines to `S` is no wider than `S` is. -/
-theorem exists_pos_forall_diam_le_of_isJordanCurve_frontier_image (hUo : IsOpen U)
-    (hfc : ContinuousOn f U) (hJ : IsJordanCurve (frontier (f '' U))) {ε : ℝ} (hε : 0 < ε) :
-    ∃ δ > 0, ∀ (ζ : ℂ) {ρ : ℝ}, ρ ≠ 0 → ∀ {u v : ℂ}, u ∈ frontier (f '' U) →
-      v ∈ frontier (f '' U) → u ≠ v → dist u v < δ →
-      frontier (f '' U) ∩ closure (f '' (U ∩ ball ζ ρ)) ∩
-          closure (f '' (U \ closedBall ζ ρ)) ⊆ ({u, v} : Set ℂ) →
-        diam (frontier (f '' U) ∩ closure (f '' (U ∩ ball ζ ρ))) ≤ ε ∨
-          diam (frontier (f '' U) ∩ closure (f '' (U \ closedBall ζ ρ))) ≤ ε := by
-  obtain ⟨δ, hδ, hmain⟩ := hJ.exists_pos_forall_exists_diam_le hε
-  refine ⟨δ, hδ, fun ζ ρ hρ u v hu hv huv hdist hmid => ?_⟩
-  obtain ⟨A, B, -, hB, hAB, hABeq, -, hdiam⟩ := hmain hu hv huv hdist
-  have hSsub : A ∪ {u, v} ⊆ frontier (f '' U) := by
-    refine union_subset (fun p hp => (hABeq.subset (mem_union_left _ hp)).1) ?_
-    rintro p (rfl | rfl)
-    · exact hu
-    · exact hv
-  have hTeq : frontier (f '' U) \ (A ∪ {u, v}) = B := by
-    rw [union_comm, ← sdiff_sdiff, ← hABeq, union_sdiff_left, hAB.symm.sdiff_eq_left]
-  have hpre : IsPreconnected (frontier (f '' U) \ (A ∪ {u, v})) := by
-    rw [hTeq]
-    exact hB.isConnected.isPreconnected
-  have hbdd : IsBounded (A ∪ {u, v}) := hJ.isCompact.isBounded.subset hSsub
-  rcases subset_or_subset_of_isPreconnected_frontier_image_sdiff hUo hfc hρ
-    (hmid.trans subset_union_right) hpre with h | h
-  · exact Or.inl ((diam_mono h hbdd).trans hdiam)
-  · exact Or.inr ((diam_mono h hbdd).trans hdiam)
 
 end TauCeti
