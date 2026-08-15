@@ -91,6 +91,7 @@ theorem rationalizationEquiv_symm_coe (L : IntegralLattice V) (x : L) :
 
 /-- The scalar extension of the carrier's integral form is the ambient rational form under the
 canonical rationalization equivalence. -/
+@[simp]
 theorem form_rationalizationEquiv (L : IntegralLattice V) (x y : ℚ ⊗[ℤ] L) :
     L.form (L.rationalizationEquiv x) (L.rationalizationEquiv y) =
       L.integralForm.baseChange ℚ x y := by
@@ -132,6 +133,7 @@ noncomputable def rationalizationIsometry (L : IntegralLattice V) :
 
 /-- Evaluating the ambient form on rational multiples of lattice vectors recovers the scalar
 extension formula for the integral form. -/
+@[simp]
 theorem form_smul_coe (L : IntegralLattice V) (q r : ℚ) (x y : L) :
     L.form (q • (x : V)) (r • (y : V)) = q * r * (L.integralForm x y : ℚ) := by
   rw [← rationalizationEquiv_tmul, ← rationalizationEquiv_tmul,
