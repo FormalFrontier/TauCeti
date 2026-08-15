@@ -55,6 +55,9 @@ base ring.
 
 ## References
 
+* The formal development in
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.ChevalleyRelations`, adapted here from `GLₙ` to
+  `SLₙ`.
 * R. W. Carter, *Simple Groups of Lie Type* (1972), §11.3.
 * J. E. Humphreys, *Linear Algebraic Groups* (1975), §26.3.
 * J. S. Milne, *Algebraic Groups* (2017), §21.
@@ -72,6 +75,17 @@ universe u w
 variable {R : Type u} [CommRing R]
 variable {A : Type w} [CommRing A] [Algebra R A]
 variable {N : ℕ} {i j k l : Fin N}
+
+private theorem toGL_transvection_eq_transvectionUnit (hij : i ≠ j) (c : A) :
+    _root_.Matrix.SpecialLinearGroup.toGL
+        (_root_.Matrix.SpecialLinearGroup.transvection hij c) =
+      TauCeti.transvectionUnit hij c := by
+  ext a b
+  rw [TauCeti.coe_transvectionUnit]
+  change (↑(_root_.Matrix.SpecialLinearGroup.transvection hij c) : Matrix (Fin N) (Fin N) A) a b =
+    _root_.Matrix.transvection i j c a b
+  rw [_root_.Matrix.SpecialLinearGroup.transvection_coe]
+  rfl
 
 section Points
 
@@ -114,7 +128,16 @@ theorem commutatorElement_rootSubgroupPoints (hij : i ≠ j) (hjl : j ≠ l)
     AdditiveGroup.toAdd_gaPointsMulEquiv g,
     AdditiveGroup.toAdd_gaPointsMulEquiv (AdditiveGroup.gaPointParamMul f g),
     AdditiveGroup.gaPointParamMul_apply_ι]
-  exact _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil _ _
+  let c := f.ofConv ((SymmetricAlgebra.ι R R) 1)
+  let d := g.ofConv ((SymmetricAlgebra.ι R R) 1)
+  change ⁅_root_.Matrix.SpecialLinearGroup.transvection hij c,
+      _root_.Matrix.SpecialLinearGroup.transvection hjl d⁆ =
+    _root_.Matrix.SpecialLinearGroup.transvection hil (c * d)
+  apply _root_.Matrix.SpecialLinearGroup.toGL_injective
+  rw [map_commutatorElement]
+  rw [toGL_transvection_eq_transvectionUnit, toGL_transvection_eq_transvectionUnit,
+    toGL_transvection_eq_transvectionUnit]
+  exact TauCeti.commutatorElement_transvectionUnit hij hjl hil c d
 
 end Points
 
@@ -152,7 +175,16 @@ theorem schemePointsMulEquiv_rootSubgroup_commutatorElement (hij : i ≠ j) (hjl
   rw [schemePointsMulEquiv_rootSubgroup, schemePointsMulEquiv_rootSubgroup,
     schemePointsMulEquiv_rootSubgroup]
   simp only [MulEquiv.apply_symm_apply, toAdd_ofAdd]
-  exact _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil _ _
+  let c := Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv (R := R) A p)
+  let d := Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv (R := R) A q)
+  change ⁅_root_.Matrix.SpecialLinearGroup.transvection hij c,
+      _root_.Matrix.SpecialLinearGroup.transvection hjl d⁆ =
+    _root_.Matrix.SpecialLinearGroup.transvection hil (c * d)
+  apply _root_.Matrix.SpecialLinearGroup.toGL_injective
+  rw [map_commutatorElement]
+  rw [toGL_transvection_eq_transvectionUnit, toGL_transvection_eq_transvectionUnit,
+    toGL_transvection_eq_transvectionUnit]
+  exact TauCeti.commutatorElement_transvectionUnit hij hjl hil c d
 
 /-- Multiplying two scheme-valued points of the same root subgroup multiplies along the group
 law of `𝔾ₐ`. -/

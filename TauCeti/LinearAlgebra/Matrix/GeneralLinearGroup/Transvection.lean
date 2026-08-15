@@ -59,8 +59,6 @@ elementary matrices against the diagonal torus.
 * `Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul`: product of chaining
   transvections in `SL n A`.
 * `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
-* `Matrix.SpecialLinearGroup.commutatorElement_transvection`: the Chevalley commutator relation
-  for determinant-one transvections in `SL n A`.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
 * `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
@@ -247,18 +245,6 @@ theorem _root_.Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mu
         Matrix.SpecialLinearGroup.transvection hil (c * d) := by
   ext a b
   exact congrFun₂ (TauCeti.transvection_mul_transvection_eq_mul_mul hij hil c d) a b
-
-/-- **The Chevalley commutator relation of type `A` in `SL n A`.** The commutator of the
-determinant-one root subgroup elements `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`,
-is `xᵢₗ(cd)`. -/
-theorem _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection
-    (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
-    ⁅Matrix.SpecialLinearGroup.transvection hij c,
-      Matrix.SpecialLinearGroup.transvection hjl d⁆ =
-      Matrix.SpecialLinearGroup.transvection hil (c * d) := by
-  apply SpecialLinearGroup.toGL_injective
-  rw [map_commutatorElement]
-  exact commutatorElement_transvectionUnit hij hjl hil c d
 
 end Unit
 
