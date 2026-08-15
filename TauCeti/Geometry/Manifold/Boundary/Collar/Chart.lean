@@ -158,27 +158,12 @@ section Smooth
 
 variable [ChartedSpace (EuclideanHalfSpace (n + 1)) M]
 
-/-- The collar identification is a diffeomorphism at every regularity, so in particular `C^k`.
-The chart is built at `⊤`; since that is the top of `WithTop ℕ∞`, `le_top` downcasts it to
-whatever `k` a caller needs. -/
-private theorem contMDiff_collarDiffeomorph :
-    ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k
-      (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n) :=
-  (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).contMDiff.of_le le_top
-
-/-- The inverse collar identification is `C^k`, for the reason given at
-`contMDiff_collarDiffeomorph`. -/
-private theorem contMDiff_collarDiffeomorph_symm :
-    ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k
-      (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm :=
-  (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.contMDiff.of_le le_top
-
 /-- **A collar chart is `C^k` on its source.** The collar identification is a diffeomorphism, so
 splitting an ambient chart into a tangential and a normal coordinate costs no regularity. -/
 theorem contMDiffOn_collarChart {e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))}
     (he : e ∈ IsManifold.maximalAtlas (𝓡∂ (n + 1)) k M) :
     ContMDiffOn (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k (collarChart e) e.source :=
-  (contMDiff_collarDiffeomorph_symm.comp_contMDiffOn
+  (((EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.contMDiff.of_le le_top).comp_contMDiffOn
     (contMDiffOn_of_mem_maximalAtlas he)).congr fun x _ => collarChart_apply e x
 
 /-- **The inverse of a collar chart is `C^k` on its target.** With `contMDiffOn_collarChart`,
@@ -194,7 +179,8 @@ theorem contMDiffOn_collarChart_symm
       (collarChart e).target e.target := fun p hp => by
     rwa [collarChart_target] at hp
   exact ((contMDiffOn_symm_of_mem_maximalAtlas he).comp
-    contMDiff_collarDiffeomorph.contMDiffOn hmaps).congr fun p _ => collarChart_symm_apply e p
+    ((EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).contMDiff.of_le le_top).contMDiffOn
+    hmaps).congr fun p _ => collarChart_symm_apply e p
 
 end Smooth
 
