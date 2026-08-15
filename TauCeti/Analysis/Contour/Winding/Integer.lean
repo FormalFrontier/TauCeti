@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
+public import TauCeti.Analysis.Contour.PiecewiseC1On
 import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import TauCeti.Analysis.Contour.Winding.SegmentSum
 import TauCeti.Analysis.Contour.Argument.Lift
@@ -24,6 +25,8 @@ homology form of Cauchy's theorem.
 
 * `TauCeti.Contour.exists_int_windingNumber_of_closed` — the generalized winding number of a closed
   curve is an integer.
+* `TauCeti.Contour.IsPiecewiseC1On.exists_int_windingNumber` — the same for a closed piecewise-`C¹`
+  curve, whose regularity supplies the raw hypotheses on its own.
 
 ## Provenance
 
@@ -157,5 +160,17 @@ theorem exists_int_windingNumber_of_closed {γ : ℝ → ℂ} {w : ℂ} {a b : �
         intervalIntegral.integral_symm a b]
       ring
     rw [hrev, hm]; push_cast; ring
+
+/-- **Piecewise-`C¹` form of winding-number integrality.** For a closed piecewise-`C¹` curve that
+avoids `w`, the winding number about `w` is an integer. Piecewise-`C¹` regularity supplies the
+continuity, differentiability and integrability hypotheses of
+`exists_int_windingNumber_of_closed`. -/
+theorem IsPiecewiseC1On.exists_int_windingNumber {γ : ℝ → ℂ} {a b : ℝ} {w : ℂ}
+    (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    (h_avoid : ∀ t ∈ Set.uIcc a b, γ t ≠ w) :
+    ∃ n : ℤ, windingNumber γ a b w = n := by
+  obtain ⟨P, hP, hγ_diff⟩ := hγ.exists_countable_differentiableAt
+  exact exists_int_windingNumber_of_closed hclosed hP hγ.continuousOn hγ_diff h_avoid
+    (intervalIntegrable_inv_sub_mul_deriv hγ.continuousOn h_avoid hγ.intervalIntegrable_deriv)
 
 end TauCeti.Contour

@@ -50,10 +50,13 @@ it; the subspace form here needs no such comparison.)
   inclusion into `Cont A` is `spa_def ▸ Set.inter_subset_left`.
 * `TauCeti.ValuationSpectrum.spa_integralClosure` : replacing the plus ring by its integral
   closure leaves `Spa` unchanged.
+* `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
+  commutative ring `A` with separately continuous addition, then `Spa(A, A⁺) = ∅` for any plus
+  ring `A⁺` (the `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1)).
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23 and Proposition 7.49.
 -/
 
 public section
@@ -111,6 +114,19 @@ theorem spa_integralClosure (R : Subring A) :
     have hxint := (Valuation.integer.integers v.valuation).mem_of_integral hint
     rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
     exact hxint
+
+section SeparatelyContinuousAdd
+
+variable [SeparatelyContinuousAdd A]
+
+/-- **The `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1).** If
+`1 ∈ closure {0}` in a commutative ring `A` with separately continuous addition, then
+`Spa (A, A⁺) = ∅` for any plus ring `A⁺`. -/
+theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
+    (h : (1 : A) ∈ closure ({0} : Set A)) : spa Aplus = ∅ := by
+  rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
+
+end SeparatelyContinuousAdd
 
 end TauCeti.ValuationSpectrum
 
