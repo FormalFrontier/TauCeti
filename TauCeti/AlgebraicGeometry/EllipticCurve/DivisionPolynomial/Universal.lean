@@ -37,11 +37,11 @@ extra rewrites in those proofs (`map_C`, `coe_mapRingHom`) only move that `C` pa
 The companion transport for `ω` is **not** here. It cannot be: `WeierstrassCurve.ω` does not exist
 in this repository or in the pinned Mathlib, and neither does the `map_ω` such a proof would rewrite
 with. `DivisionPolynomial/Invariant.lean` lists both among what it deliberately leaves out, and
-records the chain still missing for them — `redInvarDenom` together with the upper part of
+records the chain still missing for them — `redInvarDenom` together with the top of
 `redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, the source's names for it. The
-lower two links are `isEllipticNet_normEDS` and `invarNum_mul_invarDenom`, both present, so what
-remains is `invar₂_normEDS` and `redInvar_normEDS`. `evalEval_ω` belongs with that work rather
-than here.
+lower three links are `isEllipticNet_normEDS`, `invarNum_mul_invarDenom` and
+`IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul`, all present, so what remains is
+`redInvar_normEDS`. `evalEval_ω` belongs with that work rather than here.
 
 ## Provenance
 

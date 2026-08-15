@@ -43,7 +43,8 @@ free indices, not three — so stopping at the sequence would leave that consume
 for every `b`, `c`, `d`, `s`, `m` and `n`.
 
 That is **weaker** than index-independence of an invariant ratio, which needs the denominators
-invertible and so does not hold over a general commutative ring; `Invariant.lean` states the
+invertible and so does not hold over a general commutative ring; `Invariant/Basic.lean` states
+the
 distinction where the identity is proved.
 
 ## Main results
@@ -155,9 +156,7 @@ theorem isEllipticNet_normEDS (b c d : R) : IsEllipticNet (normEDS b c d) := by
   -- Supply the defining equation rather than leaving it to `isDefEq`: `universalNormEDS`'s body
   -- is not exposed, so unification cannot cheaply see it as `normEDS (X B) (X C) (X D)`.
   have huniv : IsEllipticNet (universalNormEDS : ℤ → MvPolynomial NormEDSParam ℤ) := by
-    have hfun : (universalNormEDS : ℤ → MvPolynomial NormEDSParam ℤ)
-        = normEDS (X B) (X C) (X D) := funext universalNormEDS_apply
-    rw [hfun]
+    rw [universalNormEDS_def]
     exact isEllipticNet_normEDS_of_mem (mem_nonZeroDivisors_of_ne_zero (X_ne_zero B))
   intro p q r s
   -- `map_rel` is stated for `f ∘ W`, `normEDS_eq_aeval` for the eta-expanded lambda.
