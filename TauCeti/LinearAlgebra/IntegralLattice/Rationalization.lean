@@ -102,7 +102,6 @@ theorem rationalizationEquiv_tmul (L : IntegralLattice V) (q : ℚ) (x : L) :
   L.isBaseChange_subtype.equiv_tmul q x
 
 /-- The rationalization equivalence sends a unit pure tensor to the embedded lattice vector. -/
-@[simp]
 theorem rationalizationEquiv_one_tmul (L : IntegralLattice V) (x : L) :
     L.rationalizationEquiv (1 ⊗ₜ[ℤ] x) = (x : V) := by
   simp
