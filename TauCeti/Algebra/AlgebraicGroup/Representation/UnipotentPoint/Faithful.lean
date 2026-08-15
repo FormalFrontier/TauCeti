@@ -5,7 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful
-public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
+public import Mathlib.FieldTheory.Perfect
+import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
 
 /-!
 # Detecting unipotent points in a faithful representation
@@ -70,15 +72,16 @@ theorem isUnipotentPoint_iff_isUnipotent_pointsAction_of_isFaithful
     exact (isUnipotentPoint_def g).mp hg M
   · intro hg
     rw [Point.isUnipotentPoint_iff_semisimplePart_eq_one]
-    apply Comodule.eq_of_pointsAction_eq_of_isFaithful hM
-    apply (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.injective
-    change LinearMap.GeneralLinearGroup.ofLinearEquiv
-        (Comodule.pointsAction M (Point.semisimplePart k H K g)) =
-      LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M 1)
-    rw [Point.ofLinearEquiv_pointsAction_semisimplePart,
-      GeneralLinearGroup.semisimplePart_eq_one_of_isUnipotent hg, map_one]
-    apply Units.ext
-    rfl
+    apply Comodule.pointsAction_injective_of_isFaithful hM
+    have hGL :
+        LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (Comodule.pointsAction M (Point.semisimplePart k H K g)) =
+          LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (Comodule.pointsAction M (1 : WithConv (H →ₐ[k] K))) := by
+      rw [Point.ofLinearEquiv_pointsAction_semisimplePart,
+        GeneralLinearGroup.semisimplePart_eq_one_of_isUnipotent hg, map_one]
+      exact ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.map_one).symm
+    exact (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.injective hGL
 
 end
 

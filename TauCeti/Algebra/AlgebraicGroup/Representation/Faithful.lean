@@ -7,7 +7,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Embedding
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Dual
-public import TauCeti.Algebra.Coalgebra.Comodule.PointSeparation
+import TauCeti.Algebra.Coalgebra.Comodule.PointSeparation
 
 /-!
 # Faithful representations and matrix coefficients
@@ -39,7 +39,7 @@ equivalent to generation of the coordinate ring by matrix coefficients and their
 * `TauCeti.Comodule.IsFaithful`: the basis-independent predicate for a faithful comodule.
 * `TauCeti.Comodule.isFaithful_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top`: the
   matrix-coefficient criterion for faithfulness.
-* `TauCeti.Comodule.eq_of_pointsAction_eq_of_isFaithful`: a faithful comodule separates
+* `TauCeti.Comodule.pointsAction_injective_of_isFaithful`: a faithful comodule separates
   algebra-valued points.
 * `TauCeti.Comodule.isClosedImmersion_coordinateGroupSchemeHom_iff_of_bases`: faithfulness is
   independent of the chosen finite basis.
@@ -261,13 +261,12 @@ theorem isFaithful_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top
   rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
     isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top]
 
-/-- A faithful comodule separates algebra-valued points: if two points have the same action on
-the comodule, then they are equal. -/
-theorem eq_of_pointsAction_eq_of_isFaithful
+/-- A faithful comodule separates algebra-valued points. -/
+theorem pointsAction_injective_of_isFaithful
     {K : Type u} [CommRing K] [Algebra k K]
-    (hV : IsFaithful (k := k) (H := H) (V := V))
-    {g h : WithConv (H →ₐ[k] K)} (haction : pointsAction V g = pointsAction V h) :
-    g = h := by
+    (hV : IsFaithful (k := k) (H := H) (V := V)) :
+    Function.Injective (pointsAction (R := k) (H := H) (A := K) V) := by
+  intro g h haction
   have hEnd : endOfPoint V g.ofConv = endOfPoint V h.ofConv := by
     simpa only [pointsAction_toLinearMap] using congrArg LinearEquiv.toLinearMap haction
   have hInvAction : pointsAction V g⁻¹ = pointsAction V h⁻¹ := by
@@ -287,6 +286,8 @@ theorem eq_of_pointsAction_eq_of_isFaithful
         ((matrixCoefficientSubalgebra (R := k) (C := H) (M := V)).map
           (HopfAlgebra.antipodeAlgHom k H)) := by
     rintro y ⟨x, hx, rfl⟩
+    -- A `Subalgebra.map` witness retains the coerced `antipodeAlgHom` application at the
+    -- current Mathlib pin, so expose its definition before applying the convolution-inverse API.
     change g.ofConv (HopfAlgebraStruct.antipode k x) =
       h.ofConv (HopfAlgebraStruct.antipode k x)
     simpa only [← AlgHom.convInv_apply] using hInvCoefficients hx
