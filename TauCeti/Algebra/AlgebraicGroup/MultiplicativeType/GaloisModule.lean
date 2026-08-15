@@ -67,6 +67,7 @@ noncomputable instance instDistribMulActionCocharacterLattice
 
 /-- Scalar multiplication on the cocharacter lattice is the existing contragredient Galois
 representation. -/
+@[simp]
 theorem cocharacterLattice_smul_def (T : MultiplicativeTypeCommHopfAlgCat k)
     (σ : Field.absoluteGaloisGroup k) (f : cocharacterLattice T) :
     σ • f = cocharacterGaloisRepresentation T σ f :=
