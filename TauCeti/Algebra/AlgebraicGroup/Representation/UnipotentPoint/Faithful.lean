@@ -22,9 +22,10 @@ on their antipode images. Faithfulness says that these two coefficient algebras 
 coordinate Hopf algebra; hence the semisimple part is the identity, which characterizes a
 unipotent point.
 
-This is the bridge needed by Layer 5, "Unipotent groups", of the ReductiveGroups roadmap: a closed
-immersion into an upper-unitriangular group can now be tested in its defining faithful
-representation instead of separately in every representation.
+This is the bridge needed by Layer 5, "Unipotent groups", of the ReductiveGroups roadmap: a point
+of a group given with a faithful representation can now be tested for unipotence in that one
+representation instead of in every representation. The upper-unitriangular embedding
+characterization is still to come.
 
 ## Main declaration
 
@@ -69,69 +70,15 @@ theorem isUnipotentPoint_iff_isUnipotent_pointsAction_of_isFaithful
     exact (isUnipotentPoint_def g).mp hg M
   · intro hg
     rw [Point.isUnipotentPoint_iff_semisimplePart_eq_one]
-    let s := Point.semisimplePart k H K g
-    have hsemisimpleAction :
-        GeneralLinearGroup.semisimplePart
-            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) = 1 :=
-      GeneralLinearGroup.semisimplePart_eq_one_of_isUnipotent hg
-    have hsEnd :
-        Comodule.endOfPoint M s.ofConv =
-          Comodule.endOfPoint M (1 : WithConv (H →ₐ[k] K)).ofConv := by
-      calc
-        Comodule.endOfPoint M s.ofConv =
-            (GeneralLinearGroup.semisimplePart
-              (LinearMap.GeneralLinearGroup.ofLinearEquiv
-                (Comodule.pointsAction M g)) : Module.End K _) :=
-          Point.endOfPoint_semisimplePart k H K g M
-        _ = (1 : Module.End K _) := congrArg Units.val hsemisimpleAction
-        _ = Comodule.endOfPoint M (1 : WithConv (H →ₐ[k] K)).ofConv := by
-          exact (Comodule.endOfPoint_convOne M).symm
-    have hsAction :
-        Comodule.pointsAction M s =
-          Comodule.pointsAction M (1 : WithConv (H →ₐ[k] K)) := by
-      apply LinearEquiv.toLinearMap_injective
-      simpa only [Comodule.pointsAction_toLinearMap] using hsEnd
-    have hsInvAction :
-        Comodule.pointsAction M s⁻¹ =
-          Comodule.pointsAction M (1 : WithConv (H →ₐ[k] K))⁻¹ := by
-      simpa only [map_inv] using congrArg Inv.inv hsAction
-    have hsInvEnd :
-        Comodule.endOfPoint M (s⁻¹).ofConv =
-          Comodule.endOfPoint M ((1 : WithConv (H →ₐ[k] K))⁻¹).ofConv := by
-      simpa only [Comodule.pointsAction_toLinearMap] using
-        congrArg LinearEquiv.toLinearMap hsInvAction
-    have hsCoefficients :
-        Set.EqOn s.ofConv (1 : WithConv (H →ₐ[k] K)).ofConv
-          (Comodule.matrixCoefficientSubalgebra (R := k) (C := H) (M := M)) :=
-      Comodule.eqOn_matrixCoefficientSubalgebra_of_endOfPoint_eq _ _ hsEnd
-    have hsInvCoefficients :
-        Set.EqOn (s⁻¹).ofConv ((1 : WithConv (H →ₐ[k] K))⁻¹).ofConv
-          (Comodule.matrixCoefficientSubalgebra (R := k) (C := H) (M := M)) :=
-      Comodule.eqOn_matrixCoefficientSubalgebra_of_endOfPoint_eq _ _ hsInvEnd
-    have hsAntipodeCoefficients :
-        Set.EqOn s.ofConv (1 : WithConv (H →ₐ[k] K)).ofConv
-          ((Comodule.matrixCoefficientSubalgebra (R := k) (C := H) (M := M)).map
-            (_root_.HopfAlgebra.antipodeAlgHom k H)) := by
-      rintro y ⟨x, hx, rfl⟩
-      -- The subalgebra map leaves the algebra-hom coercion opaque to rewriting; expose its
-      -- underlying antipode value so the pointwise inverse formula applies.
-      change s.ofConv (_root_.HopfAlgebraStruct.antipode k x) =
-        (1 : WithConv (H →ₐ[k] K)).ofConv (_root_.HopfAlgebraStruct.antipode k x)
-      simpa only [← AlgHom.convInv_apply] using hsInvCoefficients hx
-    let b := Module.finBasis k M
-    have hgenerate :
-        Comodule.matrixCoefficientSubalgebra (R := k) (C := H) (M := M) ⊔
-            (Comodule.matrixCoefficientSubalgebra (R := k) (C := H) (M := M)).map
-              (_root_.HopfAlgebra.antipodeAlgHom k H) = ⊤ :=
-      (Comodule.isFaithful_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top b).mp hM
-    have hsTop := AlgHom.eqOn_sup hsCoefficients hsAntipodeCoefficients
-    rw [hgenerate] at hsTop
-    -- Fold the local name back into the Jordan characterization which is the current goal.
-    change s = 1
-    apply WithConv.ofConv_injective
-    apply AlgHom.ext
-    intro x
-    exact hsTop (by simp)
+    apply Comodule.eq_of_pointsAction_eq_of_isFaithful hM
+    apply (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.injective
+    change LinearMap.GeneralLinearGroup.ofLinearEquiv
+        (Comodule.pointsAction M (Point.semisimplePart k H K g)) =
+      LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M 1)
+    rw [Point.ofLinearEquiv_pointsAction_semisimplePart,
+      GeneralLinearGroup.semisimplePart_eq_one_of_isUnipotent hg, map_one]
+    apply Units.ext
+    rfl
 
 end
 
