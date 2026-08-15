@@ -67,14 +67,16 @@ reduces to six orderings of three, the last index being `0` and so already minim
 
 ## Provenance
 
-Adapted from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), declarations `rel₆_eq₃`, `rel₆_eq₃'`, `rel₆_eq₁₀`,
-`rel₄_iff_evenRec`, `dMin`, `cMin`, `Rel₄OfValid`, `rel₄_fix₁_of_fix₂`, `rel₄_of_fix₂`,
-`rel₄_of_min₂`, `rel₄_of_anti_oddRec_evenRec`, `rel₄_of_oddRec_evenRec` and
-`IsEllSequence.of_oddRec_evenRec`. That file's header reads
-`Authors: Junyan Xu`; following this repository's convention for adapted material the upstream
-authorship is credited here rather than in the copyright header.
+Adapted from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
+declarations `rel₆_eq₃`, `rel₆_eq₃'`, `rel₆_eq₁₀`, `rel₄_iff_evenRec`, `dMin`, `cMin`,
+`Rel₄OfValid`, `rel₄_fix₁_of_fix₂`, `rel₄_of_fix₂`, `rel₄_of_min₂`, `rel₄_of_anti_oddRec_evenRec`,
+`rel₄_of_oddRec_evenRec` and `IsEllSequence.of_oddRec_evenRec`. That file's header reads `Authors:
+David Kurniadi Angdinata`; following this repository's convention for adapted material the upstream
+authorship is credited here rather than in the copyright header. J. Xu is acknowledged for the
+surrounding LutzNagell development — he authors `Universal.lean` and co-authors
+`DivisionPolynomialOmega.lean` at the same revision — as context for this port, not as an author of
+the declarations above.
 
 The source states its expansions against its own `addMulSub` and `rel₄`, which Mathlib now
 supplies as `atom` and `atomRel` with the same definitions, so those statements transfer by

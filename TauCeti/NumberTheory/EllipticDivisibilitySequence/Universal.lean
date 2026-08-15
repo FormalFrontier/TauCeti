@@ -62,15 +62,17 @@ instance otherwise.
 
 ## Provenance
 
-Ported from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), declarations `Param`, `universalNormEDS`,
-`normEDS_eq_aeval`, `compl₂EDS_eq_aeval` and `complEDS_eq_aeval`. **`Param` is spelt
-`NormEDSParam` here** — a root-level `Param` says nothing about elliptic divisibility sequences and
-makes its namespace equally generic; that rename is an adaptation made in this repository, not
-upstream's name. That file's header reads
-`Authors: Junyan Xu`; following this repository's convention for adapted material the upstream
-authorship is credited here rather than in the copyright header.
+Ported from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
+declarations `Param`, `universalNormEDS`, `normEDS_eq_aeval`, `compl₂EDS_eq_aeval` and
+`complEDS_eq_aeval`. **`Param` is spelt `NormEDSParam` here** — a root-level `Param` says nothing
+about elliptic divisibility sequences and makes its namespace equally generic; that rename is an
+adaptation made in this repository, not upstream's name. That file's header reads `Authors: David
+Kurniadi Angdinata`; following this repository's convention for adapted material the upstream
+authorship is credited here rather than in the copyright header. J. Xu is acknowledged for the
+surrounding LutzNagell development — he authors `Universal.lean` and co-authors
+`DivisionPolynomialOmega.lean` at the same revision — as context for this port, not as an author of
+the declarations above.
 
 The same declarations sit in **Mathlib PR #13057** (open, last updated 2024-07-31), the
 upstreaming of that AINTLIB file, so they are portable under this project's rule and deduplicate

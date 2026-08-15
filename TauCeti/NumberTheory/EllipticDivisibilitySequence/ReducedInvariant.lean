@@ -60,13 +60,15 @@ ellipticity variables over exactly this block.
 
 ## Provenance
 
-Ported from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), declarations `invarNum_normEDS`, `redInvarNum`,
-`compl₂EDS_eq_redInvarNum_sub` and `invarNum_eq_redInvarNum_mul` — the source's own names, which
-this file respells with `reduced` written out. That file's header reads `Authors: Junyan Xu`;
-following this repository's convention for adapted material the upstream authorship is credited
-here rather than in the copyright header.
+Ported from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
+declarations `invarNum_normEDS`, `redInvarNum`, `compl₂EDS_eq_redInvarNum_sub` and
+`invarNum_eq_redInvarNum_mul` — the source's own names, which this file respells with `reduced`
+written out. That file's header reads `Authors: David Kurniadi Angdinata`; following this
+repository's convention for adapted material the upstream authorship is credited here rather than
+in the copyright header. J. Xu is acknowledged for the surrounding LutzNagell development — he
+authors `Universal.lean` and co-authors `DivisionPolynomialOmega.lean` at the same revision — as
+context for this port, not as an author of the declarations above.
 
 The same declarations sit in **Mathlib PR #13057**, the upstreaming of that AINTLIB file, so they
 are portable under this project's rule and deduplicate if and when it lands.
