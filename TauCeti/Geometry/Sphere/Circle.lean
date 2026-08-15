@@ -85,10 +85,9 @@ underlying points. -/
 lemma coe_sphereIsometryEquivCircle_symm_apply (z : Circle) :
     (sphereIsometryEquivCircle.symm z : EuclideanSpace ℝ (Fin 2)) =
       Complex.orthonormalBasisOneI.repr (z : ℂ) := by
-  change ((LinearIsometryEquiv.unitSphereIsometryEquiv Complex.orthonormalBasisOneI.repr.symm).symm
-    z : EuclideanSpace ℝ (Fin 2)) = _
-  rw [LinearIsometryEquiv.unitSphereIsometryEquiv_symm]
-  exact LinearIsometryEquiv.coe_unitSphereIsometryEquiv_apply Complex.orthonormalBasisOneI.repr z
+  apply Complex.orthonormalBasisOneI.repr.symm.injective
+  rw [← coe_sphereIsometryEquivCircle_apply, IsometryEquiv.apply_symm_apply,
+    LinearIsometryEquiv.symm_apply_apply]
 
 /-- The inverse Euclidean-circle homeomorphism is the standard coordinate representation on
 underlying points. -/
