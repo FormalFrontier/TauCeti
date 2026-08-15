@@ -10,6 +10,8 @@ public import Mathlib.LinearAlgebra.Basis.Submodule
 public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.Binomial
 
+import Mathlib.Data.Nat.Factorial.NatCast
+
 /-!
 # The binomial polynomials as a basis
 
@@ -59,23 +61,6 @@ attribute [local instance] BinomialRing.toIsAddTorsionFree
 
 /-! ## The polynomial basis -/
 
-/-- The canonical integer scalar-action homomorphism `ℤ →+* R` coincides with
-`Int.castRingHom R`. -/
-@[simp]
-theorem smulOneHom_int_eq_intCastRingHom {R : Type*} [NonAssocRing R] :
-    (RingHom.smulOneHom : ℤ →+* R) = Int.castRingHom R :=
-  Subsingleton.elim _ _
-
-/-- Evaluating the integer descending Pochhammer polynomial at `X` in `K[X]` yields the
-descending Pochhammer polynomial over `K`. -/
-theorem descPochhammer_int_smeval_X {K : Type*} [CommRing K] (n : ℕ) :
-    (descPochhammer ℤ n).smeval (X : K[X]) = descPochhammer K n := by
-  rw [← Polynomial.eval₂_smulOneHom_eq_smeval, smulOneHom_int_eq_intCastRingHom]
-  have hX : (X : K[X]) = (Polynomial.mapRingHom (Int.castRingHom K)) X := by
-    simp only [Polynomial.coe_mapRingHom, Polynomial.map_X]
-  rw [hX, Polynomial.eval₂_intCastRingHom_X]
-  simp only [Polynomial.coe_mapRingHom, descPochhammer_map]
-
 /-- The descending Pochhammer polynomial over any commutative ring is monic. -/
 theorem monic_descPochhammer' {K : Type*} [CommRing K] (n : ℕ) :
     Monic (descPochhammer K n) := by
@@ -89,17 +74,13 @@ omit [CharZero K] in
 polynomial. -/
 theorem factorial_smul_binomialPolynomial (n : ℕ) :
     (n.factorial : K) • Ring.choose (X : K[X]) n = descPochhammer K n := by
-  rw [← descPochhammer_int_smeval_X, Nat.cast_smul_eq_nsmul]
-  exact (Ring.descPochhammer_eq_factorial_smul_choose (X : K[X]) n).symm
-
-omit [CharZero K] in
-/-- The `n`th factorial is a unit in any commutative `ℚ`-algebra. -/
-theorem isUnit_factorial (n : ℕ) : IsUnit (n.factorial : K) := by
-  have hfac : (n.factorial : K) = algebraMap ℚ K (n.factorial : ℚ) := by
-    simp only [map_natCast]
-  rw [hfac]
-  exact (isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero n))).map
-    (algebraMap ℚ K)
+  rw [Nat.cast_smul_eq_nsmul, ← Ring.descPochhammer_eq_factorial_smul_choose,
+    ← Polynomial.eval₂_smulOneHom_eq_smeval]
+  rw [show (RingHom.smulOneHom : ℤ →+* K[X]) = Int.castRingHom K[X] from Subsingleton.elim _ _]
+  have hX : (X : K[X]) = (Polynomial.mapRingHom (Int.castRingHom K)) X := by
+    simp only [Polynomial.coe_mapRingHom, Polynomial.map_X]
+  rw [hX, Polynomial.eval₂_intCastRingHom_X]
+  simp only [Polynomial.coe_mapRingHom, descPochhammer_map]
 
 omit [Algebra ℚ K] in
 /-- The natural degree of the descending Pochhammer polynomial over `K` is `n`. -/
@@ -121,7 +102,8 @@ theorem descPochhammer_degree' (n : ℕ) :
 theorem binomialPolynomial_degree (n : ℕ) :
     (Ring.choose (X : K[X]) n).degree = n := by
   have hreg : IsSMulRegular K (n.factorial : K) := fun _ _ h =>
-    (isUnit_factorial K n).mul_left_cancel (by simpa only [smul_eq_mul] using h)
+    (IsUnit.natCast_factorial_of_algebra ℚ n).mul_left_cancel
+      (by simpa only [smul_eq_mul] using h)
   have h := congrArg Polynomial.degree (factorial_smul_binomialPolynomial K n)
   rw [Polynomial.degree_smul_of_smul_regular (Ring.choose (X : K[X]) n) hreg,
     descPochhammer_degree'] at h
@@ -144,7 +126,8 @@ omit [CharZero K] in
 theorem binomialPolynomial_leadingCoeff (n : ℕ) :
     (Ring.choose (X : K[X]) n).leadingCoeff = algebraMap ℚ K (n.factorial : ℚ)⁻¹ := by
   have hreg : IsSMulRegular K (n.factorial : K) := fun _ _ h =>
-    (isUnit_factorial K n).mul_left_cancel (by simpa only [smul_eq_mul] using h)
+    (IsUnit.natCast_factorial_of_algebra ℚ n).mul_left_cancel
+      (by simpa only [smul_eq_mul] using h)
   have h := congrArg Polynomial.leadingCoeff (factorial_smul_binomialPolynomial K n)
   rw [Polynomial.leadingCoeff_smul_of_smul_regular (Ring.choose (X : K[X]) n) hreg,
     (monic_descPochhammer' n).leadingCoeff, smul_eq_mul] at h
