@@ -83,6 +83,10 @@ instance : CoeFun (IntegralLattice V) fun _ ↦ V → V → ℚ :=
 @[simp]
 theorem coe_form_apply (L : IntegralLattice V) (x y : V) : L x y = L.form x y := rfl
 
+/-- The flipped rational bilinear form of an integral lattice equals the form itself. -/
+theorem form_flip (L : IntegralLattice V) : L.form.flip = L.form :=
+  LinearMap.ext fun x ↦ LinearMap.ext fun y ↦ L.isSymm.eq y x
+
 /-- The value of the rational form on lattice vectors is integral. -/
 theorem form_mem_one (L : IntegralLattice V) (x y : L) :
     L.form x y ∈ (1 : Submodule ℤ ℚ) :=
