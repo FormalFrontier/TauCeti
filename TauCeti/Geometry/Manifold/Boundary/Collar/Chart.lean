@@ -28,18 +28,22 @@ are the content of the file.
   manifold built in `Boundary.Charts`. The two files therefore describe one coordinate system,
   not two.
 
-The chart is built from `collarDiffeomorph` at the top regularity `⊤` and used only through its
-underlying homeomorphism: charts are topological data, and the map underlying `collarDiffeomorph`
-does not depend on the regularity exponent. Smoothness statements instantiate the diffeomorphism
-at whatever exponent they need.
+The chart is built from `collarDiffeomorph` at the top regularity `⊤`. Since `⊤` is the top of
+`WithTop ℕ∞`, `ContMDiff.of_le le_top` downcasts its smoothness to whatever exponent a caller
+needs, so one chart serves every regularity.
 
-This is the first step of the collar-neighbourhood target in Layer 1 of the GeometricTopology
-roadmap, taken after `Boundary.Collar.Basic`'s standard-model calculation: it puts the product
-coordinates on a general manifold. The two steps that remain for the collar theorem itself are
-not proved here — that the collar charts have `C^k` transitions, so `M` is also a manifold for
-the product model `(𝓡 n).prod (𝓡∂ 1)`; and the global statement, that a whole neighbourhood of
-`I.boundary M` is diffeomorphic to `I.boundary M × [0, 1)`, which needs these local product
-coordinates patched with a partition of unity.
+Those coordinates are smooth, not merely continuous: `contMDiffOn_collarChart` and
+`contMDiffOn_collarChart_symm` make a collar chart a `C^k` diffeomorphism between its source and
+its target. Together with `mem_boundary_iff_collarChart_snd_apply_zero_eq_zero` that is a *local*
+collar — around any point, `M` is smoothly a tangential coordinate together with a normal one, and
+the boundary is exactly where the normal one vanishes.
+
+This serves the collar-neighbourhood target in Layer 1 of the GeometricTopology roadmap
+(`TauCetiRoadmap/GeometricTopology/README.md`), after `Boundary.Collar.Basic`'s standard-model
+calculation. What remains is the global statement, that a whole neighbourhood of
+`I.boundary M` is diffeomorphic to `I.boundary M × [0, 1)`. Both textbook routes glue these local
+collars along an inward-pointing vector field, which needs flows from boundary points; Mathlib's
+integral curves are still restricted to interior points, so that step waits on it.
 
 ## Main definitions
 
@@ -59,6 +63,8 @@ coordinates patched with a partition of unity.
   collar chart, so it never has to be unfolded.
 * `TauCeti.collarChartedSpace_chartAt` and `TauCeti.collarChartedSpace_atlas`: its preferred
   charts and its atlas.
+* `TauCeti.contMDiffOn_collarChart` and `TauCeti.contMDiffOn_collarChart_symm`: a collar chart
+  and its inverse are `C^k`, so the local product structure is smooth.
 
 ## References
 
@@ -137,6 +143,49 @@ Not `@[simp]`, for the reason given at `collarChart_fst`. -/
 theorem collarChart_snd_apply_zero (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1)))
     (x : M) : (collarChart e x).2.1 0 = (e x).1 0 := by
   rw [collarChart_apply, EuclideanHalfSpace.collarDiffeomorph_symm_apply_snd_apply_zero]
+
+section Smooth
+
+variable [ChartedSpace (EuclideanHalfSpace (n + 1)) M]
+
+/-- The collar identification is a diffeomorphism at every regularity, so in particular `C^k`.
+The chart is built at `⊤`; since that is the top of `WithTop ℕ∞`, `le_top` downcasts it to
+whatever `k` a caller needs. -/
+private theorem contMDiff_collarDiffeomorph :
+    ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k
+      (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n) :=
+  (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).contMDiff.of_le le_top
+
+/-- The inverse collar identification is `C^k`, for the reason given at
+`contMDiff_collarDiffeomorph`. -/
+private theorem contMDiff_collarDiffeomorph_symm :
+    ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k
+      (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm :=
+  (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n).symm.contMDiff.of_le le_top
+
+/-- **A collar chart is `C^k` on its source.** The collar identification is a diffeomorphism, so
+splitting an ambient chart into a tangential and a normal coordinate costs no regularity. -/
+theorem contMDiffOn_collarChart {e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))}
+    (he : e ∈ IsManifold.maximalAtlas (𝓡∂ (n + 1)) k M) :
+    ContMDiffOn (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k (collarChart e) e.source :=
+  (contMDiff_collarDiffeomorph_symm.comp_contMDiffOn
+    (contMDiffOn_of_mem_maximalAtlas he)).congr fun x _ => collarChart_apply e x
+
+/-- **The inverse of a collar chart is `C^k` on its target.** With
+`contMDiffOn_collarChart`, a collar chart is a diffeomorphism between its source and its
+target: near any point, `M` is smoothly a tangential coordinate together with a normal one. -/
+theorem contMDiffOn_collarChart_symm
+    {e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1))}
+    (he : e ∈ IsManifold.maximalAtlas (𝓡∂ (n + 1)) k M) :
+    ContMDiffOn ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k (collarChart e).symm
+      (collarChart e).target := by
+  have hmaps : Set.MapsTo (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n)
+      (collarChart e).target e.target := fun p hp => by
+    rwa [collarChart_target] at hp
+  exact ((contMDiffOn_symm_of_mem_maximalAtlas he).comp
+    contMDiff_collarDiffeomorph.contMDiffOn hmaps).congr fun p _ => collarChart_symm_apply e p
+
+end Smooth
 
 section Atlas
 
