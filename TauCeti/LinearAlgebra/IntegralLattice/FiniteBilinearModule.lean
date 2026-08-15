@@ -13,8 +13,8 @@ public import Mathlib.Analysis.Fourier.FiniteAbelian.PontryaginDuality
 # Finite bilinear modules
 
 A finite abelian group equipped with a symmetric biadditive pairing into `ℚ/ℤ`.  The pairing
-is stored as its adjoint into Mathlib's `CharacterModule`; this makes nondegeneracy the
-assertion that the adjoint is injective, from which bijectivity follows by finite duality.
+is stored as its adjoint into Mathlib's `CharacterModule`; nondegeneracy asserts that this
+adjoint is bijective.
 
 This file provides the basic constructions needed for discriminant forms: isometries, restriction,
 form negation, orthogonal direct sums, radicals, orthogonal complements, isotropic elements,
@@ -30,7 +30,7 @@ subgroup can be degenerate.
 
 * `TauCeti.FiniteBilinearModule`: a finite abelian group with a symmetric `ℚ/ℤ`-valued pairing.
 * `TauCeti.FiniteBilinearModule.toBilin`: the pairing as a `ℤ`-bilinear map.
-* `TauCeti.FiniteBilinearModule.IsNondegenerate`: injectivity of the adjoint pairing.
+* `TauCeti.FiniteBilinearModule.IsNondegenerate`: bijectivity of the adjoint pairing.
 * `TauCeti.FiniteBilinearModule.Isometry`: a pairing-preserving additive equivalence.
 * `TauCeti.FiniteBilinearModule.orthogonalComplement`: the orthogonal complement of a subgroup.
 * `TauCeti.FiniteBilinearModule.IsIsotropicElem`: vanishing of the self-pairing on an element.
@@ -221,19 +221,31 @@ theorem isRefl_toBilin : A.toBilin.IsRefl := fun x y h ↦ by
   rw [toBilin_apply, A.pairing_comm, ← toBilin_apply]
   exact h
 
-/-- A finite bilinear module is nondegenerate when its adjoint pairing is injective. -/
-def IsNondegenerate : Prop := Function.Injective A.pairing
+/-- A finite bilinear module is nondegenerate when its adjoint pairing is bijective. -/
+def IsNondegenerate : Prop := Function.Bijective A.pairing
 
-/-- An injective pairing on a finite module is bijective by finite duality. -/
-theorem IsNondegenerate.bijective (hA : A.IsNondegenerate) : Function.Bijective A.pairing := by
+/-- An injective pairing on a finite module is nondegenerate by finite duality. -/
+theorem isNondegenerate_of_injective (hA : Function.Injective A.pairing) : A.IsNondegenerate := by
   cases nonempty_fintype A
   have : Fintype (CharacterModule A) := Fintype.ofFinite _
   refine (Fintype.bijective_iff_injective_and_card A.pairing).mpr ⟨hA, ?_⟩
   rw [Fintype.card_eq_nat_card, Fintype.card_eq_nat_card, natCard_characterModule]
 
-/-- An injective pairing on a finite module is surjective. -/
+/-- Nondegeneracy is equivalent to injectivity of the adjoint pairing for a finite module. -/
+theorem isNondegenerate_iff_injective : A.IsNondegenerate ↔ Function.Injective A.pairing :=
+  ⟨And.left, A.isNondegenerate_of_injective⟩
+
+/-- The adjoint pairing of a nondegenerate finite module is injective. -/
+theorem IsNondegenerate.injective (hA : A.IsNondegenerate) : Function.Injective A.pairing :=
+  hA.1
+
+/-- The adjoint pairing of a nondegenerate finite module is surjective. -/
 theorem IsNondegenerate.surjective (hA : A.IsNondegenerate) : Function.Surjective A.pairing :=
-  hA.bijective.2
+  hA.2
+
+/-- The adjoint pairing of a nondegenerate finite module is bijective. -/
+theorem IsNondegenerate.bijective (hA : A.IsNondegenerate) : Function.Bijective A.pairing :=
+  hA
 
 /-- A nondegenerate pairing identifies its group with the full character module. -/
 noncomputable def adjointEquiv (hA : A.IsNondegenerate) : A ≃+ CharacterModule A :=
@@ -329,11 +341,12 @@ theorem trans_apply (f : Isometry A B) (g : Isometry B C) (x : A) : (f.trans g) 
 
 /-- Nondegeneracy transfers along an isometry. -/
 theorem isNondegenerate (f : Isometry A B) (hA : A.IsNondegenerate) : B.IsNondegenerate := by
+  rw [B.isNondegenerate_iff_injective]
   intro x y hxy
   obtain ⟨x, rfl⟩ := (EquivLike.surjective f) x
   obtain ⟨y, rfl⟩ := (EquivLike.surjective f) y
   apply congrArg f
-  apply hA
+  apply hA.injective
   ext z
   have h := DFunLike.congr_fun hxy (f z)
   simpa only [map_pairing] using h
@@ -380,6 +393,7 @@ theorem neg_pairing (x y : A) : A.neg.pairing x y = -A.pairing x y := (rfl)
 /-- Form negation preserves nondegeneracy of a finite bilinear module. -/
 @[simp]
 theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
+  rw [A.neg.isNondegenerate_iff_injective, A.isNondegenerate_iff_injective]
   constructor
   · intro h x y hxy
     apply h
@@ -426,6 +440,8 @@ factors are nondegenerate. -/
 @[simp]
 theorem isNondegenerate_prod (B : FiniteBilinearModule) :
     (A.prod B).IsNondegenerate ↔ A.IsNondegenerate ∧ B.IsNondegenerate := by
+  rw [(A.prod B).isNondegenerate_iff_injective, A.isNondegenerate_iff_injective,
+    B.isNondegenerate_iff_injective]
   constructor
   · intro h
     constructor
@@ -483,12 +499,12 @@ theorem mem_radical_iff (x : A) : x ∈ A.radical ↔ ∀ y, A.pairing x y = 0 :
 
 /-- A finite bilinear module is nondegenerate if and only if its radical is trivial. -/
 theorem isNondegenerate_iff_radical_eq_bot : A.IsNondegenerate ↔ A.radical = ⊥ :=
-  A.pairing.ker_eq_bot_iff.symm
+  A.isNondegenerate_iff_injective.trans A.pairing.ker_eq_bot_iff.symm
 
 /-- An element pairing trivially with every element is zero in a nondegenerate module. -/
 theorem IsNondegenerate.eq_zero_of_forall_pairing_eq_zero (hA : A.IsNondegenerate) {x : A}
     (hx : ∀ y, A.pairing x y = 0) : x = 0 := by
-  apply hA
+  apply hA.injective
   ext y
   rw [hx y, A.pairing_zero_left]
 
