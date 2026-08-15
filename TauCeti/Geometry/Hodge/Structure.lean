@@ -56,11 +56,16 @@ is outside the scope of this module.
 
 ## References
 
-* Voisin, *Hodge Theory and Complex Algebraic Geometry I*, Section 6.
 * Deligne, *Théorie de Hodge II*, Section 1.2.1.
-* Smith, Booker, `pure-hodge-structures-lean4` (prior L0 formalization in Lean 4).
-* The `IsBaseChange` complexification interface and the `opposed`/Deligne §1.2.1 naming follow
-  the Mathlib Zulip discussion cited by the `HodgeStructures` roadmap.
+* Voisin, *Hodge Theory and Complex Algebraic Geometry I*, Section 6.
+* Roadmap: [HodgeStructures](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/HodgeStructures/README.md)
+  (L0 milestone: Hodge decomposition for pure Hodge structures).
+* The `IsBaseChange` complexification interface, the canonical `TensorProduct ℤ ℂ V` instance,
+  and `latticeConj` transport/uniqueness follow the `#mathlib4` Zulip discussion
+  *Complexifications with a view towards Hodge theory* (Johan Commelin, Andrew Yang, Kevin Buzzard).
+  The opposed-filtration definition of `piece` follows the recommendation of Joël Riou.
+* Smith, Booker, `pure-hodge-structures-lean4` (prior L0 formalization in Lean 4 over `ℚ`,
+  distinguished from the `ℤ`-module / base-change approach developed here).
 -/
 
 namespace TauCeti.Geometry.Hodge
@@ -210,15 +215,14 @@ public theorem F_le_iSup_piece (p : ℤ) :
       rw [this]
       exact sup_le ih (le_iSup hs.piece (k - 1))
 
-/-- The Hodge pieces span the entire complex vector space: $igoplus_p H^{p, n-p} = W$. -/
+/-- The Hodge pieces span the entire complex vector space: $\bigoplus_p H^{p, n-p} = W$. -/
 public theorem iSup_piece_eq_top : ⨆ q, hs.piece q = ⊤ := by
   rcases hs.F_top with ⟨p_top, hp_top⟩
   refine top_unique ?_
   rw [← hp_top]
   exact hs.F_le_iSup_piece p_top
 
-/-- The sum of all pieces $H^{q, n-q}$ with $q 
-e p$ lies in
+/-- The sum of all pieces $H^{q, n-q}$ with $q \ne p$ lies in
 $F^{p+1} ⊔ \overline{F^{n+1-p}}$. -/
 public theorem iSup_ne_piece_le (p : ℤ) :
     (⨆ (q) (_ : q ≠ p), hs.piece q) ≤
@@ -268,11 +272,12 @@ public theorem iSupIndep_piece : iSupIndep hs.piece := by
   exact le_bot_iff.mp (le_trans (inf_le_inf_left _ (hs.iSup_ne_piece_le p)) (le_of_eq h_disj))
 
 /-- **L0 milestone -- the Hodge decomposition.** The `(p, q)`-pieces of a pure Hodge structure
-give an internal direct sum $W = igoplus_p H^{p, n-p}$. -/
+give an internal direct sum $W = \bigoplus_p H^{p, n-p}$. -/
 public theorem isInternal_piece : DirectSum.IsInternal hs.piece := by
   rw [DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top]
   exact ⟨hs.iSupIndep_piece, hs.iSup_piece_eq_top⟩
 
+/-- In an effective Hodge structure, pieces with negative index vanish. -/
 public theorem piece_eq_bot_of_lt_zero (h : hs.IsEffective) {p : ℤ} (hp : p < 0) :
     hs.piece p = ⊥ := by
   rw [piece_def]
@@ -280,6 +285,7 @@ public theorem piece_eq_bot_of_lt_zero (h : hs.IsEffective) {p : ℤ} (hp : p < 
   have hF : hs.F (n - p) = ⊥ := le_bot_iff.mp (h ▸ hs.F_antitone hp')
   rw [hF, Submodule.map_bot, inf_bot_eq]
 
+/-- In an effective Hodge structure of weight $n$, pieces with index greater than $n$ vanish. -/
 public theorem piece_eq_bot_of_gt_weight (h : hs.IsEffective) {p : ℤ} (hp : n < p) :
     hs.piece p = ⊥ := by
   rw [piece_def]
@@ -327,10 +333,12 @@ public def twist (m : ℤ) : HodgeStructureOn W ω (n - 2 * m) where
     rw [← h_eval] at h_opp
     exact h_opp
 
+/-- The filtration of the Tate twist $W(m)$ is $F^p(W(m)) = F^{p+m}(W)$. -/
 @[simp]
 public theorem twist_F (m : ℤ) (p : ℤ) :
     (hs.twist m).F p = hs.F (p + m) := rfl
 
+/-- The pieces of the Tate twist $W(m)$ are shifted by $m$: $H^p(W(m)) = H^{p+m}(W)$. -/
 @[simp]
 public theorem twist_piece (m : ℤ) (p : ℤ) :
     (hs.twist m).piece p = hs.piece (p + m) := by
@@ -367,6 +375,7 @@ public instance : DFunLike (Hom hs₁ hs₂) W₁ (fun _ => W₂) where
     ext x
     exact congrFun h x
 
+/-- Coercion of a Hodge morphism to a function agrees with its linear map. -/
 @[simp]
 public theorem coe_toLinearMap (f : Hom hs₁ hs₂) : ⇑f.toLinearMap = f := rfl
 
@@ -436,6 +445,7 @@ public noncomputable def tate (m : ℤ) :
       rw [h1, h2, Conjugation.map_top]
       exact isCompl_bot_top
 
+/-- The Hodge filtration of the Tate structure $\mathbb{Z}(m)$. -/
 @[simp]
 public theorem tate_F (m p : ℤ) : (tate m).F p = if p ≤ -m then ⊤ else ⊥ := rfl
 
@@ -483,3 +493,4 @@ public theorem isEffective_tate_iff (m : ℤ) : (tate m).IsEffective ↔ m ≤ 0
     exact ite_eq_right (by omega)
 
 end TauCeti.Geometry.Hodge
+
