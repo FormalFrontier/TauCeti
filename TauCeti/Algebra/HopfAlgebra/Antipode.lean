@@ -17,7 +17,7 @@ the antipode before comultiplication is the same as comultiplying, swapping the 
 factors, and applying the antipode to each factor.
 
 For a commutative Hopf algebra, the antipode is involutive, hence defines an algebra
-automorphism. These facts are also recorded here in their natural generality.
+automorphism. These facts are also recorded here in the commutative case.
 
 ## Main declarations
 
@@ -27,23 +27,30 @@ automorphism. These facts are also recorded here in their natural generality.
   involutive.
 * `TauCeti.HopfAlgebra.antipodeAlgEquiv`: the antipode as an algebra equivalence in the
   commutative case.
+* `TauCeti.HopfAlgebra.antipodeAlgEquiv_symm`: the antipode equivalence is its own inverse.
 
 ## Implementation notes
 
-The proof takes place in the convolution monoid of linear maps from the Hopf algebra to its
-tensor square. Comultiplication factors as the convolution product of the two canonical tensor
-inclusions, and postcomposing Mathlib's antipode convolution identity
-`LinearMap.antipode_mul_id` with those inclusions exhibits the proposed opposite
-comultiplication as a left inverse of comultiplication. Mathlib's `LinearMap.comul_right_inv`
-supplies the matching right inverse, so uniqueness of inverses finishes the proof.
+The proof of `antipode_comul_antidistrib` takes place in the convolution monoid of linear maps
+from the Hopf algebra to its tensor square. Comultiplication factors as the convolution product
+of the two canonical tensor inclusions, and postcomposing Mathlib's antipode convolution
+identity `LinearMap.antipode_mul_id` with those inclusions exhibits the proposed opposite
+comultiplication as a left inverse of comultiplication. Mathlib's
+`LinearMap.comul_right_inv` supplies the matching right inverse, so uniqueness of inverses
+finishes the proof.
+
+The involutivity proof uses `inv_inv` in Mathlib's convolution group on algebra maps. The private
+lemma `ofConv_inv` isolates the single definitional unfolding of `AlgHom.convInv` needed to read
+that group identity as the pointwise equation `S (S x) = x`.
 
 ## References
 
-This is the standard anti-coalgebra identity for a Hopf antipode; see Sweedler,
-*Hopf Algebras*, Chapter 4. Mathlib formalizes it for a Hopf object in a braided monoidal
-category as `CategoryTheory.HopfObj.antipode_comul`, by the same left-inverse-equals-right-inverse
-argument in the convolution monoid; the proof below is the ring-level analogue of that argument,
-stated for `HopfAlgebra R C` so that it applies directly to `Coalgebra.comul`.
+The anti-coalgebra identity and involutivity in the commutative case are standard; see Sweedler,
+*Hopf Algebras*, Chapter 4, especially Proposition 4.0.1 for involutivity. Mathlib formalizes the
+anti-coalgebra identity for a Hopf object in a braided monoidal category as
+`CategoryTheory.HopfObj.antipode_comul`, by the same left-inverse-equals-right-inverse argument
+in the convolution monoid; the proof below is the ring-level analogue of that argument, stated
+for `HopfAlgebra R C` so that it applies directly to `Coalgebra.comul`.
 -/
 
 public section
@@ -66,18 +73,24 @@ section Commutative
 
 variable {A : Type v} [CommSemiring A] [_root_.HopfAlgebra R A]
 
+/-- By the definition of `AlgHom.convInv`, convolution inversion composes an algebra map with
+the antipode. This isolates the definitional unfolding used in `antipode_antipode`. -/
+private lemma ofConv_inv (f : WithConv (A →ₐ[R] A)) :
+    (f⁻¹).ofConv = f.ofConv.comp (_root_.HopfAlgebra.antipodeAlgHom R A) :=
+  rfl
+
 /-- In a commutative Hopf algebra, applying the antipode twice is the identity. -/
 @[simp]
 theorem antipode_antipode (x : A) :
     HopfAlgebraStruct.antipode R (HopfAlgebraStruct.antipode R x) = x := by
-  have h := congrArg (fun f : WithConv (A →ₐ[R] A) ↦ f x)
-    (inv_inv (WithConv.toConv (AlgHom.id R A)))
-  -- The convolution inverse of an algebra map is its composite with the antipode.
-  change HopfAlgebraStruct.antipode R (HopfAlgebraStruct.antipode R x) = x at h
-  exact h
+  have h := congrArg WithConv.ofConv (inv_inv (WithConv.toConv (AlgHom.id R A)))
+  rw [ofConv_inv, ofConv_inv] at h
+  simpa only [AlgHom.comp_apply, WithConv.ofConv_toConv, AlgHom.id_apply,
+    _root_.HopfAlgebra.antipodeAlgHom_apply] using
+    DFunLike.congr_fun h x
 
 /-- The antipode of a commutative Hopf algebra as an involutive algebra equivalence. -/
-@[expose] noncomputable def antipodeAlgEquiv : A ≃ₐ[R] A :=
+noncomputable def antipodeAlgEquiv : A ≃ₐ[R] A :=
   AlgEquiv.ofAlgHom (_root_.HopfAlgebra.antipodeAlgHom R A)
     (_root_.HopfAlgebra.antipodeAlgHom R A)
     (AlgHom.ext fun x ↦ antipode_antipode x)
@@ -87,7 +100,15 @@ theorem antipode_antipode (x : A) :
 @[simp]
 theorem antipodeAlgEquiv_apply (x : A) :
     antipodeAlgEquiv (R := R) (A := A) x = HopfAlgebraStruct.antipode R x :=
-  rfl
+  by
+    rw [antipodeAlgEquiv, AlgEquiv.ofAlgHom_apply,
+      _root_.HopfAlgebra.antipodeAlgHom_apply]
+
+/-- The antipode algebra equivalence is its own inverse. -/
+@[simp]
+theorem antipodeAlgEquiv_symm :
+    (antipodeAlgEquiv (R := R) (A := A)).symm = antipodeAlgEquiv :=
+  by rw [antipodeAlgEquiv, AlgEquiv.ofAlgHom_symm]
 
 end Commutative
 
