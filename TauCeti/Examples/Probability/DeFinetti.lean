@@ -72,11 +72,6 @@ example := @mixedIID_of_contractable
 example := @deFinetti_viaL2
 example := @deFinetti_viaKoopman
 
--- The ergodic correspondence: de Finetti components are ergodic components.
-example := @exchangeable_ergodicSMul_iff_iid
-example := @exchangeable_ergodicSMul_iff_mem_extremePoints
-example := @deFinettiBarycenter_ergodicSMul_iff_dirac
-
 -- Representation, disintegration and uniqueness.
 example := @ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw
 example := @deFinetti_mixture
