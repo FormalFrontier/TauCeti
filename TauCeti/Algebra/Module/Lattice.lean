@@ -42,7 +42,7 @@ theorem Basis.span_range_extendOfIsLattice {κ : Type*} {N : Submodule R V} [N.I
     Submodule.map_top, Submodule.range_subtype]
 
 /-- The `R`-finrank of a full lattice in `V` equals the `K`-finrank of the ambient space. -/
-theorem finrank_of_isLattice [IsDomain R] [IsPrincipalIdealRing R] [Module.IsTorsionFree R K]
+theorem finrank_of_isLattice [IsDomain R] [IsPrincipalIdealRing R]
     (N : Submodule R V) [N.IsLattice K] :
     Module.finrank R N = Module.finrank K V :=
   congr_arg Cardinal.toNat (Submodule.IsLattice.rank' K N)
