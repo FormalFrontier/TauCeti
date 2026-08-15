@@ -207,6 +207,7 @@ instance : IsMulCommutative (GL2ScalarUnipotent R) :=
 /-- **Normal form for the scalar–unipotent subgroup**: its elements are exactly the invertible
 matrices `!![x, y; 0, x]` with equal diagonal entries. The upper-right entry `y` is unconstrained;
 it is the product of the diagonal unit with the unipotent coordinate. -/
+@[simp]
 theorem mem_gl2ScalarUnipotent_iff {g : GL (Fin 2) R} :
     g ∈ GL2ScalarUnipotent R ↔ ∃ (x : Rˣ) (y : R), g = jordanGL x y := by
   constructor

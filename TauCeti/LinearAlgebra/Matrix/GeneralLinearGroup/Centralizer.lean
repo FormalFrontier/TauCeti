@@ -75,9 +75,11 @@ elements. That subgroup is the product `Z U` of the centre with the unipotent ra
 subgroup, so it is `Gₘ × Gₐ` and not a torus — which is precisely what distinguishes this family
 from the two semisimple ones.
 
-Together the four families give the class sizes `1`, `q (q + 1)`, `q (q - 1)` and `q² - 1`. That
-every element of `GL₂(𝔽_q)` is conjugate to one of the four normal forms, and hence the class count
-`q² - 1`, is not proved here.
+Together the four families give the class sizes `1`, `q (q + 1)`, `q (q - 1)` and `q² - 1`. These
+are the sizes of the individual classes, not the numbers of classes in each family: the
+non-semisimple family, for instance, has one class for each of the `q - 1` possible eigenvalues.
+That every element of `GL₂(𝔽_q)` is conjugate to one of the four normal forms, and with it any
+enumeration of the classes themselves, is not proved here.
 
 The class sizes are read off the centralizer orders by orbit-stabilizer
 (`TauCeti.ConjClasses.ncard_carrier_mk`), together with `TauCeti.natCard_GL_fin_two`, which gives
@@ -346,14 +348,9 @@ theorem centralizer_jordanGL (hb : b ≠ 0) :
       ring
     exact ⟨Units.mk0 _ hu, d * b, Units.ext (by rw [hval, coe_jordanGL, Units.val_mk0])⟩
   · rintro ⟨x, y, rfl⟩
-    have hmul : ((jordanGL a b : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) *
-        ((jordanGL x y : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F)
-        = ((jordanGL x y : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) *
-          ((jordanGL a b : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) := by
-      rw [coe_jordanGL, coe_jordanGL]
-      ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two] <;> ring
-    exact hmul
+    -- Conversely both blocks lie in `Z U`, which is abelian, so they commute already there.
+    exact Commute.units_val (setLike_mul_comm
+      (jordanGL_mem_gl2ScalarUnipotent a b) (jordanGL_mem_gl2ScalarUnipotent x y))
 
 /-- **The order of the centralizer of a regular non-semisimple element of `GL₂`**: the centralizer
 is `TauCeti.GL2ScalarUnipotent F`, a copy of `Fˣ × (F, +)`, so over a field with `q` elements it has
