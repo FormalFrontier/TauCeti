@@ -37,6 +37,11 @@ hypotheses and is a separate downstream theorem.
 * J. S. Milne, *Algebraic Groups* (2017), Section 5.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Section 14.
 
+## Implementation notes
+
+The construction uses Mathlib's `sheafificationAdjunction`, its lift `Adjunction.mapGrp` to group
+objects, and the finite-product-preserving monoidal structure on type-valued sheafification.
+
 This is the fppf-sheaf-quotient step of Layer 3, "Normality and quotients", in the
 ReductiveGroups roadmap.
 -/
@@ -162,6 +167,28 @@ noncomputable def pointsFppfGroupObject (H : _root_.CommHopfAlgCat.{u} R) :
   exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.obj
     (pointsPresheafGrp H)
 
+/-- The underlying sheaf of `pointsFppfGroupObject` is canonically the universe lift of the
+existing group-valued points sheaf `HopfAlgebra.pointsFppfSheaf`. -/
+noncomputable def pointsFppfGroupObjectIso (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsFppfGroupObject H).X ≅
+      (sheafCompose (CommAlgCat.fppfTopology R)
+        ((forget GrpCat.{u}) ⋙ CategoryTheory.uliftFunctor.{u + 1, u})).obj
+          (HopfAlgebra.pointsFppfSheaf H) := by
+  let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  let F := (sheafCompose (CommAlgCat.fppfTopology R)
+    ((forget GrpCat.{u}) ⋙ CategoryTheory.uliftFunctor.{u + 1, u})).obj
+      (HopfAlgebra.pointsFppfSheaf H)
+  let e : (pointsPresheafGrp H).X ≅ F.obj := by
+    change _ ≅ (HopfAlgebra.pointsFppfSheaf H).obj ⋙
+      (forget GrpCat.{u}) ⋙ CategoryTheory.uliftFunctor.{u + 1, u}
+    rw [HopfAlgebra.pointsFppfSheaf_obj]
+    exact Iso.refl _
+  change (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
+    (pointsPresheafGrp H).X ≅ F
+  exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapIso e ≪≫
+    (sheafificationIso F).symm
+
 /-- The fppf quotient sheaf associated to a normal Hopf ideal, as a group object in type-valued
 fppf sheaves.
 
@@ -193,6 +220,20 @@ noncomputable def fppfGroupObjectToPresheaf
     Functor.Monoidal.ofChosenFiniteProducts _
   exact (sheafToPresheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.obj F
 
+/-- Maps from the sheafified points group object to a group object in fppf sheaves are naturally
+equivalent to maps from the points presheaf to its underlying presheaf. -/
+noncomputable def pointsFppfHomEquiv (H : _root_.CommHopfAlgCat.{u} R)
+    (F : Grp (Sheaf (CommAlgCat.fppfTopology R) (Type (u + 1)))) :
+    (pointsFppfGroupObject H ⟶ F) ≃
+      (pointsPresheafGrp H ⟶ fppfGroupObjectToPresheaf F) := by
+  let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  let _ : (sheafToPresheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  exact ((sheafificationAdjunction
+    (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp).homEquiv
+      (pointsPresheafGrp H) F
+
 /-- Maps from the fppf quotient sheaf to a group object in fppf sheaves are naturally equivalent
 to group-object maps from the pointwise quotient presheaf to its underlying presheaf. -/
 noncomputable def fppfQuotientHomEquiv (H : _root_.CommHopfAlgCat.{u} R)
@@ -208,6 +249,36 @@ noncomputable def fppfQuotientHomEquiv (H : _root_.CommHopfAlgCat.{u} R)
   exact ((sheafificationAdjunction (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp).homEquiv
     (pointwiseQuotientPresheafGrp H I hI) F
 
+/-- Under the sheafification adjunction, the quotient projection restricts to the pointwise
+quotient projection followed by the sheafification unit. -/
+@[simp]
+theorem fppfQuotientProjection_homEquiv (H : _root_.CommHopfAlgCat.{u} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) :
+    pointsFppfHomEquiv H (fppfQuotientSheaf H I hI) (fppfQuotientProjection H I hI) =
+      pointwiseQuotientPresheafGrpProjection H I hI ≫
+        fppfQuotientHomEquiv H I hI (fppfQuotientSheaf H I hI) (𝟙 _) := by
+  let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  let _ : (sheafToPresheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  change
+    ((sheafificationAdjunction
+      (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp).homEquiv _ _
+        ((presheafToSheaf
+          (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.map
+            (pointwiseQuotientPresheafGrpProjection H I hI)) =
+      pointwiseQuotientPresheafGrpProjection H I hI ≫
+        ((sheafificationAdjunction
+          (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp).homEquiv
+            (pointwiseQuotientPresheafGrp H I hI)
+            ((presheafToSheaf
+              (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.obj
+                (pointwiseQuotientPresheafGrp H I hI)) (𝟙 _)
+  rw [Adjunction.homEquiv_unit, Adjunction.homEquiv_unit]
+  simpa using (((sheafificationAdjunction
+    (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp).unit.naturality
+      (pointwiseQuotientPresheafGrpProjection H I hI)).symm
+
 /-- A group-object morphism from the pointwise quotient presheaf into the underlying presheaf of
 an fppf sheaf extends uniquely to the fppf quotient sheaf. -/
 noncomputable def fppfQuotientLift (H : _root_.CommHopfAlgCat.{u} R)
@@ -217,30 +288,5 @@ noncomputable def fppfQuotientLift (H : _root_.CommHopfAlgCat.{u} R)
       fppfGroupObjectToPresheaf F) :
     fppfQuotientSheaf H I hI ⟶ F :=
   (fppfQuotientHomEquiv H I hI F).symm f
-
-/-- The lift to the fppf quotient sheaf restricts to the original morphism on the pointwise
-quotient presheaf. -/
-@[simp]
-theorem fppfQuotientHomEquiv_fppfQuotientLift
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
-    (F : Grp (Sheaf (CommAlgCat.fppfTopology R) (Type (u + 1))))
-    (f : pointwiseQuotientPresheafGrp H I hI ⟶
-      fppfGroupObjectToPresheaf F) :
-    fppfQuotientHomEquiv H I hI F (fppfQuotientLift H I hI F f) = f :=
-  (fppfQuotientHomEquiv H I hI F).apply_symm_apply f
-
-/-- A morphism out of the fppf quotient sheaf is determined by the corresponding morphism from
-the pointwise quotient presheaf. -/
-theorem fppfQuotientLift_unique (H : _root_.CommHopfAlgCat.{u} R)
-    (I : HopfIdeal R H) (hI : I.IsNormal)
-    (F : Grp (Sheaf (CommAlgCat.fppfTopology R) (Type (u + 1))))
-    (f : pointwiseQuotientPresheafGrp H I hI ⟶
-      fppfGroupObjectToPresheaf F)
-    (g : fppfQuotientSheaf H I hI ⟶ F)
-    (hg : fppfQuotientHomEquiv H I hI F g = f) :
-    g = fppfQuotientLift H I hI F f := by
-  apply (fppfQuotientHomEquiv H I hI F).injective
-  rw [hg]
-  exact (fppfQuotientHomEquiv H I hI F).apply_symm_apply f |>.symm
 
 end TauCeti.CommHopfAlgCat
