@@ -488,7 +488,6 @@ lemma stdComplexLineEnergy_eq_zero_of_ae_eq_zero (form : SmoothTwoForm I M)
   (stdComplexLineEnergy_congr_ae hdu).trans (stdComplexLineEnergy_zero form J u μ)
 
 /-- A constant curve has zero energy when its differential field is `mfderiv`. -/
-@[simp]
 lemma mfderiv_stdComplexLineEnergy_const (form : SmoothTwoForm I M)
     (J : SmoothAlmostComplexStructure I M) (c : M) (μ : Measure (ℝ × ℝ)) :
     form.stdComplexLineEnergy J (fun _ ↦ c)

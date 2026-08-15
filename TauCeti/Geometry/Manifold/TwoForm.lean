@@ -92,7 +92,6 @@ lemma isAlt_bilinFormAt (form : SmoothTwoForm I M) (x : M) :
   fun v ↦ form.isAlt x v
 
 /-- A smooth two-form vanishes when its first tangent argument is zero. -/
-@[simp]
 lemma apply_zero_left (form : SmoothTwoForm I M) (x : M) (w : TangentSpace I x) :
     form x 0 w = 0 := by
   simpa only [bilinFormAt_apply, LinearMap.zero_apply] using congrArg
