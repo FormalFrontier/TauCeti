@@ -71,7 +71,7 @@ theorem yosidaLimitSemigroup_generator (hA : IsMDissipative A)
   · intro x T hT
     exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (A x) hT).congr_right
       fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (A x)).symm
-  · refine fun T => ⟨1, ?_⟩
+  · refine fun _ => ⟨1, ?_⟩
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with lambda hlambda u hu
     exact norm_exp_smul_yosidaApproximation_le_one
       (hA.mul_norm_resolvent_le_one hlambda) hlambda hu.1

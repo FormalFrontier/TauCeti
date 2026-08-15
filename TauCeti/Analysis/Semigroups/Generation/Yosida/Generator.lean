@@ -184,13 +184,13 @@ theorem le_generator_of_yosidaApproximation
       TendstoUniformlyOn
         (fun lambda u : ℝ => exp (u • yosidaApproximation A lambda) (A x))
         (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 T))
-    (hbound : ∀ T : ℝ, ∃ K : ℝ, ∀ᶠ lambda in atTop, ∀ u ∈ Set.Icc (0 : ℝ) T,
+    (hbound : ∀ {T : ℝ}, 0 < T → ∃ K : ℝ, ∀ᶠ lambda in atTop, ∀ u ∈ Set.Icc (0 : ℝ) T,
       ‖exp (u • yosidaApproximation A lambda)‖ ≤ K) :
     A ≤ S.generator := by
   refine S.le_generator_of_forall_tendsto fun x => ?_
   refine (S.tendsto_average_orbit_zero (A x)).congr' ?_
   filter_upwards [self_mem_nhdsWithin] with t (ht : (0 : ℝ) < t)
-  obtain ⟨K, hK⟩ := hbound t
+  obtain ⟨K, hK⟩ := hbound ht
   refine congrArg _ ?_
   rw [S.realOperator_sub_eq_intervalIntegral_of_yosidaApproximation x ht.le (happrox x)
     (hpoint x ht.le) (huniform x ht.le) hK, intervalIntegral.integral_of_le ht.le]
@@ -214,7 +214,7 @@ theorem generator_eq_of_yosidaApproximation
       TendstoUniformlyOn
         (fun mu u : ℝ => exp (u • yosidaApproximation A mu) (A x))
         (fun u : ℝ => S.realOperator u (A x)) atTop (Set.Icc 0 T))
-    (hbound : ∀ T : ℝ, ∃ K : ℝ, ∀ᶠ mu in atTop, ∀ u ∈ Set.Icc (0 : ℝ) T,
+    (hbound : ∀ {T : ℝ}, 0 < T → ∃ K : ℝ, ∀ᶠ mu in atTop, ∀ u ∈ Set.Icc (0 : ℝ) T,
       ‖exp (u • yosidaApproximation A mu)‖ ≤ K) :
     S.generator = A :=
   (LinearPMap.eq_of_le_of_mem_resolventSet
