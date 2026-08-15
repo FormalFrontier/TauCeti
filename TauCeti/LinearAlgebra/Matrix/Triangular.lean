@@ -33,7 +33,7 @@ which have no business importing Lie-algebra theory use it.
 * `Matrix.inv_apply_diag_of_isUpperTriangular` — where an upper-triangular matrix carries a `1`
   on the diagonal, so does its inverse.
 * `Matrix.IsUpperUnitriangular` — an upper-triangular matrix with diagonal one.
-* `Matrix.IsUpperUnitriangular.ext_of_lt` — upper-unitriangular matrices are determined by their
+* `Matrix.IsUpperUnitriangular.ext` — upper-unitriangular matrices are determined by their
   entries strictly above the diagonal.
 * `Matrix.IsUpperUnitriangular.det_eq_one` — an upper-unitriangular matrix has determinant one.
 * `Matrix.isNilpotent_of_isUpperTriangular_of_diag_eq_zero` — strict upper triangularity implies
@@ -70,7 +70,7 @@ theorem IsUpperUnitriangular.apply_diag [LT m] [Zero R] [One R]
 
 /-- Two upper-unitriangular matrices are equal if their entries strictly above the diagonal
 agree. -/
-theorem IsUpperUnitriangular.ext_of_lt [LinearOrder m] [Zero R] [One R] {M N : Matrix m m R}
+theorem IsUpperUnitriangular.ext [LinearOrder m] [Zero R] [One R] {M N : Matrix m m R}
     (hM : M.IsUpperUnitriangular) (hN : N.IsUpperUnitriangular)
     (h : ∀ i j, i < j → M i j = N i j) : M = N := by
   ext i j
