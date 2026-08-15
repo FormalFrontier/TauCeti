@@ -45,7 +45,7 @@ group of its non-universal antipodal cover.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupOneMulEquiv`: `π₁(RP¹, x) ≃* Multiplicative ℤ` at
   any basepoint.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupOneMulEquiv_def`: the factorization of that
-  isomorphism into homeomorphisms and the additive-circle computation.
+  isomorphism into the homeomorphism-invariance isomorphism and the circle computation.
 
 This advances `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13, `π₁(RPⁿ)`, by
 closing its `n = 1` case. It consumes Mathlib's orthonormal-basis isometry and the quotient
@@ -76,7 +76,7 @@ def sphereOneHomeomorphCircle :
 /-- The Euclidean-circle homeomorphism is the standard orthonormal-coordinate isometry on
 underlying points. -/
 @[simp]
-lemma sphereOneHomeomorphCircle_coe
+lemma coe_sphereOneHomeomorphCircle_apply
     (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     (sphereOneHomeomorphCircle x : ℂ) = Complex.orthonormalBasisOneI.repr.symm x :=
   LinearIsometryEquiv.coe_unitSphereEquiv_apply Complex.orthonormalBasisOneI.repr.symm x
@@ -87,7 +87,7 @@ lemma sphereOneHomeomorphCircle_neg
     (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     sphereOneHomeomorphCircle (-x) = -sphereOneHomeomorphCircle x := by
   ext
-  rw [sphereOneHomeomorphCircle_coe, Circle.coe_neg, sphereOneHomeomorphCircle_coe]
+  rw [coe_sphereOneHomeomorphCircle_apply, Circle.coe_neg, coe_sphereOneHomeomorphCircle_apply]
   exact map_neg Complex.orthonormalBasisOneI.repr.symm (x : EuclideanSpace ℝ (Fin 2))
 
 /-- The map from `RP¹` to the complex circle induced by squaring a unit-vector representative.
@@ -98,21 +98,21 @@ def toCircle : RealProjectiveSpace 1 → Circle :=
 
 /-- On a unit-vector representative, `toCircle` is the square of its complex coordinate. -/
 @[simp]
-lemma toCircle_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
+lemma toCircle_apply_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     toCircle (mk 1 x) = sphereOneHomeomorphCircle x ^ 2 :=
   RealProjectiveSpace.lift_mk 1 _ _ x
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is continuous. -/
 private lemma continuous_toCircle : Continuous toCircle :=
   (isQuotientMap_mk 1).continuous_iff.mpr
-    ((sphereOneHomeomorphCircle.continuous.pow 2).congr fun x => (toCircle_mk x).symm)
+    ((sphereOneHomeomorphCircle.continuous.pow 2).congr fun x => (toCircle_apply_mk x).symm)
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is injective. -/
 private lemma injective_toCircle : Function.Injective toCircle := by
   intro x y hxy
   obtain ⟨x, rfl⟩ := mk_surjective 1 x
   obtain ⟨y, rfl⟩ := mk_surjective 1 y
-  rw [toCircle_mk, toCircle_mk] at hxy
+  rw [toCircle_apply_mk, toCircle_apply_mk] at hxy
   have hxy' : (sphereOneHomeomorphCircle x : ℂ) ^ 2 =
       (sphereOneHomeomorphCircle y : ℂ) ^ 2 := congrArg Subtype.val hxy
   obtain h | h := sq_eq_sq_iff_eq_or_eq_neg.mp hxy'
@@ -127,7 +127,7 @@ private lemma surjective_toCircle : Function.Surjective toCircle := by
   intro z
   obtain ⟨w, hw⟩ := (Circle.isQuotientCoveringMap_npow 2).surjective z
   refine ⟨mk 1 (sphereOneHomeomorphCircle.symm w), ?_⟩
-  rw [toCircle_mk, sphereOneHomeomorphCircle.apply_symm_apply]
+  rw [toCircle_apply_mk, sphereOneHomeomorphCircle.apply_symm_apply]
   exact hw
 
 /-- **The real projective line is homeomorphic to the circle.** The map sends the antipodal class
@@ -158,38 +158,24 @@ lemma toCircle_oneBasepoint : toCircle oneBasepoint = 1 := by
 
 /-- The homeomorphism from the real projective line to the circle sends the natural basepoint to
 `1 : Circle`. -/
+@[simp]
 lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 := by
   rw [oneHomeomorphCircle_apply, toCircle_oneBasepoint]
 
 /-- **The fundamental group of the real projective line is infinite cyclic.** The isomorphism is
-obtained by transporting the additive-circle computation across `oneHomeomorphCircle` and
-`AddCircle.homeomorphCircle`. -/
+obtained by transporting the complex-circle computation across `oneHomeomorphCircle`. -/
 def fundamentalGroupOneMulEquiv (x : RealProjectiveSpace 1) :
     FundamentalGroup (RealProjectiveSpace 1) x ≃* Multiplicative ℤ :=
   (FundamentalGroup.homeomorphMulEquiv oneHomeomorphCircle x).trans
-    ((FundamentalGroup.homeomorphMulEquiv
-        (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-        (oneHomeomorphCircle x)).trans
-      (AddCircle.fundamentalGroupMulEquiv (2 * Real.pi) Real.two_pi_pos.ne'
-        ⟨Classical.choose (QuotientAddGroup.mk_surjective
-          ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-            (oneHomeomorphCircle x))),
-         Classical.choose_spec (QuotientAddGroup.mk_surjective _)⟩))
+    (Circle.fundamentalGroupMulEquiv (oneHomeomorphCircle x))
 
 /-- `fundamentalGroupOneMulEquiv` factors as the homeomorphism-invariance isomorphism of
-`oneHomeomorphCircle` composed with the circle homeomorphism and the additive-circle
-equivalence. This exposes the definition so consumers can reason about the isomorphism. -/
+`oneHomeomorphCircle` composed with the circle equivalence. This exposes the definition so
+consumers can reason about the isomorphism. -/
 theorem fundamentalGroupOneMulEquiv_def (x : RealProjectiveSpace 1) :
     fundamentalGroupOneMulEquiv x =
       (FundamentalGroup.homeomorphMulEquiv oneHomeomorphCircle x).trans
-        ((FundamentalGroup.homeomorphMulEquiv
-            (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-            (oneHomeomorphCircle x)).trans
-          (AddCircle.fundamentalGroupMulEquiv (2 * Real.pi) Real.two_pi_pos.ne'
-            ⟨Classical.choose (QuotientAddGroup.mk_surjective
-              ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-                (oneHomeomorphCircle x))),
-             Classical.choose_spec (QuotientAddGroup.mk_surjective _)⟩)) := by
+        (Circle.fundamentalGroupMulEquiv (oneHomeomorphCircle x)) := by
   unfold fundamentalGroupOneMulEquiv
   rfl
 

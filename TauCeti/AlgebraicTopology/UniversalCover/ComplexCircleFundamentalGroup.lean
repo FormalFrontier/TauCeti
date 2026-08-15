@@ -20,10 +20,10 @@ multiplicative group structure, and the two are identified by the homeomorphism
 
 Transporting the additive-circle computation across that homeomorphism with the
 homeomorphism-invariance isomorphism
-`TauCeti.FundamentalGroup.homeomorphMulEquivOfEq` gives the fundamental group of the genuine
-complex unit circle, based at `1`:
+`TauCeti.FundamentalGroup.homeomorphMulEquiv` gives the fundamental group of the genuine
+complex unit circle, based at any `x : Circle`:
 
-  `π₁(Circle, 1) ≃* Multiplicative ℤ`.
+  `π₁(Circle, x) ≃* Multiplicative ℤ`.
 
 This is the `Circle ⊆ ℂ` instance of the universal-covers roadmap Stage 4 target `π₁(S¹) ≅ ℤ`
 (`TauCetiRoadmap/UniversalCovers/README.md`, item 12), realised on the standard Mathlib circle
@@ -35,11 +35,11 @@ homeomorphic to the real line — follow exactly as for `AddCircle`. No Mathlib 
 
 ## Main declarations
 
-* `TauCeti.Circle.fundamentalGroupMulEquiv`: `π₁(Circle, 1) ≃* Multiplicative ℤ`.
+* `TauCeti.Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
 * `TauCeti.Circle.fundamentalGroupMulEquiv_def`: the factorization of that isomorphism into the
   homeomorphism-invariance isomorphism and the additive-circle computation.
 * `TauCeti.Circle.nontrivial_fundamentalGroup`, `TauCeti.Circle.infinite_fundamentalGroup`:
-  the fundamental group of `Circle`, based at `1`, is nontrivial and infinite.
+  the fundamental group of `Circle`, based at `x`, is nontrivial and infinite.
 * `TauCeti.Circle.not_simplyConnectedSpace`, `TauCeti.Circle.not_contractibleSpace`:
   `Circle` is not simply connected and not contractible.
 * `TauCeti.Circle.isEmpty_homeomorph_real`: `Circle` is not homeomorphic to `ℝ`.
@@ -63,45 +63,48 @@ theorem homeomorphCircle_symm_one :
   rw [Homeomorph.symm_apply_eq, AddCircle.homeomorphCircle_apply, AddCircle.toCircle_zero]
 
 /-- The fundamental group of the complex unit circle `Circle = {z : ℂ | ‖z‖ = 1}`, based at
-`1`, is `Multiplicative ℤ`: `π₁(S¹) ≅ ℤ`. It is obtained by transporting the additive-circle
-computation `TauCeti.AddCircle.fundamentalGroupMulEquivZero` across the homeomorphism
-`AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`, which carries the basepoint `0` to
-`1`. -/
-def fundamentalGroupMulEquiv : FundamentalGroup Circle 1 ≃* Multiplicative ℤ :=
-  (FundamentalGroup.homeomorphMulEquivOfEq
-      (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-      homeomorphCircle_symm_one).trans
-    (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne')
+`x`, is `Multiplicative ℤ`: `π₁(S¹, x) ≅ ℤ`. It is obtained by transporting the additive-circle
+computation `TauCeti.AddCircle.fundamentalGroupMulEquiv` across the homeomorphism
+`AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`. -/
+def fundamentalGroupMulEquiv (x : Circle) : FundamentalGroup Circle x ≃* Multiplicative ℤ :=
+  (FundamentalGroup.homeomorphMulEquiv
+      (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x).trans
+    (AddCircle.fundamentalGroupMulEquiv (2 * Real.pi) Real.two_pi_pos.ne'
+      ⟨Classical.choose (QuotientAddGroup.mk_surjective
+        ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x)),
+       Classical.choose_spec (QuotientAddGroup.mk_surjective _)⟩)
 
 /-- `fundamentalGroupMulEquiv` factors as the homeomorphism-invariance isomorphism of
-`AddCircle.homeomorphCircle.symm` (based at `1 ↦ 0`) composed with the additive-circle
-computation `AddCircle.fundamentalGroupMulEquivZero`. This exposes the otherwise-opaque
-definition, so a downstream consumer can rewrite a loop's image in `Multiplicative ℤ` through the
-component `@[simp]` lemmas `FundamentalGroup.homeomorphMulEquivOfEq_apply` and the
-`AddCircle.fundamentalGroupMulEquivZero` characterization. -/
-theorem fundamentalGroupMulEquiv_def :
-    fundamentalGroupMulEquiv =
-      (FundamentalGroup.homeomorphMulEquivOfEq
-          (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-          homeomorphCircle_symm_one).trans
-        (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne') := by
+`AddCircle.homeomorphCircle.symm` composed with the additive-circle computation
+`AddCircle.fundamentalGroupMulEquiv`. This exposes the otherwise-opaque definition, so a downstream
+consumer can rewrite a loop's image in `Multiplicative ℤ` through the component `@[simp]` lemmas
+`FundamentalGroup.homeomorphMulEquiv_apply` and the `AddCircle.fundamentalGroupMulEquiv`
+characterization. -/
+theorem fundamentalGroupMulEquiv_def (x : Circle) :
+    fundamentalGroupMulEquiv x =
+      (FundamentalGroup.homeomorphMulEquiv
+          (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x).trans
+        (AddCircle.fundamentalGroupMulEquiv (2 * Real.pi) Real.two_pi_pos.ne'
+          ⟨Classical.choose (QuotientAddGroup.mk_surjective
+            ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x)),
+           Classical.choose_spec (QuotientAddGroup.mk_surjective _)⟩) := by
   unfold fundamentalGroupMulEquiv
   rfl
 
-/-- The fundamental group of the complex unit circle `Circle`, based at `1`, is nontrivial. See
+/-- The fundamental group of the complex unit circle `Circle`, based at `x`, is nontrivial. See
 `fundamentalGroupMulEquiv` for the full identification with `Multiplicative ℤ`. -/
-theorem nontrivial_fundamentalGroup : Nontrivial (FundamentalGroup Circle 1) :=
-  fundamentalGroupMulEquiv.toEquiv.nontrivial
+theorem nontrivial_fundamentalGroup (x : Circle) : Nontrivial (FundamentalGroup Circle x) :=
+  (fundamentalGroupMulEquiv x).toEquiv.nontrivial
 
-/-- The fundamental group of the complex unit circle `Circle`, based at `1`, is infinite. See
+/-- The fundamental group of the complex unit circle `Circle`, based at `x`, is infinite. See
 `fundamentalGroupMulEquiv` for the full identification with `Multiplicative ℤ`. -/
-theorem infinite_fundamentalGroup : Infinite (FundamentalGroup Circle 1) :=
-  Infinite.of_injective _ fundamentalGroupMulEquiv.symm.injective
+theorem infinite_fundamentalGroup (x : Circle) : Infinite (FundamentalGroup Circle x) :=
+  Infinite.of_injective _ (fundamentalGroupMulEquiv x).symm.injective
 
 /-- The complex unit circle `Circle` is **not simply connected**: its fundamental group is
 nontrivial, whereas a simply connected space has a subsingleton fundamental group. -/
 theorem not_simplyConnectedSpace : ¬ SimplyConnectedSpace Circle :=
-  haveI := nontrivial_fundamentalGroup
+  haveI := nontrivial_fundamentalGroup 1
   not_simplyConnectedSpace_of_nontrivial_fundamentalGroup (1 : Circle)
 
 /-- The complex unit circle `Circle` is **not contractible**: a contractible space is simply
