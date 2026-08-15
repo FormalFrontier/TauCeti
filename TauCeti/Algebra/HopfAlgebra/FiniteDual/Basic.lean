@@ -12,9 +12,9 @@ import TauCeti.Algebra.Coalgebra.Convolution
 /-!
 # The finite dual of a Hopf algebra
 
-For a finite-dimensional bialgebra `H` over a field `k`, the linear dual carries the transposed
-bialgebra structure. Its multiplication is convolution, while its comultiplication and counit are
-characterized by
+For a finite projective bialgebra `H` over a commutative ring `k`, the linear dual carries the
+transposed bialgebra structure. Its multiplication is convolution, while its comultiplication and
+counit are characterized by
 
 ```text
 Delta(phi)(x tensor y) = phi (x * y),        epsilon(phi) = phi(1).
@@ -22,8 +22,8 @@ Delta(phi)(x tensor y) = phi (x * y),        epsilon(phi) = phi(1).
 
 If `H` is a Hopf algebra, precomposition with its antipode is the antipode of the dual. This is
 the algebraic construction underlying Cartier duality for finite group schemes. The present file
-builds the finite-dimensional Hopf dual over a field; the scheme-level duality and the extension
-to finite locally free Hopf algebras over a general base remain separate steps.
+builds the finite locally free Hopf dual over a general affine base; the scheme-level duality
+remains a separate step.
 
 ## Main declarations
 
@@ -56,17 +56,51 @@ abbrev ConvolutionDual (k : Type u) (H : Type v) [CommSemiring k] [AddCommMonoid
 
 namespace ConvolutionDual
 
-/-- The convolution dual of a finite-dimensional vector space is finite-dimensional. -/
-noncomputable instance instFinite (k : Type u) (H : Type v) [Field k]
-    [AddCommMonoid H] [Module k H] [Module.Finite k H] :
+/-- The convolution dual of a finite projective module is finite. -/
+noncomputable instance instFinite (k : Type u) (H : Type v) [CommSemiring k]
+    [AddCommMonoid H] [Module k H] [Module.Finite k H] [Module.Projective k H] :
     Module.Finite k (ConvolutionDual k H) := by
-  let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-  exact LinearEquiv.finiteDimensional (WithConv.linearEquiv k (Module.Dual k H)).symm
+  exact Module.Finite.equiv (WithConv.linearEquiv k (Module.Dual k H)).symm
+
+/-- The convolution dual of a finite projective module is projective. -/
+noncomputable instance instProjective (k : Type u) (H : Type v) [CommSemiring k]
+    [AddCommMonoid H] [Module k H] [Module.Finite k H] [Module.Projective k H] :
+    Module.Projective k (ConvolutionDual k H) := by
+  exact Module.Projective.of_equiv (WithConv.linearEquiv k (Module.Dual k H)).symm
 
 section LinearAlgebra
 
-variable (k : Type u) (H : Type v) [Field k] [AddCommMonoid H] [Module k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [CommRing k] [AddCommMonoid H] [Module k H]
+  [Module.Finite k H] [Module.Projective k H]
+
+/-- Tensor products of duals commute with dualization for finite projective modules. -/
+private noncomputable def projectiveDualDistribEquiv
+    (M N : Type*) [AddCommMonoid M] [Module k M] [Module.Finite k M]
+    [Module.Projective k M] [AddCommMonoid N] [Module k N] [Module.Finite k N]
+    [Module.Projective k N] :
+    Module.Dual k M ⊗[k] Module.Dual k N ≃ₗ[k] Module.Dual k (M ⊗[k] N) :=
+  (homTensorHomEquiv k M N k k).trans
+    ((LinearEquiv.refl k (M ⊗[k] N)).arrowCongr (TensorProduct.lid k k))
+
+private theorem projectiveDualDistribEquiv_toLinearMap
+    (M N : Type*) [AddCommMonoid M] [Module k M] [Module.Finite k M]
+    [Module.Projective k M] [AddCommMonoid N] [Module k N] [Module.Finite k N]
+    [Module.Projective k N] :
+    (projectiveDualDistribEquiv k M N).toLinearMap = TensorProduct.dualDistrib k M N := by
+  ext phi psi m n
+  simp [projectiveDualDistribEquiv]
+
+@[simp]
+private theorem projectiveDualDistribEquiv_apply
+    (M N : Type*) [AddCommMonoid M] [Module k M] [Module.Finite k M]
+    [Module.Projective k M] [AddCommMonoid N] [Module k N] [Module.Finite k N]
+    [Module.Projective k N] (w : Module.Dual k M ⊗[k] Module.Dual k N)
+    (z : M ⊗[k] N) :
+    projectiveDualDistribEquiv k M N w z = TensorProduct.dualDistrib k M N w z := by
+  have hw := congrArg
+    (fun f : (Module.Dual k M ⊗[k] Module.Dual k N) →ₗ[k] Module.Dual k (M ⊗[k] N) => f w)
+    (projectiveDualDistribEquiv_toLinearMap k M N)
+  exact DFunLike.congr_fun hw z
 
 /-- Forget the convolution wrappers on both factors of a tensor of finite-dual elements. -/
 private noncomputable def tensorUnwrap :
@@ -78,7 +112,7 @@ private noncomputable def tensorUnwrap :
 noncomputable def dualDistribEquiv :
     ConvolutionDual k H ⊗[k] ConvolutionDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) := by
   letI : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-  exact (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
+  exact (tensorUnwrap k H).trans (projectiveDualDistribEquiv k H H)
 
 private theorem dualDistribEquiv_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (z : H ⊗[k] H) :
@@ -86,14 +120,14 @@ private theorem dualDistribEquiv_apply
       TensorProduct.dualDistrib k H H ((tensorUnwrap k H) w) z :=
   by
     let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
-    rfl
+    rw [dualDistribEquiv, LinearEquiv.trans_apply, projectiveDualDistribEquiv_apply]
 
 end LinearAlgebra
 
 section Coalgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Semiring H] [Algebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [CommRing k] [Semiring H] [Algebra k H]
+  [Module.Finite k H] [Module.Projective k H]
 
 /-- The comultiplication and counit on the finite dual, obtained by transposing multiplication
 and unit on the original algebra. -/
@@ -136,7 +170,7 @@ private noncomputable def evalTripleEquiv :
   letI : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
   exact
     (TensorProduct.congr (WithConv.linearEquiv k _) (dualDistribEquiv k H)).trans
-      (TensorProduct.dualDistribEquiv k H (H ⊗[k] H))
+      (projectiveDualDistribEquiv k H (H ⊗[k] H))
 
 private theorem evalTripleEquiv_tmul_tmul_apply
     (phi psi chi : ConvolutionDual k H) (x y z : H) :
@@ -292,8 +326,8 @@ end Coalgebra
 
 section Bialgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Semiring H] [Bialgebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [CommRing k] [Semiring H] [Bialgebra k H]
+  [Module.Finite k H] [Module.Projective k H]
 
 /-- `dualDistribEquiv` packaged in the convolution algebra on functionals on the tensor square. -/
 private noncomputable def evalTensorConv :
@@ -367,8 +401,8 @@ end ConvolutionDual
 
 namespace ConvolutionDual
 
-variable (k : Type u) (H : Type v) [Field k] [CommSemiring H] [Algebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [CommRing k] [CommSemiring H] [Algebra k H]
+  [Module.Finite k H] [Module.Projective k H]
 
 private theorem dualDistribEquiv_comm_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (x y : H) :
@@ -408,8 +442,8 @@ namespace ConvolutionDual
 
 section HopfAlgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Semiring H] [HopfAlgebra k H]
-  [Module.Finite k H]
+variable (k : Type u) (H : Type v) [CommRing k] [Semiring H] [HopfAlgebra k H]
+  [Module.Finite k H] [Module.Projective k H]
 
 /-- The antipode operation on the finite dual, obtained by transposing the antipode of the
 original Hopf algebra. -/
@@ -487,7 +521,7 @@ private theorem dualDistribEquiv_map_antipode_right_apply
           rfl
 
 /-- The Hopf algebra structure on the finite dual. Its antipode is precomposition with the
-antipode of the original finite-dimensional Hopf algebra. -/
+antipode of the original finite projective Hopf algebra. -/
 noncomputable instance instHopfAlgebra : HopfAlgebra k (ConvolutionDual k H) :=
   HopfAlgebra.ofConvInverse
     (HopfAlgebra.antipode k (A := ConvolutionDual k H))
