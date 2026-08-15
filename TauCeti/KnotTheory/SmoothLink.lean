@@ -11,31 +11,28 @@ public import TauCeti.Geometry.Sphere.Defs
 /-!
 # Geometric presentation of knots and links
 
-This file builds the geometric presentation layer of knot theory, as specified in Layer 4 of the
-GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4, "knot theory,
-done properly"). Knots have no single privileged representation; the geometric presentation
-represents a knot as a smooth embedding of the circle `Circle` into an ambient charted space $M$.
-The embedding is parametrized and no quotient by reparametrization or reversal is taken, so
-orientation is not tracked as a separate structure yet.
-
-This file introduces:
-* `TauCeti.SmoothKnot`: smooth embeddings $\mathrm{Circle} \hookrightarrow M$.
-* `TauCeti.SmoothKnotSphere3`: smooth knots in the 3-sphere $S^3$.
-* `TauCeti.SmoothLink`: $k$-component smooth-link presentations in a charted space $M$, bundling
-  $k$ component knots with pairwise disjoint embedding images.
-* `TauCeti.SmoothLinkSphere3`: smooth $k$-component links in $S^3$.
+This file builds the first piece of the geometric presentation layer of knot theory, as specified
+in Layer 4 of the GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4,
+"knot theory, done properly"). Knots have no single privileged representation; the geometric
+presentation represents a knot as a smooth embedding of the circle `Circle` into an ambient
+charted space $M$. The embedding is parametrized and no quotient by reparametrization or reversal
+is taken, so orientation is not tracked as a separate structure yet; framing, ambient-isotopy
+equivalence, and sliceness are also not provided here.
 
 ## Main definitions
 
 * `TauCeti.SmoothKnot`: type of smooth embeddings $\mathrm{Circle} \hookrightarrow M$.
 * `TauCeti.SmoothKnotSphere3`: type of smooth knots in the standard 3-sphere $S^3$.
-* `TauCeti.SmoothLink`: type of $k$-component smooth links in $M$.
+* `TauCeti.SmoothLink`: type of $k$-component smooth links in $M$, bundling $k$ component knots
+  with pairwise disjoint embedding images.
 * `TauCeti.SmoothLinkSphere3`: type of $k$-component smooth links in $S^3$.
+* `TauCeti.SmoothLink.ofKnot`: convert a single smooth knot into a 1-component smooth link.
+
+## Main results
+
 * `TauCeti.SmoothLink.disjoint_range`: disjointness of component embedding images.
-* `TauCeti.SmoothLink.apply_ne_apply`: distinct components take different values at any
+* `TauCeti.SmoothLink.component_apply_ne`: distinct components take different values at any
   pair of points.
-* `TauCeti.SmoothLink.pairwise_disjoint_range_iff`: equivalence between pairwise disjoint
-  component ranges and pointwise separation.
 * `TauCeti.SmoothLink.component_injective`: distinct components of a smooth link are distinct
   knot embeddings.
 
@@ -89,13 +86,14 @@ namespace SmoothLink
 variable {I M}
 
 /-- Convert a single smooth knot into a 1-component smooth link. -/
-def ofKnot (K : SmoothKnot I M) : SmoothLink I M 1 where
+public def ofKnot (K : SmoothKnot I M) : SmoothLink I M 1 where
   component _ := K
   pairwise_disjoint_range := Subsingleton.pairwise
 
 @[simp]
 theorem ofKnot_component (K : SmoothKnot I M) (i : Fin 1) :
-    (ofKnot K).component i = K := (rfl)
+    (ofKnot K).component i = K := by
+  rfl
 
 /-- The embedding images of distinct components of a smooth link are disjoint. -/
 theorem disjoint_range {k : ℕ} (L : SmoothLink I M k) {i j : Fin k} (h : i ≠ j) :
@@ -103,22 +101,9 @@ theorem disjoint_range {k : ℕ} (L : SmoothLink I M k) {i j : Fin k} (h : i ≠
   L.pairwise_disjoint_range h
 
 /-- Two distinct components of a smooth link take different values at any pair of points. -/
-theorem apply_ne_apply {k : ℕ} (L : SmoothLink I M k) {i j : Fin k} (h : i ≠ j)
+theorem component_apply_ne {k : ℕ} (L : SmoothLink I M k) {i j : Fin k} (h : i ≠ j)
     (x y : Circle) : L.component i x ≠ L.component j y :=
-  Disjoint.ne_of_mem (L.disjoint_range h) (mem_range_self x) (mem_range_self y)
-
-/-- Characterisation of pairwise disjointness of component ranges in terms of pointwise
-separation. -/
-theorem pairwise_disjoint_range_iff {k : ℕ} (c : Fin k → SmoothKnot I M) :
-    (Pairwise fun i j => Disjoint (range (c i)) (range (c j))) ↔
-      ∀ i j, i ≠ j → ∀ x y, c i x ≠ c j y := by
-  constructor
-  · intro h i j hij x y
-    exact Disjoint.ne_of_mem (h hij) (mem_range_self x) (mem_range_self y)
-  · intro h i j hij
-    rw [Set.disjoint_left]
-    rintro _ ⟨x, rfl⟩ ⟨y, hy⟩
-    exact h i j hij x y hy.symm
+  Set.disjoint_range_iff.1 (L.disjoint_range h) x y
 
 /-- Distinct components of a smooth link are distinct knot embeddings. -/
 theorem component_injective {k : ℕ} (L : SmoothLink I M k) :
