@@ -53,6 +53,8 @@ elementary matrices against the diagonal torus.
   pairs that do not chain commute.
 * `Matrix.SpecialLinearGroup.commute_transvection`: determinant-one transvections at non-chaining
   index pairs commute.
+* `Matrix.SpecialLinearGroup.commutatorElement_transvection`: the commutator of two chaining
+  determinant-one transvections in `SL n A`.
 * `TauCeti.transvection_mul_transvection_eq_mul_mul`: the product of two chaining transvections,
   in the two orders. As a matrix identity it needs only `i ≠ j` and `i ≠ l`; the third index
   condition `j ≠ l` is what makes the three matrices involved transvections.
@@ -232,6 +234,18 @@ theorem _root_.Matrix.SpecialLinearGroup.commute_transvection (hij : i ≠ j) (h
       (Matrix.SpecialLinearGroup.transvection hkl d) := by
   ext a b
   exact congrFun₂ (TauCeti.commute_transvection hjk hli c d) a b
+
+/-- **The Chevalley commutator relation of type `A` in `SL n A`.** The commutator of the
+determinant-one transvections `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`, is
+`xᵢₗ(cd)`. -/
+theorem _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection
+    (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
+    ⁅Matrix.SpecialLinearGroup.transvection hij c,
+      Matrix.SpecialLinearGroup.transvection hjl d⁆ =
+      Matrix.SpecialLinearGroup.transvection hil (c * d) := by
+  apply SpecialLinearGroup.toGL_injective
+  rw [map_commutatorElement]
+  exact TauCeti.commutatorElement_transvectionUnit hij hjl hil c d
 
 end Unit
 
