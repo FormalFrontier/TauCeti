@@ -24,12 +24,16 @@ characteristic equations.
 
 ## Main results
 
+* `TauCeti.Submodule.IsLattice.isBaseChange_subtype`: the inclusion of a full lattice submodule
+  is a base change from `ℤ` to `ℚ`.
 * `TauCeti.IntegralLattice.isBaseChange_subtype`: the carrier inclusion is a base change from
   `ℤ` to `ℚ`.
 * `TauCeti.IntegralLattice.rationalizationEquiv`: the canonical equivalence
   `ℚ ⊗[ℤ] L ≃ₗ[ℚ] V`.
 * `TauCeti.IntegralLattice.rationalizationIsometry`: this equivalence is an isometry from
   `L.integralForm.baseChange ℚ` to `L.form`.
+* `TauCeti.IntegralLattice.rationalizationIsometry_apply`: evaluating the rationalization isometry
+  coincides with the rationalization equivalence.
 
 ## References
 
@@ -47,20 +51,19 @@ universe u
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
-namespace IntegralLattice
+namespace Submodule
 
-/-- The inclusion of the carrier of a full integral lattice into its ambient rational vector
-space exhibits that space as base change from `ℤ` to `ℚ`.
+namespace IsLattice
 
-The proof uses a carrier basis only to establish bijectivity. The public equivalence below is
-`IsBaseChange.equiv`, and is therefore characterized canonically by its value on pure tensors. -/
-theorem isBaseChange_subtype (L : IntegralLattice V) :
-    IsBaseChange ℚ L.carrier.subtype := by
-  let b := Module.Free.chooseBasis ℤ L
-  let e : ℚ ⊗[ℤ] L ≃ₗ[ℚ] V :=
+/-- The inclusion of a full lattice submodule into its ambient rational vector space exhibits that
+space as base change from `ℤ` to `ℚ`. -/
+theorem isBaseChange_subtype (S : Submodule ℤ V) [S.IsLattice ℚ] :
+    IsBaseChange ℚ S.subtype := by
+  let b := Module.Free.chooseBasis ℤ S
+  let e : ℚ ⊗[ℤ] S ≃ₗ[ℚ] V :=
     (b.baseChange ℚ).equiv (b.extendOfIsLattice ℚ) (Equiv.refl _)
-  have hmap : (e.toLinearMap.restrictScalars ℤ).comp (TensorProduct.mk ℤ ℚ L 1) =
-      L.carrier.subtype := by
+  have hmap : (e.toLinearMap.restrictScalars ℤ).comp (TensorProduct.mk ℤ ℚ S 1) =
+      S.subtype := by
     apply b.ext
     intro i
     -- The two wrapper coercions prevent the basis simp lemmas from seeing the pure tensor.
@@ -68,6 +71,18 @@ theorem isBaseChange_subtype (L : IntegralLattice V) :
     rw [← Module.Basis.baseChange_apply ℚ b i, Basis.equiv_apply,
       Basis.extendOfIsLattice_apply, Equiv.refl_apply]
   exact IsBaseChange.of_equiv e fun x ↦ DFunLike.congr_fun hmap x
+
+end IsLattice
+
+end Submodule
+
+namespace IntegralLattice
+
+/-- The inclusion of the carrier of a full integral lattice into its ambient rational vector
+space exhibits that space as base change from `ℤ` to `ℚ`. -/
+theorem isBaseChange_subtype (L : IntegralLattice V) :
+    IsBaseChange ℚ L.carrier.subtype :=
+  Submodule.IsLattice.isBaseChange_subtype L.carrier
 
 /-- The canonical rationalization equivalence from the abstract scalar extension of the carrier
 to the ambient rational vector space. -/
@@ -130,6 +145,13 @@ noncomputable def rationalizationIsometry (L : IntegralLattice V) :
     (L.integralForm.baseChange ℚ).IsometryEquiv L.form where
   toLinearEquiv := L.rationalizationEquiv
   map_app' := L.form_rationalizationEquiv
+
+/-- Evaluating the rationalization isometry on a tensor product element coincides with the
+rationalization equivalence. -/
+@[simp]
+theorem rationalizationIsometry_apply (L : IntegralLattice V) (x : ℚ ⊗[ℤ] L) :
+    L.rationalizationIsometry x = L.rationalizationEquiv x := by
+  rfl
 
 /-- Evaluating the ambient form on rational multiples of lattice vectors recovers the scalar
 extension formula for the integral form. -/
