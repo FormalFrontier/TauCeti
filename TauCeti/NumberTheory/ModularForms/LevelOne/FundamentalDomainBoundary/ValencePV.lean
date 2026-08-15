@@ -404,7 +404,7 @@ theorem sum_orderOfVanishingAt_add_qExpansionOrderAtCusp_eq [SlashInvariantFormC
   -- Both are forced by the data: excision centres sit on the unit circle, and every divisor
   -- point has `|re| < 1/2` while the basepoint has real part exactly `1/2`.
   have hHgt : ∀ s ∈ S, s.im < H := fun s hs => by
-    have h1 : s.im ≤ ‖s‖ := (le_abs_self _).trans (Complex.abs_im_le_norm s)
+    have h1 : s.im ≤ ‖s‖ := Complex.im_le_norm s
     rw [hnorm s hs] at h1
     linarith
   have hbase : fdBoundary H 0 ∉ (T : Set ℂ) := fun hmem => by
