@@ -116,6 +116,18 @@ theorem spinMinus_def : spinMinus Q P = evenOdd (0 : QuadraticForm K P.W) 1 :=
   -- `(rfl)`, not `rfl`: the body of `spinMinus` is not `@[expose]`d.
   (rfl)
 
+/-- **A spinor lies in `S⁺` exactly when it is of even exterior parity.** -/
+@[simp]
+theorem mem_spinPlus {s : ExteriorAlgebra K P.W} :
+    s ∈ spinPlus Q P ↔ s ∈ evenOdd (0 : QuadraticForm K P.W) 0 := by
+  rw [spinPlus_def]
+
+/-- **A spinor lies in `S⁻` exactly when it is of odd exterior parity.** -/
+@[simp]
+theorem mem_spinMinus {s : ExteriorAlgebra K P.W} :
+    s ∈ spinMinus Q P ↔ s ∈ evenOdd (0 : QuadraticForm K P.W) 1 := by
+  rw [spinMinus_def]
+
 /-- **The spinor module is the sum of its two half-spin summands**, `S = S⁺ ⊕ S⁻`. This is the
 exterior parity grading, and it holds for every polarization. Invariance of the summands
 (`TauCeti.spinPlus_invariant`) does not: it needs a polarization without a line summand. -/
