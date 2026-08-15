@@ -62,7 +62,6 @@ namespace IntegralLattice
 def norm (L : IntegralLattice V) : QuadraticForm ℚ V := L.form.toQuadraticMap
 
 /-- Evaluating the rational norm of an ambient vector yields its self-pairing. -/
-@[simp]
 theorem norm_apply (L : IntegralLattice V) (x : V) : L.norm x = L.form x x :=
   LinearMap.BilinMap.toQuadraticMap_apply L.form x
 
@@ -71,7 +70,6 @@ noncomputable def integralNorm (L : IntegralLattice V) : QuadraticForm ℤ L :=
   L.integralForm.toQuadraticMap
 
 /-- Evaluating the integral norm of a lattice vector yields its integral self-pairing. -/
-@[simp]
 theorem integralNorm_apply (L : IntegralLattice V) (x : L) :
     L.integralNorm x = L.integralForm x x :=
   LinearMap.BilinMap.toQuadraticMap_apply L.integralForm x
@@ -88,7 +86,6 @@ theorem norm_zero (L : IntegralLattice V) : L.norm 0 = 0 :=
   L.norm.map_zero
 
 /-- The rational norm is invariant under negation. -/
-@[simp]
 theorem norm_neg (L : IntegralLattice V) (x : V) : L.norm (-x) = L.norm x :=
   L.norm.map_neg x
 
@@ -114,7 +111,6 @@ theorem integralNorm_zero (L : IntegralLattice V) : L.integralNorm 0 = 0 :=
   L.integralNorm.map_zero
 
 /-- The integral norm is invariant under negation. -/
-@[simp]
 theorem integralNorm_neg (L : IntegralLattice V) (x : L) :
     L.integralNorm (-x) = L.integralNorm x :=
   L.integralNorm.map_neg x
