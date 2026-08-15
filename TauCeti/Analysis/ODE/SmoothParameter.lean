@@ -78,7 +78,17 @@ private theorem picardResidual_apply (f : C(E × F, F)) (x₀ : F)
       ContinuousMap.unitIntervalIntegral (f.comp (parameterizedPath p)) := by
   rfl
 
-/-- A smooth vector field gives a smooth Picard residual. -/
+/-- **A path's Picard residual vanishes exactly when it satisfies the Picard integral equation.**
+The residual is the path minus the constant path at `x₀` minus the integrated field, so the two
+sides are the same statement read as an equation of paths and pointwise on `[0, 1]` respectively.
+Mathlib states the same equivalence for its own path space as `ODE.FunSpace.isFixedPt_next_iff`. -/
+private theorem picardResidual_eq_zero_iff (gc : C(E × F, F)) (x₀ : F) (p : E)
+    (q : C(Set.Icc (0 : ℝ) 1, F)) :
+    picardResidual gc x₀ (p, q) = 0 ↔ ∀ t : Set.Icc (0 : ℝ) 1,
+      q t = x₀ + ∫ s in (0 : ℝ)..t, gc (p, q (Set.projIcc 0 1 zero_le_one s)) := by
+  simp [ContinuousMap.ext_iff, sub_sub, sub_eq_zero]
+
+/-- A vector field of class `Cⁿ` gives a Picard residual of class `Cⁿ`. -/
 private theorem contDiff_picardResidual (n : ℕ) (f : C(E × F, F))
     (hf : ContDiff ℝ n f) (x₀ : F) :
     ContDiff ℝ n (picardResidual f x₀) := by
@@ -135,6 +145,49 @@ private theorem hasDerivWithinAt_Icc_of_forall_eq_picard
     exact hq ⟨s, hs⟩
   · exact ht
 
+/-- **The path-derivative of the Picard residual at the constant base solution is invertible.**
+For a continuously differentiable field vanishing near `x₀` at the base parameter `p₀`, the
+restriction of
+`fderiv ℝ (picardResidual gc x₀)` to the path direction is invertible at `(p₀, const x₀)`. -/
+private theorem isInvertible_fderiv_picardResidual_comp_inr
+    (gc : C(E × F, F)) (hg : ContDiff ℝ 1 gc) (p₀ : E) (x₀ : F)
+    (hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0) :
+    (fderiv ℝ (picardResidual gc x₀)
+          (p₀, (ContinuousMap.const _ x₀ : C(Set.Icc (0 : ℝ) 1, F))) ∘L
+        ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)).IsInvertible := by
+  have hR : ContDiffAt ℝ 1 (picardResidual gc x₀)
+      (p₀, (ContinuousMap.const _ x₀ : C(Set.Icc (0 : ℝ) 1, F))) :=
+    (contDiff_picardResidual 1 gc hg x₀).contDiffAt
+  have hpartial := hasStrictFDerivAt_picardResidual_path gc p₀ x₀ hgzero
+  have hdiff := hR.differentiableAt (by norm_num)
+  have hpartialEq :=
+    (hdiff.hasFDerivAt.comp (ContinuousMap.const (Set.Icc (0 : ℝ) 1) x₀)
+      (hasFDerivAt_prodMk_right (𝕜 := ℝ) p₀
+        (ContinuousMap.const (Set.Icc (0 : ℝ) 1) x₀))).unique hpartial.hasFDerivAt
+  rw [hpartialEq]
+  exact ⟨ContinuousLinearEquiv.refl ℝ _, rfl⟩
+
+/-- **A parameter-to-path germ continuous at the base parameter keeps its whole path near the
+base point.** If `γ` is continuous at `p₀` and `γ p₀` is the constant path at `x₀`, then for `p`
+near `p₀` the parameterized path `(p, γ p)` stays within any prescribed distance of the constant
+path at `(p₀, x₀)`. -/
+private theorem eventually_dist_parameterizedPath_lt {γ : E → C(K, F)} {p₀ : E}
+    {x₀ : F} (hγcont : ContinuousAt γ p₀)
+    (hγbase : γ p₀ = ContinuousMap.const _ x₀) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ p in nhds p₀,
+      dist (parameterizedPath (p, γ p)) (ContinuousMap.const K (p₀, x₀)) < ε := by
+  have hpath := parameterizedPath.continuous.continuousAt.comp
+    (continuousAt_id.prodMk hγcont)
+  have hpathBase : parameterizedPath (p₀, γ p₀) =
+      ContinuousMap.const _ (p₀, x₀) := by
+    rw [hγbase]
+    apply ContinuousMap.ext
+    intro t
+    rw [parameterizedPath_apply, ContinuousMap.const_apply]
+    rw [ContinuousMap.const_apply]
+  simpa only [hpathBase, Function.comp_apply, id_eq] using
+    (Metric.continuousAt_iff'.mp hpath ε hε)
+
 /-- A smooth parameterized autonomous vector field which vanishes at the base parameter admits a
 locally smooth family of solutions through a fixed initial state. The result is stated at every
 finite order; this is the form needed to assemble smoothness of a germ. Each nearby path satisfies
@@ -180,22 +233,10 @@ theorem exists_contDiffAt_picard_solution
     exact hy.trans hyzero
   -- At the constant base solution the path derivative of the residual is the identity, so the
   -- implicit function theorem produces a smooth parameter-to-path germ.
-  have hpartial := hasStrictFDerivAt_picardResidual_path gc p₀ x₀ hgzero
-  have hdiff := hR.differentiableAt (by norm_num)
-  have hinnerRaw := hasFDerivAt_const (𝕜 := ℝ) p₀ basePath |>.prodMk
-    (hasFDerivAt_id (𝕜 := ℝ) basePath)
-  have hinner := hinnerRaw.congr_fderiv (g' :=
-    ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)) (by
-      apply ContinuousLinearMap.ext
-      intro z
-      simp [ContinuousLinearMap.inr_apply])
-  have hpartialFromR := hdiff.hasFDerivAt.comp basePath hinner
-  have hpartialEq := hpartialFromR.unique hpartial.hasFDerivAt
   have hinvertible :
       (fderiv ℝ R u ∘L
-        ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)).IsInvertible := by
-    rw [hpartialEq]
-    exact ⟨ContinuousLinearEquiv.refl ℝ _, rfl⟩
+        ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)).IsInvertible :=
+    isInvertible_fderiv_picardResidual_comp_inr gc (hg.of_le (by norm_num)) p₀ x₀ hgzero
   let γ : E → C(Set.Icc (0 : ℝ) 1, F) :=
     hR.implicitFunction (by norm_num) hinvertible
   have hγsmooth : ContDiffAt ℝ (n + 1) γ p₀ :=
@@ -212,28 +253,10 @@ theorem exists_contDiffAt_picard_solution
   have hγeq : ∀ᶠ p in nhds p₀, R (p, γ p) = 0 := by
     filter_upwards [hR.eventually_apply_implicitFunction (by norm_num) hinvertible] with p hp
     rw [hp, hRbase]
-  have hpath := parameterizedPath.continuous.continuousAt.comp
-    (continuousAt_id.prodMk hγsmooth.continuousAt)
-  have hpathBase : parameterizedPath (p₀, γ p₀) =
-      ContinuousMap.const _ (p₀, x₀) := by
-    rw [hγbase]
-    apply ContinuousMap.ext
-    intro t
-    rw [parameterizedPath_apply, ContinuousMap.const_apply]
-    rw [ContinuousMap.const_apply]
   have hgfSet : {z : E × F | g z = f z} ∈ nhds (p₀, x₀) := hgf
   obtain ⟨ε, hε, hεgf⟩ := Metric.mem_nhds_iff.mp hgfSet
-  have hpathsNear : ∀ᶠ p in nhds p₀,
-      dist (parameterizedPath (p, γ p)) (ContinuousMap.const _ (p₀, x₀)) < ε := by
-    have hnear := hpath (Metric.ball_mem_nhds
-      (parameterizedPath (p₀, γ p₀)) hε)
-    filter_upwards [hnear] with p hp
-    have hpBall : parameterizedPath (p, γ p) ∈
-        Metric.ball (parameterizedPath (p₀, γ p₀)) ε := Set.mem_preimage.mp hp
-    have hp' : dist (parameterizedPath (p, γ p))
-        (parameterizedPath (p₀, γ p₀)) < ε := by
-      simpa only [Metric.mem_ball] using hpBall
-    simpa only [hpathBase] using hp'
+  have hpathsNear := eventually_dist_parameterizedPath_lt (γ := γ)
+    hγsmooth.continuousAt (by simpa only [basePath] using hγbase) hε
   -- Restrict to parameters whose whole Picard path remains where the cutoff field agrees with
   -- the original field; then transfer the integral equation and its derivative consequences.
   refine ⟨γ, hγsmooth, by simpa only [basePath] using hγbase, ?_⟩
@@ -246,24 +269,10 @@ theorem exists_contDiffAt_picard_solution
       (ContinuousMap.dist_apply_le_dist
         (f := parameterizedPath (p, γ p))
         (g := ContinuousMap.const _ (p₀, x₀)) t).trans_lt hpnear
-  have hpathEq : γ p = ContinuousMap.const _ x₀ +
-      ContinuousMap.unitIntervalIntegral (gc.comp (parameterizedPath (p, γ p))) := by
-    apply sub_eq_zero.mp
-    calc
-      γ p - (ContinuousMap.const _ x₀ +
-          ContinuousMap.unitIntervalIntegral (gc.comp (parameterizedPath (p, γ p)))) =
-          R (p, γ p) := by
-        simp only [R, picardResidual_apply]
-        abel
-      _ = 0 := hp
   have hpicard : ∀ t : Set.Icc (0 : ℝ) 1,
       γ p t = x₀ + ∫ s in (0 : ℝ)..t,
-        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) := by
-    intro t
-    have ht := congrArg (fun q : C(Set.Icc (0 : ℝ) 1, F) ↦ q t) hpathEq
-    simpa only [ContinuousMap.add_apply, ContinuousMap.const_apply,
-      ContinuousMap.unitIntervalIntegral_apply, ContinuousMap.comp_apply,
-      parameterizedPath_apply] using ht
+        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) :=
+    (picardResidual_eq_zero_iff gc x₀ p (γ p)).mp hp
   let vproj : ℝ → F := fun s ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s))
   have hvproj : Continuous vproj :=
     gc.continuous.comp

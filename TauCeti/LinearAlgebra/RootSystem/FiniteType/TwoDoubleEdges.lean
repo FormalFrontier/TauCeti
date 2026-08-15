@@ -308,9 +308,9 @@ section Chain
 
 variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
 
-/-- Two nonpositive integers whose product is `2` are `-1` and `-2`, in one order or the other:
-the two entries of a double edge. -/
-private lemma eq_neg_one_and_eq_neg_two_or_of_mul_eq_two {x y : ℤ} (hx : x ≤ 0)
+/-- **Two nonpositive integers whose product is `2` are `-1` and `-2`**, in one order or the other:
+the two entries of a double edge, whose orientation this splits into its two cases. -/
+lemma eq_neg_one_and_eq_neg_two_or_of_mul_eq_two {x y : ℤ} (hx : x ≤ 0)
     (hxy : x * y = 2) : (x = -1 ∧ y = -2) ∨ (x = -2 ∧ y = -1) := by
   have hdvd : (-x) ∣ 2 := ⟨-y, by rw [neg_mul_neg, hxy]⟩
   have hle : -x ≤ 2 := Int.le_of_dvd (by norm_num) hdvd

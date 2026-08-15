@@ -100,31 +100,15 @@ private theorem exists_pow_mul_locSubring_mem {B : Type*} [Ring B] [TopologicalS
     exact ⟨m, fun x hx b hb ↦ hm x (locSubring_empty P s S ▸ hx) b hb⟩
   | insert t U' ht ih =>
     intro hpowU G
-    have hinsert_le : locSubring P (insert t U') s S ≤
-        Subring.closure ((locSubring P U' s S : Set S) ∪ {divBy t s}) :=
-      (locSubring_le_iff P _ s S).mpr
-        ⟨fun _ ha ↦ Subring.subset_closure (.inl (algebraMap_mem_locSubring P U' s S ha)),
-         fun t' ht' ↦ by
-           rcases Finset.mem_insert.mp ht' with rfl | ht'U
-           · exact Subring.subset_closure (.inr rfl)
-           · exact Subring.subset_closure (.inl (divBy_mem_locSubring P U' s S ht'U))⟩
     obtain ⟨V, hV, hzV⟩ := isBounded_iff.mp (isPowerBounded_iff.mp
       (hpowU t (Finset.mem_insert_self t U'))) (G : Set B) (G.isOpen.mem_nhds G.zero_mem)
     obtain ⟨W, hWV⟩ := NonarchimedeanAddGroup.is_nonarchimedean V hV
     obtain ⟨m, hm⟩ := ih (fun t' ht' ↦ hpowU t' (Finset.mem_insert_of_mem ht')) W
     refine ⟨m, fun x hx b hb ↦ ?_⟩
-    -- Write `x` as a polynomial in `t/s` with coefficients in the smaller subring.
-    have hx_adj : x ∈ Algebra.adjoin (locSubring P U' s S)
-        ({divBy t s} : Set S) := by
-      have h_le : Subring.closure
-          ((locSubring P U' s S : Set S) ∪ {divBy t s}) ≤
-            (Algebra.adjoin (locSubring P U' s S)
-              ({divBy t s} : Set S)).toSubring := by
-        rw [Subring.closure_le]
-        rintro w (hw | rfl)
-        · exact Subalgebra.algebraMap_mem _ (⟨w, hw⟩ : locSubring P U' s S)
-        · exact Algebra.subset_adjoin rfl
-      exact h_le (hinsert_le hx)
+    -- Write `x` as a polynomial in `t/s` with coefficients in the smaller subring: that is
+    -- exactly what the insertion formula says `x` is a member of.
+    have hx_adj : x ∈ Algebra.adjoin (locSubring P U' s S) ({divBy t s} : Set S) :=
+      (locSubring_insert P t U' s S).le hx
     rw [Algebra.adjoin_singleton_eq_range_aeval, AlgHom.mem_range] at hx_adj
     obtain ⟨p, hp⟩ := hx_adj
     rw [← hp, Polynomial.aeval_eq_sum_range, Finset.sum_mul, map_sum]
@@ -132,6 +116,33 @@ private theorem exists_pow_mul_locSubring_mem {B : Type*} [Ring B] [TopologicalS
     rw [Algebra.smul_def, Algebra.algebraMap_ofSubsemiring_apply, mul_right_comm,
       map_mul, map_pow]
     exact hzV (Set.mul_mem_mul (hWV (hm _ (p.coeff i).property b hb)) ⟨i, rfl⟩)
+
+/-- If `f` sends every `x · b` with `x ∈ D` and `b ∈ Iᵐ` into `W`, then it sends `r · d` into `W`
+for every `r ∈ D` and every `d` in the `D`-span of the image of `Iᵐ`. `W` is an arbitrary additive
+subgroup. -/
+private theorem map_mul_mem_of_mem_span_locIdeal_pow {B : Type*} [Ring B]
+    (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (f : S →+* B) (W : AddSubgroup B) {m : ℕ}
+    (hm : ∀ x ∈ locSubring P T s S, ∀ b ∈ P.idealOfDefinition ^ m,
+      f (x * algebraMap A S (b : A)) ∈ (W : Set B))
+    {d : locSubring P T s S}
+    (hd : d ∈ Ideal.span (toLocSubring P T s S ''
+      ((P.idealOfDefinition ^ m : Ideal P.ringOfDefinition) : Set P.ringOfDefinition))) :
+    ∀ r : locSubring P T s S, f ((locSubring P T s S).subtype (r * d)) ∈ (W : Set B) := by
+  refine Submodule.span_induction (p := fun d _ ↦ ∀ r : locSubring P T s S,
+    f ((locSubring P T s S).subtype (r * d)) ∈ (W : Set B)) ?_ ?_ ?_ ?_ hd
+  · rintro _ ⟨b, hb, rfl⟩ r
+    rw [Subring.coe_subtype, MulMemClass.coe_mul, toLocSubring_apply]
+    exact hm r.val r.property b hb
+  · intro r
+    simp
+  · intro d₁ d₂ _ _ h₁ h₂ r
+    rw [mul_add, map_add, map_add]
+    exact W.add_mem (h₁ r) (h₂ r)
+  · intro c d _ hd r
+    rw [smul_eq_mul, ← mul_assoc]
+    exact hd (r * c)
 
 /-- A ring homomorphism out of `Aₛ` is continuous for the localisation topology as soon as its
 restriction along `algebraMap` is continuous and the fractions `t/s` are sent to power-bounded
@@ -163,22 +174,7 @@ theorem continuous_of_continuous_algebraMap_of_isPowerBounded {B : Type*}
   obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P T s S m).mp hx
   refine hWV ?_
   rw [locIdeal_pow_eq_span] at hd
-  suffices h : ∀ r : locSubring P T s S,
-      f ((locSubring P T s S).subtype (r * d)) ∈ (W : Set B) by
-    simpa using h 1
-  refine Submodule.span_induction (p := fun d _ ↦ ∀ r : locSubring P T s S,
-    f ((locSubring P T s S).subtype (r * d)) ∈ (W : Set B)) ?_ ?_ ?_ ?_ hd
-  · rintro _ ⟨b, hb, rfl⟩ r
-    rw [Subring.coe_subtype, MulMemClass.coe_mul, toLocSubring_apply]
-    exact hm r.val r.property b hb
-  · intro r
-    simp
-  · intro d₁ d₂ _ _ h₁ h₂ r
-    rw [mul_add, map_add, map_add]
-    exact W.toAddSubgroup.add_mem (h₁ r) (h₂ r)
-  · intro c d _ hd r
-    rw [smul_eq_mul, ← mul_assoc]
-    exact hd (r * c)
+  simpa using map_mul_mem_of_mem_span_locIdeal_pow P T s S f W.toAddSubgroup hm hd 1
 
 
 /-! ### The universal property -/
