@@ -30,8 +30,9 @@ classification of the double-edge case into the `B`, `C`, and `F₄` shapes.
 
 ## Main results
 
-* `TauCeti.IsFiniteType.degree_le_two_of_apply_mul_apply_eq_two`: a connected finite-type
+* `TauCeti.IsFiniteType.degree_le_two_of_reachable_of_apply_mul_apply_eq_two`: a finite-type
   component containing a double edge has no branch vertex.
+* `TauCeti.IsFiniteType.degree_le_two_of_apply_mul_apply_eq_two`: the connected specialization.
 * `TauCeti.IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_apply_mul_apply_eq_two`:
   the component is a double-edge chain of type `B`, `C`, or `F₄`.
 
@@ -148,12 +149,12 @@ private lemma submatrix_forkedPath_le_affineBCartanMatrix
 
 /-- A branch vertex and a directed double edge produce a forbidden affine dominated submatrix. -/
 private lemma false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
-    (h : IsFiniteType A) (hconn : (diagramGraph A).Connected) {c near far : B}
+    (h : IsFiniteType A) {c near far : B} (hreach : (diagramGraph A).Reachable c near)
     (hc : (diagramGraph A).degree c = 3) (hnf : (diagramGraph A).Adj near far)
     (hdist : (diagramGraph A).dist c far = (diagramGraph A).dist c near + 1)
     (hnfEntry : A near far = -2) : False := by
   let G := diagramGraph A
-  obtain ⟨p, hp, hpdist⟩ := hconn.exists_path_of_dist c near
+  obtain ⟨p, hp, hpdist⟩ := hreach.exists_path_of_dist
   have hfar : far ∉ p.support := by
     intro hfarMem
     have hdistLe := SimpleGraph.dist_le (p.takeUntil far hfarMem)
@@ -218,15 +219,12 @@ private lemma false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
     exact mul_nonpos_of_nonneg_of_nonpos (affineBComark_pos n i).le hrow
   exact (affineBComark_pos n none).ne' (congrFun hzero none)
 
-/-- **A connected finite-type diagram containing a double edge has maximum degree two.**
+/-- **A finite-type component containing a double edge has maximum degree two.**
 
-Thus the component has no branch vertex.  This is the extraction step that makes the branchless
-double-edge classification apply without an extra shape hypothesis. -/
-theorem degree_le_two_of_apply_mul_apply_eq_two (h : IsFiniteType A)
-    (hconn : (diagramGraph A).Preconnected) {u v : B} (huv : A u v * A v u = 2) (c : B) :
+Every vertex reachable from the double edge has degree at most two. -/
+theorem degree_le_two_of_reachable_of_apply_mul_apply_eq_two (h : IsFiniteType A)
+    {u v c : B} (hreach : (diagramGraph A).Reachable c u) (huv : A u v * A v u = 2) :
     (diagramGraph A).degree c ≤ 2 := by
-  let _ : Nonempty B := ⟨u⟩
-  have hconn' : (diagramGraph A).Connected := ⟨hconn⟩
   by_contra hdeg
   have hc : (diagramGraph A).degree c = 3 := by
     have := h.degree_le_three c
@@ -237,35 +235,45 @@ theorem degree_le_two_of_apply_mul_apply_eq_two (h : IsFiniteType A)
     norm_num at huv
   have huvAdj : (diagramGraph A).Adj u v := h.diagramGraph_adj_iff.mpr
     ⟨huvNe, fun hzero ↦ by rw [hzero] at huv; norm_num at huv⟩
-  have htree := h.isTree_diagramGraph hconn'
   have hgraph := diagramGraph_transpose A
   let hgraphIso : diagramGraph A.transpose ≃g diagramGraph A :=
     ⟨Equiv.refl B, by intro a b; simp only [hgraph, Equiv.refl_apply]⟩
+  have hreachV : (diagramGraph A).Reachable c v := hreach.trans huvAdj.reachable
   have hdegree : (diagramGraph A.transpose).degree c = (diagramGraph A).degree c := by
     have hdegree := hgraphIso.symm.degree_eq c
     -- The inverse of this identity graph isomorphism is definitionally the identity on vertices,
     -- but simplification does not unfold its bundled inverse equivalence.
     change (diagramGraph A.transpose).degree c = (diagramGraph A).degree c at hdegree
     exact hdegree
-  rcases htree.dist_eq_dist_add_one_of_adj c huvAdj with hdist | hdist
+  rcases h.isAcyclic_diagramGraph.dist_eq_dist_add_one_of_adj_of_reachable
+      c huvAdj hreach with hdist | hdist
   · rcases eq_neg_one_and_eq_neg_two_or_of_mul_eq_two (h.apply_le_zero_of_ne huvNe) huv with
       ⟨huvEntry, hvuEntry⟩ | ⟨huvEntry, hvuEntry⟩
     · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
-        (c := c) (near := v) (far := u) h hconn' hc huvAdj.symm hdist hvuEntry
+        (c := c) (near := v) (far := u) h hreachV hc huvAdj.symm hdist hvuEntry
     · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
         (c := c) (near := v) (far := u) h.transpose
-        (by rw [hgraph]; exact hconn') (by rw [hdegree]; exact hc)
+        (by rw [hgraph]; exact hreachV) (by rw [hdegree]; exact hc)
         (by rw [hgraph]; exact huvAdj.symm) (by rw [hgraph]; exact hdist)
         (by simpa using huvEntry)
   · rcases eq_neg_one_and_eq_neg_two_or_of_mul_eq_two (h.apply_le_zero_of_ne huvNe) huv with
       ⟨huvEntry, hvuEntry⟩ | ⟨huvEntry, hvuEntry⟩
     · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two h.transpose
         (c := c) (near := u) (far := v)
-        (by rw [hgraph]; exact hconn') (by rw [hdegree]; exact hc)
+        (by rw [hgraph]; exact hreach) (by rw [hdegree]; exact hc)
         (by rw [hgraph]; exact huvAdj) (by rw [hgraph]; exact hdist)
         (by simpa using hvuEntry)
     · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
-        (c := c) (near := u) (far := v) h hconn' hc huvAdj hdist huvEntry
+        (c := c) (near := u) (far := v) h hreach hc huvAdj hdist huvEntry
+
+/-- **A connected finite-type diagram containing a double edge has maximum degree two.**
+
+Thus the component has no branch vertex.  This is the extraction step that makes the branchless
+double-edge classification apply without an extra shape hypothesis. -/
+theorem degree_le_two_of_apply_mul_apply_eq_two (h : IsFiniteType A)
+    (hconn : (diagramGraph A).Preconnected) {u v : B} (huv : A u v * A v u = 2) (c : B) :
+    (diagramGraph A).degree c ≤ 2 :=
+  h.degree_le_two_of_reachable_of_apply_mul_apply_eq_two (hconn c u) huv
 
 omit [DecidableEq B] in
 /-- **Classification of the double-edge case.** A connected finite-type diagram containing a
