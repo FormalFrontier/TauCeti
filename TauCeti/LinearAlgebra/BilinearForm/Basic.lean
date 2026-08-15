@@ -9,24 +9,38 @@ public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 public import Mathlib.Tactic.LinearCombination
 
 /-!
-# A form that is both symmetric and alternating
+# Basic properties of bilinear forms and quadratic maps
 
-Away from characteristic two a bilinear form cannot be both symmetric and alternating without
-being zero: symmetry and alternation give `B x y = B y x` and `B x y = -B y x`, so `2 * B x y = 0`,
-and cancelling the `2` leaves `B x y = 0`.
+This module collects foundational properties of bilinear forms and their associated
+quadratic maps that complement Mathlib's basic bilinear and quadratic form APIs.
 
-That cancellation is all the hypothesis on the ring there is: `2` has to be regular, and nothing
-is asked of any other element, so the statement covers rings with zero divisors elsewhere.  Over a
-field, or over any domain, `IsRegular.of_ne_zero` supplies the hypothesis from `(2 : R) ≠ 0`.
+Specifically, it covers two core algebraic features of symmetric bilinear forms:
+
+1. **Symmetric alternating forms vanish away from characteristic two**:
+   A bilinear form that is both symmetric and alternating must be zero. Symmetry and
+   alternation give `B x y = B y x` and `B x y = -B y x`, which implies `2 * B x y = 0`.
+   Whenever `2` is regular in the scalar ring, cancelling `2` leaves `B x y = 0`.
+   That regularity hypothesis covers any domain where `2 ≠ 0` as well as rings with
+   zero divisors elsewhere.
+
+2. **Polarization identities for symmetric bilinear forms**:
+   For any symmetric bilinear form `B`, the associated quadratic map `B.toQuadraticMap`
+   satisfies the standard additive and subtractive polarization identities expressing
+   `B.toQuadraticMap (x + y)` and `B.toQuadraticMap (x - y)` in terms of `B.toQuadraticMap x`,
+   `B.toQuadraticMap y`, and `2 * B x y`.
+
+These results live together here as foundational, lightweight utilities on bilinear forms
+and quadratic maps, shared by downstream consumers such as integral lattices and Lie algebra
+weight modules without imposing heavier structural dependencies.
 
 ## Main results
 
-* `TauCeti.BilinForm.eq_zero_of_isSymm_of_isAlt`: a symmetric alternating form over a ring in which
-  `2` is regular is zero.
-* `TauCeti.BilinForm.IsSymm.toQuadraticMap_add`: polarization identity for the quadratic form
-  associated to a symmetric bilinear form.
-* `TauCeti.BilinForm.IsSymm.toQuadraticMap_sub`: subtraction polarization identity for the quadratic
-  form associated to a symmetric bilinear form.
+* `TauCeti.BilinForm.eq_zero_of_isSymm_of_isAlt`: a symmetric alternating form over a ring
+  in which `2` is regular is zero.
+* `LinearMap.BilinForm.IsSymm.toQuadraticMap_add`: additive polarization identity for the
+  quadratic map associated to a symmetric bilinear form.
+* `LinearMap.BilinForm.IsSymm.toQuadraticMap_sub`: subtractive polarization identity for the
+  quadratic map associated to a symmetric bilinear form.
 -/
 
 public section
