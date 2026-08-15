@@ -89,7 +89,6 @@ theorem form_mem_one (L : IntegralLattice V) (x y : L) :
   L.le_dual x.2 (y : V) y.2
 
 /-- The chosen `ℤ`-basis of an integral lattice extends to a `ℚ`-basis of the ambient space. -/
-@[expose]
 noncomputable def rationalBasis (L : IntegralLattice V) :
     Basis (Module.Free.ChooseBasisIndex ℤ L) ℚ V :=
   (Module.Free.chooseBasis ℤ L).extendOfIsLattice ℚ
