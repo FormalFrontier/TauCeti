@@ -5,8 +5,6 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Order.Radical
-public import Mathlib.RingTheory.Jacobson.Radical
 public import TauCeti.RingTheory.Jacobson.Module
 
 /-!

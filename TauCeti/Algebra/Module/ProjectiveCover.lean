@@ -51,7 +51,7 @@ conditional on a cover being given.
 * `TauCeti.IsProjectiveCover.bijective_of_comp_eq` and
   `TauCeti.IsProjectiveCover.exists_linearEquiv`: **uniqueness**, first as bijectivity of any
   comparison map between two covers and then as the existence of an isomorphism over `M`.
-* `TauCeti.IsProjectiveCover.postcomp`: composing a projective cover with a surjection that itself
+* `TauCeti.IsProjectiveCover.comp`: composing a projective cover with a surjection that itself
   has superfluous kernel again gives a projective cover.
 * `TauCeti.IsProjectiveCover.ker_le_jacobson`: the kernel of a projective cover lies in the radical
   of the covering module.
@@ -168,7 +168,7 @@ theorem IsProjectiveCover.exists_linearEquiv {P' : Type*} [AddCommGroup P'] [Mod
 
 /-- Composing a projective cover with a surjection whose kernel is superfluous again gives a
 projective cover. -/
-theorem IsProjectiveCover.postcomp {N : Type*} [AddCommGroup N] [Module R N] {f : P →ₗ[R] M}
+theorem IsProjectiveCover.comp {N : Type*} [AddCommGroup N] [Module R N] {f : P →ₗ[R] M}
     (hf : IsProjectiveCover f) {g : M →ₗ[R] N} (hg : Function.Surjective g)
     (hgker : IsSuperfluous (LinearMap.ker g)) : IsProjectiveCover (g ∘ₗ f) where
   projective := hf.projective
