@@ -82,11 +82,12 @@ First draw a population `x : κ → α` with law `ρ`; independently and uniform
 selection `k : ι → κ`; then return the sample `i ↦ x (k i)`. If no injective selection exists,
 Mathlib's `uniformOn` convention makes this the zero measure.
 
-The discreteness assumptions on the population index are part of the definition, not just of its
-API: they are exactly what `measurable_samplePopulation` needs, and without them the pushforward
-map is not measurable, so `Measure.map` would silently return the zero measure even for a
-probability population law admitting injective selections. -/
-def sampleWithoutReplacement {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
+The assumptions on the population index are part of the definition, not just of its API. The
+population index is finite because uniform counting only distributes mass over finitely many
+injective selections, and its singletons are measurable because that is what
+`measurable_samplePopulation` uses to establish measurability of the pushforward map for an
+arbitrary `α`. -/
+def sampleWithoutReplacement {ι κ : Type*} [Finite κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] (ρ : Measure (κ → α)) : Measure (ι → α) :=
   let ν := (uniformOn {k : ι → κ | Function.Injective k}).prod ρ
   let f := fun p i => p.2 (p.1 i)
@@ -95,7 +96,7 @@ def sampleWithoutReplacement {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
 
 /-- The defining pushforward form of `sampleWithoutReplacement`. -/
 @[simp]
-theorem sampleWithoutReplacement_def {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
+theorem sampleWithoutReplacement_def {ι κ : Type*} [Finite κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] (ρ : Measure (κ → α)) :
     sampleWithoutReplacement ρ =
       ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
@@ -104,11 +105,12 @@ theorem sampleWithoutReplacement_def {ι κ : Type*} [Countable κ] [MeasurableS
 
 /-- Sampling without replacement preserves probability mass whenever an injective selection
 exists. -/
-theorem isProbabilityMeasure_sampleWithoutReplacement {ι κ : Type*} [Finite ι] [Finite κ]
+theorem isProbabilityMeasure_sampleWithoutReplacement {ι κ : Type*} [Finite κ]
     [MeasurableSpace κ] [MeasurableSingletonClass κ] (ρ : Measure (κ → α))
     [IsProbabilityMeasure ρ] (e : ι ↪ κ) :
     IsProbabilityMeasure
       (sampleWithoutReplacement (ι := ι) (κ := κ) (α := α) ρ) := by
+  have : Finite ι := Finite.of_injective e e.injective
   let E : Set (ι → κ) := {k | Function.Injective k}
   let _ : IsProbabilityMeasure (uniformOn E) :=
     isProbabilityMeasure_uniformOn (Set.toFinite E) ⟨e, e.injective⟩
