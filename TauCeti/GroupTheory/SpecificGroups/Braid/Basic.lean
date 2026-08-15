@@ -299,12 +299,6 @@ theorem sigma_ne_one (i : Fin (n - 1)) : sigma i ≠ 1 := by
   have : (1 : ℕ) = 0 := (sigma_pow_eq_one_iff i 1).mp (by rwa [pow_one])
   omega
 
-/-- The square of a standard generator is nontrivial. -/
-theorem sigma_sq_ne_one (i : Fin (n - 1)) : sigma i ^ 2 ≠ 1 := by
-  intro h
-  have : (2 : ℕ) = 0 := (sigma_pow_eq_one_iff i 2).mp h
-  omega
-
 /-- For `h : m ≤ n`, the homomorphism `BraidGroup m →* BraidGroup n` which adjoins `n - m`
 unbraided strands and sends each standard generator to the generator with the same index. -/
 def castLE {m n : ℕ} (h : m ≤ n) : BraidGroup m →* BraidGroup n :=
