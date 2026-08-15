@@ -170,15 +170,6 @@ theorem rightTranslationHomeomorph_apply (g : WithConv (H →ₐ[k] k))
       PrimeSpectrum.comap ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H) x :=
   rfl
 
-/-- Right translation sends the identity point to the translating point. -/
-@[simp]
-theorem rightTranslationHomeomorph_augmentationPoint
-    (g : WithConv (H →ₐ[k] k)) :
-    PrimeSpectrum.comap (rightTranslationAlgEquiv g)
-        (Bialgebra.augmentationPoint k H) =
-      AlgHom.kernelPoint g.ofConv := by
-  rw [comap_rightTranslationAlgEquiv_augmentationPoint]
-
 /-- Right translation transports the connected component of a point to the connected component
 of its translate. -/
 theorem rightTranslationHomeomorph_image_connectedComponent
@@ -200,7 +191,7 @@ theorem rightTranslation_preserves_augmentationPoint_connectedComponent
       connectedComponent (Bialgebra.augmentationPoint k H) := by
   rw [rightTranslationHomeomorph_image_connectedComponent,
     rightTranslationHomeomorph_apply, AlgEquiv.toRingEquiv_toRingHom,
-    rightTranslationHomeomorph_augmentationPoint]
+    comap_rightTranslationAlgEquiv_augmentationPoint]
   exact (connectedComponent_eq hg).symm
 
 variable [LocallyConnectedSpace (PrimeSpectrum H)]
