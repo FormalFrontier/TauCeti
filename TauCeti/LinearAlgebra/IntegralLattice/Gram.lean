@@ -56,22 +56,20 @@ section GramMatrix
 variable (L : IntegralLattice V)
 
 /-- The integral Gram matrix of a carrier basis. -/
-@[expose]
 noncomputable def gramMatrix {ι : Type v} (e : Basis ι ℤ L) : Matrix ι ι ℤ :=
-  fun i j ↦ L.integralForm (e i) (e j)
+  LinearMap.BilinForm.toMatrixAux e L.integralForm
 
 /-- A Gram-matrix entry is the value of the integral form on the corresponding basis vectors. -/
 @[simp]
 theorem gramMatrix_apply {ι : Type v} (e : Basis ι ℤ L) (i j : ι) :
     L.gramMatrix e i j = L.integralForm (e i) (e j) :=
-  rfl
+  LinearMap.BilinForm.toMatrixAux_apply L.integralForm e i j
 
 /-- The Gram matrix is Mathlib's matrix of the restricted integral bilinear form. -/
 theorem gramMatrix_eq_toMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
-    L.gramMatrix e = LinearMap.BilinForm.toMatrix e L.integralForm := by
-  ext i j
-  rw [gramMatrix_apply, LinearMap.BilinForm.toMatrix_apply]
+    L.gramMatrix e = LinearMap.BilinForm.toMatrix e L.integralForm :=
+  LinearMap.BilinForm.toMatrixAux_eq e L.integralForm
 
 /-- Casting a Gram-matrix entry to `ℚ` recovers the ambient rational form. -/
 theorem intCast_gramMatrix_apply {ι : Type v} (e : Basis ι ℤ L) (i j : ι) :
@@ -79,7 +77,7 @@ theorem intCast_gramMatrix_apply {ι : Type v} (e : Basis ι ℤ L) (i j : ι) :
   rw [gramMatrix_apply, integralForm_cast]
 
 /-- The Gram matrix of a symmetric integral lattice is symmetric. -/
-theorem gramMatrix_isSymm {ι : Type v} (e : Basis ι ℤ L) :
+theorem isSymm_gramMatrix {ι : Type v} (e : Basis ι ℤ L) :
     (L.gramMatrix e).IsSymm := by
   ext i j
   rw [Matrix.transpose_apply, gramMatrix_apply, gramMatrix_apply, L.isSymm_integralForm.eq]
@@ -99,9 +97,17 @@ theorem map_gramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι] (e : Basis ι
     Basis.extendOfIsLattice_apply]
 
 /-- The signed determinant of the Gram matrix in a carrier basis. -/
+@[expose]
 noncomputable def gramDet {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) : ℤ :=
   Matrix.det (L.gramMatrix e)
+
+/-- Unfolding the signed Gram determinant to the matrix determinant. -/
+@[simp]
+theorem gramDet_def {ι : Type v} [Fintype ι] [DecidableEq ι]
+    (e : Basis ι ℤ L) :
+    L.gramDet e = Matrix.det (L.gramMatrix e) :=
+  rfl
 
 /-- Casting the signed Gram determinant to `ℚ` gives the determinant of the ambient rational form
 in the extended basis. -/
@@ -109,7 +115,7 @@ theorem intCast_gramDet {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
     (L.gramDet e : ℚ) =
       Matrix.det (LinearMap.BilinForm.toMatrix (e.extendOfIsLattice ℚ) L.form) := by
-  rw [gramDet, Int.cast_det]
+  rw [gramDet_def, Int.cast_det]
   exact congrArg Matrix.det (map_gramMatrix L e)
 
 /-- Reindexing a carrier basis simultaneously reindexes the rows and columns of its Gram matrix. -/
@@ -123,7 +129,7 @@ theorem gramMatrix_reindex {ι : Type v} {κ : Type w}
 theorem gramDet_reindex {ι : Type v} {κ : Type w} [Fintype ι] [Fintype κ]
     [DecidableEq ι] [DecidableEq κ] (e : Basis ι ℤ L) (σ : ι ≃ κ) :
     L.gramDet (e.reindex σ) = L.gramDet e := by
-  rw [gramDet, gramMatrix_reindex, Matrix.det_submatrix_equiv_self, gramDet]
+  rw [gramDet_def, gramMatrix_reindex, Matrix.det_submatrix_equiv_self, ← gramDet_def]
 
 /-- Two carrier bases with the same index type give the same signed Gram determinant. -/
 private theorem gramDet_eq_gramDet_sameIndex {ι : Type v} [Fintype ι] [DecidableEq ι]
@@ -134,7 +140,7 @@ private theorem gramDet_eq_gramDet_sameIndex {ι : Type v} [Fintype ι] [Decidab
       (f.toMatrix e).transpose * LinearMap.BilinForm.toMatrix f L.integralForm * f.toMatrix e =
         LinearMap.BilinForm.toMatrix e L.integralForm :=
     LinearMap.BilinForm.toMatrix_mul_basis_toMatrix (b := f) e L.integralForm
-  rw [gramDet, gramDet, gramMatrix_eq_toMatrix, gramMatrix_eq_toMatrix]
+  rw [gramDet_def, gramDet_def, gramMatrix_eq_toMatrix, gramMatrix_eq_toMatrix]
   calc
     Matrix.det (LinearMap.BilinForm.toMatrix e L.integralForm) =
         Matrix.det ((f.toMatrix e).transpose *
