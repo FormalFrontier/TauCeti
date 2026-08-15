@@ -55,7 +55,7 @@ open Module
 
 namespace TauCeti.Comodule
 
-universe u v w
+universe u v w x
 
 noncomputable section
 
@@ -263,7 +263,7 @@ theorem isFaithful_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top
 
 /-- A faithful comodule separates algebra-valued points. -/
 theorem pointsAction_injective_of_isFaithful
-    {K : Type u} [CommRing K] [Algebra k K]
+    {K : Type x} [CommRing K] [Algebra k K]
     (hV : IsFaithful (k := k) (H := H) (V := V)) :
     Function.Injective (pointsAction (R := k) (H := H) (A := K) V) := by
   intro g h haction
