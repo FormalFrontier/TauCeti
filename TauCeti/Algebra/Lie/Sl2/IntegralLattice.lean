@@ -273,95 +273,71 @@ end GeneralCoefficients
 
 variable (n : ℕ)
 
-private def ofIntCoords (z : Fin (n + 1) → ℤ) : Sl2Std ℚ n := fun i => (z i : ℚ)
+private def ofIntCoords : (Fin (n + 1) → ℤ) →ₗ[ℤ] Sl2Std ℚ n where
+  toFun z i := (z i : ℚ)
+  map_add' x y := by
+    funext i
+    dsimp
+    push_cast
+    rfl
+  map_smul' z x := by
+    funext i
+    dsimp
+    push_cast
+    rfl
 
-private theorem ofIntCoords_add (x y : Fin (n + 1) → ℤ) :
-    ofIntCoords n (x + y) = ofIntCoords n x + ofIntCoords n y := by
-  funext i
-  dsimp [ofIntCoords]
-  push_cast
+@[simp]
+private lemma ofIntCoords_apply (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
+    ofIntCoords n z i = (z i : ℚ) :=
   rfl
 
-private theorem ofIntCoords_zsmul (z : ℤ) (x : Fin (n + 1) → ℤ) :
-    ofIntCoords n (z • x) = z • ofIntCoords n x := by
+private lemma ofIntCoords_injective : Function.Injective (ofIntCoords n) := by
+  intro x y hxy
   funext i
-  rw [← Int.cast_smul_eq_zsmul ℚ z (ofIntCoords n x), smul_apply]
-  dsimp [ofIntCoords]
-  push_cast
-  rfl
+  have hi := congrFun hxy i
+  exact Int.cast_injective hi
 
 /-- The coordinate `ℤ`-lattice in the rational standard `sl₂`-module `V(n)`.
 
 A vector belongs to this submodule exactly when each of its coordinates is an integer viewed in
 `ℚ`; see `mem_integralLattice_iff`. -/
 def integralLattice : Submodule ℤ (Sl2Std ℚ n) :=
-  { carrier := {v | ∀ i, ∃ z : ℤ, (z : ℚ) = v i}
-    zero_mem' := fun i => ⟨0, by simp⟩
-    add_mem' := fun {v w} hv hw i => by
-      obtain ⟨z, hz⟩ := hv i
-      obtain ⟨t, ht⟩ := hw i
-      exact ⟨z + t, by rw [Int.cast_add, hz, ht, add_apply]⟩
-    smul_mem' := fun z v hv i => by
-      obtain ⟨t, ht⟩ := hv i
-      refine ⟨z * t, ?_⟩
-      rw [Int.cast_mul, ht, ← Int.cast_smul_eq_zsmul ℚ, smul_apply] }
+  LinearMap.range (ofIntCoords n)
 
 /-- A vector belongs to the standard integral lattice exactly when all its coordinates are
 integer-valued. -/
 @[simp]
 theorem mem_integralLattice_iff {v : Sl2Std ℚ n} :
-    v ∈ integralLattice n ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = v i :=
-  Iff.rfl
-
-private def integerCoordinatesLinearMap :
-    (Fin (n + 1) → ℤ) →ₗ[ℤ] integralLattice n where
-  toFun z := ⟨ofIntCoords n z, (mem_integralLattice_iff n).2 fun i => ⟨z i, rfl⟩⟩
-  map_add' x y := Subtype.ext (ofIntCoords_add n x y)
-  map_smul' z x := Subtype.ext (ofIntCoords_zsmul n z x)
-
-@[simp]
-private theorem integerCoordinatesLinearMap_apply_coe (z : Fin (n + 1) → ℤ)
-    (i : Fin (n + 1)) :
-    ((integerCoordinatesLinearMap n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
-  rfl
-
-private theorem integerCoordinatesLinearMap_bijective :
-    Function.Bijective (integerCoordinatesLinearMap n) := ⟨by
-  intro x y hxy
-  funext i
-  have hi : ((integerCoordinatesLinearMap n x : integralLattice n) : Sl2Std ℚ n) i =
-      ((integerCoordinatesLinearMap n y : integralLattice n) : Sl2Std ℚ n) i := by
-    rw [hxy]
-  rw [integerCoordinatesLinearMap_apply_coe, integerCoordinatesLinearMap_apply_coe] at hi
-  exact Int.cast_injective hi, by
-  rintro ⟨v, hv⟩
-  rw [mem_integralLattice_iff] at hv
-  choose z hz using hv
-  refine ⟨z, ?_⟩
-  apply Subtype.ext
-  funext i
-  exact hz i⟩
+    v ∈ integralLattice n ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = v i := by
+  rw [integralLattice, LinearMap.mem_range]
+  constructor
+  · rintro ⟨z, rfl⟩ i
+    exact ⟨z i, rfl⟩
+  · intro hv
+    choose z hz using hv
+    exact ⟨z, funext hz⟩
 
 /-- Integer coordinate vectors are linearly equivalent to the standard integral lattice. -/
 noncomputable def integerCoordinatesLinearEquiv :
     (Fin (n + 1) → ℤ) ≃ₗ[ℤ] integralLattice n :=
-  LinearEquiv.ofBijective (integerCoordinatesLinearMap n)
-    (integerCoordinatesLinearMap_bijective n)
+  LinearEquiv.ofInjective (ofIntCoords n) (ofIntCoords_injective n)
 
 /-- Forward evaluation of the coordinate linear equivalence on a coordinate vector. -/
 @[simp]
 theorem integerCoordinatesLinearEquiv_apply_coe (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
     ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
-  rw [integerCoordinatesLinearEquiv, LinearEquiv.ofBijective_apply]
-  exact integerCoordinatesLinearMap_apply_coe n z i
+  have : ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) = ofIntCoords n z :=
+    LinearEquiv.ofInjective_apply (f := ofIntCoords n) (h := ofIntCoords_injective n) z
+  rw [this, ofIntCoords_apply]
 
 /-- Inverse evaluation of the coordinate linear equivalence yields the integer coordinates. -/
 @[simp]
 theorem integerCoordinatesLinearEquiv_symm_apply_coe (v : integralLattice n) (i : Fin (n + 1)) :
     (((integerCoordinatesLinearEquiv n).symm v i : ℤ) : ℚ) = (v : Sl2Std ℚ n) i := by
-  have h := (integerCoordinatesLinearEquiv n).apply_symm_apply v
-  have h' := congrArg (fun w : integralLattice n => (w : Sl2Std ℚ n) i) h
-  exact h'
+  have h := congrArg (fun w : integralLattice n => (w : Sl2Std ℚ n) i)
+    ((integerCoordinatesLinearEquiv n).apply_symm_apply v)
+  rw [integerCoordinatesLinearEquiv_apply_coe] at h
+  exact h
 
 noncomputable instance : Module.Free ℤ (integralLattice n) :=
   Module.Free.of_equiv (integerCoordinatesLinearEquiv n)
@@ -379,6 +355,7 @@ theorem finrank_integralLattice : Module.finrank ℤ (integralLattice n) = n + 1
 theorem dividedPower_raise_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
     (hv : v ∈ integralLattice n) :
     Associative.dividedPower k (raise ℚ n) v ∈ integralLattice n := by
+  rw [mem_integralLattice_iff]
   intro i
   rw [mem_integralLattice_iff] at hv
   have hstep := dividedPower_raise_apply (K := ℚ) k v i
@@ -395,6 +372,7 @@ theorem dividedPower_raise_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
 theorem dividedPower_lower_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
     (hv : v ∈ integralLattice n) :
     Associative.dividedPower k (lower ℚ n) v ∈ integralLattice n := by
+  rw [mem_integralLattice_iff]
   intro i
   rw [mem_integralLattice_iff] at hv
   have hstep := dividedPower_lower_apply (K := ℚ) k v i
@@ -412,6 +390,7 @@ integral lattice. -/
 theorem ringChoose_diag_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
     (hv : v ∈ integralLattice n) :
     (Ring.choose (diag ℚ n) k : Module.End ℚ (Sl2Std ℚ n)) v ∈ integralLattice n := by
+  rw [mem_integralLattice_iff]
   intro i
   rw [mem_integralLattice_iff] at hv
   obtain ⟨z, hz⟩ := hv i
@@ -430,7 +409,8 @@ theorem span_integralLattice_eq_top :
   rw [← (basis ℚ n).span_eq, Submodule.span_le]
   rintro _ ⟨i, rfl⟩
   apply Submodule.subset_span
-  apply (mem_integralLattice_iff (n := n)).2
+  change (basis ℚ n) i ∈ integralLattice n
+  rw [mem_integralLattice_iff]
   intro j
   by_cases hji : j = i
   · exact ⟨1, by simp [basis_apply, hji]⟩
