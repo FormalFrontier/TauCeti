@@ -50,9 +50,13 @@ normEDS_mul_complEDS ← normEDS_mul_complEDS_of_mem ← IsEllipticSequence.norm
 That fact is `isEllipticSequence_normEDS` in `NormEDS.lean`, proved here through the descent of
 `Descent.lean`; the pinned Mathlib still records it as an open TODO
 (`Mathlib/NumberTheory/EllipticDivisibilitySequence.lean`: "prove that `normEDS` satisfies
-`IsEllipticDvdSequence`"). What the denominator side still lacks is the rest of each chain above:
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS` for the first, and
-`normEDS_mul_complEDS_div ← normEDS_mul_complEDS ← normEDS_mul_complEDS_of_mem` for the second.
+`IsEllipticDvdSequence`"). Both chains above are written in the source's names; what the
+denominator side still lacks is the upper part of each, the lower links having landed. For the
+first, `net_normEDS` is `isEllipticNet_normEDS` (`NormEDS.lean`) and `invar_normEDS` is
+`invarNum_mul_invarDenom` (`Invariant.lean`), so what remains is `invar₂_normEDS` and
+`redInvar_normEDS`. For the second, `normEDS_mul_complEDS_of_mem` is
+`normEDS_mul_complEDS_of_mem_nonZeroDivisors` (`Complement.lean`), so what remains is
+`normEDS_mul_complEDS` and `normEDS_mul_complEDS_div`.
 Carrying the bare definition across before them would add a formula that no consumer can state
 anything about, so it waits for the layer that gives it meaning. Everything below is independent
 of that fact: nothing carries an ellipticity hypothesis, and the source discharges the
