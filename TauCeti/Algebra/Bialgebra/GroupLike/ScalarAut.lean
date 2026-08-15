@@ -114,6 +114,7 @@ theorem val_smul (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
 
 /-- The map on group-like elements induced by scalar extension is equivariant for scalar
 automorphisms. -/
+@[simp]
 theorem groupLike_map_smul {B : Type*} [Semiring B] [Bialgebra K B] (f : A →ₐc[K] B)
     (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
     GroupLike.map (Bialgebra.TensorProduct.map (BialgHom.id L L) f) (σ • x) =

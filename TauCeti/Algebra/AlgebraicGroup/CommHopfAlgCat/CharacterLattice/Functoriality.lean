@@ -67,10 +67,8 @@ theorem val_geometricCharacterMap {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶
 theorem geometricCharacterMap_smul {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K)
     (sigma : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
     geometricCharacterMap f (sigma • x) = sigma • geometricCharacterMap f x := by
-  apply _root_.GroupLike.val_injective
-  simp only [val_geometricCharacterMap, val_smul]
-  exact ScalarAut.map_smul f.hom
-    (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from sigma) x.val
+  exact ScalarAut.groupLike_map_smul f.hom
+    (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from sigma) x
 
 /-- Mapping geometric characters along an identity morphism is the identity. -/
 @[simp]
