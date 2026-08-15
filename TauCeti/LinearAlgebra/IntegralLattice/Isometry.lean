@@ -87,16 +87,11 @@ theorem coe_toLinearEquiv (e : Isometry L M) : ⇑(e : V ≃ₗ[ℚ] W) = e := r
 theorem map_app (e : Isometry L M) (x y : V) : M.form (e x) (e y) = L.form x y :=
   e.toIsometryEquiv.map_app y x
 
-/-- An integral-lattice isometry maps the source carrier onto the target carrier. -/
-theorem map_carrier_eq (e : Isometry L M) :
-    L.carrier.map ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).toLinearMap = M.carrier :=
-  e.map_carrier
-
 /-- A vector belongs to the target carrier exactly when its inverse image belongs to the source
 carrier. -/
 theorem mem_carrier_iff_symm_mem (e : Isometry L M) (y : W) :
     y ∈ M.carrier ↔ (e : V ≃ₗ[ℚ] W).symm y ∈ L.carrier := by
-  rw [← e.map_carrier_eq]
+  rw [← e.map_carrier]
   let eℤ := (e : V ≃ₗ[ℚ] W).restrictScalars ℤ
   exact Submodule.mem_map_equiv (p := L.carrier) (e := eℤ)
 
@@ -132,7 +127,7 @@ theorem refl_apply (L : IntegralLattice V) (x : V) : refl L x = x := (rfl)
 def symm (e : Isometry L M) : Isometry M L where
   toIsometryEquiv := e.toIsometryEquiv.symm
   map_carrier := (Submodule.map_symm_eq_iff
-    ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ)).mpr e.map_carrier_eq
+    ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ)).mpr e.map_carrier
 
 @[simp]
 theorem symm_apply_apply (e : Isometry L M) (x : V) : e.symm (e x) = x :=
@@ -153,7 +148,7 @@ theorem symm_symm (e : Isometry L M) : e.symm.symm = e := by
 def trans (e : Isometry L M) (f : Isometry M N) : Isometry L N where
   toIsometryEquiv := e.toIsometryEquiv.trans f.toIsometryEquiv
   map_carrier := by
-    rw [← f.map_carrier_eq, ← e.map_carrier_eq, ← Submodule.map_comp]
+    rw [← f.map_carrier, ← e.map_carrier, ← Submodule.map_comp]
     rfl
 
 @[simp]
@@ -194,7 +189,7 @@ theorem trans_assoc (e : Isometry L M) (f : Isometry M N) {X : Type*}
 
 /-- Restrict an integral-lattice isometry to an integral linear equivalence of its carriers. -/
 def carrierEquiv (e : Isometry L M) : L ≃ₗ[ℤ] M :=
-  ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).ofSubmodules L.carrier M.carrier e.map_carrier_eq
+  ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).ofSubmodules L.carrier M.carrier e.map_carrier
 
 @[simp]
 theorem coe_carrierEquiv_apply (e : Isometry L M) (x : L) :
