@@ -98,6 +98,7 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
   have hEq : (fun g : G => Ad (I := I) g Y) = L ∘ T := by
     funext g
+    simp only [Function.comp_apply, L, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
     exact Ad_eq_modelTangentAd (I := I) (G := G) g Y
   have hL : ContMDiff 𝓘(ℝ, E) 𝓘(ℝ, LeftInvariantDerivation I G) ∞ L :=
     eIso.symm.toContinuousLinearEquiv.contDiff.contMDiff
