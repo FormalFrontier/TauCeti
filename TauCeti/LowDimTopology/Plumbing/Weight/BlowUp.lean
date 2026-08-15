@@ -33,14 +33,15 @@ it is *nonnegative for every* `s` once `ε` is a unit of `ℤ`, because no integ
 between `0` and `±1`. Nonnegativity is what fails for the other odd values: `ε = 3` and the
 multiplicity `s = 1` already give `s * (s - ε) = -2`. So for a characteristic covector of the
 blow-up carrying a unit on the exceptional class — among them the canonical one, which carries
-`-1` — the weight function has the same minimum as the weight function downstairs. Hence
+`-1` — the weight function has the same infimum as the weight function downstairs. Hence
 
 `inf χ_{k'} = inf χ_k`,
 
-the main result: **the minimal characteristic weight, the numerical `d`-invariant input of
-`Weight/Sublevel.lean`, is unchanged by the blow-up move**. Since the blow-down of a `-1`-framed
-vertex of degree one is Neumann's first move and `blowUpVertex_degree_none` exhibits the new
-vertex as such, this is the first Neumann-invariance statement for the lattice-homology data.
+the main result: **the infimum of the characteristic weights is unchanged by the blow-up move**.
+For a negative-definite plumbing this infimum is the minimal characteristic weight, the numerical
+`d`-invariant input of `Weight/Sublevel.lean`. Since the blow-down of a `-1`-framed vertex of
+degree one is Neumann's first move and `blowUpVertex_degree_none` exhibits the new vertex as such,
+this is the first Neumann-invariance statement for the lattice-homology data.
 
 Lattice homology itself is not touched here; the file works one layer below, at the weight
 function that grades it. The weight identity and the equality locus `s ∈ {0, ε}` — the two
@@ -56,8 +57,9 @@ old weight — are also the combinatorial input a later invariance proof needs.
   `TauCeti.PlumbingGraph.characteristicWeight_le_blowUpCharacteristic`: for unit `ε`, elsewhere it
   is larger.
 * `TauCeti.PlumbingGraph.sInfCharacteristicWeight_blowUpCharacteristic` and
-  `TauCeti.PlumbingGraph.sInfCharacteristicWeight_canonicalCharacteristic_blowUpVertex`: the minimal
-  characteristic weight is unchanged by the blow-up move.
+  `TauCeti.PlumbingGraph.sInfCharacteristicWeight_canonicalCharacteristic_blowUpVertex`: the
+  infimum of the characteristic weights is unchanged by the blow-up move; for negative-definite
+  plumbings, this is equality of the minimal weights.
 
 ## References
 
@@ -174,19 +176,22 @@ theorem characteristicWeight_blowUpCharacteristic_eq_iff (k : P.characteristicVe
 /-- **The blow-up does not lower the weight.** With a unit on the exceptional class, every lattice
 point of the blow-up has characteristic weight at least that of the lattice point of `P` it lies
 over. -/
-theorem characteristicWeight_le_blowUpCharacteristic (k : P.characteristicVectors) (ε : ℤ)
-    (hε : Odd ε) (hunit : IsUnit ε) (x : V → ℤ) (s : ℤ) :
+theorem characteristicWeight_le_blowUpCharacteristic (k : P.characteristicVectors) (δ : ℤˣ)
+    (x : V → ℤ) (s : ℤ) :
     P.characteristicWeight k x ≤
-      (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k ε hε)
+      (P.blowUpVertex v).characteristicWeight
+        (P.blowUpCharacteristic v k (δ : ℤ) (by
+          rcases Int.units_eq_one_or δ with rfl | rfl <;> norm_num))
         (blowUpVertexEquiv v (x, s)) := by
-  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k ε hε x s
-  obtain ⟨δ, rfl⟩ := hunit
+  have hδ : Odd ((δ : ℤ)) := by
+    rcases Int.units_eq_one_or δ with rfl | rfl <;> norm_num
+  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k (δ : ℤ) hδ x s
   have hnn := zero_le_mul_sub_units δ s
   linarith
 
-/-- **The minimal characteristic weight is a blow-up invariant.** For a characteristic covector
-carrying a unit on the exceptional class, the infimum of the characteristic weight of the blow-up
-equals the infimum for the original plumbing.
+/-- **The infimum of the characteristic weight is a blow-up invariant.** For a characteristic
+covector carrying a unit on the exceptional class, the infimum of the characteristic weight of
+the blow-up equals the infimum for the original plumbing.
 
 The two weight functions have the same lower bounds, so no hypothesis on `P` is needed: every
 lattice point of the blow-up has weight at least that of the point of `P` it lies over, by
@@ -196,29 +201,35 @@ negative-definite plumbing — the case the theory is stated for — the infimum
 and is the numerical `d`-invariant input of `Weight/Sublevel.lean`, so this is its invariance under
 the first of Neumann's moves. -/
 theorem sInfCharacteristicWeight_blowUpCharacteristic
-    (k : P.characteristicVectors) (ε : ℤ) (hε : Odd ε) (hunit : IsUnit ε) :
-    (P.blowUpVertex v).sInfCharacteristicWeight (P.blowUpCharacteristic v k ε hε) =
+    (k : P.characteristicVectors) (δ : ℤˣ) :
+    (P.blowUpVertex v).sInfCharacteristicWeight
+        (P.blowUpCharacteristic v k (δ : ℤ) (by
+          rcases Int.units_eq_one_or δ with rfl | rfl <;> norm_num)) =
       P.sInfCharacteristicWeight k := by
+  have hδ : Odd ((δ : ℤ)) := by
+    rcases Int.units_eq_one_or δ with rfl | rfl <;> norm_num
   rw [sInfCharacteristicWeight_def, sInfCharacteristicWeight_def]
   refine csInf_eq_csInf_of_forall_exists_le ?_ ?_
   · rintro _ ⟨y, rfl⟩
     obtain ⟨⟨x, s⟩, rfl⟩ := (blowUpVertexEquiv v).surjective y
     exact ⟨P.characteristicWeight k x, ⟨x, rfl⟩,
-      P.characteristicWeight_le_blowUpCharacteristic v k ε hε hunit x s⟩
+      P.characteristicWeight_le_blowUpCharacteristic v k δ x s⟩
   · rintro _ ⟨x, rfl⟩
     exact ⟨_, ⟨blowUpVertexEquiv v (x, 0), rfl⟩,
-      (P.characteristicWeight_blowUpCharacteristic_zero v k ε hε x).le⟩
+      (P.characteristicWeight_blowUpCharacteristic_zero v k (δ : ℤ) hδ x).le⟩
 
-/-- The minimal weight of the canonical characteristic covector — the adjunction class, which
-carries the unit `-1` on the exceptional class — is unchanged by the blow-up move. -/
+/-- The infimum of the canonical characteristic weight — the adjunction class, which carries the
+unit `-1` on the exceptional class — is unchanged by the blow-up move. For negative-definite
+plumbings, this infimum is the minimal weight. -/
 theorem sInfCharacteristicWeight_canonicalCharacteristic_blowUpVertex :
     (P.blowUpVertex v).sInfCharacteristicWeight
         ⟨(P.blowUpVertex v).canonicalCharacteristic,
           (P.blowUpVertex v).isCharacteristicVector_canonicalCharacteristic⟩ =
       P.sInfCharacteristicWeight
         ⟨P.canonicalCharacteristic, P.isCharacteristicVector_canonicalCharacteristic⟩ := by
-  rw [← P.blowUpCharacteristic_canonicalCharacteristic v,
-    P.sInfCharacteristicWeight_blowUpCharacteristic v _ (-1) (by norm_num) (by norm_num)]
+  rw [← P.blowUpCharacteristic_canonicalCharacteristic v]
+  simpa using P.sInfCharacteristicWeight_blowUpCharacteristic v
+    ⟨P.canonicalCharacteristic, P.isCharacteristicVector_canonicalCharacteristic⟩ (-1)
 
 end Weight
 
