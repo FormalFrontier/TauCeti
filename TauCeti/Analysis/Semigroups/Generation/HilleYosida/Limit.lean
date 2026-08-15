@@ -39,7 +39,7 @@ This is the limit stage of the Hille--Yosida generation theorem. Identifying the
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup_apply`: evaluating the limit semigroup.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup_realOperator_apply_of_nonneg`: evaluating the
   real-time operator at nonnegative times.
-* `TauCeti.Semigroups.hilleYosidaLimitSemigroup_hasGrowthBound`: its growth bound `(0, M)`.
+* `TauCeti.Semigroups.hasGrowthBound_hilleYosidaLimitSemigroup`: its growth bound `(0, M)`.
 * `TauCeti.Semigroups.tendsto_hilleYosidaLimitSemigroup`: convergence of approximating orbits to the
   semigroup orbits.
 
@@ -116,7 +116,7 @@ theorem norm_yosidaLimit_le_of_norm_resolvent_pow_le {t : ℝ} (ht : 0 ≤ t) (x
 /-- The strongly continuous semigroup obtained as the strong limit of the exponent-zero
 Hille--Yosida approximating semigroups. -/
 def hilleYosidaLimitSemigroup : StronglyContinuousSemigroup X :=
-  yosidaLimitSemigroupOfTendsto hM
+  yosidaLimitSemigroupOfTendsto
     (fun _t ht x => tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense ht x)
     (fun x _T hT => tendstoUniformlyOn_exp_yosidaApproximation_of_norm_resolvent_pow_le
       hM hres hpow hdense x hT)
@@ -128,26 +128,26 @@ def hilleYosidaLimitSemigroup : StronglyContinuousSemigroup X :=
 @[simp]
 theorem hilleYosidaLimitSemigroup_apply (t : ℝ≥0) (x : X) :
     hilleYosidaLimitSemigroup hM hres hpow hdense t x = yosidaLimit A t x :=
-  yosidaLimitSemigroupOfTendsto_apply hM _ _ _ t x
+  yosidaLimitSemigroupOfTendsto_apply _ _ _ t x
 
 /-- Evaluating the real-time operator of the exponent-zero Hille--Yosida limit semigroup at a
 nonnegative time `t` yields `yosidaLimit A t x`. -/
 @[simp]
 theorem hilleYosidaLimitSemigroup_realOperator_apply_of_nonneg {t : ℝ} (ht : 0 ≤ t) (x : X) :
     (hilleYosidaLimitSemigroup hM hres hpow hdense).realOperator t x = yosidaLimit A t x :=
-  yosidaLimitSemigroupOfTendsto_realOperator_apply_of_nonneg hM _ _ _ ht x
+  yosidaLimitSemigroupOfTendsto_realOperator_apply_of_nonneg _ _ _ ht x
 
 /-- The exponent-zero Hille--Yosida limit semigroup has growth bound `(0, M)`. -/
-theorem hilleYosidaLimitSemigroup_hasGrowthBound :
+theorem hasGrowthBound_hilleYosidaLimitSemigroup :
     (hilleYosidaLimitSemigroup hM hres hpow hdense).HasGrowthBound 0 M :=
-  yosidaLimitSemigroupOfTendsto_hasGrowthBound hM _ _ _
+  hasGrowthBound_yosidaLimitSemigroupOfTendsto hM _ _ _
 
 /-- The orbits of the exponent-zero Hille--Yosida limit semigroup are the limits of the Yosida
 exponentials. -/
 theorem tendsto_hilleYosidaLimitSemigroup (t : ℝ≥0) (x : X) :
     Tendsto (fun lambda : ℝ => exp ((t : ℝ) • yosidaApproximation A lambda) x) atTop
       (𝓝 (hilleYosidaLimitSemigroup hM hres hpow hdense t x)) :=
-  tendsto_yosidaLimitSemigroupOfTendsto hM _ _ _ t x
+  tendsto_yosidaLimitSemigroupOfTendsto _ _ _ t x
 
 end
 
