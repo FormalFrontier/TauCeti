@@ -63,11 +63,14 @@ attribute [local instance] BinomialRing.toIsAddTorsionFree
 descending Pochhammer polynomial over `K`. -/
 theorem descPochhammer_int_smeval_X {K : Type*} [CommRing K] (n : ℕ) :
     (descPochhammer ℤ n).smeval (X : K[X]) = descPochhammer K n := by
-  rw [← Polynomial.eval₂_smulOneHom_eq_smeval,
-    show RingHom.smulOneHom = Int.castRingHom K[X] from Subsingleton.elim _ _]
-  simpa only [Polynomial.map_X, Polynomial.coe_mapRingHom, descPochhammer_map] using
+  rw [← Polynomial.eval₂_smulOneHom_eq_smeval]
+  convert
     Polynomial.eval₂_intCastRingHom_X (descPochhammer ℤ n)
-      (Polynomial.mapRingHom (Int.castRingHom K))
+      (Polynomial.mapRingHom (Int.castRingHom K)) using 1
+  · congr 1
+    · exact Subsingleton.elim _ _
+    · simp only [Polynomial.coe_mapRingHom, Polynomial.map_X]
+  · simp only [Polynomial.coe_mapRingHom, descPochhammer_map]
 
 /-- The descending Pochhammer polynomial over any commutative ring is monic. -/
 theorem monic_descPochhammer' {K : Type*} [CommRing K] (n : ℕ) :
