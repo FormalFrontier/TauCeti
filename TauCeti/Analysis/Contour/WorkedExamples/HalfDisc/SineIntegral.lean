@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Dirichlet
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Sinc
+import TauCeti.MeasureTheory.Integral.OddSymmetric
 import Mathlib.Analysis.Complex.RealDeriv
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
@@ -169,16 +170,10 @@ cancellation is what makes the principal value exist even though `∫ dt / t` di
 origin. -/
 private theorem integral_truncated_cos_mul_div_eq_zero (a ε R : ℝ) :
     (∫ t in -R..R, if ε < |t| then Real.cos (a * t) / t else 0) = 0 := by
-  set g : ℝ → ℝ := fun t => if ε < |t| then Real.cos (a * t) / t else 0 with hg
-  have hodd : ∀ t : ℝ, g (-t) = -g t := by
-    intro t
-    simp only [hg, abs_neg, mul_neg, Real.cos_neg, div_neg]
-    split <;> simp
-  -- reflecting the symmetric interval leaves the integral alone, while oddness negates it
-  have hrefl : (∫ t in -R..R, g (-t)) = ∫ t in -R..R, g t := by simp
-  have hodd_integral : (∫ t in -R..R, g (-t)) = -∫ t in -R..R, g t := by
-    simp only [hodd, intervalIntegral.integral_neg]
-  linarith [hrefl, hodd_integral]
+  apply intervalIntegral.integral_eq_zero_of_odd
+  intro t
+  simp only [abs_neg, mul_neg, Real.cos_neg, div_neg]
+  split <;> simp
 
 /-- The imaginary part needs **no** excision in the limit: `sin (a t) / t` is bounded by `|a|`, so
 dominated convergence lets the excised integrals converge to the ordinary integral as `ε → 0⁺`. -/
@@ -335,9 +330,9 @@ private theorem integral_sin_mul_div_neg_self_eq_two_mul (a R : ℝ) :
 /-- **The Dirichlet integral, for an arbitrary positive frequency.**
 `∫_0^R sin (a x) / x dx → π / 2` as `R → ∞`, for every `a > 0` — the value is independent of the
 frequency. This is the Hungerbühler--Wasem motivating application: the pole of `e^{iaz}/z` sits
-*on* the contour of integration, so the classical residue theorem does not reach this integral,
-and the generalized theorem weights the residue by the winding number `½` of a point on a smooth
-arc.
+*on* the contour of integration, so the classical residue theorem does not apply directly to this
+contour. The generalized theorem handles it without an indentation and weights the residue by the
+winding number `½` of a point on a smooth arc.
 
 The limit is genuinely improper: `x ↦ sin (a x) / x` is not Lebesgue integrable on `[0, ∞)`, so
 this is a statement about the truncated integrals and not about an integral over `Ioi 0`. -/
