@@ -131,7 +131,6 @@ theorem radicalQuotientMap_coe (x : L) :
   by simp [radicalQuotientMap]
 
 /-- The radical quotient map preserves the rational bilinear form. -/
-@[simp]
 theorem radicalQuotient_form_map (x y : L) :
     L.radicalQuotient.form (L.radicalQuotientMap x) (L.radicalQuotientMap y) = L.form x y :=
   by simp only [radicalQuotient_form, radicalQuotientMap_coe, radicalQuotientForm_mk]
