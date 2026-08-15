@@ -42,7 +42,6 @@ homeomorphic to the real line — follow exactly as for `AddCircle`. No Mathlib 
 * `TauCeti.Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
 * `TauCeti.Circle.fundamentalGroupMulEquiv_def`: the factorization of that isomorphism into the
   homeomorphism-invariance isomorphism and the additive-circle computation.
-* `TauCeti.Circle.fundamentalGroupMulEquiv_eq_one_iff`: characterization of the trivial loop class.
 * `TauCeti.Circle.nontrivial_fundamentalGroup`, `TauCeti.Circle.infinite_fundamentalGroup`:
   the fundamental group of `Circle`, based at `x`, is nontrivial and infinite.
 * `TauCeti.Circle.not_simplyConnectedSpace`, `TauCeti.Circle.not_contractibleSpace`:
@@ -84,13 +83,6 @@ theorem fundamentalGroupMulEquiv_def (x : Circle) :
           ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x)) := by
   unfold fundamentalGroupMulEquiv
   rfl
-
-/-- A loop class in `Circle` maps to `1` under `fundamentalGroupMulEquiv` exactly when it is the
-trivial loop class. -/
-@[simp]
-lemma fundamentalGroupMulEquiv_eq_one_iff (x : Circle) (γ : FundamentalGroup Circle x) :
-    fundamentalGroupMulEquiv x γ = 1 ↔ γ = 1 :=
-  (fundamentalGroupMulEquiv x).map_eq_one_iff
 
 /-- The fundamental group of the complex unit circle `Circle`, based at `x`, is nontrivial. See
 `fundamentalGroupMulEquiv` for the full identification with `Multiplicative ℤ`. -/

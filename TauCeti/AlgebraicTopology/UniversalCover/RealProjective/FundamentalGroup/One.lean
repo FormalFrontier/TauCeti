@@ -43,8 +43,6 @@ For `2 ≤ n`, the fundamental group computation is developed in the sibling mod
   any basepoint.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquivOne_def`: the factorization of that
   isomorphism into the homeomorphism-invariance isomorphism and the circle computation.
-* `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquivOne_eq_one_iff`: characterization of the
-  trivial loop class in `RP¹`.
 * `TauCeti.RealProjectiveSpace.nontrivial_fundamentalGroup_one`: `π₁(RP¹, x)` is nontrivial.
 * `TauCeti.RealProjectiveSpace.infinite_fundamentalGroup_one`: `π₁(RP¹, x)` is infinite.
 * `TauCeti.RealProjectiveSpace.not_simplyConnectedSpace_one`: `RP¹` is not simply connected.
@@ -164,14 +162,6 @@ theorem fundamentalGroupMulEquivOne_def (x : RealProjectiveSpace 1) :
         (Circle.fundamentalGroupMulEquiv (homeomorphCircleOne x)) := by
   unfold fundamentalGroupMulEquivOne
   rfl
-
-/-- A loop class in `RP¹` maps to `1` under `fundamentalGroupMulEquivOne` exactly when it is
-the trivial loop class. -/
-@[simp]
-lemma fundamentalGroupMulEquivOne_eq_one_iff (x : RealProjectiveSpace 1)
-    (γ : FundamentalGroup (RealProjectiveSpace 1) x) :
-    fundamentalGroupMulEquivOne x γ = 1 ↔ γ = 1 :=
-  (fundamentalGroupMulEquivOne x).map_eq_one_iff
 
 /-- The fundamental group of `RP¹` at any basepoint is nontrivial. -/
 theorem nontrivial_fundamentalGroup_one (x : RealProjectiveSpace 1) :

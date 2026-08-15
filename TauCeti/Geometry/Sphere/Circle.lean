@@ -68,15 +68,6 @@ lemma coe_sphereHomeomorphCircle_symm_apply (z : Circle) :
   rw [LinearIsometryEquiv.apply_symm_apply] at h'
   exact h'
 
-/-- The inverse Euclidean-circle homeomorphism sends `1 : Circle` to the first standard
-basis vector `![1, 0]`. -/
-@[simp]
-lemma coe_sphereHomeomorphCircle_symm_one_apply (i : Fin 2) :
-    (sphereHomeomorphCircle.symm 1 : EuclideanSpace ℝ (Fin 2)) i = ![1, 0] i := by
-  rw [coe_sphereHomeomorphCircle_symm_apply, Circle.coe_one,
-    Complex.orthonormalBasisOneI_repr_apply]
-  fin_cases i <;> rfl
-
 end
 
 end EuclideanSpace
