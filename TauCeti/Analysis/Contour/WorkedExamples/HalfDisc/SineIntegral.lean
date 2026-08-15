@@ -52,9 +52,9 @@ since that is where Jordan's lemma enters.
 
 * `TauCeti.Contour.hasCauchyPVAt_realSegment_dirichlet` — the principal value of
   `e^{iat}/t` along `[-R, R]` is `i · ∫_{-R}^{R} sin (a t) / t dt`, for every frequency.
-* `TauCeti.Contour.integral_sin_mul_div_symm_eq` — comparing the two evaluations of that
+* `TauCeti.Contour.integral_sin_mul_div_neg_self_eq` — comparing the two evaluations of that
   principal value: the symmetric integral is `π` minus the arc contribution.
-* `TauCeti.Contour.tendsto_integral_sin_mul_div_symm_atTop` — the symmetric integrals
+* `TauCeti.Contour.tendsto_integral_sin_mul_div_neg_self_atTop` — the symmetric integrals
   `∫_{-R}^{R} sin (a t) / t dt` converge to `π` for `a > 0`.
 * `TauCeti.Contour.tendsto_integral_sin_mul_div_atTop` — **the Dirichlet integral**:
   `∫_0^R sin (a x) / x dx → π / 2` for `a > 0`.
@@ -246,15 +246,7 @@ private theorem integral_truncated_dirichletIntegrand_ofReal (a R : ℝ) (hε : 
           intervalIntegral.integral_ofReal, integral_truncated_cos_mul_div_eq_zero]
         simp
 
-/-- **The principal value along the real segment, evaluated directly.** For every frequency `a`
-and every radius `R ≥ 0`, the Cauchy principal value of `e^{iat}/t` along `[-R, R]`, excising the
-origin symmetrically, is `i` times the ordinary integral of `sin (a t) / t`.
-
-Both defining clauses come from the split of the integrand into `cos (a t)/t + i · sin (a t)/t`:
-the excised real part integrates to `0` by oddness for every `ε`, while the imaginary part is
-bounded and its excised integrals converge by dominated convergence. No positivity of `a` is
-needed. -/
-theorem hasCauchyPVAt_realSegment_dirichlet (a : ℝ) (hR : 0 ≤ R) :
+private theorem hasCauchyPVAt_realSegment_dirichlet_of_nonneg (a : ℝ) (hR : 0 ≤ R) :
     HasCauchyPVAt (fun t : ℝ => (t : ℂ)) (-R) R (dirichletIntegrand a) 0
       (((∫ t in -R..R, Real.sin (a * t) / t : ℝ) : ℂ) * Complex.I) := by
   refine HasCauchyPVAt.intro ?_ ?_
@@ -265,23 +257,46 @@ theorem hasCauchyPVAt_realSegment_dirichlet (a : ℝ) (hR : 0 ≤ R) :
     filter_upwards [self_mem_nhdsWithin] with ε hε
     exact (integral_truncated_dirichletIntegrand_ofReal a R hε).symm
 
+/-- **The principal value along the real segment, evaluated directly.** For every frequency `a`
+and every real `R`, the Cauchy principal value of `e^{iat}/t` along `[-R, R]`, excising the
+origin symmetrically, is `i` times the ordinary integral of `sin (a t) / t`.
+
+Both defining clauses come from the split of the integrand into `cos (a t)/t + i · sin (a t)/t`:
+the excised real part integrates to `0` by oddness for every `ε`, while the imaginary part is
+bounded and its excised integrals converge by dominated convergence. Reversing a negative-radius
+interval negates both sides. No positivity of `a` is needed. -/
+theorem hasCauchyPVAt_realSegment_dirichlet (a R : ℝ) :
+    HasCauchyPVAt (fun t : ℝ => (t : ℂ)) (-R) R (dirichletIntegrand a) 0
+      (((∫ t in -R..R, Real.sin (a * t) / t : ℝ) : ℂ) * Complex.I) := by
+  rcases le_total 0 R with hR | hR
+  · exact hasCauchyPVAt_realSegment_dirichlet_of_nonneg a hR
+  · have h := (hasCauchyPVAt_realSegment_dirichlet_of_nonneg a (neg_nonneg.mpr hR)).symm
+    have h' : HasCauchyPVAt (fun t : ℝ => (t : ℂ)) (-R) R (dirichletIntegrand a) 0
+        (-(((∫ t in R..-R, Real.sin (a * t) / t : ℝ) : ℂ) * Complex.I)) := by
+      simpa only [neg_neg] using h
+    convert h' using 1
+    rw [intervalIntegral.integral_symm]
+    push_cast
+    ring
+
 /-- **The two evaluations agree.** Comparing the direct evaluation above with the half-disc
 evaluation of `Dirichlet.lean` through uniqueness of the principal value turns the complex
 identity into a real one: for each radius, `i · ∫_{-R}^{R} sin (a t)/t dt` is `π i` minus the arc
 contribution. -/
-theorem integral_sin_mul_div_symm_eq (a : ℝ) (hR : 0 < R) :
+theorem integral_sin_mul_div_neg_self_eq (a : ℝ) (hR : 0 < R) :
     ((∫ t in -R..R, Real.sin (a * t) / t : ℝ) : ℂ) * Complex.I
       = (Real.pi : ℂ) * Complex.I
         - ∫ θ in (0 : ℝ)..Real.pi,
             dirichletIntegrand a (circleMap 0 R θ) * deriv (circleMap 0 R) θ :=
-  HasCauchyPV.unique (hasCauchyPVAt_realSegment_dirichlet a hR.le).hasCauchyPV
+  HasCauchyPV.unique (hasCauchyPVAt_realSegment_dirichlet a R).hasCauchyPV
     (hasCauchyPV_realSegment_dirichlet a hR)
 
 /-! ### The improper integral -/
 
 /-- **The symmetric Dirichlet integral.** For a positive frequency the integrals over `[-R, R]`
-converge to `π`: Jordan's lemma kills the arc contribution of `integral_sin_mul_div_symm_eq`. -/
-theorem tendsto_integral_sin_mul_div_symm_atTop (ha : 0 < a) :
+converge to `π`: Jordan's lemma kills the arc contribution of
+`integral_sin_mul_div_neg_self_eq`. -/
+theorem tendsto_integral_sin_mul_div_neg_self_atTop (ha : 0 < a) :
     Tendsto (fun R : ℝ => ∫ t in -R..R, Real.sin (a * t) / t) atTop (𝓝 Real.pi) := by
   have harc : Tendsto (fun R : ℝ => (Real.pi : ℂ) * Complex.I -
       ∫ θ in (0 : ℝ)..Real.pi,
@@ -293,7 +308,7 @@ theorem tendsto_integral_sin_mul_div_symm_atTop (ha : 0 < a) :
       atTop (𝓝 ((Real.pi : ℂ) * Complex.I)) := by
     refine harc.congr' ?_
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with R hR
-    exact (integral_sin_mul_div_symm_eq a hR).symm
+    exact (integral_sin_mul_div_neg_self_eq a hR).symm
   have hcast : Tendsto (fun R : ℝ => ((∫ t in -R..R, Real.sin (a * t) / t : ℝ) : ℂ))
       atTop (𝓝 ((Real.pi : ℝ) : ℂ)) := by
     have h := hmul.mul_const (-Complex.I)
@@ -302,7 +317,7 @@ theorem tendsto_integral_sin_mul_div_symm_atTop (ha : 0 < a) :
 
 /-- The integrand `t ↦ sin (a t) / t` is even, so the symmetric integral is twice the integral
 over `[0, R]`. -/
-private theorem integral_sin_mul_div_symm_eq_two_mul (a R : ℝ) :
+private theorem integral_sin_mul_div_neg_self_eq_two_mul (a R : ℝ) :
     (∫ t in -R..R, Real.sin (a * t) / t) = 2 * ∫ t in (0 : ℝ)..R, Real.sin (a * t) / t := by
   have heven : ∀ t : ℝ, Real.sin (a * -t) / -t = Real.sin (a * t) / t := by
     intro t
@@ -328,8 +343,8 @@ The limit is genuinely improper: `x ↦ sin (a x) / x` is not Lebesgue integrabl
 this is a statement about the truncated integrals and not about an integral over `Ioi 0`. -/
 theorem tendsto_integral_sin_mul_div_atTop (ha : 0 < a) :
     Tendsto (fun R : ℝ => ∫ x in (0 : ℝ)..R, Real.sin (a * x) / x) atTop (𝓝 (Real.pi / 2)) := by
-  have h := tendsto_integral_sin_mul_div_symm_atTop ha
-  simp only [integral_sin_mul_div_symm_eq_two_mul] at h
+  have h := tendsto_integral_sin_mul_div_neg_self_atTop ha
+  simp only [integral_sin_mul_div_neg_self_eq_two_mul] at h
   have h2 := h.const_mul (2⁻¹ : ℝ)
   have hfun : ∀ R : ℝ, (2 : ℝ)⁻¹ * (2 * ∫ x in (0 : ℝ)..R, Real.sin (a * x) / x)
       = ∫ x in (0 : ℝ)..R, Real.sin (a * x) / x := fun R => by ring
