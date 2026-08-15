@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Cocharacter
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.Torus.Cocharacter
 public import Mathlib.Algebra.Group.Equiv.TypeTags
 public import Mathlib.LinearAlgebra.PerfectPairing.Basic
 
@@ -260,6 +262,101 @@ theorem eq_one_of_forall_pairing_eq_zero {ψ : Multiplicative (σ →₀ ℤ) �
   refine Multiplicative.toAdd.injective ?_
   rw [toAdd_one]
   exact hj
+
+/-- The standard rank-`σ` split torus, regarded as an object of the category of tori. -/
+noncomputable abbrev toTorusCommHopfAlgCat
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] : TorusCommHopfAlgCat k :=
+  ⟨DiagonalizableGroup.coordinateRing k (characterGroup σ),
+    (splitTorus_coordinateRing k σ).torus k _⟩
+
+/-- The standard rank-`σ` split torus, regarded as a group of multiplicative type. -/
+noncomputable abbrev toMultiplicativeTypeCommHopfAlgCat
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] : MultiplicativeTypeCommHopfAlgCat k :=
+  TorusCommHopfAlgCat.toMultiplicativeTypeCommHopfAlgCat (toTorusCommHopfAlgCat k σ)
+
+-- The `cocharacterLattice` abbreviation erases the property witness indexing the generic
+-- transported instances, so instance search cannot reconstruct this specialized object.
+/-- The transported additive group structure specialized to the standard split torus. -/
+noncomputable local instance cocharacterLatticeAddCommGroup
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
+    AddCommGroup (MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat k σ)) :=
+  MultiplicativeTypeCommHopfAlgCat.instCocharacterLatticeAddCommGroup _
+
+/-- The transported integer-module structure specialized to the standard split torus. -/
+noncomputable local instance cocharacterLatticeModule
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
+    Module ℤ (MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat k σ)) :=
+  MultiplicativeTypeCommHopfAlgCat.instCocharacterLatticeModule _
+
+/-- The dual comparison for a standard split torus, expressed in coordinates `σ → ℤ`. -/
+noncomputable def cocharacterLatticeCoordEquiv
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
+    MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+        (toMultiplicativeTypeCommHopfAlgCat k σ) ≃ₗ[ℤ] (σ → ℤ) :=
+  (MultiplicativeTypeCommHopfAlgCat.cocharacterLatticeLinearEquivDual
+      (toMultiplicativeTypeCommHopfAlgCat k σ)).trans <|
+    (characterLatticeEquiv k σ).toIntLinearEquiv.symm.dualMap |>.trans
+      (Finsupp.llift ℤ ℤ ℤ σ).symm
+
+/-- The dual comparison for a standard split torus, expressed in its existing group of genuine
+cocharacters `Multiplicative (σ →₀ ℤ) →* Multiplicative ℤ`. -/
+noncomputable def cocharacterLatticeEquiv
+    (k : Type u) [Field k] (σ : Type u) [Finite σ] :
+    MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+        (toMultiplicativeTypeCommHopfAlgCat k σ) ≃ₗ[ℤ]
+      Additive (Multiplicative (σ →₀ ℤ) →* Multiplicative ℤ) :=
+  (cocharacterLatticeCoordEquiv k σ).trans cocharAddEquiv.toIntLinearEquiv.symm
+
+/-- Under the split-torus cocharacter equivalence, the usual cocharacter coordinates are
+obtained by applying the functional to the corresponding standard characters. -/
+@[simp]
+theorem cocharAddEquiv_cocharacterLatticeEquiv_apply
+    (k : Type u) [Field k] (σ : Type u) [Finite σ]
+    (f : MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat k σ)) (i : σ) :
+    cocharAddEquiv (cocharacterLatticeEquiv k σ f) i =
+      MultiplicativeTypeCommHopfAlgCat.cocharacterLatticeLinearEquivDual
+        (toMultiplicativeTypeCommHopfAlgCat k σ) f
+          ((characterLatticeEquiv k σ).symm (Finsupp.single i 1)) := by
+  simp [cocharacterLatticeEquiv, cocharacterLatticeCoordEquiv, Finsupp.llift_symm_apply]
+
+/-- For a standard split torus, the pairing transported through the comparison agrees with the
+existing pairing on the explicit character and cocharacter lattices. -/
+theorem characterCocharacterPairing_eq_latticePairing
+    (k : Type u) [Field k] (σ : Type u) [Finite σ]
+    (x : CommHopfAlgCat.additiveCharacterGroup
+      (DiagonalizableGroup.coordinateRing k (characterGroup σ)).obj)
+    (f : MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat k σ)) :
+    MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing
+        (toMultiplicativeTypeCommHopfAlgCat k σ) x f =
+      latticePairing (characterLatticeEquiv k σ x) (cocharacterLatticeEquiv k σ f) := by
+  rw [MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing_apply,
+    ← ofMul_toMul (cocharacterLatticeEquiv k σ f), latticePairing_ofMul,
+    pairing_eq_dotPairing, dotPairing_apply]
+  simp_rw [← cocharAddEquiv_apply]
+  simp only [ofMul_toMul, ← smul_eq_mul]
+  rw [← Finsupp.lift_apply,
+    ← Finsupp.llift_apply (M := ℤ) (R := ℤ) (X := σ) (S := ℤ)]
+  simp [cocharacterLatticeEquiv, cocharacterLatticeCoordEquiv]
+
+/-- The absolute-Galois representation on the geometric cocharacter lattice of a standard split
+torus is trivial. -/
+@[simp]
+theorem cocharacterGaloisRepresentation_apply_eq_self
+    (k : Type u) [Field k] (σ : Type u) [Finite σ]
+    (γ : Field.absoluteGaloisGroup k)
+    (f : MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat k σ)) :
+    MultiplicativeTypeCommHopfAlgCat.cocharacterGaloisRepresentation
+      (toMultiplicativeTypeCommHopfAlgCat k σ) γ f = f := by
+  apply (MultiplicativeTypeCommHopfAlgCat.cocharacterLatticeLinearEquivDual
+    (toMultiplicativeTypeCommHopfAlgCat k σ)).injective
+  ext x
+  rw [MultiplicativeTypeCommHopfAlgCat.cocharacterGaloisRepresentation_apply_apply,
+    smul_characterLattice_eq_self]
 
 end SplitTorus
 

@@ -30,6 +30,8 @@ the opaque `Field.absoluteGaloisGroup` definition.
 
 * `TauCeti.CommHopfAlgCat.geometricCharacterGroup`: the geometric character group.
 * `TauCeti.CommHopfAlgCat.additiveCharacterGroup`: its additive form.
+* `TauCeti.CommHopfAlgCat.instMulSemiringActionAlgebraicClosure`: an instance bridge for the
+  absolute-Galois action on the algebraic closure.
 * `TauCeti.CommHopfAlgCat.instGaloisScalarMulSemiringAction`: an instance bridge for the
   absolute-Galois action on the scalar extension.
 * `TauCeti.CommHopfAlgCat.instGeometricCharacterGroupGaloisAction`: an instance bridge for the
@@ -50,7 +52,7 @@ open TensorProduct
 
 namespace TauCeti
 
-universe u
+universe u v
 
 namespace CommHopfAlgCat
 
@@ -64,8 +66,16 @@ these are exactly its morphisms over `k̄` to the multiplicative group. -/
 abbrev geometricCharacterGroup :=
   GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] H)
 
+/-- Bridge the tautological action across the opaque `Field.absoluteGaloisGroup` definition. -/
+noncomputable abbrev instMulSemiringActionAlgebraicClosure :
+    MulSemiringAction (Field.absoluteGaloisGroup k) (AlgebraicClosure k) := by
+  unfold Field.absoluteGaloisGroup
+  exact AlgEquiv.applyMulSemiringAction
+
+attribute [instance] instMulSemiringActionAlgebraicClosure
+
 /-- Bridge the generic scalar action across the opaque `Field.absoluteGaloisGroup` definition. -/
-noncomputable abbrev instGaloisScalarMulSemiringAction {A : Type u} [Semiring A] [Algebra k A] :
+noncomputable abbrev instGaloisScalarMulSemiringAction {A : Type v} [Semiring A] [Algebra k A] :
     MulSemiringAction (Field.absoluteGaloisGroup k) (AlgebraicClosure k ⊗[k] A) := by
   unfold Field.absoluteGaloisGroup
   exact ScalarAut.instMulSemiringAction
@@ -73,7 +83,7 @@ noncomputable abbrev instGaloisScalarMulSemiringAction {A : Type u} [Semiring A]
 attribute [instance] instGaloisScalarMulSemiringAction
 
 /-- Bridge the generic group-like action across the opaque absolute-Galois-group definition. -/
-noncomputable abbrev instGeometricCharacterGroupGaloisAction {A : Type u}
+noncomputable abbrev instGeometricCharacterGroupGaloisAction {A : Type v}
     [Semiring A] [Bialgebra k A] :
     MulDistribMulAction (Field.absoluteGaloisGroup k)
       (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A)) := by
@@ -87,7 +97,7 @@ torus its underlying additive group is free of finite rank. -/
 abbrev additiveCharacterGroup := Additive (geometricCharacterGroup H)
 
 /-- Bridge the generic additive action across the opaque absolute-Galois-group definition. -/
-noncomputable abbrev instAdditiveCharacterGroupGaloisAction {A : Type u}
+noncomputable abbrev instAdditiveCharacterGroupGaloisAction {A : Type v}
     [Semiring A] [Bialgebra k A] :
     DistribMulAction (Field.absoluteGaloisGroup k)
       (Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) := by
@@ -96,24 +106,29 @@ noncomputable abbrev instAdditiveCharacterGroupGaloisAction {A : Type u}
 
 attribute [instance] instAdditiveCharacterGroupGaloisAction
 
-/-- The underlying value of the absolute-Galois action on a geometric character. -/
+/-- The underlying value of the absolute-Galois action on a scalar-extended group-like element. -/
 @[simp]
-theorem val_smul (σ : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
-    (σ • x).val = (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from σ) • x.val :=
+theorem val_smul {A : Type v} [Semiring A] [Bialgebra k A]
+    (sigma : Field.absoluteGaloisGroup k)
+    (x : _root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A)) :
+    (sigma • x).val =
+      (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from sigma) • x.val :=
   by
     -- Mathlib exposes `absoluteGaloisGroup` as an opaque `def`, with no conversion lemma to the
-    -- underlying algebra equivalence. The `show` selects the generic scalar-automorphism action;
-    -- this boundary is therefore the one place where the wrapper must be unfolded.
-    unfold Field.absoluteGaloisGroup at σ ⊢
-    exact ScalarAut.val_smul σ x
+    -- underlying algebra equivalence, so this boundary must unfold the wrapper.
+    unfold Field.absoluteGaloisGroup at sigma ⊢
+    exact ScalarAut.val_smul sigma x
 
-/-- Passing from additive to multiplicative characters commutes with the absolute-Galois action. -/
+/-- Passing from additive to multiplicative group-like elements commutes with the
+absolute-Galois action. -/
 @[simp]
-theorem toMul_smul (σ : Field.absoluteGaloisGroup k) (x : additiveCharacterGroup H) :
-    (σ • x).toMul = σ • x.toMul :=
+theorem toMul_smul {A : Type v} [Semiring A] [Bialgebra k A]
+    (sigma : Field.absoluteGaloisGroup k)
+    (x : Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) :
+    (sigma • x).toMul = sigma • x.toMul :=
   by
-    unfold Field.absoluteGaloisGroup at σ ⊢
-    exact ScalarAut.toMul_smul σ x
+    unfold Field.absoluteGaloisGroup at sigma ⊢
+    exact ScalarAut.toMul_smul sigma x
 
 end CommHopfAlgCat
 
