@@ -7,6 +7,7 @@ module
 public import Mathlib.NumberTheory.Modular
 public import TauCeti.Analysis.Complex.UpperHalfPlane.Rho
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
+import TauCeti.NumberTheory.Modular.Orbits
 
 /-!
 # Pairing the boundary divisor points of the fundamental domain
@@ -67,8 +68,9 @@ private lemma norm_coe_vadd_of_re_eq (hre : (p : ℂ).re = -r / 2) :
     ‖((r +ᵥ p : ℍ) : ℂ)‖ = ‖(p : ℂ)‖ := by
   rw [norm_def, norm_def, normSq_coe_vadd_of_re_eq hre]
 
--- Translation carries the line `re = -r / 2` to `re = r / 2`, keeping the modulus.
-private lemma vadd_mem_fd_of_re_eq (hr : |r| ≤ 1) (hp : p ∈ 𝒟) (hre : (p : ℂ).re = -r / 2) :
+/-- Translation by `r` carries a fundamental-domain point on the line `re = -r / 2` to one on
+`re = r / 2`, keeping the modulus. -/
+lemma vadd_mem_fd_of_re_eq (hr : |r| ≤ 1) (hp : p ∈ 𝒟) (hre : (p : ℂ).re = -r / 2) :
     r +ᵥ p ∈ 𝒟 := by
   refine ⟨normSq_coe_vadd_of_re_eq hre ▸ hp.1, abs_le.mpr ⟨?_, ?_⟩⟩ <;>
     rw [vadd_re, ← coe_re, hre] <;> linarith [abs_le.mp hr]
@@ -125,25 +127,6 @@ section Arc
 
 variable {g : ℍ → ℂ} {p : ℍ}
 
-private lemma coe_S_smul (p : ℍ) : ((ModularGroup.S • p : ℍ) : ℂ) = (-(p : ℂ))⁻¹ := by
-  rw [modular_S_smul]
-
-private lemma norm_coe_S_smul (hp : ‖(p : ℂ)‖ = 1) : ‖((ModularGroup.S • p : ℍ) : ℂ)‖ = 1 := by
-  rw [coe_S_smul, norm_inv, norm_neg, hp, inv_one]
-
--- On the unit arc the inversion is `z ↦ -conj z`, so it flips the real part.
-private lemma re_coe_S_smul (hp : ‖(p : ℂ)‖ = 1) :
-    ((ModularGroup.S • p : ℍ) : ℂ).re = -(p : ℂ).re := by
-  rw [coe_S_smul, inv_re, normSq_neg, Complex.normSq_eq_norm_sq, hp, one_pow, neg_re, div_one]
-
-private lemma S_smul_mem_fd (hp : p ∈ 𝒟) (hnorm : ‖(p : ℂ)‖ = 1) : ModularGroup.S • p ∈ 𝒟 :=
-  ⟨Complex.one_le_normSq_iff.mpr (norm_coe_S_smul hnorm).ge,
-    by simpa only [← coe_re, re_coe_S_smul hnorm, abs_neg] using hp.2⟩
-
-/-- The inversion is an involution of `ℍ`. -/
-private lemma S_smul_S_smul (p : ℍ) : ModularGroup.S • (ModularGroup.S • p) = p :=
-  UpperHalfPlane.ext (by rw [coe_S_smul, coe_S_smul, neg_inv, neg_neg, inv_inv])
-
 /-- Slash-invariance carries the vanishing order along the inversion. -/
 private lemma orderOfVanishingAt_S_smul [SlashInvariantFormClass F Γ k] (f : F)
     (hSmem : ModularGroup.S ∈ Γ) (p : ℍ) :
@@ -162,8 +145,9 @@ private lemma S_smul_mem_of_norm_eq_one (hS : ∀ q ∈ S, orderOfVanishingAt g 
     (hnorm : ‖(p : ℂ)‖ = 1) (hne : orderOfVanishingAt g p ≠ 0) :
     ModularGroup.S • p ∈ S ∧ ‖((ModularGroup.S • p : ℍ) : ℂ)‖ = 1 ∧
       ((ModularGroup.S • p : ℍ) : ℂ).re = -(p : ℂ).re :=
-  ⟨hcomp _ (S_smul_mem_fd (hS p hp hne) hnorm) (hord ▸ hne), norm_coe_S_smul hnorm,
-    re_coe_S_smul hnorm⟩
+  ⟨hcomp _ (ModularGroup.S_smul_mem_fd_of_norm_eq_one (hS p hp hne).2 hnorm) (hord ▸ hne),
+    ModularGroup.norm_coe_S_smul_of_norm_eq_one hnorm,
+    by rw [coe_re, ModularGroup.re_S_smul_of_norm_eq_one hnorm, coe_re]⟩
 
 end Arc
 
@@ -181,7 +165,8 @@ theorem sum_orderOfVanishingAt_rightArc_eq_leftArc [SlashInvariantFormClass F Γ
   rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero
     (s := S.filter (fun p : ℍ ↦ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0))]
   refine Finset.sum_nbij' (ModularGroup.S • ·) (ModularGroup.S • ·) (fun q hq ↦ ?_)
-    (fun q hq ↦ ?_) (fun q _ ↦ S_smul_S_smul q) (fun q _ ↦ S_smul_S_smul q)
+    (fun q hq ↦ ?_) (fun q _ ↦ ModularGroup.S_smul_S_smul q)
+    (fun q _ ↦ ModularGroup.S_smul_S_smul q)
     (fun q _ ↦ (hord q).symm)
   -- the two halves of the arc are interchanged by the same argument, `re` flipping sign
   all_goals
@@ -192,21 +177,13 @@ theorem sum_orderOfVanishingAt_rightArc_eq_leftArc [SlashInvariantFormClass F Γ
 
 section Corners
 
-/-- The corner `ρ` sits on the left half of the unit arc. -/
-private lemma coe_re_ρ : ((ρ : ℍ) : ℂ).re = -(1 / 2) := by
-  norm_num [UpperHalfPlane.ρ]
-
-/-- The second corner `ρ + 1` is the unit translate of `ρ`. -/
-private lemma coe_vadd_one_ρ : (((1 : ℝ) +ᵥ ρ : ℍ) : ℂ) = (ρ : ℂ) + 1 := by
-  rw [coe_vadd]; push_cast; ring
-
 /-- The corner `ρ` lies in the left arc family of a divisor set complete for `𝒟`, as soon as its
 order is nonzero. -/
 private lemma ρ_mem_leftArc {g : ℍ → ℂ}
     (hcomp : ∀ q, q ∈ 𝒟 → orderOfVanishingAt g q ≠ 0 → q ∈ S)
     (h : orderOfVanishingAt g ρ ≠ 0) :
     ρ ∈ S.filter (fun p : ℍ ↦ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) :=
-  Finset.mem_filter.mpr ⟨hcomp ρ ModularGroup.ρ_mem_fd h, norm_ρ, by rw [coe_re_ρ]; norm_num⟩
+  Finset.mem_filter.mpr ⟨hcomp ρ ModularGroup.ρ_mem_fd h, norm_ρ, by norm_num⟩
 
 /-- The corner `ρ + 1` lies in the right arc family of a divisor set complete for `𝒟`, as soon as
 the order at `ρ` is nonzero — the two corners carry the same order. -/
@@ -217,9 +194,9 @@ private lemma vadd_one_ρ_mem_rightArc {g : ℍ → ℂ}
     (1 : ℝ) +ᵥ ρ ∈ S.filter (fun p : ℍ ↦ ‖(p : ℂ)‖ = 1 ∧ 0 < (p : ℂ).re) :=
   Finset.mem_filter.mpr
     ⟨hcomp _ (vadd_mem_fd_of_re_eq (r := 1) (by norm_num) ModularGroup.ρ_mem_fd
-        (by rw [coe_re_ρ]; norm_num)) (by rw [hordρ]; exact h),
+        (by norm_num)) (by rw [hordρ]; exact h),
       by rw [coe_vadd_one_ρ]; exact norm_ρ_add_one,
-      by rw [coe_re, vadd_re, ← coe_re, coe_re_ρ]; norm_num⟩
+      by norm_num⟩
 
 end Corners
 
@@ -262,37 +239,7 @@ variable {p : ℍ}
 
 /-- The real part of the second corner. -/
 private lemma coe_re_ρ_add_one : ((ρ : ℂ) + 1).re = 1 / 2 := by
-  rw [add_re, coe_re_ρ, one_re]; norm_num
-
-/-- A point of the unit arc with vanishing real part is `i`. -/
-private lemma coe_eq_I_of_re_eq_zero (hnorm : ‖(p : ℂ)‖ = 1) (hre : (p : ℂ).re = 0) :
-    (p : ℂ) = Complex.I := by
-  -- `eq_of_re_of_norm` states its hypotheses via `UpperHalfPlane.re`; the `show`s restate them
-  -- (definitionally) at the `Complex` spellings the hypotheses and corner lemmas use.
-  have hp : p = UpperHalfPlane.I := UpperHalfPlane.eq_of_re_of_norm
-    (show (p : ℂ).re = (UpperHalfPlane.I : ℂ).re by simpa using hre)
-    (show ‖(p : ℂ)‖ = ‖(UpperHalfPlane.I : ℂ)‖ by simp [hnorm])
-  rw [hp, UpperHalfPlane.coe_I]
-
-/-- A point of the unit arc with real part `-1/2` is the corner `ρ`. -/
-private lemma coe_eq_ρ_of_re (hnorm : ‖(p : ℂ)‖ = 1) (hre : (p : ℂ).re = -(1 / 2)) :
-    (p : ℂ) = (ρ : ℂ) := by
-  -- `show` restates the hypotheses at the `Complex` spellings, as in `coe_eq_I_of_re_eq_zero`.
-  have hp : p = ρ := UpperHalfPlane.eq_of_re_of_norm
-    (show (p : ℂ).re = (ρ : ℂ).re by rw [hre, coe_re_ρ])
-    (show ‖(p : ℂ)‖ = ‖(ρ : ℂ)‖ by rw [hnorm, norm_ρ])
-  rw [hp]
-
-/-- A point of the unit arc with real part `1/2` is the corner `ρ + 1`. -/
-private lemma coe_eq_ρ_add_one_of_re (hnorm : ‖(p : ℂ)‖ = 1) (hre : (p : ℂ).re = 1 / 2) :
-    (p : ℂ) = (ρ : ℂ) + 1 := by
-  -- `show` restates the hypotheses at the `Complex` spellings, as in `coe_eq_I_of_re_eq_zero`.
-  have hp : p = (1 : ℝ) +ᵥ ρ := UpperHalfPlane.eq_of_re_of_norm
-    (show (p : ℂ).re = (((1 : ℝ) +ᵥ ρ : ℍ) : ℂ).re by
-      rw [hre, coe_re, vadd_re, ← coe_re, coe_re_ρ]; norm_num)
-    (show ‖(p : ℂ)‖ = ‖(((1 : ℝ) +ᵥ ρ : ℍ) : ℂ)‖ by
-      rw [hnorm, coe_vadd_one_ρ, norm_ρ_add_one])
-  rw [hp, coe_vadd_one_ρ]
+  norm_num
 
 /-- Each of the four half-edges consists of non-elliptic points that are not strictly interior:
 the verticals are cut off from the corners by their modulus, the arc halves by their real part. -/
@@ -312,7 +259,7 @@ private lemma notMem_corners_of_half_edge
       fun h ↦ by rw [h, norm_ρ_add_one] at hn; norm_num at hn⟩,
       fun h ↦ by rw [hre] at h; norm_num at h⟩
   · exact ⟨⟨fun h ↦ by rw [h] at hre; norm_num at hre,
-      fun h ↦ by rw [h, coe_re_ρ] at hre; norm_num at hre, hne⟩,
+      fun h ↦ by rw [h] at hre; norm_num at hre, hne⟩,
       fun h ↦ by rw [hn] at h; exact absurd h.1 (lt_irrefl 1)⟩
   · exact ⟨⟨fun h ↦ by rw [h] at hre; norm_num at hre, hne,
       fun h ↦ by rw [h, coe_re_ρ_add_one] at hre; norm_num at hre⟩,
@@ -330,7 +277,7 @@ private lemma half_edge_of_boundary (hp : p ∈ 𝒟) (hI : (p : ℂ) ≠ Comple
   rcases eq_or_lt_of_le (Complex.one_le_normSq_iff.mp hp.1) with heq | hgt
   · rcases lt_trichotomy (p : ℂ).re 0 with h | h | h
     · exact Or.inr (Or.inr (Or.inr ⟨hρ, heq.symm, h⟩))
-    · exact absurd (coe_eq_I_of_re_eq_zero heq.symm h) hI
+    · exact absurd ((congrArg _ (eq_I_of_re_eq_zero heq.symm h)).trans coe_I) hI
     · exact Or.inr (Or.inr (Or.inl ⟨hρ₁, heq.symm, h⟩))
   · have habs : |(p : ℂ).re| = 1 / 2 := le_antisymm hp.2 (not_lt.mp fun h ↦ hint ⟨hgt, h⟩)
     rcases (abs_eq (by norm_num : (0 : ℝ) ≤ 1 / 2)).mp habs with h | h
@@ -339,7 +286,7 @@ private lemma half_edge_of_boundary (hp : p ∈ 𝒟) (hI : (p : ℂ) ≠ Comple
 
 /-- **The pointwise boundary classification.** A point of `𝒟` avoids the three elliptic points
 and the open fundamental domain exactly when it lies on one of the four half-edges. -/
-private lemma mem_boundary_iff (hp : p ∈ 𝒟) :
+lemma mem_boundary_iff (hp : p ∈ 𝒟) :
     ((p : ℂ) ∉ ({Complex.I, (ρ : ℂ), (ρ : ℂ) + 1} : Finset ℂ) ∧
         ¬(1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2)) ↔
       (((p : ℂ).re = 1 / 2 ∧ 1 < ‖(p : ℂ)‖) ∨ ((p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖) ∨

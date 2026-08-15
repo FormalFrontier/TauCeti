@@ -12,7 +12,8 @@ public import TauCeti.Analysis.Semigroups.Generation.HilleYosida.Approximation
 This file assembles the two halves of the exponent-zero, general-`M` Hille--Yosida construction
 that are already available: the uniform bound `‖exp (t A_lambda)‖ ≤ M` on the Yosida exponentials
 proved in `TauCeti/Analysis/Semigroups/Generation/HilleYosida/Approximation.lean`, and the
-convergence `A_lambda x -> A x` proved in `TauCeti/Analysis/Semigroups/Generation/Yosida.lean`
+convergence `A_lambda x -> A x` proved in
+`TauCeti/Analysis/Semigroups/Generation/Yosida/Basic.lean`
 from the resolvent bound alone. Together they say that for a densely defined operator whose
 resolvent powers at `lambda > 0` satisfy
 

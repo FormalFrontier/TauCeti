@@ -5,8 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Closure
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 public import Mathlib.Data.NNReal.Basic
 
 /-!
@@ -31,7 +30,7 @@ for `IsSemigroupGroupPD` as the positive-definite predicate on `ℝ≥0 × V` wi
 ## Main declarations
 
 * `TauCeti.IsSemigroupGroupPD`: the BCR positive-definiteness predicate on `ℝ≥0 × V`.
-* `TauCeti.isSemigroupGroupPD_iff_isPositiveDefiniteKernel`: the bridge to the associated
+* `TauCeti.isSemigroupGroupPD_iff_posSemidef`: the bridge to the associated
   positive-definite kernel.
 * `TauCeti.isSemigroupGroupPD_iff`: the finite quadratic-form characterization.
 * `TauCeti.IsSemigroupGroupPD.conj_symm`, diagonal, and origin lemmas: basic consequences of the
@@ -159,36 +158,51 @@ def IsSemigroupGroupPD (F : ℝ≥0 × V → ℂ) : Prop :=
 
 /-- The bridge from semigroup-group positive definiteness to the associated positive-definite
 kernel. -/
-theorem isSemigroupGroupPD_iff_isPositiveDefiniteKernel :
+theorem isSemigroupGroupPD_iff_posSemidef :
     IsSemigroupGroupPD F ↔
-      IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
+      Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
   constructor
   · intro hF
-    have hK := IsPositiveDefinite.isPositiveDefiniteKernel hF
-    have hK' := isPositiveDefiniteKernel_comp hK (fun p : ℝ≥0 × V => BCRPoint.ofProd p)
-    simpa [BCRPoint.ofProd, sub_eq_add_neg] using hK'
+    have h := (IsPositiveDefinite.posSemidef hF).submatrix
+        (fun p : ℝ≥0 × V => BCRPoint.ofProd p)
+    have heq : Matrix.submatrix
+        (Matrix.of fun a b : BCRPoint V => F ((a + star b).time, (a + star b).point))
+        (fun p : ℝ≥0 × V => BCRPoint.ofProd p) (fun p => BCRPoint.ofProd p) =
+        fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) := by
+      ext p q
+      rw [Matrix.submatrix_apply, Matrix.of_apply]
+      simp [BCRPoint.ofProd, sub_eq_add_neg]
+    exact heq ▸ h
   · intro hK
-    refine IsPositiveDefinite.of_isPositiveDefiniteKernel ?_
-    have hK' := isPositiveDefiniteKernel_comp hK (fun p : BCRPoint V => BCRPoint.toProd p)
-    simpa [BCRPoint.toProd, sub_eq_add_neg] using hK'
+    refine IsPositiveDefinite.of_posSemidef ?_
+    have h := hK.submatrix
+      (fun p : BCRPoint V => BCRPoint.toProd p)
+    have heq : Matrix.submatrix
+        (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+        (fun p : BCRPoint V => BCRPoint.toProd p) (fun p => BCRPoint.toProd p) =
+        fun a b : BCRPoint V => F (a.time + b.time, a.point + -b.point) := by
+      ext a b
+      rw [Matrix.submatrix_apply, Matrix.of_apply]
+      simp [BCRPoint.toProd, sub_eq_add_neg]
+    exact heq ▸ h
 
 /-- The kernel associated to a semigroup-group positive-definite function is positive definite. -/
-theorem IsSemigroupGroupPD.isPositiveDefiniteKernel (hF : IsSemigroupGroupPD F) :
-    IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) :=
-  isSemigroupGroupPD_iff_isPositiveDefiniteKernel.mp hF
+theorem IsSemigroupGroupPD.posSemidef (hF : IsSemigroupGroupPD F) :
+    Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2) :=
+  isSemigroupGroupPD_iff_posSemidef.mp hF
 
 /-- Build a semigroup-group positive-definite function from the associated positive-definite
 kernel. -/
-theorem IsSemigroupGroupPD.of_isPositiveDefiniteKernel
-    (hF : IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2)) :
+theorem IsSemigroupGroupPD.of_posSemidef
+    (hF : Matrix.PosSemidef fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2)) :
     IsSemigroupGroupPD F :=
-  isSemigroupGroupPD_iff_isPositiveDefiniteKernel.mpr hF
+  isSemigroupGroupPD_iff_posSemidef.mpr hF
 
 /-- A nonnegative complex constant is semigroup-group positive definite. -/
 theorem isSemigroupGroupPD_const_of_nonneg {k : ℂ} (hk : 0 ≤ k) :
     IsSemigroupGroupPD (fun _ : ℝ≥0 × V => k) :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <| by
-    simpa using isPositiveDefiniteKernel_const_of_nonneg (α := ℝ≥0 × V) hk
+  IsSemigroupGroupPD.of_posSemidef <| by
+    simpa using posSemidef_const_of_nonneg (α := ℝ≥0 × V) hk
 
 /-- The zero function is semigroup-group positive definite. -/
 theorem isSemigroupGroupPD_zero :
@@ -211,16 +225,17 @@ theorem isSemigroupGroupPD_iff :
   classical
   constructor
   · intro hF
-    refine ⟨fun p q => isPositiveDefiniteKernel_conj_symm hF.isPositiveDefiniteKernel p q, ?_⟩
+    refine ⟨fun p q => by
+      simpa only [RCLike.star_def] using hF.posSemidef.isHermitian.apply q p, ?_⟩
     intro ι _ c p
-    have hpos := (isPositiveDefiniteKernel_iff.mp hF.isPositiveDefiniteKernel).2 p
+    have hpos := (posSemidef_iff_finite_sum.mp hF.posSemidef).2 p
       (fun i => conj (c i))
-    simpa only [Complex.conj_conj] using hpos
+    simpa only [RCLike.star_def, Complex.conj_conj, mul_comm, mul_left_comm, mul_assoc] using hpos
   · rintro ⟨hsymm, hpos⟩
-    exact IsSemigroupGroupPD.of_isPositiveDefiniteKernel <| isPositiveDefiniteKernel_iff.mpr
-      ⟨hsymm, fun p x => by
+    exact IsSemigroupGroupPD.of_posSemidef <| posSemidef_iff_finite_sum.mpr
+      ⟨fun p q => by simpa only [RCLike.star_def] using hsymm p q, fun p x => by
         have h := hpos (fun i => conj (x i)) p
-        simpa only [Complex.conj_conj] using h⟩
+        simpa only [RCLike.star_def, Complex.conj_conj, mul_comm, mul_left_comm, mul_assoc] using h⟩
 
 namespace IsSemigroupGroupPD
 
@@ -246,13 +261,13 @@ theorem quadForm_two_nonneg (hF : IsSemigroupGroupPD F) (p q : ℝ≥0 × V) (c�
 `conj (F (t + u, v - w)) = F (u + t, w - v)`. -/
 @[simp]
 theorem conj_symm (hF : IsSemigroupGroupPD F) (p q : ℝ≥0 × V) :
-    conj (F (p.1 + q.1, p.2 - q.2)) = F (q.1 + p.1, q.2 - p.2) :=
-  isPositiveDefiniteKernel_conj_symm hF.isPositiveDefiniteKernel p q
+    conj (F (p.1 + q.1, p.2 - q.2)) = F (q.1 + p.1, q.2 - p.2) := by
+  simpa only [starRingEnd_apply] using hF.posSemidef.isHermitian.apply q p
 
 /-- Values of a semigroup-group positive-definite function on the time diagonal `(t + t, 0)` are
 real and nonnegative. -/
 theorem diagonal_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) : 0 ≤ F (t + t, 0) := by
-  simpa using isPositiveDefiniteKernel_apply_self_nonneg hF.isPositiveDefiniteKernel (t, 0)
+  simpa using hF.posSemidef.diag_nonneg (i := (t, 0))
 
 /-- Values of a semigroup-group positive-definite function on the time diagonal `(t + t, 0)` have
 zero imaginary part. -/
@@ -309,46 +324,41 @@ theorem map_zero_re_pos_of_ne_zero (hF : IsSemigroupGroupPD F) (h0 : F (0, 0) �
 /-- Semigroup-group positive-definite functions are closed under addition. -/
 theorem add (hF : IsSemigroupGroupPD F) (hG : IsSemigroupGroupPD G) :
     IsSemigroupGroupPD fun x => F x + G x :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <| by
-    simpa only [Pi.add_apply] using
-      isPositiveDefiniteKernel_add hF.isPositiveDefiniteKernel hG.isPositiveDefiniteKernel
+  IsSemigroupGroupPD.of_posSemidef <| hF.posSemidef.add hG.posSemidef
 
 /-- Semigroup-group positive-definite functions are closed under multiplication by a
 nonnegative complex scalar. -/
 theorem const_mul {k : ℂ} (hk : 0 ≤ k) (hF : IsSemigroupGroupPD F) :
     IsSemigroupGroupPD fun x => k * F x :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <| by
-    simpa only [Pi.smul_apply, smul_eq_mul] using
-      isPositiveDefiniteKernel_smul_of_nonneg hk hF.isPositiveDefiniteKernel
+  IsSemigroupGroupPD.of_posSemidef <| hF.posSemidef.smul hk
 
 /-- Semigroup-group positive-definite functions are closed under multiplication by a
 nonnegative real scalar. -/
 theorem smul_of_nonneg {r : ℝ} (hr : 0 ≤ r) (hF : IsSemigroupGroupPD F) :
     IsSemigroupGroupPD fun x => r • F x :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_smul hr hF.isPositiveDefiniteKernel
+  IsSemigroupGroupPD.of_posSemidef <|
+    hF.posSemidef.smul (α := ℝ) hr
 
 /-- Semigroup-group positive-definite functions are closed under pointwise multiplication
 (Schur product). -/
 theorem mul (hF : IsSemigroupGroupPD F) (hG : IsSemigroupGroupPD G) :
     IsSemigroupGroupPD fun x => F x * G x :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_mul hF.isPositiveDefiniteKernel hG.isPositiveDefiniteKernel
+  IsSemigroupGroupPD.of_posSemidef <| hF.posSemidef.hadamard hG.posSemidef
 
 /-- Semigroup-group positive-definite functions are closed under finite sums. -/
 theorem sum {ι : Type*} {s : Finset ι} {F : ι → ℝ≥0 × V → ℂ}
     (hF : ∀ i ∈ s, IsSemigroupGroupPD (F i)) :
     IsSemigroupGroupPD fun x => ∑ i ∈ s, F i x :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_sum fun i hi => (hF i hi).isPositiveDefiniteKernel
+  IsSemigroupGroupPD.of_posSemidef <|
+    posSemidef_finset_sum fun i hi => (hF i hi).posSemidef
 
 /-- Semigroup-group positive-definite functions are closed under finite products
 (Schur products). -/
 theorem prod {ι : Type*} {s : Finset ι} {F : ι → ℝ≥0 × V → ℂ}
     (hF : ∀ i ∈ s, IsSemigroupGroupPD (F i)) :
     IsSemigroupGroupPD fun x => ∏ i ∈ s, F i x :=
-  IsSemigroupGroupPD.of_isPositiveDefiniteKernel <|
-    isPositiveDefiniteKernel_prod fun i hi => (hF i hi).isPositiveDefiniteKernel
+  IsSemigroupGroupPD.of_posSemidef <|
+    posSemidef_schur_finset_prod fun i hi => (hF i hi).posSemidef
 
 end IsSemigroupGroupPD
 
