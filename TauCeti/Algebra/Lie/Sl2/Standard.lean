@@ -172,6 +172,15 @@ namespace Sl2Std
 instance : AddCommGroup (Sl2Std K n) := inferInstanceAs (AddCommGroup (Fin (n + 1) → K))
 instance : Module K (Sl2Std K n) := inferInstanceAs (Module K (Fin (n + 1) → K))
 
+instance (priority := 100) [Algebra ℚ K] : Module ℚ (Sl2Std K n) :=
+  inferInstanceAs (Module ℚ (Fin (n + 1) → K))
+
+instance (priority := 100) [Algebra ℚ K] : IsScalarTower ℚ K (Sl2Std K n) :=
+  inferInstanceAs (IsScalarTower ℚ K (Fin (n + 1) → K))
+
+instance (priority := 100) [Algebra ℚ K] : SMulCommClass K ℚ (Sl2Std K n) :=
+  inferInstanceAs (SMulCommClass K ℚ (Fin (n + 1) → K))
+
 /-! ### The three ladder operators -/
 
 /-- **The raising operator** `e` of `V(n)`, sending the coordinate vector `vᵢ` to `i · vᵢ₋₁`; in
@@ -347,13 +356,19 @@ instance [Nontrivial K] : Nontrivial (Sl2Std K n) :=
   inferInstanceAs (Nontrivial (Fin (n + 1) → K))
 
 /-- The coordinate basis `v₀, …, vₙ` of `V(n)`, a weight basis for the Cartan operator. -/
-noncomputable def basis : Basis (Fin (n + 1)) K (Sl2Std K n) := Pi.basisFun K (Fin (n + 1))
+@[expose] noncomputable def basis : Basis (Fin (n + 1)) K (Sl2Std K n) :=
+  Pi.basisFun K (Fin (n + 1))
 
 variable {K n}
 
 /-- The coordinate basis consists of the standard unit vectors. -/
 theorem basis_eq (i : Fin (n + 1)) : basis K n i = (Pi.single i 1 : Fin (n + 1) → K) :=
   Pi.basisFun_apply K (Fin (n + 1)) i
+
+/-- Coordinates of a vector in the coordinate basis are its values. -/
+@[simp] theorem basis_repr_apply (v : Sl2Std K n) (i : Fin (n + 1)) :
+    (basis K n).repr v i = v i :=
+  Pi.basisFun_repr K (Fin (n + 1)) (v : Fin (n + 1) → K) i
 
 /-- The coordinates of a coordinate basis vector. -/
 @[simp] theorem basis_apply (i j : Fin (n + 1)) : basis K n i j = if j = i then 1 else 0 :=

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.Module.Lattice
 public import TauCeti.Algebra.Lie.Sl2.Standard
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
 public import TauCeti.RingTheory.Binomial
@@ -42,6 +43,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.Sl2Std.ringChoose_diag_apply`: the coordinate formula for Cartan binomials.
 * `TauCeti.Sl2Std.kostantForm_apply_mem_integralLattice`: the rank-one Kostant form preserves
   the lattice.
+* `TauCeti.Sl2Std.kostantRepresentationIntegralLattice`: the canonical `ℤ`-algebra representation
+  of the rank-one Kostant form on the integral lattice.
 
 ## References
 
@@ -58,18 +61,6 @@ open Polynomial
 open scoped Matrix
 
 attribute [local instance] TauCeti.moduleNNRat
-
-instance (priority := 100) {K : Type*} [CommRing K] [Algebra ℚ K] {n : ℕ} :
-    Module ℚ (Sl2Std K n) :=
-  inferInstanceAs (Module ℚ (Fin (n + 1) → K))
-
-instance (priority := 100) {K : Type*} [CommRing K] [Algebra ℚ K] {n : ℕ} :
-    IsScalarTower ℚ K (Sl2Std K n) :=
-  inferInstanceAs (IsScalarTower ℚ K (Fin (n + 1) → K))
-
-instance (priority := 100) {K : Type*} [CommRing K] [Algebra ℚ K] {n : ℕ} :
-    SMulCommClass K ℚ (Sl2Std K n) :=
-  inferInstanceAs (SMulCommClass K ℚ (Fin (n + 1) → K))
 
 section GeneralCoefficients
 
@@ -273,83 +264,57 @@ end GeneralCoefficients
 
 variable (n : ℕ)
 
-private def ofIntCoords : (Fin (n + 1) → ℤ) →ₗ[ℤ] Sl2Std ℚ n where
-  toFun z i := (z i : ℚ)
-  map_add' x y := by
-    funext i
-    dsimp
-    push_cast
-    rfl
-  map_smul' z x := by
-    funext i
-    dsimp
-    push_cast
-    rfl
-
-@[simp]
-private lemma ofIntCoords_apply (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
-    ofIntCoords n z i = (z i : ℚ) :=
-  rfl
-
-private lemma ofIntCoords_injective : Function.Injective (ofIntCoords n) := by
-  intro x y hxy
-  funext i
-  have hi := congrFun hxy i
-  exact Int.cast_injective hi
-
 /-- The coordinate `ℤ`-lattice in the rational standard `sl₂`-module `V(n)`.
 
 A vector belongs to this submodule exactly when each of its coordinates is an integer viewed in
 `ℚ`; see `mem_integralLattice_iff`. -/
-def integralLattice : Submodule ℤ (Sl2Std ℚ n) :=
-  LinearMap.range (ofIntCoords n)
+@[expose] def integralLattice : Submodule ℤ (Sl2Std ℚ n) :=
+  Submodule.span ℤ (Set.range (basis ℚ n))
 
 /-- A vector belongs to the standard integral lattice exactly when all its coordinates are
 integer-valued. -/
 @[simp]
 theorem mem_integralLattice_iff {v : Sl2Std ℚ n} :
     v ∈ integralLattice n ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = v i := by
-  rw [integralLattice, LinearMap.mem_range]
-  constructor
-  · rintro ⟨z, rfl⟩ i
-    exact ⟨z i, rfl⟩
-  · intro hv
-    choose z hz using hv
-    exact ⟨z, funext hz⟩
+  rw [integralLattice, Module.Basis.mem_span_iff_repr_mem]
+  simp only [basis_repr_apply, Set.mem_range, eq_comm]
+  rfl
 
 /-- Integer coordinate vectors are linearly equivalent to the standard integral lattice. -/
 noncomputable def integerCoordinatesLinearEquiv :
     (Fin (n + 1) → ℤ) ≃ₗ[ℤ] integralLattice n :=
-  LinearEquiv.ofInjective (ofIntCoords n) (ofIntCoords_injective n)
-
-/-- Forward evaluation of the coordinate linear equivalence on a coordinate vector. -/
-@[simp]
-theorem integerCoordinatesLinearEquiv_apply_coe (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
-    ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
-  have : ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) = ofIntCoords n z :=
-    LinearEquiv.ofInjective_apply (f := ofIntCoords n) (h := ofIntCoords_injective n) z
-  rw [this, ofIntCoords_apply]
+  ((basis ℚ n).restrictScalars ℤ).equivFun.symm
 
 /-- Inverse evaluation of the coordinate linear equivalence yields the integer coordinates. -/
 @[simp]
 theorem integerCoordinatesLinearEquiv_symm_apply_coe (v : integralLattice n) (i : Fin (n + 1)) :
     (((integerCoordinatesLinearEquiv n).symm v i : ℤ) : ℚ) = (v : Sl2Std ℚ n) i := by
-  have h := congrArg (fun w : integralLattice n => (w : Sl2Std ℚ n) i)
-    ((integerCoordinatesLinearEquiv n).apply_symm_apply v)
-  rw [integerCoordinatesLinearEquiv_apply_coe] at h
-  exact h
+  have h := Module.Basis.restrictScalars_repr_apply ℤ (basis ℚ n) v i
+  have hequiv : (integerCoordinatesLinearEquiv n).symm v i =
+      ((basis ℚ n).restrictScalars ℤ).repr v i := rfl
+  rw [hequiv]
+  exact h.trans (basis_repr_apply (v : Sl2Std ℚ n) i)
+
+/-- Forward evaluation of the coordinate linear equivalence on a coordinate vector. -/
+@[simp]
+theorem integerCoordinatesLinearEquiv_apply_coe (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
+    ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
+  have h := integerCoordinatesLinearEquiv_symm_apply_coe n (integerCoordinatesLinearEquiv n z) i
+  rw [LinearEquiv.symm_apply_apply] at h
+  exact h.symm
 
 noncomputable instance : Module.Free ℤ (integralLattice n) :=
-  Module.Free.of_equiv (integerCoordinatesLinearEquiv n)
+  Module.Free.of_basis ((basis ℚ n).restrictScalars ℤ)
 
 noncomputable instance : Module.Finite ℤ (integralLattice n) :=
-  Module.Finite.equiv (integerCoordinatesLinearEquiv n)
+  Module.Finite.of_basis ((basis ℚ n).restrictScalars ℤ)
 
 /-- The standard integral lattice has rank `n + 1`. -/
 @[simp]
 theorem finrank_integralLattice : Module.finrank ℤ (integralLattice n) = n + 1 := by
-  rw [← (integerCoordinatesLinearEquiv n).finrank_eq]
-  exact Module.finrank_fin_fun ℤ
+  have h := Module.finrank_eq_card_basis ((basis ℚ n).restrictScalars ℤ)
+  rw [Fintype.card_fin] at h
+  exact h
 
 /-- Every divided power of the raising operator preserves the standard integral lattice. -/
 theorem dividedPower_raise_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
@@ -405,16 +370,13 @@ theorem ringChoose_diag_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
 /-- The rational span of the standard integral lattice is the whole standard module. -/
 theorem span_integralLattice_eq_top :
     Submodule.span ℚ (integralLattice n : Set (Sl2Std ℚ n)) = ⊤ := by
-  apply top_unique
-  rw [← (basis ℚ n).span_eq, Submodule.span_le]
-  rintro _ ⟨i, rfl⟩
-  apply Submodule.subset_span
-  change (basis ℚ n) i ∈ integralLattice n
-  rw [mem_integralLattice_iff]
-  intro j
-  by_cases hji : j = i
-  · exact ⟨1, by simp [basis_apply, hji]⟩
-  · exact ⟨0, by simp [basis_apply, hji]⟩
+  rw [integralLattice, Submodule.span_span_of_tower, (basis ℚ n).span_eq]
+
+instance : Submodule.IsLattice ℚ (integralLattice n) where
+  fg := by
+    rw [← Module.Finite.iff_fg]
+    infer_instance
+  span_eq_top := span_integralLattice_eq_top n
 
 /-! ### The restricted rank-one Kostant action -/
 
@@ -502,5 +464,51 @@ theorem kostantForm_apply_mem_integralLattice
       rw [Ring.map_choose, hrep]
       exact ringChoose_diag_mem_integralLattice n k hw
   exact hle hu v hv
+
+/-- The canonical representation of the rank-one Kostant integral form on the standard
+integral lattice `V(n)ℤ`. -/
+@[expose] noncomputable def kostantRepresentationIntegralLattice :
+    TauCeti.UniversalEnvelopingAlgebra.kostantForm
+        ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2] →ₐ[ℤ]
+      Module.End ℤ (integralLattice n) where
+  toFun u := {
+    toFun v := ⟨kostantRepresentation n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n),
+      kostantForm_apply_mem_integralLattice n (u : U𝔰𝔩₂) u.2 v.2⟩
+    map_add' v w := Subtype.ext (by simp)
+    map_smul' z v := Subtype.ext (by
+      dsimp
+      rw [← Int.cast_smul_eq_zsmul ℚ z (v : Sl2Std ℚ n)]
+      exact (kostantRepresentation n (u : U𝔰𝔩₂)).map_smul z (v : Sl2Std ℚ n))
+  }
+  map_one' := LinearMap.ext fun v => Subtype.ext (by simp)
+  map_mul' u w := LinearMap.ext fun v => Subtype.ext (by simp)
+  map_zero' := LinearMap.ext fun v => Subtype.ext (by simp)
+  map_add' u w := LinearMap.ext fun v => Subtype.ext (by simp)
+  commutes' z := LinearMap.ext fun v => Subtype.ext (by
+    have h1 : kostantRepresentation n (↑(algebraMap ℤ
+        (TauCeti.UniversalEnvelopingAlgebra.kostantForm
+          ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2]) z) : U𝔰𝔩₂)
+        (v : Sl2Std ℚ n) = z • (v : Sl2Std ℚ n) := by
+      have : (↑(algebraMap ℤ (TauCeti.UniversalEnvelopingAlgebra.kostantForm
+        ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2]) z) : U𝔰𝔩₂) = (z : U𝔰𝔩₂) := rfl
+      rw [this, map_intCast, Module.End.intCast_apply]
+    have h2 : ((algebraMap ℤ (Module.End ℤ (integralLattice n)) z v :
+        integralLattice n) : Sl2Std ℚ n) = z • (v : Sl2Std ℚ n) := by
+      have : (algebraMap ℤ (Module.End ℤ (integralLattice n)) z) =
+          (z : Module.End ℤ (integralLattice n)) := rfl
+      rw [this, Module.End.intCast_apply]
+      rfl
+    exact h1.trans h2.symm)
+
+/-- The ambient action of the restricted Kostant representation agrees with the enveloping-algebra
+representation on the standard module. -/
+@[simp]
+theorem coe_kostantRepresentationIntegralLattice_apply
+    (u : TauCeti.UniversalEnvelopingAlgebra.kostantForm
+      ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2])
+    (v : integralLattice n) :
+    ((kostantRepresentationIntegralLattice n u v : integralLattice n) : Sl2Std ℚ n) =
+      kostantRepresentation n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n) :=
+  rfl
 
 end TauCeti.Sl2Std
