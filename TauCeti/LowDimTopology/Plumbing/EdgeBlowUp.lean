@@ -325,7 +325,7 @@ theorem blowUpEdge_degree_none [Fintype V] (u v : V) (h : P.toSimpleGraph.Adj u 
   rw [SimpleGraph.degree, hset, Finset.card_pair hne']
 
 /-- The exceptional sphere has self-intersection `-1`. -/
-@[simp]
+@[simp 1100]
 theorem blowUpEdge_intersectionMatrix_none_none (u v : V) (_h : P.toSimpleGraph.Adj u v) :
     (P.blowUpEdge u v _h).intersectionMatrix none none = -1 := by
   rw [intersectionMatrix_diag, blowUpEdge_weight_none]
