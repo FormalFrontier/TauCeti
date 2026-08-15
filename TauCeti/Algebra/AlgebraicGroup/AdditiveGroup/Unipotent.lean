@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
+import TauCeti.Algebra.Bialgebra.Primitive
 
 /-!
 # The additive group is unipotent
@@ -139,20 +140,6 @@ theorem coeff_zero_eq_counit :
   simp only [Bialgebra.counitAlgHom_apply, SymmetricAlgebra.counit_ι]
   cases n <;> simp
 
-/-- **The binomial expansion of the comultiplication on monomials.** The coordinate `x` is
-primitive, so `Δ(xⁿ) = ∑ₖ (n choose k) xᵏ ⊗ xⁿ⁻ᵏ`. -/
-theorem comul_pow (n : ℕ) :
-    Coalgebra.comul (R := R) ((ι R R 1 : SymmetricAlgebra R R) ^ n) =
-      ∑ k ∈ Finset.range (n + 1), (n.choose k) •
-        (((ι R R 1 : SymmetricAlgebra R R) ^ k) ⊗ₜ[R]
-          ((ι R R 1 : SymmetricAlgebra R R) ^ (n - k))) := by
-  rw [← Bialgebra.comulAlgHom_apply, map_pow]
-  simp only [Bialgebra.comulAlgHom_apply, SymmetricAlgebra.comul_ι]
-  rw [add_pow]
-  refine Finset.sum_congr rfl fun k _ => ?_
-  rw [Algebra.TensorProduct.tmul_pow, Algebra.TensorProduct.tmul_pow, one_pow, one_pow,
-    Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul, nsmul_eq_mul, mul_comm]
-
 /-- The pairing of two coefficient functionals on a tensor square of the coordinate algebra. -/
 private noncomputable def coeffPair (i j : ℕ) :
     SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R →ₗ[R] R :=
@@ -171,22 +158,26 @@ private theorem coeffPair_comp_comul (i j : ℕ) :
       ((i + j).choose i) • coeff R (i + j) := by
   refine (monomialBasis R).ext fun n => ?_
   rw [monomialBasis_apply]
-  simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.smul_apply, coeff_pow,
-    comul_pow, map_sum, map_nsmul, coeffPair_tmul, coeff_pow]
+  simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.smul_apply]
+  rw [TauCeti.Bialgebra.comul_pow_of_primitive _ (SymmetricAlgebra.comul_ι R R 1) n]
+  simp only [coeff_pow, map_sum, map_nsmul, coeffPair_tmul, coeff_pow]
   rcases eq_or_ne n (i + j) with rfl | hn
-  · rw [Finset.sum_eq_single i]
+  · rw [Finset.sum_eq_single (i, j)]
     · simp
-    · intro k _ hk
-      simp [hk]
-    · intro hi
-      exact absurd (Finset.mem_range.2 (Nat.lt_succ_of_le (Nat.le_add_right i j))) hi
+    · intro mn _ hmn
+      by_cases hmi : mn.1 = i
+      · by_cases hmj : mn.2 = j
+        · exact (hmn (Prod.ext hmi hmj)).elim
+        · simp [hmi, hmj]
+      · simp [hmi]
+    · simp
   · rw [ite_eq_right hn, smul_zero]
-    refine Finset.sum_eq_zero fun k hk => ?_
-    have hkn : k ≤ n := Nat.lt_succ_iff.1 (Finset.mem_range.1 hk)
-    rcases eq_or_ne k i with rfl | hki
-    · have : n - k ≠ j := fun h => hn (by omega)
-      simp [this]
-    · simp [hki]
+    refine Finset.sum_eq_zero fun mn hmn => ?_
+    have hmnsum : mn.1 + mn.2 = n := Finset.mem_antidiagonal.1 hmn
+    rcases eq_or_ne mn.1 i with hmi | hmi
+    · have : mn.2 ≠ j := fun hmj => hn (by omega)
+      simp [hmi, this]
+    · simp [hmi]
 
 end MonomialBasis
 
@@ -297,18 +288,6 @@ section Decomposition
 
 variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
 
-/-- Reading off the `n`-th coefficient of a tensor is the `n`-th coordinate of its expansion in
-the monomial basis. -/
-private theorem equivFinsuppOfBasisRight_monomialBasis_apply
-    (z : V ⊗[R] SymmetricAlgebra R R) (n : ℕ) :
-    TensorProduct.equivFinsuppOfBasisRight (monomialBasis R) z n = tensorComponent R V n z := by
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | tmul v h =>
-    rw [TensorProduct.equivFinsuppOfBasisRight_apply_tmul_apply, tensorComponent_tmul, coeff,
-      Basis.coord_apply]
-  | add z w hz hw => simp only [map_add, Finsupp.add_apply, hz, hw]
-
 variable [Comodule R (SymmetricAlgebra R R) V]
 
 /-- **The divided-power decomposition of the coaction**, as a finitely supported family: writing
@@ -320,8 +299,11 @@ noncomputable def coactDecomposition : V →ₗ[R] (ℕ →₀ V) :=
 
 @[simp]
 theorem coactDecomposition_apply (v : V) (n : ℕ) :
-    coactDecomposition R V v n = coactComponent R V n v :=
-  equivFinsuppOfBasisRight_monomialBasis_apply R V _ n
+    coactDecomposition R V v n = coactComponent R V n v := by
+  rw [coactDecomposition, LinearMap.coe_comp, Function.comp_apply, coactComponent_apply]
+  unfold tensorComponent coeff
+  convert TensorProduct.equivFinsuppOfBasisRight_apply (monomialBasis R)
+    (Comodule.coact (R := R) (C := SymmetricAlgebra R R) v) n using 1 <;> rfl
 
 /-- The coaction is recovered from its divided-power components: `ρ v = ∑ₙ Nₙ v ⊗ xⁿ`. -/
 theorem coact_eq_sum (v : V) :
