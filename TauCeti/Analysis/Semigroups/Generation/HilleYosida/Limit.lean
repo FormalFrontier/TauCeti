@@ -79,8 +79,9 @@ Yosida limit at every nonnegative time. -/
 theorem tendsto_yosidaLimit_of_norm_resolvent_pow_le {t : ℝ} (ht : 0 ≤ t) (x : X) :
     Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x)) :=
-  ((exp_yosidaApproximation_uniformCauchySeqOn_compact_of_norm_resolvent_pow_le hM hres hpow
-    hdense x ht).cauchySeq (Set.right_mem_Icc.mpr ht)).tendsto_limUnder
+  tendsto_yosidaLimit_of_cauchySeq A t x <|
+    (exp_yosidaApproximation_uniformCauchySeqOn_compact_of_norm_resolvent_pow_le hM hres hpow
+      hdense x ht).cauchySeq (Set.right_mem_Icc.mpr ht)
 
 /-- Convergence of the Hille--Yosida approximations is uniform on every compact nonnegative time
 interval. -/

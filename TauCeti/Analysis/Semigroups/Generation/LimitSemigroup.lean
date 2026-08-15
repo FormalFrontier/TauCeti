@@ -88,13 +88,22 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 
 Being a `limUnder`, this is a total definition: it names a candidate value for every operator
 `A` and every real `t`, but it is a junk value unless that family actually converges. It is
-proved to be the limit exactly when `A` is m-dissipative with dense domain and `t ≥ 0` — there
-the general compact-time Cauchy estimate gives convergence, and
-`IsMDissipative.tendsto_yosidaLimit` records it. Every lemma below that appeals to the limit
-property carries those hypotheses explicitly. -/
-@[expose]
+proved to be the limit at nonnegative times in the two supported cases: when `A` is
+m-dissipative with dense domain, or when `A` has dense domain and satisfies the Hille--Yosida
+resolvent-power bounds. In both cases the compact-time Cauchy estimate gives convergence. Every
+lemma below that appeals to the limit property carries the relevant hypotheses explicitly. -/
 def yosidaLimit (A : X →ₗ.[ℝ] X) (t : ℝ) (x : X) : X :=
   limUnder atTop fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x
+
+/-- A Cauchy family of Yosida exponentials converges to `yosidaLimit`, its chosen
+`limUnder` value. This exposes the convergence property to downstream modules while keeping the
+implementation of `yosidaLimit` hidden. -/
+theorem tendsto_yosidaLimit_of_cauchySeq (A : X →ₗ.[ℝ] X) (t : ℝ) (x : X)
+    (h : CauchySeq fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) :
+    Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
+      (𝓝 (yosidaLimit A t x)) := by
+  rw [yosidaLimit]
+  exact h.tendsto_limUnder
 
 omit [CompleteSpace X] in
 /-- At time `0` every Yosida exponential is the identity, so the limit is too. -/
