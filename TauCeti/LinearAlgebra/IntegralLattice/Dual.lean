@@ -231,12 +231,24 @@ noncomputable def dualPairingEquiv (L : IntegralLattice V) [L.IsNondegenerate] :
     L.dualCarrier ≃ₗ[ℤ] Module.Dual ℤ L :=
   dualSubmoduleEquivDual L.form L.form_nondegenerate L.carrier
 
+/-- The perfect pairing equivalence has `dualPairing` as its underlying linear map. -/
+@[simp]
+theorem dualPairingEquiv_toLinearMap (L : IntegralLattice V) [L.IsNondegenerate] :
+    L.dualPairingEquiv.toLinearMap = L.dualPairing := by
+  apply LinearMap.ext
+  intro x
+  simp only [dualPairingEquiv, dualSubmoduleEquivDual, dualPairing]
+  exact LinearEquiv.ofBijective_apply (L.form.dualSubmoduleToDual L.carrier) x
+
 /-- The perfect pairing equivalence agrees with the ambient rational form after casting to `ℚ`. -/
 @[simp]
 theorem intCast_dualPairingEquiv_apply (L : IntegralLattice V) [L.IsNondegenerate]
     (x : L.dualCarrier) (y : L) :
-    (L.dualPairingEquiv x y : ℚ) = L.form x y :=
-  L.intCast_dualPairing_apply x y
+    (L.dualPairingEquiv x y : ℚ) = L.form x y := by
+  have hx : L.dualPairingEquiv x = L.dualPairing x :=
+    DFunLike.congr_fun L.dualPairingEquiv_toLinearMap x
+  rw [hx]
+  exact L.intCast_dualPairing_apply x y
 
 /-- A vector of the bilinear dual basis, regarded as an element of the dual carrier. -/
 noncomputable def dualBasisElem (L : IntegralLattice V) [L.IsNondegenerate]
@@ -318,4 +330,3 @@ theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondege
 end IntegralLattice
 
 end TauCeti
-
