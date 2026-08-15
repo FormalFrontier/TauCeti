@@ -25,9 +25,10 @@ complex unit circle, based at any `x : Circle`:
 
   `π₁(Circle, x) ≃* Multiplicative ℤ`.
 
-The `AddCircle` side uses an arbitrarily chosen real preimage of `x` via
-`QuotientAddGroup.mk_surjective`; the resulting group isomorphism is canonical and independent of
-the choice of lift.
+The `AddCircle` side uses `TauCeti.AddCircle.fundamentalGroupMulEquivAt`, which is independent of
+the chosen lift by `TauCeti.AddCircle.fundamentalGroupMulEquivAt_eq`. At the canonical basepoint
+`1 : Circle`, `TauCeti.Circle.fundamentalGroupMulEquiv_one` specializes this isomorphism to
+the basepoint-`0` equivalence `TauCeti.AddCircle.fundamentalGroupMulEquivZero`.
 
 This is the `Circle ⊆ ℂ` instance of the universal-covers roadmap Stage 4 target `π₁(S¹) ≅ ℤ`
 (`TauCetiRoadmap/UniversalCovers/README.md`, item 12), realised on the standard Mathlib circle
@@ -39,9 +40,10 @@ homeomorphic to the real line — follow exactly as for `AddCircle`. No Mathlib 
 
 ## Main declarations
 
+* `TauCeti.Circle.homeomorphCircle_symm_one`: `AddCircle.homeomorphCircle.symm 1 = 0`.
 * `TauCeti.Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
-* `TauCeti.Circle.fundamentalGroupMulEquiv_def`: the factorization of that isomorphism into the
-  homeomorphism-invariance isomorphism and the additive-circle computation.
+* `TauCeti.Circle.fundamentalGroupMulEquiv_one`: specialization of `fundamentalGroupMulEquiv 1`
+  to the basepoint-`0` computation `AddCircle.fundamentalGroupMulEquivZero`.
 * `TauCeti.Circle.nontrivial_fundamentalGroup`, `TauCeti.Circle.infinite_fundamentalGroup`:
   the fundamental group of `Circle`, based at `x`, is nontrivial and infinite.
 * `TauCeti.Circle.not_simplyConnectedSpace`, `TauCeti.Circle.not_contractibleSpace`:
@@ -59,30 +61,48 @@ open scoped Real
 
 noncomputable section
 
+/-- The inverse homeomorphism `AddCircle.homeomorphCircle.symm` carries `1 : Circle` to `0`. -/
+@[simp]
+theorem homeomorphCircle_symm_one :
+    (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm 1 = 0 := by
+  rw [Homeomorph.symm_apply_eq, AddCircle.homeomorphCircle_apply, AddCircle.toCircle_zero]
+
 /-- The fundamental group of the complex unit circle `Circle = {z : ℂ | ‖z‖ = 1}`, based at
 `x`, is `Multiplicative ℤ`: `π₁(S¹, x) ≅ ℤ`. It is obtained by transporting the additive-circle
 computation `TauCeti.AddCircle.fundamentalGroupMulEquivAt` across the homeomorphism
-`AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`. On the `AddCircle` side, an
-arbitrary real preimage of `x` is chosen via `QuotientAddGroup.mk_surjective`; the resulting
-group isomorphism is independent of the choice of lift. -/
+`AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`. On the `AddCircle` side, the
+resulting group isomorphism is independent of the choice of lift by
+`TauCeti.AddCircle.fundamentalGroupMulEquivAt_eq`. -/
 def fundamentalGroupMulEquiv (x : Circle) : FundamentalGroup Circle x ≃* Multiplicative ℤ :=
   (FundamentalGroup.homeomorphMulEquiv
       (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x).trans
     (AddCircle.fundamentalGroupMulEquivAt (2 * Real.pi) Real.two_pi_pos.ne'
       ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x))
 
-/-- `fundamentalGroupMulEquiv` factors as the homeomorphism-invariance isomorphism of
-`AddCircle.homeomorphCircle.symm` composed with the additive-circle computation
-`AddCircle.fundamentalGroupMulEquivAt`. This exposes the definition so downstream consumers can
-reason about the isomorphism. -/
-theorem fundamentalGroupMulEquiv_def (x : Circle) :
-    fundamentalGroupMulEquiv x =
-      (FundamentalGroup.homeomorphMulEquiv
-          (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x).trans
-        (AddCircle.fundamentalGroupMulEquivAt (2 * Real.pi) Real.two_pi_pos.ne'
-          ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm x)) := by
-  unfold fundamentalGroupMulEquiv
+private lemma fundamentalGroupMulEquiv_homeomorphCircle_symm (y : AddCircle (2 * Real.pi))
+    (h : (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm 1 = y) :
+    (FundamentalGroup.homeomorphMulEquiv
+        (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm 1).trans
+      (AddCircle.fundamentalGroupMulEquivAt (2 * Real.pi) Real.two_pi_pos.ne'
+        ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm 1)) =
+    (FundamentalGroup.homeomorphMulEquivOfEq
+        (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+        h).trans
+      (AddCircle.fundamentalGroupMulEquivAt (2 * Real.pi) Real.two_pi_pos.ne' y) := by
+  cases h
   rfl
+
+/-- At the canonical basepoint `1 : Circle`, `fundamentalGroupMulEquiv` factors through
+`AddCircle.fundamentalGroupMulEquivZero`. -/
+lemma fundamentalGroupMulEquiv_one :
+    fundamentalGroupMulEquiv 1 =
+      (FundamentalGroup.homeomorphMulEquivOfEq
+          (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+          homeomorphCircle_symm_one).trans
+        (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne') := by
+  rw [fundamentalGroupMulEquiv,
+    fundamentalGroupMulEquiv_homeomorphCircle_symm 0 homeomorphCircle_symm_one,
+    AddCircle.fundamentalGroupMulEquivAt_zero]
 
 /-- The fundamental group of the complex unit circle `Circle`, based at `x`, is nontrivial. See
 `fundamentalGroupMulEquiv` for the full identification with `Multiplicative ℤ`. -/

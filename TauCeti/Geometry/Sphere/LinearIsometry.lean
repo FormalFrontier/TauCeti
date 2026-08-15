@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Normed.Group.BallSphere
 public import Mathlib.Analysis.Normed.Operator.LinearIsometry
 public import Mathlib.Analysis.Normed.Module.Basic
 public import Mathlib.Topology.MetricSpace.Isometry
@@ -71,11 +70,6 @@ theorem unitSphereEquiv_refl :
 theorem unitSphereEquiv_trans (e : E ≃ₗᵢ[R] F) (e' : F ≃ₗᵢ[R] G) :
     unitSphereEquiv (e.trans e') = (unitSphereEquiv e).trans (unitSphereEquiv e') :=
   (rfl)
-
-@[simp]
-theorem unitSphereEquiv_neg (e : E ≃ₗᵢ[R] F) (x : sphere (0 : E) 1) :
-    unitSphereEquiv e (-x) = -(unitSphereEquiv e x) :=
-  Subtype.ext (by simp)
 
 /-- The restriction of a linear isometry equivalence to the unit sphere is an isometry for the
 distance the sphere inherits from `E`: the action of `O(n + 1)` on `Sⁿ` is by isometries of the
