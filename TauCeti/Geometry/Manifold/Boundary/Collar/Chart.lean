@@ -17,8 +17,7 @@ manifold `M` modeled on that half-space, by composing an ambient chart of `M` wi
 identification.
 
 The resulting *collar chart* reads a point of `M` as a pair: a tangential coordinate in the
-boundary model, and a normal coordinate in `[0, ∞)`. Two facts make it deserve the name, and they
-are the content of the file.
+boundary model, and a normal coordinate in `[0, ∞)`. Two facts make it deserve the name.
 
 * **The boundary is the zero slice.** For an atlas chart `e` and a point of `e.source`, lying on
   `I.boundary M` becomes the vanishing of one product factor — the normal coordinate — of the
@@ -49,10 +48,13 @@ calculation. Two steps remain, neither proved here.
   they are about single charts against the half-space model, not about the transitions — but no
   `HasGroupoid` or `IsManifold` instance for `collarChartedSpace` exists yet.
 * The global statement, that a whole neighbourhood of `I.boundary M` is diffeomorphic to
-  `I.boundary M × [0, 1)`. Both textbook routes first build collars near boundary points — which
-  this file does not do — and then glue them along an inward-pointing vector field, which needs
-  flows from boundary points; Mathlib's integral curves are still restricted to interior points,
-  so that step waits on it.
+  `I.boundary M × [0, 1)`. The two textbook routes differ in what they need. Lee Thm 9.25 goes
+  through the Boundary Flowout Theorem, gluing an inward-pointing vector field and flowing it,
+  which needs flows from boundary points; Mathlib's integral curves are still restricted to
+  interior points, so that route waits on them. Hirsch Thm 6.1 instead glues local retractions
+  with a bump function and pairs the resulting retraction `r` with a `g` vanishing on the boundary
+  and regular there, taking `h = (r, g)`; that route needs no flows. (Hirsch §5.2 gives the
+  differential-equations proof as an alternative.)
 
 ## Main definitions
 
