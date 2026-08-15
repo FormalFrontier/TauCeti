@@ -78,7 +78,7 @@ theorem rationalToComplexLinearEquiv_one_tmul_ι (hℚ : IsBaseChange ℚ ιℚ)
 
 /-- The complexification of a rational subspace, realized inside the chosen ambient
 complexification. -/
-@[expose] noncomputable def rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
+noncomputable def rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) : Submodule ℂ Vℂ :=
   (W.baseChange ℂ).map (rationalToComplexLinearEquiv hℚ hℂ).toLinearMap
 
@@ -127,12 +127,12 @@ theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)
 
 /-- The canonical equivalence from the concrete complexification `ℂ ⊗[ℚ] W` of a rational
 subspace onto the complexification of `W` inside the ambient complexification. -/
-@[expose] noncomputable def rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
+noncomputable def rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
     ℂ ⊗[ℚ] W ≃ₗ[ℂ] rationalToComplexSubmodule hℚ hℂ W :=
   (Submodule.toBaseChange.toLinearEquiv ℂ W).trans
     ((rationalToComplexLinearEquiv hℚ hℂ).ofSubmodules (W.baseChange ℂ)
-      (rationalToComplexSubmodule hℚ hℂ W) rfl)
+      (rationalToComplexSubmodule hℚ hℂ W) (by rw [rationalToComplexSubmodule]))
 
 /-- The equivalence onto the complexification of a rational subspace is the tower equivalence
 applied to the base change of the inclusion of that subspace. -/
@@ -140,7 +140,10 @@ applied to the base change of the inclusion of that subspace. -/
 theorem coe_rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) (x : ℂ ⊗[ℚ] W) :
     (rationalToComplexSubmoduleEquiv hℚ hℂ W x : Vℂ) =
-      rationalToComplexLinearEquiv hℚ hℂ (W.subtype.baseChange ℂ x) := rfl
+      rationalToComplexLinearEquiv hℚ hℂ (W.subtype.baseChange ℂ x) := by
+  rw [rationalToComplexSubmoduleEquiv, LinearEquiv.trans_apply,
+    LinearEquiv.ofSubmodules_apply, Submodule.toBaseChange.toLinearEquiv_apply]
+  rfl
 
 section Map
 
