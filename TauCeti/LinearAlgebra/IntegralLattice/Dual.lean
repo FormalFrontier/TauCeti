@@ -39,7 +39,6 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
 * `TauCeti.IntegralLattice.dualCarrier`: the dual lattice as a submodule of the common ambient
   rational vector space.
 * `TauCeti.IntegralLattice.le_dualCarrier`: the inclusion `L.carrier ≤ L.dualCarrier`.
-* `TauCeti.IntegralLattice.mem_dualCarrier_iff`: characterization of membership in the dual carrier.
 * `TauCeti.IntegralLattice.instIsLatticeDualCarrier`: the dual carrier is a full lattice.
 * `TauCeti.IntegralLattice.dualPairingEquiv`: the perfect integral pairing
   `Lᵛ ≃ Module.Dual ℤ L`.
@@ -78,14 +77,6 @@ theorem span_range_extendOfIsLattice (N : Submodule ℤ V) [N.IsLattice ℚ] :
   rw [hrange, Set.range_comp, ← Submodule.map_span, b.span_eq,
     Submodule.map_top, Submodule.range_subtype]
 
-/-- The canonical pairing between a dual submodule and the submodule recovers the ambient rational
-bilinear form after coercion to `ℚ`. -/
-@[simp]
-theorem intCast_dualSubmoduleParing {N : Submodule ℤ V} (B : LinearMap.BilinForm ℚ V)
-    (x : B.dualSubmodule N) (y : N) :
-    ((B.dualSubmoduleParing x y : ℤ) : ℚ) = B (x : V) (y : V) :=
-  B.dualSubmoduleParing_spec x y
-
 /-- Surjectivity of Mathlib's canonical pairing `dualSubmoduleToDual` for a full `ℤ`-submodule
 and a nondegenerate rational bilinear form. -/
 theorem dualSubmoduleToDual_surjective (B : LinearMap.BilinForm ℚ V) (hB : B.Nondegenerate)
@@ -104,9 +95,9 @@ theorem dualSubmoduleToDual_surjective (B : LinearMap.BilinForm ℚ V) (hB : B.N
   refine ⟨⟨x, hx⟩, ?_⟩
   apply LinearMap.ext_on b.span_eq
   rintro _ ⟨i, rfl⟩
-  apply Int.cast_injective (α := ℚ)
+  apply FaithfulSMul.algebraMap_injective ℤ ℚ
   rw [LinearMap.BilinForm.dualSubmoduleToDual_apply_apply,
-    intCast_dualSubmoduleParing]
+    LinearMap.BilinForm.dualSubmoduleParing_spec]
   have hform (j) : B (bd j) ((b i : N) : V) = if i = j then 1 else 0 := by
     calc
       B (bd j) ((b i : N) : V) = B (bd j) (b_ext i) := by
@@ -167,13 +158,6 @@ def dualCarrier (L : IntegralLattice V) : Submodule ℤ V :=
 /-- The carrier of an integral lattice is contained in its dual carrier. -/
 theorem le_dualCarrier (L : IntegralLattice V) : L.carrier ≤ L.dualCarrier :=
   L.le_dual
-
-/-- Membership in the dual carrier is characterized by integral pairing with every element of the
-lattice carrier. -/
-@[simp]
-theorem mem_dualCarrier_iff (L : IntegralLattice V) (x : V) :
-    x ∈ L.dualCarrier ↔ ∀ y ∈ L.carrier, L.form x y ∈ (1 : Submodule ℤ ℚ) :=
-  LinearMap.BilinForm.mem_dualSubmodule (B := L.form)
 
 /-- The integral span of the rational basis obtained from Mathlib's chosen basis of `L` is the
 carrier itself. -/
@@ -313,8 +297,9 @@ theorem dualCarrier_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
 
 /-- A vector pairs integrally with every vector of the dual carrier exactly when it belongs to the
 original carrier. -/
--- This is deliberately not a simp lemma: `mem_dualCarrier_iff` already expands the quantified
--- domain on the left, so the simp-normal-form linter rejects this statement as a simp rule.
+-- This is deliberately not a simp lemma: `LinearMap.BilinForm.mem_dualSubmodule` already expands
+-- the quantified domain on the left, so the simp-normal-form linter rejects this statement as a
+-- simp rule.
 theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondegenerate]
     (x : V) :
     (∀ y ∈ L.dualCarrier, L.form x y ∈ (1 : Submodule ℤ ℚ)) ↔ x ∈ L.carrier := by
