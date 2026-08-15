@@ -160,6 +160,16 @@ abbrev BraidWord (n : ℕ) : Type _ := List (Fin (n - 1) × Bool)
 def evalLetter (l : Fin (n - 1) × Bool) : BraidGroup n :=
   if l.2 then sigma l.1 else (sigma l.1)⁻¹
 
+/-- A positive braid letter evaluates to the corresponding generator. -/
+@[simp]
+theorem evalLetter_true (i : Fin (n - 1)) : evalLetter (i, true) = sigma i := by
+  simp [evalLetter]
+
+/-- A negative braid letter evaluates to the inverse of the corresponding generator. -/
+@[simp]
+theorem evalLetter_false (i : Fin (n - 1)) : evalLetter (i, false) = (sigma i)⁻¹ := by
+  simp [evalLetter]
+
 /-- Evaluate a `BraidWord n` into `BraidGroup n` as the product of its letters. -/
 def evalWord (w : BraidWord n) : BraidGroup n :=
   (w.map evalLetter).prod
@@ -181,11 +191,22 @@ theorem evalWord_append (w1 w2 : BraidWord n) :
   dsimp [evalWord]
   rw [List.map_append, List.prod_append]
 
+/-- Reversing a braid word and flipping its signs evaluates to the inverse braid. -/
+@[simp]
+theorem evalWord_invRev (w : BraidWord n) :
+    evalWord (FreeGroup.invRev w) = (evalWord w)⁻¹ := by
+  induction w with
+  | nil => simp
+  | cons l w ih =>
+    rw [FreeGroup.invRev_cons, evalWord_append, evalWord_cons, ih]
+    rcases l with ⟨i, b⟩
+    cases b <;> simp [FreeGroup.invRev, evalLetter]
+
 /-- The map from generators to `Multiplicative ℤ` sending each $\sigma_i$ to `1`. -/
-def exponentSumGen (n : ℕ) : Fin (n - 1) → Multiplicative ℤ :=
+private def exponentSumGen (n : ℕ) : Fin (n - 1) → Multiplicative ℤ :=
   fun _ ↦ Multiplicative.ofAdd 1
 
-theorem exponentSum_rel (r : FreeGroup (Fin (n - 1))) (hr : r ∈ artinRelations n) :
+private theorem exponentSum_rel (r : FreeGroup (Fin (n - 1))) (hr : r ∈ artinRelations n) :
     FreeGroup.lift (exponentSumGen n) r = 1 := by
   rcases hr with ⟨i, j, h⟩ | ⟨i, j, h⟩
   · simp [exponentSumGen, FreeGroup.lift_apply_of]
@@ -204,12 +225,13 @@ theorem exponentSum_sigma (i : Fin (n - 1)) :
 
 /-- Helper permutation sending generator `i : Fin (n - 1)` to the transposition $(i, i+1)$ in
 `Equiv.Perm (Fin n)`. -/
-def permGen (n : ℕ) (i : Fin (n - 1)) : Equiv.Perm (Fin n) :=
+private def permGen (n : ℕ) (i : Fin (n - 1)) : Equiv.Perm (Fin n) :=
   have hi : i.1 < n := by have hlt := i.is_lt; omega
   have hi_succ : i.1 + 1 < n := by have hlt := i.is_lt; omega
   Equiv.swap ⟨i.1, hi⟩ ⟨i.1 + 1, hi_succ⟩
 
-theorem permHom_rel (n : ℕ) (r : FreeGroup (Fin (n - 1))) (hr : r ∈ artinRelations n) :
+private theorem permHom_rel (n : ℕ) (r : FreeGroup (Fin (n - 1)))
+    (hr : r ∈ artinRelations n) :
     FreeGroup.lift (permGen n) r = 1 := by
   rcases hr with ⟨i, j, h⟩ | ⟨i, j, h⟩
   · simp only [map_mul, map_inv, FreeGroup.lift_apply_of, permGen]
@@ -262,15 +284,17 @@ def PureBraidGroup (n : ℕ) : Subgroup (BraidGroup n) :=
   (permHom n).ker
 
 /-- A braid is pure if and only if its permutation is the identity. -/
+@[simp]
 theorem mem_pureBraidGroup_iff (b : BraidGroup n) :
     b ∈ PureBraidGroup n ↔ permHom n b = 1 :=
   Iff.rfl
 
 /-- The natural generator-embedding from $B_n$ to $B_{n+1}$ sending $\sigma_i$ to $\sigma_i$. -/
-def castSuccGen (n : ℕ) : Fin (n - 1) → BraidGroup (n + 1) :=
+private def castSuccGen (n : ℕ) : Fin (n - 1) → BraidGroup (n + 1) :=
   fun i ↦ sigma ⟨i.1, by have hlt := i.is_lt; omega⟩
 
-theorem castSucc_rel (n : ℕ) (r : FreeGroup (Fin (n - 1))) (hr : r ∈ artinRelations n) :
+private theorem castSucc_rel (n : ℕ) (r : FreeGroup (Fin (n - 1)))
+    (hr : r ∈ artinRelations n) :
     FreeGroup.lift (castSuccGen n) r = 1 := by
   rcases hr with ⟨i, j, h⟩ | ⟨i, j, h⟩
   · simp only [map_mul, map_inv, FreeGroup.lift_apply_of, castSuccGen]
