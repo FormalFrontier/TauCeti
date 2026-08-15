@@ -92,6 +92,18 @@ theorem unitSphereIsometryEquiv_symm (e : E ≃ₗᵢ[R] F) :
     (unitSphereIsometryEquiv e).symm = unitSphereIsometryEquiv e.symm :=
   IsometryEquiv.ext fun _ => rfl
 
+@[simp]
+theorem unitSphereIsometryEquiv_refl :
+    unitSphereIsometryEquiv (_root_.LinearIsometryEquiv.refl R E) =
+      IsometryEquiv.refl (sphere (0 : E) 1) :=
+  IsometryEquiv.ext fun _ => rfl
+
+@[simp]
+theorem unitSphereIsometryEquiv_trans (e : E ≃ₗᵢ[R] F) (e' : F ≃ₗᵢ[R] G) :
+    unitSphereIsometryEquiv (e.trans e') =
+      (unitSphereIsometryEquiv e).trans (unitSphereIsometryEquiv e') :=
+  IsometryEquiv.ext fun _ => rfl
+
 end Seminormed
 
 end LinearIsometryEquiv
