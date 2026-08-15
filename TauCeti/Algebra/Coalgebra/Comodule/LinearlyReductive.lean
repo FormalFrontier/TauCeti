@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.LinearAlgebra.Basis.VectorSpace
-import Mathlib.LinearAlgebra.Projection
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
 import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
@@ -48,18 +47,18 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-universe u v w x
+universe u v w
 
 namespace Comodule
 
 variable (k : Type u) (C : Type v) (V : Type w)
-variable [Field k]
+variable [CommSemiring k]
 variable [AddCommMonoid C] [Module k C] [Coalgebra k C]
 variable [AddCommMonoid V] [Module k V] [Comodule k C V]
 
 /-- A comodule is completely reducible when each subcomodule has a complementary subcomodule.
 
-The complement is taken in the lattice of underlying vector subspaces, so the statement says
+The complement is taken in the lattice of underlying submodules, so the statement says
 both that the two subcomodules intersect trivially and that together they span the whole
 comodule. -/
 def IsCompletelyReducible : Prop :=
@@ -100,56 +99,6 @@ theorem isLinearlyReductive_def :
 end Coalgebra
 
 namespace Comodule
-
-section WeightMaps
-
-variable {k : Type u} {G : Type v} {V : Type w} {W : Type x}
-variable [CommSemiring k]
-variable [AddCommMonoid V] [Module k V] [Comodule k (MonoidAlgebra k G) V]
-variable [AddCommMonoid W] [Module k W] [Comodule k (MonoidAlgebra k G) W]
-
-/-- A linear map between comodules over a monoid algebra is a comodule morphism if it preserves
-every weight space. -/
-@[expose] noncomputable def Hom.ofMapWeightSpace (f : V →ₗ[k] W)
-    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace k G V g → f v ∈ weightSpace k G W g) :
-    Hom k (MonoidAlgebra k G) V W where
-  toLinearMap := f
-  map_coact := by
-    apply LinearMap.ext
-    intro v
-    rw [← weightDecomposition_sum (R := k) (G := G) (V := V) v]
-    simp only [Finsupp.sum, map_sum, LinearMap.coe_comp, Function.comp_apply]
-    apply Finset.sum_congr rfl
-    intro g hg
-    rw [weightDecomposition_apply,
-      mem_weightSpace.mp (weightProj_mem_weightSpace g v), TensorProduct.map_tmul,
-      mem_weightSpace.mp (hf g (weightProj_mem_weightSpace g v))]
-    rfl
-
-@[simp]
-theorem Hom.ofMapWeightSpace_toLinearMap (f : V →ₗ[k] W)
-    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace k G V g → f v ∈ weightSpace k G W g) :
-    (Hom.ofMapWeightSpace f hf).toLinearMap = f :=
-  rfl
-
-omit [Comodule k (MonoidAlgebra k G) V] [Comodule k (MonoidAlgebra k G) W] in
-private theorem tensorComponent_map (f : V →ₗ[k] W) (g : G)
-    (t : V ⊗[k] MonoidAlgebra k G) :
-    f (tensorComponent k G V g t) =
-      tensorComponent k G W g (TensorProduct.map f LinearMap.id t) := by
-  induction t using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul v x => simp [tensorComponent_tmul]
-
-/-- A comodule morphism over a monoid algebra commutes with every weight projection. -/
-theorem Hom.map_weightProj (f : Hom k (MonoidAlgebra k G) V W) (g : G) (v : V) :
-    f (weightProj k G V g v) = weightProj k G W g (f v) := by
-  rw [weightProj_apply, weightProj_apply]
-  exact (tensorComponent_map f.toLinearMap g _).trans <|
-    congrArg (tensorComponent k G W g) (f.map_coact_apply v)
-
-end WeightMaps
 
 section Projection
 
@@ -246,8 +195,11 @@ private theorem exists_equivariantProjection
   obtain ⟨Q, hNQ⟩ := Submodule.exists_isCompl N.toSubmodule
   let p : V →ₗ[k] V := N.toSubmodule.projection Q hNQ
   let P := equivariantProjectionHom k G V p
+  have hP : P.toLinearMap = equivariantProjection k G V p := by
+    simp only [P, equivariantProjectionHom, Hom.ofMapWeightSpace_toLinearMap]
   refine ⟨P, ?_, ?_⟩
-  · apply le_antisymm
+  · rw [hP]
+    apply le_antisymm
     · rintro _ ⟨v, rfl⟩
       exact equivariantProjection_mem_subcomodule k G V N p
         (fun w ↦ Submodule.projection_apply_mem hNQ w) v
@@ -255,7 +207,8 @@ private theorem exists_equivariantProjection
       refine ⟨n, ?_⟩
       exact equivariantProjection_apply_of_mem k G V N p
         (fun hv ↦ Submodule.projection_apply_of_mem_left hNQ hv) hn
-  · change P.toLinearMap * P.toLinearMap = P.toLinearMap
+  · unfold IsIdempotentElem
+    rw [hP]
     ext v
     apply equivariantProjection_apply_of_mem k G V N p
       (fun hv ↦ Submodule.projection_apply_of_mem_left hNQ hv)

@@ -448,6 +448,48 @@ variable {W : Type*} [AddCommMonoid W] [Module R W] [Comodule R (MonoidAlgebra R
 
 namespace Hom
 
+/-- A linear map between comodules over a monoid algebra is a comodule morphism if it preserves
+every weight space. -/
+noncomputable def ofMapWeightSpace (f : V →ₗ[R] W)
+    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace R G V g → f v ∈ weightSpace R G W g) :
+    Hom R (MonoidAlgebra R G) V W where
+  toLinearMap := f
+  map_coact := by
+    apply LinearMap.ext
+    intro v
+    rw [← weightDecomposition_sum (R := R) (G := G) (V := V) v]
+    simp only [Finsupp.sum, map_sum, LinearMap.coe_comp, Function.comp_apply]
+    apply Finset.sum_congr rfl
+    intro g hg
+    rw [weightDecomposition_apply,
+      mem_weightSpace.mp (weightProj_mem_weightSpace g v), TensorProduct.map_tmul,
+      mem_weightSpace.mp (hf g (weightProj_mem_weightSpace g v))]
+    rfl
+
+@[simp]
+theorem ofMapWeightSpace_toLinearMap (f : V →ₗ[R] W)
+    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace R G V g → f v ∈ weightSpace R G W g) :
+    (ofMapWeightSpace f hf).toLinearMap = f :=
+  (rfl)
+
+omit [Comodule R (MonoidAlgebra R G) V] [Comodule R (MonoidAlgebra R G) W] in
+private theorem tensorComponent_map (f : V →ₗ[R] W) (g : G)
+    (t : V ⊗[R] MonoidAlgebra R G) :
+    f (tensorComponent R G V g t) =
+      tensorComponent R G W g (TensorProduct.map f LinearMap.id t) := by
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul v x => simp [tensorComponent_tmul]
+
+/-- A comodule morphism over a monoid algebra commutes with every weight projection. -/
+@[simp]
+theorem map_weightProj (f : Hom R (MonoidAlgebra R G) V W) (g : G) (v : V) :
+    f (weightProj R G V g v) = weightProj R G W g (f v) := by
+  rw [weightProj_apply, weightProj_apply]
+  exact (tensorComponent_map f.toLinearMap g _).trans <|
+    congrArg (tensorComponent R G W g) (f.map_coact_apply v)
+
 /-- A morphism of comodules over `R[G]` sends the `g`-weight submodule into the `g`-weight
 submodule. -/
 theorem map_mem_weightSpace (f : Hom R (MonoidAlgebra R G) V W) {g : G} {v : V}
