@@ -67,27 +67,6 @@ private theorem genusPrimeDiscriminants_not_all_three_even {d : ℤ} (hd : Squar
       (genusPrimeDiscriminants_spec hd).2.1
         P.val P.property Q.val Q.property hP hQ)
 
-/-- The chosen root indexed by `P`, regarded as an element of the candidate genus field. -/
-noncomputable def candidateGenusFieldGen {d : ℤ} (hd : Squarefree d)
-    (P : {P // P ∈ genusPrimeDiscriminants hd}) : candidateGenusField hd :=
-  ⟨genusFieldRoot hd P, genusFieldRoot_mem_candidateGenusField hd P⟩
-
-/-- The chosen candidate-genus-field generator has the corresponding chosen complex root as its
-underlying value. -/
-@[simp] theorem candidateGenusFieldGen_val {d : ℤ} (hd : Squarefree d)
-    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
-    (candidateGenusFieldGen hd P : ℂ) = genusFieldRoot hd P := by
-  rfl
-
-/-- The chosen candidate-genus-field generator squares to its prime-discriminant radicand. -/
-@[simp] theorem candidateGenusFieldGen_sq {d : ℤ} (hd : Squarefree d)
-    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
-    candidateGenusFieldGen hd P ^ 2 =
-      algebraMap ℚ (candidateGenusField hd)
-        (((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := by
-  apply Subtype.ext
-  simp [candidateGenusFieldGen]
-
 /-- The presentation equivalence sends each candidate-genus-field generator to the corresponding
 generator of the adjoin presentation. -/
 @[simp] theorem candidateGenusFieldEquivAdjoin_apply_gen {d : ℤ} (hd : Squarefree d)

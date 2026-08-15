@@ -36,6 +36,8 @@ F. Lemmermeyer, *Reciprocity Laws*.
 
 * `TauCeti.Multiquadratic.candidateGenusField`: the candidate genus field of `ℚ(√d)`, as an
   intermediate field of `ℂ / ℚ`.
+* `TauCeti.Multiquadratic.candidateGenusFieldGen`: each chosen root, viewed inside the candidate
+  genus field.
 
 ## Main results
 
@@ -100,6 +102,27 @@ theorem candidateGenusField_def {d : ℤ} (hd : Squarefree d) :
     genusFieldRoot hd P ∈ candidateGenusField hd := by
   rw [candidateGenusField_def]
   exact subset_adjoin ℚ _ ⟨P, rfl⟩
+
+/-- The chosen root indexed by `P`, regarded as an element of the candidate genus field. -/
+@[expose] noncomputable def candidateGenusFieldGen {d : ℤ} (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) : candidateGenusField hd :=
+  ⟨genusFieldRoot hd P, genusFieldRoot_mem_candidateGenusField hd P⟩
+
+/-- The chosen candidate-genus-field generator has the corresponding chosen complex root as its
+underlying value. -/
+@[simp] theorem candidateGenusFieldGen_val {d : ℤ} (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    (candidateGenusFieldGen hd P : ℂ) = genusFieldRoot hd P := by
+  rfl
+
+/-- The chosen candidate-genus-field generator squares to its prime-discriminant radicand. -/
+@[simp] theorem candidateGenusFieldGen_sq {d : ℤ} (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    candidateGenusFieldGen hd P ^ 2 =
+      algebraMap ℚ (candidateGenusField hd)
+        (((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := by
+  apply Subtype.ext
+  simp [candidateGenusFieldGen]
 
 /-- **Universal property of the candidate genus field.** It is contained in an intermediate field
 `F` exactly when `F` contains every chosen root. -/

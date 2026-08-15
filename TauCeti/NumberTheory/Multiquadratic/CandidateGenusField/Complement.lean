@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
+public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Degree
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
 
 /-!
@@ -34,6 +34,8 @@ Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.adjoin_candidateGenusFieldGen_over_complement_eq_top`: adjoining the
+  omitted root to the complementary subfield gives the whole candidate genus field.
 * `TauCeti.Multiquadratic.finrank_candidateGenusFieldComplement`: the complementary subfield has
   absolute degree `2 ^ (t - 1)`.
 * `TauCeti.Multiquadratic.finrank_candidateGenusField_over_complement`: the candidate genus field
@@ -74,6 +76,29 @@ contains every chosen root other than the omitted one. -/
   simp only [candidateGenusFieldComplement, adjoin_le_iff, Set.range_subset_iff,
     SetLike.mem_coe]
 
+/-- **The omitted root generates the candidate genus field over the complementary compositum.**
+Adjoining `candidateGenusFieldGen hd P` to `candidateGenusFieldComplement hd P` recovers all of
+`candidateGenusField hd`; with `finrank_candidateGenusField_over_complement` this is the quadratic
+presentation of the candidate genus field over the complementary compositum. -/
+theorem adjoin_candidateGenusFieldGen_over_complement_eq_top (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    adjoin (candidateGenusFieldComplement hd P) {candidateGenusFieldGen hd P} = ⊤ := by
+  -- Compare the two sides as `ℚ`-subfields: the extension contains every chosen root, namely the
+  -- omitted one by construction and the others through the complement, and those generate
+  -- everything.
+  refine restrictScalars_injective ℚ ?_
+  rw [restrictScalars_top, eq_top_iff, ← adjoin_range_candidateGenusFieldGen_eq_top hd,
+    adjoin_le_iff, Set.range_subset_iff]
+  intro Q
+  rw [SetLike.mem_coe, mem_restrictScalars]
+  rcases eq_or_ne Q P with rfl | hQP
+  · exact subset_adjoin _ _ rfl
+  · have hmem := IntermediateField.algebraMap_mem
+      (adjoin (candidateGenusFieldComplement hd P) {candidateGenusFieldGen hd P})
+      ⟨candidateGenusFieldGen hd Q,
+        candidateGenusFieldGen_mem_candidateGenusFieldComplement hd hQP⟩
+    simpa using hmem
+
 /-- The complementary compositum has absolute degree `2 ^ (t - 1)`, where
 `t = (genusPrimeDiscriminants hd).card`. -/
 theorem finrank_candidateGenusFieldComplement (hd : Squarefree d)
@@ -109,12 +134,12 @@ theorem finrank_candidateGenusField_over_complement (hd : Squarefree d)
     Module.finrank (candidateGenusFieldComplement hd P) (candidateGenusField hd) = 2 := by
   have hpos : 0 < (genusPrimeDiscriminants hd).card :=
     Finset.card_pos.mpr ⟨P.val, P.property⟩
+  have hpow : (2 : ℕ) ^ (genusPrimeDiscriminants hd).card =
+      2 ^ ((genusPrimeDiscriminants hd).card - 1) * 2 := by
+    rw [← pow_succ, Nat.sub_add_cancel hpos]
   have htower := Module.finrank_mul_finrank ℚ (candidateGenusFieldComplement hd P)
     (candidateGenusField hd)
-  rw [finrank_candidateGenusFieldComplement hd P, finrank_candidateGenusField hd,
-    show (genusPrimeDiscriminants hd).card =
-        ((genusPrimeDiscriminants hd).card - 1) + 1 by omega,
-    pow_succ] at htower
+  rw [finrank_candidateGenusFieldComplement hd P, finrank_candidateGenusField hd, hpow] at htower
   exact Nat.eq_of_mul_eq_mul_left (by positivity) htower
 
 end TauCeti.Multiquadratic

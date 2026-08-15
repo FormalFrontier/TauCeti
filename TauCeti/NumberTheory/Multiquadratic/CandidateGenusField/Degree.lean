@@ -35,6 +35,8 @@ The prime-discriminant description of the genus field is classical; see D. A. Co
   finite extension of `ℚ`.
 * `TauCeti.Multiquadratic.finrank_candidateGenusField`: its degree over `ℚ` is `2` to the number
   of prime discriminants in its chosen factorization.
+* `TauCeti.Multiquadratic.adjoin_range_candidateGenusFieldGen_eq_top`: the chosen roots generate
+  it, by that degree count.
 -/
 
 public section
@@ -74,5 +76,21 @@ theorem finrank_candidateGenusField {d : ℤ} (hd : Squarefree d) :
       (fun P => hprime P.val P.property) Subtype.val_injective
       (fun P Q hP hQ => heven_unique P.val P.property Q.val Q.property hP hQ)
       (genusFieldRoot hd) (fun P => by simp)
+
+/-- The chosen roots generate the candidate genus field: adjoining all of them to `ℚ` inside
+`candidateGenusField hd` already gives everything, since the compositum they generate has the
+full degree `2 ^ (genusPrimeDiscriminants hd).card`. -/
+theorem adjoin_range_candidateGenusFieldGen_eq_top {d : ℤ} (hd : Squarefree d) :
+    adjoin ℚ (Set.range (candidateGenusFieldGen hd)) = ⊤ := by
+  classical
+  obtain ⟨hprime, heven_unique, _⟩ := genusPrimeDiscriminants_spec hd
+  refine IntermediateField.eq_of_le_of_finrank_eq le_top ?_
+  rw [IntermediateField.finrank_top', finrank_candidateGenusField hd]
+  simpa only [Nat.card_eq_fintype_card, Fintype.card_coe] using
+    finrank_adjoin_roots_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
+      (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
+      (fun P => hprime P.val P.property) Subtype.val_injective
+      (fun P Q hP hQ => heven_unique P.val P.property Q.val Q.property hP hQ)
+      (candidateGenusFieldGen hd) (candidateGenusFieldGen_sq hd)
 
 end TauCeti.Multiquadratic
