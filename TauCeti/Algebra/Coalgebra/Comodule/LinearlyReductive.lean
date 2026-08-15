@@ -64,13 +64,6 @@ def IsCompletelyReducible : Prop :=
   ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
     IsCompl W.toSubmodule Q.toSubmodule
 
-/-- Complete reducibility is characterized by invariant complements to all subcomodules. -/
-theorem isCompletelyReducible_def :
-    IsCompletelyReducible k C V ↔
-      ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
-        IsCompl W.toSubmodule Q.toSubmodule :=
-  Iff.rfl
-
 end Comodule
 
 namespace Coalgebra
@@ -85,15 +78,6 @@ usual complete-reducibility definition of a linearly reductive group. -/
 def IsLinearlyReductive : Prop :=
   ∀ (V : Type w) [AddCommMonoid V] [Module k V] [Comodule k C V] [Module.Finite k V],
     Comodule.IsCompletelyReducible k C V
-
-/-- Linear reductivity is characterized by complements to subcomodules of every finite
-comodule. -/
-theorem isLinearlyReductive_def :
-    IsLinearlyReductive.{u, v, w} k C ↔
-      ∀ (V : Type w) [AddCommMonoid V] [Module k V] [Comodule k C V] [Module.Finite k V]
-        (W : Subcomodule k C V), ∃ Q : Subcomodule k C V,
-          IsCompl W.toSubmodule Q.toSubmodule :=
-  Iff.rfl
 
 end Coalgebra
 
