@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.Matrix.Trace
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import TauCeti.LinearAlgebra.UnitaryGroup
 public import TauCeti.Topology.Algebra.UnitaryGroup
+import TauCeti.Topology.Circle.Basic
 
 /-!
 # `SU(2)` and its maximal torus
@@ -39,7 +40,7 @@ The centralizer computation is run at a *single* well-chosen torus element: alre
 `TauCeti.SU2.centralizer_torusHom` says that `diag (z, z⁻¹)` with `z² ≠ 1` has centralizer exactly
 `T`. Together with `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom`, which says that conjugating a torus
 element back into `T` can only return it or its inverse, this is the rigidity that the Weyl group
-of `SU(2)` is computed from in `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
+of `SU(2)` is computed from in `TauCeti/RepresentationTheory/SU2/Weyl/Basic.lean`.
 
 It also records the structural identity `TauCeti.SU2.coe_add_star`: an element of `SU(2)` and its
 conjugate transpose add up to `(tr g) • 1`, so the Hermitian part of an element of `SU(2)` is a
@@ -285,17 +286,10 @@ private theorem circleI_sq_ne_one : (circleI : ℂ) ^ 2 ≠ 1 := by
 /-- **An element of `SU(2)` commuting with a single torus element `diag (z, z⁻¹)` with `z² ≠ 1`
 already lies in the maximal torus.** Reading off the off-diagonal entries of
 `diag (z, z⁻¹) g = g diag (z, z⁻¹)` gives `g₀₁ (z - z⁻¹) = 0` and `g₁₀ (z⁻¹ - z) = 0`, and
-`z ≠ z⁻¹` is exactly `z² ≠ 1`. -/
+`z² ≠ 1` gives `z ≠ z⁻¹` (`TauCeti.circle_sub_inv_ne_zero`). -/
 theorem mem_torus_of_commute_torusHom {z : Circle} (hz : (z : ℂ) ^ 2 ≠ 1) {g : SU2}
     (h : torusHom z * g = g * torusHom z) : g ∈ torus := by
-  have hz0 : (z : ℂ) ≠ 0 := z.coe_ne_zero
-  have hsub : (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := by
-    intro hc
-    refine hz ?_
-    have h2 : (z : ℂ) * ((z : ℂ) - ((z : ℂ))⁻¹) = (z : ℂ) ^ 2 - 1 := by
-      rw [mul_sub, mul_inv_cancel₀ hz0, sq]
-    rw [hc, mul_zero] at h2
-    exact sub_eq_zero.mp h2.symm
+  have hsub : (z : ℂ) - ((z : ℂ))⁻¹ ≠ 0 := circle_sub_inv_ne_zero hz
   have hmat : torusMatrix z * (g : Matrix (Fin 2) (Fin 2) ℂ)
       = (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z := by
     have hval := congrArg Subtype.val h

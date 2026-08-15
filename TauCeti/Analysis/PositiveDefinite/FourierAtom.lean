@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 public import Mathlib.Analysis.Complex.Circle
 public import Mathlib.Analysis.InnerProductSpace.Basic
 
@@ -17,7 +17,7 @@ It uses Mathlib's `2π` Fourier convention.
 ## Main declarations
 
 * `TauCeti.fourierAtom`: the spatial atom `v ↦ exp (-2πi⟪v, q⟫)`.
-* `TauCeti.isPositiveDefiniteKernel_fourierAtom`: the subtraction kernel attached to a
+* `TauCeti.posSemidef_fourierAtom`: the subtraction kernel attached to a
   Fourier atom is positive definite.
 * `TauCeti.continuous_fourierAtom`: Fourier atoms are continuous in the spatial variable.
 * `TauCeti.fourierAtom_zero_left` and `TauCeti.fourierAtom_zero_right`: a Fourier atom is `1`
@@ -77,10 +77,10 @@ theorem fourierAtom_sub (q v w : V) :
   ring_nf
 
 /-- The spatial subtraction kernel supplied by a Fourier atom is positive definite. -/
-theorem isPositiveDefiniteKernel_fourierAtom (q : V) :
-    IsPositiveDefiniteKernel fun v w : V => fourierAtom q (v - w) := by
+theorem posSemidef_fourierAtom (q : V) :
+    Matrix.PosSemidef fun v w : V => fourierAtom q (v - w) := by
   simp_rw [fourierAtom_sub]
-  exact isPositiveDefiniteKernel_conj_mul
+  simpa only [RCLike.star_def] using posSemidef_rankOne
     (fun v : V => Complex.exp (2 * ((Real.pi : ℝ) : ℂ) * Complex.I * ((inner ℝ v q : ℝ) : ℂ)))
 
 /-- Fourier atoms are continuous in the spatial variable. -/

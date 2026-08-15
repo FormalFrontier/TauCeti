@@ -45,8 +45,8 @@ commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck), 
 Restated against TauCeti's `SLnZ` / `posDetInt` Hecke pair, `DoubleCoset.DecompQuotient`,
 `transposeGLEquiv` and `transposeRep`, rather than AINTLIB's `GL_pair`, `decompQuot`,
 `GL_transposeEquiv` and `tRep`. AINTLIB's `h_coset_mem_H` is not reproduced as a declaration: this
-repository already owns its two steps, as `QuotientGroup.eq` and
-`DoubleCoset.conj_mem_of_stabilizer`, so it is inlined at its one use site.
+repository already owns exactly that statement as `DoubleCoset.conj_mem_of_mk_eq`, which is what
+the proof below calls.
 
 One deliberate deviation: the slash-invariance hypothesis is carried at `SLnZ 2` under the
 rational slash action, rather than routed through the real `𝒮ℒ`. AINTLIB's
@@ -121,9 +121,9 @@ lemma slash_transposeRep_of_mem_SLnZ {h₁ h₂ : GL (Fin 2) ℚ} (hh₁ : h₁ 
     f ∣[k] (transposeGLEquiv 2 (h₁ * ↑D.out * h₂)).unop = f ∣[k] transposeRep D ⟦⟨h₁, hh₁⟩⟧ := by
   rw [transposeGLEquiv_eq_mul_transposeRep D ⟦⟨h₁, hh₁⟩⟧ h₁ h₂]
   -- The leftover factor lies in `H`: `Quotient.out_eq` says the chosen representative of `⟦h₁⟧`
-  -- is in `h₁`'s own class, so `QuotientGroup.eq` puts `σ⁻¹ h₁` in the stabilizer indexing the
-  -- decomposition, and `conj_mem_of_stabilizer` conjugates that by `δ` back into `H`.
+  -- is in `h₁`'s own class, and `conj_mem_of_mk_eq` turns that class equality into the
+  -- conjugated membership in one step.
   exact slash_transpose_mul_of_mem_SLnZ k
-    (mul_mem (conj_mem_of_stabilizer _ ⟨_, QuotientGroup.eq.mp (Quotient.out_eq _)⟩) hh₂) _ f hf
+    (mul_mem (conj_mem_of_mk_eq _ (Quotient.out_eq _)) hh₂) _ f hf
 
 end HeckeRing.GL2
