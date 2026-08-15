@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import Mathlib.RingTheory.Coalgebra.Basic
 
 /-!
@@ -105,7 +106,6 @@ theorem lTensor_counit_coact (m : M) :
 /-! ## Components selected by linear functionals -/
 
 /-- Apply a linear functional to the coalgebra factor of a tensor. -/
-@[expose]
 noncomputable def tensorComponent (phi : C →ₗ[R] R) : M ⊗[R] C →ₗ[R] M :=
   (TensorProduct.rid R M).toLinearMap ∘ₗ phi.lTensor M
 
@@ -114,6 +114,15 @@ omit [Coalgebra R C] [Comodule R C M] in
 theorem tensorComponent_tmul (phi : C →ₗ[R] R) (m : M) (c : C) :
     tensorComponent (R := R) (M := M) phi (m ⊗ₜ[R] c) = phi c • m := by
   simp [tensorComponent]
+
+omit [Coalgebra R C] [Comodule R C M] in
+/-- The coordinates of a tensor in a basis of its right factor are its tensor components. -/
+theorem equivFinsuppOfBasisRight_apply {ι : Type*} [DecidableEq ι]
+    (b : Module.Basis ι R C) (t : M ⊗[R] C) (i : ι) :
+    TensorProduct.equivFinsuppOfBasisRight b t i =
+      tensorComponent (R := R) (M := M) (b.coord i) t := by
+  rw [TensorProduct.equivFinsuppOfBasisRight_apply]
+  rfl
 
 omit [Coalgebra R C] [Comodule R C M] in
 @[simp]

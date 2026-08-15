@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
@@ -173,8 +172,7 @@ private theorem tensorPairComponent_comp_lTensor_comul (i j : ℕ) :
   refine TensorProduct.ext' fun v h => ?_
   have hc := congr($(coeffPair_comp_comul R i j) h)
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.smul_apply] at hc
-  change Comodule.pairCoeff (R := R) (coeff R i) (coeff R j)
-    (Coalgebra.comul h) = ((i + j).choose i) • coeff R (i + j) h at hc
+  simp only [coeffPair] at hc
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.lTensor_tmul,
     Comodule.tensorPairComponent_tmul, hc, LinearMap.smul_apply, Comodule.tensorComponent_tmul]
   rw [← Nat.cast_smul_eq_nsmul R, smul_eq_mul, mul_smul]
@@ -238,9 +236,8 @@ noncomputable def coactDecomposition : V →ₗ[R] (ℕ →₀ V) :=
 theorem coactDecomposition_apply (v : V) (n : ℕ) :
     coactDecomposition R V v n = coactComponent R V n v := by
   rw [coactDecomposition, LinearMap.coe_comp, Function.comp_apply, coactComponent_apply]
-  unfold Comodule.tensorComponent coeff
-  convert TensorProduct.equivFinsuppOfBasisRight_apply (monomialBasis R)
-    (Comodule.coact (R := R) (C := SymmetricAlgebra R R) v) n using 1 <;> rfl
+  exact Comodule.equivFinsuppOfBasisRight_apply (monomialBasis R)
+    (Comodule.coact (R := R) (C := SymmetricAlgebra R R) v) n
 
 /-- The coaction is recovered from its divided-power components: `ρ v = ∑ₙ Nₙ v ⊗ xⁿ`. -/
 theorem coact_eq_sum (v : V) :
