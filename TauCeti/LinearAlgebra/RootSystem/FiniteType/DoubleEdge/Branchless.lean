@@ -57,6 +57,8 @@ in the Cartan--Killing list: the second is a singleton (type `C`), the first is 
 
 The double edge is given by the orientation-free hypothesis `A u v * A v u = 2`; the two
 orientations of the edge give the two transposed models, both of which the disjunction covers. -/
+-- `degree` needs finite neighbour sets while the theorem type is elaborated, so this decidability
+-- instance cannot be confined to the proof.
 theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix_eq_one_or_eq_one_or_eq_two_two
     [DecidableEq B] (h : IsFiniteType A) (hconn : (diagramGraph A).Preconnected)
     (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2)

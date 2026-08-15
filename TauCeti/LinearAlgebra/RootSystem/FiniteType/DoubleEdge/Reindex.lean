@@ -336,6 +336,8 @@ relabelling under which `A` is `TauCeti.doubleEdgeCartanMatrix p q`.
 Nothing is assumed about the other edges: the path argument above proves that the chosen edge is
 the only multiple edge, and the finite-type sign conditions then determine every remaining nonzero
 entry. -/
+-- `degree` needs finite neighbour sets while the theorem type is elaborated, so this decidability
+-- instance cannot be confined to the proof.
 theorem IsFiniteType.exists_equiv_forall_eq_doubleEdgeCartanMatrix [DecidableEq B]
     (h : IsFiniteType A)
     (hconn : (diagramGraph A).Preconnected) (hdeg : ∀ i, (diagramGraph A).degree i ≤ 2)
