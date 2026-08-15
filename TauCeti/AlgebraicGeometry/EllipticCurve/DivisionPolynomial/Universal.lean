@@ -99,9 +99,9 @@ lemma evalEval_φ : (W.φ n).evalEval x y = polyEval W x y (curve.φ n) := by
 `Universal.Field` gives a normalised EDS, hence an elliptic sequence — over the universal field,
 with no hypothesis on any coefficient.
 
-This is the form `Universal.lean` needs: it records `universalNormEDS_ne_zero` and
-`universalNormEDS_mem_nonZeroDivisors` as absent because they rest on `normEDS 2 3 2 = id`, which
-requires recognising the universal division polynomials as a `normEDS` in the first place. -/
+The proof recognises the family as a `normEDS` outright, which is what puts the whole `normEDS` API
+— including `NormEDS.lean`'s `universalNormEDS_ne_zero` — within reach of the universal division
+polynomials. -/
 lemma isEllipticSequence_polyToField_ψ :
     IsEllipticSequence fun n : ℤ ↦ polyToField (curve.ψ n) := by
   have h : (fun n : ℤ ↦ polyToField (curve.ψ n))
