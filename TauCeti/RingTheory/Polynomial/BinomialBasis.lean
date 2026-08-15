@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Polynomial.Sequence
 public import Mathlib.LinearAlgebra.Basis.Submodule
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.Binomial
 
 /-!
@@ -53,17 +54,8 @@ namespace TauCeti
 open Polynomial
 
 attribute [local instance] Classical.propDecidable
-
-noncomputable instance (priority := 100) {R : Type*} [AddCommMonoid R] [Module ℚ R] :
-    Module ℚ≥0 R :=
-  Module.compHom R NNRat.coeHom
-
-noncomputable instance (priority := 100) {R : Type*} [AddCommMonoid R] [Module ℚ R] [Pow R ℕ] :
-    BinomialRing R := by
-  infer_instance
-
-instance (priority := 100) {R : Type*} [AddCommMonoid R] [Module ℚ R] : IsAddTorsionFree R :=
-  @IsAddTorsionFree.of_module_nnrat R _ inferInstance
+attribute [local instance] TauCeti.moduleNNRat
+attribute [local instance] BinomialRing.toIsAddTorsionFree
 
 /-! ## The polynomial basis -/
 
