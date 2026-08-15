@@ -127,6 +127,13 @@ theorem rationalizationIsometry_apply (L : IntegralLattice V) (x : ℚ ⊗[ℤ] 
     L.rationalizationIsometry x = L.rationalizationEquiv x := by
   rfl
 
+/-- The inverse rationalization isometry sends an embedded lattice vector to the corresponding
+unit pure tensor. -/
+@[simp]
+theorem rationalizationIsometry_symm_coe (L : IntegralLattice V) (x : L) :
+    L.rationalizationIsometry.symm (x : V) = 1 ⊗ₜ[ℤ] x := by
+  exact L.rationalizationEquiv_symm_coe x
+
 /-- Evaluating the ambient form on rational multiples of lattice vectors recovers the scalar
 extension formula for the integral form. -/
 theorem form_smul_coe (L : IntegralLattice V) (q r : ℚ) (x y : L) :
