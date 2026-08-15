@@ -349,12 +349,8 @@ indices, which carry the simple roots. -/
 def f4Support : Finset (Fin 48) := simpleSupport (Fin.castAdd_injective 4 44)
 
 /-- The support of the base consists exactly of the four indices below `4`. -/
-@[simp] lemma mem_f4Support {i : Fin 48} : i ∈ f4Support ↔ (i : ℕ) < 4 := by
-  rw [f4Support, mem_simpleSupport]
-  constructor
-  · rintro ⟨k, rfl⟩
-    simpa only [Fin.val_castAdd] using k.isLt
-  · exact fun hi => ⟨⟨i, hi⟩, Fin.ext rfl⟩
+@[simp] lemma mem_f4Support {i : Fin 48} : i ∈ f4Support ↔ (i : ℕ) < 4 :=
+  mem_simpleSupport_iff_lt (Fin.castAdd_injective 4 44) (fun _ ↦ Fin.val_castAdd 44 _)
 
 /-- The coefficients of the positive `F4` roots in the ordered simple-root basis. -/
 private def f4RootCoefficients : Fin 24 → Fin 4 → ℕ := ![

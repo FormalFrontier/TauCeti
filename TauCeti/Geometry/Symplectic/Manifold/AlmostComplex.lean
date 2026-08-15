@@ -210,11 +210,12 @@ def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
       ContinuousLinearMap.coe_id', id_eq]
     exact hJc v
 
-/-- The constant smooth almost complex structure of `Jc` evaluates to `Jc`. -/
+/-- The endomorphism section of a constant smooth almost complex structure has its defining value
+in every fiber. -/
 @[simp]
-lemma const_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-    (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x v : V) :
-    const Jc hJc x v = Jc v :=
+lemma const_toEndomorphism_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x : V) :
+    (const Jc hJc).toEndomorphism x = Jc :=
   (rfl)
 
 end SmoothAlmostComplexStructure
@@ -233,7 +234,19 @@ def constSmooth (J : AlmostComplexStructure V) :
 @[simp]
 lemma constSmooth_apply (J : AlmostComplexStructure V) (x v : V) :
     J.constSmooth x v = J v :=
-  SmoothAlmostComplexStructure.const_apply _ _ x v
+  congrArg (fun A : V →L[ℝ] V ↦ A v)
+    (SmoothAlmostComplexStructure.const_toEndomorphism_apply _ _ x)
+
+/-- Under the canonical identification of a self-model tangent fiber with the model space,
+evaluating a constant smooth almost complex structure is evaluating its defining linear map. -/
+@[simp]
+lemma fromTangentSpace_constSmooth_apply (J : AlmostComplexStructure V) (x : V)
+    (v : TangentSpace 𝓘(ℝ, V) x) :
+    NormedSpace.fromTangentSpace x (J.constSmooth x v) =
+      J (NormedSpace.fromTangentSpace x v) := by
+  exact congrArg
+    (fun A : V →L[ℝ] V ↦ A (NormedSpace.fromTangentSpace x v))
+    (SmoothAlmostComplexStructure.const_toEndomorphism_apply _ _ x)
 
 @[simp]
 lemma constSmooth_almostComplexStructureAt (J : AlmostComplexStructure V) (x : V) :
@@ -254,7 +267,8 @@ noncomputable def product (V : Type*) [NormedAddCommGroup V] [NormedSpace ℝ V]
 @[simp]
 lemma product_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x v : V × V) :
     product V x v = (-v.2, v.1) :=
-  const_apply _ _ x v
+  congrArg (fun A : (V × V) →L[ℝ] (V × V) ↦ A v)
+    (const_toEndomorphism_apply _ _ x)
 
 @[simp]
 lemma product_almostComplexStructureAt {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]

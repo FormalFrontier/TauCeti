@@ -9,6 +9,7 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Combinatorics.Young.YoungDiagram
 public import Mathlib.Data.Finset.Powerset
 public import Mathlib.Data.List.GetD
+public import Mathlib.Data.Multiset.Sort
 
 /-!
 # Counting the cells of a Young diagram by rows
@@ -80,6 +81,23 @@ theorem getD_rowLens (μ : YoungDiagram) (i : ℕ) : μ.rowLens.getD i 0 = μ.ro
   · rw [List.getD_eq_default _ _ (Nat.le_of_not_lt hi),
       rowLen_eq_zero_of_colLen_le
         (le_of_eq_of_le _root_.YoungDiagram.length_rowLens.symm (Nat.le_of_not_lt hi))]
+
+/-- Merge-sorting the row lengths of a Young diagram recovers them: they are already
+decreasing. This is stated for `List.mergeSort` in the shape `simp` produces from
+`Multiset.sort` on a coerced list (via `Multiset.coe_sort` and `ge_iff_le`), making it the
+`simp` normal form for sorted row-length expressions; the public statement is
+`TauCeti.YoungDiagram.sort_coe_rowLens`. -/
+@[simp]
+private theorem mergeSort_rowLens (μ : YoungDiagram) :
+    μ.rowLens.mergeSort (fun a b => decide (b ≤ a)) = μ.rowLens :=
+  List.mergeSort_eq_self _ μ.rowLens_sorted.pairwise
+
+/-- Sorting the row lengths of a Young diagram, as a multiset, recovers the row lengths: they
+are already decreasing. -/
+theorem sort_coe_rowLens (μ : YoungDiagram) :
+    (↑μ.rowLens : Multiset ℕ).sort (· ≥ ·) = μ.rowLens := by
+  rw [Multiset.coe_sort]
+  exact mergeSort_rowLens μ
 
 /-- The first `k` row lengths of a Young diagram count its cells in the first `k` rows. -/
 theorem sum_range_rowLen_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :

@@ -74,8 +74,10 @@ theorem fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt (hre : |w.re| < 
 
 /-- The endpoint ratio of a piece has negative argument when its junction chord turns
 clockwise as seen from `w`; the four instances below feed the pinning argument. -/
-private lemma arg_div_neg {z₁ z₂ : ℂ} (hz₁ : z₁ ≠ 0)
-    (hnum : z₂.im * z₁.re - z₂.re * z₁.im < 0) : (z₂ / z₁).arg < 0 := by
+private lemma arg_div_neg {z₁ z₂ : ℂ} (hnum : z₂.im * z₁.re - z₂.re * z₁.im < 0) :
+    (z₂ / z₁).arg < 0 := by
+  -- a vanishing denominator would make the chord determinant `0`, contradicting `hnum`
+  have hz₁ : z₁ ≠ 0 := by rintro rfl; simp at hnum
   rw [Complex.arg_neg_iff, Complex.div_im, div_sub_div_same]
   exact div_neg_of_neg_of_pos hnum (Complex.normSq_pos.mpr hz₁)
 
@@ -85,37 +87,17 @@ private theorem windingNumber_fdBoundary_eq_neg_one_of_one_lt_im (hx : |w.re| < 
     (hy1 : 1 < w.im) (hyH : w.im < H) : windingNumber (fdBoundary H) 0 5 w = -1 := by
   obtain ⟨hx₁, hx₂⟩ := abs_lt.mp hx
   have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_lt_one.le
-  have hnorm : 1 < ‖w‖ :=
-    hy1.trans_le ((le_abs_self _).trans (Complex.abs_im_le_norm w))
+  have hnorm : 1 < ‖w‖ := hy1.trans_le ((le_abs_self _).trans (Complex.abs_im_le_norm w))
   have hw := fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt hx hnorm hyH
-  -- the four endpoint differences, their coordinates, and their nonvanishing
-  have hz₀ : (1 / 2 + H * Complex.I - w).re = 1 / 2 - w.re ∧
-      (1 / 2 + H * Complex.I - w).im = H - w.im := by constructor <;> simp
-  have hz₁ : ((ρ : ℂ) + 1 - w).re = 1 / 2 - w.re ∧
-      ((ρ : ℂ) + 1 - w).im = Real.sqrt 3 / 2 - w.im := by
-    constructor <;> simp [ρ]; norm_num
-  have hz₃ : ((ρ : ℂ) - w).re = -(1 / 2) - w.re ∧
-      ((ρ : ℂ) - w).im = Real.sqrt 3 / 2 - w.im := by
-    constructor <;> simp [ρ]; norm_num
-  have hz₄ : (-1 / 2 + H * Complex.I - w).re = -(1 / 2) - w.re ∧
-      (-1 / 2 + H * Complex.I - w).im = H - w.im := by constructor <;> simp; norm_num
-  have hne₀ : (1 / 2 + H * Complex.I - w) ≠ 0 := fun h0 => by
-    have := congrArg Complex.re h0; rw [hz₀.1] at this; simp at this; linarith
-  have hne₁ : ((ρ : ℂ) + 1 - w) ≠ 0 := fun h0 => by
-    have := congrArg Complex.re h0; rw [hz₁.1] at this; simp at this; linarith
-  have hne₃ : ((ρ : ℂ) - w) ≠ 0 := fun h0 => by
-    have := congrArg Complex.re h0; rw [hz₃.1] at this; simp at this; linarith
-  have hne₄ : (-1 / 2 + H * Complex.I - w) ≠ 0 := fun h0 => by
-    have := congrArg Complex.re h0; rw [hz₄.1] at this; simp at this; linarith
-  -- the four piece arguments are strictly negative
-  have ha₁ : ((((ρ : ℂ) + 1 - w)) / (1 / 2 + H * Complex.I - w)).arg < 0 :=
-    arg_div_neg hne₀ (by rw [hz₀.1, hz₀.2, hz₁.1, hz₁.2]; nlinarith)
-  have ha₂ : ((((ρ : ℂ) - w)) / ((ρ : ℂ) + 1 - w)).arg < 0 :=
-    arg_div_neg hne₁ (by rw [hz₁.1, hz₁.2, hz₃.1, hz₃.2]; nlinarith)
-  have ha₃ : (((-1 / 2 + H * Complex.I - w)) / ((ρ : ℂ) - w)).arg < 0 :=
-    arg_div_neg hne₃ (by rw [hz₃.1, hz₃.2, hz₄.1, hz₄.2]; nlinarith)
-  have ha₄ : (((1 / 2 + H * Complex.I - w)) / (-1 / 2 + H * Complex.I - w)).arg < 0 :=
-    arg_div_neg hne₄ (by rw [hz₄.1, hz₄.2, hz₀.1, hz₀.2]; nlinarith)
+  -- the four endpoint differences turn clockwise: the piece arguments are strictly negative
+  have ha₁ : (((ρ : ℂ) + 1 - w) / (1 / 2 + H * Complex.I - w)).arg < 0 :=
+    arg_div_neg <| by norm_num [ρ]; nlinarith
+  have ha₂ : (((ρ : ℂ) - w) / ((ρ : ℂ) + 1 - w)).arg < 0 :=
+    arg_div_neg <| by norm_num [ρ]; nlinarith
+  have ha₃ : ((-1 / 2 + H * Complex.I - w) / ((ρ : ℂ) - w)).arg < 0 :=
+    arg_div_neg <| by norm_num [ρ]; nlinarith
+  have ha₄ : ((1 / 2 + H * Complex.I - w) / (-1 / 2 + H * Complex.I - w)).arg < 0 :=
+    arg_div_neg <| by norm_num [ρ]; nlinarith
   -- the winding number is the normalized sum of the four principal logarithms
   have hsum : windingNumber (fdBoundary H) 0 5 w =
       (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
@@ -124,10 +106,8 @@ private theorem windingNumber_fdBoundary_eq_neg_one_of_one_lt_im (hx : |w.re| < 
           Complex.log ((-1 / 2 + H * Complex.I - w) / ((ρ : ℂ) - w)) +
           Complex.log ((1 / 2 + H * Complex.I - w) / (-1 / 2 + H * Complex.I - w))) := by
     rw [windingNumber_fdBoundary_eq_sum_pieces hw,
-      windingNumber_fdBoundarySegment1_eq_log hx₂,
-      windingNumber_fdBoundary_arc_eq_log hy1,
-      windingNumber_fdBoundarySegment4_eq_log hx₁,
-      windingNumber_fdBoundarySegment5_eq_log hyH]
+      windingNumber_fdBoundarySegment1_eq_log hx₂, windingNumber_fdBoundary_arc_eq_log hy1,
+      windingNumber_fdBoundarySegment4_eq_log hx₁, windingNumber_fdBoundarySegment5_eq_log hyH]
     ring
   -- integrality
   obtain ⟨P, hP, hdiff⟩ := (isPiecewiseC1On_fdBoundary H).exists_countable_differentiableAt
@@ -138,28 +118,25 @@ private theorem windingNumber_fdBoundary_eq_neg_one_of_one_lt_im (hx : |w.re| < 
       (by rwa [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 5)])
       (isPiecewiseC1On_fdBoundary H).intervalIntegrable_deriv)
   -- extract the argument sum and pin the integer
-  have hπ : (0 : ℝ) < Real.pi := Real.pi_pos
   have hIm : 2 * Real.pi * (n : ℝ) =
       (((ρ : ℂ) + 1 - w) / (1 / 2 + H * Complex.I - w)).arg +
-        ((((ρ : ℂ) - w)) / ((ρ : ℂ) + 1 - w)).arg +
-        (((-1 / 2 + H * Complex.I - w)) / ((ρ : ℂ) - w)).arg +
-        (((1 / 2 + H * Complex.I - w)) / (-1 / 2 + H * Complex.I - w)).arg := by
-    have := hsum.symm.trans hn
-    rw [inv_mul_eq_iff_eq_mul₀ Complex.two_pi_I_ne_zero] at this
-    have hIm' := congrArg Complex.im this.symm
+        (((ρ : ℂ) - w) / ((ρ : ℂ) + 1 - w)).arg +
+        ((-1 / 2 + H * Complex.I - w) / ((ρ : ℂ) - w)).arg +
+        ((1 / 2 + H * Complex.I - w) / (-1 / 2 + H * Complex.I - w)).arg := by
+    -- clear the `(2πI)⁻¹`, then read off the imaginary part: each `log`'s is its argument
+    have hmul := (inv_mul_eq_iff_eq_mul₀ Complex.two_pi_I_ne_zero).mp (hsum.symm.trans hn)
+    have hIm' := congrArg Complex.im hmul.symm
     simpa [Complex.log_im, Complex.add_im, Complex.mul_im] using hIm'
   have hb₁ := Complex.neg_pi_lt_arg (((ρ : ℂ) + 1 - w) / (1 / 2 + H * Complex.I - w))
-  have hb₂ := Complex.neg_pi_lt_arg ((((ρ : ℂ) - w)) / ((ρ : ℂ) + 1 - w))
-  have hb₃ := Complex.neg_pi_lt_arg (((-1 / 2 + H * Complex.I - w)) / ((ρ : ℂ) - w))
-  have hb₄ := Complex.neg_pi_lt_arg (((1 / 2 + H * Complex.I - w)) / (-1 / 2 + H * Complex.I - w))
-  have hn2 : (-2 : ℤ) < n := by
-    have : (-2 : ℝ) < (n : ℝ) := by nlinarith
-    exact_mod_cast this
-  have hn0 : n < 0 := by
-    have : ((n : ℝ)) < 0 := by nlinarith
-    exact_mod_cast this
-  have : n = -1 := by omega
-  rw [hn, this]
+  have hb₂ := Complex.neg_pi_lt_arg (((ρ : ℂ) - w) / ((ρ : ℂ) + 1 - w))
+  have hb₃ := Complex.neg_pi_lt_arg ((-1 / 2 + H * Complex.I - w) / ((ρ : ℂ) - w))
+  have hb₄ := Complex.neg_pi_lt_arg ((1 / 2 + H * Complex.I - w) / (-1 / 2 + H * Complex.I - w))
+  have hn2R : (-2 : ℝ) < (n : ℝ) := by nlinarith
+  have hn0R : (n : ℝ) < 0 := by nlinarith
+  have hn2 : (-2 : ℤ) < n := by exact_mod_cast hn2R
+  have hn0 : n < 0 := by exact_mod_cast hn0R
+  have hneg : n = -1 := by lia
+  rw [hn, hneg]
   norm_num
 
 /-- Points of the lifted segment and of the strip box satisfy the interior avoidance
