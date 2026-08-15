@@ -28,6 +28,8 @@ composition) follows Mathlib's `LinearMap.BilinForm.IsometryEquiv` API in
 * `TauCeti.IntegralLattice.Isometry`: a form-preserving rational linear equivalence mapping one
   integral carrier onto another.
 * `TauCeti.IntegralLattice.Isometry.carrierEquiv`: restriction of an isometry to the carriers.
+* `TauCeti.IntegralLattice.Isometry.carrierBasisEquiv`: transport of carrier bases along an
+  isometry.
 * `TauCeti.IntegralLattice.Isometry.ofCarrierEquiv`: rational extension of a form-preserving
   integral linear equivalence of carriers.
 * `TauCeti.IntegralLattice.transport`: transport of a lattice along a rational linear equivalence.
@@ -110,11 +112,10 @@ to the source carrier. -/
 @[simp]
 theorem apply_mem_carrier_iff (e : Isometry L M) (x : V) :
     e x ∈ M.carrier ↔ x ∈ L.carrier := by
-  rw [← e.map_carrier]
-  rw [Submodule.mem_map_equiv]
-  change (e : V ≃ₗ[ℚ] W).symm (e x) ∈ L.carrier ↔ x ∈ L.carrier
-  rw [show e x = (e : V ≃ₗ[ℚ] W) x by rfl]
-  rw [LinearEquiv.symm_apply_apply]
+  rw [← e.map_carrier, Submodule.mem_map_equiv]
+  have hsymm := ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).symm_apply_apply x
+  simp only [LinearEquiv.restrictScalars_apply, coe_toLinearEquiv] at hsymm
+  rw [hsymm]
 
 /-- Two lattice isometries agreeing on the ambient space are equal. -/
 @[ext]
@@ -125,7 +126,10 @@ theorem ext {e f : Isometry L M} (h : ∀ x, e x = f x) : e = f :=
 @[refl]
 def refl (L : IntegralLattice V) : Isometry L L where
   toIsometryEquiv := .refl L.form
-  map_carrier := Submodule.map_restrictScalars_refl L.carrier
+  map_carrier := by
+    simpa only [LinearMap.BilinForm.IsometryEquiv.refl,
+      LinearEquiv.restrictScalars_toLinearMap, LinearEquiv.refl_toLinearMap,
+      LinearMap.restrictScalars_id] using (Submodule.map_id (p := L.carrier))
 
 /-- Evaluation of the identity isometry on an ambient vector. -/
 @[simp]
@@ -214,6 +218,22 @@ theorem coe_carrierEquiv_apply (e : Isometry L M) (x : L) :
 @[simp]
 theorem coe_carrierEquiv_symm_apply (e : Isometry L M) (y : M) :
     (e.carrierEquiv.symm y : V) = e.symm (y : W) := (rfl)
+
+/-- An isometry transports bases of its source carrier to bases of its target carrier. -/
+noncomputable def carrierBasisEquiv (e : Isometry L M) (ι : Type*) :
+    Basis ι ℤ L ≃ Basis ι ℤ M where
+  toFun b := b.map e.carrierEquiv
+  invFun b := b.map e.carrierEquiv.symm
+  left_inv b := by ext i; simp
+  right_inv b := by ext i; simp
+
+@[simp]
+theorem carrierBasisEquiv_apply (e : Isometry L M) (b : Basis ι ℤ L) :
+    e.carrierBasisEquiv ι b = b.map e.carrierEquiv := (rfl)
+
+@[simp]
+theorem carrierBasisEquiv_symm_apply (e : Isometry L M) (b : Basis ι ℤ M) :
+    (e.carrierBasisEquiv ι).symm b = b.map e.carrierEquiv.symm := (rfl)
 
 /-- The carrier restriction of the identity isometry is the identity linear equivalence. -/
 @[simp]
@@ -343,7 +363,9 @@ theorem transportIsometry_apply (L : IntegralLattice V) (e : V ≃ₗ[ℚ] W) (x
 @[simp]
 theorem transport_refl (L : IntegralLattice V) : L.transport (LinearEquiv.refl ℚ V) = L := by
   apply IntegralLattice.ext
-  · exact Submodule.map_restrictScalars_refl L.carrier
+  · simpa only [transport_carrier, LinearEquiv.restrictScalars_toLinearMap,
+      LinearEquiv.refl_toLinearMap, LinearMap.restrictScalars_id] using
+      (Submodule.map_id (p := L.carrier))
   · ext x y
     simp
 

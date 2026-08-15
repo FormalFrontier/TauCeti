@@ -76,8 +76,8 @@ theorem extendOfIsLattice_apply {S : Submodule ℤ V} {T : Submodule ℤ W}
     apply b.ext
     intro i
     dsimp only [b]
-    change extendOfIsLattice e (Module.Free.chooseBasis ℤ S i : V) =
-      (e (Module.Free.chooseBasis ℤ S i) : W)
+    simp only [LinearMap.comp_apply, LinearMap.restrictScalars_apply, Submodule.subtype_apply,
+      LinearEquiv.coe_toLinearMap]
     rw [← Basis.extendOfIsLattice_apply ℚ (Module.Free.chooseBasis ℤ S) i]
     -- Expose the constructed basis equivalence so `Basis.equiv_apply` can identify its values.
     unfold extendOfIsLattice
@@ -102,16 +102,15 @@ theorem extendOfIsLattice_map {S : Submodule ℤ V} {T : Submodule ℤ W}
     S.map ((extendOfIsLattice e).restrictScalars ℤ).toLinearMap = T := by
   apply le_antisymm
   · rintro _ ⟨x, hx, rfl⟩
-    change extendOfIsLattice e (⟨x, hx⟩ : S) ∈ T
-    rw [extendOfIsLattice_apply]
-    exact (e ⟨x, hx⟩).2
+    have hmem : (e (⟨x, hx⟩ : S) : W) ∈ T := (e ⟨x, hx⟩).2
+    rw [← extendOfIsLattice_apply] at hmem
+    simpa only [LinearEquiv.restrictScalars_apply, LinearEquiv.coe_toLinearMap] using hmem
   · intro y hy
     let yT : T := ⟨y, hy⟩
     let xS : S := e.symm yT
     refine ⟨(xS : V), xS.2, ?_⟩
-    change extendOfIsLattice e (xS : V) = y
-    rw [extendOfIsLattice_apply]
-    exact congr_arg Subtype.val (e.apply_symm_apply yT)
+    simpa only [LinearEquiv.restrictScalars_apply, LinearEquiv.coe_toLinearMap,
+      extendOfIsLattice_apply] using congr_arg Subtype.val (e.apply_symm_apply yT)
 
 end LinearEquiv
 
@@ -129,13 +128,6 @@ theorem IsLattice.map (S : Submodule ℤ V) [S.IsLattice ℚ] (e : V ≃ₗ[ℚ]
   span_eq_top := by
     simp [Submodule.map_coe, Submodule.span_image_linearEquiv,
       _root_.Submodule.IsLattice.span_eq_top]
-
-/-- Restricting the identity equivalence to the integers leaves every submodule fixed. -/
-theorem map_restrictScalars_refl (S : Submodule ℤ V) :
-    S.map ((LinearEquiv.refl ℚ V).restrictScalars ℤ).toLinearMap = S := by
-  ext x
-  simp only [_root_.Submodule.mem_map_equiv]
-  rfl
 
 end Submodule
 
