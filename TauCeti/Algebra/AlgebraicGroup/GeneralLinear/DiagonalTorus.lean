@@ -270,12 +270,6 @@ variable (A : Type u) [CommRing A] [Algebra R A]
 -- the point equivalences of both sides are unexposed definitions, so the crossing has to be made
 -- through their public `left` computations rather than by unfolding.
 
-private lemma eqToHom_hom_hom_left {G G' : Grp (Over (Spec (CommRingCat.of R)))} (h : G = G') :
-    (eqToHom h).hom.hom.left =
-      eqToHom (congrArg (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left) h) := by
-  subst h
-  rfl
-
 private lemma hopfSpec_map_left {H K : _root_.CommHopfAlgCat.{u} R} (φ : H ⟶ K) :
     ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom.left =
       Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) :=
@@ -301,7 +295,8 @@ private lemma diagonalTorus_hom_hom_left :
         ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
           (diagonalTorusCoordinateMap (R := R) (N := N)).op).hom.hom.left ≫
         (eqToHom (groupScheme_def R N).symm).hom.hom.left from rfl]
-  rw [eqToHom_hom_hom_left, eqToHom_hom_hom_left, hopfSpec_map_left]
+  rw [DiagonalizableGroup.eqToHom_hom_hom_left, DiagonalizableGroup.eqToHom_hom_hom_left,
+    hopfSpec_map_left]
   rfl
 
 private lemma groupSchemePointsMulEquiv_comp_diagonalTorus

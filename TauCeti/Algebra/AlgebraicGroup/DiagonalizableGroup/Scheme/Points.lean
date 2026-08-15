@@ -122,7 +122,9 @@ noncomputable def groupSchemePointsMulEquiv (G : FGCommGrpCat.{u}) :
     ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)))).trans
       AlgebraicGeometry.Spec.mapMulEquiv.symm
 
-private lemma eqToHom_hom_hom_left {G₁ G₂ : Grp (Over (Spec (CommRingCat.of R)))}
+/-- The underlying scheme morphism of an equality transport between group objects over
+`Spec R` is the equality transport between their underlying schemes. -/
+lemma eqToHom_hom_hom_left {G₁ G₂ : Grp (Over (Spec (CommRingCat.of R)))}
     (h : G₁ = G₂) :
     (eqToHom h).hom.hom.left =
       eqToHom (congrArg (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left) h) := by
