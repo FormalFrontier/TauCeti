@@ -7,7 +7,6 @@ module
 public import TauCeti.LinearAlgebra.IntegralLattice.Even
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
 import Mathlib.LinearAlgebra.Basis.Prod
-public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 
 /-!
 # Orthogonal sums of integral lattices
