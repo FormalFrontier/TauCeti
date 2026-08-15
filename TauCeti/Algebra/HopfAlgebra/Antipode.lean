@@ -27,6 +27,8 @@ automorphism. These facts are also recorded here in the commutative case.
   involutive.
 * `TauCeti.HopfAlgebra.antipodeAlgEquiv`: the antipode as an algebra equivalence in the
   commutative case.
+* `TauCeti.HopfAlgebra.antipodeAlgEquiv_toAlgHom`: the underlying algebra homomorphism is
+  Mathlib's antipode algebra homomorphism.
 * `TauCeti.HopfAlgebra.antipodeAlgEquiv_symm`: the antipode equivalence is its own inverse.
 
 ## Implementation notes
@@ -46,11 +48,12 @@ that group identity as the pointwise equation `S (S x) = x`.
 ## References
 
 The anti-coalgebra identity and involutivity in the commutative case are standard; see Sweedler,
-*Hopf Algebras*, Chapter 4, especially Proposition 4.0.1 for involutivity. Mathlib formalizes the
-anti-coalgebra identity for a Hopf object in a braided monoidal category as
-`CategoryTheory.HopfObj.antipode_comul`, by the same left-inverse-equals-right-inverse argument
-in the convolution monoid; the proof below is the ring-level analogue of that argument, stated
-for `HopfAlgebra R C` so that it applies directly to `Coalgebra.comul`.
+*Hopf Algebras*, Chapter 4, Proposition 4.0.1 for the anti-(co)algebra identity and Proposition
+4.0.6 for involutivity. Mathlib formalizes these results for Hopf objects in a braided monoidal
+category as `CategoryTheory.HopfObj.antipode_comul` and
+`CategoryTheory.HopfObj.antipode_antipode`. The proofs below are ring-level analogues, stated for
+`HopfAlgebra R C` and `HopfAlgebra R A` so they apply directly to the bundled ring-theoretic
+antipode APIs.
 -/
 
 public section
@@ -103,6 +106,22 @@ theorem antipodeAlgEquiv_apply (x : A) :
   by
     rw [antipodeAlgEquiv, AlgEquiv.ofAlgHom_apply,
       _root_.HopfAlgebra.antipodeAlgHom_apply]
+
+/-- The algebra homomorphism underlying the antipode equivalence is Mathlib's antipode algebra
+homomorphism. -/
+@[simp]
+theorem antipodeAlgEquiv_toAlgHom :
+    ((antipodeAlgEquiv (R := R) (A := A)) : A →ₐ[R] A) =
+      _root_.HopfAlgebra.antipodeAlgHom R A := by
+  rw [antipodeAlgEquiv, AlgEquiv.toAlgHom_ofAlgHom]
+
+/-- The ring homomorphism underlying the antipode equivalence is Mathlib's antipode algebra
+homomorphism viewed as a ring homomorphism. -/
+@[simp]
+theorem antipodeAlgEquiv_toRingHom :
+    (antipodeAlgEquiv (R := R) (A := A) : A →+* A) =
+      (_root_.HopfAlgebra.antipodeAlgHom R A : A →+* A) := by
+  exact congrArg AlgHom.toRingHom (antipodeAlgEquiv_toAlgHom (R := R) (A := A))
 
 /-- The antipode algebra equivalence is its own inverse. -/
 @[simp]

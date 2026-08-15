@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.Bialgebra.Augmentation
+public import TauCeti.Algebra.HopfAlgebra.Augmentation
 public import TauCeti.Algebra.HopfAlgebra.Antipode
 public import TauCeti.RingTheory.Idempotents.Connected.Component
 
@@ -29,8 +29,6 @@ closure; its descent and the component group are later parts of Layer 3.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.comap_antipodeAlgHom_augmentationPoint`: inversion fixes the augmentation
-  point on the prime spectrum.
 * `TauCeti.HopfAlgebra.antipode_connectedComponentIdempotent_augmentationPoint_eq_self`: the
   antipode fixes the component idempotent of the augmentation point.
 * `TauCeti.HopfAlgebra.antipode_mem_connectedComponentIdeal_augmentationPoint_iff`: antipode
@@ -59,43 +57,12 @@ universe u v
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H]
 
-/-- Contraction along the antipode fixes the prime defined by the counit. -/
-@[simp]
-theorem comap_antipodeAlgHom_augmentationPoint :
-    PrimeSpectrum.comap (_root_.HopfAlgebra.antipodeAlgHom k H)
-        (show PrimeSpectrum H from Bialgebra.augmentationPoint k H) =
-      (show PrimeSpectrum H from Bialgebra.augmentationPoint k H) := by
-  apply PrimeSpectrum.ext
-  rw [PrimeSpectrum.comap_asIdeal, AlgHom.kernelPoint_asIdeal]
-  ext x
-  simp only [Ideal.mem_comap, RingHom.mem_ker]
-  change Bialgebra.counitAlgHom k H (_root_.HopfAlgebra.antipodeAlgHom k H x) = 0 ↔
-    Bialgebra.counitAlgHom k H x = 0
-  have hcounit : Bialgebra.counitAlgHom k H
-      (_root_.HopfAlgebra.antipodeAlgHom k H x) = Bialgebra.counitAlgHom k H x := by
-    simpa only [AlgHom.comp_apply] using
-      DFunLike.congr_fun
-        (AlgHom.counitAlgHom_comp_antipodeAlgHom (R := k) (A := H)) x
-  rw [hcounit]
-
-/-- The ring homomorphisms underlying the antipode algebra homomorphism and equivalence agree. -/
-private theorem antipodeAlgEquiv_toRingHom :
-    ((antipodeAlgEquiv (R := k) (A := H)).toRingEquiv : H →+* H) =
-      (_root_.HopfAlgebra.antipodeAlgHom k H : H →+* H) := by
-  apply RingHom.ext
-  intro x
-  simp only [RingEquiv.coe_toRingHom, AlgEquiv.coe_ringEquiv, AlgHom.coe_toRingHom,
-    antipodeAlgEquiv_apply, _root_.HopfAlgebra.antipodeAlgHom_apply]
-
-/-- Mapping an ideal using the algebra-homomorphism and algebra-equivalence presentations of the
-antipode gives the same ideal. -/
-private theorem map_antipodeAlgHom_eq_map_antipodeAlgEquiv (I : Ideal H) :
-    Ideal.map (_root_.HopfAlgebra.antipodeAlgHom k H) I =
-      Ideal.map (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv I := by
-  change Ideal.map (_root_.HopfAlgebra.antipodeAlgHom k H : H →+* H) I =
-    Ideal.map ((antipodeAlgEquiv (R := k) (A := H)).toRingEquiv : H →+* H) I
-  exact congrArg (fun f : H →+* H ↦ Ideal.map f I)
-    (antipodeAlgEquiv_toRingHom (k := k) (H := H)).symm
+private theorem comap_antipodeAlgEquiv_augmentationPoint_eq_self :
+    PrimeSpectrum.comap
+        ((antipodeAlgEquiv (R := k) (A := H)).toRingEquiv : H →+* H)
+        (Bialgebra.augmentationPoint k H) = Bialgebra.augmentationPoint k H := by
+  rw [AlgEquiv.toRingEquiv_toRingHom, antipodeAlgEquiv_toRingHom]
+  exact comap_antipodeAlgHom_augmentationPoint_eq_self (k := k) (H := H)
 
 variable [LocallyConnectedSpace (PrimeSpectrum H)]
 
@@ -106,11 +73,10 @@ theorem antipode_connectedComponentIdempotent_augmentationPoint_eq_self :
         (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) =
       PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H) := by
   rw [← antipodeAlgEquiv_apply]
-  refine PrimeSpectrum.map_connectedComponentIdempotent_eq_self
+  exact PrimeSpectrum.map_connectedComponentIdempotent_eq_self
     (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv
-    (Bialgebra.augmentationPoint k H) ?_
-  rw [antipodeAlgEquiv_toRingHom]
-  exact comap_antipodeAlgHom_augmentationPoint (k := k) (H := H)
+    (Bialgebra.augmentationPoint k H)
+    (comap_antipodeAlgEquiv_augmentationPoint_eq_self (k := k) (H := H))
 
 /-- Mapping the ideal cutting out the augmentation point's connected component along the
 antipode fixes it. This is the ideal-theoretic form of inversion stability of the ordinary
@@ -120,12 +86,24 @@ theorem map_antipodeAlgHom_connectedComponentIdeal_augmentationPoint_eq_self :
     Ideal.map (_root_.HopfAlgebra.antipodeAlgHom k H)
         (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) =
       PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
-  rw [map_antipodeAlgHom_eq_map_antipodeAlgEquiv]
-  exact PrimeSpectrum.map_connectedComponentIdeal_eq_self
-    (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv
-    (Bialgebra.augmentationPoint k H) (by
-      rw [antipodeAlgEquiv_toRingHom]
-      exact comap_antipodeAlgHom_augmentationPoint (k := k) (H := H))
+  calc
+    Ideal.map (_root_.HopfAlgebra.antipodeAlgHom k H)
+        (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) =
+      Ideal.map (_root_.HopfAlgebra.antipodeAlgHom k H : H →+* H)
+        (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) :=
+      (Ideal.map_coe (_root_.HopfAlgebra.antipodeAlgHom k H) _).symm
+    _ = Ideal.map
+        ((antipodeAlgEquiv (R := k) (A := H)).toRingEquiv : H →+* H)
+        (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) := by
+      rw [AlgEquiv.toRingEquiv_toRingHom, antipodeAlgEquiv_toRingHom]
+    _ = Ideal.map (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv
+        (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) :=
+      Ideal.map_coe (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv _
+    _ = PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) :=
+      PrimeSpectrum.map_connectedComponentIdeal_eq_self
+        (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv
+        (Bialgebra.augmentationPoint k H)
+        (comap_antipodeAlgEquiv_augmentationPoint_eq_self (k := k) (H := H))
 
 /-- An antipode image belongs to the ideal cutting out the augmentation point's connected
 component exactly when its preimage does. -/
@@ -134,13 +112,10 @@ theorem antipode_mem_connectedComponentIdeal_augmentationPoint_iff {x : H} :
     HopfAlgebraStruct.antipode k x ∈
         PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) ↔
       x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
-  have h := PrimeSpectrum.map_mem_connectedComponentIdeal_iff
-      (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv
-      (Bialgebra.augmentationPoint k H) (by
-        rw [antipodeAlgEquiv_toRingHom]
-        exact comap_antipodeAlgHom_augmentationPoint (k := k) (H := H)) (r := x)
-  rw [congrFun (AlgEquiv.coe_ringEquiv (antipodeAlgEquiv (R := k) (A := H))) x,
-    antipodeAlgEquiv_apply] at h
-  exact h
+  have h := PrimeSpectrum.apply_mem_connectedComponentIdeal_iff_of_comap_eq_self
+    (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv
+    (Bialgebra.augmentationPoint k H)
+    (comap_antipodeAlgEquiv_augmentationPoint_eq_self (k := k) (H := H)) (r := x)
+  simpa using h
 
 end TauCeti.HopfAlgebra
