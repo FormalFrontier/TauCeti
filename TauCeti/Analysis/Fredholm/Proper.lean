@@ -39,6 +39,8 @@ sends `N ∩ f ⁻¹' L` into a compact box; being anti-Lipschitz, it reflects t
 
 ## Main declarations
 
+* `TauCeti.one_sub_mul_norm_sub_le`: an a priori estimate survives a nonlinear
+  approximation, degraded by its quality — the absorption step behind Peetre's lemma.
 * `HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage`: local properness.
 * `HasStrictFDerivAt.exists_mem_nhds_isCompact_inter_preimage_singleton`: an arbitrary fibre is
   compact near the point of differentiation.
@@ -64,6 +66,34 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [ProperSpace 𝕜]
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
   [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
 variable {f : E → F} {f' : E →L[𝕜] F} {a : E}
+
+omit [ProperSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- **An a priori estimate survives a nonlinear approximation, degraded by its quality.** Suppose
+every vector is controlled by its image under `f'` together with an auxiliary additive map `P`,
+as `‖z‖ ≤ C * ‖f' z‖ + ‖P z‖`, and `f` approximates `f'` on `N` to within `ε`. Then the same
+control holds for `f` on `N`, with the left side scaled by `1 - C * ε`; it has content exactly
+when `C * ε < 1`, and taking `ε ≤ (2 * C)⁻¹` gives the factor-two form properness uses.
+
+Nothing about `P` beyond `map_sub` enters, so it need only be additive into a seminormed additive
+group — no scalar-linearity, no idempotence, no constraint on its target. Taking it to be the
+projection onto `ker f'` from `ContinuousLinearMap.exists_projection_norm_le` recovers the Peetre
+estimate, which characterises semi-Fredholm operators — see Wendl, *Fredholm operators*,
+Lemma 5.2. -/
+theorem one_sub_mul_norm_sub_le {G : Type*} [SeminormedAddGroup G]
+    {P : E →+ G} {C : ℝ} {N : Set E} {ε : ℝ≥0}
+    (hC : 0 ≤ C) (hest : ∀ z, ‖z‖ ≤ C * ‖f' z‖ + ‖P z‖)
+    (happ : ApproximatesLinearOn f f' N ε) {x : E} (hx : x ∈ N) {y : E} (hy : y ∈ N) :
+    (1 - C * (ε : ℝ)) * ‖x - y‖ ≤ C * ‖f x - f y‖ + ‖P x - P y‖ := by
+  have h1 := hest (x - y)
+  have h2 := happ x hx y hy
+  have h3 : ‖f' (x - y)‖ ≤ ‖f x - f y‖ + (ε : ℝ) * ‖x - y‖ := by
+    have hrw : f' (x - y) = f x - f y - (f x - f y - f' (x - y)) := by abel
+    rw [hrw]
+    exact (norm_sub_le _ _).trans (by linarith)
+  have h4 : C * ‖f' (x - y)‖ ≤ C * (‖f x - f y‖ + (ε : ℝ) * ‖x - y‖) :=
+    mul_le_mul_of_nonneg_left h3 hC
+  rw [map_sub P x y] at h1
+  nlinarith
 
 /-- **Local properness of a map with upper semi-Fredholm derivative.** If `f` is strictly
 differentiable at `a` and its derivative there has closed range and finite-dimensional
@@ -93,22 +123,13 @@ theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
   have happN : ApproximatesLinearOn f f' N ε := happ.mono_set hNs
   have hcontOn : ContinuousOn f N := happN.continuousOn
   -- the two-sided bound on `N`
+  have hCε : C * (ε : ℝ) = 1 / 2 := by rw [hεcoe]; field_simp
   have key : ∀ x ∈ N, ∀ y ∈ N,
       ‖x - y‖ ≤ 2 * (C * ‖f x - f y‖) + 2 * ‖P x - P y‖ := by
     intro x hx y hy
-    have h1 := hest (x - y)
-    have h2 := happN x hx y hy
-    have h3 : ‖f' (x - y)‖ ≤ ‖f x - f y‖ + (ε : ℝ) * ‖x - y‖ := by
-      have hrw : f' (x - y) = f x - f y - (f x - f y - f' (x - y)) := by abel
-      rw [hrw]
-      exact (norm_sub_le _ _).trans (by linarith)
-    have h4 : C * ‖f' (x - y)‖ ≤ C * (‖f x - f y‖ + (ε : ℝ) * ‖x - y‖) :=
-      mul_le_mul_of_nonneg_left h3 hC.le
-    have h5 : C * (‖f x - f y‖ + (ε : ℝ) * ‖x - y‖)
-        = C * ‖f x - f y‖ + 1 / 2 * ‖x - y‖ := by
-      rw [mul_add, ← mul_assoc, hεcoe]
-      field_simp
-    rw [map_sub P x y] at h1
+    have h := one_sub_mul_norm_sub_le (P := P.toLinearMap.toAddMonoidHom) hC.le hest happN hx hy
+    rw [hCε] at h
+    simp only [LinearMap.toAddMonoidHom_coe, ContinuousLinearMap.coe_coe] at h
     linarith
   refine ⟨N, Metric.closedBall_mem_nhds a (by linarith), fun L hL => ?_⟩
   -- the compact box the projection lands in
