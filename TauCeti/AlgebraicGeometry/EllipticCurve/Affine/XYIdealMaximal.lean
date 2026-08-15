@@ -31,6 +31,11 @@ ideal of a point.
   `y₁.eval x₁ = y₂.eval x₂`, as soon as the first is proper.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.XYIdeal_eq_iff`: the constant-polynomial point
   case, where the conclusion is equality of the coordinates and properness comes from maximality.
+* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.ringHom_comp_mk_eq_evalEvalRingHom`: a ring
+  homomorphism from the coordinate ring to the base field that fixes the base field is evaluation
+  at the images of the two coordinate functions, and
+  `TauCeti.WeierstrassCurve.Affine.CoordinateRing.equation_of_ringHom`: that pair of images is
+  therefore a point of the curve.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.exists_equation_and_eq_XYIdeal`: an ideal whose
   quotient has rank one over the base field is `XYIdeal W x (C y)` for a point `(x, y)` of `W`.
 
@@ -259,13 +264,8 @@ theorem exists_equation_and_eq_XYIdeal {I : Ideal W.CoordinateRing}
     (AlgEquiv.ofBijective (Algebra.ofId F _) hbij).symm
   let ρ : W.CoordinateRing →ₐ[F] F := e.toAlgHom.comp (Ideal.Quotient.mkₐ F I)
   have hρmem : ∀ a, ρ a = 0 ↔ a ∈ I := fun a ↦ by
-    simp only [ρ, AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk]
-    constructor
-    · intro h
-      apply Ideal.Quotient.eq_zero_iff_mem.mp
-      exact e.injective (by simpa using h)
-    · intro h
-      rw [Ideal.Quotient.eq_zero_iff_mem.mpr h, map_zero]
+    rw [show ρ a = e (Ideal.Quotient.mk I a) from rfl, map_eq_zero_iff _ e.injective,
+      Ideal.Quotient.eq_zero_iff_mem]
   let x₀ := ρ (CoordinateRing.mk W (C X))
   let y₀ := ρ (CoordinateRing.mk W Y)
   have hcomp : ∀ p : F[X][Y], ρ (CoordinateRing.mk W p) = p.evalEval x₀ y₀ := fun p ↦
