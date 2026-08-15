@@ -156,13 +156,13 @@ theorem continuous_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : �
       simp [circleMap]
 
 /-- On a subinterval ending before the corner, the model sector is its incoming affine ray. -/
-private theorem modelSector_eqOn_incoming {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ α : ℝ)
+private theorem modelSector_eqOn_incoming {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ)
     {c d : ℝ} (hd : d ≤ 0) :
     EqOn (modelSector z₀ r φ α)
       (fun t : ℝ => z₀ - (t : ℂ) * Complex.exp ((φ + α : ℝ) * Complex.I)) (Icc c d) := by
   intro t ht
   have ht0 := (mem_Icc.mp ht).2.trans hd
-  rw [modelSector_of_le (ht0.trans hr.le)]
+  rw [modelSector_of_le (ht0.trans hr)]
   rcases ht0.eq_or_lt with rfl | htneg
   · rw [twoRayCorner_of_nonneg le_rfl]
     simp
@@ -187,61 +187,43 @@ private theorem modelSector_eqOn_arc_closed {z₀ : ℂ} {r φ α c d : ℝ} (hr
   · rw [modelSector_of_lt hrt]
     rfl
 
-/-- **The model sector is piecewise `C¹`.** For nonnegative radius and opening angle it is affine
-on the two rays and smoothly parametrized on the circular arc; at radius zero its restriction to
-the parameter interval is constant. -/
-theorem isPiecewiseC1On_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ : ℝ) {α : ℝ}
-    (hα : 0 ≤ α) : IsPiecewiseC1On (modelSector z₀ r φ α) (-r) (r + α) := by
-  rcases eq_or_lt_of_le hr with rfl | hr
-  · refine IsPiecewiseC1On.of_contDiffOn
-      ((contDiff_const : ContDiff ℝ 1 (fun _ : ℝ => z₀)).contDiffOn.congr ?_)
-    intro t ht
-    simp only [neg_zero, zero_add, uIcc_of_le hα, mem_Icc] at ht
-    rcases ht.1.eq_or_lt with rfl | ht
-    · rw [modelSector_of_le le_rfl, twoRayCorner_of_nonneg le_rfl]
-      simp
-    · rw [modelSector_of_lt ht]
-      simp [circleMap]
-  have hend : -r ≤ r + α := by linarith
-  let p : Finset ℝ := ({0, r} : Finset ℝ).filter (fun t => t ∈ Ioo (-r) (r + α))
-  have hp0 : 0 ∈ p := by
-    rw [Finset.mem_filter]
-    exact ⟨by simp, mem_Ioo.mpr ⟨by linarith, by linarith⟩⟩
-  refine IsPiecewiseC1On.of_breakpoints (continuous_modelSector hr.le φ α).continuousOn p ?_
-    fun c d hsub hdisj => ?_
-  · rw [min_eq_left hend, max_eq_right hend]
-    intro t ht
-    exact (Finset.mem_filter.mp ht).2
-  · rw [uIcc_of_le hend] at hsub
-    have hside : d ≤ 0 ∨ (0 ≤ c ∧ d ≤ r) ∨ r ≤ c := by
-      by_cases hd0 : d ≤ 0
-      · exact Or.inl hd0
-      have h0d : 0 < d := lt_of_not_ge hd0
-      have hc0 : 0 ≤ c := by
-        apply le_of_not_gt
-        intro hc0
-        exact Set.disjoint_left.mp hdisj hp0 (mem_Ioo.mpr ⟨hc0, h0d⟩)
-      by_cases hdr : d ≤ r
-      · exact Or.inr (Or.inl ⟨hc0, hdr⟩)
-      have hrd : r < d := lt_of_not_ge hdr
-      have hcr : r ≤ c := by
-        apply le_of_not_gt
-        intro hcr
-        have hd_mem : d ∈ Icc c d := ⟨(hcr.trans hrd).le, le_rfl⟩
-        have hr_global : r < r + α := hrd.trans_le (mem_Icc.mp (hsub hd_mem)).2
-        have hrp : r ∈ p := by simp [p, hr, hr_global]
-        exact Set.disjoint_left.mp hdisj hrp (mem_Ioo.mpr ⟨hcr, hrd⟩)
-      exact Or.inr (Or.inr hcr)
-    rcases hside with hd | ⟨hc, hd⟩ | hc
-    · exact ((contDiff_const.sub
-        ((Complex.ofRealCLM.contDiff (n := 1)).mul contDiff_const)).contDiffOn).congr
-          (modelSector_eqOn_incoming hr φ α hd)
-    · exact ((contDiff_const.add
-        ((Complex.ofRealCLM.contDiff (n := 1)).mul contDiff_const)).contDiffOn).congr
-          (modelSector_eqOn_outgoing hc hd)
-    · exact (((contDiff_circleMap z₀ r).comp
-        (contDiff_const.add (contDiff_id.sub contDiff_const))).contDiffOn).congr
-          (modelSector_eqOn_arc_closed hr.le hc)
+/-- **The model sector is piecewise `C¹`.** For nonnegative radius it is affine on the two rays and
+smoothly parametrized on the circular arc, with corners only at the parameters `0` and `r`. The
+opening angle is unconstrained: for `α < 0` the parameter interval reverses, but the curve is
+still built from the same three pieces. -/
+theorem isPiecewiseC1On_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ) :
+    IsPiecewiseC1On (modelSector z₀ r φ α) (-r) (r + α) := by
+  let p : Finset ℝ :=
+    ({0, r} : Finset ℝ).filter (fun t => t ∈ Ioo (min (-r) (r + α)) (max (-r) (r + α)))
+  refine IsPiecewiseC1On.of_breakpoints (continuous_modelSector hr φ α).continuousOn p
+    (fun t ht => (Finset.mem_filter.mp ht).2) fun c d hsub hdisj => ?_
+  rw [← Set.Icc_min_max] at hsub
+  -- A breakpoint strictly inside `[c, d]` lies strictly inside the parameter interval, so it is
+  -- in `p` — contradicting disjointness.  Hence `[c, d]` meets at most one piece.
+  have key : ∀ x ∈ ({0, r} : Finset ℝ), c < x → x < d → False := fun x hx hcx hxd => by
+    have hcd : c ≤ d := (hcx.trans hxd).le
+    have hxp : x ∈ p := Finset.mem_filter.mpr ⟨hx, mem_Ioo.mpr
+      ⟨(mem_Icc.mp (hsub ⟨le_rfl, hcd⟩)).1.trans_lt hcx,
+        hxd.trans_le (mem_Icc.mp (hsub ⟨hcd, le_rfl⟩)).2⟩⟩
+    exact Set.disjoint_left.mp hdisj hxp (mem_Ioo.mpr ⟨hcx, hxd⟩)
+  have hside : d ≤ 0 ∨ (0 ≤ c ∧ d ≤ r) ∨ r ≤ c := by
+    by_cases hd0 : d ≤ 0
+    · exact Or.inl hd0
+    have h0d : 0 < d := lt_of_not_ge hd0
+    have hc0 : 0 ≤ c := le_of_not_gt fun hc0 => key 0 (by simp) hc0 h0d
+    by_cases hdr : d ≤ r
+    · exact Or.inr (Or.inl ⟨hc0, hdr⟩)
+    exact Or.inr (Or.inr (le_of_not_gt fun hcr => key r (by simp) hcr (lt_of_not_ge hdr)))
+  rcases hside with hd | ⟨hc, hd⟩ | hc
+  · exact ((contDiff_const.sub
+      ((Complex.ofRealCLM.contDiff (n := 1)).mul contDiff_const)).contDiffOn).congr
+        (modelSector_eqOn_incoming hr φ α hd)
+  · exact ((contDiff_const.add
+      ((Complex.ofRealCLM.contDiff (n := 1)).mul contDiff_const)).contDiffOn).congr
+        (modelSector_eqOn_outgoing hc hd)
+  · exact (((contDiff_circleMap z₀ r).comp
+      (contDiff_const.add (contDiff_id.sub contDiff_const))).contDiffOn).congr
+        (modelSector_eqOn_arc_closed hr hc)
 
 /-- The two ray directions of the model sector have equal (unit) length. -/
 private theorem norm_modelSector_dirs (φ α : ℝ) :

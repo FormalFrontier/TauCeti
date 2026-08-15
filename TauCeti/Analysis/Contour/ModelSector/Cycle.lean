@@ -48,7 +48,7 @@ namespace TauCeti.Contour
 def modelSectorCurve (z₀ : ℂ) (r φ α : ℝ) (hr : 0 ≤ r) (hα : 0 ≤ α) :
     PiecewiseC1ClosedCurve :=
   PiecewiseC1ClosedCurve.of (modelSector z₀ r φ α)
-    (isPiecewiseC1On_modelSector hr φ hα) (modelSector_closed z₀ hr φ hα)
+    (isPiecewiseC1On_modelSector hr φ α) (modelSector_closed z₀ hr φ hα)
 
 /-- The model sector as a one-generator contour cycle. -/
 def modelSectorCycle (z₀ : ℂ) (r φ α : ℝ) (hr : 0 ≤ r) (hα : 0 ≤ α) : Cycle :=
