@@ -28,8 +28,6 @@ lies in the stabilizer of any prescribed cocharacter.
   cocharacter has open stabilizer.
 * `TauCeti.MultiplicativeTypeCommHopfAlgCat.instContinuousSMulCocharacterLattice`: the
   cocharacter group is a continuous discrete Galois module.
-* `TauCeti.MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing_smul_smul`: the pairing
-  is invariant under the two continuous actions.
 
 ## References
 
@@ -69,30 +67,10 @@ noncomputable instance instDistribMulActionCocharacterLattice
 
 /-- Scalar multiplication on the cocharacter lattice is the existing contragredient Galois
 representation. -/
-theorem cocharacterLattice_smul_eq (T : MultiplicativeTypeCommHopfAlgCat k)
+theorem cocharacterLattice_smul_def (T : MultiplicativeTypeCommHopfAlgCat k)
     (σ : Field.absoluteGaloisGroup k) (f : cocharacterLattice T) :
     σ • f = cocharacterGaloisRepresentation T σ f :=
   rfl
-
-/-- The contragredient action evaluates by applying the inverse Galois element to the
-character. -/
-@[simp]
-theorem cocharacterLatticeLinearEquivDual_smul_apply (T : MultiplicativeTypeCommHopfAlgCat k)
-    (σ : Field.absoluteGaloisGroup k)
-    (f : cocharacterLattice T)
-    (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :
-    cocharacterLatticeLinearEquivDual T (σ • f) x =
-      cocharacterLatticeLinearEquivDual T f (σ⁻¹ • x) := by
-  rw [cocharacterLattice_smul_eq]
-  exact cocharacterGaloisRepresentation_apply_apply T σ f x
-
-/-- The character--cocharacter pairing is invariant under the diagonal action expressed through
-the Galois-module structures on both factors. -/
-theorem characterCocharacterPairing_smul_smul (T : MultiplicativeTypeCommHopfAlgCat k)
-    (σ : Field.absoluteGaloisGroup k)
-    (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) (f : cocharacterLattice T) :
-    characterCocharacterPairing T (σ • x) (σ • f) = characterCocharacterPairing T x f :=
-  characterCocharacterPairing_galois_invariant T σ x f
 
 /-- The cocharacter lattice carries the discrete topology. -/
 noncomputable instance instTopologicalSpaceCocharacterLattice
@@ -124,7 +102,7 @@ theorem stabilizer_cocharacterLattice_isOpen (T : MultiplicativeTypeCommHopfAlgC
     apply (cocharacterLatticeLinearEquivDual T).injective
     apply LinearMap.ext
     intro x
-    rw [cocharacterLatticeLinearEquivDual_smul_apply]
+    rw [cocharacterLattice_smul_def, cocharacterGaloisRepresentation_apply_apply]
     -- `ofMulDistribMulAction_apply_apply` evaluates in `Additive` notation, whereas the
     -- character-group action uses scalar notation on that abbreviation. No public lemma bridges
     -- these definitionally equal forms, so the two `change`s below cross this type-tag boundary.
