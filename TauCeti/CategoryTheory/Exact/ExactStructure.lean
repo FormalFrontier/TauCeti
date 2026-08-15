@@ -36,8 +36,10 @@ constructed separately.
 
 The conflations are a `CategoryTheory.ObjectProperty (CategoryTheory.ShortComplex C)` closed
 under isomorphisms in Mathlib's sense, and the inflations and the deflations are each a
-`CategoryTheory.MorphismProperty`, so that the generic API applies: E0/E0op and E1/E1op are
-recorded as `CategoryTheory.MorphismProperty.ContainsIdentities` and
+`CategoryTheory.MorphismProperty`, so that the generic API applies: isomorphism-closure of the
+conflations makes the inflations and the deflations
+`CategoryTheory.MorphismProperty.RespectsIso`, and E0/E0op and E1/E1op are recorded as
+`CategoryTheory.MorphismProperty.ContainsIdentities` and
 `CategoryTheory.MorphismProperty.IsStableUnderComposition` instances.
 
 E2 and E2op cannot be phrased through Mathlib's
@@ -153,6 +155,28 @@ theorem conflation_iff_of_iso (E : ConflationClass C) {S T : ShortComplex C} (e 
     E.Conflation S ↔ E.Conflation T :=
   E.Conflation.prop_iff_of_iso e
 
+/-- Being an inflation is invariant under composing with isomorphisms on either side: the
+witnessing conflation transports along the isomorphism. -/
+instance (E : ConflationClass C) : E.inflations.RespectsIso := by
+  apply MorphismProperty.RespectsIso.mk
+  · rintro X Y Z e i ⟨W, p, zero, hS⟩
+    refine ⟨W, p, by simp [zero], E.conflation_of_iso (S := ShortComplex.mk i p zero)
+      (ShortComplex.isoMk e.symm (Iso.refl _) (Iso.refl _) (by simp) (by simp)) hS⟩
+  · rintro X Y Z e i ⟨W, p, zero, hS⟩
+    refine ⟨W, e.inv ≫ p, by simp [zero], E.conflation_of_iso (S := ShortComplex.mk i p zero)
+      (ShortComplex.isoMk (Iso.refl _) e (Iso.refl _) (by simp) (by simp)) hS⟩
+
+/-- Being a deflation is invariant under composing with isomorphisms on either side: the
+witnessing conflation transports along the isomorphism. -/
+instance (E : ConflationClass C) : E.deflations.RespectsIso := by
+  apply MorphismProperty.RespectsIso.mk
+  · rintro X Y Z e p ⟨W, i, zero, hS⟩
+    refine ⟨W, i ≫ e.inv, by simp [zero], E.conflation_of_iso (S := ShortComplex.mk i p zero)
+      (ShortComplex.isoMk (Iso.refl _) e.symm (Iso.refl _) (by simp) (by simp)) hS⟩
+  · rintro X Y Z e p ⟨W, i, zero, hS⟩
+    refine ⟨W, i, by simp [reassoc_of% zero], E.conflation_of_iso (S := ShortComplex.mk i p zero)
+      (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simp)) hS⟩
+
 end ConflationClass
 
 /-- A Quillen exact structure on an additive category, in the self-dual E0/E1/E2
@@ -162,15 +186,15 @@ The E2 fields provide genuine universal squares. No ambient pushouts or pullback
 structure ExactStructure (C : Type u) [Category.{v} C] [Preadditive C] [HasZeroObject C]
     [HasBinaryBiproducts C] extends ConflationClass C where
   /-- E0: identity morphisms are inflations. -/
-  id_isInflation : ∀ X : C, toConflationClass.IsInflation (𝟙 X)
+  isInflation_id : ∀ X : C, toConflationClass.IsInflation (𝟙 X)
   /-- E0op: identity morphisms are deflations. -/
-  id_isDeflation : ∀ X : C, toConflationClass.IsDeflation (𝟙 X)
+  isDeflation_id : ∀ X : C, toConflationClass.IsDeflation (𝟙 X)
   /-- E1: a composite of inflations is an inflation. -/
-  comp_isInflation : ∀ {X Y Z : C} (i : X ⟶ Y) (j : Y ⟶ Z),
+  isInflation_comp : ∀ {X Y Z : C} (i : X ⟶ Y) (j : Y ⟶ Z),
     toConflationClass.IsInflation i → toConflationClass.IsInflation j →
       toConflationClass.IsInflation (i ≫ j)
   /-- E1op: a composite of deflations is a deflation. -/
-  comp_isDeflation : ∀ {X Y Z : C} (p : X ⟶ Y) (q : Y ⟶ Z),
+  isDeflation_comp : ∀ {X Y Z : C} (p : X ⟶ Y) (q : Y ⟶ Z),
     toConflationClass.IsDeflation p → toConflationClass.IsDeflation q →
       toConflationClass.IsDeflation (p ≫ q)
   /-- E2: the pushout of an inflation along any morphism exists, and its other leg is an
@@ -207,58 +231,19 @@ abbrev IsDeflation (E : ExactStructure C) {Y Z : C} (p : Y ⟶ Z) : Prop :=
 
 /-- E0, as the statement that the inflations contain the identities. -/
 instance (E : ExactStructure C) : E.inflations.ContainsIdentities where
-  id_mem := E.id_isInflation
+  id_mem := E.isInflation_id
 
 /-- E0op, as the statement that the deflations contain the identities. -/
 instance (E : ExactStructure C) : E.deflations.ContainsIdentities where
-  id_mem := E.id_isDeflation
+  id_mem := E.isDeflation_id
 
 /-- E1, as the statement that the inflations are stable under composition. -/
 instance (E : ExactStructure C) : E.inflations.IsStableUnderComposition where
-  comp_mem := E.comp_isInflation
+  comp_mem := E.isInflation_comp
 
 /-- E1op, as the statement that the deflations are stable under composition. -/
 instance (E : ExactStructure C) : E.deflations.IsStableUnderComposition where
-  comp_mem := E.comp_isDeflation
-
-/-- A morphism is an inflation exactly when it is the first map of a distinguished
-conflation. -/
-theorem isInflation_iff (E : ExactStructure C) {X Y : C} (i : X ⟶ Y) :
-    E.IsInflation i ↔
-      ∃ (Z : C) (p : Y ⟶ Z) (zero : i ≫ p = 0), E.Conflation (ShortComplex.mk i p zero) :=
-  E.toConflationClass.isInflation_iff i
-
-/-- A morphism is a deflation exactly when it is the second map of a distinguished
-conflation. -/
-theorem isDeflation_iff (E : ExactStructure C) {Y Z : C} (p : Y ⟶ Z) :
-    E.IsDeflation p ↔
-      ∃ (X : C) (i : X ⟶ Y) (zero : i ≫ p = 0), E.Conflation (ShortComplex.mk i p zero) :=
-  E.toConflationClass.isDeflation_iff p
-
-/-- A conflation's first map is an inflation. -/
-theorem isInflation_f (E : ExactStructure C) {S : ShortComplex C} (hS : E.Conflation S) :
-    E.IsInflation S.f :=
-  E.toConflationClass.isInflation_f hS
-
-/-- A conflation's second map is a deflation. -/
-theorem isDeflation_g (E : ExactStructure C) {S : ShortComplex C} (hS : E.Conflation S) :
-    E.IsDeflation S.g :=
-  E.toConflationClass.isDeflation_g hS
-
-/-- Every inflation in an exact structure is a monomorphism. -/
-theorem IsInflation.mono {E : ExactStructure C} {X Y : C} {i : X ⟶ Y}
-    (hi : E.IsInflation i) : Mono i :=
-  ConflationClass.IsInflation.mono hi
-
-/-- Every deflation in an exact structure is an epimorphism. -/
-theorem IsDeflation.epi {E : ExactStructure C} {Y Z : C} {p : Y ⟶ Z}
-    (hp : E.IsDeflation p) : Epi p :=
-  ConflationClass.IsDeflation.epi hp
-
-/-- An isomorphism of short complexes transports distinguished conflations. -/
-theorem conflation_of_iso (E : ExactStructure C) {S T : ShortComplex C} (e : S ≅ T)
-    (hS : E.Conflation S) : E.Conflation T :=
-  E.toConflationClass.conflation_of_iso e hS
+  comp_mem := E.isDeflation_comp
 
 end ExactStructure
 
