@@ -16,11 +16,11 @@ import Mathlib.GroupTheory.GroupAction.Quotient
 
 For a finite-index subgroup `Γ ≤ SL(2, ℤ)`, the vanishing order of a modular form on
 `Γ` is constant on `Γ`-orbits of the upper half-plane. This file descends the order to that
-orbit space and proves that a nonzero form has nonzero order on only finitely many orbits.
+orbit space and proves that a form has nonzero order on only finitely many orbits.
 
 The proof follows the norm-map route prescribed for the general-level valence formula. The
-norm of the form is a nonzero level-one modular form, and its order dominates that of the
-original form at every point. Thus every `Γ`-orbit in the support lies above an
+norm of the form is a level-one modular form whose order dominates that of the original form
+at every point. Thus every `Γ`-orbit in the support lies above an
 `SL(2, ℤ)`-orbit in the finite support of the norm. Each such fiber is finite because a
 finite-index subgroup splits any `SL(2, ℤ)`-orbit into only finitely many `Γ`-orbits.
 
@@ -29,7 +29,7 @@ finite-index subgroup splits any `SL(2, ℤ)`-orbit into only finitely many `Γ`
 * `TauCeti.ModularForm.orderOfVanishingOnSubgroupOrbit`: the order descended to the
   `Γ`-orbit space.
 * `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnSubgroupOrbit`: finite support of
-  the interior order divisor of a nonzero general-level modular form.
+  the interior order divisor of a general-level modular form.
 
 ## References
 
@@ -123,23 +123,19 @@ private lemma orderOfVanishingOnSubgroupOrbit_ne_zero_norm
     exact ne_of_gt (hpos.trans_le
       (orderOfVanishingAt_le_orderOfVanishingAt_norm (ℋ := 𝒮ℒ) f p))
 
-/-- A nonzero modular form for a finite-index subgroup `Γ ≤ SL(2, ℤ)` has nonzero
-vanishing order on only finitely many `Γ`-orbits in the upper half-plane.
+/-- A modular form for a finite-index subgroup `Γ ≤ SL(2, ℤ)` has nonzero vanishing order on
+only finitely many `Γ`-orbits in the upper half-plane.
 
 This is the finite-support statement for the interior part of the general-level divisor.
 It is obtained from the finite support of the level-one norm, order domination under the
-norm, and finiteness of the fibers of `subgroupOrbitToOrbit`. -/
+norm, and finiteness of the fibers of `subgroupOrbitToOrbit`. As at level one, the zero form
+needs no exclusion: its order vanishes identically, so its support is empty. -/
 public theorem hasFiniteSupport_orderOfVanishingOnSubgroupOrbit
-    [Γ.FiniteIndex] [ModularFormClass F (NormReduction.G Γ) k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+    [Γ.FiniteIndex] [ModularFormClass F (NormReduction.G Γ) k] (f : F) :
     (orderOfVanishingOnSubgroupOrbit f).HasFiniteSupport := by
-  let normf := _root_.ModularForm.norm 𝒮ℒ f
-  have hnorm' : normf ≠ 0 :=
-    (_root_.ModularForm.norm_eq_zero_iff 𝒮ℒ f).not.mpr hf
-  have hnorm : (⇑normf : ℍ → ℂ) ≠ 0 :=
-    fun h ↦ hnorm' ((FunLike.coe_zero_iff normf).mp h)
   apply Set.Finite.of_finite_fibers (subgroupOrbitToOrbit Γ)
-  · exact (hasFiniteSupport_orderOfVanishingOnOrbit hnorm).subset fun q hq ↦ by
+  · exact (hasFiniteSupport_orderOfVanishingOnOrbit
+      (_root_.ModularForm.norm 𝒮ℒ f)).subset fun q hq ↦ by
       obtain ⟨r, hr, rfl⟩ := hq
       exact orderOfVanishingOnSubgroupOrbit_ne_zero_norm f hr
   · intro q _
