@@ -95,38 +95,38 @@ instance (S : CommRingCat.{u}) :
     · exact isCommMonObj_of_grp_iso
         ((affineGroupSchemeProperty S).ι.mapIso e) hG.2
 
-/-- Under the affine Hopf/group-scheme anti-equivalence, finite-dimensionality and
+/-- Under the affine Hopf/group-scheme anti-equivalence, module-finiteness and
 cocommutativity of the coordinate Hopf algebra correspond to finiteness and commutativity of the
 affine group scheme. -/
 theorem finiteCommAffineGroupSchemeProperty_inverseImage
-    (k : Type u) [Field k] :
-    (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).inverseImage
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor =
-      (finiteBicommutativeHopfAlgProperty k).op := by
+    (R : Type u) [CommRing R] :
+    (finiteCommAffineGroupSchemeProperty (CommRingCat.of R)).inverseImage
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
+      (finiteBicommutativeHopfAlgProperty R).op := by
   ext H
-  let G : AffineGroupSchemeCat (CommRingCat.of k) :=
-    ⟨(hopfSpec (CommRingCat.of k)).obj H, by
+  let G : AffineGroupSchemeCat (CommRingCat.of R) :=
+    ⟨(hopfSpec (CommRingCat.of R)).obj H, by
       apply (affineGroupSchemeProperty_iff _).mpr
       rw [← essImage_hopfSpec]
       exact ⟨H, ⟨Iso.refl _⟩⟩⟩
   let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of k)).functor.obj H ≅ G :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
+      (CommRingCat.of R)).functor.obj H ≅ G :=
+    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
       ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of k)).app H)
+        (CommRingCat.of R)).app H)
   rw [ObjectProperty.prop_inverseImage_iff,
     finiteCommAffineGroupSchemeProperty_iff, ObjectProperty.op_iff,
     finiteBicommutativeHopfAlgProperty_iff]
   constructor
   · intro h
-    have hG : finiteCommAffineGroupSchemeProperty (CommRingCat.of k) G :=
-      (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso e h
-    exact ⟨(moduleFinite_iff_isFinite_hopfSpec k H.unop).mpr hG.1,
-      (isCocomm_iff_isCommMonObj_hopfSpec k H.unop).mpr hG.2⟩
+    have hG : finiteCommAffineGroupSchemeProperty (CommRingCat.of R) G :=
+      (finiteCommAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e h
+    exact ⟨(moduleFinite_iff_isFinite_hopfSpec R H.unop).mpr hG.1,
+      (isCocomm_iff_isCommMonObj_hopfSpec R H.unop).mpr hG.2⟩
   · intro h
-    apply (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso e.symm
-    exact ⟨(moduleFinite_iff_isFinite_hopfSpec k H.unop).mp h.1,
-      (isCocomm_iff_isCommMonObj_hopfSpec k H.unop).mp h.2⟩
+    apply (finiteCommAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e.symm
+    exact ⟨(moduleFinite_iff_isFinite_hopfSpec R H.unop).mp h.1,
+      (isCocomm_iff_isCommMonObj_hopfSpec R H.unop).mp h.2⟩
 
 /-- The category of finite commutative affine group schemes over a base ring. -/
 abbrev FiniteCommAffineGroupSchemeCat (S : CommRingCat.{u}) :=
@@ -140,28 +140,28 @@ instance {S : CommRingCat.{u}} (G : FiniteCommAffineGroupSchemeCat S) :
     IsCommMonObj G.obj.obj.X :=
   G.property.2
 
-/-- `Spec` as an anti-equivalence from finite-dimensional bicommutative Hopf algebras to finite
-commutative affine group schemes over a field. -/
+/-- `Spec` as an anti-equivalence from module-finite bicommutative Hopf algebras to finite
+commutative affine group schemes over a commutative ring. -/
 noncomputable def finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat
-    (k : Type u) [Field k] :
-    (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
-      FiniteCommAffineGroupSchemeCat (CommRingCat.of k) :=
-  (ObjectProperty.opEquivalence (finiteBicommutativeHopfAlgProperty k)).symm.trans <|
+    (R : Type u) [CommRing R] :
+    (FiniteBicommutativeHopfAlgCat.{u} R)ᵒᵖ ≌
+      FiniteCommAffineGroupSchemeCat (CommRingCat.of R) :=
+  (ObjectProperty.opEquivalence (finiteBicommutativeHopfAlgProperty R)).symm.trans <|
     (commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of k)).congrFullSubcategory
-        (finiteCommAffineGroupSchemeProperty_inverseImage k)
+      (CommRingCat.of R)).congrFullSubcategory
+        (finiteCommAffineGroupSchemeProperty_inverseImage R)
 
 /-- The restricted equivalence followed by the finite-commutative inclusion is definitionally
 the unrestricted equivalence applied after forgetting the finiteness and cocommutativity proofs.
 This private isomorphism isolates the implementation of the object-property restrictions. -/
 private noncomputable def
     finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCatFunctorCompιIso
-    (k : Type u) [Field k] :
-    (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).functor ⋙
-        (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).ι ≅
-      (forget₂ (FiniteBicommutativeHopfAlgCat.{u} k)
-          (CommHopfAlgCat.{u} k)).op ⋙
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor :=
+    (R : Type u) [CommRing R] :
+    (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat R).functor ⋙
+        (finiteCommAffineGroupSchemeProperty (CommRingCat.of R)).ι ≅
+      (forget₂ (FiniteBicommutativeHopfAlgCat.{u} R)
+          (CommHopfAlgCat.{u} R)).op ⋙
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor :=
   Iso.refl _
 
 /-- The forward restricted anti-equivalence, followed by the inclusions into affine group schemes
@@ -169,21 +169,21 @@ and all group schemes, is `hopfSpec` applied after forgetting the finiteness and
 proofs. This is the computation interface for the restricted equivalence. -/
 noncomputable def
     finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat.functorCompιIso
-    (k : Type u) [Field k] :
-    (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).functor ⋙
-          (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
-        (affineGroupSchemeProperty (CommRingCat.of k)).ι ≅
-      (forget₂ (FiniteBicommutativeHopfAlgCat.{u} k)
-          (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
+    (R : Type u) [CommRing R] :
+    (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat R).functor ⋙
+          (finiteCommAffineGroupSchemeProperty (CommRingCat.of R)).ι ⋙
+        (affineGroupSchemeProperty (CommRingCat.of R)).ι ≅
+      (forget₂ (FiniteBicommutativeHopfAlgCat.{u} R)
+          (CommHopfAlgCat.{u} R)).op ⋙ hopfSpec (CommRingCat.of R) :=
   Functor.isoWhiskerRight
-      (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCatFunctorCompιIso k)
-      (affineGroupSchemeProperty (CommRingCat.of k)).ι ≪≫
+      (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCatFunctorCompιIso R)
+      (affineGroupSchemeProperty (CommRingCat.of R)).ι ≪≫
     Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft
-      (forget₂ (FiniteBicommutativeHopfAlgCat.{u} k)
-        (CommHopfAlgCat.{u} k)).op
+      (forget₂ (FiniteBicommutativeHopfAlgCat.{u} R)
+        (CommHopfAlgCat.{u} R)).op
       (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of k))
+        (CommRingCat.of R))
 
 namespace FiniteCommAffineGroupSchemeCat
 
