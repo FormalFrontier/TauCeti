@@ -200,8 +200,15 @@ theorem coactComponent_apply (n : ℕ) (v : V) :
 @[simp]
 theorem coactComponent_zero : coactComponent R V 0 = LinearMap.id := by
   ext v
-  rw [coactComponent_apply, Comodule.tensorComponent, LinearMap.coe_comp, Function.comp_apply,
-    coeff_zero_eq_counit, Comodule.lTensor_counit_coact]
+  rw [coactComponent_apply, coeff_zero_eq_counit]
+  have hcomponent :
+      Comodule.tensorComponent (R := R) (M := V)
+          (Coalgebra.counit (R := R) (A := SymmetricAlgebra R R)) =
+        (TensorProduct.rid R V).toLinearMap ∘ₗ
+          (Coalgebra.counit (R := R) (A := SymmetricAlgebra R R)).lTensor V := by
+    refine TensorProduct.ext' fun w c => ?_
+    simp
+  rw [hcomponent, LinearMap.coe_comp, Function.comp_apply, Comodule.lTensor_counit_coact]
   simp
 
 /-- **The divided-power components compose by the binomial rule** `Nᵢ ∘ Nⱼ = (i + j choose i)
