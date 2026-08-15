@@ -59,31 +59,15 @@ attribute [local instance] BinomialRing.toIsAddTorsionFree
 
 /-! ## The polynomial basis -/
 
-/-- The polynomial evaluation `smeval` of an integer polynomial at `X` in `K[X]` agrees with
-its canonical base change via `Int.castRingHom K`. -/
-theorem int_polynomial_smeval_X {K : Type*} [CommRing K] (p : ℤ[X]) :
-    p.smeval (X : K[X]) = p.map (Int.castRingHom K) := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq =>
-    rw [Polynomial.smeval_add, Polynomial.map_add, hp, hq]
-  | monomial n z =>
-    calc
-      (monomial n z).smeval (X : K[X]) = z • (X : K[X]) ^ n := by
-        rw [Polynomial.smeval_monomial]
-      _ = (z : K) • (X : K[X]) ^ n := by
-        rw [Int.cast_smul_eq_zsmul (R := K)]
-      _ = C (z : K) * (X : K[X]) ^ n := by
-        rw [Polynomial.smul_eq_C_mul]
-      _ = monomial n (z : K) := by
-        rw [Polynomial.C_mul_X_pow_eq_monomial]
-      _ = (monomial n z).map (Int.castRingHom K) := by
-        rw [Polynomial.map_monomial, Int.coe_castRingHom]
-
 /-- Evaluating the integer descending Pochhammer polynomial at `X` in `K[X]` yields the
 descending Pochhammer polynomial over `K`. -/
 theorem descPochhammer_int_smeval_X {K : Type*} [CommRing K] (n : ℕ) :
     (descPochhammer ℤ n).smeval (X : K[X]) = descPochhammer K n := by
-  rw [int_polynomial_smeval_X, descPochhammer_map]
+  rw [← Polynomial.eval₂_smulOneHom_eq_smeval,
+    show RingHom.smulOneHom = Int.castRingHom K[X] from Subsingleton.elim _ _]
+  simpa only [Polynomial.map_X, Polynomial.coe_mapRingHom, descPochhammer_map] using
+    Polynomial.eval₂_intCastRingHom_X (descPochhammer ℤ n)
+      (Polynomial.mapRingHom (Int.castRingHom K))
 
 /-- The descending Pochhammer polynomial over any commutative ring is monic. -/
 theorem monic_descPochhammer' {K : Type*} [CommRing K] (n : ℕ) :
@@ -295,4 +279,3 @@ theorem mem_ringChooseSpan_X_iff_existsUnique (p : K[X]) :
     exact ⟨a, ha⟩
 
 end TauCeti
-
