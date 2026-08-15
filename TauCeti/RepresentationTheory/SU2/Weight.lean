@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
 import Mathlib.Analysis.Real.Pi.Irrational
+import TauCeti.LinearAlgebra.Eigenspace.DiagonalBasis
 
 /-!
 # The weight decomposition of `Symᵈ(ℂ²)` under the maximal torus of `SU(2)`
@@ -24,12 +25,11 @@ occurs with multiplicity exactly one, and the character above,
 Two consequences make this the form the highest-weight classification uses.
 
 * **A torus-stable subspace is spanned by weight vectors.**  Nothing forces this for a single
-  operator with repeated eigenvalues; here the eigenvalues are distinct, and the proof is the
-  usual one: subtracting an eigenvalue multiple of a vector from its image under a fixed
-  generic torus element kills one coordinate and keeps the others, so an induction on the number
-  of nonzero coordinates strips a vector down to a single weight vector.  The generic element is
-  `exp(i)`, whose powers are pairwise distinct because `π` is irrational; it is a device of the
-  proof, and stays private to this file.
+  operator with repeated eigenvalues; here the eigenvalues are distinct, which is exactly the
+  hypothesis of the general coordinate argument
+  `TauCeti/LinearAlgebra/Eigenspace/DiagonalBasis.lean`.  Feeding it a torus element whose
+  integer powers are pairwise distinct — `exp(i)`, by the irrationality of `π` — separates the
+  `d + 1` weights at once.  That element is a device of the proof and stays private to this file.
 * **The weight spaces are lines.**  A nonzero vector on which the whole torus acts through a
   single character `z ↦ z^m` is a multiple of one basis vector, and `m` is one of the `d + 1`
   weights.
@@ -43,11 +43,12 @@ Two consequences make this the form the highest-weight classification uses.
 
 * `TauCeti.SU2.symPower_torusHom_weightBasis`: `diag(z, z⁻¹)` acts on the `i`-th weight vector by
   `z^{2i - d}`, and `TauCeti.SU2.weight_injective`: the weights are pairwise distinct.
-* `TauCeti.SU2.weightBasis_mem_of_repr_ne_zero` and `TauCeti.SU2.eq_span_weightBasis`: a
+* `TauCeti.SU2.weightBasis_mem_of_repr_ne_zero` and `TauCeti.SU2.eq_span_weightBasis_mem`: a
   torus-stable subspace contains every weight vector occurring in one of its elements, and is
   spanned by the weight vectors it contains.
 * `TauCeti.SU2.exists_weight_eq_of_forall_torusHom_smul`: a nonzero vector on which the torus acts
-  through a single character `z ↦ z^m` spans a weight line, and `m` is one of the weights.
+  through a single character `z ↦ z^m` is a multiple of a single weight vector, and `m` is that
+  vector's weight.
 
 ## References
 
@@ -107,8 +108,9 @@ theorem weight_last : weight d (Fin.last d) = (d : ℤ) := by
   rw [weight_def, Fin.val_last]
   ring
 
-/-- **The weights are pairwise distinct**: every weight of `Symᵈ(ℂ²)` occurs with multiplicity
-one. -/
+/-- **The `d + 1` weights `2i - d` are pairwise distinct.**  Together with
+`TauCeti.SU2.symPower_torusHom_weightBasis` this is what makes each weight of `Symᵈ(ℂ²)` occur
+with multiplicity one, in the form `TauCeti.SU2.exists_weight_eq_of_forall_torusHom_smul`. -/
 theorem weight_injective : Function.Injective (weight d) := by
   intro i j hij
   rw [weight_def, weight_def] at hij
@@ -121,37 +123,24 @@ weight vector by `z^{2i - d}`.  This is the weight decomposition of `Symᵈ(ℂ�
 character `TauCeti.SU2.character_symPower_torusHom` is the trace. -/
 theorem symPower_torusHom_weightBasis (z : Circle) (i : Fin (d + 1)) :
     symPower d (torusHom z) (weightBasis d i) = (z : ℂ) ^ weight d i • weightBasis d i := by
-  have hz : (z : ℂ) ≠ 0 := z.coe_ne_zero
   have hi : (i : ℕ) ≤ d := Nat.lt_succ_iff.mp i.isLt
   rw [weightBasis_apply, symPower_apply, toGL_torusHom,
     Representation.symmetricPower_apply,
-    SymmetricPower.map_symmetricPower_of_apply_basis (Pi.basisFun ℂ (Fin 2)) _
+    SymmetricPower.map_basis_symmetricPower_of_apply_basis (Pi.basisFun ℂ (Fin 2)) _
       (fun j => ((![Circle.toUnits z, (Circle.toUnits z)⁻¹] j : ℂˣ) : ℂ))
       (stdRep_diagGL_apply_basisFun _)]
   congr 1
-  rw [coe_symFinTwoEquiv_symm_apply, Multiset.map_add, Multiset.map_replicate,
-    Multiset.map_replicate, Multiset.prod_add, Multiset.prod_replicate, Multiset.prod_replicate]
   -- the eigenvalue is `z` on the `i` factors of index `0` and `z⁻¹` on the `d - i` of index `1`
-  have h0 : ((![Circle.toUnits z, (Circle.toUnits z)⁻¹] 0 : ℂˣ) : ℂ) = (z : ℂ) := by simp
-  have h1 : ((![Circle.toUnits z, (Circle.toUnits z)⁻¹] 1 : ℂˣ) : ℂ) = (z : ℂ)⁻¹ := by simp
-  have hexp : weight d i = (i : ℕ) - ((d - (i : ℕ) : ℕ) : ℤ) := by
-    rw [weight_def]
-    omega
-  rw [h0, h1, hexp, zpow_sub₀ hz, zpow_natCast, zpow_natCast, inv_pow, div_eq_mul_inv]
+  rw [weight_def, ← coe_pow_mul_coe_inv_pow z hi]
+  simp [coe_symFinTwoEquiv_symm_apply]
 
 /-- The coordinates of a vector in the weight basis are scaled by the weights: the torus is
 diagonal, so it multiplies the `i`-th coordinate by `z^{2i - d}`. -/
-theorem repr_symPower_torusHom (z : Circle) (w : Sym[ℂ]^d(Fin 2 → ℂ)) (i : Fin (d + 1)) :
+theorem weightBasis_repr_symPower_torusHom (z : Circle) (w : Sym[ℂ]^d(Fin 2 → ℂ))
+    (i : Fin (d + 1)) :
     (weightBasis d).repr (symPower d (torusHom z) w) i
-      = (z : ℂ) ^ weight d i * (weightBasis d).repr w i := by
-  have key : symPower d (torusHom z) w
-      = ∑ k, ((z : ℂ) ^ weight d k * (weightBasis d).repr w k) • weightBasis d k := by
-    conv_lhs => rw [← (weightBasis d).sum_repr w]
-    rw [map_sum]
-    refine Finset.sum_congr rfl fun k _ => ?_
-    rw [map_smul, symPower_torusHom_weightBasis, smul_smul, mul_comm]
-  rw [key]
-  exact congrFun ((weightBasis d).repr_sum_self _) i
+      = (z : ℂ) ^ weight d i * (weightBasis d).repr w i :=
+  (weightBasis d).repr_apply_of_apply_basis (symPower_torusHom_weightBasis d z) w i
 
 /-! ### A torus element with pairwise distinct powers -/
 
@@ -190,125 +179,35 @@ private theorem coe_genericTorus_zpow_weight_injective :
 
 variable {d}
 
-private theorem weightBasis_mem_aux {W : Submodule ℂ (Sym[ℂ]^d(Fin 2 → ℂ))}
-    (hW : ∀ (z : Circle) (v : Sym[ℂ]^d(Fin 2 → ℂ)), v ∈ W → symPower d (torusHom z) v ∈ W) :
-    ∀ (n : ℕ) (w : Sym[ℂ]^d(Fin 2 → ℂ)), w ∈ W →
-      ((weightBasis d).repr w).support.card ≤ n →
-        ∀ i : Fin (d + 1), (weightBasis d).repr w i ≠ 0 → weightBasis d i ∈ W := by
-  classical
-  intro n
-  induction n with
-  | zero =>
-    intro w _ hcard i hi
-    have hsupp : ((weightBasis d).repr w).support = ∅ :=
-      Finset.card_eq_zero.1 (Nat.le_zero.1 hcard)
-    exact absurd (Finsupp.notMem_support_iff.1 (by rw [hsupp]; exact Finset.notMem_empty i)) hi
-  | succ n ih =>
-    intro w hw hcard i hi
-    by_cases hsub : ((weightBasis d).repr w).support ⊆ {i}
-    · -- the only nonzero coordinate is the `i`-th, so `w` is already a multiple of `b i`
-      have hsum : ∑ k, (weightBasis d).repr w k • weightBasis d k
-          = (weightBasis d).repr w i • weightBasis d i := by
-        refine Finset.sum_eq_single i (fun k _ hk => ?_) fun h => absurd (Finset.mem_univ i) h
-        rw [Finsupp.notMem_support_iff.1 fun hks => hk (Finset.mem_singleton.1 (hsub hks)),
-          zero_smul]
-      obtain ⟨c, hc0, hcw⟩ : ∃ c : ℂ, c ≠ 0 ∧ w = c • weightBasis d i :=
-        ⟨(weightBasis d).repr w i, hi, by rw [← hsum, (weightBasis d).sum_repr]⟩
-      have hbi : weightBasis d i = c⁻¹ • w := by
-        rw [hcw, smul_smul, inv_mul_cancel₀ hc0, one_smul]
-      rw [hbi]
-      exact W.smul_mem _ hw
-    · -- otherwise some other coordinate `j` is nonzero, and can be cleared
-      obtain ⟨j, hjs, hji⟩ := Finset.not_subset.1 hsub
-      have hjne : j ≠ i := fun h => hji (Finset.mem_singleton.2 h)
-      set w' := symPower d (torusHom genericTorus) w
-        - ((genericTorus : ℂ) ^ weight d j) • w with hw'def
-      have hw'W : w' ∈ W := W.sub_mem (hW _ _ hw) (W.smul_mem _ hw)
-      have hrepr : ∀ k : Fin (d + 1), (weightBasis d).repr w' k
-          = ((genericTorus : ℂ) ^ weight d k - (genericTorus : ℂ) ^ weight d j)
-              * (weightBasis d).repr w k := by
-        intro k
-        rw [hw'def, map_sub, map_smul, Finsupp.sub_apply, Finsupp.smul_apply,
-          repr_symPower_torusHom, smul_eq_mul, sub_mul]
-      have hsupp' : ((weightBasis d).repr w').support ⊆
-          ((weightBasis d).repr w).support.erase j := by
-        intro k hk
-        have hk0 : (weightBasis d).repr w' k ≠ 0 := Finsupp.mem_support_iff.1 hk
-        rw [hrepr k] at hk0
-        refine Finset.mem_erase.2 ⟨?_, Finsupp.mem_support_iff.2 (right_ne_zero_of_mul hk0)⟩
-        rintro rfl
-        exact hk0 (by rw [sub_self, zero_mul])
-      have hcard' : ((weightBasis d).repr w').support.card ≤ n := by
-        have hle := Finset.card_le_card hsupp'
-        rw [Finset.card_erase_of_mem hjs] at hle
-        have hpos : 0 < ((weightBasis d).repr w).support.card := Finset.card_pos.2 ⟨j, hjs⟩
-        omega
-      refine ih w' hw'W hcard' i ?_
-      rw [hrepr i]
-      refine mul_ne_zero (sub_ne_zero.2 fun h => ?_) hi
-      exact hjne (coe_genericTorus_zpow_weight_injective d h).symm
-
 /-- **A torus-stable subspace contains every weight vector that occurs in one of its elements.**
-The weights of `Symᵈ(ℂ²)` are pairwise distinct, so the coordinates of a vector in the weight
-basis can be separated by repeatedly clearing one of them with the generic torus element. -/
+The torus is diagonal in the weight basis and the weights `weight d i` are pairwise distinct, so
+a single torus element already separates the coordinates of a vector. -/
 theorem weightBasis_mem_of_repr_ne_zero {W : Submodule ℂ (Sym[ℂ]^d(Fin 2 → ℂ))}
     (hW : ∀ (z : Circle) (v : Sym[ℂ]^d(Fin 2 → ℂ)), v ∈ W → symPower d (torusHom z) v ∈ W)
     {w : Sym[ℂ]^d(Fin 2 → ℂ)} (hw : w ∈ W) {i : Fin (d + 1)}
     (hi : (weightBasis d).repr w i ≠ 0) : weightBasis d i ∈ W :=
-  weightBasis_mem_aux hW _ w hw le_rfl i hi
+  (weightBasis d).self_mem_of_repr_ne_zero (symPower_torusHom_weightBasis d genericTorus)
+    (coe_genericTorus_zpow_weight_injective d) (hW genericTorus) hw hi
 
 /-- **A torus-stable subspace of `Symᵈ(ℂ²)` is spanned by the weight vectors it contains.** -/
-theorem eq_span_weightBasis {W : Submodule ℂ (Sym[ℂ]^d(Fin 2 → ℂ))}
+theorem eq_span_weightBasis_mem {W : Submodule ℂ (Sym[ℂ]^d(Fin 2 → ℂ))}
     (hW : ∀ (z : Circle) (v : Sym[ℂ]^d(Fin 2 → ℂ)), v ∈ W → symPower d (torusHom z) v ∈ W) :
-    W = Submodule.span ℂ {v | ∃ i : Fin (d + 1), weightBasis d i = v ∧ v ∈ W} := by
-  classical
-  refine le_antisymm (fun w hw => ?_) (Submodule.span_le.2 ?_)
-  · rw [← (weightBasis d).sum_repr w]
-    refine Submodule.sum_mem _ fun k _ => ?_
-    by_cases hk : (weightBasis d).repr w k = 0
-    · rw [hk, zero_smul]
-      exact Submodule.zero_mem _
-    · exact Submodule.smul_mem _ _
-        (Submodule.subset_span ⟨k, rfl, weightBasis_mem_of_repr_ne_zero hW hw hk⟩)
-  · rintro v ⟨-, -, hv⟩
-    exact hv
+    W = Submodule.span ℂ {v | ∃ i : Fin (d + 1), weightBasis d i = v ∧ v ∈ W} :=
+  (weightBasis d).eq_span_self_mem (symPower_torusHom_weightBasis d genericTorus)
+    (coe_genericTorus_zpow_weight_injective d) (hW genericTorus)
 
 /-! ### The weight spaces are lines -/
 
-/-- **The weight spaces of `Symᵈ(ℂ²)` are one-dimensional, and the weights are the `2i - d`.**  A
-nonzero vector on which the whole maximal torus acts through the single character `z ↦ z^m` is a
-multiple of a single weight vector, whose weight is `m`. -/
+/-- **A vector transforming under a single character of the torus is a weight vector.**  A nonzero
+`w` on which the whole maximal torus acts through `z ↦ z^m` is a multiple of a single weight
+vector, and `m` is that vector's weight, one of the `d + 1` integers `2i - d`. -/
 theorem exists_weight_eq_of_forall_torusHom_smul {w : Sym[ℂ]^d(Fin 2 → ℂ)} (hw : w ≠ 0) {m : ℤ}
     (hsmul : ∀ z : Circle, symPower d (torusHom z) w = ((z : ℂ) ^ m) • w) :
     ∃ i : Fin (d + 1), weight d i = m ∧ w ∈ Submodule.span ℂ {weightBasis d i} := by
-  classical
-  have hcoord : ∀ k : Fin (d + 1),
-      (genericTorus : ℂ) ^ weight d k * (weightBasis d).repr w k
-        = (genericTorus : ℂ) ^ m * (weightBasis d).repr w k := by
-    intro k
-    rw [← repr_symPower_torusHom d genericTorus w k, hsmul genericTorus, map_smul,
-      Finsupp.smul_apply, smul_eq_mul]
-  have hrne : (weightBasis d).repr w ≠ 0 := fun h =>
-    hw ((weightBasis d).repr.map_eq_zero_iff.1 h)
-  obtain ⟨i, hi⟩ := Finsupp.ne_iff.1 hrne
-  rw [Finsupp.coe_zero, Pi.zero_apply] at hi
-  have hwi : weight d i = m := coe_genericTorus_zpow_injective (mul_right_cancel₀ hi (hcoord i))
-  refine ⟨i, hwi, ?_⟩
-  have hzero : ∀ k : Fin (d + 1), k ≠ i → (weightBasis d).repr w k = 0 := by
-    intro k hk
-    by_contra hk0
-    have hpow : (genericTorus : ℂ) ^ weight d k = (genericTorus : ℂ) ^ weight d i := by
-      rw [hwi]
-      exact mul_right_cancel₀ hk0 (hcoord k)
-    exact hk (coe_genericTorus_zpow_weight_injective d hpow)
-  have hsum : ∑ k, (weightBasis d).repr w k • weightBasis d k
-      = (weightBasis d).repr w i • weightBasis d i := by
-    refine Finset.sum_eq_single i (fun k _ hk => ?_) fun h => absurd (Finset.mem_univ i) h
-    rw [hzero k hk, zero_smul]
-  have hwe : w = (weightBasis d).repr w i • weightBasis d i := by
-    rw [← hsum, (weightBasis d).sum_repr]
-  rw [hwe]
-  exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self _)
+  obtain ⟨i, hi, hspan⟩ := (weightBasis d).exists_eq_and_mem_span_singleton
+    (symPower_torusHom_weightBasis d genericTorus) (coe_genericTorus_zpow_weight_injective d) hw
+    (hsmul genericTorus)
+  exact ⟨i, coe_genericTorus_zpow_injective hi, hspan⟩
 
 end SU2
 

@@ -33,7 +33,7 @@ orderings of an unordered tuple differ by a permutation.
 
 ## Main results
 
-* `SymmetricPower.map_symmetricPower_of_apply_basis`: an endomorphism diagonal in a basis is
+* `SymmetricPower.map_basis_symmetricPower_of_apply_basis`: an endomorphism diagonal in a basis is
   diagonal in the induced basis of the symmetric power, with eigenvalue the product of the
   eigenvalues listed by the index.
 * `SymmetricPower.finrank_eq`: the rank of `Sym[R]^n M` is `Nat.multichoose (finrank R M) n`.
@@ -178,7 +178,7 @@ theorem _root_.Module.Basis.symmetricPower_apply (s : Sym κ n) :
 power**: the basis vector indexed by `s` is an eigenvector, with eigenvalue the product of the
 eigenvalues listed by `s`.  Summing these eigenvalues gives the trace,
 `SymmetricPower.trace_map_of_apply_basis`. -/
-theorem map_symmetricPower_of_apply_basis (f : M →ₗ[R] M) (a : κ → R)
+theorem map_basis_symmetricPower_of_apply_basis (f : M →ₗ[R] M) (a : κ → R)
     (hf : ∀ i, f (b i) = a i • b i) (s : Sym κ n) :
     map (ι := Fin n) f (b.symmetricPower n s) =
       ((s : Multiset κ).map a).prod • b.symmetricPower n s := by
@@ -223,7 +223,8 @@ theorem trace_map_of_apply_basis [Fintype κ] [DecidableEq κ] (b : Basis κ R M
   classical
   rw [LinearMap.trace_eq_matrix_trace R (b.symmetricPower n), Matrix.trace]
   refine Finset.sum_congr rfl fun s _ => ?_
-  rw [Matrix.diag_apply, LinearMap.toMatrix_apply, map_symmetricPower_of_apply_basis b f a hf s,
+  rw [Matrix.diag_apply, LinearMap.toMatrix_apply,
+    map_basis_symmetricPower_of_apply_basis b f a hf s,
     map_smul, Finsupp.smul_apply, Basis.repr_self, Finsupp.single_eq_same, smul_eq_mul, mul_one]
 
 end CommRing
