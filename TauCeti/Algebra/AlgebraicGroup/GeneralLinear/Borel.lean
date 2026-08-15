@@ -634,12 +634,7 @@ theorem pointsMulEquiv_rootSubgroupCoordinateMap
       (by decide : (0 : Fin 2) ≠ 1) (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) id_pt
     rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
     exact congrArg WithConv.ofConv hmap
-  rw [show
-      f.ofConv.comp
-          (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom =
-        f.ofConv.comp
-          (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv by
-    rw [hcomp_alg]]
+  rw [hcomp_alg]
   have hmap_gl :
       GeneralLinear.pointsMulEquiv 2
           (toConv (f.ofConv.comp
@@ -656,11 +651,11 @@ theorem pointsMulEquiv_rootSubgroupCoordinateMap
   have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
     apply WithConv.ext
     exact AlgHom.comp_id f.ofConv
+  have hcoe_ring (x : AdditiveGroup.coordinateHopfAlgebra R) :
+      f.ofConv.toRingHom x = f.ofConv x := rfl
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).injective
   rw [hmap_gl, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
-    map_transvectionUnit,
-    show f.ofConv.toRingHom (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv id_pt)) =
-      f.ofConv (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv id_pt)) from rfl,
+    map_transvectionUnit, hcoe_ring,
     ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
     hid_pt,
     GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
