@@ -158,7 +158,6 @@ lemma toCircle_oneBasepoint : toCircle oneBasepoint = 1 := by
 
 /-- The homeomorphism from the real projective line to the circle sends the natural basepoint to
 `1 : Circle`. -/
-@[simp]
 lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 := by
   rw [oneHomeomorphCircle_apply, toCircle_oneBasepoint]
 
