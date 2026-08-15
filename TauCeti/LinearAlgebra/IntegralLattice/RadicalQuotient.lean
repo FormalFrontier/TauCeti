@@ -30,7 +30,9 @@ lattice, while its null index vanishes.
 * `TauCeti.IntegralLattice.radicalQuotientForm`: the descended rational bilinear form.
 * `TauCeti.IntegralLattice.radicalQuotient`: the image lattice in the quotient ambient space.
 * `TauCeti.IntegralLattice.radicalQuotientMap`: the quotient map on integral carriers.
-* `TauCeti.IntegralLattice.radicalQuotientForm_nondegenerate`: the descended form is
+* `TauCeti.IntegralLattice.radicalQuotientMap_surjective`: the quotient map on carriers
+  is surjective.
+* `TauCeti.IntegralLattice.nondegenerate_radicalQuotientForm`: the descended form is
   nondegenerate.
 * `TauCeti.IntegralLattice.signature_radicalQuotient`: the quotient signature is
   `(n₊, 0, n₋)`.
@@ -55,20 +57,14 @@ noncomputable def radicalQuotientForm :
 /-- The quotient form evaluated on classes is the original form evaluated on representatives. -/
 @[simp]
 theorem radicalQuotientForm_mk (x y : V) :
-    L.radicalQuotientForm (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) = L.form x y :=
-  by
-    rw [radicalQuotientForm, QuadraticMap.associated_apply, ← Submodule.Quotient.mk_add,
-      QuadraticMap.lift_mk, QuadraticMap.lift_mk, QuadraticMap.lift_mk]
-    simp only [LinearMap.BilinMap.toQuadraticMap_apply]
-    rw [map_add, map_add]
-    simp only [LinearMap.add_apply]
-    rw [L.isSymm.eq y x]
-    rw [invOf_smul_eq_iff]
-    rw [two_smul]
-    ring
+    L.radicalQuotientForm (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) = L.form x y := by
+  have hsymm : L.form y x = L.form x y := L.isSymm.eq y x
+  simp [radicalQuotientForm, QuadraticMap.associated_apply, ← Submodule.Quotient.mk_add,
+    LinearMap.BilinMap.toQuadraticMap_apply, hsymm]
+  ring
 
 /-- The form induced on the radical quotient is symmetric. -/
-theorem radicalQuotientForm_isSymm : L.radicalQuotientForm.IsSymm := by
+theorem isSymm_radicalQuotientForm : L.radicalQuotientForm.IsSymm := by
   constructor
   intro x y
   induction x using Submodule.Quotient.induction_on with
@@ -87,14 +83,15 @@ theorem mem_radicalQuotientCarrier_iff (x : V ⧸ L.radical) :
   simp only [radicalQuotientCarrier, Submodule.mem_map, LinearMap.restrictScalars_apply]
 
 /-- The image of a full integral carrier in the radical quotient is again a full lattice. -/
-instance radicalQuotientCarrier_isLattice : L.radicalQuotientCarrier.IsLattice ℚ where
+instance isLattice_radicalQuotientCarrier : L.radicalQuotientCarrier.IsLattice ℚ where
   fg := L.isLattice.fg.map _
   span_eq_top := by
-    rw [show (L.radicalQuotientCarrier : Set (V ⧸ L.radical)) =
-      L.radical.mkQ '' (L.carrier : Set V) by
-        ext x
-        simp only [SetLike.mem_coe, mem_radicalQuotientCarrier_iff, Set.mem_image]]
-    rw [← Submodule.map_span, L.isLattice.span_eq_top, Submodule.map_top,
+    -- Express the carrier set as the image of the original carrier under the rational projection
+    have hcoe : (L.radicalQuotientCarrier : Set (V ⧸ L.radical)) =
+        L.radical.mkQ '' (L.carrier : Set V) := by
+      ext x
+      simp only [SetLike.mem_coe, mem_radicalQuotientCarrier_iff, Set.mem_image]
+    rw [hcoe, ← Submodule.map_span, L.isLattice.span_eq_top, Submodule.map_top,
       Submodule.range_mkQ]
 
 /-- The radical quotient of an integral lattice. Its carrier is the image of the original carrier,
@@ -103,7 +100,7 @@ noncomputable def radicalQuotient : IntegralLattice (V ⧸ L.radical) :=
   { carrier := L.radicalQuotientCarrier
     form := L.radicalQuotientForm
     isLattice := inferInstance
-    isSymm := L.radicalQuotientForm_isSymm
+    isSymm := L.isSymm_radicalQuotientForm
     le_dual := fun x hx y hy ↦ by
       rw [mem_radicalQuotientCarrier_iff] at hx hy
       obtain ⟨x, hxL, rfl⟩ := hx
@@ -125,15 +122,24 @@ noncomputable def radicalQuotientMap : L →ₗ[ℤ] L.radicalQuotient :=
       rw [radicalQuotient_carrier]
       exact Submodule.mem_map.mpr ⟨x, x.2, rfl⟩
 
+/-- Evaluation rule for the radical quotient map. -/
 @[simp]
-theorem radicalQuotientMap_coe (x : L) :
+theorem radicalQuotientMap_apply (x : L) :
     (L.radicalQuotientMap x : V ⧸ L.radical) = Submodule.Quotient.mk (x : V) :=
   by simp [radicalQuotientMap]
 
+/-- The radical quotient map on integral lattices is surjective. -/
+theorem radicalQuotientMap_surjective : Function.Surjective L.radicalQuotientMap := by
+  rintro ⟨x, hx⟩
+  rw [radicalQuotient_carrier, mem_radicalQuotientCarrier_iff] at hx
+  obtain ⟨y, hy, rfl⟩ := hx
+  exact ⟨⟨y, hy⟩, Subtype.ext (L.radicalQuotientMap_apply ⟨y, hy⟩)⟩
+
 /-- The radical quotient map preserves the rational bilinear form. -/
+@[simp]
 theorem radicalQuotient_form_map (x y : L) :
     L.radicalQuotient.form (L.radicalQuotientMap x) (L.radicalQuotientMap y) = L.form x y :=
-  by simp only [radicalQuotient_form, radicalQuotientMap_coe, radicalQuotientForm_mk]
+  by simp only [radicalQuotient_form, radicalQuotientMap_apply, radicalQuotientForm_mk]
 
 /-- The radical quotient map preserves the integral bilinear form. -/
 @[simp]
@@ -144,7 +150,7 @@ theorem radicalQuotient_integralForm_map (x y : L) :
   simp only [integralForm_cast, radicalQuotient_form_map]
 
 /-- The form on the radical quotient is nondegenerate. -/
-theorem radicalQuotientForm_nondegenerate : L.radicalQuotient.form.Nondegenerate := by
+theorem nondegenerate_radicalQuotientForm : L.radicalQuotient.form.Nondegenerate := by
   let _ := L.finiteDimensional
   rw [LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot]
   rw [Submodule.eq_bot_iff]
@@ -165,7 +171,7 @@ theorem radicalQuotient_radical_eq_bot : L.radicalQuotient.radical = ⊥ := by
   have hxker : x ∈ L.radicalQuotient.form.ker := by
     rw [LinearMap.mem_ker, LinearMap.ext_iff]
     exact (L.radicalQuotient.mem_radical_iff x).mp hx
-  rw [L.radicalQuotientForm_nondegenerate.ker_eq_bot] at hxker
+  rw [L.nondegenerate_radicalQuotientForm.ker_eq_bot] at hxker
   exact hxker
 
 /-- Evenness passes from an integral lattice to its radical quotient. -/
@@ -202,15 +208,34 @@ private noncomputable def radicalQuotientIsometryEquiv :
       rw [e.apply_symm_apply]
       exact (Submodule.quotientEquivOfIsCompl_apply_mk_right
         L.radical_isCompl_quotientComplement x).symm
+    -- Fold the linear equivalence expression to rewrite by `he`
     change L.radicalQuotient.form.toQuadraticMap (e.symm x) = _
     rw [he]
     simp only [LinearMap.BilinMap.toQuadraticMap_apply, radicalQuotient_form,
       radicalQuotientForm_mk, QuadraticMap.restrict_apply]
 
+private theorem radical_restrict_quotientComplement :
+    (L.form.toQuadraticMap.restrict L.quotientComplement).radical = ⊥ := by
+  have hrad : (L.form.toQuadraticMap.restrict L.quotientComplement).radical =
+      (L.form.restrict L.quotientComplement).ker :=
+    LinearMap.BilinForm.radical_toQuadraticMap (L.form.restrict L.quotientComplement)
+      ⟨fun x y ↦ L.isSymm.eq x y⟩
+  rw [hrad, Submodule.eq_bot_iff]
+  intro x hx
+  have hxrad : (x : V) ∈ L.radical := by
+    rw [L.mem_radical_iff]
+    intro y
+    obtain ⟨r, w, rfl, _⟩ :=
+      Submodule.existsUnique_add_of_isCompl L.radical_isCompl_quotientComplement y
+    rw [map_add, L.isSymm.eq x r, (L.mem_radical_iff r).mp r.2 x, zero_add]
+    exact DFunLike.congr_fun (LinearMap.mem_ker.mp hx) w
+  have hxbot : (x : V) ∈ L.radical ⊓ L.quotientComplement := ⟨hxrad, x.2⟩
+  rw [L.radical_isCompl_quotientComplement.disjoint.eq_bot, Submodule.mem_bot] at hxbot
+  exact Subtype.ext hxbot
+
 /-- The positive index is unchanged after quotienting by the radical. -/
 theorem sigPos_radicalQuotient : L.radicalQuotient.sigPos = L.sigPos := by
-  change _root_.sigPos L.radicalQuotient.form.toQuadraticMap =
-    _root_.sigPos L.form.toQuadraticMap
+  dsimp only [sigPos]
   have hfd := L.finiteDimensional
   have hquot : _root_.sigPos L.radicalQuotient.form.toQuadraticMap =
       _root_.sigPos (L.form.toQuadraticMap.restrict L.quotientComplement) :=
@@ -225,24 +250,7 @@ theorem sigPos_radicalQuotient : L.radicalQuotient.sigPos = L.sigPos := by
     (Q := L.form.toQuadraticMap)
   have hsumW := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical
     (Q := L.form.toQuadraticMap.restrict L.quotientComplement)
-  have hradW : (L.form.toQuadraticMap.restrict L.quotientComplement).radical = ⊥ := by
-    rw [QuadraticMap.radical_eq_ker_associated]
-    change (QuadraticMap.associated
-      (L.form.restrict L.quotientComplement).toQuadraticMap).ker = ⊥
-    rw [QuadraticMap.associated_left_inverse ℚ
-      (B₁ := L.form.restrict L.quotientComplement) fun x y ↦ L.isSymm.eq x y]
-    rw [Submodule.eq_bot_iff]
-    intro x hx
-    have hxrad : (x : V) ∈ L.radical := by
-      rw [L.mem_radical_iff]
-      intro y
-      obtain ⟨r, w, rfl, _⟩ :=
-        Submodule.existsUnique_add_of_isCompl L.radical_isCompl_quotientComplement y
-      rw [map_add, L.isSymm.eq x r, (L.mem_radical_iff r).mp r.2 x, zero_add]
-      exact DFunLike.congr_fun (LinearMap.mem_ker.mp hx) w
-    have hxbot : (x : V) ∈ L.radical ⊓ L.quotientComplement := ⟨hxrad, x.2⟩
-    rw [L.radical_isCompl_quotientComplement.disjoint.eq_bot, Submodule.mem_bot] at hxbot
-    exact Subtype.ext hxbot
+  have hradW := L.radical_restrict_quotientComplement
   rw [L.radical_toQuadraticMap] at hsum
   rw [hradW, finrank_bot, add_zero] at hsumW
   have hdim := Submodule.finrank_add_eq_of_isCompl
@@ -251,12 +259,13 @@ theorem sigPos_radicalQuotient : L.radicalQuotient.sigPos = L.sigPos := by
 
 /-- The negative index is unchanged after quotienting by the radical. -/
 theorem sigNeg_radicalQuotient : L.radicalQuotient.sigNeg = L.sigNeg := by
-  change _root_.sigNeg L.radicalQuotient.form.toQuadraticMap =
-    _root_.sigNeg L.form.toQuadraticMap
+  dsimp only [sigNeg]
   have hfd := L.finiteDimensional
   have hquotPos : _root_.sigPos L.radicalQuotient.form.toQuadraticMap =
-      _root_.sigPos L.form.toQuadraticMap :=
-    L.sigPos_radicalQuotient
+      _root_.sigPos L.form.toQuadraticMap := by
+    have := L.sigPos_radicalQuotient
+    dsimp only [sigPos] at this
+    exact this
   have hsum := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical
     (Q := L.form.toQuadraticMap)
   have hsumQ := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical
