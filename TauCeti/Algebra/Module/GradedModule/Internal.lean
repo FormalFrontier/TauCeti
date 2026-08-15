@@ -23,8 +23,6 @@ than duplicating it.
 
 * `InternalGrading`: an internal `ℤ`-grading of a module.
 * `InternalGrading.IsHomogeneous`: membership in a specified homogeneous piece.
-* `InternalGrading.decomposeLinearEquiv`: the canonical linear equivalence from the total module
-  to the direct sum of its homogeneous pieces.
 * `InternalGrading.component`: the linear projection onto a homogeneous piece.
 * `InternalGrading.support`: the finite set of degrees at which an element’s homogeneous component
   is nonzero.
@@ -33,9 +31,6 @@ than duplicating it.
 
 * `InternalGrading.sum_support_component`: every element is the finite sum of its homogeneous
   components.
-* `InternalGrading.inductionOn`: prove a statement by checking zero, homogeneous elements, and
-  addition.
-* `InternalGrading.linearMap_ext`: linear maps agree when they agree on every homogeneous piece.
 * `InternalGrading.linearMap_ext_homogeneous`: linear maps agree when they agree on all homogeneous
   elements.
 
@@ -80,17 +75,6 @@ theorem isHomogeneous_iff_mem (G : InternalGrading R M) (p : ℤ) (x : M) :
 /-- The decomposition attached to an internal grading. -/
 noncomputable instance (G : InternalGrading R M) : DirectSum.Decomposition G.piece :=
   G.isInternal.chooseDecomposition
-
-/-- The canonical linear equivalence between a graded total module and the direct sum of its
-homogeneous pieces. -/
-noncomputable def decomposeLinearEquiv (G : InternalGrading R M) :
-    M ≃ₗ[R] ⨁ p : ℤ, G.piece p :=
-  DirectSum.decomposeLinearEquiv G.piece
-
-@[simp]
-theorem decomposeLinearEquiv_apply (G : InternalGrading R M) (x : M) :
-    G.decomposeLinearEquiv x = DirectSum.decompose G.piece x :=
-  DirectSum.decomposeLinearEquiv_apply G.piece x
 
 /-- Projection onto the homogeneous piece of degree `p`. -/
 noncomputable def component (G : InternalGrading R M) (p : ℤ) : M →ₗ[R] G.piece p :=
@@ -157,11 +141,6 @@ theorem component_of_isHomogeneous_ne (G : InternalGrading R M) {p q : ℤ}
   simp only [component_apply, Submodule.coe_zero]
   exact DirectSum.decompose_of_mem_ne G.piece hx hpq
 
-/-- A nonzero homogeneous element has a unique degree. -/
-theorem degree_eq_of_isHomogeneous {G : InternalGrading R M} {p q : ℤ} {x : M}
-    (hp : G.IsHomogeneous p x) (hq : G.IsHomogeneous q x) (hx : x ≠ 0) : p = q :=
-  DirectSum.degree_eq_of_mem_mem G.piece hp hq hx
-
 /-- The finite set of degrees at which an element’s homogeneous component is nonzero. -/
 noncomputable def support (G : InternalGrading R M) (x : M) : Finset ℤ := by
   classical
@@ -180,27 +159,11 @@ theorem sum_support_component (G : InternalGrading R M) (x : M) :
   simpa only [component_apply] using
     DirectSum.sum_support_decompose G.piece x
 
-/-- Induction on a graded module by finite sums of homogeneous elements. -/
-@[elab_as_elim]
-theorem inductionOn (G : InternalGrading R M) {motive : M → Prop}
-    (x : M) (zero : motive 0)
-    (homogeneous : ∀ {p : ℤ} (x : G.piece p), motive (x : M))
-    (add : ∀ x y : M, motive x → motive y → motive (x + y)) : motive x :=
-  DirectSum.Decomposition.inductionOn G.piece zero homogeneous add x
-
-/-- Two linear maps from an internally graded module are equal if they agree on every homogeneous
-piece. -/
-theorem linearMap_ext {N : Type*} [AddCommMonoid N] [Module R N]
-    (G : InternalGrading R M) ⦃f g : M →ₗ[R] N⦄
-    (h : ∀ p, f ∘ₗ (G.piece p).subtype = g ∘ₗ (G.piece p).subtype) : f = g :=
-  DirectSum.decompose_lhom_ext G.piece h
-
-/-- Elementwise form of `linearMap_ext`, convenient when a map is specified on homogeneous
-elements. -/
+/-- Linear maps agree when they agree on all homogeneous elements. -/
 theorem linearMap_ext_homogeneous {N : Type*} [AddCommMonoid N] [Module R N]
     (G : InternalGrading R M) ⦃f g : M →ₗ[R] N⦄
     (h : ∀ p (x : G.piece p), f (x : M) = g (x : M)) : f = g := by
-  apply G.linearMap_ext
+  apply DirectSum.decompose_lhom_ext G.piece
   intro p
   ext x
   exact h p x
