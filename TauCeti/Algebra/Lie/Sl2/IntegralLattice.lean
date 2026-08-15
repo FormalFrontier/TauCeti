@@ -33,7 +33,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 
 * `TauCeti.Sl2Std.repEnveloping`: the enveloping-algebra representation on the standard
   module `V(n)`.
-* `TauCeti.Sl2Std.repEnveloping_ι` and `TauCeti.Sl2Std.repEnveloping_ι_slFinTwoBasis`: evaluation on
+* `TauCeti.Sl2Std.repEnveloping_ι`, `TauCeti.Sl2Std.repEnveloping_ι'`, and
+  `TauCeti.Sl2Std.repEnveloping_ι_slFinTwoBasis`: evaluation on
   Lie algebra generators.
 * `TauCeti.Sl2Std.integralLattice`: the coordinate `ℤ`-lattice in `V(n)`.
 * `TauCeti.Sl2Std.mem_integralLattice_iff`: integrality of coordinates.
@@ -178,10 +179,18 @@ noncomputable def repEnveloping (K : Type*) [CommRing K] (n : ℕ) :
   _root_.UniversalEnvelopingAlgebra.lift K (rep K n)
 
 /-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
-@[simp]
 theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
     repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
   _root_.UniversalEnvelopingAlgebra.lift_ι_apply K (rep K n) x
+
+/-- The `simp`-normal form of `repEnveloping_ι`, stated for the canonical generators as `simp`
+writes them: `ι K x` unfolds to `mkAlgHom K _ (TensorAlgebra.ι K x)`. -/
+@[simp]
+theorem repEnveloping_ι' (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
+    repEnveloping K n
+      (_root_.UniversalEnvelopingAlgebra.mkAlgHom K
+        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (TensorAlgebra.ι K x)) = rep K n x := by
+  simpa using repEnveloping_ι (K := K) (n := n) x
 
 /-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
 raising, lowering, and Cartan operators. -/
