@@ -135,13 +135,6 @@ noncomputable def characterLatticeFunctor :
   (galoisLatticeProperty k).lift (characterRepresentationFunctor (k := k))
     characterRepresentationFunctor_mem
 
-/-- Forgetting that character lattices are finite free with open stabilizers recovers the
-geometric-character representation functor restricted to tori. -/
-noncomputable def characterLatticeFunctorCompιIso :
-    characterLatticeFunctor (k := k) ⋙ (galoisLatticeProperty k).ι ≅
-      characterRepresentationFunctor (k := k) :=
-  ObjectProperty.liftCompιIso _ _ _
-
 /-- The underlying integral representation of a torus's character lattice is its geometric
 character group with the absolute-Galois action. -/
 @[simp]
