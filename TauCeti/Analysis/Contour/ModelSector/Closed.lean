@@ -133,7 +133,8 @@ theorem modelSector_eqOn_arc (z₀ : ℂ) (r φ : ℝ) {α : ℝ} (hα : 0 ≤ �
   simp only [modelSector, ite_eq_right this, Function.comp_apply, one_mul]
   ring_nf
 
-private theorem continuous_modelSector_aux {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ) :
+/-- The model sector is continuous: the two-ray corner and circular arc agree at their join. -/
+theorem continuous_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ) :
     Continuous (modelSector z₀ r φ α) := by
   have harc : Continuous (circleMap z₀ r ∘ fun t : ℝ => φ + (t - r)) := by fun_prop
   have heq : modelSector z₀ r φ α = fun t : ℝ =>
@@ -153,11 +154,6 @@ private theorem continuous_modelSector_aux {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r)
       subst t
       rw [twoRayCorner_of_nonneg hr]
       simp [circleMap]
-
-/-- The model sector is continuous: the two-ray corner and circular arc agree at their join. -/
-theorem continuous_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ) :
-    Continuous (modelSector z₀ r φ α) :=
-  continuous_modelSector_aux hr φ α
 
 /-- On a subinterval ending before the corner, the model sector is its incoming affine ray. -/
 private theorem modelSector_eqOn_incoming {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ α : ℝ)
@@ -191,10 +187,21 @@ private theorem modelSector_eqOn_arc_closed {z₀ : ℂ} {r φ α c d : ℝ} (hr
   · rw [modelSector_of_lt hrt]
     rfl
 
-/-- **The model sector is piecewise `C¹`.** For positive radius and nonnegative opening angle it
-is affine on the two rays and smoothly parametrized on the circular arc. -/
-theorem isPiecewiseC1On_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ : ℝ) {α : ℝ}
+/-- **The model sector is piecewise `C¹`.** For nonnegative radius and opening angle it is affine
+on the two rays and smoothly parametrized on the circular arc; at radius zero its restriction to
+the parameter interval is constant. -/
+theorem isPiecewiseC1On_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ : ℝ) {α : ℝ}
     (hα : 0 ≤ α) : IsPiecewiseC1On (modelSector z₀ r φ α) (-r) (r + α) := by
+  rcases eq_or_lt_of_le hr with rfl | hr
+  · refine IsPiecewiseC1On.of_contDiffOn
+      ((contDiff_const : ContDiff ℝ 1 (fun _ : ℝ => z₀)).contDiffOn.congr ?_)
+    intro t ht
+    simp only [neg_zero, zero_add, uIcc_of_le hα, mem_Icc] at ht
+    rcases ht.1.eq_or_lt with rfl | ht
+    · rw [modelSector_of_le le_rfl, twoRayCorner_of_nonneg le_rfl]
+      simp
+    · rw [modelSector_of_lt ht]
+      simp [circleMap]
   have hend : -r ≤ r + α := by linarith
   let p : Finset ℝ := ({0, r} : Finset ℝ).filter (fun t => t ∈ Ioo (-r) (r + α))
   have hp0 : 0 ∈ p := by
