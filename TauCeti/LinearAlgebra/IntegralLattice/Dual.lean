@@ -222,7 +222,6 @@ theorem dualCarrier_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
 
 /-- A vector pairs integrally with every vector of the dual carrier exactly when it belongs to the
 original carrier. -/
-@[simp]
 theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondegenerate]
     (x : V) :
     (∀ y ∈ L.dualCarrier, L.form x y ∈ (1 : Submodule ℤ ℚ)) ↔ x ∈ L.carrier := by
