@@ -102,7 +102,6 @@ noncomputable def gramDet {ι : Type v} [Fintype ι] [DecidableEq ι]
   Matrix.det (L.gramMatrix e)
 
 /-- Unfolding the signed Gram determinant to the matrix determinant. -/
-@[simp]
 theorem gramDet_def {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
     L.gramDet e = Matrix.det (L.gramMatrix e) :=
@@ -200,7 +199,6 @@ noncomputable def discriminant (L : IntegralLattice V) : ℕ :=
   L.determinant.natAbs
 
 /-- Unfolding the discriminant to the absolute value of the signed determinant. -/
-@[simp]
 theorem discriminant_def (L : IntegralLattice V) :
     L.discriminant = L.determinant.natAbs :=
   (rfl)
