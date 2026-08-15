@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
+public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.BaseChangeAction
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 
@@ -70,7 +70,7 @@ commutative ring `A`.
 Under the usual equivalence `𝔾ₐ(A) ≃ A⁺`, the parameter `t` acts on `A ⊗[ℤ] M` by the finite
 divided-power exponential of `ρ(eᵢ)`. -/
 noncomputable def kostantRootSubgroupPoints :
-    WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A) →*
+    WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A) →*
       LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp <|
     (baseChangeKostantExpHom e h ρ M hM i hnil).comp
@@ -79,7 +79,7 @@ noncomputable def kostantRootSubgroupPoints :
 /-- The linear equivalence underlying a Kostant root-subgroup point is the integral
 divided-power exponential with the corresponding `𝔾ₐ` parameter. -/
 @[simp] theorem kostantRootSubgroupPoints_toLinearEquiv
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     (kostantRootSubgroupPoints e h ρ M hM i hnil f).toLinearEquiv =
       baseChangeKostantExpHom e h ρ M hM i hnil
         (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f) := by
@@ -89,7 +89,7 @@ divided-power exponential with the corresponding `𝔾ₐ` parameter. -/
 /-- On an elementary tensor, a Kostant root-subgroup point acts by the expected finite
 divided-power formula. -/
 @[simp] theorem kostantRootSubgroupPoints_tmul
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) (a : A) (m : M) :
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) (a : A) (m : M) :
     (kostantRootSubgroupPoints e h ρ M hM i hnil f).val (a ⊗ₜ[ℤ] m) =
       ∑ n ∈ Finset.range
           (nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))),
@@ -118,23 +118,20 @@ coordinate of every tensor intertwines the automorphism attached to `t : A` with
 automorphism attached to `φ(t) : B`. -/
 theorem map_kostantRootSubgroupPoints
     (φ : A →+* B)
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     ∀ z : A ⊗[ℤ] M,
       TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id
           ((kostantRootSubgroupPoints e h ρ M hM i hnil f).val z) =
         (kostantRootSubgroupPoints e h ρ M hM i hnil
-            (AlgHom.mapValue (H := AdditiveGroup.coordinateHopfAlgebra ℤ) φ.toIntAlgHom f)).val
+            (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ.toIntAlgHom f)).val
           (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
   intro z
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a m =>
-      rw [TensorProduct.map_tmul, kostantRootSubgroupPoints_tmul,
-        kostantRootSubgroupPoints_tmul,
-        AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
-      simp only [map_sum, TensorProduct.map_tmul, LinearMap.id_apply,
-        AlgHom.toLinearMap_apply, map_pow, map_mul]
-  | add x y hx hy => simp [hx, hy]
+  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
+    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
+    ← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
+    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
+    AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
+  exact map_baseChangeExp φ _ _ _ _ z
 
 end Naturality
 

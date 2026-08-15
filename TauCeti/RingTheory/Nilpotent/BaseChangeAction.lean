@@ -37,6 +37,7 @@ characteristic.
   subgroup.
 * `TauCeti.mul_integralDividedPower`: multiplication formula for restricted divided powers.
 * `TauCeti.baseChangeExp`: the finite divided-power exponential on `R ⊗[ℤ] M` for an element of `A`.
+* `TauCeti.map_baseChangeExp`: naturality of the exponential under a map of parameter rings.
 * `TauCeti.baseChangeExp_add`: its one-parameter group law.
 * `TauCeti.baseChangeExpLinearEquiv`: the resulting linear automorphism.
 * `TauCeti.baseChangeExpHom`: the additive one-parameter subgroup over `R`.
@@ -142,6 +143,23 @@ theorem baseChangeExp_tmul (x : A) (M : S)
       ∑ n ∈ range (nilpotencyClass x), (t ^ n * r) ⊗ₜ[ℤ]
         integralDividedPower x M n (hM n) v := by
   simp [baseChangeExp, smul_tmul']
+
+/-- The base-changed divided-power exponential is natural under maps of parameter rings. -/
+theorem map_baseChangeExp {T : Type*} [CommRing T] (φ : R →+* T) (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (t : R) :
+    ∀ z : R ⊗[ℤ] M,
+      TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id (baseChangeExp x M hM t z) =
+        baseChangeExp x M hM (φ t)
+          (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
+  intro z
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | tmul r m =>
+      rw [TensorProduct.map_tmul, baseChangeExp_tmul, baseChangeExp_tmul]
+      simp only [map_sum, TensorProduct.map_tmul, LinearMap.id_apply,
+        AlgHom.toLinearMap_apply, map_pow, map_mul]
+      rfl
+  | add y z hy hz => simp [hy, hz]
 
 private theorem baseChange_mul_integralDividedPower
     (x : A) (M : S)
