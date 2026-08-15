@@ -11,9 +11,9 @@ public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.
 # Detecting unipotent points in a faithful representation
 
 The definition of a unipotent point of an affine group quantifies over every finite-dimensional
-representation. This file proves the usable faithful-representation criterion: if one
-finite-dimensional comodule defines a closed immersion into a general linear group, then a point
-is unipotent exactly when it acts unipotently on that comodule.
+representation. This file proves the usable faithful-representation criterion over a perfect
+value field: if one finite-dimensional comodule defines a closed immersion into a general linear
+group, then a point is unipotent exactly when it acts unipotently on that comodule.
 
 The substantive direction uses the Jordan decomposition of the point. If its action in the
 faithful comodule is unipotent, its semisimple part acts trivially there. The same is true on the
@@ -29,7 +29,7 @@ representation instead of separately in every representation.
 ## Main declaration
 
 * `TauCeti.HopfAlgebra.isUnipotentPoint_iff_isUnipotent_pointsAction_of_isFaithful`: a faithful
-  finite-dimensional representation detects unipotence of points.
+  finite-dimensional representation detects unipotence of points over a perfect value field.
 
 ## References
 
@@ -50,7 +50,8 @@ variable {k H K : Type u} [Field k] [CommRing H] [_root_.HopfAlgebra k H]
 
 noncomputable section
 
-/-- **A faithful finite-dimensional representation detects unipotent points.**
+/-- **Over a perfect value field, a faithful finite-dimensional representation detects unipotent
+points.**
 
 The forward implication is the defining universal property of a unipotent point. For the
 converse, faithfulness ensures that the comodule's matrix coefficients and their antipode images
