@@ -18,7 +18,8 @@ multiplicity; this file builds the decomposition behind it.
 The monomial basis of `Symᵈ(ℂ²)`, reindexed by `Fin (d + 1)` through
 `TauCeti.symFinTwoEquiv`, is a basis of **weight vectors**: `diag(z, z⁻¹)` acts on the `i`-th one
 by the scalar `z^{2i - d}`.  The `d + 1` weights `2i - d` are pairwise distinct, so each weight
-occurs with multiplicity exactly one, and the character above is their sum.
+occurs with multiplicity exactly one, and the character above,
+`TauCeti.SU2.character_symPower_torusHom_zpow`, is their sum.
 
 Two consequences make this the form the highest-weight classification uses.
 
@@ -43,9 +44,6 @@ Two consequences make this the form the highest-weight classification uses.
 
 * `TauCeti.SU2.symPower_torusHom_weightBasis`: `diag(z, z⁻¹)` acts on the `i`-th weight vector by
   `z^{2i - d}`, and `TauCeti.SU2.weight_injective`: the weights are pairwise distinct.
-* `TauCeti.SU2.character_symPower_torusHom_eq_sum_weight`: the character on the torus is the sum
-  of the weights, which is the weight string of
-  `TauCeti.SU2.character_symPower_torusHom_zpow` reindexed.
 * `TauCeti.SU2.weightBasis_mem_of_repr_ne_zero` and `TauCeti.SU2.eq_span_weightBasis`: a
   torus-stable subspace contains every weight vector occurring in one of its elements, and is
   spanned by the weight vectors it contains.
@@ -141,14 +139,6 @@ theorem symPower_torusHom_weightBasis (z : Circle) (i : Fin (d + 1)) :
     rw [weight_def]
     omega
   rw [h0, h1, hexp, zpow_sub₀ hz, zpow_natCast, zpow_natCast, inv_pow, div_eq_mul_inv]
-
-/-- **The character is the sum of the weights.**  This is the weight string
-`TauCeti.SU2.character_symPower_torusHom_zpow` written over the index set of the weight basis. -/
-theorem character_symPower_torusHom_eq_sum_weight (z : Circle) :
-    (symPower d).character (torusHom z) = ∑ i : Fin (d + 1), (z : ℂ) ^ weight d i := by
-  rw [character_symPower_torusHom_zpow]
-  exact (Fin.sum_univ_eq_sum_range
-    (fun j : ℕ => (z : ℂ) ^ (2 * (j : ℤ) - (d : ℤ))) (d + 1)).symm
 
 /-- The coordinates of a vector in the weight basis are scaled by the weights: the torus is
 diagonal, so it multiplies the `i`-th coordinate by `z^{2i - d}`. -/
