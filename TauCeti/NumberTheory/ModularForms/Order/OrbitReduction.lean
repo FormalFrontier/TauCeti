@@ -31,7 +31,7 @@ closed-domain descriptions (`orbit_mk_eq_I_iff`, `orbit_mk_eq_ρ_iff`).
 ## Main declarations
 
 * `TauCeti.ModularForm.fdZeros`: the canonical complete divisor set — the nonzero-order points
-  of the closed fundamental domain of a nonzero level-one form.
+  of the closed fundamental domain of a level-one form, empty for the zero form.
 * `TauCeti.ModularForm.canonicalReps`: one representative per non-elliptic orbit of nonzero
   order — the strict-interior, left-vertical and left-half-arc points of `fdZeros`.
 * `TauCeti.ModularForm.exists_mem_canonicalReps_orbit_mk_eq`: every non-elliptic orbit of
@@ -63,23 +63,23 @@ namespace ModularForm
 
 variable {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
 
-/-- The canonical complete divisor set of a nonzero level-one form: the finitely many points
-of the closed fundamental domain `𝒟` carrying nonzero vanishing order, as a `Finset`. -/
-def fdZeros [ModularFormClass F 𝒮ℒ k] {f : F} (hf : (⇑f : ℍ → ℂ) ≠ 0) : Finset ℍ :=
-  (finite_zeros_in_fd hf).toFinset
+/-- The canonical complete divisor set of a level-one form: the finitely many points of the
+closed fundamental domain `𝒟` carrying nonzero vanishing order, as a `Finset`.
+
+No nonvanishing hypothesis — the zero form has order `0` everywhere, so this is empty for it. -/
+def fdZeros [ModularFormClass F 𝒮ℒ k] (f : F) : Finset ℍ := (finite_zeros_in_fd (f := f)).toFinset
 
 /-- Membership in the canonical divisor set: a point of `𝒟` of nonzero order. -/
 @[simp]
-lemma mem_fdZeros [ModularFormClass F 𝒮ℒ k] {f : F} {hf : (⇑f : ℍ → ℂ) ≠ 0} {p : ℍ} :
-    p ∈ fdZeros hf ↔ p ∈ 𝒟 ∧ orderOfVanishingAt f p ≠ 0 :=
-  (finite_zeros_in_fd hf).mem_toFinset
+lemma mem_fdZeros [ModularFormClass F 𝒮ℒ k] {f : F} {p : ℍ} :
+    p ∈ fdZeros f ↔ p ∈ 𝒟 ∧ orderOfVanishingAt f p ≠ 0 :=
+  (finite_zeros_in_fd (f := f)).mem_toFinset
 
 /-- One representative per non-elliptic orbit of nonzero order: the points of `fdZeros` in the
 strict interior, on the left vertical edge, or on the left half-arc minus `ρ`. The right
 vertical edge and right half-arc are omitted — `z ↦ z - 1` and `z ↦ -1/z` move them onto the
 left representatives — and the elliptic points are excluded by all three filters. -/
-def canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F} (hf : (⇑f : ℍ → ℂ) ≠ 0) : Finset ℍ :=
-  (fdZeros hf).filter fun p : ℍ ↦
+def canonicalReps [ModularFormClass F 𝒮ℒ k] (f : F) : Finset ℍ := (fdZeros f).filter fun p : ℍ ↦
     (1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2) ∨
       ((p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖) ∨
       ((p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
@@ -87,16 +87,15 @@ def canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F} (hf : (⇑f : ℍ → �
 /-- Membership in the canonical representatives: a point of `fdZeros` in the strict interior,
 on the left vertical edge, or on the left half-arc minus `ρ`. -/
 @[simp]
-lemma mem_canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F} {hf : (⇑f : ℍ → ℂ) ≠ 0} {p : ℍ} :
-    p ∈ canonicalReps hf ↔
-      p ∈ fdZeros hf ∧
-        ((1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2) ∨
-          ((p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖) ∨
-          ((p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)) :=
+lemma mem_canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F} {p : ℍ} : p ∈ canonicalReps f ↔
+    p ∈ fdZeros f ∧
+      ((1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2) ∨
+        ((p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖) ∨
+        ((p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)) :=
   Finset.mem_filter
 
 private lemma ne_elliptic_of_mem_canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F}
-    {hf : (⇑f : ℍ → ℂ) ≠ 0} {p : ℍ} (hp : p ∈ canonicalReps hf) :
+    {p : ℍ} (hp : p ∈ canonicalReps f) :
     p ≠ I ∧ p ≠ ρ ∧ p ≠ (1 : ℝ) +ᵥ ρ := by
   have hcond := (mem_canonicalReps.mp hp).2
   refine ⟨fun h ↦ ?_, fun h ↦ ?_, fun h ↦ ?_⟩ <;> subst h <;>
@@ -113,7 +112,7 @@ private lemma ne_elliptic_of_mem_canonicalReps [ModularFormClass F 𝒮ℒ k] {f
 
 /-- The canonical representatives lie in the non-elliptic orbits. -/
 theorem orbit_mk_ne_I_and_ne_ρ_of_mem_canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F}
-    {hf : (⇑f : ℍ → ℂ) ≠ 0} {p : ℍ} (hp : p ∈ canonicalReps hf) :
+    {p : ℍ} (hp : p ∈ canonicalReps f) :
     (Quotient.mk'' p : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' I ∧
       (Quotient.mk'' p : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' ρ := by
   obtain ⟨hne_I, hne_ρ, hne_vadd⟩ := ne_elliptic_of_mem_canonicalReps hp
@@ -123,10 +122,9 @@ theorem orbit_mk_ne_I_and_ne_ρ_of_mem_canonicalReps [ModularFormClass F 𝒮ℒ
 
 /-- The orbit map is injective on the canonical representatives, which lie left of the
 boundary identifications of `𝒟`. -/
-theorem orbit_mk_injOn_canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+theorem orbit_mk_injOn_canonicalReps [ModularFormClass F 𝒮ℒ k] (f : F) :
     Set.InjOn (fun p : ℍ ↦ (Quotient.mk'' p : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ))
-      ↑(canonicalReps hf) := by
+      ↑(canonicalReps f) := by
   refine ModularGroup.orbit_mk_injOn_fd_left.mono fun p hp ↦ ?_
   obtain ⟨hmem, hcond⟩ := mem_canonicalReps.mp hp
   refine ⟨(mem_fdZeros.mp hmem).1, ?_, ?_⟩
@@ -158,9 +156,9 @@ private lemma vadd_neg_one_mem_fd {p : ℍ} (hp : p ∈ 𝒟) (hre : (p : ℂ).r
   · rw [vadd_re, (coe_re p ▸ hre : p.re = 1 / 2)]
     norm_num
 
-private lemma exists_of_re_eq_half [ModularFormClass F 𝒮ℒ k] {f : F} {hf : (⇑f : ℍ → ℂ) ≠ 0}
+private lemma exists_of_re_eq_half [ModularFormClass F 𝒮ℒ k] {f : F}
     {p₀ : ℍ} (hfd : p₀ ∈ 𝒟) (hord : orderOfVanishingAt f p₀ ≠ 0) (hre : (p₀ : ℂ).re = 1 / 2)
-    (hlt : 1 < ‖(p₀ : ℂ)‖) : ∃ p ∈ canonicalReps hf,
+    (hlt : 1 < ‖(p₀ : ℂ)‖) : ∃ p ∈ canonicalReps f,
       (Quotient.mk'' p : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = Quotient.mk'' p₀ := by
   have horb : (Quotient.mk'' ((-1 : ℝ) +ᵥ p₀) : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) =
       Quotient.mk'' p₀ := by
@@ -176,10 +174,10 @@ private lemma exists_of_re_eq_half [ModularFormClass F 𝒮ℒ k] {f : F} {hf : 
     exact hlt
 
 private lemma exists_of_norm_eq_one_of_re_pos [ModularFormClass F 𝒮ℒ k] {f : F}
-    {hf : (⇑f : ℍ → ℂ) ≠ 0} {p₀ : ℍ} (hfd : p₀ ∈ 𝒟) (hord : orderOfVanishingAt f p₀ ≠ 0)
+    {p₀ : ℍ} (hfd : p₀ ∈ 𝒟) (hord : orderOfVanishingAt f p₀ ≠ 0)
     (hnorm : ‖(p₀ : ℂ)‖ = 1) (hpos : 0 < (p₀ : ℂ).re)
     (hqρ : (Quotient.mk'' p₀ : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' ρ) :
-    ∃ p ∈ canonicalReps hf,
+    ∃ p ∈ canonicalReps f,
       (Quotient.mk'' p : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) = Quotient.mk'' p₀ := by
   have horb : (Quotient.mk'' (ModularGroup.S • p₀) : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) =
       Quotient.mk'' p₀ := Quotient.sound' ⟨ModularGroup.S, rfl⟩
@@ -198,10 +196,10 @@ private lemma exists_of_norm_eq_one_of_re_pos [ModularFormClass F 𝒮ℒ k] {f 
 a fundamental-domain representative exists, and the boundary identifications move it into
 `canonicalReps` when it falls on the omitted right vertical edge or right half-arc. -/
 theorem exists_mem_canonicalReps_orbit_mk_eq [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ}
+    {q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ}
     (hqI : q ≠ Quotient.mk'' I) (hqρ : q ≠ Quotient.mk'' ρ)
     (hq : orderOfVanishingOnOrbit f q ≠ 0) :
-    ∃ p ∈ canonicalReps hf, Quotient.mk'' p = q := by
+    ∃ p ∈ canonicalReps f, Quotient.mk'' p = q := by
   obtain ⟨p₀, rfl, hfd⟩ := ModularGroup.exists_rep_mem_fd q
   rw [orderOfVanishingOnOrbit_mk] at hq
   rcases (Complex.one_le_normSq_iff.mp hfd.1).lt_or_eq with hlt | heq
@@ -225,48 +223,47 @@ theorem exists_mem_canonicalReps_orbit_mk_eq [ModularFormClass F 𝒮ℒ k] {f :
 /-- The `∑ᶠ` over the non-elliptic orbit space equals the sum over the canonical
 representatives: the orbit map matches `canonicalReps` bijectively with the non-elliptic
 orbits of nonzero order, and the order is orbit-constant. -/
-theorem finsum_orderOfVanishingOnOrbit_eq_sum_canonicalReps [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+theorem finsum_orderOfVanishingOnOrbit_eq_sum_canonicalReps [ModularFormClass F 𝒮ℒ k] (f : F) :
     ∑ᶠ q : NonEllipticOrbit, orderOfVanishingOnOrbit f q.val =
-      ∑ p ∈ canonicalReps hf, orderOfVanishingAt f p := by
-  rw [finsum_eq_sum _ (hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic hf)]
+      ∑ p ∈ canonicalReps f, orderOfVanishingAt f p := by
+  rw [finsum_eq_sum _ (hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic f)]
   refine (Finset.sum_bij
     (fun p hp ↦ (⟨Quotient.mk'' p, orbit_mk_ne_I_and_ne_ρ_of_mem_canonicalReps hp⟩ :
       NonEllipticOrbit))
     ?_ ?_ ?_ ?_).symm
   · intro p hp
-    refine (hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic hf).mem_toFinset.mpr ?_
+    refine (hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic f).mem_toFinset.mpr ?_
     simpa using (mem_fdZeros.mp (mem_canonicalReps.mp hp).1).2
   · intro p₁ h₁ p₂ h₂ h
-    exact orbit_mk_injOn_canonicalReps hf h₁ h₂ (congrArg Subtype.val h)
+    exact orbit_mk_injOn_canonicalReps f h₁ h₂ (congrArg Subtype.val h)
   · intro q hq
-    obtain ⟨p, hp, hporb⟩ := exists_mem_canonicalReps_orbit_mk_eq hf q.2.1 q.2.2
-      ((hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic hf).mem_toFinset.mp hq)
+    obtain ⟨p, hp, hporb⟩ := exists_mem_canonicalReps_orbit_mk_eq q.2.1 q.2.2
+      ((hasFiniteSupport_orderOfVanishingOnOrbit_nonElliptic f).mem_toFinset.mp hq)
     exact ⟨p, hp, Subtype.ext hporb⟩
   · intro p hp
     exact (orderOfVanishingOnOrbit_mk f p).symm
 
 /-- The canonical-representative sum splits into the three family sums of the core identity:
 strict interior, left vertical edge, and left half-arc minus `ρ`. -/
-theorem sum_canonicalReps_split [ModularFormClass F 𝒮ℒ k] {f : F} (hf : (⇑f : ℍ → ℂ) ≠ 0) :
-    ∑ p ∈ canonicalReps hf, orderOfVanishingAt f p =
-      ∑ p ∈ (fdZeros hf).filter (fun p : ℍ ↦ 1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2),
+theorem sum_canonicalReps_split [ModularFormClass F 𝒮ℒ k] (f : F) :
+    ∑ p ∈ canonicalReps f, orderOfVanishingAt f p =
+      ∑ p ∈ (fdZeros f).filter (fun p : ℍ ↦ 1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2),
           orderOfVanishingAt f p +
-        ∑ p ∈ (fdZeros hf).filter (fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖),
+        ∑ p ∈ (fdZeros f).filter (fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖),
           orderOfVanishingAt f p +
-        ∑ p ∈ (fdZeros hf).filter (fun p : ℍ ↦
+        ∑ p ∈ (fdZeros f).filter (fun p : ℍ ↦
           (p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
           orderOfVanishingAt f p := by
   classical
   have hd₂ : Disjoint
-      ((fdZeros hf).filter fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖)
-      ((fdZeros hf).filter fun p : ℍ ↦ (p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) :=
+      ((fdZeros f).filter fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖)
+      ((fdZeros f).filter fun p : ℍ ↦ (p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) :=
     Finset.disjoint_left.mpr fun p hp hq ↦
       (Finset.mem_filter.mp hp).2.2.ne' (Finset.mem_filter.mp hq).2.2.1
   have hd₁ : Disjoint
-      ((fdZeros hf).filter fun p : ℍ ↦ 1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2)
-      (((fdZeros hf).filter fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖) ∪
-        (fdZeros hf).filter fun p : ℍ ↦ (p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) := by
+      ((fdZeros f).filter fun p : ℍ ↦ 1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2)
+      (((fdZeros f).filter fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖) ∪
+        (fdZeros f).filter fun p : ℍ ↦ (p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) := by
     refine Finset.disjoint_left.mpr fun p hp hq ↦ ?_
     obtain ⟨hgt, habs⟩ := (Finset.mem_filter.mp hp).2
     rcases Finset.mem_union.mp hq with hq | hq

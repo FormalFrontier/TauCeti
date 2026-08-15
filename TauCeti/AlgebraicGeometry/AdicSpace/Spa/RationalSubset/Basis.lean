@@ -45,11 +45,14 @@ the basis arguments uses it.
 * `TauCeti.ValuationSpectrum.isCompact_of_mem_spaRationalFamily`: every member of the family is
   quasi-compact. Each result also has an `_of_pairOfDefinition` form for use with a specified
   pair of definition.
+* `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_isTateRing_of_isOpen`: over a Tate
+  ring, if a finite set `T` generates an open ideal, then the standard rational subsets cover
+  `spa Aplus` (Wedhorn Corollary 7.53 specialization).
 
 ## References
 
 * T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.29, Remark 7.30, Theorem 7.35,
-  and Lemma 6.6.
+  Corollary 7.53, and Lemma 6.6.
 -/
 
 public section
@@ -250,6 +253,22 @@ theorem isCompact_of_mem_spaRationalFamily [IsHuberRing A] {Aplus : Subring A}
     {U : Set (spa Aplus)} (hU : U ∈ spaRationalFamily Aplus) : IsCompact U :=
   (IsHuberRing.nonempty_pairOfDefinition (A := A)).elim
     fun P ↦ isCompact_of_mem_spaRationalFamily_of_pairOfDefinition P hU
+
+/-! ### Standard rational covers -/
+
+section Tate
+
+variable [IsTateRing A]
+
+/-- Over a Tate ring, if a finite set `T` generates an open ideal, then the standard rational
+subsets `(R(T/t))_{t ∈ T}` cover `spa Aplus`. -/
+theorem spa_eq_biUnion_rationalSubset_of_isTateRing_of_isOpen (Aplus : Subring A) {T : Finset A}
+    (hT : IsOpen ((Ideal.span (T : Set A) : Ideal A) : Set A)) :
+    spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t :=
+  spa_eq_biUnion_rationalSubset_of_span_eq_top Aplus
+    ((IsTateRing.isOpen_iff_eq_top (Ideal.span (T : Set A))).mp hT)
+
+end Tate
 
 end TopologicalRing
 

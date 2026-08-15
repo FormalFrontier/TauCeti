@@ -33,8 +33,6 @@ integrand.
 * `TauCeti.PDE.energyFormIntegral_coefficientSymmetricPart_zero_drift_apply`: the
   symmetric-part zero-drift form is the average of the original form and its transpose, under the
   natural integrability hypotheses.
-* `TauCeti.PDE.energyFormIntegral_one_zero_mass_swap_eq`: bundled symmetry of the
-  shifted-Laplacian model form.
 -/
 
 public section
@@ -96,32 +94,6 @@ lemma energyFormIntegral_zero_drift_swap_eq_of_isSymm_ae (ha : ∀ᵐ x ∂μ, (
   funext U V
   exact energyFormIntegral_zero_drift_comm_of_isSymm_ae (a := a) (c := c) (U := V) (V := U) ha
 
-/-- Symmetry on a domain when the measure is a.e. supported there and the principal
-coefficients are pointwise symmetric on that domain. -/
-lemma energyFormIntegral_zero_drift_comm_on {Ω : Set X}
-    (hΩ : ∀ᵐ x ∂μ, x ∈ Ω) (ha : ∀ ⦃x⦄, x ∈ Ω → (a x).IsSymm) :
-    energyFormIntegral μ a (fun _ => 0) c U V =
-      energyFormIntegral μ a (fun _ => 0) c V U :=
-  energyFormIntegral_zero_drift_comm_of_isSymm_ae
-    (hΩ.mono fun _ hx => ha hx)
-
-/-- Bundled-map symmetry on a domain when the measure is a.e. supported there and the
-principal coefficients are pointwise symmetric on that domain. -/
-lemma energyFormIntegral_zero_drift_swap_eq_on {Ω : Set X}
-    (hΩ : ∀ᵐ x ∂μ, x ∈ Ω) (ha : ∀ ⦃x⦄, x ∈ Ω → (a x).IsSymm) :
-    Function.swap (energyFormIntegral μ a (fun _ => 0) c) =
-      energyFormIntegral μ a (fun _ => 0) c := by
-  funext U V
-  exact energyFormIntegral_zero_drift_comm_on
-    (a := a) (c := c) (U := V) (V := U) hΩ ha
-
-/-- The symmetric-part zero-drift integrated energy form is symmetric. -/
-lemma energyFormIntegral_coefficientSymmetricPart_zero_drift_comm :
-    energyFormIntegral μ (fun x => coefficientSymmetricPart (a x)) (fun _ => 0) c U V =
-      energyFormIntegral μ (fun x => coefficientSymmetricPart (a x)) (fun _ => 0) c V U :=
-  energyFormIntegral_zero_drift_comm_of_isSymm_ae
-    (Filter.Eventually.of_forall fun _ => coefficientSymmetricPart_isSymm _)
-
 /-- Bundled-map symmetry for the symmetric-part zero-drift integrated energy form. -/
 @[simp]
 lemma energyFormIntegral_coefficientSymmetricPart_zero_drift_swap_eq :
@@ -130,20 +102,6 @@ lemma energyFormIntegral_coefficientSymmetricPart_zero_drift_swap_eq :
       energyFormIntegral μ (fun x => coefficientSymmetricPart (a x)) (fun _ => 0) c :=
   energyFormIntegral_zero_drift_swap_eq_of_isSymm_ae
     (Filter.Eventually.of_forall fun _ => coefficientSymmetricPart_isSymm _)
-
-/-- The shifted-Laplacian model integrated form `-Δ + c` is symmetric. -/
-lemma energyFormIntegral_one_zero_mass_comm :
-    energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) c U V =
-      energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) c V U :=
-  energyFormIntegral_zero_drift_comm_of_isSymm_ae
-    (Filter.Eventually.of_forall fun _ => isSymm_one)
-
-/-- Bundled symmetry of the shifted-Laplacian model integrated form `-Δ + c`. -/
-lemma energyFormIntegral_one_zero_mass_swap_eq :
-    Function.swap (energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) c) =
-      energyFormIntegral μ (fun _ => (1 : Matrix n n ℝ)) (fun _ => 0) c :=
-  energyFormIntegral_zero_drift_swap_eq_of_isSymm_ae
-    (Filter.Eventually.of_forall fun _ => isSymm_one)
 
 /-- Replacing the principal coefficient by its symmetric part does not change the diagonal
 integrated energy.  The drift and mass coefficients are arbitrary, since the diagonal

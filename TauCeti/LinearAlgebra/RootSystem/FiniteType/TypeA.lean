@@ -33,6 +33,8 @@ whose diagrams are also paths, and without the degree bound they are `Dₙ` and 
 
 ## Main results
 
+* `TauCeti.apply_eq_chainEntry_of_iso_pathGraph`: a simply-laced normalized matrix equals
+  `chainEntry` along any diagram isomorphism to `pathGraph n`.
 * `TauCeti.exists_equiv_forall_eq_cartanMatrix_A_of_isTree_of_isSimplyLaced_of_degree_le_two`:
   a simply-laced matrix with diagonal entries `2` and a tree diagram of maximum degree two is the
   standard Cartan matrix of type `Aₙ` after a relabelling of its index type.
@@ -58,6 +60,31 @@ open SimpleGraph
 
 variable {B : Type*} [Fintype B] [DecidableEq B] {A : Matrix B B ℤ}
 
+/-- **A simply-laced normalized matrix equals `chainEntry` along any diagram isomorphism to
+`pathGraph n`.** -/
+theorem apply_eq_chainEntry_of_iso_pathGraph {B : Type*}
+    {A : Matrix B B ℤ} (hdiag : ∀ i, A i i = 2) (hsl : A.IsSimplyLaced)
+    {G : SimpleGraph B} (hadj : ∀ i j, G.Adj i j ↔ i ≠ j ∧ A i j ≠ 0)
+    {n : ℕ} (iso : G ≃g pathGraph n) (i j : B) :
+    A i j = chainEntry (iso i) (iso j) := by
+  classical
+  rcases eq_or_ne i j with rfl | hij
+  · rw [hdiag, chainEntry_self]
+  by_cases hA : A i j = 0
+  · -- Distinct nonadjacent indices: the entry vanishes and the vertices are not consecutive.
+    have hnot : ¬ G.Adj i j := fun hc ↦ (hadj i j).mp hc |>.2 hA
+    rw [adj_iff_of_iso_pathGraph iso] at hnot
+    push Not at hnot
+    have hne : (iso i : ℕ) ≠ (iso j : ℕ) := fun hc ↦ hij (iso.toEquiv.injective (Fin.ext hc))
+    rw [hA, chainEntry_eq_zero hne (fun hc ↦ hnot.2 hc.symm) fun hc ↦ hnot.1 hc.symm]
+  · -- Adjacent indices: the entry is `-1` and the vertices are consecutive.
+    have hadj' : G.Adj i j := (hadj i j).mpr ⟨hij, hA⟩
+    rw [adj_iff_of_iso_pathGraph iso] at hadj'
+    rw [(hsl hij).resolve_left hA]
+    rcases hadj' with hc | hc
+    · rw [← hc, chainEntry_succ_right]
+    · rw [← hc, chainEntry_succ_left]
+
 /-- **A simply-laced matrix with diagonal entries `2` whose diagram is a tree of maximum degree two
 is the standard Cartan matrix of type `Aₙ`**, after a relabelling of its index type by the vertices
 of a path.
@@ -71,28 +98,12 @@ theorem exists_equiv_forall_eq_cartanMatrix_A_of_isTree_of_isSimplyLaced_of_degr
     ∃ e : B ≃ Fin (Fintype.card B),
       ∀ i j, A i j = DynkinType.cartanMatrix (.A (Fintype.card B)) (e i) (e j) := by
   obtain ⟨iso⟩ := IsTree.nonempty_iso_pathGraph_of_degree_le_two htree hdeg
-  have key : ∀ i j, A i j = chainEntry (iso i) (iso j) := by
-    intro i j
-    rcases eq_or_ne i j with rfl | hij
-    · rw [hdiag, chainEntry_self]
-    by_cases hA : A i j = 0
-    · -- Distinct nonadjacent indices: the entry vanishes and the vertices are not consecutive.
-      have hnot : ¬ (diagramGraph A).Adj i j := fun hc ↦ (diagramGraph_adj.mp hc).2.1 hA
-      rw [← iso.map_adj_iff, pathGraph_adj] at hnot
-      push Not at hnot
-      have hne : (iso i : ℕ) ≠ (iso j : ℕ) := fun hc ↦ hij (iso.toEquiv.injective (Fin.ext hc))
-      rw [hA, chainEntry_eq_zero hne (fun hc ↦ hnot.2 hc.symm) fun hc ↦ hnot.1 hc.symm]
-    · -- Adjacent indices: the entry is `-1` and the vertices are consecutive.
-      have hadj : (diagramGraph A).Adj i j := diagramGraph_adj.mpr
-        ⟨hij, hA, fun hji ↦ hA ((hzero i j).mpr hji)⟩
-      rw [← iso.map_adj_iff, pathGraph_adj] at hadj
-      rw [(hsl hij).resolve_left hA]
-      rcases hadj with hc | hc
-      · rw [← hc, chainEntry_succ_right]
-      · rw [← hc, chainEntry_succ_left]
+  have hadj : ∀ i j, (diagramGraph A).Adj i j ↔ i ≠ j ∧ A i j ≠ 0 := fun i j ↦ by
+    rw [diagramGraph_adj]
+    exact ⟨fun h ↦ ⟨h.1, h.2.1⟩, fun h ↦ ⟨h.1, h.2, fun hji ↦ h.2 ((hzero i j).mpr hji)⟩⟩
   refine ⟨iso.toEquiv, fun i j ↦ ?_⟩
   simp only [DynkinType.cartanMatrix_A, ← chainEntry_eq_cartanMatrix_A]
-  exact key i j
+  exact apply_eq_chainEntry_of_iso_pathGraph hdiag hsl hadj iso i j
 
 /-- **A connected simply-laced finite-type matrix whose diagram has maximum degree two is the
 standard Cartan matrix of type `Aₙ`**, after a relabelling of its index type by the vertices of a

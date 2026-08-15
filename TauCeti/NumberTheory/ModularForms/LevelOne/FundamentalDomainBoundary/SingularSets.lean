@@ -271,7 +271,7 @@ theorem im_pos_of_mem_verticalSingularSet {S : Finset ℍ} {s : ℂ}
 part is bounded by the norm. -/
 theorem im_lt_of_mem_arcSingularSet {S : Finset ℍ} {s : ℂ} {H : ℝ}
     (hs : s ∈ arcSingularSet S) (hH : 1 < H) : s.im < H := by
-  have h1 : s.im ≤ ‖s‖ := (le_abs_self _).trans (Complex.abs_im_le_norm s)
+  have h1 : s.im ≤ ‖s‖ := Complex.im_le_norm s
   rw [norm_eq_one_of_mem_arcSingularSet hs] at h1
   linarith
 
