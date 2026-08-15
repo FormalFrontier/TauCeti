@@ -20,6 +20,23 @@ complement Mathlib's definitions of `QuadraticMap.PosDef`, `sigPos`, and `sigNeg
 It also proves that restriction to a subspace cannot increase either index of inertia, and that
 quotienting a quadratic form by its radical preserves both indices.
 
+## Main results
+
+* `TauCeti.QuadraticForm.forall_nonneg_iff_sigNeg_eq_zero`: nonnegativity is characterized by
+  vanishing negative index of inertia.
+* `TauCeti.QuadraticForm.forall_nonpos_iff_sigPos_eq_zero`: nonpositivity is characterized by
+  vanishing positive index of inertia.
+* `TauCeti.QuadraticForm.sigPos_restrict_le`: restriction to a subspace cannot increase the
+  positive index of inertia.
+* `TauCeti.QuadraticForm.sigNeg_restrict_le`: restriction to a subspace cannot increase the
+  negative index of inertia.
+* `TauCeti.QuadraticForm.sigPos_lift_radical`: quotienting by the radical preserves the positive
+  index of inertia.
+* `TauCeti.QuadraticForm.sigNeg_lift_radical`: quotienting by the radical preserves the negative
+  index of inertia.
+* `TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot`: positive-definiteness
+  is characterized by vanishing negative index and trivial radical.
+
 ## References
 
 * W. Ebeling, *Lattices and Codes*, Chapter 1.

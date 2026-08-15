@@ -24,6 +24,7 @@ lattice, while its null index vanishes.
 
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
 * `TauCetiRoadmap/IntegralLattices/README.md`, Layer 1.
+* `TauCetiRoadmap/IntegralLattices/Suggested.lean`.
 
 ## Main definitions and results
 
