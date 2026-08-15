@@ -79,7 +79,7 @@ theorem posSemidef_positiveDefiniteKernelOperator (hK : Matrix.PosSemidef K) :
     (positiveDefiniteKernelOperator K).PosSemidef := by
   have hsymm (a b : α) : conj (K a b) = K b a := by
     simpa only [starRingEnd_apply] using hK.isHermitian.apply b a
-  apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 2 0 |>.mp
+  apply (RKHS.posSemidef_tfae (K := positiveDefiniteKernelOperator K)).out 3 1 |>.mp
   refine ⟨?_, ?_⟩
   · apply Matrix.ext
     intro a b

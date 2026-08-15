@@ -40,6 +40,11 @@ these representatives are in `GL2/UpperTriangularDelta0.lean`.
   `a = ![1, p]`, as an identity of natural numbers — the two fibres `Fin (![1, p] 1 / ![1, p] 0)`
   is `Fin (p / 1)`, which `finCongr` carries to `Fin p` along `p / 1 = p`.
 
+* `HeckeRing.GL2.upperTriRep_apply_one_zero`: the representatives are upper triangular — the
+  hypothesis mathlib's `IsBoundedAtImInfty.slash` asks for.
+* `HeckeRing.GL2.det_upperTriRep_pos`: they have determinant `p > 0`, which is what lets scalars
+  pass through a slash by them without the `σ` twist.
+
 ## Provenance
 
 No code is ported: the equivalence is a fact about this repository's own `UpperTriEntries`. The
@@ -56,6 +61,8 @@ public section
 namespace HeckeRing.GL2
 
 open HeckeRing.GLn
+
+variable (p : ℕ)
 
 /-- At `n = 2` there is exactly one ordered index pair, `(0, 1)`, so `UpperTriEntries` is a
 function on a one-element type. -/
@@ -103,6 +110,32 @@ lemma upperTriEntriesEquivFin_apply_val {p : ℕ} (B : UpperTriEntries 2 ![1, p]
 @[simp]
 lemma upperTriEntriesEquivFin_symm_apply_default_val {p : ℕ} (b : Fin p) :
     (((upperTriEntriesEquivFin p).symm b default : ℕ)) = (b : ℕ) := (rfl)
+
+/-- The `b`-th upper-triangular representative `!![1, b; 0, p]`, as an element of this
+repository's general-`n` family at `a = ![1, p]`. -/
+noncomputable def upperTriRep (b : Fin p) : GL (Fin 2) ℚ :=
+  upperTriGL ((upperTriEntriesEquivFin p).symm b)
+
+/-- **The representatives are upper triangular** — the hypothesis mathlib's
+`IsBoundedAtImInfty.slash` asks for. At `n = 2` this is the `(1, 0)` entry of
+`upperTriGL_apply_eq_zero_of_lt`. -/
+@[simp] lemma upperTriRep_apply_one_zero (b : Fin p) :
+    (↑(upperTriRep p b) : Matrix (Fin 2) (Fin 2) ℚ) 1 0 = 0 :=
+  upperTriGL_apply_eq_zero_of_lt (fun i ↦ by fin_cases i <;> simp [b.pos]) _ (by decide)
+
+/-- The representatives have positive determinant: `det !![1, b; 0, p] = p > 0`. -/
+lemma det_upperTriRep_pos (b : Fin p) :
+    0 < (↑(upperTriRep p b) : Matrix (Fin 2) (Fin 2) ℚ).det := by
+  have hpos : ∀ i : Fin 2, 0 < ![1, p] i := fun i ↦ by fin_cases i <;> simp [b.pos]
+  have hdiag : (0 : ℚ) < (↑(natDiagGL 2 ![1, p]) : Matrix (Fin 2) (Fin 2) ℚ).det :=
+    natDiagGL_det_pos 2 ![1, p] hpos
+  have hunit := RingHom.map_det (Int.castRingHom ℚ)
+    (unitriMat ((upperTriEntriesEquivFin p).symm b))
+  rw [det_unitriMat] at hunit
+  have hunit' : ((unitriMat ((upperTriEntriesEquivFin p).symm b)).map
+      (Int.cast : ℤ → ℚ)).det = 1 := by simpa using hunit.symm
+  rw [upperTriRep, upperTriGL_def, Units.val_mul, Matrix.det_mul]
+  simpa [hunit'] using hdiag
 
 end HeckeRing.GL2
 

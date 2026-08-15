@@ -893,27 +893,21 @@ theorem quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed {σ : M ≃ₐ[K] M
     E.quadraticTwistPointEquiv L M (Affine.Point.map σ.toAlgHom P)
       = -Affine.Point.map σ.toAlgHom (E.quadraticTwistPointEquiv L M P) := by
   have hM := map_quadraticTwistVariableChange_baseChange (E := E) (L := L) (M := M) hσ
+  -- the four components of the cocycle identity, read off by `mul_negVariableChange_u/_r/_s/_t`
   have hu : σ.toAlgHom (((E.quadraticTwistVariableChange L).baseChange M).u : M)
       = -(((E.quadraticTwistVariableChange L).baseChange M).u : M) := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t]
-      using congrArg (fun C ↦ (VariableChange.u C : M)) hM
+    simpa using congrArg (fun C ↦ (VariableChange.u C : M)) hM
   have hr : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).r
       = ((E.quadraticTwistVariableChange L).baseChange M).r := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t] using congrArg VariableChange.r hM
+    simpa using congrArg VariableChange.r hM
   have hs : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).s
       = -((E.quadraticTwistVariableChange L).baseChange M).s - (E.baseChange M).a₁ := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t, sub_eq_add_neg]
-      using congrArg VariableChange.s hM
+    simpa using congrArg VariableChange.s hM
   have ht : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).t
       = -((E.quadraticTwistVariableChange L).baseChange M).t
         - ((E.quadraticTwistVariableChange L).baseChange M).r * (E.baseChange M).a₁
         - (E.baseChange M).a₃ := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t, sub_eq_add_neg, mul_neg_one,
-      (by ring : ((-1 : M)) ^ 3 = -1)] using congrArg VariableChange.t hM
+    simpa using congrArg VariableChange.t hM
   rcases P with _ | ⟨x, y, hns⟩
   · simp [← Affine.Point.zero_def]
   · simp only [quadraticTwistPointEquiv_some, Affine.Point.map_some, Affine.Point.neg_some,
