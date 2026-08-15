@@ -20,9 +20,12 @@ public abbrev Complexification (V : Type*) [AddCommGroup V] : Type _ :=
 
 variable {V : Type*} [AddCommGroup V]
 
+/-- A conjugate-linear involution on a complex vector space `W`. -/
 @[ext]
 public structure Conjugation (W : Type*) [AddCommGroup W] [Module ℂ W] where
+  /-- The underlying conjugate-linear equivalence on `W`. -/
   toEquiv : W ≃ₛₗ[starRingEnd ℂ] W
+  /-- Involution property: applying the conjugation twice is the identity. -/
   involutive : Function.Involutive toEquiv
 
 namespace Conjugation
@@ -43,6 +46,8 @@ public theorem map_map_self (p : Submodule ℂ W) :
 
 end Conjugation
 
+/-- The canonical conjugate-linear involution on the concrete complexification `ℂ ⊗[ℤ] V`,
+acting by complex conjugation on `ℂ` and the identity on `V`. -/
 @[expose]
 public def concreteLatticeConj : Complexification V →ₛₗ[starRingEnd ℂ] Complexification V where
   toFun := TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
@@ -79,6 +84,8 @@ variable {Vℂ : Type*} [AddCommGroup Vℂ] [Module ℂ Vℂ]
   {ιℂ : V →ₗ[ℤ] Vℂ}
 variable {hℂ : IsBaseChange ℂ ιℂ}
 
+/-- The conjugate-linear involution on an abstract complexification `Vℂ` with base change data `hℂ`,
+transporting `concreteLatticeConj` across the canonical linear equivalence `hℂ.equiv`. -/
 @[expose]
 public noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
     Vℂ →ₛₗ[starRingEnd ℂ] Vℂ where
@@ -98,7 +105,6 @@ public noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
 public theorem latticeConj_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
     latticeConj hℂ x = hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x)) := rfl
 
-@[simp]
 public theorem latticeConj_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     latticeConj hℂ (ιℂ v) = ιℂ v := by
   have hιv : hℂ.equiv.symm (ιℂ v) = (1 : ℂ) ⊗ₜ[ℤ] v := by
@@ -119,6 +125,8 @@ public theorem latticeConj_involutive (hℂ : IsBaseChange ℂ ιℂ) :
     concreteLatticeConj_involutive]
   exact hℂ.equiv.apply_symm_apply x
 
+/-- The `Conjugation` structure on an abstract complexification `Vℂ`
+induced by a `ℤ`-lattice `V`. -/
 @[expose]
 public noncomputable def latticeConjugation (hℂ : IsBaseChange ℂ ιℂ) : Conjugation Vℂ where
   toEquiv := LinearEquiv.ofInvolutive (latticeConj hℂ) (latticeConj_involutive hℂ)
