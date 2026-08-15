@@ -71,7 +71,7 @@ of a block cylinder is the integral of the product of the invariant conditional 
 coordinate sets. -/
 theorem measure_inter_blockCylinder_eq_setLIntegral_of_measurableSet_invariants
     [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
     {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i)) :
