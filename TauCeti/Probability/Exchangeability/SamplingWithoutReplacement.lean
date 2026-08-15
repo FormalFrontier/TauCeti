@@ -88,8 +88,10 @@ map is not measurable, so `Measure.map` would silently return the zero measure e
 probability population law admitting injective selections. -/
 def sampleWithoutReplacement {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] (ρ : Measure (κ → α)) : Measure (ι → α) :=
-  ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
-    fun p i => p.2 (p.1 i)
+  let ν := (uniformOn {k : ι → κ | Function.Injective k}).prod ρ
+  let f := fun p i => p.2 (p.1 i)
+  let hf : AEMeasurable f ν := measurable_samplePopulation.aemeasurable
+  Measure.mapₗ (hf.mk f) ν
 
 /-- The defining pushforward form of `sampleWithoutReplacement`. -/
 @[simp]
@@ -98,7 +100,7 @@ theorem sampleWithoutReplacement_def {ι κ : Type*} [Countable κ] [MeasurableS
     sampleWithoutReplacement ρ =
       ((uniformOn {k : ι → κ | Function.Injective k}).prod ρ).map
         fun p i => p.2 (p.1 i) :=
-  (rfl)
+  Measure.mapₗ_mk_apply_of_aemeasurable measurable_samplePopulation.aemeasurable
 
 /-- Sampling without replacement preserves probability mass whenever an injective selection
 exists. -/
