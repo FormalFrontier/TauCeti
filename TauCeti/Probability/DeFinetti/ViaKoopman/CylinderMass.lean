@@ -113,7 +113,8 @@ theorem measure_inter_blockCylinder_eq_setLIntegral_of_measurableSet_invariants
     ⟨((hP_meas.aestronglyMeasurable).congr hPQ).restrict,
       .of_bounded (C := 1) (Filter.Eventually.of_forall hQ_bdd)⟩
   -- Move the block onto the prefix.
-  rw [hρ.measure_inter_blockCylinder_eq_prefix_of_strictMono hk hB hA_inv]
+  rw [hρ.measure_inter_blockCylinder_eq_prefix_of_strictMono_of_measurableSet_invariants
+    hk hB hA_inv]
   set C : Set (ℕ → α) :=
     blockCylinder (fun j (x : ℕ → α) => x j) (fun i : Fin r => (i : ℕ)) B with hCdef
   have hcyl : MeasurableSet C :=

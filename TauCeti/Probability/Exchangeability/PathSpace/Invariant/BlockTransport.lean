@@ -42,17 +42,19 @@ integral identity, which needs only `T ⁻¹' A = A`.
   from the first by applying it to `A.indicator w`. This is the form an induction peeling one
   coordinate at a time needs, since the factors already peeled accumulate as such a weight.
 
-* `ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono` — the block-cylinder
+* `ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono_of_measurableSet_invariants`
+  — the block-cylinder
   corollary: over an invariant event, the mass of a block cylinder does not depend on which
   strictly increasing selection cuts it, and may be read at the prefix.
 
-`ℝ≥0∞` statements are not restated here. For the *unweighted* results a consumer applies
-`.lintegral_comp` to the `MeasurePreserving` above, or rewrites with `lintegral_map` through the
-measure equality. A weighted `ℝ≥0∞` form is available both ways: via `.lintegral_comp` together
-with `comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add`, or as a genuine measure
-equality on `ρ.withDensity w`, which the reindexing preserves because it preserves `ρ` and fixes
-`w`. It is the *signed real* weight that cannot ride in an equality of positive measures, which is
-why the `ℝ`-valued statements above are integral identities.
+The one `ℝ≥0∞` statement here is the block-cylinder mass corollary above, an equality of measure
+values. The transport results themselves are not restated in `ℝ≥0∞`: a
+consumer wanting that applies `.lintegral_comp` to the `MeasurePreserving` above, or rewrites with
+`lintegral_map` through the measure equality. A weighted `ℝ≥0∞` form is available both ways: via
+`.lintegral_comp` together with `comp_reindex_apply_eq_of_measurable_invariants_of_eventually_add`,
+or as a measure equality on `ρ.withDensity w`, which the reindexing preserves because it preserves
+`ρ` and fixes `w`. It is the *signed real* weight that cannot ride in an equality of positive
+measures, which is why the `ℝ`-valued statements above are integral identities.
 
 The endomorphism-level facts are Mathlib's: `MeasurePreserving.restrict_preimage` gives the
 restricted measure preservation once the invariant event is rewritten by
@@ -199,7 +201,8 @@ end ContractableLaw
 For a contractable law, a shift-invariant event, measurable coordinate sets and a strictly
 increasing selection, the mass of the intersection equals that of the intersection with the prefix
 cylinder. -/
-theorem ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono
+theorem
+    ContractableLaw.measure_inter_blockCylinder_eq_prefix_of_strictMono_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ)
     {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) {B : Fin r → Set α}
     (hB : ∀ i, MeasurableSet (B i))
