@@ -5,7 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Analysis.Complex.UpperHalfPlane.PSLAction
 public import TauCeti.NumberTheory.Modular.Orbits
+
+-- these two serve only the private centre computation, so they stay off the public surface
+import Mathlib.LinearAlgebra.SpecialLinearGroup
+import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
 # Orders of the point stabilisers of the modular group
@@ -153,6 +158,91 @@ theorem card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ (z : ℍ)
   · simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
       Set.mem_singleton_iff] at hx
     rcases hx with rfl | rfl <;> simp [MulAction.mem_stabilizer_iff]
+
+
+/-! ### The projective orders `e_P` -/
+
+-- the centre sits inside every point stabiliser, since `±1` acts trivially on `ℍ`
+private theorem center_le_stabilizer (z : ℍ) : Subgroup.center SL(2, ℤ) ≤ stabilizer SL(2, ℤ) z :=
+  fun c hc ↦ UpperHalfPlane.smul_eq_self_of_mem_center c hc z
+
+-- the centre of `SL(2, ℤ)` has order two. Built on Mathlib rather than on an explicit `{±1}`
+-- computation: the matrix and module special linear groups agree (`toLin'_equiv`), the module
+-- one has centre the roots of unity (`centerEquivRootsOfUnity`), and `-1` is a primitive second
+-- root over `ℤ`.
+private theorem card_center : Nat.card (Subgroup.center SL(2, ℤ)) = 2 := by
+  have hroot : IsPrimitiveRoot (-1 : ℤ) 2 := IsPrimitiveRoot.neg_one 0 (by norm_num)
+  have hrank : max (Module.finrank ℤ (Fin 2 → ℤ)) 1 = 2 := by simp
+  rw [Nat.card_congr (Subgroup.centerCongr Matrix.SpecialLinearGroup.toLin'_equiv).toEquiv,
+    Nat.card_congr (SpecialLinearGroup.centerEquivRootsOfUnity (R := ℤ) (V := Fin 2 → ℤ)).toEquiv,
+    hrank, hroot.card_rootsOfUnity]
+
+-- the quotient map restricted to a point stabiliser
+private noncomputable def toPsl (z : ℍ) : stabilizer SL(2, ℤ) z →* stabilizer PSL(2, ℤ) z where
+  toFun h := ⟨((h : SL(2, ℤ)) : PSL(2, ℤ)), by
+    rw [MulAction.mem_stabilizer_iff, UpperHalfPlane.pslMk_smul]; exact h.2⟩
+  map_one' := rfl
+  map_mul' _ _ := rfl
+
+private theorem toPsl_surjective (z : ℍ) : Function.Surjective (toPsl z) := by
+  rintro ⟨q, hq⟩
+  obtain ⟨g, rfl⟩ := QuotientGroup.mk_surjective q
+  refine ⟨⟨g, ?_⟩, rfl⟩
+  rw [MulAction.mem_stabilizer_iff]
+  rw [MulAction.mem_stabilizer_iff, UpperHalfPlane.pslMk_smul] at hq
+  exact hq
+
+private theorem ker_toPsl (z : ℍ) :
+    (toPsl z).ker = (Subgroup.center SL(2, ℤ)).subgroupOf (stabilizer SL(2, ℤ) z) := by
+  ext h
+  rw [MonoidHom.mem_ker, Subgroup.mem_subgroupOf, Subtype.ext_iff]
+  -- `simp only [toPsl]` will not unfold the structure-instance application; `change` does
+  change ((h : SL(2, ℤ)) : PSL(2, ℤ)) = 1 ↔ _
+  exact QuotientGroup.eq_one_iff _
+
+/-- **The `SL(2, ℤ)`-stabiliser order is twice the `PSL(2, ℤ)` one.** The two differ exactly by
+the centre `±1`, which acts trivially on `ℍ`, so every projective stabiliser is the matrix one
+halved — the passage from the counts `4`, `6`, `2` to the elliptic orders `e_P`. -/
+theorem card_stabilizer_eq_two_mul_card_stabilizer_psl (z : ℍ) :
+    Nat.card (stabilizer SL(2, ℤ) z) = 2 * Nat.card (stabilizer PSL(2, ℤ) z) := by
+  have hker : Nat.card ((toPsl z).ker) = 2 := by
+    rw [ker_toPsl, Nat.card_congr (Subgroup.subgroupOfEquivOfLe (center_le_stabilizer z)).toEquiv]
+    exact card_center
+  have hquot : Nat.card (stabilizer SL(2, ℤ) z) =
+      Nat.card (stabilizer PSL(2, ℤ) z) * Nat.card ((toPsl z).ker) := by
+    rw [← Nat.card_congr
+      (QuotientGroup.quotientKerEquivOfSurjective _ (toPsl_surjective z)).toEquiv]
+    exact Subgroup.card_eq_card_quotient_mul_card_subgroup _
+  rw [hquot, hker, mul_comm]
+
+-- Neither elliptic order below is `@[simp]`, tested: `MulAction.mem_stabilizer_iff` rewrites
+-- `Nat.card (stabilizer G z)` into a `Nat.card` of a subtype underneath, so the left-hand side is
+-- not in simp-normal form and `simpNF` rejects the attribute — the same reason recorded above for
+-- `card_stabilizer_smul` over `SL(2, ℤ)`.
+
+/-- **The elliptic order at `i` is `e_i = 2`** — the order of the `PSL(2, ℤ)`-stabiliser, not the
+weight: the valence formula weights that orbit by the reciprocal `1 / e_i = 1 / 2`. -/
+theorem card_stabilizer_psl_I : Nat.card (stabilizer PSL(2, ℤ) I) = 2 := by
+  have h := card_stabilizer_eq_two_mul_card_stabilizer_psl I
+  rw [card_stabilizer_I] at h
+  omega
+
+/-- **The elliptic order at `ρ` is `e_ρ = 3`** — again the stabiliser order; the valence formula
+weights that orbit by `1 / e_ρ = 1 / 3`. -/
+theorem card_stabilizer_psl_ρ : Nat.card (stabilizer PSL(2, ℤ) ρ) = 3 := by
+  have h := card_stabilizer_eq_two_mul_card_stabilizer_psl ρ
+  rw [card_stabilizer_ρ] at h
+  omega
+
+/-- **Every non-elliptic orbit has `e_P = 1`**: away from the orbits of `i` and `ρ`, the
+`PSL(2, ℤ)`-action on `ℍ` is free. -/
+theorem card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ (z : ℍ)
+    (hI : (Quotient.mk'' z : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' I)
+    (hρ : (Quotient.mk'' z : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ≠ Quotient.mk'' ρ) :
+    Nat.card (stabilizer PSL(2, ℤ) z) = 1 := by
+  have h := card_stabilizer_eq_two_mul_card_stabilizer_psl z
+  rw [card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ z hI hρ] at h
+  omega
 
 end ModularGroup
 

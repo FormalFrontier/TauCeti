@@ -56,6 +56,8 @@ that composes to zero is already zero.
   element in the triple is `TauCeti.eq_smul_single_add_smul_single_add_smul_singleSubSingle`.
 * `IsSl2Triple.isSl2Triple_restrict`: an arbitrary triple regarded inside the subalgebra that it
   generates.
+* `IsSl2Triple.lieSubmoduleOfStable`: a submodule stable under the raising and lowering elements of
+  a triple is a Lie submodule over the subalgebra they generate.
 * `TauCeti.lieHomOfSl2Basis`: from a basis obeying the `sl₂` relations, three elements of another
   Lie algebra obeying the same relations determine a homomorphism, sending the basis to them
   (`TauCeti.lieHomOfSl2Basis_apply`).
@@ -377,6 +379,46 @@ theorem restrict_toLieSubalgebra_eq_top (t : IsSl2Triple h e f) :
   obtain ⟨c₁, c₂, c₃, hx⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 x.2
   exact IsSl2Triple.mem_toLieSubalgebra_iff.2
     ⟨c₁, c₂, c₃, Subtype.ext (by simpa using hx)⟩
+
+variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+
+/-- **A submodule stable under the raising and lowering elements of an `sl₂` triple is a Lie
+submodule over the subalgebra they generate.** Every element of `t.toLieSubalgebra K` is a
+combination `c₁ • e + c₂ • f + c₃ • h`, and the Cartan element is `h = ⁅e, f⁆`, so stability under
+`e` and `f` is all that has to be checked.
+
+The underlying submodule is `S` itself, recorded in
+`IsSl2Triple.lieSubmoduleOfStable_toSubmodule`, and membership in
+`IsSl2Triple.mem_lieSubmoduleOfStable`. -/
+def lieSubmoduleOfStable (t : IsSl2Triple h e f) (S : Submodule K M)
+    (he : ∀ m ∈ S, ⁅e, m⁆ ∈ S) (hf : ∀ m ∈ S, ⁅f, m⁆ ∈ S) :
+    LieSubmodule K (t.toLieSubalgebra K) M where
+  __ := S
+  lie_mem := by
+    have hh : ∀ m ∈ S, ⁅h, m⁆ ∈ S := fun m hm ↦ by
+      rw [← t.lie_e_f, lie_lie]
+      exact S.sub_mem (he _ (hf m hm)) (hf _ (he m hm))
+    rintro ⟨x, hx⟩ m hm
+    obtain ⟨c₁, c₂, c₃, rfl⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 hx
+    rw [LieSubalgebra.coe_bracket_of_module, add_lie, add_lie, smul_lie, smul_lie, smul_lie,
+      t.lie_e_f]
+    exact S.add_mem (S.add_mem (S.smul_mem _ (he m hm)) (S.smul_mem _ (hf m hm)))
+      (S.smul_mem _ (hh m hm))
+
+@[simp]
+theorem lieSubmoduleOfStable_toSubmodule (t : IsSl2Triple h e f) (S : Submodule K M)
+    (he : ∀ m ∈ S, ⁅e, m⁆ ∈ S) (hf : ∀ m ∈ S, ⁅f, m⁆ ∈ S) :
+    (t.lieSubmoduleOfStable S he hf).toSubmodule = S := by
+  simp only [lieSubmoduleOfStable]
+
+/-- Membership in `IsSl2Triple.lieSubmoduleOfStable` is membership in the submodule it is built
+from. This is the abstraction boundary for membership: a consumer should rewrite with this lemma
+rather than unfold the definition. -/
+@[simp]
+theorem mem_lieSubmoduleOfStable (t : IsSl2Triple h e f) (S : Submodule K M)
+    (he : ∀ m ∈ S, ⁅e, m⁆ ∈ S) (hf : ∀ m ∈ S, ⁅f, m⁆ ∈ S) {m : M} :
+    m ∈ t.lieSubmoduleOfStable S he hf ↔ m ∈ S :=
+  Iff.rfl
 
 end IsSl2Triple
 

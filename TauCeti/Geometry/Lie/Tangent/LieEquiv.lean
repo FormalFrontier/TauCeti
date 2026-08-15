@@ -87,7 +87,7 @@ theorem tangentToLeftInvariantDerivation_lie [CompleteSpace E]
       (W := mulInvariantVectorField w)
       (x := (1 : G))
       F.contMDiff.contMDiffAt
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
       ((contMDiff_mulInvariantVectorField_infty v).mdifferentiable
         (by simp)).mdifferentiableAt
       ((contMDiff_mulInvariantVectorField_infty w).mdifferentiable
