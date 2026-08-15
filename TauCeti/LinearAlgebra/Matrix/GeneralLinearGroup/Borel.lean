@@ -102,7 +102,7 @@ namespace TauCeti
 
 open Matrix
 
-universe u
+universe u v
 
 /-- In size `2`, block triangularity for `id : Fin 2 → Fin 2` is the single vanishing condition on
 the lower-left entry. -/
@@ -179,6 +179,24 @@ theorem mem_iff {g : GL (Fin 2) R} :
 theorem apply_one_zero (g : GL2Borel R) :
     ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 :=
   g.2
+
+/-- Apply a ring homomorphism entrywise to an invertible upper-triangular matrix. -/
+def map {S : Type v} [CommRing S] (phi : R →+* S) : GL2Borel R →* GL2Borel S :=
+  ((Matrix.GeneralLinearGroup.map phi).comp (GL2Borel R).subtype).codRestrict
+    (GL2Borel S) fun g => by
+      change ((Matrix.GeneralLinearGroup.map phi (g : GL (Fin 2) R) : GL (Fin 2) S) :
+        Matrix (Fin 2) (Fin 2) S) 1 0 = 0
+      rw [Matrix.GeneralLinearGroup.map_apply, apply_one_zero, map_zero]
+
+/-- The underlying general-linear matrix of `map phi g` is obtained by applying `phi`
+entrywise. -/
+@[simp]
+theorem coe_map {S : Type v} [CommRing S] (phi : R →+* S) (g : GL2Borel R) :
+    ((map phi g : GL2Borel S) : GL (Fin 2) S) =
+      Matrix.GeneralLinearGroup.map phi (g : GL (Fin 2) R) :=
+  by
+    rw [map]
+    rfl
 
 /-- The `(0, 0)` entry is multiplicative on the Borel subgroup: only the lower-left entry of the
 *right* factor is needed. -/
