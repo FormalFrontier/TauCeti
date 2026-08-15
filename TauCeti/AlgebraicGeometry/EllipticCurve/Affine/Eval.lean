@@ -71,12 +71,19 @@ theorem algHom_mk_eq_evalEval (f : W.CoordinateRing →ₐ[R] R) (p : R[X][Y]) :
     f.comp ((AdjoinRoot.mkₐ W.polynomial).restrictScalars R)
   have hg (q : R[X][Y]) : g q = f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W q) := by
     simp only [g, AlgHom.comp_apply, AlgHom.restrictScalars_apply, AdjoinRoot.coe_mkₐ]
-  -- `g` is in the image of `aevalAevalEquiv`, hence is evaluation at the images of `X` and `Y`
-  have key : ⇑g = evalEval (g (C X)) (g Y) := by
-    conv_lhs => rw [← (aevalAevalEquiv R R).apply_symm_apply g, aevalAevalEquiv_symm_apply,
-      aevalAevalEquiv_apply, coe_aevalAeval_eq_evalEval]
+  have key : g.toRingHom = evalEvalRingHom (g (C X)) (g Y) := by
+    apply Polynomial.ringHom_ext'
+    · apply Polynomial.ringHom_ext'
+      · ext r
+        simp only [RingHom.comp_apply, coe_evalRingHom, eval_C]
+        have hCC : (C (C r) : R[X][Y]) = algebraMap R R[X][Y] r :=
+          (congrFun coe_algebraMap_eq_CC r).symm
+        rw [hCC]
+        exact g.commutes r
+      · simp
+    · simp
   rw [← hg]
-  exact congrFun key p
+  exact RingHom.congr_fun key p
 
 /-- The images of the coordinate functions under an algebra homomorphism from the coordinate ring
 to the base ring satisfy the Weierstrass equation. -/
