@@ -53,7 +53,6 @@ it; the subspace form here needs no such comparison.)
 * `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
   topological additive group `A`, then `Spa(A, A⁺) = ∅` for any plus ring `A⁺`
   (the `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1)).
-* `TauCeti.ValuationSpectrum.spa_eq_empty_of_subsingleton` : over a zero ring `A`, `Spa(A, A⁺) = ∅`.
 
 ## References
 
@@ -128,12 +127,6 @@ theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
   rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
 
 end TopologicalAddGroup
-
-/-- Over a zero ring, `Spa (A, A⁺) = ∅`. -/
-@[simp]
-theorem spa_eq_empty_of_subsingleton [Subsingleton A] (Aplus : Subring A) :
-    spa Aplus = ∅ := by
-  rw [spa_def, cont_eq_empty_of_subsingleton, Set.empty_inter]
 
 end TauCeti.ValuationSpectrum
 

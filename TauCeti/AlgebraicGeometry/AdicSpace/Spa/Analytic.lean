@@ -6,7 +6,7 @@ Authors: Antigravity
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
-public import TauCeti.RingTheory.Huber.Basic
+public import TauCeti.RingTheory.Huber.OpenIdeal
 
 /-!
 # Analytic points and the analytic locus of `Spa(A, A⁺)`
@@ -22,6 +22,7 @@ This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)`.
   `Cont A` to `Spv A`; on continuous points it is Definition 7.39.
 * `TauCeti.ValuationSpectrum.spaAnalytic` : **Wedhorn's `Spa(A, A⁺)ᵃ`**, the analytic locus of
   `Spa(A, A⁺)` as a `Set (Spv A)`.
+* `TauCeti.ValuationSpectrum.spaAnalytic_def` : the analytic locus as a set intersection.
 
 ## Main results
 
@@ -61,6 +62,10 @@ points (Definition 7.39). -/
 def spaAnalytic (Aplus : Subring A) : Set (Spv A) :=
   spa Aplus ∩ {v : Spv A | IsAnalyticPoint v}
 
+/-- The analytic locus as a set intersection. -/
+theorem spaAnalytic_def (Aplus : Subring A) :
+    spaAnalytic Aplus = spa Aplus ∩ {v : Spv A | IsAnalyticPoint v} := (rfl)
+
 /-- Membership in the analytic locus: `v ∈ Spa(A, A⁺)ᵃ` iff `v ∈ Spa(A, A⁺)` and `v` is an
 analytic point. -/
 @[simp]
@@ -77,12 +82,6 @@ theorem spaAnalytic_subset_spa (Aplus : Subring A) :
 theorem spaAnalytic_antitone : Antitone (spaAnalytic (A := A)) := fun _ _ hle ↦
   Set.inter_subset_inter_left _ (spa_antitone hle)
 
-/-- Over a zero ring, the analytic locus `Spa (A, A⁺)ᵃ` is empty. -/
-@[simp]
-theorem spaAnalytic_eq_empty_of_subsingleton [Subsingleton A] (Aplus : Subring A) :
-    spaAnalytic Aplus = ∅ := by
-  rw [spaAnalytic, spa_eq_empty_of_subsingleton, Set.empty_inter]
-
 section TateRing
 
 variable [IsTopologicalRing A] [IsTateRing A]
@@ -90,7 +89,7 @@ variable [IsTopologicalRing A] [IsTateRing A]
 /-- Over a Tate ring, every point of `Spv A` is analytic, extending Wedhorn Remark 7.40(3) beyond
 continuous points. -/
 theorem isAnalyticPoint_of_isTateRing (v : Spv A) : IsAnalyticPoint v :=
-  Huber.not_isOpen_of_isPrime v.supp
+  fun h ↦ (instIsPrimeSupp v).ne_top (IsTateRing.eq_top_of_isOpen h)
 
 /-- **Wedhorn Remark 7.40(3).** Over a Tate ring, the analytic locus is the entire adic
 spectrum: `Spa (A, A⁺)ᵃ = Spa (A, A⁺)`. -/

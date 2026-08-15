@@ -30,8 +30,6 @@ We define the valuation spectrum `Spv A` following Wedhorn, *Adic Spaces*
   Lemma 7.5, that the rational opens are stable under finite intersection.
 * `TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vlt_one` : the sub-unit locus of a set
   of ring elements is closed — the closedness behind Wedhorn's Corollary 7.12.
-* `TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vle_zero` : the locus where every
-  element of a set has value at most zero is closed.
 * `TauCeti.ValuationSpectrum.quotientLift 𝔞 h` : Lift the implicitly inferred point `v` with
   `𝔞 ≤ supp v` to `Spv (A ⧸ 𝔞)`.
 * `TauCeti.ValuationSpectrum.localizationComapSection S B v hS` : Lift `v` to a localization
@@ -66,6 +64,11 @@ structure ValuationSpectrum (A : Type*) [CommRing A] where
   toValuativeRel : ValuativeRel A
 
 @[inherit_doc] scoped notation "Spv" => ValuationSpectrum
+
+/-- Over a subsingleton ring, the valuation spectrum is empty. -/
+instance [CommRing A] [Subsingleton A] : IsEmpty (Spv A) :=
+  ⟨fun v ↦ v.toValuativeRel.not_vle_one_zero
+    (Subsingleton.elim (1 : A) 0 ▸ v.toValuativeRel.vle_refl 0)⟩
 
 namespace ValuationSpectrum
 
@@ -432,23 +435,6 @@ lemma suppFun_preimage_basicOpen (f : A) :
 theorem continuous_suppFun : Continuous (suppFun : Spv A → PrimeSpectrum A) :=
   PrimeSpectrum.isTopologicalBasis_basic_opens.continuous_iff.mpr fun _ ⟨f, hf⟩ ↦
     hf ▸ suppFun_preimage_basicOpen f ▸ isOpen_basicOpen f f
-
-/-- **The locus of points where `v(a) ≤ 0` for all `a ∈ S` is closed in `Spv A`.** Equivalently,
-it is the preimage under `suppFun` of the zero locus of `S`, so it is the locus where `S` lies in
-the support. -/
-theorem isClosed_setOfPred_forall_vle_zero (S : Set A) :
-    IsClosed {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0} := by
-  have hset : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 0} =
-      suppFun ⁻¹' PrimeSpectrum.zeroLocus S := by
-    ext v
-    simp only [Set.mem_ofPred_eq, Set.mem_preimage, PrimeSpectrum.mem_zeroLocus, suppFun_asIdeal]
-    constructor
-    · intro h a ha
-      exact (mem_supp_iff v a).2 (h a ha)
-    · intro h a ha
-      exact (mem_supp_iff v a).1 (h ha)
-  rw [hset]
-  exact (PrimeSpectrum.isClosed_zeroLocus S).preimage continuous_suppFun
 
 /-- `supp ∘ Spv(φ) = Spec(φ) ∘ supp`. -/
 theorem suppFun_comap {B : Type*} [CommRing B] (φ : A →+* B) (v : Spv B) :

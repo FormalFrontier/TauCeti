@@ -57,7 +57,6 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
 * `TauCeti.ValuationSpectrum.cont_eq_empty_of_one_mem_closure_zero` : if `1` belongs to the
   closure of zero, then `Cont A` is empty.
-* `TauCeti.ValuationSpectrum.cont_eq_empty_of_subsingleton` : over a zero ring, `Cont A = ∅`.
 
 ## References
 
@@ -139,36 +138,15 @@ theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Se
   ext v
   simp only [Set.mem_empty_iff_false, iff_false, mem_cont_iff]
   intro hv
-  have h_open : IsOpen {a : A | v.valuation a < 1} := by
-    have h1 : v.valuation 1 = 1 := v.valuation.map_one
-    have hcont : v.valuation.IsContinuous := (isContinuous_def v).mp hv
-    rw [← h1]
-    exact Valuation.isContinuous_def.mp hcont 1
-  have h_sub_open : IsOpen {a : A | v.valuation (a - 1) < 1} :=
-    h_open.preimage (continuous_sub_right 1)
-  have h1_mem : (1 : A) ∈ {a : A | v.valuation (a - 1) < 1} := by
-    simp only [Set.mem_ofPred_eq, sub_self, Valuation.map_zero]
-    exact zero_lt_one
-  have h0_mem : (0 : A) ∈ {a : A | v.valuation (a - 1) < 1} := by
-    obtain ⟨x, hx_sub, hx_zero⟩ := mem_closure_iff.mp h _ h_sub_open h1_mem
-    rw [Set.mem_singleton_iff] at hx_zero
-    subst hx_zero
-    exact hx_sub
-  rw [Set.mem_ofPred_eq, zero_sub, Valuation.map_neg] at h0_mem
-  have h1_val : v.valuation 1 = 1 := v.valuation.map_one
-  rw [h1_val] at h0_mem
-  exact lt_irrefl 1 h0_mem
+  have hcont : v.valuation.IsContinuous := (isContinuous_def v).mp hv
+  have h_nhds : {y : A | v.valuation (y - 1) < 1} ∈ nhds (1 : A) := by
+    have h1_ne : v.valuation 1 ≠ 0 := by simp [v.valuation.map_one]
+    have := hcont.sub_lt_mem_nhds 1 h1_ne
+    simpa [v.valuation.map_one] using this
+  obtain ⟨x, hx, rfl⟩ := mem_closure_iff_nhds.mp h _ h_nhds
+  simp [v.valuation.map_one] at hx
 
 end TopologicalAddGroup
-
-/-- Over a zero ring, `Cont A = ∅`. -/
-theorem cont_eq_empty_of_subsingleton [Subsingleton A] : cont A = ∅ := by
-  ext v
-  simp only [Set.mem_empty_iff_false, iff_false]
-  intro _
-  exact v.toValuativeRel.not_vle_one_zero (by
-    rw [Subsingleton.elim (1 : A) 0]
-    exact v.toValuativeRel.vle_refl 0)
 
 /-- **Wedhorn Remark 7.9.** A continuous ring homomorphism pulls continuous points back to
 continuous points, so it restricts to a map `Cont B → Cont A`. -/
