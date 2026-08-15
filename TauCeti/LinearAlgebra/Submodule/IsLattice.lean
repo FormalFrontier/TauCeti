@@ -10,15 +10,15 @@ public import Mathlib.RingTheory.IsTensorProduct
 /-!
 # Lattices and base change
 
-This file develops properties of full lattice submodules over a principal ideal domain. In
+This file develops properties of free full lattice submodules over an integral domain. In
 particular, the inclusion of a full lattice submodule `S ≤ V` into an ambient vector space `V`
 over the fraction field `K` exhibits `V` as the base change `K ⊗[R] S`.
 
 ## Main declarations
 
 * `TauCeti.Submodule.IsLattice.isBaseChange_subtype`: the inclusion of a full lattice submodule
-  over a principal ideal domain into its ambient vector space over the fraction field is a base
-  change.
+  that is free over an integral domain into its ambient vector space over the fraction field is a
+  base change.
 
 ## References
 
@@ -38,13 +38,13 @@ namespace Submodule
 namespace IsLattice
 
 variable {R : Type u} {K : Type v} {V : Type w}
-variable [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
+variable [CommRing R] [IsDomain R]
 variable [Field K] [Algebra R K] [IsFractionRing R K]
 variable [AddCommGroup V] [Module R V] [Module K V] [IsScalarTower R K V]
 
-/-- The inclusion of a full lattice submodule over a principal ideal domain into its ambient vector
+/-- The inclusion of a free full lattice submodule over an integral domain into its ambient vector
 space over the fraction field exhibits that space as base change from `R` to `K`. -/
-theorem isBaseChange_subtype (S : Submodule R V) [S.IsLattice K] :
+theorem isBaseChange_subtype (S : Submodule R V) [Module.Free R S] [S.IsLattice K] :
     IsBaseChange K S.subtype := by
   have : Module.IsTorsionFree R K :=
     Module.isTorsionFree_iff_algebraMap_injective.2 (IsFractionRing.injective R K)
