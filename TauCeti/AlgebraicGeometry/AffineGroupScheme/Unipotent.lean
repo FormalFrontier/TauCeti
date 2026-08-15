@@ -98,23 +98,21 @@ theorem smooth_of_smoothUnipotentAffineGroupSchemeProperty
   let H := E.inverse.obj G
   let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
     (CommHopfAlgCat.{u} k)).op.obj H
-  have hH : Algebra.Smooth k H₀.unop :=
-    (smoothUnipotentAffineGroupSchemeProperty_iff k G).mp hG |>.1
-  let G' : AffineGroupSchemeCat (CommRingCat.of k) :=
-    ⟨(hopfSpec (CommRingCat.of k)).obj H₀, by
-      apply (affineGroupSchemeProperty_iff _).mpr
-      rw [← essImage_hopfSpec]
-      exact ⟨H₀, ⟨Iso.refl _⟩⟩⟩
-  have hG' : smoothAffineGroupSchemeProperty (CommRingCat.of k) G' :=
-    (algebraSmooth_iff_smooth_hopfSpec k H₀.unop).mp
-      ((smoothCommHopfAlgProperty_iff H₀.unop).mpr hH)
+  have hH : (smoothCommHopfAlgProperty k).op H₀ :=
+    (smoothCommHopfAlgProperty_iff H₀.unop).mpr
+      ((smoothUnipotentAffineGroupSchemeProperty_iff k G).mp hG |>.1)
+  rw [← smoothAffineGroupSchemeProperty_inverseImage k] at hH
   let eSpec :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅ G' :=
+      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat
+          (CommRingCat.of k)).functor.obj H₀ :=
     (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H)
+      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H ≪≫
+        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+          (CommRingCat.of k)).app H₀).symm)
   have hEF : smoothAffineGroupSchemeProperty (CommRingCat.of k)
       ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso eSpec.symm hG'
+    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso eSpec.symm hH
   exact (smoothAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).mp <|
     (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso
       ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
