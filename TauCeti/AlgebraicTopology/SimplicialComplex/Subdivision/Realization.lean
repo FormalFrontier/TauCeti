@@ -191,15 +191,12 @@ theorem continuous_barycentricSubdivisionRealizationMap (K : AbstractSimplicialC
   let toFace : StandardSimplex ρ.1 → StandardSimplex σ.1 := fun x =>
     ⟨barycentricSubdivisionLinearMap K x.1,
       barycentricSubdivisionLinearMap_mem_closedSimplex K σ x hσmax⟩
-  have htoFace_apply (x : StandardSimplex ρ.1) :
-      ((toFace x : ι →₀ ℝ) : ι → ℝ) =
-        (barycentricSubdivisionLinearMap K x.1 : ι → ℝ) := rfl
-  have htoFace : Continuous toFace := by
-    apply continuous_induced_rng.mpr
-    rw [show ((fun x : StandardSimplex σ.1 => ((x : ι →₀ ℝ) : ι → ℝ)) ∘ toFace) =
-      fun x => (barycentricSubdivisionLinearMap K x.1 : ι → ℝ) by
-        funext x
-        exact htoFace_apply x]
+  -- The induced topology exposes the underlying `Finsupp`; record its value explicitly rather
+  -- than relying on unfolding `toFace` through both subtype coercions below.
+  have htoFace_val (x : StandardSimplex ρ.1) :
+      (toFace x : ι →₀ ℝ) = barycentricSubdivisionLinearMap K x.1 := rfl
+  have hlinear : Continuous (fun x : StandardSimplex ρ.1 =>
+      (barycentricSubdivisionLinearMap K x.1 : ι → ℝ)) := by
     apply continuous_pi
     intro v
     have hformula :
@@ -218,6 +215,11 @@ theorem continuous_barycentricSubdivisionRealizationMap (K : AbstractSimplicialC
     have hcoe : Continuous (fun x : StandardSimplex ρ.1 => (x.1 : Face K → ℝ)) :=
       continuous_induced_dom
     exact ((continuous_apply τ).comp hcoe).mul continuous_const
+  have htoFace : Continuous toFace := by
+    apply continuous_induced_rng.mpr
+    convert hlinear using 1
+    funext x v
+    exact DFunLike.congr_fun (htoFace_val x) v
   have hfactor :
       barycentricSubdivisionRealizationMap K ∘ faceInclusion _ ρ =
         faceInclusion K ⟨σ.1, σ.2⟩ ∘ toFace := by
