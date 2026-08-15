@@ -56,9 +56,11 @@ identities listed below.
 `WeierstrassCurve.ω` itself and its API — `ω_spec`, `two_mul_ω`, `ψc`, `ψc_spec`, `ω_zero`,
 `ω_one`, `ψc_neg`, `map_ω`, `ω_neg` — are **not** in this file. `ω` is defined through
 `redInvarDenom` and `complEDS₂Aux`, and `ω_spec` additionally consumes `redInvar_normEDS`, which
-routes through `normEDS` being an elliptic sequence: a fact the pinned Mathlib records as an open
-TODO and whose proof is the parity-transfer machinery of Mathlib PR #42453. Nothing in this file
-depends on any of it, so the identities land now and `ω` follows when that gap closes.
+routes through `normEDS` being an elliptic sequence — that is `isEllipticSequence_normEDS` in
+`NormEDS.lean`, which the pinned Mathlib still records as an open TODO. What is missing for `ω`
+is `redInvarDenom` itself together with the chain
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`. Nothing in this file depends
+on any of it, so the identities land now and `ω` follows when that gap closes.
 
 ## Provenance
 

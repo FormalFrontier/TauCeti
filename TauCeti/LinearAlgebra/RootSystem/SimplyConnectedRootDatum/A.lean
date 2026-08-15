@@ -482,12 +482,8 @@ private abbrev typeASimpleSupport (n : ℕ) : Finset (Fin (n * (n + 1))) :=
   simpleSupport (typeASimpleIndex_injective (n := n))
 
 private lemma mem_typeASimpleSupport {k : Fin (n * (n + 1))} :
-    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n := by
-  rw [typeASimpleSupport, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    simpa only [typeASimpleIndex_val] using i.isLt
-  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext rfl⟩
+    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeASimpleIndex_injective (n := n)) (fun _ ↦ typeASimpleIndex_val _)
 
 private lemma image_root_typeASimpleSupport :
     (typeASimplyConnectedRootDatum n).root '' (typeASimpleSupport n : Set (Fin (n * (n + 1)))) =
