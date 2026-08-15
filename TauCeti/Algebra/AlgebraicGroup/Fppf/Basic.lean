@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 public import TauCeti.Algebra.Category.CommAlgCat.Fppf
 
 /-!
@@ -19,10 +19,9 @@ variance
 CommAlgCat R ⥤ Type.
 ```
 
-For a commutative Hopf algebra `H`, the imported Yoneda and scheme-points modules identify the
-underlying type-valued presheaf of convolution points `A ↦ WithConv (H →ₐ[R] A)` with the
-restriction of the Yoneda presheaf represented by `Spec H`. Its registered representability and
-subcanonicity imply that affine-group points form an fppf sheaf.
+For a commutative Hopf algebra `H`, the imported Yoneda module registers the underlying type-valued
+presheaf of convolution points `A ↦ WithConv (H →ₐ[R] A)` as representable. Its representability
+and subcanonicity imply that affine-group points form an fppf sheaf.
 
 This is the affine-site foundation for fppf sheafification of pointwise quotients. It does not
 assert that such a quotient sheaf is representable; representability requires separate hypotheses.
