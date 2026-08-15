@@ -9,25 +9,24 @@ public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Functoriality
 
 /-!
-# Cartier duality for finite-dimensional Hopf algebras
+# Cartier duality for finite locally free Hopf algebras
 
-A commutative finite group scheme over a field is represented by a finite-dimensional Hopf
-algebra whose multiplication and comultiplication are both commutative. The finite linear dual
-preserves this bicommutative condition, reverses morphisms, and is involutive by evaluation.
+A commutative finite locally free group scheme over an affine base is represented by a finite
+projective Hopf algebra whose multiplication and comultiplication are both commutative. The linear
+dual preserves this bicommutative condition, reverses morphisms, and is involutive by evaluation.
 
-This file packages those facts as a contravariant equivalence on finite-dimensional
-bicommutative Hopf algebras. It is the algebraic core of Cartier duality over a field; transporting
-the equivalence through `Spec` and extending it to finite locally free Hopf algebras over a
-general base are separate steps.
+This file packages those facts as a contravariant equivalence on finite locally free
+bicommutative Hopf algebras. It is the algebraic core of Cartier duality over a general affine
+base; transporting the equivalence through `Spec` is a separate step.
 
 ## Main declarations
 
-* `TauCeti.FiniteBicommutativeHopfAlgCat`: finite-dimensional commutative, cocommutative Hopf
-  algebras over a field.
-* `TauCeti.FiniteBicommutativeHopfAlgCat.dualFunctor`: contravariant finite dualization.
-* `TauCeti.FiniteBicommutativeHopfAlgCat.evalIso`: the objectwise double-dual evaluation
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat`: finite locally free commutative,
+  cocommutative Hopf algebras over a commutative ring.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.dualFunctor`: contravariant finite dualization.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.evalIso`: the objectwise double-dual evaluation
   isomorphism, natural in morphisms by `evalIso_hom_naturality`.
-* `TauCeti.FiniteBicommutativeHopfAlgCat.cartierDuality`: the resulting anti-equivalence.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality`: the resulting anti-equivalence.
 
 ## References
 
@@ -45,109 +44,118 @@ namespace TauCeti
 
 universe u
 
-/-- The object property selecting finite-dimensional bicommutative Hopf algebras over a field.
+/-- The object property selecting finite locally free bicommutative Hopf algebras.
 
-The ambient `CommHopfAlgCat` supplies commutativity of multiplication; the second conjunct is
-cocommutativity of comultiplication. -/
-def finiteBicommutativeHopfAlgProperty (k : Type u) [Field k] :
+The ambient `CommHopfAlgCat` supplies commutativity of multiplication; the final conjunct is
+cocommutativity of comultiplication. Finite locally free modules are expressed as finite
+projective modules. -/
+def finiteLocallyFreeBicommutativeHopfAlgProperty (k : Type u) [CommRing k] :
     ObjectProperty (_root_.CommHopfAlgCat.{u} k) :=
-  fun H => Module.Finite k H ∧ Coalgebra.IsCocomm k H
+  fun H => Module.Finite k H ∧ Module.Projective k H ∧ Coalgebra.IsCocomm k H
 
-/-- Membership in `finiteBicommutativeHopfAlgProperty` is finite-dimensionality together with
-cocommutativity. -/
+/-- Membership in `finiteLocallyFreeBicommutativeHopfAlgProperty` is finite projectivity together
+with cocommutativity. -/
 @[simp]
-theorem finiteBicommutativeHopfAlgProperty_iff (k : Type u) [Field k]
+theorem finiteLocallyFreeBicommutativeHopfAlgProperty_iff (k : Type u) [CommRing k]
     (H : _root_.CommHopfAlgCat.{u} k) :
-    finiteBicommutativeHopfAlgProperty k H ↔
-      Module.Finite k H ∧ Coalgebra.IsCocomm k H :=
+    finiteLocallyFreeBicommutativeHopfAlgProperty k H ↔
+      Module.Finite k H ∧ Module.Projective k H ∧ Coalgebra.IsCocomm k H :=
   Iff.rfl
 
-/-- The category of finite-dimensional bicommutative Hopf algebras over a field. -/
-abbrev FiniteBicommutativeHopfAlgCat (k : Type u) [Field k] :=
-  (finiteBicommutativeHopfAlgProperty (k := k)).FullSubcategory
+/-- The category of finite locally free bicommutative Hopf algebras over a commutative ring. -/
+abbrev FiniteLocallyFreeBicommutativeHopfAlgCat (k : Type u) [CommRing k] :=
+  (finiteLocallyFreeBicommutativeHopfAlgProperty (k := k)).FullSubcategory
 
-namespace FiniteBicommutativeHopfAlgCat
+namespace FiniteLocallyFreeBicommutativeHopfAlgCat
 
-variable {k : Type u} [Field k]
+variable {k : Type u} [CommRing k]
 
-instance : CoeSort (FiniteBicommutativeHopfAlgCat.{u} k) (Type u) :=
+instance : CoeSort (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) (Type u) :=
   ⟨fun H => H.obj⟩
 
-instance commRing (H : FiniteBicommutativeHopfAlgCat.{u} k) : CommRing H :=
+instance commRing (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) : CommRing H :=
   inferInstanceAs (CommRing H.obj)
 
-instance hopfAlgebra (H : FiniteBicommutativeHopfAlgCat.{u} k) :
+instance hopfAlgebra (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
     HopfAlgebra k H :=
   inferInstanceAs (HopfAlgebra k H.obj)
 
-instance finite (H : FiniteBicommutativeHopfAlgCat.{u} k) : Module.Finite k H :=
+instance finite (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) : Module.Finite k H :=
   H.property.1
 
-instance isCocomm (H : FiniteBicommutativeHopfAlgCat.{u} k) :
+instance projective (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    Module.Projective k H :=
+  H.property.2.1
+
+instance isCocomm (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
     Coalgebra.IsCocomm k H :=
-  H.property.2
+  H.property.2.2
 
 variable (k) in
-/-- Bundle a finite-dimensional bicommutative Hopf algebra as an object of
-`FiniteBicommutativeHopfAlgCat`. -/
+/-- Bundle a finite locally free bicommutative Hopf algebra as an object of
+`FiniteLocallyFreeBicommutativeHopfAlgCat`. -/
 abbrev of (H : Type u) [CommRing H] [HopfAlgebra k H] [Module.Finite k H]
-    [Coalgebra.IsCocomm k H] : FiniteBicommutativeHopfAlgCat.{u} k :=
+    [Module.Projective k H] [Coalgebra.IsCocomm k H] :
+    FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k :=
   ⟨_root_.CommHopfAlgCat.of k H,
-    (finiteBicommutativeHopfAlgProperty_iff k _).2 ⟨inferInstance, inferInstance⟩⟩
+    (finiteLocallyFreeBicommutativeHopfAlgProperty_iff k _).2
+      ⟨inferInstance, inferInstance, inferInstance⟩⟩
 
-/-- The bialgebra morphism underlying a morphism of finite bicommutative Hopf algebras. -/
-abbrev toBialgHom {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
+/-- The bialgebra morphism underlying a morphism of finite locally free bicommutative Hopf
+algebras. -/
+abbrev toBialgHom {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
     H →ₐc[k] K :=
   f.hom.hom
 
-/-- Bundle a bialgebra morphism between finite-dimensional bicommutative Hopf algebras. -/
+/-- Bundle a bialgebra morphism between finite locally free bicommutative Hopf algebras. -/
 abbrev ofHom {H K : Type u} [CommRing H] [CommRing K] [HopfAlgebra k H]
     [HopfAlgebra k K] [Module.Finite k H] [Module.Finite k K]
+    [Module.Projective k H] [Module.Projective k K]
     [Coalgebra.IsCocomm k H] [Coalgebra.IsCocomm k K] (f : H →ₐc[k] K) :
     of k H ⟶ of k K :=
   ObjectProperty.homMk (_root_.CommHopfAlgCat.ofHom f)
 
-/-- Morphisms of finite bicommutative Hopf algebras are determined by their underlying
+/-- Morphisms of finite locally free bicommutative Hopf algebras are determined by their underlying
 bialgebra morphisms. -/
 @[ext]
-theorem hom_ext {H K : FiniteBicommutativeHopfAlgCat.{u} k} {f g : H ⟶ K}
+theorem hom_ext {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k} {f g : H ⟶ K}
     (h : toBialgHom f = toBialgHom g) : f = g :=
-  ObjectProperty.hom_ext (P := finiteBicommutativeHopfAlgProperty k)
+  ObjectProperty.hom_ext (P := finiteLocallyFreeBicommutativeHopfAlgProperty k)
     (_root_.CommHopfAlgCat.hom_ext h)
 
 @[simp]
-theorem toBialgHom_id {H : FiniteBicommutativeHopfAlgCat.{u} k} :
+theorem toBialgHom_id {H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k} :
     toBialgHom (𝟙 H : H ⟶ H) = BialgHom.id k H :=
   rfl
 
 @[simp]
-theorem toBialgHom_comp {H K L : FiniteBicommutativeHopfAlgCat.{u} k}
+theorem toBialgHom_comp {H K L : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k}
     (f : H ⟶ K) (g : K ⟶ L) :
     toBialgHom (f ≫ g) = (toBialgHom g).comp (toBialgHom f) :=
   rfl
 
-/-- The finite dual of a finite-dimensional bicommutative Hopf algebra. -/
-noncomputable abbrev dual (H : FiniteBicommutativeHopfAlgCat.{u} k) :
-    FiniteBicommutativeHopfAlgCat.{u} k :=
+/-- The finite dual of a finite locally free bicommutative Hopf algebra. -/
+noncomputable abbrev dual (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k :=
   of k (ConvolutionDual k H)
 
-/-- A morphism of finite bicommutative Hopf algebras induces a morphism of finite duals in the
-opposite direction. -/
-noncomputable abbrev dualMap {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
+/-- A morphism of finite locally free bicommutative Hopf algebras induces a morphism of finite
+duals in the opposite direction. -/
+noncomputable abbrev dualMap {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
     dual K ⟶ dual H :=
   ofHom (ConvolutionDual.map k (toBialgHom f))
 
 /-- The bialgebra morphism underlying `dualMap` is the transposed morphism. -/
 @[simp]
-theorem toBialgHom_dualMap {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
+theorem toBialgHom_dualMap {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
     toBialgHom (dualMap f) = ConvolutionDual.map k (toBialgHom f) :=
   rfl
 
-/-- Finite dualization as a contravariant endofunctor on finite-dimensional bicommutative Hopf
+/-- Finite dualization as a contravariant endofunctor on finite locally free bicommutative Hopf
 algebras. -/
 noncomputable def dualFunctor :
-    (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ ⥤
-      FiniteBicommutativeHopfAlgCat.{u} k where
+    (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ ⥤
+      FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k where
   obj H := dual H.unop
   map f := dualMap f.unop
   map_id H := by
@@ -160,48 +168,50 @@ noncomputable def dualFunctor :
 
 /-- The object part of `dualFunctor` is the finite convolution dual. -/
 @[simp]
-theorem dualFunctor_obj (H : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
+theorem dualFunctor_obj (H : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
     (dualFunctor (k := k)).obj H = dual H.unop :=
   (rfl)
 
 /-- The morphism part of `dualFunctor` is precomposition on the finite dual. -/
 @[simp]
-theorem dualFunctor_map {H K : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
+theorem dualFunctor_map {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
     (f : H ⟶ K) :
     (dualFunctor (k := k)).map f =
       eqToHom (dualFunctor_obj H) ≫ dualMap f.unop ≫ eqToHom (dualFunctor_obj K).symm :=
   (rfl)
 
-/-- Evaluation identifies a finite bicommutative Hopf algebra with its double finite dual. -/
-noncomputable def evalIso (H : FiniteBicommutativeHopfAlgCat.{u} k) :
+/-- Evaluation identifies a finite locally free bicommutative Hopf algebra with its double finite
+dual. -/
+noncomputable def evalIso (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
     H ≅ dual (dual H) :=
-  ObjectProperty.isoMk (finiteBicommutativeHopfAlgProperty k)
+  ObjectProperty.isoMk (finiteLocallyFreeBicommutativeHopfAlgProperty k)
     (_root_.CommHopfAlgCat.isoMk (ConvolutionDual.evalBialgEquiv k H))
 
 /-- The forward map of `evalIso` evaluates finite-dual functionals. -/
 @[simp]
-theorem evalIso_hom_apply_apply (H : FiniteBicommutativeHopfAlgCat.{u} k)
+theorem evalIso_hom_apply_apply (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)
     (x : H) (phi : ConvolutionDual k H) :
     ((evalIso H).hom x).ofConv phi = phi.ofConv x :=
   ConvolutionDual.evalBialgEquiv_apply_apply k H x phi
 
 /-- The inverse map of `evalIso` is characterized by evaluation. -/
 @[simp]
-theorem evalIso_inv_apply_apply (H : FiniteBicommutativeHopfAlgCat.{u} k)
+theorem evalIso_inv_apply_apply (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)
     (Phi : ConvolutionDual k (ConvolutionDual k H)) (phi : ConvolutionDual k H) :
     phi.ofConv ((evalIso H).inv Phi) = Phi.ofConv phi :=
   ConvolutionDual.evalBialgEquiv_symm_apply_apply k H Phi phi
 
-/-- Double-dual evaluation is natural in finite-dimensional bicommutative Hopf algebras. -/
+/-- Double-dual evaluation is natural in finite locally free bicommutative Hopf algebras. -/
 @[simp, reassoc]
-theorem evalIso_hom_naturality {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
+theorem evalIso_hom_naturality
+    {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
     f ≫ (evalIso K).hom = (evalIso H).hom ≫ dualMap (dualMap f) := by
   apply hom_ext
   exact ConvolutionDual.evalBialgEquiv_naturality k H (toBialgHom f)
 
 /-- Recover the preimage of a morphism between finite duals by double-dual evaluation. -/
 private noncomputable def dualMapPreimage
-    {H K : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
+    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
     (f : dual H.unop ⟶ dual K.unop) : H ⟶ K :=
   (ObjectProperty.homMk (_root_.CommHopfAlgCat.ofHom
     ((ConvolutionDual.evalBialgEquiv k H.unop).symm.toBialgHom.comp
@@ -209,7 +219,7 @@ private noncomputable def dualMapPreimage
         (ConvolutionDual.evalBialgEquiv k K.unop).toBialgHom)))).op
 
 private theorem toBialgHom_dualMapPreimage_unop
-    {H K : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
+    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
     (f : dual H.unop ⟶ dual K.unop) :
     toBialgHom (dualMapPreimage f).unop =
       (ConvolutionDual.evalBialgEquiv k H.unop).symm.toBialgHom.comp
@@ -218,7 +228,7 @@ private theorem toBialgHom_dualMapPreimage_unop
   rfl
 
 private theorem dualFunctor_map_dualMapPreimage
-    {H K : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
+    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
     (f : dual H.unop ⟶ dual K.unop) :
     (dualFunctor (k := k)).map (dualMapPreimage f) = f := by
   apply hom_ext
@@ -238,7 +248,7 @@ private theorem dualFunctor_map_dualMapPreimage
     ConvolutionDual.map_apply_apply, ConvolutionDual.evalBialgEquiv_apply_apply]
 
 private theorem dualFunctor_map_injective
-    {H K : (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ} :
+    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ} :
     Function.Injective
       ((dualFunctor (k := k)).map : (H ⟶ K) →
         ((dualFunctor (k := k)).obj H ⟶ (dualFunctor (k := k)).obj K)) := by
@@ -275,11 +285,11 @@ instance dualFunctorEssSurj : (dualFunctor (k := k)).EssSurj where
 
 instance dualFunctorIsEquivalence : (dualFunctor (k := k)).IsEquivalence where
 
-/-- **Finite-dimensional Cartier duality.** Finite dualization is an anti-equivalence of the
-category of finite-dimensional bicommutative Hopf algebras over a field. -/
+/-- **Finite locally free Cartier duality.** Finite dualization is an anti-equivalence of the
+category of finite locally free bicommutative Hopf algebras over a commutative ring. -/
 noncomputable def cartierDuality :
-    (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
-      FiniteBicommutativeHopfAlgCat.{u} k :=
+    (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
+      FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k :=
   (dualFunctor (k := k)).asEquivalence
 
 /-- The forward functor of `cartierDuality` is finite dualization. -/
@@ -287,6 +297,6 @@ noncomputable def cartierDuality :
 theorem cartierDuality_functor : (cartierDuality (k := k)).functor = dualFunctor :=
   (rfl)
 
-end FiniteBicommutativeHopfAlgCat
+end FiniteLocallyFreeBicommutativeHopfAlgCat
 
 end TauCeti

@@ -10,18 +10,18 @@ public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Basic
 /-!
 # Functoriality and reflexivity of the finite Hopf dual
 
-Dualizing a bialgebra morphism between finite-dimensional bialgebras gives a morphism in the
-opposite direction between their convolution duals. Evaluation identifies a finite-dimensional
+Dualizing a bialgebra morphism between finite projective bialgebras gives a morphism in the
+opposite direction between their convolution duals. Evaluation identifies a finite projective
 bialgebra with its double convolution dual, compatibly with multiplication, comultiplication,
 unit, and counit.
 
 These are the algebraic functoriality and involutivity statements needed to promote the finite
 Hopf dual constructed in `TauCeti.Algebra.HopfAlgebra.FiniteDual.Basic` to Cartier duality. The
-scheme-level duality, and finite locally free duality over a general base, remain separate steps.
+scheme-level duality remains a separate step.
 
 ## Main declarations
 
-* `TauCeti.ConvolutionDual.map`: the contravariant map on finite-dimensional bialgebras.
+* `TauCeti.ConvolutionDual.map`: the contravariant map on finite projective bialgebras.
 * `TauCeti.ConvolutionDual.map_id` and `TauCeti.ConvolutionDual.map_comp`: its functoriality laws.
 * `TauCeti.ConvolutionDual.mapEquiv`: the contravariant equivalence induced by a bialgebra
   equivalence.
@@ -47,7 +47,7 @@ universe u v w
 
 section Map
 
-variable (k : Type u) [Field k]
+variable (k : Type u) [CommRing k]
 variable {H : Type v} {K : Type w}
 variable [Semiring H] [Bialgebra k H]
 variable [Semiring K] [Bialgebra k K]
@@ -87,7 +87,8 @@ private theorem mapAlgHom_apply_apply (f : H →ₐc[k] K)
     (mapAlgHom k f phi).ofConv x = phi.ofConv (f x) :=
   rfl
 
-variable [Module.Finite k H] [Module.Finite k K]
+variable [Module.Finite k H] [Module.Projective k H]
+variable [Module.Finite k K] [Module.Projective k K]
 
 private theorem dualDistribEquiv_tensor_map_apply (f : H →ₐc[k] K)
     (z : ConvolutionDual k K ⊗[k] ConvolutionDual k K) (x y : H) :
@@ -142,7 +143,8 @@ theorem map_id :
 /-- Dualizing a composite reverses the order of the dual morphisms. -/
 @[simp]
 theorem map_comp {L : Type*} [Semiring L] [Bialgebra k L]
-    [Module.Finite k L] (g : K →ₐc[k] L) (f : H →ₐc[k] K) :
+    [Module.Finite k L] [Module.Projective k L]
+    (g : K →ₐc[k] L) (f : H →ₐc[k] K) :
     map k (g.comp f) = (map k f).comp (map k g) := by
   ext phi x
   simp
@@ -173,8 +175,9 @@ end Map
 
 section Evaluation
 
-variable (k : Type u) [Field k]
+variable (k : Type u) [CommRing k]
 variable (H : Type v) [Semiring H] [Bialgebra k H] [Module.Finite k H]
+  [Module.Projective k H]
 
 /-- Evaluation into the double convolution dual as a linear equivalence. -/
 private noncomputable def evalLinearEquiv :
@@ -291,7 +294,7 @@ private noncomputable def evalBialgHom :
     H →ₐc[k] ConvolutionDual k (ConvolutionDual k H) :=
   { evalCoalgHom k H, evalAlgHom k H with }
 
-/-- **A finite-dimensional bialgebra is canonically isomorphic to its double finite dual.**
+/-- **A finite projective bialgebra is canonically isomorphic to its double finite dual.**
 
 The equivalence sends `x` to evaluation at `x`. -/
 noncomputable def evalBialgEquiv :
@@ -330,9 +333,9 @@ theorem evalBialgEquiv_symm_apply_apply
   rw [← evalBialgEquiv_apply_apply]
   simp
 
-/-- Evaluation into the double dual is natural in finite-dimensional bialgebras. -/
+/-- Evaluation into the double dual is natural in finite projective bialgebras. -/
 theorem evalBialgEquiv_naturality {K : Type w} [Semiring K] [Bialgebra k K]
-    [Module.Finite k K] (f : H →ₐc[k] K) :
+    [Module.Finite k K] [Module.Projective k K] (f : H →ₐc[k] K) :
     (evalBialgEquiv k K : K →ₐc[k] ConvolutionDual k (ConvolutionDual k K)).comp f =
       (map k (map k f)).comp (evalBialgEquiv k H) := by
   ext x phi

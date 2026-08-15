@@ -22,6 +22,8 @@ factor — here `TauCeti.hermiteHilbertBasis` — so this file only performs the
 ## Main statements
 
 * `TauCeti.hermiteFunctionPiBasis` — the multi-index basis.
+* `TauCeti.hermiteFunctionPiBasis_apply` — the `a`-th vector is the tensor `TauCeti.L2piMul` of the
+  one-dimensional Hermite vectors, as an equality of `L²` vectors.
 * `TauCeti.coeFn_hermiteFunctionPiBasis` — the anti-vacuity pin: the `a`-th vector really is the
   product `∏ᵢ ψ_{aᵢ}(xᵢ)`.
 -/
@@ -39,6 +41,16 @@ Hermite-function basis in every coordinate — the eigenbasis of the `ℝ^ι` ha
 noncomputable def hermiteFunctionPiBasis :
     HilbertBasis (ι → ℕ) 𝕜 (Lp 𝕜 2 (Measure.pi fun _ : ι => (volume : Measure ℝ))) :=
   piHilbertBasis fun _ => hermiteHilbertBasis 𝕜
+
+/-- **The `a`-th basis vector is the tensor of the one-dimensional Hermite vectors.** This is the
+identification `TauCeti.coeFn_hermiteFunctionPiBasis` below refines to a pointwise product; stated
+between `L²` vectors it is what the expansion API rewrites with, since the inner product against a
+tensor factors coordinatewise (`TauCeti.inner_L2piMul`). -/
+@[simp]
+theorem hermiteFunctionPiBasis_apply (a : ι → ℕ) :
+    hermiteFunctionPiBasis 𝕜 ι a = L2piMul fun i => hermiteFunctionLp 𝕜 (a i) := by
+  rw [hermiteFunctionPiBasis, piHilbertBasis_apply]
+  simp only [coe_hermiteHilbertBasis]
 
 /-- **The basis vectors are the multi-index Hermite-function products.** Without this the
 construction would only exhibit *some* Hilbert basis of `L²(volume^ι)`. The coordinatewise

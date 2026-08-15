@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.Basic
-public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant
+public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant.Basic
 
 /-!
 # The invariant polynomial of a Weierstrass curve
@@ -58,9 +58,13 @@ identities listed below.
 `redInvarDenom` and `complEDS₂Aux`, and `ω_spec` additionally consumes `redInvar_normEDS`, which
 routes through `normEDS` being an elliptic sequence — that is `isEllipticSequence_normEDS` in
 `NormEDS.lean`, which the pinned Mathlib still records as an open TODO. What is missing for `ω`
-is `redInvarDenom` itself together with the chain
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`. Nothing in this file depends
-on any of it, so the identities land now and `ω` follows when that gap closes.
+is `redInvarDenom` itself together with the top of the chain
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, which is written in the
+source's names. The lower three links have landed: `net_normEDS` is `isEllipticNet_normEDS`,
+`invar_normEDS` is `invarNum_mul_invarDenom`, and `invar₂_normEDS` is
+`IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul`. What remains is `redInvar_normEDS`.
+Nothing in this file depends on any of it, so the identities land now and `ω`
+follows when that gap closes.
 
 ## Provenance
 
@@ -75,8 +79,9 @@ material the upstream authorship is credited here rather than in the copyright h
 Two adaptations, neither of them a choice:
 
 * the source proves `φ_mul_ψ` by `rw [φ, invarDenom]`, unfolding both definitions. The
-  `invarDenom` half does not port: `EllipticDivisibilitySequence/Invariant.lean` exports that body
-  unexposed, so from this module `rw [invarDenom]` has nothing to rewrite with. It goes through the
+  `invarDenom` half does not port: `EllipticDivisibilitySequence/Invariant/Basic.lean` exports
+  that body unexposed, so from this module `rw [invarDenom]` has nothing to rewrite with. It goes
+  through the
   equation lemma `IsEllipticNet.invarDenom_def` instead. `φ` unfolds as before, being Mathlib's.
 * the source's local `C_simp` macro is written out at its three use sites rather than carried
   across, a macro being more surface than the one `simp only` call it abbreviates.

@@ -23,6 +23,8 @@ characterization in Layer 5, "Unipotent groups", of the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.upperUnitriangularGroup`: the subgroup `Uₙ(R)` of `GLₙ(R)`.
+* `TauCeti.UpperUnitriangularGroup.ext`: upper-unitriangular group elements are determined
+  by their entries strictly above the diagonal.
 * `TauCeti.UpperUnitriangularGroup.map`: base change along a ring homomorphism.
 * `TauCeti.UpperUnitriangularGroup.isUnipotent_toLin`: the natural representation of every
   element of `Uₙ(R)` is unipotent.
@@ -98,6 +100,18 @@ theorem isUpperTriangular (g : upperUnitriangularGroup m R) :
 theorem apply_diag (g : upperUnitriangularGroup m R) (i : m) :
     ((g : GL m R) : Matrix m m R) i i = 1 :=
   (isUpperUnitriangular g).apply_diag i
+
+/-- Two upper-unitriangular group elements are equal if their entries strictly above the diagonal
+agree. -/
+@[ext]
+theorem ext {g h : upperUnitriangularGroup m R}
+    (heq : ∀ i j, i < j →
+      ((g : GL m R) : Matrix m m R) i j = ((h : GL m R) : Matrix m m R) i j) : g = h := by
+  apply Subtype.ext
+  apply Matrix.GeneralLinearGroup.ext
+  intro i j
+  exact congrFun (congrFun
+    ((isUpperUnitriangular g).ext (isUpperUnitriangular h) heq) i) j
 
 /-- Packaging an upper-unitriangular matrix as an element of `GLₘ(R)` lands in the
 upper-unitriangular subgroup. -/

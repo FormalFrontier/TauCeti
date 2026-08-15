@@ -38,6 +38,8 @@ the exponentials above preserve an integral lattice. The application to the Kost
 * `TauCeti.exp_zsmul_smul_mem`: `exp (t • x)` preserves an additive subgroup that the divided
   powers of `x` preserve.
 * `TauCeti.expZSMulHom`: the integer-parameter group of units `t ↦ exp (t • x)`.
+* `TauCeti.expZSMulAddAut`: the induced action by additive automorphisms on an additive subgroup
+  preserved by the divided powers of `x`.
 
 ## References
 
@@ -134,5 +136,74 @@ theorem coe_expZSMulHom {x : A} (hx : IsNilpotent x) (t : Multiplicative ℤ) :
   -- The parentheses opt out of the exported-theorem exposure check, so that `expZSMulHom` can stay
   -- sealed and this `@[simp]` lemma remain its public characterization.
   (rfl)
+
+/-! ## The action on an invariant additive subgroup -/
+
+variable {V : Type*} [AddCommGroup V] [Module A V]
+
+/-- The additive automorphism induced on a subgroup preserved by every divided power of a
+nilpotent element.
+
+The inverse is the action of the inverse unit, equivalently the exponential with the negated
+integer parameter. The preservation hypothesis is deliberately stated only for the divided powers
+of `x`; `exp_zsmul_smul_mem` supplies preservation by every integral exponential. -/
+private noncomputable def expZSMulAddEquiv {x : A} (hx : IsNilpotent x)
+    {S : Type*} [SetLike S V] [AddSubgroupClass S V] (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (t : Multiplicative ℤ) : M ≃+ M where
+  toFun v := ⟨(expZSMulHom hx t : Aˣ) • (v : V), by
+    simpa only [Units.smul_def, coe_expZSMulHom] using
+      exp_zsmul_smul_mem hx hM (Multiplicative.toAdd t) v.2⟩
+  invFun v := ⟨(expZSMulHom hx t)⁻¹ • (v : V), by
+    simpa only [← map_inv, Units.smul_def, coe_expZSMulHom] using
+      exp_zsmul_smul_mem hx hM (Multiplicative.toAdd t⁻¹) v.2⟩
+  left_inv v := by
+    apply Subtype.ext
+    simp
+  right_inv v := by
+    apply Subtype.ext
+    simp
+  map_add' v w := by
+    apply Subtype.ext
+    exact smul_add _ _ _
+
+private theorem coe_expZSMulAddEquiv {x : A} (hx : IsNilpotent x)
+    {S : Type*} [SetLike S V] [AddSubgroupClass S V] (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (t : Multiplicative ℤ) (v : M) :
+    (expZSMulAddEquiv hx M hM t v : V) = (expZSMulHom hx t : Aˣ) • (v : V) :=
+  rfl
+
+/-- Integral exponentials act on a divided-power-stable additive subgroup by additive
+automorphisms. This is the restriction of `expZSMulHom hx` from units of the ambient algebra to
+automorphisms of the invariant subgroup. -/
+noncomputable def expZSMulAddAut {x : A} (hx : IsNilpotent x)
+    {S : Type*} [SetLike S V] [AddSubgroupClass S V] (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) :
+    Multiplicative ℤ →* Multiplicative (AddAut M) where
+  toFun t := Multiplicative.ofAdd (expZSMulAddEquiv hx M hM t)
+  map_one' := by
+    apply Multiplicative.toAdd.injective
+    ext v : 1
+    apply Subtype.ext
+    exact (coe_expZSMulAddEquiv hx M hM 1 v).trans (by simp)
+  map_mul' t u := by
+    apply Multiplicative.toAdd.injective
+    ext v : 1
+    apply Subtype.ext
+    exact (coe_expZSMulAddEquiv hx M hM (t * u) v).trans (by
+      simp [coe_expZSMulAddEquiv, mul_smul])
+
+/-- The action of `expZSMulAddAut` on the invariant subgroup is the ambient nilpotent
+exponential. -/
+@[simp]
+theorem coe_expZSMulAddAut {x : A} (hx : IsNilpotent x)
+    {S : Type*} [SetLike S V] [AddSubgroupClass S V] (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (t : Multiplicative ℤ) (v : M) :
+    ((Multiplicative.toAdd (expZSMulAddAut hx M hM t) v : M) : V) =
+      exp ((Multiplicative.toAdd t : ℤ) • x) • (v : V) := by
+  simp only [expZSMulAddAut, MonoidHom.coe_mk, OneHom.coe_mk, toAdd_ofAdd, coe_expZSMulAddEquiv,
+    Units.smul_def, coe_expZSMulHom]
 
 end TauCeti

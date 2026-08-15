@@ -80,7 +80,7 @@ Peeling the last coordinate replaces `𝟙_{B_r}(x_r)` by its conditional expect
 shift-invariant σ-algebra; the factors already peeled ride along as the weight of the next step,
 which is why the whole chain is stated against one. -/
 theorem setIntegral_weight_mul_blockIndicatorProd_prefix_eq_prod_condExp
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A) :
     ∀ (r : ℕ) (B : Fin r → Set α), (∀ i, MeasurableSet (B i)) →
       ∀ w : (ℕ → α) → ℝ, Measurable[MeasurableSpace.invariants (shift α)] w →
@@ -94,7 +94,6 @@ theorem setIntegral_weight_mul_blockIndicatorProd_prefix_eq_prod_condExp
   | zero => intro B _ w _ _; simp
   | succ r ih =>
     intro B hB w hw hw_bdd
-    classical
     set E : (ℕ → α) → ℝ :=
       ρ[fun y : ℕ → α => (B (Fin.last r)).indicator (fun _ => (1 : ℝ)) (y r) |
         MeasurableSpace.invariants (shift α)] with hEdef
@@ -161,7 +160,7 @@ factors, so it does not care what multiplies them. -/
 theorem
     setIntegral_weight_mul_blockIndicatorProd_prefix_eq_prod_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     (r : ℕ) (B : Fin r → Set α) (hB : ∀ i, MeasurableSet (B i))
     (w : (ℕ → α) → ℝ) (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
@@ -184,7 +183,7 @@ theorem
 specialisation of the theorem above. -/
 theorem setIntegral_blockIndicatorProd_prefix_eq_prod_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     (r : ℕ) (B : Fin r → Set α) (hB : ∀ i, MeasurableSet (B i)) :
     ∫ x in A, ∏ i : Fin r, (B i).indicator (fun _ => (1 : ℝ)) (x (i : ℕ)) ∂ρ

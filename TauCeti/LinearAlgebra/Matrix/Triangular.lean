@@ -33,6 +33,8 @@ which have no business importing Lie-algebra theory use it.
 * `Matrix.inv_apply_diag_of_isUpperTriangular` — where an upper-triangular matrix carries a `1`
   on the diagonal, so does its inverse.
 * `Matrix.IsUpperUnitriangular` — an upper-triangular matrix with diagonal one.
+* `Matrix.IsUpperUnitriangular.ext` — upper-unitriangular matrices are determined by their
+  entries strictly above the diagonal.
 * `Matrix.IsUpperUnitriangular.det_eq_one` — an upper-unitriangular matrix has determinant one.
 * `Matrix.isNilpotent_of_isUpperTriangular_of_diag_eq_zero` — strict upper triangularity implies
   nilpotence.
@@ -65,6 +67,18 @@ theorem IsUpperUnitriangular.isUpperTriangular [LT m] [Zero R] [One R]
 theorem IsUpperUnitriangular.apply_diag [LT m] [Zero R] [One R]
     {M : Matrix m m R} (hM : M.IsUpperUnitriangular) (i : m) : M i i = 1 :=
   ((isUpperUnitriangular_def M).1 hM).2 i
+
+/-- Two upper-unitriangular matrices are equal if their entries strictly above the diagonal
+agree. -/
+theorem IsUpperUnitriangular.ext [LinearOrder m] [Zero R] [One R] {M N : Matrix m m R}
+    (hM : M.IsUpperUnitriangular) (hN : N.IsUpperUnitriangular)
+    (h : ∀ i j, i < j → M i j = N i j) : M = N := by
+  ext i j
+  by_cases hij : i < j
+  · exact h i j hij
+  · obtain hji | rfl := lt_or_eq_of_le (le_of_not_gt hij)
+    · exact (hM.isUpperTriangular hji).trans (hN.isUpperTriangular hji).symm
+    · exact (hM.apply_diag _).trans (hN.apply_diag _).symm
 
 /-- The determinant of an upper-unitriangular matrix is one. -/
 theorem IsUpperUnitriangular.det_eq_one [Fintype m] [LinearOrder m] [CommRing R]
