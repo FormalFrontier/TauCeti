@@ -29,10 +29,10 @@ than duplicating it.
 
 ## Main results
 
-* `InternalGrading.sum_support_component`: every element is the finite sum of its homogeneous
-  components.
-* `InternalGrading.linearMap_ext_homogeneous`: linear maps agree when they agree on all homogeneous
-  elements.
+* `InternalGrading.component_apply`: the component projection agrees with Mathlib's
+  `DirectSum.decompose`.
+* `InternalGrading.mem_support_iff`: degree membership in the support is equivalent to having
+  a nonzero component.
 
 This is the first graded-module target in Layer 0 of the `DGAInfinity` roadmap.  Later files use
 these projections to define maps of nonzero degree, shifts, tensor-product gradings, and signed
@@ -118,29 +118,6 @@ theorem IsHomogeneous.sub {G : InternalGrading S N} {p : ℤ} {x y : N}
 
 end Ring
 
-theorem component_same (G : InternalGrading R M) (p : ℤ) (x : G.piece p) :
-    G.component p (x : M) = x := by
-  ext
-  simp only [component_apply]
-  exact DirectSum.decompose_of_mem_same G.piece x.property
-
-theorem component_ne (G : InternalGrading R M) {p q : ℤ} (hpq : p ≠ q) (x : G.piece p) :
-    G.component q (x : M) = 0 := by
-  ext
-  simp only [component_apply, Submodule.coe_zero]
-  exact DirectSum.decompose_of_mem_ne G.piece x.property hpq
-
-theorem component_of_isHomogeneous_same (G : InternalGrading R M) {p : ℤ} {x : M}
-    (hx : G.IsHomogeneous p x) : (G.component p x : M) = x := by
-  simp only [component_apply]
-  exact DirectSum.decompose_of_mem_same G.piece hx
-
-theorem component_of_isHomogeneous_ne (G : InternalGrading R M) {p q : ℤ}
-    (hpq : p ≠ q) {x : M} (hx : G.IsHomogeneous p x) : G.component q x = 0 := by
-  ext
-  simp only [component_apply, Submodule.coe_zero]
-  exact DirectSum.decompose_of_mem_ne G.piece hx hpq
-
 /-- The finite set of degrees at which an element’s homogeneous component is nonzero. -/
 noncomputable def support (G : InternalGrading R M) (x : M) : Finset ℤ := by
   classical
@@ -150,23 +127,6 @@ theorem mem_support_iff (G : InternalGrading R M) (x : M) (p : ℤ) :
     p ∈ G.support x ↔ G.component p x ≠ 0 := by
   classical
   simp [support, component_apply]
-
-/-- Every element is the finite sum of its homogeneous components. -/
-theorem sum_support_component (G : InternalGrading R M) (x : M) :
-    (∑ p ∈ G.support x, (G.component p x : M)) = x := by
-  classical
-  simp only [support]
-  simpa only [component_apply] using
-    DirectSum.sum_support_decompose G.piece x
-
-/-- Linear maps agree when they agree on all homogeneous elements. -/
-theorem linearMap_ext_homogeneous {N : Type*} [AddCommMonoid N] [Module R N]
-    (G : InternalGrading R M) ⦃f g : M →ₗ[R] N⦄
-    (h : ∀ p (x : G.piece p), f (x : M) = g (x : M)) : f = g := by
-  apply DirectSum.decompose_lhom_ext G.piece
-  intro p
-  ext x
-  exact h p x
 
 end InternalGrading
 
