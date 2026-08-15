@@ -5,15 +5,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import Mathlib.LinearAlgebra.Dimension.FreeAndStrongRankCondition
 
 /-!
-# The ideal of a point of a Weierstrass curve is maximal, and determines its coordinates
+# Ideals of points of a Weierstrass curve
 
 For a point `(x, y)` on an affine Weierstrass curve `W` over a field, Mathlib's
 `CoordinateRing.XYIdeal W x (C y)` is the ideal `⟨X - x, Y - y⟩` of the coordinate ring, and
 `CoordinateRing.quotientXYIdealEquiv` identifies the quotient by it with the base field. This file
 records the consequences: that ideal is maximal, it is nonzero, and it determines the coordinates
-it was built from.
+it was built from. Conversely, every ideal whose quotient has rank one over the base field is the
+ideal of a point.
 
 ## Main results
 
@@ -29,6 +31,8 @@ it was built from.
   `y₁.eval x₁ = y₂.eval x₂`, as soon as the first is proper.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.XYIdeal_eq_iff`: the constant-polynomial point
   case, where the conclusion is equality of the coordinates and properness comes from maximality.
+* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.exists_equation_and_eq_XYIdeal`: an ideal whose
+  quotient has rank one over the base field is `XYIdeal W x (C y)` for a point `(x, y)` of `W`.
 
 Mathlib has the quotient isomorphism but records nothing about the ideal itself; the many `XYIdeal`
 lemmas it does state (`XYIdeal_eq₁`, `XYIdeal_eq₂`, `XYIdeal_mul_XYIdeal`, `XYIdeal_neg_mul`) are
@@ -41,8 +45,8 @@ Only the curve equation is needed, not nonsingularity: the quotient is the base 
 This supports `TauCetiRoadmap/EllipticCurves/README.md`, Layer 0, whose point–place dictionary
 identifies the affine places of `W` with the maximal ideals of its coordinate ring — "the affine
 places are the maximal ideals of the coordinate ring". Maximality of `XYIdeal` is the direction
-that sends a point to a place, and `XYIdeal_eq_iff` says that map is injective. Classifying *all*
-maximal ideals as coming from points is a separate statement, not proved here.
+that sends a point to a place, `XYIdeal_eq_iff` says that map is injective, and
+`exists_equation_and_eq_XYIdeal` classifies the ideals with residue degree one.
 
 The roadmap's §"What Mathlib already has (consume)" lists `Affine.CoordinateRing` as consumed
 infrastructure that "is load-bearing API here, not an
@@ -59,11 +63,23 @@ Changes from the source. There the ideal is reached through a `SmoothPlaneCurve`
 nonsingularity proof; the surrounding wrappers are not ported, and the statement is made directly
 about Mathlib's `XYIdeal`. The hypothesis is correspondingly weakened from nonsingularity to the
 curve equation, which is all the quotient isomorphism consumes.
+
+The classification has a counterpart in the same project, in
+`projects/HasseWeil/HasseWeil/Foundation/Curves/Valuation/NormValuation.lean` at
+`github.com/CBirkbeck/AINTLIB @ 1c1c74664e40` (Apache-2.0 per that file's header;
+Authors: Chris Birkbeck): `exists_coordinates_of_isMaximal_of_surjective`,
+`equation_of_coordinates_of_field` and `exists_smoothPoint_of_isMaximal_of_surjective`, packaged
+in `Valuation/SmoothPointPrime.lean` as `smoothPointEquivHeightOneSpectrum`. That statement is
+about a *maximal* ideal of the coordinate ring of a `SmoothPlaneCurve`, hypothesises surjectivity
+of `algebraMap F (F[C] ⧸ M)`, and assumes ellipticity throughout. The classification below is
+written directly against Mathlib's `XYIdeal`: its hypothesis is the residue degree and it uses no
+ellipticity or Dedekind assumption.
 -/
 
 public section
 
 open Polynomial WeierstrassCurve WeierstrassCurve.Affine
+open scoped Polynomial.Bivariate
 
 namespace TauCeti
 
@@ -200,6 +216,69 @@ theorem XYIdeal_eq_iff {x₁ x₂ y₁ y₂ : F} (h₁ : W.Equation x₁ y₁) :
       x₁ = x₂ ∧ y₁ = y₂ := by
   simpa only [eval_C] using XYIdeal_eq_iff_of_ne_top (x₂ := x₂) (y₂ := C y₂)
     (XYIdeal_isMaximal_of_equation h₁).ne_top
+
+/-- A ring homomorphism from the coordinate ring that fixes the base field is evaluation at the
+images of the two coordinate functions. -/
+theorem ringHom_comp_mk_eq_evalEvalRingHom (f : W.CoordinateRing →+* F)
+    (hf : ∀ c : F, f (algebraMap F W.CoordinateRing c) = c) :
+    f.comp (CoordinateRing.mk W) =
+      evalEvalRingHom (f (CoordinateRing.mk W (C X))) (f (CoordinateRing.mk W Y)) := by
+  refine Polynomial.ringHom_ext' (Polynomial.ringHom_ext' ?_ ?_) ?_
+  · ext c
+    have hCC : CoordinateRing.mk W (C (C c)) = algebraMap F W.CoordinateRing c := by
+      rw [IsScalarTower.algebraMap_apply F F[X] W.CoordinateRing, AdjoinRoot.algebraMap_eq]
+      simp
+    simp only [RingHom.comp_apply, hCC, hf, coe_evalRingHom, eval_C]
+  · simp
+  · simp
+
+/-- The images of the coordinate functions under a base-field-preserving ring homomorphism from
+the coordinate ring satisfy the Weierstrass equation. -/
+theorem equation_of_ringHom (f : W.CoordinateRing →+* F)
+    (hf : ∀ c : F, f (algebraMap F W.CoordinateRing c) = c) :
+    W.Equation (f (CoordinateRing.mk W (C X))) (f (CoordinateRing.mk W Y)) := by
+  have hcomp := congrArg (fun g : F[X][Y] →+* F ↦ g W.polynomial)
+    (ringHom_comp_mk_eq_evalEvalRingHom f hf)
+  have hzero : f (CoordinateRing.mk W W.polynomial) = 0 := by
+    rw [AdjoinRoot.mk_self, map_zero]
+  rw [← RingHom.comp_apply] at hzero
+  rw [hcomp] at hzero
+  exact hzero
+
+/-- **An ideal of residue degree one is the ideal of a point.** Every ideal `I` for which
+`F[W] ⧸ I` has finrank one over `F` is `XYIdeal W x (C y)` for some solution `(x, y)` of the
+Weierstrass equation. No ellipticity or Dedekind hypothesis is involved. -/
+theorem exists_equation_and_eq_XYIdeal {I : Ideal W.CoordinateRing}
+    (hdeg : Module.finrank F (W.CoordinateRing ⧸ I) = 1) :
+    ∃ (x y : F) (_ : W.Equation x y), I = CoordinateRing.XYIdeal W x (C y) := by
+  have hI : I ≠ ⊤ := Ideal.Quotient.nontrivial_iff.mp <|
+    Module.nontrivial_of_finrank_pos (R := F) (by rw [hdeg]; norm_num)
+  have hbij : Function.Bijective (algebraMap F (W.CoordinateRing ⧸ I)) :=
+    Algebra.finrank_eq_one_iff_bijective_algebraMap.mp hdeg
+  let e : (W.CoordinateRing ⧸ I) ≃ₐ[F] F :=
+    (AlgEquiv.ofBijective (Algebra.ofId F _) hbij).symm
+  let ρ : W.CoordinateRing →ₐ[F] F := e.toAlgHom.comp (Ideal.Quotient.mkₐ F I)
+  have hρmem : ∀ a, ρ a = 0 ↔ a ∈ I := fun a ↦ by
+    simp only [ρ, AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk]
+    constructor
+    · intro h
+      apply Ideal.Quotient.eq_zero_iff_mem.mp
+      exact e.injective (by simpa using h)
+    · intro h
+      rw [Ideal.Quotient.eq_zero_iff_mem.mpr h, map_zero]
+  let x₀ := ρ (CoordinateRing.mk W (C X))
+  let y₀ := ρ (CoordinateRing.mk W Y)
+  have hcomp : ∀ p : F[X][Y], ρ (CoordinateRing.mk W p) = p.evalEval x₀ y₀ := fun p ↦
+    congrArg (fun g : F[X][Y] →+* F ↦ g p)
+      (ringHom_comp_mk_eq_evalEvalRingHom ρ.toRingHom ρ.commutes)
+  have heq : W.Equation x₀ y₀ := equation_of_ringHom ρ.toRingHom ρ.commutes
+  refine ⟨x₀, y₀, heq, ((XYIdeal_isMaximal_of_equation heq).eq_of_le hI ?_).symm⟩
+  rw [CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
+  refine ⟨?_, ?_⟩
+  · rw [SetLike.mem_coe, ← hρmem, CoordinateRing.XClass, hcomp]
+    simp [evalEval_C]
+  · rw [SetLike.mem_coe, ← hρmem, CoordinateRing.YClass, hcomp]
+    simp
 
 end WeierstrassCurve.Affine.CoordinateRing
 
