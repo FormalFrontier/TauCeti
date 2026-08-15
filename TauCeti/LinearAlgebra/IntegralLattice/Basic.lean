@@ -204,19 +204,6 @@ theorem ofBasis_form (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : 
     (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) :
     (ofBasis b B hB hint).form = B := (rfl)
 
-/-- The canonical embedding of the basis vector `b i` into the carrier of `ofBasis b B hB hint`. -/
-noncomputable def ofBasis.basisElem (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
-    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
-    ofBasis b B hB hint :=
-  ⟨b i, by rw [ofBasis_carrier]; exact Submodule.subset_span (Set.mem_range_self i)⟩
-
-@[simp]
-theorem ofBasis.coe_basisElem (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
-    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
-    (ofBasis.basisElem b B hB hint i : V) = b i := by
-  unfold ofBasis.basisElem
-  rfl
-
 /-- The canonical carrier basis of `ofBasis b B hB hint` induced by `b`. -/
 noncomputable def ofBasis.basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
     (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) :
@@ -224,11 +211,6 @@ noncomputable def ofBasis.basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm �
   b.restrictScalars ℤ
 
 @[simp]
-theorem ofBasis.basis_apply (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
-    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
-    ofBasis.basis b B hB hint i = ofBasis.basisElem b B hB hint i :=
-  Subtype.ext (b.restrictScalars_apply ℤ i)
-
 theorem ofBasis.coe_basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
     (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
     (ofBasis.basis b B hB hint i : V) = b i :=
@@ -262,20 +244,6 @@ theorem ofGramMatrix_form (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.Is
     (ofGramMatrix b G hG).form = Matrix.toBilin b (G.map (algebraMap ℤ ℚ)) := (rfl)
 
 open Classical in
-/-- The canonical embedding of the basis vector `b i` into the carrier of
-`ofGramMatrix b G hG`. -/
-noncomputable def ofGramMatrix.basisElem (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm)
-    (i : ι) : ofGramMatrix b G hG :=
-  ⟨b i, by rw [ofGramMatrix_carrier]; exact Submodule.subset_span (Set.mem_range_self i)⟩
-
-open Classical in
-@[simp]
-theorem ofGramMatrix.coe_basisElem (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm)
-    (i : ι) : (ofGramMatrix.basisElem b G hG i : V) = b i := by
-  unfold ofGramMatrix.basisElem
-  rfl
-
-open Classical in
 /-- The canonical carrier basis of `ofGramMatrix b G hG` induced by `b`. -/
 noncomputable def ofGramMatrix.basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
     Basis ι ℤ (ofGramMatrix b G hG) :=
@@ -283,11 +251,6 @@ noncomputable def ofGramMatrix.basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ)
 
 open Classical in
 @[simp]
-theorem ofGramMatrix.basis_apply (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (i : ι) :
-    ofGramMatrix.basis b G hG i = ofGramMatrix.basisElem b G hG i :=
-  Subtype.ext (b.restrictScalars_apply ℤ i)
-
-open Classical in
 theorem ofGramMatrix.coe_basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (i : ι) :
     (ofGramMatrix.basis b G hG i : V) = b i :=
   b.restrictScalars_apply ℤ i
@@ -298,11 +261,11 @@ the corresponding entry of the Gram matrix. -/
 @[simp]
 theorem integralForm_ofGramMatrix_apply (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm)
     (i j : ι) :
-    (ofGramMatrix b G hG).integralForm (ofGramMatrix.basisElem b G hG i)
-      (ofGramMatrix.basisElem b G hG j) = G i j := by
+    (ofGramMatrix b G hG).integralForm (ofGramMatrix.basis b G hG i)
+      (ofGramMatrix.basis b G hG j) = G i j := by
   apply Int.cast_injective (α := ℚ)
-  rw [integralForm_cast, ofGramMatrix_form, ofGramMatrix.coe_basisElem,
-    ofGramMatrix.coe_basisElem, ← LinearMap.BilinForm.toMatrix_apply (b := b),
+  rw [integralForm_cast, ofGramMatrix_form, ofGramMatrix.coe_basis,
+    ofGramMatrix.coe_basis, ← LinearMap.BilinForm.toMatrix_apply (b := b),
     LinearMap.BilinForm.toMatrix_toBilin, Matrix.map_apply]
   rfl
 

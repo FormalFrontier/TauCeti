@@ -182,8 +182,7 @@ theorem gramMatrix_ofGramMatrix {ι : Type v} [Fintype ι]
     (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
     (ofGramMatrix b G hG).gramMatrix (ofGramMatrix.basis b G hG) = G := by
   ext i j
-  rw [gramMatrix_apply, ofGramMatrix.basis_apply, ofGramMatrix.basis_apply,
-    integralForm_ofGramMatrix_apply]
+  rw [gramMatrix_apply, integralForm_ofGramMatrix_apply]
 
 /-- The signed Gram determinant of `ofGramMatrix b G hG` in its canonical carrier basis is the
 determinant of `G`. -/
