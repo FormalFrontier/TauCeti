@@ -216,7 +216,6 @@ def eigenspaceSup : LieSubmodule K (t.toLieSubalgebra K) M :=
     intro z hz y hy
     exact (iSup_le hz : S ≤ S.comap (toEnd K L M z)) hy
   t.lieSubmoduleOfStable S
-    (key h fun ν _ hw ↦ Submodule.mem_iSup_of_mem ν (lie_mem_eigenspace hw))
     (key e fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν + 2) (lie_mem_eigenspace_add_two t hw))
     (key f fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν - 2) (lie_mem_eigenspace_sub_two t hw))
 

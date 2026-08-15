@@ -99,7 +99,6 @@ def weightStringSubmodule (P : t.HasPrimitiveVectorWith m μ) :
       Submodule.span_le.2 (Set.range_subset_iff.2 fun i ↦ by simpa using hz i)
     exact hle hy
   t.lieSubmoduleOfStable S
-    (key h fun i ↦ by rw [P.lie_h_pow_toEnd_f]; exact Submodule.smul_mem _ _ (hmem i))
     (key e fun i ↦ by
       match i with
       | 0 =>
