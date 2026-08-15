@@ -80,11 +80,18 @@ private lemma subgroupOrbitToOrbit_mk (Γ : Subgroup SL(2, ℤ)) (p : ℍ) :
     subgroupOrbitToOrbit Γ (Quotient.mk'' p) = Quotient.mk'' p := by
   rfl
 
+private lemma equivSubgroupOrbits_fst (Γ : Subgroup SL(2, ℤ))
+    (r : MulAction.orbitRel.Quotient Γ ℍ) :
+    (MulAction.equivSubgroupOrbits ℍ Γ r).1 = subgroupOrbitToOrbit Γ r := by
+  induction r using Quotient.inductionOn' with
+  | _ p => rfl
+
 private noncomputable def subgroupOrbitFiberEquiv (Γ : Subgroup SL(2, ℤ))
     (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
     {r : MulAction.orbitRel.Quotient Γ ℍ // subgroupOrbitToOrbit Γ r = q} ≃
       MulAction.orbitRel.Quotient Γ q.orbit :=
-  ((MulAction.equivSubgroupOrbits ℍ Γ).subtypeEquiv fun _ ↦ Iff.rfl).trans
+  ((MulAction.equivSubgroupOrbits ℍ Γ).subtypeEquiv fun r ↦ by
+    rw [equivSubgroupOrbits_fst]).trans
     (Equiv.sigmaSubtype q)
 
 private lemma finite_subgroupOrbitToOrbit_fiber [Γ.FiniteIndex]
