@@ -26,8 +26,8 @@ proves `E_R(t + u) = E_R(t) E_R(u)`, so `E_R(-t)` is its inverse. Consequently t
 of every commutative ring acts on `R ⊗[ℤ] M` by `R`-linear automorphisms.
 
 This is the base-ring-valued form of a root subgroup action in the Chevalley--Demazure
-construction. The integer specialization is the nilpotent exponential from
-`TauCeti/RingTheory/Nilpotent/Exp.lean`; the new content here is that the integral divided-power
+construction, and an arbitrary-ring analogue of the earlier integer exponential from
+`TauCeti/RingTheory/Nilpotent/Exp.lean`. The new content here is that the integral divided-power
 operators make the same family available over every parameter ring, even when the ring has positive
 characteristic.
 
@@ -225,6 +225,7 @@ private theorem sum_pow_smul_mul_sum_pow_smul
 
 /-- The integral divided-power exponential satisfies the additive one-parameter group law over
 every commutative base ring. -/
+@[simp]
 theorem baseChangeExp_add (x : Module.End ℚ V) (M : AddSubgroup V)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x)
     (t u : R) :
