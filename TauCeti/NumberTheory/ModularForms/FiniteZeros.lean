@@ -10,7 +10,7 @@ public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
 
 /-!
-# Finite zeros of a level-one modular form in the fundamental domain
+# Finite zeros of a level-one modular form in the fundamental domain `𝒟`
 
 A nonzero level-one modular form does not vanish above some height, since its cusp
 function is nonvanishing on a punctured `q`-ball; its remaining nonzero-order points in
@@ -18,16 +18,35 @@ the standard fundamental domain lie in a truncated fundamental domain, which is 
 so by the accumulation-point argument and the identity theorem they are finite — the
 finite-support input to the valence formula.
 
+The statement carries no nonvanishing hypothesis: the zero form has order `0` at every
+point (`TauCeti.orderOfVanishingAt_zero`), so the set is empty and finiteness is trivial.
+That is what lets the orbit-level finite-support statements downstream drop theirs too.
+
+⚠ `𝒟` here is the fundamental domain of `𝒮ℒ`, and this file is level-one throughout. The
+general-level analogue is **not** obtained by widening the group while keeping this region:
+for `Γ` of relative index `n > 1` an `𝒮ℒ`-orbit splits into up to `n` `Γ`-orbits, and `𝒟`
+need not meet all of them, so bounding the zeros inside `𝒟` does not bound the order divisor
+on `Γ \ ℍ`. (It can meet more than one: `𝒟` is closed, and its boundary carries `𝒮ℒ`-equivalent
+representatives — the two vertical edges under `T`, the two arc halves under `S` — which may
+fall in distinct `Γ`-orbits.) The general statement belongs at the orbit level, downstream of
+`TauCeti.ModularForm.orderOfVanishingOnOrbit`.
+
 ## Main declarations
 
 * `TauCeti.ModularForm.exists_height_nonvanishing`: a nonzero form does not vanish at
   points of imaginary part above some height.
-* `TauCeti.ModularForm.finite_zeros_in_fd`: finiteness of the nonzero-order points in `𝒟`.
+* `TauCeti.ModularForm.finite_zeros_in_fd`: finiteness of the nonzero-order points of a
+  level-one form lying in `𝒟`.
 
 ## References
 
-* [AINTLIB `LeanModularForms`](https://github.com/CBirkbeck/AINTLIB) — the valence-formula
-  development this file ports onto the current Mathlib pin.
+* [AINTLIB `LeanModularForms`](https://github.com/CBirkbeck/AINTLIB), Chris Birkbeck,
+  Apache 2.0, commit `2baa76f742bdb4fb8ee323fabba41203bd390e08` — `finite_zeros_in_fd` is
+  ported from `finite_zeros_in_fdFM`
+  (`projects/LeanModularForms/LeanModularForms/ForMathlib/Orbits.lean`), through the same
+  compact-truncation architecture as `modularForm_finitely_many_zeros_in_fdBox`
+  (`ForMathlib/ModularInvariance.lean`). Dropping the source's nonvanishing hypothesis is
+  new here, and rests on TauCeti's `untop₀` order-zero convention.
 -/
 
 public noncomputable section
@@ -55,10 +74,15 @@ lemma exists_height_nonvanishing [ModularFormClass F Γ k] (hh : 0 < h)
   rw [← SlashInvariantFormClass.eq_cuspFunction f p hΓ hh.ne'] at hfp
   exact hfp
 
-/-- The set of points of the fundamental domain at which the vanishing order of a nonzero
-level-one modular form is nonzero is finite. -/
-lemma finite_zeros_in_fd [ModularFormClass F 𝒮ℒ k] (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+/-- The points of the level-one fundamental domain `𝒟` at which a level-one modular form has
+nonzero vanishing order are finite in number.
+
+No nonvanishing hypothesis: the zero form has order `0` at every point, so the set is empty
+and finiteness is trivial. -/
+lemma finite_zeros_in_fd [ModularFormClass F 𝒮ℒ k] :
     Set.Finite {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt f p ≠ 0} := by
+  rcases eq_or_ne (⇑f : ℍ → ℂ) 0 with hf | hf
+  · simp [hf]
   obtain ⟨H₀, hH₀_no⟩ := exists_height_nonvanishing one_pos (by simp) hf
   have hK : IsCompact (UpperHalfPlane.coe '' ModularGroup.truncatedFundamentalDomain H₀) :=
     (ModularGroup.isCompact_truncatedFundamentalDomain H₀).image continuous_coe

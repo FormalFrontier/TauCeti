@@ -31,6 +31,8 @@ exactly the statement the roadmap asks for.
 ## Main statements
 
 * `TauCeti.gaussianHermitePiBasis` — the multi-index basis.
+* `TauCeti.gaussianHermitePiBasis_apply` — the `a`-th vector is the tensor `TauCeti.L2piMul` of the
+  one-dimensional Gaussian Hermite vectors, as an equality of `L²` vectors.
 * `TauCeti.coeFn_gaussianHermitePiBasis` — the anti-vacuity pin: the `a`-th vector really is the
   product `∏ᵢ H_{aᵢ}(xᵢ)/√(aᵢ!)`.
 * `TauCeti.sqrt_prod_gaussianPDFReal_smul_gaussianHermitePiBasis`: scaling the `a`-th vector by
@@ -52,6 +54,15 @@ Hermite basis in every coordinate. -/
 noncomputable def gaussianHermitePiBasis :
     HilbertBasis (ι → ℕ) 𝕜 (Lp 𝕜 2 (Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ))) :=
   piHilbertBasis fun _ => gaussianHermiteHilbertBasis 𝕜
+
+/-- **The `a`-th basis vector is the tensor of the one-dimensional Gaussian Hermite vectors.**
+Stated between `L²` vectors, this is what the expansion API rewrites with, since the inner product
+against a tensor factors coordinatewise (`TauCeti.inner_L2piMul`);
+`TauCeti.coeFn_gaussianHermitePiBasis` below refines it to a pointwise product of polynomials. -/
+@[simp]
+theorem gaussianHermitePiBasis_apply (a : ι → ℕ) :
+    gaussianHermitePiBasis 𝕜 ι a = L2piMul fun i => gaussianHermiteHilbertBasis 𝕜 (a i) := by
+  rw [gaussianHermitePiBasis, piHilbertBasis_apply]
 
 /-- **The basis vectors are the multi-index Hermite products.** Without this the construction would
 only exhibit *some* Hilbert basis of `L²(γ^ι)`. The coordinatewise identification transfers to the

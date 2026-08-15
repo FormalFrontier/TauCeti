@@ -47,23 +47,28 @@ Both route through the fact that `normEDS` is an elliptic sequence, along
 
 for the first, and `invarDenom_eq_redInvarDenom_mul ← normEDS_mul_complEDS_div ←
 normEDS_mul_complEDS ← normEDS_mul_complEDS_of_mem ← IsEllipticSequence.normEDS` for the second.
-That fact is not in the pinned Mathlib, which records it as an open TODO
+That fact is `isEllipticSequence_normEDS` in `NormEDS.lean`, proved here through the descent of
+`Descent.lean`; the pinned Mathlib still records it as an open TODO
 (`Mathlib/NumberTheory/EllipticDivisibilitySequence.lean`: "prove that `normEDS` satisfies
-`IsEllipticDvdSequence`"), and proving it needs the parity-transfer machinery of Mathlib PR #42453.
-Carrying the bare definition across now would add a formula that no consumer can state anything
-about, so it waits for the layer that gives it meaning. Everything below is independent of that
-fact: nothing carries an ellipticity hypothesis, and the source discharges the ellipticity
-variables over exactly this block.
+`IsEllipticDvdSequence`"). What the denominator side still lacks is the rest of each chain above:
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS` for the first, and
+`normEDS_mul_complEDS_div ← normEDS_mul_complEDS ← normEDS_mul_complEDS_of_mem` for the second.
+Carrying the bare definition across before them would add a formula that no consumer can state
+anything about, so it waits for the layer that gives it meaning. Everything below is independent
+of that fact: nothing carries an ellipticity hypothesis, and the source discharges the
+ellipticity variables over exactly this block.
 
 ## Provenance
 
-Ported from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), declarations `invarNum_normEDS`, `redInvarNum`,
-`compl₂EDS_eq_redInvarNum_sub` and `invarNum_eq_redInvarNum_mul` — the source's own names, which
-this file respells with `reduced` written out. That file's header reads `Authors: Junyan Xu`;
-following this repository's convention for adapted material the upstream authorship is credited
-here rather than in the copyright header.
+Ported from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
+declarations `invarNum_normEDS`, `redInvarNum`, `compl₂EDS_eq_redInvarNum_sub` and
+`invarNum_eq_redInvarNum_mul` — the source's own names, which this file respells with `reduced`
+written out. That file's header reads `Authors: David Kurniadi Angdinata`; following this
+repository's convention for adapted material the upstream authorship is credited here rather than
+in the copyright header. J. Xu is acknowledged for the surrounding LutzNagell development — he
+authors `Universal.lean` and co-authors `DivisionPolynomialOmega.lean` at the same revision — as
+context for this port, not as an author of the declarations above.
 
 The same declarations sit in **Mathlib PR #13057**, the upstreaming of that AINTLIB file, so they
 are portable under this project's rule and deduplicate if and when it lands.
