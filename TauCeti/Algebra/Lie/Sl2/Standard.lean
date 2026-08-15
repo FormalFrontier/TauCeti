@@ -356,7 +356,7 @@ instance [Nontrivial K] : Nontrivial (Sl2Std K n) :=
   inferInstanceAs (Nontrivial (Fin (n + 1) → K))
 
 /-- The coordinate basis `v₀, …, vₙ` of `V(n)`, a weight basis for the Cartan operator. -/
-@[expose] noncomputable def basis : Basis (Fin (n + 1)) K (Sl2Std K n) :=
+noncomputable def basis : Basis (Fin (n + 1)) K (Sl2Std K n) :=
   Pi.basisFun K (Fin (n + 1))
 
 variable {K n}

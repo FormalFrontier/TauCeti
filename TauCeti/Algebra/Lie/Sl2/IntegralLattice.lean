@@ -34,8 +34,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.Sl2Std.integralLattice`: the coordinate `ℤ`-lattice in `V(n)`.
 * `TauCeti.Sl2Std.integerCoordinatesLinearEquiv`: its identification with
   `Fin (n + 1) → ℤ`.
-* `TauCeti.Sl2Std.integerCoordinatesLinearEquiv_apply_coe` and
-  `TauCeti.Sl2Std.integerCoordinatesLinearEquiv_symm_apply_coe`: coordinate characterizations
+* `TauCeti.Sl2Std.coe_integerCoordinatesLinearEquiv_apply` and
+  `TauCeti.Sl2Std.coe_integerCoordinatesLinearEquiv_symm_apply`: coordinate characterizations
   of the forward and inverse identification.
 * `TauCeti.Sl2Std.dividedPower_raise_apply` and
   `TauCeti.Sl2Std.dividedPower_lower_apply`: the integral coordinate formulas for the root
@@ -268,7 +268,7 @@ variable (n : ℕ)
 
 A vector belongs to this submodule exactly when each of its coordinates is an integer viewed in
 `ℚ`; see `mem_integralLattice_iff`. -/
-@[expose] def integralLattice : Submodule ℤ (Sl2Std ℚ n) :=
+def integralLattice : Submodule ℤ (Sl2Std ℚ n) :=
   Submodule.span ℤ (Set.range (basis ℚ n))
 
 /-- A vector belongs to the standard integral lattice exactly when all its coordinates are
@@ -287,7 +287,7 @@ noncomputable def integerCoordinatesLinearEquiv :
 
 /-- Inverse evaluation of the coordinate linear equivalence yields the integer coordinates. -/
 @[simp]
-theorem integerCoordinatesLinearEquiv_symm_apply_coe (v : integralLattice n) (i : Fin (n + 1)) :
+theorem coe_integerCoordinatesLinearEquiv_symm_apply (v : integralLattice n) (i : Fin (n + 1)) :
     (((integerCoordinatesLinearEquiv n).symm v i : ℤ) : ℚ) = (v : Sl2Std ℚ n) i := by
   have h := Module.Basis.restrictScalars_repr_apply ℤ (basis ℚ n) v i
   have hequiv : (integerCoordinatesLinearEquiv n).symm v i =
@@ -297,9 +297,9 @@ theorem integerCoordinatesLinearEquiv_symm_apply_coe (v : integralLattice n) (i 
 
 /-- Forward evaluation of the coordinate linear equivalence on a coordinate vector. -/
 @[simp]
-theorem integerCoordinatesLinearEquiv_apply_coe (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
+theorem coe_integerCoordinatesLinearEquiv_apply (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
     ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
-  have h := integerCoordinatesLinearEquiv_symm_apply_coe n (integerCoordinatesLinearEquiv n z) i
+  have h := coe_integerCoordinatesLinearEquiv_symm_apply n (integerCoordinatesLinearEquiv n z) i
   rw [LinearEquiv.symm_apply_apply] at h
   exact h.symm
 
@@ -467,7 +467,7 @@ theorem kostantForm_apply_mem_integralLattice
 
 /-- The canonical representation of the rank-one Kostant integral form on the standard
 integral lattice `V(n)ℤ`. -/
-@[expose] noncomputable def kostantRepresentationIntegralLattice :
+noncomputable def kostantRepresentationIntegralLattice :
     TauCeti.UniversalEnvelopingAlgebra.kostantForm
         ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2] →ₐ[ℤ]
       Module.End ℤ (integralLattice n) where
@@ -509,6 +509,6 @@ theorem coe_kostantRepresentationIntegralLattice_apply
     (v : integralLattice n) :
     ((kostantRepresentationIntegralLattice n u v : integralLattice n) : Sl2Std ℚ n) =
       kostantRepresentation n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n) :=
-  rfl
+  (rfl)
 
 end TauCeti.Sl2Std
