@@ -35,9 +35,9 @@ closure; its descent and the component group are later parts of Layer 3.
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 2.37.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Section 6.7.
 
-The proof of antipode involutivity reuses Mathlib's categorical group-object identity
-`CategoryTheory.GrpObj.inv_comp_inv`; the induced ring equivalence then transports the connected
-component through the corresponding homeomorphism of prime spectra.
+The proof of antipode involutivity reuses Mathlib's convolution group on algebra maps: inverse is
+precomposition with the antipode, so `inv_inv` gives the result. The induced ring equivalence then
+transports the connected component through the corresponding homeomorphism of prime spectra.
 
 This advances Layer 3, "Identity component `G°` and component group `π₀(G)`", of the
 ReductiveGroups roadmap. The next step is comultiplication closure and the resulting quotient
@@ -46,14 +46,14 @@ Hopf algebra; geometric connectedness and the finite étale component group then
 
 public section
 
-open CategoryTheory AlgebraicGeometry
+open AlgebraicGeometry
 
 namespace TauCeti.FiniteTypeCommHopfAlgCat
 
-universe u
+universe u v
 
 variable {k : Type u} [Field k]
-variable (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+variable (H : FiniteTypeCommHopfAlgCat.{u, v} k)
 
 local instance : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
 
@@ -63,13 +63,9 @@ private abbrev augmentationPrime : PrimeSpectrum H :=
 
 private theorem antipode_involutive (x : H) :
     HopfAlgebra.antipode k (HopfAlgebra.antipode k x) = x := by
-  have h := CategoryTheory.GrpObj.inv_comp_inv
-    (Opposite.op (CommAlgCat.of k H))
-  have h' := congrArg Quiver.Hom.unop h
-  have hx := DFunLike.congr_fun (congrArg CommAlgCat.Hom.hom h') x
-  -- The categorical inverse is the antipode after unbundling the opposite commutative algebra.
-  change HopfAlgebra.antipode k (HopfAlgebra.antipode k x) = x at hx
-  exact hx
+  have h := congrArg (fun f : WithConv (H →ₐ[k] H) ↦ f x)
+    (inv_inv (WithConv.toConv (AlgHom.id k H)))
+  exact h
 
 /-- The antipode as an involutive algebra equivalence. -/
 private noncomputable def antipodeAlgEquiv : H ≃ₐ[k] H :=
@@ -82,6 +78,35 @@ private theorem antipodeAlgEquiv_apply (x : H) :
     antipodeAlgEquiv H x = HopfAlgebra.antipode k x :=
   rfl
 
+/-- Pulling a basic open back along the spectrum homeomorphism induced by the antipode gives the
+basic open of the antipode. This records the transport through `homeomorphOfRingEquiv`
+explicitly. -/
+private theorem antipodeAlgEquiv_preimage_basicOpen (x : H) :
+    PrimeSpectrum.homeomorphOfRingEquiv (antipodeAlgEquiv H).symm.toRingEquiv ⁻¹'
+        PrimeSpectrum.basicOpen x =
+      PrimeSpectrum.basicOpen (HopfAlgebra.antipode k x) := by
+  change PrimeSpectrum.comap (antipodeAlgEquiv H).toRingHom ⁻¹'
+      PrimeSpectrum.basicOpen x = PrimeSpectrum.basicOpen (HopfAlgebra.antipode k x)
+  change PrimeSpectrum.comap (antipodeAlgEquiv H).toRingHom ⁻¹'
+      PrimeSpectrum.basicOpen x = PrimeSpectrum.basicOpen (antipodeAlgEquiv H x)
+  have hopen :=
+    congrArg SetLike.coe (PrimeSpectrum.comap_basicOpen (antipodeAlgEquiv H).toRingHom x)
+  simp only [TopologicalSpace.Opens.coe_comap, ContinuousMap.coe_mk] at hopen
+  have happly : (antipodeAlgEquiv H).toRingEquiv.toRingHom x =
+      antipodeAlgEquiv H x := rfl
+  rw [happly] at hopen
+  exact hopen
+
+/-- The antipode preserves membership in the augmentation prime, since the counit is unchanged by
+the antipode. This exposes the kernel-point and counit reductions used below. -/
+private theorem antipodeAlgEquiv_mem_augmentationPrime_iff (x : H) :
+    antipodeAlgEquiv H x ∈ (augmentationPrime H).asIdeal ↔
+      x ∈ (augmentationPrime H).asIdeal := by
+  rw [AlgHom.kernelPoint_asIdeal, RingHom.mem_ker, RingHom.mem_ker]
+  change Coalgebra.counit (R := k) (antipodeAlgEquiv H x) = 0 ↔
+    Coalgebra.counit (R := k) x = 0
+  rw [antipodeAlgEquiv_apply, HopfAlgebra.counit_antipode]
+
 private theorem antipode_connectedComponentIdempotent :
     HopfAlgebra.antipode k
         (PrimeSpectrum.connectedComponentIdempotent (augmentationPrime H)) =
@@ -93,11 +118,7 @@ private theorem antipode_connectedComponentIdempotent :
   have hfix : h (augmentationPrime H) = augmentationPrime H := by
     apply PrimeSpectrum.ext
     ext y
-    change S y ∈ (augmentationPrime H).asIdeal ↔ y ∈ (augmentationPrime H).asIdeal
-    simp only [AlgHom.kernelPoint_asIdeal, RingHom.mem_ker]
-    change Coalgebra.counit (R := k) (S y) = 0 ↔ Coalgebra.counit (R := k) y = 0
-    dsimp only [S]
-    rw [antipodeAlgEquiv_apply, HopfAlgebra.counit_antipode]
+    exact antipodeAlgEquiv_mem_augmentationPrime_iff H y
   have hfix_symm : h.symm (augmentationPrime H) = augmentationPrime H := by
     apply h.injective
     rw [h.apply_symm_apply, hfix]
@@ -114,7 +135,8 @@ private theorem antipode_connectedComponentIdempotent :
     (augmentationPrime H)).mpr
   calc
     (PrimeSpectrum.basicOpen (HopfAlgebra.antipode k e) : Set (PrimeSpectrum H)) =
-        h ⁻¹' PrimeSpectrum.basicOpen e := rfl
+        h ⁻¹' PrimeSpectrum.basicOpen e :=
+      (antipodeAlgEquiv_preimage_basicOpen H e).symm
     _ = h ⁻¹' connectedComponent (augmentationPrime H) := by
       rw [PrimeSpectrum.basicOpen_connectedComponentIdempotent]
     _ = connectedComponent (augmentationPrime H) := hcomponent
@@ -135,6 +157,7 @@ theorem antipode_mem_connectedComponentIdeal {x : H}
 
 /-- An element belongs to the ideal cutting out the counit's connected component exactly when
 its image under the antipode does. -/
+@[simp]
 theorem antipode_mem_connectedComponentIdeal_iff {x : H} :
     HopfAlgebra.antipode k x ∈ PrimeSpectrum.connectedComponentIdeal
         (show PrimeSpectrum H from Bialgebra.augmentationPoint k H) ↔
