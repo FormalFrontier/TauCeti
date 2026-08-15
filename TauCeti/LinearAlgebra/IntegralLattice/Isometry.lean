@@ -199,6 +199,28 @@ theorem coe_carrierEquiv_apply (e : Isometry L M) (x : L) :
 theorem coe_carrierEquiv_symm_apply (e : Isometry L M) (y : M) :
     (e.carrierEquiv.symm y : V) = e.symm (y : W) := (rfl)
 
+/-- The carrier restriction of the identity isometry is the identity linear equivalence. -/
+@[simp]
+theorem carrierEquiv_refl (L : IntegralLattice V) :
+    (refl L).carrierEquiv = LinearEquiv.refl ℤ L := by
+  ext
+  rfl
+
+/-- The carrier restriction of an inverse isometry is the inverse of the carrier restriction. -/
+@[simp]
+theorem carrierEquiv_symm (e : Isometry L M) :
+    e.symm.carrierEquiv = e.carrierEquiv.symm := by
+  ext
+  rfl
+
+/-- The carrier restriction of a composed isometry is the composition of the carrier
+restrictions. -/
+@[simp]
+theorem carrierEquiv_trans (e : Isometry L M) (f : Isometry M N) :
+    (e.trans f).carrierEquiv = e.carrierEquiv.trans f.carrierEquiv := by
+  ext
+  rfl
+
 /-- The carrier equivalence preserves the induced integral bilinear forms. -/
 @[simp]
 theorem carrierEquiv_map_integralForm (e : Isometry L M) (x y : L) :
@@ -245,6 +267,25 @@ theorem extendCarrierEquiv_apply (e : L ≃ₗ[ℤ] M) (x : L) :
     rw [Basis.equiv_apply, Basis.extendOfIsLattice_apply, Basis.map_apply, Equiv.refl_apply]
   exact LinearMap.congr_fun hfg x
 
+/-- The rational extension of a carrier equivalence maps the source carrier onto the target
+carrier. -/
+@[simp]
+theorem extendCarrierEquiv_map_carrier (e : L ≃ₗ[ℤ] M) :
+    L.carrier.map ((extendCarrierEquiv e).restrictScalars ℤ).toLinearMap = M.carrier := by
+  ext y
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    rw [LinearEquiv.restrictScalars_toLinearMap, LinearMap.restrictScalars_apply,
+      LinearEquiv.coe_toLinearMap, extendCarrierEquiv_apply e ⟨x, hx⟩]
+    exact (e ⟨x, hx⟩).2
+  · intro hy
+    let yM : M := ⟨y, hy⟩
+    let xL : L := e.symm yM
+    refine ⟨(xL : V), xL.2, ?_⟩
+    rw [LinearEquiv.restrictScalars_toLinearMap, LinearMap.restrictScalars_apply,
+      LinearEquiv.coe_toLinearMap, extendCarrierEquiv_apply]
+    exact congr_arg Subtype.val (e.apply_symm_apply yM)
+
 /-- The ambient bilinear-form isometry obtained by extending a form-preserving carrier
 equivalence. -/
 private noncomputable def isometryEquivOfCarrierEquiv (e : L ≃ₗ[ℤ] M)
@@ -273,24 +314,7 @@ integral lattices. -/
 noncomputable def ofCarrierEquiv (e : L ≃ₗ[ℤ] M)
     (hform : ∀ x y, M.integralForm (e x) (e y) = L.integralForm x y) : Isometry L M where
   toIsometryEquiv := isometryEquivOfCarrierEquiv e hform
-  map_carrier := by
-    ext y
-    constructor
-    · rintro ⟨x, hx, hxy⟩
-      rw [← hxy, LinearEquiv.restrictScalars_toLinearMap, LinearMap.restrictScalars_apply,
-        LinearEquiv.coe_toLinearMap]
-      dsimp [isometryEquivOfCarrierEquiv]
-      rw [extendCarrierEquiv_apply e ⟨x, hx⟩]
-      exact (e ⟨x, hx⟩).2
-    · intro hy
-      let yM : M := ⟨y, hy⟩
-      let xL : L := e.symm yM
-      refine ⟨(xL : V), xL.2, ?_⟩
-      rw [LinearEquiv.restrictScalars_toLinearMap, LinearMap.restrictScalars_apply,
-        LinearEquiv.coe_toLinearMap]
-      dsimp [isometryEquivOfCarrierEquiv]
-      rw [extendCarrierEquiv_apply]
-      exact congr_arg Subtype.val (e.apply_symm_apply yM)
+  map_carrier := extendCarrierEquiv_map_carrier e
 
 @[simp]
 theorem ofCarrierEquiv_apply (e : L ≃ₗ[ℤ] M)
