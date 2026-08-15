@@ -94,7 +94,7 @@ theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   have hFdiff : DifferentiableAt ℝ F (s, 0) := hF.differentiable (by norm_num) (s, 0)
   have hpartial := (hasFDerivAt_timeSlice hFdiff).hasDerivAt
   have hfAt := f.contMDiff.mdifferentiable (by simp)
@@ -128,7 +128,7 @@ theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   have hFdiff : DifferentiableAt ℝ F (0, t) := hF.differentiable (by norm_num) (0, t)
   have hpartial := hasDerivAt_parameterCurve hFdiff
   have hfAt := f.contMDiff.mdifferentiable (by simp)
@@ -163,7 +163,7 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
   let RXf := rightInvariantDerivative (I := I) X f
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   -- Identify the two partial derivatives with the invariant directional derivatives.
   have hspaceFun : (fun s => spatialFDeriv F 0 s 1) =
       fun s => LYf (γX s * g) := by
@@ -213,8 +213,7 @@ theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
     (V := mulRightInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := g)
-    (f.contMDiff.contMDiffAt.of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out))
+    f.contMDiff.contMDiffAt
     (by simp)
     ((contMDiff_mulRightInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt
