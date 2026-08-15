@@ -7,15 +7,18 @@ module
 public import Mathlib.Algebra.GroupWithZero.NonZeroDivisors
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Recurrence
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Transfer
+import Mathlib.Data.Fin.Tuple.Sort
+import Mathlib.Data.Int.ModEq
+import Mathlib.Tactic.FinCases
 import TauCeti.NumberTheory.EllipticDivisibilitySequence.SignEquivariance
 
 /-!
-# An elliptic sequence from its two doubling recurrences
+# An elliptic net from its two doubling recurrences
 
-`IsEllipticSequence W` is a condition on every triple of integers. This file proves it
-equivalent to two families of equations indexed by a *single* integer — the odd doubling
-recurrence from `m = 2` on and the even one from `m = 3` on — for a sequence that is odd,
-vanishes at `0`, and has `W 1` and `W 2` nonzerodivisors.
+`IsEllipticNet W` is a condition on every quadruple of integers, `IsEllipticSequence W` on every
+triple. This file proves both equivalent to two families of equations indexed by a *single*
+integer — the odd doubling recurrence from `m = 2` on and the even one from `m = 3` on — for a
+sequence that is odd, vanishes at `0`, and has `W 1` and `W 2` nonzerodivisors.
 
 The forward direction is `Recurrence.lean`. The reverse is the descent proved here, by
 induction on the largest index `a`:
@@ -38,9 +41,10 @@ hypotheses that `atom_even`, `atom_odd` and `atomRel_eq` carry.
 
 ## Main results
 
-* `isEllipticSequence_iff`: the equivalence, and the headline result of the file.
-* `IsEllipticNet.isEllipticSequence_of_rel`: its hard direction, with the recurrences in
-  relator form.
+* `isEllipticNet_iff`: the equivalence at **four** indices, and the headline result of the file.
+* `isEllipticSequence_iff`: the classical three-index equivalence, its `s = 0` case.
+* `IsEllipticNet.of_rel`: the hard direction of the first, with the recurrences in relator
+  form.
 * `IsEllipticNet.atom_mul_atomRel_eq_of_last_eq_fst`, `…_of_last_eq_snd`,
   `IsEllipticNet.atom_mul_atomRel_eq`: the three-term and ten-term expansions that drive it.
 
@@ -50,20 +54,28 @@ The descent itself is private. `AtomRelVanishes` and the three lemmas lowering i
 this proof rather than by any consumer, and the interface a caller wants is the equivalence and
 its hard direction.
 
+Both levels are stated. `isEllipticNet_iff` is the stronger statement and everything is proved
+through it, but `IsEllipticSequence` is the predicate Mathlib defines and that
+`IsEllipticDvdSequence` is built from, so the three-index equivalence is kept named rather than
+left as `(isEllipticNet_iff …).mpr … |>.isEllipticSequence` at each use. The relator-form
+`isEllipticSequence_of_rel` is *not* kept: it restated `IsEllipticNet.of_rel` in the spelling
+this file uses internally, and had no consumer.
+
 That predicate carries the parity and ordering conditions *inside* it. The induction applies its
 hypothesis at quadruples whose validity is not known in advance, so the recursive call has to be
 a statement about indices alone.
 
 The antisymmetry of `atomRel` under transpositions is **not** proved here: `SignEquivariance.lean`
 already exports `atomRel_swap₁₂`, `atomRel_swap₂₃` and `atomRel_swap₃₄`, together with the general
-`atomRelFin4_perm`. Only the first three indices are ever permuted below, the last being held at
-`0`, so the two adjacent transpositions are all that is used.
+`atomRelFin4_perm`. It is that general form the sorting uses. The net has no distinguished index —
+`rel_eq` produces the quadruple `(2p + s, 2q + s, 2r + s, s)`, in which `s` is free — so all four
+are sorted, by `Tuple.sort` composed with the reversal, rather than three against a fixed `0`.
 
-Three parts of the source's apparatus are not needed here, each because Mathlib has absorbed
-the layer that made them necessary. Its `rel₄_transf` is `atomRel_avg_sub`; its minimal-index
+Two parts of the source's apparatus are not needed here, each because Mathlib has absorbed the
+layer that made them necessary. Its `rel₄_transf` is `atomRel_avg_sub`; and its minimal-index
 definition `if Even a then 0 else 1`, with five `Int.negOnePow` lemmas about it, is `a % 2`,
-about which everything needed is `omega`; and its `Tuple.sort` argument over four indices
-reduces to six orderings of three, the last index being `0` and so already minimal.
+about which everything needed is `omega`. Its `Tuple.sort` argument over four indices **is**
+needed, and is used.
 
 ## Provenance
 
@@ -77,6 +89,9 @@ authorship is credited here rather than in the copyright header. J. Xu is acknow
 surrounding LutzNagell development — he authors `Universal.lean` and co-authors
 `DivisionPolynomialOmega.lean` at the same revision — as context for this port, not as an author of
 the declarations above.
+
+The four-index sorting and the net entry point adapt two further declarations of that same file,
+`IsEllSequence.rel₄` and `IsEllSequence.net`.
 
 The source states its expansions against its own `addMulSub` and `rel₄`, which Mathlib now
 supplies as `atom` and `atomRel` with the same definitions, so those statements transfer by
@@ -336,109 +351,115 @@ private theorem atomRelVanishes_of_rel (one : W 1 ∈ R⁰) (two : W 2 ∈ R⁰)
         (nonnegStrictAnti₄_abs_avg_sub h1 (by omega) h2 h3)
     · exact atomRel_eq_zero_of_gap_two oddRec evenRec (by omega) hb
 
-/-- Three distinct positive even indices, in any order, against a last index of `0`. The six
-orderings are reached from the decreasing one by the adjacent transpositions; the last index is
-already minimal, so only the first three need sorting and the general `Tuple.sort` argument the
-source uses is not required. The local `sorted` is the descent specialised to that decreasing
-shape, which is the only shape the six branches ever need. -/
-private theorem atomRel_eq_zero_of_ne (odd : W.Odd)
-    (descent : ∀ a b c d : ℤ, AtomRelVanishes W a b c d) {x y z : ℤ}
-    (hx : 0 < x) (hy : 0 < y) (hz : 0 < z) (px : x % 2 = 0) (py : y % 2 = 0) (pz : z % 2 = 0)
-    (hxy : x ≠ y) (hyz : y ≠ z) (hxz : x ≠ z) :
-    atomRel W x y z 0 = 0 := by
-  have sorted {u v w : ℤ} (pu : u % 2 = 0) (pv : v % 2 = 0) (pw : w % 2 = 0)
-      (hw : 0 < w) (hwv : w < v) (hvu : v < u) : atomRel W u v w 0 = 0 :=
-    descent u v w 0 ⟨by omega, by omega, by omega⟩ (by rw [nonnegStrictAnti₄_iff]; omega)
-  rcases lt_trichotomy x y with h₁ | h₁ | h₁
-  · rcases lt_trichotomy y z with h₂ | h₂ | h₂
-    · have h := sorted pz py px hx h₁ h₂
-      rw [atomRel_swap₁₂ odd z y x 0, atomRel_swap₂₃ odd y z x 0,
-        atomRel_swap₁₂ odd y x z 0] at h
-      simpa using h
-    · exact absurd h₂ hyz
-    · rcases lt_trichotomy x z with h₃ | h₃ | h₃
-      · have h := sorted py pz px hx h₃ h₂
-        rw [atomRel_swap₂₃ odd y z x 0, atomRel_swap₁₂ odd y x z 0] at h
-        simpa using h
-      · exact absurd h₃ hxz
-      · have h := sorted py px pz hz h₃ h₁
-        rw [atomRel_swap₁₂ odd y x z 0] at h
-        simpa using h
-  · exact absurd h₁ hxy
-  · rcases lt_trichotomy x z with h₂ | h₂ | h₂
-    · have h := sorted pz px py hy h₁ h₂
-      rw [atomRel_swap₁₂ odd z x y 0, atomRel_swap₂₃ odd x z y 0] at h
-      simpa using h
-    · exact absurd h₂ hxz
-    · rcases lt_trichotomy y z with h₃ | h₃ | h₃
-      · have h := sorted px pz py hy h₃ h₂
-        rw [atomRel_swap₂₃ odd x z y 0] at h
-        simpa using h
-      · exact absurd h₃ hyz
-      · exact sorted px py pz hz h₃ h₁
+/-- **Four pairwise distinct nonnegative indices of one parity, in any order.** The tuple is
+sorted by `Tuple.sort` and the relator read off the sorted order, `atomRelFin4_perm` supplying the
+sign. No index is pinned at `0` here, so there is no distinguished minimum and the sorting needs
+the general permutation argument rather than the six orderings of three free indices. -/
+private theorem atomRelFin4_eq_zero_of_injective (odd : W.Odd)
+    (descent : ∀ a b c d : ℤ, AtomRelVanishes W a b c d) {t : Fin 4 → ℤ}
+    (nonneg : ∀ i, 0 ≤ t i) (par : ∀ i j, t i % 2 = t j % 2) (inj : Function.Injective t) :
+    atomRelFin4 W t = 0 := by
+  set σ : Equiv.Perm (Fin 4) := Fin.revPerm.trans (Tuple.sort t) with hσ
+  -- `t ∘ Tuple.sort t` is monotone and injective, hence strictly monotone; precomposing with the
+  -- reversal turns that into the strict decrease the descent consumes.
+  have hstrict : StrictMono (t ∘ Tuple.sort t) :=
+    (Tuple.monotone_sort t).strictMono_of_injective (inj.comp (Tuple.sort t).injective)
+  have hanti : ∀ i j : Fin 4, i < j → (t ∘ σ) j < (t ∘ σ) i := fun i j hij ↦ by
+    simpa [hσ, Function.comp_assoc] using hstrict (Fin.rev_lt_rev.mpr hij)
+  have hzero : atomRelFin4 W (t ∘ σ) = 0 := by
+    rw [atomRelFin4_def]
+    refine descent _ _ _ _ ⟨par _ _, par _ _, par _ _⟩ ?_
+    rw [nonnegStrictAnti₄_iff]
+    exact ⟨nonneg _, hanti 2 3 (by decide), hanti 1 2 (by decide), hanti 0 1 (by decide)⟩
+  rw [atomRelFin4_perm odd σ t] at hzero
+  exact (smul_eq_zero_iff_eq (Equiv.Perm.sign σ)).mp hzero
 
-/-- Three nonnegative even indices against `0`, with no distinctness assumed: every coincidence
-puts two indices of the relator equal, and each such case is one of Mathlib's `atomRel_same`
-lemmas, whose value carries a factor `W 0`. -/
-private theorem atomRel_eq_zero_of_nonneg (odd : W.Odd) (zero : W 0 = 0)
-    (descent : ∀ a b c d : ℤ, AtomRelVanishes W a b c d) {x y z : ℤ}
-    (hx : 0 ≤ x) (hy : 0 ≤ y) (hz : 0 ≤ z) (px : x % 2 = 0) (py : y % 2 = 0) (pz : z % 2 = 0) :
-    atomRel W x y z 0 = 0 := by
-  rcases eq_or_lt_of_le hx with rfl | hx'
-  · rw [atomRel_same₁₄ odd]; simp [zero]
-  rcases eq_or_lt_of_le hy with rfl | hy'
-  · rw [atomRel_same₂₄ odd]; simp [zero]
-  rcases eq_or_lt_of_le hz with rfl | hz'
-  · rw [atomRel_same₃₄]; simp [zero]
-  rcases eq_or_ne x y with rfl | hxy
-  · rw [atomRel_same₁₂]; simp [zero]
-  rcases eq_or_ne y z with rfl | hyz
-  · rw [atomRel_same₂₃]; simp [zero]
-  rcases eq_or_ne x z with rfl | hxz
-  · rw [atomRel_same₁₃ odd]; simp [zero]
-  exact atomRel_eq_zero_of_ne odd descent hx' hy' hz' px py pz hxy hyz hxz
+/-- **The relator vanishes at any quadruple of one parity.** All four indices are made
+nonnegative by sign equivariance, a coincidence between any two is one of Mathlib's
+`atomRel_same` lemmas, and the remaining pairwise-distinct case is sorted. This is the net
+statement, and the only reduction the file needs: the sequence case is its `d = 0` instance. -/
+private theorem atomRel_eq_zero_of_parity (odd : W.Odd) (zero : W 0 = 0)
+    (descent : ∀ a b c d : ℤ, AtomRelVanishes W a b c d) {a b c d : ℤ}
+    (parity : d % 2 = a % 2 ∧ d % 2 = b % 2 ∧ d % 2 = c % 2) :
+    atomRel W a b c d = 0 := by
+  obtain ⟨pa, pb, pc⟩ := parity
+  rw [← atomRel_abs₁ odd, ← atomRel_abs₂ odd, ← atomRel_abs₃ odd, ← atomRel_abs₄]
+  by_cases hab : |a| = |b|
+  · rw [hab, atomRel_same₁₂]; simp [zero]
+  by_cases hac : |a| = |c|
+  · rw [← hac, atomRel_same₁₃ odd]; simp [zero]
+  by_cases had : |a| = |d|
+  · rw [← had, atomRel_same₁₄ odd]; simp [zero]
+  by_cases hbc : |b| = |c|
+  · rw [← hbc, atomRel_same₂₃]; simp [zero]
+  by_cases hbd : |b| = |d|
+  · rw [← hbd, atomRel_same₂₄ odd]; simp [zero]
+  by_cases hcd : |c| = |d|
+  · rw [← hcd, atomRel_same₃₄]; simp [zero]
+  have habs : ∀ x : ℤ, |x| % 2 = x % 2 := fun _ ↦ Int.abs_modEq_two
+  have hpar : ∀ i j : Fin 4, (![|a|, |b|, |c|, |d|] : Fin 4 → ℤ) i % 2 =
+      (![|a|, |b|, |c|, |d|] : Fin 4 → ℤ) j % 2 := by
+    intro i j; fin_cases i <;> fin_cases j <;> simp [habs] <;> omega
+  have hinj : Function.Injective (![|a|, |b|, |c|, |d|] : Fin 4 → ℤ) := by
+    intro i j hij
+    fin_cases i <;> fin_cases j <;> simp_all
+  have hzero := atomRelFin4_eq_zero_of_injective odd descent (t := ![|a|, |b|, |c|, |d|])
+    (fun i ↦ by fin_cases i <;> simp [abs_nonneg]) hpar hinj
+  -- `atomRelFin4_def` is the bridge back to `atomRel`; `simp` then only reduces the projections.
+  rw [atomRelFin4_def] at hzero
+  simpa using hzero
 
-/-- `omega` cannot parse `|·|`, so the sign split has to happen before it is called. -/
-private theorem abs_two_mul_emod_two (p : ℤ) : |2 * p| % 2 = 0 := by
-  rcases abs_cases (2 * p) with ⟨h, _⟩ | ⟨h, _⟩ <;> rw [h] <;> omega
-
-/-- **An elliptic sequence from its two doubling recurrences.** A sequence that is odd, vanishes
-at `0`, has `W 1` and `W 2` nonzerodivisors, and satisfies the odd recurrence from `m = 2` and
-the even one from `m = 3`, satisfies the full elliptic-net relation at every triple.
-
-This is the converse direction to `IsEllipticSequence.rel_odd` and `rel_even`: those read the two
-recurrences off the relation, this rebuilds the relation from them. -/
-theorem isEllipticSequence_of_rel (odd : W.Odd) (zero : W 0 = 0) (one : W 1 ∈ R⁰) (two : W 2 ∈ R⁰)
+/-- **An elliptic net from the two doubling recurrences.** A sequence that is odd, vanishes at
+`0`, has `W 1` and `W 2` nonzerodivisors, and satisfies the odd recurrence from `m = 2` and the
+even one from `m = 3`, satisfies the full four-index relation at *every* quadruple. -/
+theorem of_rel (odd : W.Odd) (zero : W 0 = 0) (one : W 1 ∈ R⁰) (two : W 2 ∈ R⁰)
     (oddRec : ∀ m : ℤ, 2 ≤ m → rel W (m + 1) m 1 0 = 0)
     (evenRec : ∀ m : ℤ, 3 ≤ m → rel W (m + 1) (m - 1) 1 0 = 0) :
-    IsEllipticSequence W := by
-  intro p q r
-  have bridge := atomRel_two_mul W p q r 0
-  norm_num at bridge
-  rw [← bridge, ← atomRel_abs₁ odd, ← atomRel_abs₂ odd, ← atomRel_abs₃ odd]
-  exact atomRel_eq_zero_of_nonneg odd zero
-    (atomRelVanishes_of_rel one two oddRec evenRec) (abs_nonneg _) (abs_nonneg _) (abs_nonneg _)
-    (abs_two_mul_emod_two p) (abs_two_mul_emod_two q) (abs_two_mul_emod_two r)
+    IsEllipticNet W := by
+  -- `rel_eq` writes `rel W p q r s` as the relator at `(2p + s, 2q + s, 2r + s, s)`, whose four
+  -- indices are all congruent to `s`, so this is `atomRel_eq_zero_of_parity` at that quadruple.
+  intro p q r s
+  rw [rel_eq]
+  exact atomRel_eq_zero_of_parity odd zero (atomRelVanishes_of_rel one two oddRec evenRec)
+    ⟨by omega, by omega, by omega⟩
 
 end IsEllipticNet
+
+/-- **Being an elliptic net is exactly satisfying the two doubling recurrences.** For a sequence
+that is odd, vanishes at `0` and has `W 1`, `W 2` nonzerodivisors, the **four**-index relation at
+every quadruple is equivalent to the odd recurrence from `m = 2` and the even one from `m = 3` —
+finitely many equations per index rather than a condition on quadruples.
+
+Under these hypotheses, therefore, being an elliptic net and being an elliptic sequence are the
+same condition. They are not the same condition in general: `normEDS b c d` at arbitrary
+parameters need not have `W 2 = b` a nonzerodivisor, and `NormEDS.lean` obtains the net there
+without this equivalence. -/
+theorem isEllipticNet_iff {R : Type*} [CommRing R] {W : ℤ → R} (odd : W.Odd) (zero : W 0 = 0)
+    (one : W 1 ∈ nonZeroDivisors R) (two : W 2 ∈ nonZeroDivisors R) :
+    IsEllipticNet W ↔
+      (∀ m : ℤ, 2 ≤ m → W (2 * m + 1) * W 1 ^ 3 = W (m + 2) * W m ^ 3 - W (m - 1) * W (m + 1) ^ 3)
+        ∧ ∀ m : ℤ, 3 ≤ m → W (2 * m) * W 2 * W 1 ^ 2 =
+            W m * (W (m - 1) ^ 2 * W (m + 2) - W (m - 2) * W (m + 1) ^ 2) := by
+  refine ⟨fun h ↦ ⟨fun m _ ↦ h.isEllipticSequence.rel_odd m,
+    fun m _ ↦ h.isEllipticSequence.rel_even m⟩, fun ⟨hodd, heven⟩ ↦ ?_⟩
+  refine IsEllipticNet.of_rel odd zero one two (fun m hm ↦ ?_) fun m hm ↦ ?_
+  · rw [IsEllipticNet.rel_odd]
+    linear_combination hodd m hm
+  · rw [IsEllipticNet.rel_even]
+    linear_combination heven m hm
 
 /-- **Being an elliptic sequence is exactly satisfying the two doubling recurrences.** For a
 sequence that is odd, vanishes at `0` and has `W 1`, `W 2` nonzerodivisors, the whole
 three-index relation is equivalent to the odd recurrence from `m = 2` and the even one from
 `m = 3` — finitely many equations per index rather than a condition on triples.
 
-The forward direction is `IsEllipticSequence.rel_odd` and `rel_even`, which read the two
-recurrences off the relation; the reverse is the descent, which rebuilds the relation from
-them. -/
+This is the classical statement, about the predicate `IsEllipticSequence`; `isEllipticNet_iff`
+is its four-index strengthening. -/
 theorem isEllipticSequence_iff {R : Type*} [CommRing R] {W : ℤ → R} (odd : W.Odd) (zero : W 0 = 0)
     (one : W 1 ∈ nonZeroDivisors R) (two : W 2 ∈ nonZeroDivisors R) :
     IsEllipticSequence W ↔
       (∀ m : ℤ, 2 ≤ m → W (2 * m + 1) * W 1 ^ 3 = W (m + 2) * W m ^ 3 - W (m - 1) * W (m + 1) ^ 3)
         ∧ ∀ m : ℤ, 3 ≤ m → W (2 * m) * W 2 * W 1 ^ 2 =
-            W m * (W (m - 1) ^ 2 * W (m + 2) - W (m - 2) * W (m + 1) ^ 2) := by
-  refine ⟨fun h ↦ ⟨fun m _ ↦ h.rel_odd m, fun m _ ↦ h.rel_even m⟩, fun ⟨hodd, heven⟩ ↦ ?_⟩
-  refine IsEllipticNet.isEllipticSequence_of_rel odd zero one two (fun m hm ↦ ?_) fun m hm ↦ ?_
-  · rw [IsEllipticNet.rel_odd]
-    linear_combination hodd m hm
-  · rw [IsEllipticNet.rel_even]
-    linear_combination heven m hm
+            W m * (W (m - 1) ^ 2 * W (m + 2) - W (m - 2) * W (m + 1) ^ 2) :=
+  ⟨fun h ↦ ⟨fun m _ ↦ h.rel_odd m, fun m _ ↦ h.rel_even m⟩,
+    fun h ↦ ((isEllipticNet_iff odd zero one two).mpr h).isEllipticSequence⟩

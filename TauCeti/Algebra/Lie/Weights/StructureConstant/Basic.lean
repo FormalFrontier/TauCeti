@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.Lie.Weights.RootString
+public import TauCeti.Algebra.Lie.Weights.Root.String
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 
 /-!
@@ -29,7 +29,7 @@ This file packages that scalar as `TauCeti.IsSl2System.structureConstant`. Its c
 equation and uniqueness theorem keep downstream arguments independent of its choice-based
 implementation. The constants are non-zero when all three weights are roots, are skew-symmetric in
 `α` and `β`, transform by the expected ratio when a normalised system is rescaled, and satisfy the
-root-string product formula proved in `TauCeti/Algebra/Lie/Weights/RootString.lean`.
+root-string product formula proved in `TauCeti/Algebra/Lie/Weights/Root/String.lean`.
 
 These are the scalar identities needed before a coherent choice of signs can upgrade an
 `IsSl2System` to a Chevalley basis with constants `±(p + 1)`. This advances the explicit
