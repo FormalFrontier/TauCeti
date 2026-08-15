@@ -418,17 +418,15 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
             abel }
       map_zero' := by
         ext ⟨z₁, z₂⟩
-        change A.pairing 0 z₁ + B.pairing 0 z₂ = 0
-        simp only [pairing_zero_left, add_zero]
+        exact (congrArg₂ (· + ·) (A.pairing_zero_left z₁) (B.pairing_zero_left z₂)).trans
+          (add_zero 0)
       map_add' := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
         ext ⟨z₁, z₂⟩
-        change A.pairing (x₁ + y₁) z₁ + B.pairing (x₂ + y₂) z₂ =
-          (A.pairing x₁ z₁ + B.pairing x₂ z₂) + (A.pairing y₁ z₁ + B.pairing y₂ z₂)
-        simp only [pairing_add_left]
-        abel }
-  pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
-    change A.pairing x₁ y₁ + B.pairing x₂ y₂ = A.pairing y₁ x₁ + B.pairing y₂ x₂
-    rw [A.pairing_comm x₁ y₁, B.pairing_comm x₂ y₂]
+        exact (congrArg₂ (· + ·) (A.pairing_add_left x₁ y₁ z₁) (B.pairing_add_left x₂ y₂ z₂)).trans
+          (add_add_add_comm (A.pairing x₁ z₁) (A.pairing y₁ z₁) (B.pairing x₂ z₂)
+            (B.pairing y₂ z₂)) }
+  pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦
+    congrArg₂ (· + ·) (A.pairing_comm x₁ y₁) (B.pairing_comm x₂ y₂)
 
 @[simp]
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
@@ -629,7 +627,7 @@ theorem isIsotropic_bot : A.IsIsotropic ⊥ := by simp [IsIsotropic]
 def IsLagrangian (H : AddSubgroup A) : Prop := H = A.orthogonalComplement H
 
 /-- A subgroup is Lagrangian exactly when it equals its orthogonal complement. -/
-theorem isLagrangian_iff (H : AddSubgroup A) :
+theorem isLagrangian_def (H : AddSubgroup A) :
     A.IsLagrangian H ↔ H = A.orthogonalComplement H := Iff.rfl
 
 /-- Every Lagrangian is isotropic. -/
