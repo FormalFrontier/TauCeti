@@ -203,6 +203,7 @@ theorem finrank_neg (L : IntegralLattice V) :
 /-- The integral form of the negated lattice is the negative of the original integral form. -/
 theorem integralForm_neg_apply (L : IntegralLattice V) (x y : L) :
     (-L).integralForm x y = -L.integralForm x y := by
+  -- `rw [neg_def]` cannot rewrite through arguments whose type depends on the lattice carrier.
   change ((-1 : ℤ) • L).integralForm x y = -L.integralForm x y
   rw [integralForm_smul_apply, neg_one_mul]
 
@@ -210,6 +211,7 @@ theorem integralForm_neg_apply (L : IntegralLattice V) (x y : L) :
 @[simp]
 theorem integralForm_neg (L : IntegralLattice V) :
     (-L).integralForm = -L.integralForm := by
+  -- `rw [neg_def]` cannot rewrite an equality of forms whose domain depends on the carrier.
   change ((-1 : ℤ) • L).integralForm = -L.integralForm
   rw [integralForm_smul, neg_one_smul ℤ]
 
@@ -217,6 +219,7 @@ theorem integralForm_neg (L : IntegralLattice V) :
 @[simp]
 theorem gramMatrix_neg (L : IntegralLattice V) {ι : Type v} (e : Basis ι ℤ L) :
     (-L).gramMatrix e = -L.gramMatrix e := by
+  -- `rw [neg_def]` cannot rewrite through a basis whose type depends on the lattice carrier.
   change ((-1 : ℤ) • L).gramMatrix e = -L.gramMatrix e
   rw [gramMatrix_smul, neg_one_smul ℤ]
 
@@ -225,6 +228,7 @@ theorem gramMatrix_neg (L : IntegralLattice V) {ι : Type v} (e : Basis ι ℤ L
 theorem gramDet_neg (L : IntegralLattice V) {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
     (-L).gramDet e = (-1 : ℤ) ^ Fintype.card ι * L.gramDet e := by
+  -- `rw [neg_def]` cannot rewrite through a basis whose type depends on the lattice carrier.
   change ((-1 : ℤ) • L).gramDet e = (-1 : ℤ) ^ Fintype.card ι * L.gramDet e
   exact gramDet_smul (-1) L e
 
