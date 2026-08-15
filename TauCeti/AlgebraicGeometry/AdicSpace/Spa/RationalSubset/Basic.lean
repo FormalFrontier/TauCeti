@@ -124,6 +124,27 @@ theorem rationalSubset_subset_spa (Aplus : Subring A) (T : Finset A) (s : A) :
     rationalSubset Aplus T s ⊆ spa Aplus :=
   rationalSubset_def Aplus T s ▸ Set.inter_subset_left
 
+/-- **The containment criterion for rational subsets.** One rational subset is contained in
+another exactly when, at every point of the smaller, the larger one's numerators are dominated
+by its denominator and that denominator is off the support.
+
+Containment in `spa A⁺` is automatic on both sides, so it drops out of the criterion: only the
+`T`-over-`s` conditions are left to check. This is the set-level input to Wedhorn's comparison of
+two presentations (§8.2) — it says *which* valuation-theoretic facts a containment gives you,
+leaving the passage from those facts to invertibility of `s` and power-boundedness of `t/s` in
+the coordinate ring as a separate, genuinely algebraic step. -/
+theorem rationalSubset_subset_rationalSubset_iff (Aplus : Subring A) (T T' : Finset A)
+    (s s' : A) :
+    rationalSubset Aplus T' s' ⊆ rationalSubset Aplus T s ↔
+      ∀ v ∈ rationalSubset Aplus T' s',
+        (∀ t ∈ T, v.toValuativeRel.vle t s) ∧ ¬ v.toValuativeRel.vle s 0 := by
+  constructor
+  · intro h v hv
+    exact ((mem_rationalSubset_iff Aplus T s v).mp (h hv)).2
+  · intro h v hv
+    exact (mem_rationalSubset_iff Aplus T s v).mpr
+      ⟨rationalSubset_subset_spa Aplus T' s' hv, (h v hv).1, (h v hv).2⟩
+
 open scoped Classical in
 /-- Inserting the denominator among the numerators changes nothing — Wedhorn's "one may
 replace `T` by `T ∪ {s}`" (Definition 7.29). -/

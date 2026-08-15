@@ -22,8 +22,8 @@ general base are separate steps.
 
 ## Main declarations
 
-* `TauCeti.FiniteBicommutativeHopfAlgCat`: finite-dimensional commutative, cocommutative Hopf
-  algebras over a field.
+* `TauCeti.FiniteBicommutativeHopfAlgCat`: module-finite commutative, cocommutative Hopf
+  algebras over a commutative ring.
 * `TauCeti.FiniteBicommutativeHopfAlgCat.dualFunctor`: contravariant finite dualization.
 * `TauCeti.FiniteBicommutativeHopfAlgCat.evalIso`: the objectwise double-dual evaluation
   isomorphism, natural in morphisms by `evalIso_hom_naturality`.
@@ -45,86 +45,88 @@ namespace TauCeti
 
 universe u
 
-/-- The object property selecting finite-dimensional bicommutative Hopf algebras over a field.
+/-- The object property selecting module-finite bicommutative Hopf algebras over a commutative ring.
 
 The ambient `CommHopfAlgCat` supplies commutativity of multiplication; the second conjunct is
 cocommutativity of comultiplication. -/
-def finiteBicommutativeHopfAlgProperty (k : Type u) [Field k] :
-    ObjectProperty (_root_.CommHopfAlgCat.{u} k) :=
-  fun H => Module.Finite k H ∧ Coalgebra.IsCocomm k H
+def finiteBicommutativeHopfAlgProperty (R : Type u) [CommRing R] :
+    ObjectProperty (_root_.CommHopfAlgCat.{u} R) :=
+  fun H => Module.Finite R H ∧ Coalgebra.IsCocomm R H
 
-/-- Membership in `finiteBicommutativeHopfAlgProperty` is finite-dimensionality together with
+/-- Membership in `finiteBicommutativeHopfAlgProperty` is module-finiteness together with
 cocommutativity. -/
 @[simp]
-theorem finiteBicommutativeHopfAlgProperty_iff (k : Type u) [Field k]
-    (H : _root_.CommHopfAlgCat.{u} k) :
-    finiteBicommutativeHopfAlgProperty k H ↔
-      Module.Finite k H ∧ Coalgebra.IsCocomm k H :=
+theorem finiteBicommutativeHopfAlgProperty_iff (R : Type u) [CommRing R]
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    finiteBicommutativeHopfAlgProperty R H ↔
+      Module.Finite R H ∧ Coalgebra.IsCocomm R H :=
   Iff.rfl
 
-/-- The category of finite-dimensional bicommutative Hopf algebras over a field. -/
-abbrev FiniteBicommutativeHopfAlgCat (k : Type u) [Field k] :=
-  (finiteBicommutativeHopfAlgProperty (k := k)).FullSubcategory
+/-- The category of module-finite bicommutative Hopf algebras over a commutative ring. -/
+abbrev FiniteBicommutativeHopfAlgCat (R : Type u) [CommRing R] :=
+  (finiteBicommutativeHopfAlgProperty (R := R)).FullSubcategory
 
 namespace FiniteBicommutativeHopfAlgCat
 
-variable {k : Type u} [Field k]
+variable {R : Type u} [CommRing R]
 
-instance : CoeSort (FiniteBicommutativeHopfAlgCat.{u} k) (Type u) :=
+instance : CoeSort (FiniteBicommutativeHopfAlgCat.{u} R) (Type u) :=
   ⟨fun H => H.obj⟩
 
-instance commRing (H : FiniteBicommutativeHopfAlgCat.{u} k) : CommRing H :=
+instance commRing (H : FiniteBicommutativeHopfAlgCat.{u} R) : CommRing H :=
   inferInstanceAs (CommRing H.obj)
 
-instance hopfAlgebra (H : FiniteBicommutativeHopfAlgCat.{u} k) :
-    HopfAlgebra k H :=
-  inferInstanceAs (HopfAlgebra k H.obj)
+instance hopfAlgebra (H : FiniteBicommutativeHopfAlgCat.{u} R) :
+    HopfAlgebra R H :=
+  inferInstanceAs (HopfAlgebra R H.obj)
 
-instance finite (H : FiniteBicommutativeHopfAlgCat.{u} k) : Module.Finite k H :=
+instance finite (H : FiniteBicommutativeHopfAlgCat.{u} R) : Module.Finite R H :=
   H.property.1
 
-instance isCocomm (H : FiniteBicommutativeHopfAlgCat.{u} k) :
-    Coalgebra.IsCocomm k H :=
+instance isCocomm (H : FiniteBicommutativeHopfAlgCat.{u} R) :
+    Coalgebra.IsCocomm R H :=
   H.property.2
 
-variable (k) in
-/-- Bundle a finite-dimensional bicommutative Hopf algebra as an object of
+variable (R) in
+/-- Bundle a module-finite bicommutative Hopf algebra as an object of
 `FiniteBicommutativeHopfAlgCat`. -/
-abbrev of (H : Type u) [CommRing H] [HopfAlgebra k H] [Module.Finite k H]
-    [Coalgebra.IsCocomm k H] : FiniteBicommutativeHopfAlgCat.{u} k :=
-  ⟨_root_.CommHopfAlgCat.of k H,
-    (finiteBicommutativeHopfAlgProperty_iff k _).2 ⟨inferInstance, inferInstance⟩⟩
+abbrev of (H : Type u) [CommRing H] [HopfAlgebra R H] [Module.Finite R H]
+    [Coalgebra.IsCocomm R H] : FiniteBicommutativeHopfAlgCat.{u} R :=
+  ⟨_root_.CommHopfAlgCat.of R H,
+    (finiteBicommutativeHopfAlgProperty_iff R _).2 ⟨inferInstance, inferInstance⟩⟩
 
 /-- The bialgebra morphism underlying a morphism of finite bicommutative Hopf algebras. -/
-abbrev toBialgHom {H K : FiniteBicommutativeHopfAlgCat.{u} k} (f : H ⟶ K) :
-    H →ₐc[k] K :=
+abbrev toBialgHom {H K : FiniteBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
+    H →ₐc[R] K :=
   f.hom.hom
 
-/-- Bundle a bialgebra morphism between finite-dimensional bicommutative Hopf algebras. -/
-abbrev ofHom {H K : Type u} [CommRing H] [CommRing K] [HopfAlgebra k H]
-    [HopfAlgebra k K] [Module.Finite k H] [Module.Finite k K]
-    [Coalgebra.IsCocomm k H] [Coalgebra.IsCocomm k K] (f : H →ₐc[k] K) :
-    of k H ⟶ of k K :=
+/-- Bundle a bialgebra morphism between module-finite bicommutative Hopf algebras. -/
+abbrev ofHom {H K : Type u} [CommRing H] [CommRing K] [HopfAlgebra R H]
+    [HopfAlgebra R K] [Module.Finite R H] [Module.Finite R K]
+    [Coalgebra.IsCocomm R H] [Coalgebra.IsCocomm R K] (f : H →ₐc[R] K) :
+    of R H ⟶ of R K :=
   ObjectProperty.homMk (_root_.CommHopfAlgCat.ofHom f)
 
 /-- Morphisms of finite bicommutative Hopf algebras are determined by their underlying
 bialgebra morphisms. -/
 @[ext]
-theorem hom_ext {H K : FiniteBicommutativeHopfAlgCat.{u} k} {f g : H ⟶ K}
+theorem hom_ext {H K : FiniteBicommutativeHopfAlgCat.{u} R} {f g : H ⟶ K}
     (h : toBialgHom f = toBialgHom g) : f = g :=
-  ObjectProperty.hom_ext (P := finiteBicommutativeHopfAlgProperty k)
+  ObjectProperty.hom_ext (P := finiteBicommutativeHopfAlgProperty R)
     (_root_.CommHopfAlgCat.hom_ext h)
 
 @[simp]
-theorem toBialgHom_id {H : FiniteBicommutativeHopfAlgCat.{u} k} :
-    toBialgHom (𝟙 H : H ⟶ H) = BialgHom.id k H :=
+theorem toBialgHom_id {H : FiniteBicommutativeHopfAlgCat.{u} R} :
+    toBialgHom (𝟙 H : H ⟶ H) = BialgHom.id R H :=
   rfl
 
 @[simp]
-theorem toBialgHom_comp {H K L : FiniteBicommutativeHopfAlgCat.{u} k}
+theorem toBialgHom_comp {H K L : FiniteBicommutativeHopfAlgCat.{u} R}
     (f : H ⟶ K) (g : K ⟶ L) :
     toBialgHom (f ≫ g) = (toBialgHom g).comp (toBialgHom f) :=
   rfl
+
+variable {k : Type u} [Field k]
 
 /-- The finite dual of a finite-dimensional bicommutative Hopf algebra. -/
 noncomputable abbrev dual (H : FiniteBicommutativeHopfAlgCat.{u} k) :
