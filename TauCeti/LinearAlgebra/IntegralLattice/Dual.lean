@@ -57,15 +57,6 @@ variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 def dualCarrier (L : IntegralLattice V) : Submodule ℤ V :=
   L.form.dualSubmodule L.carrier
 
-/-- Membership in the dual carrier is the integrality of pairing against every lattice vector. -/
-@[simp]
-theorem mem_dualCarrier_iff (L : IntegralLattice V) (x : V) :
-    x ∈ L.dualCarrier ↔ ∀ y ∈ L.carrier, L.form x y ∈ (1 : Submodule ℤ ℚ) :=
-  Iff.rfl
-
-/-- An integral lattice is contained in its dual carrier. -/
-theorem carrier_le_dualCarrier (L : IntegralLattice V) : L.carrier ≤ L.dualCarrier :=
-  L.le_dual
 
 /-- The integral span of the rational basis canonically obtained from the carrier is the carrier
 itself. -/
