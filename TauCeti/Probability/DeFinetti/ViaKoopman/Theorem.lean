@@ -36,7 +36,7 @@ given the tail. This route uses actual invariance of the test event under the sh
 `invariants_shift_lt_pathTail` shows those σ-algebras genuinely differ — strictly, already over
 `Bool`. They are deliberately not unified into one σ-algebra-parametric theorem.
 
-A hypothesis difference is worth recording: these wrappers ask for `[IsProbabilityMeasure μ]` where
+A hypothesis difference is worth recording: these wrappers ask for `[IsFiniteMeasure μ]` where
 `deFinetti_viaL2` asks only for `[IsFiniteMeasure μ]`. The mean ergodic input and the conditional
 expectation of a coordinate indicator are both stated for a probability measure.
 
@@ -69,7 +69,7 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 law of the first coordinate given the shift-invariant σ-algebra as its witness. -/
 theorem conditionallyIIDWith_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) :
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) :
     ConditionallyIIDWith ρ (fun j (x : ℕ → α) => x j)
       (invariantConditionalProbabilityMeasure ρ) := by
   refine conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral
@@ -82,21 +82,21 @@ theorem conditionallyIIDWith_invariantConditionalProbabilityMeasure
 
 /-- **A contractable process is conditionally i.i.d.**, via the Koopman route. -/
 theorem conditionallyIID_of_contractable_viaKoopman [StandardBorelSpace α] [Nonempty α]
-    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     ConditionallyIID μ X := by
   have hXae : ∀ i, AEMeasurable (X i) μ := fun i => (hX_meas i).aemeasurable
   -- Supplied for instance resolution below, not referenced by name.
-  have : IsProbabilityMeasure (pathLaw μ X) := by
+  have : IsFiniteMeasure (pathLaw μ X) := by
     rw [pathLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hXae)
+    exact Measure.isFiniteMeasure_map μ _
   exact ConditionallyIID.of_directing (ConditionallyIIDWith.of_pathLaw hX_meas
     (conditionallyIIDWith_invariantConditionalProbabilityMeasure (hX.contractableLaw_pathLaw hXae)))
 
 /-- **de Finetti's theorem via Koopman operators.** An exchangeable process on a nonempty standard
 Borel state space is conditionally i.i.d. -/
 theorem deFinetti_viaKoopman [StandardBorelSpace α] [Nonempty α]
-    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX_meas : ∀ n, Measurable (X n)) (hX : Exchangeable μ X) :
     ConditionallyIID μ X :=
   conditionallyIID_of_contractable_viaKoopman
