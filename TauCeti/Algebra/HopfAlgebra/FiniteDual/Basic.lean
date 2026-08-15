@@ -56,10 +56,17 @@ abbrev ConvolutionDual (k : Type u) (H : Type v) [CommSemiring k] [AddCommMonoid
 
 namespace ConvolutionDual
 
+/-- The convolution dual of a finite-dimensional vector space is finite-dimensional. -/
+noncomputable instance instFinite (k : Type u) (H : Type v) [Field k]
+    [AddCommMonoid H] [Module k H] [Module.Finite k H] :
+    Module.Finite k (ConvolutionDual k H) := by
+  let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
+  exact LinearEquiv.finiteDimensional (WithConv.linearEquiv k (Module.Dual k H)).symm
+
 section LinearAlgebra
 
-variable (k : Type u) (H : Type v) [Field k] [AddCommGroup H] [Module k H]
-  [FiniteDimensional k H]
+variable (k : Type u) (H : Type v) [Field k] [AddCommMonoid H] [Module k H]
+  [Module.Finite k H]
 
 /-- Forget the convolution wrappers on both factors of a tensor of finite-dual elements. -/
 private noncomputable def tensorUnwrap :
@@ -69,21 +76,24 @@ private noncomputable def tensorUnwrap :
 
 /-- A tensor of finite-dual functionals is equivalently a functional on the tensor square. -/
 noncomputable def dualDistribEquiv :
-    ConvolutionDual k H ⊗[k] ConvolutionDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) :=
-  (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
+    ConvolutionDual k H ⊗[k] ConvolutionDual k H ≃ₗ[k] Module.Dual k (H ⊗[k] H) := by
+  letI : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
+  exact (tensorUnwrap k H).trans (TensorProduct.dualDistribEquiv k H H)
 
 private theorem dualDistribEquiv_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (z : H ⊗[k] H) :
     dualDistribEquiv k H w z =
       TensorProduct.dualDistrib k H H ((tensorUnwrap k H) w) z :=
-  rfl
+  by
+    let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
+    rfl
 
 end LinearAlgebra
 
 section Coalgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Ring H] [Algebra k H]
-  [FiniteDimensional k H]
+variable (k : Type u) (H : Type v) [Field k] [Semiring H] [Algebra k H]
+  [Module.Finite k H]
 
 /-- The comultiplication and counit on the finite dual, obtained by transposing multiplication
 and unit on the original algebra. -/
@@ -122,14 +132,17 @@ private theorem counit_apply' (phi : ConvolutionDual k H) :
 /-- Evaluate three finite-dual functionals on a right-associated triple tensor. -/
 private noncomputable def evalTripleEquiv :
     ConvolutionDual k H ⊗[k] (ConvolutionDual k H ⊗[k] ConvolutionDual k H) ≃ₗ[k]
-      Module.Dual k (H ⊗[k] (H ⊗[k] H)) :=
-  (TensorProduct.congr (WithConv.linearEquiv k _) (dualDistribEquiv k H)).trans
-    (TensorProduct.dualDistribEquiv k H (H ⊗[k] H))
+      Module.Dual k (H ⊗[k] (H ⊗[k] H)) := by
+  letI : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
+  exact
+    (TensorProduct.congr (WithConv.linearEquiv k _) (dualDistribEquiv k H)).trans
+      (TensorProduct.dualDistribEquiv k H (H ⊗[k] H))
 
 private theorem evalTripleEquiv_tmul_tmul_apply
     (phi psi chi : ConvolutionDual k H) (x y z : H) :
     evalTripleEquiv k H (phi ⊗ₜ[k] (psi ⊗ₜ[k] chi)) (x ⊗ₜ[k] (y ⊗ₜ[k] z)) =
       phi.ofConv x * (psi.ofConv y * chi.ofConv z) := by
+  let _ : AddCommGroup H := Module.addCommMonoidToAddCommGroup k
   simp [evalTripleEquiv, dualDistribEquiv, tensorUnwrap]
 
 private theorem evalTripleEquiv_tmul_apply
@@ -279,8 +292,8 @@ end Coalgebra
 
 section Bialgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Ring H] [Bialgebra k H]
-  [FiniteDimensional k H]
+variable (k : Type u) (H : Type v) [Field k] [Semiring H] [Bialgebra k H]
+  [Module.Finite k H]
 
 /-- `dualDistribEquiv` packaged in the convolution algebra on functionals on the tensor square. -/
 private noncomputable def evalTensorConv :
@@ -354,8 +367,8 @@ end ConvolutionDual
 
 namespace ConvolutionDual
 
-variable (k : Type u) (H : Type v) [Field k] [CommRing H] [Algebra k H]
-  [FiniteDimensional k H]
+variable (k : Type u) (H : Type v) [Field k] [CommSemiring H] [Algebra k H]
+  [Module.Finite k H]
 
 private theorem dualDistribEquiv_comm_apply
     (w : ConvolutionDual k H ⊗[k] ConvolutionDual k H) (x y : H) :
@@ -395,8 +408,8 @@ namespace ConvolutionDual
 
 section HopfAlgebra
 
-variable (k : Type u) (H : Type v) [Field k] [Ring H] [HopfAlgebra k H]
-  [FiniteDimensional k H]
+variable (k : Type u) (H : Type v) [Field k] [Semiring H] [HopfAlgebra k H]
+  [Module.Finite k H]
 
 /-- The antipode operation on the finite dual, obtained by transposing the antipode of the
 original Hopf algebra. -/

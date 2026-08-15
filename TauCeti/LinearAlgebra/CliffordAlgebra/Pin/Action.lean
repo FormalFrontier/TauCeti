@@ -245,8 +245,8 @@ theorem ι_lipschitzVectorAction_apply (x : lipschitzGroup Q) (m : M) :
   rw [lipschitzVectorAction_apply, ι_vectorMap_apply Q x.2, twistedConj_apply]
 
 /-- **A vector acts by the reflection in its orthogonal hyperplane.** These are the generators of
-the Lipschitz group, so this identification is what an eventual Cartan-Dieudonné theorem would turn
-into surjectivity of `pinToOrthogonal`. -/
+the Lipschitz group, so this identification is what Cartan--Dieudonné turns into surjectivity of
+`lipschitzToOrthogonal`. -/
 @[simp]
 theorem lipschitzVectorAction_unitι (v : M) [Invertible (Q v)] :
     lipschitzVectorAction Q ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ =
@@ -281,6 +281,17 @@ theorem coe_lipschitzToOrthogonal_apply (x : lipschitzGroup Q) (m : M) :
       lipschitzVectorAction Q x m := by
   rw [lipschitzToOrthogonal]
   rfl
+
+/-- A generating vector acts by its bundled orthogonal reflection. -/
+@[simp]
+theorem lipschitzToOrthogonal_unitι (v : M) [Invertible (Q v)] :
+    lipschitzToOrthogonal Q ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ =
+      QuadraticMap.reflectionOrthogonal Q v := by
+  apply Subtype.ext
+  rw [QuadraticMap.coe_reflectionOrthogonal]
+  apply LinearEquiv.ext
+  intro m
+  rw [coe_lipschitzToOrthogonal_apply, lipschitzVectorAction_unitι]
 
 /-! ### The Pin and spin groups -/
 

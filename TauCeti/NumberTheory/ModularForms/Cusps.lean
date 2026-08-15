@@ -159,6 +159,17 @@ lemma Subgroup.integerCuspWidth_mem_strictPeriods :
   exact Subgroup.mk_T_pow_eq_iff.mp
     ((quotientTAction_pow_smul_mk_one _).symm.trans (MulAction.pow_period_smul _ _))
 
+/-- `∞` is a cusp of a subgroup of finite relative index in `𝒮ℒ`: its integer cusp width is
+a positive strict period, which is exactly the criterion.
+
+This is the group-theoretic half of every "a form for `𝒢` is bounded at `∞`" argument; the
+form-theoretic half is one application of `ModularFormClass.bdd_at_cusps` on top of it. -/
+lemma Subgroup.isCusp_infty_of_finiteRelIndex : IsCusp OnePoint.infty 𝒢 :=
+  Subgroup.isCusp_of_mem_strictPeriods
+    (by exact_mod_cast Subgroup.integerCuspWidth_pos (𝒢 := 𝒢) :
+      (0 : ℝ) < Subgroup.integerCuspWidth 𝒢)
+    Subgroup.integerCuspWidth_mem_strictPeriods
+
 omit [𝒢.IsFiniteRelIndex 𝒮ℒ] in
 /-- The integer cusp width is minimal among positive integer strict periods. -/
 lemma Subgroup.integerCuspWidth_le {n : ℕ} (hpos : 0 < n)

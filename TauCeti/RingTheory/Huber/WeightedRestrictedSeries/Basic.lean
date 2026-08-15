@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RingTheory.Huber.RestrictedPowerSeries
+public import TauCeti.RingTheory.Huber.Restricted.PowerSeries
 public import TauCeti.Topology.Algebra.Nonarchimedean.Absorption
+public import Mathlib.RingTheory.MvPowerSeries.Equiv
 public import Mathlib.Topology.Algebra.Nonarchimedean.Bases
 public import Mathlib.Algebra.Ring.Subgroup
 public import Mathlib.RingTheory.MvPowerSeries.Trunc
@@ -60,6 +61,8 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
   multiplication by an element of `Tᵢ` an open *map*, not merely of open image.
 * `TauCeti.Huber.IsWeightedRestricted.mul`: `A⟨X⟩_T` is closed under multiplication, the point
   Wedhorn flags as not entirely clear; with the additive closure lemmas this gives the subring.
+  `TauCeti.Huber.IsWeightedRestricted.finite_coeff_notMem` restates the predicate as finiteness of
+  the exceptional set of coefficients.
 * `TauCeti.Huber.weightedNhd_subgroups_basis`: the `U⟨X⟩` are a fundamental system of
   neighbourhoods of zero for a ring topology, with its contract
   (`hasBasis_nhds_zero_weightedTopology`, `isTopologicalRing_weightedTopology`,
@@ -73,6 +76,14 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
 * `TauCeti.Huber.weightedPolynomialEquiv`, with `discreteTopology_weightedRestrictedSubring`
   and `weightedPolynomials_eq_top`: over a discrete ring the weighted topology is discrete and
   `A⟨X⟩_T` is exactly the polynomial ring.
+* `TauCeti.Huber.weightedRestrictedSubring_fin_zero` and
+  `TauCeti.Huber.weightedRestrictedSubringFinZeroEquiv`, with
+  `continuous_weightedRestrictedSubringFinZeroEquiv` and its `_symm`: in no variables every
+  series is restricted, so `A⟨X⟩_T` is `A` — and topologically so, since the index `Fin 0 →₀ ℕ`
+  is a singleton and the basic neighbourhood is cut out by that one coefficient. All of them are
+  stated for an arbitrary `T : Fin 0 → Set A` and take no weight-family hypothesis:
+  `TauCeti.Huber.isWeightFamily_fin_zero` supplies it, the condition being a statement about each
+  index and there being none.
 * `TauCeti.Huber.IsWeightedRestricted.map`, with `weightMul_map_le` and `image_weightPow`:
   restrictedness is preserved by a continuous ring map carrying each `T i` into `S i`. This is
   what `weightedMap` is built from; `weightedMap_weightedX` says it fixes the variables, while
@@ -118,7 +129,7 @@ subgroups, and every open subgroup contains one, so quantifying over all open su
 same as quantifying over the balls and the condition becomes `‖coeff ν f‖ → 0` along the
 cofinite filter. Over a general normed ring they do not agree: over `ℝ`, as above, the condition
 here is vacuous while Mathlib's still asks for `‖coeff ν f‖ → 0`. The unweighted predicate of
-`TauCeti/RingTheory/Huber/RestrictedPowerSeries.lean` is a topological limit rather than a
+`TauCeti/RingTheory/Huber/Restricted/PowerSeries.lean` is a topological limit rather than a
 condition on subgroups, and that file remarks on the comparison for it — in prose, not as a
 proved declaration. Neither notion is a special case of the other in general.
 
@@ -139,7 +150,7 @@ its `AdicSpaces` weighted-series and localisation files were checked first: they
 `A⟨X⟩_T`, and AINTLIB's `TateAlgebraWedhorn` is a different object — it retopologises the ordinary
 `A⟨X⟩` by transporting along a substitution rather than letting the carrier depend on `T`.
 
-The *proofs*, however, follow `TauCeti/RingTheory/Huber/RestrictedPowerSeries.lean`
+The *proofs*, however, follow `TauCeti/RingTheory/Huber/Restricted/PowerSeries.lean`
 (TauCetiProject/TauCeti#2348), which is itself AINTLIB-derived — and not only in API layout. In
 particular `TauCeti.Huber.IsWeightedRestricted.mul` follows the plan of `IsRestricted.mul` there:
 choose `W` with `W · W ⊆ U`; take the finite sets of coefficients of `f` and `g` that fail the `W`
@@ -570,6 +581,30 @@ theorem IsWeightedRestricted.add {T : Fin k → Set A} {f g : MvPowerSeries (Fin
   filter_upwards [hf U, hg U] with ν hfν hgν
   simpa using (weightMul T ν U.toAddSubgroup).add_mem hfν hgν
 
+/-- Weighted restrictedness, restated: for every open additive subgroup `U`, only finitely many
+coefficients fail to lie in `Tν · U`. -/
+theorem IsWeightedRestricted.finite_coeff_notMem {T : Fin k → Set A}
+    {f : MvPowerSeries (Fin k) A} (hf : IsWeightedRestricted T f) (U : OpenAddSubgroup A) :
+    {ν | MvPowerSeries.coeff ν f ∉ weightMul T ν U.toAddSubgroup}.Finite :=
+  Filter.eventually_cofinite.mp (hf U)
+
+/-- One open additive subgroup absorbing exceptional coefficients of two series at once: `Z` sends
+`coeff α f * z` into `Tα · U` for every `α ∈ F`, and `coeff β g * z` into `Tβ · U` for every
+`β ∈ G`. -/
+private theorem exists_openAddSubgroup_forall_pair_weightMul_mem [NonarchimedeanRing A]
+    {T : Fin k → Set A} (hT : IsWeightFamily T) (U : OpenAddSubgroup A)
+    (F G : Finset (Fin k →₀ ℕ)) (f g : MvPowerSeries (Fin k) A) :
+    ∃ Z : OpenAddSubgroup A,
+      (∀ α ∈ F, ∀ z ∈ Z, MvPowerSeries.coeff α f * z ∈ weightMul T α U.toAddSubgroup) ∧
+        ∀ β ∈ G, ∀ z ∈ Z, MvPowerSeries.coeff β g * z ∈ weightMul T β U.toAddSubgroup := by
+  have hU : (U : Set A) ∈ nhds (0 : A) := U.isOpen.mem_nhds U.zero_mem
+  obtain ⟨Z, hZ⟩ := NonarchimedeanRing.exists_openAddSubgroup_forall_mul_subset (F.disjSum G)
+    (Sum.elim (fun α ↦ MvPowerSeries.coeff α f) fun β ↦ MvPowerSeries.coeff β g)
+    (Sum.elim (fun α ↦ weightMul T α U.toAddSubgroup) fun β ↦ weightMul T β U.toAddSubgroup)
+    (by rintro (α | β) _ <;> exact hT.weightMul_mem_nhds _ hU)
+  exact ⟨Z, fun α hα z hz ↦ hZ (Sum.inl α) (Finset.inl_mem_disjSum.mpr hα) z hz,
+    fun β hβ z hz ↦ hZ (Sum.inr β) (Finset.inr_mem_disjSum.mpr hβ) z hz⟩
+
 /-- **`A⟨X⟩_T` is closed under multiplication** (Wedhorn 5.48, the point he flags as "not
 entirely clear").
 
@@ -588,25 +623,13 @@ theorem IsWeightedRestricted.mul [NonarchimedeanRing A] {T : Fin k → Set A}
   -- `α + β = ν` has `α` bad, `β` bad, or neither, and each case lands in `Tν · U`.
   classical
   intro U
-  have hUnhds : (U : Set A) ∈ nhds (0 : A) := U.isOpen.mem_nhds U.zero_mem
   obtain ⟨W, hWU⟩ := NonarchimedeanRing.mul_subset U
-  have hF : {α | MvPowerSeries.coeff α f ∉ weightMul T α W.toAddSubgroup}.Finite :=
-    Filter.eventually_cofinite.mp (hf W)
-  have hG : {β | MvPowerSeries.coeff β g ∉ weightMul T β W.toAddSubgroup}.Finite :=
-    Filter.eventually_cofinite.mp (hg W)
-  obtain ⟨Zf, hZf⟩ := NonarchimedeanRing.exists_openAddSubgroup_forall_mul_subset hF.toFinset
-    (fun α ↦ MvPowerSeries.coeff α f) (fun α ↦ weightMul T α U.toAddSubgroup)
-    (fun α _ ↦ hT.weightMul_mem_nhds α hUnhds)
-  obtain ⟨Zg, hZg⟩ := NonarchimedeanRing.exists_openAddSubgroup_forall_mul_subset hG.toFinset
-    (fun β ↦ MvPowerSeries.coeff β g) (fun β ↦ weightMul T β U.toAddSubgroup)
-    (fun β _ ↦ hT.weightMul_mem_nhds β hUnhds)
-  set Z : OpenAddSubgroup A := Zf ⊓ Zg
-  have hZle_f : Z ≤ Zf := inf_le_left
-  have hZle_g : Z ≤ Zg := inf_le_right
-  have hFZ : {α | MvPowerSeries.coeff α f ∉ weightMul T α Z.toAddSubgroup}.Finite :=
-    Filter.eventually_cofinite.mp (hf Z)
-  have hGZ : {β | MvPowerSeries.coeff β g ∉ weightMul T β Z.toAddSubgroup}.Finite :=
-    Filter.eventually_cofinite.mp (hg Z)
+  have hF := hf.finite_coeff_notMem W
+  have hG := hg.finite_coeff_notMem W
+  obtain ⟨Z, hZf, hZg⟩ := exists_openAddSubgroup_forall_pair_weightMul_mem hT U
+    hF.toFinset hG.toFinset f g
+  have hFZ := hf.finite_coeff_notMem Z
+  have hGZ := hg.finite_coeff_notMem Z
   rw [Filter.eventually_cofinite]
   refine Set.Finite.subset ((hF.add hGZ).union (hFZ.add hG)) ?_
   intro ν hν
@@ -625,14 +648,14 @@ theorem IsWeightedRestricted.mul [NonarchimedeanRing A] {T : Fin k → Set A}
         exact hνE (Or.inr ⟨p.1, hbad, p.2, hp2, hsum⟩)
       rw [mul_comm, ← hsum, add_comm]
       exact mul_mem_weightMul_of_forall_mul_mem
-        (fun z hz ↦ hZg p.2 (hG.mem_toFinset.mpr hp2) z (hZle_g hz)) hgood
+        (fun z hz ↦ hZg p.2 (hG.mem_toFinset.mpr hp2) z hz) hgood
   · -- `p.1` is bad: absorb it
     have hgood : MvPowerSeries.coeff p.2 g ∈ weightMul T p.2 Z.toAddSubgroup := by
       by_contra hbad
       exact hνE (Or.inl ⟨p.1, hp1, p.2, hbad, hsum⟩)
     rw [← hsum]
     exact mul_mem_weightMul_of_forall_mul_mem
-      (fun z hz ↦ hZf p.1 (hF.mem_toFinset.mpr hp1) z (hZle_f hz)) hgood
+      (fun z hz ↦ hZf p.1 (hF.mem_toFinset.mpr hp1) z hz) hgood
 
 /-- The negation of a `T`-restricted series is `T`-restricted. -/
 theorem IsWeightedRestricted.neg {T : Fin k → Set A} {f : MvPowerSeries (Fin k) A}
@@ -769,8 +792,7 @@ theorem exists_weightedNhd_mul_mem [NonarchimedeanRing A] {T : Fin k → Set A}
   have hUnhds : (U : Set A) ∈ nhds (0 : A) := U.isOpen.mem_nhds U.zero_mem
   obtain ⟨W, hWU⟩ := NonarchimedeanRing.mul_subset U
   have hx : IsWeightedRestricted T (x : MvPowerSeries (Fin k) A) := x.2
-  have hF : {α | MvPowerSeries.coeff α (x : MvPowerSeries (Fin k) A)
-      ∉ weightMul T α W.toAddSubgroup}.Finite := Filter.eventually_cofinite.mp (hx W)
+  have hF := hx.finite_coeff_notMem W
   obtain ⟨Zx, hZx⟩ := NonarchimedeanRing.exists_openAddSubgroup_forall_mul_subset hF.toFinset
     (fun α ↦ MvPowerSeries.coeff α (x : MvPowerSeries (Fin k) A))
     (fun α ↦ weightMul T α U.toAddSubgroup) (fun α _ ↦ hT.weightMul_mem_nhds α hUnhds)
@@ -889,8 +911,7 @@ theorem exists_mvPolynomial_forall_coeff_sub_mem {T : Fin k → Set A}
     ∃ p : MvPolynomial (Fin k) A, ∀ ν, MvPowerSeries.coeff ν (f - (p : MvPowerSeries (Fin k) A))
       ∈ weightMul T ν U.toAddSubgroup := by
   classical
-  have hbad : {ν | MvPowerSeries.coeff ν f ∉ weightMul T ν U.toAddSubgroup}.Finite :=
-    Filter.eventually_cofinite.mp (hf U)
+  have hbad := hf.finite_coeff_notMem U
   refine ⟨MvPowerSeries.truncFinset A hbad.toFinset f, fun ν ↦ ?_⟩
   rw [map_sub, MvPolynomial.coeff_coe, MvPowerSeries.coeff_truncFinset]
   by_cases hν : ν ∈ hbad.toFinset
@@ -1070,6 +1091,80 @@ noncomputable def weightedPolynomialEquiv [NonarchimedeanRing A] [DiscreteTopolo
 theorem weightedPolynomialEquiv_apply [NonarchimedeanRing A] [DiscreteTopology A]
     {T : Fin k → Set A} {hT : IsWeightFamily T} (p : MvPolynomial (Fin k) A) :
     weightedPolynomialEquiv T hT p = weightedPolynomialHom T hT p := (rfl)
+
+/-! ### Zero variables
+
+At `k = 0` the coefficient index `Fin 0 →₀ ℕ` is a singleton: a series is its constant coefficient
+and nothing else. So restrictedness is vacuous, and the basic neighbourhood cut out by a subgroup
+`U` is exactly the series whose one coefficient lies in `U`, which is `U`.
+
+Neither fact mentions the weight, so the whole section is stated for an arbitrary
+`T : Fin 0 → Set A` — at `Fin 0` the only multi-index is `0`, and `weightMul T 0 U` is `U` for
+every `T`. The weight-family hypothesis is not carried either: it quantifies over the index, so
+`isWeightFamily_fin_zero` discharges it outright. -/
+
+section ZeroVariables
+
+variable (T : Fin 0 → Set A)
+
+/-- **Every family of sets indexed by no variables is a weight family**, the condition being a
+statement about each index and there being none. This is what lets the rest of this section drop
+the hypothesis. -/
+theorem isWeightFamily_fin_zero : IsWeightFamily T := fun i ↦ i.elim0
+
+/-- **At zero variables every power series is restricted, whatever the weight.** There is only one
+monomial, so every series has finite support. -/
+@[simp]
+theorem weightedRestrictedSubring_fin_zero [NonarchimedeanRing A] :
+    weightedRestrictedSubring T (isWeightFamily_fin_zero T) = ⊤ := by
+  ext f
+  simpa using isWeightedRestricted_of_finite_support T (Set.toFinite _)
+
+/-- **`A⟨⟩ = A`**: the restricted power series in no variables are `A` itself, as a ring. -/
+noncomputable def weightedRestrictedSubringFinZeroEquiv [NonarchimedeanRing A] :
+    weightedRestrictedSubring T (isWeightFamily_fin_zero T) ≃+* A :=
+  (RingEquiv.subringCongr (weightedRestrictedSubring_fin_zero T)).trans <|
+    Subring.topEquiv.trans (MvPowerSeries.isEmptyEquiv (Fin 0) A).toRingEquiv
+
+/-- The zero-variable comparison is the constant coefficient. -/
+@[simp]
+theorem weightedRestrictedSubringFinZeroEquiv_apply [NonarchimedeanRing A]
+    (f : weightedRestrictedSubring T (isWeightFamily_fin_zero T)) :
+    weightedRestrictedSubringFinZeroEquiv T f =
+      MvPowerSeries.constantCoeff (f : MvPowerSeries (Fin 0) A) := by
+  simp [weightedRestrictedSubringFinZeroEquiv, RingEquiv.trans_apply,
+    MvPowerSeries.isEmptyEquiv_apply]
+
+/-- The zero-variable comparison is continuous. -/
+theorem continuous_weightedRestrictedSubringFinZeroEquiv [NonarchimedeanRing A] :
+    Continuous (weightedRestrictedSubringFinZeroEquiv T) := by
+  refine continuous_of_continuousAt_zero
+    (weightedRestrictedSubringFinZeroEquiv T).toAddMonoidHom ?_
+  rw [ContinuousAt, map_zero,
+    (hasBasis_nhds_zero_weightedTopology (isWeightFamily_fin_zero T)).tendsto_left_iff]
+  intro V hV
+  obtain ⟨U, hUV⟩ := NonarchimedeanAddGroup.is_nonarchimedean V hV
+  refine ⟨U, trivial, fun f hf ↦ hUV ?_⟩
+  have h := mem_weightedNhd.mp hf 0
+  rw [weightMul_zero] at h
+  simpa using h
+
+/-- The inverse comparison sends `a` to the constant series. -/
+@[simp]
+theorem coe_weightedRestrictedSubringFinZeroEquiv_symm_apply [NonarchimedeanRing A] (a : A) :
+    (((weightedRestrictedSubringFinZeroEquiv T).symm a :
+        weightedRestrictedSubring T (isWeightFamily_fin_zero T)) :
+      MvPowerSeries (Fin 0) A) = MvPowerSeries.C a := by
+  simp [weightedRestrictedSubringFinZeroEquiv, RingEquiv.symm_trans_apply,
+    MvPowerSeries.isEmptyEquiv_symm_apply]
+
+/-- The inverse of the zero-variable comparison is continuous: it *is* the constant-series map
+`weightedC`, whose continuity is already known. -/
+theorem continuous_weightedRestrictedSubringFinZeroEquiv_symm [NonarchimedeanRing A] :
+    Continuous (weightedRestrictedSubringFinZeroEquiv T).symm :=
+  (continuous_weightedC (isWeightFamily_fin_zero T)).congr fun a ↦ Subtype.ext (by simp)
+
+end ZeroVariables
 
 /-! ### The uniform structure
 
