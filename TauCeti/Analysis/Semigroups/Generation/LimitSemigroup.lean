@@ -45,16 +45,8 @@ Lumer--Phillips and Hille--Yosida constructions.
 
 ## Main results
 
-* `TauCeti.Semigroups.yosidaLimit_add_of_tendsto`, `TauCeti.Semigroups.yosidaLimit_smul_of_tendsto`:
-  vector-space linearity of the limit.
 * `TauCeti.Semigroups.norm_yosidaLimit_le_of_tendsto_of_norm_le`: passing an operator bound to the
   limit.
-* `TauCeti.Semigroups.yosidaLimit_time_add_of_tendsto_of_norm_le`: the semigroup law for the limit.
-* `TauCeti.Semigroups.continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn`: continuity in time on
-  compact intervals.
-* `TauCeti.Semigroups.continuousOn_Ici_of_forall_continuousOn_Icc`: continuity on `[0, ∞)` from
-  compact intervals.
-* `TauCeti.Semigroups.continuousAt_nnreal_zero_of_continuousOn_Ici`: strong continuity at time zero.
 * `TauCeti.Semigroups.yosidaLimitSemigroupOfTendsto_apply`: evaluating the limit semigroup.
 * `TauCeti.Semigroups.yosidaLimitSemigroupOfTendsto_realOperator_apply_of_nonneg`: evaluating the
   real-time operator at nonnegative times.
@@ -146,7 +138,7 @@ private theorem exp_add_smul_apply (B : X →L[ℝ] X) (s t : ℝ) (x : X) :
 
 omit [CompleteSpace X] in
 /-- Pointwise convergence of the Yosida exponentials implies additivity of the limit. -/
-theorem yosidaLimit_add_of_tendsto {A : X →ₗ.[ℝ] X} {t : ℝ}
+private theorem yosidaLimit_add_of_tendsto {A : X →ₗ.[ℝ] X} {t : ℝ}
     (htend : ∀ x : X, Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x))) (x y : X) :
     yosidaLimit A t (x + y) = yosidaLimit A t x + yosidaLimit A t y := by
@@ -155,7 +147,7 @@ theorem yosidaLimit_add_of_tendsto {A : X →ₗ.[ℝ] X} {t : ℝ}
 
 omit [CompleteSpace X] in
 /-- Pointwise convergence of the Yosida exponentials implies homogeneity of the limit. -/
-theorem yosidaLimit_smul_of_tendsto {A : X →ₗ.[ℝ] X} {t : ℝ}
+private theorem yosidaLimit_smul_of_tendsto {A : X →ₗ.[ℝ] X} {t : ℝ}
     (htend : ∀ x : X, Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x))) (c : ℝ) (x : X) :
     yosidaLimit A t (c • x) = c • yosidaLimit A t x := by
@@ -175,7 +167,8 @@ theorem norm_yosidaLimit_le_of_tendsto_of_norm_le {A : X →ₗ.[ℝ] X} {t : �
     (mul_le_mul_of_nonneg_right hl (norm_nonneg _))
 
 /-- The semigroup law for `yosidaLimit` under pointwise convergence and an eventual norm bound. -/
-theorem yosidaLimit_time_add_of_tendsto_of_norm_le {A : X →ₗ.[ℝ] X} {s t : ℝ} {M : ℝ} (x : X)
+private theorem yosidaLimit_time_add_of_tendsto_of_norm_le {A : X →ₗ.[ℝ] X} {s t : ℝ} {M : ℝ}
+    (x : X)
     (htend_t : Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x)))
     (htend_s : Tendsto (fun lambda : ℝ =>
@@ -216,7 +209,8 @@ theorem yosidaLimit_time_add_of_tendsto_of_norm_le {A : X →ₗ.[ℝ] X} {s t :
 
 /-- The Yosida limit is continuous in time on a compact interval whenever the approximating
 exponentials converge uniformly there. -/
-theorem continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn (A : X →ₗ.[ℝ] X) (x : X) {T : ℝ}
+private theorem continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn (A : X →ₗ.[ℝ] X)
+    (x : X) {T : ℝ}
     (hunif : TendstoUniformlyOn (fun lambda t : ℝ => exp (t • yosidaApproximation A lambda) x)
       (fun t : ℝ => yosidaLimit A t x) atTop (Set.Icc 0 T)) :
     ContinuousOn (fun t : ℝ => yosidaLimit A t x) (Set.Icc 0 T) :=
@@ -227,7 +221,7 @@ theorem continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn (A : X →ₗ.[ℝ] X
 
 omit [CompleteSpace X] in
 /-- Continuity on `[0, ∞)` from continuity on every compact interval `[0, T]`. -/
-theorem continuousOn_Ici_of_forall_continuousOn_Icc {Y : Type*} [TopologicalSpace Y]
+private theorem continuousOn_Ici_of_forall_continuousOn_Icc {Y : Type*} [TopologicalSpace Y]
     {f : ℝ → Y} (hIcc : ∀ T : ℝ, 0 ≤ T → ContinuousOn f (Set.Icc 0 T)) :
     ContinuousOn f (Set.Ici 0) := by
   intro t ht
@@ -241,7 +235,7 @@ theorem continuousOn_Ici_of_forall_continuousOn_Icc {Y : Type*} [TopologicalSpac
 
 omit [CompleteSpace X] in
 /-- Strong continuity at time zero on `ℝ≥0` from continuity on the nonnegative half-line. -/
-theorem continuousAt_nnreal_zero_of_continuousOn_Ici {Y : Type*} [TopologicalSpace Y]
+private theorem continuousAt_nnreal_zero_of_continuousOn_Ici {Y : Type*} [TopologicalSpace Y]
     {f : ℝ → Y} (hcont : ContinuousOn f (Set.Ici 0)) :
     ContinuousAt (fun t : ℝ≥0 => f t) 0 := by
   have hIci : ContinuousWithinAt f (Set.Ici 0) (((0 : ℝ≥0) : ℝ)) := by
