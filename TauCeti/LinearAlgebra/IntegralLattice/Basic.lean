@@ -274,8 +274,7 @@ open Classical in
 /-- The canonical `ℤ`-basis of `ofGramMatrix b G hG` induced by the ambient `ℚ`-basis. -/
 noncomputable def ofGramMatrix.basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
     Basis ι ℤ (ofGramMatrix b G hG) :=
-  (b.restrictScalars ℤ).map
-    (LinearEquiv.ofEq _ _ (ofGramMatrix_carrier b G hG).symm)
+  ofBasis.basis b _ _ _
 
 open Classical in
 @[simp]

@@ -50,13 +50,12 @@ theorem eq_zero_of_isSymm_of_isAlt {R M : Type*} [CommRing R] [AddCommGroup M]
   simpa using h2 hzero
 
 /-- Polarization identity for the quadratic form associated to a symmetric bilinear form. -/
-theorem _root_.LinearMap.BilinForm.IsSymm.toQuadraticMap_add {R M : Type*} [CommRing R]
-    [AddCommGroup M] [Module R M] {B : BilinForm R M} (hB : B.IsSymm) (x y : M) :
+theorem _root_.LinearMap.BilinForm.IsSymm.toQuadraticMap_add {R M : Type*} [CommSemiring R]
+    [AddCommMonoid M] [Module R M] {B : BilinForm R M} (hB : B.IsSymm) (x y : M) :
     B.toQuadraticMap (x + y) = B.toQuadraticMap x + B.toQuadraticMap y + 2 * B x y := by
-  have hpolar : polar B.toQuadraticMap x y = 2 * B x y := by
-    rw [LinearMap.BilinMap.polar_toQuadraticMap, hB.eq y x, two_mul]
-  rw [← hpolar, polar]
-  abel
+  simp only [LinearMap.BilinMap.toQuadraticMap_apply, map_add, LinearMap.add_apply]
+  rw [hB.eq y x, two_mul]
+  simp only [add_comm, add_left_comm]
 
 /-- Subtraction polarization identity for the quadratic form associated to a symmetric
 bilinear form. -/
