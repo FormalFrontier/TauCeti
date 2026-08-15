@@ -168,34 +168,50 @@ theorem linearIndependent_dividedPower_int {x : A}
     LinearIndependent ℤ (fun n : ℕ => dividedPower n x) :=
   (linearIndependent_dividedPower h).restrict_scalars (smul_left_injective ℤ one_ne_zero)
 
-/-- When the powers of `x` are rationally independent, the divided powers form a `ℤ`-basis of
-their integral lattice. -/
+/-- When the divided powers of `x` are integrally independent, they form a `ℤ`-basis of their
+integral lattice. -/
 noncomputable def dividedPowerLatticeBasis (x : A)
-    (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) :
+    (h : LinearIndependent ℤ (fun n : ℕ => dividedPower n x)) :
     Module.Basis ℕ ℤ (dividedPowerLattice x) :=
-  Module.Basis.span (linearIndependent_dividedPower_int h)
+  Module.Basis.span h
 
 /-- The integral-lattice basis evaluates to the corresponding divided power in the ambient
 algebra. -/
 @[simp]
 theorem coe_dividedPowerLatticeBasis_apply (x : A)
-    (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) (n : ℕ) :
+    (h : LinearIndependent ℤ (fun n : ℕ => dividedPower n x)) (n : ℕ) :
     (dividedPowerLatticeBasis x h n : A) = dividedPower n x := by
-  exact Module.Basis.coe_span_apply (linearIndependent_dividedPower_int h) n
+  exact Module.Basis.coe_span_apply h n
 
-/-- Under rational independence of the powers, every element of the divided-power lattice has a
-unique finite expansion in divided powers. -/
+/-- Under integral independence of the divided powers, every element of the divided-power lattice
+has a unique finite expansion in divided powers. -/
 theorem mem_dividedPowerLattice_iff_existsUnique_sum_dividedPower_eq {x y : A}
-    (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) :
+    (h : LinearIndependent ℤ (fun n : ℕ => dividedPower n x)) :
     y ∈ dividedPowerLattice x ↔
       ∃! c : ℕ →₀ ℤ, c.sum (fun n a => a • dividedPower n x) = y := by
   rw [mem_dividedPowerLattice_iff]
   constructor
   · rintro ⟨c, hc⟩
     refine ⟨c, hc, fun d hd => ?_⟩
-    apply linearIndependent_dividedPower_int h
+    apply h
     simpa only [Finsupp.linearCombination_apply] using hd.trans hc.symm
   · exact ExistsUnique.exists
+
+/-- Rational independence of the powers gives the canonical `ℤ`-basis of the integral
+divided-power lattice. -/
+noncomputable def dividedPowerLatticeBasisOfPow (x : A)
+    (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) :
+    Module.Basis ℕ ℤ (dividedPowerLattice x) :=
+  dividedPowerLatticeBasis x (linearIndependent_dividedPower_int h)
+
+/-- Under rational independence of the powers, every element of the divided-power lattice has a
+unique finite expansion in divided powers. -/
+theorem mem_dividedPowerLattice_iff_existsUnique_sum_dividedPower_eq_of_pow {x y : A}
+    (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) :
+    y ∈ dividedPowerLattice x ↔
+      ∃! c : ℕ →₀ ℤ, c.sum (fun n a => a • dividedPower n x) = y :=
+  mem_dividedPowerLattice_iff_existsUnique_sum_dividedPower_eq
+    (linearIndependent_dividedPower_int h)
 
 end Ring
 
