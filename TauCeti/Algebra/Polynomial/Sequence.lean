@@ -18,7 +18,7 @@ unit leading coefficients.
 
 * `Polynomial.Sequence.linearIndependent_of_isUnit_leadingCoeff`: a polynomial sequence whose
   elements have unit leading coefficients is linearly independent over any ring.
-* `Polynomial.Sequence.basis_of_isUnit_leadingCoeff`: the corresponding basis of `R[X]`.
+* `Polynomial.Sequence.basisOfIsUnitLeadingCoeff`: the corresponding basis of `R[X]`.
 -/
 
 public section
@@ -69,7 +69,7 @@ theorem linearIndependent_of_isUnit_leadingCoeff
   exact hgm (hu.mul_left_eq_zero.mp h_coeff)
 
 /-- Every polynomial sequence with unit leading coefficients is a basis of `R[X]`. -/
-noncomputable def basis_of_isUnit_leadingCoeff
+noncomputable def basisOfIsUnitLeadingCoeff
     (hCoeff : ∀ i, IsUnit (S i).leadingCoeff) :
     Basis ℕ R R[X] :=
   Basis.mk (S.linearIndependent_of_isUnit_leadingCoeff hCoeff)
@@ -77,9 +77,9 @@ noncomputable def basis_of_isUnit_leadingCoeff
 
 /-- The `i`-th basis vector is the `i`-th polynomial in the sequence. -/
 @[simp]
-theorem basis_of_isUnit_leadingCoeff_apply
+theorem basisOfIsUnitLeadingCoeff_apply
     (hCoeff : ∀ i, IsUnit (S i).leadingCoeff) (i : ℕ) :
-    S.basis_of_isUnit_leadingCoeff hCoeff i = S i :=
+    S.basisOfIsUnitLeadingCoeff hCoeff i = S i :=
   Basis.mk_apply _ _ _
 
 end Polynomial.Sequence

@@ -152,14 +152,14 @@ theorem linearIndependent_ringChoose_X [Nontrivial K] :
 
 /-- The binomial polynomials form a basis of `K[X]`. -/
 noncomputable def binomialPolynomialBasis [Nontrivial K] : Module.Basis ℕ K K[X] :=
-  (binomialPolynomialSequence K).basis_of_isUnit_leadingCoeff
+  (binomialPolynomialSequence K).basisOfIsUnitLeadingCoeff
     (isUnit_leadingCoeff_ringChoose_X K)
 
 /-- The `n`th vector of the binomial polynomial basis is `(X choose n)`. -/
 @[simp]
 theorem binomialPolynomialBasis_apply [Nontrivial K] (n : ℕ) :
     binomialPolynomialBasis K n = Ring.choose X n :=
-  Polynomial.Sequence.basis_of_isUnit_leadingCoeff_apply _ _ _
+  Polynomial.Sequence.basisOfIsUnitLeadingCoeff_apply _ _ _
 
 /-! ## The integral basis -/
 
