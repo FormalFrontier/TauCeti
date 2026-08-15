@@ -162,22 +162,22 @@ theorem orthogonalSumCarrierEquiv_inr (L : IntegralLattice V) (M : IntegralLatti
     orthogonalSumCarrierEquiv L M (orthogonalSumInr L M b) = (0, b) := by
   rfl
 
-@[simp]
+/-- The first projection of the first inclusion is the identity. -/
 theorem orthogonalSumFst_inl (L : IntegralLattice V) (M : IntegralLattice W) (a : L) :
     orthogonalSumFst L M (orthogonalSumInl L M a) = a := by
   rfl
 
-@[simp]
+/-- The first projection of the second inclusion is zero. -/
 theorem orthogonalSumFst_inr (L : IntegralLattice V) (M : IntegralLattice W) (b : M) :
     orthogonalSumFst L M (orthogonalSumInr L M b) = 0 := by
   rfl
 
-@[simp]
+/-- The second projection of the first inclusion is zero. -/
 theorem orthogonalSumSnd_inl (L : IntegralLattice V) (M : IntegralLattice W) (a : L) :
     orthogonalSumSnd L M (orthogonalSumInl L M a) = 0 := by
   rfl
 
-@[simp]
+/-- The second projection of the second inclusion is the identity. -/
 theorem orthogonalSumSnd_inr (L : IntegralLattice V) (M : IntegralLattice W) (b : M) :
     orthogonalSumSnd L M (orthogonalSumInr L M b) = b := by
   rfl
@@ -324,7 +324,6 @@ theorem nondegenerate_orthogonalSumForm_iff (L : IntegralLattice V) (M : Integra
       · exact hM.2 q.2 fun b ↦ by simpa using hq (0, b)
 
 /-- The ambient form of an orthogonal sum is nondegenerate exactly when both summand forms are. -/
-@[simp]
 theorem nondegenerate_orthogonalSum_iff (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).form.Nondegenerate ↔
       L.form.Nondegenerate ∧ M.form.Nondegenerate := by
