@@ -253,7 +253,13 @@ theorem isSuperfluous_of_le_jacobson [IsCoatomic (Submodule R M)] {N : Submodule
   exact sup_le (le_sup_of_le_right h) le_sup_left
 
 /-- Over a module with coatomic submodule lattice — for instance a finitely generated one — the
-superfluous submodules are exactly the submodules of the radical. -/
+superfluous submodules are exactly the submodules of the radical.
+
+This is the simp normal form of superfluity wherever the comparison is available, at low priority
+so that the shape-specific lemmas above (`TauCeti.isSuperfluous_bot`,
+`TauCeti.isSuperfluous_sup_iff`, `TauCeti.isSuperfluous_top_iff`,
+`TauCeti.isSuperfluous_map_equiv_iff`) still fire first on the submodules they match. -/
+@[simp low]
 theorem isSuperfluous_iff_le_jacobson [IsCoatomic (Submodule R M)] {N : Submodule R M} :
     IsSuperfluous N ↔ N ≤ Module.jacobson R M :=
   ⟨IsSuperfluous.le_jacobson, isSuperfluous_of_le_jacobson⟩
