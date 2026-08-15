@@ -27,8 +27,8 @@ the Weierstrass equation. The maximal ideal `⟨X - ρ x, Y - ρ y⟩` is contai
 `I`, hence equal to it.
 
 Neither direction needs ellipticity or a Dedekind hypothesis: both are statements about an ideal
-of the coordinate ring. Those hypotheses enter only in the packaging, where the places and the
-point group are named.
+of the coordinate ring. The Dedekind hypothesis enters only in the packaging, where the places are
+named.
 
 The degree hypothesis is part of the statement, not a convenience: a place of degree `d > 1` has
 a residue field of degree `d` over `F` and is the place of no rational point at all. It is only
@@ -43,9 +43,6 @@ over an algebraically closed base that every place has degree one, so that point
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.equationEquivPointPlace`: **the affine
   point–place dictionary** — `pointPlace` as an equivalence between the points of the curve and
   the degree-one places.
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.pointEquivPointPlace`: the same dictionary read
-  on the point group of an elliptic curve, whose extra element — the point at infinity — is the
-  `WithZero` adjoined to the degree-one places.
 
 ## Main results
 
@@ -79,11 +76,12 @@ dictionary, in both directions. The place at infinity
 (`TauCeti.WeierstrassCurve.Affine.infinityPlace`) is a valuation on the function field rather than
 a prime of the coordinate ring, so the two are not yet terms of one type of places, although they
 are already known to be distinct places
-(`TauCeti.WeierstrassCurve.Affine.infinityPlace_ne_heightOneSpectrum_valuation`). Until Layer 0
-fixes that type, the point at infinity is the adjoined element of `pointEquivPointPlace`, and
-identifying that element with the place at infinity is what remains. The layer seeds no declaration
-this competes with, and records that the design is coordinated with D. Angdinata's in-flight
-upstream `CoordinateRing` work.
+(`TauCeti.WeierstrassCurve.Affine.infinityPlace_ne_heightOneSpectrum_valuation`). The point at
+infinity therefore stays out of the dictionary here: reading it on the whole point group `W.Point`
+has to wait for Layer 0 to fix one type of places holding both `infinityPlace` and the affine ones,
+and is what remains of the milestone. The layer seeds no declaration this competes with, and
+records that the design is coordinated with D. Angdinata's in-flight upstream `CoordinateRing`
+work.
 
 ## Provenance
 
@@ -105,9 +103,8 @@ about a *maximal* ideal of the coordinate ring of a `SmoothPlaneCurve`, hypothes
 of `algebraMap F (F[C] ⧸ M)`, assumes ellipticity throughout, and its packaged bijection is onto
 all height-one primes under `[IsAlgClosed F]`. The development below is written directly against
 Mathlib's `XYIdeal`: the ideal is only assumed proper, the hypothesis is the residue degree, no
-ellipticity is used until the point group is named, and the bijection is with the degree-one
-places over an arbitrary field, which is the roadmap's statement and the one that survives without
-a closure hypothesis.
+ellipticity is used at all, and the bijection is with the degree-one places over an arbitrary
+field, which is the roadmap's statement and the one that survives without a closure hypothesis.
 
 The place itself is not a port. AINTLIB's `HasseWeil/Curves/Valuation.lean` builds an `ord_P` for
 its own
@@ -246,26 +243,6 @@ noncomputable def equationEquivPointPlace :
 @[simp]
 theorem coe_equationEquivPointPlace (p : {xy : F × F // W.Equation xy.1 xy.2}) :
     (equationEquivPointPlace W p : HeightOneSpectrum W.CoordinateRing) = pointPlace p.2 := (rfl)
-
-variable (W) in
-/-- **The point–place dictionary on the point group** of an elliptic curve: the affine points are
-the degree-one places of the coordinate ring, and the point at infinity is the one further place —
-here the element `WithZero` adjoins, since the place at infinity lives on the function field and
-is not a prime of the coordinate ring. -/
-noncomputable def pointEquivPointPlace [W.IsElliptic] :
-    W.Point ≃ WithZero {v : HeightOneSpectrum W.CoordinateRing //
-      Module.finrank F (W.CoordinateRing ⧸ v.asIdeal) = 1} :=
-  (pointEquiv W).trans (equationEquivPointPlace W).optionCongr
-
-/-- The dictionary sends the point at infinity to the adjoined element. -/
-@[simp]
-theorem pointEquivPointPlace_zero [W.IsElliptic] : pointEquivPointPlace W .zero = none := (rfl)
-
-/-- The dictionary sends an affine point to its place. -/
-@[simp]
-theorem pointEquivPointPlace_mk [W.IsElliptic] {y : F} (h : W.Equation x y) :
-    pointEquivPointPlace W (.mk h) =
-      .some ⟨pointPlace h, pointPlace.finrank_residueField_eq_one h⟩ := (rfl)
 
 end WeierstrassCurve.Affine.CoordinateRing
 
