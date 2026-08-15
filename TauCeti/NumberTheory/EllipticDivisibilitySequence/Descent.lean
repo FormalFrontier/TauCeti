@@ -67,14 +67,16 @@ reduces to six orderings of three, the last index being `0` and so already minim
 
 ## Provenance
 
-Adapted from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), declarations `rel₆_eq₃`, `rel₆_eq₃'`, `rel₆_eq₁₀`,
-`rel₄_iff_evenRec`, `dMin`, `cMin`, `Rel₄OfValid`, `rel₄_fix₁_of_fix₂`, `rel₄_of_fix₂`,
-`rel₄_of_min₂`, `rel₄_of_anti_oddRec_evenRec`, `rel₄_of_oddRec_evenRec` and
-`IsEllSequence.of_oddRec_evenRec`. That file's header reads
-`Authors: Junyan Xu`; following this repository's convention for adapted material the upstream
-authorship is credited here rather than in the copyright header.
+Adapted from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
+declarations `rel₆_eq₃`, `rel₆_eq₃'`, `rel₆_eq₁₀`, `rel₄_iff_evenRec`, `dMin`, `cMin`,
+`Rel₄OfValid`, `rel₄_fix₁_of_fix₂`, `rel₄_of_fix₂`, `rel₄_of_min₂`, `rel₄_of_anti_oddRec_evenRec`,
+`rel₄_of_oddRec_evenRec` and `IsEllSequence.of_oddRec_evenRec`. That file's header reads `Authors:
+David Kurniadi Angdinata`; following this repository's convention for adapted material the upstream
+authorship is credited here rather than in the copyright header. J. Xu is acknowledged for the
+surrounding LutzNagell development — he authors `Universal.lean` and co-authors
+`DivisionPolynomialOmega.lean` at the same revision — as context for this port, not as an author of
+the declarations above.
 
 The source states its expansions against its own `addMulSub` and `rel₄`, which Mathlib now
 supplies as `atom` and `atomRel` with the same definitions, so those statements transfer by
@@ -258,9 +260,11 @@ private theorem atomRelVanishes_of_min {a : ℤ} (one : W 1 ∈ R⁰) (two : W 2
     · exact fix.2 hlt₃ same anti
 
 /-- The even base case, as a relator: all four indices are even, so `atomRel_two_mul` applies. -/
-private theorem atomRel_even_eq_rel (m : ℤ) :
-    atomRel W (2 * m) (2 * (m - 1)) (2 * 1) (2 * 0) = rel W m (m - 1) 1 0 := by
-  rw [atomRel_two_mul]
+private theorem atomRel_even_eq_rel (k : ℤ) :
+    atomRel W (2 * k) (2 * (k - 1)) (2 * k % 2 + 2) (2 * k % 2) = rel W k (k - 1) 1 0 := by
+  have hlast : (2 * k % 2 : ℤ) = 2 * 0 := by omega
+  have hthird : (2 : ℤ) * 0 + 2 = 2 * 1 := by norm_num
+  rw [hlast, hthird, atomRel_two_mul]
   norm_num
 
 /-- The odd base case, as a relator. All four indices are odd, so `atom_odd` reduces every atom
@@ -268,17 +272,42 @@ and no reasoning about truncated division survives. The source proves the corres
 equivalence under `set_option allowUnsafeReducibility true` together with
 `attribute [local reducible] Nat.rawCast`; putting the indices in `2 * _ + 1` form removes the
 need for either. -/
-private theorem atomRel_odd_eq_rel (m : ℤ) :
-    atomRel W (2 * m + 1) (2 * (m - 1) + 1) (2 * 1 + 1) (2 * 0 + 1)
-      = rel W (m + 1) (m - 1) 1 0 := by
+private theorem atomRel_odd_eq_rel (k : ℤ) :
+    atomRel W (2 * k + 1) (2 * (k - 1) + 1) ((2 * k + 1) % 2 + 2) ((2 * k + 1) % 2)
+      = rel W (k + 1) (k - 1) 1 0 := by
+  have hlast : ((2 * k + 1) % 2 : ℤ) = 2 * 0 + 1 := by omega
+  have hthird : (2 : ℤ) * 0 + 1 + 2 = 2 * 1 + 1 := by norm_num
+  rw [hlast, hthird]
   simp_rw [atomRel, atom_odd, rel]
   ring_nf
+
+/-- **At a gap of exactly two the relator vanishes at the minimal pair.** This is where the
+induction bottoms out: the odd recurrence supplies the even first index and the even recurrence
+the odd one. -/
+private theorem atomRel_eq_zero_of_gap_two
+    (oddRec : ∀ m : ℤ, 2 ≤ m → rel W (m + 1) m 1 0 = 0)
+    (evenRec : ∀ m : ℤ, 3 ≤ m → rel W (m + 1) (m - 1) 1 0 = 0) {a b : ℤ} (h6 : 6 ≤ a)
+    (hb : b + 2 = a) :
+    atomRel W a b (a % 2 + 2) (a % 2) = 0 := by
+  rcases Int.emod_two_eq_zero_or_one a with hp | hp
+  · obtain ⟨k, rfl⟩ : ∃ k, a = 2 * k := ⟨a / 2, by omega⟩
+    -- `atomRel_even_eq_rel` is stated with its second index in `2 * _` form, which is what lets
+    -- `atomRel_two_mul` reduce every atom; put `b` in that form before rewriting.
+    obtain rfl : b = 2 * (k - 1) := by omega
+    rw [atomRel_even_eq_rel]
+    simpa using oddRec (k - 1) (by omega)
+  · obtain ⟨k, rfl⟩ : ∃ k, a = 2 * k + 1 := ⟨a / 2, by omega⟩
+    -- Likewise `atomRel_odd_eq_rel` wants `2 * _ + 1`, which is what lets `atom_odd` reduce each
+    -- atom without any reasoning about truncated division.
+    obtain rfl : b = 2 * (k - 1) + 1 := by omega
+    rw [atomRel_odd_eq_rel]
+    exact evenRec k (by omega)
 
 /-- **The descent.** The two doubling recurrences, holding from `m = 2` and `m = 3` on, force the
 full four-index relation at every valid quadruple. The induction is on the largest index: below
 `6` no valid quadruple exists, and above it `atomRelVanishes_of_min` reduces to the minimal
 pair, where either the gap `b + 2 < a` admits the transfer down to a smaller first index, or
-`b + 2 = a` lands on one of the two recurrences according to parity. -/
+`b + 2 = a` lands on one of the two base cases according to parity. -/
 private theorem atomRelVanishes_of_rel (one : W 1 ∈ R⁰) (two : W 2 ∈ R⁰)
     (oddRec : ∀ m : ℤ, 2 ≤ m → rel W (m + 1) m 1 0 = 0)
     (evenRec : ∀ m : ℤ, 3 ≤ m → rel W (m + 1) (m - 1) 1 0 = 0) :
@@ -305,39 +334,21 @@ private theorem atomRelVanishes_of_rel (one : W 1 ∈ R⁰) (two : W 2 ∈ R⁰)
     · rw [← atomRel_avg_sub W same, ← atomRel_abs₄]
       exact ih _ (by omega) _ _ _ (parity_abs_avg_sub same)
         (nonnegStrictAnti₄_abs_avg_sub h1 (by omega) h2 h3)
-    · rcases Int.emod_two_eq_zero_or_one a' with hp | hp
-      · obtain ⟨k, rfl⟩ : ∃ k, a' = 2 * k := ⟨a' / 2, by omega⟩
-        have hodd := oddRec (k - 1) (by omega)
-        rw [sub_add_cancel] at hodd
-        -- `atomRel_even_eq_rel` carries every index in `2 * _` form, which is what lets
-        -- `atomRel_two_mul` fire; the goal's indices have to be put in that form first.
-        have hlast : (2 * k % 2 : ℤ) = 2 * 0 := by omega
-        have hthird : (2 : ℤ) * 0 + 2 = 2 * 1 := by norm_num
-        have hsecond : b' = 2 * (k - 1) := by omega
-        rw [hlast, hthird, hsecond, atomRel_even_eq_rel]
-        exact hodd
-      · obtain ⟨k, rfl⟩ : ∃ k, a' = 2 * k + 1 := ⟨a' / 2, by omega⟩
-        -- Likewise `atomRel_odd_eq_rel` carries its indices in `2 * _ + 1` form, which is what
-        -- lets `atom_odd` reduce each atom without any reasoning about truncated division.
-        have hlast : ((2 * k + 1) % 2 : ℤ) = 2 * 0 + 1 := by omega
-        have hthird : (2 : ℤ) * 0 + 1 + 2 = 2 * 1 + 1 := by norm_num
-        have hsecond : b' = 2 * (k - 1) + 1 := by omega
-        rw [hlast, hthird, hsecond, atomRel_odd_eq_rel]
-        exact evenRec k (by omega)
+    · exact atomRel_eq_zero_of_gap_two oddRec evenRec (by omega) hb
 
 /-- Three distinct positive even indices, in any order, against a last index of `0`. The six
 orderings are reached from the decreasing one by the adjacent transpositions; the last index is
 already minimal, so only the first three need sorting and the general `Tuple.sort` argument the
-source uses is not required. -/
+source uses is not required. The local `sorted` is the descent specialised to that decreasing
+shape, which is the only shape the six branches ever need. -/
 private theorem atomRel_eq_zero_of_ne (odd : W.Odd)
     (descent : ∀ a b c d : ℤ, AtomRelVanishes W a b c d) {x y z : ℤ}
     (hx : 0 < x) (hy : 0 < y) (hz : 0 < z) (px : x % 2 = 0) (py : y % 2 = 0) (pz : z % 2 = 0)
     (hxy : x ≠ y) (hyz : y ≠ z) (hxz : x ≠ z) :
     atomRel W x y z 0 = 0 := by
-  have sorted : ∀ {u v w : ℤ}, u % 2 = 0 → v % 2 = 0 → w % 2 = 0 → 0 < w → w < v → v < u →
-      atomRel W u v w 0 = 0 := by
-    intro u v w pu pv pw hw hwv hvu
-    exact descent u v w 0 ⟨by omega, by omega, by omega⟩ (by rw [nonnegStrictAnti₄_iff]; omega)
+  have sorted {u v w : ℤ} (pu : u % 2 = 0) (pv : v % 2 = 0) (pw : w % 2 = 0)
+      (hw : 0 < w) (hwv : w < v) (hvu : v < u) : atomRel W u v w 0 = 0 :=
+    descent u v w 0 ⟨by omega, by omega, by omega⟩ (by rw [nonnegStrictAnti₄_iff]; omega)
   rcases lt_trichotomy x y with h₁ | h₁ | h₁
   · rcases lt_trichotomy y z with h₂ | h₂ | h₂
     · have h := sorted pz py px hx h₁ h₂

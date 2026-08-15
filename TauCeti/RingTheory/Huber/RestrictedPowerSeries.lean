@@ -7,6 +7,7 @@ module
 public import Mathlib.RingTheory.MvPowerSeries.Basic
 public import Mathlib.Topology.Algebra.Nonarchimedean.Basic
 public import Mathlib.Order.Filter.ZeroAndBoundedAtFilter
+import TauCeti.RingTheory.Huber.Bounded
 
 /-!
 # Restricted Power Series
@@ -36,9 +37,11 @@ this PR did different things to different declarations.
 
 **AINTLIB's in definition, statement and proof.** `restrictedMvPowerSeriesSubring`,
 `restrictedMvPowerSeriesSubring.instAlgebra`, `IsRestricted.finite_coeff_notMem`, the private
-convolution helpers, and `IsRestricted.mul` — the
-convolution argument this file exists for. `IsRestricted.mul`'s proof is unchanged here apart from
-three call sites renamed to `isRestricted_iff_coeff`.
+helpers `finite_shift_bad_set` and `coeff_mul_mem_of_forall_mem`, and `IsRestricted.mul` — the
+convolution argument this file exists for. That convolution argument is AINTLIB's; what differs
+here is three call sites renamed to `isRestricted_iff_coeff`, and the choice of absorbing
+neighbourhood, which now comes from Mathlib's `exists_mem_nhds_zero_mul_subset` on the left and
+`TauCeti.Huber.isBounded_finite` on the right, in place of AINTLIB's inline `Aᵐᵒᵖ` transport.
 
 **AINTLIB's in statement, with proofs rewritten here.** Five: `isRestricted_zero`,
 `IsRestricted.add` and `IsRestricted.neg`, which now delegate to Mathlib's `Filter.ZeroAtFilter`
@@ -296,28 +299,15 @@ theorem IsRestricted.mul {k : ℕ} {A : Type*} [Ring A] [TopologicalSpace A]
   set Sg := {s | MvPowerSeries.coeff s g ∉ (W : Set A)}
   have hSf : Sf.Finite := hf.finite_coeff_notMem W
   have hSg : Sg.Finite := hg.finite_coeff_notMem W
-  -- A neighbourhood of `0` that the finitely many large coefficients multiply into `V`, on the
-  -- left directly and on the right through the opposite ring.
+  -- One neighbourhood of `0` absorbing the finitely many large coefficients of both factors:
+  -- `f`'s on the left, from Mathlib, and `g`'s on the right, from `isBounded_finite`.
+  have hVnhds : (V : Set A) ∈ nhds (0 : A) := V.isOpen.mem_nhds V.zero_mem
   obtain ⟨T₁, hT₁mem, hT₁⟩ := exists_mem_nhds_zero_mul_subset
-    (hSf.image fun a => MvPowerSeries.coeff a f).isCompact (V.isOpen.mem_nhds V.zero_mem)
-  have hVop : MulOpposite.unop ⁻¹' (V : Set A) ∈ nhds (0 : Aᵐᵒᵖ) :=
-    MulOpposite.continuous_unop.continuousAt.preimage_mem_nhds
-      (by simpa using V.isOpen.mem_nhds V.zero_mem)
-  obtain ⟨T₂, hT₂mem, hT₂⟩ := exists_mem_nhds_zero_mul_subset
-    (hSg.image fun b => MulOpposite.op (MvPowerSeries.coeff b g)).isCompact hVop
-  set T : Set A := T₁ ∩ MulOpposite.op ⁻¹' T₂ with hTdef
-  have hT_nhds : T ∈ nhds (0 : A) :=
-    Filter.inter_mem hT₁mem
-      (MulOpposite.continuous_op.continuousAt.preimage_mem_nhds (by simpa using hT₂mem))
-  have hT_left : ∀ a ∈ hSf.toFinset, ∀ y ∈ T, MvPowerSeries.coeff a f * y ∈ (V : Set A) :=
-    fun a ha y hy =>
-      hT₁ (Set.mul_mem_mul (Set.mem_image_of_mem _ (hSf.mem_toFinset.mp ha)) hy.1)
-  have hT_right : ∀ b ∈ hSg.toFinset, ∀ x ∈ T, x * MvPowerSeries.coeff b g ∈ (V : Set A) := by
-    intro b hb x hx
-    -- `hT₂` lives in `Aᵐᵒᵖ`, where the product is reversed; unopping it gives the `A`-statement.
-    have hmem := hT₂ (Set.mul_mem_mul (Set.mem_image_of_mem _ (hSg.mem_toFinset.mp hb))
-      (Set.mem_preimage.mp hx.2))
-    simpa only [Set.mem_preimage, MulOpposite.unop_mul, MulOpposite.unop_op] using hmem
+    (hSf.image fun a => MvPowerSeries.coeff a f).isCompact hVnhds
+  have hBg := isBounded_finite (hSg.image fun b => MvPowerSeries.coeff b g)
+  obtain ⟨T₂, hT₂mem, hT₂⟩ := isBounded_iff.mp hBg _ hVnhds
+  set T := T₁ ∩ T₂
+  have hT_nhds : T ∈ nhds (0 : A) := Filter.inter_mem hT₁mem hT₂mem
   have hgT : {s | MvPowerSeries.coeff s g ∉ T}.Finite :=
     (Filter.mem_cofinite.mp (isRestricted_iff_coeff.mp hg hT_nhds)).subset (fun s hs => hs)
   have hfT : {s | MvPowerSeries.coeff s f ∉ T}.Finite :=
@@ -335,8 +325,8 @@ theorem IsRestricted.mul {k : ℕ} {A : Type*} [Ring A] [TopologicalSpace A]
   obtain ⟨hnB1, hnB2⟩ := hnB
   exact hVU (coeff_mul_mem_of_forall_mem V W T
     (fun x hx y hy => hWV ⟨x, hx, y, hy, rfl⟩)
-    (fun a ha => hT_left a (hSf.mem_toFinset.mpr ha))
-    (fun b hb => hT_right b (hSg.mem_toFinset.mpr hb))
+    (fun a ha y hy => hT₁ (Set.mul_mem_mul (Set.mem_image_of_mem _ ha) hy.1))
+    (fun b hb x hx => hT₂ (Set.mul_mem_mul hx.2 (Set.mem_image_of_mem _ hb)))
     n
     (fun a ha han => not_not.mp (hnB1 a (hSf.mem_toFinset.mpr ha) han))
     (fun b hb hbn => not_not.mp (hnB2 b (hSg.mem_toFinset.mpr hb) hbn)))
