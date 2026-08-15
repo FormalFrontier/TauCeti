@@ -180,10 +180,14 @@ noncomputable def pointsFppfGroupObjectIso (H : _root_.CommHopfAlgCat.{u} R) :
     ((forget GrpCat.{u}) ⋙ CategoryTheory.uliftFunctor.{u + 1, u})).obj
       (HopfAlgebra.pointsFppfSheaf H)
   let e : (pointsPresheafGrp H).X ≅ F.obj := by
+    -- Unfold `sheafCompose.obj` and the carrier of `pointsPresheafGrp`: both sides are the
+    -- universe lift of the underlying group-valued points presheaf.
     change _ ≅ (HopfAlgebra.pointsFppfSheaf H).obj ⋙
       (forget GrpCat.{u}) ⋙ CategoryTheory.uliftFunctor.{u + 1, u}
     rw [HopfAlgebra.pointsFppfSheaf_obj]
     exact Iso.refl _
+  -- The carrier of `mapGrp.obj` is definitionally the image of the original carrier; Mathlib's
+  -- `mapGrp` API does not provide a separate comparison isomorphism for this wrapper.
   change (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
     (pointsPresheafGrp H).X ≅ F
   exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapIso e ≪≫
@@ -261,6 +265,8 @@ theorem fppfQuotientProjection_homEquiv (H : _root_.CommHopfAlgCat.{u} R)
     Functor.Monoidal.ofChosenFiniteProducts _
   let _ : (sheafToPresheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
     Functor.Monoidal.ofChosenFiniteProducts _
+  -- Unfold the two `HomEquiv` wrappers and `fppfQuotientProjection` to expose the same
+  -- `mapGrp` adjunction on both sides; the resulting statement is precisely unit naturality.
   change
     ((sheafificationAdjunction
       (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp).homEquiv _ _
