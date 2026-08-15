@@ -6,7 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.PerfectPairing.Basic
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Cocharacter
-public import TauCeti.Algebra.AlgebraicGroup.Torus.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.Torus.CharacterLattice.Basic
 
 /-!
 # Cocharacter lattices of tori
