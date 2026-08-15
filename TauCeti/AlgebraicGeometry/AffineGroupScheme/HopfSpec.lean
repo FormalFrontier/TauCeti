@@ -49,7 +49,8 @@ universe u
 
 variable (R : Type u) [CommRing R]
 
-private instance finite_respectsIso :
+/-- Finite morphisms of schemes are invariant under isomorphisms. -/
+instance finite_respectsIso :
     MorphismProperty.RespectsIso (@IsFinite) where
   toRespectsLeft :=
     { precomp := fun i hi f hf => by
