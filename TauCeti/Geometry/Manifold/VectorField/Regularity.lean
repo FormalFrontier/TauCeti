@@ -99,9 +99,15 @@ theorem mfderiv_continuousLinearMap_apply
   let evalY : (V →L[𝕜] W) →L[𝕜] W := (ContinuousLinearMap.apply 𝕜 W) y
   have h := mfderiv_comp_apply x evalY.mdifferentiableAt hf v
   rw [evalY.hasMFDerivAt.mfderiv] at h
-  have hfun : evalY ∘ f = fun z ↦ f z y := by rfl
+  have hfun : evalY ∘ f = fun z ↦ f z y := by
+    funext z
+    exact ContinuousLinearMap.apply_apply y (f z)
   rw [hfun] at h
-  exact h.symm
+  calc
+    (show V →L[𝕜] W from mfderiv I 𝓘(𝕜, V →L[𝕜] W) f x v) y =
+        evalY (show V →L[𝕜] W from mfderiv I 𝓘(𝕜, V →L[𝕜] W) f x v) :=
+      (ContinuousLinearMap.apply_apply y _).symm
+    _ = (show W from mfderiv I 𝓘(𝕜, W) (fun z ↦ f z y) x v) := h.symm
 
 /-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
 tangent bundle when `m + 1 ≤ n`. -/
