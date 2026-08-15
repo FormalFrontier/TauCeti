@@ -26,6 +26,11 @@ on the scalar extension of its domain. For a finite projective module, this map 
   coordinates in the base-changed basis.
 * `TauCeti.Module.Dual.eq_of_baseChange_eq`: base changes of all dual elements jointly
   separate vectors when the original module is free.
+
+## References
+
+The finite-projective equivalence is assembled from Mathlib's `dualTensorHomEquiv` and
+`LinearMap.liftBaseChangeEquiv`.
 -/
 
 public section
