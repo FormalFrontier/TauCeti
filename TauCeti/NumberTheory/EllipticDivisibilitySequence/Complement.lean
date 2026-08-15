@@ -31,8 +31,9 @@ The nonzerodivisor hypothesis is what the induction consumes. The odd step deriv
 multiplied through by `normEDS b c d k`, and cancelling that factor is the only use of `hk`; the
 even step and both base cases are unconditional. It is removable by specialising from the
 universal parameters, where the sequence is a nonzerodivisor at every index — the route
-`NormEDS.lean` takes for `isEllipticNet_normEDS` — but `universalNormEDS_mem_nonZeroDivisors` is
-not yet available, and `Universal.lean` records what that in turn waits on.
+`NormEDS.lean` takes for `isEllipticNet_normEDS`. That is now available: `universalNormEDS_ne_zero`
+(`NormEDS.lean`) gives the nonvanishing, and `mem_nonZeroDivisors_of_ne_zero` turns it into the
+hypothesis this induction consumes, `ℤ[B, C, D]` being a domain.
 
 The elliptic relation is instantiated once, at `ER((j + 2) * k, 1, (j + 1) * k, 0)`. Its middle
 term is then `W((2 * j + 3) * k) * W k`, the odd step's right-hand side times the factor to be
