@@ -46,36 +46,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-private theorem modelBracketTransport (X Y : LeftInvariantDerivation I G) :
-    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
-      (I := I) (G := G) BoundarylessManifold.isInteriorPoint
-    let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-      (I := I) (G := G)
-    eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) = ⁅X, Y⁆ := by
-  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-  dsimp only
-  let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
-    (I := I) (G := G) BoundarylessManifold.isInteriorPoint
-  let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-    (I := I) (G := G)
-  calc
-    eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) =
-        tangentToLeftInvariantDerivation (I := I) (G := G) ⁅eLie X, eLie Y⁆ :=
-      leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply
-        (I := I) (G := G) (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G))
-    _ = ⁅tangentToLeftInvariantDerivation (I := I) (G := G) (eLie X),
-        tangentToLeftInvariantDerivation (I := I) (G := G) (eLie Y)⁆ :=
-      tangentToLeftInvariantDerivation_lie (I := I) (G := G) (eLie X) (eLie Y)
-    _ = ⁅eIso.symm (show E from eLie X), eIso.symm (show E from eLie Y)⁆ := by
-      rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply,
-        leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
-    _ = ⁅eIso.symm (eIso X), eIso.symm (eIso Y)⁆ := by
-      rw [← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply,
-        ← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply]
-    _ = ⁅X, Y⁆ := by
-      rw [eIso.symm_apply_apply, eIso.symm_apply_apply]
-
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
 the Lie-algebra adjoint `ad X Y`. -/
 @[simp]
@@ -139,7 +109,13 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply
       (I := I) (G := G) Y
   rw [heIsoLieY]
-  exact modelBracketTransport (I := I) (G := G) X Y
+  calc
+    eIso.symm (show E from (⁅eLie X, eLie Y⁆ : GroupLieAlgebra I G)) =
+        eLie.symm ⁅eLie X, eLie Y⁆ := by
+      rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply,
+        leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply]
+    _ = ⁅eLie.symm (eLie X), eLie.symm (eLie Y)⁆ := eLie.symm.map_lie (eLie X) (eLie Y)
+    _ = ⁅X, Y⁆ := by rw [eLie.symm_apply_apply, eLie.symm_apply_apply]
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/
