@@ -19,7 +19,8 @@ rational linear equivalences preserve fullness.
 
 * `TauCeti.Basis.span_range_extendOfIsLattice`: the span of an extended lattice basis is the
   lattice.
-* `TauCeti.finrank_of_isLattice`: a full lattice and its ambient space have the same finrank.
+* `TauCeti.Submodule.IsLattice.finrank_eq_finrank`: a full lattice and its ambient space have the
+  same finrank.
 * `TauCeti.LinearEquiv.extendOfIsLattice`: extension of an integral linear equivalence between
   full submodules to their rational ambient spaces.
 -/
@@ -48,7 +49,7 @@ theorem Basis.span_range_extendOfIsLattice {κ : Type*} {N : Submodule R V} [N.I
     Submodule.map_top, Submodule.range_subtype]
 
 /-- The `R`-finrank of a full lattice in `V` equals the `K`-finrank of the ambient space. -/
-theorem finrank_of_isLattice [IsDomain R] [IsPrincipalIdealRing R]
+theorem Submodule.IsLattice.finrank_eq_finrank [IsDomain R] [IsPrincipalIdealRing R]
     (N : Submodule R V) [N.IsLattice K] :
     Module.finrank R N = Module.finrank K V :=
   congr_arg Cardinal.toNat (Submodule.IsLattice.rank' K N)
