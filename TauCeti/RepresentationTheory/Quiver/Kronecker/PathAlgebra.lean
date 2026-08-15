@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Kronecker.Basic
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
+public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
 /-!
 # The path algebra of the generalized Kronecker quiver

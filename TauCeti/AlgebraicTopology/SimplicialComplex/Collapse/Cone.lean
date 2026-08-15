@@ -17,9 +17,9 @@ A simplicial complex is a *cone with apex `v`* when `v` is one of its vertices a
 cone collapses to its apex; in particular every finite cone is collapsible.
 
 This file proves that theorem for the collapse relation of
-`TauCeti.PreAbstractSimplicialComplex.CollapsesTo`, and reads it off for the standard cones:
+`PreAbstractSimplicialComplex.CollapsesTo`, and reads it off for the standard cones:
 an abstract simplex, the closed star of a face, and the cone construction
-`TauCeti.PreAbstractSimplicialComplex.cone`.  Before this, `Collapsible` was known only for the
+`PreAbstractSimplicialComplex.cone`.  Before this, `Collapsible` was known only for the
 one-vertex complexes of `Collapsible.point`; these theorems supply collapsible complexes of
 arbitrarily many faces, and the simplex case is the base of the recursion on combinatorial balls
 in layer 11 of the geometric-topology roadmap
@@ -47,8 +47,6 @@ termination measure.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace PreAbstractSimplicialComplex
 
@@ -191,4 +189,3 @@ end Cone
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

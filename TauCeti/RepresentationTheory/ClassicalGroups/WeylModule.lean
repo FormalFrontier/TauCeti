@@ -415,13 +415,13 @@ identification is `TauCeti.YoungTableau.weylRepEquivOfShape`.
 This is the object the classical-groups roadmap pins as `schurFunctor n μ`. -/
 noncomputable def weylModuleOfShape (μ : YoungDiagram) :
     Subrepresentation (tensorPowerRep k n μ.card) :=
-  YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toEquiv
+  YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toTableau
 
 /-- The Weyl module of a shape is the Weyl module of its row-superstandard tableau, so the
 tableau-indexed lemmas apply to it. -/
 theorem weylModuleOfShape_def (μ : YoungDiagram) :
     weylModuleOfShape k n μ =
-      YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toEquiv :=
+      YoungTableau.weylModule k n (StandardYoungTableau.rowSuperstandard μ).toTableau :=
   (rfl)
 
 /-- The action of `GL n k` on the Weyl module of a shape. -/
@@ -436,7 +436,7 @@ theorem weylModuleOfShape_toSubmodule (μ : YoungDiagram) :
     (weylModuleOfShape k n μ).toSubmodule =
       LinearMap.range (permTensorActionAlgHom k n μ.card
         (YoungTableau.youngSymmetrizerOver k
-          (StandardYoungTableau.rowSuperstandard μ).toEquiv)) :=
+          (StandardYoungTableau.rowSuperstandard μ).toTableau)) :=
   YoungTableau.weylModule_toSubmodule k n _
 
 /-- The action on the Weyl module of a shape is the restriction of the action on the tensor

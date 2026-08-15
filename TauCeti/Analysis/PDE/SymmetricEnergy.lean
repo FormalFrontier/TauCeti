@@ -38,10 +38,6 @@ separate conjunction API.
   part has zero-drift jet form equal to the average of the original form and its transpose.
 * `TauCeti.PDE.energyIntegrand_coefficientSymmetricPart_self`: the diagonal energy density
   is unchanged by replacing the principal coefficient by its symmetric part.
-* `TauCeti.PDE.energyIntegrand_zero_drift_comm_on`: a pointwise symmetric coefficient field
-  gives symmetric zero-drift jet forms at every point of the domain.
-* `TauCeti.PDE.energyIntegrand_one_zero_mass_flip_eq`: bundled symmetry of the shifted
-  Laplacian jet form.
 -/
 
 public section
@@ -52,7 +48,7 @@ namespace PDE
 
 open Matrix
 
-variable {X n : Type*} [Fintype n]
+variable {n : Type*} [Fintype n]
 
 /-- Local classical decidable equality for finite coordinate indices in symmetry proofs. -/
 noncomputable local instance symmetricEnergyDecidableEq : DecidableEq n := Classical.decEq n
@@ -114,27 +110,6 @@ lemma energyIntegrand_coefficientSymmetricPart_zero_drift_flip_eq (A : Matrix n 
     (energyIntegrand (coefficientSymmetricPart A) 0 c).flip =
       energyIntegrand (coefficientSymmetricPart A) 0 c :=
   energyIntegrand_zero_drift_flip_eq_of_isSymm (coefficientSymmetricPart_isSymm A) c
-
-/-- A pointwise symmetric coefficient field gives symmetric zero-drift jet forms at every
-point of the domain. -/
-lemma energyIntegrand_zero_drift_comm_on {Ω : Set X} {a : X → Matrix n n ℝ}
-    (ha : ∀ ⦃x⦄, x ∈ Ω → (a x).IsSymm) {x : X} (hx : x ∈ Ω) (c : X → ℝ)
-    (U V : ℝ × EuclideanSpace ℝ n) :
-    energyIntegrand (a x) 0 (c x) U V = energyIntegrand (a x) 0 (c x) V U :=
-  energyIntegrand_zero_drift_comm_of_isSymm (ha hx) (c x) U V
-
-/-- A pointwise symmetric coefficient field gives a bundled symmetric zero-drift jet form at
-each point of the domain. -/
-lemma energyIntegrand_zero_drift_flip_eq_on {Ω : Set X} {a : X → Matrix n n ℝ}
-    (ha : ∀ ⦃x⦄, x ∈ Ω → (a x).IsSymm) {x : X} (hx : x ∈ Ω) (c : X → ℝ) :
-    (energyIntegrand (a x) 0 (c x)).flip = energyIntegrand (a x) 0 (c x) :=
-  energyIntegrand_zero_drift_flip_eq_of_isSymm (ha hx) (c x)
-
-/-- Bundled symmetry of the shifted Laplacian jet form. -/
-lemma energyIntegrand_one_zero_mass_flip_eq (c : ℝ) :
-    (energyIntegrand (1 : Matrix n n ℝ) 0 c).flip =
-      energyIntegrand (1 : Matrix n n ℝ) 0 c :=
-  energyIntegrand_zero_drift_flip_eq_of_isSymm isSymm_one c
 
 end PDE
 

@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+import Mathlib.LinearAlgebra.Matrix.Dual
+import TauCeti.LinearAlgebra.Matrix.Gram
 
 public section
 
@@ -653,11 +655,8 @@ private lemma typeDAmbientReflection_apply (u : TypeDRoot n) (v : Fin n → ℤ)
 
 private lemma typeDAmbientReflection_dotProduct_self (u : TypeDRoot n) {v : Fin n → ℤ}
     (hv : v ⬝ᵥ v = 2) : typeDAmbientReflection u v ⬝ᵥ typeDAmbientReflection u v = 2 := by
-  have hsymm : u.1 ⬝ᵥ v = v ⬝ᵥ u.1 := dotProduct_comm _ _
-  rw [typeDAmbientReflection_apply]
-  simp only [sub_dotProduct, dotProduct_sub, smul_dotProduct, dotProduct_smul, smul_eq_mul]
-  rw [u.2, hv, hsymm]
-  ring
+  have h := reflect_vecMul_dotProduct_self Matrix.isSymm_one (u := u.1) (by simpa using u.2) v
+  simpa [typeDAmbientReflection_apply, Matrix.one_vecMul, hv] using h
 
 /-- Reflection of a type `Dₙ` root `v` in the root `u`. -/
 def typeDRootReflection (u v : TypeDRoot n) : TypeDRoot n :=
@@ -857,9 +856,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
     have htot : ∑ i : Fin n, x.1 i = 0 := by
       simp [hv, Finset.sum_sub_distrib]
     have hhalf : typeDHalfTotal x = 0 := by
-      have h2 := two_mul_typeDHalfTotal x
-      rw [htot] at h2
-      linarith
+      linarith [two_mul_typeDHalfTotal x, htot]
     simp only [typeDSimpleRootCoordinates]
     split_ifs
     · rw [hv]
@@ -875,9 +872,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
     have htot : ∑ i : Fin n, x.1 i = 2 := by
       simp [hv, Finset.sum_add_distrib]
     have hhalf : typeDHalfTotal x = 1 := by
-      have h2 := two_mul_typeDHalfTotal x
-      rw [htot] at h2
-      linarith
+      linarith [two_mul_typeDHalfTotal x, htot]
     simp only [typeDSimpleRootCoordinates]
     split_ifs
     · rw [hv]

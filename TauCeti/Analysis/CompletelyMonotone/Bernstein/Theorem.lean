@@ -25,7 +25,7 @@ on `ℝ≥0`.
 This is the **existence** half of the Bernstein milestone in
 `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B. Uniqueness of the representing measure
 is `TauCeti.RepresentsLaplace.unique`, the converse direction is
-`TauCeti.isCompletelyMonotoneOnIci_laplaceTransform`, and all three combine in
+`TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`, and all three combine in
 `Bernstein/HausdorffBernsteinWidder.lean` as `TauCeti.hausdorff_bernstein_widder` and
 `TauCeti.hausdorff_bernstein_widder_existsUnique`.
 

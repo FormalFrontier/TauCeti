@@ -126,7 +126,8 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateHopfAlgebra R))
 
-private lemma groupScheme_eq_hopfSpec :
+/-- The additive group scheme is the relative spectrum of its coordinate Hopf algebra. -/
+public lemma groupScheme_def :
     groupScheme R =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R)) := by
@@ -286,7 +287,7 @@ noncomputable def groupSchemePointMulEquiv :
       ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
         (groupScheme R).X) :=
   CommHopfAlgCat.mapMulEquivOfPresentation
-    (coordinateHopfAlgebra R) A (groupScheme_eq_hopfSpec R)
+    (coordinateHopfAlgebra R) A (groupScheme_def R)
 
 /-- The underlying map of the spectrum point associated to an algebra point. -/
 @[simp]
@@ -297,7 +298,7 @@ lemma groupSchemePointMulEquiv_apply_left
         eqToHom (groupScheme_X_left R).symm := by
   simpa only [groupSchemePointMulEquiv] using
     CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
-      (coordinateHopfAlgebra R) A (groupScheme_eq_hopfSpec R)
+      (coordinateHopfAlgebra R) A (groupScheme_def R)
         (groupScheme_X_left R) f
 
 /-- The group of scheme-valued points of the additive group scheme is the additive group of the
@@ -323,6 +324,25 @@ lemma toAdd_schemePointsMulEquiv
         (SymmetricAlgebra.ι R R 1) := by
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   exact toAdd_gaPointsMulEquiv _
+
+/-- Evaluating the scheme-points equivalence on a point presented by `groupSchemePointMulEquiv`
+recovers the canonical algebra point. -/
+@[simp]
+theorem schemePointsMulEquiv_groupSchemePointMulEquiv
+    (q : WithConv (coordinateHopfAlgebra R →ₐ[R] A)) :
+    schemePointsMulEquiv A (groupSchemePointMulEquiv A q) =
+      gaPointsMulEquiv (R := R) (A := A) q := by
+  simp [schemePointsMulEquiv]
+
+/-- Evaluating the scheme-points equivalence directly on a scheme morphism. -/
+theorem schemePointsMulEquiv_apply
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    schemePointsMulEquiv A p =
+      gaPointsMulEquiv (R := R) (A := A)
+        ((groupSchemePointMulEquiv A).symm p) := by
+  unfold schemePointsMulEquiv
+  rfl
 
 /-- The inverse scheme-points equivalence sends an element of the value algebra to the spectrum
 map induced by the corresponding symmetric-algebra point. -/
@@ -356,7 +376,7 @@ theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
           (CommAlgCat.ofHom φ) q := by
     simpa only [q, groupSchemePointMulEquiv] using
       CommHopfAlgCat.mapMulEquivOfPresentation_mapValue
-        (coordinateHopfAlgebra R) φ (groupScheme_eq_hopfSpec R) p
+        (coordinateHopfAlgebra R) φ (groupScheme_def R) p
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   exact gaPointsMulEquiv_mapValue φ q

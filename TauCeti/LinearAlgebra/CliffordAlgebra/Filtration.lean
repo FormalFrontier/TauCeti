@@ -239,6 +239,18 @@ theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ fil
     (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) :=
   TauCeti.Algebra.mul_mem_wordFiltration (ι Q) hx hy
 
+/-- Multiplication preserves a strict degree drop in the left factor of the Clifford filtration. -/
+theorem mul_mem_filtrationPrevious_left {i j : ℕ} {x y : CliffordAlgebra Q}
+    (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
+    x * y ∈ filtrationPrevious Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left (ι Q) hx hy
+
+/-- Multiplication preserves a strict degree drop in the right factor of the Clifford filtration. -/
+theorem mul_mem_filtrationPrevious_right {i j : ℕ} {x y : CliffordAlgebra Q}
+    (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
+    x * y ∈ filtrationPrevious Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right (ι Q) hx hy
+
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
 theorem filtration_pow (i n : ℕ) : filtration Q i ^ n = filtration Q (i * n) :=
@@ -505,12 +517,10 @@ variable {N : Type w} [AddCommGroup N] [Module R N] {Q' : QuadraticForm R N}
 to a product of the same length. -/
 theorem map_mem_filtration (f : Q →qᵢ Q') {k : ℕ} {x : CliffordAlgebra Q}
     (hx : x ∈ filtration Q k) : CliffordAlgebra.map f x ∈ filtration Q' k := by
-  have h : filtration Q k ≤ (filtration Q' k).comap (CliffordAlgebra.map f).toLinearMap :=
-    (filtration_le_iff Q).2 fun l hl => by
-      rw [Submodule.mem_comap, AlgHom.toLinearMap_apply, map_list_prod, List.map_map]
-      simpa [Function.comp_def] using
-        prod_map_ι_mem_filtration Q' (l := l.map f) (by simpa using hl)
-  exact h hx
+  apply TauCeti.Algebra.map_mem_wordFiltration (ι Q) (CliffordAlgebra.map f) (ι Q') _ hx
+  intro m
+  rw [CliffordAlgebra.map_apply_ι]
+  exact TauCeti.Algebra.apply_mem_wordFiltration_one (ι Q') (f m)
 
 end Map
 

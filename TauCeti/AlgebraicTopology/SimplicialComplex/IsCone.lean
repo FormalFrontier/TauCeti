@@ -26,12 +26,10 @@ piecewise-linear topology, that a finite cone collapses to its apex
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.IsCone`: a complex is a cone with a given apex.
+* `PreAbstractSimplicialComplex.IsCone`: a complex is a cone with a given apex.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace PreAbstractSimplicialComplex
 
@@ -55,4 +53,3 @@ theorem IsCone.ne_bot {K : PreAbstractSimplicialComplex ι} (h : IsCone K v) : K
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

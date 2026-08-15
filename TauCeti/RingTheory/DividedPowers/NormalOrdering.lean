@@ -169,18 +169,14 @@ private theorem mul_normalOrderTerm {x y z : A} (hxy : x * y = y * x + z)
         (m + 1 - k) •
           (dividedPower (n - k) y * dividedPower k z *
             dividedPower (m + 1 - k) x) := by
-    rw [hxmove, hxx]
-    simp_rw [← Nat.cast_smul_eq_nsmul ℚ]
-    rw [mul_smul_comm, mul_smul_comm, mul_assoc]
+    rw [hxmove, hxx, mul_smul_comm, mul_smul_comm, mul_assoc]
   have hsecond :
       dividedPower (n - (k + 1)) y *
           (z * (dividedPower k z * dividedPower (m - k) x)) =
         (k + 1) •
           (dividedPower (n - (k + 1)) y * dividedPower (k + 1) z *
             dividedPower (m - k) x) := by
-    rw [hzmove, hzz]
-    simp_rw [← Nat.cast_smul_eq_nsmul ℚ]
-    rw [smul_mul_assoc, mul_smul_comm, mul_assoc]
+    rw [hzmove, hzz, smul_mul_assoc, mul_smul_comm, mul_assoc]
   rw [mul_assoc (dividedPower (n - k) y) (dividedPower k z),
     ← mul_assoc x (dividedPower (n - k) y), hxy', add_mul,
     mul_assoc (dividedPower (n - k) y) x,
@@ -198,9 +194,7 @@ private theorem mul_normalOrderLast {x z : A} (hxz : Commute x z) {m n : ℕ} (h
       x * dividedPower (m - n) x =
         (m + 1 - n) • dividedPower (m + 1 - n) x := by
     rw [self_mul_dividedPower, hmn]
-  rw [← mul_assoc, hxzn.eq, mul_assoc, hxx]
-  simp_rw [← Nat.cast_smul_eq_nsmul ℚ]
-  rw [mul_smul_comm]
+  rw [← mul_assoc, hxzn.eq, mul_assoc, hxx, mul_smul_comm]
 
 /-- **Coefficient-one normal ordering for divided powers with central commutator.** Suppose
 `x * y = y * x + z`, and `z` commutes with both `x` and `y`. Then
@@ -224,8 +218,8 @@ theorem dividedPower_mul_dividedPower_of_commutator_eq {x y z : A}
           ((m + 1 : ℕ) : ℚ) •
               (dividedPower (m + 1) x * dividedPower n y) =
             x * (dividedPower m x * dividedPower n y) := by
-        rw [← smul_mul_assoc, Nat.cast_smul_eq_nsmul,
-          ← self_mul_dividedPower, mul_assoc]
+        rw [Nat.cast_smul_eq_nsmul]
+        exact succ_nsmul_dividedPower_succ_mul m x (dividedPower n y)
       rw [← inv_smul_smul₀ hm (dividedPower (m + 1) x * dividedPower n y),
         ← inv_smul_smul₀ hm
           (∑ k ∈ range (min (m + 1) n + 1),
@@ -247,7 +241,6 @@ theorem dividedPower_mul_dividedPower_of_commutator_eq {x y z : A}
             (M := n) (C := m + 1) (Nat.le_succ_of_le hnm)
         conv_rhs => rw [Finset.sum_range_succ]
         simp only [Finset.sum_range_succ, Nat.sub_self, dividedPower_zero, one_mul] at hsum ⊢
-        simp_rw [← Nat.cast_smul_eq_nsmul ℚ] at hsum ⊢
         rw [← hsum]
         abel
       · have hmn : m < n := Nat.lt_of_not_ge hnm

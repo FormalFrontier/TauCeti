@@ -624,7 +624,7 @@ private lemma integral_chafaiDensity_le_tendsto_sub (f : ℝ → ℝ)
     (hL : Tendsto f atTop (nhds L)) (T : ℝ) (hT : 0 < T) :
     ∫ t in (0 : ℝ)..T, chafaiDensity f n t ≤ f 0 - L := by
   linarith [integral_chafaiDensity_le_sub f hcm n hn T hT,
-    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL hT.le]
+    (IsContinuousCompletelyMonotoneOnIoi.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL hT.le]
 
 private lemma chafaiDensity_integrableOn_Ioi_of_tendsto (f : ℝ → ℝ)
     (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
@@ -699,7 +699,7 @@ lemma chafaiMeasure_finite_mass (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
         IsFiniteMeasure (chafaiMeasure f n) ∧
         (chafaiMeasure f n) univ ≤ ENNReal.ofReal (f 0 - L) := by
   obtain ⟨L, hL, hL_nn⟩ :=
-    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
+    (IsContinuousCompletelyMonotoneOnIoi.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   exact ⟨L, hL, hL_nn, fun n => chafaiMeasure_finite_mass_of_tendsto f hcm n L hL⟩
 
 /-- **Natural rescaled total mass bound**: for a completely monotone `f`, the rescaled
@@ -757,7 +757,7 @@ lemma chafaiRescaled_prokhorov_mass_bound (f : ℝ → ℝ) (hcm : IsCompletelyM
         (chafaiRescaled f n) univ ≤ (C : ENNReal) := by
   obtain ⟨L, hL, hL_nn, hfinite⟩ := chafaiRescaled_finite_mass f hcm
   have hL_le : L ≤ f 0 :=
-    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL le_rfl
+    (IsContinuousCompletelyMonotoneOnIoi.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL le_rfl
   let C : ℝ≥0 := ⟨f 0 - L, sub_nonneg.mpr hL_le⟩
   refine ⟨L, C, hL, hL_nn, rfl, fun n => ?_⟩
   refine ⟨(hfinite n).1, ?_⟩
@@ -1023,7 +1023,7 @@ private lemma tendsto_sub_pow_mul_normalized_iteratedDerivWithin (f : ℝ → �
       atTop (nhds 0) := by
   -- complete monotonicity already supplies the limit at infinity that integrability needs
   obtain ⟨L, hL, -⟩ :=
-    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
+    (IsContinuousCompletelyMonotoneOnIoi.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   set h := fun T => (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) T
   have hk1 : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
   obtain ⟨h_nonneg₀, h_antitone₀⟩ :=

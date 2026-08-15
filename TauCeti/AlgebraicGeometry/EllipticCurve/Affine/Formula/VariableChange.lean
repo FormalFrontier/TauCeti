@@ -12,13 +12,18 @@ public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Formula
 An admissible change of variables `C : VariableChange R` carries a point `(x, y)` of `C • W` to
 the point `(u²x + r, u³y + u²sx + t)` of `W`. This file records what that substitution does to
 each formula Mathlib's `Affine/Formula.lean` defines — `negY`, `addX`, `negAddY`, `addY` and
-`slope` — and to the two predicates `Equation` and `Nonsingular` that cut the curve out.
+`slope` — to the two partial derivatives `polynomialX` and `polynomialY`, and to the two
+predicates `Equation` and `Nonsingular` that cut the curve out.
 
 ## Main statements
 
 * `WeierstrassCurve.Affine.variableChange_negY`, `_addX`, `_negAddY`, `_addY`: each formula
   transforms by an explicit power of `u`, together with the shear and translation the change of
   variables applies to the coordinate concerned.
+* `WeierstrassCurve.Affine.variableChange_evalEval_polynomialX`, `_polynomialY`: the two partial
+  derivatives transform by the matrix `![![u⁴, -su³], ![0, u³]]` — the `Y`-partial simply scales
+  by `u³`, while the `X`-partial scales by `u⁴` and is sheared by an `s`-multiple of the
+  `Y`-partial. Invertibility of that matrix is what `variableChange_nonsingular` runs on.
 * `WeierstrassCurve.Affine.variableChange_equation`, `_nonsingular`: `(x, y)` lies on `C • W`,
   respectively is a smooth point of it, exactly when its image lies on `W`. Both are `@[simp]`.
   These are what make the change of variables carry points to points.
@@ -151,9 +156,37 @@ change of variables scales the Weierstrass polynomial by `u⁶`, and `u` is a un
       - (C.u : R) ^ 3 * y * u_pow_mul_variableChange_a₃ W C
       + (C.u : R) ^ 2 * x * u_pow_mul_variableChange_a₄ W C + u_pow_mul_variableChange_a₆ W C
 
+/-- **`polynomialY` under the change of variables**, scaling by `u³`. The `Y`-partial derivative
+of the Weierstrass polynomial, evaluated at the image point, is `u³` times the corresponding
+derivative of `C • W` evaluated at the source point. This is the second row `(0, u³)` of the
+matrix in `variableChange_nonsingular` below. -/
+lemma variableChange_evalEval_polynomialY (x y : R) :
+    W.toAffine.polynomialY.evalEval ((C.u : R) ^ 2 * x + C.r)
+        ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
+      = (C.u : R) ^ 3 * (C • W).toAffine.polynomialY.evalEval x y := by
+  simp only [evalEval_polynomialY]
+  linear_combination (-(C.u : R) ^ 2 * x) * u_mul_variableChange_a₁ W C
+    - u_pow_mul_variableChange_a₃ W C
+
+/-- **`polynomialX` under the change of variables**, scaling by `u⁴` and picking up a shear. The
+`X`-partial derivative, evaluated at the image point, is `u⁴` times the corresponding derivative
+of `C • W` at the source point, *minus* `s` times the `u³`-scaled `Y`-partial there. That extra
+shear term is the one asymmetry between the two derivative laws, and it makes this the first row
+`(u⁴, -su³)` of the matrix in `variableChange_nonsingular` below. -/
+lemma variableChange_evalEval_polynomialX (x y : R) :
+    W.toAffine.polynomialX.evalEval ((C.u : R) ^ 2 * x + C.r)
+        ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
+      = (C.u : R) ^ 4 * (C • W).toAffine.polynomialX.evalEval x y
+        - C.s * ((C.u : R) ^ 3 * (C • W).toAffine.polynomialY.evalEval x y) := by
+  simp only [evalEval_polynomialX, evalEval_polynomialY]
+  linear_combination (-(C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x) * u_mul_variableChange_a₁ W C
+    + (2 * (C.u : R) ^ 2 * x) * u_pow_mul_variableChange_a₂ W C
+    + C.s * u_pow_mul_variableChange_a₃ W C + u_pow_mul_variableChange_a₄ W C
+
 /-- **Nonsingularity transfers across the change of variables.** The two partial derivatives
-transform by the matrix `![![u⁴, -su³], ![0, u³]]`, which is invertible because `u` is, so
-`W_X ≠ 0 ∨ W_Y ≠ 0` holds at the image exactly when it holds at the source.
+transform by the matrix `![![u⁴, -su³], ![0, u³]]` — the two lemmas just above — which is
+invertible because `u` is, so `W_X ≠ 0 ∨ W_Y ≠ 0` holds at the image exactly when it holds at the
+source.
 
 This is what lets the point map of `Affine/Point/VariableChange.lean` avoid `[W.IsElliptic]`:
 `equation_iff_nonsingular` would supply nonsingularity from the equation, but only for an elliptic
@@ -162,23 +195,10 @@ curve, whereas carrying a point to a point needs no such hypothesis. -/
     W.toAffine.Nonsingular ((C.u : R) ^ 2 * x + C.r)
         ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
       ↔ (C • W).toAffine.Nonsingular x y := by
-  -- `W_Y` scales by `u³`
-  have hY : 2 * ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
-        + W.a₁ * ((C.u : R) ^ 2 * x + C.r) + W.a₃
-      = (C.u : R) ^ 3 * (2 * y + (C • W).a₁ * x + (C • W).a₃) := by
-    linear_combination (-(C.u : R) ^ 2 * x) * u_mul_variableChange_a₁ W C
-      - u_pow_mul_variableChange_a₃ W C
-  -- `W_X` scales by `u⁴`, shifted by an `s`-multiple of `W_Y`
-  have hX : W.a₁ * ((C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x + C.t)
-        - (3 * ((C.u : R) ^ 2 * x + C.r) ^ 2 + 2 * W.a₂ * ((C.u : R) ^ 2 * x + C.r) + W.a₄)
-      = (C.u : R) ^ 4 * ((C • W).a₁ * y - (3 * x ^ 2 + 2 * (C • W).a₂ * x + (C • W).a₄))
-        - C.s * ((C.u : R) ^ 3 * (2 * y + (C • W).a₁ * x + (C • W).a₃)) := by
-    linear_combination (-(C.u : R) ^ 3 * y + (C.u : R) ^ 2 * C.s * x) * u_mul_variableChange_a₁ W C
-      + (2 * (C.u : R) ^ 2 * x) * u_pow_mul_variableChange_a₂ W C
-      + C.s * u_pow_mul_variableChange_a₃ W C + u_pow_mul_variableChange_a₄ W C
-  rw [nonsingular_iff', nonsingular_iff', variableChange_equation]
+  rw [Nonsingular, Nonsingular, variableChange_equation]
   refine and_congr_right fun _ ↦ ?_
-  rw [hX, hY, ← not_and_or, ← not_and_or]
+  rw [variableChange_evalEval_polynomialX W C x y, variableChange_evalEval_polynomialY W C x y,
+    ← not_and_or, ← not_and_or]
   refine not_congr ⟨fun ⟨h1, h2⟩ ↦ ?_, fun ⟨h1, h2⟩ ↦ ?_⟩
   · have hB := (C.u.isUnit.pow 3).mul_right_eq_zero.mp h2
     rw [hB, mul_zero, mul_zero, sub_zero] at h1
@@ -196,6 +216,43 @@ variable {F : Type*} [Field F] (W : WeierstrassCurve F) (C : VariableChange F)
 The slope of the chord or tangent is a quotient, so this is the first statement that needs to
 divide, and the only one here that asks for a field. -/
 
+/-- **The tangent case of `variableChange_slope`**: at a single point that is not its own
+negation, the tangent slope scales by `u` and translates by `s`. The curve equations are not
+needed — they are what `variableChange_slope` uses to reach this case. -/
+private lemma variableChange_slope_of_Y_ne [DecidableEq F] {x y : F}
+    (hy : y ≠ (C • W).toAffine.negY x y) :
+    W.toAffine.slope ((C.u : F) ^ 2 * x + C.r) ((C.u : F) ^ 2 * x + C.r)
+        ((C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t)
+        ((C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t)
+      = (C.u : F) * (C • W).toAffine.slope x x y y + C.s := by
+  have hu : (C.u : F) ≠ 0 := C.u.ne_zero
+  have hΦy : (C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t
+      ≠ W.toAffine.negY ((C.u : F) ^ 2 * x + C.r)
+          ((C.u : F) ^ 3 * y + (C.u : F) ^ 2 * C.s * x + C.t) := by
+    rw [variableChange_negY]
+    exact fun h ↦ hy (mul_left_cancel₀ (pow_ne_zero 3 hu) (by linear_combination h))
+  rw [W.toAffine.slope_of_Y_ne rfl hΦy, (C • W).toAffine.slope_of_Y_ne rfl hy,
+    ← mul_div_assoc, div_add' _ _ _ (sub_ne_zero.mpr hy),
+    div_eq_div_iff (sub_ne_zero.mpr hΦy) (sub_ne_zero.mpr hy)]
+  simp [negY, variableChange_a₁, variableChange_a₂, variableChange_a₃, variableChange_a₄]
+  field
+
+/-- **The chord case of `variableChange_slope`**: through two points with distinct
+`x`-coordinates, which stay distinct after the change of variables because `u` is a unit. The
+curve equations are not needed here either. -/
+private lemma variableChange_slope_of_X_ne [DecidableEq F] {x₁ x₂ y₁ y₂ : F} (hx : x₁ ≠ x₂) :
+    W.toAffine.slope ((C.u : F) ^ 2 * x₁ + C.r) ((C.u : F) ^ 2 * x₂ + C.r)
+        ((C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t)
+        ((C.u : F) ^ 3 * y₂ + (C.u : F) ^ 2 * C.s * x₂ + C.t)
+      = (C.u : F) * (C • W).toAffine.slope x₁ x₂ y₁ y₂ + C.s := by
+  have hu : (C.u : F) ≠ 0 := C.u.ne_zero
+  have hΦx : (C.u : F) ^ 2 * x₁ + C.r ≠ (C.u : F) ^ 2 * x₂ + C.r := by
+    simpa [mul_right_inj' (pow_ne_zero 2 hu)] using hx
+  rw [W.toAffine.slope_of_X_ne hΦx, (C • W).toAffine.slope_of_X_ne hx]
+  have h1 := sub_ne_zero.mpr hΦx
+  have h2 := sub_ne_zero.mpr hx
+  field
+
 /-- **The slope under the change of variables**, scaling by `u` and translating by `s` — the law
 the change of variables applies to a slope, as `y` scales by `u³` and `x` by `u²`. Stated for two
 points of `C • W` on the curve, excluding the degenerate case `x₁ = x₂ ∧ y₁ = negY x₂ y₂` —
@@ -207,26 +264,11 @@ lemma variableChange_slope [DecidableEq F] {x₁ x₂ y₁ y₂ : F}
         ((C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t)
         ((C.u : F) ^ 3 * y₂ + (C.u : F) ^ 2 * C.s * x₂ + C.t)
       = (C.u : F) * (C • W).toAffine.slope x₁ x₂ y₁ y₂ + C.s := by
-  have hu : (C.u : F) ≠ 0 := C.u.ne_zero
   rcases eq_or_ne x₁ x₂ with rfl | hx
   · have hy : y₁ ≠ (C • W).toAffine.negY x₁ y₂ := fun h ↦ hxy ⟨rfl, h⟩
     obtain rfl := Y_eq_of_Y_ne h₁ h₂ rfl hy
-    have hΦy : (C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t
-        ≠ W.toAffine.negY ((C.u : F) ^ 2 * x₁ + C.r)
-            ((C.u : F) ^ 3 * y₁ + (C.u : F) ^ 2 * C.s * x₁ + C.t) := by
-      rw [variableChange_negY]
-      exact fun h ↦ hy (mul_left_cancel₀ (pow_ne_zero 3 hu) (by linear_combination h))
-    rw [W.toAffine.slope_of_Y_ne rfl hΦy, (C • W).toAffine.slope_of_Y_ne rfl hy,
-      ← mul_div_assoc, div_add' _ _ _ (sub_ne_zero.mpr hy),
-      div_eq_div_iff (sub_ne_zero.mpr hΦy) (sub_ne_zero.mpr hy)]
-    simp [negY, variableChange_a₁, variableChange_a₂, variableChange_a₃, variableChange_a₄]
-    field
-  · have hΦx : (C.u : F) ^ 2 * x₁ + C.r ≠ (C.u : F) ^ 2 * x₂ + C.r := by
-      simpa [mul_right_inj' (pow_ne_zero 2 hu)] using hx
-    rw [W.toAffine.slope_of_X_ne hΦx, (C • W).toAffine.slope_of_X_ne hx]
-    have h1 := sub_ne_zero.mpr hΦx
-    have h2 := sub_ne_zero.mpr hx
-    field
+    exact variableChange_slope_of_Y_ne W C hy
+  · exact variableChange_slope_of_X_ne W C hx
 
 end Field
 

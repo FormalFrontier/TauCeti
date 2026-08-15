@@ -17,8 +17,9 @@ involution, recorded here as an `InvolutiveInv (ConjClasses G)` instance; `C⁻�
 inverses of the members of `C`, and it has the same size as `C`. A class fixed by this involution is
 a **real** class (`TauCeti.IsRealClass`).
 
-The other fact collected here is that the size of a conjugacy class divides the order of the group,
-a consequence of the orbit-stabilizer theorem for the conjugation action.
+The other fact collected here is that the size of a conjugacy class is the index of the centralizer
+of any of its members, and so divides the order of the group: the orbit-stabilizer theorem for the
+conjugation action.
 
 ## Main statements
 
@@ -28,6 +29,9 @@ a consequence of the orbit-stabilizer theorem for the conjugation action.
   `TauCeti.isRealClass_iff_inv_eq` identifying it with being fixed by inversion.
 * `TauCeti.ConjClasses.ncard_carrier_inv` and `TauCeti.ConjClasses.card_carrier_inv`: a conjugacy
   class and its inverse have the same size, in `Set.ncard` and in `Nat.card` form.
+* `TauCeti.ConjClasses.ncard_carrier_mk` and `TauCeti.ConjClasses.card_carrier_mk`: the size of a
+  conjugacy class is the index of the centralizer of any of its members, in `Set.ncard` and in
+  `Nat.card` form.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
   a class is nonzero in any semiring where the group order is.
@@ -107,16 +111,34 @@ to `(C⁻¹).carrier.ncard` and the simp normal form linter rejects the pair; th
 theorem card_carrier_inv (C : ConjClasses G) : Nat.card (C⁻¹).carrier = Nat.card C.carrier :=
   ncard_carrier_inv C
 
-/-- **The size of a conjugacy class divides the order of the group.** The class is the orbit of any
-of its members under the conjugation action, so its size is the index of a centralizer. -/
+/-- **The size of a conjugacy class is the index of the centralizer of any of its members.** The
+class is the orbit of `g` under the conjugation action and the centralizer is the stabilizer, so
+this is the orbit-stabilizer theorem. -/
+theorem ncard_carrier_mk (g : G) :
+    (ConjClasses.mk g).carrier.ncard = (Subgroup.centralizer {g}).index := by
+  have hcomap := (MulAction.stabilizer (ConjAct G) g).index_comap_of_surjective
+    (f := ConjAct.toConjAct.toMonoidHom) ConjAct.toConjAct.surjective
+  rw [← ConjAct.orbit_eq_carrier_conjClasses, ← MulAction.index_stabilizer,
+    Subgroup.centralizer_eq_comap_stabilizer]
+  exact hcomap.symm
+
+/-- **The size of a conjugacy class is the index of the centralizer of any of its members**, in
+`Nat.card` form.
+
+Not `@[simp]`: Mathlib's `Nat.card_coe_set_eq` is itself `simp`, so the left-hand side simplifies
+to `(ConjClasses.mk g).carrier.ncard` and the simp normal form linter rejects the pair; that
+normalized form is `TauCeti.ConjClasses.ncard_carrier_mk`. -/
+theorem card_carrier_mk (g : G) :
+    Nat.card (ConjClasses.mk g).carrier = (Subgroup.centralizer {g}).index := by
+  rw [Nat.card_coe_set_eq, ncard_carrier_mk]
+
+/-- **The size of a conjugacy class divides the order of the group**, being the index of a
+centralizer. -/
 theorem card_carrier_dvd_card (C : ConjClasses G) : Nat.card C.carrier ∣ Nat.card G := by
   obtain ⟨x, rfl⟩ := ConjClasses.exists_rep C
   calc Nat.card (ConjClasses.mk x).carrier
-      = (MulAction.stabilizer (ConjAct G) x).index := by
-        rw [Nat.card_coe_set_eq, ← ConjAct.orbit_eq_carrier_conjClasses,
-          MulAction.index_stabilizer]
-    _ ∣ Nat.card (ConjAct G) := Subgroup.index_dvd_card _
-    _ = Nat.card G := Nat.card_congr ConjAct.ofConjAct.toEquiv
+      = (Subgroup.centralizer {x}).index := card_carrier_mk x
+    _ ∣ Nat.card G := Subgroup.index_dvd_card _
 
 /-- The size of a conjugacy class is nonzero in any semiring in which the order of the group is
 nonzero: it divides that order. -/

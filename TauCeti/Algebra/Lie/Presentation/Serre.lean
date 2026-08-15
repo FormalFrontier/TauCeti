@@ -27,8 +27,12 @@ field per displayed relator, and `TauCeti.isSerreSystem_serre` proves that the g
 presented algebra form such a system — the "only if" direction of the presentation. The converse is
 `TauCeti.serreLift`: any Serre system in any Lie algebra `L` is the image of the generators under a
 homomorphism out of `Matrix.ToLieAlgebra R CM`, and by `TauCeti.serre_hom_ext` that homomorphism is
-the only one with those values. Finally `TauCeti.lieSpan_serreGenerators_eq_top` records that the
-three families generate the presented algebra as a Lie subalgebra.
+the only one with those values. The symmetries of Serre's relations are recorded as stability
+properties of `TauCeti.IsSerreSystem` — under reindexing the families along an injective map of
+index sets and under the signed exchange of the raising and lowering families — since they are
+statements about an arbitrary Serre system rather than about the presented algebra. Finally
+`TauCeti.lieSpan_serreGenerators_eq_top` records that the three families generate the presented
+algebra as a Lie subalgebra.
 
 Nothing here assumes that `CM` is a Cartan matrix, since none of it needs to: the presented algebra
 is defined for an arbitrary matrix of integers, and the universal property is a statement about the
@@ -53,7 +57,12 @@ one, which is not proved here (see the Roadmap section below).
   with the individual relations available as `TauCeti.lie_serreH_serreH` and its companions.
 * `TauCeti.serreLift_serreH`, `TauCeti.serreLift_serreE`, `TauCeti.serreLift_serreF` and
   `TauCeti.serre_hom_ext`: `TauCeti.serreLift` sends the generators to the given Serre system, and
-  is the unique homomorphism doing so.
+  is the unique homomorphism doing so; `TauCeti.serre_equiv_ext` is the same extensionality
+  principle for equivalences out of the presented algebra.
+* `TauCeti.IsSerreSystem.submatrix`, `TauCeti.IsSerreSystem.perm` and
+  `TauCeti.IsSerreSystem.neg_swap`: a Serre system stays one after reindexing along an injective
+  map of index sets (a permutation preserving the matrix, in the second) or after the signed
+  exchange of the raising and lowering families.
 * `TauCeti.serreLift_eq_id`: lifting the generators along their own Serre system is the identity.
 * `TauCeti.lieSpan_serreGenerators_eq_top`: the generators generate the presented algebra.
 
@@ -267,6 +276,70 @@ theorem isSerreSystem_serre :
   ad_pow_lie_E_E := ad_pow_lie_serreE_serreE R CM
   ad_pow_lie_F_F := ad_pow_lie_serreF_serreF R CM
 
+/-! ### Stability of Serre systems
+
+Serre's relations are stable under reindexing the three families along an injective map of index
+sets, provided the matrix is reindexed the same way, and under the signed exchange of the raising
+and lowering families. Both are statements about an arbitrary Serre system in an arbitrary Lie
+algebra; applied to the generators of the presented algebra they give its automorphisms, in
+`TauCeti/Algebra/Lie/Presentation/Serre/Automorphism.lean`. -/
+
+section Stability
+
+variable {R CM} {H E F : B → L} {σ : Equiv.Perm B}
+
+omit [DecidableEq B] in
+/-- If the `n`-fold adjoint action of `x` annihilates `y`, then so does that of `-x`. -/
+private theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (ad R L x ^ n) y = 0) :
+    (ad R L (-x) ^ n) y = 0 := by
+  have hneg : ad R L (-x) = (-1 : R) • ad R L x := by rw [map_neg, neg_smul, one_smul]
+  rw [hneg, smul_pow, LinearMap.smul_apply, h, smul_zero]
+
+omit [DecidableEq B] in
+/-- Reindexing a Serre system along an injective map of index sets gives a Serre system for the
+matrix reindexed the same way. -/
+theorem IsSerreSystem.submatrix {B' : Type*} {f : B' → B} (hf : Function.Injective f)
+    (h : IsSerreSystem R CM H E F) :
+    IsSerreSystem R (CM.submatrix f f) (H ∘ f) (E ∘ f) (F ∘ f) where
+  lie_H_H i j := h.lie_H_H (f i) (f j)
+  lie_E_F_self i := h.lie_E_F_self (f i)
+  lie_E_F_of_ne i j hij := h.lie_E_F_of_ne (f i) (f j) fun hc => hij (hf hc)
+  lie_H_E i j := h.lie_H_E (f i) (f j)
+  lie_H_F i j := h.lie_H_F (f i) (f j)
+  ad_pow_lie_E_E i j := h.ad_pow_lie_E_E (f i) (f j)
+  ad_pow_lie_F_F i j := h.ad_pow_lie_F_F (f i) (f j)
+
+omit [DecidableEq B] in
+/-- Reindexing a Serre system along a permutation `σ` of the index set that preserves the matrix
+gives a Serre system for the same matrix. -/
+theorem IsSerreSystem.perm (h : IsSerreSystem R CM H E F) (hσ : CM.submatrix σ σ = CM) :
+    IsSerreSystem R CM (H ∘ σ) (E ∘ σ) (F ∘ σ) :=
+  hσ ▸ h.submatrix σ.injective
+
+omit [DecidableEq B] in
+/-- Negating the Cartan family of a Serre system and exchanging its raising and lowering families,
+again with a sign, gives a Serre system for the same matrix. This is the symmetry of Serre's
+relations behind the Chevalley involution. -/
+theorem IsSerreSystem.neg_swap (h : IsSerreSystem R CM H E F) :
+    IsSerreSystem R CM (fun i => -H i) (fun i => -F i) (fun i => -E i) where
+  lie_H_H i j := by simp [h.lie_H_H i j]
+  lie_E_F_self i := by
+    rw [neg_lie, lie_neg, neg_neg, ← lie_skew, h.lie_E_F_self i]
+  lie_E_F_of_ne i j hij := by
+    rw [neg_lie, lie_neg, neg_neg, ← lie_skew, h.lie_E_F_of_ne j i (Ne.symm hij), neg_zero]
+  lie_H_E i j := by rw [neg_lie, lie_neg, neg_neg, h.lie_H_F i j, smul_neg]
+  lie_H_F i j := by rw [neg_lie, lie_neg, neg_neg, h.lie_H_E i j, smul_neg, neg_neg]
+  ad_pow_lie_E_E i j := by
+    rw [neg_lie, lie_neg, neg_neg]
+    exact ad_neg_pow_apply_eq_zero (h.ad_pow_lie_F_F i j)
+  ad_pow_lie_F_F i j := by
+    rw [neg_lie, lie_neg, neg_neg]
+    exact ad_neg_pow_apply_eq_zero (h.ad_pow_lie_E_E i j)
+
+end Stability
+
+/-! ### The universal property -/
+
 variable {R CM}
 
 omit [DecidableEq B] in
@@ -347,6 +420,15 @@ theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
     | F i => exact hF i
   refine LieIdeal.lieHom_qext fun x => ?_
   exact congrArg (fun ψ : FreeLieAlgebra R (Generators B) →ₗ⁅R⁆ L => ψ x) hcomp
+
+/-- Two equivalences out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
+@[ext]
+theorem serre_equiv_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM ≃ₗ⁅R⁆ L}
+    (hH : ∀ i, g₁ (serreH R CM i) = g₂ (serreH R CM i))
+    (hE : ∀ i, g₁ (serreE R CM i) = g₂ (serreE R CM i))
+    (hF : ∀ i, g₁ (serreF R CM i) = g₂ (serreF R CM i)) : g₁ = g₂ :=
+  LieEquiv.ext fun x =>
+    DFunLike.congr_fun (serre_hom_ext (g₁ := g₁.toLieHom) (g₂ := g₂.toLieHom) hH hE hF) x
 
 /-- `TauCeti.serreLift` is the unique homomorphism sending the generators to a given Serre
 system. -/

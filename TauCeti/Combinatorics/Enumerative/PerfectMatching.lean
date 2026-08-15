@@ -14,10 +14,10 @@ public import Mathlib.Data.Nat.Factorial.DoubleFactorial
 
 A **perfect matching** of a type `α` is a permutation of `α` that is an involution without
 fixed points; equivalently, it partitions `α` into the unordered pairs `{a, f a}`. This file
-defines perfect matchings, shows that a perfect matching restricted to the complement of one
-of its arcs is again a perfect matching, and counts the perfect matchings of a finite type:
-a type of cardinality `2 * m` has `(2 * m - 1)‼` of them, and a type of odd cardinality has
-none.
+defines perfect matchings, transports them along an equivalence of the underlying types, shows
+that a perfect matching restricted to the complement of one of its arcs is again a perfect
+matching, and counts the perfect matchings of a finite type: a type of cardinality `2 * m` has
+`(2 * m - 1)‼` of them, and a type of odd cardinality has none.
 
 The counting theorem is the combinatorial content behind the dimension of the Brauer algebra;
 see `TauCeti/Combinatorics/Brauer/Diagram.lean`.
@@ -26,6 +26,7 @@ see `TauCeti/Combinatorics/Brauer/Diagram.lean`.
 
 * `TauCeti.IsPerfectMatching f`: the permutation `f` is an involution with no fixed point.
 * `TauCeti.PerfectMatching α`: the type of perfect matchings of `α`.
+* `TauCeti.PerfectMatching.congr`: transporting a perfect matching along an equivalence.
 * `TauCeti.PerfectMatching.restrict`: the perfect matching induced on the complement of an arc.
 * `TauCeti.PerfectMatching.extend`: the perfect matching obtained by adjoining an arc.
 * `TauCeti.PerfectMatching.fiberEquiv`: the two constructions above are mutually inverse.
@@ -48,9 +49,9 @@ open scoped Nat
 
 namespace TauCeti
 
-universe u
+universe u v w
 
-variable {α : Type u}
+variable {α : Type u} {β : Type v} {γ : Type w}
 
 /-- A permutation of `α` is a **perfect matching** when it is an involution with no fixed
 point, so that it pairs off the elements of `α`. -/
@@ -223,6 +224,65 @@ theorem fiberEquiv_symm_apply (hab : a ≠ b) (E : PerfectMatching {x : α // x 
     ((fiberEquiv hab).symm E : PerfectMatching α) = extend hab E := (rfl)
 
 end Extend
+
+section Congr
+
+/-- Transporting an involution without fixed points along an equivalence leaves it an involution
+without fixed points. -/
+theorem isPerfectMatching_permCongr (e : α ≃ β) {f : Equiv.Perm α} (hf : IsPerfectMatching f) :
+    IsPerfectMatching (e.permCongr f) := by
+  refine ⟨fun b => by simp [hf.1], fun b hb => hf.2 (e.symm b) ?_⟩
+  simpa using congrArg e.symm hb
+
+/-- A permutation is a perfect matching exactly when its transport along an equivalence is. -/
+theorem isPerfectMatching_permCongr_iff (e : α ≃ β) {f : Equiv.Perm α} :
+    IsPerfectMatching (e.permCongr f) ↔ IsPerfectMatching f := by
+  refine ⟨fun h => ?_, isPerfectMatching_permCongr e⟩
+  have hf : e.symm.permCongr (e.permCongr f) = f := by
+    rw [← Equiv.permCongr_symm, Equiv.symm_apply_apply]
+  exact hf ▸ isPerfectMatching_permCongr e.symm h
+
+/-- **Transporting a perfect matching along an equivalence** of the underlying types: the arc
+joining `a` to `b` becomes the arc joining `e a` to `e b`. -/
+def congr (e : α ≃ β) : PerfectMatching α ≃ PerfectMatching β :=
+  e.permCongr.subtypeEquiv fun _ => (isPerfectMatching_permCongr_iff e).symm
+
+/-- The involution underlying a transported matching is the transported involution. -/
+@[simp]
+theorem congr_val (e : α ≃ β) (D : PerfectMatching α) :
+    (congr e D).val = e.permCongr D.val := (rfl)
+
+/-- The transported matching matches `b` with the image of the partner of `e.symm b`. -/
+theorem congr_val_apply (e : α ≃ β) (D : PerfectMatching α) (b : β) :
+    (congr e D).val b = e (D.val (e.symm b)) := (rfl)
+
+/-- The transported matching matches `e a` with the image of the partner of `a`. -/
+theorem congr_val_apply_apply (e : α ≃ β) (D : PerfectMatching α) (a : α) :
+    (congr e D).val (e a) = e (D.val a) := by
+  rw [congr_val_apply, Equiv.symm_apply_apply]
+
+/-- Transporting along the identity equivalence changes nothing. -/
+@[simp]
+theorem congr_refl (D : PerfectMatching α) : congr (Equiv.refl α) D = D :=
+  Subtype.ext <| Equiv.ext fun a => by
+    rw [congr_val_apply, Equiv.refl_symm, Equiv.refl_apply, Equiv.refl_apply]
+
+/-- **Transports compose**: transporting along `e` and then along `e'` is transporting along
+`e.trans e'`, both matchings sending `c` to `e' (e (D.val (e.symm (e'.symm c))))`. -/
+@[simp]
+theorem congr_trans (e : α ≃ β) (e' : β ≃ γ) (D : PerfectMatching α) :
+    congr e' (congr e D) = congr (e.trans e') D :=
+  Subtype.ext <| Equiv.ext fun c => by
+    rw [congr_val_apply, congr_val_apply, congr_val_apply, Equiv.symm_trans_apply,
+      Equiv.trans_apply]
+
+/-- Transporting back along `e` is transporting along `e.symm`, since transports compose. -/
+@[simp]
+theorem congr_symm (e : α ≃ β) : (congr e).symm = congr e.symm :=
+  Equiv.ext fun D => by
+    rw [Equiv.symm_apply_eq, congr_trans, Equiv.symm_trans_self, congr_refl]
+
+end Congr
 
 end PerfectMatching
 

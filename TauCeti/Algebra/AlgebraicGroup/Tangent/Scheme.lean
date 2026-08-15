@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
+public import TauCeti.Algebra.Bialgebra.Augmentation
 public import TauCeti.AlgebraicGeometry.TangentSpace.Affine
 
 /-!
@@ -18,7 +19,6 @@ represented affine group.
 
 ## Main declarations
 
-* `Bialgebra.augmentationPoint`: the point of the affine spectrum defined by the counit.
 * `Bialgebra.cotangentLinearEquivZariski`: the augmentation cotangent space is the Zariski
   cotangent space at the augmentation point.
 * `Bialgebra.finrank_cotangentSpace_eq_finrank_zariskiCotangentSpace`: equality of their
@@ -39,11 +39,6 @@ universe u v
 
 variable (k : Type u) [Field k]
 variable (H : Type v) [CommRing H] [Bialgebra k H]
-
-/-- The point of `Spec H` defined by the counit of a commutative bialgebra. For a Hopf algebra,
-this is the identity point of the represented affine group. -/
-abbrev augmentationPoint : Spec (CommRingCat.of H) :=
-  AlgHom.kernelPoint (_root_.Bialgebra.counitAlgHom k H)
 
 /-- The augmentation cotangent space of a commutative bialgebra is canonically the Zariski
 cotangent space of its affine spectrum at the augmentation point. -/

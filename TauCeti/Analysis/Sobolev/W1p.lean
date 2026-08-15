@@ -4,11 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Sobolev.WeakDeriv
+public import TauCeti.Analysis.Sobolev.TestFunctionLp
 public import Mathlib.MeasureTheory.Function.Holder
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.SpecificCodomains.WithLp
 public import Mathlib.Analysis.InnerProductSpace.ProdL2
+import Mathlib.Analysis.InnerProductSpace.Dual
 
 /-!
 # First-order weak Sobolev spaces
@@ -203,37 +204,18 @@ private def weakDerivativeTestFunction (phi : 𝓓(Omega, ℝ)) (v : E) (x : E) 
 omit [FiniteDimensional ℝ E] in
 private theorem weakDerivativeTestFunction_memLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) (v : E) :
     MemLp (weakDerivativeTestFunction phi v) q (mu.restrict Omega) := by
-  let dphi : 𝓓(Omega, ℝ) := TestFunction.lineDerivCLM ℝ v phi
-  have hdphi : (dphi : E → ℝ) = fun x => lineDeriv ℝ (phi : E → ℝ) x v := by
-    funext x
-    exact TestFunction.lineDerivCLM_apply_of_le le_top
-  let f : E → Sobolev1Jet E := fun x => WithLp.toLp 2 (dphi x, phi x • v)
-  have hf_cont : Continuous f :=
-    (WithLp.prodContinuousLinearEquiv 2 ℝ ℝ E).symm.continuous.comp
-      (dphi.continuous.prodMk (phi.continuous.smul continuous_const))
-  have hd_support : HasCompactSupport (fun x => WithLp.toLp 2 (dphi x, (0 : E))) :=
-    dphi.hasCompactSupport.mono fun x hx hzero => hx (by simp [hzero])
-  have hv_support : HasCompactSupport (fun x => WithLp.toLp 2 ((0 : ℝ), phi x • v)) :=
-    phi.hasCompactSupport.mono fun x hx hzero => hx (by simp [hzero])
-  have hf_support : HasCompactSupport f := by
-    have hf_eq : f = (fun x => WithLp.toLp 2 (dphi x, (0 : E))) +
-        fun x => WithLp.toLp 2 ((0 : ℝ), phi x • v) := by
-      funext x
-      -- Reduce pointwise addition to the product equality consumed by the linear equivalence.
-      change WithLp.toLp 2 (dphi x, phi x • v) =
-        WithLp.toLp 2 (dphi x, 0) + WithLp.toLp 2 (0, phi x • v)
-      -- This product identity supplies the input to `map_add`; `WithLp.toLp` is otherwise opaque.
-      rw [show (dphi x, phi x • v) =
-          (dphi x, (0 : E)) + ((0 : ℝ), phi x • v) by ext <;> simp]
-      exact (WithLp.prodContinuousLinearEquiv 2 ℝ ℝ E).symm.map_add _ _
-    rw [hf_eq]
-    exact hd_support.add hv_support
-  have hfun : weakDerivativeTestFunction phi v = f := by
-    funext x
-    simp only [weakDerivativeTestFunction, f]
-    rw [congrFun hdphi x]
-  rw [hfun]
-  exact hf_cont.memLp_of_hasCompactSupport (μ := mu.restrict Omega) (p := q) hf_support
+  have hdphi : ((TestFunction.lineDerivCLM ℝ v phi : 𝓓(Omega, ℝ)) : E → ℝ) =
+      fun x => lineDeriv ℝ (phi : E → ℝ) x v :=
+    funext fun _ => TestFunction.lineDerivCLM_apply_of_le le_top
+  have hsmul : MemLp (fun x => (phi : E → ℝ) x • v) q (mu.restrict Omega) :=
+    (phi.continuous.smul continuous_const).memLp_of_hasCompactSupport
+      (phi.hasCompactSupport.mono fun x hx hzero => hx (by simp [hzero]))
+  -- A jet is `Lᵠ` exactly when both of its coordinates are, and both are test-function multiples.
+  refine MemLp.of_fst_of_snd_prodLp ⟨?_, ?_⟩ <;>
+    simp only [weakDerivativeTestFunction, WithLp.toLp_fst, WithLp.toLp_snd]
+  · have hmem := memLp_testFunction (mu := mu) q (TestFunction.lineDerivCLM ℝ v phi)
+    rwa [hdphi] at hmem
+  · exact hsmul
 
 /-- The compactly supported jet `(∂_v φ, φ v)` used to test whether an `Lᵖ` jet is a weak
 derivative.  Its exponent is Hölder-conjugate to `p`, including the endpoints `p = 1, ∞`. -/
@@ -319,16 +301,10 @@ private theorem testIntegral_eq_zero_iff
     simpa only [smul_eq_mul] using integrable_lineDeriv_smul_of_locallyIntegrableOn hf phi v
   have hright : Integrable (fun x => phi x * f' x) mu := by
     simpa only [smul_eq_mul] using integrable_smul_of_locallyIntegrableOn hf' phi
-  have hsupport : ∀ x, x ∉ (Omega : Set E) →
-      lineDeriv ℝ (phi : E → ℝ) x v * f x + phi x * f' x = 0 := by
-    intro x hx
-    have hxt : x ∉ tsupport (phi : E → ℝ) := fun hmem => hx (phi.tsupport_subset hmem)
-    rw [lineDeriv_eq_zero_of_notMem_tsupport phi hxt v,
-      image_eq_zero_of_notMem_tsupport hxt]
-    simp
-  rw [setIntegral_eq_integral_of_forall_compl_eq_zero hsupport,
-    integral_add hleft hright]
-  simp only [smul_eq_mul]
+  rw [integral_add hleft.integrableOn hright.integrableOn]
+  simp only [← smul_eq_mul]
+  rw [setIntegral_lineDeriv_smul_eq_integral_lineDeriv_smul,
+    setIntegral_smul_eq_integral_smul]
   constructor <;> intro h <;> linarith
 
 /-- A jet belongs to `w1pSubmodule` exactly when its value component has the recorded gradient as
@@ -375,6 +351,10 @@ def W1p.valueL : W1p mu Omega p →L[ℝ] Lp ℝ p (mu.restrict Omega) :=
 def W1p.value (u : W1p mu Omega p) : Lp ℝ p (mu.restrict Omega) :=
   W1p.valueL u
 
+omit [FiniteDimensional ℝ E] in
+@[simp]
+theorem W1p.valueL_apply (u : W1p mu Omega p) : W1p.valueL u = W1p.value u := (rfl)
+
 /-- The continuous linear projection from `W1p` to its `Lᵖ` weak-gradient component. -/
 def W1p.gradientL : W1p mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
   Sobolev1JetLp.gradientL.comp (w1pSubmodule mu Omega p).toSubmodule.subtypeL
@@ -382,6 +362,10 @@ def W1p.gradientL : W1p mu Omega p →L[ℝ] Lp E p (mu.restrict Omega) :=
 /-- The `Lᵖ` weak-gradient component of a Sobolev function. -/
 def W1p.gradient (u : W1p mu Omega p) : Lp E p (mu.restrict Omega) :=
   W1p.gradientL u
+
+omit [FiniteDimensional ℝ E] in
+@[simp]
+theorem W1p.gradientL_apply (u : W1p mu Omega p) : W1p.gradientL u = W1p.gradient u := (rfl)
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]
     [Fact (1 <= p)] in
@@ -460,6 +444,20 @@ theorem W1p.hasWeakFDerivOn (u : W1p mu Omega p) :
     HasWeakFDerivOn mu Omega (W1p.value u)
       (fun x => innerSL ℝ (W1p.gradient u x)) :=
   (mem_w1pSubmodule_iff_hasWeakFDerivOn u.1).mp u.2
+
+/-- Two Sobolev functions are equal when their `Lᵖ` value components are equal.  Uniqueness of
+weak derivatives determines the gradient component. -/
+@[ext]
+theorem W1p.ext_value {u v : W1p mu Omega p} (hvalue : W1p.value u = W1p.value v) : u = v := by
+  apply W1p.ext hvalue
+  apply Lp.ext
+  have hderiv :
+      (fun x => innerSL ℝ (W1p.gradient u x)) =ᵐ[mu.restrict Omega]
+        fun x => innerSL ℝ (W1p.gradient v x) := by
+    apply (W1p.hasWeakFDerivOn u).ae_eq
+    simpa only [hvalue] using W1p.hasWeakFDerivOn v
+  filter_upwards [hderiv] with x hx
+  exact innerSL_inj.mp hx
 
 omit [FiniteDimensional ℝ E] in
 /-- The norm of a Sobolev function controls the norm of its value component. -/

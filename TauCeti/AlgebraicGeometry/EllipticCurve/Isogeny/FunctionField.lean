@@ -13,25 +13,51 @@ import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 # Function-field pullbacks of isogenies
 
 This file proves that the coordinate pullback of an isogeny is injective and extends it uniquely
-to the function fields. Injectivity is the algebraic form of nonconstancy: a nonzero element in the
-kernel would make the pulled-back target coordinate algebraic over the base field. Pointedness
-would then make the source coordinate algebraic as well, contradicting its transcendence.
+to the function fields. Both rest on one nonconstancy statement: the pulled-back target
+coordinate is transcendental over the base field, since otherwise pointedness would make the
+source coordinate algebraic as well, against its transcendence. Injectivity is then the
+observation that a nonzero element of the kernel has a nonzero norm over the target's polynomial
+subring, and that norm is a polynomial relation killing the pulled-back coordinate.
+
+That extension is what lets isogenies be composed: a coordinate pullback lands in a *function*
+field, so composing two of them needs the outer one extended across the inner one's fraction
+field. `TauCeti.Isogeny.comp` therefore lives here rather than beside `TauCeti.Isogeny.id` in
+`Isogeny/Basic.lean` — this is the first file where it can be stated.
 
 ## Main results
 
+* `TauCeti.Isogeny.transcendental_pullback_X`: the pullback of the affine coordinate `x` is
+  transcendental over the base field. This is the nonconstancy step, and the source of a
+  transcendental element inside the pulled-back function field.
 * `TauCeti.Isogeny.pullback_injective`: a coordinate pullback satisfying `MapsInfinity` is
   injective.
 * `TauCeti.Isogeny.fieldPullback`: the induced embedding of function fields.
-* `TauCeti.Isogeny.degree`: the degree of an isogeny, the dimension of the source function field
-  over the image of `fieldPullback`, with `TauCeti.Isogeny.degree_def` the equation lemma the
-  module boundary makes necessary; `TauCeti.Isogeny.degree_id` computes it for the identity and is
-  the `@[simp]` normal form.
-  Finiteness of that extension — which is what makes the degree honest, since `finrank` of an
-  infinite extension reads `0` — is not proved here, so nothing below asserts positivity.
+* `TauCeti.Isogeny.comp`: composition of isogenies, with `TauCeti.Isogeny.comp_fieldPullback`
+  its function-field law and `TauCeti.Isogeny.id_comp`, `TauCeti.Isogeny.comp_id`,
+  `TauCeti.Isogeny.comp_assoc` the unit and associativity laws. The pointedness obligation is
+  discharged privately when `comp` is defined.
+* `TauCeti.Isogeny.comp_right_injective` and `TauCeti.Isogeny.comp_right_inj`: precomposition
+  by a fixed isogeny is injective. Equivalently, a factorisation `ψ = λ.comp φ` through a fixed
+  `φ` determines its factor `λ` uniquely — the uniqueness half of factoring an isogeny, reached
+  without the group structure on `Hom` that Silverman's subtraction argument uses.
+
+Adapted from the AINTLIB project (`github.com/CBirkbeck/AINTLIB`, at revision
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache 2.0 per the source file's header, by Chris
+Birkbeck): `projects/HasseWeil/HasseWeil/EC/IsogenyAG/CanonicalDual.lean`, declaration
+`Isogeny.compose_right_cancel`. The source states it for an isogeny structure that carries the
+point map as an independent field, so its proof passes through `ext_toCurveMap`; here an isogeny
+is determined by its pullback, so pullback extensionality suffices.
+
+The degree of an isogeny — the dimension of `W₁.FunctionField` over the image of `fieldPullback`
+— is `TauCeti.Isogeny.degree`, in `Isogeny/Degree.lean`; it is stated there rather than here
+because the finiteness that makes it honest is proved from `transcendental_pullback_X` together
+with the degree of the function field over the rational function field.
 
 The construction is the coordinate-ring form of D. Angdinata's function-field definition of an
 isogeny and follows the nonconstancy argument described in the elliptic-curves roadmap. The
-geometric interpretation is Silverman, *The Arithmetic of Elliptic Curves*, II.2.4.
+composition definition follows the seed in `TauCetiRoadmap/EllipticCurves/Suggested.lean`,
+discharging the `mapsInfinity` obligation the seed leaves open. The geometric interpretation is
+Silverman, *The Arithmetic of Elliptic Curves*, II.2.4.
 -/
 
 public section
@@ -52,28 +78,13 @@ private theorem isIntegral_eval_of_isIntegral {K : Type*} [CommRing K] [Algebra 
   rw [← mem_integralClosure_iff]
   exact adjoin_le_integralClosure hx (Polynomial.aeval_mem_adjoin_singleton F x)
 
-private theorem isIntegral_of_isIntegral_map {A K : Type*} [CommRing A] [CommRing K] [Nontrivial K]
-    [Algebra F K] (f : A →+* K) (hf : ∀ a, IsIntegral F (f a)) {x : K}
-    (hx : @IsIntegral A K _ _ f.toAlgebra x) : IsIntegral F x := by
-  obtain ⟨p, hp, hpx⟩ := hx
-  have hpdegree : p.natDegree ≠ 0 := by
-    intro hdegree
-    have hp_one : p = 1 := hp.natDegree_eq_zero.mp hdegree
-    rw [hp_one] at hpx
-    simp at hpx
-  apply IsIntegral.of_aeval_monic_of_isIntegral_coeff
-      (p := p.map f) (x := x)
-  · exact hp.map _
-  · rw [hp.natDegree_map]
-    exact hpdegree
-  · have hroot : (p.map f).eval x = 0 := by
-      rw [eval_map]
-      simpa only [RingHom.algebraMap_toAlgebra] using hpx
-    rw [hroot]
-    exact isIntegral_zero
-  · intro i
-    rw [coeff_map]
-    exact hf (p.coeff i)
+-- Integrality descends along a ring hom with integral image. Kept here rather than exported,
+-- since the pullback-integrality arguments in this file are its only consumers.
+private theorem isIntegral_of_isIntegral_map {R A K : Type*} [CommRing R] [CommRing A] [CommRing K]
+    [Algebra R K] (f : A →+* K) (hf : ∀ a, IsIntegral R (f a)) {x : K}
+    (hx : @IsIntegral A K _ _ f.toAlgebra x) : IsIntegral R x :=
+  let _ := f.toAlgebra
+  isIntegral_trans x (hx.map_of_comp_eq (f.codRestrict (integralClosure R K) hf) (RingHom.id K) rfl)
 
 private theorem isIntegral_pullback_of_isIntegral_X (φ : Isogeny W₁ W₂)
     (hX : IsIntegral F (φ.pullback (algebraMap F[X] W₂.CoordinateRing X)))
@@ -102,8 +113,41 @@ private theorem isIntegral_pullback_of_isIntegral_X (φ : Isogeny W₁ W₂)
       (Polynomial.hom_eval₂ P (algebraMap F[X] W₂.CoordinateRing)
         φ.pullback.toRingHom a).symm.trans (by rw [hPa, map_zero])
 
+/-- **The pullback of the affine coordinate is transcendental.** If `φ^*x₂` were algebraic over
+`F`, then every pullback would be integral over `F`, because the target coordinate ring is
+integral over `F[x₂]`; pointedness would carry that to the source coordinate `x₁`, which is
+transcendental.
+
+This is the nonconstancy of an isogeny, in the form later files consume: it exhibits a
+transcendental element of the pulled-back function field, which is what makes the extension it
+sits under finite. -/
+theorem transcendental_pullback_X (φ : Isogeny W₁ W₂) :
+    Transcendental F (φ.pullback (algebraMap F[X] W₂.CoordinateRing X)) := by
+  intro ht_algebraic
+  have himage : ∀ a : W₂.CoordinateRing, IsIntegral F (φ.pullback a) :=
+    isIntegral_pullback_of_isIntegral_X φ ht_algebraic.isIntegral
+  let x₁ : W₁.FunctionField :=
+    algebraMap W₁.CoordinateRing W₁.FunctionField
+      (algebraMap F[X] W₁.CoordinateRing X)
+  have hx₁_over_target :
+      @IsIntegral W₂.CoordinateRing W₁.FunctionField _ _
+        φ.pullback.toRingHom.toAlgebra x₁ :=
+    (CoordinatePullback.mapsInfinity_iff φ.pullback).1 φ.mapsInfinity
+      (algebraMap F[X] W₁.CoordinateRing X)
+  have hx₁ : IsIntegral F x₁ :=
+    isIntegral_of_isIntegral_map φ.pullback.toRingHom himage hx₁_over_target
+  have hx₁_transcendental : Transcendental F x₁ := by
+    have hx₁_eq : x₁ = algebraMap F[X] W₁.FunctionField X :=
+      (IsScalarTower.algebraMap_apply F[X] W₁.CoordinateRing W₁.FunctionField X).symm
+    rw [hx₁_eq]
+    exact (transcendental_algebraMap_iff
+      (FaithfulSMul.algebraMap_injective F[X] W₁.FunctionField)).2
+        (Polynomial.transcendental_X F)
+  exact hx₁_transcendental hx₁.isAlgebraic
+
 /-- The coordinate pullback of any isogeny of affine Weierstrass curves over a field is
-injective. -/
+injective. A nonzero element of the kernel has nonzero norm over `F[x₂]`, and that norm is a
+polynomial relation killing `φ^*x₂` — which `transcendental_pullback_X` forbids. -/
 theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pullback := by
   apply (injective_iff_map_eq_zero φ.pullback).2
   intro z hz
@@ -128,30 +172,7 @@ theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pull
         simp [t, x₂]
       exact AlgHom.congr_fun hhom N
     rw [heval, hnorm, map_mul, hz, zero_mul]
-  have ht_algebraic : IsAlgebraic F t := ⟨N, hN₀, hN⟩
-  have ht : IsIntegral F t := ht_algebraic.isIntegral
-  have himage : ∀ a : W₂.CoordinateRing, IsIntegral F (φ.pullback a) :=
-    isIntegral_pullback_of_isIntegral_X φ ht
-  let x₁ : W₁.FunctionField :=
-    algebraMap W₁.CoordinateRing W₁.FunctionField
-      (algebraMap F[X] W₁.CoordinateRing X)
-  have hx₁_over_target :
-      @IsIntegral W₂.CoordinateRing W₁.FunctionField _ _
-        φ.pullback.toRingHom.toAlgebra x₁ := by
-    exact (CoordinatePullback.mapsInfinity_iff φ.pullback).1 φ.mapsInfinity
-      (algebraMap F[X] W₁.CoordinateRing X)
-  obtain ⟨Q, hQmonic, hQx⟩ := hx₁_over_target
-  have hx₁ : IsIntegral F x₁ := by
-    exact isIntegral_of_isIntegral_map φ.pullback.toRingHom himage
-      ⟨Q, hQmonic, hQx⟩
-  have hx₁_transcendental : Transcendental F x₁ := by
-    have hx₁_eq : x₁ = algebraMap F[X] W₁.FunctionField X :=
-      (IsScalarTower.algebraMap_apply F[X] W₁.CoordinateRing W₁.FunctionField X).symm
-    rw [hx₁_eq]
-    exact (transcendental_algebraMap_iff
-      (FaithfulSMul.algebraMap_injective F[X] W₁.FunctionField)).2
-        (Polynomial.transcendental_X F)
-  exact hx₁_transcendental hx₁.isAlgebraic
+  exact φ.transcendental_pullback_X ⟨N, hN₀, hN⟩
 
 /-- The function-field pullback induced by an isogeny. It is the unique extension of the
 coordinate pullback across the target fraction field. -/
@@ -185,36 +206,76 @@ theorem id_fieldPullback (W : WeierstrassCurve.Affine F) :
   intro x
   simp
 
-/-- **The degree of an isogeny**: the dimension of the source function field `W₁.FunctionField`
-over the image of `fieldPullback` — the pulled-back copy of the target's function field
-`W₂.FunctionField`, which `fieldPullback` embeds isomorphically.
+variable {W₃ : WeierstrassCurve.Affine F}
 
-This is the shape of Silverman, *The Arithmetic of Elliptic Curves*, II.2.4(a). Two things it
-does **not** yet carry. The extension is finite for a nonconstant map of one-variable function
-fields, but that is not proved here, and `Module.finrank` of an infinite extension reads `0`, so
-`degree` is only known to be the honest dimension once finiteness is available. Consequently
-positivity is unavailable too: `degree_id` below is computed from the extension being trivial,
-not from any general bound. -/
-noncomputable def degree (φ : Isogeny W₁ W₂) : ℕ :=
-  Module.finrank φ.fieldPullback.fieldRange W₁.FunctionField
+/-- **Composition maps infinity to infinity**: the composite pullback of two isogenies again
+satisfies `CoordinatePullback.MapsInfinity`. Private: it exists to fill `comp`'s `mapsInfinity`
+field, and consumers read the same fact off `(ψ.comp φ).mapsInfinity`. -/
+private theorem mapsInfinity_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
+    CoordinatePullback.MapsInfinity (φ.fieldPullback.comp ψ.pullback) := by
+  rw [CoordinatePullback.mapsInfinity_iff]
+  let _ := (φ.fieldPullback.comp ψ.pullback).toRingHom.toAlgebra
+  let _ := ψ.pullback.toRingHom.toAlgebra
+  -- split the tower: `x` is integral over `φ.pullback`'s copy of `W₂.CoordinateRing` by
+  -- `φ.mapsInfinity`, leaving each value of `φ.pullback` integral over the composite's copy
+  -- of `W₃.CoordinateRing`
+  refine fun x ↦ isIntegral_of_isIntegral_map φ.pullback.toRingHom (fun a ↦ ?_)
+    ((CoordinatePullback.mapsInfinity_iff φ.pullback).1 φ.mapsInfinity x)
+  -- `ψ.mapsInfinity` carried across `φ.fieldPullback` — legitimate because the composite
+  -- pullback *is* `φ.fieldPullback ∘ ψ.pullback`
+  simpa using ((CoordinatePullback.mapsInfinity_iff ψ.pullback).1 ψ.mapsInfinity a).map_of_comp_eq
+    (RingHom.id W₃.CoordinateRing) φ.fieldPullback.toRingHom rfl
 
-/-- The defining formula for `degree`. The definition's body is not exposed across the module
-boundary, so this is how downstream modules compute with it.
+/-- **Composition of isogenies**: pull back along `ψ` into `W₂.FunctionField`, then carry that
+across to `W₁.FunctionField` by `φ.fieldPullback`. -/
+noncomputable def comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) : Isogeny W₁ W₃ where
+  pullback := φ.fieldPullback.comp ψ.pullback
+  mapsInfinity := mapsInfinity_comp ψ φ
 
-Not `@[simp]`: `degree_id` is the simp-normal form of a degree, and this lemma rewrites its
-left-hand side, so tagging both fails `simpNF`. -/
-theorem degree_def (φ : Isogeny W₁ W₂) :
-    φ.degree = Module.finrank φ.fieldPullback.fieldRange W₁.FunctionField := (rfl)
-
-/-- The identity isogeny has degree one: its function-field pullback is the identity, so the
-extension it measures is trivial. -/
+/-- The equation lemma for `comp`'s coordinate pullback: the definition's body is not exposed
+across the module boundary, so this is how downstream modules compute with it. -/
 @[simp]
-theorem degree_id (W : WeierstrassCurve.Affine F) : (id W).degree = 1 := by
-  have hrange : (id W).fieldPullback.fieldRange = ⊤ := by
-    rw [id_fieldPullback]
-    exact AlgHom.fieldRange_eq_top.mpr Function.surjective_id
-  rw [degree_def, hrange]
-  exact IntermediateField.finrank_top
+theorem comp_pullback (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
+    (ψ.comp φ).pullback = φ.fieldPullback.comp ψ.pullback := (rfl)
+
+/-- The function-field pullback of a composite is the composite of the function-field
+pullbacks. -/
+@[simp]
+theorem comp_fieldPullback (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
+    (ψ.comp φ).fieldPullback = φ.fieldPullback.comp ψ.fieldPullback :=
+  ((ψ.comp φ).fieldPullback_unique _ fun x ↦ by simp).symm
+
+/-- The identity isogeny is a left unit for composition. -/
+@[simp]
+theorem id_comp (φ : Isogeny W₁ W₂) : (id W₂).comp φ = φ :=
+  Isogeny.ext <| AlgHom.ext fun x ↦ by simp
+
+/-- The identity isogeny is a right unit for composition. -/
+@[simp]
+theorem comp_id (φ : Isogeny W₁ W₂) : φ.comp (id W₁) = φ :=
+  Isogeny.ext <| by simp
+
+/-- Composition of isogenies is associative; the right-associated form is the simp-normal one,
+as for `CategoryTheory.Category.assoc`. -/
+@[simp]
+theorem comp_assoc {W₄ : WeierstrassCurve.Affine F} (χ : Isogeny W₃ W₄) (ψ : Isogeny W₂ W₃)
+    (φ : Isogeny W₁ W₂) : (χ.comp ψ).comp φ = χ.comp (ψ.comp φ) :=
+  Isogeny.ext <| AlgHom.ext fun x ↦ by simp
+
+/-- Precomposition by a fixed isogeny is injective. -/
+theorem comp_right_injective (φ : Isogeny W₁ W₂) :
+    Function.Injective fun ψ : Isogeny W₂ W₃ ↦ ψ.comp φ := fun _ _ h ↦
+  -- the composite's pullback is `φ.fieldPullback ∘ ψ.pullback`, and an embedding of function
+  -- fields cancels on the left
+  Isogeny.ext <| (AlgHom.cancel_left φ.fieldPullback.toRingHom.injective).mp <| by
+    simpa using congrArg Isogeny.pullback h
+
+/-- Two isogenies agree exactly when they agree after precomposition by a fixed isogeny. So a
+factorisation through a fixed `φ` determines its factor uniquely. -/
+@[simp]
+theorem comp_right_inj {φ : Isogeny W₁ W₂} {ψ₁ ψ₂ : Isogeny W₂ W₃} :
+    ψ₁.comp φ = ψ₂.comp φ ↔ ψ₁ = ψ₂ :=
+  (comp_right_injective φ).eq_iff
 
 end Isogeny
 

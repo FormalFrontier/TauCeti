@@ -53,6 +53,12 @@ spanning and the independence half of the decomposition.
   direct sum of its weight submodules.**
 * `TauCeti.Comodule.endOfPoint_tmul_of_mem_weightSpace`: an algebra map out of `R[G]` acts on the
   `g`-weight submodule by multiplication by its value at the group-like element `single g 1`.
+* `TauCeti.Comodule.Hom.map_mem_weightSpace`: a comodule morphism preserves the weight
+  submodules.
+* `TauCeti.Comodule.range_weightProj`: the `g`-weight submodule is the range of the `g`-weight
+  projection.
+* `TauCeti.Comodule.finite_setOf_weightSpace_ne_bot`: **a comodule finitely generated as a module
+  has only finitely many weights.**
 
 ## Implementation notes
 
@@ -478,6 +484,66 @@ theorem weightSubcomodule_toSubmodule (g : G) :
 theorem mem_weightSubcomodule {g : G} {v : V} :
     v ∈ weightSubcomodule R G V g ↔ v ∈ weightSpace R G V g :=
   (Iff.rfl)
+
+/-! ### Functoriality and finiteness -/
+
+variable {W : Type*} [AddCommMonoid W] [Module R W] [Comodule R (MonoidAlgebra R G) W]
+
+namespace Hom
+
+/-- A morphism of comodules over `R[G]` sends the `g`-weight submodule into the `g`-weight
+submodule. -/
+theorem map_mem_weightSpace (f : Hom R (MonoidAlgebra R G) V W) {g : G} {v : V}
+    (hv : v ∈ weightSpace R G V g) : f v ∈ weightSpace R G W g := by
+  rw [mem_weightSpace] at hv ⊢
+  rw [← Hom.map_coact_apply f v, hv, TensorProduct.map_tmul]
+  rfl
+
+/-- A morphism of comodules over `R[G]` maps the `g`-weight submodule into the `g`-weight
+submodule. -/
+theorem map_weightSpace_le (f : Hom R (MonoidAlgebra R G) V W) (g : G) :
+    (weightSpace R G V g).map f.toLinearMap ≤ weightSpace R G W g := by
+  rintro _ ⟨v, hv, rfl⟩
+  exact f.map_mem_weightSpace hv
+
+end Hom
+
+variable (R G V)
+
+/-- The `g`-weight submodule is the range of the `g`-weight projection: the projection is
+idempotent with image the submodule it projects onto. -/
+@[simp]
+theorem range_weightProj (g : G) :
+    LinearMap.range (weightProj R G V g) = weightSpace R G V g := by
+  refine le_antisymm ?_ fun v hv => ⟨v, weightProj_of_mem hv⟩
+  rintro _ ⟨v, rfl⟩
+  exact weightProj_mem_weightSpace g v
+
+/-- **A comodule over `R[G]` that is finitely generated as a module has only finitely many
+weights.**
+
+For a representation of the diagonalizable group `D(G)` this is the finiteness of its set of
+weights, and for the adjoint representation of an affine group scheme under a split torus it is
+the finiteness of the set of roots. -/
+theorem finite_setOf_weightSpace_ne_bot [Module.Finite R V] :
+    {g : G | weightSpace R G V g ≠ ⊥}.Finite := by
+  classical
+  obtain ⟨S, hS⟩ := Module.Finite.fg_top (R := R) (M := V)
+  refine Set.Finite.subset
+    (S.biUnion fun v => (weightDecomposition R G V v).support).finite_toSet fun g hg => ?_
+  by_contra hgS
+  refine hg (le_antisymm ?_ bot_le)
+  have hgS' : g ∉ S.biUnion fun v => (weightDecomposition R G V v).support := by
+    simpa using hgS
+  rw [Finset.mem_biUnion] at hgS'
+  push Not at hgS'
+  rw [← range_weightProj R G V g, LinearMap.range_eq_map, ← hS, Submodule.map_span,
+    Submodule.span_le]
+  rintro _ ⟨v, hv, rfl⟩
+  have : weightDecomposition R G V v g = 0 :=
+    Finsupp.notMem_support_iff.mp (hgS' v (Finset.mem_coe.mp hv))
+  rw [weightDecomposition_apply] at this
+  simp [this]
 
 end WeightSpace
 

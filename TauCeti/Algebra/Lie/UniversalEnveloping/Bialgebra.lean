@@ -34,6 +34,9 @@ eventually makes the corresponding distribution algebra a Hopf algebra over `ℤ
 * `TauCeti.UniversalEnvelopingAlgebra.comul_ι`: the comultiplication of a Lie generator.
 * `TauCeti.UniversalEnvelopingAlgebra.counit_ι`: the counit of a Lie generator.
 * `TauCeti.UniversalEnvelopingAlgebra.comul_ι_pow`: the comultiplication of a generator power.
+* `TauCeti.UniversalEnvelopingAlgebra.comul_ι_dividedPower` and
+  `TauCeti.UniversalEnvelopingAlgebra.comul_ι_choose`: the coefficient-one coproduct formulas
+  for the two families of Kostant generators.
 * `TauCeti.UniversalEnvelopingAlgebra.mapBialgHom_id` and
   `TauCeti.UniversalEnvelopingAlgebra.mapBialgHom_comp`: the induced bialgebra homomorphisms are
   functorial.
@@ -63,6 +66,7 @@ universe u v w x
 variable (R : Type u) (L : Type v)
 variable [CommRing R] [LieRing L] [LieAlgebra R L]
 
+/-- Local notation for the universal enveloping algebra currently under consideration. -/
 local notation "U" => _root_.UniversalEnvelopingAlgebra R L
 
 attribute [local instance 100] LieRing.ofAssociativeRing
@@ -183,6 +187,91 @@ theorem comul_ι_pow (x : L) (n : ℕ) :
         ((_root_.UniversalEnvelopingAlgebra.ι R x ^ mn.1) ⊗ₜ[R]
           (_root_.UniversalEnvelopingAlgebra.ι R x ^ mn.2)) :=
   TauCeti.Bialgebra.comul_pow_of_primitive _ (comul_ι R L x) n
+
+section Rational
+
+variable (L : Type v) [LieRing L] [LieAlgebra ℚ L]
+
+attribute [local instance] TauCeti.moduleNNRat
+
+/-- The comultiplication of a divided power of a canonical Lie generator is the antidiagonal
+sum of the corresponding divided powers in the two tensor factors. -/
+theorem comul_ι_dividedPower (x : L) (n : ℕ) :
+    (Coalgebra.comul (R := ℚ))
+        (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) =
+      ∑ ij ∈ Finset.antidiagonal n,
+        Associative.dividedPower ij.1 (_root_.UniversalEnvelopingAlgebra.ι ℚ x) ⊗ₜ[ℚ]
+          Associative.dividedPower ij.2 (_root_.UniversalEnvelopingAlgebra.ι ℚ x) :=
+  TauCeti.Bialgebra.comul_dividedPower_of_primitive _ (comul_ι ℚ L x) n
+
+/-- The `simp`-normal form of `comul_ι_dividedPower`, stated for canonical generators as
+`simp` writes them. -/
+@[simp]
+theorem comul_ι_dividedPower' (x : L) (n : ℕ) :
+    (Coalgebra.comul (R := ℚ))
+        (Associative.dividedPower n
+          (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x))) =
+      ∑ ij ∈ Finset.antidiagonal n,
+        Associative.dividedPower ij.1
+            (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x)) ⊗ₜ[ℚ]
+          Associative.dividedPower ij.2
+            (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x)) := by
+  simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using comul_ι_dividedPower L x n
+
+/-- Every positive divided power of a canonical Lie generator has counit zero. -/
+theorem counit_ι_dividedPower (x : L) (n : ℕ) :
+    (Coalgebra.counit (R := ℚ))
+        (Associative.dividedPower (n + 1) (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) = 0 :=
+  TauCeti.Bialgebra.counit_dividedPower_of_counit_eq_zero _ (counit_ι ℚ L x) n
+
+/-- The `simp`-normal form of `counit_ι_dividedPower`, stated for canonical generators as
+`simp` writes them. -/
+@[simp]
+theorem counit_ι_dividedPower' (x : L) (n : ℕ) :
+    (Coalgebra.counit (R := ℚ))
+        (Associative.dividedPower (n + 1)
+          (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x))) = 0 := by
+  simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using counit_ι_dividedPower L x n
+
+/-- The comultiplication of a binomial coefficient in a canonical Lie generator is the
+antidiagonal sum of the corresponding binomial coefficients in the two tensor factors. -/
+theorem comul_ι_choose (x : L) (n : ℕ) :
+    (Coalgebra.comul (R := ℚ)) (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) n) =
+      ∑ ij ∈ Finset.antidiagonal n,
+        Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) ij.1 ⊗ₜ[ℚ]
+          Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) ij.2 :=
+  TauCeti.Bialgebra.comul_choose_of_primitive _ (comul_ι ℚ L x) n
+
+/-- The `simp`-normal form of `comul_ι_choose`, stated for canonical generators as `simp`
+writes them. -/
+@[simp]
+theorem comul_ι_choose' (x : L) (n : ℕ) :
+    (Coalgebra.comul (R := ℚ))
+        (Ring.choose
+          (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x)) n) =
+      ∑ ij ∈ Finset.antidiagonal n,
+        Ring.choose
+            (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x)) ij.1 ⊗ₜ[ℚ]
+          Ring.choose
+            (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x)) ij.2 := by
+  simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using comul_ι_choose L x n
+
+/-- Every positive binomial coefficient in a canonical Lie generator has counit zero. -/
+theorem counit_ι_choose (x : L) (n : ℕ) :
+    (Coalgebra.counit (R := ℚ))
+        (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ x) (n + 1)) = 0 :=
+  TauCeti.Bialgebra.counit_choose_of_counit_eq_zero _ (counit_ι ℚ L x) n
+
+/-- The `simp`-normal form of `counit_ι_choose`, stated for canonical generators as `simp`
+writes them. -/
+@[simp]
+theorem counit_ι_choose' (x : L) (n : ℕ) :
+    (Coalgebra.counit (R := ℚ))
+        (Ring.choose
+          (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ L (TensorAlgebra.ι ℚ x)) (n + 1)) = 0 := by
+  simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using counit_ι_choose L x n
+
+end Rational
 
 variable {L₁ : Type v} {L₂ : Type w} {L₃ : Type x}
 variable [LieRing L₁] [LieAlgebra R L₁] [LieRing L₂] [LieAlgebra R L₂]
