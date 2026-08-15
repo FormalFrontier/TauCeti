@@ -37,7 +37,7 @@ universe u
 lattice: its module is finite free and every vector has an open stabilizer. -/
 def galoisLatticeProperty (k : Type u) [Field k] :
     ObjectProperty (Rep.{u} ℤ (Field.absoluteGaloisGroup k)) :=
-  fun M ↦ (Module.Free ℤ M ∧ Module.Finite ℤ M) ∧
+  fun M ↦ (@Module.Free ℤ M _ _ M.hV2 ∧ @Module.Finite ℤ M _ _ M.hV2) ∧
     ∀ x : M, IsOpen {sigma | M.ρ sigma x = x}
 
 /-- Membership in the Galois-lattice property. -/
@@ -45,79 +45,126 @@ def galoisLatticeProperty (k : Type u) [Field k] :
 theorem galoisLatticeProperty_iff (k : Type u) [Field k]
     (M : Rep.{u} ℤ (Field.absoluteGaloisGroup k)) :
     galoisLatticeProperty k M ↔
-      (Module.Free ℤ M ∧ Module.Finite ℤ M) ∧
+      (@Module.Free ℤ M _ _ M.hV2 ∧ @Module.Finite ℤ M _ _ M.hV2) ∧
         ∀ x : M, IsOpen {sigma | M.ρ sigma x = x} :=
   Iff.rfl
+
+/-- Build the Galois-lattice property for a representation induced from a multiplicative action,
+using the usual stabilizer formulation of continuity. -/
+theorem galoisLatticeProperty_ofMulDistribMulAction (k : Type u) [Field k]
+    (G : Type u) [CommGroup G] [MulDistribMulAction (Field.absoluteGaloisGroup k) G]
+    [DistribMulAction (Field.absoluteGaloisGroup k) (Additive G)]
+    [free : Module.Free ℤ (Additive G)] [finite : Module.Finite ℤ (Additive G)]
+    (hρ : ∀ (sigma : Field.absoluteGaloisGroup k) (x : Additive G),
+      (Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) G).ρ sigma x = sigma • x)
+    (hopen : ∀ x : Additive G,
+      IsOpen (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
+        Set (Field.absoluteGaloisGroup k))) :
+    galoisLatticeProperty k
+      (Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) G) := by
+  rw [galoisLatticeProperty_iff]
+  let M := Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) G
+  have hmod : M.hV2 = AddCommGroup.toIntModule (Additive G) := Subsingleton.elim _ _
+  have hfree : @Module.Free ℤ (Additive G) _ _ M.hV2 := by
+    rw [hmod]
+    exact free
+  have hfinite : @Module.Finite ℤ (Additive G) _ _ M.hV2 := by
+    rw [hmod]
+    exact finite
+  refine ⟨⟨hfree, hfinite⟩, ?_⟩
+  -- Expose the carrier of Mathlib's bundled representation so the supplied additive action and
+  -- its stabilizer can be used directly.
+  change ∀ x : Additive G, IsOpen {sigma |
+    (Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) G).ρ sigma x = x}
+  intro x
+  rw [show {sigma |
+      (Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) G).ρ sigma x = x} =
+      (MulAction.stabilizer (Field.absoluteGaloisGroup k) x : Set _) from
+    Set.ext fun sigma ↦ by
+      simp only [Set.mem_ofPred_eq, hρ, SetLike.mem_coe, MulAction.mem_stabilizer_iff]
+      exact Iff.rfl]
+  exact hopen x
+
+private theorem module_free_of_repIso {G : Type u} [Monoid G] {X Y : Rep.{u} ℤ G}
+    (e : X ≅ Y) (hX : @Module.Free ℤ X _ _ X.hV2) :
+    @Module.Free ℤ Y _ _ Y.hV2 := by
+  let _ : Module ℤ X := X.hV2
+  let _ : Module ℤ Y := Y.hV2
+  exact Module.Free.of_equiv' hX (Representation.equivOfIso e).toLinearEquiv
+
+private theorem module_finite_of_repIso {G : Type u} [Monoid G] {X Y : Rep.{u} ℤ G}
+    (e : X ≅ Y) (hX : @Module.Finite ℤ X _ _ X.hV2) :
+    @Module.Finite ℤ Y _ _ Y.hV2 := by
+  let _ : Module ℤ X := X.hV2
+  let _ : Module ℤ Y := Y.hV2
+  let _ : @Module.Finite ℤ X _ _ X.hV2 := hX
+  exact Module.Finite.equiv (Representation.equivOfIso e).toLinearEquiv
+
+private theorem isOpen_setOf_ρ_eq_of_iso {G : Type u} [Monoid G] [TopologicalSpace G]
+    {X Y : Rep.{u} ℤ G} (e : X ≅ Y)
+    (hX : ∀ x : X, IsOpen {g | X.ρ g x = x}) (y : Y) :
+    IsOpen {g | Y.ρ g y = y} := by
+  let _ : Module ℤ X := X.hV2
+  let _ : Module ℤ Y := Y.hV2
+  let inv : Y →ₗ[ℤ] X :=
+    (Representation.equivOfIso e).symm.toIntertwiningMap.toLinearMap
+  have hinv : Function.Injective inv := by
+    dsimp only [inv]
+    rw [← (Representation.equivOfIso e).symm.toLinearEquiv_toLinearMap]
+    exact (Representation.equivOfIso e).symm.toLinearEquiv.injective
+  have hcomm (g : G) (z : Y) : inv (Y.ρ g z) = X.ρ g (inv z) := by
+    simpa only [inv, LinearMap.comp_apply] using
+      congrArg (fun q : Y →ₗ[ℤ] X ↦ q z)
+        ((Representation.equivOfIso e).symm.toIntertwiningMap.isIntertwining' g)
+  rw [show {g | Y.ρ g y = y} = {g | X.ρ g (inv y) = inv y} from
+    Set.ext fun g ↦ by
+      simp only [Set.mem_ofPred_eq, ← hcomm g y, hinv.eq_iff]]
+  exact hX (inv y)
 
 /-- Being a Galois lattice is invariant under equivariant integral-linear isomorphisms. -/
 instance (k : Type u) [Field k] :
     (galoisLatticeProperty k).IsClosedUnderIsomorphisms where
   of_iso {X Y} e hX := by
     rw [galoisLatticeProperty_iff] at hX ⊢
-    -- A `Rep` stores a module structure, while Lean otherwise selects the canonical integer
-    -- module. These structures are uniquely equal; transport finite freeness to the stored
-    -- structures while applying Mathlib's equivariant linear equivalence, then transport back.
-    let repModX : Module ℤ X := X.hV2
-    let repModY : Module ℤ Y := Y.hV2
-    have hmodX : repModX = AddCommGroup.toIntModule X := Subsingleton.elim _ _
-    have hmodY : repModY = AddCommGroup.toIntModule Y := Subsingleton.elim _ _
-    have hFreeX : @Module.Free ℤ X _ _ repModX := by
-      rw [hmodX]
-      exact hX.1.1
-    have hFiniteX : @Module.Finite ℤ X _ _ repModX := by
-      rw [hmodX]
-      exact hX.1.2
-    let _ : Module ℤ X := repModX
-    let _ : Module ℤ Y := repModY
-    let eRep := Representation.equivOfIso e
-    have hFreeY : @Module.Free ℤ Y _ _ repModY :=
-      Module.Free.of_equiv' hFreeX eRep.toLinearEquiv
-    let _ : Module.Finite ℤ X := hFiniteX
-    have hFiniteY : @Module.Finite ℤ Y _ _ repModY :=
-      Module.Finite.equiv eRep.toLinearEquiv
-    have hFreeY' : @Module.Free ℤ Y _ _ (AddCommGroup.toIntModule Y) := by
-      rw [hmodY] at hFreeY
-      exact hFreeY
-    have hFiniteY' : @Module.Finite ℤ Y _ _ (AddCommGroup.toIntModule Y) := by
-      rw [hmodY] at hFiniteY
-      exact hFiniteY
-    refine ⟨⟨hFreeY', hFiniteY'⟩, ?_⟩
-    intro y
-    let inv : Y →ₗ[ℤ] X := eRep.symm.toIntertwiningMap.toLinearMap
-    have hinv : Function.Injective inv := by
-      dsimp only [inv]
-      rw [← eRep.symm.toLinearEquiv_toLinearMap]
-      exact eRep.symm.toLinearEquiv.injective
-    let x : X := inv y
-    have hcomm (sigma : Field.absoluteGaloisGroup k) (z : Y) :
-        inv (Y.ρ sigma z) = X.ρ sigma (inv z) := by
-      simpa only [inv, LinearMap.comp_apply] using
-        congrArg (fun q : Y →ₗ[ℤ] X ↦ q z)
-          (eRep.symm.toIntertwiningMap.isIntertwining' sigma)
-    -- After `ext sigma`, membership in each set reduces definitionally to its stabilizer
-    -- equality. The `change` steps make that reduction explicit and also unfold the local
-    -- abbreviation `x = inv y`, so equivariance and injectivity of `inv` apply directly.
-    have hset : {sigma | Y.ρ sigma y = y} = {sigma | X.ρ sigma x = x} := by
-      ext sigma
-      constructor
-      · intro hy
-        change Y.ρ sigma y = y at hy
-        change X.ρ sigma x = x
-        calc
-          X.ρ sigma x = inv (Y.ρ sigma y) := (hcomm sigma y).symm
-          _ = inv y := congrArg inv hy
-          _ = x := rfl
-      · intro hx
-        change X.ρ sigma x = x at hx
-        change Y.ρ sigma y = y
-        apply hinv
-        rw [hcomm sigma y, hx]
-    rw [hset]
-    exact hX.2 x
+    exact ⟨⟨module_free_of_repIso e hX.1.1, module_finite_of_repIso e hX.1.2⟩,
+      isOpen_setOf_ρ_eq_of_iso e hX.2⟩
 
 /-- The category of finite free integral representations of the absolute Galois group whose
 vectors have open stabilizers. -/
 abbrev GaloisLatticeCat (k : Type u) [Field k] :=
   (galoisLatticeProperty k).FullSubcategory
+
+namespace GaloisLatticeCat
+
+/-- The stored integral module of a Galois lattice is free. -/
+instance instStoredModuleFree (k : Type u) [Field k] (M : GaloisLatticeCat k) :
+    @Module.Free ℤ M.obj _ _ M.obj.hV2 :=
+  M.property.1.1
+
+/-- The stored integral module of a Galois lattice is finite. -/
+instance instStoredModuleFinite (k : Type u) [Field k] (M : GaloisLatticeCat k) :
+    @Module.Finite ℤ M.obj _ _ M.obj.hV2 :=
+  M.property.1.2
+
+/-- The canonical integral module on the additive group underlying a Galois lattice is free. -/
+instance instModuleFree (k : Type u) [Field k] (M : GaloisLatticeCat k) :
+    Module.Free ℤ M.obj := by
+  have hmod : M.obj.hV2 = AddCommGroup.toIntModule M.obj := Subsingleton.elim _ _
+  rw [← hmod]
+  exact M.property.1.1
+
+/-- The canonical integral module on the additive group underlying a Galois lattice is finite. -/
+instance instModuleFinite (k : Type u) [Field k] (M : GaloisLatticeCat k) :
+    Module.Finite ℤ M.obj := by
+  have hmod : M.obj.hV2 = AddCommGroup.toIntModule M.obj := Subsingleton.elim _ _
+  rw [← hmod]
+  exact M.property.1.2
+
+/-- Every vector of a Galois lattice has an open stabilizer. -/
+theorem isOpen_setOf_ρ_eq (k : Type u) [Field k] (M : GaloisLatticeCat k) (x : M.obj) :
+    IsOpen {sigma | M.obj.ρ sigma x = x} :=
+  M.property.2 x
+
+end GaloisLatticeCat
 
 end TauCeti

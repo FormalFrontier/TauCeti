@@ -51,30 +51,15 @@ private theorem characterLatticeFunctor_mem (T : TorusCommHopfAlgCat k) :
           CommHopfAlgCat.geometricCharacterFunctor).obj T) := by
   simp only [Functor.comp_obj, ObjectProperty.ι_obj,
     CommHopfAlgCat.geometricCharacterFunctor_obj]
-  rw [galoisLatticeProperty_iff]
-  refine ⟨⟨characterLattice_module_free_of_torus k T.obj T.property,
-    characterLattice_module_finite_of_torus k T.obj T.property⟩, ?_⟩
-  refine fun x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj ↦ ?_
-  -- Expose the representation abbreviation so the public action bridge can rewrite it.
-  change IsOpen {sigma |
-    Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
-      (CommHopfAlgCat.geometricCharacterGroup T.obj.obj) sigma x = x}
-  have hsetAction :
-      {sigma | Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
-        (CommHopfAlgCat.geometricCharacterGroup T.obj.obj) sigma x = x} =
-        {sigma | sigma • x = x} := by
-    ext sigma
-    change Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
-      (CommHopfAlgCat.geometricCharacterGroup T.obj.obj) sigma x = x ↔ sigma • x = x
-    rw [CommHopfAlgCat.geometricCharacterRepresentation_ρ_apply T.obj.obj sigma x]
-  rw [hsetAction]
-  have hset : {sigma | sigma • x = x} =
-      (MulAction.stabilizer (Field.absoluteGaloisGroup k) x :
-        Set (Field.absoluteGaloisGroup k)) := by
-    ext sigma
-    exact MulAction.mem_stabilizer_iff.symm
-  rw [hset]
-  exact CommHopfAlgCat.stabilizer_additiveGroupLike_isOpen x
+  let _ : Module.Free ℤ (CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :=
+    characterLattice_module_free_of_torus k T.obj T.property
+  let _ : Module.Finite ℤ (CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :=
+    characterLattice_module_finite_of_torus k T.obj T.property
+  apply galoisLatticeProperty_ofMulDistribMulAction k
+    (CommHopfAlgCat.geometricCharacterGroup T.obj.obj)
+  · exact fun sigma x ↦
+      CommHopfAlgCat.geometricCharacterRepresentation_ρ_apply T.obj.obj sigma x
+  · exact fun x ↦ CommHopfAlgCat.stabilizer_additiveGroupLike_isOpen x
 
 /-- The character-lattice functor from coordinate Hopf algebras of tori to continuous integral
 Galois lattices. On the corresponding affine group schemes this functor is contravariant. -/
@@ -103,18 +88,32 @@ theorem characterLatticeFunctor_obj_obj
 
 /-- The morphism part of `characterLatticeFunctor` is the induced equivariant character map. -/
 @[simp]
-theorem characterLatticeFunctor_map {S T : TorusCommHopfAlgCat k} (f : S ⟶ T) :
+theorem characterLatticeFunctor_map_hom {S T : TorusCommHopfAlgCat k} (f : S ⟶ T) :
     ((characterLatticeFunctor (k := k)).map f).hom =
       eqToHom (characterLatticeFunctor_obj_obj S) ≫
         CommHopfAlgCat.geometricCharacterRepresentationMap f.hom.hom ≫
           eqToHom (characterLatticeFunctor_obj_obj T).symm := by
-  change
-    (((torusCommHopfAlgProperty k).ι ⋙
-      (finiteTypeCommHopfAlgProperty k).ι ⋙
-        CommHopfAlgCat.geometricCharacterFunctor).map f) = _
-  simp only [Functor.comp_map, ObjectProperty.ι_map,
+  have hlift : ((characterLatticeFunctor (k := k)).map f).hom =
+      (((torusCommHopfAlgProperty k).ι ⋙
+        (finiteTypeCommHopfAlgProperty k).ι ⋙
+          CommHopfAlgCat.geometricCharacterFunctor).map f) := by
+    simpa only [characterLatticeFunctor, ObjectProperty.ι_map] using
+      ObjectProperty.ι_obj_lift_map
+        (galoisLatticeProperty k)
+        ((torusCommHopfAlgProperty k).ι ⋙
+          (finiteTypeCommHopfAlgProperty k).ι ⋙
+            CommHopfAlgCat.geometricCharacterFunctor)
+        characterLatticeFunctor_mem f
+  rw [hlift]
+  simp only [Functor.comp_map, ObjectProperty.ι_map, ObjectProperty.ι_obj,
     CommHopfAlgCat.geometricCharacterFunctor_map]
-  congr 1
+  rw [show CommHopfAlgCat.geometricCharacterFunctor_obj S.obj.obj =
+      characterLatticeFunctor_obj_obj S from Subsingleton.elim _ _,
+    show CommHopfAlgCat.geometricCharacterFunctor_obj T.obj.obj =
+      characterLatticeFunctor_obj_obj T from Subsingleton.elim _ _]
+  -- After explicitly identifying the two object-equality proofs, both composites are the same
+  -- morphism definitionally.
+  rfl
 
 end TorusCommHopfAlgCat
 

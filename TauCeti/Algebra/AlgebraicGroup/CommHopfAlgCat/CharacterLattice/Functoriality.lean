@@ -66,8 +66,9 @@ theorem val_geometricCharacterMap {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶
 @[simp]
 theorem geometricCharacterMap_smul {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K)
     (sigma : Field.absoluteGaloisGroup k) (x : geometricCharacterGroup H) :
-    geometricCharacterMap f (sigma • x) = sigma • geometricCharacterMap f x := by
-  exact ScalarAut.groupLike_map_smul f.hom
+    geometricCharacterMap f (sigma • x) = sigma • geometricCharacterMap f x :=
+  -- Expose the algebra equivalence behind Mathlib's opaque absolute-Galois-group wrapper.
+  ScalarAut.groupLikeMap_smul f.hom
     (show AlgebraicClosure k ≃ₐ[k] AlgebraicClosure k from sigma) x
 
 /-- Mapping geometric characters along an identity morphism is the identity. -/
@@ -93,14 +94,9 @@ theorem geometricCharacterMap_comp {H K L : _root_.CommHopfAlgCat.{u} k}
   have h : (baseChangeMap (K := AlgebraicClosure k) (f ≫ g)).hom =
       (baseChangeMap (K := AlgebraicClosure k) g).hom.comp
         (baseChangeMap (K := AlgebraicClosure k) f).hom := by
-    refine (congrArg (fun q ↦ q.hom)
-      ((baseChangeFunctor (K := AlgebraicClosure k)).map_comp f g)).trans ?_
-    apply _root_.BialgHom.ext
-    intro x
-    simpa only [_root_.BialgHom.comp_apply] using
-      _root_.CommHopfAlgCat.comp_apply
-        (baseChangeMap (K := AlgebraicClosure k) f)
-        (baseChangeMap (K := AlgebraicClosure k) g) x
+    exact (congrArg (fun q ↦ q.hom)
+      ((baseChangeFunctor (K := AlgebraicClosure k)).map_comp f g)).trans
+        (_root_.CommHopfAlgCat.hom_comp _ _)
   simp only [geometricCharacterMap]
   rw [h, TauCeti.GroupLike.map_comp]
 
@@ -118,6 +114,8 @@ theorem toMul_additiveCharacterMap {H K : _root_.CommHopfAlgCat.{u} k} (f : H �
     (additiveCharacterMap f x).toMul = geometricCharacterMap f x.toMul :=
   by
     rw [additiveCharacterMap]
+    -- `toIntLinearMap` preserves the underlying additive map definitionally; it has no
+    -- pointwise projection lemma specialized to the `Additive` wrapper.
     rfl
 
 /-- The additive character map is equivariant for the absolute-Galois action. -/
@@ -154,14 +152,21 @@ noncomputable abbrev geometricCharacterRepresentation (H : _root_.CommHopfAlgCat
     Rep.{u} ℤ (Field.absoluteGaloisGroup k) :=
   Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) (geometricCharacterGroup H)
 
-/-- The action map of the geometric-character representation is the scalar action on additive
-characters. -/
-theorem geometricCharacterRepresentation_ρ_apply (H : _root_.CommHopfAlgCat.{u} k)
+@[simp]
+private theorem ofMulDistribMulAction_apply (H : _root_.CommHopfAlgCat.{u} k)
     (sigma : Field.absoluteGaloisGroup k) (x : additiveCharacterGroup H) :
     Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
       (geometricCharacterGroup H) sigma x = sigma • x := by
   rw [Representation.ofMulDistribMulAction_apply_apply]
   rfl
+
+/-- The action map of the geometric-character representation is the scalar action on additive
+characters. -/
+@[simp]
+theorem geometricCharacterRepresentation_ρ_apply (H : _root_.CommHopfAlgCat.{u} k)
+    (sigma : Field.absoluteGaloisGroup k) (x : additiveCharacterGroup H) :
+    (geometricCharacterRepresentation H).ρ sigma x = sigma • x := by
+  exact ofMulDistribMulAction_apply H sigma x
 
 /-- The additive character map bundled as an intertwining map between the geometric-character
 representations. -/
@@ -175,8 +180,14 @@ private noncomputable def additiveCharacterIntertwiningMap
   isIntertwining' := fun sigma ↦ by
     apply LinearMap.ext
     intro x
-    simpa only [LinearMap.comp_apply, geometricCharacterRepresentation_ρ_apply] using
+    simpa only [LinearMap.comp_apply, ofMulDistribMulAction_apply] using
       additiveCharacterMap_smul f sigma x
+
+@[simp]
+private theorem additiveCharacterIntertwiningMap_apply
+    {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K) (x : additiveCharacterGroup H) :
+    additiveCharacterIntertwiningMap f x = additiveCharacterMap f x :=
+  rfl
 
 /-- The equivariant morphism of geometric-character representations induced by a Hopf-algebra
 morphism. -/
@@ -191,8 +202,11 @@ theorem geometricCharacterRepresentationMap_hom_apply
     {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K) (x : additiveCharacterGroup H) :
     (geometricCharacterRepresentationMap f).hom x = additiveCharacterMap f x :=
   by
-    simp only [geometricCharacterRepresentationMap]
-    rfl
+    have hhom : (geometricCharacterRepresentationMap f).hom =
+        additiveCharacterIntertwiningMap f := by
+      rw [geometricCharacterRepresentationMap]
+      exact Rep.hom_ofHom (additiveCharacterIntertwiningMap f)
+    exact (congrArg (fun q ↦ q x) hhom).trans (additiveCharacterIntertwiningMap_apply f x)
 
 /-- Geometric character groups and their absolute-Galois actions are functorial in the
 coordinate Hopf algebra. -/
@@ -221,7 +235,10 @@ theorem geometricCharacterFunctor_map {H K : _root_.CommHopfAlgCat.{u} k} (f : H
     (geometricCharacterFunctor (k := k)).map f =
       eqToHom (geometricCharacterFunctor_obj H) ≫ geometricCharacterRepresentationMap f ≫
         eqToHom (geometricCharacterFunctor_obj K).symm :=
-  (rfl)
+  by
+    -- The displayed transports are definitionally identities; their equality proofs are
+    -- propositionally irrelevant, and no public category lemma exposes this constructor equality.
+    rfl
 
 end CommHopfAlgCat
 
