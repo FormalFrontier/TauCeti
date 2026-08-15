@@ -156,11 +156,9 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
   -- Identify the operator-valued derivative pointwise by differentiating evaluation at `Y`.
   apply ContinuousLinearMap.ext
   intro Y
-  rw [← mvfderiv_apply_eq_mfderiv_apply]
-  rw [mvfderiv_continuousLinearMap_apply
+  rw [mfderiv_continuousLinearMap_apply
     (hf := (contMDiff_continuousAdjointRepresentation (I := I) (G := G)).mdifferentiable
       (by simp) 1)]
-  rw [mvfderiv_apply_eq_mfderiv_apply]
   rw [show (fun g : G => continuousAdjointRepresentation (I := I) g Y) =
       fun g : G => Ad (I := I) g Y by
     funext g
