@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Group.Affine
+public import Mathlib.AlgebraicGeometry.Morphisms.Finite
+public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
 # Projections of Hopf spectra
@@ -28,11 +30,16 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
 * `TauCeti.algSpec_map_left_ofAlgHom`: the underlying spectrum map of an algebra morphism.
 * `TauCeti.hopfSpec_obj_one_left`, `TauCeti.hopfSpec_obj_mul_left`, and
   `TauCeti.hopfSpec_obj_inv_left`: its three group operations.
+* `TauCeti.isCocomm_iff_isCommMonObj_hopfSpec`: cocommutativity corresponds to a commutative
+  group object.
+* `TauCeti.moduleFinite_iff_isFinite_hopfSpec`: module-finiteness corresponds to a finite
+  structural morphism.
 -/
 
 public section
 
-open CategoryTheory
+open CategoryTheory Opposite WithConv
+open scoped CategoryTheory.MonObj
 
 namespace TauCeti
 
@@ -41,6 +48,19 @@ open AlgebraicGeometry MonObj MonoidalCategory
 universe u
 
 variable (R : Type u) [CommRing R]
+
+private instance finite_respectsIso :
+    MorphismProperty.RespectsIso (@IsFinite) where
+  toRespectsLeft :=
+    { precomp := fun i hi f hf => by
+        let _ := hi
+        let _ := hf
+        infer_instance }
+  toRespectsRight :=
+    { postcomp := fun i hi f hf => by
+        let _ := hi
+        let _ := hf
+        infer_instance }
 
 /-- The scheme underlying the Hopf spectrum of `H` is its ordinary spectrum. -/
 @[simp↓]
@@ -162,5 +182,71 @@ lemma hopfSpec_obj_inv_left (H : CommHopfAlgCat.{u} R) :
   rw [hopfSpec_obj_eq_asOver]
   exact heq_of_eq (algSpec_map_left_ofAlgHom R
     (HopfAlgebra.antipodeAlgHom R H))
+
+/-- A Hopf spectrum is a commutative group object exactly when its coordinate Hopf algebra is
+cocommutative. -/
+theorem isCocomm_iff_isCommMonObj_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
+    Coalgebra.IsCocomm R H ↔
+      IsCommMonObj
+        (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X) := by
+  constructor
+  · intro h
+    let _ := h
+    rw [hopfSpec_obj_eq_asOver]
+    infer_instance
+  · intro h
+    rw [hopfSpec_obj_eq_asOver] at h
+    let _ := h
+    constructor
+    let leftPoint : WithConv (H →ₐ[R] TensorProduct R H H) :=
+      toConv (Bialgebra.TensorProduct.includeLeft
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+    let rightPoint : WithConv (H →ₐ[R] TensorProduct R H H) :=
+      toConv (Bialgebra.TensorProduct.includeRight
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+    have hcomm : leftPoint * rightPoint = rightPoint * leftPoint := by
+      apply (AlgebraicGeometry.Spec.mapMulEquiv
+        (R := R) (S := H) (T := TensorProduct R H H)).injective
+      simpa only [map_mul] using mul_comm
+        ((AlgebraicGeometry.Spec.mapMulEquiv
+          (R := R) (S := H) (T := TensorProduct R H H)) leftPoint)
+        ((AlgebraicGeometry.Spec.mapMulEquiv
+          (R := R) (S := H) (T := TensorProduct R H H)) rightPoint)
+    have hswap :
+        toConv ((Algebra.TensorProduct.comm R H H).toAlgHom.comp
+          (Bialgebra.comulAlgHom R H)) = rightPoint * leftPoint := by
+      rw [Bialgebra.toConv_comp_comulAlgHom]
+      simp only [leftPoint, rightPoint,
+        Bialgebra.TensorProduct.includeLeft_toAlgHom,
+        Bialgebra.TensorProduct.includeRight_toAlgHom,
+        Algebra.TensorProduct.comm_comp_includeLeft,
+        Algebra.TensorProduct.comm_comp_includeRight]
+    have hcomul :
+        toConv ((Algebra.TensorProduct.comm R H H).toAlgHom.comp
+          (Bialgebra.comulAlgHom R H)) =
+            toConv (Bialgebra.comulAlgHom R H) := by
+      rw [hswap, ← hcomm]
+      exact Bialgebra.comulPoint_eq_include_mul.symm
+    have hlinear := congrArg
+      (fun f : WithConv (H →ₐ[R] TensorProduct R H H) => f.ofConv.toLinearMap) hcomul
+    simp only [AlgHom.comp_toLinearMap, Bialgebra.toLinearMap_comulAlgHom] at hlinear
+    apply LinearMap.ext
+    intro x
+    exact LinearMap.congr_fun hlinear x
+
+/-- A Hopf spectrum is finite over its base exactly when its coordinate algebra is
+module-finite. -/
+theorem moduleFinite_iff_isFinite_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
+    Module.Finite R H ↔
+      IsFinite (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+  rw [hopfSpec_obj_X_hom]
+  rw [MorphismProperty.cancel_left_of_respectsIso
+    (P := @IsFinite) (eqToHom (hopfSpec_obj_X_left R H))]
+  rw [IsFinite.SpecMap_iff]
+  -- `SpecMap_iff` leaves the algebra map behind the `CommRingCat.ofHom` projection.
+  change Module.Finite R H ↔ (algebraMap R H).Finite
+  exact RingHom.finite_algebraMap.symm
 
 end TauCeti

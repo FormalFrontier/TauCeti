@@ -4,10 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.Morphisms.Finite
 public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Equivalence
-public import TauCeti.Algebra.Coalgebra.Convolution
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
@@ -22,13 +20,15 @@ Hopf algebra is cocommutative.
 ## Main declarations
 
 * `TauCeti.finiteCommAffineGroupSchemeProperty`: the object property selecting finite
-  commutative affine group schemes over a field.
+  commutative affine group schemes over a base ring.
 * `TauCeti.finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat`: the restricted
   Hopf--`Spec` anti-equivalence.
 * `TauCeti.finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat.functorCompιIso`:
   after both inclusions, the restricted equivalence is Mathlib's `hopfSpec`.
-* `TauCeti.finiteCommAffineGroupSchemeCartierDuality`: Cartier duality transported to finite
-  commutative affine group schemes.
+* `TauCeti.FiniteCommAffineGroupSchemeCat.cartierDuality`: Cartier duality transported to finite
+  commutative affine group schemes over a field.
+* `TauCeti.FiniteCommAffineGroupSchemeCat.cartierDuality_functor`: its computation as transported
+  finite dualization.
 
 ## References
 
@@ -42,7 +42,7 @@ separate step.
 
 public section
 
-open CategoryTheory AlgebraicGeometry Opposite WithConv
+open CategoryTheory AlgebraicGeometry Opposite
 open scoped CategoryTheory.MonObj
 
 namespace TauCeti
@@ -62,82 +62,16 @@ private instance finite_respectsIso :
         let _ := hf
         infer_instance }
 
-/-- A Hopf spectrum is a commutative group object exactly when its coordinate Hopf algebra is
-cocommutative. -/
-theorem isCocomm_iff_isCommMonObj_hopfSpec
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
-    Coalgebra.IsCocomm k H ↔
-      IsCommMonObj
-        (((hopfSpec (CommRingCat.of k)).obj (op H)).X) := by
-  constructor
-  · intro h
-    let _ := h
-    rw [hopfSpec_obj_eq_asOver]
-    infer_instance
-  · intro h
-    rw [hopfSpec_obj_eq_asOver] at h
-    let _ := h
-    constructor
-    let leftPoint : WithConv (H →ₐ[k] TensorProduct k H H) :=
-      toConv (Bialgebra.TensorProduct.includeLeft
-        (R := k) (H₁ := H) (H₂ := H)).toAlgHom
-    let rightPoint : WithConv (H →ₐ[k] TensorProduct k H H) :=
-      toConv (Bialgebra.TensorProduct.includeRight
-        (R := k) (H₁ := H) (H₂ := H)).toAlgHom
-    have hcomm : leftPoint * rightPoint = rightPoint * leftPoint := by
-      apply (AlgebraicGeometry.Spec.mapMulEquiv
-        (R := k) (S := H) (T := TensorProduct k H H)).injective
-      simpa only [map_mul] using mul_comm
-        ((AlgebraicGeometry.Spec.mapMulEquiv
-          (R := k) (S := H) (T := TensorProduct k H H)) leftPoint)
-        ((AlgebraicGeometry.Spec.mapMulEquiv
-          (R := k) (S := H) (T := TensorProduct k H H)) rightPoint)
-    have hswap :
-        toConv ((Algebra.TensorProduct.comm k H H).toAlgHom.comp
-          (Bialgebra.comulAlgHom k H)) = rightPoint * leftPoint := by
-      rw [Bialgebra.toConv_comp_comulAlgHom]
-      simp only [leftPoint, rightPoint,
-        Bialgebra.TensorProduct.includeLeft_toAlgHom,
-        Bialgebra.TensorProduct.includeRight_toAlgHom,
-        Algebra.TensorProduct.comm_comp_includeLeft,
-        Algebra.TensorProduct.comm_comp_includeRight]
-    have hcomul :
-        toConv ((Algebra.TensorProduct.comm k H H).toAlgHom.comp
-          (Bialgebra.comulAlgHom k H)) =
-            toConv (Bialgebra.comulAlgHom k H) := by
-      rw [hswap, ← hcomm]
-      exact Bialgebra.comulPoint_eq_include_mul.symm
-    have hlinear := congrArg
-      (fun f : WithConv (H →ₐ[k] TensorProduct k H H) => f.ofConv.toLinearMap) hcomul
-    simp only [AlgHom.comp_toLinearMap, Bialgebra.toLinearMap_comulAlgHom] at hlinear
-    apply LinearMap.ext
-    intro x
-    exact LinearMap.congr_fun hlinear x
-
-/-- A Hopf spectrum is finite over its base exactly when its coordinate algebra is
-finite-dimensional. -/
-theorem moduleFinite_iff_isFinite_hopfSpec
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
-    Module.Finite k H ↔
-      IsFinite (((hopfSpec (CommRingCat.of k)).obj (op H)).X.hom) := by
-  rw [hopfSpec_obj_X_hom]
-  rw [MorphismProperty.cancel_left_of_respectsIso
-    (P := @IsFinite) (eqToHom (hopfSpec_obj_X_left k H))]
-  rw [IsFinite.SpecMap_iff]
-  -- `SpecMap_iff` leaves the algebra map behind the `CommRingCat.ofHom` projection.
-  change Module.Finite k H ↔ (algebraMap k H).Finite
-  exact RingHom.finite_algebraMap.symm
-
-/-- The object property selecting finite commutative affine group schemes over a field. -/
-def finiteCommAffineGroupSchemeProperty (k : Type u) [Field k] :
-    ObjectProperty (AffineGroupSchemeCat (CommRingCat.of k)) :=
+/-- The object property selecting finite commutative affine group schemes over a base ring. -/
+def finiteCommAffineGroupSchemeProperty (S : CommRingCat.{u}) :
+    ObjectProperty (AffineGroupSchemeCat S) :=
   fun G => IsFinite G.obj.X.hom ∧ IsCommMonObj G.obj.X
 
 /-- Membership in the finite-commutative affine-group-scheme property. -/
 @[simp]
 theorem finiteCommAffineGroupSchemeProperty_iff
-    (k : Type u) [Field k] (G : AffineGroupSchemeCat (CommRingCat.of k)) :
-    finiteCommAffineGroupSchemeProperty k G ↔
+    (S : CommRingCat.{u}) (G : AffineGroupSchemeCat S) :
+    finiteCommAffineGroupSchemeProperty S G ↔
       IsFinite G.obj.X.hom ∧ IsCommMonObj G.obj.X :=
   Iff.rfl
 
@@ -151,22 +85,22 @@ private theorem isCommMonObj_of_grp_iso
   rw [← Category.assoc, ← BraidedCategory.braiding_naturality]
   simp only [Category.assoc, IsCommMonObj.mul_comm]
 
-instance (k : Type u) [Field k] :
-    (finiteCommAffineGroupSchemeProperty k).IsClosedUnderIsomorphisms where
+instance (S : CommRingCat.{u}) :
+    (finiteCommAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
   of_iso e hG := by
     constructor
     · exact (MorphismProperty.over_iso_iff (@IsFinite)
         ((Grp.forget _).mapIso
-          ((affineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso e))).mp hG.1
+          ((affineGroupSchemeProperty S).ι.mapIso e))).mp hG.1
     · exact isCommMonObj_of_grp_iso
-        ((affineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso e) hG.2
+        ((affineGroupSchemeProperty S).ι.mapIso e) hG.2
 
 /-- Under the affine Hopf/group-scheme anti-equivalence, finite-dimensionality and
 cocommutativity of the coordinate Hopf algebra correspond to finiteness and commutativity of the
 affine group scheme. -/
 theorem finiteCommAffineGroupSchemeProperty_inverseImage
     (k : Type u) [Field k] :
-    (finiteCommAffineGroupSchemeProperty k).inverseImage
+    (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).inverseImage
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor =
       (finiteBicommutativeHopfAlgProperty k).op := by
   ext H
@@ -185,24 +119,24 @@ theorem finiteCommAffineGroupSchemeProperty_inverseImage
     finiteBicommutativeHopfAlgProperty_iff]
   constructor
   · intro h
-    have hG : finiteCommAffineGroupSchemeProperty k G :=
-      (finiteCommAffineGroupSchemeProperty k).prop_of_iso e h
+    have hG : finiteCommAffineGroupSchemeProperty (CommRingCat.of k) G :=
+      (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso e h
     exact ⟨(moduleFinite_iff_isFinite_hopfSpec k H.unop).mpr hG.1,
       (isCocomm_iff_isCommMonObj_hopfSpec k H.unop).mpr hG.2⟩
   · intro h
-    apply (finiteCommAffineGroupSchemeProperty k).prop_of_iso e.symm
+    apply (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso e.symm
     exact ⟨(moduleFinite_iff_isFinite_hopfSpec k H.unop).mp h.1,
       (isCocomm_iff_isCommMonObj_hopfSpec k H.unop).mp h.2⟩
 
-/-- The category of finite commutative affine group schemes over a field. -/
-abbrev FiniteCommAffineGroupSchemeCat (k : Type u) [Field k] :=
-  (finiteCommAffineGroupSchemeProperty k).FullSubcategory
+/-- The category of finite commutative affine group schemes over a base ring. -/
+abbrev FiniteCommAffineGroupSchemeCat (S : CommRingCat.{u}) :=
+  (finiteCommAffineGroupSchemeProperty S).FullSubcategory
 
-instance {k : Type u} [Field k] (G : FiniteCommAffineGroupSchemeCat.{u} k) :
+instance {S : CommRingCat.{u}} (G : FiniteCommAffineGroupSchemeCat S) :
     IsFinite G.obj.obj.X.hom :=
   G.property.1
 
-instance {k : Type u} [Field k] (G : FiniteCommAffineGroupSchemeCat.{u} k) :
+instance {S : CommRingCat.{u}} (G : FiniteCommAffineGroupSchemeCat S) :
     IsCommMonObj G.obj.obj.X :=
   G.property.2
 
@@ -211,7 +145,7 @@ commutative affine group schemes over a field. -/
 noncomputable def finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat
     (k : Type u) [Field k] :
     (FiniteBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
-      FiniteCommAffineGroupSchemeCat k :=
+      FiniteCommAffineGroupSchemeCat (CommRingCat.of k) :=
   (ObjectProperty.opEquivalence (finiteBicommutativeHopfAlgProperty k)).symm.trans <|
     (commHopfAlgCatOpEquivAffineGroupSchemeCat
       (CommRingCat.of k)).congrFullSubcategory
@@ -224,7 +158,7 @@ private noncomputable def
     finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCatFunctorCompιIso
     (k : Type u) [Field k] :
     (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).functor ⋙
-        (finiteCommAffineGroupSchemeProperty k).ι ≅
+        (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).ι ≅
       (forget₂ (FiniteBicommutativeHopfAlgCat.{u} k)
           (CommHopfAlgCat.{u} k)).op ⋙
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).functor :=
@@ -237,7 +171,7 @@ noncomputable def
     finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat.functorCompιIso
     (k : Type u) [Field k] :
     (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).functor ⋙
-          (finiteCommAffineGroupSchemeProperty k).ι ⋙
+          (finiteCommAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
         (affineGroupSchemeProperty (CommRingCat.of k)).ι ≅
       (forget₂ (FiniteBicommutativeHopfAlgCat.{u} k)
           (CommHopfAlgCat.{u} k)).op ⋙ hopfSpec (CommRingCat.of k) :=
@@ -251,14 +185,27 @@ noncomputable def
       (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
         (CommRingCat.of k))
 
-/-- **Cartier duality for finite commutative affine group schemes over a field.** On coordinate
-Hopf algebras this is finite linear dualization. -/
-noncomputable def finiteCommAffineGroupSchemeCartierDuality
+namespace FiniteCommAffineGroupSchemeCat
+
+/-- **Cartier duality for finite commutative affine group schemes over a field.** -/
+noncomputable def cartierDuality
     (k : Type u) [Field k] :
-    (FiniteCommAffineGroupSchemeCat k)ᵒᵖ ≌
-      FiniteCommAffineGroupSchemeCat k :=
+    (FiniteCommAffineGroupSchemeCat (CommRingCat.of k))ᵒᵖ ≌
+      FiniteCommAffineGroupSchemeCat (CommRingCat.of k) :=
   ((finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).rightOp).symm.trans <|
-    (FiniteBicommutativeHopfAlgCat.cartierDuality (k := k)).symm |>.trans
+    ((FiniteBicommutativeHopfAlgCat.dualFunctor (k := k)).rightOp).asEquivalence |>.trans
       (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k)
+
+/-- The forward functor of scheme-level Cartier duality is finite dualization transported through
+the restricted Hopf--`Spec` equivalence. -/
+@[simp]
+theorem cartierDuality_functor (k : Type u) [Field k] :
+    (cartierDuality k).functor =
+      (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).rightOp.inverse ⋙
+        (FiniteBicommutativeHopfAlgCat.dualFunctor (k := k)).rightOp ⋙
+        (finiteBicommutativeHopfAlgCatOpEquivFiniteCommAffineGroupSchemeCat k).functor :=
+  by simp [cartierDuality]
+
+end FiniteCommAffineGroupSchemeCat
 
 end TauCeti
