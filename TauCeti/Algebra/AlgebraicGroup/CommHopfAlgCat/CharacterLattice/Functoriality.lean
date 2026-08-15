@@ -196,7 +196,7 @@ theorem geometricCharacterRepresentationMap_hom_apply
 
 /-- Geometric character groups and their absolute-Galois actions are functorial in the
 coordinate Hopf algebra. -/
-@[expose] noncomputable def geometricCharacterFunctor :
+noncomputable def geometricCharacterFunctor :
     _root_.CommHopfAlgCat.{u} k ⥤ Rep.{u} ℤ (Field.absoluteGaloisGroup k) where
   obj := geometricCharacterRepresentation
   map := geometricCharacterRepresentationMap
@@ -218,8 +218,10 @@ theorem geometricCharacterFunctor_obj (H : _root_.CommHopfAlgCat.{u} k) :
 /-- The morphism part of `geometricCharacterFunctor` is the induced equivariant character map. -/
 @[simp]
 theorem geometricCharacterFunctor_map {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K) :
-    (geometricCharacterFunctor (k := k)).map f = geometricCharacterRepresentationMap f :=
-  rfl
+    (geometricCharacterFunctor (k := k)).map f =
+      eqToHom (geometricCharacterFunctor_obj H) ≫ geometricCharacterRepresentationMap f ≫
+        eqToHom (geometricCharacterFunctor_obj K).symm :=
+  (rfl)
 
 end CommHopfAlgCat
 

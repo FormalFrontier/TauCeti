@@ -94,6 +94,9 @@ instance (k : Type u) [Field k] :
       simpa only [inv, LinearMap.comp_apply] using
         congrArg (fun q : Y →ₗ[ℤ] X ↦ q z)
           (eRep.symm.toIntertwiningMap.isIntertwining' sigma)
+    -- After `ext sigma`, membership in each set reduces definitionally to its stabilizer
+    -- equality. The `change` steps make that reduction explicit and also unfold the local
+    -- abbreviation `x = inv y`, so equivariance and injectivity of `inv` apply directly.
     have hset : {sigma | Y.ρ sigma y = y} = {sigma | X.ρ sigma x = x} := by
       ext sigma
       constructor
