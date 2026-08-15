@@ -36,6 +36,17 @@ field. `TauCeti.Isogeny.comp` therefore lives here rather than beside `TauCeti.I
   its function-field law and `TauCeti.Isogeny.id_comp`, `TauCeti.Isogeny.comp_id`,
   `TauCeti.Isogeny.comp_assoc` the unit and associativity laws. The pointedness obligation is
   discharged privately when `comp` is defined.
+* `TauCeti.Isogeny.comp_right_injective` and `TauCeti.Isogeny.comp_right_inj`: precomposition
+  by a fixed isogeny is injective. Equivalently, a factorisation `ψ = λ.comp φ` through a fixed
+  `φ` determines its factor `λ` uniquely — the uniqueness half of factoring an isogeny, reached
+  without the group structure on `Hom` that Silverman's subtraction argument uses.
+
+Adapted from the AINTLIB project (`github.com/CBirkbeck/AINTLIB`, at revision
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache 2.0 per the source file's header, by Chris
+Birkbeck): `projects/HasseWeil/HasseWeil/EC/IsogenyAG/CanonicalDual.lean`, declaration
+`Isogeny.compose_right_cancel`. The source states it for an isogeny structure that carries the
+point map as an independent field, so its proof passes through `ext_toCurveMap`; here an isogeny
+is determined by its pullback, so pullback extensionality suffices.
 
 The degree of an isogeny — the dimension of `W₁.FunctionField` over the image of `fieldPullback`
 — is `TauCeti.Isogeny.degree`, in `Isogeny/Degree.lean`; it is stated there rather than here
@@ -250,6 +261,21 @@ as for `CategoryTheory.Category.assoc`. -/
 theorem comp_assoc {W₄ : WeierstrassCurve.Affine F} (χ : Isogeny W₃ W₄) (ψ : Isogeny W₂ W₃)
     (φ : Isogeny W₁ W₂) : (χ.comp ψ).comp φ = χ.comp (ψ.comp φ) :=
   Isogeny.ext <| AlgHom.ext fun x ↦ by simp
+
+/-- Precomposition by a fixed isogeny is injective. -/
+theorem comp_right_injective (φ : Isogeny W₁ W₂) :
+    Function.Injective fun ψ : Isogeny W₂ W₃ ↦ ψ.comp φ := fun _ _ h ↦
+  -- the composite's pullback is `φ.fieldPullback ∘ ψ.pullback`, and an embedding of function
+  -- fields cancels on the left
+  Isogeny.ext <| (AlgHom.cancel_left φ.fieldPullback.toRingHom.injective).mp <| by
+    simpa using congrArg Isogeny.pullback h
+
+/-- Two isogenies agree exactly when they agree after precomposition by a fixed isogeny. So a
+factorisation through a fixed `φ` determines its factor uniquely. -/
+@[simp]
+theorem comp_right_inj {φ : Isogeny W₁ W₂} {ψ₁ ψ₂ : Isogeny W₂ W₃} :
+    ψ₁.comp φ = ψ₂.comp φ ↔ ψ₁ = ψ₂ :=
+  (comp_right_injective φ).eq_iff
 
 end Isogeny
 
