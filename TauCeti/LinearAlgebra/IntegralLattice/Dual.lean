@@ -7,7 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Basic
 public import TauCeti.LinearAlgebra.BilinearForm.DualLattice
-public import TauCeti.Algebra.Module.Lattice
 
 /-!
 # Duals of integral lattices
@@ -32,8 +31,6 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
 
 * `TauCeti.IntegralLattice.dualCarrier`: the dual lattice as a submodule of the common ambient
   rational vector space.
-* `TauCeti.IntegralLattice.dualCarrier_def`: the defining equation
-  `L.dualCarrier = L.form.dualSubmodule L.carrier`.
 * `TauCeti.IntegralLattice.le_dualCarrier`: the inclusion `L.carrier ≤ L.dualCarrier`.
 * `TauCeti.IntegralLattice.instIsLatticeDualCarrier`: the dual carrier is a full lattice.
 * `TauCeti.IntegralLattice.finrank_dualCarrier`: the dual carrier has the same rank as the ambient
@@ -73,10 +70,6 @@ namespace IntegralLattice
 `x` belongs to it exactly when `L.form x y` is integral for every `y ∈ L`. -/
 abbrev dualCarrier (L : IntegralLattice V) : Submodule ℤ V :=
   L.form.dualSubmodule L.carrier
-
-/-- The defining equation identifying `L.dualCarrier` with `L.form.dualSubmodule L.carrier`. -/
-theorem dualCarrier_def (L : IntegralLattice V) :
-    L.dualCarrier = L.form.dualSubmodule L.carrier := rfl
 
 /-- The carrier of an integral lattice is contained in its dual carrier. -/
 theorem le_dualCarrier (L : IntegralLattice V) : L.carrier ≤ L.dualCarrier :=

@@ -87,6 +87,7 @@ instance : CoeFun (IntegralLattice V) fun _ ↦ V → V → ℚ :=
 theorem coe_form_apply (L : IntegralLattice V) (x y : V) : L x y = L.form x y := rfl
 
 /-- The flipped rational bilinear form of an integral lattice equals the form itself. -/
+@[simp]
 theorem form_flip (L : IntegralLattice V) : L.form.flip = L.form :=
   LinearMap.ext fun x ↦ LinearMap.ext fun y ↦ L.isSymm.eq y x
 
