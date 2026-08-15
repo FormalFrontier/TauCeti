@@ -6,6 +6,7 @@ module
 
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Descent
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Universal
+import TauCeti.NumberTheory.EllipticDivisibilitySequence.Ext
 
 /-!
 # A normalised EDS is an elliptic net
@@ -14,6 +15,17 @@ public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Universal
 construction. This file draws the consequence: it satisfies the full **four**-index elliptic
 relation, for arbitrary `b`, `c`, `d` in any commutative ring. Being an elliptic *sequence* is
 the last index held at `0`.
+
+Knowing that, one specialisation can be identified outright: `normEDS 2 3 2` is the identity
+sequence. Its base values are `1, 2, 3, 4`, `id` is an elliptic sequence too, and
+`IsEllipticSequence.ext` makes two elliptic sequences agreeing at `1, 2, 3, 4` equal given that
+the first two values are nonzerodivisors — here `1` and `2` in `ℤ`. `Universal.lean` records this
+identity as what `universalNormEDS_ne_zero` and `universalNormEDS_mem_nonZeroDivisors` rest on,
+and had it down as blocked on that extensionality principle; `Ext.lean` supplies it.
+
+The `ℤ` statement is the one with consumers, but it is not the general one: applying the unique
+ring map out of `ℤ` gives `normEDS (2 : R) 3 2 = Int.cast` over every commutative ring, and both
+are stated below.
 
 The three-index statement is the first half of the TODO Mathlib records at
 `Mathlib/NumberTheory/EllipticDivisibilitySequence.lean:70`, "prove that `normEDS` satisfies
@@ -38,6 +50,12 @@ distinction where the identity is proved.
 
 * `isEllipticNet_normEDS`: `IsEllipticNet (normEDS b c d)`, with no hypothesis on the parameters.
 * `isEllipticSequence_normEDS`: its `s = 0` case.
+* `normEDS_two_three_two_eq_intCast`: `normEDS (2 : R) 3 2 = Int.cast` over any commutative ring.
+* `normEDS_two_three_two_eq_id`: its `R = ℤ` case, `normEDS (2 : ℤ) 3 2 = id`. Kept as a named
+  theorem rather than left to the general form because it is what the universal-parameter
+  arguments consume — they specialise at `(2, 3, 2)` in `ℤ`. Only the general form is `@[simp]`:
+  tagging both makes `normEDS 2 3 2` rewrite to `Int.cast`, so the `ℤ` left-hand side is no longer
+  in normal form and `simpNF` fails the build.
 
 The first consumer this unlocks is `IsEllipticNet.invarNum_mul_invarDenom`, which callers can
 apply to `isEllipticNet_normEDS` directly; it is deliberately not restated here as a
@@ -61,13 +79,15 @@ survives only in the private helper, applied once at the indeterminates.
 
 `Universal.lean` records `universalNormEDS_ne_zero` and `universalNormEDS_mem_nonZeroDivisors`
 as belonging with "whichever slice ports" the fact proved here. They are still not ported: they
-rest on `normEDS 2 3 2 = id`, which additionally needs an extensionality principle for elliptic
-sequences that this repository does not yet have. This file is the prerequisite they were
-waiting on, not the slice that lands them.
+rest on `normEDS 2 3 2 = id`, which is `normEDS_two_three_two_eq_id` below. The extensionality
+principle
+that identity needs is `IsEllipticSequence.ext`, which this repository now has, so the obstacle
+recorded for those two is gone; what remains is the work itself.
 
 ## Provenance
 
-Adapted from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+Adapted from D. K. Angdinata's `projects/NagellLutz/LutzNagell/EllipticDivisibilitySequence.lean`
+in AINTLIB
 (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
 declarations `IsEllSequence.normEDS_of_mem_nonZeroDivisors` and `IsEllSequence.normEDS`. That
 file's header reads `Authors: David Kurniadi Angdinata`; following this repository's convention for
@@ -76,7 +96,15 @@ Xu is acknowledged for the surrounding LutzNagell development — he authors `Un
 co-authors `DivisionPolynomialOmega.lean` at the same revision — as context for this port, not as
 an author of the declarations above.
 
-The net strengthening here adapts one further declaration of that same file, `net_normEDS`.
+The net strengthening here adapts one further declaration of that same file, `net_normEDS`, and
+`normEDS_two_three_two_eq_id` below adapts its `normEDS_two_three_two` (`:1236`), renamed to state
+its conclusion. That declaration is byte-identical at the roadmap's NagellLutz pin
+(`dev/modular-curves @ 9fec8eba7652`, `:1235`); the revision named above is used throughout so
+that this file cites one source revision rather than two.
+
+Its proof is the source's, with `IsEllipticSequence.id` in place of the deprecated
+`isEllSequence_id` alias, and the four base-value hypotheses discharged by `simp` rather than by
+`simp only` followed by `exacts`.
 
 The source proves the hypothesis-carrying version from its own descent development; here that step
 is `Descent.lean`'s `IsEllipticNet.of_rel`, fed the two recurrences in relator form, so the helper
@@ -126,3 +154,23 @@ theorem isEllipticNet_normEDS (b c d : R) : IsEllipticNet (normEDS b c d) := by
 /-- **A normalised EDS is an elliptic sequence**, the last index of the net held at `0`. -/
 theorem isEllipticSequence_normEDS (b c d : R) : IsEllipticSequence (normEDS b c d) :=
   (isEllipticNet_normEDS b c d).isEllipticSequence
+
+/-- **`normEDS 2 3 2` is the identity sequence on `ℤ`.** -/
+theorem normEDS_two_three_two_eq_id : normEDS (2 : ℤ) 3 2 = id := by
+  refine (isEllipticSequence_normEDS 2 3 2).ext IsEllipticSequence.id ?_ ?_ ?_ ?_ ?_ ?_
+  · simp
+  · simp
+  · simp
+  · simp
+  · simp
+  · simp
+
+/-- **`normEDS 2 3 2` is the integer cast, over any commutative ring.** The identity on `ℤ`
+transported along the unique ring map out of it. -/
+@[simp]
+theorem normEDS_two_three_two_eq_intCast (R : Type*) [CommRing R] :
+    normEDS (2 : R) 3 2 = Int.cast := by
+  funext n
+  have h := map_normEDS (f := Int.castRingHom R) (b := (2 : ℤ)) (c := 3) (d := 2) n
+  rw [normEDS_two_three_two_eq_id] at h
+  simpa using h.symm
