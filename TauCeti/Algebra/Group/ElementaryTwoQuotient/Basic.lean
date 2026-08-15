@@ -64,6 +64,8 @@ names around it. The cardinality identity is still expressed through the squarin
   odd order has a single square class.
 * `TauCeti.card_elementaryTwoQuotient_dvd_card` and
   `TauCeti.two_pow_twoRank_dvd_card`: the quotient cardinality and its rank form divide `|G|`.
+* `TauCeti.twoRank_eq_of_mulEquiv` and `TauCeti.twoRank_le_twoRank_of_surjective`: the 2-rank is
+  invariant under isomorphisms and monotonic under surjections.
 -/
 
 public section
@@ -417,6 +419,8 @@ theorem two_pow_twoRank_le_card :
 
 end FiniteCardinality
 
+variable {G}
+
 /-- Multiplicatively equivalent commutative groups have elementary-2 quotients with the same
 `ZMod 2` finrank. -/
 theorem finrank_elementaryTwoQuotient_eq_of_mulEquiv (e : G ≃* H) :
@@ -426,6 +430,11 @@ theorem finrank_elementaryTwoQuotient_eq_of_mulEquiv (e : G ≃* H) :
 
 /-- Multiplicatively equivalent commutative groups have the same elementary-2 rank. -/
 theorem twoRank_eq_of_mulEquiv (e : G ≃* H) : twoRank G = twoRank H :=
-  finrank_elementaryTwoQuotient_eq_of_mulEquiv (G := G) (H := H) e
+  finrank_elementaryTwoQuotient_eq_of_mulEquiv e
+
+/-- A surjective homomorphism of commutative groups does not increase the 2-rank. -/
+theorem twoRank_le_twoRank_of_surjective [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)]
+    (f : G →* H) (hf : Function.Surjective f) : twoRank H ≤ twoRank G :=
+  LinearMap.finrank_le_finrank_of_surjective (elementaryTwoQuotientMap_surjective f hf)
 
 end TauCeti

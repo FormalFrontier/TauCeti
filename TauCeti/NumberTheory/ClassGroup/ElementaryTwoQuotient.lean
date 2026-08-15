@@ -29,11 +29,10 @@ square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup` f
 
 ## Main definitions and results
 
-* `TauCeti.ClassGroup.ElementaryTwoQuotient`: the quotient `Cl(R) ⧸ Cl(R)²`, a `ZMod 2`-module.
-* `TauCeti.ClassGroup.elementaryTwoQuotientMk` and `elementaryTwoQuotientMk_eq_zero_iff`: the class
-  of an ideal class, trivial iff that class is a square; `elementaryTwoQuotientMk_mul`,
-  `elementaryTwoQuotientMk_one`, `elementaryTwoQuotientMk_inv`,
-  `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
+* `TauCeti.ClassGroup.elementaryTwoQuotientMk`, `elementaryTwoQuotientMk_eq`, and
+  `elementaryTwoQuotientMk_eq_zero_iff`: the class of an ideal class, trivial iff that class is a
+  square; `elementaryTwoQuotientMk_mul`, `elementaryTwoQuotientMk_one`,
+  `elementaryTwoQuotientMk_inv`, `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
   `elementaryTwoQuotientMk_prod` record its additivity, while `elementaryTwoQuotientMk_surjective`
   and `elementaryTwoQuotientMk_eq_iff` give surjectivity and the equality criterion.
 * `TauCeti.ClassGroup.elementaryTwoQuotientCongr`: a multiplicative equivalence of class groups
@@ -60,8 +59,14 @@ variable (R : Type*) [CommRing R] [IsDomain R]
 abbrev ElementaryTwoQuotient : Type _ := TauCeti.ElementaryTwoQuotient (ClassGroup R)
 
 /-- The class of an ideal class in the maximal elementary-2 quotient `Cl(R)/Cl(R)²`. -/
-noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuotient R :=
+@[expose] noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuotient R :=
   TauCeti.elementaryTwoQuotientMk C
+
+/-- The class-group elementary-2 quotient class map is the generic elementary-2 quotient class
+map. -/
+@[simp] theorem elementaryTwoQuotientMk_eq (C : ClassGroup R) :
+    elementaryTwoQuotientMk R C = TauCeti.elementaryTwoQuotientMk C :=
+  rfl
 
 /-- An ideal class has trivial class in `Cl(R)/Cl(R)²` iff it is a square. -/
 @[simp] theorem elementaryTwoQuotientMk_eq_zero_iff (C : ClassGroup R) :
@@ -173,7 +178,7 @@ variable (R)
 quotient `Cl(R)/Cl(R)²` (zero, by convention of `Module.finrank`, when the quotient is
 infinite-dimensional). In genus-theory applications the `t - 1` formula belongs to the narrow
 class group; for imaginary fields the narrow and ordinary class groups coincide. -/
-noncomputable def twoRank : ℕ :=
+@[expose] noncomputable def twoRank : ℕ :=
   TauCeti.twoRank (ClassGroup R)
 
 /-- The 2-rank of the class group is the `ZMod 2` dimension of its maximal elementary-2 quotient
@@ -195,14 +200,13 @@ theorem finrank_elementaryTwoQuotient_eq_of_mulEquiv {S : Type*} [CommRing S] [I
     (e : ClassGroup R ≃* ClassGroup S) :
     Module.finrank (ZMod 2) (ElementaryTwoQuotient R) =
       Module.finrank (ZMod 2) (ElementaryTwoQuotient S) :=
-  TauCeti.finrank_elementaryTwoQuotient_eq_of_mulEquiv
-    (G := ClassGroup R) (H := ClassGroup S) e
+  TauCeti.finrank_elementaryTwoQuotient_eq_of_mulEquiv e
 
 /-- Multiplicatively equivalent class groups have the same elementary-2 rank. -/
 theorem twoRank_eq_of_mulEquiv {S : Type*} [CommRing S] [IsDomain S]
     (e : ClassGroup R ≃* ClassGroup S) :
     twoRank R = twoRank S :=
-  TauCeti.twoRank_eq_of_mulEquiv (G := ClassGroup R) (H := ClassGroup S) e
+  TauCeti.twoRank_eq_of_mulEquiv e
 
 /-- The cardinality of `Cl(R)/Cl(R)²` divides the cardinality of `Cl(R)` when the class group is
 finite, and more generally in Mathlib's cardinal arithmetic. -/
