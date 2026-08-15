@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
 public import TauCeti.RepresentationTheory.SU2.Basic
+import TauCeti.Algebra.GroupWithZero.Units.Basic
 import TauCeti.RingTheory.MvPolynomial.Symmetric.Complete
 
 /-!
@@ -116,23 +117,14 @@ theorem character_symPower_torusHom (z : Circle) :
   refine sum_congr rfl fun i _ => ?_
   simp
 
-/-- **The weight of a monomial as an exponent**: the diagonal entries `z` and `z⁻¹` of a torus
-element contribute `i` and `n - i` factors to the monomial with `i` factors of the first basis
-vector, and the resulting scalar is the `2i - n`-th power of `z`. -/
-theorem coe_pow_mul_coe_inv_pow (z : Circle) {i n : ℕ} (hi : i ≤ n) :
-    (z : ℂ) ^ i * ((z : ℂ)⁻¹) ^ (n - i) = (z : ℂ) ^ (2 * (i : ℤ) - n) := by
-  -- the weight `2i - n` is the exponent of `z` minus the exponent of `z⁻¹`
-  have hexp : 2 * (i : ℤ) - n = (i : ℤ) - ((n - i : ℕ) : ℤ) := by omega
-  rw [hexp, zpow_sub₀ (Circle.coe_ne_zero z), zpow_natCast, zpow_natCast, inv_pow,
-    div_eq_mul_inv]
-
 /-- The weight string with the weights displayed as integer exponents `2i - d`. -/
 theorem character_symPower_torusHom_zpow (z : Circle) :
     (symPower d).character (torusHom z)
       = ∑ i ∈ range (d + 1), (z : ℂ) ^ (2 * (i : ℤ) - d) := by
   rw [character_symPower_torusHom]
+  -- the diagonal entries `z` and `z⁻¹` contribute `i` and `d - i` factors to the `i`-th monomial
   exact sum_congr rfl fun i hi =>
-    coe_pow_mul_coe_inv_pow z (Nat.lt_succ_iff.mp (mem_range.mp hi))
+    pow_mul_inv_pow_eq_zpow₀ (Circle.coe_ne_zero z) (Nat.lt_succ_iff.mp (mem_range.mp hi))
 
 /-- **The weight string in exponential coordinates.**  Writing the torus element as
 `diag(e^{iθ}, e^{-iθ})`, the character of `Symᵈ(ℂ²)` is `∑ᵢ e^{i(2i-d)θ}`: the classical

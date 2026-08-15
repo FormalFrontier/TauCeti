@@ -38,8 +38,8 @@ algebraic closedness, and the answer names the basis vectors involved.
 * `Module.Basis.self_mem_of_repr_ne_zero` and `Module.Basis.eq_span_self_mem`: an invariant
   subspace contains every basis vector occurring in one of its elements, and is spanned by the
   basis vectors it contains.
-* `Module.Basis.exists_eq_and_mem_span_singleton`: a nonzero eigenvector of `f` is a multiple of
-  a single basis vector, whose eigenvalue is its eigenvalue.
+* `Module.Basis.exists_apply_eq_and_mem_span_singleton`: a nonzero eigenvector of `f` is a
+  multiple of a single basis vector, whose eigenvalue is its eigenvalue.
 -/
 
 public section
@@ -162,7 +162,7 @@ theorem _root_.Module.Basis.eq_span_self_mem (b : Module.Basis ι K V)
 /-- **A nonzero eigenvector is a multiple of a single basis vector**, when the endomorphism is
 diagonal in the basis with pairwise distinct eigenvalues, and its eigenvalue is the eigenvalue of
 that basis vector. -/
-theorem _root_.Module.Basis.exists_eq_and_mem_span_singleton (b : Module.Basis ι K V)
+theorem _root_.Module.Basis.exists_apply_eq_and_mem_span_singleton (b : Module.Basis ι K V)
     (hf : ∀ i, f (b i) = a i • b i) (ha : Function.Injective a) {w : V} (hw : w ≠ 0) {c : K}
     (hfw : f w = c • w) : ∃ i : ι, a i = c ∧ w ∈ Submodule.span K {b i} := by
   classical

@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
 import Mathlib.Analysis.Real.Pi.Irrational
+import TauCeti.Algebra.GroupWithZero.Units.Basic
 import TauCeti.LinearAlgebra.Eigenspace.DiagonalBasis
 
 /-!
@@ -131,7 +132,7 @@ theorem symPower_torusHom_weightBasis (z : Circle) (i : Fin (d + 1)) :
       (stdRep_diagGL_apply_basisFun _)]
   congr 1
   -- the eigenvalue is `z` on the `i` factors of index `0` and `z⁻¹` on the `d - i` of index `1`
-  rw [weight_def, ← coe_pow_mul_coe_inv_pow z hi]
+  rw [weight_def, ← pow_mul_inv_pow_eq_zpow₀ (Circle.coe_ne_zero z) hi]
   simp [coe_symFinTwoEquiv_symm_apply]
 
 /-- The coordinates of a vector in the weight basis are scaled by the weights: the torus is
@@ -204,7 +205,7 @@ vector, and `m` is that vector's weight, one of the `d + 1` integers `2i - d`. -
 theorem exists_weight_eq_of_forall_torusHom_smul {w : Sym[ℂ]^d(Fin 2 → ℂ)} (hw : w ≠ 0) {m : ℤ}
     (hsmul : ∀ z : Circle, symPower d (torusHom z) w = ((z : ℂ) ^ m) • w) :
     ∃ i : Fin (d + 1), weight d i = m ∧ w ∈ Submodule.span ℂ {weightBasis d i} := by
-  obtain ⟨i, hi, hspan⟩ := (weightBasis d).exists_eq_and_mem_span_singleton
+  obtain ⟨i, hi, hspan⟩ := (weightBasis d).exists_apply_eq_and_mem_span_singleton
     (symPower_torusHom_weightBasis d genericTorus) (coe_genericTorus_zpow_weight_injective d) hw
     (hsmul genericTorus)
   exact ⟨i, coe_genericTorus_zpow_injective hi, hspan⟩
