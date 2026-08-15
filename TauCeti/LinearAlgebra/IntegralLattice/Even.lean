@@ -61,6 +61,9 @@ namespace IntegralLattice
 /-- The rational quadratic form on ambient vectors given by self-pairing. -/
 def norm (L : IntegralLattice V) : QuadraticForm ℚ V := L.form.toQuadraticMap
 
+-- The evaluation and negation identities below remain explicit rewrite lemmas. Registering them
+-- with `simp` makes the specialized cast, zero, and scaling rules fail the `simpNF` linter.
+
 /-- Evaluating the rational norm of an ambient vector yields its self-pairing. -/
 theorem norm_apply (L : IntegralLattice V) (x : V) : L.norm x = L.form x x :=
   LinearMap.BilinMap.toQuadraticMap_apply L.form x
@@ -227,7 +230,8 @@ theorem mem_vectorsOfNorm {L : IntegralLattice V} {n : ℚ} {x : L} :
     x ∈ L.vectorsOfNorm n ↔ L.norm x = n := Iff.rfl
 
 /-- Membership in `vectorsOfNorm (n : ℚ)` for an integer `n` is equivalent to having integral norm
-equal to `n`. -/
+equal to `n`.  This remains an explicit rewrite lemma because `mem_vectorsOfNorm` already
+simplifies its left-hand side, so tagging both lemmas would violate `simpNF`. -/
 theorem mem_vectorsOfNorm_intCast (L : IntegralLattice V) {n : ℤ} {x : L} :
     x ∈ L.vectorsOfNorm (n : ℚ) ↔ L.integralNorm x = n := by
   rw [mem_vectorsOfNorm, ← L.integralNorm_cast x]
