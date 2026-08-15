@@ -5,8 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.DirectSum.Module
-public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
+public import Mathlib.LinearAlgebra.FreeModule.Basic
 public import Mathlib.Order.Monotone.Basic
+public import Mathlib.RingTheory.Finiteness.Basic
 public import TauCeti.Geometry.Hodge.Conjugation
 import Mathlib.Order.ModularLattice
 import Mathlib.Tactic.Abel
@@ -84,9 +85,10 @@ public structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
 /-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of a
-`ℤ`-module (lattice) `V`.
+finitely generated free `ℤ`-module (lattice) `V`.
 This is an abbreviation for `HodgeStructureOn Vℂ (latticeConjugation hℂ) n`. -/
-public abbrev HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
+public abbrev HodgeStructure [Module.Free ℤ V] [Module.Finite ℤ V]
+    (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
   HodgeStructureOn Vℂ (latticeConjugation hℂ) n
 
 namespace HodgeStructureOn
@@ -108,8 +110,10 @@ Hodge structure. -/
 public def piece (p : ℤ) : Submodule ℂ W :=
   hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap
 
-theorem piece_def (p : ℤ) :
-    hs.piece p = hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap := rfl
+/-- Definitional unfolding of the `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$. -/
+public theorem piece_def (p : ℤ) :
+    hs.piece p = hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap := by
+  rfl
 
 /-- Membership in the `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$ (with $q := n - p$)
 is characterized by membership in both filtration submodules. -/
@@ -182,7 +186,7 @@ public theorem F_eq_F_add_one_sup_piece (p : ℤ) :
 
 /-- Downward induction helper: if a property holds at `p_bot` and is preserved when going
 from `k` to `k - 1` using `F (k-1) = F k ⊔ piece (k-1)`, it holds for all `p ≤ p_bot`. -/
-public theorem induction_down_F (P : ℤ → Submodule ℂ W → Prop) (p_bot p : ℤ) (hp : p ≤ p_bot)
+theorem induction_down_F (P : ℤ → Submodule ℂ W → Prop) (p_bot p : ℤ) (hp : p ≤ p_bot)
     (hp_bot : P p_bot (hs.F p_bot))
     (h_step : ∀ k, p ≤ k - 1 → k ≤ p_bot → P k (hs.F k) → P (k - 1) (hs.F (k - 1))) :
     P p (hs.F p) := by
@@ -328,8 +332,11 @@ public def twist (m : ℤ) : HodgeStructureOn W ω (n - 2 * m) where
     rw [← h_eval] at h_opp
     exact h_opp
 
-theorem twist_F (m : ℤ) (p : ℤ) :
-    (hs.twist m).F p = hs.F (p + m) := rfl
+/-- Definitional unfolding of the Hodge filtration of a Tate twist $W(m)$. -/
+@[simp]
+public theorem twist_F (m : ℤ) (p : ℤ) :
+    (hs.twist m).F p = hs.F (p + m) := by
+  rfl
 
 /-- The pieces of the Tate twist $W(m)$ are shifted by $m$: $H^p(W(m)) = H^{p+m}(W)$. -/
 @[simp]
@@ -370,7 +377,8 @@ public instance : DFunLike (Hom hs₁ hs₂) W₁ (fun _ => W₂) where
 
 /-- Coercion of a Hodge morphism to a function agrees with its linear map. -/
 @[simp]
-public theorem coe_toLinearMap (f : Hom hs₁ hs₂) : ⇑f.toLinearMap = f := rfl
+public theorem coe_toLinearMap (f : Hom hs₁ hs₂) : ⇑f.toLinearMap = f := by
+  rfl
 
 /-- Identity morphism of a pure Hodge structure. -/
 public def id (hs : HodgeStructureOn W₁ ω₁ n) : Hom hs hs where
@@ -378,15 +386,17 @@ public def id (hs : HodgeStructureOn W₁ ω₁ n) : Hom hs hs where
   map_F_le p := by rw [Submodule.map_id]
   map_conj x := rfl
 
-theorem id_toLinearMap_def (hs : HodgeStructureOn W₁ ω₁ n) :
-    (Hom.id hs).toLinearMap = LinearMap.id := rfl
+/-- The linear map of the identity morphism is the identity linear map. -/
+@[simp]
+public theorem id_toLinearMap (hs : HodgeStructureOn W₁ ω₁ n) :
+    (Hom.id hs).toLinearMap = LinearMap.id := by
+  rfl
 
 /-- Application of the identity morphism. -/
 @[simp]
 public theorem id_apply (hs : HodgeStructureOn W₁ ω₁ n) (x : W₁) :
     Hom.id hs x = x := by
-  have : (Hom.id hs).toLinearMap x = x := by rw [id_toLinearMap_def, LinearMap.id_apply]
-  exact this
+  rfl
 
 /-- Composition of morphisms of pure Hodge structures. -/
 public def comp {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
@@ -399,30 +409,31 @@ public def comp {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Co
     simp only [LinearMap.comp_apply]
     rw [f.map_conj, g.map_conj]
 
-theorem comp_toLinearMap_def {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
+/-- The linear map of a composition of morphisms is the composition of their linear maps. -/
+@[simp]
+public theorem comp_toLinearMap {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
     {hs₃ : HodgeStructureOn W₃ ω₃ n} (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) :
-    (g.comp f).toLinearMap = g.toLinearMap.comp f.toLinearMap := rfl
+    (g.comp f).toLinearMap = g.toLinearMap.comp f.toLinearMap := by
+  rfl
 
 /-- Application of morphism composition. -/
 @[simp]
 public theorem comp_apply {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
     {hs₃ : HodgeStructureOn W₃ ω₃ n} (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) (x : W₁) :
     (g.comp f) x = g (f x) := by
-  have : (g.comp f).toLinearMap x = g.toLinearMap (f.toLinearMap x) := by
-    rw [comp_toLinearMap_def, LinearMap.comp_apply]
-  exact this
+  rfl
 
 /-- Left identity for morphism composition. -/
 @[simp]
 public theorem comp_id (f : Hom hs₁ hs₂) : f.comp (Hom.id hs₁) = f := by
   ext x
-  exact comp_apply f (Hom.id hs₁) x ▸ id_apply hs₁ x ▸ rfl
+  rfl
 
 /-- Right identity for morphism composition. -/
 @[simp]
 public theorem id_comp (f : Hom hs₁ hs₂) : (Hom.id hs₂).comp f = f := by
   ext x
-  exact comp_apply (Hom.id hs₂) f x ▸ id_apply hs₂ (f x) ▸ rfl
+  rfl
 
 /-- Associativity of morphism composition. -/
 public theorem comp_assoc {W₃ W₄ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
@@ -431,8 +442,7 @@ public theorem comp_assoc {W₃ W₄ : Type*} [AddCommGroup W₃] [Module ℂ W�
     (h : Hom hs₃ hs₄) (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) :
     (h.comp g).comp f = h.comp (g.comp f) := by
   ext x
-  change ((h.comp g).comp f) x = (h.comp (g.comp f)) x
-  rw [comp_apply, comp_apply, comp_apply, comp_apply]
+  rfl
 
 /-- A morphism of pure Hodge structures preserves the `(p, q)`-pieces:
 $f(H^{p,q}) \subseteq H^{p,q}$. -/
@@ -452,23 +462,23 @@ end HodgeStructureOn.Hom
 
 /-- The step-function Hodge filtration for the Tate Hodge structure $\mathbb{Z}(m)$:
 $F^p = \top$ for $p \le -m$ and $F^p = \bot$ for $p > -m$. -/
-public def tateF (m : ℤ) (p : ℤ) : Submodule ℂ (Complexification ℤ) :=
+def tateF (m : ℤ) (p : ℤ) : Submodule ℂ (Complexification ℤ) :=
   if p ≤ -m then ⊤ else ⊥
 
 /-- Value of `tateF` for indices at or below `-m`. -/
 @[simp]
-public theorem tateF_of_le {m p : ℤ} (hp : p ≤ -m) :
+theorem tateF_of_le {m p : ℤ} (hp : p ≤ -m) :
     tateF m p = ⊤ :=
   ite_eq_left hp
 
 /-- Value of `tateF` for indices above `-m`. -/
 @[simp]
-public theorem tateF_of_gt {m p : ℤ} (hp : -m < p) :
+theorem tateF_of_gt {m p : ℤ} (hp : -m < p) :
     tateF m p = ⊥ :=
   ite_eq_right (not_le_of_gt hp)
 
 /-- The step-function filtration `tateF` is antitone. -/
-public theorem tateF_antitone (m : ℤ) : Antitone (tateF m) := by
+theorem tateF_antitone (m : ℤ) : Antitone (tateF m) := by
   intro p q hpq
   by_cases hq : q ≤ -m
   · have hp : p ≤ -m := le_trans hpq hq
@@ -478,7 +488,7 @@ public theorem tateF_antitone (m : ℤ) : Antitone (tateF m) := by
     exact bot_le
 
 /-- The step-function filtration `tateF` is $n$-opposed for $n = -2m$. -/
-public theorem tateF_opposed (m : ℤ) (p : ℤ) :
+theorem tateF_opposed (m : ℤ) (p : ℤ) :
     IsCompl (tateF m p)
       ((tateF m (-2 * m + 1 - p)).map
         (latticeConjugation (TensorProduct.isBaseChange ℤ ℤ ℂ)).toEquiv.toLinearMap) := by
@@ -502,7 +512,6 @@ public noncomputable def tate (m : ℤ) :
 /-- The Hodge filtration of the Tate structure $\mathbb{Z}(m)$. -/
 @[simp]
 public theorem tate_F (m p : ℤ) : (tate m).F p = if p ≤ -m then ⊤ else ⊥ := by
-  change tateF m p = if p ≤ -m then ⊤ else ⊥
   rfl
 
 /-- The `(p, q)`-pieces of the Tate Hodge structure $\mathbb{Z}(m)$: the piece at $p = -m$

@@ -136,8 +136,10 @@ public noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
     rw [h_conj]
     exact map_smul _ _ _
 
-theorem latticeConj_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
-    latticeConj hℂ x = hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x)) := rfl
+/-- Evaluation of the lattice conjugation on an element of `Vℂ`. -/
+public theorem latticeConj_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
+    latticeConj hℂ x = hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x)) := by
+  rfl
 
 /-- The lattice conjugation fixes the image of the underlying lattice `V`. -/
 @[simp]
@@ -167,6 +169,12 @@ induced by a `ℤ`-lattice `V`. -/
 public noncomputable def latticeConjugation (hℂ : IsBaseChange ℂ ιℂ) : Conjugation Vℂ where
   toEquiv := LinearEquiv.ofInvolutive (latticeConj hℂ) (latticeConj_involutive hℂ)
   involutive := latticeConj_involutive hℂ
+
+/-- Application of the bundled lattice conjugation equivalence to an element. -/
+@[simp]
+public theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
+    (latticeConjugation hℂ).toEquiv x = latticeConj hℂ x := by
+  rfl
 
 /-- Uniqueness of conjugate-linear map fixing the lattice `ιℂ V`. -/
 public theorem latticeConj_unique (f : Vℂ →ₛₗ[starRingEnd ℂ] Vℂ)
