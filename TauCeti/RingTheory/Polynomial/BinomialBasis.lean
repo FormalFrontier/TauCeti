@@ -67,10 +67,17 @@ theorem int_polynomial_smeval_X {K : Type*} [CommRing K] (p : ℤ[X]) :
   | add p q hp hq =>
     rw [Polynomial.smeval_add, Polynomial.map_add, hp, hq]
   | monomial n z =>
-    rw [Polynomial.smeval_monomial, Polynomial.map_monomial,
-      ← Polynomial.C_mul_X_pow_eq_monomial, ← Polynomial.smul_eq_C_mul]
-    change z • (X : K[X]) ^ n = (z : K) • (X : K[X]) ^ n
-    exact (Int.cast_smul_eq_zsmul (R := K) z ((X : K[X]) ^ n)).symm
+    calc
+      (monomial n z).smeval (X : K[X]) = z • (X : K[X]) ^ n := by
+        rw [Polynomial.smeval_monomial]
+      _ = (z : K) • (X : K[X]) ^ n := by
+        rw [Int.cast_smul_eq_zsmul (R := K)]
+      _ = C (z : K) * (X : K[X]) ^ n := by
+        rw [Polynomial.smul_eq_C_mul]
+      _ = monomial n (z : K) := by
+        rw [Polynomial.C_mul_X_pow_eq_monomial]
+      _ = (monomial n z).map (Int.castRingHom K) := by
+        rw [Polynomial.map_monomial, Int.coe_castRingHom]
 
 /-- Evaluating the integer descending Pochhammer polynomial at `X` in `K[X]` yields the
 descending Pochhammer polynomial over `K`. -/
