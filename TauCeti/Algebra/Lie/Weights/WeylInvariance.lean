@@ -174,7 +174,7 @@ dimension.
 
 No integrality hypothesis is needed: if `χ(α^∨)` is not an integer then neither `χ` nor `s_α χ` is
 a weight of `M`, both weight spaces are trivial, and the statement is `0 = 0`. -/
-@[simp] theorem finrank_weightSpace_sub_apply_coroot_smul {α : Weight K H L} (hα : α.IsNonZero)
+theorem finrank_weightSpace_sub_apply_coroot_smul {α : Weight K H L} (hα : α.IsNonZero)
     (χ : H → K) :
     finrank K (weightSpace M (χ - χ (IsKilling.coroot α) • ⇑α)) =
       finrank K (weightSpace M χ) := by
@@ -208,7 +208,7 @@ a weight of `M`, both weight spaces are trivial, and the statement is `0 = 0`. -
 
 /-- **The set of weights is stable under the reflections.** A form `χ` on the Cartan subalgebra is
 a weight of a finite-dimensional module exactly when its reflection `s_α χ` is. -/
-@[simp] theorem weightSpace_sub_apply_coroot_smul_eq_bot_iff {α : Weight K H L} (hα : α.IsNonZero)
+theorem weightSpace_sub_apply_coroot_smul_eq_bot_iff {α : Weight K H L} (hα : α.IsNonZero)
     (χ : H → K) :
     weightSpace M (χ - χ (IsKilling.coroot α) • ⇑α) = ⊥ ↔ weightSpace M χ = ⊥ := by
   have key : ∀ ψ : H → K, weightSpace M ψ = ⊥ ↔ finrank K (weightSpace M ψ) = 0 := fun ψ ↦ by
