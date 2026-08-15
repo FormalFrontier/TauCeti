@@ -107,6 +107,12 @@ inductive ArtinRelation (n : ℕ) : FreeGroup (Fin (n - 1)) → Prop
 def artinRelations (n : ℕ) : Set (FreeGroup (Fin (n - 1))) :=
   { r | ArtinRelation n r }
 
+/-- Membership in `artinRelations n` is exactly the predicate `ArtinRelation n`. -/
+@[simp]
+theorem mem_artinRelations_iff {n : ℕ} {r : FreeGroup (Fin (n - 1))} :
+    r ∈ artinRelations n ↔ ArtinRelation n r :=
+  Iff.rfl
+
 /-- The Artin braid group $B_n$ on `n` strands, presented by generators `Fin (n - 1)`
 and relations `artinRelations n`. -/
 def BraidGroup (n : ℕ) : Type _ :=
