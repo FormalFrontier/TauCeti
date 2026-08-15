@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Classification
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.NoBranch
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 
@@ -26,9 +25,10 @@ towards the double edge, followed by the first chain away from it. Under this or
 type follows from `TauCeti.DynkinType.isFiniteType_cartanMatrix_F4`, and combining this with the
 double-edge bound gives a complete characterization of when the model diagram is of finite type.
 
-The result classifies the model double-edge chains themselves. The preceding extraction problem --
-showing that a connected finite-type Cartan matrix carrying a double edge has this shape -- remains
-part of the existence half of the Cartan--Killing classification.
+This file classifies the model double-edge chains themselves, and combines this with the no-branch
+extraction theorem to establish the double-edge branch of the classification: every connected
+finite-type Cartan matrix carrying a double edge has a unique valid Dynkin type
+(`Bₙ`, `Cₙ`, or `F₄`).
 
 ## Main results
 
@@ -36,6 +36,10 @@ part of the existence half of the Cartan--Killing classification.
   explicit simultaneous reindexing.
 * `TauCeti.isFiniteType_doubleEdgeCartanMatrix_iff`: two nonempty chains joined by a double edge
   are of finite type exactly for the `B_n`, `C_n`, and `F₄` shapes.
+* `TauCeti.IsFiniteType.existsUnique_dynkinType_of_apply_mul_apply_eq_two`: a connected finite-type
+  Cartan matrix with a double edge has a unique valid Dynkin type (`Bₙ`, `Cₙ`, or `F₄`).
+* `TauCeti.existsUnique_dynkinType_of_apply_mul_apply_eq_two`: the root-system counterpart for
+  an irreducible reduced crystallographic finite root system with a double edge.
 
 ## References
 
@@ -102,11 +106,11 @@ followed by the lone vertex of the first chain. -/
 def doubleEdgeBEquiv (q : ℕ) : Fin 1 ⊕ Fin q ≃ Fin (q + 1) :=
   (Equiv.sumComm (Fin 1) (Fin q)).trans finSumFinEquiv
 
-@[simp] lemma doubleEdgeBEquiv_inl (q : ℕ) (i : Fin 1) :
+@[simp] lemma doubleEdgeBEquiv_inl_val (q : ℕ) (i : Fin 1) :
     (doubleEdgeBEquiv q (Sum.inl i) : ℕ) = q := by
   simp [doubleEdgeBEquiv]
 
-@[simp] lemma doubleEdgeBEquiv_inr (q : ℕ) (i : Fin q) :
+@[simp] lemma doubleEdgeBEquiv_inr_val (q : ℕ) (i : Fin q) :
     (doubleEdgeBEquiv q (Sum.inr i) : ℕ) = i := by
   simp [doubleEdgeBEquiv]
 
@@ -117,13 +121,11 @@ theorem doubleEdgeCartanMatrix_one_left (q : ℕ) :
   ext v w
   rcases v with a | a <;> rcases w with b | b <;>
     have ha := a.isLt <;> have hb := b.isLt <;>
-    simp only [doubleEdgeBEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
-      Sum.swap_inl, Sum.swap_inr, Matrix.submatrix_apply,
-      finSumFinEquiv_apply_left, finSumFinEquiv_apply_right,
+    simp only [Matrix.submatrix_apply,
+      doubleEdgeBEquiv_inl_val, doubleEdgeBEquiv_inr_val,
       doubleEdgeCartanMatrix_inl_inl, doubleEdgeCartanMatrix_inr_inr,
       doubleEdgeCartanMatrix_inl_inr, doubleEdgeCartanMatrix_inr_inl,
-      CartanMatrix.B, Matrix.of_apply, chainEntry_def, Fin.ext_iff,
-      Fin.val_castAdd, Fin.val_natAdd] <;>
+      CartanMatrix.B, Matrix.of_apply, chainEntry_def, Fin.ext_iff] <;>
     split_ifs <;> omega
 
 /-- **Classification of finite double-edge chains.** Suppose both chains are nonempty. Their
@@ -140,7 +142,7 @@ double-edge diagram is of finite type exactly when the second chain is a single 
     · exact isFiniteType_doubleEdgeCartanMatrix_two_two
 
 /-- Every admissible finite-type double-edge chain carries a unique valid Dynkin type. -/
-theorem doubleEdgeCartanMatrix_exists_valid_dynkinType (p q : ℕ) (hp : 0 < p) (hq : 0 < q)
+private theorem doubleEdgeCartanMatrix_existsUnique_dynkinType (p q : ℕ) (hp : 0 < p) (hq : 0 < q)
     (h : q = 1 ∨ p = 1 ∨ (p = 2 ∧ q = 2)) :
     ∃! t : DynkinType, t.Valid ∧
       ∃ e : Fin p ⊕ Fin q ≃ Fin t.rank,
@@ -184,7 +186,7 @@ theorem existsUnique_dynkinType_of_apply_mul_apply_eq_two
   obtain ⟨p, q, hp, hq, hadm, e, he⟩ :=
     h.exists_equiv_forall_eq_doubleEdgeCartanMatrix_of_apply_mul_apply_eq_two hconn huv
   obtain ⟨t, ⟨htv, et, het⟩, -⟩ :=
-    doubleEdgeCartanMatrix_exists_valid_dynkinType p q hp hq hadm
+    doubleEdgeCartanMatrix_existsUnique_dynkinType p q hp hq hadm
   refine ⟨t, ⟨htv, e.trans et, fun i j ↦ by rw [he, het]; rfl⟩, ?_⟩
   intro s hs
   exact DynkinType.eq_of_valid_of_forall_eq hs.1 htv hs.2.choose (e.trans et)
