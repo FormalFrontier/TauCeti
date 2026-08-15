@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.CharacterLattice
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice.Continuous
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
 
 /-!
@@ -12,12 +13,12 @@ public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
 
 The geometric characters of a torus are the group-like elements of its coordinate algebra after
 extension to an algebraic closure. The generic construction and its absolute-Galois action are in
-`TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice`.
+`TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.CharacterLattice.Basic`.
 
 The defining splitting over the algebraic closure identifies the underlying additive character
-group, noncanonically, with a finite-rank free abelian group. The absolute-Galois action is
-constructed in the generic character-group module, but its continuity and an equivariant
-classification of non-split tori are not formalized here.
+group, noncanonically, with a finite-rank free abelian group. The absolute-Galois action and its
+continuity for the discrete topology are constructed in the generic character-group modules. An
+equivariant classification of non-split tori is not formalized here.
 
 ## Main declarations
 
