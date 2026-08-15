@@ -31,8 +31,6 @@ bounded continuous positive-definite function as the remaining existence problem
 * `TauCeti.continuous_laplaceFourierTransform`: a finite measure's transform is continuous.
 * `TauCeti.isSemigroupGroupPD_laplaceFourierTransform`: a finite measure's transform is
   semigroup-group positive definite.
-* `TauCeti.isSemigroupGroupPD_laplaceFourierTransform_and_continuous`: the two structural
-  conclusions packaged together.
 * `TauCeti.RepresentsLaplaceFourier.isSemigroupGroupPD` and
   `TauCeti.RepresentsLaplaceFourier.continuous`: every represented function inherits the two
   structural properties.
@@ -83,16 +81,16 @@ theorem norm_laplaceFourierTransform_le (μ : Measure (ℝ≥0 × V)) [IsFiniteM
     (μ := μ) (C := 1) (.of_forall fun y =>
       norm_laplaceAtom_mul_fourierAtom_le_one x.1 y.1 x.2 y.2)
 
-variable [BorelSpace V]
+variable [OpensMeasurableSpace V]
 
 /-- The Laplace--Fourier transform of a finite measure is continuous.  The integrands are jointly
 continuous in the evaluation variable and uniformly dominated by the integrable constant one. -/
 theorem continuous_laplaceFourierTransform (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ] :
     Continuous (laplaceFourierTransform μ) := by
-  rw [show laplaceFourierTransform μ = fun x =>
-      ∫ y, laplaceAtom x.1 y.1 * fourierAtom x.2 y.2 ∂μ by
-    funext x
-    exact laplaceFourierTransform_apply μ x]
+  have h_eq : laplaceFourierTransform μ =
+      fun x => ∫ y, laplaceAtom x.1 y.1 * fourierAtom x.2 y.2 ∂μ :=
+    funext (laplaceFourierTransform_apply μ)
+  rw [h_eq]
   refine continuous_of_dominated (bound := fun _ => 1) ?_ ?_ (integrable_const 1) ?_
   · intro x
     exact (continuous_mul_time_spatial (continuous_laplaceAtom x.1)
@@ -156,19 +154,10 @@ theorem isSemigroupGroupPD_laplaceFourierTransform
   · intro ι _ c p
     rw [laplaceFourierTransform_sum_eq_integral μ c p]
     refine MeasureTheory.integral_nonneg (E := ℂ) fun y => ?_
-    change (0 : ℂ) ≤ ∑ i, ∑ j, c i * conj (c j) *
-      (laplaceAtom ((p i).1 + (p j).1) y.1 *
-        fourierAtom ((p i).2 - (p j).2) y.2)
+    dsimp only [Pi.zero_apply]
     simpa only [laplaceAtom_comm, fourierAtom_comm] using
       (IsSemigroupGroupPD.sum_nonneg (V := V) (ι := ι)
         (isSemigroupGroupPD_laplaceFourierAtom y.1 y.2) c p)
-
-/-- A finite measure's Laplace--Fourier transform has both structural properties required by the
-easy direction of the BCR representation: semigroup-group positive definiteness and continuity. -/
-theorem isSemigroupGroupPD_laplaceFourierTransform_and_continuous
-    (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ] :
-    IsSemigroupGroupPD (laplaceFourierTransform μ) ∧ Continuous (laplaceFourierTransform μ) :=
-  ⟨isSemigroupGroupPD_laplaceFourierTransform μ, continuous_laplaceFourierTransform μ⟩
 
 namespace RepresentsLaplaceFourier
 
@@ -177,27 +166,24 @@ variable {μ : Measure (ℝ≥0 × V)} {F : ℝ≥0 × V → ℂ}
 /-- A function represented by a finite measure is semigroup-group positive definite. -/
 theorem isSemigroupGroupPD (h : RepresentsLaplaceFourier μ F) : IsSemigroupGroupPD F := by
   let _ : IsFiniteMeasure μ := h.isFiniteMeasure
-  rw [show F = laplaceFourierTransform μ from funext h.eq_laplaceFourierTransform]
+  have hF : F = laplaceFourierTransform μ := funext h.eq_laplaceFourierTransform
+  rw [hF]
   exact isSemigroupGroupPD_laplaceFourierTransform μ
 
 /-- A function represented by a finite measure is continuous. -/
 theorem continuous (h : RepresentsLaplaceFourier μ F) : Continuous F := by
   let _ : IsFiniteMeasure μ := h.isFiniteMeasure
-  rw [show F = laplaceFourierTransform μ from funext h.eq_laplaceFourierTransform]
+  have hF : F = laplaceFourierTransform μ := funext h.eq_laplaceFourierTransform
+  rw [hF]
   exact continuous_laplaceFourierTransform μ
 
-omit [BorelSpace V] in
+omit [OpensMeasurableSpace V] in
 /-- A function represented by `μ` is uniformly bounded in norm by the total mass of `μ`. -/
 theorem norm_le_mass (h : RepresentsLaplaceFourier μ F) (x : ℝ≥0 × V) :
     ‖F x‖ ≤ μ.real Set.univ := by
   let _ : IsFiniteMeasure μ := h.isFiniteMeasure
   rw [h.eq_laplaceFourierTransform x]
   exact norm_laplaceFourierTransform_le μ x
-
-/-- Package positive definiteness and continuity for a represented function. -/
-theorem isSemigroupGroupPD_and_continuous (h : RepresentsLaplaceFourier μ F) :
-    IsSemigroupGroupPD F ∧ Continuous F :=
-  ⟨h.isSemigroupGroupPD, h.continuous⟩
 
 end RepresentsLaplaceFourier
 
