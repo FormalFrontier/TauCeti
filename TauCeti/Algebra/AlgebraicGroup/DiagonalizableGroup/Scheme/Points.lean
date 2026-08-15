@@ -129,6 +129,27 @@ private lemma eqToHom_hom_hom_left {G₁ G₂ : Grp (Over (Spec (CommRingCat.of 
   subst h
   rfl
 
+private lemma groupSchemeIsoHopfSpec_hom_left (G : FGCommGrpCat.{u}) :
+    (groupSchemeIsoHopfSpec (R := R) G).hom.left =
+      (eqToHom (groupScheme_def R G)).hom.hom.left :=
+  rfl
+
+private lemma hopfSpecIsoSpec_hom_left (G : FGCommGrpCat.{u}) :
+    (hopfSpecIsoSpec (R := R) G).hom.left =
+      (eqToHom (hopfSpec_obj_eq_asOver R (coordinateRing R G).obj)).hom.hom.left :=
+  rfl
+
+private lemma groupSchemeIsoSpec_hom_left (G : FGCommGrpCat.{u}) :
+    (groupSchemeIsoSpec (R := R) G).hom.left = eqToHom (groupScheme_X_left R G) := by
+  -- `groupSchemeIsoSpec` is the composite of `groupSchemeIsoHopfSpec` and `hopfSpecIsoSpec`,
+  -- which are transport isomorphisms along `groupScheme_def` and `hopfSpec_obj_eq_asOver`.
+  -- On the underlying scheme morphisms, both reduce to `eqToHom` on the scheme components.
+  unfold groupSchemeIsoSpec
+  rw [Iso.trans_hom, Over.comp_left]
+  rw [groupSchemeIsoHopfSpec_hom_left, hopfSpecIsoSpec_hom_left]
+  rw [eqToHom_hom_hom_left, eqToHom_hom_hom_left]
+  rfl
+
 /-- The underlying map of a scheme point under the typed comparison. -/
 lemma groupSchemePointsMulEquiv_apply_left_comp (G : FGCommGrpCat.{u})
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -139,12 +160,7 @@ lemma groupSchemePointsMulEquiv_apply_left_comp (G : FGCommGrpCat.{u})
   have hp := (AlgebraicGeometry.Spec.mapMulEquiv.apply_symm_apply
     (p ≫ (groupSchemeIsoSpec (R := R) G).hom)).symm
   have hleft := congrArg Over.Hom.left hp
-  rw [Over.comp_left] at hleft
-  change p.left ≫ (((groupSchemeIsoHopfSpec (R := R) G).hom).left ≫
-      ((hopfSpecIsoSpec (R := R) G).hom).left) = _ at hleft
-  change p.left ≫ ((eqToHom (groupScheme_def R G)).hom.hom.left ≫
-      (eqToHom (hopfSpec_obj_eq_asOver R (coordinateRing R G).obj)).hom.hom.left) = _ at hleft
-  rw [eqToHom_hom_hom_left, eqToHom_hom_hom_left] at hleft
+  rw [Over.comp_left, groupSchemeIsoSpec_hom_left] at hleft
   exact hleft
 
 /-- The typed scheme-point comparison is natural in the value algebra. -/
