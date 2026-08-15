@@ -47,7 +47,8 @@ attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
-the Lie-algebra adjoint `ad X Y`. -/
+the Lie-algebra adjoint `ad X Y`. The tangent space of a normed vector space is definitionally the
+vector space itself; `show ... from` exposes that identification to `mfderiv`. -/
 @[simp]
 theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
@@ -118,7 +119,8 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     _ = ⁅X, Y⁆ := by rw [eLie.symm_apply_apply, eLie.symm_apply_apply]
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
-Mathlib's Lie-algebra adjoint map. -/
+Mathlib's Lie-algebra adjoint map. The tangent space of a normed vector space is definitionally the
+vector space itself; `show ... from` exposes that identification to `mfderiv`. -/
 @[simp]
 theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)

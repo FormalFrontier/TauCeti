@@ -88,7 +88,9 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
 
 omit [IsManifold I 1 M] in
 /-- The derivative of a continuous-linear-map-valued function, evaluated at a fixed vector, is
-the derivative of the pointwise evaluation. -/
+the derivative of the pointwise evaluation. Tangent spaces of normed vector spaces are
+definitionally the vector spaces themselves; the `show ... from` terms expose those identifications
+to `mfderiv`. -/
 theorem mfderiv_continuousLinearMap_apply_const_apply
     {V : Type*} [NormedAddCommGroup V] [NormedSpace 𝕜 V]
     {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W]
