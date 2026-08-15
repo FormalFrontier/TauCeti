@@ -5,15 +5,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Dual.BaseChange
+import Mathlib.LinearAlgebra.Contraction
 
 /-!
 # Evaluation after scalar extension
 
 This file defines the canonical pairing between the scalar extensions of a module and its linear
 dual. It sends an `R`-linear functional extended to `A` to the corresponding `A`-linear functional
-on the scalar extension of its domain. No finiteness hypothesis is required, and the construction
-is not asserted to identify the scalar extension of the dual with the full dual of the scalar
-extension.
+on the scalar extension of its domain. For a finite projective module, this map is an equivalence.
 
 ## Main declarations
 
@@ -21,6 +20,8 @@ extension.
 * `TauCeti.Module.Dual.baseChangeEvaluation_one_tmul`: evaluation at a scalar-extended
   functional with coefficient one is its base change.
 * `TauCeti.Module.Dual.baseChangeEvaluation_tmul`: its value on two pure tensors.
+* `TauCeti.Module.Dual.baseChangeEquiv`: scalar extension commutes with the dual of a finite
+  projective module.
 * `TauCeti.Module.Dual.baseChange_coord`: base-changed dual basis elements recover the
   coordinates in the base-changed basis.
 * `TauCeti.Module.Dual.eq_of_baseChange_eq`: base changes of all dual elements jointly
@@ -63,6 +64,47 @@ theorem baseChangeEvaluation_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
     Module.Dual.baseChange_apply_tmul, Algebra.smul_def]
   rw [Algebra.algebraMap_self_apply]
   ac_rfl
+
+section FiniteProjective
+
+variable [Module.Finite R M] [Module.Projective R M]
+
+/-- The scalar extension of the dual of a finite projective module is canonically equivalent to
+the dual of its scalar extension. -/
+private noncomputable def baseChangeEquivRestrictScalars :
+    A ⊗[R] Module.Dual R M ≃ₗ[R] Module.Dual A (A ⊗[R] M) :=
+  (TensorProduct.comm R A (Module.Dual R M)).trans
+    (dualTensorHomEquiv R M A) |>.trans
+      ((LinearMap.liftBaseChangeEquiv A).restrictScalars R)
+
+private theorem baseChangeEquivRestrictScalars_toLinearMap :
+    (baseChangeEquivRestrictScalars (R := R) (A := A) (M := M)).toLinearMap =
+      (baseChangeEvaluation (R := R) (M := M) (A := A)).restrictScalars R := by
+  ext a φ b
+  simp [baseChangeEquivRestrictScalars, baseChangeEvaluation]
+
+/-- Scalar extension commutes with the linear dual of a finite projective module. -/
+noncomputable def baseChangeEquiv :
+    A ⊗[R] Module.Dual R M ≃ₗ[A] Module.Dual A (A ⊗[R] M) :=
+  LinearEquiv.ofBijective (baseChangeEvaluation (R := R) (M := M) (A := A)) <| by
+    rw [← LinearMap.coe_restrictScalars R]
+    rw [← baseChangeEquivRestrictScalars_toLinearMap]
+    exact (baseChangeEquivRestrictScalars (R := R) (A := A) (M := M)).bijective
+
+/-- The finite-projective equivalence is the canonical scalar-extended evaluation map. -/
+@[simp]
+theorem baseChangeEquiv_apply (z : A ⊗[R] Module.Dual R M) :
+    baseChangeEquiv (R := R) (A := A) (M := M) z =
+      baseChangeEvaluation (R := R) (M := M) (A := A) z :=
+  by simp only [baseChangeEquiv, LinearEquiv.ofBijective_apply]
+
+/-- The finite-projective base-change equivalence has the expected evaluation on pure tensors. -/
+theorem baseChangeEquiv_tmul_apply_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
+    baseChangeEquiv (R := R) (A := A) (M := M) (a ⊗ₜ[R] φ) (b ⊗ₜ[R] m) =
+      a * b * algebraMap R A (φ m) :=
+  baseChangeEvaluation_tmul a b φ m
+
+end FiniteProjective
 
 /-- A coordinate in a base-changed basis is evaluation against the base change of the
 corresponding element of the dual basis. -/
