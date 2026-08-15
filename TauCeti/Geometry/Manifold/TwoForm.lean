@@ -91,6 +91,59 @@ lemma isAlt_bilinFormAt (form : SmoothTwoForm I M) (x : M) :
     (form.bilinFormAt x).IsAlt :=
   fun v ↦ form.isAlt x v
 
+/-- A smooth two-form vanishes when its first tangent argument is zero. -/
+@[simp]
+lemma apply_zero_left (form : SmoothTwoForm I M) (x : M) (w : TangentSpace I x) :
+    form x 0 w = 0 := by
+  simpa only [bilinFormAt_apply, LinearMap.zero_apply] using congrArg
+    (fun f : TangentSpace I x →ₗ[ℝ] ℝ ↦ f w) (form.bilinFormAt x).map_zero
+
+/-- A smooth two-form vanishes when its second tangent argument is zero. -/
+@[simp]
+lemma apply_zero_right (form : SmoothTwoForm I M) (x : M) (v : TangentSpace I x) :
+    form x v 0 = 0 := by
+  simpa only [bilinFormAt_apply] using (form.bilinFormAt x v).map_zero
+
+/-- A smooth two-form is additive in its first tangent argument. -/
+lemma apply_add_left (form : SmoothTwoForm I M) (x : M) (v₁ v₂ w : TangentSpace I x) :
+    form x (v₁ + v₂) w = form x v₁ w + form x v₂ w := by
+  simpa only [bilinFormAt_apply, LinearMap.add_apply] using congrArg
+    (fun f : TangentSpace I x →ₗ[ℝ] ℝ ↦ f w) ((form.bilinFormAt x).map_add v₁ v₂)
+
+/-- A smooth two-form is additive in its second tangent argument. -/
+lemma apply_add_right (form : SmoothTwoForm I M) (x : M) (v w₁ w₂ : TangentSpace I x) :
+    form x v (w₁ + w₂) = form x v w₁ + form x v w₂ := by
+  simpa only [bilinFormAt_apply] using (form.bilinFormAt x v).map_add w₁ w₂
+
+/-- A smooth two-form preserves subtraction in its first tangent argument. -/
+lemma apply_sub_left (form : SmoothTwoForm I M) (x : M) (v₁ v₂ w : TangentSpace I x) :
+    form x (v₁ - v₂) w = form x v₁ w - form x v₂ w := by
+  simpa only [bilinFormAt_apply, LinearMap.sub_apply] using congrArg
+    (fun f : TangentSpace I x →ₗ[ℝ] ℝ ↦ f w) ((form.bilinFormAt x).map_sub v₁ v₂)
+
+/-- A smooth two-form preserves subtraction in its second tangent argument. -/
+lemma apply_sub_right (form : SmoothTwoForm I M) (x : M) (v w₁ w₂ : TangentSpace I x) :
+    form x v (w₁ - w₂) = form x v w₁ - form x v w₂ := by
+  simpa only [bilinFormAt_apply] using (form.bilinFormAt x v).map_sub w₁ w₂
+
+/-- A smooth two-form preserves negation in its first tangent argument. -/
+lemma apply_neg_left (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
+    form x (-v) w = -form x v w := by
+  simpa only [bilinFormAt_apply, LinearMap.neg_apply] using congrArg
+    (fun f : TangentSpace I x →ₗ[ℝ] ℝ ↦ f w) ((form.bilinFormAt x).map_neg v)
+
+/-- A smooth two-form preserves negation in its second tangent argument. -/
+lemma apply_neg_right (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
+    form x v (-w) = -form x v w := by
+  simpa only [bilinFormAt_apply] using (form.bilinFormAt x v).map_neg w
+
+/-- A smooth two-form is skew-symmetric in its tangent arguments. -/
+lemma apply_swap (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
+    form x v w = -form x w v := by
+  have h := LinearMap.IsAlt.neg (form.isAlt_bilinFormAt x) v w
+  simp only [bilinFormAt_apply] at h
+  linarith
+
 /-- The underlying smooth bilinear section determines a smooth two-form. -/
 theorem toContMDiffSection_injective :
     Function.Injective
