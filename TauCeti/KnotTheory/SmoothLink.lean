@@ -30,7 +30,6 @@ equivalence, and sliceness are also not provided here.
 
 ## Main results
 
-* `TauCeti.SmoothLink.disjoint_range`: disjointness of component embedding images.
 * `TauCeti.SmoothLink.component_apply_ne`: distinct components take different values at any
   pair of points.
 * `TauCeti.SmoothLink.component_injective`: distinct components of a smooth link are distinct
@@ -95,15 +94,10 @@ theorem ofKnot_component (K : SmoothKnot I M) (i : Fin 1) :
     (ofKnot K).component i = K := by
   rfl
 
-/-- The embedding images of distinct components of a smooth link are disjoint. -/
-theorem disjoint_range {k : ℕ} (L : SmoothLink I M k) {i j : Fin k} (h : i ≠ j) :
-    Disjoint (range (L.component i)) (range (L.component j)) :=
-  L.pairwise_disjoint_range h
-
 /-- Two distinct components of a smooth link take different values at any pair of points. -/
 theorem component_apply_ne {k : ℕ} (L : SmoothLink I M k) {i j : Fin k} (h : i ≠ j)
     (x y : Circle) : L.component i x ≠ L.component j y :=
-  Set.disjoint_range_iff.1 (L.disjoint_range h) x y
+  Set.disjoint_range_iff.1 (L.pairwise_disjoint_range h) x y
 
 /-- Distinct components of a smooth link are distinct knot embeddings. -/
 theorem component_injective {k : ℕ} (L : SmoothLink I M k) :
