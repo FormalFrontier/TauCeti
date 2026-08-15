@@ -24,6 +24,7 @@ tangent-bundle smoothness inputs from `TauCeti.Geometry.Manifold.VectorField.Reg
   tangent bundles.
 * `tangentMap_mul_prod_apply`: the value of that tangent map is the sum of the two partial
   derivatives of multiplication.
+* `mfderiv_mul_apply_one`: at the identity pair, the derivative of multiplication is addition.
 * `mfderiv_mul_left_mulInvariantVectorField`: left translation intertwines a left-invariant vector
   field with itself.
 * `contMDiff_tangentMap_mul_prod_comp`: regularity after feeding two smooth tangent-bundle inputs
@@ -79,6 +80,30 @@ theorem tangentMap_mul_prod_apply [ContMDiffMul I 1 G] (p q : TangentBundle I G)
   simp +instances [equivTangentBundleProd]
 
 end Multiplication
+
+section MultiplicationAtOne
+
+variable {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
+
+/-- At the identity pair, the derivative of multiplication is addition on the tangent Lie
+algebra. -/
+theorem mfderiv_mul_apply_one [ContMDiffMul I 1 G] (v w : GroupLieAlgebra I G) :
+    mfderiv (I.prod I) I (fun p : G × G => p.1 * p.2) ((1, 1) : G × G) (v, w) =
+      v + w := by
+  have hmul_tangent := tangentMap_mul_prod_apply (I := I) (G := G)
+    (⟨1, v⟩ : TangentBundle I G) (⟨1, w⟩ : TangentBundle I G)
+  have hmul_apply := congrArg (fun z : TangentBundle I G => z.2) hmul_tangent
+  -- Project the bundled tangent-map equation to its fiberwise `mfderiv` statement.
+  change
+    (mfderiv (I.prod I) I (fun p : G × G => p.1 * p.2) ((1, 1) : G × G))
+        (v, w) =
+      (mfderiv I I (fun z : G => z * 1) 1) v +
+        (mfderiv I I (fun z : G => 1 * z) 1) w at hmul_apply
+  rw [show (fun z : G => z * 1) = id by funext z; simp,
+    show (fun z : G => 1 * z) = id by funext z; simp, mfderiv_id] at hmul_apply
+  exact hmul_apply
+
+end MultiplicationAtOne
 
 section TangentMapInputs
 

@@ -65,6 +65,11 @@ structure ValuationSpectrum (A : Type*) [CommRing A] where
 
 @[inherit_doc] scoped notation "Spv" => ValuationSpectrum
 
+/-- Over a subsingleton ring, the valuation spectrum is empty. -/
+instance [CommRing A] [Subsingleton A] : IsEmpty (Spv A) :=
+  ⟨fun v ↦ v.toValuativeRel.not_vle_one_zero
+    (Subsingleton.elim (1 : A) 0 ▸ v.toValuativeRel.vle_refl 0)⟩
+
 namespace ValuationSpectrum
 
 variable {A : Type*} [CommRing A]

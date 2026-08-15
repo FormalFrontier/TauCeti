@@ -436,12 +436,7 @@ theorem hasCauchyPVAt_fdBoundary_rho (hH : Real.sqrt 3 / 2 < H) :
       refine continuous_const.sub ((Complex.continuous_ofReal.comp ?_).mul continuous_const)
       exact Real.continuous_arcsin.comp (continuous_id.div_const 2)
     simpa [Real.arcsin_zero] using (hc.tendsto 0).mono_left nhdsWithin_le_nhds
-  refine Contour.hasCauchyPVAt_iff.mpr ⟨?_, ?_⟩
-  · filter_upwards [hIoo] with ε hε
-    exact (hspec ε hε).1
-  · refine Tendsto.congr' ?_ hcont
-    filter_upwards [hIoo] with ε hε
-    exact ((hspec ε hε).2).symm
+  exact Contour.HasCauchyPVAt.of_tendsto hcont (eventually_of_mem hIoo hspec)
 
 /-- **The winding number of the boundary contour at `ρ` is `-1/6`**: the corner `ρ`
 sits on the contour with interior angle `π/3`, and the principal-value normalization

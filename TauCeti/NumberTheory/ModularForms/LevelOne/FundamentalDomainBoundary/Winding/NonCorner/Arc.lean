@@ -481,12 +481,7 @@ theorem hasCauchyPVAt_fdBoundary_arc (hH : 1 < H) (hnorm : ‖w‖ = 1)
         (min_le_left _ _))))
       (hε.2.trans_le ((min_le_right _ _).trans ((min_le_right _ _).trans
         (min_le_right _ _))))
-  refine Contour.hasCauchyPVAt_iff.mpr ⟨?_, ?_⟩
-  · filter_upwards [hIoo] with ε hε
-    exact (hspec ε hε).1
-  · refine Tendsto.congr' ?_ tendsto_neg_pi_sub_arcsin
-    filter_upwards [hIoo] with ε hε
-    exact ((hspec ε hε).2).symm
+  exact Contour.HasCauchyPVAt.of_tendsto tendsto_neg_pi_sub_arcsin (eventually_of_mem hIoo hspec)
 
 /-- **The winding number of the boundary contour at an arc point is `-1/2`**: the point sits
 on the open unit arc, and the principal-value normalization sees exactly half a clockwise
