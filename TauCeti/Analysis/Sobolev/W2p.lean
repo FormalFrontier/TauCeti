@@ -67,15 +67,16 @@ abbrev Sobolev2JetLp (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p
 /-- The second-order weak Sobolev subspace.  Its Hessian component is required to be the weak
 Fréchet derivative of the weak gradient in its first-order component.
 
-The theorem `TauCeti.w2pSubmodule_def` exposes its identification with the generic graph step
-without exposing this implementation body. -/
+The theorem `TauCeti.w2pSubmodule_def` restates this body as a rewrite rule, so that goals about
+membership in `TauCeti.w2pSubmodule` can be turned into goals about the generic graph step
+without unfolding the definition by name. -/
 def w2pSubmodule (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] : ClosedSubmodule ℝ (Sobolev2JetLp mu Omega p) :=
   weakDerivStepSubmodule mu Omega p W1p.gradientL
 
-/-- `w2pSubmodule` is the weak-derivative graph step taken over the weak gradient: this is what
-identifies `TauCeti.W2p` with `TauCeti.WeakDerivStep` and makes the generic API below available
-to it. -/
+/-- `w2pSubmodule` is the weak-derivative graph step taken over the weak gradient.  Rewriting with
+this identity replaces the `w2pSubmodule` term by the generic one, which is how the membership
+characterizations below are transported from `TauCeti.weakDerivStepSubmodule`. -/
 theorem w2pSubmodule_def :
     w2pSubmodule mu Omega p =
       weakDerivStepSubmodule mu Omega p (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) :=
@@ -87,7 +88,7 @@ theorem mem_w2pSubmodule_iff (J : Sobolev2JetLp mu Omega p) :
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
         (∫ x, lineDeriv ℝ (phi : E → ℝ) x v • W1p.gradient (WithLp.fst J) x ∂mu) +
           ∫ x, phi x • WithLp.snd J x v ∂mu = 0 := by
-  simpa only [w2pSubmodule, W1p.gradientL_apply] using
+  simpa only [w2pSubmodule_def, W1p.gradientL_apply] using
     (mem_weakDerivStepSubmodule_iff (mu := mu) (Omega := Omega) W1p.gradientL J)
 
 /-- A jet belongs to `w2pSubmodule` exactly when its Hessian is the weak Fréchet derivative of
@@ -96,7 +97,7 @@ theorem mem_w2pSubmodule_iff_hasWeakFDerivOn (J : Sobolev2JetLp mu Omega p) :
     J ∈ w2pSubmodule mu Omega p ↔
       HasWeakFDerivOn mu Omega (W1p.gradient (WithLp.fst J))
         (WithLp.snd J : Lp (E →L[ℝ] E) p (mu.restrict Omega)) := by
-  simpa only [w2pSubmodule, W1p.gradientL_apply] using
+  simpa only [w2pSubmodule_def, W1p.gradientL_apply] using
     (mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn
       (mu := mu) (Omega := Omega) W1p.gradientL J)
 
@@ -173,8 +174,9 @@ theorem W2p.ext_firstOrder {u v : W2p mu Omega p}
 gradient. -/
 theorem W2p.hasWeakFDerivOn_gradient (u : W2p mu Omega p) :
     HasWeakFDerivOn mu Omega (W1p.gradient (W2p.firstOrder u)) (W2p.hessian u) := by
-  simpa [W2p.firstOrder, W2p.hessian] using
-    WeakDerivStep.hasWeakFDerivOn_base_prev (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
+  rw [← W1p.gradientL_apply]
+  exact WeakDerivStep.hasWeakFDerivOn_base_prev
+    (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
 /-- Two second-order Sobolev functions are equal when their `Lᵖ` value components are equal.
 Successive uniqueness of weak derivatives determines both the gradient and Hessian components. -/
@@ -215,9 +217,15 @@ theorem W2p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq_add_norm_hessian_sq
   rw [W2p.norm_sq_eq_norm_firstOrder_sq_add_norm_hessian_sq,
     W1p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq]
 
-/-- The normed `ℝ`-space structure of `W^{2,p}(Ω)`, recorded as an instance in its own right.
+/-- The normed group structure of `W^{2,p}(Ω)`, recorded as an instance in its own right.
 Rediscovering it through the subspace-of-product structures underneath is what makes a further
 graph step over `W^{2,p}(Ω)` expensive to elaborate. -/
+instance : NormedAddCommGroup (W2p mu Omega p) := inferInstance
+
+/-- The normed `ℝ`-space structure of `W^{2,p}(Ω)`, recorded over the group structure above.
+A further graph step over `W^{2,p}(Ω)` searches for `NormedSpace ℝ X` at `X = W^{2,p}(Ω)` while
+the accompanying `NormedAddCommGroup X` argument is still unassigned; the two shortcuts together
+make that search a concrete one, so no caller has to pass the group structure by hand. -/
 instance : NormedSpace ℝ (W2p mu Omega p) := inferInstance
 
 /-- `W^{2,p}(Ω)` is complete in its iterated weak-derivative graph norm. -/
