@@ -222,9 +222,15 @@ lemma stdComplexLineEnergyDensity_eq_two_mul_twoForm
   have hreal : J x (F stdComplexLineImag) = - (F stdComplexLineReal) := by
     rw [himag, J.apply_apply]
   rw [← himag, hreal]
-  have hneg_right := form.apply_neg_right x (F stdComplexLineImag) (F stdComplexLineReal)
-  have halt := congrArg Neg.neg (form.apply_swap x
-    (F stdComplexLineImag) (F stdComplexLineReal))
+  have hneg_right : form x (F stdComplexLineImag) (-F stdComplexLineReal) =
+      -form x (F stdComplexLineImag) (F stdComplexLineReal) := by
+    simpa only [SmoothTwoForm.bilinFormAt_apply] using
+      (form.bilinFormAt x).neg_right (F stdComplexLineImag) (F stdComplexLineReal)
+  have halt : -form x (F stdComplexLineImag) (F stdComplexLineReal) =
+      form x (F stdComplexLineReal) (F stdComplexLineImag) := by
+    simpa only [SmoothTwoForm.bilinFormAt_apply] using
+      (LinearMap.IsAlt.neg (form.isAlt_bilinFormAt x)
+        (F stdComplexLineImag) (F stdComplexLineReal))
   rw [hneg_right, halt]
   ring
 
@@ -311,14 +317,20 @@ lemma Invariant.stdComplexLineEnergyDensity_sub_two_mul_twoForm (hinv : form.Inv
   let w := F stdComplexLineImag
   have h_right : form x (v + J x w) (J x v - w) =
       form x (v + J x w) (J x v) - form x (v + J x w) w :=
-    form.apply_sub_right x (v + J x w) (J x v) w
+    by simpa only [SmoothTwoForm.bilinFormAt_apply] using
+      (form.bilinFormAt x).sub_right (v + J x w) (J x v) w
   have h_left1 : form x (v + J x w) (J x v) = form x v (J x v) + form x (J x w) (J x v) :=
-    form.apply_add_left x v (J x w) (J x v)
+    by simpa only [SmoothTwoForm.bilinFormAt_apply] using
+      (form.bilinFormAt x).add_left v (J x w) (J x v)
   have h_left2 : form x (v + J x w) w = form x v w + form x (J x w) w :=
-    form.apply_add_left x v (J x w) w
+    by simpa only [SmoothTwoForm.bilinFormAt_apply] using
+      (form.bilinFormAt x).add_left v (J x w) w
   have hinv_step : form x (J x w) (J x v) = form x w v := hinv.apply x w v
-  have halt1 := congrArg Neg.neg (form.apply_swap x w v)
-  have halt2 := congrArg Neg.neg (form.apply_swap x (J x w) w)
+  have halt1 := congrArg Neg.neg <|
+    LinearMap.IsAlt.neg (form.isAlt_bilinFormAt x) v w
+  have halt2 := congrArg Neg.neg <|
+    LinearMap.IsAlt.neg (form.isAlt_bilinFormAt x) w (J x w)
+  simp only [SmoothTwoForm.bilinFormAt_apply] at halt1 halt2
   linarith
 
 /-- **Wirtinger inequality on manifolds.** For a compatible pair `(form, J)`, twice the symplectic
@@ -378,10 +390,7 @@ lemma stdComplexLineEnergy_congr_ae {u : ℝ × ℝ → M}
     (h : ∀ᵐ z ∂μ, du z = dv z) :
     form.stdComplexLineEnergy J u du μ = form.stdComplexLineEnergy J u dv μ := by
   rw [stdComplexLineEnergy_def, stdComplexLineEnergy_def]
-  exact lintegral_congr_ae <| h.mono fun z hz ↦ by
-    change ENNReal.ofReal (form.stdComplexLineEnergyDensity J (u z) (du z) / 2) =
-      ENNReal.ofReal (form.stdComplexLineEnergyDensity J (u z) (dv z) / 2)
-    rw [hz]
+  exact lintegral_congr_ae <| h.mono fun _ hz ↦ by simp only [hz]
 
 /-- Enlarging the source measure cannot decrease the manifold energy. -/
 lemma stdComplexLineEnergy_mono_measure {μ ν : Measure (ℝ × ℝ)} (hμν : μ ≤ ν)
