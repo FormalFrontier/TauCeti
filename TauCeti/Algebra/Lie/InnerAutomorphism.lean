@@ -185,9 +185,9 @@ theorem expAd_apply_eq_exp_mul_exp_neg {x y : A} (hx : IsNilpotent x) :
   have hexpOp : MulOpposite.unop (IsNilpotent.exp (MulOpposite.op (-x))) =
       IsNilpotent.exp (-x) := by
     obtain ⟨k, hk⟩ := hx.neg
-    rw [IsNilpotent.exp_eq_sum hk,
-      IsNilpotent.exp_eq_sum
-        (show MulOpposite.op (-x) ^ k = 0 by simpa using congrArg MulOpposite.op hk)]
+    have hk_op : MulOpposite.op (-x) ^ k = 0 := by
+      rw [← MulOpposite.op_pow, hk, MulOpposite.op_zero]
+    rw [IsNilpotent.exp_eq_sum hk, IsNilpotent.exp_eq_sum hk_op]
     simp
   have hl' (a : A) : IsNilpotent.exp (LinearMap.mulLeft ℚ x) a =
       IsNilpotent.exp x * a := by
