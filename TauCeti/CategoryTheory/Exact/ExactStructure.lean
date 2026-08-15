@@ -6,8 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.CategoryTheory.Exact.KernelCokernelPair
-public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Defs
-public import Mathlib.CategoryTheory.MorphismProperty.Composition
+public import Mathlib.CategoryTheory.MorphismProperty.Limits
 public import Mathlib.CategoryTheory.ObjectProperty.ClosedUnderIsomorphisms
 
 /-!
@@ -40,15 +39,11 @@ under isomorphisms in Mathlib's sense, and the inflations and the deflations are
 conflations makes the inflations and the deflations
 `CategoryTheory.MorphismProperty.RespectsIso`, and E0/E0op and E1/E1op are recorded as
 `CategoryTheory.MorphismProperty.ContainsIdentities` and
-`CategoryTheory.MorphismProperty.IsStableUnderComposition` instances.
-
-E2 and E2op cannot be phrased through Mathlib's
-`CategoryTheory.MorphismProperty.IsStableUnderCobaseChange` and its dual: those classes assume
-a square is already known to be a pushout, whereas Quillen's axioms *assert the existence* of
-the pushout of an inflation along an arbitrary morphism, in a category with no pushouts to
-speak of otherwise. They are therefore existential fields, as
-`CategoryTheory.Pretriangulated.distinguished_cocone_triangle` is. Deducing stability under
-cobase change from E2 belongs to the inflation--deflation calculus built on this file.
+`CategoryTheory.MorphismProperty.IsStableUnderComposition` instances. E2/E2op are recorded by
+the corresponding property-specific `HasPushouts`/`HasPullbacks` and
+`IsStableUnderCobaseChange`/`IsStableUnderBaseChange` classes. These assert existence only for
+pushouts of inflations and pullbacks of deflations, without requiring arbitrary pushouts or
+pullbacks in the ambient category.
 
 ## References
 
@@ -59,7 +54,7 @@ cobase change from E2 belongs to the inflation--deflation calculus built on this
   formalization, fixes the design followed here: the `ConflationClass`/`ExactStructure`
   split, the E0/E0op, E1/E1op, E2/E2op fields, and the derived inflation and deflation
   predicates are its. This file replaces its bespoke `PushoutWitness` and `PullbackWitness`
-  by `CategoryTheory.IsPushout` and `CategoryTheory.IsPullback`, and its pair of composable
+  by Mathlib's property-specific pushout and pullback classes, and its pair of composable
   morphisms by a `CategoryTheory.ShortComplex`.
 -/
 
@@ -182,7 +177,8 @@ end ConflationClass
 /-- A Quillen exact structure on an additive category, in the self-dual E0/E1/E2
 presentation.
 
-The E2 fields provide genuine universal squares. No ambient pushouts or pullbacks are assumed. -/
+The E2 fields provide genuine universal squares through Mathlib's pushout and pullback APIs. No
+ambient pushouts or pullbacks are assumed. -/
 structure ExactStructure (C : Type u) [Category.{v} C] [Preadditive C] [HasZeroObject C]
     [HasBinaryBiproducts C] extends ConflationClass C where
   /-- E0: identity morphisms are inflations. -/
@@ -197,16 +193,15 @@ structure ExactStructure (C : Type u) [Category.{v} C] [Preadditive C] [HasZeroO
   isDeflation_comp : ∀ {X Y Z : C} (p : X ⟶ Y) (q : Y ⟶ Z),
     toConflationClass.IsDeflation p → toConflationClass.IsDeflation q →
       toConflationClass.IsDeflation (p ≫ q)
-  /-- E2: the pushout of an inflation along any morphism exists, and its other leg is an
-  inflation. -/
-  pushout_isInflation : ∀ {X Y : C} (i : X ⟶ Y), toConflationClass.IsInflation i →
-    ∀ {X' : C} (f : X ⟶ X'), ∃ (Y' : C) (g : Y ⟶ Y') (i' : X' ⟶ Y'),
-      IsPushout i f g i' ∧ toConflationClass.IsInflation i'
-  /-- E2op: the pullback of a deflation along any morphism exists, and its other leg is a
-  deflation. -/
-  pullback_isDeflation : ∀ {X Y : C} (p : X ⟶ Y), toConflationClass.IsDeflation p →
-    ∀ {Y' : C} (f : Y' ⟶ Y), ∃ (X' : C) (p' : X' ⟶ Y') (g : X' ⟶ X),
-      IsPullback p' g f p ∧ toConflationClass.IsDeflation p'
+  /-- E2 existence: pushouts of inflations along arbitrary morphisms exist. -/
+  hasPushouts_inflations : toConflationClass.inflations.HasPushouts
+  /-- E2 stability: every cobase change of an inflation is an inflation. -/
+  isStableUnderCobaseChange_inflations :
+    toConflationClass.inflations.IsStableUnderCobaseChange
+  /-- E2op existence: pullbacks of deflations along arbitrary morphisms exist. -/
+  hasPullbacks_deflations : toConflationClass.deflations.HasPullbacks
+  /-- E2op stability: every base change of a deflation is a deflation. -/
+  isStableUnderBaseChange_deflations : toConflationClass.deflations.IsStableUnderBaseChange
 
 namespace ExactStructure
 
@@ -244,6 +239,20 @@ instance (E : ExactStructure C) : E.inflations.IsStableUnderComposition where
 /-- E1op, as the statement that the deflations are stable under composition. -/
 instance (E : ExactStructure C) : E.deflations.IsStableUnderComposition where
   comp_mem := E.isDeflation_comp
+
+/-- E2 existence, as property-specific availability of pushouts. -/
+instance (E : ExactStructure C) : E.inflations.HasPushouts := E.hasPushouts_inflations
+
+/-- E2 stability, as stability of inflations under cobase change. -/
+instance (E : ExactStructure C) : E.inflations.IsStableUnderCobaseChange :=
+  E.isStableUnderCobaseChange_inflations
+
+/-- E2op existence, as property-specific availability of pullbacks. -/
+instance (E : ExactStructure C) : E.deflations.HasPullbacks := E.hasPullbacks_deflations
+
+/-- E2op stability, as stability of deflations under base change. -/
+instance (E : ExactStructure C) : E.deflations.IsStableUnderBaseChange :=
+  E.isStableUnderBaseChange_deflations
 
 end ExactStructure
 
