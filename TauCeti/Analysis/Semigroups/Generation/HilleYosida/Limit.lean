@@ -158,6 +158,8 @@ def hilleYosidaLimitSemigroup : StronglyContinuousSemigroup X where
             (tendstoUniformlyOn_exp_yosidaApproximation_of_norm_resolvent_pow_le
               hM hres hpow hdense x hT))
 
+/-- Evaluating the exponent-zero Hille--Yosida limit semigroup at `t` on `x` yields
+`yosidaLimit A t x`. -/
 @[simp]
 theorem hilleYosidaLimitSemigroup_apply (t : ℝ≥0) (x : X) :
     hilleYosidaLimitSemigroup hM hres hpow hdense t x = yosidaLimit A t x :=
