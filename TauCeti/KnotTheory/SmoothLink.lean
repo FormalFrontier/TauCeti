@@ -19,21 +19,17 @@ topology (manifold orientations and tubular neighbourhoods) is available.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
-* `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
-* `TauCeti.UnorientedSmoothKnot3`: unoriented smooth knots in the 3-sphere $S^3$.
-* `TauCeti.SmoothKnot`: alias for `UnorientedSmoothKnot`.
-* `TauCeti.SmoothKnot3`: alias for `UnorientedSmoothKnot3`.
+* `TauCeti.SmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
+* `TauCeti.SmoothKnot3`: unoriented smooth knots in the 3-sphere $S^3$.
 * `TauCeti.SmoothLink`: $k$-component smooth links in a manifold $M$, bundling $k$ component knots
   with pairwise disjoint embedding images.
 * `TauCeti.SmoothLink3`: smooth $k$-component links in $S^3$.
-* `TauCeti.UnorientedSmoothLink` / `TauCeti.UnorientedSmoothLink3`: aliases for `SmoothLink` and
-  `SmoothLink3`.
 
 ## Main definitions
 
 * `TauCeti.Sphere1`: the standard 1-sphere $S^1 \subset \mathbb{R}^2$.
 * `TauCeti.Sphere3`: the standard 3-sphere $S^3 \subset \mathbb{R}^4$.
-* `TauCeti.UnorientedSmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
+* `TauCeti.SmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.SmoothLink`: type of $k$-component smooth links in $M$.
 
 ## References
@@ -64,20 +60,12 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- An unoriented smooth-knot presentation in an ambient manifold `M` is a bundled `C^∞` smooth
 embedding of the standard 1-sphere `Sphere1` into `M`. -/
-public abbrev UnorientedSmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
+public abbrev SmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
     [ChartedSpace H M] : Type _ :=
   SmoothEmbedding (𝓡 1) I ∞ Sphere1 M
 
 /-- An unoriented smooth knot in the standard 3-sphere `Sphere3`. -/
-public abbrev UnorientedSmoothKnot3 : Type _ := UnorientedSmoothKnot (𝓡 3) Sphere3
-
-/-- Alias for `UnorientedSmoothKnot` as the geometric smooth-knot presentation. -/
-public abbrev SmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
-    [ChartedSpace H M] : Type _ :=
-  UnorientedSmoothKnot I M
-
-/-- Alias for `UnorientedSmoothKnot3`. -/
-public abbrev SmoothKnot3 : Type _ := UnorientedSmoothKnot3
+public abbrev SmoothKnot3 : Type _ := SmoothKnot (𝓡 3) Sphere3
 
 /-- A `k`-component smooth link in a manifold `M` consists of `k` unoriented component knots with
 pairwise disjoint embedding images. -/
@@ -85,33 +73,25 @@ pairwise disjoint embedding images. -/
 structure SmoothLink (I : ModelWithCorners ℝ E H)
     (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) where
   /-- The individual component knots of the link. -/
-  component : Fin k → UnorientedSmoothKnot I M
+  component : Fin k → SmoothKnot I M
   /-- Different components have pairwise disjoint embedding images in `M`. -/
   pairwise_disjoint : Pairwise fun i j =>
     Disjoint (range (component i)) (range (component j))
 
-/-- Alias for `SmoothLink`. -/
-public abbrev UnorientedSmoothLink (I : ModelWithCorners ℝ E H)
-    (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) : Type _ :=
-  SmoothLink I M k
-
 /-- A `k`-component smooth link in the standard 3-sphere `Sphere3`. -/
 public abbrev SmoothLink3 (k : ℕ) : Type _ := SmoothLink (𝓡 3) Sphere3 k
-
-/-- Alias for `SmoothLink3`. -/
-public abbrev UnorientedSmoothLink3 (k : ℕ) : Type _ := SmoothLink3 k
 
 namespace SmoothLink
 
 variable {I M}
 
 /-- Convert a single unoriented smooth knot into a 1-component smooth link. -/
-def ofKnot (K : UnorientedSmoothKnot I M) : SmoothLink I M 1 where
+def ofKnot (K : SmoothKnot I M) : SmoothLink I M 1 where
   component _ := K
   pairwise_disjoint := Subsingleton.pairwise
 
 @[simp]
-theorem ofKnot_component (K : UnorientedSmoothKnot I M) (i : Fin 1) :
+theorem ofKnot_component (K : SmoothKnot I M) (i : Fin 1) :
     (ofKnot K).component i = K := (rfl)
 
 /-- Distinct components of a smooth link are distinct knot embeddings. -/
@@ -122,7 +102,7 @@ theorem component_injective {k : ℕ} (L : SmoothLink I M k) :
   apply L.pairwise_disjoint.eq
   intro hdisj
   have hrange : range (L.component i) = range (L.component j) :=
-    congrArg (fun K : UnorientedSmoothKnot I M ↦ range (⇑K)) hij
+    congrArg (fun K : SmoothKnot I M ↦ range (⇑K)) hij
   rw [hrange, disjoint_self] at hdisj
   exact (range_nonempty (L.component j)).ne_empty hdisj
 
