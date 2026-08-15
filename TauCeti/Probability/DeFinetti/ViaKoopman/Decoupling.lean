@@ -73,8 +73,9 @@ end.
 This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
 
-The induction on `r` that iterates this decoupling across a whole block, and the `ℝ≥0∞` ending it
-feeds, are not here yet.
+The induction on `r` that iterates this decoupling across a whole block is
+`ViaKoopman/BlockFactorization.lean`, and the `ℝ≥0∞` ending it feeds is
+`ViaKoopman/CylinderMass.lean`.
 -/
 
 public section
