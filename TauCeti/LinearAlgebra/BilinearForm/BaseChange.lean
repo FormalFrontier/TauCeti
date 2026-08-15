@@ -15,8 +15,9 @@ canonical base change of bilinear forms.
 
 ## Main declarations
 
-* `TauCeti.IsBaseChange.bilinForm_baseChange`: evaluating a bilinear form through a base-change
-  equivalence agrees with the canonical base change of the original form.
+* `TauCeti.IsBaseChange.bilinForm_baseChange`: if a bilinear form restricts along a map to a
+  second form, evaluating it through the associated base-change equivalence agrees with the
+  canonical base change of the second form.
 -/
 
 public section
@@ -33,8 +34,8 @@ variable [AddCommMonoid M] [Module R M]
 variable [AddCommMonoid N] [Module A N] [Module R N] [IsScalarTower R A N]
 variable {f : M →ₗ[R] N} (h : IsBaseChange A f)
 
-/-- Evaluating a bilinear form on base-changed vectors via an `IsBaseChange` equivalence
-identifies it with the canonical base change of the original bilinear form. -/
+/-- If `B` restricts along `f` to `B'`, evaluating `B` on base-changed vectors agrees with the
+canonical base change of `B'`. -/
 theorem bilinForm_baseChange (B' : LinearMap.BilinForm R M) (B : LinearMap.BilinForm A N)
     (hB : ∀ x y : M, B (f x) (f y) = algebraMap R A (B' x y)) (x y : A ⊗[R] M) :
     B (h.equiv x) (h.equiv y) = B'.baseChange A x y := by

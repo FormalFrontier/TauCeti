@@ -19,6 +19,8 @@ over the fraction field `K` exhibits `V` as the base change `K ⊗[R] S`.
 * `TauCeti.Submodule.IsLattice.isBaseChange_subtype`: the inclusion of a full lattice submodule
   that is free over an integral domain into its ambient vector space over the fraction field is a
   base change.
+* `TauCeti.Submodule.rationalizationEquiv`: the canonical equivalence from the scalar extension
+  of a free full lattice submodule to its ambient vector space.
 
 ## References
 
@@ -62,6 +64,31 @@ theorem isBaseChange_subtype (S : Submodule R V) [Module.Free R S] [S.IsLattice 
   exact IsBaseChange.of_equiv e fun x ↦ DFunLike.congr_fun hmap x
 
 end IsLattice
+
+variable {R : Type u} {K : Type v} {V : Type w}
+variable [CommRing R] [IsDomain R]
+variable [Field K] [Algebra R K] [IsFractionRing R K]
+variable [AddCommGroup V] [Module R V] [Module K V] [IsScalarTower R K V]
+
+/-- The canonical equivalence from the scalar extension of a free full lattice submodule to its
+ambient vector space. -/
+noncomputable def rationalizationEquiv (S : Submodule R V) [Module.Free R S] [S.IsLattice K] :
+    K ⊗[R] S ≃ₗ[K] V :=
+  (IsLattice.isBaseChange_subtype S).equiv
+
+/-- The rationalization equivalence sends a pure tensor to scalar multiplication of the embedded
+lattice vector. This equation characterizes the equivalence. -/
+@[simp]
+theorem rationalizationEquiv_tmul (S : Submodule R V) [Module.Free R S] [S.IsLattice K]
+    (k : K) (x : S) : rationalizationEquiv S (k ⊗ₜ[R] x) = k • (x : V) :=
+  (IsLattice.isBaseChange_subtype S).equiv_tmul k x
+
+/-- The inverse rationalization equivalence sends an embedded lattice vector to the corresponding
+unit pure tensor. -/
+@[simp]
+theorem rationalizationEquiv_symm_coe (S : Submodule R V) [Module.Free R S] [S.IsLattice K]
+    (x : S) : (rationalizationEquiv S).symm (x : V) = 1 ⊗ₜ[R] x :=
+  (IsLattice.isBaseChange_subtype S).equiv_symm_apply x
 
 end Submodule
 

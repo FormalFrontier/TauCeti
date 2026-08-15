@@ -31,7 +31,6 @@ The form restricts to a canonical `ℤ`-bilinear form on the carrier.  Conversel
 * `TauCeti.IntegralLattice.rationalBasis`: the ambient `ℚ`-basis extending a chosen `ℤ`-basis of
   the carrier.
 * `TauCeti.IntegralLattice.integralForm`: the induced `ℤ`-bilinear form on the carrier.
-* `TauCeti.IntegralLattice.form_smul_smul`: evaluating the ambient form on scaled lattice vectors.
 * `TauCeti.IntegralLattice.ofSubmodule`: constructor from a full submodule, symmetric form, and
   integrality proof.
 * `TauCeti.IntegralLattice.ofBasis`: the lattice spanned by a basis on which a given form is
@@ -140,12 +139,6 @@ theorem isSymm_integralForm (L : IntegralLattice V) : L.integralForm.IsSymm := b
   constructor
   intro x y
   exact Int.cast_injective (by rw [L.integralForm_cast, L.integralForm_cast, L.isSymm.eq])
-
-/-- Evaluating the ambient rational form on scaled lattice vectors recovers the integral form. -/
-theorem form_smul_smul (L : IntegralLattice V) (q r : ℚ) (x y : L) :
-    L.form (q • (x : V)) (r • (y : V)) = q * r * (L.integralForm x y : ℚ) := by
-  rw [LinearMap.BilinForm.smul_left, LinearMap.BilinForm.smul_right, ← integralForm_cast]
-  ring
 
 /-- Construct an integral lattice from a full submodule, a symmetric rational bilinear form, and
 an integrality proof. -/
