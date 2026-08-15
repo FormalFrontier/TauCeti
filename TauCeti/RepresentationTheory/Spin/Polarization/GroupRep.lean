@@ -7,6 +7,7 @@ module
 public import Mathlib.LinearAlgebra.CliffordAlgebra.SpinGroup
 public import Mathlib.RepresentationTheory.Subrepresentation
 public import TauCeti.RepresentationTheory.Spin.Polarization.CliffordAction
+public import TauCeti.RepresentationTheory.Spin.Representation
 -- Private: `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` is used only inside a proof, and
 -- `CliffordAction` imports this module privately too, so it is not available transitively.
 import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
@@ -15,18 +16,12 @@ import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
 import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
-# The pin and spin representations, and the half-spin summands
+# The half-spin summands of the spin representation
 
 `TauCeti.spinAction` makes the exterior algebra `S = ⋀·W` of the isotropic summand of a
-polarization a module over the Clifford algebra. The pin and spin groups sit inside that Clifford
-algebra, so restricting the action along their inclusions turns `S` into a representation of
-each: `TauCeti.pinRep`, of `pinGroup Q`, and `TauCeti.spinRep`, of `spinGroup Q` — the latter is
-the spin representation proper. What makes them worth constructing is classical: over `ℂ`, for a
-nondegenerate `Q`, `spinRep` does not factor through the covering `Spin → SO` of the special
-orthogonal group, so it is not a summand of any tensor power of the vector representation; and
-`pinRep` likewise does not factor through the covering `Pin → O` of the orthogonal group. That is
-motivation for the construction; it is not proved here, and it is not a statement about the
-arbitrary commutative ring this file works over.
+polarization a module over the Clifford algebra, and `TauCeti.spinRep` restricts that action
+along the inclusion of `spinGroup Q` — the spin representation proper — as `TauCeti.pinRep` does
+along the inclusion of `pinGroup Q`.
 
 The exterior algebra is itself `ℤ/2`-graded, by exterior parity, and `S` splits as the sum
 `S⁺ ⊕ S⁻` of the even and the odd part. Whether that splitting is a splitting *of
@@ -58,7 +53,6 @@ belong to the complex theory and are not proved here.
 
 ## Main definitions
 
-* `TauCeti.pinRep` and `TauCeti.spinRep`: the pin and spin representations on `S = ⋀·W`.
 * `TauCeti.spinPlus` and `TauCeti.spinMinus`: the even and odd half-spin summands of `S`.
 * `TauCeti.spinPlusSubrep` and `TauCeti.spinMinusSubrep`: those summands bundled as
   subrepresentations of `spinRep`, for a polarization without a line summand.
@@ -97,35 +91,7 @@ universe u v
 
 variable {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
 
-/-! ### The pin and spin representations -/
-
-/-- **The pin representation** on the spinor module `S = ⋀·W`: the Clifford action
-`TauCeti.spinAction` restricted along the inclusion of `pinGroup Q` into the Clifford algebra.
-Every element of the pin group is a unit of the Clifford algebra, so it acts invertibly. -/
-noncomputable def pinRep (Q : QuadraticForm K V) (P : SpinPolarizationData Q) :
-    Representation K (pinGroup Q) (ExteriorAlgebra K P.W) :=
-  (spinAction Q P).toRingHom.toMonoidHom.comp (pinGroup Q).subtype
-
-/-- **The spin representation** on the spinor module `S = ⋀·W`: the Clifford action
-`TauCeti.spinAction` restricted along the inclusion of `spinGroup Q` into the Clifford
-algebra. -/
-noncomputable def spinRep (Q : QuadraticForm K V) (P : SpinPolarizationData Q) :
-    Representation K (spinGroup Q) (ExteriorAlgebra K P.W) :=
-  (spinAction Q P).toRingHom.toMonoidHom.comp (spinGroup Q).subtype
-
 variable {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
-
-@[simp, grind =]
-theorem pinRep_apply (g : pinGroup Q) :
-    pinRep Q P g = spinAction Q P (g : CliffordAlgebra Q) :=
-  -- `(rfl)`, not `rfl`: the body of `pinRep` is not `@[expose]`d.
-  (rfl)
-
-@[simp, grind =]
-theorem spinRep_apply (g : spinGroup Q) :
-    spinRep Q P g = spinAction Q P (g : CliffordAlgebra Q) :=
-  -- `(rfl)`, not `rfl`: the body of `spinRep` is not `@[expose]`d.
-  (rfl)
 
 /-! ### The half-spin summands -/
 
