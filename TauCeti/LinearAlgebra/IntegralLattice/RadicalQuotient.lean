@@ -156,7 +156,6 @@ theorem radicalQuotientMap_eq_zero_iff (x : L) :
   simp only [radicalQuotientMap_apply, Submodule.coe_zero, Submodule.Quotient.mk_eq_zero]
 
 /-- The radical quotient map preserves the rational bilinear form. -/
-@[simp]
 theorem form_radicalQuotientMap (x y : L) :
     L.radicalQuotient.form (L.radicalQuotientMap x) (L.radicalQuotientMap y) = L.form x y :=
   by simp only [radicalQuotient_form, radicalQuotientMap_apply, radicalQuotientForm_mk]
