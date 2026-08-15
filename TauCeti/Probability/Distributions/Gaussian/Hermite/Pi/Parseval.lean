@@ -31,6 +31,7 @@ product function into the one-dimensional coordinates of its factors.
   integrand is integrable by
   `TauCeti.integrable_prod_hermite_div_sqrt_factorial_mul_pi_gaussianReal`.
 * `TauCeti.gaussianHermitePiBasis_repr_L2piMul` factors the coordinates of a product function.
+* `TauCeti.tsum_inner_mul_inner_L2piMul_gaussianHermiteHilbertBasis` is Parseval in polarized form.
 * `TauCeti.tsum_norm_sq_integral_prod_hermite_mul_pi_gaussianReal` is Parseval's identity for those
   coefficients.
 * `TauCeti.summable_norm_sq_integral_prod_hermite_mul_pi_gaussianReal` gives square-summability of
@@ -95,6 +96,15 @@ theorem gaussianHermitePiBasis_repr_L2piMul
             piHilbertBasis_repr_L2piMul (fun _ : ι => gaussianHermiteHilbertBasis 𝕜) F a
     _ = _ := Finset.prod_congr rfl fun i _ => by
       rw [gaussianHermiteHilbertBasis_repr_apply]
+
+/-- **Parseval's identity for the multivariate Gaussian Hermite basis** (polarized form): the
+multi-index Gaussian Hermite coordinates of `f` and `g` pair to their inner product. -/
+theorem tsum_inner_mul_inner_L2piMul_gaussianHermiteHilbertBasis
+    (f g : Lp 𝕜 2 (Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ))) :
+    ∑' a : ι → ℕ, inner 𝕜 f (L2piMul fun i => gaussianHermiteHilbertBasis 𝕜 (a i))
+        * inner 𝕜 (L2piMul fun i => gaussianHermiteHilbertBasis 𝕜 (a i)) g = inner 𝕜 f g := by
+  simpa only [gaussianHermitePiBasis_apply] using
+    (gaussianHermitePiBasis 𝕜 ι).tsum_inner_mul_inner f g
 
 /-- **Parseval's identity for the multivariate Gaussian Hermite basis.** The squared coefficients
 of `f` against the multi-index Hermite products sum to `‖f‖²`. -/
