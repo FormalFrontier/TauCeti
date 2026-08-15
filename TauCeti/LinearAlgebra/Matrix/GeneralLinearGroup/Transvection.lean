@@ -51,10 +51,16 @@ elementary matrices against the diagonal torus.
 
 * `TauCeti.commute_transvection` and `TauCeti.commute_transvectionUnit`: transvections at index
   pairs that do not chain commute.
+* `Matrix.SpecialLinearGroup.commute_transvection`: determinant-one transvections at non-chaining
+  index pairs commute.
 * `TauCeti.transvection_mul_transvection_eq_mul_mul`: the product of two chaining transvections,
   in the two orders. As a matrix identity it needs only `i ≠ j` and `i ≠ l`; the third index
   condition `j ≠ l` is what makes the three matrices involved transvections.
+* `Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul`: product of chaining
+  transvections in `SL n A`.
 * `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
+* `Matrix.SpecialLinearGroup.commutatorElement_transvection`: the Chevalley commutator relation
+  for determinant-one transvections in `SL n A`.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
 * `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
@@ -222,6 +228,45 @@ theorem commutatorElement_transvectionUnit (hij : i ≠ j) (hjl : j ≠ l) (hil 
   rw [commutatorElement_def, transvectionUnit_mul_transvectionUnit_eq_mul_mul hij hjl hil,
     mul_assoc (transvectionUnit hjl d) (transvectionUnit hij c), hxz.eq, ← mul_assoc,
     mul_inv_cancel_right, hyz.eq, mul_inv_cancel_right]
+
+/-- Two determinant-one transvections at index pairs that do not chain commute in `SL n A`. -/
+theorem _root_.Matrix.SpecialLinearGroup.commute_transvection (hij : i ≠ j) (hkl : k ≠ l)
+    (hjk : j ≠ k) (hli : l ≠ i) (c d : A) :
+    Commute (Matrix.SpecialLinearGroup.transvection hij c)
+      (Matrix.SpecialLinearGroup.transvection hkl d) := by
+  ext a b
+  exact congrFun₂ (TauCeti.commute_transvection hjk hli c d) a b
+
+/-- The product of two chaining determinant-one transvections in `SL n A`, in the two orders. -/
+theorem _root_.Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul
+    (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
+    Matrix.SpecialLinearGroup.transvection hij c *
+        Matrix.SpecialLinearGroup.transvection hjl d =
+      Matrix.SpecialLinearGroup.transvection hjl d *
+        Matrix.SpecialLinearGroup.transvection hij c *
+        Matrix.SpecialLinearGroup.transvection hil (c * d) := by
+  ext a b
+  exact congrFun₂ (TauCeti.transvection_mul_transvection_eq_mul_mul hij hil c d) a b
+
+/-- **The Chevalley commutator relation of type `A` in `SL n A`.** The commutator of the
+determinant-one root subgroup elements `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`,
+is `xᵢₗ(cd)`. -/
+theorem _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection
+    (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
+    ⁅Matrix.SpecialLinearGroup.transvection hij c,
+      Matrix.SpecialLinearGroup.transvection hjl d⁆ =
+      Matrix.SpecialLinearGroup.transvection hil (c * d) := by
+  have hxz : Commute (Matrix.SpecialLinearGroup.transvection hij c)
+      (Matrix.SpecialLinearGroup.transvection hil (c * d)) :=
+    Matrix.SpecialLinearGroup.commute_transvection hij hil hij.symm hil.symm c (c * d)
+  have hyz : Commute (Matrix.SpecialLinearGroup.transvection hjl d)
+      (Matrix.SpecialLinearGroup.transvection hil (c * d)) :=
+    Matrix.SpecialLinearGroup.commute_transvection hjl hil hil.symm hjl.symm d (c * d)
+  rw [commutatorElement_def,
+    Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul hij hjl hil,
+    mul_assoc (Matrix.SpecialLinearGroup.transvection hjl d)
+      (Matrix.SpecialLinearGroup.transvection hij c),
+    hxz.eq, ← mul_assoc, mul_inv_cancel_right, hyz.eq, mul_inv_cancel_right]
 
 end Unit
 
