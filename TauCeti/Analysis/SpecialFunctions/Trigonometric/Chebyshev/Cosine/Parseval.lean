@@ -18,22 +18,19 @@ public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Parseval
 `TauCeti.chebyshevTHilbertBasis` along the cosine isometry `TauCeti.chebyshevCosineL2Equiv`.
 
 This file supplies the coefficient, Parseval, and Fourier cosine series reconstruction API for that
-basis. It defines the explicit normalized `L²` vectors `TauCeti.normalizedChebyshevCosineLp`,
-identifies the abstract coordinates `HilbertBasis.repr` with both the measure and interval
-integrals against the normalized cosines, proves Parseval in polarized and norm-square forms, and
-establishes the transfer of coordinates and inner products across the Chebyshev-to-cosine
-equivalence.
+basis. It identifies the abstract coordinates `HilbertBasis.repr` with both the measure and
+interval integrals against the normalized cosines, proves Parseval in polarized and norm-square
+forms, and establishes the transfer of coordinates and inner products across the
+Chebyshev-to-cosine equivalence.
 
 ## Main declarations
 
-* `TauCeti.normalizedChebyshevCosineLp` — the normalized angular cosine mode as an `Lp` vector.
-* `TauCeti.coe_chebyshevCosineHilbertBasis` — the basis vectors are the normalized cosine modes.
 * `TauCeti.chebyshevCosineHilbertBasis_repr_apply` — identifies coordinates with measure integrals.
 * `TauCeti.chebyshevCosineHilbertBasis_repr_apply_interval` — identifies coordinates with interval
   integrals `∫ θ in (0)..π, …`.
 * `TauCeti.tsum_norm_sq_integral_normalizedChebyshevCosine_mul` — Parseval's identity in norm-square
   form.
-* `TauCeti.tsum_inner_mul_inner_normalizedChebyshevCosineLp` — Parseval's identity in polarized
+* `TauCeti.tsum_inner_mul_inner_chebyshevCosineHilbertBasis` — Parseval's identity in polarized
   form.
 * `TauCeti.hasSum_chebyshevCosine_expansion` — reconstruction of every `L²` function from its
   Fourier cosine series.
@@ -58,41 +55,6 @@ open MeasureTheory Polynomial.Chebyshev
 
 variable (𝕜 : Type*) [RCLike 𝕜]
 
-/-! ## The normalized cosine modes in `L²` -/
-
-/-- The scalar cast of the normalized angular cosine mode is square-integrable on `(0, π]`. -/
-theorem memLp_two_algebraMap_normalizedChebyshevCosine (n : ℕ) :
-    MemLp (fun θ : ℝ => (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ)) 2 chebyshevAngleMeasure :=
-  MemLp.ae_eq (coeFn_chebyshevCosineHilbertBasis 𝕜 n)
-    (Lp.memLp (chebyshevCosineHilbertBasis 𝕜 n))
-
-/-- The `n`-th normalized angular cosine mode as a vector of `L²((0, π]; dθ)`. -/
-noncomputable def normalizedChebyshevCosineLp (n : ℕ) : Lp 𝕜 2 chebyshevAngleMeasure :=
-  (memLp_two_algebraMap_normalizedChebyshevCosine (𝕜 := 𝕜) n).toLp _
-
-/-- The `Lp` representative of `TauCeti.normalizedChebyshevCosineLp` is almost everywhere the
-scalar-cast normalized cosine function. -/
-theorem coeFn_normalizedChebyshevCosineLp (n : ℕ) :
-    ⇑(normalizedChebyshevCosineLp 𝕜 n) =ᵐ[chebyshevAngleMeasure]
-      fun θ => (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) :=
-  MemLp.coeFn_toLp _
-
-/-- **The basis vectors are the normalized cosine modes.** The transported basis
-`TauCeti.chebyshevCosineHilbertBasis` is the explicit family `TauCeti.normalizedChebyshevCosineLp`,
-as an equality of `ℕ`-indexed families of `L²` vectors. -/
-@[simp]
-theorem coe_chebyshevCosineHilbertBasis :
-    ⇑(chebyshevCosineHilbertBasis 𝕜) = normalizedChebyshevCosineLp 𝕜 := by
-  funext n
-  exact Lp.ext ((coeFn_chebyshevCosineHilbertBasis 𝕜 n).trans
-    (coeFn_normalizedChebyshevCosineLp 𝕜 n).symm)
-
-/-- The normalized angular cosine modes are orthonormal in `L²((0, π]; dθ)`. -/
-theorem orthonormal_normalizedChebyshevCosineLp :
-    Orthonormal 𝕜 (normalizedChebyshevCosineLp 𝕜) := by
-  rw [← coe_chebyshevCosineHilbertBasis]
-  exact (chebyshevCosineHilbertBasis 𝕜).orthonormal
-
 /-! ## Coordinate representation -/
 
 /-- The `n`-th coordinate of `f` in the Chebyshev cosine Hilbert basis is the integral of `f`
@@ -102,10 +64,9 @@ theorem chebyshevCosineHilbertBasis_repr_apply
     (f : Lp 𝕜 2 chebyshevAngleMeasure) (n : ℕ) :
     (chebyshevCosineHilbertBasis 𝕜).repr f n =
       ∫ θ : ℝ, (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) * f θ ∂chebyshevAngleMeasure := by
-  rw [(chebyshevCosineHilbertBasis 𝕜).repr_apply_apply, coe_chebyshevCosineHilbertBasis,
-    MeasureTheory.L2.inner_def]
+  rw [(chebyshevCosineHilbertBasis 𝕜).repr_apply_apply, MeasureTheory.L2.inner_def]
   refine integral_congr_ae ?_
-  filter_upwards [coeFn_normalizedChebyshevCosineLp 𝕜 n] with θ hθ
+  filter_upwards [coeFn_chebyshevCosineHilbertBasis 𝕜 n] with θ hθ
   rw [hθ]
   simp only [RCLike.inner_apply, RCLike.algebraMap_eq_ofReal, RCLike.conj_ofReal, mul_comm]
 
@@ -120,10 +81,9 @@ theorem chebyshevCosineHilbertBasis_repr_apply_interval
 /-- The coordinates of the `n`-th normalized cosine mode are a single `1` in position `n`. -/
 @[simp]
 theorem chebyshevCosineHilbertBasis_repr_self (n : ℕ) :
-    (chebyshevCosineHilbertBasis 𝕜).repr (normalizedChebyshevCosineLp 𝕜 n) =
+    (chebyshevCosineHilbertBasis 𝕜).repr (chebyshevCosineHilbertBasis 𝕜 n) =
       lp.single 2 n (1 : 𝕜) := by
   classical
-  rw [← coe_chebyshevCosineHilbertBasis]
   exact (chebyshevCosineHilbertBasis 𝕜).repr_self n
 
 /-! ## Parseval identities -/
@@ -152,12 +112,11 @@ theorem tsum_norm_sq_intervalIntegral_normalizedChebyshevCosine_mul
 
 /-- **Parseval's identity for the Chebyshev cosine basis** (polarized form): the inner product
 of `f` and `g` is the sum of products of their cosine coefficients. -/
-theorem tsum_inner_mul_inner_normalizedChebyshevCosineLp
+theorem tsum_inner_mul_inner_chebyshevCosineHilbertBasis
     (f g : Lp 𝕜 2 chebyshevAngleMeasure) :
-    ∑' n : ℕ, inner 𝕜 f (normalizedChebyshevCosineLp 𝕜 n) *
-        inner 𝕜 (normalizedChebyshevCosineLp 𝕜 n) g = inner 𝕜 f g := by
-  simpa only [← coe_chebyshevCosineHilbertBasis] using
-    (chebyshevCosineHilbertBasis 𝕜).tsum_inner_mul_inner f g
+    ∑' n : ℕ, inner 𝕜 f (chebyshevCosineHilbertBasis 𝕜 n) *
+        inner 𝕜 (chebyshevCosineHilbertBasis 𝕜 n) g = inner 𝕜 f g :=
+  (chebyshevCosineHilbertBasis 𝕜).tsum_inner_mul_inner f g
 
 /-- The squared norms of the cosine integral coefficients of an `L²` function are summable. -/
 theorem summable_norm_sq_integral_normalizedChebyshevCosine_mul
@@ -188,9 +147,9 @@ cosine series with respect to `chebyshevAngleMeasure`. -/
 theorem hasSum_chebyshevCosine_expansion (f : Lp 𝕜 2 chebyshevAngleMeasure) :
     HasSum (fun n : ℕ =>
       (∫ θ : ℝ, (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) * f θ
-        ∂chebyshevAngleMeasure) • normalizedChebyshevCosineLp 𝕜 n) f := by
-  simpa only [chebyshevCosineHilbertBasis_repr_apply, coe_chebyshevCosineHilbertBasis,
-    Function.comp_apply] using (chebyshevCosineHilbertBasis 𝕜).hasSum_repr f
+        ∂chebyshevAngleMeasure) • chebyshevCosineHilbertBasis 𝕜 n) f := by
+  simpa only [chebyshevCosineHilbertBasis_repr_apply, Function.comp_apply] using
+    (chebyshevCosineHilbertBasis 𝕜).hasSum_repr f
 
 /-- **The Fourier cosine expansion** (interval-integral form). Every `f ∈ L²((0, π]; dθ)` is the
 sum of its normalized cosine series with explicit interval integrals over `(0, π]`. -/
@@ -198,9 +157,9 @@ theorem hasSum_intervalIntegral_chebyshevCosine_expansion
     (f : Lp 𝕜 2 chebyshevAngleMeasure) :
     HasSum (fun n : ℕ =>
       (∫ θ in (0)..Real.pi, (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) * f θ) •
-        normalizedChebyshevCosineLp 𝕜 n) f := by
-  simpa only [chebyshevCosineHilbertBasis_repr_apply_interval, coe_chebyshevCosineHilbertBasis,
-    Function.comp_apply] using (chebyshevCosineHilbertBasis 𝕜).hasSum_repr f
+        chebyshevCosineHilbertBasis 𝕜 n) f := by
+  simpa only [chebyshevCosineHilbertBasis_repr_apply_interval, Function.comp_apply] using
+    (chebyshevCosineHilbertBasis 𝕜).hasSum_repr f
 
 /-! ## Transfer across the cosine change of variables -/
 
@@ -210,12 +169,12 @@ normalized angular cosine mode `cos (nθ) / √cₙ` in `L²(chebyshevAngleMeasu
 @[simp]
 theorem chebyshevCosineL2Equiv_normalizedChebyshevTLp (n : ℕ) :
     chebyshevCosineL2Equiv 𝕜 (normalizedChebyshevTLp 𝕜 n) =
-      normalizedChebyshevCosineLp 𝕜 n := by
+      chebyshevCosineHilbertBasis 𝕜 n := by
   refine Lp.ext ?_
   filter_upwards [chebyshevCosineL2Equiv_apply 𝕜 (normalizedChebyshevTLp 𝕜 n),
     measurePreserving_cos_chebyshev.quasiMeasurePreserving.ae_eq
       (coeFn_normalizedChebyshevTLp (𝕜 := 𝕜) n),
-    coeFn_normalizedChebyshevCosineLp 𝕜 n] with θ hcos hmode hcosmode
+    coeFn_chebyshevCosineHilbertBasis 𝕜 n] with θ hcos hmode hcosmode
   rw [hcos, hcosmode]
   exact hmode.trans (congrArg (algebraMap ℝ 𝕜) (by
     rw [normalizedChebyshevT_def, normalized_eval_T_real_cos_eq_normalizedChebyshevCosine]))
@@ -223,8 +182,8 @@ theorem chebyshevCosineL2Equiv_normalizedChebyshevTLp (n : ℕ) :
 /-- The inverse cosine equivalence maps the normalized cosine mode back to the normalized Chebyshev
 polynomial mode. -/
 @[simp]
-theorem chebyshevCosineL2Equiv_symm_normalizedChebyshevCosineLp (n : ℕ) :
-    (chebyshevCosineL2Equiv 𝕜).symm (normalizedChebyshevCosineLp 𝕜 n) =
+theorem chebyshevCosineL2Equiv_symm_chebyshevCosineHilbertBasis (n : ℕ) :
+    (chebyshevCosineL2Equiv 𝕜).symm (chebyshevCosineHilbertBasis 𝕜 n) =
       normalizedChebyshevTLp 𝕜 n := by
   rw [← chebyshevCosineL2Equiv_normalizedChebyshevTLp, LinearIsometryEquiv.symm_apply_apply]
 
@@ -236,7 +195,7 @@ theorem chebyshevTHilbertBasis_mapₗᵢ_chebyshevCosineL2Equiv :
     (chebyshevTHilbertBasis 𝕜).mapₗᵢ (chebyshevCosineL2Equiv 𝕜) =
       chebyshevCosineHilbertBasis 𝕜 := by
   refine DFunLike.coe_injective ?_
-  rw [HilbertBasis.coe_mapₗᵢ, coe_chebyshevTHilbertBasis, coe_chebyshevCosineHilbertBasis]
+  rw [HilbertBasis.coe_mapₗᵢ, coe_chebyshevTHilbertBasis]
   exact funext fun n => chebyshevCosineL2Equiv_normalizedChebyshevTLp 𝕜 n
 
 /-- The reverse transport: transporting `TauCeti.chebyshevCosineHilbertBasis` across the inverse
@@ -268,9 +227,9 @@ theorem chebyshevTHilbertBasis_repr_chebyshevCosineL2Equiv_symm
 
 /-- Pairing against the normalized cosine mode in `L²(chebyshevAngleMeasure)` is pairing against
 the normalized Chebyshev polynomial mode in `L²(measureT)`. -/
-theorem inner_normalizedChebyshevCosineLp_chebyshevCosineL2Equiv
+theorem inner_chebyshevCosineHilbertBasis_chebyshevCosineL2Equiv
     (n : ℕ) (g : Lp 𝕜 2 (measureT : Measure ℝ)) :
-    inner 𝕜 (normalizedChebyshevCosineLp 𝕜 n) (chebyshevCosineL2Equiv 𝕜 g) =
+    inner 𝕜 (chebyshevCosineHilbertBasis 𝕜 n) (chebyshevCosineL2Equiv 𝕜 g) =
       inner 𝕜 (normalizedChebyshevTLp 𝕜 n) g := by
   rw [← chebyshevCosineL2Equiv_normalizedChebyshevTLp, LinearIsometryEquiv.inner_map_map]
 
