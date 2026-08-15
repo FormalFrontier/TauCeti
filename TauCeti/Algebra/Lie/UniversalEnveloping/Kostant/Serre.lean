@@ -72,9 +72,8 @@ attribute [local instance] TauCeti.moduleNNRat
 
 /-- The raising and lowering generators of a Serre presentation, combined into one family.
 The left summand indexes `Eᵢ` and the right summand indexes `Fᵢ`. -/
-noncomputable def serreRootGenerator : B ⊕ B → S
-  | .inl i => serreE ℚ CM i
-  | .inr i => serreF ℚ CM i
+noncomputable def serreRootGenerator : B ⊕ B → S :=
+  Sum.elim (serreE ℚ CM) (serreF ℚ CM)
 
 /-- The combined root-generator family evaluates to `Eᵢ` on the left summand. -/
 @[simp]
@@ -141,18 +140,8 @@ theorem span_serreKostantForm_eq_top :
   apply span_kostantForm_eq_top
   have hgenerators : Set.range (serreRootGenerator CM) ∪ Set.range (serreH ℚ CM) =
       Set.range (serreH ℚ CM) ∪ Set.range (serreE ℚ CM) ∪ Set.range (serreF ℚ CM) := by
-    ext x
-    simp only [Set.mem_union, Set.mem_range]
-    constructor
-    · rintro (⟨i, rfl⟩ | ⟨i, rfl⟩)
-      · rcases i with i | i
-        · exact Or.inl (Or.inr ⟨i, serreRootGenerator_inl CM i⟩)
-        · exact Or.inr ⟨i, serreRootGenerator_inr CM i⟩
-      · exact Or.inl (Or.inl ⟨i, rfl⟩)
-    · rintro ((⟨i, rfl⟩ | ⟨i, rfl⟩) | ⟨i, rfl⟩)
-      · exact Or.inr ⟨i, rfl⟩
-      · exact Or.inl ⟨Sum.inl i, serreRootGenerator_inl CM i⟩
-      · exact Or.inl ⟨Sum.inr i, serreRootGenerator_inr CM i⟩
+    rw [serreRootGenerator, Set.Sum.elim_range]
+    ac_rfl
   rw [hgenerators, lieSpan_serreGenerators_eq_top]
 
 private theorem dividedPower_neg_mem_iff (T : Subring U) (a : U) (n : ℕ) :
