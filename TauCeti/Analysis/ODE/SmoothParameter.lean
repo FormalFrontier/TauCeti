@@ -78,6 +78,16 @@ private theorem picardResidual_apply (f : C(E × F, F)) (x₀ : F)
       ContinuousMap.unitIntervalIntegral (f.comp (parameterizedPath p)) := by
   rfl
 
+/-- **A path's Picard residual vanishes exactly when it satisfies the Picard integral equation.**
+The residual is the path minus the constant path at `x₀` minus the integrated field, so the two
+sides are the same statement read as an equation of paths and pointwise on `[0, 1]` respectively.
+Mathlib states the same equivalence for its own path space as `ODE.FunSpace.isFixedPt_next_iff`. -/
+private theorem picardResidual_eq_zero_iff (gc : C(E × F, F)) (x₀ : F) (p : E)
+    (q : C(Set.Icc (0 : ℝ) 1, F)) :
+    picardResidual gc x₀ (p, q) = 0 ↔ ∀ t : Set.Icc (0 : ℝ) 1,
+      q t = x₀ + ∫ s in (0 : ℝ)..t, gc (p, q (Set.projIcc 0 1 zero_le_one s)) := by
+  simp [ContinuousMap.ext_iff, sub_sub, sub_eq_zero]
+
 /-- A vector field of class `Cⁿ` gives a Picard residual of class `Cⁿ`. -/
 private theorem contDiff_picardResidual (n : ℕ) (f : C(E × F, F))
     (hf : ContDiff ℝ n f) (x₀ : F) :
@@ -259,24 +269,10 @@ theorem exists_contDiffAt_picard_solution
       (ContinuousMap.dist_apply_le_dist
         (f := parameterizedPath (p, γ p))
         (g := ContinuousMap.const _ (p₀, x₀)) t).trans_lt hpnear
-  have hpathEq : γ p = ContinuousMap.const _ x₀ +
-      ContinuousMap.unitIntervalIntegral (gc.comp (parameterizedPath (p, γ p))) := by
-    apply sub_eq_zero.mp
-    calc
-      γ p - (ContinuousMap.const _ x₀ +
-          ContinuousMap.unitIntervalIntegral (gc.comp (parameterizedPath (p, γ p)))) =
-          R (p, γ p) := by
-        simp only [R, picardResidual_apply]
-        abel
-      _ = 0 := hp
   have hpicard : ∀ t : Set.Icc (0 : ℝ) 1,
       γ p t = x₀ + ∫ s in (0 : ℝ)..t,
-        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) := by
-    intro t
-    have ht := congrArg (fun q : C(Set.Icc (0 : ℝ) 1, F) ↦ q t) hpathEq
-    simpa only [ContinuousMap.add_apply, ContinuousMap.const_apply,
-      ContinuousMap.unitIntervalIntegral_apply, ContinuousMap.comp_apply,
-      parameterizedPath_apply] using ht
+        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) :=
+    (picardResidual_eq_zero_iff gc x₀ p (γ p)).mp hp
   let vproj : ℝ → F := fun s ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s))
   have hvproj : Continuous vproj :=
     gc.continuous.comp
