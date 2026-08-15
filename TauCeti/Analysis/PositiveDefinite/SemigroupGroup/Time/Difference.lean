@@ -29,11 +29,14 @@ operator `Δ_[(h, 0)]`, and, along the zero-spatial axis, the classical statemen
 `0 ≤ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k h, 0)`.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, Milestone 2
-("BCR semigroup--Bochner"). Bochner's theorem represents each fixed-time slice `F (t, ·)` by a
-finite measure `μ_t` on `V`; the difference statement below says that `F (t, ·) - F (t + h, ·)` is
-itself represented by a finite measure, so that `μ_{t + h} ≤ μ_t`, and the alternating sums are
-the complete monotonicity in `t` that the representing Laplace measure of the BCR existence half
-must integrate.
+("BCR semigroup--Bochner"). Nothing below assumes a topology on `V` or any continuity of `F`, and
+no measure is constructed here: the results are the purely algebraic finite-difference statements
+that the later, topological half of the milestone consumes. In *that* setting — `V` a suitable
+topological group and `F` continuous — Bochner's theorem represents each fixed-time slice
+`F (t, ·)` by a finite measure `μ_t` on `V`, and the difference statement below then makes
+`F (t, ·) - F (t + h, ·)` representable too, so that `μ_{t + h} ≤ μ_t`; the alternating sums
+become the complete monotonicity in `t` that the representing Laplace measure of the BCR
+existence half must integrate.
 
 ## Main declarations
 
@@ -44,7 +47,7 @@ must integrate.
 * `TauCeti.IsSemigroupGroupPD.alternating_sum_nonneg`: the time axis `t ↦ F (t, 0)` is completely
   monotone in the finite-difference sense.
 * `TauCeti.IsSemigroupGroupPD.timeAxis_sub_nonneg` and
-  `TauCeti.IsSemigroupGroupPD.antitone_timeAxis_re`: the time axis is nonincreasing.
+  `TauCeti.IsSemigroupGroupPD.timeAxis_re_antitone`: the time axis is nonincreasing.
 
 ## References
 
@@ -89,8 +92,9 @@ theorem sub_timeShift {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsSemigroupGrou
   exact hkey
 
 omit [AddCommGroup V] in
-/-- The backward time difference of a function bounded by `C` is bounded by `2 * C`. -/
-theorem norm_sub_timeShift_le {F : ℝ≥0 × V → ℂ} {C : ℝ} (hbdd : ∀ x, ‖F x‖ ≤ C) (h : ℝ≥0)
+/-- The backward time difference of a function bounded by `C` is bounded by `2 * C`. Only used to
+propagate the bound through the induction in `neg_one_pow_mul_fwdDiff_iter`. -/
+private theorem norm_sub_timeShift_le {F : ℝ≥0 × V → ℂ} {C : ℝ} (hbdd : ∀ x, ‖F x‖ ≤ C) (h : ℝ≥0)
     (x : ℝ≥0 × V) : ‖F x - F (x.1 + h, x.2)‖ ≤ 2 * C := by
   refine (norm_sub_le _ _).trans ?_
   have h₁ := hbdd x
@@ -146,8 +150,9 @@ theorem alternating_sum_nonneg (n : ℕ) {F : ℝ≥0 × V → ℂ} {C : ℝ} (h
   rw [fwdDiff_iter_eq_sum_shift, Finset.mul_sum]
   refine Finset.sum_congr rfl fun k hk => ?_
   have hk' : k ≤ n := Nat.lt_succ_iff.mp (Finset.mem_range.mp hk)
+  have hexp : n + (n - k) = 2 * (n - k) + k := by omega
   have hsign : (-1 : ℂ) ^ n * (-1 : ℂ) ^ (n - k) = (-1 : ℂ) ^ k := by
-    rw [← pow_add, show n + (n - k) = 2 * (n - k) + k by omega, pow_add, pow_mul]
+    rw [← pow_add, hexp, pow_add, pow_mul]
     simp
   have hpt : ((t, 0) : ℝ≥0 × V) + k • ((h, 0) : ℝ≥0 × V) = (t + k • h, 0) := by
     simp
@@ -164,7 +169,7 @@ theorem timeAxis_sub_nonneg {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsSemigro
 
 /-- The time axis of a bounded semigroup-group positive-definite function is nonincreasing: its
 real part is an antitone function of time. -/
-theorem antitone_timeAxis_re {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsSemigroupGroupPD F)
+theorem timeAxis_re_antitone {F : ℝ≥0 × V → ℂ} {C : ℝ} (hF : IsSemigroupGroupPD F)
     (hbdd : ∀ x, ‖F x‖ ≤ C) : Antitone fun t : ℝ≥0 => (F (t, (0 : V))).re := by
   intro t u hle
   obtain ⟨h, rfl⟩ : ∃ h : ℝ≥0, u = t + h := ⟨u - t, (add_tsub_cancel_of_le hle).symm⟩

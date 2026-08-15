@@ -20,9 +20,8 @@ is again positive definite. Boundedness cannot be dropped — for `K p q = exp (
 
 The mechanism is a moment-problem estimate. Fixing a finite family of points and coefficients, the
 numbers `a n = ∑ᵢⱼ conj (cᵢ) K (σⁿ pᵢ) (pⱼ) c ⱼ` form a positive-semidefinite Hankel matrix
-`(m, n) ↦ a (m + n)`, because the shift can be moved from one argument to the other. Cauchy--Schwarz
-for that matrix gives `a n ^ 2 ≤ a 0 * a (2 n)`, so `a 1 > a 0 ≥ 0` would force
-`a (2 ^ k) ≥ a 0 (a 1 / a 0) ^ (2 ^ k) → ∞`, contradicting boundedness. Hence `a 0 - a 1 ≥ 0`,
+`(m, n) ↦ a (m + n)`, because the shift can be moved from one argument to the other, and they are
+bounded. The matrix estimate `TauCeti.sub_nonneg_of_posSemidef_hankel` then gives `a 0 - a 1 ≥ 0`,
 which is the quadratic form of the difference kernel.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, Milestone 2
@@ -32,8 +31,6 @@ definiteness into complete monotonicity in the time variable.
 
 ## Main declarations
 
-* `TauCeti.sub_nonneg_of_posSemidef_hankel`: a bounded positive-semidefinite Hankel sequence does
-  not increase at the first step.
 * `TauCeti.posSemidef_sub_comp_shift`: the difference of a bounded positive-definite kernel and its
   shift by a symmetric shift is positive definite.
 
@@ -53,88 +50,6 @@ universe u v
 
 variable {𝕜 : Type u} [RCLike 𝕜]
 
-/-! ## Bounded positive-semidefinite Hankel sequences -/
-
-/-- The numerical core of the Hankel estimate: a bounded sequence of reals whose squares satisfy
-the Cauchy--Schwarz inequality `b n ^ 2 ≤ b 0 * b (n + n)` cannot increase at the first step. If it
-did, the ratio `r = b 1 / b 0` would exceed `1` and the doubling inequality would push
-`b (2 ^ k)` past `b 0 * r ^ (2 ^ k)`, which is unbounded. -/
-private theorem apply_one_le_apply_zero_of_sq_le_mul {b : ℕ → ℝ} {D : ℝ} (hb0 : 0 ≤ b 0)
-    (hsq : ∀ n, b n ^ 2 ≤ b 0 * b (n + n)) (hbd : ∀ n, b n ≤ D) : b 1 ≤ b 0 := by
-  rcases le_or_gt (b 1) (b 0) with hle | hlt
-  · exact hle
-  exfalso
-  have hb0pos : 0 < b 0 := by
-    rcases hb0.lt_or_eq with h | h
-    · exact h
-    · have h1 := hsq 1
-      rw [← h] at h1
-      nlinarith
-  set r : ℝ := b 1 / b 0 with hr
-  have hr1 : 1 < r := (one_lt_div hb0pos).mpr hlt
-  have hrpos : 0 < r := lt_trans zero_lt_one hr1
-  have key : ∀ k : ℕ, b 0 * r ^ 2 ^ k ≤ b (2 ^ k) := by
-    intro k
-    induction k with
-    | zero =>
-        have : b 0 * r = b 1 := by
-          rw [hr, mul_div_cancel₀ _ hb0pos.ne']
-        simpa using this.le
-    | succ k ih =>
-        have hpow : (0 : ℝ) < r ^ 2 ^ k := pow_pos hrpos _
-        have hsplit : (2 : ℕ) ^ (k + 1) = 2 ^ k + 2 ^ k := by ring
-        have hsq' := hsq (2 ^ k)
-        have hrw : r ^ 2 ^ (k + 1) = (r ^ 2 ^ k) ^ 2 := by
-          rw [hsplit, pow_add, sq]
-        rw [hrw, hsplit]
-        nlinarith [mul_pos hb0pos hpow]
-  obtain ⟨k, hk⟩ := exists_nat_gt ((D / b 0 - 1) / (r - 1))
-  have hkr : D / b 0 - 1 < k * (r - 1) := (div_lt_iff₀ (by linarith)).mp hk
-  have hD : D < b 0 * (1 + k * (r - 1)) := by
-    have h : D / b 0 < 1 + k * (r - 1) := by linarith
-    rw [mul_comm]
-    exact (div_lt_iff₀ hb0pos).mp h
-  have hbern : 1 + k * (r - 1) ≤ r ^ k := by
-    simpa using one_add_mul_le_pow (by linarith : (-2 : ℝ) ≤ r - 1) k
-  have hmono : r ^ k ≤ r ^ 2 ^ k :=
-    pow_le_pow_right₀ hr1.le (Nat.le_of_lt k.lt_two_pow_self)
-  have hchain : b 0 * (1 + k * (r - 1)) ≤ D :=
-    le_trans (le_trans (mul_le_mul_of_nonneg_left (hbern.trans hmono) hb0pos.le) (key k))
-      (hbd _)
-  linarith
-
-/-- **A bounded positive-semidefinite Hankel sequence does not increase at the first step.**
-If `(m, n) ↦ a (m + n)` is positive semidefinite and `a` is bounded in norm, then `a 1 ≤ a 0`
-in the `RCLike` order. This is the moment-problem estimate behind `posSemidef_sub_comp_shift`:
-Cauchy--Schwarz alone gives `a n ^ 2 ≤ a 0 * a (2 n)`, and boundedness rules out a ratio
-`a 1 / a 0` greater than `1`. -/
-theorem sub_nonneg_of_posSemidef_hankel {a : ℕ → 𝕜} {D : ℝ}
-    (ha : Matrix.PosSemidef fun m n : ℕ => a (m + n)) (hbd : ∀ n, ‖a n‖ ≤ D) :
-    0 ≤ a 0 - a 1 := by
-  have hreal : ∀ n, (starRingEnd 𝕜) (a n) = a n := by
-    intro n
-    simpa using ha.isHermitian.apply n 0
-  have him : ∀ n, RCLike.im (a n) = 0 := fun n => RCLike.conj_eq_iff_im.mp (hreal n)
-  set b : ℕ → ℝ := fun n => RCLike.re (a n) with hbdef
-  have hnormSq : ∀ n, RCLike.normSq (a n) = b n ^ 2 := by
-    intro n
-    rw [RCLike.normSq_apply, him n]
-    simp [hbdef, sq]
-  have hb0 : 0 ≤ b 0 := by
-    have h := ha.diag_nonneg (i := 0)
-    simpa [hbdef] using (RCLike.nonneg_iff.mp (by simpa using h)).1
-  have hsq : ∀ n, b n ^ 2 ≤ b 0 * b (n + n) := by
-    intro n
-    have h := ha.normSq_le 0 n
-    simpa [hnormSq, hbdef] using h
-  have hbdb : ∀ n, b n ≤ D := fun n =>
-    le_trans (RCLike.re_le_norm (a n)) (hbd n)
-  have hmain : b 1 ≤ b 0 := apply_one_le_apply_zero_of_sq_le_mul hb0 hsq hbdb
-  rw [RCLike.nonneg_iff]
-  constructor
-  · simpa [hbdef] using sub_nonneg.mpr hmain
-  · simp [him 0, him 1]
-
 /-! ## Positive-definite kernels and symmetric shifts -/
 
 section Shift
@@ -149,8 +64,8 @@ private theorem apply_iterate_add (hshift : ∀ p q, K (σ p) q = K p (σ q)) (m
   induction n generalizing q with
   | zero => simp
   | succ n ih =>
-      rw [show m + (n + 1) = m + n + 1 from rfl, Function.iterate_succ_apply', hshift, ih,
-        ← Function.iterate_succ_apply]
+      have hassoc : m + (n + 1) = m + n + 1 := (Nat.add_assoc m n 1).symm
+      rw [hassoc, Function.iterate_succ_apply', hshift, ih, ← Function.iterate_succ_apply]
 
 omit [RCLike 𝕜] in
 /-- Moving the whole iterated shift onto the left argument. -/

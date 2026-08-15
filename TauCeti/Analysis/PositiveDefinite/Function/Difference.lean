@@ -20,9 +20,9 @@ is again positive definite. This is the function-level form of
 `s` a symmetric shift of the kernel `(a, b) ↦ F (a + star b)`.
 
 Boundedness is essential and is not a technical artefact: `t ↦ exp t` is positive definite on the
-involutive monoid `(ℝ≥0, +)` with the trivial involution, and it *increases*. Positive-definite
-functions that are bounded, on the other hand, are the moment functions of measures on the bounded
-semicharacters, and the statement above is the shadow of the resulting complete monotonicity.
+involutive monoid `(ℝ≥0, +)` with the trivial involution, and it *increases*. The statement is
+proved by a purely numerical moment-problem estimate on the finite quadratic forms; no topology,
+measurability, or representing measure is assumed or produced here.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C: it is the closure property
 of the generic `IsPositiveDefinite` predicate that the Berg--Christensen--Ressel representation
