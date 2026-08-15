@@ -82,10 +82,9 @@ maximal-weight argument needs only the finiteness of the set of weights.
 
 ## References
 
-This is the Layer 4 step of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md` stating that every
-finite-dimensional irreducible is an `L(λ)` and that `λ` is dominant integral. The uniqueness
-statement is the target
+This proves the existence and uniqueness of the dominant integral highest weight, one part of the
+Layer 4 classification step in `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
+The uniqueness statement is the target
 `existsUnique_isDominantIntegral_highestWeight_of_finiteDimensional_irreducible` in
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`.
 
