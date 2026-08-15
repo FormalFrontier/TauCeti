@@ -11,12 +11,12 @@ module
 -- `Algebra.TensorProduct.opAlgEquiv`, used in its body, to be public.
 public import Mathlib.LinearAlgebra.TensorProduct.Opposite
 public import Mathlib.RingTheory.TensorProduct.Basic
--- Non-public: none appears in the type of an exported declaration. Mathlib's
--- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct`,
--- `LinearMap.map_mul_of_map_mul_tmul` and `congr` are used only inside definition bodies and
--- proofs, and no definition below is `@[expose]`d.
+-- Non-public: the declarations from `Tower` appear only inside definition bodies and proofs,
+-- and no definition below is `@[expose]`d.
 import Mathlib.LinearAlgebra.TensorProduct.Tower
-import Mathlib.RingTheory.TensorProduct.Maps
+-- Public: `Algebra.TensorProduct.congr` supplies the scalar-automorphism action exported below,
+-- and `TensorProduct.map` occurs in the type of `ScalarAut.comul_smul` downstream.
+public import Mathlib.RingTheory.TensorProduct.Maps
 
 /-!
 # Base change is compatible with `⊗`, with `ᵐᵒᵖ`, and with itself
@@ -31,6 +31,8 @@ with passing to the opposite algebra, and composes in stages:
   `M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A` for a tower `K → L → M`.
 * `TauCeti.Algebra.TensorProduct.baseChangeTowerRingEquiv`: the same tower comparison with tensor
   factors in coordinate-ring order, `(L ⊗[K] A) ⊗[L] M ≃+* A ⊗[K] M`.
+* `TauCeti.ScalarAut.instMulSemiringAction`: scalar automorphisms act on a scalar extension
+  through its scalar factor.
 
 None is reproved from scratch: the first and third upgrade Mathlib's linear equivalences
 `TensorProduct.AlgebraTensorModule.distribBaseChange` and
@@ -199,5 +201,64 @@ theorem baseChangeTowerRingEquiv_symm_tmul (a : A) (m : M) :
 end CommTower
 
 end Algebra.TensorProduct
+
+namespace ScalarAut
+
+variable {K L A : Type*} [CommSemiring K] [CommSemiring L] [Algebra K L]
+  [Semiring A] [Algebra K A]
+
+/-- Scalar automorphisms act on a scalar extension through the scalar factor. -/
+noncomputable instance instMulSemiringAction :
+    MulSemiringAction (L ≃ₐ[K] L) (L ⊗[K] A) :=
+  let congrHom : (L ≃ₐ[K] L) →* (L ⊗[K] A ≃ₐ[K] L ⊗[K] A) :=
+    { toFun σ := Algebra.TensorProduct.congr σ .refl
+      map_one' := Algebra.TensorProduct.congr_refl
+      map_mul' σ τ := by
+        -- Multiplication of algebra equivalences is composition in the opposite textual order;
+        -- expose that representation so `congr_trans` can state the required compatibility.
+        change Algebra.TensorProduct.congr (τ.trans σ) .refl =
+          (Algebra.TensorProduct.congr τ (.refl : A ≃ₐ[K] A)).trans
+            (Algebra.TensorProduct.congr σ .refl)
+        convert Algebra.TensorProduct.congr_trans τ σ (.refl : A ≃ₐ[K] A) .refl using 1
+        ext
+        rfl }
+  MulSemiringAction.compHom _ congrHom
+
+/-- Scalar multiplication on a base change is the tensor-product congruence. -/
+@[simp]
+theorem smul_def (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
+    σ • x = Algebra.TensorProduct.congr σ (.refl : A ≃ₐ[K] A) x :=
+  rfl
+
+/-- Scalar multiplication on a pure tensor acts through the first factor. -/
+@[simp]
+theorem smul_tmul (σ : L ≃ₐ[K] L) (a : L) (x : A) :
+    σ • (a ⊗ₜ[K] x) = σ a ⊗ₜ[K] x := by
+  simp [smul_def]
+
+/-- The scalar-factor action is semilinear for the corresponding automorphism of `L`. -/
+theorem smul_smulₛₗ (σ : L ≃ₐ[K] L) (a : L) (x : L ⊗[K] A) :
+    σ • (a • x) = σ a • σ • x := by
+  simp [Algebra.smul_def, Algebra.TensorProduct.algebraMap_apply]
+
+/-- The scalar action as a semilinear map over `L`. -/
+noncomputable def semilinearMap (σ : L ≃ₐ[K] L) :
+    L ⊗[K] A →ₛₗ[σ.toRingHom] L ⊗[K] A where
+  toFun x := σ • x
+  map_add' := smul_add σ
+  map_smul' := smul_smulₛₗ (A := A) σ
+
+/-- The semilinear scalar map agrees pointwise with the scalar action. -/
+@[simp]
+theorem semilinearMap_apply (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
+    semilinearMap (A := A) σ x = σ • x :=
+  by
+    -- Exported semilinear-map application unfolds to `TensorProduct.map`, whereas the action
+    -- unfolds to `TensorProduct.congr`; expose both representations before comparing them.
+    change Algebra.TensorProduct.map σ.toAlgHom (AlgHom.id K A) x = σ • x
+    rw [smul_def, Algebra.TensorProduct.congr_apply]
+    rw [AlgEquiv.refl_toAlgHom]
+
+end ScalarAut
 
 end TauCeti

@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Coalgebra.GroupLike
 public import Mathlib.RingTheory.Finiteness.Basic
+public import TauCeti.Algebra.Coalgebra.GroupLike.Map
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.Basic
 
 import Mathlib.LinearAlgebra.Span.Basic
@@ -140,10 +140,11 @@ theorem groupLikeSetSpan_eq_top_iff_of_coalgEquiv {D : Type w} [AddCommMonoid D]
     ext d
     constructor
     · rintro ⟨_, ⟨g, rfl⟩, rfl⟩
-      exact ⟨⟨e g, g.isGroupLikeElem_val.map e⟩, rfl⟩
+      exact ⟨TauCeti.GroupLike.equivOfCoalgEquiv e g,
+        TauCeti.GroupLike.val_equivOfCoalgEquiv e g⟩
     · rintro ⟨g, rfl⟩
-      exact ⟨e.symm (g : D), ⟨⟨e.symm (g : D), g.isGroupLikeElem_val.map e.symm⟩, rfl⟩,
-        e.apply_symm_apply (g : D)⟩
+      obtain ⟨x, rfl⟩ := (TauCeti.GroupLike.equivOfCoalgEquiv e).surjective g
+      exact ⟨x.val, ⟨x, rfl⟩, (TauCeti.GroupLike.val_equivOfCoalgEquiv e x).symm⟩
   rw [← hgroupLike, Submodule.span_image_linearEquiv, Submodule.map_eq_top_iff]
 
 /-- The subcoalgebra spanned by a group-like element. -/
