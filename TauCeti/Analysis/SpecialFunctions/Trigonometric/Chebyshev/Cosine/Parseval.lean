@@ -19,9 +19,9 @@ public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Parseval
 
 This file supplies the coefficient, Parseval, and Fourier cosine series reconstruction API for that
 basis. It identifies the abstract coordinates `HilbertBasis.repr` with both the measure and
-interval integrals against the normalized cosines, proves Parseval in polarized and norm-square
-forms, and establishes the transfer of coordinates and inner products across the
-Chebyshev-to-cosine equivalence.
+interval integrals against the normalized cosines, proves Parseval in norm-square form, and
+establishes the transfer of coordinates and inner products across the Chebyshev-to-cosine
+equivalence.
 
 ## Main declarations
 
@@ -29,8 +29,6 @@ Chebyshev-to-cosine equivalence.
 * `TauCeti.chebyshevCosineHilbertBasis_repr_apply_interval` — identifies coordinates with interval
   integrals `∫ θ in (0)..π, …`.
 * `TauCeti.tsum_norm_sq_integral_normalizedChebyshevCosine_mul` — Parseval's identity in norm-square
-  form.
-* `TauCeti.tsum_inner_mul_inner_chebyshevCosineHilbertBasis` — Parseval's identity in polarized
   form.
 * `TauCeti.hasSum_chebyshevCosine_expansion` — reconstruction of every `L²` function from its
   Fourier cosine series.
@@ -78,13 +76,6 @@ theorem chebyshevCosineHilbertBasis_repr_apply_interval
       ∫ θ in (0)..Real.pi, (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) * f θ := by
   rw [chebyshevCosineHilbertBasis_repr_apply, integral_chebyshevAngleMeasure]
 
-/-- The coordinates of the `n`-th normalized cosine mode are a single `1` in position `n`. -/
-@[simp]
-theorem chebyshevCosineHilbertBasis_repr_self (n : ℕ) :
-    (chebyshevCosineHilbertBasis 𝕜).repr (chebyshevCosineHilbertBasis 𝕜 n) =
-      lp.single 2 n (1 : 𝕜) := by
-  classical
-  exact (chebyshevCosineHilbertBasis 𝕜).repr_self n
 
 /-! ## Parseval identities -/
 
@@ -110,13 +101,6 @@ theorem tsum_norm_sq_intervalIntegral_normalizedChebyshevCosine_mul
     chebyshevCosineHilbertBasis_repr_apply_interval] at h
   exact h
 
-/-- **Parseval's identity for the Chebyshev cosine basis** (polarized form): the inner product
-of `f` and `g` is the sum of products of their cosine coefficients. -/
-theorem tsum_inner_mul_inner_chebyshevCosineHilbertBasis
-    (f g : Lp 𝕜 2 chebyshevAngleMeasure) :
-    ∑' n : ℕ, inner 𝕜 f (chebyshevCosineHilbertBasis 𝕜 n) *
-        inner 𝕜 (chebyshevCosineHilbertBasis 𝕜 n) g = inner 𝕜 f g :=
-  (chebyshevCosineHilbertBasis 𝕜).tsum_inner_mul_inner f g
 
 /-- The squared norms of the cosine integral coefficients of an `L²` function are summable. -/
 theorem summable_norm_sq_integral_normalizedChebyshevCosine_mul
