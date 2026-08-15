@@ -66,12 +66,17 @@ theorem algHom_mk_eq_evalEval (f : W.CoordinateRing →ₐ[R] R) (p : R[X][Y]) :
       p.evalEval
         (f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W (C X)))
         (f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W Y)) := by
+  -- `f` precomposed with the quotient map, as an `R`-algebra map on bivariate polynomials
   let g : R[X][Y] →ₐ[R] R :=
     f.comp ((AdjoinRoot.mkₐ W.polynomial).restrictScalars R)
-  have hg := (aevalAevalEquiv R R).apply_symm_apply g
-  change g p = p.evalEval (g (C X)) (g Y)
-  exact (DFunLike.congr_fun hg.symm p).trans
-    (congrFun (coe_aevalAeval_eq_evalEval (g (C X)) (g Y)) p)
+  have hg (q : R[X][Y]) : g q = f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W q) := by
+    simp only [g, AlgHom.comp_apply, AlgHom.restrictScalars_apply, AdjoinRoot.coe_mkₐ]
+  -- `g` is in the image of `aevalAevalEquiv`, hence is evaluation at the images of `X` and `Y`
+  have key : ⇑g = evalEval (g (C X)) (g Y) := by
+    conv_lhs => rw [← (aevalAevalEquiv R R).apply_symm_apply g, aevalAevalEquiv_symm_apply,
+      aevalAevalEquiv_apply, coe_aevalAeval_eq_evalEval]
+  rw [← hg]
+  exact congrFun key p
 
 /-- The images of the coordinate functions under an algebra homomorphism from the coordinate ring
 to the base ring satisfy the Weierstrass equation. -/
