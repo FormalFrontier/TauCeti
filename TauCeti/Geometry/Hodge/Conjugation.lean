@@ -7,8 +7,39 @@ module
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Basic
 public import Mathlib.RingTheory.IsTensorProduct
-import Mathlib.LinearAlgebra.TensorProduct.Associator
 import Mathlib.Tactic.Ring
+
+/-!
+# Complexification and Conjugation for Hodge Theory
+
+This module defines the algebraic machinery for complexifications and conjugate-linear
+involutions needed in the definition of pure Hodge structures.
+
+## Main Definitions
+
+* `TauCeti.Geometry.Hodge.Complexification`: The canonical complexification `ℂ ⊗[ℤ] V`
+  of a `ℤ`-module `V`.
+* `TauCeti.Geometry.Hodge.Conjugation`: A structure bundling a conjugate-linear equivalence
+  `W ≃ₛₗ[starRingEnd ℂ] W` on a complex vector space `W` with an involution property.
+* `TauCeti.Geometry.Hodge.concreteLatticeConj`: The canonical conjugate-linear involution on
+  the concrete complexification `ℂ ⊗[ℤ] V`, acting by complex conjugation on `ℂ` and the
+  identity on `V`.
+* `TauCeti.Geometry.Hodge.latticeConj`: The conjugate-linear involution on an abstract
+  complexification `Vℂ` with base change data `hℂ : IsBaseChange ℂ ιℂ`, transporting
+  `concreteLatticeConj` across `hℂ.equiv`.
+* `TauCeti.Geometry.Hodge.latticeConjugation`: The bundled `Conjugation` structure on `Vℂ`
+  induced by `hℂ`.
+
+## Main Theorems
+
+* `TauCeti.Geometry.Hodge.latticeConj_ι`: The lattice conjugation fixes the image of the
+  underlying lattice: `latticeConj hℂ (ιℂ v) = ιℂ v`.
+* `TauCeti.Geometry.Hodge.latticeConj_involutive`: `latticeConj hℂ` is an involution.
+* `TauCeti.Geometry.Hodge.latticeConj_unique`: Any conjugate-linear map on `Vℂ` that fixes
+  the lattice image `ιℂ V` is equal to `latticeConj hℂ`.
+* `TauCeti.Geometry.Hodge.concreteLatticeConj_eq_latticeConj`: Compatibility between
+  `concreteLatticeConj` and `latticeConj` on the canonical tensor product.
+-/
 
 namespace TauCeti.Geometry.Hodge
 
@@ -37,20 +68,22 @@ public theorem map_top : (⊤ : Submodule ℂ W).map ω.toEquiv.toLinearMap = �
   rw [Submodule.map_top]
   exact LinearEquiv.range _
 
+/-- Composing the conjugation's linear map with itself gives the identity. -/
+@[simp]
+public theorem toLinearMap_comp_toLinearMap :
+    ω.toEquiv.toLinearMap.comp ω.toEquiv.toLinearMap = LinearMap.id :=
+  LinearMap.ext ω.involutive
+
 /-- Conjugating a submodule twice returns the original submodule. -/
 @[simp]
 public theorem map_map_self (p : Submodule ℂ W) :
     (p.map ω.toEquiv.toLinearMap).map ω.toEquiv.toLinearMap = p := by
-  rw [← Submodule.map_comp,
-    show ω.toEquiv.toLinearMap.comp ω.toEquiv.toLinearMap = LinearMap.id from
-      LinearMap.ext ω.involutive,
-    Submodule.map_id]
+  rw [← Submodule.map_comp, ω.toLinearMap_comp_toLinearMap, Submodule.map_id]
 
 end Conjugation
 
 /-- The canonical conjugate-linear involution on the concrete complexification `ℂ ⊗[ℤ] V`,
 acting by complex conjugation on `ℂ` and the identity on `V`. -/
-@[expose]
 public def concreteLatticeConj : Complexification V →ₛₗ[starRingEnd ℂ] Complexification V where
   toFun := TensorProduct.map (starRingEnd ℂ).toAddMonoidHom.toIntLinearMap
     (LinearMap.id : V →ₗ[ℤ] V)
@@ -90,7 +123,6 @@ variable {hℂ : IsBaseChange ℂ ιℂ}
 
 /-- The conjugate-linear involution on an abstract complexification `Vℂ` with base change data `hℂ`,
 transporting `concreteLatticeConj` across the canonical linear equivalence `hℂ.equiv`. -/
-@[expose]
 public noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
     Vℂ →ₛₗ[starRingEnd ℂ] Vℂ where
   toFun x := hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x))
@@ -105,12 +137,11 @@ public noncomputable def latticeConj (hℂ : IsBaseChange ℂ ιℂ) :
     rw [h_conj]
     exact map_smul _ _ _
 
-/-- Definitional reduction of `latticeConj` on elements. -/
-@[simp]
-public theorem latticeConj_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
+theorem latticeConj_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
     latticeConj hℂ x = hℂ.equiv (concreteLatticeConj (hℂ.equiv.symm x)) := rfl
 
 /-- The lattice conjugation fixes the image of the underlying lattice `V`. -/
+@[simp]
 public theorem latticeConj_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     latticeConj hℂ (ιℂ v) = ιℂ v := by
   have hιv : hℂ.equiv.symm (ιℂ v) = (1 : ℂ) ⊗ₜ[ℤ] v := by
@@ -134,20 +165,9 @@ public theorem latticeConj_involutive (hℂ : IsBaseChange ℂ ιℂ) :
 
 /-- The `Conjugation` structure on an abstract complexification `Vℂ`
 induced by a `ℤ`-lattice `V`. -/
-@[expose]
 public noncomputable def latticeConjugation (hℂ : IsBaseChange ℂ ιℂ) : Conjugation Vℂ where
   toEquiv := LinearEquiv.ofInvolutive (latticeConj hℂ) (latticeConj_involutive hℂ)
   involutive := latticeConj_involutive hℂ
-
-/-- The underlying equivalence of `latticeConjugation` agrees with `latticeConj`. -/
-@[simp]
-public theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
-    (latticeConjugation hℂ).toEquiv x = latticeConj hℂ x := rfl
-
-/-- The linear map of `latticeConjugation` agrees with `latticeConj`. -/
-@[simp]
-public theorem latticeConjugation_toLinearMap (hℂ : IsBaseChange ℂ ιℂ) :
-    (latticeConjugation hℂ).toEquiv.toLinearMap = (latticeConj hℂ : Vℂ →ₗ⋆[ℂ] Vℂ) := rfl
 
 /-- Uniqueness of conjugate-linear map fixing the lattice `ιℂ V`. -/
 public theorem latticeConj_unique (f : Vℂ →ₛₗ[starRingEnd ℂ] Vℂ)

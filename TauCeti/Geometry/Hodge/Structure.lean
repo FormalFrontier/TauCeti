@@ -5,13 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.DirectSum.Module
-public import Mathlib.Data.Complex.Basic
-public import Mathlib.LinearAlgebra.TensorProduct.Basic
-public import Mathlib.Order.ModularLattice
+public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
 public import Mathlib.Order.Monotone.Basic
-public import Mathlib.RingTheory.IsTensorProduct
 public import TauCeti.Geometry.Hodge.Conjugation
-import Mathlib.LinearAlgebra.TensorProduct.Associator
+import Mathlib.Order.ModularLattice
 import Mathlib.Tactic.Abel
 import Mathlib.Tactic.Ring
 
@@ -30,8 +27,8 @@ is outside the scope of this module.
 
 * `TauCeti.Geometry.Hodge.HodgeStructureOn`: Pure Hodge structure of weight `n` on a complex
   vector space `W` equipped with a conjugation `ω`.
-* `TauCeti.Geometry.Hodge.HodgeStructure`: Pure Hodge structure on the
-  complexification of a `ℤ`-module `V` (an abbreviation for `HodgeStructureOn`).
+* `TauCeti.Geometry.Hodge.HodgeStructure`: Pure Hodge structure on the complexification of a
+  finitely generated free `ℤ`-module `V` (an abbreviation for `HodgeStructureOn`).
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.piece`: The `(p, q)`-piece
   $H^{p,q} = F^p \cap \overline{F^{n-p}}$ with $q := n - p$.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.IsEffective`: Predicate stating that $F^{n+1} = 0$,
@@ -51,7 +48,7 @@ is outside the scope of this module.
   effective Hodge structures in terms of their vanishing pieces outside $[0, n]$.
 * `TauCeti.Geometry.Hodge.isEffective_tate_iff`: Classification of effective Tate structures
   $(\mathbb{Z}(m)\text{ is effective} \leftrightarrow m \le 0)$.
-* `TauCeti.Geometry.Hodge.tate_piece_apply`: Explicit description of the Hodge pieces of
+* `TauCeti.Geometry.Hodge.tate_piece`: Explicit description of the Hodge pieces of
   $\mathbb{Z}(m)$.
 
 ## References
@@ -86,9 +83,11 @@ public structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   F_bot : ∃ p, F p = ⊥
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
-/-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of a `ℤ`-module `V`.
+/-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of a finitely generated
+free `ℤ`-module (lattice) `V`.
 This is an abbreviation for `HodgeStructureOn Vℂ (latticeConjugation hℂ) n`. -/
-public abbrev HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
+public abbrev HodgeStructure [Module.Free ℤ V] [Module.Finite ℤ V]
+    (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
   HodgeStructureOn Vℂ (latticeConjugation hℂ) n
 
 namespace HodgeStructureOn
@@ -107,12 +106,10 @@ public theorem F_top : ∃ p, hs.F p = ⊤ := by
 
 /-- The `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$ (with $q := n - p$) of a pure
 Hodge structure. -/
-@[expose]
 public def piece (p : ℤ) : Submodule ℂ W :=
   hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap
 
-/-- Definitional restatement of the `(p, q)`-piece of a pure Hodge structure. -/
-public theorem piece_def (p : ℤ) :
+theorem piece_def (p : ℤ) :
     hs.piece p = hs.F p ⊓ (hs.F (n - p)).map ω.toEquiv.toLinearMap := rfl
 
 /-- Membership in the `(p, q)`-piece $H^{p,q} = F^p \cap \overline{F^{n-p}}$ (with $q := n - p$)
@@ -318,7 +315,6 @@ public theorem isEffective_iff_piece_eq_bot :
 /-- The Tate twist $W(m)$ of a pure Hodge structure of weight $n$ by $m \in \mathbb{Z}$,
 yielding a pure Hodge structure of weight $n - 2m$ on the same underlying space and conjugation,
 with filtration shifted by $F^p(W(m)) = F^{p+m}(W)$. -/
-@[expose]
 public def twist (m : ℤ) : HodgeStructureOn W ω (n - 2 * m) where
   F p := hs.F (p + m)
   F_antitone := by
@@ -333,9 +329,7 @@ public def twist (m : ℤ) : HodgeStructureOn W ω (n - 2 * m) where
     rw [← h_eval] at h_opp
     exact h_opp
 
-/-- The filtration of the Tate twist $W(m)$ is $F^p(W(m)) = F^{p+m}(W)$. -/
-@[simp]
-public theorem twist_F (m : ℤ) (p : ℤ) :
+theorem twist_F (m : ℤ) (p : ℤ) :
     (hs.twist m).F p = hs.F (p + m) := rfl
 
 /-- The pieces of the Tate twist $W(m)$ are shifted by $m$: $H^p(W(m)) = H^{p+m}(W)$. -/
@@ -385,6 +379,16 @@ public def id (hs : HodgeStructureOn W₁ ω₁ n) : Hom hs hs where
   map_F_le p := by rw [Submodule.map_id]
   map_conj x := rfl
 
+theorem id_toLinearMap_def (hs : HodgeStructureOn W₁ ω₁ n) :
+    (Hom.id hs).toLinearMap = LinearMap.id := rfl
+
+/-- Application of the identity morphism. -/
+@[simp]
+public theorem id_apply (hs : HodgeStructureOn W₁ ω₁ n) (x : W₁) :
+    Hom.id hs x = x := by
+  have : (Hom.id hs).toLinearMap x = x := by rw [id_toLinearMap_def, LinearMap.id_apply]
+  exact this
+
 /-- Composition of morphisms of pure Hodge structures. -/
 public def comp {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
     {hs₃ : HodgeStructureOn W₃ ω₃ n} (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) : Hom hs₁ hs₃ where
@@ -395,6 +399,41 @@ public def comp {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Co
   map_conj x := by
     simp only [LinearMap.comp_apply]
     rw [f.map_conj, g.map_conj]
+
+theorem comp_toLinearMap_def {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
+    {hs₃ : HodgeStructureOn W₃ ω₃ n} (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) :
+    (g.comp f).toLinearMap = g.toLinearMap.comp f.toLinearMap := rfl
+
+/-- Application of morphism composition. -/
+@[simp]
+public theorem comp_apply {W₃ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
+    {hs₃ : HodgeStructureOn W₃ ω₃ n} (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) (x : W₁) :
+    (g.comp f) x = g (f x) := by
+  have : (g.comp f).toLinearMap x = g.toLinearMap (f.toLinearMap x) := by
+    rw [comp_toLinearMap_def, LinearMap.comp_apply]
+  exact this
+
+/-- Left identity for morphism composition. -/
+@[simp]
+public theorem comp_id (f : Hom hs₁ hs₂) : f.comp (Hom.id hs₁) = f := by
+  ext x
+  exact comp_apply f (Hom.id hs₁) x ▸ id_apply hs₁ x ▸ rfl
+
+/-- Right identity for morphism composition. -/
+@[simp]
+public theorem id_comp (f : Hom hs₁ hs₂) : (Hom.id hs₂).comp f = f := by
+  ext x
+  exact comp_apply (Hom.id hs₂) f x ▸ id_apply hs₂ (f x) ▸ rfl
+
+/-- Associativity of morphism composition. -/
+public theorem comp_assoc {W₃ W₄ : Type*} [AddCommGroup W₃] [Module ℂ W₃] {ω₃ : Conjugation W₃}
+    [AddCommGroup W₄] [Module ℂ W₄] {ω₄ : Conjugation W₄}
+    {hs₃ : HodgeStructureOn W₃ ω₃ n} {hs₄ : HodgeStructureOn W₄ ω₄ n}
+    (h : Hom hs₃ hs₄) (g : Hom hs₂ hs₃) (f : Hom hs₁ hs₂) :
+    (h.comp g).comp f = h.comp (g.comp f) := by
+  ext x
+  change ((h.comp g).comp f) x = (h.comp (g.comp f)) x
+  rw [comp_apply, comp_apply, comp_apply, comp_apply]
 
 /-- A morphism of pure Hodge structures preserves the `(p, q)`-pieces:
 $f(H^{p,q}) \subseteq H^{p,q}$. -/
@@ -412,60 +451,81 @@ public theorem map_piece_le (f : Hom hs₁ hs₂) (p : ℤ) :
 
 end HodgeStructureOn.Hom
 
+/-- The step-function Hodge filtration for the Tate Hodge structure $\mathbb{Z}(m)$:
+$F^p = \top$ for $p \le -m$ and $F^p = \bot$ for $p > -m$. -/
+public def tateF (m : ℤ) (p : ℤ) : Submodule ℂ (Complexification ℤ) :=
+  if p ≤ -m then ⊤ else ⊥
+
+/-- Value of `tateF` for indices at or below `-m`. -/
+@[simp]
+public theorem tateF_of_le {m p : ℤ} (hp : p ≤ -m) :
+    tateF m p = ⊤ :=
+  ite_eq_left hp
+
+/-- Value of `tateF` for indices above `-m`. -/
+@[simp]
+public theorem tateF_of_gt {m p : ℤ} (hp : -m < p) :
+    tateF m p = ⊥ :=
+  ite_eq_right (not_le_of_gt hp)
+
+/-- The step-function filtration `tateF` is antitone. -/
+public theorem tateF_antitone (m : ℤ) : Antitone (tateF m) := by
+  intro p q hpq
+  by_cases hq : q ≤ -m
+  · have hp : p ≤ -m := le_trans hpq hq
+    rw [tateF_of_le hq, tateF_of_le hp]
+  · have hq' : -m < q := lt_of_not_ge hq
+    rw [tateF_of_gt hq']
+    exact bot_le
+
+/-- The step-function filtration `tateF` is $n$-opposed for $n = -2m$. -/
+public theorem tateF_opposed (m : ℤ) (p : ℤ) :
+    IsCompl (tateF m p)
+      ((tateF m (-2 * m + 1 - p)).map
+        (latticeConjugation (TensorProduct.isBaseChange ℤ ℤ ℂ)).toEquiv.toLinearMap) := by
+  by_cases hp : p ≤ -m
+  · have h_gt : -m < -2 * m + 1 - p := by omega
+    rw [tateF_of_le hp, tateF_of_gt h_gt, Submodule.map_bot]
+    exact isCompl_top_bot
+  · have hp' : -m < p := lt_of_not_ge hp
+    have h_le : -2 * m + 1 - p ≤ -m := by omega
+    rw [tateF_of_gt hp', tateF_of_le h_le, Conjugation.map_top]
+    exact isCompl_bot_top
+
+theorem tate_F_def (m : ℤ) (p : ℤ) :
+    (tateF m : ℤ → Submodule ℂ (Complexification ℤ)) p = tateF m p := rfl
+
 /-- The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$ on $V = \mathbb{Z}$. -/
-@[expose]
 public noncomputable def tate (m : ℤ) :
     HodgeStructure (TensorProduct.isBaseChange ℤ ℤ ℂ) (-2 * m) where
-  F p := if p ≤ -m then ⊤ else ⊥
-  F_antitone := by
-    intro p q hpq
-    change (if q ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) ≤
-      (if p ≤ -m then ⊤ else ⊥)
-    by_cases hq : q ≤ -m
-    · have hp : p ≤ -m := by omega
-      rw [ite_eq_left hq, ite_eq_left hp]
-    · rw [ite_eq_right hq]
-      exact bot_le
-  F_bot := ⟨-m + 1, ite_eq_right (by omega)⟩
-  opposed p := by
-    change IsCompl (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥)
-      (Submodule.map (latticeConjugation (TensorProduct.isBaseChange ℤ ℤ ℂ)).toEquiv.toLinearMap
-        (if -2 * m + 1 - p ≤ -m then ⊤ else ⊥))
-    by_cases hp : p ≤ -m
-    · have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ :=
-        ite_eq_left hp
-      have h2 : (if -2 * m + 1 - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ :=
-        ite_eq_right (by omega)
-      rw [h1, h2, Submodule.map_bot]
-      exact isCompl_top_bot
-    · have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ :=
-        ite_eq_right hp
-      have h2 : (if -2 * m + 1 - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ :=
-        ite_eq_left (by omega)
-      rw [h1, h2, Conjugation.map_top]
-      exact isCompl_bot_top
+  F := tateF m
+  F_antitone := tateF_antitone m
+  F_bot := ⟨-m + 1, tateF_of_gt (m := m) (p := -m + 1) (by omega)⟩
+  opposed := tateF_opposed m
 
 /-- The Hodge filtration of the Tate structure $\mathbb{Z}(m)$. -/
 @[simp]
-public theorem tate_F (m p : ℤ) : (tate m).F p = if p ≤ -m then ⊤ else ⊥ := rfl
+public theorem tate_F (m p : ℤ) : (tate m).F p = if p ≤ -m then ⊤ else ⊥ := by
+  change tateF m p = if p ≤ -m then ⊤ else ⊥
+  rfl
 
 /-- The `(p, q)`-pieces of the Tate Hodge structure $\mathbb{Z}(m)$: the piece at $p = -m$
 is all of `ℂ ⊗[ℤ] ℤ` and every other piece is `⊥`. -/
 @[simp]
-public theorem tate_piece_apply (m : ℤ) (p : ℤ) :
+public theorem tate_piece (m : ℤ) (p : ℤ) :
     (tate m).piece p = if p = -m then ⊤ else ⊥ := by
   rw [HodgeStructureOn.piece_def, tate_F, tate_F]
   by_cases hp : p = -m
   · subst hp
     have h1 : (if -m ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ :=
-      ite_eq_left (by omega)
+      ite_eq_left le_rfl
     have h2 : (if -2 * m - -m ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ :=
       ite_eq_left (by omega)
-    rw [h1, h2, Conjugation.map_top, inf_top_eq, ite_eq_left (by omega)]
+    rw [h1, h2, Conjugation.map_top, inf_top_eq, ite_eq_left rfl]
   · rw [ite_eq_right hp]
     rcases lt_or_gt_of_ne hp with hp_lt | hp_gt
     · have h1 : (if p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊤ :=
-        ite_eq_left (by omega)
+        ite_eq_left (le_of_lt hp_lt)
       have h2 : (if -2 * m - p ≤ -m then (⊤ : Submodule ℂ (Complexification ℤ)) else ⊥) = ⊥ :=
         ite_eq_right (by omega)
       rw [h1, h2, Submodule.map_bot, inf_bot_eq]
@@ -493,4 +553,3 @@ public theorem isEffective_tate_iff (m : ℤ) : (tate m).IsEffective ↔ m ≤ 0
     exact ite_eq_right (by omega)
 
 end TauCeti.Geometry.Hodge
-
