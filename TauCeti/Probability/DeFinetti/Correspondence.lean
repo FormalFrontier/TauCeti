@@ -40,7 +40,8 @@ i.i.d. — exchangeable laws: the mixing law is unique, and the path laws it ave
 This settles the first two sentences of the Layer 8 bullet "the affine and ergodic decomposition
 of exchangeable laws" in `TauCetiRoadmap/Exchangeability/README.md`. Identifying the components
 with the ergodic components of the finitely supported permutation action, which that bullet
-sequences after the `ErgodicSMul` interface of Layer 6, is not done here.
+sequences after the `ErgodicSMul` interface of Layer 6, is
+`DeFinetti/ErgodicCorrespondence.lean`.
 
 ## Main results
 

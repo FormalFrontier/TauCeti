@@ -14,6 +14,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegr
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 public import TauCeti.Probability.DeFinetti.Correspondence
+public import TauCeti.Probability.DeFinetti.ErgodicCorrespondence
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
 
 /-!
@@ -46,6 +47,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
 * `ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw` — the full-path joint disintegration;
 * `exchangeableSigma_trivial_iff_iid` — an exchangeable law is a product law exactly when its
   exchangeable σ-algebra is trivial;
+* `exchangeable_ergodicSMul_iff_iid`, `exchangeable_ergodicSMul_iff_mem_extremePoints` and
+  `deFinettiBarycenter_ergodicSMul_iff_dirac` — the de Finetti components are the ergodic
+  components of the finitely supported permutation action;
 * `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
   its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
   point masses with the extreme laws;
