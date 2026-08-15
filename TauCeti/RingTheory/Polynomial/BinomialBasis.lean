@@ -59,18 +59,22 @@ attribute [local instance] BinomialRing.toIsAddTorsionFree
 
 /-! ## The polynomial basis -/
 
+/-- The canonical integer scalar-action homomorphism `ℤ →+* R` coincides with
+`Int.castRingHom R`. -/
+@[simp]
+theorem smulOneHom_int_eq_intCastRingHom {R : Type*} [NonAssocRing R] :
+    (RingHom.smulOneHom : ℤ →+* R) = Int.castRingHom R :=
+  Subsingleton.elim _ _
+
 /-- Evaluating the integer descending Pochhammer polynomial at `X` in `K[X]` yields the
 descending Pochhammer polynomial over `K`. -/
 theorem descPochhammer_int_smeval_X {K : Type*} [CommRing K] (n : ℕ) :
     (descPochhammer ℤ n).smeval (X : K[X]) = descPochhammer K n := by
-  rw [← Polynomial.eval₂_smulOneHom_eq_smeval]
-  convert
-    Polynomial.eval₂_intCastRingHom_X (descPochhammer ℤ n)
-      (Polynomial.mapRingHom (Int.castRingHom K)) using 1
-  · congr 1
-    · exact Subsingleton.elim _ _
-    · simp only [Polynomial.coe_mapRingHom, Polynomial.map_X]
-  · simp only [Polynomial.coe_mapRingHom, descPochhammer_map]
+  rw [← Polynomial.eval₂_smulOneHom_eq_smeval, smulOneHom_int_eq_intCastRingHom]
+  have hX : (X : K[X]) = (Polynomial.mapRingHom (Int.castRingHom K)) X := by
+    simp only [Polynomial.coe_mapRingHom, Polynomial.map_X]
+  rw [hX, Polynomial.eval₂_intCastRingHom_X]
+  simp only [Polynomial.coe_mapRingHom, descPochhammer_map]
 
 /-- The descending Pochhammer polynomial over any commutative ring is monic. -/
 theorem monic_descPochhammer' {K : Type*} [CommRing K] (n : ℕ) :
