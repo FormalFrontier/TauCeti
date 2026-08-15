@@ -23,10 +23,6 @@ the Hecke operator at general level.
 
 ## Main results
 
-* `HeckeRing.GL2.isZeroAt_slash_upperTriRep`: slashing by an upper-triangular representative
-  preserves cusp vanishing.
-* `HeckeRing.GL2.isBoundedAt_slash_upperTriRep`: slashing by an upper-triangular representative
-  preserves cusp boundedness.
 * `HeckeRing.GL2.isZeroAt_heckeSlashUpperTri`: `heckeSlashUpperTri k p f` vanishes at every cusp
   when `f` does.
 * `HeckeRing.GL2.isBoundedAt_heckeSlashUpperTri`: `heckeSlashUpperTri k p f` is bounded at every
@@ -54,20 +50,6 @@ open UpperHalfPlane HeckeRing.GLn
 open scoped MatrixGroups ModularForm
 
 variable (k : ℤ) (p : ℕ)
-
-/-- **Slashing by an upper-triangular representative preserves vanishing at a cusp.** -/
-lemma isZeroAt_slash_upperTriRep {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
-    (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsZeroAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ)
-    (b : Fin p) :
-    c.IsZeroAt (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) k :=
-  OnePoint.isZeroAt_rat_slash k (upperTriRep p b) hf hc
-
-/-- **Slashing by an upper-triangular representative preserves boundedness at a cusp.** -/
-lemma isBoundedAt_slash_upperTriRep {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
-    (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsBoundedAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ)
-    (b : Fin p) :
-    c.IsBoundedAt (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) k :=
-  OnePoint.isBoundedAt_rat_slash k (upperTriRep p b) hf hc
 
 /-- **The upper-triangular slash sum vanishes at every cusp** when the function does. -/
 lemma isZeroAt_heckeSlashUpperTri {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
