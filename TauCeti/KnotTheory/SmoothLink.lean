@@ -16,9 +16,9 @@ GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4
 done properly"). Knots have no single privileged representation; the geometric presentation
 represents an unoriented knot as a smooth embedding of the 1-sphere $S^1$ into an ambient
 manifold $M$. Oriented presentations carry a manifold orientation of the circle source,
-represented by the orientation of its 1-dimensional tangent model space, and framed presentations
-in a 3-manifold carry a framing of the normal bundle, represented by the normal-bundle twist
-coefficient relative to the canonical reference framing.
+represented by the orientation of its 1-dimensional tangent model space. Framed presentations
+are deferred until the tubular-neighbourhood and normal-bundle infrastructure needed to represent
+a chosen push-off is available.
 
 This file introduces:
 * `TauCeti.Sphere1` / `TauCeti.Sphere3`: the standard 1-sphere and 3-sphere in Euclidean space.
@@ -26,22 +26,16 @@ This file introduces:
   tangent model space.
 * `TauCeti.UnorientedSmoothKnot`: unoriented smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: smooth knots carrying a source orientation.
-* `TauCeti.KnotFraming`: normal-bundle framings of an oriented knot parameterized by twist
-  coefficient.
-* `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth knots in a 3-manifold.
-* `TauCeti.FramedOrientedSmoothKnot3`: framed, oriented smooth knots in the 3-sphere $S^3$.
-* `TauCeti.FramedOrientedSmoothLink`: $k$-component framed oriented smooth links in a 3-manifold
-  $M$, bundling $k$ component knots with pairwise disjoint core embedding images.
-* `TauCeti.FramedOrientedSmoothLink3`: framed oriented smooth $k$-component links in $S^3$.
+* `TauCeti.OrientedSmoothLink`: $k$-component oriented smooth links in a manifold $M$, bundling
+  $k$ component knots with pairwise disjoint core embedding images.
+* `TauCeti.OrientedSmoothLink3`: oriented smooth $k$-component links in $S^3$.
 
 ## Main definitions
 
 * `TauCeti.Sphere1.Orientation`: manifold orientation of $S^1$.
 * `TauCeti.UnorientedSmoothKnot`: type of smooth embeddings $S^1 \hookrightarrow M$.
 * `TauCeti.OrientedSmoothKnot`: oriented smooth geometric presentations.
-* `TauCeti.KnotFraming`: normal-bundle framing parameter for oriented smooth knots.
-* `TauCeti.FramedOrientedSmoothKnot`: framed, oriented smooth geometric presentations.
-* `TauCeti.FramedOrientedSmoothLink`: type of $k$-component framed oriented links in $M$.
+* `TauCeti.OrientedSmoothLink`: type of $k$-component oriented links in $M$.
 
 ## References
 
@@ -89,10 +83,6 @@ theorem neg_standard : -standard = opposite := by
 theorem neg_opposite : -opposite = standard := by
   dsimp [opposite]
   exact _root_.neg_neg standard
-
-@[simp]
-theorem neg_neg (o : Sphere1.Orientation) : - (- o) = o :=
-  _root_.neg_neg o
 
 /-- Every circle orientation is either the standard orientation or its opposite. -/
 theorem eq_standard_or_opposite (o : Sphere1.Orientation) :
@@ -172,100 +162,11 @@ theorem orientation_reverseOrientation (K : OrientedSmoothKnot I M) :
 @[simp]
 theorem reverseOrientation_reverseOrientation (K : OrientedSmoothKnot I M) :
     reverseOrientation I M (reverseOrientation I M K) = K := by
-  cases K
-  simp [reverseOrientation]
+  apply OrientedSmoothKnot.ext
+  · rfl
+  · exact _root_.neg_neg K.orientation
 
 end OrientedSmoothKnot
-
-variable {H₃ : Type*} [TopologicalSpace H₃]
-  {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
-  {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
-
-/-- A framing of an oriented smooth knot `K` in a 3-manifold `M`, represented by its integer
-framing coefficient (the self-linking / twist number of the normal push-off relative to the
-canonical reference framing). -/
-@[ext]
-structure KnotFraming (K : OrientedSmoothKnot I₃ M₃) where
-  /-- The integer framing coefficient (number of full twists of the normal push-off). -/
-  twist : ℤ
-
-namespace KnotFraming
-
-variable {K : OrientedSmoothKnot I₃ M₃}
-
-/-- The canonical (zero / untwisted) framing of an oriented smooth knot. -/
-def zero (K : OrientedSmoothKnot I₃ M₃) : KnotFraming K := ⟨0⟩
-
-instance : Inhabited (KnotFraming K) := ⟨zero K⟩
-
-instance : Zero (KnotFraming K) := ⟨zero K⟩
-
-@[simp]
-theorem zero_twist : (0 : KnotFraming K).twist = 0 := (rfl)
-
-@[simp]
-theorem zero_eq_zero : zero K = 0 := (rfl)
-
-/-- Induction principle for knot framings. -/
-@[elab_as_elim]
-theorem induction {P : KnotFraming K → Prop}
-    (h : ∀ n : ℤ, P ⟨n⟩) (F : KnotFraming K) : P F := by
-  cases F
-  apply h
-
-end KnotFraming
-
-/-- A framed oriented smooth knot in a 3-manifold consists of an oriented core together with a
-framing of its normal bundle. -/
-@[ext]
-structure FramedOrientedSmoothKnot
-    (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H) (M : Type*)
-    [TopologicalSpace M] [ChartedSpace H M] where
-  /-- The underlying oriented smooth knot. -/
-  knot : OrientedSmoothKnot I M
-  /-- The framing of the oriented knot. -/
-  framing : KnotFraming knot
-
-namespace FramedOrientedSmoothKnot
-
-variable {H₃ : Type*} [TopologicalSpace H₃]
-  {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
-  {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
-
-/-- Forget the framing of a framed, oriented smooth knot. -/
-def forgetFraming (K : FramedOrientedSmoothKnot I₃ M₃) : OrientedSmoothKnot I₃ M₃ := K.knot
-
-/-- Forget both the framing and orientation of a framed, oriented smooth knot. -/
-def forget (K : FramedOrientedSmoothKnot I₃ M₃) : UnorientedSmoothKnot I₃ M₃ :=
-  K.knot.knot
-
-@[simp]
-theorem knot_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
-    (mk (I := I₃) (M := M₃) k f).knot = k := (rfl)
-
-@[simp]
-theorem framing_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
-    (mk (I := I₃) (M := M₃) k f).framing = f := (rfl)
-
-@[simp]
-theorem forgetFraming_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
-    (mk (I := I₃) (M := M₃) k f).forgetFraming = k := (rfl)
-
-@[simp]
-theorem forget_mk (k : OrientedSmoothKnot I₃ M₃) (f : KnotFraming k) :
-    (mk (I := I₃) (M := M₃) k f).forget = k.knot := (rfl)
-
-theorem forgetFraming_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
-    K.forgetFraming = K.knot := (rfl)
-
-theorem forget_knot (K : FramedOrientedSmoothKnot I₃ M₃) :
-    K.forget = K.knot.knot := (rfl)
-
-@[simp]
-theorem forget_forgetFraming (K : FramedOrientedSmoothKnot I₃ M₃) :
-    K.forgetFraming.forgetOrientation = K.forget := (rfl)
-
-end FramedOrientedSmoothKnot
 
 /-- An unoriented smooth knot in the standard 3-sphere `Sphere3`. -/
 public abbrev UnorientedSmoothKnot3 : Type _ := UnorientedSmoothKnot (𝓡 3) Sphere3
@@ -273,50 +174,45 @@ public abbrev UnorientedSmoothKnot3 : Type _ := UnorientedSmoothKnot (𝓡 3) Sp
 /-- An oriented smooth knot in the standard 3-sphere `Sphere3`. -/
 public abbrev OrientedSmoothKnot3 : Type _ := OrientedSmoothKnot (𝓡 3) Sphere3
 
-/-- A framed, oriented smooth knot in the standard 3-sphere `Sphere3`. -/
-public abbrev FramedOrientedSmoothKnot3 : Type _ := FramedOrientedSmoothKnot (𝓡 3) Sphere3
-
-/-- A `k`-component framed oriented smooth link in a 3-manifold `M` consists of `k` framed oriented
-knots with pairwise disjoint core embedding images. -/
+/-- A `k`-component oriented smooth link in a manifold `M` consists of `k` oriented knots with
+pairwise disjoint core embedding images. -/
 @[ext]
-structure FramedOrientedSmoothLink (I : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H)
+structure OrientedSmoothLink (I : ModelWithCorners ℝ E H)
     (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) where
   /-- The individual component knots of the link. -/
-  component : Fin k → FramedOrientedSmoothKnot I M
+  component : Fin k → OrientedSmoothKnot I M
   /-- Different components have pairwise disjoint core embedding images in `M`. -/
   pairwise_disjoint : Pairwise fun i j =>
-    Disjoint (range (component i).knot.knot) (range (component j).knot.knot)
+    Disjoint (range (component i).knot) (range (component j).knot)
 
-/-- A `k`-component framed oriented smooth link in the standard 3-sphere `Sphere3`. -/
-public abbrev FramedOrientedSmoothLink3 (k : ℕ) : Type _ := FramedOrientedSmoothLink (𝓡 3) Sphere3 k
+/-- A `k`-component oriented smooth link in the standard 3-sphere `Sphere3`. -/
+public abbrev OrientedSmoothLink3 (k : ℕ) : Type _ := OrientedSmoothLink (𝓡 3) Sphere3 k
 
-namespace FramedOrientedSmoothLink
+namespace OrientedSmoothLink
 
-variable {H₃ : Type*} [TopologicalSpace H₃]
-  {I₃ : ModelWithCorners ℝ (EuclideanSpace ℝ (Fin 3)) H₃}
-  {M₃ : Type*} [TopologicalSpace M₃] [ChartedSpace H₃ M₃]
+variable {I M}
 
-/-- Convert a single framed oriented smooth knot into a 1-component framed oriented smooth link. -/
-def ofKnot (K : FramedOrientedSmoothKnot I₃ M₃) : FramedOrientedSmoothLink I₃ M₃ 1 where
+/-- Convert a single oriented smooth knot into a 1-component oriented smooth link. -/
+def ofKnot (K : OrientedSmoothKnot I M) : OrientedSmoothLink I M 1 where
   component _ := K
   pairwise_disjoint := Subsingleton.pairwise
 
 @[simp]
-theorem ofKnot_component (K : FramedOrientedSmoothKnot I₃ M₃) (i : Fin 1) :
+theorem ofKnot_component (K : OrientedSmoothKnot I M) (i : Fin 1) :
     (ofKnot K).component i = K := (rfl)
 
-/-- Distinct components of a framed oriented smooth link are distinct framed knot presentations. -/
-theorem component_injective {k : ℕ} (L : FramedOrientedSmoothLink I₃ M₃ k) :
+/-- Distinct components of an oriented smooth link are distinct knot presentations. -/
+theorem component_injective {k : ℕ} (L : OrientedSmoothLink I M k) :
     Function.Injective L.component := by
   let _ : Nonempty Sphere1 := NormedSpace.sphere_nonempty_rclike ℝ zero_le_one
   intro i j hij
   apply L.pairwise_disjoint.eq
   intro hdisj
-  have hrange : range (L.component i).knot.knot = range (L.component j).knot.knot :=
-    congrArg (fun K : FramedOrientedSmoothKnot I₃ M₃ ↦ range K.knot.knot) hij
+  have hrange : range (L.component i).knot = range (L.component j).knot :=
+    congrArg (fun K : OrientedSmoothKnot I M ↦ range K.knot) hij
   rw [hrange, disjoint_self] at hdisj
-  exact (range_nonempty (L.component j).knot.knot).ne_empty hdisj
+  exact (range_nonempty (L.component j).knot).ne_empty hdisj
 
-end FramedOrientedSmoothLink
+end OrientedSmoothLink
 
 end TauCeti
