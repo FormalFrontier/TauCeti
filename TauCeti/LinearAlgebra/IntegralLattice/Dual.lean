@@ -178,18 +178,8 @@ theorem mem_dualCarrier_iff (L : IntegralLattice V) (x : V) :
 /-- The integral span of the rational basis obtained from Mathlib's chosen basis of `L` is the
 carrier itself. -/
 theorem span_range_rationalBasis (L : IntegralLattice V) :
-    Submodule.span ℤ (Set.range L.rationalBasis) = L.carrier := by
-  let b := Module.Free.chooseBasis ℤ L
-  have hrange : Set.range L.rationalBasis = Set.range (L.carrier.subtype ∘ b) := by
-    ext x
-    simp only [Set.mem_range, Function.comp_apply]
-    constructor
-    · rintro ⟨i, rfl⟩
-      exact ⟨i, (L.rationalBasis_apply i).symm⟩
-    · rintro ⟨i, rfl⟩
-      exact ⟨i, L.rationalBasis_apply i⟩
-  rw [hrange, Set.range_comp, ← Submodule.map_span, b.span_eq,
-    Submodule.map_top, Submodule.range_subtype]
+    Submodule.span ℤ (Set.range L.rationalBasis) = L.carrier :=
+  span_range_extendOfIsLattice L.carrier
 
 /-- The dual carrier is the integral span of the bilinear dual basis to the carrier's rational basis
 obtained from Mathlib's chosen basis of `L`. -/
