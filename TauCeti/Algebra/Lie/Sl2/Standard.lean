@@ -563,6 +563,7 @@ theorem raise_pow_apply_eq_zero (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1))
 
 /-- The `k`-th power of the raising operator reads coordinate `i + k` with coefficient
 `(i + k)_(k)`, and vanishes when `i + k > n`. -/
+@[simp]
 theorem raise_pow_apply (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1)) :
     ((raise K n) ^ k) v i =
       if h : (i : ℕ) + k ≤ n then
@@ -629,6 +630,7 @@ theorem lower_pow_apply_eq_zero (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1))
 
 /-- The `k`-th power of the lowering operator reads coordinate `i - k` with coefficient
 `(n - i + k)_(k)`, and vanishes when `k > i`. -/
+@[simp]
 theorem lower_pow_apply (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1)) :
     ((lower K n) ^ k) v i =
       if h : k ≤ (i : ℕ) then
@@ -647,6 +649,7 @@ theorem lower_pow_eq_zero : (lower K n) ^ (n + 1) = 0 := by
 
 /-- The `k`-th power of the Cartan operator acts diagonally with eigenvalue `(n - 2i)ᵏ` on
 coordinate `i`. -/
+@[simp]
 theorem diag_pow_apply
     (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1)) :
     ((diag K n) ^ k) v i = ((n : K) - 2 * (i : ℕ)) ^ k * v i := by
