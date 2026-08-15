@@ -50,8 +50,9 @@ the integral root--coroot span.
 * `TauCeti.IsChevalleySystem.map_cartan`: the automorphism negates the Cartan subalgebra.
 * `TauCeti.IsChevalleySystem.involutive`: compatibility on the root vectors forces the
   automorphism to be an involution on all of `L`.
-* `TauCeti.IsChevalleySystem.structureConstant_eq_natCast_or_eq_neg_natCast`: every structure
-  constant is `p + 1` or its negative.
+* `TauCeti.IsChevalleySystem.symm_eq`: the automorphism is its own inverse.
+* `TauCeti.IsChevalleySystem.structureConstant_eq_natCast_or_eq_neg_natCast`: every genuine
+  root-sum structure constant is `p + 1` or its negative.
 * `TauCeti.IsChevalleySystem.exists_int_lie_eq_smul`: every root-sum bracket has an integral
   coefficient.
 
@@ -157,6 +158,14 @@ theorem involutive : Function.Involutive ω := by
   have hz : z ∈ LinearMap.ker f := htop trivial
   rw [LinearMap.mem_ker] at hz
   exact sub_eq_zero.mp (by simpa [f] using hz)
+
+/-- A Chevalley-system automorphism is its own inverse. -/
+theorem symm_eq : ω.symm = ω := by
+  ext z
+  apply ω.injective
+  -- Expose the applications hidden by the `LieEquiv` coercions after applying injectivity.
+  change ω (ω.symm z) = ω (ω z)
+  rw [ω.apply_symm_apply, hx.involutive z]
 
 /-- **Chevalley normalization of structure constants.** If `γ = α + β` is a genuine root sum,
 then the structure constant of a Chevalley system is `p + 1` or its negative, where
