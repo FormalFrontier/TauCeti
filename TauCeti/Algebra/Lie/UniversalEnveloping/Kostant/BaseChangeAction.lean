@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Exponential
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
 public import TauCeti.RingTheory.Nilpotent.BaseChangeAction
 
 /-!
