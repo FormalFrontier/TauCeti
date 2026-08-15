@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Sobolev.WeakDeriv
+public import TauCeti.Analysis.Sobolev.TestFunctionLp
 public import Mathlib.MeasureTheory.Function.Holder
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.SpecificCodomains.WithLp
@@ -196,32 +196,6 @@ omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
 theorem Sobolev1JetLp.candidateWeakFDeriv_apply (J : Sobolev1JetLp mu Omega p) (x v : E) :
     Sobolev1JetLp.candidateWeakFDeriv J x v = ⟪v, Sobolev1JetLp.gradient J x⟫_ℝ := by
   rw [Sobolev1JetLp.candidateWeakFDeriv, innerSL_apply_apply, real_inner_comm]
-
-section TestFunctionLp
-
--- Pairing a test function against an `Lᵖ` field uses nothing about the domain beyond its normed
--- structure, so `E` and `mu` are re-declared here without the inner product and the Haar
--- hypothesis carried by the rest of the file.  `TauCeti.WeakDerivStep` consumes these three
--- facts over a bare normed domain.
-variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [NormedSpace ℝ E]
-  [OpensMeasurableSpace E] {mu : Measure E} [IsFiniteMeasureOnCompacts mu] {Omega : Opens E}
-
-/-- A test function on `Ω` lies in every `Lᵠ(Ω)`: it is continuous with compact support. -/
-theorem memLp_testFunction (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
-    MemLp (phi : E → ℝ) q (mu.restrict Omega) :=
-  phi.continuous.memLp_of_hasCompactSupport phi.hasCompactSupport
-
-/-- A test function on `Ω` as an element of `Lᵠ(Ω)`.  It is used at the exponent
-Hölder-conjugate to `p` to pair a test function with the `Lᵖ` components of a Sobolev jet. -/
-def testFunctionLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) : Lp ℝ q (mu.restrict Omega) :=
-  (memLp_testFunction (mu := mu) q phi).toLp phi
-
-@[simp]
-theorem testFunctionLp_apply_ae (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
-    ∀ᵐ x ∂mu.restrict Omega, testFunctionLp (mu := mu) q phi x = phi x :=
-  (memLp_testFunction (mu := mu) q phi).coeFn_toLp
-
-end TestFunctionLp
 
 private def weakDerivativeTestFunction (phi : 𝓓(Omega, ℝ)) (v : E) (x : E) :
     Sobolev1Jet E :=

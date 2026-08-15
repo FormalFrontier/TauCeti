@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Sobolev.GraphStep
+public import TauCeti.Analysis.Sobolev.W1p
 
 /-!
 # Second-order weak Sobolev spaces
@@ -66,10 +67,8 @@ abbrev Sobolev2JetLp (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p
 /-- The second-order weak Sobolev subspace.  Its Hessian component is required to be the weak
 Fréchet derivative of the weak gradient in its first-order component.
 
-The body is exposed: it is what identifies `TauCeti.W2p` with the graph step
-`TauCeti.WeakDerivStep` over `TauCeti.W1p.gradientL`, so that the generic step API applies to a
-second-order Sobolev function downstream. -/
-@[expose]
+The theorem `TauCeti.w2pSubmodule_def` exposes its identification with the generic graph step
+without exposing this implementation body. -/
 def w2pSubmodule (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] : ClosedSubmodule ℝ (Sobolev2JetLp mu Omega p) :=
   weakDerivStepSubmodule mu Omega p W1p.gradientL
@@ -124,13 +123,6 @@ theorem W2p.firstOrder_coe (u : W2p mu Omega p) :
     W2p.firstOrder u = WithLp.fst (u : Sobolev2JetLp mu Omega p) :=
   WeakDerivStep.prev_coe (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
-/-- The first-order component is the preceding component of the graph step over the weak
-gradient. -/
-theorem W2p.firstOrder_eq_prev (u : W2p mu Omega p) :
-    W2p.firstOrder u =
-      WeakDerivStep.prev (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u :=
-  (rfl)
-
 /-- The continuous linear projection from `W2p` to its weak Hessian. -/
 def W2p.hessianL : W2p mu Omega p →L[ℝ] Lp (E →L[ℝ] E) p (mu.restrict Omega) :=
   WeakDerivStep.weakFDerivL (W1p.gradientL (mu := mu) (Omega := Omega) (p := p))
@@ -147,13 +139,6 @@ theorem W2p.hessianL_apply (u : W2p mu Omega p) :
 theorem W2p.hessian_coe (u : W2p mu Omega p) :
     W2p.hessian u = WithLp.snd (u : Sobolev2JetLp mu Omega p) :=
   WeakDerivStep.weakFDeriv_coe (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
-
-/-- The weak Hessian is the weak Fréchet derivative adjoined by the graph step over the weak
-gradient. -/
-theorem W2p.hessian_eq_weakFDeriv (u : W2p mu Omega p) :
-    W2p.hessian u =
-      WeakDerivStep.weakFDeriv (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u :=
-  (rfl)
 
 /-- Construct a second-order Sobolev function from a first-order Sobolev function and a weak
 Hessian. -/
