@@ -7,7 +7,7 @@ module
 -- Public: the types occurring in the exported signatures.
 public import Mathlib.RingTheory.SimpleModule.IsAlgClosed
 -- Non-public: used only inside proofs.
-import TauCeti.RingTheory.Semisimple.Wedderburn.Blocks
+import TauCeti.RingTheory.Semisimple.BlockCount
 
 /-!
 # Chosen Wedderburn presentations
@@ -20,8 +20,11 @@ form, its finite form, and the split form over an algebraically closed field.  F
 division ring is the opposite of the endomorphism ring of a chosen simple left ideal.
 
 These presentations deliberately retain all choices made by the existence theorems.  In particular,
-their block order is not canonical, and none of the data below should be used as an invariant of the
-source ring without a separate uniqueness theorem.
+their block order and the representatives of their division rings are not canonical, and the
+classical `DecidableEq` choice on endomorphism rings enters the exposed division ring instance of
+the endomorphism form.  However, the number of blocks is an invariant of the ring (`blockCount_eq`).
+None of the other data below should be used as an invariant of the source ring without a separate
+uniqueness theorem.
 
 ## Main definitions
 
@@ -47,10 +50,10 @@ source ring without a separate uniqueness theorem.
 
 ## Main results
 
-* `TauCeti.WedderburnPresentation.exists_simpleSubmodule`: a chosen Wedderburn presentation has
-  exactly as many blocks as `R` has isomorphism classes of simple left ideals: there is a family of
-  simple left ideals indexed by the blocks, pairwise non-isomorphic and exhaustive. (The indexing is
-  by cardinality only; matching block `i` with a specific simple module is the uniqueness target.)
+* `TauCeti.WedderburnPresentation.blockCount_eq`: the number of blocks is the same for any two
+  Wedderburn presentations of the same ring.
+* `TauCeti.WedderburnPresentation.isSemisimpleRing`: a ring admitting a Wedderburn presentation is
+  semisimple.
 
 ## References
 
@@ -235,13 +238,16 @@ whose division rings are opposites of endomorphism rings of simple left ideals. 
 noncomputable def toWedderburnAlgebraPresentation
     (P : WedderburnEndomorphismAlgebraPresentation K A) :
     WedderburnAlgebraPresentation.{u, v, u} K A :=
-  -- The ring structure on `(Module.End A (P.simpleIdeal i))ᵐᵒᵖ` inferred from `Module.End` and
-  -- the ring structure coming from the chosen `DivisionRing` instance (via Schur's Lemma) agree
-  -- by defeq only up to unfolding.
+  -- `Module.End.instDivisionRing` requires `DecidableEq`; this arbitrary `Classical.decEq` choice
+  -- becomes part of the exposed `instDivisionRing` field. Downstream results should use
+  -- `P.toWedderburnAlgebraPresentation.instDivisionRing` rather than re-synthesizing.
   letI : ∀ i, DecidableEq (Module.End A (P.simpleIdeal i)) := fun _ ↦ Classical.decEq _
   { blockCount := P.blockCount
     divisionRing := fun i ↦ (Module.End A (P.simpleIdeal i))ᵐᵒᵖ
     degree := P.degree
+    -- The ring structure on `(Module.End A (P.simpleIdeal i))ᵐᵒᵖ` inferred from `Module.End` and
+    -- the ring structure coming from the chosen `DivisionRing` instance (via Schur's Lemma) agree
+    -- by defeq only up to unfolding.
     equiv := P.equiv }
 
 @[simp]
@@ -354,19 +360,14 @@ namespace WedderburnPresentation
 
 variable {R : Type u} [Ring R]
 
-/-- A chosen Wedderburn presentation has exactly as many blocks as `R` has isomorphism classes of
-simple left ideals: there is a family of simple left ideals indexed by the blocks, pairwise
-non-isomorphic and exhaustive.
+/-- The number of blocks of a Wedderburn presentation is an invariant of the ring. -/
+theorem blockCount_eq (P : WedderburnPresentation.{u, w} R)
+    (Q : WedderburnPresentation.{u, w'} R) : P.blockCount = Q.blockCount :=
+  card_blocks_eq P.equiv Q.equiv
 
-The indexing is by cardinality only; matching block `i` with a specific simple module is the
-uniqueness target. -/
-theorem exists_simpleSubmodule (P : WedderburnPresentation R) :
-    ∃ S : Fin P.blockCount → Submodule R R,
-      (∀ i, IsSimpleModule R (S i)) ∧
-      (∀ i j, Nonempty (S i ≃ₗ[R] S j) → i = j) ∧
-      ∀ I : Submodule R R, IsSimpleModule R I → ∃ i, Nonempty (I ≃ₗ[R] S i) := by
-  have : IsSemisimpleRing R := P.equiv.symm.isSemisimpleRing
-  exact blocks_equiv_simpleModules P.equiv
+/-- A ring admitting a Wedderburn presentation is semisimple. -/
+theorem isSemisimpleRing (P : WedderburnPresentation R) : IsSemisimpleRing R :=
+  P.equiv.symm.isSemisimpleRing
 
 end WedderburnPresentation
 
