@@ -75,16 +75,36 @@ noncomputable abbrev sigNull : ℕ := Module.finrank ℚ L.radical
 noncomputable abbrev sigNeg : ℕ := _root_.sigNeg L.form.toQuadraticMap
 
 /-- The signature `(n₊, n₀, n₋)` of an integral lattice. -/
-noncomputable abbrev signature : ℕ × ℕ × ℕ := (L.sigPos, L.sigNull, L.sigNeg)
+noncomputable def signature : ℕ × ℕ × ℕ := (L.sigPos, L.sigNull, L.sigNeg)
+
+/-- The signature is the triple of positive, null, and negative indices. -/
+theorem signature_def : L.signature = (L.sigPos, L.sigNull, L.sigNeg) := by
+  rfl
+
+/-- The first component of the signature is the positive index. -/
+@[simp]
+theorem signature_pos : L.signature.1 = L.sigPos := by
+  rw [signature_def]
+
+/-- The second component of the signature is the null index. -/
+@[simp]
+theorem signature_null : L.signature.2.1 = L.sigNull := by
+  rw [signature_def]
+
+/-- The third component of the signature is the negative index. -/
+@[simp]
+theorem signature_neg : L.signature.2.2 = L.sigNeg := by
+  rw [signature_def]
 
 /-- The positive, null, and negative indices exhaust the rank of the lattice. -/
-theorem sigPos_add_sigNull_add_sigNeg :
-    L.sigPos + L.sigNull + L.sigNeg = Module.finrank ℚ V := by
+theorem signature_sum_eq_finrank :
+    L.signature.1 + L.signature.2.1 + L.signature.2.2 = Module.finrank ℚ V := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
   have h := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical
     (Q := L.form.toQuadraticMap)
   rw [L.radical_toQuadraticMap] at h
-  simpa only [sigPos, sigNull, sigNeg, add_comm, add_left_comm, add_assoc] using h
+  simpa only [signature_pos, signature_null, signature_neg, sigPos, sigNull, sigNeg,
+    add_comm, add_left_comm, add_assoc] using h
 
 /-- An integral lattice is positive-definite when its quadratic form is positive on every nonzero
 vector. -/
