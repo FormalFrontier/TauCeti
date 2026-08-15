@@ -261,7 +261,8 @@ theorem determinant_neg (L : IntegralLattice V) :
 /-- Form negation preserves nondegeneracy. -/
 @[simp]
 theorem nondegenerate_neg_iff (L : IntegralLattice V) :
-    (-L).form.Nondegenerate ↔ L.form.Nondegenerate := by
+    (-L.form).Nondegenerate ↔ L.form.Nondegenerate := by
+  rw [← neg_form]
   exact nondegenerate_smul_iff (by norm_num) L
 
 /-- Form negation preserves the nonnegative discriminant. -/
