@@ -31,11 +31,13 @@ representations* is the substance of this file, and it depends on the polarizati
   since the spin group is even — `S⁺` and `S⁻` are subrepresentations of `spinRep`.
 * A vector `z` of the line summand acts by `P.lineCoordinate z` times the grade involution, an
   operator that *preserves* parity, so with a line present an even Clifford element need not
-  preserve parity at all. Concretely, over `ℂ`
-  with `dim V = 3` the spin group is a copy of `SL₂` acting on the two-dimensional `S` by its
-  standard representation, which has no one-dimensional subrepresentation, so the parity
-  splitting is not invariant there. The hypothesis `P.line = ⊥` below is therefore not a
-  convenience; the statement is false without it.
+  preserve parity at all. Concretely, take `V` a three-dimensional complex vector space carrying
+  a nondegenerate quadratic form, polarized in the standard way: `W` and `W'` are dual isotropic
+  lines and the line summand is their anisotropic orthogonal complement. Then `S = ⋀·W` is
+  two-dimensional, `spinGroup Q` is a copy of `SL₂` acting on `S` by its standard representation,
+  and that representation has no one-dimensional subrepresentation, so the parity splitting is
+  not invariant there. The hypothesis `P.line = ⊥` below is therefore not a convenience; the
+  statement is false without it.
 
 The grading statement `TauCeti.spinAction_mem_evenOdd` is proved once, for an arbitrary parity of
 the acting Clifford element, and the half-spin invariance and the parity shift by odd elements are
