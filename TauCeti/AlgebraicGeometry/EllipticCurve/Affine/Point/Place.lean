@@ -145,7 +145,7 @@ lands in the *degree-one* places. -/
 theorem pointPlace.finrank_residueField_eq_one {y : F} (h : W.Equation x y) :
     Module.finrank F (W.CoordinateRing ⧸ (pointPlace h).asIdeal) = 1 := by
   rw [pointPlace_asIdeal]
-  exact finrank_quotient_XYIdeal h
+  rw [(CoordinateRing.quotientXYIdealEquiv h).toLinearEquiv.finrank_eq, Module.finrank_self]
 
 /-- **Every degree-one place is the place of a point**, the converse of
 `pointPlace.finrank_residueField_eq_one`. -/
@@ -157,7 +157,7 @@ theorem exists_pointPlace_eq {v : HeightOneSpectrum W.CoordinateRing}
 
 variable (W) in
 /-- Send a solution of `W.Equation` to its degree-one place. -/
-noncomputable def equationToDegreeOnePlace
+private noncomputable def equationToDegreeOnePlace
     (p : {xy : F × F // W.Equation xy.1 xy.2}) :
     {v : HeightOneSpectrum W.CoordinateRing //
       Module.finrank F (W.CoordinateRing ⧸ v.asIdeal) = 1} :=
@@ -165,7 +165,8 @@ noncomputable def equationToDegreeOnePlace
 
 variable (W) in
 /-- Sending an equation solution to its degree-one place is bijective. -/
-theorem equationToDegreeOnePlace_bijective : Function.Bijective (equationToDegreeOnePlace W) :=
+private theorem equationToDegreeOnePlace_bijective :
+    Function.Bijective (equationToDegreeOnePlace W) :=
   ⟨fun p q h ↦ Subtype.ext <| Prod.ext_iff.mpr <|
       (pointPlace_eq_iff p.2 q.2).mp (Subtype.ext_iff.mp h),
     fun v ↦ by

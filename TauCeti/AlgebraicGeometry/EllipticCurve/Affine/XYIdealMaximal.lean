@@ -24,8 +24,6 @@ ideal of a point.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.XYIdeal_isMaximal`: `XYIdeal W x y` is maximal
   for any `y : F[X]` solving the Weierstrass equation at `x`, matching the generality of
   `XYIdeal` and `quotientXYIdealEquiv` themselves.
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.finrank_quotient_XYIdeal`: the quotient by such
-  an ideal has rank one over the base field.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.XYIdeal_isMaximal_of_equation`: the point case,
   `XYIdeal W x (C y)` for `(x, y)` on `W`.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.XYIdeal_eq_iff_of_ne_top`: two such ideals are
@@ -111,12 +109,6 @@ theorem XYIdeal_isMaximal {y : F[X]} (h : (W.polynomial.eval y).eval x = 0) :
     (CoordinateRing.XYIdeal W x y).IsMaximal :=
   Ideal.Quotient.maximal_of_isField _
     ((CoordinateRing.quotientXYIdealEquiv h).toRingEquiv.isField (Field.toIsField F))
-
-/-- **The quotient by the ideal of a point has rank one over the base field.** This is stated for
-polynomial `y`, matching `XYIdeal`, `quotientXYIdealEquiv`, and `XYIdeal_isMaximal`. -/
-theorem finrank_quotient_XYIdeal {y : F[X]} (h : (W.polynomial.eval y).eval x = 0) :
-    Module.finrank F (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x y) = 1 := by
-  rw [(CoordinateRing.quotientXYIdealEquiv h).toLinearEquiv.finrank_eq, Module.finrank_self]
 
 /-- **The ideal of a point of a Weierstrass curve is maximal**, the constant-polynomial case of
 `XYIdeal_isMaximal`. -/
@@ -258,7 +250,7 @@ theorem finrank_quotient_eq_one_iff {I : Ideal W.CoordinateRing} :
     · rw [SetLike.mem_coe, ← hρmem, CoordinateRing.YClass, hcomp]
       simp
   · rintro ⟨x, y, h, rfl⟩
-    exact finrank_quotient_XYIdeal h
+    rw [(CoordinateRing.quotientXYIdealEquiv h).toLinearEquiv.finrank_eq, Module.finrank_self]
 
 end WeierstrassCurve.Affine.CoordinateRing
 
