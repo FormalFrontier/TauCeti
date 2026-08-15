@@ -120,8 +120,9 @@ variable (R : Type u) [CommSemiring R]
 /-- The coordinate algebra of `𝔾ₐ` is of finite type: it is the polynomial algebra on the single
 generator `x`. -/
 instance instFiniteTypeSymmetricAlgebra : Algebra.FiniteType R (SymmetricAlgebra R R) :=
-  Algebra.FiniteType.equiv (inferInstanceAs (Algebra.FiniteType R (MvPolynomial Unit R)))
-    (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
+  Algebra.FiniteType.equiv
+    (inferInstanceAs (Algebra.FiniteType R (MvPolynomial (CoordinateIndex.{u}) R)))
+    (coordinateAlgEquiv R).symm
 
 end FiniteType
 
@@ -135,9 +136,9 @@ noncomputable abbrev coordinateHopfAlgebra : CommHopfAlgCat.{u} R :=
 /-- The coordinate algebra of `𝔾ₐ` is smooth: it is the polynomial algebra on the single
 generator `x`. -/
 instance instSmoothSymmetricAlgebra : Algebra.Smooth R (SymmetricAlgebra R R) :=
-  letI : Algebra.Smooth R (MvPolynomial Unit R) := ⟨inferInstance, inferInstance⟩
-  Algebra.Smooth.of_equiv
-    (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
+  letI : Algebra.Smooth R (MvPolynomial (CoordinateIndex.{u}) R) :=
+    ⟨inferInstance, inferInstance⟩
+  Algebra.Smooth.of_equiv (coordinateAlgEquiv R).symm
 
 /-- The additive group scheme obtained by applying relative spectrum to the symmetric Hopf
 algebra on one generator.
@@ -278,9 +279,6 @@ instance isAffine_groupScheme : IsAffine (groupScheme R).X.left := by
 /-- The structural morphism of the additive group scheme is locally of finite presentation. -/
 instance locallyOfFinitePresentation_groupScheme :
     LocallyOfFinitePresentation (groupScheme R).X.hom := by
-  let : Algebra.FinitePresentation R (MvPolynomial (CoordinateIndex.{u}) R) := inferInstance
-  let : Algebra.FinitePresentation R (SymmetricAlgebra R R) :=
-    Algebra.FinitePresentation.equiv (coordinateAlgEquiv R).symm
   rw [groupScheme_X_hom]
   let : LocallyOfFinitePresentation (eqToHom (groupScheme_X_left R)) :=
     locallyOfFinitePresentation_of_isOpenImmersion _
