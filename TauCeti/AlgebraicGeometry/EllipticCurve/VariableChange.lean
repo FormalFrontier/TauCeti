@@ -20,6 +20,10 @@ automorphism fixes it) and `map_smul_baseChange_eq` (the conjugate of an isomorp
 changes is again one). Comparing an isomorphism with its conjugate via the last of these is what
 produces the Galois cocycle used by the twist classification.
 
+That cocycle comparison lands on a product `C * [-1]`, whose four components are read off here as
+`mul_negVariableChange_u/_r/_s/_t` rather than by unfolding `VariableChange.mul_def` against the
+components of `[-1]` at each use.
+
 The negation is the nontrivial automorphism in the `Aut (E, O)`
 milestone of `TauCetiRoadmap/EllipticCurves/README.md` §Layer 1, proved in
 `TauCeti/AlgebraicGeometry/EllipticCurve/Aut.lean` to exhaust `Aut(E)` with the identity when
@@ -67,19 +71,10 @@ def negVariableChange : VariableChange R :=
       Units.val_one] <;>
     ring
 
-/-- The negation automorphism is an involution. -/
-@[simp] lemma negVariableChange_mul_self : E.negVariableChange * E.negVariableChange = 1 := by
-  simp [VariableChange.mul_def, VariableChange.one_def, negVariableChange,
-    Odd.neg_one_pow (by decide : Odd 3)]
-
 /-- The negation automorphism commutes with base change along a ring homomorphism. -/
 @[simp] lemma negVariableChange_map {A : Type*} [CommRing A] (φ : R →+* A) :
     (E.map φ).negVariableChange = E.negVariableChange.map φ := by
   ext <;> simp [negVariableChange, VariableChange.map, map_a₁, map_a₃]
-
-/-- The negation automorphism is its own inverse, being an involution. -/
-@[simp] lemma negVariableChange_inv : E.negVariableChange⁻¹ = E.negVariableChange :=
-  inv_eq_of_mul_eq_one_left E.negVariableChange_mul_self
 
 /-- The negation automorphism is nontrivial for an elliptic curve: where `2 ≠ 0` it has
 `u = -1 ≠ 1`, and where `2 = 0` it has `(s, t) = (-a₁, -a₃) ≠ (0, 0)`, since an elliptic curve
@@ -119,6 +114,45 @@ enough. -/
   _root_.map_mul (VariableChange.mapHom φ) C D
 
 end VariableChange
+
+/-! ### Components of a change of variables composed with `[-1]`
+
+`[-1]` has `u = -1` and `r = 0`, so composing with it negates `u`, fixes `r`, and shifts `s` and
+`t` by the curve's `a₁` and `a₃`. These four are `@[simp]`: their right-hand sides are the normal
+form wanted downstream, since the cocycle comparisons of the twist classification land on exactly
+this product. -/
+
+variable (C : VariableChange R)
+
+/-- Composing with `[-1]` negates the scaling factor `u`. -/
+@[simp] lemma mul_negVariableChange_u : (C * E.negVariableChange).u = -C.u := by
+  simp [VariableChange.mul_def]
+
+/-- Composing with `[-1]` leaves the translation `r` unchanged, `[-1]` having `r = 0` and
+`u = -1` entering squared. -/
+@[simp] lemma mul_negVariableChange_r : (C * E.negVariableChange).r = C.r := by
+  simp [VariableChange.mul_def]
+
+/-- Composing with `[-1]` negates the shear `s` and shifts it by the curve's `a₁`. -/
+@[simp] lemma mul_negVariableChange_s : (C * E.negVariableChange).s = -C.s - E.a₁ := by
+  simp [VariableChange.mul_def]
+  ring
+
+/-- Composing with `[-1]` negates the translation `t` and shifts it by `r * a₁` and the curve's
+`a₃`. -/
+@[simp] lemma mul_negVariableChange_t :
+    (C * E.negVariableChange).t = -C.t - C.r * E.a₁ - E.a₃ := by
+  simp [VariableChange.mul_def]
+  ring
+
+/-- The negation automorphism is an involution. -/
+@[simp] lemma negVariableChange_mul_self : E.negVariableChange * E.negVariableChange = 1 := by
+  simp [VariableChange.mul_def, VariableChange.one_def, negVariableChange,
+    Odd.neg_one_pow (by decide : Odd 3)]
+
+/-- The negation automorphism is its own inverse, being an involution. -/
+@[simp] lemma negVariableChange_inv : E.negVariableChange⁻¹ = E.negVariableChange :=
+  inv_eq_of_mul_eq_one_left E.negVariableChange_mul_self
 
 section BaseChange
 

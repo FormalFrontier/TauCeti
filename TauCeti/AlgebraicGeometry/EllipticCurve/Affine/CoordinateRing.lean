@@ -434,31 +434,18 @@ lies in the coordinate ring. -/
 private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
     (hz : IsIntegral F[X] z) :
     ∃ b : W.CoordinateRing, algebraMap W.CoordinateRing W.FunctionField b = z := by
-  -- write `z = b / d` with `b` in the coordinate ring and `d` in `F[X]`
-  obtain ⟨b₁, b₂, hb₂, rfl⟩ := IsFractionRing.div_surjective (A := W.CoordinateRing) z
-  have hb₂0 : b₂ ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp hb₂
-  have hcb₂0 : CoordinateRing.conj W b₂ ≠ 0 := fun h =>
-    hb₂0 <| (CoordinateRing.conj W).injective (by rw [h, map_zero])
-  set b : W.CoordinateRing := b₁ * CoordinateRing.conj W b₂ with hb
-  set d : F[X] := Algebra.norm F[X] b₂
-  have hdB : algebraMap F[X] W.CoordinateRing d = b₂ * CoordinateRing.conj W b₂ :=
-    (CoordinateRing.mul_conj W b₂).symm
-  have hd0 : d ≠ 0 := fun h => (mul_ne_zero hb₂0 hcb₂0) (by rw [← hdB, h, map_zero])
-  have hinjB : Function.Injective (algebraMap W.CoordinateRing W.FunctionField) :=
-    FaithfulSMul.algebraMap_injective _ _
-  have hinjK : Function.Injective (algebraMap F[X] W.FunctionField) := by
-    rw [IsScalarTower.algebraMap_eq F[X] W.CoordinateRing W.FunctionField]
-    exact hinjB.comp (FaithfulSMul.algebraMap_injective _ _)
-  have hdK : algebraMap F[X] W.FunctionField d ≠ 0 := fun h =>
-    hd0 (hinjK (h.trans (map_zero _).symm))
-  have hcb₂K : algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.conj W b₂) ≠ 0 :=
-    fun h => hcb₂0 (hinjB (h.trans (map_zero _).symm))
-  have hzeq : algebraMap W.CoordinateRing W.FunctionField b₁ /
-      algebraMap W.CoordinateRing W.FunctionField b₂ =
-      algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d := by
-    rw [IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, hdB, hb, map_mul,
-      map_mul, mul_div_mul_right _ _ hcb₂K]
-  rw [hzeq] at hz ⊢
+  -- write `z = b / d` with `b` in the coordinate ring and `d` in `F[X]`; the function field is
+  -- the localisation at the image of `nonZeroDivisors F[X]`, so the denominator is a polynomial
+  obtain ⟨⟨b, m, hm⟩, hbm⟩ :=
+    IsLocalization.surj (Algebra.algebraMapSubmonoid W.CoordinateRing (nonZeroDivisors F[X])) z
+  obtain ⟨d, hd, rfl⟩ := hm
+  have hd0 : d ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp hd
+  have hdK : algebraMap F[X] W.FunctionField d ≠ 0 :=
+    (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective F[X] W.FunctionField)).mpr hd0
+  obtain rfl : algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d = z := by
+    rw [eq_comm, eq_div_iff hdK,
+      IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, hbm]
   -- the trace and the norm of `z`
   obtain ⟨p, q, hpq⟩ := exists_smul_basis_eq b
   have htr := dvd_trace_of_isIntegral_div W hd0 hpq hz
