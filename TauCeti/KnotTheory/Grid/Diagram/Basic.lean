@@ -30,7 +30,7 @@ The point-set API records the basic row, column, cardinality, and disjointness f
 before defining rectangles, empty rectangles, and the grid differential.
 
 * `TauCeti.GridState`: a grid state with a permutation graph on `Fin n`.
-* `TauCeti.GridState.pointSet`: the finite set of occupied squares of a grid state.
+* `TauCeti.GridState.pointSet`: the finite set of occupied grid points of a grid state.
 * `TauCeti.GridDiagram`: an `n × n` grid diagram with `O` and `X` markings.
 * `TauCeti.GridDiagram.OSet`, `TauCeti.GridDiagram.XSet`: the marking point sets.
 * Relabeling, swapping, transposition, and marking-swap operations for grid states and diagrams.
@@ -101,7 +101,7 @@ theorem ext {x y : GridState n} (h : ∀ c : Fin n, x c = y c) : x = y := by
   ext c
   exact congrArg Fin.val (h c)
 
-/-- The finite set of occupied squares of a grid state. The first coordinate is the column and
+/-- The finite set of occupied grid points of a grid state. The first coordinate is the column and
 the second coordinate is the row. -/
 def pointSet (x : GridState n) : Finset (Fin n × Fin n) :=
   Finset.univ.image fun c => (c, x c)
@@ -124,11 +124,11 @@ theorem mem_pointSet (x : GridState n) (p : Fin n × Fin n) :
     rw [pointSet]
     exact Finset.mem_image.mpr ⟨p.1, Finset.mem_univ _, by ext <;> simp [hp]⟩
 
-/-- The square `(c, r)` lies in a grid state's point set exactly when `x c = r`. -/
+/-- The grid point `(c, r)` lies in a grid state's point set exactly when `x c = r`. -/
 theorem mk_mem_pointSet (x : GridState n) (c r : Fin n) : (c, r) ∈ x.pointSet ↔ x c = r := by
   simp
 
-/-- The point set of a grid state has exactly `n` occupied squares. -/
+/-- The point set of a grid state has exactly `n` occupied grid points. -/
 @[simp]
 theorem card_pointSet (x : GridState n) : x.pointSet.card = n := by
   rw [pointSet, Finset.card_image_of_injective]
@@ -612,7 +612,7 @@ theorem card_pointSet_inter_swapColumns (x : GridState n) {a b : Fin n} (h : a �
 
 /-- The diagonal reflection of a grid state.
 
-Reflecting the occupied squares across the main diagonal exchanges columns and rows, so the new
+Reflecting the occupied grid points across the main diagonal exchanges columns and rows, so the new
 permutation graph is the inverse of the old one. -/
 def transpose (x : GridState n) : GridState n where
   toPerm := x.toPerm.symm

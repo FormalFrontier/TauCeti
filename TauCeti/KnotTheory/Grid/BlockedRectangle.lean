@@ -40,10 +40,11 @@ homology roadmap.
 ## References
 
 This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
-`HeegaardFloer/README.md` in TauCetiRoadmap, Lane G.3, "The complexes and `∂² = 0`",
-where the fully blocked grid complex over `𝔽₂` counts rectangles avoiding all markings. The
-objects and terminology follow Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and
-Links*, Chapter 3.
+`CombinatorialHeegaardFloer/README.md` in TauCetiRoadmap, Lane G.3, "The complexes and
+`∂² = 0`", where the fully blocked grid complex over `𝔽₂` counts rectangles avoiding all
+markings. The objects and terminology follow Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots
+and Links*, Chapter 3; the fully blocked marking-avoidance condition follows Definition 4.1.1
+and Chapter 4.6.
 -/
 
 public section
@@ -59,7 +60,7 @@ variable {n : ℕ} (G : GridDiagram n) (x y : GridState n)
 "Fully blocked" means that the rectangle is empty for the source grid state and none of the
 squares it covers carries an `O` or `X` marking. This is the rectangle set whose parity gives
 the coefficient of `y` in the fully blocked grid differential applied to `x`. -/
-@[expose] noncomputable def fullyBlockedRectangles : Finset (GridRectangleBetween x y) := by
+noncomputable def fullyBlockedRectangles : Finset (GridRectangleBetween x y) := by
   classical
   exact (GridRectangleBetween.emptyRectangles x y).filter fun R => R.AvoidsMarkings G
 
@@ -128,7 +129,9 @@ theorem exists_swapColumns_of_fullyBlockedRectangleCount_ne_zero
 @[simp]
 theorem fullyBlockedRectangles_self (x : GridState n) : G.fullyBlockedRectangles x x = ∅ := by
   classical
-  simp [fullyBlockedRectangles]
+  apply Finset.eq_empty_iff_forall_notMem.mpr
+  intro R _
+  exact R.source_ne_target rfl
 
 /-- The fully blocked rectangle count from a grid state to itself is zero. -/
 @[simp]

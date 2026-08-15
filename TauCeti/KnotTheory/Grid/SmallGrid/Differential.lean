@@ -38,7 +38,8 @@ This supplies a prerequisite for
 `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`",
 and for the standing convention that the grid complexes compute on explicit small grids. The
 rectangle-count convention follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and
-Links*, Chapter 3.
+Links*, Chapter 3; the fully blocked marking-avoidance condition follows Definition 4.1.1 and
+Chapter 4.6.
 -/
 
 public section
@@ -70,13 +71,12 @@ theorem fullyBlockedRectangles_eq_empty_of_le_two (hn : n ≤ 2) (x y : GridStat
     rw [← Fin.val_ne_iff] at hO hX
     omega
   have hsq : (R.left, x R.left) ∈ R.toGridRectangle.squares := by
-    rw [GridRectangle.mem_squares, GridRectangle.mem_columnSquares, GridRectangle.mem_rowSquares]
-    exact ⟨Grid.left_mem_cIco R.left_ne_right, Grid.left_mem_cIco R.bottom_ne_top⟩
-  have hmark : (R.left, x R.left) ∈ G.OSet ∪ G.XSet := by
-    rcases hpair with h | h
-    · exact Finset.mem_union_left _ ((G.mk_mem_OSet R.left (x R.left)).mpr h.symm)
-    · exact Finset.mem_union_right _ ((G.mk_mem_XSet R.left (x R.left)).mpr h.symm)
-  exact Finset.disjoint_left.mp havoid hsq hmark
+    simpa only [GridRectangleBetween.bottom] using R.left_bottom_mem_squares
+  rcases hpair with h | h
+  · exact Finset.disjoint_left.mp (R.disjoint_squares_OSet_of_avoidsMarkings havoid) hsq
+      ((G.mk_mem_OSet R.left (x R.left)).mpr h.symm)
+  · exact Finset.disjoint_left.mp (R.disjoint_squares_XSet_of_avoidsMarkings havoid) hsq
+      ((G.mk_mem_XSet R.left (x R.left)).mpr h.symm)
 
 /-- Every fully blocked rectangle coefficient vanishes in grid size at most two: no rectangle is
 fully blocked. -/

@@ -16,7 +16,7 @@ public import TauCeti.KnotTheory.Grid.Diagram.Basic
 
 This file adds the first rectangle API for the grid-combinatorial lane of the Heegaard Floer
 roadmap. The grid lives on a torus, so the basic one-dimensional ingredient is the circular
-interval in `Fin n`. A grid rectangle carries two finite square sets built from such intervals:
+interval in `Fin n`. A grid rectangle carries two finite coordinate sets built from such intervals:
 its `interior`, the product of two open intervals, records the grid points strictly inside and
 is what a grid state must avoid for the rectangle to be empty; its `squares`, the product of
 two half-open intervals, records the region the rectangle covers and is what must avoid the
@@ -50,11 +50,12 @@ finite-set disjointness conditions used for empty rectangles and marking-avoidin
 ## References
 
 This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
-`HeegaardFloer/README.md` in TauCetiRoadmap. Lane G.1, "Grid diagrams and grid states",
-asks for rectangles and empty rectangles `Rect°(x, y)`, and Lane G.3, "The complexes and
-`∂² = 0`", uses the opposite-rectangle bookkeeping in the rectangle-pairing arguments. The
+`CombinatorialHeegaardFloer/README.md` in TauCetiRoadmap. Lane G.1, "Grid diagrams and grid
+states", asks for rectangles and empty rectangles `Rect°(x, y)`, and Lane G.3, "The complexes
+and `∂² = 0`", uses the opposite-rectangle bookkeeping in the rectangle-pairing arguments. The
 encoding follows the toroidal grid-diagram convention from Ozsváth--Stipsicz--Szabó, *Grid
-Homology for Knots and Links*, Chapter 3.
+Homology for Knots and Links*, Chapter 3; the marking-avoidance region follows Definition 4.1.1
+and Chapter 4.6.
 -/
 
 @[expose] public section
@@ -152,7 +153,7 @@ theorem bottom_notMem_rowInterior : R.bottom ∉ R.rowInterior := by
 theorem top_notMem_rowInterior : R.top ∉ R.rowInterior := by
   simp [rowInterior]
 
-/-- The finite set of squares strictly inside a toroidal grid rectangle. -/
+/-- The finite set of grid points strictly inside a toroidal grid rectangle. -/
 noncomputable def interior : Finset (Fin n × Fin n) :=
   R.columnInterior ×ˢ R.rowInterior
 
@@ -180,7 +181,7 @@ theorem interior_eq_empty_of_bottom_eq_top (h : R.bottom = R.top) : R.interior =
   ext p
   simp [interior, rowInterior, h]
 
-/-- The number of interior squares is the product of the numbers of interior columns and
+/-- The number of interior grid points is the product of the numbers of interior columns and
 interior rows. -/
 @[simp]
 theorem card_interior :
@@ -192,13 +193,15 @@ theorem interior_eq_empty_of_le_two (hn : n ≤ 2) (R : GridRectangle n) : R.int
   ext p
   simp [interior, columnInterior, Grid.cIoo_eq_empty_of_le_two hn R.left R.right]
 
-/-- The columns of squares a toroidal grid rectangle covers: the initial side together with the
-strictly interior columns, each column of squares named by its initial grid line. -/
+/-- The columns of squares a toroidal grid rectangle covers. For distinct sides this is the
+initial side together with the strictly interior columns, each column of squares named by its
+initial grid line; for coincident sides it is empty. -/
 noncomputable def columnSquares : Finset (Fin n) :=
   Grid.cIco R.left R.right
 
-/-- The rows of squares a toroidal grid rectangle covers: the initial side together with the
-strictly interior rows, each row of squares named by its initial grid line. -/
+/-- The rows of squares a toroidal grid rectangle covers. For distinct sides this is the initial
+side together with the strictly interior rows, each row of squares named by its initial grid
+line; for coincident sides it is empty. -/
 noncomputable def rowSquares : Finset (Fin n) :=
   Grid.cIco R.bottom R.top
 
@@ -221,7 +224,8 @@ lower-left grid point.
 
 Where `interior` records the grid points strictly inside the rectangle — what a grid state must
 avoid for the rectangle to be empty — `squares` records the region the rectangle covers, which
-is what contains or avoids the `O` and `X` markings placed in the squares of a grid diagram. -/
+is what contains or avoids the `O` and `X` markings placed in the squares of a grid diagram. If
+either pair of sides coincides, the covered set is empty. -/
 noncomputable def squares : Finset (Fin n × Fin n) :=
   R.columnSquares ×ˢ R.rowSquares
 
@@ -231,13 +235,6 @@ intervals. -/
 theorem mem_squares (p : Fin n × Fin n) :
     p ∈ R.squares ↔ p.1 ∈ R.columnSquares ∧ p.2 ∈ R.rowSquares := by
   simp [squares]
-
-/-- The grid points strictly inside a rectangle name a subset of the squares it covers. -/
-theorem interior_subset_squares : R.interior ⊆ R.squares := by
-  intro p hp
-  rw [mem_interior] at hp
-  rw [mem_squares, mem_columnSquares, mem_rowSquares]
-  exact ⟨Grid.cIoo_subset_cIco _ _ hp.1, Grid.cIoo_subset_cIco _ _ hp.2⟩
 
 /-- A rectangle is empty for a grid state when the state has no point in its interior. -/
 def IsEmptyFor (x : GridState n) : Prop :=
@@ -511,6 +508,13 @@ theorem all_self (x : GridState n) : all x x = ∅ := by
 /-- The initial lower corner is a point of the source state. -/
 theorem left_bottom_mem_source : (R.left, R.bottom) ∈ x.pointSet := by
   simp [bottom]
+
+/-- The associated rectangle covers its initial lower square. -/
+theorem left_bottom_mem_squares :
+    (R.left, R.bottom) ∈ R.toGridRectangle.squares := by
+  rw [GridRectangle.mem_squares, GridRectangle.mem_columnSquares,
+    GridRectangle.mem_rowSquares]
+  exact ⟨Grid.left_mem_cIco R.left_ne_right, Grid.left_mem_cIco R.bottom_ne_top⟩
 
 /-- The terminal upper corner is a point of the source state. -/
 theorem right_top_mem_source : (R.right, R.top) ∈ x.pointSet := by

@@ -12,11 +12,17 @@ public import TauCeti.KnotTheory.Grid.Diagram.Basic
 
 This file adds the `180°` rotation of the toroidal grid to the grid-combinatorial lane of the
 Heegaard Floer roadmap, alongside the already-developed diagonal reflection (`transpose`) and
-marking swap (`swapMarkings`). Rotation reverses both the column and the row coordinate, so on
-grid squares it is the map `(c, r) ↦ (cᵒ, rᵒ)` with `·ᵒ = Fin.rev`. It is the composition of the
-column and row relabelings by the coordinate reversal `Fin.revPerm`, so it reuses the existing
-relabeling API rather than introducing a new primitive. It carries a grid state to a grid state
-and a grid diagram to a grid diagram.
+marking swap (`swapMarkings`). Rotation reverses both the column and the row coordinate by the
+map `(c, r) ↦ (cᵒ, rᵒ)` with `·ᵒ = Fin.rev`. It is the composition of the column and row
+relabelings by the coordinate reversal `Fin.revPerm`, so it reuses the existing relabeling API
+rather than introducing a new primitive. It carries a grid state to a grid state and a grid
+diagram to a grid diagram.
+
+In the coordinate convention used here, `GridState.rotate` reverses grid-point coordinates,
+whereas `GridDiagram.rotate` reverses the lower-left-coordinate names of marking squares. These
+are half-turns about different centres on the torus. Thus the paired operations preserve the
+grading results below but not marking avoidance, and do not give a symmetry of the fully blocked
+complex.
 
 Only the basic state/diagram operation and its point-set lemmas live here, parallel to where
 `transpose` is developed; the invariance of the `J`-function under coordinate reversal is in
@@ -53,7 +59,7 @@ namespace TauCeti
 
 variable {n : ℕ}
 
-/-- Reversing both coordinates of a grid square twice returns the original square. -/
+/-- Reversing both coordinates of a coordinate pair twice returns the original pair. -/
 private theorem rev2_rev2 (p : Fin n × Fin n) :
     Prod.map Fin.rev Fin.rev (Prod.map Fin.rev Fin.rev p) = p := by
   obtain ⟨a, b⟩ := p
@@ -82,7 +88,7 @@ namespace GridState
 
 /-- The half-turn rotation of a grid state.
 
-Rotating the occupied squares by `180°` reverses both the column and the row coordinate. It is
+Rotating the occupied grid points by `180°` reverses both the column and the row coordinate. It is
 the composition of the column and row relabelings by the coordinate reversal `Fin.revPerm`. -/
 def rotate (x : GridState n) : GridState n :=
   (x.relabelColumns Fin.revPerm).relabelRows Fin.revPerm
@@ -171,7 +177,9 @@ variable {n : ℕ} (G : GridDiagram n)
 
 It is the composition of the column and row relabelings by the coordinate reversal `Fin.revPerm`,
 applied to both marking states at once. Each relabeling is again a grid diagram, so rotation
-preserves the condition that no square carries both an `O` and an `X` marking. -/
+preserves the condition that no square carries both an `O` and an `X` marking. Here `Fin.rev`
+acts on the lower-left-coordinate names of marking squares, so this operation and
+`GridState.rotate` do not together preserve marking avoidance. -/
 def rotate (G : GridDiagram n) : GridDiagram n :=
   (G.relabelColumns Fin.revPerm).relabelRows Fin.revPerm
 

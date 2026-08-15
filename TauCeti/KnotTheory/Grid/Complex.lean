@@ -51,56 +51,27 @@ abbrev GridChain (R : Type*) [Zero R] (n : ℕ) :=
 
 namespace GridChain
 
-/-- The linear automorphism of grid chains induced by relabeling each generator `x` along an
-equivalence `e` of grid states, sending the generator `x` to the generator `e x`.
-
-The transpose relabeling below is the special case in which `e` is the permutation of grid
-states coming from the diagonal-reflection involution. This is an implementation helper that
-factors that equivalence; it is private because no downstream consumer refers to it. -/
-private noncomputable def relabelEquiv {R : Type*} [Semiring R] {n : ℕ}
-    (e : GridState n ≃ GridState n) :
-    GridChain R n ≃ₗ[R] GridChain R n :=
-  Finsupp.domLCongr e
-
-/-- The relabeling along `e` sends the generator `x` to the generator `e x`. -/
-private theorem relabelEquiv_single {R : Type*} [Semiring R] {n : ℕ}
-    (e : GridState n ≃ GridState n) (x : GridState n) (a : R) :
-    relabelEquiv e (Finsupp.single x a) = Finsupp.single (e x) a :=
-  Finsupp.domLCongr_single e x a
-
-/-- The `y`-coefficient of a relabeled chain is the `e.symm y`-coefficient of the original
-chain. -/
-private theorem relabelEquiv_apply {R : Type*} [Semiring R] {n : ℕ} (e : GridState n ≃ GridState n)
-    (f : GridChain R n) (y : GridState n) : relabelEquiv e f y = f (e.symm y) := by
-  rw [relabelEquiv, Finsupp.domLCongr_apply]
-  exact Finsupp.equivMapDomain_apply _ _ _
-
-/-- The inverse of the relabeling along `e` is the relabeling along `e.symm`. -/
-private theorem relabelEquiv_symm {R : Type*} [Semiring R] {n : ℕ} (e : GridState n ≃ GridState n) :
-    (relabelEquiv (R := R) e).symm = relabelEquiv e.symm := by
-  unfold relabelEquiv
-  rw [Finsupp.domLCongr_symm]
-
 /-- The linear automorphism of grid chains induced by the diagonal reflection of grid states.
 
 Because `GridState.transpose` is an involution, relabeling each generator `x` by `x.transpose`
 gives a linear automorphism of the chain module `GridChain R n`. -/
 noncomputable def transposeEquiv (R : Type*) [Semiring R] (n : ℕ) :
     GridChain R n ≃ₗ[R] GridChain R n :=
-  relabelEquiv (Function.Involutive.toPerm _ GridState.transpose_transpose)
+  Finsupp.domLCongr (Function.Involutive.toPerm _ GridState.transpose_transpose)
 
 /-- The transpose relabeling sends the generator `x` to the generator `x.transpose`. -/
 @[simp]
 theorem transposeEquiv_single {R : Type*} [Semiring R] {n : ℕ} (x : GridState n) (a : R) :
     transposeEquiv R n (Finsupp.single x a) = Finsupp.single x.transpose a :=
-  relabelEquiv_single _ x a
+  Finsupp.domLCongr_single _ x a
 
 /-- The `y`-coefficient of a relabeled chain is the `y.transpose`-coefficient of the original
 chain. -/
 @[simp]
 theorem transposeEquiv_apply {R : Type*} [Semiring R] {n : ℕ} (f : GridChain R n)
-    (y : GridState n) : transposeEquiv R n f y = f y.transpose :=
-  relabelEquiv_apply _ f y
+    (y : GridState n) : transposeEquiv R n f y = f y.transpose := by
+  rw [transposeEquiv, Finsupp.domLCongr_apply]
+  exact Finsupp.equivMapDomain_apply _ _ _
 
 /-- The transpose relabeling is its own inverse: since `GridState.transpose` is an involution, the
 inverse automorphism is again `transposeEquiv`. This lets the forward lemmas
@@ -109,7 +80,7 @@ inverse automorphism is again `transposeEquiv`. This lets the forward lemmas
 theorem transposeEquiv_symm {R : Type*} [Semiring R] {n : ℕ} :
     (transposeEquiv R n).symm = transposeEquiv R n := by
   unfold transposeEquiv
-  rw [relabelEquiv_symm,
+  rw [Finsupp.domLCongr_symm,
     Function.Involutive.toPerm_symm GridState.transpose_transpose]
 
 end GridChain

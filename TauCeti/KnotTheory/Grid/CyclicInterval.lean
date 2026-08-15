@@ -38,10 +38,11 @@ directions before taking products.
 
 ## References
 
-This supplies a prerequisite for `TauCetiRoadmap/HeegaardFloer/README.md`, Lane G.3, "The
-complexes and `∂² = 0`", where the annular cases in the juxtaposition proof use the fact that
-the two complementary cyclic intervals partition the non-endpoint columns or rows. The
-terminology follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 3.
+This supplies a prerequisite for `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane
+G.3, "The complexes and `∂² = 0`", where the annular cases in the juxtaposition proof use the
+fact that the two complementary cyclic intervals partition the non-endpoint columns or rows.
+The terminology follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
+Chapter 3.
 -/
 
 public section
@@ -136,11 +137,6 @@ noncomputable def cIco (a b : Fin n) : Finset (Fin n) :=
 theorem cIco_self (a : Fin n) : cIco a a = ∅ := by
   simp [cIco]
 
-/-- For distinct endpoints, the half-open cyclic interval is the initial endpoint together with
-the open cyclic interval. -/
-theorem cIco_of_ne {a b : Fin n} (h : a ≠ b) : cIco a b = insert a (cIoo a b) := by
-  simp [cIco, h]
-
 /-- Membership in a clockwise half-open cyclic interval: the endpoints are distinct, and the
 point is the initial endpoint or lies strictly between. -/
 @[simp]
@@ -148,27 +144,11 @@ theorem mem_cIco {a b x : Fin n} : x ∈ cIco a b ↔ a ≠ b ∧ (x = a ∨ x �
   rw [cIco]
   by_cases h : a = b <;> simp [h]
 
-/-- The open cyclic interval is contained in the half-open cyclic interval with the same
-endpoints. -/
-theorem cIoo_subset_cIco (a b : Fin n) : cIoo a b ⊆ cIco a b := by
-  intro x hx
-  have hab : a ≠ b := ((mem_cIoo a b x).mp hx).1
-  rw [mem_cIco]
-  exact ⟨hab, Or.inr hx⟩
-
 /-- The initial endpoint belongs to its half-open cyclic interval when the endpoints are
 distinct. -/
 theorem left_mem_cIco {a b : Fin n} (h : a ≠ b) : a ∈ cIco a b := by
   rw [mem_cIco]
   exact ⟨h, Or.inl rfl⟩
-
-/-- The terminal endpoint is not in its half-open cyclic interval. -/
-theorem right_notMem_cIco (a b : Fin n) : b ∉ cIco a b := by
-  intro hb
-  rw [mem_cIco] at hb
-  rcases hb.2 with hba | hb'
-  · exact hb.1 hba.symm
-  · exact right_notMem_cIoo a b hb'
 
 /-- Two oriented cyclic intervals have non-interleaving endpoint pairs.
 
@@ -329,12 +309,6 @@ theorem cIoo_eq_empty_of_le_two (hn : n ≤ 2) (a b : Fin n) : cIoo a b = ∅ :=
     have hsum := card_cIoo_add_card_cIoo_swap hab
     have hcard : (cIoo a b).card = 0 := by omega
     exact hcard
-
-/-- In a grid of size at most two, the half-open cyclic interval between distinct endpoints is
-the singleton of its initial endpoint. -/
-theorem cIco_of_le_two (hn : n ≤ 2) {a b : Fin n} (h : a ≠ b) : cIco a b = {a} := by
-  rw [cIco_of_ne h, cIoo_eq_empty_of_le_two hn a b]
-  simp
 
 /-- A clockwise open cyclic interval reversed by `Fin.rev` is the clockwise open cyclic interval
 with the two endpoints reversed and exchanged.
