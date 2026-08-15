@@ -19,10 +19,9 @@ that a consumer never has to unfold `hermiteFunctionPiBasis` to expand a functio
 variables in Hermite functions. It is the `Fintype`-indexed analogue of
 `TauCeti.tsum_norm_sq_inner_hermiteFunctionLp` and its neighbours.
 
-Beyond the transported one-dimensional statements there is one genuinely multidimensional lemma,
-`TauCeti.hermiteFunctionPiBasis_repr_L2piMul`: on a function that is itself a product, the
-multi-index coordinates are the products of the one-dimensional Hermite coordinates. It is the
-coordinate form of the tensor inner-product identity `TauCeti.inner_L2piMul`.
+At this arity the file additionally gives the coordinate as an integral, proves that its integrand
+is integrable, and specializes `TauCeti.piHilbertBasis_repr_L2piMul` to show that the coordinates
+of a product are the products of the one-dimensional Hermite coordinates.
 
 ## Main statements
 
@@ -65,10 +64,10 @@ theorem integrable_prod_hermiteFunction_mul
     (f : Lp 𝕜 2 (Measure.pi fun _ : ι => (volume : Measure ℝ))) (a : ι → ℕ) :
     Integrable (fun x : ι → ℝ => (∏ i, (algebraMap ℝ 𝕜) (hermiteFunction (a i) (x i))) * f x)
       (Measure.pi fun _ : ι => (volume : Measure ℝ)) := by
-  refine (MeasureTheory.L2.integrable_inner (𝕜 := 𝕜) (hermiteFunctionPiBasis 𝕜 ι a) f).congr ?_
-  filter_upwards [coeFn_hermiteFunctionPiBasis 𝕜 ι a] with x hx
-  rw [hx]
-  simp [RCLike.algebraMap_eq_ofReal, map_prod, mul_comm]
+  refine (integrable_L2piMul_mul (fun i => hermiteFunctionLp 𝕜 (a i)) f).congr ?_
+  filter_upwards [coeFn_L2piMul (fun i => hermiteFunctionLp 𝕜 (a i)),
+    coeFn_hermiteFunctionPiBasis 𝕜 ι a] with x hprod hexplicit
+  rw [← hprod, ← hermiteFunctionPiBasis_apply, hexplicit]
 
 /-- The `a`-th multi-index Hermite coordinate of `f`, as an integral of `f` against the product
 `∏ᵢ ψ_{aᵢ}(xᵢ)`. The Hermite functions are real, so no complex conjugate survives. -/
@@ -91,7 +90,16 @@ theorem hermiteFunctionPiBasis_repr_L2piMul
     (F : ι → Lp 𝕜 2 (volume : Measure ℝ)) (a : ι → ℕ) :
     (hermiteFunctionPiBasis 𝕜 ι).repr (L2piMul F) a
       = ∏ i, inner 𝕜 (hermiteFunctionLp 𝕜 (a i)) (F i) := by
-  rw [hermiteFunctionPiBasis_repr_apply, inner_L2piMul]
+  rw [HilbertBasis.repr_apply_apply, hermiteFunctionPiBasis_apply]
+  calc
+    inner 𝕜 (L2piMul fun i => hermiteFunctionLp 𝕜 (a i)) (L2piMul F)
+        = ∏ i, (hermiteHilbertBasis 𝕜).repr (F i) (a i) := by
+          simpa only [HilbertBasis.repr_apply_apply, piHilbertBasis_apply,
+            coe_hermiteHilbertBasis] using
+              piHilbertBasis_repr_L2piMul (fun _ : ι => hermiteHilbertBasis 𝕜) F a
+    _ = ∏ i, inner 𝕜 (hermiteFunctionLp 𝕜 (a i)) (F i) :=
+      Finset.prod_congr rfl fun i _ => by
+        rw [HilbertBasis.repr_apply_apply, coe_hermiteHilbertBasis]
 
 /-- **Parseval's identity for the multi-index Hermite basis** (polarized form): the multi-index
 Hermite coordinates of `f` and `g` pair to their inner product. -/

@@ -21,16 +21,15 @@ form of a chaos expansion. It is the `Fintype`-indexed analogue of
 As in one dimension the coefficient has no name of its own: it is spelled out as the integral
 against `∏ᵢ H_{aᵢ}/√(aᵢ!)`, and the Parseval-side lemmas are named after that integral.
 
-Two lemmas are genuinely multidimensional rather than transported. The coordinate theorem
-`TauCeti.gaussianHermitePiBasis_repr_apply` writes the abstract `HilbertBasis.repr` coordinate as
-an integral over `ℝ^ι`, and `TauCeti.gaussianHermitePiBasis_repr_L2piMul` factors the coordinates
-of a product function into the one-dimensional coordinates of its factors — the coordinate form of
-the tensor inner-product identity `TauCeti.inner_L2piMul`.
+At this arity the file additionally gives the coordinate as an integral, proves that its integrand
+is integrable, and specializes `TauCeti.piHilbertBasis_repr_L2piMul` to factor the coordinates of a
+product function into the one-dimensional coordinates of its factors.
 
 ## Main statements
 
 * `TauCeti.gaussianHermitePiBasis_repr_apply` identifies each coordinate with its integral, whose
-  integrand is integrable by `TauCeti.integrable_prod_hermite_div_sqrt_factorial_mul`.
+  integrand is integrable by
+  `TauCeti.integrable_prod_hermite_div_sqrt_factorial_mul_pi_gaussianReal`.
 * `TauCeti.gaussianHermitePiBasis_repr_L2piMul` factors the coordinates of a product function.
 * `TauCeti.tsum_norm_sq_integral_prod_hermite_mul_pi_gaussianReal` is Parseval's identity for those
   coefficients.
@@ -53,20 +52,19 @@ variable {𝕜 : Type*} [RCLike 𝕜] {ι : Type*} [Fintype ι]
 
 /-- The integrand of the coordinate integral below is integrable: it is the pointwise inner product
 of two `L²` functions. -/
-theorem integrable_prod_hermite_div_sqrt_factorial_mul
+theorem integrable_prod_hermite_div_sqrt_factorial_mul_pi_gaussianReal
     (f : Lp 𝕜 2 (Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ))) (a : ι → ℕ) :
     Integrable (fun x : ι → ℝ => (∏ i, (algebraMap ℝ 𝕜)
       (aeval (x i) (hermite (a i)) / Real.sqrt ((a i).factorial : ℝ))) * f x)
         (Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ)) := by
-  refine (MeasureTheory.L2.integrable_inner (𝕜 := 𝕜) (gaussianHermitePiBasis 𝕜 ι a) f).congr ?_
-  filter_upwards [coeFn_gaussianHermitePiBasis 𝕜 ι a] with x hx
-  rw [hx]
-  simp [RCLike.algebraMap_eq_ofReal, map_prod, mul_comm]
+  refine (integrable_L2piMul_mul (fun i => gaussianHermiteHilbertBasis 𝕜 (a i)) f).congr ?_
+  filter_upwards [coeFn_L2piMul (fun i => gaussianHermiteHilbertBasis 𝕜 (a i)),
+    coeFn_gaussianHermitePiBasis 𝕜 ι a] with x hprod hexplicit
+  rw [← hprod, ← gaussianHermitePiBasis_apply, hexplicit]
 
 /-- The `a`-th multivariate Gaussian Hermite coordinate of `f` is the integral of `f` against the
 normalized multi-index Hermite product `∏ᵢ H_{aᵢ}(xᵢ)/√(aᵢ!)`. The polynomials are real, so no
 complex conjugate survives. -/
-@[simp]
 theorem gaussianHermitePiBasis_repr_apply
     (f : Lp 𝕜 2 (Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ))) (a : ι → ℕ) :
     (gaussianHermitePiBasis 𝕜 ι).repr f a
@@ -89,9 +87,14 @@ theorem gaussianHermitePiBasis_repr_L2piMul
       = ∏ i, ∫ x : ℝ, (algebraMap ℝ 𝕜)
           (aeval x (hermite (a i)) / Real.sqrt ((a i).factorial : ℝ)) * F i x
             ∂(gaussianReal 0 1) := by
-  rw [(gaussianHermitePiBasis 𝕜 ι).repr_apply_apply, gaussianHermitePiBasis_apply, inner_L2piMul]
-  exact Finset.prod_congr rfl fun i _ => by
-    rw [← HilbertBasis.repr_apply_apply, gaussianHermiteHilbertBasis_repr_apply]
+  rw [HilbertBasis.repr_apply_apply, gaussianHermitePiBasis_apply]
+  calc
+    inner 𝕜 (L2piMul fun i => gaussianHermiteHilbertBasis 𝕜 (a i)) (L2piMul F)
+        = ∏ i, (gaussianHermiteHilbertBasis 𝕜).repr (F i) (a i) := by
+          simpa only [HilbertBasis.repr_apply_apply, piHilbertBasis_apply] using
+            piHilbertBasis_repr_L2piMul (fun _ : ι => gaussianHermiteHilbertBasis 𝕜) F a
+    _ = _ := Finset.prod_congr rfl fun i _ => by
+      rw [gaussianHermiteHilbertBasis_repr_apply]
 
 /-- **Parseval's identity for the multivariate Gaussian Hermite basis.** The squared coefficients
 of `f` against the multi-index Hermite products sum to `‖f‖²`. -/
@@ -119,9 +122,10 @@ theorem hasSum_gaussianHermitePi_expansion
     (f : Lp 𝕜 2 (Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ))) :
     HasSum (fun a : ι → ℕ =>
       (∫ x : ι → ℝ, (∏ i, (algebraMap ℝ 𝕜)
-        (aeval (x i) (hermite (a i)) / Real.sqrt ((a i).factorial : ℝ))) * f x
+          (aeval (x i) (hermite (a i)) / Real.sqrt ((a i).factorial : ℝ))) * f x
           ∂(Measure.pi fun _ : ι => (gaussianReal 0 1 : Measure ℝ))) •
-            gaussianHermitePiBasis 𝕜 ι a) f := by
-  simpa only [gaussianHermitePiBasis_repr_apply] using (gaussianHermitePiBasis 𝕜 ι).hasSum_repr f
+            L2piMul fun i => gaussianHermiteHilbertBasis 𝕜 (a i)) f := by
+  simpa only [gaussianHermitePiBasis_repr_apply, gaussianHermitePiBasis_apply] using
+    (gaussianHermitePiBasis 𝕜 ι).hasSum_repr f
 
 end TauCeti
