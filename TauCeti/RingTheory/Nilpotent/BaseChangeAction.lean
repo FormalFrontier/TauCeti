@@ -350,7 +350,6 @@ noncomputable def baseChangeExpHom (x : A) (M : S)
 
 /-- The linear map underlying the base-changed one-parameter subgroup is the corresponding
 divided-power exponential. -/
-@[simp]
 theorem baseChangeExpHom_toLinearMap (x : A) (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
     (t : Multiplicative R) :
@@ -368,7 +367,6 @@ theorem baseChangeExpHom_apply (x : A) (M : S)
   (rfl)
 
 /-- Coercing `baseChangeExpHom` to a function yields `baseChangeExp`. -/
-@[simp]
 theorem coe_baseChangeExpHom (x : A) (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
     (t : Multiplicative R) :
