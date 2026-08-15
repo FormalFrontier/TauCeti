@@ -69,8 +69,9 @@ The core of the file is the lattice-level and weight-level content:
 
 ## Main results
 
-* `TauCeti.PlumbingGraph.blowUpEdge_degree_none`: the new vertex has degree two and framing `-1`,
-  matching the local configuration of Neumann's degree-two blow-down move.
+* `TauCeti.PlumbingGraph.blowUpEdge_weight_none`: the new vertex has framing `-1`.
+* `TauCeti.PlumbingGraph.blowUpEdge_degree_none`: the new vertex has degree two, matching (together
+  with framing `-1`) the local configuration of Neumann's degree-two blow-down move.
 * `TauCeti.PlumbingGraph.intersectionForm_blowUpEdgeEquiv`: the blown-up intersection form is the
   orthogonal direct sum of the original form with `⟨-1⟩`.
 * `TauCeti.PlumbingGraph.sum_blowUpEdgeCovectorEquiv_mul_blowUpEdgeEquiv`: duality of the two
@@ -324,6 +325,7 @@ theorem blowUpEdge_degree_none [Fintype V] (u v : V) (h : P.toSimpleGraph.Adj u 
   rw [SimpleGraph.degree, hset, Finset.card_pair hne']
 
 /-- The exceptional sphere has self-intersection `-1`. -/
+@[simp]
 theorem blowUpEdge_intersectionMatrix_none_none (u v : V) (_h : P.toSimpleGraph.Adj u v) :
     (P.blowUpEdge u v _h).intersectionMatrix none none = -1 := by
   rw [intersectionMatrix_diag, blowUpEdge_weight_none]
@@ -454,6 +456,7 @@ theorem blowUpEdgeCovectorEquiv_symm_apply (u v : V) (k : Option V → ℤ) :
 
 /-- The canonical characteristic covector of the edge blow-up is the canonical characteristic
 covector of `P` carrying `-1` on the exceptional class. -/
+@[simp]
 theorem blowUpEdgeCovectorEquiv_canonicalCharacteristic (u v : V)
     (_h : P.toSimpleGraph.Adj u v) :
     blowUpEdgeCovectorEquiv u v (P.canonicalCharacteristic, -1) =
@@ -520,6 +523,7 @@ theorem blowUpEdgeCharacteristic_val (u v : V) (h : P.toSimpleGraph.Adj u v)
 
 /-- The canonical characteristic covector of an edge blow-up is the canonical characteristic
 covector of `P` with `-1` on the exceptional class. -/
+@[simp]
 theorem blowUpEdgeCharacteristic_canonicalCharacteristic (u v : V)
     (h : P.toSimpleGraph.Adj u v) :
     P.blowUpEdgeCharacteristic u v h
@@ -537,6 +541,21 @@ section Lattice
 
 variable [Fintype V]
 
+/-- Sum of a function supported on two distinct elements `u` and `v`. -/
+private theorem sum_ite_or_eq (u v : V) (hne : u ≠ v) (f : V → ℤ) :
+    ∑ w : V, (if w = u ∨ w = v then f w else 0) = f u + f v := by
+  have h_cases : ∀ w : V, (if w = u ∨ w = v then f w else 0) =
+      (if w = u then f w else 0) + (if w = v then f w else 0) := by
+    intro w
+    by_cases hwu : w = u
+    · subst hwu; simp [hne]
+    · by_cases hwv : w = v
+      · subst hwv; simp [hwu]
+      · simp [hwu, hwv]
+  simp_rw [h_cases, Finset.sum_add_distrib]
+  rw [Finset.sum_ite_eq' Finset.univ u f, Finset.sum_ite_eq' Finset.univ v f]
+  simp
+
 /-- The `none`-coordinate of the image of a lifted lattice point under the edge-blown-up
 intersection matrix. -/
 private theorem blowUpEdge_mulVec_apply_none (u v : V) (h : P.toSimpleGraph.Adj u v)
@@ -545,20 +564,7 @@ private theorem blowUpEdge_mulVec_apply_none (u v : V) (h : P.toSimpleGraph.Adj 
   rw [Matrix.mulVec_apply_eq_sum, Fintype.sum_option]
   simp only [blowUpEdge_intersectionMatrix_none_none, blowUpEdge_intersectionMatrix_none_some,
     blowUpEdgeEquiv_apply_none, blowUpEdgeEquiv_apply_some, ite_mul, one_mul, zero_mul]
-  have hsum : ∑ w : V, (if w = u ∨ w = v then y w else 0) = y u + y v := by
-    have hne : u ≠ v := h.ne
-    have h_cases : ∀ w : V, (if w = u ∨ w = v then y w else 0) =
-        (if w = u then y w else 0) + (if w = v then y w else 0) := by
-      intro w
-      by_cases hwu : w = u
-      · subst hwu; simp [hne]
-      · by_cases hwv : w = v
-        · subst hwv; simp [hwu]
-        · simp [hwu, hwv]
-    simp_rw [h_cases, Finset.sum_add_distrib]
-    rw [Finset.sum_ite_eq' Finset.univ u y, Finset.sum_ite_eq' Finset.univ v y]
-    simp
-  rw [hsum]
+  rw [sum_ite_or_eq u v h.ne y]
   ring
 
 /-- The `some`-coordinates of the image of a lifted lattice point under the edge-blown-up
@@ -581,18 +587,8 @@ private theorem blowUpEdge_mulVec_apply_some (u v : V) (h : P.toSimpleGraph.Adj 
     blowUpEdgeEquiv_apply_none, blowUpEdgeEquiv_apply_some, hsplit]
   rw [Finset.sum_sub_distrib, ← Finset.mul_sum, Matrix.mulVec_apply_eq_sum]
   have hsum : ∑ w' : V, (if w' = u ∨ w' = v then (1 : ℤ) else 0) * y w' = y u + y v := by
-    have hne : u ≠ v := h.ne
-    have h_cases : ∀ w' : V, (if w' = u ∨ w' = v then (1 : ℤ) else 0) * y w' =
-        (if w' = u then y w' else 0) + (if w' = v then y w' else 0) := by
-      intro w'
-      by_cases hwu : w' = u
-      · subst hwu; simp [hne]
-      · by_cases hwv : w' = v
-        · subst hwv; simp [hwu]
-        · simp [hwu, hwv]
-    simp_rw [h_cases, Finset.sum_add_distrib]
-    rw [Finset.sum_ite_eq' Finset.univ u y, Finset.sum_ite_eq' Finset.univ v y]
-    simp
+    simp_rw [ite_mul, one_mul, zero_mul]
+    exact sum_ite_or_eq u v h.ne y
   rw [hsum]
   split_ifs <;> ring
 
@@ -617,22 +613,7 @@ theorem intersectionForm_blowUpEdgeEquiv (u v : V) (h : P.toSimpleGraph.Adj u v)
     Matrix.toBilin'_apply', hdotOpt, hdotV, Fintype.sum_option]
   simp only [blowUpEdgeEquiv_apply_none, blowUpEdgeEquiv_apply_some,
     P.blowUpEdge_mulVec_apply_none u v h y t, P.blowUpEdge_mulVec_apply_some u v h y t, hterm]
-  have hsum : ∑ w : V, (if w = u ∨ w = v then x w * t else 0) = (x u + x v) * t := by
-    have hne : u ≠ v := h.ne
-    have h_cases : ∀ w : V, (if w = u ∨ w = v then x w * t else 0) =
-        (if w = u then x w * t else 0) + (if w = v then x w * t else 0) := by
-      intro w
-      by_cases hwu : w = u
-      · subst hwu; simp [hne]
-      · by_cases hwv : w = v
-        · subst hwv; simp [hwu]
-        · simp [hwu, hwv]
-    simp_rw [h_cases, Finset.sum_add_distrib]
-    rw [Finset.sum_ite_eq' Finset.univ u fun w => x w * t,
-      Finset.sum_ite_eq' Finset.univ v fun w => x w * t]
-    simp only [Finset.mem_univ, ite_true]
-    ring
-  rw [Finset.sum_add_distrib, hsum]
+  rw [Finset.sum_add_distrib, sum_ite_or_eq u v h.ne fun w => x w * t]
   ring
 
 /-- The two total-transform identifications are dual to one another: the pairing of the lifted
@@ -644,21 +625,7 @@ theorem sum_blowUpEdgeCovectorEquiv_mul_blowUpEdgeEquiv (u v : V) (hne : u ≠ v
   rw [Fintype.sum_option]
   simp only [blowUpEdgeCovectorEquiv_apply_none, blowUpEdgeCovectorEquiv_apply_some,
     blowUpEdgeEquiv_apply_none, blowUpEdgeEquiv_apply_some, sub_mul, ite_mul, zero_mul]
-  have hsum : ∑ w : V, (if w = u ∨ w = v then ε * x w else 0) = ε * (x u + x v) := by
-    have h_cases : ∀ w : V, (if w = u ∨ w = v then ε * x w else 0) =
-        (if w = u then ε * x w else 0) + (if w = v then ε * x w else 0) := by
-      intro w
-      by_cases hwu : w = u
-      · subst hwu; simp [hne]
-      · by_cases hwv : w = v
-        · subst hwv; simp [hwu]
-        · simp [hwu, hwv]
-    simp_rw [h_cases, Finset.sum_add_distrib]
-    rw [Finset.sum_ite_eq' Finset.univ u fun w => ε * x w,
-      Finset.sum_ite_eq' Finset.univ v fun w => ε * x w]
-    simp only [Finset.mem_univ, ite_true]
-    ring
-  rw [Finset.sum_sub_distrib, hsum]
+  rw [Finset.sum_sub_distrib, sum_ite_or_eq u v hne fun w => ε * x w]
   ring
 
 /-- The exceptional class has self-intersection `-1`. -/
@@ -830,9 +797,8 @@ private theorem a2Plumbing_adj_zero_one : a2Plumbing.toSimpleGraph.Adj 0 1 := by
   rw [a2Plumbing_intersectionMatrix] at hM
   simp [h] at hM
 
-/-- A self-validating check on the `A₂` plumbing that blowing up along its unique edge yields a
-three-vertex graph where the exceptional vertex has weight `-1` and degree two, and the
-characteristic weight at exceptional multiplicity `1` over the origin is `1`. -/
+/-- A self-validating check on the `A₂` plumbing that the characteristic weight at exceptional
+multiplicity `1` over the origin is `1`. -/
 example :
     (a2Plumbing.blowUpEdge 0 1 a2Plumbing_adj_zero_one).characteristicWeight
         (a2Plumbing.blowUpEdgeCharacteristic 0 1 a2Plumbing_adj_zero_one
@@ -844,7 +810,7 @@ example :
     ⟨a2Plumbing.canonicalCharacteristic,
       a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) (by norm_num) 0 1
   rw [PlumbingGraph.characteristicWeight_zero] at h
-  norm_num at h
+  simp only [PlumbingGraph.blowUpEdgeCharacteristic_canonicalCharacteristic] at h ⊢
   omega
 
 /-- A self-validating check on the `A₂` plumbing of the equality locus for the edge blow-up:
