@@ -80,7 +80,6 @@ theorem cocharacterLattice_smul_apply (T : MultiplicativeTypeCommHopfAlgCat k)
 
 /-- The character--cocharacter pairing is invariant under the diagonal action expressed through
 the Galois-module structures on both factors. -/
-@[simp]
 theorem characterCocharacterPairing_smul_smul (T : MultiplicativeTypeCommHopfAlgCat k)
     (σ : Field.absoluteGaloisGroup k)
     (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) (f : cocharacterLattice T) :
