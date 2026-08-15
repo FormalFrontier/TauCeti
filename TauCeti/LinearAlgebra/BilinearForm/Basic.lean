@@ -22,6 +22,9 @@ field, or over any domain, `IsRegular.of_ne_zero` supplies the hypothesis from `
 
 * `TauCeti.BilinForm.eq_zero_of_isSymm_of_isAlt`: a symmetric alternating form over a ring in which
   `2` is regular is zero.
+* `TauCeti.BilinForm.nondegenerate_smul_iff`: scalar multiplication by a nonzero element preserves
+  nondegeneracy.
+* `TauCeti.BilinForm.nondegenerate_neg_iff`: negating a bilinear form preserves nondegeneracy.
 -/
 
 public section
@@ -42,6 +45,53 @@ theorem eq_zero_of_isSymm_of_isAlt {R M : Type*} [CommRing R] [AddCommGroup M]
     rw [mul_zero]
     linear_combination hsymm.eq x y - halt.neg_eq x y
   simpa using h2 hzero
+
+/-- A scalar multiple of a bilinear form by a nonzero element of an integral domain is
+nondegenerate if and only if the original form is nondegenerate. -/
+@[simp]
+theorem nondegenerate_smul_iff {R M : Type*} [CommRing R] [IsDomain R] [AddCommGroup M]
+    [Module R M] {B : BilinForm R M} {c : R} (hc : c ≠ 0) :
+    (c • B).Nondegenerate ↔ B.Nondegenerate := by
+  constructor
+  · rintro ⟨hl, hr⟩
+    refine ⟨fun x hx ↦ hl x fun y ↦ ?_, fun y hy ↦ hr y fun x ↦ ?_⟩
+    · specialize hx y
+      simp only [LinearMap.smul_apply, smul_eq_mul, mul_eq_zero]
+      exact Or.inr hx
+    · specialize hy x
+      simp only [LinearMap.smul_apply, smul_eq_mul, mul_eq_zero]
+      exact Or.inr hy
+  · rintro ⟨hl, hr⟩
+    refine ⟨fun x hx ↦ hl x fun y ↦ ?_, fun y hy ↦ hr y fun x ↦ ?_⟩
+    · specialize hx y
+      simp only [LinearMap.smul_apply, smul_eq_mul, mul_eq_zero] at hx
+      exact hx.resolve_left hc
+    · specialize hy x
+      simp only [LinearMap.smul_apply, smul_eq_mul, mul_eq_zero] at hy
+      exact hy.resolve_left hc
+
+/-- Negating a bilinear form preserves nondegeneracy. -/
+@[simp]
+theorem nondegenerate_neg_iff {R M : Type*} [CommRing R] [AddCommGroup M]
+    [Module R M] {B : BilinForm R M} :
+    (-B).Nondegenerate ↔ B.Nondegenerate := by
+  constructor
+  · rintro ⟨hl, hr⟩
+    refine ⟨fun x hx ↦ hl x fun y ↦ ?_, fun y hy ↦ hr y fun x ↦ ?_⟩
+    · specialize hx y
+      simp only [LinearMap.neg_apply, neg_eq_zero]
+      exact hx
+    · specialize hy x
+      simp only [LinearMap.neg_apply, neg_eq_zero]
+      exact hy
+  · rintro ⟨hl, hr⟩
+    refine ⟨fun x hx ↦ hl x fun y ↦ ?_, fun y hy ↦ hr y fun x ↦ ?_⟩
+    · specialize hx y
+      simp only [LinearMap.neg_apply, neg_eq_zero] at hx
+      exact hx
+    · specialize hy x
+      simp only [LinearMap.neg_apply, neg_eq_zero] at hy
+      exact hy
 
 end BilinForm
 
