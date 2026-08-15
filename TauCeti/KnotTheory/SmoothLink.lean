@@ -104,6 +104,10 @@ theorem standard_ne_opposite : standard ≠ opposite := by
   dsimp [opposite]
   exact Module.Ray.ne_neg_self standard
 
+/-- The opposite circle orientation is distinct from the standard orientation. -/
+theorem opposite_ne_standard : opposite ≠ standard :=
+  standard_ne_opposite.symm
+
 /-- Induction principle for circle orientations. -/
 @[elab_as_elim]
 theorem induction {P : Sphere1.Orientation → Prop}
