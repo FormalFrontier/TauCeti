@@ -55,8 +55,8 @@ theorem isBaseChange_subtype (S : Submodule R V) [S.IsLattice K] :
       S.subtype := by
     apply b.ext
     intro i
-    -- The two wrapper coercions prevent the basis simp lemmas from seeing the pure tensor.
-    change e (1 ⊗ₜ[R] b i) = (b i : V)
+    simp only [LinearMap.comp_apply, LinearMap.restrictScalars_apply, TensorProduct.mk_apply,
+      LinearEquiv.coe_coe, Submodule.subtype_apply]
     rw [← Module.Basis.baseChange_apply K b i, Basis.equiv_apply,
       Basis.extendOfIsLattice_apply, Equiv.refl_apply]
   exact IsBaseChange.of_equiv e fun x ↦ DFunLike.congr_fun hmap x

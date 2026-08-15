@@ -29,10 +29,10 @@ characteristic equations.
   `ℤ` to `ℚ`.
 * `TauCeti.IntegralLattice.rationalizationEquiv`: the canonical equivalence
   `ℚ ⊗[ℤ] L ≃ₗ[ℚ] V`.
+* `TauCeti.IntegralLattice.form_rationalizationEquiv`: the base-changed integral form equals
+  the ambient form under the equivalence.
 * `TauCeti.IntegralLattice.rationalizationIsometry`: this equivalence is an isometry from
   `L.integralForm.baseChange ℚ` to `L.form`.
-* `TauCeti.IntegralLattice.rationalizationIsometry_apply`: evaluating the rationalization isometry
-  coincides with the rationalization equivalence.
 
 ## References
 
@@ -45,6 +45,36 @@ public section
 open Module TensorProduct
 
 namespace TauCeti
+
+namespace IsBaseChange
+
+variable {R : Type*} {A : Type*} {M : Type*} {N : Type*}
+variable [CommSemiring R] [CommSemiring A] [Algebra R A]
+variable [AddCommMonoid M] [Module R M]
+variable [AddCommMonoid N] [Module A N] [Module R N] [IsScalarTower R A N]
+variable {f : M →ₗ[R] N} (h : IsBaseChange A f)
+
+/-- Evaluating a bilinear form on base-changed vectors via an `IsBaseChange` equivalence
+identifies it with the canonical base change of the original bilinear form. -/
+theorem bilinForm_baseChange (B' : LinearMap.BilinForm R M) (B : LinearMap.BilinForm A N)
+    (hB : ∀ x y : M, B (f x) (f y) = algebraMap R A (B' x y)) (x y : A ⊗[R] M) :
+    B (h.equiv x) (h.equiv y) = B'.baseChange A x y := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x₁ x₂ hx₁ hx₂ =>
+    simp only [map_add, LinearMap.add_apply, hx₁, hx₂]
+  | tmul a m =>
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | add y₁ y₂ hy₁ hy₂ =>
+      simp only [map_add, hy₁, hy₂]
+    | tmul a' m' =>
+      simp only [IsBaseChange.equiv_tmul, LinearMap.BilinForm.smul_left,
+        LinearMap.BilinForm.smul_right, LinearMap.BilinForm.baseChange_tmul,
+        hB, Algebra.smul_def]
+      ring
+
+end IsBaseChange
 
 universe u
 
@@ -71,6 +101,12 @@ theorem rationalizationEquiv_tmul (L : IntegralLattice V) (q : ℚ) (x : L) :
     L.rationalizationEquiv (q ⊗ₜ[ℤ] x) = q • (x : V) :=
   L.isBaseChange_subtype.equiv_tmul q x
 
+/-- The rationalization equivalence sends a unit pure tensor to the embedded lattice vector. -/
+@[simp]
+theorem rationalizationEquiv_one_tmul (L : IntegralLattice V) (x : L) :
+    L.rationalizationEquiv (1 ⊗ₜ[ℤ] x) = (x : V) := by
+  simp
+
 /-- The inverse rationalization equivalence sends an embedded lattice vector to the corresponding
 unit pure tensor. -/
 @[simp]
@@ -83,35 +119,9 @@ canonical rationalization equivalence. -/
 @[simp]
 theorem form_rationalizationEquiv (L : IntegralLattice V) (x y : ℚ ⊗[ℤ] L) :
     L.form (L.rationalizationEquiv x) (L.rationalizationEquiv y) =
-      L.integralForm.baseChange ℚ x y := by
-  let b := (Module.Free.chooseBasis ℤ L).baseChange ℚ
-  suffices L.form.comp L.rationalizationEquiv.toLinearMap
-      L.rationalizationEquiv.toLinearMap = L.integralForm.baseChange ℚ by
-    exact LinearMap.BilinForm.congr_fun this x y
-  apply LinearMap.BilinForm.ext_basis b
-  intro i j
-  have hb (k) : b k = 1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ L k :=
-    Module.Basis.baseChange_apply ℚ _ _
-  rw [hb i, hb j, LinearMap.BilinForm.comp_apply]
-  have hi : L.rationalizationEquiv (1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ L i) =
-      (Module.Free.chooseBasis ℤ L i : V) := by
-    simpa only [one_smul] using
-      L.rationalizationEquiv_tmul 1 (Module.Free.chooseBasis ℤ L i)
-  have hj : L.rationalizationEquiv (1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ L j) =
-      (Module.Free.chooseBasis ℤ L j : V) := by
-    simpa only [one_smul] using
-      L.rationalizationEquiv_tmul 1 (Module.Free.chooseBasis ℤ L j)
-  calc
-    _ = L.form (Module.Free.chooseBasis ℤ L i)
-        (L.rationalizationEquiv (1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ L j)) :=
-      congrArg (fun z : V ↦ L.form z
-        (L.rationalizationEquiv (1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ L j))) hi
-    _ = L.form (Module.Free.chooseBasis ℤ L i) (Module.Free.chooseBasis ℤ L j) :=
-      congrArg (L.form (Module.Free.chooseBasis ℤ L i)) hj
-    _ = (L.integralForm (Module.Free.chooseBasis ℤ L i)
-        (Module.Free.chooseBasis ℤ L j) : ℚ) := (L.integralForm_cast _ _).symm
-    _ = _ := by
-      simp only [LinearMap.BilinForm.baseChange_tmul, mul_one, zsmul_eq_mul]
+      L.integralForm.baseChange ℚ x y :=
+  IsBaseChange.bilinForm_baseChange L.isBaseChange_subtype L.integralForm L.form
+    (fun x y ↦ (L.integralForm_cast x y).symm) x y
 
 /-- The canonical rationalization is an isometry from the base-changed integral form to the
 ambient rational form. -/
@@ -122,25 +132,19 @@ noncomputable def rationalizationIsometry (L : IntegralLattice V) :
 
 /-- Evaluating the rationalization isometry on a tensor product element coincides with the
 rationalization equivalence. -/
+-- BilinForm.IsometryEquiv has no toLinearEquiv lemma; definition unfolding is canonical.
 @[simp]
 theorem rationalizationIsometry_apply (L : IntegralLattice V) (x : ℚ ⊗[ℤ] L) :
     L.rationalizationIsometry x = L.rationalizationEquiv x := by
   rfl
 
-/-- The inverse rationalization isometry sends an embedded lattice vector to the corresponding
-unit pure tensor. -/
+/-- Evaluating the inverse rationalization isometry coincides with the inverse rationalization
+equivalence. -/
+-- BilinForm.IsometryEquiv has no symm_toLinearEquiv lemma; definition unfolding is canonical.
 @[simp]
-theorem rationalizationIsometry_symm_coe (L : IntegralLattice V) (x : L) :
-    L.rationalizationIsometry.symm (x : V) = 1 ⊗ₜ[ℤ] x := by
-  exact L.rationalizationEquiv_symm_coe x
-
-/-- Evaluating the ambient form on rational multiples of lattice vectors recovers the scalar
-extension formula for the integral form. -/
-theorem form_smul_coe (L : IntegralLattice V) (q r : ℚ) (x y : L) :
-    L.form (q • (x : V)) (r • (y : V)) = q * r * (L.integralForm x y : ℚ) := by
-  rw [← rationalizationEquiv_tmul, ← rationalizationEquiv_tmul,
-    form_rationalizationEquiv, LinearMap.BilinForm.baseChange_tmul, zsmul_eq_mul]
-  ring
+theorem rationalizationIsometry_symm_apply (L : IntegralLattice V) (y : V) :
+    L.rationalizationIsometry.symm y = L.rationalizationEquiv.symm y := by
+  rfl
 
 end IntegralLattice
 
