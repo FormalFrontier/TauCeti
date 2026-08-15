@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Lie.Weights.Chain
 public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 public import TauCeti.Algebra.Lie.Sl2.WeightMultiplicity
+public import TauCeti.Algebra.Lie.Weights.Chain
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.Algebra.Lie.Weights.Integrality
 public import TauCeti.LinearAlgebra.Eigenspace.Invariant
@@ -74,37 +74,6 @@ namespace TauCeti
 open LieAlgebra LieModule Module
 
 universe u v w
-
-/-! ### Cutting a weight string off at both ends -/
-
-section Ends
-
-variable {R : Type u} {L : Type v} {M : Type w} [CommRing R] [IsDomain R] [IsAddTorsionFree R]
-  [LieRing L] [LieAlgebra R L] [LieRing.IsNilpotent L]
-  [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
-  [Module.IsTorsionFree R M] [IsNoetherian R M]
-
-variable (M) in
-/-- Far enough along a nonzero direction `a`, the weight spaces `M_{k • a + χ}` vanish: a
-Noetherian module has only finitely many weights. -/
-theorem exists_lt_genWeightSpace_zsmul_add_eq_bot {a : L → R} (ha : a ≠ 0) (χ : L → R) (b : ℤ) :
-    ∃ q : ℤ, b < q ∧ genWeightSpace M (q • a + χ) = ⊥ := by
-  obtain ⟨n, hn₁, hn₂⟩ :=
-    ((Filter.eventually_gt_atTop b.toNat).and
-      (eventually_genWeightSpace_smul_add_eq_bot M a χ ha)).exists
-  exact ⟨(n : ℤ), lt_of_le_of_lt (Int.self_le_toNat b) (by exact_mod_cast hn₁),
-    by rwa [natCast_zsmul]⟩
-
-variable (M) in
-/-- The mirror of `TauCeti.exists_lt_genWeightSpace_zsmul_add_eq_bot`: the weight spaces
-`M_{k • a + χ}` also vanish far enough back along `a`. -/
-theorem exists_genWeightSpace_zsmul_add_eq_bot_lt {a : L → R} (ha : a ≠ 0) (χ : L → R) (b : ℤ) :
-    ∃ p : ℤ, p < b ∧ genWeightSpace M (p • a + χ) = ⊥ := by
-  obtain ⟨q, hq, hq'⟩ :=
-    exists_lt_genWeightSpace_zsmul_add_eq_bot M (a := -a) (neg_ne_zero.2 ha) χ (-b)
-  exact ⟨-q, by omega, by rwa [neg_smul, ← smul_neg]⟩
-
-end Ends
 
 section Killing
 
@@ -185,7 +154,8 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
       finrank K (weightSpace M (j • ⇑α + χ)) =
         finrank K (Module.End.eigenspace (A.restrict hA) (g j)) := by
     intro j hj
-    rw [finrank_eigenspace_restrict, hNsup,
+    rw [← Submodule.finrank_map_subtype_eq N.toSubmodule,
+      ← N.toSubmodule.inf_genEigenspace A hA, hNsup,
       biSup_inf_eigenspace_eq A _ g hWle hj fun i _ hik ↦ fun hcon ↦ hik (hginj hcon)]
     rfl
   -- Both indices lie inside the cut.
@@ -225,8 +195,8 @@ theorem finrank_weightSpace_sub_apply_coroot_smul {α : Weight K H L} (hα : α.
       rcases hψ with hψ | hψ
       · exact hint z (by rw [← hψ, ← hz]; rfl)
       · refine hint (-z) ?_
-        rw [Int.cast_neg, ← hz, show (⟨ψ, hne'⟩ : Weight K H M) (IsKilling.coroot α) = ψ _ from rfl,
-          hψ, neg_neg]
+        rw [Int.cast_neg, ← hz, ← Weight.toLinear_apply, Weight.coe_coe,
+          Weight.coe_weight_mk, hψ, neg_neg]
     have hrefl : (χ - χ (IsKilling.coroot α) • ⇑α) (IsKilling.coroot α) =
         -χ (IsKilling.coroot α) := by
       simp only [Pi.sub_apply, Pi.smul_apply, IsKilling.root_apply_coroot hα, smul_eq_mul]
@@ -260,15 +230,9 @@ theorem finrank_weightSpace_rootSystem_reflection (i : H.root) (χ : Dual K H) :
   rw [coe_rootSystem_reflection_apply]
   exact finrank_weightSpace_sub_apply_coroot_smul (LieSubalgebra.isNonZero_coe_root i) _
 
-/-- **Weyl invariance of the weight multiplicities.** For a finite-dimensional module `M` over a
-Killing-semisimple Lie algebra, the function `χ ↦ dim Mχ` on the weight space `Module.Dual K H` is
-invariant under the Weyl group of the root system of `H`.
-
-This is the direct, rank-one proof: it descends through
-`TauCeti.finrank_weightSpace_sub_apply_coroot_smul` to the `sl₂` triple attached to each root, and
-so is available before — and independently of — Weyl's complete reducibility theorem. -/
-theorem finrank_weightSpace_weylGroup_smul {w : (IsKilling.rootSystem H).Aut}
-    (hw : w ∈ (IsKilling.rootSystem H).weylGroup) (χ : Dual K H) :
+private theorem finrank_weightSpace_weylGroup_smul_of_mem
+    {w : (IsKilling.rootSystem H).Aut} (hw : w ∈ (IsKilling.rootSystem H).weylGroup)
+    (χ : Dual K H) :
     finrank K (weightSpace M ⇑(w • χ)) = finrank K (weightSpace M ⇑χ) := by
   induction hw using RootPairing.weylGroup.induction generalizing χ with
   | mem i =>
@@ -276,6 +240,18 @@ theorem finrank_weightSpace_weylGroup_smul {w : (IsKilling.rootSystem H).Aut}
     exact finrank_weightSpace_rootSystem_reflection i χ
   | one => rw [one_smul]
   | mul x y hx hy ihx ihy => rw [mul_smul, ihx, ihy]
+
+/-- **Weyl invariance of the weight multiplicities.** For a finite-dimensional module `M` over a
+Killing-semisimple Lie algebra, the function `χ ↦ dim Mχ` on the weight space `Module.Dual K H` is
+invariant under the Weyl group of the root system of `H`.
+
+This is the direct, rank-one proof: it descends through
+`TauCeti.finrank_weightSpace_sub_apply_coroot_smul` to the `sl₂` triple attached to each root, and
+so is available before — and independently of — Weyl's complete reducibility theorem. -/
+theorem finrank_weightSpace_weylGroup_smul
+    (w : (IsKilling.rootSystem H).weylGroup) (χ : Dual K H) :
+    finrank K (weightSpace M ⇑(w • χ)) = finrank K (weightSpace M ⇑χ) :=
+  finrank_weightSpace_weylGroup_smul_of_mem w.property χ
 
 end Killing
 
