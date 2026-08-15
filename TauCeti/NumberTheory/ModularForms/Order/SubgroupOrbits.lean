@@ -5,25 +5,34 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.Norm.Order
-public import TauCeti.NumberTheory.ModularForms.Norm.Reduction
-public import TauCeti.NumberTheory.ModularForms.Order.Orbits
+public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
-import Mathlib.GroupTheory.GroupAction.Quotient
+import Mathlib.Algebra.FiniteSupport.Basic
+import Mathlib.NumberTheory.ModularForms.ArithmeticSubgroups
+import TauCeti.NumberTheory.ModularForms.Norm.Order
 
 /-!
-# Finite support of the order divisor at general level
+# The order divisor at general level, on the orbit space
 
-For a finite-index subgroup `Γ ≤ SL(2, ℤ)`, the vanishing order of a modular form on
-`Γ` is constant on `Γ`-orbits of the upper half-plane. This file descends the order to that
-orbit space and proves that a form has nonzero order on only finitely many orbits.
+For a subgroup `Γ ≤ SL(2, ℤ)`, the vanishing order of a modular form on `Γ` is constant on
+`Γ`-orbits of the upper half-plane: every element of `Γ` acts through a matrix of determinant
+`1`, and the order is invariant along positive-determinant elements of the group of the form.
+This file descends the order to the orbit space `Γ \ ℍ` and records that, for `Γ` of finite
+index, only finitely many orbits carry nonzero order — the summation index of the general-level
+valence formula.
 
-The proof follows the norm-map route prescribed by the Tau Ceti ModularForms roadmap's Layer 1
-milestone **“General level — by the coset norm”**. The norm of the form is a level-one modular
-form whose order dominates that of the original form at every point. Thus every `Γ`-orbit in
-the support lies above an
-`SL(2, ℤ)`-orbit in the finite support of the norm. Each such fiber is finite because a
-finite-index subgroup splits any `SL(2, ℤ)`-orbit into only finitely many `Γ`-orbits.
+The orbit space is spelled `MulAction.orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ`, the
+index type the rest of the general-level API already uses; the `Γ`-orbits and the orbits of the
+image of `Γ` in `GL (Fin 2) ℝ` are the same subsets of `ℍ`.
+
+The finiteness is not reproved here. It is
+`TauCeti.ModularForm.finite_image_orbit_mk_setOf_orderOfVanishingAt_ne_zero_subgroup`, which
+bounds the image of the nonzero-order set in `𝒢 \ ℍ` for any `𝒢 ≤ GL (Fin 2) ℝ` of finite
+relative index in `𝒮ℒ`, by the norm-map route of the Tau Ceti ModularForms roadmap's Layer 1
+milestone **“General level — by the coset norm”**. What this file adds is the order *function*
+on the quotient, which that statement deliberately does not provide: a general `𝒢` may contain
+elements of negative determinant, under which the order is not known to be invariant, while the
+image of a subgroup of `SL(2, ℤ)` has determinant `1` throughout.
 
 ## Main declarations
 
@@ -34,7 +43,13 @@ finite-index subgroup splits any `SL(2, ℤ)`-orbit into only finitely many `Γ`
 
 ## References
 
-* [F. Diamond and J. Shurman, *A First Course in Modular Forms*][diamond-shurman2005],
+* [AINTLIB `LeanModularForms`](https://github.com/CBirkbeck/AINTLIB) — the descent here is the
+  level-one one, `TauCeti.ModularForm.orderOfVanishingOnOrbit` in `Order/Orbits.lean`, which is
+  ported from AINTLIB, transposed from `SL(2, ℤ)` to `Γ`.
+* `TauCeti.ModularForm.finite_image_orbit_mk_setOf_orderOfVanishingAt_ne_zero_subgroup` in
+  `Norm/Order.lean` — the general-`𝒢` form of the norm-map route, arrived at concurrently with
+  this file and consumed by it here, rather than reproved.
+* [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005],
   Chapter 3.
 -/
 
@@ -53,94 +68,39 @@ variable {Γ : Subgroup SL(2, ℤ)} {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
 /-- The vanishing order of a form for `Γ ≤ SL(2, ℤ)`, descended to the `Γ`-orbit space of
 the upper half-plane. -/
 public def orderOfVanishingOnSubgroupOrbit
-    [SlashInvariantFormClass F (NormReduction.G Γ) k] (f : F)
-    (q : MulAction.orbitRel.Quotient Γ ℍ) : ℤ :=
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F)
+    (q : MulAction.orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) : ℤ :=
   Quotient.liftOn' q (orderOfVanishingAt f) fun _ b ⟨g, hg⟩ ↦ by
+    obtain ⟨γ, -, hγ⟩ := Subgroup.mem_map.1 g.2
     have hg' : g • b = _ := hg
-    rw [← hg', Subgroup.smul_def, MulAction.compHom_smul_def,
-      orderOfVanishingAt_smul f
-        (γ := Matrix.SpecialLinearGroup.mapGL ℝ g.val) (by simp [NormReduction.G, g.2])
-        (by rw [← Matrix.GeneralLinearGroup.val_det_apply,
+    rw [← hg', Subgroup.smul_def,
+      orderOfVanishingAt_smul f g.2
+        (by rw [← hγ, ← Matrix.GeneralLinearGroup.val_det_apply,
           Matrix.SpecialLinearGroup.det_mapGL]; exact one_pos) b]
 
 /-- Evaluating the descended order on the orbit of `p` recovers the vanishing order at `p`. -/
 @[simp]
 public lemma orderOfVanishingOnSubgroupOrbit_mk
-    [SlashInvariantFormClass F (NormReduction.G Γ) k] (f : F) (p : ℍ) :
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (p : ℍ) :
     orderOfVanishingOnSubgroupOrbit f (Quotient.mk'' p) = orderOfVanishingAt f p := by
   unfold orderOfVanishingOnSubgroupOrbit
   rfl
 
-private def subgroupOrbitToOrbit (Γ : Subgroup SL(2, ℤ)) :
-    MulAction.orbitRel.Quotient Γ ℍ →
-      MulAction.orbitRel.Quotient SL(2, ℤ) ℍ :=
-  Setoid.map_of_le (MulAction.orbitRel_subgroup_le Γ)
-
-@[simp]
-private lemma subgroupOrbitToOrbit_mk (Γ : Subgroup SL(2, ℤ)) (p : ℍ) :
-    subgroupOrbitToOrbit Γ (Quotient.mk'' p) = Quotient.mk'' p := by
-  rfl
-
-private lemma equivSubgroupOrbits_fst (Γ : Subgroup SL(2, ℤ))
-    (r : MulAction.orbitRel.Quotient Γ ℍ) :
-    (MulAction.equivSubgroupOrbits ℍ Γ r).1 = subgroupOrbitToOrbit Γ r := by
-  induction r using Quotient.inductionOn' with
-  | _ p => rfl
-
-private noncomputable def subgroupOrbitFiberEquiv (Γ : Subgroup SL(2, ℤ))
-    (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
-    {r : MulAction.orbitRel.Quotient Γ ℍ // subgroupOrbitToOrbit Γ r = q} ≃
-      MulAction.orbitRel.Quotient Γ q.orbit :=
-  ((MulAction.equivSubgroupOrbits ℍ Γ).subtypeEquiv fun r ↦ by
-    rw [equivSubgroupOrbits_fst]).trans
-    (Equiv.sigmaSubtype q)
-
-private lemma finite_subgroupOrbitToOrbit_fiber [Γ.FiniteIndex]
-    (q : MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) :
-    Set.Finite (subgroupOrbitToOrbit Γ ⁻¹' {q}) := by
-  let _ : Finite (MulAction.orbitRel.Quotient Γ q.orbit) :=
-    Subgroup.finite_quotient_of_pretransitive_of_index_ne_zero
-      (Subgroup.FiniteIndex.index_ne_zero (H := Γ))
-  let _ : Finite {r : MulAction.orbitRel.Quotient Γ ℍ // subgroupOrbitToOrbit Γ r = q} :=
-    Finite.of_equiv _ (subgroupOrbitFiberEquiv Γ q).symm
-  let _ : Finite (subgroupOrbitToOrbit Γ ⁻¹' {q}) := Finite.of_injective
-    (fun r : (subgroupOrbitToOrbit Γ ⁻¹' {q}) ↦
-      (⟨r, Set.mem_singleton_iff.mp r.2⟩ :
-        {s : MulAction.orbitRel.Quotient Γ ℍ // subgroupOrbitToOrbit Γ s = q}))
-    fun _ _ h ↦ Subtype.ext (congrArg Subtype.val h)
-  exact Set.toFinite _
-
-private lemma orderOfVanishingOnSubgroupOrbit_ne_zero_norm
-    [Γ.FiniteIndex] [ModularFormClass F (NormReduction.G Γ) k] (f : F)
-    {q : MulAction.orbitRel.Quotient Γ ℍ}
-    (hq : orderOfVanishingOnSubgroupOrbit f q ≠ 0) :
-    orderOfVanishingOnOrbit (_root_.ModularForm.norm 𝒮ℒ f)
-      (subgroupOrbitToOrbit Γ q) ≠ 0 := by
-  induction q using Quotient.inductionOn' with
-  | _ p =>
-    rw [subgroupOrbitToOrbit_mk, orderOfVanishingOnOrbit_mk]
-    have hpos : 0 < orderOfVanishingAt f p :=
-      lt_of_le_of_ne (orderOfVanishingAt_nonneg (ModularFormClass.holo f) p) (Ne.symm hq)
-    exact ne_of_gt (hpos.trans_le
-      (orderOfVanishingAt_le_orderOfVanishingAt_norm (ℋ := 𝒮ℒ) f p))
-
 /-- A modular form for a finite-index subgroup `Γ ≤ SL(2, ℤ)` has nonzero vanishing order on
 only finitely many `Γ`-orbits in the upper half-plane.
 
-This is the finite-support statement for the interior part of the general-level divisor.
-It is obtained from the finite support of the level-one norm, order domination under the
-norm, and finiteness of the fibers of `subgroupOrbitToOrbit`. As at level one, the zero form
-needs no exclusion: its order vanishes identically, so its support is empty. -/
+This is the finite-support statement for the interior part of the general-level divisor. As at
+level one, the zero form needs no exclusion: its order vanishes identically, so its support is
+empty. -/
 public theorem hasFiniteSupport_orderOfVanishingOnSubgroupOrbit
-    [Γ.FiniteIndex] [ModularFormClass F (NormReduction.G Γ) k] (f : F) :
+    [Γ.FiniteIndex] [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) :
     (orderOfVanishingOnSubgroupOrbit f).HasFiniteSupport := by
-  apply Set.Finite.of_finite_fibers (subgroupOrbitToOrbit Γ)
-  · exact (hasFiniteSupport_orderOfVanishingOnOrbit
-      (_root_.ModularForm.norm 𝒮ℒ f)).subset fun q hq ↦ by
-      obtain ⟨r, hr, rfl⟩ := hq
-      exact orderOfVanishingOnSubgroupOrbit_ne_zero_norm f hr
-  · intro q _
-    exact (finite_subgroupOrbitToOrbit_fiber q).subset Set.inter_subset_right
+  -- an orbit of nonzero order is the class of a point of nonzero order, so the support sits
+  -- inside the image that the general-level finiteness lemma bounds
+  refine (finite_image_orbit_mk_setOf_orderOfVanishingAt_ne_zero_subgroup f).subset ?_
+  intro q hq
+  induction q using Quotient.inductionOn' with
+  | _ p => exact ⟨p, by simpa using hq, rfl⟩
 
 end ModularForm
 
