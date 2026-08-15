@@ -18,13 +18,14 @@ expressed through the fifth rather than expanded. The fifth term does have a clo
 `normEDS b c d 5 = d * b ^ 4 - c ^ 3`, but the factored shape above is the one the divisibility
 arguments downstream consume, so the statement keeps `normEDS _ 5` rather than substituting it.
 
-Adapted from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`, path
-`projects/NagellLutz/LutzNagell/EllipticDivisibilitySequence.lean`), declaration
-`normEDS_six`. That file's header reads `Authors: Junyan Xu`; following this repository's
-convention for adapted material, the upstream authorship is credited here rather than in the
-copyright header.
+Adapted from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`,
+path `projects/NagellLutz/LutzNagell/EllipticDivisibilitySequence.lean`), declaration
+`normEDS_six`. That file's header reads `Authors: David Kurniadi Angdinata`; following this
+repository's convention for adapted material, the upstream authorship is credited here rather than
+in the copyright header. J. Xu is acknowledged for the surrounding LutzNagell development — he
+authors `Universal.lean` and co-authors `DivisionPolynomialOmega.lean` at the same revision — as
+context for this port, not as an author of the declarations above.
 
 **Adaptations:** converted to this repository's module system, and restated for Mathlib's current
 names — the source predates the rename of `compl₂EDS` to `complEDS₂` and of

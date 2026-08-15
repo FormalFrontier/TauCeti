@@ -23,8 +23,9 @@ square. So linear independence of the classes is the **Finset form** of square-c
 ## Main definitions and results
 
 * `TauCeti.SquareClassGroup`: the square-class group `Kˣ ⧸ (Kˣ)²`, an `𝔽₂`-vector space.
-* `TauCeti.squareClass`: the class of a unit, with `squareClass_eq_zero_iff` characterising the
-  trivial class as the squares.
+* `TauCeti.squareClass`, `TauCeti.squareClassHom`: the class of a unit, as a function and a
+  multiplicative homomorphism, with `squareClass_eq_zero_iff` characterising the trivial class as
+  the squares.
 * `TauCeti.linearIndependent_squareClass_iff`: the classes of `d : ι → Kˣ` are `ZMod 2`-linearly
   independent iff no nonempty subset product is a square.
 -/
@@ -49,6 +50,17 @@ instance : Module (ZMod 2) (SquareClassGroup K) :=
 /-- The square class of a unit. -/
 def squareClass (u : Kˣ) : SquareClassGroup K :=
   QuotientAddGroup.mk (Additive.ofMul u)
+
+/-- The square-class quotient map, written multiplicatively between the unit group and the
+multiplicative form of the additive square-class group. -/
+def squareClassHom : Kˣ →* Multiplicative (SquareClassGroup K) :=
+  (QuotientAddGroup.mk' (Subgroup.square Kˣ).toAddSubgroup).toMultiplicativeRight
+
+@[simp]
+theorem squareClassHom_apply (u : Kˣ) :
+    squareClassHom u = Multiplicative.ofAdd (squareClass u) := by
+  rw [squareClassHom, squareClass]
+  rfl
 
 /-- A unit has trivial square class iff it is a square. -/
 @[simp] theorem squareClass_eq_zero_iff (u : Kˣ) : squareClass u = 0 ↔ IsSquare u := by

@@ -400,13 +400,9 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   set δR := fdBoundaryArcExcisionHalfWidth ε with hδR_def
   have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := by linarith
   set δL := ε / (H - Real.sqrt 3 / 2) with hδL_def
-  have hδL_pos : 0 < δL := by rw [hδL_def]; positivity
-  have hδL_le : δL ≤ 1 := by
-    rw [hδL_def, div_le_one hHpos]
-    linarith
-  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := by
-    rw [hδL_def]
-    exact div_mul_cancel₀ ε hHpos.ne'
+  have hδL_pos : 0 < δL := div_pos hε hHpos
+  have hδL_le : δL ≤ 1 := (div_le_one hHpos).2 hεH.le
+  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := div_mul_cancel₀ ε hHpos.ne'
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho_add_one H hH hδL_pos hδL_le hδR_pos hδR_lt
   have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)

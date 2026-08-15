@@ -63,6 +63,8 @@ transport results needed by the Chevalley construction.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantForm`: exact functoriality under Lie maps.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormMap`: the restricted map of integral forms.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormEquiv`: transport under a Lie equivalence.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantFormAut`: transport under an invariant Lie
+  automorphism.
 * `TauCeti.UniversalEnvelopingAlgebra.stabilizer`: the subring stabilizing a given `ℤ`-submodule.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_stabilizer`: generator criterion for the
   Kostant form to stabilize a `ℤ`-submodule.
@@ -397,6 +399,34 @@ theorem coe_kostantFormEquiv_symm_apply (g : LieEquiv ℚ L M) (e : ι → L) (h
     fun z => RingEquiv.subsemiringMap_symm_apply_coe _ _ _
   rw [hsub, RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply, mapEquiv_symm,
     ← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
+
+/-- A Lie self-equivalence that preserves a Kostant integral form restricts to a ring automorphism
+of that integral form. -/
+noncomputable def kostantFormAut (g : LieEquiv ℚ L L) (e : ι → L) (h : κ → L)
+    (heq : kostantForm (fun i => g (e i)) (fun i => g (h i)) = kostantForm e h) :
+    kostantForm e h ≃+* kostantForm e h :=
+  (kostantFormEquiv g e h).trans (RingEquiv.subringCongr heq)
+
+/-- The restricted automorphism acts by the enveloping-algebra map induced by the original Lie
+equivalence. -/
+@[simp]
+theorem coe_kostantFormAut_apply (g : LieEquiv ℚ L L) (e : ι → L) (h : κ → L)
+    (heq : kostantForm (fun i => g (e i)) (fun i => g (h i)) = kostantForm e h)
+    (x : kostantForm e h) :
+    (kostantFormAut g e h heq x : _root_.UniversalEnvelopingAlgebra ℚ L) =
+      map ℚ g.toLieHom x := by
+  simp [kostantFormAut]
+
+/-- The inverse restricted automorphism acts by the enveloping-algebra map induced by the inverse
+Lie equivalence. -/
+@[simp]
+theorem coe_kostantFormAut_symm_apply (g : LieEquiv ℚ L L) (e : ι → L) (h : κ → L)
+    (heq : kostantForm (fun i => g (e i)) (fun i => g (h i)) = kostantForm e h)
+    (x : kostantForm e h) :
+    ((kostantFormAut g e h heq).symm x : _root_.UniversalEnvelopingAlgebra ℚ L) =
+      map ℚ g.symm.toLieHom x := by
+  rw [kostantFormAut, RingEquiv.symm_trans_apply, coe_kostantFormEquiv_symm_apply,
+    RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply]
 
 /-! ## Module representations and stabilized lattices -/
 

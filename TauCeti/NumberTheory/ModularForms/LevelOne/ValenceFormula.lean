@@ -57,17 +57,17 @@ theorem valence_formula {F : Type*} [FunLike F ℍ ℂ] {k : ℤ} [ModularFormCl
         + 1 / 3 * ((orderOfVanishingAt ⇑f ρ : ℤ) : ℂ)
         + qExpansionOrderAtCusp 1 ⇑f = (k : ℂ) / 12 := by
   have hsplit : ((∑ᶠ q : NonEllipticOrbit, orderOfVanishingOnOrbit f q.val : ℤ) : ℂ) =
-      ((∑ p ∈ (fdZeros hf).filter (fun p : ℍ ↦ 1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2),
+      ((∑ p ∈ (fdZeros f).filter (fun p : ℍ ↦ 1 < ‖(p : ℂ)‖ ∧ |(p : ℂ).re| < 1 / 2),
           orderOfVanishingAt ⇑f p
-        + ∑ p ∈ (fdZeros hf).filter (fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖),
+        + ∑ p ∈ (fdZeros f).filter (fun p : ℍ ↦ (p : ℂ).re = -(1 / 2) ∧ 1 < ‖(p : ℂ)‖),
           orderOfVanishingAt ⇑f p
-        + ∑ p ∈ (fdZeros hf).filter
+        + ∑ p ∈ (fdZeros f).filter
             (fun p : ℍ ↦ (p : ℂ) ≠ (ρ : ℂ) ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
           orderOfVanishingAt ⇑f p : ℤ) : ℂ) := by
-    exact_mod_cast (finsum_orderOfVanishingOnOrbit_eq_sum_canonicalReps hf).trans
-      (sum_canonicalReps_split hf)
+    exact_mod_cast (finsum_orderOfVanishingOnOrbit_eq_sum_canonicalReps f).trans
+      (sum_canonicalReps_split f)
   have key := sum_orderOfVanishingAt_add_elliptic_add_qExpansionOrderAtCusp_eq
-    f hf (S := fdZeros hf) (fun p hp _ ↦ (mem_fdZeros.mp hp).1)
+    f hf (S := fdZeros f) (fun p hp _ ↦ (mem_fdZeros.mp hp).1)
     (fun p hpfd hord ↦ mem_fdZeros.mpr ⟨hpfd, hord⟩)
   push_cast at hsplit key ⊢
   linear_combination hsplit + key

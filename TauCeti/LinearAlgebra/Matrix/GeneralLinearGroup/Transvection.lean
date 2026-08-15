@@ -5,10 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- `Matrix.transvection` and its product law are the subject of this file.
-public import Mathlib.LinearAlgebra.Matrix.Transvection
--- `Matrix.SpecialLinearGroup.transvection` and `Matrix.SpecialLinearGroup.toGL` are what the
--- invertible transvection below is assembled from.
-public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
+public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 -- The group-commutator bracket `⁅x, y⁆` occurs in the statements below.
@@ -175,30 +172,28 @@ theorem det_transvectionUnit (hij : i ≠ j) (c : A) :
 
 /-- The transvections at a fixed pair of distinct indices form a one-parameter subgroup of
 `GL n A`, isomorphic to the additive group of `A`. This is the root subgroup of `εᵢ - εⱼ`. -/
-def transvectionHom (hij : i ≠ j) : Multiplicative A →* GL n A where
-  toFun c := transvectionUnit hij (Multiplicative.toAdd c)
-  map_one' := transvectionUnit_zero hij
-  map_mul' _ _ := transvectionUnit_add hij _ _
+def transvectionHom (hij : i ≠ j) : Multiplicative A →* GL n A :=
+  (SpecialLinearGroup.toGL (n := n) (R := A)).comp (SpecialLinearGroup.transvectionHom hij)
 
 /-- The value of the root subgroup homomorphism is the transvection of the parameter. -/
 @[simp]
 theorem transvectionHom_apply (hij : i ≠ j) (c : Multiplicative A) :
     transvectionHom hij c = transvectionUnit hij (Multiplicative.toAdd c) :=
-  (rfl)
+  by simp [transvectionHom, transvectionUnit]
 
 /-- Distinct parameters give distinct transvections: the parameter is the `(i, j)` entry. So the
 root subgroup is a copy of the additive group of `A` inside `GL n A`, not a quotient of it. -/
 theorem transvectionUnit_injective (hij : i ≠ j) :
-    Function.Injective fun c : A => transvectionUnit hij c := fun c d h => by
-  have h' := congrArg Units.val h
-  simpa [transvection, Matrix.one_apply, Matrix.single_apply, hij] using congrFun₂ h' i j
+    Function.Injective fun c : A => transvectionUnit hij c :=
+  SpecialLinearGroup.toGL_injective.comp (SpecialLinearGroup.transvection_injective hij)
 
 /-- The bundled root subgroup homomorphism is injective. -/
 theorem transvectionHom_injective (hij : i ≠ j) :
     Function.Injective (transvectionHom (A := A) hij) := by
   intro c d h
-  simpa only [ofAdd_toAdd] using
-    congrArg Multiplicative.ofAdd (transvectionUnit_injective hij h)
+  apply Multiplicative.toAdd.injective
+  apply transvectionUnit_injective hij
+  simpa only [transvectionHom_apply] using h
 
 /-- Transvections at index pairs that do not chain commute in `GL n A`. -/
 theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
@@ -242,7 +237,8 @@ variable [Fintype n] {B : Type v} [CommRing B]
 theorem map_transvectionUnit (f : A →+* B) (hij : i ≠ j) (c : A) :
     Matrix.GeneralLinearGroup.map f (transvectionUnit hij c) = transvectionUnit hij (f c) := by
   ext a b
-  simp [Matrix.GeneralLinearGroup.map, transvection, Matrix.one_apply, single, apply_ite f]
+  exact congrArg (fun s : Matrix.SpecialLinearGroup n B => (s : Matrix n n B) a b)
+    (SpecialLinearGroup.map_transvection f hij c)
 
 end Map
 

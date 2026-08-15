@@ -35,8 +35,11 @@ The form restricts to a canonical `ℤ`-bilinear form on the carrier.  Conversel
   integrality proof.
 * `TauCeti.IntegralLattice.ofBasis`: the lattice spanned by a basis on which a given form is
   integral.
+* `TauCeti.IntegralLattice.ofBasis.basis`: the canonical carrier basis induced by a rational basis.
 * `TauCeti.IntegralLattice.ofGramMatrix`: the lattice and form determined by an integral
   symmetric Gram matrix.
+* `TauCeti.IntegralLattice.ofGramMatrix.basis`: the canonical carrier basis induced by a rational
+  basis.
 -/
 
 public section
@@ -96,6 +99,10 @@ noncomputable def rationalBasis (L : IntegralLattice V) :
 theorem rationalBasis_apply (L : IntegralLattice V) (i : Module.Free.ChooseBasisIndex ℤ L) :
     L.rationalBasis i = (Module.Free.chooseBasis ℤ L i : V) :=
   Basis.extendOfIsLattice_apply ℚ (Module.Free.chooseBasis ℤ L) i
+
+/-- The ambient rational vector space of an integral lattice is finite-dimensional. -/
+theorem finiteDimensional (L : IntegralLattice V) : FiniteDimensional ℚ V :=
+  Module.Finite.of_basis L.rationalBasis
 
 /-- The `ℤ`-finrank of the carrier of an integral lattice equals the `ℚ`-finrank of the ambient
 space. -/
@@ -201,18 +208,17 @@ theorem ofBasis_form (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : 
     (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) :
     (ofBasis b B hB hint).form = B := (rfl)
 
-/-- The canonical embedding of the basis vector `b i` into the carrier of `ofBasis b B hB hint`. -/
-noncomputable def ofBasis.basisElem (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
-    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
-    ofBasis b B hB hint :=
-  ⟨b i, by rw [ofBasis_carrier]; exact Submodule.subset_span (Set.mem_range_self i)⟩
+/-- The canonical carrier basis of `ofBasis b B hB hint` induced by `b`. -/
+noncomputable def ofBasis.basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
+    (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) :
+    Basis ι ℤ (ofBasis b B hB hint) :=
+  b.restrictScalars ℤ
 
 @[simp]
-theorem ofBasis.coe_basisElem (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
+theorem ofBasis.coe_basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
     (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
-    (ofBasis.basisElem b B hB hint i : V) = b i := by
-  unfold ofBasis.basisElem
-  rfl
+    (ofBasis.basis b B hB hint i : V) = b i :=
+  b.restrictScalars_apply ℤ i
 
 end Basis
 
@@ -242,18 +248,16 @@ theorem ofGramMatrix_form (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.Is
     (ofGramMatrix b G hG).form = Matrix.toBilin b (G.map (algebraMap ℤ ℚ)) := (rfl)
 
 open Classical in
-/-- The canonical embedding of the basis vector `b i` into the carrier of
-`ofGramMatrix b G hG`. -/
-noncomputable def ofGramMatrix.basisElem (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm)
-    (i : ι) : ofGramMatrix b G hG :=
-  ⟨b i, by rw [ofGramMatrix_carrier]; exact Submodule.subset_span (Set.mem_range_self i)⟩
+/-- The canonical carrier basis of `ofGramMatrix b G hG` induced by `b`. -/
+noncomputable def ofGramMatrix.basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
+    Basis ι ℤ (ofGramMatrix b G hG) :=
+  b.restrictScalars ℤ
 
 open Classical in
 @[simp]
-theorem ofGramMatrix.coe_basisElem (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm)
-    (i : ι) : (ofGramMatrix.basisElem b G hG i : V) = b i := by
-  unfold ofGramMatrix.basisElem
-  rfl
+theorem ofGramMatrix.coe_basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (i : ι) :
+    (ofGramMatrix.basis b G hG i : V) = b i :=
+  b.restrictScalars_apply ℤ i
 
 open Classical in
 /-- Evaluating the induced integral form of `ofGramMatrix` on embedded basis vectors recovers
@@ -261,11 +265,11 @@ the corresponding entry of the Gram matrix. -/
 @[simp]
 theorem integralForm_ofGramMatrix_apply (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm)
     (i j : ι) :
-    (ofGramMatrix b G hG).integralForm (ofGramMatrix.basisElem b G hG i)
-      (ofGramMatrix.basisElem b G hG j) = G i j := by
+    (ofGramMatrix b G hG).integralForm (ofGramMatrix.basis b G hG i)
+      (ofGramMatrix.basis b G hG j) = G i j := by
   apply Int.cast_injective (α := ℚ)
-  rw [integralForm_cast, ofGramMatrix_form, ofGramMatrix.coe_basisElem,
-    ofGramMatrix.coe_basisElem, ← LinearMap.BilinForm.toMatrix_apply (b := b),
+  rw [integralForm_cast, ofGramMatrix_form, ofGramMatrix.coe_basis,
+    ofGramMatrix.coe_basis, ← LinearMap.BilinForm.toMatrix_apply (b := b),
     LinearMap.BilinForm.toMatrix_toBilin, Matrix.map_apply]
   rfl
 

@@ -41,6 +41,8 @@ degree off any algebra structure whose structure map is the pullback.
   measures is finite, the inseparable case included.
 * `TauCeti.Isogeny.degree_eq_finrank`: the degree read off an arbitrary algebra structure
   induced by the pullback.
+* `TauCeti.Isogeny.finiteDimensional_functionField`: the function-field extension is finite, for
+  any algebra structure whose structure map is the pullback.
 * `TauCeti.Isogeny.degree_pos`: an isogeny has positive degree.
 * `TauCeti.Isogeny.degree_eq_one_iff`: degree one means the function-field pullback is onto;
   `TauCeti.Isogeny.degree_id` is the identity's case, and is the `@[simp]` normal form of a
@@ -136,6 +138,18 @@ field is nontrivial. -/
 theorem degree_pos (φ : Isogeny W₁ W₂) : 0 < φ.degree := by
   rw [degree_def]
   exact Module.finrank_pos
+
+/-- **An isogeny's function-field extension is finite.**
+
+`Isogeny.finiteDimensional` gives this over `φ.fieldPullback.fieldRange`; this is the same fact for
+any algebra structure whose structure map is the pullback, which is the form consumers hold. It
+takes the same hypothesis as `degree_eq_finrank`, and needs nothing beyond it: every isogeny has
+positive degree, and the degree *is* the relevant `finrank`. -/
+theorem finiteDimensional_functionField (φ : Isogeny W₁ W₂)
+    [Algebra W₂.FunctionField W₁.FunctionField]
+    (h : ∀ z, algebraMap W₂.FunctionField W₁.FunctionField z = φ.fieldPullback z) :
+    FiniteDimensional W₂.FunctionField W₁.FunctionField :=
+  FiniteDimensional.of_finrank_pos (φ.degree_eq_finrank h ▸ φ.degree_pos)
 
 /-- The degree of an isogeny is nonzero, the `≠` form of `degree_pos`. -/
 @[simp]
