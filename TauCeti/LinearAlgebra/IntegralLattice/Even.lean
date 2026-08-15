@@ -208,7 +208,7 @@ theorem isEven_ofBasis_iff {ι : Type*} [Finite ι] (b : Basis ι ℚ V)
   rw [isEven_iff_basis (ofBasis b B hB hint) (ofBasis.basis b B hB hint)]
   apply forall_congr'
   intro i
-  rw [ofBasis.basis_apply, even_integralNorm_iff, norm_apply, ofBasis_form, ofBasis.coe_basisElem]
+  rw [even_integralNorm_iff, norm_apply, ofBasis_form, ofBasis.coe_basis]
 
 /-- A lattice constructed from a Gram matrix is even exactly when every diagonal entry is even. -/
 theorem isEven_ofGramMatrix_iff {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
@@ -217,7 +217,7 @@ theorem isEven_ofGramMatrix_iff {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
   rw [isEven_iff_basis (ofGramMatrix b G hG) (ofGramMatrix.basis b G hG)]
   apply forall_congr'
   intro i
-  rw [ofGramMatrix.basis_apply, integralNorm_apply, integralForm_ofGramMatrix_apply]
+  rw [integralNorm_apply, integralForm_ofGramMatrix_apply]
 
 /-! ## Vectors of prescribed norm -/
 

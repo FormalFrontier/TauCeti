@@ -35,7 +35,7 @@ type `M ⊗[A] MvPowerSeries (Fin k) A →ₗ[A] MvPowerSeries (Fin k) M`.
   `ContinuousConstSMul` does not give.
 * `coe_restrictedMvPowerSeriesBaseChange`, with `coe_restrictedMvPowerSeriesBaseChange_tmul`: read
   in the ambient series, the restricted map is the ambient one, at a general element and at a pure
-  tensor.
+  tensor; `coeff_restrictedMvPowerSeriesBaseChange_tmul` reads off a single coefficient.
 
 The isomorphism itself — Remark 8.29 proper, which needs `M` finitely generated over a complete
 strongly noetherian Tate ring — is not proved here.
@@ -99,8 +99,7 @@ omit [TopologicalSpace A] [TopologicalSpace M] in
 /-- The coefficient of `mvPowerSeriesBaseChange (m ⊗ₜ f)` at `s`, read through the function-type
 ascription that `IsRestricted` also uses. -/
 @[simp]
-theorem coeff_mvPowerSeriesBaseChange_tmul (m : M) (f : MvPowerSeries (Fin k) A)
-    (s : Fin k →₀ ℕ) :
+theorem coeff_mvPowerSeriesBaseChange_tmul (m : M) (f : MvPowerSeries (Fin k) A) (s : Fin k →₀ ℕ) :
     (mvPowerSeriesBaseChange (TensorProduct.tmul A m f) : (Fin k →₀ ℕ) → M) s
       = MvPowerSeries.coeff s f • m := (rfl)
 
@@ -109,8 +108,8 @@ theorem coeff_mvPowerSeriesBaseChange_tmul (m : M) (f : MvPowerSeries (Fin k) A)
 The hypothesis is `ContinuousSMul A M`, not `ContinuousConstSMul A M`: the continuity needed is of
 `a ↦ a • m` in the **scalar** variable, since it is the coefficients that vary and the vector that
 is fixed. `ContinuousConstSMul` gives continuity in the vector variable instead. -/
-theorem IsRestricted.mvPowerSeriesBaseChange_tmul [ContinuousSMul A M]
-    {f : MvPowerSeries (Fin k) A} (hf : IsRestricted f) (m : M) :
+theorem IsRestricted.mvPowerSeriesBaseChange_tmul [ContinuousSMul A M] {f : MvPowerSeries (Fin k) A}
+    (hf : IsRestricted f) (m : M) :
     IsRestricted (mvPowerSeriesBaseChange (TensorProduct.tmul A m f)) := by
   rw [_root_.TauCeti.Huber.mvPowerSeriesBaseChange_tmul]
   exact isRestricted_iff.mpr ((isRestricted_iff_coeff.mp hf).zero_smul_const m)
@@ -170,10 +169,23 @@ theorem coe_restrictedMvPowerSeriesBaseChange_tmul (m : M)
         restrictedMvPowerSeriesSubmodule k A M) : MvPowerSeries (Fin k) M)
       = mvPowerSeriesBaseChange (TensorProduct.tmul A m (f : MvPowerSeries (Fin k) A)) := by
   rw [coe_restrictedMvPowerSeriesBaseChange, TensorProduct.map_tmul]
-  -- `simp` lands both sides on the coefficient function; the residue is the `MvPowerSeries`
-  -- wrapper, which only full transparency crosses.
-  simp
+  -- Both sides land on the coefficient function; the residue is the `MvPowerSeries` wrapper,
+  -- which only full transparency crosses.
+  simp only [LinearMap.id_coe, id_eq, AlgHom.toLinearMap_apply,
+    restrictedMvPowerSeriesSubringVal_apply, mvPowerSeriesBaseChange_tmul]
   rfl
+
+
+/-- The coefficient of `restrictedMvPowerSeriesBaseChange (m ⊗ₜ f)` at `s`, read through the
+function-type ascription that `IsRestricted` also uses. -/
+@[simp]
+theorem coeff_restrictedMvPowerSeriesBaseChange_tmul (m : M)
+    (f : restrictedMvPowerSeriesSubring k A) (s : Fin k →₀ ℕ) :
+    (((restrictedMvPowerSeriesBaseChange (TensorProduct.tmul A m f) :
+        restrictedMvPowerSeriesSubmodule k A M) : MvPowerSeries (Fin k) M) :
+      (Fin k →₀ ℕ) → M) s = MvPowerSeries.coeff s (f : MvPowerSeries (Fin k) A) • m := by
+  rw [coe_restrictedMvPowerSeriesBaseChange_tmul]
+  exact coeff_mvPowerSeriesBaseChange_tmul m _ s
 
 end Restricted
 
