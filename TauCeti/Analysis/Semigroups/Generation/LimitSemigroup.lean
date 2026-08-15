@@ -97,7 +97,8 @@ def yosidaLimit (A : X →ₗ.[ℝ] X) (t : ℝ) (x : X) : X :=
 
 /-- A Cauchy family of Yosida exponentials converges to `yosidaLimit`, its chosen
 `limUnder` value. This is the common completeness step in the Lumer--Phillips and
-Hille--Yosida constructions. -/
+Hille--Yosida constructions, and exposes that convergence to downstream modules without exposing
+the implementation of `yosidaLimit`. -/
 theorem tendsto_yosidaLimit_of_cauchySeq (A : X →ₗ.[ℝ] X) (t : ℝ) (x : X)
     (h : CauchySeq fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) :
     Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
