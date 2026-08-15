@@ -210,7 +210,8 @@ theorem mem_weakDerivStepSubmodule_iff_hasWeakFDerivOn
     exact add_eq_zero_iff_eq_neg.mpr
       ((h v).integral_lineDeriv_smul_eq_neg_integral_smul phi)
 
-/-- One complete weak-derivative graph step over the field selected by `base`. -/
+/-- One weak-derivative graph step over the field selected by `base`. It is complete when `X` is
+complete. -/
 abbrev WeakDerivStep (mu : Measure E) [IsFiniteMeasureOnCompacts mu] (Omega : Opens E) (p : ENNReal)
     [Fact (1 <= p)] (base : X →L[ℝ] Lp F p (mu.restrict Omega)) :=
   (weakDerivStepSubmodule mu Omega p base).toSubmodule
@@ -324,6 +325,8 @@ theorem norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq
   rw [Submodule.coe_norm, prev_coe, weakFDeriv_coe]
   exact WithLp.prod_norm_sq_eq_of_L2 u.1
 
+/-- A weak-derivative graph step over a complete preceding space is complete because it is a
+closed subspace. -/
 instance [CompleteSpace X] (base : X →L[ℝ] Lp F p (mu.restrict Omega)) :
     CompleteSpace (WeakDerivStep mu Omega p base) :=
   (weakDerivStepSubmodule mu Omega p base).isClosed.completeSpace_coe
