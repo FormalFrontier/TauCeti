@@ -35,6 +35,7 @@ characteristic.
 
 * `TauCeti.integralDividedPower`: a divided-power operator restricted to an invariant additive
   subgroup.
+* `TauCeti.integralDividedPower_mul`: multiplication formula for restricted divided powers.
 * `TauCeti.baseChangeExp`: the finite divided-power exponential on `R ⊗[ℤ] M` for a nilpotent
   endomorphism.
 * `TauCeti.baseChangeExp_add`: its one-parameter group law.
@@ -74,21 +75,24 @@ noncomputable def integralDividedPower (x : Module.End ℚ V) (M : AddSubgroup V
     apply Subtype.ext
     exact map_zsmul _ _ _
 
+/-- The value of `integralDividedPower x M n hM v` coerced to `V` is
+`Associative.dividedPower n x v`. -/
 @[simp]
 theorem integralDividedPower_apply (x : Module.End ℚ V) (M : AddSubgroup V)
     (n : ℕ) (hM : ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (v : M) :
     ((integralDividedPower x M n hM v : M) : V) = Associative.dividedPower n x v := by
   rfl
 
-private theorem integralDividedPower_zero (x : Module.End ℚ V) (M : AddSubgroup V)
+/-- The zeroth restricted divided power is the identity. -/
+@[simp]
+theorem integralDividedPower_zero (x : Module.End ℚ V) (M : AddSubgroup V)
     (hM0 : ∀ v ∈ M, Associative.dividedPower 0 x v ∈ M) :
     integralDividedPower x M 0 hM0 = 1 := by
   ext v
   simp
 
-/-- Multiplication formula for restricted divided powers, evaluating on `v : M` in the ambient
-space `V` where `Associative.mul_dividedPower` applies. -/
-private theorem integralDividedPower_mul (x : Module.End ℚ V) (M : AddSubgroup V)
+/-- Multiplication formula for restricted divided powers. -/
+theorem integralDividedPower_mul (x : Module.End ℚ V) (M : AddSubgroup V)
     (m n : ℕ) (hm : ∀ v ∈ M, Associative.dividedPower m x v ∈ M)
     (hn : ∀ v ∈ M, Associative.dividedPower n x v ∈ M)
     (hmn : ∀ v ∈ M, Associative.dividedPower (m + n) x v ∈ M) :
@@ -98,7 +102,9 @@ private theorem integralDividedPower_mul (x : Module.End ℚ V) (M : AddSubgroup
   -- The underlying vectors in V match by the ambient divided-power multiplication law
   exact LinearMap.congr_fun (Associative.mul_dividedPower m n x) (v : V)
 
-private theorem integralDividedPower_eq_zero_of_le (x : Module.End ℚ V)
+/-- The restricted divided power vanishes for degrees greater than or equal to a nilpotency
+bound. -/
+theorem integralDividedPower_eq_zero_of_le (x : Module.End ℚ V)
     (M : AddSubgroup V) (n : ℕ) (hn : ∀ v ∈ M, Associative.dividedPower n x v ∈ M)
     {k : ℕ} (hk : x ^ k = 0) (hkn : k ≤ n) :
     integralDividedPower x M n hn = 0 := by
@@ -132,11 +138,6 @@ theorem baseChangeExp_tmul (x : Module.End ℚ V) (M : AddSubgroup V)
         integralDividedPower x M n (hM n) v := by
   simp [baseChangeExp, smul_tmul']
 
-private theorem baseChange_integralDividedPower_zero
-    (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) :
-    (integralDividedPower x M 0 (hM 0)).baseChange R = 1 := by
-  rw [integralDividedPower_zero, LinearMap.baseChange_one]
 
 private theorem baseChange_integralDividedPower_mul
     (x : Module.End ℚ V) (M : AddSubgroup V)
@@ -256,7 +257,7 @@ theorem baseChangeExp_zero (x : Module.End ℚ V) (M : AddSubgroup V)
   | inr hV =>
       let _ := hV
       rw [baseChangeExp, sum_eq_single 0]
-      · simp [baseChange_integralDividedPower_zero]
+      · simp
       · intro n hn hn0
         simp [hn0]
       · simp [pos_nilpotencyClass_iff.2 hx]
