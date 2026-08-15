@@ -83,14 +83,16 @@ theorem integralNorm_cast (L : IntegralLattice V) (x : L) :
     (L.integralNorm x : ℚ) = L.norm x := by
   simpa only [integralNorm_apply, norm_apply] using L.integralForm_cast x x
 
+/-- The rational norm of zero is zero. -/
 @[simp]
 theorem norm_zero (L : IntegralLattice V) : L.norm 0 = 0 :=
   L.norm.map_zero
 
-@[simp]
+/-- The rational norm is invariant under negation. -/
 theorem norm_neg (L : IntegralLattice V) (x : V) : L.norm (-x) = L.norm x :=
   L.norm.map_neg x
 
+/-- Scaling an ambient vector squares its rational norm. -/
 @[simp]
 theorem norm_smul (L : IntegralLattice V) (a : ℚ) (x : V) :
     L.norm (a • x) = a ^ 2 * L.norm x := by
@@ -106,15 +108,17 @@ theorem norm_sub (L : IntegralLattice V) (x y : V) :
     L.norm (x - y) = L.norm x + L.norm y - 2 * L.form x y :=
   L.isSymm.toQuadraticMap_sub x y
 
+/-- The integral norm of zero is zero. -/
 @[simp]
 theorem integralNorm_zero (L : IntegralLattice V) : L.integralNorm 0 = 0 :=
   L.integralNorm.map_zero
 
-@[simp]
+/-- The integral norm is invariant under negation. -/
 theorem integralNorm_neg (L : IntegralLattice V) (x : L) :
     L.integralNorm (-x) = L.integralNorm x :=
   L.integralNorm.map_neg x
 
+/-- Scaling a lattice vector by an integer scales its integral norm by the square. -/
 @[simp]
 theorem integralNorm_zsmul (L : IntegralLattice V) (a : ℤ) (x : L) :
     L.integralNorm (a • x) = a ^ 2 * L.integralNorm x := by
@@ -224,13 +228,13 @@ theorem isEven_ofGramMatrix_iff {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
 /-- The lattice vectors having the prescribed rational norm. -/
 def vectorsOfNorm (L : IntegralLattice V) (n : ℚ) : Set L := {x | L.norm x = n}
 
+/-- Membership condition for `vectorsOfNorm`. -/
 @[simp]
 theorem mem_vectorsOfNorm {L : IntegralLattice V} {n : ℚ} {x : L} :
     x ∈ L.vectorsOfNorm n ↔ L.norm x = n := Iff.rfl
 
 /-- Membership in `vectorsOfNorm (n : ℚ)` for an integer `n` is equivalent to having integral norm
 equal to `n`. -/
-@[simp]
 theorem mem_vectorsOfNorm_intCast (L : IntegralLattice V) {n : ℤ} {x : L} :
     x ∈ L.vectorsOfNorm (n : ℚ) ↔ L.integralNorm x = n := by
   rw [mem_vectorsOfNorm, ← L.integralNorm_cast x]
@@ -241,7 +245,6 @@ theorem zero_mem_vectorsOfNorm (L : IntegralLattice V) : (0 : L) ∈ L.vectorsOf
   simp
 
 /-- A lattice vector has norm `n` if and only if its negation does. -/
-@[simp]
 theorem neg_mem_vectorsOfNorm_iff {L : IntegralLattice V} {n : ℚ} (x : L) :
     -x ∈ L.vectorsOfNorm n ↔ x ∈ L.vectorsOfNorm n := by
   simp [mem_vectorsOfNorm]
