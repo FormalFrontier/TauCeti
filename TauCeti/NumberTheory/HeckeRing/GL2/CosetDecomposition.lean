@@ -122,29 +122,20 @@ lemma upperTriRep_def (b : Fin p) :
     upperTriRep p b = upperTriGL ((upperTriEntriesEquivFin p).symm b) := (rfl)
 
 /-- The matrix of `upperTriRep p b` is `!![1, b; 0, p]`. -/
-lemma upperTriRep_coe_matrix (hp : 0 < p) (b : Fin p) :
+@[simp] lemma upperTriRep_coe_matrix (b : Fin p) :
     (↑(upperTriRep p b) : Matrix (Fin 2) (Fin 2) ℚ) =
       !![1, (b : ℚ); 0, (p : ℚ)] := by
-  have ha : ∀ i : Fin 2, 0 < ![1, p] i := fun i ↦ by fin_cases i <;> simp [hp]
-  set B := (upperTriEntriesEquivFin p).symm b
-  ext ⟨_ | _ | _, _⟩ ⟨_ | _ | _, _⟩ <;> try contradiction
-  · change (upperTriGL B : Matrix (Fin 2) (Fin 2) ℚ) 0 0 = 1
-    rw [upperTriGL_apply_diag ha B 0]
-    rfl
-  · change (upperTriGL B : Matrix (Fin 2) (Fin 2) ℚ) 0 1 = (b : ℚ)
-    rw [upperTriGL_apply_lt ha B (by decide)]
-    have hdef : (⟨(0, 1), by decide⟩ : {ij : Fin 2 × Fin 2 // ij.1 < ij.2}) = default :=
-      Subtype.ext rfl
-    have hb := upperTriEntriesEquivFin_symm_apply_default_val b
-    rw [hdef]
-    change ((1 : ℕ) : ℚ) * ((B default : ℕ) : ℚ) = (b : ℚ)
-    rw [hb]
-    simp
-  · change (upperTriGL B : Matrix (Fin 2) (Fin 2) ℚ) 1 0 = 0
-    rw [upperTriGL_apply_eq_zero_of_lt ha B (by decide)]
-  · change (upperTriGL B : Matrix (Fin 2) (Fin 2) ℚ) 1 1 = (p : ℚ)
-    rw [upperTriGL_apply_diag ha B 1]
-    rfl
+  have ha : ∀ i : Fin 2, 0 < ![1, p] i := fun i ↦ by fin_cases i <;> simp [b.pos]
+  ext i j
+  fin_cases i <;> fin_cases j
+  · simp [upperTriRep_def, ha]
+  · have hlt : (0 : Fin 2) < 1 := by decide
+    have heq := upperTriGL_apply_lt ha ((upperTriEntriesEquivFin p).symm b) hlt
+    have hdef : (⟨(0, 1), hlt⟩ : {ij : Fin 2 × Fin 2 // ij.1 < ij.2}) = default := Subtype.ext rfl
+    rw [hdef, upperTriEntriesEquivFin_symm_apply_default_val b] at heq
+    simp [upperTriRep_def, heq]
+  · simp [upperTriRep_def, ha]
+  · simp [upperTriRep_def, ha]
 
 /-- **The representatives are upper triangular** — the hypothesis mathlib's
 `IsBoundedAtImInfty.slash` asks for. At `n = 2` this is the `(1, 0)` entry of

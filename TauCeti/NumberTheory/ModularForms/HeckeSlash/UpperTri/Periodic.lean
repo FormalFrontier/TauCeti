@@ -26,7 +26,6 @@ sum sends 1-periodic functions to 1-periodic functions.
 
 ## Main results
 
-* `HeckeRing.GL2.mapGL_T_coe_matrix`: the matrix of `mapGL ℚ ModularGroup.T` is `!![1, 1; 0, 1]`.
 * `HeckeRing.GL2.upperTriRep_mul_mapGL_T_of_lt`: for `b.val + 1 < p`,
   `upperTriRep p b * mapGL ℚ ModularGroup.T = upperTriRep p ⟨b.val + 1, _⟩`.
 * `HeckeRing.GL2.upperTriRep_last_mul_mapGL_T`: for `b.val + 1 = p`,
@@ -52,23 +51,13 @@ namespace HeckeRing.GL2
 
 variable (k : ℤ) (p : ℕ)
 
-/-- The matrix of `mapGL ℚ ModularGroup.T` is `!![1, 1; 0, 1]`. -/
-lemma mapGL_T_coe_matrix :
-    (↑(mapGL ℚ (ModularGroup.T : SL(2, ℤ))) : Matrix (Fin 2) (Fin 2) ℚ) = !![1, 1; 0, 1] := by
-  have hT := TauCeti.ModularGroup.mapGL_T_pow_eq_upperRightHom (S := ℚ) 1
-  rw [pow_one] at hT
-  rw [hT]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [GeneralLinearGroup.upperRightHom_apply]
-
 /-- For `b.val + 1 < p`, right multiplication of `upperTriRep p b` by `T` shifts the offset
 to `b + 1`. -/
 lemma upperTriRep_mul_mapGL_T_of_lt (b : Fin p) (hb : b.val + 1 < p) :
     upperTriRep p b * mapGL ℚ ModularGroup.T = upperTriRep p ⟨b.val + 1, hb⟩ := by
-  have hp : 0 < p := by omega
   apply Units.ext
-  rw [Units.val_mul, upperTriRep_coe_matrix p hp b, mapGL_T_coe_matrix,
-    upperTriRep_coe_matrix p hp ⟨b.val + 1, hb⟩]
+  rw [Units.val_mul, upperTriRep_coe_matrix, TauCeti.ModularGroup.mapGL_T_coe_matrix,
+    upperTriRep_coe_matrix]
   ext ⟨_ | _ | _, _⟩ ⟨_ | _ | _, _⟩ <;> try contradiction
   · simp
   · simp [Matrix.mul_apply, Fin.sum_univ_two, add_comm]
@@ -77,12 +66,12 @@ lemma upperTriRep_mul_mapGL_T_of_lt (b : Fin p) (hb : b.val + 1 < p) :
 
 /-- For the last representative `b.val + 1 = p`, right multiplication by `T` factors as
 `T · upperTriRep p 0`. -/
-lemma upperTriRep_last_mul_mapGL_T (b : Fin p) (hb : b.val + 1 = p) (hp : 0 < p) :
+lemma upperTriRep_last_mul_mapGL_T (b : Fin p) (hb : b.val + 1 = p) :
     upperTriRep p b * mapGL ℚ ModularGroup.T =
-      mapGL ℚ ModularGroup.T * upperTriRep p ⟨0, hp⟩ := by
+      mapGL ℚ ModularGroup.T * upperTriRep p ⟨0, b.pos⟩ := by
   apply Units.ext
-  rw [Units.val_mul, Units.val_mul, upperTriRep_coe_matrix p hp b, mapGL_T_coe_matrix,
-    upperTriRep_coe_matrix p hp ⟨0, hp⟩]
+  rw [Units.val_mul, Units.val_mul, upperTriRep_coe_matrix,
+    TauCeti.ModularGroup.mapGL_T_coe_matrix, upperTriRep_coe_matrix]
   have hbp : (b : ℚ) + 1 = (p : ℚ) := by
     have : (b.val : ℚ) + 1 = (p : ℚ) := by exact_mod_cast hb
     exact this
@@ -105,7 +94,7 @@ private lemma slash_upperTriRep_mul_T (n : ℕ) (f : ℍ → ℂ)
   · have hbn : b = ⟨n, Nat.lt_succ_self n⟩ := by ext; dsimp; omega
     rw [hbn, finRotate_last']
     have hlast : (⟨n, Nat.lt_succ_self n⟩ : Fin (n + 1)).val + 1 = n + 1 := rfl
-    rw [upperTriRep_last_mul_mapGL_T (n + 1) _ hlast (Nat.zero_lt_succ n),
+    rw [upperTriRep_last_mul_mapGL_T (n + 1) _ hlast,
       SlashAction.slash_mul, hfT]
 
 /-- **The upper-triangular Hecke slash sum preserves `T`-invariance.** -/
@@ -133,20 +122,19 @@ lemma heckeSlashUpperTri_shift_one (f : ℍ → ℂ) (hf : ∀ τ : ℍ, f ((1 :
     heckeSlashUpperTri k p f ((1 : ℝ) +ᵥ τ) = heckeSlashUpperTri k p f τ := by
   have hfT : f ∣[k] (mapGL ℚ (ModularGroup.T : SL(2, ℤ)) : GL (Fin 2) ℚ) = f := by
     ext x
-    rw [ModularForm.rat_slash, map_mapGL]
+    rw [ModularForm.rat_slash, map_mapGL, ← TauCeti.Matrix.SpecialLinearGroup.coe_GL_eq_mapGL,
+      ← _root_.ModularForm.SL_slash]
     have ht := TauCeti.ModularForm.slash_T_zpow_apply k 1 f x
     rw [zpow_one, Int.cast_one] at ht
-    change (f ∣[k] (ModularGroup.T : SL(2, ℤ))) x = f x
     exact ht.trans (hf x)
   have hTinv := heckeSlashUpperTri_slash_T k p f hfT
   have hT_eval : (heckeSlashUpperTri k p f ∣[k]
       (mapGL ℚ (ModularGroup.T : SL(2, ℤ)) : GL (Fin 2) ℚ)) τ =
         heckeSlashUpperTri k p f ((1 : ℝ) +ᵥ τ) := by
-    rw [ModularForm.rat_slash, map_mapGL]
+    rw [ModularForm.rat_slash, map_mapGL, ← TauCeti.Matrix.SpecialLinearGroup.coe_GL_eq_mapGL,
+      ← _root_.ModularForm.SL_slash]
     have ht := TauCeti.ModularForm.slash_T_zpow_apply k 1 (heckeSlashUpperTri k p f) τ
     rw [zpow_one, Int.cast_one] at ht
-    change (heckeSlashUpperTri k p f ∣[k] (ModularGroup.T : SL(2, ℤ))) τ =
-      heckeSlashUpperTri k p f ((1 : ℝ) +ᵥ τ)
     exact ht
   rw [← hT_eval, hTinv]
 

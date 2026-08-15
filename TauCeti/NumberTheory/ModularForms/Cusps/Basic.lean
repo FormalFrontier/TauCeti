@@ -56,6 +56,17 @@ lemma ModularGroup.mapGL_T_pow_eq_upperRightHom {S : Type*} [CommRing S] (n : �
       Matrix.GeneralLinearGroup.upperRightHom (n : S) := by
   rw [← zpow_natCast, ModularGroup.mapGL_T_zpow_eq_upperRightHom, Int.cast_natCast]
 
+/-- The matrix of `mapGL S ModularGroup.T` is `!![1, 1; 0, 1]`. -/
+@[simp]
+lemma ModularGroup.mapGL_T_coe_matrix {S : Type*} [CommRing S] :
+    (↑(Matrix.SpecialLinearGroup.mapGL S (ModularGroup.T : SL(2, ℤ))) : Matrix (Fin 2) (Fin 2) S) =
+      !![1, 1; 0, 1] := by
+  have hT := ModularGroup.mapGL_T_pow_eq_upperRightHom (S := S) 1
+  rw [pow_one] at hT
+  rw [hT]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [GeneralLinearGroup.upperRightHom_apply]
+
 /-- The coercion of `SL(2, ℤ)` into `GL(2, ℝ)` agrees with `mapGL ℝ`. -/
 lemma Matrix.SpecialLinearGroup.coe_GL_eq_mapGL (g : SL(2, ℤ)) :
     (g : GL (Fin 2) ℝ) = mapGL ℝ g := rfl
