@@ -15,7 +15,7 @@ This file builds the first piece of the geometric presentation layer of knot the
 in Layer 4 of the GeometricTopology roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 4,
 "knot theory, done properly"). Knots have no single privileged representation; the geometric
 presentation represents a knot as a smooth embedding of the circle `Circle` into an ambient
-charted space $M$. The embedding is parametrized and no quotient by reparametrization or reversal
+smooth manifold $M$. The embedding is parametrized and no quotient by reparametrization or reversal
 is taken, so orientation is not tracked as a separate structure yet; framing, ambient-isotopy
 equivalence, and sliceness are also not provided here.
 
@@ -53,24 +53,24 @@ namespace TauCeti
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H]
   (I : ModelWithCorners ℝ E H)
-  (M : Type*) [TopologicalSpace M] [ChartedSpace H M]
+  (M : Type*) [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
 
-/-- A smooth-knot presentation in an ambient charted space `M` is a bundled `C^∞` smooth
+/-- A smooth-knot presentation in an ambient smooth manifold `M` is a bundled `C^∞` smooth
 embedding of the standard circle `Circle` into `M`. The embedding is parametrized and no quotient
 by reparametrization or reversal is taken, so orientation is not tracked as a separate
 structure yet. -/
 public abbrev SmoothKnot (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M]
-    [ChartedSpace H M] : Type _ :=
+    [ChartedSpace H M] [IsManifold I ∞ M] : Type _ :=
   SmoothEmbedding (𝓡 1) I ∞ Circle M
 
 /-- A smooth knot in the standard 3-sphere `Sphere3`. -/
 public abbrev SmoothKnotSphere3 : Type _ := SmoothKnot (𝓡 3) Sphere3
 
-/-- A `k`-component smooth-link presentation in a charted space `M` consists of `k` component
+/-- A `k`-component smooth-link presentation in a smooth manifold `M` consists of `k` component
 knots with pairwise disjoint embedding images. -/
 @[ext]
 structure SmoothLink (I : ModelWithCorners ℝ E H)
-    (M : Type*) [TopologicalSpace M] [ChartedSpace H M] (k : ℕ) where
+    (M : Type*) [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] (k : ℕ) where
   /-- The individual component knots of the link. -/
   component : Fin k → SmoothKnot I M
   /-- Different components have pairwise disjoint embedding images in `M`. -/
