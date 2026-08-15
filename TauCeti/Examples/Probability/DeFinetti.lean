@@ -18,15 +18,14 @@ A failure here means an export went missing, not that a proof broke — the gap 
 is the one where `deFinetti_viaL2` existed on `main` for some time without being reachable from the
 facade.
 
-## Two advertised names do not exist
+## One advertised name does not exist
 
-Layer 7's list includes two declarations that are absent from the repository, so they cannot be
-checked here:
+Layer 7 spells one endpoint `exchangeable_of_mixedIID`; the repository proves it canonically as
+`MixedIID.exchangeable`, which is checked below under that name. No alias is introduced.
 
-* `exchangeable_of_mixedIID` — only the converse, `mixedIID_of_exchangeable`, is proved;
-* `deFinetti_empiricalMeasure` — not started, and blocked on a roadmap decision recorded in
-  `Exchangeability/STATUS.md`: under `[StandardBorelSpace α]` alone no compatible Polish topology
-  is selected, so the target as worded is not yet well-posed.
+`deFinetti_empiricalMeasure` is genuinely absent: not started, and blocked on a roadmap decision
+recorded in `Exchangeability/STATUS.md` — under `[StandardBorelSpace α]` alone no compatible Polish
+topology is selected, so the target as worded is not yet well-posed.
 
 Every other advertised name is checked below.
 
@@ -59,6 +58,7 @@ example := @ConditionallyIID
 -- Relations between them.
 example := @exchangeable_iff_fullyExchangeable
 example := @contractable_of_exchangeable
+example := @MixedIID.exchangeable
 example := @mixedIIDWith_of_conditionallyIIDWith
 example := @mixedIID_of_conditionallyIID
 
