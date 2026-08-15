@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Completion
-public import TauCeti.Topology.Category.TopCommRingCat.CompleteSeparated
+public import TauCeti.Topology.Category.TopCommRingCat.CompleteSeparated.Basic
 
 /-!
 # `A⟨T/s⟩` is a complete separated topological ring
