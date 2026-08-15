@@ -51,8 +51,8 @@ under isomorphisms and tensor products.
   comodule over a monoid algebra is semisimple.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_mapDomain_iff`: invariance of point semisimplicity under
   bialgebra isomorphisms.
-* `TauCeti.HopfAlgebra.isSemisimplePoint_pointsMulEquiv_iff`: a point of a product affine group is
-  semisimple if and only if both component points are semisimple.
+* `TauCeti.HopfAlgebra.isSemisimplePoint_pointsMulEquiv_iff`: over a perfect field, a point of a
+  product affine group is semisimple if and only if both component points are semisimple.
 * `TauCeti.DiagonalizableGroup.isSemisimplePoint`: every point of a diagonalizable group is a
   semisimple point.
 * `TauCeti.DiagonalizableGroup.semisimplePart_eq_self` and
@@ -180,8 +180,8 @@ variable {H K' : Type v} [CommSemiring H] [CommSemiring K']
 variable [_root_.HopfAlgebra k H] [_root_.HopfAlgebra k K']
 variable {A : Type w} [Field A] [Algebra k A] [PerfectField A]
 
-/-- A point of a product affine group is semisimple exactly when both factor points are
-semisimple. -/
+/-- Over a perfect field, a point of a product affine group is semisimple exactly when both factor
+points are semisimple. -/
 theorem HopfAlgebra.isSemisimplePoint_pointsMulEquiv_iff
     (g : WithConv ((H ⊗[k] K') →ₐ[k] A)) :
     IsSemisimplePoint g ↔
