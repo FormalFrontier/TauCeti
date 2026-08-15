@@ -9,10 +9,10 @@ public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 /-!
 # Radical API for quadratic forms
 
-This file records general consequences of nondegeneracy for quadratic forms, together with the two
-facts about the quadratic form `x ↦ B x x` of a *symmetric* bilinear form `B` that a Clifford
-construction consumes: its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as
-`2` is invertible.
+This file records basic properties of the radical of a quadratic form (such as its invariance under
+negation) and general consequences of nondegeneracy, together with the two facts about the
+quadratic form `x ↦ B x x` of a *symmetric* bilinear form `B` that a Clifford construction consumes:
+its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as `2` is invertible.
 
 ## Main results
 

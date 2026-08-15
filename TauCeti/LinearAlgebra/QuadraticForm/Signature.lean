@@ -4,18 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.LinearAlgebra.BilinearForm.Properties
+public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
 
 /-!
 # Definiteness and the signature of a quadratic form
 
 This file characterizes positive and negative semidefiniteness by the vanishing of the
-corresponding index of inertia.  It also characterizes positive-definiteness by the negative
-index and the radical.  These are convenient consequences of Sylvester's law of inertia which
-complement Mathlib's definitions of `QuadraticMap.PosDef`, `QuadraticForm.sigPos`, and
-`QuadraticForm.sigNeg`.
-
-The results are proved by reducing to Mathlib's weighted-sum-of-squares normal form.
+opposite index of inertia. It also characterizes positive-definiteness by the negative
+index and the radical. These are convenient consequences of Sylvester's law of inertia which
+complement Mathlib's definitions of `QuadraticMap.PosDef`, `sigPos`, and `sigNeg`.
 
 ## References
 
@@ -38,30 +37,34 @@ variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
 /-- A quadratic form is nonnegative exactly when its negative index of inertia vanishes. -/
 theorem forall_nonneg_iff_sigNeg_eq_zero (Q : _root_.QuadraticForm K M) :
     (∀ x, 0 ≤ Q x) ↔ sigNeg Q = 0 := by
-  classical
-  let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
-  obtain ⟨w, hQw⟩ := Q.equivalent_weightedSumSquares
-  rw [hQw.sigNeg_eq, sigNeg_weightedSumSquares, Set.ncard_eq_zero]
-  obtain ⟨e⟩ := hQw
   constructor
   · intro hQ
-    ext i
-    simp only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false]
-    have hi := hQ (e.symm (Pi.single i 1))
-    rw [e.symm.map_app] at hi
-    have hsingle : weightedSumSquares K w (Pi.single i 1) = w i := by
-      rw [weightedSumSquares_apply, Fintype.sum_eq_single i]
-      · rw [Pi.single_eq_same, one_mul, smul_eq_mul, mul_one]
-      · intro j hji
-        rw [Pi.single_eq_of_ne hji, mul_zero, smul_zero]
-    rw [hsingle] at hi
-    exact not_lt.mpr hi
-  · intro hw x
-    rw [← e.map_app, weightedSumSquares_apply]
-    exact sum_nonneg fun i _ ↦ mul_nonneg (not_lt.mp (by
-      have hi := Set.ext_iff.mp hw i
-      simpa only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false] using hi))
-        (mul_self_nonneg _)
+    have h := sigPos_add_finrank_le_of_nonpos (Q := -Q) (V := ⊤) (fun x _ ↦ by
+      simp only [neg_apply]
+      exact neg_nonpos.mpr (hQ x))
+    rw [sigPos_neg, finrank_top] at h
+    omega
+  · intro hsig x
+    by_contra hlt
+    have hQx : 0 < -Q x := neg_pos.mpr (not_le.mp hlt)
+    have hx0 : x ≠ 0 := by
+      rintro rfl
+      rw [map_zero, neg_zero] at hQx
+      exact lt_irrefl 0 hQx
+    have hpos : ((-Q).restrict (Submodule.span K {x})).PosDef := by
+      rintro ⟨v, hv⟩ hv0
+      obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.mp hv
+      have hc0 : c ≠ 0 := by
+        rintro rfl
+        exact hv0 (by simp)
+      rw [restrict_apply, neg_apply, Q.map_smul, smul_eq_mul]
+      have : -(c * c * Q x) = (c * c) * -Q x := by ring
+      rw [this]
+      exact mul_pos (mul_self_pos.mpr hc0) hQx
+    have hrank : Module.finrank K (Submodule.span K {x}) = 1 := finrank_span_singleton hx0
+    have hle := le_sigNeg_of_negDef (Q := Q) hpos
+    rw [hrank, hsig] at hle
+    omega
 
 /-- A quadratic form is nonpositive exactly when its positive index of inertia vanishes. -/
 theorem forall_nonpos_iff_sigPos_eq_zero (Q : _root_.QuadraticForm K M) :
@@ -73,7 +76,6 @@ radical is trivial. -/
 @[grind =]
 theorem posDef_iff_sigNeg_eq_zero_and_radical_eq_bot (Q : _root_.QuadraticForm K M) :
     Q.PosDef ↔ sigNeg Q = 0 ∧ Q.radical = ⊥ := by
-  let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
   constructor
   · intro hQ
     refine ⟨(forall_nonneg_iff_sigNeg_eq_zero Q).mp hQ.nonneg, ?_⟩
@@ -92,5 +94,58 @@ theorem posDef_iff_sigNeg_eq_zero_and_radical_eq_bot (Q : _root_.QuadraticForm K
     exact hWpos ⟨x, hxW⟩ (by simpa only [ne_eq, Submodule.mk_eq_zero])
 
 end QuadraticForm
+
+namespace LinearMap.BilinForm
+
+open _root_.QuadraticForm
+
+variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
+  [AddCommGroup M] [Module K M] [FiniteDimensional K M]
+
+omit [FiniteDimensional K M] in
+/-- The radical of the quadratic form of a symmetric bilinear form equals the kernel of the
+bilinear form. -/
+theorem radical_toQuadraticMap (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
+    B.toQuadraticMap.radical = B.ker := by
+  let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
+  rw [QuadraticMap.radical_eq_ker_associated,
+    QuadraticMap.associated_left_inverse (S := K) hB.eq]
+
+omit [IsStrictOrderedRing K] [FiniteDimensional K M] in
+/-- A symmetric bilinear form is positive-semidefinite if and only if its values on all vectors
+are nonnegative. -/
+theorem isPosSemidef_iff_forall_nonneg (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
+    B.IsPosSemidef ↔ ∀ x, 0 ≤ B x x := by
+  rw [LinearMap.BilinForm.isPosSemidef_def, LinearMap.BilinForm.isNonneg_def]
+  simp only [hB, true_and]
+
+/-- A symmetric bilinear form is positive-semidefinite if and only if the negative index of its
+associated quadratic form vanishes. -/
+theorem isPosSemidef_iff_sigNeg_eq_zero (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
+    B.IsPosSemidef ↔ _root_.sigNeg B.toQuadraticMap = 0 := by
+  rw [isPosSemidef_iff_forall_nonneg B hB]
+  simpa only [LinearMap.BilinMap.toQuadraticMap_apply] using
+    QuadraticForm.forall_nonneg_iff_sigNeg_eq_zero B.toQuadraticMap
+
+/-- The quadratic form of a symmetric bilinear form is positive-definite if and only if the
+bilinear form is positive-semidefinite and nondegenerate. -/
+theorem posDef_toQuadraticMap_iff_isPosSemidef_and_nondegenerate (B : LinearMap.BilinForm K M)
+    (hB : B.IsSymm) :
+    B.toQuadraticMap.PosDef ↔ B.IsPosSemidef ∧ B.Nondegenerate := by
+  rw [isPosSemidef_iff_sigNeg_eq_zero B hB,
+    QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
+    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot, radical_toQuadraticMap B hB]
+
+/-- The quadratic form of a symmetric bilinear form is positive-definite if and only if the
+kernel of the bilinear form and the negative index of the quadratic form both vanish. -/
+theorem posDef_toQuadraticMap_iff_finrank_ker_eq_zero_and_sigNeg_eq_zero
+    (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
+    B.toQuadraticMap.PosDef ↔ Module.finrank K B.ker = 0 ∧ _root_.sigNeg B.toQuadraticMap = 0 := by
+  rw [posDef_toQuadraticMap_iff_isPosSemidef_and_nondegenerate B hB,
+    isPosSemidef_iff_sigNeg_eq_zero B hB,
+    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot,
+    Submodule.finrank_eq_zero, and_comm]
+
+end LinearMap.BilinForm
 
 end TauCeti

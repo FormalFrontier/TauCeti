@@ -97,6 +97,10 @@ theorem rationalBasis_apply (L : IntegralLattice V) (i : Module.Free.ChooseBasis
     L.rationalBasis i = (Module.Free.chooseBasis ℤ L i : V) :=
   Basis.extendOfIsLattice_apply ℚ (Module.Free.chooseBasis ℤ L) i
 
+/-- The ambient rational vector space of an integral lattice is finite-dimensional. -/
+theorem finiteDimensional (L : IntegralLattice V) : FiniteDimensional ℚ V :=
+  Module.Finite.of_basis L.rationalBasis
+
 /-- The `ℤ`-finrank of the carrier of an integral lattice equals the `ℚ`-finrank of the ambient
 space. -/
 theorem finrank_carrier (L : IntegralLattice V) :
