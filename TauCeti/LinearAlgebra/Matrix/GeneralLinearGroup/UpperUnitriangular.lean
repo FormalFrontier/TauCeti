@@ -103,6 +103,7 @@ theorem apply_diag (g : upperUnitriangularGroup m R) (i : m) :
 
 /-- Two upper-unitriangular group elements are equal if their entries strictly above the diagonal
 agree. -/
+@[ext]
 theorem ext {g h : upperUnitriangularGroup m R}
     (heq : ∀ i j, i < j →
       ((g : GL m R) : Matrix m m R) i j = ((h : GL m R) : Matrix m m R) i j) : g = h := by
