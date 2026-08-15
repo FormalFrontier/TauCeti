@@ -4,11 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Topology.Homeomorph.Lemmas
-public import Mathlib.Topology.MetricSpace.ProperSpace
-public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
-public import TauCeti.AlgebraicTopology.NotSimplyConnected
 public import TauCeti.AlgebraicTopology.UniversalCover.ComplexCircleFundamentalGroup
 public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Basic
 public import TauCeti.Geometry.Sphere.LinearIsometry
@@ -29,10 +25,10 @@ squares are equal or negatives, and it is surjective because Mathlib's power map
 quotient covering map. A continuous bijection from the compact quotient to the Hausdorff circle is
 then a homeomorphism.
 
-Transporting `TauCeti.Circle.fundamentalGroupMulEquiv` across this homeomorphism computes the
+Transporting the circle fundamental group computation across this homeomorphism computes the
 exceptional one-dimensional case of the real-projective-space fundamental group:
 
-  `FundamentalGroup (RealProjectiveSpace 1) basepoint ≃* Multiplicative ℤ`.
+  `FundamentalGroup (RealProjectiveSpace 1) x ≃* Multiplicative ℤ`.
 
 For dimensions at least two the antipodal cover has deck group `ℤˣ`, as proved in
 `TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Deck`, but completing that computation
@@ -46,8 +42,10 @@ group of its non-universal antipodal cover.
   homeomorphic to the complex unit circle.
 * `TauCeti.RealProjectiveSpace.toCircle`: the squared complex coordinate on `RP¹`.
 * `TauCeti.RealProjectiveSpace.oneHomeomorphCircle`: the homeomorphism `RP¹ ≃ₜ Circle`.
-* `TauCeti.RealProjectiveSpace.fundamentalGroupOneMulEquiv`: `π₁(RP¹) ≅ ℤ` at the natural
-  basepoint.
+* `TauCeti.RealProjectiveSpace.fundamentalGroupOneMulEquiv`: `π₁(RP¹, x) ≃* Multiplicative ℤ` at
+  any basepoint.
+* `TauCeti.RealProjectiveSpace.fundamentalGroupOneMulEquiv_def`: the factorization of that
+  isomorphism into homeomorphisms and the additive-circle computation.
 
 This advances `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13, `π₁(RPⁿ)`, by
 closing its `n = 1` case. It consumes Mathlib's orthonormal-basis isometry and the quotient
@@ -60,7 +58,7 @@ public section
 namespace TauCeti
 
 open Metric
-open scoped EuclideanSpace
+open scoped EuclideanSpace Real
 
 namespace RealProjectiveSpace
 
@@ -105,12 +103,12 @@ lemma toCircle_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
   RealProjectiveSpace.lift_mk 1 _ _ x
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is continuous. -/
-lemma continuous_toCircle : Continuous toCircle :=
+private lemma continuous_toCircle : Continuous toCircle :=
   (isQuotientMap_mk 1).continuous_iff.mpr
     ((sphereOneHomeomorphCircle.continuous.pow 2).congr fun x => (toCircle_mk x).symm)
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is injective. -/
-lemma injective_toCircle : Function.Injective toCircle := by
+private lemma injective_toCircle : Function.Injective toCircle := by
   intro x y hxy
   obtain ⟨x, rfl⟩ := mk_surjective 1 x
   obtain ⟨y, rfl⟩ := mk_surjective 1 y
@@ -125,7 +123,7 @@ lemma injective_toCircle : Function.Injective toCircle := by
     exact Circle.ext h
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is surjective. -/
-lemma surjective_toCircle : Function.Surjective toCircle := by
+private lemma surjective_toCircle : Function.Surjective toCircle := by
   intro z
   obtain ⟨w, hw⟩ := (Circle.isQuotientCoveringMap_npow 2).surjective z
   refine ⟨mk 1 (sphereOneHomeomorphCircle.symm w), ?_⟩
@@ -140,6 +138,7 @@ def oneHomeomorphCircle : RealProjectiveSpace 1 ≃ₜ Circle :=
     continuous_toCircle
 
 /-- The homeomorphism `RP¹ ≃ₜ Circle` evaluates as the squared-coordinate map. -/
+@[simp]
 lemma oneHomeomorphCircle_apply (x : RealProjectiveSpace 1) :
     oneHomeomorphCircle x = toCircle x := by
   have h : oneHomeomorphCircle.toEquiv =
@@ -164,27 +163,50 @@ lemma oneHomeomorphCircle_oneBasepoint : oneHomeomorphCircle oneBasepoint = 1 :=
   rw [oneHomeomorphCircle_apply, toCircle_oneBasepoint]
 
 /-- **The fundamental group of the real projective line is infinite cyclic.** The isomorphism is
-obtained by transporting the existing computation `π₁(Circle, 1) ≅ ℤ` across
-`oneHomeomorphCircle`. -/
-def fundamentalGroupOneMulEquiv :
-    FundamentalGroup (RealProjectiveSpace 1) oneBasepoint ≃* Multiplicative ℤ :=
-  (FundamentalGroup.homeomorphMulEquivOfEq oneHomeomorphCircle
-      oneHomeomorphCircle_oneBasepoint).trans
-    Circle.fundamentalGroupMulEquiv
+obtained by transporting the additive-circle computation across `oneHomeomorphCircle` and
+`AddCircle.homeomorphCircle`. -/
+def fundamentalGroupOneMulEquiv (x : RealProjectiveSpace 1) :
+    FundamentalGroup (RealProjectiveSpace 1) x ≃* Multiplicative ℤ :=
+  (FundamentalGroup.homeomorphMulEquiv oneHomeomorphCircle x).trans
+    ((FundamentalGroup.homeomorphMulEquiv
+        (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+        (oneHomeomorphCircle x)).trans
+      (AddCircle.fundamentalGroupMulEquiv (2 * Real.pi) Real.two_pi_pos.ne'
+        ⟨Classical.choose (QuotientAddGroup.mk_surjective
+          ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+            (oneHomeomorphCircle x))),
+         Classical.choose_spec (QuotientAddGroup.mk_surjective _)⟩))
 
-/-- The fundamental group of `RP¹` at its natural basepoint is nontrivial. -/
-theorem nontrivial_fundamentalGroup_one :
-    Nontrivial (FundamentalGroup (RealProjectiveSpace 1) oneBasepoint) :=
-  fundamentalGroupOneMulEquiv.toEquiv.nontrivial
+/-- `fundamentalGroupOneMulEquiv` factors as the homeomorphism-invariance isomorphism of
+`oneHomeomorphCircle` composed with the circle homeomorphism and the additive-circle
+equivalence. This exposes the definition so consumers can reason about the isomorphism. -/
+theorem fundamentalGroupOneMulEquiv_def (x : RealProjectiveSpace 1) :
+    fundamentalGroupOneMulEquiv x =
+      (FundamentalGroup.homeomorphMulEquiv oneHomeomorphCircle x).trans
+        ((FundamentalGroup.homeomorphMulEquiv
+            (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+            (oneHomeomorphCircle x)).trans
+          (AddCircle.fundamentalGroupMulEquiv (2 * Real.pi) Real.two_pi_pos.ne'
+            ⟨Classical.choose (QuotientAddGroup.mk_surjective
+              ((AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+                (oneHomeomorphCircle x))),
+             Classical.choose_spec (QuotientAddGroup.mk_surjective _)⟩)) := by
+  unfold fundamentalGroupOneMulEquiv
+  rfl
 
-/-- The fundamental group of `RP¹` at its natural basepoint is infinite. -/
-theorem infinite_fundamentalGroup_one :
-    Infinite (FundamentalGroup (RealProjectiveSpace 1) oneBasepoint) :=
-  Infinite.of_injective _ fundamentalGroupOneMulEquiv.symm.injective
+/-- The fundamental group of `RP¹` at any basepoint is nontrivial. -/
+theorem nontrivial_fundamentalGroup_one (x : RealProjectiveSpace 1) :
+    Nontrivial (FundamentalGroup (RealProjectiveSpace 1) x) :=
+  (fundamentalGroupOneMulEquiv x).toEquiv.nontrivial
+
+/-- The fundamental group of `RP¹` at any basepoint is infinite. -/
+theorem infinite_fundamentalGroup_one (x : RealProjectiveSpace 1) :
+    Infinite (FundamentalGroup (RealProjectiveSpace 1) x) :=
+  Infinite.of_injective _ (fundamentalGroupOneMulEquiv x).symm.injective
 
 /-- The real projective line is not simply connected. -/
 theorem not_simplyConnectedSpace_one : ¬ SimplyConnectedSpace (RealProjectiveSpace 1) :=
-  haveI := nontrivial_fundamentalGroup_one
+  haveI := nontrivial_fundamentalGroup_one oneBasepoint
   not_simplyConnectedSpace_of_nontrivial_fundamentalGroup oneBasepoint
 
 /-- The real projective line is not contractible. -/
@@ -196,3 +218,4 @@ end
 end RealProjectiveSpace
 
 end TauCeti
+
