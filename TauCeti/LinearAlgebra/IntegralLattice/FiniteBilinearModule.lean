@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.Module.CharacterModule
 public import Mathlib.LinearAlgebra.SesquilinearForm.Orthogonal
 public import Mathlib.Analysis.Fourier.FiniteAbelian.PontryaginDuality
-public import Mathlib.Topology.Instances.AddCircle.Real
-public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 
 /-!
 # Finite bilinear modules
@@ -19,9 +17,9 @@ is stored as its adjoint into Mathlib's `CharacterModule`; this makes nondegener
 assertion that the adjoint is injective, from which bijectivity follows by finite duality.
 
 This file provides the basic constructions needed for discriminant forms: isometries, restriction,
-form negation, orthogonal direct sums, radicals, orthogonal complements, isotropic subgroups, and
-Lagrangians.  Nondegeneracy remains a predicate because restriction to a subgroup can be
-degenerate.
+form negation, orthogonal direct sums, radicals, orthogonal complements, isotropic elements,
+isotropic subgroups, and Lagrangians.  Nondegeneracy remains a predicate because restriction to a
+subgroup can be degenerate.
 
 ## References
 
@@ -35,6 +33,7 @@ degenerate.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate`: injectivity of the adjoint pairing.
 * `TauCeti.FiniteBilinearModule.Isometry`: a pairing-preserving additive equivalence.
 * `TauCeti.FiniteBilinearModule.orthogonalComplement`: the orthogonal complement of a subgroup.
+* `TauCeti.FiniteBilinearModule.IsIsotropicElem`: vanishing of the self-pairing on an element.
 * `TauCeti.FiniteBilinearModule.IsIsotropic`: vanishing of the pairing on a subgroup.
 * `TauCeti.FiniteBilinearModule.IsLagrangian`: equality with the orthogonal complement.
 -/
@@ -185,6 +184,7 @@ instance : CoeSort FiniteBilinearModule (Type u) := ⟨FiniteBilinearModule.carr
 
 variable (A : FiniteBilinearModule)
 
+@[simp]
 theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
   rw [map_zero]
   rfl
@@ -192,6 +192,7 @@ theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
 @[simp]
 theorem pairing_zero_right (x : A) : A.pairing x 0 = 0 := map_zero _
 
+@[simp]
 theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.pairing y z :=
   DFunLike.congr_fun (map_add A.pairing x y) z
 
@@ -199,6 +200,7 @@ theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.p
 theorem pairing_add_right (x y z : A) : A.pairing x (y + z) = A.pairing x y + A.pairing x z :=
   map_add (A.pairing x) y z
 
+@[simp]
 theorem pairing_neg_left (x y : A) : A.pairing (-x) y = -A.pairing x y :=
   DFunLike.congr_fun (map_neg A.pairing x) y
 
@@ -378,6 +380,7 @@ theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
 @[simp]
 theorem neg_pairing (x y : A) : A.neg.pairing x y = -A.pairing x y := (rfl)
 
+/-- Form negation preserves nondegeneracy of a finite bilinear module. -/
 @[simp]
 theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
   constructor
@@ -391,38 +394,48 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
     have := DFunLike.congr_fun hxy z
     exact neg_inj.mp this
 
+/-- The adjoint pairing for the orthogonal direct sum of two finite bilinear modules. -/
+@[expose] def prodPairing (A B : FiniteBilinearModule) :
+    (A.carrier × B.carrier) →+ CharacterModule (A.carrier × B.carrier) where
+  toFun x :=
+    { toFun := fun y ↦ A.pairing x.1 y.1 + B.pairing x.2 y.2
+      map_zero' := by
+        simp only [Prod.fst_zero, Prod.snd_zero, pairing_zero_right, add_zero]
+      map_add' := fun y z ↦ by
+        simp only [Prod.fst_add, Prod.snd_add, pairing_add_right]
+        abel }
+  map_zero' := by
+    ext ⟨z₁, z₂⟩
+    -- Expose the component evaluation hidden by the AddMonoidHom structure constructor.
+    change A.pairing 0 z₁ + B.pairing 0 z₂ = 0
+    simp only [pairing_zero_left, add_zero]
+  map_add' := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
+    ext ⟨z₁, z₂⟩
+    -- Expose the component evaluation hidden by the AddMonoidHom structure constructor.
+    change A.pairing (x₁ + y₁) z₁ + B.pairing (x₂ + y₂) z₂ =
+      (A.pairing x₁ z₁ + B.pairing x₂ z₂) + (A.pairing y₁ z₁ + B.pairing y₂ z₂)
+    simp only [pairing_add_left]
+    abel
+
+@[simp]
+theorem prodPairing_apply (A B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
+    prodPairing A B x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 :=
+  rfl
+
 /-- The orthogonal direct sum of two finite bilinear modules. -/
 @[expose] def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   carrier := A.carrier × B.carrier
-  pairing :=
-    { toFun := fun (x : A.carrier × B.carrier) ↦
-        { toFun := fun (y : A.carrier × B.carrier) ↦ A.pairing x.1 y.1 + B.pairing x.2 y.2
-          map_zero' := by
-            simp only [Prod.fst_zero, Prod.snd_zero, pairing_zero_right, add_zero]
-          map_add' := fun y z ↦ by
-            simp only [Prod.fst_add, Prod.snd_add, pairing_add_right]
-            abel }
-      map_zero' := by
-        ext ⟨z₁, z₂⟩
-        simp only [Prod.fst_zero, Prod.snd_zero, pairing_zero_left, add_zero]
-        rfl
-      map_add' := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
-        ext ⟨z₁, z₂⟩
-        -- Unfold the definition of the product pairing on components
-        change A.pairing (x₁ + y₁) z₁ + B.pairing (x₂ + y₂) z₂ =
-          (A.pairing x₁ z₁ + B.pairing x₂ z₂) + (A.pairing y₁ z₁ + B.pairing y₂ z₂)
-        simp only [pairing_add_left]
-        abel }
-  -- Unfold the definition of the product pairing to apply componentwise symmetry
+  pairing := prodPairing A B
   pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
-    change A.pairing x₁ y₁ + B.pairing x₂ y₂ = A.pairing y₁ x₁ + B.pairing y₂ x₂
-    rw [A.pairing_comm x₁ y₁, B.pairing_comm x₂ y₂]
+    rw [prodPairing_apply, prodPairing_apply, A.pairing_comm x₁ y₁, B.pairing_comm x₂ y₂]
 
 @[simp]
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
     (prod A B).pairing x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 :=
-  (rfl)
+  rfl
 
+/-- An orthogonal direct sum of finite bilinear modules is nondegenerate if and only if both
+factors are nondegenerate. -/
 @[simp]
 theorem isNondegenerate_prod (B : FiniteBilinearModule) :
     (A.prod B).IsNondegenerate ↔ A.IsNondegenerate ∧ B.IsNondegenerate := by
@@ -481,6 +494,10 @@ theorem mem_radical_iff (x : A) : x ∈ A.radical ↔ ∀ y, A.pairing x y = 0 :
     ext y
     exact hx y
 
+/-- A finite bilinear module is nondegenerate if and only if its radical is trivial. -/
+theorem isNondegenerate_iff_radical_eq_bot : A.IsNondegenerate ↔ A.radical = ⊥ :=
+  A.pairing.ker_eq_bot_iff.symm
+
 /-- An element pairing trivially with every element is zero in a nondegenerate module. -/
 theorem IsNondegenerate.eq_zero_of_forall_pairing_eq_zero (hA : A.IsNondegenerate) {x : A}
     (hx : ∀ y, A.pairing x y = 0) : x = 0 := by
@@ -489,12 +506,12 @@ theorem IsNondegenerate.eq_zero_of_forall_pairing_eq_zero (hA : A.IsNondegenerat
   rw [hx y, A.pairing_zero_left]
 
 /-- The radical of a nondegenerate finite bilinear module is trivial. -/
-theorem IsNondegenerate.radical_eq_bot (hA : A.IsNondegenerate) : A.radical = ⊥ := by
-  apply le_antisymm
-  · intro x hx
-    simpa only [AddSubgroup.mem_bot] using
-      eq_zero_of_forall_pairing_eq_zero A hA ((A.mem_radical_iff x).mp hx)
-  · exact bot_le
+theorem IsNondegenerate.radical_eq_bot (hA : A.IsNondegenerate) : A.radical = ⊥ :=
+  A.isNondegenerate_iff_radical_eq_bot.mp hA
+
+/-- A finite bilinear module with trivial radical is nondegenerate. -/
+theorem isNondegenerate_of_radical_eq_bot (h : A.radical = ⊥) : A.IsNondegenerate :=
+  A.isNondegenerate_iff_radical_eq_bot.mpr h
 
 /-- The orthogonal complement of a subgroup consists of the elements pairing trivially with it. -/
 def orthogonalComplement (H : AddSubgroup A) : AddSubgroup A :=
@@ -535,8 +552,61 @@ theorem le_orthogonalComplement_orthogonalComplement (H : AddSubgroup A) :
   rw [← Submodule.toAddSubgroup_toIntSubmodule (H.toIntSubmodule.orthogonalBilin A.toBilin)] at h
   exact h hx
 
+/-- An element of a finite bilinear module is isotropic when its self-pairing vanishes. -/
+def IsIsotropicElem (x : A) : Prop := A.pairing x x = 0
+
+@[simp]
+theorem isIsotropicElem_def (x : A) : A.IsIsotropicElem x ↔ A.pairing x x = 0 := Iff.rfl
+
+/-- The zero element is isotropic. -/
+@[simp]
+theorem isIsotropicElem_zero : A.IsIsotropicElem 0 := by
+  rw [isIsotropicElem_def, pairing_zero_left]
+
+/-- The negative of an isotropic element is isotropic. -/
+@[simp]
+theorem isIsotropicElem_neg (x : A) : A.IsIsotropicElem (-x) ↔ A.IsIsotropicElem x := by
+  rw [isIsotropicElem_def, isIsotropicElem_def, pairing_neg_left, pairing_neg_right, neg_neg]
+
+/-- An isometry preserves isotropic elements. -/
+@[simp]
+theorem Isometry.isIsotropicElem_iff {B : FiniteBilinearModule} (f : Isometry A B) (x : A) :
+    B.IsIsotropicElem (f x) ↔ A.IsIsotropicElem x := by
+  rw [isIsotropicElem_def, isIsotropicElem_def, map_pairing]
+
+/-- Form negation preserves isotropic elements. -/
+@[simp]
+theorem isIsotropicElem_neg_module (x : A) : A.neg.IsIsotropicElem x ↔ A.IsIsotropicElem x := by
+  simp only [IsIsotropicElem, neg_pairing, neg_eq_zero]
+
+/-- An element in an orthogonal product is isotropic if and only if the sum of its component
+pairings vanishes. -/
+@[simp]
+theorem isIsotropicElem_prod (B : FiniteBilinearModule) (x : A) (y : B) :
+    (A.prod B).IsIsotropicElem (x, y) ↔ A.pairing x x + B.pairing y y = 0 := by
+  simp only [IsIsotropicElem, prod_pairing]
+
 /-- A subgroup is bilinearly isotropic when the pairing vanishes on the subgroup square. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, ∀ y ∈ H, A.pairing x y = 0
+
+/-- An element belonging to an isotropic subgroup is isotropic. -/
+theorem isIsotropicElem_of_mem_isIsotropic {H : AddSubgroup A} (hH : A.IsIsotropic H) {x : A}
+    (hx : x ∈ H) : A.IsIsotropicElem x :=
+  hH x hx x hx
+
+/-- The cyclic subgroup generated by `x` is isotropic if and only if `x` is isotropic. -/
+theorem isIsotropic_zmultiples_iff (x : A) :
+    A.IsIsotropic (AddSubgroup.zmultiples x) ↔ A.IsIsotropicElem x := by
+  constructor
+  · intro h
+    exact isIsotropicElem_of_mem_isIsotropic A h (AddSubgroup.mem_zmultiples x)
+  · intro h u hu v hv
+    obtain ⟨m, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hu
+    obtain ⟨n, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hv
+    have h1 : A.pairing (m • x) (n • x) = m • n • A.pairing x x := by
+      rw [A.pairing_comm (m • x) (n • x), map_zsmul, A.pairing_comm (n • x) x, map_zsmul]
+    rw [isIsotropicElem_def] at h
+    rw [h1, h, smul_zero, smul_zero]
 
 /-- Isotropy is equivalently inclusion in the orthogonal complement. -/
 theorem isIsotropic_iff_le_orthogonalComplement (H : AddSubgroup A) :
