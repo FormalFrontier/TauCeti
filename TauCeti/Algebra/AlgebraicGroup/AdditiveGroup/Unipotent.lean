@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basis
 public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
