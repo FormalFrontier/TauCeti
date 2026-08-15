@@ -126,6 +126,13 @@ theorem eq_connectedComponentIdempotent_iff {e : R} (he : IsIdempotentElem e)
     exact TopologicalSpace.Opens.ext
       (h.trans (basicOpen_connectedComponentIdempotent x).symm)
 
+omit [LocallyConnectedSpace (PrimeSpectrum R)] in
+/-- Unfolding `homeomorphOfRingEquiv` identifies its action with contraction along the inverse
+ring equivalence. This isolates the definitional equality used below. -/
+private theorem homeomorphOfRingEquiv_apply (e : R ≃+* R) (x : PrimeSpectrum R) :
+    homeomorphOfRingEquiv e x = comap e.symm.toRingHom x :=
+  rfl
+
 /-- A ring automorphism whose induced map on the prime spectrum fixes `x` also fixes the
 component idempotent of `x`. -/
 theorem map_connectedComponentIdempotent_eq_self (e : R ≃+* R) (x : PrimeSpectrum R)
@@ -133,8 +140,7 @@ theorem map_connectedComponentIdempotent_eq_self (e : R ≃+* R) (x : PrimeSpect
     e (connectedComponentIdempotent x) = connectedComponentIdempotent x := by
   let h : PrimeSpectrum R ≃ₜ PrimeSpectrum R := homeomorphOfRingEquiv e.symm
   have h_apply (y : PrimeSpectrum R) : h y = comap e.toRingHom y := by
-    change comap e.symm.symm.toRingHom y = comap e.toRingHom y
-    rw [RingEquiv.symm_symm]
+    rw [homeomorphOfRingEquiv_apply, RingEquiv.symm_symm]
   have hfix : h x = x := (h_apply x).trans hx
   have hfix_symm : h.symm x = x := by
     apply h.injective

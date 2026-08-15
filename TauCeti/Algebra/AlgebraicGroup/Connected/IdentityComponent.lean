@@ -63,17 +63,10 @@ variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H]
 @[simp]
 theorem comap_antipodeAlgHom_augmentationPoint :
     PrimeSpectrum.comap (_root_.HopfAlgebra.antipodeAlgHom k H)
-        (Bialgebra.augmentationPoint k H) =
-      Bialgebra.augmentationPoint k H := by
-  -- Normalize Mathlib's `Spec (CommRingCat.of H)` notation to its underlying prime spectrum.
-  let p : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  change PrimeSpectrum.comap (_root_.HopfAlgebra.antipodeAlgHom k H) p = p
+        (show PrimeSpectrum H from Bialgebra.augmentationPoint k H) =
+      (show PrimeSpectrum H from Bialgebra.augmentationPoint k H) := by
   apply PrimeSpectrum.ext
-  rw [PrimeSpectrum.comap_asIdeal]
-  have hp : p.asIdeal = RingHom.ker (Bialgebra.counitAlgHom k H).toRingHom := by
-    change (AlgHom.kernelPoint (Bialgebra.counitAlgHom k H)).asIdeal = _
-    exact AlgHom.kernelPoint_asIdeal (f := Bialgebra.counitAlgHom k H)
-  rw [hp]
+  rw [PrimeSpectrum.comap_asIdeal, AlgHom.kernelPoint_asIdeal]
   ext x
   simp only [Ideal.mem_comap, RingHom.mem_ker]
   have hcounit :
@@ -103,22 +96,15 @@ private theorem antipodeAlgEquiv_toRingHom :
       (_root_.HopfAlgebra.antipodeAlgHom k H : H →+* H) := by
   apply RingHom.ext
   intro x
-  change antipodeAlgEquiv (R := k) (A := H) x =
-    _root_.HopfAlgebra.antipodeAlgHom k H x
-  rw [antipodeAlgEquiv_apply, _root_.HopfAlgebra.antipodeAlgHom_apply]
+  simp only [RingEquiv.coe_toRingHom, AlgEquiv.coe_ringEquiv, AlgHom.coe_toRingHom,
+    antipodeAlgEquiv_apply, _root_.HopfAlgebra.antipodeAlgHom_apply]
 
 /-- Mapping an ideal using the algebra-homomorphism and algebra-equivalence presentations of the
 antipode gives the same ideal. -/
 private theorem map_antipodeAlgHom_eq_map_antipodeAlgEquiv (I : Ideal H) :
     Ideal.map (_root_.HopfAlgebra.antipodeAlgHom k H) I =
       Ideal.map (antipodeAlgEquiv (R := k) (A := H)).toRingEquiv I := by
-  rw [Ideal.map]
-  congr 1
-  apply Set.image_congr'
-  intro x
-  change _root_.HopfAlgebra.antipodeAlgHom k H x =
-    antipodeAlgEquiv (R := k) (A := H) x
-  rw [antipodeAlgEquiv_apply, _root_.HopfAlgebra.antipodeAlgHom_apply]
+  exact congrArg (fun f : H →+* H ↦ Ideal.map f I) antipodeAlgEquiv_toRingHom.symm
 
 variable [LocallyConnectedSpace (PrimeSpectrum H)]
 
