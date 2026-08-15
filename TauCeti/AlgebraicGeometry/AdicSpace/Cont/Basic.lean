@@ -132,8 +132,8 @@ section TopologicalAddGroup
 
 variable [IsTopologicalAddGroup A]
 
-/-- **Wedhorn Proposition 7.49(1) (forward direction).** If `1 ∈ closure {0}` in a topological
-additive group `A`, then `Cont A = ∅`. -/
+/-- **The `1 ∈ closure {0} → Cont A = ∅` half of Wedhorn Proposition 7.49(1).** If `1 ∈ closure {0}`
+in a topological additive group `A`, then `Cont A = ∅`. -/
 theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Set A)) :
     cont A = ∅ := by
   ext v
