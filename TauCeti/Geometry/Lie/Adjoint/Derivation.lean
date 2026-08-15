@@ -35,8 +35,6 @@ This advances Deliverable A, Layer 1 of
 * `TauCeti.Lie.Ad_inv`: inversion corresponds to the inverse automorphism.
 * `TauCeti.Lie.leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad`: the canonical
   derivation–model equivalence intertwines `Ad` and `tangentAd`.
-* `TauCeti.Lie.Ad_eq_modelTangentAd`: the corresponding inverse model-space factorization of
-  `Ad`.
 
 ## References
 
@@ -113,28 +111,6 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
   rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply,
     leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply]
   exact hE
-
-/-- The derivation adjoint is the tangent adjoint transported back through the canonical
-model-space isometry. -/
-theorem Ad_eq_modelTangentAd (g : G) (D : LeftInvariantDerivation I G) :
-    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
-    Ad (I := I) g D =
-      (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-        (I := I) (G := G)).symm
-        (show E from tangentAd (I := I) g
-          (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-            (I := I) (G := G) D)) := by
-  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
-  dsimp only
-  let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
-  have h := leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g D
-  dsimp only at h
-  exact calc
-    Ad (I := I) g D = eIso.symm (eIso (Ad (I := I) g D)) :=
-      (eIso.symm_apply_apply (Ad (I := I) g D)).symm
-    _ = eIso.symm (show E from tangentAd (I := I) g (eIso D)) := congrArg eIso.symm h
 
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]

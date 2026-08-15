@@ -70,9 +70,11 @@ private theorem modelBracketTransport (X Y : LeftInvariantDerivation I G) :
     _ = ⁅eIso.symm (show E from eLie X), eIso.symm (show E from eLie Y)⁆ := by
       rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply,
         leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
+    _ = ⁅eIso.symm (eIso X), eIso.symm (eIso Y)⁆ := by
+      rw [← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply,
+        ← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply]
     _ = ⁅X, Y⁆ := by
-      rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_lieEquiv_apply,
-        leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_lieEquiv_apply]
+      rw [eIso.symm_apply_apply, eIso.symm_apply_apply]
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
 the Lie-algebra adjoint `ad X Y`. -/
@@ -99,7 +101,9 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   have hEq : (fun g : G => Ad (I := I) g Y) = L ∘ T := by
     funext g
     simp only [Function.comp_apply, L, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
-    have h := Ad_eq_modelTangentAd (I := I) (G := G) g Y
+    apply eIso.injective
+    rw [eIso.apply_symm_apply]
+    have h := leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g Y
     dsimp only at h
     exact h
   have hL : ContMDiff 𝓘(ℝ, E) 𝓘(ℝ, LeftInvariantDerivation I G) ∞ L :=
