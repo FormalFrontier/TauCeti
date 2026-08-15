@@ -77,6 +77,9 @@ private theorem isCommMonObj_of_grp_iso
 instance (S : CommRingCat.{u}) :
     (finiteCommAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
   of_iso e hG := by
+    let _ : MorphismProperty.RespectsIso (@IsFinite : MorphismProperty Scheme) :=
+      MorphismProperty.respectsIso_of_isStableUnderComposition
+        (fun _ _ f (_ : IsIso f) ↦ inferInstance)
     constructor
     · exact (MorphismProperty.over_iso_iff (@IsFinite)
         ((Grp.forget _).mapIso

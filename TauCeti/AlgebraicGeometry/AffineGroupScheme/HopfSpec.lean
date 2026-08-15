@@ -49,20 +49,6 @@ universe u
 
 variable (R : Type u) [CommRing R]
 
-/-- Finite morphisms of schemes are invariant under isomorphisms. -/
-instance finite_respectsIso :
-    MorphismProperty.RespectsIso (@IsFinite) where
-  toRespectsLeft :=
-    { precomp := fun i hi f hf => by
-        let _ := hi
-        let _ := hf
-        infer_instance }
-  toRespectsRight :=
-    { postcomp := fun i hi f hf => by
-        let _ := hi
-        let _ := hf
-        infer_instance }
-
 /-- The scheme underlying the Hopf spectrum of `H` is its ordinary spectrum. -/
 @[simp↓]
 lemma hopfSpec_obj_X_left (H : CommHopfAlgCat.{u} R) :
@@ -242,6 +228,9 @@ theorem moduleFinite_iff_isFinite_hopfSpec
     (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
     Module.Finite R H ↔
       IsFinite (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+  let _ : MorphismProperty.RespectsIso (@IsFinite : MorphismProperty Scheme) :=
+    MorphismProperty.respectsIso_of_isStableUnderComposition
+      (fun _ _ f (_ : IsIso f) ↦ inferInstance)
   rw [hopfSpec_obj_X_hom]
   rw [MorphismProperty.cancel_left_of_respectsIso
     (P := @IsFinite) (eqToHom (hopfSpec_obj_X_left R H))]
