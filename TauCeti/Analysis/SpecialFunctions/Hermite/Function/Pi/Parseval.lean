@@ -85,7 +85,12 @@ theorem hermiteFunctionPiBasis_repr_eq_integral
 /-- **The multi-index coordinates of a product function factor.** If `f(x) = ∏ᵢ Fᵢ(xᵢ)` then its
 `a`-th multi-index Hermite coordinate is the product of the `aᵢ`-th one-dimensional Hermite
 coordinates of the factors — the statement that makes a multidimensional Hermite expansion of a
-product function computable from one-dimensional ones. -/
+product function computable from one-dimensional ones.
+
+Unlike its generic source `TauCeti.piHilbertBasis_repr_L2piMul` and its Gaussian sibling
+`TauCeti.gaussianHermitePiBasis_repr_L2piMul`, this is not a `simp` lemma: `simp` already
+factors this coordinate, through `TauCeti.hermiteFunctionPiBasis_repr_apply` and
+`TauCeti.inner_L2piMul`. -/
 theorem hermiteFunctionPiBasis_repr_L2piMul
     (F : ι → Lp 𝕜 2 (volume : Measure ℝ)) (a : ι → ℕ) :
     (hermiteFunctionPiBasis 𝕜 ι).repr (L2piMul F) a

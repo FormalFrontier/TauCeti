@@ -377,6 +377,7 @@ theorem piHilbertBasis_apply {κ : ι → Type*}
 
 /-- The coordinate of a tensor in a product Hilbert basis is the product of its coordinatewise
 coordinates. -/
+@[simp]
 theorem piHilbertBasis_repr_L2piMul {κ : ι → Type*}
     (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) (F : ∀ i, Lp 𝕜 2 (μ i))
     (k : ∀ i, κ i) :

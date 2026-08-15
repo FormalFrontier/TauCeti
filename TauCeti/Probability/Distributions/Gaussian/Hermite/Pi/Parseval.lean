@@ -82,6 +82,7 @@ theorem gaussianHermitePiBasis_repr_apply
 one-dimensional `L²(N(0, 1))` factors `Fᵢ`, its `a`-th multivariate Hermite coordinate is the
 product of the `aᵢ`-th one-dimensional Hermite coordinates of the factors: a multivariate chaos
 expansion of a product of independent variables is computable from one-dimensional ones. -/
+@[simp]
 theorem gaussianHermitePiBasis_repr_L2piMul
     (F : ι → Lp 𝕜 2 (gaussianReal 0 1)) (a : ι → ℕ) :
     (gaussianHermitePiBasis 𝕜 ι).repr (L2piMul F) a
