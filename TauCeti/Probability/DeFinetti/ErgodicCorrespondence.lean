@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.Ergodic
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
-public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 public import TauCeti.Probability.DeFinetti.Correspondence
 
 /-!
@@ -60,6 +59,9 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
+/-- **The permutation action is ergodic exactly on the i.i.d. laws.** For an exchangeable path law,
+ergodicity of the finitely supported permutations of the time index characterises being an i.i.d.
+product law — the ergodic form of Hewitt–Savage. -/
 theorem exchangeable_ergodicSMul_iff_iid [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ) :
     ErgodicSMul TimePerm (ℕ → α) ρ ↔
@@ -67,6 +69,9 @@ theorem exchangeable_ergodicSMul_iff_iid [StandardBorelSpace α]
   (exchangeableSigma_trivial_iff_ergodicSMul hρ).symm.trans
     (exchangeableSigma_trivial_iff_iid hρ)
 
+/-- **Ergodic exactly at the extreme points.** Combining the previous characterisation with
+`exchangeable_extreme_iff_iid`: the ergodic exchangeable laws are precisely the extreme points of
+the exchangeable probability laws, so the de Finetti components are the ergodic components. -/
 theorem exchangeable_ergodicSMul_iff_mem_extremePoints [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ) :
     ErgodicSMul TimePerm (ℕ → α) ρ ↔
@@ -74,6 +79,9 @@ theorem exchangeable_ergodicSMul_iff_mem_extremePoints [StandardBorelSpace α]
         {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} :=
   (exchangeable_ergodicSMul_iff_iid hρ).trans exchangeable_extreme_iff_iid.symm
 
+/-- **A barycenter is ergodic exactly at a point mass.** The mixing-side form: the de Finetti
+barycenter of `π` is ergodic for the permutation action if and only if `π` is a Dirac measure, so
+the decomposition is trivial precisely when the mixture is. -/
 theorem deFinettiBarycenter_ergodicSMul_iff_dirac [StandardBorelSpace α]
     {π : Measure (ProbabilityMeasure α)} [IsProbabilityMeasure π] :
     ErgodicSMul TimePerm (ℕ → α) (deFinettiBarycenter π) ↔
