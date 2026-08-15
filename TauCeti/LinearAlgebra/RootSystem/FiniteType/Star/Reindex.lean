@@ -205,8 +205,9 @@ private theorem apply_eq_chainEntry_of_component_iso {B : Type*} [Fintype B]
 
 namespace IsFiniteType
 
-variable {B : Type*} [Fintype B] [DecidableEq B] {A : Matrix B B ℤ}
+variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
 
+open Classical in
 /-- **A connected simply-laced finite-type matrix with a branch vertex is a three-armed star.**
 
 The arm lengths are the cardinalities of the three components left after deleting the branch
@@ -342,6 +343,7 @@ theorem exists_equiv_starCartanMatrix_of_isSimplyLaced_of_degree_eq_three
       · rw [ite_eq_right hij]
         exact hdifferent hij ((f i).symm v) ((f j).symm w)
 
+open Classical in
 /-- **The simply-laced branch case of the finite-type Cartan-matrix classification.** A connected
 simply-laced finite-type matrix with a vertex of degree three has exactly one valid Dynkin type.
 It is consequently one of `Dₙ`, `E₆`, `E₇`, or `E₈`, as determined by the three arm lengths
@@ -373,9 +375,12 @@ end IsFiniteType
 section RootPairing
 
 variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R] [DecidableEq ι]
+  {P : RootPairing ι R M N} [Finite ι] [CharZero R] [IsDomain R]
   [P.IsRootSystem] [P.IsCrystallographic] [P.IsReduced] [P.IsIrreducible]
 
+attribute [local instance 2000] Classical.decEq
+
+open Classical in
 /-- **An irreducible simply-laced root system with a branch vertex has a unique valid Dynkin
 type.** The type is `Dₙ`, `E₆`, `E₇`, or `E₈`, with the three arms of the branch diagram
 determining which one. -/
