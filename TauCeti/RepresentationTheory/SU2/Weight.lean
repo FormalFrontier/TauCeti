@@ -28,8 +28,8 @@ Two consequences make this the form the highest-weight classification uses.
   usual one: subtracting an eigenvalue multiple of a vector from its image under a fixed
   generic torus element kills one coordinate and keeps the others, so an induction on the number
   of nonzero coordinates strips a vector down to a single weight vector.  The generic element is
-  `TauCeti.SU2.genericTorus = exp(i)`, whose powers are pairwise distinct because `π` is
-  irrational.
+  `exp(i)`, whose powers are pairwise distinct because `π` is irrational; it is a device of the
+  proof, and stays private to this file.
 * **The weight spaces are lines.**  A nonzero vector on which the whole torus acts through a
   single character `z ↦ z^m` is a multiple of one basis vector, and `m` is one of the `d + 1`
   weights.
@@ -38,7 +38,6 @@ Two consequences make this the form the highest-weight classification uses.
 
 * `TauCeti.SU2.weightBasis`: the weight basis of `Symᵈ(ℂ²)`, indexed by `Fin (d + 1)`.
 * `TauCeti.SU2.weight`: the weight `2i - d` of the `i`-th weight vector.
-* `TauCeti.SU2.genericTorus`: a torus element whose integer powers are pairwise distinct.
 
 ## Main results
 
@@ -157,14 +156,17 @@ theorem repr_symPower_torusHom (z : Circle) (w : Sym[ℂ]^d(Fin 2 → ℂ)) (i :
 /-! ### A torus element with pairwise distinct powers -/
 
 /-- **A generic element of the maximal torus**: `exp(i)`, an element of infinite order.  Its
-integer powers are pairwise distinct (`TauCeti.SU2.coe_genericTorus_zpow_injective`) because `π`
-is irrational, so it already separates the `d + 1` weights of `Symᵈ(ℂ²)` for every `d` at once. -/
-noncomputable def genericTorus : Circle := Circle.exp 1
+integer powers are pairwise distinct (`coe_genericTorus_zpow_injective`) because `π` is
+irrational, so it already separates the `d + 1` weights of `Symᵈ(ℂ²)` for every `d` at once.
 
-/-- **The powers of `TauCeti.SU2.genericTorus` are pairwise distinct.**  An equality
+This is the separating element the proofs below run on, not part of the interface: the results
+they prove are stated for the whole torus. -/
+private noncomputable def genericTorus : Circle := Circle.exp 1
+
+/-- **The powers of `genericTorus` are pairwise distinct.**  An equality
 `exp(i)^m = exp(i)^n` says `m - n` is an integer multiple of `2π`, which forces `m = n` since `π`
 is irrational. -/
-theorem coe_genericTorus_zpow_injective :
+private theorem coe_genericTorus_zpow_injective :
     Function.Injective fun m : ℤ => (genericTorus : ℂ) ^ m := by
   intro m n hmn
   have h : (genericTorus ^ m : Circle) = genericTorus ^ n :=
@@ -180,7 +182,7 @@ theorem coe_genericTorus_zpow_injective :
 
 /-- The generic torus element separates the weights of `Symᵈ(ℂ²)`: it acts on the `d + 1` weight
 vectors by `d + 1` pairwise distinct scalars. -/
-theorem coe_genericTorus_zpow_weight_injective :
+private theorem coe_genericTorus_zpow_weight_injective :
     Function.Injective fun i : Fin (d + 1) => (genericTorus : ℂ) ^ weight d i :=
   fun _ _ h => weight_injective d (coe_genericTorus_zpow_injective h)
 
@@ -295,10 +297,10 @@ theorem exists_weight_eq_of_forall_torusHom_smul {w : Sym[ℂ]^d(Fin 2 → ℂ)}
   have hzero : ∀ k : Fin (d + 1), k ≠ i → (weightBasis d).repr w k = 0 := by
     intro k hk
     by_contra hk0
-    refine hk (coe_genericTorus_zpow_weight_injective d ?_)
-    change (genericTorus : ℂ) ^ weight d k = (genericTorus : ℂ) ^ weight d i
-    rw [hwi]
-    exact mul_right_cancel₀ hk0 (hcoord k)
+    have hpow : (genericTorus : ℂ) ^ weight d k = (genericTorus : ℂ) ^ weight d i := by
+      rw [hwi]
+      exact mul_right_cancel₀ hk0 (hcoord k)
+    exact hk (coe_genericTorus_zpow_weight_injective d hpow)
   have hsum : ∑ k, (weightBasis d).repr w k • weightBasis d k
       = (weightBasis d).repr w i • weightBasis d i := by
     refine Finset.sum_eq_single i (fun k _ hk => ?_) fun h => absurd (Finset.mem_univ i) h
