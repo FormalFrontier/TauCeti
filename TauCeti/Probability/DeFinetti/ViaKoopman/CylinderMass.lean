@@ -7,7 +7,7 @@ module
 public import TauCeti.Probability.DeFinetti.ViaKoopman.BlockFactorization
 public import TauCeti.Probability.Exchangeability.Cylinder
 import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTransport
-public import TauCeti.MeasureTheory.Integral.ENNRealProd
+import TauCeti.MeasureTheory.Integral.ENNRealProd
 
 /-!
 # The block-cylinder mass, in the shape the common ending consumes
@@ -22,8 +22,13 @@ the identity.
 
 ## Main results
 
-* `ContractableLaw.measure_preimage_invariantConditional_inter_blockCylinder_eq_setLIntegral` —
-  the `hcore` hypothesis of the common ending, for the Koopman witness.
+Both in the `ContractableLaw` namespace:
+
+* `measure_inter_blockCylinder_eq_setLIntegral_of_measurableSet_invariants` — over any
+  shift-invariant event, the block-cylinder mass is the integral of the product of the invariant
+  conditional law's values;
+* `measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_setLIntegral`
+  — its specialisation to a witness event, which is the `hcore` hypothesis of the common ending.
 
 The crossing to `ℝ≥0∞` happens exactly once, here, through the route-neutral
 `TauCeti.MeasureTheory.ofReal_integral_prod_toReal_eq_lintegral_prod`; everything upstream is
@@ -33,11 +38,14 @@ directly.
 
 ## Source
 
-No material is adapted from `cameronfreer/exchangeability`; this assembles Tau Ceti's own block
-reduction, block factorization and `ℝ≥0∞` bridge.
+The Koopman route follows Kallenberg's first proof (see References). No material is adapted from
+`cameronfreer/exchangeability`; this assembles Tau Ceti's own block reduction, block factorization
+and `ℝ≥0∞` bridge.
 
 ## References
 
+* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles*, Springer, 2005, Chapter 1,
+  Theorem 1.1.
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 5** (Koopman operators and
   invariant σ-algebras), whose milestone is `deFinetti_viaKoopman`.
 -/
@@ -58,20 +66,17 @@ variable {α : Type*} [MeasurableSpace α]
 
 namespace ContractableLaw
 
-/-- **The block-cylinder mass over a witness event**, in the shape the common ending consumes. -/
-theorem measure_preimage_invariantConditional_inter_blockCylinder_eq_setLIntegral
+/-- **The block-cylinder mass over an invariant event.** Over any shift-invariant event, the mass
+of a block cylinder is the integral of the product of the invariant conditional law's values on the
+coordinate sets. -/
+theorem measure_inter_blockCylinder_eq_setLIntegral_of_measurableSet_invariants
     [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
     {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
-    {S : Set (ProbabilityMeasure α)} (hS : MeasurableSet S)
+    {A : Set (ℕ → α)} (hA_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i)) :
-    ρ ((invariantConditionalProbabilityMeasure ρ ⁻¹' S)
-        ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
-      = ∫⁻ x in invariantConditionalProbabilityMeasure ρ ⁻¹' S,
-          ∏ i, (invariantConditionalProbabilityMeasure ρ x : Measure α) (B i) ∂ρ := by
-  set A : Set (ℕ → α) := invariantConditionalProbabilityMeasure ρ ⁻¹' S
-  have hA_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] A :=
-    measurable_invariants_invariantConditionalProbabilityMeasure hS
+    ρ (A ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
+      = ∫⁻ x in A, ∏ i, (invariantConditionalProbabilityMeasure ρ x : Measure α) (B i) ∂ρ := by
   -- The two products, real-valued.
   set P : (ℕ → α) → ℝ := fun x =>
     ∏ i : Fin r, ρ[fun y : ℕ → α => (B i).indicator (fun _ => (1 : ℝ)) (y (i : ℕ)) |
@@ -136,6 +141,22 @@ theorem measure_preimage_invariantConditional_inter_blockCylinder_eq_setLIntegra
       ENNReal.prod_ne_top fun i _ => measure_ne_top _ _
   rw [← ENNReal.ofReal_toReal (measure_ne_top ρ (A ∩ C)), hmass]
   exact TauCeti.MeasureTheory.ofReal_integral_prod_toReal_eq_lintegral_prod hne hQ_int
+
+/-- **The witness specialisation**, which is the `hcore` hypothesis
+`conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` consumes: a test event cut
+out by the invariant conditional law is invariant. -/
+theorem measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_setLIntegral
+    [StandardBorelSpace α] [Nonempty α]
+    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ)
+    {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
+    {S : Set (ProbabilityMeasure α)} (hS : MeasurableSet S)
+    {B : Fin r → Set α} (hB : ∀ i, MeasurableSet (B i)) :
+    ρ ((invariantConditionalProbabilityMeasure ρ ⁻¹' S)
+        ∩ blockCylinder (fun j (x : ℕ → α) => x j) k B)
+      = ∫⁻ x in invariantConditionalProbabilityMeasure ρ ⁻¹' S,
+          ∏ i, (invariantConditionalProbabilityMeasure ρ x : Measure α) (B i) ∂ρ :=
+  hρ.measure_inter_blockCylinder_eq_setLIntegral_of_measurableSet_invariants hk
+    (measurable_invariants_invariantConditionalProbabilityMeasure hS) hB
 
 end ContractableLaw
 

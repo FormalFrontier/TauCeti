@@ -62,7 +62,7 @@ reindexing-and-invariant-event instance, and restates no Mathlib API.
 
 Nothing here is specific to a de Finetti route. The statements mention a contractable path law, a
 shift-invariant event and a finite selection, and no Koopman operator; the Koopman route is the
-motivating consumer and will import this; nothing imports it yet.
+motivating consumer: `ViaKoopman/CylinderMass.lean` imports this for the block-cylinder corollary.
 
 ## Invariance, not tail-measurability
 
