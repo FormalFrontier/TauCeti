@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.ClusterSet
-import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 import TauCeti.Analysis.Normed.Module.Ball.Cut
 
 /-!
@@ -48,13 +47,14 @@ the two sides of the crosscut cling to the image boundary only along the crosscu
 planar-separation statement this development does not have, and it is a prerequisite to be proved
 on its own, not something to assume; so no theorem here is stated in a shape that presumes it.
 
-The two pieces are stated with `closure A` rather than `frontier A`, which is the shape the crosscut
+The two pieces are stated with `closure A` rather than `frontier A`, the shape the crosscut
 criterion `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
-`Conformal/CutDiameter.lean` consumes. The two shapes agree
-(`TauCeti.frontier_inter_closure_image_inter_ball_eq_inter_frontier`), because a frontier point of
-the open `Ω` lies outside the open `A` and so is adherent to `A` exactly when on its frontier; the
-closure shape is used throughout because it is closed under nothing more than continuity of `f`,
-while the equality needs the open mapping theorem.
+`Conformal/CutDiameter.lean` consumes being the latter. A consumer converts between the two with
+`TauCeti.frontier_inter_closure_eq_frontier_inter_frontier` of `TauCeti/Topology/Frontier.lean`,
+applied to `Set.image_mono Set.inter_subset_left` on the near side and to
+`Set.image_mono Set.sdiff_subset` on the far side: on the frontier of a set, adherence to a subset
+is membership of that subset's frontier, for any subset and with no hypothesis on `f`. The closure
+shape is used throughout because it needs nothing more than continuity of `f`.
 
 ## Which piece is which
 
@@ -74,10 +74,10 @@ every theorem added in layers L0–L6, everything below is stated for maps of `�
 `U`, as in `Conformal/CutDiameter.lean`; nothing asks `U ∩ sphere ζ ρ` to be a crosscut, or `ζ` to
 lie on `frontier U`. The metric step that never mentions a map — that both sides of a cut cling to
 the cutting sphere — is stated for a seminormed real vector space in
-`TauCeti/Analysis/Normed/Module/Ball/Cut.lean` and consumed here. Only the frontier-shape lemmas and
-the cluster-set lemmas ask `f` to be holomorphic and injective; the splitting and the dichotomy need
-no more than continuity, and the radius is unrestricted apart from `ρ ≠ 0`, which is what makes the
-cutting sphere adherent to the ball.
+`TauCeti/Analysis/Normed/Module/Ball/Cut.lean` and consumed here. Only the cluster-set lemmas ask
+`f` to be holomorphic and injective; the splitting and the dichotomy need no more than continuity,
+and the radius is unrestricted apart from `ρ ≠ 0`, which is what makes the cutting sphere adherent
+to the ball.
 
 ## Main results
 
@@ -89,10 +89,6 @@ cutting sphere adherent to the ball.
 * `TauCeti.frontier_image_subset_union_closure_image` and
   `TauCeti.frontier_image_eq_union_inter_closure_image` — **the splitting**: the two boundary
   pieces cover the boundary of the image, with no third piece.
-* `TauCeti.frontier_inter_closure_image_inter_ball_eq_inter_frontier` and
-  `TauCeti.frontier_inter_closure_image_sdiff_closedBall_eq_inter_frontier` — on the boundary of the
-  image, adherence to a side is membership of that side's frontier, which is the shape
-  `Conformal/CutDiameter.lean` consumes.
 * `TauCeti.clusterSetOn_subset_frontier_inter_closure_image_inter_ball` and
   `TauCeti.clusterSetOn_subset_frontier_inter_closure_image_sdiff_closedBall` — each piece captures
   the values `f` clusters at over the boundary points of `U` on its own side of the circle.
@@ -220,44 +216,6 @@ theorem frontier_image_eq_union_inter_closure_image (hUo : IsOpen U) (hfc : Cont
       frontier (f '' U) ∩ closure (f '' (U \ closedBall ζ ρ)) := by
   rw [← inter_union_distrib_left]
   exact (inter_eq_left.mpr (frontier_image_subset_union_closure_image hUo hfc hρ)).symm
-
-/-- **On the boundary of the image, adherence to a side is membership of its frontier.** For a
-conformal `f`, the near-side piece `frontier (f '' U) ∩ closure (f '' (U ∩ ball ζ ρ))` is
-`frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ))`, the shape the crosscut criterion
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` consumes.
-
-Both images are open, by `TauCeti.isOpen_image_of_differentiableOn_of_injOn`; a point of
-`frontier (f '' U)` therefore misses `f '' U`, hence misses `f '' (U ∩ ball ζ ρ)`, so adherence to
-the latter puts it on the frontier. This is the only place the analytic hypotheses are used in the
-splitting. -/
-theorem frontier_inter_closure_image_inter_ball_eq_inter_frontier (hUo : IsOpen U)
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) :
-    frontier (f '' U) ∩ closure (f '' (U ∩ ball ζ ρ)) =
-      frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) := by
-  have hAo : IsOpen (f '' (U ∩ ball ζ ρ)) :=
-    isOpen_image_of_differentiableOn_of_injOn (hUo.inter isOpen_ball) (hd.mono inter_subset_left)
-      (hinj.mono inter_subset_left)
-  have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
-  refine subset_antisymm (fun p hp => ⟨hp.1, ?_⟩)
-    (inter_subset_inter_right _ frontier_subset_closure)
-  rw [hAo.frontier_eq]
-  exact ⟨hp.2, fun hpA => (hΩo.frontier_eq.subset hp.1).2 (image_mono inter_subset_left hpA)⟩
-
-/-- **On the boundary of the image, adherence to the far side is membership of its frontier.** The
-mirror of `TauCeti.frontier_inter_closure_image_inter_ball_eq_inter_frontier`, read across the
-cut. -/
-theorem frontier_inter_closure_image_sdiff_closedBall_eq_inter_frontier (hUo : IsOpen U)
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) :
-    frontier (f '' U) ∩ closure (f '' (U \ closedBall ζ ρ)) =
-      frontier (f '' U) ∩ frontier (f '' (U \ closedBall ζ ρ)) := by
-  have hBo : IsOpen (f '' (U \ closedBall ζ ρ)) :=
-    isOpen_image_of_differentiableOn_of_injOn (hUo.sdiff isClosed_closedBall)
-      (hd.mono sdiff_subset) (hinj.mono sdiff_subset)
-  have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
-  refine subset_antisymm (fun p hp => ⟨hp.1, ?_⟩)
-    (inter_subset_inter_right _ frontier_subset_closure)
-  rw [hBo.frontier_eq]
-  exact ⟨hp.2, fun hpB => (hΩo.frontier_eq.subset hp.1).2 (image_mono sdiff_subset hpB)⟩
 
 /-! ## Which piece a boundary point falls in -/
 
