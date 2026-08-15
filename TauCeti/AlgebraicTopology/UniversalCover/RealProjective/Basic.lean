@@ -7,7 +7,6 @@ module
 public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import Mathlib.Analysis.Normed.Module.Connected
 public import Mathlib.Topology.Covering.Quotient
-public import Mathlib.Topology.MetricSpace.ProperSpace
 public import TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction
 
 /-!

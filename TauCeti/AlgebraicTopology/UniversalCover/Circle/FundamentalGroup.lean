@@ -42,6 +42,8 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
   `AddCircle p` is `Multiplicative ℤ`.
 * `TauCeti.AddCircle.fundamentalGroupMulEquiv`: for a nonzero real period, the fundamental
   group of `AddCircle p` (based at any point with a chosen lift) is `Multiplicative ℤ`.
+* `TauCeti.AddCircle.fundamentalGroupMulEquivAt`: the fundamental group of `AddCircle p` based at
+  any point `x`, choosing a lift.
 * `TauCeti.AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using
   the lift `0 : ℝ`.
 * `TauCeti.UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
@@ -228,6 +230,14 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (hp : p ≠ 0) {x : AddCircle p}
     fundamentalGroupMulEquiv p hp e γ = 1 ↔ (AddCircle.isCoveringMap_coe p).monodromy γ e = e :=
   fundamentalGroupMulEquivInt_eq_one_iff (AddCircle.isCoveringMap_coe p)
     (not_isOfFinAddOrder_of_isAddTorsionFree hp) e γ
+
+/-- The fundamental group of the circle `AddCircle p`, based at any point `x : AddCircle p`, is
+`Multiplicative ℤ`. The isomorphism is obtained from `fundamentalGroupMulEquiv` by choosing a
+real lift of `x` via `QuotientAddGroup.mk_surjective`. -/
+noncomputable def fundamentalGroupMulEquivAt (hp : p ≠ 0) (x : AddCircle p) :
+    FundamentalGroup (AddCircle p) x ≃* Multiplicative ℤ :=
+  let h := QuotientAddGroup.mk_surjective x
+  fundamentalGroupMulEquiv p hp ⟨h.choose, Set.mem_singleton_iff.mpr h.choose_spec⟩
 
 /-- The fundamental group of the circle `AddCircle p` based at `0`, with the lift `0 : ℝ`, is
 `Multiplicative ℤ`. -/
