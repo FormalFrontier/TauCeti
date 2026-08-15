@@ -26,8 +26,8 @@ This advances Deliverable A, Layer 1 of
   equivalence.
 * `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply`: the
   isometric and Lie equivalences agree after viewing the tangent Lie algebra as the model space.
-* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply`: the inverse
-  model-space isometry cancels the canonical Lie equivalence.
+* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_lieEquiv_apply`: the
+  inverse model-space isometry cancels the canonical Lie equivalence.
 
 ## References
 
@@ -169,7 +169,7 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieE
     leftInvariantDerivationEquivGroupLieAlgebra_apply]
 
 /-- The inverse model-space isometry cancels the canonical Lie equivalence. -/
-theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_lieEquiv_apply
     [FiniteDimensional ℝ E] (D : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold

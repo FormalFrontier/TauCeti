@@ -19,7 +19,7 @@ manifold differential of a function to tangent vectors whose base point varies.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
 * `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
   normed vector space.
-* `mfderiv_continuousLinearMap_apply`: differentiation commutes with evaluating a
+* `mfderiv_continuousLinearMap_apply_const_apply`: differentiation commutes with evaluating a
   continuous-linear-map-valued function at a fixed vector.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
   tangent bundle is `C^m` when `m + 1 ≤ n`.
@@ -89,7 +89,7 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
 omit [IsManifold I 1 M] in
 /-- The derivative of a continuous-linear-map-valued function, evaluated at a fixed vector, is
 the derivative of the pointwise evaluation. -/
-theorem mfderiv_continuousLinearMap_apply
+theorem mfderiv_continuousLinearMap_apply_const_apply
     {V : Type*} [NormedAddCommGroup V] [NormedSpace 𝕜 V]
     {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W]
     (f : M → V →L[𝕜] W) (x : M) (v : TangentSpace I x) (y : V)

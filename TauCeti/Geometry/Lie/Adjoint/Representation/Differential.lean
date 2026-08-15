@@ -71,8 +71,8 @@ private theorem modelBracketTransport (X Y : LeftInvariantDerivation I G) :
       rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply,
         leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
     _ = ⁅X, Y⁆ := by
-      rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply,
-        leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply]
+      rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_lieEquiv_apply,
+        leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_lieEquiv_apply]
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
 the Lie-algebra adjoint `ad X Y`. -/
@@ -95,11 +95,13 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
   -- model-space-valued here.
   let T : G → E := fun g => show E from tangentAd (I := I) g (eIso Y)
   have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
-    contMDiff_tangentAd_apply_right (I := I) (G := G) (eIso Y)
+    contMDiff_tangentAd_apply_const (I := I) (G := G) (eIso Y)
   have hEq : (fun g : G => Ad (I := I) g Y) = L ∘ T := by
     funext g
     simp only [Function.comp_apply, L, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
-    exact Ad_eq_modelTangentAd (I := I) (G := G) g Y
+    have h := Ad_eq_modelTangentAd (I := I) (G := G) g Y
+    dsimp only at h
+    exact h
   have hL : ContMDiff 𝓘(ℝ, E) 𝓘(ℝ, LeftInvariantDerivation I G) ∞ L :=
     eIso.symm.toContinuousLinearEquiv.contDiff.contMDiff
   -- Factor the adjoint orbit as the inverse model isometry after the tangent adjoint orbit, then
@@ -157,7 +159,7 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
   -- Identify the operator-valued derivative pointwise by differentiating evaluation at `Y`.
   apply ContinuousLinearMap.ext
   intro Y
-  rw [mfderiv_continuousLinearMap_apply
+  rw [mfderiv_continuousLinearMap_apply_const_apply
     (hf := (contMDiff_continuousAdjointRepresentation (I := I) (G := G)).mdifferentiable
       (by simp) 1)]
   rw [show (fun g : G => continuousAdjointRepresentation (I := I) g Y) =

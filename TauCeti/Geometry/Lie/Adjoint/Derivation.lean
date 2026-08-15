@@ -97,11 +97,15 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
 tangent adjoint actions. -/
 @[simp high]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
-    [T2Space G] [BoundarylessManifold I G]
     (g : G) (D : LeftInvariantDerivation I G) :
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
     leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) (Ad g D) =
       tangentAd (I := I) g
         (leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  dsimp only
   have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g D
   -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it to compare the
   -- Lie-equivalence identity with the isometric model-space identification.
@@ -112,18 +116,25 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
 
 /-- The derivation adjoint is the tangent adjoint transported back through the canonical
 model-space isometry. -/
-theorem Ad_eq_modelTangentAd [T2Space G] [BoundarylessManifold I G]
-    (g : G) (D : LeftInvariantDerivation I G) :
+theorem Ad_eq_modelTangentAd (g : G) (D : LeftInvariantDerivation I G) :
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
     Ad (I := I) g D =
       (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
         (I := I) (G := G)).symm
         (show E from tangentAd (I := I) g
           (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
             (I := I) (G := G) D)) := by
-  apply (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-    (I := I) (G := G)).injective
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad,
-    LinearIsometryEquiv.apply_symm_apply]
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  dsimp only
+  let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
+  have h := leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g D
+  dsimp only at h
+  exact calc
+    Ad (I := I) g D = eIso.symm (eIso (Ad (I := I) g D)) :=
+      (eIso.symm_apply_apply (Ad (I := I) g D)).symm
+    _ = eIso.symm (show E from tangentAd (I := I) g (eIso D)) := congrArg eIso.symm h
 
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]

@@ -348,7 +348,7 @@ theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
   dsimp only
   let T : G → E := fun g => show E from tangentAd (I := I) g Y
   have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
-    contMDiff_tangentAd_apply_right (I := I) (G := G) (show E from Y)
+    contMDiff_tangentAd_apply_const (I := I) (G := G) (show E from Y)
   have hTmf := hT.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
   have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hTmf X
   have hchain : HasDerivAt

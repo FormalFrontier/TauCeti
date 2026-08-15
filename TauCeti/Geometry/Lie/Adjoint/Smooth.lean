@@ -23,7 +23,7 @@ This advances Deliverable A, Layer 1 of
 * `TauCeti.Lie.contMDiff_adjointContinuousLinearMap`: the adjoint operator depends smoothly on the
   group element.
 * `TauCeti.Lie.contMDiff_tangentAd_apply`: the bundled tangent adjoint action is jointly smooth.
-* `TauCeti.Lie.contMDiff_tangentAd_apply_right`: the bundled tangent adjoint action on a fixed model
+* `TauCeti.Lie.contMDiff_tangentAd_apply_const`: the bundled tangent adjoint action on a fixed model
   vector is smooth in the group element.
 
 ## References
@@ -134,7 +134,7 @@ theorem contMDiff_tangentAd_apply :
     contMDiff_snd
 
 /-- The bundled tangent adjoint action on a fixed model vector is smooth in the group element. -/
-theorem contMDiff_tangentAd_apply_right (Y : E) :
+theorem contMDiff_tangentAd_apply_const (Y : E) :
     ContMDiff I 𝓘(ℝ, E) ∞
       (fun g : G ↦ show E from tangentAd (I := I) g (Y : GroupLieAlgebra I G)) := by
   -- `GroupLieAlgebra I G` definitionally reduces to the model space `E`; expose that model-space
