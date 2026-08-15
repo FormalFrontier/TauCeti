@@ -211,6 +211,27 @@ theorem toWedderburnAlgebraPresentation_degree (P : SplitWedderburnAlgebraPresen
 theorem toWedderburnAlgebraPresentation_equiv (P : SplitWedderburnAlgebraPresentation K A) :
     P.toWedderburnAlgebraPresentation.equiv = P.equiv :=
   rfl
+
+@[simp]
+theorem toWedderburnPresentation_blockCount (P : SplitWedderburnAlgebraPresentation K A) :
+    P.toWedderburnPresentation.blockCount = P.blockCount :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_divisionRing (P : SplitWedderburnAlgebraPresentation K A)
+    (i : Fin P.blockCount) :
+    P.toWedderburnPresentation.divisionRing i = K :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_degree (P : SplitWedderburnAlgebraPresentation K A) :
+    P.toWedderburnPresentation.degree = P.degree :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_equiv (P : SplitWedderburnAlgebraPresentation K A) :
+    P.toWedderburnPresentation.equiv = P.equiv.toRingEquiv :=
+  rfl
 end SplitWedderburnAlgebraPresentation
 
 namespace WedderburnEndomorphismPresentation
@@ -260,6 +281,27 @@ theorem toWedderburnAlgebraPresentation_degree (P : WedderburnEndomorphismPresen
 @[simp]
 theorem toWedderburnAlgebraPresentation_equiv (P : WedderburnEndomorphismPresentation K A) :
     P.toWedderburnAlgebraPresentation.equiv = P.equiv :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_blockCount (P : WedderburnEndomorphismPresentation K A) :
+    P.toWedderburnPresentation.blockCount = P.blockCount :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_divisionRing (P : WedderburnEndomorphismPresentation K A)
+    (i : Fin P.blockCount) :
+    P.toWedderburnPresentation.divisionRing i = (Module.End A (P.simpleIdeal i))ᵐᵒᵖ :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_degree (P : WedderburnEndomorphismPresentation K A) :
+    P.toWedderburnPresentation.degree = P.degree :=
+  rfl
+
+@[simp]
+theorem toWedderburnPresentation_equiv (P : WedderburnEndomorphismPresentation K A) :
+    P.toWedderburnPresentation.equiv = P.equiv.toRingEquiv :=
   rfl
 end WedderburnEndomorphismPresentation
 
