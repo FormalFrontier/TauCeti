@@ -21,10 +21,8 @@ Cauchy on compact nonnegative time intervals. This file turns their pointwise li
 strongly continuous semigroup and proves its exponent-zero growth bound `‖S(t)‖ ≤ M`.
 
 The underlying limit is `TauCeti.Semigroups.yosidaLimit`, shared with the Lumer--Phillips
-construction. The proof of the semigroup law uses the exact law for each bounded exponential. In
-passing to the limit, the first error is multiplied by an approximating exponential, whose norm is
-bounded by `M`; this uses the shared limit lemma
-`TauCeti.Semigroups.yosidaLimit_time_add_of_tendsto`.
+construction. The semigroup packaging is obtained from the shared constructor
+`TauCeti.Semigroups.yosidaLimitSemigroupOfTendsto` in `LimitSemigroup.lean`.
 
 This is the limit stage of the Hille--Yosida generation theorem. Identifying the generator with
 `A`, and then undoing the scalar shift, remain separate steps.
@@ -35,6 +33,8 @@ This is the limit stage of the Hille--Yosida generation theorem. Identifying the
   converge pointwise to `yosidaLimit`.
 * `TauCeti.Semigroups.tendstoUniformlyOn_exp_yosidaApproximation_of_norm_resolvent_pow_le`: uniform
   convergence on compact nonnegative intervals.
+* `TauCeti.Semigroups.norm_yosidaLimit_le_of_norm_resolvent_pow_le`: each limit vector satisfies
+  `‖yosidaLimit A t x‖ ≤ M * ‖x‖`.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup`: the resulting strongly continuous semigroup.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup_apply`: evaluating the limit semigroup.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup_realOperator_apply_of_nonneg`: evaluating the
@@ -46,9 +46,9 @@ This is the limit stage of the Hille--Yosida generation theorem. Identifying the
 ## References
 
 * K.-J. Engel and R. Nagel, *One-Parameter Semigroups for Linear Evolution Equations*,
-  Theorem II.3.5.
+  Theorem II.3.8.
 * A. Pazy, *Semigroups of Linear Operators and Applications to Partial Differential Equations*,
-  Chapter 1, Theorem 3.1.
+  Chapter 1, Theorem 5.3.
 -/
 
 public section
@@ -96,100 +96,58 @@ theorem tendstoUniformlyOn_exp_yosidaApproximation_of_norm_resolvent_pow_le
       tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense ht.1 x
 
 omit hres hdense in
-private theorem eventually_exp_smul_yosidaApproximation_norm_le_of_norm_resolvent_pow_le
+private theorem eventually_norm_exp_smul_yosidaApproximation_le_of_norm_resolvent_pow_le
     {t : ℝ} (ht : 0 ≤ t) :
     ∀ᶠ lambda in atTop, ‖exp (t • yosidaApproximation A lambda)‖ ≤ M := by
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with lambda hlambda
   exact norm_exp_smul_yosidaApproximation_le hM hlambda ht
     fun n hn => hpow n hn lambda hlambda
 
+/-- Under the exponent-zero Hille--Yosida bounds, each limit vector satisfies
+`‖yosidaLimit A t x‖ ≤ M * ‖x‖` at nonnegative times. -/
+theorem norm_yosidaLimit_le_of_norm_resolvent_pow_le {t : ℝ} (ht : 0 ≤ t) (x : X) :
+    ‖yosidaLimit A t x‖ ≤ M * ‖x‖ :=
+  norm_yosidaLimit_le_of_tendsto_of_norm_le
+    (tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense ht x)
+    (eventually_norm_exp_smul_yosidaApproximation_le_of_norm_resolvent_pow_le hM hpow ht)
+
 /-! ## The limit semigroup -/
-
-/-- The exponent-zero Hille--Yosida limit operator at a nonnegative time, packaged as a bounded
-operator on `X`. -/
-private def hilleYosidaLimitCLM (t : ℝ≥0) : X →L[ℝ] X :=
-  LinearMap.mkContinuous
-    { toFun := fun x => yosidaLimit A t x
-      map_add' := fun x y =>
-        yosidaLimit_add_of_tendsto
-          (fun u =>
-            tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense t.coe_nonneg u) x y
-      map_smul' := fun c x =>
-        yosidaLimit_smul_of_tendsto
-          (fun u =>
-            tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense t.coe_nonneg u) c x }
-    M fun x =>
-      norm_yosidaLimit_le_of_tendsto_of_norm_le
-        (tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense t.coe_nonneg x)
-        (eventually_exp_smul_yosidaApproximation_norm_le_of_norm_resolvent_pow_le
-          hM hpow t.coe_nonneg)
-
-@[simp]
-private theorem hilleYosidaLimitCLM_apply (t : ℝ≥0) (x : X) :
-    hilleYosidaLimitCLM hM hres hpow hdense t x = yosidaLimit A t x :=
-  rfl
-
-/-- Each Hille--Yosida limit operator satisfies `‖T(t)‖ ≤ M`. -/
-private theorem norm_hilleYosidaLimitCLM_le (t : ℝ≥0) :
-    ‖hilleYosidaLimitCLM hM hres hpow hdense t‖ ≤ M :=
-  LinearMap.mkContinuous_norm_le _ (zero_le_one.trans hM) _
 
 /-- The strongly continuous semigroup obtained as the strong limit of the exponent-zero
 Hille--Yosida approximating semigroups. -/
-def hilleYosidaLimitSemigroup : StronglyContinuousSemigroup X where
-  toFun := hilleYosidaLimitCLM hM hres hpow hdense
-  map_zero' := by
-    ext x
-    simp [hilleYosidaLimitCLM_apply]
-  map_add' s t := by
-    ext x
-    simp only [ContinuousLinearMap.comp_apply, hilleYosidaLimitCLM_apply, NNReal.coe_add]
-    exact yosidaLimit_time_add_of_tendsto x
-      (tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense t.coe_nonneg x)
-      (tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense s.coe_nonneg
-        (yosidaLimit A t x))
-      (tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense
-        (add_nonneg s.coe_nonneg t.coe_nonneg) x)
-      (eventually_exp_smul_yosidaApproximation_norm_le_of_norm_resolvent_pow_le
-        hM hpow s.coe_nonneg)
-  continuousAt_zero' x := by
-    simpa only [hilleYosidaLimitCLM_apply] using
-      continuousAt_yosidaLimit_zero_of_continuousOn_Ici A x
-        (continuousOn_yosidaLimit_of_continuousOn_Icc A x fun _T hT =>
-          continuousOn_yosidaLimit_Icc_of_tendstoUniformlyOn A x
-            (tendstoUniformlyOn_exp_yosidaApproximation_of_norm_resolvent_pow_le
-              hM hres hpow hdense x hT))
+def hilleYosidaLimitSemigroup : StronglyContinuousSemigroup X :=
+  yosidaLimitSemigroupOfTendsto hM
+    (fun _t ht x => tendsto_yosidaLimit_of_norm_resolvent_pow_le hM hres hpow hdense ht x)
+    (fun x _T hT => tendstoUniformlyOn_exp_yosidaApproximation_of_norm_resolvent_pow_le
+      hM hres hpow hdense x hT)
+    (fun _t ht =>
+      eventually_norm_exp_smul_yosidaApproximation_le_of_norm_resolvent_pow_le hM hpow ht)
 
 /-- Evaluating the exponent-zero Hille--Yosida limit semigroup at `t` on `x` yields
 `yosidaLimit A t x`. -/
 @[simp]
 theorem hilleYosidaLimitSemigroup_apply (t : ℝ≥0) (x : X) :
     hilleYosidaLimitSemigroup hM hres hpow hdense t x = yosidaLimit A t x :=
-  hilleYosidaLimitCLM_apply hM hres hpow hdense t x
+  yosidaLimitSemigroupOfTendsto_apply hM _ _ _ t x
 
 /-- Evaluating the real-time operator of the exponent-zero Hille--Yosida limit semigroup at a
 nonnegative time `t` yields `yosidaLimit A t x`. -/
 @[simp]
 theorem hilleYosidaLimitSemigroup_realOperator_apply_of_nonneg {t : ℝ} (ht : 0 ≤ t) (x : X) :
-    (hilleYosidaLimitSemigroup hM hres hpow hdense).realOperator t x = yosidaLimit A t x := by
-  rw [StronglyContinuousSemigroup.realOperator_def, hilleYosidaLimitSemigroup_apply,
-    Real.coe_toNNReal t ht]
+    (hilleYosidaLimitSemigroup hM hres hpow hdense).realOperator t x = yosidaLimit A t x :=
+  yosidaLimitSemigroupOfTendsto_realOperator_apply_of_nonneg hM _ _ _ ht x
 
 /-- The exponent-zero Hille--Yosida limit semigroup has growth bound `(0, M)`. -/
 theorem hilleYosidaLimitSemigroup_hasGrowthBound :
-    (hilleYosidaLimitSemigroup hM hres hpow hdense).HasGrowthBound 0 M := by
-  refine StronglyContinuousSemigroup.hasGrowthBound_of_bound hM fun t _ht => ?_
-  rw [zero_mul, Real.exp_zero, mul_one, StronglyContinuousSemigroup.realOperator_def]
-  exact norm_hilleYosidaLimitCLM_le hM hres hpow hdense t.toNNReal
+    (hilleYosidaLimitSemigroup hM hres hpow hdense).HasGrowthBound 0 M :=
+  yosidaLimitSemigroupOfTendsto_hasGrowthBound hM _ _ _
 
 /-- The orbits of the exponent-zero Hille--Yosida limit semigroup are the limits of the Yosida
 exponentials. -/
 theorem tendsto_hilleYosidaLimitSemigroup (t : ℝ≥0) (x : X) :
     Tendsto (fun lambda : ℝ => exp ((t : ℝ) • yosidaApproximation A lambda) x) atTop
-      (𝓝 (hilleYosidaLimitSemigroup hM hres hpow hdense t x)) := by
-  rw [hilleYosidaLimitSemigroup_apply]
-  exact tendsto_yosidaLimit_of_norm_resolvent_pow_le
-    hM hres hpow hdense t.coe_nonneg x
+      (𝓝 (hilleYosidaLimitSemigroup hM hres hpow hdense t x)) :=
+  tendsto_yosidaLimitSemigroupOfTendsto hM _ _ _ t x
 
 end
 
