@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 -- `TauCeti.transvectionHom` is the unipotent factor of `TauCeti.scalarUnipotentHom`.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
--- Non-public: `TauCeti.diagGL` is the conjugating matrix used only inside a proof below.
-import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 -- `MonoidHom.noncommCoprod` assembles the two commuting factors into one homomorphism.
 public import Mathlib.GroupTheory.NoncommCoprod
 -- Non-public: `Nat.card_units` is used only inside the order computation.
@@ -36,9 +34,9 @@ built from `Matrix.GeneralLinearGroup.scalar` and the root subgroup
 homomorphism is injective, so the subgroup is a faithful copy of `Rˣ × (R, +)` — the direct
 product `Gₘ × Gₐ` — and over a field with `q` elements it has `(q - 1) q` elements.
 
-Nothing here is specific to a finite field, or even to a field: the normal form, the subgroup and
-the isomorphism `Rˣ × (R, +) ≃* Z U` are stated over an arbitrary commutative ring, and only the
-order count asks for a field, where the nonzero elements are exactly the units.
+Nothing here is specific to a finite field, or even to a field: the normal form is stated over an
+arbitrary ring, the subgroup and the isomorphism `Rˣ × (R, +) ≃* Z U` over an arbitrary commutative
+ring, and only the order count asks for a field, where the nonzero elements are exactly the units.
 
 The parameter `b` is left free rather than fixed to `1`. That costs no generality: a Jordan block
 with `b` a unit is conjugate to the standard representative `!![a, 1; 0, a]`
@@ -62,8 +60,9 @@ ones.
 
 * `TauCeti.mem_gl2ScalarUnipotent_iff`: an element of `GL₂` lies in `Z U` exactly when it is
   `!![x, y; 0, x]` for a unit `x`.
-* `TauCeti.notMem_range_scalar_jordanGL`: a Jordan block with `b ≠ 0` is not a scalar matrix, so it
-  is a regular element of `GL₂`.
+* `TauCeti.notMem_range_scalar_jordanGL`: a Jordan block with `b ≠ 0` is not a scalar matrix. Over
+  a field that is exactly the hypothesis of `TauCeti.commute_fin_two_iff`, which is what makes such
+  a block a regular element of `GL₂`.
 * `TauCeti.isConj_jordanGL`: a Jordan block whose off-diagonal entry is a unit is conjugate to
   `!![a, 1; 0, a]`.
 * `TauCeti.natCard_gl2ScalarUnipotent`: over a field with `q` elements, `|Z U| = (q - 1) q`.
@@ -84,9 +83,9 @@ namespace TauCeti
 
 universe u
 
-section CommRing
+section Ring
 
-variable {R : Type u} [CommRing R]
+variable {R : Type u} [Ring R]
 
 /-- The **Jordan normal form** `!![a, b; 0, a]` in `GL (Fin 2) R`: an invertible matrix whose two
 diagonal entries are the same unit `a`. For `b` a unit — over a field, for `b ≠ 0` — it is the
@@ -104,17 +103,33 @@ theorem coe_jordanGL (a : Rˣ) (b : R) :
 /-- A Jordan block with zero off-diagonal entry is the scalar matrix. -/
 @[simp]
 theorem jordanGL_zero (a : Rˣ) : jordanGL a (0 : R) = Matrix.GeneralLinearGroup.scalar (Fin 2) a :=
-  Matrix.GeneralLinearGroup.ext fun i j => by
+  Units.ext <| Matrix.ext fun i j => by
     fin_cases i <;> fin_cases j <;> simp [Matrix.scalar_apply]
 
 /-- Two Jordan blocks are equal exactly when their parameters are: the diagonal entry and the
 upper-right entry can both be read off the matrix. -/
 theorem jordanGL_injective : Function.Injective2 (jordanGL (R := R)) := by
   intro a b c d h
-  rw [Matrix.GeneralLinearGroup.ext_iff] at h
+  have h' : (jordanGL a c : Matrix (Fin 2) (Fin 2) R) = jordanGL b d := congrArg Units.val h
   refine ⟨Units.ext ?_, ?_⟩
-  · simpa using h 0 0
-  · simpa using h 0 1
+  · simpa using congrFun₂ h' 0 0
+  · simpa using congrFun₂ h' 0 1
+
+/-- A Jordan block with a nonzero off-diagonal entry is **not** a scalar matrix. Over a field that
+is exactly the hypothesis of `TauCeti.commute_fin_two_iff` — it is what makes the block a regular
+(cyclic, nonderogatory) element of `GL₂`, with commutant the two-dimensional algebra `F[M]` — and it
+is exactly the non-semisimple case, `b ≠ 0`. Over a general ring no such conclusion is claimed
+here. -/
+theorem notMem_range_scalar_jordanGL {a : Rˣ} {b : R} (hb : b ≠ 0) :
+    (jordanGL a b : Matrix (Fin 2) (Fin 2) R) ∉ Set.range (Matrix.scalar (Fin 2)) := by
+  rintro ⟨c, hc⟩
+  exact hb (by simpa [Matrix.scalar_apply] using (congrFun₂ hc 0 1).symm)
+
+end Ring
+
+section CommRing
+
+variable {R : Type u} [CommRing R]
 
 /-- **Normalizing the off-diagonal entry.** A Jordan block whose off-diagonal entry is a unit is
 conjugate, by the diagonal matrix `diag (1, b)`, to the standard representative `!![a, 1; 0, a]`;
@@ -127,14 +142,6 @@ theorem isConj_jordanGL (a b : Rˣ) : IsConj (jordanGL a (b : R)) (jordanGL a 1)
     rw [mul_right_comm, Units.mul_inv, one_mul]
   ext i j
   fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Matrix.diagonal_apply, key]
-
-/-- A Jordan block with a nonzero off-diagonal entry is **not** a scalar matrix, so it is a regular
-(cyclic, nonderogatory) element of `GL₂` and `TauCeti.commute_fin_two_iff` applies to it. Over a
-field this is exactly the non-semisimple case, `b ≠ 0`. -/
-theorem notMem_range_scalar_jordanGL {a : Rˣ} {b : R} (hb : b ≠ 0) :
-    (jordanGL a b : Matrix (Fin 2) (Fin 2) R) ∉ Set.range (Matrix.scalar (Fin 2)) := by
-  rintro ⟨c, hc⟩
-  exact hb (by simpa [Matrix.scalar_apply] using (congrFun₂ hc 0 1).symm)
 
 /-- Scalar matrices are central, so they commute with the transvections; this is what lets the two
 factors of `TauCeti.scalarUnipotentHom` be coproduced. -/
@@ -192,6 +199,11 @@ it is the centralizer of every non-scalar Jordan block
 (`TauCeti.centralizer_jordanGL`). -/
 def GL2ScalarUnipotent : Subgroup (GL (Fin 2) R) := (scalarUnipotentHom R).range
 
+/-- The scalar–unipotent subgroup is **abelian**: it is the image of the commutative group
+`Rˣ × Multiplicative R`. -/
+instance : IsMulCommutative (GL2ScalarUnipotent R) :=
+  Subgroup.range_isMulCommutative (scalarUnipotentHom R)
+
 /-- **Normal form for the scalar–unipotent subgroup**: its elements are exactly the invertible
 matrices `!![x, y; 0, x]` with equal diagonal entries. The upper-right entry `y` is unconstrained;
 it is the product of the diagonal unit with the unipotent coordinate. -/
@@ -217,6 +229,22 @@ on. -/
 noncomputable def GL2ScalarUnipotent.mulEquiv :
     Rˣ × Multiplicative R ≃* GL2ScalarUnipotent R :=
   MonoidHom.ofInjective scalarUnipotentHom_injective
+
+/-- The isomorphism `Rˣ × (R, +) ≃* Z U` is `TauCeti.scalarUnipotentHom` with its codomain cut
+down, so no unfolding of `MonoidHom.ofInjective` is needed to compute with it. This is not a `simp`
+lemma because its right-hand side is not in `simp`-normal form: `simp` rewrites it further by
+`TauCeti.scalarUnipotentHom_apply`, which is what the companion
+`TauCeti.GL2ScalarUnipotent.coe_mulEquiv_apply_eq_jordanGL` states. -/
+theorem GL2ScalarUnipotent.coe_mulEquiv_apply (p : Rˣ × Multiplicative R) :
+    (mulEquiv R p : GL (Fin 2) R) = scalarUnipotentHom R p :=
+  MonoidHom.ofInjective_apply scalarUnipotentHom_injective
+
+/-- The matrix underlying `TauCeti.GL2ScalarUnipotent.mulEquiv R p` is the Jordan block
+`!![x, x t; 0, x]` read off the pair `p = (x, t)`. -/
+@[simp, grind =]
+theorem GL2ScalarUnipotent.coe_mulEquiv_apply_eq_jordanGL (p : Rˣ × Multiplicative R) :
+    (mulEquiv R p : GL (Fin 2) R) = jordanGL p.1 ((p.1 : R) * Multiplicative.toAdd p.2) := by
+  rw [coe_mulEquiv_apply, scalarUnipotentHom_apply]
 
 end CommRing
 

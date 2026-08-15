@@ -380,15 +380,18 @@ end NonSemisimple
 
 section Central
 
-variable {n : Type*} [DecidableEq n] [Fintype n] {R : Type*} [CommRing R]
+variable {n : Type*} [DecidableEq n] [Fintype n] {R : Type*} [CommSemiring R]
 
 /-- **The centralizer of a scalar matrix is everything.** The easy end of the class table: scalar
-matrices are central in `GL n R`, so nothing is cut out. -/
+matrices are central in `GL n R`, so nothing is cut out. Mathlib's
+`Matrix.GeneralLinearGroup.scalar_commute` asks for a commutative ring; a commutative semiring is
+enough, since `Matrix.scalar_commute` needs only that the scalar commute with every element. -/
 theorem centralizer_scalar (u : Rˣ) :
     Subgroup.centralizer {Matrix.GeneralLinearGroup.scalar n u} = ⊤ := by
   ext g
   simp only [Subgroup.mem_centralizer_singleton_iff, Subgroup.mem_top, iff_true]
-  exact (Matrix.GeneralLinearGroup.scalar_commute u g).symm
+  exact Units.ext
+    ((Matrix.scalar_commute (u : R) (fun _ => Commute.all _ _) (g : Matrix n n R)).symm.eq)
 
 /-- **A central conjugacy class is a single point.** For `GL₂(𝔽_q)` these are the `q - 1` classes
 of the scalar matrices `diag (a, a)`, the first of the four families. -/
