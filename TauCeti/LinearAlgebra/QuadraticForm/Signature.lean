@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
+import Mathlib.LinearAlgebra.Projection
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 
@@ -139,12 +140,9 @@ private noncomputable def liftRadicalIsometryEquiv (Q : _root_.QuadraticForm K M
     have he :
         (Q.radical.quotientEquivOfIsCompl (radicalComplement Q)
           (isCompl_radical_radicalComplement Q)).symm x =
-          Submodule.Quotient.mk (x : M) := by
-      apply (Q.radical.quotientEquivOfIsCompl (radicalComplement Q)
-        (isCompl_radical_radicalComplement Q)).injective
-      rw [LinearEquiv.apply_symm_apply]
-      exact (Submodule.quotientEquivOfIsCompl_apply_mk_right
-        (isCompl_radical_radicalComplement Q) x).symm
+          Submodule.Quotient.mk (x : M) :=
+      LinearMap.congr_fun (Submodule.toLinearMap_symm_quotientEquivOfIsCompl
+        (isCompl_radical_radicalComplement Q)) x
     -- Expose the linear-equivalence application hidden by the isometry-equivalence coercion.
     change Q.lift Q.radical le_rfl
       ((Q.radical.quotientEquivOfIsCompl (radicalComplement Q)
@@ -209,19 +207,15 @@ theorem sigPos_lift_of_eq_radical (Q : _root_.QuadraticForm K M) (N : Subspace K
 /-- Quotienting a quadratic form by its radical preserves its negative index of inertia. -/
 theorem sigNeg_lift_radical (Q : _root_.QuadraticForm K M) :
     sigNeg (Q.lift Q.radical le_rfl) = sigNeg Q := by
-  let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
-  have hquot : sigNeg (Q.lift Q.radical le_rfl) =
-      sigNeg (Q.restrict (radicalComplement Q)) :=
-    (QuadraticMap.Equivalent.sigNeg_eq (⟨liftRadicalIsometryEquiv Q⟩ :
-      (Q.restrict (radicalComplement Q)).Equivalent (Q.lift Q.radical le_rfl))).symm
-  have hpos := sigPos_restrict_le Q (radicalComplement Q)
-  have hneg := sigNeg_restrict_le Q (radicalComplement Q)
-  have hsum := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical (Q := Q)
-  have hsumW := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical
-    (Q := Q.restrict (radicalComplement Q))
-  rw [radical_restrict_radicalComplement_eq_bot Q inferInstance, finrank_bot, add_zero] at hsumW
-  have hdim := Submodule.finrank_add_eq_of_isCompl (isCompl_radical_radicalComplement Q)
-  omega
+  have hlift : (-Q).lift Q.radical (radical_neg Q).symm.le =
+      -(Q.lift Q.radical le_rfl) := by
+    ext x
+    induction x using Submodule.Quotient.induction_on with
+    | _ x =>
+      simp only [QuadraticMap.lift_mk, neg_apply]
+  rw [← sigPos_neg, ← hlift,
+    sigPos_lift_of_eq_radical (-Q) Q.radical (radical_neg Q).symm,
+    sigPos_neg]
 
 /-- Lifting by a subspace known to be the radical preserves the negative index of inertia. -/
 theorem sigNeg_lift_of_eq_radical (Q : _root_.QuadraticForm K M) (N : Subspace K M)

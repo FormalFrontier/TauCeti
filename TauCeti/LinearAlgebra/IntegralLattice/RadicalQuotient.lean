@@ -6,7 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Even
 public import TauCeti.LinearAlgebra.IntegralLattice.Signature
-import Mathlib.LinearAlgebra.Projection
 
 /-!
 # Quotienting an integral lattice by its radical
@@ -43,6 +42,8 @@ lattice, while its null index vanishes.
 * `TauCeti.IntegralLattice.integralNorm_radicalQuotientMap`: preservation of the integral norm.
 * `TauCeti.IntegralLattice.nondegenerate_radicalQuotientForm`: the descended form is
   nondegenerate.
+* `TauCeti.IntegralLattice.nondegenerate_radicalQuotient`: the bilinear form of the
+  radical quotient is nondegenerate.
 * `TauCeti.IntegralLattice.radical_radicalQuotient_eq_bot`: the quotient radical is trivial.
 * `TauCeti.IntegralLattice.IsEven.radicalQuotient`: evenness descends to the quotient.
 * `TauCeti.IntegralLattice.sigPos_radicalQuotient`: preservation of the positive index.
@@ -93,8 +94,8 @@ original integral carrier. -/
 theorem mem_radicalQuotientCarrier_iff (x : V ⧸ L.radical) :
     x ∈ L.radicalQuotientCarrier ↔
       ∃ y ∈ L.carrier, (Submodule.Quotient.mk y : V ⧸ L.radical) = x := by
-  change x ∈ L.radicalQuotientCarrier ↔ ∃ y ∈ L.carrier, L.radical.mkQ y = x
-  simp only [radicalQuotientCarrier, Submodule.mem_map, LinearMap.restrictScalars_apply]
+  simp only [radicalQuotientCarrier, Submodule.mem_map, LinearMap.restrictScalars_apply,
+    Submodule.mkQ_apply]
 
 /-- The image of a full integral carrier in the radical quotient is again a full lattice. -/
 instance isLattice_radicalQuotientCarrier : L.radicalQuotientCarrier.IsLattice ℚ where
@@ -155,6 +156,7 @@ theorem radicalQuotientMap_eq_zero_iff (x : L) :
   simp only [radicalQuotientMap_apply, Submodule.coe_zero, Submodule.Quotient.mk_eq_zero]
 
 /-- The radical quotient map preserves the rational bilinear form. -/
+@[simp]
 theorem form_radicalQuotientMap (x y : L) :
     L.radicalQuotient.form (L.radicalQuotientMap x) (L.radicalQuotientMap y) = L.form x y :=
   by simp only [radicalQuotient_form, radicalQuotientMap_apply, radicalQuotientForm_mk]
@@ -193,6 +195,11 @@ theorem nondegenerate_radicalQuotientForm : L.radicalQuotientForm.Nondegenerate 
     have hxy := DFunLike.congr_fun (LinearMap.mem_ker.mp hx) (Submodule.Quotient.mk y)
     simpa only [radicalQuotientForm_mk, LinearMap.zero_apply] using hxy
 
+/-- The bilinear form of the radical quotient is nondegenerate. -/
+theorem nondegenerate_radicalQuotient : L.radicalQuotient.form.Nondegenerate := by
+  rw [radicalQuotient_form]
+  exact L.nondegenerate_radicalQuotientForm
+
 /-- The radical of the quotient lattice is trivial. -/
 @[simp]
 theorem radical_radicalQuotient_eq_bot : L.radicalQuotient.radical = ⊥ := by
@@ -212,6 +219,7 @@ theorem IsEven.radicalQuotient (hL : L.IsEven) : L.radicalQuotient.IsEven := by
     hL.exists_norm_eq_two_mul ⟨y, hy⟩
 
 /-- The positive index is unchanged after quotienting by the radical. -/
+@[simp]
 theorem sigPos_radicalQuotient : L.radicalQuotient.sigPos = L.sigPos := by
   let _ := L.finiteDimensional
   dsimp only [sigPos]
@@ -221,6 +229,7 @@ theorem sigPos_radicalQuotient : L.radicalQuotient.sigPos = L.sigPos := by
     L.radical_toQuadraticMap.symm
 
 /-- The negative index is unchanged after quotienting by the radical. -/
+@[simp]
 theorem sigNeg_radicalQuotient : L.radicalQuotient.sigNeg = L.sigNeg := by
   let _ := L.finiteDimensional
   dsimp only [sigNeg]
@@ -231,6 +240,7 @@ theorem sigNeg_radicalQuotient : L.radicalQuotient.sigNeg = L.sigNeg := by
 
 /-- The radical quotient has the same positive and negative indices as the original lattice and
 zero null index. -/
+@[simp]
 theorem signature_radicalQuotient :
     L.radicalQuotient.signature = (L.sigPos, 0, L.sigNeg) := by
   have hnull : L.radicalQuotient.sigNull = 0 := by
