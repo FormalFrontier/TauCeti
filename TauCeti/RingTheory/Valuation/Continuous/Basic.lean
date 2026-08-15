@@ -153,11 +153,8 @@ theorem _root_.Valuation.IsEquiv.isContinuous_iff {v : Valuation A Γ₀} {w : V
 theorem isContinuous_of_discreteTopology [DiscreteTopology A] (v : Valuation A Γ₀) :
     v.IsContinuous := fun _ ↦ isOpen_discrete _
 
-/-- **The translated ball is a neighbourhood.** For an *attained* threshold `v b`, the set
-`{y ; v (y - a) < v b}` is an open neighbourhood of `a`, being the preimage of the open
-`{x ; v x < v b}` under translation. (An arbitrary element of `Γ_v` is a ratio and needs the
-machinery of `isOpen_lt_div`; nothing here does.) It is the workhorse of the two results below:
-on it, `v y` is controlled by `v a` through the strict triangle inequality. -/
+/-- For a continuous valuation `v` on a ring with separately continuous addition, the valuation ball
+`{y | v (y - a) < v b}` is a neighborhood of `a` whenever `v b ≠ 0`. -/
 theorem IsContinuous.sub_lt_mem_nhds [SeparatelyContinuousAdd A] {v : Valuation A Γ₀}
     (hv : v.IsContinuous) (a : A) {b : A} (hb : v b ≠ 0) : {y : A | v (y - a) < v b} ∈ 𝓝 a := by
   have hcont : Continuous fun y : A ↦ y - a := by

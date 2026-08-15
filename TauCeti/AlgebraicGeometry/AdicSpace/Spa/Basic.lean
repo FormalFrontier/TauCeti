@@ -51,8 +51,8 @@ it; the subspace form here needs no such comparison.)
 * `TauCeti.ValuationSpectrum.spa_integralClosure` : replacing the plus ring by its integral
   closure leaves `Spa` unchanged.
 * `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
-  topological additive group `A`, then `Spa(A, A⁺) = ∅` for any plus ring `A⁺`
-  (the `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1)).
+  commutative ring `A` with separately continuous addition, then `Spa(A, A⁺) = ∅` for any plus
+  ring `A⁺` (the `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1)).
 
 ## References
 
@@ -115,18 +115,18 @@ theorem spa_integralClosure (R : Subring A) :
     rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
     exact hxint
 
-section TopologicalAddGroup
+section SeparatelyContinuousAdd
 
-variable [IsTopologicalAddGroup A]
+variable [SeparatelyContinuousAdd A]
 
 /-- **The `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1).** If
-`1 ∈ closure {0}` in a topological additive group `A`, then `Spa (A, A⁺) = ∅` for any plus
-ring `A⁺`. -/
+`1 ∈ closure {0}` in a commutative ring `A` with separately continuous addition, then
+`Spa (A, A⁺) = ∅` for any plus ring `A⁺`. -/
 theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
     (h : (1 : A) ∈ closure ({0} : Set A)) : spa Aplus = ∅ := by
   rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
 
-end TopologicalAddGroup
+end SeparatelyContinuousAdd
 
 end TauCeti.ValuationSpectrum
 

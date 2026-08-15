@@ -5,7 +5,6 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import Mathlib.Topology.Algebra.Group.Basic
 public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
 public import TauCeti.RingTheory.Valuation.Continuous.Basic
@@ -127,12 +126,12 @@ theorem cont_eq_univ [DiscreteTopology A] : cont A = Set.univ :=
   Set.eq_univ_of_forall fun v ↦
     (mem_cont_iff v).mpr ((isContinuous_def v).mpr (isContinuous_of_discreteTopology v.valuation))
 
-section TopologicalAddGroup
+section SeparatelyContinuousAdd
 
-variable [IsTopologicalAddGroup A]
+variable [SeparatelyContinuousAdd A]
 
 /-- **The `1 ∈ closure {0} → Cont A = ∅` half of Wedhorn Proposition 7.49(1).** If `1 ∈ closure {0}`
-in a topological additive group `A`, then `Cont A = ∅`. -/
+in a commutative ring `A` with separately continuous addition, then `Cont A = ∅`. -/
 theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Set A)) :
     cont A = ∅ := by
   ext v
@@ -146,7 +145,7 @@ theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Se
   obtain ⟨x, hx, rfl⟩ := mem_closure_iff_nhds.mp h _ h_nhds
   simp [v.valuation.map_one] at hx
 
-end TopologicalAddGroup
+end SeparatelyContinuousAdd
 
 /-- **Wedhorn Remark 7.9.** A continuous ring homomorphism pulls continuous points back to
 continuous points, so it restricts to a map `Cont B → Cont A`. -/
