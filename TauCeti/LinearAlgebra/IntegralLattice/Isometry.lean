@@ -198,7 +198,6 @@ theorem trans_assoc (e : Isometry L M) (f : Isometry M N) {X : Type*}
   rfl
 
 /-- The inverse lattice isometry acts as the inverse ambient linear equivalence. -/
-@[simp]
 theorem coe_symm (e : Isometry L M) : ⇑e.symm = ⇑(e : V ≃ₗ[ℚ] W).symm := by
   funext y
   simp only [symm]
