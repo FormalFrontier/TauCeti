@@ -165,7 +165,6 @@ theorem barycentricSubdivisionRealizationMap_val (K : AbstractSimplicialComplex 
 
 /-- A vertex of the barycentric subdivision maps to the barycenter of the original face it
 represents. -/
-@[simp]
 theorem barycentricSubdivisionRealizationMap_vertex (K : AbstractSimplicialComplex ι)
     (σ : Face K) :
     (barycentricSubdivisionRealizationMap K
