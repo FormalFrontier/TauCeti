@@ -8,6 +8,7 @@ public import Mathlib.LinearAlgebra.BilinearForm.IsometryEquiv
 public import Mathlib.LinearAlgebra.BilinearForm.TensorProduct
 public import Mathlib.RingTheory.IsTensorProduct
 public import TauCeti.LinearAlgebra.IntegralLattice.Basic
+public import TauCeti.LinearAlgebra.Submodule.IsLattice
 
 /-!
 # Rationalizing an integral lattice form
@@ -24,8 +25,6 @@ characteristic equations.
 
 ## Main results
 
-* `TauCeti.Submodule.IsLattice.isBaseChange_subtype`: the inclusion of a full lattice submodule
-  is a base change from `ℤ` to `ℚ`.
 * `TauCeti.IntegralLattice.isBaseChange_subtype`: the carrier inclusion is a base change from
   `ℤ` to `ℚ`.
 * `TauCeti.IntegralLattice.rationalizationEquiv`: the canonical equivalence
@@ -50,31 +49,6 @@ namespace TauCeti
 universe u
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
-
-namespace Submodule
-
-namespace IsLattice
-
-/-- The inclusion of a full lattice submodule into its ambient rational vector space exhibits that
-space as base change from `ℤ` to `ℚ`. -/
-theorem isBaseChange_subtype (S : Submodule ℤ V) [S.IsLattice ℚ] :
-    IsBaseChange ℚ S.subtype := by
-  let b := Module.Free.chooseBasis ℤ S
-  let e : ℚ ⊗[ℤ] S ≃ₗ[ℚ] V :=
-    (b.baseChange ℚ).equiv (b.extendOfIsLattice ℚ) (Equiv.refl _)
-  have hmap : (e.toLinearMap.restrictScalars ℤ).comp (TensorProduct.mk ℤ ℚ S 1) =
-      S.subtype := by
-    apply b.ext
-    intro i
-    -- The two wrapper coercions prevent the basis simp lemmas from seeing the pure tensor.
-    change e (1 ⊗ₜ[ℤ] b i) = (b i : V)
-    rw [← Module.Basis.baseChange_apply ℚ b i, Basis.equiv_apply,
-      Basis.extendOfIsLattice_apply, Equiv.refl_apply]
-  exact IsBaseChange.of_equiv e fun x ↦ DFunLike.congr_fun hmap x
-
-end IsLattice
-
-end Submodule
 
 namespace IntegralLattice
 
