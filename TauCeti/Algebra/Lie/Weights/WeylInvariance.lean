@@ -124,8 +124,8 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
   -- On the string, the coroot acts as the Cartan element of the triple.
   have hop : toEnd K (ht.toLieSubalgebra K) N' ⟨h, ht.h_mem_toLieSubalgebra⟩ = A.restrict hA := by
     ext v
-    simp only [hAdef, hh]
-    rfl
+    change ⁅h, (v : M)⁆ = A (v : M)
+    simp only [hAdef, hh, toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module]
   -- The `sl₂` engine: the eigenvalues `c` and `-c` have equal multiplicity on the string.
   have hsym : ∀ c : K, finrank K (Module.End.eigenspace (A.restrict hA) c) =
       finrank K (Module.End.eigenspace (A.restrict hA) (-c)) := by
@@ -156,8 +156,11 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
     intro j hj
     rw [← Submodule.finrank_map_subtype_eq N.toSubmodule,
       ← N.toSubmodule.inf_genEigenspace A hA, hNsup,
-      biSup_inf_eigenspace_eq A _ g hWle hj fun i _ hik ↦ fun hcon ↦ hik (hginj hcon)]
-    rfl
+      biSup_inf_eigenspace_eq (s := Set.Ioo p q) A
+        (fun i ↦ (weightSpace M (i • ⇑α + χ)).toSubmodule) g
+        (fun i (_ : i ∈ Set.Ioo p q) m hm ↦ hWle i hm) hj
+        fun i _ hik ↦ fun hcon ↦ hik (hginj hcon)]
+    exact (LinearEquiv.refl K (weightSpace M (j • ⇑α + χ))).finrank_eq
   -- Both indices lie inside the cut.
   have hmemk : k ∈ Set.Ioo p q := ⟨by omega, by omega⟩
   have hmemk' : (-k - n) ∈ Set.Ioo p q := ⟨by omega, by omega⟩
@@ -171,7 +174,7 @@ dimension.
 
 No integrality hypothesis is needed: if `χ(α^∨)` is not an integer then neither `χ` nor `s_α χ` is
 a weight of `M`, both weight spaces are trivial, and the statement is `0 = 0`. -/
-theorem finrank_weightSpace_sub_apply_coroot_smul {α : Weight K H L} (hα : α.IsNonZero)
+@[simp] theorem finrank_weightSpace_sub_apply_coroot_smul {α : Weight K H L} (hα : α.IsNonZero)
     (χ : H → K) :
     finrank K (weightSpace M (χ - χ (IsKilling.coroot α) • ⇑α)) =
       finrank K (weightSpace M χ) := by
@@ -205,7 +208,7 @@ theorem finrank_weightSpace_sub_apply_coroot_smul {α : Weight K H L} (hα : α.
 
 /-- **The set of weights is stable under the reflections.** A form `χ` on the Cartan subalgebra is
 a weight of a finite-dimensional module exactly when its reflection `s_α χ` is. -/
-theorem weightSpace_sub_apply_coroot_smul_eq_bot_iff {α : Weight K H L} (hα : α.IsNonZero)
+@[simp] theorem weightSpace_sub_apply_coroot_smul_eq_bot_iff {α : Weight K H L} (hα : α.IsNonZero)
     (χ : H → K) :
     weightSpace M (χ - χ (IsKilling.coroot α) • ⇑α) = ⊥ ↔ weightSpace M χ = ⊥ := by
   have key : ∀ ψ : H → K, weightSpace M ψ = ⊥ ↔ finrank K (weightSpace M ψ) = 0 := fun ψ ↦ by
@@ -224,7 +227,7 @@ theorem coe_rootSystem_reflection_apply (i : H.root) (χ : Dual K H) :
   simp [RootPairing.reflection_apply, Weight.toLinear_apply]
 
 /-- **The reflections of the root system preserve weight multiplicities.** -/
-theorem finrank_weightSpace_rootSystem_reflection (i : H.root) (χ : Dual K H) :
+@[simp] theorem finrank_weightSpace_rootSystem_reflection (i : H.root) (χ : Dual K H) :
     finrank K (weightSpace M ⇑((IsKilling.rootSystem H).reflection i χ)) =
       finrank K (weightSpace M ⇑χ) := by
   rw [coe_rootSystem_reflection_apply]
@@ -248,7 +251,7 @@ invariant under the Weyl group of the root system of `H`.
 This is the direct, rank-one proof: it descends through
 `TauCeti.finrank_weightSpace_sub_apply_coroot_smul` to the `sl₂` triple attached to each root, and
 so is available before — and independently of — Weyl's complete reducibility theorem. -/
-theorem finrank_weightSpace_weylGroup_smul
+@[simp] theorem finrank_weightSpace_weylGroup_smul
     (w : (IsKilling.rootSystem H).weylGroup) (χ : Dual K H) :
     finrank K (weightSpace M ⇑(w • χ)) = finrank K (weightSpace M ⇑χ) :=
   finrank_weightSpace_weylGroup_smul_of_mem w.property χ

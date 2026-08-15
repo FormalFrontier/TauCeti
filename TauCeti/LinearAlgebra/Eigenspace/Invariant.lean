@@ -41,17 +41,18 @@ index `k ∈ s` is attained by no other index of `s`, then meeting the sum `⨆ 
 The inclusion `W k ≤ ⨆ j ∈ s, W j ⊓ eigenspace (g k)` is immediate; the content is the reverse one,
 and it is the independence of the eigenspaces of `A` at distinct eigenvalues. -/
 theorem biSup_inf_eigenspace_eq {ι : Type w} (A : Module.End K V) (W : ι → Submodule K V)
-    (g : ι → K) (hW : ∀ j, W j ≤ A.eigenspace (g j)) {s : Set ι} {k : ι} (hk : k ∈ s)
+    (g : ι → K) {s : Set ι} (hW : ∀ j, j ∈ s → W j ≤ A.eigenspace (g j))
+    {k : ι} (hk : k ∈ s)
     (hg : ∀ j ∈ s, j ≠ k → g j ≠ g k) :
     (⨆ j ∈ s, W j) ⊓ A.eigenspace (g k) = W k := by
   have hsplit : (⨆ j ∈ s, W j) = W k ⊔ ⨆ j ∈ s \ {k}, W j := by
     conv_lhs => rw [← Set.insert_sdiff_self_of_mem hk]
     rw [iSup_insert]
   have hle : (⨆ j ∈ s \ {k}, W j) ≤ ⨆ c ≠ g k, A.eigenspace c := by
-    refine iSup₂_le fun j hj ↦ (hW j).trans ?_
+    refine iSup₂_le fun j hj ↦ (hW j hj.1).trans ?_
     exact le_iSup₂ (f := fun (c : K) (_ : c ≠ g k) ↦ A.eigenspace c) (g j) (hg j hj.1 hj.2)
   have hdisj : Disjoint (⨆ j ∈ s \ {k}, W j) (A.eigenspace (g k)) :=
     ((A.eigenspaces_iSupIndep (g k)).mono_right hle).symm
-  rw [hsplit, sup_inf_assoc_of_le _ (hW k), disjoint_iff.mp hdisj, sup_bot_eq]
+  rw [hsplit, sup_inf_assoc_of_le _ (hW k hk), disjoint_iff.mp hdisj, sup_bot_eq]
 
 end TauCeti
