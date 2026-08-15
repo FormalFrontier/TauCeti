@@ -31,6 +31,7 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
 * `TauCeti.IntegralLattice.IsNondegenerate`: the nondegeneracy mixin for an integral lattice.
 * `TauCeti.IntegralLattice.dualCarrier`: the dual lattice as a submodule of the common ambient
   rational vector space.
+* `TauCeti.IntegralLattice.mem_dualCarrier_iff`: characterization of membership in the dual carrier.
 * `TauCeti.IntegralLattice.instIsLatticeDualCarrier`: the dual carrier is a full lattice.
 * `TauCeti.IntegralLattice.dualPairingEquiv`: the perfect integral pairing
   `Lᵛ ≃ Module.Dual ℤ L`.
@@ -57,9 +58,15 @@ variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 def dualCarrier (L : IntegralLattice V) : Submodule ℤ V :=
   L.form.dualSubmodule L.carrier
 
+/-- Membership in the dual carrier is characterized by integral pairing with every element of the
+lattice carrier. -/
+@[simp]
+theorem mem_dualCarrier_iff (L : IntegralLattice V) (x : V) :
+    x ∈ L.dualCarrier ↔ ∀ y ∈ L.carrier, L.form x y ∈ (1 : Submodule ℤ ℚ) :=
+  LinearMap.BilinForm.mem_dualSubmodule (B := L.form)
 
-/-- The integral span of the rational basis canonically obtained from the carrier is the carrier
-itself. -/
+/-- The integral span of the rational basis obtained from Mathlib's chosen basis of `L` is the
+carrier itself. -/
 theorem span_range_rationalBasis (L : IntegralLattice V) :
     Submodule.span ℤ (Set.range L.rationalBasis) = L.carrier := by
   let b := Module.Free.chooseBasis ℤ L
@@ -74,8 +81,8 @@ theorem span_range_rationalBasis (L : IntegralLattice V) :
   rw [hrange, Set.range_comp, ← Submodule.map_span, b.span_eq,
     Submodule.map_top, Submodule.range_subtype]
 
-/-- The dual carrier is the integral span of the bilinear dual basis to the carrier's canonical
-rational basis. -/
+/-- The dual carrier is the integral span of the bilinear dual basis to the carrier's rational basis
+obtained from Mathlib's chosen basis of `L`. -/
 theorem dualCarrier_eq_span_dualBasis (L : IntegralLattice V) [L.IsNondegenerate] :
     L.dualCarrier = Submodule.span ℤ
       (Set.range (L.form.dualBasis L.form_nondegenerate L.rationalBasis)) := by
@@ -117,9 +124,8 @@ private theorem dualPairing_surjective (L : IntegralLattice V) [L.IsNondegenerat
   have hx : x ∈ L.dualCarrier := by
     rw [L.dualCarrier_eq_span_dualBasis]
     exact Submodule.sum_mem _ fun i _ => by
-      rw [show (f (b i) : ℚ) • bd i = f (b i) • bd i by
-        exact IsScalarTower.algebraMap_smul ℚ (f (b i)) (bd i)]
-      exact Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_range_self i))
+      simpa only [Int.cast_smul_eq_zsmul ℚ] using
+        Submodule.smul_mem _ (f (b i)) (Submodule.subset_span (Set.mem_range_self i))
   refine ⟨⟨x, hx⟩, ?_⟩
   apply LinearMap.ext_on b.span_eq
   rintro _ ⟨i, rfl⟩
@@ -171,6 +177,7 @@ theorem coe_dualBasisElem (L : IntegralLattice V) [L.IsNondegenerate]
 
 /-- Under the perfect-pairing equivalence, the bilinear dual basis of the ambient space is sent to
 the module-dual basis of the carrier. -/
+@[simp]
 theorem dualPairingEquiv_dualBasisElem (L : IntegralLattice V) [L.IsNondegenerate]
     (i : Module.Free.ChooseBasisIndex ℤ L) :
     L.dualPairingEquiv (L.dualBasisElem i) =
@@ -190,13 +197,13 @@ theorem dualPairingEquiv_dualBasisElem (L : IntegralLattice V) [L.IsNondegenerat
       simp only [Basis.dualBasis_apply, Basis.repr_self, Finsupp.single_apply]
       split_ifs <;> simp_all
 
-/-- The canonical basis of the dual carrier corresponding to the chosen basis of `L`. -/
+/-- The basis of the dual carrier corresponding to Mathlib's chosen basis of `L`. -/
 noncomputable def dualCarrierBasis (L : IntegralLattice V) [L.IsNondegenerate] :
     Basis (Module.Free.ChooseBasisIndex ℤ L) ℤ L.dualCarrier :=
   (Module.Free.chooseBasis ℤ L).dualBasis.map L.dualPairingEquiv.symm
 
-/-- The canonical basis of the dual carrier consists of the ambient bilinear dual-basis
-vectors. -/
+/-- The basis of the dual carrier corresponding to Mathlib's chosen basis of `L` consists of the
+ambient bilinear dual-basis vectors. -/
 @[simp]
 theorem dualCarrierBasis_apply (L : IntegralLattice V) [L.IsNondegenerate]
     (i : Module.Free.ChooseBasisIndex ℤ L) :
@@ -206,6 +213,7 @@ theorem dualCarrierBasis_apply (L : IntegralLattice V) [L.IsNondegenerate]
     L.dualPairingEquiv_dualBasisElem]
 
 /-- Taking the dual submodule twice recovers the original carrier. -/
+@[simp]
 theorem dualCarrier_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
     L.form.dualSubmodule L.dualCarrier = L.carrier := by
   rw [dualCarrier, ← L.span_range_rationalBasis]
@@ -214,6 +222,7 @@ theorem dualCarrier_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
 
 /-- A vector pairs integrally with every vector of the dual carrier exactly when it belongs to the
 original carrier. -/
+@[simp]
 theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondegenerate]
     (x : V) :
     (∀ y ∈ L.dualCarrier, L.form x y ∈ (1 : Submodule ℤ ℚ)) ↔ x ∈ L.carrier := by
