@@ -5,8 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.BoundedAtCusp
-public import TauCeti.NumberTheory.ModularForms.Cusps.Rat
+public import TauCeti.NumberTheory.ModularForms.Cusps.Rat.Slash
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Basic
 
 /-!
@@ -34,10 +33,11 @@ supplies through `zero_at_cusps'`. `IsCusp.smul_map_ratCast` reduces to `𝒮ℒ
 
 The shape is AINTLIB's `heckeT_p_ut_zero_at_cusps`
 ([`LeanModularForms/HeckeRIngs/GL2/AdjointTheory.lean`](https://github.com/CBirkbeck/AINTLIB)
-lines 62-71, commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck),
-which runs the same argument by hand with `Finset.sum_induction` over its own representatives.
-Here the induction is `OnePoint.IsZeroAt.sum`, and the statement is about this repository's
-`heckeSlashSum`.
+lines 62-70, commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck),
+which runs that argument by hand with `Finset.sum_induction` over its own representatives, once
+per call site. Here it is factored: the general statement for an arbitrary finite family of
+rational matrices lives in `ModularForms/Cusps/Rat/Slash.lean`, and this module only specialises it
+to `heckeSlashSum`.
 -/
 
 public section
@@ -55,18 +55,14 @@ lemma isZeroAt_heckeSlashSum {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] 
     (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsZeroAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ) :
     c.IsZeroAt (heckeSlashSum k D f) k := by
   rw [heckeSlashSum_def]
-  refine OnePoint.IsZeroAt.sum fun i _ ↦ ?_
-  rw [ModularForm.rat_slash]
-  exact OnePoint.IsZeroAt.smul_iff.mp (hf _ (hc.smul_map_ratCast _))
+  exact OnePoint.isZeroAt_sum_rat_slash k _ _ hf hc
 
 /-- **The slash sum is bounded at every cusp** when the function is. -/
 lemma isBoundedAt_heckeSlashSum {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
     (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsBoundedAt f k) {c : OnePoint ℝ}
     (hc : IsCusp c Γ) : c.IsBoundedAt (heckeSlashSum k D f) k := by
   rw [heckeSlashSum_def]
-  refine OnePoint.IsBoundedAt.sum fun i _ ↦ ?_
-  rw [ModularForm.rat_slash]
-  exact OnePoint.IsBoundedAt.smul_iff.mp (hf _ (hc.smul_map_ratCast _))
+  exact OnePoint.isBoundedAt_sum_rat_slash k _ _ hf hc
 
 end HeckeRing.GL2
 

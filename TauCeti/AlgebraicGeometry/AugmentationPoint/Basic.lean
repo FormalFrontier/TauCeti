@@ -15,6 +15,8 @@ of the algebra's prime spectrum. This file records that point and its underlying
 ## Main declarations
 
 * `TauCeti.AlgHom.kernelPoint`: the point cut out by the kernel of an augmentation.
+* `TauCeti.AlgHom.comap_kernelPoint`: contraction of a kernel point is the kernel point of the
+  composite algebra homomorphism.
 -/
 
 public section
@@ -42,5 +44,11 @@ theorem kernelPoint_asIdeal :
   dsimp only [closedPoint]
   rw [IsLocalRing.maximalIdeal_eq_bot]
   rfl
+
+/-- Contracting a kernel point along an algebra endomorphism gives the kernel point of the
+composite algebra homomorphism. -/
+theorem comap_kernelPoint (g : H →ₐ[k] H) :
+    PrimeSpectrum.comap (g : H →+* H) (kernelPoint f) = kernelPoint (f.comp g) :=
+  PrimeSpectrum.comap_comp_apply (g : H →+* H) (f : H →+* k) (closedPoint k)
 
 end TauCeti.AlgHom
