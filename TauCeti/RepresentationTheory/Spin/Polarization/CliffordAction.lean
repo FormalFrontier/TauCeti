@@ -44,9 +44,10 @@ here. Everything holds over an arbitrary commutative ring, since
 `TauCeti.SpinPolarizationData` already carries the isotropy and pairing that the relation needs;
 no invertibility of `2` is used.
 
-Surjectivity of `TauCeti.spinAction` onto `Module.End K S`, and its restriction to `pinGroup Q`
-and `spinGroup Q`, are in `TauCeti/RepresentationTheory/Spin/Representation.lean`; the half-spin
-summands are in `TauCeti/RepresentationTheory/Spin/Polarization/GroupRep.lean`.
+Surjectivity of `TauCeti.spinAction` onto `Module.End K S` when `P.W` is finite free, and its
+restriction to `pinGroup Q` and `spinGroup Q`, are in
+`TauCeti/RepresentationTheory/Spin/Representation.lean`; the half-spin summands are in
+`TauCeti/RepresentationTheory/Spin/HalfSpin.lean`.
 
 ## Main definitions
 

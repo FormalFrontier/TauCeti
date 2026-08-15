@@ -23,14 +23,19 @@ anisotropic vector orthogonal to a polarization acts on a spinor module by its s
 times the grade involution.
 
 The degree bookkeeping is in `ZMod 2`, where lowering and raising the degree by one are the same
-map, so the statement is `contractLeft d ⁻¹` of `evenOdd Q (i + 1)` rather than of `evenOdd Q
-(i - 1)`; the two are literally equal.
+map, so `evenOdd Q (i + 1)` and `evenOdd Q (i - 1)` are the same submodule; the statement below
+names the first.
+
+The parity statement is proved by induction over the grading, whose base case hands back
+membership in a power of `LinearMap.range (ι Q)` whose exponent is a `ZMod.val`. Reading such a
+membership as "a scalar" or "a vector" is recorded once, in
+`TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
+`TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`, and reused by the inductions
+downstream that share the same base case.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` and
-  `TauCeti.CliffordAlgebra.map_contractLeft_evenOdd_le`: **contraction shifts the parity**, in
-  membership and in submodule form.
+* `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd`: **contraction shifts the parity**.
 * `TauCeti.CliffordAlgebra.involute_contractLeft`: `involute (d ⌋ x) = -(d ⌋ involute x)`.
 
 ## References
@@ -50,6 +55,23 @@ namespace TauCeti.CliffordAlgebra
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   {Q : QuadraticForm R M}
 
+/-! ### The base case of an induction over the grading -/
+
+/-- An element of the `(0 : ZMod 2).val`-th power of the range of `ι` is a scalar. This is the
+`i = 0` half of the `range_ι_pow` hypothesis of `CliffordAlgebra.evenOdd_induction`. -/
+theorem exists_algebraMap_of_mem_range_ι_pow_zero {v : CliffordAlgebra Q}
+    (hv : v ∈ LinearMap.range (ι Q) ^ (0 : ZMod 2).val) :
+    ∃ r : R, algebraMap R (CliffordAlgebra Q) r = v :=
+  Submodule.mem_one.mp (by simpa using hv)
+
+/-- An element of the `(1 : ZMod 2).val`-th power of the range of `ι` is a vector. This is the
+`i = 1` half of the `range_ι_pow` hypothesis of `CliffordAlgebra.evenOdd_induction`. -/
+theorem exists_ι_of_mem_range_ι_pow_one {v : CliffordAlgebra Q}
+    (hv : v ∈ LinearMap.range (ι Q) ^ (1 : ZMod 2).val) : ∃ a, ι Q a = v := by
+  simpa [ZMod.val_one] using hv
+
+/-! ### Contraction, the grade involution and the parity -/
+
 /-- **The grade involution anticommutes with contraction.** Contracting against a linear
 functional lowers the degree by one, hence swaps the even and odd parts of the Clifford algebra,
 so it anticommutes with the operator that is `+1` on the even part and `-1` on the odd part. -/
@@ -68,11 +90,7 @@ theorem involute_contractLeft (d : Module.Dual R M) (x : CliffordAlgebra Q) :
     rw [hlhs, hrhs, map_neg, neg_neg, contractLeft_ι_mul]
 
 /-- **Contraction shifts the parity.** Contracting against a linear functional lowers the degree
-of a multivector by one, so it carries the `i`-th half of the `ℤ/2`-grading into the other one.
-
-The induction is Mathlib's `CliffordAlgebra.evenOdd_induction`: a scalar is annihilated, a vector
-is contracted to a scalar, and multiplying by a pair of vectors changes the parity twice, which in
-`ZMod 2` is not at all. -/
+of a multivector by one, so it carries the `i`-th half of the `ℤ/2`-grading into the other one. -/
 theorem contractLeft_mem_evenOdd (d : Module.Dual R M) {i : ZMod 2} {x : CliffordAlgebra Q}
     (hx : x ∈ evenOdd Q i) : contractLeft d x ∈ evenOdd Q (i + 1) := by
   -- Two parity facts, used to keep the indices in `ZMod 2` honest.
@@ -82,9 +100,9 @@ theorem contractLeft_mem_evenOdd (d : Module.Dual R M) {i : ZMod 2} {x : Cliffor
   | range_ι_pow v hv =>
     -- `i.val` is `0` or `1`, so `v` is a scalar or a vector.
     rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl
-    · obtain ⟨r, rfl⟩ := Submodule.mem_one.mp (by simpa using hv)
+    · obtain ⟨r, rfl⟩ := exists_algebraMap_of_mem_range_ι_pow_zero hv
       simp
-    · obtain ⟨a, rfl⟩ : ∃ a, ι Q a = v := by simpa [ZMod.val_one] using hv
+    · obtain ⟨a, rfl⟩ := exists_ι_of_mem_range_ι_pow_one hv
       rw [contractLeft_ι, hone]
       exact SetLike.algebraMap_mem_graded _ _
   | add x y hx hy ihx ihy => simpa only [map_add] using add_mem ihx ihy
@@ -100,11 +118,5 @@ theorem contractLeft_mem_evenOdd (d : Module.Dual R M) {i : ZMod 2} {x : Cliffor
     refine sub_mem (Submodule.smul_mem _ _ h₂) ?_
     rw [add_comm]
     exact SetLike.mul_mem_graded (ι_mem_evenOdd_one Q m₁) h₁
-
-/-- **Contraction shifts the parity**, in submodule form. -/
-theorem map_contractLeft_evenOdd_le (d : Module.Dual R M) (i : ZMod 2) :
-    (evenOdd Q i).map (contractLeft d) ≤ evenOdd Q (i + 1) := by
-  rintro _ ⟨y, hy, rfl⟩
-  exact contractLeft_mem_evenOdd d hy
 
 end TauCeti.CliffordAlgebra

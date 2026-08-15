@@ -58,23 +58,24 @@ belong to the complex theory and are not proved here.
 ## Main results
 
 * `TauCeti.spinAction_mem_evenOdd`: **the Clifford action is graded** for a polarization without
-  a line summand, and `TauCeti.spinAction_even_mem_evenOdd`: an even Clifford element preserves
-  exterior parity.
+  a line summand, and `TauCeti.spinAction_mem_evenOdd_of_mem_even`: an even Clifford element
+  preserves exterior parity.
 * `TauCeti.spinPlus_invariant` and `TauCeti.spinMinus_invariant`: **the half-spin summands are
   invariant** under the spin representation.
 * `TauCeti.isCompl_spinPlus_spinMinus`: the two summands are complementary, so `S = S⁺ ⊕ S⁻`, and
   `TauCeti.isCompl_spinPlusSubrep_spinMinusSubrep`: the same in the lattice of subrepresentations
   of `spinRep`, so the splitting is one of representations.
-* `TauCeti.map_spinAction_spinPlus_le` and `TauCeti.map_spinAction_spinMinus_le`: an odd Clifford
-  element carries each of the two summands into the other, which is why the splitting is stated
-  for `spinRep` and not for `pinRep`.
+* `TauCeti.map_spinAction_spinPlus_le_spinMinus` and
+  `TauCeti.map_spinAction_spinMinus_le_spinPlus`: an odd Clifford element carries each of the two
+  summands into the other, which is why the splitting is stated for `spinRep` and not for
+  `pinRep`.
 
 ## References
 
-* W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), Lecture 20, especially
-  §20.3: the spin module `S = ⋀·W` of a maximal isotropic subspace, the pin and spin groups acting
-  on it, and its splitting into the half-spin summands `S⁺` and `S⁻` — the construction formalised
-  here.
+* W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), §20.1–20.2: the spin
+  module `S = ⋀·W` of a maximal isotropic subspace and its splitting into the half-spin summands
+  `S⁺` and `S⁻` (§20.1), and the pin and spin groups acting on it (§20.2) — the construction
+  formalised here.
 * [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
   Layer 4, "The spin representation of the group" and "The half-spin summands".
 -/
@@ -113,29 +114,17 @@ theorem spinMinus_def : spinMinus Q P = evenOdd (0 : QuadraticForm K P.W) 1 :=
   -- `(rfl)`, not `rfl`: the body of `spinMinus` is not `@[expose]`d.
   (rfl)
 
-@[simp]
-theorem mem_spinPlus {s : ExteriorAlgebra K P.W} :
-    s ∈ spinPlus Q P ↔ s ∈ evenOdd (0 : QuadraticForm K P.W) 0 := by
-  rw [spinPlus_def]
-
-@[simp]
-theorem mem_spinMinus {s : ExteriorAlgebra K P.W} :
-    s ∈ spinMinus Q P ↔ s ∈ evenOdd (0 : QuadraticForm K P.W) 1 := by
-  rw [spinMinus_def]
-
 /-- **The spinor module is the sum of its two half-spin summands**, `S = S⁺ ⊕ S⁻`. This is the
 exterior parity grading, and it holds for every polarization. Invariance of the summands
 (`TauCeti.spinPlus_invariant`) does not: it needs a polarization without a line summand. -/
-theorem isCompl_spinPlus_spinMinus : IsCompl (spinPlus Q P) (spinMinus Q P) :=
-  evenOdd_isCompl _
+theorem isCompl_spinPlus_spinMinus : IsCompl (spinPlus Q P) (spinMinus Q P) := by
+  rw [spinPlus_def, spinMinus_def]
+  exact evenOdd_isCompl _
 
 /-! ### The Clifford action is graded
 
 The parity of the operator by which a Clifford element acts on `S` is the parity of the element,
-provided the polarization has no line summand. The proof is Mathlib's
-`CliffordAlgebra.evenOdd_induction`: a scalar acts by a scalar and a vector acts oddly, and
-multiplying by a pair of vectors shifts the exterior parity twice, which in `ZMod 2` is not at
-all. -/
+provided the polarization has no line summand. -/
 
 /-- **Without a line summand every vector acts oddly.** Exterior multiplication raises the
 exterior degree by one and contraction lowers it by one, and in `ZMod 2` those are the same
@@ -167,9 +156,9 @@ theorem spinAction_mem_evenOdd (hline : P.line = ⊥) {i j : ZMod 2} {x : Cliffo
   | range_ι_pow v hv =>
     -- `i.val` is `0` or `1`, so `v` is a scalar or a vector.
     rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl
-    · obtain ⟨r, rfl⟩ := Submodule.mem_one.mp (by simpa using hv)
+    · obtain ⟨r, rfl⟩ := TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero hv
       simpa using Submodule.smul_mem _ r hs
-    · obtain ⟨a, rfl⟩ : ∃ a, ι Q a = v := by simpa [ZMod.val_one] using hv
+    · obtain ⟨a, rfl⟩ := TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one hv
       rw [spinAction_ι, add_comm]
       exact cliffordOperator_mem_evenOdd P hline a hs
   | add x y hx hy ihx ihy => simpa only [map_add, LinearMap.add_apply] using add_mem ihx ihy
@@ -181,13 +170,13 @@ theorem spinAction_mem_evenOdd (hline : P.line = ⊥) {i j : ZMod 2} {x : Cliffo
 /-- **An even Clifford element preserves exterior parity**, when the polarization has no line
 summand. This is the `i = 0` case of `TauCeti.spinAction_mem_evenOdd`, and the form the spin
 group consumes. -/
-theorem spinAction_even_mem_evenOdd (hline : P.line = ⊥) {x : CliffordAlgebra Q}
+theorem spinAction_mem_evenOdd_of_mem_even (hline : P.line = ⊥) {x : CliffordAlgebra Q}
     (hx : x ∈ CliffordAlgebra.even Q) {j : ZMod 2} {s : ExteriorAlgebra K P.W}
     (hs : s ∈ evenOdd (0 : QuadraticForm K P.W) j) :
     spinAction Q P x s ∈ evenOdd (0 : QuadraticForm K P.W) j := by
   have hx' : x ∈ evenOdd Q 0 := by
     rw [← CliffordAlgebra.even_toSubmodule Q]
-    exact hx
+    exact (Subalgebra.mem_toSubmodule _).mpr hx
   simpa only [zero_add] using spinAction_mem_evenOdd P hline hx' hs
 
 /-! ### Invariance of the half-spin summands -/
@@ -200,7 +189,7 @@ theorem spinPlus_invariant (hline : P.line = ⊥) (g : spinGroup Q) :
   rintro _ ⟨s, hs, rfl⟩
   rw [spinPlus_def] at hs ⊢
   rw [spinRep_apply]
-  exact spinAction_even_mem_evenOdd P hline (spinGroup.mem_even g.2) hs
+  exact spinAction_mem_evenOdd_of_mem_even P hline (spinGroup.mem_even g.2) hs
 
 /-- **The odd half-spin summand is invariant** under the spin representation, when the
 polarization has no line summand. -/
@@ -209,7 +198,7 @@ theorem spinMinus_invariant (hline : P.line = ⊥) (g : spinGroup Q) :
   rintro _ ⟨s, hs, rfl⟩
   rw [spinMinus_def] at hs ⊢
   rw [spinRep_apply]
-  exact spinAction_even_mem_evenOdd P hline (spinGroup.mem_even g.2) hs
+  exact spinAction_mem_evenOdd_of_mem_even P hline (spinGroup.mem_even g.2) hs
 
 /-- **The even half-spin summand as a subrepresentation** of the spin representation. -/
 def spinPlusSubrep (hline : P.line = ⊥) : Subrepresentation (spinRep Q P) where
@@ -233,6 +222,22 @@ theorem spinMinusSubrep_toSubmodule (hline : P.line = ⊥) :
   -- `(rfl)`, not `rfl`: the body of `spinMinusSubrep` is not `@[expose]`d.
   (rfl)
 
+/-- Membership in the even half-spin subrepresentation is membership in `S⁺`. A goal about a
+`Subrepresentation` is stated through its `SetLike` membership, on which
+`TauCeti.spinPlusSubrep_toSubmodule` cannot fire. -/
+@[simp]
+theorem mem_spinPlusSubrep (hline : P.line = ⊥) {s : ExteriorAlgebra K P.W} :
+    s ∈ spinPlusSubrep P hline ↔ s ∈ spinPlus Q P := by
+  rw [← spinPlusSubrep_toSubmodule P hline]
+  exact Iff.rfl
+
+/-- Membership in the odd half-spin subrepresentation is membership in `S⁻`. -/
+@[simp]
+theorem mem_spinMinusSubrep (hline : P.line = ⊥) {s : ExteriorAlgebra K P.W} :
+    s ∈ spinMinusSubrep P hline ↔ s ∈ spinMinus Q P := by
+  rw [← spinMinusSubrep_toSubmodule P hline]
+  exact Iff.rfl
+
 /-- **The spin representation is the sum of its two half-spin subrepresentations.** This is
 `TauCeti.isCompl_spinPlus_spinMinus` read in the lattice of subrepresentations of `spinRep`, where
 it says that the parity splitting of `S` is a splitting of the spin representation itself. -/
@@ -253,7 +258,7 @@ these inclusions — it needs an odd element of the pin group whose action does 
 summand — and that is not proved here. -/
 
 /-- **An odd Clifford element carries `S⁺` into `S⁻`.** -/
-theorem map_spinAction_spinPlus_le (hline : P.line = ⊥) {x : CliffordAlgebra Q}
+theorem map_spinAction_spinPlus_le_spinMinus (hline : P.line = ⊥) {x : CliffordAlgebra Q}
     (hx : x ∈ evenOdd Q 1) : (spinPlus Q P).map (spinAction Q P x) ≤ spinMinus Q P := by
   rintro _ ⟨s, hs, rfl⟩
   rw [spinPlus_def] at hs
@@ -261,7 +266,7 @@ theorem map_spinAction_spinPlus_le (hline : P.line = ⊥) {x : CliffordAlgebra Q
   simpa only [add_zero] using spinAction_mem_evenOdd P hline hx hs
 
 /-- **An odd Clifford element carries `S⁻` into `S⁺`.** -/
-theorem map_spinAction_spinMinus_le (hline : P.line = ⊥) {x : CliffordAlgebra Q}
+theorem map_spinAction_spinMinus_le_spinPlus (hline : P.line = ⊥) {x : CliffordAlgebra Q}
     (hx : x ∈ evenOdd Q 1) : (spinMinus Q P).map (spinAction Q P x) ≤ spinPlus Q P := by
   rintro _ ⟨s, hs, rfl⟩
   rw [spinMinus_def] at hs
