@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
+public import Mathlib.Algebra.Lie.Weights.Chain
 public import TauCeti.Algebra.Lie.Sl2.WeightMultiplicity
-public import TauCeti.Algebra.Lie.Weights.Chain
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.Algebra.Lie.Weights.Integrality
 public import TauCeti.LinearAlgebra.Eigenspace.Invariant
@@ -34,10 +34,10 @@ The argument, for a root `α` and a linear form `χ`, runs as follows.
 
 * Cut the `α`-string through `χ` off at both ends: choose indices `p` and `q` beyond the two of
   interest, with `M_{p α + χ} = M_{q α + χ} = 0`, which is possible because a finite-dimensional
-  module has only finitely many weights
-  (`TauCeti.exists_lt_genWeightSpace_zsmul_add_eq_bot`). Mathlib's `LieModule.genWeightSpaceChain`
-  is then a module over the `sl₂` triple `(α^∨, eₐ, fₐ)` attached to `α`: it is stable under `H`,
-  and its two cut-off lemmas say exactly that it is stable under `eₐ` and `fₐ`.
+  module has only finitely many weights (`LieModule.eventually_genWeightSpace_smul_add_eq_bot`).
+  Mathlib's `LieModule.genWeightSpaceChain` is then a module over the `sl₂` triple
+  `(α^∨, eₐ, fₐ)` attached to `α`: it is stable under `H`, and its two cut-off lemmas say exactly
+  that it is stable under `eₐ` and `fₐ`.
 * Inside the string the coroot `α^∨` separates the weights: it acts on `M_{k α + χ}` by
   `2k + χ(α^∨)`, and these scalars are distinct, so each summand of the string is recovered from a
   single eigenspace of `α^∨` (`TauCeti.biSup_inf_eigenspace_eq`).
@@ -97,10 +97,30 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
   obtain ⟨h, e, f, ht, he, hf⟩ := IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
   have hh : h = (IsKilling.coroot α : L) := ht.h_eq_coroot hα he hf
   -- Cut the string off beyond both indices `k` and `-k - n`.
-  obtain ⟨q, hqb, hq⟩ :=
-    exists_lt_genWeightSpace_zsmul_add_eq_bot M hα χ ((k.natAbs : ℤ) + (n.natAbs : ℤ) + 1)
-  obtain ⟨p, hpb, hp⟩ :=
-    exists_genWeightSpace_zsmul_add_eq_bot_lt M hα χ (-((k.natAbs : ℤ) + (n.natAbs : ℤ) + 1))
+  obtain ⟨q₀, hqb₀, hq₀⟩ :=
+    ((Filter.eventually_gt_atTop
+      ((k.natAbs : ℤ) + (n.natAbs : ℤ) + 1).toNat).and
+      (eventually_genWeightSpace_smul_add_eq_bot M (⇑α) χ hα)).exists
+  let q : ℤ := q₀
+  have hqb : (k.natAbs : ℤ) + (n.natAbs : ℤ) + 1 < q := by
+    change (k.natAbs : ℤ) + (n.natAbs : ℤ) + 1 < (q₀ : ℤ)
+    exact lt_of_le_of_lt (Int.self_le_toNat _) (by exact_mod_cast hqb₀)
+  have hq : genWeightSpace M (q • ⇑α + χ) = ⊥ := by
+    simpa only [q, natCast_zsmul] using hq₀
+  obtain ⟨r₀, hrb₀, hp₀⟩ :=
+    ((Filter.eventually_gt_atTop
+      ((k.natAbs : ℤ) + (n.natAbs : ℤ) + 1).toNat).and
+      (eventually_genWeightSpace_smul_add_eq_bot M (-⇑α) χ (neg_ne_zero.2 hα))).exists
+  let p : ℤ := -(r₀ : ℤ)
+  have hrb : (k.natAbs : ℤ) + (n.natAbs : ℤ) + 1 < (r₀ : ℤ) :=
+    lt_of_le_of_lt (Int.self_le_toNat _) (by exact_mod_cast hrb₀)
+  have hpb : p < -((k.natAbs : ℤ) + (n.natAbs : ℤ) + 1) := by
+    dsimp only [p]
+    omega
+  have hp : genWeightSpace M (p • ⇑α + χ) = ⊥ := by
+    change genWeightSpace M ((-(r₀ : ℤ)) • ⇑α + χ) = ⊥
+    rw [neg_smul, ← smul_neg]
+    simpa only [natCast_zsmul] using hp₀
   set N : LieSubmodule K H M := genWeightSpaceChain M (⇑α) χ p q with hNdef
   -- The operator whose eigenspaces separate the string.
   set A : Module.End K M := toEnd K H M (IsKilling.coroot α) with hAdef
@@ -124,6 +144,8 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
   -- On the string, the coroot acts as the Cartan element of the triple.
   have hop : toEnd K (ht.toLieSubalgebra K) N' ⟨h, ht.h_mem_toLieSubalgebra⟩ = A.restrict hA := by
     ext v
+    -- There is no application lemma that simultaneously unfolds `toEnd` on the restricted
+    -- Lie algebra and `Module.End.restrict`; expose their common underlying action explicitly.
     change ⁅h, (v : M)⁆ = A (v : M)
     simp only [hAdef, hh, toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module]
   -- The `sl₂` engine: the eigenvalues `c` and `-c` have equal multiplicity on the string.
@@ -220,7 +242,7 @@ theorem weightSpace_sub_apply_coroot_smul_eq_bot_iff {α : Weight K H L} (hα : 
 
 /-- The reflection of the root system of `H` in a root `i`, read on the weight space
 `Module.Dual K H`, is the reflection `χ ↦ χ - χ(αᵢ^∨) • αᵢ`. -/
-theorem coe_rootSystem_reflection_apply (i : H.root) (χ : Dual K H) :
+@[simp] theorem coe_rootSystem_reflection_apply (i : H.root) (χ : Dual K H) :
     ⇑((IsKilling.rootSystem H).reflection i χ) =
       ⇑χ - χ (IsKilling.coroot (i : Weight K H L)) • ⇑(i : Weight K H L) := by
   ext x
