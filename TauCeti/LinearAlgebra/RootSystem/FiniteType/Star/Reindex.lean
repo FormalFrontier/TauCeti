@@ -43,17 +43,6 @@ namespace TauCeti
 
 open SimpleGraph
 
-private def pathGraphRevIso (n : ℕ) : pathGraph n ≃g pathGraph n where
-  toEquiv := Fin.revPerm
-  map_rel_iff' := by
-    intro i j
-    simp only [pathGraph_adj, Fin.revPerm_apply, Fin.val_rev]
-    omega
-
-@[simp] private theorem pathGraphRevIso_apply (n : ℕ) (i : Fin n) :
-    pathGraphRevIso n i = i.rev :=
-  rfl
-
 private theorem exists_iso_pathGraph_apply_eq_zero {V : Type*} [Fintype V]
     {G : SimpleGraph V} [DecidableRel G.Adj]
     (u : V) (hu : G.degree u ≤ 1)

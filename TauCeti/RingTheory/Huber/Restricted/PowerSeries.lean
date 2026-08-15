@@ -26,6 +26,9 @@ where the convergent/restricted power series ring is (5.6.1) in §5.6.
   coefficients in a topological `A`-module `M`, denoted `M⟨T₁, …, Tₖ⟩`. This is the object
   Wedhorn's Remark 8.29 compares with `M ⊗[A] A⟨T₁, …, Tₖ⟩`. It *is* Mathlib's
   `Filter.zeroAtFilterSubmodule` at the cofinite filter, under the Huber-theoretic name.
+* `restrictedMvPowerSeriesSubringVal`: the inclusion `A⟨T₁, …, Tₖ⟩ → MvPowerSeries (Fin k) A` as
+  an `A`-algebra map. `A⟨T⟩` is a `Subring` carrying an `Algebra A` instance rather than a
+  `Subalgebra`, so `Subalgebra.val` does not apply.
 * `isRestricted_of_hasFiniteSupport`: the introduction rule at module coefficients — finitely many
   nonzero coefficients suffice.
 
@@ -385,6 +388,22 @@ theorem coe_algebraMap_restrictedMvPowerSeriesSubring {k : ℕ} {A : Type*} [Com
     ((algebraMap A (restrictedMvPowerSeriesSubring k A) a :
         restrictedMvPowerSeriesSubring k A) : MvPowerSeries (Fin k) A) =
       algebraMap A (MvPowerSeries (Fin k) A) a := (rfl)
+
+/-- The inclusion `A⟨T₁, …, Tₖ⟩ → MvPowerSeries (Fin k) A` as an `A`-algebra map. `A⟨T⟩` is a
+`Subring` carrying an `Algebra A` instance rather than a `Subalgebra`, so `Subalgebra.val` does
+not apply. -/
+noncomputable def restrictedMvPowerSeriesSubringVal {k : ℕ} {A : Type*} [CommRing A]
+    [TopologicalSpace A] [NonarchimedeanRing A] :
+    restrictedMvPowerSeriesSubring k A →ₐ[A] MvPowerSeries (Fin k) A :=
+  { (restrictedMvPowerSeriesSubring k A).subtype with
+    commutes' := fun a ↦ by simp [coe_algebraMap_restrictedMvPowerSeriesSubring] }
+
+/-- `restrictedMvPowerSeriesSubringVal` is the underlying series. Its body is not exposed, so this
+is how a consumer computes with it. -/
+@[simp]
+theorem restrictedMvPowerSeriesSubringVal_apply {k : ℕ} {A : Type*} [CommRing A]
+    [TopologicalSpace A] [NonarchimedeanRing A] (f : restrictedMvPowerSeriesSubring k A) :
+    restrictedMvPowerSeriesSubringVal f = (f : MvPowerSeries (Fin k) A) := (rfl)
 
 /-! ### Module coefficients -/
 

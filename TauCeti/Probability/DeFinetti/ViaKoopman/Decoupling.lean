@@ -129,7 +129,7 @@ private theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ
 applied to the indicator of `B` at coordinate `r`: the limit is the conditional expectation of that
 same indicator given the shift-invariant σ-algebra. -/
 private theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hmp : MeasurePreserving (shift α) ρ ρ)
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hmp : MeasurePreserving (shift α) ρ ρ)
     {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     Filter.Tendsto (fun n => ∫ x,
         |birkhoffAverage ℝ (shift α) (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x
@@ -154,7 +154,7 @@ witness's characteristic property at coordinate `0` with the transport fact that
 agree over invariant events. This is what lets the Birkhoff limit at coordinate `r` be named as the
 witness. -/
 theorem condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure
-    [StandardBorelSpace α] [Nonempty α] {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+    [StandardBorelSpace α] [Nonempty α] {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ]
     (hρ : ContractableLaw ρ) {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     ρ[fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r) |
         MeasurableSpace.invariants (shift α)]
@@ -331,7 +331,7 @@ Where the two halves meet: the averaged sequence is *constant* in `n` by
 sequence converges to the right-hand side by the `L¹` mean ergodic theorem; a sequence has one
 limit. -/
 theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
@@ -404,7 +404,7 @@ theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
 coordinate decouples; this says what it decouples into. -/
 theorem setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
