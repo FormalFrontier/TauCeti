@@ -31,9 +31,13 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 
 ## Main declarations
 
+* `TauCeti.Sl2Std.repEnveloping`: the enveloping-algebra representation on the standard
+  module `V(n)`.
+* `TauCeti.Sl2Std.repEnveloping_ι` and `TauCeti.Sl2Std.repEnveloping_ι_slFinTwoBasis`: evaluation on
+  Lie algebra generators.
 * `TauCeti.Sl2Std.integralLattice`: the coordinate `ℤ`-lattice in `V(n)`.
-* `TauCeti.Sl2Std.integerCoordinatesLinearEquiv`: its identification with
-  `Fin (n + 1) → ℤ`.
+* `TauCeti.Sl2Std.mem_integralLattice_iff`: integrality of coordinates.
+* `TauCeti.Sl2Std.integerCoordinatesLinearEquiv`: its identification with `Fin (n + 1) → ℤ`.
 * `TauCeti.Sl2Std.coe_integerCoordinatesLinearEquiv_apply` and
   `TauCeti.Sl2Std.coe_integerCoordinatesLinearEquiv_symm_apply`: coordinate characterizations
   of the forward and inverse identification.
@@ -43,8 +47,9 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.Sl2Std.ringChoose_diag_apply`: the coordinate formula for Cartan binomials.
 * `TauCeti.Sl2Std.kostantForm_apply_mem_integralLattice`: the rank-one Kostant form preserves
   the lattice.
-* `TauCeti.Sl2Std.kostantRepresentationIntegralLattice`: the canonical `ℤ`-algebra representation
-  of the rank-one Kostant form on the integral lattice.
+* `TauCeti.Sl2Std.kostantFormRep`: the canonical `ℤ`-algebra representation of the rank-one Kostant
+  form on the integral lattice.
+* `TauCeti.Sl2Std.coe_kostantFormRep_apply`: compatibility with the ambient representation.
 
 ## References
 
@@ -70,91 +75,6 @@ private lemma rat_smul_apply [Algebra ℚ K] (q : ℚ) (w : Sl2Std K n) (i : Fin
     (q • w) i = algebraMap ℚ K q * w i := by
   have : (q • w) i = q • (w i) := rfl
   rw [this, Algebra.smul_def]
-
-private theorem raise_pow_apply_of_le {k : ℕ}
-    (v : Sl2Std K n) (i : Fin (n + 1)) (h : (i : ℕ) + k ≤ n) :
-    ((raise K n) ^ k) v i = (((i : ℕ) + k).descFactorial k : K) * v ⟨(i : ℕ) + k, by omega⟩ := by
-  induction k generalizing i with
-  | zero => simp
-  | succ k ih =>
-      rw [pow_succ', Module.End.mul_apply, raise_apply]
-      have hi : (i : ℕ) < n := by omega
-      rw [dite_eq_left hi]
-      let j : Fin (n + 1) := ⟨(i : ℕ) + 1, by omega⟩
-      have hj : (j : ℕ) + k ≤ n := by dsimp [j]; omega
-      have hj_eq : (j : ℕ) + k = (i : ℕ) + (k + 1) := by dsimp [j]; omega
-      rw [ih j hj]
-      simp only [hj_eq]
-      rw [Nat.descFactorial_succ]
-      have hfactor : (i : ℕ) + (k + 1) - k = (i : ℕ) + 1 := by omega
-      rw [hfactor]
-      push_cast
-      ring
-
-private theorem raise_pow_apply (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1)) :
-    ((raise K n) ^ k) v i =
-      if h : (i : ℕ) + k ≤ n then
-        (((i : ℕ) + k).descFactorial k : K) * v ⟨(i : ℕ) + k, by omega⟩
-      else 0 := by
-  split_ifs with h
-  · exact raise_pow_apply_of_le v i h
-  · exact raise_pow_apply_eq_zero k v i (by omega)
-
-private theorem lower_pow_apply_of_le {k : ℕ}
-    (v : Sl2Std K n) (i : Fin (n + 1)) (h : k ≤ (i : ℕ)) :
-    ((lower K n) ^ k) v i =
-      ((n - (i : ℕ) + k).descFactorial k : K) *
-        v ⟨(i : ℕ) - k, by omega⟩ := by
-  induction k generalizing i with
-  | zero => simp
-  | succ k ih =>
-      rw [pow_succ', Module.End.mul_apply, lower_apply]
-      have hi : 0 < (i : ℕ) := by omega
-      rw [dite_eq_left hi]
-      let j : Fin (n + 1) := ⟨(i : ℕ) - 1, by omega⟩
-      have hj : k ≤ (j : ℕ) := by dsimp [j]; omega
-      rw [ih j hj]
-      rw [Nat.descFactorial_succ]
-      have hsub : n - (j : ℕ) + k = n - (i : ℕ) + (k + 1) := by dsimp [j]; omega
-      rw [hsub]
-      have hfactor : n - (i : ℕ) + (k + 1) - k = n - (i : ℕ) + 1 := by omega
-      rw [hfactor]
-      have hidx :
-          (⟨(j : ℕ) - k, by dsimp [j]; omega⟩ : Fin (n + 1)) =
-            ⟨(i : ℕ) - (k + 1), by omega⟩ := by
-        ext
-        dsimp [j]
-        omega
-      rw [hidx]
-      have hle : (i : ℕ) ≤ n := by have := i.isLt; omega
-      have hcoeff : (n : K) - (i : ℕ) + 1 = ((n - (i : ℕ) + 1 : ℕ) : K) := by
-        rw [Nat.cast_add, Nat.cast_sub hle, Nat.cast_one]
-      rw [hcoeff, Nat.cast_mul]
-      ring
-
-private theorem lower_pow_apply_eq_zero (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1))
-    (h : (i : ℕ) < k) :
-    ((lower K n) ^ k) v i = 0 := by
-  induction k generalizing i with
-  | zero => omega
-  | succ k ih =>
-      rw [pow_succ', Module.End.mul_apply, lower_apply]
-      by_cases hi : 0 < (i : ℕ)
-      · rw [dite_eq_left hi]
-        let j : Fin (n + 1) := ⟨(i : ℕ) - 1, by omega⟩
-        have hj : (j : ℕ) < k := by dsimp [j]; omega
-        rw [ih j hj, mul_zero]
-      · rw [dite_eq_right hi]
-
-private theorem lower_pow_apply (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1)) :
-    ((lower K n) ^ k) v i =
-      if h : k ≤ (i : ℕ) then
-        ((n - (i : ℕ) + k).descFactorial k : K) *
-          v ⟨(i : ℕ) - k, by omega⟩
-      else 0 := by
-  split_ifs with h
-  · exact lower_pow_apply_of_le v i h
-  · exact lower_pow_apply_eq_zero k v i (by omega)
 
 /-- The `k`-th divided raising operator reads coordinate `i + k` with the integral coefficient
 `(i + k choose k)`, and vanishes when that coordinate is past the end of `V(n)`. -/
@@ -206,15 +126,6 @@ theorem dividedPower_lower_apply [Algebra ℚ K]
         rw [hfac, ← map_mul (algebraMap ℚ K), inv_mul_cancel₀ hk, map_one, one_mul]
   · rw [mul_zero]
 
-private theorem diag_pow_apply
-    (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1)) :
-    ((diag K n) ^ k) v i = ((n : K) - 2 * (i : ℕ)) ^ k * v i := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-      rw [pow_succ', Module.End.mul_apply, diag_apply, ih]
-      ring
-
 private theorem zsmul_end_apply
     (z : ℤ) (f : Module.End K (Sl2Std K n))
     (v : Sl2Std K n) (i : Fin (n + 1)) :
@@ -259,6 +170,25 @@ theorem ringChoose_diag_apply [Algebra ℚ K]
     rw [← hop', smeval_diag_apply, hscalar']
   have : IsAddTorsionFree K := .of_module_rat K
   exact (nsmul_right_inj (Nat.factorial_ne_zero k)).mp heq
+
+/-- The enveloping-algebra representation on the standard module `V(n)`. -/
+noncomputable def repEnveloping (K : Type*) [CommRing K] (n : ℕ) :
+    _root_.UniversalEnvelopingAlgebra K (LieAlgebra.SpecialLinear.sl (Fin 2) K) →ₐ[K]
+      Module.End K (Sl2Std K n) :=
+  _root_.UniversalEnvelopingAlgebra.lift K (rep K n)
+
+/-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
+@[simp]
+theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
+    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
+  _root_.UniversalEnvelopingAlgebra.lift_ι_apply K (rep K n) x
+
+/-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
+raising, lowering, and Cartan operators. -/
+theorem repEnveloping_ι_slFinTwoBasis (i : Fin 3) :
+    repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
+      ![raise K n, lower K n, diag K n] i := by
+  rw [repEnveloping_ι, rep_apply_basis]
 
 end GeneralCoefficients
 
@@ -383,132 +313,59 @@ instance : Submodule.IsLattice ℚ (integralLattice n) where
 local notation "𝔰𝔩₂" => LieAlgebra.SpecialLinear.sl (Fin 2) ℚ
 local notation "U𝔰𝔩₂" => _root_.UniversalEnvelopingAlgebra ℚ 𝔰𝔩₂
 
-/-- The enveloping-algebra representation on the standard module `V(n)`. -/
-noncomputable def kostantRepresentation :
-    U𝔰𝔩₂ →ₐ[ℚ] Module.End ℚ (Sl2Std ℚ n) :=
-  _root_.UniversalEnvelopingAlgebra.lift ℚ (rep ℚ n)
+/-- The canonical representation of the rank-one Kostant integral form on the standard
+integral lattice `V(n)ℤ`. -/
+noncomputable def kostantFormRep :
+    TauCeti.UniversalEnvelopingAlgebra.kostantForm
+        ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2] →ₐ[ℤ]
+      Module.End ℤ (integralLattice n) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantFormRep
+    ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2]
+    (repEnveloping ℚ n) (integralLattice n)
+    (by
+      intro i k v hv
+      have hrep : repEnveloping ℚ n
+          (_root_.UniversalEnvelopingAlgebra.ι ℚ
+            (![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] i)) =
+          ![raise ℚ n, lower ℚ n] i := by
+        fin_cases i
+        · exact repEnveloping_ι_slFinTwoBasis 0
+        · exact repEnveloping_ι_slFinTwoBasis 1
+      rw [TauCeti.Associative.map_dividedPower, hrep]
+      fin_cases i
+      · exact dividedPower_raise_mem_integralLattice n k hv
+      · exact dividedPower_lower_mem_integralLattice n k hv)
+    (by
+      intro i k v hv
+      have hrep : repEnveloping ℚ n
+          (_root_.UniversalEnvelopingAlgebra.ι ℚ (![slFinTwoBasis ℚ 2] i)) = diag ℚ n := by
+        fin_cases i
+        exact repEnveloping_ι_slFinTwoBasis 2
+      rw [Ring.map_choose, hrep]
+      exact ringChoose_diag_mem_integralLattice n k hv)
 
-/-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
+/-- The ambient action of the restricted Kostant representation agrees with the enveloping-algebra
+representation on the standard module. -/
 @[simp]
-theorem kostantRepresentation_ι_apply (x : 𝔰𝔩₂) :
-    kostantRepresentation n
-        (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ 𝔰𝔩₂ (TensorAlgebra.ι ℚ x)) =
-      rep ℚ n x := by
-  rw [kostantRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply']
-
-/-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
-raising, lowering, and Cartan operators. -/
-theorem kostantRepresentation_ι_slFinTwoBasis (i : Fin 3) :
-    kostantRepresentation n
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ i)) =
-      ![raise ℚ n, lower ℚ n, diag ℚ n] i := by
-  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, kostantRepresentation_ι_apply,
-    rep_apply_basis]
-
-private def integralLatticeStabilizer : Subring U𝔰𝔩₂ where
-  carrier := {u | ∀ v ∈ integralLattice n, kostantRepresentation n u v ∈ integralLattice n}
-  zero_mem' := by simp
-  one_mem' := by simp
-  add_mem' := fun {u w} hu hw v hv => by
-    rw [map_add, LinearMap.add_apply]
-    exact (integralLattice n).add_mem (hu v hv) (hw v hv)
-  neg_mem' := fun {u} hu v hv => by
-    rw [map_neg, LinearMap.neg_apply]
-    exact (integralLattice n).neg_mem (hu v hv)
-  mul_mem' := fun {u w} hu hw v hv => by
-    rw [map_mul, Module.End.mul_apply]
-    exact hu _ (hw v hv)
-
-private theorem mem_integralLatticeStabilizer_iff (u : U𝔰𝔩₂) :
-    u ∈ integralLatticeStabilizer n ↔
-      ∀ v ∈ integralLattice n, kostantRepresentation n u v ∈ integralLattice n :=
-  Iff.rfl
+theorem coe_kostantFormRep_apply
+    (u : TauCeti.UniversalEnvelopingAlgebra.kostantForm
+      ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2])
+    (v : integralLattice n) :
+    ((kostantFormRep n u v : integralLattice n) : Sl2Std ℚ n) =
+      repEnveloping ℚ n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n) :=
+  TauCeti.UniversalEnvelopingAlgebra.coe_kostantFormRep_apply _ _ _ _ _ _ u v
 
 /-- The rank-one Kostant integral form acts on the standard integral lattice.
 
 The root-vector family is `(e, f)` and the Cartan family is `(h)`, in the standard basis
-`TauCeti.slFinTwoBasis ℚ`. The proof checks exactly the three generator families of the Kostant
-form against the coordinate formulas above. -/
+`TauCeti.slFinTwoBasis ℚ`. -/
 theorem kostantForm_apply_mem_integralLattice
     (u : U𝔰𝔩₂)
     (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm
       ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2])
     {v : Sl2Std ℚ n} (hv : v ∈ integralLattice n) :
-    kostantRepresentation n u v ∈ integralLattice n := by
-  have hle : TauCeti.UniversalEnvelopingAlgebra.kostantForm
-      ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2] ≤
-        integralLatticeStabilizer n := by
-    rw [TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_iff]
-    constructor
-    · intro i k
-      rw [mem_integralLatticeStabilizer_iff]
-      intro w hw
-      have hrep : kostantRepresentation n
-          (_root_.UniversalEnvelopingAlgebra.ι ℚ
-            (![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] i)) =
-          ![raise ℚ n, lower ℚ n] i := by
-        fin_cases i
-        · exact kostantRepresentation_ι_slFinTwoBasis n 0
-        · exact kostantRepresentation_ι_slFinTwoBasis n 1
-      rw [TauCeti.Associative.map_dividedPower, hrep]
-      fin_cases i
-      · exact dividedPower_raise_mem_integralLattice n k hw
-      · exact dividedPower_lower_mem_integralLattice n k hw
-    · intro i k
-      rw [mem_integralLatticeStabilizer_iff]
-      intro w hw
-      have hrep : kostantRepresentation n
-          (_root_.UniversalEnvelopingAlgebra.ι ℚ (![slFinTwoBasis ℚ 2] i)) = diag ℚ n := by
-        fin_cases i
-        exact kostantRepresentation_ι_slFinTwoBasis n 2
-      rw [Ring.map_choose, hrep]
-      exact ringChoose_diag_mem_integralLattice n k hw
-  exact hle hu v hv
-
-/-- The canonical representation of the rank-one Kostant integral form on the standard
-integral lattice `V(n)ℤ`. -/
-noncomputable def kostantRepresentationIntegralLattice :
-    TauCeti.UniversalEnvelopingAlgebra.kostantForm
-        ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2] →ₐ[ℤ]
-      Module.End ℤ (integralLattice n) where
-  toFun u := {
-    toFun v := ⟨kostantRepresentation n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n),
-      kostantForm_apply_mem_integralLattice n (u : U𝔰𝔩₂) u.2 v.2⟩
-    map_add' v w := Subtype.ext (by simp)
-    map_smul' z v := Subtype.ext (by
-      dsimp
-      rw [← Int.cast_smul_eq_zsmul ℚ z (v : Sl2Std ℚ n)]
-      exact (kostantRepresentation n (u : U𝔰𝔩₂)).map_smul z (v : Sl2Std ℚ n))
-  }
-  map_one' := LinearMap.ext fun v => Subtype.ext (by simp)
-  map_mul' u w := LinearMap.ext fun v => Subtype.ext (by simp)
-  map_zero' := LinearMap.ext fun v => Subtype.ext (by simp)
-  map_add' u w := LinearMap.ext fun v => Subtype.ext (by simp)
-  commutes' z := LinearMap.ext fun v => Subtype.ext (by
-    have h1 : kostantRepresentation n (↑(algebraMap ℤ
-        (TauCeti.UniversalEnvelopingAlgebra.kostantForm
-          ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2]) z) : U𝔰𝔩₂)
-        (v : Sl2Std ℚ n) = z • (v : Sl2Std ℚ n) := by
-      have : (↑(algebraMap ℤ (TauCeti.UniversalEnvelopingAlgebra.kostantForm
-        ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2]) z) : U𝔰𝔩₂) = (z : U𝔰𝔩₂) := rfl
-      rw [this, map_intCast, Module.End.intCast_apply]
-    have h2 : ((algebraMap ℤ (Module.End ℤ (integralLattice n)) z v :
-        integralLattice n) : Sl2Std ℚ n) = z • (v : Sl2Std ℚ n) := by
-      have : (algebraMap ℤ (Module.End ℤ (integralLattice n)) z) =
-          (z : Module.End ℤ (integralLattice n)) := rfl
-      rw [this, Module.End.intCast_apply]
-      rfl
-    exact h1.trans h2.symm)
-
-/-- The ambient action of the restricted Kostant representation agrees with the enveloping-algebra
-representation on the standard module. -/
-@[simp]
-theorem coe_kostantRepresentationIntegralLattice_apply
-    (u : TauCeti.UniversalEnvelopingAlgebra.kostantForm
-      ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1] ![slFinTwoBasis ℚ 2])
-    (v : integralLattice n) :
-    ((kostantRepresentationIntegralLattice n u v : integralLattice n) : Sl2Std ℚ n) =
-      kostantRepresentation n (u : U𝔰𝔩₂) (v : Sl2Std ℚ n) :=
-  (rfl)
+    repEnveloping ℚ n u v ∈ integralLattice n := by
+  rw [← coe_kostantFormRep_apply n ⟨u, hu⟩ ⟨v, hv⟩]
+  exact (((kostantFormRep n) ⟨u, hu⟩) ⟨v, hv⟩).2
 
 end TauCeti.Sl2Std

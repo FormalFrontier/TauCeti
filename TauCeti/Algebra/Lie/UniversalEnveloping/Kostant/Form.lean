@@ -63,6 +63,13 @@ transport results needed by the Chevalley construction.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantForm`: exact functoriality under Lie maps.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormMap`: the restricted map of integral forms.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantFormEquiv`: transport under a Lie equivalence.
+* `TauCeti.UniversalEnvelopingAlgebra.stabilizer`: the subring stabilizing a given `ℤ`-submodule.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantForm_le_stabilizer`: generator criterion for the
+  Kostant form to stabilize a `ℤ`-submodule.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantFormRep`: the restricted representation of the Kostant
+  integral form on an invariant `ℤ`-submodule.
+* `TauCeti.UniversalEnvelopingAlgebra.coe_kostantFormRep_apply`: compatibility with the ambient
+  algebra representation.
 
 ## References
 
@@ -390,5 +397,104 @@ theorem coe_kostantFormEquiv_symm_apply (g : LieEquiv ℚ L M) (e : ι → L) (h
     fun z => RingEquiv.subsemiringMap_symm_apply_coe _ _ _
   rw [hsub, RingEquiv.subringCongr_symm, RingEquiv.coe_subringCongr_apply, mapEquiv_symm,
     ← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
+
+/-! ## Module representations and stabilized lattices -/
+
+section Representation
+
+variable {V : Type*} [AddCommGroup V] [Module ℚ V]
+variable (e : ι → L) (h : κ → L)
+variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
+variable (N : Submodule ℤ V)
+
+/-- The subring of elements in the universal enveloping algebra that stabilize a given
+`ℤ`-submodule under an algebra representation. -/
+def stabilizer : Subring (_root_.UniversalEnvelopingAlgebra ℚ L) where
+  carrier := {u | ∀ v ∈ N, ρ u v ∈ N}
+  zero_mem' := by simp
+  one_mem' := by simp
+  add_mem' := fun {u w} hu hw v hv => by
+    rw [map_add, LinearMap.add_apply]
+    exact N.add_mem (hu v hv) (hw v hv)
+  neg_mem' := fun {u} hu v hv => by
+    rw [map_neg, LinearMap.neg_apply]
+    exact N.neg_mem (hu v hv)
+  mul_mem' := fun {u w} hu hw v hv => by
+    rw [map_mul, Module.End.mul_apply]
+    exact hu _ (hw v hv)
+
+@[simp]
+theorem mem_stabilizer_iff (u : _root_.UniversalEnvelopingAlgebra ℚ L) :
+    u ∈ stabilizer ρ N ↔ ∀ v ∈ N, ρ u v ∈ N :=
+  Iff.rfl
+
+/-- If every divided power of the designated root vectors and every binomial coefficient in the
+designated Cartan vectors preserves `N`, then the entire Kostant form stabilizes `N`. -/
+theorem kostantForm_le_stabilizer
+    (he : ∀ i n, ∀ v ∈ N,
+      ρ (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) v ∈ N)
+    (hh : ∀ i n, ∀ v ∈ N,
+      ρ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n) v ∈ N) :
+    kostantForm e h ≤ stabilizer ρ N := by
+  rw [kostantForm_le_iff]
+  exact ⟨fun i n => (mem_stabilizer_iff ρ N _).2 (he i n),
+    fun i n => (mem_stabilizer_iff ρ N _).2 (hh i n)⟩
+
+/-- The action of an element of the Kostant form on an invariant `ℤ`-submodule. -/
+theorem kostantForm_apply_mem
+    (he : ∀ i n, ∀ v ∈ N,
+      ρ (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) v ∈ N)
+    (hh : ∀ i n, ∀ v ∈ N,
+      ρ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n) v ∈ N)
+    (u : _root_.UniversalEnvelopingAlgebra ℚ L) (hu : u ∈ kostantForm e h)
+    {v : V} (hv : v ∈ N) :
+    ρ u v ∈ N :=
+  (kostantForm_le_stabilizer e h ρ N he hh) hu v hv
+
+/-- The restricted representation of the Kostant integral form on an invariant `ℤ`-submodule `N`. -/
+noncomputable def kostantFormRep
+    (he : ∀ i n, ∀ v ∈ N,
+      ρ (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) v ∈ N)
+    (hh : ∀ i n, ∀ v ∈ N,
+      ρ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n) v ∈ N) :
+    kostantForm e h →ₐ[ℤ] Module.End ℤ N where
+  toFun u := {
+    toFun v := ⟨ρ (u : _root_.UniversalEnvelopingAlgebra ℚ L) (v : V),
+      kostantForm_apply_mem e h ρ N he hh (u : _root_.UniversalEnvelopingAlgebra ℚ L) u.2 v.2⟩
+    map_add' v w := Subtype.ext (by simp)
+    map_smul' z v := Subtype.ext
+      (map_zsmul (ρ (u : _root_.UniversalEnvelopingAlgebra ℚ L)) z (v : V))
+  }
+  map_one' := LinearMap.ext fun v => Subtype.ext (by simp)
+  map_mul' u w := LinearMap.ext fun v => Subtype.ext (by simp)
+  map_zero' := LinearMap.ext fun v => Subtype.ext (by simp)
+  map_add' u w := LinearMap.ext fun v => Subtype.ext (by simp)
+  commutes' z := LinearMap.ext fun v => Subtype.ext (by
+    have h1 : ρ (↑(algebraMap ℤ (kostantForm e h) z) :
+        _root_.UniversalEnvelopingAlgebra ℚ L) (v : V) = z • (v : V) := by
+      have : (↑(algebraMap ℤ (kostantForm e h) z) :
+          _root_.UniversalEnvelopingAlgebra ℚ L) =
+          (z : _root_.UniversalEnvelopingAlgebra ℚ L) := rfl
+      rw [this, map_intCast, Module.End.intCast_apply]
+    have h2 : ((algebraMap ℤ (Module.End ℤ N) z v : N) : V) = z • (v : V) := by
+      have : (algebraMap ℤ (Module.End ℤ N) z) = (z : Module.End ℤ N) := rfl
+      rw [this, Module.End.intCast_apply]
+      rfl
+    exact h1.trans h2.symm)
+
+/-- The ambient action of the restricted Kostant representation agrees with the enveloping-algebra
+representation. -/
+@[simp]
+theorem coe_kostantFormRep_apply
+    (he : ∀ i n, ∀ v ∈ N,
+      ρ (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) v ∈ N)
+    (hh : ∀ i n, ∀ v ∈ N,
+      ρ (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (h i)) n) v ∈ N)
+    (u : kostantForm e h) (v : N) :
+    ((kostantFormRep e h ρ N he hh u v : N) : V) =
+      ρ (u : _root_.UniversalEnvelopingAlgebra ℚ L) (v : V) :=
+  (rfl)
+
+end Representation
 
 end TauCeti.UniversalEnvelopingAlgebra
