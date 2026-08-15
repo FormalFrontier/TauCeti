@@ -18,9 +18,10 @@ For a finite-index subgroup `Γ ≤ SL(2, ℤ)`, the vanishing order of a modula
 `Γ` is constant on `Γ`-orbits of the upper half-plane. This file descends the order to that
 orbit space and proves that a form has nonzero order on only finitely many orbits.
 
-The proof follows the norm-map route prescribed for the general-level valence formula. The
-norm of the form is a level-one modular form whose order dominates that of the original form
-at every point. Thus every `Γ`-orbit in the support lies above an
+The proof follows the norm-map route prescribed by the Tau Ceti ModularForms roadmap's Layer 1
+milestone **“General level — by the coset norm”**. The norm of the form is a level-one modular
+form whose order dominates that of the original form at every point. Thus every `Γ`-orbit in
+the support lies above an
 `SL(2, ℤ)`-orbit in the finite support of the norm. Each such fiber is finite because a
 finite-index subgroup splits any `SL(2, ℤ)`-orbit into only finitely many `Γ`-orbits.
 
