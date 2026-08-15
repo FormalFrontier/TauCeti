@@ -27,6 +27,7 @@ group"), in the same spirit as the multiplicative group `𝔾ₘ`.
   `SymmetricAlgebra R M →ₐ[R] A` is the additive monoid `M →ₗ[R] A`.
 * `TauCeti.AdditiveGroup.gaPointsMulEquiv`: the monoid of `A`-valued points of `𝔾ₐ` over `R`
   is the additive monoid of `A`.
+* `TauCeti.AdditiveGroup.gaPointParamMul`: multiplication of the parameters of two `𝔾ₐ`-points.
 * `TauCeti.AdditiveGroup.pointsMulEquiv_mapValue`: the points equivalence is natural in the
   value algebra.
 
@@ -207,6 +208,50 @@ theorem mapValue_gaPointsMulEquiv_symm_apply (φ : A →ₐ[R] B) (a : Multiplic
   rw [(gaPointsMulEquiv (R := R) (A := A)).apply_symm_apply a]
   exact ((gaPointsMulEquiv (R := R) (A := B)).apply_symm_apply
     (Multiplicative.ofAdd (φ (Multiplicative.toAdd a)))).symm
+
+/-- The `A`-valued point of `𝔾ₐ` whose parameter is the product of the parameters of `F` and
+`G`.
+
+This is not the convolution multiplication of `𝔾ₐ(A)`: convolution corresponds to addition,
+whereas `gaPointParamMul F G` records multiplication in the value algebra. -/
+noncomputable def gaPointParamMul
+    (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
+    WithConv (SymmetricAlgebra R R →ₐ[R] A) :=
+  (gaPointsMulEquiv (R := R) (A := A)).symm <|
+    Multiplicative.ofAdd
+      (Multiplicative.toAdd (gaPointsMulEquiv F) *
+        Multiplicative.toAdd (gaPointsMulEquiv G))
+
+/-- Under the points equivalence, `gaPointParamMul` is multiplication in the value algebra. -/
+@[simp]
+theorem gaPointsMulEquiv_gaPointParamMul
+    (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
+    gaPointsMulEquiv (gaPointParamMul F G) =
+      Multiplicative.ofAdd
+        (Multiplicative.toAdd (gaPointsMulEquiv F) *
+          Multiplicative.toAdd (gaPointsMulEquiv G)) := by
+  rw [gaPointParamMul, MulEquiv.apply_symm_apply]
+
+/-- The value of `gaPointParamMul F G` on the additive coordinate is the product of the two original
+coordinate values. -/
+@[simp]
+theorem gaPointParamMul_apply_ι (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
+    (gaPointParamMul F G).ofConv (ι R R 1) =
+      F.ofConv (ι R R 1) * G.ofConv (ι R R 1) := by
+  simpa only [toAdd_gaPointsMulEquiv, toAdd_ofAdd] using
+    congrArg Multiplicative.toAdd (gaPointsMulEquiv_gaPointParamMul F G)
+
+/-- Multiplication of `𝔾ₐ`-point parameters is natural in the value algebra. -/
+theorem mapValue_gaPointParamMul (φ : A →ₐ[R] B)
+    (F G : WithConv (SymmetricAlgebra R R →ₐ[R] A)) :
+    AlgHom.mapValue (H := SymmetricAlgebra R R) φ (gaPointParamMul F G) =
+      gaPointParamMul
+        (AlgHom.mapValue (H := SymmetricAlgebra R R) φ F)
+        (AlgHom.mapValue (H := SymmetricAlgebra R R) φ G) := by
+  rw [gaPointParamMul, mapValue_gaPointsMulEquiv_symm_apply, gaPointParamMul,
+    toAdd_gaPointsMulEquiv_mapValue, toAdd_gaPointsMulEquiv_mapValue]
+  exact congrArg (gaPointsMulEquiv (R := R) (A := B)).symm
+    (congrArg Multiplicative.ofAdd (map_mul φ _ _))
 
 end Ga
 

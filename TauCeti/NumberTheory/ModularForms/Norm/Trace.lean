@@ -21,13 +21,22 @@ translates of `f` times a `1`-periodic remainder analytic at `∞`.
 
 * `TauCeti.SlashInvariantForm.mdifferentiable_quotientFunc`.
 * `TauCeti.SlashInvariantForm.isBoundedAtImInfty_quotientFunc`.
-* `TauCeti.ModularForm.normRest`, `TauCeti.ModularForm.periodic_normRest` and
+* `TauCeti.ModularForm.normRest`, with `TauCeti.ModularForm.periodic_normRest`,
+  `TauCeti.ModularForm.mdifferentiable_normRest`,
+  `TauCeti.ModularForm.isBoundedAtImInfty_normRest` and
   `TauCeti.ModularForm.analyticAt_cuspFunction_normRest`.
 * `TauCeti.ModularForm.slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest`, with
   `TauCeti.ModularForm.norm_apply_eq_galoisProd_mul_normRest` as its modular-form corollary.
 * `TauCeti.ModularForm.normRest_def`: the remainder as a product of coset factors.
 * `TauCeti.ModularForm.normRest_apply_eq_div`: how to compute the remainder off the zeros of
   the Galois product.
+* `TauCeti.ModularForm.normRest_ne_zero_of_norm_ne_zero`, with
+  `TauCeti.ModularForm.normRest_ne_zero` as its modular-form corollary: the remainder of a
+  nonzero form is nonzero.
+* `TauCeti.ModularForm.qExpansion_one_norm_order_eq`: the `q`-expansion order of the norm at
+  `∞` splits as the order of `f` plus the order of the remainder.
+* `TauCeti.ModularForm.qExpansion_one_normRest_ne_zero`: the remainder's `q`-expansion is a
+  nonzero power series.
 
 The remainder and the decomposition itself are algebraic, so they are stated for
 `SlashInvariantForm.norm` under `SlashInvariantFormClass`; only analyticity at the cusp
@@ -38,6 +47,9 @@ needs `f` to be a modular form.
 * [Mathlib PR #39083](https://github.com/leanprover-community/mathlib4/pull/39083) and
   [Mathlib PR #39088](https://github.com/leanprover-community/mathlib4/pull/39088)
   (Chris Birkbeck) — the upstream drafts this file ports onto the current Mathlib pin.
+* [Mathlib PR #39000](https://github.com/leanprover-community/mathlib4/pull/39000)
+  (Chris Birkbeck) — the source of `qExpansion_one_norm_order_eq`, whose proof moved here
+  from the Sturm-bound development.
 -/
 
 public noncomputable section
@@ -268,6 +280,20 @@ public lemma normRest_apply_eq_div {τ : ℍ}
       galoisProd (Subgroup.integerCuspWidth 𝒢) (f : ℍ → ℂ) τ := by
   rw [eq_div_iff h, slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest, mul_comm]
 
+/-- If the norm does not vanish identically then neither does its remainder factor: the
+remainder is a factor of the norm, so a vanishing remainder would kill the whole product.
+
+This is the algebraic content; `normRest_ne_zero` is the modular-form corollary. Order
+arguments over `normRest` need one of the two, since `orderOfVanishingAt_prod` and the rest
+of the vanishing-order API are stated only for factors that are not identically zero. -/
+public lemma normRest_ne_zero_of_norm_ne_zero
+    (hf : (⇑(_root_.SlashInvariantForm.norm 𝒮ℒ f) : ℍ → ℂ) ≠ 0) : normRest f ≠ 0 := by
+  refine right_ne_zero_of_mul (a := galoisProd (Subgroup.integerCuspWidth 𝒢) (⇑f)) ?_
+  have hprod : galoisProd (Subgroup.integerCuspWidth 𝒢) (⇑f) * normRest f
+      = (⇑(_root_.SlashInvariantForm.norm 𝒮ℒ f) : ℍ → ℂ) :=
+    (funext (slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest f)).symm
+  rwa [hprod]
+
 end Algebraic
 
 /-! ### The analytic layer
@@ -278,16 +304,25 @@ section Analytic
 
 variable [ModularFormClass F 𝒢 k]
 
-/-- The cusp function of `normRest` is analytic at `0`. -/
-public lemma analyticAt_cuspFunction_normRest :
-    AnalyticAt ℂ (cuspFunction 1 (normRest f)) 0 := by
+/-- `normRest` is holomorphic: it is a product of coset factors, each of which is. -/
+public lemma mdifferentiable_normRest : MDiff (normRest f) := by
   classical
   let _ : Fintype (𝒮ℒ ⧸ (𝒢.subgroupOf 𝒮ℒ)) := Fintype.ofFinite _
-  exact analyticAt_cuspFunction_zero one_pos (periodic_normRest f)
-    (normRest_eq_prod_tPowCosets f ▸ MDifferentiable.prod fun q _ ↦
-      SlashInvariantForm.mdifferentiable_quotientFunc f q)
-    (normRest_eq_prod_tPowCosets f ▸ Filter.BoundedAtFilter.prod _ fun q _ ↦
-      SlashInvariantForm.isBoundedAtImInfty_quotientFunc f q)
+  exact normRest_eq_prod_tPowCosets f ▸ MDifferentiable.prod fun q _ ↦
+    SlashInvariantForm.mdifferentiable_quotientFunc f q
+
+/-- `normRest` is bounded at `∞`: it is a product of coset factors, each of which is. -/
+public lemma isBoundedAtImInfty_normRest : IsBoundedAtImInfty (normRest f) := by
+  classical
+  let _ : Fintype (𝒮ℒ ⧸ (𝒢.subgroupOf 𝒮ℒ)) := Fintype.ofFinite _
+  exact normRest_eq_prod_tPowCosets f ▸ Filter.BoundedAtFilter.prod _ fun q _ ↦
+    SlashInvariantForm.isBoundedAtImInfty_quotientFunc f q
+
+/-- The cusp function of `normRest` is analytic at `0`. -/
+public lemma analyticAt_cuspFunction_normRest :
+    AnalyticAt ℂ (cuspFunction 1 (normRest f)) 0 :=
+  analyticAt_cuspFunction_zero one_pos (periodic_normRest f)
+    (mdifferentiable_normRest f) (isBoundedAtImInfty_normRest f)
 
 /-- **Decomposition of the norm at the cusp** for a modular form: the norm of `f` from `𝒢`
 down to `𝒮ℒ` is the Galois product of the first `Subgroup.integerCuspWidth 𝒢` integer
@@ -302,6 +337,58 @@ public lemma norm_apply_eq_galoisProd_mul_normRest (τ : ℍ) :
   have hcoe : _root_.ModularForm.norm 𝒮ℒ f τ = _root_.SlashInvariantForm.norm 𝒮ℒ f τ := by
     rw [_root_.ModularForm.coe_norm, _root_.SlashInvariantForm.coe_norm]
   rw [hcoe, slashInvariantForm_norm_apply_eq_galoisProd_mul_normRest]
+
+/-- The remainder factor of a nonzero modular form is itself nonzero: the modular-form
+corollary of `normRest_ne_zero_of_norm_ne_zero`, discharged by `ModularForm.norm_ne_zero`. -/
+public lemma normRest_ne_zero (hf : (⇑f : ℍ → ℂ) ≠ 0) : normRest f ≠ 0 := by
+  refine normRest_ne_zero_of_norm_ne_zero f ?_
+  -- The two norms share an underlying function but not a spelling; both `coe_norm` lemmas
+  -- unfold to the same coset product, which is the bridge.
+  have h : (⇑(_root_.ModularForm.norm 𝒮ℒ f) : ℍ → ℂ) ≠ 0 := fun hz =>
+    _root_.ModularForm.norm_ne_zero 𝒮ℒ hf (DFunLike.coe_injective (by simpa using hz))
+  rwa [_root_.ModularForm.coe_norm, ← _root_.SlashInvariantForm.coe_norm] at h
+/-- The `q`-expansion order of the norm at the cusp `∞` splits as the order of `f` at width
+`Subgroup.integerCuspWidth 𝒢` plus the order of the remainder factor `normRest f`.
+
+No discreteness hypothesis is needed here. Discreteness is what converts `𝒢.strictWidthInfty`
+into `Subgroup.integerCuspWidth 𝒢` — see
+`Subgroup.exists_pos_nat_integerCuspWidth_eq_mul_strictWidthInfty` — and that conversion
+belongs to the Sturm-bound inequality derived from this identity, not to the identity.
+
+Not `@[simp]`: `ModularForm.coe_norm` is itself an unconditional simp lemma, so the
+left-hand side is not in simp normal form — it simplifies on to the raw coset product. -/
+public lemma qExpansion_one_norm_order_eq :
+    (qExpansion 1 (_root_.ModularForm.norm 𝒮ℒ f)).order =
+      (qExpansion ((Subgroup.integerCuspWidth 𝒢 : ℕ) : ℝ) f).order
+        + (qExpansion 1 (normRest f)).order := by
+  have hn_pos : 0 < Subgroup.integerCuspWidth 𝒢 := Subgroup.integerCuspWidth_pos
+  have hf_bdd : IsBoundedAtImInfty f := OnePoint.isBoundedAt_infty_iff.mp <|
+    ModularFormClass.bdd_at_cusps f Subgroup.isCusp_infty_of_finiteRelIndex
+  have hf_n_per : Function.Periodic (⇑f ∘ ofComplex)
+      ((Subgroup.integerCuspWidth 𝒢 : ℕ) : ℝ) :=
+    SlashInvariantFormClass.periodic_comp_ofComplex f
+      Subgroup.integerCuspWidth_mem_strictPeriods
+  -- `norm_apply_eq_galoisProd_mul_normRest` is a pointwise identity; `funext` converts it
+  -- to an equality of functions so the `q`-expansion of the norm literally becomes that of
+  -- the product, and `qExpansion_mul` (both cusp functions being analytic at `0`) splits it.
+  have h_qexp : qExpansion 1 (_root_.ModularForm.norm 𝒮ℒ f) =
+      qExpansion 1 (galoisProd (Subgroup.integerCuspWidth 𝒢) ⇑f) *
+        qExpansion 1 (normRest f) := by
+    rw [funext (norm_apply_eq_galoisProd_mul_normRest f)]
+    exact qExpansion_mul (analyticAt_cuspFunction_zero one_pos
+      (galoisProd_periodic_one hf_n_per) (mdifferentiable_galoisProd (ModularFormClass.holo f))
+      (isBoundedAtImInfty_galoisProd hf_bdd)) (analyticAt_cuspFunction_normRest f)
+  rw [h_qexp, PowerSeries.order_mul,
+    qExpansion_one_galoisProd_order_eq hn_pos hf_n_per hf_bdd (ModularFormClass.holo f)]
+
+/-- The `q`-expansion of `normRest f` is a nonzero power series whenever `f` is nonzero.
+
+This is what makes the order at `∞` of `normRest f` finite, so that it can appear as a
+summand in a cusp-order count. -/
+public lemma qExpansion_one_normRest_ne_zero (hf : (⇑f : ℍ → ℂ) ≠ 0) :
+    qExpansion 1 (normRest f) ≠ 0 :=
+  mt (qExpansion_eq_zero_iff one_pos (periodic_normRest f) (mdifferentiable_normRest f)
+    (isBoundedAtImInfty_normRest f)).mp (normRest_ne_zero f hf)
 
 end Analytic
 
