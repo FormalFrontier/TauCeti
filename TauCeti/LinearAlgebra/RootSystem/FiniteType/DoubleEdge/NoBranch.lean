@@ -243,6 +243,8 @@ theorem degree_le_two_of_apply_mul_apply_eq_two (h : IsFiniteType A)
     ⟨Equiv.refl B, by intro a b; simp only [hgraph, Equiv.refl_apply]⟩
   have hdegree : (diagramGraph A.transpose).degree c = (diagramGraph A).degree c := by
     have hdegree := hgraphIso.symm.degree_eq c
+    -- The inverse of this identity graph isomorphism is definitionally the identity on vertices,
+    -- but simplification does not unfold its bundled inverse equivalence.
     change (diagramGraph A.transpose).degree c = (diagramGraph A).degree c at hdegree
     exact hdegree
   rcases htree.dist_eq_dist_add_one_of_adj c huvAdj with hdist | hdist
