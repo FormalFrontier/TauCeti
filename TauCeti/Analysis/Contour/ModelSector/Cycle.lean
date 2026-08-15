@@ -13,13 +13,9 @@ public import TauCeti.Analysis.Contour.ModelSector.Closed
 
 Hungerbühler--Wasem Proposition 2.2 decomposes a closed immersed curve, as a contour cycle, into
 a cycle avoiding the distinguished point and one model-sector cycle for each crossing.  The raw
-model sector and its winding number are constructed in `ModelSector.Closed`; this file proves its
-piecewise-`C¹` regularity and packages it as the closed-curve generator that the cycle decomposition
-uses.
-
-For `0 < r` and `0 ≤ α`, the sector has three smooth pieces: the incoming radius on `[-r, 0]`, the
-outgoing radius on `[0, r]`, and the circular arc on `[r, r + α]`.  The filtered breakpoint set
-used below omits `r` when `α = 0`, since then the arc is degenerate and `r` is an endpoint.
+model sector, its piecewise-`C¹` regularity, and its winding number are constructed in
+`ModelSector.Closed`; this file packages it as the closed-curve generator that the cycle
+decomposition uses.
 
 ## Main definitions
 
@@ -28,7 +24,7 @@ used below omits `r` when `α = 0`, since then the arc is degenerate and `r` is 
 
 ## Main results
 
-* `Contour.isPiecewiseC1On_modelSector` -- piecewise-`C¹` regularity of the model sector.
+* `Contour.Cycle.integral_modelSectorCycle` -- its cycle integral is the raw contour integral.
 * `Contour.Cycle.windingNumber_modelSectorCycle` -- the cycle winding number is `α / 2π`.
 
 ## References
@@ -84,6 +80,14 @@ theorem Cycle.trace_modelSectorCycle (z₀ : ℂ) (r φ α : ℝ) (hr : 0 < r) (
   exact Cycle.trace_of_raw _ _ _
 
 namespace Cycle
+
+/-- Integrating over the model-sector cycle gives the raw contour integral over the model sector. -/
+@[simp]
+theorem integral_modelSectorCycle {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (f : ℂ → E) (z₀ : ℂ) (r φ α : ℝ) (hr : 0 < r) (hα : 0 ≤ α) :
+    integral f (modelSectorCycle z₀ r φ α hr hα) =
+      ∫ t in -r..r + α, deriv (modelSector z₀ r φ α) t • f (modelSector z₀ r φ α t) := by
+  rw [modelSectorCycle, modelSectorCurve, integral_of_raw]
 
 /-- **The model-sector cycle has winding number `α / 2π` about its corner.** This is the cycle
 form of `Contour.windingNumber_closedModelSector`, ready to be summed in the finite crossing
