@@ -16,6 +16,17 @@ subgroup.
 
 Because the order of a subgroup divides the order of the group -- with the index as cofactor --
 invertibility of the order of a finite group in a semiring passes to every subgroup.
+
+Adjoining a two-element subgroup `N ⊄ Γ` normalised by `Γ` is also quantified: `Γ` then has
+relative index exactly `2` in `Γ ⊔ N`, so `Γ.index = 2 * (Γ ⊔ N).index`. Taking `N` to be the
+centre gives the `Γ.withCenter` readings.
+
+## Main results
+
+* `Subgroup.relIndex_sup_eq_two`, `Subgroup.index_eq_two_mul_index_sup`: the relative index `2`
+  and the index doubling, for an `N` normalised by `Γ` whose elements are `1` and `a ∉ Γ`.
+* `Subgroup.relIndex_withCenter_eq_two`, `Subgroup.index_eq_two_mul_index_withCenter`: the same
+  two facts on `Γ.withCenter`, when the centre is `{1, a}`.
 -/
 
 public section
@@ -47,6 +58,69 @@ lemma le_withCenter {G : Type*} [Group G] (Γ : Subgroup G) : Γ ≤ Γ.withCent
 instance instFiniteIndexWithCenter {G : Type*} [Group G] (Γ : Subgroup G)
     [Γ.FiniteIndex] : Γ.withCenter.FiniteIndex :=
   Subgroup.finiteIndex_of_le Γ.le_withCenter
+
+variable {G : Type*} [Group G] {Γ : Subgroup G} {a : G}
+
+/-- **A two-element subgroup normalised by `Γ` and not already inside it has relative index
+`2`.** If every element of `N` is `1` or `a`, and `a ∉ Γ`, then `Γ ⊔ N` splits into the two
+cosets `Γ` and `Γ * a`.
+
+Only normalisation by `Γ` is asked for, not normality of `N` in the whole group, so a
+two-element subgroup normalised by `Γ` alone is covered. A globally normal `N` is the special
+case `Subgroup.le_normalizer_of_normal`.
+
+Stated for an arbitrary `N` rather than for the centre, because the centre is often larger than
+two elements — in `GL (Fin 2) ℝ` it is every scalar — while the two-element subgroup one actually
+wants there is `Subgroup.zpowers (-1)`. A caller supplies whichever `N` is in hand.
+
+`a` is not assumed to be an involution; it follows from the hypotheses that it is one.
+
+Generalises Mathlib's `Subgroup.relindex_adjoinNegOne_eq_two`
+(`Mathlib/NumberTheory/ModularForms/ArithmeticSubgroups.lean`) from `𝒢 ≤ GL n R` with `a = -1` to
+an arbitrary group. -/
+theorem relIndex_sup_eq_two (N : Subgroup G) (hnorm : Γ ≤ Subgroup.normalizer N) (ha : a ∈ N)
+    (haΓ : a ∉ Γ) (hN : ∀ c ∈ N, c = 1 ∨ c = a) : Γ.relIndex (Γ ⊔ N) = 2 := by
+  have ha2 : a * a = 1 := by
+    rcases hN _ (N.mul_mem ha ha) with h | h
+    · exact h
+    · exact absurd (mul_eq_left.mp h ▸ Γ.one_mem) haΓ
+  refine Subgroup.relIndex_eq_two_iff_exists_notMem_and.mpr
+    ⟨a, Subgroup.mem_sup_right ha, haΓ, fun b hb ↦ ?_⟩
+  rw [← SetLike.mem_coe, Subgroup.coe_mul_of_left_le_normalizer_right Γ N hnorm] at hb
+  obtain ⟨g, hg, c, hc, rfl⟩ := hb
+  rcases hN c hc with rfl | rfl
+  · exact Or.inr (by simpa using hg)
+  · exact Or.inl (by simpa [mul_assoc, ha2] using hg)
+
+/-- **The index doubles on adjoining a two-element subgroup normalised by `Γ` and not inside
+it.** The counting form of `Subgroup.relIndex_sup_eq_two`. -/
+theorem index_eq_two_mul_index_sup (N : Subgroup G) (hnorm : Γ ≤ Subgroup.normalizer N)
+    (ha : a ∈ N) (haΓ : a ∉ Γ) (hN : ∀ c ∈ N, c = 1 ∨ c = a) :
+    Γ.index = 2 * (Γ ⊔ N).index := by
+  rw [← Subgroup.relIndex_mul_index (le_sup_left : Γ ≤ Γ ⊔ N),
+    relIndex_sup_eq_two N hnorm ha haΓ hN]
+
+/-- **When the centre is `{1, a}` and `a ∉ Γ`, `Γ` has relative index exactly `2` in
+`Γ.withCenter`.** The centre reading of `Subgroup.relIndex_sup_eq_two`. This is the branch in
+which the two subgroups genuinely differ; they coincide exactly when the centre already lies
+inside `Γ`.
+
+For `Γ ≤ SL(2, ℤ)` the centre is `{±I}` and `a = -I`, so this is the quantitative form of the
+dichotomy recorded on `Subgroup.withCenter`: cosets of `Γ` count each translate of `𝒟` twice
+unless `-I ∈ Γ` already. -/
+theorem relIndex_withCenter_eq_two (ha : a ∈ Subgroup.center G) (haΓ : a ∉ Γ)
+    (hcenter : ∀ c ∈ Subgroup.center G, c = 1 ∨ c = a) : Γ.relIndex Γ.withCenter = 2 :=
+  Subgroup.withCenter_def Γ ▸
+    relIndex_sup_eq_two _ Subgroup.le_normalizer_of_normal ha haΓ hcenter
+
+/-- **When the centre is `{1, a}` and `a ∉ Γ`, the index of `Γ` is twice that of
+`Γ.withCenter`.** The counting form of `Subgroup.relIndex_withCenter_eq_two`: it is
+`Γ.withCenter`, not `Γ`, whose cosets index the distinct translates, so a count over `Γ`-cosets is
+twice the geometric one. -/
+theorem index_eq_two_mul_index_withCenter (ha : a ∈ Subgroup.center G) (haΓ : a ∉ Γ)
+    (hcenter : ∀ c ∈ Subgroup.center G, c = 1 ∨ c = a) : Γ.index = 2 * Γ.withCenter.index :=
+  Subgroup.withCenter_def Γ ▸
+    index_eq_two_mul_index_sup _ Subgroup.le_normalizer_of_normal ha haΓ hcenter
 
 end Subgroup
 

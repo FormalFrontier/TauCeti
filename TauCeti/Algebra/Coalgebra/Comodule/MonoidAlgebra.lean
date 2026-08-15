@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.DirectSum.Finsupp
 public import Mathlib.RingTheory.Coalgebra.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
+import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
 # The weight decomposition of a comodule over a monoid algebra
@@ -54,6 +55,8 @@ spanning and the independence half of the decomposition.
   `g`-weight submodule by multiplication by its value at the group-like element `single g 1`.
 * `TauCeti.Comodule.Hom.map_mem_weightSpace`: a comodule morphism preserves the weight
   submodules.
+* `TauCeti.Comodule.weightProj_mem_subcomodule`: every subcomodule is stable under the weight
+  projections.
 * `TauCeti.Comodule.range_weightProj`: the `g`-weight submodule is the range of the `g`-weight
   projection.
 * `TauCeti.Comodule.finite_setOf_weightSpace_ne_bot`: **a comodule finitely generated as a module
@@ -448,6 +451,50 @@ variable {W : Type*} [AddCommMonoid W] [Module R W] [Comodule R (MonoidAlgebra R
 
 namespace Hom
 
+/-- A linear map between comodules over a monoid algebra is a comodule morphism if it preserves
+every weight space. -/
+noncomputable def ofMapWeightSpace (f : V →ₗ[R] W)
+    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace R G V g → f v ∈ weightSpace R G W g) :
+    Hom R (MonoidAlgebra R G) V W where
+  toLinearMap := f
+  map_coact := by
+    apply LinearMap.ext
+    intro v
+    rw [← weightDecomposition_sum (R := R) (G := G) (V := V) v]
+    simp only [Finsupp.sum, map_sum, LinearMap.coe_comp, Function.comp_apply]
+    apply Finset.sum_congr rfl
+    intro g hg
+    rw [weightDecomposition_apply,
+      mem_weightSpace.mp (weightProj_mem_weightSpace g v), TensorProduct.map_tmul,
+      mem_weightSpace.mp (hf g (weightProj_mem_weightSpace g v))]
+    rfl
+
+@[simp]
+theorem ofMapWeightSpace_toLinearMap (f : V →ₗ[R] W)
+    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace R G V g → f v ∈ weightSpace R G W g) :
+    (ofMapWeightSpace f hf).toLinearMap = f :=
+  (rfl)
+
+omit [Comodule R (MonoidAlgebra R G) V] [Comodule R (MonoidAlgebra R G) W] in
+private theorem tensorComponent_map (f : V →ₗ[R] W) (g : G)
+    (t : V ⊗[R] MonoidAlgebra R G) :
+    f (tensorComponent (R := R) (M := V) (monoidCoeff R G g) t) =
+      tensorComponent (R := R) (M := W) (monoidCoeff R G g)
+        (TensorProduct.map f LinearMap.id t) := by
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul v x => simp [tensorComponent_tmul]
+
+/-- A comodule morphism over a monoid algebra commutes with every weight projection. -/
+@[simp]
+theorem map_weightProj (f : Hom R (MonoidAlgebra R G) V W) (g : G) (v : V) :
+    f (weightProj R G V g v) = weightProj R G W g (f v) := by
+  rw [weightProj_apply, weightProj_apply]
+  exact (tensorComponent_map f.toLinearMap g _).trans <|
+    congrArg (tensorComponent (R := R) (M := W) (monoidCoeff R G g))
+      (f.map_coact_apply v)
+
 /-- A morphism of comodules over `R[G]` sends the `g`-weight submodule into the `g`-weight
 submodule. -/
 theorem map_mem_weightSpace (f : Hom R (MonoidAlgebra R G) V W) {g : G} {v : V}
@@ -464,6 +511,18 @@ theorem map_weightSpace_le (f : Hom R (MonoidAlgebra R G) V W) (g : G) :
   exact f.map_mem_weightSpace hv
 
 end Hom
+
+/-- Every subcomodule over a monoid algebra is stable under the weight projections. -/
+theorem weightProj_mem_subcomodule (N : Subcomodule R (MonoidAlgebra R G) V)
+    (g : G) {v : V} (hv : v ∈ N) : weightProj R G V g v ∈ N := by
+  let _ : Comodule R (MonoidAlgebra R G) N := Subcomodule.instComodule N
+  have hmap := (Subcomodule.subtype N).map_weightProj g (⟨v, hv⟩ : N)
+  rw [Subcomodule.subtype_apply] at hmap
+  have hmap' :
+      (weightProj R G N g (⟨v, hv⟩ : N) : V) = weightProj R G V g v := by
+    simpa only [Subcomodule.subtype_apply] using hmap
+  rw [← hmap']
+  exact (weightProj R G N g (⟨v, hv⟩ : N)).2
 
 variable (R G V)
 
