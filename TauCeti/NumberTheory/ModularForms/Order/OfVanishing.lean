@@ -142,6 +142,14 @@ lemma orderOfVanishingAt_const (c : ℂ) (z : ℍ) :
   rw [orderOfVanishingAt_def, hcomp, meromorphicOrderAt_const]
   split_ifs <;> rfl
 
+/-- The zero function has vanishing order zero everywhere, by the order-zero convention.
+
+This is what lets the finiteness and finite-support statements downstream drop their
+nonvanishing hypotheses: the degenerate case is not excluded, it is trivially true. -/
+@[simp]
+lemma orderOfVanishingAt_zero (z : ℍ) : orderOfVanishingAt 0 z = 0 :=
+  orderOfVanishingAt_const 0 z
+
 /-- The vanishing order of a holomorphic function is nonnegative. -/
 lemma orderOfVanishingAt_nonneg (hf : MDiff f) (z : ℍ) : 0 ≤ orderOfVanishingAt f z := by
   rw [orderOfVanishingAt_def]
