@@ -40,7 +40,7 @@ The definitions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Top
 Section 2.2.
 -/
 
-public section
+@[expose] public section
 
 open scoped ContDiff Manifold
 
