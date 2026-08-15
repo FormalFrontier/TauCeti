@@ -26,6 +26,8 @@ the dot product may be used directly as the pairing of a `RootPairing` or a `Roo
 
 namespace TauCeti
 
+open _root_.Matrix
+
 /-- The dot product on `ι → R` is a perfect pairing of that module with itself: it is Mathlib's
 `dotProductEquiv` read as a bilinear map. -/
 instance dotProductBilin_isPerfPair (R ι : Type*) [CommRing R] [Fintype ι] :
