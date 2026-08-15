@@ -219,7 +219,11 @@ theorem finrank_weightSpace_neg_sub_zsmul_add {α : Weight K H L} {χ : H → K}
   swap
   · -- A zero weight translates nothing, so the two indices name the same weight space.
     have hz : (⇑α : H → K) = 0 := Weight.IsZero.eq (not_not.1 hα)
-    rw [show ((-k - n) • ⇑α + χ) = k • ⇑α + χ by rw [hz, smul_zero, smul_zero]]
+    -- Rewriting the ambient goal does not see through the `Weight` coercion, so record the
+    -- equality of the coerced functions first.
+    have hindices : ((-k - n) • ⇑α + χ) = k • ⇑α + χ := by
+      rw [hz, smul_zero, smul_zero]
+    rw [hindices]
   obtain ⟨h, e, f, ht, he, hf⟩ := IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
   have hh : h = (IsKilling.coroot α : L) := ht.h_eq_coroot hα he hf
   -- Cut the string off beyond both indices `k` and `-k - n`.
@@ -251,9 +255,13 @@ theorem finrank_weightSpace_neg_sub_zsmul_add {α : Weight K H L} {χ : H → K}
   -- Both indices lie inside the cut, and their eigenvalues are opposite.
   have hmemk : k ∈ Set.Ioo p q := ⟨by omega, by omega⟩
   have hmemk' : (-k - n) ∈ Set.Ioo p q := ⟨by omega, by omega⟩
+  -- Normalize the casted integer eigenvalue separately before applying the `sl₂` symmetry.
+  have heigen : ((2 * (-k - n) + n : ℤ) : K) = -((2 * k + n : ℤ) : K) := by
+    push_cast
+    ring
   rw [finrank_weightSpace_eq_finrank_eigenspace_restrict hα hn hN'S hA hmemk',
     finrank_weightSpace_eq_finrank_eigenspace_restrict hα hn hN'S hA hmemk,
-    show ((2 * (-k - n) + n : ℤ) : K) = -((2 * k + n : ℤ) : K) by push_cast; ring, ← hsym]
+    heigen, ← hsym]
 
 /-- A form taking a non-integral value on the coroot `α^∨` is not a weight: it fails integrality,
 `TauCeti.genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast`, already for the single operator
@@ -279,7 +287,11 @@ a weight of `M`, both weight spaces are trivial, and the statement is `0 = 0`. -
   swap
   · -- A zero weight reflects nothing.
     have hz : (⇑α : H → K) = 0 := Weight.IsZero.eq (not_not.1 hα)
-    rw [show (χ - χ (IsKilling.coroot α) • ⇑α) = χ by rw [hz, smul_zero, sub_zero]]
+    -- Rewriting the ambient goal does not see through the `Weight` coercion, so record the
+    -- equality of the coerced functions first.
+    have hreflection : χ - χ (IsKilling.coroot α) • ⇑α = χ := by
+      rw [hz, smul_zero, sub_zero]
+    rw [hreflection]
   by_cases hint : ∃ n : ℤ, χ (IsKilling.coroot α) = (n : K)
   · obtain ⟨n, hn⟩ := hint
     have hkey := finrank_weightSpace_neg_sub_zsmul_add (M := M) hn 0
