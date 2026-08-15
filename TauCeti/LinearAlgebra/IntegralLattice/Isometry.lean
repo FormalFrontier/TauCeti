@@ -183,7 +183,7 @@ theorem symm_trans_self (e : Isometry L M) : e.symm.trans e = refl M := by
 
 /-- The inverse of a composition is the reversed composition of the inverses. -/
 @[simp]
-theorem trans_symm (e : Isometry L M) (f : Isometry M N) :
+theorem symm_trans (e : Isometry L M) (f : Isometry M N) :
     (e.trans f).symm = f.symm.trans e.symm := by
   ext
   rfl
