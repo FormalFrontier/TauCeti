@@ -123,7 +123,6 @@ theorem commutatorElement_rootSubgroupPoints (hij : i ≠ j) (hjl : j ≠ l)
 
 /-- Special-linear root subgroup multiplication of points corresponds to convolution multiplication
 of the additive parameters. -/
-@[simp]
 theorem rootSubgroupPoints_mul (hij : i ≠ j)
     (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     rootSubgroupPoints (R := R) (A := A) hij (f * g) =
@@ -132,7 +131,6 @@ theorem rootSubgroupPoints_mul (hij : i ≠ j)
 
 /-- Special-linear root subgroup inversion of points corresponds to convolution inversion of the
 additive parameter. -/
-@[simp]
 theorem rootSubgroupPoints_inv (hij : i ≠ j)
     (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     rootSubgroupPoints (R := R) (A := A) hij f⁻¹ =
@@ -140,7 +138,6 @@ theorem rootSubgroupPoints_inv (hij : i ≠ j)
   map_inv (rootSubgroupPoints (R := R) (A := A) hij) f
 
 /-- The trivial additive parameter yields the identity point in `SLₙ(A)`. -/
-@[simp]
 theorem rootSubgroupPoints_one (hij : i ≠ j) :
     rootSubgroupPoints (R := R) (A := A) (N := N) hij 1 = 1 :=
   map_one (rootSubgroupPoints (R := R) (A := A) hij)
@@ -180,7 +177,6 @@ theorem schemePointsMulEquiv_commutatorElement (hij : i ≠ j) (hjl : j ≠ l)
 
 /-- Multiplying two scheme-valued points of the same root subgroup adds their additive
 parameters. -/
-@[simp]
 theorem schemePointsMulEquiv_mul (hij : i ≠ j)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (AdditiveGroup.groupScheme R).X)
@@ -194,7 +190,6 @@ theorem schemePointsMulEquiv_mul (hij : i ≠ j)
   simp only [schemePointsMulEquiv_rootSubgroup, ← Matrix.SpecialLinearGroup.transvection_add]
 
 /-- Inverting a scheme-valued point of a root subgroup negates its additive parameter. -/
-@[simp]
 theorem schemePointsMulEquiv_inv (hij : i ≠ j)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (AdditiveGroup.groupScheme R).X) :
