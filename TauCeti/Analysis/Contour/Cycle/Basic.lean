@@ -101,6 +101,16 @@ def of {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b) (hclosed : 
         (Subtype.val_injective.extend_apply (fun t : uIcc a b ↦ γ t) 0
           ⟨b, right_mem_uIcc⟩).symm
 
+/-- Bundling a raw curve preserves its initial parameter. -/
+@[simp]
+theorem of_a {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) :
+    (of γ hγ hclosed).a = a := (rfl)
+
+/-- Bundling a raw curve preserves its terminal parameter. -/
+@[simp]
+theorem of_b {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) :
+    (of γ hγ hclosed).b = b := (rfl)
+
 /-- Bundling a raw curve preserves its values on the parameter interval. -/
 @[simp]
 theorem of_apply {a b : ℝ} (γ : ℝ → ℂ) (hγ : IsPiecewiseC1On γ a b)

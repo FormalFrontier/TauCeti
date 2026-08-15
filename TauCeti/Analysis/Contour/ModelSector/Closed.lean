@@ -6,6 +6,7 @@ Authors: Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Contour.ModelSector.Corner
+public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.Winding.Number.Circle
 public import TauCeti.Analysis.Contour.Winding.Number.Concat
 public import TauCeti.Analysis.Contour.Winding.Number.Reparam
@@ -131,6 +132,109 @@ theorem modelSector_eqOn_arc (z₀ : ℂ) (r φ : ℝ) {α : ℝ} (hα : 0 ≤ �
   have : ¬ t ≤ r := not_le.mpr ht.1
   simp only [modelSector, ite_eq_right this, Function.comp_apply, one_mul]
   ring_nf
+
+private theorem continuous_modelSector_aux {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ) :
+    Continuous (modelSector z₀ r φ α) := by
+  have harc : Continuous (circleMap z₀ r ∘ fun t : ℝ => φ + (t - r)) := by fun_prop
+  have heq : modelSector z₀ r φ α = fun t : ℝ =>
+      if t ≤ r then
+        twoRayCorner z₀ (Complex.exp ((φ + α : ℝ) * Complex.I))
+          (Complex.exp ((φ : ℝ) * Complex.I)) t
+      else circleMap z₀ r (φ + (t - r)) := by
+    funext t
+    by_cases ht : t ≤ r
+    · rw [ite_eq_left ht, modelSector_of_le ht]
+    · rw [ite_eq_right ht, modelSector_of_lt (lt_of_not_ge ht)]
+  rw [heq]
+  exact (continuous_twoRayCorner z₀ (Complex.exp ((φ + α : ℝ) * Complex.I))
+      (Complex.exp ((φ : ℝ) * Complex.I))).if_le harc continuous_id
+    (continuous_const : Continuous fun _ : ℝ => r) fun t ht => by
+      have ht' : t = r := by simpa only [id_eq] using ht
+      subst t
+      rw [twoRayCorner_of_nonneg hr]
+      simp [circleMap]
+
+/-- The model sector is continuous: the two-ray corner and circular arc agree at their join. -/
+theorem continuous_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 ≤ r) (φ α : ℝ) :
+    Continuous (modelSector z₀ r φ α) :=
+  continuous_modelSector_aux hr φ α
+
+/-- On a subinterval ending before the corner, the model sector is its incoming affine ray. -/
+private theorem modelSector_eqOn_incoming {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ α : ℝ)
+    {c d : ℝ} (hd : d ≤ 0) :
+    EqOn (modelSector z₀ r φ α)
+      (fun t : ℝ => z₀ - (t : ℂ) * Complex.exp ((φ + α : ℝ) * Complex.I)) (Icc c d) := by
+  intro t ht
+  have ht0 := (mem_Icc.mp ht).2.trans hd
+  rw [modelSector_of_le (ht0.trans hr.le)]
+  rcases ht0.eq_or_lt with rfl | htneg
+  · rw [twoRayCorner_of_nonneg le_rfl]
+    simp
+  · rw [twoRayCorner_of_neg htneg]
+
+/-- Between the corner and the arc join, the model sector is its outgoing affine ray. -/
+private theorem modelSector_eqOn_outgoing {z₀ : ℂ} {r φ α c d : ℝ} (hc : 0 ≤ c) (hd : d ≤ r) :
+    EqOn (modelSector z₀ r φ α)
+      (fun t : ℝ => z₀ + (t : ℂ) * Complex.exp ((φ : ℝ) * Complex.I)) (Icc c d) := by
+  intro t ht
+  have hct := hc.trans (mem_Icc.mp ht).1
+  rw [modelSector_of_le ((mem_Icc.mp ht).2.trans hd), twoRayCorner_of_nonneg hct]
+
+/-- On a subinterval starting after the ray join, the model sector is its circular arc. -/
+private theorem modelSector_eqOn_arc_closed {z₀ : ℂ} {r φ α c d : ℝ} (hr : 0 ≤ r) (hc : r ≤ c) :
+    EqOn (modelSector z₀ r φ α) (circleMap z₀ r ∘ fun t : ℝ => φ + (t - r)) (Icc c d) := by
+  intro t ht
+  rcases (hc.trans (mem_Icc.mp ht).1).eq_or_lt with h | hrt
+  · subst t
+    rw [modelSector_of_le le_rfl, twoRayCorner_of_nonneg hr]
+    simp [circleMap]
+  · rw [modelSector_of_lt hrt]
+    rfl
+
+/-- **The model sector is piecewise `C¹`.** For positive radius and nonnegative opening angle it
+is affine on the two rays and smoothly parametrized on the circular arc. -/
+theorem isPiecewiseC1On_modelSector {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ : ℝ) {α : ℝ}
+    (hα : 0 ≤ α) : IsPiecewiseC1On (modelSector z₀ r φ α) (-r) (r + α) := by
+  have hend : -r ≤ r + α := by linarith
+  let p : Finset ℝ := ({0, r} : Finset ℝ).filter (fun t => t ∈ Ioo (-r) (r + α))
+  have hp0 : 0 ∈ p := by
+    rw [Finset.mem_filter]
+    exact ⟨by simp, mem_Ioo.mpr ⟨by linarith, by linarith⟩⟩
+  refine IsPiecewiseC1On.of_breakpoints (continuous_modelSector hr.le φ α).continuousOn p ?_
+    fun c d hsub hdisj => ?_
+  · rw [min_eq_left hend, max_eq_right hend]
+    intro t ht
+    exact (Finset.mem_filter.mp ht).2
+  · rw [uIcc_of_le hend] at hsub
+    have hside : d ≤ 0 ∨ (0 ≤ c ∧ d ≤ r) ∨ r ≤ c := by
+      by_cases hd0 : d ≤ 0
+      · exact Or.inl hd0
+      have h0d : 0 < d := lt_of_not_ge hd0
+      have hc0 : 0 ≤ c := by
+        apply le_of_not_gt
+        intro hc0
+        exact Set.disjoint_left.mp hdisj hp0 (mem_Ioo.mpr ⟨hc0, h0d⟩)
+      by_cases hdr : d ≤ r
+      · exact Or.inr (Or.inl ⟨hc0, hdr⟩)
+      have hrd : r < d := lt_of_not_ge hdr
+      have hcr : r ≤ c := by
+        apply le_of_not_gt
+        intro hcr
+        have hd_mem : d ∈ Icc c d := ⟨(hcr.trans hrd).le, le_rfl⟩
+        have hr_global : r < r + α := hrd.trans_le (mem_Icc.mp (hsub hd_mem)).2
+        have hrp : r ∈ p := by simp [p, hr, hr_global]
+        exact Set.disjoint_left.mp hdisj hrp (mem_Ioo.mpr ⟨hcr, hrd⟩)
+      exact Or.inr (Or.inr hcr)
+    rcases hside with hd | ⟨hc, hd⟩ | hc
+    · exact ((contDiff_const.sub
+        ((Complex.ofRealCLM.contDiff (n := 1)).mul contDiff_const)).contDiffOn).congr
+          (modelSector_eqOn_incoming hr φ α hd)
+    · exact ((contDiff_const.add
+        ((Complex.ofRealCLM.contDiff (n := 1)).mul contDiff_const)).contDiffOn).congr
+          (modelSector_eqOn_outgoing hc hd)
+    · exact (((contDiff_circleMap z₀ r).comp
+        (contDiff_const.add (contDiff_id.sub contDiff_const))).contDiffOn).congr
+          (modelSector_eqOn_arc_closed hr.le hc)
 
 /-- The two ray directions of the model sector have equal (unit) length. -/
 private theorem norm_modelSector_dirs (φ α : ℝ) :
