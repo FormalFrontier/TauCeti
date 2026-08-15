@@ -61,17 +61,17 @@ theorem yosidaLimitSemigroup_generator (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) :
     (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup.generator = A := by
   let S := (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup
-  apply S.generator_eq_of_yosidaApproximation (K := 1) (lambda := 1) zero_lt_one
+  apply S.generator_eq_of_yosidaApproximation (lambda := 1)
     (hA.mem_resolventSet one_pos)
     ((ContractionSemigroup.isMDissipative_generator _).mem_resolventSet one_pos)
   · exact hA.tendsto_yosidaApproximation_apply_atTop hdense
   · intro x t ht
-    constructor
-    · have hx := hA.tendsto_yosidaLimit hdense ht (x : X)
-      rwa [← hA.yosidaLimitSemigroup_realOperator_apply hdense ht (x : X)] at hx
-    · exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (A x) ht).congr_right
-        fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (A x)).symm
-  · intro T hT
+    have hx := hA.tendsto_yosidaLimit hdense ht (x : X)
+    rwa [← hA.yosidaLimitSemigroup_realOperator_apply hdense ht (x : X)] at hx
+  · intro x T hT
+    exact (hA.tendstoUniformlyOn_exp_yosidaApproximation hdense (A x) hT).congr_right
+      fun u hu => (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1 (A x)).symm
+  · refine fun T => ⟨1, ?_⟩
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with lambda hlambda u hu
     exact norm_exp_smul_yosidaApproximation_le_one
       (hA.mul_norm_resolvent_le_one hlambda) hlambda hu.1
