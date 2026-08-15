@@ -78,14 +78,14 @@ theorem exists_equiv_forall_eq_cartanMatrix_A_of_isTree_of_isSimplyLaced_of_degr
     by_cases hA : A i j = 0
     · -- Distinct nonadjacent indices: the entry vanishes and the vertices are not consecutive.
       have hnot : ¬ (diagramGraph A).Adj i j := fun hc ↦ (diagramGraph_adj.mp hc).2.1 hA
-      rw [← iso.map_adj_iff, pathGraph_adj] at hnot
+      rw [adj_iff_of_iso_pathGraph iso] at hnot
       push Not at hnot
       have hne : (iso i : ℕ) ≠ (iso j : ℕ) := fun hc ↦ hij (iso.toEquiv.injective (Fin.ext hc))
       rw [hA, chainEntry_eq_zero hne (fun hc ↦ hnot.2 hc.symm) fun hc ↦ hnot.1 hc.symm]
     · -- Adjacent indices: the entry is `-1` and the vertices are consecutive.
       have hadj : (diagramGraph A).Adj i j := diagramGraph_adj.mpr
         ⟨hij, hA, fun hji ↦ hA ((hzero i j).mpr hji)⟩
-      rw [← iso.map_adj_iff, pathGraph_adj] at hadj
+      rw [adj_iff_of_iso_pathGraph iso] at hadj
       rw [(hsl hij).resolve_left hA]
       rcases hadj with hc | hc
       · rw [← hc, chainEntry_succ_right]
