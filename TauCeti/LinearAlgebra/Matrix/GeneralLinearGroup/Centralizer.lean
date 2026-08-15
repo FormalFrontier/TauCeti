@@ -9,8 +9,9 @@ module
 public import TauCeti.Algebra.Group.Subgroup.Centralizer
 -- `TauCeti.commute_fin_two_iff` is the engine of the centralizer computations below.
 public import TauCeti.LinearAlgebra.Matrix.Commute
--- `ConjClasses.carrier` occurs in the statements below, and `TauCeti.ConjClasses.ncard_carrier_mk`
--- is what turns a centralizer order into a class size.
+-- `ConjClasses.carrier` occurs in the statements below, `TauCeti.ConjClasses.ncard_carrier_mk`
+-- is what turns a centralizer order into a class size, and
+-- `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center` is what does it for a central element.
 public import TauCeti.Algebra.Group.Conj
 -- `TauCeti.diagGL` and `TauCeti.diagonalTorus` occur in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
@@ -76,9 +77,10 @@ from the two semisimple ones.
 
 The fourth family, the **central** one, is the non-regular case this file's title excludes: a
 scalar matrix is central in `GL n R` for any index type and any commutative semiring, so its
-centralizer is everything and its class is a single point, and those two facts are proved at that
+centralizer is everything and its class is a single point. The centralizer half is proved at that
 generality in `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal`
-(`TauCeti.centralizer_scalar`, `TauCeti.ncard_carrier_mk_scalar`).
+(`TauCeti.centralizer_scalar`); the class size, `TauCeti.ncard_carrier_mk_scalar`, is here with the
+other three.
 
 Together the four families give the class sizes `1`, `q (q + 1)`, `q (q - 1)` and `q² - 1`. These
 are the sizes of the individual classes, not the numbers of classes in each family: the
@@ -107,6 +109,7 @@ The class sizes are read off the centralizer orders by orbit-stabilizer
   `TauCeti.ncard_carrier_mk_jordanGL`: the centralizer of a Jordan block `!![a, b; 0, a]` with
   `b ≠ 0` — a non-semisimple element — is the scalar-unipotent subgroup, of order `q (q - 1)`, and
   its conjugacy class has `q² - 1` elements.
+* `TauCeti.ncard_carrier_mk_scalar`: the conjugacy class of a scalar matrix is a single point.
 
 ## References
 
@@ -322,9 +325,10 @@ section CommRing
 
 variable {R : Type*} [CommRing R] [IsCancelMulZero R] {a : Rˣ} {b : R}
 
-/-- **The centralizer of a regular non-semisimple element of `GL₂`.** The centralizer of a Jordan
-block `TauCeti.jordanGL a b = !![a, b; 0, a]` with `b ≠ 0` is the scalar-unipotent subgroup
-`TauCeti.GL2ScalarUnipotent R` of the matrices `!![x, y; 0, x]`.
+/-- **The centralizer of a Jordan block with nonzero off-diagonal entry.** Over a commutative ring
+in which nonzero elements cancel, the centralizer of `TauCeti.jordanGL a b = !![a, b; 0, a]` with
+`b ≠ 0` is the scalar-unipotent subgroup `TauCeti.GL2ScalarUnipotent R` of the matrices
+`!![x, y; 0, x]`.
 
 Like the split case this needs no commutant, and for the same reason: only the two entry equations
 `b · g₁₀ = 0` and `b · (g₁₁ - g₀₀) = 0` of `M g = g M` are used, and cancellation by the nonzero
@@ -406,5 +410,24 @@ theorem ncard_carrier_mk_jordanGL [Fintype F] (hb : b ≠ 0) :
     ring
 
 end NonSemisimple
+
+section Central
+
+variable {k : Type*} [CommSemiring k] {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- **The size of a central conjugacy class**: the conjugacy class of a scalar matrix is a single
+point. For `GL₂(𝔽_q)` these are the `q - 1` central classes, the first of the four families of
+conjugacy classes gathered in this file; nothing here is special to `Fin 2` or to a field, so the
+statement is made for an arbitrary finite index type over a commutative semiring.
+
+The centralizer half of the statement, `TauCeti.centralizer_scalar`, is in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal` with the rest of the general-index
+material; only the class size is here, so that the foundational diagonal module does not have to
+import conjugacy theory for it. -/
+theorem ncard_carrier_mk_scalar (u : kˣ) :
+    (ConjClasses.mk (Matrix.GeneralLinearGroup.scalar ι u)).carrier.ncard = 1 :=
+  ConjClasses.ncard_carrier_mk_of_mem_center (scalar_mem_center u)
+
+end Central
 
 end TauCeti

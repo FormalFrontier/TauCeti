@@ -13,9 +13,6 @@ public import Mathlib.Algebra.Group.Pi.Units
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
 -- `Subgroup.centralizer` and `Subgroup.center` occur in the statements below.
 public import Mathlib.GroupTheory.Subgroup.Centralizer
--- `ConjClasses.carrier` occurs in the statement of `TauCeti.ncard_carrier_mk_scalar`, and
--- `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center` is what proves it.
-public import TauCeti.Algebra.Group.Conj
 -- `Nat.card` occurs in the statement of `TauCeti.natCard_diagonalTorus`.
 public import Mathlib.SetTheory.Cardinal.Finite
 -- Non-public: `Nat.card_units`, the number of units of a `GroupWithZero`, is used only inside the
@@ -72,11 +69,12 @@ anything to contradict it.
 
 The smallest diagonal matrices, the scalar ones, are treated here as well: a scalar matrix is
 central in `GL ι k` (`TauCeti.scalar_mem_center`), so its centralizer is the whole group
-(`TauCeti.centralizer_scalar`) and its conjugacy class is a single point
-(`TauCeti.ncard_carrier_mk_scalar`) — the easy end of the class table of `GL₂(𝔽_q)` computed in
-`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer`. Nothing there is special to `Fin n`
-or to a field, so those three are stated for an arbitrary finite index type over a commutative
-semiring.
+(`TauCeti.centralizer_scalar`). Nothing there is special to `Fin n` or to a field, so both are
+stated for an arbitrary finite index type over a commutative semiring. The size of the resulting
+conjugacy class — the easy end of the class table of `GL₂(𝔽_q)` — is
+`TauCeti.ncard_carrier_mk_scalar`, in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer` alongside the other class sizes, so
+that conjugacy theory stays out of this module's imports.
 
 The action of the torus on the coordinate lines of the standard representation is in
 `TauCeti.RepresentationTheory.ClassicalGroups.Torus`.
@@ -99,9 +97,8 @@ The action of the torus on the coordinate lines of the standard representation i
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
 * `TauCeti.centralizer_diagonalTorus_eq_top`: over a ring with a single unit the centralizer is
   instead the whole group.
-* `TauCeti.scalar_mem_center`, `TauCeti.centralizer_scalar` and
-  `TauCeti.ncard_carrier_mk_scalar`: a scalar matrix is central, so its centralizer is the whole
-  group and its conjugacy class is a single point.
+* `TauCeti.scalar_mem_center` and `TauCeti.centralizer_scalar`: a scalar matrix is central, so its
+  centralizer is the whole group.
 
 ## References
 
@@ -280,17 +277,12 @@ theorem scalar_mem_center (u : kˣ) :
   Subgroup.mem_center_iff.mpr fun g => Units.ext
     ((Matrix.scalar_commute (u : k) (fun _ => Commute.all _ _) (g : Matrix ι ι k)).symm.eq)
 
-/-- **The centralizer of a scalar matrix is everything**, scalar matrices being central. -/
+/-- **The centralizer of a scalar matrix is everything**, scalar matrices being central. The size of
+its conjugacy class is `TauCeti.ncard_carrier_mk_scalar`, in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer`. -/
 theorem centralizer_scalar (u : kˣ) :
     Subgroup.centralizer {Matrix.GeneralLinearGroup.scalar ι u} = ⊤ :=
   Subgroup.centralizer_eq_top_iff_subset.mpr (Set.singleton_subset_iff.mpr (scalar_mem_center u))
-
-/-- **The conjugacy class of a scalar matrix is a single point.** For `GL₂(𝔽_q)` these are the
-`q - 1` central classes, the first of the four families of conjugacy classes computed in
-`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer`. -/
-theorem ncard_carrier_mk_scalar (u : kˣ) :
-    (ConjClasses.mk (Matrix.GeneralLinearGroup.scalar ι u)).carrier.ncard = 1 :=
-  ConjClasses.ncard_carrier_mk_of_mem_center (scalar_mem_center u)
 
 end Scalar
 

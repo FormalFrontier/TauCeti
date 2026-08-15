@@ -89,19 +89,16 @@ section Ring
 
 variable {R : Type u} [Ring R]
 
-/-- The **Jordan normal form** `!![a, b; 0, a]` in `GL (Fin 2) R`: an invertible matrix whose two
-diagonal entries are the same unit `a`. For `b` a unit — over a field, for `b ≠ 0` — it is the
-non-semisimple normal form of `GL₂`, a single Jordan block with repeated eigenvalue `a`; for
-`b = 0` it is the scalar matrix `a`. It is `TauCeti.GL2Borel.mk` with its two diagonal arguments
-made equal, and it is one of the four conjugacy class representatives of `GL₂(𝔽_q)`, alongside the
-scalars, `TauCeti.diagGL` and `TauCeti.GL2NonSplitTorusHom`. -/
-def jordanGL (a : Rˣ) (b : R) : GL (Fin 2) R := GL2Borel.mk a a b
-
-/-- A Jordan block is the upper-triangular normal form `TauCeti.GL2Borel.mk` with its two diagonal
+/-- The **Jordan block** `!![a, b; 0, a]` in `GL (Fin 2) R`: the upper-triangular invertible matrix
+whose two diagonal entries are the same unit `a`. It is `TauCeti.GL2Borel.mk` with its two diagonal
 arguments made equal, so the whole Borel API — the diagonal projection, the determinant, the
-splitting `B = T U` — applies to it. -/
-theorem jordanGL_eq_mk (a : Rˣ) (b : R) : jordanGL a b = GL2Borel.mk a a b :=
-  (rfl)
+splitting `B = T U` — applies to it; for `b = 0` it is the scalar matrix `a` (`jordanGL_zero`).
+
+Over a field and for `b ≠ 0` this is the non-semisimple normal form of `GL₂`, a single Jordan block
+with repeated eigenvalue `a`, and it is then one of the four conjugacy class representatives of
+`GL₂(𝔽_q)`, alongside the scalars, `TauCeti.diagGL` and `TauCeti.GL2NonSplitTorusHom`. Over an
+arbitrary ring no such claim is made: only the matrix shape is. -/
+def jordanGL (a : Rˣ) (b : R) : GL (Fin 2) R := GL2Borel.mk a a b
 
 @[simp]
 theorem coe_jordanGL (a : Rˣ) (b : R) :
@@ -144,10 +141,10 @@ section CommRing
 
 variable {R : Type u} [CommRing R]
 
-/-- A Jordan block is upper triangular, so it lies in the Borel subgroup. -/
-theorem jordanGL_mem_gl2Borel (a : Rˣ) (b : R) : jordanGL a b ∈ GL2Borel R := by
-  rw [jordanGL_eq_mk]
-  exact GL2Borel.mk_mem a a b
+/-- A Jordan block is upper triangular, so it lies in the Borel subgroup: it is
+`TauCeti.GL2Borel.mk` with its two diagonal arguments made equal. -/
+theorem jordanGL_mem_gl2Borel (a : Rˣ) (b : R) : jordanGL a b ∈ GL2Borel R :=
+  GL2Borel.mk_mem a a b
 
 /-- The determinant of a Jordan block is the square of its repeated eigenvalue. -/
 @[simp]
@@ -197,10 +194,12 @@ theorem scalarUnipotentHom_apply (p : Rˣ × Multiplicative R) :
       Matrix.single_apply, Matrix.one_apply]
 
 /-- **A Jordan block is a scalar matrix times a transvection**:
-`!![a, b; 0, a] = a · (1 + a⁻¹ b E₀₁)` is the decomposition `M = a (1 + N)` of a non-semisimple
-element into its central and unipotent parts. It is `TauCeti.scalarUnipotentHom_eq_mul` read on the
-Jordan block, and it is what lets the root subgroup API — conjugation by the diagonal torus, in
-particular — be applied to `M`. -/
+`!![a, b; 0, a] = a · (1 + a⁻¹ b E₀₁)` is the decomposition `M = a (1 + N)` into a central factor
+and a unipotent one. It is `TauCeti.scalarUnipotentHom_eq_mul` read on the Jordan block, and it is
+what lets the root subgroup API — conjugation by the diagonal torus, in particular — be applied to
+`M`. Over a field it is the multiplicative Jordan decomposition of `M`, whose unipotent part is
+trivial exactly when `b = 0`; so it exhibits `M` as non-semisimple precisely in the case
+`b ≠ 0`. -/
 theorem jordanGL_eq_scalar_mul_transvectionUnit (a : Rˣ) (b : R) :
     jordanGL a b = Matrix.GeneralLinearGroup.scalar (Fin 2) a *
       transvectionUnit (zero_ne_one : (0 : Fin 2) ≠ 1) ((a⁻¹ : Rˣ) * b) := by
