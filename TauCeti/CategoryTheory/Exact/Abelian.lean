@@ -31,8 +31,6 @@ of abelian categories:
 
 ## Main definitions
 
-* `TauCeti.ConflationClass.abelian`: the isomorphism-closed class of short exact short
-  complexes in an abelian category `C`.
 * `TauCeti.ExactStructure.abelian`: the canonical Quillen exact structure on `C`.
 
 ## Main results
@@ -69,8 +67,7 @@ section Abelian
 
 variable (C : Type u) [Category.{v} C] [Abelian C]
 
-/-- The conflation class of short exact sequences in an abelian category `C`. -/
-def ConflationClass.abelian : ConflationClass C where
+private def ConflationClass.abelian : ConflationClass C where
   Conflation S := S.ShortExact
   isKernelCokernelPair _ hS := IsKernelCokernelPair.of_shortExact hS
   isClosedUnderIsomorphisms := ⟨fun e h => ShortComplex.shortExact_of_iso e h⟩
@@ -213,14 +210,16 @@ theorem abelian_conflation_of_epi {Y Z : C} (p : Y ⟶ Z) [Epi p] :
       (ShortComplex.mk (kernel.ι p) p (kernel.condition p)) :=
   ShortComplex.ShortExact.mk' (ShortComplex.exact_kernel p) inferInstance inferInstance
 
-/-- Duality for canonical conflations: a short complex in `Cᵒᵖ` is a conflation if and only if
-its un-opposite is a conflation in `C`. -/
+/-- Duality for canonical conflations: the opposite of a short complex in `C` is a conflation in
+`Cᵒᵖ` if and only if the original complex is a conflation in `C`. -/
+@[simp]
 theorem abelian_conflation_op_iff (S : ShortComplex C) :
     (ExactStructure.abelian Cᵒᵖ).Conflation S.op ↔ (ExactStructure.abelian C).Conflation S :=
   (ShortComplex.shortExact_iff_op S).symm
 
-/-- Duality for canonical conflations: a short complex in `C` is a conflation if and only if
-its opposite is a conflation in `Cᵒᵖ`. -/
+/-- Duality for canonical conflations: the un-opposite of a short complex in `Cᵒᵖ` is a conflation
+in `C` if and only if the original complex is a conflation in `Cᵒᵖ`. -/
+@[simp]
 theorem abelian_conflation_unop_iff (S : ShortComplex Cᵒᵖ) :
     (ExactStructure.abelian C).Conflation S.unop ↔ (ExactStructure.abelian Cᵒᵖ).Conflation S :=
   (ShortComplex.shortExact_iff_unop S).symm
