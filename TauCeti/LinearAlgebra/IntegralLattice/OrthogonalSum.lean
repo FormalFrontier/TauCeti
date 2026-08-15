@@ -57,23 +57,25 @@ theorem orthogonalSumForm_apply (L : IntegralLattice V) (M : IntegralLattice W)
     orthogonalSumForm L M p q = L.form p.1 q.1 + M.form p.2 q.2 :=
   (rfl)
 
+private def prodCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.carrier.prod M.carrier : Submodule ℤ (V × W)) ≃ₗ[ℤ] L × M where
+  toFun p :=
+    (⟨p.1.1, (Submodule.mem_prod.mp p.2).1⟩,
+      ⟨p.1.2, (Submodule.mem_prod.mp p.2).2⟩)
+  invFun p := ⟨(p.1, p.2), Submodule.mem_prod.mpr ⟨p.1.2, p.2.2⟩⟩
+  map_add' _ _ := rfl
+  map_smul' := by intro c p; apply Prod.ext <;> rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 /-- The product of two full integral carriers is a full integral carrier. -/
 private theorem isLattice_prod (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.carrier.prod M.carrier).IsLattice ℚ := by
   constructor
   · rw [← Module.Finite.iff_fg]
-    let e : (L.carrier.prod M.carrier) ≃ₗ[ℤ] L × M :=
-      { toFun := fun p ↦
-          (⟨p.1.1, (Submodule.mem_prod.mp p.2).1⟩,
-            ⟨p.1.2, (Submodule.mem_prod.mp p.2).2⟩)
-        invFun := fun p ↦ ⟨(p.1, p.2), Submodule.mem_prod.mpr ⟨p.1.2, p.2.2⟩⟩
-        map_add' := fun _ _ ↦ rfl
-        map_smul' := fun _ _ ↦ rfl
-        left_inv := fun _ ↦ rfl
-        right_inv := fun _ ↦ rfl }
-    exact Module.Finite.equiv e.symm
-  · change Submodule.span ℚ ((L.carrier : Set V) ×ˢ (M.carrier : Set W)) = ⊤
-    rw [Submodule.span_prod_eq (R := ℚ) L.carrier.zero_mem M.carrier.zero_mem,
+    exact Module.Finite.equiv (prodCarrierEquiv L M).symm
+  · rw [Submodule.prod_coe,
+      Submodule.span_prod_eq (R := ℚ) L.carrier.zero_mem M.carrier.zero_mem,
       Submodule.IsLattice.span_eq_top, Submodule.IsLattice.span_eq_top,
       Submodule.prod_top]
 
@@ -102,15 +104,8 @@ theorem orthogonalSum_form (L : IntegralLattice V) (M : IntegralLattice W) :
 
 /-- The carrier of an orthogonal sum is canonically the product of the carrier types. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
-    L.orthogonalSum M ≃ₗ[ℤ] L × M where
-  toFun p :=
-    (⟨p.1.1, (Submodule.mem_prod.mp p.2).1⟩,
-      ⟨p.1.2, (Submodule.mem_prod.mp p.2).2⟩)
-  invFun p := ⟨(p.1, p.2), Submodule.mem_prod.mpr ⟨p.1.2, p.2.2⟩⟩
-  map_add' _ _ := rfl
-  map_smul' := by intro c p; apply Prod.ext <;> rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
+    L.orthogonalSum M ≃ₗ[ℤ] L × M :=
+  prodCarrierEquiv L M
 
 /-- The canonical inclusion of the first carrier into an orthogonal sum. -/
 def orthogonalSumInl (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -191,6 +186,14 @@ theorem coe_orthogonalSumCarrierEquiv_fst (L : IntegralLattice V) (M : IntegralL
 theorem coe_orthogonalSumCarrierEquiv_snd (L : IntegralLattice V) (M : IntegralLattice W)
     (p : L.orthogonalSum M) : ((orthogonalSumCarrierEquiv L M p).2 : W) = p.1.2 := by
   rfl
+
+/-- A vector in an orthogonal sum is the sum of the inclusions of its two projections. -/
+theorem orthogonalSumInl_fst_add_inr_snd_eq (L : IntegralLattice V) (M : IntegralLattice W)
+    (p : L.orthogonalSum M) :
+    orthogonalSumInl L M (orthogonalSumFst L M p) +
+        orthogonalSumInr L M (orthogonalSumSnd L M p) = p := by
+  apply Subtype.ext
+  ext <;> simp
 
 /-- The product of carrier bases is a basis of the orthogonal sum carrier. -/
 noncomputable def orthogonalSumBasis {I : Type w} {J : Type x} (L : IntegralLattice V)
