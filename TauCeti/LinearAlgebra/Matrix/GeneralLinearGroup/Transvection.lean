@@ -256,17 +256,9 @@ theorem _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection
     ⁅Matrix.SpecialLinearGroup.transvection hij c,
       Matrix.SpecialLinearGroup.transvection hjl d⁆ =
       Matrix.SpecialLinearGroup.transvection hil (c * d) := by
-  have hxz : Commute (Matrix.SpecialLinearGroup.transvection hij c)
-      (Matrix.SpecialLinearGroup.transvection hil (c * d)) :=
-    Matrix.SpecialLinearGroup.commute_transvection hij hil hij.symm hil.symm c (c * d)
-  have hyz : Commute (Matrix.SpecialLinearGroup.transvection hjl d)
-      (Matrix.SpecialLinearGroup.transvection hil (c * d)) :=
-    Matrix.SpecialLinearGroup.commute_transvection hjl hil hil.symm hjl.symm d (c * d)
-  rw [commutatorElement_def,
-    Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul hij hjl hil,
-    mul_assoc (Matrix.SpecialLinearGroup.transvection hjl d)
-      (Matrix.SpecialLinearGroup.transvection hij c),
-    hxz.eq, ← mul_assoc, mul_inv_cancel_right, hyz.eq, mul_inv_cancel_right]
+  apply SpecialLinearGroup.toGL_injective
+  rw [map_commutatorElement]
+  exact commutatorElement_transvectionUnit hij hjl hil c d
 
 end Unit
 
