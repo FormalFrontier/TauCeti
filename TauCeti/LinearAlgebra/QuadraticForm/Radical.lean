@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.CharP.Invertible
+public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
 /-!
@@ -21,6 +23,8 @@ its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as 
   nonzero.
 * `LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip`: the polar form of the quadratic form of a
   symmetric bilinear form `B` is `2 • B`.
+* `LinearMap.BilinForm.radical_toQuadraticMap`: the radical of the quadratic form of a symmetric
+  bilinear form `B` equals the kernel of `B`.
 * `LinearMap.BilinForm.Nondegenerate.toQuadraticMap`: over a ring in which `2` is invertible, the
   quadratic form of a nondegenerate symmetric bilinear form is nondegenerate.
 -/
@@ -66,6 +70,14 @@ theorem BilinMap.polarBilin_toQuadraticMap_of_flip {B : LinearMap.BilinMap R M N
     (hB : LinearMap.flip B = B) :
     QuadraticMap.polarBilin B.toQuadraticMap = (2 : R) • B := by
   rw [BilinMap.polarBilin_toQuadraticMap, hB, two_smul]
+
+/-- The radical of the quadratic form of a symmetric bilinear form equals the kernel of the
+bilinear form over a commutative ring in which `2` is invertible. -/
+theorem BilinForm.radical_toQuadraticMap [Invertible (2 : R)] (B : LinearMap.BilinForm R M)
+    (hB : B.IsSymm) :
+    B.toQuadraticMap.radical = B.ker := by
+  rw [QuadraticMap.radical_eq_ker_associated,
+    QuadraticMap.associated_left_inverse (S := R) hB.eq]
 
 /-- **Nondegeneracy passes from a symmetric bilinear form to its quadratic form** over a ring in
 which `2` is invertible. Some hypothesis on `2` is needed: a quadratic form is a finer invariant

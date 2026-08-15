@@ -70,18 +70,6 @@ noncomputable abbrev sigNeg : ℕ := _root_.sigNeg L.form.toQuadraticMap
 /-- The signature `(n₊, n₀, n₋)` of an integral lattice. -/
 noncomputable abbrev signature : ℕ × ℕ × ℕ := (L.sigPos, L.sigNull, L.sigNeg)
 
-/-- The first component of the signature is the positive index. -/
-@[simp]
-theorem signature_fst : L.signature.1 = L.sigPos := rfl
-
-/-- The second component of the signature is the null index. -/
-@[simp]
-theorem signature_snd_fst : L.signature.2.1 = L.sigNull := rfl
-
-/-- The third component of the signature is the negative index. -/
-@[simp]
-theorem signature_snd_snd : L.signature.2.2 = L.sigNeg := rfl
-
 /-- The positive, null, and negative indices exhaust the rank of the lattice. -/
 theorem signature_sum_eq_finrank :
     L.sigPos + L.sigNull + L.sigNeg = Module.finrank ℚ V := by

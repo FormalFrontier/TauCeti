@@ -7,6 +7,7 @@ module
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
+public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 
 /-!
 # Definiteness and the signature of a quadratic form
@@ -99,28 +100,26 @@ namespace LinearMap.BilinForm
 
 open _root_.QuadraticForm
 
-variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
-  [AddCommGroup M] [Module K M] [FiniteDimensional K M]
+section Semiring
 
-omit [FiniteDimensional K M] in
-/-- The radical of the quadratic form of a symmetric bilinear form equals the kernel of the
-bilinear form. -/
-theorem radical_toQuadraticMap (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
-    B.toQuadraticMap.radical = B.ker := by
-  let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
-  rw [QuadraticMap.radical_eq_ker_associated,
-    QuadraticMap.associated_left_inverse (S := K) hB.eq]
+variable {R M : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M] [LE R]
 
-omit [IsStrictOrderedRing K] [FiniteDimensional K M] in
 /-- A symmetric bilinear form is positive-semidefinite if and only if its values on all vectors
 are nonnegative. -/
-theorem isPosSemidef_iff_forall_nonneg (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
+@[grind =]
+theorem isPosSemidef_iff_forall_nonneg (B : LinearMap.BilinForm R M) (hB : B.IsSymm) :
     B.IsPosSemidef ↔ ∀ x, 0 ≤ B x x := by
   rw [LinearMap.BilinForm.isPosSemidef_def, LinearMap.BilinForm.isNonneg_def]
   simp only [hB, true_and]
 
+end Semiring
+
+variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
+  [AddCommGroup M] [Module K M] [FiniteDimensional K M]
+
 /-- A symmetric bilinear form is positive-semidefinite if and only if the negative index of its
 associated quadratic form vanishes. -/
+@[grind =]
 theorem isPosSemidef_iff_sigNeg_eq_zero (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
     B.IsPosSemidef ↔ _root_.sigNeg B.toQuadraticMap = 0 := by
   rw [isPosSemidef_iff_forall_nonneg B hB]
@@ -129,15 +128,19 @@ theorem isPosSemidef_iff_sigNeg_eq_zero (B : LinearMap.BilinForm K M) (hB : B.Is
 
 /-- The quadratic form of a symmetric bilinear form is positive-definite if and only if the
 bilinear form is positive-semidefinite and nondegenerate. -/
+@[grind =]
 theorem posDef_toQuadraticMap_iff_isPosSemidef_and_nondegenerate (B : LinearMap.BilinForm K M)
     (hB : B.IsSymm) :
     B.toQuadraticMap.PosDef ↔ B.IsPosSemidef ∧ B.Nondegenerate := by
+  have _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
   rw [isPosSemidef_iff_sigNeg_eq_zero B hB,
     QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
-    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot, radical_toQuadraticMap B hB]
+    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot,
+    _root_.LinearMap.BilinForm.radical_toQuadraticMap B hB]
 
 /-- The quadratic form of a symmetric bilinear form is positive-definite if and only if the
 kernel of the bilinear form and the negative index of the quadratic form both vanish. -/
+@[grind =]
 theorem posDef_toQuadraticMap_iff_finrank_ker_eq_zero_and_sigNeg_eq_zero
     (B : LinearMap.BilinForm K M) (hB : B.IsSymm) :
     B.toQuadraticMap.PosDef ↔ Module.finrank K B.ker = 0 ∧ _root_.sigNeg B.toQuadraticMap = 0 := by
