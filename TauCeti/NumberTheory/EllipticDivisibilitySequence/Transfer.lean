@@ -79,16 +79,18 @@ Importing the EDS module only to reach `abs_cases` through it cost 279 build job
 
 ## Provenance
 
-Ported from J. Xu's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
-(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at
-`1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), declarations `StrictAnti₄`, `HaveSameParity₄.transf`,
-`HaveSameParity₄.strictAnti₄_transf` and `HaveSameParity₄.six_le_of_strictAnti₄`. That file's
-header reads `Authors: Junyan Xu`; following this repository's convention for adapted material the
-upstream authorship is credited here rather than in the copyright header. The source's
-`StrictAnti₄` gains a `Nonneg` prefix here, because the predicate bundles the lower bound `0 ≤ d`
-that the source's name left unsaid; the `StrictAnti` half is kept, the definition being Mathlib's
-`StrictAnti` on the tuple. The dependent names follow it, and `six_le_of_parity_of_…` names the
-parity hypothesis that its statement genuinely needs.
+Ported from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0, `main` at `1c1c74664e40071c2c2165bc55ca2616a67ccd6b`),
+declarations `StrictAnti₄`, `HaveSameParity₄.transf`, `HaveSameParity₄.strictAnti₄_transf` and
+`HaveSameParity₄.six_le_of_strictAnti₄`. That file's header reads `Authors: David Kurniadi
+Angdinata`; following this repository's convention for adapted material the upstream authorship is
+credited here rather than in the copyright header. J. Xu is acknowledged for the surrounding
+LutzNagell development — he authors `Universal.lean` and co-authors `DivisionPolynomialOmega.lean`
+at the same revision — as context for this port, not as an author of the declarations above. The
+source's `StrictAnti₄` gains a `Nonneg` prefix here, because the predicate bundles the lower bound
+`0 ≤ d` that the source's name left unsaid; the `StrictAnti` half is kept, the definition being
+Mathlib's `StrictAnti` on the tuple. The dependent names follow it, and `six_le_of_parity_of_…`
+names the parity hypothesis that its statement genuinely needs.
 
 The source's surrounding transfer machinery is **not** ported, being already upstream: its
 `rel₄_transf` is Mathlib's `atomRel_avg_sub`, its `rel₄_eq_net` is Mathlib's `atomRel_eq`, and its

@@ -168,6 +168,23 @@ theorem StronglyContinuousSemigroup.generator_eq_of_tendsto
   tendsto_nhds_unique (S.generator_tendsto ⟨x, hx⟩) h
 
 omit [CompleteSpace X] in
+/-- If the generator difference quotient of every vector of `A.domain` converges to `A x`, then
+`A` is a restriction of the generator. -/
+theorem StronglyContinuousSemigroup.le_generator_of_forall_tendsto
+    (S : StronglyContinuousSemigroup X) {A : X →ₗ.[ℝ] X}
+    (h : ∀ x : A.domain, Filter.Tendsto
+      (fun t => (1 / t) • (S.realOperator t (x : X) - (x : X)))
+      (nhdsWithin 0 (Set.Ioi 0)) (nhds (A x))) :
+    A ≤ S.generator := by
+  have hmem : ∀ x : A.domain, (x : X) ∈ S.domain := fun x =>
+    (S.mem_domain_iff_tendsto (x : X)).mpr ⟨A x, h x⟩
+  refine ⟨fun x hx => ?_, fun x y hxy => ?_⟩
+  · rw [S.generator_domain]
+    exact hmem ⟨x, hx⟩
+  · rw [← S.generator_eq_of_tendsto (hmem x) (h x)]
+    exact congrArg _ (Subtype.ext hxy)
+
+omit [CompleteSpace X] in
 /-- If every generator difference quotient converges to `L x` for a linear operator `L`, then
 the generator domain is the whole space and the generator is `L` as a total `LinearPMap`. -/
 theorem StronglyContinuousSemigroup.generator_eq_toPMap_top_of_forall_tendsto

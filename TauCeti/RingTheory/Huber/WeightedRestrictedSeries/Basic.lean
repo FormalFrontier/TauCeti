@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RingTheory.Huber.RestrictedPowerSeries
+public import TauCeti.RingTheory.Huber.Restricted.PowerSeries
 public import TauCeti.Topology.Algebra.Nonarchimedean.Absorption
 public import Mathlib.RingTheory.MvPowerSeries.Equiv
 public import Mathlib.Topology.Algebra.Nonarchimedean.Bases
@@ -129,7 +129,7 @@ subgroups, and every open subgroup contains one, so quantifying over all open su
 same as quantifying over the balls and the condition becomes `‖coeff ν f‖ → 0` along the
 cofinite filter. Over a general normed ring they do not agree: over `ℝ`, as above, the condition
 here is vacuous while Mathlib's still asks for `‖coeff ν f‖ → 0`. The unweighted predicate of
-`TauCeti/RingTheory/Huber/RestrictedPowerSeries.lean` is a topological limit rather than a
+`TauCeti/RingTheory/Huber/Restricted/PowerSeries.lean` is a topological limit rather than a
 condition on subgroups, and that file remarks on the comparison for it — in prose, not as a
 proved declaration. Neither notion is a special case of the other in general.
 
@@ -150,7 +150,7 @@ its `AdicSpaces` weighted-series and localisation files were checked first: they
 `A⟨X⟩_T`, and AINTLIB's `TateAlgebraWedhorn` is a different object — it retopologises the ordinary
 `A⟨X⟩` by transporting along a substitution rather than letting the carrier depend on `T`.
 
-The *proofs*, however, follow `TauCeti/RingTheory/Huber/RestrictedPowerSeries.lean`
+The *proofs*, however, follow `TauCeti/RingTheory/Huber/Restricted/PowerSeries.lean`
 (TauCetiProject/TauCeti#2348), which is itself AINTLIB-derived — and not only in API layout. In
 particular `TauCeti.Huber.IsWeightedRestricted.mul` follows the plan of `IsRestricted.mul` there:
 choose `W` with `W · W ⊆ U`; take the finite sets of coefficients of `f` and `g` that fail the `W`
