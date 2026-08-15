@@ -6,7 +6,6 @@ Authors: Antigravity
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.RootSubgroup
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 
 /-!
 # Chevalley relations for the root subgroups of the special linear group
@@ -44,10 +43,12 @@ base ring.
   commute in `SLₙ(A)`.
 * `TauCeti.SpecialLinear.commutatorElement_rootSubgroupPoints`: the type-A Chevalley commutator
   relation on algebra-valued points of `SLₙ`.
-* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_commute`: commutation on scheme-valued
+* `TauCeti.SpecialLinear.commute_schemePointsMulEquiv_rootSubgroup`: commutation on scheme-valued
   points of `SLₙ`.
-* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_commutatorElement`: the type-A Chevalley
+* `TauCeti.SpecialLinear.commutatorElement_schemePointsMulEquiv_rootSubgroup`: the type-A Chevalley
   commutator relation on scheme-valued points of `SLₙ`.
+* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_one`: identity on scheme-valued points
+  of root subgroups.
 * `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_mul`: multiplication on scheme-valued
   points of root subgroups.
 * `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_inv`: inversion on scheme-valued points
@@ -127,7 +128,7 @@ section SchemePoints
 variable (A : Type u) [CommRing A] [Algebra R A]
 
 /-- On scheme-valued points of `SLₙ`, root subgroups at non-chaining index pairs commute. -/
-theorem schemePointsMulEquiv_rootSubgroup_commute (hij : i ≠ j) (hkl : k ≠ l)
+theorem commute_schemePointsMulEquiv_rootSubgroup (hij : i ≠ j) (hkl : k ≠ l)
     (hjk : j ≠ k) (hli : l ≠ i)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (AdditiveGroup.groupScheme R).X)
@@ -139,7 +140,7 @@ theorem schemePointsMulEquiv_rootSubgroup_commute (hij : i ≠ j) (hkl : k ≠ l
   exact _root_.Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli _ _
 
 /-- **The type-A Chevalley commutator relation on scheme-valued points of `SLₙ`.** -/
-theorem schemePointsMulEquiv_rootSubgroup_commutatorElement (hij : i ≠ j) (hjl : j ≠ l)
+theorem commutatorElement_schemePointsMulEquiv_rootSubgroup (hij : i ≠ j) (hjl : j ≠ l)
     (hil : i ≠ l)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
       (AdditiveGroup.groupScheme R).X)
@@ -157,6 +158,14 @@ theorem schemePointsMulEquiv_rootSubgroup_commutatorElement (hij : i ≠ j) (hjl
     schemePointsMulEquiv_rootSubgroup]
   simp only [MulEquiv.apply_symm_apply, toAdd_ofAdd]
   exact _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil _ _
+
+/-- The identity scheme-valued point of `𝔾ₐ` maps to the identity of `SLₙ`. -/
+theorem schemePointsMulEquiv_rootSubgroup_one (hij : i ≠ j) :
+    schemePointsMulEquiv N A
+        ((1 : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+          (AdditiveGroup.groupScheme R).X) ≫ (rootSubgroup hij).hom.hom) = 1 := by
+  rw [schemePointsMulEquiv_rootSubgroup]
+  simp only [map_one, toAdd_one, Matrix.SpecialLinearGroup.transvection_coeff_zero]
 
 /-- Multiplying two scheme-valued points of the same root subgroup multiplies along the group
 law of `𝔾ₐ`. -/
