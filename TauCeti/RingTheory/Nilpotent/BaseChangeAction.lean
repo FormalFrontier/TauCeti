@@ -104,8 +104,7 @@ theorem mul_integralDividedPower (x : A) (M : S)
     integralDividedPower x M m hm * integralDividedPower x M n hn =
       Nat.choose (m + n) m • integralDividedPower x M (m + n) hmn := by
   ext v
-  change Associative.dividedPower m x • Associative.dividedPower n x • (v : V) =
-    Nat.choose (m + n) m • Associative.dividedPower (m + n) x • (v : V)
+  dsimp [integralDividedPower]
   rw [smul_smul, Associative.mul_dividedPower, smul_assoc]
 
 /-- The restricted divided power vanishes for degrees greater than or equal to a nilpotency
