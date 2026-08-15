@@ -141,7 +141,7 @@ structure WedderburnEndomorphismAlgebraPresentation (K : Type v) (A : Type u) [C
     [Ring A] [Algebra K A] where
   /-- The number of matrix blocks. -/
   blockCount : ℕ
-  /-- A simple left ideal representing each block. -/
+  /-- A simple left ideal for each matrix block. -/
   simpleIdeal : Fin blockCount → Ideal A
   /-- The degree of each matrix block. -/
   degree : Fin blockCount → ℕ
