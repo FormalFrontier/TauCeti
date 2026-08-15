@@ -119,6 +119,7 @@ def refl (L : IntegralLattice V) : Isometry L L where
     simp only [Submodule.mem_map_equiv]
     rfl
 
+/-- Evaluation of the identity isometry on an ambient vector. -/
 @[simp]
 theorem refl_apply (L : IntegralLattice V) (x : V) : refl L x = x := (rfl)
 
@@ -269,7 +270,6 @@ theorem extendCarrierEquiv_apply (e : L ≃ₗ[ℤ] M) (x : L) :
 
 /-- The rational extension of a carrier equivalence maps the source carrier onto the target
 carrier. -/
-@[simp]
 theorem extendCarrierEquiv_map_carrier (e : L ≃ₗ[ℤ] M) :
     L.carrier.map ((extendCarrierEquiv e).restrictScalars ℤ).toLinearMap = M.carrier := by
   ext y
