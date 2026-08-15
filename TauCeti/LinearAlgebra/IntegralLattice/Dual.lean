@@ -222,6 +222,8 @@ theorem dualCarrier_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
 
 /-- A vector pairs integrally with every vector of the dual carrier exactly when it belongs to the
 original carrier. -/
+-- This is deliberately not a simp lemma: `mem_dualCarrier_iff` already expands the quantified
+-- domain on the left, so the simp-normal-form linter rejects this statement as a simp rule.
 theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondegenerate]
     (x : V) :
     (∀ y ∈ L.dualCarrier, L.form x y ∈ (1 : Submodule ℤ ℚ)) ↔ x ∈ L.carrier := by
