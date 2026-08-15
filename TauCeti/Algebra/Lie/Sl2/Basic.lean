@@ -388,23 +388,23 @@ subalgebra they generate.** Every element of `t.toLieSubalgebra K` is a combinat
 
 The underlying submodule is `S` itself, recorded in
 `IsSl2Triple.lieSubmoduleOfStable_toSubmodule`. -/
-@[expose] def lieSubmoduleOfStable (t : IsSl2Triple h e f) (S : Submodule K M)
+def lieSubmoduleOfStable (t : IsSl2Triple h e f) (S : Submodule K M)
     (hh : ∀ m ∈ S, ⁅h, m⁆ ∈ S) (he : ∀ m ∈ S, ⁅e, m⁆ ∈ S) (hf : ∀ m ∈ S, ⁅f, m⁆ ∈ S) :
     LieSubmodule K (t.toLieSubalgebra K) M where
   __ := S
   lie_mem := by
     rintro ⟨x, hx⟩ m hm
     obtain ⟨c₁, c₂, c₃, rfl⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 hx
-    change ⁅c₁ • e + c₂ • f + c₃ • ⁅e, f⁆, m⁆ ∈ S
-    rw [add_lie, add_lie, smul_lie, smul_lie, smul_lie, t.lie_e_f]
+    rw [LieSubalgebra.coe_bracket_of_module, add_lie, add_lie, smul_lie, smul_lie, smul_lie,
+      t.lie_e_f]
     exact S.add_mem (S.add_mem (S.smul_mem _ (he m hm)) (S.smul_mem _ (hf m hm)))
       (S.smul_mem _ (hh m hm))
 
 @[simp]
 theorem lieSubmoduleOfStable_toSubmodule (t : IsSl2Triple h e f) (S : Submodule K M)
     (hh : ∀ m ∈ S, ⁅h, m⁆ ∈ S) (he : ∀ m ∈ S, ⁅e, m⁆ ∈ S) (hf : ∀ m ∈ S, ⁅f, m⁆ ∈ S) :
-    (t.lieSubmoduleOfStable S hh he hf).toSubmodule = S :=
-  rfl
+    (t.lieSubmoduleOfStable S hh he hf).toSubmodule = S := by
+  simp only [lieSubmoduleOfStable]
 
 end IsSl2Triple
 
