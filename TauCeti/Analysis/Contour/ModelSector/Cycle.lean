@@ -104,7 +104,6 @@ theorem windingNumber_modelSectorCycle_eq_raw (z z₀ : ℂ) (r φ α : ℝ) (hr
 /-- **The model-sector cycle has winding number `α / 2π` about its corner.** This is the cycle
 form of `Contour.windingNumber_closedModelSector`, ready to be summed in the finite crossing
 decomposition of Hungerbühler--Wasem Proposition 2.2. -/
-@[simp]
 theorem windingNumber_modelSectorCycle {z₀ : ℂ} {r : ℝ} (hr : 0 < r) (φ : ℝ) {α : ℝ}
     (hα : 0 ≤ α) :
     windingNumber z₀ (modelSectorCycle z₀ r φ α hr.le hα) =
