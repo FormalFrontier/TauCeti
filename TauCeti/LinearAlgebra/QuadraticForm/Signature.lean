@@ -72,6 +72,28 @@ theorem forall_nonpos_iff_sigPos_eq_zero (Q : _root_.QuadraticForm K M) :
     (∀ x, Q x ≤ 0) ↔ sigPos Q = 0 := by
   simpa only [neg_apply, neg_nonneg, sigNeg_neg] using forall_nonneg_iff_sigNeg_eq_zero (-Q)
 
+omit [IsStrictOrderedRing K] in
+/-- Restricting a quadratic form to a subspace cannot increase its positive index. -/
+theorem sigPos_restrict_le (Q : _root_.QuadraticForm K M) (W : Subspace K M) :
+    sigPos (Q.restrict W) ≤ sigPos Q := by
+  obtain ⟨U, hUrank, hUpos⟩ := exists_finrank_eq_sigPos_and_posDef (Q.restrict W)
+  rw [← hUrank, ← Submodule.finrank_map_subtype_eq W U]
+  apply le_sigPos_of_posDef (V := U.map W.subtype)
+  rintro ⟨_, ⟨x, hx, rfl⟩⟩ hx0
+  rw [restrict_apply]
+  exact hUpos ⟨x, hx⟩ (by simpa using hx0)
+
+omit [IsStrictOrderedRing K] in
+/-- Restricting a quadratic form to a subspace cannot increase its negative index. -/
+theorem sigNeg_restrict_le (Q : _root_.QuadraticForm K M) (W : Subspace K M) :
+    sigNeg (Q.restrict W) ≤ sigNeg Q := by
+  obtain ⟨U, hUrank, hUneg⟩ := exists_finrank_eq_sigNeg_and_negDef (Q.restrict W)
+  rw [← hUrank, ← Submodule.finrank_map_subtype_eq W U]
+  apply le_sigNeg_of_negDef (V := U.map W.subtype)
+  rintro ⟨_, ⟨x, hx, rfl⟩⟩ hx0
+  rw [QuadraticMap.restrict_apply, neg_apply]
+  exact hUneg ⟨x, hx⟩ (by simpa using hx0)
+
 /-- A quadratic form is positive-definite exactly when its negative index vanishes and its
 radical is trivial. -/
 @[grind =]
