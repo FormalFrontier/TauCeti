@@ -169,7 +169,6 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieE
     leftInvariantDerivationEquivGroupLieAlgebra_apply]
 
 /-- The inverse model-space isometry cancels the canonical Lie equivalence. -/
-@[simp]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply
     [FiniteDimensional ℝ E] (D : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
