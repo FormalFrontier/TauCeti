@@ -100,9 +100,9 @@ theorem card_elementaryTwoQuotient_eq_two_pow_twoRank :
 be strict for real fields because forgetting positivity is only a surjection. -/
 theorem classGroupTwoRank_le_twoRank :
     TauCeti.ClassGroup.twoRank (𝓞 K) ≤ twoRank K := by
-  rw [TauCeti.ClassGroup.twoRank_def, twoRank_def]
-  exact LinearMap.finrank_le_finrank_of_surjective
-    (toClassGroupElementaryTwoQuotient_surjective K)
+  rw [TauCeti.ClassGroup.twoRank_def, ← TauCeti.twoRank_def]
+  exact TauCeti.twoRank_le_twoRank_of_surjective
+    (toClassGroup (K := K)) toClassGroup_surjective
 
 /-- For a totally complex field, the elementary-2 quotients of the narrow and ordinary class
 groups are linearly equivalent over `ZMod 2`. -/
@@ -123,7 +123,7 @@ by forgetting positivity. -/
 /-- **For a totally complex field, the narrow and ordinary class-group 2-ranks agree.** -/
 theorem twoRank_eq_classGroupTwoRank [IsTotallyComplex K] :
     twoRank K = TauCeti.ClassGroup.twoRank (𝓞 K) := by
-  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
-  exact (toClassGroupElementaryTwoQuotientEquiv K).finrank_eq
+  rw [TauCeti.ClassGroup.twoRank_def, ← TauCeti.twoRank_def]
+  exact TauCeti.twoRank_eq_of_mulEquiv (toClassGroupEquiv (K := K))
 
 end TauCeti.NumberField.NarrowClassGroup
