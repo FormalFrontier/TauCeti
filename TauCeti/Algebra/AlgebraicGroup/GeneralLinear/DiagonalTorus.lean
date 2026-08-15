@@ -90,7 +90,6 @@ noncomputable def diagonalTorusPoints :
 
 /-- Reading the image of a split-torus point as an invertible matrix gives the diagonal matrix
 whose diagonal entries are the coordinates of that point. -/
-@[simp]
 theorem pointsMulEquiv_diagonalTorusPoints
     (f : WithConv
       (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ)) →ₐ[R] A)) :
@@ -115,7 +114,6 @@ theorem diagonalTorusPoints_injective :
 variable {B : Type w} [CommRing B] [Algebra R B]
 
 /-- The diagonal embedding is natural in the value algebra. -/
-@[simp]
 theorem mapValue_diagonalTorusPoints (phi : A →ₐ[R] B)
     (f : WithConv
       (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ)) →ₐ[R] A)) :
