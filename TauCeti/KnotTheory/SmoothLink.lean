@@ -105,8 +105,8 @@ theorem component_injective {k : ℕ} (L : SmoothLink I M k) :
   intro i j hij
   apply L.pairwise_disjoint_range.eq
   intro hdisj
-  rw [hij, disjoint_self, Set.bot_eq_empty] at hdisj
-  exact (range_nonempty (L.component j)).ne_empty hdisj
+  exact (hdisj.ne (range_nonempty _).ne_empty)
+    (congrArg (fun K : SmoothKnot I M => Set.range K) hij)
 
 end SmoothLink
 
