@@ -6,6 +6,9 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Grading
+-- Private: `TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
+-- `TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one` are used only inside a proof.
+import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 
 /-!
 # Contraction against the `ℤ/2`-grading
@@ -26,12 +29,10 @@ The degree bookkeeping is in `ZMod 2`, where lowering and raising the degree by 
 map, so `evenOdd Q (i + 1)` and `evenOdd Q (i - 1)` are the same submodule; the statement below
 names the first.
 
-The parity statement is proved by induction over the grading, whose base case hands back
-membership in a power of `LinearMap.range (ι Q)` whose exponent is a `ZMod.val`. Reading such a
-membership as "a scalar" or "a vector" is recorded once, in
+The parity statement is proved by induction over the grading; its base case is read off by
 `TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
-`TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`, and reused by the inductions
-downstream that share the same base case.
+`TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`, which are general facts about the
+grading and live with it.
 
 ## Main results
 
@@ -54,23 +55,6 @@ namespace TauCeti.CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   {Q : QuadraticForm R M}
-
-/-! ### The base case of an induction over the grading -/
-
-/-- An element of the `(0 : ZMod 2).val`-th power of the range of `ι` is a scalar. This is the
-`i = 0` half of the `range_ι_pow` hypothesis of `CliffordAlgebra.evenOdd_induction`. -/
-theorem exists_algebraMap_of_mem_range_ι_pow_zero {v : CliffordAlgebra Q}
-    (hv : v ∈ LinearMap.range (ι Q) ^ (0 : ZMod 2).val) :
-    ∃ r : R, algebraMap R (CliffordAlgebra Q) r = v :=
-  Submodule.mem_one.mp (by simpa using hv)
-
-/-- An element of the `(1 : ZMod 2).val`-th power of the range of `ι` is a vector. This is the
-`i = 1` half of the `range_ι_pow` hypothesis of `CliffordAlgebra.evenOdd_induction`. -/
-theorem exists_ι_of_mem_range_ι_pow_one {v : CliffordAlgebra Q}
-    (hv : v ∈ LinearMap.range (ι Q) ^ (1 : ZMod 2).val) : ∃ a, ι Q a = v := by
-  simpa [ZMod.val_one] using hv
-
-/-! ### Contraction, the grade involution and the parity -/
 
 /-- **The grade involution anticommutes with contraction.** Contracting against a linear
 functional lowers the degree by one, hence swaps the even and odd parts of the Clifford algebra,

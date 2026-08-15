@@ -9,8 +9,11 @@ public import TauCeti.RepresentationTheory.Spin.Representation
 -- Private: `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` is used only inside a proof, and
 -- `CliffordAction` imports this module privately too, so it is not available transitively.
 import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
--- Private: `Subrepresentation.toSubmodule_bot` and `Subrepresentation.toSubmodule_top` are used
--- only inside a proof.
+-- Private: `TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
+-- `TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one` are used only inside a proof.
+import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
+-- Private: `Subrepresentation.mem_toSubmodule`, `Subrepresentation.toSubmodule_bot` and
+-- `Subrepresentation.toSubmodule_top` are used only inside a proof.
 import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
@@ -225,32 +228,30 @@ def spinMinusSubrep (hline : P.line = ⊥) : Subrepresentation (spinRep Q P) whe
   apply_mem_toSubmodule g _ hv := spinMinus_invariant P hline g ⟨_, hv, rfl⟩
 
 @[simp]
-theorem spinPlusSubrep_toSubmodule (hline : P.line = ⊥) :
+theorem toSubmodule_spinPlusSubrep (hline : P.line = ⊥) :
     (spinPlusSubrep P hline).toSubmodule = spinPlus Q P :=
   -- `(rfl)`, not `rfl`: the body of `spinPlusSubrep` is not `@[expose]`d.
   (rfl)
 
 @[simp]
-theorem spinMinusSubrep_toSubmodule (hline : P.line = ⊥) :
+theorem toSubmodule_spinMinusSubrep (hline : P.line = ⊥) :
     (spinMinusSubrep P hline).toSubmodule = spinMinus Q P :=
   -- `(rfl)`, not `rfl`: the body of `spinMinusSubrep` is not `@[expose]`d.
   (rfl)
 
 /-- Membership in the even half-spin subrepresentation is membership in `S⁺`. A goal about a
 `Subrepresentation` is stated through its `SetLike` membership, on which
-`TauCeti.spinPlusSubrep_toSubmodule` cannot fire. -/
+`TauCeti.toSubmodule_spinPlusSubrep` cannot fire. -/
 @[simp]
 theorem mem_spinPlusSubrep (hline : P.line = ⊥) {s : ExteriorAlgebra K P.W} :
     s ∈ spinPlusSubrep P hline ↔ s ∈ spinPlus Q P := by
-  rw [← spinPlusSubrep_toSubmodule P hline]
-  exact Iff.rfl
+  rw [← Subrepresentation.mem_toSubmodule, toSubmodule_spinPlusSubrep]
 
 /-- Membership in the odd half-spin subrepresentation is membership in `S⁻`. -/
 @[simp]
 theorem mem_spinMinusSubrep (hline : P.line = ⊥) {s : ExteriorAlgebra K P.W} :
     s ∈ spinMinusSubrep P hline ↔ s ∈ spinMinus Q P := by
-  rw [← spinMinusSubrep_toSubmodule P hline]
-  exact Iff.rfl
+  rw [← Subrepresentation.mem_toSubmodule, toSubmodule_spinMinusSubrep]
 
 /-- **The spin representation is the sum of its two half-spin subrepresentations.** This is
 `TauCeti.isCompl_spinPlus_spinMinus` read in the lattice of subrepresentations of `spinRep`, where
