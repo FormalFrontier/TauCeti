@@ -70,6 +70,7 @@ theorem forall_nonpos_iff_sigPos_eq_zero (Q : _root_.QuadraticForm K M) :
 
 /-- A quadratic form is positive-definite exactly when its negative index vanishes and its
 radical is trivial. -/
+@[grind =]
 theorem posDef_iff_sigNeg_eq_zero_and_radical_eq_bot (Q : _root_.QuadraticForm K M) :
     Q.PosDef ↔ sigNeg Q = 0 ∧ Q.radical = ⊥ := by
   let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
