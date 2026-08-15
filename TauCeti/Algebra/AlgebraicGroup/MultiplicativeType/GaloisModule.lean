@@ -67,16 +67,24 @@ noncomputable instance instDistribMulActionCocharacterLattice
   smul_zero σ := LinearMap.map_zero _
   smul_add σ f g := LinearMap.map_add _ f g
 
+/-- Scalar multiplication on the cocharacter lattice is the existing contragredient Galois
+representation. -/
+theorem cocharacterLattice_smul_eq (T : MultiplicativeTypeCommHopfAlgCat k)
+    (σ : Field.absoluteGaloisGroup k) (f : cocharacterLattice T) :
+    σ • f = cocharacterGaloisRepresentation T σ f :=
+  rfl
+
 /-- The contragredient action evaluates by applying the inverse Galois element to the
 character. -/
 @[simp]
-theorem cocharacterLattice_smul_apply (T : MultiplicativeTypeCommHopfAlgCat k)
+theorem cocharacterLatticeLinearEquivDual_smul_apply (T : MultiplicativeTypeCommHopfAlgCat k)
     (σ : Field.absoluteGaloisGroup k)
     (f : cocharacterLattice T)
     (x : CommHopfAlgCat.additiveCharacterGroup T.obj.obj) :
     cocharacterLatticeLinearEquivDual T (σ • f) x =
-      cocharacterLatticeLinearEquivDual T f (σ⁻¹ • x) :=
-  cocharacterGaloisRepresentation_apply_apply T σ f x
+      cocharacterLatticeLinearEquivDual T f (σ⁻¹ • x) := by
+  rw [cocharacterLattice_smul_eq]
+  exact cocharacterGaloisRepresentation_apply_apply T σ f x
 
 /-- The character--cocharacter pairing is invariant under the diagonal action expressed through
 the Galois-module structures on both factors. -/
@@ -116,7 +124,10 @@ theorem stabilizer_cocharacterLattice_isOpen (T : MultiplicativeTypeCommHopfAlgC
     apply (cocharacterLatticeLinearEquivDual T).injective
     apply LinearMap.ext
     intro x
-    rw [cocharacterLattice_smul_apply]
+    rw [cocharacterLatticeLinearEquivDual_smul_apply]
+    -- `ofMulDistribMulAction_apply_apply` evaluates in `Additive` notation, whereas the
+    -- character-group action uses scalar notation on that abbreviation. No public lemma bridges
+    -- these definitionally equal forms, so the two `change`s below cross this type-tag boundary.
     have hlinear :
         Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
             (CommHopfAlgCat.geometricCharacterGroup T.obj.obj) σ⁻¹ =
