@@ -62,20 +62,21 @@ noncomputable def antipode : CoordinateRing R m →ₐ[R] CoordinateRing R m :=
     ((↑((h.toGL : Matrix.GeneralLinearGroup m (CoordinateRing R m))⁻¹) :
       Matrix m m (CoordinateRing R m)) ij.1.1 ij.1.2)
 
+/-- The inverse of the generic matrix is upper unitriangular. -/
+theorem isUpperUnitriangular_inv_genericMatrix :
+    ((genericMatrix R m)⁻¹).IsUpperUnitriangular := by
+  simpa using UpperUnitriangularGroup.mem_iff.mp
+    ((upperUnitriangularGroup m (CoordinateRing R m)).inv_mem
+      (UpperUnitriangularGroup.toGL_mem_upperUnitriangularGroup
+        (isUpperUnitriangular_genericMatrix R m)))
+
 /-- The antipode evaluates the generic matrix at its inverse. -/
 @[simp]
 theorem map_antipode_genericMatrix :
     (genericMatrix R m).map (antipode R m) =
       (genericMatrix R m)⁻¹ := by
-  have hinv :
-      (↑((isUpperUnitriangular_genericMatrix R m).toGL⁻¹) :
-        Matrix m m (CoordinateRing R m)).IsUpperUnitriangular :=
-    UpperUnitriangularGroup.mem_iff.mp
-      ((upperUnitriangularGroup m (CoordinateRing R m)).inv_mem
-        (UpperUnitriangularGroup.toGL_mem_upperUnitriangularGroup
-          (isUpperUnitriangular_genericMatrix R m)))
   rw [antipode]
-  simpa using map_aeval_genericMatrix R m _ hinv
+  simpa using map_aeval_genericMatrix R m _ (isUpperUnitriangular_inv_genericMatrix R m)
 
 /-- The antipode on every generic matrix entry is the corresponding inverse-matrix entry. -/
 @[simp]
@@ -241,6 +242,26 @@ theorem coordinateHopfAlgebra_counit_X (ij : Index m) :
     Coalgebra.counit (R := R) (A := coordinateHopfAlgebra R m)
         (coordinateHopfAlgebraAlgEquiv R m (MvPolynomial.X ij)) = 0 := by
   rw [coordinateHopfAlgebra_counit_apply, counit_X]
+
+/-- The bundled comultiplication formula on every generic matrix entry. -/
+@[simp]
+theorem coordinateHopfAlgebra_comul_genericMatrix_apply (i j : m) :
+    Coalgebra.comul (R := R) (A := coordinateHopfAlgebra R m)
+        (coordinateHopfAlgebraAlgEquiv R m (genericMatrix R m i j)) =
+      ∑ k : m,
+        coordinateHopfAlgebraAlgEquiv R m (genericMatrix R m i k) ⊗ₜ[R]
+          coordinateHopfAlgebraAlgEquiv R m (genericMatrix R m k j) := by
+  rw [coordinateHopfAlgebra_comul_apply, comul_genericMatrix_apply, map_sum]
+  simp
+
+/-- The bundled counit on every generic matrix entry is the corresponding identity-matrix
+entry. -/
+@[simp]
+theorem coordinateHopfAlgebra_counit_genericMatrix_apply (i j : m) :
+    Coalgebra.counit (R := R) (A := coordinateHopfAlgebra R m)
+        (coordinateHopfAlgebraAlgEquiv R m (genericMatrix R m i j)) =
+      if i = j then 1 else 0 := by
+  rw [coordinateHopfAlgebra_counit_apply, counit_genericMatrix_apply]
 
 /-- The bundled antipode sends a strict-upper coordinate to the corresponding inverse-matrix
 entry. -/

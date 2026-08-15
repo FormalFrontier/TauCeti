@@ -141,6 +141,7 @@ theorem map_counit_genericMatrix : (genericMatrix R m).map (counit R m) = 1 := b
     (Matrix.isUpperUnitriangular_one (m := m) (R := R))
 
 /-- Comultiplication on every generic matrix entry is matrix multiplication. -/
+@[simp]
 theorem comul_genericMatrix_apply (i j : m) :
     comul R m (genericMatrix R m i j) =
       ∑ k : m, genericMatrix R m i k ⊗ₜ[R] genericMatrix R m k j := by
@@ -187,7 +188,7 @@ theorem comul_coassoc :
   rw [Finset.sum_comm]
   rfl
 
-/-- Applying the counit in the left tensor factor is the right-unit identification. -/
+/-- Applying the counit in the left tensor factor is the left-unit identification. -/
 theorem comul_rTensor_counit :
     (Algebra.TensorProduct.map (counit R m) (.id R (CoordinateRing R m))).comp
         (comul R m) =
@@ -203,7 +204,7 @@ theorem comul_rTensor_counit :
     simp [hki.symm]
   · simp
 
-/-- Applying the counit in the right tensor factor is the left-unit identification. -/
+/-- Applying the counit in the right tensor factor is the right-unit identification. -/
 theorem comul_lTensor_counit :
     (Algebra.TensorProduct.map (.id R (CoordinateRing R m)) (counit R m)).comp
         (comul R m) =
