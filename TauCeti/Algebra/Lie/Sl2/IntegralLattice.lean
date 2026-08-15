@@ -449,8 +449,10 @@ noncomputable def kostantRepresentation :
 /-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
 @[simp]
 theorem kostantRepresentation_ι_apply (x : 𝔰𝔩₂) :
-    kostantRepresentation n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) = rep ℚ n x := by
-  rw [kostantRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply]
+    kostantRepresentation n
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ 𝔰𝔩₂ (TensorAlgebra.ι ℚ x)) =
+      rep ℚ n x := by
+  rw [kostantRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply']
 
 /-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
 raising, lowering, and Cartan operators. -/
@@ -458,7 +460,8 @@ theorem kostantRepresentation_ι_slFinTwoBasis (i : Fin 3) :
     kostantRepresentation n
         (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ i)) =
       ![raise ℚ n, lower ℚ n, diag ℚ n] i := by
-  rw [kostantRepresentation_ι_apply, rep_apply_basis]
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, kostantRepresentation_ι_apply,
+    rep_apply_basis]
 
 private def integralLatticeStabilizer : Subring U𝔰𝔩₂ where
   carrier := {u | ∀ v ∈ integralLattice n, kostantRepresentation n u v ∈ integralLattice n}
