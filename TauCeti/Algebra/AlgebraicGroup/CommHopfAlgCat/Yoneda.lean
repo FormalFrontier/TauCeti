@@ -453,6 +453,16 @@ private theorem isRepresentable_unopUnop_comp_iff_isCorepresentable
             Quiver.Hom.unop_op] }
     exact r.isRepresentable
 
+/-- Presenting the corepresentable underlying points functor on the double opposite of
+`CommAlgCat R` produces a representable presheaf on `(CommAlgCat R)ᵒᵖ`. -/
+instance pointsFunctorForget_unopUnop_isRepresentable
+    (H : Type u) [CommRing H] [_root_.HopfAlgebra R H] :
+    (unopUnop (CommAlgCat.{u} R) ⋙
+      (HopfAlgebra.pointsFunctor (R := R) (H := H) ⋙ forget GrpCat.{u})).IsRepresentable :=
+  (isRepresentable_unopUnop_comp_iff_isCorepresentable
+    (R := R) (HopfAlgebra.pointsFunctor (R := R) (H := H) ⋙
+      forget GrpCat.{u})).mpr inferInstance
+
 /-- Transport the generic essential image of group-object Yoneda across the double-opposite
 equivalence. -/
 private theorem essImage_yonedaGrp_doubleOp :
