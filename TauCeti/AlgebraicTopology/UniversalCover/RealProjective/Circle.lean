@@ -20,7 +20,7 @@ continuous bijection from a compact space to a Hausdorff space, hence a homeomor
 ## Main declarations
 
 * `TauCeti.RealProjectiveSpace.Line.toCircle`: the squared complex coordinate on `RP¹`.
-* `TauCeti.RealProjectiveSpace.Line.toCircle_mk`: evaluation of `toCircle` on a unit vector.
+* `TauCeti.RealProjectiveSpace.Line.toCircle_apply_mk`: evaluation of `toCircle` on a unit vector.
 * `TauCeti.RealProjectiveSpace.Line.homeomorphCircle`: the homeomorphism `RP¹ ≃ₜ Circle`.
 * `TauCeti.RealProjectiveSpace.Line.homeomorphCircle_apply`: forward evaluation of
   `homeomorphCircle`.
@@ -58,7 +58,7 @@ def toCircle : RealProjectiveSpace 1 → Circle :=
 
 /-- On a unit-vector representative, `toCircle` is the square of its complex coordinate. -/
 @[simp]
-lemma toCircle_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
+lemma toCircle_apply_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     toCircle (mk 1 x) = EuclideanSpace.sphereHomeomorphCircle x ^ 2 :=
   RealProjectiveSpace.lift_mk 1 _ _ x
 
@@ -66,14 +66,14 @@ lemma toCircle_mk (x : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
 private lemma continuous_toCircle : Continuous toCircle :=
   (isQuotientMap_mk 1).continuous_iff.mpr
     ((EuclideanSpace.sphereHomeomorphCircle.continuous.pow 2).congr
-      fun x => (toCircle_mk x).symm)
+      fun x => (toCircle_apply_mk x).symm)
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is injective. -/
 private lemma injective_toCircle : Function.Injective toCircle := by
   intro x y hxy
   obtain ⟨x, rfl⟩ := mk_surjective 1 x
   obtain ⟨y, rfl⟩ := mk_surjective 1 y
-  rw [toCircle_mk, toCircle_mk] at hxy
+  rw [toCircle_apply_mk, toCircle_apply_mk] at hxy
   have hxy' : (EuclideanSpace.sphereHomeomorphCircle x : ℂ) ^ 2 =
       (EuclideanSpace.sphereHomeomorphCircle y : ℂ) ^ 2 := by
     rw [← Circle.coe_pow, ← Circle.coe_pow, hxy]
@@ -89,7 +89,7 @@ private lemma surjective_toCircle : Function.Surjective toCircle := by
   intro z
   obtain ⟨w, hw⟩ := (Circle.isQuotientCoveringMap_npow 2).surjective z
   refine ⟨mk 1 (EuclideanSpace.sphereHomeomorphCircle.symm w), ?_⟩
-  rw [toCircle_mk, EuclideanSpace.sphereHomeomorphCircle.apply_symm_apply]
+  rw [toCircle_apply_mk, EuclideanSpace.sphereHomeomorphCircle.apply_symm_apply]
   exact hw
 
 /-- The squared-coordinate map from `RP¹` to the complex circle is bijective. -/
@@ -114,7 +114,7 @@ lemma homeomorphCircle_apply (x : RealProjectiveSpace 1) :
 @[simp]
 lemma homeomorphCircle_symm_apply (w : sphere (0 : EuclideanSpace ℝ (Fin 2)) 1) :
     homeomorphCircle.symm (EuclideanSpace.sphereHomeomorphCircle w ^ 2) = mk 1 w := by
-  rw [Homeomorph.symm_apply_eq, homeomorphCircle_apply, toCircle_mk]
+  rw [Homeomorph.symm_apply_eq, homeomorphCircle_apply, toCircle_apply_mk]
 
 /-- A natural basepoint of `RP¹`: the antipodal class of the Euclidean unit vector corresponding
 to `1 : ℂ` under `sphereHomeomorphCircle`. -/

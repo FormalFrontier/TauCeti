@@ -42,8 +42,6 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
   `AddCircle p` is `Multiplicative ℤ`.
 * `TauCeti.AddCircle.fundamentalGroupMulEquiv`: for a nonzero real period, the fundamental
   group of `AddCircle p` (based at any point with a chosen lift) is `Multiplicative ℤ`.
-* `TauCeti.AddCircle.fundamentalGroupMulEquivAt`: the fundamental group of `AddCircle p` based at
-  any point `x`, choosing a lift.
 * `TauCeti.AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using
   the lift `0 : ℝ`.
 * `TauCeti.UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
@@ -231,73 +229,11 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (hp : p ≠ 0) {x : AddCircle p}
   fundamentalGroupMulEquivInt_eq_one_iff (AddCircle.isCoveringMap_coe p)
     (not_isOfFinAddOrder_of_isAddTorsionFree hp) e γ
 
-/-- For any two lifts `e, e'` of the same basepoint `x : AddCircle p`, the fundamental group
-equivalences agree. -/
-lemma fundamentalGroupMulEquiv_eq_of_mem (hp : p ≠ 0) {x : AddCircle p}
-    (e e' : ((↑) : ℝ → AddCircle p) ⁻¹' {x}) :
-    fundamentalGroupMulEquiv p hp e = fundamentalGroupMulEquiv p hp e' := by
-  apply MulEquiv.ext
-  intro γ
-  rw [fundamentalGroupMulEquiv_apply_eq_iff]
-  obtain ⟨g, hg⟩ :=
-    (AddCircle.isAddQuotientCoveringMap_coe p).toMultiplicative.exists_toPermFiber_eq e e'
-  have hmono :=
-    (AddCircle.isAddQuotientCoveringMap_coe p).monodromy_toPermFiber (γ := γ) (e := e) (g := g)
-  set n : ℤ := (fundamentalGroupMulEquiv p hp e' γ).toAdd
-  have hn : ((AddCircle.isCoveringMap_coe p).monodromy γ e' : ℝ) = (e' : ℝ) + n • p :=
-    (fundamentalGroupMulEquiv_apply_eq_iff p hp e' γ (Multiplicative.ofAdd n)).mp rfl
-  rw [← hg] at hn
-  rw [hmono] at hn
-  have hval : ∀ (u : ((↑) : ℝ → AddCircle p) ⁻¹' {x}),
-      (((AddCircle.isAddQuotientCoveringMap_coe p).toMultiplicative.toPermFiber x g u) : ℝ) =
-        (g.toAdd : ℝ) + (u : ℝ) := fun _ => rfl
-  rw [hval, hval] at hn
-  linarith
-
-/-- The fundamental group of the circle `AddCircle p`, based at any point `x : AddCircle p`, is
-`Multiplicative ℤ`. The isomorphism is obtained from `fundamentalGroupMulEquiv` by choosing a
-real lift of `x` via `QuotientAddGroup.mk_surjective`. -/
-noncomputable def fundamentalGroupMulEquivAt (hp : p ≠ 0) (x : AddCircle p) :
-    FundamentalGroup (AddCircle p) x ≃* Multiplicative ℤ :=
-  let h := QuotientAddGroup.mk_surjective x
-  fundamentalGroupMulEquiv p hp ⟨h.choose, by simpa using h.choose_spec⟩
-
-/-- The fundamental-group isomorphism `fundamentalGroupMulEquivAt` at basepoint `x` agrees with
-`fundamentalGroupMulEquiv` instantiated at any chosen real lift `e` of `x`. -/
-lemma fundamentalGroupMulEquivAt_eq (hp : p ≠ 0) {x : AddCircle p}
-    (e : ((↑) : ℝ → AddCircle p) ⁻¹' {x}) :
-    fundamentalGroupMulEquivAt p hp x = fundamentalGroupMulEquiv p hp e :=
-  fundamentalGroupMulEquiv_eq_of_mem p hp _ e
-
-/-- Characterization of the integer assigned by `fundamentalGroupMulEquivAt`: a loop class maps
-to `n` exactly when its monodromy translate of any chosen lift `e` differs by `n • p`. -/
-lemma fundamentalGroupMulEquivAt_apply_eq_iff (hp : p ≠ 0) {x : AddCircle p}
-    (e : ((↑) : ℝ → AddCircle p) ⁻¹' {x}) (γ : FundamentalGroup (AddCircle p) x)
-    (n : Multiplicative ℤ) :
-    fundamentalGroupMulEquivAt p hp x γ = n ↔
-      ((AddCircle.isCoveringMap_coe p).monodromy γ e : ℝ) = (e : ℝ) + n.toAdd • p := by
-  rw [fundamentalGroupMulEquivAt_eq p hp e]
-  exact fundamentalGroupMulEquiv_apply_eq_iff p hp e γ n
-
-/-- A loop class maps to `1` under `fundamentalGroupMulEquivAt` exactly when its monodromy fixes
-the chosen lift `e`. -/
-lemma fundamentalGroupMulEquivAt_eq_one_iff (hp : p ≠ 0) {x : AddCircle p}
-    (e : ((↑) : ℝ → AddCircle p) ⁻¹' {x}) (γ : FundamentalGroup (AddCircle p) x) :
-    fundamentalGroupMulEquivAt p hp x γ = 1 ↔
-      (AddCircle.isCoveringMap_coe p).monodromy γ e = e := by
-  rw [fundamentalGroupMulEquivAt_eq p hp e]
-  exact fundamentalGroupMulEquiv_eq_one_iff p hp e γ
-
 /-- The fundamental group of the circle `AddCircle p` based at `0`, with the lift `0 : ℝ`, is
 `Multiplicative ℤ`. -/
 noncomputable def fundamentalGroupMulEquivZero (hp : p ≠ 0) :
     FundamentalGroup (AddCircle p) 0 ≃* Multiplicative ℤ :=
   fundamentalGroupMulEquiv p hp ⟨0, by simp⟩
-
-/-- The general-basepoint equivalence at `0` agrees with the basepoint-`0` specialization. -/
-lemma fundamentalGroupMulEquivAt_zero (hp : p ≠ 0) :
-    fundamentalGroupMulEquivAt p hp 0 = fundamentalGroupMulEquivZero p hp :=
-  fundamentalGroupMulEquivAt_eq p hp ⟨0, by simp⟩
 
 /-- Characterization of the integer assigned by the basepoint-`0` specialization. -/
 lemma fundamentalGroupMulEquivZero_apply_eq_iff (hp : p ≠ 0)
