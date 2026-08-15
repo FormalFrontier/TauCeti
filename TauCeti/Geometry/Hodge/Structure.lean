@@ -5,9 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.DirectSum.Module
-public import Mathlib.LinearAlgebra.FreeModule.Basic
 public import Mathlib.Order.Monotone.Basic
-public import Mathlib.RingTheory.Finiteness.Basic
 public import TauCeti.Geometry.Hodge.Conjugation
 import Mathlib.Order.ModularLattice
 import Mathlib.Tactic.Abel
@@ -29,7 +27,7 @@ is outside the scope of this module.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn`: Pure Hodge structure of weight `n` on a complex
   vector space `W` equipped with a conjugation `ω`.
 * `TauCeti.Geometry.Hodge.HodgeStructure`: Pure Hodge structure on the complexification of a
-  finitely generated free `ℤ`-module `V` (an abbreviation for `HodgeStructureOn`).
+  `ℤ`-module `V` (an abbreviation for `HodgeStructureOn`).
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.piece`: The `(p, q)`-piece
   $H^{p,q} = F^p \cap \overline{F^{n-p}}$ with $q := n - p$.
 * `TauCeti.Geometry.Hodge.HodgeStructureOn.IsEffective`: Predicate stating that $F^{n+1} = 0$,
@@ -85,10 +83,9 @@ public structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
 /-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of a
-finitely generated free `ℤ`-module (lattice) `V`.
+`ℤ`-module (lattice) `V`.
 This is an abbreviation for `HodgeStructureOn Vℂ (latticeConjugation hℂ) n`. -/
-public abbrev HodgeStructure [Module.Free ℤ V] [Module.Finite ℤ V]
-    (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
+public abbrev HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
   HodgeStructureOn Vℂ (latticeConjugation hℂ) n
 
 namespace HodgeStructureOn
