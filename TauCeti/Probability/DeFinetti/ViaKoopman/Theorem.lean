@@ -75,9 +75,8 @@ theorem conditionallyIIDWith_invariantConditional_pathLaw [StandardBorelSpace α
     ((measurable_invariants_invariantConditionalProbabilityMeasure).mono
       (MeasurableSpace.invariants_le (shift α)) le_rfl) ?_
   intro r k hk S hS B hB
-  exact
-    hρ.measure_preimage_invariantConditionalProbabilityMeasure_inter_blockCylinder_eq_setLIntegral
-      hk hS hB
+  exact hρ.measure_inter_blockCylinder_eq_setLIntegral_of_measurableSet_invariants hk
+    (measurable_invariants_invariantConditionalProbabilityMeasure hS) hB
 
 /-- **A contractable process is conditionally i.i.d.**, via the Koopman route. -/
 theorem conditionallyIID_of_contractable_viaKoopman [StandardBorelSpace α] [Nonempty α]
