@@ -6,7 +6,9 @@ module
 
 public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.Data.Complex.Basic
+public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
+public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
@@ -14,7 +16,7 @@ public import Mathlib.RingTheory.IsTensorProduct
 
 This file develops the `ℤ → ℚ → ℂ` base-change tower used by pure and mixed Hodge structures.
 Given abstract models `Vℚ` and `Vℂ` of the rational and complex scalar extensions of an integral
-module `Vℤ`, `TauCeti.Hodge.rationalToComplexEquiv` canonically identifies `ℂ ⊗[ℚ] Vℚ` with
+module `Vℤ`, `TauCeti.Hodge.rationalToComplexLinearEquiv` canonically identifies `ℂ ⊗[ℚ] Vℚ` with
 `Vℂ`. Rational subspaces and rational linear maps can therefore be complexified directly inside
 the chosen ambient complex spaces.
 
@@ -24,10 +26,12 @@ structures, whose rational and complex cohomology spaces arrive as abstract base
 
 ## Main declarations
 
-* `TauCeti.Hodge.rationalToComplexEquiv`: the canonical tower equivalence from an abstract
+* `TauCeti.Hodge.rationalToComplexLinearEquiv`: the canonical tower equivalence from an abstract
   rationalification to an abstract complexification.
 * `TauCeti.Hodge.rationalToComplexSubmodule`: the complexification of a rational subspace inside
   the chosen ambient complexification.
+* `TauCeti.Hodge.rationalToComplexSubmoduleEquiv`: the canonical identification of the concrete
+  complexification `ℂ ⊗[ℚ] W` of a rational subspace with that complexified subspace.
 * `TauCeti.Hodge.rationalMapToComplex`: scalar extension of a rational linear map between two
   abstract base-change models.
 
@@ -59,7 +63,7 @@ variable {ιℚ : Vℤ →ₗ[ℤ] Vℚ} {ιℂ : Vℤ →ₗ[ℤ] Vℂ}
 
 /-- The canonical tower equivalence from an abstract rational base change to an abstract complex
 base change of the same integral module. -/
-noncomputable def rationalToComplexEquiv (hℚ : IsBaseChange ℚ ιℚ)
+noncomputable def rationalToComplexLinearEquiv (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) : ℂ ⊗[ℚ] Vℚ ≃ₗ[ℂ] Vℂ :=
   (TensorProduct.AlgebraTensorModule.congr (LinearEquiv.refl ℂ ℂ) hℚ.equiv.symm).trans
     ((TensorProduct.AlgebraTensorModule.cancelBaseChange ℤ ℚ ℂ ℂ Vℤ).trans hℂ.equiv)
@@ -67,16 +71,16 @@ noncomputable def rationalToComplexEquiv (hℚ : IsBaseChange ℚ ιℚ)
 /-- The tower equivalence carries an integral vector through the rationalification to the same
 integral vector in the complexification. -/
 @[simp]
-theorem rationalToComplexEquiv_one_tmul_ι (hℚ : IsBaseChange ℚ ιℚ)
+theorem rationalToComplexLinearEquiv_one_tmul_ι (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (x : Vℤ) :
-    rationalToComplexEquiv hℚ hℂ (1 ⊗ₜ[ℚ] ιℚ x) = ιℂ x := by
-  simp [rationalToComplexEquiv]
+    rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] ιℚ x) = ιℂ x := by
+  simp [rationalToComplexLinearEquiv]
 
 /-- The complexification of a rational subspace, realized inside the chosen ambient
 complexification. -/
-noncomputable def rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
+@[expose] noncomputable def rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) : Submodule ℂ Vℂ :=
-  (W.baseChange ℂ).map (rationalToComplexEquiv hℚ hℂ).toLinearMap
+  (W.baseChange ℂ).map (rationalToComplexLinearEquiv hℚ hℂ).toLinearMap
 
 /-- The complexification of a rational subspace is the complex span of its rational vectors in
 the ambient complexification. -/
@@ -84,7 +88,7 @@ theorem rationalToComplexSubmodule_eq_span (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
     rationalToComplexSubmodule hℚ hℂ W =
       Submodule.span ℂ
-        ((fun x : Vℚ ↦ rationalToComplexEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) '' (W : Set Vℚ)) := by
+        ((fun x : Vℚ ↦ rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) '' (W : Set Vℚ)) := by
   rw [rationalToComplexSubmodule, Submodule.baseChange_eq_span, Submodule.map_span]
   congr 1
   ext x
@@ -96,9 +100,9 @@ theorem rationalToComplexSubmodule_eq_span (hℚ : IsBaseChange ℚ ιℚ)
     exact ⟨1 ⊗ₜ[ℚ] y, ⟨y, hy, rfl⟩, by simp⟩
 
 /-- A rational vector belonging to a rational subspace belongs to its complexification. -/
-theorem rationalToComplexEquiv_one_tmul_mem (hℚ : IsBaseChange ℚ ιℚ)
+theorem rationalToComplexLinearEquiv_one_tmul_mem (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) {W : Submodule ℚ Vℚ} {x : Vℚ} (hx : x ∈ W) :
-    rationalToComplexEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) ∈
+    rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x) ∈
       rationalToComplexSubmodule hℚ hℂ W := by
   rw [rationalToComplexSubmodule_eq_span]
   exact Submodule.subset_span ⟨x, hx, rfl⟩
@@ -121,6 +125,23 @@ theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)
     rationalToComplexSubmodule hℚ hℂ (⊤ : Submodule ℚ Vℚ) = ⊤ := by
   simp [rationalToComplexSubmodule]
 
+/-- The canonical equivalence from the concrete complexification `ℂ ⊗[ℚ] W` of a rational
+subspace onto the complexification of `W` inside the ambient complexification. -/
+@[expose] noncomputable def rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
+    ℂ ⊗[ℚ] W ≃ₗ[ℂ] rationalToComplexSubmodule hℚ hℂ W :=
+  (Submodule.toBaseChange.toLinearEquiv ℂ W).trans
+    ((rationalToComplexLinearEquiv hℚ hℂ).ofSubmodules (W.baseChange ℂ)
+      (rationalToComplexSubmodule hℚ hℂ W) rfl)
+
+/-- The equivalence onto the complexification of a rational subspace is the tower equivalence
+applied to the base change of the inclusion of that subspace. -/
+@[simp]
+theorem coe_rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) (x : ℂ ⊗[ℚ] W) :
+    (rationalToComplexSubmoduleEquiv hℚ hℂ W x : Vℂ) =
+      rationalToComplexLinearEquiv hℚ hℂ (W.subtype.baseChange ℂ x) := rfl
+
 section Map
 
 variable {V'ℤ : Type u'} {V'ℚ : Type v'} {V'ℂ : Type w'}
@@ -134,19 +155,19 @@ base-change models. -/
 noncomputable def rationalMapToComplex (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (h'ℚ : IsBaseChange ℚ ι'ℚ)
     (h'ℂ : IsBaseChange ℂ ι'ℂ) (f : Vℚ →ₗ[ℚ] V'ℚ) : Vℂ →ₗ[ℂ] V'ℂ :=
-  (rationalToComplexEquiv h'ℚ h'ℂ).toLinearMap ∘ₗ
-    f.baseChange ℂ ∘ₗ (rationalToComplexEquiv hℚ hℂ).symm.toLinearMap
+  (rationalToComplexLinearEquiv h'ℚ h'ℂ).toLinearMap ∘ₗ
+    f.baseChange ℂ ∘ₗ (rationalToComplexLinearEquiv hℚ hℂ).symm.toLinearMap
 
 /-- Complexification of a rational map sends the image of a rational vector to the image of its
 rational value. -/
 @[simp]
-theorem rationalMapToComplex_rationalToComplexEquiv_one_tmul
+theorem rationalMapToComplex_rationalToComplexLinearEquiv_one_tmul
     (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ)
     (h'ℚ : IsBaseChange ℚ ι'ℚ) (h'ℂ : IsBaseChange ℂ ι'ℂ)
     (f : Vℚ →ₗ[ℚ] V'ℚ) (x : Vℚ) :
     rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f
-        (rationalToComplexEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) =
-      rationalToComplexEquiv h'ℚ h'ℂ (1 ⊗ₜ[ℚ] f x) := by
+        (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x)) =
+      rationalToComplexLinearEquiv h'ℚ h'ℂ (1 ⊗ₜ[ℚ] f x) := by
   simp [rationalMapToComplex]
 
 /-- Complexification sends the identity rational map to the identity complex map. -/
@@ -155,11 +176,7 @@ theorem rationalMapToComplex_id (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) :
     rationalMapToComplex hℚ hℂ hℚ hℂ (LinearMap.id : Vℚ →ₗ[ℚ] Vℚ) = LinearMap.id := by
   ext x
-  obtain ⟨y, rfl⟩ := (rationalToComplexEquiv hℚ hℂ).surjective x
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
-  | tmul z x => simp [rationalMapToComplex]
+  simp [rationalMapToComplex]
 
 /-- Complexification sends the zero rational map to the zero complex map. -/
 @[simp]
@@ -197,11 +214,7 @@ theorem rationalMapToComplex_comp
       rationalMapToComplex h'ℚ h'ℂ h''ℚ h''ℂ g ∘ₗ
         rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f := by
   ext x
-  obtain ⟨y, rfl⟩ := (rationalToComplexEquiv hℚ hℂ).surjective x
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
-  | tmul z x => simp [rationalMapToComplex]
+  simp [rationalMapToComplex, LinearMap.baseChange_comp]
 
 end Comp
 
@@ -221,7 +234,7 @@ theorem map_rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
   · rintro ⟨_, ⟨y, hy, rfl⟩, rfl⟩
     exact ⟨f y, ⟨y, hy, rfl⟩, by simp⟩
   · rintro ⟨_, ⟨y, hy, rfl⟩, rfl⟩
-    exact ⟨rationalToComplexEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y), ⟨y, hy, rfl⟩, by simp⟩
+    exact ⟨rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y), ⟨y, hy, rfl⟩, by simp⟩
 
 /-- A rational map carrying one rational subspace into another carries their complexifications
 into one another. -/
