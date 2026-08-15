@@ -38,6 +38,9 @@ arbitrary commutative base ring.
 * `TauCeti.GeneralLinear.Borel.coordinateHopfAlgebra`: the quotient coordinate Hopf algebra.
 * `TauCeti.GeneralLinear.Borel.groupScheme`: the resulting closed subgroup scheme of `GL₂`.
 * `TauCeti.GeneralLinear.Borel.inclusion`: its closed immersion into the named `GL₂` group scheme.
+* `TauCeti.GeneralLinear.Borel.rootSubgroup`: the positive root subgroup morphism `x₀₁ : 𝔾ₐ → B`.
+* `TauCeti.GeneralLinear.Borel.rootSubgroup_comp_inclusion`: composing the Borel root subgroup with
+  the inclusion is the ambient `GL₂` root subgroup `x₀₁`.
 * `TauCeti.GeneralLinear.Borel.pointsMulEquiv`: its algebra-valued points are upper-triangular
   invertible matrices.
 
@@ -45,6 +48,8 @@ arbitrary commutative base ring.
 
 * J. S. Milne, *Algebraic Groups* (2017), §§12 and 21.
 * R. W. Carter, *Simple Groups of Lie Type* (1972), §8.2.
+* The quotient coordinate Hopf algebra, closed subgroup scheme packaging, and algebra-valued
+  points construction adapt `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`.
 -/
 
 public section
@@ -197,7 +202,7 @@ noncomputable def inclusion : groupScheme R ⟶ GeneralLinear.groupScheme R 2 :=
 
 /-- The underlying scheme morphism of the Borel inclusion is the quotient-spectrum inclusion
 followed by the canonical identification with the named general-linear group scheme. -/
-theorem inclusion_hom_left :
+private theorem inclusion_hom_left :
     (inclusion R).hom.hom.left =
       (eqToHom (groupScheme_def R)).hom.hom.left ≫
         (CommHopfAlgCat.quotientSpecι
@@ -392,21 +397,160 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
   rw [GeneralLinear.pointsMulEquiv_mapValue, pointsMulEquiv_coe]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
+  rw [Matrix.GeneralLinearGroup.map_apply, Matrix.GeneralLinearGroup.map_apply]
   rfl
 
 /-- The positive simple-root subgroup `x₀₁` of `GL₂` lands in the Borel subgroup on every
 algebra-valued point. -/
 theorem rootSubgroupPoints_mem
     (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
-    GeneralLinear.rootSubgroupPoints (show (0 : Fin 2) ≠ 1 by decide) f ∈
+    GeneralLinear.rootSubgroupPoints (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1) f ∈
       CommHopfAlgCat.quotientPointsSubgroup
         (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
         (CommAlgCat.of R A) := by
   apply (mem_definingPointsSubgroup_iff R _).mpr
   rw [GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
-  exact GL2Borel.mem_iff.mpr (by
-    simp [Matrix.transvection])
+  exact GL2Borel.mem_iff.mpr (by simp [Matrix.transvection])
 
 end Points
+
+section RootSubgroup
+
+/-- The coordinate morphism of the positive root subgroup into the Borel coordinate Hopf algebra. -/
+noncomputable def rootSubgroupCoordinateMap :
+    coordinateHopfAlgebra R ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
+  CommHopfAlgCat.liftQuotient (definingHopfIdeal R)
+    (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1))
+    (by
+      rw [definingHopfIdeal_toIdeal, Ideal.span_le, Set.singleton_subset_iff]
+      change (GeneralLinear.rootSubgroupCoordinateMap
+        (by decide : (0 : Fin 2) ≠ 1)).hom (lowerLeftCoordinate R) = 0
+      have hmem := rootSubgroupPoints_mem (R := R)
+        (A := AdditiveGroup.coordinateHopfAlgebra R)
+        (WithConv.toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R)))
+      rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff] at hmem
+      have h0 := hmem (lowerLeftCoordinate R)
+        (HopfIdeal.mem_toIdeal.mp
+          (definingHopfIdeal_toIdeal R ▸ Ideal.mem_span_singleton_self _))
+      have heq :
+          GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1)
+              (WithConv.toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))) =
+            (CommHopfAlgCat.mapPointsFunctor
+              (GeneralLinear.rootSubgroupCoordinateMap
+                (by decide : (0 : Fin 2) ≠ 1))).app
+              (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R))
+              (WithConv.toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))) := by
+        rw [GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app]
+      rw [heq, CommHopfAlgCat.mapPointsFunctor_app_apply] at h0
+      exact h0)
+
+/-- Precomposing the Borel root-subgroup coordinate morphism with the quotient coordinate map
+yields the ambient general-linear root-subgroup coordinate morphism. -/
+@[simp]
+theorem coordinateMap_comp_rootSubgroupCoordinateMap :
+    coordinateMap R ≫ rootSubgroupCoordinateMap R =
+      GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1) :=
+  CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+
+/-- **The positive simple-root subgroup of `GL₂` inside the Borel subgroup scheme**: the affine
+group-scheme morphism `x₀₁ : 𝔾ₐ → B` whose value on points is `c ↦ x₀₁(c)`. -/
+noncomputable def rootSubgroup :
+    AdditiveGroup.groupScheme R ⟶ groupScheme R :=
+  eqToHom (AdditiveGroup.groupScheme_def R) ≫
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+      (rootSubgroupCoordinateMap R).op ≫
+    eqToHom (groupScheme_def R).symm
+
+/-- The root subgroup into the Borel subgroup scheme is relative spectrum applied contravariantly
+to its coordinate morphism, transported across the named presentations of `𝔾ₐ` and `B`. -/
+theorem rootSubgroup_def :
+    rootSubgroup R =
+      eqToHom (AdditiveGroup.groupScheme_def R) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (rootSubgroupCoordinateMap R).op ≫
+        eqToHom (groupScheme_def R).symm := by
+  unfold rootSubgroup
+  rfl
+
+/-- Composing the Borel root-subgroup morphism with the Borel inclusion into `GL₂` gives the
+standard general-linear root subgroup `x₀₁`. -/
+@[simp]
+theorem rootSubgroup_comp_inclusion :
+    rootSubgroup R ≫ inclusion R =
+      GeneralLinear.rootSubgroup (by decide : (0 : Fin 2) ≠ 1) := by
+  rw [rootSubgroup_def, inclusion, GeneralLinear.rootSubgroup_def]
+  unfold groupSchemeι
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  rw [CommHopfAlgCat.quotientSpecι_def]
+  have hmap :
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (rootSubgroupCoordinateMap R).op ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+            (definingHopfIdeal R)).op =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+        (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).op := by
+    rw [← Functor.map_comp, ← op_comp, ← coordinateMap_def,
+      coordinateMap_comp_rootSubgroupCoordinateMap]
+  congr 1
+  rw [← Category.assoc, hmap]
+  rfl
+
+variable (A : Type u) [CommRing A] [Algebra R A]
+
+/-- The positive root subgroup morphism lands in the expected upper-triangular matrix on
+algebra-valued points. -/
+theorem pointsMulEquiv_rootSubgroupCoordinateMap
+    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
+    ((pointsMulEquiv (R := R) (A := A)
+        (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom)) : GL2Borel A) : GL (Fin 2) A) =
+      GeneralLinear.pointsMulEquiv 2
+        (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) f) := by
+  have hcoe := pointsMulEquiv_coe (R := R) (A := A)
+    (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom))
+  rw [← hcoe]
+  congr 1
+  rw [CommHopfAlgCat.quotientPointsHom_apply]
+  have hcomp2 :
+      (rootSubgroupCoordinateMap R).hom.toAlgHom.comp
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+            (definingHopfIdeal R)).hom.toAlgHom =
+        (GeneralLinear.rootSubgroupCoordinateMap
+          (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom := by
+    ext x
+    exact congrFun (congrArg (fun (m : _root_.CommHopfAlgCat.Hom _ _) => (m.hom : _ → _))
+      (CommHopfAlgCat.mkQuotient_comp_liftQuotient (definingHopfIdeal R)
+        (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)) _)) x
+  have heq :
+      toConv ((toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom.toAlgHom)).ofConv.comp
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+          (definingHopfIdeal R)).hom.toAlgHom) =
+      toConv (f.ofConv.comp
+        (GeneralLinear.rootSubgroupCoordinateMap
+          (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom) := by
+    congr 1
+    ext x
+    change f.ofConv ((rootSubgroupCoordinateMap R).hom.toAlgHom
+      ((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+        (definingHopfIdeal R)).hom.toAlgHom x)) = _
+    rw [show (rootSubgroupCoordinateMap R).hom.toAlgHom
+      ((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+        (definingHopfIdeal R)).hom.toAlgHom x) =
+      ((rootSubgroupCoordinateMap R).hom.toAlgHom.comp
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+          (definingHopfIdeal R)).hom.toAlgHom) x from rfl]
+    rw [hcomp2]
+    rfl
+  have hGL :
+      (GeneralLinear.rootSubgroupPoints (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1) f).ofConv =
+        f.ofConv.comp
+          (GeneralLinear.rootSubgroupCoordinateMap
+            (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom := by
+    rw [← GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app
+      (by decide : (0 : Fin 2) ≠ 1) (CommAlgCat.of R A) f,
+      CommHopfAlgCat.mapPointsFunctor_app_apply, WithConv.ofConv_toConv]
+  rw [heq, ← WithConv.toConv_ofConv (GeneralLinear.rootSubgroupPoints
+    (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1) f), hGL]
+
+end RootSubgroup
 
 end TauCeti.GeneralLinear.Borel
