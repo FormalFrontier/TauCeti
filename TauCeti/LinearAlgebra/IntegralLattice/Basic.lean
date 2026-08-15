@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Module.Lattice
 public import Mathlib.LinearAlgebra.BilinearForm.DualLattice
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
+public import TauCeti.Algebra.Module.Lattice
 
 /-!
 # Integral symmetric lattices
@@ -99,6 +99,10 @@ noncomputable def rationalBasis (L : IntegralLattice V) :
 theorem rationalBasis_apply (L : IntegralLattice V) (i : Module.Free.ChooseBasisIndex ℤ L) :
     L.rationalBasis i = (Module.Free.chooseBasis ℤ L i : V) :=
   Basis.extendOfIsLattice_apply ℚ (Module.Free.chooseBasis ℤ L) i
+
+/-- The ambient rational vector space of an integral lattice is finite-dimensional. -/
+theorem finiteDimensional (L : IntegralLattice V) : FiniteDimensional ℚ V :=
+  Module.Finite.of_basis L.rationalBasis
 
 /-- The `ℤ`-finrank of the carrier of an integral lattice equals the `ℚ`-finrank of the ambient
 space. -/

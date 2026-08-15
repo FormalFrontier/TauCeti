@@ -34,6 +34,10 @@ and `𝒮ℒ` are ranges of `mapGL` out of the same `SL₂(ℤ)`, so mathlib's
 corollaries of it. `slash_eq_of_mem_SLnZ` is the form consumers want: real invariance under `𝒮ℒ`
 gives rational invariance under `SLnZ 2`.
 
+The file also carries the rational forms of mathlib's two behaviour-at-`i∞` slash lemmas, in the
+`UpperHalfPlane` namespace: they belong beside `rat_slash`, which is the bridge their proofs
+cross, rather than in any module about particular matrices.
+
 ## Main results
 
 * `ModularForm.rat_slash`: the rational action is the real one at the mapped matrix.
@@ -48,6 +52,9 @@ gives rational invariance under `SLnZ 2`.
   of the `SLnZ 2` / `𝒮ℒ` correspondence.
 * `ModularForm.slash_eq_of_mem_SLnZ`: real slash-invariance under `𝒮ℒ` gives rational
   slash-invariance under `SLnZ 2`.
+* `UpperHalfPlane.IsBoundedAtImInfty.rat_slash`, `UpperHalfPlane.IsZeroAtImInfty.rat_slash`: the
+  rational forms of mathlib's `.slash` lemmas — boundedness and vanishing at `i∞` survive a
+  rational slash whose matrix has vanishing `(1, 0)` entry.
 
 ## Provenance
 
@@ -168,6 +175,27 @@ lemma slash_eq_of_mem_SLnZ (k : ℤ) {f : ℍ → ℂ} (hf : ∀ γ ∈ 𝒮ℒ,
   exact hf _ (map_ratCast_mem_SL hδ)
 
 end ModularForm
+
+namespace UpperHalfPlane
+
+/-- **The rational form of `IsBoundedAtImInfty.slash`.** Mathlib's lemma is stated for the real
+slash; the matrix and its hypothesis are given here over `ℚ`, since
+`Matrix.GeneralLinearGroup.map` acts entrywise and so carries `g 1 0 = 0` along
+`algebraMap ℚ ℝ`. -/
+lemma IsBoundedAtImInfty.rat_slash (k : ℤ) {g : GL (Fin 2) ℚ}
+    (hg : (g : Matrix (Fin 2) (Fin 2) ℚ) 1 0 = 0) {f : ℍ → ℂ} (hf : IsBoundedAtImInfty f) :
+    IsBoundedAtImInfty (f ∣[k] g) := by
+  rw [ModularForm.rat_slash]
+  exact hf.slash k (by simp [hg])
+
+/-- **The rational form of `IsZeroAtImInfty.slash`.** -/
+lemma IsZeroAtImInfty.rat_slash (k : ℤ) {g : GL (Fin 2) ℚ}
+    (hg : (g : Matrix (Fin 2) (Fin 2) ℚ) 1 0 = 0) {f : ℍ → ℂ} (hf : IsZeroAtImInfty f) :
+    IsZeroAtImInfty (f ∣[k] g) := by
+  rw [ModularForm.rat_slash]
+  exact hf.slash k (by simp [hg])
+
+end UpperHalfPlane
 
 /-- A form invariant under `𝒮ℒ` is fixed by the rational slash action of every element of
 `SLnZ 2`. -/

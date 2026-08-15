@@ -6,6 +6,7 @@ module
 
 public import Mathlib.AlgebraicGeometry.Group.Affine
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 
 /-!
 # Scheme-valued points of affine Hopf spectra
@@ -40,6 +41,8 @@ Hopf algebra.
   becomes postcomposition by its contravariant `hopfSpec` image.
 * `TauCeti.CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain`: contravariance for arbitrary
   named point equivalences characterized by their underlying spectrum maps.
+* `TauCeti.CommHopfAlgCat.pointsPresheafIsoSchemePointsPresheaf`: the natural comparison between
+  convolution points and relative-spectrum points.
 -/
 
 public section
@@ -246,7 +249,62 @@ theorem pointMulEquivOfPresentation_mapDomain
   rw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
   rfl
 
+/-- Scheme-valued affine-group points, restricted along relative `Spec` and regarded as a
+type-valued presheaf on opposite commutative algebras. -/
+noncomputable abbrev schemePointsPresheaf (H : _root_.CommHopfAlgCat.{u} R) :
+    ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ ⥤ Type u :=
+  (AlgebraicGeometry.algSpec (CommRingCat.of R)).op ⋙
+    yoneda.obj
+      ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H)).X
+
+/-- The scheme-points presheaf at `A` is the set of morphisms over `Spec R` from `Spec A` to
+`Spec H`. -/
+theorem schemePointsPresheaf_obj (H : _root_.CommHopfAlgCat.{u} R)
+    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ) :
+    (schemePointsPresheaf H).obj A =
+      ((Spec (CommRingCat.of A.unop.unop)).asOver (Spec (CommRingCat.of R)) ⟶
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op H)).X) :=
+  rfl
+
+/-- **Convolution points agree naturally with scheme-valued points.** This is Mathlib's
+`Spec.mapMulEquiv`, assembled over all value algebras. -/
+noncomputable def pointsPresheafIsoSchemePointsPresheaf
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    HopfAlgebra.pointsPresheaf H ≅ schemePointsPresheaf H :=
+  NatIso.ofComponents
+    (fun A =>
+      (AlgebraicGeometry.Spec.mapMulEquiv
+        (R := R) (S := H) (T := A.unop.unop)).toEquiv.toIso)
+    (by
+      intro A B f
+      ext p
+      exact mapMulEquiv_mapValue H f.unop.unop p)
+
+-- These component lemmas are deliberately not `@[simp]`: `simpNF` first unfolds the presheaf
+-- object expressions in their left-hand sides through functor composition and Yoneda evaluation.
+
+/-- The comparison from convolution points to scheme-valued points is Mathlib's spectrum-points
+equivalence at every value algebra. -/
+theorem pointsPresheafIsoSchemePointsPresheaf_hom_app_apply
+    (H : _root_.CommHopfAlgCat.{u} R)
+    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ)
+    (p : WithConv (H →ₐ[R] A.unop.unop)) :
+    (pointsPresheafIsoSchemePointsPresheaf H).hom.app A p =
+      AlgebraicGeometry.Spec.mapMulEquiv p := by
+  rw [pointsPresheafIsoSchemePointsPresheaf]
+  rfl
+
+/-- The inverse comparison recovers the convolution point represented by a relative spectrum
+morphism. -/
+theorem pointsPresheafIsoSchemePointsPresheaf_inv_app_apply
+    (H : _root_.CommHopfAlgCat.{u} R)
+    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ)
+    (p : (schemePointsPresheaf H).obj A) :
+    (pointsPresheafIsoSchemePointsPresheaf H).inv.app A p =
+      AlgebraicGeometry.Spec.mapMulEquiv.symm p := by
+  rw [pointsPresheafIsoSchemePointsPresheaf]
+  rfl
+
 end CommHopfAlgCat
 
 end TauCeti
-

@@ -16,10 +16,11 @@ together with one further term when `p ∤ N`. This file defines that first sum,
 and records that `f ↦ heckeSlashUpperTri k p f` is `ℂ`-linear: it preserves zero, addition and
 scalar multiplication. (Linearity in `f` only; this is not yet bundled as a `LinearMap`.)
 
-Why these representatives: mathlib's `IsBoundedAtImInfty.slash` requires `g 1 0 = 0`, so
-boundedness of a slash at the cusp `∞` is available exactly for upper-triangular `g`. That is why
-the classical arguments run over `!![1, b; 0, p]` rather than over arbitrary coset
-representatives. That hypothesis is discharged by `upperTriRep_apply_one_zero` in
+Why these representatives: mathlib's `IsBoundedAtImInfty.slash` requires `g 1 0 = 0`, so it
+applies when `g` is upper triangular. (Sufficient, not necessary — the zero function stays
+bounded after slashing by any matrix.) Having that hypothesis to hand is why the classical
+arguments are organised around `!![1, b; 0, p]`. It is discharged by `upperTriRep_apply_one_zero`
+in
 `HeckeRing/GL2/CosetDecomposition.lean`, the `(1, 0)` case of `upperTriGL_apply_eq_zero_of_lt` —
 the entrywise description of the representatives is not restated.
 

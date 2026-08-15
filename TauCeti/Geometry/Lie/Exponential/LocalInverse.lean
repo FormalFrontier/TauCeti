@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 public import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
+import Mathlib.Analysis.Calculus.FDeriv.OfCompLeft
 public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 public import Mathlib.Geometry.Manifold.LocalDiffeomorph
 /-!
@@ -19,6 +20,8 @@ tangent-space exponential.
 
 * `mulInvariantLog`: a local logarithm from the group to its tangent Lie algebra.
 * `lieLog`: the same chosen local logarithm, valued in left-invariant derivations.
+* `hasFDerivAt_mulInvariantLogChart_one`: the coordinate logarithm has derivative the identity
+  at the identity coordinate.
 * `eventually_mulInvariantExp_log`: exponential followed after logarithm is locally the identity.
 * `eventually_mulInvariantLog_exp`: logarithm followed after exponential is locally the identity.
 * `isLocalDiffeomorphAt_lieExp_zero`: the canonical Lie-group exponential is a local
@@ -218,6 +221,24 @@ theorem contDiffAt_mulInvariantLogChart_one [FiniteDimensional ℝ E]
     exact hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)
   · rw [hlog, hφ]
     exact contDiffAt_mulInvariantExpChart_zero (I := I) (G := G)
+
+/-- The coordinate logarithm has derivative the identity at the identity coordinate. -/
+theorem hasFDerivAt_mulInvariantLogChart_one [FiniteDimensional ℝ E]
+    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    HasFDerivAt (mulInvariantLogChart (I := I) (G := G))
+      (ContinuousLinearMap.id ℝ E) (extChartAt I (1 : G) (1 : G)) := by
+  let φ := mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)
+  have hlog : φ.symm (extChartAt I (1 : G) (1 : G)) = 0 :=
+    mulInvariantLogChart_one (I := I) (G := G)
+  have h := φ.hasFDerivAt_symm
+    one_mem_mulInvariantExpOpenPartialHomeomorph_target
+    (f' := ContinuousLinearEquiv.refl ℝ E) (by
+      have hφ : (φ : E → E) = mulInvariantExpChart (I := I) (G := G) := by
+        funext v
+        exact mulInvariantExpOpenPartialHomeomorph_apply (I := I) (G := G) v
+      rw [hlog, hφ]
+      simpa using hasFDerivAt_mulInvariantExpChart_zero (I := I) (G := G))
+  simpa [mulInvariantLogChart, φ] using h
 
 /-- The local logarithm of a group element, valued in the tangent Lie algebra at the identity. It
 is the coordinate logarithm transported back from the manifold model space. Its values outside
