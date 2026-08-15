@@ -37,9 +37,11 @@ extra rewrites in those proofs (`map_C`, `coe_mapRingHom`) only move that `C` pa
 The companion transport for `ω` is **not** here. It cannot be: `WeierstrassCurve.ω` does not exist
 in this repository or in the pinned Mathlib, and neither does the `map_ω` such a proof would rewrite
 with. `DivisionPolynomial/Invariant.lean` lists both among what it deliberately leaves out, and
-records the chain still missing for them — `redInvarDenom` together with
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`. `evalEval_ω` belongs with that
-work rather than here.
+records the chain still missing for them — `redInvarDenom` together with the upper part of
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, the source's names for it. The
+lower two links are `isEllipticNet_normEDS` and `invarNum_mul_invarDenom`, both present, so what
+remains is `invar₂_normEDS` and `redInvar_normEDS`. `evalEval_ω` belongs with that work rather
+than here.
 
 ## Provenance
 
@@ -97,9 +99,9 @@ lemma evalEval_φ : (W.φ n).evalEval x y = polyEval W x y (curve.φ n) := by
 `Universal.Field` gives a normalised EDS, hence an elliptic sequence — over the universal field,
 with no hypothesis on any coefficient.
 
-This is the form `Universal.lean` needs: it records `universalNormEDS_ne_zero` and
-`universalNormEDS_mem_nonZeroDivisors` as absent because they rest on `normEDS 2 3 2 = id`, which
-requires recognising the universal division polynomials as a `normEDS` in the first place. -/
+The proof recognises the family as a `normEDS` outright, which is what puts the whole `normEDS` API
+— including `NormEDS.lean`'s `universalNormEDS_ne_zero` — within reach of the universal division
+polynomials. -/
 lemma isEllipticSequence_polyToField_ψ :
     IsEllipticSequence fun n : ℤ ↦ polyToField (curve.ψ n) := by
   have h : (fun n : ℤ ↦ polyToField (curve.ψ n))
