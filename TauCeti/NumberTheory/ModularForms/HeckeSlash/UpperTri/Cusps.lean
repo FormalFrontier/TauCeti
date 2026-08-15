@@ -5,8 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.BoundedAtCusp
-public import TauCeti.NumberTheory.ModularForms.Cusps.Rat
+public import TauCeti.NumberTheory.ModularForms.Cusps.Rat.Slash
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Sum
 
 /-!
@@ -60,31 +59,29 @@ variable (k : ℤ) (p : ℕ)
 lemma isZeroAt_slash_upperTriRep {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
     (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsZeroAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ)
     (b : Fin p) :
-    c.IsZeroAt (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) k := by
-  rw [ModularForm.rat_slash]
-  exact OnePoint.IsZeroAt.smul_iff.mp (hf _ (hc.smul_map_ratCast _))
+    c.IsZeroAt (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) k :=
+  OnePoint.isZeroAt_rat_slash k (upperTriRep p b) hf hc
 
 /-- **Slashing by an upper-triangular representative preserves boundedness at a cusp.** -/
 lemma isBoundedAt_slash_upperTriRep {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
     (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsBoundedAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ)
     (b : Fin p) :
-    c.IsBoundedAt (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) k := by
-  rw [ModularForm.rat_slash]
-  exact OnePoint.IsBoundedAt.smul_iff.mp (hf _ (hc.smul_map_ratCast _))
+    c.IsBoundedAt (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) k :=
+  OnePoint.isBoundedAt_rat_slash k (upperTriRep p b) hf hc
 
 /-- **The upper-triangular slash sum vanishes at every cusp** when the function does. -/
 lemma isZeroAt_heckeSlashUpperTri {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
     (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsZeroAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ) :
     c.IsZeroAt (heckeSlashUpperTri k p f) k := by
   rw [heckeSlashUpperTri_def]
-  exact OnePoint.IsZeroAt.sum fun b _ ↦ isZeroAt_slash_upperTriRep k p hf hc b
+  exact OnePoint.isZeroAt_sum_rat_slash k _ _ hf hc
 
 /-- **The upper-triangular slash sum is bounded at every cusp** when the function is. -/
 lemma isBoundedAt_heckeSlashUpperTri {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic] {f : ℍ → ℂ}
     (hf : ∀ c : OnePoint ℝ, IsCusp c Γ → c.IsBoundedAt f k) {c : OnePoint ℝ} (hc : IsCusp c Γ) :
     c.IsBoundedAt (heckeSlashUpperTri k p f) k := by
   rw [heckeSlashUpperTri_def]
-  exact OnePoint.IsBoundedAt.sum fun b _ ↦ isBoundedAt_slash_upperTriRep k p hf hc b
+  exact OnePoint.isBoundedAt_sum_rat_slash k _ _ hf hc
 
 end HeckeRing.GL2
 
