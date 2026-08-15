@@ -93,18 +93,10 @@ private theorem raise_pow_apply_of_le {k : ℕ}
       have hj : (j : ℕ) + k ≤ n := by dsimp [j]; omega
       have hj_eq : (j : ℕ) + k = (i : ℕ) + (k + 1) := by dsimp [j]; omega
       rw [ih j hj]
-      rw [show (((j : ℕ) + k).descFactorial k : K) = (((i : ℕ) + (k + 1)).descFactorial k : K) by
-        rw [hj_eq]]
+      simp only [hj_eq]
       rw [Nat.descFactorial_succ]
       have hfactor : (i : ℕ) + (k + 1) - k = (i : ℕ) + 1 := by omega
       rw [hfactor]
-      have hidx :
-          (⟨(j : ℕ) + k, by omega⟩ : Fin (n + 1)) =
-            ⟨(i : ℕ) + (k + 1), by omega⟩ := by
-        ext
-        dsimp [j]
-        omega
-      rw [hidx]
       push_cast
       ring
 
@@ -321,43 +313,47 @@ theorem mem_integralLattice_iff {v : Sl2Std ℚ n} :
     v ∈ integralLattice n ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = v i :=
   Iff.rfl
 
-/-- Cast an integer coordinate vector into the standard integral lattice. -/
-def integerCoordinatesLinearMap :
+private def integerCoordinatesLinearMap :
     (Fin (n + 1) → ℤ) →ₗ[ℤ] integralLattice n where
   toFun z := ⟨ofIntCoords n z, (mem_integralLattice_iff n).2 fun i => ⟨z i, rfl⟩⟩
   map_add' x y := Subtype.ext (ofIntCoords_add n x y)
   map_smul' z x := Subtype.ext (ofIntCoords_zsmul n z x)
 
-/-- The forward map on integer coordinate vectors acts coordinatewise by casting to `ℚ`. -/
 @[simp]
-theorem integerCoordinatesLinearMap_apply_coe (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
+private theorem integerCoordinatesLinearMap_apply_coe (z : Fin (n + 1) → ℤ)
+    (i : Fin (n + 1)) :
     ((integerCoordinatesLinearMap n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
   rfl
+
+private theorem integerCoordinatesLinearMap_bijective :
+    Function.Bijective (integerCoordinatesLinearMap n) := ⟨by
+  intro x y hxy
+  funext i
+  have hi : ((integerCoordinatesLinearMap n x : integralLattice n) : Sl2Std ℚ n) i =
+      ((integerCoordinatesLinearMap n y : integralLattice n) : Sl2Std ℚ n) i := by
+    rw [hxy]
+  rw [integerCoordinatesLinearMap_apply_coe, integerCoordinatesLinearMap_apply_coe] at hi
+  exact Int.cast_injective hi, by
+  rintro ⟨v, hv⟩
+  rw [mem_integralLattice_iff] at hv
+  choose z hz using hv
+  refine ⟨z, ?_⟩
+  apply Subtype.ext
+  funext i
+  exact hz i⟩
 
 /-- Integer coordinate vectors are linearly equivalent to the standard integral lattice. -/
 noncomputable def integerCoordinatesLinearEquiv :
     (Fin (n + 1) → ℤ) ≃ₗ[ℤ] integralLattice n :=
-  LinearEquiv.ofBijective (integerCoordinatesLinearMap n) ⟨by
-    intro x y hxy
-    funext i
-    have hi : ((integerCoordinatesLinearMap n x : integralLattice n) : Sl2Std ℚ n) i =
-        ((integerCoordinatesLinearMap n y : integralLattice n) : Sl2Std ℚ n) i := by
-      rw [hxy]
-    rw [integerCoordinatesLinearMap_apply_coe, integerCoordinatesLinearMap_apply_coe] at hi
-    exact Int.cast_injective hi, by
-    rintro ⟨v, hv⟩
-    rw [mem_integralLattice_iff] at hv
-    choose z hz using hv
-    refine ⟨z, ?_⟩
-    apply Subtype.ext
-    funext i
-    exact hz i⟩
+  LinearEquiv.ofBijective (integerCoordinatesLinearMap n)
+    (integerCoordinatesLinearMap_bijective n)
 
 /-- Forward evaluation of the coordinate linear equivalence on a coordinate vector. -/
 @[simp]
 theorem integerCoordinatesLinearEquiv_apply_coe (z : Fin (n + 1) → ℤ) (i : Fin (n + 1)) :
     ((integerCoordinatesLinearEquiv n z : integralLattice n) : Sl2Std ℚ n) i = (z i : ℚ) := by
-  rfl
+  rw [integerCoordinatesLinearEquiv, LinearEquiv.ofBijective_apply]
+  exact integerCoordinatesLinearMap_apply_coe n z i
 
 /-- Inverse evaluation of the coordinate linear equivalence yields the integer coordinates. -/
 @[simp]
@@ -450,14 +446,19 @@ noncomputable def kostantRepresentation :
     U𝔰𝔩₂ →ₐ[ℚ] Module.End ℚ (Sl2Std ℚ n) :=
   _root_.UniversalEnvelopingAlgebra.lift ℚ (rep ℚ n)
 
+/-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
+@[simp]
+theorem kostantRepresentation_ι_apply (x : 𝔰𝔩₂) :
+    kostantRepresentation n (_root_.UniversalEnvelopingAlgebra.ι ℚ x) = rep ℚ n x := by
+  rw [kostantRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply]
+
 /-- The enveloping-algebra representation sends the three standard `sl₂` basis elements to the
 raising, lowering, and Cartan operators. -/
 theorem kostantRepresentation_ι_slFinTwoBasis (i : Fin 3) :
     kostantRepresentation n
         (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ i)) =
       ![raise ℚ n, lower ℚ n, diag ℚ n] i := by
-  rw [kostantRepresentation, _root_.UniversalEnvelopingAlgebra.lift_ι_apply,
-    rep_apply_basis]
+  rw [kostantRepresentation_ι_apply, rep_apply_basis]
 
 private def integralLatticeStabilizer : Subring U𝔰𝔩₂ where
   carrier := {u | ∀ v ∈ integralLattice n, kostantRepresentation n u v ∈ integralLattice n}
