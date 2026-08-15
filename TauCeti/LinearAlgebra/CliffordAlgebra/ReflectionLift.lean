@@ -159,15 +159,6 @@ theorem reflection_mem_range_pinToOrthogonal_of_isSquare (v : V) [Invertible (Q 
   rw [MonoidHom.mem_range]
   exact ⟨pinReflectionLift Q v hv, pinToOrthogonal_pinReflectionLift Q v hv⟩
 
-private theorem lipschitzToOrthogonal_unitι_eq (v : V) [Invertible (Q v)] :
-    lipschitzToOrthogonal Q ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ =
-      QuadraticMap.reflectionOrthogonal Q v := by
-  apply Subtype.ext
-  rw [QuadraticMap.coe_reflectionOrthogonal]
-  apply LinearEquiv.ext
-  intro m
-  rw [coe_lipschitzToOrthogonal_apply, lipschitzVectorAction_unitι]
-
 /-- If the product of the required normalization scalars is a square, the product of the
 reflections in `v` and `w` lifts through the Spin action. -/
 theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
@@ -200,8 +191,7 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
             ⟨unitι Q w, unitι_mem_lipschitzGroup _⟩ := by
       apply Subtype.ext
       simp only [Subgroup.coe_mul]
-    rw [hmul,
-      map_mul, lipschitzToOrthogonal_unitι_eq, lipschitzToOrthogonal_unitι_eq]
+    rw [hmul, map_mul, lipschitzToOrthogonal_unitι, lipschitzToOrthogonal_unitι]
     apply Subtype.ext
     simp only [Subgroup.coe_mul, QuadraticMap.coe_reflectionOrthogonal]
     exact congrArg (fun x : V ≃ₗ[K] V => x * QuadraticMap.reflection Q w)
