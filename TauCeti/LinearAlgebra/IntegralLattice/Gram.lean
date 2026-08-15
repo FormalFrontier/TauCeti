@@ -34,6 +34,12 @@ discriminant group.
 * `TauCeti.IntegralLattice.gramDet_eq_gramDet`: Gram determinants agree in any two bases.
 * `TauCeti.IntegralLattice.gramDet_ne_zero_iff`: a Gram determinant is nonzero exactly when the
   ambient form is nondegenerate.
+* `TauCeti.IntegralLattice.gramMatrix_ofGramMatrix`: the Gram matrix of `ofGramMatrix` in its
+  canonical basis is `G`.
+* `TauCeti.IntegralLattice.determinant_ofGramMatrix`: the signed determinant of `ofGramMatrix` is
+  the determinant of `G`.
+* `TauCeti.IntegralLattice.discriminant_ofGramMatrix`: the discriminant of `ofGramMatrix` is the
+  absolute determinant of `G`.
 
 ## References
 
@@ -170,6 +176,23 @@ theorem gramDet_ne_zero_iff {ι : Type v} [Fintype ι] [DecidableEq ι]
     ← intCast_gramDet]
   exact (Int.cast_ne_zero (α := ℚ) (n := L.gramDet e)).symm
 
+/-- The Gram matrix of `ofGramMatrix b G hG` in its canonical carrier basis is `G`. -/
+@[simp]
+theorem gramMatrix_ofGramMatrix {ι : Type v} [Fintype ι]
+    (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
+    (ofGramMatrix b G hG).gramMatrix (ofGramMatrix.basis b G hG) = G := by
+  ext i j
+  rw [gramMatrix_apply, ofGramMatrix.basis_apply, ofGramMatrix.basis_apply,
+    integralForm_ofGramMatrix_apply]
+
+/-- The signed Gram determinant of `ofGramMatrix b G hG` in its canonical carrier basis is the
+determinant of `G`. -/
+@[simp]
+theorem gramDet_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
+    (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
+    (ofGramMatrix b G hG).gramDet (ofGramMatrix.basis b G hG) = G.det := by
+  rw [gramDet_def, gramMatrix_ofGramMatrix]
+
 end GramMatrix
 
 section Invariants
@@ -184,6 +207,13 @@ theorem determinant_eq_gramDet (L : IntegralLattice V) {ι : Type v} [Fintype ι
     L.determinant = L.gramDet e := by
   classical
   exact L.gramDet_eq_gramDet _ _
+
+/-- The basis-independent signed determinant of `ofGramMatrix b G hG` is the determinant of `G`. -/
+@[simp]
+theorem determinant_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
+    (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
+    (ofGramMatrix b G hG).determinant = G.det := by
+  rw [determinant_eq_gramDet _ (ofGramMatrix.basis b G hG), gramDet_ofGramMatrix]
 
 /-- The basis-independent determinant is nonzero exactly when the ambient rational form is
 nondegenerate. -/
@@ -209,6 +239,13 @@ theorem discriminant_eq_natAbs_gramDet (L : IntegralLattice V) {ι : Type v} [Fi
     L.discriminant = (L.gramDet e).natAbs := by
   classical
   rw [discriminant_def, L.determinant_eq_gramDet e]
+
+/-- The discriminant of `ofGramMatrix b G hG` is the absolute value of the determinant of `G`. -/
+@[simp]
+theorem discriminant_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
+    (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
+    (ofGramMatrix b G hG).discriminant = G.det.natAbs := by
+  rw [discriminant_def, determinant_ofGramMatrix]
 
 /-- The discriminant is positive exactly when the ambient rational form is nondegenerate. -/
 @[simp]
