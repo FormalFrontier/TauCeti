@@ -68,13 +68,6 @@ theorem forall_nonpos_iff_sigPos_eq_zero (Q : _root_.QuadraticForm K M) :
     (∀ x, Q x ≤ 0) ↔ sigPos Q = 0 := by
   simpa only [neg_apply, neg_nonneg, sigNeg_neg] using forall_nonneg_iff_sigNeg_eq_zero (-Q)
 
-/-- Negating a quadratic form does not change its radical. -/
-@[simp]
-theorem radical_neg {K M : Type*} [CommRing K] [AddCommGroup M] [Module K M]
-    (Q : _root_.QuadraticForm K M) : (-Q).radical = Q.radical := by
-  ext x
-  simp only [QuadraticMap.mem_radical_iff', neg_apply, neg_eq_zero, neg_inj]
-
 /-- A quadratic form is positive-definite exactly when its negative index vanishes and its
 radical is trivial. -/
 theorem posDef_iff_sigNeg_eq_zero_and_radical_eq_bot (Q : _root_.QuadraticForm K M) :

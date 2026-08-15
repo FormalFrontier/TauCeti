@@ -16,6 +16,7 @@ construction consumes: its polar form is `2 • B`, and nondegeneracy passes fro
 
 ## Main results
 
+* `QuadraticMap.radical_neg`: negating a quadratic map does not change its radical.
 * `QuadraticMap.Nondegenerate.ne_zero`: a nondegenerate quadratic form on a nontrivial module is
   nonzero.
 * `LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip`: the polar form of the quadratic form of a
@@ -25,6 +26,19 @@ construction consumes: its polar form is `2 • B`, and nondegeneracy passes fro
 -/
 
 public section
+
+namespace QuadraticMap
+
+variable {R M P : Type*} [CommRing R] [AddCommGroup M] [AddCommGroup P]
+  [Module R M] [Module R P]
+
+/-- Negating a quadratic map does not change its radical. -/
+@[simp]
+theorem radical_neg (Q : QuadraticMap R M P) : (-Q).radical = Q.radical := by
+  ext x
+  simp only [QuadraticMap.mem_radical_iff', neg_apply, neg_eq_zero, neg_inj]
+
+end QuadraticMap
 
 namespace QuadraticMap.Nondegenerate
 

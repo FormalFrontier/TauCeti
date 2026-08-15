@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Basic
+public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.QuadraticForm.Signature
 
 /-!
@@ -107,11 +108,13 @@ def IsDegenerate : Prop := L.radical ≠ ⊥
 def IsIndefinite : Prop := 0 < L.sigPos ∧ 0 < L.sigNeg
 
 /-- Positive-definiteness has its usual elementwise characterization. -/
+@[grind =]
 theorem isPositiveDefinite_iff :
     L.IsPositiveDefinite ↔ ∀ x : V, x ≠ 0 → 0 < L.form x x := by
   rfl
 
 /-- Positive-semidefiniteness has its usual elementwise characterization. -/
+@[grind =]
 theorem isPositiveSemidefinite_iff :
     L.IsPositiveSemidefinite ↔ ∀ x : V, 0 ≤ L.form x x := by
   simp only [IsPositiveSemidefinite]
@@ -119,12 +122,14 @@ theorem isPositiveSemidefinite_iff :
   simp only [L.isSymm, true_and]
 
 /-- Negative-definiteness has its usual elementwise characterization. -/
+@[grind =]
 theorem isNegativeDefinite_iff :
     L.IsNegativeDefinite ↔ ∀ x : V, x ≠ 0 → L.form x x < 0 := by
   simp only [IsNegativeDefinite, QuadraticMap.PosDef, neg_apply,
     LinearMap.BilinMap.toQuadraticMap_apply, neg_pos]
 
 /-- Negative-semidefiniteness has its usual elementwise characterization. -/
+@[grind =]
 theorem isNegativeSemidefinite_iff :
     L.IsNegativeSemidefinite ↔ ∀ x : V, L.form x x ≤ 0 := by
   simp only [IsNegativeSemidefinite]
@@ -132,6 +137,7 @@ theorem isNegativeSemidefinite_iff :
   simp only [L.isSymm.neg, LinearMap.neg_apply, neg_nonneg, true_and]
 
 /-- Positive-semidefiniteness is equivalent to the vanishing of the negative index. -/
+@[grind =]
 theorem isPositiveSemidefinite_iff_sigNeg_eq_zero :
     L.IsPositiveSemidefinite ↔ L.sigNeg = 0 := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
@@ -140,6 +146,7 @@ theorem isPositiveSemidefinite_iff_sigNeg_eq_zero :
     QuadraticForm.forall_nonneg_iff_sigNeg_eq_zero L.form.toQuadraticMap
 
 /-- Negative-semidefiniteness is equivalent to the vanishing of the positive index. -/
+@[grind =]
 theorem isNegativeSemidefinite_iff_sigPos_eq_zero :
     L.IsNegativeSemidefinite ↔ L.sigPos = 0 := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
@@ -148,6 +155,7 @@ theorem isNegativeSemidefinite_iff_sigPos_eq_zero :
     QuadraticForm.forall_nonpos_iff_sigPos_eq_zero L.form.toQuadraticMap
 
 /-- Positive-definiteness is positive-semidefiniteness together with nondegeneracy. -/
+@[grind =]
 theorem isPositiveDefinite_iff_isPositiveSemidefinite_and_nondegenerate :
     L.IsPositiveDefinite ↔ L.IsPositiveSemidefinite ∧ L.form.Nondegenerate := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
@@ -158,6 +166,7 @@ theorem isPositiveDefinite_iff_isPositiveSemidefinite_and_nondegenerate :
   rfl
 
 /-- Positive-definiteness is equivalent to zero null and negative indices. -/
+@[grind =]
 theorem isPositiveDefinite_iff_sigNull_eq_zero_and_sigNeg_eq_zero :
     L.IsPositiveDefinite ↔ L.sigNull = 0 ∧ L.sigNeg = 0 := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
@@ -169,17 +178,19 @@ theorem isPositiveDefinite_iff_sigNull_eq_zero_and_sigNeg_eq_zero :
   exact and_comm
 
 /-- Negative-definiteness is negative-semidefiniteness together with nondegeneracy. -/
+@[grind =]
 theorem isNegativeDefinite_iff_isNegativeSemidefinite_and_nondegenerate :
     L.IsNegativeDefinite ↔ L.IsNegativeSemidefinite ∧ L.form.Nondegenerate := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
   simp only [IsNegativeDefinite]
   rw [L.isNegativeSemidefinite_iff_sigPos_eq_zero,
     QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot]
-  simp only [_root_.sigNeg_neg, QuadraticForm.radical_neg,
+  simp only [_root_.sigNeg_neg, QuadraticMap.radical_neg,
     LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot, L.radical_toQuadraticMap]
   rfl
 
 /-- Negative-definiteness is equivalent to zero positive and null indices. -/
+@[grind =]
 theorem isNegativeDefinite_iff_sigPos_eq_zero_and_sigNull_eq_zero :
     L.IsNegativeDefinite ↔ L.sigPos = 0 ∧ L.sigNull = 0 := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
@@ -191,6 +202,7 @@ theorem isNegativeDefinite_iff_sigPos_eq_zero_and_sigNull_eq_zero :
   rfl
 
 /-- Degeneracy is equivalent to a positive null index. -/
+@[grind =]
 theorem isDegenerate_iff_sigNull_pos : L.IsDegenerate ↔ 0 < L.sigNull := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
   simp only [IsDegenerate, sigNull]
@@ -198,18 +210,21 @@ theorem isDegenerate_iff_sigNull_pos : L.IsDegenerate ↔ 0 < L.sigNull := by
   exact (Submodule.finrank_eq_zero (R := ℚ) (S := L.radical)).not.symm
 
 /-- A lattice is degenerate exactly when its bilinear form is not nondegenerate. -/
+@[grind =]
 theorem isDegenerate_iff_not_nondegenerate : L.IsDegenerate ↔ ¬L.form.Nondegenerate := by
   let _ : FiniteDimensional ℚ V := Module.Finite.of_basis L.rationalBasis
   rw [LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot]
   rfl
 
 /-- A lattice is degenerate exactly when its radical contains a nonzero vector. -/
+@[grind =]
 theorem isDegenerate_iff_exists_mem_radical_ne_zero :
     L.IsDegenerate ↔ ∃ x : V, x ∈ L.radical ∧ x ≠ 0 := by
   simp only [IsDegenerate]
   exact L.radical.ne_bot_iff
 
 /-- Indefiniteness is equivalent to the failure of both semidefiniteness conditions. -/
+@[grind =]
 theorem isIndefinite_iff_not_semidefinite :
     L.IsIndefinite ↔ ¬L.IsPositiveSemidefinite ∧ ¬L.IsNegativeSemidefinite := by
   rw [IsIndefinite, L.isPositiveSemidefinite_iff_sigNeg_eq_zero,
@@ -217,6 +232,7 @@ theorem isIndefinite_iff_not_semidefinite :
   omega
 
 /-- An indefinite lattice has, and is characterized by, vectors of both signs. -/
+@[grind =]
 theorem isIndefinite_iff_exists_pos_and_exists_neg :
     L.IsIndefinite ↔ (∃ x : V, 0 < L.form x x) ∧ (∃ x : V, L.form x x < 0) := by
   rw [L.isIndefinite_iff_not_semidefinite, L.isPositiveSemidefinite_iff,
