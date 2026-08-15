@@ -28,13 +28,22 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
 
 ## Main declarations
 
-* `TauCeti.IntegralLattice.IsNondegenerate`: the nondegeneracy mixin for an integral lattice.
+* `TauCeti.span_range_extendOfIsLattice`: the chosen basis of a full `ℤ`-submodule spans the
+  submodule over `ℤ`.
+* `TauCeti.dualSubmoduleToDual_surjective`: surjectivity of `dualSubmoduleToDual` for a full
+  `ℤ`-submodule and nondegenerate bilinear form.
+* `TauCeti.dualSubmoduleEquivDual`: the perfect linear equivalence
+  `B.dualSubmodule N ≃ₗ[ℤ] Module.Dual ℤ N`.
+* `TauCeti.dualSubmodule_dualSubmodule_flip`, `TauCeti.dualSubmodule_flip_dualSubmodule`: double
+  duality for general full submodules using `B.flip`.
 * `TauCeti.IntegralLattice.dualCarrier`: the dual lattice as a submodule of the common ambient
   rational vector space.
+* `TauCeti.IntegralLattice.le_dualCarrier`: the inclusion `L.carrier ≤ L.dualCarrier`.
 * `TauCeti.IntegralLattice.mem_dualCarrier_iff`: characterization of membership in the dual carrier.
 * `TauCeti.IntegralLattice.instIsLatticeDualCarrier`: the dual carrier is a full lattice.
 * `TauCeti.IntegralLattice.dualPairingEquiv`: the perfect integral pairing
   `Lᵛ ≃ Module.Dual ℤ L`.
+* `TauCeti.IntegralLattice.flip_dualSubmodule_dualCarrier`: double duality with `form.flip`.
 * `TauCeti.IntegralLattice.dualCarrier_dualCarrier`: dualizing twice recovers `L`.
 
 ## References
@@ -47,16 +56,117 @@ public section
 
 open Module
 
-namespace TauCeti.IntegralLattice
+namespace TauCeti
 
 universe u
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
+/-- The integral span of the ambient rational basis obtained from Mathlib's chosen basis of a
+lattice is the lattice itself. -/
+theorem span_range_extendOfIsLattice (N : Submodule ℤ V) [N.IsLattice ℚ] :
+    Submodule.span ℤ (Set.range ((Module.Free.chooseBasis ℤ N).extendOfIsLattice ℚ)) = N := by
+  let b := Module.Free.chooseBasis ℤ N
+  have hrange : Set.range (b.extendOfIsLattice ℚ) = Set.range (N.subtype ∘ b) := by
+    ext x
+    simp only [Set.mem_range, Function.comp_apply]
+    constructor
+    · rintro ⟨i, rfl⟩
+      exact ⟨i, (Basis.extendOfIsLattice_apply ℚ b i).symm⟩
+    · rintro ⟨i, rfl⟩
+      exact ⟨i, Basis.extendOfIsLattice_apply ℚ b i⟩
+  rw [hrange, Set.range_comp, ← Submodule.map_span, b.span_eq,
+    Submodule.map_top, Submodule.range_subtype]
+
+/-- The canonical pairing between a dual submodule and the submodule recovers the ambient rational
+bilinear form after coercion to `ℚ`. -/
+@[simp]
+theorem intCast_dualSubmoduleParing {N : Submodule ℤ V} (B : LinearMap.BilinForm ℚ V)
+    (x : B.dualSubmodule N) (y : N) :
+    ((B.dualSubmoduleParing x y : ℤ) : ℚ) = B (x : V) (y : V) :=
+  B.dualSubmoduleParing_spec x y
+
+/-- Surjectivity of Mathlib's canonical pairing `dualSubmoduleToDual` for a full `ℤ`-submodule
+and a nondegenerate rational bilinear form. -/
+theorem dualSubmoduleToDual_surjective (B : LinearMap.BilinForm ℚ V) (hB : B.Nondegenerate)
+    (N : Submodule ℤ V) [N.IsLattice ℚ] :
+    Function.Surjective (B.dualSubmoduleToDual N) := by
+  intro f
+  let b := Module.Free.chooseBasis ℤ N
+  let b_ext := b.extendOfIsLattice ℚ
+  let bd := B.dualBasis hB b_ext
+  let x : V := ∑ i, (f (b i) : ℚ) • bd i
+  have hx : x ∈ B.dualSubmodule N := by
+    rw [← span_range_extendOfIsLattice N, B.dualSubmodule_span_of_basis hB b_ext]
+    exact Submodule.sum_mem _ fun i _ => by
+      simpa only [Int.cast_smul_eq_zsmul ℚ] using
+        Submodule.smul_mem _ (f (b i)) (Submodule.subset_span (Set.mem_range_self i))
+  refine ⟨⟨x, hx⟩, ?_⟩
+  apply LinearMap.ext_on b.span_eq
+  rintro _ ⟨i, rfl⟩
+  apply Int.cast_injective (α := ℚ)
+  rw [LinearMap.BilinForm.dualSubmoduleToDual_apply_apply,
+    intCast_dualSubmoduleParing]
+  have hform (j) : B (bd j) ((b i : N) : V) = if i = j then 1 else 0 := by
+    calc
+      B (bd j) ((b i : N) : V) = B (bd j) (b_ext i) := by
+        rw [Basis.extendOfIsLattice_apply ℚ b i]
+      _ = _ := B.apply_dualBasis_left hB b_ext j i
+  simp only [x, map_sum, LinearMap.sum_apply, map_smul, LinearMap.smul_apply, smul_eq_mul]
+  simp only [b] at hform ⊢
+  rw [Finset.sum_eq_single i]
+  · simp [hform]
+  · intro j _ hji
+    simp [hform, Ne.symm hji]
+  · simp
+
+/-- The canonical pairing between the dual submodule of a full `ℤ`-submodule and the submodule
+itself is a linear equivalence over `ℤ` whenever the ambient bilinear form is nondegenerate. -/
+noncomputable def dualSubmoduleEquivDual (B : LinearMap.BilinForm ℚ V) (hB : B.Nondegenerate)
+    (N : Submodule ℤ V) [hN : N.IsLattice ℚ] :
+    B.dualSubmodule N ≃ₗ[ℤ] Module.Dual ℤ N :=
+  LinearEquiv.ofBijective (B.dualSubmoduleToDual N)
+    ⟨B.dualSubmoduleToDual_injective hB N hN.span_eq_top,
+      dualSubmoduleToDual_surjective B hB N⟩
+
+/-- Dualizing by `B.flip` and then by `B` recovers the original full `ℤ`-submodule. -/
+theorem dualSubmodule_dualSubmodule_flip (B : LinearMap.BilinForm ℚ V) (hB : B.Nondegenerate)
+    (N : Submodule ℤ V) [N.IsLattice ℚ] :
+    B.dualSubmodule (B.flip.dualSubmodule N) = N := by
+  let b := (Module.Free.chooseBasis ℤ N).extendOfIsLattice ℚ
+  calc
+    B.dualSubmodule (B.flip.dualSubmodule N) =
+        B.dualSubmodule (B.flip.dualSubmodule (Submodule.span ℤ (Set.range b))) :=
+      congrArg (fun S => B.dualSubmodule (B.flip.dualSubmodule S))
+        (span_range_extendOfIsLattice N).symm
+    _ = Submodule.span ℤ (Set.range b) :=
+      B.dualSubmodule_dualSubmodule_flip_of_basis hB b
+    _ = N := span_range_extendOfIsLattice N
+
+/-- Dualizing by `B` and then by `B.flip` recovers the original full `ℤ`-submodule. -/
+theorem dualSubmodule_flip_dualSubmodule (B : LinearMap.BilinForm ℚ V) (hB : B.Nondegenerate)
+    (N : Submodule ℤ V) [N.IsLattice ℚ] :
+    B.flip.dualSubmodule (B.dualSubmodule N) = N := by
+  let b := (Module.Free.chooseBasis ℤ N).extendOfIsLattice ℚ
+  calc
+    B.flip.dualSubmodule (B.dualSubmodule N) =
+        B.flip.dualSubmodule (B.dualSubmodule (Submodule.span ℤ (Set.range b))) :=
+      congrArg (fun S => B.flip.dualSubmodule (B.dualSubmodule S))
+        (span_range_extendOfIsLattice N).symm
+    _ = Submodule.span ℤ (Set.range b) :=
+      B.dualSubmodule_flip_dualSubmodule_of_basis hB b
+    _ = N := span_range_extendOfIsLattice N
+
+namespace IntegralLattice
+
 /-- The dual carrier of an integral lattice:
 `x` belongs to it exactly when `L.form x y` is integral for every `y ∈ L`. -/
 def dualCarrier (L : IntegralLattice V) : Submodule ℤ V :=
   L.form.dualSubmodule L.carrier
+
+/-- The carrier of an integral lattice is contained in its dual carrier. -/
+theorem le_dualCarrier (L : IntegralLattice V) : L.carrier ≤ L.dualCarrier :=
+  L.le_dual
 
 /-- Membership in the dual carrier is characterized by integral pairing with every element of the
 lattice carrier. -/
@@ -115,42 +225,11 @@ theorem intCast_dualPairing_apply (L : IntegralLattice V) (x : L.dualCarrier) (y
     (L.dualPairing x y : ℚ) = L.form x y :=
   L.form.dualSubmoduleParing_spec x y
 
-private theorem dualPairing_surjective (L : IntegralLattice V) [L.IsNondegenerate] :
-    Function.Surjective L.dualPairing := by
-  intro f
-  let b := Module.Free.chooseBasis ℤ L
-  let bd := L.form.dualBasis L.form_nondegenerate L.rationalBasis
-  let x : V := ∑ i, (f (b i) : ℚ) • bd i
-  have hx : x ∈ L.dualCarrier := by
-    rw [L.dualCarrier_eq_span_dualBasis]
-    exact Submodule.sum_mem _ fun i _ => by
-      simpa only [Int.cast_smul_eq_zsmul ℚ] using
-        Submodule.smul_mem _ (f (b i)) (Submodule.subset_span (Set.mem_range_self i))
-  refine ⟨⟨x, hx⟩, ?_⟩
-  apply LinearMap.ext_on b.span_eq
-  rintro _ ⟨i, rfl⟩
-  apply Int.cast_injective (α := ℚ)
-  rw [L.intCast_dualPairing_apply]
-  have hform (j) : L.form (bd j) ((b i : L) : V) = if i = j then 1 else 0 := by
-    calc
-      L.form (bd j) ((b i : L) : V) = L.form (bd j) (L.rationalBasis i) := by
-        rw [L.rationalBasis_apply]
-      _ = _ := L.form.apply_dualBasis_left L.form_nondegenerate L.rationalBasis j i
-  simp only [x, map_sum, LinearMap.sum_apply, map_smul, LinearMap.smul_apply, smul_eq_mul]
-  simp only [b] at hform ⊢
-  rw [Finset.sum_eq_single i]
-  · simp [hform]
-  · intro j _ hji
-    simp [hform, Ne.symm hji]
-  · simp
-
 /-- The pairing with the carrier is perfect: every integral functional on `L` is represented by a
 unique vector of `Lᵛ`. -/
 noncomputable def dualPairingEquiv (L : IntegralLattice V) [L.IsNondegenerate] :
     L.dualCarrier ≃ₗ[ℤ] Module.Dual ℤ L :=
-  LinearEquiv.ofBijective L.dualPairing
-    ⟨L.form.dualSubmoduleToDual_injective L.form_nondegenerate L.carrier
-      L.isLattice.span_eq_top, L.dualPairing_surjective⟩
+  dualSubmoduleEquivDual L.form L.form_nondegenerate L.carrier
 
 /-- The perfect pairing equivalence agrees with the ambient rational form after casting to `ℚ`. -/
 @[simp]
@@ -212,13 +291,20 @@ theorem dualCarrierBasis_apply (L : IntegralLattice V) [L.IsNondegenerate]
   rw [dualCarrierBasis, Basis.map_apply, LinearEquiv.apply_symm_apply,
     L.dualPairingEquiv_dualBasisElem]
 
+/-- Taking the flipped dual submodule of the dual carrier recovers the original carrier. -/
+theorem flip_dualSubmodule_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
+    L.form.flip.dualSubmodule L.dualCarrier = L.carrier :=
+  dualSubmodule_flip_dualSubmodule L.form L.form_nondegenerate L.carrier
+
 /-- Taking the dual submodule twice recovers the original carrier. -/
 @[simp]
 theorem dualCarrier_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :
     L.form.dualSubmodule L.dualCarrier = L.carrier := by
-  rw [dualCarrier, ← L.span_range_rationalBasis]
-  exact L.form.dualSubmodule_dualSubmodule_of_basis L.form_nondegenerate L.isSymm
-    L.rationalBasis
+  have hflip : L.form.flip = L.form := by
+    ext x y
+    exact L.isSymm.eq y x
+  rw [← hflip]
+  exact L.flip_dualSubmodule_dualCarrier
 
 /-- A vector pairs integrally with every vector of the dual carrier exactly when it belongs to the
 original carrier. -/
@@ -229,4 +315,7 @@ theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondege
     (∀ y ∈ L.dualCarrier, L.form x y ∈ (1 : Submodule ℤ ℚ)) ↔ x ∈ L.carrier := by
   rw [← LinearMap.BilinForm.mem_dualSubmodule, L.dualCarrier_dualCarrier]
 
-end TauCeti.IntegralLattice
+end IntegralLattice
+
+end TauCeti
+
