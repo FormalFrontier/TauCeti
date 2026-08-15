@@ -25,7 +25,7 @@ The polynomials
   (X choose n) = X (X - 1) ... (X - n + 1) / n!
 ```
 
-form a basis of `K[X]` for any commutative `ℚ`-algebra `K`. This file packages them as a
+form a basis of `K[X]` for any nontrivial commutative `ℚ`-algebra `K`. This file packages them as a
 `Polynomial.Sequence`. The sequence supplies the spanning half of the basis (`span`,
 `span_degreeLT`, `span_degreeLE`), while linear independence is proved via
 `Polynomial.Sequence.linearIndependent_of_isUnit_leadingCoeff`, extending Mathlib's domain-only
