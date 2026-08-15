@@ -56,8 +56,6 @@ elementary matrices against the diagonal torus.
 * `TauCeti.transvection_mul_transvection_eq_mul_mul`: the product of two chaining transvections,
   in the two orders. As a matrix identity it needs only `i ≠ j` and `i ≠ l`; the third index
   condition `j ≠ l` is what makes the three matrices involved transvections.
-* `Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul`: product of chaining
-  transvections in `SL n A`.
 * `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
@@ -234,17 +232,6 @@ theorem _root_.Matrix.SpecialLinearGroup.commute_transvection (hij : i ≠ j) (h
       (Matrix.SpecialLinearGroup.transvection hkl d) := by
   ext a b
   exact congrFun₂ (TauCeti.commute_transvection hjk hli c d) a b
-
-/-- The product of two chaining determinant-one transvections in `SL n A`, in the two orders. -/
-theorem _root_.Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul
-    (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
-    Matrix.SpecialLinearGroup.transvection hij c *
-        Matrix.SpecialLinearGroup.transvection hjl d =
-      Matrix.SpecialLinearGroup.transvection hjl d *
-        Matrix.SpecialLinearGroup.transvection hij c *
-        Matrix.SpecialLinearGroup.transvection hil (c * d) := by
-  ext a b
-  exact congrFun₂ (TauCeti.transvection_mul_transvection_eq_mul_mul hij hil c d) a b
 
 end Unit
 
