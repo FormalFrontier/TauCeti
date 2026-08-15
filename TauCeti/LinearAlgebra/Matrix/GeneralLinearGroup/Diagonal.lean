@@ -280,6 +280,7 @@ theorem scalar_mem_center (u : kˣ) :
 /-- **The centralizer of a scalar matrix is everything**, scalar matrices being central. The size of
 its conjugacy class is `TauCeti.ncard_carrier_mk_scalar`, in
 `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer`. -/
+@[simp]
 theorem centralizer_scalar (u : kˣ) :
     Subgroup.centralizer {Matrix.GeneralLinearGroup.scalar ι u} = ⊤ :=
   Subgroup.centralizer_eq_top_iff_subset.mpr (Set.singleton_subset_iff.mpr (scalar_mem_center u))

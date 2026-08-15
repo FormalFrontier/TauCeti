@@ -125,6 +125,7 @@ theorem ncard_carrier_mk (g : G) :
   exact hcomap.symm
 
 /-- **The conjugacy class of a central element is a single point**: nothing moves it. -/
+@[simp]
 theorem ncard_carrier_mk_of_mem_center {g : G} (hg : g ∈ Subgroup.center G) :
     (ConjClasses.mk g).carrier.ncard = 1 := by
   rw [ncard_carrier_mk, Subgroup.centralizer_eq_top_iff_subset.mpr

@@ -323,18 +323,18 @@ section NonSemisimple
 
 section CommRing
 
-variable {R : Type*} [CommRing R] [IsCancelMulZero R] {a : Rˣ} {b : R}
+variable {R : Type*} [CommRing R] {a : Rˣ} {b : R}
 
-/-- **The centralizer of a Jordan block with nonzero off-diagonal entry.** Over a commutative ring
-in which nonzero elements cancel, the centralizer of `TauCeti.jordanGL a b = !![a, b; 0, a]` with
-`b ≠ 0` is the scalar-unipotent subgroup `TauCeti.GL2ScalarUnipotent R` of the matrices
+/-- **The centralizer of a Jordan block with regular off-diagonal entry.** Over any commutative
+ring, the centralizer of `TauCeti.jordanGL a b = !![a, b; 0, a]` with `b` left-regular — over a
+field, any `b ≠ 0` — is the scalar-unipotent subgroup `TauCeti.GL2ScalarUnipotent R` of the matrices
 `!![x, y; 0, x]`.
 
 Like the split case this needs no commutant, and for the same reason: only the two entry equations
-`b · g₁₀ = 0` and `b · (g₁₁ - g₀₀) = 0` of `M g = g M` are used, and cancellation by the nonzero
-`b` is what solves them — no division, so a commutative ring in which nonzero elements cancel is
-enough, and a field is asked for only by the counting below. That the diagonal entry so obtained is
-a unit is read off the determinant `g₀₀²`. The reverse inclusion is the commutativity of
+`b · g₁₀ = b · 0` and `b · g₁₁ = b · g₀₀` of `M g = g M` are used, and cancelling `b` from them is
+what solves them — no division and no hypothesis on the other elements of `R`, so left-regularity of
+`b` alone is enough, and a field is asked for only by the counting below. That the diagonal entry so
+obtained is a unit is read off the determinant `g₀₀²`. The reverse inclusion is the commutativity of
 `TauCeti.GL2ScalarUnipotent R`.
 
 Over a field this is the centralizer of a **non-semisimple** element, and unlike the split and
@@ -343,7 +343,7 @@ radical of the Borel subgroup, `Gₘ × Gₐ` rather than `Gₘ × Gₘ`, which 
 to be semisimple. As with the two semisimple normal forms, that every non-semisimple element of
 `GL₂(𝔽_q)` is conjugate to a Jordan block, and that a centralizer transports along such a
 conjugation, are not proved here. -/
-theorem centralizer_jordanGL (hb : b ≠ 0) :
+theorem centralizer_jordanGL (hb : IsLeftRegular b) :
     Subgroup.centralizer {jordanGL a b} = GL2ScalarUnipotent R := by
   ext h
   rw [mem_centralizer_singleton_iff_commute_val, mem_gl2ScalarUnipotent_iff]
@@ -351,21 +351,24 @@ theorem centralizer_jordanGL (hb : b ≠ 0) :
   · intro hcomm
     have hmul := hcomm.eq
     rw [coe_jordanGL] at hmul
-    -- The `(0, 0)` entry of `M g = g M` reads `b · g₁₀ = 0`, and the `(0, 1)` entry
+    -- The `(0, 0)` entry of `M g = g M` reads `b · g₁₀ = b · 0`, and the `(0, 1)` entry
     -- `b · g₁₁ = b · g₀₀`; cancelling `b` leaves `g` upper triangular with equal diagonal entries.
     have h10 : (h : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 := by
       have e00 : (a : R) * (h : Matrix (Fin 2) (Fin 2) R) 0 0
           + b * (h : Matrix (Fin 2) (Fin 2) R) 1 0
           = (h : Matrix (Fin 2) (Fin 2) R) 0 0 * (a : R) := by
         simpa [Matrix.mul_apply, Fin.sum_univ_two] using congrFun₂ hmul 0 0
-      exact (mul_eq_zero.mp (by linear_combination e00)).resolve_left hb
+      have hcancel : b * (h : Matrix (Fin 2) (Fin 2) R) 1 0 = b * 0 := by linear_combination e00
+      exact hb hcancel
     have h11 : (h : Matrix (Fin 2) (Fin 2) R) 1 1 = (h : Matrix (Fin 2) (Fin 2) R) 0 0 := by
       have e01 : (a : R) * (h : Matrix (Fin 2) (Fin 2) R) 0 1
           + b * (h : Matrix (Fin 2) (Fin 2) R) 1 1
           = (h : Matrix (Fin 2) (Fin 2) R) 0 0 * b
             + (h : Matrix (Fin 2) (Fin 2) R) 0 1 * (a : R) := by
         simpa [Matrix.mul_apply, Fin.sum_univ_two] using congrFun₂ hmul 0 1
-      exact sub_eq_zero.mp ((mul_eq_zero.mp (by linear_combination e01)).resolve_left hb)
+      have hcancel : b * (h : Matrix (Fin 2) (Fin 2) R) 1 1
+          = b * (h : Matrix (Fin 2) (Fin 2) R) 0 0 := by linear_combination e01
+      exact hb hcancel
     -- The determinant is then `g₀₀²`, so the repeated diagonal entry is a unit.
     have hu : IsUnit ((h : Matrix (Fin 2) (Fin 2) R) 0 0) := by
       refine isUnit_of_mul_isUnit_left (y := (h : Matrix (Fin 2) (Fin 2) R) 0 0) ?_
@@ -394,7 +397,7 @@ is `TauCeti.GL2ScalarUnipotent F`, a copy of `Fˣ × (F, +)`, so over a field wi
 field both sides are `0`. -/
 theorem natCard_centralizer_jordanGL (hb : b ≠ 0) :
     Nat.card (Subgroup.centralizer {jordanGL a b}) = (Nat.card F - 1) * Nat.card F := by
-  rw [centralizer_jordanGL hb, natCard_gl2ScalarUnipotent]
+  rw [centralizer_jordanGL (IsRegular.of_ne_zero hb).left, natCard_gl2ScalarUnipotent]
 
 /-- **The size of a non-semisimple conjugacy class of `GL₂(𝔽_q)`**: it is
 `q² - 1 = [GL₂(𝔽_q) : Z U]`.
@@ -424,6 +427,7 @@ The centralizer half of the statement, `TauCeti.centralizer_scalar`, is in
 `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal` with the rest of the general-index
 material; only the class size is here, so that the foundational diagonal module does not have to
 import conjugacy theory for it. -/
+@[simp]
 theorem ncard_carrier_mk_scalar (u : kˣ) :
     (ConjClasses.mk (Matrix.GeneralLinearGroup.scalar ι u)).carrier.ncard = 1 :=
   ConjClasses.ncard_carrier_mk_of_mem_center (scalar_mem_center u)
