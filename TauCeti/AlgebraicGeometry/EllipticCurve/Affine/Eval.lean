@@ -20,8 +20,6 @@ itself, not a global `WeierstrassCurve R`.
 
 * `TauCeti.WeierstrassCurve.evalEval_eq_of_mk_eq`: bivariate polynomials that are equal in the
   coordinate ring evaluate equally at a point of the curve.
-* `TauCeti.WeierstrassCurve.ringHom_eq_evalEvalRingHom`: a ring homomorphism on bivariate
-  polynomials that fixes constants is evaluation at the images of the variables.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.algHom_mk_eq_evalEval`: an algebra homomorphism
   from the coordinate ring is evaluation at the images of the coordinate functions, and
   `TauCeti.WeierstrassCurve.Affine.CoordinateRing.equation_of_algHom` says that those images
@@ -57,17 +55,6 @@ theorem evalEval_eq_of_mk_eq (h : W.Equation x y) {p q : R[X][Y]}
   have hev := AdjoinRoot.evalEval_mk (p := W.polynomial) h
   exact hev p ▸ hev q ▸ congrArg _ hpq
 
-/-- A ring homomorphism from bivariate polynomials that fixes the constant coefficients is
-evaluation at the images of the two variables. -/
-theorem ringHom_eq_evalEvalRingHom (g : R[X][Y] →+* R)
-    (hg : ∀ c : R, g (C (C c)) = c) :
-    g = evalEvalRingHom (g (C X)) (g Y) := by
-  refine Polynomial.ringHom_ext' (Polynomial.ringHom_ext' ?_ ?_) ?_
-  · ext c
-    simp only [RingHom.comp_apply, hg, coe_evalRingHom, eval_C]
-  · simp
-  · simp
-
 namespace Affine.CoordinateRing
 
 variable {W : _root_.WeierstrassCurve.Affine R}
@@ -79,19 +66,12 @@ theorem algHom_mk_eq_evalEval (f : W.CoordinateRing →ₐ[R] R) (p : R[X][Y]) :
       p.evalEval
         (f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W (C X)))
         (f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W Y)) := by
-  have hconstants : ∀ c : R,
-      (f.toRingHom.comp (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W)) (C (C c)) = c :=
-    fun c ↦ by
-    rw [RingHom.comp_apply]
-    have hCC : _root_.WeierstrassCurve.Affine.CoordinateRing.mk W (C (C c)) =
-        algebraMap R W.CoordinateRing c := by
-      rw [IsScalarTower.algebraMap_apply R R[X] W.CoordinateRing, AdjoinRoot.algebraMap_eq]
-      simp
-    rw [hCC]
-    exact f.commutes c
-  exact DFunLike.congr_fun
-    (ringHom_eq_evalEvalRingHom
-      (f.toRingHom.comp (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W)) hconstants) p
+  let g : R[X][Y] →ₐ[R] R :=
+    f.comp ((AdjoinRoot.mkₐ W.polynomial).restrictScalars R)
+  have hg := (aevalAevalEquiv R R).apply_symm_apply g
+  change g p = p.evalEval (g (C X)) (g Y)
+  exact (DFunLike.congr_fun hg.symm p).trans
+    (congrFun (coe_aevalAeval_eq_evalEval (g (C X)) (g Y)) p)
 
 /-- The images of the coordinate functions under an algebra homomorphism from the coordinate ring
 to the base ring satisfy the Weierstrass equation. -/
