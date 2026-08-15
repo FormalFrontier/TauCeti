@@ -35,6 +35,8 @@ This advances Deliverable A, Layer 1 of
 * `TauCeti.Lie.Ad_inv`: inversion corresponds to the inverse automorphism.
 * `TauCeti.Lie.leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad`: the canonical
   derivation–model equivalence intertwines `Ad` and `tangentAd`.
+* `TauCeti.Lie.Ad_eq_modelTangentAd`: the corresponding inverse model-space factorization of
+  `Ad`.
 
 ## References
 
@@ -107,6 +109,21 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
   rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply,
     leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply]
   exact hE
+
+/-- The derivation adjoint is the tangent adjoint transported back through the canonical
+model-space isometry. -/
+theorem Ad_eq_modelTangentAd [T2Space G] [BoundarylessManifold I G]
+    (g : G) (D : LeftInvariantDerivation I G) :
+    Ad (I := I) g D =
+      (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+        (I := I) (G := G)).symm
+        (show E from tangentAd (I := I) g
+          (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+            (I := I) (G := G) D)) := by
+  apply (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    (I := I) (G := G)).injective
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad,
+    LinearIsometryEquiv.apply_symm_apply]
 
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]

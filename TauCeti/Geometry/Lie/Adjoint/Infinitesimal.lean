@@ -217,7 +217,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
   have hA : ContDiff ℝ ∞ A := by
     have hpair : ContMDiff 𝓘(ℝ, ℝ) (I.prod 𝓘(ℝ, E)) ∞
         (fun t => (γX t, @id E Y)) := hγX.prodMk contMDiff_const
-    exact ((contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair).contDiff
+    exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair |>.contDiff
   have hAder : HasDerivAt A (deriv A 0) 0 :=
     (hA.differentiable (by simp) 0).hasDerivAt
   let bracketTangent : GroupLieAlgebra I G :=

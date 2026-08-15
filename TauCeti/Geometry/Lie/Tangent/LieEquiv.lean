@@ -26,8 +26,8 @@ This advances Deliverable A, Layer 1 of
   equivalence.
 * `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply`: the
   isometric and Lie equivalences agree after viewing the tangent Lie algebra as the model space.
-* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie`: the inverse model-space
-  isometry preserves arbitrary tangent Lie brackets.
+* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply`: the inverse
+  model-space isometry cancels the canonical Lie equivalence.
 
 ## References
 
@@ -168,51 +168,32 @@ theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieE
     leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
     leftInvariantDerivationEquivGroupLieAlgebra_apply]
 
-/-- The inverses of the canonical isometric and Lie equivalences agree after viewing a model
-vector as an element of the tangent Lie algebra. -/
-private theorem
-    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_eq_lieEquiv_symm_apply
-    [FiniteDimensional ℝ E] (v : E) :
-    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
-    (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-      (I := I) (G := G)).symm v =
-      (leftInvariantDerivationLieEquivGroupLieAlgebra
-        BoundarylessManifold.isInteriorPoint).symm
-        (v : GroupLieAlgebra I G) := by
-  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
-  dsimp only
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
-  exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
-    (I := I) (G := G) BoundarylessManifold.isInteriorPoint
-      (v : GroupLieAlgebra I G)).symm
-
-/-- The inverse model-space isometry preserves the bracket of arbitrary tangent Lie-algebra
-vectors. -/
-theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lie
-    [FiniteDimensional ℝ E] (v w : GroupLieAlgebra I G) :
+/-- The inverse model-space isometry cancels the canonical Lie equivalence. -/
+@[simp]
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_lieEquiv_apply
+    [FiniteDimensional ℝ E] (D : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
     (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
       (I := I) (G := G)).symm
-        (show E from (⁅v, w⁆ : GroupLieAlgebra I G)) =
-      ⁅(leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-          (I := I) (G := G)).symm (show E from v),
-        (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-          (I := I) (G := G)).symm (show E from w)⁆ := by
+        (show E from leftInvariantDerivationLieEquivGroupLieAlgebra
+          BoundarylessManifold.isInteriorPoint D) = D := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
   dsimp only
-  let e := leftInvariantDerivationLieEquivGroupLieAlgebra
+  let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
+  let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
     (I := I) (G := G) BoundarylessManifold.isInteriorPoint
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_eq_lieEquiv_symm_apply
-      (I := I) (G := G) (show E from (⁅v, w⁆ : GroupLieAlgebra I G))]
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_eq_lieEquiv_symm_apply
-      (I := I) (G := G) (show E from v)]
-  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply_eq_lieEquiv_symm_apply
-      (I := I) (G := G) (show E from w)]
-  exact e.symm.map_lie v w
+  exact calc
+    eIso.symm (show E from eLie D) =
+        tangentToLeftInvariantDerivation (I := I) (G := G)
+          ((show E from eLie D) : GroupLieAlgebra I G) := by
+      exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply
+        (I := I) (G := G) (show E from eLie D)
+    _ = eLie.symm (eLie D) := by
+      exact (leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
+        (I := I) (G := G) BoundarylessManifold.isInteriorPoint (eLie D)).symm
+    _ = D := eLie.symm_apply_apply D
 
 end CanonicalModelBridges
 

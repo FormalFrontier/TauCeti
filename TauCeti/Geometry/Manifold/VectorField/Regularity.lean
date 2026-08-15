@@ -19,6 +19,8 @@ manifold differential of a function to tangent vectors whose base point varies.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
 * `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
   normed vector space.
+* `mvfderiv_continuousLinearMap_apply`: differentiation commutes with evaluating a
+  continuous-linear-map-valued function at a fixed vector.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
   tangent bundle is `C^m` when `m + 1 ≤ n`.
 
@@ -81,8 +83,35 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
 @[simp] theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
     mvfderiv I f x v = mfderiv I 𝓘(𝕜, F) f x v := by
   rw [mvfderiv, ContinuousLinearMap.comp_apply]
-  -- For a normed vector space, `fromTangentSpace` is the identity on underlying values.
+  -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
   rfl
+
+omit [IsManifold I 1 M] in
+/-- The derivative of a continuous-linear-map-valued function, evaluated at a fixed vector, is
+the derivative of the pointwise evaluation. -/
+theorem mvfderiv_continuousLinearMap_apply
+    {V : Type*} [NormedAddCommGroup V] [NormedSpace 𝕜 V]
+    {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W]
+    (f : M → V →L[𝕜] W) (x : M) (v : TangentSpace I x) (y : V)
+    (hf : MDiffAt f x) :
+    mvfderiv I f x v y = mvfderiv I (fun z ↦ f z y) x v := by
+  let evalY : (V →L[𝕜] W) →L[𝕜] W := (ContinuousLinearMap.apply 𝕜 W) y
+  have h := mfderiv_comp_apply x evalY.mdifferentiableAt hf v
+  rw [evalY.hasMFDerivAt.mfderiv] at h
+  have h' := congrArg (NormedSpace.fromTangentSpace ((evalY ∘ f) x)) h
+  have hfun : evalY ∘ f = fun z ↦ f z y := by rfl
+  rw [hfun] at h'
+  calc
+    mvfderiv I f x v y =
+        NormedSpace.fromTangentSpace ((f x) y)
+          (evalY (mfderiv I 𝓘(𝕜, V →L[𝕜] W) f x v)) := by
+      -- Evaluation commutes definitionally with the canonical tangent-space identification on
+      -- the normed model spaces `V →L[𝕜] W` and `W`.
+      rfl
+    _ = NormedSpace.fromTangentSpace ((f x) y)
+        (mfderiv I 𝓘(𝕜, W) (fun z ↦ f z y) x v) := by
+      exact h'.symm
+    _ = mvfderiv I (fun z ↦ f z y) x v := by rfl
 
 /-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
 tangent bundle when `m + 1 ≤ n`. -/
@@ -101,11 +130,8 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
   have htangent (p : TangentBundle I M) :
       NormedSpace.fromTangentSpace (f p.1) ((tangentMap% f p).2) =
         mvfderiv I f p.1 p.2 := by
-    rw [tangentMap_snd]
-    calc
-      _ = (show F from mfderiv I 𝓘(𝕜, F) f p.1 p.2) := by rfl
-      _ = mvfderiv I f p.1 p.2 :=
-        (mvfderiv_apply_eq_mfderiv_apply (I := I) f p.1 p.2).symm
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
+    rfl
   -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
   -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
   exact h.congr fun p => (htangent p).symm
