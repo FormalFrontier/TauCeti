@@ -69,7 +69,6 @@ public theorem map_top : (⊤ : Submodule ℂ W).map ω.toEquiv.toLinearMap = �
   exact LinearEquiv.range _
 
 /-- Composing the conjugation's linear map with itself gives the identity. -/
-@[simp]
 public theorem toLinearMap_comp_toLinearMap :
     ω.toEquiv.toLinearMap.comp ω.toEquiv.toLinearMap = LinearMap.id :=
   LinearMap.ext ω.involutive

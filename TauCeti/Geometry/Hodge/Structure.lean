@@ -83,11 +83,10 @@ public structure HodgeStructureOn (W : Type*) [AddCommGroup W] [Module ℂ W]
   F_bot : ∃ p, F p = ⊥
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
-/-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of a finitely generated
-free `ℤ`-module (lattice) `V`.
+/-- Pure Hodge structure of weight `n` on the complexification `Vℂ` of a
+`ℤ`-module (lattice) `V`.
 This is an abbreviation for `HodgeStructureOn Vℂ (latticeConjugation hℂ) n`. -/
-public abbrev HodgeStructure [Module.Free ℤ V] [Module.Finite ℤ V]
-    (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
+public abbrev HodgeStructure (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) : Type _ :=
   HodgeStructureOn Vℂ (latticeConjugation hℂ) n
 
 namespace HodgeStructureOn
@@ -491,9 +490,6 @@ public theorem tateF_opposed (m : ℤ) (p : ℤ) :
     have h_le : -2 * m + 1 - p ≤ -m := by omega
     rw [tateF_of_gt hp', tateF_of_le h_le, Conjugation.map_top]
     exact isCompl_bot_top
-
-theorem tate_F_def (m : ℤ) (p : ℤ) :
-    (tateF m : ℤ → Submodule ℂ (Complexification ℤ)) p = tateF m p := rfl
 
 /-- The Tate Hodge structure $\mathbb{Z}(m)$ of weight $-2m$ on $V = \mathbb{Z}$. -/
 public noncomputable def tate (m : ℤ) :
