@@ -32,7 +32,10 @@ which is plain from their statements.
   the equalizer of a parallel pair, as the agreement subring under the subspace topology.
 * The resulting `HasProducts` and `HasEqualizers` instances.
 
-## Main results
+The equalizer fork's inclusion is, as a function, the subtype coercion of the agreement subring,
+and by `rfl`; consumers state closedness of its range against the coercion and let that
+definitional equality carry it to the categorical morphism, rather than going through a named
+lemma here.
 
 The closedness of the agreement subring over a Hausdorff codomain — what will keep equalizers
 of complete separated rings complete — is Mathlib's `isClosed_eq` applied to the two morphisms'
