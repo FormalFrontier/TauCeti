@@ -75,15 +75,6 @@ abbrev dualCarrier (L : IntegralLattice V) : Submodule ℤ V :=
 theorem le_dualCarrier (L : IntegralLattice V) : L.carrier ≤ L.dualCarrier :=
   L.le_dual
 
-/-- The integral span of the rational basis obtained from Mathlib's chosen basis of `L` is the
-carrier itself. -/
-theorem span_range_rationalBasis (L : IntegralLattice V) :
-    Submodule.span ℤ (Set.range L.rationalBasis) = L.carrier := by
-  have h : ⇑L.rationalBasis = ⇑((Module.Free.chooseBasis ℤ L.carrier).extendOfIsLattice ℚ) :=
-    funext fun i ↦ by rw [L.rationalBasis_apply, Basis.extendOfIsLattice_apply]
-  rw [h]
-  exact Basis.span_range_extendOfIsLattice (Module.Free.chooseBasis ℤ L.carrier)
-
 open Classical in
 /-- The dual carrier is the integral span of the bilinear dual basis to the rational basis
 extending any `ℤ`-basis of the carrier. -/
