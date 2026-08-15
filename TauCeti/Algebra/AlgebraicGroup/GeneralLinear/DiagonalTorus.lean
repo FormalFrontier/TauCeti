@@ -248,19 +248,6 @@ noncomputable def diagonalTorus :
       (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
     eqToHom (groupScheme_def R N).symm
 
-/-- The diagonal-torus morphism is relative spectrum applied contravariantly to its coordinate
-Hopf-algebra morphism, transported across the named source and target presentations. -/
-theorem diagonalTorus_def :
-    diagonalTorus (R := R) (N := N) =
-      eqToHom
-          (DiagonalizableGroup.groupScheme_def R
-            (SplitTorus.characterGroup (ULift.{u} (Fin N)))) ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
-        eqToHom (groupScheme_def R N).symm := by
-  unfold diagonalTorus
-  rfl
-
 section SchemePoints
 
 variable (A : Type u) [CommRing A] [Algebra R A]
@@ -282,7 +269,7 @@ private lemma diagonalTorus_hom_hom_left :
         Spec.map (CommRingCat.ofHom
           (diagonalTorusCoordinateMap (R := R) (N := N)).hom.toAlgHom.toRingHom) ≫
         eqToHom (groupScheme_X_left R N).symm := by
-  rw [diagonalTorus_def]
+  unfold diagonalTorus
   -- Taking the underlying morphism of schemes distributes over composition definitionally, but
   -- `Grp (Over _)` has no rewrite lemma stating it, so the distribution is made explicit here.
   rw [show ((eqToHom (DiagonalizableGroup.groupScheme_def R
