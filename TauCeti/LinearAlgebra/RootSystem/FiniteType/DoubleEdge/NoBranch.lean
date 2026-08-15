@@ -59,15 +59,6 @@ private lemma diagramGraph_transpose (A : Matrix B B ℤ) :
   simp only [diagramGraph_adj, Matrix.transpose_apply]
   tauto
 
-/-- Transposing a matrix preserves every vertex degree of its diagram. -/
-private lemma degree_diagramGraph_transpose (A : Matrix B B ℤ) (i : B) :
-    (diagramGraph A.transpose).degree i = (diagramGraph A).degree i := by
-  simp only [SimpleGraph.degree]
-  congr 1
-  ext j
-  simp only [SimpleGraph.mem_neighborFinset, diagramGraph_adj, Matrix.transpose_apply]
-  tauto
-
 omit [DecidableEq B] in
 /-- Along an edge of a finite-type diagram, the corresponding Cartan entry is at most `-1`. -/
 private lemma apply_le_neg_one_of_adj (h : IsFiniteType A) {i j : B}
@@ -247,23 +238,28 @@ theorem degree_le_two_of_apply_mul_apply_eq_two (h : IsFiniteType A)
   have huvAdj : (diagramGraph A).Adj u v := h.diagramGraph_adj_iff.mpr
     ⟨huvNe, fun hzero ↦ by rw [hzero] at huv; norm_num at huv⟩
   have htree := h.isTree_diagramGraph hconn'
+  have hgraph := diagramGraph_transpose A
+  let hgraphIso : diagramGraph A.transpose ≃g diagramGraph A :=
+    ⟨Equiv.refl B, by intro a b; simp only [hgraph, Equiv.refl_apply]⟩
+  have hdegree : (diagramGraph A.transpose).degree c = (diagramGraph A).degree c := by
+    have hdegree := hgraphIso.symm.degree_eq c
+    change (diagramGraph A.transpose).degree c = (diagramGraph A).degree c at hdegree
+    exact hdegree
   rcases htree.dist_eq_dist_add_one_of_adj c huvAdj with hdist | hdist
   · rcases eq_neg_one_and_eq_neg_two_or_of_mul_eq_two (h.apply_le_zero_of_ne huvNe) huv with
       ⟨huvEntry, hvuEntry⟩ | ⟨huvEntry, hvuEntry⟩
     · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
         (c := c) (near := v) (far := u) h hconn' hc huvAdj.symm hdist hvuEntry
-    · have hgraph := diagramGraph_transpose A
-      exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
+    · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
         (c := c) (near := v) (far := u) h.transpose
-        (by rw [hgraph]; exact hconn') (by rw [degree_diagramGraph_transpose]; exact hc)
+        (by rw [hgraph]; exact hconn') (by rw [hdegree]; exact hc)
         (by rw [hgraph]; exact huvAdj.symm) (by rw [hgraph]; exact hdist)
         (by simpa using huvEntry)
   · rcases eq_neg_one_and_eq_neg_two_or_of_mul_eq_two (h.apply_le_zero_of_ne huvNe) huv with
       ⟨huvEntry, hvuEntry⟩ | ⟨huvEntry, hvuEntry⟩
-    · have hgraph := diagramGraph_transpose A
-      exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two h.transpose
+    · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two h.transpose
         (c := c) (near := u) (far := v)
-        (by rw [hgraph]; exact hconn') (by rw [degree_diagramGraph_transpose]; exact hc)
+        (by rw [hgraph]; exact hconn') (by rw [hdegree]; exact hc)
         (by rw [hgraph]; exact huvAdj) (by rw [hgraph]; exact hdist)
         (by simpa using hvuEntry)
     · exact false_of_degree_eq_three_of_dist_eq_add_one_of_apply_eq_neg_two
