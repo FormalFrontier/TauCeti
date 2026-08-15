@@ -65,8 +65,10 @@ private theorem measurable_samplePopulation {ι κ : Type*} [Countable κ] [Meas
     Measurable (fun p : (ι → κ) × (κ → α) => fun i : ι => p.2 (p.1 i)) := by
   refine measurable_pi_lambda _ fun i => ?_
   intro s hs
-  rw [show (fun p : (ι → κ) × (κ → α) => p.2 (p.1 i)) ⁻¹' s =
-      ⋃ j : κ, {p | p.1 i = j} ∩ {p | p.2 j ∈ s} by ext p; simp]
+  have hpreimage : (fun p : (ι → κ) × (κ → α) => p.2 (p.1 i)) ⁻¹' s =
+      ⋃ j : κ, {p | p.1 i = j} ∩ {p | p.2 j ∈ s} := by
+    ext p; simp
+  rw [hpreimage]
   refine MeasurableSet.iUnion fun j => ?_
   have hselection : MeasurableSet
       ((fun p : (ι → κ) × (κ → α) => p.1 i) ⁻¹' {j}) :=
