@@ -52,7 +52,7 @@ universe u v w
 /-- Pairs indexing the entries strictly above the diagonal of a square matrix. -/
 abbrev Index (m : Type*) [LT m] := {ij : m × m // ij.1 < ij.2}
 
-/-- The polynomial coordinate ring of the upper-unitriangular group. -/
+/-- The polynomial coordinate ring of the upper-unitriangular matrix monoid. -/
 abbrev CoordinateRing (R : Type u) [CommSemiring R] (m : Type*) [LT m] :=
   MvPolynomial (Index m) R
 
