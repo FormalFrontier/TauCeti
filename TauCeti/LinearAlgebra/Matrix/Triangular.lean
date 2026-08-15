@@ -70,7 +70,7 @@ theorem IsUpperUnitriangular.apply_diag [LT m] [Zero R] [One R]
 
 /-- Two upper-unitriangular matrices are equal if their entries strictly above the diagonal
 agree. -/
-theorem IsUpperUnitriangular.ext_of_lt [LinearOrder m] [Semiring R] {M N : Matrix m m R}
+theorem IsUpperUnitriangular.ext_of_lt [LinearOrder m] [Zero R] [One R] {M N : Matrix m m R}
     (hM : M.IsUpperUnitriangular) (hN : N.IsUpperUnitriangular)
     (h : ∀ i j, i < j → M i j = N i j) : M = N := by
   ext i j

@@ -18,12 +18,11 @@ the diagonal and zeros below it.  Matrix multiplication and inversion give the c
 and antipode, so its `A`-valued points are naturally the upper-unitriangular matrices over every
 commutative `R`-algebra `A`.
 
-This supplies a multiplicative equivalence between Hopf-algebra points and upper-unitriangular
-matrices over each commutative `R`-algebra, natural in the value algebra. It does not yet package a
-natural isomorphism of `pointsFunctor`s or a group scheme. This is the coordinate-Hopf-algebra part
-of the upper-unitriangular model in Layer 5, "Unipotent groups", of the ReductiveGroups roadmap. A
-subsequent closed-immersion module can identify its map to `GL_m` with the corresponding Hopf-ideal
-quotient.
+This supplies a natural isomorphism between the Hopf-algebra points functor and the
+upper-unitriangular matrix functor. It does not yet package a group scheme. This is the
+coordinate-Hopf-algebra part of the upper-unitriangular model in Layer 5, "Unipotent groups", of
+the ReductiveGroups roadmap. A subsequent closed-immersion module can identify its map to `GL_m`
+with the corresponding Hopf-ideal quotient.
 
 ## Main declarations
 
@@ -31,8 +30,6 @@ quotient.
 * `TauCeti.UpperUnitriangular.genericMatrix`: the generic upper-unitriangular matrix.
 * `TauCeti.UpperUnitriangular.comul`, `TauCeti.UpperUnitriangular.counit`, and
   `TauCeti.UpperUnitriangular.antipode`: the raw structure maps.
-* `TauCeti.UpperUnitriangular.bialgebra` and `TauCeti.UpperUnitriangular.hopfAlgebra`: named
-  structure dictionaries; these are deliberately not global instances.
 * `TauCeti.UpperUnitriangular.coordinateHopfAlgebra`: its bundled commutative Hopf algebra.
 * `TauCeti.UpperUnitriangular.finiteTypeCoordinateHopfAlgebra`: its finite-type package.
 * `TauCeti.UpperUnitriangular.pointsMulEquiv`: its convolution points are the existing
@@ -41,6 +38,9 @@ quotient.
   natural in the value algebra.
 * `TauCeti.UpperUnitriangular.pointsMulEquiv_mapValue`: the bundled point equivalence is natural
   in the value algebra.
+* `TauCeti.UpperUnitriangular.upperUnitriangularFunctor`: the group-valued matrix functor.
+* `TauCeti.UpperUnitriangular.pointsNatIso`: the natural isomorphism between the points and matrix
+  functors.
 
 ## References
 
@@ -59,9 +59,9 @@ open scoped TensorProduct
 
 namespace TauCeti.UpperUnitriangular
 
-open Algebra.TensorProduct WithConv
+open Algebra.TensorProduct CategoryTheory WithConv
 
-universe u w
+universe u v w
 
 /-- Pairs indexing the entries strictly above the diagonal of a square matrix. -/
 abbrev Index (m : Type*) [LT m] := {ij : m × m // ij.1 < ij.2}
@@ -72,7 +72,7 @@ abbrev CoordinateRing (R : Type u) [CommSemiring R] (m : Type*) [LT m] :=
 
 section Bialgebra
 
-variable (R : Type u) [CommSemiring R] (m : Type*) [LinearOrder m]
+variable (R : Type u) [CommSemiring R] (m : Type v) [LinearOrder m]
 
 /-- The generic upper-unitriangular matrix. -/
 noncomputable def genericMatrix : Matrix m m (CoordinateRing R m) :=
@@ -233,7 +233,7 @@ This is intentionally a named value, not an instance. Callers that need typeclas
 coalgebra operations should use `coordinateHopfAlgebra`, or install this value in a deliberately
 local scope. -/
 @[instance_reducible]
-noncomputable def bialgebra : Bialgebra R (CoordinateRing R m) :=
+private noncomputable def bialgebra : Bialgebra R (CoordinateRing R m) :=
   Bialgebra.ofAlgHom (comul R m) (counit R m)
     (comul_coassoc R m) (comul_rTensor_counit R m) (comul_lTensor_counit R m)
 
@@ -241,7 +241,7 @@ end Bialgebra
 
 section HopfAlgebra
 
-variable (R : Type u) [CommRing R] (m : Type*) [Fintype m] [LinearOrder m]
+variable (R : Type u) [CommRing R] (m : Type v) [Fintype m] [LinearOrder m]
 
 /-- Inverse-matrix antipode on the coordinate ring of `U_m`. -/
 noncomputable def antipode : CoordinateRing R m →ₐ[R] CoordinateRing R m :=
@@ -310,14 +310,14 @@ This is intentionally a named value, not an instance. Callers that need typeclas
 operations should use `coordinateHopfAlgebra`, or install this value in a deliberately local
 scope. -/
 @[instance_reducible]
-noncomputable def hopfAlgebra : HopfAlgebra R (CoordinateRing R m) := by
+private noncomputable def hopfAlgebra : HopfAlgebra R (CoordinateRing R m) := by
   letI : Bialgebra R (CoordinateRing R m) := bialgebra R m
   exact HopfAlgebra.ofAlgHom (antipode R m)
     (mul_antipode_rTensor_comul R m) (mul_antipode_lTensor_comul R m)
 
 /-- Selecting `hopfAlgebra R m` makes its comultiplication the explicit map `comul R m`.
 The equality is heterogeneous because opacity hides the stored module structure. -/
-theorem hopfAlgebra_comul :
+private theorem hopfAlgebra_comul :
     HEq (letI : Module R (CoordinateRing R m) := (hopfAlgebra R m).toAlgebra.toModule
       letI : Coalgebra R (CoordinateRing R m) := (hopfAlgebra R m).toCoalgebra
       Coalgebra.comul (R := R) (A := CoordinateRing R m)) (comul R m).toLinearMap :=
@@ -325,7 +325,7 @@ theorem hopfAlgebra_comul :
 
 /-- Selecting `hopfAlgebra R m` makes its counit the explicit map `counit R m`.
 The equality is heterogeneous because opacity hides the stored module structure. -/
-theorem hopfAlgebra_counit :
+private theorem hopfAlgebra_counit :
     HEq (letI : Module R (CoordinateRing R m) := (hopfAlgebra R m).toAlgebra.toModule
       letI : Coalgebra R (CoordinateRing R m) := (hopfAlgebra R m).toCoalgebra
       Coalgebra.counit (R := R) (A := CoordinateRing R m)) (counit R m).toLinearMap :=
@@ -333,7 +333,7 @@ theorem hopfAlgebra_counit :
 
 /-- Selecting `hopfAlgebra R m` makes its antipode inverse-matrix evaluation.
 The equality is heterogeneous because opacity hides the stored module structure. -/
-theorem hopfAlgebra_antipode :
+private theorem hopfAlgebra_antipode :
     HEq (letI : Module R (CoordinateRing R m) := (hopfAlgebra R m).toAlgebra.toModule
       letI : HopfAlgebra R (CoordinateRing R m) := hopfAlgebra R m
       HopfAlgebra.antipode R (A := CoordinateRing R m)) (antipode R m).toLinearMap :=
@@ -632,6 +632,91 @@ theorem mapValue_pointsMulEquiv_symm_apply {B : Type*} [CommRing B] [Algebra R B
   simp
 
 end Points
+
+section Functor
+
+/-- The group-valued functor sending a commutative `R`-algebra to its upper-unitriangular group,
+before the universe lift used by `upperUnitriangularFunctor`. -/
+private noncomputable abbrev upperUnitriangularFunctorUnlifted :
+    CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
+  obj A := GrpCat.of (upperUnitriangularGroup m (A : Type w))
+  map φ := GrpCat.ofHom (UpperUnitriangularGroup.map φ.hom.toRingHom)
+  map_id _ := by
+    ext g i j
+    simp
+  map_comp _ _ := by
+    ext g i j
+    simp
+
+/-- The group-valued functor sending a commutative `R`-algebra to its upper-unitriangular group
+and a value-algebra morphism to entrywise application. Its values are universe-lifted so that its
+codomain agrees with the generic Hopf-algebra points functor. -/
+noncomputable def upperUnitriangularFunctor :
+    CommAlgCat.{w} R ⥤ GrpCat.{max u v w} :=
+  upperUnitriangularFunctorUnlifted (R := R) m ⋙ GrpCat.uliftFunctor.{u, max v w}
+
+/-- The object part of `upperUnitriangularFunctor` is the universe lift of the ordinary
+upper-unitriangular group. -/
+theorem upperUnitriangularFunctor_obj (A : CommAlgCat.{w} R) :
+    (upperUnitriangularFunctor (R := R) m).obj A =
+      GrpCat.of (ULift.{u, max v w} (upperUnitriangularGroup m A)) :=
+  (rfl)
+
+/-- The morphism part of `upperUnitriangularFunctor` applies the value-algebra map entrywise. -/
+theorem upperUnitriangularFunctor_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    (upperUnitriangularFunctor (R := R) m).map φ =
+      eqToHom (upperUnitriangularFunctor_obj (R := R) m A) ≫
+        GrpCat.ofHom
+          (MulEquiv.ulift.symm.toMonoidHom.comp
+            ((UpperUnitriangularGroup.map φ.hom.toRingHom).comp
+              MulEquiv.ulift.toMonoidHom)) ≫
+        eqToHom (upperUnitriangularFunctor_obj (R := R) m B).symm :=
+  (rfl)
+
+/-- Entrywise computation of a value-algebra map on the upper-unitriangular functor. -/
+@[simp]
+theorem upperUnitriangularFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
+    (g : ULift.{u, max v w} (upperUnitriangularGroup m A)) (i j : m) :
+    (eqToHom (upperUnitriangularFunctor_obj (R := R) m B)
+      ((upperUnitriangularFunctor (R := R) m).map φ
+        (eqToHom (upperUnitriangularFunctor_obj (R := R) m A).symm g))).down.val i j =
+      φ.hom (g.down.val i j) :=
+  UpperUnitriangularGroup.map_apply φ.hom.toRingHom g.down i j
+
+/-- The convolution-points functor of the upper-unitriangular coordinate Hopf algebra is
+naturally isomorphic to the ordinary upper-unitriangular group functor. -/
+noncomputable def pointsNatIso :
+    HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R m) ≅
+      upperUnitriangularFunctor (R := R) m :=
+  NatIso.ofComponents
+    (fun A ↦ ((pointsMulEquiv (R := R) (A := A) m).trans
+      MulEquiv.ulift.symm).toGrpIso)
+    (by
+      intro A B φ
+      ext f
+      apply ULift.ext
+      exact pointsMulEquiv_mapValue R m φ.hom f)
+
+/-- After transport along `upperUnitriangularFunctor_obj`, the forward component of
+`pointsNatIso` is the pointwise upper-unitriangular equivalence. -/
+@[simp]
+theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m) A) :
+    (eqToHom (upperUnitriangularFunctor_obj (R := R) m A)
+      ((pointsNatIso (R := R) m).hom.app A f)).down = pointsMulEquiv R m f :=
+  (rfl)
+
+/-- After transport back along `upperUnitriangularFunctor_obj`, the inverse component of
+`pointsNatIso` is polynomial evaluation on strict-upper entries. -/
+@[simp]
+theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
+    (g : ULift.{u, max v w} (upperUnitriangularGroup m A)) :
+    (pointsNatIso (R := R) m).inv.app A
+        (eqToHom (upperUnitriangularFunctor_obj (R := R) m A).symm g) =
+      (pointsMulEquiv (R := R) m).symm g.down :=
+  (rfl)
+
+end Functor
 
 end HopfAlgebra
 
