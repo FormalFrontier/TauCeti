@@ -37,6 +37,8 @@ This is the limit stage of the Hille--Yosida generation theorem. Identifying the
   convergence on compact nonnegative intervals.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup`: the resulting strongly continuous semigroup.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup_apply`: evaluating the limit semigroup.
+* `TauCeti.Semigroups.hilleYosidaLimitSemigroup_realOperator_apply_of_nonneg`: evaluating the
+  real-time operator at nonnegative times.
 * `TauCeti.Semigroups.hilleYosidaLimitSemigroup_hasGrowthBound`: its growth bound `(0, M)`.
 * `TauCeti.Semigroups.tendsto_hilleYosidaLimitSemigroup`: convergence of approximating orbits to the
   semigroup orbits.
@@ -164,6 +166,14 @@ def hilleYosidaLimitSemigroup : StronglyContinuousSemigroup X where
 theorem hilleYosidaLimitSemigroup_apply (t : ℝ≥0) (x : X) :
     hilleYosidaLimitSemigroup hM hres hpow hdense t x = yosidaLimit A t x :=
   hilleYosidaLimitCLM_apply hM hres hpow hdense t x
+
+/-- Evaluating the real-time operator of the exponent-zero Hille--Yosida limit semigroup at a
+nonnegative time `t` yields `yosidaLimit A t x`. -/
+@[simp]
+theorem hilleYosidaLimitSemigroup_realOperator_apply_of_nonneg {t : ℝ} (ht : 0 ≤ t) (x : X) :
+    (hilleYosidaLimitSemigroup hM hres hpow hdense).realOperator t x = yosidaLimit A t x := by
+  rw [StronglyContinuousSemigroup.realOperator_def, hilleYosidaLimitSemigroup_apply,
+    Real.coe_toNNReal t ht]
 
 /-- The exponent-zero Hille--Yosida limit semigroup has growth bound `(0, M)`. -/
 theorem hilleYosidaLimitSemigroup_hasGrowthBound :
