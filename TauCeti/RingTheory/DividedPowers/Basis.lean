@@ -24,7 +24,8 @@ polynomials `(X choose n)`.
 
 ## Main declarations
 
-* `TauCeti.Associative.span_dividedPower_eq_span_pow`: divided and ordinary powers have the same
+* `TauCeti.Associative.dividedPowerSpan`: the rational submodule spanned by divided powers.
+* `TauCeti.Associative.dividedPowerSpan_eq_span_pow`: divided and ordinary powers have the same
   rational span.
 * `TauCeti.Associative.linearIndependent_dividedPower_iff`: divided powers are rationally
   independent exactly when ordinary powers are.
@@ -33,6 +34,8 @@ polynomials `(X choose n)`.
 * `TauCeti.Associative.dividedPowerLatticeBasis`: its canonical `ℤ`-basis.
 * `TauCeti.Associative.mem_dividedPowerLattice_iff`: membership as a finite integral linear
   combination.
+* `TauCeti.Associative.mem_dividedPowerLattice_iff_existsUnique_sum_dividedPower_eq`: unique finite
+  expansion in divided powers for elements of the integral lattice.
 
 ## References
 
@@ -52,28 +55,48 @@ section Semiring
 
 variable {A : Type u} [Semiring A] [Algebra ℚ A]
 
+/-- The rational submodule spanned by the divided powers of `x`. -/
+noncomputable def dividedPowerSpan (x : A) : Submodule ℚ A :=
+  span ℚ (range fun n : ℕ => dividedPower n x)
+
+/-- The defining equation of `dividedPowerSpan`. -/
+theorem dividedPowerSpan_def (x : A) :
+    dividedPowerSpan x = span ℚ (range fun n : ℕ => dividedPower n x) := by
+  unfold dividedPowerSpan
+  rfl
+
+/-- Every divided power of `x` belongs to `dividedPowerSpan x`. -/
+@[simp]
+theorem dividedPower_mem_dividedPowerSpan (x : A) (n : ℕ) :
+    dividedPower n x ∈ dividedPowerSpan x :=
+  subset_span (mem_range_self n)
+
+/-- Containment characterization for `dividedPowerSpan x`. -/
+@[simp]
+theorem dividedPowerSpan_le_iff {x : A} {p : Submodule ℚ A} :
+    dividedPowerSpan x ≤ p ↔ ∀ n : ℕ, dividedPower n x ∈ p := by
+  rw [dividedPowerSpan_def, span_le, Set.range_subset_iff]
+  rfl
+
 /-- The divided powers of an element and its ordinary powers span the same rational submodule. -/
-theorem span_dividedPower_eq_span_pow (x : A) :
-    span ℚ (range fun n : ℕ => dividedPower n x) = span ℚ (range fun n : ℕ => x ^ n) := by
+theorem dividedPowerSpan_eq_span_pow (x : A) :
+    dividedPowerSpan x = span ℚ (range fun n : ℕ => x ^ n) := by
   apply le_antisymm
-  · rw [span_le]
-    rintro _ ⟨n, rfl⟩
-    change dividedPower n x ∈ span ℚ (range fun n : ℕ => x ^ n)
+  · rw [dividedPowerSpan_le_iff]
+    intro n
     rw [dividedPower_def]
     exact smul_mem _ _ (subset_span (mem_range_self n))
-  · rw [span_le]
-    rintro _ ⟨n, rfl⟩
-    change x ^ n ∈ span ℚ (range fun n : ℕ => dividedPower n x)
+  · rw [span_le, range_subset_iff]
+    intro n
     rw [← factorial_smul_dividedPower_eq_pow]
-    exact smul_mem _ _ (subset_span (mem_range_self n))
+    exact smul_mem _ _ (dividedPower_mem_dividedPowerSpan x n)
 
 private noncomputable def invFactorialUnit (n : ℕ) : ℚˣ :=
   Units.mk0 (n.factorial : ℚ)⁻¹ <| inv_ne_zero <| by exact_mod_cast n.factorial_ne_zero
 
 private theorem invFactorialUnit_smul_pow (x : A) (n : ℕ) :
     invFactorialUnit n • x ^ n = dividedPower n x := by
-  change (n.factorial : ℚ)⁻¹ • x ^ n = dividedPower n x
-  exact (dividedPower_def n x).symm
+  rw [Units.smul_def, invFactorialUnit, Units.val_mk0, dividedPower_def]
 
 /-- Divided powers are linearly independent over `ℚ` exactly when the ordinary powers are. -/
 theorem linearIndependent_dividedPower_iff (x : A) :
@@ -88,10 +111,6 @@ theorem linearIndependent_dividedPower {x : A}
     (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) :
     LinearIndependent ℚ (fun n : ℕ => dividedPower n x) :=
   (linearIndependent_dividedPower_iff x).2 h
-
-/-- The rational submodule spanned by the divided powers of `x`. -/
-noncomputable def dividedPowerSpan (x : A) : Submodule ℚ A :=
-  span ℚ (range fun n : ℕ => dividedPower n x)
 
 /-- When the powers of `x` are linearly independent, the divided powers form a basis of their
 rational span. -/
@@ -116,6 +135,25 @@ variable {A : Type u} [Ring A] [Algebra ℚ A]
 /-- The integral lattice spanned by the divided powers of `x`. -/
 noncomputable def dividedPowerLattice (x : A) : Submodule ℤ A :=
   span ℤ (range fun n : ℕ => dividedPower n x)
+
+/-- The defining equation of `dividedPowerLattice`. -/
+theorem dividedPowerLattice_def (x : A) :
+    dividedPowerLattice x = span ℤ (range fun n : ℕ => dividedPower n x) := by
+  unfold dividedPowerLattice
+  rfl
+
+/-- Every divided power of `x` belongs to `dividedPowerLattice x`. -/
+@[simp]
+theorem dividedPower_mem_dividedPowerLattice (x : A) (n : ℕ) :
+    dividedPower n x ∈ dividedPowerLattice x :=
+  subset_span (mem_range_self n)
+
+/-- Containment characterization for `dividedPowerLattice x`. -/
+@[simp]
+theorem dividedPowerLattice_le_iff {x : A} {p : Submodule ℤ A} :
+    dividedPowerLattice x ≤ p ↔ ∀ n : ℕ, dividedPower n x ∈ p := by
+  rw [dividedPowerLattice_def, span_le, Set.range_subset_iff]
+  rfl
 
 /-- Membership in the divided-power lattice means being a finite integral linear combination of
 divided powers. -/
@@ -147,7 +185,7 @@ theorem coe_dividedPowerLatticeBasis_apply (x : A)
 
 /-- Under rational independence of the powers, every element of the divided-power lattice has a
 unique finite expansion in divided powers. -/
-theorem existsUnique_sum_dividedPower_eq {x y : A}
+theorem mem_dividedPowerLattice_iff_existsUnique_sum_dividedPower_eq {x y : A}
     (h : LinearIndependent ℚ (fun n : ℕ => x ^ n)) :
     y ∈ dividedPowerLattice x ↔
       ∃! c : ℕ →₀ ℤ, c.sum (fun n a => a • dividedPower n x) = y := by
