@@ -8,7 +8,7 @@ public import Mathlib.RingTheory.HopfAlgebra.Convolution
 public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
-# The antipode reverses comultiplication
+# Antipode identities for Hopf algebras
 
 The antipode of a Hopf algebra is an antihomomorphism for both its algebra and coalgebra
 structures. Mathlib already proves the multiplicative statement directly, as
@@ -16,10 +16,17 @@ structures. Mathlib already proves the multiplicative statement directly, as
 the antipode before comultiplication is the same as comultiplying, swapping the two tensor
 factors, and applying the antipode to each factor.
 
+For a commutative Hopf algebra, the antipode is involutive, hence defines an algebra
+automorphism. These facts are also recorded here in their natural generality.
+
 ## Main declarations
 
 * `TauCeti.HopfAlgebra.antipode_comul_antidistrib`: the identity as an equality of linear maps.
 * `TauCeti.HopfAlgebra.antipode_comul_antidistrib_apply`: the pointwise form.
+* `TauCeti.HopfAlgebra.antipode_antipode`: the antipode of a commutative Hopf algebra is
+  involutive.
+* `TauCeti.HopfAlgebra.antipodeAlgEquiv`: the antipode as an algebra equivalence in the
+  commutative case.
 
 ## Implementation notes
 
@@ -54,6 +61,35 @@ variable {R : Type u} {C : Type v}
 variable [CommSemiring R] [Semiring C] [_root_.HopfAlgebra R C]
 
 noncomputable section
+
+section Commutative
+
+variable {A : Type v} [CommSemiring A] [_root_.HopfAlgebra R A]
+
+/-- In a commutative Hopf algebra, applying the antipode twice is the identity. -/
+@[simp]
+theorem antipode_antipode (x : A) :
+    HopfAlgebraStruct.antipode R (HopfAlgebraStruct.antipode R x) = x := by
+  have h := congrArg (fun f : WithConv (A →ₐ[R] A) ↦ f x)
+    (inv_inv (WithConv.toConv (AlgHom.id R A)))
+  -- The convolution inverse of an algebra map is its composite with the antipode.
+  change HopfAlgebraStruct.antipode R (HopfAlgebraStruct.antipode R x) = x at h
+  exact h
+
+/-- The antipode of a commutative Hopf algebra as an involutive algebra equivalence. -/
+@[expose] noncomputable def antipodeAlgEquiv : A ≃ₐ[R] A :=
+  AlgEquiv.ofAlgHom (_root_.HopfAlgebra.antipodeAlgHom R A)
+    (_root_.HopfAlgebra.antipodeAlgHom R A)
+    (AlgHom.ext fun x ↦ antipode_antipode x)
+    (AlgHom.ext fun x ↦ antipode_antipode x)
+
+/-- The antipode algebra equivalence acts by the antipode. -/
+@[simp]
+theorem antipodeAlgEquiv_apply (x : A) :
+    antipodeAlgEquiv (R := R) (A := A) x = HopfAlgebraStruct.antipode R x :=
+  rfl
+
+end Commutative
 
 /-- Postcomposing the antipode convolution identity `LinearMap.antipode_mul_id` with an algebra
 homomorphism `f`: the map `f ∘ₗ antipode` is a left convolution inverse of `f`. -/
