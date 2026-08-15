@@ -9,7 +9,10 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.ReflectionLift
 public import TauCeti.LinearAlgebra.QuadraticForm.CartanDieudonne
 
 /-!
-# Pin corrections over fixed subspaces
+# Cartan--Dieudonné for Lipschitz and Pin actions
+
+Over a field of characteristic other than two, Cartan--Dieudonné and the action of a generating
+vector show that the Lipschitz action is onto the orthogonal group.
 
 Let `g` be an orthogonal automorphism fixing a subspace `W`, and let `x` be an anisotropic vector
 orthogonal to `W`. The generic fixed-subspace correction in the quadratic-form layer uses one or
@@ -19,6 +22,8 @@ element lies in the range of `pinToOrthogonal`.
 
 ## Main results
 
+* `TauCeti.CliffordAlgebra.lipschitzToOrthogonal_surjective`: the Lipschitz action is onto for a
+  finite-dimensional nondegenerate quadratic space.
 * `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
   Pin-range correction extends a fixed subspace by one orthogonal anisotropic vector.
 * `TauCeti.CliffordAlgebra.pinToOrthogonal_surjective`: over a separably closed field of
@@ -43,7 +48,26 @@ universe u v
 namespace CliffordAlgebra
 
 variable {K : Type u} {V : Type v} [Field K]
-  [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) [Invertible (2 : K)]
+  [AddCommGroup V] [Module K V] (Q : QuadraticForm K V)
+
+/-- The Lipschitz action is onto the orthogonal group of a finite-dimensional nondegenerate
+quadratic space over a field of characteristic other than two. -/
+theorem lipschitzToOrthogonal_surjective
+    [NeZero (2 : K)] [FiniteDimensional K V]
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
+    Function.Surjective
+      (@lipschitzToOrthogonal K V _ _ _ Q
+        (invertibleOfNonzero (NeZero.ne (2 : K)))) := by
+  let _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
+  exact MonoidHom.range_eq_top.mp <|
+    QuadraticMap.subgroup_eq_top_of_reflection_mem
+      Q hQ (lipschitzToOrthogonal Q).range
+      fun v _ ↦ by
+        rw [MonoidHom.mem_range]
+        exact ⟨⟨unitι Q v, unitι_mem_lipschitzGroup v⟩,
+          lipschitzToOrthogonal_unitι Q v⟩
+
+variable [Invertible (2 : K)]
 
 section IsSepClosed
 
