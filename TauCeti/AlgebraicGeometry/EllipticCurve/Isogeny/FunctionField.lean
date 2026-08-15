@@ -186,16 +186,46 @@ theorem fieldPullback_algebraMap (φ : Isogeny W₁ W₂) (x : W₂.CoordinateRi
     φ.fieldPullback (algebraMap W₂.CoordinateRing W₂.FunctionField x) = φ.pullback x := by
   simp [fieldPullback, IsFractionRing.liftAlgHom_apply]
 
+/-- **A ring homomorphism agreeing with an isogeny's coordinate pullback is its function-field
+pullback.** `W₂.FunctionField` is a fraction field of `W₂.CoordinateRing`, so a map out of it is
+determined by its restriction.
+
+Stated for a bare `RingHom` rather than an `F`-algebra homomorphism, because that is the form a
+caller holds: the `algebraMap` of an `Algebra W₂.FunctionField W₁.FunctionField` instance carries
+no `F`-structure of its own. `fieldPullback_unique` is the `AlgHom` corollary. -/
+theorem ringHom_eq_fieldPullback (φ : Isogeny W₁ W₂)
+    (f : W₂.FunctionField →+* W₁.FunctionField)
+    (hf : ∀ x : W₂.CoordinateRing,
+      f (algebraMap W₂.CoordinateRing W₂.FunctionField x) = φ.pullback x) :
+    f = (φ.fieldPullback : W₂.FunctionField →+* W₁.FunctionField) :=
+  IsFractionRing.ringHom_ext (A := W₂.CoordinateRing) (K := W₂.FunctionField)
+    (L := W₁.FunctionField) fun x ↦ (hf x).trans (fieldPullback_algebraMap φ x).symm
+
 /-- A function-field algebra homomorphism agreeing with an isogeny's coordinate pullback is its
-function-field pullback. -/
+function-field pullback, the `AlgHom` corollary of `ringHom_eq_fieldPullback`. -/
 theorem fieldPullback_unique (φ : Isogeny W₁ W₂)
     (f : W₂.FunctionField →ₐ[F] W₁.FunctionField)
     (hf : ∀ x : W₂.CoordinateRing,
       f (algebraMap W₂.CoordinateRing W₂.FunctionField x) = φ.pullback x) :
-    f = φ.fieldPullback := by
-  exact AlgHom.coe_ringHom_injective <| IsFractionRing.ringHom_ext
-    (A := W₂.CoordinateRing) (K := W₂.FunctionField) (L := W₁.FunctionField) fun x ↦ by
-      exact (hf x).trans (fieldPullback_algebraMap φ x).symm
+    f = φ.fieldPullback :=
+  AlgHom.coe_ringHom_injective <| ringHom_eq_fieldPullback φ f.toRingHom hf
+
+/-- **A coordinate-level structure map forces the field-level one.** If an
+`Algebra W₂.CoordinateRing W₁.FunctionField` structure is the coordinate pullback, then any
+`Algebra W₂.FunctionField W₁.FunctionField` structure sitting in a tower over it is the
+function-field pullback.
+
+This is the bridge every consumer needs that holds a coordinate-level witness but must transport a
+property of the *extension* across it — finite-dimensionality, separability, or integrality of an
+element over `W₂.FunctionField`. Properties intrinsic to a ring, `IsIntegrallyClosed` among them,
+do not depend on this structure map and are not what it carries. -/
+theorem algebraMap_functionField_eq_fieldPullback (φ : Isogeny W₁ W₂)
+    [Algebra W₂.CoordinateRing W₁.FunctionField] [Algebra W₂.FunctionField W₁.FunctionField]
+    [IsScalarTower W₂.CoordinateRing W₂.FunctionField W₁.FunctionField]
+    (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x) (z) :
+    algebraMap W₂.FunctionField W₁.FunctionField z = φ.fieldPullback z :=
+  congrFun (congrArg DFunLike.coe (ringHom_eq_fieldPullback φ _ fun x ↦ by
+    rw [← IsScalarTower.algebraMap_apply]; exact h x)) z
 
 /-- The identity isogeny induces the identity pullback on the function field. -/
 @[simp]

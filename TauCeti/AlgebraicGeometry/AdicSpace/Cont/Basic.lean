@@ -54,6 +54,8 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
 * `TauCeti.ValuationSpectrum.IsContinuous.quotientLift` : continuity descends to the canonical
   lift through a quotient.
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
+* `TauCeti.ValuationSpectrum.cont_eq_empty_of_one_mem_closure_zero` : if `1` belongs to the
+  closure of zero, then `Cont A` is empty.
 
 ## References
 
@@ -123,6 +125,27 @@ theorem isContinuous_ofValuation_iff {Γ₀ : Type*} [LinearOrderedCommGroupWith
 theorem cont_eq_univ [DiscreteTopology A] : cont A = Set.univ :=
   Set.eq_univ_of_forall fun v ↦
     (mem_cont_iff v).mpr ((isContinuous_def v).mpr (isContinuous_of_discreteTopology v.valuation))
+
+section SeparatelyContinuousAdd
+
+variable [SeparatelyContinuousAdd A]
+
+/-- **The `1 ∈ closure {0} → Cont A = ∅` half of Wedhorn Proposition 7.49(1).** If `1 ∈ closure {0}`
+in a commutative ring `A` with separately continuous addition, then `Cont A = ∅`. -/
+theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Set A)) :
+    cont A = ∅ := by
+  ext v
+  simp only [Set.mem_empty_iff_false, iff_false, mem_cont_iff]
+  intro hv
+  have hcont : v.valuation.IsContinuous := (isContinuous_def v).mp hv
+  have h_nhds : {y : A | v.valuation (y - 1) < 1} ∈ nhds (1 : A) := by
+    have h1_ne : v.valuation 1 ≠ 0 := by simp [v.valuation.map_one]
+    have := hcont.sub_lt_mem_nhds 1 h1_ne
+    simpa [v.valuation.map_one] using this
+  obtain ⟨x, hx, rfl⟩ := mem_closure_iff_nhds.mp h _ h_nhds
+  simp [v.valuation.map_one] at hx
+
+end SeparatelyContinuousAdd
 
 /-- **Wedhorn Remark 7.9.** A continuous ring homomorphism pulls continuous points back to
 continuous points, so it restricts to a map `Cont B → Cont A`. -/

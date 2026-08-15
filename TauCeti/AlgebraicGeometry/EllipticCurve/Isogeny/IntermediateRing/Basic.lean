@@ -26,6 +26,10 @@ because `mapsInfinity` is precisely the assertion that it lands there.
 
 * `TauCeti.Isogeny.algebraMap_mem_intermediateRing`: the source coordinate ring lands in it.
 * `TauCeti.Isogeny.pullback_mem_intermediateRing`: so does the target coordinate ring.
+* `TauCeti.Isogeny.isIntegralClosure_intermediateRing`: it really is the integral closure, in
+  Mathlib's `IsIntegralClosure` sense.
+* `TauCeti.Isogeny.isScalarTower_intermediateRing`: the corestricted pullback puts it in a scalar
+  tower under `W₂.CoordinateRing`, which is the other half of a consumer's setup.
 * `TauCeti.Isogeny.id_intermediateRing`: an identity isogeny's intermediate ring is the
   coordinate ring itself, sitting inside its own fraction field.
 
@@ -49,11 +53,13 @@ one, which is all its proof uses; the elliptic case is that hypothesis discharge
 `WeierstrassCurve.Affine.isIntegrallyClosed_coordinateRing`, and is not given a separate name
 because nothing would consume it.
 
-The structural theory of this ring — module-finiteness over `W₂.CoordinateRing`, and its being a
-Dedekind domain — is deliberately not proved here. Every route to it in Mathlib
-(`IsIntegralClosure.finite`, `integralClosure.isDedekindDomain`) carries an
-`Algebra.IsSeparable` hypothesis, so the inseparable case that this roadmap wants is separate
-work rather than a corollary of the definition.
+The structural theory of this ring is not proved here. Module-finiteness over `W₂.CoordinateRing`
+is in the sibling `IntermediateRing/Finite.lean` as `moduleFinite_intermediateRing`, for a
+separable function-field extension; Dedekindness is still absent. Every route to either in Mathlib
+(`IsIntegralClosure.finite`, `integralClosure.isDedekindDomain`) carries an `Algebra.IsSeparable`
+hypothesis, so the inseparable case — which is expected to be true, by Noether's finiteness
+theorem for the module-finiteness half — remains separate work rather than a corollary of the
+definition.
 
 This opens the "points come along" milestone of Layer 1 of
 `TauCetiRoadmap/EllipticCurves/README.md`, which names this object as "the **intermediate ring**
@@ -72,11 +78,12 @@ in `projects/HasseWeil/HasseWeil/Curves/RamificationFinite.lean`.
 
 What is adapted here is the object and the observation that the integral closure over the
 *coordinate* ring — rather than over a localization — is the right home for the norm and
-class-group route to the induced map on points. The structural instances are deliberately **not**
-ported: the source proves them for a fixed extension carrying `[Algebra.IsSeparable K L]`, with
-the algebra structures supplied as instance arguments, whereas this file takes the pullback-induced
-structure locally and assumes no separability. None of the declarations below is a transcription
-of a source declaration.
+class-group route to the induced map on points. Of the structural instances, only
+module-finiteness is ported, and in the sibling `IntermediateRing/Finite.lean` rather than here,
+under the source's own `[Algebra.IsSeparable K L]`; the rest are not. The source proves them for
+a fixed extension with the algebra structures supplied as instance arguments, whereas this file
+takes the pullback-induced structure locally and assumes no separability. None of the declarations
+below is a transcription of a source declaration.
 
 ## References
 
@@ -147,6 +154,44 @@ noncomputable def pullbackToIntermediateRing (φ : Isogeny W₁ W₂) :
 @[simp]
 theorem coe_pullbackToIntermediateRing (φ : Isogeny W₁ W₂) (x : W₂.CoordinateRing) :
     (φ.pullbackToIntermediateRing x : W₁.FunctionField) = φ.pullback x := (rfl)
+
+/-- **The corestricted pullback puts the intermediate ring in a scalar tower.** With
+`letI := φ.pullbackToIntermediateRing.toAlgebra`, the target coordinate ring acts on
+`W₁.FunctionField` through the intermediate ring exactly as it does directly.
+
+This is the second half of the one-line setup a consumer needs: `pullbackToIntermediateRing`
+supplies the `Algebra`, and this supplies the `IsScalarTower` that every downstream statement over
+the intermediate ring also asks for. -/
+theorem isScalarTower_intermediateRing (φ : Isogeny W₁ W₂)
+    [Algebra W₂.CoordinateRing W₁.FunctionField]
+    [inst : Algebra W₂.CoordinateRing φ.intermediateRing]
+    (halg : inst = φ.pullbackToIntermediateRing.toAlgebra)
+    (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x) :
+    IsScalarTower W₂.CoordinateRing φ.intermediateRing W₁.FunctionField := by
+  subst halg
+  -- `subst` leaves the structure as a bare term, so re-register it for synthesis
+  let _ := φ.pullbackToIntermediateRing.toAlgebra
+  refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+  rw [h]
+  exact (φ.coe_pullbackToIntermediateRing x).symm
+
+/-- **The intermediate ring really is the integral closure**, in Mathlib's `IsIntegralClosure`
+sense: an element of `W₁.FunctionField` lies in it exactly when it is integral over
+`W₂.CoordinateRing`.
+
+Stated for an arbitrary `W₂.CoordinateRing`-algebra structure on `W₁.FunctionField` whose
+structure map is the pullback, so that a caller's own structure is accepted rather than only the
+locally-built one `intermediateRing` is defined against. Nothing here assumes separability. -/
+theorem isIntegralClosure_intermediateRing (φ : Isogeny W₁ W₂)
+    [inst : Algebra W₂.CoordinateRing W₁.FunctionField]
+    (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x) :
+    IsIntegralClosure φ.intermediateRing W₂.CoordinateRing W₁.FunctionField := by
+  -- the caller's structure and the pullback-induced one agree on the structure map, so they are
+  -- the same instance; substituting makes `mem_intermediateRing_iff` apply on the nose
+  have halg : inst = φ.pullback.toRingHom.toAlgebra := Algebra.algebra_ext _ _ h
+  subst halg
+  let _ := φ.pullback.toRingHom.toAlgebra
+  exact integralClosure.isIntegralClosure W₂.CoordinateRing W₁.FunctionField
 
 /-- **The identity isogeny's intermediate ring is the coordinate ring itself**, embedded in its
 own fraction field: nothing in the function field beyond an integrally closed coordinate ring is
