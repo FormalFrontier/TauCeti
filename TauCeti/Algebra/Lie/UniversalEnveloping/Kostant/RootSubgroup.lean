@@ -78,7 +78,7 @@ noncomputable def kostantRootSubgroupPoints :
 
 /-- The linear equivalence underlying a Kostant root-subgroup point is the integral
 divided-power exponential with the corresponding `𝔾ₐ` parameter. -/
-theorem kostantRootSubgroupPoints_toLinearEquiv
+@[simp] theorem kostantRootSubgroupPoints_toLinearEquiv
     (f : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
     (kostantRootSubgroupPoints e h ρ M hM i hnil f).toLinearEquiv =
       baseChangeKostantExpHom e h ρ M hM i hnil
@@ -88,7 +88,7 @@ theorem kostantRootSubgroupPoints_toLinearEquiv
 
 /-- On an elementary tensor, a Kostant root-subgroup point acts by the expected finite
 divided-power formula. -/
-theorem kostantRootSubgroupPoints_tmul
+@[simp] theorem kostantRootSubgroupPoints_tmul
     (f : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) (a : A) (m : M) :
     (kostantRootSubgroupPoints e h ρ M hM i hnil f).val (a ⊗ₜ[ℤ] m) =
       ∑ n ∈ Finset.range
