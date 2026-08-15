@@ -612,6 +612,10 @@ theorem isIsotropic_bot : A.IsIsotropic ⊥ := by simp [IsIsotropic]
 /-- A Lagrangian is a subgroup equal to its orthogonal complement. -/
 def IsLagrangian (H : AddSubgroup A) : Prop := H = A.orthogonalComplement H
 
+/-- A subgroup is Lagrangian exactly when it equals its orthogonal complement. -/
+theorem isLagrangian_iff (H : AddSubgroup A) :
+    A.IsLagrangian H ↔ H = A.orthogonalComplement H := Iff.rfl
+
 /-- Every Lagrangian is isotropic. -/
 theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :
     A.IsIsotropic H := by
