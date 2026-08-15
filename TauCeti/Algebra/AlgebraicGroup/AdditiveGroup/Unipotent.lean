@@ -88,7 +88,7 @@ universe u v w
 
 section MonomialBasis
 
-variable (R : Type u) [CommRing R]
+variable (R : Type u) [CommSemiring R]
 
 /-- Exponent vectors on a singleton are natural numbers. -/
 private noncomputable def unitFinsuppEquivNat : (Unit →₀ ℕ) ≃ ℕ where
@@ -182,7 +182,7 @@ end MonomialBasis
 
 section Component
 
-variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable (R : Type u) [CommSemiring R] (V : Type v) [AddCommMonoid V] [Module R V]
 
 /-- The `n`-th coefficient map of `V ⊗[R] R[x]`, reading off the coefficient of the monomial
 `xⁿ` in the second factor. -/
@@ -233,7 +233,7 @@ end Component
 
 section CoactComponent
 
-variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable (R : Type u) [CommSemiring R] (V : Type v) [AddCommMonoid V] [Module R V]
 variable [Comodule R (SymmetricAlgebra R R) V]
 
 /-- **The `n`-th divided-power component of the coaction** of a comodule over the coordinate
@@ -265,6 +265,7 @@ private theorem coact_comp_tensorComponent (n : ℕ) :
 
 /-- **The divided-power components compose by the binomial rule** `Nᵢ ∘ Nⱼ = (i + j choose i)
 Nᵢ₊ⱼ`. This is coassociativity of the coaction, read off in the monomial basis. -/
+@[simp]
 theorem coactComponent_coactComponent (i j : ℕ) (v : V) :
     coactComponent R V i (coactComponent R V j v) =
       ((i + j).choose i) • coactComponent R V (i + j) v := by
@@ -285,7 +286,7 @@ end CoactComponent
 
 section Decomposition
 
-variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable (R : Type u) [CommSemiring R] (V : Type v) [AddCommMonoid V] [Module R V]
 
 variable [Comodule R (SymmetricAlgebra R R) V]
 
@@ -319,7 +320,7 @@ end Decomposition
 
 section Filtration
 
-variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable (R : Type u) [CommSemiring R] (V : Type v) [AddCommMonoid V] [Module R V]
 variable [Comodule R (SymmetricAlgebra R R) V]
 
 /-- **The divided-power filtration of a `𝔾ₐ`-comodule**: the `p`-th step consists of the vectors
@@ -360,11 +361,11 @@ theorem exists_coactFiltration_eq_top [Module.Finite R V] :
 
 end Filtration
 
-section Nilpotent
+section ActionExpansion
 
-variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable (R : Type u) [CommSemiring R] (V : Type v) [AddCommMonoid V] [Module R V]
 variable [Comodule R (SymmetricAlgebra R R) V]
-variable {A : Type w} [CommRing A] [Algebra R A]
+variable {A : Type w} [CommSemiring A] [Algebra R A]
 
 /-- **A point of `𝔾ₐ` acts through the divided-power components of the coaction.** A point with
 parameter `g x` sends `a ⊗ v` to `∑ᵢ a (g x)ⁱ ⊗ Nᵢ v`. -/
@@ -376,6 +377,14 @@ theorem endOfPoint_tmul_eq_sum (g : SymmetricAlgebra R R →ₐ[R] A) (a : A) (v
   refine Finsupp.sum_congr fun i _ => ?_
   rw [LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply, map_pow, TensorProduct.comm_tmul,
     TensorProduct.smul_tmul', smul_eq_mul]
+
+end ActionExpansion
+
+section Nilpotent
+
+variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable [Comodule R (SymmetricAlgebra R R) V]
+variable {A : Type w} [CommRing A] [Algebra R A]
 
 /-- The action of a point, minus the identity, involves only the positive divided-power
 components. -/
