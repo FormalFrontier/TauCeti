@@ -121,6 +121,7 @@ theorem integralForm_smul_apply (n : ℤ) (L : IntegralLattice V) (x y : L) :
     LinearMap.smul_apply, LinearMap.smul_apply, smul_eq_mul]
 
 /-- Scaling commutes with the construction of the restricted integral form. -/
+@[simp]
 theorem integralForm_smul (n : ℤ) (L : IntegralLattice V) :
     (n • L).integralForm = n • L.integralForm := by
   ext x y
@@ -163,7 +164,7 @@ theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) 
     (n • L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [smul_form]
   exact TauCeti.BilinForm.nondegenerate_smul_iff
-    (IsRegular.of_ne_zero (Int.cast_ne_zero.mpr hn))
+    (IsRegular.of_ne_zero (Int.cast_ne_zero.mpr hn)).left
 
 /-- Scaling multiplies the discriminant by the absolute scalar to the rank of the lattice. -/
 @[simp]
@@ -177,11 +178,8 @@ theorem discriminant_smul (n : ℤ) (L : IntegralLattice V) :
 instance instInvolutiveNeg : InvolutiveNeg (IntegralLattice V) where
   neg L := (-1 : ℤ) • L
   neg_neg L := by
-    apply IntegralLattice.ext (L := scale (-1) (scale (-1) L)) (M := L)
-    · rfl
-    · ext x y
-      simp only [LinearMap.smul_apply, smul_eq_mul, Int.cast_neg, Int.cast_one]
-      ring
+    rw [← mul_smul]
+    norm_num
 
 /-- Definitional bridge between negation and scaling by `-1`. -/
 theorem neg_def (L : IntegralLattice V) : -L = (-1 : ℤ) • L :=
@@ -193,11 +191,9 @@ theorem neg_carrier (L : IntegralLattice V) : (-L).carrier = L.carrier :=
 
 @[simp]
 theorem neg_form (L : IntegralLattice V) : (-L).form = -L.form := by
-  ext x y
-  rw [neg_def, smul_form, LinearMap.smul_apply, LinearMap.smul_apply, smul_eq_mul,
-    LinearMap.neg_apply, LinearMap.neg_apply]
-  push_cast
-  ring
+  rw [neg_def, smul_form]
+  norm_num only [Int.cast_neg, Int.cast_one]
+  exact neg_one_smul ℚ L.form
 
 /-- Negating the form does not change the rank of the carrier. -/
 @[simp]
@@ -209,29 +205,30 @@ theorem finrank_neg (L : IntegralLattice V) :
 @[simp]
 theorem integralForm_neg_apply (L : IntegralLattice V) (x y : L) :
     (-L).integralForm x y = -L.integralForm x y := by
-  apply Int.cast_injective (α := ℚ)
-  rw [integralForm_cast (-L), Int.cast_neg, integralForm_cast L, neg_form,
-    LinearMap.neg_apply, LinearMap.neg_apply]
+  change ((-1 : ℤ) • L).integralForm x y = -L.integralForm x y
+  rw [integralForm_smul_apply, neg_one_mul]
 
 /-- Form negation commutes with the construction of the restricted integral form. -/
+@[simp]
 theorem integralForm_neg (L : IntegralLattice V) :
     (-L).integralForm = -L.integralForm := by
-  ext x y
-  exact integralForm_neg_apply L x y
+  change ((-1 : ℤ) • L).integralForm = -L.integralForm
+  rw [integralForm_smul, neg_one_smul ℤ]
 
 /-- Negation multiplies every Gram-matrix entry by `-1`. -/
 @[simp]
 theorem gramMatrix_neg (L : IntegralLattice V) {ι : Type v} (e : Basis ι ℤ L) :
     (-L).gramMatrix e = -L.gramMatrix e := by
-  ext i j
-  rw [gramMatrix_apply (-L), integralForm_neg_apply, ← gramMatrix_apply L, Matrix.neg_apply]
+  change ((-1 : ℤ) • L).gramMatrix e = -L.gramMatrix e
+  rw [gramMatrix_smul, neg_one_smul ℤ]
 
 /-- Negating the form multiplies a Gram determinant by `(-1)` to the size of its basis. -/
 @[simp]
 theorem gramDet_neg (L : IntegralLattice V) {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
     (-L).gramDet e = (-1 : ℤ) ^ Fintype.card ι * L.gramDet e := by
-  rw [gramDet_def (-L), gramMatrix_neg, Matrix.det_neg, gramDet_def L]
+  change ((-1 : ℤ) • L).gramDet e = (-1 : ℤ) ^ Fintype.card ι * L.gramDet e
+  exact gramDet_smul (-1) L e
 
 /-- Negating the form multiplies the signed determinant by `(-1)` to the lattice rank. -/
 @[simp]
@@ -245,8 +242,8 @@ This is a named API lemma rather than a simp lemma: simplification already deriv
 `neg_form` and the corresponding bilinear-form result. -/
 theorem nondegenerate_neg_iff (L : IntegralLattice V) :
     (-L).form.Nondegenerate ↔ L.form.Nondegenerate := by
-  rw [neg_form]
-  exact TauCeti.BilinForm.nondegenerate_neg_iff
+  rw [neg_def]
+  exact nondegenerate_smul_iff (by norm_num) L
 
 /-- Form negation preserves the nonnegative discriminant. -/
 @[simp]
@@ -278,7 +275,12 @@ theorem neg_ofSubmodule (S : Submodule ℤ V) [hS : S.IsLattice ℚ]
         intro y hy
         have hmem := Submodule.neg_mem (1 : Submodule ℤ ℚ) (hle hx y hy)
         simpa only [LinearMap.neg_apply] using hmem) := by
-  apply IntegralLattice.ext <;> simp
+  rw [neg_def, smul_ofSubmodule]
+  apply IntegralLattice.ext
+  · simp only [ofSubmodule_carrier]
+  · rw [ofSubmodule_form, ofSubmodule_form]
+    norm_num only [Int.cast_neg, Int.cast_one]
+    exact neg_one_smul ℚ B
 
 @[simp]
 theorem smul_ofBasis (n : ℤ) {ι : Type*} [Finite ι] (b : Basis ι ℚ V)
@@ -298,7 +300,12 @@ theorem neg_ofBasis {ι : Type*} [Finite ι] (b : Basis ι ℚ V)
       (fun i j ↦ by
         have hmem := Submodule.neg_mem (1 : Submodule ℤ ℚ) (hint i j)
         simpa only [LinearMap.neg_apply] using hmem) := by
-  apply IntegralLattice.ext <;> simp
+  rw [neg_def, smul_ofBasis]
+  apply IntegralLattice.ext
+  · simp only [ofBasis_carrier]
+  · rw [ofBasis_form, ofBasis_form]
+    norm_num only [Int.cast_neg, Int.cast_one]
+    exact neg_one_smul ℚ B
 
 open Classical in
 @[simp]
@@ -318,11 +325,6 @@ open Classical in
 theorem neg_ofGramMatrix {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
     (G : Matrix ι ι ℤ) (hG : G.IsSymm) :
     -ofGramMatrix b G hG = ofGramMatrix b (-G) hG.neg := by
-  apply IntegralLattice.ext
-  · rw [neg_carrier, ofGramMatrix_carrier, ofGramMatrix_carrier]
-  · have hmap : (-G).map (algebraMap ℤ ℚ) = -G.map (algebraMap ℤ ℚ) := by
-      ext i j
-      simp only [Matrix.map_apply, Matrix.neg_apply, map_neg]
-    rw [neg_form, ofGramMatrix_form, ofGramMatrix_form, hmap, map_neg]
+  simpa only [neg_def, neg_one_smul ℤ] using smul_ofGramMatrix (-1) b G hG
 
 end TauCeti.IntegralLattice
