@@ -21,9 +21,9 @@ Delta(phi)(x tensor y) = phi (x * y),        epsilon(phi) = phi(1).
 ```
 
 If `H` is a Hopf algebra, precomposition with its antipode is the antipode of the dual. This is
-the algebraic construction underlying Cartier duality for finite group schemes. The present file
-builds the finite locally free Hopf dual over a general affine base; the scheme-level duality
-remains a separate step.
+the algebraic construction underlying Cartier duality for finite locally free commutative group
+schemes. The present file builds the finite locally free Hopf dual over a general affine base; the
+scheme-level duality remains a separate step.
 
 ## Main declarations
 
