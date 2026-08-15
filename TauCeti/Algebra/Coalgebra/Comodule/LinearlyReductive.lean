@@ -7,7 +7,6 @@ module
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
-import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
 # Linear reductivity of diagonalizable groups
@@ -149,24 +148,13 @@ private noncomputable def equivariantProjectionHom (p : V →ₗ[k] V) :
   Hom.ofMapWeightSpace (equivariantProjection k G V p)
     (fun g _ hv ↦ equivariantProjection_mem_weightSpace k G V p (g := g) hv)
 
-private theorem weightProj_mem_subcomodule (N : Subcomodule k (MonoidAlgebra k G) V)
-    (g : G) {v : V} (hv : v ∈ N) : weightProj k G V g v ∈ N := by
-  let _ : Comodule k (MonoidAlgebra k G) N := Subcomodule.instComodule N
-  have hmap := (Subcomodule.subtype N).map_weightProj g (⟨v, hv⟩ : N)
-  rw [Subcomodule.subtype_apply] at hmap
-  have hmap' :
-      (weightProj k G N g (⟨v, hv⟩ : N) : V) = weightProj k G V g v := by
-    simpa only [Subcomodule.subtype_apply] using hmap
-  rw [← hmap']
-  exact (weightProj k G N g (⟨v, hv⟩ : N)).2
-
 private theorem equivariantProjection_mem_subcomodule
     (N : Subcomodule k (MonoidAlgebra k G) V) (p : V →ₗ[k] V)
     (hp : ∀ v, p v ∈ N) (v : V) : equivariantProjection k G V p v ∈ N := by
   classical
   rw [equivariantProjection_apply]
   exact Submodule.sum_mem N.toSubmodule fun g _ ↦
-    weightProj_mem_subcomodule k G V N g (hp _)
+    weightProj_mem_subcomodule (R := k) (G := G) (V := V) N g (hp _)
 
 private theorem equivariantProjection_apply_of_mem
     (N : Subcomodule k (MonoidAlgebra k G) V) (p : V →ₗ[k] V)
@@ -177,7 +165,7 @@ private theorem equivariantProjection_apply_of_mem
   have hterm : ∀ g ∈ (weightDecomposition k G V v).support,
       weightProj k G V g (p (weightProj k G V g v)) = weightProj k G V g v := by
     intro g hg
-    rw [hp (weightProj_mem_subcomodule k G V N g hv),
+    rw [hp (weightProj_mem_subcomodule (R := k) (G := G) (V := V) N g hv),
       weightProj_weightProj_self]
   rw [Finsupp.sum]
   simp_rw [weightDecomposition_apply]
