@@ -644,15 +644,6 @@ section Classification
 
 variable [E.IsElliptic]
 
-omit [E.IsElliptic] in
-/-- The inverse of the trace–norm change of variables carries `Eᴸ` back to the base change of the
-quadratic twist by `θ`. -/
-private theorem inv_quadraticTwistOfTraceNormVariableChange_smul {θ : L}
-    (hθ : θ ∉ Set.range (algebraMap K L)) {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) :
-    (E.quadraticTwistOfTraceNormVariableChange hθ hσ)⁻¹ • E.baseChange L
-      = (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L := by
-  rw [← E.quadraticTwistOfTraceNormVariableChange_smul_baseChange hθ hσ, inv_smul_smul]
-
 variable (L) in
 /-- **The quadratic twist is not isomorphic to `E` over `K`**, when `j(E) ∉ {0, 1728}`. Twisting is
 a genuinely nontrivial operation: this is what `map_quadraticTwistOfTraceNormVariableChange`
@@ -665,42 +656,54 @@ theorem not_exists_smul_quadraticTwist_eq (hj₀ : E.j ≠ 0) (hj₁₇₂₈ : 
     ¬∃ C : VariableChange K, C • E.quadraticTwist L = E := by
   rintro ⟨CK, hCK⟩
   obtain ⟨σ, hσ⟩ := Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L
-  obtain ⟨θ, hθ⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap K L
-  set C₁ := E.quadraticTwistOfTraceNormVariableChange hθ hσ with hC₁
-  have hcoc := E.map_quadraticTwistOfTraceNormVariableChange hθ hσ
-  obtain ⟨C₀, hC₀⟩ := E.exists_smul_quadraticTwist_eq hθ
   have hinj := FaithfulSMul.algebraMap_injective K L
-  -- needed by `negVariableChange_ne_one` at the end; the `Aut(Eᴸ) = {±1}` step supplies its own
+  -- needed by `negVariableChange_ne_one` at the end
   have : (E.baseChange L).IsElliptic := inferInstanceAs ((E.map (algebraMap K L)).IsElliptic)
-  -- transfer the hypothetical `K`-isomorphism to the twist by `θ`
-  have hDK : (CK * C₀⁻¹) • E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) = E := by
-    rw [mul_smul, ← hC₀, inv_smul_smul, hCK]
-  -- base change it: a `σ`-invariant `L`-isomorphism from the twist by `θ` to `E`
-  set ψ := (CK * C₀⁻¹).baseChange L with hψ
-  have hψiso : ψ • (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L
-      = E.baseChange L := by rw [hψ, baseChange_smul_baseChange, hDK]
-  have hψinv : ψ.map (σ : L →+* L) = ψ :=
-    VariableChange.map_baseChange (C := CK * C₀⁻¹) (σ : L →ₐ[K] L)
-  -- `a := ψ · C₁⁻¹` fixes `Eᴸ`, so it is `1` or `[-1]`; either way it is `σ`-invariant
-  set a := ψ * C₁⁻¹ with ha
-  have haut : a • E.baseChange L = E.baseChange L := by
-    rw [ha, mul_smul, hC₁, E.inv_quadraticTwistOfTraceNormVariableChange_smul hθ hσ, hψiso]
-  have haC : a * C₁ = ψ := by rw [ha, mul_assoc, inv_mul_cancel, mul_one]
-  have hamap : a.map (σ : L →+* L) = a := by
-    rcases E.eq_one_or_eq_negVariableChange_map (f := algebraMap K L) hinj hj₀ hj₁₇₂₈ haut with
-      hcase | hcase
-    · rw [hcase]; exact VariableChange.map_one _
-    · rw [hcase]; exact E.negVariableChange_baseChange_map L (σ : L →ₐ[K] L)
-  -- applying `σ` to `ψ = a · C₁` forces `[-1] = 1`
+  -- `b := CKᴸ · T` fixes `Eᴸ`, where `T` is the change of variables carrying `Eᴸ` to the twist
+  set b := CK.baseChange L * E.quadraticTwistVariableChange L with hb
+  have haut : b • E.baseChange L = E.baseChange L := by
+    rw [hb, mul_smul, E.quadraticTwistVariableChange_smul L, baseChange_smul_baseChange, hCK]
+  -- `σ` fixes the base change of a `K`-change and multiplies `T` by `[-1]`, so `σb = b · [-1]`
+  have hCKmap : (CK.baseChange L).map (σ : L →+* L) = CK.baseChange L :=
+    VariableChange.map_baseChange (C := CK) (σ : L →ₐ[K] L)
+  have hnegmap : (E.baseChange L).negVariableChange.map (σ : L →+* L)
+      = (E.baseChange L).negVariableChange :=
+    E.negVariableChange_baseChange_map L (σ : L →ₐ[K] L)
+  have hbmap : b.map (σ : L →+* L) = b * (E.baseChange L).negVariableChange := by
+    rw [hb, VariableChange.map_mul, hCKmap, E.map_quadraticTwistVariableChange L hσ, mul_assoc]
+  -- both values the dichotomy allows for `b` force `[-1] = 1`
   apply (E.baseChange L).negVariableChange_ne_one
-  have hchain : a * ((E.baseChange L).negVariableChange * C₁) = a * C₁ :=
-    calc a * ((E.baseChange L).negVariableChange * C₁)
-        = a.map (σ : L →+* L) * C₁.map (σ : L →+* L) := by rw [hamap, hcoc]
-      _ = (a * C₁).map (σ : L →+* L) := (VariableChange.map_mul ..).symm
-      _ = ψ.map (σ : L →+* L) := by rw [haC]
-      _ = ψ := hψinv
-      _ = a * C₁ := haC.symm
-  exact mul_right_cancel (((mul_left_cancel hchain).trans (one_mul C₁).symm))
+  -- the dichotomy is stated for `E.map (algebraMap K L)`, which is `E.baseChange L` by definition
+  have hEL : E.map (algebraMap K L) = E.baseChange L := rfl
+  rcases E.eq_one_or_eq_negVariableChange_map (f := algebraMap K L) hinj hj₀ hj₁₇₂₈ haut with
+    hcase | hcase
+  on_goal 2 => rw [hEL] at hcase
+  · rw [hcase, VariableChange.map_one, one_mul] at hbmap
+    exact hbmap.symm
+  · rw [hcase, hnegmap, (E.baseChange L).negVariableChange_mul_self] at hbmap
+    exact hbmap
+
+omit [E.IsElliptic] in
+/-- **An `L`-isomorphism `E'ᴸ ≅ Eᴸ` whose Galois conjugate differs from it by `[-1]` makes `E'`
+`K`-isomorphic to the quadratic twist of `E`.** -/
+private theorem exists_smul_eq_quadraticTwist_of_map_eq_negVariableChange_mul
+    {E' : WeierstrassCurve K} {ρ : VariableChange L}
+    (hρ : ρ • E'.baseChange L = E.baseChange L) {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1)
+    (hρmap : ρ.map (σ : L →+* L) = (E.baseChange L).negVariableChange * ρ) :
+    ∃ C : VariableChange K, C • E' = E.quadraticTwist L := by
+  -- the twist's own change of variables carries the opposite cocycle, so `T · ρ` is
+  -- `σ`-invariant and descends to `K`
+  have hχiso : (E.quadraticTwistVariableChange L * ρ) • E'.baseChange L
+      = (E.quadraticTwist L).baseChange L := by
+    rw [mul_smul, hρ, E.quadraticTwistVariableChange_smul L]
+  have hχinv : (E.quadraticTwistVariableChange L * ρ).map (σ : L →+* L)
+      = E.quadraticTwistVariableChange L * ρ := by
+    rw [VariableChange.map_mul, E.map_quadraticTwistVariableChange L hσ, hρmap, mul_assoc,
+      ← mul_assoc (E.baseChange L).negVariableChange,
+      (E.baseChange L).negVariableChange_mul_self, one_mul]
+  obtain ⟨χK, hχK⟩ := VariableChange.exists_baseChange_eq_of_map_eq L hσ hχinv
+  exact ⟨χK, smul_eq_of_baseChange_smul_eq L (FaithfulSMul.algebraMap_injective K L) χK
+    (by rw [hχK]; exact hχiso)⟩
 
 variable (L) in
 /-- **Classification of the forms of `E` split by `L/K`, for `j(E) ∉ {0, 1728}`.** A curve over `K`
@@ -718,9 +721,6 @@ theorem exists_smul_eq_or_exists_smul_eq_quadraticTwist (hj₀ : E.j ≠ 0) (hj�
       ∃ C : VariableChange K, C • E' = E.quadraticTwist L := by
   obtain ⟨ρ, hρ⟩ := h
   obtain ⟨σ, hσ⟩ := Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L
-  obtain ⟨θ, hθ⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap K L
-  set C₁ := E.quadraticTwistOfTraceNormVariableChange hθ hσ with hC₁
-  have hcoc := E.map_quadraticTwistOfTraceNormVariableChange hθ hσ
   have hinj := FaithfulSMul.algebraMap_injective K L
   -- the Galois conjugate of `ρ` is again an isomorphism `E'ᴸ ≅ Eᴸ`, so `σρ · ρ⁻¹` fixes `Eᴸ`
   have hσρ : (ρ.map (σ : L →+* L)) • E'.baseChange L = E.baseChange L :=
@@ -735,23 +735,9 @@ theorem exists_smul_eq_or_exists_smul_eq_quadraticTwist (hj₀ : E.j ≠ 0) (hj�
     obtain ⟨ρK, hρK⟩ :=
       VariableChange.exists_baseChange_eq_of_map_eq L hσ (mul_inv_eq_one.mp hbcase)
     exact ⟨ρK, smul_eq_of_baseChange_smul_eq L hinj ρK (by rw [hρK]; exact hρ)⟩
-  · -- nontrivial cocycle: `C₁⁻¹ · ρ` is `σ`-invariant, its cocycle cancelling that of `C₁`
-    right
-    have hρmap : ρ.map (σ : L →+* L) = (E.baseChange L).negVariableChange * ρ :=
-      mul_inv_eq_iff_eq_mul.mp hbcase
-    have hχiso : (C₁⁻¹ * ρ) • E'.baseChange L
-        = (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).baseChange L := by
-      rw [mul_smul, hρ, hC₁, E.inv_quadraticTwistOfTraceNormVariableChange_smul hθ hσ]
-    have hχinv : (C₁⁻¹ * ρ).map (σ : L →+* L) = C₁⁻¹ * ρ := by
-      rw [VariableChange.map_mul, VariableChange.map_inv, hcoc, hρmap, mul_inv_rev,
-        (E.baseChange L).negVariableChange_inv, mul_assoc,
-        ← mul_assoc (E.baseChange L).negVariableChange,
-        (E.baseChange L).negVariableChange_mul_self, one_mul]
-    obtain ⟨χK, hχK⟩ := VariableChange.exists_baseChange_eq_of_map_eq L hσ hχinv
-    have hE'T : χK • E' = E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) :=
-      smul_eq_of_baseChange_smul_eq L hinj χK (by rw [hχK]; exact hχiso)
-    obtain ⟨C₀, hC₀⟩ := E.exists_smul_quadraticTwist_eq hθ
-    exact ⟨C₀⁻¹ * χK, by rw [mul_smul, hE'T, ← hC₀, inv_smul_smul]⟩
+  · -- nontrivial cocycle: `E'` is the twist
+    exact .inr (E.exists_smul_eq_quadraticTwist_of_map_eq_negVariableChange_mul hρ hσ
+      (mul_inv_eq_iff_eq_mul.mp hbcase))
 
 end Classification
 
@@ -907,27 +893,21 @@ theorem quadraticTwistPointEquiv_map_eq_neg_map_of_not_fixed {σ : M ≃ₐ[K] M
     E.quadraticTwistPointEquiv L M (Affine.Point.map σ.toAlgHom P)
       = -Affine.Point.map σ.toAlgHom (E.quadraticTwistPointEquiv L M P) := by
   have hM := map_quadraticTwistVariableChange_baseChange (E := E) (L := L) (M := M) hσ
+  -- the four components of the cocycle identity, read off by `mul_negVariableChange_u/_r/_s/_t`
   have hu : σ.toAlgHom (((E.quadraticTwistVariableChange L).baseChange M).u : M)
       = -(((E.quadraticTwistVariableChange L).baseChange M).u : M) := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t]
-      using congrArg (fun C ↦ (VariableChange.u C : M)) hM
+    simpa using congrArg (fun C ↦ (VariableChange.u C : M)) hM
   have hr : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).r
       = ((E.quadraticTwistVariableChange L).baseChange M).r := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t] using congrArg VariableChange.r hM
+    simpa using congrArg VariableChange.r hM
   have hs : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).s
       = -((E.quadraticTwistVariableChange L).baseChange M).s - (E.baseChange M).a₁ := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t, sub_eq_add_neg]
-      using congrArg VariableChange.s hM
+    simpa using congrArg VariableChange.s hM
   have ht : σ.toAlgHom ((E.quadraticTwistVariableChange L).baseChange M).t
       = -((E.quadraticTwistVariableChange L).baseChange M).t
         - ((E.quadraticTwistVariableChange L).baseChange M).r * (E.baseChange M).a₁
         - (E.baseChange M).a₃ := by
-    simpa [VariableChange.mul_def, negVariableChange_u, negVariableChange_r,
-      negVariableChange_s, negVariableChange_t, sub_eq_add_neg, mul_neg_one,
-      (by ring : ((-1 : M)) ^ 3 = -1)] using congrArg VariableChange.t hM
+    simpa using congrArg VariableChange.t hM
   rcases P with _ | ⟨x, y, hns⟩
   · simp [← Affine.Point.zero_def]
   · simp only [quadraticTwistPointEquiv_some, Affine.Point.map_some, Affine.Point.neg_some,

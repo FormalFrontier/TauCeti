@@ -39,7 +39,7 @@ public section
 
 noncomputable section
 
-open Metric Set
+open Metric Set TauCeti.SetLike
 
 namespace AbstractSimplicialComplex
 

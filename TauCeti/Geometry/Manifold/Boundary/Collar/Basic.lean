@@ -29,6 +29,8 @@ coordinates on an arbitrary manifold and is not proved here.
 
 * `EuclideanHalfSpace.collarDiffeomorph`: the same identification as a diffeomorphism of manifolds
   with corners.
+* `EuclideanHalfSpace.collarModelChartedSpace`: the model half-space charted over the product,
+  with that identification as its single chart.
 
 ## Main results
 
@@ -37,6 +39,8 @@ coordinates on an arbitrary manifold and is not proved here.
 * `EuclideanHalfSpace.collarDiffeomorph_symm_apply_fst`: the inverse recovers the boundary
   projection.
 * `EuclideanHalfSpace.collarDiffeomorph_apply_zero`: the inward normal is coordinate zero.
+* `EuclideanHalfSpace.collarModelChartedSpace_chartAt` and
+  `EuclideanHalfSpace.collarModelChartedSpace_atlas`: its preferred chart and its atlas.
 
 ## Downstream target
 
@@ -207,5 +211,35 @@ theorem collarDiffeomorph_apply_zero_eq_boundaryParam (n : ℕ) {k : WithTop ℕ
   apply Subtype.ext
   rw [boundaryParam_coe]
   exact collarAmbientEquiv_apply_zero_eq_boundaryParam n x
+
+/-- The model half-space as a charted space over the product, with the collar identification as
+its single chart.
+
+Deliberately not an instance: `EuclideanHalfSpace (n + 1)` already carries the charted space
+structure over itself, and a second one found by instance search would make every statement
+about its charts ambiguous. Use it explicitly with `letI`. -/
+@[instance_reducible]
+noncomputable def collarModelChartedSpace (n : ℕ) :
+    ChartedSpace (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1)
+      (EuclideanHalfSpace (n + 1)) :=
+  (collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph
+    |>.singletonChartedSpace (by simp)
+
+/-- The preferred chart of `collarModelChartedSpace` at every point is the collar
+identification. -/
+@[simp]
+theorem collarModelChartedSpace_chartAt (n : ℕ) (y : EuclideanHalfSpace (n + 1)) :
+    @chartAt (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ (EuclideanHalfSpace (n + 1)) _
+        (collarModelChartedSpace n) y =
+      (collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph :=
+  OpenPartialHomeomorph.singletonChartedSpace_chartAt_eq _ _
+
+/-- The atlas of `collarModelChartedSpace` is the collar identification alone. -/
+@[simp]
+theorem collarModelChartedSpace_atlas (n : ℕ) :
+    @atlas (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) _ (EuclideanHalfSpace (n + 1)) _
+        (collarModelChartedSpace n) =
+      {(collarDiffeomorph (k := ⊤) n).symm.toHomeomorph.toOpenPartialHomeomorph} :=
+  (rfl)
 
 end TauCeti.EuclideanHalfSpace

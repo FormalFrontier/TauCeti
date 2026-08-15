@@ -105,18 +105,10 @@ private theorem exists_pow_mul_locSubring_mem {B : Type*} [Ring B] [TopologicalS
     obtain ⟨W, hWV⟩ := NonarchimedeanAddGroup.is_nonarchimedean V hV
     obtain ⟨m, hm⟩ := ih (fun t' ht' ↦ hpowU t' (Finset.mem_insert_of_mem ht')) W
     refine ⟨m, fun x hx b hb ↦ ?_⟩
-    -- Write `x` as a polynomial in `t/s` with coefficients in the smaller subring.
-    have hx_adj : x ∈ Algebra.adjoin (locSubring P U' s S)
-        ({divBy t s} : Set S) := by
-      have h_le : Subring.closure
-          ((locSubring P U' s S : Set S) ∪ {divBy t s}) ≤
-            (Algebra.adjoin (locSubring P U' s S)
-              ({divBy t s} : Set S)).toSubring := by
-        rw [Subring.closure_le]
-        rintro w (hw | rfl)
-        · exact Subalgebra.algebraMap_mem _ (⟨w, hw⟩ : locSubring P U' s S)
-        · exact Algebra.subset_adjoin rfl
-      exact h_le ((locSubring_insert P t U' s S).le hx)
+    -- Write `x` as a polynomial in `t/s` with coefficients in the smaller subring: that is
+    -- exactly what the insertion formula says `x` is a member of.
+    have hx_adj : x ∈ Algebra.adjoin (locSubring P U' s S) ({divBy t s} : Set S) :=
+      (locSubring_insert P t U' s S).le hx
     rw [Algebra.adjoin_singleton_eq_range_aeval, AlgHom.mem_range] at hx_adj
     obtain ⟨p, hp⟩ := hx_adj
     rw [← hp, Polynomial.aeval_eq_sum_range, Finset.sum_mul, map_sum]
