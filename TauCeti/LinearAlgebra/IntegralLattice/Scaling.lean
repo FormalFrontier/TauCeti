@@ -113,7 +113,6 @@ theorem finrank_smul (n : ℤ) (L : IntegralLattice V) :
 
 /-- The integral form of a scaled lattice is the corresponding integer multiple of the original
 integral form. -/
-@[simp]
 theorem integralForm_smul_apply (n : ℤ) (L : IntegralLattice V) (x y : L) :
     (n • L).integralForm x y = n * L.integralForm x y := by
   apply Int.cast_injective (α := ℚ)
@@ -164,7 +163,7 @@ theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) 
     (n • L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [smul_form]
   exact TauCeti.BilinForm.nondegenerate_smul_iff
-    (IsRegular.of_ne_zero (Int.cast_ne_zero.mpr hn)).left
+    (IsRegular.of_ne_zero (Int.cast_ne_zero.mpr hn))
 
 /-- Scaling multiplies the discriminant by the absolute scalar to the rank of the lattice. -/
 @[simp]
@@ -202,7 +201,6 @@ theorem finrank_neg (L : IntegralLattice V) :
   (rfl)
 
 /-- The integral form of the negated lattice is the negative of the original integral form. -/
-@[simp]
 theorem integralForm_neg_apply (L : IntegralLattice V) (x y : L) :
     (-L).integralForm x y = -L.integralForm x y := by
   change ((-1 : ℤ) • L).integralForm x y = -L.integralForm x y
