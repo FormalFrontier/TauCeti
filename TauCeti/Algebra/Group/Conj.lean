@@ -32,6 +32,8 @@ conjugation action.
 * `TauCeti.ConjClasses.ncard_carrier_mk` and `TauCeti.ConjClasses.card_carrier_mk`: the size of a
   conjugacy class is the index of the centralizer of any of its members, in `Set.ncard` and in
   `Nat.card` form.
+* `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center`: the class of a central element is a single
+  point.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
   a class is nonzero in any semiring where the group order is.
@@ -121,6 +123,12 @@ theorem ncard_carrier_mk (g : G) :
   rw [← ConjAct.orbit_eq_carrier_conjClasses, ← MulAction.index_stabilizer,
     Subgroup.centralizer_eq_comap_stabilizer]
   exact hcomap.symm
+
+/-- **The conjugacy class of a central element is a single point**: nothing moves it. -/
+theorem ncard_carrier_mk_of_mem_center {g : G} (hg : g ∈ Subgroup.center G) :
+    (ConjClasses.mk g).carrier.ncard = 1 := by
+  rw [ncard_carrier_mk, Subgroup.centralizer_eq_top_iff_subset.mpr
+    (Set.singleton_subset_iff.mpr hg), Subgroup.index_top]
 
 /-- **The size of a conjugacy class is the index of the centralizer of any of its members**, in
 `Nat.card` form.

@@ -58,6 +58,8 @@ ones.
 
 ## Main results
 
+* `TauCeti.jordanGL_eq_scalar_mul_transvectionUnit`: a Jordan block is a scalar matrix times a
+  transvection, `M = a (1 + a⁻¹ b E₀₁)`.
 * `TauCeti.mem_gl2ScalarUnipotent_iff`: an element of `GL₂` lies in `Z U` exactly when it is
   `!![x, y; 0, x]` for a unit `x`.
 * `TauCeti.notMem_range_scalar_jordanGL`: a Jordan block with `b ≠ 0` is not a scalar matrix. Over
@@ -95,10 +97,21 @@ made equal, and it is one of the four conjugacy class representatives of `GL₂(
 scalars, `TauCeti.diagGL` and `TauCeti.GL2NonSplitTorusHom`. -/
 def jordanGL (a : Rˣ) (b : R) : GL (Fin 2) R := GL2Borel.mk a a b
 
+/-- A Jordan block is the upper-triangular normal form `TauCeti.GL2Borel.mk` with its two diagonal
+arguments made equal, so the whole Borel API — the diagonal projection, the determinant, the
+splitting `B = T U` — applies to it. -/
+theorem jordanGL_eq_mk (a : Rˣ) (b : R) : jordanGL a b = GL2Borel.mk a a b :=
+  (rfl)
+
 @[simp]
 theorem coe_jordanGL (a : Rˣ) (b : R) :
     (jordanGL a b : Matrix (Fin 2) (Fin 2) R) = !![(a : R), b; 0, (a : R)] :=
   GL2Borel.coe_mk a a b
+
+/-- The trace of a Jordan block is twice its repeated eigenvalue. -/
+theorem trace_jordanGL (a : Rˣ) (b : R) :
+    Matrix.trace (jordanGL a b : Matrix (Fin 2) (Fin 2) R) = 2 * (a : R) := by
+  rw [coe_jordanGL, Matrix.trace_fin_two_of, two_mul]
 
 /-- A Jordan block with zero off-diagonal entry is the scalar matrix. -/
 @[simp]
@@ -108,7 +121,7 @@ theorem jordanGL_zero (a : Rˣ) : jordanGL a (0 : R) = Matrix.GeneralLinearGroup
 
 /-- Two Jordan blocks are equal exactly when their parameters are: the diagonal entry and the
 upper-right entry can both be read off the matrix. -/
-theorem jordanGL_injective : Function.Injective2 (jordanGL (R := R)) := by
+theorem jordanGL_injective2 : Function.Injective2 (jordanGL (R := R)) := by
   intro a b c d h
   have h' : (jordanGL a c : Matrix (Fin 2) (Fin 2) R) = jordanGL b d := congrArg Units.val h
   refine ⟨Units.ext ?_, ?_⟩
@@ -131,17 +144,18 @@ section CommRing
 
 variable {R : Type u} [CommRing R]
 
-/-- **Normalizing the off-diagonal entry.** A Jordan block whose off-diagonal entry is a unit is
-conjugate, by the diagonal matrix `diag (1, b)`, to the standard representative `!![a, 1; 0, a]`;
-conjugation rescales that entry by the ratio of the two diagonal entries. Over a field this applies
-to every `b ≠ 0` through `Units.mk0`, so leaving `b` free below costs no generality. -/
-theorem isConj_jordanGL (a b : Rˣ) : IsConj (jordanGL a (b : R)) (jordanGL a 1) := by
-  refine isConj_iff.mpr ⟨diagGL ![1, b], Units.ext ?_⟩
-  rw [Units.val_mul, Units.val_mul, ← map_inv, diagGL_coe, diagGL_coe, coe_jordanGL, coe_jordanGL]
-  have key : (b : R) * (a : R) * ((b⁻¹ : Rˣ) : R) = a := by
-    rw [mul_right_comm, Units.mul_inv, one_mul]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Matrix.diagonal_apply, key]
+/-- A Jordan block is upper triangular, so it lies in the Borel subgroup. -/
+theorem jordanGL_mem_gl2Borel (a : Rˣ) (b : R) : jordanGL a b ∈ GL2Borel R := by
+  rw [jordanGL_eq_mk]
+  exact GL2Borel.mk_mem a a b
+
+/-- The determinant of a Jordan block is the square of its repeated eigenvalue. -/
+@[simp]
+theorem det_jordanGL (a : Rˣ) (b : R) : Matrix.GeneralLinearGroup.det (jordanGL a b) = a ^ 2 := by
+  refine Units.ext ?_
+  rw [Matrix.GeneralLinearGroup.val_det_apply, coe_jordanGL, Matrix.det_fin_two_of,
+    Units.val_pow_eq_pow_val]
+  ring
 
 /-- Scalar matrices are central, so they commute with the transvections; this is what lets the two
 factors of `TauCeti.scalarUnipotentHom` be coproduced. -/
@@ -182,21 +196,49 @@ theorem scalarUnipotentHom_apply (p : Rˣ × Multiplicative R) :
     simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.transvection, Matrix.scalar_apply,
       Matrix.single_apply, Matrix.one_apply]
 
+/-- **A Jordan block is a scalar matrix times a transvection**:
+`!![a, b; 0, a] = a · (1 + a⁻¹ b E₀₁)` is the decomposition `M = a (1 + N)` of a non-semisimple
+element into its central and unipotent parts. It is `TauCeti.scalarUnipotentHom_eq_mul` read on the
+Jordan block, and it is what lets the root subgroup API — conjugation by the diagonal torus, in
+particular — be applied to `M`. -/
+theorem jordanGL_eq_scalar_mul_transvectionUnit (a : Rˣ) (b : R) :
+    jordanGL a b = Matrix.GeneralLinearGroup.scalar (Fin 2) a *
+      transvectionUnit (zero_ne_one : (0 : Fin 2) ≠ 1) ((a⁻¹ : Rˣ) * b) := by
+  have h := scalarUnipotentHom_eq_mul R (a, Multiplicative.ofAdd ((a⁻¹ : Rˣ) * b))
+  rwa [scalarUnipotentHom_apply, transvectionHom_apply, toAdd_ofAdd,
+    Units.mul_inv_cancel_left] at h
+
+/-- **Normalizing the off-diagonal entry.** A Jordan block whose off-diagonal entry is a unit is
+conjugate, by the diagonal matrix `diag (1, b)`, to the standard representative `!![a, 1; 0, a]`.
+The scalar factor of `TauCeti.jordanGL_eq_scalar_mul_transvectionUnit` is central, and conjugation
+rescales the parameter of the remaining transvection by the value `1 · b⁻¹` of the root `ε₀ - ε₁`
+(`TauCeti.diagGL_mul_transvectionUnit_mul_inv`). Over a field this applies to every `b ≠ 0` through
+`Units.mk0`, so leaving `b` free below costs no generality. -/
+theorem isConj_jordanGL (a b : Rˣ) : IsConj (jordanGL a (b : R)) (jordanGL a 1) := by
+  have hcomm : Commute (diagGL ![1, b]) (Matrix.GeneralLinearGroup.scalar (Fin 2) a) :=
+    (Matrix.GeneralLinearGroup.scalar_commute a _).symm
+  -- The root `ε₀ - ε₁` takes the value `1 · b⁻¹` at `diag (1, b)`, which cancels the `b`.
+  have hpar : ((![1, b] 0 : Rˣ) : R) * ((a⁻¹ : Rˣ) * b) * (((![1, b] 1)⁻¹ : Rˣ) : R)
+      = ((a⁻¹ : Rˣ) : R) * 1 := by simp
+  refine isConj_iff.mpr ⟨diagGL ![1, b], ?_⟩
+  rw [jordanGL_eq_scalar_mul_transvectionUnit, jordanGL_eq_scalar_mul_transvectionUnit,
+    hcomm.left_comm, mul_assoc, diagGL_mul_transvectionUnit_mul_inv, hpar]
+
 /-- The scalar–unipotent homomorphism is injective: the pair `(x, t)` is read back off the matrix
 `!![x, x t; 0, x]` as its upper-left entry and the quotient of its two top entries. So `Z U` is a
 faithful copy of `Rˣ × (R, +)`, not a quotient of it. -/
 theorem scalarUnipotentHom_injective : Function.Injective (scalarUnipotentHom R) := by
   rintro ⟨x, s⟩ ⟨y, t⟩ h
   rw [scalarUnipotentHom_apply, scalarUnipotentHom_apply] at h
-  obtain ⟨rfl, hst⟩ := jordanGL_injective h
+  obtain ⟨rfl, hst⟩ := jordanGL_injective2 h
   exact Prod.ext rfl (Multiplicative.toAdd.injective ((Units.mul_right_inj x).mp hst))
 
 variable (R) in
 /-- The **scalar–unipotent subgroup** `Z U` of `GL (Fin 2) R`: the invertible matrices
 `!![x, y; 0, x]`, that is, the units of the commutative subalgebra `R[N]` generated by a nilpotent
 Jordan block. It is the product of the centre with the unipotent radical of the Borel subgroup, and
-it is the centralizer of every non-scalar Jordan block
-(`TauCeti.centralizer_jordanGL`). -/
+whenever nonzero elements of `R` cancel — over a field, in particular — it is the centralizer of
+every Jordan block with `b ≠ 0` (`TauCeti.centralizer_jordanGL`). -/
 def GL2ScalarUnipotent : Subgroup (GL (Fin 2) R) := (scalarUnipotentHom R).range
 
 /-- The scalar–unipotent subgroup is **abelian**: it is the image of the commutative group
@@ -217,8 +259,8 @@ theorem mem_gl2ScalarUnipotent_iff {g : GL (Fin 2) R} :
     refine ⟨(x, Multiplicative.ofAdd ((x⁻¹ : Rˣ) * y)), ?_⟩
     rw [scalarUnipotentHom_apply, toAdd_ofAdd, Units.mul_inv_cancel_left]
 
-/-- Every Jordan block lies in the scalar–unipotent subgroup; in particular so does the element
-whose centralizer that subgroup is. -/
+/-- Every Jordan block lies in the scalar–unipotent subgroup, the degenerate case `b = 0` — the
+scalar matrix — included. -/
 theorem jordanGL_mem_gl2ScalarUnipotent (x : Rˣ) (y : R) :
     jordanGL x y ∈ GL2ScalarUnipotent R :=
   mem_gl2ScalarUnipotent_iff.mpr ⟨x, y, rfl⟩
