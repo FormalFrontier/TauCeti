@@ -154,7 +154,8 @@ theorem orthogonalSpinorNorm_lipschitzToOrthogonal (Q : QuadraticForm K V)
 /-- The spinor norm of an orthogonal reflection is the square class of the negative norm of its
 defining vector. -/
 @[simp]
-theorem orthogonalSpinorNorm_reflection (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+theorem orthogonalSpinorNorm_reflectionOrthogonal (Q : QuadraticForm K V)
+    (hQ : Q.Nondegenerate)
     (v : V) [Invertible (Q v)] :
     orthogonalSpinorNorm Q hQ (QuadraticMap.reflectionOrthogonal Q v) =
       squareClassHom (-(unitOfInvertible (Q v))) := by
