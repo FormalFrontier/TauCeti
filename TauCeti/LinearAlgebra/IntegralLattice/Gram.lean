@@ -97,7 +97,6 @@ theorem map_gramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι] (e : Basis ι
     Basis.extendOfIsLattice_apply]
 
 /-- The signed determinant of the Gram matrix in a carrier basis. -/
-@[expose]
 noncomputable def gramDet {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) : ℤ :=
   Matrix.det (L.gramMatrix e)
@@ -107,7 +106,7 @@ noncomputable def gramDet {ι : Type v} [Fintype ι] [DecidableEq ι]
 theorem gramDet_def {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
     L.gramDet e = Matrix.det (L.gramMatrix e) :=
-  rfl
+  (rfl)
 
 /-- Casting the signed Gram determinant to `ℚ` gives the determinant of the ambient rational form
 in the extended basis. -/
@@ -164,6 +163,7 @@ theorem gramDet_eq_gramDet {ι : Type v} {κ : Type w} [Fintype ι] [Fintype κ]
     _ = L.gramDet f := gramDet_eq_gramDet_sameIndex L _ _
 
 /-- A Gram determinant is nonzero exactly when the ambient rational form is nondegenerate. -/
+@[simp]
 theorem gramDet_ne_zero_iff {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
     L.gramDet e ≠ 0 ↔ L.form.Nondegenerate := by
@@ -188,6 +188,7 @@ theorem determinant_eq_gramDet (L : IntegralLattice V) {ι : Type v} [Fintype ι
 
 /-- The basis-independent determinant is nonzero exactly when the ambient rational form is
 nondegenerate. -/
+@[simp]
 theorem determinant_ne_zero_iff (L : IntegralLattice V) :
     L.determinant ≠ 0 ↔ L.form.Nondegenerate := by
   classical
@@ -198,18 +199,25 @@ determinant. -/
 noncomputable def discriminant (L : IntegralLattice V) : ℕ :=
   L.determinant.natAbs
 
+/-- Unfolding the discriminant to the absolute value of the signed determinant. -/
+@[simp]
+theorem discriminant_def (L : IntegralLattice V) :
+    L.discriminant = L.determinant.natAbs :=
+  (rfl)
+
 /-- The discriminant is the absolute value of the Gram determinant in every carrier basis. -/
 theorem discriminant_eq_natAbs_gramDet (L : IntegralLattice V) {ι : Type v} [Fintype ι]
     [DecidableEq ι] (e : Basis ι ℤ L) :
     L.discriminant = (L.gramDet e).natAbs := by
   classical
-  rw [discriminant, L.determinant_eq_gramDet e]
+  rw [discriminant_def, L.determinant_eq_gramDet e]
 
 /-- The discriminant is positive exactly when the ambient rational form is nondegenerate. -/
+@[simp]
 theorem discriminant_pos_iff (L : IntegralLattice V) :
     0 < L.discriminant ↔ L.form.Nondegenerate := by
   classical
-  rw [discriminant, Int.natAbs_pos, determinant_ne_zero_iff]
+  rw [discriminant_def, Int.natAbs_pos, determinant_ne_zero_iff]
 
 end Invariants
 
