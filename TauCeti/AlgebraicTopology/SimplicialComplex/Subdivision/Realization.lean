@@ -117,6 +117,25 @@ theorem barycentricSubdivisionLinearMap_single (K : AbstractSimplicialComplex ι
     barycentricSubdivisionLinearMap K (Finsupp.single σ 1) = faceBarycenter K σ := by
   simp [barycentricSubdivisionLinearMap]
 
+private theorem barycentricSubdivisionLinearMap_mem_closedSimplex
+    (K : AbstractSimplicialComplex ι) {ρ : Finset (Face K)} (σ : Face K)
+    (x : StandardSimplex ρ) (hρσ : ∀ τ ∈ ρ, τ ≤ σ) :
+    barycentricSubdivisionLinearMap K x.1 ∈
+      convexHull ℝ (σ.1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
+  rw [barycentricSubdivisionLinearMap, Finsupp.linearCombination_apply, Finsupp.sum]
+  apply (convex_convexHull ℝ _).sum_mem
+  · intro τ hτ
+    exact StandardSimplex.nonneg x τ
+  · exact StandardSimplex.sum_eq_one x
+  · intro τ hτ
+    apply convexHull_mono
+    · intro y hy
+      rw [Finset.mem_coe] at hy ⊢
+      obtain ⟨v, hv, rfl⟩ := Finset.mem_image.mp hy
+      exact Finset.mem_image.mpr
+        ⟨v, hρσ τ (StandardSimplex.support_subset x hτ) hv, rfl⟩
+    exact faceBarycenter_mem K τ
+
 private theorem barycentricSubdivisionLinearMap_mem (K : AbstractSimplicialComplex ι)
     (x : Realization (TauCeti.PreAbstractSimplicialComplex.barycentricSubdivision
       K.toPreAbstractSimplicialComplex)) :
@@ -131,19 +150,7 @@ private theorem barycentricSubdivisionLinearMap_mem (K : AbstractSimplicialCompl
   rw [mem_realization_iff]
   refine ⟨σ.1, σ.2, ?_⟩
   let x' : StandardSimplex ρ.1 := ⟨x.1, mem_convexHull_carrier _ x⟩
-  rw [barycentricSubdivisionLinearMap, Finsupp.linearCombination_apply, Finsupp.sum]
-  apply (convex_convexHull ℝ _).sum_mem
-  · intro τ hτ
-    exact StandardSimplex.nonneg x' τ
-  · exact StandardSimplex.sum_eq_one x'
-  · intro τ hτ
-    apply convexHull_mono
-    · intro y hy
-      rw [Finset.mem_coe] at hy ⊢
-      obtain ⟨v, hv, rfl⟩ := Finset.mem_image.mp hy
-      exact Finset.mem_image.mpr
-        ⟨v, hσmax τ (by simpa [ρ] using hτ) hv, rfl⟩
-    exact faceBarycenter_mem K τ
+  exact barycentricSubdivisionLinearMap_mem_closedSimplex K σ x' hσmax
 
 /-- The canonical map from the realization of the barycentric subdivision of `K` to the
 realization of `K`. It sends each face-vertex to that face's barycenter and is affine on each
@@ -165,6 +172,7 @@ theorem barycentricSubdivisionRealizationMap_val (K : AbstractSimplicialComplex 
 
 /-- A vertex of the barycentric subdivision maps to the barycenter of the original face it
 represents. -/
+@[simp]
 theorem barycentricSubdivisionRealizationMap_vertex (K : AbstractSimplicialComplex ι)
     (σ : Face K) :
     (barycentricSubdivisionRealizationMap K
@@ -182,21 +190,17 @@ theorem continuous_barycentricSubdivisionRealizationMap (K : AbstractSimplicialC
   have hρ := TauCeti.PreAbstractSimplicialComplex.mem_barycentricSubdivision_iff.mp ρ.2
   obtain ⟨σ, hσρ, hσmax⟩ := exists_greatest_of_isChain ρ.1 hρ.1 hρ.2
   let toFace : StandardSimplex ρ.1 → StandardSimplex σ.1 := fun x =>
-    ⟨barycentricSubdivisionLinearMap K x.1, by
-      apply (convex_convexHull ℝ _).sum_mem
-      · intro τ hτ
-        exact StandardSimplex.nonneg x τ
-      · exact StandardSimplex.sum_eq_one x
-      · intro τ hτ
-        apply convexHull_mono
-        · intro y hy
-          rw [Finset.mem_coe] at hy ⊢
-          obtain ⟨v, hv, rfl⟩ := Finset.mem_image.mp hy
-          exact Finset.mem_image.mpr
-            ⟨v, hσmax τ (StandardSimplex.support_subset x hτ) hv, rfl⟩
-        exact faceBarycenter_mem K τ⟩
+    ⟨barycentricSubdivisionLinearMap K x.1,
+      barycentricSubdivisionLinearMap_mem_closedSimplex K σ x hσmax⟩
+  have htoFace_apply (x : StandardSimplex ρ.1) :
+      ((toFace x : ι →₀ ℝ) : ι → ℝ) =
+        (barycentricSubdivisionLinearMap K x.1 : ι → ℝ) := rfl
   have htoFace : Continuous toFace := by
     apply continuous_induced_rng.mpr
+    rw [show ((fun x : StandardSimplex σ.1 => ((x : ι →₀ ℝ) : ι → ℝ)) ∘ toFace) =
+      fun x => (barycentricSubdivisionLinearMap K x.1 : ι → ℝ) by
+        funext x
+        exact htoFace_apply x]
     apply continuous_pi
     intro v
     have hformula :
@@ -209,8 +213,6 @@ theorem continuous_barycentricSubdivisionRealizationMap (K : AbstractSimplicialC
         Finsupp.linearCombination_apply_of_mem_supported ℝ hsupp]
       simp only [Finset.sum_apply', Finsupp.smul_apply, smul_eq_mul]
       rfl
-    change Continuous (fun x : StandardSimplex ρ.1 =>
-      (barycentricSubdivisionLinearMap K x.1) v)
     rw [hformula]
     apply continuous_finsetSum
     intro τ _
