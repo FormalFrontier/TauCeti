@@ -62,7 +62,8 @@ The target is the additive automorphism group of `M`, written multiplicatively s
 one-parameter group law is exposed as a `MonoidHom`. No freeness or finite-generation assumption on
 `M` is needed for this action-level statement. -/
 noncomputable def expZSMulKostantAddAut (e : ι → L) (h : κ → L)
-    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (M : AddSubgroup V)
+    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
+    {S : Type*} [SetLike S V] [AddSubgroupClass S V] (M : S)
     (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M) (i : ι)
     (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))) :
     Multiplicative ℤ →* Multiplicative (AddAut M) :=
@@ -74,7 +75,8 @@ noncomputable def expZSMulKostantAddAut (e : ι → L) (h : κ → L)
 exponential. -/
 @[simp]
 theorem coe_expZSMulKostantAddAut (e : ι → L) (h : κ → L)
-    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (M : AddSubgroup V)
+    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
+    {S : Type*} [SetLike S V] [AddSubgroupClass S V] (M : S)
     (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M) (i : ι)
     (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
     (t : Multiplicative ℤ) (v : M) :
@@ -98,7 +100,7 @@ noncomputable def expZSMulKostantOrbitAddAut (e : ι → L) (h : κ → L) (v : 
     (hnil : IsNilpotent ((Algebra.lsmul ℚ ℚ V)
       (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))) :
     Multiplicative ℤ →* Multiplicative (AddAut (kostantOrbit e h v)) :=
-  TauCeti.expZSMulAddAut hnil (kostantOrbit e h v).toAddSubgroup fun n _ hx => by
+  TauCeti.expZSMulAddAut hnil (kostantOrbit e h v) fun n _ hx => by
     rw [← Associative.map_dividedPower (Algebra.lsmul ℚ ℚ V) n]
     exact dividedPower_smul_mem_kostantOrbit i n hx
 
@@ -113,6 +115,6 @@ theorem coe_expZSMulKostantOrbitAddAut (e : ι → L) (h : κ → L) (v : V) (i 
       kostantOrbit e h v) : V) =
       IsNilpotent.exp ((Multiplicative.toAdd t : ℤ) •
         (Algebra.lsmul ℚ ℚ V) (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) (x : V) :=
-  TauCeti.coe_expZSMulAddAut hnil (kostantOrbit e h v).toAddSubgroup _ t x
+  TauCeti.coe_expZSMulAddAut hnil (kostantOrbit e h v) _ t x
 
 end TauCeti.UniversalEnvelopingAlgebra
