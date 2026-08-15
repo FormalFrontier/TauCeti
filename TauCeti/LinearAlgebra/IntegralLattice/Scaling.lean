@@ -156,7 +156,6 @@ theorem determinant_smul (n : ℤ) (L : IntegralLattice V) :
     ← determinant_eq_gramDet L (Module.Free.chooseBasis ℤ L)]
 
 /-- Scaling by a nonzero integer preserves nondegeneracy of the rational form. -/
-@[simp]
 theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
     (n • L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [smul_form]
@@ -237,7 +236,6 @@ theorem determinant_neg (L : IntegralLattice V) :
   rw [neg_def, determinant_smul]
 
 /-- Form negation preserves nondegeneracy. -/
-@[simp]
 theorem nondegenerate_neg_iff (L : IntegralLattice V) :
     (-L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [neg_form]
