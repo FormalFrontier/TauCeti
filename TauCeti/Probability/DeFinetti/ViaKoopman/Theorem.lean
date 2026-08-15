@@ -22,7 +22,8 @@ statement follows at once; `ConditionallyIIDWith.of_pathLaw` carries it to an ar
 
 ## Main results
 
-* `conditionallyIIDWith_invariantConditional_pathLaw` — the path-space form, with its witness;
+* `conditionallyIIDWith_invariantConditionalProbabilityMeasure` — the path-space form, with its
+  witness;
 * `conditionallyIID_of_contractable_viaKoopman` — a contractable process is conditionally i.i.d.;
 * `deFinetti_viaKoopman` — an exchangeable process is conditionally i.i.d.
 
@@ -66,7 +67,8 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- **The path-space form.** A contractable path law is conditionally i.i.d. with the conditional
 law of the first coordinate given the shift-invariant σ-algebra as its witness. -/
-theorem conditionallyIIDWith_invariantConditional_pathLaw [StandardBorelSpace α] [Nonempty α]
+theorem conditionallyIIDWith_invariantConditionalProbabilityMeasure
+    [StandardBorelSpace α] [Nonempty α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) :
     ConditionallyIIDWith ρ (fun j (x : ℕ → α) => x j)
       (invariantConditionalProbabilityMeasure ρ) := by
@@ -89,7 +91,7 @@ theorem conditionallyIID_of_contractable_viaKoopman [StandardBorelSpace α] [Non
     rw [pathLaw_def]
     exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hXae)
   exact ConditionallyIID.of_directing (ConditionallyIIDWith.of_pathLaw hX_meas
-    (conditionallyIIDWith_invariantConditional_pathLaw (hX.contractableLaw_pathLaw hXae)))
+    (conditionallyIIDWith_invariantConditionalProbabilityMeasure (hX.contractableLaw_pathLaw hXae)))
 
 /-- **de Finetti's theorem via Koopman operators.** An exchangeable process on a nonempty standard
 Borel state space is conditionally i.i.d. -/
