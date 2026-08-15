@@ -67,7 +67,7 @@ theorem dualSubmoduleToDual_surjective (B : LinearMap.BilinForm K V) (hB : B.Non
       B (bd j) ((b i : N) : V) = B (bd j) (b_ext i) := by
         rw [Basis.extendOfIsLattice_apply K b i]
       _ = _ := B.apply_dualBasis_left hB b_ext j i
-  change B x ((b i : N) : V) = algebraMap R K (f (b i))
+  dsimp only [Submodule.coe_mk]
   have hx_eq : x = ∑ j, (algebraMap R K (f (b j))) • bd j := rfl
   rw [hx_eq, map_sum, LinearMap.sum_apply]
   rw [Finset.sum_eq_single i]
