@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 public import TauCeti.Geometry.Lie.Exponential.LocalInverse
+public import TauCeti.Geometry.Lie.Interior
 
 /-!
 # The Trotter product formula
@@ -69,20 +70,26 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [IsManifold I 1 G]
 
 attribute [local instance] LieGroup.minSmoothnessThree
+attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- A tangent-to-identity curve has the expected exponential power limit. The derivative is
 stated in local logarithmic coordinates so the result can be reused independently of a chosen
 manifold expression for the curve. -/
 theorem tendsto_pow_div_of_hasDerivAt_mulInvariantLog [FiniteDimensional ℝ E]
-    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
-    {f : ℝ → G} (X : GroupLieAlgebra I G) (hf0 : f 0 = 1)
-    (hf : ContinuousAt f 0)
-    (hlog : HasDerivAt (fun s =>
-      (show E from mulInvariantLog (I := I) (G := G) (f s)))
-      (show E from X) 0)
-    (t : ℝ) :
-    Tendsto (fun n : ℕ => (f (t / n)) ^ n) atTop
-      (nhds (mulInvariantExp (I := I) (G := G) (t • X))) := by
+    [LieGroup I ∞ G] :
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    ∀ {f : ℝ → G} (X : GroupLieAlgebra I G) (_hf0 : f 0 = 1),
+      ContinuousAt f 0 →
+      HasDerivAt (fun s =>
+        (show E from mulInvariantLog (I := I) (G := G) (f s)))
+        (show E from X) 0 →
+      ∀ t : ℝ, Tendsto (fun n : ℕ => (f (t / n)) ^ n) atTop
+        (nhds (mulInvariantExp (I := I) (G := G) (t • X))) := by
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  dsimp only
+  intro f X hf0 hf hlog t
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   have hlog0 : (show E from mulInvariantLog (I := I) (G := G) (f 0)) = 0 := by
     rw [hf0]
@@ -225,12 +232,18 @@ private theorem hasDerivAt_mulInvariantLog_mulInvariantExp_mul [FiniteDimensiona
 
 /-- The Trotter product formula for the tangent-space exponential. -/
 theorem tendsto_mulInvariantExp_mul_pow_div [FiniteDimensional ℝ E]
-    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
-    (X Y : GroupLieAlgebra I G) (t : ℝ) :
-    Tendsto (fun n : ℕ =>
-      (mulInvariantExp (I := I) (G := G) ((t / n) • X) *
-        mulInvariantExp (I := I) (G := G) ((t / n) • Y)) ^ n) atTop
-      (nhds (mulInvariantExp (I := I) (G := G) (t • (X + Y)))) := by
+    [LieGroup I ∞ G] :
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    ∀ (X Y : GroupLieAlgebra I G) (t : ℝ),
+      Tendsto (fun n : ℕ =>
+        (mulInvariantExp (I := I) (G := G) ((t / n) • X) *
+          mulInvariantExp (I := I) (G := G) ((t / n) • Y)) ^ n) atTop
+        (nhds (mulInvariantExp (I := I) (G := G) (t • (X + Y)))) := by
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  dsimp only
+  intro X Y t
   let f : ℝ → G := fun s =>
     mulInvariantExp (I := I) (G := G) (s • X) *
       mulInvariantExp (I := I) (G := G) (s • Y)
@@ -246,10 +259,16 @@ theorem tendsto_mulInvariantExp_mul_pow_div [FiniteDimensional ℝ E]
 
 /-- The Trotter product formula for the exponential of left-invariant derivations. -/
 theorem tendsto_lieExp_mul_pow_div [FiniteDimensional ℝ E]
-    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
-    (X Y : LeftInvariantDerivation I G) (t : ℝ) :
-    Tendsto (fun n : ℕ => (lieExp ((t / n) • X) * lieExp ((t / n) • Y)) ^ n) atTop
-      (nhds (lieExp (t • (X + Y)))) := by
+    [LieGroup I ∞ G] :
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    ∀ (X Y : LeftInvariantDerivation I G) (t : ℝ),
+      Tendsto (fun n : ℕ => (lieExp ((t / n) • X) * lieExp ((t / n) • Y)) ^ n) atTop
+        (nhds (lieExp (t • (X + Y)))) := by
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  dsimp only
+  intro X Y t
   let L := leftInvariantDerivationEquivGroupLieAlgebra
     (I := I) (G := G) BoundarylessManifold.isInteriorPoint
   simpa only [lieExp_eq_mulInvariantExp, map_smul, map_add] using
