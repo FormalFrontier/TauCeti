@@ -275,6 +275,7 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
 
 /-- Two algebra homomorphisms out of the bundled coordinate Hopf algebra are equal if they agree
 on every strict-upper coordinate. -/
+@[ext]
 theorem coordinateHopfAlgebra_algHom_ext {T : Type*} [Semiring T] [Algebra R T]
     {f g : coordinateHopfAlgebra R m →ₐ[R] T}
     (h : ∀ ij : Index m,
