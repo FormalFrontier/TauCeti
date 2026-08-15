@@ -34,10 +34,6 @@ equivalence.
   Fourier cosine series.
 * `TauCeti.chebyshevCosineL2Equiv_normalizedChebyshevTLp` — the cosine equivalence maps the
   normalized Chebyshev polynomial mode `Tₙ / √cₙ` to the normalized cosine mode.
-* `TauCeti.chebyshevTHilbertBasis_mapₗᵢ_chebyshevCosineL2Equiv` — the Chebyshev cosine basis is the
-  `mapₗᵢ` image of the Chebyshev polynomial basis under the cosine equivalence.
-* `TauCeti.chebyshevCosineHilbertBasis_mapₗᵢ_symm` — reverse transport along the inverse cosine
-  equivalence returns the Chebyshev polynomial basis.
 * `TauCeti.chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv` — the cosine coordinate of
   `f ∘ cos` equals the Chebyshev polynomial coordinate of `f`.
 
@@ -171,25 +167,6 @@ theorem chebyshevCosineL2Equiv_symm_chebyshevCosineHilbertBasis (n : ℕ) :
       normalizedChebyshevTLp 𝕜 n := by
   rw [← chebyshevCosineL2Equiv_normalizedChebyshevTLp, LinearIsometryEquiv.symm_apply_apply]
 
-/-- **The Chebyshev cosine Hilbert basis is the transported Chebyshev polynomial basis.**
-Transporting `TauCeti.chebyshevTHilbertBasis` across `TauCeti.chebyshevCosineL2Equiv` equals
-`TauCeti.chebyshevCosineHilbertBasis`. -/
-@[simp]
-theorem chebyshevTHilbertBasis_mapₗᵢ_chebyshevCosineL2Equiv :
-    (chebyshevTHilbertBasis 𝕜).mapₗᵢ (chebyshevCosineL2Equiv 𝕜) =
-      chebyshevCosineHilbertBasis 𝕜 := by
-  refine DFunLike.coe_injective ?_
-  rw [HilbertBasis.coe_mapₗᵢ, coe_chebyshevTHilbertBasis]
-  exact funext fun n => chebyshevCosineL2Equiv_normalizedChebyshevTLp 𝕜 n
-
-/-- The reverse transport: transporting `TauCeti.chebyshevCosineHilbertBasis` across the inverse
-cosine equivalence returns the Chebyshev polynomial basis `TauCeti.chebyshevTHilbertBasis`. -/
-@[simp]
-theorem chebyshevCosineHilbertBasis_mapₗᵢ_symm :
-    (chebyshevCosineHilbertBasis 𝕜).mapₗᵢ (chebyshevCosineL2Equiv 𝕜).symm =
-      chebyshevTHilbertBasis 𝕜 := by
-  rw [← chebyshevTHilbertBasis_mapₗᵢ_chebyshevCosineL2Equiv, HilbertBasis.mapₗᵢ_symm]
-
 /-- **Coordinates are preserved under the cosine change of variables.** The `n`-th coordinate of
 `f ∘ cos` in the Chebyshev cosine basis equals the `n`-th coordinate of `f` in the Chebyshev
 polynomial basis. -/
@@ -197,8 +174,10 @@ theorem chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv
     (g : Lp 𝕜 2 (measureT : Measure ℝ)) (n : ℕ) :
     (chebyshevCosineHilbertBasis 𝕜).repr (chebyshevCosineL2Equiv 𝕜 g) n =
       (chebyshevTHilbertBasis 𝕜).repr g n := by
-  rw [← chebyshevTHilbertBasis_mapₗᵢ_chebyshevCosineL2Equiv, HilbertBasis.repr_mapₗᵢ,
-    LinearIsometryEquiv.trans_apply, LinearIsometryEquiv.symm_apply_apply]
+  rw [(chebyshevCosineHilbertBasis 𝕜).repr_apply_apply,
+    (chebyshevTHilbertBasis 𝕜).repr_apply_apply,
+    ← chebyshevCosineL2Equiv_normalizedChebyshevTLp, coe_chebyshevTHilbertBasis,
+    LinearIsometryEquiv.inner_map_map]
 
 /-- The inverse coordinate identification: the Chebyshev polynomial coordinate of `f ∘ arccos`
 equals the cosine coordinate of `f`. -/
