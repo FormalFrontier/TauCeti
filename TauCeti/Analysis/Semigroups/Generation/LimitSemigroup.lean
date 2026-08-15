@@ -92,19 +92,9 @@ proved to be the limit exactly when `A` is m-dissipative with dense domain and `
 the general compact-time Cauchy estimate gives convergence, and
 `IsMDissipative.tendsto_yosidaLimit` records it. Every lemma below that appeals to the limit
 property carries those hypotheses explicitly. -/
+@[expose]
 def yosidaLimit (A : X →ₗ.[ℝ] X) (t : ℝ) (x : X) : X :=
   limUnder atTop fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x
-
-/-- A Cauchy family of Yosida exponentials converges to `yosidaLimit`, its chosen
-`limUnder` value. This is the common completeness step in the Lumer--Phillips and
-Hille--Yosida constructions, and exposes that convergence to downstream modules without exposing
-the implementation of `yosidaLimit`. -/
-theorem tendsto_yosidaLimit_of_cauchySeq (A : X →ₗ.[ℝ] X) (t : ℝ) (x : X)
-    (h : CauchySeq fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) :
-    Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-      (𝓝 (yosidaLimit A t x)) := by
-  rw [yosidaLimit]
-  exact h.tendsto_limUnder
 
 omit [CompleteSpace X] in
 /-- At time `0` every Yosida exponential is the identity, so the limit is too. -/
@@ -252,9 +242,8 @@ theorem tendsto_yosidaLimit (hA : IsMDissipative A) (hdense : Dense (A.domain : 
     {t : ℝ} (ht : 0 ≤ t) (x : X) :
     Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
       (𝓝 (yosidaLimit A t x)) :=
-  tendsto_yosidaLimit_of_cauchySeq A t x <|
-    (hA.exp_yosidaApproximation_uniformCauchySeqOn_compact hdense x ht).cauchySeq
-      (Set.right_mem_Icc.mpr ht)
+  ((hA.exp_yosidaApproximation_uniformCauchySeqOn_compact hdense x ht).cauchySeq
+    (Set.right_mem_Icc.mpr ht)).tendsto_limUnder
 
 /-- The convergence to the Yosida limit is uniform on every compact time interval. -/
 theorem tendstoUniformlyOn_exp_yosidaApproximation (hA : IsMDissipative A)
