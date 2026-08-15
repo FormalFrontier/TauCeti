@@ -162,7 +162,8 @@ This is a named API lemma rather than a simp lemma: simplification already deriv
 theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
     (n • L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [smul_form]
-  exact TauCeti.BilinForm.nondegenerate_smul_iff (Int.cast_ne_zero.mpr hn)
+  exact TauCeti.BilinForm.nondegenerate_smul_iff
+    (IsRegular.of_ne_zero (Int.cast_ne_zero.mpr hn)).left
 
 /-- Scaling multiplies the discriminant by the absolute scalar to the rank of the lattice. -/
 @[simp]
