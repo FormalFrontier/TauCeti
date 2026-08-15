@@ -72,6 +72,7 @@ theorem rightTranslationAlgHom_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
   | add z w hz hw => simp [hz, hw]
   | tmul z w => simp [Algebra.smul_def, mul_comm]
 
+/-- The linear equivalence underlying right translation. -/
 private noncomputable def rightTranslationLinearEquiv (g : WithConv (H →ₐ[k] k)) :
     H ≃ₗ[k] H :=
   (TensorProduct.lid k H).symm.trans
@@ -144,10 +145,9 @@ theorem counitAlgHom_comp_rightTranslationAlgHom (g : WithConv (H →ₐ[k] k)) 
 @[simp]
 theorem comap_rightTranslationAlgEquiv_augmentationPoint
     (g : WithConv (H →ₐ[k] k)) :
-    PrimeSpectrum.comap ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H)
+    PrimeSpectrum.comap (rightTranslationAlgEquiv g)
         (Bialgebra.augmentationPoint k H) =
       AlgHom.kernelPoint g.ofConv := by
-  rw [AlgEquiv.toRingEquiv_toRingHom]
   change PrimeSpectrum.comap
       ((rightTranslationAlgEquiv g).toAlgHom : H →+* H)
         (AlgHom.kernelPoint (_root_.Bialgebra.counitAlgHom k H)) =
@@ -174,10 +174,10 @@ theorem rightTranslationHomeomorph_apply (g : WithConv (H →ₐ[k] k))
 @[simp]
 theorem rightTranslationHomeomorph_augmentationPoint
     (g : WithConv (H →ₐ[k] k)) :
-    rightTranslationHomeomorph g (Bialgebra.augmentationPoint k H) =
+    PrimeSpectrum.comap (rightTranslationAlgEquiv g)
+        (Bialgebra.augmentationPoint k H) =
       AlgHom.kernelPoint g.ofConv := by
-  rw [rightTranslationHomeomorph_apply,
-    comap_rightTranslationAlgEquiv_augmentationPoint]
+  rw [comap_rightTranslationAlgEquiv_augmentationPoint]
 
 /-- Right translation transports the connected component of a point to the connected component
 of its translate. -/
@@ -199,6 +199,7 @@ theorem rightTranslation_preserves_augmentationPoint_connectedComponent
         connectedComponent (Bialgebra.augmentationPoint k H) =
       connectedComponent (Bialgebra.augmentationPoint k H) := by
   rw [rightTranslationHomeomorph_image_connectedComponent,
+    rightTranslationHomeomorph_apply, AlgEquiv.toRingEquiv_toRingHom,
     rightTranslationHomeomorph_augmentationPoint]
   exact (connectedComponent_eq hg).symm
 
