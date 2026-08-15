@@ -55,6 +55,7 @@ variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
 Integer scaling preserves integrality because an integer multiple of every integral pairing is
 again integral. The scalar acts on the rational form through the canonical map `ℤ → ℚ`. -/
+@[expose, reducible]
 def scale (n : ℤ) (L : IntegralLattice V) : IntegralLattice V where
   carrier := L.carrier
   form := (n : ℚ) • L.form
@@ -76,12 +77,12 @@ instance : MulAction ℤ (IntegralLattice V) where
     apply IntegralLattice.ext (L := scale 1 L) (M := L)
     · rfl
     · ext x y
-      simp [scale]
+      simp
   mul_smul m n L := by
     apply IntegralLattice.ext (L := scale (m * n) L) (M := scale m (scale n L))
     · rfl
     · ext x y
-      simp only [scale, LinearMap.smul_apply, Int.cast_mul]
+      simp only [LinearMap.smul_apply, Int.cast_mul]
       ring
 
 @[simp]
@@ -94,43 +95,11 @@ theorem smul_form (n : ℤ) (L : IntegralLattice V) :
     (n • L).form = (n : ℚ) • L.form :=
   (rfl)
 
-/-- The carrier of a scaled lattice is canonically the original carrier. This equivalence is the
-identity on underlying vectors. -/
-def scaleCarrierEquiv (n : ℤ) (L : IntegralLattice V) : scale n L ≃ₗ[ℤ] L where
-  toFun x := ⟨x, x.2⟩
-  invFun x := ⟨x, x.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-
-@[simp]
-theorem coe_scaleCarrierEquiv (n : ℤ) (L : IntegralLattice V) (x : scale n L) :
-    (scaleCarrierEquiv n L x : V) = x :=
-  (rfl)
-
-@[simp]
-theorem coe_scaleCarrierEquiv_symm (n : ℤ) (L : IntegralLattice V) (x : L) :
-    ((scaleCarrierEquiv n L).symm x : V) = x :=
-  (rfl)
-
-/-- A carrier basis of an integral lattice, regarded as a basis of any integer scaling of that
-lattice. -/
-noncomputable def scaleBasis (n : ℤ) (L : IntegralLattice V) {ι : Type v}
-    (e : Basis ι ℤ L) : Basis ι ℤ (scale n L) :=
-  e.map (scaleCarrierEquiv n L).symm
-
-@[simp]
-theorem coe_scaleBasis (n : ℤ) (L : IntegralLattice V) {ι : Type v}
-    (e : Basis ι ℤ L) (i : ι) :
-    (scaleBasis n L e i : V) = e i := by
-  simp [scaleBasis]
-
 /-- Scaling the form does not change the rank of the carrier. -/
 @[simp]
 theorem finrank_scale (n : ℤ) (L : IntegralLattice V) :
     Module.finrank ℤ (scale n L) = Module.finrank ℤ L :=
-  LinearEquiv.finrank_eq (scaleCarrierEquiv n L)
+  rfl
 
 /-- Scaling by zero retains the carrier and replaces the form by zero. -/
 theorem zero_smul_form (L : IntegralLattice V) : ((0 : ℤ) • L).form = 0 := by
@@ -140,19 +109,16 @@ theorem zero_smul_form (L : IntegralLattice V) : ((0 : ℤ) • L).form = 0 := b
 integral form. -/
 @[simp]
 theorem integralForm_smul_apply (n : ℤ) (L : IntegralLattice V) (x y : L) :
-    (scale n L).integralForm ((scaleCarrierEquiv n L).symm x)
-      ((scaleCarrierEquiv n L).symm y) = n * L.integralForm x y := by
+    (scale n L).integralForm x y = n * L.integralForm x y := by
   apply Int.cast_injective (α := ℚ)
-  rw [integralForm_cast, Int.cast_mul, integralForm_cast]
-  change (n : ℚ) * L.form x y = (n : ℚ) * L.form x y
+  rw [integralForm_cast (scale n L), Int.cast_mul, integralForm_cast L]
   rfl
 
 /-- Scaling commutes with the construction of the restricted integral form. -/
 theorem integralForm_smul (n : ℤ) (L : IntegralLattice V) :
-    (scale n L).integralForm.compl₁₂ (scaleCarrierEquiv n L).symm.toLinearMap
-      (scaleCarrierEquiv n L).symm.toLinearMap = n • L.integralForm := by
+    (scale n L).integralForm = n • L.integralForm := by
   ext x y
-  simp [integralForm_smul_apply]
+  exact integralForm_smul_apply n L x y
 
 /-! ## Gram matrices and invariants -/
 
@@ -160,22 +126,19 @@ theorem integralForm_smul (n : ℤ) (L : IntegralLattice V) :
 @[simp]
 theorem gramMatrix_smul (n : ℤ) (L : IntegralLattice V) {ι : Type v}
     (e : Basis ι ℤ L) :
-    (scale n L).gramMatrix (scaleBasis n L e) =
+    (scale n L).gramMatrix e =
       (n • L.gramMatrix e : Matrix ι ι ℤ) := by
   ext i j
-  rw [gramMatrix_apply]
-  change (scale n L).integralForm ((scaleCarrierEquiv n L).symm (e i))
-    ((scaleCarrierEquiv n L).symm (e j)) = n * L.gramMatrix e i j
-  rw [integralForm_smul_apply]
-  rw [gramMatrix_apply]
+  rw [gramMatrix_apply (scale n L), integralForm_smul_apply, ← gramMatrix_apply L]
+  rfl
 
 /-- The Gram determinant of a scaled lattice is multiplied by the scalar to the size of the
 basis. -/
 @[simp]
 theorem gramDet_smul (n : ℤ) (L : IntegralLattice V) {ι : Type v} [Fintype ι]
     [DecidableEq ι] (e : Basis ι ℤ L) :
-    (scale n L).gramDet (scaleBasis n L e) = n ^ Fintype.card ι * L.gramDet e := by
-  rw [gramDet_def, gramMatrix_smul, Matrix.det_smul, gramDet_def]
+    (scale n L).gramDet e = n ^ Fintype.card ι * L.gramDet e := by
+  rw [gramDet_def (scale n L), gramMatrix_smul, Matrix.det_smul, gramDet_def L]
 
 /-- Scaling by a nonzero integer preserves nondegeneracy of the rational form. -/
 theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
@@ -183,8 +146,7 @@ theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) 
   change (scale n L).form.Nondegenerate ↔ L.form.Nondegenerate
   rw [← determinant_ne_zero_iff, ← determinant_ne_zero_iff]
   classical
-  rw [determinant_eq_gramDet (scale n L)
-      (scaleBasis n L (Module.Free.chooseBasis ℤ L)),
+  rw [determinant_eq_gramDet (scale n L) (Module.Free.chooseBasis ℤ L),
     gramDet_smul, ← determinant_eq_gramDet L (Module.Free.chooseBasis ℤ L)]
   exact mul_ne_zero_iff_left (pow_ne_zero _ hn)
 
@@ -194,8 +156,7 @@ theorem determinant_smul (n : ℤ) (L : IntegralLattice V) :
     (n • L).determinant = n ^ Module.finrank ℤ L * L.determinant := by
   change (scale n L).determinant = _
   classical
-  rw [determinant_eq_gramDet (scale n L)
-      (scaleBasis n L (Module.Free.chooseBasis ℤ L)),
+  rw [determinant_eq_gramDet (scale n L) (Module.Free.chooseBasis ℤ L),
     gramDet_smul, ← Module.finrank_eq_card_chooseBasisIndex,
     ← determinant_eq_gramDet L (Module.Free.chooseBasis ℤ L)]
 
@@ -228,18 +189,22 @@ theorem neg_neg (L : IntegralLattice V) : - -L = L := by
 /-- The integral form of the negated lattice is the negative of the original integral form. -/
 @[simp]
 theorem integralForm_neg_apply (L : IntegralLattice V) (x y : L) :
-    (-L).integralForm ((scaleCarrierEquiv (-1) L).symm x)
-      ((scaleCarrierEquiv (-1) L).symm y) = -L.integralForm x y := by
-  change (scale (-1) L).integralForm ((scaleCarrierEquiv (-1) L).symm x)
-    ((scaleCarrierEquiv (-1) L).symm y) = _
+    (-L).integralForm x y = -L.integralForm x y := by
+  change (scale (-1) L).integralForm x y = _
   rw [integralForm_smul_apply]
   ring
+
+/-- Form negation commutes with the construction of the restricted integral form. -/
+theorem integralForm_neg (L : IntegralLattice V) :
+    (-L).integralForm = -L.integralForm := by
+  ext x y
+  exact integralForm_neg_apply L x y
 
 /-- Negation multiplies every Gram-matrix entry by `-1`. -/
 @[simp]
 theorem gramMatrix_neg (L : IntegralLattice V) {ι : Type v} (e : Basis ι ℤ L) :
-    (-L).gramMatrix (scaleBasis (-1) L e) = -L.gramMatrix e := by
-  change (scale (-1) L).gramMatrix (scaleBasis (-1) L e) = _
+    (-L).gramMatrix e = -L.gramMatrix e := by
+  change (scale (-1) L).gramMatrix e = _
   rw [gramMatrix_smul]
   exact neg_one_smul ℤ (L.gramMatrix e)
 
@@ -247,9 +212,8 @@ theorem gramMatrix_neg (L : IntegralLattice V) {ι : Type v} (e : Basis ι ℤ L
 @[simp]
 theorem gramDet_neg (L : IntegralLattice V) {ι : Type v} [Fintype ι] [DecidableEq ι]
     (e : Basis ι ℤ L) :
-    (-L).gramDet (scaleBasis (-1) L e) =
-      (-1 : ℤ) ^ Fintype.card ι * L.gramDet e := by
-  change (scale (-1) L).gramDet (scaleBasis (-1) L e) = _
+    (-L).gramDet e = (-1 : ℤ) ^ Fintype.card ι * L.gramDet e := by
+  change (scale (-1) L).gramDet e = _
   exact gramDet_smul (-1) L e
 
 /-- Negating the form multiplies the signed determinant by `(-1)` to the lattice rank. -/
