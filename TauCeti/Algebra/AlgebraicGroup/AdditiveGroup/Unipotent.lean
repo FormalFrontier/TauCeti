@@ -100,6 +100,11 @@ private noncomputable def unitFinsuppEquivNat : (Unit →₀ ℕ) ≃ ℕ where
     simp
   right_inv n := by simp
 
+@[simp]
+private theorem unitFinsuppEquivNat_symm_apply (n : ℕ) :
+    (unitFinsuppEquivNat).symm n = Finsupp.single () n :=
+  rfl
+
 /-- **The monomials `xⁿ` in the coordinate `x = ι(1)` form a basis of the coordinate algebra
 `R[x] = SymmetricAlgebra R R` of the additive group.** -/
 noncomputable def monomialBasis : Basis ℕ R (SymmetricAlgebra R R) :=
@@ -109,7 +114,7 @@ noncomputable def monomialBasis : Basis ℕ R (SymmetricAlgebra R R) :=
 theorem monomialBasis_apply (n : ℕ) :
     monomialBasis R n = (ι R R 1 : SymmetricAlgebra R R) ^ n := by
   rw [monomialBasis, Basis.reindex_apply]
-  change (Basis.symmetricAlgebra (Basis.singleton Unit R)) (Finsupp.single () n) = _
+  rw [unitFinsuppEquivNat_symm_apply]
   rw [Basis.symmetricAlgebra, Basis.map_apply]
   simp only [MvPolynomial.coe_basisMonomials, AlgEquiv.toLinearEquiv_apply,
     ← MvPolynomial.X_pow_eq_monomial, map_pow, SymmetricAlgebra.equivMvPolynomial_symm_X,
@@ -130,8 +135,7 @@ theorem coeff_zero_eq_counit :
     coeff R 0 = Coalgebra.counit (R := R) (A := SymmetricAlgebra R R) := by
   refine (monomialBasis R).ext fun n => ?_
   rw [monomialBasis_apply, coeff_pow]
-  rw [show (Coalgebra.counit (R := R) ((ι R R 1 : SymmetricAlgebra R R) ^ n)) =
-      Bialgebra.counitAlgHom R (SymmetricAlgebra R R) ((ι R R 1) ^ n) from rfl, map_pow]
+  rw [← Bialgebra.counitAlgHom_apply, map_pow]
   simp only [Bialgebra.counitAlgHom_apply, SymmetricAlgebra.counit_ι]
   cases n <;> simp
 
@@ -142,8 +146,7 @@ theorem comul_pow (n : ℕ) :
       ∑ k ∈ Finset.range (n + 1), (n.choose k) •
         (((ι R R 1 : SymmetricAlgebra R R) ^ k) ⊗ₜ[R]
           ((ι R R 1 : SymmetricAlgebra R R) ^ (n - k))) := by
-  rw [show (Coalgebra.comul (R := R) ((ι R R 1 : SymmetricAlgebra R R) ^ n)) =
-      Bialgebra.comulAlgHom R (SymmetricAlgebra R R) ((ι R R 1) ^ n) from rfl, map_pow]
+  rw [← Bialgebra.comulAlgHom_apply, map_pow]
   simp only [Bialgebra.comulAlgHom_apply, SymmetricAlgebra.comul_ι]
   rw [add_pow]
   refine Finset.sum_congr rfl fun k _ => ?_
@@ -151,19 +154,19 @@ theorem comul_pow (n : ℕ) :
     Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul, nsmul_eq_mul, mul_comm]
 
 /-- The pairing of two coefficient functionals on a tensor square of the coordinate algebra. -/
-noncomputable def coeffPair (i j : ℕ) :
+private noncomputable def coeffPair (i j : ℕ) :
     SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R →ₗ[R] R :=
   (TensorProduct.rid R R).toLinearMap ∘ₗ TensorProduct.map (coeff R i) (coeff R j)
 
 @[simp]
-theorem coeffPair_tmul (i j : ℕ) (a b : SymmetricAlgebra R R) :
+private theorem coeffPair_tmul (i j : ℕ) (a b : SymmetricAlgebra R R) :
     coeffPair R i j (a ⊗ₜ[R] b) = coeff R i a * coeff R j b := by
   simp [coeffPair, smul_eq_mul, mul_comm]
 
 /-- **The coefficient functionals are a divided-power system.** Pairing the `i`-th and `j`-th
 coefficients across the comultiplication returns `(i + j choose i)` times the `(i + j)`-th
 coefficient. -/
-theorem coeffPair_comp_comul (i j : ℕ) :
+private theorem coeffPair_comp_comul (i j : ℕ) :
     coeffPair R i j ∘ₗ (Coalgebra.comul (R := R) (A := SymmetricAlgebra R R)) =
       ((i + j).choose i) • coeff R (i + j) := by
   refine (monomialBasis R).ext fun n => ?_
@@ -202,18 +205,18 @@ theorem tensorComponent_tmul (n : ℕ) (v : V) (h : SymmetricAlgebra R R) :
   simp [tensorComponent]
 
 /-- The `(i, j)`-th coefficient map of `V ⊗[R] (R[x] ⊗[R] R[x])`. -/
-noncomputable def tensorPairComponent (i j : ℕ) :
+private noncomputable def tensorPairComponent (i j : ℕ) :
     V ⊗[R] (SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R) →ₗ[R] V :=
   (TensorProduct.rid R V).toLinearMap ∘ₗ (coeffPair R i j).lTensor V
 
 @[simp]
-theorem tensorPairComponent_tmul (i j : ℕ) (v : V)
+private theorem tensorPairComponent_tmul (i j : ℕ) (v : V)
     (h : SymmetricAlgebra R R ⊗[R] SymmetricAlgebra R R) :
     tensorPairComponent R V i j (v ⊗ₜ[R] h) = coeffPair R i j h • v := by
   simp [tensorPairComponent]
 
 /-- Reading off a coefficient of a tensor is compatible with the associator. -/
-theorem tensorComponent_comp_tensorComponent (i j : ℕ) :
+private theorem tensorComponent_comp_tensorComponent (i j : ℕ) :
     tensorComponent R V i ∘ₗ tensorComponent R (V ⊗[R] SymmetricAlgebra R R) j =
       tensorPairComponent R V i j ∘ₗ
         (TensorProduct.assoc R V (SymmetricAlgebra R R) (SymmetricAlgebra R R)).toLinearMap := by
@@ -225,7 +228,7 @@ theorem tensorComponent_comp_tensorComponent (i j : ℕ) :
 
 /-- Pairing the `i`-th and `j`-th coefficients across the comultiplication picks out
 `(i + j choose i)` times the `(i + j)`-th coefficient. -/
-theorem tensorPairComponent_comp_lTensor_comul (i j : ℕ) :
+private theorem tensorPairComponent_comp_lTensor_comul (i j : ℕ) :
     tensorPairComponent R V i j ∘ₗ
         (Coalgebra.comul (R := R) (A := SymmetricAlgebra R R)).lTensor V =
       ((i + j).choose i) • tensorComponent R V (i + j) := by
@@ -245,13 +248,13 @@ variable [Comodule R (SymmetricAlgebra R R) V]
 
 /-- **The `n`-th divided-power component of the coaction** of a comodule over the coordinate
 algebra of `𝔾ₐ`: writing the coaction as `ρ v = ∑ₙ Nₙ v ⊗ xⁿ`, this is `Nₙ`. -/
-@[expose] noncomputable def coactComponent (n : ℕ) : V →ₗ[R] V :=
+noncomputable def coactComponent (n : ℕ) : V →ₗ[R] V :=
   tensorComponent R V n ∘ₗ Comodule.coact (R := R) (C := SymmetricAlgebra R R)
 
 theorem coactComponent_apply (n : ℕ) (v : V) :
     coactComponent R V n v =
       tensorComponent R V n (Comodule.coact (R := R) (C := SymmetricAlgebra R R) v) :=
-  rfl
+  by rw [coactComponent, LinearMap.coe_comp, Function.comp_apply]
 
 /-- The zeroth divided-power component is the identity: this is the counit axiom. -/
 @[simp]
@@ -262,7 +265,7 @@ theorem coactComponent_zero : coactComponent R V 0 = LinearMap.id := by
   simp
 
 /-- Reading off a coefficient of the coaction commutes with the coaction itself. -/
-theorem coact_comp_tensorComponent (n : ℕ) :
+private theorem coact_comp_tensorComponent (n : ℕ) :
     Comodule.coact (R := R) (C := SymmetricAlgebra R R) ∘ₗ tensorComponent R V n =
       tensorComponent R (V ⊗[R] SymmetricAlgebra R R) n ∘ₗ
         (Comodule.coact (R := R) (C := SymmetricAlgebra R R) (M := V)).rTensor
@@ -296,7 +299,8 @@ variable (R : Type u) [CommRing R] (V : Type v) [AddCommMonoid V] [Module R V]
 
 /-- Reading off the `n`-th coefficient of a tensor is the `n`-th coordinate of its expansion in
 the monomial basis. -/
-theorem equivFinsuppOfBasisRight_monomialBasis_apply (z : V ⊗[R] SymmetricAlgebra R R) (n : ℕ) :
+private theorem equivFinsuppOfBasisRight_monomialBasis_apply
+    (z : V ⊗[R] SymmetricAlgebra R R) (n : ℕ) :
     TensorProduct.equivFinsuppOfBasisRight (monomialBasis R) z n = tensorComponent R V n z := by
   induction z using TensorProduct.induction_on with
   | zero => simp
@@ -326,8 +330,7 @@ theorem coact_eq_sum (v : V) :
         w ⊗ₜ[R] ((ι R R 1 : SymmetricAlgebra R R) ^ i) := by
   conv_lhs => rw [← (TensorProduct.equivFinsuppOfBasisRight
     (monomialBasis R)).symm_apply_apply (Comodule.coact (R := R) (C := SymmetricAlgebra R R) v)]
-  rw [show TensorProduct.equivFinsuppOfBasisRight (monomialBasis R)
-      (Comodule.coact (R := R) (C := SymmetricAlgebra R R) v) = coactDecomposition R V v from rfl,
+  simp only [coactDecomposition, LinearMap.coe_comp, Function.comp_apply,
     TensorProduct.equivFinsuppOfBasisRight_symm_apply]
   exact Finsupp.sum_congr fun i _ => by rw [monomialBasis_apply]
 
@@ -346,6 +349,7 @@ noncomputable def coactFiltration (p : ℕ) : Submodule R V :=
 
 variable {V}
 
+@[simp]
 theorem mem_coactFiltration {p : ℕ} {v : V} :
     v ∈ coactFiltration R V p ↔ ∀ i, p < i → coactComponent R V i v = 0 := by
   simp [coactFiltration]
@@ -476,19 +480,6 @@ end Nilpotent
 section AffineGroup
 
 variable (R : Type u) [CommRing R]
-
-/-- The coordinate algebra of `𝔾ₐ` is of finite type: it is the polynomial algebra on the single
-generator `x`. -/
-instance instFiniteTypeSymmetricAlgebra : Algebra.FiniteType R (SymmetricAlgebra R R) :=
-  Algebra.FiniteType.equiv (inferInstanceAs (Algebra.FiniteType R (MvPolynomial Unit R)))
-    (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
-
-/-- The coordinate algebra of `𝔾ₐ` is smooth: it is the polynomial algebra on the single
-generator `x`. -/
-instance instSmoothSymmetricAlgebra : Algebra.Smooth R (SymmetricAlgebra R R) :=
-  letI : Algebra.Smooth R (MvPolynomial Unit R) := ⟨inferInstance, inferInstance⟩
-  Algebra.Smooth.of_equiv
-    (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
 
 /-- **Every point of the additive group is unipotent.** A point of `𝔾ₐ` valued in a commutative
 `R`-algebra acts on every finitely generated comodule, over a field on every finite-dimensional

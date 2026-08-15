@@ -6,6 +6,7 @@ module
 
 public import Mathlib.AlgebraicGeometry.AffineSpace
 public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basis
+public import Mathlib.RingTheory.Smooth.Basic
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
@@ -92,6 +93,7 @@ section CoordinateAlgebra
 
 variable (R : Type u) [CommSemiring R]
 
+/-- The singleton basis used to present the rank-one symmetric algebra as a polynomial algebra. -/
 private noncomputable def coordinateBasis : Basis (CoordinateIndex.{u}) R R :=
   Basis.singleton _ _
 
@@ -117,6 +119,19 @@ variable (R : Type u) [CommRing R]
 `SymmetricAlgebra R R`, with primitive generator `SymmetricAlgebra.ι R R 1`. -/
 noncomputable abbrev coordinateHopfAlgebra : CommHopfAlgCat.{u} R :=
   CommHopfAlgCat.of R (SymmetricAlgebra R R)
+
+/-- The coordinate algebra of `𝔾ₐ` is of finite type: it is the polynomial algebra on the single
+generator `x`. -/
+instance instFiniteTypeSymmetricAlgebra : Algebra.FiniteType R (SymmetricAlgebra R R) :=
+  Algebra.FiniteType.equiv (inferInstanceAs (Algebra.FiniteType R (MvPolynomial Unit R)))
+    (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
+
+/-- The coordinate algebra of `𝔾ₐ` is smooth: it is the polynomial algebra on the single
+generator `x`. -/
+instance instSmoothSymmetricAlgebra : Algebra.Smooth R (SymmetricAlgebra R R) :=
+  letI : Algebra.Smooth R (MvPolynomial Unit R) := ⟨inferInstance, inferInstance⟩
+  Algebra.Smooth.of_equiv
+    (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
 
 /-- The additive group scheme obtained by applying relative spectrum to the symmetric Hopf
 algebra on one generator.
@@ -206,6 +221,7 @@ lemma groupScheme_inv_left :
   unfold groupScheme
   convert hopfSpec_obj_inv_left R (coordinateHopfAlgebra R) using 1
 
+/-- The underlying scheme isomorphism from the additive group to affine one-space. -/
 private noncomputable def groupSchemeAffineSpaceIsoLeft :
     (groupScheme R).X.left ≅
       𝔸(CoordinateIndex.{u}; Spec (CommRingCat.of R)) :=
