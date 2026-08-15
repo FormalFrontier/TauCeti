@@ -47,6 +47,15 @@ noncomputable def fppfTopology (R : Type u) [CommRing R] :
   (AlgebraicGeometry.algSpec (CommRingCat.of R)).inducedTopology
     (Scheme.fppfTopology.over (Spec (CommRingCat.of R)))
 
+/-- The affine fppf topology is induced from the fppf topology on schemes over `Spec R`. -/
+theorem fppfTopology_def (R : Type u) [CommRing R] :
+    fppfTopology R =
+      (AlgebraicGeometry.algSpec (CommRingCat.of R)).inducedTopology
+        (Scheme.fppfTopology.over (Spec (CommRingCat.of R))) :=
+  by
+    unfold fppfTopology
+    rfl
+
 /-- **The affine fppf topology is subcanonical.** Every presheaf represented by an affine scheme
 over `Spec R` is an fppf sheaf. -/
 noncomputable instance fppfTopology_subcanonical (R : Type u) [CommRing R] :
@@ -55,7 +64,7 @@ noncomputable instance fppfTopology_subcanonical (R : Type u) [CommRing R] :
     (AlgebraicGeometry.algSpec.fullyFaithful (R := CommRingCat.of R)).full
   let _ : (AlgebraicGeometry.algSpec (CommRingCat.of R)).Faithful :=
     (AlgebraicGeometry.algSpec.fullyFaithful (R := CommRingCat.of R)).faithful
-  unfold fppfTopology
+  rw [fppfTopology_def]
   exact GrothendieckTopology.subcanonical_of_full_of_faithful
     (AlgebraicGeometry.algSpec (CommRingCat.of R)) _
       (Scheme.fppfTopology.over (Spec (CommRingCat.of R)))

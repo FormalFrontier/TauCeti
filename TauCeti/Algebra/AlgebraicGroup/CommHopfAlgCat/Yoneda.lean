@@ -37,6 +37,8 @@ shrinking part.
   isomorphism.
 * `TauCeti.HopfAlgebra.pointsFunctorForget_isCorepresentable`: the discoverable
   corepresentability instance.
+* `TauCeti.HopfAlgebra.pointsGroupPresheaf` and `TauCeti.HopfAlgebra.pointsPresheaf`: the
+  group- and type-valued points functors as presheaves on opposite commutative algebras.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsFunctor`: the group-object Yoneda model of the
   functor of points.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsHomEquiv`: the carrier equivalence from the opaque
@@ -182,6 +184,27 @@ instance pointsFunctorForget_isCorepresentable
     (H : Type v) [CommRing H] [_root_.HopfAlgebra R H] :
     (pointsFunctor (R := R) (H := H) ⋙ forget GrpCat.{v}).IsCorepresentable :=
   (pointsCorepresentableBy (R := R) H).isCorepresentable
+
+/-- The group-valued presheaf of convolution points of a commutative Hopf algebra.
+
+The double-opposite equivalence presents the covariant functor on `CommAlgCat R` as a presheaf on
+the opposite category. -/
+noncomputable abbrev pointsGroupPresheaf (H : _root_.CommHopfAlgCat.{v} R) :
+    ((CommAlgCat.{v} R)ᵒᵖ)ᵒᵖ ⥤ GrpCat.{v} :=
+  (opOpEquivalence (CommAlgCat.{v} R)).functor ⋙
+    pointsFunctor (R := R) (H := H)
+
+/-- The underlying type-valued presheaf of convolution points of a commutative Hopf algebra. -/
+noncomputable abbrev pointsPresheaf (H : _root_.CommHopfAlgCat.{v} R) :
+    ((CommAlgCat.{v} R)ᵒᵖ)ᵒᵖ ⥤ Type v :=
+  pointsGroupPresheaf H ⋙ forget GrpCat
+
+/-- Evaluating the points presheaf at an affine `R`-scheme gives its convolution group of
+algebra-valued points, with the group structure forgotten. -/
+theorem pointsPresheaf_obj (H : _root_.CommHopfAlgCat.{v} R)
+    (A : ((CommAlgCat.{v} R)ᵒᵖ)ᵒᵖ) :
+    (pointsPresheaf H).obj A = WithConv (H →ₐ[R] A.unop.unop) :=
+  rfl
 
 -- The two component lemmas below are deliberately not `@[simp]`: their left-hand sides carry
 -- the value type `(pointsFunctor ⋙ forget GrpCat).obj A` of the corepresented functor, which
@@ -500,5 +523,21 @@ theorem essImage_pointsFunctor :
     essImage_yonedaGrp_doubleOp]
 
 end CommHopfAlgCat
+
+namespace HopfAlgebra
+
+variable {R : Type u} [CommRing R]
+
+/-- The type-valued points presheaf is represented by the coordinate algebra on the opposite
+category. -/
+instance pointsPresheaf_isRepresentable (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsPresheaf H).IsRepresentable := by
+  -- Unfolding the two presheaf abbreviations exposes the registered representability of the
+  -- underlying points functor after precomposition by the double-opposite equivalence.
+  change (unopUnop (CommAlgCat.{u} R) ⋙
+    (pointsFunctor (R := R) (H := H) ⋙ forget GrpCat.{u})).IsRepresentable
+  exact CommHopfAlgCat.pointsFunctorForget_unopUnop_isRepresentable H
+
+end HopfAlgebra
 
 end TauCeti
