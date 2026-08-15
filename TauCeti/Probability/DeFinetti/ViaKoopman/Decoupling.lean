@@ -8,6 +8,7 @@ public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
 import TauCeti.Probability.Exchangeability.PathSpace.Invariant.BlockTransport
 public import TauCeti.Probability.DeFinetti.ViaKoopman.InvariantConditionalLaw
 import Mathlib.Dynamics.BirkhoffSum.Average
+import TauCeti.Probability.Process.BlockAverage
 import TauCeti.Probability.Ergodic.CondExpProjection
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
@@ -73,8 +74,9 @@ end.
 This is the engine of the Koopman factorization: the `m`-independence is what allows the average
 over `m` to be inserted for free, and that average is what the ergodic theorem consumes.
 
-The induction on `r` that iterates this decoupling across a whole block, and the `ℝ≥0∞` ending it
-feeds, are not here yet.
+The induction on `r` that iterates this decoupling across a whole block is
+`ViaKoopman/BlockFactorization.lean`, and the `ℝ≥0∞` ending it feeds is
+`ViaKoopman/CylinderMass.lean`.
 -/
 
 public section
@@ -129,7 +131,7 @@ private theorem birkhoffAverage_shift_coord_eq {B : Set α} (r n : ℕ) (x : ℕ
 applied to the indicator of `B` at coordinate `r`: the limit is the conditional expectation of that
 same indicator given the shift-invariant σ-algebra. -/
 private theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hmp : MeasurePreserving (shift α) ρ ρ)
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hmp : MeasurePreserving (shift α) ρ ρ)
     {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     Filter.Tendsto (fun n => ∫ x,
         |birkhoffAverage ℝ (shift α) (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r)) n x
@@ -154,7 +156,7 @@ witness's characteristic property at coordinate `0` with the transport fact that
 agree over invariant events. This is what lets the Birkhoff limit at coordinate `r` be named as the
 witness. -/
 theorem condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure
-    [StandardBorelSpace α] [Nonempty α] {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+    [StandardBorelSpace α] [Nonempty α] {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ]
     (hρ : ContractableLaw ρ) {B : Set α} (hB : MeasurableSet B) (r : ℕ) :
     ρ[fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r) |
         MeasurableSpace.invariants (shift α)]
@@ -331,7 +333,7 @@ Where the two halves meet: the averaged sequence is *constant* in `n` by
 sequence converges to the right-hand side by the `L¹` mean ergodic theorem; a sequence has one
 limit. -/
 theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)
@@ -358,19 +360,9 @@ theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
     exact hsum.const_smul ((n : ℝ)⁻¹)
   have havg_bdd : ∀ (n : ℕ) (x : ℕ → α), ‖birkhoffAverage ℝ (shift α) φ n x‖ ≤ 1 := by
     intro n x
-    rcases Nat.eq_zero_or_pos n with rfl | hn
-    · simp [birkhoffAverage, birkhoffSum]
-    · have hs0 : 0 ≤ ∑ m ∈ Finset.range n, φ ((shift α)^[m] x) :=
-        Finset.sum_nonneg fun m _ => hind_nonneg _
-      have hsn : ∑ m ∈ Finset.range n, φ ((shift α)^[m] x) ≤ (n : ℝ) := by
-        calc ∑ m ∈ Finset.range n, φ ((shift α)^[m] x)
-            ≤ ∑ _m ∈ Finset.range n, (1 : ℝ) := Finset.sum_le_sum fun m _ => hind_le _
-          _ = (n : ℝ) := by simp
-      rw [birkhoffAverage, birkhoffSum, smul_eq_mul, Real.norm_eq_abs,
-        abs_of_nonneg (by positivity)]
-      calc (n : ℝ)⁻¹ * ∑ m ∈ Finset.range n, φ ((shift α)^[m] x)
-          ≤ (n : ℝ)⁻¹ * (n : ℝ) := by gcongr
-        _ = 1 := inv_mul_cancel₀ (Nat.cast_ne_zero.mpr hn.ne')
+    rw [birkhoffAverage_eq_prefixAverage, prefixAverage_def, Real.norm_eq_abs,
+      abs_of_nonneg (blockAverage_nonneg fun i => hind_nonneg _)]
+    exact blockAverage_le_one fun i => hind_le _
   have havg_int : ∀ n : ℕ, Integrable (birkhoffAverage ℝ (shift α) φ n) ρ := fun n =>
     ⟨(havg_meas n).aestronglyMeasurable,
       .of_bounded (C := 1) (Filter.Eventually.of_forall (havg_bdd n))⟩
@@ -404,7 +396,7 @@ theorem setIntegral_weight_mul_prefix_mul_indicator_eq_condExp
 coordinate decouples; this says what it decouples into. -/
 theorem setIntegral_weight_mul_prefix_mul_indicator_eq_invariantConditionalProbabilityMeasure
     [StandardBorelSpace α] [Nonempty α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
+    {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ] (hρ : ContractableLaw ρ) {r : ℕ}
     {w : (ℕ → α) → ℝ} (hw : Measurable[MeasurableSpace.invariants (shift α)] w)
     (hw_bdd : ∀ᵐ x ∂ρ, |w x| ≤ 1)
     {g : (Fin r → α) → ℝ} (hg : Measurable g) (hg_bdd : ∀ y, |g y| ≤ 1)

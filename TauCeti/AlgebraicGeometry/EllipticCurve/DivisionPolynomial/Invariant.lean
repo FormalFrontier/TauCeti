@@ -58,9 +58,12 @@ identities listed below.
 `redInvarDenom` and `complEDS₂Aux`, and `ω_spec` additionally consumes `redInvar_normEDS`, which
 routes through `normEDS` being an elliptic sequence — that is `isEllipticSequence_normEDS` in
 `NormEDS.lean`, which the pinned Mathlib still records as an open TODO. What is missing for `ω`
-is `redInvarDenom` itself together with the chain
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`. Nothing in this file depends
-on any of it, so the identities land now and `ω` follows when that gap closes.
+is `redInvarDenom` itself together with the upper part of the chain
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, which is written in the
+source's names. The lower two links have landed: `net_normEDS` is `isEllipticNet_normEDS` and
+`invar_normEDS` is `invarNum_mul_invarDenom`. What remains is `invar₂_normEDS` and
+`redInvar_normEDS`. Nothing in this file depends on any of it, so the identities land now and `ω`
+follows when that gap closes.
 
 ## Provenance
 

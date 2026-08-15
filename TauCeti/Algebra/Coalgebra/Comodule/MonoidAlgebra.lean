@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.DirectSum.Finsupp
 public import Mathlib.RingTheory.Coalgebra.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
+import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
 # The weight decomposition of a comodule over a monoid algebra
@@ -32,7 +33,6 @@ spanning and the independence half of the decomposition.
 
 ## Main definitions
 
-* `TauCeti.Comodule.tensorComponent`: the `g`-th coefficient map of `V ⊗[R] R[G]`.
 * `TauCeti.Comodule.tensorCoeffEquiv`: the coefficients of an element of `V ⊗[R] R[G]`, as a
   finitely supported family.
 * `TauCeti.Comodule.weightDecomposition`: the weight components of a comodule, as a linear map to
@@ -55,6 +55,8 @@ spanning and the independence half of the decomposition.
   `g`-weight submodule by multiplication by its value at the group-like element `single g 1`.
 * `TauCeti.Comodule.Hom.map_mem_weightSpace`: a comodule morphism preserves the weight
   submodules.
+* `TauCeti.Comodule.weightProj_mem_subcomodule`: every subcomodule is stable under the weight
+  projections.
 * `TauCeti.Comodule.range_weightProj`: the `g`-weight submodule is the range of the `g`-weight
   projection.
 * `TauCeti.Comodule.finite_setOf_weightSpace_ne_bot`: **a comodule finitely generated as a module
@@ -101,19 +103,16 @@ variable [CommSemiring R] [AddCommMonoid V] [Module R V]
 
 section Component
 
-/-- The `g`-th coefficient map of `V ⊗[R] R[G]`, sending `v ⊗ x` to `x.coeff g • v`. The coaction
-of a comodule over `R[G]` is recovered from these coefficients, which are its weight
-components. -/
-noncomputable def tensorComponent (g : G) : V ⊗[R] MonoidAlgebra R G →ₗ[R] V :=
-  (TensorProduct.rid R V).toLinearMap ∘ₗ
-    (Finsupp.lapply g ∘ₗ (MonoidAlgebra.coeffLinearEquiv R).toLinearMap).lTensor V
-
-variable {R G V}
+/-- The coefficient functional at a basis element of a monoid algebra. -/
+noncomputable def monoidCoeff (g : G) : MonoidAlgebra R G →ₗ[R] R :=
+  Finsupp.lapply g ∘ₗ (MonoidAlgebra.coeffLinearEquiv R).toLinearMap
 
 @[simp]
-theorem tensorComponent_tmul (g : G) (v : V) (x : MonoidAlgebra R G) :
-    tensorComponent R G V g (v ⊗ₜ[R] x) = x.coeff g • v := by
-  simp [tensorComponent]
+theorem monoidCoeff_apply (g : G) (x : MonoidAlgebra R G) :
+    monoidCoeff R G g x = x.coeff g := by
+  simp [monoidCoeff]
+
+variable {R G V}
 
 variable (R G V)
 
@@ -128,10 +127,12 @@ variable {R G V}
 /-- The coefficient family of an element of `V ⊗[R] R[G]` is given by the coefficient maps. -/
 @[simp]
 theorem tensorCoeffEquiv_apply (t : V ⊗[R] MonoidAlgebra R G) (g : G) :
-    tensorCoeffEquiv R G V t g = tensorComponent R G V g t := by
+    tensorCoeffEquiv R G V t g =
+      tensorComponent (R := R) (M := V) (monoidCoeff R G g) t := by
   classical
   have h : (Finsupp.lapply g).comp (tensorCoeffEquiv R G V).toLinearMap =
-      tensorComponent R G V g := TensorProduct.ext' fun v x => by simp [tensorCoeffEquiv]
+      tensorComponent (R := R) (M := V) (monoidCoeff R G g) :=
+    TensorProduct.ext' fun v x => by simp [tensorCoeffEquiv, monoidCoeff]
   exact congr($h t)
 
 /-- The coefficient family of a pure tensor scales the vector by the coefficients. -/
@@ -160,7 +161,7 @@ variable [Comodule R (MonoidAlgebra R G) V]
 
 /-- The projection of a comodule over `R[G]` onto its `g`-weight component. -/
 noncomputable def weightProj (g : G) : V →ₗ[R] V :=
-  tensorComponent R G V g ∘ₗ coact (R := R) (C := MonoidAlgebra R G) (M := V)
+  coactComponent (R := R) (C := MonoidAlgebra R G) (M := V) (monoidCoeff R G g)
 
 variable {R G V} in
 /-- The `g`-weight component of `v` is the `g`-th coefficient of its coaction.
@@ -169,8 +170,10 @@ This is deliberately not a `simp` lemma: `weightProj_weightProj_self` and
 `weightProj_weightProj_of_ne` are the simp-normal form of a composite of weight projections, and
 they could never fire if `simp` first unfolded every `weightProj` to a coefficient of a coaction. -/
 theorem weightProj_apply (g : G) (v : V) :
-    weightProj R G V g v = tensorComponent R G V g (coact (R := R) (C := MonoidAlgebra R G) v) :=
-  (rfl)
+    weightProj R G V g v =
+      tensorComponent (R := R) (M := V) (monoidCoeff R G g)
+        (coact (R := R) (C := MonoidAlgebra R G) v) :=
+  by rw [weightProj, coactComponent_apply]
 
 /-- The weight components of a comodule over `R[G]`, read off its coaction as a finitely supported
 family. -/
@@ -238,101 +241,58 @@ end Counit
 
 section Coassoc
 
-/-- The pair of coefficient maps of `R[G] ⊗[R] R[G]`, contracted to a scalar. -/
-private noncomputable def pairCoeff (h g : G) :
-    MonoidAlgebra R G ⊗[R] MonoidAlgebra R G →ₗ[R] R :=
-  (TensorProduct.lid R R).toLinearMap ∘ₗ
-    TensorProduct.map (Finsupp.lapply h ∘ₗ (MonoidAlgebra.coeffLinearEquiv R).toLinearMap)
-      (Finsupp.lapply g ∘ₗ (MonoidAlgebra.coeffLinearEquiv R).toLinearMap)
-
-/-- The double coefficient map of `V ⊗[R] (R[G] ⊗[R] R[G])`. -/
-private noncomputable def doubleComponent (h g : G) :
-    V ⊗[R] (MonoidAlgebra R G ⊗[R] MonoidAlgebra R G) →ₗ[R] V :=
-  (TensorProduct.rid R V).toLinearMap ∘ₗ (pairCoeff R G h g).lTensor V
-
 variable {R G V}
-
-private theorem pairCoeff_tmul (h g : G) (x y : MonoidAlgebra R G) :
-    pairCoeff R G h g (x ⊗ₜ[R] y) = x.coeff h * y.coeff g := by
-  simp [pairCoeff]
-
-private theorem doubleComponent_tmul (h g : G) (v : V) (x y : MonoidAlgebra R G) :
-    doubleComponent R G V h g (v ⊗ₜ[R] (x ⊗ₜ[R] y)) = (x.coeff h * y.coeff g) • v := by
-  simp [doubleComponent, pairCoeff_tmul]
-
-/-- Reassociating, the double coefficient map is a composite of two single ones. -/
-private theorem doubleComponent_comp_assoc (h g : G) :
-    doubleComponent R G V h g ∘ₗ
-        (TensorProduct.assoc R V (MonoidAlgebra R G) (MonoidAlgebra R G)).toLinearMap =
-      tensorComponent R G V h ∘ₗ tensorComponent R G (V ⊗[R] MonoidAlgebra R G) g :=
-  TensorProduct.ext_threefold fun v x y => by
-    simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
-      TensorProduct.assoc_tmul, doubleComponent_tmul, tensorComponent_tmul, map_smul, mul_smul]
-    exact smul_comm _ _ _
 
 /-- Composed with the comultiplication of `R[G]`, the pair of coefficient maps at equal indices is
 a single coefficient map: the elements `single g 1` are group-like. -/
 private theorem pairCoeff_comp_comul_self (g : G) :
-    pairCoeff R G g g ∘ₗ Coalgebra.comul (R := R) (A := MonoidAlgebra R G) =
-      Finsupp.lapply g ∘ₗ (MonoidAlgebra.coeffLinearEquiv R).toLinearMap := by
+    pairCoeff (R := R) (monoidCoeff R G g) (monoidCoeff R G g) ∘ₗ
+        Coalgebra.comul (R := R) (A := MonoidAlgebra R G) = monoidCoeff R G g := by
   refine MonoidAlgebra.lhom_ext' fun k => ?_
   ext
-  by_cases hk : k = g <;> simp [pairCoeff_tmul, MonoidAlgebra.comul_single, hk]
+  by_cases hk : k = g <;>
+    simp [monoidCoeff, MonoidAlgebra.comul_single, hk]
 
 /-- Composed with the comultiplication of `R[G]`, the pair of coefficient maps at distinct indices
 vanishes. -/
 private theorem pairCoeff_comp_comul_of_ne {h g : G} (hne : h ≠ g) :
-    pairCoeff R G h g ∘ₗ Coalgebra.comul (R := R) (A := MonoidAlgebra R G) = 0 := by
+    pairCoeff (R := R) (monoidCoeff R G h) (monoidCoeff R G g) ∘ₗ
+        Coalgebra.comul (R := R) (A := MonoidAlgebra R G) = 0 := by
   refine MonoidAlgebra.lhom_ext' fun k => ?_
   ext
-  by_cases hk : k = g <;> simp [pairCoeff_tmul, MonoidAlgebra.comul_single, hk, hne]
+  by_cases hk : k = g <;>
+    simp [monoidCoeff, MonoidAlgebra.comul_single, hk, hne]
 
 variable [Comodule R (MonoidAlgebra R G) V]
 
-/-- Taking a coefficient of the coaction on the left factor is the coaction of the coefficient. -/
-private theorem tensorComponent_comp_rTensor_coact (g : G) :
-    tensorComponent R G (V ⊗[R] MonoidAlgebra R G) g ∘ₗ
-        (coact (R := R) (C := MonoidAlgebra R G) (M := V)).rTensor (MonoidAlgebra R G) =
-      coact (R := R) (C := MonoidAlgebra R G) (M := V) ∘ₗ tensorComponent R G V g :=
-  TensorProduct.ext' fun v x => by simp
-
 private theorem weightProj_weightProj_eq (h g : G) (v : V) :
     weightProj R G V h (weightProj R G V g v) =
-      doubleComponent R G V h g
+      tensorPairComponent (R := R) (M := V) (monoidCoeff R G h) (monoidCoeff R G g)
         ((Coalgebra.comul (R := R) (A := MonoidAlgebra R G)).lTensor V
-          (coact (R := R) (C := MonoidAlgebra R G) v)) := by
-  have key := congr($(doubleComponent_comp_assoc (R := R) (G := G) (V := V) h g)
-    ((coact (R := R) (C := MonoidAlgebra R G) (M := V)).rTensor (MonoidAlgebra R G)
-      (coact (R := R) (C := MonoidAlgebra R G) v)))
-  simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe, coassoc_apply] at key
-  have hcomp := congr($(tensorComponent_comp_rTensor_coact (R := R) (G := G) (V := V) g)
-    (coact (R := R) (C := MonoidAlgebra R G) v))
-  simp only [LinearMap.coe_comp, Function.comp_apply] at hcomp
-  rw [key, hcomp]
-  rw [weightProj_apply, weightProj_apply]
+          (coact (R := R) (C := MonoidAlgebra R G) v)) :=
+  coactComponent_coactComponent (R := R) (C := MonoidAlgebra R G) (M := V)
+    (monoidCoeff R G h) (monoidCoeff R G g) v
 
 /-- **The weight projections are idempotent.** -/
 @[simp]
 theorem weightProj_weightProj_self (g : G) (v : V) :
     weightProj R G V g (weightProj R G V g v) = weightProj R G V g v := by
   rw [weightProj_weightProj_eq]
-  have h : doubleComponent R G V g g ∘ₗ
-      (Coalgebra.comul (R := R) (A := MonoidAlgebra R G)).lTensor V =
-        tensorComponent R G V g := by
-    rw [doubleComponent, tensorComponent, LinearMap.comp_assoc, ← LinearMap.lTensor_comp,
-      pairCoeff_comp_comul_self]
-  exact congr($h (coact (R := R) (C := MonoidAlgebra R G) v))
+  have h := tensorPairComponent_comp_lTensor_comul (M := V)
+    (pairCoeff_comp_comul_self (R := R) (G := G) g)
+  simpa only [LinearMap.coe_comp, Function.comp_apply, weightProj_apply] using
+    congr($h (coact (R := R) (C := MonoidAlgebra R G) v))
 
 /-- **The weight projections at distinct indices are orthogonal.** -/
 @[simp]
 theorem weightProj_weightProj_of_ne {h g : G} (hne : h ≠ g) (v : V) :
     weightProj R G V h (weightProj R G V g v) = 0 := by
   rw [weightProj_weightProj_eq]
-  have h0 : doubleComponent R G V h g ∘ₗ
-      (Coalgebra.comul (R := R) (A := MonoidAlgebra R G)).lTensor V = 0 := by
-    rw [doubleComponent, LinearMap.comp_assoc, ← LinearMap.lTensor_comp,
-      pairCoeff_comp_comul_of_ne hne, LinearMap.lTensor_zero, LinearMap.comp_zero]
-  exact congr($h0 (coact (R := R) (C := MonoidAlgebra R G) v))
+  have h0 := tensorPairComponent_comp_lTensor_comul (M := V)
+    (pairCoeff_comp_comul_of_ne (R := R) (G := G) hne)
+  have := congr($h0 (coact (R := R) (C := MonoidAlgebra R G) v))
+  simpa only [LinearMap.coe_comp, Function.comp_apply, tensorComponent_zero,
+    LinearMap.zero_apply] using this
 
 end Coassoc
 
@@ -372,7 +332,7 @@ theorem weightProj_of_mem {g : G} {v : V} (hv : v ∈ weightSpace R G V g) :
 theorem weightProj_of_mem_of_ne {h g : G} (hne : h ≠ g) {v : V} (hv : v ∈ weightSpace R G V g) :
     weightProj R G V h v = 0 := by
   classical
-  simp [weightProj_apply, mem_weightSpace.mp hv, Ne.symm hne]
+  simp [weightProj_apply, mem_weightSpace.mp hv, hne]
 
 /-- **Each weight component lies in its weight submodule.** -/
 theorem weightProj_mem_weightSpace (g : G) (v : V) :
@@ -491,6 +451,50 @@ variable {W : Type*} [AddCommMonoid W] [Module R W] [Comodule R (MonoidAlgebra R
 
 namespace Hom
 
+/-- A linear map between comodules over a monoid algebra is a comodule morphism if it preserves
+every weight space. -/
+noncomputable def ofMapWeightSpace (f : V →ₗ[R] W)
+    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace R G V g → f v ∈ weightSpace R G W g) :
+    Hom R (MonoidAlgebra R G) V W where
+  toLinearMap := f
+  map_coact := by
+    apply LinearMap.ext
+    intro v
+    rw [← weightDecomposition_sum (R := R) (G := G) (V := V) v]
+    simp only [Finsupp.sum, map_sum, LinearMap.coe_comp, Function.comp_apply]
+    apply Finset.sum_congr rfl
+    intro g hg
+    rw [weightDecomposition_apply,
+      mem_weightSpace.mp (weightProj_mem_weightSpace g v), TensorProduct.map_tmul,
+      mem_weightSpace.mp (hf g (weightProj_mem_weightSpace g v))]
+    rfl
+
+@[simp]
+theorem ofMapWeightSpace_toLinearMap (f : V →ₗ[R] W)
+    (hf : ∀ (g : G) {v : V}, v ∈ weightSpace R G V g → f v ∈ weightSpace R G W g) :
+    (ofMapWeightSpace f hf).toLinearMap = f :=
+  (rfl)
+
+omit [Comodule R (MonoidAlgebra R G) V] [Comodule R (MonoidAlgebra R G) W] in
+private theorem tensorComponent_map (f : V →ₗ[R] W) (g : G)
+    (t : V ⊗[R] MonoidAlgebra R G) :
+    f (tensorComponent (R := R) (M := V) (monoidCoeff R G g) t) =
+      tensorComponent (R := R) (M := W) (monoidCoeff R G g)
+        (TensorProduct.map f LinearMap.id t) := by
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul v x => simp [tensorComponent_tmul]
+
+/-- A comodule morphism over a monoid algebra commutes with every weight projection. -/
+@[simp]
+theorem map_weightProj (f : Hom R (MonoidAlgebra R G) V W) (g : G) (v : V) :
+    f (weightProj R G V g v) = weightProj R G W g (f v) := by
+  rw [weightProj_apply, weightProj_apply]
+  exact (tensorComponent_map f.toLinearMap g _).trans <|
+    congrArg (tensorComponent (R := R) (M := W) (monoidCoeff R G g))
+      (f.map_coact_apply v)
+
 /-- A morphism of comodules over `R[G]` sends the `g`-weight submodule into the `g`-weight
 submodule. -/
 theorem map_mem_weightSpace (f : Hom R (MonoidAlgebra R G) V W) {g : G} {v : V}
@@ -507,6 +511,18 @@ theorem map_weightSpace_le (f : Hom R (MonoidAlgebra R G) V W) (g : G) :
   exact f.map_mem_weightSpace hv
 
 end Hom
+
+/-- Every subcomodule over a monoid algebra is stable under the weight projections. -/
+theorem weightProj_mem_subcomodule (N : Subcomodule R (MonoidAlgebra R G) V)
+    (g : G) {v : V} (hv : v ∈ N) : weightProj R G V g v ∈ N := by
+  let _ : Comodule R (MonoidAlgebra R G) N := Subcomodule.instComodule N
+  have hmap := (Subcomodule.subtype N).map_weightProj g (⟨v, hv⟩ : N)
+  rw [Subcomodule.subtype_apply] at hmap
+  have hmap' :
+      (weightProj R G N g (⟨v, hv⟩ : N) : V) = weightProj R G V g v := by
+    simpa only [Subcomodule.subtype_apply] using hmap
+  rw [← hmap']
+  exact (weightProj R G N g (⟨v, hv⟩ : N)).2
 
 variable (R G V)
 

@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.ModularForms.NormTrace
-public import TauCeti.NumberTheory.ModularForms.Cusps
+public import TauCeti.NumberTheory.ModularForms.Cusps.Basic
 public import TauCeti.NumberTheory.ModularForms.GaloisProd
 
 /-!
