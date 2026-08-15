@@ -229,7 +229,6 @@ theorem ofBasis.basis_apply (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V)
     ofBasis.basis b B hB hint i = ofBasis.basisElem b B hB hint i :=
   Subtype.ext (b.restrictScalars_apply ℤ i)
 
-@[simp]
 theorem ofBasis.coe_basis (b : Basis ι ℚ V) (B : LinearMap.BilinForm ℚ V) (hB : B.IsSymm)
     (hint : ∀ i j, B (b i) (b j) ∈ (1 : Submodule ℤ ℚ)) (i : ι) :
     (ofBasis.basis b B hB hint i : V) = b i :=
@@ -289,7 +288,6 @@ theorem ofGramMatrix.basis_apply (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG
   Subtype.ext (b.restrictScalars_apply ℤ i)
 
 open Classical in
-@[simp]
 theorem ofGramMatrix.coe_basis (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (i : ι) :
     (ofGramMatrix.basis b G hG i : V) = b i :=
   b.restrictScalars_apply ℤ i
