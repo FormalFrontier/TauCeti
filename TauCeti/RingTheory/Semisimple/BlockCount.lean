@@ -39,7 +39,7 @@ What is *not* proved here is the finer uniqueness — that the multiset of degre
 division rings `Dᵢ` are determined too — which needs the identification of the blocks with the
 isomorphism classes of simple `R`-modules rather than a mere count.  That identification is
 `TauCeti.blocks_equiv_simpleModules` in
-`TauCeti/RingTheory/Semisimple/WedderburnBlocks.lean`, which recovers the count below as a count of
+`TauCeti/RingTheory/Semisimple/Wedderburn/Blocks.lean`, which recovers the count below as a count of
 simple modules but still says nothing about the degrees or the division rings.  For a *single*
 block those two are settled by `TauCeti.wedderburn_data_unique` in
 `TauCeti/RingTheory/Semisimple/MatrixDivisionRing.lean`; what remains open is the matching of the
