@@ -184,6 +184,7 @@ instance : CoeSort FiniteBilinearModule (Type u) := ⟨FiniteBilinearModule.carr
 
 variable (A : FiniteBilinearModule)
 
+@[simp]
 theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
   rw [map_zero]
   rfl
@@ -191,6 +192,7 @@ theorem pairing_zero_left (x : A) : A.pairing 0 x = 0 := by
 @[simp]
 theorem pairing_zero_right (x : A) : A.pairing x 0 = 0 := map_zero _
 
+@[simp]
 theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.pairing y z :=
   DFunLike.congr_fun (map_add A.pairing x y) z
 
@@ -198,6 +200,7 @@ theorem pairing_add_left (x y z : A) : A.pairing (x + y) z = A.pairing x z + A.p
 theorem pairing_add_right (x y z : A) : A.pairing x (y + z) = A.pairing x y + A.pairing x z :=
   map_add (A.pairing x) y z
 
+@[simp]
 theorem pairing_neg_left (x y : A) : A.pairing (-x) y = -A.pairing x y :=
   DFunLike.congr_fun (map_neg A.pairing x) y
 
@@ -391,40 +394,30 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
     have := DFunLike.congr_fun hxy z
     exact neg_inj.mp this
 
-/-- The adjoint pairing for the orthogonal direct sum of two finite bilinear modules. -/
-@[expose] def prodPairing (A B : FiniteBilinearModule) :
-    (A.carrier × B.carrier) →+ CharacterModule (A.carrier × B.carrier) where
-  toFun x :=
-    { toFun := fun y ↦ A.pairing x.1 y.1 + B.pairing x.2 y.2
-      map_zero' := by
-        simp only [Prod.fst_zero, Prod.snd_zero, pairing_zero_right, add_zero]
-      map_add' := fun y z ↦ by
-        simp only [Prod.fst_add, Prod.snd_add, pairing_add_right]
-        abel }
-  map_zero' := by
-    ext ⟨z₁, z₂⟩
-    -- Expose the component evaluation hidden by the AddMonoidHom structure constructor.
-    change A.pairing 0 z₁ + B.pairing 0 z₂ = 0
-    simp only [pairing_zero_left, add_zero]
-  map_add' := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
-    ext ⟨z₁, z₂⟩
-    -- Expose the component evaluation hidden by the AddMonoidHom structure constructor.
-    change A.pairing (x₁ + y₁) z₁ + B.pairing (x₂ + y₂) z₂ =
-      (A.pairing x₁ z₁ + B.pairing x₂ z₂) + (A.pairing y₁ z₁ + B.pairing y₂ z₂)
-    simp only [pairing_add_left]
-    abel
-
-@[simp]
-theorem prodPairing_apply (A B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
-    prodPairing A B x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 :=
-  rfl
-
 /-- The orthogonal direct sum of two finite bilinear modules. -/
 @[expose] def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   carrier := A.carrier × B.carrier
-  pairing := prodPairing A B
+  pairing :=
+    { toFun := fun x ↦
+        { toFun := fun y ↦ A.pairing x.1 y.1 + B.pairing x.2 y.2
+          map_zero' := by
+            simp only [Prod.fst_zero, Prod.snd_zero, pairing_zero_right, add_zero]
+          map_add' := fun y z ↦ by
+            simp only [Prod.fst_add, Prod.snd_add, pairing_add_right]
+            abel }
+      map_zero' := by
+        ext ⟨z₁, z₂⟩
+        change A.pairing 0 z₁ + B.pairing 0 z₂ = 0
+        simp only [pairing_zero_left, add_zero]
+      map_add' := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
+        ext ⟨z₁, z₂⟩
+        change A.pairing (x₁ + y₁) z₁ + B.pairing (x₂ + y₂) z₂ =
+          (A.pairing x₁ z₁ + B.pairing x₂ z₂) + (A.pairing y₁ z₁ + B.pairing y₂ z₂)
+        simp only [pairing_add_left]
+        abel }
   pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦ by
-    rw [prodPairing_apply, prodPairing_apply, A.pairing_comm x₁ y₁, B.pairing_comm x₂ y₂]
+    change A.pairing x₁ y₁ + B.pairing x₂ y₂ = A.pairing y₁ x₁ + B.pairing y₂ x₂
+    rw [A.pairing_comm x₁ y₁, B.pairing_comm x₂ y₂]
 
 @[simp]
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
