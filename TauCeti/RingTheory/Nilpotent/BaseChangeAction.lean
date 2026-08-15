@@ -6,14 +6,14 @@ Authors: Codex
 module
 
 public import TauCeti.RingTheory.DividedPowers.Associative
-public import Mathlib.RingTheory.Nilpotent.Exp
+public import Mathlib.RingTheory.Nilpotent.Defs
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 
 /-!
 # Base change of integral nilpotent exponentials
 
-Let `V` be a rational representation, let `M ≤ V` be an additive subgroup, and suppose that every
-divided power of a nilpotent endomorphism `x` preserves `M`. Restricting those divided powers gives
+Let `V` be an `A`-module for a `ℚ`-algebra `A`, let `M ≤ V` be an additive subgroup, and suppose
+that every divided power of an element `x : A` preserves `M`. Restricting those divided powers gives
 integral endomorphisms of `M`. After extension of scalars to any commutative ring `R`, the finite
 sum
 
@@ -35,9 +35,8 @@ characteristic.
 
 * `TauCeti.integralDividedPower`: a divided-power operator restricted to an invariant additive
   subgroup.
-* `TauCeti.integralDividedPower_mul`: multiplication formula for restricted divided powers.
-* `TauCeti.baseChangeExp`: the finite divided-power exponential on `R ⊗[ℤ] M` for a nilpotent
-  endomorphism.
+* `TauCeti.mul_integralDividedPower`: multiplication formula for restricted divided powers.
+* `TauCeti.baseChangeExp`: the finite divided-power exponential on `R ⊗[ℤ] M` for an element of `A`.
 * `TauCeti.baseChangeExp_add`: its one-parameter group law.
 * `TauCeti.baseChangeExpLinearEquiv`: the resulting linear automorphism.
 * `TauCeti.baseChangeExpHom`: the additive one-parameter subgroup over `R`.
@@ -46,70 +45,77 @@ characteristic.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §§26--27.
 * R. W. Carter, *Simple Groups of Lie Type*, §4.4.
+* The proof of `sum_pow_smul_mul_sum_pow_smul` adapts Mathlib's `IsNilpotent.exp_add_of_commute` in
+  `Mathlib/RingTheory/Nilpotent/Exp.lean` (Janos Wolosz), replacing powers/factorials by integral
+  divided powers.
 -/
 
 public section
 
 namespace TauCeti
 
-open Finset IsNilpotent TensorProduct
+open Finset TensorProduct
 
 universe u v
 
-variable {V : Type u} [AddCommGroup V] [Module ℚ V]
+variable {A : Type*} [Ring A] [Algebra ℚ A]
+variable {V : Type u} [AddCommGroup V] [Module A V]
+variable {S : Type*} [SetLike S V] [AddSubgroupClass S V]
 
 /-! ## Integral divided-power operators -/
 
-/-- The restriction to `M` of the `n`-th divided power of an endomorphism preserving `M`.
+/-- The restriction to `M` of the `n`-th divided power of `x`, given that this divided power maps
+`M` into `M`.
 
 This is an integral linear map: the rational division by `n!` has already taken place in the
 ambient representation, while the preservation hypothesis says that its value lands back in
 `M`. -/
-noncomputable def integralDividedPower (x : Module.End ℚ V) (M : AddSubgroup V)
-    (n : ℕ) (hM : ∀ v ∈ M, Associative.dividedPower n x v ∈ M) : Module.End ℤ M where
-  toFun v := ⟨Associative.dividedPower n x v, hM v v.2⟩
+noncomputable def integralDividedPower (x : A) (M : S)
+    (n : ℕ) (hM : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) : Module.End ℤ M where
+  toFun v := ⟨Associative.dividedPower n x • (v : V), hM v v.2⟩
   map_add' a b := by
-    apply Subtype.ext
-    exact LinearMap.map_add _ _ _
+    ext
+    exact smul_add _ _ _
   map_smul' t a := by
-    apply Subtype.ext
-    exact map_zsmul _ _ _
+    ext
+    exact smul_comm _ _ _
 
 /-- The value of `integralDividedPower x M n hM v` coerced to `V` is
-`Associative.dividedPower n x v`. -/
+`Associative.dividedPower n x • v`. -/
 @[simp]
-theorem integralDividedPower_apply (x : Module.End ℚ V) (M : AddSubgroup V)
-    (n : ℕ) (hM : ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (v : M) :
-    ((integralDividedPower x M n hM v : M) : V) = Associative.dividedPower n x v := by
+theorem coe_integralDividedPower_apply (x : A) (M : S)
+    (n : ℕ) (hM : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (v : M) :
+    ((integralDividedPower x M n hM v : M) : V) = Associative.dividedPower n x • (v : V) := by
   rfl
 
 /-- The zeroth restricted divided power is the identity. -/
 @[simp]
-theorem integralDividedPower_zero (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM0 : ∀ v ∈ M, Associative.dividedPower 0 x v ∈ M) :
+theorem integralDividedPower_zero (x : A) (M : S)
+    (hM0 : ∀ v ∈ M, Associative.dividedPower 0 x • v ∈ M) :
     integralDividedPower x M 0 hM0 = 1 := by
   ext v
   simp
 
 /-- Multiplication formula for restricted divided powers. -/
-theorem integralDividedPower_mul (x : Module.End ℚ V) (M : AddSubgroup V)
-    (m n : ℕ) (hm : ∀ v ∈ M, Associative.dividedPower m x v ∈ M)
-    (hn : ∀ v ∈ M, Associative.dividedPower n x v ∈ M)
-    (hmn : ∀ v ∈ M, Associative.dividedPower (m + n) x v ∈ M) :
+theorem mul_integralDividedPower (x : A) (M : S)
+    (m n : ℕ) (hm : ∀ v ∈ M, Associative.dividedPower m x • v ∈ M)
+    (hn : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (hmn : ∀ v ∈ M, Associative.dividedPower (m + n) x • v ∈ M) :
     integralDividedPower x M m hm * integralDividedPower x M n hn =
       Nat.choose (m + n) m • integralDividedPower x M (m + n) hmn := by
   ext v
-  -- The underlying vectors in V match by the ambient divided-power multiplication law
-  exact LinearMap.congr_fun (Associative.mul_dividedPower m n x) (v : V)
+  change Associative.dividedPower m x • Associative.dividedPower n x • (v : V) =
+    Nat.choose (m + n) m • Associative.dividedPower (m + n) x • (v : V)
+  rw [smul_smul, Associative.mul_dividedPower, smul_assoc]
 
 /-- The restricted divided power vanishes for degrees greater than or equal to a nilpotency
 bound. -/
-theorem integralDividedPower_eq_zero_of_le (x : Module.End ℚ V)
-    (M : AddSubgroup V) (n : ℕ) (hn : ∀ v ∈ M, Associative.dividedPower n x v ∈ M)
+theorem integralDividedPower_eq_zero_of_le (x : A)
+    (M : S) (n : ℕ) (hn : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     {k : ℕ} (hk : x ^ k = 0) (hkn : k ≤ n) :
     integralDividedPower x M n hn = 0 := by
   ext v
-  simp [integralDividedPower_apply, Associative.dividedPower_def,
+  simp [coe_integralDividedPower_apply, Associative.dividedPower_def,
     pow_eq_zero_of_le hkn hk]
 
 /-! ## The divided-power exponential after base change -/
@@ -117,12 +123,12 @@ theorem integralDividedPower_eq_zero_of_le (x : Module.End ℚ V)
 variable {R : Type v} [CommRing R]
 
 /-- The finite integral divided-power exponential on the scalar extension `R ⊗[ℤ] M`
-for a nilpotent endomorphism `x`.
+for an element `x`.
 
 Although `x` acts on a rational vector space, this definition uses only the integral operators on
 `M` and therefore makes sense over an arbitrary commutative parameter ring `R`. -/
-noncomputable def baseChangeExp (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (_hx : IsNilpotent x) (t : R) :
+noncomputable def baseChangeExp (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (t : R) :
     Module.End R (R ⊗[ℤ] M) :=
   ∑ n ∈ range (nilpotencyClass x),
     t ^ n • (integralDividedPower x M n (hM n)).baseChange R
@@ -130,34 +136,59 @@ noncomputable def baseChangeExp (x : Module.End ℚ V) (M : AddSubgroup V)
 /-- The base-changed exponential acts on a pure tensor by the expected finite divided-power
 formula. -/
 @[simp]
-theorem baseChangeExp_tmul (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x)
+theorem baseChangeExp_tmul (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     (t r : R) (v : M) :
-    baseChangeExp x M hM hx t (r ⊗ₜ[ℤ] v) =
+    baseChangeExp x M hM t (r ⊗ₜ[ℤ] v) =
       ∑ n ∈ range (nilpotencyClass x), (t ^ n * r) ⊗ₜ[ℤ]
         integralDividedPower x M n (hM n) v := by
   simp [baseChangeExp, smul_tmul']
 
-
-private theorem baseChange_integralDividedPower_mul
-    (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (m n : ℕ) :
+private theorem baseChange_mul_integralDividedPower
+    (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (m n : ℕ) :
     (integralDividedPower x M m (hM m)).baseChange R *
         (integralDividedPower x M n (hM n)).baseChange R =
       Nat.choose (m + n) m • (integralDividedPower x M (m + n) (hM (m + n))).baseChange R := by
-  rw [← LinearMap.baseChange_mul, integralDividedPower_mul]
+  rw [← LinearMap.baseChange_mul, mul_integralDividedPower]
   exact map_nsmul (Module.End.baseChangeHom ℤ R M) _ _
 
 private theorem baseChange_integralDividedPower_eq_zero_of_le
-    (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M)
+    (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     {k n : ℕ} (hk : x ^ k = 0) (hkn : k ≤ n) :
     (integralDividedPower x M n (hM n)).baseChange R = 0 := by
   rw [integralDividedPower_eq_zero_of_le x M n (hM n) hk hkn, LinearMap.baseChange_zero]
 
-/-- Binomial convolution identity for truncated divided-power series. -/
+/-- The base-changed exponential expanded over any truncation bound `k` satisfying `x ^ k = 0`. -/
+theorem baseChangeExp_of_pow_eq_zero (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) {k : ℕ} (hk : x ^ k = 0) (t : R) :
+    baseChangeExp x M hM t =
+      ∑ n ∈ range k, t ^ n • (integralDividedPower x M n (hM n)).baseChange R := by
+  have hle : nilpotencyClass x ≤ k := Nat.sInf_le hk
+  rw [baseChangeExp]
+  apply sum_subset (range_mono hle)
+  intro n hn hnot
+  rw [mem_range] at hn hnot
+  have hn_ge : nilpotencyClass x ≤ n := not_lt.1 hnot
+  have hpow : x ^ nilpotencyClass x = 0 := pow_nilpotencyClass ⟨k, hk⟩
+  rw [baseChange_integralDividedPower_eq_zero_of_le x M hM hpow hn_ge, smul_zero]
+
+/-- The base-changed exponential acts on a pure tensor by the divided-power formula over any
+truncation bound `k` satisfying `x ^ k = 0`. -/
+theorem baseChangeExp_tmul_of_pow_eq_zero (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) {k : ℕ} (hk : x ^ k = 0)
+    (t r : R) (v : M) :
+    baseChangeExp x M hM t (r ⊗ₜ[ℤ] v) =
+      ∑ n ∈ range k, (t ^ n * r) ⊗ₜ[ℤ] integralDividedPower x M n (hM n) v := by
+  simp [baseChangeExp_of_pow_eq_zero x M hM hk, smul_tmul']
+
+/-- Binomial convolution identity for truncated divided-power series.
+
+Adapted from Mathlib's `IsNilpotent.exp_add_of_commute` in
+`Mathlib/RingTheory/Nilpotent/Exp.lean` (Janos Wolosz). -/
 private theorem sum_pow_smul_mul_sum_pow_smul
-    {W : Type*} [AddCommGroup W] (D : ℕ → Module.End R (R ⊗[ℤ] W)) (k : ℕ)
+    {B : Type*} [Ring B] [Algebra R B] (D : ℕ → B) (k : ℕ)
     (hzero : ∀ n, k ≤ n → D n = 0)
     (hmul : ∀ m n, D m * D n = Nat.choose (m + n) m • D (m + n))
     (t u : R) :
@@ -226,86 +257,123 @@ private theorem sum_pow_smul_mul_sum_pow_smul
 /-- The integral divided-power exponential satisfies the additive one-parameter group law over
 every commutative base ring. -/
 @[simp]
-theorem baseChangeExp_add (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x)
+theorem baseChangeExp_add (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
     (t u : R) :
-    baseChangeExp x M hM hx (t + u) = baseChangeExp x M hM hx t * baseChangeExp x M hM hx u := by
+    baseChangeExp x M hM (t + u) = baseChangeExp x M hM t * baseChangeExp x M hM u := by
   rw [baseChangeExp, baseChangeExp, baseChangeExp]
   symm
-  apply sum_pow_smul_mul_sum_pow_smul
+  apply sum_pow_smul_mul_sum_pow_smul (fun n => (integralDividedPower x M n (hM n)).baseChange R)
   · intro n hn
     exact baseChange_integralDividedPower_eq_zero_of_le x M hM
       (pow_nilpotencyClass hx) hn
-  · exact baseChange_integralDividedPower_mul x M hM
+  · exact baseChange_mul_integralDividedPower x M hM
 
 /-- The base-changed divided-power exponential at zero is the identity. -/
 @[simp]
-theorem baseChangeExp_zero (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x) :
-    baseChangeExp (R := R) x M hM hx 0 = 1 := by
+theorem baseChangeExp_zero (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) :
+    baseChangeExp (R := R) x M hM 0 = 1 := by
   classical
-  cases subsingleton_or_nontrivial V with
-  | inl hV =>
-      apply LinearMap.ext
-      intro z
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | tmul r m =>
-          have hm : m = 0 := Subtype.ext (hV.elim _ _)
-          subst m
-          simp
-      | add a b ha hb => simp [ha, hb]
-  | inr hV =>
-      let _ := hV
-      rw [baseChangeExp, sum_eq_single 0]
-      · simp
-      · intro n hn hn0
-        simp [hn0]
-      · simp [pos_nilpotencyClass_iff.2 hx]
+  by_cases h0 : nilpotencyClass x = 0
+  · have hpow := pow_nilpotencyClass hx
+    rw [h0, pow_zero] at hpow
+    apply LinearMap.ext
+    intro v
+    induction v using TensorProduct.induction_on with
+    | zero => simp
+    | tmul r m =>
+        have hm : (m : V) = 0 := by
+          have h1 : (m : V) = (1 : A) • (m : V) := (one_smul A (m : V)).symm
+          rw [hpow, zero_smul] at h1
+          exact h1
+        have hm0 : m = 0 := SetLike.coe_eq_coe.mp (by simp [hm])
+        subst hm0
+        simp
+    | add a b ha hb => simp [ha, hb]
+  · rw [baseChangeExp, sum_eq_single 0]
+    · simp
+    · intro n _ hn0
+      simp [hn0]
+    · intro hn0
+      exact False.elim (h0 (by simpa using hn0))
 
 /-- The base-changed divided-power exponential as a linear equivalence, with inverse given by the
 negative parameter. -/
-noncomputable def baseChangeExpLinearEquiv (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x) (t : R) :
-    R ⊗[ℤ] M ≃ₗ[R] R ⊗[ℤ] M where
-  toLinearMap := baseChangeExp x M hM hx t
-  invFun := baseChangeExp x M hM hx (-t)
-  left_inv v := by
-    have h := LinearMap.congr_fun (baseChangeExp_add x M hM hx (-t) t) v
-    simpa [baseChangeExp_zero x M hM hx] using h.symm
-  right_inv v := by
-    have h := LinearMap.congr_fun (baseChangeExp_add x M hM hx t (-t)) v
-    simpa [baseChangeExp_zero x M hM hx] using h.symm
+noncomputable def baseChangeExpLinearEquiv (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : R) :
+    R ⊗[ℤ] M ≃ₗ[R] R ⊗[ℤ] M :=
+  LinearEquiv.ofLinearMap (baseChangeExp x M hM t) (baseChangeExp x M hM (-t))
+    (by
+      have h := baseChangeExp_add x M hM hx t (-t)
+      simp only [add_neg_cancel, baseChangeExp_zero x M hM hx] at h
+      exact h.symm)
+    (by
+      have h := baseChangeExp_add x M hM hx (-t) t
+      simp only [neg_add_cancel, baseChangeExp_zero x M hM hx] at h
+      exact h.symm)
 
 /-- The linear map underlying `baseChangeExpLinearEquiv` is `baseChangeExp`. -/
 @[simp]
-theorem baseChangeExpLinearEquiv_toLinearMap (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x) (t : R) :
-    (baseChangeExpLinearEquiv x M hM hx t).toLinearMap = baseChangeExp x M hM hx t := by
+theorem baseChangeExpLinearEquiv_toLinearMap (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : R) :
+    (baseChangeExpLinearEquiv x M hM hx t).toLinearMap = baseChangeExp x M hM t :=
+  (rfl)
+
+/-- Coercing `baseChangeExpLinearEquiv` to a function yields `baseChangeExp`. -/
+@[simp]
+theorem coe_baseChangeExpLinearEquiv (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : R) :
+    ⇑(baseChangeExpLinearEquiv x M hM hx t) = ⇑(baseChangeExp x M hM t) :=
+  (rfl)
+
+/-- The inverse of `baseChangeExpLinearEquiv` is given by the negative parameter. -/
+@[simp]
+theorem baseChangeExpLinearEquiv_symm (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : R) :
+    (baseChangeExpLinearEquiv x M hM hx t).symm = baseChangeExpLinearEquiv x M hM hx (-t) := by
+  ext
   rfl
 
 /-- The additive group of a commutative ring acts on the scalar extension of a
 divided-power-stable additive subgroup by the integral nilpotent exponential. -/
-noncomputable def baseChangeExpHom (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x) :
+noncomputable def baseChangeExpHom (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) :
     Multiplicative R →* (R ⊗[ℤ] M ≃ₗ[R] R ⊗[ℤ] M) where
   toFun t := baseChangeExpLinearEquiv x M hM hx (Multiplicative.toAdd t)
   map_one' := by
     ext v
-    exact LinearMap.congr_fun (baseChangeExp_zero x M hM hx) v
+    simp [baseChangeExp_zero x M hM hx]
   map_mul' t u := by
     ext v
-    exact LinearMap.congr_fun (baseChangeExp_add x M hM hx
-      (Multiplicative.toAdd t) (Multiplicative.toAdd u)) v
+    simp [baseChangeExp_add x M hM hx]
 
 /-- The linear map underlying the base-changed one-parameter subgroup is the corresponding
 divided-power exponential. -/
 @[simp]
-theorem baseChangeExpHom_toLinearMap (x : Module.End ℚ V) (M : AddSubgroup V)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x v ∈ M) (hx : IsNilpotent x)
+theorem baseChangeExpHom_toLinearMap (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
     (t : Multiplicative R) :
     (baseChangeExpHom x M hM hx t).toLinearMap =
-      baseChangeExp x M hM hx (Multiplicative.toAdd t) := by
-  rfl
+      baseChangeExp x M hM (Multiplicative.toAdd t) :=
+  (rfl)
+
+/-- Evaluating `baseChangeExpHom` at `t` yields `baseChangeExpLinearEquiv` at `toAdd t`. -/
+@[simp]
+theorem baseChangeExpHom_apply (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
+    (t : Multiplicative R) :
+    baseChangeExpHom x M hM hx t =
+      baseChangeExpLinearEquiv x M hM hx (Multiplicative.toAdd t) :=
+  (rfl)
+
+/-- Coercing `baseChangeExpHom` to a function yields `baseChangeExp`. -/
+@[simp]
+theorem coe_baseChangeExpHom (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
+    (t : Multiplicative R) :
+    ⇑(baseChangeExpHom x M hM hx t) =
+      ⇑(baseChangeExp x M hM (Multiplicative.toAdd t)) :=
+  (rfl)
 
 end TauCeti
