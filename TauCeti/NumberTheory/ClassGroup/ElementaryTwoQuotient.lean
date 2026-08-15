@@ -29,10 +29,11 @@ square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup` f
 
 ## Main definitions and results
 
-* `TauCeti.ClassGroup.elementaryTwoQuotientMk`, `elementaryTwoQuotientMk_eq`, and
-  `elementaryTwoQuotientMk_eq_zero_iff`: the class of an ideal class, trivial iff that class is a
-  square; `elementaryTwoQuotientMk_mul`, `elementaryTwoQuotientMk_one`,
-  `elementaryTwoQuotientMk_inv`, `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
+* `TauCeti.ClassGroup.ElementaryTwoQuotient`: the quotient `Cl(R) ⧸ Cl(R)²`, a `ZMod 2`-module.
+* `TauCeti.ClassGroup.elementaryTwoQuotientMk` and `elementaryTwoQuotientMk_eq_zero_iff`: the class
+  of an ideal class, trivial iff that class is a square; `elementaryTwoQuotientMk_mul`,
+  `elementaryTwoQuotientMk_one`, `elementaryTwoQuotientMk_inv`,
+  `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
   `elementaryTwoQuotientMk_prod` record its additivity, while `elementaryTwoQuotientMk_surjective`
   and `elementaryTwoQuotientMk_eq_iff` give surjectivity and the equality criterion.
 * `TauCeti.ClassGroup.elementaryTwoQuotientCongr`: a multiplicative equivalence of class groups
@@ -59,14 +60,8 @@ variable (R : Type*) [CommRing R] [IsDomain R]
 abbrev ElementaryTwoQuotient : Type _ := TauCeti.ElementaryTwoQuotient (ClassGroup R)
 
 /-- The class of an ideal class in the maximal elementary-2 quotient `Cl(R)/Cl(R)²`. -/
-@[expose] noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuotient R :=
+noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuotient R :=
   TauCeti.elementaryTwoQuotientMk C
-
-/-- The class-group elementary-2 quotient class map is the generic elementary-2 quotient class
-map. -/
-@[simp] theorem elementaryTwoQuotientMk_eq (C : ClassGroup R) :
-    elementaryTwoQuotientMk R C = TauCeti.elementaryTwoQuotientMk C :=
-  rfl
 
 /-- An ideal class has trivial class in `Cl(R)/Cl(R)²` iff it is a square. -/
 @[simp] theorem elementaryTwoQuotientMk_eq_zero_iff (C : ClassGroup R) :
