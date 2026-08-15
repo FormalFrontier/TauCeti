@@ -168,13 +168,6 @@ theorem linearIndependent_ringChoose_X_int [Nontrivial K] :
     LinearIndependent ℤ (fun n : ℕ => Ring.choose (X : K[X]) n) :=
   (linearIndependent_ringChoose_X K).restrict_scalars' ℤ
 
-/-- The `ℤ`-linear span of the binomial polynomials is the integral submodule associated to
-`ringChooseSpan X`. -/
-theorem span_ringChoose_X_eq_toIntSubmodule :
-    Submodule.span ℤ (Set.range fun n : ℕ => Ring.choose (X : K[X]) n) =
-      (ringChooseSpan (X : K[X])).toIntSubmodule :=
-  span_int_range_ringChoose (X : K[X])
-
 /-- The binomial polynomials form an integral basis of their additive span in `K[X]`. -/
 noncomputable def ringChooseSpanBasisX [Nontrivial K] :
     Module.Basis ℕ ℤ (ringChooseSpan (X : K[X])).toIntSubmodule :=
