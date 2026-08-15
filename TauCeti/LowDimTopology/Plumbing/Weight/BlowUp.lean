@@ -54,7 +54,7 @@ corresponding sublevel set of `P`.
 * `TauCeti.PlumbingGraph.blowUpCovectorEquiv`: the total-transform identification of the covectors
   of the blow-up with pairs `(k, ε)`, dual to `blowUpVertexEquiv`.
 * `TauCeti.PlumbingGraph.blowUpCharacteristic`: the characteristic covector of the blow-up
-  determined by a characteristic covector of `P` and a unit `δ : ℤˣ` on the exceptional class.
+  determined by a characteristic covector of `P` and an odd value on the exceptional class.
 
 ## Main results
 
@@ -64,10 +64,11 @@ corresponding sublevel set of `P`.
 * `TauCeti.PlumbingGraph.blowUpCovectorEquiv_canonicalCharacteristic`: the canonical characteristic
   covector of the blow-up is the canonical one of `P` with exceptional value `-1`.
 * `TauCeti.PlumbingGraph.two_mul_characteristicWeight_blowUpCharacteristic`: the weight formula
-  `2 χ_{k'}(φ(x, s)) = 2 χ_k(x) + s * (s - δ)`.
+  `2 χ_{k'}(φ(x, s)) = 2 χ_k(x) + s * (s - ε)` for every odd exceptional value `ε`.
 * `TauCeti.PlumbingGraph.characteristicWeight_blowUpCharacteristic_eq_iff`: the blown-up weight
-  agrees with the old one exactly at the exceptional multiplicities `s = 0` and `s = δ`, and
-  `TauCeti.PlumbingGraph.characteristicWeight_le_blowUpCharacteristic`: elsewhere it is larger.
+  agrees with the old one exactly at the exceptional multiplicities `s = 0` and `s = ε`, and
+  `TauCeti.PlumbingGraph.characteristicWeight_le_blowUpCharacteristic`: for unit `ε`, elsewhere it
+  is larger.
 * `TauCeti.PlumbingGraph.sInfCharacteristicWeight_blowUpCharacteristic` and
   `TauCeti.PlumbingGraph.sInfCharacteristicWeight_canonicalCharacteristic_blowUpVertex`: the minimal
   characteristic weight is unchanged by the blow-up move.
@@ -110,12 +111,6 @@ private theorem zero_le_mul_sub_units (δ : ℤˣ) (s : ℤ) : 0 ≤ s * (s - (�
     linear_combination (s * s) * hδ
   rw [← hEq]
   exact zero_le_mul_sub_one _
-
-/-- A unit of `ℤ` is odd, which is the parity the exceptional class of a blow-up demands. -/
-private theorem odd_units_val (δ : ℤˣ) : Odd ((δ : ℤ)) := by
-  rcases Int.units_eq_one_or δ with rfl | rfl
-  · exact ⟨0, by norm_num⟩
-  · exact ⟨-1, by norm_num⟩
 
 namespace PlumbingGraph
 
@@ -264,31 +259,30 @@ theorem exists_blowUpCovectorEquiv_eq (k : (P.blowUpVertex v).characteristicVect
   exact ⟨⟨p.1, hl⟩, p.2, hε, hp⟩
 
 /-- The characteristic covector of the blow-up of `P` at `v` determined by a characteristic
-covector `k` of `P` and a unit `δ` on the exceptional class.
+covector `k` of `P` and an odd value `ε` on the exceptional class.
 
-The unit values `δ = ±1` are singled out among the odd exceptional values of
-`isCharacteristicVector_blowUpCovectorEquiv_iff` because for them the extra weight term
-`s * (s - δ)` is nonnegative at every exceptional multiplicity, which is what makes the minimal
-weight a blow-up invariant; see `sInfCharacteristicWeight_blowUpCharacteristic`. The canonical
-characteristic covector of a blow-up is the case `δ = -1` of `k` canonical, by
+Every odd exceptional value gives a characteristic covector, although only the unit values
+`ε = ±1` make the extra weight term `s * (s - ε)` nonnegative at every exceptional multiplicity;
+see `characteristicWeight_le_blowUpCharacteristic`. The canonical characteristic covector of a
+blow-up is the case `ε = -1` of `k` canonical, by
 `blowUpCharacteristic_canonicalCharacteristic`. -/
-def blowUpCharacteristic (k : P.characteristicVectors) (δ : ℤˣ) :
+def blowUpCharacteristic (k : P.characteristicVectors) (ε : ℤ) (hε : Odd ε) :
     (P.blowUpVertex v).characteristicVectors :=
-  ⟨blowUpCovectorEquiv v (k.val, (δ : ℤ)),
-    (P.isCharacteristicVector_blowUpCovectorEquiv_iff v k.val (δ : ℤ)).mpr
-      ⟨k.property, odd_units_val δ⟩⟩
+  ⟨blowUpCovectorEquiv v (k.val, ε),
+    (P.isCharacteristicVector_blowUpCovectorEquiv_iff v k.val ε).mpr ⟨k.property, hε⟩⟩
 
 /-- The underlying covector of `blowUpCharacteristic` is the lift of the underlying covector. -/
 @[simp]
-theorem blowUpCharacteristic_val (k : P.characteristicVectors) (δ : ℤˣ) :
-    (P.blowUpCharacteristic v k δ).val = blowUpCovectorEquiv v (k.val, (δ : ℤ)) :=
+theorem blowUpCharacteristic_val (k : P.characteristicVectors) (ε : ℤ) (hε : Odd ε) :
+    (P.blowUpCharacteristic v k ε hε).val = blowUpCovectorEquiv v (k.val, ε) :=
   (rfl)
 
 /-- The canonical characteristic covector of a blow-up is the canonical characteristic covector of
 `P` with the unit `-1` on the exceptional class. -/
 theorem blowUpCharacteristic_canonicalCharacteristic :
     P.blowUpCharacteristic v
-        ⟨P.canonicalCharacteristic, P.isCharacteristicVector_canonicalCharacteristic⟩ (-1) =
+        ⟨P.canonicalCharacteristic, P.isCharacteristicVector_canonicalCharacteristic⟩ (-1)
+          (by norm_num) =
       ⟨(P.blowUpVertex v).canonicalCharacteristic,
         (P.blowUpVertex v).isCharacteristicVector_canonicalCharacteristic⟩ := by
   refine Subtype.ext ?_
@@ -329,17 +323,17 @@ theorem characteristicWeightNumerator_blowUpCovectorEquiv (k x : V → ℤ) (ε 
 
 /-- **The weight function of a blow-up splits.** In total-transform coordinates the characteristic
 weight of the blow-up is the characteristic weight of `P` plus the exceptional term
-`s * (s - δ) / 2`, which depends on the exceptional multiplicity alone:
+`s * (s - ε) / 2`, which depends on the exceptional multiplicity alone:
 
-`2 χ_{k'}(φ(x, s)) = 2 χ_k(x) + s * (s - δ)`.
+`2 χ_{k'}(φ(x, s)) = 2 χ_k(x) + s * (s - ε)`.
 
 The identity is stated in doubled form, since the exceptional term is halved by the weight
 convention `χ_k = -(⟨k, x⟩ + x · x) / 2`. -/
-theorem two_mul_characteristicWeight_blowUpCharacteristic (k : P.characteristicVectors) (δ : ℤˣ)
-    (x : V → ℤ) (s : ℤ) :
-    2 * (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k δ)
+theorem two_mul_characteristicWeight_blowUpCharacteristic (k : P.characteristicVectors) (ε : ℤ)
+    (hε : Odd ε) (x : V → ℤ) (s : ℤ) :
+    2 * (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k ε hε)
         (blowUpVertexEquiv v (x, s)) =
-      2 * P.characteristicWeight k x + s * (s - (δ : ℤ)) := by
+      2 * P.characteristicWeight k x + s * (s - ε) := by
   rw [two_mul_characteristicWeight, blowUpCharacteristic_val,
     characteristicWeightNumerator_blowUpCovectorEquiv]
   linear_combination -P.two_mul_characteristicWeight k x
@@ -347,25 +341,25 @@ theorem two_mul_characteristicWeight_blowUpCharacteristic (k : P.characteristicV
 /-- The total transform preserves the characteristic weight: at exceptional multiplicity `0` the
 weight of the blow-up is the weight of `P`. -/
 @[simp]
-theorem characteristicWeight_blowUpCharacteristic_zero (k : P.characteristicVectors) (δ : ℤˣ)
-    (x : V → ℤ) :
-    (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k δ)
+theorem characteristicWeight_blowUpCharacteristic_zero (k : P.characteristicVectors) (ε : ℤ)
+    (hε : Odd ε) (x : V → ℤ) :
+    (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k ε hε)
         (blowUpVertexEquiv v (x, 0)) = P.characteristicWeight k x := by
-  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k δ x 0
+  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k ε hε x 0
   rw [zero_mul, add_zero] at h
   omega
 
 /-- The blown-up weight agrees with the old weight exactly at the two exceptional multiplicities
-`0` and `δ`, the two lattice points of the exceptional direction where the term `s * (s - δ)`
+`0` and `ε`, the two lattice points of the exceptional direction where the term `s * (s - ε)`
 vanishes. -/
-theorem characteristicWeight_blowUpCharacteristic_eq_iff (k : P.characteristicVectors) (δ : ℤˣ)
-    (x : V → ℤ) (s : ℤ) :
-    (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k δ)
-        (blowUpVertexEquiv v (x, s)) = P.characteristicWeight k x ↔ s = 0 ∨ s = (δ : ℤ) := by
-  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k δ x s
+theorem characteristicWeight_blowUpCharacteristic_eq_iff (k : P.characteristicVectors) (ε : ℤ)
+    (hε : Odd ε) (x : V → ℤ) (s : ℤ) :
+    (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k ε hε)
+        (blowUpVertexEquiv v (x, s)) = P.characteristicWeight k x ↔ s = 0 ∨ s = ε := by
+  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k ε hε x s
   constructor
   · intro he
-    have hzero : s * (s - (δ : ℤ)) = 0 := by linarith
+    have hzero : s * (s - ε) = 0 := by linarith
     rcases mul_eq_zero.mp hzero with hs | hs
     · exact Or.inl hs
     · exact Or.inr (by linarith)
@@ -378,12 +372,13 @@ theorem characteristicWeight_blowUpCharacteristic_eq_iff (k : P.characteristicVe
 /-- **The blow-up does not lower the weight.** With a unit on the exceptional class, every lattice
 point of the blow-up has characteristic weight at least that of the lattice point of `P` it lies
 over. -/
-theorem characteristicWeight_le_blowUpCharacteristic (k : P.characteristicVectors) (δ : ℤˣ)
-    (x : V → ℤ) (s : ℤ) :
+theorem characteristicWeight_le_blowUpCharacteristic (k : P.characteristicVectors) (ε : ℤ)
+    (hε : Odd ε) (hunit : IsUnit ε) (x : V → ℤ) (s : ℤ) :
     P.characteristicWeight k x ≤
-      (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k δ)
+      (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k ε hε)
         (blowUpVertexEquiv v (x, s)) := by
-  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k δ x s
+  have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k ε hε x s
+  obtain ⟨δ, rfl⟩ := hunit
   have hnn := zero_le_mul_sub_units δ s
   linarith
 
@@ -397,24 +392,25 @@ minimizer, where `characteristicWeight_blowUpCharacteristic_zero` returns the ol
 infimum is the numerical `d`-invariant input of `Weight/Sublevel.lean`, so this is its invariance
 under the first of Neumann's moves. -/
 theorem sInfCharacteristicWeight_blowUpCharacteristic (h : P.IsNegativeDefinite)
-    (k : P.characteristicVectors) (δ : ℤˣ) :
-    (P.blowUpVertex v).sInfCharacteristicWeight (P.blowUpCharacteristic v k δ) =
+    (k : P.characteristicVectors) (ε : ℤ) (hε : Odd ε) (hunit : IsUnit ε) :
+    (P.blowUpVertex v).sInfCharacteristicWeight (P.blowUpCharacteristic v k ε hε) =
       P.sInfCharacteristicWeight k := by
   have hblow : (P.blowUpVertex v).IsNegativeDefinite :=
     (P.isNegativeDefinite_blowUpVertex_iff v).mpr h
   refine le_antisymm ?_ ?_
   · obtain ⟨x, hx⟩ := P.exists_characteristicWeight_eq_sInfCharacteristicWeight h k
     calc
-      (P.blowUpVertex v).sInfCharacteristicWeight (P.blowUpCharacteristic v k δ)
-          ≤ (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k δ)
+      (P.blowUpVertex v).sInfCharacteristicWeight (P.blowUpCharacteristic v k ε hε)
+          ≤ (P.blowUpVertex v).characteristicWeight (P.blowUpCharacteristic v k ε hε)
               (blowUpVertexEquiv v (x, 0)) :=
         (P.blowUpVertex v).sInfCharacteristicWeight_le hblow _ _
-      _ = P.characteristicWeight k x := P.characteristicWeight_blowUpCharacteristic_zero v k δ x
+      _ = P.characteristicWeight k x :=
+        P.characteristicWeight_blowUpCharacteristic_zero v k ε hε x
       _ = P.sInfCharacteristicWeight k := hx
   · refine (P.blowUpVertex v).le_sInfCharacteristicWeight _ fun y => ?_
     obtain ⟨⟨x, s⟩, rfl⟩ := (blowUpVertexEquiv v).surjective y
     exact (P.sInfCharacteristicWeight_le h k x).trans
-      (P.characteristicWeight_le_blowUpCharacteristic v k δ x s)
+      (P.characteristicWeight_le_blowUpCharacteristic v k ε hε hunit x s)
 
 /-- The minimal weight of the canonical characteristic covector — the adjunction class, which
 carries the unit `-1` on the exceptional class — is unchanged by the blow-up move. -/
@@ -425,7 +421,7 @@ theorem sInfCharacteristicWeight_canonicalCharacteristic_blowUpVertex (h : P.IsN
       P.sInfCharacteristicWeight
         ⟨P.canonicalCharacteristic, P.isCharacteristicVector_canonicalCharacteristic⟩ := by
   rw [← P.blowUpCharacteristic_canonicalCharacteristic v,
-    P.sInfCharacteristicWeight_blowUpCharacteristic v h]
+    P.sInfCharacteristicWeight_blowUpCharacteristic v h _ (-1) (by norm_num) (by norm_num)]
 
 end Weight
 
@@ -439,11 +435,11 @@ example :
     (a2Plumbing.blowUpVertex 0).characteristicWeight
         (a2Plumbing.blowUpCharacteristic 0
           ⟨a2Plumbing.canonicalCharacteristic,
-            a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1))
+            a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) (by norm_num))
         (PlumbingGraph.blowUpVertexEquiv 0 (0, 1)) = 1 := by
   have h := a2Plumbing.two_mul_characteristicWeight_blowUpCharacteristic 0
     ⟨a2Plumbing.canonicalCharacteristic,
-      a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) 0 1
+      a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) (by norm_num) 0 1
   rw [PlumbingGraph.characteristicWeight_zero] at h
   norm_num at h
   omega
@@ -456,11 +452,11 @@ example :
     (a2Plumbing.blowUpVertex 0).characteristicWeight
         (a2Plumbing.blowUpCharacteristic 0
           ⟨a2Plumbing.canonicalCharacteristic,
-            a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1))
+            a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) (by norm_num))
         (PlumbingGraph.blowUpVertexEquiv 0 (0, -1)) = 0 := by
   have h := (a2Plumbing.characteristicWeight_blowUpCharacteristic_eq_iff 0
     ⟨a2Plumbing.canonicalCharacteristic,
-      a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) 0 (-1)).mpr
+      a2Plumbing.isCharacteristicVector_canonicalCharacteristic⟩ (-1) (by norm_num) 0 (-1)).mpr
       (Or.inr (by norm_num))
   rwa [PlumbingGraph.characteristicWeight_zero] at h
 
