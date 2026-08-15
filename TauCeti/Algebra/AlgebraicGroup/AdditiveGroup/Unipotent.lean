@@ -343,6 +343,14 @@ theorem coactFiltration_mono {p q : ℕ} (h : p ≤ q) :
     coactFiltration R V p ≤ coactFiltration R V q := fun _v hv =>
   (mem_coactFiltration R).2 fun i hi => (mem_coactFiltration R).1 hv i (lt_of_le_of_lt h hi)
 
+/-- The positive divided-power components lower the filtration by one step. -/
+theorem coactComponent_mem_coactFiltration {p i : ℕ} (hi : 0 < i) {v : V}
+    (hv : v ∈ coactFiltration R V (p + 1)) :
+    coactComponent R V i v ∈ coactFiltration R V p := by
+  rw [mem_coactFiltration]
+  intro j hj
+  rw [coactComponent_coactComponent, (mem_coactFiltration R).1 hv (j + i) (by omega), smul_zero]
+
 /-- **The divided-power filtration of a finitely generated comodule is exhaustive.** Each vector
 has only finitely many nonzero divided-power components, and finitely many generators bound them
 all at once. -/
@@ -402,14 +410,6 @@ theorem endOfPoint_sub_one_tmul (g : SymmetricAlgebra R R →ₐ[R] A) (a : A) (
     ← Finset.add_sum_erase _ _ (Finset.mem_insert_self 0 _), Finset.erase_insert_eq_erase]
   simp only [coactDecomposition_apply, coactComponent_zero, LinearMap.id_coe, id_eq, pow_zero,
     mul_one, add_sub_cancel_left]
-
-/-- The positive divided-power components lower the filtration by one step. -/
-theorem coactComponent_mem_coactFiltration {p i : ℕ} (hi : 0 < i) {v : V}
-    (hv : v ∈ coactFiltration R V (p + 1)) :
-    coactComponent R V i v ∈ coactFiltration R V p := by
-  rw [mem_coactFiltration]
-  intro j hj
-  rw [coactComponent_coactComponent, (mem_coactFiltration R).1 hv (j + i) (by omega), smul_zero]
 
 /-- A point acts as the identity on the bottom step of the filtration. -/
 theorem endOfPoint_sub_one_tmul_eq_zero (g : SymmetricAlgebra R R →ₐ[R] A) (a : A) {v : V}

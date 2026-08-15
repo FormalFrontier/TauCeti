@@ -113,18 +113,24 @@ lemma coordinateAlgEquiv_ι_one :
 
 end CoordinateAlgebra
 
-variable (R : Type u) [CommRing R]
+section FiniteType
 
-/-- The commutative Hopf algebra representing the one-dimensional additive group. Its carrier is
-`SymmetricAlgebra R R`, with primitive generator `SymmetricAlgebra.ι R R 1`. -/
-noncomputable abbrev coordinateHopfAlgebra : CommHopfAlgCat.{u} R :=
-  CommHopfAlgCat.of R (SymmetricAlgebra R R)
+variable (R : Type u) [CommSemiring R]
 
 /-- The coordinate algebra of `𝔾ₐ` is of finite type: it is the polynomial algebra on the single
 generator `x`. -/
 instance instFiniteTypeSymmetricAlgebra : Algebra.FiniteType R (SymmetricAlgebra R R) :=
   Algebra.FiniteType.equiv (inferInstanceAs (Algebra.FiniteType R (MvPolynomial Unit R)))
     (SymmetricAlgebra.equivMvPolynomial (Basis.singleton Unit R)).symm
+
+end FiniteType
+
+variable (R : Type u) [CommRing R]
+
+/-- The commutative Hopf algebra representing the one-dimensional additive group. Its carrier is
+`SymmetricAlgebra R R`, with primitive generator `SymmetricAlgebra.ι R R 1`. -/
+noncomputable abbrev coordinateHopfAlgebra : CommHopfAlgCat.{u} R :=
+  CommHopfAlgCat.of R (SymmetricAlgebra R R)
 
 /-- The coordinate algebra of `𝔾ₐ` is smooth: it is the polynomial algebra on the single
 generator `x`. -/
