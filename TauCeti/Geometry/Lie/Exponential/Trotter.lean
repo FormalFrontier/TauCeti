@@ -124,9 +124,7 @@ private theorem hasFDerivAt_mulInvariantLogChart_one [FiniteDimensional ℝ E]
   simpa using hlog.hasFDerivAt
 
 -- Multiplication's tangent-map API and `extChartAt` use dependent tangent-space synonyms at
--- definitionally equal basepoints. This scope lets Lean elaborate those existing interfaces; the
--- three conversions below state each semantic boundary explicitly.
-set_option backward.isDefEq.respectTransparency false in
+-- definitionally equal basepoints. The conversions below state each semantic boundary explicitly.
 private theorem hasFDerivAt_mulInvariantExp_mul_chartCurve [FiniteDimensional ℝ E]
     [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
     (X Y : GroupLieAlgebra I G) :
@@ -160,9 +158,10 @@ private theorem hasFDerivAt_mulInvariantExp_mul_chartCurve [FiniteDimensional �
   have hchart := hext.comp 0 hcurve
   simp only [Function.comp_apply] at hchart
   rw [hzero] at hchart
-  apply hchart.hasFDerivAt.congr_fderiv
-  apply ContinuousLinearMap.ext
-  intro t
+  apply hchart.mdifferentiableAt.differentiableAt.hasFDerivAt.congr_fderiv
+  rw [← mfderiv_eq_fderiv, hchart.mfderiv]
+  apply DFunLike.coe_injective
+  funext t
   let s : ℝ := show ℝ from t
   rw [show (0 : ℝ) • X = 0 by exact zero_smul ℝ X,
     show (0 : ℝ) • Y = 0 by exact zero_smul ℝ Y,
@@ -185,7 +184,6 @@ private theorem hasFDerivAt_mulInvariantExp_mul_chartCurve [FiniteDimensional �
   have hmul_model := congrArg (fun Z : GroupLieAlgebra I G => show E from Z)
     (hmul_apply.trans (smul_add s X Y).symm)
   rw [mfderiv_extChartAt_self]
-  simp only [ContinuousLinearMap.comp_apply]
   -- `extChartAt` lands in the self-model, whose tangent space is the model-space synonym `E`.
   -- Expose that final chart boundary before applying the model-space equality above.
   change
