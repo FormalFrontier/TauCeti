@@ -103,8 +103,10 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
       (eventually_genWeightSpace_smul_add_eq_bot M (⇑α) χ hα)).exists
   let q : ℤ := q₀
   have hqb : (k.natAbs : ℤ) + (n.natAbs : ℤ) + 1 < q := by
-    change (k.natAbs : ℤ) + (n.natAbs : ℤ) + 1 < (q₀ : ℤ)
-    exact lt_of_le_of_lt (Int.self_le_toNat _) (by exact_mod_cast hqb₀)
+    simpa only [q] using
+      (lt_of_le_of_lt (Int.self_le_toNat _)
+        (by exact_mod_cast hqb₀) :
+          (k.natAbs : ℤ) + (n.natAbs : ℤ) + 1 < (q₀ : ℤ))
   have hq : genWeightSpace M (q • ⇑α + χ) = ⊥ := by
     simpa only [q, natCast_zsmul] using hq₀
   obtain ⟨r₀, hrb₀, hp₀⟩ :=
@@ -118,9 +120,7 @@ theorem finrank_weightSpace_zsmul_add {α : Weight K H L} (hα : α.IsNonZero) {
     dsimp only [p]
     omega
   have hp : genWeightSpace M (p • ⇑α + χ) = ⊥ := by
-    change genWeightSpace M ((-(r₀ : ℤ)) • ⇑α + χ) = ⊥
-    rw [neg_smul, ← smul_neg]
-    simpa only [natCast_zsmul] using hp₀
+    simpa only [p, neg_smul, ← smul_neg, natCast_zsmul] using hp₀
   set N : LieSubmodule K H M := genWeightSpaceChain M (⇑α) χ p q with hNdef
   -- The operator whose eigenspaces separate the string.
   set A : Module.End K M := toEnd K H M (IsKilling.coroot α) with hAdef
