@@ -4,9 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.Group.Commutator
 public import Mathlib.GroupTheory.OrderOfElement
 public import Mathlib.GroupTheory.Perm.Support
-public import TauCeti.GroupTheory.Presentation.Relator
+public import Mathlib.GroupTheory.PresentedGroup
 
 /-!
 # Artin Braid Groups
@@ -17,9 +18,7 @@ $\sigma_0, \sigma_1, \dots, \sigma_{n-2}$ (indexed by `Fin (n - 1)`) and relatio
 - $\sigma_i \sigma_{i+1} \sigma_i = \sigma_{i+1} \sigma_i \sigma_{i+1}$ (adjacent braid relation).
 
 This provides the algebraic foundation for the braid presentation of knots and links requested by
-Layer 4 ("knot theory, done properly") of the geometric-topology roadmap. Signed braid words reuse
-`TauCeti.PresentationWord` from `TauCeti.GroupTheory.Presentation.Relator`
-(adapted there from the roadmap's `TauCetiRoadmap/CFSGStatement/Suggested.lean`).
+Layer 4 ("knot theory, done properly") of the geometric-topology roadmap.
 
 ## Main definitions
 
@@ -39,7 +38,6 @@ Layer 4 ("knot theory, done properly") of the geometric-topology roadmap. Signed
 * `TauCeti.BraidGroup.sigma_comm`: far generators commute.
 * `TauCeti.BraidGroup.sigma_braid`: adjacent generators satisfy the braid relation.
 * `TauCeti.BraidGroup.lift_sigma`: the universal lift agrees with its generator map.
-* `TauCeti.BraidGroup.hom_ext`: homomorphisms from a braid group agree if they agree on generators.
 * `TauCeti.BraidGroup.orderOf_sigma`: standard braid generators have infinite order.
 
 ## References
@@ -99,19 +97,13 @@ theorem sigma_def (i : Fin (n - 1)) :
   unfold sigma
   rfl
 
-/-- Bridge identifying the standard generator with its canonical representative
-in `PresentedGroup`. -/
-private theorem sigma_eq_mk (i : Fin (n - 1)) :
-    sigma i = PresentedGroup.mk (artinRelations n) (FreeGroup.of i) :=
-  rfl
-
 private theorem sigma_comm_ordered (i j : Fin (n - 1)) (h : i.1 + 2 ≤ j.1) :
     sigma i * sigma j = sigma j * sigma i := by
   have hmem : FreeGroup.of i * FreeGroup.of j * (FreeGroup.of i)⁻¹ *
       (FreeGroup.of j)⁻¹ ∈ artinRelations n :=
     mem_artinRelations.mpr (ArtinRelation.comm i j h)
   have hrel : sigma i * sigma j * (sigma i)⁻¹ * (sigma j)⁻¹ = 1 := by
-    simpa only [sigma_eq_mk, map_mul, map_inv] using PresentedGroup.one_of_mem hmem
+    simpa only [sigma_def, PresentedGroup.of, map_mul, map_inv] using PresentedGroup.one_of_mem hmem
   rw [← commutatorElement_def, commutatorElement_eq_one_iff_mul_comm] at hrel
   exact hrel
 
@@ -128,7 +120,7 @@ private theorem sigma_braid_ordered (i j : Fin (n - 1)) (h : i.1 + 1 = j.1) :
       (FreeGroup.of j * FreeGroup.of i * FreeGroup.of j)⁻¹ ∈ artinRelations n :=
     mem_artinRelations.mpr (ArtinRelation.braid i j h)
   have hrel := PresentedGroup.mk_eq_mk_of_mul_inv_mem hmem
-  simpa only [sigma_eq_mk, map_mul] using hrel
+  simpa only [sigma_def, PresentedGroup.of, map_mul] using hrel
 
 /-- Adjacent generators satisfy the Artin braid relation, in either index order. -/
 theorem sigma_braid (i j : Fin (n - 1)) (h : i.1 + 1 = j.1 ∨ j.1 + 1 = i.1) :
@@ -160,17 +152,6 @@ theorem lift_sigma {G : Type*} [Group G] (f : Fin (n - 1) → G) (hcomm) (hbraid
     (i : Fin (n - 1)) : lift f hcomm hbraid (sigma i) = f i :=
   PresentedGroup.toGroup.of _
 
-/-- Two homomorphisms from `BraidGroup n` are equal if they agree on every standard generator. -/
-@[ext]
-theorem hom_ext {G : Type*} [Group G] {φ ψ : BraidGroup n →* G}
-    (h : ∀ i, φ (sigma i) = ψ (sigma i)) : φ = ψ :=
-  PresentedGroup.ext h
-
-/-- The standard generators generate the whole braid group. -/
-@[simp]
-theorem closure_range_sigma : Subgroup.closure (Set.range (@sigma n)) = ⊤ :=
-  PresentedGroup.closure_range_of (artinRelations n)
-
 /-- The exponent-sum homomorphism, sending every generator to `Multiplicative.ofAdd 1`, i.e. the
 integer `1` written multiplicatively. -/
 def exponentSumHom (n : ℕ) : BraidGroup n →* Multiplicative ℤ :=
@@ -184,18 +165,10 @@ theorem exponentSumHom_sigma (i : Fin (n - 1)) :
   simp [exponentSumHom]
 
 private def strand (i : Fin (n - 1)) : Fin n :=
-  ⟨i.1, by omega⟩
+  i.castLE (Nat.sub_le n 1)
 
 private def nextStrand (i : Fin (n - 1)) : Fin n :=
   ⟨i.1 + 1, by omega⟩
-
-@[simp]
-private theorem strand_val (i : Fin (n - 1)) : (strand i).1 = i.1 :=
-  rfl
-
-@[simp]
-private theorem nextStrand_val (i : Fin (n - 1)) : (nextStrand i).1 = i.1 + 1 :=
-  rfl
 
 private theorem swap_braid {α : Type*} [DecidableEq α] {a b c : α}
     (hab : a ≠ b) (hbc : b ≠ c) (hac : a ≠ c) :
@@ -215,23 +188,57 @@ private def permGen (n : ℕ) (i : Fin (n - 1)) : Equiv.Perm (Fin n) :=
 
 private theorem permGen_comm (i j : Fin (n - 1)) (h : i.1 + 2 ≤ j.1) :
     permGen n i * permGen n j = permGen n j * permGen n i := by
-  have hab : strand i ≠ nextStrand i := by simp [Fin.ext_iff]
-  have hac : strand i ≠ strand j := by simp [Fin.ext_iff]; omega
-  have had : strand i ≠ nextStrand j := by simp [Fin.ext_iff]; omega
-  have hbc : nextStrand i ≠ strand j := by simp [Fin.ext_iff]; omega
-  have hbd : nextStrand i ≠ nextStrand j := by simp [Fin.ext_iff]; omega
-  have hcd : strand j ≠ nextStrand j := by simp [Fin.ext_iff]
-  exact (Equiv.Perm.disjoint_swap_swap (by simp [hab, hac, had, hbc, hbd, hcd])).commute.eq
+  have hab : strand i ≠ nextStrand i := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand, nextStrand] at this
+  have hac : strand i ≠ strand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand] at this
+    omega
+  have had : strand i ≠ nextStrand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand, nextStrand] at this
+    omega
+  have hbc : nextStrand i ≠ strand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand, nextStrand] at this
+    omega
+  have hbd : nextStrand i ≠ nextStrand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [nextStrand] at this
+    omega
+  have hcd : strand j ≠ nextStrand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand, nextStrand] at this
+  refine (Equiv.Perm.disjoint_swap_swap ?_).commute.eq
+  simp [hab, hac, had, hbc, hbd, hcd]
 
 private theorem permGen_braid (i j : Fin (n - 1)) (h : i.1 + 1 = j.1) :
     permGen n i * permGen n j * permGen n i = permGen n j * permGen n i * permGen n j := by
   have hj : strand j = nextStrand i := by
     ext
-    simp [h]
+    simp [strand, nextStrand, h]
   rw [permGen, permGen, hj]
-  have hab : strand i ≠ nextStrand i := by simp [Fin.ext_iff]
-  have hbc : nextStrand i ≠ nextStrand j := by simp [Fin.ext_iff]; omega
-  have hac : strand i ≠ nextStrand j := by simp [Fin.ext_iff]; omega
+  have hab : strand i ≠ nextStrand i := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand, nextStrand] at this
+  have hbc : nextStrand i ≠ nextStrand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [nextStrand] at this
+    omega
+  have hac : strand i ≠ nextStrand j := by
+    intro heq
+    have := congr_arg Fin.val heq
+    simp [strand, nextStrand] at this
+    omega
   exact swap_braid hab hbc hac
 
 /-- The canonical permutation homomorphism `BraidGroup n →* Equiv.Perm (Fin n)`, sending generator
@@ -243,7 +250,7 @@ def permHom (n : ℕ) : BraidGroup n →* Equiv.Perm (Fin n) :=
 @[simp]
 theorem permHom_sigma (i : Fin (n - 1)) :
     permHom n (sigma i) =
-      Equiv.swap ⟨i.1, by omega⟩ ⟨i.1 + 1, by omega⟩ := by
+      Equiv.swap (i.castLE (Nat.sub_le n 1)) ⟨i.1 + 1, by omega⟩ := by
   simp [permHom, permGen, strand, nextStrand]
 
 /-- The subgroup of pure braids, defined as the kernel of the canonical permutation homomorphism. -/
@@ -302,30 +309,28 @@ theorem sigma_ne_one (i : Fin (n - 1)) : sigma i ≠ 1 := by
 /-- For `h : m ≤ n`, the homomorphism `BraidGroup m →* BraidGroup n` which adjoins `n - m`
 unbraided strands and sends each standard generator to the generator with the same index. -/
 def castLE {m n : ℕ} (h : m ≤ n) : BraidGroup m →* BraidGroup n :=
-  lift (fun i ↦ sigma ⟨i.1, by omega⟩)
-    (fun i j hij ↦ sigma_comm _ _ (Or.inl hij))
-    (fun i j hij ↦ sigma_braid _ _ (Or.inl hij))
+  lift (fun i ↦ sigma (i.castLE (Nat.sub_le_sub_right h 1)))
+    (fun i j hij ↦ sigma_comm _ _ (Or.inl (by simpa using hij)))
+    (fun i j hij ↦ sigma_braid _ _ (Or.inl (by simpa using hij)))
 
 /-- Adjoining strands preserves every standard generator. -/
 @[simp]
 theorem castLE_sigma {m n : ℕ} (h : m ≤ n) (i : Fin (m - 1)) :
-    castLE h (sigma i) = sigma ⟨i.1, by omega⟩ := by
+    castLE h (sigma i) = sigma (i.castLE (Nat.sub_le_sub_right h 1)) := by
   simp [castLE]
 
 /-- Adjoining no strands is the identity homomorphism. -/
 @[simp]
 theorem castLE_rfl (n : ℕ) : castLE (Nat.le_refl n) = MonoidHom.id (BraidGroup n) := by
-  apply hom_ext
-  intro i
-  simp
+  ext i
+  simp [← sigma_def]
 
 /-- Successively adjoining strands agrees with adjoining all of them at once. -/
 @[simp]
 theorem castLE_comp_castLE {l m n : ℕ} (hlm : l ≤ m) (hmn : m ≤ n) :
     (castLE hmn).comp (castLE hlm) = castLE (hlm.trans hmn) := by
-  apply hom_ext
-  intro i
-  simp
+  ext i
+  simp [← sigma_def]
 
 end BraidGroup
 

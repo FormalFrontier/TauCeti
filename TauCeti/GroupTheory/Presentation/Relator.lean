@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Algebra.Group.Commutator
 public import Mathlib.GroupTheory.FreeGroup.Basic
-public import Mathlib.GroupTheory.PresentedGroup
 
 /-!
 # Auditable relator expressions
@@ -36,13 +35,11 @@ from Mathlib.
 * `TauCeti.Relator.conj` and `TauCeti.Relator.div`: the conjugate `s⁻¹ r s` and the relator `r s⁻¹`
   by which a source states an equation between two words.
 * `TauCeti.Relator.relatorSet`: the free-group elements denoted by a list of expressions.
-* `TauCeti.evalWord`: evaluation of a signed word into a presented group.
 
-## Main results
+## Main result
 
 * `TauCeti.Relator.toWord_toFreeGroup`: compilation preserves the free-group element denoted by an
   expression.
-* `TauCeti.evalWord_surjective`: every element of a presented group is represented by a signed word.
 
 ## References
 
@@ -318,58 +315,5 @@ theorem toWord_toFreeGroup {α : Type*} (r : Relator α) :
       ← FreeGroup.mul_mk, ← FreeGroup.mul_mk, ← FreeGroup.inv_mk, ← FreeGroup.inv_mk, ihr, ihs]
 
 end Relator
-
-/-! ## Evaluation of signed words in presented groups -/
-
-/-- Evaluate a signed word in the generators of `α` into the group presented by relations `rels`. -/
-def evalWord {α : Type*} (rels : Set (FreeGroup α)) (w : PresentationWord α) :
-    PresentedGroup rels :=
-  PresentedGroup.mk rels (FreeGroup.mk w)
-
-/-- The empty signed word evaluates to the group identity. -/
-@[simp]
-theorem evalWord_nil {α : Type*} (rels : Set (FreeGroup α)) :
-    evalWord rels ([] : PresentationWord α) = 1 := by
-  rw [evalWord, ← FreeGroup.one_eq_mk, map_one]
-
-/-- Word evaluation turns concatenation of signed words into group multiplication. -/
-@[simp]
-theorem evalWord_append {α : Type*} (rels : Set (FreeGroup α)) (u v : PresentationWord α) :
-    evalWord rels (u ++ v) = evalWord rels u * evalWord rels v := by
-  rw [evalWord, ← FreeGroup.mul_mk, map_mul]
-  rfl
-
-/-- A positive generator letter evaluates to the canonical generator of the presented group. -/
-@[simp]
-theorem evalWord_singleton_true {α : Type*} (rels : Set (FreeGroup α)) (x : α) :
-    evalWord rels [(x, true)] = PresentedGroup.of x := by
-  rw [evalWord, ← Relator.toWord_gen, Relator.toWord_toFreeGroup, Relator.toFreeGroup_gen,
-    PresentedGroup.of]
-
-/-- A negative generator letter evaluates to the inverse of the canonical generator. -/
-@[simp]
-theorem evalWord_singleton_false {α : Type*} (rels : Set (FreeGroup α)) (x : α) :
-    evalWord rels [(x, false)] = (PresentedGroup.of x)⁻¹ := by
-  have hrev : [(x, false)] = FreeGroup.invRev [(x, true)] := rfl
-  have hgen : FreeGroup.mk [(x, true)] = FreeGroup.of x := by
-    rw [← Relator.toWord_gen, Relator.toWord_toFreeGroup, Relator.toFreeGroup_gen]
-  rw [evalWord, hrev, ← FreeGroup.inv_mk, map_inv, hgen, PresentedGroup.of]
-
-/-- Every element of a presented group is represented by a signed word in the generators. -/
-theorem evalWord_surjective {α : Type*} (rels : Set (FreeGroup α)) :
-    Function.Surjective (evalWord rels) := by
-  intro b
-  obtain ⟨z, rfl⟩ := PresentedGroup.mk_surjective rels b
-  obtain ⟨w⟩ := z
-  exact ⟨w, rfl⟩
-
-/-- To prove a predicate for every element of a presented group, it suffices to prove it for
-evaluated signed words. -/
-@[elab_as_elim]
-theorem evalWord_induction_on {α : Type*} {rels : Set (FreeGroup α)}
-    {C : PresentedGroup rels → Prop} (b : PresentedGroup rels)
-    (h : ∀ w : PresentationWord α, C (evalWord rels w)) : C b := by
-  obtain ⟨w, rfl⟩ := evalWord_surjective rels b
-  exact h w
 
 end TauCeti
