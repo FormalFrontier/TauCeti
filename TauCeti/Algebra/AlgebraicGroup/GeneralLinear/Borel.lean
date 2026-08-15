@@ -603,7 +603,7 @@ theorem rootSubgroup_comp_inclusion :
   rw [← Category.assoc, hmap]
   rfl
 
-variable (A : Type u) [CommRing A] [Algebra R A]
+variable (A : Type w) [CommRing A] [Algebra R A]
 
 /-- The positive root subgroup morphism lands in the expected upper-triangular matrix on
 algebra-valued points. -/
@@ -623,10 +623,47 @@ theorem pointsMulEquiv_rootSubgroupCoordinateMap
       (rootSubgroupCoordinateMap R).hom.toAlgHom.comp (coordinateMap R).hom.toAlgHom := rfl
   rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R, ← hcomp,
     coordinateMap_comp_rootSubgroupCoordinateMap]
-  have hmap := GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app (R := R)
-    (by decide : (0 : Fin 2) ≠ 1) (CommAlgCat.of R A) f
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
-  exact hmap
+  let id_pt :
+      WithConv
+        (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] AdditiveGroup.coordinateHopfAlgebra R) :=
+    toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))
+  have hcomp_alg :
+      (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom =
+        (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv := by
+    have hmap := GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app (R := R)
+      (by decide : (0 : Fin 2) ≠ 1) (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) id_pt
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+    exact congrArg WithConv.ofConv hmap
+  rw [show
+      f.ofConv.comp
+          (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom =
+        f.ofConv.comp
+          (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv by
+    rw [hcomp_alg]]
+  have hmap_gl :
+      GeneralLinear.pointsMulEquiv 2
+          (toConv (f.ofConv.comp
+            (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv)) =
+        Matrix.GeneralLinearGroup.map f.ofConv.toRingHom
+          (GeneralLinear.pointsMulEquiv 2
+            (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt)) := by
+    apply Matrix.GeneralLinearGroup.ext
+    intro i j
+    rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
+      Matrix.GeneralLinearGroup.map_apply, GeneralLinear.pointsMulEquiv_apply,
+      GeneralLinear.pointToGeneralLinear_apply]
+    rfl
+  have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
+    apply WithConv.ext
+    exact AlgHom.comp_id f.ofConv
+  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).injective
+  rw [hmap_gl, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
+    map_transvectionUnit,
+    show f.ofConv.toRingHom (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv id_pt)) =
+      f.ofConv (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv id_pt)) from rfl,
+    ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
+    hid_pt,
+    GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
 
 end RootSubgroup
 
