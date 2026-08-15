@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Order.Radical
 public import Mathlib.RingTheory.Jacobson.Radical
+public import TauCeti.RingTheory.Jacobson.Module
 
 /-!
 # Superfluous submodules
@@ -42,8 +43,8 @@ contained in the radical `Module.jacobson`.
   with it is onto is itself onto. This is the minimality that makes a projective cover a
   projective cover. Both directions need differences, so they are stated for modules over a
   semiring that are additive groups.
-* `TauCeti.IsSuperfluous.le_jacobson`: a superfluous submodule lies in every coatom, hence in the
-  radical `Module.jacobson R M`.
+* `TauCeti.IsSuperfluous.le_coatom` and `TauCeti.IsSuperfluous.le_jacobson`: a superfluous
+  submodule lies in every coatom, hence in the radical `Module.jacobson R M`.
 * `TauCeti.isSuperfluous_iff_le_jacobson`: over a module whose submodule lattice is coatomic — in
   particular over a finitely generated module — the converse holds, so the superfluous submodules
   are exactly the submodules of the radical, and
@@ -67,7 +68,8 @@ universe u v w
 
 section Semiring
 
-variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
+variable {R : Type u} {M : Type v} {M₂ : Type w}
+  [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid M₂] [Module R M₂]
 
 /-- A submodule `N` of `M` is **superfluous** (or *small*) when it is dispensable for generating
 `M`: any submodule `K` with `N ⊔ K = ⊤` is already `⊤`. -/
@@ -129,6 +131,32 @@ theorem IsSuperfluous.ne_top [Nontrivial M] {N : Submodule R M} (hN : IsSuperflu
   rintro rfl
   exact not_isSuperfluous_top hN
 
+/-- Transport along a linear equivalence both preserves and reflects superfluity. -/
+@[simp]
+theorem isSuperfluous_map_equiv_iff {N : Submodule R M} (e : M ≃ₗ[R] M₂) :
+    IsSuperfluous (N.map (e : M →ₗ[R] M₂)) ↔ IsSuperfluous N := by
+  -- Superfluity mentions only `⊔` and `⊤`, both of which `e` preserves and reflects.
+  have key : ∀ K : Submodule R M,
+      N.map (e : M →ₗ[R] M₂) ⊔ K.map (e : M →ₗ[R] M₂) = ⊤ ↔ N ⊔ K = ⊤ := fun K => by
+    rw [← Submodule.map_sup, Submodule.map_eq_top_iff]
+  refine ⟨fun h K hK => Submodule.map_eq_top_iff.mp (h _ ((key K).mpr hK)), fun h K hK => ?_⟩
+  have hcomap : K.comap (e : M →ₗ[R] M₂) = ⊤ := by
+    refine h _ ((key _).mp ?_)
+    rwa [Submodule.map_comap_eq_of_surjective e.surjective]
+  rw [← Submodule.map_comap_eq_of_surjective e.surjective K, hcomap]
+  exact Submodule.map_eq_top_iff.mpr rfl
+
+/-- A superfluous submodule is contained in every maximal submodule. -/
+theorem IsSuperfluous.le_coatom {N m : Submodule R M} (hN : IsSuperfluous N) (hm : IsCoatom m) :
+    N ≤ m := by
+  by_contra hle
+  -- Otherwise `N ⊔ m` strictly exceeds the coatom `m`, so is `⊤`, forcing `m = ⊤`.
+  have hlt : m < N ⊔ m := by
+    refine lt_of_le_of_ne le_sup_right fun heq => hle ?_
+    rw [heq]
+    exact le_sup_left
+  exact hm.1 (hN.eq_top_of_sup_eq_top (hm.2 _ hlt))
+
 end Semiring
 
 section AddCommGroup
@@ -152,14 +180,6 @@ theorem IsSuperfluous.map {N : Submodule R M} (hN : IsSuperfluous N) (f : M →�
   have hle : N.map f ≤ K := Submodule.map_le_iff_le_comap.mpr (by rw [hcomapK]; exact le_top)
   rw [← hK]
   exact (sup_eq_right.mpr hle).symm
-
-/-- Transport along a linear equivalence both preserves and reflects superfluity. -/
-@[simp]
-theorem isSuperfluous_map_equiv_iff {N : Submodule R M} (e : M ≃ₗ[R] M₂) :
-    IsSuperfluous (N.map (e : M →ₗ[R] M₂)) ↔ IsSuperfluous N := by
-  refine ⟨fun h => ?_, fun h => h.map _⟩
-  have hback := h.map (e.symm : M₂ →ₗ[R] M)
-  rwa [(Submodule.map_symm_eq_iff e).mpr rfl] at hback
 
 /-- The preimage of a superfluous submodule under a surjection whose kernel is itself superfluous
 is superfluous. This is what makes projective covers compose. -/
@@ -217,26 +237,6 @@ end AddCommGroup
 section Ring
 
 variable {R : Type u} {M : Type v} [Ring R] [AddCommGroup M] [Module R M]
-
-variable (R M) in
-/-- The Jacobson radical of a module is the order radical of its submodule lattice: both are the
-infimum of the coatoms. Mathlib defines the two independently and states no lemma connecting
-them. -/
-theorem Module.jacobson_eq_radical :
-    Module.jacobson R M = Order.radical (Submodule R M) := by
-  simp only [Module.jacobson, Order.radical]
-  exact sInf_eq_iInf
-
-/-- A superfluous submodule is contained in every maximal submodule. -/
-theorem IsSuperfluous.le_coatom {N m : Submodule R M} (hN : IsSuperfluous N) (hm : IsCoatom m) :
-    N ≤ m := by
-  by_contra hle
-  -- Otherwise `N ⊔ m` strictly exceeds the coatom `m`, so is `⊤`, forcing `m = ⊤`.
-  have hlt : m < N ⊔ m := by
-    refine lt_of_le_of_ne le_sup_right fun heq => hle ?_
-    rw [heq]
-    exact le_sup_left
-  exact hm.1 (hN.eq_top_of_sup_eq_top (hm.2 _ hlt))
 
 /-- A superfluous submodule is contained in the radical. -/
 theorem IsSuperfluous.le_jacobson {N : Submodule R M} (hN : IsSuperfluous N) :

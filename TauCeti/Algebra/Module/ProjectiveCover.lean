@@ -16,12 +16,13 @@ whose kernel is superfluous in `P` (`TauCeti.IsSuperfluous`). Mathlib has projec
 projective covers; this file supplies the predicate and the two facts everything downstream rests
 on.
 
-Both rest on the minimality packaged in `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: a
-map into the source of a cover whose composite with the cover is onto is itself onto, the kernel of
-a cover being too small for the image of such a map to miss it. This is the sense in which the
-superfluous-kernel condition makes a cover *minimal*; the same statement read backwards is
-`TauCeti.isProjectiveCover_iff_forall_surjective`, which says that the covers of `M` are exactly
-the essential epimorphisms onto `M` from a projective module.
+Both rest on the minimality packaged in `TauCeti.IsSuperfluous.surjective_of_surjective_comp`: over
+a covering module that is an additive group, a map into the source of a cover whose composite with
+the cover is onto is itself onto, the kernel of a cover being too small for the image of such a map
+to miss it. This is the sense in which the superfluous-kernel condition makes a cover *minimal*,
+and read backwards it is `TauCeti.isProjectiveCover_iff_forall_surjective`: over an additive group
+the covers of `M` are exactly the essential epimorphisms onto `M` from a projective module. Both
+directions need differences, so neither is available for a covering module that is only a monoid.
 
 The first fact is that a projective cover receives every projective presentation: if `Q` is
 projective and `g : Q →ₗ[R] M` is surjective, then `g` factors as `f ∘ₗ h` with `h : Q →ₗ[R] P`
@@ -43,8 +44,8 @@ conditional on a cover being given.
 ## Main results
 
 * `TauCeti.isProjectiveCover_id`: a projective module is its own projective cover.
-* `TauCeti.isProjectiveCover_iff_forall_surjective`: a surjection from a projective module is a
-  projective cover exactly when it is an essential epimorphism.
+* `TauCeti.isProjectiveCover_iff_forall_surjective`: a surjection from a projective module that is
+  an additive group is a projective cover exactly when it is an essential epimorphism.
 * `TauCeti.IsProjectiveCover.exists_surjective`: every surjection onto `M` from a projective module
   factors through a projective cover by a surjection.
 * `TauCeti.IsProjectiveCover.bijective_of_comp_eq` and
@@ -83,8 +84,10 @@ variable {R : Type u} {M : Type v} {P : Type w}
   [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid P] [Module R P]
 
 /-- A **projective cover** of `M`: a surjection from a projective module whose kernel is
-superfluous. The superfluous kernel says exactly that no proper submodule of the source still
-surjects onto `M`; see `TauCeti.isProjectiveCover_iff_forall_surjective`. -/
+superfluous. The superfluous kernel is the minimality of the cover: when `P` is an additive group
+it says exactly that no proper submodule of `P` still surjects onto `M`, equivalently that every
+map into `P` whose composite with `f` is onto is onto already
+(`TauCeti.isProjectiveCover_iff_forall_surjective`). -/
 structure IsProjectiveCover (f : P →ₗ[R] M) : Prop where
   /-- The covering module is projective. -/
   projective : Module.Projective R P
@@ -144,13 +147,11 @@ theorem IsProjectiveCover.bijective_of_comp_eq {P' : Type*} [AddCommGroup P'] [M
   have hproj : Module.Projective R P' := hf'.projective
   obtain ⟨σ, hσ⟩ := h.exists_rightInverse_of_surjective (LinearMap.range_eq_top.mpr hsurj)
   have hsplit : Function.LeftInverse h σ := fun y => by simpa using LinearMap.congr_fun hσ y
-  -- The range of the splitting complements `ker h ≤ ker f`, which is superfluous, so it is
-  -- everything; a splitting that is itself onto is a two-sided inverse.
-  have hsup : LinearMap.ker h ⊔ LinearMap.range σ = ⊤ := by
-    rw [sup_comm, ← Submodule.comap_map_eq, ← LinearMap.range_comp, hσ, LinearMap.range_id,
-      Submodule.comap_top]
+  -- `ker h ≤ ker f` is superfluous, so the same minimality that gave surjectivity of `h` makes the
+  -- splitting itself onto, and a splitting that is onto is a two-sided inverse.
   have hσsurj : Function.Surjective σ :=
-    LinearMap.range_eq_top.mp ((hf.isSuperfluous_ker.mono hkerle).eq_top_of_sup_eq_top hsup)
+    (hf.isSuperfluous_ker.mono hkerle).surjective_of_surjective_comp (f := h)
+      (by rw [hσ]; exact Function.surjective_id)
   exact (hsplit.rightInverse_of_surjective hσsurj).injective
 
 /-- **Uniqueness of the projective cover.** Two projective covers of the same module are related by
