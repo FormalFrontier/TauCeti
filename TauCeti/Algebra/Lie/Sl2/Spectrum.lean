@@ -209,27 +209,16 @@ This is the object complete reducibility is applied to in
 `TauCeti.iSup_eigenspace_toEnd_eq_top`; its underlying submodule is
 `TauCeti.eigenspaceSup_toSubmodule`, which is the abstraction boundary importing modules should use
 rather than unfolding the definition. -/
-def eigenspaceSup : LieSubmodule K (t.toLieSubalgebra K) M where
-  __ := ⨆ ν : K, (toEnd K L M h).eigenspace ν
-  lie_mem := by
-    set S := ⨆ ν : K, (toEnd K L M h).eigenspace ν
-    have key : ∀ z : L, (∀ ν : K, (toEnd K L M h).eigenspace ν ≤ S.comap (toEnd K L M z)) →
-        ∀ y ∈ S, ⁅z, y⁆ ∈ S := by
-      intro z hz y hy
-      exact (iSup_le hz : S ≤ S.comap (toEnd K L M z)) hy
-    have he : ∀ ν : K, (toEnd K L M h).eigenspace ν ≤ S.comap (toEnd K L M e) :=
-      fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν + 2) (lie_mem_eigenspace_add_two t hw)
-    have hf : ∀ ν : K, (toEnd K L M h).eigenspace ν ≤ S.comap (toEnd K L M f) :=
-      fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν - 2) (lie_mem_eigenspace_sub_two t hw)
-    have hh : ∀ ν : K, (toEnd K L M h).eigenspace ν ≤ S.comap (toEnd K L M h) :=
-      fun ν _ hw ↦ Submodule.mem_iSup_of_mem ν (lie_mem_eigenspace hw)
-    rintro x y hy
-    obtain ⟨c₁, c₂, c₃, hx⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 x.2
-    rw [LieSubalgebra.coe_bracket_of_module, hx, add_lie, add_lie, smul_lie, smul_lie, smul_lie,
-      t.lie_e_f]
-    exact Submodule.add_mem _ (Submodule.add_mem _
-      (Submodule.smul_mem _ _ (key e he y hy)) (Submodule.smul_mem _ _ (key f hf y hy)))
-      (Submodule.smul_mem _ _ (key h hh y hy))
+def eigenspaceSup : LieSubmodule K (t.toLieSubalgebra K) M :=
+  let S := ⨆ ν : K, (toEnd K L M h).eigenspace ν
+  have key : ∀ z : L, (∀ ν : K, (toEnd K L M h).eigenspace ν ≤ S.comap (toEnd K L M z)) →
+      ∀ y ∈ S, ⁅z, y⁆ ∈ S := by
+    intro z hz y hy
+    exact (iSup_le hz : S ≤ S.comap (toEnd K L M z)) hy
+  t.lieSubmoduleOfStable S
+    (key h fun ν _ hw ↦ Submodule.mem_iSup_of_mem ν (lie_mem_eigenspace hw))
+    (key e fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν + 2) (lie_mem_eigenspace_add_two t hw))
+    (key f fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν - 2) (lie_mem_eigenspace_sub_two t hw))
 
 /-- The submodule underlying `TauCeti.eigenspaceSup` is the sum of the eigenspaces of the Cartan
 element. This is the abstraction boundary: it is how a downstream proof should pass between the
@@ -237,7 +226,7 @@ bundled Lie submodule and the eigenspaces, rather than unfolding the definition.
 @[simp]
 theorem eigenspaceSup_toSubmodule :
     (eigenspaceSup t (M := M)).toSubmodule = ⨆ ν : K, (toEnd K L M h).eigenspace ν := by
-  simp only [eigenspaceSup]
+  simp only [eigenspaceSup, IsSl2Triple.lieSubmoduleOfStable_toSubmodule]
 
 /-- An eigenvector of the Cartan element lies in the sum of its eigenspaces,
 `TauCeti.eigenspaceSup`. -/

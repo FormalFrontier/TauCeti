@@ -20,8 +20,8 @@ a single operator once a decomposition separating the weights is available.
 
 ## Main results
 
-* `TauCeti.biSup_inf_eigenspace_eq`: a summand whose scalar is attained only by itself is cut out
-  by the corresponding eigenspace.
+* `TauCeti.biSup_inf_eigenspace_eq_self`: a summand whose scalar is attained only by itself is cut
+  out by the corresponding eigenspace.
 -/
 
 namespace TauCeti
@@ -38,9 +38,8 @@ consists of eigenvectors of `A` of eigenvalue `g j`, and if the scalar `g k` of 
 index `k ∈ s` is attained by no other index of `s`, then meeting the sum `⨆ j ∈ s, W j` with the
 `g k`-eigenspace of `A` returns `W k` exactly.
 
-The inclusion `W k ≤ ⨆ j ∈ s, W j ⊓ eigenspace (g k)` is immediate; the content is the reverse one,
-and it is the independence of the eigenspaces of `A` at distinct eigenvalues. -/
-theorem biSup_inf_eigenspace_eq {ι : Type w} (A : Module.End K V) (W : ι → Submodule K V)
+In particular no eigenvector of eigenvalue `g k` in the sum lies outside `W k`. -/
+theorem biSup_inf_eigenspace_eq_self {ι : Type w} (A : Module.End K V) (W : ι → Submodule K V)
     (g : ι → K) {s : Set ι} (hW : ∀ j, j ∈ s → W j ≤ A.eigenspace (g j))
     {k : ι} (hk : k ∈ s)
     (hg : ∀ j ∈ s, j ≠ k → g j ≠ g k) :
