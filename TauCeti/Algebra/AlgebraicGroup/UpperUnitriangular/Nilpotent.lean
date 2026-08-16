@@ -35,22 +35,22 @@ public section
 
 namespace TauCeti.UpperUnitriangular
 
-universe u w
+universe u v w
 
-variable (R : Type u) [CommRing R] (n : ℕ)
+variable (R : Type u) [CommRing R] (m : Type v) [Fintype m] [LinearOrder m]
 variable (A : Type w) [CommRing A] [Algebra R A]
 
 /-- The group of `A`-valued points of `U_n` is nilpotent. -/
 theorem isNilpotent_points :
     Group.IsNilpotent
-      (WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) := by
-  exact Group.nilpotent_of_mulEquiv (pointsMulEquiv R (Fin n)).symm
+      (WithConv (coordinateHopfAlgebra R m →ₐ[R] A)) := by
+  exact Group.nilpotent_of_mulEquiv (pointsMulEquiv R m).symm
 
 /-- The group of `A`-valued points of `U_n` is solvable. -/
 theorem isSolvable_points :
     Group.IsSolvable
-      (WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) := by
-  let _ := isNilpotent_points R n A
+      (WithConv (coordinateHopfAlgebra R m →ₐ[R] A)) := by
+  let _ := isNilpotent_points R m A
   infer_instance
 
 end TauCeti.UpperUnitriangular
