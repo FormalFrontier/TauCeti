@@ -6,7 +6,7 @@ module
 
 public import Mathlib.CategoryTheory.Abelian.FunctorCategory
 public import Mathlib.CategoryTheory.Preadditive.Schur
-public import TauCeti.RepresentationTheory.Quiver.Representation.Injective
+public import TauCeti.RepresentationTheory.Quiver.Representation.Injective.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.Simple
 
 /-!

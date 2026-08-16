@@ -47,7 +47,9 @@ below feeds the Euler form the pointwise cast `fun v ↦ (dimVector M v : ℤ)`.
 
 The dual statements, for the injective `Iᵢ` on the right-hand side of the Euler form, need the
 decomposition of a path by its *first* arrow, which
-`TauCeti.RepresentationTheory.Quiver.LastArrow` does not provide; they are left for later.
+`TauCeti.RepresentationTheory.Quiver.LastArrow` does not provide; that decomposition is built in
+`TauCeti.RepresentationTheory.Quiver.FirstArrow` and the dual statements are in
+`TauCeti.RepresentationTheory.Quiver.Representation.Injective.EulerForm`.
 
 ## References
 

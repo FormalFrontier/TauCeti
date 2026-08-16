@@ -23,8 +23,8 @@ recursion for the number of paths out of a fixed vertex.
 
 ## Main results
 
-* `TauCeti.card_path_eq_ite_add_sum`: the path count `#(i → b)` equals `∑ₐ #(i → a) · #(a ⟶ b)`,
-  plus `1` when `i = b` for the trivial path.
+* `TauCeti.card_path_eq_ite_add_sum_lastArrow`: the path count `#(i → b)` equals
+  `∑ₐ #(i → a) · #(a ⟶ b)`, plus `1` when `i = b` for the trivial path.
 
 ## Implementation notes
 
@@ -39,7 +39,8 @@ system, so the equivalence itself need not be `@[expose]`d.
 
 The dual decomposition, by the *first* arrow of a path, is not available in this form: the
 recursion of `Quiver.Path` is on the target vertex, so the first arrow is not visible to a match.
-Mathlib's `Quiver.Path.length_ne_zero_iff_eq_comp` supplies its existence half.
+It is built instead by an explicit recursion over the path, in
+`TauCeti.RepresentationTheory.Quiver.FirstArrow`.
 
 ## References
 
@@ -100,8 +101,10 @@ theorem pathLastArrowEquiv_symm_inr {i b : V} (a : V) (p : Quiver.Path i a) (e :
 exactly when `i = b`, together with a path `i → a` and an arrow `a ⟶ b`. All three cardinalities
 are honest counts only when the paths out of `i` are finite, which is what the hypothesis
 `[∀ a, Finite (Quiver.Path i a)]` provides. The only arrows counted are those into `b`, so
-`[∀ a, Finite (a ⟶ b)]` suffices for the arrow factors. -/
-theorem card_path_eq_ite_add_sum [DecidableEq V] [Fintype V] (i : V)
+`[∀ a, Finite (a ⟶ b)]` suffices for the arrow factors.
+
+This is the mirror image of `TauCeti.card_path_eq_ite_add_sum_firstArrow`. -/
+theorem card_path_eq_ite_add_sum_lastArrow [DecidableEq V] [Fintype V] (i : V)
     [∀ a : V, Finite (Quiver.Path i a)] (b : V) [∀ a : V, Finite (a ⟶ b)] :
     Nat.card (Quiver.Path i b)
       = (if i = b then 1 else 0)
