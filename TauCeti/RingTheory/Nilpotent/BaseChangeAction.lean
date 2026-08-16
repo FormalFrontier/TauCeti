@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.RingTheory.DividedPowers.Associative
+public import TauCeti.RingTheory.Nilpotent.Exp
 public import Mathlib.RingTheory.Nilpotent.Defs
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
 
@@ -41,6 +41,12 @@ characteristic.
 * `TauCeti.baseChangeExp_add`: its one-parameter group law.
 * `TauCeti.baseChangeExpLinearEquiv`: the resulting linear automorphism.
 * `TauCeti.baseChangeExpHom`: the additive one-parameter subgroup over `R`.
+* `TauCeti.integralUnitRestrict`: a unit of `A` preserving `M` restricted to an integral
+  automorphism of `M`.
+* `TauCeti.baseChangeExp_intCast`: at an integer parameter the exponential is the base change of a
+  single integral automorphism.
+* `TauCeti.baseChange_integralUnitRestrict_conj_baseChangeExp`: conjugating a one-parameter
+  subgroup by such a unit gives the one-parameter subgroup of the conjugated element.
 
 ## References
 
@@ -117,6 +123,91 @@ theorem integralDividedPower_eq_zero_of_le (x : A)
   ext v
   simp [coe_integralDividedPower_apply, Associative.dividedPower_def,
     pow_eq_zero_of_le hkn hk]
+
+/-! ## Restricting a unit to an invariant additive subgroup -/
+
+/-- The restriction to `M` of the action of a unit of `A` that preserves `M` together with its
+inverse, as an integral linear automorphism.
+
+Scalar multiplication by a ring element is additive, and an additive map of abelian groups is
+exactly a `ℤ`-linear map, so no divisibility is involved: this automorphism survives base change to
+an arbitrary commutative ring. -/
+noncomputable def integralUnitRestrict (u : Aˣ) (M : S)
+    (hu : ∀ v ∈ M, (u : A) • v ∈ M) (hu' : ∀ v ∈ M, ((u⁻¹ : Aˣ) : A) • v ∈ M) : M ≃ₗ[ℤ] M :=
+  AddEquiv.toIntLinearEquiv
+    { toFun := fun v => ⟨(u : A) • (v : V), hu v v.2⟩
+      invFun := fun v => ⟨((u⁻¹ : Aˣ) : A) • (v : V), hu' v v.2⟩
+      left_inv := fun v => Subtype.ext (by simp [smul_smul])
+      right_inv := fun v => Subtype.ext (by simp [smul_smul])
+      map_add' := fun a b => Subtype.ext (smul_add _ _ _) }
+
+omit [Algebra ℚ A] in
+@[simp]
+theorem coe_integralUnitRestrict_apply (u : Aˣ) (M : S)
+    (hu : ∀ v ∈ M, (u : A) • v ∈ M) (hu' : ∀ v ∈ M, ((u⁻¹ : Aˣ) : A) • v ∈ M) (v : M) :
+    ((integralUnitRestrict u M hu hu' v : M) : V) = (u : A) • (v : V) :=
+  (rfl)
+
+omit [Algebra ℚ A] in
+@[simp]
+theorem coe_integralUnitRestrict_symm_apply (u : Aˣ) (M : S)
+    (hu : ∀ v ∈ M, (u : A) • v ∈ M) (hu' : ∀ v ∈ M, ((u⁻¹ : Aˣ) : A) • v ∈ M) (v : M) :
+    (((integralUnitRestrict u M hu hu').symm v : M) : V) = ((u⁻¹ : Aˣ) : A) • (v : V) :=
+  (rfl)
+
+/-- The restriction to `M` of the exponential `exp (t • x)` of an integral multiple of a nilpotent
+element whose divided powers preserve `M`.
+
+The coefficients of the divided-power expansion of `exp (t • x)` are the integers `tⁿ`, so this
+automorphism is defined over `ℤ` even though the exponential itself divides by factorials. -/
+noncomputable def integralExpZSMul (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : ℤ) :
+    M ≃ₗ[ℤ] M :=
+  integralUnitRestrict (nilpotentExpUnit (hx.smul t)) M
+    (fun _ hv => by simpa using exp_zsmul_smul_mem hx hM t hv)
+    (fun _ hv => by simpa [neg_zsmul] using exp_zsmul_smul_mem hx hM (-t) hv)
+
+@[simp]
+theorem coe_integralExpZSMul_apply (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : ℤ)
+    (v : M) :
+    ((integralExpZSMul x M hM hx t v : M) : V) = IsNilpotent.exp (t • x) • (v : V) := by
+  simp [integralExpZSMul]
+
+/-- Negating the element leaves the even restricted divided powers unchanged. -/
+theorem integralDividedPower_neg_of_even (x : A) (M : S) {n : ℕ} (hn : Even n)
+    (hM' : ∀ v ∈ M, Associative.dividedPower n (-x) • v ∈ M)
+    (hM : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) :
+    integralDividedPower (-x) M n hM' = integralDividedPower x M n hM := by
+  refine LinearMap.ext fun v => Subtype.ext ?_
+  rw [coe_integralDividedPower_apply, coe_integralDividedPower_apply,
+    Associative.dividedPower_neg, hn.neg_one_pow, one_smul]
+
+/-- Negating the element negates the odd restricted divided powers. -/
+theorem integralDividedPower_neg_of_odd (x : A) (M : S) {n : ℕ} (hn : Odd n)
+    (hM' : ∀ v ∈ M, Associative.dividedPower n (-x) • v ∈ M)
+    (hM : ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) :
+    integralDividedPower (-x) M n hM' = -integralDividedPower x M n hM := by
+  refine LinearMap.ext fun v => Subtype.ext ?_
+  rw [coe_integralDividedPower_apply, LinearMap.neg_apply, NegMemClass.coe_neg,
+    coe_integralDividedPower_apply, Associative.dividedPower_neg, hn.neg_one_pow, neg_one_smul,
+    neg_smul]
+
+/-- The integral exponential expanded over any truncation bound. -/
+theorem integralExpZSMul_eq_sum (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x)
+    {k : ℕ} (hk : x ^ k = 0) (t : ℤ) :
+    (integralExpZSMul x M hM hx t : M →ₗ[ℤ] M) =
+      ∑ n ∈ range k, t ^ n • integralDividedPower x M n (hM n) := by
+  refine LinearMap.ext fun v => Subtype.ext ?_
+  have hsum : (((∑ n ∈ range k, t ^ n • integralDividedPower x M n (hM n)) v : M) : V) =
+      ∑ n ∈ range k, t ^ n • (Associative.dividedPower n x • (v : V)) := by
+    rw [LinearMap.sum_apply, AddSubmonoidClass.coe_finsetSum]
+    exact Finset.sum_congr rfl fun n _ => by
+      rw [LinearMap.smul_apply, AddSubgroupClass.coe_zsmul, coe_integralDividedPower_apply]
+  rw [hsum, LinearEquiv.coe_coe, coe_integralExpZSMul_apply,
+    exp_zsmul_eq_sum_zsmul_dividedPower hk, Finset.sum_smul]
+  exact Finset.sum_congr rfl fun n _ => (smul_assoc _ _ _)
 
 /-! ## The divided-power exponential after base change -/
 
@@ -398,6 +489,107 @@ theorem coe_baseChangeExpHom (x : A) (M : S)
     ⇑(baseChangeExpHom x M hM hx t) =
       ⇑(baseChangeExp x M hM (Multiplicative.toAdd t)) :=
   (rfl)
+
+/-- The base-changed exponential depends only on the element, not on the stability proof. -/
+theorem baseChangeExp_congr {x y : A} (hxy : x = y) (M : S)
+    (hMx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (hMy : ∀ n, ∀ v ∈ M, Associative.dividedPower n y • v ∈ M) (t : R) :
+    baseChangeExp x M hMx t = baseChangeExp y M hMy t := by
+  subst hxy
+  rfl
+
+/-- Negating the element inverts the parameter: `E_{-x}(t) = E_x(-t)`. -/
+theorem baseChangeExp_neg (x : A) (M : S)
+    (hM' : ∀ n, ∀ v ∈ M, Associative.dividedPower n (-x) • v ∈ M)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : R) :
+    baseChangeExp (-x) M hM' t = baseChangeExp x M hM (-t) := by
+  obtain ⟨k, hk⟩ := id hx
+  have hk' : (-x) ^ k = 0 := by rw [neg_pow, hk, mul_zero]
+  refine LinearMap.ext fun z => ?_
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | tmul r v =>
+      rw [baseChangeExp_tmul_of_pow_eq_zero (-x) M hM' hk',
+        baseChangeExp_tmul_of_pow_eq_zero x M hM hk]
+      refine Finset.sum_congr rfl fun n _ => ?_
+      rcases Nat.even_or_odd n with hn | hn
+      · rw [integralDividedPower_neg_of_even x M hn (hM' n) (hM n), hn.neg_pow]
+      · rw [integralDividedPower_neg_of_odd x M hn (hM' n) (hM n), hn.neg_pow,
+          LinearMap.neg_apply, TensorProduct.tmul_neg, neg_mul, TensorProduct.neg_tmul]
+  | add a b ha hb => rw [map_add, map_add, ha, hb]
+
+/-! ## Conjugating the exponential by an integral unit -/
+
+-- Moving an integer scalar across `⊗[ℤ]` by hand. The `ℤ`-module structure on `R` here is the one
+-- carried by its explicit `ℤ`-algebra, so it is not the `AddCommGroup.toIntModule` structure that
+-- `TensorProduct.CompatibleSMul.int` is stated for, and `TensorProduct.smul_tmul` does not apply.
+private theorem intCast_mul_tmul (M : S) (z : ℤ) (r : R) (w : M) :
+    (((z : R) * r) ⊗ₜ[ℤ] w : R ⊗[ℤ] M) = r ⊗ₜ[ℤ] (z • w) := by
+  induction z using Int.induction_on with
+  | zero =>
+      rw [Int.cast_zero, zero_mul, TensorProduct.zero_tmul, zero_smul, TensorProduct.tmul_zero]
+  | succ i ih =>
+      rw [Int.cast_add, Int.cast_one, add_mul, one_mul, TensorProduct.add_tmul, ih,
+        add_smul, one_smul, TensorProduct.tmul_add]
+  | pred i ih =>
+      rw [Int.cast_sub, Int.cast_one, sub_mul, one_mul, TensorProduct.sub_tmul, ih,
+        sub_smul, one_smul, TensorProduct.tmul_sub]
+
+/-- At an integer parameter the base-changed exponential is the base change of a single integral
+automorphism of `M`, namely the restriction of `exp (t • x)`.
+
+This is what makes a Chevalley group element defined over `ℤ`: its value at an integral parameter
+does not depend on the ring the points are taken in. -/
+theorem baseChangeExp_intCast (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : ℤ) :
+    baseChangeExp x M hM ((t : R)) =
+      ((integralExpZSMul x M hM hx t : M →ₗ[ℤ] M).baseChange R) := by
+  obtain ⟨k, hk⟩ := id hx
+  refine LinearMap.ext fun z => ?_
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | tmul r v =>
+      have hE : ((integralExpZSMul x M hM hx t : M →ₗ[ℤ] M) v : M) =
+          ∑ n ∈ range k, t ^ n • integralDividedPower x M n (hM n) v := by
+        rw [integralExpZSMul_eq_sum x M hM hx hk t, LinearMap.sum_apply]
+        exact Finset.sum_congr rfl fun n _ => LinearMap.smul_apply _ _ _
+      rw [baseChangeExp_tmul_of_pow_eq_zero x M hM hk, LinearMap.baseChange_tmul, hE,
+        TensorProduct.tmul_sum]
+      refine Finset.sum_congr rfl fun n _ => ?_
+      rw [← Int.cast_pow, intCast_mul_tmul]
+  | add a b ha hb => rw [map_add, map_add, ha, hb]
+
+/-- **Conjugating a base-changed exponential by an integral unit.** If a unit `u` of `A` preserves
+`M` together with its inverse, then conjugating the one-parameter subgroup of `x` by the induced
+automorphism of `R ⊗[ℤ] M` gives the one-parameter subgroup of the conjugate `u x u⁻¹`.
+
+For the Weyl element `n_α` and a root vector `eα` this is Chevalley's relation
+`n_α x_α(t) n_α⁻¹ = x_{-α}(-t)`, obtained from the Lie-algebra identity `n_α eα n_α⁻¹ = -e_{-α}`
+alone: conjugation is an algebra automorphism, so it passes through the divided powers. -/
+theorem baseChange_integralUnitRestrict_conj_baseChangeExp (x : A) (M : S) (u : Aˣ)
+    (hu : ∀ v ∈ M, (u : A) • v ∈ M) (hu' : ∀ v ∈ M, ((u⁻¹ : Aˣ) : A) • v ∈ M)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    (hM' : ∀ n, ∀ v ∈ M, Associative.dividedPower n ((u : A) * x * ↑u⁻¹) • v ∈ M)
+    (hx : IsNilpotent x) (t : R) :
+    ((integralUnitRestrict u M hu hu' : M →ₗ[ℤ] M).baseChange R) * baseChangeExp x M hM t *
+        (((integralUnitRestrict u M hu hu').symm : M →ₗ[ℤ] M).baseChange R) =
+      baseChangeExp ((u : A) * x * ↑u⁻¹) M hM' t := by
+  obtain ⟨k, hk⟩ := id hx
+  have hk' : ((u : A) * x * ↑u⁻¹) ^ k = 0 := by rw [Units.conj_pow, hk, mul_zero, zero_mul]
+  refine LinearMap.ext fun z => ?_
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | tmul r v =>
+      rw [Module.End.mul_apply, Module.End.mul_apply, LinearMap.baseChange_tmul,
+        baseChangeExp_tmul_of_pow_eq_zero x M hM hk,
+        baseChangeExp_tmul_of_pow_eq_zero ((u : A) * x * ↑u⁻¹) M hM' hk', map_sum]
+      refine Finset.sum_congr rfl fun n _ => ?_
+      rw [LinearMap.baseChange_tmul]
+      refine congrArg _ (Subtype.ext ?_)
+      simp only [LinearEquiv.coe_coe, coe_integralUnitRestrict_apply,
+        coe_integralDividedPower_apply, coe_integralUnitRestrict_symm_apply,
+        Associative.dividedPower_units_conj, mul_smul]
+  | add a b ha hb => rw [map_add, map_add, ha, hb]
 
 end ExplicitAlgebra
 

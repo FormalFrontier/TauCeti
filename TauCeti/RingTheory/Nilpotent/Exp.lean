@@ -37,6 +37,7 @@ the exponentials above preserve an integral lattice. The application to the Kost
   of `x`.
 * `TauCeti.exp_zsmul_smul_mem`: `exp (t • x)` preserves an additive subgroup that the divided
   powers of `x` preserve.
+* `TauCeti.nilpotentExpUnit`: the exponential of a nilpotent element as a unit.
 * `TauCeti.expZSMulHom`: the integer-parameter group of units `t ↦ exp (t • x)`.
 * `TauCeti.expZSMulAddAut`: the induced action by additive automorphisms on an additive subgroup
   preserved by the divided powers of `x`.
@@ -105,20 +106,55 @@ theorem exp_zsmul_smul_mem {x : A} (hx : IsNilpotent x) {S : Type*} [SetLike S V
     rw [← Int.cast_smul_eq_zsmul A, smul_assoc, Int.cast_smul_eq_zsmul]
     exact zsmul_mem (hM n v hv) _
 
+/-- The exponential of a nilpotent element preserves an additive subgroup preserved by every
+divided power of it. -/
+theorem exp_smul_mem {x : A} (hx : IsNilpotent x) {S : Type*} [SetLike S V]
+    [AddSubgroupClass S V] {M : S}
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    {v : V} (hv : v ∈ M) : exp x • v ∈ M := by
+  simpa using exp_zsmul_smul_mem hx hM 1 hv
+
+/-- The exponential of the negative of a nilpotent element preserves an additive subgroup
+preserved by every divided power of it. -/
+theorem exp_neg_smul_mem {x : A} (hx : IsNilpotent x) {S : Type*} [SetLike S V]
+    [AddSubgroupClass S V] {M : S}
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
+    {v : V} (hv : v ∈ M) : exp (-x) • v ∈ M := by
+  simpa using exp_zsmul_smul_mem hx hM (-1) hv
+
 end Modules
 
 /-! ## The one-parameter group of units -/
+
+/-- The unit `exp x` attached to a nilpotent element `x`, with inverse `exp (-x)`.
+
+For a Chevalley root vector this is the root subgroup element `x_α (1)`. -/
+noncomputable def nilpotentExpUnit {x : A} (hx : IsNilpotent x) : Aˣ where
+  val := exp x
+  inv := exp (-x)
+  val_inv := exp_mul_exp_neg_self hx
+  inv_val := exp_neg_mul_exp_self hx
+
+/-- Coercing `nilpotentExpUnit hx` to `A` yields `exp x`. -/
+@[simp]
+theorem coe_nilpotentExpUnit {x : A} (hx : IsNilpotent x) :
+    ((nilpotentExpUnit hx : Aˣ) : A) = exp x :=
+  -- The parentheses opt out of the exported-theorem exposure check, so that `nilpotentExpUnit`
+  -- can stay sealed and this `@[simp]` lemma remain its public characterization.
+  (rfl)
+
+/-- Coercing the inverse of `nilpotentExpUnit hx` to `A` yields `exp (-x)`. -/
+@[simp]
+theorem coe_inv_nilpotentExpUnit {x : A} (hx : IsNilpotent x) :
+    (((nilpotentExpUnit hx)⁻¹ : Aˣ) : A) = exp (-x) :=
+  (rfl)
 
 /-- The one-parameter group of units `t ↦ exp (t • x)` attached to a nilpotent element `x`.
 
 For a Chevalley root vector this is the root subgroup map `x_α` evaluated on the integral points of
 the additive group. -/
 noncomputable def expZSMulHom {x : A} (hx : IsNilpotent x) : Multiplicative ℤ →* Aˣ where
-  toFun t :=
-    { val := exp ((Multiplicative.toAdd t : ℤ) • x)
-      inv := exp (-((Multiplicative.toAdd t : ℤ) • x))
-      val_inv := exp_mul_exp_neg_self (hx.smul _)
-      inv_val := exp_neg_mul_exp_self (hx.smul _) }
+  toFun t := nilpotentExpUnit (hx.smul (Multiplicative.toAdd t : ℤ))
   map_one' := by
     ext
     simp
