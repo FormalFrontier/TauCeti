@@ -72,7 +72,7 @@ theorem dualCarrierBasis_toMatrix_carrierInDualBasis (L : IntegralLattice V)
 open Classical in
 /-- The determinant of the carrier basis inside the dual basis is the signed Gram determinant. -/
 theorem dualCarrierBasis_det_carrierInDualBasis (L : IntegralLattice V)
-    [L.IsNondegenerate] {ι : Type v} [Fintype ι] [DecidableEq ι]
+    [L.IsNondegenerate] {ι : Type v} [Fintype ι]
     (b : Basis ι ℤ L) :
     (L.dualCarrierBasis b).det ((↑) ∘ L.carrierInDualBasis b) = L.gramDet b := by
   rw [Basis.det_apply, L.dualCarrierBasis_toMatrix_carrierInDualBasis b, L.gramDet_def]
@@ -81,7 +81,7 @@ open Classical in
 /-- The discriminant group has cardinality equal to the absolute value of the Gram determinant in
 any carrier basis. -/
 theorem natCard_discriminantGroup_eq_natAbs_gramDet (L : IntegralLattice V)
-    [L.IsNondegenerate] {ι : Type v} [Fintype ι] [DecidableEq ι]
+    [L.IsNondegenerate] {ι : Type v} [Fintype ι]
     (b : Basis ι ℤ L) :
     Nat.card L.DiscriminantGroup = (L.gramDet b).natAbs := by
   rw [← L.dualCarrierBasis_det_carrierInDualBasis b]
@@ -95,10 +95,11 @@ theorem natCard_discriminantGroup (L : IntegralLattice V) [L.IsNondegenerate] :
   rw [L.natCard_discriminantGroup_eq_natAbs_gramDet (Module.Free.chooseBasis ℤ L),
     L.discriminant_eq_natAbs_gramDet (Module.Free.chooseBasis ℤ L)]
 
+open Classical in
 /-- The discriminant group of a lattice constructed from a nonsingular integral symmetric matrix
 has cardinality equal to the absolute value of that matrix's determinant. -/
 @[simp]
-theorem natCard_discriminantGroup_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
+theorem natCard_discriminantGroup_ofGramMatrix {ι : Type v} [Fintype ι]
     (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (hdet : G.det ≠ 0) :
     Nat.card (ofGramMatrix b G hG).DiscriminantGroup = G.det.natAbs := by
   have : (ofGramMatrix b G hG).IsNondegenerate :=

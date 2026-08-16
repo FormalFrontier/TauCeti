@@ -224,8 +224,9 @@ theorem determinant_ne_zero_iff (L : IntegralLattice V) :
   classical
   rw [determinant, gramDet_ne_zero_iff]
 
+open Classical in
 /-- An integral lattice constructed from a nonsingular Gram matrix is nondegenerate. -/
-theorem isNondegenerate_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
+theorem isNondegenerate_ofGramMatrix {ι : Type v} [Fintype ι]
     (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (hdet : G.det ≠ 0) :
     (ofGramMatrix b G hG).IsNondegenerate :=
   ⟨(determinant_ne_zero_iff _).mp (by
