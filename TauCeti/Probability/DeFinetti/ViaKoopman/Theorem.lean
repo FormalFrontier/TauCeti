@@ -38,9 +38,8 @@ given the tail. This route uses actual invariance of the test event under the sh
 `Bool`. They are deliberately not unified into one σ-algebra-parametric theorem.
 
 Both routes are finite-measure statements: these wrappers and `deFinetti_viaL2` alike ask only for
-`[IsFiniteMeasure μ]`. The Koopman chain briefly assumed a probability measure, but nothing in it
-used that — the mean ergodic input and the witness are both finite-measure statements — and the
-assumption was removed in #3326.
+`[IsFiniteMeasure μ]`. Nothing in the Koopman chain needs more: the mean ergodic input and the
+witness are both finite-measure statements.
 
 ## Source
 

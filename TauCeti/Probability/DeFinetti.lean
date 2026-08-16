@@ -62,6 +62,7 @@ directing measure is pinned down almost everywhere.
 This facade exports the stable representation and uniqueness API. Proof routes keep their own
 endpoints and internals in their own modules, and the worked examples live with the examples;
 both are reachable directly.
+
 ## References
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API), which specifies
