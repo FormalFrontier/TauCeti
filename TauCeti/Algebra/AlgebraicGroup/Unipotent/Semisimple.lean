@@ -198,6 +198,31 @@ noncomputable def quotientCounitBialgEquivOfGeometricallyUnipotent
     (Ideal.Quotient.mkₐ_surjective k I.toIdeal)
   exact geometricallySemisimplePointsCommHopfAlgProperty k G
 
+/-- The equivalence for a geometrically unipotent closed subgroup is its counit. -/
+@[simp]
+theorem quotientCounitBialgEquivOfGeometricallyUnipotent_apply
+    (G : FGCommGrpCat.{u})
+    (I : HopfIdeal k (coordinateRing k G))
+    [IsReduced (FiniteTypeCommHopfAlgCat.quotient (coordinateRing k G) I)]
+    (hI : geometricallyUnipotentPointsCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient (coordinateRing k G) I).obj)
+    (x : FiniteTypeCommHopfAlgCat.quotient (coordinateRing k G) I) :
+    quotientCounitBialgEquivOfGeometricallyUnipotent k G I hI x = Coalgebra.counit x := by
+  rfl
+
+/-- The inverse equivalence for a geometrically unipotent closed subgroup is the structure map. -/
+@[simp]
+theorem quotientCounitBialgEquivOfGeometricallyUnipotent_symm_apply
+    (G : FGCommGrpCat.{u})
+    (I : HopfIdeal k (coordinateRing k G))
+    [IsReduced (FiniteTypeCommHopfAlgCat.quotient (coordinateRing k G) I)]
+    (hI : geometricallyUnipotentPointsCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient (coordinateRing k G) I).obj)
+    (r : k) :
+    (quotientCounitBialgEquivOfGeometricallyUnipotent k G I hI).symm r =
+      algebraMap k (FiniteTypeCommHopfAlgCat.quotient (coordinateRing k G) I) r := by
+  apply FiniteTypeCommHopfAlgCat.counitBialgEquivOfGeometricallySemisimpleUnipotent_symm_apply
+
 /-- The defining Hopf ideal of a reduced finite-type unipotent closed subgroup of a
 diagonalizable group is the augmentation ideal. Thus the closed subgroup is the identity
 subgroup, not merely abstractly isomorphic to it. -/

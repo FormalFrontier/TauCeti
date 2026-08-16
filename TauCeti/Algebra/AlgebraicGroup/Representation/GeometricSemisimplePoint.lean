@@ -86,8 +86,6 @@ theorem geometricallySemisimplePointsCommHopfAlgProperty_of_surjective
   rw [geometricallySemisimplePointsCommHopfAlgProperty_iff] at hH ⊢
   intro g
   apply (HopfAlgebra.isSemisimplePoint_mapDomain_iff_of_surjective f.hom hf g).mp
-  rw [← AlgHom.mapDomain_apply, ← HopfAlgebra.Point.unipotentPart_mapDomain,
-    ← HopfAlgebra.isSemisimplePoint_iff_unipotentPart_eq_one]
   exact hH _
 
 /-- The tensor product of two coordinate Hopf algebras with semisimple geometric points again has
