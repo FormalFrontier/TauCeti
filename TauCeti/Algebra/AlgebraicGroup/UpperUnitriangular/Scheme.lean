@@ -283,29 +283,22 @@ instance isClosedImmersion_inclusion :
     AlgebraicGeometry.IsClosedImmersion (inclusion R n).hom.hom.left := by
   let e₁ := (eqToHom (groupScheme_def R (Fin n))).hom.hom.left
   let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-    (coordinateMap R n).op).hom.hom.left
-  let e₂ := (eqToHom (GeneralLinear.groupScheme_def R n).symm).hom.hom.left
+    (coordinateMap R n).op ≫
+      eqToHom (GeneralLinear.groupScheme_def R n).symm).hom.hom.left
   have he₁ : IsIso e₁ :=
     ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
       ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
         (eqToIso (groupScheme_def R (Fin n))))).isIso_hom
-  have he₂ : IsIso e₂ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (GeneralLinear.groupScheme_def R n).symm))).isIso_hom
   have hc : AlgebraicGeometry.IsClosedImmersion c := by
     dsimp only [c]
-    rw [CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff]
-    exact coordinateMap_surjective R n
+    exact (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
+      (GeneralLinear.groupScheme_def R n) _).2 (coordinateMap_surjective R n)
   have he₁c : AlgebraicGeometry.IsClosedImmersion (e₁ ≫ c) :=
     (@MorphismProperty.cancel_left_of_respectsIso
       _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ e₁ c he₁).2 hc
-  have he₁ce₂ : AlgebraicGeometry.IsClosedImmersion ((e₁ ≫ c) ≫ e₂) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ (e₁ ≫ c) e₂ he₂).2 he₁c
   rw [inclusion_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  exact he₁ce₂
+  exact he₁c
 
 /-! ### Scheme-valued points -/
 
