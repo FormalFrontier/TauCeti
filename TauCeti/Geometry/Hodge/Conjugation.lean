@@ -225,7 +225,6 @@ theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : V�
   by simp [latticeConjugation]
 
 /-- Bundled lattice conjugation fixes the image of the integral module. -/
-@[simp]
 theorem latticeConjugation_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     (latticeConjugation hℂ).toEquiv (ιℂ v) = ιℂ v := by
   simp
