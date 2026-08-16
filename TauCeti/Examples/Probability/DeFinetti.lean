@@ -14,9 +14,9 @@ example is a bare reference to a name Layer 7 advertises, so the file elaborates
 curated facade exports everything it promises. Nothing is proved and nothing is declared; the
 import is not public, so this adds no second route to the API.
 
-A failure here means an export went missing, not that a proof broke — the gap this guards against
-is the one where `deFinetti_viaL2` existed on `main` for some time without being reachable from the
-facade.
+A failure here means an export went missing, not that a proof broke: a summit can be proved, and
+its module built, while the facade never re-exports it, leaving the name unreachable for a caller
+who imports only the facade.
 
 ## One advertised name does not exist
 
