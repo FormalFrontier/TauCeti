@@ -72,6 +72,7 @@ variable [LocallyConnectedSpace (PrimeSpectrum H)]
 omit [_root_.HopfAlgebra k H] in
 /-- Points in the identity component have the same connected-component idempotent as the
 augmentation point. -/
+@[simp]
 theorem connectedComponentIdempotent_kernelPoint_eq_augmentationPoint
     [_root_.Bialgebra k H]
     (g : WithConv (H →ₐ[k] k))

@@ -47,6 +47,7 @@ theorem kernelPoint_asIdeal :
 
 /-- Contracting a kernel point along an algebra homomorphism gives the kernel point of the
 composite algebra homomorphism. -/
+@[simp]
 theorem comap_kernelPoint {A : Type w} [CommRing A] [Algebra k A] (g : A →ₐ[k] H) :
     PrimeSpectrum.comap (g : A →+* H) (kernelPoint f) = kernelPoint (f.comp g) :=
   PrimeSpectrum.comap_comp_apply (g : A →+* H) (f : H →+* k) (closedPoint k)
