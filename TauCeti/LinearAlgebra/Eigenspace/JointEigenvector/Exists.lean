@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector
+public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 
 /-!
 # Existence of joint eigenvectors for commuting endomorphisms
@@ -16,11 +16,12 @@ endomorphism is scalar, or the eigenspace of a nonscalar member is a nonzero pro
 preserved by the whole family.  Over an algebraically closed field, the triangularizability
 hypothesis is automatic.
 
-For a group representation with commuting image, such a joint eigenvector exists.  The general
-`unitHomOfJointEigenvector` construction from `JointEigenvector.lean` packages its eigenvalue
-function as a unit-valued character.  Thus every such representation has a one-dimensional
-submodule on which the group acts through that character.  This is the abelian base step for the
-fixed-line induction in the Lie--Kolchin theorem.
+For a group representation with commuting, triangularizable image, such a joint eigenvector
+exists.  The general `unitHomOfJointEigenvector` construction from `JointEigenvector/Basic.lean`
+packages its eigenvalue function as a unit-valued character.  Thus every such representation has
+a one-dimensional submodule on which the group acts through that character.  Over an algebraically
+closed field, triangularizability is automatic.  This is the abelian base step for the fixed-line
+induction in the Lie--Kolchin theorem.
 
 ## Main declarations
 
@@ -29,7 +30,8 @@ fixed-line induction in the Lie--Kolchin theorem.
 * `TauCeti.exists_iInf_eigenspace_ne_bot_of_pairwise_commute`: the same result in the joint
   eigenspace API.
 * `TauCeti.exists_unitHom_jointEigenvector_of_pairwise_commute`: a group representation with
-  commuting image has a joint eigenvector whose eigenvalues form a unit-valued character.
+  commuting, triangularizable image has a joint eigenvector whose eigenvalues form a unit-valued
+  character.
 * `TauCeti.exists_unitHom_submodule_finrank_eq_one_of_pairwise_commute`: the resulting
   one-dimensional submodule, together with the character through which the group acts on it.
 
@@ -127,44 +129,76 @@ theorem exists_iInf_eigenspace_ne_bot_of_pairwise_commute_of_isAlgClosed [IsAlgC
   exists_iInf_eigenspace_ne_bot_of_pairwise_commute f hcomm fun i ↦
     Module.End.iSup_maxGenEigenspace_eq_top (f i)
 
-variable {G : Type w} [Group G] [IsAlgClosed K]
+variable {G : Type w} [Group G]
 
-/-- Every nonzero finite-dimensional representation with pairwise-commuting image over an
-algebraically closed field has a joint eigenvector, and its eigenvalues form a unit-valued
-character. -/
+/-- Every nonzero finite-dimensional representation with pairwise-commuting triangularizable
+image has a joint eigenvector, and its eigenvalues form a unit-valued character. -/
 theorem exists_unitHom_jointEigenvector_of_pairwise_commute [FiniteDimensional K V] [Nontrivial V]
-    (ρ : G →* Module.End K V) (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h)) :
+    (ρ : G →* Module.End K V) (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h))
+    (htri : ∀ g, ⨆ μ, (ρ g).maxGenEigenspace μ = ⊤) :
     ∃ (χ : G →* Kˣ) (v : V), v ≠ 0 ∧ ∀ g, ρ g v = (χ g : K) • v := by
   obtain ⟨χ, v, hv, hv_mem⟩ :=
-    exists_jointEigenvector_of_pairwise_commute_of_isAlgClosed (fun g ↦ ρ g) hcomm
+    exists_jointEigenvector_of_pairwise_commute (fun g ↦ ρ g) hcomm htri
   let χ' : G →* Kˣ :=
     unitHomOfJointEigenvector ρ χ v hv hv_mem
   refine ⟨χ', v, hv, fun g ↦ ?_⟩
   rw [unitHomOfJointEigenvector_apply]
   exact Module.End.mem_eigenspace_iff.mp (hv_mem g)
 
-/-- A group representation with pairwise-commuting image has a nonzero joint eigenspace indexed by
-a unit-valued character. -/
+/-- Over an algebraically closed field, every nonzero finite-dimensional representation with
+pairwise-commuting image has a joint eigenvector whose eigenvalues form a unit-valued character. -/
+theorem exists_unitHom_jointEigenvector_of_pairwise_commute_of_isAlgClosed [IsAlgClosed K]
+    [FiniteDimensional K V] [Nontrivial V] (ρ : G →* Module.End K V)
+    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h)) :
+    ∃ (χ : G →* Kˣ) (v : V), v ≠ 0 ∧ ∀ g, ρ g v = (χ g : K) • v :=
+  exists_unitHom_jointEigenvector_of_pairwise_commute ρ hcomm fun g ↦
+    Module.End.iSup_maxGenEigenspace_eq_top (ρ g)
+
+/-- A group representation with pairwise-commuting triangularizable image has a nonzero joint
+eigenspace indexed by a unit-valued character. -/
 theorem exists_unitHom_iInf_eigenspace_ne_bot_of_pairwise_commute [FiniteDimensional K V]
     [Nontrivial V] (ρ : G →* Module.End K V)
-    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h)) :
+    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h))
+    (htri : ∀ g, ⨆ μ, (ρ g).maxGenEigenspace μ = ⊤) :
     ∃ χ : G →* Kˣ, (⨅ g, (ρ g).eigenspace (χ g)) ≠ ⊥ := by
-  obtain ⟨χ, v, hv, heigen⟩ := exists_unitHom_jointEigenvector_of_pairwise_commute ρ hcomm
+  obtain ⟨χ, v, hv, heigen⟩ :=
+    exists_unitHom_jointEigenvector_of_pairwise_commute ρ hcomm htri
   refine ⟨χ, (Submodule.ne_bot_iff _).mpr ⟨v, (Submodule.mem_iInf _).mpr fun g ↦ ?_, hv⟩⟩
   exact Module.End.mem_eigenspace_iff.mpr (heigen g)
 
-/-- For a group representation with pairwise-commuting image, there is a one-dimensional
-submodule and a unit-valued character through which the group acts on that submodule. -/
+/-- Over an algebraically closed field, a group representation with pairwise-commuting image has a
+nonzero joint eigenspace indexed by a unit-valued character. -/
+theorem exists_unitHom_iInf_eigenspace_ne_bot_of_pairwise_commute_of_isAlgClosed [IsAlgClosed K]
+    [FiniteDimensional K V] [Nontrivial V] (ρ : G →* Module.End K V)
+    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h)) :
+    ∃ χ : G →* Kˣ, (⨅ g, (ρ g).eigenspace (χ g)) ≠ ⊥ :=
+  exists_unitHom_iInf_eigenspace_ne_bot_of_pairwise_commute ρ hcomm fun g ↦
+    Module.End.iSup_maxGenEigenspace_eq_top (ρ g)
+
+/-- For a group representation with pairwise-commuting triangularizable image, there is a
+one-dimensional submodule and a unit-valued character through which the group acts on it. -/
 theorem exists_unitHom_submodule_finrank_eq_one_of_pairwise_commute [FiniteDimensional K V]
     [Nontrivial V] (ρ : G →* Module.End K V)
-    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h)) :
+    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h))
+    (htri : ∀ g, ⨆ μ, (ρ g).maxGenEigenspace μ = ⊤) :
     ∃ (χ : G →* Kˣ) (p : Submodule K V), Module.finrank K p = 1 ∧
       ∀ g, ∀ x ∈ p, ρ g x = (χ g : K) • x := by
-  obtain ⟨χ, v, hv, heigen⟩ := exists_unitHom_jointEigenvector_of_pairwise_commute ρ hcomm
+  obtain ⟨χ, v, hv, heigen⟩ :=
+    exists_unitHom_jointEigenvector_of_pairwise_commute ρ hcomm htri
   refine ⟨χ, K ∙ v, finrank_span_singleton hv, fun g x hx ↦ ?_⟩
   rw [Submodule.mem_span_singleton] at hx
   obtain ⟨a, rfl⟩ := hx
   simp only [map_smul, heigen, smul_smul, mul_comm]
+
+/-- Over an algebraically closed field, a group representation with pairwise-commuting image has a
+one-dimensional submodule and a unit-valued character through which the group acts on it. -/
+theorem exists_unitHom_submodule_finrank_eq_one_of_pairwise_commute_of_isAlgClosed
+    [IsAlgClosed K] [FiniteDimensional K V] [Nontrivial V] (ρ : G →* Module.End K V)
+    (hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h)) :
+    ∃ (χ : G →* Kˣ) (p : Submodule K V), Module.finrank K p = 1 ∧
+      ∀ g, ∀ x ∈ p, ρ g x = (χ g : K) • x :=
+  exists_unitHom_submodule_finrank_eq_one_of_pairwise_commute ρ hcomm fun g ↦
+    Module.End.iSup_maxGenEigenspace_eq_top (ρ g)
 
 end
 
