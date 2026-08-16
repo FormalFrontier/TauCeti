@@ -210,18 +210,18 @@ theorem abelian_conflation_of_epi {Y Z : C} (p : Y ⟶ Z) [Epi p] :
       (ShortComplex.mk (kernel.ι p) p (kernel.condition p)) :=
   ShortComplex.ShortExact.mk' (ShortComplex.exact_kernel p) inferInstance inferInstance
 
-/-- Duality for canonical conflations: the opposite of a short complex in `C` is a conflation in
+/-- Duality for canonical conflations: the opposite of a short complex in `C` is short exact in
 `Cᵒᵖ` if and only if the original complex is a conflation in `C`. -/
 @[simp]
 theorem abelian_conflation_op_iff (S : ShortComplex C) :
-    (ExactStructure.abelian Cᵒᵖ).Conflation S.op ↔ (ExactStructure.abelian C).Conflation S :=
+    S.op.ShortExact ↔ (ExactStructure.abelian C).Conflation S :=
   (ShortComplex.shortExact_iff_op S).symm
 
-/-- Duality for canonical conflations: the un-opposite of a short complex in `Cᵒᵖ` is a conflation
+/-- Duality for canonical conflations: the un-opposite of a short complex in `Cᵒᵖ` is short exact
 in `C` if and only if the original complex is a conflation in `Cᵒᵖ`. -/
 @[simp]
 theorem abelian_conflation_unop_iff (S : ShortComplex Cᵒᵖ) :
-    (ExactStructure.abelian C).Conflation S.unop ↔ (ExactStructure.abelian Cᵒᵖ).Conflation S :=
+    S.unop.ShortExact ↔ (ExactStructure.abelian Cᵒᵖ).Conflation S :=
   (ShortComplex.shortExact_iff_unop S).symm
 
 end ExactStructure
