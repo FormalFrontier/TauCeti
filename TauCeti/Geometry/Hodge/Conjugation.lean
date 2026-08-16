@@ -55,7 +55,7 @@ variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 
 /-- The inverse of a conjugation is the conjugation itself. -/
 @[simp]
-theorem symm_toEquiv (ω : Conjugation W) : ω.toEquiv.symm = ω.toEquiv := by
+theorem toEquiv_symm (ω : Conjugation W) : ω.toEquiv.symm = ω.toEquiv := by
   ext x
   apply ω.toEquiv.injective
   simp [ω.involutive x]
@@ -67,20 +67,20 @@ theorem apply_apply (ω : Conjugation W) (x : W) : ω.toEquiv (ω.toEquiv x) = x
 
 /-- Mapping a complex subspace twice by a conjugation returns the original subspace. -/
 @[simp]
-theorem map_map (ω : Conjugation W) (U : Submodule ℂ W) :
+theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
     (U.map ω.toEquiv.toLinearMap).map ω.toEquiv.toLinearMap = U := by
   have h : (U.map ω.toEquiv.toLinearMap).map ω.toEquiv.symm.toLinearMap = U :=
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
-  simpa only [ω.symm_toEquiv] using h
+  simpa only [ω.toEquiv_symm] using h
 
 end Conjugation
 
 section Concrete
 
-variable {V : Type u} [AddCommGroup V] [Module ℤ V]
+variable {V : Type u} [AddCommGroup V]
 
 /-- The canonical complexification `ℂ ⊗[ℤ] V` of an integral module. -/
-abbrev Complexification (V : Type u) [AddCommGroup V] [Module ℤ V] :=
+abbrev Complexification (V : Type u) [AddCommGroup V] :=
   TensorProduct ℤ ℂ V
 
 /-- The canonical map from an integral module to its tensor-product complexification. -/
@@ -163,7 +163,7 @@ end Concrete
 section Abstract
 
 variable {V : Type u} {Vℂ : Type v}
-variable [AddCommGroup V] [Module ℤ V]
+variable [AddCommGroup V]
 variable [AddCommGroup Vℂ] [Module ℂ Vℂ]
 variable {ιℂ : V →ₗ[ℤ] Vℂ}
 
@@ -225,7 +225,7 @@ theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : V�
   by simp [latticeConjugation]
 
 /-- Bundled lattice conjugation fixes the image of the integral module. -/
-theorem latticeConjugation_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
+theorem latticeConjugation_toEquiv_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     (latticeConjugation hℂ).toEquiv (ιℂ v) = ιℂ v := by
   simp
 
