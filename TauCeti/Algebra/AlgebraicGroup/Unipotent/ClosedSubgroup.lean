@@ -69,7 +69,8 @@ in the ambient affine group is unipotent. -/
 theorem isUnipotentPoint_mapDomain_iff_of_surjective
     (f : H →ₐc[k] K) (hf : Function.Surjective f)
     (g : WithConv (K →ₐ[k] L)) :
-    IsUnipotentPoint (AlgHom.mapDomain f g) ↔ IsUnipotentPoint g := by
+    IsUnipotentPoint (toConv (g.ofConv.comp (f : H →ₐ[k] K))) ↔ IsUnipotentPoint g := by
+  rw [← AlgHom.mapDomain_apply]
   constructor
   · intro hg
     rw [Point.isUnipotentPoint_iff_semisimplePart_eq_one] at hg ⊢
