@@ -219,6 +219,16 @@ noncomputable def identityComponentPointsHom
   CommHopfAlgCat.quotientPointsHom H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A
 
+/-- The range of the identity-component point inclusion is the subgroup cut out by the
+identity-component Hopf ideal. -/
+@[simp]
+theorem identityComponentPointsHom_range
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k) :
+    (identityComponentPointsHom H A).hom.range =
+      CommHopfAlgCat.quotientPointsSubgroup H.obj
+        (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A := by
+  rfl
+
 /-- A rational point of the ambient affine group lies in the image of the identity-component
 points exactly when its kernel point belongs to the connected component of the augmentation
 point. -/
