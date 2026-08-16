@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.CategoryTheory.Limits.FunctorCategory.Shapes.Pullbacks
 public import Mathlib.CategoryTheory.Limits.Types.Pullbacks
 public import TauCeti.Algebra.AlgebraicGroup.Fppf.Quotient.Projection
 
