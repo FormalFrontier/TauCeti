@@ -15,7 +15,7 @@ import TauCeti.Probability.Process.BlockAverage
 # Conditional moment identities and the empirical-frequency rate
 
 The second-moment consequences of the joint-law disintegration `ConditionallyIIDWith`, culminating
-in an exact finite-sample formula for the mean square error of an empirical frequency.
+in an exact finite-sample formula for the integrated squared error of an empirical frequency.
 
 ## Main results
 
@@ -24,12 +24,14 @@ in an exact finite-sample formula for the mean square error of an empirical freq
   the power `(ν ω) B ^ m`. Its one- and two-coordinate specializations are
   `ConditionallyIIDWith.lintegral_mul_indicator_single` and
   `ConditionallyIIDWith.lintegral_mul_indicator_pair`.
-* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` — the exact rate: the empirical
-  frequency of a measurable set `B` along the first `n` coordinates approximates `(ν ·) B` with
-  mean square error exactly `(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`.
-* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le` — its `≤ 1 / n` corollary.
-* `ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq` — the limit that corollary
-  gives: fixed-set empirical frequencies converge to `(ν ·) B` in mean square.
+* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` — the exact rate: for the empirical
+  frequency of a measurable set `B` along the first `n` coordinates, the integral of its squared
+  deviation from `(ν ·) B` is exactly `(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`. At a probability measure
+  this reads as the mean square error, with an averaged Bernoulli variance on the right.
+* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le` — its `≤ 1 / n` corollary, and the
+  only statement here that needs `μ univ = 1`.
+* `ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq` — the limit the identity gives:
+  fixed-set empirical frequencies converge to `(ν ·) B` in `L²`.
 
 ## Implementation
 
@@ -197,9 +199,11 @@ private theorem integral_sub_mul_sub {u v q : Ω → ℝ}
   rw [integral_congr_ae (ae_of_all _ hexp), integral_add hiA hi4,
     integral_sub hiB hi3, integral_sub hi1 hi2]
 
-/-- The abstract second-moment computation behind the `L²` rate: if the centred variables
-`eᵢ - q` are uncorrelated with common variance `c`, then their average over `Fin n` has mean
-square `c / n`. Private: it is an algebraic repackaging with no probabilistic content of its own. -/
+/-- The abstract second-moment computation behind the `L²` rate: if the centred variables `eᵢ - q`
+integrate against each other to `c` on the diagonal and to `0` off it, then the integral of the
+squared deviation of their average over `Fin n` is `c / n`. At a probability measure the hypothesis
+reads as "uncorrelated with common variance `c`" and the conclusion as a mean square. Private: it is
+an algebraic repackaging with no probabilistic content of its own. -/
 private theorem integral_sq_average_sub [IsFiniteMeasure μ] {e : ℕ → Ω → ℝ} {q : Ω → ℝ}
     {c : ℝ} {n : ℕ} (he : ∀ i ∈ Finset.range n, AEMeasurable (e i) μ)
     (hq : AEMeasurable q μ) (heb : ∀ i ∈ Finset.range n, ∀ ω, |e i ω| ≤ 1)
@@ -375,9 +379,11 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
     ring
 
 /-- **The `L²` rate for empirical frequencies.** For a conditionally i.i.d. process with directing
-measure `ν` and a measurable set `B`, the empirical frequency of `B` among the first `n`
-coordinates approximates `ω ↦ (ν ω) B` with mean square error
-`(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`.
+measure `ν` and a measurable set `B`, the integral of the squared deviation of the empirical
+frequency of `B` among the first `n` coordinates from `ω ↦ (ν ω) B` is exactly
+`(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`. At a probability measure this is the mean square error and the
+numerator is the averaged Bernoulli variance of the directing mass; at a general finite measure both
+sides scale with the total mass.
 
 This is the second-moment law of large numbers for the conditional predicate, read straight off the
 joint-law disintegration: the cross term `∫ (ν ·) B · 1_{Xᵢ ∈ B}` is the one moment that the
@@ -412,10 +418,11 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsFiniteMeasure
     hn
 
 /-- The mean square error of `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` is at most
-`1 / n`: the variance factor is a difference of moments of a `[0, 1]`-valued variable. 
+`1 / n`: the factor on the right is a difference of moments of a `[0, 1]`-valued variable.
 
-Unlike the exact identity above, this bound uses `μ univ = 1`, so it asks for a probability
-measure rather than a finite one. -/
+Unlike the exact identity above, this bound uses `μ univ = 1`, so it asks for a probability measure
+rather than a finite one; at a general finite measure the right-hand side would carry a mass
+factor. -/
 theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilityMeasure μ]
     (h : ConditionallyIIDWith μ X ν) {n : ℕ}
     (hX : ∀ i ∈ Finset.range n, AEMeasurable (X i) μ) (hB : MeasurableSet B)
@@ -447,7 +454,7 @@ the empirical frequency of a fixed measurable set `B` along the first `n` coordi
 `L²` to the directing measure's evaluation `(ν ·) B`.
 
 Indexed at `n + 1` so that no caller carries an `n ≠ 0` side condition. -/
-theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsProbabilityMeasure μ]
+theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B) :
     Tendsto (fun n : ℕ => ∫ ω, (((n + 1 : ℕ) : ℝ)⁻¹ *
           (∑ i ∈ Finset.range (n + 1), (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
@@ -455,8 +462,9 @@ theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsProba
   have hupper : Tendsto (fun n : ℕ => ((n + 1 : ℕ) : ℝ)⁻¹) atTop (nhds 0) :=
     tendsto_one_div_add_atTop_nhds_zero_nat.congr fun n => by
       rw [one_div]; norm_cast
-  refine squeeze_zero (fun n => integral_nonneg fun ω => sq_nonneg _) (fun n => ?_) hupper
-  exact h.integral_empiricalFrequency_sub_sq_le (fun i _ => hX i) hB (Nat.succ_ne_zero n)
+  simp only [fun n : ℕ =>
+    h.integral_empiricalFrequency_sub_sq (fun i _ => hX i) hB (Nat.succ_ne_zero n)]
+  simpa using hupper.mul_const _
 
 end Probability
 
