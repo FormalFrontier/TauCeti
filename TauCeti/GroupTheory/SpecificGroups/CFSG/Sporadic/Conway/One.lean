@@ -188,18 +188,21 @@ private theorem isCyclicallyReduced_toWord_of_mem_co1NonedgeRelators :
 
 /-- The relators taken from `presdef[3]` compile to cyclically reduced words.
 
-The last of them is a thirty-ninth power, whose expansion has three hundred and fifty-one letters;
-it is handled by `TauCeti.Relator.isCyclicallyReduced_toWord_pow`, which reduces the check to its
-nine-letter base. Expanding it instead exhausts the elaborator. -/
+Each alternative is dispatched by the shape of its relator, not by goal position: a relator that
+is a power is checked on its base through `TauCeti.Relator.isCyclicallyReduced_toWord_pow`, and
+every other relator is checked by direct computation, so inserting, removing, or reordering
+relators cannot redirect a branch. The power route is also what makes the last relator tractable
+at all: it is a thirty-ninth power whose expansion has three hundred and fifty-one of the
+presentation's letters, and expanding it exhausts the elaborator. -/
 private theorem isCyclicallyReduced_toWord_of_mem_co1AdditionalRelators :
     ∀ r ∈ co1AdditionalRelators, FreeGroup.IsCyclicallyReduced (Relator.toWord r) := by
   intro r hr
   simp only [co1AdditionalRelators, List.mem_cons, List.not_mem_nil, or_false] at hr
-  rcases hr with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  on_goal 9 =>
-    exact Relator.isCyclicallyReduced_toWord_pow
-      (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) 39
-  all_goals simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced, FreeGroup.invRev]
+  rcases hr with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+  first
+  | exact Relator.isCyclicallyReduced_toWord_pow
+      (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+  | simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced, FreeGroup.invRev]
 
 /-- Every transcribed `Co₁` relator expression compiles to a cyclically reduced word. -/
 private theorem isCyclicallyReduced_toWord_of_mem_co1Transcribed :
