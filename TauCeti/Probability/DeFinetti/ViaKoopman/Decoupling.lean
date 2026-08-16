@@ -140,12 +140,8 @@ private theorem tendsto_integral_abs_birkhoffAverage_indicator_coord
       Filter.atTop (nhds 0) := by
   have hmeas : Measurable fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y r) :=
     (measurable_const.indicator hB).comp (measurable_pi_apply r)
-  have hbdd : ∀ y : ℕ → α, ‖B.indicator (fun _ => (1 : ℝ)) (y r)‖ ≤ 1 := by
-    intro y
-    have h0 : 0 ≤ B.indicator (fun _ => (1 : ℝ)) (y r) :=
-      Set.indicator_apply_nonneg fun _ => zero_le_one
-    rw [Real.norm_eq_abs, abs_of_nonneg h0]
-    exact Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
+  have hbdd : ∀ y : ℕ → α, ‖B.indicator (fun _ => (1 : ℝ)) (y r)‖ ≤ 1 := fun y => by
+    simpa only [norm_one] using norm_indicator_le_norm_self (fun _ => (1 : ℝ)) (y r)
   exact tendsto_integral_abs_birkhoffAverage_sub_condExp (shift α) hmp
     (MemLp.of_bound hmeas.aestronglyMeasurable 1 (Filter.Eventually.of_forall hbdd))
 
@@ -168,12 +164,9 @@ theorem condExp_indicator_coord_ae_eq_invariantConditionalProbabilityMeasure
     fun s => (measurable_const.indicator hB).comp (measurable_pi_apply s)
   have hint : ∀ s : ℕ, Integrable (fun y : ℕ → α => B.indicator (fun _ => (1 : ℝ)) (y s)) ρ := by
     intro s
-    refine ⟨(hmeas s).aestronglyMeasurable, .of_bounded (C := 1) (Filter.Eventually.of_forall ?_)⟩
-    intro y
-    have h0 : 0 ≤ B.indicator (fun _ => (1 : ℝ)) (y s) :=
-      Set.indicator_apply_nonneg fun _ => zero_le_one
-    rw [Real.norm_eq_abs, abs_of_nonneg h0]
-    exact Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
+    refine ⟨(hmeas s).aestronglyMeasurable, .of_bounded (C := 1)
+      (Filter.Eventually.of_forall fun y => ?_)⟩
+    simpa only [norm_one] using norm_indicator_le_norm_self (fun _ => (1 : ℝ)) (y s)
   -- The witness is the conditional expectation at coordinate `0`.
   have hwit := invariantConditionalProbabilityMeasure_ae_eq_condExp (ρ := ρ) hB
   refine Filter.EventuallyEq.symm (ae_eq_condExp_of_forall_setIntegral_eq hle (hint r)
