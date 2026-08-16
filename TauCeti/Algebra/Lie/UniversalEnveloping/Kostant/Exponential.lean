@@ -44,6 +44,8 @@ distinguished vectors, and a pinned root datum will supply the specific ones.
 
 * `TauCeti.UniversalEnvelopingAlgebra.exp_zsmul_mem_map_kostantForm`: a root subgroup element lies
   in the image of the Kostant form.
+* `TauCeti.UniversalEnvelopingAlgebra.dividedPower_apply_mem_of_kostantForm_apply_mem`: divided
+  powers of root vectors preserve any Kostant-stable additive subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.exp_zsmul_apply_mem_of_kostantForm_apply_mem`: a root
   subgroup element preserves every additive subgroup of a representation that the Kostant form
   preserves.
@@ -81,6 +83,17 @@ theorem exp_zsmul_mem_map_kostantForm (e : ι → L) (h : κ → L)
 
 variable {V : Type*} [AddCommGroup V] [Module ℚ V]
 
+/-- Every designated root vector's divided powers preserve an additive subgroup stable under the
+whole Kostant form. -/
+theorem dividedPower_apply_mem_of_kostantForm_apply_mem (e : ι → L) (h : κ → L)
+    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) {M : AddSubgroup V}
+    (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M) (i : ι) (n : ℕ)
+    {v : V} (hv : v ∈ M) :
+    Associative.dividedPower n
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) v ∈ M := by
+  rw [← Associative.map_dividedPower ρ n]
+  exact hM _ (dividedPower_mem_kostantForm e h i n) v hv
+
 /-- **A root subgroup element preserves an admissible lattice.** If an additive subgroup `M` of a
 representation `V` of `L` is stable under the Kostant integral form, then it is stable under every
 root subgroup element `exp (t • ρ (eᵢ))` with `t` an integer.
@@ -97,8 +110,7 @@ theorem exp_zsmul_apply_mem_of_kostantForm_apply_mem (e : ι → L) (h : κ → 
     (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))) (t : ℤ)
     {v : V} (hv : v ∈ M) :
     IsNilpotent.exp (t • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) v ∈ M :=
-  exp_zsmul_smul_mem hnil (fun n w hw => by
-    rw [← Associative.map_dividedPower ρ n]
-    exact hM _ (dividedPower_mem_kostantForm e h i n) w hw) t hv
+  exp_zsmul_smul_mem hnil (fun n _ hw =>
+    dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) t hv
 
 end TauCeti.UniversalEnvelopingAlgebra

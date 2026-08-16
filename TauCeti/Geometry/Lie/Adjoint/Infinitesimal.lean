@@ -74,7 +74,7 @@ private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
       mulInvariantExp (I := I) (G := G) (p.2 • (-X)))
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X (-X)).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   have hdiag : HasDerivAt (fun t : ℝ => F (t, t))
       (fderiv ℝ F (0, 0) (1, 1)) 0 := by
     have hemb : HasDerivAt (fun t : ℝ => (t, t)) (1, 1) 0 :=
@@ -237,7 +237,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
       mulInvariantExp (I := I) (G := G) (p.1 • (-X)))
   have hF : ContDiff ℝ 2 F :=
     (ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp f X Y).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   -- Varying the second parameter conjugates the `Y`-line by `γX t`, so this spatial partial
   -- evaluates the tangent adjoint orbit against the chosen test function.
   have hspace (t : ℝ) : spatialFDeriv F 0 t 1 = q (A t) := by

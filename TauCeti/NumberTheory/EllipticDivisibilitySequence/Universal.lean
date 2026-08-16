@@ -86,16 +86,13 @@ complements but not for `preNormEDS`, although Mathlib's `map_preNormEDS` makes 
 one-line proof and consumers reaching for the pre-normalised sequence would otherwise have to
 redo it.
 
-Deliberately **not** ported here: `universalNormEDS_ne_zero` and
-`universalNormEDS_mem_nonZeroDivisors`. They rest on `normEDS 2 3 2 = id`, the source's
-`normEDS_two_three_two`, which needs two things: `normEDS` known to be an elliptic sequence,
-which is now `isEllipticSequence_normEDS` in `NormEDS.lean`, and an extensionality principle for
-elliptic sequences — the source's `IsEllSequence.ext`, that two elliptic sequences agreeing at
-the indices which determine them are equal — which is now `IsEllipticSequence.ext` in `Ext.lean`.
-Both prerequisites are therefore present, and `normEDS 2 3 2 = id` is
-`normEDS_two_three_two_eq_id` in `NormEDS.lean`; these two remain unported but are no longer
-blocked. They belong with whichever slice needs them — as of writing, the general
-`normEDS_mul_complEDS`, whose unconditional form is what they discharge the hypothesis of.
+`universalNormEDS_ne_zero` is **not** here, and the reason is the import direction rather than a
+gap. It rests on `normEDS 2 3 2 = id`, which is `normEDS_two_three_two_eq_id`; that in turn needs
+`normEDS` to be an elliptic sequence, `isEllipticSequence_normEDS`, which is proved in
+`NormEDS.lean` — downstream of this file, since `NormEDS.lean` imports it and not the other way
+round. So the nonvanishing lemma is stated there, beside the identity it is one line from. (The
+identity also uses `IsEllipticSequence.ext` from `Ext.lean`, but that file imports neither this one
+nor `NormEDS.lean`, so it is not what fixes the direction.)
 -/
 
 public section
@@ -120,12 +117,18 @@ identity between such terms can be proved here once and read off for every ring 
 parameters. -/
 noncomputable def universalNormEDS : ℤ → MvPolynomial NormEDSParam ℤ := normEDS (X B) (X C) (X D)
 
-/-- The `simp` expansion of `universalNormEDS`: `normEDS` at the three indeterminates. It is the
+/-- The defining equation of `universalNormEDS`: `normEDS` at the three indeterminates. It is the
 stable name for that expansion, so downstream proofs rewrite with a lemma rather than unfolding a
-definition; it does not hide the representation, and its right-hand side is that representation. -/
+definition; it does not hide the representation, and its right-hand side is that representation.
+
+It is stated at the level of functions, not pointwise. Downstream modules cannot see the body, so a
+rewrite under a function-valued argument — `invarNum`, `IsEllipticNet` — needs this form; the
+pointwise one is `congrFun universalNormEDS_def n`, and `@[simp]` rewrites the head constant, so
+applied occurrences reach the same normal form either way. -/
 @[simp]
-theorem universalNormEDS_apply (n : ℤ) :
-    universalNormEDS n = normEDS (X NormEDSParam.B) (X NormEDSParam.C) (X NormEDSParam.D) n := (rfl)
+theorem universalNormEDS_def :
+    (universalNormEDS : ℤ → MvPolynomial NormEDSParam ℤ)
+      = normEDS (X NormEDSParam.B) (X NormEDSParam.C) (X NormEDSParam.D) := (rfl)
 
 /-- **Every sequence of the form `normEDS b c d` is a specialization of the universal one.** -/
 theorem normEDS_eq_aeval :
