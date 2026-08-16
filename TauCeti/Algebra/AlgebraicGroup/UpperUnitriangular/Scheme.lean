@@ -69,7 +69,7 @@ upper-unitriangular point attached to `f`. -/
 @[simp]
 theorem generalLinear_pointsMulEquiv_inclusionPoints
     (f : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
-    GeneralLinear.pointsMulEquiv n (inclusionPoints (R := R) n f) =
+    GeneralLinear.pointToGeneralLinear n (inclusionPoints (R := R) n f) =
       (pointsMulEquiv R (Fin n) f : upperUnitriangularGroup (Fin n) A) := by
   simp [inclusionPoints]
 
@@ -90,12 +90,14 @@ theorem mapValue_inclusionPoints {B : Type w} [CommRing B] [Algebra R B]
       GeneralLinear.pointsMulEquiv_mapValue n φ _
     _ = (UpperUnitriangularGroup.map φ.toRingHom (pointsMulEquiv R (Fin n) f) :
           upperUnitriangularGroup (Fin n) B) := by
-      rw [generalLinear_pointsMulEquiv_inclusionPoints]
+      rw [GeneralLinear.pointsMulEquiv_apply,
+        generalLinear_pointsMulEquiv_inclusionPoints]
       exact (UpperUnitriangularGroup.coe_map φ.toRingHom _).symm
     _ = GeneralLinear.pointsMulEquiv n
         (inclusionPoints (R := R) n
           (AlgHom.mapValue (H := coordinateHopfAlgebra R (Fin n)) φ f)) := by
-      rw [generalLinear_pointsMulEquiv_inclusionPoints, pointsMulEquiv_mapValue]
+      rw [GeneralLinear.pointsMulEquiv_apply,
+        generalLinear_pointsMulEquiv_inclusionPoints, pointsMulEquiv_mapValue]
 
 end CoordinateMap
 
@@ -133,9 +135,9 @@ upper-unitriangular matrices. -/
 @[simp]
 theorem mapPointsFunctor_coordinateMap_app (A : CommAlgCat.{u} R)
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R (Fin n)) A) :
-    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R n)).app A f =
+    toConv (f.ofConv.comp ↑(CommHopfAlgCat.Hom.hom (coordinateMap R n))) =
       inclusionPoints (R := R) n f := by
-  rw [mapPointsFunctor_coordinateMap]
+  rw [← CommHopfAlgCat.mapPointsFunctor_app_apply, mapPointsFunctor_coordinateMap]
   rfl
 
 /-- The coordinate morphism sends a generic general-linear matrix entry to the corresponding
@@ -335,6 +337,7 @@ theorem schemePointsMulEquiv_comp_inclusion
   rw [groupSchemePointMulEquiv_comp_inclusion,
     GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
     schemePointsMulEquiv_groupSchemePointMulEquiv,
+    GeneralLinear.pointsMulEquiv_apply,
     generalLinear_pointsMulEquiv_inclusionPoints]
 
 end SchemePoints
