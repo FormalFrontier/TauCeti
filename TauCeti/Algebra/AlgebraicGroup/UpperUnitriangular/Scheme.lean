@@ -173,14 +173,7 @@ theorem coordinateMap_genericMatrix_apply (i j : Fin n) :
         (inclusionPoints (R := R) n e).ofConv
           (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
             (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))) := by
-      apply Eq.trans (b :=
-        (↑((coordinateMap R n).hom) :
-          GeneralLinear.coordinateHopfAlgebra R n →ₐ[R]
-            coordinateHopfAlgebra R (Fin n))
-          (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
-            (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))))
-      · rfl
-      · simpa only [e, WithConv.ofConv_toConv, AlgHom.id_comp] using h'
+      simpa only [BialgHom.coe_toAlgHom, e, WithConv.ofConv_toConv, AlgHom.id_comp] using h'
     _ = GeneralLinear.pointToGeneralLinear n (inclusionPoints (R := R) n e) i j :=
       (GeneralLinear.pointToGeneralLinear_apply (R := R) n
         (inclusionPoints (R := R) n e) i j).symm
