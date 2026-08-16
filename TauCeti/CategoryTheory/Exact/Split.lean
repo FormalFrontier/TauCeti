@@ -44,9 +44,6 @@ structure.
 * `TauCeti.ExactStructure.split_isInflation_iff` and
   `TauCeti.ExactStructure.split_isDeflation_iff`: the characteristic API of
   `TauCeti.ExactStructure.split`.
-* `TauCeti.ExactStructure.isInflation_of_isIso` and
-  `TauCeti.ExactStructure.isDeflation_of_isIso`: in every exact structure an isomorphism is both
-  an inflation and a deflation.
 
 ## References
 
@@ -75,10 +72,6 @@ variable (X Z : C) [HasBinaryBiproduct X Z]
 conflations of the split exact structure. -/
 noncomputable abbrev biprodShortComplex : ShortComplex C :=
   ShortComplex.mk (biprod.inl : X ⟶ X ⊞ Z) biprod.snd (by simp)
-
-/-- The tautological splitting of `X ⟶ X ⊞ Z ⟶ Z`. -/
-noncomputable def biprodShortComplexSplitting : (biprodShortComplex X Z).Splitting :=
-  ShortComplex.Splitting.ofHasBinaryBiproduct X Z
 
 variable {X Z}
 
@@ -109,7 +102,7 @@ theorem split_conflation_iff (S : ShortComplex C) :
 /-- The biproduct short complex `X ⟶ X ⊞ Z ⟶ Z` is a split conflation. -/
 theorem split_conflation_biprodShortComplex (X Z : C) [HasBinaryBiproduct X Z] :
     (split C).Conflation (biprodShortComplex X Z) :=
-  ⟨biprodShortComplexSplitting X Z⟩
+  ⟨ShortComplex.Splitting.ofHasBinaryBiproduct X Z⟩
 
 /-- The short complex `Z ⟶ X ⊞ Z ⟶ X` on the other biproduct summand is a split conflation. -/
 theorem split_conflation_biprod_inr_fst (X Z : C) [HasBinaryBiproduct X Z] :
@@ -176,7 +169,7 @@ theorem split_isInflation_iff {X Y : C} (i : X ⟶ Y) :
       rw [← he, Category.assoc, e.hom_inv_id, Category.comp_id]
     refine ⟨Z, e.hom ≫ biprod.snd, by rw [← Category.assoc, he]; simp,
       (split_conflation_iff _).mpr ⟨?_⟩⟩
-    exact (biprodShortComplexSplitting X Z).ofIso
+    exact (ShortComplex.Splitting.ofHasBinaryBiproduct X Z).ofIso
       (ShortComplex.isoMk (Iso.refl _) e.symm (Iso.refl _) (by simpa using hi.symm) (by simp))
 
 /-- **The split deflations are the biproduct projections.** -/
@@ -192,7 +185,7 @@ theorem split_isDeflation_iff {Y Z : C} (p : Y ⟶ Z) :
   · rintro ⟨X, e, he⟩
     refine ⟨X, biprod.inl ≫ e.inv, by rw [Category.assoc, he]; simp,
       (split_conflation_iff _).mpr ⟨?_⟩⟩
-    exact (biprodShortComplexSplitting X Z).ofIso
+    exact (ShortComplex.Splitting.ofHasBinaryBiproduct X Z).ofIso
       (ShortComplex.isoMk (Iso.refl _) e.symm (Iso.refl _) (by simp) (by simpa using he))
 
 /-- **E1 for the split exact structure**: a composite of split inflations is a split inflation.
@@ -267,17 +260,12 @@ theorem exists_isPushout_of_split_isInflation {A B A' : C} {i : A ⟶ B}
   obtain ⟨Z, e, he⟩ := (split_isInflation_iff i).mp hi
   have hi' : biprod.inl ≫ e.inv = i := by
     rw [← he, Category.assoc, e.hom_inv_id, Category.comp_id]
-  have hcomm : (biprod.inl : A ⟶ A ⊞ Z) ≫ biprod.map g (𝟙 Z) = g ≫ biprod.inl := by simp
+  -- Mathlib's pushout square for `coprod.inl`, transported along `A ⨿ Z ≅ A ⊞ Z`.
   have hbase : IsPushout (biprod.inl : A ⟶ A ⊞ Z) g (biprod.map g (𝟙 Z))
       (biprod.inl : A' ⟶ A' ⊞ Z) :=
-    IsPushout.of_isColimit' ⟨hcomm⟩ (PushoutCocone.IsColimit.mk hcomm
-      (fun s => biprod.desc s.inr (biprod.inr ≫ s.inl))
-      (fun s => by apply biprod.hom_ext' <;> simp [s.condition])
-      (fun _ => by simp)
-      (fun s m h₁ h₂ => by
-        apply biprod.hom_ext'
-        · simpa using h₂
-        · simpa using biprod.inr ≫= h₁))
+    (IsPushout.of_coprod_inl_with_id g Z).of_iso (Iso.refl A) (biprod.isoCoprod A Z).symm
+      (Iso.refl A') (biprod.isoCoprod A' Z).symm (by simp [coprod.inl_desc]) (by simp)
+      (by ext <;> simp) (by simp [coprod.inl_desc])
   refine ⟨A' ⊞ Z, e.hom ≫ biprod.map g (𝟙 Z), biprod.inl, ?_, split_isInflation_biprod_inl A' Z⟩
   exact hbase.of_iso (Iso.refl A) e.symm (Iso.refl A') (Iso.refl _) (by simpa using hi')
     (by simp) (by simp) (by simp)
@@ -290,17 +278,13 @@ theorem exists_isPullback_of_split_isDeflation {Y Z A : C} {p : Y ⟶ Z}
     ∃ (T : C) (fst : T ⟶ A) (snd : T ⟶ Y),
       IsPullback fst snd f p ∧ (split C).IsDeflation fst := by
   obtain ⟨X, e, he⟩ := (split_isDeflation_iff p).mp hp
-  have hcomm : (biprod.snd : X ⊞ A ⟶ A) ≫ f = biprod.map (𝟙 X) f ≫ biprod.snd := by simp
+  -- Mathlib's pullback square for `prod.fst`, transported along `A ⨯ X ≅ A ⊞ X ≅ X ⊞ A`.
   have hbase : IsPullback (biprod.snd : X ⊞ A ⟶ A) (biprod.map (𝟙 X) f) f
       (biprod.snd : X ⊞ Z ⟶ Z) :=
-    IsPullback.of_isLimit' ⟨hcomm⟩ (PullbackCone.IsLimit.mk hcomm
-      (fun s => biprod.lift (s.snd ≫ biprod.fst) s.fst)
-      (fun _ => by simp)
-      (fun s => by apply biprod.hom_ext <;> simp [s.condition])
-      (fun s m h₁ h₂ => by
-        apply biprod.hom_ext
-        · simpa using h₂ =≫ (biprod.fst : X ⊞ Z ⟶ X)
-        · simpa using h₁))
+    (IsPullback.of_prod_fst_with_id f X).of_iso
+      ((biprod.isoProd A X).symm ≪≫ biprod.braiding A X) (Iso.refl A)
+      ((biprod.isoProd Z X).symm ≪≫ biprod.braiding Z X) (Iso.refl Z)
+      (by simp) (by ext <;> simp) (by simp) (by simp)
   refine ⟨X ⊞ A, biprod.snd, biprod.map (𝟙 X) f ≫ e.inv, ?_, split_isDeflation_biprod_snd X A⟩
   exact hbase.of_iso (Iso.refl _) (Iso.refl A) e.symm (Iso.refl Z) (by simp) (by simp) (by simp)
     (by simpa using he.symm)
@@ -393,18 +377,12 @@ theorem conflation_biprodShortComplex (E : ExactStructure C) (X Z : C) :
   have hpair' : IsKernelCokernelPair
       (ShortComplex.mk (biprod.inl : X ⟶ X ⊞ Z) biprod.snd hzero) :=
     IsKernelCokernelPair.of_hasBinaryBiproduct X Z
-  obtain ⟨d, hd⟩ : ∃ d : Z' ⟶ Z, q ≫ d = biprod.snd :=
-    ⟨hpair.desc _ hzero, hpair.g_desc _ _⟩
-  obtain ⟨d', hd'⟩ : ∃ d' : Z ⟶ Z', (biprod.snd : X ⊞ Z ⟶ Z) ≫ d' = q :=
-    ⟨hpair'.desc q hq, hpair'.g_desc _ _⟩
-  have hepi : Epi q := hpair.epi_g
-  have hepi' : Epi (biprod.snd : X ⊞ Z ⟶ Z) := hpair'.epi_g
-  have hiso : IsIso d := by
-    refine ⟨d', ?_, ?_⟩
-    · rw [← cancel_epi q, ← Category.assoc, hd, hd', Category.comp_id]
-    · rw [← cancel_epi (biprod.snd : X ⊞ Z ⟶ Z), ← Category.assoc, hd', hd, Category.comp_id]
+  let e : Z' ≅ Z := IsColimit.coconePointUniqueUpToIso hpair.gIsCokernel hpair'.gIsCokernel
+  have hd : q ≫ e.hom = biprod.snd :=
+    IsColimit.comp_coconePointUniqueUpToIso_hom hpair.gIsCokernel hpair'.gIsCokernel
+      WalkingParallelPair.one
   refine E.toConflationClass.conflation_of_iso ?_ hQ
-  exact ShortComplex.isoMk (Iso.refl _) (Iso.refl _) (asIso d) (by simp) (by simpa using hd.symm)
+  exact ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simpa using hd.symm)
 
 /-- **A short complex with a splitting is a conflation of every exact structure.**
 Equivalently, the split exact structure is the smallest exact structure on `C`. -/
@@ -417,16 +395,6 @@ theorem conflation_of_splitting (E : ExactStructure C) {S : ShortComplex C} (s :
 theorem conflation_of_split_conflation (E : ExactStructure C) {S : ShortComplex C}
     (hS : (ExactStructure.split C).Conflation S) : E.Conflation S :=
   E.conflation_of_splitting ((split_conflation S).mp hS).some
-
-/-- In every exact structure an isomorphism is an inflation. -/
-theorem isInflation_of_isIso (E : ExactStructure C) {X Y : C} (f : X ⟶ Y) [IsIso f] :
-    E.IsInflation f :=
-  E.inflations.of_isIso f
-
-/-- In every exact structure an isomorphism is a deflation. -/
-theorem isDeflation_of_isIso (E : ExactStructure C) {X Y : C} (f : X ⟶ Y) [IsIso f] :
-    E.IsDeflation f :=
-  E.deflations.of_isIso f
 
 /-- Every split inflation is an inflation of any exact structure. -/
 theorem isInflation_of_split_isInflation (E : ExactStructure C) {X Y : C} {i : X ⟶ Y}
