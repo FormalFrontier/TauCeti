@@ -40,7 +40,7 @@ make this explicit data available without requiring downstream users to unfold t
 
 * `TauCeti.DynkinType.hasCartanType_simplyConnectedRootDatum`: the pinned datum realizes its
   indexing Dynkin type.
-* `TauCeti.DynkinType.corootSpan_simplyConnectedRootDatum_eq_top`: its coroots span the cocharacter
+* `TauCeti.DynkinType.span_coroot_simplyConnectedRootDatum`: its coroots span the cocharacter
   lattice.
 * `TauCeti.DynkinType.root_simpleIndex`, `coroot_simpleIndex`, and
   `mem_support_simplyConnectedBase`: the entrywise pinning of the simple roots and base.
@@ -405,7 +405,7 @@ theorem hasCartanType_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid) :
 
 /-- The coroots of the pinned datum span the cocharacter lattice. This is the simply connected
 lattice condition consumed by the pinned Chevalley--Demazure construction. -/
-theorem corootSpan_simplyConnectedRootDatum_eq_top (t : DynkinType) (ht : t.Valid) :
+theorem span_coroot_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid) :
     Submodule.span ℤ (Set.range (t.simplyConnectedRootDatum ht).coroot) = ⊤ := by
   cases t with
   | A n => exact corootSpan_typeASimplyConnectedRootDatum_eq_top n
