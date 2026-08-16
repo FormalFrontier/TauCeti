@@ -19,8 +19,6 @@ manifold differential of a function to tangent vectors whose base point varies.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
 * `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
   normed vector space.
-* `mfderiv_continuousLinearMap_apply_const_apply`: differentiation commutes with evaluating a
-  continuous-linear-map-valued function at a fixed vector.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
   tangent bundle is `C^m` when `m + 1 ≤ n`.
 
@@ -85,31 +83,6 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
   rw [mvfderiv, ContinuousLinearMap.comp_apply]
   -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
   rfl
-
-omit [IsManifold I 1 M] in
-/-- The derivative of a continuous-linear-map-valued function, evaluated at a fixed vector, is
-the derivative of the pointwise evaluation. Tangent spaces of normed vector spaces are
-definitionally the vector spaces themselves; the `show ... from` terms expose those identifications
-to `mfderiv`. -/
-theorem mfderiv_continuousLinearMap_apply_const_apply
-    {V : Type*} [NormedAddCommGroup V] [NormedSpace 𝕜 V]
-    {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W]
-    (f : M → V →L[𝕜] W) (x : M) (v : TangentSpace I x) (y : V)
-    (hf : MDiffAt f x) :
-    (show V →L[𝕜] W from mfderiv I 𝓘(𝕜, V →L[𝕜] W) f x v) y =
-      (show W from mfderiv I 𝓘(𝕜, W) (fun z ↦ f z y) x v) := by
-  let evalY : (V →L[𝕜] W) →L[𝕜] W := (ContinuousLinearMap.apply 𝕜 W) y
-  have h := mfderiv_comp_apply x evalY.mdifferentiableAt hf v
-  rw [evalY.hasMFDerivAt.mfderiv] at h
-  have hfun : evalY ∘ f = fun z ↦ f z y := by
-    funext z
-    exact ContinuousLinearMap.apply_apply y (f z)
-  rw [hfun] at h
-  calc
-    (show V →L[𝕜] W from mfderiv I 𝓘(𝕜, V →L[𝕜] W) f x v) y =
-        evalY (show V →L[𝕜] W from mfderiv I 𝓘(𝕜, V →L[𝕜] W) f x v) :=
-      (ContinuousLinearMap.apply_apply y _).symm
-    _ = (show W from mfderiv I 𝓘(𝕜, W) (fun z ↦ f z y) x v) := h.symm
 
 /-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
 tangent bundle when `m + 1 ≤ n`. -/

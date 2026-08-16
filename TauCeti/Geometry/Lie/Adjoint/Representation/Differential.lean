@@ -47,8 +47,7 @@ attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
-the Lie-algebra adjoint `ad X Y`. The tangent space of a normed vector space is definitionally the
-vector space itself; `show ... from` exposes that identification to `mfderiv`. -/
+the Lie-algebra adjoint `ad X Y`. -/
 @[simp]
 theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
@@ -59,6 +58,8 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
       LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
+  -- The tangent space of a normed vector space is definitionally that vector space; the statement's
+  -- `show ... from` ascription exposes this identification to `mfderiv`.
   let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
     (I := I) (G := G) BoundarylessManifold.isInteriorPoint
   let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
@@ -119,8 +120,7 @@ theorem mfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     _ = ⁅X, Y⁆ := by rw [eLie.symm_apply_apply, eLie.symm_apply_apply]
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
-Mathlib's Lie-algebra adjoint map. The tangent space of a normed vector space is definitionally the
-vector space itself; `show ... from` exposes that identification to `mfderiv`. -/
+Mathlib's Lie-algebra adjoint map. -/
 @[simp]
 theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
@@ -136,14 +136,42 @@ theorem mfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation
         (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
+  -- The operator space's tangent space is definitionally the operator space; the statement's
+  -- `show ... from` ascription exposes this identification to `mfderiv`.
   let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
     finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
   -- Identify the operator-valued derivative pointwise by differentiating evaluation at `Y`.
   apply ContinuousLinearMap.ext
   intro Y
-  rw [mfderiv_continuousLinearMap_apply_const_apply
-    (hf := (contMDiff_continuousAdjointRepresentation (I := I) (G := G)).mdifferentiable
-      (by simp) 1)]
+  let evalY :
+      (LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G) →L[ℝ]
+        LeftInvariantDerivation I G :=
+    (ContinuousLinearMap.apply ℝ (LeftInvariantDerivation I G)) Y
+  have hEval := mfderiv_comp_apply 1 evalY.mdifferentiableAt
+    ((contMDiff_continuousAdjointRepresentation (I := I) (G := G)).mdifferentiable
+      (by simp) 1)
+    (pointDerivationEquivTangentSpace (I := I) 1
+      BoundarylessManifold.isInteriorPoint (LeftInvariantDerivation.evalAt 1 X))
+  rw [evalY.hasMFDerivAt.mfderiv] at hEval
+  have hfun : evalY ∘ continuousAdjointRepresentation (I := I) (G := G) =
+      fun g : G ↦ continuousAdjointRepresentation (I := I) g Y := by
+    funext g
+    exact ContinuousLinearMap.apply_apply Y _
+  rw [hfun] at hEval
+  have hpoint :
+      (show LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G from
+        mfderiv I
+          𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+          (continuousAdjointRepresentation (I := I) (G := G)) 1
+          (pointDerivationEquivTangentSpace (I := I) 1
+            BoundarylessManifold.isInteriorPoint (LeftInvariantDerivation.evalAt 1 X))) Y =
+        (show LeftInvariantDerivation I G from
+          mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G)
+            (fun g : G ↦ continuousAdjointRepresentation (I := I) g Y) 1
+            (pointDerivationEquivTangentSpace (I := I) 1
+              BoundarylessManifold.isInteriorPoint (LeftInvariantDerivation.evalAt 1 X))) := by
+    exact (ContinuousLinearMap.apply_apply Y _).symm.trans hEval.symm
+  rw [hpoint]
   rw [show (fun g : G => continuousAdjointRepresentation (I := I) g Y) =
       fun g : G => Ad (I := I) g Y by
     funext g
