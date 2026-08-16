@@ -75,12 +75,9 @@ private theorem radicalQuotientBilin_mk (x y : A) :
 private theorem radicalQuotientMkAux_ker :
     A.radical.toIntSubmodule.mkQ.toAddMonoidHom.ker = A.radical := by
   ext x
-  rw [AddMonoidHom.mem_ker]
-  -- Expose the quotient map and the common carrier of `radical` and `toIntSubmodule`;
-  -- both bundled wrappers preserve these data definitionally.
-  change Submodule.Quotient.mk x = 0 ↔ x ∈ A.radical
-  rw [Submodule.Quotient.mk_eq_zero]
-  rfl
+  rw [AddMonoidHom.mem_ker, LinearMap.toAddMonoidHom_coe, Submodule.mkQ_apply,
+    Submodule.Quotient.mk_eq_zero, ← SetLike.mem_coe, AddSubgroup.coe_toIntSubmodule,
+    SetLike.mem_coe]
 
 /-- The finite bilinear module obtained by quotienting by the radical. -/
 noncomputable def radicalQuotient : FiniteBilinearModule where
