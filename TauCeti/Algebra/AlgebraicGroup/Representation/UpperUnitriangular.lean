@@ -187,7 +187,7 @@ theorem upperUnitriangularCoordinateBialgHom_comp_coordinateMap
 
 /-- If the ordinary coordinate morphism of an upper-unitriangular representation is surjective,
 then its factored coordinate morphism `O(U_n) ⟶ H` is surjective. -/
-theorem upperUnitriangularCoordinateBialgHom_surjective_of_surjective
+theorem upperUnitriangularCoordinateBialgHom_surjective_of_coordinateBialgHom_surjective
     (b : Basis (Fin n) R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular)
     (hsurj : Function.Surjective (coordinateBialgHom (H := H) b)) :
     Function.Surjective (upperUnitriangularCoordinateBialgHom (H := H) b h) := by
@@ -220,29 +220,30 @@ theorem upperUnitriangularCoordinateBialgHom_surjective_iff_isFaithful
     obtain ⟨x, hx⟩ := hsurj y
     obtain ⟨z, hz⟩ := UpperUnitriangular.coordinateMap_surjective R n x
     refine ⟨z, ?_⟩
-    change upperUnitriangularCoordinateBialgHom (H := H) b h
-      ((UpperUnitriangular.coordinateMap R n).hom z) = y
-    rw [hz, hx]
-  · exact upperUnitriangularCoordinateBialgHom_surjective_of_surjective b h
+    simpa only [BialgHom.comp_apply, hz] using hx
+  · exact
+      upperUnitriangularCoordinateBialgHom_surjective_of_coordinateBialgHom_surjective b h
 
-/-- The morphism from the affine group represented by `H` to `U_n` associated to a basis in
-which the coefficient matrix is upper unitriangular. -/
+variable {m : Type} [Fintype m] [LinearOrder m]
+
+/-- The morphism from the affine group represented by `H` to the upper-unitriangular group
+associated to a basis in which the coefficient matrix is upper unitriangular. -/
 def upperUnitriangularCoordinateGroupSchemeHom
-    (b : Basis (Fin n) R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) :
+    (b : Basis m R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) :
     (hopfSpec (CommRingCat.of R)).obj (Opposite.op (CommHopfAlgCat.of R H)) ⟶
-      UpperUnitriangular.groupScheme R (Fin n) :=
+      UpperUnitriangular.groupScheme R m :=
   (hopfSpec (CommRingCat.of R)).map
       (CommHopfAlgCat.ofHom (upperUnitriangularCoordinateBialgHom b h)).op ≫
-    eqToHom (UpperUnitriangular.groupScheme_def R (Fin n)).symm
+    eqToHom (UpperUnitriangular.groupScheme_def R m).symm
 
 /-- The upper-unitriangular representation morphism is relative spectrum applied to its
-coordinate morphism, followed by the defining identification of `U_n`. -/
+coordinate morphism, followed by the defining identification of the upper-unitriangular group. -/
 theorem upperUnitriangularCoordinateGroupSchemeHom_def
-    (b : Basis (Fin n) R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) :
+    (b : Basis m R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) :
     upperUnitriangularCoordinateGroupSchemeHom (H := H) b h =
       (hopfSpec (CommRingCat.of R)).map
           (CommHopfAlgCat.ofHom (upperUnitriangularCoordinateBialgHom b h)).op ≫
-        eqToHom (UpperUnitriangular.groupScheme_def R (Fin n)).symm :=
+        eqToHom (UpperUnitriangular.groupScheme_def R m).symm :=
   (rfl)
 
 /-- Composing the upper-unitriangular representation with `U_n ⟶ GL_n` recovers the usual
@@ -259,24 +260,23 @@ theorem upperUnitriangularCoordinateGroupSchemeHom_comp_inclusion
       CommHopfAlgCat.ofHom (coordinateBialgHom (H := H) b) =
         UpperUnitriangular.coordinateMap R n ≫
           CommHopfAlgCat.ofHom (upperUnitriangularCoordinateBialgHom (H := H) b h) := by
-    apply CommHopfAlgCat.hom_ext
-    change coordinateBialgHom (H := H) b =
-      (upperUnitriangularCoordinateBialgHom (H := H) b h).comp
-        (UpperUnitriangular.coordinateMap R n).hom
-    exact (upperUnitriangularCoordinateBialgHom_comp_coordinateMap b h).symm
+    rw [← CommHopfAlgCat.ofHom_hom (UpperUnitriangular.coordinateMap R n),
+      ← CommHopfAlgCat.ofHom_comp]
+    exact congrArg CommHopfAlgCat.ofHom
+      (upperUnitriangularCoordinateBialgHom_comp_coordinateMap b h).symm
   rw [← Category.assoc, ← Functor.map_comp, ← op_comp, ← hcoordinate]
 
 /-- The upper-unitriangular representation morphism is a closed immersion exactly when its
 coordinate Hopf-algebra morphism is surjective. -/
 @[simp]
 theorem isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom_iff
-    (b : Basis (Fin n) R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) :
+    (b : Basis m R M) (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) :
     IsClosedImmersion
         (upperUnitriangularCoordinateGroupSchemeHom (H := H) b h).hom.hom.left ↔
       Function.Surjective (upperUnitriangularCoordinateBialgHom (H := H) b h) := by
   rw [upperUnitriangularCoordinateGroupSchemeHom]
   exact CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
-    (UpperUnitriangular.groupScheme_def R (Fin n)) _
+    (UpperUnitriangular.groupScheme_def R m) _
 
 /-- The morphism into `U_n` defined by an upper-unitriangular coefficient matrix is a closed
 immersion exactly when the comodule is faithful. -/
