@@ -6,7 +6,6 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Complement.Ramification
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Discriminant
-public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.InfinitePlace
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Quadratic
 public import TauCeti.NumberTheory.RamificationInertia.Tower
 import TauCeti.NumberTheory.Multiquadratic.Quadratic.Ramification
@@ -18,11 +17,12 @@ import Mathlib.RingTheory.Ideal.NatInt
 
 For a squarefree integer `d`, `candidateGenusField hd` is the compositum of the quadratic fields
 attached to the prime discriminants dividing `fundamentalDiscriminant d`, and
-`candidateGenusFieldBase hd` is the copy of `K = ℚ(√d)` inside it. This file proves that every
-prime of `𝓞 K` is unramified in the candidate genus field: it is an unramified extension of
-`ℚ(√d)` at all finite places. This is the defining property of the genus field at the finite
-places, and the half of the genus-field identification the roadmap flags as the trap, since it is
-exactly where ramification at `2` and at the primes dividing `d` has to be controlled.
+`candidateGenusFieldBase hd` is the copy of `K = ℚ(√d)` inside it. This file proves that, for such
+a `d` that is moreover not a rational square, every prime of `𝓞 K` is unramified in the candidate
+genus field: it is an unramified extension of `ℚ(√d)` at all finite places. This is the defining
+property of the genus field at the finite places, and the half of the genus-field identification
+the roadmap flags as the trap, since it is exactly where ramification at `2` and at the primes
+dividing `d` has to be controlled.
 
 The proof splits on the rational prime `p` below the given prime of `𝓞 K`.
 
@@ -39,8 +39,9 @@ The proof splits on the rational prime `p` below the given prime of `𝓞 K`.
   bounds the absolute ramification index upstairs by `2` as well, so the relative ramification
   index is `1`.
 
-For imaginary `d` the base is totally complex, hence unramified at the infinite places too
-(`isUnramifiedAtInfinitePlaces_candidateGenusField`), and the two statements combine into
+An imaginary `d` is in particular not a rational square (`not_isSquare_of_neg`), and the base is
+then totally complex, hence unramified at the infinite places too
+(`isUnramifiedAtInfinitePlaces_candidateGenusField`), so for `d < 0` the two results together give
 unramifiedness at *every* place: the candidate genus field of an imaginary quadratic field is an
 everywhere-unramified abelian extension of it, so it lies inside the Hilbert class field. What
 remains for the genus-field identification is maximality — that it is the largest such extension
@@ -51,11 +52,11 @@ D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Law
 
 ## Main results
 
-* `TauCeti.Multiquadratic.isUnramifiedIn_candidateGenusField_of_liesOver`: a prime of `𝓞 ℚ(√d)`
-  lying over a given rational prime is unramified in the candidate genus field.
-* `TauCeti.Multiquadratic.isUnramifiedIn_candidateGenusField`: every prime of `𝓞 ℚ(√d)` is.
-* `TauCeti.Multiquadratic.isUnramifiedIn_and_isUnramifiedAtInfinitePlaces_candidateGenusField`: for
-  `d < 0` the candidate genus field is unramified over `ℚ(√d)` at every place, finite or infinite.
+* `TauCeti.Multiquadratic.isUnramifiedIn_candidateGenusField_of_liesOver`: for squarefree `d` that
+  is not a rational square, a prime of `𝓞 ℚ(√d)` lying over a given rational prime is unramified
+  in the candidate genus field.
+* `TauCeti.Multiquadratic.isUnramifiedIn_candidateGenusField`: under the same hypotheses, every
+  prime of `𝓞 ℚ(√d)` is.
 -/
 
 public section
@@ -131,24 +132,5 @@ theorem isUnramifiedIn_candidateGenusField (hd : Squarefree d) (hnsq : ¬ IsSqua
     exact Algebra.isUnramifiedIn_bot
   · have : 𝔭.LiesOver (Ideal.span {(p : ℤ)}) := ⟨hspan.symm⟩
     exact isUnramifiedIn_candidateGenusField_of_liesOver hd hnsq hp 𝔭
-
-/-- **The candidate genus field of an imaginary quadratic field is unramified everywhere over it.**
-For squarefree `d < 0`, the candidate genus field is unramified over the embedded base `ℚ(√d)` at
-every finite place and at every infinite place. Being abelian over `ℚ` (hence over `ℚ(√d)`), it is
-therefore an unramified abelian extension of `ℚ(√d)`, so it sits inside the Hilbert class field.
-
-Identifying it with the genus field — proving it is the *maximal* unramified extension abelian
-over `ℚ` — and the isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` remain later work. -/
-theorem isUnramifiedIn_and_isUnramifiedAtInfinitePlaces_candidateGenusField (hd : Squarefree d)
-    (hneg : d < 0) :
-    (∀ 𝔭 : Ideal (𝓞 (candidateGenusFieldBase hd)), 𝔭.IsPrime →
-        Algebra.IsUnramifiedIn (𝓞 (candidateGenusField hd)) 𝔭) ∧
-      IsUnramifiedAtInfinitePlaces (candidateGenusFieldBase hd) (candidateGenusField hd) := by
-  have hnsq : ¬ IsSquare ((d : ℤ) : ℚ) := by
-    rintro ⟨q, hq⟩
-    have hd0 : ((d : ℤ) : ℚ) < 0 := by exact_mod_cast hneg
-    nlinarith [hq, sq_nonneg q, mul_self_nonneg q]
-  exact ⟨fun 𝔭 _ => isUnramifiedIn_candidateGenusField hd hnsq 𝔭,
-    isUnramifiedAtInfinitePlaces_candidateGenusField hd hneg⟩
 
 end TauCeti.Multiquadratic
