@@ -27,6 +27,8 @@ the same universe, which is reflected in the declaration in this file.
   morphism of Hopf spectra to be a closed immersion.
 * `TauCeti.CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff`: the same criterion
   after identifying the target group scheme.
+* `TauCeti.CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_comp_eqToHom_iff`: the same
+  criterion after identifying both the source and the target group scheme.
 -/
 
 public section
@@ -75,6 +77,30 @@ lemma isClosedImmersion_hopfSpec_map_comp_eqToHom_iff {S : CommRingCat.{u}}
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
   exact isClosedImmersion_hopfSpec_map_iff f
+
+/-- Named presentations of both the source and the target group scheme leave the closed-immersion
+criterion unchanged. This is the shape in which a group scheme defined by a coordinate Hopf
+algebra, such as `𝔾ₐ` or `GLₙ`, presents a morphism between two such group schemes. -/
+@[simp↓]
+lemma isClosedImmersion_eqToHom_comp_hopfSpec_map_comp_eqToHom_iff {S : CommRingCat.{u}}
+    {A B : _root_.CommHopfAlgCat.{u} S}
+    {G K : Grp (Over (AlgebraicGeometry.Spec S))}
+    (hG : G = (AlgebraicGeometry.hopfSpec S).obj (Opposite.op B))
+    (hK : K = (AlgebraicGeometry.hopfSpec S).obj (Opposite.op A)) (f : A ⟶ B) :
+    IsClosedImmersion
+        ((eqToHom hG ≫ (AlgebraicGeometry.hopfSpec S).map f.op ≫
+          eqToHom hK.symm).hom.hom.left) ↔
+      Function.Surjective f.hom := by
+  let _ : IsIso (eqToHom hG).hom.hom.left :=
+    ((Over.forget (AlgebraicGeometry.Spec S)).mapIso
+      ((Grp.forget (Over (AlgebraicGeometry.Spec S))).mapIso
+        (eqToIso hG))).isIso_hom
+  rw [show (eqToHom hG ≫ (AlgebraicGeometry.hopfSpec S).map f.op ≫
+        eqToHom hK.symm).hom.hom.left =
+      (eqToHom hG).hom.hom.left ≫
+        ((AlgebraicGeometry.hopfSpec S).map f.op ≫ eqToHom hK.symm).hom.hom.left from rfl,
+    MorphismProperty.cancel_left_of_respectsIso (P := @IsClosedImmersion)]
+  exact isClosedImmersion_hopfSpec_map_comp_eqToHom_iff hK f
 
 end CommHopfAlgCat
 
