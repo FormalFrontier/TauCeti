@@ -91,6 +91,7 @@ theorem cocharacterMap_comp {S T U : MultiplicativeTypeCommHopfAlgCat k}
   simp
 
 /-- The map on cocharacters is equivariant for the contragredient absolute-Galois actions. -/
+@[simp]
 theorem cocharacterMap_smul
     {S T : MultiplicativeTypeCommHopfAlgCat k} (f : S ⟶ T)
     (σ : Field.absoluteGaloisGroup k) (y : cocharacterLattice T) :
@@ -163,6 +164,16 @@ noncomputable def cocharacterLatticeRepresentationMap
         (toMultiplicativeTypeMap f) σ y
   }
 
+/-- Evaluation of the equivariant morphism induced on geometric cocharacters. -/
+@[simp]
+theorem cocharacterLatticeRepresentationMap_hom_apply
+    {S T : TorusCommHopfAlgCat k} (f : S ⟶ T)
+    (y : MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat T)) :
+    (cocharacterLatticeRepresentationMap f).hom y =
+      MultiplicativeTypeCommHopfAlgCat.cocharacterMap (toMultiplicativeTypeMap f) y := by
+  rfl
+
 /-- Cocharacter lattices and their Galois actions form a contravariant functor on coordinate
 Hopf algebras of tori. -/
 private noncomputable def cocharacterLatticeRepresentationFunctor :
@@ -223,6 +234,18 @@ theorem cocharacterLatticeFunctor_map_hom
   rw [hlift]
   -- The remaining equality only erases the propositionally irrelevant object transports inserted
   -- by the lifted functor.
+  rfl
+
+/-- Evaluation of the cocharacter-lattice functor on a morphism of torus coordinate rings. -/
+theorem cocharacterLatticeFunctor_map_hom_apply
+    {S T : TorusCommHopfAlgCat k} (f : S ⟶ T)
+    (y : MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
+      (toMultiplicativeTypeCommHopfAlgCat T)) :
+    (eqToHom (cocharacterLatticeFunctor_obj_obj (Opposite.op S))).hom
+        (((cocharacterLatticeFunctor (k := k)).map f.op).hom
+          ((eqToHom (cocharacterLatticeFunctor_obj_obj (Opposite.op T)).symm).hom y)) =
+      MultiplicativeTypeCommHopfAlgCat.cocharacterMap (toMultiplicativeTypeMap f) y := by
+  rw [cocharacterLatticeFunctor_map_hom]
   rfl
 
 /-- The character--cocharacter pairing is natural: mapping a character covariantly or mapping a
