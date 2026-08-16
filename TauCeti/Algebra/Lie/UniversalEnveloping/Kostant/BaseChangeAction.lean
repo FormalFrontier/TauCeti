@@ -46,8 +46,11 @@ namespace UniversalEnvelopingAlgebra
 
 universe u v w
 
+-- Match tensor products to the explicit `ℤ`-algebra instance supplied by a value-ring object.
+attribute [local instance high] Algebra.toModule
+
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
-variable {R : Type v} [CommRing R]
+variable {R : Type v} [CommRing R] [Algebra ℤ R]
 variable {L : Type*} [LieRing L] [LieAlgebra ℚ L]
 variable {ι : Type w} {κ : Type*}
 

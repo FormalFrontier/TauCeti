@@ -120,7 +120,11 @@ theorem integralDividedPower_eq_zero_of_le (x : A)
 
 /-! ## The divided-power exponential after base change -/
 
-variable {R : Type v} [CommRing R]
+-- Use the module structure carried by the explicit `ℤ`-algebra. Although an algebra structure
+-- over `ℤ` is unique, category objects need not store the canonical instance definitionally.
+attribute [local instance high] Algebra.toModule
+
+variable {R : Type v} [CommRing R] [Algebra ℤ R]
 
 /-- The finite integral divided-power exponential on the scalar extension `R ⊗[ℤ] M`
 for an element `x`.
@@ -145,12 +149,13 @@ theorem baseChangeExp_tmul (x : A) (M : S)
   simp [baseChangeExp, smul_tmul']
 
 /-- The base-changed divided-power exponential is natural under maps of parameter rings. -/
-theorem map_baseChangeExp {T : Type*} [CommRing T] (φ : R →+* T) (x : A) (M : S)
+theorem map_baseChangeExp {T : Type*} [CommRing T] [Algebra ℤ T] (φ : R →ₐ[ℤ] T)
+    (x : A) (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (t : R) :
     ∀ z : R ⊗[ℤ] M,
-      TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id (baseChangeExp x M hM t z) =
+      TensorProduct.map φ.toLinearMap LinearMap.id (baseChangeExp x M hM t z) =
         baseChangeExp x M hM (φ t)
-          (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
+          (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
   intro z
   induction z using TensorProduct.induction_on with
   | zero => simp
@@ -158,7 +163,6 @@ theorem map_baseChangeExp {T : Type*} [CommRing T] (φ : R →+* T) (x : A) (M :
       rw [TensorProduct.map_tmul, baseChangeExp_tmul, baseChangeExp_tmul]
       simp only [map_sum, TensorProduct.map_tmul, LinearMap.id_apply,
         AlgHom.toLinearMap_apply, map_pow, map_mul]
-      rfl
   | add y z hy hz => simp [hy, hz]
 
 private theorem baseChange_mul_integralDividedPower
@@ -200,6 +204,7 @@ theorem baseChangeExp_tmul_of_pow_eq_zero (x : A) (M : S)
       ∑ n ∈ range k, (t ^ n * r) ⊗ₜ[ℤ] integralDividedPower x M n (hM n) v := by
   simp [baseChangeExp_of_pow_eq_zero x M hM hk, smul_tmul']
 
+omit [Algebra ℤ R] in
 /-- Binomial convolution identity for truncated divided-power series.
 
 Adapted from Mathlib's `IsNilpotent.exp_add_of_commute` in
