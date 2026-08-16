@@ -167,6 +167,8 @@ theorem val_kostantElementaryNumberedSymmetry (A : CommAlgCat.{w} ℤ)
         LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
       invariantRestrictUnit (R := A) θ M hθM * (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
         (invariantRestrictUnit (R := A) θ M hθM)⁻¹ := by
+  -- Traverse each equivalence wrapper explicitly; this formula should not depend on their
+  -- definitional transparency.
   rw [kostantElementaryNumberedSymmetry, MulEquiv.trans_apply,
     MulEquiv.subgroupCongr_apply, MulEquiv.coe_subgroupMap_apply, MulAut.conj_apply]
 
