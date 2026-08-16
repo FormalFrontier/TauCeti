@@ -46,6 +46,13 @@ namespace DynkinType
 private def e7Extend (v : Fin 7 → ℤ) : Fin 8 → ℤ :=
   fun i => if hi : (i : ℕ) < 7 then v ⟨i, hi⟩ else 0
 
+/-- The positive `E₈` coroots with zero final coordinate are exactly the positive coroots of
+the principal `E₇` subsystem, extended by zero. -/
+private theorem e8PositiveCoroot_last_eq_zero_iff (j : Fin 120) :
+    e8PositiveCoroot j 7 = 0 ↔
+      ∃ i : Fin 63, e8PositiveCoroot j = e7Extend (e7PositiveCoroot i) := by
+  fin_cases j <;> decide +kernel +revert
+
 private theorem norm_e7Extend (v : Fin 7 → ℤ) :
     (e7Extend v ᵥ* CartanMatrix.E₈) ⬝ᵥ e7Extend v =
       (v ᵥ* CartanMatrix.E₇) ⬝ᵥ v := by
