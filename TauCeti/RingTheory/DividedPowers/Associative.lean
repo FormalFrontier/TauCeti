@@ -115,6 +115,7 @@ theorem dividedPower_smul (q : ℚ) (n : ℕ) (x : A) :
 
 Conjugation is an algebra automorphism, so it commutes with the rational scalar as well as with
 the power. This is what lets a Chevalley group element move past a root subgroup. -/
+@[simp]
 theorem dividedPower_units_conj (u : Aˣ) (n : ℕ) (x : A) :
     dividedPower n ((u : A) * x * ↑u⁻¹) = (u : A) * dividedPower n x * ↑u⁻¹ := by
   rw [dividedPower_def, dividedPower_def, Units.conj_pow, mul_smul_comm, smul_mul_assoc]

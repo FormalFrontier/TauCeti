@@ -140,6 +140,14 @@ theorem coe_kostantWeylRestrict_apply (v : M) :
       ((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) • (v : V) := by
   simp [kostantWeylRestrict]
 
+/-- The inverse of the restricted Weyl element acts by the inverse of the Weyl element. -/
+@[simp]
+theorem coe_kostantWeylRestrict_symm_apply (v : M) :
+    (((kostantWeylRestrict e h ρ M hM hi hj hT).symm v : M) : V) =
+      (((weylUnit hT hi hj : (Module.End ℚ V)ˣ)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) •
+        (v : V) := by
+  simp [kostantWeylRestrict]
+
 section Points
 
 variable {A : Type*} [CommRing A] [Algebra ℤ A]
@@ -153,21 +161,7 @@ the Chevalley product `x_i(1) x_j(-1) x_i(1)` of root subgroup elements is
 `TauCeti.UniversalEnvelopingAlgebra.kostantWeylPoints_toLinearMap_eq`. -/
 noncomputable def kostantWeylPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     A ⊗[ℤ] M ≃ₗ[A] A ⊗[ℤ] M :=
-  LinearEquiv.ofLinearMap
-    ((kostantWeylRestrict e h ρ M hM hi hj hT : M →ₗ[ℤ] M).baseChange A)
-    (((kostantWeylRestrict e h ρ M hM hi hj hT).symm : M →ₗ[ℤ] M).baseChange A)
-    (by
-      refine LinearMap.ext fun z => ?_
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | tmul r v => simp
-      | add a b ha hb => rw [map_add, map_add, ha, hb])
-    (by
-      refine LinearMap.ext fun z => ?_
-      induction z using TensorProduct.induction_on with
-      | zero => simp
-      | tmul r v => simp
-      | add a b ha hb => rw [map_add, map_add, ha, hb])
+  (kostantWeylRestrict e h ρ M hM hi hj hT).baseChange ℤ A
 
 @[simp]
 theorem kostantWeylPoints_toLinearMap :
@@ -186,6 +180,15 @@ theorem kostantWeylPoints_apply_tmul (r : A) (v : M) :
     kostantWeylPoints e h ρ M hM hi hj hT A (r ⊗ₜ[ℤ] v) =
       r ⊗ₜ[ℤ] kostantWeylRestrict e h ρ M hM hi hj hT v := by
   rw [← LinearEquiv.coe_coe, kostantWeylPoints_toLinearMap, LinearMap.baseChange_tmul,
+    LinearEquiv.coe_coe]
+
+/-- The inverse Weyl element on points acts on a pure tensor through the inverse of the integral
+automorphism. -/
+@[simp]
+theorem kostantWeylPoints_symm_apply_tmul (r : A) (v : M) :
+    (kostantWeylPoints e h ρ M hM hi hj hT A).symm (r ⊗ₜ[ℤ] v) =
+      r ⊗ₜ[ℤ] (kostantWeylRestrict e h ρ M hM hi hj hT).symm v := by
+  rw [← LinearEquiv.coe_coe, kostantWeylPoints_symm_toLinearMap, LinearMap.baseChange_tmul,
     LinearEquiv.coe_coe]
 
 /-- **The Weyl element is the Chevalley product `x_i(1) x_j(-1) x_i(1)`.**
@@ -255,8 +258,11 @@ theorem kostantWeylPoints_conj_baseChangeExp (u : A) :
 
 /-- The Weyl element is natural in the ring of points: it is the scalar extension of a single
 integral automorphism, so applying a ring homomorphism to the scalar coordinate of every tensor
-intertwines the two. -/
-theorem map_kostantWeylPoints {B : Type*} [CommRing B] [Algebra ℤ B] (φ : A →ₐ[ℤ] B)
+intertwines the two.
+
+This is the form for parameter rings carrying explicit `ℤ`-algebra structures; the version for an
+arbitrary ring homomorphism is `TauCeti.UniversalEnvelopingAlgebra.map_kostantWeylPoints`. -/
+theorem map_kostantWeylPoints_algHom {B : Type*} [CommRing B] [Algebra ℤ B] (φ : A →ₐ[ℤ] B)
     (z : A ⊗[ℤ] M) :
     TensorProduct.map φ.toLinearMap LinearMap.id
         (kostantWeylPoints e h ρ M hM hi hj hT A z) =
@@ -268,6 +274,22 @@ theorem map_kostantWeylPoints {B : Type*} [CommRing B] [Algebra ℤ B] (φ : A �
   | add a b ha hb => simp [ha, hb]
 
 end Points
+
+section RingHomPoints
+
+variable {A : Type*} [CommRing A]
+
+/-- The Weyl element is natural in the ring of points, for every homomorphism of commutative rings
+of points: a `ℤ`-algebra structure on a ring is unique, so no compatibility with a chosen one is
+needed. -/
+theorem map_kostantWeylPoints {B : Type*} [CommRing B] (φ : A →+* B) (z : A ⊗[ℤ] M) :
+    TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id
+        (kostantWeylPoints e h ρ M hM hi hj hT A z) =
+      kostantWeylPoints e h ρ M hM hi hj hT B
+        (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) :=
+  map_kostantWeylPoints_algHom e h ρ M hM hi hj hT φ.toIntAlgHom z
+
+end RingHomPoints
 
 /-! ## The reflected weight -/
 
