@@ -20,6 +20,8 @@ square-class descent shows the new root is genuinely outside the previous stage.
 * `TauCeti.Multiquadratic.finrank_sqrtTower`: `[K(root₀,…,rootₙ₋₁) : K] = 2ⁿ`.
 * `TauCeti.Multiquadratic.finrank_adjoin_range`: the same over a finite index type,
   `[K(rootᵢ : i) : K] = 2^|ι|` — the multiquadratic degree target.
+* `TauCeti.Multiquadratic.finrank_adjoin_range_ne`: omitting one root from the generating family
+  gives `[K(rootⱼ : j ≠ i) : K] = 2^(|ι| - 1)`.
 
 ## Provenance
 
@@ -113,5 +115,26 @@ theorem finrank_adjoin_range {ι : Type*} [Finite ι] {d : ι → K} {root : ι 
       simpa [toι, e.symm.injective.eq_iff, Fin.mk.injEq] using hab
   rw [hprod]
   exact hindep S' hS'ne
+
+/-- **Degree of the compositum of all but one of the roots.** If no nonempty subset product of the
+radicands `d i` is a square in `K`, then omitting the root indexed by `i` from the generating family
+lowers the degree by one power of two: `[K(rootⱼ : j ≠ i) : K] = 2^(|ι| - 1)`. -/
+theorem finrank_adjoin_range_ne {ι : Type*} [Finite ι] {d : ι → K} {root : ι → L}
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) [NeZero (2 : K)]
+    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) (i : ι) :
+    Module.finrank K
+        (IntermediateField.adjoin K (Set.range fun j : {j // j ≠ i} => root j.val))
+      = 2 ^ (Nat.card ι - 1) := by
+  classical
+  have hcard : Nat.card {j : ι // j ≠ i} = Nat.card ι - 1 := by
+    have := Fintype.ofFinite ι
+    simp [Nat.card_eq_fintype_card, Fintype.card_subtype_compl (p := fun j => j = i)]
+  rw [← hcard]
+  -- The subfamily indexed by `{j // j ≠ i}` is again square-class independent: its subset products
+  -- are subset products of the original family.
+  refine finrank_adjoin_range (d := fun j : {j // j ≠ i} => d j.val)
+    (fun j => hroot j.val) (fun S hS => ?_)
+  have h := hindep (S.map (Function.Embedding.subtype _)) hS.map
+  rwa [Finset.prod_map] at h
 
 end TauCeti.Multiquadratic

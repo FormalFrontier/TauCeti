@@ -120,16 +120,9 @@ noncomputable def galoisGroupEquivCandidateGenusField {d : ℤ} (hd : Squarefree
       (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd))
 
 /-- Transporting an automorphism supplied by the inverse sign-pattern equivalence back through
-the adjoin presentation recovers the corresponding automorphism of that presentation.
-
-`galoisGroupEquivCandidateGenusField` is by definition the composite of `autCongr` along
-`candidateGenusFieldEquivAdjoin` with the prime-discriminant equivalence, so both sides are the
-same term. No rewrite reaches this goal: once the composite is unfolded, its `MulEquiv.trans` is
-type-correct only at default transparency, because the two `Mul` instances on the automorphism
-group — one coming from `candidateGenusField hd`, the other from its `adjoin` presentation — agree
-only by unfolding `candidateGenusField`. So `rw`/`simp` lemmas such as `MulEquiv.symm_trans_apply`
-fail to match, while `rfl` closes the goal. -/
-private theorem candidateGenusFieldEquivAdjoin_map_galoisGroupEquiv_symm {d : ℤ}
+the adjoin presentation recovers the corresponding automorphism of that presentation. -/
+private theorem candidateGenusFieldEquivAdjoin_galoisGroupEquivCandidateGenusField_symm_apply
+    {d : ℤ}
     (hd : Squarefree d) (ε : {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2)
     (x : candidateGenusField hd) :
     candidateGenusFieldEquivAdjoin hd
@@ -140,6 +133,13 @@ private theorem candidateGenusFieldEquivAdjoin_map_galoisGroupEquiv_symm {d : �
         Subtype.val_injective (genusPrimeDiscriminants_not_all_three_even hd)
         (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd)).symm
           (Multiplicative.ofAdd ε)) (candidateGenusFieldEquivAdjoin hd x) := by
+  -- `galoisGroupEquivCandidateGenusField` is by definition the composite of `autCongr` along
+  -- `candidateGenusFieldEquivAdjoin` with the prime-discriminant equivalence, so both sides are
+  -- the same term. No rewrite reaches this goal: once the composite is unfolded, its
+  -- `MulEquiv.trans` is type-correct only at default transparency, because the two `Mul` instances
+  -- on the automorphism group — one coming from `candidateGenusField hd`, the other from its
+  -- `adjoin` presentation — agree only by unfolding `candidateGenusField`. So `rw`/`simp` lemmas
+  -- such as `MulEquiv.symm_trans_apply` fail to match, while `rfl` closes the goal.
   rfl
 
 /-- The candidate-genus-field Galois equivalence sends an automorphism to its sign pattern on the
@@ -164,8 +164,8 @@ chosen generator to `(-1)^(ε P)` times that generator. -/
     ((galoisGroupEquivCandidateGenusField hd).symm (Multiplicative.ofAdd ε))
         (candidateGenusFieldGen hd P) = (-1) ^ (ε P).val * candidateGenusFieldGen hd P := by
   apply (candidateGenusFieldEquivAdjoin hd).injective
-  rw [candidateGenusFieldEquivAdjoin_map_galoisGroupEquiv_symm, map_mul, map_pow, map_neg,
-    map_one, candidateGenusFieldEquivAdjoin_apply_gen]
+  rw [candidateGenusFieldEquivAdjoin_galoisGroupEquivCandidateGenusField_symm_apply, map_mul,
+    map_pow, map_neg, map_one, candidateGenusFieldEquivAdjoin_apply_gen]
   exact galoisGroupEquivPrimeDiscriminantRadicands_symm_apply_gen
     (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
     (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)

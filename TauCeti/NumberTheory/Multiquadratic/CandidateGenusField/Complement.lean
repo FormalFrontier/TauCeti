@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Degree
-import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
+import TauCeti.NumberTheory.Multiquadratic.RelativeDegree
 
 /-!
 # Complementary subfields of the candidate genus field
@@ -24,6 +24,11 @@ unramified there, the transverse-ramification cancellation theorem in
 `TauCeti.NumberTheory.RamificationInertia.Tower` uses the degree-two result below to cancel the
 ramification already present in the quadratic base.
 
+Both degree statements are the candidate-genus-field instances of the general multiquadratic facts
+`TauCeti.Multiquadratic.finrank_adjoin_range_ne` and
+`TauCeti.Multiquadratic.finrank_top_over_adjoin_range_ne`, fed the square-class independence of the
+chosen radicands.
+
 The prime-discriminant construction of the genus field is classical; see D. A. Cox, *Primes of the
 Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
 
@@ -34,12 +39,14 @@ Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
 
 ## Main results
 
-* `TauCeti.Multiquadratic.adjoin_candidateGenusFieldGen_over_complement_eq_top`: adjoining the
-  omitted root to the complementary subfield gives the whole candidate genus field.
+* `TauCeti.Multiquadratic.candidateGenusFieldComplement_le_iff`: the complementary subfield lies
+  below an intermediate field exactly when that field contains every root but the omitted one.
+* `TauCeti.Multiquadratic.adjoin_candidateGenusFieldGen_over_candidateGenusFieldComplement_eq_top`:
+  adjoining the omitted root to the complementary subfield gives the whole candidate genus field.
 * `TauCeti.Multiquadratic.finrank_candidateGenusFieldComplement`: the complementary subfield has
   absolute degree `2 ^ (t - 1)`.
-* `TauCeti.Multiquadratic.finrank_candidateGenusField_over_complement`: the candidate genus field
-  has degree two over each complementary subfield.
+* `TauCeti.Multiquadratic.finrank_candidateGenusField_over_candidateGenusFieldComplement`: the
+  candidate genus field has degree two over each complementary subfield.
 -/
 
 public section
@@ -58,11 +65,19 @@ noncomputable def candidateGenusFieldComplement (hd : Squarefree d)
   adjoin ℚ (Set.range fun Q : {Q : {Q // Q ∈ genusPrimeDiscriminants hd} // Q ≠ P} =>
     candidateGenusFieldGen hd Q.val)
 
+/-- `candidateGenusFieldComplement` presented as the compositum of the roots it keeps. -/
+theorem candidateGenusFieldComplement_def (hd : Squarefree d)
+    (P : {P // P ∈ genusPrimeDiscriminants hd}) :
+    candidateGenusFieldComplement hd P =
+      adjoin ℚ (Set.range fun Q : {Q : {Q // Q ∈ genusPrimeDiscriminants hd} // Q ≠ P} =>
+        candidateGenusFieldGen hd Q.val) := by
+  simp only [candidateGenusFieldComplement]
+
 /-- Every chosen root other than the omitted one belongs to the complementary compositum. -/
 @[simp] theorem candidateGenusFieldGen_mem_candidateGenusFieldComplement (hd : Squarefree d)
     {P Q : {P // P ∈ genusPrimeDiscriminants hd}} (hQP : Q ≠ P) :
     candidateGenusFieldGen hd Q ∈ candidateGenusFieldComplement hd P := by
-  rw [candidateGenusFieldComplement]
+  rw [candidateGenusFieldComplement_def]
   exact subset_adjoin ℚ _ ⟨⟨Q, hQP⟩, rfl⟩
 
 /-- Universal property of the complementary compositum: it lies below `F` exactly when `F`
@@ -71,38 +86,37 @@ contains every chosen root other than the omitted one. -/
     (P : {P // P ∈ genusPrimeDiscriminants hd})
     {F : IntermediateField ℚ (candidateGenusField hd)} :
     candidateGenusFieldComplement hd P ≤ F ↔
-      ∀ Q : {Q : {Q // Q ∈ genusPrimeDiscriminants hd} // Q ≠ P},
-        candidateGenusFieldGen hd Q.val ∈ F := by
-  simp only [candidateGenusFieldComplement, adjoin_le_iff, Set.range_subset_iff,
-    SetLike.mem_coe]
+      ∀ Q, Q ≠ P → candidateGenusFieldGen hd Q ∈ F := by
+  rw [candidateGenusFieldComplement_def]
+  simp only [adjoin_le_iff, Set.range_subset_iff, SetLike.mem_coe, Subtype.forall]
 
 /-- **The omitted root generates the candidate genus field over the complementary compositum.**
 Adjoining `candidateGenusFieldGen hd P` to `candidateGenusFieldComplement hd P` recovers all of
-`candidateGenusField hd`; with `finrank_candidateGenusField_over_complement` this is the quadratic
-presentation of the candidate genus field over the complementary compositum. -/
-theorem adjoin_candidateGenusFieldGen_over_complement_eq_top (hd : Squarefree d)
+`candidateGenusField hd`; with
+`finrank_candidateGenusField_over_candidateGenusFieldComplement` this is the quadratic presentation
+of the candidate genus field over the complementary compositum. -/
+theorem adjoin_candidateGenusFieldGen_over_candidateGenusFieldComplement_eq_top (hd : Squarefree d)
     (P : {P // P ∈ genusPrimeDiscriminants hd}) :
     adjoin (candidateGenusFieldComplement hd P) {candidateGenusFieldGen hd P} = ⊤ := by
-  -- Compare the two sides as `ℚ`-subfields: the extension contains every chosen root, namely the
-  -- omitted one by construction and the others through the complement, and those generate
-  -- everything.
+  have hunion : (Set.range fun Q : {Q : {Q // Q ∈ genusPrimeDiscriminants hd} // Q ≠ P} =>
+        candidateGenusFieldGen hd Q.val) ∪ {candidateGenusFieldGen hd P}
+      = Set.range (candidateGenusFieldGen hd) := by
+    ext x
+    simp only [Set.mem_union, Set.mem_range, Set.mem_singleton_iff]
+    constructor
+    · rintro (⟨Q, rfl⟩ | rfl)
+      · exact ⟨Q.val, rfl⟩
+      · exact ⟨P, rfl⟩
+    · rintro ⟨Q, rfl⟩
+      rcases eq_or_ne Q P with rfl | hQP
+      · exact Or.inr rfl
+      · exact Or.inl ⟨⟨Q, hQP⟩, rfl⟩
+  -- Adjoining the omitted root to the compositum of the others readjoins all the chosen roots.
   refine restrictScalars_injective ℚ ?_
-  rw [restrictScalars_top, eq_top_iff, ← adjoin_range_candidateGenusFieldGen_eq_top hd,
-    adjoin_le_iff, Set.range_subset_iff]
-  intro Q
-  rw [SetLike.mem_coe, mem_restrictScalars]
-  rcases eq_or_ne Q P with rfl | hQP
-  · exact subset_adjoin _ _ rfl
-  · have hmap :
-        algebraMap (candidateGenusFieldComplement hd P) (candidateGenusField hd)
-            (⟨candidateGenusFieldGen hd Q,
-              candidateGenusFieldGen_mem_candidateGenusFieldComplement hd hQP⟩ :
-              candidateGenusFieldComplement hd P) =
-          candidateGenusFieldGen hd Q := by
-      rfl
-    rw [← hmap]
-    exact IntermediateField.algebraMap_mem
-      (adjoin (candidateGenusFieldComplement hd P) {candidateGenusFieldGen hd P}) _
+  rw [restrictScalars_top, candidateGenusFieldComplement_def]
+  refine (adjoin_adjoin_left ℚ _ {candidateGenusFieldGen hd P}).trans ?_
+  rw [hunion]
+  exact adjoin_range_candidateGenusFieldGen_eq_top hd
 
 /-- The complementary compositum has absolute degree `2 ^ (t - 1)`, where
 `t = (genusPrimeDiscriminants hd).card`. -/
@@ -111,40 +125,20 @@ theorem finrank_candidateGenusFieldComplement (hd : Squarefree d)
     Module.finrank ℚ (candidateGenusFieldComplement hd P) =
       2 ^ ((genusPrimeDiscriminants hd).card - 1) := by
   classical
-  let I := {P // P ∈ genusPrimeDiscriminants hd}
-  let J := {Q : I // Q ≠ P}
-  have hcard : Nat.card J = (genusPrimeDiscriminants hd).card - 1 := by
-    let _ := Fintype.ofFinite I
-    let _ := Fintype.ofFinite J
-    rw [Nat.card_eq_fintype_card, Fintype.card_subtype_compl (fun Q : I => Q = P),
-      Fintype.card_subtype_eq P, Fintype.card_coe]
-  obtain ⟨hprime, heven_unique, _⟩ := genusPrimeDiscriminants_spec hd
-  rw [candidateGenusFieldComplement]
-  have hdegree :=
-    finrank_adjoin_roots_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
-      (fun Q : J => Q.val.val)
-      (fun Q => hprime Q.val.val Q.val.property)
-      (fun Q R h => Subtype.ext (Subtype.ext h))
-      (fun Q R hQ hR =>
-        heven_unique Q.val.val Q.val.property R.val.val R.val.property hQ hR)
-      (fun Q : J => candidateGenusFieldGen hd Q.val)
-      (fun Q => candidateGenusFieldGen_sq hd Q.val)
-  simpa only [hcard] using hdegree
+  rw [candidateGenusFieldComplement_def]
+  simpa only [Nat.card_eq_fintype_card, Fintype.card_coe] using
+    finrank_adjoin_range_ne (candidateGenusFieldGen_sq hd)
+      (not_isSquare_prod_genusPrimeDiscriminantRadicands hd) P
 
 /-- **The candidate genus field is quadratic over each complementary compositum.** Omitting one
 of the square-class-independent prime-discriminant roots lowers the absolute degree from `2 ^ t`
-to `2 ^ (t - 1)`; the tower law therefore gives relative degree two. -/
-theorem finrank_candidateGenusField_over_complement (hd : Squarefree d)
+to `2 ^ (t - 1)`, so the candidate genus field is quadratic over what is left. -/
+theorem finrank_candidateGenusField_over_candidateGenusFieldComplement (hd : Squarefree d)
     (P : {P // P ∈ genusPrimeDiscriminants hd}) :
     Module.finrank (candidateGenusFieldComplement hd P) (candidateGenusField hd) = 2 := by
-  have hpos : 0 < (genusPrimeDiscriminants hd).card :=
-    Finset.card_pos.mpr ⟨P.val, P.property⟩
-  have hpow : (2 : ℕ) ^ (genusPrimeDiscriminants hd).card =
-      2 ^ ((genusPrimeDiscriminants hd).card - 1) * 2 := by
-    rw [← pow_succ, Nat.sub_add_cancel hpos]
-  have htower := Module.finrank_mul_finrank ℚ (candidateGenusFieldComplement hd P)
-    (candidateGenusField hd)
-  rw [finrank_candidateGenusFieldComplement hd P, finrank_candidateGenusField hd, hpow] at htower
-  exact Nat.eq_of_mul_eq_mul_left (by positivity) htower
+  rw [candidateGenusFieldComplement_def]
+  exact finrank_top_over_adjoin_range_ne (candidateGenusFieldGen_sq hd)
+    (not_isSquare_prod_genusPrimeDiscriminantRadicands hd)
+    (adjoin_range_candidateGenusFieldGen_eq_top hd) P
 
 end TauCeti.Multiquadratic
