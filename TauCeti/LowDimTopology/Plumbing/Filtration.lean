@@ -61,10 +61,17 @@ private theorem fg_supported_of_finite {R α : Type*} [Semiring R] (s : Set α)
   exact Submodule.fg_span (hs.image fun a ↦ Finsupp.single a 1)
 
 /-- The `𝔽₂[U]`-submodule of plumbing chains supported on cubes of weight at most `N`. -/
-@[expose] noncomputable def supportedCharacteristicWeightSublevel (P : PlumbingGraph V)
+noncomputable def supportedCharacteristicWeightSublevel (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) :
     Submodule PlumbingCoefficient (PlumbingChain V) :=
   Finsupp.supported PlumbingCoefficient PlumbingCoefficient (P.characteristicCubeWeightSublevel k N)
+
+private theorem supportedCharacteristicWeightSublevel_def_private (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) :
+    supportedCharacteristicWeightSublevel P k N =
+      Finsupp.supported PlumbingCoefficient PlumbingCoefficient
+        (P.characteristicCubeWeightSublevel k N) :=
+  rfl
 
 /-- The chain-level characteristic-weight sublevel is the submodule supported on the
 corresponding cube sublevel. -/
@@ -73,7 +80,7 @@ theorem supportedCharacteristicWeightSublevel_def (P : PlumbingGraph V)
     supportedCharacteristicWeightSublevel P k N =
       Finsupp.supported PlumbingCoefficient PlumbingCoefficient
         (P.characteristicCubeWeightSublevel k N) :=
-  rfl
+  supportedCharacteristicWeightSublevel_def_private P k N
 
 /-- A chain belongs to the weight sublevel exactly when every cube in its support has weight at
 most the level. -/
@@ -82,14 +89,17 @@ theorem mem_supportedCharacteristicWeightSublevel (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) (c : PlumbingChain V) :
     c ∈ supportedCharacteristicWeightSublevel P k N ↔
       ∀ C ∈ c.support, C.characteristicWeight P k ≤ N := by
-  simp [supportedCharacteristicWeightSublevel, Finsupp.mem_supported, Set.subset_def]
+  rw [supportedCharacteristicWeightSublevel_def, Finsupp.mem_supported]
+  simp only [Set.subset_def, Finset.mem_coe, P.mem_characteristicCubeWeightSublevel]
 
 /-- A single cube of weight at most `N`, with any coefficient, belongs to the weight sublevel. -/
 theorem single_mem_supportedCharacteristicWeightSublevel (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) (C : PlumbingCube V) (a : PlumbingCoefficient)
     (hC : C.characteristicWeight P k ≤ N) :
-    Finsupp.single C a ∈ supportedCharacteristicWeightSublevel P k N :=
-  Finsupp.single_mem_supported PlumbingCoefficient a hC
+    Finsupp.single C a ∈ supportedCharacteristicWeightSublevel P k N := by
+  rw [supportedCharacteristicWeightSublevel_def]
+  exact Finsupp.single_mem_supported PlumbingCoefficient a
+    ((P.mem_characteristicCubeWeightSublevel k N C).mpr hC)
 
 /-- The chain-level weight submodules increase with the level. -/
 theorem supportedCharacteristicWeightSublevel_mono (P : PlumbingGraph V)
@@ -123,10 +133,16 @@ theorem supportedCharacteristicWeightSublevel_fg (P : PlumbingGraph V)
   exact fg_supported_of_finite _ (P.finite_characteristicCubeWeightSublevel h k N)
 
 /-- The chains simultaneously lying in cubical degree `q` and weight at most `N`. -/
-@[expose] noncomputable def characteristicWeightDegreePart (P : PlumbingGraph V)
+noncomputable def characteristicWeightDegreePart (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) (q : ℕ) :
     Submodule PlumbingCoefficient (PlumbingChain V) :=
   degreePart V q ⊓ supportedCharacteristicWeightSublevel P k N
+
+private theorem characteristicWeightDegreePart_def_private (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) (q : ℕ) :
+    characteristicWeightDegreePart P k N q =
+      degreePart V q ⊓ supportedCharacteristicWeightSublevel P k N :=
+  rfl
 
 /-- The filtered degree part is the intersection of the cubical-degree part and the
 chain-level characteristic-weight sublevel. -/
@@ -134,7 +150,7 @@ theorem characteristicWeightDegreePart_def (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) (q : ℕ) :
     characteristicWeightDegreePart P k N q =
       degreePart V q ⊓ supportedCharacteristicWeightSublevel P k N :=
-  rfl
+  characteristicWeightDegreePart_def_private P k N q
 
 /-- A filtered degree part lies in the corresponding unfiltered cubical-degree part. -/
 theorem characteristicWeightDegreePart_le_degreePart (P : PlumbingGraph V)
@@ -157,7 +173,7 @@ theorem mem_characteristicWeightDegreePart (P : PlumbingGraph V)
     (N : ℤ) (q : ℕ) (c : PlumbingChain V) :
     c ∈ characteristicWeightDegreePart P k N q ↔
       ∀ C ∈ c.support, C.dimension = q ∧ C.characteristicWeight P k ≤ N := by
-  rw [characteristicWeightDegreePart, Submodule.mem_inf, mem_degreePart,
+  rw [characteristicWeightDegreePart_def, Submodule.mem_inf, mem_degreePart,
     mem_supportedCharacteristicWeightSublevel]
   aesop
 
@@ -176,6 +192,8 @@ theorem characteristicWeightDegreePart_eq_supported (P : PlumbingGraph V)
   rw [characteristicWeightDegreePart_def, hdegree,
     supportedCharacteristicWeightSublevel_def, ← Finsupp.supported_inter]
   congr 1
+  ext C
+  simp only [Set.mem_inter_iff, Set.mem_ofPred_eq, P.mem_characteristicCubeWeightSublevel]
 
 /-- A basis cube of dimension `q` and weight at most `N` belongs to the corresponding filtered
 chain group. -/
@@ -235,16 +253,21 @@ theorem latticeDifferentialOnGenerator_mem_supportedCharacteristicWeightSublevel
   intro v _
   apply Submodule.add_mem
   · exact PlumbingChain.single_mem_supportedCharacteristicWeightSublevel P k N _ _
-      (P.lowerFace_mem_characteristicCubeWeightSublevel k hC v.property)
+      ((P.mem_characteristicCubeWeightSublevel k N _).mp
+        (P.lowerFace_mem_characteristicCubeWeightSublevel k
+          ((P.mem_characteristicCubeWeightSublevel k N C).mpr hC) v.property))
   · exact PlumbingChain.single_mem_supportedCharacteristicWeightSublevel P k N _ _
-      (P.upperFace_mem_characteristicCubeWeightSublevel k hC v.property)
+      ((P.mem_characteristicCubeWeightSublevel k N _).mp
+        (P.upperFace_mem_characteristicCubeWeightSublevel k
+          ((P.mem_characteristicCubeWeightSublevel k N C).mpr hC) v.property))
 
 /-- The lattice differential preserves every chain-level weight submodule. -/
 theorem latticeDifferential_mem_supportedCharacteristicWeightSublevel (P : PlumbingGraph V)
     (k : P.characteristicVectors) {N : ℤ} {c : PlumbingChain V}
     (hc : c ∈ PlumbingChain.supportedCharacteristicWeightSublevel P k N) :
     P.latticeDifferential k c ∈ PlumbingChain.supportedCharacteristicWeightSublevel P k N := by
-  rw [PlumbingChain.supportedCharacteristicWeightSublevel, Finsupp.supported_eq_span_single] at hc
+  rw [PlumbingChain.supportedCharacteristicWeightSublevel_def,
+    Finsupp.supported_eq_span_single] at hc
   refine Submodule.span_induction
     (p := fun c _ =>
       P.latticeDifferential k c ∈ PlumbingChain.supportedCharacteristicWeightSublevel P k N)
@@ -252,7 +275,8 @@ theorem latticeDifferential_mem_supportedCharacteristicWeightSublevel (P : Plumb
   · rintro _ ⟨C, hC, rfl⟩
     rw [latticeDifferential_single]
     exact Submodule.smul_mem _ _
-      (P.latticeDifferentialOnGenerator_mem_supportedCharacteristicWeightSublevel k C hC)
+      (P.latticeDifferentialOnGenerator_mem_supportedCharacteristicWeightSublevel k C
+        ((P.mem_characteristicCubeWeightSublevel k N C).mp hC))
   · intro x y _ _ hx hy
     simpa only [map_add] using Submodule.add_mem _ hx hy
   · intro a x _ hx
@@ -336,6 +360,13 @@ theorem latticeWeightSublevelComplex_X (P : PlumbingGraph V)
   unfold latticeWeightSublevelComplex
   exact congrFun (ChainComplex.of_X _ _ _) q
 
+-- `ChainComplex.of_X` identifies definitionally equal objects; proof irrelevance normalizes its
+-- equality proof so that the explicit transports in the public differential formula reduce.
+private theorem latticeWeightSublevelComplex_X_proof_eq_rfl (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) (q : ℕ) :
+    P.latticeWeightSublevelComplex_X k N q = rfl :=
+  Subsingleton.elim _ _
+
 /-- The differential of the weight-sublevel complex is the restricted lattice differential. -/
 @[simp]
 theorem latticeWeightSublevelComplex_d (P : PlumbingGraph V)
@@ -344,8 +375,8 @@ theorem latticeWeightSublevelComplex_d (P : PlumbingGraph V)
       eqToHom (P.latticeWeightSublevelComplex_X k N (q + 1)) ≫
         ModuleCat.ofHom (P.latticeDifferentialWeightDegree k N q) ≫
           eqToHom (P.latticeWeightSublevelComplex_X k N q).symm := by
-  rw [show P.latticeWeightSublevelComplex_X k N (q + 1) = rfl from Subsingleton.elim _ _,
-    show P.latticeWeightSublevelComplex_X k N q = rfl from Subsingleton.elim _ _]
+  rw [P.latticeWeightSublevelComplex_X_proof_eq_rfl k N (q + 1),
+    P.latticeWeightSublevelComplex_X_proof_eq_rfl k N q]
   unfold latticeWeightSublevelComplex
   simp only [ChainComplex.of_d, eqToHom_refl, Category.id_comp, Category.comp_id]
 
@@ -431,6 +462,40 @@ noncomputable def latticeWeightSublevelFunctor (P : PlumbingGraph V)
   map f := P.latticeWeightSublevelInclusion k (leOfHom f)
   map_id N := P.latticeWeightSublevelInclusion_id k N
   map_comp f g := (P.latticeWeightSublevelInclusion_comp k (leOfHom f) (leOfHom g)).symm
+
+private theorem latticeWeightSublevelFunctor_obj_private (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) :
+    (P.latticeWeightSublevelFunctor k).obj N = P.latticeWeightSublevelComplex k N :=
+  rfl
+
+/-- The object at level `N` in the characteristic-weight filtration diagram is the
+corresponding weight-sublevel complex. -/
+@[simp]
+theorem latticeWeightSublevelFunctor_obj (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) :
+    (P.latticeWeightSublevelFunctor k).obj N = P.latticeWeightSublevelComplex k N :=
+  P.latticeWeightSublevelFunctor_obj_private k N
+
+-- The functor's object field is definitionally the sublevel complex; normalize the proof used by
+-- the transported map formula below without exposing the functor's implementation.
+private theorem latticeWeightSublevelFunctor_obj_proof_eq_rfl (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) :
+    P.latticeWeightSublevelFunctor_obj k N = rfl :=
+  Subsingleton.elim _ _
+
+/-- The map in the characteristic-weight filtration diagram is the canonical inclusion
+between the corresponding weight-sublevel complexes. -/
+@[simp]
+theorem latticeWeightSublevelFunctor_map (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {N M : ℤ} (f : N ⟶ M) :
+    eqToHom (P.latticeWeightSublevelFunctor_obj k N).symm ≫
+        (P.latticeWeightSublevelFunctor k).map f ≫
+      eqToHom (P.latticeWeightSublevelFunctor_obj k M) =
+        P.latticeWeightSublevelInclusion k (leOfHom f) := by
+  rw [P.latticeWeightSublevelFunctor_obj_proof_eq_rfl k N,
+    P.latticeWeightSublevelFunctor_obj_proof_eq_rfl k M]
+  unfold latticeWeightSublevelFunctor
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
 
 end PlumbingGraph
 

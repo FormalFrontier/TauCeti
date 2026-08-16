@@ -30,7 +30,7 @@ namespace PlumbingGraph
 variable {V : Type*} [DecidableEq V] [Fintype V]
 
 /-- The set of plumbing cubes whose characteristic weight is at most `N`. -/
-@[expose] def characteristicCubeWeightSublevel (P : PlumbingGraph V) (k : P.characteristicVectors)
+def characteristicCubeWeightSublevel (P : PlumbingGraph V) (k : P.characteristicVectors)
     (N : ℤ) : Set (PlumbingCube V) :=
   {C | C.characteristicWeight P k ≤ N}
 
@@ -45,21 +45,26 @@ theorem mem_characteristicCubeWeightSublevel (P : PlumbingGraph V)
 theorem characteristicCubeWeightSublevel_mono (P : PlumbingGraph V)
     (k : P.characteristicVectors) {N M : ℤ} (hNM : N ≤ M) :
     P.characteristicCubeWeightSublevel k N ⊆ P.characteristicCubeWeightSublevel k M :=
-  fun _ hC ↦ hC.trans hNM
+  fun C hC ↦ (P.mem_characteristicCubeWeightSublevel k M C).mpr
+    ((P.mem_characteristicCubeWeightSublevel k N C).mp hC |>.trans hNM)
 
 /-- The lower face of a cube in a characteristic-weight sublevel remains in that sublevel. -/
 theorem lowerFace_mem_characteristicCubeWeightSublevel (P : PlumbingGraph V)
     (k : P.characteristicVectors) {N : ℤ} {C : PlumbingCube V}
     (hC : C ∈ P.characteristicCubeWeightSublevel k N) {v : V} (hv : v ∈ C.directions) :
     C.lowerFace v hv ∈ P.characteristicCubeWeightSublevel k N :=
-  (PlumbingCube.characteristicWeight_lowerFace_le P k C hv).trans hC
+  (P.mem_characteristicCubeWeightSublevel k N _).mpr
+    ((PlumbingCube.characteristicWeight_lowerFace_le P k C hv).trans
+      ((P.mem_characteristicCubeWeightSublevel k N C).mp hC))
 
 /-- The upper face of a cube in a characteristic-weight sublevel remains in that sublevel. -/
 theorem upperFace_mem_characteristicCubeWeightSublevel (P : PlumbingGraph V)
     (k : P.characteristicVectors) {N : ℤ} {C : PlumbingCube V}
     (hC : C ∈ P.characteristicCubeWeightSublevel k N) {v : V} (hv : v ∈ C.directions) :
     C.upperFace v hv ∈ P.characteristicCubeWeightSublevel k N :=
-  (PlumbingCube.characteristicWeight_upperFace_le P k C hv).trans hC
+  (P.mem_characteristicCubeWeightSublevel k N _).mpr
+    ((PlumbingCube.characteristicWeight_upperFace_le P k C hv).trans
+      ((P.mem_characteristicCubeWeightSublevel k N C).mp hC))
 
 /-- On a negative-definite plumbing every characteristic cube-weight sublevel set is finite.
 
