@@ -10,11 +10,11 @@ public import TauCeti.RepresentationTheory.GaloisLattice.Basic
 /-!
 # Finite quotients acting on Galois lattices
 
-A finite free module representation whose vectors have open stabilizers has open kernel. Indeed,
-the kernel is already the intersection of the stabilizers of a finite basis. The Krull
+A finite module representation whose vectors have open stabilizers has open kernel. Indeed, the
+kernel is already the intersection of the stabilizers of a finite generating family. The Krull
 neighborhood basis then puts a finite-dimensional normal subextension's fixing subgroup inside
-that kernel, so the quotient of the absolute Galois group by the kernel is finite. The original
-action therefore factors faithfully through a finite group.
+that kernel, so the quotient of the Galois group by the kernel is finite. The original action
+therefore factors faithfully through a finite group.
 
 This finite-quotient reduction is the first descent step in the classification of non-split tori:
 the Galois action on a torus character lattice factors through a finite Galois quotient, after
@@ -23,9 +23,10 @@ which the corresponding split torus can be descended from a finite extension.
 ## Main declarations
 
 * `Representation.isOpen_ker_of_finite`: open point stabilizers imply an open kernel on a finite
-  free module.
+  module.
 * `Field.absoluteGaloisGroup.exists_finiteDimensional_normal_fixingSubgroup_le`: every open
-  subgroup contains the fixing subgroup of a finite-dimensional normal subextension.
+  subgroup of a Galois group contains the fixing subgroup of a finite-dimensional normal
+  subextension.
 * `TauCeti.GaloisLatticeCat.actionQuotient`: the finite quotient of the absolute Galois group
   acting faithfully on a Galois lattice.
 * `TauCeti.GaloisLatticeCat.actionQuotientRepresentation`: the induced representation of that
@@ -44,16 +45,16 @@ universe u v w
 
 variable {R : Type u} [Semiring R]
 variable {G : Type v} [Group G] [TopologicalSpace G]
-variable {V : Type w} [AddCommGroup V] [Module R V] [Module.Free R V] [Module.Finite R V]
+variable {V : Type w} [AddCommMonoid V] [Module R V] [Module.Finite R V]
 
-/-- A representation on a finite free module has open kernel if every vector stabilizer is open.
+/-- A representation on a finite module has open kernel if every vector stabilizer is open.
 
-It is enough to intersect the stabilizers of a finite basis: an element fixes that basis exactly
-when its linear action is the identity. -/
+It is enough to intersect the stabilizers of a finite generating family: an element fixes those
+generators exactly when its linear action is the identity. -/
 theorem isOpen_ker_of_finite (rho : Representation R G V)
     (hopen : ∀ x : V, IsOpen {g | rho g x = x}) :
     IsOpen (rho.ker : Set G) := by
-  let B := Module.Free.chooseBasis R V
+  obtain ⟨n, s, hs⟩ := Module.Finite.exists_fin (R := R) (M := V)
   let _ : MulAction G V := {
     smul g x := rho g x
     one_smul x := by
@@ -66,12 +67,12 @@ theorem isOpen_ker_of_finite (rho : Representation R G V)
       rw [map_mul, Module.End.mul_apply]
   }
   let U : Subgroup G :=
-    ⨅ i : Module.Free.ChooseBasisIndex R V, MulAction.stabilizer G (B i)
+    ⨅ i : Fin n, MulAction.stabilizer G (s i)
   have hU : U = rho.ker := by
     apply le_antisymm
     · intro g hg
       rw [MonoidHom.mem_ker]
-      apply B.ext
+      apply LinearMap.ext_on_range hs
       intro i
       exact MulAction.mem_stabilizer_iff.mp (Subgroup.mem_iInf.mp hg i)
     · intro g hg
@@ -79,46 +80,38 @@ theorem isOpen_ker_of_finite (rho : Representation R G V)
       intro i
       rw [MulAction.mem_stabilizer_iff]
       -- The stabilizer uses the local action; expose its defining representation.
-      change rho g (B i) = B i
+      change rho g (s i) = s i
       rw [MonoidHom.mem_ker.mp hg, Module.End.one_apply]
   rw [← hU, Subgroup.coe_iInf]
-  exact isOpen_iInter_of_finite fun i ↦ hopen (B i)
+  exact isOpen_iInter_of_finite fun i ↦ hopen (s i)
 
 end Representation
 
 namespace Field.absoluteGaloisGroup
 
-universe u
+universe u v
 
-variable {k : Type u} [Field k]
+variable {K : Type u} {L : Type v} [Field K] [Field L] [Algebra K L] [Normal K L]
 
-/-- Every open subgroup of an absolute Galois group contains the fixing subgroup of a
-finite-dimensional normal subextension of the chosen algebraic closure. -/
+/-- Every open subgroup of the Galois group of a normal extension contains the fixing subgroup of
+a finite-dimensional normal intermediate extension. -/
 theorem exists_finiteDimensional_normal_fixingSubgroup_le
-    (U : Subgroup (Field.absoluteGaloisGroup k))
-    (hU : IsOpen (U : Set (Field.absoluteGaloisGroup k))) :
-    ∃ E : IntermediateField k (AlgebraicClosure k),
-      FiniteDimensional k E ∧ Normal k E ∧ E.fixingSubgroup ≤ U := by
-  let U' : Subgroup Gal(AlgebraicClosure k / k) := U
-  have hU'_open : IsOpen (U' : Set Gal(AlgebraicClosure k / k)) := by
-    exact hU
-  have hU'_nhds := hU'_open.mem_nhds U'.one_mem
-  rw [_root_.krullTopology_mem_nhds_one_iff_of_normal k (AlgebraicClosure k)] at hU'_nhds
-  obtain ⟨E, hEfinite, hEnormal, hEU⟩ := hU'_nhds
-  refine ⟨E, hEfinite, hEnormal, ?_⟩
-  intro sigma hsigma
-  exact hEU hsigma
+    (U : Subgroup Gal(L/K)) (hU : IsOpen (U : Set Gal(L/K))) :
+    ∃ E : IntermediateField K L,
+      FiniteDimensional K E ∧ Normal K E ∧ E.fixingSubgroup ≤ U := by
+  have hU_nhds := hU.mem_nhds U.one_mem
+  rw [_root_.krullTopology_mem_nhds_one_iff_of_normal K L] at hU_nhds
+  exact hU_nhds
 
-/-- Every open subgroup of an absolute Galois group has finite quotient. -/
+/-- Every open subgroup of the Galois group of a normal extension has finite quotient. -/
 theorem finite_quotient_of_isOpen
-    (U : Subgroup (Field.absoluteGaloisGroup k))
-    (hU : IsOpen (U : Set (Field.absoluteGaloisGroup k))) :
-    Finite (Field.absoluteGaloisGroup k ⧸ U) := by
+    (U : Subgroup Gal(L/K)) (hU : IsOpen (U : Set Gal(L/K))) :
+    Finite (Gal(L/K) ⧸ U) := by
   obtain ⟨E, hEfinite, hEnormal, hEU⟩ :=
     exists_finiteDimensional_normal_fixingSubgroup_le U hU
-  let _ : FiniteDimensional k E := hEfinite
-  let _ : Normal k E := hEnormal
-  let _ : Finite Gal(E / k) := (AlgEquiv.fintype k E).finite
+  let _ : FiniteDimensional K E := hEfinite
+  let _ : Normal K E := hEnormal
+  let _ : Finite Gal(E / K) := (AlgEquiv.fintype K E).finite
   have hEindex : E.fixingSubgroup.FiniteIndex := by
     rw [← E.restrictNormalHom_ker]
     infer_instance
