@@ -138,6 +138,7 @@ theorem discriminantQuadraticMap_mk (L : IntegralLattice V) (hL : L.IsEven)
     dualCarrierHalfNormModOne_apply]
 
 /-- The polar of the half-norm discriminant quadratic map is the discriminant pairing. -/
+@[simp]
 theorem polar_discriminantQuadraticMap (L : IntegralLattice V) (hL : L.IsEven)
     (x y : L.DiscriminantGroup) :
     QuadraticMap.polar (L.discriminantQuadraticMap hL) x y =
@@ -155,6 +156,7 @@ theorem polar_discriminantQuadraticMap (L : IntegralLattice V) (hL : L.IsEven)
 
 /-- The polar bilinear map of the half-norm discriminant quadratic map is the discriminant
 pairing. -/
+@[simp]
 theorem polarBilin_discriminantQuadraticMap (L : IntegralLattice V) (hL : L.IsEven) :
     (L.discriminantQuadraticMap hL).polarBilin = L.discriminantPairing := by
   apply LinearMap.ext₂
