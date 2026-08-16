@@ -109,6 +109,7 @@ theorem orthogonalSum_form (L : IntegralLattice V) (M : IntegralLattice W) :
   (rfl)
 
 /-- The quadratic map of the block-diagonal form is the product of the component quadratic maps. -/
+@[simp]
 theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLattice W) :
     (orthogonalSumForm L M).toQuadraticMap =
       L.form.toQuadraticMap.prod M.form.toQuadraticMap := by
