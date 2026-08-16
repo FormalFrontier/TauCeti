@@ -24,9 +24,6 @@ which the corresponding split torus can be descended from a finite extension.
 
 * `Representation.isOpen_ker_of_finite`: open point stabilizers imply an open kernel on a finite
   module.
-* `Field.absoluteGaloisGroup.exists_finiteDimensional_normal_fixingSubgroup_le`: every open
-  subgroup of a Galois group contains the fixing subgroup of a finite-dimensional normal
-  subextension.
 * `TauCeti.GaloisLatticeCat.actionQuotient`: the finite quotient of the absolute Galois group
   acting faithfully on a Galois lattice.
 * `TauCeti.GaloisLatticeCat.actionQuotientRepresentation`: the induced representation of that
@@ -93,22 +90,13 @@ universe u v
 
 variable {K : Type u} {L : Type v} [Field K] [Field L] [Algebra K L] [Normal K L]
 
-/-- Every open subgroup of the Galois group of a normal extension contains the fixing subgroup of
-a finite-dimensional normal intermediate extension. -/
-theorem exists_finiteDimensional_normal_fixingSubgroup_le
-    (U : Subgroup Gal(L/K)) (hU : IsOpen (U : Set Gal(L/K))) :
-    ∃ E : IntermediateField K L,
-      FiniteDimensional K E ∧ Normal K E ∧ E.fixingSubgroup ≤ U := by
-  have hU_nhds := hU.mem_nhds U.one_mem
-  rw [_root_.krullTopology_mem_nhds_one_iff_of_normal K L] at hU_nhds
-  exact hU_nhds
-
 /-- Every open subgroup of the Galois group of a normal extension has finite quotient. -/
 theorem finite_quotient_of_isOpen
     (U : Subgroup Gal(L/K)) (hU : IsOpen (U : Set Gal(L/K))) :
     Finite (Gal(L/K) ⧸ U) := by
   obtain ⟨E, hEfinite, hEnormal, hEU⟩ :=
-    exists_finiteDimensional_normal_fixingSubgroup_le U hU
+    (_root_.krullTopology_mem_nhds_one_iff_of_normal K L (U : Set Gal(L/K))).mp
+      (hU.mem_nhds U.one_mem)
   let _ : FiniteDimensional K E := hEfinite
   let _ : Normal K E := hEnormal
   let _ : Finite Gal(E / K) := (AlgEquiv.fintype K E).finite
@@ -163,6 +151,7 @@ theorem actionQuotientRepresentation_mk_apply (M : GaloisLatticeCat k)
   simp [actionQuotientRepresentation]
 
 /-- The action of a Galois lattice is the pullback of its finite-quotient representation. -/
+@[simp]
 theorem actionQuotientRepresentation_comp_mk (M : GaloisLatticeCat k) :
     (actionQuotientRepresentation M).comp (QuotientGroup.mk' M.obj.ρ.ker) = M.obj.ρ := by
   simp [actionQuotientRepresentation]
