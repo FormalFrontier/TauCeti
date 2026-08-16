@@ -140,6 +140,7 @@ theorem ofIntegralForm_carrier (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     (TensorProduct.range_mk_one_eq_span (Module.Free.chooseBasis ℤ M)).symm
 
 /-- The carrier of a rationalized integral form consists exactly of the unit pure tensors. -/
+@[simp]
 theorem mem_ofIntegralForm_carrier_iff (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
     (x : ℚ ⊗[ℤ] M) : x ∈ (ofIntegralForm B hB).carrier ↔ ∃ m : M, 1 ⊗ₜ[ℤ] m = x := by
   rw [ofIntegralForm_carrier]
