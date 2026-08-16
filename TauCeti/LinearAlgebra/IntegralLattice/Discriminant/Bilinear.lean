@@ -137,29 +137,35 @@ theorem discriminantBilinearModule_pairing (L : IntegralLattice V) [L.IsNondegen
     L.discriminantBilinearModule.pairing x y = L.discriminantPairing x y :=
   (rfl)
 
-/-- The discriminant bilinear module of a nondegenerate integral lattice is nondegenerate. -/
-theorem isNondegenerate_discriminantBilinearModule (L : IntegralLattice V)
-    [L.IsNondegenerate] : L.discriminantBilinearModule.IsNondegenerate := by
-  rw [FiniteBilinearModule.isNondegenerate_iff_injective]
+private theorem injective_discriminantPairing (L : IntegralLattice V) [L.IsNondegenerate] :
+    Function.Injective L.discriminantPairing := by
   intro a b hab
   induction a using Submodule.Quotient.induction_on with
   | _ x =>
     induction b using Submodule.Quotient.induction_on with
     | _ y =>
-      change (Submodule.Quotient.mk x : L.DiscriminantGroup) = Submodule.Quotient.mk y
-      rw [L.discriminantGroup_mk_eq_iff]
+      apply (L.discriminantGroup_mk_eq_iff x y).mpr
       apply (L.forall_form_mem_one_dualCarrier_iff ((x - y : L.dualCarrier) : V)).mp
       intro z hz
       let z' : L.dualCarrier := ⟨z, hz⟩
       have hpair := DFunLike.congr_fun hab (Submodule.Quotient.mk z')
-      unfold discriminantBilinearModule at hpair
-      change L.discriminantPairing (Submodule.Quotient.mk x) (Submodule.Quotient.mk z') =
-        L.discriminantPairing (Submodule.Quotient.mk y) (Submodule.Quotient.mk z') at hpair
-      simp only [discriminantPairing_mk] at hpair
       have hzero : (L.form ((x - y : L.dualCarrier) : V) z : AddCircle (1 : ℚ)) = 0 := by
         rw [Submodule.coe_sub, map_sub, LinearMap.sub_apply, AddCircle.coe_sub, sub_eq_zero]
         exact hpair
       exact (coe_eq_zero_iff_mem_one _).mp hzero
+
+/-- The discriminant bilinear module of a nondegenerate integral lattice is nondegenerate. -/
+theorem isNondegenerate_discriminantBilinearModule (L : IntegralLattice V)
+    [L.IsNondegenerate] : L.discriminantBilinearModule.IsNondegenerate := by
+  rw [FiniteBilinearModule.isNondegenerate_iff_injective]
+  -- The carrier projection of the opaque package must be exposed to identify its pairing with
+  -- `discriminantPairing`; the quotient argument itself is isolated above.
+  unfold discriminantBilinearModule
+  intro a b hab
+  apply L.injective_discriminantPairing
+  apply LinearMap.ext
+  intro z
+  exact DFunLike.congr_fun hab z
 
 namespace Isometry
 
@@ -168,23 +174,24 @@ variable [AddCommGroup W] [Module ℚ W]
 variable [AddCommGroup U] [Module ℚ U]
 variable {L : IntegralLattice V} {M : IntegralLattice W} {N : IntegralLattice U}
 
+/-- An integral-lattice isometry preserves the discriminant pairing. -/
+private theorem map_discriminantPairing (e : Isometry L M) (x y : L.DiscriminantGroup) :
+    M.discriminantPairing (e.discriminantGroupEquiv x) (e.discriminantGroupEquiv y) =
+      L.discriminantPairing x y := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+    induction y using Submodule.Quotient.induction_on with
+    | _ y =>
+      simp only [discriminantGroupEquiv_mk, discriminantPairing_mk,
+        coe_dualCarrierEquiv_apply, e.map_app]
+
 /-- An integral-lattice isometry induces an isometry of discriminant bilinear modules. -/
 noncomputable def discriminantBilinearIsometry (e : Isometry L M)
     [L.IsNondegenerate] [M.IsNondegenerate] :
     FiniteBilinearModule.Isometry L.discriminantBilinearModule
       M.discriminantBilinearModule where
   toAddEquiv := e.discriminantGroupEquiv.toAddEquiv
-  map_pairing' x y := by
-    induction x using Submodule.Quotient.induction_on with
-    | _ x =>
-      induction y using Submodule.Quotient.induction_on with
-      | _ y =>
-        change M.discriminantPairing
-            (e.discriminantGroupEquiv (Submodule.Quotient.mk x))
-            (e.discriminantGroupEquiv (Submodule.Quotient.mk y)) =
-          L.discriminantPairing (Submodule.Quotient.mk x) (Submodule.Quotient.mk y)
-        simp only [discriminantGroupEquiv_mk, discriminantPairing_mk,
-          coe_dualCarrierEquiv_apply, e.map_app]
+  map_pairing' := e.map_discriminantPairing
 
 /-- The underlying additive equivalence of the induced discriminant isometry is the one already
 carried by `discriminantGroupEquiv`. -/
@@ -214,13 +221,10 @@ theorem discriminantBilinearIsometry_mk (e : Isometry L M)
 theorem discriminantBilinearIsometry_refl (L : IntegralLattice V) [L.IsNondegenerate] :
     (Isometry.refl L).discriminantBilinearIsometry =
       FiniteBilinearModule.Isometry.refl L.discriminantBilinearModule := by
-  ext x
-  induction x using Submodule.Quotient.induction_on with
-  | _ x =>
-    rw [discriminantBilinearIsometry_mk, dualCarrierEquiv_refl,
-      LinearEquiv.refl_apply]
-    exact (FiniteBilinearModule.Isometry.refl_apply L.discriminantBilinearModule
-      (show L.discriminantBilinearModule.carrier from Submodule.Quotient.mk x)).symm
+  apply FiniteBilinearModule.Isometry.toAddEquiv_injective
+  rw [discriminantBilinearIsometry_toAddEquiv,
+    FiniteBilinearModule.Isometry.refl_toAddEquiv, discriminantGroupEquiv_refl]
+  rfl
 
 /-- Passing to the inverse lattice isometry passes to the inverse discriminant-bilinear
 isometry. -/
@@ -249,21 +253,11 @@ theorem discriminantBilinearIsometry_trans (e : Isometry L M) (f : Isometry M N)
     [L.IsNondegenerate] [M.IsNondegenerate] [N.IsNondegenerate] :
     (e.trans f).discriminantBilinearIsometry =
       e.discriminantBilinearIsometry.trans f.discriminantBilinearIsometry := by
-  ext x
-  induction x using Submodule.Quotient.induction_on with
-  | _ x =>
-    rw [discriminantBilinearIsometry_mk, dualCarrierEquiv_trans,
-      LinearEquiv.trans_apply]
-    have hmap :
-        f.discriminantBilinearIsometry
-            (e.discriminantBilinearIsometry (Submodule.Quotient.mk x)) =
-          (show N.discriminantBilinearModule.carrier from
-            Submodule.Quotient.mk (f.dualCarrierEquiv (e.dualCarrierEquiv x))) := by
-      rw [discriminantBilinearIsometry_mk, discriminantBilinearIsometry_mk]
-    exact hmap.symm.trans
-      (FiniteBilinearModule.Isometry.trans_apply e.discriminantBilinearIsometry
-        f.discriminantBilinearIsometry
-        (show L.discriminantBilinearModule.carrier from Submodule.Quotient.mk x)).symm
+  apply FiniteBilinearModule.Isometry.toAddEquiv_injective
+  rw [discriminantBilinearIsometry_toAddEquiv,
+    FiniteBilinearModule.Isometry.trans_toAddEquiv, discriminantBilinearIsometry_toAddEquiv,
+    discriminantBilinearIsometry_toAddEquiv, discriminantGroupEquiv_trans]
+  rfl
 
 end Isometry
 
