@@ -27,7 +27,7 @@ These are the data that vertical stacking consumes: composing `D₁` with `D₂`
 bottom boundary of `D₁` with the top boundary of `D₂` and reads the arcs of the composite by
 concatenating through strands (`throughEquiv`) along that middle boundary. Counting the closed
 loops that form there, by alternately following the caps of `D₁` (`capMatching`) and the cups of
-`D₂` (`cupMatching`), is left to a later file.
+`D₂` (`cupMatching`), is done in `TauCeti/Combinatorics/Brauer/LoopCount.lean`.
 
 ## Main definitions
 
