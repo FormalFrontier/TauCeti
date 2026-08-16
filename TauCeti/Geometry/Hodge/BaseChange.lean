@@ -56,7 +56,7 @@ open scoped TensorProduct
 universe u v w u' v' w'
 
 variable {Vℤ : Type u} {Vℚ : Type v} {Vℂ : Type w}
-variable [AddCommGroup Vℤ] [Module ℤ Vℤ]
+variable [AddCommGroup Vℤ]
 variable [AddCommGroup Vℚ] [Module ℚ Vℚ]
 variable [AddCommGroup Vℂ] [Module ℂ Vℂ]
 variable {ιℚ : Vℤ →ₗ[ℤ] Vℚ} {ιℂ : Vℤ →ₗ[ℤ] Vℂ}
@@ -148,7 +148,7 @@ theorem coe_rationalToComplexSubmoduleEquiv (hℚ : IsBaseChange ℚ ιℚ)
 section Map
 
 variable {V'ℤ : Type u'} {V'ℚ : Type v'} {V'ℂ : Type w'}
-variable [AddCommGroup V'ℤ] [Module ℤ V'ℤ]
+variable [AddCommGroup V'ℤ]
 variable [AddCommGroup V'ℚ] [Module ℚ V'ℚ]
 variable [AddCommGroup V'ℂ] [Module ℂ V'ℂ]
 variable {ι'ℚ : V'ℤ →ₗ[ℤ] V'ℚ} {ι'ℂ : V'ℤ →ₗ[ℤ] V'ℂ}
@@ -202,7 +202,7 @@ theorem rationalMapToComplex_add (hℚ : IsBaseChange ℚ ιℚ)
 section Comp
 
 variable {V''ℤ V''ℚ V''ℂ : Type*}
-variable [AddCommGroup V''ℤ] [Module ℤ V''ℤ]
+variable [AddCommGroup V''ℤ]
 variable [AddCommGroup V''ℚ] [Module ℚ V''ℚ]
 variable [AddCommGroup V''ℂ] [Module ℂ V''ℂ]
 variable {ι''ℚ : V''ℤ →ₗ[ℤ] V''ℚ} {ι''ℂ : V''ℤ →ₗ[ℤ] V''ℂ}
