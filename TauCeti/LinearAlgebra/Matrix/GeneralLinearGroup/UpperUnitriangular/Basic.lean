@@ -41,22 +41,23 @@ namespace Matrix
 
 variable {R : Type*} {m : Type*} [Fintype m] [LinearOrder m]
 
-section CommRing
+section Ring
 
-variable [CommRing R]
+variable [Ring R]
 
 /-- Package an upper-unitriangular matrix as an element of the general linear group. -/
 noncomputable def IsUpperUnitriangular.toGL {M : Matrix m m R} (hM : M.IsUpperUnitriangular) :
     GL m R :=
-  Matrix.GeneralLinearGroup.mk'' M hM.isUnit_det
+  (show IsUnit M by
+    simpa only [sub_add_cancel] using hM.isNilpotent_sub_one.isUnit_add_one).unit
 
 /-- The matrix underlying `IsUpperUnitriangular.toGL` is the original matrix. -/
 @[simp]
 theorem IsUpperUnitriangular.coe_toGL {M : Matrix m m R} (hM : M.IsUpperUnitriangular) :
     (hM.toGL : Matrix m m R) = M := by
-  rfl
+  exact IsUnit.unit_spec _
 
-end CommRing
+end Ring
 
 private theorem IsUpperUnitriangular.units_inv [Ring R] (g : (Matrix m m R)ˣ)
     (hg : (g : Matrix m m R).IsUpperUnitriangular) :
@@ -179,17 +180,17 @@ theorem ext {g h : upperUnitriangularGroup m R}
   exact congrFun (congrFun
     ((isUpperUnitriangular g).ext (isUpperUnitriangular h) heq) i) j
 
-end Ring
-
-section CommRing
-
-variable [CommRing R]
-
 /-- Packaging an upper-unitriangular matrix as an element of `GLₘ(R)` lands in the
 upper-unitriangular subgroup. -/
 theorem toGL_mem_upperUnitriangularGroup {M : Matrix m m R}
     (hM : M.IsUpperUnitriangular) : hM.toGL ∈ upperUnitriangularGroup m R := by
   simpa only [mem_iff, hM.coe_toGL] using hM
+
+end Ring
+
+section CommRing
+
+variable [CommRing R]
 
 /-- Applying a ring homomorphism entrywise gives the base-change homomorphism between
 upper-unitriangular groups. -/
