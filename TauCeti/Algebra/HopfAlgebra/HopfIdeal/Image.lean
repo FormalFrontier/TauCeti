@@ -196,8 +196,11 @@ noncomputable abbrev imageι (f : H ⟶ K) : image f ⟶ K :=
     intro x hx
     exact hx)
 
-/-- The coordinate morphism factors through its scheme-theoretic image. -/
-@[reassoc (attr := simp)]
+/-- The coordinate morphism factors through its scheme-theoretic image.
+
+The reassociated lemma is not marked `simp`: since `imageQuotient` and `imageι` are reducible
+abbreviations, `mkQuotient_comp_liftQuotient_assoc` already performs that simplification. -/
+@[reassoc]
 theorem imageQuotient_comp_imageι (f : H ⟶ K) : imageQuotient f ≫ imageι f = f := by
   exact mkQuotient_comp_liftQuotient (HopfIdeal.ker f.hom) f _
 

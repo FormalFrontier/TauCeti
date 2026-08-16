@@ -117,6 +117,8 @@ theorem quotientClosedSubgroup_le_iff (H : _root_.CommHopfAlgCat.{u} R)
     exact Subobject.mk_le_mk_of_comm (quotientSpecMapOfLe H hJI)
       (quotientSpecMapOfLe_comp_quotientSpecι H hJI)
 
+/-- The private order embedding underlying the classification of Hopf ideals by closed subgroup
+schemes. -/
 private noncomputable def hopfIdealClosedSubgroupOrderEmbedding
     (H : _root_.CommHopfAlgCat.{u} R) :
     (HopfIdeal R H)ᵒᵈ ↪o
@@ -170,6 +172,8 @@ private theorem isAffine_closedSubgroup
   exact (@IsClosedImmersion.isAffine_surjective_of_isAffine _ _ hTarget
     i.hom.hom.left hi).1
 
+/-- The Hopf-algebra morphism corresponding to a chosen affine presentation of a closed subgroup
+scheme. -/
 private noncomputable def closedSubgroupCoordinateMorphism
     (H K : _root_.CommHopfAlgCat.{u} R)
     (P : ClosedSubgroupScheme
