@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.UpperHalfPlane.PSLAction
+public import TauCeti.GroupTheory.GroupAction.Stabilizer
 public import TauCeti.NumberTheory.Modular.Orbits
 
 -- these two serve only the private centre computation, so they stay off the public surface
@@ -33,8 +34,6 @@ literally the `q` with `q ≠ ⟦i⟧` and `q ≠ ⟦ρ⟧`.
 
 ## Main declarations
 
-* `TauCeti.ModularGroup.card_stabilizer_smul`: the order is invariant along the action, so it
-  is an invariant of the orbit rather than of the point.
 * `TauCeti.ModularGroup.finite_stabilizer`: every point stabiliser is finite, so the elliptic
   order is defined at every point of `ℍ`.
 * `TauCeti.ModularGroup.card_stabilizer_I` and `TauCeti.ModularGroup.card_stabilizer_ρ`: the
@@ -44,6 +43,11 @@ literally the `q` with `q ≠ ⟦i⟧` and `q ≠ ⟦ρ⟧`.
   orbits.
 * `TauCeti.ModularGroup.card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ`: order `2` on every
   other orbit.
+* `TauCeti.ModularGroup.card_stabilizer_eq_two_mul_card_stabilizer_psl`: the projective order is
+  the matrix one halved.
+* `TauCeti.ModularGroup.card_stabilizer_psl_I`, `TauCeti.ModularGroup.card_stabilizer_psl_ρ` and
+  `TauCeti.ModularGroup.card_stabilizer_psl_eq_one_of_orbit_ne_I_of_orbit_ne_ρ`: the resulting
+  elliptic orders `e_i = 2`, `e_ρ = 3` and `e_P = 1`.
 
 ## References
 
@@ -70,18 +74,7 @@ private theorem finite_stabilizer_of_subset (s : Finset SL(2, ℤ))
 private theorem finite_stabilizer_of_smul (g : SL(2, ℤ))
     (h : Finite (stabilizer SL(2, ℤ) (g • z))) : Finite (stabilizer SL(2, ℤ) z) :=
   Finite.of_equiv _ (stabilizerEquivStabilizerOfOrbitRel
-    (⟨g, rfl⟩ : MulAction.orbitRel SL(2, ℤ) ℍ (g • z) z)).toEquiv
-
-/-- **The stabiliser order is invariant along the action**, the stabilisers of `g • z` and of
-`z` being conjugate. This is the transport rule behind every count below: it is what lets the
-valence formula attach the weight `1 / e_P` to an orbit rather than to a chosen point of it.
-
-Not `@[simp]`: the left-hand side is not in simp-normal form, since `ModularGroup.sl_moeb`
-rewrites the `SL(2, ℤ)`-action inside it, and `simpNF` rejects the attribute for that reason. -/
-theorem card_stabilizer_smul (g : SL(2, ℤ)) (z : ℍ) :
-    Nat.card (stabilizer SL(2, ℤ) (g • z)) = Nat.card (stabilizer SL(2, ℤ) z) :=
-  Nat.card_congr (stabilizerEquivStabilizerOfOrbitRel
-    (⟨g, rfl⟩ : MulAction.orbitRel SL(2, ℤ) ℍ (g • z) z)).toEquiv
+    (MulAction.orbitRel_apply.mpr (MulAction.mem_orbit z g))).toEquiv
 
 /-- **Every point stabiliser is finite**, so the elliptic order `e_P` is defined at every point
 of `ℍ` and not only inside the fundamental domain. -/
@@ -104,8 +97,13 @@ instance finite_stabilizer (z : ℍ) : Finite (stabilizer SL(2, ℤ) z) := by
 private theorem card_stabilizer_of_coe_eq {s : Finset SL(2, ℤ)}
     (h : (stabilizer SL(2, ℤ) w : Set SL(2, ℤ)) = ↑s) :
     Nat.card (stabilizer SL(2, ℤ) w) = s.card := by
-  rw [← SetLike.coe_sort_coe, h, Nat.card_coe_set_eq, Set.ncard_eq_toFinset_card']
+  rw [← SetLike.coe_sort_coe, h, Nat.card_coe_set_eq]
   simp
+
+-- None of the `SL(2, ℤ)` counts below is `@[simp]`, and none can be: their common
+-- left-hand side `Nat.card (stabilizer SL(2, ℤ) z)` is not in simp-normal form, because
+-- `MulAction.mem_stabilizer_iff` and `ModularGroup.sl_moeb` rewrite the membership condition
+-- underneath the `Nat.card`, so `simpNF` rejects the attribute on every one of them.
 
 /-- **The stabiliser of `i` has order `4`**: the centre `±1` together with `±S`, the inversion
 fixing `i`. In `PSL(2, ℤ)` this is the elliptic order `e_i = 2`. -/
@@ -159,12 +157,7 @@ theorem card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ (z : ℍ)
       Set.mem_singleton_iff] at hx
     rcases hx with rfl | rfl <;> simp [MulAction.mem_stabilizer_iff]
 
-
 /-! ### The projective orders `e_P` -/
-
--- the centre sits inside every point stabiliser, since `±1` acts trivially on `ℍ`
-private theorem center_le_stabilizer (z : ℍ) : Subgroup.center SL(2, ℤ) ≤ stabilizer SL(2, ℤ) z :=
-  fun c hc ↦ UpperHalfPlane.smul_eq_self_of_mem_center c hc z
 
 -- the centre of `SL(2, ℤ)` has order two. Built on Mathlib rather than on an explicit `{±1}`
 -- computation: the matrix and module special linear groups agree (`toLin'_equiv`), the module
@@ -177,48 +170,18 @@ private theorem card_center : Nat.card (Subgroup.center SL(2, ℤ)) = 2 := by
     Nat.card_congr (SpecialLinearGroup.centerEquivRootsOfUnity (R := ℤ) (V := Fin 2 → ℤ)).toEquiv,
     hrank, hroot.card_rootsOfUnity]
 
--- the quotient map restricted to a point stabiliser
-private noncomputable def toPsl (z : ℍ) : stabilizer SL(2, ℤ) z →* stabilizer PSL(2, ℤ) z where
-  toFun h := ⟨((h : SL(2, ℤ)) : PSL(2, ℤ)), by
-    rw [MulAction.mem_stabilizer_iff, UpperHalfPlane.pslMk_smul]; exact h.2⟩
-  map_one' := rfl
-  map_mul' _ _ := rfl
-
-private theorem toPsl_surjective (z : ℍ) : Function.Surjective (toPsl z) := by
-  rintro ⟨q, hq⟩
-  obtain ⟨g, rfl⟩ := QuotientGroup.mk_surjective q
-  refine ⟨⟨g, ?_⟩, rfl⟩
-  rw [MulAction.mem_stabilizer_iff]
-  rw [MulAction.mem_stabilizer_iff, UpperHalfPlane.pslMk_smul] at hq
-  exact hq
-
-private theorem ker_toPsl (z : ℍ) :
-    (toPsl z).ker = (Subgroup.center SL(2, ℤ)).subgroupOf (stabilizer SL(2, ℤ) z) := by
-  ext h
-  rw [MonoidHom.mem_ker, Subgroup.mem_subgroupOf, Subtype.ext_iff]
-  -- `simp only [toPsl]` will not unfold the structure-instance application; `change` does
-  change ((h : SL(2, ℤ)) : PSL(2, ℤ)) = 1 ↔ _
-  exact QuotientGroup.eq_one_iff _
-
 /-- **The `SL(2, ℤ)`-stabiliser order is twice the `PSL(2, ℤ)` one.** The two differ exactly by
 the centre `±1`, which acts trivially on `ℍ`, so every projective stabiliser is the matrix one
 halved — the passage from the counts `4`, `6`, `2` to the elliptic orders `e_P`. -/
 theorem card_stabilizer_eq_two_mul_card_stabilizer_psl (z : ℍ) :
     Nat.card (stabilizer SL(2, ℤ) z) = 2 * Nat.card (stabilizer PSL(2, ℤ) z) := by
-  have hker : Nat.card ((toPsl z).ker) = 2 := by
-    rw [ker_toPsl, Nat.card_congr (Subgroup.subgroupOfEquivOfLe (center_le_stabilizer z)).toEquiv]
-    exact card_center
-  have hquot : Nat.card (stabilizer SL(2, ℤ) z) =
-      Nat.card (stabilizer PSL(2, ℤ) z) * Nat.card ((toPsl z).ker) := by
-    rw [← Nat.card_congr
-      (QuotientGroup.quotientKerEquivOfSurjective _ (toPsl_surjective z)).toEquiv]
-    exact Subgroup.card_eq_card_quotient_mul_card_subgroup _
-  rw [hquot, hker, mul_comm]
+  rw [TauCeti.card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient _ z
+    fun g ↦ UpperHalfPlane.pslMk_smul g z, card_center]
 
 -- Neither elliptic order below is `@[simp]`, tested: `MulAction.mem_stabilizer_iff` rewrites
 -- `Nat.card (stabilizer G z)` into a `Nat.card` of a subtype underneath, so the left-hand side is
 -- not in simp-normal form and `simpNF` rejects the attribute — the same reason recorded above for
--- `card_stabilizer_smul` over `SL(2, ℤ)`.
+-- the `SL(2, ℤ)` counts.
 
 /-- **The elliptic order at `i` is `e_i = 2`** — the order of the `PSL(2, ℤ)`-stabiliser, not the
 weight: the valence formula weights that orbit by the reciprocal `1 / e_i = 1 / 2`. -/

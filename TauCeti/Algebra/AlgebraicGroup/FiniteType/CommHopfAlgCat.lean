@@ -23,6 +23,8 @@ reductive-groups roadmap: the Hopf algebra structure carries the group law, whil
   Hopf algebras.
 * `TauCeti.FiniteTypeCommHopfAlgCat.of`: construct a bundled finite-type commutative
   Hopf algebra from unbundled typeclasses.
+* `TauCeti.FiniteTypeCommHopfAlgCat.isNoetherianRing`: the coordinate ring underlying a
+  finite-type commutative Hopf algebra over a Noetherian ring is Noetherian.
 * `forget₂ (FiniteTypeCommHopfAlgCat R) (FGAlgCat R)`: the forgetful functor to Mathlib's
   finitely generated commutative `R`-algebras.
 * `TauCeti.FiniteTypeCommHopfAlgCat.pointsFunctor`: the inherited contravariant functor
@@ -83,6 +85,12 @@ instance hopfAlgebra (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
 
 instance finiteType (H : FiniteTypeCommHopfAlgCat.{u, v} R) : Algebra.FiniteType R H :=
   H.property
+
+/-- A finite-type commutative Hopf algebra over a Noetherian ring has a Noetherian
+underlying coordinate ring. -/
+instance isNoetherianRing (H : FiniteTypeCommHopfAlgCat.{u, v} R) [IsNoetherianRing R] :
+    IsNoetherianRing H :=
+  Algebra.FiniteType.isNoetherianRing R H
 
 variable (R) in
 /-- Construct a bundled finite-type commutative Hopf algebra from the usual unbundled
