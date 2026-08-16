@@ -93,7 +93,7 @@ namespace ConflationClass
 variable (C) in
 /-- The class of short complexes admitting a splitting. These are the conflations of the split
 exact structure. -/
-@[expose] def split : ConflationClass C where
+def split : ConflationClass C where
   Conflation S := Nonempty S.Splitting
   isKernelCokernelPair _ hS := .of_splitting hS.some
   isClosedUnderIsomorphisms := ⟨fun e hS => ⟨hS.some.ofIso e⟩⟩
@@ -108,6 +108,53 @@ theorem split_conflation_iff (S : ShortComplex C) :
 theorem split_conflation_biprodShortComplex (X Z : C) [HasBinaryBiproduct X Z] :
     (split C).Conflation (biprodShortComplex X Z) :=
   ⟨biprodShortComplexSplitting X Z⟩
+
+/-- The short complex `Z ⟶ X ⊞ Z ⟶ X` on the other biproduct summand is a split conflation. -/
+theorem split_conflation_biprod_inr_fst (X Z : C) [HasBinaryBiproduct X Z] :
+    (split C).Conflation
+      (ShortComplex.mk (biprod.inr : Z ⟶ X ⊞ Z) (biprod.fst : X ⊞ Z ⟶ X) (by simp)) :=
+  ⟨{ r := biprod.snd
+     s := biprod.inl
+     id := by rw [add_comm]; exact biprod.total }⟩
+
+/-- A biproduct inclusion is a split inflation. -/
+@[simp]
+theorem split_isInflation_biprod_inl (X Z : C) [HasBinaryBiproduct X Z] :
+    (split C).IsInflation (biprod.inl : X ⟶ X ⊞ Z) :=
+  (split C).isInflation_f (split_conflation_biprodShortComplex X Z)
+
+/-- The other biproduct inclusion is a split inflation as well. -/
+@[simp]
+theorem split_isInflation_biprod_inr (X Z : C) [HasBinaryBiproduct X Z] :
+    (split C).IsInflation (biprod.inr : Z ⟶ X ⊞ Z) :=
+  (split C).isInflation_f (split_conflation_biprod_inr_fst X Z)
+
+/-- A biproduct projection is a split deflation. -/
+@[simp]
+theorem split_isDeflation_biprod_snd (X Z : C) [HasBinaryBiproduct X Z] :
+    (split C).IsDeflation (biprod.snd : X ⊞ Z ⟶ Z) :=
+  (split C).isDeflation_g (split_conflation_biprodShortComplex X Z)
+
+/-- The other biproduct projection is a split deflation as well. -/
+@[simp]
+theorem split_isDeflation_biprod_fst (X Z : C) [HasBinaryBiproduct X Z] :
+    (split C).IsDeflation (biprod.fst : X ⊞ Z ⟶ X) :=
+  (split C).isDeflation_g (split_conflation_biprod_inr_fst X Z)
+
+/-- Every split inflation is a split monomorphism. The converse fails in general: a split
+monomorphism is an inflation only once its complementary idempotent splits. -/
+theorem isSplitMono_of_split_isInflation {X Y : C} {i : X ⟶ Y}
+    (hi : (split C).IsInflation i) : IsSplitMono i := by
+  obtain ⟨Z, p, zero, hS⟩ := (isInflation_iff (split C) i).mp hi
+  obtain ⟨s⟩ := (split_conflation_iff _).mp hS
+  exact ⟨⟨s.r, s.f_r⟩⟩
+
+/-- Every split deflation is a split epimorphism. -/
+theorem isSplitEpi_of_split_isDeflation {Y Z : C} {p : Y ⟶ Z}
+    (hp : (split C).IsDeflation p) : IsSplitEpi p := by
+  obtain ⟨X, i, zero, hS⟩ := (isDeflation_iff (split C) p).mp hp
+  obtain ⟨s⟩ := (split_conflation_iff _).mp hS
+  exact ⟨⟨s.s, s.s_g⟩⟩
 
 variable [HasBinaryBiproducts C]
 
@@ -145,29 +192,6 @@ theorem split_isDeflation_iff {Y Z : C} (p : Y ⟶ Z) :
       (split_conflation_iff _).mpr ⟨?_⟩⟩
     exact (biprodShortComplexSplitting X Z).ofIso
       (ShortComplex.isoMk (Iso.refl _) e.symm (Iso.refl _) (by simp) (by simpa using he))
-
-/-- A biproduct inclusion is a split inflation. -/
-theorem split_isInflation_biprod_inl (X Z : C) :
-    (split C).IsInflation (biprod.inl : X ⟶ X ⊞ Z) :=
-  (split_isInflation_iff _).mpr ⟨Z, Iso.refl _, by simp⟩
-
-/-- A biproduct projection is a split deflation. -/
-theorem split_isDeflation_biprod_snd (X Z : C) :
-    (split C).IsDeflation (biprod.snd : X ⊞ Z ⟶ Z) :=
-  (split_isDeflation_iff _).mpr ⟨X, Iso.refl _, by simp⟩
-
-/-- Every split inflation is a split monomorphism. The converse fails in general: a split
-monomorphism is an inflation only once its complementary idempotent splits. -/
-theorem isSplitMono_of_split_isInflation {X Y : C} {i : X ⟶ Y}
-    (hi : (split C).IsInflation i) : IsSplitMono i := by
-  obtain ⟨Z, e, he⟩ := (split_isInflation_iff i).mp hi
-  exact ⟨⟨e.hom ≫ biprod.fst, by rw [← Category.assoc, he, biprod.inl_fst]⟩⟩
-
-/-- Every split deflation is a split epimorphism. -/
-theorem isSplitEpi_of_split_isDeflation {Y Z : C} {p : Y ⟶ Z}
-    (hp : (split C).IsDeflation p) : IsSplitEpi p := by
-  obtain ⟨X, e, he⟩ := (split_isDeflation_iff p).mp hp
-  exact ⟨⟨biprod.inr ≫ e.inv, by rw [Category.assoc, he, biprod.inr_snd]⟩⟩
 
 /-- **E1 for the split exact structure**: a composite of split inflations is a split inflation.
 The cokernel of `i ≫ j` is the biproduct of the two cokernels. -/
@@ -327,12 +351,30 @@ theorem split_toConflationClass :
     (ExactStructure.split C).toConflationClass = ConflationClass.split C :=
   rfl
 
+/-- The conflations of the split exact structure are exactly the short complexes admitting a
+splitting. This is not `@[simp]`: `split_toConflationClass` together with
+`TauCeti.ConflationClass.split_conflation_iff` already rewrites the left-hand side. -/
+theorem split_conflation (S : ShortComplex C) :
+    (ExactStructure.split C).Conflation S ↔ Nonempty S.Splitting :=
+  ConflationClass.split_conflation_iff S
+
+/-- **The inflations of the split exact structure are the biproduct inclusions.** -/
+theorem split_isInflation_iff {X Y : C} (i : X ⟶ Y) :
+    (ExactStructure.split C).IsInflation i ↔ ∃ (Z : C) (e : Y ≅ X ⊞ Z), i ≫ e.hom = biprod.inl :=
+  ConflationClass.split_isInflation_iff i
+
+/-- **The deflations of the split exact structure are the biproduct projections.** -/
+theorem split_isDeflation_iff {Y Z : C} (p : Y ⟶ Z) :
+    (ExactStructure.split C).IsDeflation p ↔ ∃ (X : C) (e : Y ≅ X ⊞ Z), e.inv ≫ p = biprod.snd :=
+  ConflationClass.split_isDeflation_iff p
+
 /-- In every exact structure the biproduct short complex `X ⟶ X ⊞ Z ⟶ Z` is a conflation.
 
 The proof is Bühler's: E0op produces a conflation whose deflation is `𝟙 Z`, so its inflation
 `i : K ⟶ Z` is zero, and the square exhibiting `X ⊞ Z` as the pushout of `i` along the zero map
 `K ⟶ X` turns `biprod.inl` into an inflation by E2. The cokernel of `biprod.inl` supplied by
 that conflation is then identified with `biprod.snd`. -/
+@[simp]
 theorem conflation_biprodShortComplex (E : ExactStructure C) (X Z : C) :
     E.Conflation (biprodShortComplex X Z) := by
   obtain ⟨K, i, hi, hK⟩ :=
