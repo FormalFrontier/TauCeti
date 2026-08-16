@@ -121,7 +121,6 @@ theorem hilleYosida_generation {A : X →ₗ.[ℝ] X} {M omega : ℝ}
   let T := hilleYosidaLimitSemigroup hM hres₀ hpow₀ hdense₀
   refine ⟨T.expShift (-omega), ?_, ?_⟩
   · rw [StronglyContinuousSemigroup.generator_expShift]
-    change LinearPMap.subScalar T.generator (-omega) = A
     dsimp only [T]
     rw [hilleYosidaLimitSemigroup_generator hM hres₀ hpow₀ hdense₀,
       LinearPMap.subScalar_subScalar, add_neg_cancel, LinearPMap.subScalar_zero]
