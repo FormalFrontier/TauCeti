@@ -34,6 +34,7 @@ Némethi's `ℍ⁻` are subsequent steps.
 * `TauCeti.PlumbingChain.weightDegreePart`: the weight-`≤ N`, cubical-degree-`q` chain group.
 * `TauCeti.PlumbingGraph.latticeDifferentialWeightDegree`: the restricted differential.
 * `TauCeti.PlumbingGraph.latticeWeightSublevelComplex`: the filtered chain complex at level `N`.
+* `TauCeti.PlumbingGraph.latticeWeightSublevelInclusion`: the inclusion between filtration levels.
 
 ## References
 
@@ -161,7 +162,7 @@ theorem iSup_weightSublevel_eq_top (P : PlumbingGraph V) (k : P.characteristicVe
 
 /-- On a negative-definite plumbing, each chain-level weight submodule is finitely generated over
 `𝔽₂[U]`. -/
-theorem weightSublevel_fg (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
+theorem fg_weightSublevel (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) (N : ℤ) : (weightSublevel P k N).FG := by
   rw [weightSublevel, Finsupp.supported_eq_span_single]
   exact Submodule.fg_span ((P.finite_cubeWeightSublevel h k N).image fun C => Finsupp.single C 1)
@@ -222,7 +223,7 @@ theorem weightDegreeInclusion_apply (P : PlumbingGraph V) (k : P.characteristicV
 
 /-- On a negative-definite plumbing, every filtered cubical-degree chain group is finitely
 generated over `𝔽₂[U]`. -/
-theorem weightDegreePart_fg (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
+theorem fg_weightDegreePart (P : PlumbingGraph V) (h : P.IsNegativeDefinite)
     (k : P.characteristicVectors) (N : ℤ) (q : ℕ) :
     (weightDegreePart P k N q).FG := by
   have hsupport : weightDegreePart P k N q =
@@ -331,7 +332,7 @@ theorem latticeDifferentialWeightDegree_comp_inclusion (P : PlumbingGraph V)
 
 /-- The cubically graded lattice chain complex restricted to cubes of characteristic weight at
 most `N`. -/
-noncomputable def latticeWeightSublevelComplex (P : PlumbingGraph V)
+@[expose] noncomputable def latticeWeightSublevelComplex (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) : ChainComplex (ModuleCat PlumbingCoefficient) ℕ :=
   ChainComplex.of
     (fun q => ModuleCat.of PlumbingCoefficient (PlumbingChain.weightDegreePart P k N q))
@@ -364,6 +365,55 @@ theorem latticeWeightSublevelComplex_d (P : PlumbingGraph V)
     (fun r => ModuleCat.of PlumbingCoefficient (PlumbingChain.weightDegreePart P k N r))
     (fun r => ModuleCat.ofHom (R := PlumbingCoefficient)
       (P.latticeDifferentialWeightDegree k N r)) q)
+
+/-- The chain-complex inclusion from weight level `N` to a larger level `M`. -/
+@[expose] noncomputable def latticeWeightSublevelInclusion (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {N M : ℤ} (hNM : N ≤ M) :
+    P.latticeWeightSublevelComplex k N ⟶ P.latticeWeightSublevelComplex k M :=
+  by
+    unfold latticeWeightSublevelComplex
+    refine ChainComplex.ofHom
+      (fun q => ModuleCat.ofHom (PlumbingChain.weightDegreeInclusion P k hNM q)) ?_
+    intro q
+    simp only [ChainComplex.of_d, ← ModuleCat.ofHom_comp]
+    exact congrArg ModuleCat.ofHom
+      (P.latticeDifferentialWeightDegree_comp_inclusion k hNM q)
+
+/-- The component of a weight-sublevel inclusion is the corresponding inclusion of filtered
+degree parts. -/
+@[simp]
+theorem latticeWeightSublevelInclusion_f (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {N M : ℤ} (hNM : N ≤ M) (q : ℕ) :
+    (P.latticeWeightSublevelInclusion k hNM).f q =
+      ModuleCat.ofHom (PlumbingChain.weightDegreeInclusion P k hNM q) :=
+  rfl
+
+/-- A weight-sublevel complex inclusion does not change the underlying filtered chain. -/
+@[simp]
+theorem latticeWeightSublevelInclusion_apply (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {N M : ℤ} (hNM : N ≤ M) (q : ℕ)
+    (c : PlumbingChain.weightDegreePart P k N q) :
+    (P.latticeWeightSublevelInclusion k hNM).f q c =
+      PlumbingChain.weightDegreeInclusion P k hNM q c :=
+  rfl
+
+/-- The weight-sublevel inclusion from a level to itself is the identity chain map. -/
+@[simp]
+theorem latticeWeightSublevelInclusion_id (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) :
+    P.latticeWeightSublevelInclusion k (le_refl N) =
+      𝟙 (P.latticeWeightSublevelComplex k N) := by
+  ext q c
+  rfl
+
+/-- Weight-sublevel inclusions compose to the inclusion between the outer levels. -/
+@[simp]
+theorem latticeWeightSublevelInclusion_comp (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {N M L : ℤ} (hNM : N ≤ M) (hML : M ≤ L) :
+    P.latticeWeightSublevelInclusion k hNM ≫ P.latticeWeightSublevelInclusion k hML =
+      P.latticeWeightSublevelInclusion k (hNM.trans hML) := by
+  ext q c
+  rfl
 
 end PlumbingGraph
 
