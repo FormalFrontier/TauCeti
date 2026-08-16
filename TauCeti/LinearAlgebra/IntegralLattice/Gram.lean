@@ -38,6 +38,8 @@ discriminant group.
   canonical basis is `G`.
 * `TauCeti.IntegralLattice.determinant_ofGramMatrix`: the signed determinant of `ofGramMatrix` is
   the determinant of `G`.
+* `TauCeti.IntegralLattice.isNondegenerate_ofGramMatrix`: a nonsingular Gram matrix produces a
+  nondegenerate integral lattice.
 * `TauCeti.IntegralLattice.discriminant_ofGramMatrix`: the discriminant of `ofGramMatrix` is the
   absolute determinant of `G`.
 
@@ -221,6 +223,14 @@ theorem determinant_ne_zero_iff (L : IntegralLattice V) :
     L.determinant ≠ 0 ↔ L.form.Nondegenerate := by
   classical
   rw [determinant, gramDet_ne_zero_iff]
+
+/-- An integral lattice constructed from a nonsingular Gram matrix is nondegenerate. -/
+theorem isNondegenerate_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
+    (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (hdet : G.det ≠ 0) :
+    (ofGramMatrix b G hG).IsNondegenerate :=
+  ⟨(determinant_ne_zero_iff _).mp (by
+    rw [determinant_ofGramMatrix]
+    exact hdet)⟩
 
 /-- The nonnegative discriminant of an integral lattice is the absolute value of its signed
 determinant. -/

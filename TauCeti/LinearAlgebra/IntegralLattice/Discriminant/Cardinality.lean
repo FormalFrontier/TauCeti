@@ -27,17 +27,20 @@ Gram matrix of `b`: the coefficient of `b j` along the dual vector indexed by `i
 
 ## Main results
 
-* `TauCeti.IntegralLattice.carrierInDualBasis`: a carrier basis, regarded as a basis of the copy
-  of the carrier inside the dual carrier.
 * `TauCeti.IntegralLattice.dualCarrierBasis_toMatrix_carrierInDualBasis`: the associated
   change-of-basis matrix is the Gram matrix.
+* `TauCeti.IntegralLattice.natCard_discriminantGroup_eq_natAbs_gramDet`: the basis-relative
+  cardinality formula.
 * `TauCeti.IntegralLattice.natCard_discriminantGroup`: the discriminant-group cardinality is the
   lattice discriminant.
+* `TauCeti.IntegralLattice.natCard_discriminantGroup_ofGramMatrix`: the formula for a lattice
+  constructed from a nonsingular integral symmetric matrix.
 
 ## References
 
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
 * `TauCetiRoadmap/IntegralLattices/README.md` (Layer 2).
+* `TauCetiRoadmap/IntegralLattices/Suggested.lean`.
 -/
 
 public section
@@ -49,20 +52,6 @@ namespace TauCeti.IntegralLattice
 universe u v
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
-
-open Classical in
-/-- A basis of the carrier, regarded as a basis of its copy inside the dual carrier. -/
-noncomputable def carrierInDualBasis (L : IntegralLattice V) {ι : Type v}
-    (b : Basis ι ℤ L) : Basis ι ℤ L.carrierInDual :=
-  b.map (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm
-
-open Classical in
-/-- The vector of `carrierInDualBasis` indexed by `i` has underlying carrier vector `b i`. -/
-@[simp]
-theorem carrierInDualBasis_apply (L : IntegralLattice V) {ι : Type v}
-    (b : Basis ι ℤ L) (i : ι) :
-    (L.carrierInDualBasis b i : L.dualCarrier) = ⟨b i, L.le_dualCarrier (b i).property⟩ := by
-  rfl
 
 open Classical in
 /-- The change-of-basis matrix from the dual basis to the embedded carrier basis is the Gram
@@ -77,7 +66,7 @@ theorem dualCarrierBasis_toMatrix_carrierInDualBasis (L : IntegralLattice V)
   apply Int.cast_injective (α := ℚ)
   rw [L.intCast_gramMatrix_apply]
   simp only [L.dualCarrierBasis_repr, Function.comp_apply, Basis.dualBasis_repr,
-    L.dualPairingEquiv_cast, carrierInDualBasis_apply]
+    L.dualPairingEquiv_cast, coe_carrierInDualBasis_apply]
   exact L.isSymm.eq _ _
 
 open Classical in
@@ -100,6 +89,7 @@ theorem natCard_discriminantGroup_eq_natAbs_gramDet (L : IntegralLattice V)
     (L.carrierInDualBasis b)).symm
 
 /-- **The order of the discriminant group is the lattice discriminant.** -/
+@[simp]
 theorem natCard_discriminantGroup (L : IntegralLattice V) [L.IsNondegenerate] :
     Nat.card L.DiscriminantGroup = L.discriminant := by
   classical
@@ -112,9 +102,8 @@ has cardinality equal to the absolute value of that matrix's determinant. -/
 theorem natCard_discriminantGroup_ofGramMatrix {ι : Type v} [Fintype ι] [DecidableEq ι]
     (b : Basis ι ℚ V) (G : Matrix ι ι ℤ) (hG : G.IsSymm) (hdet : G.det ≠ 0) :
     Nat.card (ofGramMatrix b G hG).DiscriminantGroup = G.det.natAbs := by
-  let hnondegenerate : (ofGramMatrix b G hG).IsNondegenerate :=
-    ⟨(determinant_ne_zero_iff _).mp (by simpa using hdet)⟩
-  rw [@natCard_discriminantGroup V _ _ (ofGramMatrix b G hG) hnondegenerate,
-    discriminant_ofGramMatrix]
+  have : (ofGramMatrix b G hG).IsNondegenerate :=
+    isNondegenerate_ofGramMatrix b G hG hdet
+  rw [natCard_discriminantGroup, discriminant_ofGramMatrix]
 
 end TauCeti.IntegralLattice

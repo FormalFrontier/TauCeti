@@ -28,6 +28,8 @@ equivalence of discriminant groups.  The construction respects identity, inverse
 ## Main declarations
 
 * `TauCeti.IntegralLattice.carrierInDual`: the original carrier inside its dual carrier.
+* `TauCeti.IntegralLattice.carrierInDualBasis`: a carrier basis, regarded as a basis of its copy
+  inside the dual carrier.
 * `TauCeti.IntegralLattice.DiscriminantGroup`: the quotient `Lᵛ / L`.
 * `TauCeti.IntegralLattice.instFiniteDiscriminantGroup`: finiteness in the nondegenerate case.
 * `TauCeti.IntegralLattice.Isometry.discriminantGroupEquiv`: the induced equivalence of
@@ -54,7 +56,6 @@ namespace IntegralLattice
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
 /-- The original carrier, regarded as a submodule of the subtype `L.dualCarrier`. -/
-@[expose]
 def carrierInDual (L : IntegralLattice V) : Submodule ℤ L.dualCarrier :=
   L.carrier.submoduleOf L.dualCarrier
 
@@ -68,6 +69,22 @@ theorem mem_carrierInDual_iff (L : IntegralLattice V) (x : L.dualCarrier) :
 theorem finrank_carrierInDual (L : IntegralLattice V) :
     Module.finrank ℤ L.carrierInDual = Module.finrank ℤ L :=
   (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).finrank_eq
+
+open Classical in
+/-- A basis of the carrier, regarded as a basis of its copy inside the dual carrier. -/
+noncomputable def carrierInDualBasis (L : IntegralLattice V) {ι : Type v}
+    (b : Basis ι ℤ L) : Basis ι ℤ L.carrierInDual :=
+  b.map (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm
+
+open Classical in
+/-- The vector of `carrierInDualBasis` indexed by `i` has underlying carrier vector `b i`. -/
+@[simp]
+theorem coe_carrierInDualBasis_apply (L : IntegralLattice V) {ι : Type v}
+    (b : Basis ι ℤ L) (i : ι) :
+    (L.carrierInDualBasis b i : L.dualCarrier) = ⟨b i, L.le_dualCarrier (b i).property⟩ := by
+  unfold carrierInDualBasis carrierInDual
+  rw [Basis.map_apply]
+  rfl
 
 /-- The discriminant group `A_L = Lᵛ / L`, as an actual quotient of the dual-carrier subtype by
 the inverse image of the original carrier. -/
