@@ -51,6 +51,8 @@ separately, alongside `TauCeti/Algebra/AlgebraicGroup/GeneralLinear/Borel.lean`.
 * `TauCeti.GLSymplectic.mulEquivSymplecticGroup`: the group identification with
   `Matrix.symplecticGroup`.
 * `TauCeti.GLSymplectic.symJ`: the standard alternating form, as an element of the subgroup.
+* `TauCeti.GLSymplectic.map`: the group morphism induced by a ring morphism of value rings,
+  restricting `Matrix.GeneralLinearGroup.map`.
 
 ## References
 
@@ -72,11 +74,8 @@ universe u
 variable (l : Type*) [DecidableEq l] [Fintype l] (R : Type u) [CommRing R]
 
 /-- The **symplectic group** as a subgroup of `GL (l ⊕ l) R`: the invertible matrices whose
-underlying matrix satisfies `M J Mᵀ = J`.
-
-Closure under multiplication and the unit are Mathlib's `Submonoid` closure; closure under the
-unit inverse is the computation `M⁻¹ = (-J) Mᵀ J` of
-`Matrix.SymplecticGroup.inv_eq_symplectic_inv`, transported across `Matrix.coe_units_inv`. -/
+underlying matrix satisfies `M J Mᵀ = J`. `TauCeti.GLSymplectic.mulEquivSymplecticGroup`
+identifies it with Mathlib's submonoid form `Matrix.symplecticGroup`. -/
 def GLSymplectic : Subgroup (GL (l ⊕ l) R) where
   carrier := {M | (M : Matrix (l ⊕ l) (l ⊕ l) R) ∈ Matrix.symplecticGroup l R}
   mul_mem' {a b} ha hb := by
@@ -159,6 +158,44 @@ noncomputable def symJ : GLSymplectic l R :=
 @[simp]
 theorem coe_symJ : ((symJ l R : GL (l ⊕ l) R) : Matrix (l ⊕ l) (l ⊕ l) R) = J l R := by
   simp [symJ, SymplecticGroup.symJ]
+
+section Map
+
+variable {l R} {S : Type*} [CommRing S]
+
+/-- A ring morphism of value rings carries symplectic matrices to symplectic matrices. -/
+theorem map_mem (f : R →+* S) {M : GL (l ⊕ l) R} (hM : M ∈ GLSymplectic l R) :
+    Matrix.GeneralLinearGroup.map f M ∈ GLSymplectic l S :=
+  SymplecticGroup.map_mem hM f
+
+variable (l) in
+/-- The group morphism between symplectic subgroups induced by a ring morphism of value rings:
+the restriction of `Matrix.GeneralLinearGroup.map`, which acts entrywise. -/
+def map (f : R →+* S) : GLSymplectic l R →* GLSymplectic l S where
+  toFun M := ⟨Matrix.GeneralLinearGroup.map f M, map_mem f M.2⟩
+  map_one' := Subtype.ext (map_one (Matrix.GeneralLinearGroup.map f))
+  map_mul' M N := Subtype.ext (map_mul (Matrix.GeneralLinearGroup.map f) M.1 N.1)
+
+/-- The underlying general-linear value of the induced morphism is
+`Matrix.GeneralLinearGroup.map`. -/
+@[simp]
+theorem coe_map (f : R →+* S) (M : GLSymplectic l R) :
+    ((map l f M : GLSymplectic l S) : GL (l ⊕ l) S) =
+      Matrix.GeneralLinearGroup.map f (M : GL (l ⊕ l) R) := by
+  simp [map]
+
+@[simp]
+theorem map_id : map l (RingHom.id R) = MonoidHom.id (GLSymplectic l R) := by
+  refine MonoidHom.ext fun M => Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
+  simp
+
+@[simp]
+theorem map_comp {T : Type*} [CommRing T] (f : R →+* S) (g : S →+* T) :
+    map l (g.comp f) = (map l g).comp (map l f) := by
+  refine MonoidHom.ext fun M => Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
+  simp
+
+end Map
 
 end GLSymplectic
 
