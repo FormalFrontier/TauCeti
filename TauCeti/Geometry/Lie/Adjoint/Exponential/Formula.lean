@@ -183,15 +183,19 @@ theorem tangentAd_mulInvariantExp_smul_self (X : GroupLieAlgebra I G) (t : ℝ) 
   let A := (Module.End.toContinuousLinearMap E)
     ((groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).conj
       (LieAlgebra.ad ℝ (GroupLieAlgebra I G) X))
+  have hAX_eq_bracket : A (show E from X) =
+      (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X X) := by
+    rfl
   have hAX : A (show E from X) = 0 := by
-    change (show E from (⁅X, X⁆ : GroupLieAlgebra I G)) = 0
-    rw [lie_self]
+    rw [hAX_eq_bracket, LieAlgebra.ad_apply, lie_self]
     rfl
   change (show E from tangentAd (I := I)
     (mulInvariantExp (I := I) (G := G) (t • X)) X) = (show E from X)
   rw [tangentAd_mulInvariantExp_apply]
   simp only [map_smul]
   apply sub_eq_zero.mp
+  -- Re-expose the definitionally equal model representatives so the general operator-exponential
+  -- integral identity matches this tangent-Lie-algebra goal.
   change NormedSpace.exp (t • A) (show E from X) - (show E from X) = 0
   rw [ContinuousLinearMap.exp_smul_apply_sub_eq_intervalIntegral, hAX]
   simp only [map_zero, intervalIntegral.integral_zero]
