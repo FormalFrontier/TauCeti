@@ -74,7 +74,7 @@ generator of the adjoin presentation. -/
     candidateGenusFieldEquivAdjoin hd (candidateGenusFieldGen hd P) =
       gen (genusFieldRoot hd) P := by
   apply Subtype.ext
-  rfl
+  exact candidateGenusFieldGen_val hd P
 
 private theorem candidateGenusField_autCongr_fixes_gen_iff {d : ℤ} (hd : Squarefree d)
     (σ : candidateGenusField hd ≃ₐ[ℚ] candidateGenusField hd)
@@ -141,7 +141,13 @@ chosen generator to `(-1)^(ε P)` times that generator. -/
     ((galoisGroupEquivCandidateGenusField hd).symm (Multiplicative.ofAdd ε))
         (candidateGenusFieldGen hd P) = (-1) ^ (ε P).val * candidateGenusFieldGen hd P := by
   apply (candidateGenusFieldEquivAdjoin hd).injective
-  simp only [map_mul, candidateGenusFieldEquivAdjoin_apply_gen]
+  change ((galoisGroupEquivPrimeDiscriminantRadicands
+      (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
+      (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)
+      Subtype.val_injective (genusPrimeDiscriminants_not_all_three_even hd)
+      (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd)).symm (Multiplicative.ofAdd ε))
+        (candidateGenusFieldEquivAdjoin hd (candidateGenusFieldGen hd P)) = _
+  rw [map_mul, map_pow, map_neg, map_one, candidateGenusFieldEquivAdjoin_apply_gen]
   exact galoisGroupEquivPrimeDiscriminantRadicands_symm_apply_gen
     (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
     (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)

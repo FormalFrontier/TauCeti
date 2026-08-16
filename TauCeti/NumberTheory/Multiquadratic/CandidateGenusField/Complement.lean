@@ -93,11 +93,16 @@ theorem adjoin_candidateGenusFieldGen_over_complement_eq_top (hd : Squarefree d)
   rw [SetLike.mem_coe, mem_restrictScalars]
   rcases eq_or_ne Q P with rfl | hQP
   · exact subset_adjoin _ _ rfl
-  · have hmem := IntermediateField.algebraMap_mem
-      (adjoin (candidateGenusFieldComplement hd P) {candidateGenusFieldGen hd P})
-      ⟨candidateGenusFieldGen hd Q,
-        candidateGenusFieldGen_mem_candidateGenusFieldComplement hd hQP⟩
-    simpa using hmem
+  · have hmap :
+        algebraMap (candidateGenusFieldComplement hd P) (candidateGenusField hd)
+            (⟨candidateGenusFieldGen hd Q,
+              candidateGenusFieldGen_mem_candidateGenusFieldComplement hd hQP⟩ :
+              candidateGenusFieldComplement hd P) =
+          candidateGenusFieldGen hd Q := by
+      rfl
+    rw [← hmap]
+    exact IntermediateField.algebraMap_mem
+      (adjoin (candidateGenusFieldComplement hd P) {candidateGenusFieldGen hd P}) _
 
 /-- The complementary compositum has absolute degree `2 ^ (t - 1)`, where
 `t = (genusPrimeDiscriminants hd).card`. -/

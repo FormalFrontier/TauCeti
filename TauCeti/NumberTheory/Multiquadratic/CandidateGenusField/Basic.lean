@@ -104,7 +104,7 @@ theorem candidateGenusField_def {d : ℤ} (hd : Squarefree d) :
   exact subset_adjoin ℚ _ ⟨P, rfl⟩
 
 /-- The chosen root indexed by `P`, regarded as an element of the candidate genus field. -/
-@[expose] noncomputable def candidateGenusFieldGen {d : ℤ} (hd : Squarefree d)
+noncomputable def candidateGenusFieldGen {d : ℤ} (hd : Squarefree d)
     (P : {P // P ∈ genusPrimeDiscriminants hd}) : candidateGenusField hd :=
   ⟨genusFieldRoot hd P, genusFieldRoot_mem_candidateGenusField hd P⟩
 
