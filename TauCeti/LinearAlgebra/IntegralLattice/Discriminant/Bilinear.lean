@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.Quotient.Bilinear
-public import TauCeti.LinearAlgebra.FiniteBilinearModule
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Basic
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Group
 
 /-!
