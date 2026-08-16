@@ -91,7 +91,7 @@ theorem cocharacterMap_comp {S T U : MultiplicativeTypeCommHopfAlgCat k}
   simp
 
 /-- The map on cocharacters is equivariant for the contragredient absolute-Galois actions. -/
-theorem cocharacterMap_galois
+theorem cocharacterMap_smul
     {S T : MultiplicativeTypeCommHopfAlgCat k} (f : S ⟶ T)
     (σ : Field.absoluteGaloisGroup k) (y : cocharacterLattice T) :
     cocharacterMap f (cocharacterGaloisRepresentation T σ y) =
@@ -159,7 +159,7 @@ noncomputable def cocharacterLatticeRepresentationMap
     isIntertwining' := fun σ ↦ by
       apply LinearMap.ext
       intro y
-      exact MultiplicativeTypeCommHopfAlgCat.cocharacterMap_galois
+      exact MultiplicativeTypeCommHopfAlgCat.cocharacterMap_smul
         (toMultiplicativeTypeMap f) σ y
   }
 
