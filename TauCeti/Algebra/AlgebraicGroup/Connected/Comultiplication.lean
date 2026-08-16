@@ -244,10 +244,17 @@ private theorem comul_one_sub_connectedComponentIdempotent_mem
       exact Ideal.Quotient.mkₐ_ker k I
     -- Unfold the local tensor-square map abbreviation before tensor-product exactness rewrites it.
     change RingHom.ker (Algebra.TensorProduct.map q q) = _
-    rw [Algebra.TensorProduct.map_ker (f := q) (g := q) hq hq, hqker,
-      HopfIdeal.leftTensorIdeal_def, HopfIdeal.rightTensorIdeal_def]
-    simp only [AlgHom.toRingHom_eq_coe]
-    apply congr_arg₂ (fun J K : Ideal (H ⊗[k] H) ↦ J ⊔ K) <;> rfl
+    have hleft :
+        I.map (Algebra.TensorProduct.includeLeft (R := k) (S := k) (A := H) (B := H)) =
+          HopfIdeal.leftTensorIdeal (R := k) (H := H) I := by
+      rw [HopfIdeal.leftTensorIdeal_def, AlgHom.toRingHom_eq_coe]
+      exact AlgHom.coe_ideal_map _ I
+    have hright :
+        I.map (Algebra.TensorProduct.includeRight (R := k) (A := H) (B := H)) =
+          HopfIdeal.rightTensorIdeal (R := k) (H := H) I := by
+      rw [HopfIdeal.rightTensorIdeal_def, AlgHom.toRingHom_eq_coe]
+      exact AlgHom.coe_ideal_map _ I
+    rw [Algebra.TensorProduct.map_ker (f := q) (g := q) hq hq, hqker, hleft, hright]
   rwa [hker_eq] at hker
 
 /-- The ideal cutting out the augmentation point's connected component is stable under
