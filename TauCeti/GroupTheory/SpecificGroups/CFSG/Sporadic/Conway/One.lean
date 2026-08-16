@@ -176,4 +176,49 @@ theorem co1Presentation_totalLength : co1Presentation.totalLength = 611 := by
     List.sum_nil]
   norm_num
 
+/-- The involution and labeled-edge relators compile to cyclically reduced words. -/
+private theorem isCyclicallyReduced_toWord_of_mem_co1NodeAndEdgeRelators :
+    ∀ r ∈ co1NodeAndEdgeRelators, FreeGroup.IsCyclicallyReduced (Relator.toWord r) := by
+  simp [co1NodeAndEdgeRelators, FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]
+
+/-- The omitted-edge relators compile to cyclically reduced words. -/
+private theorem isCyclicallyReduced_toWord_of_mem_co1NonedgeRelators :
+    ∀ r ∈ co1NonedgeRelators, FreeGroup.IsCyclicallyReduced (Relator.toWord r) := by
+  simp [co1NonedgeRelators, FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]
+
+/-- The relators taken from `presdef[3]` compile to cyclically reduced words.
+
+The last of them is a thirty-ninth power, whose expansion has three hundred and fifty-one letters;
+it is handled by `TauCeti.Relator.isCyclicallyReduced_toWord_pow`, which reduces the check to its
+nine-letter base. Expanding it instead exhausts the elaborator. -/
+private theorem isCyclicallyReduced_toWord_of_mem_co1AdditionalRelators :
+    ∀ r ∈ co1AdditionalRelators, FreeGroup.IsCyclicallyReduced (Relator.toWord r) := by
+  intro r hr
+  simp only [co1AdditionalRelators, List.mem_cons, List.not_mem_nil, or_false] at hr
+  rcases hr with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  on_goal 9 =>
+    exact Relator.isCyclicallyReduced_toWord_pow
+      (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) 39
+  all_goals simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced, FreeGroup.invRev]
+
+/-- Every transcribed `Co₁` relator expression compiles to a cyclically reduced word. -/
+private theorem isCyclicallyReduced_toWord_of_mem_co1Transcribed :
+    ∀ r ∈ co1Presentation.transcribed, FreeGroup.IsCyclicallyReduced (Relator.toWord r) := by
+  intro r hr
+  rcases List.mem_append.mp hr with h | h
+  · rcases List.mem_append.mp h with h | h
+    · exact isCyclicallyReduced_toWord_of_mem_co1NodeAndEdgeRelators r h
+    · exact isCyclicallyReduced_toWord_of_mem_co1NonedgeRelators r h
+  · exact isCyclicallyReduced_toWord_of_mem_co1AdditionalRelators r h
+
+/-- Every compiled `Co₁` relator is cyclically reduced, so the letter count recorded by
+`TauCeti.Sporadic.co1Presentation_totalLength` is comparable with a published presentation length,
+which is measured after free and cyclic reduction of each relator. -/
+theorem co1Presentation_relatorsCyclicallyReduced :
+    co1Presentation.relatorsCyclicallyReduced := by
+  rw [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def]
+  intro w hw
+  obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hw
+  exact isCyclicallyReduced_toWord_of_mem_co1Transcribed r hr
+
 end TauCeti.Sporadic
