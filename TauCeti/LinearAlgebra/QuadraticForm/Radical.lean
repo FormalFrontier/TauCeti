@@ -6,19 +6,22 @@ module
 
 public import Mathlib.Algebra.CharP.Invertible
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
+public import Mathlib.LinearAlgebra.QuadraticForm.Prod
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
 /-!
 # Radical API for quadratic forms
 
 This file records basic properties of the radical of a quadratic form (such as its invariance under
-negation) and general consequences of nondegeneracy, together with the two facts about the
+negation and orthogonal products) and general consequences of nondegeneracy, together with the two
+facts about the
 quadratic form `x ↦ B x x` of a *symmetric* bilinear form `B` that a Clifford construction consumes:
 its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as `2` is invertible.
 
 ## Main results
 
 * `QuadraticMap.radical_neg`: negating a quadratic map does not change its radical.
+* `QuadraticMap.radical_prod`: the radical of an orthogonal product is the product of the radicals.
 * `QuadraticMap.Nondegenerate.ne_zero`: a nondegenerate quadratic form on a nontrivial module is
   nonzero.
 * `LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip`: the polar form of the quadratic form of a
@@ -41,6 +44,23 @@ variable {R M P : Type*} [CommRing R] [AddCommGroup M] [AddCommGroup P]
 theorem radical_neg (Q : QuadraticMap R M P) : (-Q).radical = Q.radical := by
   ext x
   simp only [QuadraticMap.mem_radical_iff', neg_apply, neg_eq_zero, neg_inj]
+
+variable {M' : Type*} [AddCommGroup M'] [Module R M']
+
+/-- The radical of an orthogonal product is the product of the two radicals when two is
+invertible. -/
+@[simp]
+theorem radical_prod [Invertible (2 : R)] (Q : QuadraticForm R M) (Q' : QuadraticForm R M') :
+    (Q.prod Q').radical = Q.radical.prod Q'.radical := by
+  rw [radical_eq_ker_polarBilin, radical_eq_ker_polarBilin, radical_eq_ker_polarBilin]
+  ext p
+  simp only [Submodule.mem_prod, LinearMap.mem_ker, LinearMap.ext_iff,
+    LinearMap.zero_apply]
+  constructor
+  · intro hp
+    exact ⟨fun x ↦ by simpa using hp (x, 0), fun x ↦ by simpa using hp (0, x)⟩
+  · rintro ⟨hp, hp'⟩ x
+    simpa using congrArg₂ (· + ·) (hp x.1) (hp' x.2)
 
 end QuadraticMap
 
