@@ -54,11 +54,11 @@ variable {ι : Type w} {κ : Type*}
 variable {V : Type v} [AddCommGroup V] [Module ℚ V]
 
 variable (e : ι → L) (h : κ → L)
-variable (rho : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
+variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
 variable (M : AddSubgroup V)
-variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, rho u m ∈ M)
+variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
 variable (i : ι)
-variable (hnil : IsNilpotent (rho (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 
 -- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
 attribute [local instance high] Algebra.toModule
@@ -66,20 +66,20 @@ attribute [local instance high] Algebra.toModule
 private noncomputable def kostantRootSubgroupPointAction (A : CommAlgCat.{v} ℤ) :
     HopfAlgebra.points (R := ℤ) (H := SymmetricAlgebra ℤ ℤ) A ⟶
       GeneralLinear.scalarExtensionAutomorphisms (V := M) A :=
-  GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h rho M hM i hnil)
+  GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h ρ M hM i hnil)
 
 private theorem kostantRootSubgroupPointAction_eq (A : CommAlgCat.{v} ℤ) :
     kostantRootSubgroupPointAction
-      (e := e) (h := h) (rho := rho) M hM i hnil A =
-      GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h rho M hM i hnil) := by
+      (e := e) (h := h) (ρ := ρ) M hM i hnil A =
+      GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h ρ M hM i hnil) := by
   rfl
 
 @[simp]
 private theorem kostantRootSubgroupPointAction_val (A : CommAlgCat.{v} ℤ)
     (f : HopfAlgebra.points (R := ℤ) (H := SymmetricAlgebra ℤ ℤ) A) :
     (kostantRootSubgroupPointAction
-      (e := e) (h := h) (rho := rho) M hM i hnil A f).val =
-      (kostantRootSubgroupPoints (A := A) e h rho M hM i hnil f).val := by
+      (e := e) (h := h) (ρ := ρ) M hM i hnil A f).val =
+      (kostantRootSubgroupPoints (A := A) e h ρ M hM i hnil f).val := by
   rfl
 
 private theorem kostantRootSubgroupPointAction_naturality
@@ -87,9 +87,9 @@ private theorem kostantRootSubgroupPointAction_naturality
     (f : HopfAlgebra.points (R := ℤ) (H := SymmetricAlgebra ℤ ℤ) A) :
     GeneralLinear.mapScalarExtensionAutomorphisms (V := M) phi
         (kostantRootSubgroupPointAction
-          (e := e) (h := h) (rho := rho) M hM i hnil A f) =
+          (e := e) (h := h) (ρ := ρ) M hM i hnil A f) =
       kostantRootSubgroupPointAction
-          (e := e) (h := h) (rho := rho) M hM i hnil B
+          (e := e) (h := h) (ρ := ρ) M hM i hnil B
         (HopfAlgebra.mapPoints (H := SymmetricAlgebra ℤ ℤ) phi f) := by
   symm
   apply GeneralLinear.eq_mapScalarExtensionAutomorphisms_of_apply_scalarExtensionMap_eq
@@ -106,7 +106,7 @@ private theorem kostantRootSubgroupPointAction_naturality
   rw [kostantRootSubgroupPointAction_val, kostantRootSubgroupPointAction_val,
     HopfAlgebra.mapPoints_apply]
   simpa only [AlgHom.mapValue_apply] using
-    (map_kostantRootSubgroupPoints_algHom e h rho M hM i hnil phi.hom f z).symm
+    (map_kostantRootSubgroupPoints_algHom e h ρ M hM i hnil phi.hom f z).symm
 
 /-- The natural point representation of `𝔾ₐ` on a Kostant-stable integral module attached to a
 nilpotent root-vector action.
@@ -118,7 +118,7 @@ noncomputable def kostantRootSubgroupPointRepresentation :
     HopfAlgebra.PointRepresentation
       (R := ℤ) (H := SymmetricAlgebra ℤ ℤ) (V := M) where
   app A := kostantRootSubgroupPointAction
-      (e := e) (h := h) (rho := rho) M hM i hnil A ≫
+      (e := e) (h := h) (ρ := ρ) M hM i hnil A ≫
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A).symm
   naturality A B phi := by
     -- The structure-field goal contains the opaque object equalities of both functors, so expose
@@ -126,25 +126,25 @@ noncomputable def kostantRootSubgroupPointRepresentation :
     change
       HopfAlgebra.mapPoints (H := SymmetricAlgebra ℤ ℤ) phi ≫
           kostantRootSubgroupPointAction
-            (e := e) (h := h) (rho := rho) M hM i hnil B ≫
+            (e := e) (h := h) (ρ := ρ) M hM i hnil B ≫
           eqToHom
             (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) B).symm =
         kostantRootSubgroupPointAction
-          (e := e) (h := h) (rho := rho) M hM i hnil A ≫
+          (e := e) (h := h) (ρ := ρ) M hM i hnil A ≫
           eqToHom
             (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A).symm ≫
           (GeneralLinear.scalarExtensionAutomorphismsFunctor (V := M)).map phi
     have hraw :
         HopfAlgebra.mapPoints (H := SymmetricAlgebra ℤ ℤ) phi ≫
             kostantRootSubgroupPointAction
-              (e := e) (h := h) (rho := rho) M hM i hnil B =
+              (e := e) (h := h) (ρ := ρ) M hM i hnil B =
           kostantRootSubgroupPointAction
-              (e := e) (h := h) (rho := rho) M hM i hnil A ≫
+              (e := e) (h := h) (ρ := ρ) M hM i hnil A ≫
             GeneralLinear.mapScalarExtensionAutomorphisms (V := M) phi := by
       apply GrpCat.ext
       intro f
       exact (kostantRootSubgroupPointAction_naturality
-        e h rho M hM i hnil phi f).symm
+        e h ρ M hM i hnil phi f).symm
     rw [GeneralLinear.scalarExtensionAutomorphismsFunctor_map]
     rw [← Category.assoc, hraw]
     simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
@@ -154,27 +154,27 @@ homomorphism. -/
 @[simp]
 theorem kostantRootSubgroupPointRepresentation_action (A : CommAlgCat.{v} ℤ) :
     (kostantRootSubgroupPointRepresentation
-      (V := V) e h rho M hM i hnil).action A =
-      GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h rho M hM i hnil) := by
+      (V := V) e h ρ M hM i hnil).action A =
+      GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h ρ M hM i hnil) := by
   rw [HopfAlgebra.PointRepresentation.action_def,
     kostantRootSubgroupPointRepresentation]
   -- `action` inserts the opaque functor-object equality after the component, whose definition
   -- stores its inverse; expose that composite so the two transports can be cancelled.
   change
     (kostantRootSubgroupPointAction
-        (e := e) (h := h) (rho := rho) M hM i hnil A ≫
+        (e := e) (h := h) (ρ := ρ) M hM i hnil A ≫
         eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A).symm) ≫
       eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A) =
-        GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h rho M hM i hnil)
+        GrpCat.ofHom (kostantRootSubgroupPoints (A := A) e h ρ M hM i hnil)
   rw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
-  exact kostantRootSubgroupPointAction_eq e h rho M hM i hnil A
+  exact kostantRootSubgroupPointAction_eq e h ρ M hM i hnil A
 
 private theorem kostantRootSubgroupPointRepresentation_action_val
     (A : CommAlgCat.{v} ℤ)
     (f : HopfAlgebra.points (R := ℤ) (H := SymmetricAlgebra ℤ ℤ) A) :
     ((kostantRootSubgroupPointRepresentation
-      (V := V) e h rho M hM i hnil).action A f).val =
-      (kostantRootSubgroupPoints (A := A) e h rho M hM i hnil f).val := by
+      (V := V) e h ρ M hM i hnil).action A f).val =
+      (kostantRootSubgroupPoints (A := A) e h ρ M hM i hnil f).val := by
   rw [kostantRootSubgroupPointRepresentation_action]
   simp only [GrpCat.hom_ofHom]
 
@@ -183,19 +183,19 @@ root-subgroup action. This is the coordinate-side form of the divided-power expo
 @[irreducible]
 noncomputable def kostantRootSubgroupComodule : Comodule ℤ (SymmetricAlgebra ℤ ℤ) M :=
   HopfAlgebra.PointRepresentation.toComodule
-    (kostantRootSubgroupPointRepresentation e h rho M hM i hnil)
+    (kostantRootSubgroupPointRepresentation e h ρ M hM i hnil)
 
 /-- The Kostant root-subgroup coaction is the finite divided-power polynomial
 `m ↦ ∑ₙ D⁽ⁿ⁾(m) ⊗ Xⁿ`. -/
 @[simp]
 theorem kostantRootSubgroupComodule_coact (m : M) :
-    (kostantRootSubgroupComodule e h rho M hM i hnil).coact m =
+    (kostantRootSubgroupComodule e h ρ M hM i hnil).coact m =
       ∑ n ∈ Finset.range
-          (nilpotencyClass (rho (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))),
+          (nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))),
         integralDividedPower
-            (rho (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M n
+            (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M n
             (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem
-              e h rho hM i n hv) m ⊗ₜ[ℤ]
+              e h ρ hM i n hv) m ⊗ₜ[ℤ]
           ((SymmetricAlgebra.ι ℤ ℤ 1) ^ n) := by
   have hunlift :
       (ULift.algEquiv (R := ℤ) :
