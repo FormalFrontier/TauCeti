@@ -392,8 +392,22 @@ theorem orthogonalSum_carrierEquiv_inr (f : Isometry L L') (g : Isometry M M') (
     simp only [Isometry.coe_carrierEquiv_apply, orthogonalSumInr_apply,
       orthogonalSum_apply, map_zero]
 
-/-- Product isometries commute with the first canonical carrier projection. -/
+/-- Product isometries commute with the canonical carrier-product equivalence. -/
 @[simp]
+theorem orthogonalSumCarrierEquiv_carrierEquiv (f : Isometry L L') (g : Isometry M M')
+    (p : L.orthogonalSum M) :
+    orthogonalSumCarrierEquiv L' M' ((f.orthogonalSum g).carrierEquiv p) =
+      (f.carrierEquiv (orthogonalSumFst L M p), g.carrierEquiv (orthogonalSumSnd L M p)) :=
+  by
+    apply Prod.ext
+    · apply Subtype.ext
+      simp only [coe_orthogonalSumCarrierEquiv_fst, Isometry.coe_carrierEquiv_apply,
+        orthogonalSum_apply, orthogonalSumFst_apply]
+    · apply Subtype.ext
+      simp only [coe_orthogonalSumCarrierEquiv_snd, Isometry.coe_carrierEquiv_apply,
+        orthogonalSum_apply, orthogonalSumSnd_apply]
+
+/-- Product isometries commute with the first canonical carrier projection. -/
 theorem orthogonalSumFst_carrierEquiv (f : Isometry L L') (g : Isometry M M')
     (p : L.orthogonalSum M) :
     orthogonalSumFst L' M' ((f.orthogonalSum g).carrierEquiv p) =
@@ -404,7 +418,6 @@ theorem orthogonalSumFst_carrierEquiv (f : Isometry L L') (g : Isometry M M')
       Isometry.coe_carrierEquiv_apply, orthogonalSum_apply]
 
 /-- Product isometries commute with the second canonical carrier projection. -/
-@[simp]
 theorem orthogonalSumSnd_carrierEquiv (f : Isometry L L') (g : Isometry M M')
     (p : L.orthogonalSum M) :
     orthogonalSumSnd L' M' ((f.orthogonalSum g).carrierEquiv p) =
