@@ -57,6 +57,23 @@ variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 def carrierInDual (L : IntegralLattice V) : Submodule ℤ L.dualCarrier :=
   L.carrier.submoduleOf L.dualCarrier
 
+/-- The copy of the original carrier inside the dual carrier is canonically equivalent to the
+original carrier. -/
+def carrierInDualEquiv (L : IntegralLattice V) : L.carrierInDual ≃ₗ[ℤ] L :=
+  Submodule.submoduleOfEquivOfLe L.le_dualCarrier
+
+/-- The canonical equivalence from the carrier inside the dual carrier does not change the
+underlying ambient vector. -/
+@[simp]
+theorem coe_carrierInDualEquiv_apply (L : IntegralLattice V) (x : L.carrierInDual) :
+    (L.carrierInDualEquiv x : V) = x := (rfl)
+
+/-- The inverse canonical equivalence embeds a carrier vector into the dual carrier without
+changing its underlying ambient vector. -/
+@[simp]
+theorem coe_carrierInDualEquiv_symm_apply (L : IntegralLattice V) (x : L) :
+    ((L.carrierInDualEquiv.symm x : L.dualCarrier) : V) = x := (rfl)
+
 /-- Membership in `carrierInDual` is membership of the underlying ambient vector in the original
 carrier. -/
 @[simp]
