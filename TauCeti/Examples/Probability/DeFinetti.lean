@@ -23,9 +23,9 @@ who imports only the facade.
 Layer 7 spells one endpoint `exchangeable_of_mixedIID`; the repository proves it canonically as
 `MixedIID.exchangeable`, which is checked below under that name. No alias is introduced.
 
-`deFinetti_empiricalMeasure` is genuinely absent: not started, and blocked on a roadmap decision
-recorded in `Exchangeability/STATUS.md` — under `[StandardBorelSpace α]` alone no compatible Polish
-topology is selected, so the target as worded is not yet well-posed.
+`deFinetti_empiricalMeasure` is not currently exported. Unlike the topology-free fixed-set endpoint
+below, its weak-convergence statement requires an explicitly chosen compatible Polish topology,
+which `[StandardBorelSpace α]` alone does not select.
 
 Every other advertised name is checked below.
 

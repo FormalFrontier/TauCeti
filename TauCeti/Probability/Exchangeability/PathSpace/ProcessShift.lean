@@ -13,7 +13,7 @@ The process-level path shift for a process `X : ℕ → Ω → α`, used to buil
 block-product factorisation:
 
 * `processShift X m` — the shifted random path `ω ↦ (n ↦ X (m + n) ω)`, defined as the `m`-fold
-  merged path-space shift `(shift α)^[m]` of the process's path.
+  path-space shift `(shift α)^[m]` of the process's path.
 
 The `processCons` / `processTail` operations on sequence-valued random variables, together with
 their σ-algebra-contraction lemmas, live in `TauCeti.Probability.Process.Tail.Basic`.
@@ -38,7 +38,7 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- The shifted random path of a process, as the `m`-fold path-space shift `(shift α)^[m]` of the
-process's path (reusing the merged path shift): `ω ↦ (n ↦ X (m + n) ω)`. -/
+process's path (reusing the path shift): `ω ↦ (n ↦ X (m + n) ω)`. -/
 def processShift (X : ℕ → Ω → α) (m : ℕ) : Ω → (ℕ → α) :=
   fun ω => (shift α)^[m] fun n => X n ω
 
