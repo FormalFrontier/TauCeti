@@ -18,7 +18,7 @@ For a diagonal path `x → y → x`, this set is exactly the full one-swap neigh
 factorization through a distinct intermediate state. Consequently every nonempty nondiagonal
 intermediate set has at least two elements. The conjugation argument treats both geometric cases
 needed later: disjoint transpositions commute, while transpositions sharing one column satisfy
-the three-column braid relation.
+the three-column conjugation identity.
 
 These state-level factorizations do not yet pair rectangles: a later juxtaposition argument must
 also track which of the two rectangles with given corners is used and whether its domain avoids
@@ -34,13 +34,9 @@ built.
 
 * `TauCeti.GridState.nonempty_twoStepColumnSwapIntermediates_iff`: the intermediate set is
   nonempty exactly for a two-step neighbour.
-* `TauCeti.GridState.twoStepColumnSwapIntermediates_self`: diagonal paths are precisely the
-  backtracking paths through an arbitrary one-swap neighbour.
-* `TauCeti.GridState.swapColumns_swapColumns_conj`: the transposition-conjugation identity that
-  reorders any two column swaps.
-* `TauCeti.GridState.swapColumns_swapColumns_of_disjoint` and
-  `TauCeti.GridState.swapColumns_swapColumns_overlap`: its disjoint- and shared-column forms.
-* `TauCeti.GridState.one_lt_card_twoStepColumnSwapIntermediates_of_ne`: a nondiagonal two-step
+* `TauCeti.GridState.twoStepColumnSwapIntermediates_self`: the intermediates between `x` and
+  itself are exactly its one-swap neighbours.
+* `TauCeti.GridState.one_lt_card_twoStepColumnSwapIntermediates`: a nondiagonal two-step
   path has at least two possible intermediate states.
 
 ## References
@@ -99,53 +95,12 @@ theorem nonempty_twoStepColumnSwapIntermediates_iff {x z : GridState n} :
     exact ⟨y, mem_twoStepColumnSwapIntermediates.mpr
       ⟨hyx, mem_columnSwapNeighbors_comm.mp hzy⟩⟩
 
-/-- Conjugating the first transposition by the second reorders two column swaps.
-
-When the pairs are disjoint this is commutation. When they share a column, the conjugated pair is
-the third pair among the three involved columns. -/
-theorem swapColumns_swapColumns_conj (x : GridState n) (a b c d : Fin n) :
-    (x.swapColumns a b).swapColumns c d =
-      (x.swapColumns c d).swapColumns (Equiv.swap c d a) (Equiv.swap c d b) := by
-  ext k
-  simp only [swapColumns_apply]
-  apply congrArg Fin.val
-  apply x.toPerm.injective
-  simpa using
-    ((Equiv.swap c d).injective.swap_apply (Equiv.swap c d a) (Equiv.swap c d b)
-      k)
-
-/-- Column swaps on four distinct columns commute.
-
-This is the disjoint-rectangle state factorization: the same endpoint is reached by applying the
-two swaps in the opposite order. -/
-theorem swapColumns_swapColumns_of_disjoint (x : GridState n) {a b c d : Fin n}
-    (h : [a, b, c, d].Nodup) :
-    (x.swapColumns a b).swapColumns c d = (x.swapColumns c d).swapColumns a b := by
-  rw [x.swapColumns_swapColumns_conj a b c d]
-  have hac : a ≠ c := by grind
-  have had : a ≠ d := by grind
-  have hbc : b ≠ c := by grind
-  have hbd : b ≠ d := by grind
-  rw [Equiv.swap_apply_of_ne_of_ne hac had, Equiv.swap_apply_of_ne_of_ne hbc hbd]
-
-/-- Two swaps sharing one column can be reordered by using the third pair of columns.
-
-For distinct `a`, `b`, and `c`, the path that swaps `a,b` and then `b,c` has the same endpoint as
-the path that swaps `b,c` and then `a,c`. This is the three-column case of transposition
-conjugation used for overlapping rectangles. -/
-theorem swapColumns_swapColumns_overlap (x : GridState n) {a b c : Fin n}
-    (h : [a, b, c].Nodup) :
-    (x.swapColumns a b).swapColumns b c = (x.swapColumns b c).swapColumns a c := by
-  rw [x.swapColumns_swapColumns_conj a b b c]
-  have hab : a ≠ b := by grind
-  have hac : a ≠ c := by grind
-  rw [Equiv.swap_apply_of_ne_of_ne hab hac, Equiv.swap_apply_left]
-
 /-- Reordering two distinct nontrivial column swaps produces a distinct intermediate state.
 
 The new intermediate is obtained by applying the second swap first. The remaining swap is the
 conjugate of the first one. -/
-theorem exists_alternate_twoStepColumnSwapIntermediate (x : GridState n) {a b c d : Fin n}
+private theorem exists_mem_columnSwapNeighbors_ne_swapColumns
+    (x : GridState n) {a b c d : Fin n}
     (hab : a ≠ b) (hcd : c ≠ d) (hpairs : s(a, b) ≠ s(c, d)) :
     ∃ y' ∈ x.columnSwapNeighbors,
       y' ≠ x.swapColumns a b ∧
@@ -170,26 +125,19 @@ theorem exists_ne_mem_twoStepColumnSwapIntermediates_of_mem_of_ne
     intro hpairs
     exact hzx ((swapColumns_swapColumns_eq_self_iff_sym2_mk_eq x hab hcd).mpr hpairs)
   obtain ⟨y', hy'x, hy'ne, hy'z⟩ :=
-    x.exists_alternate_twoStepColumnSwapIntermediate hab hcd hpairs
+    x.exists_mem_columnSwapNeighbors_ne_swapColumns hab hcd hpairs
   refine ⟨y', mem_twoStepColumnSwapIntermediates.mpr ⟨hy'x, ?_⟩, hy'ne⟩
   rw [mem_columnSwapNeighbors_comm]
   exact hy'z
 
-/-- A nonempty nondiagonal set of two-step intermediates contains at least two states. -/
-theorem one_lt_card_twoStepColumnSwapIntermediates_of_ne {x z : GridState n}
-    (hne : (x.twoStepColumnSwapIntermediates z).Nonempty) (hzx : z ≠ x) :
-    1 < (x.twoStepColumnSwapIntermediates z).card := by
-  obtain ⟨y, hy⟩ := hne
-  obtain ⟨y', hy', hy'ne⟩ :=
-    exists_ne_mem_twoStepColumnSwapIntermediates_of_mem_of_ne hy hzx
-  exact Finset.one_lt_card.mpr ⟨y, hy, y', hy', hy'ne.symm⟩
-
 /-- A nondiagonal two-step neighbour has at least two possible intermediate states. -/
 theorem one_lt_card_twoStepColumnSwapIntermediates {x z : GridState n}
     (hz : z ∈ x.twoStepColumnSwapNeighbors) (hzx : z ≠ x) :
-    1 < (x.twoStepColumnSwapIntermediates z).card :=
-  one_lt_card_twoStepColumnSwapIntermediates_of_ne
-    (nonempty_twoStepColumnSwapIntermediates_iff.mpr hz) hzx
+    1 < (x.twoStepColumnSwapIntermediates z).card := by
+  obtain ⟨y, hy⟩ := nonempty_twoStepColumnSwapIntermediates_iff.mpr hz
+  obtain ⟨y', hy', hy'ne⟩ :=
+    exists_ne_mem_twoStepColumnSwapIntermediates_of_mem_of_ne hy hzx
+  exact Finset.one_lt_card.mpr ⟨y, hy, y', hy', hy'ne.symm⟩
 
 end GridState
 

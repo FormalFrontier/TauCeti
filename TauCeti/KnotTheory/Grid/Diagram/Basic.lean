@@ -315,6 +315,33 @@ theorem swapColumns_swapColumns (a b : Fin n) (x : GridState n) :
   ext c
   simp [swapColumns]
 
+/-- Conjugating the first transposition by the second reorders two column swaps.
+
+When the pairs are disjoint this is commutation. When they share a column, the conjugated pair is
+the third pair among the three involved columns. -/
+theorem swapColumns_swapColumns_conj (x : GridState n) (a b c d : Fin n) :
+    (x.swapColumns a b).swapColumns c d =
+      (x.swapColumns c d).swapColumns (Equiv.swap c d a) (Equiv.swap c d b) := by
+  refine GridState.ext fun k => ?_
+  simp only [swapColumns_apply]
+  simpa using
+    ((Equiv.swap c d).injective.swap_apply (Equiv.swap c d a) (Equiv.swap c d b) k)
+
+/-- Column swaps commute when every column in the first pair differs from every column in the
+second pair. -/
+theorem swapColumns_swapColumns_comm_of_ne (x : GridState n) {a b c d : Fin n}
+    (hac : a ≠ c) (had : a ≠ d) (hbc : b ≠ c) (hbd : b ≠ d) :
+    (x.swapColumns a b).swapColumns c d = (x.swapColumns c d).swapColumns a b := by
+  rw [x.swapColumns_swapColumns_conj a b c d,
+    Equiv.swap_apply_of_ne_of_ne hac had, Equiv.swap_apply_of_ne_of_ne hbc hbd]
+
+/-- Two swaps sharing a column can be reordered using the third pair of columns. -/
+theorem swapColumns_swapColumns_eq_of_ne (x : GridState n) {a b c : Fin n}
+    (hab : a ≠ b) (hac : a ≠ c) :
+    (x.swapColumns a b).swapColumns b c = (x.swapColumns b c).swapColumns a c := by
+  rw [x.swapColumns_swapColumns_conj a b b c,
+    Equiv.swap_apply_of_ne_of_ne hab hac, Equiv.swap_apply_left]
+
 /-- The grid states obtained from `x` by transposing a pair of distinct columns.
 
 These are exactly the states a single grid rectangle can reach from `x`: the fully blocked
