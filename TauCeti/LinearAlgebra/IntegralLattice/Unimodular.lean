@@ -29,7 +29,7 @@ than reproving Smith normal form.
   `#A_L = |det Gram(L)|`.
 * `TauCeti.IntegralLattice.isUnimodular_iff_subsingleton_discriminantGroup`: the quotient
   criterion.
-* `TauCeti.IntegralLattice.isUnimodular_iff_bijective_integralForm`: the perfect-pairing
+* `TauCeti.IntegralLattice.isUnimodular_iff_integralForm_bijective`: the perfect-pairing
   criterion.
 * `TauCeti.IntegralLattice.isUnimodular_iff_discriminant_eq_one`: the determinant criterion.
 * `TauCeti.IntegralLattice.integralPairingEquiv`: the restricted pairing as a linear equivalence.
@@ -122,13 +122,12 @@ theorem integralForm_eq_dualPairingEquiv_comp :
   apply Int.cast_injective (α := ℚ)
   rw [L.integralForm_cast]
   symm
-  change ((L.dualPairingEquiv (Submodule.inclusion L.le_dualCarrier x) y : ℤ) : ℚ) = _
-  rw [L.dualPairingEquiv_cast]
-  rfl
+  rw [LinearMap.comp_apply]
+  convert L.dualPairingEquiv_cast (Submodule.inclusion L.le_dualCarrier x) y using 1 <;> rfl
 
 /-- A nondegenerate integral lattice is unimodular exactly when its restricted pairing with the
 module dual is bijective. -/
-theorem isUnimodular_iff_bijective_integralForm :
+theorem isUnimodular_iff_integralForm_bijective :
     L.IsUnimodular ↔ Function.Bijective L.integralForm := by
   rw [L.isUnimodular_iff_surjective_inclusion]
   constructor
@@ -147,7 +146,7 @@ module dual. -/
 noncomputable def integralPairingEquiv (hL : L.IsUnimodular) :
     L ≃ₗ[ℤ] Module.Dual ℤ L :=
   LinearEquiv.ofBijective L.integralForm
-    (L.isUnimodular_iff_bijective_integralForm.mp hL)
+    (L.isUnimodular_iff_integralForm_bijective.mp hL)
 
 /-- The underlying linear map of `integralPairingEquiv` is the restricted integral form. -/
 @[simp]
@@ -195,10 +194,8 @@ theorem dualCarrierBasis_repr_inclusion {ι : Type v} [Finite ι]
     apply congrArg Subtype.val
     apply L.dualPairingEquiv.injective
     rw [L.dualPairingEquiv_dualBasisElem, LinearEquiv.apply_symm_apply]
-  rw [hb, Basis.map_repr]
-  change e.dualBasis.repr
-    (L.dualPairingEquiv (Submodule.inclusion L.le_dualCarrier x)) i = _
-  rw [Basis.dualBasis_repr, L.integralForm_eq_dualPairingEquiv_comp]
+  rw [hb, Basis.map_repr, LinearEquiv.symm_symm, LinearEquiv.trans_apply,
+    Basis.dualBasis_repr, L.integralForm_eq_dualPairingEquiv_comp]
   rfl
 
 /-- The determinant of the embedded carrier basis relative to the dual-carrier basis is the Gram
