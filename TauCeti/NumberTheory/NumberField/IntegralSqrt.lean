@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.NumberField.Basic
+import Mathlib.FieldTheory.KummerPolynomial
 
 /-!
 # Square roots of integers as algebraic integers
@@ -20,13 +21,23 @@ generators `√dᵢ` into `𝓞 K` to compare residues, and the Frobenius comput
 (`TauCeti.NumberTheory.NumberField.Frobenius`) applies the arithmetic-Frobenius congruence,
 which lives on `𝓞 K`, to a square root.
 
+When `d` is not a rational square, `X² - d` is irreducible over `ℚ`, so it is the minimal
+polynomial of `x` over `ℚ`; since `ℤ` is integrally closed in `ℚ` and `x` is integral, it is also
+the minimal polynomial over `ℤ`. That last identity is the standing hypothesis `hmin` of the
+quadratic-field API in `TauCeti.NumberTheory.NumberField.Quadratic` and of the multiquadratic
+files built on it, so it is recorded here once.
+
 ## Main definitions and results
 
 * `TauCeti.NumberField.integralSqrt`: the packaging in `𝓞 K`, with
   `TauCeti.NumberField.algebraMap_integralSqrt` and `TauCeti.NumberField.integralSqrt_sq`.
+* `TauCeti.NumberField.minpoly_integralSqrt`: its minimal polynomial over `ℤ` is `X² - d`,
+  provided `d` is not a rational square.
 -/
 
 public section
+
+open Polynomial
 
 open scoped NumberField
 
@@ -50,5 +61,31 @@ noncomputable def integralSqrt (hx : x ^ 2 = algebraMap ℤ K d) : 𝓞 K :=
   apply FaithfulSMul.algebraMap_injective (𝓞 K) K
   rw [map_pow, algebraMap_integralSqrt, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K]
   exact hx
+
+/-- **The minimal polynomial of a square root of a nonsquare integer.** If `x ^ 2 = d` for an
+integer `d` that is not a square in `ℚ`, then `X ^ 2 - d` is the minimal polynomial over `ℤ` of
+`TauCeti.NumberField.integralSqrt hx`. Over `ℚ` this is Kummer irreducibility
+(`X_pow_sub_C_irreducible_of_prime`); the descent to `ℤ` is
+`minpoly.isIntegrallyClosed_eq_field_fractions`. -/
+theorem minpoly_integralSqrt [NumberField K] (hx : x ^ 2 = algebraMap ℤ K d)
+    (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) : minpoly ℤ (integralSqrt hx) = X ^ 2 - C d := by
+  have hxQ : x ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
+    rw [hx, IsScalarTower.algebraMap_apply ℤ ℚ K]
+    norm_num
+  have hirr : Irreducible (X ^ 2 - C ((d : ℤ) : ℚ)) :=
+    X_pow_sub_C_irreducible_of_prime (by decide) fun y hy =>
+      hnsq ⟨y, by simpa [pow_two] using hy.symm⟩
+  have haeval : aeval x (X ^ 2 - C ((d : ℤ) : ℚ)) = 0 := by
+    simp only [map_sub, map_pow, aeval_X, aeval_C, hxQ, sub_self]
+  have hminQ : minpoly ℚ x = X ^ 2 - C ((d : ℤ) : ℚ) :=
+    (minpoly.eq_of_irreducible_of_monic hirr haeval
+      (monic_X_pow_sub_C ((d : ℤ) : ℚ) (by norm_num))).symm
+  have hfrac := minpoly.isIntegrallyClosed_eq_field_fractions ℚ K
+    (IsIntegralClosure.isIntegral ℤ K (integralSqrt hx))
+  apply Polynomial.map_injective (algebraMap ℤ ℚ) Int.cast_injective
+  rw [← hfrac, algebraMap_integralSqrt hx, hminQ]
+  simp only [Polynomial.map_sub, Polynomial.map_pow, Polynomial.map_X, Polynomial.map_C,
+    map_intCast]
+  norm_num
 
 end TauCeti.NumberField
