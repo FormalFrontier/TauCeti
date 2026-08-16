@@ -101,8 +101,10 @@ noncomputable abbrev radicalQuotient : FiniteBilinearModule where
       A.toBilin_apply, A.toBilin_apply]
     exact A.pairing_comm x y
 
-/-- The quotient pairing is represented by the original pairing on representatives. -/
-@[simp]
+/-- The quotient pairing is represented by the original pairing on representatives.
+
+This is an explicit rewrite lemma: simplifying the reducible quotient bundle first exposes its
+bilinear-map implementation, so the displayed left-hand side is not a simp normal form. -/
 theorem radicalQuotient_pairing_mk (x y : A) :
     (radicalQuotient A).pairing (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) =
       A.pairing x y :=
@@ -122,8 +124,10 @@ theorem radicalQuotientMk_apply (x : A) :
     radicalQuotientMk A x = Submodule.Quotient.mk x :=
   by simp [radicalQuotientMk]
 
-/-- An element maps to zero in the radical quotient exactly when it lies in the radical. -/
-@[simp]
+/-- An element maps to zero in the radical quotient exactly when it lies in the radical.
+
+This is an explicit named criterion; the basic quotient-map simp lemmas already normalize its
+left-hand side. -/
 theorem radicalQuotientMk_eq_zero_iff (x : A) :
     radicalQuotientMk A x = 0 ↔ x ∈ A.radical := by
   rw [radicalQuotientMk_apply, Submodule.Quotient.mk_eq_zero]
