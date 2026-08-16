@@ -21,9 +21,8 @@ of a biproduct summand: there are an object `Z` and an isomorphism `e : Y ≅ X 
 summand need not exist; the two notions agree as soon as the relevant idempotent splits.
 
 The split structure is the smallest exact structure on `C`: the last section proves that a short
-complex with a splitting is a conflation for *every* exact structure `E` on `C`, whence also
-that every isomorphism is both an `E`-inflation and an `E`-deflation. This is Bühler's Lemma
-2.7, and it is what makes the comparison out of split `K₀` available for an arbitrary exact
+complex with a splitting is a conflation for *every* exact structure `E` on `C`. This is Bühler's
+Lemma 2.7, and it is what makes the comparison out of split `K₀` available for an arbitrary exact
 structure.
 
 ## Main definitions
@@ -42,6 +41,9 @@ structure.
   explicitly in the biproduct decomposition.
 * `TauCeti.ExactStructure.conflation_of_splitting`: a split short complex is a conflation of
   every exact structure, so `ExactStructure.split C` is the smallest one.
+* `TauCeti.ExactStructure.split_isInflation_iff` and
+  `TauCeti.ExactStructure.split_isDeflation_iff`: the characteristic API of
+  `TauCeti.ExactStructure.split`.
 * `TauCeti.ExactStructure.isInflation_of_isIso` and
   `TauCeti.ExactStructure.isDeflation_of_isIso`: in every exact structure an isomorphism is both
   an inflation and a deflation.
@@ -309,10 +311,10 @@ variable (C) in
 /-- The **split exact structure** on an additive category: its conflations are the short
 complexes admitting a splitting.
 
-This is genuinely smaller than the canonical exact structure of an abelian category, whose
-conflations are all the short exact short complexes; see
+Its conflations are only the split short complexes, whereas those of the canonical exact
+structure of an abelian category are all the short exact ones; see
 `TauCeti.ExactStructure.conflation_of_splitting` for the general comparison. -/
-@[expose] noncomputable def ExactStructure.split [HasZeroObject C] [HasBinaryBiproducts C] :
+noncomputable def ExactStructure.split [HasZeroObject C] [HasBinaryBiproducts C] :
     ExactStructure C where
   toConflationClass := ConflationClass.split C
   isInflation_id X := by
@@ -344,36 +346,30 @@ namespace ExactStructure
 
 variable [HasZeroObject C] [HasBinaryBiproducts C]
 
-/-- The underlying conflation class of the split exact structure. Rewriting with this makes the
-whole `TauCeti.ConflationClass.split` API available for `TauCeti.ExactStructure.split`. -/
-@[simp]
-theorem split_toConflationClass :
-    (ExactStructure.split C).toConflationClass = ConflationClass.split C :=
-  rfl
-
 /-- The conflations of the split exact structure are exactly the short complexes admitting a
-splitting. This is not `@[simp]`: `split_toConflationClass` together with
-`TauCeti.ConflationClass.split_conflation_iff` already rewrites the left-hand side. -/
+splitting. -/
+@[simp]
 theorem split_conflation (S : ShortComplex C) :
     (ExactStructure.split C).Conflation S ↔ Nonempty S.Splitting :=
   ConflationClass.split_conflation_iff S
 
 /-- **The inflations of the split exact structure are the biproduct inclusions.** -/
+@[simp]
 theorem split_isInflation_iff {X Y : C} (i : X ⟶ Y) :
     (ExactStructure.split C).IsInflation i ↔ ∃ (Z : C) (e : Y ≅ X ⊞ Z), i ≫ e.hom = biprod.inl :=
   ConflationClass.split_isInflation_iff i
 
 /-- **The deflations of the split exact structure are the biproduct projections.** -/
+@[simp]
 theorem split_isDeflation_iff {Y Z : C} (p : Y ⟶ Z) :
     (ExactStructure.split C).IsDeflation p ↔ ∃ (X : C) (e : Y ≅ X ⊞ Z), e.inv ≫ p = biprod.snd :=
   ConflationClass.split_isDeflation_iff p
 
 /-- In every exact structure the biproduct short complex `X ⟶ X ⊞ Z ⟶ Z` is a conflation.
 
-The proof is Bühler's: E0op produces a conflation whose deflation is `𝟙 Z`, so its inflation
-`i : K ⟶ Z` is zero, and the square exhibiting `X ⊞ Z` as the pushout of `i` along the zero map
-`K ⟶ X` turns `biprod.inl` into an inflation by E2. The cokernel of `biprod.inl` supplied by
-that conflation is then identified with `biprod.snd`. -/
+No exact structure can therefore omit a biproduct decomposition. This is the key step of
+Bühler's Lemma 2.7, from which `TauCeti.ExactStructure.conflation_of_splitting` — the
+minimality of the split exact structure — follows by closure under isomorphisms. -/
 @[simp]
 theorem conflation_biprodShortComplex (E : ExactStructure C) (X Z : C) :
     E.Conflation (biprodShortComplex X Z) := by
@@ -420,30 +416,23 @@ theorem conflation_of_splitting (E : ExactStructure C) {S : ShortComplex C} (s :
 /-- A conflation of the split exact structure is a conflation of every exact structure. -/
 theorem conflation_of_split_conflation (E : ExactStructure C) {S : ShortComplex C}
     (hS : (ExactStructure.split C).Conflation S) : E.Conflation S :=
-  E.conflation_of_splitting
-    ((ConflationClass.split_conflation_iff (C := C) S).mp hS).some
+  E.conflation_of_splitting ((split_conflation S).mp hS).some
 
 /-- In every exact structure an isomorphism is an inflation. -/
 theorem isInflation_of_isIso (E : ExactStructure C) {X Y : C} (f : X ⟶ Y) [IsIso f] :
-    E.IsInflation f := by
-  refine (ConflationClass.isInflation_iff E.toConflationClass f).mpr ⟨0, 0, by simp, ?_⟩
-  refine E.conflation_of_splitting
-    (ShortComplex.Splitting.ofIsIsoOfIsZero _ ?_ (isZero_zero C))
-  exact inferInstanceAs (IsIso f)
+    E.IsInflation f :=
+  E.inflations.of_isIso f
 
 /-- In every exact structure an isomorphism is a deflation. -/
 theorem isDeflation_of_isIso (E : ExactStructure C) {X Y : C} (f : X ⟶ Y) [IsIso f] :
-    E.IsDeflation f := by
-  refine (ConflationClass.isDeflation_iff E.toConflationClass f).mpr ⟨0, 0, by simp, ?_⟩
-  refine E.conflation_of_splitting
-    (ShortComplex.Splitting.ofIsZeroOfIsIso _ (isZero_zero C) ?_)
-  exact inferInstanceAs (IsIso f)
+    E.IsDeflation f :=
+  E.deflations.of_isIso f
 
 /-- Every split inflation is an inflation of any exact structure. -/
 theorem isInflation_of_split_isInflation (E : ExactStructure C) {X Y : C} {i : X ⟶ Y}
     (hi : (ExactStructure.split C).IsInflation i) : E.IsInflation i := by
   obtain ⟨Z, p, zero, hS⟩ :=
-    (ConflationClass.isInflation_iff (ConflationClass.split C) i).mp hi
+    (ConflationClass.isInflation_iff (ExactStructure.split C).toConflationClass i).mp hi
   exact (ConflationClass.isInflation_iff E.toConflationClass i).mpr
     ⟨Z, p, zero, E.conflation_of_split_conflation hS⟩
 
@@ -451,7 +440,7 @@ theorem isInflation_of_split_isInflation (E : ExactStructure C) {X Y : C} {i : X
 theorem isDeflation_of_split_isDeflation (E : ExactStructure C) {Y Z : C} {p : Y ⟶ Z}
     (hp : (ExactStructure.split C).IsDeflation p) : E.IsDeflation p := by
   obtain ⟨X, i, zero, hS⟩ :=
-    (ConflationClass.isDeflation_iff (ConflationClass.split C) p).mp hp
+    (ConflationClass.isDeflation_iff (ExactStructure.split C).toConflationClass p).mp hp
   exact (ConflationClass.isDeflation_iff E.toConflationClass p).mpr
     ⟨X, i, zero, E.conflation_of_split_conflation hS⟩
 
