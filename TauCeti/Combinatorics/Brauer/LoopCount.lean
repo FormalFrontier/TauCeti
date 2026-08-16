@@ -93,11 +93,20 @@ stays in the middle instead of running out to the outer boundary. -/
 def MiddleAdj (D₁ D₂ : BrauerDiagram k) (a b : Fin k) : Prop :=
   D₁.val (Sum.inl a) = Sum.inl b ∨ D₂.val (Sum.inr a) = Sum.inr b
 
+/-- Adjacency in the middle graph is a cap of `D₁` or a cup of `D₂` between the two points. -/
+theorem middleAdj_def (D₁ D₂ : BrauerDiagram k) (a b : Fin k) :
+    MiddleAdj D₁ D₂ a b ↔
+      D₁.val (Sum.inl a) = Sum.inl b ∨ D₂.val (Sum.inr a) = Sum.inr b := (Iff.rfl)
+
 /-- **Both arcs at a middle point stay in the middle**: the arc of `D₁` at the bottom point `a`
 is a cap, and the arc of `D₂` at the top point `a` is a cup. These are exactly the middle points
 that a strand cannot leave the stack through. -/
 def IsMiddleVertex (D₁ D₂ : BrauerDiagram k) (a : Fin k) : Prop :=
   D₁.IsCap (Sum.inl a) ∧ D₂.IsCup (Sum.inr a)
+
+/-- Keeping both arcs in the middle is being capped by `D₁` and cupped by `D₂`. -/
+theorem isMiddleVertex_def (D₁ D₂ : BrauerDiagram k) (a : Fin k) :
+    IsMiddleVertex D₁ D₂ a ↔ D₁.IsCap (Sum.inl a) ∧ D₂.IsCup (Sum.inr a) := (Iff.rfl)
 
 /-- **A middle point lies on a closed loop** of the stack of `D₁` above `D₂` when every middle
 point reachable from it in the middle graph keeps both of its arcs in the middle. Each point of
@@ -107,10 +116,21 @@ closes up in the middle. -/
 def OnMiddleLoop (D₁ D₂ : BrauerDiagram k) (a : Fin k) : Prop :=
   ∀ b, Relation.ReflTransGen (MiddleAdj D₁ D₂) a b → IsMiddleVertex D₁ D₂ b
 
+/-- Lying on a closed middle loop is every reachable middle point keeping both of its arcs in
+the middle. -/
+theorem onMiddleLoop_def (D₁ D₂ : BrauerDiagram k) (a : Fin k) :
+    OnMiddleLoop D₁ D₂ a ↔
+      ∀ b, Relation.ReflTransGen (MiddleAdj D₁ D₂) a b → IsMiddleVertex D₁ D₂ b := (Iff.rfl)
+
 /-- `a` is the least middle point of the closed middle loop it lies on. Each loop has exactly
 one such point, so these count the loops. -/
 def IsMiddleLoopMin (D₁ D₂ : BrauerDiagram k) (a : Fin k) : Prop :=
   OnMiddleLoop D₁ D₂ a ∧ ∀ b, Relation.ReflTransGen (MiddleAdj D₁ D₂) a b → a ≤ b
+
+/-- Being the least point of a loop is lying on a loop and being below every reachable point. -/
+theorem isMiddleLoopMin_def (D₁ D₂ : BrauerDiagram k) (a : Fin k) :
+    IsMiddleLoopMin D₁ D₂ a ↔
+      OnMiddleLoop D₁ D₂ a ∧ ∀ b, Relation.ReflTransGen (MiddleAdj D₁ D₂) a b → a ≤ b := (Iff.rfl)
 
 /-- **The middle-loop count of a stack of two Brauer diagrams**: the number of loops that close
 up in the middle when `D₁` is stacked above `D₂`, counted by their least middle points. This is
@@ -118,6 +138,10 @@ the exponent of `δ` in the loop rule that weights the multiplication of the Bra
 the diagram basis, `D₁ * D₂ = δ ^ middleLoopCount D₁ D₂ • composeDiagram D₁ D₂`. -/
 noncomputable def middleLoopCount (D₁ D₂ : BrauerDiagram k) : ℕ :=
   {a : Fin k | IsMiddleLoopMin D₁ D₂ a}.ncard
+
+/-- The middle-loop count is the number of least points of closed middle loops. -/
+theorem middleLoopCount_def (D₁ D₂ : BrauerDiagram k) :
+    middleLoopCount D₁ D₂ = {a : Fin k | IsMiddleLoopMin D₁ D₂ a}.ncard := (rfl)
 
 variable {D₁ D₂ : BrauerDiagram k}
 
@@ -132,29 +156,23 @@ theorem MiddleAdj.symm {a b : Fin k} (h : MiddleAdj D₁ D₂ a b) : MiddleAdj D
 /-- Reachability in the middle graph is symmetric. -/
 theorem MiddleAdj.reflTransGen_symm {a b : Fin k}
     (h : Relation.ReflTransGen (MiddleAdj D₁ D₂) a b) :
-    Relation.ReflTransGen (MiddleAdj D₁ D₂) b a := by
-  induction h with
-  | refl => exact .refl
-  | @tail _ _ _ huv ih => exact (Relation.ReflTransGen.single huv.symm).trans ih
+    Relation.ReflTransGen (MiddleAdj D₁ D₂) b a :=
+  Relation.ReflTransGen.mono (fun _ _ huv => MiddleAdj.symm huv) b a
+    (Relation.ReflTransGen.swap b a h)
 
 /-- A cap of `D₁` at the bottom middle point `a` lands at the middle point read off its far
-end. -/
+end, the point `BrauerDiagram.capMatching` pairs `a` with. -/
 theorem BrauerDiagram.val_inl_eq_inl_middlePoint {D : BrauerDiagram k} {a : Fin k}
     (h : D.IsCap (Sum.inl a)) :
     D.val (Sum.inl a) = Sum.inl (middlePoint (D.val (Sum.inl a))) := by
-  rcases hv : D.val (Sum.inl a) with b | b
-  · simp
-  · rw [BrauerDiagram.isCap_def, hv] at h
-    simp at h
+  rw [← D.inl_capMatching ⟨a, h⟩, middlePoint_inl]
 
-/-- A cup of `D₂` at the top middle point `a` lands at the middle point read off its far end. -/
+/-- A cup of `D₂` at the top middle point `a` lands at the middle point read off its far end,
+the point `BrauerDiagram.cupMatching` pairs `a` with. -/
 theorem BrauerDiagram.val_inr_eq_inr_middlePoint {D : BrauerDiagram k} {a : Fin k}
     (h : D.IsCup (Sum.inr a)) :
     D.val (Sum.inr a) = Sum.inr (middlePoint (D.val (Sum.inr a))) := by
-  rcases hv : D.val (Sum.inr a) with b | b
-  · rw [BrauerDiagram.isCup_def, hv] at h
-    simp at h
-  · simp
+  rw [← D.inr_cupMatching ⟨a, h⟩, middlePoint_inr]
 
 /-! ### Points on a closed middle loop -/
 
@@ -194,7 +212,7 @@ theorem OnMiddleLoop.exists_isMiddleLoopMin {a : Fin k} (ha : OnMiddleLoop D₁ 
 closed loop. -/
 theorem middleLoopCount_eq_zero_iff :
     middleLoopCount D₁ D₂ = 0 ↔ ∀ a, ¬OnMiddleLoop D₁ D₂ a := by
-  rw [middleLoopCount, Set.ncard_eq_zero (Set.toFinite _), Set.eq_empty_iff_forall_notMem]
+  rw [middleLoopCount_def, Set.ncard_eq_zero (Set.toFinite _), Set.eq_empty_iff_forall_notMem]
   refine ⟨fun h a ha => ?_, fun h a ha => h a ha.1⟩
   obtain ⟨m, hm, -⟩ := ha.exists_isMiddleLoopMin
   exact h m hm
@@ -240,27 +258,31 @@ theorem middleLoopCount_pos_of_val_eq {a b : Fin k} (h₁ : D₁.val (Sum.inl a)
 
 /-! ### Stacking with a permutation diagram -/
 
-/-- A diagram with no cap has no middle loop above it. -/
-theorem not_onMiddleLoop_of_forall_isThrough_left (h : ∀ x, D₁.IsThrough x) (a : Fin k) :
+/-- A middle point whose arc in `D₁` runs through to the outer boundary lies on no middle
+loop. -/
+theorem not_onMiddleLoop_of_isThrough_left {a : Fin k} (h : D₁.IsThrough (Sum.inl a)) :
     ¬OnMiddleLoop D₁ D₂ a := fun ha =>
-  D₁.not_isThrough_of_isCap (Sum.inl a) ha.isMiddleVertex.1 (h _)
+  D₁.not_isThrough_of_isCap (Sum.inl a) ha.isMiddleVertex.1 h
 
-/-- A diagram with no cup has no middle loop below it. -/
-theorem not_onMiddleLoop_of_forall_isThrough_right (h : ∀ x, D₂.IsThrough x) (a : Fin k) :
+/-- A middle point whose arc in `D₂` runs through to the outer boundary lies on no middle
+loop. -/
+theorem not_onMiddleLoop_of_isThrough_right {a : Fin k} (h : D₂.IsThrough (Sum.inr a)) :
     ¬OnMiddleLoop D₁ D₂ a := fun ha =>
-  D₂.not_isThrough_of_isCup (Sum.inr a) ha.isMiddleVertex.2 (h _)
+  D₂.not_isThrough_of_isCup (Sum.inr a) ha.isMiddleVertex.2 h
 
 /-- **A permutation diagram on top creates no loop.** -/
+@[simp]
 theorem middleLoopCount_permToBrauer_left (σ : Equiv.Perm (Fin k)) (D : BrauerDiagram k) :
     middleLoopCount (permToBrauer σ) D = 0 :=
-  middleLoopCount_eq_zero_iff.mpr
-    (not_onMiddleLoop_of_forall_isThrough_left (BrauerDiagram.isThrough_permToBrauer σ))
+  middleLoopCount_eq_zero_iff.mpr fun _ =>
+    not_onMiddleLoop_of_isThrough_left (BrauerDiagram.isThrough_permToBrauer σ _)
 
 /-- **A permutation diagram underneath creates no loop.** -/
+@[simp]
 theorem middleLoopCount_permToBrauer_right (D : BrauerDiagram k) (σ : Equiv.Perm (Fin k)) :
     middleLoopCount D (permToBrauer σ) = 0 :=
-  middleLoopCount_eq_zero_iff.mpr
-    (not_onMiddleLoop_of_forall_isThrough_right (BrauerDiagram.isThrough_permToBrauer σ))
+  middleLoopCount_eq_zero_iff.mpr fun _ =>
+    not_onMiddleLoop_of_isThrough_right (BrauerDiagram.isThrough_permToBrauer σ _)
 
 /-! ### How many loops there can be -/
 
@@ -290,7 +312,7 @@ theorem two_mul_middleLoopCount_le (D₁ D₂ : BrauerDiagram k) :
   have hle : (S ∪ f '' S).ncard ≤ (Set.univ : Set (Fin k)).ncard :=
     Set.ncard_le_ncard (Set.subset_univ _)
   rw [Set.ncard_univ, Nat.card_eq_fintype_card, Fintype.card_fin, hcard] at hle
-  rw [middleLoopCount, ← hSdef]
+  rw [middleLoopCount_def, ← hSdef]
   omega
 
 /-! ### Loops are disjoint from the strands of the composite -/
