@@ -361,7 +361,7 @@ end Isometry
 
 No nondegeneracy conclusion is asserted: a subgroup of a nondegenerate module can have a
 degenerate restricted pairing. -/
-@[expose] def restrict (H : AddSubgroup A) : FiniteBilinearModule where
+abbrev restrict (H : AddSubgroup A) : FiniteBilinearModule where
   carrier := H
   pairing :=
     { toFun := fun (x : H) ↦
@@ -382,7 +382,7 @@ theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x.1 y.1 := (rfl)
 
 /-- Negate the pairing of a finite bilinear module. -/
-@[expose] def neg : FiniteBilinearModule where
+abbrev neg : FiniteBilinearModule where
   carrier := A
   pairing := -A.pairing
   pairing_comm x y := congrArg Neg.neg (A.pairing_comm x y)
@@ -406,7 +406,7 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
     exact neg_inj.mp this
 
 /-- The orthogonal direct sum of two finite bilinear modules. -/
-@[expose] def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
+abbrev prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   carrier := A.carrier × B.carrier
   pairing :=
     { toFun := fun x ↦
@@ -577,14 +577,16 @@ theorem Isometry.isIsotropicElem_iff {B : FiniteBilinearModule} (f : Isometry A 
 /-- Form negation preserves isotropic elements. -/
 @[simp]
 theorem isIsotropicElem_neg_module (x : A) : A.neg.IsIsotropicElem x ↔ A.IsIsotropicElem x := by
-  simp only [IsIsotropicElem, neg_pairing, neg_eq_zero]
+  constructor
+  · exact neg_eq_zero.mp
+  · exact neg_eq_zero.mpr
 
 /-- An element in an orthogonal product is isotropic if and only if the sum of its component
 pairings vanishes. -/
 @[simp]
 theorem isIsotropicElem_prod (B : FiniteBilinearModule) (x : A) (y : B) :
     (A.prod B).IsIsotropicElem (x, y) ↔ A.pairing x x + B.pairing y y = 0 := by
-  simp only [IsIsotropicElem, prod_pairing]
+  rfl
 
 /-- A subgroup is bilinearly isotropic when the pairing vanishes on the subgroup square. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, ∀ y ∈ H, A.pairing x y = 0
