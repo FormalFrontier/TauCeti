@@ -7,6 +7,7 @@ module
 public import Mathlib.MeasureTheory.Measure.GiryMonad
 public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
+public import Mathlib.Probability.UniformOn
 
 /-!
 # Empirical measures of sequences
@@ -15,6 +16,9 @@ This file defines the empirical probability measure of the first `n + 1` terms o
 gives its basic evaluation, integration, and measurability API.  The successor indexing makes the
 object a probability measure without a nonemptiness side condition and matches the form used in
 limit theorems.
+
+It also provides `empiricalPopulation` for a population indexed by an arbitrary nonempty finite
+type. This is the finite-population form used by quantitative sampling arguments.
 
 The construction is a uniform finite sum of Dirac measures.  It is the process-level prerequisite
 for the empirical-measure form of de Finetti's theorem in the `Exchangeability` roadmap.
@@ -106,6 +110,60 @@ theorem measurable_empiricalMeasure {X : ℕ → Ω → α}
         simp only [Measure.smul_apply, smul_eq_mul, Measure.dirac_apply' _ hs]
         exact measurable_const.mul (measurable_one.indicator (hX i hi hs))
   exact hmeasure.subtype_mk
+
+section FinitePopulation
+
+variable {κ : Type*} [Fintype κ] [Nonempty κ] [MeasurableSpace κ]
+  [MeasurableSingletonClass κ]
+
+/-- The empirical probability measure of a nonempty finite population `x : κ → α`.
+
+It is the pushforward of the uniform probability measure on `κ` by `x`. Unlike
+`empiricalMeasure`, its population can have an arbitrary nonempty finite index type rather than a
+natural-number prefix. -/
+def empiricalPopulation (x : κ → α) : ProbabilityMeasure α :=
+  MeasureTheory.ProbabilityMeasure.map
+    (⟨ProbabilityTheory.uniformOn (Set.univ : Set κ), inferInstance⟩ : ProbabilityMeasure κ)
+    (measurable_of_countable x).aemeasurable
+
+/-- The measure underlying a finite empirical population is the pushforward of the uniform law. -/
+@[simp]
+theorem empiricalPopulation_toMeasure (x : κ → α) :
+    (empiricalPopulation x : Measure α) =
+      (ProbabilityTheory.uniformOn (Set.univ : Set κ)).map x :=
+  (rfl)
+
+/-- Finite empirical distributions depend measurably on the population. -/
+theorem measurable_empiricalPopulation :
+    Measurable (empiricalPopulation : (κ → α) → ProbabilityMeasure α) := by
+  apply Measurable.subtype_mk
+  refine Measure.measurable_of_measurable_coe _ fun s hs => ?_
+  -- The measurable structure on `ProbabilityMeasure` is induced by evaluation of its measure.
+  change Measurable fun x : κ → α =>
+    ((ProbabilityTheory.uniformOn (Set.univ : Set κ)).map x) s
+  have heval (x : κ → α) :
+      ((ProbabilityTheory.uniformOn (Set.univ : Set κ)).map x) s =
+        ProbabilityTheory.uniformOn Set.univ (x ⁻¹' s) :=
+    Measure.map_apply (measurable_of_countable x) hs
+  simp_rw [heval, ProbabilityTheory.uniformOn_univ]
+  classical
+  rw [show (fun x : κ → α => Measure.count (x ⁻¹' s) / Fintype.card κ) =
+      fun x => (∑ i, s.indicator (1 : α → ℝ≥0∞) (x i)) / Fintype.card κ by
+    funext x
+    rw [show x ⁻¹' s = (Finset.univ.filter fun i => x i ∈ s : Finset κ) by
+      ext i
+      simp]
+    rw [Measure.count_apply_finset]
+    congr 1
+    have hcount :
+        ((Finset.univ.filter fun i => x i ∈ s).card : ℝ≥0∞) =
+          ∑ i, if x i ∈ s then 1 else 0 := by
+      norm_cast
+      simp
+    simpa only [Set.indicator_apply, Pi.one_apply] using hcount]
+  fun_prop
+
+end FinitePopulation
 
 end Probability
 
