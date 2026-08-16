@@ -44,8 +44,10 @@ identity supplies
 ```
 
 the last of which is the genuinely *conditional* input: it constrains the joint law of `(ν, Xᵢ)`,
-which the mixture predicate `MixedIIDWith` would leave free. The centred variables `eᵢ - q` are
-therefore uncorrelated with common variance `∫ q - ∫ q²`, which is exactly the stated rate.
+which the mixture predicate `MixedIIDWith` would leave free. The centred variables `eᵢ - q`
+therefore integrate against each other to `∫ q - ∫ q²` on the diagonal and to `0` off it, which is
+exactly the stated rate; at a probability measure that reads as uncorrelated with common variance
+`∫ q - ∫ q²`.
 
 The identities are stated in `ℝ≥0∞` first, where the disintegration lives, and converted to Bochner
 integrals by the private machinery below; the coordinates are only assumed a.e. measurable, as
@@ -54,7 +56,7 @@ elsewhere in the measure-theoretic exchangeability API.
 These estimates are consumed by `ConditionallyIID.Unique` for a.e. uniqueness of the directing
 measure.
 
-The `O(1/n)` rate is **not** summable, so it gives mean-square convergence but not almost-sure
+The `O(1/n)` rate is **not** summable, so it gives `L²` convergence but not almost-sure
 convergence; the latter needs a different argument. Convergence on a countable determining class,
 empirical probability measures as objects, and weak convergence — which additionally requires a
 chosen Polish topology, since `StandardBorelSpace α` asserts only that *some* compatible topology
@@ -174,7 +176,7 @@ private theorem integral_toReal_eq_of_lintegral_eq {F G : Ω → ℝ≥0∞}
     integral_toReal hG (ae_of_all _ fun ω => (hGtop ω).lt_top), hFG]
 
 /-- A product of two `[0, 1]`-valued functions is integrable on a finite measure space, being
-bounded by `1`. Every summand of the covariance expansion below is of this shape. -/
+bounded by `1`. Every summand of the expansion below is of this shape. -/
 private theorem integrable_mul_of_nonneg_of_le_one [IsFiniteMeasure μ] {u v : Ω → ℝ}
     (hu : AEMeasurable u μ) (hv : AEMeasurable v μ)
     (hu01 : ∀ᵐ ω ∂μ, 0 ≤ u ω ∧ u ω ≤ 1) (hv01 : ∀ᵐ ω ∂μ, 0 ≤ v ω ∧ v ω ≤ 1) :
@@ -327,11 +329,12 @@ private theorem ConditionallyIIDWith.integral_directing_mul_indicator
     (fun ω => ENNReal.mul_ne_top (measure_ne_top _ _) (measure_ne_top _ _)) hlin
   simpa [ENNReal.toReal_mul, toReal_indicator_one, sq] using this
 
-/-- **The centred indicators are uncorrelated, with common variance `∫ q - ∫ q²`.** Writing
-`q ω = ((ν ω) B).toReal` for the directing mass of `B`, the centred variables
-`1_{Xᵢ ∈ B} - q` have vanishing cross moments and common second moment `∫ q - ∫ q²`.
+/-- **The centred indicators pair to `∫ q - ∫ q²` on the diagonal and to `0` off it.** Writing
+`q ω = ((ν ω) B).toReal` for the directing mass of `B`, the centred variables `1_{Xᵢ ∈ B} - q` have
+vanishing cross moments and common second moment `∫ q - ∫ q²`.  At a probability measure this says
+they are uncorrelated with common variance `∫ q - ∫ q²`.
 
-This is the covariance hypothesis of `integral_sq_average_sub`, and it is the only place the
+This is the pairing hypothesis of `integral_sq_average_sub`, and it is the only place the
 conditional i.i.d. structure enters beyond measurability of the directing map. -/
 private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indicator_sub_directing
     [IsFiniteMeasure μ] (h : ConditionallyIIDWith μ X ν) (i j : ℕ)
@@ -362,7 +365,7 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
       integrable_mul_of_nonneg_of_le_one hq.aemeasurable hq.aemeasurable hbq hbq)]
   by_cases hij : i = j
   · -- On the diagonal the indicator is idempotent, so the first moment appears in place of the
-    -- pair moment and the variance is `∫ q - ∫ q²`.
+    -- pair moment and the diagonal value is `∫ q - ∫ q²`.
     subst hij
     have hsq : ∀ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
         * (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω = (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω := by
