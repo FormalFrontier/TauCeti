@@ -5,32 +5,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Connected.IdentityComponent
-public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
+public import TauCeti.Algebra.AlgebraicGroup.Hopf.Translation
 
 /-!
-# Translations of an affine group
+# Translations of the identity component
 
-An algebra-valued point of an affine group acts on its coordinate algebra by translation.  For a
-commutative Hopf algebra `H` over `k`, a `k`-point `g : H →ₐ[k] k` defines the algebra
-endomorphism
-
-```text
-x ↦ ∑ x₍₁₎ g(x₍₂₎).
-```
-
-The regular-comodule action shows that this endomorphism is bijective, with inverse obtained from
-the convolution inverse point.  This file packages it as an algebra equivalence and identifies its
-action on prime spectra.  In particular, translating by a point in the connected component of the
-counit preserves that component.
+Right translation by a `k`-rational point induces a homeomorphism of the prime spectrum. This file
+proves that a point in the connected component of the counit translates that component onto itself
+and preserves its defining idempotent and ideal.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.rightTranslationAlgHom`: pullback by right translation by a point.
-* `TauCeti.HopfAlgebra.rightTranslationAlgEquiv`: right translation as an algebra automorphism.
-* `TauCeti.HopfAlgebra.comap_rightTranslationAlgEquiv_augmentationPoint`: the translated counit
-  point is the given point.
-* `TauCeti.HopfAlgebra.rightTranslation_preserves_augmentationPoint_connectedComponent`: a point
-  in the identity component translates that component to itself.
+* `rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq_self`: a point in the
+  identity component translates that component to itself.
+* `map_rightTranslationAlgEquiv_connectedComponentIdeal_eq_self`: translation by an
+  identity-component point fixes its defining ideal.
 
 ## References
 
@@ -46,7 +35,6 @@ component, giving comultiplication closure of its defining ideal.
 public section
 
 open AlgebraicGeometry
-open scoped TensorProduct
 
 namespace TauCeti.HopfAlgebra
 
@@ -54,121 +42,6 @@ universe u v
 
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H]
-
-/-- Pullback by right translation by a `k`-point of an affine group, on its coordinate algebra. -/
-noncomputable def rightTranslationAlgHom (g : WithConv (H →ₐ[k] k)) : H →ₐ[k] H :=
-  (WithConv.toConv (AlgHom.id k H) *
-    WithConv.toConv ((Algebra.ofId k H).comp g.ofConv)).ofConv
-
-/-- Right translation evaluates by applying the point to the second tensor factor of the
-comultiplication. -/
-theorem rightTranslationAlgHom_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
-    rightTranslationAlgHom g x =
-      TensorProduct.rid k H
-        (TensorProduct.map LinearMap.id g.ofConv.toLinearMap (Coalgebra.comul x)) := by
-  rw [rightTranslationAlgHom, AlgHom.convMul_apply]
-  induction Coalgebra.comul (R := k) x using TensorProduct.induction_on with
-  | zero => simp
-  | add z w hz hw => simp [hz, hw]
-  | tmul z w => simp [Algebra.smul_def, mul_comm]
-
-/-- The linear equivalence underlying right translation. -/
-private noncomputable def rightTranslationLinearEquiv (g : WithConv (H →ₐ[k] k)) :
-    H ≃ₗ[k] H :=
-  (TensorProduct.lid k H).symm.trans
-    ((Comodule.pointsAction H g).trans (TensorProduct.lid k H))
-
-private theorem rightTranslationLinearEquiv_toLinearMap
-    (g : WithConv (H →ₐ[k] k)) :
-    (rightTranslationLinearEquiv g).toLinearMap = (rightTranslationAlgHom g).toLinearMap := by
-  ext x
-  rw [rightTranslationLinearEquiv]
-  -- Composition of the three linear equivalences is intentionally reduced to application here;
-  -- the public comparison theorem below prevents consumers from relying on this representation.
-  change TensorProduct.lid k H
-      (Comodule.pointsAction H g ((TensorProduct.lid k H).symm x)) =
-    rightTranslationAlgHom g x
-  rw [TensorProduct.lid_symm_apply]
-  have haction : Comodule.pointsAction H g (1 ⊗ₜ[k] x) =
-      Comodule.endOfPoint H g.ofConv (1 ⊗ₜ[k] x) :=
-    DFunLike.congr_fun (Comodule.pointsAction_toLinearMap H g) (1 ⊗ₜ[k] x)
-  rw [haction, Comodule.endOfPoint_tmul, Comodule.instSelf_coact,
-    rightTranslationAlgHom_apply]
-  simp [LinearMap.lTensor_def]
-
-private theorem rightTranslationAlgHom_bijective (g : WithConv (H →ₐ[k] k)) :
-    Function.Bijective (rightTranslationAlgHom g) := by
-  change Function.Bijective (rightTranslationAlgHom g).toLinearMap
-  rw [← rightTranslationLinearEquiv_toLinearMap g]
-  exact (rightTranslationLinearEquiv g).bijective
-
-/-- Pullback by right translation by a `k`-point, as an algebra automorphism of the coordinate
-algebra. -/
-noncomputable def rightTranslationAlgEquiv (g : WithConv (H →ₐ[k] k)) : H ≃ₐ[k] H :=
-  AlgEquiv.ofBijective (rightTranslationAlgHom g) (rightTranslationAlgHom_bijective g)
-
-/-- The algebra equivalence underlying right translation is the right-translation algebra
-homomorphism. -/
-@[simp]
-theorem rightTranslationAlgEquiv_toAlgHom (g : WithConv (H →ₐ[k] k)) :
-    (rightTranslationAlgEquiv g).toAlgHom = rightTranslationAlgHom g :=
-  AlgEquiv.toAlgHom_ofBijective _ _
-
-/-- Right translation as an algebra equivalence has the expected evaluation formula. -/
-theorem rightTranslationAlgEquiv_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
-    rightTranslationAlgEquiv g x =
-      TensorProduct.rid k H
-        (TensorProduct.map LinearMap.id g.ofConv.toLinearMap (Coalgebra.comul x)) := by
-  rw [← rightTranslationAlgHom_apply]
-  rfl
-
-/-- Evaluating a right-translated function at the identity evaluates the original function at
-the translating point. -/
-@[simp]
-theorem counitAlgHom_comp_rightTranslationAlgHom (g : WithConv (H →ₐ[k] k)) :
-    (_root_.Bialgebra.counitAlgHom k H).comp (rightTranslationAlgHom g) = g.ofConv := by
-  rw [rightTranslationAlgHom, AlgHom.comp_convMul_distrib]
-  have hcounit :
-      (_root_.Bialgebra.counitAlgHom k H).comp (AlgHom.id k H) =
-        _root_.Bialgebra.counitAlgHom k H := by
-    rw [AlgHom.comp_id]
-  have hpoint :
-      (_root_.Bialgebra.counitAlgHom k H).comp
-          ((Algebra.ofId k H).comp g.ofConv) = g.ofConv := by
-    ext x
-    simp
-  rw [hcounit, hpoint]
-  change (1 * g).ofConv = g.ofConv
-  rw [one_mul]
-
-/-- Contraction of the augmentation point along right translation gives the translating point. -/
-@[simp]
-theorem comap_rightTranslationAlgEquiv_augmentationPoint
-    (g : WithConv (H →ₐ[k] k)) :
-    PrimeSpectrum.comap (rightTranslationAlgEquiv g)
-        (Bialgebra.augmentationPoint k H) =
-      AlgHom.kernelPoint g.ofConv := by
-  change PrimeSpectrum.comap
-      ((rightTranslationAlgEquiv g).toAlgHom : H →+* H)
-        (AlgHom.kernelPoint (_root_.Bialgebra.counitAlgHom k H)) =
-    AlgHom.kernelPoint g.ofConv
-  rw [rightTranslationAlgEquiv_toAlgHom, AlgHom.comap_kernelPoint,
-    counitAlgHom_comp_rightTranslationAlgHom]
-
-/-- Right translation on the prime spectrum.  The inverse algebra equivalence occurs because
-`Spec` is contravariant. -/
-@[expose] noncomputable def rightTranslationHomeomorph (g : WithConv (H →ₐ[k] k)) :
-    Spec (CommRingCat.of H) ≃ₜ Spec (CommRingCat.of H) :=
-  PrimeSpectrum.homeomorphOfRingEquiv (rightTranslationAlgEquiv g).symm.toRingEquiv
-
-/-- Right translation on the prime spectrum is contraction along the right-translation algebra
-automorphism. -/
-@[simp]
-theorem rightTranslationHomeomorph_apply (g : WithConv (H →ₐ[k] k))
-    (x : Spec (CommRingCat.of H)) :
-    rightTranslationHomeomorph g x =
-      PrimeSpectrum.comap ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H) x :=
-  rfl
 
 /-- Right translation transports the connected component of a point to the connected component
 of its translate. -/
@@ -182,7 +55,7 @@ theorem rightTranslationHomeomorph_image_connectedComponent
       (s := Set.univ) (x := x) (Set.mem_univ x)
 
 /-- A point in the identity component right-translates that component onto itself. -/
-theorem rightTranslation_preserves_augmentationPoint_connectedComponent
+theorem rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq_self
     (g : WithConv (H →ₐ[k] k))
     (hg : AlgHom.kernelPoint g.ofConv ∈
       connectedComponent (Bialgebra.augmentationPoint k H)) :
@@ -204,6 +77,7 @@ private theorem connectedComponentIdempotent_kernelPoint_eq_augmentationPoint
       PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H) := by
   let p : PrimeSpectrum H := AlgHom.kernelPoint g.ofConv
   let e : PrimeSpectrum H := Bialgebra.augmentationPoint k H
+  -- `Spec (CommRingCat.of H)` has `PrimeSpectrum H` as its reducible carrier.
   change PrimeSpectrum.connectedComponentIdempotent p =
     PrimeSpectrum.connectedComponentIdempotent e
   change p ∈ connectedComponent e at hg
@@ -211,6 +85,24 @@ private theorem connectedComponentIdempotent_kernelPoint_eq_augmentationPoint
     (PrimeSpectrum.isIdempotentElem_connectedComponentIdempotent p) e).mpr
   rw [PrimeSpectrum.basicOpen_connectedComponentIdempotent]
   exact (connectedComponent_eq hg).symm
+
+private theorem connectedComponentIdeal_kernelPoint_eq_augmentationPoint
+    (g : WithConv (H →ₐ[k] k))
+    (hg : AlgHom.kernelPoint g.ofConv ∈
+      connectedComponent (Bialgebra.augmentationPoint k H)) :
+    PrimeSpectrum.connectedComponentIdeal (AlgHom.kernelPoint g.ofConv) =
+      PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
+  let p : PrimeSpectrum H := AlgHom.kernelPoint g.ofConv
+  let e : PrimeSpectrum H := Bialgebra.augmentationPoint k H
+  have h := connectedComponentIdempotent_kernelPoint_eq_augmentationPoint g hg
+  -- Reduce the two `Spec` point abbreviations once, then use the named idempotent equality.
+  change PrimeSpectrum.connectedComponentIdempotent p =
+    PrimeSpectrum.connectedComponentIdempotent e at h
+  change PrimeSpectrum.connectedComponentIdeal p = PrimeSpectrum.connectedComponentIdeal e
+  apply Ideal.ext
+  intro x
+  rw [PrimeSpectrum.mem_connectedComponentIdeal_iff,
+    PrimeSpectrum.mem_connectedComponentIdeal_iff, h]
 
 /-- The inverse coordinate-algebra automorphism of translation by an identity-component point
 fixes the idempotent selecting the identity component. -/
@@ -221,28 +113,28 @@ theorem rightTranslationAlgEquiv_symm_connectedComponentIdempotent_eq_self
     (rightTranslationAlgEquiv g).symm
         (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) =
       PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H) := by
-  let e : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  change (rightTranslationAlgEquiv g).symm
-      (PrimeSpectrum.connectedComponentIdempotent e) =
-    PrimeSpectrum.connectedComponentIdempotent e
   have he : PrimeSpectrum.comap
-      ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H) e =
+      ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H)
+        (Bialgebra.augmentationPoint k H) =
       AlgHom.kernelPoint g.ofConv :=
     comap_rightTranslationAlgEquiv_augmentationPoint g
   calc
     (rightTranslationAlgEquiv g).symm
-        (PrimeSpectrum.connectedComponentIdempotent e) =
+        (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) =
       PrimeSpectrum.connectedComponentIdempotent
         (PrimeSpectrum.comap
-          (((rightTranslationAlgEquiv g).symm.toRingEquiv).symm : H →+* H) e) :=
+          (((rightTranslationAlgEquiv g).symm.toRingEquiv).symm : H →+* H)
+            (Bialgebra.augmentationPoint k H)) :=
       PrimeSpectrum.map_connectedComponentIdempotent
-        (rightTranslationAlgEquiv g).symm.toRingEquiv e
+        (rightTranslationAlgEquiv g).symm.toRingEquiv (Bialgebra.augmentationPoint k H)
     _ = PrimeSpectrum.connectedComponentIdempotent
         (PrimeSpectrum.comap
-          ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H) e) := by rfl
+          ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H)
+            (Bialgebra.augmentationPoint k H)) := by
+      rw [AlgEquiv.symm_toRingEquiv, RingEquiv.symm_symm]
     _ = PrimeSpectrum.connectedComponentIdempotent (AlgHom.kernelPoint g.ofConv) :=
       congrArg PrimeSpectrum.connectedComponentIdempotent he
-    _ = PrimeSpectrum.connectedComponentIdempotent e :=
+    _ = PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H) :=
       connectedComponentIdempotent_kernelPoint_eq_augmentationPoint g hg
 
 /-- The coordinate-algebra automorphism of translation by an identity-component point fixes the
@@ -258,39 +150,6 @@ theorem rightTranslationAlgEquiv_connectedComponentIdempotent_eq_self
     (rightTranslationAlgEquiv_symm_connectedComponentIdempotent_eq_self g hg)
   simpa using h.symm
 
-/-- Membership in the identity-component ideal is invariant under translation by a point of the
-identity component. -/
-theorem rightTranslationAlgEquiv_mem_connectedComponentIdeal_iff
-    (g : WithConv (H →ₐ[k] k))
-    (hg : AlgHom.kernelPoint g.ofConv ∈
-      connectedComponent (Bialgebra.augmentationPoint k H)) {x : H} :
-    rightTranslationAlgEquiv g x ∈
-        PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) ↔
-      x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
-  let e : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  change rightTranslationAlgEquiv g x ∈
-      PrimeSpectrum.connectedComponentIdeal e ↔
-    x ∈ PrimeSpectrum.connectedComponentIdeal e
-  rw [PrimeSpectrum.mem_connectedComponentIdeal_iff,
-    PrimeSpectrum.mem_connectedComponentIdeal_iff]
-  have hsymm : (rightTranslationAlgEquiv g).symm
-      (PrimeSpectrum.connectedComponentIdempotent e) =
-      PrimeSpectrum.connectedComponentIdempotent e :=
-    rightTranslationAlgEquiv_symm_connectedComponentIdempotent_eq_self g hg
-  have hforward : rightTranslationAlgEquiv g
-      (PrimeSpectrum.connectedComponentIdempotent e) =
-      PrimeSpectrum.connectedComponentIdempotent e :=
-    rightTranslationAlgEquiv_connectedComponentIdempotent_eq_self g hg
-  constructor
-  · rintro ⟨a, ha⟩
-    refine ⟨(rightTranslationAlgEquiv g).symm a, ?_⟩
-    have h := congrArg (rightTranslationAlgEquiv g).symm ha
-    simpa [hsymm] using h
-  · rintro ⟨a, ha⟩
-    refine ⟨rightTranslationAlgEquiv g a, ?_⟩
-    have h := congrArg (rightTranslationAlgEquiv g) ha
-    simpa [hforward] using h
-
 /-- Translation by a point in the identity component fixes the ideal cutting out that
 component. -/
 @[simp]
@@ -301,16 +160,60 @@ theorem map_rightTranslationAlgEquiv_connectedComponentIdeal_eq_self
     Ideal.map (rightTranslationAlgEquiv g)
         (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) =
       PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
-  apply Ideal.ext
-  intro y
-  rw [Ideal.mem_map_of_equiv]
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact (rightTranslationAlgEquiv_mem_connectedComponentIdeal_iff g hg).mpr hx
-  · intro hy
-    refine ⟨(rightTranslationAlgEquiv g).symm y, ?_, ?_⟩
-    · exact (rightTranslationAlgEquiv_mem_connectedComponentIdeal_iff g hg).mp
-        (by simpa using hy)
-    · exact (rightTranslationAlgEquiv g).apply_symm_apply y
+  let φ : H ≃+* H := (rightTranslationAlgEquiv g).toRingEquiv
+  let p : PrimeSpectrum H := AlgHom.kernelPoint g.ofConv
+  let e : PrimeSpectrum H := Bialgebra.augmentationPoint k H
+  let I : Ideal H := PrimeSpectrum.connectedComponentIdeal e
+  -- Reduce the algebra-equivalence and `Spec` wrappers once; the proof below stays in the generic
+  -- ring-equivalence and prime-spectrum API.
+  change Ideal.map φ I = I
+  have he : PrimeSpectrum.comap (φ : H →+* H) e = p := by
+    change PrimeSpectrum.comap
+        ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H)
+          (Bialgebra.augmentationPoint k H) =
+      AlgHom.kernelPoint g.ofConv
+    exact comap_rightTranslationAlgEquiv_augmentationPoint g
+  have hp : PrimeSpectrum.connectedComponentIdeal p = I := by
+    change PrimeSpectrum.connectedComponentIdeal (AlgHom.kernelPoint g.ofConv) =
+      PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)
+    exact connectedComponentIdeal_kernelPoint_eq_augmentationPoint g hg
+  have hsymm : Ideal.map φ.symm I = I := by
+    calc
+      Ideal.map φ.symm I =
+          PrimeSpectrum.connectedComponentIdeal
+            (PrimeSpectrum.comap (φ.symm.symm : H →+* H) e) :=
+        PrimeSpectrum.map_connectedComponentIdeal φ.symm e
+      _ = PrimeSpectrum.connectedComponentIdeal (PrimeSpectrum.comap (φ : H →+* H) e) := by
+        rw [RingEquiv.symm_symm]
+      _ = PrimeSpectrum.connectedComponentIdeal p :=
+        congrArg PrimeSpectrum.connectedComponentIdeal he
+      _ = I := hp
+  calc
+    Ideal.map φ I = Ideal.map φ (Ideal.map φ.symm I) := by rw [hsymm]
+    _ = Ideal.map ((φ : H →+* H).comp (φ.symm : H →+* H)) I :=
+      Ideal.map_map (φ.symm : H →+* H) (φ : H →+* H)
+    _ = I := by simp
+
+/-- Membership in the identity-component ideal is invariant under translation by a point of the
+identity component. -/
+theorem rightTranslationAlgEquiv_mem_connectedComponentIdeal_iff
+    (g : WithConv (H →ₐ[k] k))
+    (hg : AlgHom.kernelPoint g.ofConv ∈
+      connectedComponent (Bialgebra.augmentationPoint k H)) {x : H} :
+    rightTranslationAlgEquiv g x ∈
+        PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) ↔
+      x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
+  have hmap := map_rightTranslationAlgEquiv_connectedComponentIdeal_eq_self g hg
+  calc
+    rightTranslationAlgEquiv g x ∈
+          PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) ↔
+        rightTranslationAlgEquiv g x ∈
+          Ideal.map (rightTranslationAlgEquiv g)
+            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) := by
+      rw [hmap]
+    _ ↔ x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) :=
+      Ideal.apply_mem_of_equiv_iff
+        (I := PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H))
+        (f := (rightTranslationAlgEquiv g).toRingEquiv) (x := x)
 
 end TauCeti.HopfAlgebra
