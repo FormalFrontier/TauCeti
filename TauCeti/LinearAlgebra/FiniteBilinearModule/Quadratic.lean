@@ -102,7 +102,7 @@ namespace Isometry
 variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
 
 /-- A quadratic isometry induces an isometry of the canonical polar bilinear modules. -/
-@[expose] def toFiniteBilinearModule (f : Isometry A B) :
+def toFiniteBilinearModule (f : Isometry A B) :
     FiniteBilinearModule.Isometry A.toFiniteBilinearModule B.toFiniteBilinearModule where
   toAddEquiv := f.toLinearEquiv.toAddEquiv
   map_pairing' x y := by
@@ -117,7 +117,7 @@ variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
 /-- The induced bilinear isometry has the same underlying additive equivalence. -/
 @[simp]
 theorem toFiniteBilinearModule_toAddEquiv (f : Isometry A B) :
-    f.toFiniteBilinearModule.toAddEquiv = f.toAddEquiv := rfl
+    f.toFiniteBilinearModule.toAddEquiv = f.toAddEquiv := (rfl)
 
 /-- Nondegeneracy transfers along a quadratic isometry. -/
 theorem isNondegenerate (f : Isometry A B) (hA : A.IsNondegenerate) : B.IsNondegenerate :=
