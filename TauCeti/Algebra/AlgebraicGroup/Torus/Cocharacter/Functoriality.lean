@@ -26,8 +26,8 @@ lattice functors supply the functorial perfect pairing needed to form root data 
   cocharacters induced by a coordinate Hopf-algebra morphism.
 * `TauCeti.TorusCommHopfAlgCat.cocharacterLatticeFunctor`: the cocharacter-lattice functor from
   the opposite category of torus coordinate rings to integral Galois lattices.
-* `TauCeti.TorusCommHopfAlgCat.characterCocharacterPairing_map`: naturality of the perfect
-  character--cocharacter pairing.
+* `TauCeti.MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing_map`: naturality of the
+  perfect character--cocharacter pairing.
 
 ## References
 
@@ -105,6 +105,14 @@ theorem cocharacterMap_smul
     cocharacterGaloisRepresentation_apply_apply,
     cocharacterLatticeLinearEquivDual_cocharacterMap_apply,
     CommHopfAlgCat.additiveCharacterMap_smul]
+
+/-- The character--cocharacter pairing is natural: mapping a character covariantly or mapping a
+cocharacter contravariantly gives the same integer. -/
+theorem characterCocharacterPairing_map {S T : MultiplicativeTypeCommHopfAlgCat k} (f : S ⟶ T)
+    (x : CommHopfAlgCat.additiveCharacterGroup S.obj.obj) (y : cocharacterLattice T) :
+    characterCocharacterPairing T (CommHopfAlgCat.additiveCharacterMap f.hom.hom x) y =
+      characterCocharacterPairing S x (cocharacterMap f y) := by
+  simp
 
 end MultiplicativeTypeCommHopfAlgCat
 
@@ -247,20 +255,6 @@ theorem cocharacterLatticeFunctor_map_hom_apply
       MultiplicativeTypeCommHopfAlgCat.cocharacterMap (toMultiplicativeTypeMap f) y := by
   rw [cocharacterLatticeFunctor_map_hom]
   rfl
-
-/-- The character--cocharacter pairing is natural: mapping a character covariantly or mapping a
-cocharacter contravariantly gives the same integer. -/
-theorem characterCocharacterPairing_map {S T : TorusCommHopfAlgCat k} (f : S ⟶ T)
-    (x : CommHopfAlgCat.additiveCharacterGroup S.obj.obj)
-    (y : MultiplicativeTypeCommHopfAlgCat.cocharacterLattice
-      (toMultiplicativeTypeCommHopfAlgCat T)) :
-    MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing
-        (toMultiplicativeTypeCommHopfAlgCat T)
-        (CommHopfAlgCat.additiveCharacterMap f.hom.hom x) y =
-      MultiplicativeTypeCommHopfAlgCat.characterCocharacterPairing
-        (toMultiplicativeTypeCommHopfAlgCat S) x
-        (MultiplicativeTypeCommHopfAlgCat.cocharacterMap (toMultiplicativeTypeMap f) y) := by
-  simp
 
 end TorusCommHopfAlgCat
 
