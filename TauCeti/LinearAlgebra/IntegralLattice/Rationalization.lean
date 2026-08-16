@@ -107,29 +107,13 @@ section AbstractIntegralForm
 
 variable {M : Type u} [AddCommGroup M] [Module.Free ℤ M] [Module.Finite ℤ M]
 
-omit [Module.Free ℤ M] [Module.Finite ℤ M] in
-private theorem isSymm_baseChange (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
-    (B.baseChange ℚ).IsSymm := by
-  constructor
-  intro x y
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x₁ x₂ hx₁ hx₂ => simp only [map_add, LinearMap.add_apply, hx₁, hx₂]
-  | tmul q m =>
-    induction y using TensorProduct.induction_on with
-    | zero => simp
-    | add y₁ y₂ hy₁ hy₂ =>
-      rw [map_add, map_add, LinearMap.add_apply, hy₁, hy₂]
-    | tmul r n =>
-      rw [LinearMap.BilinForm.baseChange_tmul, LinearMap.BilinForm.baseChange_tmul,
-        hB.eq m n, mul_comm q r]
-
 /-- Rationalizing an integral symmetric form on a finite free `ℤ`-module produces an integral
 lattice in its scalar extension to `ℚ`. -/
 noncomputable def ofIntegralForm (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     IntegralLattice (ℚ ⊗[ℤ] M) :=
   ofBasis ((Module.Free.chooseBasis ℤ M).baseChange ℚ) (B.baseChange ℚ)
-    (isSymm_baseChange B hB)
+    (LinearMap.BilinForm.isSymm_iff.mpr
+      (LinearMap.BilinForm.IsSymm.baseChange ℚ (LinearMap.BilinForm.isSymm_iff.mp hB)))
     fun i j ↦ by
       rw [Basis.baseChange_apply, Basis.baseChange_apply,
         LinearMap.BilinForm.baseChange_tmul]
@@ -142,33 +126,15 @@ theorem ofIntegralForm_form (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     (ofIntegralForm B hB).form = B.baseChange ℚ :=
   IntegralLattice.ofBasis_form _ _ _ _
 
-private theorem ofIntegralForm_carrier (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
-    (ofIntegralForm B hB).carrier =
-      Submodule.span ℤ (Set.range ((Module.Free.chooseBasis ℤ M).baseChange ℚ)) := by
-  unfold ofIntegralForm
-  exact IntegralLattice.ofBasis_carrier _ _ _ _
-
 namespace ofIntegralForm
-
-private noncomputable def basis (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
-    Basis (Module.Free.ChooseBasisIndex ℤ M) ℤ (ofIntegralForm B hB) :=
-  ((Module.Free.chooseBasis ℤ M).baseChange ℚ).restrictScalars ℤ |>.map
-    (LinearEquiv.ofEq
-      (Submodule.span ℤ (Set.range ((Module.Free.chooseBasis ℤ M).baseChange ℚ)))
-      (ofIntegralForm B hB).carrier (ofIntegralForm_carrier B hB).symm)
-
-@[simp]
-private theorem coe_basis (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
-    (i : Module.Free.ChooseBasisIndex ℤ M) :
-    (basis B hB i : ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ M i := by
-  rw [basis, Basis.map_apply, LinearEquiv.coe_ofEq_apply,
-    Basis.restrictScalars_apply, Basis.baseChange_apply]
 
 /-- The abstract integral module is canonically equivalent to the carrier of its rationalized
 integral lattice. -/
 noncomputable def carrierEquiv (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     M ≃ₗ[ℤ] ofIntegralForm B hB :=
-  (Module.Free.chooseBasis ℤ M).equiv (basis B hB) (Equiv.refl _)
+  (Module.Free.chooseBasis ℤ M).equiv
+    (IntegralLattice.ofBasis.basis ((Module.Free.chooseBasis ℤ M).baseChange ℚ)
+      (B.baseChange ℚ) _ _) (Equiv.refl _)
 
 /-- The carrier equivalence sends an abstract vector to its unit pure tensor. -/
 @[simp]
@@ -180,11 +146,14 @@ theorem coe_carrierEquiv_apply (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (
         (TensorProduct.mk ℤ ℚ M 1).toAddMonoidHom.toIntLinearMap := by
     apply (Module.Free.chooseBasis ℤ M).ext
     intro i
-    rw [LinearMap.comp_apply, LinearEquiv.coe_toLinearMap, carrierEquiv,
-      Basis.equiv_apply, Equiv.refl_apply]
+    have hbasis : carrierEquiv B hB (Module.Free.chooseBasis ℤ M i) =
+        IntegralLattice.ofBasis.basis ((Module.Free.chooseBasis ℤ M).baseChange ℚ)
+          (B.baseChange ℚ) _ _ i :=
+      Basis.equiv_apply _ _ _ _
     -- Forget the implementation wrappers on the subtype inclusion and integer-linear map.
-    change (basis B hB i : ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ M i
-    exact coe_basis B hB i
+    change ((carrierEquiv B hB (Module.Free.chooseBasis ℤ M i) : ofIntegralForm B hB) :
+      ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ M i
+    rw [hbasis, IntegralLattice.ofBasis.coe_basis, Basis.baseChange_apply]
   exact LinearMap.congr_fun hmap x
 
 /-- The carrier of a rationalized integral form consists exactly of the unit pure tensors. -/
