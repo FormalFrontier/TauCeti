@@ -11,6 +11,8 @@ module
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.FinTwo
 -- `Subgroup.index` occurs in the statements below.
 public import Mathlib.GroupTheory.Index
+-- `Group.IsSolvable` occurs in the statement of `TauCeti.GL2Borel.instIsSolvable`.
+public import Mathlib.GroupTheory.Solvable
 -- `Matrix.BlockTriangular` occurs in the statement of `TauCeti.blockTriangular_id_iff`.
 public import Mathlib.LinearAlgebra.Matrix.Block
 -- `TauCeti.diagGL` is the body of `TauCeti.GL2Borel.torusHom`, so it must be imported publicly.
@@ -67,6 +69,7 @@ q + 1`, the number of points of the projective line.
 * `TauCeti.GL2Borel.mem_ker_diag_iff`: the kernel of `TauCeti.GL2Borel.diag` is the unipotent
   radical, the image of `TauCeti.GL2Borel.unipotentHom`.
 * `TauCeti.GL2Borel.eq_torusHom_mul_unipotentHom`: the decomposition `B = T U`.
+* `TauCeti.GL2Borel.instIsSolvable`: the Borel subgroup is solvable over every commutative ring.
 * `TauCeti.GL2Borel.det_diag`: the determinant of an element of `B` is the product of its two
   diagonal entries.
 * `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`: a matrix with an upper-triangular conjugate
@@ -337,6 +340,16 @@ theorem mem_ker_diag_iff (g : GL2Borel R) :
       simp [Matrix.GeneralLinearGroup.upperRightHom, h₀, h₁, apply_one_zero g]
   · rintro ⟨b, rfl⟩
     exact MonoidHom.mem_ker.mpr (diag_unipotentHom b)
+
+/-- The upper-triangular Borel subgroup of `GL₂` is solvable over every commutative ring.
+
+Its diagonal quotient is abelian, and the kernel of the diagonal projection is the image of the
+abelian additive group of the ring under `unipotentHom`. -/
+instance instIsSolvable : Group.IsSolvable (GL2Borel R) := by
+  apply Group.isSolvable_of_ker_le_range (unipotentHom (R := R)).toMonoidHom (diag (R := R))
+  intro g hg
+  obtain ⟨b, rfl⟩ := (mem_ker_diag_iff g).mp hg
+  exact ⟨Multiplicative.ofAdd b, rfl⟩
 
 /-- **The Borel subgroup is `T U`**: every element of `B` is the diagonal matrix carrying its two
 torus coordinates times the unipotent matrix carrying the remaining upper-right coordinate. -/

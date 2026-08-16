@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Analysis.Matrix.Spectrum
 public import TauCeti.Analysis.Matrix.UnitaryGroup
-public import TauCeti.RepresentationTheory.SU2.Weyl
+public import TauCeti.RepresentationTheory.SU2.Weyl.Basic
 
 /-!
 # Every element of `SU(2)` is conjugate into the maximal torus
@@ -42,14 +42,14 @@ change the conjugation it induces.
   angle `θ`.
 * `TauCeti.SU2.isConj_inv_of_mem_torus` and `TauCeti.SU2.isConj_torusExp_neg`: the Weyl reflection,
   every element of the torus is conjugate in `SU(2)` to its inverse. This is the conjugation by
-  the quarter turn `TauCeti.SU2.weylElement` of `TauCeti/RepresentationTheory/SU2/Weyl.lean`
+  the quarter turn `TauCeti.SU2.weylElement` of `TauCeti/RepresentationTheory/SU2/Weyl/Basic.lean`
   (`TauCeti.SU2.weylElement_conj_torusHom`), read as an existential. With torus conjugacy it says
   every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
   converse, that conjugate elements of `T` are equal or inverse, is
   `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` of `TauCeti/RepresentationTheory/SU2/Basic.lean`.
 * `TauCeti.SU2.isConj_torusHom_iff`: putting those two together, each conjugacy class of `SU(2)`
   meets `T` in exactly one orbit `{z, z⁻¹}` of the Weyl group computed in
-  `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
+  `TauCeti/RepresentationTheory/SU2/Weyl/Basic.lean`.
 * `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus` and
   `TauCeti.SU2.exists_conjInvariant_torusHom_eq`: restricting a class function on `SU(2)` to `T`
   is injective, and its image is exactly the functions on `T` invariant under the Weyl action.

@@ -178,6 +178,12 @@ lemma mem_posDetInt_iff {g : GL (Fin n) ℚ} :
   simp [posDetInt, Submonoid.mem_inf, Matrix.mem_glpos,
     Matrix.GeneralLinearGroup.val_det_apply]
 
+/-- `posDetInt n` is contained in the positive-determinant submonoid, forgetting integrality.
+`posDetInt n` is defined as a meet, so this is one projection of it — but the meet is not visible
+outside this file (`posDetInt` is not `@[expose]`), so consumers that need only positivity, and
+not integrality, must go through this lemma. -/
+lemma posDetInt_le_glpos : posDetInt n ≤ (Matrix.GLPos (Fin n) ℚ).toSubmonoid := inf_le_right
+
 end PosDetInt
 
 section Pair
@@ -187,6 +193,11 @@ lemma SLnZ_le_posDetInt : (SLnZ n).toSubmonoid ≤ posDetInt n := by
   rintro g ⟨A, rfl⟩
   refine ⟨⟨A.val, by simp [mapGL_coe_matrix, algebraMap_int_eq]⟩, ?_⟩
   simp
+
+/-- `SL_n(ℤ)` has positive determinant, forgetting integrality — the composite of
+`SLnZ_le_posDetInt` with `posDetInt_le_glpos`, for consumers that need only the determinant. -/
+lemma SLnZ_le_glpos : SLnZ n ≤ Matrix.GLPos (Fin n) ℚ := fun _ h ↦
+  posDetInt_le_glpos n (SLnZ_le_posDetInt n h)
 
 /-- Kernel element of `SL_n(ℤ) → SL_n(ℤ/dℤ)` has entries congruent to identity mod d. -/
 private lemma ker_entry_dvd (d : ℕ) (γ : SpecialLinearGroup (Fin n) ℤ)

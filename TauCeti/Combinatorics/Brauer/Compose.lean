@@ -36,7 +36,8 @@ into the multiplication of the Brauer algebra on the diagram basis. That is the 
 symmetric group sits inside the Brauer algebra: once the loop-weighted multiplication of the
 Brauer algebra is available, this is what will make it restrict to the group algebra `ℂ[Sₖ]` along
 `permToBrauer`, since no loop can close up in the middle when one of the two diagrams has only
-through strands. The middle-loop count itself is not built here.
+through strands. The middle-loop count itself is built in
+`TauCeti/Combinatorics/Brauer/LoopCount.lean`.
 
 ## Main definitions
 

@@ -6,7 +6,6 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Discriminant
 import TauCeti.NumberTheory.NumberField.IntegralSqrt
-import Mathlib.FieldTheory.KummerPolynomial
 
 /-!
 # Quadratic fields attached to prime discriminants
@@ -77,29 +76,9 @@ theorem discr_eq_primeDiscriminant_of_sq {K : Type*} [Field K] [NumberField K] {
     (hgen : Algebra.adjoin ℚ {x} = ⊤) : NumberField.discr K = D := by
   let d := primeDiscriminantRadicand D
   let θ : 𝓞 K := TauCeti.NumberField.integralSqrt hx
-  have hpolyQ : Irreducible (X ^ 2 - C ((d : ℤ) : ℚ)) :=
-    X_pow_sub_C_irreducible_of_prime (by decide) fun y hy =>
-      not_isSquare_primeDiscriminantRadicand_rat hD ⟨y, by simpa [pow_two] using hy.symm⟩
   have hθ : algebraMap (𝓞 K) K θ = x := TauCeti.NumberField.algebraMap_integralSqrt hx
-  have hxQ : x ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    calc
-      x ^ 2 = algebraMap ℤ K d := by simpa only [d] using hx
-      _ = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-        rw [IsScalarTower.algebraMap_apply ℤ ℚ K]
-        norm_num
-  have haevalQ : aeval x (X ^ 2 - C ((d : ℤ) : ℚ)) = 0 := by
-    simp only [map_sub, map_pow, aeval_X, aeval_C, hxQ, sub_self]
-  have hminQ : minpoly ℚ x = X ^ 2 - C ((d : ℤ) : ℚ) :=
-    (minpoly.eq_of_irreducible_of_monic hpolyQ haevalQ
-      (monic_X_pow_sub_C ((d : ℤ) : ℚ) (by norm_num))).symm
-  have hmin : minpoly ℤ θ = X ^ 2 - C d := by
-    have hfrac := minpoly.isIntegrallyClosed_eq_field_fractions ℚ K
-      (IsIntegralClosure.isIntegral ℤ K θ)
-    apply Polynomial.map_injective (algebraMap ℤ ℚ) Int.cast_injective
-    rw [← hfrac, hθ, hminQ]
-    simp only [Polynomial.map_sub, Polynomial.map_pow, Polynomial.map_X, Polynomial.map_C,
-      map_intCast]
-    norm_num
+  have hmin : minpoly ℤ θ = X ^ 2 - C d :=
+    TauCeti.NumberField.minpoly_integralSqrt hx (not_isSquare_primeDiscriminantRadicand_rat hD)
   have hgenθ : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
     rw [NumberField.RingOfIntegers.coe_eq_algebraMap, hθ]
     exact hgen

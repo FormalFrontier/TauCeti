@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.Petersson.Basic
 public import TauCeti.GroupTheory.Index
+public import TauCeti.NumberTheory.ModularForms.WithCenter
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 
 /-!
@@ -43,7 +44,8 @@ positive-definite Hermitian form is all that the adjoint theory downstream needs
 
 ## Main results
 
-* `Subgroup.mem_withCenter_iff`: an element of `Γ·{±I}` is `±` one of `Γ`.
+* `CuspForm.exists_slash_eq_smul_of_mem_withCenter`: slashing by an element of `Γ·{±I}` scales
+  every form by one and the same unimodular constant.
 * `CuspForm.peterssonInner_slash_of_mem_withCenter`: the summand is independent of the coset
   representative, which is what makes the sum well defined.
 * `CuspForm.peterssonInnerCosets_conj_symm`: Hermitian symmetry.
@@ -126,30 +128,23 @@ private theorem out_one_mem_WithCenter :
   simpa using (Γ.withCenter).inv_mem (QuotientGroup.eq.mp h)
 
 omit [Γ.FiniteIndex] in
-/-- Membership in `Γ·{±I}`: its elements are exactly `±` the elements of `Γ`. The adjoined
-centre of `SL₂(ℤ)` is `{±I}`, so the supremum only adds the negatives. -/
-@[simp]
-theorem _root_.Subgroup.mem_withCenter_iff {γ : SL(2, ℤ)} :
-    γ ∈ Γ.withCenter ↔ ∃ γ' ∈ Γ, γ = γ' ∨ γ = -γ' := by
-  refine ⟨fun hγ ↦ ?_, ?_⟩
-  · rw [Subgroup.withCenter_def, ← SetLike.mem_coe, Subgroup.mul_normal] at hγ
-    obtain ⟨a, ha, b, hb, rfl⟩ := hγ
-    obtain ⟨r, hr, hscal⟩ := Matrix.SpecialLinearGroup.mem_center_iff.mp hb
-    have hb1 : b = 1 ∨ b = -1 := by
-      have : r = 1 ∨ r = -1 :=
-        Int.isUnit_iff.mp (IsUnit.of_mul_eq_one r (by simpa [pow_two] using hr))
-      rcases this with rfl | rfl
-      · exact Or.inl (Subtype.ext (by simpa using hscal.symm))
-      · exact Or.inr (Subtype.ext (by simpa using hscal.symm))
-    refine ⟨a, ha, ?_⟩
-    rcases hb1 with rfl | rfl
-    · exact Or.inl (by simp)
-    · exact Or.inr (by simp)
-  · rintro ⟨γ', hγ', rfl | rfl⟩
-    · exact Γ.le_withCenter hγ'
-    · have hcenter : (-1 : SL(2, ℤ)) ∈ Subgroup.center SL(2, ℤ) :=
-        Subgroup.mem_center_iff.mpr fun g ↦ by rw [neg_one_mul, mul_neg_one]
-      exact Subgroup.withCenter_def Γ ▸ mul_neg_one γ' ▸ Subgroup.mul_mem_sup hγ' hcenter
+/-- **Slashing by `Γ·{±I}` scales every form by one and the same unimodular constant**: by `1`
+on `Γ` itself, where the forms are invariant, and by `(-1)^k` on its negatives, since `-I` acts
+trivially on `ℍ` and contributes only the automorphy factor. Unimodularity `conj c * c = 1` is
+what makes the constant invisible to the conjugate-linear Petersson pairing. -/
+theorem exists_slash_eq_smul_of_mem_withCenter {γ : SL(2, ℤ)} (hγ : γ ∈ Γ.withCenter) :
+    ∃ c : ℂ, conj c * c = 1 ∧ ∀ f : CuspForm (Γ.map (mapGL ℝ)) k, ⇑f ∣[k] γ = c • ⇑f := by
+  obtain ⟨γ', hγ', hcase⟩ := Subgroup.mem_withCenter_iff_exists_eq_or_eq_neg.mp hγ
+  rcases hcase with rfl | rfl
+  · exact ⟨1, by simp, fun f ↦ by rw [SlashInvariantFormClass.SL_slash_eq f _ hγ', one_smul]⟩
+  · refine ⟨(-1 : ℂ) ^ k, ?_, fun f ↦ ?_⟩
+    · have hreal : conj ((-1 : ℂ) ^ k) = (-1 : ℂ) ^ k := by simp
+      rw [hreal, ← zpow_add₀ (by norm_num : (-1 : ℂ) ≠ 0), ← two_mul, zpow_mul]
+      norm_num
+    · -- the `SL(2, ℤ)` slash action goes through `mapGL ℝ`, which sends `-I` to `-I`
+      have hcoe : ((-1 : SL(2, ℤ)) : GL (Fin 2) ℝ) = -1 := mapGL_neg_one
+      rw [← mul_neg_one γ', SlashAction.slash_mul, ModularForm.SL_slash (γ := (-1 : SL(2, ℤ))),
+        hcoe, ModularForm.slash_neg_one, SlashInvariantFormClass.SL_slash_eq f _ hγ']
 
 omit [Γ.FiniteIndex] in
 /-- **The summand does not depend on the coset representative**: the level-one-domain pairing
@@ -159,23 +154,9 @@ itself. This is what lets the defining sum be reindexed over the coset space. -/
 theorem peterssonInner_slash_of_mem_withCenter
     (f g : CuspForm (Γ.map (mapGL ℝ)) k) {γ : SL(2, ℤ)} (hγ : γ ∈ Γ.withCenter) :
     UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] γ) (⇑g ∣[k] γ) = peterssonInnerFd f g := by
-  obtain ⟨γ', hγ', hcase⟩ := Subgroup.mem_withCenter_iff.mp hγ
-  rcases hcase with rfl | rfl
-  · rw [SlashInvariantFormClass.SL_slash_eq f _ hγ',
-      SlashInvariantFormClass.SL_slash_eq g _ hγ', peterssonInnerFd_def]
-  · -- the `SL(2, ℤ)` slash action goes through `mapGL ℝ`, which sends `-I` to `-I`
-    have hcoe : ((-1 : SL(2, ℤ)) : GL (Fin 2) ℝ) = -1 := mapGL_neg_one
-    have hneg : ∀ h : ℍ → ℂ, h ∣[k] (-γ') = (-1 : ℂ) ^ k • (h ∣[k] γ') := fun h ↦ by
-      rw [← mul_neg_one γ', SlashAction.slash_mul, ModularForm.SL_slash (γ := (-1 : SL(2, ℤ))),
-        hcoe, ModularForm.slash_neg_one]
-    rw [hneg, hneg, SlashInvariantFormClass.SL_slash_eq f _ hγ',
-      SlashInvariantFormClass.SL_slash_eq g _ hγ',
-      peterssonInner_smul_right, peterssonInner_smul_left, peterssonInnerFd_def]
-    have hreal : (starRingEnd ℂ) ((-1 : ℂ) ^ k) = (-1 : ℂ) ^ k := by simp
-    have hsq : ((-1 : ℂ) ^ k) * ((-1 : ℂ) ^ k) = 1 := by
-      rw [← zpow_add₀ (by norm_num : (-1 : ℂ) ≠ 0), ← two_mul, zpow_mul]
-      norm_num
-    rw [hreal, ← mul_assoc, hsq, one_mul]
+  obtain ⟨c, hc, hslash⟩ := exists_slash_eq_smul_of_mem_withCenter (k := k) hγ
+  rw [hslash f, hslash g, peterssonInner_smul_left, peterssonInner_smul_right, ← mul_assoc, hc,
+    one_mul, peterssonInnerFd_def]
 
 omit [Γ.FiniteIndex] in
 /-- Each summand of the self-pairing is a non-negative real: the integrand is

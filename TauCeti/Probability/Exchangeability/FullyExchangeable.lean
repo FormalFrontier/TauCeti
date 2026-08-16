@@ -28,7 +28,7 @@ endomorphisms:
 
 These bridges live together because they all identify the process-level symmetry
 `FullyExchangeable μ X` with corresponding path-law invariance statements. They are thin: they
-reuse the merged Layer 0 API and Mathlib — finite-marginal uniqueness (`FiniteMarginals`), the
+reuse the Layer 0 API and Mathlib — finite-marginal uniqueness (`FiniteMarginals`), the
 contractability bridge (`Contractability`), generic path-law reindexing, and Mathlib's finite
 permutation extension theorem — rather than new measure theory.
 

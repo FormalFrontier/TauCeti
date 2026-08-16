@@ -11,7 +11,7 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.Algebra.Group.Pi.Units
 -- `Matrix.IsDiag` occurs in the statements below.
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
--- `Subgroup.centralizer` occurs in the statements below.
+-- `Subgroup.centralizer` and `Subgroup.center` occur in the statements below.
 public import Mathlib.GroupTheory.Subgroup.Centralizer
 -- `Nat.card` occurs in the statement of `TauCeti.natCard_diagonalTorus`.
 public import Mathlib.SetTheory.Cardinal.Finite
@@ -67,6 +67,15 @@ genuinely fails, exactly when `GL n k` is itself nontrivial — over `𝔽₂` t
 `n ≥ 2`, while for `n ≤ 1` the whole group is trivial and the conclusion survives for want of
 anything to contradict it.
 
+The smallest diagonal matrices, the scalar ones, are treated here as well: a scalar matrix is
+central in `GL ι k` (`TauCeti.scalar_mem_center`), so its centralizer is the whole group
+(`TauCeti.centralizer_scalar`). Nothing there is special to `Fin n` or to a field, so both are
+stated for an arbitrary finite index type over a commutative semiring. The size of the resulting
+conjugacy class — the easy end of the class table of `GL₂(𝔽_q)` — is
+`TauCeti.ncard_carrier_mk_scalar`, in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer` alongside the other class sizes, so
+that conjugacy theory stays out of this module's imports.
+
 The action of the torus on the coordinate lines of the standard representation is in
 `TauCeti.RepresentationTheory.ClassicalGroups.Torus`.
 
@@ -88,6 +97,8 @@ The action of the torus on the coordinate lines of the standard representation i
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
 * `TauCeti.centralizer_diagonalTorus_eq_top`: over a ring with a single unit the centralizer is
   instead the whole group.
+* `TauCeti.scalar_mem_center` and `TauCeti.centralizer_scalar`: a scalar matrix is central, so its
+  centralizer is the whole group.
 
 ## References
 
@@ -252,6 +263,29 @@ instance instIsMulCommutativeDiagonalTorus : IsMulCommutative (diagonalTorus k n
     rintro ⟨-, t, rfl⟩ ⟨-, s, rfl⟩
     refine Subtype.ext ?_
     rw [Subgroup.coe_mul, Subgroup.coe_mul, ← map_mul, ← map_mul, mul_comm]⟩⟩
+
+section Scalar
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- **A scalar matrix is central in `GL ι k`**: it commutes with every matrix, invertible or not.
+Mathlib's `Matrix.GeneralLinearGroup.scalar_commute` asks for a commutative ring; a commutative
+semiring is enough, since `Matrix.scalar_commute` needs only that the scalar commute with every
+element. -/
+theorem scalar_mem_center (u : kˣ) :
+    Matrix.GeneralLinearGroup.scalar ι u ∈ Subgroup.center (GL ι k) :=
+  Subgroup.mem_center_iff.mpr fun g => Units.ext
+    ((Matrix.scalar_commute (u : k) (fun _ => Commute.all _ _) (g : Matrix ι ι k)).symm.eq)
+
+/-- **The centralizer of a scalar matrix is everything**, scalar matrices being central. The size of
+its conjugacy class is `TauCeti.ncard_carrier_mk_scalar`, in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer`. -/
+@[simp]
+theorem centralizer_scalar (u : kˣ) :
+    Subgroup.centralizer {Matrix.GeneralLinearGroup.scalar ι u} = ⊤ :=
+  Subgroup.centralizer_eq_top_iff_subset.mpr (Set.singleton_subset_iff.mpr (scalar_mem_center u))
+
+end Scalar
 
 section IsCancelMulZero
 

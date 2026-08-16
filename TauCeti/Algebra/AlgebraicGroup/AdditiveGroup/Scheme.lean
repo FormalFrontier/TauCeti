@@ -6,6 +6,7 @@ module
 
 public import Mathlib.AlgebraicGeometry.AffineSpace
 public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basis
+public import Mathlib.RingTheory.Smooth.Basic
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
@@ -55,6 +56,8 @@ affine-space APIs.
   and scheme-valued points.
 * `TauCeti.AdditiveGroup.schemePointsMulEquiv`: scheme-valued points are the additive group of
   the value algebra.
+* `TauCeti.AdditiveGroup.gaSchemePointParamMul`: the scheme-valued point whose parameter is the
+  product of two parameters in the value algebra.
 * `TauCeti.AdditiveGroup.schemePointsMulEquiv_mapValue`: covariance in the value algebra.
 
 ## References
@@ -92,6 +95,7 @@ section CoordinateAlgebra
 
 variable (R : Type u) [CommSemiring R]
 
+/-- The singleton basis used to present the rank-one symmetric algebra as a polynomial algebra. -/
 private noncomputable def coordinateBasis : Basis (CoordinateIndex.{u}) R R :=
   Basis.singleton _ _
 
@@ -111,12 +115,32 @@ lemma coordinateAlgEquiv_ι_one :
 
 end CoordinateAlgebra
 
+section FiniteType
+
+variable (R : Type u) [CommSemiring R]
+
+/-- The coordinate algebra of `𝔾ₐ` is of finite type: it is the polynomial algebra on the single
+generator `x`. -/
+instance instFiniteTypeSymmetricAlgebra : Algebra.FiniteType R (SymmetricAlgebra R R) :=
+  Algebra.FiniteType.equiv
+    (inferInstanceAs (Algebra.FiniteType R (MvPolynomial (CoordinateIndex.{u}) R)))
+    (coordinateAlgEquiv R).symm
+
+end FiniteType
+
 variable (R : Type u) [CommRing R]
 
 /-- The commutative Hopf algebra representing the one-dimensional additive group. Its carrier is
 `SymmetricAlgebra R R`, with primitive generator `SymmetricAlgebra.ι R R 1`. -/
 noncomputable abbrev coordinateHopfAlgebra : CommHopfAlgCat.{u} R :=
   CommHopfAlgCat.of R (SymmetricAlgebra R R)
+
+/-- The coordinate algebra of `𝔾ₐ` is smooth: it is the polynomial algebra on the single
+generator `x`. -/
+instance instSmoothSymmetricAlgebra : Algebra.Smooth R (SymmetricAlgebra R R) :=
+  letI : Algebra.Smooth R (MvPolynomial (CoordinateIndex.{u}) R) :=
+    ⟨inferInstance, inferInstance⟩
+  Algebra.Smooth.of_equiv (coordinateAlgEquiv R).symm
 
 /-- The additive group scheme obtained by applying relative spectrum to the symmetric Hopf
 algebra on one generator.
@@ -127,7 +151,7 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
     (Opposite.op (coordinateHopfAlgebra R))
 
 /-- The additive group scheme is the relative spectrum of its coordinate Hopf algebra. -/
-lemma groupScheme_def :
+public lemma groupScheme_def :
     groupScheme R =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R)) := by
@@ -206,6 +230,7 @@ lemma groupScheme_inv_left :
   unfold groupScheme
   convert hopfSpec_obj_inv_left R (coordinateHopfAlgebra R) using 1
 
+/-- The underlying scheme isomorphism from the additive group to affine one-space. -/
 private noncomputable def groupSchemeAffineSpaceIsoLeft :
     (groupScheme R).X.left ≅
       𝔸(CoordinateIndex.{u}; Spec (CommRingCat.of R)) :=
@@ -256,9 +281,6 @@ instance isAffine_groupScheme : IsAffine (groupScheme R).X.left := by
 /-- The structural morphism of the additive group scheme is locally of finite presentation. -/
 instance locallyOfFinitePresentation_groupScheme :
     LocallyOfFinitePresentation (groupScheme R).X.hom := by
-  let : Algebra.FinitePresentation R (MvPolynomial (CoordinateIndex.{u}) R) := inferInstance
-  let : Algebra.FinitePresentation R (SymmetricAlgebra R R) :=
-    Algebra.FinitePresentation.equiv (coordinateAlgEquiv R).symm
   rw [groupScheme_X_hom]
   let : LocallyOfFinitePresentation (eqToHom (groupScheme_X_left R)) :=
     locallyOfFinitePresentation_of_isOpenImmersion _
@@ -313,6 +335,39 @@ noncomputable def schemePointsMulEquiv :
   (groupSchemePointMulEquiv A).symm.trans
     (gaPointsMulEquiv (R := R) (A := A))
 
+/-- The scheme-valued point whose additive parameter is the product of the parameters of `p` and
+`q` in the value algebra. This is not the group operation on scheme-valued points, which adds
+parameters. -/
+noncomputable def gaSchemePointParamMul
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶ (groupScheme R).X :=
+  groupSchemePointMulEquiv A
+    (gaPointParamMul ((groupSchemePointMulEquiv A).symm p)
+      ((groupSchemePointMulEquiv A).symm q))
+
+/-- Scheme-point parameter multiplication transports algebra-point parameter multiplication
+through the canonical spectrum-points equivalence. -/
+@[simp]
+theorem gaSchemePointParamMul_groupSchemePointMulEquiv
+    (F G : WithConv (coordinateHopfAlgebra R →ₐ[R] A)) :
+    gaSchemePointParamMul A (groupSchemePointMulEquiv A F) (groupSchemePointMulEquiv A G) =
+      groupSchemePointMulEquiv A (gaPointParamMul F G) := by
+  simp [gaSchemePointParamMul]
+
+/-- Under the scheme-points equivalence, `gaSchemePointParamMul p q` has parameter equal to the
+product of the parameters of `p` and `q` in the value algebra. -/
+@[simp]
+theorem schemePointsMulEquiv_gaSchemePointParamMul
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    schemePointsMulEquiv A (gaSchemePointParamMul A p q) =
+      Multiplicative.ofAdd
+        (Multiplicative.toAdd (schemePointsMulEquiv A p) *
+          Multiplicative.toAdd (schemePointsMulEquiv A q)) := by
+  simp only [gaSchemePointParamMul, schemePointsMulEquiv, MulEquiv.trans_apply,
+    MulEquiv.symm_apply_apply, gaPointsMulEquiv_gaPointParamMul]
+
 /-- A scheme-valued point corresponds to the value at the additive coordinate `ι(1)` of its
 canonical algebra point. -/
 @[simp]
@@ -324,6 +379,25 @@ lemma toAdd_schemePointsMulEquiv
         (SymmetricAlgebra.ι R R 1) := by
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   exact toAdd_gaPointsMulEquiv _
+
+/-- Evaluating the scheme-points equivalence on a point presented by `groupSchemePointMulEquiv`
+recovers the canonical algebra point. -/
+@[simp]
+theorem schemePointsMulEquiv_groupSchemePointMulEquiv
+    (q : WithConv (coordinateHopfAlgebra R →ₐ[R] A)) :
+    schemePointsMulEquiv A (groupSchemePointMulEquiv A q) =
+      gaPointsMulEquiv (R := R) (A := A) q := by
+  simp [schemePointsMulEquiv]
+
+/-- Evaluating the scheme-points equivalence directly on a scheme morphism. -/
+theorem schemePointsMulEquiv_apply
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    schemePointsMulEquiv A p =
+      gaPointsMulEquiv (R := R) (A := A)
+        ((groupSchemePointMulEquiv A).symm p) := by
+  unfold schemePointsMulEquiv
+  rfl
 
 /-- The inverse scheme-points equivalence sends an element of the value algebra to the spectrum
 map induced by the corresponding symmetric-algebra point. -/
@@ -361,6 +435,23 @@ theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   exact gaPointsMulEquiv_mapValue φ q
+
+/-- Multiplication of scheme-point parameters is natural in the value algebra. -/
+theorem mapValue_gaSchemePointParamMul (φ : A →ₐ[R] B)
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    (Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ gaSchemePointParamMul A p q =
+      gaSchemePointParamMul B
+        ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ p)
+        ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ q) := by
+  apply (schemePointsMulEquiv B).injective
+  rw [schemePointsMulEquiv_mapValue, schemePointsMulEquiv_gaSchemePointParamMul,
+    schemePointsMulEquiv_gaSchemePointParamMul, schemePointsMulEquiv_mapValue,
+    schemePointsMulEquiv_mapValue]
+  exact congrArg Multiplicative.ofAdd (map_mul φ _ _)
 
 end SchemePoints
 

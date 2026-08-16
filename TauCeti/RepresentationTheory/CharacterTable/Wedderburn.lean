@@ -34,13 +34,13 @@ Two further statements about a Wedderburn presentation are deliberately not prov
 needed before the block count can be *called* the count of irreducible representations: that the
 blocks are in bijection with the isomorphism classes of simple `k[G]`-modules, and that the multiset
 of degrees does not depend on the chosen presentation. What this file supplies is the numerical
-half, which is what the dimension arguments can see. Neither of the two is proved downstream in the
-stated form either, but the substance of the first is assembled in two steps:
-`TauCeti/RepresentationTheory/CharacterTable/BlockRepresentation.lean` shows each block to carry an
-irreducible representation and distinct blocks to carry inequivalent ones, and
-`TauCeti/RepresentationTheory/CharacterTable/Completeness.lean` shows, in
-`TauCeti.ClassFunction.exists_nonempty_equiv`, that the family so obtained exhausts the irreducible
-representations. The independence of the degrees from the presentation is still not proved.
+half, which is what the dimension arguments can see. Both are proved downstream, in
+`TauCeti/RepresentationTheory/CharacterTable/IrreducibleClassification.lean`, as
+`TauCeti.nonempty_equiv_index_simpleSubmoduleClasses` and `TauCeti.natCard_degree_fiber_eq`,
+on top of the block representations of
+`TauCeti/RepresentationTheory/CharacterTable/BlockRepresentation.lean` and the exhaustion
+`TauCeti.ClassFunction.exists_nonempty_equiv` of
+`TauCeti/RepresentationTheory/CharacterTable/Completeness.lean`.
 
 ## References
 

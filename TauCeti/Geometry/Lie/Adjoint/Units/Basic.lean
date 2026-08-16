@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.Adjoint.Exponential
+public import TauCeti.Geometry.Lie.Adjoint.Exponential.Basic
 import TauCeti.Geometry.Lie.Adjoint.Infinitesimal
 public import TauCeti.Geometry.Lie.Adjoint.OperatorExponential
 public import TauCeti.Geometry.Lie.Exponential.Units.Compatibility

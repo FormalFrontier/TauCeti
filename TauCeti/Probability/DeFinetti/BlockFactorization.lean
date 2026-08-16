@@ -101,7 +101,8 @@ theorem condExp_blockIndicatorProd_ae_eq_prod_of_iCondIndepFun_tailProcess
     (fun i => hX_meas (k i))).1 hCI Finset.univ (sets := C) (fun i _ => hC i)
   -- The intersection over the selection is the block cylinder.
   have hcyl : ⋂ i ∈ (Finset.univ : Finset (Fin m)), X (k i) ⁻¹' C i = blockCylinder X k C := by
-    ext ω; simp [mem_blockCylinder, Set.mem_iInter, Set.mem_preimage]
+    rw [blockCylinder_eq_iInter]
+    simp
   rw [hcyl] at hfac
   -- Goal LHS = `μ⟦blockCylinder X k C | tail⟧`, the block-indicator conditional expectation.
   rw [blockIndicatorProd_eq_indicator]

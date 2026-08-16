@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Convex.SimplicialComplex.AffineIndependentUnion
+public import Mathlib.Analysis.Convex.Combination
 public import Mathlib.Topology.UniformSpace.Real
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
 
@@ -28,6 +29,7 @@ abstract simplicial complex. It is the object used in the subsequent definition 
 
 * `AbstractSimplicialComplex.standardGeometricComplex`: the standard geometric complex of `K`.
 * `AbstractSimplicialComplex.Realization`: the topological space underlying its polyhedron.
+* `AbstractSimplicialComplex.faceBarycenter`: the barycenter of a face in standard coordinates.
 
 ## Main results
 
@@ -35,6 +37,7 @@ abstract simplicial complex. It is the object used in the subsequent definition 
   of the abstract faces.
 * `mem_realization_iff`: a finitely supported function belongs to the polyhedron exactly when it
   lies in the convex hull of the coordinate image of some abstract face.
+* `faceBarycenter_mem`: a face barycenter belongs to its closed simplex.
 * `vertex`: the canonical point of the realization corresponding to a vertex.
 * `realizationBotHomeomorph`: the realization of the bottom complex is its discrete vertex space.
 -/
@@ -43,7 +46,7 @@ public section
 
 noncomputable section
 
-open Set
+open Set TauCeti.SetLike
 
 namespace AbstractSimplicialComplex
 
@@ -66,6 +69,36 @@ noncomputable abbrev Realization (K : AbstractSimplicialComplex ι) : Type _ :=
 /-- The closed simplex spanned by a finite vertex set, in standard barycentric coordinates. -/
 noncomputable abbrev StandardSimplex (σ : Finset ι) : Type _ :=
   convexHull ℝ (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))
+
+/-- The barycenter of a nonempty face, expressed in the standard barycentric coordinates of the
+realization. -/
+noncomputable def faceBarycenter (K : AbstractSimplicialComplex ι) (σ : Face K) : ι →₀ ℝ :=
+  (σ.1.image fun v => Finsupp.single v (1 : ℝ)).centroid ℝ id
+
+/-- The barycenter of a face belongs to the closed simplex spanned by that face. -/
+theorem faceBarycenter_mem (K : AbstractSimplicialComplex ι) (σ : Face K) :
+    faceBarycenter K σ ∈
+      convexHull ℝ (σ.1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
+  apply Finset.centroid_mem_convexHull
+  exact (K.isRelLowerSet_faces.prop_of_mem σ.2).image _
+
+/-- The barycenter of a face has equal coordinates on its vertices and vanishes elsewhere. -/
+@[simp]
+theorem faceBarycenter_apply (K : AbstractSimplicialComplex ι) (σ : Face K) (v : ι) :
+    faceBarycenter K σ v = if v ∈ σ.1 then (σ.1.card : ℝ)⁻¹ else 0 := by
+  have hinj : Function.Injective (fun w : ι => Finsupp.single w (1 : ℝ)) :=
+    Finsupp.single_left_injective (M := ℝ) one_ne_zero
+  have hne := (K.isRelLowerSet_faces.prop_of_mem σ.2).image
+    (fun w => Finsupp.single w (1 : ℝ))
+  have hweights : ∑ y ∈ σ.1.image (fun w => Finsupp.single w (1 : ℝ)),
+      (σ.1.image fun w => Finsupp.single w (1 : ℝ)).centroidWeights ℝ y = 1 :=
+    Finset.sum_centroidWeights_eq_one_of_nonempty ℝ _ hne
+  rw [faceBarycenter, Finset.centroid_eq_centerMass _ hne,
+    (σ.1.image fun w => Finsupp.single w (1 : ℝ)).centerMass_eq_of_sum_1 _ hweights,
+    Finset.sum_apply']
+  simp only [Finset.centroidWeights_apply, id_eq, Finsupp.smul_apply, smul_eq_mul]
+  rw [Finset.card_image_of_injOn hinj.injOn, Finset.sum_image hinj.injOn]
+  simp [Finsupp.single_apply]
 
 /-- The topology induced by the coordinatewise topology on `ι → ℝ`. These are the domain
 topologies used to define the weak topology on the whole realization. -/
@@ -435,4 +468,3 @@ theorem realizationMap_trans {K L M : AbstractSimplicialComplex ι} (hKL : K ≤
     (standardGeometricComplex_space_mono hLM)).symm
 
 end AbstractSimplicialComplex
-
