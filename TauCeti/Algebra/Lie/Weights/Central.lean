@@ -24,8 +24,12 @@ algebra, the central weight carries **no integrality constraint**: it is recorde
 element of `Module.Dual K (LieAlgebra.center K L)`, with no lattice condition attached. For
 `gl n K`, whose centre is the scalar matrices
 (`TauCeti.center_matrix_toSubmodule_eq_span_one`), the central weight is the scalar by which the
-identity matrix acts, and that scalar is an arbitrary element of `K`: none of the integrality that
-the general linear *group* imposes on the central characters of its representations survives here.
+identity matrix acts, and for `n > 0` in characteristic zero that scalar is an arbitrary element of
+`K`: twisting a module by the character `(c / n) • Matrix.trace` shifts it by `c`, so none of the
+integrality that the general linear *group* imposes on the central characters of its representations
+survives here. That twist needs `n` invertible; when the characteristic divides `n` the identity
+matrix lies in `⁅gl n K, gl n K⁆ = sl n K` and the scalars that occur can be constrained, so what is
+claimed in general is only the absence of a lattice condition, not that every scalar occurs.
 
 Algebraic closedness is essential and not a convenience: over `ℝ` the one-dimensional abelian Lie
 algebra acting on `ℝ²` by the rotation generator is irreducible, is its own centre, and no scalar
