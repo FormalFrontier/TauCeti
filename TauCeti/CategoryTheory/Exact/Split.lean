@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.CategoryTheory.Exact.ExactStructure
+public import TauCeti.CategoryTheory.Limits.Shapes.Biproduct
 public import Mathlib.CategoryTheory.Preadditive.Biproducts
 
 /-!
@@ -368,7 +369,7 @@ theorem conflation_biprodShortComplex (E : ExactStructure C) (X Z : C) :
   have hpair' : IsKernelCokernelPair
       (ShortComplex.mk (biprod.inl : X ⟶ X ⊞ Z) biprod.snd hzero) :=
     IsKernelCokernelPair.of_hasBinaryBiproduct X Z
-  exact E.conflation_of_isKernelCokernelPair hpair' hinl
+  exact E.conflation_of_isKernelCokernelPair_of_isInflation hpair' hinl
 
 /-- **A short complex with a splitting is a conflation of every exact structure.**
 Equivalently, the split exact structure is the smallest exact structure on `C`. -/

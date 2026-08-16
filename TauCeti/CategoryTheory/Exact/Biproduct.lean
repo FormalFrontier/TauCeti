@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.CategoryTheory.Exact.ExactStructure
+public import TauCeti.CategoryTheory.Limits.Shapes.Biproduct
 
 /-!
 # Binary biproducts of conflations
@@ -78,8 +79,7 @@ theorem isInflation_biprod (E : ExactStructure C)
     E.isInflation_biprod_id hi₁ X₂
   have h₂ : E.IsInflation (Limits.biprod.map (𝟙 Y₁) i₂) :=
     E.isInflation_id_biprod hi₂ Y₁
-  rw [show Limits.biprod.map i₁ i₂ =
-    Limits.biprod.map i₁ (𝟙 X₂) ≫ Limits.biprod.map (𝟙 Y₁) i₂ by ext <;> simp]
+  rw [biprod_map_factor]
   exact E.isInflation_comp _ _ h₁ h₂
 
 /-- Adjoining an identity map as the second summand preserves deflations.  This is E2op applied
@@ -111,17 +111,18 @@ theorem isDeflation_biprod (E : ExactStructure C)
     E.isDeflation_biprod_id hp₁ Y₂
   have h₂ : E.IsDeflation (Limits.biprod.map (𝟙 Z₁) p₂) :=
     E.isDeflation_id_biprod hp₂ Z₁
-  rw [show Limits.biprod.map p₁ p₂ =
-    Limits.biprod.map p₁ (𝟙 Y₂) ≫ Limits.biprod.map (𝟙 Z₁) p₂ by ext <;> simp]
+  rw [biprod_map_factor]
   exact E.isDeflation_comp _ _ h₁ h₂
 
 /-- A binary direct sum of conflations is a conflation. -/
 theorem conflation_biprod (E : ExactStructure C) {S₁ S₂ : ShortComplex C}
     (hS₁ : E.Conflation S₁) (hS₂ : E.Conflation S₂) :
     E.Conflation (shortComplexBiprod S₁ S₂) :=
-  E.conflation_of_isKernelCokernelPair
+  E.conflation_of_isKernelCokernelPair_of_isInflation
     ((E.isKernelCokernelPair S₁ hS₁).biprod (E.isKernelCokernelPair S₂ hS₂))
-    (E.isInflation_biprod (E.isInflation_f hS₁) (E.isInflation_f hS₂))
+    (by
+      rw [shortComplexBiprod_eq_mk]
+      exact E.isInflation_biprod (E.isInflation_f hS₁) (E.isInflation_f hS₂))
 
 end ExactStructure
 
