@@ -138,14 +138,6 @@ private theorem baseChangeAlgEquiv_tmul_apply_tmul
   rw [baseChangeAlgEquiv_apply]
   exact baseChangeLinearEquiv_tmul_apply_tmul a b φ x
 
-@[simp]
-private theorem baseChangeAlgEquiv_toAlgHom_tmul_apply_tmul
-    (a b : K) (φ : ConvolutionDual k H) (x : H) :
-    ((baseChangeAlgEquiv (k := k) (K := K) (H := H)).toAlgHom (a ⊗ₜ[k] φ)).ofConv
-        (b ⊗ₜ[k] x) = a * b * algebraMap k K (φ.ofConv x) := by
-  rw [baseChangeAlgEquiv_toAlgHom_apply]
-  exact baseChangeLinearEquiv_tmul_apply_tmul a b φ x
-
 /-- The base-change algebra equivalence preserves the finite-dual counit. -/
 private theorem baseChangeAlgEquiv_counit_comp :
     (Bialgebra.counitAlgHom K (ConvolutionDual K (K ⊗[k] H))).comp
@@ -188,7 +180,7 @@ private theorem baseChangeAlgEquiv_map_comp_comul :
       intro x y
       rw [ConvolutionDual.dualDistribEquiv_comul_apply]
       simp only [Algebra.TensorProduct.tmul_mul_tmul, one_mul]
-      rw [baseChangeAlgEquiv_toAlgHom_tmul_apply_tmul]
+      rw [AlgEquiv.coe_toAlgHom, baseChangeAlgEquiv_tmul_apply_tmul]
       rw [← ConvolutionDual.dualDistribEquiv_comul_apply k H φ x y]
       simp only [TensorProduct.comul_tmul]
       have comul_self : Coalgebra.comul (R := K) a = a ⊗ₜ[K] 1 :=
@@ -210,7 +202,7 @@ private theorem baseChangeAlgEquiv_map_comp_comul :
             TensorProduct.AlgebraTensorModule.tensorTensorTensorComm_tmul,
             Algebra.TensorProduct.map_tmul,
             ConvolutionDual.dualDistribEquiv_tmul_apply,
-            baseChangeAlgEquiv_toAlgHom_tmul_apply_tmul, map_mul]
+            AlgEquiv.coe_toAlgHom, baseChangeAlgEquiv_tmul_apply_tmul, map_mul]
           ring
 
 /-- Finite dualization commutes with extension of scalars for finite projective bialgebras. -/
