@@ -11,7 +11,7 @@ public import TauCeti.Probability.Exchangeability.Cylinder
 # The conditional rectangle common ending for de Finetti
 
 This file supplies the joint-law companion of the mixture rectangle common ending.  To prove that
-a measurable random probability measure `ν : Ω → ProbabilityMeasure α` directs a process, it is
+a measurable random probability measure `ν : Ω → ProbabilityMeasure α` directs a family, it is
 enough to verify the expected disintegration on sets of the form
 
 ```text
@@ -83,7 +83,7 @@ private theorem measure_eq_of_forall_prod_univ_pi
 /-- **Conditional common de Finetti ending.** If the joint law of a measurable random probability
 measure `ν` and every injective finite block agrees with
 `∫ δ_{ν(ω)} ⊗ (ν(ω))^{⊗m} ∂μ(ω)` on all measurable products of a set in the `ν` coordinate and a
-rectangle in the block coordinates, then `ν` directs the process.
+rectangle in the block coordinates, then `ν` directs the family.
 
 No measurability hypothesis on the coordinates of `X` is needed: the rectangle identities are
 already exactly the data used to extend the two finite joint measures. -/
@@ -108,10 +108,13 @@ a directing-measure event met with a block cylinder is the set-integral of the p
 witness's evaluations, then the witness directs the process.
 
 `ConditionallyIIDWith` quantifies over arbitrary injective selections, but a caller need only supply
-the monotone case: the reduction by sorting happens here. That reduction is why this theorem, alone
-among the rectangle endings, is stated for a sequence: sorting needs the order on `ℕ`. The others
-quantify over an arbitrary index type. That matches what the proof routes
+the monotone case: the reduction by sorting happens here. That matches what the proof routes
 naturally produce, since a block argument reads disjoint windows in increasing order.
+
+This theorem is, alone among the rectangle endings, stated for a sequence. The obstruction is
+inherited rather than intrinsic: the statement is phrased with `blockCylinder`, which
+`Exchangeability/Cylinder.lean` defines only for `X : ℕ → Ω → α`, and the sorting reduction needs a
+linear order on the index — hence `ℕ`. The others quantify over an arbitrary index type.
 
 This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
 factorization identity. The martingale route reaches it from tail conditional laws and consumes it
