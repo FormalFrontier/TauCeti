@@ -27,11 +27,9 @@ the last two are short.
 
 * `TauCeti.DynkinType.f4SimplyConnectedRootDatum` is the pinned forty-eight-root datum.
 * `TauCeti.DynkinType.f4ReflectionIndex` is its explicit action on root indices.
-* The `RootPairing.IsRootSystem` instance for `TauCeti.DynkinType.f4SimplyConnectedRootDatum` says
-  that its roots span the character lattice and its coroots span the cocharacter lattice. The
-  latter, `span_coroot_eq_top`, is the simply connected condition the file is named for: the datum
-  has cocharacter lattice equal to the coroot lattice, so no central isogeny quotient of the simply
-  connected form is taken.
+* `TauCeti.DynkinType.corootSpan_f4SimplyConnectedRootDatum_eq_top` says that the coroots span the
+  cocharacter lattice, the simply connected condition the file is named for. Together with root
+  spanning it supplies the `RootPairing.IsRootSystem` instance.
 * `TauCeti.DynkinType.f4SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄` pins the numbering.
 * `TauCeti.DynkinType.hasCartanType_f4SimplyConnectedRootDatum` identifies its Cartan type.
@@ -334,7 +332,10 @@ private lemma span_f4Root_eq_top : span ℤ (range f4Root) = ⊤ := by
   · exact f4Root_19_add_20 ▸ (span ℤ (range ⇑f4Root)).add_mem (hr 19) (hr 20)
   · exact f4Root_20 ▸ hr 20
 
-private lemma span_f4Coroot_eq_top : span ℤ (range f4Coroot) = ⊤ :=
+/-- **The coroots of the pinned type `F4` datum span the cocharacter lattice.** This is the
+simply connected lattice condition required by the pinned Chevalley--Demazure construction. -/
+theorem corootSpan_f4SimplyConnectedRootDatum_eq_top :
+    f4SimplyConnectedRootDatum.corootSpan ℤ = ⊤ :=
   corootSpan_eq_top_of_coroot_eq_single (P := f4SimplyConnectedRootDatum) (e := Fin.castAdd 44)
     f4Coroot_castAdd
 
@@ -342,7 +343,7 @@ private lemma span_f4Coroot_eq_top : span ℤ (range f4Coroot) = ⊤ :=
 cocharacter lattices. Coroot spanning is the simply connected lattice condition. -/
 instance : f4SimplyConnectedRootDatum.IsRootSystem where
   span_root_eq_top := span_f4Root_eq_top
-  span_coroot_eq_top := span_f4Coroot_eq_top
+  span_coroot_eq_top := corootSpan_f4SimplyConnectedRootDatum_eq_top
 
 /-- The support of the Bourbaki-numbered base of the pinned `F4` datum: the first four root
 indices, which carry the simple roots. -/
