@@ -242,14 +242,15 @@ theorem smul_tmul (σ : L ≃ₐ[K] L) (a : L) (x : A) :
 @[simp]
 theorem baseChangeMap_smul {B : Type*} [Semiring B] [Algebra K B] (f : A →ₐ[K] B)
     (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
-    Algebra.TensorProduct.map (AlgHom.id K L) f (σ • x) =
+    Algebra.TensorProduct.map (AlgHom.id K L) f
+        (Algebra.TensorProduct.map (σ : L →ₐ[K] L) (AlgHom.id K A) x) =
       σ • Algebra.TensorProduct.map (AlgHom.id K L) f x := by
   induction x using TensorProduct.induction_on with
-  | zero => rw [smul_zero, map_zero, smul_zero]
-  | add x y hx hy => rw [smul_add, map_add, hx, hy, map_add, smul_add]
+  | zero => simp only [map_zero, smul_zero]
+  | add x y hx hy => simp only [map_add, hx, hy, smul_add]
   | tmul a x =>
-      rw [smul_tmul, Algebra.TensorProduct.map_tmul, Algebra.TensorProduct.map_tmul,
-        AlgHom.id_apply, AlgHom.id_apply, smul_tmul]
+      simp only [Algebra.TensorProduct.map_tmul, AlgHom.id_apply, smul_tmul]
+      rfl
 
 /-- The scalar-factor action is semilinear for the corresponding automorphism of `L`. -/
 theorem smul_smulₛₗ (σ : L ≃ₐ[K] L) (a : L) (x : L ⊗[K] A) :

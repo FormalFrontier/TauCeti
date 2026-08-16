@@ -152,7 +152,6 @@ noncomputable abbrev geometricCharacterRepresentation (H : _root_.CommHopfAlgCat
     Rep.{u} ℤ (Field.absoluteGaloisGroup k) :=
   Rep.ofMulDistribMulAction (Field.absoluteGaloisGroup k) (geometricCharacterGroup H)
 
-@[simp]
 private theorem ofMulDistribMulAction_apply (H : _root_.CommHopfAlgCat.{u} k)
     (sigma : Field.absoluteGaloisGroup k) (x : additiveCharacterGroup H) :
     Representation.ofMulDistribMulAction (Field.absoluteGaloisGroup k)
@@ -162,7 +161,6 @@ private theorem ofMulDistribMulAction_apply (H : _root_.CommHopfAlgCat.{u} k)
 
 /-- The action map of the geometric-character representation is the scalar action on additive
 characters. -/
-@[simp]
 theorem geometricCharacterRepresentation_ρ_apply (H : _root_.CommHopfAlgCat.{u} k)
     (sigma : Field.absoluteGaloisGroup k) (x : additiveCharacterGroup H) :
     (geometricCharacterRepresentation H).ρ sigma x = sigma • x := by
