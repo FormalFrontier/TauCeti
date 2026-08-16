@@ -195,6 +195,8 @@ theorem chevalleyLieLattice_le_iff {M : LieSubalgebra ℤ L} :
         (IsKilling.coroot (K := K) (L := L) (H := H) α : L) ∈ M :=
   hx.toIsSl2System.rootCorootLieSubalgebra_le_iff _
 
+-- These generator membership facts are intentionally not simp lemmas: their left-hand sides
+-- already simplify through `mem_chevalleyLieLattice_iff`, so `simpNF` rejects the attributes.
 /-- Every root vector belongs to the Chevalley Lie lattice. -/
 theorem rootVector_mem_chevalleyLieLattice (α : Weight K H L) :
     x α ∈ hx.chevalleyLieLattice :=
