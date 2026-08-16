@@ -5,9 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.BilinearForm.IsometryEquiv
+public import TauCeti.Algebra.Module.Lattice
 public import TauCeti.LinearAlgebra.BilinearForm.BaseChange
 public import TauCeti.LinearAlgebra.IntegralLattice.Basic
-public import TauCeti.LinearAlgebra.Submodule.IsLattice
 
 /-!
 # Rationalizing an integral lattice form
