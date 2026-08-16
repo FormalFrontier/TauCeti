@@ -130,14 +130,12 @@ noncomputable abbrev discriminantBilinearModule (L : IntegralLattice V)
   pairing_comm := L.discriminantPairing_comm
 
 /-- The pairing of the discriminant bilinear module is the descended discriminant pairing. -/
-@[simp]
 theorem discriminantBilinearModule_pairing (L : IntegralLattice V) [L.IsNondegenerate]
     (x y : L.DiscriminantGroup) :
     L.discriminantBilinearModule.pairing x y = L.discriminantPairing x y :=
   (rfl)
 
 /-- On representatives, the packaged discriminant pairing is the ambient form modulo `ℤ`. -/
-@[simp]
 theorem discriminantBilinearModule_pairing_mk (L : IntegralLattice V) [L.IsNondegenerate]
     (x y : L.dualCarrier) :
     L.discriminantBilinearModule.pairing (Submodule.Quotient.mk x)
