@@ -54,7 +54,7 @@ open Classical in
 /-- A basis of the carrier, regarded as a basis of its copy inside the dual carrier. -/
 noncomputable def carrierInDualBasis (L : IntegralLattice V) {ι : Type v}
     (b : Basis ι ℤ L) : Basis ι ℤ L.carrierInDual :=
-  b.map L.carrierInDualEquiv.symm
+  b.map (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm
 
 open Classical in
 /-- The vector of `carrierInDualBasis` indexed by `i` has underlying carrier vector `b i`. -/
@@ -62,8 +62,7 @@ open Classical in
 theorem carrierInDualBasis_apply (L : IntegralLattice V) {ι : Type v}
     (b : Basis ι ℤ L) (i : ι) :
     (L.carrierInDualBasis b i : L.dualCarrier) = ⟨b i, L.le_dualCarrier (b i).property⟩ := by
-  apply Subtype.ext
-  exact L.coe_carrierInDualEquiv_symm_apply (b i)
+  rfl
 
 open Classical in
 /-- The change-of-basis matrix from the dual basis to the embedded carrier basis is the Gram
