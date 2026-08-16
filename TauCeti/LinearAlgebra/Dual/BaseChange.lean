@@ -106,8 +106,9 @@ theorem baseChangeEquiv_apply (z : A ⊗[R] Module.Dual R M) :
 /-- The finite-projective base-change equivalence has the expected evaluation on pure tensors. -/
 theorem baseChangeEquiv_tmul_apply_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
     baseChangeEquiv (R := R) (A := A) (M := M) (a ⊗ₜ[R] φ) (b ⊗ₜ[R] m) =
-      a * b * algebraMap R A (φ m) :=
-  baseChangeEvaluation_tmul a b φ m
+      a * b * algebraMap R A (φ m) := by
+  rw [baseChangeEquiv_apply]
+  exact baseChangeEvaluation_tmul a b φ m
 
 end FiniteProjective
 

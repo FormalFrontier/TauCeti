@@ -111,12 +111,19 @@ private noncomputable def baseChangeAlgEquiv :
     (baseChangeLinearEquiv (k := k) (K := K) (H := H))
     baseChange_mul baseChange_one
 
+private theorem baseChangeAlgEquiv_apply (z : K ⊗[k] ConvolutionDual k H) :
+    baseChangeAlgEquiv (k := k) (K := K) (H := H) z =
+      baseChangeLinearEquiv (k := k) (K := K) (H := H) z := by
+  rw [baseChangeAlgEquiv,
+    Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct_apply]
+
 @[simp]
 private theorem baseChangeAlgEquiv_tmul_apply_tmul
     (a b : K) (φ : ConvolutionDual k H) (x : H) :
     (baseChangeAlgEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)).ofConv
-        (b ⊗ₜ[k] x) = a * b * algebraMap k K (φ.ofConv x) :=
-  baseChangeLinearEquiv_tmul_apply_tmul a b φ x
+        (b ⊗ₜ[k] x) = a * b * algebraMap k K (φ.ofConv x) := by
+  rw [baseChangeAlgEquiv_apply]
+  exact baseChangeLinearEquiv_tmul_apply_tmul a b φ x
 
 /-- The base-change algebra equivalence preserves the finite-dual counit. -/
 private theorem baseChange_counit :
