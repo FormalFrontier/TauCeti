@@ -70,14 +70,14 @@ noncomputable abbrev pointwiseQuotientPresheafProjection
 /-- The pointwise quotient presheaf as a group object in type-valued presheaves. Values are
 lifted by one universe because the category of commutative `R`-algebras itself lives in
 `Type (u + 1)`, the universe in which type-valued sheafification is available. -/
-noncomputable def pointwiseQuotientPresheafGrp
+@[expose] noncomputable def pointwiseQuotientPresheafGrp
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     Grp (((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ ⥤ Type (u + 1)) :=
   groupFunctorGrp
     (pointwiseQuotientPresheaf H I hI ⋙ GrpCat.uliftFunctor.{u + 1, u})
 
 /-- The quotient projection as a morphism of group objects in type-valued presheaves. -/
-noncomputable def pointwiseQuotientPresheafGrpProjection
+@[expose] noncomputable def pointwiseQuotientPresheafGrpProjection
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     pointsPresheafGrp H ⟶ pointwiseQuotientPresheafGrp H I hI :=
   groupFunctorGrpMap <| Functor.whiskerRight
@@ -88,7 +88,7 @@ fppf sheaves.
 
 Its underlying sheaf is the sheafification of `A ↦ G(A) / V(I)(A)`. This definition makes no
 representability claim. -/
-noncomputable def fppfQuotientSheaf (H : _root_.CommHopfAlgCat.{u} R)
+@[expose] noncomputable def fppfQuotientSheaf (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     Grp (Sheaf (CommAlgCat.fppfTopology R) (Type (u + 1))) := by
   let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
@@ -98,7 +98,7 @@ noncomputable def fppfQuotientSheaf (H : _root_.CommHopfAlgCat.{u} R)
 
 /-- The canonical morphism from the fppf sheaf of points of `G` to the fppf quotient sheaf
 `G / V(I)`. -/
-noncomputable def fppfQuotientProjection (H : _root_.CommHopfAlgCat.{u} R)
+@[expose] noncomputable def fppfQuotientProjection (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     pointsFppfGroupObject H ⟶ fppfQuotientSheaf H I hI := by
   let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
