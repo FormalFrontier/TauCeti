@@ -37,8 +37,8 @@ also make the reflection-stability axioms of `RootPairing` decidable finite calc
   and `g2Coroot` its coordinate tables and `g2SimplyConnectedRootDatum_root`,
   `g2SimplyConnectedRootDatum_coroot`, `g2SimplyConnectedRootDatum_toLinearMap` and
   `g2SimplyConnectedRootDatum_pairing` the lemmas that expose them.
-* `TauCeti.DynkinType.corootSpan_g2SimplyConnectedRootDatum_eq_top` records the simply connected
-  coroot-spanning condition and contributes to the `RootPairing.IsRootSystem` instance.
+* Its `RootPairing.IsRootSystem` instance records that the roots and the coroots span their
+  lattices; coroot spanning is the simply connected condition.
 * `TauCeti.DynkinType.g2SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2` pins that numbering
   entrywise: on the two base indices the Cartan integers are the Bourbaki matrix `!![2, -1; -3, 2]`.
@@ -75,6 +75,18 @@ def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
   inj' := by decide
+
+/-- The simple roots of `G2` sit at the first two indices, where they are the rows of its
+Bourbaki-numbered Cartan matrix. -/
+@[simp] lemma g2Root_castAdd (i : Fin 2) :
+    g2Root (Fin.castAdd 10 i) = CartanMatrix.G₂ᵀ i := by
+  fin_cases i <;> decide
+
+/-- The simple coroots of `G2` sit at the first two indices, where they are the standard basis of
+the cocharacter lattice. -/
+@[simp] lemma g2Coroot_castAdd (i : Fin 2) :
+    g2Coroot (Fin.castAdd 10 i) = Pi.single i 1 := by
+  fin_cases i <;> decide
 
 /-- The permutation table for reflection in each of the twelve `G2` roots. -/
 private def g2ReflectionIndex : Fin 12 → Fin 12 → Fin 12 := ![
@@ -158,10 +170,7 @@ private lemma span_g2Root_eq_top : span ℤ (range g2Root) = ⊤ := by
   · exact ⟨3, by decide⟩
   · exact ⟨5, by decide⟩
 
-/-- **The coroots of the pinned type `G2` datum span the cocharacter lattice.** This is the
-simply connected lattice condition required by the pinned Chevalley--Demazure construction. -/
-theorem corootSpan_g2SimplyConnectedRootDatum_eq_top :
-    g2SimplyConnectedRootDatum.corootSpan ℤ = ⊤ := by
+private lemma span_g2Coroot_eq_top : span ℤ (range g2Coroot) = ⊤ := by
   apply top_unique
   rw [← (Pi.basisFun ℤ (Fin 2)).span_eq]
   apply span_mono
@@ -176,7 +185,7 @@ spanning is the simply connected lattice condition required by the pinned Cheval
 construction. -/
 instance : g2SimplyConnectedRootDatum.IsRootSystem where
   span_root_eq_top := span_g2Root_eq_top
-  span_coroot_eq_top := corootSpan_g2SimplyConnectedRootDatum_eq_top
+  span_coroot_eq_top := span_g2Coroot_eq_top
 
 /-- A family indexed by `Fin 12` whose members are, up to sign, prescribed `ℕ`-combinations of its
 first two members satisfies the base condition of `RootPairing.Base` at the support `{0, 1}`. The
