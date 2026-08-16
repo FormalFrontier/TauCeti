@@ -101,15 +101,14 @@ private theorem ordCompl_natCard_nsmul_mem_primaryComponent (p : ℕ) (x : A) :
   rw [← mul_nsmul, Nat.mul_comm, Nat.ordProj_mul_ordCompl_eq_self, card_nsmul_eq_zero']
 
 /-- The restriction of a nondegenerate finite bilinear module to any prime-primary component is
-nondegenerate.
-
-Indeed, let `x` lie in the radical of the restricted pairing. Pairing `x` with
-`ordCompl[p] (Nat.card A) • y` shows that the prime-to-`p` part of the cardinality annihilates
-`b(x,y)`. A power of `p` also annihilates it because `x` is `p`-primary. These two integers are
-coprime, so `b(x,y) = 0` for every `y`; ambient nondegeneracy then gives `x = 0`. -/
+nondegenerate. -/
 theorem isNondegenerate_restrict_primaryComponent (hA : A.IsNondegenerate) {p : ℕ}
     (hp : p.Prime) :
     (A.restrict (AddCommGroup.primaryComponent A p)).IsNondegenerate := by
+  -- For `x` in the radical of the restricted pairing and arbitrary `z`, pairing `x` with
+  -- `ordCompl[p] (Nat.card A) • z` shows the prime-to-`p` part of the cardinality annihilates
+  -- `A.pairing x z`, while a power of `p` annihilates it because `x` is `p`-primary.  Those two
+  -- integers are coprime, so `A.pairing x z = 0` for every `z` and ambient nondegeneracy applies.
   rw [(A.restrict (AddCommGroup.primaryComponent A p)).isNondegenerate_iff_injective]
   intro x y hxy
   apply Subtype.ext
