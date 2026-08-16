@@ -105,6 +105,16 @@ noncomputable def kostantGeneratedGroupSchemeι :
       (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) ≫
     eqToHom (GeneralLinear.groupScheme_def ℤ n).symm
 
+/-- The inclusion of the generated group scheme is the quotient-spectrum inclusion, transported
+across the named presentation of `GLₙ`. -/
+theorem kostantGeneratedGroupSchemeι_def :
+    kostantGeneratedGroupSchemeι e h ρ M hM hnil b =
+      CommHopfAlgCat.quotientSpecι (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) ≫
+        eqToHom (GeneralLinear.groupScheme_def ℤ n).symm := by
+  unfold kostantGeneratedGroupSchemeι
+  rfl
+
 /-- The inclusion of the generated group scheme into `GLₙ` is a closed immersion. -/
 instance isClosedImmersion_kostantGeneratedGroupSchemeι :
     IsClosedImmersion
@@ -133,6 +143,16 @@ noncomputable def kostantRootSubgroupToGenerated (i : I) :
   eqToHom (AdditiveGroup.groupScheme_def ℤ) ≫
     (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
       (kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).op
+
+/-- The factored root subgroup is relative spectrum applied to its quotient coordinate map,
+transported across the named presentation of `𝔾ₐ`. -/
+theorem kostantRootSubgroupToGenerated_def (i : I) :
+    kostantRootSubgroupToGenerated e h ρ M hM hnil b i =
+      eqToHom (AdditiveGroup.groupScheme_def ℤ) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+          (kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).op := by
+  unfold kostantRootSubgroupToGenerated
+  rfl
 
 /-- Factoring a root subgroup through the generated group scheme and then including into `GLₙ`
 recovers the original represented root-subgroup morphism. -/
