@@ -59,7 +59,7 @@ private theorem radical_toIntSubmodule_le_ker :
   exact A.mem_radical_iff x |>.mp hx y
 
 /-- The underlying additive quotient of a finite bilinear module by its radical. -/
-abbrev RadicalQuotient := A.carrier ⧸ A.radical.toIntSubmodule
+private abbrev RadicalQuotient := A.carrier ⧸ A.radical.toIntSubmodule
 
 private noncomputable def radicalQuotientBilin :
     A.RadicalQuotient →ₗ[ℤ] A.RadicalQuotient →ₗ[ℤ] AddCircle (1 : ℚ) :=
