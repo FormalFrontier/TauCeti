@@ -179,15 +179,16 @@ original divided-power exponential matrix. -/
 @[simp]
 theorem pointsMulEquiv_kostantRootSubgroupCoordinateMap
     (q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
-    GeneralLinear.pointsMulEquiv n
+    GeneralLinear.pointToGeneralLinear n
         (toConv (q.ofConv.comp
           (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b).hom)) =
       kostantRootSubgroupMatrix e h ρ M hM i hnil b q := by
   apply Matrix.GeneralLinearGroup.ext
   intro r s
   rw [kostantRootSubgroupMatrix_apply]
-  exact pointsMulEquiv_kostantRootSubgroupCoordinateMap_apply
-    e h ρ M hM i hnil b A q r s
+  simpa only [GeneralLinear.pointsMulEquiv_apply] using
+    pointsMulEquiv_kostantRootSubgroupCoordinateMap_apply
+      e h ρ M hM i hnil b A q r s
 
 private theorem groupSchemePointMulEquiv_comp_kostantRootSubgroup
     (q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
@@ -239,6 +240,7 @@ theorem schemePointsMulEquiv_kostantRootSubgroup
   erw [groupSchemePointMulEquiv_comp_kostantRootSubgroup,
     GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
     CommHopfAlgCat.mapPointsFunctor_app_apply,
+    GeneralLinear.pointsMulEquiv_apply,
     pointsMulEquiv_kostantRootSubgroupCoordinateMap,
     MulEquiv.symm_apply_apply]
 
