@@ -122,7 +122,10 @@ theorem discriminantPairing_comm (L : IntegralLattice V) (x y : L.DiscriminantGr
     induction y using Submodule.Quotient.induction_on with
     | _ y => simp only [discriminantPairing_mk, L.isSymm.eq]
 
-/-- The finite discriminant group equipped with its canonical symmetric bilinear pairing. -/
+/-- The finite discriminant group equipped with its canonical symmetric bilinear pairing.
+
+The package is exposed so its dependent carrier and group-instance projections reduce to those of
+`DiscriminantGroup`; its pairing should be used through the characteristic theorem below. -/
 @[expose] noncomputable def discriminantBilinearModule (L : IntegralLattice V)
     [L.IsNondegenerate] :
     FiniteBilinearModule where
@@ -158,14 +161,15 @@ private theorem injective_discriminantPairing (L : IntegralLattice V) [L.IsNonde
 theorem isNondegenerate_discriminantBilinearModule (L : IntegralLattice V)
     [L.IsNondegenerate] : L.discriminantBilinearModule.IsNondegenerate := by
   rw [FiniteBilinearModule.isNondegenerate_iff_injective]
-  -- The carrier projection of the opaque package must be exposed to identify its pairing with
-  -- `discriminantPairing`; the quotient argument itself is isolated above.
-  unfold discriminantBilinearModule
   intro a b hab
   apply L.injective_discriminantPairing
   apply LinearMap.ext
   intro z
-  exact DFunLike.congr_fun hab z
+  calc
+    L.discriminantPairing a z = L.discriminantBilinearModule.pairing a z :=
+      (L.discriminantBilinearModule_pairing a z).symm
+    _ = L.discriminantBilinearModule.pairing b z := DFunLike.congr_fun hab z
+    _ = L.discriminantPairing b z := L.discriminantBilinearModule_pairing b z
 
 namespace Isometry
 
