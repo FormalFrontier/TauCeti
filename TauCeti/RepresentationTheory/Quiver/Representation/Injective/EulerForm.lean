@@ -6,7 +6,6 @@ module
 
 public import TauCeti.RepresentationTheory.Quiver.EulerForm
 public import TauCeti.RepresentationTheory.Quiver.Representation.Injective.Basic
-public import TauCeti.RepresentationTheory.Quiver.Representation.Projective.EulerForm
 
 /-!
 # The Euler form against the dimension vector of a vertex injective
@@ -36,7 +35,7 @@ the path-count vector of `Iᵢ` is the transpose of that of `Pᵢ`
 * `TauCeti.eulerForm_dimVector_indecInjRep_indecInjRep`: the Cartan pairing of two injectives
   counts the paths `j → i`, the same count as for two projectives.
 * `TauCeti.eulerForm_dimVector_indecProjRep_indecInjRep`: the mixed pairing `⟨dim Pᵢ, dim Iⱼ⟩`
-  counts the paths `i → j`, and is `dim Hom(Pᵢ, Iⱼ)`.
+  counts the paths `i → j`.
 
 ## Implementation notes
 
@@ -105,24 +104,16 @@ theorem eulerForm_dimVector_indecInjRep_indecInjRep (i j : Q)
   rw [eulerForm_dimVector_indecInjRep, dimVector_indecInjRep]
 
 /-- **The mixed pairing of a projective against an injective.** `⟨dim Pᵢ, dim Iⱼ⟩` counts the paths
-`i → j`, which is `dim Hom(Pᵢ, Iⱼ)`. Both `TauCeti.eulerForm_dimVector_indecProjRep` and
-`TauCeti.eulerForm_dimVector_indecInjRep` apply here, and they agree. -/
+`i → j`; reading it instead as `dim Hom(Pᵢ, Iⱼ)` is
+`TauCeti.eulerForm_dimVector_indecInjRep_eq_finrank_hom` at `M := Pᵢ`. Both
+`TauCeti.eulerForm_dimVector_indecProjRep` and `TauCeti.eulerForm_dimVector_indecInjRep` apply
+here, and they agree. -/
 theorem eulerForm_dimVector_indecProjRep_indecInjRep (i j : Q)
     [∀ a : Q, Finite (Quiver.Path a j)] :
     eulerForm Q (fun v ↦ (dimVector (indecProjRep k Q i) v : ℤ))
         (fun v ↦ (dimVector (indecInjRep k Q j) v : ℤ))
       = (Nat.card (Quiver.Path i j) : ℤ) := by
   rw [eulerForm_dimVector_indecInjRep, dimVector_indecProjRep]
-
-/-- The mixed pairing of a projective against an injective is the dimension of the space of
-morphisms between them. -/
-theorem eulerForm_dimVector_indecProjRep_indecInjRep_eq_finrank_hom (i j : Q)
-    [∀ a : Q, Finite (Quiver.Path a j)] :
-    eulerForm Q (fun v ↦ (dimVector (indecProjRep k Q i) v : ℤ))
-        (fun v ↦ (dimVector (indecInjRep k Q j) v : ℤ))
-      = (Module.finrank k (indecProjRep k Q i ⟶ indecInjRep k Q j) : ℤ) := by
-  rw [eulerForm_dimVector_indecProjRep_indecInjRep, finrank_hom_indecProjRep,
-    dimVector_indecInjRep]
 
 /-- **The Euler pairing of a vertex simple against an injective.** `⟨αⱼ, dim Iᵢ⟩ = δᵢⱼ`, the
 dimension of `Hom(Sⱼ, Iᵢ)`: the injectives and the simples are dual bases for the Euler form, as
