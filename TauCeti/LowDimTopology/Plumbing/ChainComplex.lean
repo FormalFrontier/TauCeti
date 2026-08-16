@@ -67,6 +67,13 @@ theorem latticeChainComplex_X
   unfold latticeChainComplex
   exact congrFun (ChainComplex.of_X _ _ _) q
 
+-- `ChainComplex.of_X` identifies definitionally equal objects; proof irrelevance normalizes its
+-- equality proof so that the explicit transports in the public differential formula reduce.
+private theorem latticeChainComplex_X_proof_eq_rfl (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) :
+    P.latticeChainComplex_X k q = rfl :=
+  Subsingleton.elim _ _
+
 /-- The differential from cubical degree `q + 1` to degree `q` is the restriction of the total
 lattice differential. -/
 @[simp]
@@ -82,6 +89,19 @@ theorem latticeChainComplex_d
       (fun r => ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V r))
       (fun r => ModuleCat.ofHom (R := PlumbingCoefficient) (P.latticeDifferentialDegree k r))
       q)
+
+/-- The differential of the full lattice chain complex, expressed with the transports from its
+public degree-object formula. -/
+@[simp]
+theorem latticeChainComplex_d_eq
+    (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
+    (P.latticeChainComplex k).d (q + 1) q =
+      eqToHom (P.latticeChainComplex_X k (q + 1)) ≫
+        ModuleCat.ofHom (P.latticeDifferentialDegree k q) ≫
+          eqToHom (P.latticeChainComplex_X k q).symm := by
+  rw [P.latticeChainComplex_X_proof_eq_rfl k (q + 1),
+    P.latticeChainComplex_X_proof_eq_rfl k q]
+  exact eq_of_heq (P.latticeChainComplex_d k q)
 
 /-- The characteristic-two lattice homology in cubical degree `q`, obtained from Mathlib's
 canonical homology object of the graded lattice chain complex. -/
