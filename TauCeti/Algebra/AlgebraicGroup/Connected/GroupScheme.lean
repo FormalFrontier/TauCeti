@@ -67,7 +67,7 @@ noncomputable abbrev identityComponent (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
 
 /-- The coordinate morphism from an affine group to its identity component.  Contravariantly,
 this is the inclusion of the identity-component group scheme into the ambient group scheme. -/
-noncomputable abbrev identityComponentCoordinateMap
+noncomputable def identityComponentCoordinateMap
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) : H ⟶ identityComponent H :=
   mkQuotient H (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
 
@@ -77,7 +77,8 @@ theorem identityComponentCoordinateMap_ker
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     RingHom.ker (toBialgHom (identityComponentCoordinateMap H)).toAlgHom.toRingHom =
       PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
-  rw [mkQuotient_ker, HopfAlgebra.identityComponentHopfIdeal_toIdeal]
+  rw [identityComponentCoordinateMap, mkQuotient_ker,
+    HopfAlgebra.identityComponentHopfIdeal_toIdeal]
 
 /-- The prime spectrum of the identity-component coordinate algebra is canonically
 homeomorphic to the connected component of the augmentation point. -/
@@ -105,7 +106,7 @@ theorem identityComponentPrimeSpectrumHomeomorph_apply_coe
     (identityComponentPrimeSpectrumHomeomorph H x : PrimeSpectrum H) =
       PrimeSpectrum.comap
         (toBialgHom (identityComponentCoordinateMap H)).toAlgHom.toRingHom x := by
-  simp only [identityComponentPrimeSpectrumHomeomorph, id_eq, Homeomorph.trans_apply]
+  simp only [identityComponentPrimeSpectrumHomeomorph]
   change (PrimeSpectrum.quotientHomeomorphZeroLocus
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)).toIdeal x :
       PrimeSpectrum H) = _
@@ -125,15 +126,30 @@ noncomputable instance connectedSpace_identityComponent
     (Bialgebra.augmentationPoint k H)
 
 /-- The identity-component affine group scheme represented by `identityComponent H`. -/
-noncomputable abbrev identityComponentSpec
+noncomputable def identityComponentSpec
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     Grp (Over (Spec (CommRingCat.of k))) :=
   CommHopfAlgCat.quotientSpec H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
 
+/-- The identity-component group scheme is represented by its coordinate Hopf algebra. -/
+theorem identityComponentSpec_X_left
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    (identityComponentSpec H).X.left =
+      Spec (CommRingCat.of (identityComponent H)) := by
+  unfold identityComponentSpec identityComponent
+  rfl
+
+/-- The carrier of the identity-component group scheme is canonically the prime spectrum of its
+coordinate Hopf algebra. -/
+noncomputable def identityComponentSpecPrimeSpectrumHomeomorph
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    (identityComponentSpec H).X.left ≃ₜ PrimeSpectrum (identityComponent H) :=
+  (eqToIso (identityComponentSpec_X_left H)).schemeIsoToHomeo
+
 /-- The canonical morphism from the identity-component affine group scheme to the ambient
 affine group scheme. -/
-noncomputable abbrev identityComponentSpecι
+noncomputable def identityComponentSpecι
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     identityComponentSpec H ⟶
       (hopfSpec (CommRingCat.of k)).obj (op H.obj) :=
@@ -145,8 +161,10 @@ immersion. -/
 instance isClosedImmersion_identityComponentSpecι
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     IsClosedImmersion (identityComponentSpecι H).hom.hom.left :=
-  CommHopfAlgCat.isClosedImmersion_quotientSpecι H.obj
-    (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
+  by
+    rw [identityComponentSpecι]
+    exact CommHopfAlgCat.isClosedImmersion_quotientSpecι H.obj
+      (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
 
 /-- The scheme underlying the identity-component group scheme has connected carrier. -/
 noncomputable instance connectedSpace_identityComponentSpec
@@ -163,8 +181,11 @@ theorem identityComponentSpecι_apply
     (x : (identityComponentSpec H).X.left) :
     (identityComponentSpecι H).hom.hom.left x =
       PrimeSpectrum.comap
-        (toBialgHom (identityComponentCoordinateMap H)).toAlgHom.toRingHom x := by
-  rw [identityComponentSpecι, CommHopfAlgCat.quotientSpecι_def]
+        (toBialgHom (identityComponentCoordinateMap H)).toAlgHom.toRingHom
+        (identityComponentSpecPrimeSpectrumHomeomorph H x) := by
+  unfold identityComponentSpecPrimeSpectrumHomeomorph
+  rw [identityComponentSpecι, identityComponentCoordinateMap,
+    CommHopfAlgCat.quotientSpecι_def]
   rfl
 
 /-- The image of the identity-component inclusion on underlying topological spaces is exactly
@@ -173,37 +194,25 @@ theorem range_identityComponentSpecι
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     Set.range (identityComponentSpecι H).hom.hom.left =
       connectedComponent (Bialgebra.augmentationPoint k H) := by
-  let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
-  let _ : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
-  let f := (toBialgHom (identityComponentCoordinateMap H)).toAlgHom.toRingHom
-  have hf : Function.Surjective f :=
-    Ideal.Quotient.mkₐ_surjective k
-      (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)).toIdeal
-  have hker : RingHom.ker f =
-      PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
-    dsimp only [f]
-    exact identityComponentCoordinateMap_ker H
-  -- Expose the ordinary spectra underlying `hopfSpec` before applying the ring-theoretic range
-  -- theorem for a surjective coordinate map.
-  change Set.range (fun x : PrimeSpectrum (identityComponent H) ↦
-      (identityComponentSpecι H).hom.hom.left x) =
-    (connectedComponent (Bialgebra.augmentationPoint k H) : Set (PrimeSpectrum H))
-  have hmap : Set.range (fun x : PrimeSpectrum (identityComponent H) ↦
-      (identityComponentSpecι H).hom.hom.left x) =
-      Set.range (PrimeSpectrum.comap f) :=
-    congrArg Set.range (funext fun x ↦ identityComponentSpecι_apply H x)
-  have hrange : Set.range (PrimeSpectrum.comap f) =
-      PrimeSpectrum.zeroLocus (RingHom.ker f) :=
-    range_comap_of_surjective _ f hf
-  have hzero : PrimeSpectrum.zeroLocus (RingHom.ker f) =
-      (connectedComponent (Bialgebra.augmentationPoint k H) : Set (PrimeSpectrum H)) := by
-    rw [hker]
-    exact PrimeSpectrum.zeroLocus_connectedComponentIdeal
-      (Bialgebra.augmentationPoint k H)
-  exact hmap.trans (hrange.trans hzero)
+  ext y
+  constructor
+  · rintro ⟨x, rfl⟩
+    rw [identityComponentSpecι_apply,
+      ← identityComponentPrimeSpectrumHomeomorph_apply_coe]
+    exact (identityComponentPrimeSpectrumHomeomorph H
+      (identityComponentSpecPrimeSpectrumHomeomorph H x)).property
+  · intro hy
+    let e := (identityComponentSpecPrimeSpectrumHomeomorph H).trans
+      (identityComponentPrimeSpectrumHomeomorph H)
+    obtain ⟨x, hx⟩ :=
+      e.surjective ⟨y, hy⟩
+    refine ⟨x, ?_⟩
+    rw [identityComponentSpecι_apply,
+      ← identityComponentPrimeSpectrumHomeomorph_apply_coe]
+    exact congrArg Subtype.val hx
 
 /-- The canonical inclusion from the identity component to the ambient group on `A`-points. -/
-noncomputable abbrev identityComponentPointsHom
+noncomputable def identityComponentPointsHom
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k) :
     HopfAlgebra.points (R := k) (H := identityComponent H) A ⟶
       HopfAlgebra.points (R := k) (H := H) A :=
@@ -221,6 +230,7 @@ theorem mem_range_identityComponentPointsHom_iff
         connectedComponent (Bialgebra.augmentationPoint k H) := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
   let _ : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
+  simp only [identityComponentPointsHom, identityComponent]
   rw [CommHopfAlgCat.mem_range_quotientPointsHom_iff]
   let I := PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)
   have hcomponent : PrimeSpectrum.zeroLocus (I : Set H) =
