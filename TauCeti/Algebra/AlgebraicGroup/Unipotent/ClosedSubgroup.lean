@@ -31,8 +31,8 @@ of the smooth unipotent group `𝔾ₐ`.
   precomposition with a surjective coordinate morphism.
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective`: geometric unipotence
   descends to a quotient coordinate Hopf algebra.
-* `TauCeti.smoothUnipotentCommHopfAlgProperty_of_surjective`: a smooth quotient of a smooth
-  unipotent finite-type coordinate Hopf algebra is smooth unipotent.
+* `TauCeti.smoothUnipotentCommHopfAlgProperty_of_surjective`: a smooth quotient of a
+  geometrically unipotent finite-type coordinate Hopf algebra is smooth unipotent.
 * `TauCeti.smoothUnipotentCommHopfAlgProperty_quotient`: the preceding result for the quotient by
   a Hopf ideal, hence for a smooth closed subgroup scheme.
 
@@ -86,6 +86,16 @@ theorem isUnipotentPoint_mapDomain_iff_of_surjective
   · intro hg
     exact hg.mapDomain f
 
+/-- Simp-normal form of `isUnipotentPoint_mapDomain_iff_of_surjective`, with the precomposed point
+written after normalization by `AlgHom.mapDomain_apply`. -/
+@[simp]
+theorem isUnipotentPoint_toConv_comp_iff_of_surjective
+    (f : H →ₐc[k] K) (hf : Function.Surjective f)
+    (g : WithConv (K →ₐ[k] L)) :
+    IsUnipotentPoint (toConv (g.ofConv.comp (f : H →ₐ[k] K))) ↔ IsUnipotentPoint g := by
+  simpa only [AlgHom.mapDomain_apply] using
+    isUnipotentPoint_mapDomain_iff_of_surjective f hf g
+
 end HopfAlgebra
 
 /-- Geometric-point unipotence descends along a surjective morphism of coordinate Hopf algebras.
@@ -100,7 +110,7 @@ theorem geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective
   intro g
   exact (HopfAlgebra.isUnipotentPoint_mapDomain_iff_of_surjective f.hom hf g).mp (hH _)
 
-/-- A smooth quotient of a smooth unipotent finite-type coordinate Hopf algebra is smooth
+/-- A smooth quotient of a geometrically unipotent finite-type coordinate Hopf algebra is smooth
 unipotent.
 
 Contravariantly, the quotient coordinate algebra represents a smooth closed subgroup of the
@@ -109,24 +119,22 @@ subgroups of smooth group schemes need not be smooth in positive characteristic.
 theorem smoothUnipotentCommHopfAlgProperty_of_surjective
     (k : Type u) [Field k] {H K : FiniteTypeCommHopfAlgCat.{u, u} k}
     (f : H ⟶ K) (hf : Function.Surjective (FiniteTypeCommHopfAlgCat.toBialgHom f))
-    (hH : smoothUnipotentCommHopfAlgProperty k H)
+    (hH : geometricallyUnipotentPointsCommHopfAlgProperty k H.obj)
     (hK : Algebra.Smooth k K) :
     smoothUnipotentCommHopfAlgProperty k K := by
-  rw [smoothUnipotentCommHopfAlgProperty_iff] at hH ⊢
+  rw [smoothUnipotentCommHopfAlgProperty_iff]
   refine ⟨hK, ?_⟩
-  intro g
-  exact (HopfAlgebra.isUnipotentPoint_mapDomain_iff_of_surjective
-      (FiniteTypeCommHopfAlgCat.toBialgHom f) hf g).mp
-    (hH.2 (AlgHom.mapDomain (FiniteTypeCommHopfAlgCat.toBialgHom f) g))
+  rw [← geometricallyUnipotentPointsCommHopfAlgProperty_iff]
+  exact geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective k f.hom hf hH
 
-/-- A smooth Hopf-ideal quotient of a smooth unipotent finite-type coordinate Hopf algebra is
+/-- A smooth Hopf-ideal quotient of a geometrically unipotent finite-type coordinate Hopf algebra is
 smooth unipotent.
 
 The spectrum of `H ⧸ I` is the closed subgroup scheme cut out by `I`; thus this is the coordinate
 form of closure of smooth unipotent affine groups under smooth closed subgroup schemes. -/
 theorem smoothUnipotentCommHopfAlgProperty_quotient
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (I : HopfIdeal k H) (hH : smoothUnipotentCommHopfAlgProperty k H)
+    (I : HopfIdeal k H) (hH : geometricallyUnipotentPointsCommHopfAlgProperty k H.obj)
     (hI : Algebra.Smooth k (H ⧸ I.toIdeal)) :
     smoothUnipotentCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H I) := by
   apply smoothUnipotentCommHopfAlgProperty_of_surjective k
