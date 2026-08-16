@@ -164,7 +164,7 @@ theorem kostantRootSubgroupPointRepresentation_action_of
 
 /-- The right `ℤ[X]`-comodule on a Kostant-stable integral module encoded by the natural
 root-subgroup action. This is the coordinate-side form of the divided-power exponential. -/
-@[instance_reducible]
+@[irreducible]
 noncomputable def kostantRootSubgroupComodule : Comodule ℤ (SymmetricAlgebra ℤ ℤ) M :=
   HopfAlgebra.PointRepresentation.toComodule
     (kostantRootSubgroupPointRepresentation e h rho M hM i hnil)
@@ -181,8 +181,8 @@ theorem kostantRootSubgroupComodule_coact (m : M) :
             (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem
               e h rho hM i n hv) m ⊗ₜ[ℤ]
           ((SymmetricAlgebra.ι ℤ ℤ 1) ^ n) := by
-  rw [kostantRootSubgroupComodule,
-    HopfAlgebra.PointRepresentation.toComodule_coact_apply,
+  unfold kostantRootSubgroupComodule
+  rw [HopfAlgebra.PointRepresentation.toComodule_coact_apply,
     kostantRootSubgroupPointRepresentation_action]
   change
     TensorProduct.comm ℤ (SymmetricAlgebra ℤ ℤ) M
