@@ -57,7 +57,7 @@ lemma ModularGroup.mapGL_T_pow_eq_upperRightHom {S : Type*} [CommRing S] (n : �
   rw [← zpow_natCast, ModularGroup.mapGL_T_zpow_eq_upperRightHom, Int.cast_natCast]
 
 /-- The matrix of `mapGL S ModularGroup.T` is `!![1, 1; 0, 1]`. -/
-lemma ModularGroup.mapGL_T_coe_matrix {S : Type*} [CommRing S] :
+lemma ModularGroup.coe_mapGL_T {S : Type*} [CommRing S] :
     (↑(Matrix.SpecialLinearGroup.mapGL S (ModularGroup.T : SL(2, ℤ))) : Matrix (Fin 2) (Fin 2) S) =
       !![1, 1; 0, 1] := by
   have hT := ModularGroup.mapGL_T_pow_eq_upperRightHom (S := S) 1

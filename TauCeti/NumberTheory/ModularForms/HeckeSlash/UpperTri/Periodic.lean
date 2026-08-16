@@ -56,8 +56,8 @@ to `b + 1`. -/
 lemma upperTriRep_mul_mapGL_T_of_lt (b : Fin p) (hb : b.val + 1 < p) :
     upperTriRep p b * mapGL ℚ ModularGroup.T = upperTriRep p ⟨b.val + 1, hb⟩ := by
   apply Units.ext
-  rw [Units.val_mul, upperTriRep_coe_matrix, TauCeti.ModularGroup.mapGL_T_coe_matrix,
-    upperTriRep_coe_matrix]
+  rw [Units.val_mul, coe_upperTriRep, TauCeti.ModularGroup.coe_mapGL_T,
+    coe_upperTriRep]
   ext ⟨_ | _ | _, _⟩ ⟨_ | _ | _, _⟩ <;> try contradiction
   · simp
   · simp [Matrix.mul_apply, Fin.sum_univ_two, add_comm]
@@ -70,8 +70,8 @@ lemma upperTriRep_last_mul_mapGL_T (b : Fin p) (hb : b.val + 1 = p) :
     upperTriRep p b * mapGL ℚ ModularGroup.T =
       mapGL ℚ ModularGroup.T * upperTriRep p ⟨0, b.pos⟩ := by
   apply Units.ext
-  rw [Units.val_mul, Units.val_mul, upperTriRep_coe_matrix,
-    TauCeti.ModularGroup.mapGL_T_coe_matrix, upperTriRep_coe_matrix]
+  rw [Units.val_mul, Units.val_mul, coe_upperTriRep,
+    TauCeti.ModularGroup.coe_mapGL_T, coe_upperTriRep]
   have hbp : (b : ℚ) + 1 = (p : ℚ) := by
     have : (b.val : ℚ) + 1 = (p : ℚ) := by exact_mod_cast hb
     exact this

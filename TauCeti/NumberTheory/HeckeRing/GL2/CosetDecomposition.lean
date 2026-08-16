@@ -40,7 +40,7 @@ these representatives are in `GL2/UpperTriangularDelta0.lean`.
   `a = ![1, p]`, as an identity of natural numbers — the two fibres `Fin (![1, p] 1 / ![1, p] 0)`
   is `Fin (p / 1)`, which `finCongr` carries to `Fin p` along `p / 1 = p`.
 
-* `HeckeRing.GL2.upperTriRep_coe_matrix`: the entrywise description of the representative:
+* `HeckeRing.GL2.coe_upperTriRep`: the entrywise description of the representative:
   `!![1, b; 0, p]`.
 * `HeckeRing.GL2.upperTriRep_apply_one_zero`: the representatives are upper triangular — the
   hypothesis mathlib's `IsBoundedAtImInfty.slash` asks for.
@@ -119,7 +119,7 @@ noncomputable def upperTriRep (b : Fin p) : GL (Fin 2) ℚ :=
   upperTriGL ((upperTriEntriesEquivFin p).symm b)
 
 /-- The matrix of `upperTriRep p b` is `!![1, b; 0, p]`. -/
-@[simp] lemma upperTriRep_coe_matrix (b : Fin p) :
+@[simp] lemma coe_upperTriRep (b : Fin p) :
     (↑(upperTriRep p b) : Matrix (Fin 2) (Fin 2) ℚ) =
       !![1, (b : ℚ); 0, (p : ℚ)] := by
   have ha : ∀ i : Fin 2, 0 < ![1, p] i := fun i ↦ by fin_cases i <;> simp [b.pos]
