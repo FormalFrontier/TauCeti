@@ -133,11 +133,12 @@ private theorem exists_weightBasis_eq_tprod (i : Fin (d + 1)) :
   exact ⟨f, by rw [weightBasis_apply, ← hf, Basis.symmetricPower_apply,
     SymmetricPower.tprodOfSym_ofFn]⟩
 
-/-! ### The rotation reaches the highest weight, and the highest weight reaches everything -/
+/-! ### The rotated weight vectors have nonzero coordinates -/
 
-/-- **The rotation moves every weight vector onto the highest weight.**  The highest weight is
-indexed by a constant unordered tuple, whose only ordering is the constant one, so the coordinate
-there is a single product of entries of `TauCeti.SU2.mixMatrix`, and no entry vanishes. -/
+/-- **The image of a weight vector has a nonzero coordinate at the highest weight.**  The highest
+weight is indexed by a constant unordered tuple, whose only ordering is the constant one, so that
+coordinate is a single product of entries of `TauCeti.SU2.mixMatrix`, and no entry vanishes.  The
+image itself is of course not a weight vector, only a combination with this coordinate nonzero. -/
 private theorem repr_symPower_mixElement_weightBasis_last_ne_zero (i : Fin (d + 1)) :
     (weightBasis d).repr (symPower d mixElement (weightBasis d i)) (Fin.last d) ≠ 0 := by
   obtain ⟨f, hf⟩ := exists_weightBasis_eq_tprod d i
@@ -146,9 +147,9 @@ private theorem repr_symPower_mixElement_weightBasis_last_ne_zero (i : Fin (d + 
   exact Finset.prod_ne_zero_iff.2 fun j _ => by
     rw [repr_mulVec_basisFun]; exact mixMatrix_apply_ne_zero 0 (f j)
 
-/-- **The rotation moves the highest weight vector onto every weight.**  The image of the highest
-weight vector is the pure power `(u e₀)^d`, and every coordinate of a pure power of a vector with
-nonzero coordinates is nonzero. -/
+/-- **The image of the highest weight vector has a nonzero coordinate at every weight.**  That
+image is the pure power `(u e₀)^d`, and every coordinate of a pure power of a vector with nonzero
+coordinates is nonzero. -/
 private theorem repr_symPower_mixElement_weightBasis_last_ne_zero' (i : Fin (d + 1)) :
     (weightBasis d).repr (symPower d mixElement (weightBasis d (Fin.last d))) i ≠ 0 := by
   have hf : weightBasis d (Fin.last d) =
@@ -162,9 +163,11 @@ private theorem repr_symPower_mixElement_weightBasis_last_ne_zero' (i : Fin (d +
 /-! ### Irreducibility -/
 
 /-- **The symmetric powers of the standard representation of `SU(2)` are irreducible.**  A nonzero
-invariant subspace is torus-stable, hence spanned by the weight vectors it contains; the rotation
-`TauCeti.SU2.mixMatrix` carries one of them onto the highest weight and the highest weight onto
-all of them, so the subspace is everything.
+invariant subspace is torus-stable, hence spanned by the weight vectors it contains.  The image
+under the rotation `TauCeti.SU2.mixMatrix` of one of those weight vectors has a nonzero coordinate
+at the highest weight, which puts the highest weight vector in the subspace; the image of the
+highest weight vector in turn has a nonzero coordinate at *every* weight, which puts every weight
+vector in the subspace.  So the subspace is everything.
 
 This is the highest-weight half of the classification of the irreducibles of `SU(2)`; the
 character orthonormality of `TauCeti/RepresentationTheory/SU2/Weyl/Orthogonality.lean` validates
@@ -187,12 +190,13 @@ theorem isIrreducible_symPower : Representation.IsIrreducible (symPower d) := by
   -- a nonzero invariant subspace contains a weight vector
   have hex : ∃ i, weightBasis d i ∈ σ.toSubmodule := by
     by_contra hcon
+    -- otherwise the set of weight vectors lying in `σ`, which spans it, is empty
+    have hempty : {v : Sym[ℂ]^d(Fin 2 → ℂ) | ∃ i, weightBasis d i = v ∧ v ∈ σ.toSubmodule} = ∅ :=
+      Set.eq_empty_iff_forall_notMem.2 (by rintro v ⟨i, rfl, hv⟩; exact hcon ⟨i, hv⟩)
     refine hσ (Subrepresentation.toSubmodule_injective ?_)
-    rw [Subrepresentation.toSubmodule_bot, eq_span_weightBasis_mem hW,
-      show {v : Sym[ℂ]^d(Fin 2 → ℂ) | ∃ i, weightBasis d i = v ∧ v ∈ σ.toSubmodule} = ∅ from
-        Set.eq_empty_iff_forall_notMem.2 (by rintro v ⟨i, rfl, hv⟩; exact hcon ⟨i, hv⟩),
+    rw [Subrepresentation.toSubmodule_bot, eq_span_weightBasis_mem hW, hempty,
       Submodule.span_empty]
-  -- the rotation carries it onto the highest weight vector, and that onto every weight vector
+  -- the image of that weight vector reaches the highest weight, and its image reaches every weight
   obtain ⟨i, hi⟩ := hex
   have hlast : weightBasis d (Fin.last d) ∈ σ.toSubmodule :=
     weightBasis_mem_of_repr_ne_zero hW (σ.apply_mem_toSubmodule mixElement hi)
@@ -207,6 +211,7 @@ theorem isIrreducible_symPower : Representation.IsIrreducible (symPower d) := by
 the same degree, their dimensions `d + 1` being distinct.  With
 `TauCeti.SU2.isIrreducible_symPower` this exhibits `Symᵈ(ℂ²)` as a family of pairwise
 non-isomorphic irreducibles of `SU(2)`, one in each dimension. -/
+@[simp]
 theorem nonempty_equiv_symPower_iff (e : ℕ) :
     Nonempty ((symPower d).Equiv (symPower e)) ↔ d = e := by
   refine ⟨fun ⟨f⟩ => ?_, fun h => h ▸ ⟨Representation.Equiv.refl _⟩⟩
