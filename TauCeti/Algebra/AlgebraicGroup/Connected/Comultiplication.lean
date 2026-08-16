@@ -111,16 +111,7 @@ private theorem map_connectedComponentIdempotent_augmentationPoint_eq_one_of_mem
       connectedComponent (Bialgebra.augmentationPoint k H)) :
     g.ofConv
         (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) = 1 := by
-  let p : PrimeSpectrum H := AlgHom.kernelPoint g.ofConv
-  let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  change p ∈ connectedComponent z at hg
-  have he : PrimeSpectrum.connectedComponentIdempotent p =
-      PrimeSpectrum.connectedComponentIdempotent z := by
-    apply (PrimeSpectrum.eq_connectedComponentIdempotent_iff
-      (PrimeSpectrum.isIdempotentElem_connectedComponentIdempotent p) z).mpr
-    rw [PrimeSpectrum.basicOpen_connectedComponentIdempotent]
-    exact (connectedComponent_eq hg).symm
-  rw [← he]
+  rw [← connectedComponentIdempotent_kernelPoint_eq_augmentationPoint g hg]
   exact AlgHom.map_connectedComponentIdempotent_kernelPoint_eq_one g.ofConv
 
 omit [IsAlgClosed k] [Algebra.FiniteType k H] in
@@ -156,22 +147,23 @@ private theorem kernelPoint_comp_quotient_mem_connectedComponent
           (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))) ∈
       connectedComponent (Bialgebra.augmentationPoint k H) := by
   let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  let I : Ideal H :=
-    PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)
-  let p : PrimeSpectrum H :=
-    AlgHom.kernelPoint (f.comp (Ideal.Quotient.mkₐ k I))
-  change p ∈ connectedComponent z
-  rw [← PrimeSpectrum.zeroLocus_connectedComponentIdeal z]
-  rw [← PrimeSpectrum.range_comap_quotientMk_eq_zeroLocus]
-  refine ⟨AlgHom.kernelPoint f, ?_⟩
-  apply PrimeSpectrum.ext
-  ext x
-  change Ideal.Quotient.mk I x ∈ (AlgHom.kernelPoint f).asIdeal ↔ x ∈ p.asIdeal
-  rw [AlgHom.kernelPoint_asIdeal]
-  change f (Ideal.Quotient.mk I x) = 0 ↔ x ∈ p.asIdeal
-  rw [show p.asIdeal = RingHom.ker
-    (f.comp (Ideal.Quotient.mkₐ k I) : H →+* k) from AlgHom.kernelPoint_asIdeal _]
-  rfl
+  let y : PrimeSpectrum (H ⧸ PrimeSpectrum.connectedComponentIdeal z) :=
+    AlgHom.kernelPoint f
+  have hy := (PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent z y).property
+  rw [PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent_apply_coe] at hy
+  dsimp only [y, z] at hy
+  have hcomap :
+      PrimeSpectrum.comap
+          (Ideal.Quotient.mk
+            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))
+          (AlgHom.kernelPoint f) =
+        AlgHom.kernelPoint
+          (f.comp (Ideal.Quotient.mkₐ k
+            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))) :=
+    AlgHom.comap_kernelPoint f (Ideal.Quotient.mkₐ k
+      (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))
+  rw [hcomap] at hy
+  exact hy
 
 private theorem map_tensorSquare_quotient_comul_connectedComponentIdempotent_eq_one
     [LocallyConnectedSpace (PrimeSpectrum H)] :

@@ -69,7 +69,9 @@ theorem rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq
 
 variable [LocallyConnectedSpace (PrimeSpectrum H)]
 
-private theorem connectedComponentIdempotent_kernelPoint_eq_augmentationPoint
+/-- Points in the identity component have the same connected-component idempotent as the
+augmentation point. -/
+theorem connectedComponentIdempotent_kernelPoint_eq_augmentationPoint
     (g : WithConv (H →ₐ[k] k))
     (hg : AlgHom.kernelPoint g.ofConv ∈
       connectedComponent (Bialgebra.augmentationPoint k H)) :

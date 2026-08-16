@@ -25,7 +25,7 @@ open AlgebraicGeometry IsLocalRing
 
 namespace TauCeti.AlgHom
 
-universe u v
+universe u v w
 
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Algebra k H]
@@ -45,10 +45,10 @@ theorem kernelPoint_asIdeal :
   rw [IsLocalRing.maximalIdeal_eq_bot]
   rfl
 
-/-- Contracting a kernel point along an algebra endomorphism gives the kernel point of the
+/-- Contracting a kernel point along an algebra homomorphism gives the kernel point of the
 composite algebra homomorphism. -/
-theorem comap_kernelPoint (g : H →ₐ[k] H) :
-    PrimeSpectrum.comap (g : H →+* H) (kernelPoint f) = kernelPoint (f.comp g) :=
-  PrimeSpectrum.comap_comp_apply (g : H →+* H) (f : H →+* k) (closedPoint k)
+theorem comap_kernelPoint {A : Type w} [CommRing A] [Algebra k A] (g : A →ₐ[k] H) :
+    PrimeSpectrum.comap (g : A →+* H) (kernelPoint f) = kernelPoint (f.comp g) :=
+  PrimeSpectrum.comap_comp_apply (g : A →+* H) (f : H →+* k) (closedPoint k)
 
 end TauCeti.AlgHom
