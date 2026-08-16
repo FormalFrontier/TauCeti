@@ -63,21 +63,8 @@ private abbrev RadicalQuotient := A.carrier ⧸ A.radical.toIntSubmodule
 
 private noncomputable def radicalQuotientBilin :
     A.RadicalQuotient →ₗ[ℤ] A.RadicalQuotient →ₗ[ℤ] AddCircle (1 : ℚ) :=
-  A.toBilin.liftQ₂ A.radical.toIntSubmodule A.radical.toIntSubmodule
+  LinearMap.IsRefl.liftQ₂ A.toBilin A.radical.toIntSubmodule A.isRefl_toBilin
     (radical_toIntSubmodule_le_ker A)
-    (A.isRefl_toBilin.ker_flip ▸ radical_toIntSubmodule_le_ker A)
-
-private theorem radicalQuotientBilin_mk (x y : A) :
-    A.radicalQuotientBilin (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) =
-      A.pairing x y := by
-  rw [radicalQuotientBilin, LinearMap.liftQ₂_mk, A.toBilin_apply]
-
-private theorem radicalQuotientMkAux_ker :
-    A.radical.toIntSubmodule.mkQ.toAddMonoidHom.ker = A.radical := by
-  ext x
-  rw [AddMonoidHom.mem_ker, LinearMap.toAddMonoidHom_coe, Submodule.mkQ_apply,
-    Submodule.Quotient.mk_eq_zero, ← SetLike.mem_coe, AddSubgroup.coe_toIntSubmodule,
-    SetLike.mem_coe]
 
 /-- The finite bilinear module obtained by quotienting by the radical. -/
 noncomputable def radicalQuotient : FiniteBilinearModule where
@@ -88,22 +75,16 @@ noncomputable def radicalQuotient : FiniteBilinearModule where
     { toFun := fun x ↦
         (A.radicalQuotientBilin x).toAddMonoidHom
       map_zero' := by
-        ext y
-        -- Expose evaluation through the `LinearMap`/`CharacterModule` wrapper.
-        change A.radicalQuotientBilin 0 y = 0
-        rw [map_zero, LinearMap.zero_apply]
+        exact congrArg LinearMap.toAddMonoidHom (map_zero A.radicalQuotientBilin)
       map_add' := by
         intro x y
-        ext z
-        -- Expose evaluation through the `LinearMap`/`CharacterModule` wrapper.
-        change A.radicalQuotientBilin (x + y) z =
-          A.radicalQuotientBilin x z + A.radicalQuotientBilin y z
-        rw [map_add, LinearMap.add_apply] }
+        exact congrArg LinearMap.toAddMonoidHom (map_add A.radicalQuotientBilin x y) }
   pairing_comm := by
     intro x y
     induction x using Submodule.Quotient.induction_on with | H x =>
     induction y using Submodule.Quotient.induction_on with | H y =>
-    -- Expose the quotient lift so `LinearMap.liftQ₂_mk` applies to both representatives.
+    -- `CharacterModule` is an opaque `def` alias for additive homomorphisms, so its evaluation
+    -- cannot be simplified to the quotient bilinear map by a public rewrite lemma.
     change A.radicalQuotientBilin (Submodule.Quotient.mk x)
       (Submodule.Quotient.mk y) = A.radicalQuotientBilin (Submodule.Quotient.mk y)
         (Submodule.Quotient.mk x)
@@ -112,16 +93,18 @@ noncomputable def radicalQuotient : FiniteBilinearModule where
     exact A.pairing_comm x y
 
 /-- The quotient map from a finite bilinear module to its radical quotient. -/
-noncomputable def radicalQuotientMk : A →+ radicalQuotient A := by
-  rw [radicalQuotient]
-  exact A.radical.toIntSubmodule.mkQ.toAddMonoidHom
+noncomputable def radicalQuotientMk : A →+ radicalQuotient A :=
+  A.radical.toIntSubmodule.mkQ.toAddMonoidHom
 
 /-- The quotient pairing is represented by the original pairing on representatives. -/
 @[simp]
 theorem radicalQuotient_pairing_mk (x y : A) :
     (radicalQuotient A).pairing (radicalQuotientMk A x) (radicalQuotientMk A y) =
-      A.pairing x y :=
-  radicalQuotientBilin_mk A x y
+      A.pairing x y := by
+  -- Unfold the opaque `CharacterModule` alias to expose evaluation of the quotient lift.
+  change A.radicalQuotientBilin (Submodule.Quotient.mk x)
+    (Submodule.Quotient.mk y) = A.pairing x y
+  rw [radicalQuotientBilin, LinearMap.liftQ₂_mk, A.toBilin_apply]
 
 /-- The quotient map to the radical quotient is surjective. -/
 theorem radicalQuotientMk_surjective : Function.Surjective (radicalQuotientMk A) :=
@@ -130,7 +113,8 @@ theorem radicalQuotientMk_surjective : Function.Surjective (radicalQuotientMk A)
 /-- The kernel of the radical quotient map is the radical. -/
 @[simp]
 theorem radicalQuotientMk_ker : (radicalQuotientMk A).ker = A.radical := by
-  exact radicalQuotientMkAux_ker A
+  rw [← A.radical.toIntSubmodule_toAddSubgroup]
+  exact congrArg Submodule.toAddSubgroup A.radical.toIntSubmodule.ker_mkQ
 
 /-- Quotienting a finite bilinear module by its radical produces a nondegenerate module. -/
 theorem isNondegenerate_radicalQuotient : (radicalQuotient A).IsNondegenerate := by
@@ -184,8 +168,7 @@ theorem IsNondegenerate.pairingRestrict_surjective (hA : A.IsNondegenerate)
     H.toIntSubmodule.subtype (Submodule.injective_subtype H.toIntSubmodule) c
   obtain ⟨x, hx⟩ := hA.bijective.2 d
   refine ⟨x, CharacterModule.ext H fun y ↦ ?_⟩
-  -- Expose evaluation through the bundled character maps.
-  change A.pairing x y = c y
+  rw [pairingRestrict_apply]
   rw [DFunLike.congr_fun hx (y : A)]
   have hy := DFunLike.congr_fun hd y
   exact hy
@@ -229,9 +212,7 @@ theorem orthogonalComplement_map_radicalQuotient (H : AddSubgroup A) :
   constructor
   · intro hx
     refine ⟨x, ?_, rfl⟩
-    -- Identify membership with the pointwise orthogonality condition in the original module.
-    change x ∈ A.orthogonalComplement H
-    rw [A.mem_orthogonalComplement_iff]
+    refine (A.mem_orthogonalComplement_iff H x).mpr ?_
     intro y hy
     have hxy := (radicalQuotient A).mem_orthogonalComplement_iff
       (H.map (radicalQuotientMk A)) (radicalQuotientMk A x) |>.mp hx
