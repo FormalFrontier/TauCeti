@@ -56,13 +56,10 @@ to `b + 1`. -/
 lemma upperTriRep_mul_mapGL_T_of_lt (b : Fin p) (hb : b.val + 1 < p) :
     upperTriRep p b * mapGL ℚ ModularGroup.T = upperTriRep p ⟨b.val + 1, hb⟩ := by
   apply Units.ext
-  rw [Units.val_mul, coe_upperTriRep, TauCeti.ModularGroup.coe_mapGL_T,
-    coe_upperTriRep]
+  rw [Units.val_mul, coe_upperTriRep, coe_upperTriRep]
   ext ⟨_ | _ | _, _⟩ ⟨_ | _ | _, _⟩ <;> try contradiction
-  · simp
-  · simp [Matrix.mul_apply, Fin.sum_univ_two, add_comm]
-  · simp
-  · simp
+  all_goals simp [Matrix.mul_apply, Fin.sum_univ_two, add_comm, mapGL_coe_matrix,
+    ModularGroup.coe_T]
 
 /-- For the last representative `b.val + 1 = p`, right multiplication by `T` factors as
 `T · upperTriRep p 0`. -/
@@ -70,17 +67,13 @@ lemma upperTriRep_last_mul_mapGL_T (b : Fin p) (hb : b.val + 1 = p) :
     upperTriRep p b * mapGL ℚ ModularGroup.T =
       mapGL ℚ ModularGroup.T * upperTriRep p ⟨0, b.pos⟩ := by
   apply Units.ext
-  rw [Units.val_mul, Units.val_mul, coe_upperTriRep,
-    TauCeti.ModularGroup.coe_mapGL_T, coe_upperTriRep]
+  rw [Units.val_mul, Units.val_mul, coe_upperTriRep, coe_upperTriRep]
   have hbp : (b : ℚ) + 1 = (p : ℚ) := by
     have : (b.val : ℚ) + 1 = (p : ℚ) := by exact_mod_cast hb
     exact this
   ext ⟨_ | _ | _, _⟩ ⟨_ | _ | _, _⟩ <;> try contradiction
-  · simp
-  · simp [Matrix.mul_apply, Fin.sum_univ_two]
-    linarith
-  · simp
-  · simp
+  all_goals simp [Matrix.mul_apply, Fin.sum_univ_two, mapGL_coe_matrix, ModularGroup.coe_T]
+  linarith
 
 /-- Slashing by `upperTriRep (n + 1) b` followed by `T` permutes the representative by
 `finRotate (n + 1)` when `f` is `T`-invariant. -/
