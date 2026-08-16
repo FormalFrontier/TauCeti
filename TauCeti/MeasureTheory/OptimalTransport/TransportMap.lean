@@ -27,8 +27,8 @@ Kantorovich plan induced by the Monge map `T`.
 
 ## Main results
 
-* `TauCeti.Measure.fst_graphPlan` and `TauCeti.Measure.snd_graphPlan` — the second marginal of a
-  graph plan is `μ.map T`, and its first marginal is `μ` whenever `T` is `μ`-a.e. measurable;
+* `TauCeti.Measure.fst_graphPlan` and `TauCeti.Measure.snd_graphPlan` — the first marginal of a
+  graph plan is `μ` whenever `T` is `μ`-a.e. measurable, and its second marginal is `μ.map T`;
   when `ProbabilityTheory.HasLaw T ν μ` holds the second one is `ν`
   (`TauCeti.Measure.snd_graphPlan_of_hasLaw`), so every Monge map induces a Kantorovich plan;
 * `TauCeti.Measure.lintegral_graphPlan` — integrating against a graph plan is integrating
@@ -40,7 +40,7 @@ Kantorovich plan induced by the Monge map `T`.
 
 That the Monge problem is genuinely infeasible for some data — a Dirac source can only be
 transported onto a Dirac target — is not about graph plans and lives with the other
-`ProbabilityTheory.HasLaw` facts, in `TauCeti.Probability.not_hasLaw_dirac_of_forall_ne`.
+`ProbabilityTheory.HasLaw` facts, in `TauCeti.Probability.not_hasLaw_dirac_source_of_forall_ne`.
 
 ## Conventions
 
@@ -51,7 +51,9 @@ arbitrary measurable spaces; no topology, density, or normalization is involved.
 
 Recognizing a graph needs the diagonal of `Y × Y` to be measurable, i.e. the `MeasurableEq Y`
 typeclass, which holds for standard Borel spaces and, more generally, for second-countable `T2`
-spaces. That hypothesis is stated only where it is used.
+topological spaces whose measurable structure is compatible with the topology, in the sense of
+`OpensMeasurableSpace` (so in particular for the Borel structure). That hypothesis is stated only
+where it is used.
 
 ## References
 

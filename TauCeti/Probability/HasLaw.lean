@@ -17,13 +17,13 @@ exactly what `TauCeti.Measure.map_dirac_of_aemeasurable` asks for.
 
 ## Main results
 
-* `TauCeti.Probability.hasLaw_of_dirac_iff` — an a.e. measurable map has law `ν` under
+* `TauCeti.Probability.hasLaw_dirac_source_iff` — an a.e. measurable map has law `ν` under
   `Measure.dirac x` exactly when `ν` is the Dirac measure at its value at `x`;
-* `TauCeti.Probability.not_hasLaw_dirac_of_forall_ne` — no map at all has a non-Dirac law under a
-  Dirac measure.
+* `TauCeti.Probability.not_hasLaw_dirac_source_of_forall_ne` — no map at all has a non-Dirac law
+  under a Dirac measure.
 
 Mathlib's `ProbabilityTheory.hasLaw_dirac_iff` is the statement for a Dirac *target*; the results
-here are about a Dirac *source*, hence the different names.
+here are about a Dirac *source*, which is what `dirac_source` records in their names.
 -/
 
 public section
@@ -39,7 +39,7 @@ variable {ν : Measure Y}
 
 /-- An a.e. measurable map transports a Dirac measure exactly onto the Dirac measure at its
 value. The a.e. measurability is exactly what `ProbabilityTheory.HasLaw` already asks for. -/
-theorem hasLaw_of_dirac_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
+theorem hasLaw_dirac_source_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     HasLaw T ν (Measure.dirac x) ↔ ν = Measure.dirac (T x) := by
   refine ⟨fun h ↦ ?_, fun h ↦ ⟨hT, ?_⟩⟩
   · rw [← h.map_eq, TauCeti.Measure.map_dirac_of_aemeasurable hT]
@@ -48,9 +48,9 @@ theorem hasLaw_of_dirac_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
 /-- **A Dirac source admits no non-Dirac law.** No map at all pushes a Dirac measure onto a
 measure that is not itself a Dirac measure: a map carries its own a.e. measurability along with
 the law it is claimed to have. -/
-theorem not_hasLaw_dirac_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (x : X) :
+theorem not_hasLaw_dirac_source_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (x : X) :
     ¬HasLaw T ν (Measure.dirac x) :=
-  fun h ↦ hν (T x) ((hasLaw_of_dirac_iff h.aemeasurable).1 h)
+  fun h ↦ hν (T x) ((hasLaw_dirac_source_iff h.aemeasurable).1 h)
 
 end Probability
 
