@@ -191,7 +191,7 @@ theorem exists_det_ne_zero_mul_eq_mul_companionFinTwo
 
 end Field
 
-/-! ### Trace and determinant are conjugacy invariants -/
+/-! ### Conjugacy invariants -/
 
 section Invariants
 
@@ -203,15 +203,6 @@ theorem trace_val_eq_of_isConj {g h : GL n R} (hgh : IsConj g h) :
   obtain ⟨c, hc⟩ := isConj_iff.1 hgh
   rw [← hc, Units.val_mul, Units.val_mul]
   exact (Matrix.trace_units_conj c _).symm
-
-/-- Conjugate elements of `GL n R` have the same determinant. -/
-theorem det_val_eq_of_isConj {g h : GL n R} (hgh : IsConj g h) :
-    (g : Matrix n n R).det = (h : Matrix n n R).det := by
-  obtain ⟨c, hc⟩ := isConj_iff.1 hgh
-  have hcc : (c : Matrix n n R).det * ((c⁻¹ : GL n R) : Matrix n n R).det = 1 := by
-    rw [← Matrix.det_mul, ← Units.val_mul, mul_inv_cancel, Units.val_one, Matrix.det_one]
-  rw [← hc, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul]
-  linear_combination (-(g : Matrix n n R).det) * hcc
 
 /-- **A scalar element of `GL n R` is alone in its conjugacy class**: scalar matrices are
 central. -/
@@ -286,7 +277,10 @@ theorem isConj_iff_of_notMem_range_scalar {g h : GL (Fin 2) F}
     (hh : (h : Matrix (Fin 2) (Fin 2) F) ∉ Set.range (Matrix.scalar (Fin 2))) :
     IsConj g h ↔ (g : Matrix (Fin 2) (Fin 2) F).trace = (h : Matrix (Fin 2) (Fin 2) F).trace ∧
       (g : Matrix (Fin 2) (Fin 2) F).det = (h : Matrix (Fin 2) (Fin 2) F).det := by
-  refine ⟨fun hgh => ⟨trace_val_eq_of_isConj hgh, det_val_eq_of_isConj hgh⟩, fun ⟨ht, hd⟩ => ?_⟩
+  refine ⟨fun hgh => ⟨trace_val_eq_of_isConj hgh, ?_⟩, fun ⟨ht, hd⟩ => ?_⟩
+  · have hdet : Matrix.GeneralLinearGroup.det g = Matrix.GeneralLinearGroup.det h :=
+      isConj_iff_eq.1 (Matrix.GeneralLinearGroup.det.map_isConj hgh)
+    simpa only [Matrix.GeneralLinearGroup.val_det_apply] using congrArg Units.val hdet
   have hcomp : companionGL (g : Matrix (Fin 2) (Fin 2) F).trace
       (Matrix.GeneralLinearGroup.det g)
       = companionGL (h : Matrix (Fin 2) (Fin 2) F).trace (Matrix.GeneralLinearGroup.det h) := by
@@ -335,8 +329,8 @@ theorem bijective_mk_conjRepGLFinTwo :
         (scalar_ne_companionGL t' d' a)
     · exact absurd (eq_of_isConj_of_mem_range_scalar (n := Fin 2) ⟨(b : F), rfl⟩ hab.symm)
         (scalar_ne_companionGL t d b)
-    · have ht := trace_val_eq_of_isConj hab
-      have hd := det_val_eq_of_isConj hab
+    · obtain ⟨ht, hd⟩ := (isConj_iff_of_notMem_range_scalar
+        (companionGL_notMem_range_scalar t d) (companionGL_notMem_range_scalar t' d')).1 hab
       rw [coe_companionGL, coe_companionGL, trace_companionFinTwo, trace_companionFinTwo] at ht
       rw [coe_companionGL, coe_companionGL, det_companionFinTwo, det_companionFinTwo] at hd
       obtain rfl : t = t' := ht
