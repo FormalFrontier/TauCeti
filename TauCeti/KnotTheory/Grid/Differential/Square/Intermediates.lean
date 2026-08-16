@@ -9,16 +9,15 @@ public import TauCeti.KnotTheory.Grid.Differential.Square.Backtracking
 /-!
 # Intermediate states in two column swaps
 
-The support of the square of the fully blocked grid differential consists of paths of two
-nontrivial column swaps. This file records the exact finite set of possible intermediate states
-between a source `x` and a target `z`: the intersection of their one-swap neighbour sets.
+The support of the square of the fully blocked grid differential is contained in the states
+reached from `x` by two nontrivial column swaps. This file records the exact finite set of possible
+intermediate states between a source `x` and a target `z`: the intersection of their one-swap
+neighbour sets.
 
 For a diagonal path `x → y → x`, this set is exactly the full one-swap neighbour set of
 `x`. For a nondiagonal path, conjugating the first transposition by the second gives another
 factorization through a distinct intermediate state. Consequently every nonempty nondiagonal
-intermediate set has at least two elements. The conjugation argument treats both geometric cases
-needed later: disjoint transpositions commute, while transpositions sharing one column satisfy
-the three-column conjugation identity.
+intermediate set has at least two elements.
 
 These state-level factorizations do not yet pair rectangles: a later juxtaposition argument must
 also track which of the two rectangles with given corners is used and whether its domain avoids
@@ -70,6 +69,29 @@ theorem mem_twoStepColumnSwapIntermediates {x y z : GridState n} :
       y ∈ x.columnSwapNeighbors ∧ y ∈ z.columnSwapNeighbors := by
   simp [twoStepColumnSwapIntermediates]
 
+/-- A state is an intermediate between `x` and `z` exactly when it is reached from `x` by one
+nontrivial column swap and `z` is reached from it by another. -/
+theorem mem_twoStepColumnSwapIntermediates_iff_mem_columnSwapNeighbors {x y z : GridState n} :
+    y ∈ x.twoStepColumnSwapIntermediates z ↔
+      y ∈ x.columnSwapNeighbors ∧ z ∈ y.columnSwapNeighbors := by
+  rw [mem_twoStepColumnSwapIntermediates]
+  constructor
+  · exact fun h => ⟨h.1, mem_columnSwapNeighbors_comm.mp h.2⟩
+  · exact fun h => ⟨h.1, mem_columnSwapNeighbors_comm.mpr h.2⟩
+
+/-- An expanded membership form for the intermediate states in a two-swap path. -/
+theorem mem_twoStepColumnSwapIntermediates_iff_exists_swaps {x y z : GridState n} :
+    y ∈ x.twoStepColumnSwapIntermediates z ↔
+      ∃ a b c d : Fin n,
+        a ≠ b ∧ c ≠ d ∧ y = x.swapColumns a b ∧ z = y.swapColumns c d := by
+  rw [mem_twoStepColumnSwapIntermediates_iff_mem_columnSwapNeighbors]
+  simp only [mem_columnSwapNeighbors]
+  constructor
+  · rintro ⟨⟨a, b, hab, hy⟩, c, d, hcd, hz⟩
+    exact ⟨a, b, c, d, hab, hcd, hy, hz⟩
+  · rintro ⟨a, b, c, d, hab, hcd, hy, hz⟩
+    exact ⟨⟨a, b, hab, hy⟩, c, d, hcd, hz⟩
+
 /-- Swapping the two endpoints does not change their set of two-step intermediate states. -/
 theorem twoStepColumnSwapIntermediates_comm (x z : GridState n) :
     x.twoStepColumnSwapIntermediates z = z.twoStepColumnSwapIntermediates x := by
@@ -95,40 +117,37 @@ theorem nonempty_twoStepColumnSwapIntermediates_iff {x z : GridState n} :
     exact ⟨y, mem_twoStepColumnSwapIntermediates.mpr
       ⟨hyx, mem_columnSwapNeighbors_comm.mp hzy⟩⟩
 
-/-- Reordering two distinct nontrivial column swaps produces a distinct intermediate state.
+/-- Applying the second of two distinct nontrivial column swaps first produces a distinct
+intermediate state.
 
-The new intermediate is obtained by applying the second swap first. The remaining swap is the
-conjugate of the first one. -/
-private theorem exists_mem_columnSwapNeighbors_ne_swapColumns
+The remaining swap is the conjugate of the first one. -/
+theorem swapColumns_mem_twoStepColumnSwapIntermediates_ne
     (x : GridState n) {a b c d : Fin n}
     (hab : a ≠ b) (hcd : c ≠ d) (hpairs : s(a, b) ≠ s(c, d)) :
-    ∃ y' ∈ x.columnSwapNeighbors,
-      y' ≠ x.swapColumns a b ∧
-        (x.swapColumns a b).swapColumns c d ∈ y'.columnSwapNeighbors := by
-  refine ⟨x.swapColumns c d, mem_columnSwapNeighbors.mpr ⟨c, d, hcd, rfl⟩, ?_, ?_⟩
-  · intro h
-    exact hpairs (sym2_mk_eq_of_swapColumns_eq (x := x) hcd hab h).symm
-  · rw [mem_columnSwapNeighbors]
+    x.swapColumns c d ∈
+        x.twoStepColumnSwapIntermediates ((x.swapColumns a b).swapColumns c d) ∧
+      x.swapColumns c d ≠ x.swapColumns a b := by
+  constructor
+  · rw [mem_twoStepColumnSwapIntermediates_iff_mem_columnSwapNeighbors]
+    refine ⟨mem_columnSwapNeighbors.mpr ⟨c, d, hcd, rfl⟩, ?_⟩
+    rw [mem_columnSwapNeighbors]
     refine ⟨Equiv.swap c d a, Equiv.swap c d b, (Equiv.swap c d).injective.ne hab, ?_⟩
     exact x.swapColumns_swapColumns_conj a b c d
+  · intro h
+    exact hpairs (sym2_mk_eq_of_swapColumns_eq (x := x) hcd hab h).symm
 
 /-- Every intermediate state on a nondiagonal two-step path has a distinct alternative
 intermediate state. -/
-theorem exists_ne_mem_twoStepColumnSwapIntermediates_of_mem_of_ne
+theorem exists_mem_twoStepColumnSwapIntermediates_ne_of_mem_of_ne
     {x y z : GridState n} (hy : y ∈ x.twoStepColumnSwapIntermediates z) (hzx : z ≠ x) :
     ∃ y' ∈ x.twoStepColumnSwapIntermediates z, y' ≠ y := by
-  rw [mem_twoStepColumnSwapIntermediates] at hy
-  obtain ⟨a, b, hab, rfl⟩ := mem_columnSwapNeighbors.mp hy.1
-  obtain ⟨c, d, hcd, rfl⟩ :=
-    mem_columnSwapNeighbors.mp (mem_columnSwapNeighbors_comm.mpr hy.2)
+  rw [mem_twoStepColumnSwapIntermediates_iff_exists_swaps] at hy
+  obtain ⟨a, b, c, d, hab, hcd, rfl, rfl⟩ := hy
   have hpairs : s(a, b) ≠ s(c, d) := by
     intro hpairs
     exact hzx ((swapColumns_swapColumns_eq_self_iff_sym2_mk_eq x hab hcd).mpr hpairs)
-  obtain ⟨y', hy'x, hy'ne, hy'z⟩ :=
-    x.exists_mem_columnSwapNeighbors_ne_swapColumns hab hcd hpairs
-  refine ⟨y', mem_twoStepColumnSwapIntermediates.mpr ⟨hy'x, ?_⟩, hy'ne⟩
-  rw [mem_columnSwapNeighbors_comm]
-  exact hy'z
+  exact ⟨x.swapColumns c d,
+    x.swapColumns_mem_twoStepColumnSwapIntermediates_ne hab hcd hpairs⟩
 
 /-- A nondiagonal two-step neighbour has at least two possible intermediate states. -/
 theorem one_lt_card_twoStepColumnSwapIntermediates {x z : GridState n}
@@ -136,7 +155,7 @@ theorem one_lt_card_twoStepColumnSwapIntermediates {x z : GridState n}
     1 < (x.twoStepColumnSwapIntermediates z).card := by
   obtain ⟨y, hy⟩ := nonempty_twoStepColumnSwapIntermediates_iff.mpr hz
   obtain ⟨y', hy', hy'ne⟩ :=
-    exists_ne_mem_twoStepColumnSwapIntermediates_of_mem_of_ne hy hzx
+    exists_mem_twoStepColumnSwapIntermediates_ne_of_mem_of_ne hy hzx
   exact Finset.one_lt_card.mpr ⟨y, hy, y', hy', hy'ne.symm⟩
 
 end GridState
