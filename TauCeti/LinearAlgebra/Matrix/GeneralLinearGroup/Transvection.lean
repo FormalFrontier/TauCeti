@@ -185,10 +185,7 @@ theorem transvectionUnit_mul_transvectionUnit_eq_mul_mul
 of `εᵢ - εⱼ` and `εⱼ - εₗ`, and the structure constant is `1`. -/
 theorem commutatorElement_transvectionUnit (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
     ⁅transvectionUnit hij c, transvectionUnit hjl d⁆ = transvectionUnit hil (c * d) := by
-  change ⁅SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c),
-    SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hjl d)⁆ =
-      SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hil (c * d))
-  rw [← map_commutatorElement]
+  simp only [transvectionUnit, ← map_commutatorElement]
   exact congrArg SpecialLinearGroup.toGL
     (Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil c d)
 
