@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.ComplAux
-public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant
+public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant.Basic
 
 /-!
 # The reduced invariant of a normalised EDS
@@ -52,9 +52,10 @@ That fact is `isEllipticSequence_normEDS` in `NormEDS.lean`, proved here through
 (`Mathlib/NumberTheory/EllipticDivisibilitySequence.lean`: "prove that `normEDS` satisfies
 `IsEllipticDvdSequence`"). Both chains above are written in the source's names; what the
 denominator side still lacks is the upper part of each, the lower links having landed. For the
-first, `net_normEDS` is `isEllipticNet_normEDS` (`NormEDS.lean`) and `invar_normEDS` is
-`invarNum_mul_invarDenom` (`Invariant.lean`), so what remains is `invar₂_normEDS` and
-`redInvar_normEDS`. For the second, `normEDS_mul_complEDS_of_mem` is
+first, `net_normEDS` is `isEllipticNet_normEDS` (`NormEDS.lean`), `invar_normEDS` is
+`invarNum_mul_invarDenom` (`Invariant/Basic.lean`) and `invar₂_normEDS` is
+`invarNum_normEDS_one_mul_eq_invarDenom_mul` (`Invariant/NormEDS.lean`), so what remains is
+`redInvar_normEDS` alone. For the second, `normEDS_mul_complEDS_of_mem` is
 `normEDS_mul_complEDS_of_mem_nonZeroDivisors` (`Complement.lean`), so what remains is
 `normEDS_mul_complEDS` and `normEDS_mul_complEDS_div`.
 Carrying the bare definition across before them would add a formula that no consumer can state
@@ -85,7 +86,8 @@ root, and only `invarNum_normEDS_one_eq_reducedInvarNum_mul`, whose left-hand si
 `IsEllipticNet` term, sits in that namespace.
 
 One adaptation is forced rather than chosen: the source proves `invarNum_normEDS` by
-`simp [invarNum]`, unfolding the definition. That does not port, because `Invariant.lean` exports
+`simp [invarNum]`, unfolding the definition. That does not port, because `Invariant/Basic.lean`
+exports
 `invarNum`'s body unexposed — from an importing module `simp [invarNum]` is rejected outright — so
 the proof goes through the `@[simp]` equation lemma `IsEllipticNet.invarNum_def` instead.
 -/

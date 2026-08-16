@@ -43,8 +43,7 @@ variable {R : Type u} [CommRing R] [IsNoetherianRing R]
 /-- The spectrum of the coordinate ring of a finite-type affine group over a Noetherian
 commutative ring has finitely many connected components. -/
 instance instFiniteConnectedComponents (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
-    Finite (ConnectedComponents (PrimeSpectrum H)) := by
-  let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing R H
-  exact TauCeti.finite_connectedComponents_of_noetherianSpace
+    Finite (ConnectedComponents (PrimeSpectrum H)) :=
+  TauCeti.finite_connectedComponents_of_noetherianSpace
 
 end TauCeti.FiniteTypeCommHopfAlgCat
