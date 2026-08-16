@@ -102,7 +102,7 @@ theorem exists_character_eigenvector_of_commutative [FiniteDimensional K V] [Non
     ∃ (χ : G →* Kˣ) (v : V), v ≠ 0 ∧ ∀ g, ρ g v = (χ g : K) • v := by
   have hcomm : Pairwise fun g h ↦ Commute (ρ g) (ρ h) := by
     intro g h _
-    change ρ g * ρ h = ρ h * ρ g
+    rw [commute_iff_eq]
     rw [← ρ.map_mul, mul_comm, ρ.map_mul]
   obtain ⟨χ, v, hv, hv_mem⟩ :=
     exists_common_eigenvector_of_pairwise_commute (fun g ↦ ρ g) hcomm
@@ -119,9 +119,7 @@ theorem exists_invariant_line_of_commutative [FiniteDimensional K V] [Nontrivial
     ∃ p : Submodule K V, Module.finrank K p = 1 ∧ ∀ g, MapsTo (ρ g) p p := by
   obtain ⟨χ, v, hv, heigen⟩ := exists_character_eigenvector_of_commutative ρ
   refine ⟨K ∙ v, finrank_span_singleton hv, fun g x hx ↦ ?_⟩
-  change x ∈ K ∙ v at hx
-  change ρ g x ∈ K ∙ v
-  rw [Submodule.mem_span_singleton] at hx ⊢
+  rw [SetLike.mem_coe, Submodule.mem_span_singleton] at hx ⊢
   obtain ⟨a, rfl⟩ := hx
   exact ⟨a * (χ g : K), by rw [map_smul, heigen, smul_smul, mul_comm]⟩
 
