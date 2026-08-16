@@ -4,9 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.DirectSum.Module
 public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
-public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra
+public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
 public import TauCeti.LinearAlgebra.Eigenspace.Semisimple
 
 /-!

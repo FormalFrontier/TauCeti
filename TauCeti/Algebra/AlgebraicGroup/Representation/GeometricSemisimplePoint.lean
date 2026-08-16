@@ -15,13 +15,11 @@ public import TauCeti.Algebra.AlgebraicGroup.Representation.SemisimplePoint
 # Geometric semisimple points of affine groups
 
 This file packages the condition that every algebraic-closure-valued point of a commutative Hopf
-algebra is semisimple. It also establishes the generic transport and product results used to prove
+algebra is semisimple. It also uses the generic transport and product results to prove
 that this object property is invariant under isomorphisms and closed under tensor products.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.isSemisimplePoint_mapDomain_iff`: invariance of point semisimplicity under
-  bialgebra isomorphisms.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_pointsMulEquiv_iff`: over a perfect field, a point of a
   product affine group is semisimple if and only if both component points are semisimple.
 * `TauCeti.geometricallySemisimplePointsCommHopfAlgProperty`: the object property asserting that
@@ -46,30 +44,6 @@ open scoped TensorProduct
 namespace TauCeti
 
 universe u v w x
-
-section MapDomain
-
-variable {k : Type u} {H₁ : Type v} {H₂ : Type w} {K : Type x}
-variable [CommSemiring k] [Semiring H₁] [Semiring H₂]
-variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂]
-variable [Field K] [Algebra k K]
-
-/-- Semisimplicity of points is invariant under precomposition by a bialgebra isomorphism. -/
-theorem HopfAlgebra.isSemisimplePoint_mapDomain_iff
-    (e : H₁ ≃ₐc[k] H₂) (g : WithConv (H₂ →ₐ[k] K)) :
-    IsSemisimplePoint (AlgHom.mapDomain (e : H₁ →ₐc[k] H₂) g) ↔ IsSemisimplePoint g := by
-  constructor
-  · intro hg
-    have h := hg.mapDomain (e.symm : H₂ →ₐc[k] H₁)
-    have he : AlgHom.mapDomain (e.symm : H₂ →ₐc[k] H₁)
-        (AlgHom.mapDomain (e : H₁ →ₐc[k] H₂) g) = g := by
-      rw [← AlgHom.mapDomainMulEquiv_symm_apply e, ← AlgHom.mapDomainMulEquiv_apply e]
-      exact (AlgHom.mapDomainMulEquiv (A := K) e).left_inv g
-    rwa [he] at h
-  · intro hg
-    exact hg.mapDomain (e : H₁ →ₐc[k] H₂)
-
-end MapDomain
 
 section Product
 

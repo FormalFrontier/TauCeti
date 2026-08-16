@@ -33,6 +33,8 @@ invariant under conjugation.
   inversion, commuting products, and integer powers.
 * `TauCeti.HopfAlgebra.IsSemisimplePoint.mapDomain`: precomposition by a bialgebra morphism
   preserves semisimple points.
+* `TauCeti.HopfAlgebra.isSemisimplePoint_mapDomain_iff`: invariance of point semisimplicity under
+  bialgebra isomorphisms.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_conj_iff`: invariance under conjugation.
 
 ## References
@@ -95,6 +97,21 @@ theorem IsSemisimplePoint.mapDomain {g : WithConv (H₂ →ₐ[k] K)}
   intro M
   rw [← Comodule.pointsAction_corestrict_obj φ M g]
   exact hg ((FGComoduleCat.corestrict φ.toCoalgHom).obj M)
+
+/-- Semisimplicity of points is invariant under precomposition by a bialgebra isomorphism. -/
+theorem isSemisimplePoint_mapDomain_iff
+    (e : H₁ ≃ₐc[k] H₂) (g : WithConv (H₂ →ₐ[k] K)) :
+    IsSemisimplePoint (AlgHom.mapDomain (e : H₁ →ₐc[k] H₂) g) ↔ IsSemisimplePoint g := by
+  constructor
+  · intro hg
+    have h := hg.mapDomain (e.symm : H₂ →ₐc[k] H₁)
+    have he : AlgHom.mapDomain (e.symm : H₂ →ₐc[k] H₁)
+        (AlgHom.mapDomain (e : H₁ →ₐc[k] H₂) g) = g := by
+      rw [← AlgHom.mapDomainMulEquiv_symm_apply e, ← AlgHom.mapDomainMulEquiv_apply e]
+      exact (AlgHom.mapDomainMulEquiv (A := K) e).left_inv g
+    rwa [he] at h
+  · intro hg
+    exact hg.mapDomain (e : H₁ →ₐc[k] H₂)
 
 end MapDomain
 
