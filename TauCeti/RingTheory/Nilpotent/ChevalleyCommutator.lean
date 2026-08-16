@@ -44,7 +44,7 @@ its generating-function form.
 * `TauCeti.integralDividedPower_mul_integralDividedPower_of_commutator_eq`: normal ordering for the
   integral operators restricted to `M`.
 * `TauCeti.baseChangeExp_zsmul`: rescaling an element by an integer rescales the parameter of its
-  exponential, which is how a structure constant `± 1` enters.
+  exponential, which is how an integer structure constant enters.
 * `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq`: the Chevalley commutator relation.
 * `TauCeti.commute_baseChangeExp`: its degenerate case, when the commutator vanishes.
 * `TauCeti.baseChangeExp_conj_of_commutator_eq`: its conjugation form.
@@ -112,7 +112,7 @@ section BaseChange
 variable {R : Type v} [CommRing R] [Algebra ℤ R]
 
 /-- Rescaling an element by an integer `c` rescales the parameter of its integral exponential by
-`c`. This is how a Chevalley structure constant `± 1` is absorbed into the parameter of a root
+`c`. This is how an integer Chevalley structure constant is absorbed into the parameter of a root
 subgroup. -/
 theorem baseChangeExp_zsmul (c : ℤ) {x : A} (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
