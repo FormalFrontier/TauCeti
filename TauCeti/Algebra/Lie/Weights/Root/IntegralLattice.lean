@@ -196,13 +196,11 @@ theorem chevalleyLieLattice_le_iff {M : LieSubalgebra ℤ L} :
   hx.toIsSl2System.rootCorootLieSubalgebra_le_iff _
 
 /-- Every root vector belongs to the Chevalley Lie lattice. -/
-@[simp]
 theorem rootVector_mem_chevalleyLieLattice (α : Weight K H L) :
     x α ∈ hx.chevalleyLieLattice :=
   hx.mem_chevalleyLieLattice_iff.2 (rootVector_mem_rootCorootSpan x α)
 
 /-- Every coroot belongs to the Chevalley Lie lattice. -/
-@[simp]
 theorem coroot_mem_chevalleyLieLattice (α : Weight K H L) :
     (coroot α : L) ∈ hx.chevalleyLieLattice :=
   hx.mem_chevalleyLieLattice_iff.2 (coroot_mem_rootCorootSpan x α)
