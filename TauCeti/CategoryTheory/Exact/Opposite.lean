@@ -69,11 +69,13 @@ theorem op_conflation (E : ConflationClass C) (S : ShortComplex Cᵒᵖ) :
     E.op.Conflation S ↔ E.Conflation S.unop :=
   Iff.rfl
 
-/-- Opposite conflations are precisely the opposites of the original conflations. -/
-@[simp]
+/-- Opposite conflations are precisely the opposites of the original conflations.
+
+This is not a `simp` lemma: `op_conflation` already rewrites the left-hand side, to the
+definitionally equal `E.Conflation S.op.unop`. -/
 theorem op_conflation_op_iff (E : ConflationClass C) (S : ShortComplex C) :
     E.op.Conflation S.op ↔ E.Conflation S :=
-  E.conflation_iff_of_iso S.opUnop
+  Iff.rfl
 
 /-- The inflations of the opposite conflation class are the opposites of its deflations. -/
 theorem op_inflations (E : ConflationClass C) : E.op.inflations = E.deflations.op := by
@@ -178,8 +180,10 @@ theorem op_conflation (E : ExactStructure C) (S : ShortComplex Cᵒᵖ) :
   Iff.rfl
 
 /-- The opposite of a conflation is a conflation in the opposite exact structure, and every
-such opposite conflation arises this way. -/
-@[simp]
+such opposite conflation arises this way.
+
+This is not a `simp` lemma: `op_conflation` already rewrites the left-hand side, to the
+definitionally equal `E.Conflation S.op.unop`. -/
 theorem op_conflation_op_iff (E : ExactStructure C) (S : ShortComplex C) :
     E.op.Conflation S.op ↔ E.Conflation S :=
   E.toConflationClass.op_conflation_op_iff S
