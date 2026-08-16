@@ -44,7 +44,8 @@ is built from; it is injective as soon as the value ring is reduced.
   morphism of value rings.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFunctor`: the resulting group-valued functor.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius`: the `p ^ n`-power Frobenius
-  endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring.
+  endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring and
+  `exists_kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change.
 
 ## References
 
@@ -305,6 +306,17 @@ noncomputable def kostantElementaryFrobenius :
     kostantElementarySubgroup e h ρ M hM hnil A →*
       kostantElementarySubgroup e h ρ M hM hnil A :=
   kostantElementaryMap e h ρ M hM hnil (iterateFrobeniusValueHom p n A)
+
+/-- The Frobenius endomorphism of the elementary group is induced by an endomorphism of the value
+ring.
+
+This is the interface through which statements about `kostantElementaryMap` that hold uniformly in
+the morphism of value rings — naturality of a graph automorphism, for instance — specialize to
+Frobenius. The morphism is `x ↦ x ^ p ^ n` and is deliberately not itself exposed. -/
+theorem exists_kostantElementaryFrobenius_eq_kostantElementaryMap :
+    ∃ φ : A ⟶ A, kostantElementaryFrobenius e h ρ M hM hnil p n A =
+      kostantElementaryMap e h ρ M hM hnil φ :=
+  ⟨iterateFrobeniusValueHom p n A, rfl⟩
 
 /-- The Frobenius endomorphism raises the parameter of a root-subgroup element to the
 `p ^ n`-th power. -/
