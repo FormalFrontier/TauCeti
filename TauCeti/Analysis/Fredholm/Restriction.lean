@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Fredholm.FiniteRank
+public import TauCeti.Analysis.Fredholm.Comp
+public import TauCeti.Analysis.Fredholm.Criteria
 
 /-!
 # Fredholm operators from finite-codimension restrictions
@@ -99,16 +100,13 @@ theorem _root_.ContinuousLinearMap.IsFredholm.of_restrict (hE₁ : IsClosed (E�
     intro x hx
     rw [LinearMap.mem_ker]
     exact sub_eq_zero.mpr (hS_on ⟨x, hx⟩).symm
-  have hfinite :
-      FiniteDimensional K (LinearMap.range ((T - S : E →L[K] F) : E →ₗ[K] F)) :=
-    (Submodule.fg_iff_finiteDimensional _).mp
-      (LinearMap.ker_coFG_iff_hasFiniteRange.mp
-        (Submodule.CoFG.of_le hker inferInstance)).fg_range
+  have hfinite : LinearMap.HasFiniteRange ((T - S : E →L[K] F) : E →ₗ[K] F) :=
+    LinearMap.ker_coFG_iff_hasFiniteRange.mp (Submodule.CoFG.of_le hker inferInstance)
   have hTS : S + (T - S) = T := by
     rw [add_comm]
     exact sub_add_cancel T S
   rw [← hTS]
-  exact hS.add_of_finiteDimensional_range hfinite
+  exact hS.add_hasFiniteRange hfinite
 
 end Topological
 

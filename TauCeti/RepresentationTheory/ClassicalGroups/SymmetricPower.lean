@@ -8,6 +8,7 @@ public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 public import TauCeti.LinearAlgebra.SymmetricPower.Basis
 public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
 public import TauCeti.RepresentationTheory.SymmetricPower
+import TauCeti.RingTheory.MvPolynomial.Symmetric.Complete
 
 /-!
 # Symmetric powers of the standard representation
@@ -77,11 +78,7 @@ theorem char_symPowerRep_diagonal (t : Fin n → kˣ) : (symPowerRep k n d).char
     SymmetricPower.trace_map_of_apply_basis (Pi.basisFun k (Fin n))
       (stdRep k n (diagGL t)) (fun i => (t i : k)) d (stdRep_diagGL_apply_basisFun t)]
   -- both sides sum, over the unordered `d`-tuples of indices, the product of the entries listed
-  rw [MvPolynomial.hsymm, map_sum]
-  refine Finset.sum_congr rfl fun s _ => ?_
-  rw [map_multiset_prod, Multiset.map_map]
-  simp only [Function.comp_def, MvPolynomial.eval_X]
-  rfl
+  rw [eval_hsymm]
 
 /-- The character of the bundled `d`th symmetric power on a diagonal matrix is the `d`th complete
 homogeneous symmetric polynomial in its diagonal entries. -/

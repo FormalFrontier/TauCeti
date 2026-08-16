@@ -6,8 +6,12 @@ module
 
 public import Mathlib.Data.Fin.Tuple.Basic
 public import Mathlib.Data.Sym.Basic
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Data.Finset.NatAntidiagonal
+import Mathlib.Data.Finsupp.Multiset
 import Mathlib.Data.Fintype.EquivFin
 import Mathlib.Data.List.FinRange
+import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # Basic lemmas for symmetric powers
@@ -26,6 +30,8 @@ orbits of the permutation action, by `TauCeti.Sym.ofFn_eq_ofFn_iff`. Nothing her
   `TauCeti.Sym.ofFn_surjective`, that every unordered tuple arises this way.
 * `TauCeti.Sym.ofFn_eq_ofFn_iff`: two ordered tuples have the same underlying unordered tuple
   exactly when one is a reindexing of the other by a permutation.
+* `TauCeti.symFinTwoEquiv`: an unordered `d`-tuple over `Fin 2` is determined by how many of its
+  entries are `0`, so there are `d + 1` of them.
 -/
 
 public section
@@ -112,5 +118,29 @@ theorem ofFn_eq_ofFn_iff {f g : Fin n → α} :
     exact (ofFn_comp_perm σ f).symm
 
 end Sym
+
+/-! ### Unordered tuples over a two-element type -/
+
+/-- **A multiset of size `d` over `Fin 2` is determined by how many of its entries are `0`**, and
+that count can be anything from `0` to `d`: the two counts sum to `d`, so the pair of them runs
+over the antidiagonal of `d`.  This is the rank-two instance of the count
+`#(Sym α d) = (#α + d - 1).choose d`. -/
+noncomputable def symFinTwoEquiv (d : ℕ) : Sym (Fin 2) d ≃ Fin (d + 1) :=
+  (Sym.equivNatSumOfFintype (Fin 2) d).trans <|
+    ((finTwoArrowEquiv ℕ).subtypeEquiv fun _ => by
+      simp [Fin.sum_univ_two, Finset.mem_antidiagonal]).trans
+        (Finset.Nat.antidiagonalEquivFin d)
+
+/-- `TauCeti.symFinTwoEquiv` is the number of entries equal to `0`. -/
+@[simp]
+theorem coe_symFinTwoEquiv_apply (d : ℕ) (s : Sym (Fin 2) d) :
+    (symFinTwoEquiv d s : ℕ) = Multiset.count 0 (s : Multiset (Fin 2)) := (rfl)
+
+/-- The inverse of `TauCeti.symFinTwoEquiv` spelled out: `i` many `0`s and `d - i` many `1`s. -/
+@[simp]
+theorem coe_symFinTwoEquiv_symm_apply (d : ℕ) (i : Fin (d + 1)) :
+    (((symFinTwoEquiv d).symm i : Sym (Fin 2) d) : Multiset (Fin 2))
+      = Multiset.replicate (i : ℕ) 0 + Multiset.replicate (d - (i : ℕ)) 1 := by
+  simp [symFinTwoEquiv, Fin.sum_univ_two, Multiset.nsmul_singleton]
 
 end TauCeti

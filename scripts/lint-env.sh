@@ -183,6 +183,20 @@ ALLOWLIST="scripts/lint-nolints-allowlist.txt"
 UPDATE=0
 [ "${1:-}" = "--update" ] && UPDATE=1
 
+# In the required landrun build, route this script's two direct `lean`
+# invocations through the same trusted watchdog as `lake build`; they do not go
+# through Lake's LAKE_OVERRIDE_LEAN hook themselves. The trusted post-merge CI
+# also runs this script, but deliberately has no watchdog toolchain, so retain
+# its ordinary `lake env lean` path. scripts/sandbox-build.sh independently
+# requires an executable watchdog before any required build reaches this file.
+run_lean() {
+  if [ -n "${WATCHDOG_TOOLCHAIN:-}" ]; then
+    lake env "$WATCHDOG_TOOLCHAIN/bin/lean" "$@"
+  else
+    lake env lean "$@"
+  fi
+}
+
 fail() { echo "::error::lint-env: $*"; echo "LINT-ENV: FAIL — $*"; exit 1; }
 
 TMP="$(mktemp -d)" || fail "mktemp failed"
@@ -317,7 +331,7 @@ run_meta do
 EOF
 } > "$DOCDRIVER"
 
-if ! lake env lean "$DOCDRIVER" > "$TMP/docscan.txt" 2>&1; then
+if ! run_lean "$DOCDRIVER" > "$TMP/docscan.txt" 2>&1; then
   cat "$TMP/docscan.txt"
   fail "driver failure: the docstring-scan driver did not elaborate cleanly — see output above"
 fi
@@ -422,7 +436,7 @@ fi
 } > "$DRIVER"
 
 # --- 3. elaborate it (exit 1 from lean is EXPECTED when the linters report) -------
-if lake env lean "$DRIVER" > "$TMP/out.txt" 2>&1; then
+if run_lean "$DRIVER" > "$TMP/out.txt" 2>&1; then
   status=0
 else
   status=$?

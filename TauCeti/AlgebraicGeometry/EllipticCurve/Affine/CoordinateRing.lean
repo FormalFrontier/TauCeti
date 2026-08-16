@@ -129,7 +129,6 @@ noncomputable def conj : W.CoordinateRing ≃ₐ[R[X]] W.CoordinateRing :=
   AlgEquiv.ofAlgHom (conjHom W) (conjHom W) (by ext; exact conjHom_conjHom W _)
     (by ext; exact conjHom_conjHom W _)
 
-@[simp]
 private lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
   simp [conj]
 
@@ -180,9 +179,112 @@ end CoordinateRing
 
 /-! ## The divisibility core -/
 
+section CommRing
+
+variable {R : Type*} [CommRing R] (W : _root_.WeierstrassCurve.Affine R)
+
+/-- **The `X`-derivative vanishes as well.** Write `H = g² - gs - c` for the Weierstrass polynomial
+read at `Y = -g`. A square divisor of `H` divides its derivative, and that derivative splits as
+`H' = g'(2g - s) - (a₁g + c')`, so a divisor of `2g - s` is left dividing `a₁g + c'`. Modulo `π`
+this says `W_X` vanishes at the point once `W_Y` does.
+
+Neither primality of `π` nor any field structure is used: this is the chain rule and
+`Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd`. -/
+private theorem dvd_a₁_mul_add_of_dvd_two_mul_sub_of_sq_dvd {π g : R[X]}
+    (hs : π ∣ 2 * g - (C W.a₁ * X + C W.a₃))
+    (hsq : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) :
+    π ∣ C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄) := by
+  have hd : derivative (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) =
+      derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
+        (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
+    simp only [derivative_sub, derivative_mul, derivative_pow, derivative_add, derivative_C,
+      derivative_X, map_ofNat, Nat.cast_ofNat]
+    ring1
+  have hd' : π ∣ derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
+      (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
+    rw [← hd]
+    simpa using Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd hsq
+  simpa using dvd_sub (hs.mul_left (derivative g)) hd'
+
+end CommRing
+
 section Field
 
 variable {F : Type*} [Field F] (W : _root_.WeierstrassCurve.Affine F)
+
+/-- **No prime square divides `H = g² - gs - c` once the prime divides `2g - s`.** This is where
+the curve enters, and it is the one step that uses ellipticity. In the residue field
+`k = F[X]/(π)` the three divisibilities say that `(x₀, β)` lies on `W` over `k`, with `x₀` the
+image of `X` and `β` that of `-g`, and that both partial derivatives vanish there:
+
+* `π ∣ H` gives the equation of `W`;
+* `π ∣ 2g - s` gives `W_Y(x₀, β) = 2β + a₁x₀ + a₃ = 0`;
+* `π ∣ a₁g + c'` gives `W_X(x₀, β) = a₁β - (3x₀² + 2a₂x₀ + a₄) = 0`; this is the third divisibility
+  and it comes from the other two, by `dvd_a₁_mul_add_of_dvd_two_mul_sub_of_sq_dvd`.
+
+That is a singular point of an elliptic curve. The argument is uniform in the characteristic,
+unlike the route through `Squarefree (4X³ + b₂X² + 2b₄X + b₆)`. -/
+private theorem not_sq_dvd_of_dvd_two_mul_sub [W.IsElliptic] {π g : F[X]} (hπ : Prime π)
+    (hs : π ∣ 2 * g - (C W.a₁ * X + C W.a₃)) :
+    ¬π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+  intro hsq
+  have : Fact (Irreducible π) := ⟨hπ.irreducible⟩
+  have hev : ∀ r : F[X], π ∣ r → aeval (AdjoinRoot.root π) r = 0 := fun r hr => by
+    rw [AdjoinRoot.aeval_eq]; exact AdjoinRoot.mk_eq_zero.mpr hr
+  have h₁ := hev _ ((dvd_pow_self π two_ne_zero).trans hsq)
+  have h₂ := hev _ hs
+  have h₃ := hev _ (dvd_a₁_mul_add_of_dvd_two_mul_sub_of_sq_dvd W hs hsq)
+  simp only [map_sub, map_add, map_mul, map_pow, map_ofNat, aeval_C, aeval_X] at h₁ h₂ h₃
+  have key : (W.map (algebraMap F (AdjoinRoot π))).Nonsingular (AdjoinRoot.root π)
+      (-aeval (AdjoinRoot.root π) g) := equation_iff_nonsingular.mp <| by
+    rw [equation_iff']
+    simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
+      _root_.WeierstrassCurve.map_a₃, _root_.WeierstrassCurve.map_a₄,
+      _root_.WeierstrassCurve.map_a₆]
+    linear_combination h₁
+  rw [nonsingular_iff'] at key
+  refine key.2.elim (fun h => h ?_) fun h => h ?_
+  · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
+      _root_.WeierstrassCurve.map_a₄]
+    linear_combination -h₃
+  · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₃]
+    linear_combination -h₂
+
+/-- **Away from `q`, the pair `(p, q)` collapses to a single `g`.** A prime not dividing `q` is
+invertible in the residue field, so `p ≡ gq` modulo `π` for some `g`; substituting that into the
+trace and norm divisibilities and cancelling the factors of `q` — legitimate since `π` is prime
+and misses `q` — leaves the same two divisibilities for the pair `(g, 1)`.
+
+This step is pure divisibility bookkeeping: the curve is not used, and `W` need not be
+elliptic. -/
+private theorem exists_dvd_two_mul_sub_and_sq_dvd_of_not_dvd {π p q : F[X]} (hπ : Prime π)
+    (hq : ¬π ∣ q) (ht : π ∣ 2 * p - q * (C W.a₁ * X + C W.a₃))
+    (hn : π ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) :
+    ∃ g : F[X], π ∣ 2 * g - (C W.a₁ * X + C W.a₃) ∧
+      π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+        (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+  have : Fact (Irreducible π) := ⟨hπ.irreducible⟩
+  have hqk : AdjoinRoot.mk π q ≠ 0 := fun h => hq (AdjoinRoot.mk_eq_zero.mp h)
+  -- choose `g` with `p ≡ g * q` modulo `π`
+  obtain ⟨g, hg⟩ := AdjoinRoot.mk_surjective (AdjoinRoot.mk π p / AdjoinRoot.mk π q)
+  obtain ⟨p₁, hp₁⟩ : π ∣ p - g * q := AdjoinRoot.mk_eq_zero.mp <| by
+    rw [map_sub, map_mul, hg, div_mul_cancel₀ _ hqk, sub_self]
+  -- transport the two divisibilities to `g`
+  obtain ⟨f, hf⟩ : π ∣ 2 * g - (C W.a₁ * X + C W.a₃) := by
+    have hprod : π ∣ q * (2 * g - (C W.a₁ * X + C W.a₃)) := by
+      obtain ⟨t₁, ht₁⟩ := ht
+      exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
+    exact (hπ.dvd_or_dvd hprod).resolve_left hq
+  refine ⟨g, ⟨f, hf⟩, ?_⟩
+  refine hπ.pow_dvd_of_dvd_mul_left (a := q ^ 2) 2 (fun h => hq (hπ.dvd_of_dvd_pow h)) ?_
+  obtain ⟨n₁, hn₁⟩ := hn
+  exact ⟨n₁ - p₁ * q * f - p₁ ^ 2, by
+    linear_combination hn₁ -
+      (p + g * q + π * p₁ - q * (C W.a₁ * X + C W.a₃)) * hp₁ - π * p₁ * q * hf⟩
 
 /-- Over a field, a prime dividing the trace `2p - qs` and whose square divides the norm
 `p² - pqs - q²c` divides both `p` and `q`. This is where the curve enters: the alternative is a
@@ -194,62 +296,8 @@ private theorem dvd_and_dvd_of_prime [W.IsElliptic] {π p q : F[X]} (hπ : Prime
     π ∣ p ∧ π ∣ q := by
   have hq : π ∣ q := by
     by_contra hq
-    have : Fact (Irreducible π) := ⟨hπ.irreducible⟩
-    have hqk : AdjoinRoot.mk π q ≠ 0 := fun h => hq (AdjoinRoot.mk_eq_zero.mp h)
-    -- choose `g` with `p ≡ g * q` modulo `π`
-    obtain ⟨g, hg⟩ := AdjoinRoot.mk_surjective (AdjoinRoot.mk π p / AdjoinRoot.mk π q)
-    obtain ⟨p₁, hp₁⟩ : π ∣ p - g * q := AdjoinRoot.mk_eq_zero.mp <| by
-      rw [map_sub, map_mul, hg, div_mul_cancel₀ _ hqk, sub_self]
-    -- transport the two divisibilities to `g`
-    obtain ⟨f, hf⟩ : π ∣ 2 * g - (C W.a₁ * X + C W.a₃) := by
-      have hprod : π ∣ q * (2 * g - (C W.a₁ * X + C W.a₃)) := by
-        obtain ⟨t₁, ht₁⟩ := ht
-        exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
-      refine (hπ.dvd_or_dvd hprod).resolve_left hq
-    have hm : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-        (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
-      refine hπ.pow_dvd_of_dvd_mul_left (a := q ^ 2) 2 (fun h => hq (hπ.dvd_of_dvd_pow h)) ?_
-      obtain ⟨n₁, hn₁⟩ := hn
-      exact ⟨n₁ - p₁ * q * f - p₁ ^ 2, by
-        linear_combination hn₁ -
-          (p + g * q + π * p₁ - q * (C W.a₁ * X + C W.a₃)) * hp₁ - π * p₁ * q * hf⟩
-    -- `π ∣ H` and `π ∣ H'`, the latter read through `H' = g'(2g - s) - (a₁g + c')`
-    have hH₁ : π ∣ C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄) := by
-      have hd : derivative (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-          (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) =
-          derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
-            (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
-        simp only [derivative_sub, derivative_mul, derivative_pow, derivative_add, derivative_C,
-          derivative_X, map_ofNat, Nat.cast_ofNat]
-        ring1
-      have hd' : π ∣ derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
-          (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
-        rw [← hd]
-        simpa using Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd hm
-      simpa using dvd_sub (Dvd.dvd.mul_left ⟨f, hf⟩ (derivative g)) hd'
-    -- the three vanishings, read in the residue field
-    have hev : ∀ r : F[X], π ∣ r → aeval (AdjoinRoot.root π) r = 0 := fun r hr => by
-      rw [AdjoinRoot.aeval_eq]; exact AdjoinRoot.mk_eq_zero.mpr hr
-    have h₁ := hev (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆))
-        ((dvd_pow_self π two_ne_zero).trans hm)
-    have h₂ := hev (2 * g - (C W.a₁ * X + C W.a₃)) ⟨f, hf⟩
-    have h₃ := hev _ hH₁
-    simp only [map_sub, map_add, map_mul, map_pow, map_ofNat, aeval_C, aeval_X] at h₁ h₂ h₃
-    have key : (W.map (algebraMap F (AdjoinRoot π))).Nonsingular (AdjoinRoot.root π)
-        (-aeval (AdjoinRoot.root π) g) := equation_iff_nonsingular.mp <| by
-      rw [equation_iff']
-      simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
-        _root_.WeierstrassCurve.map_a₃, _root_.WeierstrassCurve.map_a₄,
-        _root_.WeierstrassCurve.map_a₆]
-      linear_combination h₁
-    rw [nonsingular_iff'] at key
-    refine key.2.elim (fun h => h ?_) fun h => h ?_
-    · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₂,
-        _root_.WeierstrassCurve.map_a₄]
-      linear_combination -h₃
-    · simp only [_root_.WeierstrassCurve.map_a₁, _root_.WeierstrassCurve.map_a₃]
-      linear_combination -h₂
+    obtain ⟨g, hs, hsq⟩ := exists_dvd_two_mul_sub_and_sq_dvd_of_not_dvd W hπ hq ht hn
+    exact not_sq_dvd_of_dvd_two_mul_sub W hπ hs hsq
   refine ⟨?_, hq⟩
   obtain ⟨q₁, rfl⟩ := hq
   refine hπ.dvd_of_dvd_pow (n := 2) ?_
@@ -318,86 +366,97 @@ private noncomputable def conjFunctionField :
     W.FunctionField ≃ₐ[F[X]] W.FunctionField :=
   IsFractionRing.algEquivOfAlgEquiv (CoordinateRing.conj W)
 
+/-- Conjugation moves only the numerator of `b / d`, because it fixes `F[X]`. -/
+private theorem conjFunctionField_apply_div (b : W.CoordinateRing) (d : F[X]) :
+    conjFunctionField W (algebraMap W.CoordinateRing W.FunctionField b /
+        algebraMap F[X] W.FunctionField d) =
+      algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.conj W b) /
+        algebraMap F[X] W.FunctionField d := by
+  rw [map_div₀, conjFunctionField, IsFractionRing.algEquivOfAlgEquiv_algebraMap, AlgEquiv.commutes]
+
+/-- **The trace of an integral quotient is divisible by the denominator.** For `w = b / d` with `b`
+in the coordinate ring and `d` in `F[X]`, writing `b = p + q Y` in the basis, the trace of `w` is
+`w + σw = (2p - q(a₁X + a₃)) / d`, whose numerator is the trace of `b`. Both summands are integral
+over `F[X]`, hence so is the quotient, and that forces `d ∣ 2p - q(a₁X + a₃)`.
+
+Ellipticity of `W` is not needed here, and is not assumed. -/
+private theorem dvd_trace_of_isIntegral_div {b : W.CoordinateRing} {d p q : F[X]}
+    (hd0 : d ≠ 0) (hpq : p • (1 : W.CoordinateRing) + q • mk W Y = b)
+    (hz : IsIntegral F[X] (algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d)) :
+    d ∣ 2 * p - q * (C W.a₁ * X + C W.a₃) := by
+  refine dvd_of_isIntegral_div (L := W.FunctionField) hd0 ?_
+  have hadd : p • (1 : W.CoordinateRing) + q • mk W Y +
+      CoordinateRing.conj W (p • 1 + q • mk W Y) =
+      algebraMap F[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
+    simpa only [AdjoinRoot.mk_X, map_add, map_smul, map_one, CoordinateRing.conj_mk_Y,
+      AdjoinRoot.smul_mk] using CoordinateRing.add_negPolynomial_smul_basis W p q
+  have hsum : algebraMap F[X] W.FunctionField (2 * p - q * (C W.a₁ * X + C W.a₃)) /
+      algebraMap F[X] W.FunctionField d =
+      algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d +
+        conjFunctionField W (algebraMap W.CoordinateRing W.FunctionField b /
+          algebraMap F[X] W.FunctionField d) := by
+    rw [conjFunctionField_apply_div, ← add_div, ← map_add,
+      IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, ← hpq, hadd]
+  rw [hsum]
+  exact hz.add (hz.map (conjFunctionField W : W.FunctionField →ₐ[F[X]] W.FunctionField))
+
+/-- **The norm of an integral quotient is divisible by the square of the denominator.** The
+companion of `dvd_trace_of_isIntegral_div`: the norm of `w = b / d` is
+`w · σw = Norm(b) / d²`, and `Norm(b)` is `p² - pq(a₁X + a₃) - q²(X³ + a₂X² + a₄X + a₆)` in the
+basis. Integrality of that product forces `d² ∣ Norm(b)`.
+
+Ellipticity of `W` is not needed here either. -/
+private theorem sq_dvd_norm_of_isIntegral_div {b : W.CoordinateRing} {d p q : F[X]}
+    (hd0 : d ≠ 0) (hpq : p • (1 : W.CoordinateRing) + q • mk W Y = b)
+    (hz : IsIntegral F[X] (algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d)) :
+    d ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+  refine dvd_of_isIntegral_div (L := W.FunctionField) (pow_ne_zero 2 hd0) ?_
+  have hnorm : Algebra.norm F[X] b = p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
+    rw [← hpq, norm_smul_basis]
+  have hprod : algebraMap F[X] W.FunctionField (p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
+      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) /
+      algebraMap F[X] W.FunctionField (d ^ 2) =
+      (algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d) *
+        conjFunctionField W (algebraMap W.CoordinateRing W.FunctionField b /
+          algebraMap F[X] W.FunctionField d) := by
+    rw [conjFunctionField_apply_div, div_mul_div_comm, ← map_mul, ← hnorm,
+      CoordinateRing.mul_conj,
+      ← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, map_pow, pow_two]
+  rw [hprod]
+  exact hz.mul (hz.map (conjFunctionField W : W.FunctionField →ₐ[F[X]] W.FunctionField))
+
 /-- Every element of the function field of an elliptic curve that is integral over `F[X]` already
 lies in the coordinate ring. -/
 private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
     (hz : IsIntegral F[X] z) :
     ∃ b : W.CoordinateRing, algebraMap W.CoordinateRing W.FunctionField b = z := by
-  set σ := conjFunctionField W with hσ
-  -- write `z = b / d` with `b` in the coordinate ring and `d` in `F[X]`
-  obtain ⟨b₁, b₂, hb₂, rfl⟩ := IsFractionRing.div_surjective (A := W.CoordinateRing) z
-  have hb₂0 : b₂ ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp hb₂
-  have hcb₂0 : CoordinateRing.conj W b₂ ≠ 0 := fun h =>
-    hb₂0 <| (CoordinateRing.conj W).injective (by rw [h, map_zero])
-  set b : W.CoordinateRing := b₁ * CoordinateRing.conj W b₂ with hb
-  set d : F[X] := Algebra.norm F[X] b₂
-  have hdB : algebraMap F[X] W.CoordinateRing d = b₂ * CoordinateRing.conj W b₂ :=
-    (CoordinateRing.mul_conj W b₂).symm
-  have hd0 : d ≠ 0 := fun h => (mul_ne_zero hb₂0 hcb₂0) (by rw [← hdB, h, map_zero])
-  have hinjB : Function.Injective (algebraMap W.CoordinateRing W.FunctionField) :=
-    FaithfulSMul.algebraMap_injective _ _
-  have hmap : ∀ r : F[X], algebraMap F[X] W.FunctionField r =
-      algebraMap W.CoordinateRing W.FunctionField (algebraMap F[X] W.CoordinateRing r) := fun r =>
-    IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField r
-  have hinjK : Function.Injective (algebraMap F[X] W.FunctionField) := by
-    rw [IsScalarTower.algebraMap_eq F[X] W.CoordinateRing W.FunctionField]
-    exact hinjB.comp (FaithfulSMul.algebraMap_injective _ _)
-  have hdK : algebraMap F[X] W.FunctionField d ≠ 0 := fun h =>
-    hd0 (hinjK (h.trans (map_zero _).symm))
-  have hcb₂K : algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.conj W b₂) ≠ 0 :=
-    fun h => hcb₂0 (hinjB (h.trans (map_zero _).symm))
-  have hzeq : algebraMap W.CoordinateRing W.FunctionField b₁ /
-      algebraMap W.CoordinateRing W.FunctionField b₂ =
-      algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d := by
-    rw [hmap, hdB, hb, map_mul, map_mul, mul_div_mul_right _ _ hcb₂K]
-  rw [hzeq] at hz ⊢
+  -- write `z = b / d` with `b` in the coordinate ring and `d` in `F[X]`; the function field is
+  -- the localisation at the image of `nonZeroDivisors F[X]`, so the denominator is a polynomial
+  obtain ⟨⟨b, m, hm⟩, hbm⟩ :=
+    IsLocalization.surj (Algebra.algebraMapSubmonoid W.CoordinateRing (nonZeroDivisors F[X])) z
+  obtain ⟨d, hd, rfl⟩ := hm
+  have hd0 : d ≠ 0 := mem_nonZeroDivisors_iff_ne_zero.mp hd
+  have hdK : algebraMap F[X] W.FunctionField d ≠ 0 :=
+    (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective F[X] W.FunctionField)).mpr hd0
+  obtain rfl : algebraMap W.CoordinateRing W.FunctionField b /
+      algebraMap F[X] W.FunctionField d = z := by
+    rw [eq_comm, eq_div_iff hdK,
+      IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, hbm]
   -- the trace and the norm of `z`
   obtain ⟨p, q, hpq⟩ := exists_smul_basis_eq b
-  have hσz : σ (algebraMap W.CoordinateRing W.FunctionField b /
-      algebraMap F[X] W.FunctionField d) =
-      algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.conj W b) /
-        algebraMap F[X] W.FunctionField d := by
-    rw [map_div₀, hσ, conjFunctionField, IsFractionRing.algEquivOfAlgEquiv_algebraMap,
-      AlgEquiv.commutes]
-  have hσzi : IsIntegral F[X] (σ (algebraMap W.CoordinateRing W.FunctionField b /
-      algebraMap F[X] W.FunctionField d)) := hz.map (σ : W.FunctionField →ₐ[F[X]] W.FunctionField)
-  have htr : d ∣ 2 * p - q * (C W.a₁ * X + C W.a₃) := by
-    refine dvd_of_isIntegral_div (L := W.FunctionField) hd0 ?_
-    have hadd : p • (1 : W.CoordinateRing) + q • mk W Y +
-        CoordinateRing.conj W (p • 1 + q • mk W Y) =
-        algebraMap F[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
-      simpa only [AdjoinRoot.mk_X, map_add, map_smul, map_one, CoordinateRing.conj_mk_Y,
-        AdjoinRoot.smul_mk] using CoordinateRing.add_negPolynomial_smul_basis W p q
-    have : algebraMap F[X] W.FunctionField (2 * p - q * (C W.a₁ * X + C W.a₃)) /
-        algebraMap F[X] W.FunctionField d =
-        algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d +
-          σ (algebraMap W.CoordinateRing W.FunctionField b /
-            algebraMap F[X] W.FunctionField d) := by
-      rw [hσz, ← add_div, ← map_add, hmap, ← hpq, hadd]
-    rw [this]
-    exact hz.add hσzi
-  have hnm : d ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
-      q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
-    refine dvd_of_isIntegral_div (L := W.FunctionField) (pow_ne_zero 2 hd0) ?_
-    have hnorm : Algebra.norm F[X] b = p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
-        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
-      rw [← hpq, norm_smul_basis]
-    have : algebraMap F[X] W.FunctionField (p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
-        q ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) /
-        algebraMap F[X] W.FunctionField (d ^ 2) =
-        (algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d) *
-          σ (algebraMap W.CoordinateRing W.FunctionField b /
-            algebraMap F[X] W.FunctionField d) := by
-      rw [hσz, div_mul_div_comm, ← map_mul, ← hnorm, CoordinateRing.mul_conj, ← hmap,
-        map_pow, pow_two]
-    rw [this]
-    exact hz.mul hσzi
+  have htr := dvd_trace_of_isIntegral_div W hd0 hpq hz
+  have hnm := sq_dvd_norm_of_isIntegral_div W hd0 hpq hz
   -- conclude
   obtain ⟨hdp, hdq⟩ := dvd_and_dvd W d p q hd0 htr hnm
   obtain ⟨p', rfl⟩ := hdp
   obtain ⟨q', rfl⟩ := hdq
   refine ⟨p' • 1 + q' • mk W Y, ?_⟩
-  rw [eq_div_iff hdK, hmap, ← map_mul, ← hpq]
+  rw [eq_div_iff hdK, IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField,
+    ← map_mul, ← hpq]
   congr 1
   simp only [smul, ← CoordinateRing.mk_C_eq_algebraMap, map_mul]
   ring1

@@ -12,7 +12,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup
 
 Combining the product formula for fundamental groups
 (`TauCeti.FundamentalGroup.prodMulEquiv`, `…piMulEquiv`) with the circle computation
-`π₁(AddCircle p) ≃* Multiplicative ℤ` (`TauCeti.AddCircle.fundamentalGroupMulEquiv_zero`)
+`π₁(AddCircle p) ≃* Multiplicative ℤ` (`TauCeti.AddCircle.fundamentalGroupMulEquivZero`)
 gives the fundamental group of a torus. For a finite product of circles this is the free
 abelian group `(Multiplicative ℤ)ᵏ`; in particular the standard two-torus
 `AddCircle p × AddCircle q` has fundamental group `Multiplicative ℤ × Multiplicative ℤ`.
@@ -26,8 +26,8 @@ This realises the universal-covers roadmap Stage 4 "applications" target `π_n(T
   `π₁(AddCircle p × AddCircle q, (x, y)) ≃* Multiplicative ℤ × Multiplicative ℤ`.
 * `TauCeti.AddCircle.piFundamentalGroupMulEquiv`:
   `π₁(Π i, AddCircle (p i), x) ≃* Π i, Multiplicative ℤ`, the fundamental group of a torus.
-* `TauCeti.AddCircle.prodFundamentalGroupMulEquiv_zero`,
-  `TauCeti.AddCircle.piFundamentalGroupMulEquiv_zero`: the basepoint-`0` specialisations.
+* `TauCeti.AddCircle.prodFundamentalGroupMulEquivZero`,
+  `TauCeti.AddCircle.piFundamentalGroupMulEquivZero`: the basepoint-`0` specialisations.
 -/
 
 public section
@@ -107,54 +107,54 @@ theorem piFundamentalGroupMulEquiv_symm_apply {ι : Type*} {p : ι → ℝ} (hp 
 
 /-- The fundamental group of the two-torus `AddCircle p × AddCircle q`, based at `(0, 0)`, is
 `Multiplicative ℤ × Multiplicative ℤ`, for nonzero real periods `p` and `q`. -/
-def prodFundamentalGroupMulEquiv_zero {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0) :
+def prodFundamentalGroupMulEquivZero {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0) :
     FundamentalGroup (AddCircle p × AddCircle q) (0, 0) ≃*
       Multiplicative ℤ × Multiplicative ℤ :=
   prodFundamentalGroupMulEquiv hp hq ⟨0, by simp⟩ ⟨0, by simp⟩
 
 @[simp]
-theorem prodFundamentalGroupMulEquiv_zero_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
+theorem prodFundamentalGroupMulEquivZero_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
     (γ : FundamentalGroup (AddCircle p × AddCircle q) (0, 0)) :
-    prodFundamentalGroupMulEquiv_zero hp hq γ =
-      (fundamentalGroupMulEquiv_zero p hp
+    prodFundamentalGroupMulEquivZero hp hq γ =
+      (fundamentalGroupMulEquivZero p hp
           (FundamentalGroup.map (ContinuousMap.fst : C(AddCircle p × AddCircle q, _)) (0, 0) γ),
-        fundamentalGroupMulEquiv_zero q hq
+        fundamentalGroupMulEquivZero q hq
           (FundamentalGroup.map
             (ContinuousMap.snd : C(AddCircle p × AddCircle q, _)) (0, 0) γ)) := by
-  rw [prodFundamentalGroupMulEquiv_zero, prodFundamentalGroupMulEquiv_apply]
+  rw [prodFundamentalGroupMulEquivZero, prodFundamentalGroupMulEquiv_apply]
   apply Prod.ext
-  · exact (fundamentalGroupMulEquiv_zero_apply p hp _).symm
-  · exact (fundamentalGroupMulEquiv_zero_apply q hq _).symm
+  · exact (fundamentalGroupMulEquivZero_apply p hp _).symm
+  · exact (fundamentalGroupMulEquivZero_apply q hq _).symm
 
 @[simp]
-theorem prodFundamentalGroupMulEquiv_zero_symm_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
-    (mn : Multiplicative ℤ × Multiplicative ℤ) : (prodFundamentalGroupMulEquiv_zero hp hq).symm mn =
-      prod ((fundamentalGroupMulEquiv_zero p hp).symm mn.1)
-        ((fundamentalGroupMulEquiv_zero q hq).symm mn.2) := by
-  simp [prodFundamentalGroupMulEquiv_zero]
+theorem prodFundamentalGroupMulEquivZero_symm_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
+    (mn : Multiplicative ℤ × Multiplicative ℤ) : (prodFundamentalGroupMulEquivZero hp hq).symm mn =
+      prod ((fundamentalGroupMulEquivZero p hp).symm mn.1)
+        ((fundamentalGroupMulEquivZero q hq).symm mn.2) := by
+  simp [prodFundamentalGroupMulEquivZero]
 
 /-- The fundamental group of a torus `Π i, AddCircle (p i)`, based at `0`, is the product
 `Π i, Multiplicative ℤ`, for a family of nonzero real periods. For a finite index this is the
 free abelian group `(Multiplicative ℤ)ᵏ`, i.e. `π₁(Tᵏ) ≅ ℤᵏ`. -/
-def piFundamentalGroupMulEquiv_zero {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0) :
+def piFundamentalGroupMulEquivZero {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0) :
     FundamentalGroup (∀ i, AddCircle (p i)) (fun _ => 0) ≃* ∀ _ : ι, Multiplicative ℤ :=
   piFundamentalGroupMulEquiv hp fun i => ⟨0, by simp⟩
 
 @[simp]
-theorem piFundamentalGroupMulEquiv_zero_apply {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0)
+theorem piFundamentalGroupMulEquivZero_apply {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0)
     (γ : FundamentalGroup (∀ i, AddCircle (p i)) (fun _ => 0)) (i : ι) :
-    piFundamentalGroupMulEquiv_zero hp γ i =
-      fundamentalGroupMulEquiv_zero (p i) (hp i)
+    piFundamentalGroupMulEquivZero hp γ i =
+      fundamentalGroupMulEquivZero (p i) (hp i)
         (FundamentalGroup.map (ContinuousMap.eval i) (fun _ => 0) γ) := by
-  rw [piFundamentalGroupMulEquiv_zero, piFundamentalGroupMulEquiv_apply]
-  exact (fundamentalGroupMulEquiv_zero_apply (p i) (hp i) _).symm
+  rw [piFundamentalGroupMulEquivZero, piFundamentalGroupMulEquiv_apply]
+  exact (fundamentalGroupMulEquivZero_apply (p i) (hp i) _).symm
 
 @[simp]
-theorem piFundamentalGroupMulEquiv_zero_symm_apply {ι : Type*} {p : ι → ℝ}
+theorem piFundamentalGroupMulEquivZero_symm_apply {ι : Type*} {p : ι → ℝ}
     (hp : ∀ i, p i ≠ 0) (n : ∀ _ : ι, Multiplicative ℤ) :
-    (piFundamentalGroupMulEquiv_zero hp).symm n =
-      pi fun i => (fundamentalGroupMulEquiv_zero (p i) (hp i)).symm (n i) := by
-  simp [piFundamentalGroupMulEquiv_zero]
+    (piFundamentalGroupMulEquivZero hp).symm n =
+      pi fun i => (fundamentalGroupMulEquivZero (p i) (hp i)).symm (n i) := by
+  simp [piFundamentalGroupMulEquivZero]
 
 end AddCircle
 

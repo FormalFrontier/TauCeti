@@ -88,8 +88,9 @@ isomorphism, which sit above `TauCeti/Algebra/CentralSimple/Splitting.lean` in t
 
 The converse of `TauCeti.isBrauerTrivial_of_isSplittingField` -- that a Brauer-trivial algebra is
 split -- is **not** proved here, and is not a formal consequence of these lemmas: it needs the
-uniqueness of the division algebra in a Brauer class, which the roadmap places with the Wedderburn
-invariants and which is not yet available. Nothing below uses it, and in particular the two
+uniqueness of the Wedderburn data, which sits above this file in the import order. It is
+`TauCeti.Algebra.isSplittingField_self_of_isBrauerTrivial`, in
+`TauCeti/Algebra/BrauerGroup/Splitting.lean`. Nothing below uses it, and in particular the two
 Brauer-group computations go through the splitting side only.
 
 ## References
@@ -118,7 +119,9 @@ equivalent to the base field, that is, when its Brauer class is the one that wil
 of `BrauerGroup K`.
 
 Every algebra split by `K` is Brauer trivial (`TauCeti.isBrauerTrivial_of_isSplittingField`); the
-converse needs the uniqueness of the division algebra in a Brauer class and is not proved here. -/
+converse needs the uniqueness of the Wedderburn data and is
+`TauCeti.Algebra.isSplittingField_self_of_isBrauerTrivial`, proved in
+`TauCeti/Algebra/BrauerGroup/Splitting.lean`. -/
 abbrev IsBrauerTrivial {K : Type u} [Field K] (A : CSA.{u, u} K) : Prop :=
   IsBrauerEquivalent A (CSA.base K)
 

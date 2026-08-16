@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
+public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
 import Mathlib.MeasureTheory.MeasurableSpace.NCard
 
 /-!

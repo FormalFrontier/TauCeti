@@ -24,8 +24,9 @@ explicit second topology.
 ## Main results
 
 * `TauCeti.spectralSpace_of_isClopen_generateFrom` : Wedhorn's Proposition 3.31.
-* `TauCeti.isCompact_of_isClopen_generateFrom` : every member of `U` is quasi-compact for the
-  generated topology.
+* `TauCeti.isCompact_of_isClosed_generateFrom` : every `t'`-closed set is quasi-compact for the
+  generated topology, and `TauCeti.isCompact_of_isClopen_generateFrom` : in particular every
+  member of `U` is.
 
 ## References
 
@@ -85,18 +86,21 @@ lemma compactSpace_of_isOpen_generateFrom (hU' : ∀ s ∈ U, IsOpen[t'] s) : Co
   exact @CompactSpace.mk X (generateFrom U)
     (isCompact_generateFrom_of_isOpen hU' (@CompactSpace.isCompact_univ X t' hcomp))
 
+/-- Every set closed for the witness topology is quasi-compact for the generated topology. The
+two lemmas below are its instances, at a finite intersection of members of `U` and at a single
+member. -/
+lemma isCompact_of_isClosed_generateFrom {s : Set X} (hs : @IsClosed X t' s) : IsCompact s :=
+  isCompact_of_patch htU hU (@IsClosed.isCompact X t' _ hcomp hs)
+
 /-- Every finite intersection of members of `U` is quasi-compact for the generated topology. -/
 lemma isCompact_sInter_of_isClopen_generateFrom {f : Set (Set X)} (hf : f.Finite)
     (hfU : f ⊆ U) : IsCompact (⋂₀ f) :=
-  isCompact_of_patch htU hU
-    (@IsClosed.isCompact X t' _ hcomp
-      (@IsClopen.isClosed X t' _ (isClopen_sInter_of_subset hU hf hfU)))
+  isCompact_of_isClosed_generateFrom htU hcomp hU
+    (@IsClopen.isClosed X t' _ (isClopen_sInter_of_subset hU hf hfU))
 
 /-- Every member of `U` is quasi-compact for the generated topology. -/
-lemma isCompact_of_isClopen_generateFrom {s : Set X} (hs : s ∈ U) : IsCompact s := by
-  rw [← Set.sInter_singleton s]
-  exact isCompact_sInter_of_isClopen_generateFrom htU hcomp hU (Set.finite_singleton s)
-    (Set.singleton_subset_iff.mpr hs)
+lemma isCompact_of_isClopen_generateFrom {s : Set X} (hs : s ∈ U) : IsCompact s :=
+  isCompact_of_isClosed_generateFrom htU hcomp hU (@IsClopen.isClosed X t' _ (hU s hs))
 
 omit hcomp hU in
 /-- The finite intersections of members of `U` form a basis of the generated topology. -/

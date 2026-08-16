@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Determinant
-public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
-public import Mathlib.LinearAlgebra.Reflection
+public import TauCeti.LinearAlgebra.BilinearForm.Isometry
+public import TauCeti.LinearAlgebra.Reflection
 
 /-!
 # The orthogonal group of a quadratic form
@@ -52,7 +51,9 @@ negating it and is a transvection rather than a reflection in `v ^ ⊥`.
   (`isOrtho_iff_of_mem_orthogonalGroup`). As soon as `2` acts injectively on the target the
   converse holds, `TauCeti.QuadraticMap.mem_orthogonalGroup_iff_polar`, which is the usual
   identification of the isometries of a quadratic form with the isometries of its polar bilinear
-  form.
+  form. At the level of groups this is
+  `TauCeti.QuadraticMap.orthogonalGroup_eq_isometryGroup_polarBilin`: `O(Q)` is the isometry group
+  `TauCeti.BilinForm.isometryGroup` of `Q.polarBilin`, so the bilinear-form API applies to it.
 * `TauCeti.QuadraticMap.orthogonalGroupEquivIsometryEquiv`: the underlying set of the orthogonal
   group is Mathlib's type of self-isometries `Q.IsometryEquiv Q`. This is the compatibility with the
   Mathlib vocabulary; the point of `orthogonalGroup` is the group structure, which
@@ -62,9 +63,10 @@ negating it and is a transvection rather than a reflection in `v ^ ⊥`.
   `Q`.
 * `TauCeti.QuadraticMap.reflection_mem_orthogonalGroup`: the reflection in a vector of invertible
   norm is orthogonal; `TauCeti.QuadraticMap.reflection_mul_self` says it is an involution, and
-  `TauCeti.QuadraticMap.reflection_apply_of_isOrtho` that it fixes the orthogonal hyperplane. These
-  are the elements a Cartan-Dieudonné theorem would write an orthogonal automorphism as a product
-  of, under hypotheses (a field of characteristic not two, a nondegenerate form, finite dimension)
+  `TauCeti.QuadraticMap.reflection_apply_of_isOrtho` that it fixes the orthogonal hyperplane, while
+  `TauCeti.QuadraticMap.det_reflection` computes its determinant on a finite free module. These are
+  the elements a Cartan-Dieudonné theorem would write an orthogonal automorphism as a product of,
+  under hypotheses (a field of characteristic not two, a nondegenerate form, finite dimension)
   that are not assumed here, and the image of the Pin group's generating vectors under twisted
   conjugation.
 * `TauCeti.QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem`: a
@@ -170,22 +172,10 @@ section Congr
 variable {M₁ : Type*} {M₂ : Type*} [AddCommMonoid M₁] [Module R M₁] [AddCommMonoid M₂] [Module R M₂]
   {Q₁ : QuadraticMap R M₁ N} {Q₂ : QuadraticMap R M₂ N}
 
-open LinearMap.GeneralLinearGroup in
-/-- Conjugation by a linear equivalence `e : M₁ ≃ₗ[R] M₂`, as an isomorphism of automorphism
-groups: Mathlib's `LinearMap.GeneralLinearGroup.congrLinearEquiv` read through
-`LinearMap.GeneralLinearGroup.generalLinearEquiv`. -/
-private def congrAut (e : M₁ ≃ₗ[R] M₂) : (M₁ ≃ₗ[R] M₁) ≃* (M₂ ≃ₗ[R] M₂) :=
-  ((generalLinearEquiv R M₁).symm.trans (congrLinearEquiv e)).trans (generalLinearEquiv R M₂)
-
-private theorem congrAut_apply (e : M₁ ≃ₗ[R] M₂) (f : M₁ ≃ₗ[R] M₁) (m : M₂) :
-    congrAut e f m = e (f (e.symm m)) := rfl
-
-private theorem congrAut_symm_apply (e : M₁ ≃ₗ[R] M₂) (g : M₂ ≃ₗ[R] M₂) (m : M₁) :
-    (congrAut e).symm g m = e.symm (g (e m)) := rfl
-
 /-- Conjugation by an isometric equivalence carries `O(Q₁)` onto `O(Q₂)`. -/
 private theorem map_orthogonalGroup (e : Q₁.IsometryEquiv Q₂) :
-    (orthogonalGroup Q₁).map (congrAut e.toLinearEquiv : _ →* _) = orthogonalGroup Q₂ := by
+    (orthogonalGroup Q₁).map (LinearEquiv.congrAut e.toLinearEquiv : _ →* _)
+      = orthogonalGroup Q₂ := by
   have key : ∀ x : M₁, Q₂ (e.toLinearEquiv x) = Q₁ x := e.map_app
   have key' : ∀ x : M₂, Q₁ (e.toLinearEquiv.symm x) = Q₂ x := fun x => by
     rw [← key (e.toLinearEquiv.symm x), e.toLinearEquiv.apply_symm_apply]
@@ -193,10 +183,10 @@ private theorem map_orthogonalGroup (e : Q₁.IsometryEquiv Q₂) :
   simp only [Subgroup.mem_map, MonoidHom.coe_coe, mem_orthogonalGroup_iff]
   constructor
   · rintro ⟨f, hf, rfl⟩ m
-    rw [congrAut_apply, key, hf, key']
-  · refine fun hg => ⟨(congrAut e.toLinearEquiv).symm g, fun m => ?_,
-      (congrAut e.toLinearEquiv).apply_symm_apply g⟩
-    rw [congrAut_symm_apply, key', hg, key]
+    rw [LinearEquiv.congrAut_apply, key, hf, key']
+  · refine fun hg => ⟨(LinearEquiv.congrAut e.toLinearEquiv).symm g, fun m => ?_,
+      (LinearEquiv.congrAut e.toLinearEquiv).apply_symm_apply g⟩
+    rw [LinearEquiv.congrAut_symm_apply, key', hg, key]
 
 /-- Isometric quadratic maps have isomorphic orthogonal groups: conjugation by an isometric
 equivalence `e : Q₁ ≃qᵢ Q₂` carries `O(Q₁)` onto `O(Q₂)`.
@@ -205,19 +195,20 @@ Over an algebraically closed field every nondegenerate quadratic form of a given
 to every other, so this is what makes `O(Q)` depend on the rank alone. -/
 def orthogonalGroupCongr (e : Q₁.IsometryEquiv Q₂) :
     orthogonalGroup Q₁ ≃* orthogonalGroup Q₂ :=
-  ((congrAut e.toLinearEquiv).subgroupMap _).trans (MulEquiv.subgroupCongr (map_orthogonalGroup e))
+  ((LinearEquiv.congrAut e.toLinearEquiv).subgroupMap _).trans
+    (MulEquiv.subgroupCongr (map_orthogonalGroup e))
 
 @[simp]
 theorem coe_orthogonalGroupCongr_apply (e : Q₁.IsometryEquiv Q₂) (f : orthogonalGroup Q₁) (m : M₂) :
     (orthogonalGroupCongr e f : M₂ ≃ₗ[R] M₂) m
       = e.toLinearEquiv ((f : M₁ ≃ₗ[R] M₁) (e.toLinearEquiv.symm m)) := by
-  simp [orthogonalGroupCongr, congrAut_apply]
+  simp [orthogonalGroupCongr, LinearEquiv.congrAut_apply]
 
 @[simp]
 theorem coe_orthogonalGroupCongr_symm_apply (e : Q₁.IsometryEquiv Q₂) (g : orthogonalGroup Q₂)
     (m : M₁) : ((orthogonalGroupCongr e).symm g : M₁ ≃ₗ[R] M₁) m
       = e.toLinearEquiv.symm ((g : M₂ ≃ₗ[R] M₂) (e.toLinearEquiv m)) := by
-  simp [orthogonalGroupCongr, congrAut_symm_apply]
+  simp [orthogonalGroupCongr, LinearEquiv.congrAut_symm_apply]
 
 end Congr
 
@@ -256,6 +247,23 @@ theorem mem_orthogonalGroup_iff_polar (h2 : IsSMulRegular N (2 : R)) {f : M ≃�
   exact h2 ((key (f m)).trans ((h m m).trans (key m).symm))
 
 end Polar
+
+section PolarBilin
+
+variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+
+/-- The orthogonal group of a quadratic form is the isometry group of its polar bilinear form, as
+soon as `2` is a regular scalar: `orthogonalGroup Q` and `TauCeti.BilinForm.isometryGroup
+Q.polarBilin` are then two names for the same subgroup of `M ≃ₗ[R] M`, and the bilinear-form API —
+the Gram-matrix criterion, `det ^ 2 = 1`, base change — applies to `O(Q)` through it. Some such
+hypothesis is needed: in characteristic two the polarization forgets `Q` on the diagonal. -/
+theorem orthogonalGroup_eq_isometryGroup_polarBilin (h2 : IsSMulRegular R (2 : R))
+    (Q : QuadraticForm R M) : orthogonalGroup Q = BilinForm.isometryGroup Q.polarBilin := by
+  ext f
+  simp only [mem_orthogonalGroup_iff_polar h2, BilinForm.mem_isometryGroup_iff,
+    QuadraticMap.polarBilin_apply_apply]
+
+end PolarBilin
 
 section Det
 
@@ -342,6 +350,12 @@ theorem reflection_inv : (reflection Q v)⁻¹ = reflection Q v :=
 @[simp]
 theorem reflection_symm : (reflection Q v).symm = reflection Q v :=
   Module.reflection_symm _
+
+/-- The determinant of a reflection is `-1` on a finite free module. -/
+@[simp]
+theorem det_reflection [Module.Free R M] [Module.Finite R M] :
+    LinearEquiv.det (reflection Q v) = (-1 : Rˣ) := by
+  exact Module.det_reflection (reflectionDual_apply_self Q v)
 
 /-- **Reflections are orthogonal.** These are the generators a Cartan-Dieudonné theorem writes an
 orthogonal automorphism as a product of, over a field of characteristic not two, for a nondegenerate

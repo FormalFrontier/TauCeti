@@ -20,8 +20,9 @@ identification of Coxeter length with the number of inversions.
 
 ## Main results
 
-* `TauCeti.mem_inversions_mul_ofIdx_iff_not_mem` shows that the defining simple root toggles
-  membership in the inversion set.
+* `TauCeti.mem_inversions_mul_ofIdx_iff_not_mem` shows that the reflecting root toggles
+  membership in the inversion set. It needs only that the root is positive, so it covers the
+  reflection in an arbitrary positive root and not just a simple one.
 * `TauCeti.ncard_inversions_mul_ofIdx_of_notMem` and `TauCeti.ncard_inversions_mul_ofIdx_of_mem`
   say in which direction the count moves: it goes up exactly when the defining simple root is not
   already an inversion.
@@ -81,14 +82,14 @@ private noncomputable def puncturedInversionsEquiv {i : ι} (hi : i ∈ b.suppor
     exact P.reflectionPerm_self i x.1
 
 omit [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
-/-- Right multiplication by a simple reflection toggles whether its defining simple root is an
+/-- Right multiplication by the reflection in a positive root toggles whether that root is an
 inversion. -/
-lemma mem_inversions_mul_ofIdx_iff_not_mem {i : ι} (hi : i ∈ b.support) :
+lemma mem_inversions_mul_ofIdx_iff_not_mem {i : ι} (hi : b.IsPos i) :
     i ∈ inversions P b (w * RootPairing.weylGroup.ofIdx P i) ↔
       i ∉ inversions P b w := by
   classical
   let := P.indexNeg
-  simp only [mem_inversions, b.isPos_of_mem_support hi, true_and,
+  simp only [mem_inversions, hi, true_and,
     RootPairing.weylGroupToPerm_mul_ofIdx_apply, ← RootPairing.indexNeg_neg,
     RootPairing.weylGroupToPerm_neg, RootPairing.Base.IsPos.neg_iff_not]
 
@@ -106,7 +107,7 @@ theorem ncard_inversions_mul_ofIdx_of_notMem {i : ι} (hi : i ∈ b.support)
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard =
       (inversions P b w).ncard + 1 := by
   have hiws : i ∈ inversions P b (w * RootPairing.weylGroup.ofIdx P i) :=
-    (mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mpr hiw
+    (mem_inversions_mul_ofIdx_iff_not_mem P w b (b.isPos_of_mem_support hi)).mpr hiw
   calc
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard =
         (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard + 1 :=
@@ -122,7 +123,7 @@ theorem ncard_inversions_mul_ofIdx_of_mem {i : ι} (hi : i ∈ b.support)
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
       (inversions P b w).ncard := by
   have hiws : i ∉ inversions P b (w * RootPairing.weylGroup.ofIdx P i) := fun h ↦
-    (mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mp h hiw
+    (mem_inversions_mul_ofIdx_iff_not_mem P w b (b.isPos_of_mem_support hi)).mp h hiw
   calc
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard + 1 =
         (inversions P b (w * RootPairing.weylGroup.ofIdx P i) \ {i}).ncard + 1 := by

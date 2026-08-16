@@ -43,7 +43,9 @@ variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [Nonarchimede
 it exist: `φ` continuous at zero and the weighted monomials `φ(Tν) · bν` bounded.
 
 With `weightedEvalHom_weightedC` and `weightedEvalHom_weightedX`, this gives every property
-Proposition 5.50 asks of the extension except the uniqueness, which is not proved here. -/
+Proposition 5.50 asks of the extension except the uniqueness, which is
+`TauCeti.Huber.weightedRestrictedSubring_ringHom_ext_of_continuous`;
+`WeightedEval/UniversalProperty.lean` assembles the two into 5.50. -/
 theorem continuous_weightedEvalHom (hT : IsWeightFamily T) (hφ : ContinuousAt φ 0)
     (hb : IsWeightBounded φ T b) : Continuous (weightedEvalHom hT hφ hb) := by
   have _ : IsTopologicalRing (weightedRestrictedSubring T hT) :=

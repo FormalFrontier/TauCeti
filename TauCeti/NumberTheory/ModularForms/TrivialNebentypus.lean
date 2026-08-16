@@ -16,19 +16,23 @@ form for the bare congruence subgroup `Γ₀(N)`, and as an element of the chara
 character `χ = 1`. The ModularForms roadmap flags the clash and pins its resolution: prove the
 two isomorphic, then use `M_k(Γ₀(N))` as the default spelling and convert to it. This file is
 that milestone, for modular forms (`TauCeti.modFormCharSpaceOneEquiv`) and for cusp forms
-(`TauCeti.cuspFormCharSpaceOneEquiv`).
+(`TauCeti.cuspFormCharSpaceOneEquiv`), both stated for `N ≠ 0`.
 
 Both directions are instances of the generic subgroup-change API of
 `TauCeti.NumberTheory.ModularForms.Basic`. Restricting a `Γ₀(N)`-form to `Γ₁(N)`
 (`ModularForm.ofLe`) is unconditional, and the resulting form has trivial nebentypus because
 the diamond operators are slashes by elements of `Γ₀(N)`. Conversely, a `Γ₁(N)`-form with
-trivial nebentypus is `Γ₀(N)`-slash invariant by the nebentypus bridge
+trivial nebentypus is `Γ₀(N)`-slash invariant by the nebentypus criterion
 `mem_modFormCharSpace_iff_nebentypus`, and it is bounded (resp. zero) at every cusp of `Γ₀(N)`
-because `Γ₀(N)` and `Γ₁(N)` are arithmetic, hence share the cusps of `SL(2, ℤ)`
-(`Subgroup.IsArithmetic.isCusp_of_isCusp`); this is `ModularForm.ofSlashInvariant`. Both
-constructions preserve the underlying function `ℍ → ℂ`, so the resulting bijections are
+because for `N ≠ 0` the groups `Γ₀(N)` and `Γ₁(N)` are arithmetic, hence share the cusps of
+`SL(2, ℤ)` (`Subgroup.IsArithmetic.isCusp_of_isCusp`); this is `ModularForm.ofSlashInvariant`.
+Both constructions preserve the underlying function `ℍ → ℂ`, so the resulting bijections are
 `ℂ`-linear and conversion in either direction costs nothing: see the `coe_…_apply` lemmas
 below.
+
+The hypothesis `N ≠ 0` is therefore needed only for that converse direction: the
+characterisations of trivial nebentypus and the results about restricting a `Γ₀(N)`-form hold
+at every level, while the range equalities and the two equivalences assume `[NeZero N]`.
 
 Note what the isomorphism is *not*: `M_k(Γ₁(N), 1)` is a `Submodule` of `M_k(Γ₁(N))`, so the
 statement is that a submodule of the level-`Γ₁(N)` space is linearly equivalent to another
@@ -36,8 +40,8 @@ space of forms, not an equality of types.
 
 ## Main definitions
 
-* `TauCeti.modFormCharSpaceOneEquiv`, `TauCeti.cuspFormCharSpaceOneEquiv`: the `ℂ`-linear
-  equivalences `M_k(Γ₁(N), 1) ≃ₗ M_k(Γ₀(N))` and `S_k(Γ₁(N), 1) ≃ₗ S_k(Γ₀(N))`.
+* `TauCeti.modFormCharSpaceOneEquiv`, `TauCeti.cuspFormCharSpaceOneEquiv`: for `N ≠ 0`, the
+  `ℂ`-linear equivalences `M_k(Γ₁(N), 1) ≃ₗ M_k(Γ₀(N))` and `S_k(Γ₁(N), 1) ≃ₗ S_k(Γ₀(N))`.
 
 ## Main results
 
@@ -46,8 +50,9 @@ space of forms, not an equality of types.
 * `TauCeti.mem_modFormCharSpace_one_iff_diamondOp`,
   `TauCeti.mem_cuspFormCharSpace_one_iff_diamondOpCusp`: equivalently, being fixed by every
   diamond operator.
-* `TauCeti.modFormCharSpace_one_eq_range`, `TauCeti.cuspFormCharSpace_one_eq_range`: the
-  trivial-nebentypus space is the image of the restriction map from level `Γ₀(N)`.
+* `TauCeti.modFormCharSpace_one_eq_range`, `TauCeti.cuspFormCharSpace_one_eq_range`: for
+  `N ≠ 0`, the trivial-nebentypus space is the image of the restriction map from level
+  `Γ₀(N)`.
 
 ## References
 
@@ -62,7 +67,7 @@ open scoped MatrixGroups ModularForm
 
 namespace TauCeti
 
-variable {N : ℕ} [NeZero N] {k : ℤ}
+variable {N : ℕ} {k : ℤ}
 
 /-! ### Trivial nebentypus is `Γ₀(N)`-invariance -/
 
@@ -128,7 +133,7 @@ theorem diamondOpCusp_ofLe (f : CuspForm ((Gamma0 N).map (mapGL ℝ)) k) (d : (Z
   (mem_cuspFormCharSpace_one_iff_diamondOpCusp _).mp (ofLe_mem_cuspFormCharSpace_one f) d
 
 /-- The trivial-nebentypus space is exactly the image of `M_k(Γ₀(N))` under restriction. -/
-theorem modFormCharSpace_one_eq_range :
+theorem modFormCharSpace_one_eq_range [NeZero N] :
     modFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) =
       LinearMap.range (ModularForm.ofLeₗ (k := k) (Gamma1_map_le_Gamma0_map N)) :=
   Submodule.ext fun f ↦
@@ -136,7 +141,7 @@ theorem modFormCharSpace_one_eq_range :
       (ModularForm.mem_range_ofLeₗ_iff _ Subgroup.IsArithmetic.isCusp_of_isCusp f).symm
 
 /-- The trivial-nebentypus space is exactly the image of `S_k(Γ₀(N))` under restriction. -/
-theorem cuspFormCharSpace_one_eq_range :
+theorem cuspFormCharSpace_one_eq_range [NeZero N] :
     cuspFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) =
       LinearMap.range (CuspForm.ofLeₗ (k := k) (Gamma1_map_le_Gamma0_map N)) :=
   Submodule.ext fun f ↦
@@ -170,7 +175,7 @@ noncomputable def modFormCharSpaceOneEquiv (N : ℕ) [NeZero N] (k : ℤ) :
 trivial-nebentypus form is converted to a `Γ₀(N)`-form by re-reading it, not by transporting
 it. -/
 @[simp]
-theorem coe_modFormCharSpaceOneEquiv_apply
+theorem coe_modFormCharSpaceOneEquiv_apply [NeZero N]
     (f : modFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)) :
     ⇑(modFormCharSpaceOneEquiv N k f) = ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ModularForm.coe_ofSlashInvariant _ _ _
@@ -178,7 +183,8 @@ theorem coe_modFormCharSpaceOneEquiv_apply
 /-- The inverse of `modFormCharSpaceOneEquiv` is the restriction `ModularForm.ofLe` of a
 `Γ₀(N)`-form to `Γ₁(N)`; in particular it too preserves the underlying function on `ℍ`. -/
 @[simp]
-theorem coe_modFormCharSpaceOneEquiv_symm_apply (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
+theorem coe_modFormCharSpaceOneEquiv_symm_apply [NeZero N]
+    (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
     (((modFormCharSpaceOneEquiv N k).symm f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
       ModularForm.ofLe (Gamma1_map_le_Gamma0_map N) f :=
@@ -201,7 +207,7 @@ noncomputable def cuspFormCharSpaceOneEquiv (N : ℕ) [NeZero N] (k : ℤ) :
 trivial-nebentypus cusp form is converted to a `Γ₀(N)`-cusp form by re-reading it, not by
 transporting it. -/
 @[simp]
-theorem coe_cuspFormCharSpaceOneEquiv_apply
+theorem coe_cuspFormCharSpaceOneEquiv_apply [NeZero N]
     (f : cuspFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)) :
     ⇑(cuspFormCharSpaceOneEquiv N k f) = ⇑(f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   CuspForm.coe_ofSlashInvariant _ _ _
@@ -209,7 +215,8 @@ theorem coe_cuspFormCharSpaceOneEquiv_apply
 /-- The inverse of `cuspFormCharSpaceOneEquiv` is the restriction `CuspForm.ofLe` of a
 `Γ₀(N)`-cusp form to `Γ₁(N)`; in particular it too preserves the underlying function on `ℍ`. -/
 @[simp]
-theorem coe_cuspFormCharSpaceOneEquiv_symm_apply (f : CuspForm ((Gamma0 N).map (mapGL ℝ)) k) :
+theorem coe_cuspFormCharSpaceOneEquiv_symm_apply [NeZero N]
+    (f : CuspForm ((Gamma0 N).map (mapGL ℝ)) k) :
     (((cuspFormCharSpaceOneEquiv N k).symm f : cuspFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
       CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
       CuspForm.ofLe (Gamma1_map_le_Gamma0_map N) f :=

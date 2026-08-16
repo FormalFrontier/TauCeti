@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.MonoidAlgebra.Module
 public import Mathlib.RepresentationTheory.Subrepresentation
+public import TauCeti.Algebra.MonoidAlgebra.Basis
 
 /-!
 # The augmentation subrepresentation of a permutation representation
@@ -46,10 +46,11 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
 
 The augmentation used here is Mathlib's `Module.Basis.sumCoords` of the standard basis
 `MonoidAlgebra.basis X k`, a `k`-linear map on the free module `k[X]` of an arbitrary index type
-`X`, because that is what a permutation representation acts on.  Nothing is restated about it: the
-one lemma this file adds, `TauCeti.MonoidAlgebra.basis_repr`, is the bridge from that basis to
-`MonoidAlgebra.coeff` that Mathlib does not record, and the generic `Module.Basis` API computes
-with the augmentation once it is available.  The augmentation is therefore *not* an instance
+`X`, because that is what a permutation representation acts on.  Nothing is restated about it:
+`TauCeti.MonoidAlgebra.basis_repr` of `TauCeti.Algebra.MonoidAlgebra.Basis` is the bridge from that
+basis to `MonoidAlgebra.coeff` that Mathlib does not record, and the generic `Module.Basis` API
+computes with the augmentation once it is available.  The augmentation is therefore *not* an
+instance
 of `TauCeti.MonoidAlgebra.augmentation` of `TauCeti.Algebra.MonoidAlgebra.Exactness`, which is the
 ring homomorphism `k[M] →+* k` of a monoid algebra: a `G`-set carries no multiplication, so there
 is no ring structure on `k[X]` for a ring homomorphism to be defined on.  On the overlap, `X` a
@@ -80,18 +81,6 @@ namespace TauCeti
 section Augmentation
 
 variable {k : Type*} [Semiring k] {X : Type*}
-
-/-- The coordinates of `k[X]` in the standard basis are the coefficients.
-
-Mathlib defines `MonoidAlgebra.basis` by `repr := MonoidAlgebra.coeffLinearEquiv _` but records no
-lemma for the resulting `repr`.  This is that missing bridge, and it is all that is needed for the
-generic basis API -- `Module.Basis.coe_sumCoords`, `Module.Basis.coe_sumCoords_of_fintype`,
-`Module.Basis.sumCoords_self_apply` -- to compute the augmentation in terms of
-`MonoidAlgebra.coeff`. -/
-@[simp]
-theorem MonoidAlgebra.basis_repr (v : MonoidAlgebra k X) :
-    (MonoidAlgebra.basis X k).repr v = v.coeff :=
-  rfl
 
 /-- The **augmentation** of `k[X]` is `Module.Basis.sumCoords` of the standard basis: the linear
 map sending an element to the sum of its coefficients.  It is surjective as soon as there is a

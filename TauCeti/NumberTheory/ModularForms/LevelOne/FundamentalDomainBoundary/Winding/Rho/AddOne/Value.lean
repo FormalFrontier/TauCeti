@@ -69,17 +69,17 @@ private lemma telescope_rho_add_one_piece_right_vertical (hH : Real.sqrt 3 / 2 <
       Complex.log (fdBoundary H (1 - δL) - ((UpperHalfPlane.ρ : ℂ) + 1)) -
         Complex.log (fdBoundary H 0 - ((UpperHalfPlane.ρ : ℂ) + 1)) := by
   have hab : (0 : ℝ) ≤ 1 - δL := by linarith
-  have heval : ∀ s ∈ Icc (0 : ℝ) (1 - δL), fdBoundary H s = fdBoundary_segment1 H s :=
+  have heval : ∀ s ∈ Icc (0 : ℝ) (1 - δL), fdBoundary H s = fdBoundarySegment1 H s :=
     fun s hs ↦ fdBoundary_of_le_one (by linarith [hs.2])
-  have hd : deriv (fun s ↦ fdBoundary_segment1 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) =
+  have hd : deriv (fun s ↦ fdBoundarySegment1 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) =
       fun _ ↦ (UpperHalfPlane.ρ : ℂ) + 1 - (1 / 2 + H * Complex.I) :=
-    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment1]
+    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundarySegment1]
   exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - ((UpperHalfPlane.ρ : ℂ) + 1))
-    (h := fun s ↦ fdBoundary_segment1 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) hab
+    (h := fun s ↦ fdBoundarySegment1 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) hab
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
-      ((hasDerivAt_fdBoundary_segment1 H s).differentiableAt.sub_const _)))
-    (fun t _ ↦ (hasDerivAt_fdBoundary_segment1 H t).differentiableAt.sub_const _)
+      ((hasDerivAt_fdBoundarySegment1 H s).differentiableAt.sub_const _)))
+    (fun t _ ↦ (hasDerivAt_fdBoundarySegment1 H t).differentiableAt.sub_const _)
     (by rw [hd]; exact continuousOn_const)
     (fun t ht ↦ heval t ht ▸ (by
       refine Complex.mem_slitPlane_iff.mpr (Or.inr ?_)
@@ -106,20 +106,20 @@ private lemma telescope_rho_add_one_piece_arc_first (H : ℝ) (hδR : 0 < δR) (
       Complex.log (fdBoundary H 2 - ((UpperHalfPlane.ρ : ℂ) + 1)) -
         Complex.log (fdBoundary H (1 + δR) - ((UpperHalfPlane.ρ : ℂ) + 1)) := by
   have hab : (1 + δR : ℝ) ≤ 2 := by linarith
-  have heval : ∀ s ∈ Icc (1 + δR : ℝ) 2, fdBoundary H s = fdBoundary_segment2 s :=
+  have heval : ∀ s ∈ Icc (1 + δR : ℝ) 2, fdBoundary H s = fdBoundarySegment2 s :=
     fun s hs ↦ fdBoundary_of_le_two (by linarith [hs.1]) hs.2
-  have hd : deriv (fun s ↦ fdBoundary_segment2 s - ((UpperHalfPlane.ρ : ℂ) + 1)) = fun s ↦
+  have hd : deriv (fun s ↦ fdBoundarySegment2 s - ((UpperHalfPlane.ρ : ℂ) + 1)) = fun s ↦
       (Real.pi / 2 - Real.pi / 3) •
         (circleMap 0 1 (Real.pi / 3 + (s - 1) * (Real.pi / 2 - Real.pi / 3)) * Complex.I) :=
-    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment2]
+    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundarySegment2]
   have hθc : Continuous fun s : ℝ ↦ Real.pi / 3 + (s - 1) * (Real.pi / 2 - Real.pi / 3) := by
     fun_prop
   exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - ((UpperHalfPlane.ρ : ℂ) + 1))
-    (h := fun s ↦ fdBoundary_segment2 s - ((UpperHalfPlane.ρ : ℂ) + 1)) hab
+    (h := fun s ↦ fdBoundarySegment2 s - ((UpperHalfPlane.ρ : ℂ) + 1)) hab
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
-      ((hasDerivAt_fdBoundary_segment2 s).differentiableAt.sub_const _)))
-    (fun t _ ↦ (hasDerivAt_fdBoundary_segment2 t).differentiableAt.sub_const _)
+      ((hasDerivAt_fdBoundarySegment2 s).differentiableAt.sub_const _)))
+    (fun t _ ↦ (hasDerivAt_fdBoundarySegment2 t).differentiableAt.sub_const _)
     (by
       rw [hd]
       exact (Continuous.const_smul
@@ -143,45 +143,30 @@ private lemma telescope_rho_add_one_piece_arc_second (H : ℝ) :
           (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)) =
       Complex.log (fdBoundary H 3 - ((UpperHalfPlane.ρ : ℂ) + 1)) -
         Complex.log (fdBoundary H 2 - ((UpperHalfPlane.ρ : ℂ) + 1)) := by
-  have heval : ∀ s ∈ Icc (2 : ℝ) 3, fdBoundary H s = fdBoundary_segment3 s := by
-    intro s hs
-    rcases eq_or_lt_of_le hs.1 with h2 | h2
-    · rw [← h2, fdBoundary_apply_two, fdBoundary_segment3_apply_two]
-    · exact fdBoundary_of_le_three h2 hs.2
-  have hd : deriv (fun s ↦ fdBoundary_segment3 s - ((UpperHalfPlane.ρ : ℂ) + 1)) = fun s ↦
+  have heval : ∀ s ∈ Icc (2 : ℝ) 3, fdBoundary H s = fdBoundarySegment3 s :=
+    eqOn_fdBoundarySegment3 H
+  have hd : deriv (fun s ↦ fdBoundarySegment3 s - ((UpperHalfPlane.ρ : ℂ) + 1)) = fun s ↦
       (2 * Real.pi / 3 - Real.pi / 2) •
         (circleMap 0 1 (Real.pi / 2 + (s - 2) * (2 * Real.pi / 3 - Real.pi / 2)) *
           Complex.I) :=
-    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment3]
-  have hθc : Continuous fun s : ℝ ↦
-      Real.pi / 2 + (s - 2) * (2 * Real.pi / 3 - Real.pi / 2) := by
-    fun_prop
+    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundarySegment3]
   have hne : ∀ t ∈ Icc (2 : ℝ) 3, fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1) ≠ 0 := by
     intro t ht
     rcases eq_or_lt_of_le ht.2 with h3 | h3
-    · rw [h3, fdBoundary_apply_three]
-      norm_num
-    · have him := im_fdBoundary_sub_rho_add_one_arc_pos H (by linarith [ht.1]) h3
-      exact fun h0 ↦ by rw [h0] at him; simp at him
-  have hne' : ∀ t ∈ Icc (2 : ℝ) 3,
-      fdBoundary_segment3 t - ((UpperHalfPlane.ρ : ℂ) + 1) ≠ 0 := fun t ht ↦
-    heval t ht ▸ hne t ht
+    · simp [h3, fdBoundary_apply_three]
+    · exact ne_of_apply_ne Complex.im
+        (im_fdBoundary_sub_rho_add_one_arc_pos H (by linarith [ht.1]) h3).ne'
   exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_im_nonneg_of_le
     (g := fun s ↦ fdBoundary H s - ((UpperHalfPlane.ρ : ℂ) + 1))
-    (h := fun s ↦ fdBoundary_segment3 s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
+    (h := fun s ↦ fdBoundarySegment3 s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
-      (hasDerivAt_fdBoundary_segment3 s).differentiableAt.sub_const _))
-    (fun t _ ↦ (hasDerivAt_fdBoundary_segment3 t).differentiableAt.sub_const _)
-    (by
-      rw [hd]
-      exact (Continuous.const_smul
-        (((continuous_circleMap 0 1).comp hθc).mul continuous_const)
-        (2 * Real.pi / 3 - Real.pi / 2)).continuousOn)
-    hne'
-    (fun t ht ↦
-      heval t ht ▸ im_fdBoundary_sub_rho_add_one_arc_nonneg H ⟨by linarith [ht.1], ht.2⟩)
+      (hasDerivAt_fdBoundarySegment3 s).differentiableAt.sub_const _))
+    (fun t _ ↦ (hasDerivAt_fdBoundarySegment3 t).differentiableAt.sub_const _)
+    (by rw [hd]; fun_prop)
+    (fun t ht ↦ heval t ht ▸ hne t ht)
+    (fun t ht ↦ heval t ht ▸ im_fdBoundary_sub_rho_add_one_arc_nonneg H ⟨by linarith [ht.1], ht.2⟩)
     (fun t ht ↦ heval t ⟨ht.1.le, ht.2.le⟩ ▸ Complex.mem_slitPlane_iff.mpr (Or.inr
-      (ne_of_gt (im_fdBoundary_sub_rho_add_one_arc_pos H (by linarith [ht.1]) ht.2))))
+      (im_fdBoundary_sub_rho_add_one_arc_pos H (by linarith [ht.1]) ht.2).ne'))
     (fun t ht ↦ congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval t ⟨ht.1.le, ht.2.le⟩))
     (congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval 2 (left_mem_Icc.mpr (by norm_num))))
     (congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval 3 (right_mem_Icc.mpr (by norm_num))))
@@ -198,45 +183,29 @@ private lemma telescope_rho_add_one_piece_left_vertical (hH : Real.sqrt 3 / 2 < 
           (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)) =
       Complex.log (fdBoundary H 4 - ((UpperHalfPlane.ρ : ℂ) + 1)) -
         Complex.log (fdBoundary H 3 - ((UpperHalfPlane.ρ : ℂ) + 1)) := by
-  have heval : ∀ s ∈ Icc (3 : ℝ) 4, fdBoundary H s = fdBoundary_segment4 H s := by
-    intro s hs
-    rcases eq_or_lt_of_le hs.1 with h3 | h3
-    · rw [← h3, fdBoundary_apply_three, fdBoundary_segment4_apply_three]
-    · exact fdBoundary_of_le_four h3 hs.2
-  have hd : deriv (fun s ↦ fdBoundary_segment4 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) =
+  have heval : ∀ s ∈ Icc (3 : ℝ) 4, fdBoundary H s = fdBoundarySegment4 H s :=
+    eqOn_fdBoundarySegment4 H
+  have hd : deriv (fun s ↦ fdBoundarySegment4 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) =
       fun _ ↦ -1 / 2 + H * Complex.I - (UpperHalfPlane.ρ : ℂ) :=
-    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment4]
-  have him : ∀ t ∈ Icc (3 : ℝ) 4,
-      (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im =
-        (t - 3) * (H - Real.sqrt 3 / 2) := fun t ht ↦ by
-    rw [fdBoundary_sub_rho_add_one_of_mem_Icc_three_four H ht]
-    simp
-  have hne : ∀ t ∈ Icc (3 : ℝ) 4, fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1) ≠ 0 := by
-    intro t ht h0
-    have hre : (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).re = -1 := by
-      rw [fdBoundary_sub_rho_add_one_of_mem_Icc_three_four H ht]
-      simp
-    rw [h0] at hre
-    norm_num at hre
-  have hne' : ∀ t ∈ Icc (3 : ℝ) 4,
-      fdBoundary_segment4 H t - ((UpperHalfPlane.ρ : ℂ) + 1) ≠ 0 := fun t ht ↦
-    heval t ht ▸ hne t ht
+    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundarySegment4]
+  have him : ∀ t ∈ Icc (3 : ℝ) 4, (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im =
+      (t - 3) * (H - Real.sqrt 3 / 2) := fun t ht ↦ by
+    simp [fdBoundary_sub_rho_add_one_of_mem_Icc_three_four H ht]
+  have hne : ∀ t ∈ Icc (3 : ℝ) 4, fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1) ≠ 0 :=
+    fun t ht ↦ ne_of_apply_ne Complex.re <| by
+      simp [fdBoundary_sub_rho_add_one_of_mem_Icc_three_four H ht]
   exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_im_nonneg_of_le
     (g := fun s ↦ fdBoundary H s - ((UpperHalfPlane.ρ : ℂ) + 1))
-    (h := fun s ↦ fdBoundary_segment4 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
+    (h := fun s ↦ fdBoundarySegment4 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
-      (hasDerivAt_fdBoundary_segment4 H s).differentiableAt.sub_const _))
-    (fun t _ ↦ (hasDerivAt_fdBoundary_segment4 H t).differentiableAt.sub_const _)
+      (hasDerivAt_fdBoundarySegment4 H s).differentiableAt.sub_const _))
+    (fun t _ ↦ (hasDerivAt_fdBoundarySegment4 H t).differentiableAt.sub_const _)
     (by rw [hd]; exact continuousOn_const)
-    hne'
-    (fun t ht ↦ heval t ht ▸ (by
-      rw [him t ht]
-      exact mul_nonneg (by linarith [ht.1]) (by linarith)))
-    (fun t ht ↦ heval t ⟨ht.1.le, ht.2.le⟩ ▸ Complex.mem_slitPlane_iff.mpr (Or.inr (by
-      rw [him t ⟨ht.1.le, ht.2.le⟩]
-      have := mul_pos (by linarith [ht.1] : (0 : ℝ) < t - 3) (by linarith :
-        (0 : ℝ) < H - Real.sqrt 3 / 2)
-      linarith)))
+    (fun t ht ↦ heval t ht ▸ hne t ht)
+    (fun t ht ↦ heval t ht ▸ him t ht ▸ mul_nonneg (by linarith [ht.1]) (by linarith))
+    (fun t ht ↦ heval t ⟨ht.1.le, ht.2.le⟩ ▸ Complex.mem_slitPlane_iff.mpr (Or.inr
+      (him t ⟨ht.1.le, ht.2.le⟩ ▸ (mul_pos (by linarith [ht.1] : (0 : ℝ) < t - 3)
+        (by linarith)).ne')))
     (fun t ht ↦ congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval t ⟨ht.1.le, ht.2.le⟩))
     (congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval 3 (left_mem_Icc.mpr (by norm_num))))
     (congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval 4 (right_mem_Icc.mpr (by norm_num))))
@@ -252,32 +221,23 @@ private lemma telescope_rho_add_one_piece_ceiling (hH : Real.sqrt 3 / 2 < H) :
           (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)) =
       Complex.log (fdBoundary H 5 - ((UpperHalfPlane.ρ : ℂ) + 1)) -
         Complex.log (fdBoundary H 4 - ((UpperHalfPlane.ρ : ℂ) + 1)) := by
-  have heval : ∀ s ∈ Icc (4 : ℝ) 5, fdBoundary H s = fdBoundary_segment5 H s := by
-    intro s hs
-    rcases eq_or_lt_of_le hs.1 with h4 | h4
-    · rw [← h4, fdBoundary_apply_four, fdBoundary_segment5_apply_four]
-    · exact fdBoundary_of_gt_four h4
-  have hd : deriv (fun s ↦ fdBoundary_segment5 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) =
+  have heval : ∀ s ∈ Icc (4 : ℝ) 5, fdBoundary H s = fdBoundarySegment5 H s :=
+    eqOn_fdBoundarySegment5 H
+  have hd : deriv (fun s ↦ fdBoundarySegment5 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) =
       fun _ ↦ (1 : ℂ) :=
-    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment5]
-  have hslit : ∀ t ∈ Icc (4 : ℝ) 5,
-      fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1) ∈ Complex.slitPlane := by
-    intro t ht
-    refine Complex.mem_slitPlane_iff.mpr (Or.inr ?_)
-    have him : (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im =
-        H - Real.sqrt 3 / 2 := by
-      rw [Complex.sub_im, im_fdBoundary_segment5 H ht]
-      norm_num [UpperHalfPlane.ρ]
-    rw [him]
-    linarith
+    funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundarySegment5]
+  have him : ∀ t ∈ Icc (4 : ℝ) 5,
+      (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im = H - Real.sqrt 3 / 2 := fun t ht ↦ by
+    rw [Complex.sub_im, im_fdBoundarySegment5 H ht, rho_add_one_im]
   exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - ((UpperHalfPlane.ρ : ℂ) + 1))
-    (h := fun s ↦ fdBoundary_segment5 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
+    (h := fun s ↦ fdBoundarySegment5 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
-      ((hasDerivAt_fdBoundary_segment5 H s).differentiableAt.sub_const _)))
-    (fun t _ ↦ (hasDerivAt_fdBoundary_segment5 H t).differentiableAt.sub_const _)
+      (hasDerivAt_fdBoundarySegment5 H s).differentiableAt.sub_const _))
+    (fun t _ ↦ (hasDerivAt_fdBoundarySegment5 H t).differentiableAt.sub_const _)
     (by rw [hd]; exact continuousOn_const)
-    (fun t ht ↦ heval t ht ▸ hslit t ht)
+    (fun t ht ↦ heval t ht ▸ Complex.mem_slitPlane_iff.mpr
+      (Or.inr ((him t ht).trans_ne (sub_pos.mpr hH).ne')))
     (fun t ht ↦ congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval t ⟨ht.1.le, ht.2.le⟩))
     (congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval 4 (left_mem_Icc.mpr (by norm_num))))
     (congrArg (· - ((UpperHalfPlane.ρ : ℂ) + 1)) (heval 5 (right_mem_Icc.mpr (by norm_num))))
@@ -400,13 +360,9 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   set δR := fdBoundaryArcExcisionHalfWidth ε with hδR_def
   have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := by linarith
   set δL := ε / (H - Real.sqrt 3 / 2) with hδL_def
-  have hδL_pos : 0 < δL := by rw [hδL_def]; positivity
-  have hδL_le : δL ≤ 1 := by
-    rw [hδL_def, div_le_one hHpos]
-    linarith
-  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := by
-    rw [hδL_def]
-    exact div_mul_cancel₀ ε hHpos.ne'
+  have hδL_pos : 0 < δL := div_pos hε hHpos
+  have hδL_le : δL ≤ 1 := (div_le_one hHpos).2 hεH.le
+  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := div_mul_cancel₀ ε hHpos.ne'
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho_add_one H hH hδL_pos hδL_le hδR_pos hδR_lt
   have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
@@ -480,12 +436,7 @@ theorem hasCauchyPVAt_fdBoundary_rho_add_one (hH : Real.sqrt 3 / 2 < H) :
       refine continuous_const.sub ((Complex.continuous_ofReal.comp ?_).mul continuous_const)
       exact Real.continuous_arcsin.comp (continuous_id.div_const 2)
     simpa [Real.arcsin_zero] using (hc.tendsto 0).mono_left nhdsWithin_le_nhds
-  refine Contour.hasCauchyPVAt_iff.mpr ⟨?_, ?_⟩
-  · filter_upwards [hIoo] with ε hε
-    exact (hspec ε hε).1
-  · refine Tendsto.congr' ?_ hcont
-    filter_upwards [hIoo] with ε hε
-    exact ((hspec ε hε).2).symm
+  exact Contour.HasCauchyPVAt.of_tendsto hcont (eventually_of_mem hIoo hspec)
 
 /-- **The winding number of the boundary contour at `ρ + 1` is `-1/6`**: the corner
 `ρ + 1` sits on the contour with interior angle `π/3` — the gap between the one-sided

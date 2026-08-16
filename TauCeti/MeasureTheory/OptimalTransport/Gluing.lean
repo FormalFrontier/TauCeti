@@ -99,9 +99,6 @@ theorem lintegral_glue [SFinite π] [IsSFiniteKernel κ] {f : X × Y × Z → �
   rw [glue, lintegral_map hf MeasurableEquiv.prodAssoc.measurable]
   exact MeasureTheory.Measure.lintegral_compProd (hf.comp MeasurableEquiv.prodAssoc.measurable)
 
-instance instSFiniteGlue [SFinite π] [IsSFiniteKernel κ] : SFinite (glue π κ) := by
-  rw [glue]; infer_instance
-
 instance instIsFiniteMeasureGlue [IsFiniteMeasure π] [IsFiniteKernel κ] :
     IsFiniteMeasure (glue π κ) := by
   rw [glue]; infer_instance

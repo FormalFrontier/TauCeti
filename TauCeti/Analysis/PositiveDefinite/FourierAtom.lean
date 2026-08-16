@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 public import Mathlib.Analysis.Complex.Circle
 public import Mathlib.Analysis.InnerProductSpace.Basic
 
@@ -17,9 +17,11 @@ It uses Mathlib's `2π` Fourier convention.
 ## Main declarations
 
 * `TauCeti.fourierAtom`: the spatial atom `v ↦ exp (-2πi⟪v, q⟫)`.
-* `TauCeti.isPositiveDefiniteKernel_fourierAtom`: the subtraction kernel attached to a
+* `TauCeti.posSemidef_fourierAtom`: the subtraction kernel attached to a
   Fourier atom is positive definite.
 * `TauCeti.continuous_fourierAtom`: Fourier atoms are continuous in the spatial variable.
+* `TauCeti.fourierAtom_zero_left` and `TauCeti.fourierAtom_zero_right`: a Fourier atom is `1`
+  when either argument is `0`.
 -/
 
 public section
@@ -50,6 +52,18 @@ theorem fourierAtom_apply (q : V) (v : V) :
   norm_num [Complex.ofReal_mul, Complex.ofReal_neg]
   ring
 
+/-- A Fourier atom at the zero frequency is `1`.
+
+Not a `@[simp]` lemma: `simp` already proves it through `fourierAtom_apply`, and the simpNF
+linter reports the tagged form as a duplicate. -/
+theorem fourierAtom_zero_left (v : V) : fourierAtom (0 : V) v = 1 := by
+  simp [fourierAtom]
+
+/-- A Fourier atom evaluated at the zero point is `1`. Not a `@[simp]` lemma, for the same
+reason as `fourierAtom_zero_left`. -/
+theorem fourierAtom_zero_right (q : V) : fourierAtom q (0 : V) = 1 := by
+  simp [fourierAtom]
+
 /-- Fourier atoms turn spatial subtraction into a rank-one positive-definite kernel. -/
 theorem fourierAtom_sub (q v w : V) :
     fourierAtom q (v - w) =
@@ -63,10 +77,10 @@ theorem fourierAtom_sub (q v w : V) :
   ring_nf
 
 /-- The spatial subtraction kernel supplied by a Fourier atom is positive definite. -/
-theorem isPositiveDefiniteKernel_fourierAtom (q : V) :
-    IsPositiveDefiniteKernel fun v w : V => fourierAtom q (v - w) := by
+theorem posSemidef_fourierAtom (q : V) :
+    Matrix.PosSemidef fun v w : V => fourierAtom q (v - w) := by
   simp_rw [fourierAtom_sub]
-  exact isPositiveDefiniteKernel_conj_mul
+  simpa only [RCLike.star_def] using posSemidef_rankOne
     (fun v : V => Complex.exp (2 * ((Real.pi : ℝ) : ℂ) * Complex.I * ((inner ℝ v q : ℝ) : ℂ)))
 
 /-- Fourier atoms are continuous in the spatial variable. -/

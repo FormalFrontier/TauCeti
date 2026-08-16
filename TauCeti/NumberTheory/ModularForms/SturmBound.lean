@@ -6,7 +6,7 @@ module
 
 public import Mathlib.NumberTheory.ModularForms.LevelOne.DimensionFormula
 public import Mathlib.RingTheory.Polynomial.DegreeLT
-public import TauCeti.NumberTheory.ModularForms.NormTrace
+public import TauCeti.NumberTheory.ModularForms.Norm.Trace
 public import TauCeti.NumberTheory.ModularForms.QExpansion.Basic
 
 /-!
@@ -19,7 +19,7 @@ For `𝒢 ≤ GL(2, ℝ)` of finite relative index in `𝒮ℒ` with discrete st
 
 The proof lifts the level-one bound `ModularForm.sturm_bound_levelOne` through the norm map:
 the norm of `f` vanishes exactly when `f` does, and by the decomposition
-`TauCeti.ModularForm.exists_norm_decomposition` sufficient vanishing of `f` at `∞`
+`TauCeti.ModularForm.qExpansion_one_norm_order_eq` sufficient vanishing of `f` at `∞`
 propagates to the norm.
 
 ## Main declarations
@@ -63,33 +63,14 @@ private lemma qExpansion_order_le_qExpansion_norm_order [DiscreteTopology 𝒢.s
       (qExpansion 1 (_root_.ModularForm.norm 𝒮ℒ f)).order := by
   obtain ⟨m', hm'_pos, hnRw⟩ :=
     Subgroup.exists_pos_nat_integerCuspWidth_eq_mul_strictWidthInfty (𝒢 := 𝒢)
-  have hn_pos : 0 < Subgroup.integerCuspWidth 𝒢 := Subgroup.integerCuspWidth_pos
-  have hnR_pos : (0 : ℝ) < Subgroup.integerCuspWidth 𝒢 := by exact_mod_cast hn_pos
   have hf_w_per : Function.Periodic (⇑f ∘ ofComplex) 𝒢.strictWidthInfty :=
     SlashInvariantFormClass.periodic_comp_ofComplex f 𝒢.strictWidthInfty_mem_strictPeriods
-  have hf_bdd : IsBoundedAtImInfty f := OnePoint.isBoundedAt_infty_iff.mp <|
-    f.bdd_at_cusps' <|
-      Subgroup.isCusp_of_mem_strictPeriods hnR_pos Subgroup.integerCuspWidth_mem_strictPeriods
-  have hf_n_per : Function.Periodic (⇑f ∘ ofComplex)
-      ((Subgroup.integerCuspWidth 𝒢 : ℕ) : ℝ) := by
-    rw [hnRw]
-    exact_mod_cast hf_w_per.nat_mul m'
-  obtain ⟨rest, _, h_rest_an, h_decomp⟩ := exists_norm_decomposition f
-  -- `h_decomp` is a pointwise identity; `funext` converts it to an equality of functions so
-  -- the `q`-expansion of the norm literally becomes that of the product, and `qExpansion_mul`
-  -- (with both cusp functions analytic at `0`) splits it.
-  have h_qexp : qExpansion 1 (_root_.ModularForm.norm 𝒮ℒ f) =
-      qExpansion 1 (galoisProd (Subgroup.integerCuspWidth 𝒢) ⇑f) * qExpansion 1 rest := by
-    rw [funext h_decomp]
-    exact qExpansion_mul (analyticAt_cuspFunction_zero one_pos
-      (galoisProd_periodic_one hf_n_per) (mdifferentiable_galoisProd f.holo')
-      (isBoundedAtImInfty_galoisProd hf_bdd)) h_rest_an
-  rw [h_qexp, PowerSeries.order_mul,
-    qExpansion_one_galoisProd_order_eq hn_pos hf_n_per hf_bdd f.holo']
+  rw [qExpansion_one_norm_order_eq f]
   refine le_trans ?_ le_self_add
   rw [hnRw]
-  exact qExpansion_order_le_qExpansion_nat_mul_order strictWidthInfty_pos_of_finiteRelIndex hm'_pos
-    hf_w_per hf_bdd f.holo'
+  exact qExpansion_order_le_qExpansion_nat_mul_order strictWidthInfty_pos_of_finiteRelIndex
+    hm'_pos hf_w_per (OnePoint.isBoundedAt_infty_iff.mp
+      (ModularFormClass.bdd_at_cusps f Subgroup.isCusp_infty_of_finiteRelIndex)) f.holo'
 
 /-- **Sturm bound for subgroups of `GL(2, ℝ)` of finite relative index in `SL(2, ℤ)`** with
 discrete strict periods. A modular form of weight `k` whose `q`-expansion at the cusp `∞`

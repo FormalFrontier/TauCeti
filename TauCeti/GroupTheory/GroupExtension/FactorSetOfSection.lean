@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.GroupTheory.GroupExtension.Basic
-public import TauCeti.GroupTheory.GroupExtension.OfFactorSet
+public import TauCeti.GroupTheory.GroupExtension.Of.FactorSet
 
 /-!
 # The factor set of a group extension with abelian kernel

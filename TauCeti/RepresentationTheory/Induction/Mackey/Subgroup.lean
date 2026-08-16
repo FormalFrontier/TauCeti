@@ -58,6 +58,8 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
   with both sides read as subgroups of `K`.
 * `TauCeti.mackeySubgroupSelfEquiv`: the identification of the Mackey subgroup of a representative
   lying in `H` with `H` itself.
+* `TauCeti.mackeySubgroupNormalEquiv`: for normal `H`, the same identification at every
+  representative.
 
 ## Main statements
 
@@ -180,6 +182,27 @@ intersection. -/
 @[simp]
 theorem mackeySubgroup_of_normal [H.Normal] : mackeySubgroup s H K = K ⊓ H := by
   rw [mackeySubgroup_def, Subgroup.Normal.conj_smul_eq_self]
+
+/-- For a normal subgroup, the Mackey subgroup at every representative is the whole subgroup.
+This is the group equivalence used to read a Mackey intertwining space over `H` itself. -/
+noncomputable def mackeySubgroupNormalEquiv (s : G) [H.Normal] :
+    ((mackeySubgroup s H H).subgroupOf H) ≃* H :=
+  (MulEquiv.subgroupCongr (by
+    rw [mackeySubgroup_of_normal, inf_idem, Subgroup.subgroupOf_self])).trans Subgroup.topEquiv
+
+@[simp]
+theorem coe_mackeySubgroupNormalEquiv_apply (s : G) [H.Normal]
+    (y : (mackeySubgroup s H H).subgroupOf H) :
+    (mackeySubgroupNormalEquiv s y : H) = (y : H) := by
+  simp [mackeySubgroupNormalEquiv]
+
+/-- The homomorphism underlying `mackeySubgroupNormalEquiv` is the canonical inclusion into `H`. -/
+@[simp]
+theorem coe_mackeySubgroupNormalEquiv (s : G) [H.Normal] :
+    (mackeySubgroupNormalEquiv (H := H) s : ((mackeySubgroup s H H).subgroupOf H) →* H) =
+      ((mackeySubgroup s H H).subgroupOf H).subtype := by
+  ext y
+  exact congrArg Subtype.val (coe_mackeySubgroupNormalEquiv_apply s y)
 
 /-- Inducing from the whole group leaves nothing to intersect: the Mackey subgroup is `K`. -/
 -- Not `@[simp]`: `simp` reaches `K` here through `mackeySubgroup_of_mem` and `Subgroup.mem_top`.

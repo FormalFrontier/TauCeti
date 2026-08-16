@@ -4,11 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-import TauCeti.Analysis.Calculus.ParametricFDeriv
-import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
+public import TauCeti.Analysis.Calculus.ParametricFDeriv
+public import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 public import TauCeti.Geometry.Lie.RightInvariantVectorField
 public import TauCeti.Geometry.Manifold.VectorField.LieBracket
-import TauCeti.Geometry.Lie.Interior
+public import TauCeti.Geometry.Lie.Interior
 
 /-!
 # Commutation of left- and right-invariant vector fields
@@ -22,6 +22,11 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
+* `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: a vector-valued function on two exponential
+  lines multiplied around a fixed group element is smooth in both parameters.
+* `spatialFDeriv_mulInvariantExp_mul_mulInvariantExp` and
+  `timeFDeriv_mulInvariantExp_mul_mulInvariantExp`: identify its two partial derivatives with
+  left- and right-invariant differentiation.
 * `mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute`: left- and
   right-invariant scalar differentiation commute at every group point.
 * `mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField`: the corresponding
@@ -52,40 +57,29 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-private theorem two_le_infinite_smoothness :
-    ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
-  WithTop.coe_le_coe.mpr le_top
-
 section Complete
 
 variable [CompleteSpace E]
+variable {F' : Type*} [NormedAddCommGroup F'] [NormedSpace ℝ F']
 
-/-- A smooth scalar function evaluated on two multiplied exponential lines is smooth in both
-parameters. -/
-private theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
-    {f : G → ℝ} (hf : ContMDiff I 𝓘(ℝ, ℝ) ∞ f) (g : G)
+/-- A smooth vector-valued function evaluated on two exponential lines multiplied around a fixed
+group element is smooth in both parameters. -/
+theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
+    {f : G → F'} (hf : ContMDiff I 𝓘(ℝ, F') ∞ f) (g : G)
     (X Y : GroupLieAlgebra I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    ContDiff ℝ 2 (fun p : ℝ × ℝ =>
+    ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
         mulInvariantExp (I := I) (G := G) (p.2 • Y))) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  have hX := contMDiff_mulInvariantExp_smul (I := I) (G := G) X
-  have hY := contMDiff_mulInvariantExp_smul (I := I) (G := G) Y
-  have hMprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞ (fun p : ℝ × ℝ =>
-      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-        mulInvariantExp (I := I) (G := G) (p.2 • Y)) :=
-    ((hX.comp contMDiff_fst).mul contMDiff_const).mul (hY.comp contMDiff_snd)
-  have hM : ContMDiff 𝓘(ℝ, ℝ × ℝ) I ∞ (fun p : ℝ × ℝ =>
-      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-        mulInvariantExp (I := I) (G := G) (p.2 • Y)) := by
-    rw [modelWithCornersSelf_prod, ← chartedSpaceSelf_prod]
-    exact hMprod
-  exact (hf.comp hM).contDiff.of_le two_le_infinite_smoothness
+  exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff
 
-private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
-    (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (s : ℝ) :
+/-- Differentiating the second exponential parameter gives left-invariant differentiation by
+`Y`. -/
+theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
+    (f : C^∞⟮I, G; 𝓘(ℝ, F'), F'⟯) (g : G)
+    (X Y : GroupLieAlgebra I G) (s : ℝ) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     spatialFDeriv (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
@@ -95,21 +89,19 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
           (mulInvariantExp (I := I) (G := G) (s • X) * g)) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  let F : ℝ × ℝ → ℝ := fun p =>
+  let F : ℝ × ℝ → F' := fun p =>
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
-    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
+    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
+      (by simp)
   have hFdiff : DifferentiableAt ℝ F (s, 0) := hF.differentiable (by norm_num) (s, 0)
-  have hslice : DifferentiableAt ℝ (fun t => F (s, t)) 0 :=
-    hFdiff.comp 0 ((differentiableAt_const s).prodMk differentiableAt_id)
-  have hpartial := hslice.hasDerivAt
-  rw [← fderiv_apply_one_eq_deriv, fderiv_timeSlice hFdiff] at hpartial
+  have hpartial := (hasFDerivAt_timeSlice hFdiff).hasDerivAt
   have hfAt := f.contMDiff.mdifferentiable (by simp)
     (mulInvariantExp (I := I) (G := G) (s • X) * g) |>.hasMFDerivAt
   have hdirection := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero hfAt Y
   have hdirection' : HasDerivAt (fun t => F (s, t))
-      ((mfderiv I 𝓘(ℝ, ℝ) f (mulInvariantExp (I := I) (G := G) (s • X) * g))
+      ((mfderiv I 𝓘(ℝ, F') f (mulInvariantExp (I := I) (G := G) (s • X) * g))
         (mulInvariantVectorField Y
           (mulInvariantExp (I := I) (G := G) (s • X) * g))) 0 := by
     -- Naming the hypothesis makes the canonical real scalar-structure identification explicit.
@@ -117,8 +109,11 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
   rw [mvfderiv_apply_eq_mfderiv_apply]
   exact hpartial.unique hdirection'
 
-private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
-    (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (t : ℝ) :
+/-- Differentiating the first exponential parameter gives right-invariant differentiation by
+`X`. -/
+theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
+    (f : C^∞⟮I, G; 𝓘(ℝ, F'), F'⟯) (g : G)
+    (X Y : GroupLieAlgebra I G) (t : ℝ) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     timeFDeriv (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
@@ -128,18 +123,19 @@ private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
           (g * mulInvariantExp (I := I) (G := G) (t • Y))) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  let F : ℝ × ℝ → ℝ := fun p =>
+  let F : ℝ × ℝ → F' := fun p =>
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
-    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
+    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
+      (by simp)
   have hFdiff : DifferentiableAt ℝ F (0, t) := hF.differentiable (by norm_num) (0, t)
   have hpartial := hasDerivAt_parameterCurve hFdiff
   have hfAt := f.contMDiff.mdifferentiable (by simp)
     (g * mulInvariantExp (I := I) (G := G) (t • Y)) |>.hasMFDerivAt
   have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul_zero hfAt X
   have hdirection' : HasDerivAt (fun s => F (s, t))
-      ((mfderiv I 𝓘(ℝ, ℝ) f (g * mulInvariantExp (I := I) (G := G) (t • Y)))
+      ((mfderiv I 𝓘(ℝ, F') f (g * mulInvariantExp (I := I) (G := G) (t • Y)))
         (mulRightInvariantVectorField X
           (g * mulInvariantExp (I := I) (G := G) (t • Y)))) 0 := by
     -- Reassociate the product while naming the canonical real scalar-structure identification.
@@ -152,36 +148,32 @@ private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
   rw [mvfderiv_apply_eq_mfderiv_apply]
   exact hpartial.unique hdirection'
 
-/-- Left- and right-invariant scalar differentiation commute at every group point. This is
-Clairaut symmetry for `(s, t) ↦ f (exp(sX) * g * exp(tY))`. -/
+/-- Left- and right-invariant scalar differentiation commute at every group point. -/
 theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) :
-    mvfderiv I (fun h => mvfderiv I f h (mulInvariantVectorField Y h)) g
+    mvfderiv I (tangentToLeftInvariantDerivation Y f) g
         (mulRightInvariantVectorField X g) =
-      mvfderiv I (fun h => mvfderiv I f h (mulRightInvariantVectorField X h)) g
+      mvfderiv I (rightInvariantDerivative X f) g
         (mulInvariantVectorField Y g) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let γX : ℝ → G := fun t => mulInvariantExp (I := I) (G := G) (t • X)
   let γY : ℝ → G := fun t => mulInvariantExp (I := I) (G := G) (t • Y)
   let F : ℝ × ℝ → ℝ := fun p => f (γX p.1 * g * γY p.2)
-  let LYf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun h => mvfderiv I f h (mulInvariantVectorField Y h),
-      contMDiff_mvfderiv_mulInvariantVectorField Y f⟩
-  let RXf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun h => mvfderiv I f h (mulRightInvariantVectorField X h),
-      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
+  let LYf := tangentToLeftInvariantDerivation (I := I) (G := G) Y f
+  let RXf := rightInvariantDerivative (I := I) X f
   have hF : ContDiff ℝ 2 F :=
-    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
+    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
+      (by simp)
   -- Identify the two partial derivatives with the invariant directional derivatives.
   have hspaceFun : (fun s => spatialFDeriv F 0 s 1) =
       fun s => LYf (γX s * g) := by
     funext s
-    simpa only [LYf, ContMDiffMap.coeFn_mk] using
+    simpa only [LYf, tangentToLeftInvariantDerivation_apply] using
       spatialFDeriv_mulInvariantExp_mul_mulInvariantExp f g X Y s
   have htimeFun : timeFDeriv F 0 =
       fun t => RXf (g * γY t) := by
     funext t
-    simpa only [RXf, ContMDiffMap.coeFn_mk] using
+    simpa only [RXf, rightInvariantDerivative_apply] using
       timeFDeriv_mulInvariantExp_mul_mulInvariantExp f g X Y t
   -- Clairaut symmetry equates the derivatives of those two partial-derivative functions.
   have hFmin : ContDiffAt ℝ (minSmoothness ℝ 2) F (0, 0) := by
@@ -221,14 +213,24 @@ theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
     (V := mulRightInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := g)
-    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness)
+    f.contMDiff.contMDiffAt
     (by simp)
     ((contMDiff_mulRightInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt
     ((contMDiff_mulInvariantVectorField_infty Y).mdifferentiable
       (by simp)).mdifferentiableAt]
-  exact sub_eq_zero.mpr
-    (mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute f g X Y)
+  have hcomm :=
+    mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute f g X Y
+  have hLY : (fun y => mvfderiv I f y (mulInvariantVectorField Y y)) =
+      tangentToLeftInvariantDerivation Y f := by
+    funext y
+    exact (tangentToLeftInvariantDerivation_apply Y f y).symm
+  have hRX : (fun y => mvfderiv I f y (mulRightInvariantVectorField X y)) =
+      rightInvariantDerivative X f := by
+    funext y
+    exact (rightInvariantDerivative_apply X f y).symm
+  rw [hLY, hRX]
+  exact sub_eq_zero.mpr hcomm
 
 /-- Left- and right-invariant vector fields commute everywhere, with the bracket arguments in the
 opposite order. -/

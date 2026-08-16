@@ -29,17 +29,17 @@ for such a junk value carry the hypothesis `c ∈ μ` explicitly.
 
 ## Main definitions
 
-* `TauCeti.YoungDiagram.hook`: the hook of a cell, as a `Finset (ℕ × ℕ)`.
-* `TauCeti.YoungDiagram.hookLength`: the hook length of a cell, `armLength + legLength + 1`.
+* `YoungDiagram.hook`: the hook of a cell, as a `Finset (ℕ × ℕ)`.
+* `YoungDiagram.hookLength`: the hook length of a cell, `armLength + legLength + 1`.
 
 ## Main results
 
-* `TauCeti.YoungDiagram.card_hook`: the hook of a cell has `hookLength` many elements.
-* `TauCeti.YoungDiagram.hookLength_transpose`: transposition preserves hook lengths.
-* `TauCeti.YoungDiagram.hookLength_eq_one_iff`: a cell has hook length `1` exactly when neither the
+* `YoungDiagram.card_hook`: the hook of a cell has `hookLength` many elements.
+* `YoungDiagram.hookLength_transpose`: transposition preserves hook lengths.
+* `YoungDiagram.hookLength_eq_one_iff`: a cell has hook length `1` exactly when neither the
   cell to its right nor the cell below it lies in the diagram; for a cell of the diagram this says
-  that it is a corner, which is `TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one`.
-* `TauCeti.YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one`: the hook lengths of a
+  that it is a corner, which is `YoungDiagram.isCorner_iff_hookLength_eq_one`.
+* `YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one`: the hook lengths of a
   one-row diagram multiply to `μ.card !`.
 
 ## References
@@ -55,8 +55,6 @@ for such a junk value carry the hypothesis `c ∈ μ` explicitly.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace YoungDiagram
 
@@ -286,20 +284,9 @@ A Young diagram `μ` has at most one row exactly when `μ.colLen 0 ≤ 1`.  Its 
 `μ.card, μ.card - 1, …, 1`, so they multiply to `μ.card !`; the one-column case follows by
 transposition.  These are the two instances of the multiplicative hook-length formula
 `standardCount μ * ∏ c ∈ μ.cells, hookLength μ c = μ.card !` in which the number of standard Young
-tableaux is `1`; that count is not computed here. -/
-
-theorem cells_eq_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
-    μ.cells = {0} ×ˢ Finset.range (μ.rowLen 0) := by
-  have hrow : μ.cells = μ.row 0 := by
-    refine (Finset.filter_true_of_mem fun d hd => ?_).symm
-    have := _root_.YoungDiagram.mem_iff_lt_colLen.mp hd
-    have := μ.colLen_anti 0 d.2 (Nat.zero_le _)
-    omega
-  rw [hrow, _root_.YoungDiagram.row_eq_prod]
-
-theorem card_eq_rowLen_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
-    μ.card = μ.rowLen 0 := by
-  simp [_root_.YoungDiagram.card, cells_eq_of_colLen_le_one h]
+tableaux is `1`; that count is not computed here.  The shapes themselves are described in
+`TauCeti/Combinatorics/Young/Diagram.lean`, by `YoungDiagram.cells_eq_of_colLen_le_one` and
+`YoungDiagram.card_eq_rowLen_of_colLen_le_one`. -/
 
 theorem hookLength_eq_rowLen_sub_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) {j : ℕ}
     (hj : j < μ.rowLen 0) :
@@ -336,4 +323,3 @@ theorem prod_hookLength_eq_factorial_of_rowLen_le_one {μ : YoungDiagram} (h : �
 
 end YoungDiagram
 
-end TauCeti

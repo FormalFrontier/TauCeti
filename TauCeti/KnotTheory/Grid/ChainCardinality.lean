@@ -52,7 +52,6 @@ theorem card (R : Type*) [Zero R] [Fintype R] (n : ℕ) :
   rw [Fintype.card_finsupp, GridState.card]
 
 /-- The natural cardinality of chains over a finite coefficient type is `Nat.card R ^ n!`. -/
-@[simp]
 theorem natCard (R : Type*) [Zero R] [Finite R] (n : ℕ) :
     Nat.card (GridChain R n) = Nat.card R ^ n.factorial := by
   classical

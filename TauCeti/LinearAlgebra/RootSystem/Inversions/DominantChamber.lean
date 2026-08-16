@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Chamber
-public import TauCeti.LinearAlgebra.RootSystem.Inversions.Deletion
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.StrongExchange
 
 /-!
 # Inversions of a Weyl-group element that preserves dominance
@@ -34,9 +34,9 @@ there. The general case, where a weight on a wall of the chamber is fixed by the
 wall and the moving element need not be the identity, is
 `TauCeti/LinearAlgebra/RootSystem/FundamentalDomain.lean`. The proof rests on the chamber
 definitions in `TauCeti/LinearAlgebra/RootSystem/Chamber.lean` and the identity criterion for
-inversion sets in `TauCeti/LinearAlgebra/RootSystem/Inversions/Deletion.lean`. The argument is the
-one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III,
-§10.
+inversion sets in `TauCeti/LinearAlgebra/RootSystem/Inversions/StrongExchange.lean`. The argument
+is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9,
+Ch. III, §10.
 -/
 
 public section

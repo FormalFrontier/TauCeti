@@ -11,7 +11,7 @@ import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 # Regularity of tangent-bundle-valued maps and directional derivatives
 
 This file records reusable regularity facts for maps into a tangent bundle and for applying the
-manifold differential of a function to a smooth section.
+manifold differential of a function to tangent vectors whose base point varies.
 
 ## Main results
 
@@ -19,8 +19,8 @@ manifold differential of a function to a smooth section.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
 * `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
   normed vector space.
-* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
-  tangent-bundle section is `C^m` when `m + 1 ≤ n`.
+* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
+  tangent bundle is `C^m` when `m + 1 ≤ n`.
 
 ## References
 
@@ -84,20 +84,25 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
   -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
   rfl
 
-/-- Applying the differential of a `C^n` function to a `C^m` tangent-bundle section is `C^m`
-when `m + 1 ≤ n`. -/
+/-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
+tangent bundle when `m + 1 ≤ n`. -/
 theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
-    {V : ∀ x : M, TangentSpace I x}
     (hf : ContMDiff I 𝓘(𝕜, F) n f)
-    (hV : ContMDiff I I.tangent m (fun x => (V x : TangentBundle I M)))
     (hmn : m + 1 ≤ n) :
-    ContMDiff I 𝓘(𝕜, F) m (fun x => mvfderiv I f x (V x)) := by
+    ContMDiff I.tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle I M => mvfderiv I f p.1 p.2) := by
   let df : TangentBundle I M → TangentBundle 𝓘(𝕜, F) F := tangentMap% f
   have hdf : ContMDiff I.tangent 𝓘(𝕜, F).tangent m df :=
     hf.contMDiff_tangentMap hmn
   have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
       (fun p : TangentBundle 𝓘(𝕜, F) F => p.2) :=
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
-  simp only [mvfderiv_apply_eq_mfderiv_apply]
-  have h := hsnd.comp (hdf.comp hV)
-  exact h.congr fun x => rfl
+  have h := hsnd.comp hdf
+  have htangent (p : TangentBundle I M) :
+      NormedSpace.fromTangentSpace (f p.1) ((tangentMap% f p).2) =
+        mvfderiv I f p.1 p.2 := by
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
+    rfl
+  -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
+  -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
+  exact h.congr fun p => (htangent p).symm

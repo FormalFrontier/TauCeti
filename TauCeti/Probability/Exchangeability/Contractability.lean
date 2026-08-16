@@ -228,6 +228,16 @@ theorem contractable_iff_forall_measurePreserving_reindex {μ : Measure Ω} {X :
   · intro hX φ hφ
     exact (hX φ hφ).map_eq
 
+/-- **A strictly monotone reindexing leaves the path law alone.** Reading a contractable process
+along `φ` gives the same path law as reading it along the identity. -/
+theorem Contractable.map_reindex_pathLaw_eq {μ : Measure Ω} {X : ℕ → Ω → α} [IsFiniteMeasure μ]
+    (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ) {φ : ℕ → ℕ} (hφ : StrictMono φ) :
+    μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
+  calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
+      = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
+        (map_reindex_pathLaw μ hX_ae φ).symm
+    _ = pathLaw μ X := (hX.measurePreserving_reindex hX_ae hφ).map_eq
+
 /-- **A contractable process has a shift-invariant path law:** `shift` preserves `pathLaw μ X`. -/
 theorem Contractable.measurePreserving_shift {μ : Measure Ω} {X : ℕ → Ω → α} [IsFiniteMeasure μ]
     (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) :
@@ -244,18 +254,13 @@ private theorem map_prod_tail_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasure 
     {h : ℕ} (hh : h < g 0) :
     μ.map (fun ω => (X h ω, fun n => X (g n) ω))
       = (pathLaw μ X).map (fun f : ℕ → α => (f 0, fun n => f (n + 1))) := by
-  classical
   let headTail : (ℕ → α) → α × (ℕ → α) := fun f => (f 0, fun n => f (n + 1))
   have hheadTail_meas : Measurable headTail :=
     (measurable_pi_apply 0).prodMk (measurable_pi_lambda _ fun n => measurable_pi_apply (n + 1))
   -- strictly-monotone time-reindexing preserves the path law of a contractable process
   have hreindex : ∀ φ : ℕ → ℕ, StrictMono φ →
-      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
-    intro φ hφ
-    calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
-        = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
-          (map_reindex_pathLaw μ hX_ae φ).symm
-      _ = pathLaw μ X := (hX.measurePreserving_reindex hX_ae hφ).map_eq
+      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X :=
+    fun φ hφ => hX.map_reindex_pathLaw_eq hX_ae hφ
   -- the selection `(h, g 0, g 1, …)` is strictly monotone, and splitting it recovers the pair
   set φ : ℕ → ℕ := fun i => if i = 0 then h else g (i - 1) with hφdef
   have hφmono : StrictMono φ := by

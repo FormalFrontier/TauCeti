@@ -45,6 +45,7 @@ universe u
 variable (k H A : Type u) [Field k] [CommRing H] [HopfAlgebra k H]
   [CommRing A] [Algebra k A]
 
+/-- The comodule morphism from the tensor unit to a finite regular subcomodule containing one. -/
 private noncomputable def regularUnitHom
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
     (hOne : (1 : H) ∈ N.1) :
@@ -122,11 +123,12 @@ private theorem map_regularUnitHom_ε_one
 /-- The transported component of a tensor automorphism fixes `1 ⊗ 1` in every finite
 regular subcomodule containing the unit. -/
 @[simp]
-theorem finiteRegularComponent_one_tmul
+theorem scalarExtensionComponent_one_tmul
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
     (hOne : (1 : H) ∈ N.1) :
-    finiteRegularComponent k H A η N (1 ⊗ₜ[k] ⟨1, hOne⟩) = 1 ⊗ₜ[k] ⟨1, hOne⟩ := by
+    scalarExtensionComponent k H A η (finiteRegularObject k H N)
+        (1 ⊗ₜ[k] ⟨1, hOne⟩) = 1 ⊗ₜ[k] ⟨1, hOne⟩ := by
   let _ : Module.Finite k N.1 := Subcomodule.mem_finiteSubcomodules.mp N.2
   let i := regularUnitHom k H N hOne
   have hnat := η.hom.hom.naturality i
@@ -155,7 +157,7 @@ theorem finiteRegularComponent_one_tmul
   rw [map_regularUnitHom_ε_one] at happ
   let hN := FGComoduleCat.scalarExtensionFunctor_obj k H A
     (finiteRegularObject k H N)
-  rw [finiteRegularComponent_apply]
+  rw [scalarExtensionComponent_apply]
   exact (congrArg (fun z ↦ eqToHom hN z) happ).trans
     ((eqToIso hN).inv_hom_id_apply _)
 
@@ -168,7 +170,8 @@ theorem localFunctional_one
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
     (hOne : (1 : H) ∈ N.1) :
     localFunctional k H A η N ⟨1, hOne⟩ = 1 := by
-  rw [localFunctional_apply, finiteRegularComponent_one_tmul]
-  simp
+  rw [localFunctional_apply, scalarExtensionComponent_one_tmul]
+  rw [counitEvaluation_tmul k H A N.1 (1 : A) ⟨1, hOne⟩]
+  simp only [Bialgebra.counit_one, map_one, one_mul]
 
 end TauCeti.Tannaka

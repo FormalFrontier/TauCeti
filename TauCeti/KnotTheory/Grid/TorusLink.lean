@@ -19,7 +19,8 @@ the column down by `q + 1` each time, so the component permutation is the invers
 grids (`q = 0`), the `4 × 4` grid with `p = q = 1`, and the `5 × 5` grid with `p = 1`, `q = 2`.
 
 The cycle decomposition of the component permutation is computed from
-`TauCeti.cycleType_pow_of_isCycle`: the diagram has exactly `gcd (p + 1) (q + 1)` link components,
+`Equiv.Perm.IsCycle.cycleType_pow_of_not_dvd`: the diagram has exactly `gcd (p + 1) (q + 1)`
+link components,
 all of them carrying the same number `((p + 1) + (q + 1)) / gcd (p + 1) (q + 1)` of markings, and
 it represents a knot exactly when `p + 1` and `q + 1` are coprime. That is all that is proved
 here.
@@ -100,8 +101,11 @@ def torusLink : GridDiagram (p + 1 + (q + 1)) where
   X := ⟨finRotate (p + 1 + (q + 1)) ^ (q + 1)⟩
   disjoint := by
     intro c h
-    exact pow_apply_ne_self_of_isCycle (isCycle_finRotate_torus p q) (not_card_dvd_torus p q)
-      (by rw [support_finRotate_torus]; exact Finset.mem_univ c) (by simpa using h.symm)
+    have hx : finRotate (p + 1 + (q + 1)) c ≠ c :=
+      Equiv.Perm.mem_support.mp (by rw [support_finRotate_torus]; exact Finset.mem_univ c)
+    refine not_card_dvd_torus p q ?_
+    rw [← (isCycle_finRotate_torus p q).orderOf]
+    exact ((isCycle_finRotate_torus p q).pow_apply_eq_self_iff hx).mp (by simpa using h.symm)
 
 -- The body of `torusLink` is deliberately not exposed, so the projection lemmas below are
 -- written `(rfl)` rather than `rfl`: the parentheses opt out of exporting the definitional
@@ -171,7 +175,7 @@ theorem componentCycleType_torusLink : (torusLink p q).componentCycleType =
       Multiset.replicate ((p + 1).gcd (q + 1))
         ((p + 1 + (q + 1)) / (p + 1).gcd (q + 1)) := by
   rw [componentCycleType_def, componentPerm_torusLink, Equiv.Perm.cycleType_inv,
-    cycleType_pow_of_isCycle (isCycle_finRotate_torus p q) (not_card_dvd_torus p q),
+    (isCycle_finRotate_torus p q).cycleType_pow_of_not_dvd (not_card_dvd_torus p q),
     card_support_finRotate_torus, gcd_torus]
 
 /-- A standard torus link grid represents a link with `gcd (p + 1) (q + 1)` components. -/

@@ -8,7 +8,7 @@ public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Tr
 -- Non-public: the two determinacy inputs (Fourier on `V` through the convention conversion,
 -- Laplace on `ℝ≥0`), the bound on the Laplace kernel, and the product-`σ`-algebra plumbing, all
 -- consumed inside proofs only.
-import TauCeti.Analysis.Bochner.FourierConvention
+import TauCeti.Analysis.Bochner.Fourier.Convention
 import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
 import TauCeti.Probability.Moments.LaplaceDeterminacy
 import Mathlib.MeasureTheory.MeasurableSpace.Prod
@@ -165,7 +165,7 @@ omit [SecondCountableTopology V] [CompleteSpace V] in
 /-- The characteristic function of a spatial slice is the Laplace--Fourier transform, after the
 `-2π` rescaling that converts Mathlib's Fourier convention into the characteristic-function
 convention. -/
-private theorem charFun_spatialSlice (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ] (t : ℝ≥0)
+private theorem charFun_spatialSlice (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0)
     (a : V) :
     charFun (spatialSlice μ t) ((-2 * Real.pi) • a) = laplaceFourierTransform μ (t, a) := by
   rw [← integral_fourierAtom_eq_charFun_neg_two_pi_smul,

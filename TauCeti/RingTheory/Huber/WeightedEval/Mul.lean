@@ -13,9 +13,13 @@ public import TauCeti.RingTheory.Huber.WeightedEval.Map
 its values on constants and variables. This file adds multiplicativity,
 `weightedEval (f * g) = weightedEval f * weightedEval g`.
 
-That is the remaining *algebraic* ingredient of Proposition 5.50. It does not by itself make 5.50
-a universal property: the evaluation is not yet packaged as a morphism out of `A⟨X⟩_T`, and
-neither its continuity nor the uniqueness of the extension is proved here.
+That is the remaining *algebraic* ingredient of Proposition 5.50, but not by itself the universal
+property, since it speaks about individual series. The packaging as a ring homomorphism out of
+`A⟨X⟩_T` is `TauCeti.Huber.weightedEvalHom` in `WeightedEval/Hom.lean`, which consumes
+`weightedEval_mul` below, and its continuity is `TauCeti.Huber.continuous_weightedEvalHom` in
+`WeightedEval/Continuous.lean`. The uniqueness of the extension, which is what makes 5.50
+*universal*, is `TauCeti.Huber.weightedRestrictedSubring_ringHom_ext_of_continuous` in
+`WeightedRestrictedSeries/Basic.lean`, and `WeightedEval/UniversalProperty.lean` states 5.50 itself.
 
 The argument is the Cauchy product, and Mathlib supplies it:
 `Summable.tsum_mul_tsum_eq_tsum_sum_antidiagonal` turns a product of sums into a sum over

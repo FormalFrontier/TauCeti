@@ -58,7 +58,7 @@ theorem eq_four_of_fdBoundary_eq_ceiling_corner (hH : H ≠ Real.sqrt 3 / 2)
         rcases mul_eq_zero.mp (by linarith : t * (Real.sqrt 3 / 2 - H) = 0) with h | h
         · exact h
         · exact absurd (by linarith : H = Real.sqrt 3 / 2) hH
-      rw [ht0, re_fdBoundary_segment1 H ⟨le_rfl, by norm_num⟩] at hre
+      rw [ht0, re_fdBoundarySegment1 H ⟨le_rfl, by norm_num⟩] at hre
       norm_num at hre
     · rcases le_or_gt t 3 with h3 | h3
       · exfalso

@@ -51,10 +51,14 @@ SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # when it derives a single PR's review state.
 SCOREBOARD_META_KIND = "scoreboard"
 STATE_REVIEW = {"awaiting-review", "review-in-progress"}
-STATE_LABELS = {"awaiting-author", *STATE_REVIEW}
+# The two states that put the ball in the author's court. They are separate labels because the
+# author reads a build log for one and the review threads for the other, but every measurement
+# here treats them as one state: the PR is waiting on a human either way.
+STATE_AUTHOR_ACTION = {"awaiting-author", "ci-failed"}
+STATE_LABELS = {*STATE_AUTHOR_ACTION, *STATE_REVIEW}
 # States in which the PR has left the review queue: the author owns it, or CI is judging a
 # new commit before review resumes.
-STATE_AUTHOR = {"awaiting-author", "awaiting-CI"}
+STATE_AUTHOR = {*STATE_AUTHOR_ACTION, "awaiting-CI"}
 LIFECYCLE_LABELS = {*STATE_REVIEW, *STATE_AUTHOR, "ready-to-merge"}
 # The lifecycle-label workflow first landed on 2026-07-22. A PR closed before
 # that UTC day cannot contain one of its label events and needs no timeline query.
@@ -356,20 +360,33 @@ def fetch_snapshot(repo: str) -> dict:
     }
 
 
-def last_labeled(pr: dict, label: str) -> datetime | None:
-    matches = [
-        parse_dt(event["created_at"])
-        for event in pr.get("labeled_events") or [] if event["label"] == label
-    ]
-    return max(matches, default=None)
-
-
 def latest_lifecycle_label(pr: dict) -> str | None:
     events = [
         event for event in pr.get("labeled_events") or []
         if event["label"] in LIFECYCLE_LABELS
     ]
     return events[-1]["label"] if events else None
+
+
+def author_episode_start(pr: dict) -> datetime | None:
+    """When the PR's current spell of waiting on its author began, or None if it is not in one.
+
+    ``ci-failed`` and ``awaiting-author`` are separate labels because the author has to do
+    different things about them, but for the queue-age clock they are one state: the PR is out of
+    the pipeline's hands either way.  So the clock runs from where the PR *entered* that state, and
+    swapping one of the two for the other inside it -- a red build arriving on a PR that already
+    had changes requested, or the migration that first split the labels -- continues the spell
+    rather than starting a new one.  Any other lifecycle label ends it: a push that sends the PR
+    back to ``awaiting-CI`` is a genuinely fresh wait, even if it fails again straight afterwards.
+    """
+    start = None
+    for event in sorted(pr.get("labeled_events") or [], key=lambda item: item["created_at"]):
+        if event["label"] in STATE_AUTHOR_ACTION:
+            if start is None:
+                start = parse_dt(event["created_at"])
+        elif event["label"] in LIFECYCLE_LABELS:
+            start = None
+    return start
 
 
 def review_cycle_starts(pr: dict) -> list[datetime]:
@@ -407,11 +424,8 @@ def queue_age_metrics(prs: list[dict], snapshot: datetime) -> dict:
         labels = set(pr.get("labels") or [])
         if pr.get("is_draft"):
             other += 1
-        elif "awaiting-author" in labels:
-            start = (
-                last_labeled(pr, "awaiting-author")
-                if latest_lifecycle_label(pr) == "awaiting-author" else None
-            )
+        elif labels & STATE_AUTHOR_ACTION:
+            start = author_episode_start(pr)
             if start is None:
                 start = created
                 missing_transition += 1

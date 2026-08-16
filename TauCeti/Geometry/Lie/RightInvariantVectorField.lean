@@ -36,6 +36,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 * `contMDiff_mulRightInvariantVectorField_infty`: a right-invariant field is smooth.
 * `contMDiff_mvfderiv_mulRightInvariantVectorField`: differentiating a smooth scalar function
   along a right-invariant field gives a smooth function.
+* `rightInvariantDerivative`: right-invariant differentiation bundled as a smooth scalar function.
 
 ## References
 
@@ -197,5 +198,22 @@ theorem contMDiff_mvfderiv_mulRightInvariantVectorField
     (f : C^∞⟮I, G; 𝕜⟯) :
     ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
       (fun g ↦ mvfderiv I f g (mulRightInvariantVectorField v g)) :=
-  f.contMDiff.contMDiff_mvfderiv_apply
-    (contMDiff_mulRightInvariantVectorField_infty v) (by simp)
+  (f.contMDiff.contMDiff_mvfderiv_apply (by simp)).comp
+    (contMDiff_mulRightInvariantVectorField_infty v)
+
+/-- Right-invariant differentiation of a smooth scalar function, bundled as a smooth scalar
+function. -/
+noncomputable def rightInvariantDerivative
+    [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
+    (f : C^∞⟮I, G; 𝕜⟯) : C^∞⟮I, G; 𝕜⟯ :=
+  ⟨fun g => mvfderiv I f g (mulRightInvariantVectorField v g),
+    contMDiff_mvfderiv_mulRightInvariantVectorField v f⟩
+
+/-- Right-invariant differentiation acts pointwise along the corresponding vector field. -/
+@[simp]
+theorem rightInvariantDerivative_apply
+    [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
+    (f : C^∞⟮I, G; 𝕜⟯) (g : G) :
+    rightInvariantDerivative v f g =
+      mvfderiv I f g (mulRightInvariantVectorField v g) :=
+  by simp only [rightInvariantDerivative, ContMDiffMap.coeFn_mk]

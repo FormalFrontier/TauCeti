@@ -97,7 +97,9 @@ identity linear equivalence and dimensions over `K` transfer by `rfl`-like trans
 Nothing here needs `A` to be a division algebra: the classical statement is about a maximal
 subfield of a central *division* algebra, but the argument only uses simplicity of `L ⊗[K] A`, so
 it is stated for every finite-dimensional central simple `A`. What a division algebra adds is the
-*existence* of a subfield attaining the bound, which is a separate question and is not settled here.
+*existence* of a subfield attaining the bound, which is a separate question, settled by
+`TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg` in
+`TauCeti/Algebra/CentralSimple/MaximalSubfield.lean`.
 
 ## References
 

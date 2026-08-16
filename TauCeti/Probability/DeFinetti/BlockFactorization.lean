@@ -42,6 +42,10 @@ finite-block rectangle identity for `directingProbabilityMeasure μ X`, exactly 
 ## Main results
 
 * `condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure` — the prefix block factorization
+  (the `L²` route proves a stronger, arbitrary-selection form independently, as
+  `condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure` in
+  `DeFinetti/ViaL2/BlockFactorization.lean`; the overlap is the intended two-route structure and
+  neither file imports the other)
   at the directing measure, the base case rectangle identities over a contractable process reduce
   to.
 * `mixedIIDWith_of_contractable` — a contractable process on a standard Borel sample space
@@ -97,7 +101,8 @@ theorem condExp_blockIndicatorProd_ae_eq_prod_of_iCondIndepFun_tailProcess
     (fun i => hX_meas (k i))).1 hCI Finset.univ (sets := C) (fun i _ => hC i)
   -- The intersection over the selection is the block cylinder.
   have hcyl : ⋂ i ∈ (Finset.univ : Finset (Fin m)), X (k i) ⁻¹' C i = blockCylinder X k C := by
-    ext ω; simp [mem_blockCylinder, Set.mem_iInter, Set.mem_preimage]
+    rw [blockCylinder_eq_iInter]
+    simp
   rw [hcyl] at hfac
   -- Goal LHS = `μ⟦blockCylinder X k C | tail⟧`, the block-indicator conditional expectation.
   rw [blockIndicatorProd_eq_indicator]

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
+public import TauCeti.Analysis.Calculus.SecondDerivative
 
 /-!
 # Mixed derivatives of a parametric map
@@ -28,6 +29,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `hasDerivAt_parameterCurve`: the parameter velocity differentiates the corresponding parameter
   curve.
+* `hasFDerivAt_timeSlice`: the spatial Jacobian differentiates the corresponding fixed-parameter
+  slice.
 * `fderiv_timeSlice`: the derivative of a fixed-parameter slice is its spatial Jacobian.
 * `hasDerivAt_spatialFDeriv`: the spatial Jacobian differentiates to the spatial derivative of the
   parameter velocity.
@@ -115,19 +118,25 @@ theorem hasDerivAt_parameterCurve {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
   simpa only [timeFDeriv_apply, Function.comp_def, ContinuousLinearMap.inl_apply] using
     hF.hasFDerivAt.comp_hasDerivAt t (hasFDerivAt_prodMk_left t x).hasDerivAt
 
+/-- The spatial Jacobian is the derivative of the fixed-parameter slice `fun y ↦ F (t, y)`. -/
+theorem hasFDerivAt_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
+    (hF : DifferentiableAt 𝕜 F (t, x)) :
+    HasFDerivAt (fun y => F (t, y)) (spatialFDeriv F x t) x := by
+  rw [spatialFDeriv_def]
+  exact hF.hasFDerivAt.comp x (hasFDerivAt_prodMk_right t x)
+
 /-- The derivative of the fixed-parameter slice `fun y ↦ F (t, y)` is its spatial Jacobian. -/
 theorem fderiv_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
     (hF : DifferentiableAt 𝕜 F (t, x)) :
-    fderiv 𝕜 (fun y => F (t, y)) x = spatialFDeriv F x t := by
-  rw [spatialFDeriv_def]
-  exact (hF.hasFDerivAt.comp x (hasFDerivAt_prodMk_right t x)).fderiv
+    fderiv 𝕜 (fun y => F (t, y)) x = spatialFDeriv F x t :=
+  (hasFDerivAt_timeSlice hF).fderiv
 
 private theorem hasDerivAt_spatialFDeriv_apply_mixed {F : 𝕜 × E → F'}
     {t : 𝕜} {x w : E} (hF : ContDiffAt 𝕜 (minSmoothness 𝕜 2) F (t, x)) :
     HasDerivAt (fun s => spatialFDeriv F x s w)
       (fderiv 𝕜 (fderiv 𝕜 F) (t, x) (1, 0) (0, w)) t := by
   have hDF : HasFDerivAt (fderiv 𝕜 F) (fderiv 𝕜 (fderiv 𝕜 F) (t, x)) (t, x) :=
-    ((hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero).hasFDerivAt
+    TauCeti.ContDiffAt.hasFDerivAt_fderiv hF le_minSmoothness
   have hParam :=
     (hDF.comp_hasDerivAt t (hasFDerivAt_prodMk_left t x).hasDerivAt).clm_apply_const (0, w)
   simpa only [spatialFDeriv_apply, Function.comp_apply, ContinuousLinearMap.inl_apply] using hParam
@@ -137,7 +146,7 @@ private theorem hasFDerivAt_timeFDeriv_mixed {F : 𝕜 × E → F'} {t : 𝕜} {
     HasFDerivAt (timeFDeriv F t)
       ((fderiv 𝕜 (fderiv 𝕜 F) (t, x) ∘L ContinuousLinearMap.inr 𝕜 𝕜 E).flip (1, 0)) x := by
   have hDF : HasFDerivAt (fderiv 𝕜 F) (fderiv 𝕜 (fderiv 𝕜 F) (t, x)) (t, x) :=
-    ((hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero).hasFDerivAt
+    TauCeti.ContDiffAt.hasFDerivAt_fderiv hF le_minSmoothness
   have hSpatial := (hDF.comp x (hasFDerivAt_prodMk_right t x)).clm_apply_const (1, 0)
   rw [timeFDeriv_eq]
   exact hSpatial
@@ -150,7 +159,7 @@ theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
   -- derivative of `timeFDeriv F t = fun z ↦ DF (t, z) (1, 0)`. Symmetry of the
   -- second derivative identifies these two mixed partials, pointwise in `w`.
   have hDFdiff : DifferentiableAt 𝕜 (fderiv 𝕜 F) (t, x) :=
-    (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
+    (TauCeti.ContDiffAt.hasFDerivAt_fderiv hF le_minSmoothness).differentiableAt
   have hdiff : DifferentiableAt 𝕜 (spatialFDeriv F x) t := by
     rw [spatialFDeriv_eq]
     fun_prop

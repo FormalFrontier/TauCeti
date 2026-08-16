@@ -6,6 +6,7 @@ module
 
 public import Mathlib.RingTheory.Finiteness.Ideal
 public import Mathlib.Topology.Algebra.Nonarchimedean.AdicTopology
+public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.RingTheory.Huber.PowerBounded
 
 /-!
@@ -39,6 +40,7 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   inducing map. This is what lets a ring of definition carry an ideal of definition that natively
   lives in a merely equivalent ring, which is what `TauCeti.Huber.PairOfDefinition` needs.
 * `TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`: a Huber ring is nonarchimedean.
+* `TauCeti.Huber.IsHuberRing.quotient`: a quotient of a Huber ring is a Huber ring.
 * `TauCeti.Huber.PairOfDefinition.isBounded_ringOfDefinition`: a ring of definition is bounded,
   hence `A₀ ≤ A°` (`TauCeti.Huber.PairOfDefinition.le_powerBoundedSubring`). This is the
   boundedness half of Wedhorn Corollary 6.4.
@@ -238,6 +240,21 @@ theorem hasBasis_nhds_zero (P : PairOfDefinition A) :
   rw [← hmap]
   exact P.isAdic_idealOfDefinition.hasBasis_nhds_zero.map _
 
+/-- **An element of the ideal of definition is topologically nilpotent.** Its powers lie in the
+successive `Iⁿ`, whose images are a neighbourhood basis of zero
+(`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`), so they converge to `0` in `A`.
+
+This is the property Wedhorn uses throughout §7.2: it is what forces a continuous valuation to
+have cofinal values on `I`, and hence `v a < 1` there (Theorem 7.10). -/
+theorem isTopologicallyNilpotent_of_mem_idealOfDefinition (P : PairOfDefinition A)
+    {a : P.ringOfDefinition} (ha : a ∈ P.idealOfDefinition) :
+    IsTopologicallyNilpotent (a : A) := by
+  rw [IsTopologicallyNilpotent, P.hasBasis_nhds_zero.tendsto_right_iff]
+  intro n _
+  filter_upwards [Filter.eventually_ge_atTop n] with m hm
+  refine (P.mem_idealImage n).mpr ⟨a ^ m, ?_, by push_cast; ring⟩
+  exact Ideal.pow_le_pow_right hm (Ideal.pow_mem_pow ha m)
+
 /-- A ring admitting a pair of definition is nonarchimedean. -/
 theorem toNonarchimedeanRing [IsTopologicalRing A] (P : PairOfDefinition A) :
     NonarchimedeanRing A where
@@ -261,7 +278,59 @@ theorem le_powerBoundedSubring [NonarchimedeanRing A] (P : PairOfDefinition A) :
     P.ringOfDefinition ≤ powerBoundedSubring A := fun _ ha ↦
   mem_powerBoundedSubring.mpr (P.isBounded_ringOfDefinition.isPowerBounded_of_mem ha)
 
+/-- The image of a pair of definition in a quotient ring, used to furnish the quotient Huber
+ring structure. -/
+private def quotient [IsTopologicalRing A] (P : PairOfDefinition A) (J : Ideal A) :
+    PairOfDefinition (A ⧸ J) := by
+  let q : A →+* A ⧸ J := Ideal.Quotient.mk J
+  let A₀ : Subring (A ⧸ J) := P.ringOfDefinition.map q
+  let q₀ : P.ringOfDefinition →+* A₀ :=
+    (q.comp P.ringOfDefinition.subtype).codRestrict A₀ fun a ↦
+      Subring.mem_map.mpr ⟨a, a.2, rfl⟩
+  have hq₀_cont : Continuous q₀ := by
+    dsimp [q₀]
+    exact (continuous_quotient_mk'.comp continuous_subtype_val).subtype_mk _
+  have hq₀_open : IsOpenMap q₀ := by
+    dsimp [q₀]
+    exact
+      (QuotientRing.isOpenMap_coe J).subtype_map P.isOpen_ringOfDefinition
+        (fun a ha ↦ Subring.mem_map.mpr ⟨a, ha, rfl⟩)
+  have hq₀_surj : Function.Surjective q₀ := by
+    rintro ⟨x, hx⟩
+    obtain ⟨a, ha, rfl⟩ := Subring.mem_map.mp hx
+    exact ⟨⟨a, ha⟩, rfl⟩
+  refine
+    { ringOfDefinition := A₀
+      isOpen_ringOfDefinition := by
+        rw [Subring.coe_map]
+        exact QuotientRing.isOpenMap_coe J _ P.isOpen_ringOfDefinition
+      idealOfDefinition := P.idealOfDefinition.map q₀
+      fg_idealOfDefinition := P.fg_idealOfDefinition.map q₀
+      isAdic_idealOfDefinition := isAdic_iff.mpr ⟨?_, ?_⟩ }
+  · intro n
+    rw [← Ideal.map_pow]
+    have hset : ((P.idealOfDefinition ^ n).map q₀ : Set A₀) =
+        q₀ '' ((P.idealOfDefinition ^ n : Ideal P.ringOfDefinition) :
+          Set P.ringOfDefinition) := by
+      ext y
+      exact Ideal.mem_map_iff_of_surjective q₀ hq₀_surj
+    rw [hset]
+    exact hq₀_open _ ((isAdic_iff.mp P.isAdic_idealOfDefinition).1 n)
+  · intro s hs
+    obtain ⟨n, hn⟩ := (isAdic_iff.mp P.isAdic_idealOfDefinition).2
+      (q₀ ⁻¹' s) (hq₀_cont.continuousAt.preimage_mem_nhds (by simpa using hs))
+    refine ⟨n, ?_⟩
+    rw [← Ideal.map_pow]
+    rintro y hy
+    obtain ⟨x, hx, rfl⟩ := Ideal.mem_map_iff_of_surjective q₀ hq₀_surj |>.mp hy
+    exact hn hx
+
 end PairOfDefinition
+
+/-- Quotients of Huber rings, with the quotient topology, are Huber rings. -/
+instance IsHuberRing.quotient {A : Type*} [CommRing A] [TopologicalSpace A]
+    [IsTopologicalRing A] [IsHuberRing A] (J : Ideal A) : IsHuberRing (A ⧸ J) :=
+  ⟨IsHuberRing.nonempty_pairOfDefinition.elim fun P ↦ ⟨P.quotient J⟩⟩
 
 section Discrete
 

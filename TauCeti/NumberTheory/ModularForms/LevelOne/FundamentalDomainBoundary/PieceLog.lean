@@ -27,8 +27,10 @@ the interior winding number `-1` of the contour is computed.
 
 ## Main declarations
 
-* `TauCeti.ModularForm.windingNumber_fdBoundary_segment1_eq_log`, `…_arc_eq_log`,
-  `…_segment4_eq_log`, `…_segment5_eq_log` — the four logarithm values.
+* `TauCeti.ModularForm.windingNumber_fdBoundarySegment1_eq_log`,
+  `TauCeti.ModularForm.windingNumber_fdBoundary_arc_eq_log`,
+  `TauCeti.ModularForm.windingNumber_fdBoundarySegment4_eq_log` and
+  `TauCeti.ModularForm.windingNumber_fdBoundarySegment5_eq_log` — the four logarithm values.
 
 ## References
 
@@ -74,13 +76,13 @@ private lemma windingNumber_fdBoundary_eq_log_of_slit {a b : ℝ} (hab : a ≤ b
 
 /-- The winding number of the right vertical about a point strictly to its left is the
 principal logarithm of the endpoint ratio. -/
-theorem windingNumber_fdBoundary_segment1_eq_log (hw : w.re < 1 / 2) :
+theorem windingNumber_fdBoundarySegment1_eq_log (hw : w.re < 1 / 2) :
     windingNumber (fdBoundary H) 0 1 w =
       (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
         Complex.log (((ρ : ℂ) + 1 - w) / (1 / 2 + H * Complex.I - w)) := by
   have h01 : uIcc (0 : ℝ) 1 = Icc 0 1 := uIcc_of_le (by norm_num)
   have hre : ∀ t ∈ uIcc (0 : ℝ) 1, 0 < (fdBoundary H t - w).re := fun t ht => by
-    rw [Complex.sub_re, re_fdBoundary_segment1 H (h01 ▸ ht)]
+    rw [Complex.sub_re, re_fdBoundarySegment1 H (h01 ▸ ht)]
     linarith
   rw [windingNumber_fdBoundary_eq_log_of_slit (by norm_num)
       (by rw [← h01]; exact h01 ▸ Icc_subset_Icc le_rfl (by norm_num))
@@ -109,13 +111,13 @@ theorem windingNumber_fdBoundary_arc_eq_log (hw : 1 < w.im) :
 
 /-- The winding number of the left vertical about a point strictly to its right is the
 principal logarithm of the endpoint ratio. -/
-theorem windingNumber_fdBoundary_segment4_eq_log (hw : -(1 / 2) < w.re) :
+theorem windingNumber_fdBoundarySegment4_eq_log (hw : -(1 / 2) < w.re) :
     windingNumber (fdBoundary H) 3 4 w =
       (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
         Complex.log ((-1 / 2 + H * Complex.I - w) / ((ρ : ℂ) - w)) := by
   have h34 : uIcc (3 : ℝ) 4 = Icc 3 4 := uIcc_of_le (by norm_num)
   have hre : ∀ t ∈ uIcc (3 : ℝ) 4, (fdBoundary H t - w).re < 0 := fun t ht => by
-    rw [Complex.sub_re, re_fdBoundary_segment4 H (h34 ▸ ht)]
+    rw [Complex.sub_re, re_fdBoundarySegment4 H (h34 ▸ ht)]
     linarith
   rw [windingNumber_fdBoundary_eq_log_of_slit (by norm_num)
       (Icc_subset_Icc (by norm_num) (by norm_num))
@@ -126,13 +128,13 @@ theorem windingNumber_fdBoundary_segment4_eq_log (hw : -(1 / 2) < w.re) :
 
 /-- The winding number of the truncation ceiling about a point strictly below height `H` is
 the principal logarithm of the endpoint ratio. -/
-theorem windingNumber_fdBoundary_segment5_eq_log (hw : w.im < H) :
+theorem windingNumber_fdBoundarySegment5_eq_log (hw : w.im < H) :
     windingNumber (fdBoundary H) 4 5 w =
       (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
         Complex.log ((1 / 2 + H * Complex.I - w) / (-1 / 2 + H * Complex.I - w)) := by
   have h45 : uIcc (4 : ℝ) 5 = Icc 4 5 := uIcc_of_le (by norm_num)
   have him : ∀ t ∈ uIcc (4 : ℝ) 5, 0 < (fdBoundary H t - w).im := fun t ht => by
-    rw [Complex.sub_im, im_fdBoundary_segment5 H (h45 ▸ ht)]
+    rw [Complex.sub_im, im_fdBoundarySegment5 H (h45 ▸ ht)]
     linarith
   rw [windingNumber_fdBoundary_eq_log_of_slit (by norm_num)
       (Icc_subset_Icc (by norm_num) le_rfl)

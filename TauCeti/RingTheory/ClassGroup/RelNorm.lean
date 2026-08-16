@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.ClassGroup.Basic
+public import Mathlib.RingTheory.ClassGroup.ExtendedHom
 public import Mathlib.RingTheory.Ideal.Norm.RelNorm
 import Mathlib.GroupTheory.Congruence.Basic
 
@@ -26,17 +27,24 @@ descent instead goes through the monoid congruence `Con.ker` and
 * `Ideal.relNorm0 : (Ideal S)⁰ →* (Ideal R)⁰`: the relative ideal norm on nonzero ideals.
 * `ClassGroup.relNorm : ClassGroup S →* ClassGroup R`.
 
+
 ## Main results
 
 * `ClassGroup.relNorm_mk0`: `relNorm (mk0 I) = mk0 (relNorm0 I)`, the defining computation on an
   integral representative.
+* `ClassGroup.relNorm_extendedHom`: **extend then norm is the `finrank`-th power**,
+  `relNorm (extendedHom R S c) = c ^ Module.finrank R S`, with
+  `ClassGroup.relNorm_comp_extendedHom` the same statement as an identity of monoid homomorphisms.
+  The extension direction is Mathlib's `ClassGroup.extendedHom`; the composite itself is the
+  source's `ClassGroup.relNorm_comp_map`, respelt against it.
 
 ## Provenance
 
 Ported from the AINTLIB `HasseWeil` project (Apache-2.0), revision `513e83879e2f`, file
 `HasseWeil/Pic0/ClassGroupNorm.lean`, declarations `relNorm0`, `mk0CompRelNorm0`,
 `mk0CompRelNorm0_apply`, `mk0CompRelNorm0_eq_of_mk0_eq`, `ClassGroup.relNorm`,
-`ClassGroup.relNorm_mk0` and `ClassGroup.relNorm_mk0'`.
+`ClassGroup.relNorm_mk0`, `ClassGroup.relNorm_mk0'`, `ClassGroup.relNorm_comp_map` and
+`ClassGroup.relNorm_comp_map_eq`.
 
 Deviations from the source. It descends by `Function.surjInv` on `ClassGroup.mk0_surjective`, with
 `Function.surjInv_eq` rewrites discharging `map_one'` and `map_mul'`; the congruence route used
@@ -45,6 +53,26 @@ alongside `IsDedekindDomain` for both rings, which are implied. Its intermediate
 `mk0CompRelNorm0` and that lemma's `_apply` are inlined, the well-definedness fact being stated
 directly about `mk0 ∘ relNorm0`. Finally its `relNorm_mk0'`, a restatement of `relNorm_mk0` with
 the membership proof spelled out inline, is not ported.
+
+**The source's extension direction is not ported at all.** Its `map0`, `mk0CompMap0`,
+`ClassGroup.map`, `ClassGroup.map_mk0`, `ClassGroup.map_one` and `ClassGroup.map_mul` are Mathlib's
+`ClassGroup.extendedIdeal`, `ClassGroup.extendedHom` and `ClassGroup.extendedHom_mk0`
+(`Mathlib/RingTheory/ClassGroup/ExtendedHom.lean`), which the pinned Mathlib already carries; the
+first version of this file duplicated them under the source's names and `reuse` blocked it. Its
+`Ideal.relNorm_map_algebraMap` is likewise not ported: it converts `Ideal.relNorm_algebraMap`'s
+exponent from `Module.finrank (FractionRing R) (FractionRing S)` to `Module.finrank R S`, and the
+pinned `Ideal.relNorm_algebraMap` already concludes in the latter form, with the converting lemma
+`finrank_of_isFractionRing` now deprecated.
+
+**The composite is ported, not original.** `relNorm_extendedHom` and `relNorm_comp_extendedHom` are
+the source's `ClassGroup.relNorm_comp_map` and `ClassGroup.relNorm_comp_map_eq`, respelt so that the
+extension direction is Mathlib's `ClassGroup.extendedHom` rather than the source's own
+`ClassGroup.map`. What is new here is only that respelling and the shape of the proof: the source
+reaches the ideal level inline, by `congrArg ClassGroup.mk0`, `Subtype.ext` and a `change`, landing
+on its own `Ideal.relNorm_map_algebraMap`; this file names that step as
+`Ideal.relNorm0_extendedIdeal` and lands on Mathlib's `Ideal.relNorm_algebraMap` directly, no
+exponent conversion being needed. The composite is nonetheless new *relative to Mathlib*, since it
+needs `ClassGroup.relNorm`, which Mathlib does not carry.
 -/
 
 public section
@@ -66,6 +94,16 @@ noncomputable def Ideal.relNorm0 : (Ideal S)⁰ →* (Ideal R)⁰ :=
 theorem Ideal.coe_relNorm0 (I : (Ideal S)⁰) :
     (Ideal.relNorm0 R I : Ideal R) = Ideal.relNorm R (I : Ideal S) :=
   (rfl)
+
+/-- **Norm of an extended ideal is the `finrank`-th power**, on nonzero ideals: the
+`(Ideal R)⁰`-level form of Mathlib's `Ideal.relNorm_algebraMap`, against Mathlib's
+`ClassGroup.extendedIdeal`. -/
+@[simp]
+theorem Ideal.relNorm0_extendedIdeal (I : (Ideal R)⁰) :
+    Ideal.relNorm0 R (ClassGroup.extendedIdeal R S I) = I ^ Module.finrank R S := by
+  refine Subtype.ext ?_
+  rw [Ideal.coe_relNorm0, SubmonoidClass.coe_pow]
+  exact Ideal.relNorm_algebraMap S (I : Ideal R)
 
 namespace ClassGroup
 
@@ -116,5 +154,26 @@ theorem relNorm_mk0 (I : (Ideal S)⁰) :
     (MulEquiv.symm_apply_eq _).mpr rfl
   rw [relNorm, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, h]
   rfl
+
+/-- **Extending a class and taking its relative norm raises it to the `finrank`-th power.**
+
+The extension direction is Mathlib's `ClassGroup.extendedHom`; the arithmetic is Mathlib's
+`Ideal.relNorm_algebraMap`, which needs no separability, Galois or perfect-field hypothesis, so
+neither does this. The composite is the source's `ClassGroup.relNorm_comp_map`; see the
+module's Provenance. -/
+@[simp]
+theorem relNorm_extendedHom (c : ClassGroup R) :
+    relNorm (ClassGroup.extendedHom R S c) = c ^ Module.finrank R S := by
+  obtain ⟨I, rfl⟩ := ClassGroup.mk0_surjective c
+  rw [ClassGroup.extendedHom_mk0, relNorm_mk0, Ideal.relNorm0_extendedIdeal]
+  exact map_pow ClassGroup.mk0 I (Module.finrank R S)
+
+/-- `ClassGroup.relNorm_extendedHom` as an identity of monoid homomorphisms: the composite
+`relNorm ∘ extendedHom` is the `finrank`-th power map on `ClassGroup R`. -/
+theorem relNorm_comp_extendedHom :
+    (relNorm (R := R)).comp (ClassGroup.extendedHom R S) = powMonoidHom (Module.finrank R S) := by
+  ext c
+  rw [MonoidHom.comp_apply, powMonoidHom_apply, relNorm_extendedHom]
+
 
 end ClassGroup

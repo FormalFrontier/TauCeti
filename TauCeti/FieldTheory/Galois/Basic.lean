@@ -12,7 +12,20 @@ public import Mathlib.FieldTheory.Galois.Basic
 Material complementing `Mathlib/FieldTheory/Galois/Basic.lean` for a separable quadratic
 extension `L/K`: it has exactly two automorphisms, so the identity and any one nontrivial
 automorphism exhaust `Gal(L/K)`, and an element fixed by a nontrivial automorphism lies in the
-base field.
+base field. `Algebra.IsQuadraticExtension.quadraticCharacter` records the resulting
+`Gal(L/K) →* ℤˣ` — the identity to `1`, the nontrivial automorphism to `-1`. It is there so that
+a quantity alternating with the Galois action can be described uniformly in `σ` rather than by
+cases; `WeierstrassCurve.quadraticTwistPointEquiv_map_eq_quadraticCharacter_smul_map` is the
+intended consumer. Mathlib's `quadraticChar` is a different object — the Legendre symbol of a
+finite field, not a character of a Galois group.
+
+The file closes with one lemma that is **not** about quadratic extensions:
+`AlgEquiv.restrictNormal_eq_one_iff_algebraMap` says that in a tower `K ⊆ L ⊆ M` with `L/K`
+normal, an automorphism of `M` restricts to the identity on `L` exactly when it fixes `L`
+pointwise. Mathlib states this for an `IntermediateField`
+(`AlgEquiv.restrictNormal_eq_one_iff`) while `AlgEquiv.restrictNormal` itself is already given for
+an abstract algebra, so only the characterisation needed transporting; it is a bridge to Mathlib
+rather than ported material, and it asks for `[Normal K L]` alone.
 
 Mathlib already supplies the surrounding structure: `Algebra.IsQuadraticExtension` makes `L/K`
 finite and normal (`Algebra.IsQuadraticExtension.normal`), hence Galois with separability
@@ -86,6 +99,65 @@ theorem univ_eq_pair [DecidableEq (L ≃ₐ[K] L)] {σ : L ≃ₐ[K] L} (hσ : �
     (Finset.univ : Finset (L ≃ₐ[K] L)) = {1, σ} :=
   (Finset.eq_univ_of_forall fun φ ↦ by simpa using algEquiv_eq_one_or_eq K L hσ φ).symm
 
+/-! ### The quadratic character -/
+
+open scoped Classical in
+/-- **The quadratic character of a separable quadratic extension**: the identity goes to `1` and
+the nontrivial automorphism to `-1`. `Gal(L/K)` has order two, so this is a group isomorphism onto
+`ℤˣ`, but the point of packaging it as a `MonoidHom` is that a statement which alternates in `σ` —
+a Galois action twisted by the extension, as for the points of a quadratic twist — can then be
+written uniformly in `σ` instead of split into a fixed and a moved branch by every consumer. -/
+noncomputable def quadraticCharacter : (L ≃ₐ[K] L) →* ℤˣ where
+  toFun σ := if σ = 1 then 1 else -1
+  map_one' := by simp
+  map_mul' σ τ := by
+    rcases eq_or_ne σ 1 with rfl | hσ
+    · simp
+    · rcases eq_or_ne τ 1 with rfl | hτ
+      · simp
+      · obtain rfl := (algEquiv_eq_one_or_eq K L hσ τ).resolve_left hτ
+        simp [algEquiv_mul_self, hσ]
+
+/-- The quadratic character detects the identity: it takes the value `1` exactly there. -/
+@[simp]
+theorem quadraticCharacter_eq_one_iff {σ : L ≃ₐ[K] L} :
+    quadraticCharacter K L σ = 1 ↔ σ = 1 := by
+  classical
+  simp only [quadraticCharacter, MonoidHom.coe_mk, OneHom.coe_mk]
+  split <;> simp_all
+
+/-- Off the identity the quadratic character takes the value `-1`, there being nowhere else to
+go in `ℤˣ`. -/
+theorem quadraticCharacter_eq_neg_one_of_ne_one {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) :
+    quadraticCharacter K L σ = -1 := by
+  classical
+  simp [quadraticCharacter, hσ]
+
 end Algebra.IsQuadraticExtension
+
+/-! ### Restriction to an intermediate field in a tower -/
+
+section Tower
+
+variable (K L : Type*) [Field K] [Field L] [Algebra K L] [Normal K L]
+  (M : Type*) [Field M] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+
+/-- **`σ` restricts to the identity on `L` exactly when it fixes `L` pointwise.** Mathlib's
+`AlgEquiv.restrictNormal_eq_one_iff` says this for an `IntermediateField`, while
+`AlgEquiv.restrictNormal` itself is already stated for an abstract algebra `L`, so only the
+characterisation needs transporting to a tower `K ⊆ L ⊆ M`. -/
+theorem AlgEquiv.restrictNormal_eq_one_iff_algebraMap (σ : M ≃ₐ[K] M) :
+    σ.restrictNormal L = 1 ↔ ∀ x : L, σ (algebraMap L M x) = algebraMap L M x := by
+  constructor
+  · intro h x
+    rw [← AlgEquiv.restrictNormal_commutes σ L x, h, AlgEquiv.one_apply]
+  · intro h
+    ext x
+    have hx := AlgEquiv.restrictNormal_commutes σ L x
+    rw [h x] at hx
+    exact (algebraMap L M).injective hx
+
+end Tower
+
 
 end

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
 
 public section
@@ -522,20 +522,10 @@ coroot lattice, so that the datum is the simply connected one. -/
 
 /-! ## The pinned base -/
 
-/-- The telescoping identity behind `root_mem_or_neg_mem`: a difference `f a - f b` with `a ≤ b` is
-the sum of the consecutive differences between them. -/
-private lemma sub_mem_of_forall {M : Type*} [AddCommGroup M] (S : AddSubmonoid M) (f : ℕ → M)
-    {a b : ℕ} (hab : a ≤ b) (h : ∀ k, a ≤ k → k < b → f k - f (k + 1) ∈ S) : f a - f b ∈ S := by
-  -- `Finset.sum_Ico_sub` at `-f` is the telescoping identity in the direction needed here.
-  have key := Finset.sum_Ico_sub (fun k => -f k) hab
-  simp only [neg_sub_neg] at key
-  rw [← key]
-  exact sum_mem fun k hk => h k (Finset.mem_Ico.mp hk).1 (Finset.mem_Ico.mp hk).2
-
 private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
     weight n a - weight n b ∈
       AddSubmonoid.closure (range (typeCSimpleRoot (n := n))) := by
-  refine sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   have hk' : k + 1 < n := by omega
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleRoot_of_lt (i := ⟨k, by omega⟩) (by simpa using hk')]
@@ -543,7 +533,7 @@ private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
 private lemma coweight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b ≤ n) :
     coweight n a - coweight n b ∈
       AddSubmonoid.closure (range (typeCSimpleCoroot (n := n))) := by
-  refine sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleCoroot_eq (i := ⟨k, by omega⟩)]
 
@@ -696,11 +686,11 @@ private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
 
 /-- The support of the pinned base of type `Cₙ`: the first `n` root indices. -/
 private def typeCSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
-  Finset.univ.map ⟨typeCSimpleIndex n, typeCSimpleIndex_injective⟩
+  simpleSupport (typeCSimpleIndex_injective (n := n))
 
 private lemma coe_typeCSimpleSupport :
-    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) := by
-  simp [typeCSimpleSupport]
+    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) :=
+  coe_simpleSupport _
 
 private lemma image_root_typeCSimpleSupport :
     (typeCSimplyConnectedRootDatum n).root '' (typeCSimpleSupport n : Set (Fin (2 * n ^ 2)))
@@ -754,16 +744,8 @@ def typeCSimplyConnectedBase (n : ℕ) : (typeCSimplyConnectedRootDatum n).Base 
 /-- **The support of the pinned base of type `Cₙ` is the set of the first `n` root indices**, which
 by `TauCeti.DynkinType.root_typeCSimpleIndex` carry the simple roots in Bourbaki order. -/
 @[simp] theorem mem_support_typeCSimplyConnectedBase {k : Fin (2 * n ^ 2)} :
-    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n := by
-  -- The support of the base is `typeCSimpleSupport n` by definition.
-  change k ∈ typeCSimpleSupport n ↔ (k : ℕ) < n
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simp only [Function.Embedding.coeFn_mk, typeCSimpleIndex_val]
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeCSimpleIndex_injective (n := n)) (fun _ ↦ typeCSimpleIndex_val _)
 
 /-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
 private def typeCBaseEquiv (n : ℕ) : (typeCSimplyConnectedBase n).support ≃ Fin n where

@@ -149,12 +149,7 @@ private lemma first_invariant_dvd_p_of_product (p : ℕ) (S : SpecialLinearGroup
   have hRadj : R_ℤ * R_ℤ.adjugate = 1 := by rw [Matrix.mul_adjugate, R.prop, one_smul]
   have hM_eq : M = L_ℤ.adjugate * Matrix.diagonal (fun i ↦ (a i : ℤ)) * R_ℤ.adjugate :=
     matrix_isolate_middle L_ℤ M R_ℤ _ hLadj hRadj (by
-      have hre : L_ℤ * M * R_ℤ = L_ℤ * dp * S_ℤ * dpk * R_ℤ := by
-        ext i j
-        simp only [M, S_ℤ, Matrix.mul_apply, Fin.sum_univ_two]
-        ring
-      rw [hre]
-      exact heq)
+      simpa only [M, mul_assoc] using heq)
   have h_dvd_entry : ∀ i j : Fin 2, (a 0 : ℤ) ∣ M i j := by
     intro i j
     rw [hM_eq]
@@ -174,13 +169,7 @@ private lemma first_invariant_dvd_p_of_product (p : ℕ) (S : SpecialLinearGroup
   have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) := S.isCoprime_col 0
   have h1 : (a 0 : ℤ) ∣ S_ℤ 0 0 := h_M00 ▸ h_dvd_entry 0 0
   have h2 : (a 0 : ℤ) ∣ (p : ℤ) * S_ℤ 1 0 := h_M10 ▸ h_dvd_entry 1 0
-  have h_cop_a : IsCoprime ((a 0 : ℤ)) (S_ℤ 1 0) := by
-    obtain ⟨u, v, huv⟩ := h_cop
-    obtain ⟨t, ht⟩ := h1
-    refine ⟨u * t, v, ?_⟩
-    have hshuffle : u * t * (a 0 : ℤ) = u * ((a 0 : ℤ) * t) := by ring
-    rw [hshuffle, ← ht]
-    exact huv
+  have h_cop_a : IsCoprime (a 0 : ℤ) (S_ℤ 1 0) := h_cop.of_isCoprime_of_dvd_left h1
   exact_mod_cast h_cop_a.dvd_of_dvd_mul_right h2
 
 /-- Determinant balance: if a `T(1,p) · T(1,pᵏ)`-shaped product lies in the double coset

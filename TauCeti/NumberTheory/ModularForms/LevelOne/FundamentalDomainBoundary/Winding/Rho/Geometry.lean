@@ -51,7 +51,7 @@ private lemma rho_eq_exp :
   · rw [Complex.exp_ofReal_mul_I_re, h23, Real.cos_pi_sub, Real.cos_pi_div_three]
     norm_num [UpperHalfPlane.ρ]
   · rw [Complex.exp_ofReal_mul_I_im, h23, Real.sin_pi_sub, Real.sin_pi_div_three]
-    norm_num [UpperHalfPlane.ρ]
+    exact rho_im
 
 /-- On the arc the distance from `ρ` is the chord distance: `2·sin(|t - 3|·π/12)` up to
 the absolute value inside the sine. -/
@@ -71,7 +71,7 @@ theorem norm_fdBoundary_sub_rho_arc (H : ℝ) (ht : t ∈ Icc (1 : ℝ) 3) :
 theorem fdBoundary_sub_rho_of_mem_Icc_three_four (H : ℝ) (ht : t ∈ Icc (3 : ℝ) 4) :
     fdBoundary H t - (UpperHalfPlane.ρ : ℂ) =
       (((t - 3) * (H - Real.sqrt 3 / 2) : ℝ) : ℂ) * Complex.I := by
-  rw [eqOn_fdBoundary_segment4 H ht, fdBoundary_segment4_apply, AffineMap.lineMap_apply]
+  rw [eqOn_fdBoundarySegment4 H ht, fdBoundarySegment4_apply, AffineMap.lineMap_apply]
   refine Complex.ext ?_ ?_
   · simp [UpperHalfPlane.ρ, Complex.real_smul]
   · simp [UpperHalfPlane.ρ, Complex.real_smul]
@@ -81,7 +81,7 @@ by exactly `1`. -/
 theorem norm_fdBoundary_sub_rho_segment1 (H : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     1 ≤ ‖fdBoundary H t - (UpperHalfPlane.ρ : ℂ)‖ := by
   have hre : (fdBoundary H t - (UpperHalfPlane.ρ : ℂ)).re = 1 := by
-    rw [Complex.sub_re, re_fdBoundary_segment1 H ht]
+    rw [Complex.sub_re, re_fdBoundarySegment1 H ht]
     norm_num [UpperHalfPlane.ρ]
   have h1 : |(fdBoundary H t - (UpperHalfPlane.ρ : ℂ)).re| ≤
       ‖fdBoundary H t - (UpperHalfPlane.ρ : ℂ)‖ := Complex.abs_re_le_norm _
@@ -95,8 +95,7 @@ makes the signed bound vacuous. -/
 theorem norm_fdBoundary_sub_rho_segment5 (ht : t ∈ Icc (4 : ℝ) 5) :
     |H - Real.sqrt 3 / 2| ≤ ‖fdBoundary H t - (UpperHalfPlane.ρ : ℂ)‖ := by
   have him : (fdBoundary H t - (UpperHalfPlane.ρ : ℂ)).im = H - Real.sqrt 3 / 2 := by
-    rw [Complex.sub_im, im_fdBoundary_segment5 H ht]
-    simp [UpperHalfPlane.ρ]
+    rw [Complex.sub_im, im_fdBoundarySegment5 H ht, rho_im]
   have h1 : |(fdBoundary H t - (UpperHalfPlane.ρ : ℂ)).im| ≤
       ‖fdBoundary H t - (UpperHalfPlane.ρ : ℂ)‖ := Complex.abs_im_le_norm _
   exact him ▸ h1
@@ -105,7 +104,7 @@ theorem norm_fdBoundary_sub_rho_segment5 (ht : t ∈ Icc (4 : ℝ) 5) :
 theorem fdBoundary_sub_rho_mem_slitPlane_of_le_one (H : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     fdBoundary H t - (UpperHalfPlane.ρ : ℂ) ∈ Complex.slitPlane := by
   refine Complex.mem_slitPlane_iff.mpr (Or.inl ?_)
-  rw [Complex.sub_re, re_fdBoundary_segment1 H ht]
+  rw [Complex.sub_re, re_fdBoundarySegment1 H ht]
   norm_num [UpperHalfPlane.ρ]
 
 /-- Before the corner the arc stays right of the corner column: the real part of the
@@ -145,10 +144,7 @@ theorem fdBoundary_sub_rho_mem_slitPlane_of_mem_Icc_four_five (hH : Real.sqrt 3 
     (ht : t ∈ Icc (4 : ℝ) 5) :
     fdBoundary H t - (UpperHalfPlane.ρ : ℂ) ∈ Complex.slitPlane := by
   refine Complex.mem_slitPlane_iff.mpr (Or.inr ?_)
-  rw [Complex.sub_im, im_fdBoundary_segment5 H ht]
-  have hrho : ((UpperHalfPlane.ρ : ℂ)).im = Real.sqrt 3 / 2 := by
-    simp [UpperHalfPlane.ρ]
-  rw [hrho]
+  rw [Complex.sub_im, im_fdBoundarySegment5 H ht, rho_im]
   positivity
 
 /-- The polar form of the shifted contour just before the corner. -/
@@ -236,8 +232,8 @@ theorem eq_three_of_fdBoundary_eq_rho (hH : H ≠ Real.sqrt 3 / 2) (ht : t ∈ I
         · exact absurd (by linarith) hH
       · have hz : fdBoundary H t - (UpperHalfPlane.ρ : ℂ) = 0 := norm_eq_zero.mp h0
         have him := congrArg Complex.im hz
-        have hρ : (UpperHalfPlane.ρ : ℂ).im = Real.sqrt 3 / 2 := by norm_num [UpperHalfPlane.ρ]
-        rw [Complex.sub_im, im_fdBoundary_segment5 H ⟨h4.le, ht.2⟩, hρ, Complex.zero_im] at him
+        rw [Complex.sub_im, im_fdBoundarySegment5 H ⟨h4.le, ht.2⟩, rho_im,
+          Complex.zero_im] at him
         exact absurd (by linarith) hH
 
 end ModularForm

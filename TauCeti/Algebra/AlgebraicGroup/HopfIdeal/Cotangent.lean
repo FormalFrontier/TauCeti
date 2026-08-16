@@ -104,7 +104,10 @@ noncomputable def quotientCotangentMap (I : HopfIdeal k H) :
       (Bialgebra.AugmentationIdeal k H)
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
       (Algebra.ofId H (H ⧸ I.toIdeal))
-      (augmentationIdeal_le_comap_quotient I)).restrictScalars k
+      (by
+        intro x hx
+        rw [Ideal.mem_comap, Algebra.ofId_apply]
+        exact augmentationIdeal_le_comap_quotient I hx)).restrictScalars k
 
 /-- The quotient cotangent map sends the class of an augmentation-ideal element to the class of
 its image in the quotient. -/
@@ -115,13 +118,16 @@ theorem quotientCotangentMap_toCotangent (I : HopfIdeal k H)
         ((Bialgebra.AugmentationIdeal k H).toCotangent x) =
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).toCotangent
         ⟨algebraMap H (H ⧸ I.toIdeal) x, by
-          simpa [Bialgebra.AugmentationIdeal, RingHom.mem_ker] using x.property⟩ := by
-  rw [quotientCotangentMap]
-  exact Ideal.mapCotangent_toCotangent
-    (Bialgebra.AugmentationIdeal k H)
-    (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
-    (Algebra.ofId H (H ⧸ I.toIdeal))
-    (augmentationIdeal_le_comap_quotient I) x
+          have hx : Coalgebra.counit (R := k) (x : H) = 0 := x.property
+          rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
+          simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+            Ideal.Quotient.algebraMap_eq, Bialgebra.counitAlgHom_apply,
+            Bialgebra.Quotient.counit_mk] using hx⟩ := by
+  rw [quotientCotangentMap, LinearMap.restrictScalars_apply,
+    Ideal.mapCotangent_toCotangent]
+  apply (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).toCotangent.congr_arg
+  ext
+  exact Algebra.ofId_apply (H ⧸ I.toIdeal) (x : H)
 
 /-- The quotient cotangent map sends the first-order displacement of `x` to the first-order
 displacement of its quotient class. -/

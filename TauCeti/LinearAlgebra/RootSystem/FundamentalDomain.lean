@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Chamber
-public import TauCeti.LinearAlgebra.RootSystem.Inversions.Deletion
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.StrongExchange
 
 /-!
 # The closed dominant chamber is a strict fundamental domain

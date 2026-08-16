@@ -19,6 +19,16 @@ set -euxo pipefail
 
 export TMPDIR="$PWD/.lake/tmp"
 
+# Lake normally invokes Lean directly. Route every compiler process through a
+# trusted wall-clock watchdog instead. This script and the wrapper are the
+# trusted base copies; the PR can overlay only TauCeti/, and landrun does not
+# pass timeout-control variables, so PR code cannot raise or disable the 300s
+# deadline. The wrapper and Lean both remain inside the same landrun sandbox.
+test -n "${WATCHDOG_TOOLCHAIN:-}"
+test -x "$WATCHDOG_TOOLCHAIN/bin/lean"
+export LAKE_OVERRIDE_LEAN=true
+export LEAN="$WATCHDOG_TOOLCHAIN/bin/lean"
+
 # Build the overlaid TauCeti/ against the trusted base config. landrun keeps this
 # offline and confines writes to base/.lake.
 #
