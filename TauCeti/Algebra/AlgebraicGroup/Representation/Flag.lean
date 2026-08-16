@@ -28,8 +28,10 @@ into `Uₙ`.
   criterion for an upper-unitriangular coefficient matrix.
 * `TauCeti.Comodule.flagSubcomodule`: the standard flag of an upper-triangular comodule, bundled as
   subcomodules.
-* `TauCeti.Comodule.quotientCoact_flagSubcomodule_mk_basis`: each successive basis class is a
-  nonzero fixed vector in the quotient by the preceding flag term.
+* `TauCeti.Comodule.quotient_mk_basis_ne_zero`: each successive basis class is nonzero in the
+  quotient by the preceding flag term.
+* `TauCeti.Comodule.quotientCoact_flagSubcomodule_mk_basis`: each successive basis class has
+  trivial coaction in that quotient.
 
 ## References
 
@@ -168,12 +170,11 @@ theorem flagSubcomodule_last (b : Basis (Fin n) k M)
     Basis.flag_last, Subcomodule.top_toSubmodule, Submodule.mem_top]
 
 /-- The bundled basis flag is monotone. -/
-theorem flagSubcomodule_mono (b : Basis (Fin n) k M)
+theorem flagSubcomodule_monotone (b : Basis (Fin n) k M)
     (h : (coefficientMatrix (C := H) b).IsUpperTriangular) :
     Monotone (flagSubcomodule (H := H) b h) := by
   intro r s hrs m hm
-  change m ∈ b.flag r at hm
-  change m ∈ b.flag s
+  rw [← Subcomodule.mem_toSubmodule, flagSubcomodule_toSubmodule] at hm ⊢
   exact b.flag_mono hrs hm
 
 /-- The bundled basis flag is strictly monotone. -/
@@ -181,7 +182,7 @@ theorem flagSubcomodule_strictMono (b : Basis (Fin n) k M)
     [Nontrivial k] (h : (coefficientMatrix (C := H) b).IsUpperTriangular) :
     StrictMono (flagSubcomodule (H := H) b h) := by
   intro r s hrs
-  refine lt_of_le_of_ne (flagSubcomodule_mono b h hrs.le) ?_
+  refine lt_of_le_of_ne (flagSubcomodule_monotone b h hrs.le) ?_
   intro hrs'
   have hflags := congrArg Subcomodule.toSubmodule hrs'
   rw [flagSubcomodule_toSubmodule, flagSubcomodule_toSubmodule] at hflags
