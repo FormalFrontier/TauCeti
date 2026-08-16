@@ -76,6 +76,8 @@ private theorem radicalQuotientMkAux_ker :
     A.radical.toIntSubmodule.mkQ.toAddMonoidHom.ker = A.radical := by
   ext x
   rw [AddMonoidHom.mem_ker]
+  -- Expose the quotient map and the common carrier of `radical` and `toIntSubmodule`;
+  -- both bundled wrappers preserve these data definitionally.
   change Submodule.Quotient.mk x = 0 ↔ x ∈ A.radical
   rw [Submodule.Quotient.mk_eq_zero]
   rfl
