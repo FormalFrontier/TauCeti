@@ -138,10 +138,10 @@ theorem pointsMulEquiv_kostantRootSubgroupCoordinateMap_apply
   rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
     WithConv.ofConv_toConv, AlgHom.comp_apply]
   change q.ofConv
-      (Comodule.coordinateBialgHom b
+      ((kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b).hom
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
           (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, s))))) = _
-  rw [Comodule.coordinateBialgHom_X]
+  rw [kostantRootSubgroupCoordinateMap_X]
   rw [Comodule.coefficientMatrix_apply, Comodule.matrixCoefficient_def,
     kostantRootSubgroupComodule_coact]
   rw [Module.Basis.baseChange_apply, kostantRootSubgroupPoints_tmul]
@@ -176,6 +176,7 @@ theorem pointsMulEquiv_kostantRootSubgroupCoordinateMap_apply
 
 /-- On algebra-valued points, the matrix induced by the Kostant coordinate morphism is the
 original divided-power exponential matrix. -/
+@[simp]
 theorem pointsMulEquiv_kostantRootSubgroupCoordinateMap
     (q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
     GeneralLinear.pointsMulEquiv n
