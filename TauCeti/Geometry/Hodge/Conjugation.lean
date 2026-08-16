@@ -88,7 +88,7 @@ def complexificationMap : V →ₗ[ℤ] Complexification V :=
   (TensorProduct.mk ℤ ℂ V) 1
 
 /-- The tensor-product complexification satisfies the abstract base-change interface. -/
-theorem complexificationMap_isBaseChange :
+theorem isBaseChange_complexificationMap :
     IsBaseChange ℂ (complexificationMap (V := V)) :=
   TensorProduct.isBaseChange ℤ V ℂ
 
@@ -208,9 +208,9 @@ theorem latticeConj_unique (hℂ : IsBaseChange ℂ ιℂ)
 /-- On the canonical tensor-product model, abstract lattice-induced conjugation is the concrete
 tensor map. -/
 theorem latticeConj_complexificationMap :
-    latticeConj (complexificationMap_isBaseChange (V := V)) =
+    latticeConj (isBaseChange_complexificationMap (V := V)) =
       concreteLatticeConj (V := V) :=
-  (latticeConj_unique complexificationMap_isBaseChange concreteLatticeConj
+  (latticeConj_unique isBaseChange_complexificationMap concreteLatticeConj
     concreteLatticeConj_complexificationMap).symm
 
 /-- Lattice-induced conjugation on an abstract complexification, bundled as a conjugation. -/
