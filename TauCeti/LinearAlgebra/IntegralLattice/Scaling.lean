@@ -175,6 +175,7 @@ theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) 
 /-! ## Radical and signature -/
 
 /-- Scaling by a nonzero integer preserves the radical. -/
+@[simp]
 theorem radical_smul {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
     (n • L).radical = L.radical := by
   ext x
@@ -187,11 +188,13 @@ theorem radical_smul {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
     rw [hx y, mul_zero]
 
 /-- Scaling by a nonzero integer preserves the null index. -/
+@[simp]
 theorem sigNull_smul {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
     (n • L).sigNull = L.sigNull := by
   rw [sigNull, radical_smul hn, sigNull]
 
 /-- Scaling by a positive integer preserves the positive index. -/
+@[simp]
 theorem sigPos_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
     (n • L).sigPos = L.sigPos := by
   let _ := L.finiteDimensional
@@ -201,6 +204,7 @@ theorem sigPos_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
   exact QuadraticForm.sigPos_smul_of_pos L.form.toQuadraticMap hnq
 
 /-- Scaling by a positive integer preserves the negative index. -/
+@[simp]
 theorem sigNeg_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
     (n • L).sigNeg = L.sigNeg := by
   let _ := L.finiteDimensional
@@ -210,12 +214,14 @@ theorem sigNeg_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
   exact QuadraticForm.sigNeg_smul_of_pos L.form.toQuadraticMap hnq
 
 /-- Scaling by a positive integer preserves the signature. -/
+@[simp]
 theorem signature_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
     (n • L).signature = L.signature := by
   rw [signature, sigPos_smul_of_pos hn, sigNull_smul hn.ne', sigNeg_smul_of_pos hn,
     signature]
 
 /-- Scaling by a negative integer exchanges the positive and negative indices. -/
+@[simp]
 theorem sigPos_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
     (n • L).sigPos = L.sigNeg := by
   let _ := L.finiteDimensional
@@ -225,6 +231,7 @@ theorem sigPos_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
   exact QuadraticForm.sigPos_smul_of_neg L.form.toQuadraticMap hnq
 
 /-- Scaling by a negative integer exchanges the negative and positive indices. -/
+@[simp]
 theorem sigNeg_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
     (n • L).sigNeg = L.sigPos := by
   let _ := L.finiteDimensional
@@ -235,6 +242,7 @@ theorem sigNeg_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
 
 /-- Scaling by a negative integer exchanges the positive and negative indices and preserves the
 null index. -/
+@[simp]
 theorem signature_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
     (n • L).signature = (L.sigNeg, L.sigNull, L.sigPos) := by
   rw [signature, sigPos_smul_of_neg hn, sigNull_smul hn.ne, sigNeg_smul_of_neg hn]

@@ -81,16 +81,11 @@ theorem sigPos_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
   · obtain ⟨U, hUrank, hU⟩ := exists_finrank_eq_sigPos_and_posDef (a • Q)
     rw [← hUrank]
     apply le_sigPos_of_posDef
-    intro x hx
-    have h := hU x hx
-    simp only [QuadraticMap.restrict_apply, smul_apply, smul_eq_mul] at h
-    exact pos_of_mul_pos_right h ha.le
+    exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mp hU
   · obtain ⟨U, hUrank, hU⟩ := exists_finrank_eq_sigPos_and_posDef Q
     rw [← hUrank]
     apply le_sigPos_of_posDef
-    intro x hx
-    simp only [QuadraticMap.restrict_apply, smul_apply, smul_eq_mul]
-    exact mul_pos ha (hU x hx)
+    exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mpr hU
 
 /-- Multiplication by a positive scalar preserves the negative index of inertia. -/
 theorem sigNeg_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
