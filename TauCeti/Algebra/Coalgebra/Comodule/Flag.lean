@@ -47,17 +47,17 @@ namespace TauCeti.Comodule
 
 open Module
 
-universe u
+universe u v w
 
 noncomputable section
 
-variable {k H M : Type u} {n : ℕ}
-variable [CommRing k] [Semiring H] [Bialgebra k H]
+variable {k : Type u} {H : Type v} {M : Type w} {n : ℕ}
+variable [CommRing k] [AddCommMonoid H] [Module k H] [Coalgebra k H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
 /-- A coefficient matrix is upper unitriangular exactly when each basis vector is fixed by the
 coaction modulo the span of the preceding basis vectors. -/
-theorem coefficientMatrix_isUpperUnitriangular_iff (b : Basis (Fin n) k M) :
+theorem coefficientMatrix_isUpperUnitriangular_iff [One H] (b : Basis (Fin n) k M) :
     (coefficientMatrix (C := H) b).IsUpperUnitriangular ↔
       ∀ i : Fin n,
         TensorProduct.map (b.flag i.castSucc).mkQ (LinearMap.id : H →ₗ[k] H)
@@ -197,6 +197,7 @@ theorem quotient_mk_basis_ne_zero [Nontrivial k] (b : Basis (Fin n) k M) (i : Fi
 /-- In the quotient by the preceding term of an upper-unitriangular basis flag, the class of the
 next basis vector has trivial coaction. -/
 theorem quotientCoact_flagSubcomodule_mk_basis
+    [One H]
     (b : Basis (Fin n) k M)
     (h : (coefficientMatrix (C := H) b).IsUpperUnitriangular) (i : Fin n) :
     let N := flagSubcomodule (H := H) b h.isUpperTriangular i.castSucc
