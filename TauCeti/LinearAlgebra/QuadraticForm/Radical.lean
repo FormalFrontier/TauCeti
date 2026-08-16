@@ -50,7 +50,7 @@ variable {M' : Type*} [AddCommGroup M'] [Module R M']
 /-- The radical of an orthogonal product is the product of the two radicals when two is
 invertible. -/
 @[simp]
-theorem radical_prod [Invertible (2 : R)] (Q : QuadraticForm R M) (Q' : QuadraticForm R M') :
+theorem radical_prod [Invertible (2 : R)] (Q : QuadraticMap R M P) (Q' : QuadraticMap R M' P) :
     (Q.prod Q').radical = Q.radical.prod Q'.radical := by
   rw [radical_eq_ker_polarBilin, radical_eq_ker_polarBilin, radical_eq_ker_polarBilin]
   ext p
