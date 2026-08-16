@@ -23,8 +23,9 @@ Unlike the weights of a Cartan subalgebra on a finite-dimensional module over a 
 algebra, the central weight carries **no integrality constraint**: it is recorded here as a plain
 element of `Module.Dual K (LieAlgebra.center K L)`, with no lattice condition attached. For
 `gl n K`, whose centre is the scalar matrices
-(`TauCeti.center_matrix_toSubmodule_eq_span_one`), it is the direction along the identity matrix
-that the integral dominant weights of the general linear *group* do not see.
+(`TauCeti.center_matrix_toSubmodule_eq_span_one`), the central weight is the scalar by which the
+identity matrix acts, and that scalar is an arbitrary element of `K`: none of the integrality that
+the general linear *group* imposes on the central characters of its representations survives here.
 
 Algebraic closedness is essential and not a convenience: over `ℝ` the one-dimensional abelian Lie
 algebra acting on `ℝ²` by the rotation generator is irreducible, is its own centre, and no scalar
