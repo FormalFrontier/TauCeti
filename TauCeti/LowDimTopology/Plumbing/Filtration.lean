@@ -380,8 +380,12 @@ theorem latticeWeightSublevelComplex_d (P : PlumbingGraph V)
       (P.latticeDifferentialWeightDegree_comp_inclusion k hNM q)
 
 /-- The component of a weight-sublevel inclusion is the corresponding inclusion of filtered
-degree parts. -/
-@[simp]
+degree parts.
+
+This is deliberately not a `simp` lemma: its right-hand side is a morphism between the
+`ModuleCat.of` objects rather than between the complexes' `X` objects, so the rewritten term is
+type-correct only after unfolding `latticeWeightSublevelComplex` and no further `simp` lemma
+applies to it. Use `latticeWeightSublevelInclusion_apply` on elements instead. -/
 theorem latticeWeightSublevelInclusion_f (P : PlumbingGraph V)
     (k : P.characteristicVectors) {N M : ℤ} (hNM : N ≤ M) (q : ℕ) :
     (P.latticeWeightSublevelInclusion k hNM).f q =
