@@ -78,6 +78,16 @@ private instance instEpiPointwiseQuotientPresheafProjection
     Epi (pointwiseQuotientPresheafProjection H I hI) :=
   NatTrans.epi_of_epi_app _
 
+private theorem pointwiseQuotientPresheafProjection_ulift_app_apply
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
+    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ)
+    (x : ULift (HopfAlgebra.points (R := R) (H := H) A.unop.unop)) :
+    ((Functor.whiskerRight
+      (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
+        GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A) x =
+      ULift.up (((pointwiseQuotientPresheafProjection H I hI).app A) x.down) :=
+  rfl
+
 private instance instEpiPointwiseQuotientPresheafGrpProjectionHom
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     Epi (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom := by
@@ -86,14 +96,13 @@ private instance instEpiPointwiseQuotientPresheafGrpProjectionHom
         (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
           GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A) := by
     apply ConcreteCategory.epi_of_surjective
-    change Function.Surjective (fun x : ULift
-      (HopfAlgebra.points (R := R) (H := H) A.unop.unop) => ULift.up
-        (((pointwiseQuotientPresheafProjection H I hI).app A) x.down))
     intro y
     obtain ⟨x, hx⟩ :=
       (GrpCat.epi_iff_surjective _).1
         (inferInstance : Epi ((pointwiseQuotientPresheafProjection H I hI).app A)) y.down
-    exact ⟨ULift.up x, ULift.ext _ _ hx⟩
+    refine ⟨ULift.up x, ?_⟩
+    erw [pointwiseQuotientPresheafProjection_ulift_app_apply]
+    exact ULift.ext _ _ hx
   let _ : Epi (Functor.whiskerRight
       (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
         GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})) :=
