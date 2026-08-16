@@ -205,7 +205,6 @@ theorem neg_mem_vectorsOfNorm_iff {L : IntegralLattice V} {n : ℚ} (x : L) :
 
 /-- A carrier vector belongs to a prescribed norm set if and only if its image under an isometry
 does. -/
-@[simp]
 theorem Isometry.carrierEquiv_mem_vectorsOfNorm_iff {L : IntegralLattice V}
     {M : IntegralLattice W} (e : Isometry L M) (x : L) (n : ℚ) :
     e.carrierEquiv x ∈ M.vectorsOfNorm n ↔ x ∈ L.vectorsOfNorm n := by
