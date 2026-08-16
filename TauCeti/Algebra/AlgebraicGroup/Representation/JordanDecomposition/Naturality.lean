@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.SemisimplePoint
 
@@ -31,6 +32,8 @@ ReductiveGroups roadmap.
 * `TauCeti.HopfAlgebra.Point.semisimplePart_mapDomain` and
   `TauCeti.HopfAlgebra.Point.unipotentPart_mapDomain`: the two component formulas, with
   `semisimplePart_toConv_comp` and `unipotentPart_toConv_comp` as their simp-normal forms.
+* `TauCeti.HopfAlgebra.isSemisimplePoint_mapDomain_iff_of_surjective`: precomposition by a
+  surjective coordinate morphism detects semisimple points.
 
 ## References
 
@@ -127,5 +130,55 @@ theorem unipotentPart_toConv_comp (φ : H₁ →ₐc[k] H₂)
   simpa only [AlgHom.mapDomain_apply] using unipotentPart_mapDomain φ g
 
 end Point
+
+variable [PerfectField K]
+
+/-- A point is semisimple exactly when its unipotent part is the identity. -/
+theorem isSemisimplePoint_iff_unipotentPart_eq_one (g : WithConv (H₁ →ₐ[k] K)) :
+    IsSemisimplePoint g ↔ Point.unipotentPart k H₁ K g = 1 := by
+  constructor
+  · intro hg
+    exact Point.unipotentPart_eq_one_of_isSemisimple k H₁ K
+      ((isSemisimplePoint_def g).mp hg)
+  · intro hu
+    rw [isSemisimplePoint_def]
+    intro M
+    have hdecomp := Point.jordanDecomposition_spec k H₁ K g
+    have hg_eq : g = (Point.jordanDecomposition k H₁ K g).1 := by
+      have hmul := hdecomp.2.2.2
+      rw [Point.jordanDecomposition_snd, hu, mul_one] at hmul
+      exact hmul
+    rw [hg_eq]
+    exact hdecomp.1 M
+
+/-- Precomposition with a surjective coordinate Hopf-algebra morphism detects semisimple points.
+
+Contravariantly, this says that a point of a closed subgroup is semisimple exactly when its image
+in the ambient affine group is semisimple. -/
+@[simp]
+theorem isSemisimplePoint_mapDomain_iff_of_surjective
+    (f : H₁ →ₐc[k] H₂) (hf : Function.Surjective f)
+    (g : WithConv (H₂ →ₐ[k] K)) :
+    IsSemisimplePoint (toConv (g.ofConv.comp (f : H₁ →ₐ[k] H₂))) ↔
+      IsSemisimplePoint g := by
+  rw [← AlgHom.mapDomain_apply]
+  constructor
+  · intro hg
+    rw [isSemisimplePoint_iff_unipotentPart_eq_one] at hg ⊢
+    let f' : CommHopfAlgCat.of k H₁ ⟶ CommHopfAlgCat.of k H₂ := CommHopfAlgCat.ofHom f
+    apply CommHopfAlgCat.mapPointsFunctor_app_injective_of_surjective f' hf
+      (CommAlgCat.of k K)
+    have hmap :
+        (CommHopfAlgCat.mapPointsFunctor f').app (CommAlgCat.of k K)
+            (Point.unipotentPart k H₂ K g) = 1 := by
+      rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+      simp only [pointsFunctor_obj]
+      dsimp [f']
+      rw [← AlgHom.mapDomain_apply, ← Point.unipotentPart_mapDomain]
+      exact hg
+    exact hmap.trans (map_one _).symm
+  · intro hg
+    exact hg.mapDomain f
+
 end HopfAlgebra
 end TauCeti
