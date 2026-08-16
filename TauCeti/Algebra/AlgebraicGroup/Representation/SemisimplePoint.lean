@@ -228,6 +228,7 @@ variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂] [PerfectField K
 
 /-- Over a perfect field, a point of a product affine group is semisimple exactly when both factor
 points are semisimple. -/
+@[simp]
 theorem isSemisimplePoint_pointsMulEquiv_iff
     (g : WithConv ((H₁ ⊗[k] H₂) →ₐ[k] K)) :
     IsSemisimplePoint g ↔
