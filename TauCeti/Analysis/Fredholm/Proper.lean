@@ -95,6 +95,51 @@ theorem one_sub_mul_norm_sub_le {G : Type*} [SeminormedAddGroup G]
   rw [map_sub P x y] at h1
   nlinarith
 
+omit [ProperSpace 𝕜] [CompleteSpace E] [CompleteSpace F] in
+/-- **The two-sided bound is exactly anti-Lipschitzness of the coordinate `x ↦ (f x, P x)`.**
+The bound of `one_sub_mul_norm_sub_le` controls `‖x - y‖` by the two components separately; since
+the product norm is the maximum, each is at most the distance between the pairs, and the two
+constants add.
+
+The constant `2 * C + 2` is not sharp — the maximum norm is what costs the factor. Sharpness
+would need the weighted norm `‖u‖ + C⁻¹ * ‖v‖`, which mathlib does not instantiate on a product,
+and no consumer here uses it. -/
+private theorem antilipschitzWith_prodMk {G : Type*} [SeminormedAddCommGroup G] {N : Set E}
+    {g : E → F} {P : E → G} {C : ℝ} (hC : 0 ≤ C)
+    (key : ∀ x ∈ N, ∀ y ∈ N, ‖x - y‖ ≤ 2 * (C * ‖g x - g y‖) + 2 * ‖P x - P y‖) :
+    AntilipschitzWith ⟨2 * C + 2, by positivity⟩ fun x : N => (g (x : E), P (x : E)) := by
+  refine AntilipschitzWith.of_le_mul_dist fun x y => ?_
+  have hd1 : ‖g (x : E) - g (y : E)‖ ≤ dist (g (x : E), P (x : E)) (g (y : E), P (y : E)) := by
+    rw [Prod.dist_eq, ← dist_eq_norm]
+    exact le_max_left _ _
+  have hd2 : ‖P (x : E) - P (y : E)‖ ≤ dist (g (x : E), P (x : E)) (g (y : E), P (y : E)) := by
+    rw [Prod.dist_eq, ← dist_eq_norm]
+    exact le_max_right _ _
+  have hCd := mul_le_mul_of_nonneg_left hd1 hC
+  have hpos : (0 : ℝ) ≤ dist (g (x : E), P (x : E)) (g (y : E), P (y : E)) := dist_nonneg
+  rw [Subtype.dist_eq, dist_eq_norm]
+  calc ‖(x : E) - (y : E)‖
+      ≤ 2 * (C * ‖g (x : E) - g (y : E)‖) + 2 * ‖P (x : E) - P (y : E)‖ :=
+        key (x : E) x.2 (y : E) y.2
+    _ ≤ (2 * C + 2) * dist (g (x : E), P (x : E)) (g (y : E), P (y : E)) := by nlinarith
+
+omit [CompleteSpace E] [CompleteSpace F] in
+/-- **A continuous linear map into a finite-dimensional subspace sends a bounded set into a
+compact one.** This is where the finite-dimensionality of `ker f'` is spent: in `V` bounded sets
+are relatively compact, so the projection of a ball has compact closure even though the ball
+itself does not. -/
+private theorem exists_isCompact_forall_mem_of_norm_le {V : Submodule 𝕜 E}
+    [FiniteDimensional 𝕜 V] (P : E →L[𝕜] E) (hPV : ∀ x, P x ∈ V) (r : ℝ) :
+    ∃ K : Set E, IsCompact K ∧ ∀ x, ‖x‖ ≤ r → P x ∈ K := by
+  have : ProperSpace V := FiniteDimensional.proper 𝕜 V
+  refine ⟨V.subtypeL '' Metric.closedBall (0 : V) (‖P‖ * r),
+    (isCompact_closedBall _ _).image V.subtypeL.continuous,
+    fun x hx => ⟨⟨P x, hPV x⟩, ?_, V.subtypeL_apply _⟩⟩
+  simp only [Metric.mem_closedBall, dist_zero_right]
+  calc ‖(⟨P x, hPV x⟩ : V)‖ = ‖P x‖ := Submodule.coe_norm _
+    _ ≤ ‖P‖ * ‖x‖ := P.le_opNorm x
+    _ ≤ ‖P‖ * r := by gcongr
+
 /-- **Local properness of a map with upper semi-Fredholm derivative.** If `f` is strictly
 differentiable at `a` and its derivative there has closed range and finite-dimensional
 complemented kernel, then `f` is proper on a neighbourhood `N` of `a`: the part of the preimage of
@@ -138,43 +183,19 @@ theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
     rw [← hPrange]
     exact ⟨x, rfl⟩
   let _ : FiniteDimensional 𝕜 f'.ker := hfinite
-  have : ProperSpace f'.ker := FiniteDimensional.proper 𝕜 f'.ker
-  set Kp : Set E := f'.ker.subtypeL '' Metric.closedBall (0 : f'.ker) (‖P‖ * (‖a‖ + δ / 2))
-  have hKpc : IsCompact Kp :=
-    (isCompact_closedBall _ _).image f'.ker.subtypeL.continuous
-  have hPN : ∀ x ∈ N, P x ∈ Kp := by
-    intro x hx
-    refine ⟨⟨P x, hPmem x⟩, ?_, rfl⟩
+  obtain ⟨Kp, hKpc, hKp⟩ :=
+    exists_isCompact_forall_mem_of_norm_le (V := f'.ker) P hPmem (‖a‖ + δ / 2)
+  have hPN : ∀ x ∈ N, P x ∈ Kp := fun x hx => hKp x <| by
     have hxa : ‖x - a‖ ≤ δ / 2 := by
       rw [hNdef, Metric.mem_closedBall, dist_eq_norm] at hx
       exact hx
-    have hnx : ‖x‖ ≤ ‖a‖ + δ / 2 := by
-      calc ‖x‖ = ‖a + (x - a)‖ := by rw [add_sub_cancel]
-        _ ≤ ‖a‖ + ‖x - a‖ := norm_add_le _ _
-        _ ≤ ‖a‖ + δ / 2 := by linarith
-    simp only [Metric.mem_closedBall, dist_zero_right]
-    calc ‖(⟨P x, hPmem x⟩ : f'.ker)‖ = ‖P x‖ := rfl
-      _ ≤ ‖P‖ * ‖x‖ := P.le_opNorm x
-      _ ≤ ‖P‖ * (‖a‖ + δ / 2) := by gcongr
+    calc ‖x‖ = ‖a + (x - a)‖ := by rw [add_sub_cancel]
+      _ ≤ ‖a‖ + ‖x - a‖ := norm_add_le _ _
+      _ ≤ ‖a‖ + δ / 2 := by linarith
   -- the anti-Lipschitz coordinate on `N`
   set Θ : N → F × E := fun x => (f (x : E), P (x : E))
-  have hanti : AntilipschitzWith ⟨2 * C + 2, by positivity⟩ Θ := by
-    refine AntilipschitzWith.of_le_mul_dist fun x y => ?_
-    have hd1 : ‖f (x : E) - f (y : E)‖ ≤ dist (Θ x) (Θ y) := by
-      rw [Prod.dist_eq, ← dist_eq_norm]
-      exact le_max_left _ _
-    have hd2 : ‖P (x : E) - P (y : E)‖ ≤ dist (Θ x) (Θ y) := by
-      rw [Prod.dist_eq, ← dist_eq_norm]
-      exact le_max_right _ _
-    have hk := key (x : E) x.2 (y : E) y.2
-    have hCd : C * ‖f (x : E) - f (y : E)‖ ≤ C * dist (Θ x) (Θ y) :=
-      mul_le_mul_of_nonneg_left hd1 hC.le
-    rw [Subtype.dist_eq, dist_eq_norm]
-    calc
-      ‖(x : E) - (y : E)‖ ≤ 2 * (C * ‖f (x : E) - f (y : E)‖) +
-          2 * ‖P (x : E) - P (y : E)‖ := hk
-      _ ≤ (2 * C + 2) * dist (Θ x) (Θ y) := by
-        nlinarith [dist_nonneg (x := Θ x) (y := Θ y)]
+  have hanti : AntilipschitzWith ⟨2 * C + 2, by positivity⟩ Θ :=
+    antilipschitzWith_prodMk hC.le key
   have hΘlip : LipschitzWith (‖f'‖₊ + ε + ‖P‖₊) Θ := by
     have h1 : LipschitzWith (‖f'‖₊ + ε) fun x : N => f (x : E) := happN.lipschitz
     have h2 : LipschitzWith ‖P‖₊ fun x : N => P (x : E) := P.lipschitz.restrict N

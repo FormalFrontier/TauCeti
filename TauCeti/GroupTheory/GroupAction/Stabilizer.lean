@@ -16,7 +16,8 @@ public import Mathlib.SetTheory.Cardinal.Finite
 A count defined through a point stabiliser is useful only alongside the rules for moving it.
 Two such rules are recorded here, both consequences of Mathlib machinery rather than new
 mathematics, and both stated for `Nat.card` because that is the form a numerical invariant of
-an orbit is wanted in.
+an orbit is wanted in. The first of them is what lets the count descend to the orbit space, so
+that descent is recorded here as well, as the definition `cardStabilizerOnOrbit`.
 
 *Along an orbit* the stabiliser order does not change: related points have conjugate
 stabilisers, by `MulAction.stabilizerEquivStabilizerOfOrbitRel`.
@@ -30,6 +31,8 @@ subgroup quotiented out.
 
 * `TauCeti.card_stabilizer_of_orbitRel`: the stabiliser order is an invariant of the orbit,
   with `TauCeti.card_stabilizer_smul` the translate-presented corollary.
+* `TauCeti.cardStabilizerOnOrbit`: that order as a function on the orbit space, with
+  `TauCeti.cardStabilizerOnOrbit_mk` its evaluation lemma.
 * `TauCeti.card_stabilizer_eq_card_ker_mul_card_stabilizer`: the stabiliser order divides by
   `Nat.card f.ker` along a surjection `f`, with
   `TauCeti.card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient` the quotient-map
@@ -61,6 +64,28 @@ the action, since a `simp` lemma for the particular `•` can rewrite inside it.
 theorem card_stabilizer_smul (g : G) (a : α) :
     Nat.card (MulAction.stabilizer G (g • a)) = Nat.card (MulAction.stabilizer G a) :=
   card_stabilizer_of_orbitRel (MulAction.orbitRel_apply.mpr (MulAction.mem_orbit a g))
+
+/-- **The stabiliser order as a function on the orbit space.** `card_stabilizer_of_orbitRel`
+says the order is constant along an orbit, so it descends to `MulAction.orbitRel.Quotient G α`,
+which is the form wanted when the count is summed over orbits rather than over points.
+
+Note this counts the stabiliser in `G` itself. When the action is not faithful the kernel sits
+inside every stabiliser and inflates each value by `Nat.card` of it — so for a group acting
+through a quotient, this is the order upstairs, not the order of the group that acts
+effectively. `card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient` is the conversion
+between the two. -/
+noncomputable def cardStabilizerOnOrbit (q : MulAction.orbitRel.Quotient G α) : ℕ :=
+  Quotient.liftOn' q (fun a ↦ Nat.card (MulAction.stabilizer G a))
+    fun _ _ h ↦ card_stabilizer_of_orbitRel h
+
+/-- Evaluating `cardStabilizerOnOrbit` on the orbit of `a` recovers the stabiliser order at
+`a`. -/
+@[simp]
+theorem cardStabilizerOnOrbit_mk (a : α) :
+    cardStabilizerOnOrbit (Quotient.mk'' a : MulAction.orbitRel.Quotient G α) =
+      Nat.card (MulAction.stabilizer G a) := by
+  unfold cardStabilizerOnOrbit
+  rfl
 
 /-- **A surjection of acting groups divides stabiliser orders by its kernel**: if `f : G →* H`
 is surjective and the `H`-action agrees with the `G`-action along `f` *at the point `a`*, then

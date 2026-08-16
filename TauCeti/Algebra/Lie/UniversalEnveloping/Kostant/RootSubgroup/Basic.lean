@@ -23,9 +23,10 @@ A⁺ → Aut_A(A ⊗[ℤ] M),    t ↦ ∑ₙ tⁿ ρ(eᵢ)⁽ⁿ⁾.
 
 This file proves that these homomorphisms are natural in `A`, turning the ring-by-ring exponential
 actions from `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.BaseChangeAction` into a natural
-root-subgroup map on points. Once integral PBW supplies a finite free admissible lattice, its basis
-will identify these automorphisms with `GLₙ(A)` and the existing full-faithfulness theorem for the
-functor of points will recover the scheme morphism `𝔾ₐ → GLₙ`.
+root-subgroup map on points. Its realization in a finite base-changed basis is provided by
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Coordinate`. Integral PBW must still
+supply a finite free admissible lattice, after which the existing full-faithfulness theorem for the
+functor of points can recover the scheme morphism `𝔾ₐ → GLₙ`.
 
 ## Main declarations
 
@@ -60,9 +61,12 @@ variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
 variable (i : ι)
 variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 
+-- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
+attribute [local instance high] Algebra.toModule
+
 section Points
 
-variable {A : Type*} [CommRing A]
+variable {A : Type*} [CommRing A] [Algebra ℤ A]
 
 /-- The root subgroup attached to a nilpotent root-vector action, on points valued in a
 commutative ring `A`.
@@ -111,6 +115,31 @@ end Points
 
 section Naturality
 
+variable {A B : Type*} [CommRing A] [CommRing B] [Algebra ℤ A] [Algebra ℤ B]
+
+/-- Kostant root-subgroup points are natural between value rings carrying explicit `ℤ`-algebra
+structures. -/
+theorem map_kostantRootSubgroupPoints_algHom
+    (φ : A →ₐ[ℤ] B)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    ∀ z : A ⊗[ℤ] M,
+      TensorProduct.map φ.toLinearMap LinearMap.id
+          ((kostantRootSubgroupPoints e h ρ M hM i hnil f).val z) =
+        (kostantRootSubgroupPoints e h ρ M hM i hnil
+            (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ f)).val
+          (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
+  intro z
+  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
+    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
+    ← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
+    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
+    AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
+  exact map_baseChangeExp_algHom φ _ _ _ _ z
+
+end Naturality
+
+section CanonicalNaturality
+
 variable {A B : Type*} [CommRing A] [CommRing B]
 
 /-- Kostant root-subgroup points are natural in the value ring. Applying `φ` to the scalar
@@ -125,14 +154,8 @@ theorem map_kostantRootSubgroupPoints
         (kostantRootSubgroupPoints e h ρ M hM i hnil
             (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ.toIntAlgHom f)).val
           (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
-  intro z
-  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
-    ← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
-    AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
-  exact map_baseChangeExp φ _ _ _ _ z
+  exact map_kostantRootSubgroupPoints_algHom e h ρ M hM i hnil φ.toIntAlgHom f
 
-end Naturality
+end CanonicalNaturality
 
 end TauCeti.UniversalEnvelopingAlgebra

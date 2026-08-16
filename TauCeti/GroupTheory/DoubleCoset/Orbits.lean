@@ -35,6 +35,9 @@ numbers, which is the group-theoretic half of the statement that the permutation
 
 * `TauCeti.mem_doubleCoset_iff_mk_mem_orbit`: an element lies in `KsH` exactly when its coset
   lies in the `K`-orbit of `sH`.
+* `TauCeti.orbitRel_smul_iff_mem_doubleCoset_stabilizer`: the same for an arbitrary action —
+  two translates of a point share a `K`-orbit exactly when the translating elements share a
+  `K`-`stabilizer` double coset.
 * `TauCeti.preimage_orbit_eq_doubleCoset`: the double coset `KsH` is the preimage of the
   `K`-orbit of `sH`.
 * `TauCeti.card_doubleCosetQuotient_eq_card_orbitQuotient`: the two sides of that bijection have
@@ -163,6 +166,33 @@ theorem card_doubleCosetQuotient_eq_card_orbitQuotient :
     Nat.card (DoubleCoset.Quotient (H : Set G) K) =
       Nat.card (orbitRel.Quotient G ((G ⧸ H) × (G ⧸ K))) :=
   Nat.card_congr (doubleCosetEquivOrbitQuotient H K)
+
+
+section GeneralAction
+
+variable {α : Type*} [MulAction G α]
+
+/-- **Two translates of a point lie in one `K`-orbit exactly when the translating elements lie
+in one double coset.** For `K ≤ G` acting on `α` and a point `p`, the `K`-orbits inside the
+`G`-orbit of `p` are indexed by the `K`-`stabilizer G p` double cosets.
+
+This is the companion of `mem_doubleCoset_iff_mk_mem_orbit` for an arbitrary action rather than
+the action on `G ⧸ H`: taking `H = stabilizer G p` there and transporting along
+`MulAction.orbitEquivQuotientStabilizer` gives the same statement. -/
+theorem orbitRel_smul_iff_mem_doubleCoset_stabilizer (K : Subgroup G) (p : α) (x y : G) :
+    orbitRel K α (x • p) (y • p) ↔
+      x ∈ DoubleCoset.doubleCoset y (K : Set G) (stabilizer G p : Set G) := by
+  rw [orbitRel_apply, mem_orbit_iff, DoubleCoset.mem_doubleCoset]
+  constructor
+  · rintro ⟨k, hk⟩
+    refine ⟨(k : G), k.2, y⁻¹ * ((k : G)⁻¹ * x), ?_, by simp [mul_assoc]⟩
+    rw [SetLike.mem_coe, mem_stabilizer_iff, mul_smul, mul_smul, ← hk, Subgroup.smul_def,
+      inv_smul_smul, inv_smul_smul]
+  · rintro ⟨a, ha, b, hb, rfl⟩
+    refine ⟨⟨a, ha⟩, ?_⟩
+    rw [Subgroup.smul_def, mul_smul, mul_smul, mem_stabilizer_iff.mp (SetLike.mem_coe.mp hb)]
+
+end GeneralAction
 
 end Orbits
 

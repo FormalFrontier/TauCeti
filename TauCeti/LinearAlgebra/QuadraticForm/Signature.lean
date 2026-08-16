@@ -18,8 +18,9 @@ opposite index of inertia. It also characterizes positive-definiteness by the ne
 index and the radical. These are convenient consequences of Sylvester's law of inertia which
 complement Mathlib's definitions of `QuadraticMap.PosDef`, `sigPos`, and `sigNeg`.
 
-It also proves that restriction to a subspace cannot increase either index of inertia, and that
-quotienting a quadratic form by its radical preserves both indices.
+It also proves that restriction to a subspace cannot increase either index of inertia, that
+quotienting a quadratic form by its radical preserves both indices, and that multiplication by a
+positive scalar preserves both indices while multiplication by a negative scalar exchanges them.
 
 ## Main results
 
@@ -31,6 +32,10 @@ quotienting a quadratic form by its radical preserves both indices.
   positive index of inertia.
 * `TauCeti.QuadraticForm.sigNeg_restrict_le`: restriction to a subspace cannot increase the
   negative index of inertia.
+* `TauCeti.QuadraticForm.sigPos_smul_of_pos` and
+  `TauCeti.QuadraticForm.sigNeg_smul_of_pos`: positive scaling preserves both indices.
+* `TauCeti.QuadraticForm.sigPos_smul_of_neg` and
+  `TauCeti.QuadraticForm.sigNeg_smul_of_neg`: negative scaling exchanges the two indices.
 * `TauCeti.QuadraticForm.sigPos_lift_radical`: quotienting by the radical preserves the positive
   index of inertia.
 * `TauCeti.QuadraticForm.sigNeg_lift_radical`: quotienting by the radical preserves the negative
@@ -55,6 +60,61 @@ open _root_.QuadraticForm
 
 variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
   [AddCommGroup M] [Module K M] [FiniteDimensional K M]
+
+omit [FiniteDimensional K M] in
+/-- Multiplication by a positive scalar preserves positive-definiteness. Thus a quadratic form is
+positive-definite if and only if its positive scalar multiple is. -/
+@[simp]
+theorem posDef_smul_iff_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
+    (a • Q).PosDef ↔ Q.PosDef := by
+  constructor
+  · intro hQ x hx
+    have h := hQ x hx
+    simp only [smul_apply, smul_eq_mul] at h
+    exact pos_of_mul_pos_right h ha.le
+  · exact fun hQ ↦ hQ.smul ha
+
+/-- Multiplication by a positive scalar preserves the positive index of inertia. -/
+@[simp]
+theorem sigPos_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
+    sigPos (a • Q) = sigPos Q := by
+  apply le_antisymm
+  · obtain ⟨U, hUrank, hU⟩ := exists_finrank_eq_sigPos_and_posDef (a • Q)
+    rw [← hUrank]
+    apply le_sigPos_of_posDef
+    exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mp hU
+  · obtain ⟨U, hUrank, hU⟩ := exists_finrank_eq_sigPos_and_posDef Q
+    rw [← hUrank]
+    apply le_sigPos_of_posDef
+    exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mpr hU
+
+/-- Multiplication by a positive scalar preserves the negative index of inertia. -/
+@[simp]
+theorem sigNeg_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
+    sigNeg (a • Q) = sigNeg Q := by
+  calc
+    sigNeg (a • Q) = sigPos (-(a • Q)) := (sigPos_neg (Q := a • Q)).symm
+    _ = sigPos (a • (-Q)) := by rw [smul_neg]
+    _ = sigPos (-Q) := sigPos_smul_of_pos (-Q) ha
+    _ = sigNeg Q := sigPos_neg
+
+/-- Multiplication by a negative scalar exchanges the positive and negative indices of inertia. -/
+@[simp]
+theorem sigPos_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
+    sigPos (a • Q) = sigNeg Q := by
+  have hpos : 0 < -a := neg_pos.mpr ha
+  have hform : a • Q = (-a) • (-Q) := by simp
+  rw [hform, sigPos_smul_of_pos (-Q) hpos, sigPos_neg]
+
+/-- Multiplication by a negative scalar exchanges the negative and positive indices of inertia. -/
+@[simp]
+theorem sigNeg_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
+    sigNeg (a • Q) = sigPos Q := by
+  have hpos : 0 < -a := neg_pos.mpr ha
+  calc
+    sigNeg (a • Q) = sigPos (-(a • Q)) := (sigPos_neg (Q := a • Q)).symm
+    _ = sigPos ((-a) • Q) := congrArg sigPos (neg_smul a Q).symm
+    _ = sigPos Q := sigPos_smul_of_pos Q hpos
 
 /-- A quadratic form is nonnegative exactly when its negative index of inertia vanishes. -/
 theorem forall_nonneg_iff_sigNeg_eq_zero (Q : _root_.QuadraticForm K M) :

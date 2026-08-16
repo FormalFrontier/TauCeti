@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
-public import TauCeti.LinearAlgebra.IntegralLattice.Dual
+public import TauCeti.LinearAlgebra.IntegralLattice.Dual.Basic
 
 /-!
 # Discriminant groups of integral lattices

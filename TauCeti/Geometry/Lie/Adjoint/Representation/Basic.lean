@@ -107,8 +107,9 @@ theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivati
     ((leftInvariantDerivationLinearIsometryEquivModelVectorSpace
       (I := I) (G := G) D : E) : GroupLieAlgebra I G)
   have htangentE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) htangent
-  exact htangentE.symm.trans
-    (leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g D).symm
+  have h := leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g D
+  dsimp only at h
+  exact htangentE.symm.trans h.symm
 
 /-- The bounded-operator-valued adjoint representation is smooth. -/
 theorem contMDiff_continuousAdjointRepresentation :

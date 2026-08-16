@@ -25,6 +25,12 @@ The orbit space is spelled `MulAction.orbitRel.Quotient (Γ : Subgroup (GL (Fin 
 index type the rest of the general-level API already uses; the `Γ`-orbits and the orbits of the
 image of `Γ` in `GL (Fin 2) ℝ` are the same subsets of `ℍ`.
 
+Because that is an ordinary `MulAction.orbitRel.Quotient`, the *other* function the valence
+formula indexes over it — the stabiliser order — needs no modular-specific definition at all:
+`TauCeti.cardStabilizerOnOrbit` in `GroupTheory/GroupAction/Stabilizer.lean` applies to this
+quotient directly. Only the vanishing order, below, needs the determinant-`1` argument that
+makes it well defined here.
+
 The finiteness is not reproved here. It is
 `TauCeti.ModularForm.finite_image_orbit_mk_setOf_orderOfVanishingAt_ne_zero_subgroup`, which
 bounds the image of the nonzero-order set in `𝒢 \ ℍ` for any `𝒢 ≤ GL (Fin 2) ℝ` of finite

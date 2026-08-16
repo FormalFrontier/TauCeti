@@ -61,8 +61,9 @@ ordinary missing prerequisites and arrive with `ω`.
 The companion transport for `ω` is **not** here. It cannot be: `WeierstrassCurve.ω` does not exist
 in this repository or in the pinned Mathlib, and neither does the `map_ω` such a proof would rewrite
 with. `DivisionPolynomial/Invariant.lean` lists both among what it deliberately leaves out, and
-records the chain still missing for them — `redInvarDenom` together with the top of
-`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, the source's names for it. The
+records the chain still missing for them — the top of
+`redInvar_normEDS ← invar₂_normEDS ← invar_normEDS ← net_normEDS`, the source's names for it; the
+denominator itself has landed as `reducedInvarDenom`. The
 lower three links are `isEllipticNet_normEDS`, `invarNum_mul_invarDenom` and
 `IsEllipticNet.invarNum_normEDS_one_mul_eq_invarDenom_mul`, all present, so what remains is
 `redInvar_normEDS`. `evalEval_ω` belongs with that work rather than here.

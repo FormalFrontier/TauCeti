@@ -23,7 +23,7 @@ integral against the *directing measure*, not against a deterministic law. Takin
 be an indicator: for each *fixed* measurable set, the empirical frequency of that set converges
 almost surely to the mass the directing measure gives it.
 
-`ConditionallyIID/EmpiricalMeasure.lean` already gives the mean-square form of this, with the exact
+`ConditionallyIID/EmpiricalMeasure.lean` already gives the `L²` form of this, with the exact
 finite-sample error. What is new here is almost-sure convergence, and the strengthening from a
 single measurable set to a countable family of sets under one null set.
 
@@ -206,7 +206,7 @@ converges almost surely to the mass the directing measure gives it.
 The null set depends on `B`, and outside a countable family of sets it must:
 `tendsto_empiricalMeasure_apply_ae_forall` is as far as the quantifiers can be interchanged.
 
-The mean-square form of the same convergence is
+The `L²` form of the same convergence is
 `ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq`, and
 `ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq` computes its exact finite-sample
 error. -/

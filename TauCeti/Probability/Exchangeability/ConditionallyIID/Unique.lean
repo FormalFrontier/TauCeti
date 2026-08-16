@@ -30,9 +30,10 @@ representative but not another directing measure.
   block into the `m`-th power `(ν ω) B ^ m`. Its one- and two-coordinate specializations are
   `ConditionallyIIDWith.lintegral_mul_indicator_single` and
   `ConditionallyIIDWith.lintegral_mul_indicator_pair`.
-* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` — the `L²` rate: the empirical
-  frequency of a measurable set `B` along the first `n` coordinates approximates `(ν ·) B` with
-  mean square error exactly `(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`.
+* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` — the `L²` rate: for the empirical
+  frequency of a measurable set `B` along the first `n` coordinates, the integral of its squared
+  deviation from `(ν ·) B` is exactly `(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`. Under the probability
+  measure this file works with, that is the mean square error.
 * `conditionallyIID_ae_unique` — two directing measures of the same process are a.e. equal.
 
 ## Implementation
