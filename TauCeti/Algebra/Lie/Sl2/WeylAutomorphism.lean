@@ -392,22 +392,26 @@ theorem weylAut_apply_eq_weylUnit_conj (t : IsSl2Triple H E F) (hE : IsNilpotent
 /-- The Weyl element negates the Cartan element of the triple. -/
 @[simp]
 theorem weylUnit_conj_h (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNilpotent F) :
-    ((weylUnit hE hF : Aˣ) : A) * H * (((weylUnit hE hF)⁻¹ : Aˣ) : A) = -H := by
+    IsNilpotent.exp E * IsNilpotent.exp (-F) * IsNilpotent.exp E * H *
+      (IsNilpotent.exp (-E) * IsNilpotent.exp F * IsNilpotent.exp (-E)) = -H := by
+  rw [← coe_weylUnit hE hF, ← coe_inv_weylUnit hE hF]
   rw [← weylAut_apply_eq_weylUnit_conj t hE hF]
   exact weylAut_apply_h _ _ t
 
 /-- The Weyl element carries the raising element of the triple to the negated lowering element.
 This is the group-level statement that `n_α` interchanges the root subgroups of `α` and `-α`. -/
-@[simp]
 theorem weylUnit_conj_e (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNilpotent F) :
-    ((weylUnit hE hF : Aˣ) : A) * E * (((weylUnit hE hF)⁻¹ : Aˣ) : A) = -F := by
+    IsNilpotent.exp E * IsNilpotent.exp (-F) * IsNilpotent.exp E * E *
+      (IsNilpotent.exp (-E) * IsNilpotent.exp F * IsNilpotent.exp (-E)) = -F := by
+  rw [← coe_weylUnit hE hF, ← coe_inv_weylUnit hE hF]
   rw [← weylAut_apply_eq_weylUnit_conj t hE hF]
   exact weylAut_apply_e _ _ t
 
 /-- The Weyl element carries the lowering element of the triple to the negated raising element. -/
-@[simp]
 theorem weylUnit_conj_f (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNilpotent F) :
-    ((weylUnit hE hF : Aˣ) : A) * F * (((weylUnit hE hF)⁻¹ : Aˣ) : A) = -E := by
+    IsNilpotent.exp E * IsNilpotent.exp (-F) * IsNilpotent.exp E * F *
+      (IsNilpotent.exp (-E) * IsNilpotent.exp F * IsNilpotent.exp (-E)) = -E := by
+  rw [← coe_weylUnit hE hF, ← coe_inv_weylUnit hE hF]
   rw [← weylAut_apply_eq_weylUnit_conj t hE hF]
   exact weylAut_apply_f _ _ t
 
