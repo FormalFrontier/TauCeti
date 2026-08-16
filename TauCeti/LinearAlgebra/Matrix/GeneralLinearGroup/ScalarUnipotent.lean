@@ -8,7 +8,9 @@ module
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 -- `TauCeti.transvectionHom` is the unipotent factor of `TauCeti.scalarUnipotentHom`.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
--- `MonoidHom.noncommCoprod` assembles the two commuting factors into one homomorphism.
+-- `MonoidHom.noncommCoprod` assembles the two commuting factors into one homomorphism. The import
+-- must be `public`: `TauCeti.scalarUnipotentHom` is compiled, and the code generator rejects a
+-- non-public import of a module whose declarations the compiled body uses.
 public import Mathlib.GroupTheory.NoncommCoprod
 -- Non-public: `Nat.card_units` is used only inside the order computation.
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
