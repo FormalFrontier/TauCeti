@@ -120,7 +120,15 @@ noncomputable def galoisGroupEquivCandidateGenusField {d : ℤ} (hd : Squarefree
       (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd))
 
 /-- Transporting an automorphism supplied by the inverse sign-pattern equivalence back through
-the adjoin presentation recovers the corresponding automorphism of that presentation. -/
+the adjoin presentation recovers the corresponding automorphism of that presentation.
+
+`galoisGroupEquivCandidateGenusField` is by definition the composite of `autCongr` along
+`candidateGenusFieldEquivAdjoin` with the prime-discriminant equivalence, so both sides are the
+same term. No rewrite reaches this goal: once the composite is unfolded, its `MulEquiv.trans` is
+type-correct only at default transparency, because the two `Mul` instances on the automorphism
+group — one coming from `candidateGenusField hd`, the other from its `adjoin` presentation — agree
+only by unfolding `candidateGenusField`. So `rw`/`simp` lemmas such as `MulEquiv.symm_trans_apply`
+fail to match, while `rfl` closes the goal. -/
 private theorem candidateGenusFieldEquivAdjoin_map_galoisGroupEquiv_symm {d : ℤ}
     (hd : Squarefree d) (ε : {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2)
     (x : candidateGenusField hd) :
