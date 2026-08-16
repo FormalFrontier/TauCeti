@@ -79,7 +79,7 @@ theorem rationalKernelPoint_one (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
   exact AlgHom.convOne_apply
 
 /-- The identity-component Hopf ideal is normal over an algebraically closed field. -/
-theorem identityComponentNormality (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+theorem isNormal_identityComponentHopfIdeal (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)).IsNormal := by
   let : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
   exact HopfAlgebra.isNormal_identityComponentHopfIdeal (k := k) (H := H)
@@ -89,14 +89,14 @@ closed field. Its representability by a finite étale group scheme is not assert
 noncomputable abbrev componentGroupFppfSheaf (H : FiniteTypeCommHopfAlgCat.{u, u} k) :=
   CommHopfAlgCat.fppfQuotientSheaf H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H)
+    (isNormal_identityComponentHopfIdeal H)
 
 /-- The canonical morphism from the fppf sheaf of points of `H` to its component group sheaf. -/
 noncomputable def componentGroupFppfProjection (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     CommHopfAlgCat.pointsFppfGroupObject H.obj ⟶ componentGroupFppfSheaf H :=
   CommHopfAlgCat.fppfQuotientProjection H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H)
+    (isNormal_identityComponentHopfIdeal H)
 
 /-- The projection to the component group is an epimorphism of group objects in fppf sheaves. -/
 instance instEpiComponentGroupFppfProjection (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
@@ -111,7 +111,7 @@ theorem isLocallySurjective_componentGroupFppfProjection
   unfold componentGroupFppfProjection
   exact CommHopfAlgCat.isLocallySurjective_fppfQuotientProjection H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H)
+    (isNormal_identityComponentHopfIdeal H)
 
 /-- The rational pointwise component group `H(k) / H⁰(k)`.
 
@@ -120,14 +120,14 @@ This is the value at `k` of the pointwise quotient presheaf whose sheafification
 noncomputable abbrev componentGroupPoints (H : FiniteTypeCommHopfAlgCat.{u, u} k) : GrpCat.{u} :=
   CommHopfAlgCat.pointwiseQuotientGroup H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H) (CommAlgCat.of k k)
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k)
 
 /-- The quotient homomorphism from rational points to the rational pointwise component group. -/
 noncomputable def componentGroupPointsMk (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k) ⟶ componentGroupPoints H :=
   CommHopfAlgCat.pointwiseQuotientMk H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H) (CommAlgCat.of k k)
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k)
 
 /-- A rational point belongs to `H⁰(k)` exactly when its kernel point belongs to the identity
 component of `Spec H`. -/
@@ -137,7 +137,7 @@ theorem mem_identityComponentPointsSubgroup_iff
     g ∈ CommHopfAlgCat.quotientPointsSubgroup H.obj
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) (CommAlgCat.of k k) ↔
       rationalKernelPoint H g ∈ connectedComponent (rationalKernelPoint H 1) := by
-  rw [← identityComponentPointsHom_range H (CommAlgCat.of k k)]
+  rw [← range_identityComponentPointsHom H (CommAlgCat.of k k)]
   -- The range is stored as a monoid-hom range, while the existing point criterion uses `Set.range`.
   change g ∈ Set.range (identityComponentPointsHom H (CommAlgCat.of k k)) ↔ _
   rw [rationalKernelPoint_one]
@@ -145,7 +145,7 @@ theorem mem_identityComponentPointsSubgroup_iff
 
 /-- Two rational points have kernel points in the same connected component exactly when their
 left quotient belongs to the identity-component subgroup. -/
-theorem connectedComponents_kernelPoint_eq_iff
+theorem connectedComponents_rationalKernelPoint_eq_iff
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (g h : HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k)) :
     (rationalKernelPoint H g : ConnectedComponents (PrimeSpectrum H)) =
@@ -156,7 +156,7 @@ theorem connectedComponents_kernelPoint_eq_iff
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) (CommAlgCat.of k k)
   let hN : N.Normal := CommHopfAlgCat.quotientPointsSubgroup_normal H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H) (CommAlgCat.of k k)
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k)
   have hright :
       rationalKernelPoint H h ∈ connectedComponent (rationalKernelPoint H g) ↔
         h * g⁻¹ ∈ N := by
@@ -222,7 +222,7 @@ noncomputable def componentGroupPointsToConnectedComponents
   fun q ↦ Quotient.liftOn' q
     (fun g ↦ (rationalKernelPoint H g : ConnectedComponents (PrimeSpectrum H)))
     (fun g h hgh ↦ by
-      rw [connectedComponents_kernelPoint_eq_iff H g h]
+      rw [connectedComponents_rationalKernelPoint_eq_iff H g h]
       exact (QuotientGroup.leftRel_apply.mp hgh))
 
 /-- The component map sends the class of a rational point to the component containing its kernel
@@ -267,16 +267,16 @@ private theorem componentGroupPointsToConnectedComponents_injective
   intro x y hxy
   obtain ⟨g, rfl⟩ := CommHopfAlgCat.pointwiseQuotientMk_surjective H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H) (CommAlgCat.of k k) x
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k) x
   obtain ⟨h, rfl⟩ := CommHopfAlgCat.pointwiseQuotientMk_surjective H.obj
     (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-    (identityComponentNormality H) (CommAlgCat.of k k) y
+    (isNormal_identityComponentHopfIdeal H) (CommAlgCat.of k k) y
   -- Surjectivity exposes the raw quotient map; refold the component-group projection wrapper.
   change componentGroupPointsToConnectedComponents H (componentGroupPointsMk H g) =
     componentGroupPointsToConnectedComponents H (componentGroupPointsMk H h) at hxy
   rw [componentGroupPointsToConnectedComponents_mk,
     componentGroupPointsToConnectedComponents_mk,
-    connectedComponents_kernelPoint_eq_iff] at hxy
+    connectedComponents_rationalKernelPoint_eq_iff] at hxy
   -- Refold the same wrapper in the equality of quotient classes.
   change componentGroupPointsMk H g = componentGroupPointsMk H h
   rw [componentGroupPointsMk, CommHopfAlgCat.pointwiseQuotientMk_apply,

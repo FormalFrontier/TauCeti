@@ -222,7 +222,7 @@ noncomputable def identityComponentPointsHom
 /-- The range of the identity-component point inclusion is the subgroup cut out by the
 identity-component Hopf ideal. -/
 @[simp]
-theorem identityComponentPointsHom_range
+theorem range_identityComponentPointsHom
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k) :
     (identityComponentPointsHom H A).hom.range =
       CommHopfAlgCat.quotientPointsSubgroup H.obj
