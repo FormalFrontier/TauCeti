@@ -31,7 +31,6 @@ equivalence of discriminant groups.  The construction respects identity, inverse
 
 * `TauCeti.IntegralLattice.carrierInDual`: the original carrier inside its dual carrier.
 * `TauCeti.IntegralLattice.DiscriminantGroup`: the quotient `Lᵛ / L`.
-* `TauCeti.IntegralLattice.discriminantGroupMk`: the quotient map.
 * `TauCeti.IntegralLattice.instFiniteDiscriminantGroup`: finiteness in the nondegenerate case.
 * `TauCeti.IntegralLattice.Isometry.dualCarrierEquiv`: transport of dual carriers by an isometry.
 * `TauCeti.IntegralLattice.Isometry.discriminantGroupEquiv`: the induced equivalence of
@@ -56,97 +55,40 @@ namespace IntegralLattice
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
-/-- The canonical inclusion of an integral lattice carrier into its dual carrier. -/
-def carrierToDual (L : IntegralLattice V) : L →ₗ[ℤ] L.dualCarrier :=
-  Submodule.inclusion L.le_dualCarrier
-
-/-- The inclusion into the dual carrier does not change the underlying ambient vector. -/
-@[simp]
-theorem coe_carrierToDual (L : IntegralLattice V) (x : L) :
-    (L.carrierToDual x : V) = x := by
-  simp [carrierToDual]
-
-/-- The canonical inclusion of the carrier into its dual is injective. -/
-theorem carrierToDual_injective (L : IntegralLattice V) :
-    Function.Injective L.carrierToDual :=
-  Submodule.inclusion_injective L.le_dualCarrier
-
 /-- The original carrier, regarded as a submodule of the subtype `L.dualCarrier`. -/
 def carrierInDual (L : IntegralLattice V) : Submodule ℤ L.dualCarrier :=
-  L.carrier.comap L.dualCarrier.subtype
+  L.carrier.submoduleOf L.dualCarrier
 
 /-- Membership in `carrierInDual` is membership of the underlying ambient vector in the original
 carrier. -/
 @[simp]
 theorem mem_carrierInDual_iff (L : IntegralLattice V) (x : L.dualCarrier) :
-    x ∈ L.carrierInDual ↔ (x : V) ∈ L.carrier :=
-  Iff.rfl
-
-/-- The carrier inside the dual is the range of the canonical inclusion. -/
-theorem carrierInDual_eq_range (L : IntegralLattice V) :
-    L.carrierInDual = LinearMap.range L.carrierToDual := by
-  ext x
-  constructor
-  · intro hx
-    refine ⟨⟨x, hx⟩, ?_⟩
-    exact Subtype.ext rfl
-  · rintro ⟨x, rfl⟩
-    exact x.2
+    x ∈ L.carrierInDual ↔ (x : V) ∈ L.carrier := by
+  rw [carrierInDual, Submodule.submoduleOf, Submodule.mem_comap]
+  rfl
 
 /-- The copy of the carrier inside the dual carrier has the same rank as the carrier. -/
 theorem finrank_carrierInDual (L : IntegralLattice V) :
-    Module.finrank ℤ L.carrierInDual = Module.finrank ℤ L := by
-  rw [L.carrierInDual_eq_range, LinearMap.finrank_range_of_inj L.carrierToDual_injective]
+    Module.finrank ℤ L.carrierInDual = Module.finrank ℤ L :=
+  (Submodule.comapSubtypeEquivOfLe L.le_dualCarrier).finrank_eq
 
 /-- The discriminant group `A_L = Lᵛ / L`, as an actual quotient of the dual-carrier subtype by
 the inverse image of the original carrier. -/
 abbrev DiscriminantGroup (L : IntegralLattice V) : Type u :=
   L.dualCarrier ⧸ L.carrierInDual
 
-/-- The canonical map from the dual carrier to the discriminant group. -/
-def discriminantGroupMk (L : IntegralLattice V) :
-    L.dualCarrier →ₗ[ℤ] L.DiscriminantGroup :=
-  L.carrierInDual.mkQ
-
-/-- The discriminant-group quotient map sends a dual vector to its quotient class. -/
-@[simp]
-theorem discriminantGroupMk_apply (L : IntegralLattice V) (x : L.dualCarrier) :
-    L.discriminantGroupMk x = Submodule.Quotient.mk x := by
-  simp [discriminantGroupMk]
-
-/-- Every discriminant-group class has a representative in the dual carrier. -/
-theorem discriminantGroupMk_surjective (L : IntegralLattice V) :
-    Function.Surjective L.discriminantGroupMk :=
-  Submodule.mkQ_surjective L.carrierInDual
-
-/-- The kernel of the discriminant-group quotient map is the original carrier inside the dual. -/
-@[simp]
-theorem ker_discriminantGroupMk (L : IntegralLattice V) :
-    LinearMap.ker L.discriminantGroupMk = L.carrierInDual :=
-  Submodule.ker_mkQ L.carrierInDual
-
 /-- A representative defines the zero discriminant class exactly when its ambient vector belongs
 to the original carrier. -/
-theorem discriminantGroupMk_eq_zero_iff (L : IntegralLattice V) (x : L.dualCarrier) :
-    L.discriminantGroupMk x = 0 ↔ (x : V) ∈ L.carrier := by
-  rw [discriminantGroupMk_apply, Submodule.Quotient.mk_eq_zero,
-    L.mem_carrierInDual_iff]
+theorem discriminantGroup_mk_eq_zero_iff (L : IntegralLattice V) (x : L.dualCarrier) :
+    (Submodule.Quotient.mk x : L.DiscriminantGroup) = 0 ↔ (x : V) ∈ L.carrier := by
+  rw [Submodule.Quotient.mk_eq_zero, L.mem_carrierInDual_iff]
 
 /-- Two representatives define the same discriminant class exactly when their difference belongs
 to the original carrier. -/
-theorem discriminantGroupMk_eq_iff (L : IntegralLattice V) (x y : L.dualCarrier) :
-    L.discriminantGroupMk x = L.discriminantGroupMk y ↔
+theorem discriminantGroup_mk_eq_iff (L : IntegralLattice V) (x y : L.dualCarrier) :
+    (Submodule.Quotient.mk x : L.DiscriminantGroup) = Submodule.Quotient.mk y ↔
       ((x - y : L.dualCarrier) : V) ∈ L.carrier := by
-  rw [discriminantGroupMk_apply, discriminantGroupMk_apply, Submodule.Quotient.eq,
-    L.mem_carrierInDual_iff]
-
-/-- Eliminate a discriminant-group class by choosing a representative in the dual carrier. -/
-@[elab_as_elim]
-theorem DiscriminantGroup.induction_on (L : IntegralLattice V)
-    {P : L.DiscriminantGroup → Prop} (a : L.DiscriminantGroup)
-    (h : ∀ x : L.dualCarrier, P (L.discriminantGroupMk x)) : P a := by
-  induction a using Submodule.Quotient.induction_on with
-  | _ x => exact h x
+  rw [Submodule.Quotient.eq, L.mem_carrierInDual_iff]
 
 /-- The discriminant group of a nondegenerate integral lattice is finite. -/
 noncomputable instance instFiniteDiscriminantGroup (L : IntegralLattice V) [L.IsNondegenerate] :
@@ -230,9 +172,9 @@ theorem discriminantGroupEquiv_mk (e : Isometry L M) (x : L.dualCarrier) :
 theorem discriminantGroupEquiv_refl (L : IntegralLattice V) :
     (Isometry.refl L).discriminantGroupEquiv = LinearEquiv.refl ℤ L.DiscriminantGroup := by
   ext x
-  induction x using DiscriminantGroup.induction_on L with
+  induction x using Submodule.Quotient.induction_on with
   | _ x =>
-      simp only [LinearEquiv.refl_apply, discriminantGroupMk_apply]
+      simp only [LinearEquiv.refl_apply]
       rw [discriminantGroupEquiv_mk]
       congr 1
       apply Subtype.ext
@@ -243,11 +185,8 @@ theorem discriminantGroupEquiv_refl (L : IntegralLattice V) :
 theorem discriminantGroupEquiv_symm (e : Isometry L M) :
     e.symm.discriminantGroupEquiv = e.discriminantGroupEquiv.symm := by
   ext x
-  induction x using DiscriminantGroup.induction_on M with
+  induction x using Submodule.Quotient.induction_on with
   | _ x =>
-      change e.symm.discriminantGroupEquiv (M.discriminantGroupMk x) =
-        e.discriminantGroupEquiv.symm (M.discriminantGroupMk x)
-      simp only [discriminantGroupMk_apply]
       apply e.discriminantGroupEquiv.injective
       rw [discriminantGroupEquiv_mk, discriminantGroupEquiv_mk,
         LinearEquiv.apply_symm_apply]
@@ -262,9 +201,8 @@ theorem discriminantGroupEquiv_trans (e : Isometry L M) (f : Isometry M N) :
     (e.trans f).discriminantGroupEquiv =
       e.discriminantGroupEquiv.trans f.discriminantGroupEquiv := by
   ext x
-  induction x using DiscriminantGroup.induction_on L with
+  induction x using Submodule.Quotient.induction_on with
   | _ x =>
-      simp only [discriminantGroupMk_apply]
       rw [LinearEquiv.trans_apply, discriminantGroupEquiv_mk, discriminantGroupEquiv_mk,
         discriminantGroupEquiv_mk]
       congr 1
