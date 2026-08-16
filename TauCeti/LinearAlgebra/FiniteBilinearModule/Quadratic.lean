@@ -81,10 +81,6 @@ theorem toFiniteBilinearModule_toBilin :
 /-- A finite quadratic module is nondegenerate when its polar pairing is nondegenerate. -/
 abbrev IsNondegenerate : Prop := A.toFiniteBilinearModule.IsNondegenerate
 
-/-- Nondegeneracy is precisely nondegeneracy of the canonical polar bilinear module. -/
-theorem isNondegenerate_def :
-    A.IsNondegenerate ↔ A.toFiniteBilinearModule.IsNondegenerate := Iff.rfl
-
 /-- A nondegenerate finite quadratic module is identified with the character dual by its polar
 pairing. -/
 noncomputable def adjointEquiv (hA : A.IsNondegenerate) :
@@ -225,9 +221,6 @@ theorem isNondegenerate_prod (B : FiniteQuadraticModule) :
 /-- An element of a finite quadratic module is isotropic when its quadratic value vanishes. -/
 def IsIsotropicElem (x : A) : Prop := A.quadratic x = 0
 
-/-- Quadratic isotropy of an element is vanishing of its quadratic value. -/
-theorem isIsotropicElem_def (x : A) : A.IsIsotropicElem x ↔ A.quadratic x = 0 := Iff.rfl
-
 /-- Zero is quadratically isotropic. -/
 @[simp]
 theorem isIsotropicElem_zero : A.IsIsotropicElem 0 := by
@@ -259,24 +252,19 @@ theorem isIsotropicElem_prod (B : FiniteQuadraticModule) (x : A) (y : B) :
 /-- A subgroup is quadratically isotropic when the quadratic map vanishes on it. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, A.quadratic x = 0
 
-/-- Quadratic isotropy is pointwise vanishing on the subgroup. -/
-theorem isIsotropic_def (H : AddSubgroup A) :
-    A.IsIsotropic H ↔ ∀ x ∈ H, A.quadratic x = 0 := Iff.rfl
-
 /-- A quadratic isometry transports quadratic isotropy of a subgroup. -/
 @[simp]
 theorem Isometry.isIsotropic_map_iff {B : FiniteQuadraticModule} (f : Isometry A B)
     (H : AddSubgroup A) :
     B.IsIsotropic (H.map f.toAddEquiv) ↔ A.IsIsotropic H := by
+  simp only [IsIsotropic]
   constructor
   · intro hH x hx
     rw [← f.map_app x]
     exact hH (f x) ⟨x, hx, rfl⟩
   · intro hH y hy
     obtain ⟨x, hx, rfl⟩ := hy
-    change B.quadratic (f x) = 0
-    rw [f.map_app]
-    exact hH x hx
+    exact (f.map_app x).trans (hH x hx)
 
 /-- An element of a quadratically isotropic subgroup is isotropic. -/
 theorem isIsotropicElem_of_mem_isIsotropic {H : AddSubgroup A} (hH : A.IsIsotropic H)
@@ -324,6 +312,15 @@ theorem IsIsotropic.le_orthogonalComplement {H : AddSubgroup A} (hH : A.IsIsotro
 polar bilinear pairing. -/
 def IsLagrangian (H : AddSubgroup A) : Prop :=
   A.IsIsotropic H ∧ A.toFiniteBilinearModule.IsLagrangian H
+
+/-- A quadratic isometry transports quadratic Lagrangian subgroups. -/
+@[simp]
+theorem Isometry.isLagrangian_map_iff {B : FiniteQuadraticModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    B.IsLagrangian (H.map f.toAddEquiv) ↔ A.IsLagrangian H := by
+  rw [IsLagrangian, IsLagrangian, f.isIsotropic_map_iff]
+  have h : f.toFiniteBilinearModule.toAddEquiv = f.toAddEquiv := rfl
+  rw [← h, f.toFiniteBilinearModule.isLagrangian_map_iff]
 
 /-- A quadratic Lagrangian is quadratically isotropic. -/
 theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :

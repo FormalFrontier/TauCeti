@@ -634,6 +634,55 @@ theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :
     A.IsIsotropic H := by
   rw [A.isIsotropic_iff_le_orthogonalComplement, ← hH]
 
+/-- An isometry transports Lagrangian subgroups. -/
+@[simp]
+theorem Isometry.isLagrangian_map_iff {B : FiniteBilinearModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    B.IsLagrangian (H.map f.toAddEquiv) ↔ A.IsLagrangian H := by
+  rw [isLagrangian_def, isLagrangian_def]
+  constructor
+  · intro hH
+    ext x
+    constructor
+    · intro hx
+      have hfx : f x ∈ B.orthogonalComplement (H.map f.toAddEquiv) := by
+        rw [← hH]
+        exact ⟨x, hx, rfl⟩
+      rw [A.mem_orthogonalComplement_iff]
+      intro y hy
+      rw [← f.map_pairing]
+      exact B.mem_orthogonalComplement_iff (H.map f.toAddEquiv) (f x) |>.mp hfx
+        (f y) ⟨y, hy, rfl⟩
+    · intro hx
+      have hfx : f x ∈ B.orthogonalComplement (H.map f.toAddEquiv) := by
+        rw [B.mem_orthogonalComplement_iff]
+        intro y hy
+        obtain ⟨z, hz, rfl⟩ := hy
+        exact (f.map_pairing x z).trans
+          (A.mem_orthogonalComplement_iff H x |>.mp hx z hz)
+      rw [← hH] at hfx
+      obtain ⟨y, hy, hxy⟩ := hfx
+      exact f.toAddEquiv.injective hxy ▸ hy
+  · intro hH
+    ext y
+    obtain ⟨x, rfl⟩ := f.toAddEquiv.surjective y
+    constructor
+    · rintro ⟨z, hz, hzx⟩
+      have hx : x ∈ H := f.toAddEquiv.injective hzx ▸ hz
+      rw [B.mem_orthogonalComplement_iff]
+      intro y hy
+      obtain ⟨w, hw, rfl⟩ := hy
+      exact (f.map_pairing x w).trans
+        (A.mem_orthogonalComplement_iff H x |>.mp (hH ▸ hx) w hw)
+    · intro hx
+      have hAx : x ∈ A.orthogonalComplement H := by
+        rw [A.mem_orthogonalComplement_iff]
+        intro z hz
+        rw [← f.map_pairing]
+        exact B.mem_orthogonalComplement_iff (H.map f.toAddEquiv) (f x) |>.mp hx
+          (f z) ⟨z, hz, rfl⟩
+      exact ⟨x, hH ▸ hAx, rfl⟩
+
 end FiniteBilinearModule
 
 end TauCeti
