@@ -190,7 +190,8 @@ noncomputable def pointwiseQuotientTorsorAction
     (CartesianMonoidalCategory.snd _ _ ≫
       (quotientSubgroupPointsPresheafGrpInclusion H I).hom.hom)
 
-private theorem pointwiseQuotientTorsorAction_app
+@[simp]
+theorem pointwiseQuotientTorsorAction_app
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H)
     (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ) :
     (pointwiseQuotientTorsorAction H I).app A =
