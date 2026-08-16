@@ -311,8 +311,8 @@ noncomputable def kostantElementaryFrobenius :
 ring.
 
 This is the interface through which statements about `kostantElementaryMap` that hold uniformly in
-the morphism of value rings — naturality of a graph automorphism, for instance — specialize to
-Frobenius. The morphism is `x ↦ x ^ p ^ n` and is deliberately not itself exposed. -/
+the morphism of value rings specialize to Frobenius from another module. The morphism is
+`x ↦ x ^ p ^ n` and is deliberately not itself exposed. -/
 theorem exists_kostantElementaryFrobenius_eq_kostantElementaryMap :
     ∃ φ : A ⟶ A, kostantElementaryFrobenius e h ρ M hM hnil p n A =
       kostantElementaryMap e h ρ M hM hnil φ :=

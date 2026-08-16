@@ -9,7 +9,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Eleme
 public import TauCeti.RingTheory.Nilpotent.Conjugation
 
 /-!
-# Graph automorphisms of a Kostant elementary group
+# Numbered symmetries of a Kostant elementary group
 
 Let `U_ℤ = kostantForm e h` act on a rational representation `V` preserving an additive subgroup
 `M ≤ V`, so that the divided-power exponentials of the distinguished root vectors `eᵢ` generate the
@@ -25,10 +25,11 @@ permutes the root subgroups by `σ` without touching their parameters:
 γ (xᵢ(t)) = x_{σ i}(t).
 ```
 
-These are exactly the equations a graph automorphism of a Chevalley group is pinned by, restricted
-to the simple root subgroups: `γ` is *defined* here from a symmetry of the underlying data rather
-than obtained from the isomorphism theorem for pinned groups, and no uniqueness statement is
-claimed. Two further properties are what a Steinberg endomorphism built from `γ` needs. The
+These include the equations that a graph automorphism of a Chevalley group is pinned by, restricted
+to the simple root subgroups, when the numbered symmetry comes from a Dynkin-diagram symmetry.
+Here `γ` is *defined* from a symmetry of the underlying data rather than obtained from the
+isomorphism theorem for pinned groups, and no uniqueness statement is claimed. Two further
+properties are what a Steinberg endomorphism built from `γ` needs. The
 automorphism commutes with every base change of the value ring, hence in particular with the
 `q`-power Frobenius endomorphism of `E(A)`; and if `θ ^ n = 1` then `γ ^ n = 1`, so an involution
 or a triality of the numbered data produces a `γ` with `γ ^ 2 = 1` or `γ ^ 3 = 1`.
@@ -42,10 +43,10 @@ both are supplied by the caller as data, and the intertwining hypothesis is the 
   pinning equation `γ (xᵢ(t)) = x_{σ i}(t)`.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantElementarySubgroup_conj`: the conjugation
   preserves the elementary group.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryDiagramAut`: the resulting automorphism of
-  the elementary group, with `kostantElementaryDiagramAut_pow_eq_one` for its order.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryMap_kostantElementaryDiagramAut` and
-  `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius_kostantElementaryDiagramAut`:
+* `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryNumberedSymmetry`: the resulting automorphism
+  of the elementary group, with `kostantElementaryNumberedSymmetry_pow_eq_one` for its order.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryMap_kostantElementaryNumberedSymmetry` and
+  `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius_kostantElementaryNumberedSymmetry`:
   the automorphism commutes with base change of the value ring, and with Frobenius.
 
 ## References
@@ -82,15 +83,6 @@ attribute [local instance high] Algebra.toModule
 
 /-! ## The pinning equation -/
 
-private theorem val_kostantRootSubgroupParam (i : I)
-    (hnili : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
-    (A : CommAlgCat.{w} ℤ) (t : Multiplicative A) :
-    (kostantRootSubgroupParam e h ρ M hM i hnili A t).val =
-      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
-        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
-        (Multiplicative.toAdd t) := by
-  rw [kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val, MulEquiv.apply_symm_apply]
-
 include hθe in
 /-- Conjugation by the scalar extension of `θ` carries the root subgroup at `i` to the root
 subgroup at `σ i`, leaving the parameter untouched.
@@ -114,12 +106,13 @@ theorem invariantRestrictUnit_mul_kostantRootSubgroupParam (A : CommAlgCat.{w} �
     pow_eq_zero_of_intertwines θ hint hk
   refine Units.ext (LinearMap.ext fun z => ?_)
   rw [Units.val_mul, Units.val_mul, Module.End.mul_apply, Module.End.mul_apply,
-    val_kostantRootSubgroupParam, val_kostantRootSubgroupParam,
+    kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val, MulEquiv.apply_symm_apply,
+    kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val, MulEquiv.apply_symm_apply,
     val_invariantRestrictUnit_apply, val_invariantRestrictUnit_apply]
   exact baseChange_invariantRestrict_baseChangeExp θ M hθM hint _ _ hk hky _ z
 
 include hθe in
-/-- The pinning equation for a graph automorphism: conjugation by the scalar extension of `θ`
+/-- The pinning equation for a numbered symmetry: conjugation by the scalar extension of `θ`
 sends `xᵢ(t)` to `x_{σ i}(t)`. -/
 theorem invariantRestrictUnit_conj_kostantRootSubgroupParam (A : CommAlgCat.{w} ℤ) (i : I)
     (t : Multiplicative A) :
@@ -157,54 +150,50 @@ theorem map_kostantElementarySubgroup_conj (A : CommAlgCat.{w} ℤ) :
       Subgroup.subset_closure (Set.mem_iUnion.2 ⟨σ.symm i, Set.mem_range_self t⟩), ?_⟩
     rw [hconj (σ.symm i) t, Equiv.apply_symm_apply]
 
-/-- The graph automorphism of the elementary group attached to a symmetry `(σ, θ)` of the numbered
+/-- The automorphism of the elementary group attached to a symmetry `(σ, θ)` of the numbered
 Kostant data: conjugation by the scalar extension of `θ`. -/
-noncomputable def kostantElementaryDiagramAut (A : CommAlgCat.{w} ℤ) :
+noncomputable def kostantElementaryNumberedSymmetry (A : CommAlgCat.{w} ℤ) :
     MulAut (kostantElementarySubgroup e h ρ M hM hnil A) :=
   (MulEquiv.subgroupMap (MulAut.conj (invariantRestrictUnit (R := A) θ M hθM))
       (kostantElementarySubgroup e h ρ M hM hnil A)).trans
     (MulEquiv.subgroupCongr
       (map_kostantElementarySubgroup_conj e h ρ M hM hnil σ θ hθM hθe A))
 
-private theorem val_kostantElementaryDiagramAut_def (A : CommAlgCat.{w} ℤ)
-    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A g :
-        LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
-      invariantRestrictUnit (R := A) θ M hθM * (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
-        (invariantRestrictUnit (R := A) θ M hθM)⁻¹ :=
-  (rfl)
-
-/-- The graph automorphism acts by conjugation inside the ambient automorphism group. -/
+/-- The numbered symmetry acts by conjugation inside the ambient automorphism group. -/
 @[simp]
-theorem val_kostantElementaryDiagramAut (A : CommAlgCat.{w} ℤ)
+theorem val_kostantElementaryNumberedSymmetry (A : CommAlgCat.{w} ℤ)
     (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A g :
+    (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A g :
         LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
       invariantRestrictUnit (R := A) θ M hθM * (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
-        (invariantRestrictUnit (R := A) θ M hθM)⁻¹ :=
-  val_kostantElementaryDiagramAut_def e h ρ M hM hnil σ θ hθM hθe A g
+        (invariantRestrictUnit (R := A) θ M hθM)⁻¹ := by
+  rw [kostantElementaryNumberedSymmetry, MulEquiv.trans_apply,
+    MulEquiv.subgroupCongr_apply, MulEquiv.coe_subgroupMap_apply, MulAut.conj_apply]
 
-/-- The graph automorphism permutes the root subgroups by `σ`, leaving parameters untouched. -/
-theorem kostantElementaryDiagramAut_kostantRootSubgroupParam (A : CommAlgCat.{w} ℤ) (i : I)
+/-- The numbered symmetry permutes the root subgroups by `σ`, leaving parameters untouched. -/
+@[simp]
+theorem kostantElementaryNumberedSymmetry_kostantRootSubgroupParam
+    (A : CommAlgCat.{w} ℤ) (i : I)
     (t : Multiplicative A) :
-    (kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A
+    kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A
         ⟨kostantRootSubgroupParam e h ρ M hM i (hnil i) A t,
-          kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A i t⟩ :
-        LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
-      kostantRootSubgroupParam e h ρ M hM (σ i) (hnil (σ i)) A t := by
-  rw [val_kostantElementaryDiagramAut,
+          kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A i t⟩ =
+      ⟨kostantRootSubgroupParam e h ρ M hM (σ i) (hnil (σ i)) A t,
+        kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A (σ i) t⟩ := by
+  apply Subtype.ext
+  rw [val_kostantElementaryNumberedSymmetry,
     invariantRestrictUnit_conj_kostantRootSubgroupParam e h ρ M hM hnil σ θ hθM hθe]
 
-/-- A symmetry of order `n` produces a graph automorphism of order dividing `n`.
+/-- A numbered symmetry of order `n` produces an automorphism of order dividing `n`.
 
 This is what makes the order relations `γ ^ 2 = 1` and `γ ^ 3 = 1` available for the graph-twisted
 families, where `θ` realizes an involution or a triality of the numbered data. -/
-theorem kostantElementaryDiagramAut_pow_eq_one (A : CommAlgCat.{w} ℤ) {n : ℕ}
+theorem kostantElementaryNumberedSymmetry_pow_eq_one (A : CommAlgCat.{w} ℤ) {n : ℕ}
     (hn : ∀ v, (θ ^ n) v = v) :
-    kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A ^ n = 1 := by
+    kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A ^ n = 1 := by
   refine MulEquiv.ext fun g => Subtype.ext ?_
   have hpow : ∀ m : ℕ, ∀ g : kostantElementarySubgroup e h ρ M hM hnil A,
-      ((kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A ^ m) g :
+      ((kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A ^ m) g :
           LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
         invariantRestrictUnit (R := A) θ M hθM ^ m *
           (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
@@ -214,7 +203,7 @@ theorem kostantElementaryDiagramAut_pow_eq_one (A : CommAlgCat.{w} ℤ) {n : ℕ
     | zero => intro g; simp
     | succ m ih =>
         intro g
-        rw [pow_succ', MulAut.mul_apply, val_kostantElementaryDiagramAut, ih g, pow_succ']
+        rw [pow_succ', MulAut.mul_apply, val_kostantElementaryNumberedSymmetry, ih g, pow_succ']
         group
   rw [hpow n g, invariantRestrictUnit_pow_eq_one θ M hθM hn, one_mul, inv_one, mul_one]
   rfl
@@ -235,34 +224,38 @@ private theorem mapScalarExtensionAutomorphisms_invariantRestrictUnit
         val_invariantRestrictUnit_tmul, GeneralLinear.scalarExtensionMap_tmul]
   | add z w hz hw => rw [map_add, map_add, map_add, map_add, hz, hw]
 
-/-- The graph automorphism commutes with base change of the value ring.
+/-- The numbered symmetry commutes with base change of the value ring.
 
 The scalar extension of `θ` is defined over `ℤ`, so extending scalars along `φ` leaves it
 unchanged, and conjugation by it is therefore natural. -/
-theorem kostantElementaryMap_kostantElementaryDiagramAut {A B : CommAlgCat.{w} ℤ} (φ : A ⟶ B)
+theorem kostantElementaryMap_kostantElementaryNumberedSymmetry
+    {A B : CommAlgCat.{w} ℤ} (φ : A ⟶ B)
     (g : kostantElementarySubgroup e h ρ M hM hnil A) :
     kostantElementaryMap e h ρ M hM hnil φ
-        (kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A g) =
-      kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe B
+        (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A g) =
+      kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe B
         (kostantElementaryMap e h ρ M hM hnil φ g) := by
   refine Subtype.ext ?_
-  rw [val_kostantElementaryMap, val_kostantElementaryDiagramAut, val_kostantElementaryDiagramAut,
+  rw [val_kostantElementaryMap, val_kostantElementaryNumberedSymmetry,
+    val_kostantElementaryNumberedSymmetry,
     val_kostantElementaryMap, map_mul, map_mul, map_inv,
     mapScalarExtensionAutomorphisms_invariantRestrictUnit M θ hθM φ]
 
-/-- The graph automorphism commutes with the `p ^ n`-power Frobenius endomorphism.
+/-- The numbered symmetry commutes with the `p ^ n`-power Frobenius endomorphism.
 
 Together with the pinning equation and the order relation, this is the compatibility a Steinberg
 endomorphism of the form `γ ∘ Frob_q` is built from. -/
-theorem kostantElementaryFrobenius_kostantElementaryDiagramAut (p n : ℕ) (A : CommAlgCat.{w} ℤ)
+theorem kostantElementaryFrobenius_kostantElementaryNumberedSymmetry
+    (p n : ℕ) (A : CommAlgCat.{w} ℤ)
     [ExpChar A p] (g : kostantElementarySubgroup e h ρ M hM hnil A) :
     kostantElementaryFrobenius e h ρ M hM hnil p n A
-        (kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A g) =
-      kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe A
+        (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A g) =
+      kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A
         (kostantElementaryFrobenius e h ρ M hM hnil p n A g) := by
   obtain ⟨φ, hφ⟩ :=
     exists_kostantElementaryFrobenius_eq_kostantElementaryMap e h ρ M hM hnil p n A
   rw [hφ]
-  exact kostantElementaryMap_kostantElementaryDiagramAut e h ρ M hM hnil σ θ hθM hθe φ g
+  exact kostantElementaryMap_kostantElementaryNumberedSymmetry
+    e h ρ M hM hnil σ θ hθM hθe φ g
 
 end TauCeti.UniversalEnvelopingAlgebra

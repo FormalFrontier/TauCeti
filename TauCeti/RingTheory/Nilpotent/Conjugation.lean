@@ -25,10 +25,10 @@ The intertwining hypothesis is imposed only on `x` itself. Divided powers divide
 `A`, so `θ` must be `ℚ`-linear for the transported statement to make sense; the *conclusion* is
 nonetheless an identity of integral operators on `R ⊗[ℤ] M` over an arbitrary commutative ring `R`.
 
-This is the mechanism behind a graph automorphism of a Chevalley group: a symmetry of the ambient
-Lie-algebra data that permutes the distinguished root vectors conjugates the corresponding root
-subgroups into one another, permuted the same way. Its application to Kostant root subgroups is in
-`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Diagram.lean`.
+This is a mechanism used to construct graph automorphisms of Chevalley groups: a symmetry of the
+ambient Lie-algebra data that permutes the distinguished root vectors conjugates the corresponding
+root subgroups into one another, permuted the same way. Its application to Kostant root subgroups
+is in `TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/NumberedSymmetry.lean`.
 
 ## Main definitions and results
 
@@ -39,7 +39,7 @@ subgroups into one another, permuted the same way. Its application to Kostant ro
 * `TauCeti.pow_eq_zero_of_intertwines`: over a faithful module, nilpotency transfers along an
   intertwiner.
 * `TauCeti.invariantRestrictUnit`: the resulting automorphism of the scalar extension `R ⊗[ℤ] M`,
-  with `TauCeti.invariantRestrictUnit_pow_eq_one` transporting the order of `θ`.
+  with `TauCeti.invariantRestrictUnit_pow_eq_one` transporting an `n`th-power-one relation of `θ`.
 * `TauCeti.baseChange_invariantRestrict_baseChangeExp`: the conjugation formula for the
   base-changed exponential.
 
@@ -101,10 +101,10 @@ theorem coe_invariantRestrict_pow_apply (θ : V ≃ₗ[ℚ] V) (M : S) (hθ : �
 
 /-! ## Transporting powers and divided powers -/
 
-variable (θ : V ≃ₗ[ℚ] V) {x y : A}
+variable (θ : V →ₗ[ℚ] V) {x y : A}
 
 omit [Algebra ℚ A] [IsScalarTower ℚ A V] in
-/-- An automorphism intertwining the actions of `x` and `y` intertwines the actions of their
+/-- A linear map intertwining the actions of `x` and `y` intertwines the actions of their
 powers. -/
 theorem apply_pow_smul_of_intertwines (hxy : ∀ v, θ (x • v) = y • θ v) (n : ℕ) (v : V) :
     θ (x ^ n • v) = y ^ n • θ v := by
@@ -113,7 +113,7 @@ theorem apply_pow_smul_of_intertwines (hxy : ∀ v, θ (x • v) = y • θ v) (
   | succ n ih =>
       rw [pow_succ x n, mul_smul, ih (x • v), hxy, pow_succ y n, mul_smul]
 
-/-- An automorphism intertwining the actions of `x` and `y` intertwines the actions of their
+/-- A linear map intertwining the actions of `x` and `y` intertwines the actions of their
 divided powers.
 
 The divided powers involve division by factorials, which is why the intertwiner is required to be
@@ -123,13 +123,16 @@ theorem apply_dividedPower_smul_of_intertwines (hxy : ∀ v, θ (x • v) = y �
   rw [Associative.dividedPower_def, Associative.dividedPower_def, smul_assoc, smul_assoc,
     map_smul, apply_pow_smul_of_intertwines θ hxy]
 
+variable (θ : V ≃ₗ[ℚ] V)
+
 omit [Algebra ℚ A] [IsScalarTower ℚ A V] in
 /-- Over a faithful module, nilpotency transfers along an intertwiner: if `θ` carries the action of
 `x` to the action of `y`, then a vanishing power of `x` forces the same power of `y` to vanish. -/
 theorem pow_eq_zero_of_intertwines [FaithfulSMul A V] (hxy : ∀ v, θ (x • v) = y • θ v) {k : ℕ}
     (hkx : x ^ k = 0) : y ^ k = 0 := by
   refine eq_of_smul_eq_smul (α := V) fun v => ?_
-  have hv := apply_pow_smul_of_intertwines θ hxy k (θ.symm v)
+  have hv := apply_pow_smul_of_intertwines θ.toLinearMap hxy k (θ.symm v)
+  simp only [LinearEquiv.coe_toLinearMap] at hv
   rw [hkx, zero_smul, map_zero, θ.apply_symm_apply] at hv
   rw [zero_smul]
   exact hv.symm
@@ -176,11 +179,11 @@ private theorem val_invariantRestrictUnit_pow_tmul (θ : V ≃ₗ[ℚ] V) (M : S
       rw [pow_succ, Units.val_mul, Module.End.mul_apply, val_invariantRestrictUnit_tmul, ih,
         pow_succ, LinearEquiv.mul_apply]
 
-/-- An automorphism of finite order induces an automorphism of the same finite order on every
-scalar extension.
+/-- If an automorphism has `n`th power one, then the induced automorphism on every scalar extension
+also has `n`th power one.
 
-This is what makes a diagram automorphism of order two or three into a group automorphism of the
-same order. -/
+Thus the order of the induced automorphism divides `n`; restriction or scalar extension may lower
+the exact order. -/
 theorem invariantRestrictUnit_pow_eq_one (θ : V ≃ₗ[ℚ] V) (M : S) (hθ : ∀ v, θ v ∈ M ↔ v ∈ M)
     {n : ℕ} (hn : ∀ v, (θ ^ n) v = v) :
     invariantRestrictUnit (R := R) θ M hθ ^ n = 1 := by
@@ -215,8 +218,9 @@ theorem baseChange_invariantRestrict_baseChangeExp (M : S) (hθ : ∀ v, θ v �
       congr 1
       refine Subtype.ext ?_
       rw [coe_invariantRestrict_apply, coe_integralDividedPower_apply,
-        coe_integralDividedPower_apply, coe_invariantRestrict_apply,
-        apply_dividedPower_smul_of_intertwines θ hxy]
+        coe_integralDividedPower_apply, coe_invariantRestrict_apply]
+      simpa only [LinearEquiv.coe_toLinearMap] using
+        apply_dividedPower_smul_of_intertwines θ.toLinearMap hxy n (v : V)
   | add z w hz hw => rw [map_add, map_add, map_add, map_add, hz, hw]
 
 end TauCeti
