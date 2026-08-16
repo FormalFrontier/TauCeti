@@ -82,7 +82,6 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
     {r c : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) (hkc : ∀ i, k i < c) :
     μ.map (fun ω => (fun i : Fin r => X (k i) ω, fun n => X (c + n) ω))
       = (pathLaw μ X).map (prefixSplitEquiv r) := by
-  classical
   set φ := (prefixSplitEquiv (α := ℕ) r).symm (k, fun n => c + n) with hφdef
   have hφ : StrictMono φ := strictMono_prefixSplitEquiv_symm_block_future hk hkc
   have hsplit : Measurable (prefixSplitEquiv (α := α) r) := (prefixSplitEquiv r).measurable
@@ -137,7 +136,6 @@ theorem Contractable.condExp_block_comp_tailProcess_ae_eq {μ : Measure Ω} [IsF
     {f : (Fin r → α) → ℝ} (hf : Measurable f) :
     μ[fun ω => f (fun i => X (k i) ω) | tailProcess X]
       =ᵐ[μ] μ[fun ω => f (fun i => X (l i) ω) | tailProcess X] := by
-  classical
   set c := max (Finset.univ.sup fun i => k i) (Finset.univ.sup fun i => l i) + 1 with hc
   have hkc : ∀ i, k i < c := fun i => by
     have := Finset.le_sup (f := fun i => k i) (Finset.mem_univ i)

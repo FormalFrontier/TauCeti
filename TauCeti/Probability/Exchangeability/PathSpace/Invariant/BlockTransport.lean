@@ -236,7 +236,6 @@ theorem ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_inv
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {f : α → ℝ} (hf : Measurable f) :
     ∫ x in A, f (x r) ∂ρ = ∫ x in A, f (x 0) ∂ρ := by
-  classical
   have hmap := hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants
     (k := fun _ : Fin 1 => r) (Subsingleton.strictMono _) hA
   have hmap0 := hρ.map_restrict_prefixProj_of_strictMono_of_measurableSet_invariants

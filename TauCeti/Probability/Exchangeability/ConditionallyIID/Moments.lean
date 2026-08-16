@@ -208,7 +208,6 @@ private theorem integral_sq_average_sub [IsProbabilityMeasure μ] {e : ℕ → �
       ∫ ω, (e i ω - q ω) * (e j ω - q ω) ∂μ = if i = j then c else 0)
     (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, e i ω) - q ω) ^ 2 ∂μ = (n : ℝ)⁻¹ * c := by
-  classical
   have hdb : ∀ i ∈ Finset.range n, ∀ ω, |e i ω - q ω| ≤ 2 := by
     intro i hi ω
     have h1 := abs_le.mp (heb i hi ω)
@@ -338,7 +337,6 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
       = if i = j then
           (∫ ω, ((ν ω : Measure α) B).toReal ∂μ - ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ)
         else 0 := by
-  classical
   have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
       h.measurable_directing
@@ -392,7 +390,6 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ
       = (n : ℝ)⁻¹ * (∫ ω, ((ν ω : Measure α) B).toReal ∂μ
           - ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ) := by
-  classical
   have hq : Measurable fun ω => ((ν ω : Measure α) B).toReal :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
       h.measurable_directing
