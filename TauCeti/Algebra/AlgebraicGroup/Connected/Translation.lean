@@ -106,6 +106,7 @@ private theorem connectedComponentIdeal_kernelPoint_eq_augmentationPoint
 
 /-- The inverse coordinate-algebra automorphism of translation by an identity-component point
 fixes the idempotent selecting the identity component. -/
+@[simp]
 theorem rightTranslationAlgEquiv_symm_connectedComponentIdempotent_eq_self
     (g : WithConv (H →ₐ[k] k))
     (hg : AlgHom.kernelPoint g.ofConv ∈
@@ -139,6 +140,7 @@ theorem rightTranslationAlgEquiv_symm_connectedComponentIdempotent_eq_self
 
 /-- The coordinate-algebra automorphism of translation by an identity-component point fixes the
 idempotent selecting the identity component. -/
+@[simp]
 theorem rightTranslationAlgEquiv_connectedComponentIdempotent_eq_self
     (g : WithConv (H →ₐ[k] k))
     (hg : AlgHom.kernelPoint g.ofConv ∈
@@ -196,6 +198,7 @@ theorem map_rightTranslationAlgEquiv_connectedComponentIdeal_eq_self
 
 /-- Membership in the identity-component ideal is invariant under translation by a point of the
 identity component. -/
+@[simp]
 theorem rightTranslationAlgEquiv_mem_connectedComponentIdeal_iff
     (g : WithConv (H →ₐ[k] k))
     (hg : AlgHom.kernelPoint g.ofConv ∈

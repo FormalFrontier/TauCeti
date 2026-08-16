@@ -10,7 +10,7 @@ public import TauCeti.Algebra.HopfAlgebra.Augmentation
 /-!
 # Translations of an affine group
 
-A `k`-rational point of an affine group acts on its coordinate algebra by translation. For a
+A `k`-point of an affine group acts on its coordinate algebra by translation. For a
 commutative Hopf algebra `H` over `k`, a point `g : H →ₐ[k] k` defines the algebra endomorphism
 
 ```text
@@ -49,7 +49,9 @@ namespace TauCeti.HopfAlgebra
 
 universe u v
 
-variable {k : Type u} [Field k]
+section CommRing
+
+variable {k : Type u} [CommRing k]
 variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H]
 
 /-- Pullback by right translation by a `k`-point of an affine group, on its coordinate algebra. -/
@@ -182,8 +184,12 @@ theorem rightTranslationAlgEquiv_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
     rightTranslationAlgEquiv g x =
       TensorProduct.rid k H
         (TensorProduct.map LinearMap.id g.ofConv.toLinearMap (Coalgebra.comul x)) := by
-  change (rightTranslationAlgEquiv g).toAlgHom x = _
-  rw [rightTranslationAlgEquiv_toAlgHom, rightTranslationAlgHom_apply]
+  calc
+    rightTranslationAlgEquiv g x = (rightTranslationAlgEquiv g).toAlgHom x :=
+      (rightTranslationAlgEquiv g).toAlgHom_apply x |>.symm
+    _ = rightTranslationAlgHom g x :=
+      DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom g) x
+    _ = _ := rightTranslationAlgHom_apply g x
 
 /-- Evaluating a right-translated function at the identity evaluates the original function at
 the translating point. -/
@@ -205,21 +211,6 @@ theorem counitAlgHom_comp_rightTranslationAlgHom (g : WithConv (H →ₐ[k] k)) 
   change (1 * g).ofConv = g.ofConv
   rw [one_mul]
 
-/-- Contraction of the augmentation point along right translation gives the translating point. -/
-@[simp]
-theorem comap_rightTranslationAlgEquiv_augmentationPoint
-    (g : WithConv (H →ₐ[k] k)) :
-    PrimeSpectrum.comap (rightTranslationAlgEquiv g)
-        (Bialgebra.augmentationPoint k H) =
-      AlgHom.kernelPoint g.ofConv := by
-  -- These abbreviations reduce `Spec H` points to kernels of their representing algebra maps.
-  change PrimeSpectrum.comap
-      ((rightTranslationAlgEquiv g).toAlgHom : H →+* H)
-        (AlgHom.kernelPoint (_root_.Bialgebra.counitAlgHom k H)) =
-    AlgHom.kernelPoint g.ofConv
-  rw [rightTranslationAlgEquiv_toAlgHom, AlgHom.comap_kernelPoint,
-    counitAlgHom_comp_rightTranslationAlgHom]
-
 /-- Right translation on the prime spectrum. The inverse algebra equivalence occurs because
 `Spec` is contravariant. -/
 noncomputable def rightTranslationHomeomorph (g : WithConv (H →ₐ[k] k)) :
@@ -235,5 +226,29 @@ theorem rightTranslationHomeomorph_apply (g : WithConv (H →ₐ[k] k))
       PrimeSpectrum.comap ((rightTranslationAlgEquiv g).toRingEquiv : H →+* H) x := by
   rw [rightTranslationHomeomorph]
   rfl
+
+end CommRing
+
+section Field
+
+variable {k : Type u} [Field k]
+variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H]
+
+/-- Contraction of the augmentation point along right translation gives the translating point. -/
+@[simp]
+theorem comap_rightTranslationAlgEquiv_augmentationPoint
+    (g : WithConv (H →ₐ[k] k)) :
+    PrimeSpectrum.comap (rightTranslationAlgEquiv g)
+        (Bialgebra.augmentationPoint k H) =
+      AlgHom.kernelPoint g.ofConv := by
+  -- These abbreviations reduce `Spec H` points to kernels of their representing algebra maps.
+  change PrimeSpectrum.comap
+      ((rightTranslationAlgEquiv g).toAlgHom : H →+* H)
+        (AlgHom.kernelPoint (_root_.Bialgebra.counitAlgHom k H)) =
+    AlgHom.kernelPoint g.ofConv
+  rw [rightTranslationAlgEquiv_toAlgHom, AlgHom.comap_kernelPoint,
+    counitAlgHom_comp_rightTranslationAlgHom]
+
+end Field
 
 end TauCeti.HopfAlgebra
