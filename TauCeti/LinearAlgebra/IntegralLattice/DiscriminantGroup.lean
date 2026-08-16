@@ -127,7 +127,6 @@ theorem ker_discriminantGroupMk (L : IntegralLattice V) :
 
 /-- A representative defines the zero discriminant class exactly when its ambient vector belongs
 to the original carrier. -/
-@[simp]
 theorem discriminantGroupMk_eq_zero_iff (L : IntegralLattice V) (x : L.dualCarrier) :
     L.discriminantGroupMk x = 0 ↔ (x : V) ∈ L.carrier := by
   rw [discriminantGroupMk_apply, Submodule.Quotient.mk_eq_zero,
@@ -222,9 +221,9 @@ def discriminantGroupEquiv (e : Isometry L M) :
 its image. -/
 @[simp]
 theorem discriminantGroupEquiv_mk (e : Isometry L M) (x : L.dualCarrier) :
-    e.discriminantGroupEquiv (L.discriminantGroupMk x) =
-      M.discriminantGroupMk (e.dualCarrierEquiv x) := by
-  simp [discriminantGroupEquiv, discriminantGroupMk]
+    e.discriminantGroupEquiv (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (e.dualCarrierEquiv x) := by
+  simp [discriminantGroupEquiv]
 
 /-- The identity isometry induces the identity equivalence of discriminant groups. -/
 @[simp]
@@ -233,7 +232,8 @@ theorem discriminantGroupEquiv_refl (L : IntegralLattice V) :
   ext x
   induction x using DiscriminantGroup.induction_on L with
   | _ x =>
-      rw [LinearEquiv.refl_apply, discriminantGroupEquiv_mk]
+      simp only [LinearEquiv.refl_apply, discriminantGroupMk_apply]
+      rw [discriminantGroupEquiv_mk]
       congr 1
       apply Subtype.ext
       simp
@@ -247,6 +247,7 @@ theorem discriminantGroupEquiv_symm (e : Isometry L M) :
   | _ x =>
       change e.symm.discriminantGroupEquiv (M.discriminantGroupMk x) =
         e.discriminantGroupEquiv.symm (M.discriminantGroupMk x)
+      simp only [discriminantGroupMk_apply]
       apply e.discriminantGroupEquiv.injective
       rw [discriminantGroupEquiv_mk, discriminantGroupEquiv_mk,
         LinearEquiv.apply_symm_apply]
@@ -263,6 +264,7 @@ theorem discriminantGroupEquiv_trans (e : Isometry L M) (f : Isometry M N) :
   ext x
   induction x using DiscriminantGroup.induction_on L with
   | _ x =>
+      simp only [discriminantGroupMk_apply]
       rw [LinearEquiv.trans_apply, discriminantGroupEquiv_mk, discriminantGroupEquiv_mk,
         discriminantGroupEquiv_mk]
       congr 1
