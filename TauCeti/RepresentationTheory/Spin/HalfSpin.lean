@@ -72,8 +72,9 @@ belong to the complex theory and are not proved here.
   of `spinRep`, so the splitting is one of representations.
 * `TauCeti.map_spinAction_spinPlus_le_spinMinus` and
   `TauCeti.map_spinAction_spinMinus_le_spinPlus`: an odd Clifford element carries each of the two
-  summands into the other, which is why the splitting is stated for `spinRep` and not for
-  `pinRep`.
+  summands into the other, so the invariance argument does not extend from the spin group — which
+  is even — to the pin group, which in general is not. That is why the splitting is stated for
+  `spinRep` and not for `pinRep`.
 
 ## References
 
@@ -266,11 +267,12 @@ theorem isCompl_spinPlusSubrep_spinMinusSubrep (hline : P.line = ⊥) :
 
 /-! ### Odd elements carry each summand into the other
 
-An odd Clifford element maps `S⁺` into `S⁻` and `S⁻` into `S⁺`. The pin group is not contained in
-the even subalgebra, so this is why the half-spin splitting is stated for `spinRep` and not for
-`pinRep`. Concluding that `pinRep` really does fail to preserve the splitting takes more than
-these inclusions — it needs an odd element of the pin group whose action does not kill the
-summand — and that is not proved here. -/
+An odd Clifford element maps `S⁺` into `S⁻` and `S⁻` into `S⁺`. Unlike the spin group, the pin
+group need not lie in the even subalgebra, so the invariance argument does not extend to it, and
+that is why the half-spin splitting is stated for `spinRep` and not for `pinRep`. Nothing here
+says that `pinRep` really does fail to preserve the splitting: that would need an odd element of
+the pin group whose action does not kill the summand — which for some `Q` there is none of, the
+pin group then being even — and it is not proved here. -/
 
 /-- **An odd Clifford element carries `S⁺` into `S⁻`.** -/
 theorem map_spinAction_spinPlus_le_spinMinus (hline : P.line = ⊥) {x : CliffordAlgebra Q}
