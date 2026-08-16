@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RingTheory.DividedPowers.Associative
 public import Mathlib.LinearAlgebra.Basis.Submodule
+public import TauCeti.LinearAlgebra.Finsupp.LinearCombination
 
 /-!
 # Bases of divided powers
@@ -189,13 +190,8 @@ theorem mem_dividedPowerLattice_iff_existsUnique_sum_dividedPower_eq {x y : A}
     (h : LinearIndependent ℤ (fun n : ℕ => dividedPower n x)) :
     y ∈ dividedPowerLattice x ↔
       ∃! c : ℕ →₀ ℤ, c.sum (fun n a => a • dividedPower n x) = y := by
-  rw [mem_dividedPowerLattice_iff]
-  constructor
-  · rintro ⟨c, hc⟩
-    refine ⟨c, hc, fun d hd => ?_⟩
-    apply h
-    simpa only [Finsupp.linearCombination_apply] using hd.trans hc.symm
-  · exact ExistsUnique.exists
+  rw [dividedPowerLattice_def]
+  exact TauCeti.LinearIndependent.mem_span_range_iff_existsUnique h y
 
 /-- Rational independence of the powers gives the canonical `ℤ`-basis of the integral
 divided-power lattice. -/

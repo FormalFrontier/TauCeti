@@ -5,10 +5,9 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
-public import Mathlib.LinearAlgebra.LinearIndependent.Basic
 public import Mathlib.RingTheory.Binomial
 public import TauCeti.Algebra.Ring.Subgroup
+public import TauCeti.LinearAlgebra.Finsupp.LinearCombination
 
 /-!
 # Products of generalized binomial coefficients
@@ -165,15 +164,8 @@ theorem mem_ringChooseSpan_iff_existsUnique {r : R}
         a.sum (fun n z => z • Ring.choose r n) = x := by
   rw [← AddSubgroup.toIntSubmodule_toAddSubgroup (ringChooseSpan r),
     Submodule.mem_toAddSubgroup,
-    ← span_int_range_ringChoose r,
-    Finsupp.mem_span_range_iff_exists_finsupp]
-  constructor
-  · rintro ⟨a, ha⟩
-    refine ⟨a, ha, fun b hb => ?_⟩
-    apply h.finsuppLinearCombination_injective
-    simpa only [Finsupp.linearCombination_apply] using hb.trans ha.symm
-  · rintro ⟨a, ha, -⟩
-    exact ⟨a, ha⟩
+    ← span_int_range_ringChoose r]
+  exact TauCeti.LinearIndependent.mem_span_range_iff_existsUnique h x
 
 end Span
 

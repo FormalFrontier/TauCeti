@@ -10,14 +10,14 @@ public import Mathlib.Algebra.Polynomial.Sequence
 /-!
 # Linear independence of polynomial sequences
 
-This file generalizes Mathlib's `Polynomial.Sequence.linearIndependent` and
-`Polynomial.Sequence.basis` from domains to arbitrary rings where the sequence elements have
-unit leading coefficients.
+This file generalizes Mathlib's `Polynomial.Sequence.linearIndependent` from domains to arbitrary
+rings where the sequence elements have right-regular leading coefficients, and constructs a basis
+when those coefficients are units.
 
 ## Main statements
 
-* `Polynomial.Sequence.linearIndependent_of_isUnit_leadingCoeff`: a polynomial sequence whose
-  elements have unit leading coefficients is linearly independent over any ring.
+* `Polynomial.Sequence.linearIndependent_of_isRightRegular_leadingCoeff`: a polynomial sequence
+  whose elements have right-regular leading coefficients is linearly independent over any ring.
 * `Polynomial.Sequence.basisOfIsUnitLeadingCoeff`: the corresponding basis of `R[X]`.
 -/
 
@@ -29,10 +29,10 @@ open Module Submodule
 
 variable {R : Type*} [Ring R] (S : Polynomial.Sequence R)
 
-/-- Polynomials in a polynomial sequence whose leading coefficients are units are linearly
+/-- Polynomials in a polynomial sequence whose leading coefficients are right-regular are linearly
 independent. -/
-theorem linearIndependent_of_isUnit_leadingCoeff
-    (hCoeff : ∀ i, IsUnit (S i).leadingCoeff) :
+theorem linearIndependent_of_isRightRegular_leadingCoeff
+    (hCoeff : ∀ i, IsRightRegular (S i).leadingCoeff) :
     LinearIndependent R S := by
   classical
   refine linearIndependent_iff'.2 fun s g hsum i hi => ?_
@@ -65,14 +65,14 @@ theorem linearIndependent_of_isUnit_leadingCoeff
     · have hj_gt : m < j := by omega
       rw [hzero j hj_s hj_gt, zero_smul, Polynomial.coeff_zero]
   rw [h_m_coeff, h_erase_coeff, add_zero, smul_eq_mul] at h_coeff
-  have hu := hCoeff m
-  exact hgm (hu.mul_left_eq_zero.mp h_coeff)
+  exact hgm ((hCoeff m) (by simpa using h_coeff))
 
 /-- Every polynomial sequence with unit leading coefficients is a basis of `R[X]`. -/
 noncomputable def basisOfIsUnitLeadingCoeff
     (hCoeff : ∀ i, IsUnit (S i).leadingCoeff) :
     Basis ℕ R R[X] :=
-  Basis.mk (S.linearIndependent_of_isUnit_leadingCoeff hCoeff)
+  Basis.mk (S.linearIndependent_of_isRightRegular_leadingCoeff fun i =>
+      (hCoeff i).isRegular.right)
     (eq_top_iff.mp (S.span hCoeff))
 
 /-- The `i`-th basis vector is the `i`-th polynomial in the sequence. -/
