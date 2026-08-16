@@ -11,7 +11,7 @@ import Mathlib.Tactic.NoncommRing
 /-!
 # Nilpotence of upper-unitriangular matrix groups
 
-For a commutative ring `R`, filter `U_n(R)` by requiring the entries on the first `r - 1`
+For a ring `R`, filter `U_n(R)` by requiring the entries on the first `r - 1`
 superdiagonals to vanish. Multiplication of matrices supported at least `r` and `s`
 superdiagonals above the diagonal is supported at least `r + s` superdiagonals above it. This
 gives the central-series estimate
@@ -21,7 +21,7 @@ gives the central-series estimate
 ```
 
 The first term is all of `U_n(R)`, while the `n`-th term is trivial. Hence `U_n(R)` is
-nilpotent, and therefore solvable, over every commutative ring.
+nilpotent, and therefore solvable, over every ring.
 
 ## Main declarations
 
@@ -53,7 +53,7 @@ namespace TauCeti.UpperUnitriangularGroup
 
 universe u
 
-variable {R : Type u} [CommRing R] {n : ℕ}
+variable {R : Type u} [Ring R] {n : ℕ}
 
 /-- A matrix vanishes strictly below its `r`-th superdiagonal. This private predicate is the
 calculation behind `superdiagonalSubgroup`; the public membership theorem is its stable API. -/
@@ -109,7 +109,8 @@ private theorem VanishesBelow.mul_isUpperTriangular {r : ℕ}
   intro k _
   by_cases hik : k.val < i.val + r
   · rw [hM i k hik, zero_mul]
-  · rw [hN (show j < k by omega), mul_zero]
+  · have hjk : j < k := by omega
+    rw [hN hjk, mul_zero]
 
 private theorem sub_one_vanishesBelow_one
     (g : upperUnitriangularGroup (Fin n) R) :
@@ -279,7 +280,7 @@ private theorem lowerCentralSeries_le_superdiagonalSubgroup (r : ℕ) :
       simpa only [superdiagonalSubgroup_one, Nat.succ_eq_add_one, add_assoc] using
         commutator_superdiagonalSubgroup_le (R := R) (n := n) (r + 1) 1
 
-/-- Upper-unitriangular matrices form a nilpotent group over every commutative ring. -/
+/-- Upper-unitriangular matrices form a nilpotent group over every ring. -/
 instance instIsNilpotent : Group.IsNilpotent (upperUnitriangularGroup (Fin n) R) := by
   rw [Subgroup.nilpotent_iff_lowerCentralSeries]
   refine ⟨n, le_antisymm ?_ bot_le⟩

@@ -10,10 +10,10 @@ public import TauCeti.LinearAlgebra.Matrix.Triangular
 /-!
 # Upper-unitriangular matrix groups
 
-For a commutative ring `R`, the upper-unitriangular group `Uₙ(R)` consists of the invertible
+For a ring `R`, the upper-unitriangular group `Uₙ(R)` consists of the invertible
 upper-triangular matrices whose diagonal entries are all one. This file packages these matrices
-as a subgroup of `GLₙ(R)`, proves functoriality in `R`, and verifies that their natural linear
-action is unipotent.
+as a subgroup of `GLₙ(R)`, proves functoriality for commutative coefficient rings, and verifies
+that their natural linear action is unipotent in the commutative case.
 
 The nilpotence calculation is valid over every ring: if `N` is a strictly upper-triangular
 `n × n` matrix, then `N ^ n = 0`. Applying it to `g - 1` proves that every element of `Uₙ(R)`
@@ -39,7 +39,11 @@ public section
 
 namespace Matrix
 
-variable {R : Type*} {m : Type*} [Fintype m] [LinearOrder m] [CommRing R]
+variable {R : Type*} {m : Type*} [Fintype m] [LinearOrder m]
+
+section CommRing
+
+variable [CommRing R]
 
 /-- Package an upper-unitriangular matrix as an element of the general linear group. -/
 noncomputable def IsUpperUnitriangular.toGL {M : Matrix m m R} (hM : M.IsUpperUnitriangular) :
@@ -52,6 +56,58 @@ theorem IsUpperUnitriangular.coe_toGL {M : Matrix m m R} (hM : M.IsUpperUnitrian
     (hM.toGL : Matrix m m R) = M := by
   rfl
 
+end CommRing
+
+private theorem IsUpperUnitriangular.units_inv [Ring R] (g : (Matrix m m R)ˣ)
+    (hg : (g : Matrix m m R).IsUpperUnitriangular) :
+    ((g⁻¹ : (Matrix m m R)ˣ) : Matrix m m R).IsUpperUnitriangular := by
+  let N : Matrix m m R := (g : Matrix m m R) - 1
+  let x : Matrix m m R := -N
+  let S : Matrix m m R := ∑ i ∈ Finset.range (Fintype.card m), x ^ i
+  have hNtri : N.IsUpperTriangular :=
+    hg.isUpperTriangular.sub Matrix.blockTriangular_one
+  have hxtri : x.IsUpperTriangular := hNtri.neg
+  have hNdiag : ∀ i, N i i = 0 := by
+    intro i
+    simp [N, hg.apply_diag i]
+  have hxdiag : ∀ i, x i i = 0 := by
+    intro i
+    simp [x, hNdiag i]
+  have hxpow : x ^ Fintype.card m = 0 :=
+    Matrix.pow_card_eq_zero_of_isUpperTriangular_of_diag_eq_zero hxtri hxdiag
+  have hg_eq : (g : Matrix m m R) = 1 - x := by
+    simp [x, N]
+  have hS : S.IsUpperUnitriangular := by
+    rw [Matrix.isUpperUnitriangular_def]
+    refine ⟨?_, ?_⟩
+    · intro i j hji
+      simp only [S, Matrix.sum_apply]
+      apply Finset.sum_eq_zero
+      intro k _
+      exact (hxtri.pow k) hji
+    · intro i
+      have hm : 0 < Fintype.card m := Fintype.card_pos_iff.mpr ⟨i⟩
+      have hpow_diag : ∀ k : ℕ, (x ^ k) i i = (x i i) ^ k := by
+        intro k
+        induction k with
+        | zero => simp
+        | succ k ih =>
+            rw [pow_succ,
+              Matrix.mul_apply_diag_of_isUpperTriangular (hxtri.pow k) hxtri, ih]
+            exact (pow_succ _ _).symm
+      simp only [S, Matrix.sum_apply, hpow_diag, hxdiag i]
+      simp [hm.ne']
+  let u : (Matrix m m R)ˣ :=
+    { val := g
+      inv := S
+      val_inv := by
+        rw [hg_eq, mul_neg_geom_sum, hxpow, sub_zero]
+      inv_val := by
+        rw [hg_eq, geom_sum_mul_neg, hxpow, sub_zero] }
+  have hgu : g = u := Units.ext rfl
+  rw [hgu]
+  exact hS
+
 end Matrix
 
 namespace TauCeti
@@ -60,7 +116,11 @@ open Matrix
 
 universe u
 
-variable (m : Type*) [Fintype m] [LinearOrder m] (R : Type u) [CommRing R]
+variable (m : Type*) [Fintype m] [LinearOrder m] (R : Type u)
+
+section Ring
+
+variable [Ring R]
 
 /-- The upper-unitriangular subgroup of `GLₘ(R)` for a finite linearly ordered index type `m`. -/
 def upperUnitriangularGroup : Subgroup (GL m R) where
@@ -68,15 +128,21 @@ def upperUnitriangularGroup : Subgroup (GL m R) where
   one_mem' := Matrix.isUpperUnitriangular_one
   mul_mem' := by
     intro g h hg hh
-    simpa only [Set.mem_ofPred_eq, Matrix.GeneralLinearGroup.coe_mul] using hg.mul hh
+    change (((g : GL m R) : Matrix m m R) * ((h : GL m R) : Matrix m m R)).IsUpperUnitriangular
+    exact hg.mul hh
   inv_mem' := by
     intro g hg
-    let _ : Invertible (g : Matrix m m R) := g.invertible
-    simpa only [Set.mem_ofPred_eq, Matrix.GeneralLinearGroup.coe_inv] using hg.inv
+    exact hg.units_inv g
+
+end Ring
 
 namespace UpperUnitriangularGroup
 
 variable {m R}
+
+section Ring
+
+variable [Ring R]
 
 /-- Membership in the upper-unitriangular group means that the underlying matrix is upper
 unitriangular. -/
@@ -108,10 +174,17 @@ theorem ext {g h : upperUnitriangularGroup m R}
     (heq : ∀ i j, i < j →
       ((g : GL m R) : Matrix m m R) i j = ((h : GL m R) : Matrix m m R) i j) : g = h := by
   apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
+  apply Units.ext
+  apply Matrix.ext
   intro i j
   exact congrFun (congrFun
     ((isUpperUnitriangular g).ext (isUpperUnitriangular h) heq) i) j
+
+end Ring
+
+section CommRing
+
+variable [CommRing R]
 
 /-- Packaging an upper-unitriangular matrix as an element of `GLₘ(R)` lands in the
 upper-unitriangular subgroup. -/
@@ -167,6 +240,8 @@ theorem isUnipotent_toLin (g : upperUnitriangularGroup m R) :
       (Matrix.GeneralLinearGroup.toLin (g : GL m R)) :=
   (TauCeti.GeneralLinearGroup.isUnipotent_toLin_iff m R (g : GL m R)).2
     (isUpperUnitriangular g).isNilpotent_sub_one
+
+end CommRing
 
 end UpperUnitriangularGroup
 
