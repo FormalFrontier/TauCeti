@@ -196,7 +196,7 @@ theorem sigPos_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
     (n • L).sigPos = L.sigPos := by
   let _ := L.finiteDimensional
   have hnq : (0 : ℚ) < n := by exact_mod_cast hn
-  change _root_.sigPos (n • L).form.toQuadraticMap = _root_.sigPos L.form.toQuadraticMap
+  rw [sigPos]
   rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
   exact QuadraticForm.sigPos_smul_of_pos L.form.toQuadraticMap hnq
 
@@ -205,7 +205,7 @@ theorem sigNeg_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
     (n • L).sigNeg = L.sigNeg := by
   let _ := L.finiteDimensional
   have hnq : (0 : ℚ) < n := by exact_mod_cast hn
-  change _root_.sigNeg (n • L).form.toQuadraticMap = _root_.sigNeg L.form.toQuadraticMap
+  rw [sigNeg]
   rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
   exact QuadraticForm.sigNeg_smul_of_pos L.form.toQuadraticMap hnq
 
@@ -220,7 +220,7 @@ theorem sigPos_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
     (n • L).sigPos = L.sigNeg := by
   let _ := L.finiteDimensional
   have hnq : (n : ℚ) < 0 := by exact_mod_cast hn
-  change _root_.sigPos (n • L).form.toQuadraticMap = _root_.sigNeg L.form.toQuadraticMap
+  rw [sigPos, sigNeg]
   rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
   exact QuadraticForm.sigPos_smul_of_neg L.form.toQuadraticMap hnq
 
@@ -229,7 +229,7 @@ theorem sigNeg_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
     (n • L).sigNeg = L.sigPos := by
   let _ := L.finiteDimensional
   have hnq : (n : ℚ) < 0 := by exact_mod_cast hn
-  change _root_.sigNeg (n • L).form.toQuadraticMap = _root_.sigPos L.form.toQuadraticMap
+  rw [sigNeg, sigPos]
   rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
   exact QuadraticForm.sigNeg_smul_of_neg L.form.toQuadraticMap hnq
 
