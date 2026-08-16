@@ -47,9 +47,10 @@ variable [Ring R]
 
 /-- Package an upper-unitriangular matrix as an element of the general linear group. -/
 noncomputable def IsUpperUnitriangular.toGL {M : Matrix m m R} (hM : M.IsUpperUnitriangular) :
-    GL m R :=
-  (show IsUnit M by
-    simpa only [sub_add_cancel] using hM.isNilpotent_sub_one.isUnit_add_one).unit
+    GL m R := by
+  have hMunit : IsUnit M := by
+    simpa only [sub_add_cancel] using hM.isNilpotent_sub_one.isUnit_add_one
+  exact hMunit.unit
 
 /-- The matrix underlying `IsUpperUnitriangular.toGL` is the original matrix. -/
 @[simp]
