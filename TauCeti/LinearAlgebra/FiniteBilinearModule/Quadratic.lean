@@ -102,7 +102,7 @@ namespace Isometry
 variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
 
 /-- A quadratic isometry induces an isometry of the canonical polar bilinear modules. -/
-def toFiniteBilinearModule (f : Isometry A B) :
+@[expose] def toFiniteBilinearModule (f : Isometry A B) :
     FiniteBilinearModule.Isometry A.toFiniteBilinearModule B.toFiniteBilinearModule where
   toAddEquiv := f.toLinearEquiv.toAddEquiv
   map_pairing' x y := by
@@ -113,6 +113,11 @@ def toFiniteBilinearModule (f : Isometry A B) :
     have hx : B.quadratic (f.toAddEquiv x) = A.quadratic x := f.map_app x
     have hy : B.quadratic (f.toAddEquiv y) = A.quadratic y := f.map_app y
     rw [hxy, hx, hy]
+
+/-- The induced bilinear isometry has the same underlying additive equivalence. -/
+@[simp]
+theorem toFiniteBilinearModule_toAddEquiv (f : Isometry A B) :
+    f.toFiniteBilinearModule.toAddEquiv = f.toAddEquiv := rfl
 
 /-- Nondegeneracy transfers along a quadratic isometry. -/
 theorem isNondegenerate (f : Isometry A B) (hA : A.IsNondegenerate) : B.IsNondegenerate :=
@@ -319,8 +324,8 @@ theorem Isometry.isLagrangian_map_iff {B : FiniteQuadraticModule} (f : Isometry 
     (H : AddSubgroup A) :
     B.IsLagrangian (H.map f.toAddEquiv) ↔ A.IsLagrangian H := by
   rw [IsLagrangian, IsLagrangian, f.isIsotropic_map_iff]
-  have h : f.toFiniteBilinearModule.toAddEquiv = f.toAddEquiv := rfl
-  rw [← h, f.toFiniteBilinearModule.isLagrangian_map_iff]
+  rw [← f.toFiniteBilinearModule_toAddEquiv,
+    f.toFiniteBilinearModule.isLagrangian_map_iff]
 
 /-- A quadratic Lagrangian is quadratically isotropic. -/
 theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :
