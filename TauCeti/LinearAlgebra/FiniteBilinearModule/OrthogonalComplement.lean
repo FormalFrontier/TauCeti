@@ -221,6 +221,7 @@ theorem IsNondegenerate.orthogonalComplement_orthogonalComplement
   exact hcard.symm.le
 
 /-- Orthogonal complementation commutes with mapping to the radical quotient. -/
+@[simp]
 theorem orthogonalComplement_map_radicalQuotient (H : AddSubgroup A) :
     (radicalQuotient A).orthogonalComplement (H.map (radicalQuotientMk A)) =
       (A.orthogonalComplement H).map (radicalQuotientMk A) := by
@@ -247,6 +248,7 @@ theorem orthogonalComplement_map_radicalQuotient (H : AddSubgroup A) :
 
 /-- For every subgroup of a finite bilinear module, the double orthogonal complement is the
 subgroup enlarged by the radical. -/
+@[simp]
 theorem orthogonalComplement_orthogonalComplement (H : AddSubgroup A) :
     A.orthogonalComplement (A.orthogonalComplement H) = H ⊔ A.radical := by
   apply le_antisymm
