@@ -34,6 +34,7 @@ separate parts of the roadmap.
   the ambient affine group scheme.
 * `TauCeti.FiniteTypeCommHopfAlgCat.identityComponentPrimeSpectrumHomeomorph`: the identification
   of its spectrum with the augmentation point's connected component.
+* `TauCeti.FiniteTypeCommHopfAlgCat.identityComponentPointsHom`: the inclusion on points.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mem_range_identityComponentPointsHom_iff`: the corresponding
   characterization on rational points.
 
@@ -89,9 +90,26 @@ noncomputable def identityComponentPrimeSpectrumHomeomorph
   -- Expose the finite-type and Hopf-algebra quotient wrappers at their common carrier.
   change PrimeSpectrum
       (H ⧸ (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)).toIdeal) ≃ₜ _
-  rw [HopfAlgebra.identityComponentHopfIdeal_toIdeal]
-  exact PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent
-    (Bialgebra.augmentationPoint k H)
+  exact (PrimeSpectrum.quotientHomeomorphZeroLocus
+    (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)).toIdeal).trans
+      (Homeomorph.setCongr (by
+        rw [HopfAlgebra.identityComponentHopfIdeal_toIdeal]
+        exact PrimeSpectrum.zeroLocus_connectedComponentIdeal
+          (Bialgebra.augmentationPoint k H)))
+
+/-- After coercion to the ambient prime spectrum, the identity-component homeomorphism sends a
+point to its contraction along the identity-component coordinate map. -/
+@[simp]
+theorem identityComponentPrimeSpectrumHomeomorph_apply_coe
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (x : PrimeSpectrum (identityComponent H)) :
+    (identityComponentPrimeSpectrumHomeomorph H x : PrimeSpectrum H) =
+      PrimeSpectrum.comap
+        (toBialgHom (identityComponentCoordinateMap H)).toAlgHom.toRingHom x := by
+  simp only [identityComponentPrimeSpectrumHomeomorph, id_eq, Homeomorph.trans_apply]
+  change (PrimeSpectrum.quotientHomeomorphZeroLocus
+    (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)).toIdeal x :
+      PrimeSpectrum H) = _
+  exact PrimeSpectrum.quotientHomeomorphZeroLocus_apply_coe _ x
 
 /-- The spectrum of the identity-component coordinate algebra is connected. -/
 noncomputable instance connectedSpace_identityComponent
@@ -184,16 +202,21 @@ theorem range_identityComponentSpecι
       (Bialgebra.augmentationPoint k H)
   exact hmap.trans (hrange.trans hzero)
 
+/-- The canonical inclusion from the identity component to the ambient group on `A`-points. -/
+noncomputable abbrev identityComponentPointsHom
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k) :
+    HopfAlgebra.points (R := k) (H := identityComponent H) A ⟶
+      HopfAlgebra.points (R := k) (H := H) A :=
+  CommHopfAlgCat.quotientPointsHom H.obj
+    (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A
+
 /-- A rational point of the ambient affine group lies in the image of the identity-component
 points exactly when its kernel point belongs to the connected component of the augmentation
 point. -/
 theorem mem_range_identityComponentPointsHom_iff
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (g : HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k)) :
-    g ∈ Set.range
-        (CommHopfAlgCat.quotientPointsHom H.obj
-          (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-          (CommAlgCat.of k k)) ↔
+    g ∈ Set.range (identityComponentPointsHom H (CommAlgCat.of k k)) ↔
       AlgHom.kernelPoint g.ofConv ∈
         connectedComponent (Bialgebra.augmentationPoint k H) := by
   let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
@@ -206,18 +229,20 @@ theorem mem_range_identityComponentPointsHom_iff
   constructor
   · intro hg
     have hz : AlgHom.kernelPoint g.ofConv ∈ PrimeSpectrum.zeroLocus (I : Set H) := by
-      change (I : Set H) ⊆ (AlgHom.kernelPoint g.ofConv).asIdeal
-      intro h hh
-      rw [AlgHom.kernelPoint_asIdeal]
-      exact RingHom.mem_ker.mpr <|
-        hg h (HopfAlgebra.mem_identityComponentHopfIdeal.mpr (show h ∈ I from hh))
+      exact (PrimeSpectrum.mem_zeroLocus (AlgHom.kernelPoint g.ofConv) (I : Set H)).mpr <|
+        fun h hh ↦ by
+          rw [AlgHom.kernelPoint_asIdeal]
+          exact RingHom.mem_ker.mpr <|
+            hg h (HopfAlgebra.mem_identityComponentHopfIdeal.mpr hh)
     exact hcomponent ▸ hz
   · intro hg h hh
     have hz : AlgHom.kernelPoint g.ofConv ∈ PrimeSpectrum.zeroLocus (I : Set H) :=
       hcomponent.symm ▸ hg
+    have hz' : (I : Set H) ⊆ (AlgHom.kernelPoint g.ofConv).asIdeal :=
+      (PrimeSpectrum.mem_zeroLocus (AlgHom.kernelPoint g.ofConv) (I : Set H)).mp hz
     have hker : h ∈ RingHom.ker (g.ofConv : H →+* k) := by
       rw [← AlgHom.kernelPoint_asIdeal]
-      exact hz (HopfAlgebra.mem_identityComponentHopfIdeal.mp hh)
+      exact hz' (HopfAlgebra.mem_identityComponentHopfIdeal.mp hh)
     exact RingHom.mem_ker.mp hker
 
 end TauCeti.FiniteTypeCommHopfAlgCat
