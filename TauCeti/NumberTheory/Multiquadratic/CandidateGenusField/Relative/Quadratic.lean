@@ -52,13 +52,15 @@ variable {d : ℤ}
 
 /-- The chosen square root of `d`, viewed inside the embedded base `ℚ(√d)` of the candidate genus
 field rather than inside the candidate genus field itself. -/
-@[expose] noncomputable def candidateGenusFieldBaseSqrt (hd : Squarefree d) :
+noncomputable def candidateGenusFieldBaseSqrt (hd : Squarefree d) :
     candidateGenusFieldBase hd :=
   ⟨candidateGenusFieldBaseRoot hd, candidateGenusFieldBaseRoot_mem hd⟩
 
 @[simp] theorem candidateGenusFieldBaseSqrt_val (hd : Squarefree d) :
     (candidateGenusFieldBaseSqrt hd : candidateGenusField hd) = candidateGenusFieldBaseRoot hd :=
-  rfl
+  -- `(rfl)` rather than `rfl`: the definition is not `@[expose]`, so the parentheses opt out of
+  -- exporting the definitional equality that this lemma exists to replace.
+  (rfl)
 
 @[simp] theorem candidateGenusFieldBaseSqrt_sq (hd : Squarefree d) :
     candidateGenusFieldBaseSqrt hd ^ 2 = algebraMap ℤ (candidateGenusFieldBase hd) d := by
