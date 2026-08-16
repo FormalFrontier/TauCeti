@@ -27,8 +27,8 @@ Signature additivity remains to be developed with the signature API targeted by 
 * `TauCeti.IntegralLattice.orthogonalSumCarrierEquiv`: the carrier-product equivalence.
 * `TauCeti.IntegralLattice.orthogonalSumBasis`: the product of two carrier bases.
 * `TauCeti.IntegralLattice.Isometry.orthogonalSum`: the product of two lattice isometries.
-* `TauCeti.IntegralLattice.orthogonalSumComm`: the canonical commutativity isometry.
-* `TauCeti.IntegralLattice.orthogonalSumAssoc`: the canonical associativity isometry.
+* `TauCeti.IntegralLattice.Isometry.orthogonalSumComm`: the canonical commutativity isometry.
+* `TauCeti.IntegralLattice.Isometry.orthogonalSumAssoc`: the canonical associativity isometry.
 
 ## References
 
@@ -408,24 +408,24 @@ theorem orthogonalSumCarrierEquiv_carrierEquiv (f : Isometry L L') (g : Isometry
         orthogonalSum_apply, orthogonalSumSnd_apply]
 
 /-- Product isometries commute with the first canonical carrier projection. -/
+@[simp]
 theorem orthogonalSumFst_carrierEquiv (f : Isometry L L') (g : Isometry M M')
     (p : L.orthogonalSum M) :
     orthogonalSumFst L' M' ((f.orthogonalSum g).carrierEquiv p) =
       f.carrierEquiv (orthogonalSumFst L M p) :=
   by
-    apply Subtype.ext
-    simp only [orthogonalSumFst_apply, coe_orthogonalSumCarrierEquiv_fst,
-      Isometry.coe_carrierEquiv_apply, orthogonalSum_apply]
+    simpa only [orthogonalSumFst_apply] using
+      congrArg Prod.fst (orthogonalSumCarrierEquiv_carrierEquiv f g p)
 
 /-- Product isometries commute with the second canonical carrier projection. -/
+@[simp]
 theorem orthogonalSumSnd_carrierEquiv (f : Isometry L L') (g : Isometry M M')
     (p : L.orthogonalSum M) :
     orthogonalSumSnd L' M' ((f.orthogonalSum g).carrierEquiv p) =
       g.carrierEquiv (orthogonalSumSnd L M p) :=
   by
-    apply Subtype.ext
-    simp only [orthogonalSumSnd_apply, coe_orthogonalSumCarrierEquiv_snd,
-      Isometry.coe_carrierEquiv_apply, orthogonalSum_apply]
+    simpa only [orthogonalSumSnd_apply] using
+      congrArg Prod.snd (orthogonalSumCarrierEquiv_carrierEquiv f g p)
 
 /-- The product of identity isometries is the identity of the orthogonal sum. -/
 @[simp]
@@ -456,8 +456,6 @@ theorem orthogonalSum_trans {L'' : IntegralLattice U} {M'' : IntegralLattice Z}
   apply Isometry.ext
   intro p
   simp only [Isometry.trans_apply, orthogonalSum_apply]
-
-end Isometry
 
 /-- Orthogonal sum is commutative up to the canonical factor-swapping lattice isometry. -/
 def orthogonalSumComm (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -556,7 +554,8 @@ theorem orthogonalSumAssoc_symm_apply (L : IntegralLattice V) (M : IntegralLatti
     (orthogonalSumAssoc L M N).symm p = ((p.1, p.2.1), p.2.2) :=
   by
     rw [Isometry.coe_symm]
-    rfl
+    apply (LinearEquiv.symm_apply_eq _).2
+    exact (orthogonalSumAssoc_apply L M N ((p.1, p.2.1), p.2.2)).symm
 
 /-- The associativity isometry is natural with respect to isometries of all three factors. -/
 theorem orthogonalSumAssoc_naturality {L : IntegralLattice V} {M : IntegralLattice W}
@@ -568,6 +567,8 @@ theorem orthogonalSumAssoc_naturality {L : IntegralLattice V} {M : IntegralLatti
   apply Isometry.ext
   intro p
   simp only [Isometry.trans_apply, Isometry.orthogonalSum_apply, orthogonalSumAssoc_apply]
+
+end Isometry
 
 end Isometry
 
