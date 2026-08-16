@@ -87,9 +87,9 @@ rectangle in the block coordinates, then `ν` directs the process.
 
 No measurability hypothesis on the coordinates of `X` is needed: the rectangle identities are
 already exactly the data used to extend the two finite joint measures. -/
-theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
-    (h_rect : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+theorem conditionallyIID_of_jointRectangles {ι : Type*} {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
+    (h_rect : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
         ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
           (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) (S ×ˢ Set.univ.pi B) =
@@ -108,7 +108,9 @@ a directing-measure event met with a block cylinder is the set-integral of the p
 witness's evaluations, then the witness directs the process.
 
 `ConditionallyIIDWith` quantifies over arbitrary injective selections, but a caller need only supply
-the monotone case: the reduction by sorting happens here. That matches what the proof routes
+the monotone case: the reduction by sorting happens here. That reduction is why this theorem, alone
+among the rectangle endings, is stated for a sequence: sorting needs the order on `ℕ`. The others
+quantify over an arbitrary index type. That matches what the proof routes
 naturally produce, since a block argument reads disjoint windows in increasing order.
 
 This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
@@ -165,9 +167,9 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
 /-- A `ConditionallyIIDWith` witness gives the joint disintegration on a product of an arbitrary
 set in the directing-measure coordinate and an arbitrary finite block rectangle. -/
 @[grind =>]
-theorem ConditionallyIIDWith.jointLaw_prod_univ_pi {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem ConditionallyIIDWith.jointLaw_prod_univ_pi {ι : Type*} {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
-    {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k)
+    {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k)
     (S : Set (ProbabilityMeasure α)) (B : Fin m → Set α) :
     (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) (S ×ˢ Set.univ.pi B) =
       (μ.bind fun ω =>
@@ -178,12 +180,12 @@ theorem ConditionallyIIDWith.jointLaw_prod_univ_pi {μ : Measure Ω} {X : ℕ �
 
 /-- Joint-rectangle factorization characterizes `ConditionallyIIDWith` for a finite base
 measure. -/
-theorem conditionallyIIDWith_iff_forall_jointRectangles
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
+theorem conditionallyIIDWith_iff_forall_jointRectangles {ι : Type*}
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} :
     ConditionallyIIDWith μ X ν ↔
       Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+        ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
             ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
               (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω))
@@ -201,11 +203,11 @@ theorem conditionallyIIDWith_iff_forall_jointRectangles
 
 /-- Joint-rectangle factorization characterizes the existential predicate `ConditionallyIID` for
 a finite base measure. -/
-theorem conditionallyIID_iff_exists_forall_jointRectangles
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} :
+theorem conditionallyIID_iff_exists_forall_jointRectangles {ι : Type*}
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ι → Ω → α} :
     ConditionallyIID μ X ↔
       ∃ ν : Ω → ProbabilityMeasure α, Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+        ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
             ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
               (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω))
