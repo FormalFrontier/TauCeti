@@ -34,7 +34,7 @@ consumed by milestone L0 of the `CFSGStatement` roadmap.
 
 ## Main declarations
 
-* `TauCeti.rootCorootGenerators_finite`: the root--coroot generating set is finite.
+* `TauCeti.finite_rootCorootGenerators`: the root--coroot generating set is finite.
 * `TauCeti.IsSl2System.span_rootCorootSpan_eq_top`: the integral span is full over the ground
   field.
 * `TauCeti.IsChevalleySystem.chevalleyLieLattice`: the canonical integral Lie lattice attached to
@@ -61,7 +61,7 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 
 omit [CharZero K] [LieModule.IsTriangularizable K H L] in
 /-- The root vectors and coroots form a finite set. -/
-theorem rootCorootGenerators_finite (x : Weight K H L → L) :
+theorem finite_rootCorootGenerators (x : Weight K H L → L) :
     (rootCorootGenerators x).Finite := by
   apply ((Set.finite_range x).union
     (Set.finite_range fun α : Weight K H L => (coroot α : L))).subset
@@ -93,7 +93,7 @@ theorem rootCorootSpan_eq_span_generators (x : Weight K H L → L) :
 noncomputable instance instModuleFiniteRootCorootSpan (x : Weight K H L → L) :
     Module.Finite ℤ (rootCorootSpan x) := by
   rw [rootCorootSpan_eq_span_generators]
-  exact Module.Finite.span_of_finite ℤ (rootCorootGenerators_finite x)
+  exact Module.Finite.span_of_finite ℤ (finite_rootCorootGenerators x)
 
 namespace IsSl2System
 
@@ -196,11 +196,13 @@ theorem chevalleyLieLattice_le_iff {M : LieSubalgebra ℤ L} :
   hx.toIsSl2System.rootCorootLieSubalgebra_le_iff _
 
 /-- Every root vector belongs to the Chevalley Lie lattice. -/
+@[simp]
 theorem rootVector_mem_chevalleyLieLattice (α : Weight K H L) :
     x α ∈ hx.chevalleyLieLattice :=
   hx.mem_chevalleyLieLattice_iff.2 (rootVector_mem_rootCorootSpan x α)
 
 /-- Every coroot belongs to the Chevalley Lie lattice. -/
+@[simp]
 theorem coroot_mem_chevalleyLieLattice (α : Weight K H L) :
     (coroot α : L) ∈ hx.chevalleyLieLattice :=
   hx.mem_chevalleyLieLattice_iff.2 (coroot_mem_rootCorootSpan x α)
