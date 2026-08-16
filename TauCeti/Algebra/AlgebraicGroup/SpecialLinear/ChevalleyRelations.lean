@@ -31,7 +31,9 @@ The product `cd` is multiplication in the value algebra, not the convolution pro
 algebra.
 
 On scheme-valued points, composing with the special-linear root subgroup morphism satisfies the
-corresponding commutation and commutator relations.
+corresponding commutation and commutator relations. Its identity, multiplication, and inversion
+laws are the generic `MonObj.one_comp`, `MonObj.mul_comp`, and `GrpObj.inv_comp` laws transported
+through `schemePointsMulEquiv`.
 
 This file supplies the commutator-relations part of the pinned Chevalley–Demazure interface from
 Layer 9 of the ReductiveGroups roadmap for the worked example `SLₙ` over an arbitrary commutative
@@ -47,12 +49,6 @@ base ring.
   points of `SLₙ`.
 * `TauCeti.SpecialLinear.commutatorElement_schemePointsMulEquiv_rootSubgroup`: the type-A Chevalley
   commutator relation on scheme-valued points of `SLₙ`.
-* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_one`: identity on scheme-valued points
-  of root subgroups.
-* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_mul`: multiplication on scheme-valued
-  points of root subgroups.
-* `TauCeti.SpecialLinear.schemePointsMulEquiv_rootSubgroup_inv`: inversion on scheme-valued points
-  of root subgroups.
 
 ## References
 
@@ -105,7 +101,6 @@ distinct indices,
 
 The point on the right has parameter `cd` in the value algebra, as recorded by
 `AdditiveGroup.gaPointParamMul`. -/
-@[simp]
 theorem commutatorElement_rootSubgroupPoints (hij : i ≠ j) (hjl : j ≠ l)
     (hil : i ≠ l)
     (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
@@ -139,7 +134,9 @@ theorem commute_schemePointsMulEquiv_rootSubgroup (hij : i ≠ j) (hkl : k ≠ l
   simp only [schemePointsMulEquiv_rootSubgroup]
   exact _root_.Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli _ _
 
-/-- **The type-A Chevalley commutator relation on scheme-valued points of `SLₙ`.** -/
+/-- **The type-A Chevalley commutator relation on scheme-valued points of `SLₙ`.** The root-subgroup
+point on the right has parameter `cd`, the product in the value algebra `A` of the parameters of
+`p` and `q`; this is not their convolution product, which corresponds to addition. -/
 theorem commutatorElement_schemePointsMulEquiv_rootSubgroup (hij : i ≠ j) (hjl : j ≠ l)
     (hil : i ≠ l)
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
@@ -149,46 +146,12 @@ theorem commutatorElement_schemePointsMulEquiv_rootSubgroup (hij : i ≠ j) (hjl
     ⁅schemePointsMulEquiv N A (p ≫ (rootSubgroup hij).hom.hom),
       schemePointsMulEquiv N A (q ≫ (rootSubgroup hjl).hom.hom)⁆ =
       schemePointsMulEquiv N A
-        (((AdditiveGroup.schemePointsMulEquiv (R := R) A).symm
-          (Multiplicative.ofAdd
-            (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv (R := R) A p) *
-              Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv (R := R) A q)))) ≫
+        (AdditiveGroup.gaSchemePointParamMul A p q ≫
           (rootSubgroup hil).hom.hom) := by
   rw [schemePointsMulEquiv_rootSubgroup, schemePointsMulEquiv_rootSubgroup,
     schemePointsMulEquiv_rootSubgroup]
-  simp only [MulEquiv.apply_symm_apply, toAdd_ofAdd]
+  simp only [AdditiveGroup.schemePointsMulEquiv_gaSchemePointParamMul, toAdd_ofAdd]
   exact _root_.Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil _ _
-
-/-- The identity scheme-valued point of `𝔾ₐ` maps to the identity of `SLₙ`. -/
-theorem schemePointsMulEquiv_rootSubgroup_one (hij : i ≠ j) :
-    schemePointsMulEquiv N A
-        ((1 : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-          (AdditiveGroup.groupScheme R).X) ≫ (rootSubgroup hij).hom.hom) = 1 := by
-  rw [schemePointsMulEquiv_rootSubgroup]
-  simp only [map_one, toAdd_one, Matrix.SpecialLinearGroup.transvection_coeff_zero]
-
-/-- Multiplying two scheme-valued points of the same root subgroup multiplies along the group
-law of `𝔾ₐ`. -/
-theorem schemePointsMulEquiv_rootSubgroup_mul (hij : i ≠ j)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (AdditiveGroup.groupScheme R).X)
-    (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (AdditiveGroup.groupScheme R).X) :
-    schemePointsMulEquiv N A (p ≫ (rootSubgroup hij).hom.hom) *
-        schemePointsMulEquiv N A (q ≫ (rootSubgroup hij).hom.hom) =
-      schemePointsMulEquiv N A ((p * q) ≫ (rootSubgroup hij).hom.hom) := by
-  rw [schemePointsMulEquiv_rootSubgroup, schemePointsMulEquiv_rootSubgroup,
-    schemePointsMulEquiv_rootSubgroup]
-  simp only [map_mul, toAdd_mul, ← Matrix.SpecialLinearGroup.transvection_add]
-
-/-- Inverting a scheme-valued point of a root subgroup inverts along the group law of `𝔾ₐ`. -/
-theorem schemePointsMulEquiv_rootSubgroup_inv (hij : i ≠ j)
-    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
-      (AdditiveGroup.groupScheme R).X) :
-    (schemePointsMulEquiv N A (p ≫ (rootSubgroup hij).hom.hom))⁻¹ =
-      schemePointsMulEquiv N A (p⁻¹ ≫ (rootSubgroup hij).hom.hom) := by
-  rw [schemePointsMulEquiv_rootSubgroup, schemePointsMulEquiv_rootSubgroup]
-  simp only [map_inv, toAdd_inv, Matrix.SpecialLinearGroup.transvection_inv]
 
 end SchemePoints
 
