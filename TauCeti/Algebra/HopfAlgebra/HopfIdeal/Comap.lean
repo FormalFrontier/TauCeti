@@ -63,7 +63,7 @@ It is defined as the kernel of the composite `H → K → K/I`; its underlying i
 ordinary ideal comap of `I.toIdeal`. -/
 noncomputable def comap (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (hf : Function.Surjective f) : HopfIdeal R H :=
-  ker ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
+  kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
     ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
 
 /-- The underlying ideal of `I.comap f hf` is the ordinary ideal-theoretic inverse image. -/
@@ -121,9 +121,9 @@ theorem comap_eq_comap_iff_of_surjective (f : H →ₐc[R] K)
 /-- The inverse image of the zero Hopf ideal is the kernel Hopf ideal. -/
 @[simp]
 theorem comap_bot (f : H →ₐc[R] K) (hf : Function.Surjective f) :
-    (⊥ : HopfIdeal R K).comap f hf = ker f hf := by
+    (⊥ : HopfIdeal R K).comap f hf = kerOfSurjective f hf := by
   ext h
-  rw [mem_comap, mem_ker, mem_bot]
+  rw [mem_comap, mem_kerOfSurjective, mem_bot]
 
 /-- A finitely supported family over `K` lifts along a surjective bialgebra morphism to a
 finitely supported family over `H` that agrees with it pointwise and has the same total sum. -/
