@@ -128,8 +128,7 @@ def upperUnitriangularGroup : Subgroup (GL m R) where
   one_mem' := Matrix.isUpperUnitriangular_one
   mul_mem' := by
     intro g h hg hh
-    change (((g : GL m R) : Matrix m m R) * ((h : GL m R) : Matrix m m R)).IsUpperUnitriangular
-    exact hg.mul hh
+    simpa only [Set.mem_ofPred_eq, Units.val_mul, Matrix.isUpperUnitriangular_def] using hg.mul hh
   inv_mem' := by
     intro g hg
     exact hg.units_inv g
