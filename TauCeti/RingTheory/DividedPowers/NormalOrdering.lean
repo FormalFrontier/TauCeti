@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: Codex, Claude
 -/
 module
 
@@ -32,12 +32,25 @@ The preliminary one-sided formula only needs `z` to commute with `y`. The full f
 needs `z` to commute with `x`, because its normal form places all powers of `z` between those of `y`
 and `x`.
 
+The last section removes the class-two restriction. Whenever a sequence `d : ℕ → A` behaves like
+the divided powers `(ad x)ᵏ(d 0) / k!` of the inner derivation, in the sense that
+`x * d k = d k * x + (k + 1) • d (k + 1)`, one gets
+
+```text
+x⁽ᵐ⁾ * d 0 = ∑ k ≤ m, d k * x⁽ᵐ⁻ᵏ⁾,
+```
+
+again with every coefficient equal to `1`. All of the structure constants of a longer root string
+are carried by the sequence `d`, so the rule stays integral exactly when its terms are.
+
 ## Main results
 
 * `TauCeti.Associative.mul_dividedPower_of_commutator_eq`: move one element across a divided power
   when its commutator with the base commutes with that base.
 * `TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq`: the coefficient-one
   normal-ordering formula for two divided powers with central commutator.
+* `TauCeti.Associative.dividedPower_mul_of_commutator_series`: the coefficient-one normal-ordering
+  formula against an arbitrary divided-power series for the inner derivation.
 
 ## References
 
@@ -257,5 +270,60 @@ theorem dividedPower_mul_dividedPower_of_commutator_eq {x y z : A}
             (u := fun k ↦ dividedPower (n - k) y * dividedPower k z *
               dividedPower (m + 1 - k) x)
             (M := m + 1) (C := m + 1) le_rfl
+
+/-! ## Normal ordering against a divided-power series for the inner derivation -/
+
+/-- **Coefficient-one normal ordering against a divided-power series.** Let `d : ℕ → A` satisfy
+
+```text
+x * d k = d k * x + (k + 1) • d (k + 1)
+```
+
+for every `k`, which is what the sequence `k ↦ (ad x)ᵏ (d 0) / k!` does. Then
+
+```text
+x⁽ᵐ⁾ * d 0 = ∑ k ≤ m, d k * x⁽ᵐ⁻ᵏ⁾.
+```
+
+Every coefficient is `1`: the sequence `d` carries all of the structure constants, so the rule is
+integral precisely when its terms are. The class-two formula
+`dividedPower_mul_dividedPower_of_commutator_eq` is the case `d k = y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾`, truncated to
+zero beyond `k = n`; a root string of length three needs a longer sequence and nothing else. -/
+theorem dividedPower_mul_of_commutator_series {x : A} {d : ℕ → A}
+    (hd : ∀ k, x * d k = d k * x + (k + 1) • d (k + 1)) (m : ℕ) :
+    dividedPower m x * d 0 = ∑ k ∈ range (m + 1), d k * dividedPower (m - k) x := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      have hm : (((m + 1 : ℕ) : ℚ)) ≠ 0 := by positivity
+      -- Each summand splits into the term that lengthens the `x`-power and the term that
+      -- advances the series; the two are the adjacent contributions of the weighted sum below.
+      have hstep : ∀ k ∈ range (m + 1),
+          x * (d k * dividedPower (m - k) x) =
+            (m + 1 - k) • (d k * dividedPower (m + 1 - k) x) +
+              (k + 1) • (d (k + 1) * dividedPower (m + 1 - (k + 1)) x) := by
+        intro k hk
+        have hkm : k ≤ m := Nat.lt_succ_iff.mp (Finset.mem_range.mp hk)
+        have h1 : m - k + 1 = m + 1 - k := by omega
+        have h2 : m - k = m + 1 - (k + 1) := by omega
+        calc x * (d k * dividedPower (m - k) x)
+            = x * d k * dividedPower (m - k) x := by rw [mul_assoc]
+          _ = d k * (x * dividedPower (m - k) x) +
+                (k + 1) • (d (k + 1) * dividedPower (m - k) x) := by
+              rw [hd k, add_mul, mul_assoc, smul_mul_assoc]
+          _ = (m - k + 1) • (d k * dividedPower (m - k + 1) x) +
+                (k + 1) • (d (k + 1) * dividedPower (m - k) x) := by
+              rw [self_mul_dividedPower, mul_smul_comm]
+          _ = _ := by rw [h1, ← h2]
+      rw [← inv_smul_smul₀ hm (dividedPower (m + 1) x * d 0),
+        ← inv_smul_smul₀ hm (∑ k ∈ range (m + 1 + 1), d k * dividedPower (m + 1 - k) x)]
+      congr 1
+      simp only [Nat.cast_smul_eq_nsmul]
+      rw [succ_nsmul_dividedPower_succ_mul, ih, Finset.mul_sum,
+        Finset.sum_congr rfl hstep, Finset.sum_add_distrib]
+      have hsum := sum_sub_nsmul_add_succ_nsmul
+          (u := fun k ↦ d k * dividedPower (m + 1 - k) x) (M := m + 1) (C := m + 1) le_rfl
+      rw [← hsum, Finset.sum_range_succ (n := m + 1)]
+      simp
 
 end TauCeti.Associative
