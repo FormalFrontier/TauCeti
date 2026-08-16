@@ -136,6 +136,7 @@ noncomputable def ofIntegralForm (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
       simp only [one_mul, Int.smul_one_eq_cast, Submodule.mem_one]
       exact ⟨B (Module.Free.chooseBasis ℤ M i) (Module.Free.chooseBasis ℤ M j), rfl⟩
 
+/-- The ambient rational form of a rationalized integral form is the base change to `ℚ`. -/
 @[simp]
 theorem ofIntegralForm_form (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     (ofIntegralForm B hB).form = B.baseChange ℚ :=
@@ -149,19 +150,15 @@ private theorem ofIntegralForm_carrier (B : LinearMap.BilinForm ℤ M) (hB : B.I
 
 namespace ofIntegralForm
 
-/-- The carrier basis of a rationalized integral form induced by the chosen basis of the abstract
-module. -/
-noncomputable def basis (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
+private noncomputable def basis (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     Basis (Module.Free.ChooseBasisIndex ℤ M) ℤ (ofIntegralForm B hB) :=
   ((Module.Free.chooseBasis ℤ M).baseChange ℚ).restrictScalars ℤ |>.map
     (LinearEquiv.ofEq
       (Submodule.span ℤ (Set.range ((Module.Free.chooseBasis ℤ M).baseChange ℚ)))
       (ofIntegralForm B hB).carrier (ofIntegralForm_carrier B hB).symm)
 
-/-- A basis vector of the embedded carrier is the unit pure tensor of the corresponding abstract
-basis vector. -/
 @[simp]
-theorem coe_basis (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
+private theorem coe_basis (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
     (i : Module.Free.ChooseBasisIndex ℤ M) :
     (basis B hB i : ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ M i := by
   rw [basis, Basis.map_apply, LinearEquiv.coe_ofEq_apply,
@@ -191,6 +188,7 @@ theorem coe_carrierEquiv_apply (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (
   exact LinearMap.congr_fun hmap x
 
 /-- The carrier of a rationalized integral form consists exactly of the unit pure tensors. -/
+@[simp]
 theorem mem_carrier_iff (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (x : ℚ ⊗[ℤ] M) :
     x ∈ (ofIntegralForm B hB).carrier ↔ ∃ m : M, 1 ⊗ₜ[ℤ] m = x := by
   constructor
