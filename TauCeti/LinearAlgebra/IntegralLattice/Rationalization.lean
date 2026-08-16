@@ -133,7 +133,6 @@ theorem ofIntegralForm_form (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
   IntegralLattice.ofBasis_form _ _ _ _
 
 /-- The carrier of a rationalized integral form is the lattice of unit pure tensors. -/
-@[simp]
 theorem ofIntegralForm_carrier (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     (ofIntegralForm B hB).carrier = LinearMap.range (TensorProduct.mk ℤ ℚ M 1) :=
   (IntegralLattice.ofBasis_carrier _ _ _ _).trans
