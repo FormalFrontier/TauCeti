@@ -82,6 +82,8 @@ open Classical in
 theorem coe_carrierInDualBasis_apply (L : IntegralLattice V) {ι : Type v}
     (b : Basis ι ℤ L) (i : ι) :
     (L.carrierInDualBasis b i : L.dualCarrier) = ⟨b i, L.le_dualCarrier (b i).property⟩ := by
+  -- Mathlib has no `submoduleOfEquivOfLe_symm_apply` lemma, so compute the inverse by unfolding
+  -- its `invFun`; `carrierInDual` must also unfold to `submoduleOf` for the subtype to elaborate.
   unfold carrierInDualBasis carrierInDual
   rw [Basis.map_apply]
   rfl
