@@ -33,6 +33,8 @@ with passing to the opposite algebra, and composes in stages:
   factors in coordinate-ring order, `(L ⊗[K] A) ⊗[L] M ≃+* A ⊗[K] M`.
 * `TauCeti.ScalarAut.instMulSemiringAction`: scalar automorphisms act on a scalar extension
   through its scalar factor.
+* `TauCeti.ScalarAut.baseChangeMap_smul`: scalar extension of an algebra map is equivariant for
+  scalar automorphisms.
 
 None is reproved from scratch: the first and third upgrade Mathlib's linear equivalences
 `TensorProduct.AlgebraTensorModule.distribBaseChange` and
@@ -235,6 +237,20 @@ theorem smul_def (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
 theorem smul_tmul (σ : L ≃ₐ[K] L) (a : L) (x : A) :
     σ • (a ⊗ₜ[K] x) = σ a ⊗ₜ[K] x := by
   simp [smul_def]
+
+/-- Scalar extension of an algebra morphism commutes with the scalar-factor action. -/
+@[simp]
+theorem baseChangeMap_smul {B : Type*} [Semiring B] [Algebra K B] (f : A →ₐ[K] B)
+    (σ : L ≃ₐ[K] L) (x : L ⊗[K] A) :
+    Algebra.TensorProduct.map (AlgHom.id K L) f
+        (Algebra.TensorProduct.map (σ : L →ₐ[K] L) (AlgHom.id K A) x) =
+      σ • Algebra.TensorProduct.map (AlgHom.id K L) f x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp only [map_zero, smul_zero]
+  | add x y hx hy => simp only [map_add, hx, hy, smul_add]
+  | tmul a x =>
+      simp only [Algebra.TensorProduct.map_tmul, AlgHom.id_apply, smul_tmul]
+      rfl
 
 /-- The scalar-factor action is semilinear for the corresponding automorphism of `L`. -/
 theorem smul_smulₛₗ (σ : L ≃ₐ[K] L) (a : L) (x : L ⊗[K] A) :
