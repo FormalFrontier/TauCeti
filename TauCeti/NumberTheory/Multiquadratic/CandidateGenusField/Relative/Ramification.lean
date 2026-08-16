@@ -89,7 +89,7 @@ theorem isUnramifiedIn_candidateGenusField_of_liesOver (hd : Squarefree d)
     have he : 𝔭.ramificationIdx ℤ = 2 :=
       ramificationIdx_eq_two_of_dvd_fundamentalDiscriminant
         (minpoly_candidateGenusFieldBaseGen hd hnsq)
-        (adjoin_candidateGenusFieldBaseGen hd) hd hp hdvd
+        (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hp hdvd
     -- Cancel that ramification against the transverse complementary compositum.
     refine TauCeti.RamificationInertia.isUnramifiedIn_of_finrank_le_of_under_ramificationIdx_eq_one
       (R := ℤ) (U := 𝓞 (candidateGenusFieldComplement hd ⟨P, hP⟩)) 𝔭 ?_ ?_
