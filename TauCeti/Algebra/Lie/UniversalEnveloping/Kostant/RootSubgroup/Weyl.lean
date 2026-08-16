@@ -41,9 +41,10 @@ characteristic two and three, where the exponential series itself is unavailable
 
 The same mechanism gives the action on weights:
 `TauCeti.UniversalEnvelopingAlgebra.weylUnit_apply_eigenvector` says that `n` carries an
-eigenvector of `ρ(h c)` of eigenvalue `m` inside `M` to an eigenvector of eigenvalue `-m`, again
-inside `M`. That is the reflection `s_α` acting on the weight lattice, realised by an element of the
-Chevalley group rather than only by an automorphism of the Lie algebra.
+eigenvector of `ρ(h c)` of eigenvalue `m` to an eigenvector of eigenvalue `-m`. When the original
+vector lies in `M`, `TauCeti.UniversalEnvelopingAlgebra.weylUnit_smul_mem` separately shows that its
+image again lies in `M`. That is the reflection `s_α` acting on the weight lattice, realised by an
+element of the Chevalley group rather than only by an automorphism of the Lie algebra.
 
 This is the normaliser-of-the-torus half of the pinning data of Layer 9 of the ReductiveGroups
 roadmap: the Chevalley commutator relations of
@@ -97,7 +98,7 @@ variable (hT : IsSl2Triple (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)))
   (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
   (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
 
-include hM hi hj hT
+include hM hi hj
 
 -- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
 attribute [local instance high] Algebra.toModule
@@ -107,44 +108,50 @@ attribute [local instance high] Algebra.toModule
 /-- The Weyl element of a Kostant root pair preserves the lattice: it is a product of root
 subgroup elements at integer parameters, each of which does. -/
 theorem weylUnit_smul_mem {v : V} (hv : v ∈ M) :
-    ((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) • v ∈ M := by
+    ((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) • v ∈ M := by
   rw [coe_weylUnit, mul_smul, mul_smul]
-  exact exp_smul_mem hi (fun n _ hw =>
-      dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw)
-    (exp_neg_smul_mem hj (fun n _ hw =>
-      dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM j n hw)
-      (exp_smul_mem hi (fun n _ hw =>
-        dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) hv))
+  simpa using
+    (exp_zsmul_smul_mem hi (fun n _ hw =>
+        dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) 1
+      (by simpa using
+        (exp_zsmul_smul_mem hj (fun n _ hw =>
+            dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM j n hw) (-1)
+          (by simpa using
+            (exp_zsmul_smul_mem hi (fun n _ hw =>
+              dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) 1 hv)))))
 
 /-- The inverse of the Weyl element preserves the lattice, by the same computation with every
 exponent negated. -/
 theorem inv_weylUnit_smul_mem {v : V} (hv : v ∈ M) :
-    (((weylUnit hT hi hj : (Module.End ℚ V)ˣ)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) • v ∈ M := by
+    (((weylUnit hi hj : (Module.End ℚ V)ˣ)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) • v ∈ M := by
   rw [coe_inv_weylUnit, mul_smul, mul_smul]
-  exact exp_neg_smul_mem hi (fun n _ hw =>
-      dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw)
-    (exp_smul_mem hj (fun n _ hw =>
-      dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM j n hw)
-      (exp_neg_smul_mem hi (fun n _ hw =>
-        dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) hv))
+  simpa using
+    (exp_zsmul_smul_mem hi (fun n _ hw =>
+        dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) (-1)
+      (by simpa using
+        (exp_zsmul_smul_mem hj (fun n _ hw =>
+            dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM j n hw) 1
+          (by simpa using
+            (exp_zsmul_smul_mem hi (fun n _ hw =>
+              dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hw) (-1) hv)))))
 
 /-- The Weyl element restricted to an integral automorphism of the lattice. -/
 noncomputable def kostantWeylRestrict : M ≃ₗ[ℤ] M :=
-  integralUnitRestrict (weylUnit hT hi hj) M
-    (fun _ hv => weylUnit_smul_mem e h ρ M hM hi hj hT hv)
-    (fun _ hv => inv_weylUnit_smul_mem e h ρ M hM hi hj hT hv)
+  integralUnitRestrict (weylUnit hi hj) M
+    (fun _ hv => weylUnit_smul_mem e h ρ M hM hi hj hv)
+    (fun _ hv => inv_weylUnit_smul_mem e h ρ M hM hi hj hv)
 
 @[simp]
 theorem coe_kostantWeylRestrict_apply (v : M) :
-    ((kostantWeylRestrict e h ρ M hM hi hj hT v : M) : V) =
-      ((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) • (v : V) := by
+    ((kostantWeylRestrict e h ρ M hM hi hj v : M) : V) =
+      ((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) • (v : V) := by
   simp [kostantWeylRestrict]
 
 /-- The inverse of the restricted Weyl element acts by the inverse of the Weyl element. -/
 @[simp]
 theorem coe_kostantWeylRestrict_symm_apply (v : M) :
-    (((kostantWeylRestrict e h ρ M hM hi hj hT).symm v : M) : V) =
-      (((weylUnit hT hi hj : (Module.End ℚ V)ˣ)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) •
+    (((kostantWeylRestrict e h ρ M hM hi hj).symm v : M) : V) =
+      (((weylUnit hi hj : (Module.End ℚ V)ˣ)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) •
         (v : V) := by
   simp [kostantWeylRestrict]
 
@@ -161,24 +168,24 @@ the Chevalley product `x_i(1) x_j(-1) x_i(1)` of root subgroup elements is
 `TauCeti.UniversalEnvelopingAlgebra.kostantWeylPoints_toLinearMap_eq`. -/
 noncomputable def kostantWeylPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     A ⊗[ℤ] M ≃ₗ[A] A ⊗[ℤ] M :=
-  (kostantWeylRestrict e h ρ M hM hi hj hT).baseChange ℤ A
+  (kostantWeylRestrict e h ρ M hM hi hj).baseChange ℤ A
 
 @[simp]
 theorem kostantWeylPoints_toLinearMap :
-    (kostantWeylPoints e h ρ M hM hi hj hT A).toLinearMap =
-      (kostantWeylRestrict e h ρ M hM hi hj hT : M →ₗ[ℤ] M).baseChange A :=
+    (kostantWeylPoints e h ρ M hM hi hj A).toLinearMap =
+      (kostantWeylRestrict e h ρ M hM hi hj : M →ₗ[ℤ] M).baseChange A :=
   (rfl)
 
 @[simp]
 theorem kostantWeylPoints_symm_toLinearMap :
-    (kostantWeylPoints e h ρ M hM hi hj hT A).symm.toLinearMap =
-      ((kostantWeylRestrict e h ρ M hM hi hj hT).symm : M →ₗ[ℤ] M).baseChange A :=
+    (kostantWeylPoints e h ρ M hM hi hj A).symm.toLinearMap =
+      ((kostantWeylRestrict e h ρ M hM hi hj).symm : M →ₗ[ℤ] M).baseChange A :=
   (rfl)
 
 @[simp]
 theorem kostantWeylPoints_apply_tmul (r : A) (v : M) :
-    kostantWeylPoints e h ρ M hM hi hj hT A (r ⊗ₜ[ℤ] v) =
-      r ⊗ₜ[ℤ] kostantWeylRestrict e h ρ M hM hi hj hT v := by
+    kostantWeylPoints e h ρ M hM hi hj A (r ⊗ₜ[ℤ] v) =
+      r ⊗ₜ[ℤ] kostantWeylRestrict e h ρ M hM hi hj v := by
   rw [← LinearEquiv.coe_coe, kostantWeylPoints_toLinearMap, LinearMap.baseChange_tmul,
     LinearEquiv.coe_coe]
 
@@ -186,8 +193,8 @@ theorem kostantWeylPoints_apply_tmul (r : A) (v : M) :
 automorphism. -/
 @[simp]
 theorem kostantWeylPoints_symm_apply_tmul (r : A) (v : M) :
-    (kostantWeylPoints e h ρ M hM hi hj hT A).symm (r ⊗ₜ[ℤ] v) =
-      r ⊗ₜ[ℤ] (kostantWeylRestrict e h ρ M hM hi hj hT).symm v := by
+    (kostantWeylPoints e h ρ M hM hi hj A).symm (r ⊗ₜ[ℤ] v) =
+      r ⊗ₜ[ℤ] (kostantWeylRestrict e h ρ M hM hi hj).symm v := by
   rw [← LinearEquiv.coe_coe, kostantWeylPoints_symm_toLinearMap, LinearMap.baseChange_tmul,
     LinearEquiv.coe_coe]
 
@@ -197,7 +204,7 @@ Each factor is a root subgroup element at an integer parameter, hence already de
 this identifies their product with the scalar extension of the integral automorphism
 `TauCeti.UniversalEnvelopingAlgebra.kostantWeylRestrict`. -/
 theorem kostantWeylPoints_toLinearMap_eq :
-    (kostantWeylPoints e h ρ M hM hi hj hT A).toLinearMap =
+    (kostantWeylPoints e h ρ M hM hi hj A).toLinearMap =
       baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
           (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
           (1 : A) *
@@ -218,16 +225,17 @@ theorem kostantWeylPoints_toLinearMap_eq :
   simp only [LinearEquiv.coe_coe, coe_kostantWeylRestrict_apply, coe_integralExpZSMul_apply,
     coe_weylUnit, one_zsmul, neg_one_zsmul, mul_smul]
 
+include hT in
 /-- **Conjugation by the Weyl element interchanges the two root subgroups.** Over every ring of
 points, `n x_i(u) n⁻¹ = x_j(-u)`.
 
 Only the Lie-algebra relation `n ρ(eᵢ) n⁻¹ = -ρ(eⱼ)` is used, so the identity is insensitive to
 the characteristic of the ring of points. -/
 theorem kostantWeylPoints_conj_baseChangeExp (u : A) :
-    (kostantWeylPoints e h ρ M hM hi hj hT A).toLinearMap *
+    (kostantWeylPoints e h ρ M hM hi hj A).toLinearMap *
           baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
             (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv) u *
-        (kostantWeylPoints e h ρ M hM hi hj hT A).symm.toLinearMap =
+        (kostantWeylPoints e h ρ M hM hi hj A).symm.toLinearMap =
       baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))) M
         (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM j n hv) (-u) := by
   have hMj : ∀ n, ∀ v ∈ M,
@@ -241,14 +249,14 @@ theorem kostantWeylPoints_conj_baseChangeExp (u : A) :
       exact hMj n v hv
     · rw [Associative.dividedPower_neg, hn.neg_one_pow, neg_one_smul, neg_smul]
       exact neg_mem (hMj n v hv)
-  have hconj : ((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) *
+  have hconj : ((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) *
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-      (((weylUnit hT hi hj)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) =
+      (((weylUnit hi hj)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V) =
         -ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)) := weylUnit_conj_e hT hi hj
   have hMconj : ∀ n, ∀ v ∈ M, Associative.dividedPower n
-      (((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) *
+      (((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) *
         ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-        (((weylUnit hT hi hj)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V)) • v ∈ M := by
+        (((weylUnit hi hj)⁻¹ : (Module.End ℚ V)ˣ) : Module.End ℚ V)) • v ∈ M := by
     rw [hconj]
     exact hMneg
   rw [kostantWeylPoints_toLinearMap, kostantWeylPoints_symm_toLinearMap, kostantWeylRestrict,
@@ -265,8 +273,8 @@ arbitrary ring homomorphism is `TauCeti.UniversalEnvelopingAlgebra.map_kostantWe
 theorem map_kostantWeylPoints_algHom {B : Type*} [CommRing B] [Algebra ℤ B] (φ : A →ₐ[ℤ] B)
     (z : A ⊗[ℤ] M) :
     TensorProduct.map φ.toLinearMap LinearMap.id
-        (kostantWeylPoints e h ρ M hM hi hj hT A z) =
-      kostantWeylPoints e h ρ M hM hi hj hT B
+        (kostantWeylPoints e h ρ M hM hi hj A z) =
+      kostantWeylPoints e h ρ M hM hi hj B
         (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
   induction z using TensorProduct.induction_on with
   | zero => simp
@@ -284,20 +292,22 @@ of points: a `ℤ`-algebra structure on a ring is unique, so no compatibility wi
 needed. -/
 theorem map_kostantWeylPoints {B : Type*} [CommRing B] (φ : A →+* B) (z : A ⊗[ℤ] M) :
     TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id
-        (kostantWeylPoints e h ρ M hM hi hj hT A z) =
-      kostantWeylPoints e h ρ M hM hi hj hT B
+        (kostantWeylPoints e h ρ M hM hi hj A z) =
+      kostantWeylPoints e h ρ M hM hi hj B
         (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) :=
-  map_kostantWeylPoints_algHom e h ρ M hM hi hj hT φ.toIntAlgHom z
+  map_kostantWeylPoints_algHom e h ρ M hM hi hj φ.toIntAlgHom z
 
 end RingHomPoints
 
 /-! ## The reflected weight -/
 
 omit hM in
+include hT in
 /-- **The Weyl element reflects weights.** If `v` is an eigenvector of a distinguished Cartan
 vector with eigenvalue `m`, then its image under the Weyl element is an eigenvector with the
-reflected eigenvalue `-m`; by `TauCeti.UniversalEnvelopingAlgebra.weylUnit_smul_mem` that image
-again lies in the lattice.
+reflected eigenvalue `-m`. If additionally `v ∈ M`, then
+`TauCeti.UniversalEnvelopingAlgebra.weylUnit_smul_mem` separately shows that the image lies in
+the lattice.
 
 For the `sl₂` triple of a root `α` this is the reflection `s_α` acting on the weight lattice of
 `M`, realised by an element of the Chevalley group rather than only by an automorphism of the Lie
@@ -305,18 +315,18 @@ algebra. -/
 theorem weylUnit_apply_eigenvector {v : V} {m : ℚ}
     (hmv : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)) v = m • v) :
     ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c))
-        (((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) v) =
-      (-m) • (((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) v) := by
-  have hw : ((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) *
+        (((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) v) =
+      (-m) • (((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) v) := by
+  have hw : ((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) *
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)) =
         -ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)) *
-          ((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) := by
+          ((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) := by
     rw [← weylUnit_conj_h hT hi hj, mul_assoc, mul_assoc, Units.inv_mul, mul_one]
   have happ := congrArg (fun f : Module.End ℚ V => f v) hw
   simp only [Module.End.mul_apply, LinearMap.neg_apply] at happ
   have key : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c))
-      (((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) v) =
-        -(((weylUnit hT hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V)
+      (((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V) v) =
+        -(((weylUnit hi hj : (Module.End ℚ V)ˣ) : Module.End ℚ V)
           (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)) v)) := by
     rw [happ, neg_neg]
   rw [key, hmv, map_smul, ← neg_smul]

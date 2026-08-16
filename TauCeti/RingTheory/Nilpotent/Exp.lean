@@ -106,22 +106,6 @@ theorem exp_zsmul_smul_mem {x : A} (hx : IsNilpotent x) {S : Type*} [SetLike S V
     rw [← Int.cast_smul_eq_zsmul A, smul_assoc, Int.cast_smul_eq_zsmul]
     exact zsmul_mem (hM n v hv) _
 
-/-- The exponential of a nilpotent element preserves an additive subgroup preserved by every
-divided power of it. -/
-theorem exp_smul_mem {x : A} (hx : IsNilpotent x) {S : Type*} [SetLike S V]
-    [AddSubgroupClass S V] {M : S}
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    {v : V} (hv : v ∈ M) : exp x • v ∈ M := by
-  simpa using exp_zsmul_smul_mem hx hM 1 hv
-
-/-- The exponential of the negative of a nilpotent element preserves an additive subgroup
-preserved by every divided power of it. -/
-theorem exp_neg_smul_mem {x : A} (hx : IsNilpotent x) {S : Type*} [SetLike S V]
-    [AddSubgroupClass S V] {M : S}
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    {v : V} (hv : v ∈ M) : exp (-x) • v ∈ M := by
-  simpa using exp_zsmul_smul_mem hx hM (-1) hv
-
 end Modules
 
 /-! ## The one-parameter group of units -/
