@@ -137,6 +137,8 @@ theorem pointsMulEquiv_kostantRootSubgroupCoordinateMap_apply
     kostantRootSubgroupComodule e h ρ M hM i hnil
   rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
     WithConv.ofConv_toConv, AlgHom.comp_apply]
+  -- The preceding rewrites leave an `AlgHom`-to-function coercion around the coordinate map,
+  -- which prevents `rw` from matching the public coordinate formula directly.
   change q.ofConv
       ((kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b).hom
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
