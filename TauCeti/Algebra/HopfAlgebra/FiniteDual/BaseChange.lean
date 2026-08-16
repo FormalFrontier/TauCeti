@@ -6,7 +6,7 @@ module
 
 public import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import Mathlib.RingTheory.TensorProduct.Finite
-public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Basic
+public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Functoriality
 public import TauCeti.LinearAlgebra.Dual.BaseChange
 
 /-!
@@ -30,6 +30,7 @@ transport Cartier duality for finite locally free commutative group schemes over
   scalars.
 * `TauCeti.ConvolutionDual.baseChangeBialgEquiv_tmul_apply_tmul`: the equivalence's value on pure
   tensors.
+* `TauCeti.ConvolutionDual.baseChangeBialgEquiv_naturality`: compatibility with finite-dual maps.
 
 ## References
 
@@ -43,7 +44,7 @@ open scoped TensorProduct
 
 namespace TauCeti.ConvolutionDual
 
-universe u v w
+universe u v w x
 
 variable {k : Type u} {K : Type v} {H : Type w}
 variable [CommRing k] [CommRing K] [Algebra k K]
@@ -125,11 +126,6 @@ private theorem baseChangeAlgEquiv_apply (z : K ⊗[k] ConvolutionDual k H) :
   rw [baseChangeAlgEquiv,
     Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct_apply]
 
-private theorem baseChangeAlgEquiv_toAlgHom_apply (z : K ⊗[k] ConvolutionDual k H) :
-    (baseChangeAlgEquiv (k := k) (K := K) (H := H)).toAlgHom z =
-      baseChangeLinearEquiv (k := k) (K := K) (H := H) z :=
-  baseChangeAlgEquiv_apply z
-
 @[simp]
 private theorem baseChangeAlgEquiv_tmul_apply_tmul
     (a b : K) (φ : ConvolutionDual k H) (x : H) :
@@ -150,15 +146,12 @@ private theorem baseChangeAlgEquiv_counit_comp :
   | add z w hz hw => simp only [map_add, hz, hw]
   | tmul a φ =>
       simp only [AlgHom.comp_apply, Bialgebra.counitAlgHom_apply]
-      rw [baseChangeAlgEquiv_toAlgHom_apply]
+      rw [AlgEquiv.coe_toAlgHom, baseChangeAlgEquiv_apply]
       rw [ConvolutionDual.counit_apply]
       rw [show (1 : K ⊗[k] H) = 1 ⊗ₜ[k] 1 from Algebra.TensorProduct.one_def]
       rw [baseChangeLinearEquiv_tmul_apply_tmul]
-      have counit_self : Coalgebra.counit (R := K) a = a := by
-        rw [← Bialgebra.counitAlgHom_apply, Bialgebra.counitAlgHom_self]
-        rfl
       simp only [TensorProduct.counit_tmul, ConvolutionDual.counit_apply,
-        Algebra.smul_def, mul_one, mul_comm, counit_self]
+        CommSemiring.counit_apply, Algebra.smul_def, mul_one, mul_comm]
 
 /-- The base-change algebra equivalence preserves the finite-dual comultiplication. -/
 private theorem baseChangeAlgEquiv_map_comp_comul :
@@ -185,12 +178,11 @@ private theorem baseChangeAlgEquiv_map_comp_comul :
       simp only [TensorProduct.comul_tmul]
       have comul_self : Coalgebra.comul (R := K) a = a ⊗ₜ[K] 1 :=
         calc
-          Coalgebra.comul (R := K) a =
-              Coalgebra.comul (R := K) (algebraMap K K a) := by
-            rw [Algebra.algebraMap_self_apply]
-          _ = algebraMap K (K ⊗[K] K) a := Bialgebra.comul_algebraMap a
+          Coalgebra.comul (R := K) a = 1 ⊗ₜ[K] a := CommSemiring.comul_apply K a
+          _ = 1 ⊗ₜ[K] (a • (1 : K)) := by rw [smul_eq_mul, mul_one]
+          _ = (a • (1 : K)) ⊗ₜ[K] 1 := TensorProduct.tmul_smul _ _ _
           _ = a ⊗ₜ[K] 1 := by
-            rw [Algebra.TensorProduct.algebraMap_apply, Algebra.algebraMap_self_apply]
+            rw [smul_eq_mul, mul_one]
       generalize Coalgebra.comul (R := k) (A := ConvolutionDual k H) φ = q
       induction q using TensorProduct.induction_on with
       | zero => simp
@@ -206,7 +198,10 @@ private theorem baseChangeAlgEquiv_map_comp_comul :
           ring
 
 /-- Finite dualization commutes with extension of scalars for finite projective bialgebras. -/
-noncomputable def baseChangeBialgEquiv :
+noncomputable def baseChangeBialgEquiv (k : Type u) (K : Type v) (H : Type w)
+    [CommRing k] [CommRing K] [Algebra k K]
+    [Semiring H] [Bialgebra k H]
+    [Module.Finite k H] [Module.Projective k H] :
     K ⊗[k] ConvolutionDual k H ≃ₐc[K] ConvolutionDual K (K ⊗[k] H) :=
   BialgEquiv.ofAlgEquiv
     (R := K) (A := K ⊗[k] ConvolutionDual k H)
@@ -215,12 +210,30 @@ noncomputable def baseChangeBialgEquiv :
     baseChangeAlgEquiv_counit_comp baseChangeAlgEquiv_map_comp_comul
 
 /-- The base-change equivalence evaluates pure tensors by scalar-extended evaluation. -/
-@[simp]
+@[simp, grind =]
 theorem baseChangeBialgEquiv_tmul_apply_tmul (a b : K)
     (φ : ConvolutionDual k H) (x : H) :
-    (baseChangeBialgEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)).ofConv
+    (baseChangeBialgEquiv k K H (a ⊗ₜ[k] φ)).ofConv
         (b ⊗ₜ[k] x) = a * b * algebraMap k K (φ.ofConv x) := by
   rw [baseChangeBialgEquiv, BialgEquiv.ofAlgEquiv_apply]
   exact baseChangeAlgEquiv_tmul_apply_tmul a b φ x
+
+/-- The finite-dual base-change equivalence is natural in finite projective bialgebras. -/
+theorem baseChangeBialgEquiv_naturality {H' : Type x} [Semiring H'] [Bialgebra k H']
+    [Module.Finite k H'] [Module.Projective k H'] (f : H →ₐc[k] H') :
+    (map K (Bialgebra.TensorProduct.map (BialgHom.id K K) f)).comp
+        (baseChangeBialgEquiv k K H') =
+      (baseChangeBialgEquiv k K H :
+        K ⊗[k] ConvolutionDual k H →ₐc[K] ConvolutionDual K (K ⊗[k] H)).comp
+        (Bialgebra.TensorProduct.map (BialgHom.id K K) (map k f)) := by
+  ext z x
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | add z w hz hw =>
+      simpa only [map_add, WithConv.ofConv_add,
+        TensorProduct.AlgebraTensorModule.curry_apply, TensorProduct.curry_apply,
+        LinearMap.restrictScalars_apply, LinearMap.add_apply] using
+        congrArg₂ (fun a b => a + b) hz hw
+  | tmul a φ => simp
 
 end TauCeti.ConvolutionDual
