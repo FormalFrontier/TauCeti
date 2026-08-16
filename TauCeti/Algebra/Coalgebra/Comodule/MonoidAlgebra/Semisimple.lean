@@ -13,8 +13,9 @@ public import TauCeti.LinearAlgebra.Eigenspace.Semisimple
 # Semisimple point actions on monoid-algebra comodules
 
 The weight-space decomposition of a comodule over a monoid algebra diagonalizes the endomorphism
-induced by any algebra map from the monoid algebra to a field. This file proves the corresponding
-eigenspace spanning result and semisimplicity of the induced endomorphism.
+induced by any algebra map from the monoid algebra to a commutative ring. This file proves the
+corresponding eigenspace spanning result and, when the target is a field, semisimplicity of the
+induced endomorphism.
 
 ## Main declarations
 
@@ -48,7 +49,10 @@ universe u v w x
 variable {R : Type u} {X : Type v} {V : Type w} {K : Type x}
 variable [CommSemiring R] [Monoid X] [AddCommMonoid V] [Module R V]
 variable [Comodule R (MonoidAlgebra R X) V]
-variable [Field K] [Algebra R K]
+
+section CommRing
+
+variable [CommRing K] [Algebra R K]
 
 /-- The base change to `K` of the `x`-weight submodule is contained in the eigenspace of
 `Comodule.endOfPoint V f` with eigenvalue `f (MonoidAlgebra.single x 1)`. -/
@@ -65,6 +69,12 @@ theorem Comodule.baseChange_weightSpace_le_eigenspace (f : MonoidAlgebra R X →
   -- before normalizing scalar multiplication on the tensor product.
   change endOfPoint V f (1 ⊗ₜ[R] v) = f (MonoidAlgebra.single x 1) • (1 ⊗ₜ[R] v)
   rw [h, TensorProduct.smul_tmul', smul_eq_mul, mul_one]
+
+end CommRing
+
+section CommSemiring
+
+variable [CommSemiring K] [Algebra R K]
 
 omit [Monoid X] in
 /-- The base-changed weight submodules of a monoid-algebra comodule span the scalar extension. -/
@@ -84,6 +94,12 @@ theorem Comodule.iSup_baseChange_weightSpace_eq_top :
     exact Submodule.tmul_mem_baseChange_of_mem a (weightProj_mem_weightSpace x v)
   | add z₁ z₂ hz₁ hz₂ => exact add_mem hz₁ hz₂
 
+end CommSemiring
+
+section CommRing
+
+variable [CommRing K] [Algebra R K]
+
 /-- The eigenspaces of the point-action endomorphism `Comodule.endOfPoint V f` span the scalar
 extension `K ⊗[R] V`. -/
 theorem Comodule.iSup_eigenspace_endOfPoint_eq_top (f : MonoidAlgebra R X →ₐ[R] K) :
@@ -96,6 +112,10 @@ theorem Comodule.iSup_eigenspace_endOfPoint_eq_top (f : MonoidAlgebra R X →ₐ
       (le_iSup (fun μ : K ↦ End.eigenspace (endOfPoint V f) μ) (f (MonoidAlgebra.single x 1)))
   rw [iSup_baseChange_weightSpace_eq_top] at hspan
   exact top_unique hspan
+
+end CommRing
+
+variable [Field K] [Algebra R K]
 
 /-- **The point-action endomorphism on any comodule over a monoid algebra is semisimple.** -/
 theorem Comodule.isSemisimple_endOfPoint_monoidAlgebra (f : MonoidAlgebra R X →ₐ[R] K) :

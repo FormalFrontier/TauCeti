@@ -25,9 +25,8 @@ linear automorphism.
 As a consequence, over a perfect field `K`, the multiplicative Jordan decomposition of every point
 `g` of a diagonalizable group is trivial: `g_s = g` and `g_u = 1`.
 
-The result applies immediately to split tori and the roots-of-unity groups `μ_n`. Transporting it
-across the standard bialgebra isomorphism gives the corresponding theorem for the multiplicative
-group `𝔾ₘ`. Using the generic object property
+The result applies immediately to split tori and the roots-of-unity groups `μ_n`. Using the generic
+object property
 `geometricallySemisimplePointsCommHopfAlgProperty`, this file also packages the geometric statement
 for diagonalizable groups, which likewise applies directly to split tori.
 
@@ -38,7 +37,6 @@ for diagonalizable groups, which likewise applies directly to split tori.
 * `TauCeti.DiagonalizableGroup.semisimplePart_eq_self` and
   `TauCeti.DiagonalizableGroup.unipotentPart_eq_one`: the Jordan factors of a point of a
   diagonalizable group are the point itself and the identity.
-* `TauCeti.MultiplicativeGroup.isSemisimplePoint`: every point of `𝔾ₘ` is semisimple.
 * `TauCeti.DiagonalizableGroup.geometricallySemisimplePointsCommHopfAlgProperty`: diagonalizable
   groups have only semisimple geometric points.
 
@@ -96,25 +94,6 @@ theorem unipotentPart_eq_one (g : WithConv (MonoidAlgebra k G →ₐ[k] K)) :
 end JordanDecomposition
 
 end DiagonalizableGroup
-
-section StandardExamples
-
-variable {R : Type u} {K : Type x} [CommSemiring R] [Field K] [Algebra R K]
-
-namespace MultiplicativeGroup
-
-/-- **Every point of the multiplicative group `𝔾ₘ` is a semisimple point.** -/
-theorem isSemisimplePoint
-    (g : WithConv (LaurentPolynomial R →ₐ[R] K)) :
-    HopfAlgebra.IsSemisimplePoint g := by
-  let e := AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ
-  have h := DiagonalizableGroup.isSemisimplePoint
-    (AlgHom.mapDomain (e.symm : MonoidAlgebra R (Multiplicative ℤ) →ₐc[R] LaurentPolynomial R) g)
-  exact (HopfAlgebra.isSemisimplePoint_mapDomain_iff e.symm g).mp h
-
-end MultiplicativeGroup
-
-end StandardExamples
 
 section ObjectPropertyExamples
 
