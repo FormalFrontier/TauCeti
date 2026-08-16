@@ -12,17 +12,21 @@ public section
 /-!
 # The integral roots of type E7
 
-This file enumerates the 126 roots of type `E7` in the lattices used by the future pinned simply
-connected root datum. Coroots are expressed in the simple-coroot basis and roots in the
-fundamental-weight basis. The first seven entries are the Bourbaki simple roots; the remaining
-positive roots are ordered by height, followed by their negatives.
+This file enumerates the 126 roots of type `E7` in the lattices used by the pinned simply connected
+root datum constructed in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Datum`.
+Coroots are expressed in the simple-coroot basis and roots in the fundamental-weight basis. The
+first seven entries are the Bourbaki simple roots; the remaining positive roots are ordered by
+height, followed by their negatives. Completeness of the table among the norm-two vectors is proved
+in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Lattice`.
 
 The enumeration is the root-data input for Layer 6 of the root-systems roadmap. It follows
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate VI.
 -/
 
 namespace TauCeti
+
 open _root_.Matrix
+
 namespace DynkinType
 
 /-- The 63 positive `E7` coroots in the simple-coroot basis, ordered by height. -/
@@ -146,6 +150,11 @@ def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
 -- This is not a simp theorem because it would rewrite the root-table lemmas below.
 theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E₇ := (rfl)
 
+/-- The `E7` roots are the images of the coroots under the Cartan matrix, read on the left or,
+equivalently, on the right, the matrix being symmetric. -/
+theorem e7Root_eq_mulVec (i : Fin 126) : e7Root i = CartanMatrix.E₇ *ᵥ e7Coroot i := by
+  rw [e7Root_apply, ← mulVec_transpose, CartanMatrix.E₇_isSymm]
+
 /-- The negative half of the coroot table is the negation of the positive half. -/
 @[simp, grind =] theorem e7Coroot_addNat (i : Fin 63) :
     e7Coroot (Fin.addNat i 63) = -e7Coroot (Fin.castAdd 63 i) := by
@@ -161,15 +170,24 @@ theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E�
 @[simp, grind =] theorem e7Root_dotProduct_coroot (i : Fin 126) : e7Root i ⬝ᵥ e7Coroot i = 2 := by
   fin_cases i <;> decide
 
-/-- The first seven coroots are the standard basis of the simple-coroot lattice. -/
-@[simp, grind =] theorem e7Coroot_simple (i : Fin 7) :
-    e7Coroot (Fin.castAdd 119 i) = Pi.single i 1 := by
+/-- The index of the `i`-th Bourbaki simple root in the pinned `E₇` enumeration. -/
+def e7SimpleIndex (i : Fin 7) : Fin 126 := Fin.castAdd 119 i
+
+@[simp] lemma e7SimpleIndex_val (i : Fin 7) : (e7SimpleIndex i : ℕ) = i := (rfl)
+
+lemma e7SimpleIndex_injective : Function.Injective e7SimpleIndex :=
+  Fin.castAdd_injective 7 119
+
+/-- The simple coroots of the pinned `E₇` datum are the standard basis vectors. -/
+@[simp, grind =] theorem coroot_e7SimpleIndex (i : Fin 7) :
+    e7Coroot (e7SimpleIndex i) = Pi.single i 1 := by
   fin_cases i <;> decide
 
-/-- The first seven roots are the rows of the Bourbaki `E7` Cartan matrix. -/
-@[simp, grind =] theorem e7Root_simple (i : Fin 7) :
-    e7Root (Fin.castAdd 119 i) = CartanMatrix.E₇.row i := by
-  rw [e7Root_apply, e7Coroot_simple, Matrix.single_one_vecMul]
+/-- The simple roots of the pinned `E₇` datum are the rows of the Bourbaki Cartan matrix. -/
+@[simp, grind =] theorem root_e7SimpleIndex (i : Fin 7) :
+    e7Root (e7SimpleIndex i) = CartanMatrix.E₇ i := by
+  rw [e7Root_apply, coroot_e7SimpleIndex, Matrix.single_one_vecMul]
+  rfl
 
 /-- Every positive `E7` coroot has nonnegative simple-coroot coordinates. -/
 theorem e7Coroot_nonneg (i : Fin 63) (j : Fin 7) : 0 ≤ e7Coroot (Fin.castAdd 63 i) j := by
