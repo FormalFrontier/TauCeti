@@ -27,17 +27,17 @@ then the canonical commutator relation is
 ⁅xᵢ(t), xⱼ(u)⁆ = xₖ(c t u).
 ```
 
-The statements are also provided in any finite integral basis. Their scheme-valued counterparts
-are in `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.SchemeRelations`.
+This file provides the relations in any finite integral basis. Their scheme-valued counterparts
+are in `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Relations`.
 
 ## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.commutatorElement_kostantRootSubgroupPoints_of_lie_eq`:
-  the canonical commutator form for the divided-power actions.
 * `TauCeti.UniversalEnvelopingAlgebra.commute_kostantRootSubgroupMatrix`: the commuting relation
   in an integral basis.
 * `TauCeti.UniversalEnvelopingAlgebra.commutatorElement_kostantRootSubgroupMatrix_of_lie_eq`:
   the class-two relation in an integral basis.
+* `TauCeti.UniversalEnvelopingAlgebra.commutatorElement_kostantRootSubgroupMatrix_of_lie_eq'`:
+  the class-two relation with the third point written out.
 
 ## References
 
@@ -69,33 +69,9 @@ attribute [local instance high] Algebra.toModule
 
 variable {A : Type*} [CommRing A]
 
-section Points
-
-/-- **The canonical class-two Chevalley commutator relation for Kostant root-subgroup
-actions.** If the third root vector is the commutator of the first two and commutes with both,
-then the element commutator is exactly the third root-subgroup value. -/
-theorem commutatorElement_kostantRootSubgroupPoints_of_lie_eq {i j k : I} {c : ℤ}
-    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
-    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
-    (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
-    (hk : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))))
-    (f g z : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A))
-    (hz : Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) z) =
-      (c : A) * (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f) *
-        Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) g))) :
-    ⁅kostantRootSubgroupPoints e h ρ M hM i hi f,
-        kostantRootSubgroupPoints e h ρ M hM j hj g⁆ =
-      kostantRootSubgroupPoints e h ρ M hM k hk z := by
-  rw [commutatorElement_def,
-    kostantRootSubgroupPoints_conj_of_lie_eq e h ρ M hM hij hik hjk hi hj hk f g z hz]
-  rw [(commute_kostantRootSubgroupPoints e h ρ M hM hjk hj hk g z).eq]
-  simp
-
-end Points
-
 section Matrices
 
-variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
+variable {η : Type*} [Fintype η] [DecidableEq η] (b : Module.Basis η ℤ M)
 
 /-- Represented Kostant root subgroups attached to commuting root vectors commute in every
 integral basis. -/
@@ -129,6 +105,26 @@ theorem commutatorElement_kostantRootSubgroupMatrix_of_lie_eq {i j k : I} {c : �
     congrArg (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom)
       (commutatorElement_kostantRootSubgroupPoints_of_lie_eq
         e h ρ M hM hij hik hjk hi hj hk f g z hz)
+
+/-- The class-two Chevalley commutator relation in an integral basis with the third `𝔾ₐ`-point
+written out at parameter `c` times the product of the parameters of `f` and `g`. -/
+theorem commutatorElement_kostantRootSubgroupMatrix_of_lie_eq' {i j k : I} {c : ℤ}
+    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
+    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
+    (hk : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))))
+    (f g : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    ⁅kostantRootSubgroupMatrix e h ρ M hM i hi b f,
+        kostantRootSubgroupMatrix e h ρ M hM j hj b g⁆ =
+      kostantRootSubgroupMatrix e h ρ M hM k hk b
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+          (Multiplicative.ofAdd ((c : A) *
+            (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f) *
+              Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) g))))) :=
+  commutatorElement_kostantRootSubgroupMatrix_of_lie_eq
+    e h ρ M hM b hij hik hjk hi hj hk f g _
+      (congrArg Multiplicative.toAdd
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply _))
 
 end Matrices
 

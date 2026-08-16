@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.ChevalleyRelations
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
 
 /-!
 # Chevalley relations for Kostant root-subgroup scheme morphisms
@@ -14,7 +14,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 The divided-power construction represents a root action by an affine group-scheme morphism
 `𝔾ₐ → GLₙ`. This file proves the commuting and class-two Chevalley relations on the
 scheme-valued points of those actual morphisms. It transports the universe-polymorphic matrix
-relations from `ChevalleyRelations.lean` through the point comparison proved in `Scheme.lean`.
+relations from `ChevalleyRelations.lean` through the point comparison proved in `Scheme/Basic.lean`.
 
 ## Main declarations
 
@@ -23,6 +23,9 @@ relations from `ChevalleyRelations.lean` through the point comparison proved in 
 * `TauCeti.UniversalEnvelopingAlgebra.
   commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq`: the class-two
   Chevalley commutator relation for scheme-valued points.
+* `TauCeti.UniversalEnvelopingAlgebra.
+  commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq'`: the same relation
+  with the third scheme-valued point written out.
 
 The representation carrier is universe-zero because the current group-scheme reconstruction API
 requires the base, coordinate Hopf algebra, and comodule to inhabit the same universe.
@@ -75,9 +78,10 @@ theorem commute_schemePointsMulEquiv_kostantRootSubgroup {i j : I} (hij : ⁅e i
   exact commute_kostantRootSubgroupMatrix e h ρ M hM b hij hi hj _ _
 
 /-- **The class-two Chevalley commutator relation on scheme-valued points of represented Kostant
-root subgroups.** If `r` has additive parameter `c` times the product of the parameters of `p`
-and `q`, the matrix commutator of the represented `i`- and `j`-root values is the represented
-`k`-root value at `r`. -/
+root subgroups.** Suppose `⁅eᵢ, eⱼ⁆ = c • eₖ`, with `eₖ` commuting with `eᵢ` and `eⱼ`, and
+let `r` have additive parameter `c` times the product of the parameters of `p` and `q`. Then the
+matrix commutator of the represented `i`- and `j`-root values is the represented `k`-root value
+at `r`. -/
 theorem commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq
     {i j k : I} {c : ℤ}
     (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
@@ -101,5 +105,30 @@ theorem commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq
   apply commutatorElement_kostantRootSubgroupMatrix_of_lie_eq
     e h ρ M hM b hij hik hjk hi hj hk
   simpa only [AdditiveGroup.schemePointsMulEquiv_apply] using hr
+
+/-- The class-two Chevalley commutator relation on scheme-valued points with the third point
+written out at parameter `c` times the product of the parameters of `p` and `q`. -/
+theorem commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq'
+    {i j k : I} {c : ℤ}
+    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
+    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
+    (hk : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))))
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (AdditiveGroup.groupScheme ℤ).X) :
+    ⁅GeneralLinear.schemePointsMulEquiv n A
+        (p ≫ (kostantRootSubgroup e h ρ M hM i hi b).hom.hom),
+      GeneralLinear.schemePointsMulEquiv n A
+        (q ≫ (kostantRootSubgroup e h ρ M hM j hj b).hom.hom)⁆ =
+      GeneralLinear.schemePointsMulEquiv n A
+        ((AdditiveGroup.schemePointsMulEquiv A).symm
+            (Multiplicative.ofAdd ((c : A) *
+              (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p) *
+                Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A q)))) ≫
+          (kostantRootSubgroup e h ρ M hM k hk b).hom.hom) :=
+  commutatorElement_schemePointsMulEquiv_kostantRootSubgroup_of_lie_eq
+    e h ρ M hM b A hij hik hjk hi hj hk p q _
+      (congrArg Multiplicative.toAdd
+        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
 
 end TauCeti.UniversalEnvelopingAlgebra
