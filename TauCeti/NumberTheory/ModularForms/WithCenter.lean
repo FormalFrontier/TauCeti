@@ -24,6 +24,9 @@ than inside any one consumer.
 
 * `Subgroup.mem_withCenter_iff_exists_eq_or_eq_neg`: membership in `Γ·{±I}` is being `±` an
   element of `Γ`.
+* `TauCeti.ModularForm.index_eq_two_mul_index_withCenter_of_neg_one_notMem` and
+  `TauCeti.ModularForm.relIndex_withCenter_eq_two_of_neg_one_notMem`: when `-I ∉ Γ`,
+  `[SL₂(ℤ) : Γ] = 2 · [SL₂(ℤ) : ±Γ]`.
 -/
 
 public section
@@ -51,6 +54,28 @@ theorem _root_.Subgroup.mem_withCenter_iff_exists_eq_or_eq_neg {γ : SL(2, ℤ)}
     · exact Subgroup.mem_withCenter_iff.mpr ⟨_, hγ', -1,
         Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl),
         mul_neg_one _⟩
+
+/-- **The `±Γ` factor of two, index form**: when `-I ∉ Γ`, the index of `Γ` in `SL(2, ℤ)` is
+twice the projective index `[SL₂(ℤ) : ±Γ]`.
+
+This is the conversion the general-level valence formula and the Sturm bound are stated
+against: both read `k · [SL₂(ℤ) : ±Γ] / 12`, while a full-coset norm product is computed over
+`Γ`-cosets, which is twice as many. -/
+theorem index_eq_two_mul_index_withCenter_of_neg_one_notMem (h : (-1 : SL(2, ℤ)) ∉ Γ) :
+    Γ.index = 2 * Γ.withCenter.index :=
+  Subgroup.index_eq_two_mul_index_withCenter
+    (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl)) h
+    fun _ hc ↦ Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mp hc
+
+/-- **The `±Γ` factor of two, relative-index form**: `Γ` has index `2` inside `Γ·{±I}` when
+`-I ∉ Γ`. The geometric reading of
+`index_eq_two_mul_index_withCenter_of_neg_one_notMem`: adjoining `-I` exactly halves the
+number of cosets. -/
+theorem relIndex_withCenter_eq_two_of_neg_one_notMem (h : (-1 : SL(2, ℤ)) ∉ Γ) :
+    Γ.relIndex Γ.withCenter = 2 :=
+  Subgroup.relIndex_withCenter_eq_two
+    (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl)) h
+    fun _ hc ↦ Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mp hc
 
 end TauCeti.ModularForm
 
