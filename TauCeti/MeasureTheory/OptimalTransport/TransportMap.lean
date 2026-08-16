@@ -40,7 +40,8 @@ Kantorovich plan induced by the Monge map `T`.
 
 That the Monge problem is genuinely infeasible for some data — a Dirac source can only be
 transported onto a Dirac target — is not about graph plans and lives with the other
-`ProbabilityTheory.HasLaw` facts, in `TauCeti.Probability.not_hasLaw_dirac_source_of_forall_ne`.
+`ProbabilityTheory.HasLaw` facts, in
+`TauCeti.Probability.not_hasLaw_dirac_source_of_forall_ne_dirac`.
 
 ## Conventions
 
@@ -95,18 +96,29 @@ variable {T S : X → Y} {μ : Measure X} {ν : Measure Y}
 theorem graphPlan_def (T : X → Y) (μ : Measure X) : graphPlan T μ = μ.map fun x ↦ (x, T x) :=
   (rfl)
 
-/-- The graph map `x ↦ (x, T x)` is a.e. measurable as soon as `T` is. -/
-theorem aemeasurable_graphMap (hT : AEMeasurable T μ) : AEMeasurable (fun x ↦ (x, T x)) μ :=
+/-- The map `x ↦ (x, T x)` onto the graph of `T` is a.e. measurable as soon as `T` is. -/
+private theorem aemeasurable_prodMk_self (hT : AEMeasurable T μ) :
+    AEMeasurable (fun x ↦ (x, T x)) μ :=
   aemeasurable_id.prodMk hT
 
-/-- The graph map `x ↦ (x, T x)` is measurable as soon as `T` is. -/
-theorem measurable_graphMap (hT : Measurable T) : Measurable fun x ↦ (x, T x) :=
+/-- The map `x ↦ (x, T x)` onto the graph of `T` is measurable as soon as `T` is. -/
+private theorem measurable_prodMk_self (hT : Measurable T) : Measurable fun x ↦ (x, T x) :=
   measurable_id.prodMk hT
+
+/-- A graph plan inherits `MeasureTheory.SFinite` from its source measure, as a pushforward
+does; this is what consumers such as `MeasureTheory.Measure.compProd` ask for. -/
+instance instSFiniteGraphPlan [SFinite μ] : SFinite (graphPlan T μ) := by
+  rw [graphPlan_def]; infer_instance
+
+/-- A graph plan inherits `MeasureTheory.IsFiniteMeasure` from its source measure, as a
+pushforward does. -/
+instance instIsFiniteMeasureGraphPlan [IsFiniteMeasure μ] : IsFiniteMeasure (graphPlan T μ) := by
+  rw [graphPlan_def]; infer_instance
 
 /-- A graph plan measures a set by the source points whose graph point lies in it. -/
 theorem graphPlan_apply (hT : AEMeasurable T μ) {s : Set (X × Y)} (hs : MeasurableSet s) :
     graphPlan T μ s = μ {x | (x, T x) ∈ s} :=
-  Measure.map_apply_of_aemeasurable (aemeasurable_graphMap hT) hs
+  Measure.map_apply_of_aemeasurable (aemeasurable_prodMk_self hT) hs
 
 /-- The graph plan over the zero measure is the zero measure. -/
 @[simp]
@@ -126,7 +138,7 @@ theorem snd_graphPlan (T : X → Y) (μ : Measure X) : (graphPlan T μ).snd = μ
 /-- A graph plan over a probability measure is a probability measure. -/
 theorem isProbabilityMeasure_graphPlan [IsProbabilityMeasure μ] (hT : AEMeasurable T μ) :
     IsProbabilityMeasure (graphPlan T μ) :=
-  Measure.isProbabilityMeasure_map (aemeasurable_graphMap hT)
+  Measure.isProbabilityMeasure_map (aemeasurable_prodMk_self hT)
 
 /-- Integration against a graph plan is integration of the composite `x ↦ f (x, T x)`.
 
@@ -135,24 +147,20 @@ underlying map. -/
 theorem lintegral_graphPlan (hT : AEMeasurable T μ) {f : X × Y → ℝ≥0∞}
     (hf : AEMeasurable f (graphPlan T μ)) :
     ∫⁻ z, f z ∂graphPlan T μ = ∫⁻ x, f (x, T x) ∂μ :=
-  lintegral_map' hf (aemeasurable_graphMap hT)
+  lintegral_map' hf (aemeasurable_prodMk_self hT)
 
 /-! ### Feasibility: transport maps and the plans they induce -/
 
 /-- A map is a transport map from `μ` to `ν` exactly when the second marginal of its graph plan
 is `ν`. -/
-theorem hasLaw_iff_snd_graphPlan (hT : AEMeasurable T μ) :
+theorem hasLaw_iff_snd_graphPlan_eq (hT : AEMeasurable T μ) :
     HasLaw T ν μ ↔ (graphPlan T μ).snd = ν := by
   rw [snd_graphPlan]
   exact ⟨fun h ↦ h.map_eq, fun h ↦ ⟨hT, h⟩⟩
 
-/-- **A Monge map induces a Kantorovich plan**: the first marginal of the graph plan of a
-transport map from `μ` to `ν` is `μ`. -/
-theorem fst_graphPlan_of_hasLaw (hT : HasLaw T ν μ) : (graphPlan T μ).fst = μ :=
-  fst_graphPlan hT.aemeasurable
-
-/-- **A Monge map induces a Kantorovich plan**: the second marginal of the graph plan of a
-transport map from `μ` to `ν` is `ν`. -/
+/-- The second marginal of the graph plan of a transport map from `μ` to `ν` is `ν`; together
+with `TauCeti.Measure.fst_graphPlan` this is the passage from a Monge map to a Kantorovich
+plan. -/
 theorem snd_graphPlan_of_hasLaw (hT : HasLaw T ν μ) : (graphPlan T μ).snd = ν := by
   rw [snd_graphPlan, hT.map_eq]
 
@@ -162,8 +170,7 @@ theorem snd_graphPlan_comp {R : Y → Z} {ρ : Measure Z} (hR : HasLaw R ρ ν) 
   snd_graphPlan_of_hasLaw (hR.comp hT)
 
 /-- A measure-preserving map is in particular a transport map, so the second marginal of its
-graph plan is the prescribed target. This covers measurable equivalences between measure
-spaces. -/
+graph plan is the prescribed target. This covers measure-preserving equivalences. -/
 theorem snd_graphPlan_of_measurePreserving (hT : MeasurePreserving T μ ν) :
     (graphPlan T μ).snd = ν :=
   snd_graphPlan_of_hasLaw hT.hasLaw
@@ -182,7 +189,7 @@ theorem graphPlan_congr (h : T =ᵐ[μ] S) : graphPlan T μ = graphPlan S μ :=
 @[simp]
 theorem graphPlan_add {μ₁ μ₂ : Measure X} (hT₁ : AEMeasurable T μ₁) (hT₂ : AEMeasurable T μ₂) :
     graphPlan T (μ₁ + μ₂) = graphPlan T μ₁ + graphPlan T μ₂ :=
-  AEMeasurable.map_add₀ (aemeasurable_graphMap hT₁) (aemeasurable_graphMap hT₂)
+  AEMeasurable.map_add₀ (aemeasurable_prodMk_self hT₁) (aemeasurable_prodMk_self hT₂)
 
 /-- Taking the graph plan of a fixed map commutes with rescaling the source measure by an
 extended nonnegative real. -/
@@ -195,7 +202,7 @@ theorem graphPlan_smul (T : X → Y) (c : ℝ≥0∞) (μ : Measure X) :
 @[simp]
 theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     graphPlan T (Measure.dirac x) = Measure.dirac (x, T x) :=
-  map_dirac_of_aemeasurable (aemeasurable_graphMap hT)
+  map_dirac_of_aemeasurable (aemeasurable_prodMk_self hT)
 
 /-- Postcomposing a transport map pushes the graph plan through the second coordinate. -/
 theorem graphPlan_comp {R : Y → Z} (hT : AEMeasurable T μ) (hR : AEMeasurable R (μ.map T)) :
@@ -204,8 +211,8 @@ theorem graphPlan_comp {R : Y → Z} (hT : AEMeasurable T μ) (hR : AEMeasurable
   have hmap : AEMeasurable (Prod.map (id : X → X) R) (μ.map fun x ↦ (x, T x)) :=
     measurable_fst.aemeasurable.prodMk (hR'.comp_aemeasurable' measurable_snd.aemeasurable)
   simp only [graphPlan]
-  rw [AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_graphMap hT)]
-  rfl
+  rw [AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_prodMk_self hT)]
+  simp [Function.comp_def, Prod.map]
 
 /-- Reparametrizing the source measure pushes the graph plan through the first coordinate. -/
 theorem graphPlan_map {f : Z → X} {μ : Measure Z} (hf : AEMeasurable f μ)
@@ -216,33 +223,33 @@ theorem graphPlan_map {f : Z → X} {μ : Measure Z} (hf : AEMeasurable f μ)
   have hmap : AEMeasurable (Prod.map f (id : Y → Y)) (μ.map fun z ↦ (z, (T ∘ f) z)) :=
     (hf'.comp_aemeasurable' measurable_fst.aemeasurable).prodMk measurable_snd.aemeasurable
   simp only [graphPlan]
-  rw [AEMeasurable.map_map_of_aemeasurable (aemeasurable_graphMap hT) hf,
-    AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_graphMap hTf)]
-  rfl
+  rw [AEMeasurable.map_map_of_aemeasurable (aemeasurable_prodMk_self hT) hf,
+    AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_prodMk_self hTf)]
+  simp [Function.comp_def, Prod.map]
 
 /-- Swapping the coordinates of a graph plan gives the cograph plan. -/
 theorem map_swap_graphPlan (hT : AEMeasurable T μ) :
     (graphPlan T μ).map Prod.swap = μ.map fun x ↦ (T x, x) := by
   rw [graphPlan, AEMeasurable.map_map_of_aemeasurable measurable_swap.aemeasurable
-    (aemeasurable_graphMap hT)]
-  rfl
+    (aemeasurable_prodMk_self hT)]
+  simp [Function.comp_def, Prod.swap]
 
 /-- A measurable equivalence and its inverse have graph plans exchanged by the coordinate
 swap. -/
-theorem map_swap_graphPlan_measurableEquiv (e : X ≃ᵐ Y) (μ : Measure X) :
+theorem map_swap_graphPlan_symm (e : X ≃ᵐ Y) (μ : Measure X) :
     (graphPlan e μ).map Prod.swap = graphPlan e.symm (μ.map e) := by
   rw [map_swap_graphPlan e.measurable.aemeasurable, graphPlan,
-    Measure.map_map (measurable_graphMap e.symm.measurable) e.measurable]
+    Measure.map_map (measurable_prodMk_self e.symm.measurable) e.measurable]
   simp [Function.comp_def]
 
 /-! ### Deterministic plans: concentration on a graph -/
 
 /-- A graph plan is concentrated on the graph of its map. -/
-theorem ae_snd_eq_of_graphPlan [MeasurableEq Y] (hT : AEMeasurable T μ) :
+theorem graphPlan_ae_snd_eq [MeasurableEq Y] (hT : AEMeasurable T μ) :
     ∀ᵐ z ∂graphPlan T μ, z.2 = T z.1 := by
   have hmk : ∀ᵐ z ∂graphPlan T μ, z.2 = hT.mk T z.1 := by
     rw [graphPlan_congr hT.ae_eq_mk]
-    exact (ae_map_iff (measurable_graphMap hT.measurable_mk).aemeasurable
+    exact (ae_map_iff (measurable_prodMk_self hT.measurable_mk).aemeasurable
       (measurableSet_eq_fun measurable_snd (hT.measurable_mk.comp measurable_fst))).2
       (ae_of_all _ fun _ ↦ rfl)
   have hfst : Measure.QuasiMeasurePreserving Prod.fst (graphPlan T μ) μ :=
@@ -250,9 +257,27 @@ theorem ae_snd_eq_of_graphPlan [MeasurableEq Y] (hT : AEMeasurable T μ) :
   filter_upwards [hmk, hfst.ae hT.ae_eq_mk] with z hz hz'
   rw [hz, ← hz']
 
+/-- The graph plan of `T` is concentrated on the graph of `S` exactly when `S` agrees with `T`
+almost everywhere. -/
+theorem graphPlan_ae_snd_eq_iff [MeasurableEq Y] (hT : AEMeasurable T μ) (hS : AEMeasurable S μ) :
+    (∀ᵐ z ∂graphPlan T μ, z.2 = S z.1) ↔ T =ᵐ[μ] S := by
+  have hfst : Measure.QuasiMeasurePreserving Prod.fst (graphPlan T μ) μ :=
+    ⟨measurable_fst, (fst_graphPlan hT).le.absolutelyContinuous⟩
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · have hmk : ∀ᵐ z ∂graphPlan (hT.mk T) μ, z.2 = hS.mk S z.1 := by
+      rw [← graphPlan_congr hT.ae_eq_mk]
+      filter_upwards [h, hfst.ae hS.ae_eq_mk] with z hz hz'
+      rw [hz, hz']
+    have key : hT.mk T =ᵐ[μ] hS.mk S :=
+      (ae_map_iff (measurable_prodMk_self hT.measurable_mk).aemeasurable
+        (measurableSet_eq_fun measurable_snd (hS.measurable_mk.comp measurable_fst))).1 hmk
+    exact hT.ae_eq_mk.trans (key.trans hS.ae_eq_mk.symm)
+  · filter_upwards [graphPlan_ae_snd_eq hT, hfst.ae h] with z hz hz'
+    rw [hz, hz']
+
 /-- A plan concentrated on the graph of `T` is the graph plan of `T` over its own first
 marginal. -/
-theorem eq_graphPlan_of_ae {π : Measure (X × Y)} (hT : AEMeasurable T π.fst)
+theorem eq_graphPlan_of_ae_snd_eq {π : Measure (X × Y)} (hT : AEMeasurable T π.fst)
     (h : ∀ᵐ z ∂π, z.2 = T z.1) : π = graphPlan T π.fst := by
   have hae : (id : X × Y → X × Y) =ᵐ[π] fun z ↦ (z.1, T z.1) := by
     filter_upwards [h] with z hz
@@ -260,7 +285,7 @@ theorem eq_graphPlan_of_ae {π : Measure (X × Y)} (hT : AEMeasurable T π.fst)
   calc π = π.map id := Measure.map_id.symm
     _ = π.map fun z ↦ (z.1, T z.1) := Measure.map_congr hae
     _ = (π.map Prod.fst).map fun x ↦ (x, T x) :=
-        (AEMeasurable.map_map_of_aemeasurable (aemeasurable_graphMap hT)
+        (AEMeasurable.map_map_of_aemeasurable (aemeasurable_prodMk_self hT)
           measurable_fst.aemeasurable).symm
     _ = graphPlan T π.fst := rfl
 
@@ -269,24 +294,17 @@ the graph plan of an a.e. measurable `T` over its own first marginal precisely w
 coordinate almost everywhere equals `T` of its first coordinate. -/
 theorem eq_graphPlan_iff [MeasurableEq Y] {π : Measure (X × Y)} (hT : AEMeasurable T π.fst) :
     π = graphPlan T π.fst ↔ ∀ᵐ z ∂π, z.2 = T z.1 := by
-  refine ⟨fun h ↦ ?_, eq_graphPlan_of_ae hT⟩
+  refine ⟨fun h ↦ ?_, eq_graphPlan_of_ae_snd_eq hT⟩
   rw [h]
-  exact ae_snd_eq_of_graphPlan hT
+  exact graphPlan_ae_snd_eq hT
 
 /-- **A transport map is pinned down by its plan only up to a null set.** Two `μ`-a.e. measurable
 maps induce the same graph plan over `μ` exactly when they agree `μ`-almost everywhere. -/
 theorem graphPlan_eq_graphPlan_iff [MeasurableEq Y] (hT : AEMeasurable T μ)
     (hS : AEMeasurable S μ) : graphPlan T μ = graphPlan S μ ↔ T =ᵐ[μ] S := by
-  refine ⟨fun h ↦ ?_, graphPlan_congr⟩
-  have hmk : graphPlan (hT.mk T) μ = graphPlan (hS.mk S) μ := by
-    rw [← graphPlan_congr hT.ae_eq_mk, ← graphPlan_congr hS.ae_eq_mk]
-    exact h
-  have hae : ∀ᵐ z ∂graphPlan (hT.mk T) μ, z.2 = hS.mk S z.1 := by
-    rw [hmk]; exact ae_snd_eq_of_graphPlan hS.measurable_mk.aemeasurable
-  have key : hT.mk T =ᵐ[μ] hS.mk S :=
-    (ae_map_iff (measurable_graphMap hT.measurable_mk).aemeasurable
-      (measurableSet_eq_fun measurable_snd (hS.measurable_mk.comp measurable_fst))).1 hae
-  exact hT.ae_eq_mk.trans (key.trans hS.ae_eq_mk.symm)
+  refine ⟨fun h ↦ (graphPlan_ae_snd_eq_iff hT hS).1 ?_, graphPlan_congr⟩
+  rw [h]
+  exact graphPlan_ae_snd_eq hS
 
 end Measure
 

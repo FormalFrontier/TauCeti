@@ -34,6 +34,7 @@ variable {X : Type*} {Y : Type*} [MeasurableSpace X] [MeasurableSpace Y] {T : X 
 
 /-- A Dirac measure leaves a map no room to be modified on a null set: pushing `Measure.dirac x`
 forward along a `Measure.dirac x`-a.e. measurable map is evaluating that map at `x`. -/
+@[simp]
 theorem map_dirac_of_aemeasurable {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     (Measure.dirac x).map T = Measure.dirac (T x) := by
   have hx : T x = hT.mk T x := by

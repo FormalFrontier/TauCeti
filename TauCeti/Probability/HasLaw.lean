@@ -19,8 +19,8 @@ exactly what `TauCeti.Measure.map_dirac_of_aemeasurable` asks for.
 
 * `TauCeti.Probability.hasLaw_dirac_source_iff` — an a.e. measurable map has law `ν` under
   `Measure.dirac x` exactly when `ν` is the Dirac measure at its value at `x`;
-* `TauCeti.Probability.not_hasLaw_dirac_source_of_forall_ne` — no map at all has a non-Dirac law
-  under a Dirac measure.
+* `TauCeti.Probability.not_hasLaw_dirac_source_of_forall_ne_dirac` — no map at all has a
+  non-Dirac law under a Dirac measure.
 
 Mathlib's `ProbabilityTheory.hasLaw_dirac_iff` is the statement for a Dirac *target*; the results
 here are about a Dirac *source*, which is what `dirac_source` records in their names.
@@ -48,7 +48,7 @@ theorem hasLaw_dirac_source_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) 
 /-- **A Dirac source admits no non-Dirac law.** No map at all pushes a Dirac measure onto a
 measure that is not itself a Dirac measure: a map carries its own a.e. measurability along with
 the law it is claimed to have. -/
-theorem not_hasLaw_dirac_source_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (x : X) :
+theorem not_hasLaw_dirac_source_of_forall_ne_dirac (hν : ∀ y : Y, ν ≠ Measure.dirac y) (x : X) :
     ¬HasLaw T ν (Measure.dirac x) :=
   fun h ↦ hν (T x) ((hasLaw_dirac_source_iff h.aemeasurable).1 h)
 
