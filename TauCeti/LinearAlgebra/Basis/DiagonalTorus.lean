@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.Equiv.Basic
 public import Mathlib.LinearAlgebra.Basis.SMul
+public import TauCeti.LinearAlgebra.Eigenspace.DiagonalBasis
 
 /-!
 # The diagonal torus attached to a weighted basis
@@ -80,6 +81,23 @@ theorem torusCharacter_nsmul (s : κ → Rˣ) (μ : κ → ℤ) (n : ℕ) :
   refine prod_congr rfl fun j _ => ?_
   rw [mul_comm, zpow_mul, zpow_natCast]
 
+/-- Negating a weight inverts the value of its character. -/
+theorem torusCharacter_neg (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter s (-μ) = (torusCharacter s μ)⁻¹ := by
+  simp [torusCharacter, ← prod_inv_distrib]
+
+/-- Subtracting weights divides the values of their characters. -/
+theorem torusCharacter_sub (s : κ → Rˣ) (μ ν : κ → ℤ) :
+    torusCharacter s (μ - ν) = torusCharacter s μ / torusCharacter s ν := by
+  rw [sub_eq_add_neg, torusCharacter_add, torusCharacter_neg, div_eq_mul_inv]
+
+/-- Scaling a weight by an integer raises its value to that integer power. -/
+theorem torusCharacter_zsmul (s : κ → Rˣ) (μ : κ → ℤ) (z : ℤ) :
+    torusCharacter s (z • μ) = torusCharacter s μ ^ z := by
+  simp only [torusCharacter, Pi.smul_apply, smul_eq_mul, ← prod_zpow]
+  refine prod_congr rfl fun j _ => ?_
+  rw [mul_comm, zpow_mul]
+
 /-- Every character takes the value one at the identity point. -/
 @[simp] theorem torusCharacter_one (μ : κ → ℤ) : torusCharacter (1 : κ → Rˣ) μ = 1 := by
   simp [torusCharacter]
@@ -91,14 +109,14 @@ theorem torusCharacter_mul (s t : κ → Rˣ) (μ : κ → ℤ) :
 
 /-- The family of characters attached to a weight function, as a homomorphism from the points of
 the split torus `𝔾ₘ^κ` to families of units indexed by the basis. -/
-@[expose] def torusCharacterHom (wt : ι → κ → ℤ) : (κ → Rˣ) →* (ι → Rˣ) where
+def torusCharacterHom (wt : ι → κ → ℤ) : (κ → Rˣ) →* (ι → Rˣ) where
   toFun s i := torusCharacter s (wt i)
   map_one' := funext fun i => torusCharacter_one (R := R) (wt i)
   map_mul' s t := funext fun i => torusCharacter_mul s t (wt i)
 
 /-- The value of the weight-character homomorphism at a point and a basis index. -/
 @[simp] theorem torusCharacterHom_apply (wt : ι → κ → ℤ) (s : κ → Rˣ) (i : ι) :
-    torusCharacterHom (R := R) wt s i = torusCharacter s (wt i) := rfl
+    torusCharacterHom (R := R) wt s i = torusCharacter s (wt i) := (rfl)
 
 /-- Torus characters are natural in the ring of values. -/
 theorem map_torusCharacter {S : Type*} [CommRing S] (φ : R →+* S) (s : κ → Rˣ) (μ : κ → ℤ) :
@@ -133,14 +151,24 @@ theorem basisDiagonal_mul (b : Basis ι R M) (w v : ι → Rˣ) :
   rw [smul_smul, mul_comm]
 
 /-- The diagonal automorphisms as a homomorphism from the group of families of units. -/
-@[expose] noncomputable def basisDiagonalHom (b : Basis ι R M) : (ι → Rˣ) →* (M ≃ₗ[R] M) where
+noncomputable def basisDiagonalHom (b : Basis ι R M) : (ι → Rˣ) →* (M ≃ₗ[R] M) where
   toFun := basisDiagonal b
   map_one' := basisDiagonal_one b
   map_mul' := basisDiagonal_mul b
 
 /-- The homomorphism of diagonal automorphisms evaluates to `TauCeti.basisDiagonal`. -/
 @[simp] theorem basisDiagonalHom_apply (b : Basis ι R M) (w : ι → Rˣ) :
-    basisDiagonalHom b w = basisDiagonal b w := rfl
+    basisDiagonalHom b w = basisDiagonal b w := (rfl)
+
+/-- A diagonal automorphism scales each coordinate by its corresponding unit. -/
+theorem repr_basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) (m : M) (i : ι) :
+    b.repr (basisDiagonal b w m) i = (w i : R) * b.repr m i :=
+  b.repr_apply_of_apply_basis (basisDiagonal_basis b w) m i
+
+/-- Inverting a diagonal automorphism inverts each of its diagonal entries. -/
+theorem basisDiagonal_inv (b : Basis ι R M) (w : ι → Rˣ) :
+    (basisDiagonal b w)⁻¹ = basisDiagonal b w⁻¹ := by
+  simpa only [basisDiagonalHom_apply] using (map_inv (basisDiagonalHom b) w).symm
 
 /-- A diagonal automorphism scales by a single unit any vector whose coordinates vanish outside
 the basis vectors carrying that unit. Applied to a weight basis, this says that a torus point acts
@@ -169,13 +197,13 @@ variable [Fintype κ]
 
 This is how the split maximal torus of a Chevalley group acts on an admissible lattice written in
 a weight basis. -/
-@[expose] noncomputable def basisWeightTorus (b : Basis ι R M) (wt : ι → κ → ℤ) :
+noncomputable def basisWeightTorus (b : Basis ι R M) (wt : ι → κ → ℤ) :
     (κ → Rˣ) →* (M ≃ₗ[R] M) :=
   (basisDiagonalHom b).comp (torusCharacterHom (R := R) wt)
 
 /-- The weight torus at a point is the diagonal automorphism scaling by the weight characters. -/
 theorem basisWeightTorus_apply (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ) :
-    basisWeightTorus b wt s = basisDiagonal b fun i => torusCharacter s (wt i) := rfl
+    basisWeightTorus b wt s = basisDiagonal b fun i => torusCharacter s (wt i) := (rfl)
 
 /-- A torus point scales the `i`-th basis vector by the value at it of the character `wt i`. -/
 @[simp] theorem basisWeightTorus_basis (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ) (i : ι) :

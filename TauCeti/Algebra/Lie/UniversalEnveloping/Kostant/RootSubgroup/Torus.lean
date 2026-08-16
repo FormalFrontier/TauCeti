@@ -108,6 +108,25 @@ namespace IsCartanWeightVector
 
 variable {h ρ}
 
+/-- Zero is a weight vector of every weight. -/
+theorem zero (μ : κ → ℤ) : IsCartanWeightVector h ρ μ (0 : V) := fun j => by simp
+
+/-- The sum of two weight vectors of the same weight has that weight. -/
+theorem add {μ : κ → ℤ} {m n : V} (hm : IsCartanWeightVector h ρ μ m)
+    (hn : IsCartanWeightVector h ρ μ n) : IsCartanWeightVector h ρ μ (m + n) := fun j => by
+  rw [map_add, hm j, hn j, smul_add]
+
+/-- The negation of a weight vector has the same weight. -/
+theorem neg {μ : κ → ℤ} {m : V} (hm : IsCartanWeightVector h ρ μ m) :
+    IsCartanWeightVector h ρ μ (-m) := fun j => by
+  rw [map_neg, hm j, smul_neg]
+
+/-- The difference of two weight vectors of the same weight has that weight. -/
+theorem sub {μ : κ → ℤ} {m n : V} (hm : IsCartanWeightVector h ρ μ m)
+    (hn : IsCartanWeightVector h ρ μ n) : IsCartanWeightVector h ρ μ (m - n) := by
+  rw [sub_eq_add_neg]
+  exact hm.add hn.neg
+
 /-- A rational multiple of a weight vector is a weight vector of the same weight. -/
 theorem smul {μ : κ → ℤ} {m : V} (hm : IsCartanWeightVector h ρ μ m) (c : ℚ) :
     IsCartanWeightVector h ρ μ (c • m) := fun j => by
@@ -169,7 +188,7 @@ variable {η : Type*} (b : Module.Basis η ℤ M) (wt : η → κ → ℤ)
 /-- A designated Cartan vector acting on a Kostant-stable additive subgroup, as an integral
 operator. It is the restriction of `ρ(hⱼ)`, which preserves `M` because `hⱼ` lies in the Kostant
 form. -/
-@[expose] noncomputable def kostantCartanOperator (j : κ) : Module.End ℤ M where
+noncomputable def kostantCartanOperator (j : κ) : Module.End ℤ M where
   toFun v := ⟨ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) (v : V),
     hM _ (cartanVector_mem_kostantForm e h j) v v.2⟩
   map_add' v w := Subtype.ext (map_add _ (v : V) (w : V))
@@ -178,7 +197,7 @@ form. -/
 /-- The integral Cartan operator acts by the ambient representation. -/
 @[simp] theorem coe_kostantCartanOperator_apply (j : κ) (v : M) :
     ((kostantCartanOperator e h ρ M hM j v : M) : V) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) (v : V) := rfl
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) (v : V) := (rfl)
 
 /-- On a weight vector the integral Cartan operator is multiplication by the integer weight. -/
 theorem kostantCartanOperator_apply_of_isCartanWeightVector {μ : κ → ℤ} {v : M}
@@ -191,17 +210,9 @@ theorem kostantCartanOperator_apply_of_isCartanWeightVector {μ : κ → ℤ} {v
 coordinate by `wt y j`. -/
 theorem repr_kostantCartanOperator
     (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V)) (j : κ) (m : M) (y : η) :
-    b.repr (kostantCartanOperator e h ρ M hM j m) y = wt y j * b.repr m y := by
-  have key : (Finsupp.lapply y).comp
-        (b.repr.toLinearMap.comp (kostantCartanOperator e h ρ M hM j)) =
-      wt y j • (Finsupp.lapply y).comp b.repr.toLinearMap := by
-    refine b.ext fun x => ?_
-    rw [LinearMap.comp_apply, LinearMap.comp_apply,
-      kostantCartanOperator_apply_of_isCartanWeightVector e h ρ M hM (hwt x) j]
-    rcases eq_or_ne x y with rfl | hxy
-    · simp
-    · simp [hxy]
-  exact congrArg (fun f : M →ₗ[ℤ] ℤ => f m) key
+    b.repr (kostantCartanOperator e h ρ M hM j m) y = wt y j * b.repr m y :=
+  b.repr_apply_of_apply_basis
+    (fun x => kostantCartanOperator_apply_of_isCartanWeightVector e h ρ M hM (hwt x) j) m y
 
 include e hM in
 /-- A weight basis separates weights: a weight vector of weight `μ` has vanishing coordinates at
