@@ -29,11 +29,10 @@ summit, which is a substantially larger closure.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 6 (directing measures), the
-  empirical-measure form of the directing-measure theorem. The roadmap's target there is weak
-  convergence in `ProbabilityMeasure α` against bounded continuous test functions; that form needs a
-  compatible Polish topology on `α`, which `[StandardBorelSpace α]` does not select, so it is not
-  attempted here.
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 6's empirical form of the
+  directing-measure theorem. This module supplies the topology-free fixed-set endpoint; weak
+  empirical-measure convergence is a separate downstream theorem requiring a chosen compatible
+  Polish topology, which `[StandardBorelSpace α]` does not select.
 -/
 
 public section
