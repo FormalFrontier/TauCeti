@@ -58,10 +58,17 @@ rational ambient space. -/
 def IsUnimodular (L : IntegralLattice V) : Prop :=
   L.carrier = L.dualCarrier
 
+/-- Unimodularity unfolded as equality with the dual carrier. -/
+@[simp]
+theorem isUnimodular_def (L : IntegralLattice V) :
+    L.IsUnimodular ↔ L.carrier = L.dualCarrier :=
+  Iff.rfl
+
 /-- Unimodularity is equivalent to every vector in the dual carrier already belonging to the
 original carrier. -/
 theorem isUnimodular_iff_dualCarrier_le (L : IntegralLattice V) :
     L.IsUnimodular ↔ L.dualCarrier ≤ L.carrier := by
+  rw [L.isUnimodular_def]
   exact ⟨fun h ↦ h.symm.le, fun h ↦ le_antisymm L.le_dualCarrier h⟩
 
 /-- Unimodularity is equivalent to the embedded carrier filling the dual carrier. -/
