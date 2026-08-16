@@ -174,6 +174,32 @@ instance (E : ConflationClass C) : E.deflations.RespectsIso := by
 
 end ConflationClass
 
+section BiproductSquares
+
+variable {D : Type u} [Category.{v} D] [HasZeroMorphisms D]
+
+/-- The square formed by a morphism and the corresponding biproduct inclusions is a pushout. -/
+theorem isPushout_biprod_inl_map {X Y : D} (f : X ⟶ Y) (Z : D)
+    [HasBinaryBiproduct X Z] [HasBinaryBiproduct Y Z] :
+    IsPushout (biprod.inl : X ⟶ X ⊞ Z) f (biprod.map f (𝟙 Z))
+      (biprod.inl : Y ⟶ Y ⊞ Z) :=
+  (IsPushout.of_coprod_inl_with_id f Z).of_iso
+    (Iso.refl X) (biprod.isoCoprod X Z).symm
+    (Iso.refl Y) (biprod.isoCoprod Y Z).symm
+    (by simp [coprod.inl_desc]) (by simp) (by ext <;> simp) (by simp [coprod.inl_desc])
+
+/-- The square formed by a morphism and the corresponding biproduct projections is a pullback. -/
+theorem isPullback_biprod_map_fst {X Y : D} (f : X ⟶ Y) (Z : D)
+    [HasBinaryBiproduct X Z] [HasBinaryBiproduct Y Z] :
+    IsPullback (biprod.fst : X ⊞ Z ⟶ X) (biprod.map f (𝟙 Z)) f
+      (biprod.fst : Y ⊞ Z ⟶ Y) :=
+  (IsPullback.of_prod_fst_with_id f Z).of_iso
+    (biprod.isoProd X Z).symm (Iso.refl X)
+    (biprod.isoProd Y Z).symm (Iso.refl Y)
+    (by simp) (by ext <;> simp) (by simp) (by simp)
+
+end BiproductSquares
+
 /-- A Quillen exact structure on an additive category, in the self-dual E0/E1/E2
 presentation.
 
@@ -223,6 +249,22 @@ abbrev IsInflation (E : ExactStructure C) {X Y : C} (i : X ⟶ Y) : Prop :=
 /-- The predicate that a morphism is the second map of a distinguished conflation. -/
 abbrev IsDeflation (E : ExactStructure C) {Y Z : C} (p : Y ⟶ Z) : Prop :=
   E.toConflationClass.IsDeflation p
+
+/-- A kernel–cokernel pair whose first map is an inflation is a conflation. -/
+theorem conflation_of_isKernelCokernelPair (E : ExactStructure C) {S : ShortComplex C}
+    (hS : IsKernelCokernelPair S) (hf : E.IsInflation S.f) : E.Conflation S := by
+  obtain ⟨Z, q, hq, hT⟩ := (ConflationClass.isInflation_iff E.toConflationClass _).mp hf
+  let T := ShortComplex.mk S.f q hq
+  have hT' : E.Conflation T := by simpa [T] using hT
+  have hpairT : IsKernelCokernelPair T := E.isKernelCokernelPair T hT'
+  let e : Z ≅ S.X₃ :=
+    IsColimit.coconePointUniqueUpToIso hpairT.gIsCokernel hS.gIsCokernel
+  have he : q ≫ e.hom = S.g :=
+    IsColimit.comp_coconePointUniqueUpToIso_hom hpairT.gIsCokernel hS.gIsCokernel
+      WalkingParallelPair.one
+  exact E.conflation_of_iso (S := T) (T := S)
+    (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e
+      (by simp [T]) (by simpa [T] using he.symm)) hT'
 
 /-- E0, as the statement that the inflations contain the identities. -/
 instance (E : ExactStructure C) : E.inflations.ContainsIdentities where
