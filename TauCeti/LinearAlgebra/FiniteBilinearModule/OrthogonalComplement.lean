@@ -129,6 +129,7 @@ theorem radicalQuotientMk_surjective : Function.Surjective (radicalQuotientMk A)
   A.radical.toIntSubmodule.mkQ_surjective
 
 /-- The kernel of the radical quotient map is the radical. -/
+@[simp]
 theorem radicalQuotientMk_ker : (radicalQuotientMk A).ker = A.radical := by
   exact radicalQuotientMkAux_ker A
 
@@ -167,6 +168,7 @@ theorem pairingRestrict_apply (H : AddSubgroup A) (x : A) (y : H) :
   (rfl)
 
 /-- The kernel of the restricted pairing is the orthogonal complement. -/
+@[simp]
 theorem pairingRestrict_ker (H : AddSubgroup A) :
     (A.pairingRestrict H).ker = A.orthogonalComplement H := by
   ext x
