@@ -7,7 +7,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Cocharacter
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.CharacterLattice
-public import TauCeti.Algebra.AlgebraicGroup.Torus.Cocharacter
+public import TauCeti.Algebra.AlgebraicGroup.Torus.Cocharacter.Basic
 public import Mathlib.Algebra.Group.Equiv.TypeTags
 public import Mathlib.LinearAlgebra.PerfectPairing.Basic
 
