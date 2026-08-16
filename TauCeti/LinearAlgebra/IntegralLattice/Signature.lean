@@ -278,15 +278,15 @@ theorem form_nondegenerate_iff (e : Isometry L M) :
     LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot, hL, hM, ← e.map_radical]
   exact Submodule.map_eq_bot_iff.symm
 
-/-- Transport the nondegeneracy mixin along an integral-lattice isometry. -/
-theorem isNondegenerate (e : Isometry L M) [L.IsNondegenerate] : M.IsNondegenerate :=
-  ⟨e.form_nondegenerate_iff.mp L.form_nondegenerate⟩
-
 /-- The nondegeneracy mixin is invariant under integral-lattice isometry. -/
 theorem isNondegenerate_iff (e : Isometry L M) : L.IsNondegenerate ↔ M.IsNondegenerate := by
   constructor <;> rintro ⟨h⟩
   · exact ⟨e.form_nondegenerate_iff.mp h⟩
   · exact ⟨e.form_nondegenerate_iff.mpr h⟩
+
+/-- Transport the nondegeneracy mixin along an integral-lattice isometry. -/
+theorem isNondegenerate (e : Isometry L M) [L.IsNondegenerate] : M.IsNondegenerate :=
+  e.isNondegenerate_iff.mp (by infer_instance)
 
 /-- Positive-definiteness is invariant under integral-lattice isometry. -/
 theorem isPosDef_iff (e : Isometry L M) : L.IsPosDef ↔ M.IsPosDef := by
