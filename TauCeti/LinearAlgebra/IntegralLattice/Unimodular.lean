@@ -67,16 +67,10 @@ theorem isUnimodular_iff_dualCarrier_le (L : IntegralLattice V) :
 /-- Unimodularity is equivalent to the embedded carrier filling the dual carrier. -/
 theorem isUnimodular_iff_carrierInDual_eq_top (L : IntegralLattice V) :
     L.IsUnimodular ↔ L.carrierInDual = ⊤ := by
-  rw [L.isUnimodular_iff_dualCarrier_le]
-  constructor
-  · intro h
+  have hcarrier : L.carrierInDual = L.carrier.submoduleOf L.dualCarrier := by
     ext x
-    simp only [L.mem_carrierInDual_iff, Submodule.mem_top, iff_true]
-    exact h x.property
-  · intro h x hx
-    let x' : L.dualCarrier := ⟨x, hx⟩
-    have hx' : x' ∈ L.carrierInDual := by rw [h]; exact Submodule.mem_top
-    exact (L.mem_carrierInDual_iff x').mp hx'
+    exact L.mem_carrierInDual_iff x
+  rw [L.isUnimodular_iff_dualCarrier_le, hcarrier, Submodule.submoduleOf_eq_top]
 
 /-- Unimodularity is equivalent to triviality of the discriminant group. -/
 theorem isUnimodular_iff_subsingleton_discriminantGroup (L : IntegralLattice V) :
@@ -112,15 +106,12 @@ omit [L.IsNondegenerate] in
 private theorem isUnimodular_iff_surjective_inclusion :
     L.IsUnimodular ↔
       Function.Surjective (Submodule.inclusion L.le_dualCarrier) := by
-  rw [L.isUnimodular_iff_dualCarrier_le]
-  constructor
-  · intro h x
-    exact ⟨⟨x, h x.property⟩, Subtype.ext (by rfl)⟩
-  · intro h x hx
-    obtain ⟨y, hy⟩ := h ⟨x, hx⟩
-    have hxy : (y : V) = x := congrArg Subtype.val hy
-    rw [← hxy]
-    exact y.property
+  rw [← LinearMap.range_eq_top, Submodule.range_inclusion]
+  have hrange : Submodule.comap L.dualCarrier.subtype L.carrier = L.carrierInDual := by
+    ext x
+    exact (L.mem_carrierInDual_iff x).symm
+  rw [hrange]
+  exact L.isUnimodular_iff_carrierInDual_eq_top
 
 /-- The restricted integral form factors as carrier inclusion followed by the perfect dual
 pairing. -/
@@ -172,25 +163,21 @@ section Cardinality
 
 variable (L : IntegralLattice V)
 
-/-- The carrier is canonically equivalent to its copy inside the dual carrier. -/
-def carrierEquivCarrierInDual : L ≃ₗ[ℤ] L.carrierInDual where
-  toFun x := ⟨⟨x, L.le_dualCarrier x.property⟩, (L.mem_carrierInDual_iff _).2 x.property⟩
-  invFun x := ⟨x, (L.mem_carrierInDual_iff _).1 x.property⟩
-  left_inv x := Subtype.ext (by rfl)
-  right_inv x := Subtype.ext (by rfl)
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-
 /-- The basis of the embedded carrier obtained from a basis of the original carrier. -/
 noncomputable def carrierInDualBasis {ι : Type v} (e : Basis ι ℤ L) :
     Basis ι ℤ L.carrierInDual :=
-  e.map L.carrierEquivCarrierInDual
+  e.map ((Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm.trans
+    (LinearEquiv.ofEq _ _ (by
+      ext x
+      exact (L.mem_carrierInDual_iff x).symm)))
 
 /-- Embedding `carrierInDualBasis` into the dual carrier recovers the original carrier basis. -/
 @[simp]
 theorem coe_carrierInDualBasis {ι : Type v} (e : Basis ι ℤ L) (i : ι) :
     (L.carrierInDualBasis e i : L.dualCarrier) =
       Submodule.inclusion L.le_dualCarrier (e i) := by
+  rw [carrierInDualBasis, Basis.map_apply, LinearEquiv.trans_apply,
+    LinearEquiv.coe_ofEq_apply]
   rfl
 
 variable [L.IsNondegenerate]
