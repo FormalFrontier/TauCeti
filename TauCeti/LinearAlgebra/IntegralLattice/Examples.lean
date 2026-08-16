@@ -65,34 +65,90 @@ private def affineAOneMatrix : Matrix (Fin 2) (Fin 2) ℤ := fun i j =>
 noncomputable def aOne : IntegralLattice ℚ := by
   exact
   ofGramMatrix (Basis.singleton (Fin 1) ℚ) aOneMatrix (by
-    change aOneMatrix.transpose = aOneMatrix
-    ext i j
+    apply Matrix.IsSymm.ext
+    intro i j
     rfl)
 
 /-- The negative rank-one root lattice `⟨-2⟩`. -/
 noncomputable def negativeAOne : IntegralLattice ℚ := by
   exact
   ofGramMatrix (Basis.singleton (Fin 1) ℚ) negativeAOneMatrix (by
-    change negativeAOneMatrix.transpose = negativeAOneMatrix
-    ext i j
+    apply Matrix.IsSymm.ext
+    intro i j
     rfl)
 
 /-- The hyperbolic plane, with Gram matrix `!![0, 1; 1, 0]`. -/
 noncomputable def hyperbolicPlane : IntegralLattice (Fin 2 → ℚ) := by
   exact
   ofGramMatrix (Pi.basisFun ℚ (Fin 2)) hyperbolicPlaneMatrix (by
-    change hyperbolicPlaneMatrix.transpose = hyperbolicPlaneMatrix
-    ext i j
-    simp only [hyperbolicPlaneMatrix, Matrix.transpose_apply, eq_comm])
+    apply Matrix.IsSymm.ext
+    intro i j
+    simp only [hyperbolicPlaneMatrix, eq_comm])
 
 /-- The degenerate affine `A₁` lattice, with Gram matrix `!![2, -2; -2, 2]`. -/
 noncomputable def affineAOne : IntegralLattice (Fin 2 → ℚ) := by
   exact
   ofGramMatrix (Pi.basisFun ℚ (Fin 2)) affineAOneMatrix (by
-    change affineAOneMatrix.transpose = affineAOneMatrix
-    ext i j
-    simp only [affineAOneMatrix, Matrix.transpose_apply, eq_comm])
+    apply Matrix.IsSymm.ext
+    intro i j
+    simp only [affineAOneMatrix, eq_comm])
 
+private theorem mem_span_singletonBasis_iff (x : ℚ) :
+    x ∈ Submodule.span ℤ (Set.range (Basis.singleton (Fin 1) ℚ)) ↔
+      ∃ z : ℤ, (z : ℚ) = x := by
+  classical
+  rw [Submodule.mem_span_range_iff_exists_fun]
+  constructor
+  · rintro ⟨c, hc⟩
+    exact ⟨c 0, by simpa using hc⟩
+  · rintro ⟨z, rfl⟩
+    exact ⟨fun _ ↦ z, by simp⟩
+
+private theorem mem_span_piBasisFinTwo_iff (x : Fin 2 → ℚ) :
+    x ∈ Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin 2))) ↔
+      ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
+  classical
+  rw [Submodule.mem_span_range_iff_exists_fun]
+  constructor
+  · rintro ⟨c, hc⟩ i
+    fin_cases i
+    · exact ⟨c 0, by simpa [Fin.sum_univ_two] using congr_fun hc 0⟩
+    · exact ⟨c 1, by simpa [Fin.sum_univ_two] using congr_fun hc 1⟩
+  · intro hx
+    choose c hc using hx
+    refine ⟨c, ?_⟩
+    ext i
+    fin_cases i <;> simp [Fin.sum_univ_two, hc]
+
+/-- Membership in the `A₁` carrier means being an integer inside `ℚ`. -/
+theorem mem_aOne_carrier_iff (x : ℚ) :
+    x ∈ aOne.carrier ↔ ∃ z : ℤ, (z : ℚ) = x := by
+  classical
+  rw [aOne, ofGramMatrix_carrier]
+  exact mem_span_singletonBasis_iff x
+
+/-- Membership in the negative `A₁` carrier means being an integer inside `ℚ`. -/
+theorem mem_negativeAOne_carrier_iff (x : ℚ) :
+    x ∈ negativeAOne.carrier ↔ ∃ z : ℤ, (z : ℚ) = x := by
+  classical
+  rw [negativeAOne, ofGramMatrix_carrier]
+  exact mem_span_singletonBasis_iff x
+
+/-- A vector belongs to the hyperbolic-plane carrier exactly when both coordinates are integers. -/
+theorem mem_hyperbolicPlane_carrier_iff (x : Fin 2 → ℚ) :
+    x ∈ hyperbolicPlane.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
+  classical
+  rw [hyperbolicPlane, ofGramMatrix_carrier]
+  exact mem_span_piBasisFinTwo_iff x
+
+/-- A vector belongs to the affine `A₁` carrier exactly when both coordinates are integers. -/
+theorem mem_affineAOne_carrier_iff (x : Fin 2 → ℚ) :
+    x ∈ affineAOne.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
+  classical
+  rw [affineAOne, ofGramMatrix_carrier]
+  exact mem_span_piBasisFinTwo_iff x
+
+/-- The `A₁` form evaluates as twice the product of its two inputs. -/
 @[simp]
 theorem aOne_form_apply (x y : ℚ) : aOne.form x y = 2 * x * y := by
   let _ : DecidableEq (Fin 1) := Classical.decEq _
@@ -103,6 +159,7 @@ theorem aOne_form_apply (x y : ℚ) : aOne.form x y = 2 * x * y := by
   simp only [aOneMatrix, map_ofNat]
   simp [mul_comm]
 
+/-- The negative `A₁` form evaluates as negative twice the product of its two inputs. -/
 @[simp]
 theorem negativeAOne_form_apply (x y : ℚ) : negativeAOne.form x y = -2 * x * y := by
   let _ : DecidableEq (Fin 1) := Classical.decEq _
@@ -113,6 +170,7 @@ theorem negativeAOne_form_apply (x y : ℚ) : negativeAOne.form x y = -2 * x * y
   simp only [negativeAOneMatrix, map_neg, map_ofNat]
   simp [mul_comm]
 
+/-- The hyperbolic-plane form pairs opposite coordinates. -/
 @[simp]
 theorem hyperbolicPlane_form_apply (x y : Fin 2 → ℚ) :
     hyperbolicPlane.form x y = x 0 * y 1 + x 1 * y 0 := by
@@ -122,6 +180,7 @@ theorem hyperbolicPlane_form_apply (x y : Fin 2 → ℚ) :
   rw [Matrix.toBilin_apply]
   simp [Fin.sum_univ_two, hyperbolicPlaneMatrix]
 
+/-- The affine `A₁` form is twice the product of the coordinate differences. -/
 @[simp]
 theorem affineAOne_form_apply (x y : Fin 2 → ℚ) :
     affineAOne.form x y = 2 * (x 0 - x 1) * (y 0 - y 1) := by
@@ -331,31 +390,15 @@ theorem affineAOneQuotientEquiv_mk (x : Fin 2 → ℚ) :
     affineAOneQuotientEquiv (Submodule.Quotient.mk x) = x 0 - x 1 := by
   simp [affineAOneQuotientEquiv]
 
-private theorem one_mem_aOne_carrier : (1 : ℚ) ∈ aOne.carrier := by
-  classical
-  rw [aOne, ofGramMatrix_carrier]
-  apply Submodule.subset_span
-  exact ⟨0, by simp⟩
-
-private theorem firstBasis_mem_affineAOne_carrier :
-    ![1, 0] ∈ affineAOne.carrier := by
-  classical
-  rw [affineAOne, ofGramMatrix_carrier]
-  apply Submodule.subset_span
-  exact ⟨0, by ext i; fin_cases i <;> simp⟩
-
 private theorem affineAOneDifference_mem_carrier {x : Fin 2 → ℚ}
     (hx : x ∈ affineAOne.carrier) : affineAOneDifference x ∈ aOne.carrier := by
-  classical
-  rw [affineAOne, ofGramMatrix_carrier] at hx
-  have hle : Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin 2))) ≤
-      aOne.carrier.comap (affineAOneDifference.restrictScalars ℤ) := by
-    rw [Submodule.span_le]
-    rintro _ ⟨i, rfl⟩
-    fin_cases i
-    · simpa [affineAOneDifference] using one_mem_aOne_carrier
-    · simpa [affineAOneDifference] using aOne.carrier.neg_mem one_mem_aOne_carrier
-  exact hle hx
+  rw [mem_affineAOne_carrier_iff] at hx
+  rw [mem_aOne_carrier_iff]
+  obtain ⟨z₀, hz₀⟩ := hx 0
+  obtain ⟨z₁, hz₁⟩ := hx 1
+  refine ⟨z₀ - z₁, ?_⟩
+  simp only [Int.cast_sub, affineAOneDifference_apply]
+  rw [hz₀, hz₁]
 
 private def affineAOneSection : ℚ →ₗ[ℚ] (Fin 2 → ℚ) :=
   LinearMap.single ℚ (fun _ : Fin 2 ↦ ℚ) 0
@@ -367,15 +410,13 @@ private theorem affineAOneSection_apply (x : ℚ) : affineAOneSection x = ![x, 0
 
 private theorem affineAOneSection_mem_carrier {x : ℚ} (hx : x ∈ aOne.carrier) :
     affineAOneSection x ∈ affineAOne.carrier := by
-  classical
-  rw [aOne, ofGramMatrix_carrier] at hx
-  have hle : Submodule.span ℤ (Set.range (Basis.singleton (Fin 1) ℚ)) ≤
-      affineAOne.carrier.comap (affineAOneSection.restrictScalars ℤ) := by
-    rw [Submodule.span_le]
-    rintro _ ⟨i, rfl⟩
-    fin_cases i
-    simpa using firstBasis_mem_affineAOne_carrier
-  exact hle hx
+  rw [mem_aOne_carrier_iff] at hx
+  rw [mem_affineAOne_carrier_iff]
+  obtain ⟨z, hz⟩ := hx
+  intro i
+  fin_cases i
+  · exact ⟨z, by simpa using hz⟩
+  · exact ⟨0, by simp⟩
 
 /-- The radical quotient of affine `A₁` is isometric, as an integral lattice, to `A₁`. -/
 noncomputable def affineAOneRadicalQuotientIsometry :
@@ -388,11 +429,16 @@ noncomputable def affineAOneRadicalQuotientIsometry :
         | _ x =>
           induction y using Submodule.Quotient.induction_on with
           | _ y =>
-            change aOne.form (affineAOneQuotientEquiv (Submodule.Quotient.mk x))
-                (affineAOneQuotientEquiv (Submodule.Quotient.mk y)) = _
-            rw [affineAOneQuotientEquiv_mk, affineAOneQuotientEquiv_mk,
-              aOne_form_apply, radicalQuotient_form, radicalQuotientForm_mk,
-              affineAOne_form_apply] }
+            calc
+              _ = aOne.form (affineAOneQuotientEquiv (Submodule.Quotient.mk x))
+                  (affineAOneQuotientEquiv (Submodule.Quotient.mk y)) := rfl
+              _ = aOne.form (x 0 - x 1) (y 0 - y 1) := by
+                rw [affineAOneQuotientEquiv_mk, affineAOneQuotientEquiv_mk]
+              _ = affineAOne.form x y := by
+                rw [aOne_form_apply, affineAOne_form_apply]
+              _ = affineAOne.radicalQuotient.form (Submodule.Quotient.mk x)
+                  (Submodule.Quotient.mk y) := by
+                rw [radicalQuotient_form, radicalQuotientForm_mk] }
   map_carrier := by
     ext y
     constructor
@@ -407,12 +453,6 @@ noncomputable def affineAOneRadicalQuotientIsometry :
       · rw [radicalQuotient_carrier, mem_radicalQuotientCarrier_iff]
         exact ⟨affineAOneSection y, affineAOneSection_mem_carrier hy, rfl⟩
       · simp
-
-/-- The affine `A₁` radical quotient has the positive rank-one norm under its canonical
-identification. -/
-theorem affineAOneRadicalQuotientIsometry_norm (x : (Fin 2 → ℚ) ⧸ affineAOne.radical) :
-    aOne.norm (affineAOneRadicalQuotientIsometry x) = affineAOne.radicalQuotient.norm x := by
-  rw [norm_apply, norm_apply, Isometry.map_app]
 
 end IntegralLattice
 
