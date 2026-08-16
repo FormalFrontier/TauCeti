@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Homology.HomologicalComplexLimits
-public import TauCeti.LinearAlgebra.Submodule.DirectedUnion
+public import TauCeti.Algebra.Category.ModuleCat.DirectedUnion
 public import TauCeti.LowDimTopology.Plumbing.Filtration.Basic
 
 /-!
@@ -61,19 +61,14 @@ noncomputable def latticeWeightSublevelToChainComplex (P : PlumbingGraph V)
         (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q)) ≫
       eqToHom (P.latticeChainComplex_X k q).symm)
     (fun q ↦ by
-      rw [P.latticeWeightSublevelComplex_d k N q, P.latticeChainComplex_d_eq k q]
+      rw [P.latticeWeightSublevelComplex_d k N q, P.latticeChainComplex_d k q]
       simp only [Category.assoc]
       apply (cancel_epi (eqToHom (P.latticeWeightSublevelComplex_X k N (q + 1)))).2
       simp only [← Category.assoc]
       apply (cancel_mono (eqToHom (P.latticeChainComplex_X k q).symm)).2
       simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
       rw [← ModuleCat.ofHom_comp, ← ModuleCat.ofHom_comp]
-      apply congrArg ModuleCat.ofHom
-      apply LinearMap.ext
-      intro c
-      apply Subtype.ext
-      simp only [LinearMap.comp_apply, Submodule.coe_inclusion,
-        latticeDifferentialDegree_apply, latticeDifferentialWeightDegree_apply])
+      exact congrArg ModuleCat.ofHom (P.latticeDifferentialDegree_comp_inclusion k N q))
 
 /-- The component of the sublevel-to-full-complex map is inclusion of the corresponding filtered
 degree part. -/
@@ -87,8 +82,8 @@ theorem latticeWeightSublevelToChainComplex_f (P : PlumbingGraph V)
   unfold latticeWeightSublevelToChainComplex
   rfl
 
-/-- Forgetting the submodule wrappers, the map from a weight sublevel to the full complex does not
-change a chain. -/
+/-- Applied to a chain, the sublevel-to-full-complex map is the inclusion of the filtered degree
+part into the cubical-degree part. -/
 @[simp]
 theorem latticeWeightSublevelToChainComplex_apply (P : PlumbingGraph V)
     (k : P.characteristicVectors) (N : ℤ) (q : ℕ)
@@ -155,119 +150,24 @@ theorem latticeWeightSublevelCocone_ι_app (P : PlumbingGraph V)
       eqToHom (P.latticeWeightSublevelFunctor_obj k N) ≫
         P.latticeWeightSublevelToChainComplex k N ≫
           eqToHom (P.latticeWeightSublevelCocone_pt k).symm :=
-  (rfl)
+  by
+    -- Proof irrelevance makes the final self-transport the identity, and composition with that
+    -- identity reduces through the `HomologicalComplex` and `ModuleCat` wrappers.
+    rfl
 
-/- In a fixed cubical degree, the characteristic-weight submodules and their inclusions form a
-diagram of modules indexed by `ℤ`. -/
 private noncomputable abbrev latticeWeightDegreeFunctor (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) : Functor ℤ (ModuleCat PlumbingCoefficient) where
-  obj N := ModuleCat.of PlumbingCoefficient
-    (PlumbingChain.characteristicWeightDegreePart P k N q)
-  map f := ModuleCat.ofHom (Submodule.inclusion
-    (PlumbingChain.characteristicWeightDegreePart_mono P k (leOfHom f) q))
-  map_id N := by
-    apply ModuleCat.hom_ext
-    apply LinearMap.ext
-    intro c
-    apply Subtype.ext
-    rfl
-  map_comp f g := by
-    apply ModuleCat.hom_ext
-    apply LinearMap.ext
-    intro c
-    apply Subtype.ext
-    rfl
-
-/- The direct degreewise cocone from all filtered degree parts to the unfiltered degree part. -/
-private noncomputable def latticeWeightDegreeCocone (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) : Cocone (P.latticeWeightDegreeFunctor k q) :=
-  Cocone.mk (ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q))
-    { app := fun N ↦ ModuleCat.ofHom (Submodule.inclusion
-        (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q))
-      naturality := fun _ _ _ ↦ by
-        apply ModuleCat.hom_ext
-        apply LinearMap.ext
-        intro c
-        apply Subtype.ext
-        rfl }
-
-private theorem directed_characteristicWeightDegreePart (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) :
-    Directed (· ≤ ·)
-      (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q) := by
-  intro N M
-  exact ⟨max N M,
-    PlumbingChain.characteristicWeightDegreePart_mono P k (le_max_left N M) q,
-    PlumbingChain.characteristicWeightDegreePart_mono P k (le_max_right N M) q⟩
-
-private theorem latticeWeightDegreeCocone_maps_compatible (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) (s : Cocone (P.latticeWeightDegreeFunctor k q))
-    (N M : ℤ)
-    (hNM : PlumbingChain.characteristicWeightDegreePart P k N q ≤
-      PlumbingChain.characteristicWeightDegreePart P k M q) :
-    (s.ι.app N).hom = (s.ι.app M).hom.comp (Submodule.inclusion hNM) := by
-  apply LinearMap.ext
-  intro (c : PlumbingChain.characteristicWeightDegreePart P k N q)
-  have hNL : N ≤ max N M := le_max_left N M
-  have hML : M ≤ max N M := le_max_right N M
-  have hN : ModuleCat.ofHom (Submodule.inclusion
-      (PlumbingChain.characteristicWeightDegreePart_mono P k hNL q)) ≫
-        s.ι.app (max N M) = s.ι.app N := by
-    simpa only [latticeWeightDegreeFunctor] using s.w (homOfLE hNL)
-  have hM : ModuleCat.ofHom (Submodule.inclusion
-      (PlumbingChain.characteristicWeightDegreePart_mono P k hML q)) ≫
-        s.ι.app (max N M) = s.ι.app M := by
-    simpa only [latticeWeightDegreeFunctor] using s.w (homOfLE hML)
-  have hN' : (s.ι.app (max N M)) (Submodule.inclusion
-      (PlumbingChain.characteristicWeightDegreePart_mono P k hNL q) c) =
-      s.ι.app N c := by
-    simpa only [ModuleCat.hom_comp, ConcreteCategory.hom_ofHom, LinearMap.coe_comp,
-      Function.comp_apply] using LinearMap.congr_fun (congrArg ModuleCat.Hom.hom hN) c
-  have hM' : (s.ι.app (max N M)) (Submodule.inclusion
-      (PlumbingChain.characteristicWeightDegreePart_mono P k hML q)
-        (Submodule.inclusion hNM c)) =
-      s.ι.app M (Submodule.inclusion hNM c) := by
-    simpa only [ModuleCat.hom_comp, ConcreteCategory.hom_ofHom, LinearMap.coe_comp,
-      Function.comp_apply] using LinearMap.congr_fun (congrArg ModuleCat.Hom.hom hM)
-        (Submodule.inclusion hNM c)
-  calc
-    (s.ι.app N).hom c =
-        (s.ι.app (max N M)).hom (Submodule.inclusion
-          (PlumbingChain.characteristicWeightDegreePart_mono P k hNL q) c) := hN'.symm
-    _ = (s.ι.app (max N M)).hom (Submodule.inclusion
-          (PlumbingChain.characteristicWeightDegreePart_mono P k hML q)
-            (Submodule.inclusion hNM c)) := by
-      congr 1
-    _ = (s.ι.app M).hom (Submodule.inclusion hNM c) := hM'
-
-/- In each cubical degree, the unfiltered chain group is the colimit of its
-characteristic-weight submodules. -/
-private noncomputable def latticeWeightDegreeCoconeIsColimit (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) :
-    IsColimit (P.latticeWeightDegreeCocone k q) where
-  desc s := ModuleCat.ofHom (Submodule.iSupLift
+    (k : P.characteristicVectors) (q : ℕ) : Functor ℤ (ModuleCat PlumbingCoefficient) :=
+  ModuleCat.submoduleFunctor
     (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
-    (P.directed_characteristicWeightDegreePart k q)
-    (fun N ↦ (s.ι.app N).hom)
-    (P.latticeWeightDegreeCocone_maps_compatible k q s)
+    (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
+
+private noncomputable abbrev latticeWeightDegreeCocone (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) : Cocone (P.latticeWeightDegreeFunctor k q) :=
+  ModuleCat.submoduleCocone
+    (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
+    (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
     (PlumbingChain.degreePart V q)
-    (PlumbingChain.iSup_characteristicWeightDegreePart_eq_degreePart P k q).ge)
-  fac s N := by
-    apply ModuleCat.hom_ext
-    apply LinearMap.ext
-    intro c
-    exact Submodule.iSupLift_inclusion
-      (dir := P.directed_characteristicWeightDegreePart k q)
-      (hf := P.latticeWeightDegreeCocone_maps_compatible k q s) c
-      (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q)
-  uniq s g hg := by
-    apply ModuleCat.hom_ext
-    apply Submodule.iSupLift_unique
-      (dir := P.directed_characteristicWeightDegreePart k q)
-      (hf := P.latticeWeightDegreeCocone_maps_compatible k q s)
-    intro N c _
-    have hN := hg N
-    exact LinearMap.congr_fun (congrArg ModuleCat.Hom.hom hN) c
+    (PlumbingChain.iSup_characteristicWeightDegreePart_eq_degreePart P k q)
 
 private theorem latticeWeightSublevelEval_obj_eq (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
@@ -333,7 +233,7 @@ private noncomputable def latticeWeightSublevelEvalCoconeIso (P : PlumbingGraph 
       NatIso.ofComponents_inv_app, eqToIso.inv, HomologicalComplex.eval_map,
       HomologicalComplex.comp_f, HomologicalComplex.eqToHom_f,
       latticeWeightSublevelToChainComplex_f]
-    dsimp only [latticeWeightDegreeCocone, eqToIso]
+    dsimp only [latticeWeightDegreeCocone, ModuleCat.submoduleCocone, eqToIso]
     simp only [← Category.assoc]
     refine (comp_eqToHom_heq _ _).trans ?_
     refine (comp_eqToHom_heq _ _).trans ?_
@@ -344,11 +244,7 @@ private noncomputable def latticeWeightSublevelEvalCoconeIso (P : PlumbingGraph 
       ModuleCat.ofHom (Submodule.inclusion
         (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q))
     have hsource : (P.latticeWeightDegreeFunctor k q).obj N =
-        (P.latticeWeightDegreeFunctor k q).obj N :=
-      (P.latticeWeightSublevelEval_obj_eq k q N).symm.trans
-        ((congrArg (fun C : ChainComplex (ModuleCat PlumbingCoefficient) ℕ ↦ C.X q)
-          (P.latticeWeightSublevelFunctor_obj k N)).trans
-            (P.latticeWeightSublevelComplex_X k N q))
+        (P.latticeWeightDegreeFunctor k q).obj N := rfl
     simpa only [eqToHom_trans, inc] using eqToHom_comp_heq inc hsource
 
 /-- The untruncated lattice chain complex is the colimit of its characteristic-weight sublevel
@@ -361,7 +257,11 @@ noncomputable def latticeWeightSublevelCoconeIsColimit (P : PlumbingGraph V)
         |>.mapCocone (P.latticeWeightSublevelCocone k))
       (P.latticeWeightDegreeCocone k q)
       (P.latticeWeightSublevelEvalCoconeIso k q)).symm
-        (P.latticeWeightDegreeCoconeIsColimit k q)
+        (ModuleCat.submoduleCoconeIsColimit
+          (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
+          (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
+          (PlumbingChain.degreePart V q)
+          (PlumbingChain.iSup_characteristicWeightDegreePart_eq_degreePart P k q))
 
 end PlumbingGraph
 
