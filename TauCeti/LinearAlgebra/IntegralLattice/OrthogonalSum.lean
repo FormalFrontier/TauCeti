@@ -6,18 +6,19 @@ module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Even
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
+public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
 import Mathlib.LinearAlgebra.Basis.Prod
 
 /-!
 # Orthogonal sums of integral lattices
 
 The orthogonal sum has product carrier and block-diagonal form. This file constructs the lattice,
-its canonical carrier maps and product bases, and proves the currently available invariant laws:
-rank is additive, Gram matrices are block diagonal, determinant and discriminant are
-multiplicative, and evenness and nondegeneracy are componentwise.
+its canonical carrier maps and product bases, and proves several invariant laws: rank is additive,
+Gram matrices are block diagonal, determinant and discriminant are multiplicative, and evenness
+and nondegeneracy are componentwise. Orthogonal sums are functorial under lattice isometries and
+are associative and commutative up to canonical lattice isometry.
 
-Associativity, commutativity, and functoriality as lattice isometries, together with signature
-additivity, belong after the lattice-isometry and signature APIs targeted by the same roadmap.
+Signature additivity remains to be developed with the signature API targeted by the same roadmap.
 
 ## Main definitions
 
@@ -25,6 +26,9 @@ additivity, belong after the lattice-isometry and signature APIs targeted by the
 * `TauCeti.IntegralLattice.orthogonalSum`: the orthogonal sum lattice.
 * `TauCeti.IntegralLattice.orthogonalSumCarrierEquiv`: the carrier-product equivalence.
 * `TauCeti.IntegralLattice.orthogonalSumBasis`: the product of two carrier bases.
+* `TauCeti.IntegralLattice.Isometry.orthogonalSum`: the product of two lattice isometries.
+* `TauCeti.IntegralLattice.orthogonalSumComm`: the canonical commutativity isometry.
+* `TauCeti.IntegralLattice.orthogonalSumAssoc`: the canonical associativity isometry.
 
 ## References
 
@@ -38,7 +42,7 @@ open Module
 
 namespace TauCeti.IntegralLattice
 
-universe u v w x
+universe u v w x y z
 
 variable {V : Type u} {W : Type v}
 variable [AddCommGroup V] [Module ℚ V] [AddCommGroup W] [Module ℚ W]
@@ -330,5 +334,172 @@ theorem nondegenerate_orthogonalSum_iff (L : IntegralLattice V) (M : IntegralLat
     (L.orthogonalSum M).form.Nondegenerate ↔
       L.form.Nondegenerate ∧ M.form.Nondegenerate := by
   rw [orthogonalSum_form, nondegenerate_orthogonalSumForm_iff]
+
+/-! ## Isometries of orthogonal sums -/
+
+section Isometry
+
+variable {X : Type w} {Y : Type x} {U : Type y} {Z : Type z}
+variable [AddCommGroup X] [Module ℚ X] [AddCommGroup Y] [Module ℚ Y]
+variable [AddCommGroup U] [Module ℚ U] [AddCommGroup Z] [Module ℚ Z]
+
+namespace Isometry
+
+variable {L : IntegralLattice V} {M : IntegralLattice W}
+variable {L' : IntegralLattice X} {M' : IntegralLattice Y}
+
+/-- The orthogonal sum of two integral-lattice isometries. -/
+def orthogonalSum (f : Isometry L L') (g : Isometry M M') :
+    Isometry (L.orthogonalSum M) (L'.orthogonalSum M') where
+  toIsometryEquiv :=
+    { toLinearEquiv := (f : V ≃ₗ[ℚ] X).prodCongr (g : W ≃ₗ[ℚ] Y)
+      map_app' := by
+        intro p q
+        -- Expose the product equivalence once so the componentwise form equations apply.
+        change L'.form (f p.1) (f q.1) + M'.form (g p.2) (g q.2) =
+          L.form p.1 q.1 + M.form p.2 q.2
+        rw [f.map_app, g.map_app] }
+  map_carrier := by
+    ext p
+    constructor
+    · rintro ⟨q, hq, rfl⟩
+      exact ⟨(f.apply_mem_carrier_iff q.1).2 hq.1,
+        (g.apply_mem_carrier_iff q.2).2 hq.2⟩
+    · intro hp
+      refine ⟨(f.symm p.1, g.symm p.2), ?_, ?_⟩
+      · exact ⟨(f.symm.apply_mem_carrier_iff p.1).2 hp.1,
+          (g.symm.apply_mem_carrier_iff p.2).2 hp.2⟩
+      · -- The restricted product equivalence has the same componentwise action as the ambient one.
+        change (f (f.symm p.1), g (g.symm p.2)) = p
+        simp
+
+/-- The product isometry acts componentwise on the ambient product. -/
+@[simp]
+theorem orthogonalSum_apply (f : Isometry L L') (g : Isometry M M') (p : V × W) :
+    f.orthogonalSum g p = (f p.1, g p.2) :=
+  by rw [orthogonalSum]; rfl
+
+/-- The product of identity isometries is the identity of the orthogonal sum. -/
+@[simp]
+theorem orthogonalSum_refl (L : IntegralLattice V) (M : IntegralLattice W) :
+    (Isometry.refl L).orthogonalSum (Isometry.refl M) =
+      Isometry.refl (L.orthogonalSum M) := by
+  apply Isometry.ext
+  intro p
+  simp only [orthogonalSum_apply, Isometry.refl_apply]
+
+/-- The inverse of a product isometry is the product of the inverse isometries. -/
+@[simp]
+theorem orthogonalSum_symm (f : Isometry L L') (g : Isometry M M') :
+    (f.orthogonalSum g).symm = f.symm.orthogonalSum g.symm := by
+  apply Isometry.ext
+  intro p
+  apply (f.orthogonalSum g).injective
+  -- `Function.Injective` exposes the underlying linear equivalence; return to the isometry
+  -- coercion so its inverse law and the componentwise application lemma can rewrite.
+  change (f.orthogonalSum g) ((f.orthogonalSum g).symm p) =
+    (f.orthogonalSum g) (f.symm.orthogonalSum g.symm p)
+  rw [Isometry.apply_symm_apply, orthogonalSum_apply, orthogonalSum_apply]
+  simp
+
+/-- Product isometries preserve composition componentwise. -/
+@[simp]
+theorem orthogonalSum_trans {L'' : IntegralLattice U} {M'' : IntegralLattice Z}
+    (f : Isometry L L') (g : Isometry M M')
+    (f' : Isometry L' L'') (g' : Isometry M' M'') :
+    (f.orthogonalSum g).trans (f'.orthogonalSum g') =
+      (f.trans f').orthogonalSum (g.trans g') := by
+  apply Isometry.ext
+  intro p
+  simp only [Isometry.trans_apply, orthogonalSum_apply]
+
+end Isometry
+
+/-- Orthogonal sum is commutative up to the canonical factor-swapping lattice isometry. -/
+def orthogonalSumComm (L : IntegralLattice V) (M : IntegralLattice W) :
+    Isometry (L.orthogonalSum M) (M.orthogonalSum L) where
+  toIsometryEquiv :=
+    { toLinearEquiv := LinearEquiv.prodComm ℚ V W
+      map_app' := by
+        intro p q
+        -- Expose the swap once so form preservation reduces to commutativity of addition.
+        change M.form p.2 q.2 + L.form p.1 q.1 =
+          L.form p.1 q.1 + M.form p.2 q.2
+        rw [add_comm] }
+  map_carrier := by
+    ext p
+    constructor
+    · rintro ⟨q, hq, rfl⟩
+      exact ⟨hq.2, hq.1⟩
+    · intro hp
+      exact ⟨(p.2, p.1), ⟨hp.2, hp.1⟩, rfl⟩
+
+/-- The commutativity isometry swaps the two ambient components. -/
+@[simp]
+theorem orthogonalSumComm_apply (L : IntegralLattice V) (M : IntegralLattice W) (p : V × W) :
+    orthogonalSumComm L M p = (p.2, p.1) :=
+  by rw [orthogonalSumComm]; rfl
+
+/-- Swapping the two factors twice is the identity lattice isometry. -/
+@[simp]
+theorem orthogonalSumComm_trans (L : IntegralLattice V) (M : IntegralLattice W) :
+    (orthogonalSumComm L M).trans (orthogonalSumComm M L) = Isometry.refl _ := by
+  apply Isometry.ext
+  intro p
+  simp only [Isometry.trans_apply, orthogonalSumComm_apply, Isometry.refl_apply]
+
+/-- The commutativity isometry is natural with respect to isometries of both factors. -/
+theorem orthogonalSumComm_naturality {L : IntegralLattice V} {M : IntegralLattice W}
+    {L' : IntegralLattice X} {M' : IntegralLattice Y}
+    (f : Isometry L L') (g : Isometry M M') :
+    (f.orthogonalSum g).trans (orthogonalSumComm L' M') =
+      (orthogonalSumComm L M).trans (g.orthogonalSum f) := by
+  apply Isometry.ext
+  intro p
+  simp only [Isometry.trans_apply, Isometry.orthogonalSum_apply, orthogonalSumComm_apply]
+
+/-- Orthogonal sum is associative up to the canonical reassociation lattice isometry. -/
+def orthogonalSumAssoc (L : IntegralLattice V) (M : IntegralLattice W)
+    (N : IntegralLattice U) :
+    Isometry ((L.orthogonalSum M).orthogonalSum N)
+      (L.orthogonalSum (M.orthogonalSum N)) where
+  toIsometryEquiv :=
+    { toLinearEquiv := LinearEquiv.prodAssoc ℚ V W U
+      map_app' := by
+        intro p q
+        -- Expose reassociation once so form preservation is exactly associativity of addition.
+        change L.form p.1.1 q.1.1 +
+            (M.form p.1.2 q.1.2 + N.form p.2 q.2) =
+          (L.form p.1.1 q.1.1 + M.form p.1.2 q.1.2) + N.form p.2 q.2
+        rw [add_assoc] }
+  map_carrier := by
+    ext p
+    constructor
+    · rintro ⟨q, hq, rfl⟩
+      exact ⟨hq.1.1, hq.1.2, hq.2⟩
+    · intro hp
+      exact ⟨((p.1, p.2.1), p.2.2), ⟨⟨hp.1, hp.2.1⟩, hp.2.2⟩, rfl⟩
+
+/-- The associativity isometry reassociates the three ambient components. -/
+@[simp]
+theorem orthogonalSumAssoc_apply (L : IntegralLattice V) (M : IntegralLattice W)
+    (N : IntegralLattice U) (p : (V × W) × U) :
+    orthogonalSumAssoc L M N p = (p.1.1, (p.1.2, p.2)) :=
+  by rw [orthogonalSumAssoc]; rfl
+
+/-- The inverse associativity isometry restores left-associated products. -/
+@[simp]
+theorem orthogonalSumAssoc_symm_apply (L : IntegralLattice V) (M : IntegralLattice W)
+    (N : IntegralLattice U) (p : V × (W × U)) :
+    (orthogonalSumAssoc L M N).symm p = ((p.1, p.2.1), p.2.2) :=
+  by
+    apply (orthogonalSumAssoc L M N).injective
+    -- `Function.Injective` exposes the underlying linear equivalence; return to the isometry
+    -- coercion so its inverse law and the public application lemma can rewrite.
+    change orthogonalSumAssoc L M N ((orthogonalSumAssoc L M N).symm p) =
+      orthogonalSumAssoc L M N ((p.1, p.2.1), p.2.2)
+    rw [Isometry.apply_symm_apply, orthogonalSumAssoc_apply]
+
+end Isometry
 
 end TauCeti.IntegralLattice
