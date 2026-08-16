@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.FreeModule.Finite.CardQuotient
-public import TauCeti.LinearAlgebra.IntegralLattice.DiscriminantGroup
+public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Group
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
 public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
 

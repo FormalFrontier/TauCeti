@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.LinearAlgebra.IntegralLattice.DiscriminantGroup
+public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Group
 
 /-!
 # Intermediate carriers of integral lattices

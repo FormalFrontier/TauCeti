@@ -49,6 +49,10 @@ Lie-theoretic hypotheses and transports the identity to the root subgroups in
   form.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_conj_of_lie_eq'`: the conjugation
   form with that point written out.
+* `TauCeti.UniversalEnvelopingAlgebra.commutatorElement_kostantRootSubgroupPoints_of_lie_eq`:
+  the element-commutator form.
+* `TauCeti.UniversalEnvelopingAlgebra.commutatorElement_kostantRootSubgroupPoints_of_lie_eq'`:
+  the element-commutator form with the third point written out.
 
 ## References
 
@@ -60,6 +64,7 @@ Lie-theoretic hypotheses and transports the identity to the root subgroups in
 public section
 
 open TensorProduct WithConv
+open scoped commutatorElement
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
@@ -230,5 +235,46 @@ theorem kostantRootSubgroupPoints_conj_of_lie_eq' {i j k : ι} {c : ℤ}
   kostantRootSubgroupPoints_conj_of_lie_eq e h ρ M hM hij hik hjk hi hj hk f g _
     (congrArg Multiplicative.toAdd
       ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply _))
+
+/-- **The canonical class-two Chevalley commutator relation for Kostant root-subgroup
+actions.** Suppose `⁅eᵢ, eⱼ⁆ = c • eₖ`, with `eₖ` commuting with `eᵢ` and `eⱼ`, and let `z`
+have additive parameter `c` times the product of the parameters of `f` and `g`. Then
+`⁅xᵢ(f), xⱼ(g)⁆ = xₖ(z)`. -/
+theorem commutatorElement_kostantRootSubgroupPoints_of_lie_eq {i j k : ι} {c : ℤ}
+    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
+    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
+    (hk : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))))
+    (f g z : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A))
+    (hz : Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) z) =
+      (c : A) * (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f) *
+        Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) g))) :
+    ⁅kostantRootSubgroupPoints e h ρ M hM i hi f,
+        kostantRootSubgroupPoints e h ρ M hM j hj g⁆ =
+      kostantRootSubgroupPoints e h ρ M hM k hk z := by
+  rw [commutatorElement_def,
+    kostantRootSubgroupPoints_conj_of_lie_eq e h ρ M hM hij hik hjk hi hj hk f g z hz]
+  rw [(commute_kostantRootSubgroupPoints e h ρ M hM hjk hj hk g z).eq]
+  simp
+
+/-- The canonical class-two Chevalley commutator relation with the third `𝔾ₐ`-point written
+out at parameter `c` times the product of the parameters of `f` and `g`. -/
+theorem commutatorElement_kostantRootSubgroupPoints_of_lie_eq' {i j k : ι} {c : ℤ}
+    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
+    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
+    (hk : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))))
+    (f g : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    ⁅kostantRootSubgroupPoints e h ρ M hM i hi f,
+        kostantRootSubgroupPoints e h ρ M hM j hj g⁆ =
+      kostantRootSubgroupPoints e h ρ M hM k hk
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+          (Multiplicative.ofAdd ((c : A) *
+            (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f) *
+              Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) g))))) :=
+  commutatorElement_kostantRootSubgroupPoints_of_lie_eq
+    e h ρ M hM hij hik hjk hi hj hk f g _
+      (congrArg Multiplicative.toAdd
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply _))
 
 end TauCeti.UniversalEnvelopingAlgebra

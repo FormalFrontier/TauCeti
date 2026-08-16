@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
 public import TauCeti.LinearAlgebra.IntegralLattice.Dual.Basic
+import TauCeti.LinearAlgebra.IntegralLattice.Dual.Finiteness
 
 /-!
 # Discriminant groups of integral lattices
@@ -30,6 +31,8 @@ equivalence of discriminant groups.  The construction respects identity, inverse
 * `TauCeti.IntegralLattice.carrierInDual`: the original carrier inside its dual carrier.
 * `TauCeti.IntegralLattice.DiscriminantGroup`: the quotient `Lᵛ / L`.
 * `TauCeti.IntegralLattice.instFiniteDiscriminantGroup`: finiteness in the nondegenerate case.
+* `TauCeti.IntegralLattice.finite_discriminantGroup_iff_nondegenerate`: finiteness holds exactly
+  in the nondegenerate case.
 * `TauCeti.IntegralLattice.Isometry.discriminantGroupEquiv`: the induced equivalence of
   discriminant groups.
 
@@ -106,6 +109,21 @@ noncomputable instance instFiniteDiscriminantGroup (L : IntegralLattice V) [L.Is
     Finite L.DiscriminantGroup := by
   apply Submodule.finiteQuotientOfFreeOfRankEq L.carrierInDual
   rw [L.finrank_carrierInDual, L.finrank_carrier, L.finrank_dualCarrier]
+
+/-- The discriminant group is finite exactly when the lattice form is nondegenerate. -/
+theorem finite_discriminantGroup_iff_nondegenerate (L : IntegralLattice V) :
+    Finite L.DiscriminantGroup ↔ L.form.Nondegenerate := by
+  constructor
+  · intro hfinite
+    let : Finite L.DiscriminantGroup := hfinite
+    let : Module.Finite ℤ L.carrierInDual :=
+      Module.Finite.equiv (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm
+    let : Module.Finite ℤ L.dualCarrier :=
+      Module.Finite.of_submodule_quotient L.carrierInDual
+    exact L.nondegenerate_of_moduleFinite_dualCarrier
+  · intro hnondegenerate
+    let : L.IsNondegenerate := ⟨hnondegenerate⟩
+    infer_instance
 
 namespace Isometry
 
