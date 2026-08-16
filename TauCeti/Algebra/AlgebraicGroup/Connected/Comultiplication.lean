@@ -10,8 +10,10 @@ public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
 import TauCeti.Algebra.AlgebraicGroup.Connected.Translation
 import TauCeti.AlgebraicGeometry.AugmentationPoint.ConnectedComponent
 import TauCeti.RingTheory.FiniteType.PointSeparation
+public import TauCeti.Topology.NoetherianSpace.ConnectedComponents
 import Mathlib.RingTheory.FiniteStability
 import Mathlib.RingTheory.Idempotents
+public import Mathlib.RingTheory.Spectrum.Prime.Noetherian
 
 /-!
 # The identity component as a Hopf ideal
@@ -111,22 +113,15 @@ private theorem map_connectedComponentIdempotent_augmentationPoint_eq_one_of_mem
         (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) = 1 := by
   let p : PrimeSpectrum H := AlgHom.kernelPoint g.ofConv
   let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  let e := PrimeSpectrum.connectedComponentIdempotent z
-  -- Reduce the `Spec` carrier and the local abbreviations once so that the basic-open
-  -- characterization can compare the component membership with ideal membership.
   change p ∈ connectedComponent z at hg
-  have hnot : e ∉ p.asIdeal := by
-    have hpopen : p ∈ (PrimeSpectrum.basicOpen e : Set (PrimeSpectrum H)) := by
-      rw [show e = PrimeSpectrum.connectedComponentIdempotent z from rfl,
-        PrimeSpectrum.basicOpen_connectedComponentIdempotent]
-      exact hg
-    exact (PrimeSpectrum.mem_basicOpen e p).mp hpopen
-  change e ∉ (AlgHom.kernelPoint g.ofConv).asIdeal at hnot
-  rw [AlgHom.kernelPoint_asIdeal, RingHom.mem_ker] at hnot
-  have he : IsIdempotentElem (g.ofConv e) :=
-    (PrimeSpectrum.isIdempotentElem_connectedComponentIdempotent
-      (Bialgebra.augmentationPoint k H)).map g.ofConv.toRingHom
-  exact (IsIdempotentElem.iff_eq_zero_or_one.mp he).resolve_left hnot
+  have he : PrimeSpectrum.connectedComponentIdempotent p =
+      PrimeSpectrum.connectedComponentIdempotent z := by
+    apply (PrimeSpectrum.eq_connectedComponentIdempotent_iff
+      (PrimeSpectrum.isIdempotentElem_connectedComponentIdempotent p) z).mpr
+    rw [PrimeSpectrum.basicOpen_connectedComponentIdempotent]
+    exact (connectedComponent_eq hg).symm
+  rw [← he]
+  exact AlgHom.map_connectedComponentIdempotent_kernelPoint_eq_one g.ofConv
 
 omit [IsAlgClosed k] [Algebra.FiniteType k H] in
 private theorem map_tensorSquare_comul_apply
@@ -161,20 +156,22 @@ private theorem kernelPoint_comp_quotient_mem_connectedComponent
           (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))) ∈
       connectedComponent (Bialgebra.augmentationPoint k H) := by
   let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  let I := PrimeSpectrum.connectedComponentIdeal z
-  let p : PrimeSpectrum H := AlgHom.kernelPoint
-    (f.comp (Ideal.Quotient.mkₐ k I))
-  -- Reduce the `Spec` carrier and kernel-point wrapper before using the zero-locus criterion.
+  let I : Ideal H :=
+    PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)
+  let p : PrimeSpectrum H :=
+    AlgHom.kernelPoint (f.comp (Ideal.Quotient.mkₐ k I))
   change p ∈ connectedComponent z
-  rw [← PrimeSpectrum.zeroLocus_connectedComponentIdeal]
-  rw [PrimeSpectrum.mem_zeroLocus]
-  intro x hx
-  change x ∈ I at hx
-  change x ∈ (AlgHom.kernelPoint
-    (f.comp (Ideal.Quotient.mkₐ k I))).asIdeal
-  rw [AlgHom.kernelPoint_asIdeal, RingHom.mem_ker]
-  change f (Ideal.Quotient.mk I x) = 0
-  rw [Ideal.Quotient.eq_zero_iff_mem.mpr hx, map_zero]
+  rw [← PrimeSpectrum.zeroLocus_connectedComponentIdeal z]
+  rw [← PrimeSpectrum.range_comap_quotientMk_eq_zeroLocus]
+  refine ⟨AlgHom.kernelPoint f, ?_⟩
+  apply PrimeSpectrum.ext
+  ext x
+  change Ideal.Quotient.mk I x ∈ (AlgHom.kernelPoint f).asIdeal ↔ x ∈ p.asIdeal
+  rw [AlgHom.kernelPoint_asIdeal]
+  change f (Ideal.Quotient.mk I x) = 0 ↔ x ∈ p.asIdeal
+  rw [show p.asIdeal = RingHom.ker
+    (f.comp (Ideal.Quotient.mkₐ k I) : H →+* k) from AlgHom.kernelPoint_asIdeal _]
+  rfl
 
 private theorem map_tensorSquare_quotient_comul_connectedComponentIdempotent_eq_one
     [LocallyConnectedSpace (PrimeSpectrum H)] :
@@ -264,13 +261,19 @@ private theorem comul_one_sub_connectedComponentIdempotent_mem
 /-- The ideal cutting out the augmentation point's connected component is stable under
 comultiplication. -/
 theorem comul_mem_connectedComponentIdeal_augmentationPoint
-    [LocallyConnectedSpace (PrimeSpectrum H)] {x : H}
-    (hx : x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) :
-    Coalgebra.comul (R := k) x ∈
-      HopfIdeal.leftTensorIdeal (R := k) (H := H)
-          (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) ⊔
-        HopfIdeal.rightTensorIdeal (R := k) (H := H)
-          (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) := by
+    {x : H} :
+    letI : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+    letI : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
+    x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) →
+      Coalgebra.comul (R := k) x ∈
+        HopfIdeal.leftTensorIdeal (R := k) (H := H)
+            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) ⊔
+          HopfIdeal.rightTensorIdeal (R := k) (H := H)
+            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)) := by
+  dsimp only
+  let _ : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  let _ : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
+  intro hx
   let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
   let I := PrimeSpectrum.connectedComponentIdeal z
   let e := PrimeSpectrum.connectedComponentIdempotent z
@@ -287,37 +290,42 @@ theorem comul_mem_connectedComponentIdeal_augmentationPoint
 
 /-- The Hopf ideal cutting out the connected component of the identity in a finite-type affine
 group over an algebraically closed field. -/
-@[expose] noncomputable def identityComponentHopfIdeal
-    [LocallyConnectedSpace (PrimeSpectrum H)] : HopfIdeal k H :=
-  HopfIdeal.ofIdeal
-    (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H))
-    (fun _ hx ↦ comul_mem_connectedComponentIdeal_augmentationPoint hx)
-    (fun x hx ↦ by
-      have hx' : x ∈ RingHom.ker
-          (_root_.Bialgebra.counitAlgHom k H).toRingHom :=
-        TauCeti.AlgHom.connectedComponentIdeal_kernelPoint_le_ker
-          (_root_.Bialgebra.counitAlgHom k H) hx
-      rw [← Bialgebra.counitAlgHom_apply]
-      exact RingHom.mem_ker.mp hx')
-    (fun _ hx ↦
-      (antipode_mem_connectedComponentIdeal_augmentationPoint_iff (k := k)).mpr hx)
+noncomputable def identityComponentHopfIdeal : HopfIdeal k H := by
+  letI : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+  letI : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
+  exact HopfIdeal.ofIdeal
+      (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H))
+      (fun _ hx ↦ comul_mem_connectedComponentIdeal_augmentationPoint hx)
+      (fun x hx ↦ by
+        have hx' : x ∈ RingHom.ker
+            (_root_.Bialgebra.counitAlgHom k H).toRingHom :=
+          TauCeti.AlgHom.connectedComponentIdeal_kernelPoint_le_ker
+            (_root_.Bialgebra.counitAlgHom k H) hx
+        rw [← Bialgebra.counitAlgHom_apply]
+        exact RingHom.mem_ker.mp hx')
+      (fun _ hx ↦
+        (antipode_mem_connectedComponentIdeal_augmentationPoint_iff (k := k)).mpr hx)
 
 /-- The underlying ideal of the identity-component Hopf ideal is the ideal generated by the
 complement of the augmentation point's component idempotent. -/
 @[simp]
 theorem identityComponentHopfIdeal_toIdeal
-    [LocallyConnectedSpace (PrimeSpectrum H)] :
-    (identityComponentHopfIdeal (k := k) (H := H)).toIdeal =
-      PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) :=
+    : letI : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+      letI : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
+      (identityComponentHopfIdeal (k := k) (H := H)).toIdeal =
+        PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
+  dsimp only
   rfl
 
 /-- Membership in the identity-component Hopf ideal is membership in the ideal cutting out the
 augmentation point's connected component. -/
 @[simp]
 theorem mem_identityComponentHopfIdeal
-    [LocallyConnectedSpace (PrimeSpectrum H)] {x : H} :
-    x ∈ identityComponentHopfIdeal (k := k) (H := H) ↔
-      x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) :=
-  Iff.rfl
+    {x : H} : letI : IsNoetherianRing H := Algebra.FiniteType.isNoetherianRing k H
+      letI : LocallyConnectedSpace (PrimeSpectrum H) := inferInstance
+      x ∈ identityComponentHopfIdeal (k := k) (H := H) ↔
+        x ∈ PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H) := by
+  dsimp only
+  rfl
 
 end TauCeti.HopfAlgebra
