@@ -24,8 +24,9 @@ weight, and the possible direction sets form the finite type `Finset V`. Consequ
 chain group of the restricted complex is a finitely generated `𝔽₂[U]`-module.
 
 The inclusions for `N ≤ M` make these complexes the filtered system whose direct limit is the
-untruncated lattice complex. Constructing that direct limit and identifying its homology with
-Némethi's `ℍ⁻` are subsequent steps.
+untruncated lattice complex. That direct limit is constructed in
+`TauCeti.LowDimTopology.Plumbing.Filtration.Colimit`; identifying its homology with Némethi's
+`ℍ⁻` is a subsequent step.
 
 ## Main definitions
 
@@ -336,6 +337,22 @@ theorem latticeDifferentialWeightDegree_comp_inclusion (P : PlumbingGraph V)
   apply Subtype.ext
   simp only [LinearMap.comp_apply, Submodule.coe_inclusion,
     latticeDifferentialWeightDegree_apply]
+
+/-- The full lattice differential after including a weight sublevel agrees with first applying
+the restricted differential and then including the result into the full degree part. -/
+theorem latticeDifferentialDegree_comp_inclusion (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (N : ℤ) (q : ℕ) :
+    (P.latticeDifferentialDegree k q).comp
+        (Submodule.inclusion
+          (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N (q + 1))) =
+      (Submodule.inclusion
+          (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q)).comp
+        (P.latticeDifferentialWeightDegree k N q) := by
+  apply LinearMap.ext
+  intro c
+  apply Subtype.ext
+  simp only [LinearMap.comp_apply, Submodule.coe_inclusion,
+    latticeDifferentialDegree_apply, latticeDifferentialWeightDegree_apply]
 
 /-- The cubically graded lattice chain complex restricted to cubes of characteristic weight at
 most `N`. -/

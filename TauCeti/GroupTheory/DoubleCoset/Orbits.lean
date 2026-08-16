@@ -30,6 +30,8 @@ numbers, which is the group-theoretic half of the statement that the permutation
 
 * `TauCeti.doubleCosetEquivOrbitQuotient`: the bijection
   `H \ G / K ≃ ((G ⧸ H) × (G ⧸ K)) / G`.
+* `TauCeti.orbitOfCosetTranslate`: the `𝒢`-orbit a class in `ℋ ⧸ 𝒢.subgroupOf ℋ` translates a
+  point into — the index map along which a coset sum is regrouped into an orbit sum.
 
 ## Main statements
 
@@ -191,6 +193,33 @@ theorem orbitRel_smul_iff_mem_doubleCoset_stabilizer (K : Subgroup G) (p : α) (
   · rintro ⟨a, ha, b, hb, rfl⟩
     refine ⟨⟨a, ha⟩, ?_⟩
     rw [Subgroup.smul_def, mul_smul, mul_smul, mem_stabilizer_iff.mp (SetLike.mem_coe.mp hb)]
+
+/-- **The `𝒢`-orbit that a coset translates a point into.** For `𝒢 ≤ ℋ ≤ G` acting on `α` and a
+point `p`, a class in `ℋ ⧸ 𝒢.subgroupOf ℋ` determines the `𝒢`-orbit of `h⁻¹ • p`, independently
+of the representative `h`.
+
+Well-definedness is the content: another representative is `h * g` with `g ∈ 𝒢`, and
+`(h * g)⁻¹ • p = g⁻¹ • (h⁻¹ • p)` lies in the same `𝒢`-orbit. This is the index map along which
+a sum over the coset space `ℋ ⧸ 𝒢.subgroupOf ℋ` is regrouped into a sum over `𝒢`-orbits, with
+`orbitRel_smul_iff_mem_doubleCoset_stabilizer` identifying its fibres as double cosets. -/
+noncomputable def orbitOfCosetTranslate {𝒢 ℋ : Subgroup G} (p : α) (q : ℋ ⧸ 𝒢.subgroupOf ℋ) :
+    orbitRel.Quotient 𝒢 α :=
+  Quotient.liftOn' q (fun h ↦ Quotient.mk'' ((h : G)⁻¹ • p))
+    fun a b hab ↦ by
+      refine Quotient.sound' ?_
+      rw [orbitRel_apply, mem_orbit_iff]
+      exact ⟨⟨(a : G)⁻¹ * (b : G),
+        (Subgroup.mem_subgroupOf.mp (QuotientGroup.leftRel_apply.mp hab))⟩, by
+        simp [Subgroup.smul_def, mul_smul]⟩
+
+/-- Evaluating `orbitOfCosetTranslate` on the class of `h` gives the orbit of `h⁻¹ • p`. -/
+-- The two sides are the same term after `Quotient.liftOn'` reduces on a representative. The
+-- definition is deliberately not `@[expose]`d, so the parentheses in `(rfl)` keep the
+-- definitional step inside this module and leave this lemma as the whole interface for importers.
+@[simp]
+theorem orbitOfCosetTranslate_mk {𝒢 ℋ : Subgroup G} (p : α) (h : ℋ) :
+    orbitOfCosetTranslate (𝒢 := 𝒢) p (⟦h⟧ : ℋ ⧸ 𝒢.subgroupOf ℋ) = Quotient.mk'' ((h : G)⁻¹ • p) :=
+  (rfl)
 
 end GeneralAction
 
