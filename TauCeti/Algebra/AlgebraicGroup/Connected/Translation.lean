@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Connected.IdentityComponent
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Translation
+public import TauCeti.Topology.ConnectedComponents
+import TauCeti.AlgebraicGeometry.AugmentationPoint.ConnectedComponent
 
 /-!
 # Translations of the identity component
@@ -18,6 +20,10 @@ and preserves its defining idempotent and ideal.
 
 * `rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq_self`: a point in the
   identity component translates that component to itself.
+* `rightTranslationHomeomorph_kernelPoint`: right translation sends the kernel point of `g` to
+  the kernel point of the convolution product.
+* `map_connectedComponentIdempotent_augmentationPoint_eq_one_of_mem`: a point in the identity
+  component evaluates its component idempotent to one.
 * `map_rightTranslationAlgEquiv_connectedComponentIdeal_eq_self`: translation by an
   identity-component point fixes its defining ideal.
 
@@ -35,6 +41,7 @@ component, giving comultiplication closure of its defining ideal.
 public section
 
 open AlgebraicGeometry
+open scoped TensorProduct
 
 namespace TauCeti.HopfAlgebra
 
@@ -43,16 +50,39 @@ universe u v
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H]
 
+/-- Right translation sends the kernel point of `g` to the kernel point of the convolution
+product `g * h`. -/
+theorem rightTranslationHomeomorph_kernelPoint
+    (g h : WithConv (H →ₐ[k] k)) :
+    rightTranslationHomeomorph h (AlgHom.kernelPoint g.ofConv) =
+      AlgHom.kernelPoint (g * h).ofConv := by
+  rw [rightTranslationHomeomorph_apply]
+  -- `Spec (CommRingCat.of H)` has `PrimeSpectrum H` as its reducible carrier; expose that carrier
+  -- and the algebra-hom composition before applying the kernel-point API.
+  change PrimeSpectrum.comap
+      ((rightTranslationAlgEquiv h).toAlgHom : H →+* H)
+        (AlgHom.kernelPoint g.ofConv) = _
+  rw [AlgHom.comap_kernelPoint, rightTranslationAlgEquiv_toAlgHom]
+  congr 1
+  ext x
+  -- Composition of algebra homomorphisms must be exposed at application level before the
+  -- translation formula can rewrite it.
+  change g.ofConv (rightTranslationAlgHom h x) = (g * h).ofConv x
+  rw [rightTranslationAlgHom_apply, AlgHom.convMul_apply]
+  induction Coalgebra.comul (R := k) x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul x y =>
+      simp [TensorProduct.map_tmul, TensorProduct.rid_tmul,
+        Algebra.TensorProduct.lift_tmul, Algebra.smul_def, mul_comm]
+
 /-- Right translation transports the connected component of a point to the connected component
 of its translate. -/
 theorem rightTranslationHomeomorph_image_connectedComponent
     (g : WithConv (H →ₐ[k] k)) (x : Spec (CommRingCat.of H)) :
     rightTranslationHomeomorph g '' connectedComponent x =
       connectedComponent (rightTranslationHomeomorph g x) := by
-  simpa only [connectedComponentIn_univ,
-    Set.image_univ_of_surjective (rightTranslationHomeomorph g).surjective] using
-    (rightTranslationHomeomorph g).image_connectedComponentIn
-      (s := Set.univ) (x := x) (Set.mem_univ x)
+  exact TauCeti.Homeomorph.image_connectedComponent (rightTranslationHomeomorph g) x
 
 /-- A point in the identity component right-translates that component onto itself. -/
 theorem rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq_self
@@ -90,6 +120,17 @@ theorem connectedComponentIdempotent_kernelPoint_eq_augmentationPoint
     (PrimeSpectrum.isIdempotentElem_connectedComponentIdempotent p) e).mpr
   rw [PrimeSpectrum.basicOpen_connectedComponentIdempotent]
   exact (connectedComponent_eq hg).symm
+
+/-- A rational point in the identity component evaluates the idempotent selecting that component
+to one. -/
+theorem map_connectedComponentIdempotent_augmentationPoint_eq_one_of_mem
+    (g : WithConv (H →ₐ[k] k))
+    (hg : AlgHom.kernelPoint g.ofConv ∈
+      connectedComponent (Bialgebra.augmentationPoint k H)) :
+    g.ofConv
+        (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) = 1 := by
+  rw [← connectedComponentIdempotent_kernelPoint_eq_augmentationPoint g hg]
+  exact AlgHom.map_connectedComponentIdempotent_kernelPoint_eq_one g.ofConv
 
 private theorem connectedComponentIdeal_kernelPoint_eq_augmentationPoint
     (g : WithConv (H →ₐ[k] k))

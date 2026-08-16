@@ -35,8 +35,8 @@ identity makes the generator difference quotients converge to `A x`. A shared re
 This is the generator-identification rung that follows the construction of the limit semigroup in
 a generation theorem. The Lumer--Phillips theorem in
 `TauCeti/Analysis/Semigroups/Generation/LumerPhillips.lean` supplies the hypotheses with the
-contraction bound `1`; the planned general Hille--Yosida construction will supply them with its
-growth constant `M`.
+contraction bound `1`; `TauCeti/Analysis/Semigroups/Generation/HilleYosida/Generation.lean`
+supplies them with the general Hille--Yosida growth constant `M`.
 
 ## Main results
 

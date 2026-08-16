@@ -37,7 +37,7 @@ records. The `b` of the `a`-th simple root is the Bourbaki successor `min (a + 1
 moves that successor to the first slot of the enumeration.
 
 Only the coroots are asked to span their lattice, and only that half is recorded, in
-`typeCSimplyConnectedRootDatum_corootSpan_eq_top`. The roots span the root lattice, which sits
+`corootSpan_typeCSimplyConnectedRootDatum_eq_top`. The roots span the root lattice, which sits
 inside the weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both
 lattices are trivial and the index is `1`), so the datum is a `RootDatum` carrying no
 `RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected" means here.
@@ -62,7 +62,7 @@ lattices are trivial and the index is `1`), so the datum is a `RootDatum` carryi
   set of the first `n` root indices.
 * `TauCeti.DynkinType.hasCartanType_typeCSimplyConnectedRootDatum`: the pinned base has Cartan type
   `C n`.
-* `TauCeti.DynkinType.typeCSimplyConnectedRootDatum_corootSpan_eq_top`: the coroots span the
+* `TauCeti.DynkinType.corootSpan_typeCSimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
 
 ## References
@@ -785,7 +785,7 @@ connected lattice condition required by the pinned Chevalley--Demazure construct
 counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
 weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both lattices are
 trivial). -/
-theorem typeCSimplyConnectedRootDatum_corootSpan_eq_top (n : ℕ) :
+theorem corootSpan_typeCSimplyConnectedRootDatum_eq_top (n : ℕ) :
     (typeCSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
   refine top_unique ?_
   rw [← (Pi.basisFun ℤ (Fin n)).span_eq]

@@ -6,6 +6,7 @@ module
 
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import Mathlib.RingTheory.Jacobson.Ring
+public import Mathlib.RingTheory.Idempotents
 
 /-!
 # Separation by algebraically closed points
@@ -29,6 +30,8 @@ that ideal is finite over `k` by Zariski's lemma and therefore embeds into `K`.
   some algebraically closed point.
 * `TauCeti.forall_algHom_apply_eq_zero_iff_isNilpotent`: the common kernel of all algebraically
   closed points is the nilradical.
+* `TauCeti.eq_one_of_isIdempotentElem_of_forall_algHom_apply_eq_one`: an idempotent evaluating to
+  one at every algebraically closed point is one.
 * `TauCeti.exists_algHom_apply_ne_of_ne`: points of a reduced finite-type algebra distinguish
   distinct elements.
 * `TauCeti.eq_of_forall_algHom_apply_eq`: the corresponding point-separation principle.
@@ -115,6 +118,16 @@ theorem forall_algHom_apply_eq_zero_iff_isNilpotent (x : A) :
     exact hf (h f)
   · intro hx f
     exact isNilpotent_iff_eq_zero.mp (hx.map f)
+
+/-- An idempotent in a finite-type algebra that evaluates to one at every algebraically closed
+point is one. -/
+theorem eq_one_of_isIdempotentElem_of_forall_algHom_apply_eq_one {a : A}
+    (ha : IsIdempotentElem a) (h : ∀ f : A →ₐ[k] K, f a = 1) : a = 1 := by
+  apply _root_.eq_of_isNilpotent_sub_of_isIdempotentElem ha IsIdempotentElem.one
+  rw [← forall_algHom_apply_eq_zero_iff_isNilpotent (k := k) (K := K)]
+  intro f
+  rw [map_sub, map_one, sub_eq_zero]
+  exact h f
 
 variable [IsReduced A]
 
