@@ -35,7 +35,7 @@ namespace DynkinType
 
 /-- The 120 positive `E8` coroots in the simple-coroot basis. The first eight entries are the
 Bourbaki simple coroots and the rest are ordered by height. -/
-@[expose] def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) :=
+def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) :=
   let e8PositiveCorootTable : Fin 12 → Fin 10 → (Fin 8 → ℤ) := ![
   ![
     ![1, 0, 0, 0, 0, 0, 0, 0],
@@ -192,6 +192,12 @@ Bourbaki simple coroots and the rest are ordered by height. -/
       -- The 120 × 120 case check runs in the kernel, whose evaluation has no recursion limit.
       decide +kernel
   }
+
+/-- There are 63 positive `E₈` coroots in the principal `E₇` subsystem, characterized by
+having zero final simple-coroot coordinate. -/
+theorem card_filter_e8PositiveCoroot_last_eq_zero :
+    (Finset.univ.filter fun i => e8PositiveCoroot i 7 = 0).card = 63 := by
+  decide +kernel
 
 /-- Every positive `E8` coroot has nonnegative simple-coroot coordinates. -/
 theorem e8PositiveCoroot_nonneg (i : Fin 120) (j : Fin 8) :
