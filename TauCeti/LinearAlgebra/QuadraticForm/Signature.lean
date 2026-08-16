@@ -75,6 +75,7 @@ theorem posDef_smul_iff_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < 
   · exact fun hQ ↦ hQ.smul ha
 
 /-- Multiplication by a positive scalar preserves the positive index of inertia. -/
+@[simp]
 theorem sigPos_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
     sigPos (a • Q) = sigPos Q := by
   apply le_antisymm
@@ -88,6 +89,7 @@ theorem sigPos_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
     exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mpr hU
 
 /-- Multiplication by a positive scalar preserves the negative index of inertia. -/
+@[simp]
 theorem sigNeg_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
     sigNeg (a • Q) = sigNeg Q := by
   calc
@@ -97,6 +99,7 @@ theorem sigNeg_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
     _ = sigNeg Q := sigPos_neg
 
 /-- Multiplication by a negative scalar exchanges the positive and negative indices of inertia. -/
+@[simp]
 theorem sigPos_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
     sigPos (a • Q) = sigNeg Q := by
   have hpos : 0 < -a := neg_pos.mpr ha
@@ -104,6 +107,7 @@ theorem sigPos_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
   rw [hform, sigPos_smul_of_pos (-Q) hpos, sigPos_neg]
 
 /-- Multiplication by a negative scalar exchanges the negative and positive indices of inertia. -/
+@[simp]
 theorem sigNeg_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
     sigNeg (a • Q) = sigPos Q := by
   have hpos : 0 < -a := neg_pos.mpr ha
