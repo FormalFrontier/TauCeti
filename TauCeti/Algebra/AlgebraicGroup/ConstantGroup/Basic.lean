@@ -6,7 +6,7 @@ module
 
 public import Mathlib.RingTheory.Etale.Pi
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
-public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Basic
+public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Functoriality
 
 /-!
 # Constant finite groups
@@ -26,6 +26,7 @@ then an algebra point, and these evaluations multiply exactly as the elements of
 * `TauCeti.ConstantGroup.functionAlgEquiv`: its canonical equivalence with `G → R`.
 * `TauCeti.ConstantGroup.eval`: evaluation at a group element as an algebra homomorphism.
 * `TauCeti.ConstantGroup.toPoints`: the group homomorphism from `G` to its algebra points.
+* `TauCeti.ConstantGroup.coordinateBialgHom`: contravariant pullback along a group homomorphism.
 
 ## References
 
@@ -48,6 +49,7 @@ variable (R : Type u) [CommRing R] (G : Type v) [Group G] [Finite G]
 It is defined as the finite Hopf dual of the group algebra. -/
 abbrev coordinateRing := ConvolutionDual R (MonoidAlgebra R G)
 
+omit [Group G] in
 /-- The underlying linear equivalence between the coordinate ring and the algebra of functions
 on `G`. -/
 noncomputable def functionLinearEquiv : coordinateRing R G ≃ₗ[R] (G → R) := by
@@ -74,6 +76,7 @@ private theorem functionLinearEquiv_map_mul (f h : coordinateRing R G) :
   rw [Pi.mul_apply]
   simp [functionLinearEquiv_apply, LinearMap.convMul_apply]
 
+omit [Group G] in
 /-- The coordinate ring of a finite constant group is canonically the function algebra `G → R`.
 -/
 noncomputable def functionAlgEquiv : coordinateRing R G ≃ₐ[R] (G → R) :=
@@ -86,10 +89,12 @@ theorem functionAlgEquiv_apply (f : coordinateRing R G) (g : G) :
     functionAlgEquiv R G f g = f.ofConv (MonoidAlgebra.single g 1) := by
   simp [functionAlgEquiv, functionLinearEquiv_apply]
 
+omit [Group G] in
 /-- The coordinate ring of a finite constant group is finite étale over the base ring. -/
 noncomputable instance instEtale : Algebra.Etale R (coordinateRing R G) :=
   Algebra.Etale.of_equiv (functionAlgEquiv R G).symm
 
+omit [Group G] in
 /-- Evaluation at a group element, regarded as an algebra point of the constant group. -/
 noncomputable def eval (g : G) : coordinateRing R G →ₐ[R] R :=
   (Pi.evalAlgHom R (fun _ : G ↦ R) g).comp (functionAlgEquiv R G).toAlgHom
@@ -97,8 +102,8 @@ noncomputable def eval (g : G) : coordinateRing R G →ₐ[R] R :=
 omit [Group G] in
 @[simp]
 theorem eval_apply (g : G) (f : coordinateRing R G) :
-    eval R G g f = f.ofConv (MonoidAlgebra.single g 1) := by
-  simp [eval, functionAlgEquiv_apply]
+    eval R G g f = functionAlgEquiv R G f g := by
+  simp [eval]
 
 /-- Comultiplication on the coordinate ring is dual to multiplication in `G`. -/
 theorem comul_apply (f : coordinateRing R G) (g h : G) :
@@ -109,7 +114,7 @@ theorem comul_apply (f : coordinateRing R G) (g h : G) :
   simp
 
 /-- The counit of the coordinate ring is evaluation at the identity of `G`. -/
-theorem counit_eq_eval_one (f : coordinateRing R G) :
+theorem counit_apply (f : coordinateRing R G) :
     Coalgebra.counit (R := R) f = functionAlgEquiv R G f 1 := by
   rw [ConvolutionDual.counit_apply, functionAlgEquiv_apply]
   rw [MonoidAlgebra.one_def]
@@ -136,8 +141,9 @@ private theorem dualDistribEquiv_apply_single
 
 /-- Evaluation points multiply according to multiplication in `G`. -/
 theorem eval_mul (g h : G) :
-    WithConv.toConv (eval R G g) * WithConv.toConv (eval R G h) =
-      WithConv.toConv (eval R G (g * h)) := by
+    WithConv.toConv (eval R G (g * h)) =
+      WithConv.toConv (eval R G g) * WithConv.toConv (eval R G h) := by
+  symm
   apply WithConv.ofConv_injective
   ext f
   rw [AlgHom.convMul_apply, eval_apply]
@@ -149,19 +155,19 @@ theorem eval_one : WithConv.toConv (eval R G (1 : G)) = 1 := by
   apply WithConv.ofConv_injective
   ext f
   rw [eval_apply, AlgHom.convOne_apply]
-  simpa using (counit_eq_eval_one R G f).symm
+  simpa using (counit_apply R G f).symm
 
 /-- A finite group maps canonically to the group of algebra points of its constant group. -/
 noncomputable def toPoints : G →* WithConv (coordinateRing R G →ₐ[R] R) where
   toFun g := WithConv.toConv (eval R G g)
   map_one' := eval_one R G
-  map_mul' g h := (eval_mul R G g h).symm
+  map_mul' g h := eval_mul R G g h
 
 @[simp]
 theorem toPoints_apply (g : G) : (toPoints R G g).ofConv = eval R G g := by
-  change (WithConv.toConv (eval R G g)).ofConv = eval R G g
-  rfl
+  simp [toPoints]
 
+/-- Over a nontrivial base ring, evaluation distinguishes the elements of the constant group. -/
 theorem toPoints_injective [Nontrivial R] : Function.Injective (toPoints R G) := by
   classical
   intro g h hgh
@@ -171,7 +177,7 @@ theorem toPoints_injective [Nontrivial R] : Function.Injective (toPoints R G) :=
   have := congrArg
     (fun q : coordinateRing R G →ₐ[R] R ↦
       q ((functionAlgEquiv R G).symm (Pi.single g (1 : R)))) hmaps
-  rw [eval_apply, eval_apply, ← functionAlgEquiv_apply, ← functionAlgEquiv_apply] at this
+  rw [eval_apply, eval_apply] at this
   rw [AlgEquiv.apply_symm_apply] at this
   rw [Pi.single_eq_same, Pi.single_eq_of_ne' hne] at this
   exact one_ne_zero this
@@ -180,8 +186,9 @@ section Functoriality
 
 variable (H : Type w) [Group H] [Finite H]
 
+omit [Group G] [Finite G] [Group H] [Finite H] in
 /-- Pull functions back along a map of types. -/
-@[expose] def functionPullback (f : G → H) : (H → R) →ₐ[R] (G → R) where
+def functionPullback (f : G → H) : (H → R) →ₐ[R] (G → R) where
   toFun a := a ∘ f
   map_one' := rfl
   map_mul' _ _ := rfl
@@ -192,21 +199,34 @@ variable (H : Type w) [Group H] [Finite H]
 omit [Group G] [Finite G] [Group H] [Finite H] in
 @[simp]
 theorem functionPullback_apply (f : G → H) (a : H → R) (g : G) :
-    functionPullback R G H f a g = a (f g) := rfl
-
-/-- A group homomorphism induces the contravariant map of constant-group coordinate rings. -/
-noncomputable def coordinateMap (f : G →* H) : coordinateRing R H →ₐ[R] coordinateRing R G :=
-  (functionAlgEquiv R G).symm.toAlgHom.comp <|
-    (functionPullback R G H f).comp (functionAlgEquiv R H).toAlgHom
-
-theorem functionAlgEquiv_coordinateMap_apply (f : G →* H) (a : coordinateRing R H) (g : G) :
-    functionAlgEquiv R G (coordinateMap R G H f a) g = functionAlgEquiv R H a (f g) := by
-  change functionAlgEquiv R G
-      ((functionAlgEquiv R G).symm (functionPullback R G H f (functionAlgEquiv R H a))) g = _
-  rw [AlgEquiv.apply_symm_apply]
+    functionPullback R G H f a g = a (f g) := by
+  unfold functionPullback
   rfl
 
+/-- A group homomorphism induces a contravariant bialgebra morphism of constant-group coordinate
+rings. -/
+noncomputable def coordinateBialgHom (f : G →* H) :
+    coordinateRing R H →ₐc[R] coordinateRing R G :=
+  ConvolutionDual.map R (MonoidAlgebra.mapDomainBialgHom R f)
+
+/-- The underlying algebra homomorphism of `coordinateBialgHom`. -/
+noncomputable def coordinateMap (f : G →* H) : coordinateRing R H →ₐ[R] coordinateRing R G :=
+  (coordinateBialgHom R G H f).toAlgHom
+
+/-- The algebra homomorphism underlying `coordinateBialgHom` is `coordinateMap`. -/
+@[simp]
+theorem coordinateBialgHom_toAlgHom (f : G →* H) :
+    (coordinateBialgHom R G H f).toAlgHom = coordinateMap R G H f := by
+  unfold coordinateMap
+  rfl
+
+/-- Under `functionAlgEquiv`, the coordinate map is precomposition by the group homomorphism. -/
+theorem functionAlgEquiv_coordinateMap_apply (f : G →* H) (a : coordinateRing R H) (g : G) :
+    functionAlgEquiv R G (coordinateMap R G H f a) g = functionAlgEquiv R H a (f g) := by
+  simp [coordinateMap, coordinateBialgHom, functionAlgEquiv_apply]
+
 /-- The coordinate map induced by the identity group homomorphism is the identity. -/
+@[simp]
 theorem coordinateMap_id :
     coordinateMap R G G (MonoidHom.id G) = AlgHom.id R (coordinateRing R G) := by
   apply DFunLike.ext
@@ -217,6 +237,7 @@ theorem coordinateMap_id :
   rfl
 
 /-- Coordinate maps reverse composition of group homomorphisms. -/
+@[simp]
 theorem coordinateMap_comp (K : Type*) [Group K] [Finite K]
     (f : G →* H) (q : H →* K) :
     coordinateMap R G K (q.comp f) =
@@ -225,18 +246,17 @@ theorem coordinateMap_comp (K : Type*) [Group K] [Finite K]
   intro a
   apply (functionAlgEquiv R G).injective
   ext g
-  change functionAlgEquiv R G (coordinateMap R G K (q.comp f) a) g =
-    functionAlgEquiv R G (coordinateMap R G H f (coordinateMap R H K q a)) g
-  rw [functionAlgEquiv_coordinateMap_apply, functionAlgEquiv_coordinateMap_apply,
+  rw [AlgHom.comp_apply, functionAlgEquiv_coordinateMap_apply,
+    functionAlgEquiv_coordinateMap_apply,
     functionAlgEquiv_coordinateMap_apply]
   rfl
 
 /-- Evaluation is natural with respect to the coordinate map induced by a group homomorphism. -/
+@[simp]
 theorem eval_comp_coordinateMap (f : G →* H) (g : G) :
     (eval R G g).comp (coordinateMap R G H f) = eval R H (f g) := by
   ext a
-  rw [AlgHom.comp_apply, eval_apply, ← functionAlgEquiv_apply,
-    functionAlgEquiv_coordinateMap_apply, functionAlgEquiv_apply, eval_apply]
+  rw [AlgHom.comp_apply, eval_apply, functionAlgEquiv_coordinateMap_apply, eval_apply]
 
 end Functoriality
 
