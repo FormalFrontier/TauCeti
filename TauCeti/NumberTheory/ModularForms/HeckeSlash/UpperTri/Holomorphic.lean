@@ -21,8 +21,6 @@ under `τ ↦ τ + 1` lives in `UpperTri/Periodic.lean`.
 
 ## Main results
 
-* `HeckeRing.GL2.mdifferentiable_slash_upperTriRep`: slashing by an upper-triangular representative
-  preserves holomorphy.
 * `HeckeRing.GL2.mdifferentiable_heckeSlashUpperTri`: `heckeSlashUpperTri k p f` is holomorphic
   when `f` is.
 
@@ -49,17 +47,13 @@ namespace HeckeRing.GL2
 
 variable (k : ℤ) (p : ℕ)
 
-/-- **Slashing by an upper-triangular representative preserves holomorphy.** -/
-lemma mdifferentiable_slash_upperTriRep {f : ℍ → ℂ} (hf : MDiff f) (b : Fin p) :
-    MDiff (f ∣[k] (upperTriRep p b : GL (Fin 2) ℚ)) := by
-  rw [ModularForm.rat_slash]
-  exact hf.slash k _
-
 /-- **The upper-triangular slash sum of a holomorphic function is holomorphic.** -/
 lemma mdifferentiable_heckeSlashUpperTri {f : ℍ → ℂ} (hf : MDiff f) :
     MDiff (heckeSlashUpperTri k p f) := by
   rw [heckeSlashUpperTri_def]
-  exact MDifferentiable.sum fun b _ ↦ mdifferentiable_slash_upperTriRep k p hf b
+  exact MDifferentiable.sum fun _ _ ↦ by
+    rw [ModularForm.rat_slash]
+    exact hf.slash k _
 
 end HeckeRing.GL2
 
