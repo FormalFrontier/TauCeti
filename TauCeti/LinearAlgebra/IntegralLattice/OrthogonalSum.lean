@@ -108,6 +108,13 @@ theorem orthogonalSum_form (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).form = orthogonalSumForm L M :=
   (rfl)
 
+/-- The quadratic map of the block-diagonal form is the product of the component quadratic maps. -/
+theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLattice W) :
+    (orthogonalSumForm L M).toQuadraticMap =
+      L.form.toQuadraticMap.prod M.form.toQuadraticMap := by
+  ext p
+  rfl
+
 /-- The carrier of an orthogonal sum is canonically the product of the carrier types. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
     L.orthogonalSum M ≃ₗ[ℤ] L × M :=
@@ -344,12 +351,9 @@ theorem nondegenerate_orthogonalSum_iff (L : IntegralLattice V) (M : IntegralLat
 @[simp]
 theorem radical_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).radical = L.radical.prod M.radical := by
-  have hform : (orthogonalSumForm L M).toQuadraticMap =
-      L.form.toQuadraticMap.prod M.form.toQuadraticMap := by
-    ext p
-    rfl
-  rw [← (L.orthogonalSum M).radical_toQuadraticMap, orthogonalSum_form, hform,
-    QuadraticMap.radical_prod, L.radical_toQuadraticMap, M.radical_toQuadraticMap]
+  rw [← (L.orthogonalSum M).radical_toQuadraticMap, orthogonalSum_form,
+    orthogonalSumForm_toQuadraticMap, QuadraticMap.radical_prod, L.radical_toQuadraticMap,
+    M.radical_toQuadraticMap]
 
 /-- The positive index of an orthogonal sum is the sum of the positive indices. -/
 @[simp]
@@ -357,11 +361,8 @@ theorem sigPos_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).sigPos = L.sigPos + M.sigPos := by
   let _ := L.finiteDimensional
   let _ := M.finiteDimensional
-  have hform : (orthogonalSumForm L M).toQuadraticMap =
-      L.form.toQuadraticMap.prod M.form.toQuadraticMap := by
-    ext p
-    rfl
-  rw [sigPos, orthogonalSum_form, hform, TauCeti.QuadraticForm.sigPos_prod]
+  rw [sigPos, orthogonalSum_form, orthogonalSumForm_toQuadraticMap,
+    TauCeti.QuadraticForm.sigPos_prod]
 
 /-- The negative index of an orthogonal sum is the sum of the negative indices. -/
 @[simp]
@@ -369,11 +370,8 @@ theorem sigNeg_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).sigNeg = L.sigNeg + M.sigNeg := by
   let _ := L.finiteDimensional
   let _ := M.finiteDimensional
-  have hform : (orthogonalSumForm L M).toQuadraticMap =
-      L.form.toQuadraticMap.prod M.form.toQuadraticMap := by
-    ext p
-    rfl
-  rw [sigNeg, orthogonalSum_form, hform, TauCeti.QuadraticForm.sigNeg_prod]
+  rw [sigNeg, orthogonalSum_form, orthogonalSumForm_toQuadraticMap,
+    TauCeti.QuadraticForm.sigNeg_prod]
 
 /-- The null index of an orthogonal sum is the sum of the null indices. -/
 @[simp]
