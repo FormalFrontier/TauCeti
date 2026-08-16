@@ -73,7 +73,6 @@ noncomputable abbrev commonKernelLift (f : ∀ i, H ⟶ K i) (i : ι) :
     (commonKernelHopfIdeal_toIdeal_le_ker f i)
 
 /-- The quotient morphism followed by a common-kernel lift is the original morphism. -/
-@[simp]
 theorem mkQuotient_comp_commonKernelLift (f : ∀ i, H ⟶ K i) (i : ι) :
     mkQuotient H (commonKernelHopfIdeal f) ≫ commonKernelLift f i = f i :=
   mkQuotient_comp_liftQuotient (commonKernelHopfIdeal f) (f i)
