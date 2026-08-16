@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
 public import TauCeti.LinearAlgebra.IntegralLattice.Dual
-public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
-import all TauCeti.LinearAlgebra.IntegralLattice.Basic
 
 /-!
 # Discriminant groups of integral lattices
@@ -32,7 +30,6 @@ equivalence of discriminant groups.  The construction respects identity, inverse
 * `TauCeti.IntegralLattice.carrierInDual`: the original carrier inside its dual carrier.
 * `TauCeti.IntegralLattice.DiscriminantGroup`: the quotient `Lᵛ / L`.
 * `TauCeti.IntegralLattice.instFiniteDiscriminantGroup`: finiteness in the nondegenerate case.
-* `TauCeti.IntegralLattice.Isometry.dualCarrierEquiv`: transport of dual carriers by an isometry.
 * `TauCeti.IntegralLattice.Isometry.discriminantGroupEquiv`: the induced equivalence of
   discriminant groups.
 
@@ -41,6 +38,7 @@ equivalence of discriminant groups.  The construction respects identity, inverse
 * V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.1.
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
 * `TauCetiRoadmap/IntegralLattices/README.md` (Layer 2).
+* `TauCetiRoadmap/IntegralLattices/Suggested.lean`.
 -/
 
 public section
@@ -63,14 +61,12 @@ def carrierInDual (L : IntegralLattice V) : Submodule ℤ L.dualCarrier :=
 carrier. -/
 @[simp]
 theorem mem_carrierInDual_iff (L : IntegralLattice V) (x : L.dualCarrier) :
-    x ∈ L.carrierInDual ↔ (x : V) ∈ L.carrier := by
-  rw [carrierInDual, Submodule.submoduleOf, Submodule.mem_comap]
-  rfl
+    x ∈ L.carrierInDual ↔ (x : V) ∈ L.carrier := Iff.rfl
 
 /-- The copy of the carrier inside the dual carrier has the same rank as the carrier. -/
 theorem finrank_carrierInDual (L : IntegralLattice V) :
     Module.finrank ℤ L.carrierInDual = Module.finrank ℤ L :=
-  (Submodule.comapSubtypeEquivOfLe L.le_dualCarrier).finrank_eq
+  (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).finrank_eq
 
 /-- The discriminant group `A_L = Lᵛ / L`, as an actual quotient of the dual-carrier subtype by
 the inverse image of the original carrier. -/
@@ -104,44 +100,6 @@ variable [AddCommGroup W] [Module ℚ W]
 variable [AddCommGroup U] [Module ℚ U]
 variable {L : IntegralLattice V} {M : IntegralLattice W} {N : IntegralLattice U}
 
-/-- An isometry carries an ambient vector into the target dual carrier exactly when the original
-vector belongs to the source dual carrier. -/
-theorem apply_mem_dualCarrier_iff (e : Isometry L M) (x : V) :
-    e x ∈ M.dualCarrier ↔ x ∈ L.dualCarrier := by
-  constructor
-  · intro hx y hy
-    have hxy := hx (e y) ((e.apply_mem_carrier_iff y).2 hy)
-    rw [e.map_app x y] at hxy
-    exact hxy
-  · intro hx y hy
-    have hxy := hx (e.symm y) ((e.symm.apply_mem_carrier_iff y).2 hy)
-    rw [← e.map_app x (e.symm y), e.apply_symm_apply] at hxy
-    exact hxy
-
-/-- An isometry restricts to an integral linear equivalence of dual carriers. -/
-def dualCarrierEquiv (e : Isometry L M) : L.dualCarrier ≃ₗ[ℤ] M.dualCarrier :=
-  ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).ofSubmodules L.dualCarrier M.dualCarrier (by
-    apply le_antisymm
-    · rintro _ ⟨x, hx, rfl⟩
-      exact (e.apply_mem_dualCarrier_iff x).2 hx
-    · intro y hy
-      refine ⟨e.symm y, (e.symm.apply_mem_dualCarrier_iff y).2 hy, e.apply_symm_apply y⟩)
-
-/-- The dual-carrier equivalence acts by the underlying ambient isometry. -/
-@[simp]
-theorem coe_dualCarrierEquiv_apply (e : Isometry L M) (x : L.dualCarrier) :
-    (e.dualCarrierEquiv x : W) = e (x : V) := by
-  simp [dualCarrierEquiv]
-
-/-- The inverse dual-carrier equivalence is induced by the inverse isometry. -/
-@[simp]
-theorem dualCarrierEquiv_symm (e : Isometry L M) :
-    e.dualCarrierEquiv.symm = e.symm.dualCarrierEquiv := by
-  ext x
-  simp only [dualCarrierEquiv, LinearEquiv.ofSubmodules_symm_apply,
-    LinearEquiv.ofSubmodules_apply]
-  exact (congrFun e.coe_symm (x : W)).symm
-
 /-- The dual-carrier equivalence maps the embedded original carrier onto the embedded target
 carrier. -/
 theorem map_carrierInDual (e : Isometry L M) :
@@ -149,7 +107,7 @@ theorem map_carrierInDual (e : Isometry L M) :
   ext y
   rw [Submodule.mem_map_equiv]
   rw [L.mem_carrierInDual_iff, M.mem_carrierInDual_iff,
-    e.dualCarrierEquiv_symm, coe_dualCarrierEquiv_apply]
+    ← e.dualCarrierEquiv_symm, coe_dualCarrierEquiv_apply]
   exact e.symm.apply_mem_carrier_iff y
 
 /-- An integral-lattice isometry induces a linear equivalence of discriminant groups. -/
@@ -170,28 +128,27 @@ theorem discriminantGroupEquiv_mk (e : Isometry L M) (x : L.dualCarrier) :
 @[simp]
 theorem discriminantGroupEquiv_refl (L : IntegralLattice V) :
     (Isometry.refl L).discriminantGroupEquiv = LinearEquiv.refl ℤ L.DiscriminantGroup := by
+  unfold discriminantGroupEquiv
+  simp only [dualCarrierEquiv_refl]
+  rw [Submodule.Quotient.equiv_refl]
   ext x
   induction x using Submodule.Quotient.induction_on with
-  | _ x =>
-      simp only [LinearEquiv.refl_apply]
-      rw [discriminantGroupEquiv_mk]
-      congr 1
-      apply Subtype.ext
-      simp
+  | _ x => simp
 
 /-- The equivalence induced by an inverse isometry is the inverse of the induced equivalence. -/
 @[simp]
 theorem discriminantGroupEquiv_symm (e : Isometry L M) :
     e.symm.discriminantGroupEquiv = e.discriminantGroupEquiv.symm := by
-  ext x
-  induction x using Submodule.Quotient.induction_on with
-  | _ x =>
-      apply e.discriminantGroupEquiv.injective
-      rw [discriminantGroupEquiv_mk, discriminantGroupEquiv_mk,
-        LinearEquiv.apply_symm_apply]
-      congr 1
-      apply Subtype.ext
-      simp
+  simp only [discriminantGroupEquiv, Submodule.Quotient.equiv_symm,
+    dualCarrierEquiv_symm]
+
+/-- The inverse induced discriminant-group equivalence maps a representative through the inverse
+dual-carrier equivalence. -/
+@[simp]
+theorem discriminantGroupEquiv_symm_mk (e : Isometry L M) (y : M.dualCarrier) :
+    e.discriminantGroupEquiv.symm (Submodule.Quotient.mk y) =
+      Submodule.Quotient.mk (e.symm.dualCarrierEquiv y) := by
+  rw [← e.discriminantGroupEquiv_symm, discriminantGroupEquiv_mk]
 
 /-- The equivalence induced by a composite isometry is the composite of the induced
 equivalences. -/
@@ -199,15 +156,11 @@ equivalences. -/
 theorem discriminantGroupEquiv_trans (e : Isometry L M) (f : Isometry M N) :
     (e.trans f).discriminantGroupEquiv =
       e.discriminantGroupEquiv.trans f.discriminantGroupEquiv := by
-  ext x
-  induction x using Submodule.Quotient.induction_on with
-  | _ x =>
-      rw [LinearEquiv.trans_apply, discriminantGroupEquiv_mk, discriminantGroupEquiv_mk,
-        discriminantGroupEquiv_mk]
-      congr 1
-      apply Subtype.ext
-      rw [coe_dualCarrierEquiv_apply, coe_dualCarrierEquiv_apply,
-        coe_dualCarrierEquiv_apply, trans_apply]
+  unfold discriminantGroupEquiv
+  simp only [dualCarrierEquiv_trans]
+  exact Submodule.Quotient.equiv_trans L.carrierInDual M.carrierInDual N.carrierInDual
+    e.dualCarrierEquiv f.dualCarrierEquiv e.map_carrierInDual f.map_carrierInDual
+      (by simpa only [dualCarrierEquiv_trans] using (e.trans f).map_carrierInDual)
 
 end Isometry
 

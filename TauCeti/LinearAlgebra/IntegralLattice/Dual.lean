@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Basic
+public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
 public import TauCeti.LinearAlgebra.BilinearForm.DualLattice
 
 /-!
@@ -45,6 +46,7 @@ that `Lᵛ` is again a full lattice.  It also identifies the natural pairing map
   chosen basis of `L.carrier`.
 * `TauCeti.IntegralLattice.dualSubmodule_flip_dualCarrier`: double duality with `form.flip`.
 * `TauCeti.IntegralLattice.dualSubmodule_dualCarrier`: dualizing twice recovers `L`.
+* `TauCeti.IntegralLattice.Isometry.dualCarrierEquiv`: transport of dual carriers by an isometry.
 
 ## References
 
@@ -60,7 +62,7 @@ open Module
 
 namespace TauCeti
 
-universe u
+universe u v w
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 
@@ -218,6 +220,68 @@ theorem forall_form_mem_one_dualCarrier_iff (L : IntegralLattice V) [L.IsNondege
     (x : V) :
     (∀ y ∈ L.dualCarrier, L.form x y ∈ (1 : Submodule ℤ ℚ)) ↔ x ∈ L.carrier := by
   rw [← LinearMap.BilinForm.mem_dualSubmodule, L.dualSubmodule_dualCarrier]
+
+namespace Isometry
+
+variable {W : Type v} {U : Type w}
+variable [AddCommGroup W] [Module ℚ W]
+variable [AddCommGroup U] [Module ℚ U]
+variable {L : IntegralLattice V} {M : IntegralLattice W} {N : IntegralLattice U}
+
+/-- An isometry carries an ambient vector into the target dual carrier exactly when the original
+vector belongs to the source dual carrier. -/
+theorem apply_mem_dualCarrier_iff (e : Isometry L M) (x : V) :
+    e x ∈ M.dualCarrier ↔ x ∈ L.dualCarrier := by
+  simp only [LinearMap.BilinForm.mem_dualSubmodule]
+  constructor
+  · intro hx y hy
+    have hxy := hx (e y) ((e.apply_mem_carrier_iff y).2 hy)
+    rw [e.map_app x y] at hxy
+    exact hxy
+  · intro hx y hy
+    have hxy := hx (e.symm y) ((e.symm.apply_mem_carrier_iff y).2 hy)
+    rw [← e.map_app x (e.symm y), e.apply_symm_apply] at hxy
+    exact hxy
+
+/-- An isometry restricts to an integral linear equivalence of dual carriers. -/
+def dualCarrierEquiv (e : Isometry L M) : L.dualCarrier ≃ₗ[ℤ] M.dualCarrier :=
+  ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).ofSubmodules L.dualCarrier M.dualCarrier (by
+    apply le_antisymm
+    · rintro _ ⟨x, hx, rfl⟩
+      exact (e.apply_mem_dualCarrier_iff x).2 hx
+    · intro y hy
+      refine ⟨e.symm y, (e.symm.apply_mem_dualCarrier_iff y).2 hy, e.apply_symm_apply y⟩)
+
+/-- The dual-carrier equivalence acts by the underlying ambient isometry. -/
+@[simp]
+theorem coe_dualCarrierEquiv_apply (e : Isometry L M) (x : L.dualCarrier) :
+    (e.dualCarrierEquiv x : W) = e (x : V) := by
+  simp [dualCarrierEquiv]
+
+/-- The dual-carrier restriction of the identity isometry is the identity equivalence. -/
+@[simp]
+theorem dualCarrierEquiv_refl (L : IntegralLattice V) :
+    (Isometry.refl L).dualCarrierEquiv = LinearEquiv.refl ℤ L.dualCarrier := by
+  ext x
+  simp
+
+/-- The dual-carrier restriction of an inverse isometry is the inverse equivalence. -/
+@[simp]
+theorem dualCarrierEquiv_symm (e : Isometry L M) :
+    e.symm.dualCarrierEquiv = e.dualCarrierEquiv.symm := by
+  ext x
+  simp only [dualCarrierEquiv, LinearEquiv.ofSubmodules_symm_apply,
+    LinearEquiv.ofSubmodules_apply]
+  exact congrFun e.coe_symm (x : W)
+
+/-- The dual-carrier restriction of a composed isometry is the composite equivalence. -/
+@[simp]
+theorem dualCarrierEquiv_trans (e : Isometry L M) (f : Isometry M N) :
+    (e.trans f).dualCarrierEquiv = e.dualCarrierEquiv.trans f.dualCarrierEquiv := by
+  ext x
+  simp
+
+end Isometry
 
 end IntegralLattice
 
