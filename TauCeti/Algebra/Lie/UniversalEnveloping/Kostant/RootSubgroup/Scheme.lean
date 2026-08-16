@@ -208,7 +208,6 @@ private theorem groupSchemePointMulEquiv_comp_kostantRootSubgroup
 
 /-- On scheme-valued points, the represented Kostant root subgroup is exactly the
 divided-power exponential matrix in the basis `b`. -/
-@[simp]
 theorem schemePointsMulEquiv_kostantRootSubgroup_apply
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (AdditiveGroup.groupScheme ℤ).X) (r s : Fin n) :
