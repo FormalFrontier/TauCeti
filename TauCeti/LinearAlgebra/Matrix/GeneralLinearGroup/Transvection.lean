@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
--- The group-commutator bracket `⁅x, y⁆` occurs in the statements below.
-public import Mathlib.Algebra.Group.Commutator
 
 /-!
 # The commutator relations between transvections
@@ -17,9 +15,8 @@ public import Mathlib.Algebra.Group.Commutator
 Mathlib's `Matrix.transvection i j c = 1 + c Eᵢⱼ` is the elementary matrix adding `c` times the
 `j`-th coordinate to the `i`-th one. For `i ≠ j` it is invertible, and Mathlib packages it as
 `Matrix.SpecialLinearGroup.transvection`, together with its zero, addition and inverse laws; this
-file views it in `GL n A` along `Matrix.SpecialLinearGroup.toGL` as `TauCeti.transvectionUnit`,
-packages the resulting one-parameter subgroup as `TauCeti.transvectionHom`, and proves the two
-relations that hold between transvections at different pairs of indices.
+file views it in `GL n A` along `Matrix.SpecialLinearGroup.toGL` as `TauCeti.transvectionUnit` and
+packages the resulting one-parameter subgroup as `TauCeti.transvectionHom`.
 
 Writing `xᵢⱼ(c)` for the transvection, the relations are
 
@@ -49,11 +46,7 @@ elementary matrices against the diagonal torus.
 
 ## Main results
 
-* `TauCeti.commute_transvection` and `TauCeti.commute_transvectionUnit`: transvections at index
-  pairs that do not chain commute.
-* `TauCeti.transvection_mul_transvection_eq_mul_mul`: the product of two chaining transvections,
-  in the two orders. As a matrix identity it needs only `i ≠ j` and `i ≠ l`; the third index
-  condition `j ≠ l` is what makes the three matrices involved transvections.
+* `TauCeti.commute_transvectionUnit`: transvections at index pairs that do not chain commute.
 * `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
@@ -79,34 +72,9 @@ universe u v
 
 variable {n : Type*} [DecidableEq n] {A : Type u} [CommRing A] {i j k l : n}
 
-/-! ## The commutator relations between transvections -/
-
 section Products
 
 variable [Fintype n]
-
-/-- Two matrices of the form `Matrix.transvection` commute when the corresponding matrix-unit
-products vanish in both orders. When both index pairs are distinct, these are root-subgroup
-elements and the sum of the two roots `εᵢ - εⱼ` and `εₖ - εₗ` is not a root. -/
-theorem commute_transvection (hjk : j ≠ k) (hli : l ≠ i) (c d : A) :
-    Commute (transvection i j c) (transvection k l d) := by
-  simp only [Commute, SemiconjBy, transvection, Matrix.add_mul, Matrix.mul_add, Matrix.one_mul,
-    Matrix.mul_one, single_mul_single_of_ne _ _ _ _ hjk, single_mul_single_of_ne _ _ _ _ hli]
-  abel
-
-/-- A product identity for two chaining matrices of the form `Matrix.transvection`: reversing
-their order produces the extra factor at `(i, l)`. When `j ≠ l` as well, all three index pairs
-are distinct and this is the type `A` Chevalley commutator relation before it is written as a
-commutator. -/
-theorem transvection_mul_transvection_eq_mul_mul (hij : i ≠ j) (hil : i ≠ l) (c d : A) :
-    transvection i j c * transvection j l d =
-      transvection j l d * transvection i j c * transvection i l (c * d) := by
-  have hli : l ≠ i := hil.symm
-  have hji : j ≠ i := hij.symm
-  simp only [transvection, Matrix.add_mul, Matrix.mul_add, Matrix.one_mul, Matrix.mul_one,
-    single_mul_single_same, single_mul_single_of_ne _ _ _ _ hli,
-    single_mul_single_of_ne _ _ _ _ hji, Matrix.zero_mul]
-  abel
 
 /-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
 corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
@@ -197,9 +165,9 @@ theorem transvectionHom_injective (hij : i ≠ j) :
 
 /-- Transvections at index pairs that do not chain commute in `GL n A`. -/
 theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
-    (c d : A) : Commute (transvectionUnit hij c) (transvectionUnit hkl d) := by
-  ext a b
-  exact congrFun₂ (commute_transvection hjk hli c d) a b
+    (c d : A) : Commute (transvectionUnit hij c) (transvectionUnit hkl d) :=
+  (Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli c d).map
+    Matrix.SpecialLinearGroup.toGL
 
 /-- The product of two chaining transvections in `GL n A`, in the two orders. -/
 theorem transvectionUnit_mul_transvectionUnit_eq_mul_mul
@@ -207,21 +175,18 @@ theorem transvectionUnit_mul_transvectionUnit_eq_mul_mul
     (c d : A) :
     transvectionUnit hij c * transvectionUnit hjl d =
       transvectionUnit hjl d * transvectionUnit hij c * transvectionUnit hil (c * d) := by
-  ext a b
-  exact congrFun₂ (transvection_mul_transvection_eq_mul_mul hij hil c d) a b
+  simp only [transvectionUnit, ← map_mul]
+  exact congrArg SpecialLinearGroup.toGL
+    (Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul hij hjl hil c d)
 
 /-- **The Chevalley commutator relation of type `A`.** The commutator of the root subgroup elements
 `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`, is `xᵢₗ(cd)`: the root `εᵢ - εₗ` is the sum
 of `εᵢ - εⱼ` and `εⱼ - εₗ`, and the structure constant is `1`. -/
 theorem commutatorElement_transvectionUnit (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
     ⁅transvectionUnit hij c, transvectionUnit hjl d⁆ = transvectionUnit hil (c * d) := by
-  have hxz : Commute (transvectionUnit hij c) (transvectionUnit hil (c * d)) :=
-    commute_transvectionUnit hij hil hij.symm hil.symm c (c * d)
-  have hyz : Commute (transvectionUnit hjl d) (transvectionUnit hil (c * d)) :=
-    commute_transvectionUnit hjl hil hil.symm hjl.symm d (c * d)
-  rw [commutatorElement_def, transvectionUnit_mul_transvectionUnit_eq_mul_mul hij hjl hil,
-    mul_assoc (transvectionUnit hjl d) (transvectionUnit hij c), hxz.eq, ← mul_assoc,
-    mul_inv_cancel_right, hyz.eq, mul_inv_cancel_right]
+  simp only [transvectionUnit, ← map_commutatorElement]
+  exact congrArg SpecialLinearGroup.toGL
+    (Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil c d)
 
 end Unit
 

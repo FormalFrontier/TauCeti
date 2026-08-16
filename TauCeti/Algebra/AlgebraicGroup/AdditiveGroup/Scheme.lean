@@ -56,6 +56,8 @@ affine-space APIs.
   and scheme-valued points.
 * `TauCeti.AdditiveGroup.schemePointsMulEquiv`: scheme-valued points are the additive group of
   the value algebra.
+* `TauCeti.AdditiveGroup.gaSchemePointParamMul`: the scheme-valued point whose parameter is the
+  product of two parameters in the value algebra.
 * `TauCeti.AdditiveGroup.schemePointsMulEquiv_mapValue`: covariance in the value algebra.
 
 ## References
@@ -333,6 +335,39 @@ noncomputable def schemePointsMulEquiv :
   (groupSchemePointMulEquiv A).symm.trans
     (gaPointsMulEquiv (R := R) (A := A))
 
+/-- The scheme-valued point whose additive parameter is the product of the parameters of `p` and
+`q` in the value algebra. This is not the group operation on scheme-valued points, which adds
+parameters. -/
+noncomputable def gaSchemePointParamMul
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶ (groupScheme R).X :=
+  groupSchemePointMulEquiv A
+    (gaPointParamMul ((groupSchemePointMulEquiv A).symm p)
+      ((groupSchemePointMulEquiv A).symm q))
+
+/-- Scheme-point parameter multiplication transports algebra-point parameter multiplication
+through the canonical spectrum-points equivalence. -/
+@[simp]
+theorem gaSchemePointParamMul_groupSchemePointMulEquiv
+    (F G : WithConv (coordinateHopfAlgebra R →ₐ[R] A)) :
+    gaSchemePointParamMul A (groupSchemePointMulEquiv A F) (groupSchemePointMulEquiv A G) =
+      groupSchemePointMulEquiv A (gaPointParamMul F G) := by
+  simp [gaSchemePointParamMul]
+
+/-- Under the scheme-points equivalence, `gaSchemePointParamMul p q` has parameter equal to the
+product of the parameters of `p` and `q` in the value algebra. -/
+@[simp]
+theorem schemePointsMulEquiv_gaSchemePointParamMul
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    schemePointsMulEquiv A (gaSchemePointParamMul A p q) =
+      Multiplicative.ofAdd
+        (Multiplicative.toAdd (schemePointsMulEquiv A p) *
+          Multiplicative.toAdd (schemePointsMulEquiv A q)) := by
+  simp only [gaSchemePointParamMul, schemePointsMulEquiv, MulEquiv.trans_apply,
+    MulEquiv.symm_apply_apply, gaPointsMulEquiv_gaPointParamMul]
+
 /-- A scheme-valued point corresponds to the value at the additive coordinate `ι(1)` of its
 canonical algebra point. -/
 @[simp]
@@ -400,6 +435,23 @@ theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   exact gaPointsMulEquiv_mapValue φ q
+
+/-- Multiplication of scheme-point parameters is natural in the value algebra. -/
+theorem mapValue_gaSchemePointParamMul (φ : A →ₐ[R] B)
+    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
+      (groupScheme R).X) :
+    (Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ gaSchemePointParamMul A p q =
+      gaSchemePointParamMul B
+        ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ p)
+        ((Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+          (Spec (CommRingCat.of R)) ≫ q) := by
+  apply (schemePointsMulEquiv B).injective
+  rw [schemePointsMulEquiv_mapValue, schemePointsMulEquiv_gaSchemePointParamMul,
+    schemePointsMulEquiv_gaSchemePointParamMul, schemePointsMulEquiv_mapValue,
+    schemePointsMulEquiv_mapValue]
+  exact congrArg Multiplicative.ofAdd (map_mul φ _ _)
 
 end SchemePoints
 

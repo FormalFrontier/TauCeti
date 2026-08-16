@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Comodule.Basic
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 
 /-!
 # Kostant root subgroups as natural point representations

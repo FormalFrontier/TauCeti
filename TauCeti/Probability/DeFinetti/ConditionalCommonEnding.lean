@@ -118,8 +118,9 @@ linear order on the index — hence `ℕ`. The others quantify over an arbitrary
 
 This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
 factorization identity. The martingale route reaches it from tail conditional laws and consumes it
-in `conditionallyIIDWith_of_contractable_pathSpace`; a route conditioning on invariant σ-algebras
-instead could consume the same statement, though none currently does.
+in `conditionallyIIDWith_of_contractable_pathSpace`; the Koopman route conditions on the
+shift-invariant σ-algebra instead and consumes it in
+`ContractableLaw.conditionallyIIDWith_invariantConditionalProbabilityMeasure`.
 
 In particular there is **no** standard-Borel or non-empty hypothesis on either space: those are
 needed to *construct* a directing measure, not to recognise one. -/

@@ -23,9 +23,10 @@ A⁺ → Aut_A(A ⊗[ℤ] M),    t ↦ ∑ₙ tⁿ ρ(eᵢ)⁽ⁿ⁾.
 
 This file proves that these homomorphisms are natural in `A`, turning the ring-by-ring exponential
 actions from `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.BaseChangeAction` into a natural
-root-subgroup map on points. Once integral PBW supplies a finite free admissible lattice, its basis
-will identify these automorphisms with `GLₙ(A)` and the existing full-faithfulness theorem for the
-functor of points will recover the scheme morphism `𝔾ₐ → GLₙ`.
+root-subgroup map on points. Its realization in a finite base-changed basis is provided by
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Coordinate`. Integral PBW must still
+supply a finite free admissible lattice, after which the existing full-faithfulness theorem for the
+functor of points can recover the scheme morphism `𝔾ₐ → GLₙ`.
 
 ## Main declarations
 
