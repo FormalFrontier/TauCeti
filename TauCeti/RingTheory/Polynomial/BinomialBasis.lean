@@ -76,7 +76,7 @@ theorem factorial_smul_ringChoose_X_eq_descPochhammer (n : ℕ) :
     (n.factorial : K) • Ring.choose (X : K[X]) n = descPochhammer K n := by
   rw [Nat.cast_smul_eq_nsmul, ← Ring.descPochhammer_eq_factorial_smul_choose,
     ← Polynomial.eval₂_smulOneHom_eq_smeval]
-  rw [show (RingHom.smulOneHom : ℤ →+* K[X]) = Int.castRingHom K[X] from Subsingleton.elim _ _]
+  rw [RingHom.eq_intCast' RingHom.smulOneHom]
   have hX : (X : K[X]) = (Polynomial.mapRingHom (Int.castRingHom K)) X := by
     simp only [Polynomial.coe_mapRingHom, Polynomial.map_X]
   rw [hX, Polynomial.eval₂_intCastRingHom_X]
