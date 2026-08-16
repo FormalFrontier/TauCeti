@@ -102,7 +102,7 @@ theorem map_kostantRootSubgroupMatrix (φ : A →+* B)
     (kostantRootSubgroupPoints e h ρ M hM i hnil f).val
     (kostantRootSubgroupPoints e h ρ M hM i hnil
       (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ.toIntAlgHom f)).val
-    (map_kostantRootSubgroupPoints e h ρ M hM i hnil φ.toIntAlgHom f)
+    (map_kostantRootSubgroupPoints e h ρ M hM i hnil φ f)
   simpa only [Matrix.map_apply, LinearMap.toMatrixAlgEquiv_apply,
     RingHom.toIntAlgHom_apply] using congrFun (congrFun hmatrix r) s
 

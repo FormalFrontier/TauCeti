@@ -124,6 +124,8 @@ theorem integralDividedPower_eq_zero_of_le (x : A)
 -- over `ℤ` is unique, category objects need not store the canonical instance definitionally.
 attribute [local instance high] Algebra.toModule
 
+section ExplicitAlgebra
+
 variable {R : Type v} [CommRing R] [Algebra ℤ R]
 
 /-- The finite integral divided-power exponential on the scalar extension `R ⊗[ℤ] M`
@@ -148,8 +150,9 @@ theorem baseChangeExp_tmul (x : A) (M : S)
         integralDividedPower x M n (hM n) v := by
   simp [baseChangeExp, smul_tmul']
 
-/-- The base-changed divided-power exponential is natural under maps of parameter rings. -/
-theorem map_baseChangeExp {T : Type*} [CommRing T] [Algebra ℤ T] (φ : R →ₐ[ℤ] T)
+/-- The base-changed divided-power exponential is natural under maps of parameter rings carrying
+explicit `ℤ`-algebra structures. -/
+theorem map_baseChangeExp_algHom {T : Type*} [CommRing T] [Algebra ℤ T] (φ : R →ₐ[ℤ] T)
     (x : A) (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (t : R) :
     ∀ z : R ⊗[ℤ] M,
@@ -395,5 +398,18 @@ theorem coe_baseChangeExpHom (x : A) (M : S)
     ⇑(baseChangeExpHom x M hM hx t) =
       ⇑(baseChangeExp x M hM (Multiplicative.toAdd t)) :=
   (rfl)
+
+end ExplicitAlgebra
+
+variable {R : Type v} [CommRing R]
+
+/-- The base-changed divided-power exponential is natural under every map of parameter rings. -/
+theorem map_baseChangeExp {T : Type*} [CommRing T] (φ : R →+* T) (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (t : R) :
+    ∀ z : R ⊗[ℤ] M,
+      TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id (baseChangeExp x M hM t z) =
+        baseChangeExp x M hM (φ t)
+          (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
+  exact map_baseChangeExp_algHom φ.toIntAlgHom x M hM t
 
 end TauCeti

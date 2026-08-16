@@ -117,10 +117,9 @@ section Naturality
 
 variable {A B : Type*} [CommRing A] [CommRing B] [Algebra ℤ A] [Algebra ℤ B]
 
-/-- Kostant root-subgroup points are natural in the value ring. Applying `φ` to the scalar
-coordinate of every tensor intertwines the automorphism attached to `t : A` with the
-automorphism attached to `φ(t) : B`. -/
-theorem map_kostantRootSubgroupPoints
+/-- Kostant root-subgroup points are natural between value rings carrying explicit `ℤ`-algebra
+structures. -/
+theorem map_kostantRootSubgroupPoints_algHom
     (φ : A →ₐ[ℤ] B)
     (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     ∀ z : A ⊗[ℤ] M,
@@ -135,8 +134,28 @@ theorem map_kostantRootSubgroupPoints
     ← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
     kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
     AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
-  exact map_baseChangeExp φ _ _ _ _ z
+  exact map_baseChangeExp_algHom φ _ _ _ _ z
 
 end Naturality
+
+section CanonicalNaturality
+
+variable {A B : Type*} [CommRing A] [CommRing B]
+
+/-- Kostant root-subgroup points are natural in the value ring. Applying `φ` to the scalar
+coordinate of every tensor intertwines the automorphism attached to `t : A` with the
+automorphism attached to `φ(t) : B`. -/
+theorem map_kostantRootSubgroupPoints
+    (φ : A →+* B)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    ∀ z : A ⊗[ℤ] M,
+      TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id
+          ((kostantRootSubgroupPoints e h ρ M hM i hnil f).val z) =
+        (kostantRootSubgroupPoints e h ρ M hM i hnil
+            (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ.toIntAlgHom f)).val
+          (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
+  exact map_kostantRootSubgroupPoints_algHom e h ρ M hM i hnil φ.toIntAlgHom f
+
+end CanonicalNaturality
 
 end TauCeti.UniversalEnvelopingAlgebra
