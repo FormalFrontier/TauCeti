@@ -180,7 +180,6 @@ theorem discriminantQuadraticModule_quadratic (L : IntegralLattice V)
 
 /-- The polar finite bilinear module of the discriminant quadratic module is the existing
 discriminant bilinear module. -/
-@[simp]
 theorem discriminantQuadraticModule_toFiniteBilinearModule (L : IntegralLattice V)
     [L.IsNondegenerate] (hL : L.IsEven) :
     (L.discriminantQuadraticModule hL).toFiniteBilinearModule =
@@ -239,7 +238,6 @@ theorem discriminantQuadraticIsometry_apply (e : Isometry L M)
 
 /-- The induced discriminant quadratic isometry maps a representative through the dual-carrier
 equivalence. -/
-@[simp]
 theorem discriminantQuadraticIsometry_mk (e : Isometry L M)
     [L.IsNondegenerate] [M.IsNondegenerate] (hL : L.IsEven) (x : L.dualCarrier) :
     e.discriminantQuadraticIsometry hL (Submodule.Quotient.mk x) =
