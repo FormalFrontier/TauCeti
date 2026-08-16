@@ -80,27 +80,19 @@ theorem exists_e7Coroot_eq {v : Fin 7 → ℤ}
   | left j =>
       rw [e8Coroot_castAdd] at hj hj0
       obtain ⟨i, hi⟩ := (e8PositiveCoroot_last_eq_zero_iff j).mp hj0
-      have hi' : e8PositiveCoroot j = e7Extend (e7PositiveCoroot i) := by
-        refine hi.trans ?_
-        funext k
-        simp only [e7Extend]
       refine ⟨Fin.castAdd 63 i, e7Extend_injective ?_⟩
       have he7 : e7Coroot (Fin.castAdd 63 i) = e7PositiveCoroot i := by
         simp only [e7Coroot_apply, Fin.val_castAdd, i.isLt, dite_true]
       rw [he7]
-      exact hi'.symm.trans hj
+      exact hi.symm.trans hj
   | right j =>
       rw [Fin.natAdd_eq_addNat, e8Coroot_addNat] at hj hj0
       have hj0' : e8PositiveCoroot j 7 = 0 := by simpa using hj0
       obtain ⟨i, hi⟩ := (e8PositiveCoroot_last_eq_zero_iff j).mp hj0'
-      have hi' : e8PositiveCoroot j = e7Extend (e7PositiveCoroot i) := by
-        refine hi.trans ?_
-        funext k
-        simp only [e7Extend]
       refine ⟨Fin.addNat i 63, e7Extend_injective ?_⟩
       have he7 : e7Coroot (Fin.castAdd 63 i) = e7PositiveCoroot i := by
         simp only [e7Coroot_apply, Fin.val_castAdd, i.isLt, dite_true]
-      rw [e7Coroot_addNat, he7, e7Extend_neg, ← hi']
+      rw [e7Coroot_addNat, he7, e7Extend_neg, ← hi]
       exact hj
 
 end DynkinType
