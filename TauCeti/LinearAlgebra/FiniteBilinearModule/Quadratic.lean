@@ -267,15 +267,15 @@ theorem isIsotropic_def (H : AddSubgroup A) :
 @[simp]
 theorem Isometry.isIsotropic_map_iff {B : FiniteQuadraticModule} (f : Isometry A B)
     (H : AddSubgroup A) :
-    B.IsIsotropic (H.map f.toAddEquiv.toAddMonoidHom) ↔ A.IsIsotropic H := by
+    B.IsIsotropic (H.map f.toAddEquiv) ↔ A.IsIsotropic H := by
   constructor
   · intro hH x hx
     rw [← f.map_app x]
     exact hH (f x) ⟨x, hx, rfl⟩
   · intro hH y hy
     obtain ⟨x, hx, rfl⟩ := hy
-    have hfx : B.quadratic (f.toAddEquiv.toAddMonoidHom x) = A.quadratic x := f.map_app x
-    rw [hfx]
+    change B.quadratic (f x) = 0
+    rw [f.map_app]
     exact hH x hx
 
 /-- An element of a quadratically isotropic subgroup is isotropic. -/

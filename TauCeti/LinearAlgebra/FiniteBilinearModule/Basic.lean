@@ -377,7 +377,6 @@ abbrev restrict (H : AddSubgroup A) : FiniteBilinearModule where
         exact A.pairing_add_left x.1 y.1 z.1 }
   pairing_comm x y := A.pairing_comm x.1 y.1
 
-@[simp]
 theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x.1 y.1 := (rfl)
 
@@ -387,7 +386,6 @@ abbrev neg : FiniteBilinearModule where
   pairing := -A.pairing
   pairing_comm x y := congrArg Neg.neg (A.pairing_comm x y)
 
-@[simp]
 theorem neg_pairing (x y : A) : A.neg.pairing x y = -A.pairing x y := (rfl)
 
 /-- Form negation preserves nondegeneracy of a finite bilinear module. -/
@@ -428,7 +426,6 @@ abbrev prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦
     congrArg₂ (· + ·) (A.pairing_comm x₁ y₁) (B.pairing_comm x₂ y₂)
 
-@[simp]
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
     (prod A B).pairing x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 :=
   rfl
