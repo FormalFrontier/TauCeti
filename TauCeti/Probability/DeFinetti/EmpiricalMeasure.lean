@@ -36,6 +36,9 @@ summit, which is a substantially larger closure.
   directing-measure theorem. This module supplies the topology-free fixed-set endpoint; weak
   empirical-measure convergence is a separate downstream theorem requiring a chosen compatible
   Polish topology, which `[StandardBorelSpace α]` does not select.
+* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), §1.1.
+
+No material is adapted from `cameronfreer/exchangeability`, which does not treat empirical measures.
 -/
 
 public section
