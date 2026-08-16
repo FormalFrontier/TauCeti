@@ -26,10 +26,11 @@ scheme interface, scheme-valued points are stated in the same universe as the ba
 
 * `TauCeti.UpperUnitriangular.coordinateMap`: the coordinate morphism
   `O(GL_n) ⟶ O(U_n)`.
-* `TauCeti.UpperUnitriangular.groupScheme`: the finite-type affine group scheme `U_n`.
+* `TauCeti.UpperUnitriangular.groupScheme`: the finite-type affine upper-unitriangular group
+  scheme on a finite linearly ordered index type.
 * `TauCeti.UpperUnitriangular.inclusion`: the closed immersion `U_n ⟶ GL_n`.
-* `TauCeti.UpperUnitriangular.schemePointsMulEquiv`: scheme-valued points of `U_n` are
-  upper-unitriangular matrices.
+* `TauCeti.UpperUnitriangular.schemePointsMulEquiv`: scheme-valued points are
+  upper-unitriangular matrices on the chosen index type.
 
 ## References
 
@@ -159,9 +160,8 @@ theorem coordinateMap_genericMatrix_apply (i j : Fin n) :
   simpa [e, inclusionPoints, GeneralLinear.generalLinearToPoint_apply,
     pointToUpperUnitriangular_apply] using h'
 
-/-- The coordinate morphism `O(GL_n) ⟶ O(U_n)` is surjective. -/
-theorem coordinateMap_surjective : Function.Surjective (coordinateMap R n).hom := by
-  change Function.Surjective (coordinateMap R n).hom.toAlgHom
+private theorem coordinateMap_toAlgHom_surjective :
+    Function.Surjective (coordinateMap R n).hom.toAlgHom := by
   intro x
   obtain ⟨p, rfl⟩ := (coordinateHopfAlgebraAlgEquiv R (Fin n)).surjective x
   induction p using MvPolynomial.induction_on with
@@ -189,32 +189,42 @@ theorem coordinateMap_surjective : Function.Surjective (coordinateMap R n).hom :
         _ = coordinateHopfAlgebraAlgEquiv R (Fin n) (p * MvPolynomial.X ij) := by
           rw [genericMatrix_apply_of_lt R (Fin n) ij.2, map_mul]
 
+/-- The coordinate morphism `O(GL_n) ⟶ O(U_n)` is surjective. -/
+theorem coordinateMap_surjective : Function.Surjective (coordinateMap R n).hom :=
+  coordinateMap_toAlgHom_surjective R n
+
 /-! ### The group scheme and its closed immersion -/
+
+section GroupScheme
+
+variable (m : Type) [Fintype m] [LinearOrder m]
 
 /-- The upper-unitriangular group scheme obtained by applying relative spectrum to its
 coordinate Hopf algebra. -/
 noncomputable def groupScheme : Grp (Over (AlgebraicGeometry.Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
-    (Opposite.op (coordinateHopfAlgebra R (Fin n)))
+    (Opposite.op (coordinateHopfAlgebra R m))
 
 /-- The upper-unitriangular group scheme is the Hopf spectrum of its coordinate algebra. -/
 theorem groupScheme_def :
-    groupScheme R n =
+    groupScheme R m =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
-        (Opposite.op (coordinateHopfAlgebra R (Fin n))) := by
+        (Opposite.op (coordinateHopfAlgebra R m)) := by
   unfold groupScheme
   rfl
 
-/-- The scheme underlying `U_n` is the spectrum of its coordinate Hopf algebra. -/
+/-- The underlying scheme is the spectrum of the upper-unitriangular coordinate Hopf algebra. -/
 theorem groupScheme_X_left :
-    (groupScheme R n).X.left =
-      AlgebraicGeometry.Spec (CommRingCat.of (coordinateHopfAlgebra R (Fin n))) := by
+    (groupScheme R m).X.left =
+      AlgebraicGeometry.Spec (CommRingCat.of (coordinateHopfAlgebra R m)) := by
   simpa only [groupScheme] using
-    hopfSpec_obj_X_left R (coordinateHopfAlgebra R (Fin n))
+    hopfSpec_obj_X_left R (coordinateHopfAlgebra R m)
+
+end GroupScheme
 
 /-- The closed immersion of the upper-unitriangular group scheme into `GL_n`. -/
-noncomputable def inclusion : groupScheme R n ⟶ GeneralLinear.groupScheme R n :=
-  eqToHom (groupScheme_def R n) ≫
+noncomputable def inclusion : groupScheme R (Fin n) ⟶ GeneralLinear.groupScheme R n :=
+  eqToHom (groupScheme_def R (Fin n)) ≫
     (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R n).op ≫
     eqToHom (GeneralLinear.groupScheme_def R n).symm
 
@@ -222,38 +232,39 @@ noncomputable def inclusion : groupScheme R n ⟶ GeneralLinear.groupScheme R n 
 `coordinateMap`. -/
 theorem inclusion_def :
     inclusion R n =
-      eqToHom (groupScheme_def R n) ≫
+      eqToHom (groupScheme_def R (Fin n)) ≫
         (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (coordinateMap R n).op ≫
         eqToHom (GeneralLinear.groupScheme_def R n).symm := by
   unfold inclusion
   rfl
 
 /-- The upper-unitriangular group scheme is affine. -/
-instance isAffine_groupScheme : AlgebraicGeometry.IsAffine (groupScheme R n).X.left := by
+instance isAffine_groupScheme (m : Type) [Fintype m] [LinearOrder m] :
+    AlgebraicGeometry.IsAffine (groupScheme R m).X.left := by
   rw [groupScheme_X_left]
   exact AlgebraicGeometry.isAffine_Spec _
 
 /-- The structural morphism of the upper-unitriangular group scheme is locally of finite type. -/
-instance locallyOfFiniteType_groupScheme :
-    AlgebraicGeometry.LocallyOfFiniteType (groupScheme R n).X.hom := by
+instance locallyOfFiniteType_groupScheme (m : Type) [Fintype m] [LinearOrder m] :
+    AlgebraicGeometry.LocallyOfFiniteType (groupScheme R m).X.hom := by
   rw [groupScheme_def]
   exact (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec R
-    (coordinateHopfAlgebra R (Fin n))).mp
+    (coordinateHopfAlgebra R m)).mp
       (by
         rw [← finiteTypeCoordinateHopfAlgebra_obj]
-        exact (finiteTypeCoordinateHopfAlgebra R (Fin n)).property)
+        exact (finiteTypeCoordinateHopfAlgebra R m).property)
 
 /-- The inclusion `U_n ⟶ GL_n` is a closed immersion. -/
 instance isClosedImmersion_inclusion :
     AlgebraicGeometry.IsClosedImmersion (inclusion R n).hom.hom.left := by
-  let e₁ := (eqToHom (groupScheme_def R n)).hom.hom.left
+  let e₁ := (eqToHom (groupScheme_def R (Fin n))).hom.hom.left
   let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
     (coordinateMap R n).op).hom.hom.left
   let e₂ := (eqToHom (GeneralLinear.groupScheme_def R n).symm).hom.hom.left
   have he₁ : IsIso e₁ :=
     ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
       ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R n)))).isIso_hom
+        (eqToIso (groupScheme_def R (Fin n))))).isIso_hom
   have he₂ : IsIso e₂ :=
     ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
       ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
@@ -276,64 +287,89 @@ instance isClosedImmersion_inclusion :
 
 section SchemePoints
 
-variable {R} (A : Type u) [CommRing A] [Algebra R A]
+section
 
-/-- The canonical equivalence from algebra-valued points to scheme-valued points of `U_n`. -/
+variable {R} (m : Type) [Fintype m] [LinearOrder m]
+  (A : Type u) [CommRing A] [Algebra R A]
+
+/-- The canonical equivalence from algebra-valued points to scheme-valued
+upper-unitriangular points. -/
 noncomputable def groupSchemePointMulEquiv :
-    WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A) ≃*
+    WithConv (coordinateHopfAlgebra R m →ₐ[R] A) ≃*
       ((AlgebraicGeometry.Spec (CommRingCat.of A)).asOver
-          (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R n).X) :=
+          (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R m).X) :=
   CommHopfAlgCat.mapMulEquivOfPresentation
-    (coordinateHopfAlgebra R (Fin n)) A (groupScheme_def R n)
+    (coordinateHopfAlgebra R m) A (groupScheme_def R m)
 
 /-- The underlying spectrum map of the canonical algebra-to-scheme point equivalence. -/
 @[simp]
 theorem groupSchemePointMulEquiv_apply_left
-    (f : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
-    (groupSchemePointMulEquiv n A f).left =
+    (f : WithConv (coordinateHopfAlgebra R m →ₐ[R] A)) :
+    (groupSchemePointMulEquiv m A f).left =
       AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
-        eqToHom (groupScheme_X_left R n).symm := by
+        eqToHom (groupScheme_X_left R m).symm := by
   simpa only [groupSchemePointMulEquiv] using
     CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
-      (coordinateHopfAlgebra R (Fin n)) A (groupScheme_def R n)
-        (groupScheme_X_left R n) f
+      (coordinateHopfAlgebra R m) A (groupScheme_def R m)
+        (groupScheme_X_left R m) f
 
-/-- Scheme-valued points of `U_n` are upper-unitriangular matrices. -/
+/-- Scheme-valued upper-unitriangular points are upper-unitriangular matrices. -/
 noncomputable def schemePointsMulEquiv :
     ((AlgebraicGeometry.Spec (CommRingCat.of A)).asOver
-        (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R n).X) ≃*
-      upperUnitriangularGroup (Fin n) A :=
-  (groupSchemePointMulEquiv n A).symm.trans (pointsMulEquiv R (Fin n))
+        (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R m).X) ≃*
+      upperUnitriangularGroup m A :=
+  (groupSchemePointMulEquiv m A).symm.trans (pointsMulEquiv R m)
 
 /-- A scheme point presented by an algebra point corresponds to the same upper-unitriangular
 matrix under `schemePointsMulEquiv`. -/
 @[simp]
 theorem schemePointsMulEquiv_groupSchemePointMulEquiv
-    (q : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
-    schemePointsMulEquiv n A (groupSchemePointMulEquiv n A q) =
-      pointsMulEquiv R (Fin n) q := by
+    (q : WithConv (coordinateHopfAlgebra R m →ₐ[R] A)) :
+    schemePointsMulEquiv m A (groupSchemePointMulEquiv m A q) =
+      pointsMulEquiv R m q := by
   simp [schemePointsMulEquiv]
+
+/-- Evaluating the scheme-points equivalence directly on a scheme morphism. -/
+theorem schemePointsMulEquiv_apply
+    (p : (AlgebraicGeometry.Spec (CommRingCat.of A)).asOver
+        (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R m).X) :
+    schemePointsMulEquiv m A p =
+      pointsMulEquiv R m ((groupSchemePointMulEquiv m A).symm p) := by
+  unfold schemePointsMulEquiv
+  rfl
+
+/-- The inverse scheme-points equivalence presents an upper-unitriangular matrix as the
+corresponding spectrum point. -/
+@[simp]
+theorem schemePointsMulEquiv_symm_apply (g : upperUnitriangularGroup m A) :
+    (schemePointsMulEquiv m A).symm g =
+      groupSchemePointMulEquiv m A ((pointsMulEquiv R m).symm g) := by
+  rfl
+
+end
+
+variable {R} (A : Type u) [CommRing A] [Algebra R A]
 
 private theorem groupSchemePointMulEquiv_comp_inclusion
     (q : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
-    groupSchemePointMulEquiv n A q ≫ (inclusion R n).hom.hom =
+    groupSchemePointMulEquiv (Fin n) A q ≫ (inclusion R n).hom.hom =
       GeneralLinear.groupSchemePointMulEquiv n A (inclusionPoints (R := R) n q) := by
   rw [inclusion_def, ← mapPointsFunctor_coordinateMap_app R n (CommAlgCat.of R A) q]
   exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
-    (R := R) A (GeneralLinear.groupScheme_def R n) (groupScheme_def R n)
-      (GeneralLinear.groupSchemePointMulEquiv n A) (groupSchemePointMulEquiv n A)
+    (R := R) A (GeneralLinear.groupScheme_def R n) (groupScheme_def R (Fin n))
+      (GeneralLinear.groupSchemePointMulEquiv n A) (groupSchemePointMulEquiv (Fin n) A)
       (GeneralLinear.groupSchemePointMulEquiv_apply_left n A)
-      (groupSchemePointMulEquiv_apply_left n A) (coordinateMap R n) q
+      (groupSchemePointMulEquiv_apply_left (Fin n) A) (coordinateMap R n) q
 
 /-- Composing a scheme-valued point with `U_n ⟶ GL_n` is ordinary subgroup inclusion on
 matrices. -/
 @[simp]
 theorem schemePointsMulEquiv_comp_inclusion
     (p : (AlgebraicGeometry.Spec (CommRingCat.of A)).asOver
-        (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R n).X) :
+        (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R (Fin n)).X) :
     GeneralLinear.schemePointsMulEquiv n A (p ≫ (inclusion R n).hom.hom) =
-      (schemePointsMulEquiv n A p : upperUnitriangularGroup (Fin n) A) := by
-  obtain ⟨q, rfl⟩ := (groupSchemePointMulEquiv n A).surjective p
+      (schemePointsMulEquiv (Fin n) A p : upperUnitriangularGroup (Fin n) A) := by
+  obtain ⟨q, rfl⟩ := (groupSchemePointMulEquiv (Fin n) A).surjective p
   rw [groupSchemePointMulEquiv_comp_inclusion,
     GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
     schemePointsMulEquiv_groupSchemePointMulEquiv,
