@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Bialgebra.GroupLike
 public import Mathlib.RingTheory.Bialgebra.TensorProduct
+public import TauCeti.Algebra.Bialgebra.GroupLike.Map
 public import TauCeti.Algebra.TensorProduct.BaseChange
 
 /-!
@@ -18,6 +18,7 @@ therefore induces actions on the group-like elements and on their additive form.
 ## Main declarations
 
 * `TauCeti.ScalarAut.isGroupLikeElem_smul`: scalar automorphisms preserve group-like elements.
+* `TauCeti.ScalarAut.groupLikeMap_smul`: the induced map on group-like elements is equivariant.
 * `TauCeti.ScalarAut.instGroupLikeDistribMulAction`: the induced action on group-like elements.
 * `TauCeti.ScalarAut.instAdditiveDistribMulAction`: the transported additive action.
 -/
@@ -97,6 +98,17 @@ noncomputable instance instGroupLikeDistribMulAction :
 theorem val_smul (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
     (σ • x).val = σ • x.val :=
   rfl
+
+/-- The map on group-like elements induced by scalar extension is equivariant for scalar
+automorphisms. -/
+@[simp]
+theorem groupLikeMap_smul {B : Type*} [Semiring B] [Bialgebra K B] (f : A →ₐc[K] B)
+    (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
+    GroupLike.map (Bialgebra.TensorProduct.map (BialgHom.id L L) f) (σ • x) =
+      σ • GroupLike.map (Bialgebra.TensorProduct.map (BialgHom.id L L) f) x := by
+  apply _root_.GroupLike.val_injective
+  simp only [GroupLike.val_map, val_smul]
+  exact baseChangeMap_smul (f : A →ₐ[K] B) σ x.val
 
 /-- The scalar action transported to the additive form of the group-like monoid. -/
 noncomputable instance instAdditiveDistribMulAction :

@@ -81,8 +81,10 @@ private noncomputable def heckeSlashInvariant (f : SlashInvariantForm 𝒮ℒ k)
 
 /-- **The double coset as a `ℂ`-linear endomorphism of `SlashInvariantForm 𝒮ℒ k`.** Bundling it
 as a `Module.End ℂ` is what lets Hecke operators compose and later carry a ring structure.
-Linearity is `heckeSlashSum_add` and `heckeSlashSum_smul`, which hold because every coset
-representative has positive determinant.
+Linearity is `heckeSlashSum_add`, which needs no hypothesis, together with `heckeSlashSum_smul`,
+which needs the two factors of each representative to have positive determinant. At this coset
+that is `SLnZ_le_posDetInt` and `D.out.2`, since both flanking groups and the ambient submonoid
+are `SL₂(ℤ)` and `posDetInt 2`.
 
 ⚠ This is an intermediate step, not the roadmap's Layer 2(b) target: that asks for endomorphisms
 of `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`, which additionally requires holomorphy and the
@@ -91,7 +93,11 @@ formalised here. -/
 noncomputable def heckeSlashEnd : Module.End ℂ (SlashInvariantForm 𝒮ℒ k) where
   toFun := heckeSlashInvariant k D
   map_add' f g := by ext τ; simp [heckeSlashInvariant, heckeSlashSum_add]
-  map_smul' c f := by ext τ; simp [heckeSlashInvariant, heckeSlashSum_smul]
+  map_smul' c f := by
+    ext τ
+    simp [heckeSlashInvariant,
+      heckeSlashSum_smul k D
+      (det_transposeRep_pos D (SLnZ_le_glpos 2) (posDetInt_le_glpos 2 D.out.2))]
 
 /-- The endomorphism is `heckeSlashSum` on underlying functions. This characterises it directly,
 without exposing the bundling. -/

@@ -11,8 +11,9 @@ public import TauCeti.NumberTheory.EllipticDivisibilitySequence.NormEDS
 
 Mathlib defines `complEDS b c d k` to witness `normEDS b c d k ∣ normEDS b c d (n * k)`, but
 proves the witnessing identity `normEDS b c d k * complEDS b c d k n = normEDS b c d (n * k)`
-only at `k = 2`, as `normEDS_mul_complEDS₂`. This file proves it at every `k`, on the hypothesis
-that `normEDS b c d k` is a nonzerodivisor.
+only at `k = 2`, as `normEDS_mul_complEDS₂`. This file proves it at every `k`, **unconditionally**:
+the induction runs on a nonzerodivisor hypothesis, which is then discharged over `ℤ[B, C, D]` and
+specialised away.
 
 That identity is the second conjunct of the TODO Mathlib records at
 `Mathlib/NumberTheory/EllipticDivisibilitySequence.lean:70`, "prove that `normEDS` satisfies
@@ -21,17 +22,21 @@ slice of its own.
 
 ## Main results
 
-* `normEDS_mul_complEDS_of_mem_nonZeroDivisors`:
-  `normEDS b c d k * complEDS b c d k n = normEDS b c d (n * k)`, for every `n`, over any
-  commutative ring, whenever `normEDS b c d k` is a nonzerodivisor.
+* `normEDS_mul_complEDS`: the same identity with **no hypothesis at all**, obtained from the
+  private nonzerodivisor form by specialising from the universal parameters.
+* `normEDS_dvd_normEDS_mul`: the divisibility it witnesses, `normEDS b c d k ∣ normEDS b c d
+  (n * k)` — Mathlib's `normEDS_dvd_normEDS_two_mul` at an arbitrary multiplier.
+* `isDvdSequence_normEDS`: the same fact as `IsDvdSequence (normEDS b c d)`, the predicate form
+  in which Mathlib's TODO states this conjunct.
 
 ## Implementation notes
 
 The nonzerodivisor hypothesis is what the induction consumes. The odd step derives the identity
 multiplied through by `normEDS b c d k`, and cancelling that factor is the only use of `hk`; the
 even step and both base cases are unconditional. It is removable by specialising from the
-universal parameters, where the sequence is a nonzerodivisor at every index — the route
-`NormEDS.lean` takes for `isEllipticNet_normEDS`. That is now available: `universalNormEDS_ne_zero`
+universal parameters, where the sequence is a nonzerodivisor at every **nonzero** index — the
+route `NormEDS.lean` takes for `isEllipticNet_normEDS`. It vanishes at `k = 0`, so that case is
+split off first and closed by `simp`. The route is now available: `universalNormEDS_ne_zero`
 (`NormEDS.lean`) gives the nonvanishing, and `mem_nonZeroDivisors_of_ne_zero` turns it into the
 hypothesis this induction consumes, `ℤ[B, C, D]` being a domain.
 
@@ -51,11 +56,14 @@ about the sequence rather than about `ℤ`, and is the single rewrite done by ha
 Adapted from D. K. Angdinata's `LutzNagell/EllipticDivisibilitySequence.lean` in AINTLIB
 (`github.com/CBirkbeck/AINTLIB`, Apache-2.0) at `dev/modular-curves @ 9fec8eba7652` — the revision
 `TauCetiRoadmap/EllipticCurves/README.md` pins for the NagellLutz project. Source declaration
-`normEDS_mul_complEDS_of_mem` (`:1324`), which is `private` there and public here, being this
-slice's deliverable rather than a step; the name gains Mathlib's full `_of_mem_nonZeroDivisors`
-suffix. That file's header reads `Authors: David Kurniadi Angdinata`; following this repository's
-convention for adapted material the upstream authorship is credited here rather than in the
-copyright header.
+`normEDS_mul_complEDS_of_mem` (`:1324`), `private` in both, the name gaining Mathlib's full
+`_of_mem_nonZeroDivisors` suffix. The unconditional form adapts
+`normEDS_mul_complEDS` (`:1339`) of that same file, under its source name. The source's divisor
+reindexing `normEDS_mul_complEDS_div` (`:1350`) is deliberately not ported: what consumers take
+from it is the divisibility, and that is stated directly here as `normEDS_dvd_normEDS_mul` and
+`isDvdSequence_normEDS`, so the reindexing itself would have no call site. That file's
+header reads `Authors: David Kurniadi Angdinata`; following this repository's convention for
+adapted material the upstream authorship is credited here rather than in the copyright header.
 
 Three departures from the source, all forced by Mathlib having since absorbed the construction.
 
@@ -77,6 +85,8 @@ bookkeeping disappears and the even step is four rewrites.
 
 public section
 
+open MvPolynomial NormEDSParam
+
 open scoped nonZeroDivisors
 
 variable {R : Type*} [CommRing R] {b c d : R}
@@ -85,7 +95,8 @@ variable {R : Type*} [CommRing R] {b c d : R}
 
 `complEDS b c d k n` is Mathlib's division-free candidate for `W (n * k) / W k`; this is the
 identity that makes it one, given that `normEDS b c d k` is a nonzerodivisor. -/
-theorem normEDS_mul_complEDS_of_mem_nonZeroDivisors {k : ℤ} (hk : normEDS b c d k ∈ R⁰) (n : ℤ) :
+private theorem normEDS_mul_complEDS_of_mem_nonZeroDivisors {k : ℤ} (hk : normEDS b c d k ∈ R⁰)
+    (n : ℤ) :
     normEDS b c d k * complEDS b c d k n = normEDS b c d (n * k) := by
   induction n using Int.negInduction with
   | nat n =>
@@ -117,3 +128,38 @@ theorem normEDS_mul_complEDS_of_mem_nonZeroDivisors {k : ℤ} (hk : normEDS b c 
       linear_combination (norm := ring_nf) hell
   | neg hn n =>
     rw [neg_mul, normEDS_neg, complEDS_neg, mul_neg, hn n]
+
+/-- **The complement of a normalised EDS witnesses divisibility at every multiple**, with no
+hypothesis at all. -/
+@[simp]
+theorem normEDS_mul_complEDS (b c d : R) (k n : ℤ) :
+    normEDS b c d k * complEDS b c d k n = normEDS b c d (n * k) := by
+  -- The previous result's nonzerodivisor hypothesis is discharged over `ℤ[B, C, D]`, where
+  -- `universalNormEDS k` is a nonzerodivisor for every `k ≠ 0`, and specialised along `aeval`.
+  rcases eq_or_ne k 0 with rfl | hk
+  · simp
+  -- `universalNormEDS`'s body is unexposed, so its nonvanishing reaches this shape through
+  -- `universalNormEDS_def` rather than by unification; `ℤ[B, C, D]` is a domain, so
+  -- `mem_nonZeroDivisors_of_ne_zero` then supplies exactly the hypothesis above.
+  have hmem : normEDS (X NormEDSParam.B : MvPolynomial NormEDSParam ℤ) (X NormEDSParam.C)
+      (X NormEDSParam.D) k ∈ (MvPolynomial NormEDSParam ℤ)⁰ :=
+    mem_nonZeroDivisors_of_ne_zero
+      (by simpa only [universalNormEDS_def, ne_eq] using universalNormEDS_ne_zero hk)
+  have key := congr(aeval (NormEDSParam.rec b c d)
+    $(normEDS_mul_complEDS_of_mem_nonZeroDivisors hmem n))
+  simpa only [map_mul, map_normEDS, map_complEDS, aeval_X] using key
+
+/-- **A normalised EDS divides itself at every multiple of the index.** This is Mathlib's
+`normEDS_dvd_normEDS_two_mul` with the doubling replaced by an arbitrary multiplier, the
+complement supplying the cofactor. -/
+theorem normEDS_dvd_normEDS_mul (b c d : R) (k n : ℤ) :
+    normEDS b c d k ∣ normEDS b c d (n * k) :=
+  ⟨_, (normEDS_mul_complEDS b c d k n).symm⟩
+
+/-- **A normalised EDS is a divisibility sequence.** This is the second conjunct of the TODO
+Mathlib records for `normEDS`, in the predicate form the TODO states it in; the first conjunct is
+`isEllipticSequence_normEDS`. -/
+theorem isDvdSequence_normEDS (b c d : R) : IsDvdSequence (normEDS b c d) := by
+  rintro k _ ⟨n, rfl⟩
+  rw [mul_comm]
+  exact normEDS_dvd_normEDS_mul b c d k n

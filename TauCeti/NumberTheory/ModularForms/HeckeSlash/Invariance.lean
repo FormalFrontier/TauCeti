@@ -107,7 +107,8 @@ noncomputable def heckeSlashSumFormₗ : SlashInvariantForm 𝒮ℒ k →ₗ[ℂ
     exact congrFun (heckeSlashSum_add k D ⇑f ⇑g) τ
   map_smul' c f := SlashInvariantForm.ext fun τ ↦ by
     simp only [SlashInvariantForm.coe_mk, FunLike.coe_smul]
-    exact congrFun (heckeSlashSum_smul k D c ⇑f) τ
+    exact congrFun (heckeSlashSum_smul k D
+      (det_transposeRep_pos D (SLnZ_le_glpos 2) (posDetInt_le_glpos 2 D.out.2)) c ⇑f) τ
 
 @[simp]
 lemma coe_heckeSlashSumFormₗ (f : SlashInvariantForm 𝒮ℒ k) :

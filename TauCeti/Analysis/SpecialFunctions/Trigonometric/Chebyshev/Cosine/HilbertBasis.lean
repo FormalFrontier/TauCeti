@@ -21,6 +21,10 @@ statement required by Part C of the `OrthogonalL2Bases` roadmap.
 
 * `TauCeti.chebyshevCosineHilbertBasis` is the transported Chebyshev basis.
 * `TauCeti.coeFn_chebyshevCosineHilbertBasis` identifies its vectors with the normalized cosines.
+* `TauCeti.chebyshevCosineL2Equiv_normalizedChebyshevTLp` identifies the transported normalized
+  Chebyshev modes.
+* `TauCeti.chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv` identifies coordinates across
+  the cosine equivalence.
 -/
 
 public section
@@ -52,6 +56,55 @@ theorem coeFn_chebyshevCosineHilbertBasis (n : ℕ) :
   rw [hcos, coe_chebyshevTHilbertBasis]
   exact hmode.trans (congrArg (algebraMap ℝ 𝕜) (by
     rw [normalizedChebyshevT_def, normalized_eval_T_real_cos_eq_normalizedChebyshevCosine]))
+
+/-! ## Transfer across the cosine change of variables -/
+
+/-- **The cosine change of variables carries Chebyshev polynomial modes to cosine modes.**
+`chebyshevCosineL2Equiv` maps the normalized Chebyshev mode `Tₙ / √cₙ` in `L²(measureT)` to the
+normalized angular cosine mode `cos (nθ) / √cₙ` in `L²(chebyshevAngleMeasure)`. -/
+@[simp]
+theorem chebyshevCosineL2Equiv_normalizedChebyshevTLp (n : ℕ) :
+    chebyshevCosineL2Equiv 𝕜 (normalizedChebyshevTLp 𝕜 n) =
+      chebyshevCosineHilbertBasis 𝕜 n := by
+  rw [chebyshevCosineHilbertBasis, HilbertBasis.mapₗᵢ_apply, coe_chebyshevTHilbertBasis]
+
+/-- The inverse cosine equivalence maps the normalized cosine mode back to the normalized Chebyshev
+polynomial mode. -/
+@[simp]
+theorem chebyshevCosineL2Equiv_symm_chebyshevCosineHilbertBasis (n : ℕ) :
+    (chebyshevCosineL2Equiv 𝕜).symm (chebyshevCosineHilbertBasis 𝕜 n) =
+      normalizedChebyshevTLp 𝕜 n := by
+  rw [← chebyshevCosineL2Equiv_normalizedChebyshevTLp, LinearIsometryEquiv.symm_apply_apply]
+
+/-- **Coordinates are preserved under the cosine change of variables.** The `n`-th coordinate of
+`f ∘ cos` in the Chebyshev cosine basis equals the `n`-th coordinate of `f` in the Chebyshev
+polynomial basis. -/
+theorem chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv
+    (g : Lp 𝕜 2 (measureT : Measure ℝ)) (n : ℕ) :
+    (chebyshevCosineHilbertBasis 𝕜).repr (chebyshevCosineL2Equiv 𝕜 g) n =
+      (chebyshevTHilbertBasis 𝕜).repr g n := by
+  rw [(chebyshevCosineHilbertBasis 𝕜).repr_apply_apply,
+    (chebyshevTHilbertBasis 𝕜).repr_apply_apply,
+    ← chebyshevCosineL2Equiv_normalizedChebyshevTLp, coe_chebyshevTHilbertBasis,
+    LinearIsometryEquiv.inner_map_map]
+
+/-- The inverse coordinate identification: the Chebyshev polynomial coordinate of `f ∘ arccos`
+equals the cosine coordinate of `f`. -/
+theorem chebyshevTHilbertBasis_repr_chebyshevCosineL2Equiv_symm
+    (f : Lp 𝕜 2 chebyshevAngleMeasure) (n : ℕ) :
+    (chebyshevTHilbertBasis 𝕜).repr ((chebyshevCosineL2Equiv 𝕜).symm f) n =
+      (chebyshevCosineHilbertBasis 𝕜).repr f n := by
+  rw [← chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv,
+    LinearIsometryEquiv.apply_symm_apply]
+
+/-- Pairing against the normalized cosine mode in `L²(chebyshevAngleMeasure)` is pairing against
+the normalized Chebyshev polynomial mode in `L²(measureT)`. -/
+@[simp]
+theorem inner_chebyshevCosineHilbertBasis_chebyshevCosineL2Equiv
+    (n : ℕ) (g : Lp 𝕜 2 (measureT : Measure ℝ)) :
+    inner 𝕜 (chebyshevCosineHilbertBasis 𝕜 n) (chebyshevCosineL2Equiv 𝕜 g) =
+      inner 𝕜 (normalizedChebyshevTLp 𝕜 n) g := by
+  rw [← chebyshevCosineL2Equiv_normalizedChebyshevTLp, LinearIsometryEquiv.inner_map_map]
 
 end L2
 

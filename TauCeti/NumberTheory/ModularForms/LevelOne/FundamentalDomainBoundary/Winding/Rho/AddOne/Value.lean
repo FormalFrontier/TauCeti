@@ -228,8 +228,7 @@ private lemma telescope_rho_add_one_piece_ceiling (hH : Real.sqrt 3 / 2 < H) :
     funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundarySegment5]
   have him : ∀ t ∈ Icc (4 : ℝ) 5,
       (fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)).im = H - Real.sqrt 3 / 2 := fun t ht ↦ by
-    rw [Complex.sub_im, im_fdBoundarySegment5 H ht]
-    norm_num [UpperHalfPlane.ρ]
+    rw [Complex.sub_im, im_fdBoundarySegment5 H ht, rho_add_one_im]
   exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - ((UpperHalfPlane.ρ : ℂ) + 1))
     (h := fun s ↦ fdBoundarySegment5 H s - ((UpperHalfPlane.ρ : ℂ) + 1)) (by norm_num)
