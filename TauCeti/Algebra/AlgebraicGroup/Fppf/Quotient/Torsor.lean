@@ -58,7 +58,7 @@ public section
 open CategoryTheory ConcreteCategory Opposite
 open CategoryTheory.Limits
 open CategoryTheory.MonoidalCategory
-open scoped CategoryTheory.MonObj
+open scoped CategoryTheory.MonObj CategoryTheory.Obj
 
 namespace TauCeti.CommHopfAlgCat
 
@@ -114,15 +114,6 @@ private theorem isPullback_pointwiseQuotientMk
     rw [hn]
     simp
 
-private theorem pointwiseQuotientProjection_app_apply
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
-    (A : CommAlgCat.{u} R) (g : HopfAlgebra.points (R := R) (H := H) A) :
-    (pointwiseQuotientProjection H I hI).app A g =
-      eqToHom (pointwiseQuotientFunctor_obj H I hI A).symm
-        (pointwiseQuotientMk H I hI A g) := by
-  rw [pointwiseQuotientProjection_app]
-  erw [GrpCat.comp_apply]
-
 private theorem isPullback_pointwiseQuotientProjection
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
     (A : CommAlgCat.{u} R) :
@@ -136,29 +127,26 @@ private theorem isPullback_pointwiseQuotientProjection
         HopfAlgebra.points (R := R) (H := quotient H I) A =>
           p.1 * quotientPointsHom H I A p.2)
       (↾fun g => q g) (↾fun g => q g) := by
-  rw [CategoryTheory.Limits.Types.isPullback_iff]
-  have hp := (CategoryTheory.Limits.Types.isPullback_iff _ _ _ _).mp
-    (isPullback_pointwiseQuotientMk H I hI A)
-  refine ⟨?_, hp.2.1, ?_⟩
-  · ext p
-    -- The functor-category component is a bundled concrete map; reduce only that wrapper.
-    change (pointwiseQuotientProjection H I hI).app A p.1 =
-      (pointwiseQuotientProjection H I hI).app A
-        (p.1 * quotientPointsHom H I A p.2)
-    rw [pointwiseQuotientProjection_app_apply,
-      pointwiseQuotientProjection_app_apply]
-    exact congrArg (eqToHom (pointwiseQuotientFunctor_obj H I hI A).symm)
-      (ConcreteCategory.congr_hom hp.1 p)
-  · intro g g' hgg'
-    have hgg'' : pointwiseQuotientMk H I hI A g =
-        pointwiseQuotientMk H I hI A g' := by
-      apply (ConcreteCategory.bijective_of_isIso
-        (eqToHom (pointwiseQuotientFunctor_obj H I hI A).symm)).injective
-      -- Reduce the bundled maps to the component formula proved immediately above.
-      change (pointwiseQuotientProjection H I hI).app A g =
-        (pointwiseQuotientProjection H I hI).app A g' at hgg'
-      simpa only [pointwiseQuotientProjection_app_apply] using hgg'
-    exact hp.2.2 g g' hgg''
+  apply (isPullback_pointwiseQuotientMk H I hI A).of_iso
+    (Iso.refl _) (Iso.refl _) (Iso.refl _)
+    (eqToIso (congrArg (fun G : GrpCat.{u} => (G : Type u))
+      (pointwiseQuotientFunctor_obj H I hI A)).symm)
+  · rfl
+  · rfl
+  · simp only [Iso.refl_hom, Category.id_comp]
+    change (forget GrpCat.{u}).map (pointwiseQuotientMk H I hI A) ≫
+        eqToHom (congrArg (fun G : GrpCat.{u} => (G : Type u))
+          (pointwiseQuotientFunctor_obj H I hI A)).symm =
+      (forget GrpCat.{u}).map ((pointwiseQuotientProjection H I hI).app A)
+    rw [pointwiseQuotientProjection_app, ← eqToHom_map]
+    exact ((forget GrpCat.{u}).map_comp _ _).symm
+  · simp only [Iso.refl_hom, Category.id_comp]
+    change (forget GrpCat.{u}).map (pointwiseQuotientMk H I hI A) ≫
+        eqToHom (congrArg (fun G : GrpCat.{u} => (G : Type u))
+          (pointwiseQuotientFunctor_obj H I hI A)).symm =
+      (forget GrpCat.{u}).map ((pointwiseQuotientProjection H I hI).app A)
+    rw [pointwiseQuotientProjection_app, ← eqToHom_map]
+    exact ((forget GrpCat.{u}).map_comp _ _).symm
 
 private theorem isPullback_pointwiseQuotientProjection_ulift
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
@@ -174,23 +162,12 @@ private theorem isPullback_pointwiseQuotientProjection_ulift
         ULift.{u + 1, u} _))
       (↾fun g => (ULift.up ((pointwiseQuotientProjection H I hI).app A g.down) :
         ULift.{u + 1, u} _)) := by
-  rw [CategoryTheory.Limits.Types.isPullback_iff]
-  have hp := (CategoryTheory.Limits.Types.isPullback_iff _ _ _ _).mp
-    (isPullback_pointwiseQuotientProjection H I hI A)
-  refine ⟨?_, ?_, ?_⟩
-  · ext p
-    exact ConcreteCategory.congr_hom hp.1 ⟨p.1.down, p.2.down⟩
-  · rintro ⟨g, n⟩ ⟨g', n'⟩ ⟨hg, hgn⟩
-    have hpair := hp.2.1 ⟨g.down, n.down⟩ ⟨g'.down, n'.down⟩
-      ⟨ULift.ext_iff.mp hg, ULift.ext_iff.mp hgn⟩
-    exact congrArg (fun p => ((ULift.up p.1 : ULift.{u + 1, u} _),
-      (ULift.up p.2 : ULift.{u + 1, u} _))) hpair
-  · intro g g' hgg'
-    obtain ⟨p, hp₁, hp₂⟩ := hp.2.2 g.down g'.down (ULift.ext_iff.mp hgg')
-    exact ⟨((ULift.up p.1 : ULift.{u + 1, u} _),
-        (ULift.up p.2 : ULift.{u + 1, u} _)),
-      congrArg (ULift.up : _ → ULift.{u + 1, u} _) hp₁,
-      congrArg (ULift.up : _ → ULift.{u + 1, u} _) hp₂⟩
+  apply ((isPullback_pointwiseQuotientProjection H I hI A).map
+    CategoryTheory.uliftFunctor.{u + 1, u}).of_iso
+      (CartesianMonoidalCategory.prodComparisonIso
+        CategoryTheory.uliftFunctor.{u + 1, u} _ _)
+      (Iso.refl _) (Iso.refl _) (Iso.refl _)
+  all_goals rfl
 
 /-- The inclusion of subgroup points into ambient points, used to define the torsor action. -/
 private noncomputable def quotientSubgroupPointsPresheafGrpInclusion
@@ -201,33 +178,14 @@ private noncomputable def quotientSubgroupPointsPresheafGrpInclusion
       (mapPointsFunctor (mkQuotient H I)))
     GrpCat.uliftFunctor.{u + 1, u}
 
-/-- The first projection in the pointwise torsor square, `(g, n) ↦ g`. -/
-noncomputable def pointwiseQuotientTorsorFst
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
-    (pointsPresheafGrp H).X ⊗ (pointsPresheafGrp (quotient H I)).X ⟶
-      (pointsPresheafGrp H).X :=
-  CartesianMonoidalCategory.fst _ _
-
 /-- The action map in the pointwise torsor square, `(g, n) ↦ gn`. -/
 noncomputable def pointwiseQuotientTorsorAction
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
     (pointsPresheafGrp H).X ⊗ (pointsPresheafGrp (quotient H I)).X ⟶
       (pointsPresheafGrp H).X :=
-  CartesianMonoidalCategory.lift
-      (CartesianMonoidalCategory.fst _ _)
-      (CartesianMonoidalCategory.snd _ _ ≫
-        (quotientSubgroupPointsPresheafGrpInclusion H I).hom.hom) ≫
-    (pointsPresheafGrp H).grp.mul
-
-private theorem pointwiseQuotientTorsorFst_app
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H)
-    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ) :
-    (pointwiseQuotientTorsorFst H I).app A =
-      (↾fun p : ULift (HopfAlgebra.points (R := R) (H := H) A.unop.unop) ×
-        ULift (HopfAlgebra.points (R := R) (H := quotient H I) A.unop.unop) => p.1) := by
-  -- Cartesian products in this functor category and the underlying `ULift` map are both
-  -- componentwise; Mathlib has no application lemma for this composite of wrappers.
-  rfl
+  CartesianMonoidalCategory.fst _ _ *
+    (CartesianMonoidalCategory.snd _ _ ≫
+      (quotientSubgroupPointsPresheafGrpInclusion H I).hom.hom)
 
 private theorem pointwiseQuotientTorsorAction_app
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H)
@@ -240,27 +198,13 @@ private theorem pointwiseQuotientTorsorAction_app
   -- these constructions expose no single application lemma for the resulting composite.
   rfl
 
-private theorem pointwiseQuotientTorsorProjection_app
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
-    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ) :
-    (eqToHom (pointsPresheafGrp_X_eq H) ≫
-      Functor.whiskerRight
-        (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
-          GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A =
-      (↾fun g : ULift (HopfAlgebra.points (R := R) (H := H) A.unop.unop) =>
-        ULift.up ((pointwiseQuotientProjection H I hI).app A.unop.unop g.down)) := by
-  ext g
-  -- Whiskering the quotient projection through `ULift` and the forgetful functor is
-  -- definitionally componentwise; there is no public application lemma for the full composite.
-  rfl
-
 /-- The pointwise quotient projection has the expected torsor kernel pair: two ambient points
 have the same quotient class exactly when they differ by a unique point of the closed subgroup
 represented by `H / I`. -/
 theorem isPullback_pointwiseQuotientTorsor
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     IsPullback
-      (pointwiseQuotientTorsorFst H I)
+      (CartesianMonoidalCategory.fst _ _)
       (pointwiseQuotientTorsorAction H I)
       (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom
       (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom := by
@@ -272,17 +216,45 @@ theorem isPullback_pointwiseQuotientTorsor
         (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
           GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})
   have hq : IsPullback
-      (pointwiseQuotientTorsorFst H I)
+      (CartesianMonoidalCategory.fst _ _)
       (pointwiseQuotientTorsorAction H I) q q := by
     apply IsPullback.of_forall_isPullback_app
     intro A
-    rw [pointwiseQuotientTorsorFst_app, pointwiseQuotientTorsorAction_app]
-    rw [pointwiseQuotientTorsorProjection_app]
+    rw [Functor.Monoidal.fst_app, pointwiseQuotientTorsorAction_app]
+    let qA := (Functor.whiskerRight
+        (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
+          GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A
+    have hqA : qA =
+        (↾fun g : ULift (HopfAlgebra.points (R := R) (H := H) A.unop.unop) =>
+          ULift.up ((pointwiseQuotientProjection H I hI).app A.unop.unop g.down)) := by
+      ext g
+      exact pointwiseQuotientPresheafProjection_ulift_app_apply H I hI A g
+    change IsPullback _ _ qA qA
+    rw [hqA]
     exact isPullback_pointwiseQuotientProjection_ulift H I hI A.unop.unop
   rw [pointwiseQuotientPresheafGrpProjection_hom_hom]
   apply hq.of_iso (Iso.refl _) (Iso.refl _) (Iso.refl _)
     (eqToIso (pointwiseQuotientPresheafGrp_X_eq H I hI).symm)
   all_goals rfl
+
+/-- The definitional identification between sheafifying the pointwise group object and the
+canonical fppf group object. -/
+private noncomputable def pointsFppfGroupObjectMapIso
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
+    let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts F
+    F.mapGrp.obj (pointsPresheafGrp H) ≅ pointsFppfGroupObject H :=
+  Iso.refl _
+
+/-- The carrier-level identification induced by `pointsFppfGroupObjectMapIso`. -/
+private noncomputable def pointsFppfGroupObjectCarrierIso
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
+        (pointsPresheafGrp H).X ≅ (pointsFppfGroupObject H).X := by
+  let _ : (presheafToSheaf
+      (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  exact (Grp.forget _).mapIso (pointsFppfGroupObjectMapIso H)
 
 /-- The canonical comparison from the product of the two fppf sheaves to the sheafification of
 their pointwise product. This is the inverse of the product comparison supplied by the left
@@ -294,22 +266,22 @@ noncomputable def fppfQuotientTorsorProductIso
       (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
         ((pointsPresheafGrp H).X ⊗ (pointsPresheafGrp (quotient H I)).X) :=
   tensorIso
-      (eqToIso (pointsFppfGroupObject_X_eq H))
-      (eqToIso (pointsFppfGroupObject_X_eq (quotient H I))) ≪≫
+      (pointsFppfGroupObjectCarrierIso H).symm
+      (pointsFppfGroupObjectCarrierIso (quotient H I)).symm ≪≫
     (CartesianMonoidalCategory.prodComparisonIso
       (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1)))
       (pointsPresheafGrp H).X (pointsPresheafGrp (quotient H I)).X).symm
 
-/-- The first projection in the sheafified torsor square, defined on the product of the ambient
-and subgroup fppf sheaves. -/
-noncomputable def fppfQuotientTorsorFst
+/-- The inclusion of the closed subgroup represented by `H / I` into the ambient fppf group. -/
+noncomputable def quotientSubgroupPointsFppfGrpInclusion
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
-    (pointsFppfGroupObject H).X ⊗ (pointsFppfGroupObject (quotient H I)).X ⟶
-      (pointsFppfGroupObject H).X :=
-  (fppfQuotientTorsorProductIso H I).hom ≫
-    (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).map
-      (pointwiseQuotientTorsorFst H I) ≫
-    eqToHom (pointsFppfGroupObject_X_eq H).symm
+    pointsFppfGroupObject (quotient H I) ⟶ pointsFppfGroupObject H := by
+  let _ : (presheafToSheaf
+      (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
+    Functor.Monoidal.ofChosenFiniteProducts _
+  exact (presheafToSheaf
+    (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.map
+      (quotientSubgroupPointsPresheafGrpInclusion H I)
 
 /-- The action map in the sheafified torsor square, defined on the product of the ambient and
 subgroup fppf sheaves. -/
@@ -317,30 +289,93 @@ noncomputable def fppfQuotientTorsorAction
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
     (pointsFppfGroupObject H).X ⊗ (pointsFppfGroupObject (quotient H I)).X ⟶
       (pointsFppfGroupObject H).X :=
-  (fppfQuotientTorsorProductIso H I).hom ≫
-    (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).map
-      (pointwiseQuotientTorsorAction H I) ≫
-    eqToHom (pointsFppfGroupObject_X_eq H).symm
+  CartesianMonoidalCategory.fst _ _ *
+    (CartesianMonoidalCategory.snd _ _ ≫
+      (quotientSubgroupPointsFppfGrpInclusion H I).hom.hom)
 
-/-- The fppf quotient projection is a torsor under the closed subgroup represented by `H / I`:
-the product of the fppf sheaves `G × V(I)` is the kernel pair of `G ⟶ G / V(I)` via
-`(g,n) ↦ (g,gn)`. Equivalently, the canonical morphism from that product to
-`G ×_{G/V(I)} G` is an isomorphism. -/
+private theorem sheafify_pointwiseQuotientTorsorFst
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
+    (fppfQuotientTorsorProductIso H I).hom ≫
+        (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).map
+          (CartesianMonoidalCategory.fst
+            (pointsPresheafGrp H).X (pointsPresheafGrp (quotient H I)).X) ≫
+      (pointsFppfGroupObjectCarrierIso H).hom =
+        CartesianMonoidalCategory.fst _ _ := by
+  let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
+  let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts _
+  change ((pointsFppfGroupObjectCarrierIso H).inv ⊗ₘ
+        (pointsFppfGroupObjectCarrierIso (quotient H I)).inv) ≫
+      (CartesianMonoidalCategory.prodComparisonIso F
+        (pointsPresheafGrp H).X (pointsPresheafGrp (quotient H I)).X).inv ≫
+      F.map (CartesianMonoidalCategory.fst
+        (pointsPresheafGrp H).X (pointsPresheafGrp (quotient H I)).X) ≫
+      (pointsFppfGroupObjectCarrierIso H).hom =
+    CartesianMonoidalCategory.fst _ _
+  rw [← Functor.Monoidal.μ_of_cartesianMonoidalCategory,
+    Functor.Monoidal.μ_fst_assoc, CartesianMonoidalCategory.tensorHom_fst_assoc,
+    Iso.inv_hom_id, Category.comp_id]
+
+private theorem sheafify_pointwiseQuotientTorsorAction
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
+    (fppfQuotientTorsorProductIso H I).hom ≫
+        (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).map
+          (pointwiseQuotientTorsorAction H I) ≫
+      (pointsFppfGroupObjectCarrierIso H).hom =
+        fppfQuotientTorsorAction H I := by
+  let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
+  let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts _
+  let _ : IsMonHom (pointsFppfGroupObjectCarrierIso H).hom := by
+    change IsMonHom (pointsFppfGroupObjectMapIso H).hom.hom.hom
+    infer_instance
+  change (fppfQuotientTorsorProductIso H I).hom ≫
+        F.map (CartesianMonoidalCategory.fst _ _ *
+          (CartesianMonoidalCategory.snd _ _ ≫
+            (quotientSubgroupPointsPresheafGrpInclusion H I).hom.hom)) ≫
+        (pointsFppfGroupObjectCarrierIso H).hom =
+      CartesianMonoidalCategory.fst _ _ *
+        (CartesianMonoidalCategory.snd _ _ ≫
+          (quotientSubgroupPointsFppfGrpInclusion H I).hom.hom)
+  rw [Functor.map_mul, MonObj.mul_comp, MonObj.comp_mul]
+  congr 1
+  · exact sheafify_pointwiseQuotientTorsorFst H I
+  · change ((pointsFppfGroupObjectCarrierIso H).inv ⊗ₘ
+          (pointsFppfGroupObjectCarrierIso (quotient H I)).inv) ≫
+        (CartesianMonoidalCategory.prodComparisonIso F
+          (pointsPresheafGrp H).X (pointsPresheafGrp (quotient H I)).X).inv ≫
+        F.map (CartesianMonoidalCategory.snd _ _ ≫
+          (quotientSubgroupPointsPresheafGrpInclusion H I).hom.hom) ≫
+        (pointsFppfGroupObjectCarrierIso H).hom =
+      CartesianMonoidalCategory.snd _ _ ≫
+        (quotientSubgroupPointsFppfGrpInclusion H I).hom.hom
+    rw [← Functor.Monoidal.μ_of_cartesianMonoidalCategory, Functor.map_comp]
+    simp only [Category.assoc]
+    rw [Functor.Monoidal.μ_snd_assoc,
+      CartesianMonoidalCategory.tensorHom_snd_assoc]
+    rfl
+
+/-- The kernel pair of the fppf quotient projection `G ⟶ G / V(I)` is `G × V(I)` via
+`(g,n) ↦ (g,gn)`. Together with
+`isLocallySurjective_fppfQuotientProjection`, this gives the two torsor conditions. -/
 theorem isPullback_fppfQuotientTorsor
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     IsPullback
-      (fppfQuotientTorsorFst H I)
+      (CartesianMonoidalCategory.fst _ _)
       (fppfQuotientTorsorAction H I)
       (fppfQuotientProjection H I hI).hom.hom
       (fppfQuotientProjection H I hI).hom.hom := by
   let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
+  let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts _
   have h := (isPullback_pointwiseQuotientTorsor H I hI).map F
   apply h.of_iso (fppfQuotientTorsorProductIso H I).symm
-    (eqToIso (pointsFppfGroupObject_X_eq H).symm)
-    (eqToIso (pointsFppfGroupObject_X_eq H).symm)
+    (pointsFppfGroupObjectCarrierIso H)
+    (pointsFppfGroupObjectCarrierIso H)
     (eqToIso (fppfQuotientSheaf_X_eq H I hI).symm)
-  · simp [fppfQuotientTorsorFst, F]
-  · simp [fppfQuotientTorsorAction, F]
+  · apply (cancel_epi (fppfQuotientTorsorProductIso H I).hom).1
+    simpa only [Category.assoc, Iso.symm_hom, Iso.hom_inv_id_assoc] using
+      sheafify_pointwiseQuotientTorsorFst H I
+  · apply (cancel_epi (fppfQuotientTorsorProductIso H I).hom).1
+    simpa only [Category.assoc, Iso.symm_hom, Iso.hom_inv_id_assoc] using
+      sheafify_pointwiseQuotientTorsorAction H I
   · rw [fppfQuotientProjection_hom]
     rfl
   · rw [fppfQuotientProjection_hom]

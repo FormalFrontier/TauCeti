@@ -114,6 +114,18 @@ theorem pointwiseQuotientPresheafGrpProjection_hom_hom
   rw [pointwiseQuotientPresheafGrpProjection.eq_1]
   rfl
 
+/-- Evaluating the universe-lifted pointwise quotient projection amounts to applying the
+pointwise projection and then lifting its value. -/
+theorem pointwiseQuotientPresheafProjection_ulift_app_apply
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
+    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ)
+    (x : ULift (HopfAlgebra.points (R := R) (H := H) A.unop.unop)) :
+    ((Functor.whiskerRight
+      (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
+        GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A) x =
+      ULift.up (((pointwiseQuotientPresheafProjection H I hI).app A) x.down) :=
+  rfl
+
 /-- The fppf quotient sheaf associated to a normal Hopf ideal, as a group object in type-valued
 fppf sheaves.
 
