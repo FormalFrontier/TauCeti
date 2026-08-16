@@ -68,7 +68,7 @@ noncomputable def inclusionPoints :
 /-- The general-linear matrix attached to `inclusionPoints f` is the underlying matrix of the
 upper-unitriangular point attached to `f`. -/
 @[simp]
-theorem generalLinear_pointsMulEquiv_inclusionPoints
+theorem pointToGeneralLinear_inclusionPoints
     (f : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
     GeneralLinear.pointToGeneralLinear n (inclusionPoints (R := R) n f) =
       (pointsMulEquiv R (Fin n) f : upperUnitriangularGroup (Fin n) A) := by
@@ -92,13 +92,13 @@ theorem mapValue_inclusionPoints {B : Type w} [CommRing B] [Algebra R B]
     _ = (UpperUnitriangularGroup.map φ.toRingHom (pointsMulEquiv R (Fin n) f) :
           upperUnitriangularGroup (Fin n) B) := by
       rw [GeneralLinear.pointsMulEquiv_apply,
-        generalLinear_pointsMulEquiv_inclusionPoints]
+        pointToGeneralLinear_inclusionPoints]
       exact (UpperUnitriangularGroup.coe_map φ.toRingHom _).symm
     _ = GeneralLinear.pointsMulEquiv n
         (inclusionPoints (R := R) n
           (AlgHom.mapValue (H := coordinateHopfAlgebra R (Fin n)) φ f)) := by
       rw [GeneralLinear.pointsMulEquiv_apply,
-        generalLinear_pointsMulEquiv_inclusionPoints, pointsMulEquiv_mapValue]
+        pointToGeneralLinear_inclusionPoints, pointsMulEquiv_mapValue]
 
 end CoordinateMap
 
@@ -141,8 +141,17 @@ theorem mapPointsFunctor_coordinateMap_app (A : CommAlgCat.{u} R)
   rw [← CommHopfAlgCat.mapPointsFunctor_app_apply, mapPointsFunctor_coordinateMap]
   rfl
 
+private theorem pointsMulEquiv_id_apply (i j : Fin n) :
+    ((pointsMulEquiv R (Fin n)
+        (toConv (AlgHom.id R (coordinateHopfAlgebra R (Fin n)))) :
+      upperUnitriangularGroup (Fin n) (coordinateHopfAlgebra R (Fin n))) :
+        Matrix.GeneralLinearGroup (Fin n) (coordinateHopfAlgebra R (Fin n))) i j =
+      coordinateHopfAlgebraAlgEquiv R (Fin n) (genericMatrix R (Fin n) i j) := by
+  rw [pointsMulEquiv_apply, pointToUpperUnitriangular_apply, AlgHom.id_apply]
+
 /-- The coordinate morphism sends a generic general-linear matrix entry to the corresponding
 entry of the generic upper-unitriangular matrix. -/
+@[simp]
 theorem coordinateMap_genericMatrix_apply (i j : Fin n) :
     (coordinateMap R n).hom
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
@@ -157,8 +166,30 @@ theorem coordinateMap_genericMatrix_apply (i j : Fin n) :
   have h' := congrArg (fun f ↦ f
       (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
         (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j))))) h
-  simpa [e, inclusionPoints, GeneralLinear.generalLinearToPoint_apply,
-    pointToUpperUnitriangular_apply] using h'
+  calc
+    (coordinateMap R n).hom
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
+            (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))) =
+        (inclusionPoints (R := R) n e).ofConv
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
+            (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))) := by
+      apply Eq.trans (b :=
+        (↑((coordinateMap R n).hom) :
+          GeneralLinear.coordinateHopfAlgebra R n →ₐ[R]
+            coordinateHopfAlgebra R (Fin n))
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
+            (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))))
+      · rfl
+      · simpa only [e, WithConv.ofConv_toConv, AlgHom.id_comp] using h'
+    _ = GeneralLinear.pointToGeneralLinear n (inclusionPoints (R := R) n e) i j :=
+      (GeneralLinear.pointToGeneralLinear_apply (R := R) n
+        (inclusionPoints (R := R) n e) i j).symm
+    _ = ((pointsMulEquiv R (Fin n) e :
+          upperUnitriangularGroup (Fin n) (coordinateHopfAlgebra R (Fin n))) :
+            Matrix.GeneralLinearGroup (Fin n) (coordinateHopfAlgebra R (Fin n))) i j := by
+      rw [pointToGeneralLinear_inclusionPoints]
+    _ = coordinateHopfAlgebraAlgEquiv R (Fin n) (genericMatrix R (Fin n) i j) := by
+      exact pointsMulEquiv_id_apply R n i j
 
 private theorem coordinateMap_toAlgHom_surjective :
     Function.Surjective (coordinateMap R n).hom.toAlgHom := by
@@ -346,6 +377,33 @@ theorem schemePointsMulEquiv_symm_apply (g : upperUnitriangularGroup m A) :
       groupSchemePointMulEquiv m A ((pointsMulEquiv R m).symm g) := by
   rfl
 
+variable {B : Type u} [CommRing B] [Algebra R B]
+
+/-- The scheme-valued point identification is covariantly natural in the value algebra. An
+`R`-algebra map `A → B` becomes precomposition by the reversed spectrum map and acts entrywise on
+the corresponding upper-unitriangular matrix. -/
+theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
+    (p : (AlgebraicGeometry.Spec (CommRingCat.of A)).asOver
+        (AlgebraicGeometry.Spec (CommRingCat.of R)) ⟶ (groupScheme R m).X) :
+    schemePointsMulEquiv m B
+        ((AlgebraicGeometry.Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+            (AlgebraicGeometry.Spec (CommRingCat.of R)) ≫ p) =
+      UpperUnitriangularGroup.map φ.toRingHom (schemePointsMulEquiv m A p) := by
+  let q : WithConv (coordinateHopfAlgebra R m →ₐ[R] A) :=
+    (groupSchemePointMulEquiv m A).symm p
+  have hpre :
+      (groupSchemePointMulEquiv m B).symm
+          ((AlgebraicGeometry.Spec.map (CommRingCat.ofHom φ.toRingHom)).asOver
+            (AlgebraicGeometry.Spec (CommRingCat.of R)) ≫ p) =
+        HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R m)
+          (CommAlgCat.ofHom φ) q := by
+    simpa only [q, groupSchemePointMulEquiv] using
+      CommHopfAlgCat.mapMulEquivOfPresentation_mapValue
+        (coordinateHopfAlgebra R m) φ (groupScheme_def R m) p
+  simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
+  rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
+  exact pointsMulEquiv_mapValue (R := R) m φ q
+
 end
 
 variable {R} (A : Type u) [CommRing A] [Algebra R A]
@@ -374,7 +432,7 @@ theorem schemePointsMulEquiv_comp_inclusion
     GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
     schemePointsMulEquiv_groupSchemePointMulEquiv,
     GeneralLinear.pointsMulEquiv_apply,
-    generalLinear_pointsMulEquiv_inclusionPoints]
+    pointToGeneralLinear_inclusionPoints]
 
 end SchemePoints
 
