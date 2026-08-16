@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Convex.Combination
 public import Mathlib.Topology.Algebra.Ring.Real
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Realization
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Subdivision.Basic
@@ -27,14 +26,11 @@ The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear To
 
 ## Main definitions
 
-* `AbstractSimplicialComplex.faceBarycenter`: the barycenter of a face in the standard
-  realization.
 * `AbstractSimplicialComplex.barycentricSubdivisionRealizationMap`: the canonical continuous map
   from the realization of the barycentric subdivision to the original realization.
 
 ## Main results
 
-* `AbstractSimplicialComplex.faceBarycenter_mem`: a face barycenter belongs to its closed simplex.
 * `AbstractSimplicialComplex.barycentricSubdivisionRealizationMap_vertex`: a subdivision vertex
   maps to the barycenter of the face it represents.
 -/
@@ -51,59 +47,16 @@ variable {ι : Type*}
 
 attribute [local instance] Classical.decEq
 
-/-- The barycenter of a nonempty face, expressed in the standard barycentric coordinates of the
-realization. -/
-noncomputable def faceBarycenter (K : AbstractSimplicialComplex ι) (σ : Face K) : ι →₀ ℝ :=
-  (σ.1.image fun v => Finsupp.single v (1 : ℝ)).centroid ℝ id
-
-/-- The barycenter of a face belongs to the closed simplex spanned by that face. -/
-theorem faceBarycenter_mem (K : AbstractSimplicialComplex ι) (σ : Face K) :
-    faceBarycenter K σ ∈
-      convexHull ℝ (σ.1.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ)) := by
-  apply Finset.centroid_mem_convexHull
-  exact (K.isRelLowerSet_faces.prop_of_mem σ.2).image _
-
-/-- The barycenter of a face has equal coordinates on its vertices and vanishes elsewhere. -/
-@[simp]
-theorem faceBarycenter_apply (K : AbstractSimplicialComplex ι) (σ : Face K) (v : ι) :
-    faceBarycenter K σ v = if v ∈ σ.1 then (σ.1.card : ℝ)⁻¹ else 0 := by
-  have hinj : Function.Injective (fun w : ι => Finsupp.single w (1 : ℝ)) :=
-    Finsupp.single_left_injective (M := ℝ) one_ne_zero
-  have hne := (K.isRelLowerSet_faces.prop_of_mem σ.2).image
-    (fun w => Finsupp.single w (1 : ℝ))
-  have hweights : ∑ y ∈ σ.1.image (fun w => Finsupp.single w (1 : ℝ)),
-      (σ.1.image fun w => Finsupp.single w (1 : ℝ)).centroidWeights ℝ y = 1 :=
-    Finset.sum_centroidWeights_eq_one_of_nonempty ℝ _ hne
-  rw [faceBarycenter, Finset.centroid_eq_centerMass _ hne,
-    (σ.1.image fun w => Finsupp.single w (1 : ℝ)).centerMass_eq_of_sum_1 _ hweights,
-    Finset.sum_apply']
-  simp only [Finset.centroidWeights_apply, id_eq, Finsupp.smul_apply, smul_eq_mul]
-  rw [Finset.card_image_of_injOn hinj.injOn, Finset.sum_image hinj.injOn]
-  simp [Finsupp.single_apply]
-
 /-- A finite nonempty chain in a partial order has a greatest element. -/
 private theorem exists_greatest_of_isChain {α : Type*} [PartialOrder α] (s : Finset α)
     (hs : s.Nonempty) (hchain : IsChain (· ≤ ·) (s : Set α)) :
     ∃ a ∈ s, ∀ b ∈ s, b ≤ a := by
   classical
-  induction s using Finset.induction_on with
-  | empty => simp at hs
-  | @insert a s ha ih =>
-      by_cases hs' : s.Nonempty
-      · obtain ⟨m, hm, hmax⟩ := ih hs' (hchain.mono (by simp))
-        have hamem : a ∈ (↑(insert a s) : Set α) := by simp
-        have hmmem : m ∈ (↑(insert a s) : Set α) := by simp [hm]
-        rcases hchain.total hamem hmmem with ham | hma
-        · exact ⟨m, by simp [hm], by
-            intro b hb
-            rw [Finset.mem_insert] at hb
-            exact hb.elim (fun h => h ▸ ham) (hmax b)⟩
-        · exact ⟨a, by simp, by
-            intro b hb
-            rw [Finset.mem_insert] at hb
-            exact hb.elim (fun h => h ▸ le_rfl) (fun hb' => (hmax b hb').trans hma)⟩
-      · rw [Finset.not_nonempty_iff_eq_empty.mp hs']
-        exact ⟨a, by simp, by simp⟩
+  obtain ⟨a, hmax⟩ := s.exists_maximal hs
+  refine ⟨a, hmax.prop, fun b hb => ?_⟩
+  rcases hchain.total hb hmax.prop with hba | hab
+  · exact hba
+  · exact hmax.le_of_ge hb hab
 
 /-- The linear extension which sends every subdivision vertex to its face barycenter. The
 restriction of this map to the subdivision realization lands in the original realization. -/
