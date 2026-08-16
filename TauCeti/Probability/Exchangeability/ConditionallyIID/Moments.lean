@@ -200,7 +200,7 @@ private theorem integral_sub_mul_sub {u v q : Ω → ℝ}
 /-- The abstract second-moment computation behind the `L²` rate: if the centred variables
 `eᵢ - q` are uncorrelated with common variance `c`, then their average over `Fin n` has mean
 square `c / n`. Private: it is an algebraic repackaging with no probabilistic content of its own. -/
-private theorem integral_sq_average_sub [IsProbabilityMeasure μ] {e : ℕ → Ω → ℝ} {q : Ω → ℝ}
+private theorem integral_sq_average_sub [IsFiniteMeasure μ] {e : ℕ → Ω → ℝ} {q : Ω → ℝ}
     {c : ℝ} {n : ℕ} (he : ∀ i ∈ Finset.range n, AEMeasurable (e i) μ)
     (hq : AEMeasurable q μ) (heb : ∀ i ∈ Finset.range n, ∀ ω, |e i ω| ≤ 1)
     (hqb : ∀ ω, |q ω| ≤ 1)
@@ -382,7 +382,7 @@ coordinates approximates `ω ↦ (ν ω) B` with mean square error
 This is the second-moment law of large numbers for the conditional predicate, read straight off the
 joint-law disintegration: the cross term `∫ (ν ·) B · 1_{Xᵢ ∈ B}` is the one moment that the
 mixture identity alone does not determine. -/
-theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMeasure μ]
+theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) {n : ℕ}
     (hX : ∀ i ∈ Finset.range n, AEMeasurable (X i) μ) (hB : MeasurableSet B)
     (hn : n ≠ 0) :
@@ -412,7 +412,10 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsProbabilityMe
     hn
 
 /-- The mean square error of `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` is at most
-`1 / n`: the variance factor is a difference of moments of a `[0, 1]`-valued variable. -/
+`1 / n`: the variance factor is a difference of moments of a `[0, 1]`-valued variable. 
+
+Unlike the exact identity above, this bound uses `μ univ = 1`, so it asks for a probability
+measure rather than a finite one. -/
 theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilityMeasure μ]
     (h : ConditionallyIIDWith μ X ν) {n : ℕ}
     (hX : ∀ i ∈ Finset.range n, AEMeasurable (X i) μ) (hB : MeasurableSet B)

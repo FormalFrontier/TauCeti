@@ -38,7 +38,7 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 /-- The exact mean-square error of empirical-measure evaluation for a conditionally i.i.d.
 process.  At sample size `n + 1`, the error is the Bernoulli variance of the directing measure's
 mass on `B`, divided by `n + 1`. -/
-theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq [IsProbabilityMeasure μ]
+theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (n : ℕ)
     (hX : ∀ i ∈ Finset.range (n + 1), AEMeasurable (X i) μ)
     (hB : MeasurableSet B) :
