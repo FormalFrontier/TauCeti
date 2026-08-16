@@ -263,6 +263,9 @@ namespace Isometry
 
 variable {L : IntegralLattice V} {M : IntegralLattice W}
 
+-- The two transport lemmas below are not registered with `simp`: `carrierBasisEquiv_apply` is
+-- itself a `simp` lemma, so their left-hand sides are not in simp-normal form.
+
 /-- Transporting a carrier basis along an isometry preserves its Gram matrix entrywise. -/
 theorem gramMatrix_carrierBasisEquiv (e : Isometry L M) {ι : Type v} (b : Basis ι ℤ L) :
     M.gramMatrix (e.carrierBasisEquiv ι b) = L.gramMatrix b := by

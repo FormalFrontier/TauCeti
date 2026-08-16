@@ -231,17 +231,18 @@ namespace Isometry
 variable {L : IntegralLattice V} {M : IntegralLattice W}
 
 /-- An integral-lattice isometry maps the source radical onto the target radical. -/
+@[simp]
 theorem map_radical (e : Isometry L M) :
     L.radical.map (e : V ≃ₗ[ℚ] W).toLinearMap = M.radical := by
   rw [← L.radical_toQuadraticMap, ← M.radical_toQuadraticMap,
-    ← L.norm_eq_toQuadraticMap, ← M.norm_eq_toQuadraticMap]
+    ← L.norm_def, ← M.norm_def]
   simpa only [e.normIsometryEquiv_toLinearEquiv] using e.normIsometryEquiv.map_radical
 
 /-- Isometric integral lattices have the same positive index. -/
 theorem sigPos_eq (e : Isometry L M) : L.sigPos = M.sigPos := by
   have := L.finiteDimensional
   have := M.finiteDimensional
-  rw [sigPos, sigPos, ← L.norm_eq_toQuadraticMap, ← M.norm_eq_toQuadraticMap]
+  rw [sigPos, sigPos, ← L.norm_def, ← M.norm_def]
   exact QuadraticMap.Equivalent.sigPos_eq ⟨e.normIsometryEquiv⟩
 
 /-- Isometric integral lattices have the same null index. -/
@@ -255,7 +256,7 @@ theorem sigNull_eq (e : Isometry L M) : L.sigNull = M.sigNull := by
 theorem sigNeg_eq (e : Isometry L M) : L.sigNeg = M.sigNeg := by
   have := L.finiteDimensional
   have := M.finiteDimensional
-  rw [sigNeg, sigNeg, ← L.norm_eq_toQuadraticMap, ← M.norm_eq_toQuadraticMap]
+  rw [sigNeg, sigNeg, ← L.norm_def, ← M.norm_def]
   exact QuadraticMap.Equivalent.sigNeg_eq ⟨e.normIsometryEquiv⟩
 
 /-- Isometric integral lattices have the same signature. -/
@@ -267,10 +268,14 @@ theorem form_nondegenerate_iff (e : Isometry L M) :
     L.form.Nondegenerate ↔ M.form.Nondegenerate := by
   have := L.finiteDimensional
   have := M.finiteDimensional
+  have hL : L.form.ker = L.radical :=
+    (LinearMap.BilinForm.radical_toQuadraticMap L.form L.isSymm).symm.trans
+      L.radical_toQuadraticMap
+  have hM : M.form.ker = M.radical :=
+    (LinearMap.BilinForm.radical_toQuadraticMap M.form M.isSymm).symm.trans
+      M.radical_toQuadraticMap
   rw [LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot,
-    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot]
-  change L.radical = ⊥ ↔ M.radical = ⊥
-  rw [← e.map_radical]
+    LinearMap.BilinForm.nondegenerate_iff_ker_eq_bot, hL, hM, ← e.map_radical]
   exact Submodule.map_eq_bot_iff.symm
 
 /-- Transport the nondegeneracy mixin along an integral-lattice isometry. -/

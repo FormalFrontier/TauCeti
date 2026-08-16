@@ -64,7 +64,7 @@ namespace IntegralLattice
 def norm (L : IntegralLattice V) : QuadraticForm ℚ V := L.form.toQuadraticMap
 
 /-- The rational norm form is the quadratic form associated to the ambient bilinear form. -/
-theorem norm_eq_toQuadraticMap (L : IntegralLattice V) :
+theorem norm_def (L : IntegralLattice V) :
     L.norm = L.form.toQuadraticMap :=
   (rfl)
 
@@ -202,6 +202,10 @@ theorem zero_mem_vectorsOfNorm (L : IntegralLattice V) : (0 : L) ∈ L.vectorsOf
 theorem neg_mem_vectorsOfNorm_iff {L : IntegralLattice V} {n : ℚ} (x : L) :
     -x ∈ L.vectorsOfNorm n ↔ x ∈ L.vectorsOfNorm n := by
   simp [mem_vectorsOfNorm]
+
+-- This membership transport is not registered with `simp`: `mem_vectorsOfNorm`,
+-- `coe_carrierEquiv_apply`, and `Isometry.norm_apply` already prove it, so tagging it fails the
+-- `simpNF` linter.
 
 /-- A carrier vector belongs to a prescribed norm set if and only if its image under an isometry
 does. -/
