@@ -133,14 +133,6 @@ theorem baseChangeExp_zsmul (c : ℤ) {x : A} (M : S)
   congr 1
   ring
 
-/-- The truncated exponential of a nilpotent element, over any bound killing that element. -/
-private theorem baseChangeExp_eq_sum {x : A} (M : S)
-    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    {N : ℕ} (hN : x ^ N = 0) (t : R) :
-    baseChangeExp x M hM t =
-      ∑ n ∈ range N, t ^ n • (integralDividedPower x M n (hM n)).baseChange R :=
-  baseChangeExp_of_pow_eq_zero x M hM hN t
-
 end BaseChange
 
 /-! ## The generating-function form of normal ordering -/
@@ -191,7 +183,7 @@ private theorem sum_smul_mul_sum_smul_of_normalOrder {R : Type*} [CommRing R]
     · rintro ⟨⟨m, n⟩, k⟩ hw
       simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range, Nat.lt_succ_iff,
         le_min_iff] at hw
-      change (⟨(m - k + k, n - k + k), k⟩ : Σ _ : ℕ × ℕ, ℕ) = ⟨(m, n), k⟩
+      dsimp only
       rw [Nat.sub_add_cancel hw.2.1, Nat.sub_add_cancel hw.2.2]
     · rintro ⟨p, k, q⟩ _
       simp
@@ -247,8 +239,9 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq
   have hxN : x ^ N = 0 := pow_eq_zero_of_le (by omega) hkx
   have hyN : y ^ N = 0 := pow_eq_zero_of_le (by omega) hky
   have hzN : z ^ N = 0 := pow_eq_zero_of_le (by omega) hkz
-  rw [baseChangeExp_eq_sum M hMx hxN, baseChangeExp_eq_sum M hMy hyN,
-    baseChangeExp_eq_sum M hMz hzN]
+  rw [baseChangeExp_of_pow_eq_zero x M hMx hxN,
+    baseChangeExp_of_pow_eq_zero y M hMy hyN,
+    baseChangeExp_of_pow_eq_zero z M hMz hzN]
   refine sum_smul_mul_sum_smul_of_normalOrder (R := R)
     (fun n => (integralDividedPower x M n (hMx n)).baseChange R)
     (fun n => (integralDividedPower y M n (hMy n)).baseChange R)
@@ -286,7 +279,8 @@ theorem commute_baseChangeExp {x y : A} (M : S) (hxy : Commute x y)
     Commute (baseChangeExp x M hMx t) (baseChangeExp y M hMy u) := by
   obtain ⟨kx, hkx⟩ := hx
   obtain ⟨ky, hky⟩ := hy
-  rw [baseChangeExp_eq_sum M hMx hkx, baseChangeExp_eq_sum M hMy hky]
+  rw [baseChangeExp_of_pow_eq_zero x M hMx hkx,
+    baseChangeExp_of_pow_eq_zero y M hMy hky]
   refine Commute.sum_left _ _ _ fun m _ => Commute.sum_right _ _ _ fun n _ => ?_
   refine Commute.smul_left (Commute.smul_right ?_ _) _
   have hcomm : integralDividedPower x M m (hMx m) * integralDividedPower y M n (hMy n) =
