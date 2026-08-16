@@ -49,93 +49,48 @@ variable {k : Type u} {K : Type v} {H : Type w}
 variable [CommRing k] [CommRing K] [Algebra k K]
 variable [Semiring H] [Bialgebra k H]
 
-/-- The scalar-extended evaluation map, with convolution wrappers on its source and target. -/
-private noncomputable def baseChangeGenerator :
-    ConvolutionDual k H →ₗ[k] Module.Dual K (K ⊗[k] H) :=
-  Module.Dual.baseChange K ∘ₗ (WithConv.linearEquiv k _).toLinearMap
-
-/-- Extend a convolution-dual functional and restore the convolution wrapper. -/
-private noncomputable def baseChange :
-    K ⊗[k] ConvolutionDual k H →ₗ[K] ConvolutionDual K (K ⊗[k] H) where
-  toFun z := WithConv.toConv
-    ((baseChangeGenerator (k := k) (K := K) (H := H)).liftBaseChange K z)
-  map_add' x y := by apply WithConv.ofConv_injective; simp
-  map_smul' a x := by apply WithConv.ofConv_injective; simp
-
-@[simp]
-private theorem baseChange_tmul_apply_tmul (a b : K) (φ : ConvolutionDual k H) (x : H) :
-    (baseChange (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)).ofConv (b ⊗ₜ[k] x) =
-      a * b * algebraMap k K (φ.ofConv x) := by
-  simp [baseChange, baseChangeGenerator, Algebra.smul_def]
-  ac_rfl
-
 variable [Module.Finite k H] [Module.Projective k H]
-
-/-- The underlying bijection of the base-change map, assembled from linear equivalences. -/
-private noncomputable def baseChangeEquivAux :
-    (K ⊗[k] ConvolutionDual k H) ≃ ConvolutionDual K (K ⊗[k] H) :=
-  (TensorProduct.congr (LinearEquiv.refl k K) (WithConv.linearEquiv k _)).toEquiv.trans <|
-    (Module.Dual.baseChangeEquiv (R := k) (A := K) (M := H)).toEquiv.trans <|
-      (WithConv.linearEquiv K _).symm.toEquiv
-
-private theorem baseChange_coe_eq_baseChangeEquivAux :
-    (baseChange (k := k) (K := K) (H := H) :
-      K ⊗[k] ConvolutionDual k H → ConvolutionDual K (K ⊗[k] H)) =
-        baseChangeEquivAux (k := k) (K := K) (H := H) := by
-  funext z
-  induction z using TensorProduct.induction_on with
-  | zero => simp [baseChangeEquivAux]
-  | add z w hz hw =>
-      rw [map_add, hz, hw]
-      simp [baseChangeEquivAux]
-  | tmul a φ =>
-      apply WithConv.ofConv_injective
-      ext x
-      simp [baseChangeEquivAux, baseChange, baseChangeGenerator,
-        Algebra.smul_def]
 
 /-- The scalar-extended evaluation map as a linear equivalence. -/
 private noncomputable def baseChangeLinearEquiv :
     K ⊗[k] ConvolutionDual k H ≃ₗ[K] ConvolutionDual K (K ⊗[k] H) :=
-  LinearEquiv.ofBijective (baseChange (k := k) (K := K) (H := H)) <| by
-    rw [baseChange_coe_eq_baseChangeEquivAux]
-    exact (baseChangeEquivAux (k := k) (K := K) (H := H)).bijective
+  ((WithConv.linearEquiv k _).baseChange k K).trans <|
+    (Module.Dual.baseChangeEquiv (R := k) (A := K) (M := H)).trans <|
+      (WithConv.linearEquiv K _).symm
 
 @[simp]
 private theorem baseChangeLinearEquiv_tmul_apply_tmul
     (a b : K) (φ : ConvolutionDual k H) (x : H) :
     (baseChangeLinearEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)).ofConv
         (b ⊗ₜ[k] x) = a * b * algebraMap k K (φ.ofConv x) :=
-  baseChange_tmul_apply_tmul a b φ x
+  by simp [baseChangeLinearEquiv]
 
-omit [Module.Finite k H] [Module.Projective k H] in
 private theorem baseChange_one :
-    baseChange (k := k) (K := K) (H := H) 1 = 1 := by
-  rw [Algebra.TensorProduct.one_def]
+    baseChangeLinearEquiv (k := k) (K := K) (H := H)
+      (1 ⊗ₜ[k] (1 : ConvolutionDual k H)) = 1 := by
   apply WithConv.ofConv_injective
   ext x
   -- Unwrap `WithConv` after testing the functionals on a pure tensor.
-  change (baseChange (k := k) (K := K) (H := H)
+  change (baseChangeLinearEquiv (k := k) (K := K) (H := H)
       (1 ⊗ₜ[k] (1 : ConvolutionDual k H))).ofConv (1 ⊗ₜ[k] x) =
     (1 : ConvolutionDual K (K ⊗[k] H)).ofConv (1 ⊗ₜ[k] x)
-  rw [baseChange_tmul_apply_tmul]
+  rw [baseChangeLinearEquiv_tmul_apply_tmul]
   simp [Algebra.smul_def]
 
-omit [Module.Finite k H] [Module.Projective k H] in
-private theorem baseChange_mul (z w : K ⊗[k] ConvolutionDual k H) :
-    baseChange (k := k) (K := K) (H := H) (z * w) =
-      baseChange (k := k) (K := K) (H := H) z *
-        baseChange (k := k) (K := K) (H := H) w := by
-  apply LinearMap.map_mul_of_map_mul_tmul
-  intro a b φ ψ
+private theorem baseChange_mul (a b : K) (φ ψ : ConvolutionDual k H) :
+    baseChangeLinearEquiv (k := k) (K := K) (H := H)
+        ((a * b) ⊗ₜ[k] (φ * ψ)) =
+      baseChangeLinearEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ) *
+        baseChangeLinearEquiv (k := k) (K := K) (H := H) (b ⊗ₜ[k] ψ) := by
   apply WithConv.ofConv_injective
   ext x
   -- Unwrap tensor-product multiplication and convolution after evaluation at `1 ⊗ₜ x`.
-  change (baseChange (k := k) (K := K) (H := H)
+  change (baseChangeLinearEquiv (k := k) (K := K) (H := H)
       ((a * b) ⊗ₜ[k] (φ * ψ))).ofConv (1 ⊗ₜ[k] x) =
-    (baseChange (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ) *
-      baseChange (k := k) (K := K) (H := H) (b ⊗ₜ[k] ψ)).ofConv (1 ⊗ₜ[k] x)
-  rw [baseChange_tmul_apply_tmul]
+    (baseChangeLinearEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ) *
+      baseChangeLinearEquiv (k := k) (K := K) (H := H)
+        (b ⊗ₜ[k] ψ)).ofConv (1 ⊗ₜ[k] x)
+  rw [baseChangeLinearEquiv_tmul_apply_tmul]
   rw [LinearMap.convMul_apply, LinearMap.convMul_apply]
   simp only [TensorProduct.comul_tmul, Bialgebra.comul_one, Algebra.TensorProduct.one_def]
   generalize Coalgebra.comul (R := k) (A := H) x = q
@@ -146,21 +101,22 @@ private theorem baseChange_mul (z w : K ⊗[k] ConvolutionDual k H) :
   | tmul y z =>
       simp only [TensorProduct.AlgebraTensorModule.tensorTensorTensorComm_tmul,
         TensorProduct.map_tmul, LinearMap.mul'_apply,
-        baseChange_tmul_apply_tmul, map_mul]
+        baseChangeLinearEquiv_tmul_apply_tmul, map_mul]
       ring
 
 /-- The scalar-extended evaluation map as an algebra equivalence. -/
 private noncomputable def baseChangeAlgEquiv :
     K ⊗[k] ConvolutionDual k H ≃ₐ[K] ConvolutionDual K (K ⊗[k] H) :=
-  AlgEquiv.ofLinearEquiv (baseChangeLinearEquiv (k := k) (K := K) (H := H))
-    baseChange_one baseChange_mul
+  Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct
+    (baseChangeLinearEquiv (k := k) (K := K) (H := H))
+    baseChange_mul baseChange_one
 
 @[simp]
 private theorem baseChangeAlgEquiv_tmul_apply_tmul
     (a b : K) (φ : ConvolutionDual k H) (x : H) :
     (baseChangeAlgEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)).ofConv
         (b ⊗ₜ[k] x) = a * b * algebraMap k K (φ.ofConv x) :=
-  baseChange_tmul_apply_tmul a b φ x
+  baseChangeLinearEquiv_tmul_apply_tmul a b φ x
 
 /-- The base-change algebra equivalence preserves the finite-dual counit. -/
 private theorem baseChange_counit :
@@ -175,13 +131,13 @@ private theorem baseChange_counit :
   | tmul a φ =>
       -- `AlgHom.comp` and `baseChangeAlgEquiv` reduce to their underlying counit and map.
       change Coalgebra.counit (R := K)
-          (baseChange (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)) =
+          (baseChangeLinearEquiv (k := k) (K := K) (H := H) (a ⊗ₜ[k] φ)) =
         Coalgebra.counit (R := K) (a ⊗ₜ[k] φ)
       rw [ConvolutionDual.counit_apply]
       -- The finite-dual counit is evaluation at the tensor-product unit `1 ⊗ₜ 1`.
-      change (baseChange (k := k) (K := K) (H := H)
+      change (baseChangeLinearEquiv (k := k) (K := K) (H := H)
           (a ⊗ₜ[k] φ)).ofConv (1 ⊗ₜ[k] (1 : H)) = _
-      rw [baseChange_tmul_apply_tmul]
+      rw [baseChangeLinearEquiv_tmul_apply_tmul]
       simp [ConvolutionDual.counit_apply, Algebra.smul_def, mul_comm]
 
 /-- The base-change algebra equivalence preserves the finite-dual comultiplication. -/
