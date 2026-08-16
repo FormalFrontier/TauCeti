@@ -18,14 +18,16 @@ that this equivalence identifies the scalar extension of `L.integralForm` with t
 form `L.form`.
 
 Conversely, an integral symmetric form on a finite free `ℤ`-module `M` defines an integral lattice
-in `ℚ ⊗[ℤ] M`. Its carrier is the image of `M` under `m ↦ 1 ⊗ₜ m`, and its restricted integral
-form recovers the original form. Rationalizing that embedded carrier gives back the original tensor
-product, so the abstract and embedded models are inverse constructions at the level of forms.
+in `ℚ ⊗[ℤ] M`. Its carrier consists exactly of the unit pure tensors `1 ⊗ₜ m`, so that
+`TauCeti.TensorProduct.unitTmulEquiv` identifies `M` with it, and its restricted integral form
+recovers the original form. Base-changing that carrier equivalence and then rationalizing is the
+identity on `ℚ ⊗[ℤ] M`; at the level of forms the two models are related by the isometries
+`rationalizationIsometry` and `carrierIsometry`.
 
 Mathlib already supplies `LinearMap.BilinForm.baseChange`; the point here is to connect that
 abstract tensor-product construction to the embedded-carrier model used by integral lattices.
-In particular, no choice of carrier basis appears in the resulting equivalence or its
-characteristic equations.
+The lattice `ofIntegralForm` is built from an arbitrary chosen basis of `M`, but no choice of basis
+appears in the resulting equivalences or in the equations characterizing them.
 
 ## Main results
 
@@ -35,10 +37,14 @@ characteristic equations.
   `L.integralForm.baseChange ℚ` to `L.form`.
 * `TauCeti.IntegralLattice.ofIntegralForm`: the integral lattice obtained by rationalizing an
   abstract finite free integral form.
+* `TauCeti.IntegralLattice.mem_ofIntegralForm_carrier_iff`: its carrier consists exactly of the
+  unit pure tensors.
 * `TauCeti.IntegralLattice.ofIntegralForm.carrierEquiv`: the original module identified with the
   embedded carrier.
 * `TauCeti.IntegralLattice.ofIntegralForm.carrierIsometry`: that equivalence as an isometry of
   integral forms.
+* `TauCeti.IntegralLattice.ofIntegralForm.carrierEquiv_baseChange_trans_rationalizationEquiv`:
+  base-changing the carrier equivalence and then rationalizing is the identity.
 
 ## References
 
@@ -118,7 +124,7 @@ noncomputable def ofIntegralForm (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
       rw [Basis.baseChange_apply, Basis.baseChange_apply,
         LinearMap.BilinForm.baseChange_tmul]
       simp only [one_mul, Int.smul_one_eq_cast, Submodule.mem_one]
-      exact ⟨B (Module.Free.chooseBasis ℤ M i) (Module.Free.chooseBasis ℤ M j), rfl⟩
+      exact ⟨B (Module.Free.chooseBasis ℤ M i) (Module.Free.chooseBasis ℤ M j), by simp⟩
 
 /-- The ambient rational form of a rationalized integral form is the base change to `ℚ`. -/
 @[simp]
@@ -126,48 +132,44 @@ theorem ofIntegralForm_form (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     (ofIntegralForm B hB).form = B.baseChange ℚ :=
   IntegralLattice.ofBasis_form _ _ _ _
 
+/-- The carrier of a rationalized integral form is the lattice of unit pure tensors. -/
+@[simp]
+theorem ofIntegralForm_carrier (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
+    (ofIntegralForm B hB).carrier = LinearMap.range (TensorProduct.mk ℤ ℚ M 1) :=
+  (IntegralLattice.ofBasis_carrier _ _ _ _).trans
+    (TensorProduct.range_mk_one_eq_span (Module.Free.chooseBasis ℤ M)).symm
+
+/-- The carrier of a rationalized integral form consists exactly of the unit pure tensors. -/
+theorem mem_ofIntegralForm_carrier_iff (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
+    (x : ℚ ⊗[ℤ] M) : x ∈ (ofIntegralForm B hB).carrier ↔ ∃ m : M, 1 ⊗ₜ[ℤ] m = x := by
+  rw [ofIntegralForm_carrier]
+  exact LinearMap.mem_range
+
 namespace ofIntegralForm
 
 /-- The abstract integral module is canonically equivalent to the carrier of its rationalized
-integral lattice. -/
+integral lattice: this is `TauCeti.TensorProduct.unitTmulEquiv` read through
+`ofIntegralForm_carrier`. -/
 noncomputable def carrierEquiv (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
     M ≃ₗ[ℤ] ofIntegralForm B hB :=
-  (Module.Free.chooseBasis ℤ M).equiv
-    (IntegralLattice.ofBasis.basis ((Module.Free.chooseBasis ℤ M).baseChange ℚ)
-      (B.baseChange ℚ) _ _) (Equiv.refl _)
+  (TensorProduct.unitTmulEquiv ℤ ℚ M).trans
+    (LinearEquiv.ofEq _ _ (ofIntegralForm_carrier B hB).symm)
 
 /-- The carrier equivalence sends an abstract vector to its unit pure tensor. -/
 @[simp]
 theorem coe_carrierEquiv_apply (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (x : M) :
-    (carrierEquiv B hB x : ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] x := by
-  have hmap :
-      (Submodule.subtype (ofIntegralForm B hB).carrier).comp
-          (carrierEquiv B hB).toLinearMap =
-        (TensorProduct.mk ℤ ℚ M 1).toAddMonoidHom.toIntLinearMap := by
-    apply (Module.Free.chooseBasis ℤ M).ext
-    intro i
-    have hbasis : carrierEquiv B hB (Module.Free.chooseBasis ℤ M i) =
-        IntegralLattice.ofBasis.basis ((Module.Free.chooseBasis ℤ M).baseChange ℚ)
-          (B.baseChange ℚ) _ _ i :=
-      Basis.equiv_apply _ _ _ _
-    -- Forget the implementation wrappers on the subtype inclusion and integer-linear map.
-    change ((carrierEquiv B hB (Module.Free.chooseBasis ℤ M i) : ofIntegralForm B hB) :
-      ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] Module.Free.chooseBasis ℤ M i
-    rw [hbasis, IntegralLattice.ofBasis.coe_basis, Basis.baseChange_apply]
-  exact LinearMap.congr_fun hmap x
+    (carrierEquiv B hB x : ℚ ⊗[ℤ] M) = 1 ⊗ₜ[ℤ] x :=
+  (LinearEquiv.coe_ofEq_apply (ofIntegralForm_carrier B hB).symm _).trans
+    (TensorProduct.coe_unitTmulEquiv_apply x)
 
-/-- The carrier of a rationalized integral form consists exactly of the unit pure tensors. -/
+/-- The inverse carrier equivalence recovers an abstract vector from its unit pure tensor. -/
 @[simp]
-theorem mem_carrier_iff (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (x : ℚ ⊗[ℤ] M) :
-    x ∈ (ofIntegralForm B hB).carrier ↔ ∃ m : M, 1 ⊗ₜ[ℤ] m = x := by
-  constructor
-  · intro hx
-    obtain ⟨m, hm⟩ := (carrierEquiv B hB).surjective
-      (⟨x, hx⟩ : ofIntegralForm B hB)
-    exact ⟨m, (coe_carrierEquiv_apply B hB m).symm.trans (congrArg Subtype.val hm)⟩
-  · rintro ⟨m, rfl⟩
-    rw [← coe_carrierEquiv_apply B hB m]
-    exact (carrierEquiv B hB m).2
+theorem carrierEquiv_symm_tmul (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (x : M)
+    (h : (1 : ℚ) ⊗ₜ[ℤ] x ∈ (ofIntegralForm B hB).carrier) :
+    (carrierEquiv B hB).symm ⟨1 ⊗ₜ[ℤ] x, h⟩ = x := by
+  apply (carrierEquiv B hB).injective
+  rw [LinearEquiv.apply_symm_apply]
+  exact Subtype.ext (coe_carrierEquiv_apply B hB x).symm
 
 /-- Restricting the rationalized form along the carrier equivalence recovers the original
 integral form. -/
@@ -193,22 +195,36 @@ theorem carrierIsometry_apply (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (x
     carrierIsometry B hB x = carrierEquiv B hB x :=
   (rfl)
 
+/-- Evaluating the inverse carrier isometry coincides with the inverse carrier equivalence. -/
+-- BilinForm.IsometryEquiv has no symm_toLinearEquiv lemma; definition unfolding is canonical.
+@[simp]
+theorem carrierIsometry_symm_apply (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm)
+    (y : ofIntegralForm B hB) :
+    (carrierIsometry B hB).symm y = (carrierEquiv B hB).symm y :=
+  (rfl)
+
 /-- Base-changing the carrier equivalence and then applying the lattice's rationalization
-equivalence is the identity on the original rationalization. -/
-theorem carrierEquiv_baseChange_trans_rationalizationEquiv
-    (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
-    (LinearEquiv.baseChange ℤ ℚ M (ofIntegralForm B hB) (carrierEquiv B hB)).trans
-      (Submodule.rationalizationEquiv (ofIntegralForm B hB).carrier) = LinearEquiv.refl ℚ _ := by
-  apply LinearEquiv.ext
-  intro x
+equivalence returns the vector one started from. -/
+@[simp]
+theorem rationalizationEquiv_baseChange_carrierEquiv
+    (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) (x : ℚ ⊗[ℤ] M) :
+    Submodule.rationalizationEquiv (ofIntegralForm B hB).carrier
+        (LinearEquiv.baseChange ℤ ℚ M _ (carrierEquiv B hB) x) = x := by
   induction x using TensorProduct.induction_on with
   | zero => simp
   | add x y hx hy => simp only [map_add, hx, hy]
   | tmul q m =>
-    rw [LinearEquiv.trans_apply, LinearEquiv.baseChange_tmul,
-      Submodule.rationalizationEquiv_tmul, coe_carrierEquiv_apply,
-      LinearEquiv.refl_apply]
+    rw [LinearEquiv.baseChange_tmul, Submodule.rationalizationEquiv_tmul,
+      coe_carrierEquiv_apply]
     exact (tmul_eq_smul_one_tmul q m).symm
+
+/-- The bundled form of `rationalizationEquiv_baseChange_carrierEquiv`: base-changing the carrier
+equivalence and then rationalizing is the identity on the original rationalization. -/
+theorem carrierEquiv_baseChange_trans_rationalizationEquiv
+    (B : LinearMap.BilinForm ℤ M) (hB : B.IsSymm) :
+    (LinearEquiv.baseChange ℤ ℚ M (ofIntegralForm B hB) (carrierEquiv B hB)).trans
+      (Submodule.rationalizationEquiv (ofIntegralForm B hB).carrier) = LinearEquiv.refl ℚ _ :=
+  LinearEquiv.ext (rationalizationEquiv_baseChange_carrierEquiv B hB)
 
 end ofIntegralForm
 
