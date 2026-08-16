@@ -134,6 +134,8 @@ private theorem isPullback_pointwiseQuotientProjection
   · rfl
   · rfl
   · simp only [Iso.refl_hom, Category.id_comp]
+    -- `of_iso` exposes the underlying type-valued maps, while the public comparison lemma
+    -- `pointwiseQuotientProjection_app` is stated for the bundled `GrpCat` morphism.
     change (forget GrpCat.{u}).map (pointwiseQuotientMk H I hI A) ≫
         eqToHom (congrArg (fun G : GrpCat.{u} => (G : Type u))
           (pointwiseQuotientFunctor_obj H I hI A)).symm =
@@ -141,6 +143,7 @@ private theorem isPullback_pointwiseQuotientProjection
     rw [pointwiseQuotientProjection_app, ← eqToHom_map]
     exact ((forget GrpCat.{u}).map_comp _ _).symm
   · simp only [Iso.refl_hom, Category.id_comp]
+    -- This is the same underlying-map reduction for the square's second quotient leg.
     change (forget GrpCat.{u}).map (pointwiseQuotientMk H I hI A) ≫
         eqToHom (congrArg (fun G : GrpCat.{u} => (G : Type u))
           (pointwiseQuotientFunctor_obj H I hI A)).symm =
@@ -229,6 +232,7 @@ theorem isPullback_pointwiseQuotientTorsor
           ULift.up ((pointwiseQuotientProjection H I hI).app A.unop.unop g.down)) := by
       ext g
       exact pointwiseQuotientPresheafProjection_ulift_app_apply H I hI A g
+    -- Reduce the local abbreviation `q` at `A` before rewriting it with `hqA`.
     change IsPullback _ _ qA qA
     rw [hqA]
     exact isPullback_pointwiseQuotientProjection_ulift H I hI A.unop.unop
@@ -303,6 +307,8 @@ private theorem sheafify_pointwiseQuotientTorsorFst
         CartesianMonoidalCategory.fst _ _ := by
   let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
   let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts _
+  -- Unfold the product and carrier comparison isomorphisms so that the stable monoidal
+  -- comparison lemmas below apply; there is no lemma for their packaged composite.
   change ((pointsFppfGroupObjectCarrierIso H).inv ⊗ₘ
         (pointsFppfGroupObjectCarrierIso (quotient H I)).inv) ≫
       (CartesianMonoidalCategory.prodComparisonIso F
@@ -325,8 +331,12 @@ private theorem sheafify_pointwiseQuotientTorsorAction
   let F := presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))
   let _ : F.Monoidal := Functor.Monoidal.ofChosenFiniteProducts _
   let _ : IsMonHom (pointsFppfGroupObjectCarrierIso H).hom := by
+    -- The carrier isomorphism is obtained by forgetting a group-object isomorphism, so its
+    -- monoid-hom instance is exposed only after reducing to that underlying morphism.
     change IsMonHom (pointsFppfGroupObjectMapIso H).hom.hom.hom
     infer_instance
+  -- Expose the two action definitions; the subsequent group-object lemmas reason about their
+  -- multiplication composites, not the named wrappers themselves.
   change (fppfQuotientTorsorProductIso H I).hom ≫
         F.map (CartesianMonoidalCategory.fst _ _ *
           (CartesianMonoidalCategory.snd _ _ ≫
@@ -338,7 +348,9 @@ private theorem sheafify_pointwiseQuotientTorsorAction
   rw [Functor.map_mul, MonObj.mul_comp, MonObj.comp_mul]
   congr 1
   · exact sheafify_pointwiseQuotientTorsorFst H I
-  · change ((pointsFppfGroupObjectCarrierIso H).inv ⊗ₘ
+  · -- Unfold the product comparison and sheafified subgroup inclusion to expose the
+    -- second projection; no public lemma identifies this entire composite at once.
+    change ((pointsFppfGroupObjectCarrierIso H).inv ⊗ₘ
           (pointsFppfGroupObjectCarrierIso (quotient H I)).inv) ≫
         (CartesianMonoidalCategory.prodComparisonIso F
           (pointsPresheafGrp H).X (pointsPresheafGrp (quotient H I)).X).inv ≫
