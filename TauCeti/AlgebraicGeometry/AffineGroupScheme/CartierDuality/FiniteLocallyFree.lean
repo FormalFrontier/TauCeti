@@ -133,16 +133,6 @@ theorem finiteLocallyFreeCommAffineGroupSchemeProperty_iff
         LocallyOfFinitePresentation G.obj.X.hom ∧ IsCommMonObj G.obj.X :=
   Iff.rfl
 
-private theorem isCommMonObj_of_grp_iso'
-    {C : Type u} [Category C] [CartesianMonoidalCategory C] [BraidedCategory C]
-    {G H : Grp C} (e : G ≅ H) (hG : IsCommMonObj G.X) : IsCommMonObj H.X := by
-  let _ := hG
-  constructor
-  apply (cancel_mono e.inv.hom.hom).1
-  simp only [Category.assoc, IsMonHom.mul_hom]
-  rw [← Category.assoc, ← BraidedCategory.braiding_naturality]
-  simp only [Category.assoc, IsCommMonObj.mul_comm]
-
 instance (S : CommRingCat.{u}) :
     (finiteLocallyFreeCommAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
   of_iso e hG := by
@@ -154,7 +144,7 @@ instance (S : CommRingCat.{u}) :
       · constructor
         · exact (MorphismProperty.over_iso_iff (@LocallyOfFinitePresentation)
             ((Grp.forget _).mapIso e')).mp hG.2.2.1
-        · exact isCommMonObj_of_grp_iso' e' hG.2.2.2
+        · exact isCommMonObj_of_grp_iso e' hG.2.2.2
 
 /-- Under the affine Hopf/group-scheme anti-equivalence over a commutative ring, finite
 projectivity and cocommutativity of the coordinate Hopf algebra correspond to finite local

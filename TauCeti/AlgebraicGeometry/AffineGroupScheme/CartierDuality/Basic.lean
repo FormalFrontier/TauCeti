@@ -62,7 +62,8 @@ theorem finiteCommAffineGroupSchemeProperty_iff
       IsFinite G.obj.X.hom ∧ IsCommMonObj G.obj.X :=
   Iff.rfl
 
-private theorem isCommMonObj_of_grp_iso
+/-- Commutativity of a group object is preserved under isomorphism. -/
+theorem isCommMonObj_of_grp_iso
     {C : Type u} [Category C] [CartesianMonoidalCategory C] [BraidedCategory C]
     {G H : Grp C} (e : G ≅ H) (hG : IsCommMonObj G.X) : IsCommMonObj H.X := by
   let _ := hG
