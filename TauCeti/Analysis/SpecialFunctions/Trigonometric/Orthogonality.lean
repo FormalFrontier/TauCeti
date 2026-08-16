@@ -29,16 +29,23 @@ the Chebyshev vocabulary: `TauCeti.integral_chebyshevCosine_mul_chebyshevCosine_
 `∫₀^π cos (m θ) cos (n θ) dθ` through the Chebyshev `T` measure. Nothing there covers the sine
 system, whose square norm is `π / 2` in *every* degree — the cosine system is the one whose
 degree-`0` mode has square norm `π` instead — so the two families are stated separately, and this
-file is deliberately independent of the Chebyshev measure-theoretic development.
+file is deliberately independent of the Chebyshev measure-theoretic development. In the other
+direction the single-mode integral does serve that development: the two cosine-side single-mode
+integrals `TauCeti.integral_chebyshevCosine_zero` and
+`TauCeti.integral_chebyshevCosine_of_ne_zero` are read off `TauCeti.integral_cos_int_mul` below,
+so the computation is performed once.
 
 ## Main results
 
 * `TauCeti.integral_cos_int_mul`: `∫₀^π cos (k θ) dθ` is `π` when the integer `k` is zero and `0`
   otherwise.
 * `TauCeti.integral_sin_nat_mul_mul_sin_nat_mul`: the orthogonality relation
-  `∫₀^π sin (m θ) sin (n θ) dθ = (π / 2) · δ_{mn}` for natural `m ≠ 0`.
+  `∫₀^π sin (m θ) sin (n θ) dθ = (π / 2) · δ_{mn}` for all natural `m` and `n`, the degenerate
+  mode `m = n = 0` — where the integrand vanishes identically — absorbed into the right-hand side
+  rather than hypothesised away.
 * `TauCeti.integral_sin_succ_mul_sin_succ`: the same relation indexed by the positive frequencies
-  `m + 1`, so that no positivity hypothesis is needed, and
+  `m + 1`, where the degenerate mode is out of range and the right-hand side is a plain
+  Kronecker delta, and
   `TauCeti.two_div_pi_mul_integral_sin_succ_mul_sin_succ`, its normalized restatement
   `(2/π) ∫₀^π sin ((m+1) θ) sin ((n+1) θ) dθ = δ_{mn}`.
 
@@ -70,15 +77,20 @@ theorem integral_cos_int_mul (k : ℤ) :
     rw [ite_eq_right hk]
     exact (mul_eq_zero.mp h).resolve_left hk'
 
-/-- **Orthogonality of the sine system on `[0, π]`.** For natural numbers `m ≠ 0` and `n`,
-`∫₀^π sin (m θ) sin (n θ) dθ` is `π / 2` when `m = n` and `0` otherwise.
+/-- **Orthogonality of the sine system on `[0, π]`.** For natural numbers `m` and `n`,
+`∫₀^π sin (m θ) sin (n θ) dθ` is `π / 2` when `m = n` is nonzero, and `0` otherwise.
 
-The hypothesis `m ≠ 0` is needed only to exclude `m = n = 0`, where the integrand vanishes
-identically and the integral is `0`, not `π / 2`; with it in force the statement is symmetric in
-`m` and `n`, since `m = n` forces `n ≠ 0` as well. -/
-theorem integral_sin_nat_mul_mul_sin_nat_mul {m n : ℕ} (hm : m ≠ 0) :
+The degenerate mode `m = n = 0` is absorbed into the right-hand side rather than hypothesised
+away: there the integrand vanishes identically, so the integral is `0`, not `π / 2`. The condition
+`m = n ∧ m ≠ 0` is symmetric in `m` and `n` up to logical equivalence, since under `m = n` the
+requirements `m ≠ 0` and `n ≠ 0` coincide. -/
+theorem integral_sin_nat_mul_mul_sin_nat_mul (m n : ℕ) :
     ∫ θ in (0 : ℝ)..Real.pi, Real.sin ((m : ℝ) * θ) * Real.sin ((n : ℝ) * θ)
-      = if m = n then Real.pi / 2 else 0 := by
+      = if m = n ∧ m ≠ 0 then Real.pi / 2 else 0 := by
+  rcases eq_or_ne m 0 with rfl | hm
+  · -- The degenerate mode: the integrand is identically `0`.
+    simp
+  rw [if_congr (and_iff_left hm) rfl rfl]
   -- Product to sum: `2 sin (m θ) sin (n θ) = cos ((m - n) θ) - cos ((m + n) θ)`.
   have hprod : ∀ θ : ℝ, Real.sin ((m : ℝ) * θ) * Real.sin ((n : ℝ) * θ)
       = Real.cos ((((m : ℤ) - (n : ℤ) : ℤ) : ℝ) * θ) / 2
@@ -103,9 +115,9 @@ theorem integral_sin_nat_mul_mul_sin_nat_mul {m n : ℕ} (hm : m ≠ 0) :
   · rw [ite_eq_right (by omega : ¬((m : ℤ) - (n : ℤ) = 0)), ite_eq_right hmn]
     ring
 
-/-- The sine system indexed by its positive frequencies `m + 1`, which removes the positivity
-hypothesis of `TauCeti.integral_sin_nat_mul_mul_sin_nat_mul`:
-`∫₀^π sin ((m+1) θ) sin ((n+1) θ) dθ = (π / 2) · δ_{mn}`. -/
+/-- The sine system indexed by its positive frequencies `m + 1`, so that the degenerate mode of
+`TauCeti.integral_sin_nat_mul_mul_sin_nat_mul` is out of range and the right-hand side is a plain
+Kronecker delta: `∫₀^π sin ((m+1) θ) sin ((n+1) θ) dθ = (π / 2) · δ_{mn}`. -/
 theorem integral_sin_succ_mul_sin_succ (m n : ℕ) :
     ∫ θ in (0 : ℝ)..Real.pi,
         Real.sin (((m : ℝ) + 1) * θ) * Real.sin (((n : ℝ) + 1) * θ)
@@ -114,14 +126,16 @@ theorem integral_sin_succ_mul_sin_succ (m n : ℕ) :
       = Real.sin (((m + 1 : ℕ) : ℝ) * θ) * Real.sin (((n + 1 : ℕ) : ℝ) * θ) := by
     intro θ; push_cast; ring
   simp only [hshift]
-  rw [integral_sin_nat_mul_mul_sin_nat_mul (m := m + 1) (n := n + 1) (Nat.succ_ne_zero m)]
-  rcases eq_or_ne m n with rfl | hmn
-  · rw [ite_eq_left rfl, ite_eq_left rfl]
-  · rw [ite_eq_right (by omega : ¬(m + 1 = n + 1)), ite_eq_right hmn]
+  rw [integral_sin_nat_mul_mul_sin_nat_mul (m + 1) (n + 1),
+    if_congr (by omega : (m + 1 = n + 1 ∧ m + 1 ≠ 0) ↔ m = n) rfl rfl]
 
 /-- **The sine system, normalized.** With the `2/π` normalization the family
 `√(2/π) · sin ((m+1) ·)` is orthonormal on `[0, π]`:
-`(2/π) ∫₀^π sin ((m+1) θ) sin ((n+1) θ) dθ = δ_{mn}`. -/
+`(2/π) ∫₀^π sin ((m+1) θ) sin ((n+1) θ) dθ = δ_{mn}`.
+
+This is the form the character orthonormality of `SU(2)` reduces to, and
+`TauCeti.SU2.character_symPower_orthonormal_torusExp`
+(`TauCeti/RepresentationTheory/SU2/Weyl/Orthogonality.lean`) is proved by rewriting with it. -/
 theorem two_div_pi_mul_integral_sin_succ_mul_sin_succ (m n : ℕ) :
     2 / Real.pi * ∫ θ in (0 : ℝ)..Real.pi,
         Real.sin (((m : ℝ) + 1) * θ) * Real.sin (((n : ℝ) + 1) * θ)

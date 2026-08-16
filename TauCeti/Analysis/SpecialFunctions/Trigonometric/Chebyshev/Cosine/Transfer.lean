@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Measure
 public import TauCeti.MeasureTheory.Function.Lp.CompMeasurePreservingEquiv
+import TauCeti.Analysis.SpecialFunctions.Trigonometric.Orthogonality
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Basic
 import Mathlib.MeasureTheory.Integral.RieszMarkovKakutani.Real
 
@@ -176,14 +177,18 @@ lemma integral_eval_T_real_mul_eval_T_real_measureT_eq_integral_chebyshevCosine_
 /-- The cosine-side integral of the constant Chebyshev mode. -/
 lemma integral_chebyshevCosine_zero :
     ∫ θ in (0)..Real.pi, chebyshevCosine 0 θ = Real.pi := by
-  rw [← integral_eval_T_real_measureT_eq_integral_chebyshevCosine]
-  exact integral_eval_T_real_measureT_zero
+  have h := integral_cos_int_mul 0
+  rw [ite_eq_left rfl, Int.cast_zero] at h
+  simp only [chebyshevCosine_def, Nat.cast_zero]
+  exact h
 
 /-- Nonzero cosine modes have zero integral over `[0, π]`. -/
 lemma integral_chebyshevCosine_of_ne_zero {n : ℕ} (hn : n ≠ 0) :
     ∫ θ in (0)..Real.pi, chebyshevCosine n θ = 0 := by
-  rw [← integral_eval_T_real_measureT_eq_integral_chebyshevCosine]
-  exact integral_eval_T_real_measureT_of_ne_zero (by exact_mod_cast hn)
+  have h := integral_cos_int_mul (n : ℤ)
+  rw [ite_eq_right (by exact_mod_cast hn : (n : ℤ) ≠ 0), Int.cast_natCast] at h
+  simp only [chebyshevCosine_def]
+  exact h
 
 /-- The diagonal cosine-side `L²` integral, using the same squared-norm
 constant as the Chebyshev `T` polynomials. -/
