@@ -203,7 +203,6 @@ theorem discriminantBilinearIsometry_apply (e : Isometry L M)
 
 /-- The induced discriminant isometry maps a representative through the dual-carrier
 equivalence. -/
-@[simp]
 theorem discriminantBilinearIsometry_mk (e : Isometry L M)
     [L.IsNondegenerate] [M.IsNondegenerate] (x : L.dualCarrier) :
     e.discriminantBilinearIsometry (Submodule.Quotient.mk x) =
