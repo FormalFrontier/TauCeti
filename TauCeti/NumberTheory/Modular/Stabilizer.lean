@@ -43,6 +43,9 @@ literally the `q` with `q ≠ ⟦i⟧` and `q ≠ ⟦ρ⟧`.
   orbits.
 * `TauCeti.ModularGroup.card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ`: order `2` on every
   other orbit.
+* `TauCeti.ModularGroup.card_stabilizer_eq_card_center_mul_card_stabilizer_psl`: for any
+  `Γ ≤ SL(2, ℤ)`, the stabiliser order in `Γ` splits off the part of the centre that `Γ`
+  contains, leaving the projective order in `Γ`'s image in `PSL(2, ℤ)`.
 * `TauCeti.ModularGroup.card_stabilizer_eq_two_mul_card_stabilizer_psl`: the projective order is
   the matrix one halved.
 * `TauCeti.ModularGroup.card_stabilizer_psl_I`, `TauCeti.ModularGroup.card_stabilizer_psl_ρ` and
@@ -169,6 +172,23 @@ private theorem card_center : Nat.card (Subgroup.center SL(2, ℤ)) = 2 := by
   rw [Nat.card_congr (Subgroup.centerCongr Matrix.SpecialLinearGroup.toLin'_equiv).toEquiv,
     Nat.card_congr (SpecialLinearGroup.centerEquivRootsOfUnity (R := ℤ) (V := Fin 2 → ℤ)).toEquiv,
     hrank, hroot.card_rootsOfUnity]
+
+/-- **The stabiliser order in `Γ` splits off the part of the centre that `Γ` contains.** For any
+`Γ ≤ SL(2, ℤ)`, the order of the stabiliser of `z` in `Γ` is the order of `Γ ⊓ ±1` times the
+order of the stabiliser in the image of `Γ` in `PSL(2, ℤ)` — the projective, elliptic order. The
+factor is `2` when `-I ∈ Γ` and `1` otherwise.
+
+This is the general-level form of the halving below, and it is exactly one application of
+`TauCeti.card_stabilizer_eq_card_subgroupOf_mul_card_stabilizer_map`: no quotient action of `Γ`
+has to be built, because the image of `Γ` in `PSL(2, ℤ)` is a subgroup of `PSL(2, ℤ)`, which
+already acts on `ℍ`. Compatibility of the two actions is definitional, since `PSL(2, R)` is
+`SL(2, R) ⧸ center` and `pslMk_smul` is `rfl`. -/
+theorem card_stabilizer_eq_card_center_mul_card_stabilizer_psl {Γ : Subgroup SL(2, ℤ)} (z : ℍ) :
+    Nat.card (stabilizer Γ z) =
+      Nat.card ((Subgroup.center SL(2, ℤ)).subgroupOf Γ) *
+        Nat.card (stabilizer (Γ.map (QuotientGroup.mk' (Subgroup.center SL(2, ℤ)))) z) :=
+  TauCeti.card_stabilizer_eq_card_subgroupOf_mul_card_stabilizer_map _ Γ z
+    fun _ ↦ UpperHalfPlane.pslMk_smul _ _
 
 /-- **The `SL(2, ℤ)`-stabiliser order is twice the `PSL(2, ℤ)` one.** The two differ exactly by
 the centre `±1`, which acts trivially on `ℍ`, so every projective stabiliser is the matrix one

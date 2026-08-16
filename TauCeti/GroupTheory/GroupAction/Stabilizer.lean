@@ -36,7 +36,9 @@ subgroup quotiented out.
 * `TauCeti.card_stabilizer_eq_card_ker_mul_card_stabilizer`: the stabiliser order divides by
   `Nat.card f.ker` along a surjection `f`, with
   `TauCeti.card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient` the quotient-map
-  corollary.
+  corollary and
+  `TauCeti.card_stabilizer_eq_card_subgroupOf_mul_card_stabilizer_map` its relative form, for a
+  subgroup mapped into the quotient.
 -/
 
 public section
@@ -131,6 +133,24 @@ theorem card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient (N : Subgr
   have h := card_stabilizer_eq_card_ker_mul_card_stabilizer (QuotientGroup.mk' N)
     (QuotientGroup.mk'_surjective N) a hcompat
   rwa [QuotientGroup.ker_mk'] at h
+
+/-- **The relative form: a subgroup, and its image in the quotient.** For `Γ ≤ G`, the stabiliser
+of `a` in `Γ` is `Nat.card (N.subgroupOf Γ)` — the part of `N` that `Γ` actually contains — times
+the stabiliser of `a` in the image of `Γ` in `G ⧸ N`.
+
+`card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient` is the case `Γ = ⊤`, where the
+divisor is all of `N`. The relative statement is what a Fuchsian group needs, where `Γ` is a
+subgroup of `SL(2, ℤ)` and `N` the centre: there the divisor measures how much of `±I` lies in
+`Γ`, and the projective elliptic order `e_P` is the matrix stabiliser order divided by it.
+Evaluating that divisor is a fact about the particular `Γ` and is not proved here. -/
+theorem card_stabilizer_eq_card_subgroupOf_mul_card_stabilizer_map (N : Subgroup G) [N.Normal]
+    [MulAction (G ⧸ N) α] (Γ : Subgroup G) (a : α)
+    (hcompat : ∀ g : Γ, (QuotientGroup.mk (g : G) : G ⧸ N) • a = (g : G) • a) :
+    Nat.card (MulAction.stabilizer Γ a) = Nat.card (N.subgroupOf Γ) *
+      Nat.card (MulAction.stabilizer (Γ.map (QuotientGroup.mk' N)) a) := by
+  rw [card_stabilizer_eq_card_ker_mul_card_stabilizer ((QuotientGroup.mk' N).subgroupMap Γ)
+    (MonoidHom.subgroupMap_surjective _ _) a hcompat, Subgroup.ker_subgroupMap,
+    QuotientGroup.ker_mk']
 
 end TauCeti
 

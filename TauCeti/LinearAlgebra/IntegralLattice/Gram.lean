@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.IntegralLattice.Basic
+public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
 import Mathlib.LinearAlgebra.Determinant
 
 /-!
@@ -14,7 +14,8 @@ This file attaches an integral Gram matrix to every basis of an integral lattice
 is independent of the carrier basis: an integral change-of-basis matrix has determinant `1` or
 `-1`, and the Gram matrix changes by multiplication by that matrix and its transpose. The resulting
 basis-free signed determinant and its absolute value are the determinant and discriminant of the
-lattice.
+lattice. An integral-lattice isometry carries every carrier basis to one with the same Gram matrix,
+so it preserves both basis-free invariants.
 
 The rational scalar extension of a Gram matrix is the matrix of the ambient rational bilinear form
 in the extended basis. Consequently the signed determinant is nonzero exactly when that form is
@@ -42,6 +43,8 @@ discriminant group.
   nondegenerate integral lattice.
 * `TauCeti.IntegralLattice.discriminant_ofGramMatrix`: the discriminant of `ofGramMatrix` is the
   absolute determinant of `G`.
+* `TauCeti.IntegralLattice.Isometry.determinant_eq` and `Isometry.discriminant_eq`: isometry
+  invariance of the basis-free invariants.
 
 ## References
 
@@ -58,6 +61,7 @@ namespace TauCeti.IntegralLattice
 universe u v w
 
 variable {V : Type u} [AddCommGroup V] [Module ℚ V]
+variable {W : Type w} [AddCommGroup W] [Module ℚ W]
 
 section GramMatrix
 
@@ -265,5 +269,40 @@ theorem discriminant_pos_iff (L : IntegralLattice V) :
   rw [discriminant_def, Int.natAbs_pos, determinant_ne_zero_iff]
 
 end Invariants
+
+namespace Isometry
+
+variable {L : IntegralLattice V} {M : IntegralLattice W}
+
+-- The two transport lemmas below are not registered with `simp`: `carrierBasisEquiv_apply` is
+-- itself a `simp` lemma, so their left-hand sides are not in simp-normal form.
+
+/-- Transporting a carrier basis along an isometry preserves its Gram matrix entrywise. -/
+theorem gramMatrix_carrierBasisEquiv (e : Isometry L M) {ι : Type v} (b : Basis ι ℤ L) :
+    M.gramMatrix (e.carrierBasisEquiv ι b) = L.gramMatrix b := by
+  ext i j
+  rw [M.gramMatrix_apply, L.gramMatrix_apply, e.carrierBasisEquiv_apply,
+    Basis.map_apply, Basis.map_apply, e.carrierEquiv_map_integralForm]
+
+/-- Transporting a carrier basis along an isometry preserves its signed Gram determinant. -/
+theorem gramDet_carrierBasisEquiv (e : Isometry L M) {ι : Type v} [Fintype ι]
+    [DecidableEq ι] (b : Basis ι ℤ L) :
+    M.gramDet (e.carrierBasisEquiv ι b) = L.gramDet b := by
+  rw [M.gramDet_def, L.gramDet_def, e.gramMatrix_carrierBasisEquiv]
+
+/-- The basis-independent signed determinant is invariant under integral-lattice isometry. -/
+theorem determinant_eq (e : Isometry L M) : L.determinant = M.determinant := by
+  classical
+  let b := Module.Free.chooseBasis ℤ L
+  calc
+    L.determinant = L.gramDet b := L.determinant_eq_gramDet b
+    _ = M.gramDet (e.carrierBasisEquiv _ b) := (e.gramDet_carrierBasisEquiv b).symm
+    _ = M.determinant := (M.determinant_eq_gramDet (e.carrierBasisEquiv _ b)).symm
+
+/-- The nonnegative discriminant is invariant under integral-lattice isometry. -/
+theorem discriminant_eq (e : Isometry L M) : L.discriminant = M.discriminant := by
+  rw [L.discriminant_def, M.discriminant_def, e.determinant_eq]
+
+end Isometry
 
 end TauCeti.IntegralLattice

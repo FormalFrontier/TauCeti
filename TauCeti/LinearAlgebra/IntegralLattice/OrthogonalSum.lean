@@ -7,6 +7,7 @@ module
 public import TauCeti.LinearAlgebra.IntegralLattice.Even
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
 public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
+public import TauCeti.LinearAlgebra.IntegralLattice.Signature
 import Mathlib.LinearAlgebra.Basis.Prod
 
 /-!
@@ -16,9 +17,8 @@ The orthogonal sum has product carrier and block-diagonal form. This file constr
 its canonical carrier maps and product bases, and proves several invariant laws: rank is additive,
 Gram matrices are block diagonal, determinant and discriminant are multiplicative, and evenness
 and nondegeneracy are componentwise. Orthogonal sums are functorial under lattice isometries and
-are associative and commutative up to canonical lattice isometry.
-
-Signature additivity remains to be developed with the signature API targeted by the same roadmap.
+are associative and commutative up to canonical lattice isometry. The radical is the product of
+the component radicals, and the signature is componentwise additive.
 
 ## Main definitions
 
@@ -26,6 +26,7 @@ Signature additivity remains to be developed with the signature API targeted by 
 * `TauCeti.IntegralLattice.orthogonalSum`: the orthogonal sum lattice.
 * `TauCeti.IntegralLattice.orthogonalSumCarrierEquiv`: the carrier-product equivalence.
 * `TauCeti.IntegralLattice.orthogonalSumBasis`: the product of two carrier bases.
+* `TauCeti.IntegralLattice.signature_orthogonalSum`: signature is additive componentwise.
 * `TauCeti.IntegralLattice.Isometry.orthogonalSum`: the product of two lattice isometries.
 * `TauCeti.IntegralLattice.Isometry.orthogonalSumComm`: the canonical commutativity isometry.
 * `TauCeti.IntegralLattice.Isometry.orthogonalSumAssoc`: the canonical associativity isometry.
@@ -106,6 +107,14 @@ theorem orthogonalSum_carrier (L : IntegralLattice V) (M : IntegralLattice W) :
 theorem orthogonalSum_form (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).form = orthogonalSumForm L M :=
   (rfl)
+
+/-- The quadratic map of the block-diagonal form is the product of the component quadratic maps. -/
+@[simp]
+theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLattice W) :
+    (orthogonalSumForm L M).toQuadraticMap =
+      L.form.toQuadraticMap.prod M.form.toQuadraticMap := by
+  ext p
+  rfl
 
 /-- The carrier of an orthogonal sum is canonically the product of the carrier types. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -336,6 +345,53 @@ theorem nondegenerate_orthogonalSum_iff (L : IntegralLattice V) (M : IntegralLat
     (L.orthogonalSum M).form.Nondegenerate ↔
       L.form.Nondegenerate ∧ M.form.Nondegenerate := by
   rw [orthogonalSum_form, nondegenerate_orthogonalSumForm_iff]
+
+/-! ## Radical and signature -/
+
+/-- The radical of an orthogonal sum is the product of the component radicals. -/
+@[simp]
+theorem radical_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).radical = L.radical.prod M.radical := by
+  rw [← (L.orthogonalSum M).radical_toQuadraticMap, orthogonalSum_form,
+    orthogonalSumForm_toQuadraticMap, QuadraticMap.radical_prod, L.radical_toQuadraticMap,
+    M.radical_toQuadraticMap]
+
+/-- The positive index of an orthogonal sum is the sum of the positive indices. -/
+@[simp]
+theorem sigPos_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).sigPos = L.sigPos + M.sigPos := by
+  let _ := L.finiteDimensional
+  let _ := M.finiteDimensional
+  rw [sigPos, orthogonalSum_form, orthogonalSumForm_toQuadraticMap,
+    TauCeti.QuadraticForm.sigPos_prod]
+
+/-- The negative index of an orthogonal sum is the sum of the negative indices. -/
+@[simp]
+theorem sigNeg_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).sigNeg = L.sigNeg + M.sigNeg := by
+  let _ := L.finiteDimensional
+  let _ := M.finiteDimensional
+  rw [sigNeg, orthogonalSum_form, orthogonalSumForm_toQuadraticMap,
+    TauCeti.QuadraticForm.sigNeg_prod]
+
+/-- The null index of an orthogonal sum is the sum of the null indices. -/
+@[simp]
+theorem sigNull_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).sigNull = L.sigNull + M.sigNull := by
+  let _ := L.finiteDimensional
+  let _ := M.finiteDimensional
+  have hsum := (L.orthogonalSum M).signature_sum_eq_finrank
+  have hsumL := L.signature_sum_eq_finrank
+  have hsumM := M.signature_sum_eq_finrank
+  rw [sigPos_orthogonalSum, sigNeg_orthogonalSum, Module.finrank_prod] at hsum
+  omega
+
+/-- The signature of an orthogonal sum is the componentwise sum of the two signatures. -/
+@[simp]
+theorem signature_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
+    (L.orthogonalSum M).signature =
+      (L.sigPos + M.sigPos, L.sigNull + M.sigNull, L.sigNeg + M.sigNeg) := by
+  simp only [signature, sigPos_orthogonalSum, sigNull_orthogonalSum, sigNeg_orthogonalSum]
 
 /-! ## Isometries of orthogonal sums -/
 

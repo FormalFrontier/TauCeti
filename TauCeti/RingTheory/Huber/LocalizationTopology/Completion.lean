@@ -44,6 +44,13 @@ complete Hausdorff targets.
   `A`. Unlike the universal property this needs no hypothesis on `s` or the fractions — those
   govern which maps exist, not when two agree — and its target need only be a semiring carrying a
   Hausdorff topology.
+* `eq_id_of_comp_toCompletionLoc_eq_self` and `eq_comp_of_comp_toCompletionLoc_eq`: two
+  corollaries of the previous item, saying that a continuous map compatible with the structure
+  maps is forced to be the identity, respectively the composite. These are **not** roadmap Layer
+  3.1's identity and composition laws for restriction maps: no restriction map is constructed
+  here, and these are conditional uniqueness statements about whatever compatible maps happen to
+  exist. They are what those laws will be proved *from* once the restriction maps themselves are
+  built.
 
 ## Provenance
 
@@ -380,6 +387,62 @@ theorem existsUnique_continuous_ringHom_completion_locTopology {B : Type*} [Comm
   exact completion_locTopology_ringHom_ext_of_continuous P T s S hden g _ hgc
     UniformSpace.Completion.continuous_extension (hge.trans hext.symm)
 
+
+/-- **The identity law.** A continuous ring endomorphism of `A⟨T/s⟩` fixing the structure map from
+`A` is the identity, since the identity fixes it too.
+
+As with the composition law below, this constructs no restriction map: it says that at most one
+continuous endomorphism is compatible with the structure map, and names it. -/
+theorem eq_id_of_comp_toCompletionLoc_eq_self [IsTopologicalRing A] (P : PairOfDefinition A)
+    (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    ∀ (g : UniformSpace.Completion S →+* UniformSpace.Completion S), Continuous g →
+      g.comp (toCompletionLoc P T s S hden) = toCompletionLoc P T s S hden →
+      g = RingHom.id (UniformSpace.Completion S) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  intro g hg hcomp
+  refine completion_locTopology_ringHom_ext_of_continuous P T s S hden g (RingHom.id _) hg
+    continuous_id ?_
+  rw [RingHom.id_comp]
+  exact hcomp
+
+/-- **The composition law.** If `g` carries the structure map of `A⟨T/s⟩` to a map `φ'`, and `h`
+carries `φ'` on to `φ''`, then any continuous `k` carrying the structure map to `φ''` is `h.comp g`.
+
+Only the *source* is a completed localisation — that is where extensionality is applied — so the
+middle and target objects are arbitrary topological semirings, with `φ'` and `φ''` the ring
+homomorphisms out of `A` they are equipped with. At the roadmap's intended instance these are the
+completed localisations of two further presentations and their structure maps, but nothing here
+requires that, and no restriction map is constructed: this is a uniqueness statement about maps
+compatible with the structure maps, not Layer 3.1's composition law for restriction maps. -/
+theorem eq_comp_of_comp_toCompletionLoc_eq [IsTopologicalRing A] (P : PairOfDefinition A)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S)
+    {B C : Type*} [Semiring B] [TopologicalSpace B] [Semiring C] [TopologicalSpace C] [T2Space C]
+    (phi' : A →+* B) (phi'' : A →+* C) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    ∀ (g : UniformSpace.Completion S →+* B), Continuous g →
+      g.comp (toCompletionLoc P T s S hden) = phi' →
+      ∀ (h : B →+* C), Continuous h → h.comp phi' = phi'' →
+      ∀ (k : UniformSpace.Completion S →+* C), Continuous k →
+      k.comp (toCompletionLoc P T s S hden) = phi'' →
+      k = h.comp g := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  intro g hg hgc h hh hhc k hk hkc
+  refine completion_locTopology_ringHom_ext_of_continuous P T s S hden k (h.comp g) hk
+    (hh.comp hg) ?_
+  rw [RingHom.comp_assoc, hgc, hhc]
+  exact hkc
 
 end PairOfDefinition
 

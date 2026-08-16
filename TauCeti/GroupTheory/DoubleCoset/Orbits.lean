@@ -40,6 +40,8 @@ numbers, which is the group-theoretic half of the statement that the permutation
 * `TauCeti.orbitRel_smul_iff_mem_doubleCoset_stabilizer`: the same for an arbitrary action —
   two translates of a point share a `K`-orbit exactly when the translating elements share a
   `K`-`stabilizer` double coset.
+* `TauCeti.orbitOfCosetTranslate_eq_iff`: the fibres of that index map are the orbits of
+  `stabilizer ℋ p` on `ℋ ⧸ 𝒢.subgroupOf ℋ`, so a fibre count is an orbit-stabiliser count.
 * `TauCeti.preimage_orbit_eq_doubleCoset`: the double coset `KsH` is the preimage of the
   `K`-orbit of `sH`.
 * `TauCeti.card_doubleCosetQuotient_eq_card_orbitQuotient`: the two sides of that bijection have
@@ -220,6 +222,54 @@ noncomputable def orbitOfCosetTranslate {𝒢 ℋ : Subgroup G} (p : α) (q : �
 theorem orbitOfCosetTranslate_mk {𝒢 ℋ : Subgroup G} (p : α) (h : ℋ) :
     orbitOfCosetTranslate (𝒢 := 𝒢) p (⟦h⟧ : ℋ ⧸ 𝒢.subgroupOf ℋ) = Quotient.mk'' ((h : G)⁻¹ • p) :=
   (rfl)
+
+/-- **The fibres of `orbitOfCosetTranslate` are the `stabilizer ℋ p`-orbits.** Two classes have
+the same image exactly when they lie in one orbit of the stabilizer of `p`, acting on the coset
+space by left translation.
+
+This is the fibre description the definition exists for: it turns a fibre of that index map into
+an orbit, so that a fibre count becomes an orbit-stabiliser count via
+`MulAction.index_stabilizer`.
+
+`hle : 𝒢 ≤ ℋ` is what puts the translating element back inside `ℋ`: the witness
+`orbitRel_smul_iff_mem_doubleCoset_stabilizer` produces lies in `𝒢`, and the stabilising factor
+is an element of `ℋ` only once `𝒢` is. -/
+theorem orbitOfCosetTranslate_eq_iff {𝒢 ℋ : Subgroup G} (hle : 𝒢 ≤ ℋ) (p : α)
+    (q r : ℋ ⧸ 𝒢.subgroupOf ℋ) :
+    orbitOfCosetTranslate p q = orbitOfCosetTranslate (𝒢 := 𝒢) p r ↔
+      q ∈ MulAction.orbit (stabilizer ℋ p) r := by
+  induction q using QuotientGroup.induction_on with
+  | H a =>
+    induction r using QuotientGroup.induction_on with
+    | H b =>
+      rw [orbitOfCosetTranslate_mk, orbitOfCosetTranslate_mk, Quotient.eq'',
+        orbitRel_smul_iff_mem_doubleCoset_stabilizer, DoubleCoset.mem_doubleCoset, mem_orbit_iff]
+      constructor
+      · rintro ⟨x, hx, y, hy, hr⟩
+        -- `y` lies in `ℋ`: solving `hr` gives `y = b * x⁻¹ * a⁻¹`, and `𝒢 ≤ ℋ` puts `x` there
+        have hyH : y ∈ ℋ := by
+          have hy2 : y = (b : G) * x⁻¹ * (a : G)⁻¹ := by rw [hr]; simp [mul_assoc]
+          exact hy2 ▸ mul_mem (mul_mem b.2 (inv_mem (hle (SetLike.mem_coe.1 hx)))) (inv_mem a.2)
+        have ha : (a : G) = y⁻¹ * (b : G) * x⁻¹ := by
+          rw [← inv_inv (a : G), hr]; simp [mul_assoc]
+        refine ⟨⟨(⟨y, hyH⟩ : ℋ)⁻¹, inv_mem ((Subgroup.mem_subgroupOf (H := stabilizer G p)).2
+          (SetLike.mem_coe.1 hy))⟩, ?_⟩
+        -- the action is left translation (the idiom at `mem_doubleCoset_iff_mk_mem_orbit`), so
+        -- the goal is a coset equality, with witness `x⁻¹`
+        rw [compHom_smul_def (Subgroup.subtype (stabilizer ℋ p)), Subgroup.coe_subtype,
+          Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq, Subgroup.mem_subgroupOf]
+        have hval : ((((⟨y, hyH⟩ : ℋ)⁻¹ * b)⁻¹ * a : ℋ) : G) = x⁻¹ := by
+          rw [Subgroup.coe_mul, Subgroup.coe_inv, Subgroup.coe_mul, Subgroup.coe_inv, ha]
+          simp [mul_assoc]
+        exact hval ▸ SetLike.mem_coe.1 (inv_mem hx)
+      · rintro ⟨s, hs⟩
+        rw [compHom_smul_def (Subgroup.subtype (stabilizer ℋ p)), Subgroup.coe_subtype,
+          Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq, Subgroup.mem_subgroupOf] at hs
+        refine ⟨(((((s : ℋ) * b)⁻¹ * a : ℋ)⁻¹ : ℋ) : G), SetLike.mem_coe.2 (inv_mem hs),
+          ((s : ℋ) : G)⁻¹,
+          SetLike.mem_coe.2 (inv_mem ((Subgroup.mem_subgroupOf (H := stabilizer G p)).1 s.2)), ?_⟩
+        rw [Subgroup.coe_inv, Subgroup.coe_mul, Subgroup.coe_inv, Subgroup.coe_mul]
+        simp [mul_assoc]
 
 end GeneralAction
 

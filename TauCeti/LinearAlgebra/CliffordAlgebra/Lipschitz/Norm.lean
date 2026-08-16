@@ -40,6 +40,57 @@ universe u v
 variable {R : Type u} {V : Type v} [CommRing R] [AddCommGroup V] [Module R V]
   [Invertible (2 : R)]
 
+omit [Invertible (2 : R)] in
+/-- **The Clifford norm is multiplicative.** If both Clifford products of `x` with its star are
+the scalar `r`, and both products of `y` with its star are the scalar `s`, then both products of
+`x * y` with its star are the scalar `r * s`.
+
+Stated for arbitrary algebra elements: no membership in the Lipschitz group is used, only that
+each element's two star-products are central scalars. -/
+private theorem star_mul_self_and_self_mul_star_mul {Q : QuadraticForm R V}
+    {x y : CliffordAlgebra Q} {r s : R}
+    (hr : star x * x = algebraMap R (CliffordAlgebra Q) r)
+    (hr' : x * star x = algebraMap R (CliffordAlgebra Q) r)
+    (hs : star y * y = algebraMap R (CliffordAlgebra Q) s)
+    (hs' : y * star y = algebraMap R (CliffordAlgebra Q) s) :
+    star (x * y) * (x * y) = algebraMap R (CliffordAlgebra Q) (r * s) ∧
+      x * y * star (x * y) = algebraMap R (CliffordAlgebra Q) (r * s) := by
+  constructor
+  · -- `star y * (star x * x) * y`, then move the central scalar out past `star y`
+    simp only [star_mul]
+    rw [mul_assoc (star y), ← mul_assoc (star x), hr, Algebra.commutes]
+    rw [← mul_assoc, hs, ← map_mul, mul_comm]
+  · -- mirror image: `x * (y * star y) * star x`
+    simp only [star_mul]
+    rw [mul_assoc x, ← mul_assoc y, hs', Algebra.commutes]
+    rw [← mul_assoc, hr', ← map_mul]
+
+omit [Invertible (2 : R)] in
+/-- **The Clifford norm of an inverse is the inverse norm.** If both Clifford products of a unit
+`x` with its star are the scalar unit `r`, then both products of `x⁻¹` with its star are `r⁻¹`. -/
+private theorem star_mul_self_and_self_mul_star_inv {Q : QuadraticForm R V}
+    {x : (CliffordAlgebra Q)ˣ} {r : Rˣ}
+    (hr : star (x : CliffordAlgebra Q) * (x : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (r : R))
+    (hr' : (x : CliffordAlgebra Q) * star (x : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (r : R)) :
+    star ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) *
+          ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+        algebraMap R (CliffordAlgebra Q) ((r⁻¹ : Rˣ) : R) ∧
+      ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) *
+          star ((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+        algebraMap R (CliffordAlgebra Q) ((r⁻¹ : Rˣ) : R) := by
+  -- lift each scalar equation to the unit group, invert it there, then read off the value
+  constructor
+  · have hunit : x * star x = Units.map (algebraMap R (CliffordAlgebra Q)) r := by
+      apply Units.ext
+      simpa using hr'
+    simpa [star_inv, map_inv] using congrArg Units.val (congrArg Inv.inv hunit)
+  · have hunit : star x * x = Units.map (algebraMap R (CliffordAlgebra Q)) r := by
+      apply Units.ext
+      simpa using hr
+    simpa [star_inv, map_inv] using congrArg Units.val (congrArg Inv.inv hunit)
+
 private theorem exists_lipschitzNormUnit (Q : QuadraticForm R V)
     (x : (CliffordAlgebra Q)ˣ) (hx : x ∈ lipschitzGroup Q) :
     ∃ r : Rˣ,
@@ -66,35 +117,16 @@ private theorem exists_lipschitzNormUnit (Q : QuadraticForm R V)
         exact (map_neg _ _).symm
   | inv x hx ih =>
       obtain ⟨r, hr, hr'⟩ := ih
-      refine ⟨r⁻¹, ?_, ?_⟩
-      · have hunit : x * star x = Units.map (algebraMap R (CliffordAlgebra Q)) r := by
-          apply Units.ext
-          simpa using hr'
-        have hinv := congrArg Inv.inv hunit
-        have hval := congrArg Units.val hinv
-        simpa [star_inv, map_inv] using hval
-      · have hunit : star x * x = Units.map (algebraMap R (CliffordAlgebra Q)) r := by
-          apply Units.ext
-          simpa using hr
-        have hinv := congrArg Inv.inv hunit
-        have hval := congrArg Units.val hinv
-        simpa [star_inv, map_inv] using hval
+      obtain ⟨h₁, h₂⟩ := star_mul_self_and_self_mul_star_inv hr hr'
+      exact ⟨r⁻¹, h₁, h₂⟩
   | one =>
       exact ⟨1, by simp, by simp⟩
   | mul x y hx hy ihx ihy =>
       obtain ⟨r, hr, hr'⟩ := ihx
       obtain ⟨s, hs, hs'⟩ := ihy
-      refine ⟨r * s, ?_, ?_⟩
-      · simp only [Units.val_mul, star_mul]
-        rw [mul_assoc (star (y : CliffordAlgebra Q))]
-        rw [← mul_assoc (star (x : CliffordAlgebra Q))]
-        rw [hr, Algebra.commutes]
-        rw [← mul_assoc, hs, ← map_mul, mul_comm]
-      · simp only [Units.val_mul, star_mul]
-        rw [mul_assoc (x : CliffordAlgebra Q)]
-        rw [← mul_assoc (y : CliffordAlgebra Q)]
-        rw [hs', Algebra.commutes]
-        rw [← mul_assoc, hr', ← map_mul]
+      obtain ⟨h₁, h₂⟩ := star_mul_self_and_self_mul_star_mul hr hr' hs hs'
+      exact ⟨r * s, by simpa only [Units.val_mul] using h₁,
+        by simpa only [Units.val_mul] using h₂⟩
 
 private noncomputable def lipschitzNormUnit (Q : QuadraticForm R V)
     (x : lipschitzGroup Q) : Rˣ :=

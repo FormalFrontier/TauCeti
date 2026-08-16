@@ -65,31 +65,6 @@ variable {k : Type u} [Field k] [IsAlgClosed k]
 variable {H : Type v} [CommRing H] [_root_.HopfAlgebra k H] [Algebra.FiniteType k H]
 
 omit [IsAlgClosed k] [Algebra.FiniteType k H] in
-private theorem rightTranslationHomeomorph_kernelPoint
-    (g h : WithConv (H →ₐ[k] k)) :
-    rightTranslationHomeomorph h (AlgHom.kernelPoint g.ofConv) =
-      AlgHom.kernelPoint (g * h).ofConv := by
-  rw [rightTranslationHomeomorph_apply]
-  -- `Spec (CommRingCat.of H)` has `PrimeSpectrum H` as its reducible carrier; expose that carrier
-  -- and the algebra-hom composition before applying the kernel-point API.
-  change PrimeSpectrum.comap
-      ((rightTranslationAlgEquiv h).toAlgHom : H →+* H)
-        (AlgHom.kernelPoint g.ofConv) = _
-  rw [AlgHom.comap_kernelPoint, rightTranslationAlgEquiv_toAlgHom]
-  congr 1
-  ext x
-  -- Composition of algebra homomorphisms must be exposed at application level before the
-  -- translation formula can rewrite it.
-  change g.ofConv (rightTranslationAlgHom h x) = (g * h).ofConv x
-  rw [rightTranslationAlgHom_apply, AlgHom.convMul_apply]
-  induction Coalgebra.comul (R := k) x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul x y =>
-      simp [TensorProduct.map_tmul, TensorProduct.rid_tmul,
-        Algebra.TensorProduct.lift_tmul, Algebra.smul_def, mul_comm]
-
-omit [IsAlgClosed k] [Algebra.FiniteType k H] in
 private theorem kernelPoint_mul_mem_connectedComponent_augmentationPoint
     (g h : WithConv (H →ₐ[k] k))
     (hg : AlgHom.kernelPoint g.ofConv ∈
@@ -102,17 +77,6 @@ private theorem kernelPoint_mul_mem_connectedComponent_augmentationPoint
     rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq_self h hh
   rw [← himage]
   exact ⟨AlgHom.kernelPoint g.ofConv, hg, rightTranslationHomeomorph_kernelPoint g h⟩
-
-omit [IsAlgClosed k] [Algebra.FiniteType k H] in
-private theorem map_connectedComponentIdempotent_augmentationPoint_eq_one_of_mem
-    [LocallyConnectedSpace (PrimeSpectrum H)]
-    (g : WithConv (H →ₐ[k] k))
-    (hg : AlgHom.kernelPoint g.ofConv ∈
-      connectedComponent (Bialgebra.augmentationPoint k H)) :
-    g.ofConv
-        (PrimeSpectrum.connectedComponentIdempotent (Bialgebra.augmentationPoint k H)) = 1 := by
-  rw [← connectedComponentIdempotent_kernelPoint_eq_augmentationPoint g hg]
-  exact AlgHom.map_connectedComponentIdempotent_kernelPoint_eq_one g.ofConv
 
 omit [IsAlgClosed k] [Algebra.FiniteType k H] in
 private theorem map_tensorSquare_comul_apply
@@ -137,34 +101,6 @@ private theorem map_tensorSquare_comul_apply
       congr 1
       simp
 
-omit [IsAlgClosed k] [Algebra.FiniteType k H] in
-private theorem kernelPoint_comp_quotient_mem_connectedComponent
-    [LocallyConnectedSpace (PrimeSpectrum H)]
-    (f : (H ⧸ PrimeSpectrum.connectedComponentIdeal
-      (Bialgebra.augmentationPoint k H)) →ₐ[k] k) :
-    AlgHom.kernelPoint
-        (f.comp (Ideal.Quotient.mkₐ k
-          (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))) ∈
-      connectedComponent (Bialgebra.augmentationPoint k H) := by
-  let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
-  let y : PrimeSpectrum (H ⧸ PrimeSpectrum.connectedComponentIdeal z) :=
-    AlgHom.kernelPoint f
-  have hy := (PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent z y).property
-  rw [PrimeSpectrum.primeSpectrumQuotientHomeomorphConnectedComponent_apply_coe] at hy
-  dsimp only [y, z] at hy
-  have hcomap :
-      PrimeSpectrum.comap
-          (Ideal.Quotient.mk
-            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))
-          (AlgHom.kernelPoint f) =
-        AlgHom.kernelPoint
-          (f.comp (Ideal.Quotient.mkₐ k
-            (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))) :=
-    AlgHom.comap_kernelPoint f (Ideal.Quotient.mkₐ k
-      (PrimeSpectrum.connectedComponentIdeal (Bialgebra.augmentationPoint k H)))
-  rw [hcomap] at hy
-  exact hy
-
 private theorem map_tensorSquare_quotient_comul_connectedComponentIdempotent_eq_one
     [LocallyConnectedSpace (PrimeSpectrum H)] :
     Algebra.TensorProduct.map
@@ -186,9 +122,8 @@ private theorem map_tensorSquare_quotient_comul_connectedComponentIdempotent_eq_
       (Bialgebra.augmentationPoint k H)).map
         (_root_.Bialgebra.comulAlgHom k H).toRingHom).map F.toRingHom
   have ha_eq_one : F (Coalgebra.comul (R := k) e) = 1 := by
-    apply _root_.eq_of_isNilpotent_sub_of_isIdempotentElem
-      ha_idem IsIdempotentElem.one
-    rw [← forall_algHom_apply_eq_zero_iff_isNilpotent (k := k) (K := k)]
+    apply eq_one_of_isIdempotentElem_of_forall_algHom_apply_eq_one
+      (k := k) (A := B ⊗[k] B) (K := k) ha_idem
     intro f
     let f₁ : B →ₐ[k] k :=
       f.comp (Algebra.TensorProduct.includeLeft (R := k) (S := k) (A := B) (B := B))
@@ -198,14 +133,15 @@ private theorem map_tensorSquare_quotient_comul_connectedComponentIdempotent_eq_
     let h : WithConv (H →ₐ[k] k) := WithConv.toConv (f₂.comp q)
     have hg : AlgHom.kernelPoint g.ofConv ∈
         connectedComponent (Bialgebra.augmentationPoint k H) := by
-      exact kernelPoint_comp_quotient_mem_connectedComponent f₁
+      exact AlgHom.kernelPoint_comp_connectedComponentQuotient_mem
+        (Bialgebra.augmentationPoint k H) f₁
     have hh : AlgHom.kernelPoint h.ofConv ∈
         connectedComponent (Bialgebra.augmentationPoint k H) := by
-      exact kernelPoint_comp_quotient_mem_connectedComponent f₂
+      exact AlgHom.kernelPoint_comp_connectedComponentQuotient_mem
+        (Bialgebra.augmentationPoint k H) f₂
     have hmul := kernelPoint_mul_mem_connectedComponent_augmentationPoint g h hg hh
     have heval :=
       map_connectedComponentIdempotent_augmentationPoint_eq_one_of_mem (g * h) hmul
-    rw [map_sub, map_one, sub_eq_zero]
     rw [map_tensorSquare_comul_apply q f e]
     exact heval
   -- Expose the local quotient and tensor-square abbreviations to return the public expression.

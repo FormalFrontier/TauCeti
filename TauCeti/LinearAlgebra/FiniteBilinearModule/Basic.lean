@@ -361,7 +361,7 @@ end Isometry
 
 No nondegeneracy conclusion is asserted: a subgroup of a nondegenerate module can have a
 degenerate restricted pairing. -/
-@[expose] def restrict (H : AddSubgroup A) : FiniteBilinearModule where
+abbrev restrict (H : AddSubgroup A) : FiniteBilinearModule where
   carrier := H
   pairing :=
     { toFun := fun (x : H) ↦
@@ -377,17 +377,15 @@ degenerate restricted pairing. -/
         exact A.pairing_add_left x.1 y.1 z.1 }
   pairing_comm x y := A.pairing_comm x.1 y.1
 
-@[simp]
 theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x.1 y.1 := (rfl)
 
 /-- Negate the pairing of a finite bilinear module. -/
-@[expose] def neg : FiniteBilinearModule where
+abbrev neg : FiniteBilinearModule where
   carrier := A
   pairing := -A.pairing
   pairing_comm x y := congrArg Neg.neg (A.pairing_comm x y)
 
-@[simp]
 theorem neg_pairing (x y : A) : A.neg.pairing x y = -A.pairing x y := (rfl)
 
 /-- Form negation preserves nondegeneracy of a finite bilinear module. -/
@@ -406,7 +404,7 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
     exact neg_inj.mp this
 
 /-- The orthogonal direct sum of two finite bilinear modules. -/
-@[expose] def prod (B : FiniteBilinearModule) : FiniteBilinearModule where
+abbrev prod (B : FiniteBilinearModule) : FiniteBilinearModule where
   carrier := A.carrier × B.carrier
   pairing :=
     { toFun := fun x ↦
@@ -428,7 +426,6 @@ theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
   pairing_comm := fun ⟨x₁, x₂⟩ ⟨y₁, y₂⟩ ↦
     congrArg₂ (· + ·) (A.pairing_comm x₁ y₁) (B.pairing_comm x₂ y₂)
 
-@[simp]
 theorem prod_pairing (B : FiniteBilinearModule) (x y : A.carrier × B.carrier) :
     (prod A B).pairing x y = A.pairing x.1 y.1 + B.pairing x.2 y.2 :=
   rfl
@@ -577,14 +574,16 @@ theorem Isometry.isIsotropicElem_iff {B : FiniteBilinearModule} (f : Isometry A 
 /-- Form negation preserves isotropic elements. -/
 @[simp]
 theorem isIsotropicElem_neg_module (x : A) : A.neg.IsIsotropicElem x ↔ A.IsIsotropicElem x := by
-  simp only [IsIsotropicElem, neg_pairing, neg_eq_zero]
+  constructor
+  · exact neg_eq_zero.mp
+  · exact neg_eq_zero.mpr
 
 /-- An element in an orthogonal product is isotropic if and only if the sum of its component
 pairings vanishes. -/
 @[simp]
 theorem isIsotropicElem_prod (B : FiniteBilinearModule) (x : A) (y : B) :
     (A.prod B).IsIsotropicElem (x, y) ↔ A.pairing x x + B.pairing y y = 0 := by
-  simp only [IsIsotropicElem, prod_pairing]
+  rfl
 
 /-- A subgroup is bilinearly isotropic when the pairing vanishes on the subgroup square. -/
 def IsIsotropic (H : AddSubgroup A) : Prop := ∀ x ∈ H, ∀ y ∈ H, A.pairing x y = 0
@@ -634,6 +633,55 @@ theorem isLagrangian_def (H : AddSubgroup A) :
 theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :
     A.IsIsotropic H := by
   rw [A.isIsotropic_iff_le_orthogonalComplement, ← hH]
+
+/-- An isometry transports Lagrangian subgroups. -/
+@[simp]
+theorem Isometry.isLagrangian_map_iff {B : FiniteBilinearModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    B.IsLagrangian (H.map f.toAddEquiv) ↔ A.IsLagrangian H := by
+  rw [isLagrangian_def, isLagrangian_def]
+  constructor
+  · intro hH
+    ext x
+    constructor
+    · intro hx
+      have hfx : f x ∈ B.orthogonalComplement (H.map f.toAddEquiv) := by
+        rw [← hH]
+        exact ⟨x, hx, rfl⟩
+      rw [A.mem_orthogonalComplement_iff]
+      intro y hy
+      rw [← f.map_pairing]
+      exact B.mem_orthogonalComplement_iff (H.map f.toAddEquiv) (f x) |>.mp hfx
+        (f y) ⟨y, hy, rfl⟩
+    · intro hx
+      have hfx : f x ∈ B.orthogonalComplement (H.map f.toAddEquiv) := by
+        rw [B.mem_orthogonalComplement_iff]
+        intro y hy
+        obtain ⟨z, hz, rfl⟩ := hy
+        exact (f.map_pairing x z).trans
+          (A.mem_orthogonalComplement_iff H x |>.mp hx z hz)
+      rw [← hH] at hfx
+      obtain ⟨y, hy, hxy⟩ := hfx
+      exact f.toAddEquiv.injective hxy ▸ hy
+  · intro hH
+    ext y
+    obtain ⟨x, rfl⟩ := f.toAddEquiv.surjective y
+    constructor
+    · rintro ⟨z, hz, hzx⟩
+      have hx : x ∈ H := f.toAddEquiv.injective hzx ▸ hz
+      rw [B.mem_orthogonalComplement_iff]
+      intro y hy
+      obtain ⟨w, hw, rfl⟩ := hy
+      exact (f.map_pairing x w).trans
+        (A.mem_orthogonalComplement_iff H x |>.mp (hH ▸ hx) w hw)
+    · intro hx
+      have hAx : x ∈ A.orthogonalComplement H := by
+        rw [A.mem_orthogonalComplement_iff]
+        intro z hz
+        rw [← f.map_pairing]
+        exact B.mem_orthogonalComplement_iff (H.map f.toAddEquiv) (f x) |>.mp hx
+          (f z) ⟨z, hz, rfl⟩
+      exact ⟨x, hH ▸ hAx, rfl⟩
 
 end FiniteBilinearModule
 
