@@ -117,10 +117,8 @@ theorem setIntegral_weight_mul_blockIndicatorProd_prefix_eq_prod_condExp
       hw.mul (stronglyMeasurable_condExp).measurable
     have hE_bdd : ∀ᵐ x ∂ρ, ‖E x‖ ≤ 1 :=
       ae_bdd_norm_condExp_of_ae_bdd_norm (Filter.Eventually.of_forall fun y => by
-        have h0 : (0 : ℝ) ≤ (B (Fin.last r)).indicator (fun _ => (1 : ℝ)) (y r) :=
-          Set.indicator_apply_nonneg fun _ => zero_le_one
-        rw [Real.norm_eq_abs, abs_of_nonneg h0]
-        exact Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one)
+        simpa only [norm_one] using
+          norm_indicator_le_norm_self (fun _ => (1 : ℝ)) (y r))
     have hwE_bdd : ∀ᵐ x ∂ρ, |w x * E x| ≤ 1 := by
       filter_upwards [hw_bdd, hE_bdd] with x hwx hEx
       rw [abs_mul]

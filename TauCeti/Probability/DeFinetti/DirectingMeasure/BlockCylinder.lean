@@ -63,7 +63,6 @@ theorem measure_inter_blockCylinder_eq_setLIntegral_of_condExp [StandardBorelSpa
     μ ((directingProbabilityMeasure μ X ⁻¹' S) ∩ blockCylinder X k B)
       = ∫⁻ ω in directingProbabilityMeasure μ X ⁻¹' S,
           ∏ i, directingMeasure μ X ω (B i) ∂μ := by
-  classical
   have hTail : tailProcess X ≤ ‹MeasurableSpace Ω› :=
     tailProcess_le_ambient 0 fun j _ => hX_meas j
   have : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
