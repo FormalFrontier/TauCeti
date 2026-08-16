@@ -76,7 +76,6 @@ private theorem latticeChainComplex_X_proof_eq_rfl (P : PlumbingGraph V)
 
 /-- The differential from cubical degree `q + 1` to degree `q` is the restriction of the total
 lattice differential. -/
-@[simp]
 theorem latticeChainComplex_d
     (P : PlumbingGraph V) (k : P.characteristicVectors) (q : ℕ) :
     HEq ((P.latticeChainComplex k).d (q + 1) q)
