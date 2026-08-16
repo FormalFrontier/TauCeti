@@ -31,9 +31,9 @@ The product `cd` is multiplication in the value algebra, not the convolution pro
 algebra.
 
 On scheme-valued points, composing with the special-linear root subgroup morphism satisfies the
-corresponding commutation and commutator relations. Its identity, multiplication, and inversion
-laws are the generic `MonObj.one_comp`, `MonObj.mul_comp`, and `GrpObj.inv_comp` laws transported
-through `schemePointsMulEquiv`.
+corresponding commutation and commutator relations. The scheme-level parameter product is
+`TauCeti.AdditiveGroup.gaSchemePointParamMul`, the scheme-point counterpart of
+`gaPointParamMul`.
 
 This file supplies the commutator-relations part of the pinned Chevalley–Demazure interface from
 Layer 9 of the ReductiveGroups roadmap for the worked example `SLₙ` over an arbitrary commutative

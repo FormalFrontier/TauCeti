@@ -22,6 +22,9 @@ theorem over division rings; `ℤ` is not covered there, and the argument here i
 integer-specific one.  Transvections are carried as `Matrix.TransvectionStruct` data, the
 vocabulary of Mathlib's transvection theory; all of the Euclidean machinery is private.
 
+The file also records the type-A relations for bare `Matrix.transvection` matrices and their
+determinant-one counterparts over an arbitrary commutative ring.
+
 ## Main results
 
 * `Matrix.SpecialLinearGroup.exists_list_transvec_prod`: every `σ ∈ SL_n(ℤ)` is the
@@ -31,6 +34,8 @@ vocabulary of Mathlib's transvection theory; all of the Euclidean machinery is p
 * `Matrix.SpecialLinearGroup.transvectionHom`, `transvection_injective`, and
   `map_transvection`: the one-parameter subgroup over a commutative ring, its injectivity, and
   its naturality under ring homomorphisms.
+* `TauCeti.commute_transvection` and `TauCeti.transvection_mul_transvection_eq_mul_mul`: the
+  type-A relations for bare transvection matrices.
 * `Matrix.SpecialLinearGroup.commute_transvection` and
   `Matrix.SpecialLinearGroup.commutatorElement_transvection`: the type-A commutator relations for
   determinant-one transvections.
@@ -677,8 +682,21 @@ variable {A : Type w} [CommRing A] {i j k l : n}
 /-- Two determinant-one transvections at index pairs that do not chain commute in `SL n A`. -/
 theorem commute_transvection (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
     (c d : A) : Commute (transvection hij c) (transvection hkl d) := by
+  exact (commute_iff_eq _ _).mpr (Subtype.ext (by
+    simpa only [SpecialLinearGroup.coe_mul, SpecialLinearGroup.transvection_coe,
+      Matrix.transvection] using
+      (TauCeti.commute_transvection hjk hli c d).eq))
+
+/-- A product identity for two chaining determinant-one transvections: reversing their order
+produces the extra transvection at `(i, l)`. -/
+theorem transvection_mul_transvection_eq_mul_mul
+    (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
+    transvection hij c * transvection hjl d =
+      transvection hjl d * transvection hij c * transvection hil (c * d) := by
   apply Subtype.ext
-  exact (TauCeti.commute_transvection hjk hli c d).eq
+  simpa only [SpecialLinearGroup.coe_mul, SpecialLinearGroup.transvection_coe,
+    Matrix.transvection] using
+    TauCeti.transvection_mul_transvection_eq_mul_mul hij hil c d
 
 /-- **The Chevalley commutator relation of type `A` in `SL n A`.** The commutator of the
 determinant-one transvections `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`, is
@@ -686,15 +704,12 @@ determinant-one transvections `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `
 theorem commutatorElement_transvection
     (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l) (c d : A) :
     ⁅transvection hij c, transvection hjl d⁆ = transvection hil (c * d) := by
-  have hxy : transvection hij c * transvection hjl d =
-      transvection hjl d * transvection hij c * transvection hil (c * d) := by
-    apply Subtype.ext
-    exact TauCeti.transvection_mul_transvection_eq_mul_mul hij hil c d
   have hxz : Commute (transvection hij c) (transvection hil (c * d)) :=
     commute_transvection hij hil hij.symm hil.symm c (c * d)
   have hyz : Commute (transvection hjl d) (transvection hil (c * d)) :=
     commute_transvection hjl hil hil.symm hjl.symm d (c * d)
-  rw [commutatorElement_def, hxy, mul_assoc (transvection hjl d) (transvection hij c),
+  rw [commutatorElement_def, transvection_mul_transvection_eq_mul_mul hij hjl hil,
+    mul_assoc (transvection hjl d) (transvection hij c),
     hxz.eq, ← mul_assoc, mul_inv_cancel_right, hyz.eq, mul_inv_cancel_right]
 
 end Matrix.SpecialLinearGroup

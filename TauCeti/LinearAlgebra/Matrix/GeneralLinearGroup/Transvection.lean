@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
--- The group-commutator bracket `⁅x, y⁆` occurs in the statements below.
-public import Mathlib.Algebra.Group.Commutator
 
 /-!
 # The commutator relations between transvections
@@ -177,8 +175,9 @@ theorem transvectionUnit_mul_transvectionUnit_eq_mul_mul
     (c d : A) :
     transvectionUnit hij c * transvectionUnit hjl d =
       transvectionUnit hjl d * transvectionUnit hij c * transvectionUnit hil (c * d) := by
-  ext a b
-  exact congrFun₂ (transvection_mul_transvection_eq_mul_mul hij hil c d) a b
+  simp only [transvectionUnit, ← map_mul]
+  exact congrArg SpecialLinearGroup.toGL
+    (Matrix.SpecialLinearGroup.transvection_mul_transvection_eq_mul_mul hij hjl hil c d)
 
 /-- **The Chevalley commutator relation of type `A`.** The commutator of the root subgroup elements
 `xᵢⱼ(c)` and `xⱼₗ(d)`, for distinct `i`, `j` and `l`, is `xᵢₗ(cd)`: the root `εᵢ - εₗ` is the sum
