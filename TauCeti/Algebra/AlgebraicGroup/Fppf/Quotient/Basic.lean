@@ -70,25 +70,56 @@ noncomputable abbrev pointwiseQuotientPresheafProjection
 /-- The pointwise quotient presheaf as a group object in type-valued presheaves. Values are
 lifted by one universe because the category of commutative `R`-algebras itself lives in
 `Type (u + 1)`, the universe in which type-valued sheafification is available. -/
-@[expose] noncomputable def pointwiseQuotientPresheafGrp
+noncomputable def pointwiseQuotientPresheafGrp
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     Grp (((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ ⥤ Type (u + 1)) :=
   groupFunctorGrp
     (pointwiseQuotientPresheaf H I hI ⋙ GrpCat.uliftFunctor.{u + 1, u})
 
 /-- The quotient projection as a morphism of group objects in type-valued presheaves. -/
-@[expose] noncomputable def pointwiseQuotientPresheafGrpProjection
+noncomputable def pointwiseQuotientPresheafGrpProjection
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     pointsPresheafGrp H ⟶ pointwiseQuotientPresheafGrp H I hI :=
   groupFunctorGrpMap <| Functor.whiskerRight
     (pointwiseQuotientPresheafProjection H I hI) GrpCat.uliftFunctor.{u + 1, u}
+
+/-- The carrier of the points presheaf group object is the universe lift of the underlying
+group-valued points presheaf. -/
+theorem pointsPresheafGrp_X_eq (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsPresheafGrp H).X =
+      HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
+        forget GrpCat.{u + 1} := by
+  rfl
+
+/-- The carrier of the pointwise quotient presheaf group object is the universe lift of the
+underlying group-valued quotient presheaf. -/
+theorem pointwiseQuotientPresheafGrp_X_eq
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
+    (pointwiseQuotientPresheafGrp H I hI).X =
+      pointwiseQuotientPresheaf H I hI ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
+        forget GrpCat.{u + 1} := by
+  rw [pointwiseQuotientPresheafGrp.eq_1]
+  rfl
+
+/-- On underlying presheaves, the group-object quotient projection is the universe lift of the
+pointwise quotient projection. -/
+theorem pointwiseQuotientPresheafGrpProjection_hom_hom
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
+    (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom =
+      eqToHom (pointsPresheafGrp_X_eq H) ≫
+        Functor.whiskerRight
+          (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
+            GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1}) ≫
+          eqToHom (pointwiseQuotientPresheafGrp_X_eq H I hI).symm := by
+  rw [pointwiseQuotientPresheafGrpProjection.eq_1]
+  rfl
 
 /-- The fppf quotient sheaf associated to a normal Hopf ideal, as a group object in type-valued
 fppf sheaves.
 
 Its underlying sheaf is the sheafification of `A ↦ G(A) / V(I)(A)`. This definition makes no
 representability claim. -/
-@[expose] noncomputable def fppfQuotientSheaf (H : _root_.CommHopfAlgCat.{u} R)
+noncomputable def fppfQuotientSheaf (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     Grp (Sheaf (CommAlgCat.fppfTopology R) (Type (u + 1))) := by
   let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
@@ -98,13 +129,44 @@ representability claim. -/
 
 /-- The canonical morphism from the fppf sheaf of points of `G` to the fppf quotient sheaf
 `G / V(I)`. -/
-@[expose] noncomputable def fppfQuotientProjection (H : _root_.CommHopfAlgCat.{u} R)
+noncomputable def fppfQuotientProjection (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     pointsFppfGroupObject H ⟶ fppfQuotientSheaf H I hI := by
   let _ : (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).Monoidal :=
     Functor.Monoidal.ofChosenFiniteProducts _
   exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.map
     (pointwiseQuotientPresheafGrpProjection H I hI)
+
+/-- The carrier of the fppf points group object is the sheafification of the carrier of its
+presheaf group object. -/
+theorem pointsFppfGroupObject_X_eq
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsFppfGroupObject H).X =
+      (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
+        (pointsPresheafGrp H).X := by
+  rfl
+
+/-- The carrier of the fppf quotient group object is the sheafification of the pointwise
+quotient presheaf's carrier. -/
+theorem fppfQuotientSheaf_X_eq
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
+    (fppfQuotientSheaf H I hI).X =
+      (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
+        (pointwiseQuotientPresheafGrp H I hI).X := by
+  rw [fppfQuotientSheaf.eq_1]
+  rfl
+
+/-- On underlying sheaves, the fppf quotient projection is the sheafification of the pointwise
+quotient projection. -/
+theorem fppfQuotientProjection_hom
+    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
+    (fppfQuotientProjection H I hI).hom.hom =
+      eqToHom (pointsFppfGroupObject_X_eq H) ≫
+        (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).map
+          (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom ≫
+            eqToHom (fppfQuotientSheaf_X_eq H I hI).symm := by
+  rw [fppfQuotientProjection.eq_1]
+  rfl
 
 /-- Maps from the fppf quotient sheaf to a group object in fppf sheaves are naturally equivalent
 to group-object maps from the pointwise quotient presheaf to its underlying presheaf. -/

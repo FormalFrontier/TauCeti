@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Category.Grp.EpiMono
 public import Mathlib.CategoryTheory.Sites.EpiMono
-public import TauCeti.Algebra.AlgebraicGroup.Fppf.Quotient
+public import TauCeti.Algebra.AlgebraicGroup.Fppf.Quotient.Basic
 
 /-!
 # Local surjectivity of fppf quotient projections
@@ -82,7 +82,9 @@ private instance instEpiPointwiseQuotientPresheafGrpProjectionHom
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     Epi (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom := by
   let _ (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ) :
-      Epi ((pointwiseQuotientPresheafGrpProjection H I hI).hom.hom.app A) := by
+      Epi ((Functor.whiskerRight
+        (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
+          GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A) := by
     apply ConcreteCategory.epi_of_surjective
     change Function.Surjective (fun x : ULift
       (HopfAlgebra.points (R := R) (H := H) A.unop.unop) => ULift.up
@@ -92,32 +94,12 @@ private instance instEpiPointwiseQuotientPresheafGrpProjectionHom
       (GrpCat.epi_iff_surjective _).1
         (inferInstance : Epi ((pointwiseQuotientPresheafProjection H I hI).app A)) y.down
     exact ⟨ULift.up x, ULift.ext _ _ hx⟩
-  exact NatTrans.epi_of_epi_app _
-
-private theorem pointsFppfGroupObject_X_eq
-    (H : _root_.CommHopfAlgCat.{u} R) :
-    (pointsFppfGroupObject H).X =
-      (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
-        (pointsPresheafGrp H).X := by
-  rfl
-
-private theorem fppfQuotientSheaf_X_eq
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
-    (fppfQuotientSheaf H I hI).X =
-      (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
-        (pointwiseQuotientPresheafGrp H I hI).X := by
-  unfold fppfQuotientSheaf
-  rfl
-
-private theorem fppfQuotientProjection_hom
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
-    (fppfQuotientProjection H I hI).hom.hom =
-      eqToHom (pointsFppfGroupObject_X_eq H) ≫
-        (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).map
-          (pointwiseQuotientPresheafGrpProjection H I hI).hom.hom ≫
-            eqToHom (fppfQuotientSheaf_X_eq H I hI).symm := by
-  unfold fppfQuotientProjection
-  rfl
+  let _ : Epi (Functor.whiskerRight
+      (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
+        GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})) :=
+    NatTrans.epi_of_epi_app _
+  rw [pointwiseQuotientPresheafGrpProjection_hom_hom]
+  infer_instance
 
 private instance instEpiFppfQuotientProjectionHom
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
