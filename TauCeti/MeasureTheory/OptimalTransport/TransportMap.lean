@@ -287,7 +287,7 @@ theorem eq_graphPlan_of_ae_snd_eq {π : Measure (X × Y)} (hT : AEMeasurable T �
     _ = (π.map Prod.fst).map fun x ↦ (x, T x) :=
         (AEMeasurable.map_map_of_aemeasurable (aemeasurable_prodMk_self hT)
           measurable_fst.aemeasurable).symm
-    _ = graphPlan T π.fst := rfl
+    _ = graphPlan T π.fst := by rw [graphPlan_def, Measure.fst]
 
 /-- **The deterministic plans are exactly the plans carried by a graph.** A plan on `X × Y` is
 the graph plan of an a.e. measurable `T` over its own first marginal precisely when its second
