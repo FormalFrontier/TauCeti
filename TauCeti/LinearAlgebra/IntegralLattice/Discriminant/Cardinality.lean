@@ -66,14 +66,6 @@ theorem carrierInDualBasis_apply (L : IntegralLattice V) {ι : Type v}
   exact L.coe_carrierInDualEquiv_symm_apply (b i)
 
 open Classical in
-/-- The ambient rational vector underlying `carrierInDualBasis b i` is `b i`. -/
-@[simp]
-theorem coe_carrierInDualBasis (L : IntegralLattice V) {ι : Type v}
-    (b : Basis ι ℤ L) (i : ι) :
-    ((L.carrierInDualBasis b i : L.dualCarrier) : V) = b i := by
-  exact L.coe_carrierInDualEquiv_symm_apply (b i)
-
-open Classical in
 /-- The change-of-basis matrix from the dual basis to the embedded carrier basis is the Gram
 matrix. -/
 theorem dualCarrierBasis_toMatrix_carrierInDualBasis (L : IntegralLattice V)
@@ -86,7 +78,7 @@ theorem dualCarrierBasis_toMatrix_carrierInDualBasis (L : IntegralLattice V)
   apply Int.cast_injective (α := ℚ)
   rw [L.intCast_gramMatrix_apply]
   simp only [L.dualCarrierBasis_repr, Function.comp_apply, Basis.dualBasis_repr,
-    L.dualPairingEquiv_cast, coe_carrierInDualBasis]
+    L.dualPairingEquiv_cast, carrierInDualBasis_apply]
   exact L.isSymm.eq _ _
 
 open Classical in
@@ -109,7 +101,6 @@ theorem natCard_discriminantGroup_eq_natAbs_gramDet (L : IntegralLattice V)
     (L.carrierInDualBasis b)).symm
 
 /-- **The order of the discriminant group is the lattice discriminant.** -/
-@[simp]
 theorem natCard_discriminantGroup (L : IntegralLattice V) [L.IsNondegenerate] :
     Nat.card L.DiscriminantGroup = L.discriminant := by
   classical
