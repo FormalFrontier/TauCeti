@@ -7,9 +7,11 @@ module
 
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
+public import TauCeti.GroupTheory.DoubleCoset.Orbits
+public import TauCeti.NumberTheory.ModularForms.Norm.Order
+
 import Mathlib.Algebra.FiniteSupport.Basic
 import Mathlib.NumberTheory.ModularForms.ArithmeticSubgroups
-import TauCeti.NumberTheory.ModularForms.Norm.Order
 
 /-!
 # The order divisor at general level, on the orbit space
@@ -46,6 +48,11 @@ image of a subgroup of `SL(2, ℤ)` has determinant `1` throughout.
   `Γ`-orbit space.
 * `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnSubgroupOrbit`: finite support of
   the interior order divisor of a general-level modular form.
+* `TauCeti.ModularForm.orderOfVanishingAt_quotientFunc_eq_orderOfVanishingOnSubgroupOrbit`: a
+  coset factor of the norm vanishes at `p` to the order `f` has on the orbit `p` is translated
+  into.
+* `TauCeti.ModularForm.orderOfVanishingAt_norm_eq_finsum_orbit`: hence the order of the norm at
+  `p` is a sum over `Γ \ ℍ`, each orbit weighted by how many cosets translate `p` into it.
 
 ## References
 
@@ -92,6 +99,28 @@ public lemma orderOfVanishingOnSubgroupOrbit_mk
   unfold orderOfVanishingOnSubgroupOrbit
   rfl
 
+/-- **The coset factors of the norm see exactly the orbits of the translates of the point.**
+The factor indexed by `q` vanishes at `p` to the order `f` itself has on the orbit into which
+`q` translates `p`.
+
+This is what turns the coset sum of `orderOfVanishingAt_norm` into a sum over orbits: the
+summand depends on `q` only through `orbitOfCosetTranslate p q`. -/
+public lemma orderOfVanishingAt_quotientFunc_eq_orderOfVanishingOnSubgroupOrbit
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (p : ℍ)
+    (q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) :
+    orderOfVanishingAt (_root_.SlashInvariantForm.quotientFunc f q) p =
+      orderOfVanishingOnSubgroupOrbit f (orbitOfCosetTranslate p q) := by
+  induction q using Quotient.inductionOn with
+  | h h =>
+    rw [_root_.SlashInvariantForm.quotientFunc_mk, orbitOfCosetTranslate_mk,
+      orderOfVanishingOnSubgroupOrbit_mk, orderOfVanishingAt_slash (k := k)]
+    -- the slash acts by `h⁻¹`, so what is left is that it has positive determinant: it is the
+    -- image of some `γ ∈ SL(2, ℤ)`, whose determinant is `1`
+    obtain ⟨γ, hγ⟩ := (h⁻¹).2
+    rw [← Subgroup.coe_inv, ← hγ, ← Matrix.GeneralLinearGroup.val_det_apply,
+      Matrix.SpecialLinearGroup.det_mapGL]
+    exact one_pos
+
 /-- A modular form for a finite-index subgroup `Γ ≤ SL(2, ℤ)` has nonzero vanishing order on
 only finitely many `Γ`-orbits in the upper half-plane.
 
@@ -107,6 +136,37 @@ public theorem hasFiniteSupport_orderOfVanishingOnSubgroupOrbit
   intro q hq
   induction q using Quotient.inductionOn' with
   | _ p => exact ⟨p, by simpa using hq, rfl⟩
+
+/-- **The order of the norm at a point, regrouped over the orbit space.** The vanishing order
+of `ModularForm.norm 𝒮ℒ f` at `p` is the sum, over the `Γ`-orbits of the upper half-plane, of
+the descended order of `f` on the orbit weighted by how many cosets translate `p` into it.
+
+This is the interior half of the general-level valence formula: the left-hand side is a level
+one quantity, which the level-one formula evaluates, while the right-hand side is indexed by
+`Γ \ ℍ`. The fibre counts become the ramification weights `1 / e_P` once the stabiliser
+comparison converts them. -/
+public theorem orderOfVanishingAt_norm_eq_finsum_orbit
+    [(Γ : Subgroup (GL (Fin 2) ℝ)).IsFiniteRelIndex 𝒮ℒ]
+    [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (hf : (⇑f : ℍ → ℂ) ≠ 0) (p : ℍ) :
+    orderOfVanishingAt (⇑(_root_.ModularForm.norm 𝒮ℒ f)) p =
+      ∑ᶠ o : MulAction.orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
+        Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
+          orbitOfCosetTranslate p q = o} • orderOfVanishingOnSubgroupOrbit f o := by
+  classical
+  have _ : Fintype (𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ) := Fintype.ofFinite _
+  rw [orderOfVanishingAt_norm f hf p, finsum_eq_sum_of_fintype]
+  simp only [orderOfVanishingAt_quotientFunc_eq_orderOfVanishingOnSubgroupOrbit]
+  -- `𝒢`/`ℋ` are spelled out because `Finset.univ` is otherwise stuck on a metavariable
+  rw [← Finset.sum_fiberwise_of_maps_to' fun q _ ↦ Finset.mem_image_of_mem
+      (orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) (ℋ := 𝒮ℒ) p) (Finset.mem_univ q),
+    finsum_eq_sum_of_support_subset _ (s := Finset.image
+      (orbitOfCosetTranslate (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) (ℋ := 𝒮ℒ) p) Finset.univ) ?_]
+  · exact Finset.sum_congr rfl fun o _ ↦ by simp [Nat.card_eq_fintype_card, Fintype.card_subtype]
+  · intro o ho
+    by_contra hmem
+    have : IsEmpty {q // orbitOfCosetTranslate p q = o} :=
+      ⟨fun q ↦ hmem (Finset.mem_coe.2 (Finset.mem_image.2 ⟨q.1, Finset.mem_univ _, q.2⟩))⟩
+    exact ho (by simp)
 
 end ModularForm
 

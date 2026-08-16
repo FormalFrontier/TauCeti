@@ -27,8 +27,8 @@ there extends to the full joint-law identity in `ConditionallyIIDWith`.
 * `conditionallyIID_of_jointRectangles` — the Layer 1 common ending, at a named directing measure;
 * `conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` — a set-integral
   factorization of the mass of a directing-measure event met with a block cylinder, converted here
-  into the joint-rectangle identity above. A reusable seam, consumed by the martingale route and
-  available to any other, assuming no standard-Borel structure on either space;
+  into the joint-rectangle identity above. A reusable seam assuming no standard-Borel structure on
+  either space: all three de Finetti routes consume it;
 * `ConditionallyIIDWith.jointLaw_prod_univ_pi` — the converse rectangle identity;
 * `conditionallyIIDWith_iff_forall_jointRectangles` and
   `conditionallyIID_iff_exists_forall_jointRectangles` — characteristic forms for the named and
@@ -118,9 +118,9 @@ linear order on the index — hence `ℕ`. The others quantify over an arbitrary
 
 This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
 factorization identity. The martingale route reaches it from tail conditional laws and consumes it
-in `conditionallyIIDWith_of_contractable_pathSpace`; the Koopman route conditions on the
-shift-invariant σ-algebra instead and consumes it in
-`ContractableLaw.conditionallyIIDWith_invariantConditionalProbabilityMeasure`.
+in `conditionallyIIDWith_of_contractable_pathSpace`; the `L²` route reaches it from its own block
+factorization; and the Koopman route conditions on the shift-invariant σ-algebra instead and
+consumes it in `ContractableLaw.conditionallyIIDWith_invariantConditionalProbabilityMeasure`.
 
 In particular there is **no** standard-Borel or non-empty hypothesis on either space: those are
 needed to *construct* a directing measure, not to recognise one. -/

@@ -37,8 +37,8 @@ This module declares nothing of its own; it is a curated re-export, and it build
   route rather than the martingale one. The unsuffixed names above are the martingale route;
   the suffixed ones name the route explicitly, and are what Layer 7 of the roadmap advertises;
 * `deFinetti_viaKoopman` and `conditionallyIID_of_contractable_viaKoopman` — the same summits proved
-  by the Koopman route, through the shift-invariant σ-algebra rather than the tail. The two routes
-  are independent at the import level;
+  by the Koopman route, through the shift-invariant σ-algebra rather than the tail. The three route
+  modules are independent at the import level: none imports another;
 * `deFinetti_mixture` — the unique mixture representation;
 * `mixedIID_mixingLaw_unique` — uniqueness of the mixing *law*;
 * `conditionallyIID_ae_unique` — a.e. uniqueness of the directing *measure*;

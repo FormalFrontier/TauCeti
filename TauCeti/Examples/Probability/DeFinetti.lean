@@ -14,18 +14,18 @@ example is a bare reference to a name Layer 7 advertises, so the file elaborates
 curated facade exports everything it promises. Nothing is proved and nothing is declared; the
 import is not public, so this adds no second route to the API.
 
-A failure here means an export went missing, not that a proof broke — the gap this guards against
-is the one where `deFinetti_viaL2` existed on `main` for some time without being reachable from the
-facade.
+A failure here means an export went missing, not that a proof broke: a summit can be proved, and
+its module built, while the facade never re-exports it, leaving the name unreachable for a caller
+who imports only the facade.
 
 ## One advertised name does not exist
 
 Layer 7 spells one endpoint `exchangeable_of_mixedIID`; the repository proves it canonically as
 `MixedIID.exchangeable`, which is checked below under that name. No alias is introduced.
 
-`deFinetti_empiricalMeasure` is genuinely absent: not started, and blocked on a roadmap decision
-recorded in `Exchangeability/STATUS.md` — under `[StandardBorelSpace α]` alone no compatible Polish
-topology is selected, so the target as worded is not yet well-posed.
+`deFinetti_empiricalMeasure` is not currently exported. Unlike the topology-free fixed-set endpoint
+below, its weak-convergence statement requires an explicitly chosen compatible Polish topology,
+which `[StandardBorelSpace α]` alone does not select.
 
 Every other advertised name is checked below.
 
