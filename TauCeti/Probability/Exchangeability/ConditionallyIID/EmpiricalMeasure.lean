@@ -12,8 +12,8 @@ public import TauCeti.Probability.Process.EmpiricalMeasure
 
 This file expresses the empirical-frequency estimates for a conditionally i.i.d. process in terms
 of the empirical probability measure.  For every measurable set, evaluation of the empirical
-measure converges in mean square to evaluation of the directing measure, with the exact
-finite-sample error and its `1 / (n + 1)` bound.
+measure converges in `L² μ` to evaluation of the directing measure, with the exact finite-sample
+error and its `1 / (n + 1)` bound.  At a probability measure this is mean-square convergence.
 
 These results are the setwise input to the empirical-measure form of de Finetti's theorem in Layer 6
 of the `Exchangeability` roadmap.  They reuse the conditional moment identities already proved in
@@ -66,7 +66,8 @@ theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq_le
     h.integral_empiricalFrequency_sub_sq_le hX hB (n := n + 1) (Nat.succ_ne_zero n)
 
 /-- For every measurable set, evaluation of the empirical measure of a conditionally i.i.d.
-process converges in mean square to evaluation of its directing measure. -/
+process converges in `L² μ` to evaluation of its directing measure: the integrated squared error
+tends to `0`.  At a probability measure this is convergence in mean square. -/
 theorem ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq
     [IsFiniteMeasure μ] (h : ConditionallyIIDWith μ X ν)
     (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B) :

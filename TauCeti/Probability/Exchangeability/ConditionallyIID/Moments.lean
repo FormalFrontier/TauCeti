@@ -449,9 +449,10 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilit
 
 /-! ### Convergence of empirical frequencies -/
 
-/-- **Fixed-set empirical frequencies converge in mean square.** For a conditionally i.i.d. process,
-the empirical frequency of a fixed measurable set `B` along the first `n` coordinates converges in
-`L²` to the directing measure's evaluation `(ν ·) B`.
+/-- **Fixed-set empirical frequencies converge in `L²`.** For a conditionally i.i.d. process, the
+empirical frequency of a fixed measurable set `B` along the first `n` coordinates converges in
+`L² μ` to the directing measure's evaluation `(ν ·) B`: the integrated squared error tends to `0`.
+At a probability measure this is convergence in mean square.
 
 Indexed at `n + 1` so that no caller carries an `n ≠ 0` side condition. -/
 theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsFiniteMeasure μ]
