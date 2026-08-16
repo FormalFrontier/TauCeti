@@ -184,16 +184,17 @@ associated upper-unitriangular matrix. -/
 @[simp]
 theorem congrLinearEquiv_pointsAction_eq_toLin
     (g : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
-    LinearMap.GeneralLinearGroup.congrLinearEquiv (standardScalarExtensionEquiv R n)
-        (LinearMap.GeneralLinearGroup.ofLinearEquiv
-          (Comodule.pointsAction (Fin n → R) g)) =
+    LinearMap.GeneralLinearGroup.ofLinearEquiv
+        ((standardScalarExtensionEquiv R n).symm ≪≫ₗ
+          ((LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (Comodule.pointsAction (Fin n → R) g)).toLinearEquiv ≪≫ₗ
+              standardScalarExtensionEquiv R n)) =
       Matrix.GeneralLinearGroup.toLin
         (pointToUpperUnitriangular R (Fin n) g : Matrix.GeneralLinearGroup (Fin n) A) := by
   apply Units.ext
   apply LinearMap.ext
   intro x
-  simp only [LinearMap.GeneralLinearGroup.congrLinearEquiv_apply,
-    LinearMap.GeneralLinearGroup.coe_ofLinearEquiv,
+  simp only [LinearMap.GeneralLinearGroup.coe_ofLinearEquiv,
     LinearMap.GeneralLinearGroup.coe_toLinearEquiv, LinearEquiv.trans_apply]
   have haction := LinearMap.congr_fun
     (Comodule.pointsAction_toLinearMap (Fin n → R) g)
@@ -217,7 +218,6 @@ theorem isUnipotent_pointsAction
     (standardScalarExtensionEquiv R n)
     (LinearMap.GeneralLinearGroup.ofLinearEquiv
       (Comodule.pointsAction (Fin n → R) g))).mp
-  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   rw [congrLinearEquiv_pointsAction_eq_toLin]
   exact UpperUnitriangularGroup.isUnipotent_toLin (pointToUpperUnitriangular R (Fin n) g)
 
