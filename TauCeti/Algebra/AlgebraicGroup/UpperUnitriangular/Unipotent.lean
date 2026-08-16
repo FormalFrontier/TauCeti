@@ -17,15 +17,16 @@ For a natural number `n`, the generic upper-unitriangular matrix defines the sta
 the coordinate Hopf algebra `O(U_n)` on `R^n`.  Its coordinate morphism is the closed immersion
 `U_n → GL_n`, so this comodule is faithful.  At every point its action is
 the corresponding upper-unitriangular matrix, hence is unipotent.  The faithful-representation
-criterion then proves that every geometric point of `U_m` is unipotent.
+criterion then proves that every geometric point of `U_n` is unipotent.
 
 The coordinate ring is a polynomial algebra in the entries strictly above the diagonal.  It is
-therefore smooth; over a field this makes `U_m` a smooth unipotent affine group.
+therefore smooth; over a field this makes `U_n` a smooth unipotent affine group.
 
 ## Main declarations
 
 * `TauCeti.UpperUnitriangular.standardComodule`: the standard faithful comodule of `O(U_n)`.
-* `TauCeti.UpperUnitriangular.isUnipotentPoint`: every field-valued point of `U_n` is unipotent.
+* `TauCeti.UpperUnitriangular.isUnipotentPoint`: every point of `U_n` valued in a perfect field
+  extension is unipotent.
 * `TauCeti.UpperUnitriangular.smoothUnipotentCommHopfAlgProperty_coordinateHopfAlgebra`:
   `U_n` over a field is smooth unipotent.
 
@@ -61,14 +62,14 @@ noncomputable def standardCoact :
 
 /-- The standard coaction on a basis vector is the corresponding column of the generic matrix. -/
 @[simp]
-theorem standardCoact_basis (j : Fin n) :
+theorem standardCoact_apply_basisFun (j : Fin n) :
     standardCoact R n (Pi.single j 1) =
       ∑ i, (Pi.single i (1 : R) : Fin n → R) ⊗ₜ[R]
         coordinateHopfAlgebraAlgEquiv R (Fin n) (genericMatrix R (Fin n) i j) := by
   rw [standardCoact, ← Pi.basisFun_apply, Basis.constr_basis]
 
 /-- The standard right comodule of the upper-unitriangular coordinate Hopf algebra. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def standardComodule :
     Comodule R (coordinateHopfAlgebra R (Fin n)) (Fin n → R) where
   coact := standardCoact R n
@@ -76,8 +77,8 @@ noncomputable def standardComodule :
     apply (Pi.basisFun R (Fin n)).ext
     intro j
     simp only [LinearMap.coe_comp, Function.comp_apply]
-    rw [Pi.basisFun_apply, standardCoact_basis]
-    simp only [map_sum, LinearMap.rTensor_tmul, standardCoact_basis,
+    rw [Pi.basisFun_apply, standardCoact_apply_basisFun]
+    simp only [map_sum, LinearMap.rTensor_tmul, standardCoact_apply_basisFun,
       TensorProduct.sum_tmul, LinearEquiv.coe_coe, TensorProduct.assoc_tmul,
       LinearMap.lTensor_tmul,
       coordinateHopfAlgebra_comul_genericMatrix_apply, TensorProduct.tmul_sum]
@@ -86,7 +87,7 @@ noncomputable def standardComodule :
     apply (Pi.basisFun R (Fin n)).ext
     intro j
     simp only [LinearMap.coe_comp, Function.comp_apply]
-    rw [Pi.basisFun_apply, standardCoact_basis]
+    rw [Pi.basisFun_apply, standardCoact_apply_basisFun]
     simp only [map_sum, LinearMap.lTensor_tmul,
       coordinateHopfAlgebra_counit_genericMatrix_apply]
     rw [Finset.sum_eq_single j]
@@ -99,23 +100,25 @@ noncomputable def standardComodule :
 @[simp]
 theorem standardComodule_coact :
     (standardComodule R n).coact = standardCoact R n :=
-  rfl
+  (rfl)
 
 attribute [local instance] standardComodule
 
 /-- The coefficient matrix of the standard comodule is the generic upper-unitriangular matrix. -/
-theorem coefficientMatrix_standardBasis :
+@[simp]
+theorem coefficientMatrix_basisFun :
     Comodule.coefficientMatrix (C := coordinateHopfAlgebra R (Fin n))
         (Pi.basisFun R (Fin n)) = fun i j ↦
           coordinateHopfAlgebraAlgEquiv R (Fin n) (genericMatrix R (Fin n) i j) := by
   ext i j
   rw [Comodule.coefficientMatrix_apply, Comodule.matrixCoefficient_def,
-    standardComodule_coact, Pi.basisFun_apply, standardCoact_basis]
+    standardComodule_coact, Pi.basisFun_apply, standardCoact_apply_basisFun]
   simp [Pi.single_apply]
 
 /-- The coordinate morphism of the standard comodule is the coordinate morphism of the closed
 immersion `U_n → GL_n`. -/
-theorem coordinateBialgHom_standardBasis :
+@[simp]
+theorem coordinateBialgHom_basisFun :
     Comodule.coordinateBialgHom (H := coordinateHopfAlgebra R (Fin n))
         (Pi.basisFun R (Fin n)) = (coordinateMap R n).hom := by
   apply BialgHom.ext
@@ -130,7 +133,7 @@ theorem coordinateBialgHom_standardBasis :
             (Pi.basisFun R (Fin n)) i j :=
         Comodule.coordinateBialgHom_X (Pi.basisFun R (Fin n)) i j
       _ = coordinateHopfAlgebraAlgEquiv R (Fin n) (genericMatrix R (Fin n) i j) := by
-        rw [coefficientMatrix_standardBasis]
+        rw [coefficientMatrix_basisFun]
       _ = _ := (coordinateMap_genericMatrix_apply R n i j).symm
   exact DFunLike.congr_fun hAlg x
 
@@ -141,7 +144,7 @@ theorem isFaithful_standardComodule :
   rw [Comodule.isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom
       (b := Pi.basisFun R (Fin n)),
     Comodule.isClosedImmersion_coordinateGroupSchemeHom_iff,
-    coordinateBialgHom_standardBasis]
+    coordinateBialgHom_basisFun]
   exact coordinateMap_surjective R n
 
 section PointAction
@@ -167,7 +170,7 @@ theorem standardScalarExtensionEquiv_comp_endOfPoint
   intro j
   simp only [LinearMap.comp_apply, Module.Basis.baseChange_apply]
   rw [Comodule.endOfPoint_tmul, standardComodule_coact, Pi.basisFun_apply,
-    standardCoact_basis]
+    standardCoact_apply_basisFun]
   simp only [map_sum, LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply,
     TensorProduct.comm_tmul, one_smul, Matrix.GeneralLinearGroup.toLin_apply,
     Matrix.mulVecLin_apply]
@@ -176,8 +179,9 @@ theorem standardScalarExtensionEquiv_comp_endOfPoint
   simp [TensorProduct.piScalarRight_apply, TensorProduct.piScalarRightHom_tmul,
     Pi.single_apply, pointToUpperUnitriangular_apply]
 
-/-- Transporting the standard point action to `A^m` gives the natural linear action of the
+/-- Transporting the standard point action to `A^n` gives the natural linear action of the
 associated upper-unitriangular matrix. -/
+@[simp]
 theorem congrLinearEquiv_pointsAction_eq_toLin
     (g : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
     LinearMap.GeneralLinearGroup.congrLinearEquiv (standardScalarExtensionEquiv R n)
@@ -188,16 +192,20 @@ theorem congrLinearEquiv_pointsAction_eq_toLin
   apply Units.ext
   apply LinearMap.ext
   intro x
-  change (standardScalarExtensionEquiv R n)
-      ((Comodule.pointsAction (Fin n → R) g).toLinearMap
-        ((standardScalarExtensionEquiv R n).symm x)) =
-    (Matrix.GeneralLinearGroup.toLin
-      (pointToUpperUnitriangular R (Fin n) g : Matrix.GeneralLinearGroup (Fin n) A) :
-        Module.End A (Fin n → A)) x
-  rw [Comodule.pointsAction_toLinearMap]
+  simp only [LinearMap.GeneralLinearGroup.congrLinearEquiv_apply,
+    LinearMap.GeneralLinearGroup.coe_ofLinearEquiv,
+    LinearMap.GeneralLinearGroup.coe_toLinearEquiv, LinearEquiv.trans_apply]
+  have haction := LinearMap.congr_fun
+    (Comodule.pointsAction_toLinearMap (Fin n → R) g)
+    ((standardScalarExtensionEquiv R n).symm x)
   have h := LinearMap.congr_fun (standardScalarExtensionEquiv_comp_endOfPoint R n g)
     ((standardScalarExtensionEquiv R n).symm x)
-  simpa using h
+  calc
+    _ = (standardScalarExtensionEquiv R n)
+        (Comodule.endOfPoint (Fin n → R) g.ofConv
+          ((standardScalarExtensionEquiv R n).symm x)) :=
+      congrArg (standardScalarExtensionEquiv R n) haction
+    _ = _ := by simpa using h
 
 /-- The standard representation sends every point of `U_n` to a unipotent automorphism. -/
 theorem isUnipotent_pointsAction
@@ -209,10 +217,7 @@ theorem isUnipotent_pointsAction
     (standardScalarExtensionEquiv R n)
     (LinearMap.GeneralLinearGroup.ofLinearEquiv
       (Comodule.pointsAction (Fin n → R) g))).mp
-  change GeneralLinearGroup.IsUnipotent
-    (LinearMap.GeneralLinearGroup.congrLinearEquiv (standardScalarExtensionEquiv R n)
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv
-        (Comodule.pointsAction (Fin n → R) g)))
+  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   rw [congrLinearEquiv_pointsAction_eq_toLin]
   exact UpperUnitriangularGroup.isUnipotent_toLin (pointToUpperUnitriangular R (Fin n) g)
 
