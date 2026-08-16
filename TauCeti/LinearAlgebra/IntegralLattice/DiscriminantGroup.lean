@@ -79,7 +79,6 @@ abbrev DiscriminantGroup (L : IntegralLattice V) : Type u :=
 
 /-- A representative defines the zero discriminant class exactly when its ambient vector belongs
 to the original carrier. -/
-@[simp]
 theorem discriminantGroup_mk_eq_zero_iff (L : IntegralLattice V) (x : L.dualCarrier) :
     (Submodule.Quotient.mk x : L.DiscriminantGroup) = 0 ↔ (x : V) ∈ L.carrier := by
   rw [Submodule.Quotient.mk_eq_zero, L.mem_carrierInDual_iff]
