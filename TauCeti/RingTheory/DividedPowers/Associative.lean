@@ -221,6 +221,15 @@ theorem mul_dividedPower_eq_dividedPower_mul_add_intCast
   rw [mul_dividedPower_eq_dividedPower_mul_add_zsmul hxy, zsmul_eq_mul', mul_add,
     Int.cast_mul, Int.cast_natCast, (Nat.cast_commute n (c : A)).eq]
 
+/-- Scaling an element by an integer scales its `n`-th divided power by the `n`-th power of that
+integer. This is the integral companion of `dividedPower_smul`, and is what lets a Chevalley
+structure constant be moved from a root vector to the parameter of its exponential. -/
+theorem dividedPower_zsmul (d : ℤ) (n : ℕ) (x : A) :
+    dividedPower n (d • x) = d ^ n • dividedPower n x := by
+  rw [← Int.cast_smul_eq_zsmul ℚ d x, dividedPower_smul,
+    ← Int.cast_smul_eq_zsmul ℚ (d ^ n) (dividedPower n x)]
+  norm_cast
+
 /-- Divided powers of a negated element acquire the expected sign. -/
 @[simp]
 theorem dividedPower_neg (n : ℕ) (x : A) :
