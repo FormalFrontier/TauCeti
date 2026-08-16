@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
-public import TauCeti.Algebra.Lie.HighestWeight.Module
-public import TauCeti.Algebra.Lie.Submodule.Atom
+import TauCeti.Algebra.Lie.HighestWeight.Module
+import TauCeti.Algebra.Lie.Submodule.Atom
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 
 public section
