@@ -4,9 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Algebra.Hom
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
 import Mathlib.NumberTheory.FunctionField
+-- witnesses inside the proofs below; it appears in no statement here.
 import TauCeti.FieldTheory.IntermediateField.FieldRange
 
 /-!
@@ -133,6 +135,7 @@ theorem degree_eq_finrank (φ : Isogeny W₁ W₂) [Algebra W₂.FunctionField W
     φ.degree = Module.finrank W₂.FunctionField W₁.FunctionField :=
   φ.degree_def.trans (AlgHom.finrank_fieldRange φ.fieldPullback h)
 
+
 /-- **The degree of an isogeny is positive.** The extension is finite and the source function
 field is nontrivial. -/
 theorem degree_pos (φ : Isogeny W₁ W₂) : 0 < φ.degree := by
@@ -180,15 +183,13 @@ theorem degree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
   have htower : IsScalarTower W₃.FunctionField W₂.FunctionField W₁.FunctionField :=
     IsScalarTower.of_algebraMap_eq fun z ↦ by
       simp [RingHom.algebraMap_toAlgebra, comp_fieldPullback]
-  rw [φ.degree_eq_finrank fun z ↦ by
-      rw [RingHom.algebraMap_toAlgebra]
-      exact congrFun (AlgHom.coe_toRingHom φ.fieldPullback) z,
-    ψ.degree_eq_finrank fun z ↦ by
-      rw [RingHom.algebraMap_toAlgebra]
-      exact congrFun (AlgHom.coe_toRingHom ψ.fieldPullback) z,
-    (ψ.comp φ).degree_eq_finrank fun z ↦ by
-      rw [RingHom.algebraMap_toAlgebra]
-      exact congrFun (AlgHom.coe_toRingHom (ψ.comp φ).fieldPullback) z]
+  have hφ : ∀ z, algebraMap _ _ z = φ.fieldPullback z :=
+    φ.fieldPullback.algebraMap_toAlgebra_apply
+  have hψ : ∀ z, algebraMap _ _ z = ψ.fieldPullback z :=
+    ψ.fieldPullback.algebraMap_toAlgebra_apply
+  have hc : ∀ z, algebraMap _ _ z = (ψ.comp φ).fieldPullback z :=
+    (ψ.comp φ).fieldPullback.algebraMap_toAlgebra_apply
+  rw [φ.degree_eq_finrank hφ, ψ.degree_eq_finrank hψ, (ψ.comp φ).degree_eq_finrank hc]
   exact (Module.finrank_mul_finrank W₃.FunctionField W₂.FunctionField W₁.FunctionField).symm
 
 end Isogeny

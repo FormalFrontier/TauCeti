@@ -6,18 +6,24 @@ module
 
 public import Mathlib.Algebra.EuclideanDomain.Int
 public import Mathlib.Algebra.Module.Lattice
+public import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
 # Full submodule lattices
 
-This file provides generic operations on full submodule lattices. In particular, an integral
-linear equivalence between full submodules extends uniquely to a rational linear equivalence of
-their ambient spaces, rational linear equivalences preserve fullness, and a free full lattice over
-an integral domain rationalizes to its ambient vector space over the fraction field.
+This file provides generic results about full submodules over fraction fields. It relates bases and
+ranks of full submodules to their ambient spaces. It also extends integral linear equivalences
+between full submodules to rational linear equivalences of their ambient spaces, and proves that
+rational linear equivalences preserve fullness. Finally, a free full lattice over an integral
+domain rationalizes to its ambient vector space over the fraction field.
 
-## Main definitions
+## Main declarations
 
+* `TauCeti.Basis.span_range_extendOfIsLattice`: the span of an extended lattice basis is the
+  lattice.
+* `TauCeti.Submodule.IsLattice.finrank_eq_finrank`: a full lattice and its ambient space have the
+  same finrank.
 * `TauCeti.LinearEquiv.extendOfIsLattice`: extension of an integral linear equivalence between
   full submodules to their rational ambient spaces.
 * `TauCeti.Submodule.IsLattice.isBaseChange_subtype`: the inclusion of a free full lattice
@@ -37,6 +43,31 @@ open Module TensorProduct
 namespace TauCeti
 
 universe u v w
+
+section
+
+variable {R K V : Type*} [CommRing R] [Field K] [Algebra R K] [IsFractionRing R K]
+variable [AddCommGroup V] [Module R V] [Module K V] [IsScalarTower R K V]
+
+/-- The `R`-span of the ambient `K`-basis obtained from an `R`-basis of a lattice is the lattice
+itself. -/
+theorem Basis.span_range_extendOfIsLattice {κ : Type*} {N : Submodule R V} [N.IsLattice K]
+    (b : Basis κ R N) :
+    Submodule.span R (Set.range (b.extendOfIsLattice K)) = N := by
+  have hrange : Set.range (b.extendOfIsLattice K) = Set.range (N.subtype ∘ b) :=
+    congrArg Set.range (funext fun i ↦ Basis.extendOfIsLattice_apply K b i)
+  rw [hrange, Set.range_comp, ← Submodule.map_span, b.span_eq,
+    Submodule.map_top, Submodule.range_subtype]
+
+/-- The `R`-finrank of a free full lattice in `V` equals the `K`-finrank of the ambient space. -/
+theorem Submodule.IsLattice.finrank_eq_finrank [IsDomain R]
+    (N : Submodule R V) [N.IsLattice K] [Module.Free R N] :
+    Module.finrank R N = Module.finrank K V := by
+  let b := Module.Free.chooseBasis R N
+  exact congr_arg Cardinal.toNat
+    (b.mk_eq_rank''.symm.trans (b.extendOfIsLattice K).mk_eq_rank'')
+
+end
 
 namespace LinearEquiv
 
