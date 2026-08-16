@@ -33,6 +33,8 @@ the finite-type coordinate-Hopf-algebra category.
 * `TauCeti.FiniteTypeCommHopfAlgCat.liftQuotient`: the induced morphism out of a quotient.
 * `TauCeti.CommHopfAlgCat.quotientMapOfLe`: the morphism `H ⧸ I ⟶ H ⧸ J` induced by
   `I ≤ J`.
+* `TauCeti.CommHopfAlgCat.quotientBotIso`: quotienting by the zero Hopf ideal does not
+  change a commutative Hopf algebra.
 
 ## References
 
@@ -134,6 +136,27 @@ lemma liftQuotient_unique (I : HopfIdeal R H) (f : H ⟶ K)
     _ = (liftQuotient I f hf).hom (Ideal.Quotient.mkₐ R I.toIdeal h) :=
       (liftQuotient_mk I f hf h).symm
 
+private lemma bot_le_ker_id (H : _root_.CommHopfAlgCat.{v} R) :
+    (⊥ : HopfIdeal R H).toIdeal ≤
+      RingHom.ker (𝟙 H : H ⟶ H).hom.toAlgHom.toRingHom := by
+  simp
+
+/-- Quotienting a commutative Hopf algebra by the zero Hopf ideal gives an isomorphic object
+of `CommHopfAlgCat`. -/
+noncomputable def quotientBotIso (H : _root_.CommHopfAlgCat.{v} R) :
+    quotient H (⊥ : HopfIdeal R H) ≅ H where
+  hom := liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) (bot_le_ker_id H)
+  inv := mkQuotient H (⊥ : HopfIdeal R H)
+  hom_inv_id := by
+    ext q
+    obtain ⟨h, rfl⟩ :=
+      Ideal.Quotient.mkₐ_surjective R (⊥ : HopfIdeal R H).toIdeal q
+    rw [_root_.CommHopfAlgCat.comp_apply,
+      liftQuotient_mk (hf := bot_le_ker_id H), mkQuotient_apply]
+    rfl
+  inv_hom_id := mkQuotient_comp_liftQuotient
+    (⊥ : HopfIdeal R H) (𝟙 H) (bot_le_ker_id H)
+
 /-- If `I ≤ J`, then the quotient map by `J` kills every element of `I`. -/
 lemma toIdeal_le_ker_mkQuotient_of_le
     (H : _root_.CommHopfAlgCat.{v} R) {I J : HopfIdeal R H} (hIJ : I ≤ J) :
@@ -199,6 +222,12 @@ finite-type commutative Hopf algebra. -/
 noncomputable abbrev quotient (H : FiniteTypeCommHopfAlgCat.{u, v} R) (I : HopfIdeal R H) :
     FiniteTypeCommHopfAlgCat.{u, v} R :=
   ⟨CommHopfAlgCat.quotient H.obj I, inferInstanceAs (Algebra.FiniteType R (H ⧸ I.toIdeal))⟩
+
+/-- Quotienting a finite-type commutative Hopf algebra by the zero Hopf ideal gives an
+isomorphic finite-type commutative Hopf algebra. -/
+noncomputable def quotientBotIso (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
+    quotient H (⊥ : HopfIdeal R H) ≅ H :=
+  ObjectProperty.isoMk _ (CommHopfAlgCat.quotientBotIso H.obj)
 
 /-- The quotient morphism `H ⟶ H ⧸ I` in `FiniteTypeCommHopfAlgCat`. -/
 noncomputable abbrev mkQuotient (H : FiniteTypeCommHopfAlgCat.{u, v} R)

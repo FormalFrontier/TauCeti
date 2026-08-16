@@ -80,6 +80,12 @@ theorem IsNormal.conjugation_mem {I : HopfIdeal R H} (hI : I.IsNormal) {x : H} (
       rightTensorIdeal (R := R) (H := H) I.toIdeal :=
   (isNormal_iff_conjugation_mem I).mp hI hx
 
+/-- The zero Hopf ideal cuts out the whole affine group, hence is normal. -/
+@[simp]
+theorem isNormal_bot : (⊥ : HopfIdeal R H).IsNormal := by
+  rw [isNormal_def, bot_toIdeal, Ideal.map_bot]
+  exact bot_le
+
 /-- An arbitrary supremum of normal Hopf ideals is normal. -/
 theorem isNormal_iSup {i : Sort*} {I : i → HopfIdeal R H} (hI : ∀ j, (I j).IsNormal) :
     (⨆ j, I j).IsNormal := by
