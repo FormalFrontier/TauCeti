@@ -47,7 +47,7 @@ namespace TauCeti
 
 open MeasureTheory Polynomial.Chebyshev
 
-variable (𝕜 : Type*) [RCLike 𝕜]
+variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-! ## Coordinate representation -/
 
@@ -129,7 +129,7 @@ theorem tsum_star_intervalIntegral_normalizedChebyshevCosine_mul_mul_intervalInt
             (algebraMap ℝ 𝕜) (normalizedChebyshevCosine n θ) * g θ =
       inner 𝕜 f g := by
   simpa only [integral_chebyshevAngleMeasure] using
-    tsum_star_integral_normalizedChebyshevCosine_mul_mul_integral 𝕜 f g
+    tsum_star_integral_normalizedChebyshevCosine_mul_mul_integral f g
 
 
 /-- The squared norms of the cosine integral coefficients of an `L²` function are summable. -/

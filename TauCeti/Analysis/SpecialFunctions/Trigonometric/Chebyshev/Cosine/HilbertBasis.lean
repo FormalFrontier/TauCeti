@@ -79,6 +79,7 @@ theorem chebyshevCosineL2Equiv_symm_chebyshevCosineHilbertBasis (n : ℕ) :
 /-- **Coordinates are preserved under the cosine change of variables.** The `n`-th coordinate of
 `f ∘ cos` in the Chebyshev cosine basis equals the `n`-th coordinate of `f` in the Chebyshev
 polynomial basis. -/
+@[simp]
 theorem chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv
     (g : Lp 𝕜 2 (measureT : Measure ℝ)) (n : ℕ) :
     (chebyshevCosineHilbertBasis 𝕜).repr (chebyshevCosineL2Equiv 𝕜 g) n =
@@ -90,6 +91,7 @@ theorem chebyshevCosineHilbertBasis_repr_chebyshevCosineL2Equiv
 
 /-- The inverse coordinate identification: the Chebyshev polynomial coordinate of `f ∘ arccos`
 equals the cosine coordinate of `f`. -/
+@[simp]
 theorem chebyshevTHilbertBasis_repr_chebyshevCosineL2Equiv_symm
     (f : Lp 𝕜 2 chebyshevAngleMeasure) (n : ℕ) :
     (chebyshevTHilbertBasis 𝕜).repr ((chebyshevCosineL2Equiv 𝕜).symm f) n =
@@ -99,6 +101,7 @@ theorem chebyshevTHilbertBasis_repr_chebyshevCosineL2Equiv_symm
 
 /-- Pairing against the normalized cosine mode in `L²(chebyshevAngleMeasure)` is pairing against
 the normalized Chebyshev polynomial mode in `L²(measureT)`. -/
+@[simp]
 theorem inner_chebyshevCosineHilbertBasis_chebyshevCosineL2Equiv
     (n : ℕ) (g : Lp 𝕜 2 (measureT : Measure ℝ)) :
     inner 𝕜 (chebyshevCosineHilbertBasis 𝕜 n) (chebyshevCosineL2Equiv 𝕜 g) =
