@@ -7,6 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
 public import Mathlib.GroupTheory.Torsion
+import Mathlib.Data.Nat.Factorization.Basic
 
 /-!
 # Primary components of finite bilinear and quadratic modules
@@ -27,6 +28,8 @@ in pairwise distinct primary components.
   components are orthogonal elementwise.
 * `TauCeti.FiniteBilinearModule.primaryComponent_le_orthogonalComplement_primaryComponent`: the
   corresponding inclusion of additive subgroups.
+* `TauCeti.FiniteBilinearModule.isNondegenerate_restrict_primaryComponent`: a nondegenerate
+  pairing restricts nondegenerately to each prime-primary component.
 * `TauCeti.FiniteBilinearModule.pairing_sum_eq_sum_pairing_of_mem_primaryComponent`: a bilinear
   pairing of primary decompositions is the sum of the component pairings.
 * `TauCeti.FiniteQuadraticModule.quadratic_sum_of_mem_primaryComponent`: a quadratic value on a
@@ -84,6 +87,54 @@ theorem primaryComponent_le_orthogonalComplement_primaryComponent {p q : ℕ}
   intro y hy
   exact A.pairing_eq_zero_of_mem_primaryComponent hp hq hpq hx hy
 
+/-! ## Nondegeneracy of the restricted pairing -/
+
+/-- Multiplication by the prime-to-`p` part of the group cardinality sends every element into the
+`p`-primary component.
+
+This is the elementary projection onto the primary part needed to detect the radical of the
+restricted pairing. It is stated for the underlying group because it is independent of the form. -/
+private theorem ordCompl_natCard_nsmul_mem_primaryComponent (p : ℕ) (x : A) :
+    ordCompl[p] (Nat.card A) • x ∈ AddCommGroup.primaryComponent A p := by
+  rw [AddCommGroup.mem_primaryComponent]
+  refine ⟨(Nat.card A).factorization p, ?_⟩
+  rw [← mul_nsmul, Nat.mul_comm, Nat.ordProj_mul_ordCompl_eq_self, card_nsmul_eq_zero']
+
+/-- The restriction of a nondegenerate finite bilinear module to any prime-primary component is
+nondegenerate. -/
+theorem isNondegenerate_restrict_primaryComponent (hA : A.IsNondegenerate) {p : ℕ}
+    (hp : p.Prime) :
+    (A.restrict (AddCommGroup.primaryComponent A p)).IsNondegenerate := by
+  -- For `x` in the radical of the restricted pairing and arbitrary `z`, pairing `x` with
+  -- `ordCompl[p] (Nat.card A) • z` shows the prime-to-`p` part of the cardinality annihilates
+  -- `A.pairing x z`, while a power of `p` annihilates it because `x` is `p`-primary.  Those two
+  -- integers are coprime, so `A.pairing x z = 0` for every `z` and ambient nondegeneracy applies.
+  rw [(A.restrict (AddCommGroup.primaryComponent A p)).isNondegenerate_iff_injective]
+  intro x y hxy
+  apply Subtype.ext
+  apply sub_eq_zero.mp
+  apply hA.eq_zero_of_forall_pairing_eq_zero
+  intro z
+  obtain ⟨k, hk⟩ := AddCommGroup.mem_primaryComponent.mp (sub_mem x.property y.property)
+  have hcard : Nat.card A ≠ 0 := Nat.card_ne_zero.mpr ⟨⟨0⟩, inferInstance⟩
+  apply eq_zero_of_coprime_nsmul_eq_zero
+      ((Nat.coprime_ordCompl hp hcard).pow_left k)
+  · have hmap := DFunLike.congr_fun
+      (map_nsmul A.pairing (p ^ k) (x.1 - y.1)) z
+    rw [hk, map_zero] at hmap
+    calc
+      p ^ k • A.pairing (x.1 - y.1) z =
+          (p ^ k • A.pairing (x.1 - y.1)) z :=
+        (AddMonoidHom.nsmul_apply _ _ _).symm
+      _ = (0 : CharacterModule A) z := hmap.symm
+      _ = 0 := AddMonoidHom.zero_apply z
+  · rw [← map_nsmul (A.pairing (x.1 - y.1))]
+    have hz := ordCompl_natCard_nsmul_mem_primaryComponent A p z
+    have heval := DFunLike.congr_fun hxy
+      (⟨ordCompl[p] (Nat.card A) • z, hz⟩ : AddCommGroup.primaryComponent A p)
+    rw [map_sub]
+    exact sub_eq_zero.mpr heval
+
 /-! ## Finite sums -/
 
 /-- Pairing sums of elements from pairwise distinct primary components keeps only the diagonal
@@ -114,6 +165,13 @@ end FiniteBilinearModule
 namespace FiniteQuadraticModule
 
 variable (A : FiniteQuadraticModule)
+
+/-- The polar pairing of a nondegenerate finite quadratic module restricts nondegenerately to each
+prime-primary component. -/
+theorem isNondegenerate_restrict_primaryComponent (hA : A.IsNondegenerate) {p : ℕ}
+    (hp : p.Prime) :
+    (A.restrict (AddCommGroup.primaryComponent A p)).IsNondegenerate :=
+  A.toFiniteBilinearModule.isNondegenerate_restrict_primaryComponent hA hp
 
 /-- A quadratic map is additive on elements belonging to primary components for distinct primes. -/
 theorem quadratic_add_of_mem_primaryComponent {p q : ℕ} (hp : p.Prime) (hq : q.Prime)
