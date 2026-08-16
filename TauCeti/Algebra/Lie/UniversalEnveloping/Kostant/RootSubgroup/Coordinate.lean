@@ -69,8 +69,8 @@ noncomputable def kostantRootSubgroupMatrix :
   (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
     (kostantRootSubgroupPoints e h ρ M hM i hnil)
 
-/-- The matrix-valued root subgroup is the divided-power action followed by the change to the
-coordinates of `b.baseChange A`. -/
+/-- The public unfolding equation for the matrix-valued root subgroup, exposing across the module
+boundary the divided-power action followed by the change to the coordinates of `b.baseChange A`. -/
 theorem kostantRootSubgroupMatrix_def :
     kostantRootSubgroupMatrix e h ρ M hM i hnil b =
       (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
