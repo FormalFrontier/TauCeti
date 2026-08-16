@@ -7,14 +7,16 @@ module
 
 public import TauCeti.LinearAlgebra.BilinearForm.Basic
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
+public import TauCeti.LinearAlgebra.IntegralLattice.Signature
 
 /-!
 # Scaling and negating integral lattices
 
 Multiplying the form of an integral lattice by an integer leaves its carrier fixed and preserves
 integrality. This file equips integral lattices with that scalar action and computes the induced
-integral form, Gram matrix, determinant, and discriminant. In particular, negating the form changes
-the signed determinant by `(-1) ^ rank` and leaves the discriminant unchanged.
+integral form, Gram matrix, determinant, discriminant, radical, and signature. Positive scaling
+preserves the positive and negative indices of inertia, while negative scaling exchanges them;
+negating the form is the special case `-1`.
 
 The scalar is integral because arbitrary rational scaling need not preserve an integral form. A
 later development may admit rational scalars together with the necessary integrality hypothesis;
@@ -32,7 +34,12 @@ the canonical operation internal to integral lattices is the integer action defi
   lattice rank.
 * `TauCeti.IntegralLattice.discriminant_smul`: the discriminant is multiplied by the absolute
   scalar to the lattice rank.
+* `TauCeti.IntegralLattice.signature_smul_of_pos` and
+  `TauCeti.IntegralLattice.signature_smul_of_neg`: scaling preserves or exchanges the two
+  non-null indices according to the sign.
 * `TauCeti.IntegralLattice.discriminant_neg`: form negation preserves the discriminant.
+* `TauCeti.IntegralLattice.signature_neg`: form negation exchanges the positive and negative
+  indices and preserves the null index.
 
 ## References
 
@@ -165,6 +172,73 @@ theorem nondegenerate_smul_iff {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) 
   exact TauCeti.BilinForm.nondegenerate_smul_iff
     (IsRegular.of_ne_zero (Int.cast_ne_zero.mpr hn))
 
+/-! ## Radical and signature -/
+
+/-- Scaling by a nonzero integer preserves the radical. -/
+theorem radical_smul {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
+    (n • L).radical = L.radical := by
+  ext x
+  rw [(n • L).mem_radical_iff, L.mem_radical_iff, smul_form]
+  simp only [LinearMap.smul_apply, smul_eq_mul]
+  constructor
+  · intro hx y
+    exact (mul_eq_zero.mp (hx y)).resolve_left (Int.cast_ne_zero.mpr hn)
+  · intro hx y
+    rw [hx y, mul_zero]
+
+/-- Scaling by a nonzero integer preserves the null index. -/
+theorem sigNull_smul {n : ℤ} (hn : n ≠ 0) (L : IntegralLattice V) :
+    (n • L).sigNull = L.sigNull := by
+  rw [sigNull, radical_smul hn, sigNull]
+
+/-- Scaling by a positive integer preserves the positive index. -/
+theorem sigPos_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
+    (n • L).sigPos = L.sigPos := by
+  let _ := L.finiteDimensional
+  have hnq : (0 : ℚ) < n := by exact_mod_cast hn
+  change _root_.sigPos (n • L).form.toQuadraticMap = _root_.sigPos L.form.toQuadraticMap
+  rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
+  exact QuadraticForm.sigPos_smul_of_pos L.form.toQuadraticMap hnq
+
+/-- Scaling by a positive integer preserves the negative index. -/
+theorem sigNeg_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
+    (n • L).sigNeg = L.sigNeg := by
+  let _ := L.finiteDimensional
+  have hnq : (0 : ℚ) < n := by exact_mod_cast hn
+  change _root_.sigNeg (n • L).form.toQuadraticMap = _root_.sigNeg L.form.toQuadraticMap
+  rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
+  exact QuadraticForm.sigNeg_smul_of_pos L.form.toQuadraticMap hnq
+
+/-- Scaling by a positive integer preserves the signature. -/
+theorem signature_smul_of_pos {n : ℤ} (hn : 0 < n) (L : IntegralLattice V) :
+    (n • L).signature = L.signature := by
+  rw [signature, sigPos_smul_of_pos hn, sigNull_smul hn.ne', sigNeg_smul_of_pos hn,
+    signature]
+
+/-- Scaling by a negative integer exchanges the positive and negative indices. -/
+theorem sigPos_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
+    (n • L).sigPos = L.sigNeg := by
+  let _ := L.finiteDimensional
+  have hnq : (n : ℚ) < 0 := by exact_mod_cast hn
+  change _root_.sigPos (n • L).form.toQuadraticMap = _root_.sigNeg L.form.toQuadraticMap
+  rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
+  exact QuadraticForm.sigPos_smul_of_neg L.form.toQuadraticMap hnq
+
+/-- Scaling by a negative integer exchanges the negative and positive indices. -/
+theorem sigNeg_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
+    (n • L).sigNeg = L.sigPos := by
+  let _ := L.finiteDimensional
+  have hnq : (n : ℚ) < 0 := by exact_mod_cast hn
+  change _root_.sigNeg (n • L).form.toQuadraticMap = _root_.sigPos L.form.toQuadraticMap
+  rw [smul_form, LinearMap.BilinMap.toQuadraticMap_smul]
+  exact QuadraticForm.sigNeg_smul_of_neg L.form.toQuadraticMap hnq
+
+/-- Scaling by a negative integer exchanges the positive and negative indices and preserves the
+null index. -/
+theorem signature_smul_of_neg {n : ℤ} (hn : n < 0) (L : IntegralLattice V) :
+    (n • L).signature = (L.sigNeg, L.sigNull, L.sigPos) := by
+  rw [signature, sigPos_smul_of_neg hn, sigNull_smul hn.ne, sigNeg_smul_of_neg hn]
+
 /-- Scaling multiplies the discriminant by the absolute scalar to the rank of the lattice. -/
 @[simp]
 theorem discriminant_smul (n : ℤ) (L : IntegralLattice V) :
@@ -246,6 +320,32 @@ theorem nondegenerate_neg_iff (L : IntegralLattice V) :
     (-L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [neg_def]
   exact nondegenerate_smul_iff (by norm_num) L
+
+/-- Form negation preserves the radical. -/
+@[simp]
+theorem radical_neg (L : IntegralLattice V) : (-L).radical = L.radical := by
+  rw [neg_def, radical_smul (by norm_num)]
+
+/-- Form negation preserves the null index. -/
+@[simp]
+theorem sigNull_neg (L : IntegralLattice V) : (-L).sigNull = L.sigNull := by
+  rw [neg_def, sigNull_smul (by norm_num)]
+
+/-- Form negation exchanges the positive and negative indices. -/
+@[simp]
+theorem sigPos_neg (L : IntegralLattice V) : (-L).sigPos = L.sigNeg := by
+  rw [neg_def, sigPos_smul_of_neg (by norm_num)]
+
+/-- Form negation exchanges the negative and positive indices. -/
+@[simp]
+theorem sigNeg_neg (L : IntegralLattice V) : (-L).sigNeg = L.sigPos := by
+  rw [neg_def, sigNeg_smul_of_neg (by norm_num)]
+
+/-- Form negation exchanges the positive and negative indices and preserves the null index. -/
+@[simp]
+theorem signature_neg (L : IntegralLattice V) :
+    (-L).signature = (L.sigNeg, L.sigNull, L.sigPos) := by
+  rw [neg_def, signature_smul_of_neg (by norm_num)]
 
 /-- Form negation preserves the nonnegative discriminant. -/
 @[simp]
