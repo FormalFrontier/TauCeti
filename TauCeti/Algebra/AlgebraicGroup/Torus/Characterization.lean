@@ -83,11 +83,23 @@ theorem iff_multiplicativeType_and_geometricallyConnected_and_geometricallyReduc
         (DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G).obj :=
       (geometricallyReducedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso i'.symm
         (geometricallyReducedCommHopfAlgProperty.baseChange (AlgebraicClosure k) hreduced)
+    let coordinateRingObjIso :
+        _root_.CommHopfAlgCat.of (AlgebraicClosure k)
+            (MonoidAlgebra (AlgebraicClosure k) G) ≅
+          (DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G).obj :=
+      Iso.refl _
+    have hconnectedMonoid :=
+      (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
+        coordinateRingObjIso hconnected'
+    have hreducedMonoid :=
+      (geometricallyReducedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
+        coordinateRingObjIso hreduced'
     let _ : ConnectedSpace
         (PrimeSpectrum (MonoidAlgebra (AlgebraicClosure k) G)) :=
-      hconnected'.connectedSpace (AlgebraicClosure k)
-        (DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G).obj
-    let _ : IsReduced (MonoidAlgebra (AlgebraicClosure k) G) := hreduced'.isReduced
+      hconnectedMonoid.connectedSpace (AlgebraicClosure k)
+        (_root_.CommHopfAlgCat.of (AlgebraicClosure k)
+          (MonoidAlgebra (AlgebraicClosure k) G))
+    let _ : IsReduced (MonoidAlgebra (AlgebraicClosure k) G) := hreducedMonoid.isReduced
     let _ : IsMulTorsionFree G :=
       isMulTorsionFree_of_isReduced_monoidAlgebra_of_connectedSpace
         (AlgebraicClosure k) G
