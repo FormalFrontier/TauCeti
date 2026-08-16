@@ -62,8 +62,8 @@ variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
   [AddCommGroup M] [Module K M] [FiniteDimensional K M]
 
 omit [FiniteDimensional K M] in
-/-- Multiplication by a positive scalar preserves positive-definiteness. The reverse implication
-is included because `QuadraticMap.PosDef.smul` only supplies the forward implication. -/
+/-- Multiplication by a positive scalar preserves positive-definiteness. Thus a quadratic form is
+positive-definite if and only if its positive scalar multiple is. -/
 @[simp]
 theorem posDef_smul_iff_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
     (a • Q).PosDef ↔ Q.PosDef := by
