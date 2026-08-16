@@ -195,7 +195,7 @@ end Field
 
 section Invariants
 
-variable {n : Type*} [DecidableEq n] [Fintype n] {R : Type*} [CommRing R]
+variable {n : Type*} [DecidableEq n] [Fintype n] {R : Type*} [CommSemiring R]
 
 /-- Conjugate elements of `GL n R` have the same trace. -/
 theorem trace_val_eq_of_isConj {g h : GL n R} (hgh : IsConj g h) :
@@ -234,6 +234,15 @@ def companionGL (t : F) (d : Fˣ) : GL (Fin 2) F :=
 @[simp]
 theorem coe_companionGL (t : F) (d : Fˣ) :
     (companionGL t d : Matrix (Fin 2) (Fin 2) F) = companionFinTwo t (d : F) := (rfl)
+
+/-- **The determinant of a companion element of `GL₂` is its constant term**, as a unit. The
+matrix-level statement is `TauCeti.det_companionFinTwo`, reached from here by
+`Matrix.GeneralLinearGroup.val_det_apply`. -/
+@[simp]
+theorem det_companionGL (t : F) (d : Fˣ) :
+    Matrix.GeneralLinearGroup.det (companionGL t d) = d :=
+  Units.ext (by rw [Matrix.GeneralLinearGroup.val_det_apply, coe_companionGL,
+    det_companionFinTwo])
 
 /-- A companion element of `GL₂` is not scalar. -/
 theorem companionGL_notMem_range_scalar (t : F) (d : Fˣ) :
