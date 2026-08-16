@@ -94,6 +94,7 @@ noncomputable def affineA1 : IntegralLattice (Fin 2 → ℚ) := by
     simp only [affineA1Matrix, eq_comm])
 
 /-- Membership in the `A₁` carrier means being an integer inside `ℚ`. -/
+@[simp]
 theorem mem_a1_carrier_iff (x : ℚ) :
     x ∈ a1.carrier ↔ ∃ z : ℤ, (z : ℚ) = x := by
   classical
@@ -101,6 +102,7 @@ theorem mem_a1_carrier_iff (x : ℚ) :
   simp [Basis.singleton_repr]
 
 /-- Membership in the negative `A₁` carrier means being an integer inside `ℚ`. -/
+@[simp]
 theorem mem_negativeA1_carrier_iff (x : ℚ) :
     x ∈ negativeA1.carrier ↔ ∃ z : ℤ, (z : ℚ) = x := by
   classical
@@ -108,6 +110,7 @@ theorem mem_negativeA1_carrier_iff (x : ℚ) :
   simp [Basis.singleton_repr]
 
 /-- A vector belongs to the hyperbolic-plane carrier exactly when both coordinates are integers. -/
+@[simp]
 theorem mem_hyperbolicPlane_carrier_iff (x : Fin 2 → ℚ) :
     x ∈ hyperbolicPlane.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   classical
@@ -115,6 +118,7 @@ theorem mem_hyperbolicPlane_carrier_iff (x : Fin 2 → ℚ) :
   simp [Pi.basisFun_repr]
 
 /-- A vector belongs to the affine `A₁` carrier exactly when both coordinates are integers. -/
+@[simp]
 theorem mem_affineA1_carrier_iff (x : Fin 2 → ℚ) :
     x ∈ affineA1.carrier ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = x i := by
   classical
