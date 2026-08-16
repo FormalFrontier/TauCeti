@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `Matrix.scalar` and the `2 × 2` matrix notation occur in the statements below, and
--- `TauCeti.mem_range_scalar_fin_two_iff` is how "non-scalar" is read off the entries.
-public import TauCeti.LinearAlgebra.Matrix.Commute
+-- `TauCeti.companionFinTwo` occurs in the statements below, `Matrix.scalar` and the `2 × 2` matrix
+-- notation come with it, and rational canonical form is what the classification runs on.
+public import TauCeti.LinearAlgebra.Matrix.RationalCanonicalFormFinTwo
 -- `GL`, `Matrix.GeneralLinearGroup.scalar` and `Matrix.GeneralLinearGroup.det` occur in the
 -- statements below.
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
@@ -18,25 +18,18 @@ public import Mathlib.Algebra.Group.Conj
 -- count.
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
 import Mathlib.SetTheory.Cardinal.Finite
--- Non-public: the entry identities below are polynomial, and are solved by `ring` and
--- `linear_combination` in the proofs only.
-import Mathlib.Tactic.LinearCombination
+-- Non-public: the arithmetic of the final count is closed by `ring`, in the proof only.
 import Mathlib.Tactic.Ring
 
 /-!
 # The conjugacy classes of `GL₂` over a field
 
-A `2 × 2` matrix over a field is scalar or **cyclic**: as soon as it is not scalar some vector `v`
-is not an eigenvector, and `v, M *ᵥ v` is then a basis in which `M` becomes the companion matrix
-`!![0, -det M; 1, trace M]` of its characteristic polynomial `X² - (trace M) X + det M`. That is
-the rational canonical form in size two, and it classifies the conjugacy classes of `GL₂(F)`
-completely: a scalar element is alone in its class, and two non-scalar elements are conjugate
-exactly when their traces and their determinants agree.
-
-The second column of the conjugating equation is the Cayley-Hamilton identity
-`M² = (trace M) • M - (det M) • 1` in disguise. In size two that identity is a four-entry
-polynomial identity in the entries, so it is discharged by `ring` here rather than by invoking the
-general theory.
+Rational canonical form in size two, proved in
+`TauCeti.LinearAlgebra.Matrix.RationalCanonicalFormFinTwo`, says that a non-scalar `2 × 2` matrix
+`M` over a field is similar to the companion matrix `!![0, -det M; 1, trace M]` of its
+characteristic polynomial `X² - (trace M) X + det M`. Read inside the group, it classifies the
+conjugacy classes of `GL₂(F)` completely: a scalar element is alone in its class, and two
+non-scalar elements are conjugate exactly when their traces and their determinants agree.
 
 Counting the classes over a finite field is then a matter of counting the invariants. The scalar
 classes are indexed by the units `a`, giving `q - 1` of them; the non-scalar classes are indexed by
@@ -45,34 +38,32 @@ of them. Altogether `q² - 1`, which is the number of irreducible complex repres
 `GL₂(𝔽_q)`.
 
 Being scalar is spelled `M ∈ Set.range (Matrix.scalar (Fin 2))`, as in
-`TauCeti.LinearAlgebra.Matrix.Commute`, and unfolded by
-`TauCeti.mem_range_scalar_fin_two_iff`; that file's commutant computation is the companion result,
+`TauCeti.LinearAlgebra.Matrix.Commute`, whose commutant computation is the companion result,
 describing the centralizer of a non-scalar matrix rather than its conjugacy class.
 
 ## Main definitions
 
-* `TauCeti.companionFinTwo`: the companion matrix `!![0, -d; 1, t]` of `X² - t X + d`.
-* `TauCeti.companionGL`: the same matrix as an element of `GL₂`, for an invertible constant term.
+* `TauCeti.companionGL`: the companion matrix of `X² - t X + d` as an element of `GL₂`, for an
+  invertible constant term.
 * `TauCeti.conjRepGLFinTwo`: the chosen representative of each conjugacy class of `GL₂(F)`, indexed
   by `Fˣ ⊕ F × Fˣ`.
 * `TauCeti.conjClassesGLFinTwoEquiv`: the resulting indexing of `ConjClasses (GL (Fin 2) F)`.
 
 ## Main results
 
-* `TauCeti.exists_det_ne_zero_mul_eq_mul_companionFinTwo`: **rational canonical form in size two**,
-  a non-scalar `2 × 2` matrix over a field is similar to the companion matrix of its characteristic
-  polynomial.
-* `TauCeti.isConj_companionGL`: the same statement inside `GL₂(F)`.
-* `TauCeti.eq_of_isConj_of_mem_range_scalar`: a scalar element of `GL n R` is alone in its class.
+* `TauCeti.isConj_companionGL`: **rational canonical form inside `GL₂(F)`**, a non-scalar element
+  is conjugate to the companion element of its characteristic polynomial.
+* `TauCeti.eq_of_mem_range_scalar_of_isConj`: a scalar element of `GL n R` is alone in its class.
 * `TauCeti.isConj_iff_of_notMem_range_scalar`: **the classification**, two non-scalar elements of
   `GL₂(F)` are conjugate exactly when they have the same trace and the same determinant.
-* `TauCeti.natCard_conjClasses_GL_fin_two`: `GL₂(𝔽_q)` has `q² - 1` conjugacy classes.
+* `TauCeti.card_conjClasses_GL2`: `GL₂(𝔽_q)` has `q² - 1` conjugacy classes.
 
 ## References
 
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
   Layer 9, "The conjugacy classes (a build target)": class representatives and the count
-  `q² - 1 = Nat.card (ConjClasses (GL (Fin 2) F))`, matching the number of irreducibles.
+  `q² - 1 = Nat.card (ConjClasses (GL (Fin 2) F))`, matching the number of irreducibles. The final
+  theorem carries the name `card_conjClasses_GL2` the roadmap gives it there.
 * C. Bonnafé, *Representations of `SL₂(𝔽_q)`* (2011), Chapter 1.
 * J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42 (1977), §5.2.
 -/
@@ -82,114 +73,6 @@ public section
 open Matrix
 
 namespace TauCeti
-
-/-! ### The companion matrix of a monic quadratic -/
-
-section CommRing
-
-variable {R : Type*} [CommRing R] (t d : R)
-
-/-- **The companion matrix** `!![0, -d; 1, t]` of the monic quadratic `X² - t X + d`: the matrix of
-multiplication by `X` on `R[X] ⧸ (X² - t X + d)` in the basis `1, X`. Its trace is `t` and its
-determinant is `d`, so it is the normal form that the classification of `2 × 2` matrices below runs
-on. -/
-def companionFinTwo : Matrix (Fin 2) (Fin 2) R := !![0, -d; 1, t]
-
-/-- `TauCeti.companionFinTwo` spelled out. -/
-theorem companionFinTwo_def : companionFinTwo t d = !![0, -d; 1, t] := (rfl)
-
-@[simp]
-theorem det_companionFinTwo : (companionFinTwo t d).det = d := by
-  rw [companionFinTwo_def, Matrix.det_fin_two_of]
-  ring
-
-@[simp]
-theorem trace_companionFinTwo : (companionFinTwo t d).trace = t := by
-  rw [companionFinTwo_def, Matrix.trace_fin_two_of]
-  ring
-
-/-- **A companion matrix is never scalar**: its lower-left entry is `1`. -/
-theorem companionFinTwo_notMem_range_scalar [Nontrivial R] :
-    companionFinTwo t d ∉ Set.range (Matrix.scalar (Fin 2)) := by
-  rw [mem_range_scalar_fin_two_iff]
-  rintro ⟨-, h10, -⟩
-  rw [companionFinTwo_def] at h10
-  simp at h10
-
-end CommRing
-
-/-! ### Rational canonical form in size two -/
-
-section Field
-
-variable {F : Type*} [Field F] {M : Matrix (Fin 2) (Fin 2) F}
-
-/-- Two vectors of `F²` spanning a degenerate parallelogram are proportional, provided the first is
-nonzero. This is the linear independence of `v` and `M *ᵥ v` below, in the form in which the
-`2 × 2` determinant supplies it. -/
-private theorem exists_eq_smul_of_det_fin_two_eq_zero {v u : Fin 2 → F} (hv : v ≠ 0)
-    (hdet : v 0 * u 1 - u 0 * v 1 = 0) : ∃ c : F, u = c • v := by
-  have hor : v 0 ≠ 0 ∨ v 1 ≠ 0 := by
-    by_contra hcon
-    push Not at hcon
-    exact hv (funext (Fin.forall_fin_two.2 ⟨hcon.1, hcon.2⟩))
-  rcases hor with h0 | h1
-  · refine ⟨u 0 / v 0, funext (Fin.forall_fin_two.2 ⟨?_, ?_⟩)⟩ <;>
-      rw [Pi.smul_apply, smul_eq_mul, div_mul_eq_mul_div, eq_div_iff h0]
-    linear_combination hdet
-  · refine ⟨u 1 / v 1, funext (Fin.forall_fin_two.2 ⟨?_, ?_⟩)⟩ <;>
-      rw [Pi.smul_apply, smul_eq_mul, div_mul_eq_mul_div, eq_div_iff h1]
-    linear_combination -hdet
-
-/-- **A non-scalar `2 × 2` matrix has a cyclic vector**: some vector is not an eigenvector. If
-every vector were an eigenvector then the two standard basis vectors and their sum would force the
-off-diagonal entries to vanish and the two diagonal entries to agree. -/
-theorem exists_forall_mulVec_ne_smul (hM : M ∉ Set.range (Matrix.scalar (Fin 2))) :
-    ∃ v : Fin 2 → F, ∀ c : F, M *ᵥ v ≠ c • v := by
-  by_contra hcon
-  push Not at hcon
-  have key : ∀ v0 v1 c : F, M *ᵥ ![v0, v1] = c • ![v0, v1] →
-      M 0 0 * v0 + M 0 1 * v1 = c * v0 ∧ M 1 0 * v0 + M 1 1 * v1 = c * v1 := by
-    refine fun v0 v1 c hv => ⟨?_, ?_⟩
-    · simpa [Matrix.mulVec, dotProduct, Fin.sum_univ_two] using congrFun hv 0
-    · simpa [Matrix.mulVec, dotProduct, Fin.sum_univ_two] using congrFun hv 1
-  obtain ⟨a, ha⟩ := hcon ![1, 0]
-  obtain ⟨b, hb⟩ := hcon ![0, 1]
-  obtain ⟨c, hc⟩ := hcon ![1, 1]
-  obtain ⟨-, ha1⟩ := key 1 0 a ha
-  obtain ⟨hb0, -⟩ := key 0 1 b hb
-  obtain ⟨hc0, hc1⟩ := key 1 1 c hc
-  exact hM (mem_range_scalar_fin_two_iff.2
-    ⟨by linear_combination hb0, by linear_combination ha1,
-      by linear_combination hc0 - hc1 - hb0 + ha1⟩)
-
-/-- **Rational canonical form in size two.** A non-scalar `2 × 2` matrix `M` over a field is
-similar to the companion matrix of its characteristic polynomial `X² - (trace M) X + det M`: in the
-basis `v, M *ᵥ v` supplied by a cyclic vector `v` it *is* that companion matrix, the second column
-of the identity being Cayley-Hamilton.
-
-The conjugating matrix is produced together with its determinant rather than as an element of
-`GL₂`, so that the statement also covers a matrix that is not itself invertible;
-`TauCeti.isConj_companionGL` is the group-level form. -/
-theorem exists_det_ne_zero_mul_eq_mul_companionFinTwo
-    (hM : M ∉ Set.range (Matrix.scalar (Fin 2))) :
-    ∃ P : Matrix (Fin 2) (Fin 2) F,
-      P.det ≠ 0 ∧ M * P = P * companionFinTwo M.trace M.det := by
-  obtain ⟨v, hv⟩ := exists_forall_mulVec_ne_smul hM
-  have hv0 : v ≠ 0 := by
-    rintro rfl
-    exact hv 0 (by simp)
-  refine ⟨!![v 0, (M *ᵥ v) 0; v 1, (M *ᵥ v) 1], ?_, ?_⟩
-  · rw [Matrix.det_fin_two_of]
-    intro hdet
-    obtain ⟨c, hc⟩ := exists_eq_smul_of_det_fin_two_eq_zero (u := M *ᵥ v) hv0 hdet
-    exact hv c hc
-  · ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [companionFinTwo_def, Matrix.mul_apply, Fin.sum_univ_two, Matrix.mulVec,
-        dotProduct, Matrix.det_fin_two, Matrix.trace_fin_two] <;> ring
-
-end Field
 
 /-! ### Conjugacy invariants -/
 
@@ -206,7 +89,7 @@ theorem trace_val_eq_of_isConj {g h : GL n R} (hgh : IsConj g h) :
 
 /-- **A scalar element of `GL n R` is alone in its conjugacy class**: scalar matrices are
 central. -/
-theorem eq_of_isConj_of_mem_range_scalar {g h : GL n R}
+theorem eq_of_mem_range_scalar_of_isConj {g h : GL n R}
     (hg : (g : Matrix n n R) ∈ Set.range (Matrix.scalar n)) (hgh : IsConj g h) : g = h := by
   obtain ⟨c, hc⟩ := isConj_iff.1 hgh
   obtain ⟨a, ha⟩ := hg
@@ -329,14 +212,14 @@ theorem bijective_mk_conjRepGLFinTwo :
   · rintro (a | ⟨t, d⟩) (b | ⟨t', d'⟩) hab <;>
       simp only [ConjClasses.mk_eq_mk_iff_isConj, conjRepGLFinTwo_inl,
         conjRepGLFinTwo_inr] at hab
-    · have hval := eq_of_isConj_of_mem_range_scalar (n := Fin 2) ⟨(a : F), rfl⟩ hab
+    · have hval := eq_of_mem_range_scalar_of_isConj (n := Fin 2) ⟨(a : F), rfl⟩ hab
       have hcoe := congrArg (fun x : GL (Fin 2) F => (x : Matrix (Fin 2) (Fin 2) F)) hval
       simp only [Matrix.GeneralLinearGroup.coe_scalar] at hcoe
       have : a = b := Units.ext (Matrix.scalar_inj.1 hcoe)
       rw [this]
-    · exact absurd (eq_of_isConj_of_mem_range_scalar (n := Fin 2) ⟨(a : F), rfl⟩ hab)
+    · exact absurd (eq_of_mem_range_scalar_of_isConj (n := Fin 2) ⟨(a : F), rfl⟩ hab)
         (scalar_ne_companionGL t' d' a)
-    · exact absurd (eq_of_isConj_of_mem_range_scalar (n := Fin 2) ⟨(b : F), rfl⟩ hab.symm)
+    · exact absurd (eq_of_mem_range_scalar_of_isConj (n := Fin 2) ⟨(b : F), rfl⟩ hab.symm)
         (scalar_ne_companionGL t d b)
     · obtain ⟨ht, hd⟩ := (isConj_iff_of_notMem_range_scalar
         (companionGL_notMem_range_scalar t d) (companionGL_notMem_range_scalar t' d')).1 hab
@@ -375,8 +258,11 @@ end GeneralLinear
 /-- **`GL₂(𝔽_q)` has `q² - 1` conjugacy classes**: `q - 1` central ones and `q (q - 1)` non-scalar
 ones, indexed by their trace and their determinant. This is the number of irreducible complex
 representations of `GL₂(𝔽_q)`, whose four families have dimensions `1`, `q`, `q + 1` and
-`q - 1`. -/
-theorem natCard_conjClasses_GL_fin_two (F : Type*) [Field F] [Finite F] :
+`q - 1`.
+
+The name is the roadmap's; the statement is the roadmap's with `[Fintype F]` weakened to
+`[Finite F]`, nothing in the argument deciding equality. -/
+theorem card_conjClasses_GL2 (F : Type*) [Field F] [Finite F] :
     Nat.card (ConjClasses (GL (Fin 2) F)) = Nat.card F ^ 2 - 1 := by
   rw [← Nat.card_congr (conjClassesGLFinTwoEquiv (F := F)), Nat.card_sum, Nat.card_prod,
     Nat.card_units F]
