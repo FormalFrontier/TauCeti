@@ -134,6 +134,7 @@ end Point
 variable [PerfectField K]
 
 /-- A point is semisimple exactly when its unipotent part is the identity. -/
+@[simp]
 theorem isSemisimplePoint_iff_unipotentPart_eq_one (g : WithConv (H₁ →ₐ[k] K)) :
     IsSemisimplePoint g ↔ Point.unipotentPart k H₁ K g = 1 := by
   constructor
@@ -159,12 +160,12 @@ in the ambient affine group is semisimple. -/
 theorem isSemisimplePoint_mapDomain_iff_of_surjective
     (f : H₁ →ₐc[k] H₂) (hf : Function.Surjective f)
     (g : WithConv (H₂ →ₐ[k] K)) :
-    IsSemisimplePoint (toConv (g.ofConv.comp (f : H₁ →ₐ[k] H₂))) ↔
+    toConv ((Point.unipotentPart k H₂ K g).ofConv.comp (f : H₁ →ₐ[k] H₂)) = 1 ↔
       IsSemisimplePoint g := by
   rw [← AlgHom.mapDomain_apply]
   constructor
   · intro hg
-    rw [isSemisimplePoint_iff_unipotentPart_eq_one] at hg ⊢
+    rw [isSemisimplePoint_iff_unipotentPart_eq_one]
     let f' : CommHopfAlgCat.of k H₁ ⟶ CommHopfAlgCat.of k H₂ := CommHopfAlgCat.ofHom f
     apply CommHopfAlgCat.mapPointsFunctor_app_injective_of_surjective f' hf
       (CommAlgCat.of k K)
@@ -174,10 +175,12 @@ theorem isSemisimplePoint_mapDomain_iff_of_surjective
       rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
       simp only [pointsFunctor_obj]
       dsimp [f']
-      rw [← AlgHom.mapDomain_apply, ← Point.unipotentPart_mapDomain]
+      rw [← AlgHom.mapDomain_apply]
       exact hg
     exact hmap.trans (map_one _).symm
   · intro hg
+    rw [← Point.unipotentPart_mapDomain,
+      ← isSemisimplePoint_iff_unipotentPart_eq_one]
     exact hg.mapDomain f
 
 end HopfAlgebra

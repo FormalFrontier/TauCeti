@@ -98,8 +98,9 @@ theorem counitBialgHom_bijective_of_geometricallySemisimple_of_geometricallyUnip
       have := congrArg (fun q : WithConv (H →ₐ[k] AlgebraicClosure k) ↦ q.ofConv y) hg
       simpa [g, AlgHom.convOne_apply] using this
     rw [hfx, hfy]
-    change Coalgebra.counit x = Coalgebra.counit y at hxy
-    rw [hxy]
+    have hxy' : Coalgebra.counit (R := k) x = Coalgebra.counit (R := k) y := by
+      simpa only [Bialgebra.counitBialgHom_apply] using hxy
+    rw [hxy']
   · intro r
     exact ⟨algebraMap k H r, by simp⟩
 
@@ -134,10 +135,13 @@ theorem counitBialgEquivOfGeometricallySemisimpleUnipotent_symm_apply
     (counitBialgEquivOfGeometricallySemisimpleUnipotent H hsemisimple hunipotent).symm r =
       algebraMap k H r := by
   let e := counitBialgEquivOfGeometricallySemisimpleUnipotent H hsemisimple hunipotent
-  apply e.injective
-  change e (e.symm r) = e (algebraMap k H r)
-  rw [e.apply_symm_apply]
-  exact (Bialgebra.counit_algebraMap (R := k) (A := H) r).symm
+  refine e.toMulEquiv.symm_apply_eq.mpr ?_
+  calc
+    r = Coalgebra.counit (R := k) (algebraMap k H r) :=
+      (Bialgebra.counit_algebraMap (R := k) (A := H) r).symm
+    _ = e (algebraMap k H r) :=
+      (counitBialgEquivOfGeometricallySemisimpleUnipotent_apply
+        H hsemisimple hunipotent (algebraMap k H r)).symm
 
 /-- A Hopf ideal is the augmentation ideal when its quotient is reduced, finite type, and has
 only semisimple and unipotent geometric points. Equivalently, the closed subgroup cut out by the
@@ -158,10 +162,16 @@ theorem eq_augmentation_of_geometricallySemisimple_of_geometricallyUnipotent
     apply (mkQuotient_eq_zero_iff H I x).mp
     let e := counitBialgEquivOfGeometricallySemisimpleUnipotent
       (quotient H I) hsemisimple hunipotent
-    apply e.injective
-    change Coalgebra.counit (R := k) (toBialgHom (mkQuotient H I) x) =
-      Coalgebra.counit (R := k) (0 : quotient H I)
-    simpa only [CoalgHomClass.counit_comp_apply, map_zero] using hx
+    calc
+      toBialgHom (mkQuotient H I) x =
+          e.symm (e (toBialgHom (mkQuotient H I) x)) :=
+        (e.symm_apply_apply (toBialgHom (mkQuotient H I) x)).symm
+      _ = algebraMap k (quotient H I)
+          (Coalgebra.counit (R := k) (toBialgHom (mkQuotient H I) x)) := by
+        rw [counitBialgEquivOfGeometricallySemisimpleUnipotent_apply,
+          counitBialgEquivOfGeometricallySemisimpleUnipotent_symm_apply]
+      _ = 0 := by
+        rw [CoalgHomClass.counit_comp_apply, hx, map_zero]
 
 end FiniteTypeCommHopfAlgCat
 
