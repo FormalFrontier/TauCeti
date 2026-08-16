@@ -15,6 +15,7 @@ public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 public import TauCeti.Probability.DeFinetti.Correspondence
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
+public import TauCeti.Probability.DeFinetti.EmpiricalMeasure
 
 /-!
 # De Finetti's theorem
