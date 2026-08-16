@@ -161,6 +161,14 @@ private noncomputable abbrev latticeWeightDegreeFunctor (P : PlumbingGraph V)
     (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
     (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
 
+private theorem latticeWeightDegreeFunctor_obj_eq (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
+    (P.latticeWeightDegreeFunctor k q).obj N = ModuleCat.of PlumbingCoefficient
+      (PlumbingChain.characteristicWeightDegreePart P k N q) :=
+  ModuleCat.submoduleFunctor_obj
+    (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
+    (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q) N
+
 private noncomputable abbrev latticeWeightDegreeCocone (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) : Cocone (P.latticeWeightDegreeFunctor k q) :=
   ModuleCat.submoduleCocone
@@ -168,6 +176,29 @@ private noncomputable abbrev latticeWeightDegreeCocone (P : PlumbingGraph V)
     (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
     (PlumbingChain.degreePart V q)
     (PlumbingChain.iSup_characteristicWeightDegreePart_eq_degreePart P k q)
+
+private theorem latticeWeightDegreeCocone_pt_eq (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) :
+    (P.latticeWeightDegreeCocone k q).pt =
+      ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q) :=
+  ModuleCat.submoduleCocone_pt
+    (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
+    (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
+    (PlumbingChain.degreePart V q)
+    (PlumbingChain.iSup_characteristicWeightDegreePart_eq_degreePart P k q)
+
+private theorem latticeWeightDegreeCocone_ι_app_eq (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
+    eqToHom (P.latticeWeightDegreeFunctor_obj_eq k q N).symm ≫
+        (P.latticeWeightDegreeCocone k q).ι.app N ≫
+      eqToHom (P.latticeWeightDegreeCocone_pt_eq k q) =
+        ModuleCat.ofHom (Submodule.inclusion
+          (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q)) :=
+  ModuleCat.submoduleCocone_ι_app
+    (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
+    (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q)
+    (PlumbingChain.degreePart V q)
+    (PlumbingChain.iSup_characteristicWeightDegreePart_eq_degreePart P k q) N
 
 private theorem latticeWeightSublevelEval_obj_eq (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
@@ -179,15 +210,17 @@ private theorem latticeWeightSublevelEval_obj_eq (P : PlumbingGraph V)
     _ = (P.latticeWeightSublevelComplex k N).X q := congrArg
       (fun C : ChainComplex (ModuleCat PlumbingCoefficient) ℕ ↦ C.X q)
       (P.latticeWeightSublevelFunctor_obj k N)
-    _ = _ := P.latticeWeightSublevelComplex_X k N q
+    _ = ModuleCat.of PlumbingCoefficient
+        (PlumbingChain.characteristicWeightDegreePart P k N q) :=
+      P.latticeWeightSublevelComplex_X k N q
+    _ = _ := (P.latticeWeightDegreeFunctor_obj_eq k q N).symm
 
 private theorem latticeWeightSublevelEval_map (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) {N M : ℤ} (f : N ⟶ M) :
     eqToHom (P.latticeWeightSublevelEval_obj_eq k q N).symm ≫
         ((P.latticeWeightSublevelFunctor k).map f).f q ≫
       eqToHom (P.latticeWeightSublevelEval_obj_eq k q M) =
-        ModuleCat.ofHom (Submodule.inclusion
-          (PlumbingChain.characteristicWeightDegreePart_mono P k (leOfHom f) q)) := by
+        (P.latticeWeightDegreeFunctor k q).map f := by
   have hq := congrArg (fun φ ↦ φ.f q) (P.latticeWeightSublevelFunctor_map k f)
   simp only [HomologicalComplex.comp_f, HomologicalComplex.eqToHom_f,
     latticeWeightSublevelInclusion_f] at hq
@@ -201,11 +234,21 @@ private theorem latticeWeightSublevelEval_map (P : PlumbingGraph V)
     dsimp only [inc]
     simpa only [eqToHom_comp_heq_iff, comp_eqToHom_heq_iff,
       heq_eqToHom_comp_iff, heq_comp_eqToHom_iff] using heq_of_eq hq
+  have hdegree : inc ≍ (P.latticeWeightDegreeFunctor k q).map f :=
+    (conj_eqToHom_iff_heq
+      inc
+      ((P.latticeWeightDegreeFunctor k q).map f)
+      (P.latticeWeightDegreeFunctor_obj_eq k q N).symm
+      (P.latticeWeightDegreeFunctor_obj_eq k q M).symm).1
+      (ModuleCat.submoduleFunctor_map
+        (fun N : ℤ ↦ PlumbingChain.characteristicWeightDegreePart P k N q)
+        (fun _ _ h ↦ PlumbingChain.characteristicWeightDegreePart_mono P k h q) f).symm
   exact ((conj_eqToHom_iff_heq
-    inc
+    ((P.latticeWeightDegreeFunctor k q).map f)
     (((P.latticeWeightSublevelFunctor k).map f).f q)
     (P.latticeWeightSublevelEval_obj_eq k q N).symm
-    (P.latticeWeightSublevelEval_obj_eq k q M).symm).2 hmap.symm).symm
+    (P.latticeWeightSublevelEval_obj_eq k q M).symm).2
+      (hdegree.symm.trans hmap.symm)).symm
 
 private noncomputable def latticeWeightSublevelEvalIso (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) :
@@ -219,33 +262,70 @@ private noncomputable def latticeWeightSublevelEvalIso (P : PlumbingGraph V)
       rw [P.latticeWeightSublevelEval_map k q f]
       simp only [eqToHom_trans_assoc, eqToHom_refl, Category.id_comp])
 
+private theorem latticeWeightSublevelEvalCocone_pt_eq (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) :
+    ((Cocone.precompose (P.latticeWeightSublevelEvalIso k q).inv).obj
+      ((HomologicalComplex.eval (ModuleCat PlumbingCoefficient) (ComplexShape.down ℕ) q)
+        |>.mapCocone (P.latticeWeightSublevelCocone k))).pt =
+      (P.latticeWeightDegreeCocone k q).pt := by
+  calc
+    _ = ((P.latticeWeightSublevelCocone k).pt).X q := rfl
+    _ = (P.latticeChainComplex k).X q := congrArg
+      (fun C : ChainComplex (ModuleCat PlumbingCoefficient) ℕ ↦ C.X q)
+      (P.latticeWeightSublevelCocone_pt k)
+    _ = ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q) :=
+      P.latticeChainComplex_X k q
+    _ = _ := (P.latticeWeightDegreeCocone_pt_eq k q).symm
+
+private theorem latticeWeightSublevelEvalCocone_ι_app_eq (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
+    eqToHom (P.latticeWeightDegreeFunctor_obj_eq k q N).symm ≫
+        ((Cocone.precompose (P.latticeWeightSublevelEvalIso k q).inv).obj
+          ((HomologicalComplex.eval (ModuleCat PlumbingCoefficient) (ComplexShape.down ℕ) q)
+            |>.mapCocone (P.latticeWeightSublevelCocone k))).ι.app N ≫
+      eqToHom ((P.latticeWeightSublevelEvalCocone_pt_eq k q).trans
+        (P.latticeWeightDegreeCocone_pt_eq k q)) =
+        ModuleCat.ofHom (Submodule.inclusion
+          (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q)) := by
+  let inc : ModuleCat.of PlumbingCoefficient
+        (PlumbingChain.characteristicWeightDegreePart P k N q) ⟶
+      ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q) :=
+    ModuleCat.ofHom (Submodule.inclusion
+      (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q))
+  symm
+  apply (conj_eqToHom_iff_heq
+    inc
+    (((Cocone.precompose (P.latticeWeightSublevelEvalIso k q).inv).obj
+      ((HomologicalComplex.eval (ModuleCat PlumbingCoefficient) (ComplexShape.down ℕ) q)
+        |>.mapCocone (P.latticeWeightSublevelCocone k))).ι.app N)
+    (P.latticeWeightDegreeFunctor_obj_eq k q N).symm
+    ((P.latticeWeightSublevelEvalCocone_pt_eq k q).trans
+      (P.latticeWeightDegreeCocone_pt_eq k q)).symm).2
+  simp only [Cocone.precompose_obj_ι, NatTrans.comp_app, Functor.mapCocone_ι_app,
+    Functor.comp_obj, HomologicalComplex.eval_obj, latticeWeightSublevelCocone_ι_app,
+    latticeWeightSublevelEvalIso, NatIso.ofComponents_inv_app, eqToIso.inv,
+    HomologicalComplex.eval_map, HomologicalComplex.comp_f, HomologicalComplex.eqToHom_f,
+    latticeWeightSublevelToChainComplex_f]
+  simp only [heq_eqToHom_comp_iff, heq_comp_eqToHom_iff, inc]
+  apply heq_of_eq
+  apply ModuleCat.hom_ext
+  apply LinearMap.ext
+  intro c
+  rfl
+
 private noncomputable def latticeWeightSublevelEvalCoconeIso (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) :
     (Cocone.precompose (P.latticeWeightSublevelEvalIso k q).inv).obj
         ((HomologicalComplex.eval (ModuleCat PlumbingCoefficient) (ComplexShape.down ℕ) q)
           |>.mapCocone (P.latticeWeightSublevelCocone k)) ≅
       P.latticeWeightDegreeCocone k q :=
-  Cocone.ext (eqToIso (P.latticeChainComplex_X k q)) fun N => by
-    apply eq_of_heq
-    simp only [Cocone.precompose_obj_pt, Cocone.precompose_obj_ι, NatTrans.comp_app,
-      Functor.mapCocone_ι_app, Functor.comp_obj, HomologicalComplex.eval_obj,
-      latticeWeightSublevelCocone_ι_app, latticeWeightSublevelEvalIso,
-      NatIso.ofComponents_inv_app, eqToIso.inv, HomologicalComplex.eval_map,
-      HomologicalComplex.comp_f, HomologicalComplex.eqToHom_f,
-      latticeWeightSublevelToChainComplex_f]
-    dsimp only [latticeWeightDegreeCocone, ModuleCat.submoduleCocone, eqToIso]
-    simp only [← Category.assoc]
-    refine (comp_eqToHom_heq _ _).trans ?_
-    refine (comp_eqToHom_heq _ _).trans ?_
-    refine (comp_eqToHom_heq _ _).trans ?_
-    let inc : ModuleCat.of PlumbingCoefficient
-          (PlumbingChain.characteristicWeightDegreePart P k N q) ⟶
-        ModuleCat.of PlumbingCoefficient (PlumbingChain.degreePart V q) :=
-      ModuleCat.ofHom (Submodule.inclusion
-        (PlumbingChain.characteristicWeightDegreePart_le_degreePart P k N q))
-    have hsource : (P.latticeWeightDegreeFunctor k q).obj N =
-        (P.latticeWeightDegreeFunctor k q).obj N := rfl
-    simpa only [eqToHom_trans, inc] using eqToHom_comp_heq inc hsource
+  Cocone.ext (eqToIso (P.latticeWeightSublevelEvalCocone_pt_eq k q)) fun N => by
+    rw [← cancel_epi (eqToHom (P.latticeWeightDegreeFunctor_obj_eq k q N).symm)]
+    rw [← cancel_mono (eqToHom (P.latticeWeightDegreeCocone_pt_eq k q))]
+    simp only [Category.assoc]
+    rw [P.latticeWeightDegreeCocone_ι_app_eq k q N]
+    simpa only [eqToIso.hom, eqToHom_trans] using
+      P.latticeWeightSublevelEvalCocone_ι_app_eq k q N
 
 /-- The untruncated lattice chain complex is the colimit of its characteristic-weight sublevel
 complexes. -/

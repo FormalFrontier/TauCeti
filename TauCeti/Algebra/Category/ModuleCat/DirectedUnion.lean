@@ -48,7 +48,7 @@ private theorem inclusion_hom_ext {A B : Submodule R M}
 
 /-- A monotone family of submodules, regarded as a diagram in `ModuleCat` whose maps are the
 canonical inclusions. -/
-noncomputable abbrev submoduleFunctor (K : ι → Submodule R M) (hK : Monotone K) :
+noncomputable def submoduleFunctor (K : ι → Submodule R M) (hK : Monotone K) :
     CategoryTheory.Functor ι (ModuleCat.{v} R) where
   obj i := ModuleCat.of R (K i)
   map f := ModuleCat.ofHom (Submodule.inclusion (hK (leOfHom f)))
@@ -61,8 +61,26 @@ noncomputable abbrev submoduleFunctor (K : ι → Submodule R M) (hK : Monotone 
     intro m
     rfl
 
+/-- The object at an index of the submodule diagram is the corresponding submodule. -/
+@[simp]
+theorem submoduleFunctor_obj (K : ι → Submodule R M) (hK : Monotone K) (i : ι) :
+    (submoduleFunctor K hK).obj i = ModuleCat.of R (K i) :=
+  by rw [submoduleFunctor]
+
+/-- A map in the submodule diagram is the canonical inclusion. -/
+@[simp]
+theorem submoduleFunctor_map (K : ι → Submodule R M) (hK : Monotone K)
+    {i j : ι} (f : i ⟶ j) :
+    eqToHom (submoduleFunctor_obj K hK i).symm ≫
+        (submoduleFunctor K hK).map f ≫
+      eqToHom (submoduleFunctor_obj K hK j) =
+      ModuleCat.ofHom (Submodule.inclusion (hK (leOfHom f))) :=
+  by
+    unfold submoduleFunctor
+    simp
+
 /-- The cocone from a monotone family of submodules to a submodule equal to their supremum. -/
-noncomputable abbrev submoduleCocone (K : ι → Submodule R M) (hK : Monotone K)
+noncomputable def submoduleCocone (K : ι → Submodule R M) (hK : Monotone K)
     (T : Submodule R M) (hT : ⨆ i, K i = T) : Cocone (submoduleFunctor K hK) :=
   Cocone.mk (ModuleCat.of R T)
     { app := fun i ↦ ModuleCat.ofHom (Submodule.inclusion ((le_iSup K i).trans hT.le))
@@ -76,15 +94,19 @@ noncomputable abbrev submoduleCocone (K : ι → Submodule R M) (hK : Monotone K
 theorem submoduleCocone_pt (K : ι → Submodule R M) (hK : Monotone K)
     (T : Submodule R M) (hT : ⨆ i, K i = T) :
     (submoduleCocone K hK T hT).pt = ModuleCat.of R T :=
-  rfl
+  by rw [submoduleCocone]
 
 /-- A leg of the directed-submodule cocone is the corresponding submodule inclusion. -/
 @[simp]
 theorem submoduleCocone_ι_app (K : ι → Submodule R M) (hK : Monotone K)
     (T : Submodule R M) (hT : ⨆ i, K i = T) (i : ι) :
-    (submoduleCocone K hK T hT).ι.app i =
+    eqToHom (submoduleFunctor_obj K hK i).symm ≫
+        (submoduleCocone K hK T hT).ι.app i ≫
+      eqToHom (submoduleCocone_pt K hK T hT) =
       ModuleCat.ofHom (Submodule.inclusion ((le_iSup K i).trans hT.le)) :=
-  rfl
+  by
+    unfold submoduleCocone submoduleFunctor
+    simp
 
 private noncomputable abbrev coconeLinearMap (K : ι → Submodule R M) (hK : Monotone K)
     (s : Cocone (submoduleFunctor K hK)) (i : ι) : K i →ₗ[R] s.pt :=
@@ -125,6 +147,8 @@ noncomputable def submoduleCoconeIsColimit [IsDirectedOrder ι]
     T hT.ge)
   fac s i := by
     apply ModuleCat.hom_ext
+    -- `ModuleCat.hom_ext` reduces the categorical equality to equality of bundled linear maps;
+    -- exposing that representation lets the linear universal-property lemma apply directly.
     change (Submodule.iSupLift K hK.directed_le (coconeLinearMap K hK s)
       (submoduleFunctor_ι_app_eq_comp_inclusion K hK s) T hT.ge).comp
         (Submodule.inclusion ((le_iSup K i).trans hT.le)) = coconeLinearMap K hK s i
