@@ -148,7 +148,7 @@ private theorem baseChangeAlgEquiv_counit_comp :
       simp only [AlgHom.comp_apply, Bialgebra.counitAlgHom_apply]
       rw [AlgEquiv.coe_toAlgHom, baseChangeAlgEquiv_apply]
       rw [ConvolutionDual.counit_apply]
-      rw [show (1 : K ⊗[k] H) = 1 ⊗ₜ[k] 1 from Algebra.TensorProduct.one_def]
+      rw [Algebra.TensorProduct.one_def]
       rw [baseChangeLinearEquiv_tmul_apply_tmul]
       simp only [TensorProduct.counit_tmul, ConvolutionDual.counit_apply,
         CommSemiring.counit_apply, Algebra.smul_def, mul_one, mul_comm]
