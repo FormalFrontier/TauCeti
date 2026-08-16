@@ -89,7 +89,6 @@ theorem natCard_discriminantGroup_eq_natAbs_gramDet (L : IntegralLattice V)
     (L.carrierInDualBasis b)).symm
 
 /-- **The order of the discriminant group is the lattice discriminant.** -/
-@[simp]
 theorem natCard_discriminantGroup (L : IntegralLattice V) [L.IsNondegenerate] :
     Nat.card L.DiscriminantGroup = L.discriminant := by
   classical
