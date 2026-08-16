@@ -410,7 +410,6 @@ noncomputable def affineAOneRadicalQuotientIsometry :
 
 /-- The affine `A₁` radical quotient has the positive rank-one norm under its canonical
 identification. -/
-@[simp]
 theorem affineAOneRadicalQuotientIsometry_norm (x : (Fin 2 → ℚ) ⧸ affineAOne.radical) :
     aOne.norm (affineAOneRadicalQuotientIsometry x) = affineAOne.radicalQuotient.norm x := by
   rw [norm_apply, norm_apply, Isometry.map_app]
