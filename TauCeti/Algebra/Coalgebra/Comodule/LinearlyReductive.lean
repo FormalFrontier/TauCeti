@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.LinearAlgebra.Basis.VectorSpace
-public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra
+public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
 
 /-!
