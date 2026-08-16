@@ -79,12 +79,14 @@ abbrev DiscriminantGroup (L : IntegralLattice V) : Type u :=
 
 /-- A representative defines the zero discriminant class exactly when its ambient vector belongs
 to the original carrier. -/
+@[simp]
 theorem discriminantGroup_mk_eq_zero_iff (L : IntegralLattice V) (x : L.dualCarrier) :
     (Submodule.Quotient.mk x : L.DiscriminantGroup) = 0 ↔ (x : V) ∈ L.carrier := by
   rw [Submodule.Quotient.mk_eq_zero, L.mem_carrierInDual_iff]
 
 /-- Two representatives define the same discriminant class exactly when their difference belongs
 to the original carrier. -/
+@[simp]
 theorem discriminantGroup_mk_eq_iff (L : IntegralLattice V) (x y : L.dualCarrier) :
     (Submodule.Quotient.mk x : L.DiscriminantGroup) = Submodule.Quotient.mk y ↔
       ((x - y : L.dualCarrier) : V) ∈ L.carrier := by
@@ -139,8 +141,7 @@ theorem dualCarrierEquiv_symm (e : Isometry L M) :
   ext x
   simp only [dualCarrierEquiv, LinearEquiv.ofSubmodules_symm_apply,
     LinearEquiv.ofSubmodules_apply]
-  change (e : V ≃ₗ[ℚ] W).symm (x : W) = e.symm (x : W)
-  rw [e.coe_symm]
+  exact (congrFun e.coe_symm (x : W)).symm
 
 /-- The dual-carrier equivalence maps the embedded original carrier onto the embedded target
 carrier. -/
@@ -148,9 +149,8 @@ theorem map_carrierInDual (e : Isometry L M) :
     L.carrierInDual.map e.dualCarrierEquiv.toLinearMap = M.carrierInDual := by
   ext y
   rw [Submodule.mem_map_equiv]
-  change (e.dualCarrierEquiv.symm y : V) ∈ L.carrier ↔ (y : W) ∈ M.carrier
-  rw [e.dualCarrierEquiv_symm]
-  change e.symm (y : W) ∈ L.carrier ↔ (y : W) ∈ M.carrier
+  rw [L.mem_carrierInDual_iff, M.mem_carrierInDual_iff,
+    e.dualCarrierEquiv_symm, coe_dualCarrierEquiv_apply]
   exact e.symm.apply_mem_carrier_iff y
 
 /-- An integral-lattice isometry induces a linear equivalence of discriminant groups. -/
