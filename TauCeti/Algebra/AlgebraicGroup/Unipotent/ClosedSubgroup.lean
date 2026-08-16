@@ -65,6 +65,7 @@ variable [Field L] [Algebra k L] [PerfectField L]
 
 Contravariantly, this says that a point of a closed subgroup is unipotent exactly when its image
 in the ambient affine group is unipotent. -/
+@[simp]
 theorem isUnipotentPoint_mapDomain_iff_of_surjective
     (f : H →ₐc[k] K) (hf : Function.Surjective f)
     (g : WithConv (K →ₐ[k] L)) :
@@ -72,29 +73,20 @@ theorem isUnipotentPoint_mapDomain_iff_of_surjective
   constructor
   · intro hg
     rw [Point.isUnipotentPoint_iff_semisimplePart_eq_one] at hg ⊢
-    have hmap :
-        AlgHom.mapDomain f (Point.semisimplePart k K L g) =
-          (1 : WithConv (H →ₐ[k] L)) := by
-      rw [← Point.semisimplePart_mapDomain]
-      exact hg
     let f' : CommHopfAlgCat.of k H ⟶ CommHopfAlgCat.of k K := CommHopfAlgCat.ofHom f
     apply CommHopfAlgCat.mapPointsFunctor_app_injective_of_surjective f' hf
       (CommAlgCat.of k L)
-    -- Expose the concrete group-hom application produced by the categorical point functor.
-    change AlgHom.mapDomain f (Point.semisimplePart k K L g) = AlgHom.mapDomain f 1
-    simpa only [map_one] using hmap
+    have hmap' :
+        (CommHopfAlgCat.mapPointsFunctor f').app (CommAlgCat.of k L)
+          (Point.semisimplePart k K L g) = 1 := by
+      rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+      simp only [HopfAlgebra.pointsFunctor_obj]
+      dsimp [f']
+      rw [← AlgHom.mapDomain_apply, ← Point.semisimplePart_mapDomain]
+      exact hg
+    exact hmap'.trans (map_one _).symm
   · intro hg
     exact hg.mapDomain f
-
-/-- Simp-normal form of `isUnipotentPoint_mapDomain_iff_of_surjective`, with the precomposed point
-written after normalization by `AlgHom.mapDomain_apply`. -/
-@[simp]
-theorem isUnipotentPoint_toConv_comp_iff_of_surjective
-    (f : H →ₐc[k] K) (hf : Function.Surjective f)
-    (g : WithConv (K →ₐ[k] L)) :
-    IsUnipotentPoint (toConv (g.ofConv.comp (f : H →ₐ[k] K))) ↔ IsUnipotentPoint g := by
-  simpa only [AlgHom.mapDomain_apply] using
-    isUnipotentPoint_mapDomain_iff_of_surjective f hf g
 
 end HopfAlgebra
 
