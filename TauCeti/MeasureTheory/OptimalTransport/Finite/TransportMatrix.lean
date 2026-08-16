@@ -51,10 +51,13 @@ structure TransportMatrix (μ : PMF ι) (ν : PMF κ) where
   /-- Every column has the mass prescribed by the target distribution. -/
   col_sum : ∀ j, ∑ i, matrix i j = ν j
 
+attribute [simp] TransportMatrix.row_sum TransportMatrix.col_sum
+
 namespace TransportMatrix
 
 variable {μ : PMF ι} {ν : PMF κ}
 
+/-- Coerce a transportation matrix to its entries, allowing the notation `A i j`. -/
 instance : CoeFun (TransportMatrix μ ν) fun _ ↦ ι → κ → ℝ≥0∞ :=
   ⟨TransportMatrix.matrix⟩
 
@@ -105,15 +108,17 @@ namespace PMF
 
 section Fst
 
-variable [Finite ι] [Fintype κ] (π : PMF (ι × κ))
+variable [Fintype κ] (π : PMF (ι × κ))
 
 /-- The first marginal of a finite product PMF is obtained by summing each row of its matrix of
 point masses. -/
 theorem map_fst_apply (i : ι) : π.map Prod.fst i = ∑ j, π (i, j) := by
-  let _ := Fintype.ofFinite ι
   classical
-  rw [PMF.map_apply, tsum_fintype, Fintype.sum_prod_type, Finset.sum_comm]
-  simp only [Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+  rw [PMF.map_apply, ENNReal.tsum_prod']
+  rw [tsum_eq_single i]
+  · simp
+  · intro i' hi
+    simp [hi.symm]
 
 /-- A product PMF has first marginal `μ` exactly when its row sums are `μ`. -/
 theorem map_fst_eq_iff (μ : PMF ι) :
@@ -125,15 +130,14 @@ end Fst
 
 section Snd
 
-variable [Fintype ι] [Finite κ] (π : PMF (ι × κ))
+variable [Fintype ι] (π : PMF (ι × κ))
 
 /-- The second marginal of a finite product PMF is obtained by summing each column of its matrix
 of point masses. -/
 theorem map_snd_apply (j : κ) : π.map Prod.snd j = ∑ i, π (i, j) := by
-  let _ := Fintype.ofFinite κ
   classical
-  rw [PMF.map_apply, tsum_fintype, Fintype.sum_prod_type]
-  simp only [Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+  rw [PMF.map_apply, ENNReal.tsum_prod']
+  simp
 
 /-- A product PMF has second marginal `ν` exactly when its column sums are `ν`. -/
 theorem map_snd_eq_iff (ν : PMF κ) :
@@ -142,15 +146,6 @@ theorem map_snd_eq_iff (ν : PMF κ) :
   simp only [map_snd_apply]
 
 end Snd
-
-variable [Fintype ι] [Fintype κ] (π : PMF (ι × κ))
-
-/-- A finite product PMF has prescribed marginals exactly when its point-mass matrix has the
-prescribed row and column sums. -/
-theorem map_fst_eq_and_map_snd_eq_iff (μ : PMF ι) (ν : PMF κ) :
-    π.map Prod.fst = μ ∧ π.map Prod.snd = ν ↔
-      (∀ i, ∑ j, π (i, j) = μ i) ∧ ∀ j, ∑ i, π (i, j) = ν j := by
-  rw [TauCeti.PMF.map_fst_eq_iff π μ, TauCeti.PMF.map_snd_eq_iff π ν]
 
 end PMF
 
