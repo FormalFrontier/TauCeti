@@ -46,55 +46,6 @@ namespace DynkinType
 private def e7Extend (v : Fin 7 → ℤ) : Fin 8 → ℤ :=
   fun i => if hi : (i : ℕ) < 7 then v ⟨i, hi⟩ else 0
 
-/-- The positive `E₈` index of each positive root in the principal `E₇` subsystem. -/
-private def e7PositiveToE8Index (i : Fin 63) : Fin 120 := ![
-  ![0, 1, 2, 3, 4, 5, 6, 9, 10],
-  ![11, 12, 13, 14, 16, 17, 18, 19, 20],
-  ![21, 23, 24, 25, 26, 27, 28, 30, 31],
-  ![32, 33, 34, 35, 38, 39, 40, 41, 42],
-  ![44, 45, 47, 48, 49, 51, 53, 54, 55],
-  ![57, 59, 60, 61, 64, 66, 67, 71, 72],
-  ![73, 77, 78, 81, 83, 87, 91, 95, 99]]
-    ⟨(i : ℕ) / 9, by omega⟩ ⟨(i : ℕ) % 9, by omega⟩
-
-private theorem e8PositiveCoroot_e7PositiveToE8Index_chunk (c : Fin 7) (i : Fin 9) :
-    e8PositiveCoroot (e7PositiveToE8Index ⟨9 * c + i, by omega⟩) =
-      e7Extend (e7PositiveCoroot ⟨9 * c + i, by omega⟩) := by
-  fin_cases c <;> simp only [e7PositiveToE8Index] <;> decide +kernel +revert
-
-private theorem e8PositiveCoroot_e7PositiveToE8Index (i : Fin 63) :
-    e8PositiveCoroot (e7PositiveToE8Index i) = e7Extend (e7PositiveCoroot i) := by
-  let c : Fin 7 := ⟨(i : ℕ) / 9, by omega⟩
-  let r : Fin 9 := ⟨(i : ℕ) % 9, by omega⟩
-  rw [show i = ⟨9 * c + r, by omega⟩ from Fin.ext (by dsimp [c, r]; omega)]
-  exact e8PositiveCoroot_e7PositiveToE8Index_chunk c r
-
-private theorem e7PositiveToE8Index_injective : Function.Injective e7PositiveToE8Index := by
-  decide
-
-private def e8PositiveCorootLastZero : Finset (Fin 120) :=
-  Finset.univ.filter fun j => e8PositiveCoroot j 7 = 0
-
-private theorem card_e8PositiveCorootLastZero : e8PositiveCorootLastZero.card = 63 := by
-  simp only [e8PositiveCorootLastZero]
-  decide +kernel
-
-private theorem exists_e7PositiveToE8Index_of_last_eq_zero (j : Fin 120)
-    (hj : e8PositiveCoroot j 7 = 0) : ∃ i, e7PositiveToE8Index i = j := by
-  let C := Finset.univ.image e7PositiveToE8Index
-  have hCT : C ⊆ e8PositiveCorootLastZero := by
-    intro k hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_image.mp hk
-    rw [e8PositiveCorootLastZero, Finset.mem_filter]
-    exact ⟨Finset.mem_univ _, by rw [e8PositiveCoroot_e7PositiveToE8Index]; rfl⟩
-  have hCcard : C.card = 63 := by
-    rw [Finset.card_image_of_injective _ e7PositiveToE8Index_injective,
-      Finset.card_univ, Fintype.card_fin]
-  have hCTeq : C = e8PositiveCorootLastZero :=
-    Finset.eq_of_subset_of_card_le hCT (by rw [hCcard, card_e8PositiveCorootLastZero])
-  have : j ∈ C := hCTeq ▸ Finset.mem_filter.mpr ⟨Finset.mem_univ _, hj⟩
-  simpa [C] using Finset.mem_image.mp this
-
 private theorem norm_e7Extend (v : Fin 7 → ℤ) :
     (e7Extend v ᵥ* CartanMatrix.E₈) ⬝ᵥ e7Extend v =
       (v ᵥ* CartanMatrix.E₇) ⬝ᵥ v := by
@@ -121,19 +72,28 @@ theorem exists_e7Coroot_eq {v : Fin 7 → ℤ}
   induction j using Fin.addCases (m := 120) (n := 120) with
   | left j =>
       rw [e8Coroot_castAdd] at hj hj0
-      obtain ⟨i, rfl⟩ := exists_e7PositiveToE8Index_of_last_eq_zero j hj0
+      obtain ⟨i, hi⟩ := (e8PositiveCoroot_last_eq_zero_iff j).mp hj0
+      have hi' : e8PositiveCoroot j = e7Extend (e7PositiveCoroot i) := by
+        refine hi.trans ?_
+        funext k
+        simp only [e7Extend]
       refine ⟨Fin.castAdd 63 i, e7Extend_injective ?_⟩
-      rw [show e7Coroot (Fin.castAdd 63 i) = e7PositiveCoroot i by
-        simp only [e7Coroot_apply, Fin.val_castAdd, i.isLt, dite_true]]
-      exact (e8PositiveCoroot_e7PositiveToE8Index i).symm.trans hj
+      have he7 : e7Coroot (Fin.castAdd 63 i) = e7PositiveCoroot i := by
+        simp only [e7Coroot_apply, Fin.val_castAdd, i.isLt, dite_true]
+      rw [he7]
+      exact hi'.symm.trans hj
   | right j =>
       rw [Fin.natAdd_eq_addNat, e8Coroot_addNat] at hj hj0
       have hj0' : e8PositiveCoroot j 7 = 0 := by simpa using hj0
-      obtain ⟨i, rfl⟩ := exists_e7PositiveToE8Index_of_last_eq_zero j hj0'
+      obtain ⟨i, hi⟩ := (e8PositiveCoroot_last_eq_zero_iff j).mp hj0'
+      have hi' : e8PositiveCoroot j = e7Extend (e7PositiveCoroot i) := by
+        refine hi.trans ?_
+        funext k
+        simp only [e7Extend]
       refine ⟨Fin.addNat i 63, e7Extend_injective ?_⟩
       have he7 : e7Coroot (Fin.castAdd 63 i) = e7PositiveCoroot i := by
         simp only [e7Coroot_apply, Fin.val_castAdd, i.isLt, dite_true]
-      rw [e7Coroot_addNat, he7, e7Extend_neg, ← e8PositiveCoroot_e7PositiveToE8Index]
+      rw [e7Coroot_addNat, he7, e7Extend_neg, ← hi']
       exact hj
 
 end DynkinType

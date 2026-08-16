@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Basic
 public import Mathlib.Data.Fin.Tuple.Embedding
 public import Mathlib.LinearAlgebra.Matrix.Dual
 
@@ -35,7 +36,7 @@ namespace DynkinType
 
 /-- The positive-coroot coordinate table of type `E₈`, split into twelve rows of ten
 vectors to keep evaluation shallow. -/
-@[expose] def e8PositiveCorootTable : Fin 12 → Fin 10 → (Fin 8 → ℤ) := ![
+private def e8PositiveCorootTable : Fin 12 → Fin 10 → (Fin 8 → ℤ) := ![
   ![
     ![1, 0, 0, 0, 0, 0, 0, 0],
     ![0, 1, 0, 0, 0, 0, 0, 0],
@@ -188,12 +189,20 @@ private def e8CorootCode (x : Fin 8 → ℤ) : ℤ :=
 
 /-- The 120 positive `E8` coroots in the simple-coroot basis. The first eight entries are the
 Bourbaki simple coroots and the rest are ordered by height. -/
-@[expose] def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) where
+def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) where
   toFun i := e8PositiveCorootTable ⟨(i : ℕ) / 10, by omega⟩ ⟨(i : ℕ) % 10, by omega⟩
   inj' := by
     apply Function.Injective.of_comp (f := e8CorootCode)
     -- The 120 × 120 case check runs in the kernel, whose evaluation has no recursion limit.
     decide +kernel
+
+/-- The positive `E₈` coroots with zero final coordinate are exactly the positive coroots of
+the principal `E₇` subsystem, extended by zero. -/
+theorem e8PositiveCoroot_last_eq_zero_iff (j : Fin 120) :
+    e8PositiveCoroot j 7 = 0 ↔
+      ∃ i : Fin 63, e8PositiveCoroot j = fun k : Fin 8 ↦
+        if hk : (k : ℕ) < 7 then e7PositiveCoroot i ⟨k, hk⟩ else 0 := by
+  fin_cases j <;> decide +kernel +revert
 
 /-- Every positive `E8` coroot has nonnegative simple-coroot coordinates. -/
 theorem e8PositiveCoroot_nonneg (i : Fin 120) (j : Fin 8) :
@@ -277,7 +286,8 @@ private theorem e8PositiveCoroot_norm (i : Fin 120) :
     (e8PositiveCoroot i ᵥ* CartanMatrix.E₈) ⬝ᵥ e8PositiveCoroot i = 2 := by
   let c : Fin 12 := ⟨(i : ℕ) / 10, by omega⟩
   let r : Fin 10 := ⟨(i : ℕ) % 10, by omega⟩
-  rw [show i = ⟨10 * c + r, by omega⟩ from Fin.ext (by dsimp [c, r]; omega)]
+  have hi : i = ⟨10 * c + r, by omega⟩ := Fin.ext (by dsimp [c, r]; omega)
+  rw [hi]
   exact e8PositiveCoroot_norm_chunk c r
 
 /-- Every listed `E8` root pairs to two with its corresponding coroot. -/
