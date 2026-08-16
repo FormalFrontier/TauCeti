@@ -30,7 +30,8 @@ Equivalently `E_x(t) E_y(u) E_x(t)⁻¹ = E_y(u) E_z(t * u)`: conjugating the on
 of `y` by the one-parameter subgroup of `x` multiplies it by the one-parameter subgroup of the
 commutator, at the product parameter. This is the class-two case of the Chevalley commutator
 formula, the case in which the only root of the form `i α + j β` besides `α` and `β` is `α + β`;
-in a simply-laced root system it is the only case that occurs.
+in a simply-laced root system every pair of non-proportional roots falls under it or under the
+degenerate case below.
 
 Nothing here divides by a factorial in `R`, so the relation holds over a ring of arbitrary
 characteristic. The whole point is the coefficient-one normal-ordering rule
@@ -224,7 +225,7 @@ E_x(t) E_y(u) = E_y(u) E_z(t * u) E_x(t).
 No factorial is inverted in `R`: the relation holds in every characteristic. -/
 theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq
     {x y z : A} (M : S) (hxy : x * y = y * x + z) (hxz : Commute x z) (hyz : Commute y z)
-    (hx : IsNilpotent x) (hy : IsNilpotent y) (hz : IsNilpotent z)
+    (hx : IsNilpotent x) (hy : IsNilpotent y)
     (hMx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     (hMy : ∀ n, ∀ v ∈ M, Associative.dividedPower n y • v ∈ M)
     (hMz : ∀ n, ∀ v ∈ M, Associative.dividedPower n z • v ∈ M)
@@ -232,9 +233,9 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq
     baseChangeExp x M hMx t * baseChangeExp y M hMy u =
       baseChangeExp y M hMy u * baseChangeExp z M hMz (t * u) * baseChangeExp x M hMx t := by
   classical
+  obtain ⟨kz, hkz⟩ := Associative.isNilpotent_of_commutator_eq hxy hxz hyz hx
   obtain ⟨kx, hkx⟩ := hx
   obtain ⟨ky, hky⟩ := hy
-  obtain ⟨kz, hkz⟩ := hz
   set N := kx + ky + kz with hNdef
   have hxN : x ^ N = 0 := pow_eq_zero_of_le (by omega) hkx
   have hyN : y ^ N = 0 := pow_eq_zero_of_le (by omega) hky
@@ -270,7 +271,8 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq
       · rw [hvz k (by omega), mul_zero, zero_mul]
 
 /-- **The degenerate Chevalley commutator relation.** Exponentials of commuting elements commute.
-For root subgroups this is the case of two roots whose sum is not a root. -/
+For root subgroups this is the case of two roots which are not opposite and whose sum is not a
+root. -/
 theorem commute_baseChangeExp {x y : A} (M : S) (hxy : Commute x y)
     (hx : IsNilpotent x) (hy : IsNilpotent y)
     (hMx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
@@ -297,14 +299,14 @@ subgroup of `y` by that of `x` multiplies it by the one-parameter subgroup of th
 at the product parameter. -/
 theorem baseChangeExp_conj_of_commutator_eq
     {x y z : A} (M : S) (hxy : x * y = y * x + z) (hxz : Commute x z) (hyz : Commute y z)
-    (hx : IsNilpotent x) (hy : IsNilpotent y) (hz : IsNilpotent z)
+    (hx : IsNilpotent x) (hy : IsNilpotent y)
     (hMx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
     (hMy : ∀ n, ∀ v ∈ M, Associative.dividedPower n y • v ∈ M)
     (hMz : ∀ n, ∀ v ∈ M, Associative.dividedPower n z • v ∈ M)
     (t u : R) :
     baseChangeExp x M hMx t * baseChangeExp y M hMy u * baseChangeExp x M hMx (-t) =
       baseChangeExp y M hMy u * baseChangeExp z M hMz (t * u) := by
-  rw [baseChangeExp_mul_baseChangeExp_of_commutator_eq M hxy hxz hyz hx hy hz hMx hMy hMz t u,
+  rw [baseChangeExp_mul_baseChangeExp_of_commutator_eq M hxy hxz hyz hx hy hMx hMy hMz t u,
     mul_assoc, ← baseChangeExp_add x M hMx hx t (-t), add_neg_cancel,
     baseChangeExp_zero x M hMx hx, mul_one]
 

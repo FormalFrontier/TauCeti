@@ -223,7 +223,10 @@ theorem mul_dividedPower_eq_dividedPower_mul_add_intCast
 
 /-- Scaling an element by an integer scales its `n`-th divided power by the `n`-th power of that
 integer. This is the integral companion of `dividedPower_smul`, and is what lets a Chevalley
-structure constant be moved from a root vector to the parameter of its exponential. -/
+structure constant be moved from a root vector to the parameter of its exponential.
+
+This is deliberately not a `simp` lemma: `zsmul_eq_mul` rewrites the argument `d • x` of the
+left-hand side to `↑d * x`, so the statement is not in simp-normal form. -/
 theorem dividedPower_zsmul (d : ℤ) (n : ℕ) (x : A) :
     dividedPower n (d • x) = d ^ n • dividedPower n x := by
   rw [← Int.cast_smul_eq_zsmul ℚ d x, dividedPower_smul,

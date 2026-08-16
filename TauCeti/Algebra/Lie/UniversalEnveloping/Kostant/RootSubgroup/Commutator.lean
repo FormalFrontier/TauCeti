@@ -47,6 +47,8 @@ Lie-theoretic hypotheses and transports the identity to the root subgroups in
   with that point written out.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_conj_of_lie_eq`: its conjugation
   form.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_conj_of_lie_eq'`: the conjugation
+  form with that point written out.
 
 ## References
 
@@ -81,19 +83,6 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {A : Type*} [CommRing A] [Algebra ℤ A]
 
-/-- The invertible linear map underlying a Kostant root-subgroup point is the base-changed
-divided-power exponential at the corresponding parameter. -/
-private theorem val_kostantRootSubgroupPoints (i : ι)
-    (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
-    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
-    (kostantRootSubgroupPoints e h ρ M hM i hnil f).val =
-      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
-        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
-        (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f)) := by
-  refine LinearMap.ext fun z => ?_
-  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv, kostantRootSubgroupPoints_toLinearEquiv,
-    coe_baseChangeKostantExpHom]
-
 /-- **The degenerate Chevalley commutator relation for Kostant root subgroups.** Root subgroups
 attached to commuting root vectors commute. For a root system this is the case of two roots whose
 sum is not a root and which are not opposite. -/
@@ -111,7 +100,7 @@ theorem commute_kostantRootSubgroupPoints {i j : ι} (hij : ⁅e i, e j⁆ = 0)
     rw [map_sub, map_mul, map_mul, map_zero] at this
     exact sub_eq_zero.mp this
   refine Units.ext ?_
-  simp only [Units.val_mul, val_kostantRootSubgroupPoints]
+  simp only [Units.val_mul, kostantRootSubgroupPoints_val]
   exact commute_baseChangeExp M hcomm hi hj _ _ _ _
 
 /-- **The Chevalley commutator relation for Kostant root subgroups.** Suppose the distinguished
@@ -167,21 +156,18 @@ theorem kostantRootSubgroupPoints_mul_of_lie_eq {i j k : ι} {c : ℤ}
     have := hbr (e j) (e k)
     rw [hjk, map_zero, map_zero] at this
     exact sub_eq_zero.mp this
-  -- Nilpotency and stability for the scaled commutator.
-  have hznil : IsNilpotent (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) := by
-    obtain ⟨N, hN⟩ := hk
-    exact ⟨N, by rw [smul_pow, hN, smul_zero]⟩
+  -- Stability of `M` under the divided powers of the scaled commutator.
   have hMz : ∀ n, ∀ v ∈ M,
       Associative.dividedPower n (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) • v ∈ M := by
     intro n v hv
     rw [Associative.dividedPower_zsmul, smul_assoc]
     exact M.zsmul_mem (dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM k n hv) _
   refine Units.ext ?_
-  simp only [Units.val_mul, val_kostantRootSubgroupPoints]
+  simp only [Units.val_mul, kostantRootSubgroupPoints_val]
   rw [hw, ← baseChangeExp_zsmul c M
       (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM k n hv) hMz hk]
   exact baseChangeExp_mul_baseChangeExp_of_commutator_eq M hxy (Commute.smul_right hcxz c)
-    (Commute.smul_right hcyz c) hi hj hznil _ _ hMz _ _
+    (Commute.smul_right hcyz c) hi hj _ _ hMz _ _
 
 /-- The Chevalley commutator relation with the third `𝔾ₐ`-point written out: it is the point whose
 parameter is `c` times the product of the parameters of `f` and `g`. -/
@@ -223,5 +209,26 @@ theorem kostantRootSubgroupPoints_conj_of_lie_eq {i j k : ι} {c : ℤ}
         kostantRootSubgroupPoints e h ρ M hM k hk w := by
   rw [kostantRootSubgroupPoints_mul_of_lie_eq e h ρ M hM hij hik hjk hi hj hk f g w hw,
     mul_inv_cancel_right]
+
+/-- The conjugation form of the Chevalley commutator relation with the third `𝔾ₐ`-point written
+out: it is the point whose parameter is `c` times the product of the parameters of `f` and `g`. -/
+theorem kostantRootSubgroupPoints_conj_of_lie_eq' {i j k : ι} {c : ℤ}
+    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
+    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
+    (hk : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))))
+    (f g : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    kostantRootSubgroupPoints e h ρ M hM i hi f *
+        kostantRootSubgroupPoints e h ρ M hM j hj g *
+        (kostantRootSubgroupPoints e h ρ M hM i hi f)⁻¹ =
+      kostantRootSubgroupPoints e h ρ M hM j hj g *
+        kostantRootSubgroupPoints e h ρ M hM k hk
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+            (Multiplicative.ofAdd ((c : A) *
+              (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f) *
+                Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) g))))) :=
+  kostantRootSubgroupPoints_conj_of_lie_eq e h ρ M hM hij hik hjk hi hj hk f g _
+    (congrArg Multiplicative.toAdd
+      ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply _))
 
 end TauCeti.UniversalEnvelopingAlgebra

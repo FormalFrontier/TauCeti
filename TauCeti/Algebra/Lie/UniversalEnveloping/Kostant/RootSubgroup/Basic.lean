@@ -90,6 +90,17 @@ divided-power exponential with the corresponding `𝔾ₐ` parameter. -/
   rw [kostantRootSubgroupPoints]
   exact (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).apply_symm_apply _
 
+/-- The invertible linear map underlying a Kostant root-subgroup point is the base-changed
+divided-power exponential at the corresponding parameter. -/
+theorem kostantRootSubgroupPoints_val (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    (kostantRootSubgroupPoints e h ρ M hM i hnil f).val =
+      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
+        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
+        (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f)) := by
+  refine LinearMap.ext fun z => ?_
+  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv, kostantRootSubgroupPoints_toLinearEquiv,
+    coe_baseChangeKostantExpHom]
+
 /-- On an elementary tensor, a Kostant root-subgroup point acts by the expected finite
 divided-power formula. -/
 @[simp] theorem kostantRootSubgroupPoints_tmul
@@ -102,9 +113,7 @@ divided-power formula. -/
             (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M n
             (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem
               e h ρ hM i n hv) m := by
-  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv]
-  rw [coe_baseChangeKostantExpHom]
+  rw [kostantRootSubgroupPoints_val]
   exact baseChangeExp_tmul
     (R := A) (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
       (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem
@@ -129,10 +138,7 @@ theorem map_kostantRootSubgroupPoints_algHom
             (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ f)).val
           (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
   intro z
-  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
-    ← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
+  rw [kostantRootSubgroupPoints_val, kostantRootSubgroupPoints_val,
     AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
   exact map_baseChangeExp_algHom φ _ _ _ _ z
 
