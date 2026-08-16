@@ -79,6 +79,12 @@ example := @mixedIID_mixingLaw_unique
 example := @conditionallyIID_ae_unique
 example := @exchangeable_extreme_iff_iid
 
+-- Empirical-frequency convergence. These two are promised by separate facade imports:
+-- `ConditionallyIID.StrongLaw` for the conditional statement, `DeFinetti.EmpiricalMeasure` for the
+-- de Finetti endpoint. Neither is re-exported by the other.
+example := @ConditionallyIIDWith.tendsto_average_ae
+example := @deFinetti_tendsto_empiricalMeasure_apply
+
 end Probability
 
 end TauCeti

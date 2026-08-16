@@ -4,8 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
+public import TauCeti.Probability.Process.EmpiricalMeasure
 public import TauCeti.Probability.DeFinetti.Theorem
+-- Non-public: the conditional strong law is used only to prove the endpoint below; this module
+-- does not re-export the `ConditionallyIIDWith.*` strong-law API.
+import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
 
 /-!
 # De Finetti's theorem in empirical-frequency form
