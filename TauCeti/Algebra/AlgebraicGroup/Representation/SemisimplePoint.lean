@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
+public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.AlgebraicGroup.Representation.ScalarExtension
 public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
 
@@ -35,6 +37,8 @@ invariant under conjugation.
   preserves semisimple points.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_mapDomain_iff`: invariance of point semisimplicity under
   bialgebra isomorphisms.
+* `TauCeti.HopfAlgebra.isSemisimplePoint_pointsMulEquiv_iff`: over a perfect field, a point of a
+  product affine group is semisimple if and only if both component points are semisimple.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_conj_iff`: invariance under conjugation.
 
 ## References
@@ -216,6 +220,51 @@ theorem IsSemisimplePoint.mul_of_commute {g h : WithConv (H →ₐ[k] K)}
     (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.toMonoidHom
 
 end PerfectField
+
+section Product
+
+variable {H₁ H₂ : Type v} [CommSemiring H₁] [CommSemiring H₂]
+variable [_root_.HopfAlgebra k H₁] [_root_.HopfAlgebra k H₂] [PerfectField K]
+
+/-- Over a perfect field, a point of a product affine group is semisimple exactly when both factor
+points are semisimple. -/
+theorem isSemisimplePoint_pointsMulEquiv_iff
+    (g : WithConv ((H₁ ⊗[k] H₂) →ₐ[k] K)) :
+    IsSemisimplePoint g ↔
+      IsSemisimplePoint (AffineGroup.Product.pointsMulEquiv g).1 ∧
+        IsSemisimplePoint (AffineGroup.Product.pointsMulEquiv g).2 := by
+  constructor
+  · intro hg
+    exact ⟨hg.mapDomain Bialgebra.TensorProduct.includeLeft,
+      hg.mapDomain Bialgebra.TensorProduct.includeRight⟩
+  · rintro ⟨hleft, hright⟩
+    let e := AffineGroup.Product.pointsMulEquiv
+      (R := k) (H₁ := H₁) (H₂ := H₂) (A := K)
+    let gleft := e.symm ((e g).1, 1)
+    let gright := e.symm (1, (e g).2)
+    have hgleft : IsSemisimplePoint gleft := by
+      have h := hleft.mapDomain (Bialgebra.TensorProduct.projectLeft
+        (R := k) (H₁ := H₁) (H₂ := H₂))
+      simpa only [AlgHom.mapDomain_apply, gleft, e,
+        AffineGroup.Product.mapDomain_projectLeft] using h
+    have hgright : IsSemisimplePoint gright := by
+      have h := hright.mapDomain (Bialgebra.TensorProduct.projectRight
+        (R := k) (H₁ := H₁) (H₂ := H₂))
+      simpa only [AlgHom.mapDomain_apply, gright, e,
+        AffineGroup.Product.mapDomain_projectRight] using h
+    have hcomm : Commute gleft gright := by
+      rw [commute_iff_eq]
+      apply e.injective
+      simp only [map_mul, e, gleft, gright, MulEquiv.apply_symm_apply]
+      ext <;> simp
+    have hfactor : g = gleft * gright := by
+      apply e.injective
+      simp only [map_mul, e, gleft, gright, MulEquiv.apply_symm_apply]
+      ext <;> simp
+    rw [hfactor]
+    exact hgleft.mul_of_commute hgright hcomm
+
+end Product
 
 end HopfAlgebra
 
