@@ -42,11 +42,11 @@ theorem isBaseChange_tateLatticeMap : IsBaseChange ℂ tateLatticeMap :=
   IsBaseChange.linearMap ℤ ℂ
 
 /-- The Hodge filtration of `ℤ(m)`: the whole complex line through degree `-m`, and zero above. -/
-def tateFiltration (m p : ℤ) : Submodule ℂ ℂ :=
+private def tateFiltration (m p : ℤ) : Submodule ℂ ℂ :=
   if p ≤ -m then ⊤ else ⊥
 
 /-- The Tate filtration is decreasing. -/
-theorem antitone_tateFiltration (m : ℤ) : Antitone (tateFiltration m) := by
+private theorem antitone_tateFiltration (m : ℤ) : Antitone (tateFiltration m) := by
   intro p q hpq
   by_cases hq : q ≤ -m
   · have hp : p ≤ -m := hpq.trans hq
@@ -54,7 +54,7 @@ theorem antitone_tateFiltration (m : ℤ) : Antitone (tateFiltration m) := by
   · simp [tateFiltration, hq]
 
 /-- The filtration of `ℤ(m)` is opposed to its conjugate in weight `-2m`. -/
-theorem isCompl_tateFiltration (m p : ℤ) :
+private theorem isCompl_tateFiltration (m p : ℤ) :
     IsCompl (tateFiltration m p)
       ((tateFiltration m (-2 * m + 1 - p)).map
         (latticeConjugation isBaseChange_tateLatticeMap).toEquiv.toLinearMap) := by
@@ -86,7 +86,6 @@ noncomputable def tate (m : ℤ) :
   F := tateFiltration m
   F_antitone := antitone_tateFiltration m
   F_top := ⟨-m, by simp [tateFiltration]⟩
-  F_bot := ⟨-m + 1, by simp [tateFiltration]⟩
   opposed := isCompl_tateFiltration m
 
 /-- The Hodge filtration of `ℤ(m)` is the whole line exactly through degree `-m`. -/
@@ -99,14 +98,7 @@ theorem tate_F (m p : ℤ) :
 @[simp]
 theorem tate_isEffective_iff (m : ℤ) : (tate m).IsEffective ↔ m ≤ 0 := by
   rw [HodgeStructureOn.isEffective_iff]
-  constructor
-  · intro h
-    simpa [tate_F] using h.1
-  · intro hm
-    constructor
-    · simpa [tate_F] using hm
-    · have hineq : 2 * m < 1 + m := by omega
-      simpa [tate_F] using hineq
+  simp [tate_F]
 
 /-- The only nonzero Hodge component of `ℤ(m)` is `H^{-m,-m}`. -/
 @[simp]

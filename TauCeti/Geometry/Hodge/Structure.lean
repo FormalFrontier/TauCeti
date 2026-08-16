@@ -56,14 +56,11 @@ structure HodgeStructureOn (W : Type u) [AddCommGroup W] [Module ℂ W]
   F_antitone : Antitone F
   /-- The filtration is exhaustive: some step is the whole space. -/
   F_top : ∃ p, F p = ⊤
-  /-- The filtration is separated: some step is zero. -/
-  F_bot : ∃ p, F p = ⊥
   /-- The filtration is opposed to its conjugate in weight `n`. -/
   opposed : ∀ p, IsCompl (F p) ((F (n + 1 - p)).map ω.toEquiv.toLinearMap)
 
-/-- A pure integral Hodge structure expressed in an arbitrary abstract complexification. Its
-conjugation is induced canonically by the integral module. Arithmetic results impose finite
-freeness on that module when they need it. -/
+/-- The specialization of a pure Hodge structure to an abelian group with an arbitrary abstract
+complexification. Its conjugation is induced canonically by the abelian group. -/
 abbrev HodgeStructure {V : Type u} {Vℂ : Type v} [AddCommGroup V]
     [AddCommGroup Vℂ] [Module ℂ Vℂ] {ιℂ : V →ₗ[ℤ] Vℂ}
     (hℂ : IsBaseChange ℂ ιℂ) (n : ℤ) :=
@@ -83,6 +80,12 @@ theorem conjF_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.conjF p = (hs.F p).map ω.toEquiv.toLinearMap :=
   (rfl)
 
+/-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
+@[simp]
+theorem mem_conjF_iff (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) :
+    x ∈ hs.conjF p ↔ ω.toEquiv x ∈ hs.F p := by
+  simp [conjF, ω.toEquiv_symm]
+
 /-- Conjugating a filtration step twice recovers that step. -/
 @[simp]
 theorem conjF_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
@@ -93,6 +96,19 @@ theorem conjF_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
 theorem isCompl_F_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
     IsCompl (hs.F p) (hs.conjF (n + 1 - p)) := by
   exact hs.opposed p
+
+/-- The Hodge filtration is separated: some step is zero. -/
+theorem F_bot (hs : HodgeStructureOn W ω n) : ∃ p, hs.F p = ⊥ := by
+  obtain ⟨q, hq⟩ := hs.F_top
+  have hconj : hs.conjF (n + 1 - q) = ⊥ := by
+    apply eq_bot_of_top_isCompl
+    simpa only [hq] using hs.isCompl_F_conjF q
+  refine ⟨n + 1 - q, ?_⟩
+  calc
+    hs.F (n + 1 - q) =
+        (hs.conjF (n + 1 - q)).map ω.toEquiv.toLinearMap :=
+      (hs.conjF_conjF (n + 1 - q)).symm
+    _ = ⊥ := by rw [hconj, Submodule.map_bot]
 
 /-- At every index below a top step, the decreasing filtration is also the whole space. -/
 theorem F_eq_top_of_le (hs : HodgeStructureOn W ω n) {p q : ℤ}
@@ -130,6 +146,12 @@ theorem piece_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.piece p = hs.F p ⊓ hs.conjF (n - p) :=
   (rfl)
 
+/-- Membership in a Hodge component is membership in both defining filtration steps. -/
+@[simp]
+theorem mem_piece_iff (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) :
+    x ∈ hs.piece p ↔ x ∈ hs.F p ∧ x ∈ hs.conjF (n - p) := by
+  simp only [piece_def, Submodule.mem_inf]
+
 /-- A Hodge component lies in its corresponding filtration step. -/
 theorem piece_le_F (hs : HodgeStructureOn W ω n) (p : ℤ) : hs.piece p ≤ hs.F p :=
   inf_le_left
@@ -146,26 +168,49 @@ theorem conj_piece (hs : HodgeStructureOn W ω n) (p : ℤ) :
   rw [piece_def, Submodule.map_inf _ ω.toEquiv.injective, conjF_def, ω.map_map_eq_self,
     piece_def, conjF_def, sub_sub_cancel, inf_comm]
 
-/-- A weight-`n` Hodge structure is effective when its Hodge filtration begins at `F 0 = ⊤`
-and ends at `F (n + 1) = ⊥`. Equivalently, its Hodge components can occur only when both
+/-- A weight-`n` Hodge structure is effective when its Hodge filtration begins at `F 0 = ⊤`.
+Equivalently, it ends at `F (n + 1) = ⊥`, and its Hodge components can occur only when both
 bidegrees are nonnegative. -/
 def IsEffective (hs : HodgeStructureOn W ω n) : Prop :=
-  hs.F 0 = ⊤ ∧ hs.F (n + 1) = ⊥
+  hs.F 0 = ⊤
 
-/-- Effectivity is exactly the conjunction of the two endpoint conditions. -/
+/-- Effectivity is the condition that the Hodge filtration begins at the whole space. -/
 theorem isEffective_iff (hs : HodgeStructureOn W ω n) :
-    hs.IsEffective ↔ hs.F 0 = ⊤ ∧ hs.F (n + 1) = ⊥ :=
+    hs.IsEffective ↔ hs.F 0 = ⊤ :=
   Iff.rfl
+
+/-- An effective Hodge filtration vanishes immediately above its weight. -/
+theorem IsEffective.F_eq_bot {hs : HodgeStructureOn W ω n} (h : hs.IsEffective) :
+    hs.F (n + 1) = ⊥ := by
+  change hs.F 0 = ⊤ at h
+  have hconj : hs.conjF (n + 1) = ⊥ := by
+    apply eq_bot_of_top_isCompl
+    simpa only [h, sub_zero] using hs.isCompl_F_conjF 0
+  calc
+    hs.F (n + 1) = (hs.conjF (n + 1)).map ω.toEquiv.toLinearMap :=
+      (hs.conjF_conjF (n + 1)).symm
+    _ = ⊥ := by rw [hconj, Submodule.map_bot]
+
+/-- Effectivity is equivalently the condition that the Hodge filtration vanishes immediately
+above its weight. -/
+theorem isEffective_iff_F_eq_bot (hs : HodgeStructureOn W ω n) :
+    hs.IsEffective ↔ hs.F (n + 1) = ⊥ := by
+  constructor
+  · exact IsEffective.F_eq_bot
+  · intro h
+    change hs.F 0 = ⊤
+    apply eq_top_of_isCompl_bot
+    simpa only [conjF_def, h, Submodule.map_bot, sub_zero] using hs.isCompl_F_conjF 0
 
 /-- An effective Hodge filtration is the whole space in every nonpositive degree. -/
 theorem IsEffective.F_eq_top_of_nonpos {hs : HodgeStructureOn W ω n}
     (h : hs.IsEffective) {p : ℤ} (hp : p ≤ 0) : hs.F p = ⊤ :=
-  hs.F_eq_top_of_le h.1 hp
+  hs.F_eq_top_of_le h hp
 
 /-- An effective Hodge filtration vanishes in every degree strictly above its weight. -/
 theorem IsEffective.F_eq_bot_of_weight_lt {hs : HodgeStructureOn W ω n}
     (h : hs.IsEffective) {p : ℤ} (hp : n < p) : hs.F p = ⊥ := by
-  exact hs.F_eq_bot_of_le h.2 (by omega)
+  exact hs.F_eq_bot_of_le h.F_eq_bot (by omega)
 
 /-- In an effective Hodge structure, a component with negative first index vanishes. -/
 theorem IsEffective.piece_eq_bot_of_neg {hs : HodgeStructureOn W ω n}
