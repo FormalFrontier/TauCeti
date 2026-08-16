@@ -29,11 +29,12 @@ estimate be spread over the whole space by density. The comparison estimate cont
 bound, and is the reason the Hille--Yosida hypotheses are not weakened to a bound on `R(lambda, A)`
 alone.
 
-Completeness then turns this Cauchy property into a candidate pointwise limit family. Later
-arguments must establish its semigroup structure and growth bound `(0, M)`, and identify its
-generator as `A`; these are the remaining steps of the generation theorem. The reduction of the
-general growth exponent to zero is
-`TauCeti.LinearPMap.hilleYosida_zero_of`.
+Completeness then turns this Cauchy property into a candidate pointwise limit family.
+`TauCeti.Semigroups.hilleYosidaLimitSemigroup` in
+`TauCeti/Analysis/Semigroups/Generation/HilleYosida/Limit.lean` packages this family into a
+strongly continuous semigroup and establishes its growth bound `(0, M)`. Identifying its
+generator as `A`, and reducing the general growth exponent to zero
+(`TauCeti.LinearPMap.hilleYosida_zero_of`), remain separate steps of the generation theorem.
 
 ## Main results
 

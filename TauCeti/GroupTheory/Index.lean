@@ -23,6 +23,10 @@ centre gives the `Γ.withCenter` readings.
 
 ## Main results
 
+* `Subgroup.mem_withCenter_iff`: an element of `Γ·Z(G)` is one of `Γ` times a central one.
+* `Subgroup.withCenter_le_iff`: the universal property — containing `Γ·Z(G)` is containing both.
+* `Subgroup.withCenter_eq_self_iff`: adjoining the centre changes nothing exactly when the
+  centre already lies inside `Γ`.
 * `Subgroup.relIndex_sup_eq_two`, `Subgroup.index_eq_two_mul_index_sup`: the relative index `2`
   and the index doubling, for an `N` normalised by `Γ` whose elements are `1` and `a ∉ Γ`.
 * `Subgroup.relIndex_withCenter_eq_two`, `Subgroup.index_eq_two_mul_index_withCenter`: the same
@@ -54,6 +58,39 @@ theorem withCenter_def {G : Type*} [Group G] (Γ : Subgroup G) :
 /-- `Γ` sits inside `Γ` with the centre adjoined. -/
 lemma le_withCenter {G : Type*} [Group G] (Γ : Subgroup G) : Γ ≤ Γ.withCenter :=
   le_sup_left
+
+/-- The centre sits inside `Γ` with the centre adjoined — the other half of the supremum. -/
+lemma center_le_withCenter {G : Type*} [Group G] (Γ : Subgroup G) :
+    Subgroup.center G ≤ Γ.withCenter :=
+  le_sup_right
+
+/-- **The universal property of `withCenter`**: a subgroup contains `Γ·Z(G)` exactly when it
+contains both `Γ` and the centre. -/
+@[simp]
+theorem withCenter_le_iff {G : Type*} [Group G] {Γ H : Subgroup G} :
+    Γ.withCenter ≤ H ↔ Γ ≤ H ∧ Subgroup.center G ≤ H :=
+  sup_le_iff
+
+/-- **Characteristic membership for `withCenter`**: an element of `Γ·Z(G)` is one of `Γ` times a
+central one. -/
+-- The product is oriented `γ * c = g` to match `Subgroup.mem_sup_of_normal_right` -- which is
+-- what proves it -- and the rest of mathlib's `mem_sup` family.
+--
+-- Not `@[simp]`, tested: its left-hand side `g ∈ Γ.withCenter` is the same shape as that of the
+-- `SL(2, ℤ)`-specific `Subgroup.mem_withCenter_iff_exists_eq_or_eq_neg`, which *is* `@[simp]` and
+-- resolves the centre to `{±1}`. Tagging this one too takes that lemma's left-hand side out of
+-- simp-normal form -- `simpNF` rejects it -- and would pre-empt the sharper rewrite everywhere
+-- the group is `SL(2, ℤ)`.
+theorem mem_withCenter_iff {G : Type*} [Group G] {Γ : Subgroup G} {g : G} :
+    g ∈ Γ.withCenter ↔ ∃ γ ∈ Γ, ∃ c ∈ Subgroup.center G, γ * c = g :=
+  Subgroup.mem_sup_of_normal_right
+
+/-- **Adjoining the centre changes nothing exactly when the centre is already inside `Γ`** —
+the other half of the dichotomy `Subgroup.withCenter` describes. -/
+@[simp]
+theorem withCenter_eq_self_iff {G : Type*} [Group G] {Γ : Subgroup G} :
+    Γ.withCenter = Γ ↔ Subgroup.center G ≤ Γ :=
+  sup_eq_left
 
 instance instFiniteIndexWithCenter {G : Type*} [Group G] (Γ : Subgroup G)
     [Γ.FiniteIndex] : Γ.withCenter.FiniteIndex :=

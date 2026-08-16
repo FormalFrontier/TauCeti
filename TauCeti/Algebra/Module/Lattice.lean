@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Algebra.EuclideanDomain.Int
 public import Mathlib.Algebra.Module.Lattice
+public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
 # Full submodule lattices
@@ -13,7 +14,8 @@ public import Mathlib.Algebra.Module.Lattice
 This file provides generic results about full submodules over fraction fields. It relates bases and
 ranks of full submodules to their ambient spaces. It also extends integral linear equivalences
 between full submodules to rational linear equivalences of their ambient spaces, and proves that
-rational linear equivalences preserve fullness.
+rational linear equivalences preserve fullness. Finally, a free full lattice over an integral
+domain rationalizes to its ambient vector space over the fraction field.
 
 ## Main declarations
 
@@ -23,15 +25,23 @@ rational linear equivalences preserve fullness.
   same finrank.
 * `TauCeti.LinearEquiv.extendOfIsLattice`: extension of an integral linear equivalence between
   full submodules to their rational ambient spaces.
+* `TauCeti.Submodule.IsLattice.isBaseChange_subtype`: the inclusion of a free full lattice
+  submodule into its ambient vector space over the fraction field is a base change.
+* `TauCeti.Submodule.rationalizationEquiv`: the canonical equivalence from the scalar extension
+  of a free full lattice submodule to its ambient vector space.
+
+## References
+
+* See N. Bourbaki, *Commutative Algebra*, Chapter VII, §4 for lattice theory over Dedekind domains.
 -/
 
 public section
 
-open Module
+open Module TensorProduct
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 section
 
@@ -119,6 +129,59 @@ theorem extendOfIsLattice_map {S : Submodule ℤ V} {T : Submodule ℤ W}
 end LinearEquiv
 
 namespace Submodule
+
+namespace IsLattice
+
+variable {R : Type u} {K : Type v} {V' : Type w}
+variable [CommRing R] [IsDomain R]
+variable [Field K] [Algebra R K] [IsFractionRing R K]
+variable [AddCommGroup V'] [Module R V'] [Module K V'] [IsScalarTower R K V']
+
+/-- The inclusion of a free full lattice submodule over an integral domain into its ambient vector
+space over the fraction field exhibits that space as base change from `R` to `K`. -/
+theorem isBaseChange_subtype (S : Submodule R V') [Module.Free R S] [S.IsLattice K] :
+    IsBaseChange K S.subtype := by
+  have : Module.IsTorsionFree R K :=
+    Module.isTorsionFree_iff_algebraMap_injective.2 (IsFractionRing.injective R K)
+  let b := Module.Free.chooseBasis R S
+  let e : K ⊗[R] S ≃ₗ[K] V' :=
+    (b.baseChange K).equiv (b.extendOfIsLattice K) (Equiv.refl _)
+  have hmap : (e.toLinearMap.restrictScalars R).comp (TensorProduct.mk R K S 1) =
+      S.subtype := by
+    apply b.ext
+    intro i
+    simp only [LinearMap.comp_apply, LinearMap.restrictScalars_apply, TensorProduct.mk_apply,
+      LinearEquiv.coe_coe, Submodule.subtype_apply]
+    rw [← Module.Basis.baseChange_apply K b i, Basis.equiv_apply,
+      Basis.extendOfIsLattice_apply, Equiv.refl_apply]
+  exact IsBaseChange.of_equiv e fun x ↦ DFunLike.congr_fun hmap x
+
+end IsLattice
+
+variable {R : Type u} {K : Type v} {V' : Type w}
+variable [CommRing R] [IsDomain R]
+variable [Field K] [Algebra R K] [IsFractionRing R K]
+variable [AddCommGroup V'] [Module R V'] [Module K V'] [IsScalarTower R K V']
+
+/-- The canonical equivalence from the scalar extension of a free full lattice submodule to its
+ambient vector space. -/
+noncomputable def rationalizationEquiv (S : Submodule R V') [Module.Free R S] [S.IsLattice K] :
+    K ⊗[R] S ≃ₗ[K] V' :=
+  (IsLattice.isBaseChange_subtype S).equiv
+
+/-- The rationalization equivalence sends a pure tensor to scalar multiplication of the embedded
+lattice vector. This equation characterizes the equivalence. -/
+@[simp]
+theorem rationalizationEquiv_tmul (S : Submodule R V') [Module.Free R S] [S.IsLattice K]
+    (k : K) (x : S) : rationalizationEquiv S (k ⊗ₜ[R] x) = k • (x : V') :=
+  (IsLattice.isBaseChange_subtype S).equiv_tmul k x
+
+/-- The inverse rationalization equivalence sends an embedded lattice vector to the corresponding
+unit pure tensor. -/
+@[simp]
+theorem rationalizationEquiv_symm_coe (S : Submodule R V') [Module.Free R S] [S.IsLattice K]
+    (x : S) : (rationalizationEquiv S).symm (x : V') = 1 ⊗ₜ[R] x :=
+  (IsLattice.isBaseChange_subtype S).equiv_symm_apply x
 
 variable {V : Type u} {W : Type v}
 variable [AddCommGroup V] [Module ℚ V]

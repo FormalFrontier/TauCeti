@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
+import Mathlib.LinearAlgebra.Projection
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 
@@ -16,6 +17,26 @@ This file characterizes positive and negative semidefiniteness by the vanishing 
 opposite index of inertia. It also characterizes positive-definiteness by the negative
 index and the radical. These are convenient consequences of Sylvester's law of inertia which
 complement Mathlib's definitions of `QuadraticMap.PosDef`, `sigPos`, and `sigNeg`.
+
+It also proves that restriction to a subspace cannot increase either index of inertia, and that
+quotienting a quadratic form by its radical preserves both indices.
+
+## Main results
+
+* `TauCeti.QuadraticForm.forall_nonneg_iff_sigNeg_eq_zero`: nonnegativity is characterized by
+  vanishing negative index of inertia.
+* `TauCeti.QuadraticForm.forall_nonpos_iff_sigPos_eq_zero`: nonpositivity is characterized by
+  vanishing positive index of inertia.
+* `TauCeti.QuadraticForm.sigPos_restrict_le`: restriction to a subspace cannot increase the
+  positive index of inertia.
+* `TauCeti.QuadraticForm.sigNeg_restrict_le`: restriction to a subspace cannot increase the
+  negative index of inertia.
+* `TauCeti.QuadraticForm.sigPos_lift_radical`: quotienting by the radical preserves the positive
+  index of inertia.
+* `TauCeti.QuadraticForm.sigNeg_lift_radical`: quotienting by the radical preserves the negative
+  index of inertia.
+* `TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot`: positive-definiteness
+  is characterized by vanishing negative index and trivial radical.
 
 ## References
 
@@ -71,6 +92,136 @@ theorem forall_nonneg_iff_sigNeg_eq_zero (Q : _root_.QuadraticForm K M) :
 theorem forall_nonpos_iff_sigPos_eq_zero (Q : _root_.QuadraticForm K M) :
     (∀ x, Q x ≤ 0) ↔ sigPos Q = 0 := by
   simpa only [neg_apply, neg_nonneg, sigNeg_neg] using forall_nonneg_iff_sigNeg_eq_zero (-Q)
+
+omit [IsStrictOrderedRing K] in
+/-- Restricting a quadratic form to a subspace cannot increase its positive index. -/
+theorem sigPos_restrict_le (Q : _root_.QuadraticForm K M) (W : Subspace K M) :
+    sigPos (Q.restrict W) ≤ sigPos Q := by
+  obtain ⟨U, hUrank, hUpos⟩ := exists_finrank_eq_sigPos_and_posDef (Q.restrict W)
+  rw [← hUrank, ← Submodule.finrank_map_subtype_eq W U]
+  apply le_sigPos_of_posDef (V := U.map W.subtype)
+  rintro ⟨_, ⟨x, hx, rfl⟩⟩ hx0
+  rw [restrict_apply]
+  exact hUpos ⟨x, hx⟩ (by simpa using hx0)
+
+omit [IsStrictOrderedRing K] in
+/-- Restricting a quadratic form to a subspace cannot increase its negative index. -/
+theorem sigNeg_restrict_le (Q : _root_.QuadraticForm K M) (W : Subspace K M) :
+    sigNeg (Q.restrict W) ≤ sigNeg Q := by
+  have hneg : (-Q).restrict W = -(Q.restrict W) := by
+    ext x
+    simp only [QuadraticMap.restrict_apply, neg_apply]
+  simpa only [hneg, sigPos_neg] using sigPos_restrict_le (-Q) W
+
+end QuadraticForm
+
+namespace QuadraticForm
+
+open _root_.QuadraticForm
+
+variable {K M : Type*} [Field K] [AddCommGroup M] [Module K M]
+
+/-- An arbitrarily chosen complement to the radical, used only to compare inertia indices. -/
+private noncomputable def radicalComplement (Q : _root_.QuadraticForm K M) : Subspace K M :=
+  (Submodule.exists_isCompl Q.radical).choose
+
+/-- The chosen radical complement is complementary to the radical. -/
+private theorem isCompl_radical_radicalComplement (Q : _root_.QuadraticForm K M) :
+    IsCompl Q.radical (radicalComplement Q) :=
+  (Submodule.exists_isCompl Q.radical).choose_spec
+
+/-- The quotient by the radical is isometric to the restriction to the chosen complement. -/
+private noncomputable def liftRadicalIsometryEquiv (Q : _root_.QuadraticForm K M) :
+    (Q.restrict (radicalComplement Q)).IsometryEquiv (Q.lift Q.radical le_rfl) where
+  toLinearEquiv :=
+    (Q.radical.quotientEquivOfIsCompl (radicalComplement Q)
+      (isCompl_radical_radicalComplement Q)).symm
+  map_app' x := by
+    have he :
+        (Q.radical.quotientEquivOfIsCompl (radicalComplement Q)
+          (isCompl_radical_radicalComplement Q)).symm x =
+          Submodule.Quotient.mk (x : M) :=
+      LinearMap.congr_fun (Submodule.toLinearMap_symm_quotientEquivOfIsCompl
+        (isCompl_radical_radicalComplement Q)) x
+    -- Expose the linear-equivalence application hidden by the isometry-equivalence coercion.
+    change Q.lift Q.radical le_rfl
+      ((Q.radical.quotientEquivOfIsCompl (radicalComplement Q)
+        (isCompl_radical_radicalComplement Q)).symm x) = _
+    rw [he]
+    simp only [QuadraticMap.lift_mk, QuadraticMap.restrict_apply]
+
+/-- The restriction to the chosen complement of the radical has trivial radical. -/
+private theorem radical_restrict_radicalComplement_eq_bot (Q : _root_.QuadraticForm K M)
+    (h2 : Invertible (2 : K)) :
+    (Q.restrict (radicalComplement Q)).radical = ⊥ := by
+  let _ := h2
+  let B : LinearMap.BilinForm K M := QuadraticMap.associated Q
+  have hsymm : B.IsSymm := ⟨fun x y ↦ QuadraticMap.associated_isSymm K Q x y⟩
+  have hrad : (Q.restrict (radicalComplement Q)).radical =
+      (B.restrict (radicalComplement Q)).ker := by
+    rw [QuadraticMap.radical_eq_ker_associated]
+    congr 1
+  rw [hrad, Submodule.eq_bot_iff]
+  intro x hx
+  have hxrad : (x : M) ∈ Q.radical := by
+    rw [QuadraticMap.radical_eq_ker_associated, LinearMap.mem_ker, LinearMap.ext_iff]
+    intro y
+    obtain ⟨r, w, rfl, _⟩ := Submodule.existsUnique_add_of_isCompl
+      (isCompl_radical_radicalComplement Q) y
+    have hr : (r : M) ∈ B.ker := by
+      rw [← QuadraticMap.radical_eq_ker_associated]
+      exact r.2
+    have hrx : B r x = 0 := DFunLike.congr_fun (LinearMap.mem_ker.mp hr) (x : M)
+    have hxzero : (B.restrict (radicalComplement Q)) x = 0 := LinearMap.mem_ker.mp hx
+    have hxw : B x w = 0 := DFunLike.congr_fun hxzero w
+    rw [map_add, hsymm.eq x r, hrx, zero_add, hxw, LinearMap.zero_apply]
+  have hxbot : (x : M) ∈ Q.radical ⊓ radicalComplement Q := ⟨hxrad, x.2⟩
+  rw [(isCompl_radical_radicalComplement Q).disjoint.eq_bot, Submodule.mem_bot] at hxbot
+  exact Subtype.ext hxbot
+
+variable [LinearOrder K] [IsStrictOrderedRing K] [FiniteDimensional K M]
+
+/-- Quotienting a quadratic form by its radical preserves its positive index of inertia. -/
+theorem sigPos_lift_radical (Q : _root_.QuadraticForm K M) :
+    sigPos (Q.lift Q.radical le_rfl) = sigPos Q := by
+  let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
+  have hquot : sigPos (Q.lift Q.radical le_rfl) =
+      sigPos (Q.restrict (radicalComplement Q)) :=
+    (QuadraticMap.Equivalent.sigPos_eq (⟨liftRadicalIsometryEquiv Q⟩ :
+      (Q.restrict (radicalComplement Q)).Equivalent (Q.lift Q.radical le_rfl))).symm
+  have hpos := sigPos_restrict_le Q (radicalComplement Q)
+  have hneg := sigNeg_restrict_le Q (radicalComplement Q)
+  have hsum := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical (Q := Q)
+  have hsumW := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical
+    (Q := Q.restrict (radicalComplement Q))
+  rw [radical_restrict_radicalComplement_eq_bot Q inferInstance, finrank_bot, add_zero] at hsumW
+  have hdim := Submodule.finrank_add_eq_of_isCompl (isCompl_radical_radicalComplement Q)
+  omega
+
+/-- Lifting by a subspace known to be the radical preserves the positive index of inertia. -/
+theorem sigPos_lift_of_eq_radical (Q : _root_.QuadraticForm K M) (N : Subspace K M)
+    (hN : N = Q.radical) : sigPos (Q.lift N hN.le) = sigPos Q := by
+  subst N
+  simpa using sigPos_lift_radical Q
+
+/-- Quotienting a quadratic form by its radical preserves its negative index of inertia. -/
+theorem sigNeg_lift_radical (Q : _root_.QuadraticForm K M) :
+    sigNeg (Q.lift Q.radical le_rfl) = sigNeg Q := by
+  have hlift : (-Q).lift Q.radical (radical_neg Q).symm.le =
+      -(Q.lift Q.radical le_rfl) := by
+    ext x
+    induction x using Submodule.Quotient.induction_on with
+    | _ x =>
+      simp only [QuadraticMap.lift_mk, neg_apply]
+  rw [← sigPos_neg, ← hlift,
+    sigPos_lift_of_eq_radical (-Q) Q.radical (radical_neg Q).symm,
+    sigPos_neg]
+
+/-- Lifting by a subspace known to be the radical preserves the negative index of inertia. -/
+theorem sigNeg_lift_of_eq_radical (Q : _root_.QuadraticForm K M) (N : Subspace K M)
+    (hN : N = Q.radical) : sigNeg (Q.lift N hN.le) = sigNeg Q := by
+  subst N
+  simpa using sigNeg_lift_radical Q
 
 /-- A quadratic form is positive-definite exactly when its negative index vanishes and its
 radical is trivial. -/
