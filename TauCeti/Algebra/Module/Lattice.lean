@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Algebra.EuclideanDomain.Int
 public import Mathlib.Algebra.Module.Lattice
+public import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
@@ -58,11 +59,13 @@ theorem Basis.span_range_extendOfIsLattice {κ : Type*} {N : Submodule R V} [N.I
   rw [hrange, Set.range_comp, ← Submodule.map_span, b.span_eq,
     Submodule.map_top, Submodule.range_subtype]
 
-/-- The `R`-finrank of a full lattice in `V` equals the `K`-finrank of the ambient space. -/
-theorem Submodule.IsLattice.finrank_eq_finrank [IsDomain R] [IsPrincipalIdealRing R]
-    (N : Submodule R V) [N.IsLattice K] :
-    Module.finrank R N = Module.finrank K V :=
-  congr_arg Cardinal.toNat (Submodule.IsLattice.rank' K N)
+/-- The `R`-finrank of a free full lattice in `V` equals the `K`-finrank of the ambient space. -/
+theorem Submodule.IsLattice.finrank_eq_finrank [IsDomain R]
+    (N : Submodule R V) [N.IsLattice K] [Module.Free R N] :
+    Module.finrank R N = Module.finrank K V := by
+  let b := Module.Free.chooseBasis R N
+  exact congr_arg Cardinal.toNat
+    (b.mk_eq_rank''.symm.trans (b.extendOfIsLattice K).mk_eq_rank'')
 
 end
 
