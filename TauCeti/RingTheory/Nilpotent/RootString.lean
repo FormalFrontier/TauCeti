@@ -6,10 +6,10 @@ Authors: Claude
 module
 
 public import TauCeti.RingTheory.DividedPowers.RootString
-public import TauCeti.RingTheory.Nilpotent.ChevalleyCommutator
+public import TauCeti.RingTheory.Nilpotent.BaseChangeAction
 
 /-!
-# The Chevalley commutator relation along a root string of length three
+# The Chevalley commutator relation for the chain `β`, `α + β`, `2α + β`
 
 Let `V` be a module over a `ℚ`-algebra `A`, let `M ≤ V` be an additive subgroup, and let `x`, `y`,
 `z`, `w` be elements of `A` with
@@ -18,35 +18,36 @@ Let `V` be a module over a `ℚ`-algebra `A`, let `M ≤ V` be an additive subgr
 x * y = y * x + z,   x * z = z * x + 2 • w,
 ```
 
-`w` commuting with `x`, and `y`, `z`, `w` commuting with one another. The integral divided-power
-exponentials of the four elements act on `R ⊗[ℤ] M` over every commutative ring `R`, by
-`TauCeti.baseChangeExp`. The main result below is that they satisfy the **Chevalley commutator
-relation for a root string of length three**
+`w` commuting with `x`, `y` commuting with `z`, and `z` commuting with `w`. The integral
+divided-power exponentials of the four elements act on `R ⊗[ℤ] M` over every commutative ring
+`R`, by `TauCeti.baseChangeExp`. The main result below is the **Chevalley commutator relation for
+the chain `β`, `α + β`, `2α + β`**
 
 ```text
 E_x(t) E_y(u) = E_y(u) E_z(t * u) E_w(t ^ 2 * u) E_x(t).
 ```
 
 This is the case of the Chevalley commutator formula in which the roots of the form `i α + j β`
-with `i, j > 0` are exactly `α + β` and `2 α + β`, which is what the multiply-laced types `B`, `C`,
-`F₄` and `G₂` contribute beyond the class-two case of
+with `i, j > 0` are exactly `α + β` and `2 α + β`, covering the additional chains in types
+`B`, `C`, and `F₄`. Type `G₂` also needs the longer chain containing `3α + β`, which is not
+treated here. This extends the class-two case of
 `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq`. The parameter of the extra factor is
 `t ^ 2 * u`, matching the exponents `(i, j) = (2, 1)` of the root `2 α + β`.
 
 Nothing here divides by a factorial in `R`, so the relation holds over a ring of arbitrary
 characteristic. The whole point is the coefficient-one straightening rule
-`TauCeti.Associative.dividedPower_mul_dividedPower_of_root_string`; the exponential identity is its
-generating-function form, and the parameters `u`, `t * u`, `t ^ 2 * u`, `t` are exactly the four
+`TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq_two_nsmul`; the exponential
+identity is its generating-function form, and the parameters `u`, `t * u`, `t ^ 2 * u`, `t` are
+exactly the four
 monomials `u ^ a (t u) ^ b (t ^ 2 u) ^ c t ^ q` into which `t ^ m u ^ n` factors.
 
 ## Main results
 
-* `TauCeti.integralDividedPower_mul_integralDividedPower_of_root_string`: the straightening rule
-  for the integral operators restricted to `M`.
-* `TauCeti.isNilpotent_of_commutator_eq_two_nsmul`: the second element of the root string is
-  nilpotent as soon as the first is.
-* `TauCeti.baseChangeExp_mul_baseChangeExp_of_root_string`: the Chevalley commutator relation.
-* `TauCeti.baseChangeExp_conj_of_root_string`: its conjugation form.
+* `TauCeti.integralDividedPower_mul_integralDividedPower_of_commutator_eq_two_nsmul`: the
+  straightening rule for the integral operators restricted to `M`.
+* `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq_two_nsmul`: the Chevalley commutator
+  relation.
+* `TauCeti.baseChangeExp_conj_of_commutator_eq_two_nsmul`: its conjugation form.
 
 ## References
 
@@ -69,11 +70,11 @@ variable {S : Type*} [SetLike S V] [AddSubgroupClass S V]
 
 /-! ## Straightening the restricted operators -/
 
-/-- **Straightening restricted divided powers along a root string of length three.** If
-`x * y = y * x + z` and `x * z = z * x + 2 • w` with `w` central for `x` and `y`, `z`, `w` pairwise
-commuting, the integral operators obtained by restricting divided powers to a stable additive
-subgroup satisfy the coefficient-one straightening rule. -/
-theorem integralDividedPower_mul_integralDividedPower_of_root_string
+/-- **Straightening restricted divided powers for the chain `β`, `α + β`, `2α + β`.** If
+`x * y = y * x + z` and `x * z = z * x + 2 • w`, with `w` commuting with `x`, `y` commuting
+with `z`, and `z` commuting with `w`, the integral operators obtained by restricting divided
+powers to a stable additive subgroup satisfy the coefficient-one straightening rule. -/
+theorem integralDividedPower_mul_integralDividedPower_of_commutator_eq_two_nsmul
     {x y z w : A} (M : S) (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 • w)
     (hxw : Commute x w) (hyz : Commute y z) (hzw : Commute z w)
     (hMx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
@@ -82,7 +83,7 @@ theorem integralDividedPower_mul_integralDividedPower_of_root_string
     (hMw : ∀ n, ∀ v ∈ M, Associative.dividedPower n w • v ∈ M)
     (m n : ℕ) :
     integralDividedPower x M m (hMx m) * integralDividedPower y M n (hMy n) =
-      ∑ p ∈ {p ∈ range (n + 1) ×ˢ range (n + 1) | p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m},
+      ∑ p ∈ Associative.chainLeTwoIndex m n,
         integralDividedPower y M (n - p.1 - p.2) (hMy (n - p.1 - p.2)) *
           integralDividedPower z M p.1 (hMz p.1) *
           integralDividedPower w M p.2 (hMw p.2) *
@@ -92,27 +93,8 @@ theorem integralDividedPower_mul_integralDividedPower_of_root_string
     coe_integralDividedPower_apply, ← mul_smul, ← Finset.sum_smul]
   congr 1
   simpa only [mul_assoc] using
-    Associative.dividedPower_mul_dividedPower_of_root_string hxy hxz hxw hyz hzw m n
-
-/-! ## Nilpotency of the far end of the root string -/
-
-/-- The second element of a root string is nilpotent as soon as the first is: `2 • w` is the
-commutator of `x` and `z`, and it commutes with both. -/
-theorem isNilpotent_of_commutator_eq_two_nsmul {x z w : A} (hxz : x * z = z * x + 2 • w)
-    (hxw : Commute x w) (hzw : Commute z w) (hx : IsNilpotent x) : IsNilpotent w := by
-  have hxw2 : Commute x (2 • w) := by
-    rw [two_smul]
-    exact hxw.add_right hxw
-  have hzw2 : Commute z (2 • w) := by
-    rw [two_smul]
-    exact hzw.add_right hzw
-  obtain ⟨k, hk⟩ := Associative.isNilpotent_of_commutator_eq hxz hxw2 hzw2 hx
-  refine ⟨k, ?_⟩
-  rw [smul_pow] at hk
-  have hk' : ((2 ^ k : ℕ) : ℚ) • w ^ k = 0 := by rwa [Nat.cast_smul_eq_nsmul]
-  have h2 : ((2 ^ k : ℕ) : ℚ) ≠ 0 := by positivity
-  calc w ^ k = ((2 ^ k : ℕ) : ℚ)⁻¹ • (((2 ^ k : ℕ) : ℚ) • w ^ k) := (inv_smul_smul₀ h2 _).symm
-    _ = 0 := by rw [hk', smul_zero]
+    Associative.dividedPower_mul_dividedPower_of_commutator_eq_two_nsmul
+      hxy hxz hxw hyz hzw m n
 
 /-! ## The generating-function form of the straightening rule -/
 
@@ -122,10 +104,10 @@ theorem isNilpotent_of_commutator_eq_two_nsmul {x z w : A} (hxz : x * z = z * x 
 -- monomial `t ^ m u ^ n` factors accordingly as `u ^ a (t u) ^ b (t ^ 2 u) ^ c t ^ q`. The proof
 -- is the four-factor analogue of the class-two argument in
 -- `TauCeti.RingTheory.Nilpotent.ChevalleyCommutator`, and follows it step for step.
-private theorem sum_smul_mul_sum_smul_of_rootStringOrder {R : Type*} [CommRing R]
+private theorem sum_smul_mul_sum_smul_of_chainLeTwoOrder {R : Type*} [CommRing R]
     {B : Type*} [Ring B] [Algebra R B] (Dx Dy Dz Dw : ℕ → B) (N : ℕ)
     (hno : ∀ m n, Dx m * Dy n =
-      ∑ p ∈ {p ∈ range (n + 1) ×ˢ range (n + 1) | p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m},
+      ∑ p ∈ Associative.chainLeTwoIndex m n,
         Dy (n - p.1 - p.2) * Dz p.1 * Dw p.2 * Dx (m - p.1 - 2 * p.2))
     (hzero : ∀ a b c q : ℕ, N ≤ a + b + c ∨ N ≤ q + b + 2 * c →
       Dy a * Dz b * Dw c * Dx q = 0)
@@ -145,8 +127,7 @@ private theorem sum_smul_mul_sum_smul_of_rootStringOrder {R : Type*} [CommRing R
     simp only [hG, Finset.sum_product, Finset.mul_sum, smul_mul_smul_comm, mul_assoc]
   -- Step 2: expand the original product over the reindexing domain.
   have hsrc : ∑ v ∈ (range N ×ˢ range N).sigma
-        (fun mn => {p ∈ range (mn.2 + 1) ×ˢ range (mn.2 + 1) |
-          p.1 + p.2 ≤ mn.2 ∧ p.1 + 2 * p.2 ≤ mn.1}),
+        (fun mn => Associative.chainLeTwoIndex mn.1 mn.2),
         (t ^ v.1.1 * u ^ v.1.2) •
           (Dy (v.1.2 - v.2.1 - v.2.2) * Dz v.2.1 * Dw v.2.2 *
             Dx (v.1.1 - v.2.1 - 2 * v.2.2)) =
@@ -155,8 +136,7 @@ private theorem sum_smul_mul_sum_smul_of_rootStringOrder {R : Type*} [CommRing R
     simp only [Finset.sum_product, smul_mul_smul_comm, hno, Finset.smul_sum]
   -- Step 3: the reindexing itself, onto the part of the hypercube it covers.
   have hbij : ∑ v ∈ (range N ×ˢ range N).sigma
-        (fun mn => {p ∈ range (mn.2 + 1) ×ˢ range (mn.2 + 1) |
-          p.1 + p.2 ≤ mn.2 ∧ p.1 + 2 * p.2 ≤ mn.1}),
+        (fun mn => Associative.chainLeTwoIndex mn.1 mn.2),
         (t ^ v.1.1 * u ^ v.1.2) •
           (Dy (v.1.2 - v.2.1 - v.2.2) * Dz v.2.1 * Dw v.2.2 *
             Dx (v.1.1 - v.2.1 - 2 * v.2.2)) =
@@ -167,15 +147,17 @@ private theorem sum_smul_mul_sum_smul_of_rootStringOrder {R : Type*} [CommRing R
       (fun v => ⟨(v.2.2.2 + v.2.1 + 2 * v.2.2.1, v.1 + v.2.1 + v.2.2.1), (v.2.1, v.2.2.1)⟩)
       ?_ ?_ ?_ ?_ ?_
     · rintro ⟨⟨m, n⟩, b, c⟩ hv
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range, Finset.mem_filter] at hv
+      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+        Associative.mem_chainLeTwoIndex] at hv
       simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
       omega
     · rintro ⟨a, b, c, q⟩ hv
       simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hv
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range, Finset.mem_filter]
+      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+        Associative.mem_chainLeTwoIndex]
       omega
     · rintro ⟨⟨m, n⟩, b, c⟩ hv
-      obtain ⟨h1, h2⟩ := (Finset.mem_filter.mp (Finset.mem_sigma.mp hv).2).2
+      obtain ⟨h1, h2⟩ := Associative.mem_chainLeTwoIndex.mp (Finset.mem_sigma.mp hv).2
       have hbn : b + c ≤ n := h1
       have hbm : b + 2 * c ≤ m := h2
       have e1 : m - b - 2 * c + b + 2 * c = m := by omega
@@ -186,7 +168,8 @@ private theorem sum_smul_mul_sum_smul_of_rootStringOrder {R : Type*} [CommRing R
       have e2 : q + b + 2 * c - b - 2 * c = q := by omega
       simp [e1, e2]
     · rintro ⟨⟨m, n⟩, b, c⟩ hv
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range, Finset.mem_filter] at hv
+      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+        Associative.mem_chainLeTwoIndex] at hv
       obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c) := ⟨n - b - c, by omega⟩
       obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c) := ⟨m - b - 2 * c, by omega⟩
       have h1 : a + (b + c) - b - c = a := by omega
@@ -216,17 +199,17 @@ variable {R : Type v} [CommRing R] [Algebra ℤ R]
 -- Match tensor products to the module structure carried by the explicit `ℤ`-algebra.
 attribute [local instance high] Algebra.toModule
 
-/-- **The Chevalley commutator relation along a root string of length three.** If
-`x * y = y * x + z` and `x * z = z * x + 2 • w`, with `w` commuting with `x` and `y`, `z`, `w`
-commuting with one another, then over every commutative ring `R` the integral divided-power
-exponentials on `R ⊗[ℤ] M` satisfy
+/-- **The Chevalley commutator relation for the chain `β`, `α + β`, `2α + β`.** If
+`x * y = y * x + z` and `x * z = z * x + 2 • w`, with `w` commuting with `x`, `y` commuting
+with `z`, and `z` commuting with `w`, then over every commutative ring `R` the integral
+divided-power exponentials on `R ⊗[ℤ] M` satisfy
 
 ```text
 E_x(t) E_y(u) = E_y(u) E_z(t * u) E_w(t ^ 2 * u) E_x(t).
 ```
 
 No factorial is inverted in `R`: the relation holds in every characteristic. -/
-theorem baseChangeExp_mul_baseChangeExp_of_root_string
+theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq_two_nsmul
     {x y z w : A} (M : S) (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 • w)
     (hxw : Commute x w) (hyz : Commute y z) (hzw : Commute z w)
     (hx : IsNilpotent x) (hy : IsNilpotent y) (hz : IsNilpotent z)
@@ -242,7 +225,8 @@ theorem baseChangeExp_mul_baseChangeExp_of_root_string
   obtain ⟨kx, hkx⟩ := hx
   obtain ⟨ky, hky⟩ := hy
   obtain ⟨kz, hkz⟩ := hz
-  obtain ⟨kw, hkw⟩ := isNilpotent_of_commutator_eq_two_nsmul hxz hxw hzw ⟨kx, hkx⟩
+  obtain ⟨kw, hkw⟩ := Associative.isNilpotent_of_commutator_eq_nsmul (by decide)
+    hxz hxw hzw ⟨kx, hkx⟩
   set N := kx + ky + kz + 2 * kw with hNdef
   have hxN : x ^ N = 0 := pow_eq_zero_of_le (by omega) hkx
   have hyN : y ^ N = 0 := pow_eq_zero_of_le (by omega) hky
@@ -250,14 +234,15 @@ theorem baseChangeExp_mul_baseChangeExp_of_root_string
   have hwN : w ^ N = 0 := pow_eq_zero_of_le (by omega) hkw
   rw [baseChangeExp_of_pow_eq_zero x M hMx hxN, baseChangeExp_of_pow_eq_zero y M hMy hyN,
     baseChangeExp_of_pow_eq_zero z M hMz hzN, baseChangeExp_of_pow_eq_zero w M hMw hwN]
-  refine sum_smul_mul_sum_smul_of_rootStringOrder (R := R)
+  refine sum_smul_mul_sum_smul_of_chainLeTwoOrder (R := R)
     (fun n => (integralDividedPower x M n (hMx n)).baseChange R)
     (fun n => (integralDividedPower y M n (hMy n)).baseChange R)
     (fun n => (integralDividedPower z M n (hMz n)).baseChange R)
     (fun n => (integralDividedPower w M n (hMw n)).baseChange R) N ?_ ?_ t u
   · intro m n
     have h := congrArg (fun f : Module.End ℤ M => (Module.End.baseChangeHom ℤ R M) f)
-      (integralDividedPower_mul_integralDividedPower_of_root_string M hxy hxz hxw hyz hzw
+      (integralDividedPower_mul_integralDividedPower_of_commutator_eq_two_nsmul
+        M hxy hxz hxw hyz hzw
         hMx hMy hMz hMw m n)
     simp only [map_mul, map_sum] at h
     exact h
@@ -286,10 +271,11 @@ theorem baseChangeExp_mul_baseChangeExp_of_root_string
         · rw [hvz b hb, mul_zero, zero_mul, zero_mul]
         · rw [hvw c (by omega), mul_zero, zero_mul]
 
-/-- The conjugation form of the Chevalley commutator relation along a root string of length three:
+/-- The conjugation form of the Chevalley commutator relation for the chain
+`β`, `α + β`, `2α + β`:
 conjugating the one-parameter subgroup of `y` by that of `x` multiplies it by the one-parameter
 subgroups of `z` and of `w`, at the parameters `t * u` and `t ^ 2 * u`. -/
-theorem baseChangeExp_conj_of_root_string
+theorem baseChangeExp_conj_of_commutator_eq_two_nsmul
     {x y z w : A} (M : S) (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 • w)
     (hxw : Commute x w) (hyz : Commute y z) (hzw : Commute z w)
     (hx : IsNilpotent x) (hy : IsNilpotent y) (hz : IsNilpotent z)
@@ -301,7 +287,7 @@ theorem baseChangeExp_conj_of_root_string
     baseChangeExp x M hMx t * baseChangeExp y M hMy u * baseChangeExp x M hMx (-t) =
       baseChangeExp y M hMy u * baseChangeExp z M hMz (t * u) *
         baseChangeExp w M hMw (t ^ 2 * u) := by
-  rw [baseChangeExp_mul_baseChangeExp_of_root_string M hxy hxz hxw hyz hzw hx hy hz
+  rw [baseChangeExp_mul_baseChangeExp_of_commutator_eq_two_nsmul M hxy hxz hxw hyz hzw hx hy hz
       hMx hMy hMz hMw t u,
     mul_assoc, ← baseChangeExp_add x M hMx hx t (-t), add_neg_cancel,
     baseChangeExp_zero x M hMx hx, mul_one]

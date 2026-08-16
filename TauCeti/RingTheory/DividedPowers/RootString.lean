@@ -8,7 +8,7 @@ module
 public import TauCeti.RingTheory.DividedPowers.NormalOrdering
 
 /-!
-# Normal ordering divided powers along a root string of length three
+# Normal ordering divided powers along the chain `β`, `α + β`, `2α + β`
 
 Let `x`, `y`, `z`, and `w` belong to an associative algebra over `ℚ`, with
 
@@ -16,7 +16,8 @@ Let `x`, `y`, `z`, and `w` belong to an associative algebra over `ℚ`, with
 x * y = y * x + z,   x * z = z * x + 2 • w,
 ```
 
-`w` commuting with `x`, and `y`, `z`, `w` pairwise commuting. This is the situation of two roots
+`w` commuting with `x`, `y` commuting with `z`, and `z` commuting with `w`. This is the situation
+of two roots
 `α`, `β` for which `α + β` and `2α + β` are roots while `3α + β` and `α + 2β` are not: with `x` and
 `y` the root vectors of `α` and `β` in a Chevalley basis, `z` is `N_{α β}` times the root vector of
 `α + β`, and the second divided power `(ad x)² y / 2` of the inner derivation is again an *integral*
@@ -31,9 +32,10 @@ x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ b + c ≤ n, b + 2c ≤ m,  y⁽ⁿ⁻ᵇ⁻ᶜ⁾ z
 so it holds in a Kostant integral form and, after base change, over a ring of any characteristic.
 The class-two rule `TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq` is the
 degenerate case `w = 0`, and covers every pair of non-proportional roots in a simply-laced root
-system; the rule proved here is what the multiply-laced types `B`, `C`, `F₄`, and `G₂` need.
+system; the rule proved here covers the additional chains in types `B`, `C`, and `F₄`. Type `G₂`
+also needs the longer chain containing `3α + β`, which is not treated here.
 
-The proof feeds `TauCeti.Associative.dividedPower_mul_of_commutator_series` the sequence
+The proof feeds `TauCeti.Associative.dividedPower_mul_of_ad_dividedPower_series` the sequence
 
 ```text
 d k = ∑ b + 2c = k,  y⁽ⁿ⁻ᵇ⁻ᶜ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾,
@@ -46,8 +48,8 @@ lengthens the `z`-power, with coefficient `b + 1`, or lengthens the `w`-power, w
 
 ## Main results
 
-* `TauCeti.Associative.dividedPower_mul_dividedPower_of_root_string`: the coefficient-one
-  straightening rule for a root string of length three.
+* `TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq_two_nsmul`: the
+  coefficient-one straightening rule for the chain `β`, `α + β`, `2α + β`.
 
 ## References
 
@@ -92,9 +94,7 @@ private theorem mul_dividedPower_triple (hxy : x * y = y * x + z) (hxz : x * z =
           else 0) := by
   have hxwc : Commute x (dividedPower c w) := by
     simpa using commute_dividedPower_dividedPower hxw 1 c
-  have hzw2 : Commute z (2 • w) := by
-    rw [two_smul]
-    exact hzw.add_right hzw
+  have hzw2 : Commute z (2 • w) := hzw.smul_right 2
   -- Split off the two commutator terms, keeping them in unevaluated form.
   have key : x * (dividedPower a y * dividedPower b z * dividedPower c w) =
       dividedPower a y * dividedPower b z * dividedPower c w * x +
@@ -155,7 +155,7 @@ private theorem rootStringSeries_zero (n : ℕ) : rootStringSeries y z w n 0 = d
   rw [rootStringSeries, hindex]
   simp
 
--- The defining recurrence of the sequence: it is what `dividedPower_mul_of_commutator_series`
+-- The defining recurrence of the sequence: it is what `dividedPower_mul_of_ad_dividedPower_series`
 -- consumes. Each summand of `rootStringSeries n (k + 1)` is reached in two ways, from a longer
 -- `y`-power with coefficient `b` and from a longer `z`-power with coefficient `2c`, and
 -- `b + 2c = k + 1`.
@@ -249,13 +249,25 @@ private theorem mul_rootStringSeries (hxy : x * y = y * x + z) (hxz : x * z = z 
 
 /-! ## The straightening rule -/
 
-/-- **Coefficient-one normal ordering along a root string of length three.** Suppose
+/-- The pairs of exponents in the straightening rule for the chain
+`β`, `α + β`, `2α + β`. -/
+def chainLeTwoIndex (m n : ℕ) : Finset (ℕ × ℕ) :=
+  {p ∈ range (n + 1) ×ˢ range (n + 1) | p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m}
+
+/-- Membership in `chainLeTwoIndex` in terms of its two mathematical inequalities. -/
+@[simp]
+theorem mem_chainLeTwoIndex {m n : ℕ} {p : ℕ × ℕ} :
+    p ∈ chainLeTwoIndex m n ↔ p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m := by
+  simp only [chainLeTwoIndex, Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+  omega
+
+/-- **Coefficient-one normal ordering along the chain `β`, `α + β`, `2α + β`.** Suppose
 
 ```text
 x * y = y * x + z,   x * z = z * x + 2 • w,
 ```
 
-that `w` commutes with `x`, and that `y`, `z`, `w` commute with one another. Then
+that `w` commutes with `x`, `y` commutes with `z`, and `z` commutes with `w`. Then
 
 ```text
 x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ b + c ≤ n, b + 2c ≤ m,  y⁽ⁿ⁻ᵇ⁻ᶜ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾ x⁽ᵐ⁻ᵇ⁻²ᶜ⁾.
@@ -265,21 +277,19 @@ Every coefficient in the divided-power basis is `1`, so the identity survives re
 Kostant integral lattice and base change to a ring of arbitrary characteristic. Taking `w = 0`
 and discarding the terms with `c ≠ 0` recovers the class-two rule
 `dividedPower_mul_dividedPower_of_commutator_eq`. -/
-theorem dividedPower_mul_dividedPower_of_root_string (hxy : x * y = y * x + z)
+theorem dividedPower_mul_dividedPower_of_commutator_eq_two_nsmul (hxy : x * y = y * x + z)
     (hxz : x * z = z * x + 2 • w) (hxw : Commute x w) (hyz : Commute y z) (hzw : Commute z w)
     (m n : ℕ) :
     dividedPower m x * dividedPower n y =
-      ∑ p ∈ {p ∈ range (n + 1) ×ˢ range (n + 1) | p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m},
+      ∑ p ∈ chainLeTwoIndex m n,
         dividedPower (n - p.1 - p.2) y * dividedPower p.1 z * dividedPower p.2 w *
           dividedPower (m - p.1 - 2 * p.2) x := by
   classical
-  set S : Finset (ℕ × ℕ) :=
-    {p ∈ range (n + 1) ×ˢ range (n + 1) | p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m} with hS
+  set S : Finset (ℕ × ℕ) := chainLeTwoIndex m n with hS
   have hmemS : ∀ p : ℕ × ℕ, p ∈ S ↔ p.1 + p.2 ≤ n ∧ p.1 + 2 * p.2 ≤ m := by
     intro p
-    simp only [hS, Finset.mem_filter, Finset.mem_product, Finset.mem_range]
-    omega
-  have hseries := dividedPower_mul_of_commutator_series
+    simpa only [hS] using (mem_chainLeTwoIndex (m := m) (n := n) (p := p))
+  have hseries := dividedPower_mul_of_ad_dividedPower_series
     (x := x) (d := rootStringSeries y z w n)
     (fun k => mul_rootStringSeries hxy hxz hxw hyz hzw n k) m
   rw [rootStringSeries_zero] at hseries

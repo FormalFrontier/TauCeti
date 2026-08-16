@@ -7,6 +7,7 @@ module
 public import Mathlib.Algebra.Algebra.Basic
 public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.RingTheory.Nilpotent.Defs
+import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Tactic.Abel
 import Mathlib.Tactic.Ring
 
@@ -23,6 +24,8 @@ scalar multiple of one of the elements, or is central for the two elements it is
 * `TauCeti.Associative.mul_pow_eq_pow_mul_add_intCast`: the same identity in shifted-factor form.
 * `TauCeti.Associative.isNilpotent_of_commutator_eq`: a commutator commuting with both of its
   arguments is nilpotent as soon as one of them is.
+* `TauCeti.Associative.isNilpotent_of_commutator_eq_nsmul`: the same conclusion when the
+  commutator is a nonzero natural multiple of the element.
 -/
 
 public section
@@ -110,6 +113,16 @@ theorem isNilpotent_of_commutator_eq (hxy : x * y = y * x + z) (hxz : Commute x 
       have heq : n - k = n - (k + 1) + 1 := by omega
       exact hstep (n - (k + 1)) k (by rw [← heq]; exact ih (by omega))
   exact ⟨n, by simpa using hpeel n le_rfl⟩
+
+/-- If `x * y = y * x + n • z` for a nonzero natural number `n`, with `z` commuting with `x`
+and `y`, then `z` is nilpotent whenever `x` is. -/
+theorem isNilpotent_of_commutator_eq_nsmul {n : ℕ} (hn : n ≠ 0)
+    (hxy : x * y = y * x + n • z) (hxz : Commute x z) (hyz : Commute y z)
+    (hx : IsNilpotent x) : IsNilpotent z := by
+  have hnQ : ((n : ℕ) : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
+  have hnil := (isNilpotent_of_commutator_eq hxy (hxz.smul_right n)
+    (hyz.smul_right n) hx).smul ((n : ℚ)⁻¹)
+  simpa only [← Nat.cast_smul_eq_nsmul ℚ, inv_smul_smul₀ hnQ] using hnil
 
 end CentralCommutator
 

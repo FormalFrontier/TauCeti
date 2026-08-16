@@ -6,7 +6,9 @@ Authors: Claude
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
+public import TauCeti.RingTheory.Nilpotent.ChevalleyCommutator
 public import TauCeti.RingTheory.Nilpotent.RootString
+import Mathlib.RingTheory.Nilpotent.Basic
 
 /-!
 # Chevalley commutator relations for Kostant root subgroups
@@ -32,8 +34,8 @@ occurs; in a simply-laced root system every pair of non-proportional roots falls
 the commuting case. The relation holds over every commutative ring `A`, with no factorial
 inverted, because it descends from the coefficient-one normal-ordering rule for divided powers.
 
-The multiply-laced types `B`, `C`, `F₄` and `G₂` also produce pairs `α`, `β` for which `2α + β` is
-a root. There the second bracket no longer vanishes: instead
+The multiply-laced types `B`, `C`, and `F₄` also produce pairs `α`, `β` for which `2α + β`
+is a root. There the second bracket no longer vanishes: instead
 
 ```text
 ⁅eᵢ, eⱼ⁆ = c • eₖ,   ⁅eᵢ, ⁅eᵢ, eⱼ⁆⁆ = (2 * d) • e_l,   ⁅eᵢ, e_l⁆ = ⁅eⱼ, eₖ⁆ = ⁅eₖ, e_l⁆ = 0,
@@ -46,9 +48,12 @@ factor:
 x_α(t) x_β(u) x_α(t)⁻¹ = x_β(u) x_{α+β}(c t u) x_{2α+β}(d t² u).
 ```
 
+Type `G₂` additionally needs the longer chain with factors at `3α + β` and `3α + 2β`, which
+is not treated here.
+
 The general statements about integral nilpotent exponentials are
 `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq` and
-`TauCeti.baseChangeExp_mul_baseChangeExp_of_root_string`; this file only supplies the
+`TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq_two_nsmul`; this file only supplies the
 Lie-theoretic hypotheses and transports the identities to the root subgroups in
 `LinearMap.GeneralLinearGroup`.
 
@@ -65,7 +70,7 @@ Lie-theoretic hypotheses and transports the identities to the root subgroups in
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_conj_of_lie_eq'`: the conjugation
   form with that point written out.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_mul_of_lie_lie_eq`: the Chevalley
-  commutator relation along a root string of length three, for `𝔾ₐ`-points carrying the parameters
+  commutator relation for the chain `β`, `α + β`, `2α + β`, for `𝔾ₐ`-points carrying the parameters
   `c * t * u` and `d * t² * u`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_mul_of_lie_lie_eq'`: the same
   relation with those points written out.
@@ -115,6 +120,32 @@ private theorem mul_sub_mul_eq_map_ι_lie (a b : L) :
   rw [LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) a b,
     LieRing.of_associative_ring_bracket, map_sub, map_mul, map_mul]
 
+private theorem commute_of_lie_eq_zero {a b : L} (hab : ⁅a, b⁆ = 0) :
+    Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a))
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b)) := by
+  have h := mul_sub_mul_eq_map_ι_lie ρ a b
+  rw [hab, map_zero, map_zero] at h
+  exact sub_eq_zero.mp h
+
+private theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
+    (hab : ⁅a, b⁆ = c • b') :
+    ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) *
+        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) =
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
+          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) +
+        c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b') := by
+  have h := mul_sub_mul_eq_map_ι_lie ρ a b
+  rw [hab, map_zsmul, map_zsmul] at h
+  exact sub_eq_iff_eq_add'.mp h
+
+private theorem dividedPower_zsmul_apply_mem (e : ι → L) (h : κ → L)
+    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (M : AddSubgroup V)
+    (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M) (c : ℤ) (k : ι) : ∀ n, ∀ v ∈ M,
+    Associative.dividedPower n (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) • v ∈ M := by
+  intro n v hv
+  rw [Associative.dividedPower_zsmul, smul_assoc]
+  exact M.zsmul_mem (dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM k n hv) _
+
 variable {A : Type*} [CommRing A] [Algebra ℤ A]
 
 /-- **The degenerate Chevalley commutator relation for Kostant root subgroups.** Root subgroups
@@ -126,13 +157,7 @@ theorem commute_kostantRootSubgroupPoints {i j : ι} (hij : ⁅e i, e j⁆ = 0)
     (f g : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     Commute (kostantRootSubgroupPoints e h ρ M hM i hi f)
       (kostantRootSubgroupPoints e h ρ M hM j hj g) := by
-  have hcomm : Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))) := by
-    have hb := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) (e i) (e j)
-    rw [hij, map_zero, LieRing.of_associative_ring_bracket] at hb
-    have := congrArg ρ hb.symm
-    rw [map_sub, map_mul, map_mul, map_zero] at this
-    exact sub_eq_zero.mp this
+  have hcomm := commute_of_lie_eq_zero ρ hij
   refine Units.ext ?_
   simp only [Units.val_mul, kostantRootSubgroupPoints_val]
   exact commute_baseChangeExp M hcomm hi hj _ _ _ _
@@ -161,33 +186,13 @@ theorem kostantRootSubgroupPoints_mul_of_lie_eq {i j k : ι} {c : ℤ}
       kostantRootSubgroupPoints e h ρ M hM j hj g *
         kostantRootSubgroupPoints e h ρ M hM k hk w *
         kostantRootSubgroupPoints e h ρ M hM i hi f := by
-  have hbr := mul_sub_mul_eq_map_ι_lie ρ
   -- The commutator of the first two root vectors is `c` times the third.
-  have hxy : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) +
-        c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)) := by
-    have hb := hbr (e i) (e j)
-    rw [hij, map_zsmul, map_zsmul] at hb
-    exact sub_eq_iff_eq_add'.mp hb
+  have hxy := mul_eq_mul_add_zsmul_of_lie_eq ρ hij
   -- The third root vector commutes with the other two.
-  have hcxz : Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) := by
-    have := hbr (e i) (e k)
-    rw [hik, map_zero, map_zero] at this
-    exact sub_eq_zero.mp this
-  have hcyz : Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) := by
-    have := hbr (e j) (e k)
-    rw [hjk, map_zero, map_zero] at this
-    exact sub_eq_zero.mp this
+  have hcxz := commute_of_lie_eq_zero ρ hik
+  have hcyz := commute_of_lie_eq_zero ρ hjk
   -- Stability of `M` under the divided powers of the scaled commutator.
-  have hMz : ∀ n, ∀ v ∈ M,
-      Associative.dividedPower n (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) • v ∈ M := by
-    intro n v hv
-    rw [Associative.dividedPower_zsmul, smul_assoc]
-    exact M.zsmul_mem (dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM k n hv) _
+  have hMz := dividedPower_zsmul_apply_mem e h ρ M hM c k
   refine Units.ext ?_
   simp only [Units.val_mul, kostantRootSubgroupPoints_val]
   rw [hw, ← baseChangeExp_zsmul c M
@@ -257,8 +262,8 @@ theorem kostantRootSubgroupPoints_conj_of_lie_eq' {i j k : ι} {c : ℤ}
     (congrArg Multiplicative.toAdd
       ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply _))
 
-/-- **The Chevalley commutator relation for Kostant root subgroups along a root string of length
-three.** Suppose the distinguished root vectors satisfy
+/-- **The Chevalley commutator relation for Kostant root subgroups along the chain
+`β`, `α + β`, `2α + β`.** Suppose the distinguished root vectors satisfy
 
 ```text
 ⁅eᵢ, eⱼ⁆ = c • eₖ,   ⁅eᵢ, ⁅eᵢ, eⱼ⁆⁆ = (2 * d) • e_l,
@@ -294,69 +299,39 @@ theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
         kostantRootSubgroupPoints e h ρ M hM k hk p *
         kostantRootSubgroupPoints e h ρ M hM l hl q *
         kostantRootSubgroupPoints e h ρ M hM i hi f := by
-  have hbr := mul_sub_mul_eq_map_ι_lie ρ
   -- The commutator of the first two root vectors is `c` times the third.
-  have hxy : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) +
-        c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)) := by
-    have hb := hbr (e i) (e j)
-    rw [hij, map_zsmul, map_zsmul] at hb
-    exact sub_eq_iff_eq_add'.mp hb
+  have hxy := mul_eq_mul_add_zsmul_of_lie_eq ρ hij
   -- The second bracket is twice the fourth root vector, scaled by `d`.
   have hxz : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
         (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) =
       c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) +
         2 • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
-    have hb := hbr (e i) ⁅e i, e j⁆
+    have hb := mul_sub_mul_eq_map_ι_lie ρ (e i) ⁅e i, e j⁆
     rw [hiij, hij, map_zsmul, map_zsmul, map_zsmul, map_zsmul] at hb
     rw [show (2 : ℕ) • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) =
       (2 * d) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l)) by
         rw [two_mul, add_smul, two_smul]]
     exact sub_eq_iff_eq_add'.mp hb
   -- The remaining brackets vanish.
-  have hcxw : Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
-    have := hbr (e i) (e l)
-    rw [hil, map_zero, map_zero] at this
-    exact sub_eq_zero.mp this
-  have hcyz : Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j)))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) := by
-    have := hbr (e j) (e k)
-    rw [hjk, map_zero, map_zero] at this
-    exact sub_eq_zero.mp this
-  have hczw : Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
-    have := hbr (e k) (e l)
-    rw [hkl, map_zero, map_zero] at this
-    exact sub_eq_zero.mp this
+  have hcxw := commute_of_lie_eq_zero ρ hil
+  have hcyz := commute_of_lie_eq_zero ρ hjk
+  have hczw := commute_of_lie_eq_zero ρ hkl
   -- Stability of `M` under the divided powers of the two scaled root vectors.
-  have hMz : ∀ n, ∀ v ∈ M,
-      Associative.dividedPower n (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) • v ∈ M := by
-    intro n v hv
-    rw [Associative.dividedPower_zsmul, smul_assoc]
-    exact M.zsmul_mem (dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM k n hv) _
-  have hMw : ∀ n, ∀ v ∈ M,
-      Associative.dividedPower n (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) • v ∈ M := by
-    intro n v hv
-    rw [Associative.dividedPower_zsmul, smul_assoc]
-    exact M.zsmul_mem (dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM l n hv) _
-  have hz : IsNilpotent (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) := by
-    obtain ⟨n, hn⟩ := hk
-    exact ⟨n, by rw [smul_pow, hn, smul_zero]⟩
+  have hMz := dividedPower_zsmul_apply_mem e h ρ M hM c k
+  have hMw := dividedPower_zsmul_apply_mem e h ρ M hM d l
+  have hz := hk.smul c
   refine Units.ext ?_
   simp only [Units.val_mul, kostantRootSubgroupPoints_val]
   rw [hp, hq, ← baseChangeExp_zsmul c M
       (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM k n hv) hMz hk,
     ← baseChangeExp_zsmul d M
       (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM l n hv) hMw hl]
-  exact baseChangeExp_mul_baseChangeExp_of_root_string M hxy hxz
+  exact baseChangeExp_mul_baseChangeExp_of_commutator_eq_two_nsmul M hxy hxz
     (Commute.smul_right hcxw d) (Commute.smul_right hcyz c)
     ((hczw.smul_left c).smul_right d) hi hj hz _ _ hMz hMw _ _
 
-/-- The Chevalley commutator relation along a root string of length three, with the two extra
+/-- The Chevalley commutator relation for the chain `β`, `α + β`, `2α + β`, with the two extra
 `𝔾ₐ`-points written out: their parameters are `c t u` and `d t² u`. -/
 theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq' {i j k l : ι} {c d : ℤ}
     (hij : ⁅e i, e j⁆ = c • e k) (hiij : ⁅e i, ⁅e i, e j⁆⁆ = (2 * d) • e l)
@@ -386,7 +361,8 @@ theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq' {i j k l : ι} {c d : ℤ}
     (congrArg Multiplicative.toAdd
       ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply _))
 
-/-- The conjugation form of the Chevalley commutator relation along a root string of length three:
+/-- The conjugation form of the Chevalley commutator relation for the chain
+`β`, `α + β`, `2α + β`:
 conjugating the root subgroup of `eⱼ` by that of `eᵢ` multiplies it by the root subgroups of `eₖ`
 and of `e_l`, at the parameters `c t u` and `d t² u`. -/
 theorem kostantRootSubgroupPoints_conj_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
@@ -412,7 +388,8 @@ theorem kostantRootSubgroupPoints_conj_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
   rw [kostantRootSubgroupPoints_mul_of_lie_lie_eq e h ρ M hM hij hiij hil hjk hkl hi hj hk hl
     f g p q hp hq, mul_inv_cancel_right]
 
-/-- The conjugation form of the Chevalley commutator relation along a root string of length three,
+/-- The conjugation form of the Chevalley commutator relation for the chain
+`β`, `α + β`, `2α + β`,
 with the two extra `𝔾ₐ`-points written out. -/
 theorem kostantRootSubgroupPoints_conj_of_lie_lie_eq' {i j k l : ι} {c d : ℤ}
     (hij : ⁅e i, e j⁆ = c • e k) (hiij : ⁅e i, ⁅e i, e j⁆⁆ = (2 * d) • e l)

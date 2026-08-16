@@ -49,8 +49,8 @@ are carried by the sequence `d`, so the rule stays integral exactly when its ter
   when its commutator with the base commutes with that base.
 * `TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq`: the coefficient-one
   normal-ordering formula for two divided powers with central commutator.
-* `TauCeti.Associative.dividedPower_mul_of_commutator_series`: the coefficient-one normal-ordering
-  formula against an arbitrary divided-power series for the inner derivation.
+* `TauCeti.Associative.dividedPower_mul_of_ad_dividedPower_series`: coefficient-one normal ordering
+  against an arbitrary divided-power series for the inner derivation.
 
 ## References
 
@@ -288,8 +288,8 @@ x⁽ᵐ⁾ * d 0 = ∑ k ≤ m, d k * x⁽ᵐ⁻ᵏ⁾.
 Every coefficient is `1`: the sequence `d` carries all of the structure constants, so the rule is
 integral precisely when its terms are. The class-two formula
 `dividedPower_mul_dividedPower_of_commutator_eq` is the case `d k = y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾`, truncated to
-zero beyond `k = n`; a root string of length three needs a longer sequence and nothing else. -/
-theorem dividedPower_mul_of_commutator_series {x : A} {d : ℕ → A}
+zero beyond `k = n`; the chain `β`, `α + β`, `2α + β` needs a longer sequence and nothing else. -/
+theorem dividedPower_mul_of_ad_dividedPower_series {x : A} {d : ℕ → A}
     (hd : ∀ k, x * d k = d k * x + (k + 1) • d (k + 1)) (m : ℕ) :
     dividedPower m x * d 0 = ∑ k ∈ range (m + 1), d k * dividedPower (m - k) x := by
   induction m with
