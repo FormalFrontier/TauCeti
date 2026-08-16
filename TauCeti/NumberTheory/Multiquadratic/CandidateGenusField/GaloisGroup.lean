@@ -119,6 +119,21 @@ noncomputable def galoisGroupEquivCandidateGenusField {d : ℤ} (hd : Squarefree
       Subtype.val_injective (genusPrimeDiscriminants_not_all_three_even hd)
       (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd))
 
+/-- Transporting an automorphism supplied by the inverse sign-pattern equivalence back through
+the adjoin presentation recovers the corresponding automorphism of that presentation. -/
+private theorem candidateGenusFieldEquivAdjoin_map_galoisGroupEquiv_symm {d : ℤ}
+    (hd : Squarefree d) (ε : {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2)
+    (x : candidateGenusField hd) :
+    candidateGenusFieldEquivAdjoin hd
+        (((galoisGroupEquivCandidateGenusField hd).symm (Multiplicative.ofAdd ε)) x) =
+      ((galoisGroupEquivPrimeDiscriminantRadicands
+        (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
+        (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)
+        Subtype.val_injective (genusPrimeDiscriminants_not_all_three_even hd)
+        (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd)).symm
+          (Multiplicative.ofAdd ε)) (candidateGenusFieldEquivAdjoin hd x) := by
+  rfl
+
 /-- The candidate-genus-field Galois equivalence sends an automorphism to its sign pattern on the
 chosen prime-discriminant roots. -/
 @[simp] theorem galoisGroupEquivCandidateGenusField_apply {d : ℤ} (hd : Squarefree d)
@@ -141,13 +156,8 @@ chosen generator to `(-1)^(ε P)` times that generator. -/
     ((galoisGroupEquivCandidateGenusField hd).symm (Multiplicative.ofAdd ε))
         (candidateGenusFieldGen hd P) = (-1) ^ (ε P).val * candidateGenusFieldGen hd P := by
   apply (candidateGenusFieldEquivAdjoin hd).injective
-  change ((galoisGroupEquivPrimeDiscriminantRadicands
-      (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
-      (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)
-      Subtype.val_injective (genusPrimeDiscriminants_not_all_three_even hd)
-      (genusFieldRoot hd) (genusFieldRoot_sq_algebraMap hd)).symm (Multiplicative.ofAdd ε))
-        (candidateGenusFieldEquivAdjoin hd (candidateGenusFieldGen hd P)) = _
-  rw [map_mul, map_pow, map_neg, map_one, candidateGenusFieldEquivAdjoin_apply_gen]
+  rw [candidateGenusFieldEquivAdjoin_map_galoisGroupEquiv_symm, map_mul, map_pow, map_neg,
+    map_one, candidateGenusFieldEquivAdjoin_apply_gen]
   exact galoisGroupEquivPrimeDiscriminantRadicands_symm_apply_gen
     (fun P : {P // P ∈ genusPrimeDiscriminants hd} => P.val)
     (fun P => (genusPrimeDiscriminants_spec hd).1 P.val P.property)
