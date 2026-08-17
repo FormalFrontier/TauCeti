@@ -90,6 +90,15 @@ theorem componentGroupPointsMulEquivConnectedComponents_apply
   exact componentGroupPointsEquivConnectedComponents_apply H q
 
 /-- The canonical bijection from the rational pointwise quotient to connected components
+sends the identity to the identity component. -/
+@[simp]
+theorem componentGroupPointsToConnectedComponents_one
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    componentGroupPointsToConnectedComponents H 1 = 1 := by
+  rw [← componentGroupPointsMulEquivConnectedComponents_apply]
+  exact map_one (componentGroupPointsMulEquivConnectedComponents H)
+
+/-- The canonical bijection from the rational pointwise quotient to connected components
 preserves multiplication. -/
 @[simp]
 theorem componentGroupPointsToConnectedComponents_mul
@@ -108,6 +117,16 @@ theorem componentGroupPointsToConnectedComponents_mul
         componentGroupPointsToConnectedComponents H r := by
       rw [componentGroupPointsMulEquivConnectedComponents_apply,
         componentGroupPointsMulEquivConnectedComponents_apply]
+
+/-- The canonical bijection from the rational pointwise quotient to connected components
+preserves inverses. -/
+@[simp]
+theorem componentGroupPointsToConnectedComponents_inv
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (q : componentGroupPoints H) :
+    componentGroupPointsToConnectedComponents H q⁻¹ =
+      (componentGroupPointsToConnectedComponents H q)⁻¹ := by
+  rw [← componentGroupPointsMulEquivConnectedComponents_apply, map_inv,
+    componentGroupPointsMulEquivConnectedComponents_apply]
 
 /-- Send a rational point of a finite-type affine group to the connected component containing
 its kernel point. -/
@@ -129,6 +148,7 @@ theorem rationalComponentMap_apply (H : FiniteTypeCommHopfAlgCat.{u, u} k)
 
 /-- The component containing the identity rational point is the identity of the component
 group. -/
+@[simp]
 theorem rationalKernelPoint_one_component (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     (rationalKernelPoint H 1 : ConnectedComponents (PrimeSpectrum H)) = 1 := by
   rw [← rationalComponentMap_apply]
