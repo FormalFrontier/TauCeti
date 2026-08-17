@@ -75,7 +75,7 @@ theorem pi_empiricalPopulation_eq_map_uniformOn (x : κ → α) :
     (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure =
       (uniformOn (Set.univ : Set (ι → κ))).map fun k i => x (k i) := by
   rw [ProbabilityMeasure.toMeasure_pi]
-  simp_rw [empiricalPopulation_toMeasure]
+  simp_rw [empiricalPopulation_eq_map_uniformOn]
   rw [← Measure.pi_map_pi fun _ : ι => (measurable_of_countable x).aemeasurable]
   rw [← uniformOn_pi (f := fun _ : ι => (Set.univ : Set κ))]
   congr 2
@@ -86,7 +86,6 @@ end EmpiricalPopulation
 section Sampling
 
 variable {ι κ : Type*} [Fintype ι] [Fintype κ] [Nonempty κ]
-  [MeasurableSpace κ] [MeasurableSingletonClass κ]
 
 /-- Sampling with replacement from a random finite population.
 
@@ -110,6 +109,17 @@ theorem isProbabilityMeasure_sampleWithReplacement (ρ : Measure (κ → α))
     (aemeasurable_pi_empiricalPopulation (ι := ι) (κ := κ) (α := α) ρ)
     (.of_forall fun _ => inferInstance)
 
+/-- Evaluation of the with-replacement law as an average over the random finite population. -/
+theorem sampleWithReplacement_apply {ρ : Measure (κ → α)} {A : Set (ι → α)}
+    (hA : MeasurableSet A) :
+    sampleWithReplacement ρ A =
+      ∫⁻ x, (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure A ∂ρ :=
+  Measure.bind_apply hA (aemeasurable_pi_empiricalPopulation ρ)
+
+section DiscretePopulation
+
+variable [MeasurableSpace κ] [MeasurableSingletonClass κ]
+
 /-- Sampling with replacement is the pushforward obtained by first choosing a uniform map into
 the population and independently drawing the population itself. -/
 theorem sampleWithReplacement_eq_map_prod (ρ : Measure (κ → α)) [SFinite ρ] :
@@ -131,13 +141,6 @@ theorem sampleWithReplacement_eq_map_prod (ρ : Measure (κ → α)) [SFinite ρ
       (measurable_pi_lambda _ fun i =>
         (measurable_of_countable x).comp (measurable_pi_apply i)) hA,
     ← pi_empiricalPopulation_eq_map_uniformOn]
-
-/-- Evaluation of the with-replacement law as an average over the random finite population. -/
-theorem sampleWithReplacement_apply {ρ : Measure (κ → α)} {A : Set (ι → α)}
-    (hA : MeasurableSet A) :
-    sampleWithReplacement ρ A =
-      ∫⁻ x, (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure A ∂ρ :=
-  Measure.bind_apply hA (aemeasurable_pi_empiricalPopulation ρ)
 
 omit [Nonempty κ] [Fintype ι] [Fintype κ] in
 /-- Evaluation of the without-replacement law by conditioning first on the population. -/
@@ -202,6 +205,8 @@ theorem sampleWithReplacement_le_sampleWithoutReplacement_add
       lintegral_mono fun x => uniformOn_univ_le_injective_add_choose_two_div _
     _ = (∫⁻ x, f x ∂ρ) + ∫⁻ _x, c ∂ρ := lintegral_add_left hf _
     _ = (∫⁻ x, f x ∂ρ) + c := by simp
+
+end DiscretePopulation
 
 end Sampling
 
