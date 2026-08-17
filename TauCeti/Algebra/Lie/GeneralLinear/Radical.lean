@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Basic
+import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 import Mathlib.Tactic.NoncommRing
 
 /-!
@@ -28,20 +29,21 @@ soon as there are two indices, it is not solvable, so no solvable ideal reaches 
 
 The ideal-generation argument runs through matrix units, and only two brackets are needed.
 Bracketing against a diagonal matrix rescales a matrix unit,
-`⁅diagonal d, Eₚq c⁆ = Eₚq ((dₚ - d_q) c)` (`TauCeti.lie_diagonal_single`), which extracts `Eₚq`
-from any diagonal element separating the indices `p` and `q`. Bracketing twice against `Eⱼᵢ`
-annihilates everything except one entry, `(ad Eⱼᵢ)² x = Eⱼᵢ (-2 xᵢⱼ)`
-(`TauCeti.lie_single_lie_single_self`), which extracts `Eⱼᵢ` from any element with a nonzero
-`(i, j)` entry. A non-central matrix is either non-diagonal, and then the second bracket applies, or
-diagonal with two distinct entries, and then the first does. Once one off-diagonal matrix unit lies
-in the ideal, so does the difference of diagonal units `E_bb - Eₐₐ = ⁅E_bₐ, Eₐb⁆`, which separates
-`b` from every other index; that produces every unit in the row and the column of `b`, then every
-difference of diagonal units, and finally, by the first bracket again, all the remaining units.
+`⁅diagonal d, Eₚq c⁆ = Eₚq ((dₚ - d_q) c)` (`TauCeti.lie_single_of_mem_diagonalCartan`, from the
+diagonal Cartan subalgebra file), which extracts `Eₚq` from any diagonal element separating the
+indices `p` and `q`. Bracketing twice against `Eⱼᵢ` annihilates everything except one entry,
+`(ad Eⱼᵢ)² x = Eⱼᵢ (-2 xᵢⱼ)` (`TauCeti.lie_single_lie_single_self`), which extracts `Eⱼᵢ` from any
+element with a nonzero `(i, j)` entry. A non-central matrix is either non-diagonal, and then the
+second bracket applies, or diagonal with two distinct entries, and then the first does. Once one
+off-diagonal matrix unit lies in the ideal, so does the difference of diagonal units
+`E_bb - Eₐₐ = ⁅E_bₐ, Eₐb⁆`, which separates `b` from every other index; that produces every unit in
+the row and the column of `b`, then every difference of diagonal units, and finally, by the first
+bracket again, all the remaining units.
 
 ## Main results
 
-* `TauCeti.lie_diagonal_single` and `TauCeti.lie_single_lie_single_self`: the two bracket
-  computations that produce matrix units inside a Lie ideal.
+* `TauCeti.lie_single_self_sub_single_self_single` and `TauCeti.lie_single_lie_single_self`: the
+  bracket computations that produce matrix units inside a Lie ideal.
 * `TauCeti.slIdeal_le_of_notMem_center`: **a Lie ideal of `gl n K` containing a non-central matrix
   contains `sl n K`**; equivalently `TauCeti.slIdeal_le_or_le_center`, every Lie ideal of `gl n K`
   either contains `sl n K` or consists of scalar matrices.
@@ -66,9 +68,11 @@ perfectness of `sl n R` — which divides by `2` alone — is stated over a comm
 `2` is a unit, non-solvability adding only `Nontrivial R`; the radical computation specialises these
 to a field.
 
-The diagonal of a difference of diagonal matrix units is written as a difference of two `if`s rather
-than through `Pi.single`, so that its values are available by `simp` at each of the indices the
-generation argument tests.
+The bracket against a diagonal matrix is not recomputed here: a diagonal matrix lies in the diagonal
+Cartan subalgebra of `TauCeti/Algebra/Lie/GeneralLinear/DiagonalCartan.lean`, so the eigenvector
+computation `TauCeti.lie_single_of_mem_diagonalCartan` of that file supplies it, and a difference of
+diagonal matrix units is turned into a diagonal matrix by `Matrix.diagonal_single` and
+`Matrix.diagonal_sub`.
 
 ## References
 
@@ -99,37 +103,20 @@ section Brackets
 
 variable [CommRing R]
 
-/-- **Bracketing against a diagonal matrix rescales a matrix unit**:
-`⁅diagonal d, Eₚq c⁆ = Eₚq ((dₚ - d_q) · c)`. -/
-theorem lie_diagonal_single (d : n → R) (p q : n) (c : R) :
-    ⁅diagonal d, single p q c⁆ = single p q ((d p - d q) * c) := by
-  ext k l
-  rw [LieRing.of_associative_ring_bracket]
-  simp only [Matrix.sub_apply, Matrix.diagonal_mul, Matrix.mul_diagonal, single_apply]
-  split_ifs with h
-  · obtain ⟨rfl, rfl⟩ := h
-    ring
-  · ring
-
-omit [Fintype n] in
-/-- A difference of diagonal matrix units is the diagonal matrix of the difference of the
-corresponding indicator functions. -/
-private theorem single_self_sub_single_self_eq_diagonal (a b : n) (c : R) :
-    single a a c - single b b c
-      = diagonal fun k => (if k = a then c else 0) - (if k = b then c else 0) := by
-  ext k l
-  simp only [Matrix.sub_apply, single_apply, diagonal_apply]
-  grind
-
 /-- **A difference of diagonal matrix units doubles the matrix unit between them**:
-`⁅Eₚₚ - E_qq, Eₚq c⁆ = Eₚq (2 c)`. -/
+`⁅Eₚₚ - E_qq, Eₚq c⁆ = Eₚq (2 c)`.
+
+The difference is diagonal, so `TauCeti.lie_single_of_mem_diagonalCartan` applies, with eigenvalue
+the difference `1 - (-1)` of its `(p, p)` and `(q, q)` entries. -/
 theorem lie_single_self_sub_single_self_single {p q : n} (hpq : p ≠ q) (c : R) :
     ⁅single p p (1 : R) - single q q (1 : R), single p q c⁆ = single p q (2 * c) := by
-  have hcoeff : (((if p = p then (1 : R) else 0) - (if p = q then (1 : R) else 0))
-      - ((if q = p then (1 : R) else 0) - (if q = q then (1 : R) else 0))) * c = 2 * c := by
+  have hcoeff : (single p p (1 : R) - single q q (1 : R)) p p
+      - (single p p (1 : R) - single q q (1 : R)) q q = 2 := by
     simp [hpq, hpq.symm]
     ring
-  rw [single_self_sub_single_self_eq_diagonal, lie_diagonal_single, hcoeff]
+  rw [lie_single_of_mem_diagonalCartan
+      (sub_mem (single_self_mem_diagonalCartan p 1) (single_self_mem_diagonalCartan q 1)),
+    hcoeff, smul_single, smul_eq_mul]
 
 /-- **The double bracket against a matrix unit isolates a single entry**:
 `(ad Eⱼᵢ)² x = Eⱼᵢ (-2 · xᵢⱼ)` for `i ≠ j`.
@@ -165,23 +152,25 @@ theorem single_mem_of_diagonal_mem {d : n → K} (hd : diagonal d ∈ I) {p q : 
   have hmem : ⁅diagonal d, single p q ((d p - d q)⁻¹ * c)⁆ ∈ I := by
     have h := I.lie_mem (x := -single p q ((d p - d q)⁻¹ * c)) hd
     rwa [neg_lie, lie_skew] at h
-  rwa [lie_diagonal_single, ← mul_assoc, mul_inv_cancel₀ (sub_ne_zero.mpr hpq), one_mul] at hmem
+  rwa [lie_single_of_mem_diagonalCartan (diagonal_mem_diagonalCartan d), diagonal_apply_eq,
+    diagonal_apply_eq, smul_single, smul_eq_mul, ← mul_assoc,
+    mul_inv_cancel₀ (sub_ne_zero.mpr hpq), one_mul] at hmem
 
 /-- **A Lie ideal containing a difference of diagonal matrix units contains the matrix unit between
-any two indices that the difference separates**; the diagonal of `Eₐₐ - E_bb` takes the value
-`[r = a] - [r = b]` at the index `r`.
+any two indices that the difference separates**, the separation being read off from the diagonal
+entries of `Eₐₐ - E_bb`.
 
-This packages the file's indicator-function encoding of that diagonal, so it stays private; the
-general statement callers want is `TauCeti.single_mem_of_diagonal_mem`. -/
+This is the shape in which the generation argument below applies
+`TauCeti.single_mem_of_diagonal_mem`, so it stays private. -/
 private theorem single_mem_of_single_self_sub_single_self_mem {a b : n}
     (hmem : single a a (1 : K) - single b b (1 : K) ∈ I) {p q : n}
-    (hpq : (if p = a then (1 : K) else 0) - (if p = b then (1 : K) else 0)
-        ≠ (if q = a then (1 : K) else 0) - (if q = b then (1 : K) else 0)) (c : K) :
+    (hpq : (single a a (1 : K) - single b b (1 : K)) p p
+        ≠ (single a a (1 : K) - single b b (1 : K)) q q) (c : K) :
     single p q c ∈ I := by
-  refine single_mem_of_diagonal_mem I
-    (d := fun k => (if k = a then (1 : K) else 0) - (if k = b then (1 : K) else 0)) ?_ hpq c
-  rw [← single_self_sub_single_self_eq_diagonal]
-  exact hmem
+  rw [← Matrix.diagonal_single a (1 : K), ← Matrix.diagonal_single b (1 : K),
+    Matrix.diagonal_sub] at hmem hpq
+  rw [diagonal_apply_eq, diagonal_apply_eq] at hpq
+  exact single_mem_of_diagonal_mem I hmem hpq c
 
 /-- **An element of a Lie ideal with a nonzero off-diagonal entry contributes the transposed matrix
 unit there.** -/
@@ -214,19 +203,19 @@ theorem slIdeal_le_of_single_mem (htwo : (2 : K) ≠ 0) {a b : n} (hab : a ≠ b
   -- Hence every matrix unit in the row and in the column of `b`.
   have hrow : ∀ p : n, p ≠ b → ∀ c : K, single b p c ∈ I ∧ single p b c ∈ I := by
     intro p hpb c
-    have hsep : (if b = b then (1 : K) else 0) - (if b = a then (1 : K) else 0)
-        ≠ (if p = b then (1 : K) else 0) - (if p = a then (1 : K) else 0) := by
-      have hlhs : (if b = b then (1 : K) else 0) - (if b = a then (1 : K) else 0) = 1 := by
-        simp [hab.symm]
+    have hsep : (single b b (1 : K) - single a a (1 : K)) b b
+        ≠ (single b b (1 : K) - single a a (1 : K)) p p := by
+      have hlhs : (single b b (1 : K) - single a a (1 : K)) b b = 1 := by
+        simp [hab]
       rw [hlhs]
       rcases eq_or_ne p a with hpa | hpa
       · rw [hpa]
-        have hrhs : (if a = b then (1 : K) else 0) - (if a = a then (1 : K) else 0) = -1 := by
-          simp [hab]
+        have hrhs : (single b b (1 : K) - single a a (1 : K)) a a = -1 := by
+          simp [hab.symm]
         rw [hrhs]
         exact one_ne_neg_one htwo
-      · have hrhs : (if p = b then (1 : K) else 0) - (if p = a then (1 : K) else 0) = 0 := by
-          simp [hpb, hpa]
+      · have hrhs : (single b b (1 : K) - single a a (1 : K)) p p = 0 := by
+          simp [hpb.symm, hpa.symm]
         rw [hrhs]
         exact one_ne_zero
     exact ⟨single_mem_of_single_self_sub_single_self_mem I hsub hsep c,
@@ -252,9 +241,9 @@ theorem slIdeal_le_of_single_mem (htwo : (2 : K) ≠ 0) {a b : n} (hab : a ≠ b
     rcases eq_or_ne p b with hpb | hpb
     · rw [hpb] at hpq ⊢
       exact (hrow q (Ne.symm hpq) c).1
-    have hsep : (if p = p then (1 : K) else 0) - (if p = b then (1 : K) else 0)
-        ≠ (if q = p then (1 : K) else 0) - (if q = b then (1 : K) else 0) := by
-      simp [hpb, hqb, Ne.symm hpq]
+    have hsep : (single p p (1 : K) - single b b (1 : K)) p p
+        ≠ (single p p (1 : K) - single b b (1 : K)) q q := by
+      simp [hpb.symm, hqb.symm, hpq]
     exact single_mem_of_single_self_sub_single_self_mem I (hdiff p b 1) hsep c
   intro A hA
   rw [← LieSubmodule.mem_toSubmodule]
