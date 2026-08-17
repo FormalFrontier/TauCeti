@@ -28,6 +28,13 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         self.assertLessEqual(check.find_self_declared_shims(root / "TauCeti"), tracked)
         self.assertEqual(groups[0].declarations,
                          ("Complex.exists_bijOn_unitBall_map_eq_zero",))
+        for group in groups:
+            if group.speculative or group.landing_sentinel:
+                continue
+            declared = set().union(*(
+                check.source_declarations(root / source) for source in group.sources
+            ))
+            self.assertLessEqual(set(group.local_declarations), declared)
         check.validate_registry_coverage(groups, root / "TauCeti")
 
     def test_new_self_declaration_requires_registry_entry(self):
@@ -138,6 +145,19 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "require local_declarations"):
                 check.load_registry(manifest, root)
 
+    def test_exact_module_probe_requires_local_surface(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            (root / "TauCeti").mkdir()
+            (root / "TauCeti/Old.lean").touch()
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps([{
+                "sources": ["TauCeti/Old.lean"],
+                "modules": ["Mathlib.New"],
+            }]), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "require local_declarations"):
+                check.load_registry(manifest, root)
+
     def test_base_registry_obligation_is_ratcheted_until_local_surface_moves(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
@@ -161,6 +181,12 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "audit-only sentinel"):
                 check.validate_registry_ratchet((weakened,), (base,), root)
+            moved = root / "TauCeti/Moved.lean"
+            (root / source).rename(moved)
+            with self.assertRaisesRegex(ValueError, "base shim obligations"):
+                check.validate_registry_ratchet((), (base,), root)
+            moved.unlink()
+            (root / source).touch()
             (root / source).write_text("lemma stillUseful : True := by trivial\n", encoding="utf-8")
             check.validate_registry_ratchet((), (base,), root)
 
@@ -182,6 +208,11 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         self.assertIn("env.contains `Alpha", source)
         output = "noise\n" + check.PROBE_PREFIX + "Foo.bar\n"
         self.assertEqual(check.parse_probe_output(output), {"Foo.bar"})
+
+    def test_empty_declaration_probe_does_not_launch_lean(self):
+        with mock.patch.object(check.subprocess, "run") as run:
+            self.assertEqual(check.probe_declarations((), pathlib.Path(".")), set())
+        run.assert_not_called()
 
     def test_declaration_and_module_replacements_render_report_and_gate(self):
         with tempfile.TemporaryDirectory() as temporary:

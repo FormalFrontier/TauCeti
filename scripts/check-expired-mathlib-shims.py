@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import functools
+import importlib.util
 import json
 import os
 import pathlib
@@ -22,8 +24,8 @@ import sys
 from collections.abc import Iterable, Sequence
 
 
-DECLARATION = re.compile(r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*")
-MODULE = re.compile(r"Mathlib(?:\.[A-Za-z_][A-Za-z0-9_']*)+")
+DECLARATION = re.compile(r"[^\W\d][\w']*(?:\.[^\W\d][\w']*)*")
+MODULE = re.compile(r"Mathlib(?:\.[^\W\d][\w']*)+")
 PROBE_PREFIX = "TAUCETI_MATHLIB_DECL\t"
 SELF_DECLARED = re.compile(r"\btemporary\b.{0,40}\bshim\b", re.IGNORECASE | re.DOTALL)
 SELF_DECLARED_OBSOLESCENCE = re.compile(
@@ -130,9 +132,10 @@ def load_registry(
                 raise ValueError(f"entry {index}: tracked source does not exist: {source}")
             seen_sources.add(source)
             sources.append(source)
-        if declarations and not speculative and not landing_sentinel and not local_declarations:
+        if (declarations or modules) and not speculative and not landing_sentinel \
+                and not local_declarations:
             raise ValueError(
-                f"entry {index}: exact declaration probes require local_declarations"
+                f"entry {index}: exact probes require local_declarations"
             )
         groups.append(ShimGroup(
             tuple(sources), declarations, modules, note, speculative, landing_sentinel,
@@ -185,17 +188,72 @@ def groups_by_source(groups: Sequence[ShimGroup]) -> dict[pathlib.Path, ShimGrou
     return {source: group for group in groups for source in group.sources}
 
 
-def source_declares_any(path: pathlib.Path, declarations: Sequence[str]) -> bool:
-    """Conservatively detect registered local declaration names in Lean source."""
+@functools.cache
+def lean_source_parser():
+    """Load the trusted command-level Lean parser shared with the dot-notation lint."""
 
-    if not declarations:
-        return False
+    path = pathlib.Path(__file__).with_name("lint-dot-notation.py")
+    spec = importlib.util.spec_from_file_location("tauceti_lint_dot_notation", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"could not load Lean source parser: {path}")
+    parser = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = parser
+    spec.loader.exec_module(parser)
+    return parser
+
+
+def source_declarations(path: pathlib.Path) -> set[str]:
+    """Return fully qualified command-level declaration names from one Lean source."""
+
+    parser = lean_source_parser()
     text = path.read_text(encoding="utf-8")
-    kinds = r"(?:abbrev|class|def|inductive|instance|lemma|opaque|structure|theorem)"
-    return any(
-        re.search(rf"\b{kinds}\s+{re.escape(name)}(?![A-Za-z0-9_'])", text) is not None
-        for name in declarations
+    code = parser.strip_comments_and_strings(text)
+    events: list[tuple[int, str, object]] = [
+        (position, "scope", (kind, name)) for position, kind, name in parser.scopes(text)
+    ]
+    events.extend(
+        (declaration.position, "declaration", declaration)
+        for declaration in parser.declarations(text)
     )
+    events.extend(
+        (match.start(), "compatibility", match.group("name"))
+        for match in re.finditer(
+            r"(?m)^\s*(?:public\s+|private\s+|protected\s+)?(?:alias|axiom)\s+"
+            r"(?P<name>[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*)",
+            code,
+        )
+    )
+    events.sort(key=lambda event: event[0])
+    stack: list[object] = []
+    found: set[str] = set()
+    for _, kind, payload in events:
+        if kind == "scope":
+            scope_kind, name = payload
+            parser._update_scope(stack, scope_kind, name)
+            continue
+        if kind == "compatibility":
+            declaration_name = payload
+        else:
+            declaration = payload
+            if declaration.name is None:
+                continue
+            declaration_name = declaration.name
+        namespaces = [component for scope in stack for component in scope.components]
+        if declaration_name.startswith("_root_."):
+            parts = declaration_name.removeprefix("_root_.").split(".")
+        else:
+            parts = [*namespaces, *declaration_name.split(".")]
+        found.add(".".join(parts))
+    return found
+
+
+def tree_declarations(source_root: pathlib.Path) -> set[str]:
+    """Collect command-level declaration names from the current Tau Ceti tree."""
+
+    found: set[str] = set()
+    for path in source_root.rglob("*.lean"):
+        found.update(source_declarations(path))
+    return found
 
 
 def validate_registry_ratchet(
@@ -205,10 +263,8 @@ def validate_registry_ratchet(
 
     current = groups_by_source(groups)
     weakened: list[pathlib.Path] = []
+    declared: set[str] | None = None
     for source, base in groups_by_source(base_groups).items():
-        source_path = repo_root / source
-        if not source_path.is_file():
-            continue
         candidate = current.get(source)
         flags_weakened = candidate is not None and (
             (not base.speculative and candidate.speculative)
@@ -220,11 +276,14 @@ def validate_registry_ratchet(
         )
         if flags_weakened:
             weakened.append(source)
-        elif probes_weakened and (
-            not base.local_declarations
-            or source_declares_any(source_path, base.local_declarations)
-        ):
-            weakened.append(source)
+        elif probes_weakened:
+            if not base.local_declarations:
+                weakened.append(source)
+                continue
+            if declared is None:
+                declared = tree_declarations(repo_root / "TauCeti")
+            if declared.intersection(base.local_declarations):
+                weakened.append(source)
     if weakened:
         rendered = "\n".join(f"  {source}" for source in sorted(weakened))
         raise ValueError(
@@ -295,7 +354,10 @@ def parse_probe_output(output: str) -> set[str]:
 def probe_declarations(declarations: Iterable[str], lake_root: pathlib.Path) -> set[str]:
     """Return declarations found in pinned Mathlib's Lean environment."""
 
-    source = render_declaration_probe(declarations)
+    names = tuple(sorted(set(declarations)))
+    if not names:
+        return set()
+    source = render_declaration_probe(names)
     completed = subprocess.run(
         ["lake", "env", "lean", "/dev/stdin"],
         cwd=lake_root,

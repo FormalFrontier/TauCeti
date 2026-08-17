@@ -67,7 +67,7 @@
       "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
     ],
     "local_declarations": [
-      "doubleCoset_eq_iUnion_leftCosets"
+      "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
     ]
   },
   {
@@ -77,6 +77,54 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Basic"
+    ],
+    "local_declarations": [
+      "HeckeCoset.toSet",
+      "HeckeCoset.rep",
+      "HeckeCoset.mk_rep",
+      "HeckeCoset.eq_iff",
+      "HeckeCoset.toSet_mk",
+      "HeckeCoset.toSet_eq_doubleCoset_rep",
+      "HeckeCoset.toSet_injective",
+      "HeckeCoset.rep_mem",
+      "HeckeCoset.mk_eq_mk_of_mem",
+      "HeckeCoset.map",
+      "HeckeCoset.map_mk",
+      "HeckeCoset.map_id",
+      "HeckeCoset.map_map",
+      "HeckeCoset.induction",
+      "HeckeCoset.induction₂",
+      "HeckeCoset.toSet_one",
+      "HeckeCoset.rep_one_mem",
+      "DoubleCoset.DecompQuotient",
+      "DoubleCoset.mk_out_mul_injective",
+      "DoubleCoset.conj_mem_of_stabilizer",
+      "DoubleCoset.conj_mem_of_mk_eq",
+      "IsHeckeTriple.mem_of_mem_doubleCoset",
+      "HeckeCoset.degree",
+      "HeckeCoset.degree_eq_relIndex",
+      "HeckeCoset.degree_mk",
+      "HeckeCoset.degree_one",
+      "HeckeCoset.degree_eq_natCard_decompQuotient",
+      "HeckeCoset.degree_eq_card_decompQuotient",
+      "HeckeCoset.degree_pos",
+      "HeckeCosetModule.single",
+      "HeckeCosetModule.sum_single_index",
+      "HeckeCosetModule.single_apply",
+      "HeckeCosetModule.single_zero",
+      "HeckeCosetModule.sum_single",
+      "HeckeCosetModule.single_add",
+      "HeckeCosetModule.induction_linear",
+      "HeckeCosetModule.instModule",
+      "HeckeCosetModule.smul_single_one",
+      "HeckeCosetModule.mem_support_iff",
+      "HeckeCosetModule.notMem_support_iff",
+      "HeckeCosetModule.sum_def",
+      "HeckeCosetModule.sum_apply",
+      "HeckeCosetModule.zero_apply",
+      "HeckeCosetModule.add_apply",
+      "HeckeCosetModule.smul_apply",
+      "HeckeCosetModule.sum_smul_index"
     ]
   },
   {
@@ -86,6 +134,21 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Multiplicity"
+    ],
+    "local_declarations": [
+      "DoubleCoset.subsingleton_decompQuotient",
+      "DoubleCoset.subsingleton_decompQuotient_of_mem",
+      "DoubleCoset.multiplicity",
+      "DoubleCoset.multiplicity_def",
+      "DoubleCoset.snd_eq_of_fst_eq",
+      "DoubleCoset.fst_eq_of_mul_snd_mem",
+      "HeckeCoset.mulMapOf",
+      "HeckeCoset.mulMap",
+      "HeckeCoset.mulMap_eq_mulMapOf",
+      "HeckeCoset.mulMapOf_eq_mk",
+      "HeckeCoset.mulMap_eq_mk",
+      "HeckeCoset.mulMapOf_eq_of_mk_eq",
+      "HeckeCoset.mulMap_eq_of_mk_eq"
     ]
   },
   {
@@ -95,6 +158,18 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.MultiplicityUnit"
+    ],
+    "local_declarations": [
+      "DoubleCoset.exists_fibre_of_mem_right",
+      "DoubleCoset.exists_fibre_of_mem_left",
+      "DoubleCoset.multiplicity_eq_one_iff_of_mem_right",
+      "DoubleCoset.multiplicity_eq_one_iff_of_mem_left",
+      "HeckeCoset.mulMapOf_one_right",
+      "HeckeCoset.mulMap_one_right",
+      "HeckeCoset.mulMapOf_one_left",
+      "HeckeCoset.mulMap_one_left",
+      "HeckeCoset.multiplicity_mul_one",
+      "HeckeCoset.multiplicity_one_mul"
     ]
   },
   {
@@ -104,6 +179,10 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.MultiplicitySupport"
+    ],
+    "local_declarations": [
+      "DoubleCoset.multiplicity_ne_zero_iff",
+      "HeckeCoset.mem_image_mulMap_iff"
     ]
   },
   {
@@ -113,6 +192,23 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Multiplication"
+    ],
+    "local_declarations": [
+      "HeckeCosetModule.structureConstants",
+      "HeckeCosetModule.structureConstants_apply",
+      "HeckeCosetModule.support_structureConstants_subset",
+      "HeckeCosetModule.mul",
+      "HeckeCosetModule.mul_eq_sum",
+      "HeckeCosetModule.instMulHeckeRing",
+      "HeckeCosetModule.mul_def",
+      "HeckeCosetModule.mul_single_single",
+      "HeckeCosetModule.single_mul_single",
+      "HeckeCosetModule.mul_single_single_of_mulMap_eq",
+      "HeckeCosetModule.mul_add",
+      "HeckeCosetModule.add_mul",
+      "HeckeCosetModule.zero_mul",
+      "HeckeCosetModule.mul_zero",
+      "HeckeCosetModule.instNonUnitalNonAssocSemiringHeckeRing"
     ]
   },
   {
@@ -122,6 +218,17 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.One"
+    ],
+    "local_declarations": [
+      "HeckeCosetModule.multiplicity_one_right_eq_zero",
+      "HeckeCosetModule.multiplicity_one_left_eq_zero",
+      "HeckeCosetModule.structureConstants_one_right",
+      "HeckeCosetModule.structureConstants_one_left",
+      "HeckeCosetModule.instOneHeckeRing",
+      "HeckeCosetModule.one_def",
+      "HeckeCosetModule.one_mul",
+      "HeckeCosetModule.mul_one",
+      "HeckeCosetModule.instNonAssocSemiringHeckeRing"
     ]
   },
   {
@@ -131,6 +238,28 @@
     ],
     "modules": [
       "Mathlib.NumberTheory.HeckeRing.Associativity"
+    ],
+    "local_declarations": [
+      "DoubleCoset.nat_card_prod_setOf",
+      "DoubleCoset.nat_card_setOf_eq_sum",
+      "DoubleCoset.mul_mem_doubleCoset_iff",
+      "DoubleCoset.nat_card_fiber",
+      "DoubleCoset.multiplicity_eq_card_filter",
+      "DoubleCoset.multiplicity_mul_left",
+      "DoubleCoset.multiplicity_mul_right",
+      "DoubleCoset.multiplicity_doubleCoset_congr",
+      "HeckeCoset.sum_ite_mem_multiplicity",
+      "HeckeCoset.sum_image_mulMap_multiplicity_right",
+      "HeckeCoset.sum_multiplicity_eq_card",
+      "HeckeCoset.sum_image_mulMap_multiplicity_left",
+      "HeckeCoset.sum_multiplicity_assoc",
+      "HeckeCosetModule.smul_mul",
+      "HeckeCosetModule.single_mul",
+      "HeckeCosetModule.mul_single",
+      "HeckeCosetModule.mul_assoc_single",
+      "HeckeCosetModule.mul_assoc",
+      "HeckeCosetModule.instSemiringHeckeRing",
+      "HeckeCosetModule.instRingHeckeRing"
     ]
   },
   {
@@ -140,6 +269,71 @@
     ],
     "modules": [
       "Mathlib.RingTheory.Valuation.ValuationSpectrum"
+    ],
+    "local_declarations": [
+      "TauCeti.ValuationSpectrum",
+      "TauCeti.ValuationSpectrum.ext'",
+      "TauCeti.ValuationSpectrum.ofValuation",
+      "TauCeti.ValuationSpectrum.ofValuation_eq_of_isEquiv",
+      "TauCeti.ValuationSpectrum.basicOpen",
+      "TauCeti.ValuationSpectrum.mem_basicOpen_iff",
+      "TauCeti.ValuationSpectrum.basicOpen_mul_subset",
+      "TauCeti.ValuationSpectrum.basicOpen_one",
+      "TauCeti.ValuationSpectrum.basicOpen_self",
+      "TauCeti.ValuationSpectrum.basicOpen_one_right",
+      "TauCeti.ValuationSpectrum.instTopologicalSpace",
+      "TauCeti.ValuationSpectrum.isOpen_basicOpen",
+      "TauCeti.ValuationSpectrum.instTopologicalSpace_eq_generateFrom",
+      "TauCeti.ValuationSpectrum.vle_iff_mem_basicOpen_or",
+      "TauCeti.ValuationSpectrum.isClosed_setOfPred_forall_vlt_one",
+      "TauCeti.ValuationSpectrum.comap",
+      "TauCeti.ValuationSpectrum.comap_vle",
+      "TauCeti.ValuationSpectrum.comap_vlt",
+      "TauCeti.ValuationSpectrum.comap_ofValuation",
+      "TauCeti.ValuationSpectrum.comap_preimage_basicOpen",
+      "TauCeti.ValuationSpectrum.continuous_comap",
+      "TauCeti.ValuationSpectrum.comap_id",
+      "TauCeti.ValuationSpectrum.comap_comp",
+      "TauCeti.ValuationSpectrum.comap_injective",
+      "TauCeti.ValuationSpectrum.supp",
+      "TauCeti.ValuationSpectrum.mem_supp_iff",
+      "TauCeti.ValuationSpectrum.instIsPrimeSupp",
+      "TauCeti.ValuationSpectrum.vle_ofValuation",
+      "TauCeti.ValuationSpectrum.supp_ofValuation",
+      "TauCeti.ValuationSpectrum.valuation",
+      "TauCeti.ValuationSpectrum.valuation_le_iff",
+      "TauCeti.ValuationSpectrum.valuation_lt_iff",
+      "TauCeti.ValuationSpectrum.supp_eq_valuation_supp",
+      "TauCeti.ValuationSpectrum.ofValuation_valuation",
+      "TauCeti.ValuationSpectrum.isEquiv_valuation_ofValuation",
+      "TauCeti.ValuationSpectrum.self_le_supp_comap",
+      "TauCeti.ValuationSpectrum.quotientLift",
+      "TauCeti.ValuationSpectrum.comap_quotientLift",
+      "TauCeti.ValuationSpectrum.quotientLift_comap",
+      "TauCeti.ValuationSpectrum.quotientMk_comap_range",
+      "TauCeti.ValuationSpectrum.isEmbedding_comap_quotientMk",
+      "TauCeti.ValuationSpectrum.localizationComapSection",
+      "TauCeti.ValuationSpectrum.comap_localizationComapSection",
+      "TauCeti.ValuationSpectrum.submonoid_le_supp_primeCompl_comap_algebraMap",
+      "TauCeti.ValuationSpectrum.localization_comap_range",
+      "TauCeti.ValuationSpectrum.suppFun",
+      "TauCeti.ValuationSpectrum.suppFun_asIdeal",
+      "TauCeti.ValuationSpectrum.suppFun_preimage_basicOpen",
+      "TauCeti.ValuationSpectrum.continuous_suppFun",
+      "TauCeti.ValuationSpectrum.suppFun_comap",
+      "TauCeti.ValuationSpectrum.trivialSection",
+      "TauCeti.ValuationSpectrum.trivialSection_vle_iff",
+      "TauCeti.ValuationSpectrum.suppFun_trivialSection",
+      "TauCeti.ValuationSpectrum.trivialSection_preimage_basicOpen",
+      "TauCeti.ValuationSpectrum.continuous_trivialSection",
+      "TauCeti.ValuationSpectrum.suppFun_surjective",
+      "TauCeti.ValuationSpectrum.basicOpenFinset",
+      "TauCeti.ValuationSpectrum.mem_basicOpenFinset_iff",
+      "TauCeti.ValuationSpectrum.basicOpenFinset_subset_basicOpen",
+      "TauCeti.ValuationSpectrum.basicOpenFinset_eq_biInter",
+      "TauCeti.ValuationSpectrum.isOpen_basicOpenFinset",
+      "TauCeti.ValuationSpectrum.basicOpenFinset_insert_self",
+      "TauCeti.ValuationSpectrum.basicOpenFinset_inter"
     ]
   },
   {
@@ -151,7 +345,7 @@
       "ValuativeRel.not_vle_zero_of_isUnit"
     ],
     "local_declarations": [
-      "not_vle_zero_of_isUnit"
+      "TauCeti.ValuativeRel.not_vle_zero_of_isUnit"
     ]
   },
   {
@@ -166,11 +360,11 @@
       "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"
     ],
     "local_declarations": [
-      "comap",
-      "comap_vle",
-      "comap_vlt",
-      "comap_id",
-      "comap_comp"
+      "TauCeti.ValuativeRel.comap",
+      "TauCeti.ValuativeRel.comap_vle",
+      "TauCeti.ValuativeRel.comap_vlt",
+      "TauCeti.ValuativeRel.comap_id",
+      "TauCeti.ValuativeRel.comap_comp"
     ]
   }
 ]
