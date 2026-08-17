@@ -55,6 +55,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_of_isCartanWeightVector`: a torus
   point acts on a weight vector by the value of its character.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusPoints`: naturality in the value ring.
+* `TauCeti.UniversalEnvelopingAlgebra.mapScalarExtensionAutomorphisms_kostantTorusPoints`:
+  scalar extension of a torus point is the torus point with mapped parameter.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootSubgroupParam`: the
   pinning equation `t(s) xᵢ(u) t(s)⁻¹ = xᵢ(α(s) u)`.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantElementarySubgroup_conj_kostantTorusPoints`: the
@@ -334,6 +336,27 @@ theorem map_kostantTorusPoints (φ : A →+* B) (s : κ → Aˣ) (z : A ⊗[ℤ]
         map_kostantTorusPoints_tmul_basis]
 
 end Naturality
+
+section CommAlgCatNaturality
+
+variable {A B : CommAlgCat.{w} ℤ}
+
+omit [Module ℚ V] in
+/-- **Scalar extension of a torus point.** Extending the scalars of the torus point `s` along a
+morphism of value rings gives the torus point whose parameter is mapped into the target ring. -/
+theorem mapScalarExtensionAutomorphisms_kostantTorusPoints (φ : A ⟶ B) (s : κ → Aˣ) :
+    GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ (kostantTorusPoints M b wt A s) =
+      kostantTorusPoints M b wt B fun j => Units.map φ.hom.toRingHom.toMonoidHom (s j) := by
+  refine Units.ext (Module.Basis.ext (b.baseChange B) fun x => ?_)
+  have hchar := congrArg Units.val (map_torusCharacter φ.hom.toRingHom s (wt x))
+  simp only [Units.coe_map, MonoidHom.coe_coe] at hchar
+  rw [Module.Basis.baseChange_apply, GeneralLinear.mapScalarExtensionAutomorphisms_tmul,
+    kostantTorusPoints_tmul_basis, kostantTorusPoints_tmul_basis, one_smul,
+    GeneralLinear.scalarExtensionMap_tmul, map_mul]
+  simp only [map_one, mul_one]
+  exact congrArg (· ⊗ₜ[ℤ] (b x : M)) hchar
+
+end CommAlgCatNaturality
 
 end Torus
 
