@@ -66,6 +66,8 @@ structure Hom (source : HodgeStructureOn W₁ ω₁ n) (target : HodgeStructureO
 
 namespace Hom
 
+attribute [simp] Hom.commutes_conj
+
 variable {source : HodgeStructureOn W₁ ω₁ n} {target : HodgeStructureOn W₂ ω₂ n}
 variable {third : HodgeStructureOn W₃ ω₃ n}
 
@@ -100,6 +102,11 @@ theorem map_conjF_le (f : Hom source target) (p : ℤ) :
   rintro _ ⟨x, hx, rfl⟩
   rw [target.mem_conjF_iff, ← f.commutes_conj]
   exact f.map_mem_F p _ ((source.mem_conjF_iff p x).mp hx)
+
+/-- Elementwise form of preservation of the conjugate Hodge filtration. -/
+theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : W₁}
+    (hx : x ∈ source.conjF p) : f x ∈ target.conjF p :=
+  f.map_conjF_le p ⟨x, hx, rfl⟩
 
 /-- A Hodge morphism preserves every Hodge component `H^{p,n-p}`. -/
 theorem map_piece_le (f : Hom source target) (p : ℤ) :
