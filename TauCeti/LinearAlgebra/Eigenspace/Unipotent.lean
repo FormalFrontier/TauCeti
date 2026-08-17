@@ -39,45 +39,49 @@ noncomputable section
 namespace GeneralLinearGroup
 
 variable {K : Type u} {V : Type v}
-variable [Field K] [AddCommGroup V] [Module K V]
+
+section CommRing
+
+variable [CommRing K] [AddCommGroup V] [Module K V]
 
 /-- The maximal generalized eigenspace for the eigenvalue one of a unipotent automorphism is the
 whole space. -/
+@[simp]
 theorem IsUnipotent.maxGenEigenspace_one_eq_top {g : GeneralLinearGroup K V}
-    (hg : IsUnipotent g) :
+    (hg : LinearMap.GeneralLinearGroup.IsUnipotent g) :
     Module.End.maxGenEigenspace (g : Module.End K V) 1 = ⊤ := by
   rw [eq_top_iff]
   intro x _
   rw [Module.End.mem_maxGenEigenspace]
-  rw [isUnipotent_def] at hg
+  rw [LinearMap.GeneralLinearGroup.isUnipotent_def] at hg
   obtain ⟨n, hn⟩ := hg
   refine ⟨n, ?_⟩
   simpa using LinearMap.congr_fun hn x
 
+end CommRing
+
+section Field
+
+variable [Field K] [AddCommGroup V] [Module K V]
+
 /-- Every eigenvalue of a unipotent automorphism is one. -/
-theorem IsUnipotent.eigenvalue_eq_one {g : GeneralLinearGroup K V} (hg : IsUnipotent g)
+theorem IsUnipotent.eigenvalue_eq_one {g : GeneralLinearGroup K V}
+    (hg : LinearMap.GeneralLinearGroup.IsUnipotent g)
     {v : V} (hv : v ≠ 0) {μ : K} (heigen : (g : Module.End K V) v = μ • v) :
     μ = 1 := by
-  have hpow_apply (m : ℕ) : (((g : Module.End K V) - 1) ^ m) v = (μ - 1) ^ m • v := by
-    induction m with
-    | zero => simp
-    | succ m ih =>
-        calc
-          (((g : Module.End K V) - 1) ^ m.succ) v =
-              ((g : Module.End K V) - 1) ((μ - 1) ^ m • v) := by
-            rw [pow_succ', Module.End.mul_apply, ih]
-          _ = (μ - 1) ^ m • ((μ - 1) • v) := by
-            simp only [map_smul, LinearMap.sub_apply, Module.End.one_apply, heigen, sub_smul,
-              one_smul]
-          _ = (μ - 1) ^ m.succ • v := by rw [smul_smul, pow_succ]
-  rw [isUnipotent_def] at hg
-  obtain ⟨n, hn⟩ := hg
-  have hzero : (μ - 1) ^ n • v = 0 := by
-    rw [← hpow_apply n, hn]
-    rfl
-  have hpow : (μ - 1) ^ n = 0 :=
-    (smul_eq_zero.mp hzero).resolve_right hv
-  exact sub_eq_zero.mp (eq_zero_of_pow_eq_zero hpow)
+  rw [LinearMap.GeneralLinearGroup.isUnipotent_def] at hg
+  have heigenvalue : Module.End.HasEigenvalue (g : Module.End K V) μ :=
+    Module.End.hasEigenvalue_of_hasEigenvector
+      ⟨Module.End.mem_eigenspace_iff.mpr heigen, hv⟩
+  have hsub : Module.End.HasEigenvalue ((g : Module.End K V) - 1) (μ - 1) := by
+    have hshift : Module.End.HasEigenvalue (g : Module.End K V) ((μ - 1) + 1) := by
+      simpa using heigenvalue
+    simpa only [one_smul, Module.End.one_eq_id] using
+      (Module.End.hasEigenvalue_sub_iff (f := (g : Module.End K V))
+        (ρ := (1 : K)) (μ := μ - 1)).mpr hshift
+  exact sub_eq_zero.mp (hsub.isNilpotent_of_isNilpotent hg).eq_zero
+
+end Field
 
 end GeneralLinearGroup
 

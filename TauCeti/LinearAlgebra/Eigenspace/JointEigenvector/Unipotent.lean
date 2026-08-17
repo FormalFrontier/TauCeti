@@ -59,13 +59,14 @@ theorem exists_common_fixedVector_of_pairwise_commute_of_isUnipotent
     (hcomm hij).units_val
   have htri (i : ι) : ⨆ μ, (fEnd i).maxGenEigenspace μ = ⊤ := by
     apply top_unique
-    rw [← (hunipotent i).maxGenEigenspace_one_eq_top]
+    rw [← TauCeti.GeneralLinearGroup.IsUnipotent.maxGenEigenspace_one_eq_top (hunipotent i)]
     exact le_iSup (fun μ ↦ (fEnd i).maxGenEigenspace μ) 1
   obtain ⟨χ, v, hv, heigen⟩ :=
     exists_jointEigenvector_of_pairwise_commute fEnd hcommEnd htri
   refine ⟨v, hv, fun i ↦ ?_⟩
   have hχ : χ i = 1 :=
-    (hunipotent i).eigenvalue_eq_one hv (Module.End.mem_eigenspace_iff.mp (heigen i))
+    TauCeti.GeneralLinearGroup.IsUnipotent.eigenvalue_eq_one (hunipotent i) hv
+      (Module.End.mem_eigenspace_iff.mp (heigen i))
   simpa [fEnd, hχ] using Module.End.mem_eigenspace_iff.mp (heigen i)
 
 /-- A pairwise-commuting family of unipotent automorphisms of a nonzero finite-dimensional vector
