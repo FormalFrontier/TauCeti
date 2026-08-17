@@ -52,12 +52,15 @@ that can be stated.
   `cartanEquivDual`.
 * `TauCeti.invForm_coroot` and `TauCeti.invForm_coroot_of_isNonZero`: the normalisation
   `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩`.
-* `TauCeti.pairing_mul_invForm_root_self`: the Cartan integer of a pair of roots is
-  `2 ⟨α, β⟩ / ⟨β, β⟩`, the compatibility with `LieAlgebra.IsKilling.rootSystem_pairing_apply`.
-* `TauCeti.invForm_root_root_eq_zero_iff`: two roots are orthogonal for the form exactly when their
-  Cartan integer vanishes.
 * `TauCeti.invForm_cartanEquivDual_coroot_self`: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a
   short coroot.
+
+The compatibility with `LieAlgebra.IsKilling.rootSystem_pairing_apply` — that a Cartan integer is
+`2 ⟨α, β⟩ / ⟨β, β⟩` — and the orthogonality criterion and reflection invariance of the form are not
+restated here: `TauCeti.rootInvariantForm` makes them
+`RootPairing.InvariantForm.two_mul_apply_root_root`,
+`RootPairing.InvariantForm.apply_root_root_zero_iff` and
+`RootPairing.InvariantForm.apply_reflection_reflection`.
 
 ## Implementation notes
 
@@ -132,6 +135,7 @@ theorem invForm_cartanEquivDual_right (a : Module.Dual K H) (x : H) :
     invForm a (cartanEquivDual H x) = a x := by
   rw [invForm_apply, LinearEquiv.symm_apply_apply]
 
+/-- The form is symmetric, inheriting the symmetry of the Killing form. -/
 theorem invForm_isSymm : (invForm (H := H)).IsSymm := by
   constructor
   intro a b
@@ -141,6 +145,8 @@ theorem invForm_isSymm : (invForm (H := H)).IsSymm := by
 theorem invForm_comm (a b : Module.Dual K H) : invForm a b = invForm b a :=
   (invForm_isSymm (H := H)).eq a b
 
+/-- Pairing a weight of the shape `cartanEquivDual H x` on the left evaluates the other weight at
+`x`; the left-hand companion of `TauCeti.invForm_cartanEquivDual_right`. -/
 theorem invForm_cartanEquivDual_left (x : H) (a : Module.Dual K H) :
     invForm (cartanEquivDual H x) a = a x := by
   rw [invForm_comm, invForm_cartanEquivDual_right]
@@ -203,14 +209,6 @@ theorem invForm_coroot (lam : Module.Dual K H) (i : H.root) :
       2 * invForm lam ((rootSystem H).root i) :=
   invForm_coroot_of_isNonZero lam (H.isNonZero_coe_root i)
 
-/-- **Compatibility with `LieAlgebra.IsKilling.rootSystem_pairing_apply`**: the Cartan integer of a
-pair of roots is `2 ⟨α, β⟩ / ⟨β, β⟩`. -/
-theorem pairing_mul_invForm_root_self (i j : H.root) :
-    (rootSystem H).pairing i j *
-        invForm ((rootSystem H).root j) ((rootSystem H).root j) =
-      2 * invForm ((rootSystem H).root i) ((rootSystem H).root j) :=
-  invForm_coroot _ j
-
 /-! ## The invariant form of the root system -/
 
 /-- `TauCeti.invForm` as an invariant form on `LieAlgebra.IsKilling.rootSystem H`. -/
@@ -221,34 +219,18 @@ noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
     simpa only [rootSystem_root_apply] using invForm_self_ne_zero (H.isNonZero_coe_root i)
   isOrthogonal_reflection i := by
     intro a b
-    have hd : i.1 ((cartanEquivDual H).symm i.1) ≠ 0 :=
-      root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
-    have hai := invForm_comm a (i.1 : Module.Dual K H)
-    have hbi := invForm_comm b (i.1 : Module.Dual K H)
-    -- Definitional equality: `(rootSystem H).reflection i` expands to reflection along `i.1`.
-    change invForm (a - a (coroot i.1) • (i.1 : Module.Dual K H))
-      (b - b (coroot i.1) • (i.1 : Module.Dual K H)) = invForm a b
-    simp only [map_sub, LinearMap.sub_apply, map_smul, map_nsmul, LinearMap.smul_apply,
-      invForm_apply, smul_eq_mul, nsmul_eq_mul, Nat.cast_ofNat, coroot]
-    simp only [invForm_apply] at hai hbi
-    rw [hai, hbi]
-    simp only [Weight.toLinear_apply]
-    field_simp
-    ring
+    have hα := H.isNonZero_coe_root i
+    have ha := invForm_coroot_of_isNonZero a hα
+    have hb := invForm_coroot_of_isNonZero b hα
+    rw [RootPairing.reflection_apply, RootPairing.reflection_apply]
+    simp only [LinearMap.flip_apply, rootSystem_toLinearMap_apply,
+      rootSystem_coroot_apply, rootSystem_root_apply, map_sub, LinearMap.sub_apply, map_smul,
+      LinearMap.smul_apply, smul_eq_mul]
+    rw [invForm_comm (i.1 : Module.Dual K H) b]
+    linear_combination (b (coroot i.1) / 2) * ha + (a (coroot i.1) / 2) * hb
 
 @[simp]
 theorem rootInvariantForm_form : (rootInvariantForm (H := H)).form = invForm := (rfl)
-
-/-- Two roots are orthogonal for the invariant form exactly when their Cartan integer vanishes. -/
-theorem invForm_root_root_eq_zero_iff (i j : H.root) :
-    invForm ((rootSystem H).root i) ((rootSystem H).root j) = 0 ↔
-      (rootSystem H).pairing i j = 0 :=
-  (rootInvariantForm (H := H)).apply_root_root_zero_iff i j
-
-/-- The reflections of the root system preserve the form. -/
-theorem invForm_reflection (i : H.root) (a b : Module.Dual K H) :
-    invForm ((rootSystem H).reflection i a) ((rootSystem H).reflection i b) = invForm a b :=
-  (rootInvariantForm (H := H)).apply_reflection_reflection i a b
 
 /-- **The length of a coroot**: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a short coroot. -/
 theorem invForm_cartanEquivDual_coroot_self (i : H.root) :
