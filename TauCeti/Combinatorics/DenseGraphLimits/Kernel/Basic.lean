@@ -41,7 +41,7 @@ Consequently the algebra below needs no hypothesis on `μ` at all — in particu
 
 * `AddCommGroup` and `Module ℝ` instances, defined pointwise. The `coe_zero`, `coe_add`, `coe_neg`,
   `coe_sub` and `coe_smul` simp lemmas identify every operation with the corresponding operation on
-  `Ω → Ω → ℝ`, so the module structure can be computed with entirely by `simp`.
+  `Ω → Ω → ℝ`, so the module structure can be computed entirely by `simp`.
 
 ## Implementation
 
