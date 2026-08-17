@@ -43,7 +43,8 @@ double-dual isomorphism `cartierDualDualIso`.
   both of its directions as transported finite dualization.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDual` and
   `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.coordHopfAlgebra`: the Cartier dual of a
-  group scheme and its coordinate Hopf algebra, related by `cartierDual_eq`.
+  group scheme and its coordinate Hopf algebra, related by `cartierDual_eq` and
+  `coordHopfAlgebraCartierDualIso`.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDualDualIso`: the double-dual
   isomorphism `G ≅ D(D(G))`, natural by `cartierDualDualIso_hom_naturality`.
 
@@ -281,6 +282,27 @@ theorem cartierDual_eq (R : Type u) [CommRing R]
         R).functor.obj
           (op (FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordHopfAlgebra R G))) :=
   (rfl)
+
+/-- **The coordinate Hopf algebra of a Cartier dual is the finite dual of the coordinate Hopf
+algebra**, naturally in the group scheme. -/
+noncomputable def coordHopfAlgebraCartierDualNatIso (R : Type u) [CommRing R] :
+    (cartierDualFunctor R).rightOp ⋙
+        (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
+          R).rightOp.inverse ≅
+      (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
+          R).rightOp.inverse.rightOp ⋙ FiniteLocallyFreeBicommutativeHopfAlgCat.dualFunctor :=
+  Functor.isoWhiskerLeft
+    ((finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
+        R).rightOp.inverse.rightOp ⋙ FiniteLocallyFreeBicommutativeHopfAlgCat.dualFunctor)
+    (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
+      R).rightOp.unitIso.symm
+
+/-- The coordinate Hopf algebra of the Cartier dual of a single group scheme. -/
+noncomputable abbrev coordHopfAlgebraCartierDualIso (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    coordHopfAlgebra R (cartierDual R G) ≅
+      FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordHopfAlgebra R G) :=
+  (coordHopfAlgebraCartierDualNatIso R).app G
 
 /-- **Cartier duality is involutive.** Every finite locally free commutative affine group scheme
 is naturally isomorphic to its Cartier double dual. -/

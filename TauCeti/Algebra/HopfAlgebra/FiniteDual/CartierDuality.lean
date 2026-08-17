@@ -243,6 +243,7 @@ theorem evalNatIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) 
 
 /-- Dualizing the inverse evaluation isomorphism of `H` is the evaluation isomorphism of the
 finite dual of `H`. This is the triangle identity that makes finite dualization involutive. -/
+@[simp]
 theorem dualMap_evalIso_inv (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
     dualMap (evalIso H).inv = (evalIso (dual H)).hom := by
   apply hom_ext
@@ -253,6 +254,14 @@ theorem dualMap_evalIso_inv (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)
   rw [toBialgHom_dualMap, ConvolutionDual.map_apply_apply]
   exact (evalIso_inv_apply_apply H Phi phi).trans
     (evalIso_hom_apply_apply (dual H) phi Phi).symm
+
+/-- Dualizing the evaluation isomorphism of `H` is the inverse evaluation isomorphism of the
+finite dual of `H`. -/
+@[simp]
+theorem dualMap_evalIso_hom (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    dualMap (evalIso H).hom = (evalIso (dual H)).inv :=
+  (Iso.inv_eq_inv ((dualFunctor (k := k)).mapIso (evalIso H).op)
+    (evalIso (dual H)).symm).mp (dualMap_evalIso_inv H)
 
 /-- Finite dualization is involutive in the sense required to build an anti-equivalence out of
 it. -/
@@ -291,6 +300,18 @@ theorem cartierDuality_unitIso_hom_app (H : (FiniteLocallyFreeBicommutativeHopfA
 @[simp]
 theorem cartierDuality_counitIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
     (cartierDuality (k := k)).counitIso.hom.app H = (evalIso H).inv :=
+  (rfl)
+
+/-- The inverse unit of `cartierDuality` is the opposite of double-dual evaluation. -/
+@[simp]
+theorem cartierDuality_unitIso_inv_app (H : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
+    (cartierDuality (k := k)).unitIso.inv.app H = (evalIso H.unop).hom.op :=
+  (rfl)
+
+/-- The inverse counit of `cartierDuality` is double-dual evaluation. -/
+@[simp]
+theorem cartierDuality_counitIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    (cartierDuality (k := k)).counitIso.inv.app H = (evalIso H).hom :=
   (rfl)
 
 instance dualFunctorIsEquivalence : (dualFunctor (k := k)).IsEquivalence :=

@@ -25,7 +25,7 @@ both directions and both structural isomorphisms compute.
 
 * `CategoryTheory.Functor.dualityEquivalence`: the anti-equivalence attached to an involutive
   contravariant endofunctor, together with the computations of its functor, inverse, unit and
-  counit.
+  counit in both directions.
 -/
 
 public section
@@ -71,6 +71,18 @@ theorem dualityEquivalence_unitIso_hom_app (X : Cᵒᵖ) :
 @[simp]
 theorem dualityEquivalence_counitIso_hom_app (X : C) :
     (dualityEquivalence F ev triangle).counitIso.hom.app X = ev.inv.app X :=
+  rfl
+
+/-- The inverse unit of `dualityEquivalence` is the opposite of the double-dual isomorphism. -/
+@[simp]
+theorem dualityEquivalence_unitIso_inv_app (X : Cᵒᵖ) :
+    (dualityEquivalence F ev triangle).unitIso.inv.app X = (ev.hom.app X.unop).op :=
+  rfl
+
+/-- The inverse counit of `dualityEquivalence` is the double-dual isomorphism. -/
+@[simp]
+theorem dualityEquivalence_counitIso_inv_app (X : C) :
+    (dualityEquivalence F ev triangle).counitIso.inv.app X = ev.hom.app X :=
   rfl
 
 end Functor
