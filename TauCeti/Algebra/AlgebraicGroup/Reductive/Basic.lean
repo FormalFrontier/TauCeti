@@ -84,6 +84,7 @@ def reductiveCommHopfAlgProperty (k : Type u) [Field k] :
 
 /-- Reductivity means smoothness, geometric connectedness, and absence of nontrivial connected
 normal smooth unipotent closed subgroups after extension to an algebraic closure. -/
+@[simp]
 theorem reductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     reductiveCommHopfAlgProperty k H ↔
