@@ -150,7 +150,8 @@ theorem rationalComponentMap_apply (H : FiniteTypeCommHopfAlgCat.{u, u} k)
 group. -/
 @[simp]
 theorem rationalKernelPoint_one_component (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    (rationalKernelPoint H 1 : ConnectedComponents (PrimeSpectrum H)) = 1 := by
+    ConnectedComponents.mk (α := PrimeSpectrum H) (Bialgebra.augmentationPoint k H) = 1 := by
+  rw [← rationalKernelPoint_one H]
   rw [← rationalComponentMap_apply]
   exact map_one (rationalComponentMap H)
 
