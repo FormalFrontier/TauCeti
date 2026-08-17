@@ -114,10 +114,8 @@ theorem connectedComponentsIdempotent_mul_eq_zero
   rw [TopologicalSpace.Opens.coe_inf, TopologicalSpace.Opens.coe_bot]
   apply Set.eq_empty_iff_forall_notMem.mpr
   intro x hx
-  rw [Set.mem_inter_iff] at hx
-  change x ∈ basicOpen (connectedComponentsIdempotent C) ∧
-    x ∈ basicOpen (connectedComponentsIdempotent D) at hx
-  rw [mem_basicOpen_connectedComponentsIdempotent,
+  rw [Set.mem_inter_iff, SetLike.mem_coe, SetLike.mem_coe,
+    mem_basicOpen_connectedComponentsIdempotent,
     mem_basicOpen_connectedComponentsIdempotent] at hx
   exact hCD (hx.1.symm.trans hx.2)
 
