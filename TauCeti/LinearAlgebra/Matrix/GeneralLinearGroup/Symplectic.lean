@@ -216,7 +216,27 @@ the alternating form and the subgroup along `finSumFinEquiv` and records that no
 
 section FinIndex
 
-variable (m : ℕ) (R : Type u) [CommRing R]
+variable (m : ℕ) (R : Type u)
+
+section
+
+variable [CommSemiring R]
+
+/-- Reindexing along `finSumFinEquiv`, as a group isomorphism of general linear groups. -/
+def reindexGL : GL (Fin (m + m)) R ≃* GL (Fin m ⊕ Fin m) R :=
+  Units.mapEquiv (Matrix.reindexAlgEquiv R R finSumFinEquiv.symm).toRingEquiv.toMulEquiv
+
+@[simp]
+theorem coe_reindexGL (M : GL (Fin (m + m)) R) :
+    (reindexGL m R M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) =
+      (M : Matrix (Fin (m + m)) (Fin (m + m)) R).submatrix finSumFinEquiv finSumFinEquiv := by
+  simp [reindexGL, Units.coe_mapEquiv, Matrix.reindex_apply]
+
+end
+
+-- `Matrix.J` and `Matrix.map_J` are stated for commutative rings, so the form and the
+-- subgroup require `[CommRing R]` even though the reindexing above does not.
+variable [CommRing R]
 
 /-- The standard alternating form in `Fin (m + m)` coordinates: `Matrix.J`, transported along
 `finSumFinEquiv`. -/
@@ -233,20 +253,11 @@ theorem JFin_map {S : Type*} [CommRing S] (f : R →+* S) : (JFin m R).map f = J
   simpa [JFin] using congrFun (congrFun h (finSumFinEquiv.symm i)) (finSumFinEquiv.symm j)
 
 /-- Transporting back along `finSumFinEquiv` recovers `Matrix.J`. -/
+@[simp]
 theorem JFin_submatrix :
     (JFin m R).submatrix finSumFinEquiv finSumFinEquiv = J (Fin m) R := by
   ext i j
   simp [JFin]
-
-/-- Reindexing along `finSumFinEquiv`, as a group isomorphism of general linear groups. -/
-def reindexGL : GL (Fin (m + m)) R ≃* GL (Fin m ⊕ Fin m) R :=
-  Units.mapEquiv (Matrix.reindexAlgEquiv R R finSumFinEquiv.symm).toRingEquiv.toMulEquiv
-
-@[simp]
-theorem coe_reindexGL (M : GL (Fin (m + m)) R) :
-    (reindexGL m R M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) =
-      (M : Matrix (Fin (m + m)) (Fin (m + m)) R).submatrix finSumFinEquiv finSumFinEquiv := by
-  simp [reindexGL, Units.coe_mapEquiv, Matrix.reindex_apply]
 
 /-- The symplectic subgroup of `GL (Fin (m + m)) R`: the pullback of `TauCeti.GLSymplectic`
 along the reindexing isomorphism. -/
@@ -259,6 +270,7 @@ variable {m R}
 
 /-- Membership in the `Fin`-indexed symplectic subgroup is the defining condition
 `M J Mᵀ = J` against the transported alternating form. -/
+@[simp]
 theorem mem_iff {M : GL (Fin (m + m)) R} :
     M ∈ GLSymplecticFin m R ↔
       (M : Matrix (Fin (m + m)) (Fin (m + m)) R) * JFin m R *
@@ -270,7 +282,7 @@ theorem mem_iff {M : GL (Fin (m + m)) R} :
   constructor
   · intro h
     have := congrArg (fun N => N.submatrix finSumFinEquiv.symm finSumFinEquiv.symm) h
-    simpa [Matrix.submatrix_submatrix] using this
+    simpa [Matrix.submatrix_submatrix, JFin] using this
   · intro h
     rw [h]
 

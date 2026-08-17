@@ -105,20 +105,20 @@ theorem genericMatrix_apply (i j : Fin (m + m)) :
   rw [genericMatrix, Matrix.map_apply, GeneralLinear.localizedGenericMatrix_apply]
 
 /-- The inverse of the localized generic matrix, read in the bundled coordinate Hopf algebra. -/
-noncomputable def genericMatrixInv :
+private noncomputable def genericMatrixInv :
     Matrix (Fin (m + m)) (Fin (m + m)) (GeneralLinear.coordinateHopfAlgebra R (m + m)) :=
   ((GeneralLinear.localizedGenericMatrix R (m + m))⁻¹).map
     (GeneralLinear.coordinateHopfAlgebraAlgEquiv R (m + m))
 
 /-- The bundled generic matrix and its bundled inverse multiply to the identity. -/
-theorem genericMatrix_mul_genericMatrixInv :
+private theorem genericMatrix_mul_genericMatrixInv :
     genericMatrix R m * genericMatrixInv R m = 1 := by
   rw [genericMatrix, genericMatrixInv, ← Matrix.map_mul,
     Matrix.mul_nonsing_inv _ (GeneralLinear.isUnit_det_localizedGenericMatrix R (m + m))]
   exact Matrix.map_one _ (map_zero _) (map_one _)
 
 /-- The bundled inverse and the bundled generic matrix multiply to the identity. -/
-theorem genericMatrixInv_mul_genericMatrix :
+private theorem genericMatrixInv_mul_genericMatrix :
     genericMatrixInv R m * genericMatrix R m = 1 := by
   rw [genericMatrix, genericMatrixInv, ← Matrix.map_mul,
     Matrix.nonsing_inv_mul _ (GeneralLinear.isUnit_det_localizedGenericMatrix R (m + m))]
@@ -341,19 +341,12 @@ noncomputable def coordinateMap :
   CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
 
-/-- The symplectic coordinate morphism is the canonical quotient morphism. -/
-theorem coordinateMap_def :
-    coordinateMap R m =
-      CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R (m + m))
-        (definingHopfIdeal R m) := by
-  unfold coordinateMap
-  rfl
-
 /-- Every defining relation vanishes in the symplectic coordinate Hopf algebra. -/
 @[simp]
 theorem coordinateMap_relationMatrix (i j : Fin (m + m)) :
     (coordinateMap R m).hom (relationMatrix R m i j) = 0 := by
-  rw [coordinateMap_def, CommHopfAlgCat.mkQuotient_apply, Ideal.Quotient.mkₐ_eq_mk]
+  unfold coordinateMap
+  rw [CommHopfAlgCat.mkQuotient_apply, Ideal.Quotient.mkₐ_eq_mk]
   exact Ideal.Quotient.eq_zero_iff_mem.mpr
     (definingHopfIdeal_toIdeal R m ▸
       Ideal.subset_span (relationMatrix_mem_relationSet R m i j))
@@ -363,14 +356,6 @@ noncomputable def groupScheme :=
   CommHopfAlgCat.quotientSpec (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
 
-/-- The symplectic group scheme is the Hopf spectrum of its quotient coordinate algebra. -/
-theorem groupScheme_def :
-    groupScheme R m =
-      CommHopfAlgCat.quotientSpec (GeneralLinear.coordinateHopfAlgebra R (m + m))
-        (definingHopfIdeal R m) := by
-  unfold groupScheme
-  rfl
-
 private noncomputable def groupSchemeι :=
   CommHopfAlgCat.quotientSpecι (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
@@ -378,16 +363,14 @@ private noncomputable def groupSchemeι :=
 /-- The closed-subgroup inclusion from the symplectic subgroup scheme into the named general
 linear group scheme. -/
 noncomputable def inclusion : groupScheme R m ⟶ GeneralLinear.groupScheme R (m + m) :=
-  eqToHom (groupScheme_def R m) ≫ groupSchemeι R m ≫
-    (eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom
+  groupSchemeι R m ≫ (eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom
 
 private theorem inclusion_hom_left :
     (inclusion R m).hom.hom.left =
-      (eqToHom (groupScheme_def R m)).hom.hom.left ≫
-        (CommHopfAlgCat.quotientSpecι
-          (GeneralLinear.coordinateHopfAlgebra R (m + m))
-          (definingHopfIdeal R m)).hom.hom.left ≫
-        ((eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom).hom.hom.left := by
+      (CommHopfAlgCat.quotientSpecι
+        (GeneralLinear.coordinateHopfAlgebra R (m + m))
+        (definingHopfIdeal R m)).hom.hom.left ≫
+      ((eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom).hom.hom.left := by
   rw [inclusion]
   unfold groupSchemeι
   rfl
@@ -396,13 +379,8 @@ private theorem inclusion_hom_left :
 immersion. -/
 instance isClosedImmersion_inclusion :
     AlgebraicGeometry.IsClosedImmersion (inclusion R m).hom.hom.left := by
-  let e₀ := (eqToHom (groupScheme_def R m)).hom.hom.left
   let c := (CommHopfAlgCat.quotientSpecι
     (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)).hom.hom.left
-  have he₀ : IsIso e₀ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R m)))).isIso_hom
   let e₂ := ((eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom).hom.hom.left
   have he₂ : IsIso e₂ :=
     ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
@@ -413,11 +391,8 @@ instance isClosedImmersion_inclusion :
   have hc₂ : AlgebraicGeometry.IsClosedImmersion (c ≫ e₂) :=
     (@MorphismProperty.cancel_right_of_respectsIso
       _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ c e₂ he₂).2 hc
-  have he₀c₂ : AlgebraicGeometry.IsClosedImmersion (e₀ ≫ (c ≫ e₂)) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ e₀ (c ≫ e₂) he₀).2 hc₂
   rw [inclusion_hom_left]
-  exact he₀c₂
+  exact hc₂
 
 /-- The symplectic coordinate Hopf algebra, bundled with its finite-type property. -/
 noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
@@ -438,7 +413,7 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
 /-- The structural morphism of the symplectic subgroup scheme is locally of finite type. -/
 instance locallyOfFiniteType_groupScheme :
     AlgebraicGeometry.LocallyOfFiniteType (groupScheme R m).X.hom := by
-  rw [groupScheme_def]
+  unfold groupScheme
   exact FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
     (⟨GeneralLinear.coordinateHopfAlgebra R (m + m), by
         rw [← GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj]
