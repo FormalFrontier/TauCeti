@@ -22,7 +22,9 @@ algebra.
 
 The resulting anti-equivalence is Cartier duality over an arbitrary affine base. Its objects
 explicitly include flatness and finite presentation; these hypotheses cannot be omitted over a
-general ring.
+general ring. Because the Hopf-algebra equivalence being transported already knows its own
+inverse, so does this one: the inverse is Cartier dualization again, and the counit is the
+double-dual isomorphism `cartierDualDualIso`.
 
 ## Main declarations
 
@@ -34,12 +36,16 @@ general ring.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat`: the category selected by that property.
 * `finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat`:
   the restricted anti-equivalence over a commutative ring.
-  Its `functorCompιIso`, `inverseCompιIso`, and `rightOpInverseCompιIso` describe the two
-  functors after forgetting the property proofs.
+  Its `functorCompFullSubcategoryιIso`, `functorCompιIso`, `inverseCompιIso`, and
+  `rightOpInverseCompιIso` describe the two functors after forgetting the property proofs.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDuality`: Cartier duality over an
-  arbitrary affine base.
-* `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDuality_functor`: its computation as
-  transported finite dualization.
+  arbitrary affine base, with `cartierDuality_functor` and `cartierDuality_inverse` computing
+  both of its directions as transported finite dualization.
+* `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDual` and
+  `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.coordHopfAlgebra`: the Cartier dual of a
+  group scheme and its coordinate Hopf algebra, related by `cartierDual_eq`.
+* `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDualDualIso`: the double-dual
+  isomorphism `G ≅ D(D(G))`, natural by `cartierDualDualIso_hom_naturality`.
 
 ## References
 
@@ -150,10 +156,11 @@ noncomputable def
 namespace
   finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
 
-/-- The restricted equivalence followed by the finite-locally-free inclusion is definitionally
-the unrestricted equivalence applied after forgetting the property proofs. This private
-isomorphism isolates the implementation of the object-property restrictions. -/
-private noncomputable def functorCompιIsoAux (R : Type u) [CommRing R] :
+/-- The restricted equivalence followed by the finite-locally-free inclusion is the unrestricted
+equivalence applied after forgetting the property proofs. This isomorphism isolates the
+implementation of the object-property restrictions, so that downstream files never have to unfold
+them. -/
+noncomputable def functorCompFullSubcategoryιIso (R : Type u) [CommRing R] :
     (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
           R).functor ⋙
         (finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of R)).ι ≅
@@ -173,7 +180,7 @@ noncomputable def functorCompιIso (R : Type u) [CommRing R] :
       (forget₂ (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R)
           (CommHopfAlgCat.{u} R)).op ⋙ hopfSpec (CommRingCat.of R) :=
   Functor.isoWhiskerRight
-      (functorCompιIsoAux R)
+      (functorCompFullSubcategoryιIso R)
       (affineGroupSchemeProperty (CommRingCat.of R)).ι ≪≫
     Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft
@@ -212,15 +219,19 @@ end
 namespace FiniteLocallyFreeCommAffineGroupSchemeCat
 
 /-- **Cartier duality for finite locally free commutative affine group schemes over an arbitrary
-commutative base ring.** -/
+commutative base ring.**
+
+Transporting `FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality` rather than the bare
+dualization functor keeps the inverse computable: it is again Cartier dualization, and the counit
+is the double-dual evaluation isomorphism `cartierDualDualIso`. -/
+@[expose]
 noncomputable def cartierDuality
     (R : Type u) [CommRing R] :
     (FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R))ᵒᵖ ≌
       FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R) :=
   ((finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
     R).rightOp).symm.trans <|
-    ((FiniteLocallyFreeBicommutativeHopfAlgCat.dualFunctor
-      (k := R)).rightOp).asEquivalence |>.trans
+    (FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality (k := R)).rightOp.trans
       (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat R)
 
 /-- The forward functor of Cartier duality over an arbitrary affine base is finite dualization
@@ -232,8 +243,74 @@ theorem cartierDuality_functor (R : Type u) [CommRing R] :
         R).rightOp.inverse ⋙
         (FiniteLocallyFreeBicommutativeHopfAlgCat.dualFunctor (k := R)).rightOp ⋙
         (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
-          R).functor := by
-  simp [cartierDuality]
+          R).functor :=
+  (rfl)
+
+/-- Cartier dualization as a contravariant endofunctor on finite locally free commutative affine
+group schemes. -/
+noncomputable abbrev cartierDualFunctor (R : Type u) [CommRing R] :
+    (FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R))ᵒᵖ ⥤
+      FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R) :=
+  (cartierDuality R).functor
+
+/-- The inverse of Cartier duality is Cartier dualization again. This is the identification that
+`CategoryTheory.Functor.asEquivalence` cannot provide. -/
+@[simp]
+theorem cartierDuality_inverse (R : Type u) [CommRing R] :
+    (cartierDuality R).inverse = (cartierDualFunctor R).rightOp :=
+  (rfl)
+
+/-- The coordinate Hopf algebra of a finite locally free commutative affine group scheme. -/
+noncomputable abbrev coordHopfAlgebra (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R :=
+  (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
+    R).rightOp.inverse.obj (op G)
+
+/-- The Cartier dual of a finite locally free commutative affine group scheme. -/
+noncomputable abbrev cartierDual (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R) :=
+  (cartierDualFunctor R).obj (op G)
+
+/-- The Cartier dual is represented by the finite dual of the coordinate Hopf algebra. -/
+theorem cartierDual_eq (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    cartierDual R G =
+      (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
+        R).functor.obj
+          (op (FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordHopfAlgebra R G))) :=
+  (rfl)
+
+/-- **Cartier duality is involutive.** Every finite locally free commutative affine group scheme
+is naturally isomorphic to its Cartier double dual. -/
+noncomputable def cartierDualDualNatIso (R : Type u) [CommRing R] :
+    𝟭 (FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) ≅
+      (cartierDualFunctor R).rightOp ⋙ cartierDualFunctor R :=
+  (cartierDuality R).counitIso.symm
+
+/-- The double-dual isomorphism of a single finite locally free commutative affine group
+scheme. -/
+noncomputable abbrev cartierDualDualIso (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    G ≅ cartierDual R (cartierDual R G) :=
+  (cartierDualDualNatIso R).app G
+
+/-- The double-dual isomorphism is the inverse counit of `cartierDuality`. -/
+@[simp]
+theorem cartierDualDualNatIso_hom_app (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    (cartierDualDualNatIso R).hom.app G = (cartierDuality R).counitIso.inv.app G :=
+  (rfl)
+
+/-- The double-dual isomorphism is natural in the group scheme. -/
+@[reassoc]
+theorem cartierDualDualIso_hom_naturality (R : Type u) [CommRing R]
+    {G H : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)} (f : G ⟶ H) :
+    f ≫ (cartierDualDualIso R H).hom =
+      (cartierDualDualIso R G).hom ≫
+        (cartierDualFunctor R).map ((cartierDualFunctor R).map f.op).op :=
+  (cartierDualDualNatIso R).hom.naturality f
 
 end FiniteLocallyFreeCommAffineGroupSchemeCat
 

@@ -1,0 +1,144 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
+public import TauCeti.Algebra.HopfAlgebra.FiniteDual.BaseChange
+public import TauCeti.Algebra.HopfAlgebra.FiniteDual.CartierDuality
+
+/-!
+# Base change of finite locally free Cartier duality
+
+Extension of scalars carries a finite locally free bicommutative Hopf algebra over `R` to one
+over an `R`-algebra `S`, and `TauCeti.ConvolutionDual.baseChangeBialgEquiv` says that it commutes
+with finite dualization. This file records both facts in the category
+`TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat`, where Cartier duality lives.
+
+## Main declarations
+
+* `TauCeti.finiteLocallyFreeBicommutativeHopfAlgProperty_baseChange`: scalar extension preserves
+  finite local freeness and cocommutativity.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.baseChangeFunctor`: scalar extension of
+  finite locally free bicommutative Hopf algebras.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.baseChangeDualIso`: the scalar extension of
+  a finite dual is the finite dual of the scalar extension, naturally by
+  `baseChangeDualIso_hom_naturality`.
+
+## References
+
+* W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
+
+This advances Layer 4, "Cartier duality", of the ReductiveGroups roadmap: compatibility with
+pullback of the base is what makes Cartier duality usable on fibres and after field extension.
+-/
+
+public section
+
+open CategoryTheory Opposite
+
+open scoped TensorProduct
+
+namespace TauCeti
+
+universe u
+
+variable (R S : Type u) [CommRing R] [CommRing S] [Algebra R S]
+
+/-- Scalar extension preserves finite local freeness and cocommutativity. -/
+theorem finiteLocallyFreeBicommutativeHopfAlgProperty_baseChange
+    (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
+    finiteLocallyFreeBicommutativeHopfAlgProperty S
+      (CommHopfAlgCat.baseChange (K := S)
+        ((finiteLocallyFreeBicommutativeHopfAlgProperty R).ι.obj H)) :=
+  (finiteLocallyFreeBicommutativeHopfAlgProperty_iff S _).2
+    ⟨inferInstanceAs (Module.Finite S (S ⊗[R] H)),
+      inferInstanceAs (Module.Projective S (S ⊗[R] H)),
+      inferInstanceAs (Coalgebra.IsCocomm S (S ⊗[R] H))⟩
+
+namespace FiniteLocallyFreeBicommutativeHopfAlgCat
+
+/-- Scalar extension of finite locally free bicommutative Hopf algebras. -/
+@[expose]
+noncomputable def baseChangeFunctor :
+    FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R ⥤
+      FiniteLocallyFreeBicommutativeHopfAlgCat.{u} S :=
+  (finiteLocallyFreeBicommutativeHopfAlgProperty S).lift
+    ((finiteLocallyFreeBicommutativeHopfAlgProperty R).ι ⋙
+      CommHopfAlgCat.baseChangeFunctor (K := S))
+    (finiteLocallyFreeBicommutativeHopfAlgProperty_baseChange R S)
+
+variable {R} in
+/-- Scalar extension of a single finite locally free bicommutative Hopf algebra. -/
+noncomputable abbrev baseChange (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
+    FiniteLocallyFreeBicommutativeHopfAlgCat.{u} S :=
+  (baseChangeFunctor R S).obj H
+
+/-- Forgetting finite local freeness and cocommutativity turns the restricted scalar extension
+into the scalar extension of commutative Hopf algebras. -/
+noncomputable def baseChangeFunctorCompιIso :
+    baseChangeFunctor R S ⋙ (finiteLocallyFreeBicommutativeHopfAlgProperty S).ι ≅
+      (finiteLocallyFreeBicommutativeHopfAlgProperty R).ι ⋙
+        CommHopfAlgCat.baseChangeFunctor (K := S) :=
+  (finiteLocallyFreeBicommutativeHopfAlgProperty S).liftCompιIso _ _
+
+variable {R S}
+
+/-- The underlying bialgebra morphism of a scalar-extended morphism. -/
+@[simp]
+theorem toBialgHom_baseChangeFunctor_map
+    {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
+    toBialgHom ((baseChangeFunctor R S).map f) =
+      Bialgebra.TensorProduct.map (BialgHom.id S S) (toBialgHom f) :=
+  rfl
+
+/-- **Finite dualization commutes with extension of scalars.** -/
+noncomputable def baseChangeDualIso (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
+    baseChange S (dual H) ≅ dual (baseChange S H) :=
+  ObjectProperty.isoMk (finiteLocallyFreeBicommutativeHopfAlgProperty S)
+    (_root_.CommHopfAlgCat.isoMk (ConvolutionDual.baseChangeBialgEquiv R S H))
+
+/-- The forward map of `baseChangeDualIso` sends a scalar-extended functional to the
+scalar-extended evaluation it defines. -/
+@[simp]
+theorem baseChangeDualIso_hom_apply_tmul_apply_tmul
+    (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R)
+    (a b : S) (phi : ConvolutionDual R H) (x : H) :
+    (((baseChangeDualIso (S := S) H).hom (a ⊗ₜ[R] phi)) :
+        ConvolutionDual S (S ⊗[R] H)).ofConv (b ⊗ₜ[R] x) =
+      a * b * algebraMap R S (phi.ofConv x) :=
+  ConvolutionDual.baseChangeBialgEquiv_tmul_apply_tmul a b phi x
+
+/-- Finite dualization and scalar extension commute naturally. -/
+@[reassoc]
+theorem baseChangeDualIso_hom_naturality
+    {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
+    (baseChangeFunctor R S).map (dualMap f) ≫ (baseChangeDualIso H).hom =
+      (baseChangeDualIso K).hom ≫ dualMap ((baseChangeFunctor R S).map f) := by
+  apply hom_ext
+  exact (ConvolutionDual.baseChangeBialgEquiv_naturality (K := S) (toBialgHom f)).symm
+
+/-- The inverse form of `baseChangeDualIso_hom_naturality`. -/
+@[reassoc]
+theorem baseChangeDualIso_inv_naturality
+    {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
+    (baseChangeDualIso (S := S) K).inv ≫ (baseChangeFunctor R S).map (dualMap f) =
+      dualMap ((baseChangeFunctor R S).map f) ≫ (baseChangeDualIso H).inv := by
+  rw [Iso.inv_comp_eq, ← Category.assoc, Iso.eq_comp_inv]
+  exact baseChangeDualIso_hom_naturality f
+
+variable (R S)
+
+/-- Finite dualization commutes with scalar extension, as a natural isomorphism of functors
+`FiniteLocallyFreeBicommutativeHopfAlgCat R ⥤ (FiniteLocallyFreeBicommutativeHopfAlgCat S)ᵒᵖ`. -/
+noncomputable def dualBaseChangeNatIso :
+    (dualFunctor (k := R)).rightOp ⋙ (baseChangeFunctor R S).op ≅
+      baseChangeFunctor R S ⋙ (dualFunctor (k := S)).rightOp :=
+  NatIso.ofComponents (fun H => (baseChangeDualIso H).symm.op) fun f =>
+    Quiver.Hom.unop_inj (baseChangeDualIso_inv_naturality f)
+
+end FiniteLocallyFreeBicommutativeHopfAlgCat
+
+end TauCeti

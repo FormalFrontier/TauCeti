@@ -8,6 +8,7 @@ module
 public import Mathlib.CategoryTheory.Equivalence
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Functoriality
+public import TauCeti.CategoryTheory.SelfDuality
 
 /-!
 # Cartier duality for finite locally free Hopf algebras
@@ -17,8 +18,10 @@ projective Hopf algebra whose multiplication and comultiplication are both commu
 dual preserves this bicommutative condition, reverses morphisms, and is involutive by evaluation.
 
 This file packages those facts as a contravariant equivalence on finite locally free
-bicommutative Hopf algebras. It is the algebraic core of Cartier duality over a general affine
-base; its transport through `Spec` is provided by
+bicommutative Hopf algebras. The equivalence is built from double-dual evaluation by
+`CategoryTheory.Functor.dualityEquivalence`, so its inverse is again finite dualization and its
+unit and counit are evaluation; nothing about it is abstract. It is the algebraic core of
+Cartier duality over a general affine base; its transport through `Spec` is provided by
 `AlgebraicGeometry.AffineGroupScheme.CartierDuality.FiniteLocallyFree`.
 
 ## Main declarations
@@ -27,8 +30,13 @@ base; its transport through `Spec` is provided by
   cocommutative Hopf algebras over a commutative ring.
 * `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.dualFunctor`: contravariant finite dualization.
 * `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.evalIso`: the objectwise double-dual evaluation
-  isomorphism, natural in morphisms by `evalIso_hom_naturality`.
-* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality`: the resulting anti-equivalence.
+  isomorphism, natural in morphisms by `evalIso_hom_naturality` and bundled as `evalNatIso`.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.dualMap_evalIso_inv`: the triangle identity
+  exhibiting finite dualization as involutive.
+* `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality`: the resulting
+  anti-equivalence, with `cartierDuality_functor`, `cartierDuality_inverse`,
+  `cartierDuality_unitIso_hom_app` and `cartierDuality_counitIso_hom_app` computing all of its
+  data.
 
 ## References
 
@@ -155,6 +163,7 @@ theorem toBialgHom_dualMap {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k
 
 /-- Finite dualization as a contravariant endofunctor on finite locally free bicommutative Hopf
 algebras. -/
+@[expose]
 noncomputable def dualFunctor :
     (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ ⥤
       FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k where
@@ -211,93 +220,81 @@ theorem evalIso_hom_naturality
   apply hom_ext
   exact ConvolutionDual.evalBialgEquiv_naturality k H (toBialgHom f)
 
-/-- Recover the preimage of a morphism between finite duals by double-dual evaluation. -/
-private noncomputable def dualMapPreimage
-    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
-    (f : dual H.unop ⟶ dual K.unop) : H ⟶ K :=
-  (ObjectProperty.homMk (_root_.CommHopfAlgCat.ofHom
-    ((ConvolutionDual.evalBialgEquiv k H.unop).symm.toBialgHom.comp
-      ((ConvolutionDual.map k (toBialgHom f)).comp
-        (ConvolutionDual.evalBialgEquiv k K.unop).toBialgHom)))).op
+/-- Double-dual evaluation as a natural isomorphism from the identity functor to double finite
+dualization. -/
+@[expose]
+noncomputable def evalNatIso :
+    𝟭 (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) ≅
+      (dualFunctor (k := k)).rightOp ⋙ dualFunctor :=
+  NatIso.ofComponents evalIso fun f => evalIso_hom_naturality f
 
-private theorem toBialgHom_dualMapPreimage_unop
-    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
-    (f : dual H.unop ⟶ dual K.unop) :
-    toBialgHom (dualMapPreimage f).unop =
-      (ConvolutionDual.evalBialgEquiv k H.unop).symm.toBialgHom.comp
-        ((ConvolutionDual.map k (toBialgHom f)).comp
-          (ConvolutionDual.evalBialgEquiv k K.unop).toBialgHom) :=
+/-- The components of `evalNatIso` are the objectwise evaluation isomorphisms. -/
+@[simp]
+theorem evalNatIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    (evalNatIso (k := k)).hom.app H = (evalIso H).hom :=
   rfl
 
-private theorem dualFunctor_map_dualMapPreimage
-    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ}
-    (f : dual H.unop ⟶ dual K.unop) :
-    (dualFunctor (k := k)).map (dualMapPreimage f) = f := by
+/-- The inverse components of `evalNatIso` are the objectwise inverse evaluation
+isomorphisms. -/
+@[simp]
+theorem evalNatIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    (evalNatIso (k := k)).inv.app H = (evalIso H).inv :=
+  rfl
+
+/-- Dualizing the inverse evaluation isomorphism of `H` is the evaluation isomorphism of the
+finite dual of `H`. This is the triangle identity that makes finite dualization involutive. -/
+theorem dualMap_evalIso_inv (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    dualMap (evalIso H).inv = (evalIso (dual H)).hom := by
   apply hom_ext
-  change ConvolutionDual.map k (toBialgHom (dualMapPreimage f).unop) = toBialgHom f
   apply BialgHom.ext
   intro phi
   apply WithConv.ofConv_injective
-  ext x
-  rw [toBialgHom_dualMapPreimage_unop]
-  rw [ConvolutionDual.map_apply_apply]
-  -- Display the three maps in the composite: the categorical wrappers have no carrier-level
-  -- application lemma that would expose them to rewriting.
-  change phi.ofConv ((ConvolutionDual.evalBialgEquiv k H.unop).symm
-    (ConvolutionDual.map k (toBialgHom f)
-      (ConvolutionDual.evalBialgEquiv k K.unop x))) = (toBialgHom f phi).ofConv x
-  rw [ConvolutionDual.evalBialgEquiv_symm_apply_apply,
-    ConvolutionDual.map_apply_apply, ConvolutionDual.evalBialgEquiv_apply_apply]
+  ext Phi
+  rw [toBialgHom_dualMap, ConvolutionDual.map_apply_apply]
+  exact (evalIso_inv_apply_apply H Phi phi).trans
+    (evalIso_hom_apply_apply (dual H) phi Phi).symm
 
-private theorem dualFunctor_map_injective
-    {H K : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ} :
-    Function.Injective
-      ((dualFunctor (k := k)).map : (H ⟶ K) →
-        ((dualFunctor (k := k)).obj H ⟶ (dualFunctor (k := k)).obj K)) := by
-  intro f g h
-  have hmap :
-      ConvolutionDual.map k (toBialgHom f.unop) =
-        ConvolutionDual.map k (toBialgHom g.unop) := by
-    have hmap' := congrArg toBialgHom h
-    -- The object computation is hidden behind `dualFunctor`; expose its carrier so that the
-    -- equality can be evaluated on finite-dual functionals below.
-    change ConvolutionDual.map k (toBialgHom f.unop) =
-      ConvolutionDual.map k (toBialgHom g.unop) at hmap'
-    exact hmap'
-  apply Quiver.Hom.unop_inj
-  apply hom_ext
-  apply BialgHom.ext
-  intro x
-  apply (Module.evalEquiv k H.unop).injective
-  ext phi
-  have h' := congrArg (fun q => (q (WithConv.toConv phi)).ofConv x) hmap
-  simpa only [Module.evalEquiv_apply, Module.Dual.eval_apply,
-    ConvolutionDual.map_apply_apply, WithConv.ofConv_toConv] using h'
-
-instance dualFunctorFaithful : (dualFunctor (k := k)).Faithful where
-  map_injective := fun h => dualFunctor_map_injective h
-
-instance dualFunctorFull : (dualFunctor (k := k)).Full where
-  map_surjective f := ⟨dualMapPreimage f, dualFunctor_map_dualMapPreimage f⟩
-
-instance dualFunctorEssSurj : (dualFunctor (k := k)).EssSurj where
-  mem_essImage H :=
-    ⟨Opposite.op (dual H),
-      ⟨eqToIso (dualFunctor_obj (Opposite.op (dual H))) ≪≫ (evalIso H).symm⟩⟩
-
-instance dualFunctorIsEquivalence : (dualFunctor (k := k)).IsEquivalence where
+/-- Finite dualization is involutive in the sense required to build an anti-equivalence out of
+it. -/
+theorem dualFunctor_isInvolutiveDual :
+    (dualFunctor (k := k)).IsInvolutiveDual evalNatIso := fun H => by
+  change dualMap (evalIso H).inv ≫ (evalIso (dual H)).inv = 𝟙 (dual H)
+  rw [dualMap_evalIso_inv, Iso.hom_inv_id]
 
 /-- **Finite locally free Cartier duality.** Finite dualization is an anti-equivalence of the
-category of finite locally free bicommutative Hopf algebras over a commutative ring. -/
+category of finite locally free bicommutative Hopf algebras over a commutative ring. Its inverse
+is finite dualization again, and its unit and counit are double-dual evaluation. -/
+@[expose]
 noncomputable def cartierDuality :
     (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
       FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k :=
-  (dualFunctor (k := k)).asEquivalence
+  (dualFunctor (k := k)).dualityEquivalence evalNatIso dualFunctor_isInvolutiveDual
 
 /-- The forward functor of `cartierDuality` is finite dualization. -/
 @[simp]
 theorem cartierDuality_functor : (cartierDuality (k := k)).functor = dualFunctor :=
   (rfl)
+
+/-- The inverse functor of `cartierDuality` is finite dualization again. -/
+@[simp]
+theorem cartierDuality_inverse :
+    (cartierDuality (k := k)).inverse = (dualFunctor (k := k)).rightOp :=
+  (rfl)
+
+/-- The unit of `cartierDuality` is the opposite of inverse double-dual evaluation. -/
+@[simp]
+theorem cartierDuality_unitIso_hom_app (H : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
+    (cartierDuality (k := k)).unitIso.hom.app H = (evalIso H.unop).inv.op :=
+  (rfl)
+
+/-- The counit of `cartierDuality` is inverse double-dual evaluation. -/
+@[simp]
+theorem cartierDuality_counitIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
+    (cartierDuality (k := k)).counitIso.hom.app H = (evalIso H).inv :=
+  (rfl)
+
+instance dualFunctorIsEquivalence : (dualFunctor (k := k)).IsEquivalence :=
+  (cartierDuality (k := k)).isEquivalence_functor
 
 end FiniteLocallyFreeBicommutativeHopfAlgCat
 
