@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Commutation
 
@@ -49,7 +49,7 @@ public section
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u
+universe u v
 
 variable {L : Type u} [LieRing L]
 
@@ -68,11 +68,11 @@ theorem ι_mul_ι_eq_ι_mul_ι_add_zsmul_one {R : Type*} [CommRing R] [LieAlgebr
   rw [mul_add, zsmul_one, ← zsmul_eq_mul', add_comm]
   exact eq_add_of_sub_eq hmap.symm
 
-variable [LieAlgebra ℚ L]
-
 local notation "U" => _root_.UniversalEnvelopingAlgebra ℚ L
 
 attribute [local instance] TauCeti.moduleNNRat
+
+variable [LieAlgebra ℚ L]
 
 /-- A Cartan binomial coefficient moves to the right of a root-vector divided power by adding
 `n` copies of the integral weight to its argument. -/
