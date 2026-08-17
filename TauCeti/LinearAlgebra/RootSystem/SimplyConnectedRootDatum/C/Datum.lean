@@ -370,6 +370,14 @@ private lemma pairing_typeCSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
       (typeCSimplyConnectedRootDatum n).root k ⬝ᵥ (typeCSimplyConnectedRootDatum n).coroot l :=
   rfl
 
+/-- Every Cartan integer between roots of the pinned type `C` datum has absolute value at most
+two. -/
+theorem abs_pairing_typeCSimplyConnectedRootDatum_le_two (k l : Fin (2 * n ^ 2)) :
+    |(typeCSimplyConnectedRootDatum n).pairing k l| ≤ 2 := by
+  rw [pairing_typeCSimplyConnectedRootDatum, root_typeCSimplyConnectedRootDatum,
+    coroot_typeCSimplyConnectedRootDatum]
+  exact abs_pairRoot_dotProduct_pairCoroot_le_two (typeCSnd_ne_signedNeg_typeCFst _)
+
 /-! ## The root and the coroot at an arbitrary index
 
 Away from the simple indices, a root of the datum is named by encoding a root index with
