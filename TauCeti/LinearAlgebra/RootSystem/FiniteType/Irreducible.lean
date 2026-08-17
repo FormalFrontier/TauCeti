@@ -7,6 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 public import Mathlib.LinearAlgebra.RootSystem.Irreducible
+import Mathlib.Combinatorics.SimpleGraph.Hasse
 
 public section
 
@@ -14,8 +15,8 @@ public section
 # Irreducibility from a connected Dynkin diagram
 
 This file proves the converse to the standard implication from irreducibility of a root pairing to
-connectedness of its Dynkin diagram. Over a field of characteristic zero, a root system whose base
-has connected diagram is irreducible. It then checks that the standard Cartan
+connectedness of its Dynkin diagram. Over a field of characteristic zero, a crystallographic root
+system whose base has connected diagram is irreducible. It then checks that the standard Cartan
 matrix of every valid `DynkinType` has connected diagram and packages the result in the form used by
 root systems identified through `TauCeti.HasCartanType`.
 
@@ -56,30 +57,26 @@ private theorem preconnected_fin_of_exists_adj_lt {n : ℕ} {G : SimpleGraph (Fi
           exact (ih (j : ℕ) (hi ▸ hji) j rfl).trans hadj.reachable
   exact fun i j ↦ (hreach i).symm.trans (hreach j)
 
+/-- A graph containing every successor edge contains the path graph. -/
+private theorem pathGraph_le_of_adj_succ {n : ℕ} {G : SimpleGraph (Fin n)}
+    (h : ∀ (i : Fin n) (hi : (i : ℕ) + 1 < n), G.Adj i ⟨(i : ℕ) + 1, hi⟩) :
+    _root_.SimpleGraph.pathGraph n ≤ G := by
+  intro i j hij
+  rw [_root_.SimpleGraph.pathGraph_adj] at hij
+  rcases hij with hij | hij
+  · have hj : (⟨(i : ℕ) + 1, by omega⟩ : Fin n) = j := Fin.ext hij
+    exact hj ▸ h i (by omega)
+  · have hi : (⟨(j : ℕ) + 1, by omega⟩ : Fin n) = i := Fin.ext hij
+    exact (hi ▸ h j (by omega)).symm
+
+/-- A graph containing the path graph on the same nonempty vertex set is connected. -/
+private theorem connected_of_pathGraph_le {n : ℕ} {G : SimpleGraph (Fin n)}
+    [Nonempty (Fin n)] (h : _root_.SimpleGraph.pathGraph n ≤ G) : G.Connected :=
+  ⟨(_root_.SimpleGraph.pathGraph_preconnected n).mono h⟩
+
 end SimpleGraph
 
 namespace DynkinType
-
-private theorem adj_succ_A {n : ℕ} (i : Fin n) (hi : (i : ℕ) + 1 < n) :
-    (diagramGraph (CartanMatrix.A n)).Adj i ⟨(i : ℕ) + 1, hi⟩ := by
-  rw [diagramGraph_adj]
-  simp [CartanMatrix.A]
-  simp only [Fin.ext_iff]
-  omega
-
-private theorem adj_succ_B {n : ℕ} (i : Fin n) (hi : (i : ℕ) + 1 < n) :
-    (diagramGraph (CartanMatrix.B n)).Adj i ⟨(i : ℕ) + 1, hi⟩ := by
-  rw [diagramGraph_adj]
-  simp [CartanMatrix.B]
-  simp only [Fin.ext_iff]
-  omega
-
-private theorem adj_succ_C {n : ℕ} (i : Fin n) (hi : (i : ℕ) + 1 < n) :
-    (diagramGraph (CartanMatrix.C n)).Adj i ⟨(i : ℕ) + 1, hi⟩ := by
-  rw [diagramGraph_adj]
-  simp [CartanMatrix.C]
-  simp only [Fin.ext_iff]
-  omega
 
 private theorem adj_succ_D {n : ℕ} (hn : 4 ≤ n) (i : Fin n)
     (hi : (i : ℕ) + 1 < n - 1) :
@@ -106,37 +103,37 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
       have hn := valid_A.mp ht
       let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
       have hconn : (diagramGraph (CartanMatrix.A n)).Connected := by
-        refine ⟨SimpleGraph.preconnected_fin_of_exists_adj_lt hn fun i hi ↦ ?_⟩
-        let j : Fin n := ⟨(i : ℕ) - 1, by omega⟩
-        have hji : (⟨(j : ℕ) + 1, by simp [j]; omega⟩ : Fin n) = i := by
-          apply Fin.ext
-          simp [j]
-          omega
-        exact ⟨j, by simp [j]; omega, hji ▸ adj_succ_A j (by simp [j]; omega)⟩
+        apply SimpleGraph.connected_of_pathGraph_le
+        apply SimpleGraph.pathGraph_le_of_adj_succ
+        intro i hi
+        rw [diagramGraph_adj]
+        simp [CartanMatrix.A]
+        simp only [Fin.ext_iff]
+        omega
       simpa only [rank_A, cartanMatrix_A] using hconn
   | B n =>
       have hn : 0 < n := by have := valid_B.mp ht; omega
       let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
       have hconn : (diagramGraph (CartanMatrix.B n)).Connected := by
-        refine ⟨SimpleGraph.preconnected_fin_of_exists_adj_lt hn fun i hi ↦ ?_⟩
-        let j : Fin n := ⟨(i : ℕ) - 1, by omega⟩
-        have hji : (⟨(j : ℕ) + 1, by simp [j]; omega⟩ : Fin n) = i := by
-          apply Fin.ext
-          simp [j]
-          omega
-        exact ⟨j, by simp [j]; omega, hji ▸ adj_succ_B j (by simp [j]; omega)⟩
+        apply SimpleGraph.connected_of_pathGraph_le
+        apply SimpleGraph.pathGraph_le_of_adj_succ
+        intro i hi
+        rw [diagramGraph_adj]
+        simp [CartanMatrix.B]
+        simp only [Fin.ext_iff]
+        omega
       simpa only [rank_B, cartanMatrix_B] using hconn
   | C n =>
       have hn : 0 < n := by have := valid_C.mp ht; omega
       let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
       have hconn : (diagramGraph (CartanMatrix.C n)).Connected := by
-        refine ⟨SimpleGraph.preconnected_fin_of_exists_adj_lt hn fun i hi ↦ ?_⟩
-        let j : Fin n := ⟨(i : ℕ) - 1, by omega⟩
-        have hji : (⟨(j : ℕ) + 1, by simp [j]; omega⟩ : Fin n) = i := by
-          apply Fin.ext
-          simp [j]
-          omega
-        exact ⟨j, by simp [j]; omega, hji ▸ adj_succ_C j (by simp [j]; omega)⟩
+        apply SimpleGraph.connected_of_pathGraph_le
+        apply SimpleGraph.pathGraph_le_of_adj_succ
+        intro i hi
+        rw [diagramGraph_adj]
+        simp [CartanMatrix.C]
+        simp only [Fin.ext_iff]
+        omega
       simpa only [rank_C, cartanMatrix_C] using hconn
   | D n =>
       have hn := valid_D.mp ht
@@ -147,7 +144,7 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
         · let j : Fin n := ⟨n - 3, by omega⟩
           have hji : j = ⟨n - 3, by omega⟩ := rfl
           refine ⟨j, ?_, hji ▸ adj_fork_D hn i hlast⟩
-          change n - 3 < (i : ℕ)
+          simp only [j]
           omega
         · let j : Fin n := ⟨(i : ℕ) - 1, by omega⟩
           have hji : (⟨(j : ℕ) + 1, by simp [j]; omega⟩ : Fin n) = i := by
@@ -215,25 +212,17 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
       simpa only [rank_E8, cartanMatrix_E8] using hconn
   | F4 =>
       have hconn : (diagramGraph CartanMatrix.F₄).Connected := by
-        rw [SimpleGraph.connected_iff_exists_forall_reachable]
-        refine ⟨(0 : Fin 4), fun i ↦ ?_⟩
-        have h01 : (diagramGraph CartanMatrix.F₄).Adj 0 1 := by decide
-        have h12 : (diagramGraph CartanMatrix.F₄).Adj 1 2 := by decide
-        have h23 : (diagramGraph CartanMatrix.F₄).Adj 2 3 := by decide
-        fin_cases i
-        · exact .rfl
-        · exact h01.reachable
-        · exact h01.reachable.trans h12.reachable
-        · exact (h01.reachable.trans h12.reachable).trans h23.reachable
+        apply SimpleGraph.connected_of_pathGraph_le
+        apply SimpleGraph.pathGraph_le_of_adj_succ
+        intro i hi
+        fin_cases i <;> decide +kernel +revert
       simpa only [rank_F4, cartanMatrix_F4] using hconn
   | G2 =>
       have hconn : (diagramGraph (CartanMatrix.G₂.transpose)).Connected := by
-        rw [SimpleGraph.connected_iff_exists_forall_reachable]
-        refine ⟨(0 : Fin 2), fun i ↦ ?_⟩
-        have h01 : (diagramGraph (CartanMatrix.G₂.transpose)).Adj 0 1 := by decide
-        fin_cases i
-        · exact .rfl
-        · exact h01.reachable
+        apply SimpleGraph.connected_of_pathGraph_le
+        apply SimpleGraph.pathGraph_le_of_adj_succ
+        intro i hi
+        fin_cases i <;> decide +kernel +revert
       simpa only [rank_G2, cartanMatrix_G2] using hconn
 
 end DynkinType
@@ -243,7 +232,7 @@ namespace RootPairing
 variable {K M N ι : Type*} [Field K] [CharZero K] [AddCommGroup M] [Module K M]
   [AddCommGroup N] [Module K N] {P : RootPairing ι K M N} [P.IsCrystallographic]
 
-/-- A root system with a connected Dynkin diagram is irreducible.
+/-- A crystallographic root system with a connected Dynkin diagram is irreducible.
 
 Characteristic zero ensures that a nonzero integral Cartan entry stays nonzero in the field when
 membership propagates across an edge. It also supplies the standard `2 ≠ 0` hypothesis in
