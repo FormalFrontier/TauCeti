@@ -344,6 +344,7 @@ jobs:
       - name: Temporary Mathlib shims have machine-checkable expiry targets
         id: shim_coverage
         if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
+        continue-on-error: true
         run: |
           set +e
           args=(--coverage-only)
@@ -458,10 +459,12 @@ jobs:
       - name: Migrate shims whose exact replacements exist in pinned Mathlib
         id: shim_expiry
         if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
+        continue-on-error: true
         run: |
           set +e
           args=(--fail-on-available)
           [ -z "${BASE_SHIM_REGISTRY:-}" ] || args+=(--base-manifest "$BASE_SHIM_REGISTRY")
+          [ "${BUMP:-0}" = "1" ] || args+=(--only-new)
           (cd base && python3 scripts/check-expired-mathlib-shims.py "${args[@]}")
           rc=$?
           echo "SHIM_EXPIRY_RC=$rc" >> "$GITHUB_ENV"
@@ -606,12 +609,14 @@ jobs:
           if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
-          elif [ "${{ env.SHIM_COVERAGE_RC }}" = "2" ]; then
+          elif [ -n "${{ env.SHIM_COVERAGE_RC }}" ] \
+               && [ "${{ env.SHIM_COVERAGE_RC }}" != "0" ]; then
             state=failure; desc="shim expiry metadata invalid — see failed checker step"
-          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "2" ]; then
-            state=failure; desc="shim expiry probe failed — see failed checker step"
-          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "1" ]; then
+          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "3" ]; then
             state=failure; desc="Mathlib replacements landed — autonomous shim migration required"
+          elif [ -n "${{ env.SHIM_EXPIRY_RC }}" ] \
+               && [ "${{ env.SHIM_EXPIRY_RC }}" != "0" ]; then
+            state=failure; desc="shim expiry probe failed — see failed checker step"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
             state=success; desc="sandboxed build, audits, and simp-NF lint passed (trusted config)"
           else
@@ -639,10 +644,9 @@ jobs:
             sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
-          elif [ "${{ env.SHIM_COVERAGE_RC }}" = "2" ]; then
+          elif [ -n "${{ env.SHIM_COVERAGE_RC }}" ] \
+               && [ "${{ env.SHIM_COVERAGE_RC }}" != "0" ]; then
             sc_state=failure; sc_desc="temporary Mathlib shim prose lacks trusted expiry metadata"
-          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "2" ]; then
-            sc_state=failure; sc_desc="could not inspect pinned Mathlib for shim expiry"
           else
             sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
           fi

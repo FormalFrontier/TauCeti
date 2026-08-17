@@ -5,8 +5,8 @@ The registry in ``TauCeti/mathlib-shims.json`` is AI-owned metadata kept out of 
 Each entry names one or more Tau Ceti source files and a concrete Mathlib declaration or module.
 Exact replacements and broader landing sentinels carry different guidance. The default invocation
 is report-only; ``--fail-on-available`` turns an exact finding into an autonomous PR gate that
-hands the source or bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean environment is
-always an infrastructure error.
+hands the source or bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean
+environment is always an infrastructure error.
 """
 
 from __future__ import annotations
@@ -52,6 +52,7 @@ class ShimGroup:
     note: str
     speculative: bool = False
     landing_sentinel: bool = False
+    local_declarations: tuple[str, ...] = ()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -91,6 +92,9 @@ def load_registry(
         sources_raw = _string_list(item.get("sources"), "sources", index)
         declarations = _string_list(item.get("declarations", []), "declarations", index)
         modules = _string_list(item.get("modules", []), "modules", index)
+        local_declarations = _string_list(
+            item.get("local_declarations", []), "local_declarations", index
+        )
         note = item.get("note", "")
         speculative = item.get("speculative", False)
         landing_sentinel = item.get("landing_sentinel", False)
@@ -107,6 +111,9 @@ def load_registry(
         for declaration in declarations:
             if DECLARATION.fullmatch(declaration) is None:
                 raise ValueError(f"entry {index}: invalid declaration name {declaration!r}")
+        for declaration in local_declarations:
+            if DECLARATION.fullmatch(declaration) is None:
+                raise ValueError(f"entry {index}: invalid local declaration name {declaration!r}")
         for module in modules:
             if MODULE.fullmatch(module) is None:
                 raise ValueError(f"entry {index}: invalid Mathlib module name {module!r}")
@@ -123,8 +130,13 @@ def load_registry(
                 raise ValueError(f"entry {index}: tracked source does not exist: {source}")
             seen_sources.add(source)
             sources.append(source)
+        if declarations and not speculative and not landing_sentinel and not local_declarations:
+            raise ValueError(
+                f"entry {index}: exact declaration probes require local_declarations"
+            )
         groups.append(ShimGroup(
-            tuple(sources), declarations, modules, note, speculative, landing_sentinel
+            tuple(sources), declarations, modules, note, speculative, landing_sentinel,
+            local_declarations,
         ))
     return tuple(groups)
 
@@ -167,38 +179,86 @@ def validate_registry_coverage(groups: Sequence[ShimGroup], source_root: pathlib
         )
 
 
+def groups_by_source(groups: Sequence[ShimGroup]) -> dict[pathlib.Path, ShimGroup]:
+    """Expand registry groups into their unique source-file keys."""
+
+    return {source: group for group in groups for source in group.sources}
+
+
+def source_declares_any(path: pathlib.Path, declarations: Sequence[str]) -> bool:
+    """Conservatively detect registered local declaration names in Lean source."""
+
+    if not declarations:
+        return False
+    text = path.read_text(encoding="utf-8")
+    kinds = r"(?:abbrev|class|def|inductive|instance|lemma|opaque|structure|theorem)"
+    return any(
+        re.search(rf"\b{kinds}\s+{re.escape(name)}(?![A-Za-z0-9_'])", text) is not None
+        for name in declarations
+    )
+
+
 def validate_registry_ratchet(
     groups: Sequence[ShimGroup], base_groups: Sequence[ShimGroup], repo_root: pathlib.Path
 ) -> None:
-    """Keep each base obligation until its tracked source is removed.
+    """Keep a base obligation until its registered local shim surface is removed."""
 
-    The registry is AI-owned so a migration worker can update it, but an unrelated source PR must
-    not make a shim disappear merely by deleting its prose and registry row. While a base-tracked
-    source remains at the same path, its declaration/module probes must remain too. A migration may
-    delete or re-home that source and remove the old row in the same PR.
-    """
-
-    def by_source(entries: Sequence[ShimGroup]) -> dict[pathlib.Path, tuple[set[str], set[str]]]:
-        return {
-            source: (set(group.declarations), set(group.modules))
-            for group in entries for source in group.sources
-        }
-
-    current = by_source(groups)
+    current = groups_by_source(groups)
     weakened: list[pathlib.Path] = []
-    for source, (base_declarations, base_modules) in by_source(base_groups).items():
-        if not (repo_root / source).is_file():
+    for source, base in groups_by_source(base_groups).items():
+        source_path = repo_root / source
+        if not source_path.is_file():
             continue
-        probes = current.get(source)
-        if probes is None or not base_declarations <= probes[0] or not base_modules <= probes[1]:
+        candidate = current.get(source)
+        flags_weakened = candidate is not None and (
+            (not base.speculative and candidate.speculative)
+            or (not base.landing_sentinel and candidate.landing_sentinel)
+        )
+        probes_weakened = candidate is None or (
+            not set(base.declarations) <= set(candidate.declarations)
+            or not set(base.modules) <= set(candidate.modules)
+        )
+        if flags_weakened:
+            weakened.append(source)
+        elif probes_weakened and (
+            not base.local_declarations
+            or source_declares_any(source_path, base.local_declarations)
+        ):
             weakened.append(source)
     if weakened:
         rendered = "\n".join(f"  {source}" for source in sorted(weakened))
         raise ValueError(
-            "base shim obligations were removed while their tracked sources still exist; "
-            "migrate and delete or re-home each source before removing its probes:\n"
+            "base shim obligations were weakened while their registered local surface remains; "
+            "migrate the local declarations (or delete/re-home a file-wide module shim) before "
+            "removing its probes or changing it to an audit-only sentinel:\n"
             f"{rendered}"
         )
+
+
+def only_new_or_changed_groups(
+    groups: Sequence[ShimGroup], base_groups: Sequence[ShimGroup]
+) -> tuple[ShimGroup, ...]:
+    """Restrict a source PR probe to registry obligations it introduced or changed."""
+
+    def signature(group: ShimGroup) -> tuple[object, ...]:
+        return (
+            group.declarations,
+            group.modules,
+            group.speculative,
+            group.landing_sentinel,
+            group.local_declarations,
+        )
+
+    base = groups_by_source(base_groups)
+    changed: list[ShimGroup] = []
+    for group in groups:
+        sources = tuple(
+            source for source in group.sources
+            if source not in base or signature(group) != signature(base[source])
+        )
+        if sources:
+            changed.append(dataclasses.replace(group, sources=sources))
+    return tuple(changed)
 
 
 def render_declaration_probe(declarations: Iterable[str]) -> str:
@@ -282,7 +342,8 @@ def available_replacements(
 
 
 def markdown_summary(
-    groups: Sequence[ShimGroup], available: Sequence[AvailableReplacement], *, blocking: bool = False
+    groups: Sequence[ShimGroup], available: Sequence[AvailableReplacement], *,
+    blocking: bool = False,
 ) -> str:
     """Render the check's GitHub Actions summary."""
 
@@ -346,8 +407,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--lake-root", type=pathlib.Path)
     parser.add_argument("--coverage-only", action="store_true",
                         help="validate source coverage without probing Mathlib")
+    parser.add_argument("--only-new", action="store_true",
+                        help="probe only entries added or changed relative to --base-manifest")
     parser.add_argument("--fail-on-available", action="store_true",
-                        help="exit 1 when Mathlib provides a configured replacement")
+                        help="exit 3 when Mathlib provides a configured exact replacement")
     return parser.parse_args(argv)
 
 
@@ -360,16 +423,27 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         groups = load_registry(manifest, repo_root)
         validate_registry_coverage(groups, repo_root / "TauCeti")
-        if args.base_manifest is not None and args.base_manifest.is_file():
-            base_groups = load_registry(args.base_manifest.resolve(), repo_root, require_sources=False)
+        base_groups: tuple[ShimGroup, ...] = ()
+        if args.base_manifest is not None:
+            if not args.base_manifest.is_file():
+                raise ValueError(f"base registry does not exist: {args.base_manifest}")
+            base_groups = load_registry(
+                args.base_manifest.resolve(), repo_root, require_sources=False
+            )
             validate_registry_ratchet(groups, base_groups, repo_root)
         if args.coverage_only:
             print("check-expired-mathlib-shims: registry covers all self-declared shims")
             return 0
-        declarations = (name for group in groups for name in group.declarations)
+        if args.only_new:
+            if args.base_manifest is None:
+                raise ValueError("--only-new requires --base-manifest")
+            probe_groups = only_new_or_changed_groups(groups, base_groups)
+        else:
+            probe_groups = groups
+        declarations = (name for group in probe_groups for name in group.declarations)
         found = probe_declarations(declarations, lake_root)
-        available = available_replacements(groups, found, mathlib_root)
-    except (RuntimeError, ValueError) as error:
+        available = available_replacements(probe_groups, found, mathlib_root)
+    except Exception as error:
         print(f"check-expired-mathlib-shims: error: {error}", file=sys.stderr)
         return 2
 
@@ -381,13 +455,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         annotation = "error" if args.fail_on_available and blocks_bump(replacement) else "warning"
         print(f"::{annotation} file={replacement.source}::{warning_message(replacement)}")
 
-    summary = markdown_summary(groups, available, blocking=bool(blocking) and args.fail_on_available)
+    summary = markdown_summary(
+        groups, available, blocking=bool(blocking) and args.fail_on_available
+    )
     if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):
         with pathlib.Path(summary_path).open("a", encoding="utf-8") as stream:
             stream.write(summary)
     elif available:
         print(summary)
-    return 1 if args.fail_on_available and blocking else 0
+    return 3 if args.fail_on_available and blocking else 0
 
 
 if __name__ == "__main__":

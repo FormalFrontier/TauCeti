@@ -125,19 +125,56 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "TauCeti/.*path"):
                 check.load_registry(manifest, root)
 
-    def test_base_registry_obligation_is_ratcheted_until_source_moves(self):
+    def test_exact_declaration_probe_requires_local_surface(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            (root / "TauCeti").mkdir()
+            (root / "TauCeti/Old.lean").touch()
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps([{
+                "sources": ["TauCeti/Old.lean"],
+                "declarations": ["Upstream.done"],
+            }]), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "require local_declarations"):
+                check.load_registry(manifest, root)
+
+    def test_base_registry_obligation_is_ratcheted_until_local_surface_moves(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
             source = pathlib.Path("TauCeti/Old.lean")
             (root / source).parent.mkdir()
-            (root / source).touch()
-            base = check.ShimGroup((source,), ("Upstream.done",), (), "base")
+            (root / source).write_text("lemma oldShim : True := by trivial\n", encoding="utf-8")
+            base = check.ShimGroup(
+                (source,), ("Upstream.done",), (), "base",
+                local_declarations=("oldShim",),
+            )
             with self.assertRaisesRegex(ValueError, "base shim obligations"):
                 check.validate_registry_ratchet((), (base,), root)
-            kept = check.ShimGroup((source,), ("Upstream.done", "Future.more"), (), "kept")
+            kept = check.ShimGroup(
+                (source,), ("Upstream.done", "Future.more"), (), "kept",
+                local_declarations=("oldShim",),
+            )
             check.validate_registry_ratchet((kept,), (base,), root)
-            (root / source).unlink()
+            weakened = check.ShimGroup(
+                (source,), ("Upstream.done",), (), "weakened", landing_sentinel=True,
+                local_declarations=("oldShim",),
+            )
+            with self.assertRaisesRegex(ValueError, "audit-only sentinel"):
+                check.validate_registry_ratchet((weakened,), (base,), root)
+            (root / source).write_text("lemma stillUseful : True := by trivial\n", encoding="utf-8")
             check.validate_registry_ratchet((), (base,), root)
+
+    def test_only_new_or_changed_groups_ignores_unchanged_base_entries(self):
+        one = pathlib.Path("TauCeti/One.lean")
+        two = pathlib.Path("TauCeti/Two.lean")
+        base = check.ShimGroup(
+            (one,), ("Upstream.one",), (), "base", local_declarations=("one",)
+        )
+        unchanged = check.dataclasses.replace(base, note="note edits are not new obligations")
+        added = check.ShimGroup(
+            (two,), ("Upstream.two",), (), "added", local_declarations=("two",)
+        )
+        self.assertEqual(check.only_new_or_changed_groups((unchanged, added), (base,)), (added,))
 
     def test_probe_round_trip(self):
         source = check.render_declaration_probe(["Foo.bar", "Alpha", "Foo.bar"])
@@ -220,12 +257,17 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             manifest.write_text(json.dumps([{
                 "sources": ["TauCeti/Old.lean"],
                 "declarations": ["Upstream.done"],
+                "local_declarations": ["oldShim"],
                 "note": "exact replacement",
             }]), encoding="utf-8")
             common = ["--repo-root", str(root), "--manifest", str(manifest)]
             with mock.patch.object(check, "probe_declarations", return_value={"Upstream.done"}):
                 self.assertEqual(check.main(common), 0)
-                self.assertEqual(check.main([*common, "--fail-on-available"]), 1)
+                self.assertEqual(check.main([*common, "--fail-on-available"]), 3)
+
+    def test_unexpected_checker_failure_is_infrastructure_not_migration(self):
+        with mock.patch.object(check, "load_registry", side_effect=OSError("bad bytes")):
+            self.assertEqual(check.main([]), 2)
 
 if __name__ == "__main__":
     unittest.main()

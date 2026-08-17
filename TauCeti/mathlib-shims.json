@@ -65,6 +65,9 @@
     ],
     "declarations": [
       "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
+    ],
+    "local_declarations": [
+      "doubleCoset_eq_iUnion_leftCosets"
     ]
   },
   {
@@ -146,6 +149,9 @@
     ],
     "declarations": [
       "ValuativeRel.not_vle_zero_of_isUnit"
+    ],
+    "local_declarations": [
+      "not_vle_zero_of_isUnit"
     ]
   },
   {
@@ -158,6 +164,13 @@
     ],
     "modules": [
       "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"
+    ],
+    "local_declarations": [
+      "comap",
+      "comap_vle",
+      "comap_vlt",
+      "comap_id",
+      "comap_comp"
     ]
   }
 ]
