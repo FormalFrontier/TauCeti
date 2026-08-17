@@ -27,17 +27,15 @@ before proving that a covering map induces isomorphisms on `π_n` for `n ≥ 2`.
 
 ## Main declarations
 
-* `TauCeti.HomotopyGroup.homeomorphEquivOfEq`: `π_N(X, x) ≃ π_N(Y, y)` from `e : X ≃ₜ Y` with
+* `HomotopyGroup.homeomorphEquivOfEq`: `π_N(X, x) ≃ π_N(Y, y)` from `e : X ≃ₜ Y` with
   `e x = y`.
-* `TauCeti.HomotopyGroup.homeomorphEquiv`: `π_N(X, x) ≃ π_N(Y, e x)`.
-* `TauCeti.HomotopyGroup.homeomorphMulEquivOfEq`: the positive-dimensional group isomorphism
+* `HomotopyGroup.homeomorphEquiv`: `π_N(X, x) ≃ π_N(Y, e x)`.
+* `HomotopyGroup.homeomorphMulEquivOfEq`: the positive-dimensional group isomorphism
   `π_N(X, x) ≃* π_N(Y, y)`.
-* `TauCeti.HomotopyGroup.homeomorphMulEquiv`: `π_N(X, x) ≃* π_N(Y, e x)`.
+* `HomotopyGroup.homeomorphMulEquiv`: `π_N(X, x) ≃* π_N(Y, e x)`.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace HomotopyGroup
 
@@ -127,5 +125,3 @@ theorem homeomorphMulEquiv_symm_apply [DecidableEq N] [Nonempty N] (e : X ≃ₜ
   rfl
 
 end HomotopyGroup
-
-end TauCeti
