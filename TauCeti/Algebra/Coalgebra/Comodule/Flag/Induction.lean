@@ -94,16 +94,12 @@ private theorem fixedSpan_coact [Module.Flat k H] (v : M)
   change coact (R := k) (C := H) (M := M) (x : M) = (x : M) ⊗ₜ[k] (1 : H)
   rw [← ha, map_smul, hv, TensorProduct.smul_tmul']
 
-/-- A basis consisting of fixed vectors has identity coefficient matrix. -/
-private theorem coefficientMatrix_eq_one_of_fixed_basis {n : ℕ} (b : Basis (Fin n) k M)
-    (hb : ∀ i, coact (R := k) (C := H) (M := M) (b i) = b i ⊗ₜ[k] (1 : H)) :
-    coefficientMatrix (C := H) b = 1 := by
-  classical
-  ext i j
-  rw [coefficientMatrix_apply, matrixCoefficient_def, hb]
-  simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq, TensorProduct.lid_tmul,
-    Basis.coord_apply, Basis.repr_self_apply, Matrix.one_apply]
-  simp [eq_comm]
+/-- The subcomodule spanned by a nonzero fixed vector has dimension one. -/
+private theorem fixedSpan_finrank (v : M)
+    (hv : coact (R := k) (C := H) (M := M) v = v ⊗ₜ[k] (1 : H)) (hv₀ : v ≠ 0) :
+    finrank k (fixedSpan v hv) = 1 := by
+  change finrank k (k ∙ v) = 1
+  exact finrank_span_singleton hv₀
 
 /-- If every nonzero finite-dimensional `H`-comodule has a nonzero fixed vector, then every
 finite-dimensional `H`-comodule has a basis with upper-unitriangular coefficient matrix.
@@ -127,10 +123,7 @@ theorem exists_basis_coefficientMatrix_isUpperUnitriangular_of_fixed_vectors
           (hfixed M)
         let L : Subcomodule k H M := fixedSpan v hvcoact
         let _ : AddCommGroup L := Module.addCommMonoidToAddCommGroup k
-        have hLfinrank : finrank k L = 1 := by
-          -- The subtype `L` and the span used as its carrier have definitionally equal finranks.
-          change finrank k (k ∙ v) = 1
-          exact finrank_span_singleton hv
+        have hLfinrank : finrank k L = 1 := fixedSpan_finrank v hvcoact hv
         let vL : L := ⟨v, Submodule.mem_span_singleton_self v⟩
         have hvL : vL ≠ 0 := by
           intro h
@@ -141,17 +134,16 @@ theorem exists_basis_coefficientMatrix_isUpperUnitriangular_of_fixed_vectors
             coact (R := k) (C := H) (M := L) (bL i) = bL i ⊗ₜ[k] (1 : H) :=
           fixedSpan_coact v hvcoact (bL i)
         have hbL : (coefficientMatrix (C := H) bL).IsUpperUnitriangular := by
-          rw [coefficientMatrix_eq_one_of_fixed_basis bL hbL_fixed]
-          exact Matrix.isUpperUnitriangular_one
+          rw [coefficientMatrix_isUpperUnitriangular_iff]
+          intro i
+          rw [hbL_fixed i]
+          simp
         let Q := M ⧸ L.toSubmodule
         have hQdim : finrank k Q < d := by
           -- Unfold the local quotient abbreviation so the generic finrank bound applies.
           change finrank k (M ⧸ L.toSubmodule) < d
           have hsum := Module.finrank_quotient_add_finrank_le L.toSubmodule
-          have hLto : finrank k L.toSubmodule = 1 := by
-            -- The carrier of `L` is definitionally the span of the chosen fixed vector.
-            change finrank k (k ∙ v) = 1
-            exact finrank_span_singleton hv
+          have hLto : finrank k L.toSubmodule = 1 := hLfinrank
           rw [hLto, hdim] at hsum
           omega
         obtain ⟨n, bQ, hbQ⟩ := ih (finrank k Q) hQdim (M := Q) rfl
