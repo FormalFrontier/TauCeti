@@ -13,12 +13,13 @@ public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
-# Geometric radical-triviality properties
+# Geometric normal-subgroup-freeness properties
 
 This file packages the common construction behind the reductive and semisimple predicates. Given
 an isomorphism-invariant property `P` of finite-type commutative Hopf algebras over an algebraic
-closure, `geometricRadicalFreeCommHopfAlgProperty k P` says that the ambient group is smooth and
-geometrically connected and that every connected normal closed subgroup satisfying `P` is trivial.
+closure, `geometricNormalSubgroupFreeCommHopfAlgProperty k P` says that the ambient group is
+smooth and geometrically connected and that every connected normal closed subgroup satisfying
+`P` is trivial.
 
 The construction is invariant under isomorphism. Its shared API also shows that, when the whole
 geometric fibre satisfies `P`, its zero Hopf ideal is the augmentation ideal and its coordinate
@@ -26,11 +27,12 @@ algebra is bialgebra-equivalent to the algebraic closure via the counit.
 
 ## Main declarations
 
-* `TauCeti.geometricRadicalFreeCommHopfAlgProperty`: the generic radical-triviality property.
-* `TauCeti.geometricRadicalFreeCommHopfAlgProperty.eq_augmentation`: candidate normal subgroups
-  are trivial.
-* `TauCeti.geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv`: a geometric
-  fibre satisfying the candidate property is trivial.
+* `TauCeti.geometricNormalSubgroupFreeCommHopfAlgProperty`: the generic normal-subgroup-freeness
+  property.
+* `TauCeti.geometricNormalSubgroupFreeCommHopfAlgProperty.eq_augmentation`: candidate normal
+  subgroups are trivial.
+* `TauCeti.geometricNormalSubgroupFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv`: a
+  geometric fibre satisfying the candidate property is trivial.
 
 This is shared infrastructure for the reductive and semisimple definitions in Layer 6,
 "Reductive and semisimple groups", of the ReductiveGroups roadmap.
@@ -51,7 +53,7 @@ connected normal geometric subgroups satisfying `P` are all trivial.
 
 The candidate property `P` is imposed on the coordinate Hopf algebra of the subgroup, represented
 contravariantly as a quotient by a normal Hopf ideal. -/
-def geometricRadicalFreeCommHopfAlgProperty (k : Type u) [Field k]
+def geometricNormalSubgroupFreeCommHopfAlgProperty (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))) :
     ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k) :=
   fun H ↦
@@ -68,12 +70,12 @@ def geometricRadicalFreeCommHopfAlgProperty (k : Type u) [Field k]
             I = HopfIdeal.augmentation (AlgebraicClosure k)
               (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
 
-/-- Membership in the generic geometric radical-triviality property. -/
+/-- Membership in the generic geometric normal-subgroup-freeness property. -/
 @[simp]
-theorem geometricRadicalFreeCommHopfAlgProperty_iff (k : Type u) [Field k]
+theorem geometricNormalSubgroupFreeCommHopfAlgProperty_iff (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    geometricRadicalFreeCommHopfAlgProperty k P H ↔
+    geometricNormalSubgroupFreeCommHopfAlgProperty k P H ↔
       Algebra.Smooth k H ∧
         geometricallyConnectedCommHopfAlgProperty k H.obj ∧
           ∀ I : HopfIdeal (AlgebraicClosure k)
@@ -88,12 +90,12 @@ theorem geometricRadicalFreeCommHopfAlgProperty_iff (k : Type u) [Field k]
                 (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
   Iff.rfl
 
-/-- Geometric radical-triviality is invariant under isomorphism when the candidate subgroup
+/-- Geometric normal-subgroup-freeness is invariant under isomorphism when the candidate subgroup
 property is invariant under isomorphism. -/
 instance (k : Type u) [Field k]
     (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)))
     [P.IsClosedUnderIsomorphisms] :
-    (geometricRadicalFreeCommHopfAlgProperty k P).IsClosedUnderIsomorphisms where
+    (geometricNormalSubgroupFreeCommHopfAlgProperty k P).IsClosedUnderIsomorphisms where
   of_iso {H K} e hH := by
     let e₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
       (CommHopfAlgCat.{u} k)).mapIso e
@@ -133,24 +135,24 @@ instance (k : Type u) [Field k]
       HopfIdeal.comap_augmentation]
     exact hJ
 
-namespace geometricRadicalFreeCommHopfAlgProperty
+namespace geometricNormalSubgroupFreeCommHopfAlgProperty
 
 variable {k : Type u} [Field k]
   {P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))}
   {H : FiniteTypeCommHopfAlgCat.{u, u} k}
 
-/-- A group satisfying a geometric radical-triviality property is smooth. -/
-theorem smooth (hH : geometricRadicalFreeCommHopfAlgProperty k P H) :
+/-- A group satisfying a geometric normal-subgroup-freeness property is smooth. -/
+theorem smooth (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H) :
     Algebra.Smooth k H :=
   hH.1
 
-/-- A group satisfying a geometric radical-triviality property is geometrically connected. -/
-theorem geometricallyConnected (hH : geometricRadicalFreeCommHopfAlgProperty k P H) :
+/-- A group satisfying a geometric normal-subgroup-freeness property is geometrically connected. -/
+theorem geometricallyConnected (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H) :
     geometricallyConnectedCommHopfAlgProperty k H.obj :=
   hH.2.1
 
 /-- Every connected normal closed subgroup of the geometric fibre satisfying `P` is trivial. -/
-theorem eq_augmentation (hH : geometricRadicalFreeCommHopfAlgProperty k P H)
+theorem eq_augmentation (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H)
     (I : HopfIdeal (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H))
     (hI : I.IsNormal)
@@ -165,7 +167,7 @@ theorem eq_augmentation (hH : geometricRadicalFreeCommHopfAlgProperty k P H)
 
 /-- If the whole geometric fibre satisfies `P`, its zero Hopf ideal is the augmentation ideal. -/
 theorem bot_eq_augmentation [P.IsClosedUnderIsomorphisms]
-    (hH : geometricRadicalFreeCommHopfAlgProperty k P H)
+    (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H)
     (hP : P (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)) :
     (⊥ : HopfIdeal (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)) =
@@ -187,7 +189,7 @@ theorem bot_eq_augmentation [P.IsClosedUnderIsomorphisms]
 /-- If the whole geometric fibre satisfies `P`, its coordinate algebra is bialgebra-equivalent
 to the algebraic closure via the counit. -/
 noncomputable def geometricFiberCounitBialgEquiv [P.IsClosedUnderIsomorphisms]
-    (hH : geometricRadicalFreeCommHopfAlgProperty k P H)
+    (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H)
     (hP : P (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)) :
     FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
         ≃ₐc[AlgebraicClosure k] AlgebraicClosure k :=
@@ -197,7 +199,7 @@ noncomputable def geometricFiberCounitBialgEquiv [P.IsClosedUnderIsomorphisms]
 /-- The generic trivial-geometric-fibre equivalence is the counit. -/
 @[simp]
 theorem geometricFiberCounitBialgEquiv_apply [P.IsClosedUnderIsomorphisms]
-    (hH : geometricRadicalFreeCommHopfAlgProperty k P H)
+    (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H)
     (hP : P (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H))
     (x : FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :
     hH.geometricFiberCounitBialgEquiv hP x =
@@ -209,7 +211,7 @@ theorem geometricFiberCounitBialgEquiv_apply [P.IsClosedUnderIsomorphisms]
 /-- The inverse of the generic trivial-geometric-fibre equivalence is the structure map. -/
 @[simp]
 theorem geometricFiberCounitBialgEquiv_symm_apply [P.IsClosedUnderIsomorphisms]
-    (hH : geometricRadicalFreeCommHopfAlgProperty k P H)
+    (hH : geometricNormalSubgroupFreeCommHopfAlgProperty k P H)
     (hP : P (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H))
     (r : AlgebraicClosure k) :
     (hH.geometricFiberCounitBialgEquiv hP).symm r =
@@ -218,7 +220,7 @@ theorem geometricFiberCounitBialgEquiv_symm_apply [P.IsClosedUnderIsomorphisms]
   rw [geometricFiberCounitBialgEquiv]
   exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_symm_apply _ _
 
-end geometricRadicalFreeCommHopfAlgProperty
+end geometricNormalSubgroupFreeCommHopfAlgProperty
 
 end
 

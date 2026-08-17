@@ -41,8 +41,8 @@ algebraic closure of the ground field via the counit.
 * T. A. Springer, *Linear Algebraic Groups*, Chapter 8.
 
 The formal construction and proof structure were adapted from
-`TauCeti.Algebra.AlgebraicGroup.Reductive.Basic`; their common radical-triviality infrastructure
-is factored through `TauCeti.Algebra.AlgebraicGroup.Radical.Basic`.
+`TauCeti.Algebra.AlgebraicGroup.Reductive.Basic`; their common normal-subgroup-freeness
+infrastructure is factored through `TauCeti.Algebra.AlgebraicGroup.Radical.Basic`.
 
 This is the semisimple-group definition target in Layer 6, "Reductive and semisimple groups", of
 the ReductiveGroups roadmap. It states triviality of the geometric radical through its defining
@@ -67,7 +67,7 @@ the identity subgroup. A Hopf ideal `I` cuts out that subgroup contravariantly, 
 `I` is the augmentation ideal, not the zero ideal. -/
 def semisimpleCommHopfAlgProperty (k : Type u) [Field k] :
     ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k) :=
-  geometricRadicalFreeCommHopfAlgProperty k <|
+  geometricNormalSubgroupFreeCommHopfAlgProperty k <|
     ((smoothCommHopfAlgProperty (AlgebraicClosure k)) ⊓
       geometricallySolvablePointsCommHopfAlgProperty (AlgebraicClosure k)).inverseImage
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
@@ -96,7 +96,7 @@ theorem semisimpleCommHopfAlgProperty_iff (k : Type u) [Field k]
               I = HopfIdeal.augmentation (AlgebraicClosure k)
                 (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
   by
-    rw [semisimpleCommHopfAlgProperty, geometricRadicalFreeCommHopfAlgProperty_iff]
+    rw [semisimpleCommHopfAlgProperty, geometricNormalSubgroupFreeCommHopfAlgProperty_iff]
     simp only [ObjectProperty.prop_inverseImage_iff, ObjectProperty.prop_inf_iff,
       FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj, smoothCommHopfAlgProperty_iff]
     constructor
@@ -112,7 +112,7 @@ theorem semisimpleCommHopfAlgProperty_iff (k : Type u) [Field k]
 /-- Semisimplicity is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
     (semisimpleCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=
-  inferInstanceAs ((geometricRadicalFreeCommHopfAlgProperty k
+  inferInstanceAs ((geometricNormalSubgroupFreeCommHopfAlgProperty k
     (((smoothCommHopfAlgProperty (AlgebraicClosure k)) ⊓
       geometricallySolvablePointsCommHopfAlgProperty (AlgebraicClosure k)).inverseImage
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
@@ -124,12 +124,12 @@ variable {k : Type u} [Field k] {H : FiniteTypeCommHopfAlgCat.{u, u} k}
 
 /-- A semisimple finite-type commutative Hopf algebra is smooth over its ground field. -/
 theorem smooth (hH : semisimpleCommHopfAlgProperty k H) : Algebra.Smooth k H :=
-  geometricRadicalFreeCommHopfAlgProperty.smooth hH
+  geometricNormalSubgroupFreeCommHopfAlgProperty.smooth hH
 
 /-- A semisimple finite-type commutative Hopf algebra is geometrically connected. -/
 theorem geometricallyConnected (hH : semisimpleCommHopfAlgProperty k H) :
     geometricallyConnectedCommHopfAlgProperty k H.obj :=
-  geometricRadicalFreeCommHopfAlgProperty.geometricallyConnected hH
+  geometricNormalSubgroupFreeCommHopfAlgProperty.geometricallyConnected hH
 
 /-- Every connected normal smooth solvable closed subgroup of the geometric fibre of a
 semisimple group is the identity subgroup. -/
@@ -148,7 +148,7 @@ theorem eq_augmentation (hH : semisimpleCommHopfAlgProperty k H)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I).obj) :
     I = HopfIdeal.augmentation (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) := by
-  apply geometricRadicalFreeCommHopfAlgProperty.eq_augmentation hH I hI hconnected
+  apply geometricNormalSubgroupFreeCommHopfAlgProperty.eq_augmentation hH I hI hconnected
   rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.prop_inf_iff,
     FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj, smoothCommHopfAlgProperty_iff]
   exact ⟨hsmooth, hsolvable⟩
@@ -163,7 +163,7 @@ theorem bot_eq_augmentation (hH : semisimpleCommHopfAlgProperty k H)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)) =
         HopfIdeal.augmentation (AlgebraicClosure k)
           (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) := by
-  apply geometricRadicalFreeCommHopfAlgProperty.bot_eq_augmentation hH
+  apply geometricNormalSubgroupFreeCommHopfAlgProperty.bot_eq_augmentation hH
   rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.prop_inf_iff,
     FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj, smoothCommHopfAlgProperty_iff]
   exact ⟨@Algebra.Smooth.baseChange k _ H (AlgebraicClosure k) _ _ _ _ hH.smooth, hsolvable⟩
@@ -177,11 +177,8 @@ noncomputable def geometricFiberCounitBialgEquiv
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj) :
     FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
         ≃ₐc[AlgebraicClosure k] AlgebraicClosure k :=
-  geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv hH <| by
-    rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.prop_inf_iff,
-      FiniteTypeCommHopfAlgCat.forget₂_commHopfAlgCat_obj, smoothCommHopfAlgProperty_iff]
-    exact
-      ⟨@Algebra.Smooth.baseChange k _ H (AlgebraicClosure k) _ _ _ _ hH.smooth, hsolvable⟩
+  HopfIdeal.counitBialgEquivOfAugmentationEqBot
+    (hH.bot_eq_augmentation hsolvable).symm
 
 /-- The equivalence from the geometric fibre to the algebraic closure is its counit. -/
 @[simp]
@@ -194,7 +191,7 @@ theorem geometricFiberCounitBialgEquiv_apply
       Bialgebra.counitBialgHom (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) x := by
   rw [geometricFiberCounitBialgEquiv]
-  exact geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv_apply _ _ _
+  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_apply _ _
 
 /-- The inverse equivalence from the algebraic closure is the geometric fibre's structure map. -/
 @[simp]
@@ -207,7 +204,7 @@ theorem geometricFiberCounitBialgEquiv_symm_apply
       algebraMap (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) r := by
   rw [geometricFiberCounitBialgEquiv]
-  exact geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv_symm_apply _ _ _
+  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_symm_apply _ _
 
 end semisimpleCommHopfAlgProperty
 
