@@ -32,9 +32,9 @@ directions are explicit: a tableau is sent to the set `TauCeti.BoundedSSYT.colFi
 entries of its column, and a set is sent back to the tableau `TauCeti.BoundedSSYT.ofColFinset`
 that lists it in increasing order, which is `Finset.orderEmbOfFin`.
 
-Symmetry is a corollary rather than an input: `TauCeti.schurPoly_ones_isSymmetric` records the
-one-column case of the symmetry of the Schur polynomials, which is proved here without the
-Bender--Knuth involution that the general case needs.
+Symmetry is a corollary rather than an input: the one-column case falls out of
+`TauCeti.schurPoly_ones` and the symmetry of the elementary symmetric polynomials, without the
+Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs in general.
 
 ## Main definitions
 
@@ -54,8 +54,6 @@ Bender--Knuth involution that the general case needs.
 * `TauCeti.diagramSchurPoly_eq_esymm_of_rowLen_le_one`: the Schur polynomial of a one-column
   shape is an elementary symmetric polynomial.
 * `TauCeti.schurPoly_ones`: `s_{(1ⁿ)} = e_n`.
-* `TauCeti.schurPoly_ones_isSymmetric`: the Schur polynomial of a one-column partition is
-  symmetric.
 
 ## References
 
@@ -274,14 +272,6 @@ theorem schurPoly_ones (n : ℕ) : schurPoly σ R (Nat.Partition.ones n) = esymm
   rw [schurPoly_eq_rename,
     diagramSchurPoly_eq_esymm_of_rowLen_le_one (rowLen_diagramOf_ones_le_one n 0),
     card_diagramOf, rename_esymm]
-
-/-- **The Schur polynomial of a one-column partition is symmetric.**  This is the one-column case
-of the symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution and
-is not proved here; for `(1ⁿ)` it is the symmetry of the elementary symmetric polynomials. -/
-theorem schurPoly_ones_isSymmetric (n : ℕ) :
-    (schurPoly σ R (Nat.Partition.ones n)).IsSymmetric := by
-  rw [schurPoly_ones]
-  exact esymm_isSymmetric σ R n
 
 end Partition
 

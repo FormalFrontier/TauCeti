@@ -43,10 +43,9 @@ weakly increasing and that it has the right multiset of letters, determine it
 (`List.Perm.eq_of_pairwise'`), which is how the round trip from a tableau back to itself is
 proved.
 
-Symmetry is a corollary rather than an input:
-`TauCeti.schurPoly_indiscrete_isSymmetric` records the one-row case of the symmetry of the Schur
-polynomials, which is proved here without the Bender--Knuth involution that the general case
-needs.
+Symmetry is a corollary rather than an input: the one-row case falls out of
+`TauCeti.schurPoly_indiscrete` and the symmetry of the complete homogeneous symmetric polynomials,
+without the Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs in general.
 
 ## Main definitions
 
@@ -66,8 +65,6 @@ needs.
 * `TauCeti.diagramSchurPoly_eq_hsymm_of_colLen_le_one`: the Schur polynomial of a one-row shape is
   a complete homogeneous symmetric polynomial.
 * `TauCeti.schurPoly_indiscrete`: `s_{(n)} = h_n`.
-* `TauCeti.schurPoly_indiscrete_isSymmetric`: the Schur polynomial of the partition `(n)` is
-  symmetric.
 
 ## References
 
@@ -354,17 +351,6 @@ theorem schurPoly_indiscrete (n : ℕ) :
   rw [schurPoly_eq_rename,
     diagramSchurPoly_eq_hsymm_of_colLen_le_one (colLen_diagramOf_indiscrete_le_one n),
     card_diagramOf, rename_hsymm]
-
-omit [DecidableEq σ] in
-/-- **The Schur polynomial of the partition `(n)` is symmetric.**  This is the at-most-one-row
-case of the symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution
-and is not proved here; for `(n)` it is the symmetry of the complete homogeneous symmetric
-polynomials. -/
-theorem schurPoly_indiscrete_isSymmetric (n : ℕ) :
-    (schurPoly σ R (Nat.Partition.indiscrete n)).IsSymmetric := by
-  classical
-  rw [schurPoly_indiscrete]
-  exact hsymm_isSymmetric σ R n
 
 end Partition
 

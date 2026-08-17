@@ -44,7 +44,8 @@ together with the Kostka theory of `TauCeti.Combinatorics.Young.Kostka`:
 An arbitrary finite alphabet `σ` is ordered by `Fintype.equivFin σ`, and `TauCeti.schurPoly σ R μ`
 is `TauCeti.diagramSchurPoly` renamed along that ordering. The result does not depend on the
 ordering, but that is the symmetry of `s_μ`, which is *not* proved here: it is the Bender-Knuth
-involution, a separate target of the Schur-Weyl roadmap, and none of the results below need it.
+involution, and it lives downstream in
+`TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Symmetric`.  None of the results below need it.
 
 ## Main definitions
 
@@ -348,7 +349,7 @@ variable {σ : Type*} [Fintype σ] {n : ℕ}
 /-- **The Schur polynomial** `s_μ` of a partition `μ` in the finite alphabet `σ`: the Schur
 polynomial `TauCeti.diagramSchurPoly` of the Young diagram of `μ` in the alphabet
 `Fin (Fintype.card σ)`, renamed along the ordering `Fintype.equivFin σ` of `σ`. The ordering does
-not matter, `s_μ` being symmetric, but symmetry is not proved here. -/
+not matter, `s_μ` being symmetric (`TauCeti.schurPoly_isSymmetric`, proved downstream). -/
 noncomputable def schurPoly (σ : Type*) [Fintype σ] (R : Type*) [CommSemiring R] {n : ℕ}
     (μ : n.Partition) : MvPolynomial σ R :=
   rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ))
