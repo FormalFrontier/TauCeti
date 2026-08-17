@@ -32,7 +32,7 @@ fppf quotient remains downstream.
 * `TauCeti.ConstantGroup.groupScheme`: the constant affine group scheme attached to `G`.
 * `TauCeti.ConstantGroup.groupSchemeMap`: the group-scheme morphism induced by a group
   homomorphism.
-* `TauCeti.ConstantGroup.schemePointsMulEquiv`: the canonical comparison between algebra-valued
+* `TauCeti.ConstantGroup.groupSchemePointMulEquiv`: the canonical comparison between algebra-valued
   coordinate points and scheme-valued points.
 * `TauCeti.ConstantGroup.isFinite_groupScheme`: the structural morphism is finite.
 * `TauCeti.ConstantGroup.etale_groupScheme`: the structural morphism is étale.
@@ -179,18 +179,18 @@ variable (G)
 
 /-- Algebra-valued points of the coordinate Hopf algebra are canonically the scheme-valued
 points of the constant group scheme. -/
-noncomputable def schemePointsMulEquiv (A : Type u) [CommRing A] [Algebra R A] :
+noncomputable def groupSchemePointMulEquiv (A : Type u) [CommRing A] [Algebra R A] :
     WithConv (coordinateRing R G →ₐ[R] A) ≃*
       ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
         (groupScheme R G).X) :=
   CommHopfAlgCat.mapMulEquivOfPresentation
     (CommHopfAlgCat.of R (coordinateRing R G)) A (groupScheme_def R G)
 
-/-- Under `schemePointsMulEquiv`, an algebra point is represented by its spectrum map. -/
+/-- Under `groupSchemePointMulEquiv`, an algebra point is represented by its spectrum map. -/
 @[simp]
-theorem schemePointsMulEquiv_apply_left (A : Type u) [CommRing A] [Algebra R A]
+theorem groupSchemePointMulEquiv_apply_left (A : Type u) [CommRing A] [Algebra R A]
     (p : WithConv (coordinateRing R G →ₐ[R] A)) :
-    (schemePointsMulEquiv R G A p).left =
+    (groupSchemePointMulEquiv R G A p).left =
       Spec.map (CommRingCat.ofHom p.ofConv.toRingHom) ≫
         eqToHom (groupScheme_X_left R G).symm := by
   exact CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
@@ -200,20 +200,20 @@ theorem schemePointsMulEquiv_apply_left (A : Type u) [CommRing A] [Algebra R A]
 /-- The scheme-valued point comparison is natural in the finite group: applying the
 group-scheme map induced by `f` is precomposition by pullback of coordinate functions. -/
 @[simp]
-theorem schemePointsMulEquiv_groupSchemeMap {H : Type u} [Group H] [Finite H]
+theorem groupSchemePointMulEquiv_groupSchemeMap {H : Type u} [Group H] [Finite H]
     (A : Type u) [CommRing A] [Algebra R A] (f : G →* H)
     (p : WithConv (coordinateRing R G →ₐ[R] A)) :
-    schemePointsMulEquiv R G A p ≫ (groupSchemeMap R f).hom.hom =
-      schemePointsMulEquiv R H A
+    groupSchemePointMulEquiv R G A p ≫ (groupSchemeMap R f).hom.hom =
+      groupSchemePointMulEquiv R H A
         ((CommHopfAlgCat.mapPointsFunctor
           (CommHopfAlgCat.ofHom (coordinateBialgHom R G H f))).app
             (CommAlgCat.of R A) p) := by
   rw [groupSchemeMap_def]
   exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain A
     (groupScheme_def R H) (groupScheme_def R G)
-    (schemePointsMulEquiv R H A) (schemePointsMulEquiv R G A)
-    (schemePointsMulEquiv_apply_left R H A)
-    (schemePointsMulEquiv_apply_left R G A)
+    (groupSchemePointMulEquiv R H A) (groupSchemePointMulEquiv R G A)
+    (groupSchemePointMulEquiv_apply_left R H A)
+    (groupSchemePointMulEquiv_apply_left R G A)
     (CommHopfAlgCat.ofHom (coordinateBialgHom R G H f)) p
 
 /-- The constant group scheme is affine. -/
