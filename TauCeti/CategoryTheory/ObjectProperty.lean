@@ -14,21 +14,21 @@ This file contains general lemmas about transporting object properties along equ
 
 ## Main declarations
 
-* `ObjectProperty.inverseImage_equivalence_inverseImage`: pulling an
+* `CategoryTheory.ObjectProperty.inverseImage_functor_inverseImage_inverse`: pulling an
   isomorphism-invariant property backward along both functors of an equivalence recovers it.
 -/
 
 public section
 
-open CategoryTheory
-
 universe u₁ v₁ u₂ v₂
+
+namespace CategoryTheory
 
 namespace ObjectProperty
 
 /-- Pulling an isomorphism-invariant object property backward along both functors of an
 equivalence recovers the original property. -/
-theorem inverseImage_equivalence_inverseImage
+theorem inverseImage_functor_inverseImage_inverse
     {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
     (P : ObjectProperty C) [P.IsClosedUnderIsomorphisms] (e : C ≌ D) :
     (P.inverseImage e.inverse).inverseImage e.functor = P := by
@@ -36,3 +36,5 @@ theorem inverseImage_equivalence_inverseImage
   exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
 
 end ObjectProperty
+
+end CategoryTheory

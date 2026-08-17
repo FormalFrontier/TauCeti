@@ -20,7 +20,7 @@ diagonalizable-group-scheme property.
 
 * `TauCeti.DiagonalizableGroup.linearlyReductiveAffineGroupSchemeProperty_groupScheme`: the
   canonical diagonalizable group scheme `D(G)` is linearly reductive.
-* `TauCeti.DiagonalizableGroup.linearlyReductive_of_diagonalizableGroupSchemeProperty`: every
+* `linearlyReductiveAffineGroupSchemeProperty_of_diagonalizableGroupSchemeProperty`: every
   affine group scheme satisfying the diagonalizable property is linearly reductive.
 
 ## References
@@ -54,7 +54,7 @@ theorem linearlyReductiveAffineGroupSchemeProperty_groupScheme
   let D : AffineGroupSchemeCat (CommRingCat.of k) :=
     ⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩
   have hS : linearlyReductiveAffineGroupSchemeProperty k S :=
-    (linearlyReductiveAffineGroupSchemeProperty_hopfSpec k (coordinateRing k G).obj).2
+    (linearlyReductiveAffineGroupSchemeProperty_hopfSpec_iff k (coordinateRing k G).obj).2
       (Coalgebra.isLinearlyReductive_monoidAlgebra k G)
   let e : S ≅ D :=
     (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
@@ -64,7 +64,7 @@ theorem linearlyReductiveAffineGroupSchemeProperty_groupScheme
 
 /-- Every affine group scheme satisfying the finite-type diagonalizable-group property is
 linearly reductive. -/
-theorem linearlyReductive_of_diagonalizableGroupSchemeProperty
+theorem linearlyReductiveAffineGroupSchemeProperty_of_diagonalizableGroupSchemeProperty
     (k : Type u) [Field k] (G : AffineGroupSchemeCat (CommRingCat.of k))
     (hG : diagonalizableGroupSchemeProperty k G.obj) :
     linearlyReductiveAffineGroupSchemeProperty k G := by

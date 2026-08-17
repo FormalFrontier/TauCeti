@@ -111,7 +111,7 @@ theorem smoothUnipotentAffineGroupSchemeProperty_inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       (smoothUnipotentCommHopfAlgProperty k).op := by
   unfold smoothUnipotentAffineGroupSchemeProperty
-  exact ObjectProperty.inverseImage_equivalence_inverseImage _ _
+  exact ObjectProperty.inverseImage_functor_inverseImage_inverse _ _
 
 /-- `Spec` restricts to an anti-equivalence from smooth unipotent finite-type commutative Hopf
 algebras to smooth unipotent affine group schemes. -/

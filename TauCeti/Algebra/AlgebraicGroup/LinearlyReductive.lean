@@ -13,10 +13,9 @@ public import TauCeti.Algebra.Coalgebra.Comodule.LinearlyReductive
 
 An affine group over a field is linearly reductive when its finite-dimensional rational
 representations are completely reducible. This file packages the existing comodule formulation
-as an isomorphism-invariant object property on commutative Hopf algebras. For a Hopf algebra in
-`Type v`, the property tests comodule carriers in `Type v`. At the scheme-level specialization
-`v = u`, transport to a finite standard basis shows that this test covers carriers in every
-universe.
+as an isomorphism-invariant object property on commutative Hopf algebras. The property tests
+comodule carriers in the base field's universe; transport to a finite standard basis then shows
+that this covers carriers in every universe.
 
 The property is deliberately separate from smoothness, connectedness, and finite type. In
 positive characteristic a torus is linearly reductive, while a general reductive group need not
@@ -36,6 +35,8 @@ equivalent in characteristic zero.
 
 This is the complete-reducibility side of Layer 6, "Reductive and semisimple groups", in the
 ReductiveGroups roadmap.
+
+The organization follows `TauCeti/Algebra/AlgebraicGroup/Unipotent/Basic.lean`.
 -/
 
 public section
@@ -44,23 +45,32 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u v
+universe u v w
 
 /-- The object property selecting commutative Hopf algebras for which every finite-dimensional
-comodule with carrier in `Type v` is completely reducible. On coordinate rings, this is linear
-reductivity of the represented affine group at that fixed carrier universe. -/
+comodule is completely reducible. It tests carriers in the base field's universe, which suffices
+for carriers in every universe by finite-dimensional transport. -/
 def linearlyReductiveCommHopfAlgProperty (k : Type u) [Field k] :
     ObjectProperty (CommHopfAlgCat.{v} k) :=
-  fun H ↦ Coalgebra.IsLinearlyReductive.{u, v, v} k H
+  fun H ↦ Coalgebra.IsLinearlyReductive.{u, v, u} k H
 
 /-- Membership in the linearly reductive commutative-Hopf-algebra property means that every
-finite-dimensional comodule with carrier in `Type v` is completely reducible. -/
+finite-dimensional comodule with carrier in the base field's universe is completely reducible. -/
 @[simp]
 theorem linearlyReductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
     (H : CommHopfAlgCat.{v} k) :
     linearlyReductiveCommHopfAlgProperty.{u, v} k H ↔
-      Coalgebra.IsLinearlyReductive.{u, v, v} k H :=
+      Coalgebra.IsLinearlyReductive.{u, v, u} k H :=
   Iff.rfl
+
+/-- A linearly reductive commutative Hopf algebra has completely reducible finite-dimensional
+comodules in every carrier universe. -/
+theorem linearlyReductiveCommHopfAlgProperty.isCompletelyReducible
+    (k : Type u) [Field k] {H : CommHopfAlgCat.{v} k}
+    (hH : linearlyReductiveCommHopfAlgProperty k H)
+    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k H V] [Module.Finite k V] :
+    Comodule.IsCompletelyReducible k H V :=
+  Coalgebra.IsLinearlyReductive.isCompletelyReducible k hH
 
 /-- Linear reductivity is invariant under isomorphism of commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
