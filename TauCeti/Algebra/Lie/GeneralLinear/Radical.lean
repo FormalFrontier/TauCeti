@@ -169,8 +169,11 @@ theorem single_mem_of_diagonal_mem {d : n → K} (hd : diagonal d ∈ I) {p q : 
 
 /-- **A Lie ideal containing a difference of diagonal matrix units contains the matrix unit between
 any two indices that the difference separates**; the diagonal of `Eₐₐ - E_bb` takes the value
-`[r = a] - [r = b]` at the index `r`. -/
-theorem single_mem_of_single_self_sub_single_self_mem {a b : n}
+`[r = a] - [r = b]` at the index `r`.
+
+This packages the file's indicator-function encoding of that diagonal, so it stays private; the
+general statement callers want is `TauCeti.single_mem_of_diagonal_mem`. -/
+private theorem single_mem_of_single_self_sub_single_self_mem {a b : n}
     (hmem : single a a (1 : K) - single b b (1 : K) ∈ I) {p q : n}
     (hpq : (if p = a then (1 : K) else 0) - (if p = b then (1 : K) else 0)
         ≠ (if q = a then (1 : K) else 0) - (if q = b then (1 : K) else 0)) (c : K) :
