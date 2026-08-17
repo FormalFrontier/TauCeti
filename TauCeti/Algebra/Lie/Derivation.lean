@@ -63,8 +63,22 @@ line in order to *state* facts about `Module.End R A` as a Lie algebra, but not 
 
 The simp-normal form of the action of a derivation is the application `(D : Module.End R A) x` of
 the underlying linear map: Mathlib's `LieSubalgebra.coe_bracket_of_module` and
-`Module.End.lie_apply` already rewrite the Lie bracket `⁅D, x⁆` into it, so no lemma of this file
-needs to say so.
+`Module.End.lie_apply` already rewrite the Lie bracket `⁅D, x⁆` into it, and those two lemmas
+together with `LieHom.lie_apply` likewise evaluate the commutator `⁅D, E⁆` of two derivations, so no
+lemma of this file needs to say so.
+
+The `_apply` and `_symm_apply` lemmas of `derivationEquivDerivationLieAlgebra` and
+`derivationLieAlgebraCommutatorRingEquivLieDerivation` are proved by `rfl`, and no rewriting lemma
+could replace it: those two equivalences are *defined* to be the identity on the underlying linear
+map, so the right-hand side of each lemma is literally the `toFun`/`invFun` field of the structure
+instance just above it.  Mathlib proves the same shape the same way (`LieEquiv.ofSubalgebras_apply`,
+`LinearEquiv.lieConj_apply`).  The point of stating them is precisely that no *consumer* then has to
+unfold the definition.  The parentheses in `(rfl)` are the module system's: the definitions' bodies
+are not `@[expose]`d, so a bare `rfl` -- whose proof term is exported -- fails with "not a
+definitional equality", while the parenthesised form elaborates inside this module, where the bodies
+are visible.  By contrast `derivationLieAlgebraCongr` is *not* the identity but a composite of
+`LieEquiv.ofSubalgebras` and `LinearEquiv.lieConj`, so its two lemmas are proved from those
+constructions' own `apply` lemmas rather than by unfolding.
 
 ## References
 
@@ -123,17 +137,10 @@ theorem apply_mul_eq_add (D : derivationLieAlgebra R A) (x y : A) :
       = (D : Module.End R A) x * y + x * (D : Module.End R A) y :=
   D.2 x y
 
-/-- The commutator of two derivations, evaluated. -/
-@[simp]
-theorem bracket_apply (D E : derivationLieAlgebra R A) (x : A) :
-    (⁅D, E⁆ : Module.End R A) x
-      = (D : Module.End R A) ((E : Module.End R A) x)
-        - (E : Module.End R A) ((D : Module.End R A) x) :=
-  rfl
-
 /-- **The constants of a derivation are closed under multiplication**: if `D` kills `x` and `y`
-then it kills `x * y`.  Together with linearity this says that the kernel of a derivation is a
-subalgebra of `A`. -/
+then it kills `x * y`.  Together with linearity this says that the kernel of a derivation is an
+`R`-submodule of `A` closed under multiplication -- a subalgebra where `A` is unital and
+associative enough for `Subalgebra` to be available. -/
 theorem apply_mul_eq_zero {D : derivationLieAlgebra R A} {x y : A}
     (hx : (D : Module.End R A) x = 0) (hy : (D : Module.End R A) y = 0) :
     (D : Module.End R A) (x * y) = 0 := by
@@ -192,27 +199,30 @@ theorem lieConj_mem_derivationLieAlgebra {e : A ≃ₗ[R] B}
 resulting map is an isomorphism of Lie algebras.  This is the tool that transports `Der` between two
 models of the same algebra -- two constructions of the split octonions, say. -/
 def derivationLieAlgebraCongr (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y) :
-    derivationLieAlgebra R A ≃ₗ⁅R⁆ derivationLieAlgebra R B := by
-  apply LieEquiv.ofSubalgebras _ _ e.lieConj
-  refine SetLike.ext fun D => ⟨?_, fun hD => ?_⟩
-  · rintro ⟨E, hE, rfl⟩
-    exact lieConj_mem_derivationLieAlgebra he hE
-  · exact ⟨e.lieConj.symm D, lieConj_mem_derivationLieAlgebra (symm_map_mul e he) hD,
-      e.lieConj.apply_symm_apply D⟩
+    derivationLieAlgebra R A ≃ₗ⁅R⁆ derivationLieAlgebra R B :=
+  LieEquiv.ofSubalgebras _ _ e.lieConj <| by
+    refine SetLike.ext fun D => ⟨?_, fun hD => ?_⟩
+    · rintro ⟨E, hE, rfl⟩
+      exact lieConj_mem_derivationLieAlgebra he hE
+    · exact ⟨e.lieConj.symm D, lieConj_mem_derivationLieAlgebra (symm_map_mul e he) hD,
+        e.lieConj.apply_symm_apply D⟩
 
 @[simp]
 theorem derivationLieAlgebraCongr_apply (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y)
     (D : derivationLieAlgebra R A) (x : B) :
     (derivationLieAlgebraCongr e he D : Module.End R B) x
-      = e ((D : Module.End R A) (e.symm x)) :=
-  (rfl)
+      = e ((D : Module.End R A) (e.symm x)) := by
+  simp only [derivationLieAlgebraCongr, LieEquiv.ofSubalgebras_apply, LinearEquiv.lieConj_apply,
+    LinearEquiv.conj_apply_apply]
 
 @[simp]
 theorem derivationLieAlgebraCongr_symm_apply (e : A ≃ₗ[R] B)
     (he : ∀ x y : A, e (x * y) = e x * e y) (D : derivationLieAlgebra R B) (x : A) :
     ((derivationLieAlgebraCongr e he).symm D : Module.End R A) x
-      = e.symm ((D : Module.End R B) (e x)) :=
-  (rfl)
+      = e.symm ((D : Module.End R B) (e x)) := by
+  simp only [derivationLieAlgebraCongr, LieEquiv.ofSubalgebras_symm_apply,
+    LinearEquiv.lieConj_symm, LinearEquiv.lieConj_apply, LinearEquiv.conj_apply_apply,
+    LinearEquiv.symm_symm]
 
 end Congr
 
@@ -238,6 +248,9 @@ def derivationEquivDerivationLieAlgebra : Derivation R A A ≃ₗ⁅R⁆ derivat
   left_inv _ := rfl
   right_inv _ := rfl
 
+-- `(rfl)` here and below is the whole content of the lemma: `derivationEquivDerivationLieAlgebra`
+-- keeps the underlying linear map, so the right-hand side *is* its `toFun`/`invFun` field.  See the
+-- implementation notes for why the parentheses are needed.
 @[simp]
 theorem derivationEquivDerivationLieAlgebra_apply (D : Derivation R A A) (x : A) :
     (derivationEquivDerivationLieAlgebra D : Module.End R A) x = D x :=
@@ -269,14 +282,14 @@ theorem leibniz_add_iff_leibniz_sub {D : L → L} :
 `LieDerivation R L L`.**  Regarding a Lie algebra as a non-associative algebra with `x * y = ⁅x, y⁆`
 turns the defining condition of `derivationLieAlgebra` into `D ⁅x, y⁆ = ⁅D x, y⁆ + ⁅x, D y⁆`, which
 `TauCeti.leibniz_add_iff_leibniz_sub` rewrites into the skew form. -/
+@[simp]
 theorem mem_derivationLieAlgebra_commutatorRing_iff_apply_lie_eq_sub {D : Module.End R L} :
     D ∈ derivationLieAlgebra R (CommutatorRing L) ↔
       ∀ x y : L, D ⁅x, y⁆ = ⁅x, D y⁆ - ⁅y, D x⁆ :=
   mem_derivationLieAlgebra.trans leibniz_add_iff_leibniz_sub
 
 /-- **The adjoint action is by derivations**: `ad x` lies in `Der (CommutatorRing L)`, which is
-exactly the Jacobi identity in Leibniz form.  This is the inner-derivation half of
-`TauCeti.derivationLieAlgebraCommutatorRingEquivLieDerivation`. -/
+exactly the Jacobi identity in Leibniz form. -/
 theorem ad_mem_derivationLieAlgebra_commutatorRing (x : L) :
     LieAlgebra.ad R L x ∈ derivationLieAlgebra R (CommutatorRing L) :=
   mem_derivationLieAlgebra.mpr fun (y z : L) => leibniz_lie x y z
@@ -298,6 +311,7 @@ def derivationLieAlgebraCommutatorRingEquivLieDerivation :
   left_inv _ := rfl
   right_inv _ := rfl
 
+-- As above, `(rfl)` is the whole content: this equivalence too keeps the underlying linear map.
 @[simp]
 theorem derivationLieAlgebraCommutatorRingEquivLieDerivation_apply
     (D : derivationLieAlgebra R (CommutatorRing L)) (x : L) :
