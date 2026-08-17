@@ -68,7 +68,8 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
   (`hasBasis_nhds_zero_weightedTopology`, `isTopologicalRing_weightedTopology`,
   `nonarchimedeanRing_weightedTopology`, `continuous_weightedC`).
   `TauCeti.Huber.weightedC_mem_weightedNhd` records that a constant series meets the `U` bound as
-  soon as its value does.
+  soon as its value does, and `TauCeti.Huber.isOpen_weightedNhd` that `U⟨X⟩` is open whenever `U`
+  is.
 * `TauCeti.Huber.weightedRestrictedSubring_one_weight`: for the trivial weight this is the ordinary
   ring of restricted power series (Wedhorn Example 5.54).
 * `TauCeti.Huber.weightedPolynomials`, the polynomials as a subring of `A⟨X⟩_T`, with
@@ -880,6 +881,13 @@ ring built from a `RingSubgroupsBasis` does. -/
 instance nonarchimedeanRing_weightedTopology [NonarchimedeanRing A] {T : Fin k → Set A}
     {hT : IsWeightFamily T} : NonarchimedeanRing (weightedRestrictedSubring T hT) :=
   (weightedNhd_subgroups_basis hT).nonarchimedean
+
+/-- `U⟨X⟩` is open in `A⟨X⟩_T` when `U` is open in `A`: it is one of the basic neighbourhoods of
+zero, and an additive subgroup that is a neighbourhood of zero is open. -/
+theorem isOpen_weightedNhd [NonarchimedeanRing A] {T : Fin k → Set A} (hT : IsWeightFamily T)
+    {U : AddSubgroup A} (hU : IsOpen (U : Set A)) :
+    IsOpen (weightedNhd T hT U : Set (weightedRestrictedSubring T hT)) :=
+  ((weightedNhd_subgroups_basis hT).openAddSubgroup ⟨U, hU⟩).isOpen'
 
 /-- The constant-series embedding `A → A⟨X⟩_T` is continuous.
 

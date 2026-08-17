@@ -50,6 +50,9 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   Tate-ring form is `TauCeti.Huber.IsTateRing.exists_hasBasis_nhds_zero`.
 * `TauCeti.Huber.IsHuberRing.of_discreteTopology`: a discrete ring is Huber, the first of the
   roadmap's Layer-0 examples.
+* `TauCeti.Huber.exists_sum_eq_of_mem_span_mul`: pure algebra, stated here because it is what
+  finite generation of an ideal of definition is used through — an element of `(G) * K`, for a
+  finite family `G`, is a `K`-linear combination of `G` itself.
 
 ## Provenance
 
@@ -78,6 +81,37 @@ public section
 open Filter Pointwise Topology
 
 namespace TauCeti.Huber
+
+section SpanMul
+
+variable {R : Type*} [CommSemiring R]
+
+/-- An element of `(G) * K` is a `K`-linear combination of the finite family `G`.
+
+This is Mathlib's `Submodule.mem_ideal_smul_span_iff_exists_sum'` in the form the Huber theory
+uses it: a `Finset.sum` over `G` itself, with cofactors given by a function on all of `R`, rather
+than a `Finsupp` on the subtype `↥G`. It is what bounds, uniformly in `k`, the number of terms
+needed to write an element of `Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`, both in Wedhorn Remark 6.8
+(`TauCeti.RingTheory.Huber.Completion`) and in the identification of the neighbourhood subgroups
+of `A⟨X⟩_T` with the powers of one finitely generated ideal
+(`TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition`). -/
+theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
+    (hb : b ∈ Ideal.span (G : Set R) * K) :
+    ∃ c : R → R, (∀ z, c z ∈ K) ∧ ∑ z ∈ G, z * c z = b := by
+  classical
+  -- Present `(G) * K` as `K • span (id '' G)`, so that the coefficients are handed to us.
+  rw [mul_comm, ← Ideal.smul_eq_mul, ← Set.image_id (G : Set R)] at hb
+  obtain ⟨a, ha, rfl⟩ := (Submodule.mem_ideal_smul_span_iff_exists_sum' _ _ _ _).mp hb
+  -- Extend the coefficients from `G` to all of `R` by zero.
+  refine ⟨fun z ↦ if h : z ∈ G then a ⟨z, h⟩ else 0, fun z ↦ ?_, ?_⟩
+  · dsimp only
+    split_ifs
+    exacts [ha _, K.zero_mem]
+  · rw [Finsupp.sum_fintype _ _ (by simp),
+      ← Finset.sum_finset_coe (fun z ↦ z * if h : z ∈ G then a ⟨z, h⟩ else 0) G]
+    exact Finset.sum_congr rfl fun i _ ↦ by simp [Finset.mem_coe.mp i.2, mul_comm]
+
+end SpanMul
 
 /-- A *pair of definition* `(A₀, I)` for a topological ring `A`: an open subring `A₀` together
 with a finitely generated ideal `I` of `A₀` whose adic topology is the subspace topology.

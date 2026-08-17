@@ -57,10 +57,9 @@ completion and need no argument here.
   (`TauCeti.Huber.PairOfDefinition.fg_weightedIdeal_one`) and its adicity
   (`TauCeti.Huber.PairOfDefinition.isAdic_weightedIdeal_one`) follow.
 * `TauCeti.Huber.isHuberRing_weightedRestrictedSubring` and
-  `TauCeti.Huber.isTateRing_weightedRestrictedSubring`: the two instances.
-* `TauCeti.Huber.isHuberRing_restrictedMvPowerSeriesCompletion` and
-  `TauCeti.Huber.isTateRing_restrictedMvPowerSeriesCompletion`: the same for the completed algebra
-  `A⟨X₁,…,Xₖ⟩` at the trivial weight, which is the roadmap's object.
+  `TauCeti.Huber.isTateRing_weightedRestrictedSubring`: the two instances. The completed algebra
+  `A⟨X₁,…,Xₖ⟩` at the trivial weight, which is the roadmap's object, inherits both from them by
+  synthesis, with no separate result: see the `example`s at the end of the file.
 
 ## Provenance
 
@@ -102,19 +101,6 @@ private def combSubgroup {ι : Type*} (G : Finset ι) (g : ι → A) (M : AddSub
     rintro _ ⟨c, hc, rfl⟩
     exact ⟨-c, fun z ↦ M.neg_mem (hc z), by simp⟩
 
-/-- `U⟨X⟩` is open in `A⟨X⟩_T` when `U` is open in `A`: it is one of the basic neighbourhoods of
-zero, and an additive subgroup that is a neighbourhood of zero is open.
-
-This belongs to the `TauCeti.Huber.weightedNhd` API rather than to the material below, but it is
-stated here: in the module that defines the topology the unifier unfolds the `RingSubgroupsBasis`
-construction when it checks the neighbourhood membership, and the proof does not elaborate within
-the heartbeat budget. -/
-theorem isOpen_weightedNhd {T : Fin k → Set A} [NonarchimedeanRing A] (hT : IsWeightFamily T)
-    {U : AddSubgroup A} (hU : IsOpen (U : Set A)) :
-    IsOpen (weightedNhd T hT U : Set (weightedRestrictedSubring T hT)) :=
-  AddSubgroup.isOpen_of_mem_nhds _
-    ((hasBasis_nhds_zero_weightedTopology hT).mem_of_mem (i := ⟨U, hU⟩) trivial)
-
 namespace PairOfDefinition
 
 /-! ### The image of the ideal of definition
@@ -123,7 +109,7 @@ Three facts about the additive subgroups `Iⁿ ⊆ A`, all of them algebra: they
 absorb multiplication by `A₀`, and they multiply. -/
 
 /-- The images of the powers of the ideal of definition are nested. -/
-theorem idealImage_le_idealImage (P : PairOfDefinition A) {m n : ℕ} (h : m ≤ n) :
+theorem idealImage_anti (P : PairOfDefinition A) {m n : ℕ} (h : m ≤ n) :
     P.idealImage n ≤ P.idealImage m := by
   intro x hx
   obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
@@ -309,10 +295,10 @@ theorem weightedIdeal_zero (P : PairOfDefinition A) (hT : IsWeightFamily T) :
   exact (P.mem_idealImage 0).mpr ⟨⟨x, hx⟩, by simp, rfl⟩
 
 /-- The bounds are nested: `Iⁿ⟨X⟩_T ⊆ Iᵐ⟨X⟩_T` for `m ≤ n`. -/
-theorem weightedIdeal_le_weightedIdeal (P : PairOfDefinition A) (hT : IsWeightFamily T)
+theorem weightedIdeal_anti (P : PairOfDefinition A) (hT : IsWeightFamily T)
     {m n : ℕ} (h : m ≤ n) : P.weightedIdeal hT n ≤ P.weightedIdeal hT m := fun _ hf ↦
   mem_weightedNhd.mpr fun ν ↦
-    weightMul_mono T ν (P.idealImage_le_idealImage h) (mem_weightedNhd.mp hf ν)
+    weightMul_mono T ν (P.idealImage_anti h) (mem_weightedNhd.mp hf ν)
 
 /-- The bounds multiply: `Iᵃ⟨X⟩_T · Iᵇ⟨X⟩_T ⊆ Iᵃ⁺ᵇ⟨X⟩_T`. This is one half of
 `TauCeti.Huber.PairOfDefinition.weightedIdeal_one_pow`, and needs no finiteness. -/
@@ -367,7 +353,7 @@ theorem exists_sum_weightedRingOfDefinitionC_mul (P : PairOfDefinition A) (hT : 
     refine hν ?_
     rw [hs]
     refine weightMul_mono T ν ?_ (hc ν z)
-    exact le_trans (P.idealImage_le_idealImage (by omega))
+    exact le_trans (P.idealImage_anti (by omega))
       fun x hx ↦ SetLike.mem_coe.mp (hM (SetLike.mem_coe.mpr hx))
   -- the cofactors, as elements of `Iⁿ⟨X⟩_T`
   obtain ⟨g, hgcoe, hgmem⟩ : ∃ g : P.ringOfDefinition → P.weightedRingOfDefinition hT,
@@ -376,7 +362,7 @@ theorem exists_sum_weightedRingOfDefinitionC_mul (P : PairOfDefinition A) (hT : 
     have hmem : ∀ z ν, MvPowerSeries.coeff ν (s z) ∈ weightMul T ν (P.idealImage n) := fun z ν ↦ by
       rw [hs]
       exact weightMul_mono T ν
-        (P.idealImage_le_idealImage (Nat.le_add_right n (m ν))) (hc ν z)
+        (P.idealImage_anti (Nat.le_add_right n (m ν))) (hc ν z)
     exact ⟨fun z ↦ ⟨⟨s z, mem_weightedRestrictedSubring.mpr (hres z)⟩,
       mem_weightedNhd.mpr fun ν ↦
         weightMul_mono T ν (P.idealImage_le_ringOfDefinition n) (hmem z ν)⟩,
@@ -495,6 +481,19 @@ def weighted (P : PairOfDefinition A) (hT : IsWeightFamily T) :
 theorem weighted_ringOfDefinition (P : PairOfDefinition A) (hT : IsWeightFamily T) :
     (P.weighted hT).ringOfDefinition = P.weightedRingOfDefinition hT := (rfl)
 
+/-- Membership in the ideal of definition of the pair `(A₀⟨X⟩_T, I⟨X⟩_T)` is membership in
+`I⟨X⟩_T`.
+
+Stated as a membership characterisation rather than an equation because the type of
+`idealOfDefinition` depends on `ringOfDefinition`, exactly as
+`TauCeti.Huber.PairOfDefinition.mem_completion_idealOfDefinition` is. -/
+@[simp]
+theorem mem_weighted_idealOfDefinition (P : PairOfDefinition A) (hT : IsWeightFamily T)
+    {f : (P.weighted hT).ringOfDefinition} :
+    f ∈ (P.weighted hT).idealOfDefinition ↔
+      (⟨f, by rw [← weighted_ringOfDefinition P hT]; exact f.2⟩ :
+        P.weightedRingOfDefinition hT) ∈ P.weightedIdeal hT 1 := (Iff.rfl)
+
 end Nonarchimedean
 
 end PairOfDefinition
@@ -519,22 +518,15 @@ instance isTateRing_weightedRestrictedSubring [IsTopologicalRing A] [IsTateRing 
       ⟨ha.isUnit.map (weightedC T hT),
         ha.isTopologicallyNilpotent.map (continuous_weightedC hT)⟩⟩
 
-/-- **The completed restricted power-series algebra `A⟨X₁,…,Xₖ⟩` of a Huber ring is a Huber ring.**
-This is the roadmap's object, and it needs no further argument: it is the separated completion of
-the trivial-weight `A⟨X⟩_T`, which is Huber by
-`TauCeti.Huber.isHuberRing_weightedRestrictedSubring`, and completion preserves the property
-(`TauCeti.Huber.IsHuberRing.completion`). Being a separated completion it is also complete and
-Hausdorff, by instance search alone. -/
-theorem isHuberRing_restrictedMvPowerSeriesCompletion (k : ℕ) (A : Type*) [CommRing A]
-    [TopologicalSpace A] [IsTopologicalRing A] [IsHuberRing A] :
-    IsHuberRing (restrictedMvPowerSeriesCompletion k A) := inferInstance
+-- The completed algebra `A⟨X₁,…,Xₖ⟩` of the roadmap — the separated completion of the
+-- trivial-weight `A⟨X⟩_T` — needs no result of its own: the instances above and
+-- `TauCeti.Huber.IsHuberRing.completion` / `TauCeti.Huber.IsTateRing.completion` already give it
+-- by synthesis, which these two `example`s record.
+example (k : ℕ) (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
+    [IsHuberRing A] : IsHuberRing (restrictedMvPowerSeriesCompletion k A) := inferInstance
 
-/-- **The completed restricted power-series algebra of a Tate ring is Tate.** As with
-`TauCeti.Huber.isHuberRing_restrictedMvPowerSeriesCompletion`, the ring-level instance and
-`TauCeti.Huber.IsTateRing.completion` give this by synthesis. -/
-theorem isTateRing_restrictedMvPowerSeriesCompletion (k : ℕ) (A : Type*) [CommRing A]
-    [TopologicalSpace A] [IsTopologicalRing A] [IsTateRing A] :
-    IsTateRing (restrictedMvPowerSeriesCompletion k A) := inferInstance
+example (k : ℕ) (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
+    [IsTateRing A] : IsTateRing (restrictedMvPowerSeriesCompletion k A) := inferInstance
 
 end Instances
 
