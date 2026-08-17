@@ -104,7 +104,7 @@ instance : HasInvolutiveReverse (DoubledQuiver G) where
 /-- The arrow of the doubled quiver corresponding to an adjacency. -/
 def arrow {i j : V} (h : G.Adj i j) : vertex G i ⟶ vertex G j := ⟨h⟩
 
-@[simp] theorem arrow_down {i j : V} (h : G.Adj i j) : (arrow G h).down = h := (rfl)
+theorem arrow_down {i j : V} (h : G.Adj i j) : (arrow G h).down = h := (rfl)
 
 @[simp] theorem reverse_arrow {i j : V} (h : G.Adj i j) :
     Quiver.reverse (arrow G h) = arrow G h.symm := by
@@ -188,19 +188,16 @@ theorem card_hom_eq_adjMatrix [DecidableRel G.Adj] (i j : V) :
   · simp only [h, ite_false]
     exact Fintype.card_eq_zero_iff.mpr (isEmpty_hom_iff G |>.mpr h)
 
-@[simp]
 theorem card_star_eq_degree [Fintype V] [DecidableRel G.Adj] (v : V) :
     Fintype.card (Quiver.Star (vertex G v)) = G.degree v := by
   rw [Fintype.card_congr (starEquivNeighborSet G v)]
   exact G.card_neighborSet_eq_degree v
 
-@[simp]
 theorem card_costar_eq_degree [Fintype V] [DecidableRel G.Adj] (v : V) :
     Fintype.card (Quiver.Costar (vertex G v)) = G.degree v := by
   rw [Fintype.card_congr (costarEquivNeighborSet G v)]
   exact G.card_neighborSet_eq_degree v
 
-@[simp]
 theorem card_totalArrow_eq_twice_card_edges [Fintype V] [DecidableRel G.Adj] :
     Fintype.card (TotalArrow G) = 2 * G.edgeFinset.card := by
   rw [Fintype.card_congr (totalArrowEquivDart G)]
