@@ -233,7 +233,7 @@ noncomputable def kostantTorusComodule :
   HopfAlgebra.PointRepresentation.toComodule (kostantTorusPointRepresentation M b wt)
 
 /-- The Kostant torus coaction is internally recovered from the universal point action. -/
-theorem kostantTorusComodule_coact_apply (x : M) :
+private theorem kostantTorusComodule_coact_apply (x : M) :
     (kostantTorusComodule M b wt).coact x =
       TensorProduct.comm ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M
         (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
