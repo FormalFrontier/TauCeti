@@ -1,20 +1,21 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.LinearlyReductive
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 
 /-!
 # Linearly reductive affine group schemes
 
 This file transports linear reductivity from commutative Hopf algebras to affine group schemes
-over a field. The coordinate-ring predicate says that every finite-dimensional comodule is
-completely reducible; the affine Hopf/group-scheme anti-equivalence makes this an intrinsic,
-isomorphism-invariant property of the represented group scheme.
+over a field. The coordinate-ring predicate tests finite-dimensional comodules whose carriers
+lie in `Type u`, the universe of the base field and coordinate ring; the affine Hopf/group-scheme
+anti-equivalence makes this an intrinsic, isomorphism-invariant property of the represented
+group scheme. No universe-transfer result is asserted here.
 
 The resulting full subcategories remain anti-equivalent. The compatibility isomorphism with
 `hopfSpec` is provided so later comparison theorems can compute on coordinate rings without
@@ -25,10 +26,10 @@ unfolding either restricted equivalence.
 * `TauCeti.linearlyReductiveAffineGroupSchemeProperty`: linear reductivity of affine group
   schemes over a field.
 * `TauCeti.LinearlyReductiveAffineGroupSchemeCat`: the corresponding full subcategory.
+* `TauCeti.linearlyReductiveAffineGroupSchemeProperty_hopfSpec`: the characterization on a
+  canonical Hopf spectrum.
 * `TauCeti.linearlyReductiveCommHopfAlgCatOpEquivLinearlyReductiveAffineGroupSchemeCat`: the
   restricted Hopf-algebra/group-scheme anti-equivalence.
-* `TauCeti.DiagonalizableGroup.linearlyReductiveAffineGroupSchemeProperty_groupScheme`: every
-  finite-type diagonalizable group scheme is linearly reductive.
 
 ## References
 
@@ -47,17 +48,19 @@ open CategoryTheory AlgebraicGeometry Opposite
 
 universe u
 
-/-- The object property selecting linearly reductive affine group schemes over a field.
+/-- The object property selecting affine group schemes whose finite-dimensional coordinate-ring
+comodules with carriers in `Type u` are completely reducible.
 
 The property is transported through the affine Hopf/group-scheme anti-equivalence and therefore
 does not add smoothness, connectedness, or finite type to the ambient affine group. -/
 def linearlyReductiveAffineGroupSchemeProperty (k : Type u) [Field k] :
     ObjectProperty (AffineGroupSchemeCat (CommRingCat.of k)) :=
-  (linearlyReductiveCommHopfAlgProperty.{u, u, u} k).op.inverseImage
+  (linearlyReductiveCommHopfAlgProperty.{u, u} k).op.inverseImage
     (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)).inverse
 
-/-- An affine group scheme is linearly reductive exactly when the coordinate Hopf algebra
-recovered by the affine anti-equivalence is linearly reductive. -/
+/-- An affine group scheme is linearly reductive exactly when finite-dimensional comodules over
+the coordinate Hopf algebra recovered by the affine anti-equivalence, with carriers in `Type u`,
+are completely reducible. -/
 @[simp]
 theorem linearlyReductiveAffineGroupSchemeProperty_iff
     (k : Type u) [Field k] (G : AffineGroupSchemeCat (CommRingCat.of k)) :
@@ -87,21 +90,45 @@ theorem linearlyReductiveAffineGroupSchemeProperty_inverseImage
     (linearlyReductiveAffineGroupSchemeProperty k).inverseImage
         (commHopfAlgCatOpEquivAffineGroupSchemeCat
           (CommRingCat.of k)).functor =
-      (linearlyReductiveCommHopfAlgProperty.{u, u, u} k).op := by
-  ext H
-  exact ((linearlyReductiveCommHopfAlgProperty.{u, u, u} k).op.prop_iff_of_iso
-    ((commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of k)).unitIso.app H)).symm
+      (linearlyReductiveCommHopfAlgProperty.{u, u} k).op := by
+  unfold linearlyReductiveAffineGroupSchemeProperty
+  exact ObjectProperty.inverseImage_equivalence_inverseImage _ _
+
+/-- A canonical Hopf spectrum is linearly reductive exactly when its coordinate Hopf algebra is
+linearly reductive for finite-dimensional comodules with carriers in `Type u`. -/
+theorem linearlyReductiveAffineGroupSchemeProperty_hopfSpec
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
+    linearlyReductiveAffineGroupSchemeProperty k
+        ⟨(hopfSpec (CommRingCat.of k)).obj (op H), by
+          rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+          infer_instance⟩ ↔
+      Coalgebra.IsLinearlyReductive.{u, u, u} k H := by
+  let E := commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)
+  let G : AffineGroupSchemeCat (CommRingCat.of k) :=
+    ⟨(hopfSpec (CommRingCat.of k)).obj (op H), by
+      rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+      infer_instance⟩
+  let e : E.functor.obj (op H) ≅ G :=
+    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of k)).app (op H))
+  change linearlyReductiveAffineGroupSchemeProperty k G ↔ _
+  refine ((linearlyReductiveAffineGroupSchemeProperty k).prop_iff_of_iso e).symm.trans ?_
+  change ((linearlyReductiveAffineGroupSchemeProperty k).inverseImage
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat
+        (CommRingCat.of k)).functor) (op H) ↔ _
+  rw [linearlyReductiveAffineGroupSchemeProperty_inverseImage,
+    ObjectProperty.op_iff, linearlyReductiveCommHopfAlgProperty_iff]
 
 /-- `Spec` restricts to an anti-equivalence from linearly reductive commutative Hopf algebras to
 linearly reductive affine group schemes. -/
 noncomputable def
     linearlyReductiveCommHopfAlgCatOpEquivLinearlyReductiveAffineGroupSchemeCat
     (k : Type u) [Field k] :
-    (LinearlyReductiveCommHopfAlgCat.{u, u, u} k)ᵒᵖ ≌
+    (LinearlyReductiveCommHopfAlgCat.{u, u} k)ᵒᵖ ≌
       LinearlyReductiveAffineGroupSchemeCat k :=
   (ObjectProperty.opEquivalence
-      (linearlyReductiveCommHopfAlgProperty.{u, u, u} k)).symm.trans <|
+      (linearlyReductiveCommHopfAlgProperty.{u, u} k)).symm.trans <|
     (commHopfAlgCatOpEquivAffineGroupSchemeCat
       (CommRingCat.of k)).congrFullSubcategory
         (linearlyReductiveAffineGroupSchemeProperty_inverseImage k)
@@ -114,7 +141,7 @@ private noncomputable def
     (k : Type u) [Field k] :
     (linearlyReductiveCommHopfAlgCatOpEquivLinearlyReductiveAffineGroupSchemeCat k).functor ⋙
         (linearlyReductiveAffineGroupSchemeProperty k).ι ≅
-      (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u, u} k)
+      (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙
         (commHopfAlgCatOpEquivAffineGroupSchemeCat
           (CommRingCat.of k)).functor :=
@@ -128,7 +155,7 @@ noncomputable def
     (linearlyReductiveCommHopfAlgCatOpEquivLinearlyReductiveAffineGroupSchemeCat k).functor ⋙
         (linearlyReductiveAffineGroupSchemeProperty k).ι ⋙
         (affineGroupSchemeProperty (CommRingCat.of k)).ι ≅
-      (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u, u} k)
+      (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙
         hopfSpec (CommRingCat.of k) :=
   Functor.isoWhiskerRight
@@ -137,36 +164,9 @@ noncomputable def
       ((affineGroupSchemeProperty (CommRingCat.of k)).ι) ≪≫
     Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft
-      (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u, u} k)
+      (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u} k)
         (CommHopfAlgCat.{u} k)).op
       (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
         (CommRingCat.of k))
-
-namespace DiagonalizableGroup
-
-/-- Every finite-type diagonalizable group scheme is linearly reductive. -/
-theorem linearlyReductiveAffineGroupSchemeProperty_groupScheme
-    (k : Type u) [Field k] (G : FGCommGrpCat.{u}) :
-    linearlyReductiveAffineGroupSchemeProperty k
-      ⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩ := by
-  let H : CommHopfAlgCat.{u} k := (coordinateRing k G).obj
-  let E := commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)
-  have hE : linearlyReductiveAffineGroupSchemeProperty k (E.functor.obj (op H)) := by
-    have h : ((linearlyReductiveAffineGroupSchemeProperty k).inverseImage E.functor) (op H) := by
-      rw [linearlyReductiveAffineGroupSchemeProperty_inverseImage, ObjectProperty.op_iff]
-      exact (linearlyReductiveCommHopfAlgProperty_iff k H).2
-        (Coalgebra.isLinearlyReductive_monoidAlgebra k G)
-    exact h
-  let e : E.functor.obj (op H) ≅
-      (⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩ :
-        AffineGroupSchemeCat (CommRingCat.of k)) :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-          (CommRingCat.of k)).app (op H) ≪≫
-        (schemeFunctorIsoHopfSpec k).symm.app (op G) ≪≫
-        eqToIso (schemeFunctor_obj k (op G)))
-  exact (linearlyReductiveAffineGroupSchemeProperty k).prop_of_iso e hE
-
-end DiagonalizableGroup
 
 end TauCeti

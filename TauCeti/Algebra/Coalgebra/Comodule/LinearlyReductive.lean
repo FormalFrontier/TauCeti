@@ -6,22 +6,23 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.LinearAlgebra.Basis.VectorSpace
-public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
+public import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
 
 /-!
-# Linear reductivity of diagonalizable groups
+# Complete reducibility and linear reductivity
 
 An affine group over a field is linearly reductive when every finite-dimensional rational
 representation is completely reducible. On coordinate rings, rational representations are
 comodules, and complete reducibility says that every subcomodule has a subcomodule complement.
 
-This file introduces that intrinsic comodule formulation and proves it for every monoid-algebra
-coalgebra `k[G]`. The proof makes an arbitrary linear projection onto a subcomodule equivariant:
-decompose a vector into its weights, apply the projection separately on each weight, and project
-the result back to that weight. The resulting idempotent comodule endomorphism has the original
-subcomodule as its range, so its kernel is an invariant complement.
+This file introduces that intrinsic comodule formulation, proves that complete reducibility is
+invariant under corestriction along a coalgebra equivalence, and proves linear reductivity for
+every monoid-algebra coalgebra `k[G]`. The last proof makes an arbitrary linear projection onto a
+subcomodule equivariant: decompose a vector into its weights, apply the projection separately on
+each weight, and project the result back to that weight. The resulting idempotent comodule
+endomorphism has the original subcomodule as its range, so its kernel is an invariant complement.
 
 For an abelian group `G`, `k[G]` is the coordinate Hopf algebra of the diagonalizable group
 `D(G)`. Thus every diagonalizable group, and in particular every split torus, is linearly
@@ -33,8 +34,8 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 * `TauCeti.Comodule.IsCompletelyReducible`: every subcomodule has a subcomodule complement.
 * `TauCeti.Coalgebra.IsLinearlyReductive`: every finite-dimensional comodule is completely
   reducible.
-* `TauCeti.Comodule.isCompletelyReducible_corestrict_iff`: complete reducibility is invariant
-  under a coalgebra equivalence.
+* `TauCeti.Comodule.isCompletelyReducible_corestrict_iff_of_coalgEquiv`: complete reducibility
+  is invariant under a coalgebra equivalence.
 * `TauCeti.Coalgebra.isLinearlyReductive_iff_of_coalgEquiv`: linear reductivity is invariant
   under a coalgebra equivalence.
 * `TauCeti.Coalgebra.isLinearlyReductive_monoidAlgebra`: monoid-algebra coalgebras are linearly
@@ -78,9 +79,10 @@ variable (k : Type u) (C : Type v)
 variable [Field k]
 variable [AddCommMonoid C] [Module k C] [Coalgebra k C]
 
-/-- A coalgebra is linearly reductive when every finite-dimensional comodule over it is
-completely reducible. For a commutative Hopf algebra representing an affine group, this is the
-usual complete-reducibility definition of a linearly reductive group. -/
+/-- A coalgebra is linearly reductive in carrier universe `w` when every finite-dimensional
+comodule over it whose carrier lies in `Type w` is completely reducible. For a commutative Hopf
+algebra representing an affine group, this is the usual complete-reducibility definition of a
+linearly reductive group at that universe. -/
 def IsLinearlyReductive : Prop :=
   ∀ (V : Type w) [AddCommMonoid V] [Module k V] [Comodule k C V] [Module.Finite k V],
     Comodule.IsCompletelyReducible k C V
@@ -91,89 +93,32 @@ namespace Comodule
 
 section Equiv
 
-variable (k : Type u) [Field k]
+variable (k : Type u) [CommSemiring k]
 variable {C : Type v} {D : Type*}
 variable [AddCommMonoid C] [Module k C] [Coalgebra k C]
 variable [AddCommMonoid D] [Module k D] [Coalgebra k D]
 
-/-- A subcomodule remains stable after corestriction along a coalgebra equivalence. -/
-private def corestrictSubcomodule (e : C ≃ₗc[k] D)
-    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V]
-    (W : Subcomodule k C V) :
-    letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-    Subcomodule k D V :=
-  letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-  Subcomodule.ofSubmodule W.carrier fun v hv ↦ by
-    obtain ⟨t, ht⟩ := W.coact_mem hv
-    refine ⟨TensorProduct.map LinearMap.id e.toLinearMap t, ?_⟩
-    rw [Comodule.corestrict_coact_apply]
-    calc
-      _ = TensorProduct.map LinearMap.id e.toLinearMap
-          (TensorProduct.map W.carrier.subtype LinearMap.id t) := by
-            simp [TensorProduct.map_map]
-      _ = _ := congrArg (TensorProduct.map LinearMap.id e.toLinearMap) ht
-
-/-- A subcomodule corestricted along a coalgebra equivalence is stable for the original
-coaction. -/
-private def uncorestrictSubcomodule (e : C ≃ₗc[k] D)
-    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V]
-    (W : letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-      Subcomodule k D V) : Subcomodule k C V :=
-  by
-    let _ : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-    exact Subcomodule.ofSubmodule W.carrier fun v hv ↦ by
-      obtain ⟨t, ht⟩ := W.coact_mem hv
-      rw [Comodule.corestrict_coact_apply] at ht
-      refine ⟨TensorProduct.map LinearMap.id e.symm.toLinearMap t, ?_⟩
-      calc
-        _ = TensorProduct.map LinearMap.id e.symm.toLinearMap
-            (TensorProduct.map W.carrier.subtype LinearMap.id t) := by
-              simp [TensorProduct.map_map]
-        _ = TensorProduct.map LinearMap.id e.symm.toLinearMap
-            (TensorProduct.map LinearMap.id e.toLinearMap
-              (Comodule.coact (R := k) (C := C) (M := V) v)) :=
-          congrArg (TensorProduct.map LinearMap.id e.symm.toLinearMap) ht
-        _ = _ := by
-          induction Comodule.coact (R := k) (C := C) (M := V) v using
-            TensorProduct.induction_on with
-          | zero => simp
-          | tmul x c => simp
-          | add x y hx hy => simpa using congrArg₂ (· + ·) hx hy
-
-private theorem corestrictSubcomodule_toSubmodule (e : C ≃ₗc[k] D)
-    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V]
-    (W : Subcomodule k C V) :
-    letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-    (corestrictSubcomodule k e W).toSubmodule = W.toSubmodule :=
-  rfl
-
-private theorem uncorestrictSubcomodule_toSubmodule (e : C ≃ₗc[k] D)
-    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V]
-    (W : letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-      Subcomodule k D V) :
-    letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-    (uncorestrictSubcomodule k e W).toSubmodule = W.toSubmodule :=
-  rfl
-
 /-- Complete reducibility is unchanged by corestricting a comodule along a coalgebra
 equivalence. -/
-theorem isCompletelyReducible_corestrict_iff (e : C ≃ₗc[k] D)
+theorem isCompletelyReducible_corestrict_iff_of_coalgEquiv (e : C ≃ₗc[k] D)
     {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k D V] :
     (letI : Comodule k C V := Comodule.Corestrict e.symm.toCoalgHom;
       Comodule.IsCompletelyReducible k C V) ↔
       Comodule.IsCompletelyReducible k D V := by
   let _ : Comodule k C V := Comodule.Corestrict e.symm.toCoalgHom
+  let subcomoduleEquiv : Subcomodule k D V ≃o Subcomodule k C V :=
+    Subcomodule.corestrictOrderIso e.symm
   constructor
   · intro h W
-    obtain ⟨Q, hQ⟩ := h (corestrictSubcomodule k e.symm W)
-    refine ⟨uncorestrictSubcomodule k e.symm Q, ?_⟩
-    simpa only [corestrictSubcomodule_toSubmodule,
-      uncorestrictSubcomodule_toSubmodule] using hQ
+    obtain ⟨Q, hQ⟩ := h (subcomoduleEquiv W)
+    refine ⟨subcomoduleEquiv.symm Q, ?_⟩
+    simpa only [subcomoduleEquiv, Subcomodule.corestrictOrderIso_apply_toSubmodule,
+      Subcomodule.corestrictOrderIso_symm_apply_toSubmodule] using hQ
   · intro h W
-    obtain ⟨Q, hQ⟩ := h (uncorestrictSubcomodule k e.symm W)
-    refine ⟨corestrictSubcomodule k e.symm Q, ?_⟩
-    simpa only [corestrictSubcomodule_toSubmodule,
-      uncorestrictSubcomodule_toSubmodule] using hQ
+    obtain ⟨Q, hQ⟩ := h (subcomoduleEquiv.symm W)
+    refine ⟨subcomoduleEquiv Q, ?_⟩
+    simpa only [subcomoduleEquiv, Subcomodule.corestrictOrderIso_apply_toSubmodule,
+      Subcomodule.corestrictOrderIso_symm_apply_toSubmodule] using hQ
 
 end Equiv
 
@@ -192,10 +137,10 @@ theorem isLinearlyReductive_iff_of_coalgEquiv (e : C ≃ₗc[k] D) :
   constructor
   · intro h V _ _ _ _
     let _ : Comodule k C V := Comodule.Corestrict e.symm.toCoalgHom
-    exact (Comodule.isCompletelyReducible_corestrict_iff k e).mp (h V)
+    exact (Comodule.isCompletelyReducible_corestrict_iff_of_coalgEquiv k e).mp (h V)
   · intro h V _ _ _ _
     let _ : Comodule k D V := Comodule.Corestrict e.toCoalgHom
-    exact (Comodule.isCompletelyReducible_corestrict_iff k e.symm).mp (h V)
+    exact (Comodule.isCompletelyReducible_corestrict_iff_of_coalgEquiv k e.symm).mp (h V)
 
 end Coalgebra
 
