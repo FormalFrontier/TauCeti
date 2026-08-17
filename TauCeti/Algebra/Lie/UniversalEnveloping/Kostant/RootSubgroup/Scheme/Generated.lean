@@ -27,7 +27,7 @@ a later theorem and is not asserted here.
 ## Main declarations
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedDefiningIdeal`: the common-kernel Hopf ideal,
-  with `kostantGeneratedDefiningIdeal_def` unfolding it.
+  with `kostantGeneratedDefiningIdeal_def` exposing its defining equation to downstream modules.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedGroupScheme`: the resulting closed subgroup
   scheme of `GLₙ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated`: the factorization of every

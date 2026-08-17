@@ -81,14 +81,6 @@ noncomputable def kostantGeneratedBaseChangeIdeal :
       (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n)) :=
   CommHopfAlgCat.baseChangeHopfIdeal (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
 
-/-- The base-changed defining ideal is the base change of the defining ideal. -/
-theorem kostantGeneratedBaseChangeIdeal_def :
-    kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A =
-      CommHopfAlgCat.baseChangeHopfIdeal (K := A)
-        (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) := by
-  unfold kostantGeneratedBaseChangeIdeal
-  rfl
-
 /-- The base change of the Chevalley carrier is the quotient of the base-changed general-linear
 coordinate algebra by the base-changed defining ideal: base change of the group scheme and of its
 presentation as a closed subgroup scheme agree. -/
@@ -138,7 +130,7 @@ theorem mkQuotient_comp_kostantRootSubgroupBaseChangeCoordinateMap (i : I) :
         CommHopfAlgCat.baseChangeMap
           (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
     rw [← Category.assoc, CommHopfAlgCat.mkQuotient_comp_quotientBaseChangeIso_hom,
-      ← CommHopfAlgCat.baseChangeMap_comp,
+      ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
       mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap]
   exact hcomp
 
@@ -150,25 +142,12 @@ theorem kostantGeneratedBaseChangeIdeal_toIdeal_le_ker (i : I) :
         (CommHopfAlgCat.baseChangeMap (K := A)
             (kostantRootSubgroupCoordinateMap e h ρ M hM i
               (hnil i) b)).hom.toAlgHom.toRingHom := by
-  intro y hy
-  have hy0 :
-      (CommHopfAlgCat.mkQuotient
-        (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-        (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A)).hom y = 0 :=
-    (CommHopfAlgCat.mkQuotient_eq_zero_iff _ _ y).mpr hy
-  rw [RingHom.mem_ker]
-  calc
-    (CommHopfAlgCat.baseChangeMap (K := A)
-          (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).hom y
-        = (CommHopfAlgCat.mkQuotient _
-              (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A) ≫
-            kostantRootSubgroupBaseChangeCoordinateMap e h ρ M hM hnil b A i).hom y := by
-      rw [mkQuotient_comp_kostantRootSubgroupBaseChangeCoordinateMap]
-    _ = (kostantRootSubgroupBaseChangeCoordinateMap e h ρ M hM hnil b A i).hom
-          ((CommHopfAlgCat.mkQuotient _
-            (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A)).hom y) :=
-      _root_.CommHopfAlgCat.comp_apply _ _ y
-    _ = 0 := by rw [hy0, map_zero]
+  unfold kostantGeneratedBaseChangeIdeal
+  rw [kostantGeneratedDefiningIdeal_def]
+  exact (HopfIdeal.toIdeal_le_toIdeal.mpr
+      (CommHopfAlgCat.baseChangeHopfIdeal_commonKernelHopfIdeal_le
+        (K := A) fun i ↦ kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)).trans
+    (CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker _ i)
 
 /-- The Chevalley carrier generated over `A` by the base-changed root subgroups is a closed
 subgroup scheme of the base change of the carrier generated over `ℤ`.
@@ -180,7 +159,8 @@ theorem kostantGeneratedBaseChangeIdeal_le_commonKernelHopfIdeal :
       CommHopfAlgCat.commonKernelHopfIdeal fun i ↦
         CommHopfAlgCat.baseChangeMap (K := A)
           (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
-  rw [kostantGeneratedBaseChangeIdeal_def, kostantGeneratedDefiningIdeal_def]
+  unfold kostantGeneratedBaseChangeIdeal
+  rw [kostantGeneratedDefiningIdeal_def]
   exact CommHopfAlgCat.baseChangeHopfIdeal_commonKernelHopfIdeal_le _
 
 end TauCeti.UniversalEnvelopingAlgebra
