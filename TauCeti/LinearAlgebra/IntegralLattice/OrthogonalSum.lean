@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -345,6 +346,12 @@ theorem nondegenerate_orthogonalSum_iff (L : IntegralLattice V) (M : IntegralLat
     (L.orthogonalSum M).form.Nondegenerate ↔
       L.form.Nondegenerate ∧ M.form.Nondegenerate := by
   rw [orthogonalSum_form, nondegenerate_orthogonalSumForm_iff]
+
+/-- The orthogonal sum of two nondegenerate integral lattices is nondegenerate. -/
+instance instIsNondegenerateOrthogonalSum (L : IntegralLattice V) (M : IntegralLattice W)
+    [L.IsNondegenerate] [M.IsNondegenerate] : (L.orthogonalSum M).IsNondegenerate :=
+  ⟨(L.nondegenerate_orthogonalSum_iff M).mpr
+    ⟨L.form_nondegenerate, M.form_nondegenerate⟩⟩
 
 /-! ## Radical and signature -/
 

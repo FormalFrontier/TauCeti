@@ -298,7 +298,7 @@ open Finset
 
 variable {ρ : G →* Module.End K V}
 
--- the character projector applied to a vector
+/-- The Fourier projector for `χ₀`, applied to a vector. -/
 private noncomputable def fourierComponent (χ₀ : G →* Kˣ) (v : V) : V :=
   Ring.inverse (Nat.card G : K) • ∑ d : G, (((χ₀ d)⁻¹ : Kˣ) : K) • ρ d v
 
@@ -338,7 +338,7 @@ private lemma card_unitHom : Nat.card (G →* Kˣ) = Nat.card G := by
     MulChar.card_eq_card_units_of_hasEnoughRootsOfUnity G K,
     Nat.card_congr (toUnits (G := G)).toEquiv.symm]
 
--- evaluation at `d`, as a multiplicative character of the finite character group `G →* Kˣ`
+/-- Evaluation at `d`, as a multiplicative character of the finite character group `G →* Kˣ`. -/
 private noncomputable def evalCharHom (d : G) : MulChar (G →* Kˣ) K :=
   MulChar.ofUnitHom ((MonoidHom.eval d).comp (Units.coeHom (G →* Kˣ)))
 
