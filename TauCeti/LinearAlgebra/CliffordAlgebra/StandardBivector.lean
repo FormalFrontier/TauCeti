@@ -27,10 +27,10 @@ commutator action of Clifford bivectors, rather than by expanding a matrix commu
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.bivectorEquivSo`: the standard exterior-bivector Lie equivalence.
-* `TauCeti.CliffordAlgebra.bivectorEquivSo_apply_ιMulti`: its value on a decomposable bivector.
-* `TauCeti.CliffordAlgebra.bivectorEquivSo_symm_repr_apply`: the coefficients of its inverse.
-* `TauCeti.CliffordAlgebra.bivectorEquivSo_apply_ιMulti_mulVec`: its normalized action on a vector.
+* `CliffordAlgebra.bivectorEquivSo`: the standard exterior-bivector Lie equivalence.
+* `CliffordAlgebra.bivectorEquivSo_apply_ιMulti`: its value on a decomposable bivector.
+* `CliffordAlgebra.bivectorEquivSo_symm_repr_apply`: the coefficients of its inverse.
+* `CliffordAlgebra.bivectorEquivSo_apply_ιMulti_mulVec`: its normalized action on a vector.
 
 ## References
 
@@ -48,7 +48,9 @@ open CliffordAlgebra
 
 universe u
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
@@ -489,4 +491,4 @@ theorem bivectorEquivSo_apply_ιMulti_mulVec (u v x : Fin n → R) :
   rw [bivectorEquivSo_apply]
   exact standardBivectorToSoLinear_mulVec n R u v x
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

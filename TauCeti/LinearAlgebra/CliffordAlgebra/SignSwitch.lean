@@ -16,9 +16,9 @@ negation. The construction is generic over a commutative ring.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.signSwitchEquiv`: the sign-switch algebra equivalence;
-* `TauCeti.CliffordAlgebra.signSwitchEquiv_ι`: its equation on generators;
-* `TauCeti.CliffordAlgebra.signSwitchEquiv_symm_apply_ι`: the inverse generator equation.
+* `CliffordAlgebra.signSwitchEquiv`: the sign-switch algebra equivalence;
+* `CliffordAlgebra.signSwitchEquiv_ι`: its equation on generators;
+* `CliffordAlgebra.signSwitchEquiv_symm_apply_ι`: the inverse generator equation.
 
 ## References
 
@@ -29,7 +29,7 @@ public section
 
 open Module QuadraticMap
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 section SignSwitch
 
@@ -165,4 +165,4 @@ theorem signSwitchEquiv_symm_apply_ι (x : N × R) :
 
 end SignSwitch
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

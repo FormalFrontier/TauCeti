@@ -19,15 +19,15 @@ contraction and the exterior-algebra basis. Unitarity then restricts the scalar 
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.mem_ker_spinToSpecialOrthogonal_iff`: a Spin element is in the kernel
+* `CliffordAlgebra.mem_ker_spinToSpecialOrthogonal_iff`: a Spin element is in the kernel
 exactly when it is `1` or the canonical scalar `-1`.
-* `TauCeti.CliffordAlgebra.card_ker_spinToSpecialOrthogonal`: the kernel of the Spin action on
+* `CliffordAlgebra.card_ker_spinToSpecialOrthogonal`: the kernel of the Spin action on
 the special orthogonal group has cardinality two.
-* `TauCeti.CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal`: the kernel is canonically
+* `CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal`: the kernel is canonically
   equivalent to `Multiplicative (ZMod 2)`.
-* `TauCeti.CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal_apply_ofAdd_one`: the chosen
+* `CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal_apply_ofAdd_one`: the chosen
   generator maps to the scalar `-1`.
-* `TauCeti.CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal_symm_apply_negOne`: the inverse
+* `CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal_symm_apply_negOne`: the inverse
   sends the scalar `-1` to the chosen generator.
 
 ## References
@@ -41,7 +41,9 @@ public section
 
 open CliffordAlgebra
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -213,9 +215,11 @@ end spinGroup
 
 end NegOne
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 section Kernel
 
@@ -319,4 +323,4 @@ theorem zmodTwoMulEquivKerSpinToSpecialOrthogonal_symm_apply_negOne [Nontrivial 
 
 end Kernel
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

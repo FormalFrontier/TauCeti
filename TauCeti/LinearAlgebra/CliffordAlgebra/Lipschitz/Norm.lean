@@ -20,10 +20,10 @@ norm: the Clifford norm descends modulo squares through the kernel of that actio
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.lipschitzNorm`: the unit-valued Clifford norm.
-* `TauCeti.CliffordAlgebra.self_mul_star_eq_algebraMap_lipschitzNorm`: its second
+* `CliffordAlgebra.lipschitzNorm`: the unit-valued Clifford norm.
+* `CliffordAlgebra.self_mul_star_eq_algebraMap_lipschitzNorm`: its second
   characteristic Clifford-product equation.
-* `TauCeti.CliffordAlgebra.lipschitzNorm_unitι`: its value on a generating vector.
+* `CliffordAlgebra.lipschitzNorm_unitι`: its value on a generating vector.
 
 ## References
 
@@ -34,7 +34,9 @@ public section
 
 open CliffordAlgebra QuadraticMap
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -213,4 +215,4 @@ theorem lipschitzNorm_pinToLipschitz (Q : QuadraticForm R V) (p : pinGroup Q) :
   simpa only [coe_pinToLipschitz_apply, Units.val_one, map_one] using
     pinGroup.coe_star_mul_self p
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

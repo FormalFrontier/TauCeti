@@ -15,7 +15,7 @@ public import Mathlib.LinearAlgebra.CliffordAlgebra.SpinGroup
 
 Mathlib defines `spinGroup Q` inside `CliffordAlgebra Q` and proves that its conjugation action
 preserves the range of the generating map `CliffordAlgebra.ι Q`. This file transports that action
-through `TauCeti.CliffordAlgebra.ιRangeEquiv`, proves that it preserves `Q`, and packages the result
+through `CliffordAlgebra.ιRangeEquiv`, proves that it preserves `Q`, and packages the result
 as `spinToOrthogonal Q : spinGroup Q →* QuadraticMap.orthogonalGroup Q`.
 
 This is the representation underlying the double cover from the spin group to the special
@@ -24,9 +24,9 @@ Cartan--Dieudonné argument and are deliberately not asserted here.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.spinVectorAction Q x` is the linear automorphism induced by conjugation
+* `CliffordAlgebra.spinVectorAction Q x` is the linear automorphism induced by conjugation
   by the spin element `x`.
-* `TauCeti.CliffordAlgebra.spinToOrthogonal Q` is the resulting homomorphism into `O(Q)`.
+* `CliffordAlgebra.spinToOrthogonal Q` is the resulting homomorphism into `O(Q)`.
 
 ## References
 
@@ -39,11 +39,11 @@ public section
 
 open CliffordAlgebra
 
-namespace TauCeti
-
 universe u v
 
 namespace CliffordAlgebra
+
+open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]
@@ -170,4 +170,3 @@ theorem coe_spinToOrthogonal_apply (x : spinGroup Q) (m : M) :
   rfl
 
 end CliffordAlgebra
-end TauCeti

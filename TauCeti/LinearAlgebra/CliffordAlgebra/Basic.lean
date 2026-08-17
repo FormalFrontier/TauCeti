@@ -25,7 +25,9 @@ open CliffordAlgebra
 
 universe u v
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
@@ -191,4 +193,4 @@ theorem exists_eq_algebraMap_of_mem_even_of_commute
   intro v
   rw [involute_eq_of_mem_even hx_even, (hx_comm v).eq]
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

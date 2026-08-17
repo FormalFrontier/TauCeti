@@ -16,11 +16,11 @@ the special orthogonal group.
 
 ## Main definitions and results
 
-* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_pinToOrthogonal_surjective`
+* `CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_pinToOrthogonal_surjective`
   restricts any surjective Pin action to a surjective Spin action on the special orthogonal group.
-* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_isSquare` proves its
+* `CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_isSquare` proves its
   surjectivity when every reflection normalization scalar is a square.
-* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective` specializes this to a
+* `CliffordAlgebra.spinToSpecialOrthogonal_surjective` specializes this to a
   separably closed field.
 
 ## References
@@ -34,7 +34,9 @@ public section
 
 open CliffordAlgebra QuadraticMap
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -93,4 +95,4 @@ end Field
 
 end Surjectivity
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

@@ -24,20 +24,20 @@ construct the total associated-graded algebra or prove multiplication compatibil
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.equivExteriorFiltration`: `equivExterior` restricted to one filtration
+* `CliffordAlgebra.equivExteriorFiltration`: `equivExterior` restricted to one filtration
   step.
-* `TauCeti.CliffordAlgebra.filtrationGradedEquiv`: the corresponding degree-quotient equivalence
+* `CliffordAlgebra.filtrationGradedEquiv`: the corresponding degree-quotient equivalence
   with the exterior power.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.equivExterior_mem_zero_form_filtration` and
-  `TauCeti.CliffordAlgebra.equivExterior_symm_mem_filtration`: `equivExterior` and its inverse
+* `CliffordAlgebra.equivExterior_mem_zero_form_filtration` and
+  `CliffordAlgebra.equivExterior_symm_mem_filtration`: `equivExterior` and its inverse
   carry each Clifford filtration step to the corresponding zero-form step and back.
-* `TauCeti.CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm`: the graded
+* `CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm`: the graded
   equivalence inverts `Filtration.lean`'s leading-term map, so the two independent routes to the
   degree quotient are the same map, with
-  `TauCeti.CliffordAlgebra.filtrationLeadingTerm_eq_filtrationGradedEquiv_symm` the map-level form.
+  `CliffordAlgebra.filtrationLeadingTerm_eq_filtrationGradedEquiv_symm` the map-level form.
 
 ## References
 
@@ -59,9 +59,9 @@ open CliffordAlgebra
 
 universe u v
 
-namespace TauCeti
-
 namespace CliffordAlgebra
+
+open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]
@@ -196,5 +196,3 @@ theorem filtrationLeadingTerm_eq_filtrationGradedEquiv_symm (k : ℕ) :
     (filtrationGradedEquiv_comp_filtrationLeadingTerm Q k)
 
 end CliffordAlgebra
-
-end TauCeti
