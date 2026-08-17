@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 
 /-!
@@ -45,6 +46,7 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   integral operator on a Kostant-stable subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
   points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`: the same action in matrix coordinates.
 
 ## Main results
 
@@ -331,29 +333,44 @@ theorem map_kostantTorusPoints (φ : A →+* B) (s : κ → Aˣ) (z : A ⊗[ℤ]
       rw [TensorProduct.tmul_smul, map_zsmul, map_zsmul, map_zsmul, map_zsmul,
         map_kostantTorusPoints_tmul_basis]
 
-section AlgebraHom
-
-variable [Algebra ℤ A] [Algebra ℤ B]
-
-omit [Module ℚ V] in
-/-- The torus on points is natural along a morphism of explicitly specified `ℤ`-algebras. -/
-theorem map_kostantTorusPoints_algHom (φ : A →ₐ[ℤ] B) (s : κ → Aˣ)
-    (z : A ⊗[ℤ] M) :
-    TensorProduct.map φ.toLinearMap LinearMap.id
-        ((kostantTorusPoints M b wt A s).val z) =
-      (kostantTorusPoints M b wt B fun j => Units.map φ.toMonoidHom (s j)).val
-        (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
-  let hA : (inferInstance : Algebra ℤ A) = Ring.toIntAlgebra A := Subsingleton.elim _ _
-  let hB : (inferInstance : Algebra ℤ B) = Ring.toIntAlgebra B := Subsingleton.elim _ _
-  cases hA
-  cases hB
-  exact map_kostantTorusPoints M b wt φ.toRingHom s z
-
-end AlgebraHom
-
 end Naturality
 
 end Torus
+
+/-! ## Matrix coordinates -/
+
+section Matrix
+
+variable [Fintype κ] {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
+variable {A : Type*} [CommRing A] [Algebra ℤ A]
+
+omit [Module ℚ V] in
+/-- The torus attached to a weight basis, in the matrix coordinates of that basis. -/
+noncomputable def kostantTorusMatrix :
+    (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A :=
+  (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
+    (kostantTorusPoints M b wt A)
+
+omit [Module ℚ V] in
+private theorem kostantTorusMatrix_coe (s : κ → Aˣ) :
+    (kostantTorusMatrix M b wt s : Matrix (Fin n) (Fin n) A) =
+      LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+        (kostantTorusPoints M b wt A s).toLinearEquiv.toLinearMap :=
+  rfl
+
+omit [Module ℚ V] in
+/-- In a weight basis, a torus point is the diagonal matrix of its weight characters. -/
+@[simp]
+theorem kostantTorusMatrix_apply (s : κ → Aˣ) :
+    kostantTorusMatrix M b wt s =
+      diagGL fun i => torusCharacter s (wt i) := by
+  apply Units.ext
+  rw [kostantTorusMatrix_coe]
+  have hlinear := congrArg LinearEquiv.toLinearMap
+    (kostantTorusPoints_toLinearEquiv M b wt s)
+  rw [hlinear, basisWeightTorus_apply, toMatrix_basisDiagonal, diagGL_coe]
+
+end Matrix
 
 /-! ## The pinning equation -/
 

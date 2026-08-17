@@ -408,15 +408,15 @@ end LieTypeIndex
 /-- A Lie-type index satisfying its rank, field, and preferred-representative conditions. Later
 carrier-valued constructions take this subtype, so they need no branch for an invalid Dynkin rank
 or an excluded small group. -/
-abbrev ValidLieTypeIndex := {d : LieTypeIndex // d.Valid}
+abbrev ValidLieTypeIndex : Type _ := {d : LieTypeIndex // d.Valid}
 
 /-- A valid index whose Steinberg map is an odd power of a half-Frobenius: the three Suzuki--Ree
 families together with the Tits group. -/
-abbrev SuzukiReeIndex := {d : ValidLieTypeIndex // d.1.UsesHalfFrobenius}
+abbrev SuzukiReeIndex : Type _ := {d : ValidLieTypeIndex // d.1.UsesHalfFrobenius}
 
 /-- A valid index whose Steinberg map uses ordinary Frobenius, possibly composed with a diagram
 automorphism. The Suzuki--Ree and Tits branches are excluded. -/
-abbrev GraphTwistedIndex := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
+abbrev GraphTwistedIndex : Type _ := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
 
 namespace ValidLieTypeIndex
 
