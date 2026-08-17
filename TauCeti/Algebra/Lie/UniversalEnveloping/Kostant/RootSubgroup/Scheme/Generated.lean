@@ -156,7 +156,7 @@ theorem kostantRootSubgroupGeneratedCoordinateMap_surjective_of_surjective (i : 
       (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom) :
     Function.Surjective
       (kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).hom :=
-  CommHopfAlgCat.surjective_commonKernelLift
+  CommHopfAlgCat.commonKernelLift_surjective_of_surjective
     (fun j ↦ kostantRootSubgroupCoordinateMap e h ρ M hM j (hnil j) b) i hi
 
 /-- The `i`th Kostant root subgroup, factored through the generated group scheme. -/
