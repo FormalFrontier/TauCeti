@@ -65,6 +65,11 @@ variable [Fintype κ]
 by which a torus point acts on a weight vector. -/
 def torusCharacter (s : κ → Rˣ) (μ : κ → ℤ) : Rˣ := ∏ j, s j ^ μ j
 
+/-- The value of a character is the monomial in the coordinates of the point with the weight as
+its exponent vector. -/
+theorem torusCharacter_def (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter s μ = ∏ j, s j ^ μ j := (rfl)
+
 /-- The trivial character takes the value one at every point. -/
 @[simp] theorem torusCharacter_zero (s : κ → Rˣ) : torusCharacter s (0 : κ → ℤ) = 1 := by
   simp [torusCharacter]
