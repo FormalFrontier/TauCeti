@@ -59,17 +59,83 @@ namespace TauCeti.UniversalEnvelopingAlgebra
 
 -- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
 attribute [local instance high] Algebra.toModule
+-- Public declarations only require finiteness; choose a `Fintype` internally for finite products.
+attribute [local instance] Fintype.ofFinite
 
-variable {κ : Type} [Fintype κ]
-variable {V : Type} [AddCommGroup V]
-variable (M : AddSubgroup V)
+variable {κ : Type} [Finite κ]
+variable (M : Type) [AddCommGroup M]
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
+
+/-- The diagonal torus action associated to a weighted basis after scalar extension. -/
+noncomputable def weightedBasisTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
+    (κ → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
+  (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp
+    (basisWeightTorus (b.baseChange A) wt)
+
+@[simp]
+private theorem weightedBasisTorusPoints_tmul_basis
+    (A : Type*) [CommRing A] [Algebra ℤ A] (s : κ → Aˣ) (a : A) (i : Fin n) :
+    (weightedBasisTorusPoints M b wt A s).val (a ⊗ₜ[ℤ] b i) =
+      ((torusCharacter s (wt i) : A) * a) ⊗ₜ[ℤ] b i := by
+  rw [weightedBasisTorusPoints]
+  change basisWeightTorus (b.baseChange A) wt s (a ⊗ₜ[ℤ] b i) = _
+  rw [show a ⊗ₜ[ℤ] b i = a • b.baseChange A i by
+    rw [Module.Basis.baseChange_apply, smul_tmul', smul_eq_mul, mul_one],
+    map_smul, basisWeightTorus_basis, smul_smul, mul_comm,
+    Module.Basis.baseChange_apply, smul_tmul', smul_eq_mul, mul_one]
+
+/-- On a Kostant lattice, the abstract weighted-basis action is the previously constructed
+Kostant torus action. -/
+theorem weightedBasisTorusPoints_eq_kostantTorusPoints
+    {V : Type} [AddCommGroup V] (M : AddSubgroup V)
+    {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
+    (A : Type*) [CommRing A] [Algebra ℤ A] :
+    weightedBasisTorusPoints M b wt A = kostantTorusPoints M b wt A := by
+  apply MonoidHom.ext
+  intro s
+  apply Units.ext
+  apply Module.Basis.ext (b.baseChange A)
+  intro i
+  rw [Module.Basis.baseChange_apply, weightedBasisTorusPoints_tmul_basis,
+    kostantTorusPoints_tmul_basis]
+
+private theorem map_weightedBasisTorusPoints
+    {A B : Type*} [CommRing A] [CommRing B] [Algebra ℤ A] [Algebra ℤ B]
+    (φ : A →ₐ[ℤ] B) (s : κ → Aˣ) (z : A ⊗[ℤ] M) :
+    TensorProduct.map φ.toLinearMap LinearMap.id
+        ((weightedBasisTorusPoints M b wt A s).val z) =
+      (weightedBasisTorusPoints M b wt B fun j ↦ Units.map φ.toMonoidHom (s j)).val
+        (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
+  let this : TensorProduct.CompatibleSMul ℤ ℤ A M :=
+    ⟨fun z a m ↦ by
+      change ((inferInstance : Module ℤ A).smul z a) ⊗ₜ[ℤ] m = a ⊗ₜ[ℤ] (z • m)
+      rw [int_smul_eq_zsmul (inferInstance : Module ℤ A)]
+      exact TensorProduct.CompatibleSMul.int.smul_tmul z a m⟩
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | add y z hy hz => simp only [map_add, hy, hz]
+  | tmul a m =>
+      conv_lhs => rw [← b.linearCombination_repr m]
+      conv_rhs => rw [← b.linearCombination_repr m]
+      rw [Finsupp.linearCombination_apply, Finsupp.sum, TensorProduct.tmul_sum]
+      simp only [map_sum]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [← this.smul_tmul, weightedBasisTorusPoints_tmul_basis,
+        TensorProduct.map_tmul, TensorProduct.map_tmul]
+      simp only [LinearMap.id_coe, id_eq]
+      rw [weightedBasisTorusPoints_tmul_basis]
+      simp only [AlgHom.toLinearMap_apply, map_mul]
+      have hchar :
+          φ (torusCharacter s (wt i) : A) =
+            (torusCharacter (fun j ↦ Units.map φ.toMonoidHom (s j)) (wt i) : B) :=
+        congrArg Units.val (map_torusCharacter φ.toRingHom s (wt i))
+      rw [hchar]
 
 private noncomputable def kostantTorusPointAction (A : CommAlgCat ℤ) :
     HopfAlgebra.points
         (R := ℤ) (H := MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) A ⟶
       GeneralLinear.scalarExtensionAutomorphisms (V := M) A :=
-  GrpCat.ofHom <| (kostantTorusPoints M b wt A).comp
+  GrpCat.ofHom <| (weightedBasisTorusPoints M b wt A).comp
     (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).toMonoidHom
 
 @[simp]
@@ -77,7 +143,7 @@ private theorem kostantTorusPointAction_val (A : CommAlgCat ℤ)
     (f : HopfAlgebra.points
       (R := ℤ) (H := MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) A) :
     (kostantTorusPointAction M b wt A f).val =
-      (kostantTorusPoints M b wt A (SplitTorus.pointsMulEquiv f)).val := by
+      (weightedBasisTorusPoints M b wt A (SplitTorus.pointsMulEquiv f)).val := by
   rfl
 
 private theorem kostantTorusPointAction_naturality
@@ -103,11 +169,11 @@ private theorem kostantTorusPointAction_naturality
     funext j
     exact SplitTorus.pointsMulEquiv_mapValue φ.hom f j
   rw [hs]
-  exact (map_kostantTorusPoints_algHom M b wt φ.hom
+  exact (map_weightedBasisTorusPoints M b wt φ.hom
     (SplitTorus.pointsMulEquiv f) z).symm
 
-/-- The natural point representation of the split torus on a Kostant-stable lattice written in a
-weight basis.
+/-- The natural point representation of the split torus on a finite free `ℤ`-module written in
+a weight basis.
 
 At a value ring `A`, a point is read as a family `s : κ → Aˣ`, and the action is the diagonal
 automorphism whose `i`-th entry is the value at `s` of the weight `wt i`. -/
@@ -141,12 +207,12 @@ noncomputable def kostantTorusPointRepresentation :
     rw [← Category.assoc, hraw]
     simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
 
-/-- At every categorical value ring, the represented point action is the previously constructed
-diagonal torus action after reading a split-torus point as its family of coordinates. -/
+/-- At every categorical value ring, the represented point action is the weighted-basis diagonal
+action after reading a split-torus point as its family of coordinates. -/
 @[simp]
 theorem kostantTorusPointRepresentation_action (A : CommAlgCat ℤ) :
     (kostantTorusPointRepresentation M b wt).action A =
-      GrpCat.ofHom ((kostantTorusPoints M b wt A).comp
+      GrpCat.ofHom ((weightedBasisTorusPoints M b wt A).comp
         (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).toMonoidHom) := by
   rw [HopfAlgebra.PointRepresentation.action_def]
   dsimp only [kostantTorusPointRepresentation]
@@ -155,19 +221,18 @@ theorem kostantTorusPointRepresentation_action (A : CommAlgCat ℤ) :
     (kostantTorusPointAction M b wt A ≫
         eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A).symm) ≫
       eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A) =
-        GrpCat.ofHom ((kostantTorusPoints M b wt A).comp
+        GrpCat.ofHom ((weightedBasisTorusPoints M b wt A).comp
           (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).toMonoidHom)
   rw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
   rfl
 
-/-- The coordinate-side comodule recovered from the natural split-torus action on the lattice. -/
+/-- The coordinate-side comodule recovered from the natural weighted-basis split-torus action. -/
 @[irreducible]
 noncomputable def kostantTorusComodule :
     Comodule ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M :=
   HopfAlgebra.PointRepresentation.toComodule (kostantTorusPointRepresentation M b wt)
 
-/-- The Kostant torus coaction is the flipped action of the universal point. -/
-@[simp]
+/-- The Kostant torus coaction is internally recovered from the universal point action. -/
 theorem kostantTorusComodule_coact_apply (x : M) :
     (kostantTorusComodule M b wt).coact x =
       TensorProduct.comm ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M
@@ -179,22 +244,94 @@ theorem kostantTorusComodule_coact_apply (x : M) :
   unfold kostantTorusComodule
   exact HopfAlgebra.PointRepresentation.toComodule_coact_apply _ x
 
+private theorem torusCharacter_pointsMulEquiv
+    {A : Type*} [CommRing A] [Algebra ℤ A]
+    (f : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A))
+    (mu : κ → ℤ) :
+    (torusCharacter (SplitTorus.pointsMulEquiv f) mu : A) =
+      f.ofConv (MonoidAlgebra.single
+        (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm mu)) 1) := by
+  let χ := DiagonalizableGroup.charOfPoint f.ofConv
+  have hs : SplitTorus.pointsMulEquiv f = freeAbelianCharEquiv χ := by
+    funext i
+    apply Units.ext
+    rw [SplitTorus.pointsMulEquiv_apply_coe, freeAbelianCharEquiv_apply,
+      DiagonalizableGroup.charOfPoint_apply_coe]
+  have hunit : torusCharacter (freeAbelianCharEquiv χ) mu =
+      χ (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm mu)) := by
+    let m := Finsupp.equivFunOnFinite.symm mu
+    calc
+      torusCharacter (freeAbelianCharEquiv χ) mu =
+          torusCharacter (freeAbelianCharEquiv χ) (Finsupp.equivFunOnFinite m) := by
+            rw [Finsupp.equivFunOnFinite.apply_symm_apply]
+      _ = m.prod fun i z ↦ freeAbelianCharEquiv χ i ^ z :=
+        torusCharacter_equivFunOnFinite _ _
+      _ = (freeAbelianCharEquiv).symm (freeAbelianCharEquiv χ)
+          (Multiplicative.ofAdd m) := by
+            rw [freeAbelianCharEquiv_symm_apply_ofAdd]
+      _ = χ (Multiplicative.ofAdd m) := by rw [MulEquiv.symm_apply_apply]
+  rw [hs]
+  exact (congrArg Units.val hunit).trans
+    (DiagonalizableGroup.charOfPoint_apply_coe f.ofConv _)
+
+/-- A weight-basis vector coacts by its weight monomial. -/
+@[simp]
+theorem kostantTorusComodule_coact_basis (i : Fin n) :
+    (kostantTorusComodule M b wt).coact (b i) =
+      b i ⊗ₜ[ℤ] MonoidAlgebra.single
+        (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i))) 1 := by
+  unfold kostantTorusComodule
+  rw [HopfAlgebra.PointRepresentation.toComodule_coact_apply,
+    kostantTorusPointRepresentation_action]
+  change
+    TensorProduct.comm ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M
+      (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+        ((weightedBasisTorusPoints M b wt
+            (ULift (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))))
+            (SplitTorus.pointsMulEquiv (toConv ULift.algEquiv.symm.toAlgHom))).val
+          (1 ⊗ₜ[ℤ] b i))) = _
+  rw [weightedBasisTorusPoints_tmul_basis]
+  simp only [mul_one, TensorProduct.map_tmul, LinearMap.id_apply,
+    TensorProduct.comm_tmul, AlgEquiv.toLinearMap_apply]
+  rw [torusCharacter_pointsMulEquiv]
+  simp
+
 /-- The matrix-valued split-torus action in the base-changed weight basis. -/
 noncomputable def kostantTorusMatrix (A : Type*) [CommRing A] :
     (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A :=
   (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
-    (kostantTorusPoints M b wt A)
+    (weightedBasisTorusPoints M b wt A)
 
-/-- An entry of the torus matrix is the corresponding weight-basis coordinate of the diagonal
-action. -/
+/-- The torus matrix is diagonal, with the weight character in its `i`-th diagonal entry. -/
 @[simp]
 theorem kostantTorusMatrix_apply (A : Type*) [CommRing A] (s : κ → Aˣ) (r i : Fin n) :
     kostantTorusMatrix M b wt A s r i =
-      (b.baseChange A).repr
-        ((kostantTorusPoints M b wt A s).val (b.baseChange A i)) r := by
+      if r = i then (torusCharacter s (wt i) : A) else 0 := by
   rw [kostantTorusMatrix, MonoidHom.comp_apply, Units.coe_map]
-  exact LinearMap.toMatrixAlgEquiv_apply (b.baseChange A)
-    (kostantTorusPoints M b wt A s).val r i
+  change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+    (weightedBasisTorusPoints M b wt A s).val r i = _
+  rw [LinearMap.toMatrix_apply]
+  change (b.baseChange A).repr
+    ((weightedBasisTorusPoints M b wt A s).val (b.baseChange A i)) r = _
+  rw [Module.Basis.baseChange_apply, weightedBasisTorusPoints_tmul_basis,
+    Module.Basis.baseChange_repr_tmul, b.repr_self]
+  by_cases h : r = i
+  · subst r
+    simp
+  · simp [h]
+
+/-- The `i`-th diagonal entry is the character attached to the `i`-th weight. -/
+@[simp]
+theorem kostantTorusMatrix_apply_self (A : Type*) [CommRing A] (s : κ → Aˣ) (i : Fin n) :
+    kostantTorusMatrix M b wt A s i i = (torusCharacter s (wt i) : A) := by
+  simp
+
+/-- Every off-diagonal entry of the weighted-basis torus matrix vanishes. -/
+@[simp]
+theorem kostantTorusMatrix_apply_of_ne (A : Type*) [CommRing A] (s : κ → Aˣ)
+    {r i : Fin n} (h : r ≠ i) :
+    kostantTorusMatrix M b wt A s r i = 0 := by
+  simp [h]
 
 /-- The coordinate Hopf-algebra morphism of the split torus action in the weight basis `b`. -/
 noncomputable def kostantTorusCoordinateMap :
@@ -204,20 +341,46 @@ noncomputable def kostantTorusCoordinateMap :
     kostantTorusComodule M b wt
   exact CommHopfAlgCat.ofHom (Comodule.coordinateBialgHom b)
 
-/-- A generic matrix coordinate pulls back to the corresponding coefficient of the split-torus
-comodule. -/
+/-- A generic matrix coordinate pulls back to the corresponding diagonal weight monomial. -/
 @[simp]
 theorem kostantTorusCoordinateMap_X (r i : Fin n) :
     (kostantTorusCoordinateMap M b wt).hom
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
           (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, i)))) =
-      letI : Comodule ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M :=
-        kostantTorusComodule M b wt
-      Comodule.coefficientMatrix
-        (C := MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) b r i := by
+      if r = i then
+        MonoidAlgebra.single
+          (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i))) 1
+      else 0 := by
   let : Comodule ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M :=
     kostantTorusComodule M b wt
-  exact Comodule.coordinateBialgHom_X b r i
+  rw [kostantTorusCoordinateMap]
+  change Comodule.coordinateBialgHom b
+      (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
+        (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, i)))) = _
+  rw [Comodule.coordinateBialgHom_X, Comodule.coefficientMatrix_apply,
+    Comodule.matrixCoefficient_def, kostantTorusComodule_coact_basis]
+  by_cases h : r = i
+  · subst r
+    simp [Module.Basis.coord_apply]
+  · simp [Module.Basis.coord_apply, h]
+
+/-- A diagonal matrix coordinate pulls back to the corresponding weight monomial. -/
+@[simp]
+theorem kostantTorusCoordinateMap_X_self (i : Fin n) :
+    (kostantTorusCoordinateMap M b wt).hom
+        (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
+          (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (i, i)))) =
+      MonoidAlgebra.single
+        (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i))) 1 := by
+  simpa using kostantTorusCoordinateMap_X M b wt i i
+
+/-- Every off-diagonal matrix coordinate pulls back to zero. -/
+@[simp]
+theorem kostantTorusCoordinateMap_X_of_ne {r i : Fin n} (h : r ≠ i) :
+    (kostantTorusCoordinateMap M b wt).hom
+        (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
+          (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, i)))) = 0 := by
+  simpa [h] using kostantTorusCoordinateMap_X M b wt r i
 
 /-- The split torus of a Kostant weight basis as a group-scheme morphism `𝔾ₘ^κ → GLₙ` over
 `ℤ`. -/
@@ -253,20 +416,6 @@ theorem pointsMulEquiv_kostantTorusCoordinateMap
     GeneralLinear.pointToGeneralLinear n
         (toConv (f.ofConv.comp (kostantTorusCoordinateMap M b wt).hom)) =
       kostantTorusMatrix M b wt A (SplitTorus.pointsMulEquiv f) := by
-  let : Comodule ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M :=
-    kostantTorusComodule M b wt
-  have hrecover :
-      HopfAlgebra.PointRepresentation.ofComodule (kostantTorusComodule M b wt) =
-        kostantTorusPointRepresentation M b wt := by
-    unfold kostantTorusComodule
-    exact HopfAlgebra.PointRepresentation.ofComodule_toComodule _
-  have haction := HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint
-    (kostantTorusComodule M b wt) (CommAlgCat.of ℤ A) f
-  rw [hrecover, kostantTorusPointRepresentation_action] at haction
-  -- Forget the bundled automorphisms to use the equality as one of linear maps.
-  change
-    (kostantTorusPoints M b wt A (SplitTorus.pointsMulEquiv f)).val =
-      Comodule.endOfPoint M f.ofConv at haction
   apply Matrix.GeneralLinearGroup.ext
   intro r i
   rw [GeneralLinear.pointToGeneralLinear_apply, ofConv_toConv, AlgHom.comp_apply]
@@ -276,21 +425,11 @@ theorem pointsMulEquiv_kostantTorusCoordinateMap
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
           (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, i))))) = _
   rw [kostantTorusCoordinateMap_X, kostantTorusMatrix_apply]
-  have hmatrix := Comodule.toMatrix_endOfPoint
-    (C := MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) b f.ofConv
-  calc
-    f.ofConv (Comodule.coefficientMatrix
-        (C := MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) b r i) =
-        LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
-          (Comodule.endOfPoint M f.ofConv) r i := by
-            rw [hmatrix, Matrix.map_apply]
-    _ = LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
-          (kostantTorusPoints M b wt A (SplitTorus.pointsMulEquiv f)).val r i := by
-            rw [← haction]
-    _ = (b.baseChange A).repr
-          ((kostantTorusPoints M b wt A (SplitTorus.pointsMulEquiv f)).val
-            (b.baseChange A i)) r := by
-            exact LinearMap.toMatrix_apply _ _ _ _ _
+  by_cases h : r = i
+  · subst r
+    simp only [↓reduceIte]
+    exact (torusCharacter_pointsMulEquiv f (wt i)).symm
+  · simp [h]
 
 private theorem groupSchemePointsMulEquiv_comp_kostantTorusGroupSchemeMap
     (f : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) :
@@ -316,8 +455,7 @@ private theorem groupSchemePointsMulEquiv_comp_kostantTorusGroupSchemeMap
         (DiagonalizableGroup.groupScheme_X_left ℤ (SplitTorus.characterGroup κ)))
       (kostantTorusCoordinateMap M b wt) f
 
-omit [Fintype κ] in
-private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentation [Finite κ]
+private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentation
     (f : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) :
     DiagonalizableGroup.groupSchemePointsMulEquiv
         (R := ℤ) (A := A) (SplitTorus.characterGroup κ)
@@ -346,8 +484,7 @@ private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentatio
     Spec.map (CommRingCat.ofHom f.ofConv.toRingHom)
   rw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
 
-omit [Fintype κ] in
-private theorem splitTorus_schemePointsMulEquiv_mapMulEquivOfPresentation [Finite κ]
+private theorem splitTorus_schemePointsMulEquiv_mapMulEquivOfPresentation
     (f : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) :
     SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A)
         (CommHopfAlgCat.mapMulEquivOfPresentation

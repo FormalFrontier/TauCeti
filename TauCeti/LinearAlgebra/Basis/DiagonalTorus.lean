@@ -65,6 +65,13 @@ variable [Fintype κ]
 by which a torus point acts on a weight vector. -/
 def torusCharacter (s : κ → Rˣ) (μ : κ → ℤ) : Rˣ := ∏ j, s j ^ μ j
 
+/-- Writing a finite-support exponent vector as a function identifies its character value with
+the corresponding finitely supported product. -/
+theorem torusCharacter_equivFunOnFinite (s : κ → Rˣ) (m : κ →₀ ℤ) :
+    torusCharacter s (Finsupp.equivFunOnFinite m) = m.prod fun i z ↦ s i ^ z := by
+  rw [torusCharacter, Finsupp.prod_zpow]
+  rfl
+
 /-- The trivial character takes the value one at every point. -/
 @[simp] theorem torusCharacter_zero (s : κ → Rˣ) : torusCharacter s (0 : κ → ℤ) = 1 := by
   simp [torusCharacter]
