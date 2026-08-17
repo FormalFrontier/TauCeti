@@ -50,20 +50,35 @@ private def prefixSuccEquiv (n : ℕ) :
   (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _) (MeasurableEquiv.piSingleton n)).trans
     (MeasurableEquiv.IicProdIoc n.le_succ)
 
+private theorem prefixSuccEquiv_apply (n : ℕ) (x : (∀ i : Iic n, X i) × X (n + 1)) :
+    prefixSuccEquiv n x =
+      IicProdIoc n (n + 1) (x.1, MeasurableEquiv.piSingleton n x.2) := by
+  rw [prefixSuccEquiv, MeasurableEquiv.coe_trans, Function.comp_apply,
+    MeasurableEquiv.coe_IicProdIoc]
+  exact congrArg (IicProdIoc n (n + 1)) (congrFun (Equiv.prodCongr_apply _ _) x)
+
 private theorem prefixSuccEquiv_symm_apply (n : ℕ) (x : ∀ i : Iic (n + 1), X i) :
     (prefixSuccEquiv n).symm x =
       (frestrictLe₂ n.le_succ x, x ⟨n + 1, Finset.mem_Iic.mpr le_rfl⟩) := by
-  change (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _)
-      (MeasurableEquiv.piSingleton n)).symm
-      ((MeasurableEquiv.IicProdIoc (X := X) n.le_succ).symm x) = _
-  rw [congrFun (MeasurableEquiv.coe_IicProdIoc_symm (X := X) n.le_succ) x]
-  rfl
+  rw [MeasurableEquiv.symm_apply_eq, prefixSuccEquiv_apply]
+  ext i
+  by_cases hi : i.1 ≤ n
+  · simp [IicProdIoc, hi]
+  · have hi_eq : i = ⟨n + 1, Finset.mem_Iic.mpr le_rfl⟩ := Subtype.ext <|
+      le_antisymm (Finset.mem_Iic.mp i.2) (Nat.succ_le_of_lt (Nat.lt_of_not_ge hi))
+    subst i
+    simp [IicProdIoc, MeasurableEquiv.piSingleton]
 
 private theorem prefixSuccEquiv_apply_pair (n : ℕ) (x : ∀ n, X n) :
     prefixSuccEquiv n (frestrictLe n x, x (n + 1)) = frestrictLe (n + 1) x := by
-  apply (prefixSuccEquiv n).symm.injective
-  rw [(prefixSuccEquiv n).symm_apply_apply, prefixSuccEquiv_symm_apply]
-  rfl
+  rw [prefixSuccEquiv_apply]
+  ext i
+  by_cases hi : i.1 ≤ n
+  · simp [IicProdIoc, hi]
+  · have hi_eq : i = ⟨n + 1, Finset.mem_Iic.mpr le_rfl⟩ := Subtype.ext <|
+      le_antisymm (Finset.mem_Iic.mp i.2) (Nat.succ_le_of_lt (Nat.lt_of_not_ge hi))
+    subst i
+    simp [IicProdIoc, MeasurableEquiv.piSingleton]
 
 /-- The law of a prefix and its next coordinate, obtained from the next prescribed prefix law. -/
 private def successorLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) (n : ℕ) :
