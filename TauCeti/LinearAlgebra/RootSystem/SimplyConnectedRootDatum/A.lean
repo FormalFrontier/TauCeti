@@ -286,6 +286,7 @@ private def typeAPairEquiv (n : ℕ) : TypeAIndex n ≃ Fin n × Fin (n + 1) whe
 private def typeAIndexEquiv (n : ℕ) : TypeAIndex n ≃ Fin (n * (n + 1)) :=
   (typeAPairEquiv n).trans finProdFinEquiv
 
+/-- Reflection in the root indexed by `k`, transported to the pinned enumeration. -/
 private def typeAReflectionPerm (n : ℕ) (k : Fin (n * (n + 1))) :
     Fin (n * (n + 1)) ≃ Fin (n * (n + 1)) :=
   ((typeAIndexEquiv n).symm.trans
@@ -353,15 +354,10 @@ theorem pairing_typeASimplyConnectedRootDatum_comm (k l : Fin (n * (n + 1))) :
     root_typeASimplyConnectedRootDatum, root_typeASimplyConnectedRootDatum,
     coroot_typeASimplyConnectedRootDatum, coroot_typeASimplyConnectedRootDatum,
     typeAPairing, typeAPairing]
-  have hite (a b : Fin (n + 1)) :
-      (if a = b then (1 : ℤ) else 0) = if b = a then 1 else 0 := by
-    rcases eq_or_ne a b with rfl | hab
-    · rfl
-    · rw [ite_eq_right hab, ite_eq_right hab.symm]
-  rw [hite ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.1,
-    hite ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.2,
-    hite ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.1,
-    hite ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.2]
+  rw [ite_eq_comm ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.1,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.2,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.1,
+    ite_eq_comm ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.2]
   ring
 
 /-- The `i`-th simple root of type `Aₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/

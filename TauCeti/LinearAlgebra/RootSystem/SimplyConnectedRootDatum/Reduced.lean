@@ -40,12 +40,12 @@ public section
 namespace TauCeti.DynkinType
 
 /-- The pinned simply connected root datum of type `A` is reduced. -/
-theorem isReduced_typeASimplyConnectedRootDatum (n : ℕ) :
+instance isReduced_typeASimplyConnectedRootDatum (n : ℕ) :
     (typeASimplyConnectedRootDatum n).IsReduced :=
   RootPairing.isReduced_of_pairing_comm _ pairing_typeASimplyConnectedRootDatum_comm
 
 /-- The pinned simply connected root datum of type `D` is reduced. -/
-theorem isReduced_typeDSimplyConnectedRootDatum (n : ℕ) (hn : 4 ≤ n) :
+instance isReduced_typeDSimplyConnectedRootDatum (n : ℕ) (hn : 4 ≤ n) :
     (typeDSimplyConnectedRootDatum n hn).IsReduced :=
   RootPairing.isReduced_of_pairing_comm _ (pairing_typeDSimplyConnectedRootDatum_comm hn)
 
@@ -63,9 +63,6 @@ instance instIsReducedE7SimplyConnectedRootDatum : e7SimplyConnectedRootDatum.Is
 instance instIsReducedE8SimplyConnectedRootDatum : e8SimplyConnectedRootDatum.IsReduced :=
   RootPairing.isReduced_of_pairing_comm _ fun i j => by
     simpa only [e8SimplyConnectedRootDatum_pairing] using e8Root_dotProduct_e8Coroot_comm i j
-
-attribute [local instance] instIsReducedE6SimplyConnectedRootDatum
-  instIsReducedE7SimplyConnectedRootDatum instIsReducedE8SimplyConnectedRootDatum
 
 /-- The pinned simply connected root datum of every valid simply-laced Dynkin type is reduced. -/
 theorem isReduced_simplyConnectedRootDatum_of_isSimplyLaced (t : DynkinType) (ht : t.Valid)
