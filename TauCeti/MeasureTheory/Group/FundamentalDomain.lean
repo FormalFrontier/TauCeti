@@ -31,9 +31,10 @@ union.
   `g₂ • D` of an `H`-fundamental domain are a.e. disjoint whenever `g₁ ≠ g₂` and
   `g₁⁻¹ * g₂ ∈ H` (needing only quasi-measure-preservation of the one translation).
 
-Ported from the [AINTLIB `LeanModularForms` project](https://github.com/CBirkbeck/AINTLIB),
-`LeanModularForms/Modularforms/PeterssonLevelN.lean` (measure-theory section), as a prerequisite
-for fundamental domains of congruence subgroups.
+Ported from the
+[AINTLIB `LeanModularForms` project](https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms),
+`projects/LeanModularForms/Modularforms/PeterssonLevelN.lean` (measure-theory section), as a
+prerequisite for fundamental domains of congruence subgroups.
 -/
 
 public section
