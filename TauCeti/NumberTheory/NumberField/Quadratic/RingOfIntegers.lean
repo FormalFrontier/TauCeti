@@ -18,7 +18,7 @@ For a quadratic number field `K = ℚ(√d)` — presented by an algebraic integ
 depends on `d mod 4`:
 
 * `d ≢ 1 (mod 4)`: `𝓞 K = ℤ[θ]` and `NumberField.discr K = 4 * d`;
-* `d ≡ 1 (mod 4)`: `𝓞 K = ℤ[ω]` with `ω = (1+θ)/2 = TauCeti.NumberField.halfGen`, and
+* `d ≡ 1 (mod 4)`: `𝓞 K = ℤ[ω]` with `ω = (1+θ)/2 = NumberField.halfGen`, and
   `NumberField.discr K = d`.
 
 The content is the "no more integers" step: an algebraic integer `z` with `(z : K) = a + b·θ`
@@ -28,17 +28,17 @@ even when `d % 4 ≠ 1`, and are equal mod `2` (so `z ∈ ℤ + ℤ·ω`) when `
 
 ## Main results
 
-* `TauCeti.NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
-* `TauCeti.NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
-* `TauCeti.NumberField.adjoin_halfGen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
-* `TauCeti.NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`: `discr K = d` for `d ≡ 1`.
+* `NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
+* `NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
+* `NumberField.adjoin_halfGen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
+* `NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`: `discr K = d` for `d ≡ 1`.
 -/
 
 public section
 
 open Polynomial NumberField Module
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -345,4 +345,4 @@ theorem discr_eq_four_mul_of_mod_four_ne_one : NumberField.discr K = 4 * d := by
   have hspan := span_eq_top_of_int_repr hbs hb (exists_int_repr hmin hgen hsf hd4')
   exact discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int bs hb hspan hdd
 
-end TauCeti.NumberField
+end NumberField

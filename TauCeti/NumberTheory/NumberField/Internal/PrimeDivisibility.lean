@@ -19,7 +19,7 @@ splitting API files.
 
 public section
 
-namespace TauCeti.NumberField.Internal
+namespace NumberField.Internal
 
 /-- Distinct rational primes remain coprime after casting to integers. -/
 theorem not_intCast_prime_dvd_natPrime {p l : ℕ} [Fact p.Prime]
@@ -28,4 +28,4 @@ theorem not_intCast_prime_dvd_natPrime {p l : ℕ} [Fact p.Prime]
   have hp_dvd_l : p ∣ l := Int.natCast_dvd_natCast.mp h
   exact hne ((Nat.prime_dvd_prime_iff_eq Fact.out hl).mp hp_dvd_l)
 
-end TauCeti.NumberField.Internal
+end NumberField.Internal

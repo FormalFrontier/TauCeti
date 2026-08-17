@@ -14,14 +14,14 @@ import TauCeti.FieldTheory.IntermediateField.AdjoinEqTop
 Let `K = ℚ(√d₁, …, √dₙ)` be a number field generated over `ℚ` by square roots `r i` of
 integers `d i`, and let `p` be an odd prime dividing none of the `d i`. The multiquadratic
 roadmap's Layer 1 states the splitting law in two forms: `p` splits completely iff every `d i`
-is a quadratic residue mod `p` (`TauCeti.NumberField.ncard_primesOver_multiquadratic_iff`),
+is a quadratic residue mod `p` (`NumberField.ncard_primesOver_multiquadratic_iff`),
 and, more precisely, the Frobenius at `p` acts on the generators by the Legendre symbols. This
 file supplies the second, finer form. An arithmetic Frobenius exists at every prime `Q` of
 `𝓞 K` above `p` and acts on each generator by the corresponding symbol,
 
 `σ (r i) = legendreSym p (d i) • r i`
 
-(`TauCeti.NumberField.exists_isArithFrobAt_multiquadratic`), and the Frobenius is trivial iff
+(`NumberField.exists_isArithFrobAt_multiquadratic`), and the Frobenius is trivial iff
 every symbol is `1` (`isArithFrobAt_multiquadratic_eq_one_iff`).
 
 The roadmap's actual sign-vector statement — the Frobenius equals `((d₁/p), …, (dₙ/p))` under
@@ -29,19 +29,19 @@ the identification `Gal ≅ (ℤ/2)ⁿ` — is then proved for the multiquadrati
 intermediate field `M = ℚ(√dᵢ : i) = adjoin ℚ (Set.range root)` itself, where
 `TauCeti.Multiquadratic.galoisGroupEquiv` lives (its automorphisms are of `M`, not of an
 abstract `K`). For a Frobenius `σ` on `M` at a prime over `p`,
-`TauCeti.NumberField.signPattern_frobenius` gives each coordinate
+`NumberField.signPattern_frobenius` gives each coordinate
 `signPattern root σ i = if legendreSym p (d i) = 1 then 0 else 1`, and
-`TauCeti.NumberField.galoisGroupEquiv_frobenius` packages this as
+`NumberField.galoisGroupEquiv_frobenius` packages this as
 `galoisGroupEquiv σ = ((d₁/p), …, (dₙ/p))`.
 
 ## Main results
 
-* `TauCeti.NumberField.exists_isArithFrobAt_multiquadratic`: at every prime `Q` over `p` there
+* `NumberField.exists_isArithFrobAt_multiquadratic`: at every prime `Q` over `p` there
   is a Frobenius, and it sends each generator `r i` to `legendreSym p (d i) • r i`.
-* `TauCeti.NumberField.isArithFrobAt_multiquadratic_eq_one_iff`: a Frobenius at `Q` is the
+* `NumberField.isArithFrobAt_multiquadratic_eq_one_iff`: a Frobenius at `Q` is the
   identity iff every `d i` is a quadratic residue mod `p`.
-* `TauCeti.NumberField.signPattern_frobenius` and
-  `TauCeti.NumberField.galoisGroupEquiv_frobenius`: the Frobenius sign pattern on the
+* `NumberField.signPattern_frobenius` and
+  `NumberField.galoisGroupEquiv_frobenius`: the Frobenius sign pattern on the
   multiquadratic field is the Legendre vector `((d₁/p), …, (dₙ/p))` under `Gal ≅ (ℤ/2)ⁿ`.
 -/
 
@@ -51,7 +51,7 @@ open NumberField Ideal
 
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {ι : Type*}
   {p : ℕ} [Fact p.Prime]
@@ -168,4 +168,4 @@ theorem galoisGroupEquiv_frobenius [Finite ι] (hroot : ∀ i, root i ^ 2 = alge
 
 end SignVector
 
-end TauCeti.NumberField
+end NumberField

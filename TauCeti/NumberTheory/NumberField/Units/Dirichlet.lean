@@ -22,7 +22,7 @@ consume — for instance the exact number of unit square classes in
 
 ## Main results
 
-* `TauCeti.NumberField.unitsMulEquivTorsionProdMultiplicative`: the unit group as the product of
+* `NumberField.unitsMulEquivTorsionProdMultiplicative`: the unit group as the product of
   its torsion subgroup and the free abelian group on the fundamental system.
 -/
 
@@ -32,12 +32,12 @@ open scoped NumberField
 
 open Module NumberField NumberField.Units
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable (F : Type*) [Field F] [NumberField F]
 
 /-- The homomorphism realizing a pair (root of unity, exponent vector) as a unit, the underlying
-map of `TauCeti.NumberField.unitsMulEquivTorsionProdMultiplicative`. Kept private; the public
+map of `NumberField.unitsMulEquivTorsionProdMultiplicative`. Kept private; the public
 interface is the equivalence. -/
 private noncomputable def torsionProdMultiplicativeToUnits :
     torsion F × Multiplicative (Fin (rank F) → ℤ) →* (𝓞 F)ˣ :=
@@ -78,7 +78,7 @@ noncomputable def unitsMulEquivTorsionProdMultiplicative :
     (𝓞 F)ˣ ≃* torsion F × Multiplicative (Fin (rank F) → ℤ) :=
   (MulEquiv.ofBijective _ (torsionProdMultiplicativeToUnits_bijective F)).symm
 
-/-- The inverse of `TauCeti.NumberField.unitsMulEquivTorsionProdMultiplicative` sends a pair to
+/-- The inverse of `NumberField.unitsMulEquivTorsionProdMultiplicative` sends a pair to
 the root of unity times the product of powers of fundamental units. -/
 @[simp] theorem unitsMulEquivTorsionProdMultiplicative_symm_apply
     (ζ : torsion F) (e : Multiplicative (Fin (rank F) → ℤ)) :
@@ -87,7 +87,7 @@ the root of unity times the product of powers of fundamental units. -/
   rw [unitsMulEquivTorsionProdMultiplicative, MulEquiv.symm_symm]
   exact torsionProdMultiplicativeToUnits_apply F ζ e
 
-/-- The forward map of `TauCeti.NumberField.unitsMulEquivTorsionProdMultiplicative` reads off the
+/-- The forward map of `NumberField.unitsMulEquivTorsionProdMultiplicative` reads off the
 Dirichlet decomposition: a unit presented as a root of unity `ζ` times a product of powers of the
 fundamental system is sent to the pair `(ζ, e)`. -/
 @[simp] theorem unitsMulEquivTorsionProdMultiplicative_apply
@@ -98,4 +98,4 @@ fundamental system is sent to the pair `(ζ, e)`. -/
     torsionProdMultiplicativeToUnits_apply]
   simp
 
-end TauCeti.NumberField
+end NumberField

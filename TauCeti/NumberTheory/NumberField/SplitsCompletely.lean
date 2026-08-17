@@ -29,10 +29,10 @@ off from residues.
 
 ## Main results
 
-* `TauCeti.NumberField.ncard_primesOver_eq_finrank_iff`: the rational-prime specialization.
-* `TauCeti.NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank`:
+* `NumberField.ncard_primesOver_eq_finrank_iff`: the rational-prime specialization.
+* `NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank`:
   complete splitting makes each residue field the prime field.
-* `TauCeti.NumberField.ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot`: the orbit–stabilizer
+* `NumberField.ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot`: the orbit–stabilizer
   form — `p` splits completely iff the decomposition group of a prime above it is trivial.
 
 ## Provenance
@@ -52,7 +52,7 @@ public section
 open NumberField Ideal Module MulAction
 open scoped Pointwise
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable (K L : Type*) [Field K] [Field L] [NumberField K] [NumberField L] [Algebra K L]
   [IsGalois K L]
@@ -122,7 +122,7 @@ theorem bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank {K : Type*}
     Ideal.IsPrime.isMaximal
       ((Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp Fact.out))
       (by simpa [Ideal.span_singleton_eq_bot] using hpne)
-  exact RamificationInertia.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank
+  exact TauCeti.RamificationInertia.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank
     (span {(p : ℤ)}) Q (by rwa [NumberField.RingOfIntegers.rank])
 
-end TauCeti.NumberField
+end NumberField

@@ -26,9 +26,9 @@ classical genus theory this supports.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.quadraticConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`, with
+* `NumberField.quadraticConj`: the conjugation `K ≃ₐ[ℚ] K`, sending `θ ↦ -θ`, with
   `quadraticConj_gen` (`quadraticConj θ = -θ`) and `quadraticConj_involutive`.
-* `TauCeti.NumberField.ringOfIntegersQuadraticConj`: its restriction to a ring automorphism
+* `NumberField.ringOfIntegersQuadraticConj`: its restriction to a ring automorphism
   `𝓞 K ≃+* 𝓞 K`, with `coe_ringOfIntegersQuadraticConj`, `ringOfIntegersQuadraticConj_gen`, and
   `ringOfIntegersQuadraticConj_involutive`.
 -/
@@ -37,7 +37,7 @@ public section
 
 open Polynomial NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
@@ -140,4 +140,4 @@ noncomputable def ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C
     exact quadraticConj_involutive hmin hgen (x : K)
   exact RingOfIntegers.coe_injective h
 
-end TauCeti.NumberField
+end NumberField

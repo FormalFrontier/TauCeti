@@ -17,8 +17,8 @@ discriminant equals the fundamental discriminant of `d`:
 `NumberField.discr K = fundamentalDiscriminant d` (`= d` for `d ≡ 1 mod 4`, else `4d`).
 
 This ties the ring-of-integers discriminant computations
-(`TauCeti.NumberField.discr_eq_four_mul_of_mod_four_ne_one` and
-`TauCeti.NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`) to the integer-level
+(`NumberField.discr_eq_four_mul_of_mod_four_ne_one` and
+`NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`) to the integer-level
 `TauCeti.Multiquadratic.fundamentalDiscriminant`.
 
 ## Main results
@@ -42,7 +42,7 @@ theorem discr_eq_fundamentalDiscriminant (hmin : minpoly ℤ θ = X ^ 2 - C d)
     NumberField.discr K = fundamentalDiscriminant d := by
   rw [fundamentalDiscriminant_def]
   split_ifs with h
-  · exact TauCeti.NumberField.discr_eq_of_squarefree_of_mod_four_eq_one hmin hgen hsf h
-  · exact TauCeti.NumberField.discr_eq_four_mul_of_mod_four_ne_one hmin hgen hsf h
+  · exact NumberField.discr_eq_of_squarefree_of_mod_four_eq_one hmin hgen hsf h
+  · exact NumberField.discr_eq_four_mul_of_mod_four_ne_one hmin hgen hsf h
 
 end TauCeti.Multiquadratic

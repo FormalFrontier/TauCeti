@@ -23,12 +23,12 @@ rank-zero case.
 
 ## Main results
 
-* `TauCeti.NumberField.Units.regulator_eq_one_of_rank_eq_zero`: `R_F = 1` when the unit rank
+* `NumberField.Units.regulator_eq_one_of_rank_eq_zero`: `R_F = 1` when the unit rank
   of `F` is zero.
-* `TauCeti.NumberField.Units.one_le_regulator_of_rank_eq_zero`: the corresponding lower bound
+* `NumberField.Units.one_le_regulator_of_rank_eq_zero`: the corresponding lower bound
   `1 ≤ R_F`.
-* `TauCeti.NumberField.Units.regulator_rat_eq_one`: `R_ℚ = 1`.
-* `TauCeti.NumberField.Units.regulator_eq_one_of_isTotallyComplex_of_finrank_eq_two`:
+* `NumberField.Units.regulator_rat_eq_one`: `R_ℚ = 1`.
+* `NumberField.Units.regulator_eq_one_of_isTotallyComplex_of_finrank_eq_two`:
   `R_F = 1` for an imaginary quadratic field `F`.
 -/
 
@@ -38,7 +38,7 @@ open Module NumberField NumberField.InfinitePlace NumberField.Units
 open NumberField.Units.dirichletUnitTheorem (w₀)
 open scoped NumberField
 
-namespace TauCeti.NumberField.Units
+namespace NumberField.Units
 
 variable (K : Type*) [Field K] [NumberField K]
 
@@ -144,4 +144,4 @@ theorem one_le_regulator_of_isTotallyComplex_of_finrank_eq_two
     [IsTotallyComplex K] (h : finrank ℚ K = 2) : 1 ≤ regulator K :=
   one_le_regulator_of_rank_eq_zero K (rank_eq_zero_of_isTotallyComplex_of_finrank_eq_two K h)
 
-end TauCeti.NumberField.Units
+end NumberField.Units

@@ -23,14 +23,14 @@ index of the squares.
 
 This is the cheap, self-contained upstream bound consumed by the effective class-number
 estimates. Its sharpening to the exact value `[O_F^× : (O_F^×)²] = 2^(rank F + 1)` (from
-Dirichlet's unit theorem) is `TauCeti.NumberField.units_sq_index_eq`, in the unit-square-class
+Dirichlet's unit theorem) is `NumberField.units_sq_index_eq`, in the unit-square-class
 file `TauCeti.NumberTheory.NumberField.Units.ElementaryTwoQuotient`, kept separate so this bound
 does not depend on the structural-Dirichlet and elementary-2-quotient machinery the exact value
 needs.
 
 ## Main results
 
-* `TauCeti.NumberField.units_sq_index_le`: `[O_F^× : (O_F^×)²] ≤ 2^[F:ℚ]`.
+* `NumberField.units_sq_index_le`: `[O_F^× : (O_F^×)²] ≤ 2^[F:ℚ]`.
 
 The remaining declarations are its degree-bounded consumer forms
 (`units_sq_index_le_of_finrank_le`, `..._of_finrank_eq`, the quadratic `..._le_quadratic`, and so
@@ -52,7 +52,7 @@ open scoped NumberField
 
 open Module NumberField NumberField.Units
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 /-- **Squares have small index in the unit group.** `[O_F^× : (O_F^×)²] ≤ 2^[F:ℚ]`, stated
 using Mathlib's `Subgroup.square` for the subgroup of squares. By Dirichlet's unit theorem
@@ -98,12 +98,12 @@ theorem units_sq_index_le (F : Type*) [Field F] [NumberField F] :
 
 /-- If a number field has degree at most `n`, then the square subgroup of its unit group has
 index at most `2^n`. This is the monotone form of
-`TauCeti.NumberField.units_sq_index_le`, useful when the degree has been bounded separately. -/
+`NumberField.units_sq_index_le`, useful when the degree has been bounded separately. -/
 theorem units_sq_index_le_of_finrank_le (F : Type*) [Field F] [NumberField F] {n : ℕ}
     (hn : finrank ℚ F ≤ n) : (Subgroup.square (𝓞 F)ˣ).index ≤ 2 ^ n :=
   (units_sq_index_le F).trans (Nat.pow_le_pow_right (by norm_num) hn)
 
-/-- Exact-degree specialization of `TauCeti.NumberField.units_sq_index_le`: if `[F : ℚ] = n`,
+/-- Exact-degree specialization of `NumberField.units_sq_index_le`: if `[F : ℚ] = n`,
 then `[O_F^× : (O_F^×)^2] ≤ 2^n`. -/
 theorem units_sq_index_le_of_finrank_eq (F : Type*) [Field F] [NumberField F] {n : ℕ}
     (hn : finrank ℚ F = n) : (Subgroup.square (𝓞 F)ˣ).index ≤ 2 ^ n :=
@@ -140,7 +140,7 @@ theorem card_units_elementaryTwoQuotient_le_of_finrank_le
   exact units_sq_index_le_of_finrank_le F hn
 
 /-- Exact-degree version of
-`TauCeti.NumberField.card_units_elementaryTwoQuotient_le_of_finrank_le`. -/
+`NumberField.card_units_elementaryTwoQuotient_le_of_finrank_le`. -/
 theorem card_units_elementaryTwoQuotient_le_of_finrank_eq
     (F : Type*) [Field F] [NumberField F] {n : ℕ} (hn : finrank ℚ F = n) :
     Nat.card (TauCeti.ElementaryTwoQuotient (𝓞 F)ˣ) ≤ 2 ^ n :=
@@ -173,4 +173,4 @@ theorem card_units_elementaryTwoQuotient_le_quadratic
     Nat.card (TauCeti.ElementaryTwoQuotient (𝓞 F)ˣ) ≤ 4 := by
   exact card_units_elementaryTwoQuotient_le_of_finrank_le_two F (le_of_eq hF)
 
-end TauCeti.NumberField
+end NumberField

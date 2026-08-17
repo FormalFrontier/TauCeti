@@ -11,7 +11,7 @@ import TauCeti.GroupTheory.QuotientGroup.KerEquiv
 /-!
 # The signature map of a number field is surjective
 
-`TauCeti.NumberField.fieldUnitSignature` records the sign of an element of `Kˣ` under each real
+`NumberField.fieldUnitSignature` records the sign of an element of `Kˣ` under each real
 embedding of a number field `K`, as a point of the sign group
 `{w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ`. This file proves that every sign
 pattern is realized: the signature map is surjective, its kernel being the totally positive
@@ -19,18 +19,18 @@ elements, so `Kˣ ⧸ totallyPositiveUnits` *is* the sign group and the totally 
 index exactly `2 ^ r₁` in `Kˣ`, with `r₁` the number of real places.
 
 The input is weak approximation at the real places,
-`TauCeti.NumberField.exists_ne_zero_forall_isReal_pos`. The analogous *unit* signature
-`TauCeti.NumberField.unitSignature` need not be surjective, so the index of the totally positive
+`NumberField.exists_ne_zero_forall_isReal_pos`. The analogous *unit* signature
+`NumberField.unitSignature` need not be surjective, so the index of the totally positive
 units inside `(𝓞 K)ˣ` need not equal `2 ^ r₁`: it is a genuine arithmetic invariant, and the gap
 between it and `2 ^ r₁` is exactly what the narrow class group measures.
 
 ## Main results
 
-* `TauCeti.NumberField.fieldUnitSignature_surjective`: every sign pattern at the real places is the
+* `NumberField.fieldUnitSignature_surjective`: every sign pattern at the real places is the
   signature of an element of `Kˣ`.
-* `TauCeti.NumberField.quotientTotallyPositiveUnitsEquiv`: `Kˣ ⧸ totallyPositiveUnits` is the sign
+* `NumberField.quotientTotallyPositiveUnitsEquiv`: `Kˣ ⧸ totallyPositiveUnits` is the sign
   group.
-* `TauCeti.NumberField.index_totallyPositiveUnits`: the totally positive elements have index
+* `NumberField.index_totallyPositiveUnits`: the totally positive elements have index
   `2 ^ nrRealPlaces K` in `Kˣ`.
 
 ## References
@@ -44,7 +44,7 @@ public section
 
 open NumberField NumberField.InfinitePlace
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -94,7 +94,7 @@ noncomputable def quotientTotallyPositiveUnitsEquiv :
     TauCeti.QuotientGroup.quotientKerEquivOfSurjective_apply_mk]
 
 /-- There are `2 ^ r₁` sign patterns at the real places, `r₁` being their number: the codomain of
-`TauCeti.NumberField.fieldUnitSignature` is a product of `r₁` two-element sign groups. -/
+`NumberField.fieldUnitSignature` is a product of `r₁` two-element sign groups. -/
 theorem card_realSignPatterns :
     Nat.card ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) =
       2 ^ nrRealPlaces K := by
@@ -103,7 +103,7 @@ theorem card_realSignPatterns :
 
 /-- **The totally positive elements of `Kˣ` have index `2 ^ r₁`,** with `r₁` the number of real
 places of `K`. This is the exact value of the index whose finiteness is
-`TauCeti.NumberField.finiteIndex_totallyPositiveUnits`. -/
+`NumberField.finiteIndex_totallyPositiveUnits`. -/
 theorem index_totallyPositiveUnits :
     (totallyPositiveUnits (K := K)).index = 2 ^ nrRealPlaces K := by
   rw [Subgroup.index_eq_card,
@@ -118,4 +118,4 @@ negative at a given real place, which is what surjectivity of the signature prov
   rw [← Subgroup.index_eq_one, index_totallyPositiveUnits]
   simp
 
-end TauCeti.NumberField
+end NumberField

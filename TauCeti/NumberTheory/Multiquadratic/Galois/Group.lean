@@ -72,7 +72,7 @@ theorem aut_gen_eq_signPattern (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)
 /-- **Read the sign pattern off a generator-wise sign.** If `σ (gen root i) = ε • gen root i`
 with `ε = ±1` (in `ℤ`) and `d i ≠ 0`, then `signPattern root σ i` is `0` when `ε = 1` and `1`
 when `ε = -1`. This bridges a generator-wise sign — for instance a Frobenius acting on `√dᵢ` by
-a Legendre symbol (`TauCeti.NumberField.isArithFrobAt_apply_sqrt`) — to the `(ℤ/2)ⁿ`
+a Legendre symbol (`NumberField.isArithFrobAt_apply_sqrt`) — to the `(ℤ/2)ⁿ`
 identification, so it composes with `TauCeti.Multiquadratic.galoisGroupEquiv_apply`. -/
 theorem signPattern_eq_ite_of_zsmul_gen [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))

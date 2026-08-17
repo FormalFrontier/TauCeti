@@ -21,14 +21,14 @@ natural primes, which is the form in which `t` is counted.
 
 ## Main definitions
 
-* `TauCeti.NumberField.ramifiedPrimes`: the set of natural primes ramifying in `K`.
+* `NumberField.ramifiedPrimes`: the set of natural primes ramifying in `K`.
 
 ## Main results
 
-* `TauCeti.NumberField.mem_ramifiedPrimes_iff_dvd_discr`: a prime ramifies iff it divides the
+* `NumberField.mem_ramifiedPrimes_iff_dvd_discr`: a prime ramifies iff it divides the
   discriminant.
-* `TauCeti.NumberField.finite_ramifiedPrimes`: only finitely many primes ramify.
-* `TauCeti.NumberField.ramifiedPrimes_nonempty`: some prime ramifies, unless `K = ℚ`
+* `NumberField.finite_ramifiedPrimes`: only finitely many primes ramify.
+* `NumberField.ramifiedPrimes_nonempty`: some prime ramifies, unless `K = ℚ`
   (Minkowski, via `NumberField.exists_not_isUnramifiedIn`).
 -/
 
@@ -36,7 +36,7 @@ public section
 
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable (K : Type*) [Field K]
 
@@ -85,4 +85,4 @@ theorem ramifiedPrimes_nonempty (h : Module.finrank ℚ K ≠ 1) : (ramifiedPrim
   simpa only [Set.nonempty_def, mem_ramifiedPrimes_iff] using
     NumberField.exists_not_isUnramifiedIn (𝒪 := 𝓞 K) h
 
-end TauCeti.NumberField
+end NumberField

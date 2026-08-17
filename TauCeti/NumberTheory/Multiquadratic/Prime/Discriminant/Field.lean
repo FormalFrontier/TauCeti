@@ -75,10 +75,10 @@ theorem discr_eq_primeDiscriminant_of_sq {K : Type*} [Field K] [NumberField K] {
     (hx : x ^ 2 = algebraMap ℤ K (primeDiscriminantRadicand D))
     (hgen : Algebra.adjoin ℚ {x} = ⊤) : NumberField.discr K = D := by
   let d := primeDiscriminantRadicand D
-  let θ : 𝓞 K := TauCeti.NumberField.integralSqrt hx
-  have hθ : algebraMap (𝓞 K) K θ = x := TauCeti.NumberField.algebraMap_integralSqrt hx
+  let θ : 𝓞 K := NumberField.integralSqrt hx
+  have hθ : algebraMap (𝓞 K) K θ = x := NumberField.algebraMap_integralSqrt hx
   have hmin : minpoly ℤ θ = X ^ 2 - C d :=
-    TauCeti.NumberField.minpoly_integralSqrt hx (not_isSquare_primeDiscriminantRadicand_rat hD)
+    NumberField.minpoly_integralSqrt hx (not_isSquare_primeDiscriminantRadicand_rat hD)
   have hgenθ : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
     rw [NumberField.RingOfIntegers.coe_eq_algebraMap, hθ]
     exact hgen

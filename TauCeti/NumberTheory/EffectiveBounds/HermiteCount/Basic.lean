@@ -33,10 +33,10 @@ explicit coefficient bound derived from Mathlib's Minkowski bound `boundOfDiscBd
 
 * `coeffBoundOfDiscrBdd`: an explicit height bound for the integer minimal polynomials of primitive
   generators of number fields of discriminant `≤ N`, uniform over real and complex generators.
-* `TauCeti.NumberField.exists_mem_rootSet_eq_adjoin_of_abs_discr_le`: each such field is generated
+* `NumberField.exists_mem_rootSet_eq_adjoin_of_abs_discr_le`: each such field is generated
   by a root of an integer polynomial of degree `≤ rankOfDiscrBdd N` and height
   `≤ coeffBoundOfDiscrBdd N`.
-* `TauCeti.NumberField.ncard_setOf_finiteDimensional_abs_discr_le_le`: the explicit count.
+* `NumberField.ncard_setOf_finiteDimensional_abs_discr_le_le`: the explicit count.
 
 The remainder of the file is the consumer-facing API layer over that count, packaging the exact
 constants and recording the monotonicities that later effective estimates need:
@@ -68,7 +68,7 @@ open Module Polynomial NumberField NumberField.InfinitePlace
 open NumberField.mixedEmbedding NumberField.hermiteTheorem TauCeti.IntermediateField
 open scoped IntermediateField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 /-- An explicit height bound for the integer minimal polynomial of a primitive generator of a number
 field of discriminant `≤ N`. It is `⌈M ^ D * (D.choose (D / 2))⌉₊` where `D = rankOfDiscrBdd N` is
@@ -351,4 +351,4 @@ theorem ncard_setOf_finiteDimensional_natAbs_discr_le_le_of_bounds (N D C : ℕ)
   ncard_setOf_finiteDimensional_natAbs_discr_le_le_of_threshold_bounds
     (A := A) le_rfl hD hC
 
-end TauCeti.NumberField
+end NumberField

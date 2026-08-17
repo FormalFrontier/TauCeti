@@ -41,7 +41,7 @@ public section
 
 open Polynomial
 open scoped NumberField
-open TauCeti.NumberField (ramifiedPrimes)
+open NumberField (ramifiedPrimes)
 
 namespace TauCeti.Multiquadratic
 
@@ -75,7 +75,7 @@ theorem finrank_candidateGenusField_over_candidateGenusFieldBase_eq_two_pow_ncar
     Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
       2 ^ ((ramifiedPrimes K).ncard - 1) := by
   rw [finrank_candidateGenusField_over_candidateGenusFieldBase hd
-      (TauCeti.NumberField.not_isSquare_radicand hmin),
+      (NumberField.not_isSquare_radicand hmin),
     card_genusPrimeDiscriminants_eq_ncard_ramifiedPrimes hmin hgen hd]
 
 end TauCeti.Multiquadratic
