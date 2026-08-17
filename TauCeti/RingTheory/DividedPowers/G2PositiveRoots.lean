@@ -5,48 +5,63 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RingTheory.DividedPowers.RootString
-import TauCeti.RingTheory.DividedPowers.NormalOrdering
+public import TauCeti.RingTheory.DividedPowers.NormalOrdering
 import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Module
 import Mathlib.Tactic.NoncommRing
 
 /-!
-# Normal ordering divided powers along the `G₂` root string
+# Normal ordering divided powers along the positive `G₂` roots
 
-Let `x`, `y`, `z`, `w`, `v`, and `s` belong to an associative algebra over `ℚ`.  The
-normalizations
-
-```text
-x y = y x + z,    x z = z x + 2w,    x w = w x + 3v,
-w z = z w + 3s
-```
-
-model the positive `G₂` roots
+Let `x`, `y`, `z`, `w`, `v`, and `s` belong to an associative algebra over `ℚ`.  They stand for
+root vectors of the six positive `G₂` roots,
 
 ```text
-α, β, α + β, 2α + β, 3α + β, 3α + 2β.
+x ↔ α,   y ↔ β,   z ↔ α + β,   w ↔ 2α + β,   v ↔ 3α + β,   s ↔ 3α + 2β,
 ```
 
-Under the remaining commutation relations forced by this root diagram, the divided powers have
-the coefficient-one straightening rule
+normalized so that
 
 ```text
-x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ y⁽ᵃ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾ v⁽ᵈ⁾ s⁽ᵉ⁾ x⁽ᑫ⁾,
+x y = y x + z,    x z = z x + 2w,    x w = w x + 3v,    w z = z w + 3s.
 ```
 
-where `n = a + b + c + d + 2e` and `m = q + b + 2c + 3d + 3e`.  In particular, all
-coefficients are integral.  This is the algebraic input needed to prove the `G₂` Chevalley
-commutator relation for Kostant root subgroups over rings of arbitrary characteristic.
+Besides these four relations only some of the commutations are assumed: `x` with `v` and `s`,
+`y` with `z`, `w` with `v` and `s`, `z` with `s`, and `v` with `s`.  Nothing at all is assumed
+about the pairs `y, w`, `y, v`, `y, s` and `z, v`.  In particular `y` and `v` do *not* commute in
+`G₂`, where `β + (3α + β) = 3α + 2β` is again a root; the straightening rule does not need that
+relation.
+
+Under those hypotheses the divided powers have the coefficient-one straightening rule
+
+```text
+x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ y⁽ᵃ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾ v⁽ᵈ⁾ s⁽ᵉ⁾ x⁽ᵐ⁻ᵇ⁻²ᶜ⁻³ᵈ⁻³ᵉ⁾,
+```
+
+where `a = n - b - c - d - 2e`.  In particular, all coefficients are integral.  This is the
+algebraic input needed to prove the `G₂` Chevalley commutator relation for Kostant root subgroups
+over rings of arbitrary characteristic.
 
 The term at `3α + 2β` is essential.  It arises when `x` crosses a divided power of `z`: the
 failure of `z` and `w` to commute contributes `3s`.  The four ways to advance the divided-power
 series have coefficients `b`, `2c`, `3d`, and `3e`, whose sum is its weighted degree.
 
+The proof feeds `TauCeti.Associative.dividedPower_mul_of_ad_dividedPower_series` the sequence
+
+```text
+k ↦ ∑ b + 2c + 3d + 3e = k,  y⁽ᵃ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾ v⁽ᵈ⁾ s⁽ᵉ⁾,
+```
+
+which is the `k`-th divided power of the inner derivation `ad x` applied to `y⁽ⁿ⁾`.  That is the
+plan already used for the chain `β`, `α + β`, `2α + β` in
+`TauCeti/RingTheory/DividedPowers/RootString.lean`, with two more exponents to carry; the rule
+proved there is the degenerate case `v = s = 0` of the one proved here, and is derived from it.
+
 ## Main declarations
 
-* `TauCeti.Associative.g2RootStringIndex`: the exponent set in the `G₂` straightening rule.
-* `TauCeti.Associative.dividedPower_mul_dividedPower_of_g2RootString`: coefficient-one normal
-  ordering along the full positive `G₂` root string.
+* `TauCeti.Associative.g2PositiveRootIndex`: the exponent set in the `G₂` straightening rule.
+* `TauCeti.Associative.dividedPower_mul_dividedPower_of_g2PositiveRoots`: coefficient-one normal
+  ordering along the positive `G₂` roots.
 
 ## References
 
@@ -66,16 +81,8 @@ variable {x y z w v s : A}
 
 /-! ## Moving one element across a normal-ordered monomial -/
 
-private theorem mul_dividedPower_of_commutator_eq' {a b c : A}
-    (hab : a * b = b * a + c) (hbc : Commute b c) (n : ℕ) :
-    a * dividedPower n b =
-      dividedPower n b * a + if 0 < n then dividedPower (n - 1) b * c else 0 := by
-  cases n with
-  | zero => simp
-  | succ n => simpa using mul_dividedPower_of_commutator_eq hab hbc n
-
 -- The ordinary-power calculation behind the second-order correction when `x` crosses `zⁿ`.
-private theorem mul_pow_of_g2RootString (hxz : x * z = z * x + 2 • w)
+private theorem mul_pow_of_commutator_eq_two_nsmul (hxz : x * z = z * x + 2 • w)
     (hwz : w * z = z * w + 3 • s) (hzs : Commute z s) (n : ℕ) :
     x * z ^ n = z ^ n * x + (2 * (n : ℚ)) • (z ^ (n - 1) * w) +
       (3 * (n : ℚ) * (n - 1 : ℕ)) • (z ^ (n - 2) * s) := by
@@ -116,7 +123,7 @@ private theorem mul_dividedPower_z_succ_succ (hxz : x * z = z * x + 2 • w)
       dividedPower (n + 2) z * x +
         2 • (dividedPower (n + 1) z * w) + 3 • (dividedPower n z * s) := by
   simp only [dividedPower_def, mul_smul_comm, smul_mul_assoc]
-  rw [mul_pow_of_g2RootString hxz hwz hzs]
+  rw [mul_pow_of_commutator_eq_two_nsmul hxz hwz hzs]
   have h1 : n + 2 - 1 = n + 1 := by omega
   have h2 : n + 2 - 2 = n := by omega
   rw [h1, h2]
@@ -192,7 +199,11 @@ private theorem mul_dividedPower_g2Monomial
     split_ifs
     · rw [mul_smul_comm]
     · rfl
-  have key : x * (dividedPower a y * dividedPower b z * dividedPower c w *
+  -- Split the product into the ordered term and the four released commutator terms, keeping the
+  -- latter unevaluated: `y → z` from `hy`, then `z → w` and `z + z → s` from `hz`, then
+  -- `w → v` from `hw'`.  The four `have`s below absorb each released factor into the divided
+  -- power it lengthens.
+  have hsplit : x * (dividedPower a y * dividedPower b z * dividedPower c w *
         dividedPower d v * dividedPower e s) =
       dividedPower a y * dividedPower b z * dividedPower c w * dividedPower d v *
           dividedPower e s * x +
@@ -213,7 +224,7 @@ private theorem mul_dividedPower_g2Monomial
       _ = _ := by
         rw [hy]
         noncomm_ring [hz, hw', hxvd.eq, hxse.eq]
-  have hA : (if 0 < a then dividedPower (a - 1) y * z else 0) * dividedPower b z *
+  have hYtoZ : (if 0 < a then dividedPower (a - 1) y * z else 0) * dividedPower b z *
         dividedPower c w * dividedPower d v * dividedPower e s =
       if 0 < a then (b + 1) • (dividedPower (a - 1) y * dividedPower (b + 1) z *
         dividedPower c w * dividedPower d v * dividedPower e s) else 0 := by
@@ -221,7 +232,7 @@ private theorem mul_dividedPower_g2Monomial
     · rw [mul_assoc (dividedPower (a - 1) y) z, self_mul_dividedPower,
         mul_smul_comm, smul_mul_assoc, smul_mul_assoc, smul_mul_assoc]
     · simp
-  have hB : dividedPower a y *
+  have hZtoW : dividedPower a y *
         (if 0 < b then 2 • (dividedPower (b - 1) z * w) else 0) *
         dividedPower c w * dividedPower d v * dividedPower e s =
       if 0 < b then (2 * (c + 1)) • (dividedPower a y * dividedPower (b - 1) z *
@@ -229,10 +240,9 @@ private theorem mul_dividedPower_g2Monomial
     split_ifs with hb
     · have hmul := self_mul_dividedPower (x := w) c
       noncomm_ring [hmul]
-      simp only [smul_smul]
-      congr 1
+      module
     · simp
-  have hC : dividedPower a y * dividedPower b z *
+  have hWtoV : dividedPower a y * dividedPower b z *
         (if 0 < c then dividedPower (c - 1) w * (3 • v) else 0) *
         dividedPower d v * dividedPower e s =
       if 0 < c then (3 * (d + 1)) • (dividedPower a y * dividedPower b z *
@@ -240,10 +250,9 @@ private theorem mul_dividedPower_g2Monomial
     split_ifs with hc
     · have hmul := self_mul_dividedPower (x := v) d
       noncomm_ring [hmul]
-      simp only [smul_smul]
-      congr 1
+      module
     · simp
-  have hE : dividedPower a y *
+  have hZZtoS : dividedPower a y *
         (if 1 < b then 3 • (dividedPower (b - 2) z * s) else 0) *
         dividedPower c w * dividedPower d v * dividedPower e s =
       if 1 < b then (3 * (e + 1)) • (dividedPower a y * dividedPower (b - 2) z *
@@ -255,10 +264,9 @@ private theorem mul_dividedPower_g2Monomial
         simpa using commute_dividedPower_dividedPower hvs.symm 1 d
       have hmul := self_mul_dividedPower (x := s) e
       noncomm_ring [hswc.eq, hsvd.eq, hmul]
-      simp only [smul_smul]
-      congr 1
+      module
     · simp
-  rw [key, hA, hB, hC, hE]
+  rw [hsplit, hYtoZ, hZtoW, hWtoV, hZZtoS]
 
 /-! ## The divided-power series of the inner derivation -/
 
@@ -306,9 +314,8 @@ private theorem g2Series_zero (n : ℕ) : g2Series y z w v s n 0 = dividedPower 
 /-! ### Reindexing the four exponent shifts
 
 Each of the four ways to advance the series moves the index `p` of weighted degree `k` to an
-index of weighted degree `k + 1` by a fixed shift of the exponents.  The bijection obligations
-are all discharged by unfolding membership with `mem_filter_g2SeriesIndex` and calling `omega`;
-the value obligation rewrites the `y`-exponent along the change in total degree. -/
+index of weighted degree `k + 1` by a fixed shift of the exponents.  All four are instances of
+one reindexing lemma, which leaves each of them only the arithmetic of its own shift. -/
 
 /-- Membership in a slice of `g2SeriesIndex` cut out by a further predicate, unfolded to the
 two degree conditions defining the index set. -/
@@ -317,27 +324,48 @@ private theorem mem_filter_g2SeriesIndex {n k : ℕ} {P : G2Exponents → Prop} 
     p ∈ {p ∈ g2SeriesIndex n k | P p} ↔ (g2Total p ≤ n ∧ g2Weight p = k) ∧ P p := by
   rw [Finset.mem_filter, mem_g2SeriesIndex]
 
+/-- The reindexing shared by the four exponent shifts.  A shift `f` with inverse `finv` matches
+the indices of weighted degree `k` cut out by `P` with those of weighted degree `k + 1` cut out
+by `Q`, and `hval` identifies the summand at `p` with `coeff (f p)` copies of the monomial at
+`f p`. -/
+private theorem sum_g2Monomial_shift {n k : ℕ} {P Q : G2Exponents → Prop}
+    [DecidablePred P] [DecidablePred Q] {F : G2Exponents → A}
+    (f finv : G2Exponents → G2Exponents) (coeff : G2Exponents → ℕ)
+    (hf : ∀ p, (g2Total p ≤ n ∧ g2Weight p = k) ∧ P p →
+      (g2Total (f p) ≤ n ∧ g2Weight (f p) = k + 1) ∧ Q (f p))
+    (hfinv : ∀ q, (g2Total q ≤ n ∧ g2Weight q = k + 1) ∧ Q q →
+      (g2Total (finv q) ≤ n ∧ g2Weight (finv q) = k) ∧ P (finv q))
+    (hleft : ∀ p, (g2Total p ≤ n ∧ g2Weight p = k) ∧ P p → finv (f p) = p)
+    (hright : ∀ q, (g2Total q ≤ n ∧ g2Weight q = k + 1) ∧ Q q → f (finv q) = q)
+    (hval : ∀ p, (g2Total p ≤ n ∧ g2Weight p = k) ∧ P p →
+      F p = coeff (f p) • g2Monomial y z w v s n (f p)) :
+    ∑ p ∈ {p ∈ g2SeriesIndex n k | P p}, F p =
+      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | Q q}, coeff q • g2Monomial y z w v s n q :=
+  Finset.sum_nbij' f finv
+    (fun _ hp => mem_filter_g2SeriesIndex.mpr (hf _ (mem_filter_g2SeriesIndex.mp hp)))
+    (fun _ hq => mem_filter_g2SeriesIndex.mpr (hfinv _ (mem_filter_g2SeriesIndex.mp hq)))
+    (fun _ hp => hleft _ (mem_filter_g2SeriesIndex.mp hp))
+    (fun _ hq => hright _ (mem_filter_g2SeriesIndex.mp hq))
+    (fun _ hp => hval _ (mem_filter_g2SeriesIndex.mp hp))
+
 -- The `y → z` advance: one `y` factor is traded for a `z` factor.
 private theorem sum_g2Monomial_shift_z (n k : ℕ) :
     ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < n - g2Total p},
         (p.1 + 1) • (dividedPower (n - g2Total p - 1) y * dividedPower (p.1 + 1) z *
           dividedPower p.2.1 w * dividedPower p.2.2.1 v * dividedPower p.2.2.2 s) =
       ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.1}, q.1 • g2Monomial y z w v s n q := by
-  refine Finset.sum_nbij'
-    (fun p => (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2))
-    (fun q => (q.1 - 1, q.2.1, q.2.2.1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
+  refine sum_g2Monomial_shift (fun p => (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2))
+    (fun q => (q.1 - 1, q.2.1, q.2.2.1, q.2.2.2)) (fun q => q.1) ?_ ?_ ?_ ?_ ?_
   · rintro ⟨b, c, d, e⟩ hp
-    simp only [mem_filter_g2SeriesIndex] at hp ⊢
     simp only [g2Total, g2Weight] at hp ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hq
-    simp only [mem_filter_g2SeriesIndex] at hq ⊢
     simp only [g2Total, g2Weight] at hq ⊢
     omega
   · rintro ⟨b, c, d, e⟩ _
     simp
   · rintro ⟨b, c, d, e⟩ hq
-    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+    simp [Nat.sub_add_cancel hq.2]
   · rintro ⟨b, c, d, e⟩ _
     simp only [g2Monomial, g2Total]
     have ht : b + c + d + 2 * e + 1 = b + 1 + c + d + 2 * e := by omega
@@ -351,23 +379,20 @@ private theorem sum_g2Monomial_shift_w (n k : ℕ) :
             dividedPower p.2.2.1 v * dividedPower p.2.2.2 s) =
       ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.1},
         (2 * q.2.1) • g2Monomial y z w v s n q := by
-  refine Finset.sum_nbij'
-    (fun p => (p.1 - 1, p.2.1 + 1, p.2.2.1, p.2.2.2))
-    (fun q => (q.1 + 1, q.2.1 - 1, q.2.2.1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
+  refine sum_g2Monomial_shift (fun p => (p.1 - 1, p.2.1 + 1, p.2.2.1, p.2.2.2))
+    (fun q => (q.1 + 1, q.2.1 - 1, q.2.2.1, q.2.2.2)) (fun q => 2 * q.2.1) ?_ ?_ ?_ ?_ ?_
   · rintro ⟨b, c, d, e⟩ hp
-    simp only [mem_filter_g2SeriesIndex] at hp ⊢
     simp only [g2Total, g2Weight] at hp ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hq
-    simp only [mem_filter_g2SeriesIndex] at hq ⊢
     simp only [g2Total, g2Weight] at hq ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hp
-    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hp).2]
+    simp [Nat.sub_add_cancel hp.2]
   · rintro ⟨b, c, d, e⟩ hq
-    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+    simp [Nat.sub_add_cancel hq.2]
   · rintro ⟨b, c, d, e⟩ hp
-    have hb : 0 < b := (mem_filter_g2SeriesIndex.mp hp).2
+    have hb : 0 < b := hp.2
     simp only [g2Monomial, g2Total]
     have ht : b - 1 + (c + 1) + d + 2 * e = b + c + d + 2 * e := by omega
     rw [ht]
@@ -380,23 +405,20 @@ private theorem sum_g2Monomial_shift_v (n k : ℕ) :
             dividedPower p.2.2.2 s) =
       ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.1},
         (3 * q.2.2.1) • g2Monomial y z w v s n q := by
-  refine Finset.sum_nbij'
-    (fun p => (p.1, p.2.1 - 1, p.2.2.1 + 1, p.2.2.2))
-    (fun q => (q.1, q.2.1 + 1, q.2.2.1 - 1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
+  refine sum_g2Monomial_shift (fun p => (p.1, p.2.1 - 1, p.2.2.1 + 1, p.2.2.2))
+    (fun q => (q.1, q.2.1 + 1, q.2.2.1 - 1, q.2.2.2)) (fun q => 3 * q.2.2.1) ?_ ?_ ?_ ?_ ?_
   · rintro ⟨b, c, d, e⟩ hp
-    simp only [mem_filter_g2SeriesIndex] at hp ⊢
     simp only [g2Total, g2Weight] at hp ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hq
-    simp only [mem_filter_g2SeriesIndex] at hq ⊢
     simp only [g2Total, g2Weight] at hq ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hp
-    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hp).2]
+    simp [Nat.sub_add_cancel hp.2]
   · rintro ⟨b, c, d, e⟩ hq
-    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+    simp [Nat.sub_add_cancel hq.2]
   · rintro ⟨b, c, d, e⟩ hp
-    have hc : 0 < c := (mem_filter_g2SeriesIndex.mp hp).2
+    have hc : 0 < c := hp.2
     simp only [g2Monomial, g2Total]
     have ht : b + (c - 1) + (d + 1) + 2 * e = b + c + d + 2 * e := by omega
     rw [ht]
@@ -409,24 +431,21 @@ private theorem sum_g2Monomial_shift_s (n k : ℕ) :
             dividedPower (p.2.2.2 + 1) s) =
       ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.2},
         (3 * q.2.2.2) • g2Monomial y z w v s n q := by
-  refine Finset.sum_nbij'
-    (fun p => (p.1 - 2, p.2.1, p.2.2.1, p.2.2.2 + 1))
-    (fun q => (q.1 + 2, q.2.1, q.2.2.1, q.2.2.2 - 1)) ?_ ?_ ?_ ?_ ?_
+  refine sum_g2Monomial_shift (fun p => (p.1 - 2, p.2.1, p.2.2.1, p.2.2.2 + 1))
+    (fun q => (q.1 + 2, q.2.1, q.2.2.1, q.2.2.2 - 1)) (fun q => 3 * q.2.2.2) ?_ ?_ ?_ ?_ ?_
   · rintro ⟨b, c, d, e⟩ hp
-    simp only [mem_filter_g2SeriesIndex] at hp ⊢
     simp only [g2Total, g2Weight] at hp ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hq
-    simp only [mem_filter_g2SeriesIndex] at hq ⊢
     simp only [g2Total, g2Weight] at hq ⊢
     omega
   · rintro ⟨b, c, d, e⟩ hp
-    have hb : 1 < b := (mem_filter_g2SeriesIndex.mp hp).2
+    have hb : 1 < b := hp.2
     simp [Nat.sub_add_cancel (show 2 ≤ b by omega)]
   · rintro ⟨b, c, d, e⟩ hq
-    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+    simp [Nat.sub_add_cancel hq.2]
   · rintro ⟨b, c, d, e⟩ hp
-    have hb : 1 < b := (mem_filter_g2SeriesIndex.mp hp).2
+    have hb : 1 < b := hp.2
     simp only [g2Monomial, g2Total]
     have ht : b - 2 + c + d + 2 * (e + 1) = b + c + d + 2 * e := by omega
     rw [ht]
@@ -510,18 +529,18 @@ private theorem mul_g2Series
 /-- The quadruples `(b, c, d, e)` of non-simple-root exponents in the `G₂` straightening
 rule.  The two inequalities record respectively the total `y`-degree used and the weighted
 `x`-degree used. -/
-def g2RootStringIndex (m n : ℕ) : Finset (ℕ × ℕ × ℕ × ℕ) :=
+def g2PositiveRootIndex (m n : ℕ) : Finset (ℕ × ℕ × ℕ × ℕ) :=
   {p ∈ range (n + 1) ×ˢ range (n + 1) ×ˢ range (n + 1) ×ˢ range (n + 1) |
     p.1 + p.2.1 + p.2.2.1 + 2 * p.2.2.2 ≤ n ∧
       p.1 + 2 * p.2.1 + 3 * p.2.2.1 + 3 * p.2.2.2 ≤ m}
 
-/-- Membership in `g2RootStringIndex` in terms of its two degree inequalities. -/
+/-- Membership in `g2PositiveRootIndex` in terms of its two degree inequalities. -/
 @[simp]
-theorem mem_g2RootStringIndex {m n : ℕ} {p : ℕ × ℕ × ℕ × ℕ} :
-    p ∈ g2RootStringIndex m n ↔
+theorem mem_g2PositiveRootIndex {m n : ℕ} {p : ℕ × ℕ × ℕ × ℕ} :
+    p ∈ g2PositiveRootIndex m n ↔
       p.1 + p.2.1 + p.2.2.1 + 2 * p.2.2.2 ≤ n ∧
         p.1 + 2 * p.2.1 + 3 * p.2.2.1 + 3 * p.2.2.2 ≤ m := by
-  rw [g2RootStringIndex, Finset.mem_filter]
+  rw [g2PositiveRootIndex, Finset.mem_filter]
   constructor
   · exact fun h => h.2
   · intro h
@@ -529,39 +548,44 @@ theorem mem_g2RootStringIndex {m n : ℕ} {p : ℕ × ℕ × ℕ × ℕ} :
     simp only [Finset.mem_product, Finset.mem_range]
     omega
 
-/-- **Coefficient-one normal ordering along the full positive `G₂` root string.** Suppose
+/-- **Coefficient-one normal ordering along the positive `G₂` roots.** Suppose
 
 ```text
 x y = y x + z,   x z = z x + 2w,   x w = w x + 3v,   w z = z w + 3s,
 ```
 
-and impose the remaining commutation relations in the positive `G₂` root diagram. Then
+that `x` commutes with `v` and with `s`, that `y` commutes with `z`, that `w` commutes with `v`
+and with `s`, that `z` commutes with `s`, and that `v` commutes with `s`. Nothing is assumed
+about the pairs `y, w`, `y, v`, `y, s` and `z, v`; in particular the `G₂` relation between the
+root vectors of `β` and `3α + β`, whose sum `3α + 2β` is again a root, is not needed. Then
 
 ```text
 x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ y⁽ⁿ⁻ᵇ⁻ᶜ⁻ᵈ⁻²ᵉ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾ v⁽ᵈ⁾ s⁽ᵉ⁾ x⁽ᵐ⁻ᵇ⁻²ᶜ⁻³ᵈ⁻³ᵉ⁾.
 ```
 
-The sum is over `g2RootStringIndex m n`. Every coefficient in the divided-power basis is `1`,
+The sum is over `g2PositiveRootIndex m n`. Every coefficient in the divided-power basis is `1`,
 so this identity supplies the integral straightening input for the `G₂` Chevalley commutator
-relation. -/
-theorem dividedPower_mul_dividedPower_of_g2RootString
+relation. Setting `v = s = 0` and discarding the terms with `d ≠ 0` or `e ≠ 0` recovers the
+chain rule `dividedPower_mul_dividedPower_of_commutator_eq_two_nsmul`, which is derived from
+this theorem in `TauCeti/RingTheory/DividedPowers/RootString.lean`. -/
+theorem dividedPower_mul_dividedPower_of_g2PositiveRoots
     (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 • w)
     (hxw : x * w = w * x + 3 • v) (hwz : w * z = z * w + 3 • s)
     (hxv : Commute x v) (hxs : Commute x s) (hyz : Commute y z)
     (hwv : Commute w v) (hzs : Commute z s) (hws : Commute w s)
     (hvs : Commute v s) (m n : ℕ) :
     dividedPower m x * dividedPower n y =
-      ∑ p ∈ g2RootStringIndex m n,
+      ∑ p ∈ g2PositiveRootIndex m n,
         dividedPower (n - p.1 - p.2.1 - p.2.2.1 - 2 * p.2.2.2) y *
           dividedPower p.1 z * dividedPower p.2.1 w * dividedPower p.2.2.1 v *
             dividedPower p.2.2.2 s *
           dividedPower (m - p.1 - 2 * p.2.1 - 3 * p.2.2.1 - 3 * p.2.2.2) x := by
   classical
-  set S : Finset G2Exponents := g2RootStringIndex m n with hS
+  set S : Finset G2Exponents := g2PositiveRootIndex m n with hS
   have hmemS : ∀ p : G2Exponents, p ∈ S ↔ g2Total p ≤ n ∧ g2Weight p ≤ m := by
     intro p
     simpa only [hS, g2Total, g2Weight] using
-      (mem_g2RootStringIndex (m := m) (n := n) (p := p))
+      (mem_g2PositiveRootIndex (m := m) (n := n) (p := p))
   have hseries := dividedPower_mul_of_ad_dividedPower_series
     (x := x) (d := g2Series y z w v s n)
     (fun k => mul_g2Series hxy hxz hxw hwz hxv hxs hyz hwv hzs hws hvs n k) m
