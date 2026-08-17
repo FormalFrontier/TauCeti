@@ -193,6 +193,7 @@ theorem schemePointsMulEquiv_apply_left (A : Type u) [CommRing A] [Algebra R A]
 
 /-- The scheme-valued point comparison is natural in the finite group: applying the
 group-scheme map induced by `f` is precomposition by pullback of coordinate functions. -/
+@[simp]
 theorem schemePointsMulEquiv_groupSchemeMap {H : Type u} [Group H] [Finite H]
     (A : Type u) [CommRing A] [Algebra R A] (f : G →* H)
     (p : WithConv (coordinateRing R G →ₐ[R] A)) :
