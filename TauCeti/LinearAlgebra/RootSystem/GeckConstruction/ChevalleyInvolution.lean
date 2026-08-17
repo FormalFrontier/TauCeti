@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Ring.NegOnePow
+import Mathlib.Algebra.Ring.NegOnePow
 public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Basic
 
 /-!
@@ -39,10 +39,11 @@ the Chevalley involution on the concrete split semisimple Lie algebra produced f
 
 Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md` asks for the split reductive group scheme
 over `ℤ` to be built "via a Chevalley basis and the Kostant `ℤ`-form of the enveloping algebra",
-and insists on constructions rather than existence theorems. The Chevalley involution is what
-normalises a Chevalley basis: it picks the root vectors `x α` and `x (-α)` compatibly, and that
-compatibility is what forces the sign symmetry `N (-α, -β) = -N (α, β)` of the structure constants
-(Humphreys §25.2, Carter §4.1). `TauCeti.serreChevalleyInvolution` of
+and insists on constructions rather than existence theorems. The involution constructed here is
+characterized on the simple generators and supplies the concrete compatibility needed when one
+later chooses opposite root vectors. Extending it to a normalized root-vector system and proving
+the resulting sign symmetry of the structure constants remain future work (Humphreys §25.2,
+Carter §4.1). `TauCeti.serreChevalleyInvolution` of
 `TauCeti/Algebra/Lie/Presentation/Serre/Automorphism.lean` is that automorphism on the presented
 Lie algebra; this file supplies it on the concrete side. Geck's construction is the explicit
 realisation of a root datum by a matrix Lie algebra, proved semisimple with the given root system
@@ -75,11 +76,12 @@ noncomputable section
 universe u v w
 
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type*}
-  [Fintype ι] [DecidableEq ι] [CommRing R] [IsDomain R] [CharZero R]
+  [Fintype ι] [CommRing R] [IsDomain R] [CharZero R]
   [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   {P : RootPairing ι R M N} [P.IsCrystallographic] (b : P.Base)
 
 attribute [local instance 100] LieRing.ofAssociativeRing
+local instance : DecidableEq ι := Classical.decEq ι
 
 /-! ## The height-parity involution -/
 
@@ -94,7 +96,7 @@ private def geckHeightSign : b.support ⊕ ι → R
 private def geckHeightMatrix : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R :=
   diagonal (geckHeightSign b)
 
-omit [Fintype ι] [DecidableEq ι] [IsDomain R] [P.IsCrystallographic] in
+omit [Fintype ι] [IsDomain R] [P.IsCrystallographic] in
 private theorem geckHeightSign_mul_self (i : b.support ⊕ ι) :
     geckHeightSign b i * geckHeightSign b i = 1 := by
   cases i with
@@ -107,12 +109,12 @@ private theorem geckHeightSign_mul_self (i : b.support ⊕ ι) :
       · rw [Int.negOnePow_odd _ hi]
         simp
 
-omit [Fintype ι] [DecidableEq ι] [IsDomain R] [P.IsCrystallographic] in
+omit [Fintype ι] [IsDomain R] [P.IsCrystallographic] in
 private theorem geckHeightSign_simple (i : b.support) :
     geckHeightSign b (.inr i) = -1 := by
   simp [geckHeightSign, b.height_one_of_mem_support i.property]
 
-omit [Fintype ι] [DecidableEq ι] [IsDomain R] [P.IsCrystallographic] in
+omit [Fintype ι] [IsDomain R] [P.IsCrystallographic] in
 private theorem geckHeightSign_neg_simple (i : b.support) :
     let _ := P.indexNeg
     geckHeightSign b (.inr (-i : ι)) = -1 := by
@@ -121,7 +123,7 @@ private theorem geckHeightSign_neg_simple (i : b.support) :
   rw [b.height_reflectionPerm_self, b.height_one_of_mem_support i.property]
   norm_num
 
-omit [Fintype ι] [DecidableEq ι] [IsDomain R] [P.IsCrystallographic] in
+omit [Fintype ι] [IsDomain R] [P.IsCrystallographic] in
 private theorem geckHeightSign_mul_eq_neg_one_of_add {i : b.support} {j k : ι}
     (hjk : P.root j = P.root i + P.root k) :
     geckHeightSign b (.inr j) * geckHeightSign b (.inr k) = -1 := by
@@ -130,7 +132,7 @@ private theorem geckHeightSign_mul_eq_neg_one_of_add {i : b.support} {j k : ι}
   norm_num [Int.coe_negOnePow]
   simpa [geckHeightSign] using geckHeightSign_mul_self b (.inr k)
 
-omit [Fintype ι] [DecidableEq ι] [IsDomain R] [P.IsCrystallographic] in
+omit [Fintype ι] [IsDomain R] [P.IsCrystallographic] in
 private theorem geckHeightSign_mul_eq_neg_one_of_sub {i : b.support} {j k : ι}
     (hjk : P.root j = P.root k - P.root i) :
     geckHeightSign b (.inr j) * geckHeightSign b (.inr k) = -1 := by
@@ -406,13 +408,14 @@ private theorem geckLieHom_ext {g k : lieAlgebra b →ₗ⁅R⁆ lieAlgebra b}
     (hf : ∀ i, g ⟨f i, f_mem_lieAlgebra i⟩ = k ⟨f i, f_mem_lieAlgebra i⟩) : g = k := by
   apply LieHom.ext
   intro x
+  have hspan : LieSubalgebra.lieSpan R (lieAlgebra b)
+      (((↑) : lieAlgebra b → Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ⁻¹'
+        (range h ∪ range e ∪ range f)) = ⊤ :=
+    LieSubalgebra.lieSpan_lieSpan_coe_preimage
   have hx : x ∈ LieSubalgebra.lieSpan R (lieAlgebra b)
       (((↑) : lieAlgebra b → Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ⁻¹'
         (range h ∪ range e ∪ range f)) := by
-    rw [show LieSubalgebra.lieSpan R (lieAlgebra b)
-      (((↑) : lieAlgebra b → Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ⁻¹'
-        (range h ∪ range e ∪ range f)) = ⊤ from
-      LieSubalgebra.lieSpan_lieSpan_coe_preimage]
+    rw [hspan]
     trivial
   induction hx using LieSubalgebra.lieSpan_induction with
   | mem x hx =>
@@ -465,7 +468,7 @@ theorem geckChevalleyInvolution_geckChevalleyInvolution (x : lieAlgebra b) :
       (fun i => by simp) (fun i => by simp) (fun i => by simp)) x
 
 /-- Geck's Chevalley involution is an involution. -/
-theorem geckChevalleyInvolution_involutive :
+theorem involutive_geckChevalleyInvolution :
     Function.Involutive (geckChevalleyInvolution b) :=
   geckChevalleyInvolution_geckChevalleyInvolution b
 
