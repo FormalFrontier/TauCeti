@@ -34,8 +34,9 @@ need not satisfy the Leibniz rule, the obstruction being the value commutators
 
 ## Main declarations
 
-* the `Bracket`, `LieRing`, and `LieAlgebra R` instances on
-  `Derivation R A (Bialgebra.CounitAlgebra R A B)`;
+* `Derivation.instBracketCounitAlgebra`, `Derivation.instLieRingCounitAlgebra`, and
+  `Derivation.instLieAlgebraCounitAlgebra`: the `Bracket`, `LieRing`, and `LieAlgebra R` instances
+  on `Derivation R A (Bialgebra.CounitAlgebra R A B)`;
 * `Derivation.coe_bracket`, `Derivation.bracket_apply`: the bracket
   is the convolution commutator.
 
@@ -47,7 +48,9 @@ composition-commutator `LieRing (Derivation R A A)`, even at `B = A`: the two
 carrier types differ in their `Module A` instance argument — the coefficient action
 here is through the counit (`a • m = algebraMap R B (counit a) * m`,
 `Bialgebra.CounitAlgebra.algebraMap_apply`), not multiplication — so neither
-elaboration nor instance search can identify the types, and no diamond exists.
+elaboration nor instance search can identify the types, and no diamond exists. The
+`CounitAlgebra` suffix also distinguishes their declaration names from Mathlib's
+`Derivation.instBracket`, `Derivation.instLieRing`, and `Derivation.instLieAlgebra`.
 -/
 
 public section

@@ -159,7 +159,7 @@ private noncomputable def ofCotangentLinearMap
       (f.comp (Bialgebra.cotangentMap R A)))
     fun a b => by
       simp only [LinearMap.comp_apply]
-      rw [Bialgebra.cotangentMap_mul, map_add, LinearMap.map_smul, LinearMap.map_smul]
+      rw [Bialgebra.cotangentMap_mul, map_add, _root_.map_smul, _root_.map_smul]
       apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
       simp only [AlgEquiv.toLinearMap_apply]
       rw [AlgEquiv.apply_symm_apply, map_add, algEquivSelf_smul,
