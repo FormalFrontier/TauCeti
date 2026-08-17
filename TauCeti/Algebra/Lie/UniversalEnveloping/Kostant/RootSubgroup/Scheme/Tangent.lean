@@ -115,7 +115,7 @@ noncomputable def kostantRootOperator : Module.End ℤ M :=
 
 /-- A root vector acting nilpotently with nilpotency class at most one acts as zero, so the
 degenerate branch of the divided-power expansion carries no linear term. -/
-theorem kostantRootOperator_eq_zero_of_pow_eq_zero
+private theorem kostantRootOperator_eq_zero_of_pow_eq_zero
     (hz : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ 1 = 0) :
     kostantRootOperator e h ρ M hM i = 0 :=
   integralDividedPower_eq_zero_of_le _ M 1 _ hz le_rfl
