@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.Shrink
+public import Mathlib.Algebra.Group.TransferInstance
 public import Mathlib.Algebra.Group.ULift
-public import Mathlib.Data.Countable.Small
-public import Mathlib.Data.Fintype.Shrink
+public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.GroupTheory.FreeGroup.Basic
 public import Mathlib.GroupTheory.Subgroup.Simple
 public import Mathlib.Logic.Small.Basic
@@ -26,9 +25,9 @@ statement does not depend on `u`: it holds in every universe as soon as it holds
 conversely.
 
 Both directions come from replacing the group by an isomorphic copy in the universe one wants.
-Downwards, a finite group is countable, hence `Small.{0}`, so Mathlib's `Shrink.{0} G` is a group in
-`Type 0` isomorphic to `G`; upwards, `ULift` moves a group in `Type 0` into `Type u`. Since the
-statement mentions the group only through `G ≃* Model i`, either replacement leaves it unchanged.
+Downwards, Mathlib's finite-group transport supplies a group in `Type 0` isomorphic to `G`;
+upwards, `ULift` moves a group in `Type 0` into `Type u`. Since the statement mentions the group
+only through `G ≃* Model i`, either replacement leaves it unchanged.
 
 The downward direction is the one a consumer needs, because a classification is stated once, with a
 family of concrete carriers in `Type`, and is then applied to a group living wherever it happens to
@@ -42,8 +41,6 @@ statement, not its content.
 
 ## Main results
 
-* `TauCeti.exists_type_zero_mulEquiv`: every finite group is isomorphic to a finite group in
-  `Type 0`.
 * `TauCeti.exists_nonempty_mulEquiv_of_forall_type_zero`: **the universe transport**, from `Type 0`
   to `Type u`.
 * `TauCeti.forall_exists_nonempty_mulEquiv_iff` and
@@ -68,31 +65,15 @@ public section
 
 namespace TauCeti
 
-universe u u' v v' w
+universe u u' v w
 
 /-! ## Groups in a prescribed universe -/
-
-/-- The `Shrink` copy of a simple group is simple, so a simple group has a simple model in every
-universe it is small in. -/
-instance instIsSimpleGroupShrink {G : Type u} [Group G] [Small.{v} G] [IsSimpleGroup G] :
-    IsSimpleGroup (Shrink.{v} G) :=
-  (Shrink.mulEquiv : Shrink.{v} G ≃* G).isSimpleGroup
 
 /-- The `ULift` copy of a simple group is simple, so a simple group has a simple model in every
 larger universe. -/
 instance instIsSimpleGroupULift {G : Type u} [Group G] [IsSimpleGroup G] :
     IsSimpleGroup (ULift.{v} G) :=
   (MulEquiv.ulift : ULift.{v} G ≃* G).isSimpleGroup
-
-/-- **Every finite group is isomorphic to a finite group in `Type 0`.**
-
-A finite group is countable, hence small for the lowest universe, and `Shrink` then supplies the
-model. This is what makes `Type 0` the substantive universe for a classification whose carriers all
-lie in `Type`. -/
-theorem exists_type_zero_mulEquiv (G : Type u) [Group G] [Finite G] :
-    ∃ (H : Type) (_ : Group H) (_ : Finite H), Nonempty (G ≃* H) :=
-  ⟨Shrink.{0} G, inferInstance, inferInstance,
-    ⟨(Shrink.mulEquiv : Shrink.{0} G ≃* G).symm⟩⟩
 
 /-! ## Transporting a classification statement -/
 
@@ -108,12 +89,6 @@ theorem exists_nonempty_mulEquiv_congr {G : Type u} {H : Type u'} [Group G] [Gro
     (h : ∃ i, Nonempty (H ≃* Model i)) : ∃ i, Nonempty (G ≃* Model i) :=
   h.imp fun _ hi => hi.map e.trans
 
-/-- A small group is isomorphic to a member of the family exactly when its `Shrink` model is. -/
-theorem exists_nonempty_mulEquiv_shrink_iff {G : Type u} [Group G] [Small.{v'} G] :
-    (∃ i, Nonempty (Shrink.{v'} G ≃* Model i)) ↔ ∃ i, Nonempty (G ≃* Model i) :=
-  ⟨exists_nonempty_mulEquiv_congr (Shrink.mulEquiv : Shrink.{v'} G ≃* G).symm,
-    exists_nonempty_mulEquiv_congr (Shrink.mulEquiv : Shrink.{v'} G ≃* G)⟩
-
 /-- A group is isomorphic to a member of the family exactly when its `ULift` copy in a larger
 universe is. -/
 theorem exists_nonempty_mulEquiv_ulift_iff {G : Type u} [Group G] :
@@ -124,13 +99,16 @@ theorem exists_nonempty_mulEquiv_ulift_iff {G : Type u} [Group G] :
 /-- **The universe transport.** A family of groups that classifies the finite simple groups in
 `Type 0` classifies the finite simple groups in every universe.
 
-The finite simple group `G : Type u` is replaced by its model `Shrink.{0} G`, which is again finite
-and simple, and the isomorphism `G ≃* Shrink.{0} G` is composed with the one the hypothesis
-supplies. -/
+Mathlib's finite-group transport supplies a finite model `H : Type` and an isomorphism `G ≃* H`.
+Simplicity is transported across this isomorphism, which is then composed with the one the
+hypothesis supplies. -/
 theorem exists_nonempty_mulEquiv_of_forall_type_zero
     (h : ∀ (H : Type) [Group H] [Finite H] [IsSimpleGroup H], ∃ i, Nonempty (H ≃* Model i))
-    (G : Type u) [Group G] [Finite G] [IsSimpleGroup G] : ∃ i, Nonempty (G ≃* Model i) :=
-  exists_nonempty_mulEquiv_shrink_iff.mp (h (Shrink.{0} G))
+    (G : Type u) [Group G] [Finite G] [IsSimpleGroup G] : ∃ i, Nonempty (G ≃* Model i) := by
+  obtain ⟨H, _, fintypeH, ⟨e⟩⟩ := Finite.exists_type_univ_nonempty_mulEquiv.{u, 0} G
+  let _ : Finite H := @Finite.of_fintype H fintypeH
+  let _ : IsSimpleGroup H := e.symm.isSimpleGroup
+  exact exists_nonempty_mulEquiv_congr e (h H)
 
 /-- The reverse transport: a family that classifies the finite simple groups in `Type u` classifies
 those in `Type 0`, by lifting a group in `Type 0` into `Type u`. -/
