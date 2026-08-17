@@ -6,13 +6,14 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 
 /-!
-# Diagonal split-torus representations attached to weight data
+# Diagonal split-torus representations and the Kostant weight torus
 
 A basis `b` of an integral module together with weights `wt` gives a diagonal representation of
 the split torus `𝔾ₘ^κ`: a point `s : κ → Aˣ` scales the basis vector `b x` by the value
@@ -43,6 +44,9 @@ requires the base, coordinate Hopf algebra, and comodule to inhabit the same uni
 
 ## Main declarations
 
+* `TauCeti.UniversalEnvelopingAlgebra.schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix`:
+  composing a scheme-valued torus point with the represented weight torus gives the matrix of the
+  existing Kostant torus action.
 * `TauCeti.UniversalEnvelopingAlgebra.weightTorusRepresentation`: the diagonal representation
   morphism of affine group schemes `𝔾ₘ^κ ⟶ GLₙ`.
 * `TauCeti.UniversalEnvelopingAlgebra.weightTorusClosedSubgroup`: the resulting closed subgroup
@@ -59,6 +63,7 @@ requires the base, coordinate Hopf algebra, and comodule to inhabit the same uni
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, II.1.
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4 and 7.1.
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §§26--27.
 * J. S. Milne, *Algebraic Groups* (2017), §12.c.
 -/
 
@@ -68,6 +73,32 @@ open AlgebraicGeometry CategoryTheory TensorProduct WithConv
 open scoped CategoryTheory.MonObj
 
 namespace TauCeti.UniversalEnvelopingAlgebra
+
+section Matrix
+
+universe v
+
+variable {κ : Type} [Fintype κ]
+variable {V : Type v} [AddCommGroup V]
+variable (M : AddSubgroup V)
+variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
+
+variable (A : Type) [CommRing A] [Algebra ℤ A]
+
+/-- Scheme-valued points of the represented weight torus are exactly the matrices of the
+pointwise Kostant torus action in the given weight basis. -/
+theorem schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ κ).X) :
+    GeneralLinear.schemePointsMulEquiv n A
+        (p ≫ (GeneralLinear.weightTorus (R := ℤ) wt).hom.hom) =
+      kostantTorusMatrix M b wt
+        (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) p) := by
+  rw [GeneralLinear.schemePointsMulEquiv_weightTorus, kostantTorusMatrix_apply]
+
+end Matrix
+
+section Representation
 
 variable {κ : Type} {M : Type} [AddCommMonoid M] [Module ℤ M]
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
@@ -238,5 +269,7 @@ theorem schemePointsMulEquiv_comp_weightTorusRepresentation_apply
     (L := L) (bL := bL) (wt := wt) A q i j
 
 end Points
+
+end Representation
 
 end TauCeti.UniversalEnvelopingAlgebra

@@ -65,7 +65,7 @@ theorem finiteLocallyFreeBicommutativeHopfAlgProperty_iff (k : Type u) [CommRing
   Iff.rfl
 
 /-- The category of finite locally free bicommutative Hopf algebras over a commutative ring. -/
-abbrev FiniteLocallyFreeBicommutativeHopfAlgCat (k : Type u) [CommRing k] :=
+abbrev FiniteLocallyFreeBicommutativeHopfAlgCat (k : Type u) [CommRing k] : Type _ :=
   (finiteLocallyFreeBicommutativeHopfAlgProperty (k := k)).FullSubcategory
 
 namespace FiniteLocallyFreeBicommutativeHopfAlgCat

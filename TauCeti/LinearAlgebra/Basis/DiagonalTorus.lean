@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.Equiv.Basic
 public import Mathlib.LinearAlgebra.Basis.SMul
+public import Mathlib.LinearAlgebra.Matrix.Basis
 public import TauCeti.LinearAlgebra.Eigenspace.DiagonalBasis
 
 /-!
@@ -65,10 +66,10 @@ variable [Fintype κ]
 by which a torus point acts on a weight vector. -/
 def torusCharacter (s : κ → Rˣ) (μ : κ → ℤ) : Rˣ := ∏ j, s j ^ μ j
 
-/-- The value of a character is the monomial in the coordinates of the point with the weight as
-its exponent vector. -/
+/-- A split-torus character evaluates as the product of its coordinate powers. -/
 theorem torusCharacter_def (s : κ → Rˣ) (μ : κ → ℤ) :
-    torusCharacter s μ = ∏ j, s j ^ μ j := (rfl)
+    torusCharacter s μ = ∏ j, s j ^ μ j :=
+  (rfl)
 
 /-- The trivial character takes the value one at every point. -/
 @[simp] theorem torusCharacter_zero (s : κ → Rˣ) : torusCharacter s (0 : κ → ℤ) = 1 := by
@@ -174,6 +175,22 @@ theorem repr_basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) (m : M) (i : ι) 
 theorem basisDiagonal_inv (b : Basis ι R M) (w : ι → Rˣ) :
     (basisDiagonal b w)⁻¹ = basisDiagonal b w⁻¹ := by
   simpa only [basisDiagonalHom_apply] using (map_inv (basisDiagonalHom b) w).symm
+
+/-- The matrix of a diagonal basis automorphism in that basis is the diagonal matrix of its
+scaling units. -/
+theorem toMatrix_basisDiagonal [Fintype ι] [DecidableEq ι]
+    (b : Basis ι R M) (w : ι → Rˣ) :
+    LinearMap.toMatrix b b (basisDiagonal b w).toLinearMap =
+      Matrix.diagonal fun i => (w i : R) := by
+  calc
+    _ = b.toMatrix (b.unitsSMul w) := by
+      ext i j
+      rw [LinearMap.toMatrix_apply, Basis.toMatrix_apply]
+      have hbasis : (basisDiagonal b w).toLinearMap (b j) = (b.unitsSMul w) j := by
+        rw [LinearEquiv.coe_toLinearMap, basisDiagonal_basis, Basis.unitsSMul_apply,
+          Units.smul_def]
+      rw [hbasis]
+    _ = _ := b.toMatrix_unitsSMul w
 
 /-- A diagonal automorphism scales by a single unit any vector whose coordinates vanish outside
 the basis vectors carrying that unit. Applied to a weight basis, this says that a torus point acts

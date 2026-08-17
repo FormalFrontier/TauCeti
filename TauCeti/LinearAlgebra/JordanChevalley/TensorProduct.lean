@@ -24,11 +24,11 @@ Tannakian reconstruction.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsSemisimple.tensorProduct`: tensor products of semisimple
+* `LinearMap.GeneralLinearGroup.IsSemisimple.tensorProduct`: tensor products of semisimple
   automorphisms are semisimple.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.tensorProduct`: tensor products of unipotent
+* `LinearMap.GeneralLinearGroup.IsUnipotent.tensorProduct`: tensor products of unipotent
   automorphisms are unipotent.
-* `TauCeti.GeneralLinearGroup.jordanDecomposition_tensorProduct`: the canonical decomposition is
+* `LinearMap.GeneralLinearGroup.jordanDecomposition_tensorProduct`: the canonical decomposition is
   factorwise on tensor products.
 
 ## References
@@ -38,12 +38,9 @@ Tannakian reconstruction.
 
 public section
 
-namespace TauCeti
-
-open LinearMap
 open scoped TensorProduct
 
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 universe u v w
 
@@ -60,7 +57,7 @@ theorem IsSemisimple.tensorProduct {g : GeneralLinearGroup K V}
     IsSemisimple (tensorProduct g h) := by
   rw [isSemisimple_def] at hg hh ⊢
   rw [coe_tensorProduct]
-  exact Module.End.IsSemisimple.tensorProduct hg hh
+  exact TauCeti.Module.End.IsSemisimple.tensorProduct hg hh
 
 end Semisimple
 
@@ -113,6 +110,4 @@ theorem unipotentPart_tensorProduct
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup
