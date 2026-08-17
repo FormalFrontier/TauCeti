@@ -96,8 +96,7 @@ point. -/
 private def corestrictFrobeniusFixed (f : H →ₐ[ℤ] A)
     (hf : ∀ h : H, f h ∈ frobeniusFixedSubring A p n) :
     H →ₐ[ℤ] ↥(frobeniusFixedSubring A p n) :=
-  { f.toRingHom.codRestrict (frobeniusFixedSubring A p n) hf with
-    commutes' := fun r => Subtype.ext (f.commutes r) }
+  f.codRestrict (subalgebraOfSubring (frobeniusFixedSubring A p n)) hf
 
 end Bialgebra
 
