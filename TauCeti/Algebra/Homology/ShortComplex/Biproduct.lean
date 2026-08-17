@@ -51,14 +51,6 @@ theorem shortComplexBiprod_zero (S₁ S₂ : ShortComplex C)
   ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
     (shortComplexBiprod_zero S₁ S₂)
 
-/-- The componentwise biproduct as an explicitly constructed short complex. -/
-theorem shortComplexBiprod_eq_mk (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    shortComplexBiprod S₁ S₂ =
-      ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
-        (shortComplexBiprod_zero S₁ S₂) := (rfl)
-
 /-- The left object of the componentwise biproduct of two short complexes. -/
 @[simp]
 theorem shortComplexBiprod_X₁ (S₁ S₂ : ShortComplex C)

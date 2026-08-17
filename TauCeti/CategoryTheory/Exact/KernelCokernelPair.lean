@@ -217,7 +217,9 @@ theorem biprod [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁
     [HasBinaryBiproduct S₁.X₃ S₂.X₃] (h₁ : IsKernelCokernelPair S₁)
     (h₂ : IsKernelCokernelPair S₂) :
     IsKernelCokernelPair (shortComplexBiprod S₁ S₂) := by
-  rw [shortComplexBiprod_eq_mk]
+  change IsKernelCokernelPair
+    (ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
+      (shortComplexBiprod_zero S₁ S₂))
   have := h₁.mono_f
   have := h₂.mono_f
   have := h₁.epi_g

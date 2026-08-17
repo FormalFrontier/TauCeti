@@ -120,7 +120,7 @@ theorem conflation_biprod (E : ExactStructure C) {S₁ S₂ : ShortComplex C}
   E.conflation_of_isKernelCokernelPair_of_isInflation
     ((E.isKernelCokernelPair S₁ hS₁).biprod (E.isKernelCokernelPair S₂ hS₂))
     (by
-      rw [shortComplexBiprod_eq_mk]
+      change E.IsInflation (Limits.biprod.map S₁.f S₂.f)
       exact E.isInflation_biprod (E.isInflation_f hS₁) (E.isInflation_f hS₂))
 
 end ExactStructure
