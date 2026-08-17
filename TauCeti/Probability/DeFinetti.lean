@@ -49,7 +49,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
   exchangeable σ-algebra is trivial;
 * `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
   its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
-  point masses with the extreme laws;
+  point masses with the extreme laws and
+  `deFinettiEquiv_convexCombo` / `deFinettiEquiv_symm_convexCombo` giving the affinity in both
+  directions, at the bundled level;
 * `deFinetti_tendsto_empiricalMeasure_apply` — on each fixed measurable set, the mass given by the
   directing measure of an exchangeable process is the almost-sure limit of the empirical
   frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it.

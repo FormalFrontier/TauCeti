@@ -29,6 +29,8 @@ noncomputable section
 
 open MeasureTheory
 
+open scoped ENNReal
+
 namespace TauCeti
 
 namespace Probability
@@ -63,6 +65,15 @@ theorem ExchangeableLaw.measurePreserving_permReindex {ρ : Measure (ℕ → α)
     (hρ : ExchangeableLaw ρ) (π : Equiv.Perm ℕ) :
     MeasurePreserving (permReindex (α := α) π) ρ ρ :=
   ⟨measurable_reindex π, hρ.map_permReindex π⟩
+
+/-- **Exchangeable laws are closed under convex combination**, and more generally under any
+nonnegative linear combination: the defining invariance is an equation between pushforwards, and
+`Measure.map` along the (measurable) reindexing is additive and homogeneous. -/
+theorem ExchangeableLaw.smul_add_smul {ρ₁ ρ₂ : Measure (ℕ → α)} (h₁ : ExchangeableLaw ρ₁)
+    (h₂ : ExchangeableLaw ρ₂) (a b : ℝ≥0∞) : ExchangeableLaw (a • ρ₁ + b • ρ₂) := fun π => by
+  have hmeas : Measurable (permReindex (α := α) π) := measurable_reindex π
+  rw [Measure.map_add _ _ hmeas, Measure.map_smul, Measure.map_smul,
+    h₁.map_permReindex π, h₂.map_permReindex π]
 
 /-- Path-law exchangeability is equivalently measure preservation by every time permutation. -/
 theorem exchangeableLaw_iff_forall_measurePreserving_permReindex {ρ : Measure (ℕ → α)} :

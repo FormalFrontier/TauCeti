@@ -8,7 +8,7 @@ module
 public import TauCeti.MeasureTheory.Measure.ProductKernel
 import TauCeti.MeasureTheory.Measure.GiryMonad
 import TauCeti.Probability.Moments.CompactDeterminacy
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 
 /-!
 # The mixing measure is identified by the i.i.d. mixture
