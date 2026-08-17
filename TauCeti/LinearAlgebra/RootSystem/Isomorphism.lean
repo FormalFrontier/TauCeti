@@ -76,7 +76,7 @@ a simple root, so consumers do not have to unfold that construction. -/
 
 /-- The covariant inverse coweight equivalence constructed from equal Cartan matrices sends a
 chosen simple coroot to the simple coroot selected by the supplied relabelling. -/
-@[simp] theorem equivOfCartanMatrixEq_coweightEquiv_symm_coroot
+@[simp] theorem equivOfCartanMatrixEq_coweightEquiv_symm_apply_coroot
     (b : P.Base) (b₂ : P₂.Base) (e : b.support ≃ b₂.support)
     (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
     (i : b.support) :
