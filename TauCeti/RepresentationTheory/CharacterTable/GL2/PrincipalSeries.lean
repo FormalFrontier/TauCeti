@@ -59,7 +59,9 @@ numbers, and neither does its bundled form `TauCeti.GL2BorelRep`, which is there
 `CommRing F`; the field and finiteness hypotheses enter only with `TauCeti.GL2PrincipalSeries`,
 where they supply the finite index that makes induction finite-dimensional.
 
-`F` is in `Type`, not in `Type u`. This is forced by induction, not chosen: an object of
+Only the principal series restricts `F` to `Type`; everything up to and including
+`TauCeti.GL2BorelRep` is universe-polymorphic in `F`, since `FDRep ℂ G` accepts a group in any
+universe. The restriction on the principal series is forced by induction, not chosen: an object of
 `FDRep ℂ G` carries a module in the universe of `ℂ`, namely `Type`, since
 `FDRep R G = Action (FGModuleCat.{u} R) G` for `R : Type u`, whereas the induced representation
 `(ℂ[G] ⊗[ℂ] A)_B` built by `TauCeti.indFDRep` lives in the universe of `G`. So induction into
@@ -190,7 +192,7 @@ end GL2Borel
 
 section CommRing
 
-variable (F : Type) [CommRing F]
+variable (F : Type*) [CommRing F]
 
 /-- **The one-dimensional representation `α ⊗ β` of the Borel subgroup**, bundled as an object of
 `FDRep ℂ B`, which is the shape parabolic induction consumes. -/
