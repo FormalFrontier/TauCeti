@@ -183,8 +183,7 @@ theorem measurable_empiricalPopulation :
     Measurable (empiricalPopulation : (κ → α) → ProbabilityMeasure α) := by
   apply Measurable.subtype_mk
   refine Measure.measurable_of_measurable_coe _ fun s hs => ?_
-  change Measurable fun x : κ → α => (empiricalPopulation x : Measure α) s
-  simp_rw [empiricalPopulation_apply hs]
+  simp_rw [← empiricalPopulation_toMeasure, empiricalPopulation_apply hs]
   fun_prop
 
 end FinitePopulation

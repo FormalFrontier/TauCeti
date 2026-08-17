@@ -95,7 +95,7 @@ def sampleWithReplacement (ρ : Measure (κ → α)) : Measure (ι → α) :=
   ρ.bind fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure
 
 /-- The product-measure mixture defining sampling with replacement is a measurable kernel. -/
-theorem aemeasurable_pi_empiricalPopulation (ρ : Measure (κ → α)) :
+private theorem aemeasurable_pi_empiricalPopulation (ρ : Measure (κ → α)) :
     AEMeasurable
       (fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure) ρ :=
   (TauCeti.MeasureTheory.measurable_probabilityMeasure_pi_toMeasure
