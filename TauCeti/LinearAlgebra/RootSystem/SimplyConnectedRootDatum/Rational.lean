@@ -16,8 +16,10 @@ public section
 `TauCeti.DynkinType.simplyConnectedRootDatum` pins one integral root datum per valid Dynkin type,
 on the lattices `Fin t.rank → ℤ`. The constructions which build a semisimple Lie algebra out of a
 root system want instead a root *system* over a field of characteristic zero: the roots must span
-the ambient space, which they never do over the simply connected character lattice, since that
-lattice is the weight lattice and the roots only span the root lattice inside it.
+the ambient space, which they do not in general over the simply connected character lattice, since
+that lattice is the weight lattice and the roots only span the root lattice inside it. The two
+lattices agree exactly when the Cartan matrix is unimodular, so integrally the roots do span for
+`E₈`, `F₄` and `G₂`, and fail to span for every other valid type.
 
 This file base-changes the pinned datum to `ℚ`, using `TauCeti.rootPairingBaseChange`, and proves
 that the result is a genuine root system: the roots span, because the `t.rank` simple roots are
@@ -56,7 +58,7 @@ root-system input of the Chevalley basis in Layer 9, "pinned Chevalley--Demazure
 
 namespace TauCeti.DynkinType
 
-open Set
+open _root_.Matrix Set
 open Submodule (span)
 
 noncomputable section
@@ -93,6 +95,11 @@ def rationalBase : (t.rationalRootSystem ht).Base :=
     (t.rationalRootSystem ht).reflectionPerm = (t.simplyConnectedRootDatum ht).reflectionPerm :=
   reflectionPerm_rootPairingBaseChange ..
 
+/-- The pairing of the rational system is the dot product of `Fin t.rank → ℚ` with itself. -/
+@[simp] theorem toLinearMap_rationalRootSystem (x y : Fin t.rank → ℚ) :
+    (t.rationalRootSystem ht).toLinearMap x y = x ⬝ᵥ y :=
+  toLinearMap_rootPairingBaseChange ..
+
 @[simp] theorem pairing_rationalRootSystem (i j : Fin t.numRoots) :
     (t.rationalRootSystem ht).pairing i j = ((t.simplyConnectedRootDatum ht).pairing i j : ℚ) := by
   rw [rationalRootSystem, pairing_rootPairingBaseChange]
@@ -120,7 +127,9 @@ theorem span_range_coroot_rationalRootSystem_eq_top :
 
 /-- The simple roots of the rational system are `t.rank` linearly independent vectors in a space of
 dimension `t.rank`, so the roots span the rational character space. This is the statement which
-fails over `ℤ`: there the roots span only the root lattice inside the weight lattice. -/
+fails integrally outside the unimodular types `E₈`, `F₄` and `G₂`: over `ℤ` the roots span only the
+root lattice, which is a proper sublattice of the weight lattice whenever the Cartan matrix has
+determinant other than `1`. -/
 theorem span_range_root_rationalRootSystem_eq_top :
     span ℚ (range (t.rationalRootSystem ht).root) = ⊤ := by
   have hli : LinearIndependent ℚ fun i : ((t.rationalBase ht).support : Finset _) =>

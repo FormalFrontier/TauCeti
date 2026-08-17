@@ -179,7 +179,7 @@ def rootPairingBaseChange : RootPairing ι S (κ → S) (κ → S) where
     (rootPairingBaseChange S P hP).reflectionPerm = P.reflectionPerm :=
   (rfl)
 
-theorem toLinearMap_rootPairingBaseChange (x y : κ → S) :
+@[simp] theorem toLinearMap_rootPairingBaseChange (x y : κ → S) :
     (rootPairingBaseChange S P hP).toLinearMap x y = x ⬝ᵥ y :=
   (rfl)
 

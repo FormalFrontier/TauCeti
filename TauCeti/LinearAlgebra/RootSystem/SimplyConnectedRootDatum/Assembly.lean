@@ -406,43 +406,36 @@ coordinates, uniformly in the Dynkin type. -/
 theorem toLinearMap_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid)
     (x y : Fin t.rank → ℤ) :
     (t.simplyConnectedRootDatum ht).toLinearMap x y = x ⬝ᵥ y := by
-  -- As with the entrywise pinning above, each branch only rewrites the dispatcher into its family
-  -- datum and applies that family's own pairing equation.
+  -- Unlike the entrywise pinning above, no index is retained in a dependent motive here: the case
+  -- split refines `t.rank` on a constructor, so `x` and `y` already have the family's index type.
+  -- Each branch therefore just rewrites the dispatcher into its family datum and applies that
+  -- family's own pairing equation.
   cases t with
   | A n =>
-    change Fin n → ℤ at x y
     rw [simplyConnectedRootDatum_A]
     exact toLinearMap_typeASimplyConnectedRootDatum x y
   | B n =>
-    change Fin n → ℤ at x y
     rw [simplyConnectedRootDatum_B]
     exact toLinearMap_typeBSimplyConnectedRootDatum x y
   | C n =>
-    change Fin n → ℤ at x y
     rw [simplyConnectedRootDatum_C]
     exact toLinearMap_typeCSimplyConnectedRootDatum x y
   | D n =>
-    change Fin n → ℤ at x y
     rw [simplyConnectedRootDatum_D]
     exact toLinearMap_typeDSimplyConnectedRootDatum (valid_D.mp ht) x y
   | E6 =>
-    change Fin 6 → ℤ at x y
     rw [simplyConnectedRootDatum_E6]
     exact e6SimplyConnectedRootDatum_toLinearMap x y
   | E7 =>
-    change Fin 7 → ℤ at x y
     rw [simplyConnectedRootDatum_E7]
     exact e7SimplyConnectedRootDatum_toLinearMap_apply x y
   | E8 =>
-    change Fin 8 → ℤ at x y
     rw [simplyConnectedRootDatum_E8]
     exact e8SimplyConnectedRootDatum_toLinearMap_apply x y
   | F4 =>
-    change Fin 4 → ℤ at x y
     rw [simplyConnectedRootDatum_F4]
     exact f4SimplyConnectedRootDatum_toLinearMap_apply_apply x y
   | G2 =>
-    change Fin 2 → ℤ at x y
     rw [simplyConnectedRootDatum_G2]
     exact g2SimplyConnectedRootDatum_toLinearMap x y
 
