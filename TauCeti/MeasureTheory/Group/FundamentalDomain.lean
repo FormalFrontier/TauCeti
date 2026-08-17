@@ -2,12 +2,6 @@
 Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
-
-## References
-
-* The AINTLIB `LeanModularForms` project,
-  <https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>
-  (`Modularforms/PeterssonLevelN.lean`)
 -/
 module
 
@@ -37,9 +31,9 @@ union.
   `g₂ • D` of an `H`-fundamental domain are a.e. disjoint whenever `g₁ ≠ g₂` and
   `g₁⁻¹ * g₂ ∈ H` (needing only quasi-measure-preservation of the one translation).
 
-Ported from the AINTLIB `LeanModularForms` project
-(`LeanModularForms/Modularforms/PeterssonLevelN.lean`, measure-theory section), as a
-prerequisite for fundamental domains of congruence subgroups.
+Ported from the [AINTLIB `LeanModularForms` project](https://github.com/CBirkbeck/AINTLIB),
+`LeanModularForms/Modularforms/PeterssonLevelN.lean` (measure-theory section), as a prerequisite
+for fundamental domains of congruence subgroups.
 -/
 
 public section
