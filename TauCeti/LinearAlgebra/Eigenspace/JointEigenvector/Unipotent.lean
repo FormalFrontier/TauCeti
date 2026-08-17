@@ -15,7 +15,7 @@ A unipotent automorphism has only the eigenvalue one.  Consequently, the joint e
 commuting family of unipotent automorphisms is fixed by every member of the family.  We record both
 the resulting common fixed vector and the one-dimensional fixed submodule that it spans.
 
-For a representation of a commutative group, commutativity of the image is automatic.  The final
+For a representation of a commutative monoid, commutativity of the image is automatic.  The final
 two results therefore give the fixed-vector and fixed-line forms used as the abelian base case in
 the fixed-line induction for the Lie--Kolchin theorem.
 
@@ -25,7 +25,7 @@ the fixed-line induction for the Lie--Kolchin theorem.
   unipotent automorphisms of a nonzero finite-dimensional space has a common nonzero fixed vector.
 * `TauCeti.exists_fixedLine_of_pairwise_commute_of_isUnipotent`: such a family fixes a
   one-dimensional submodule pointwise.
-* `TauCeti.exists_fixedLine_of_isUnipotent`: a unipotent representation of a commutative group has
+* `TauCeti.exists_fixedLine_of_isUnipotent`: a unipotent representation of a commutative monoid has
   a pointwise-fixed line.
 
 ## References
@@ -83,9 +83,9 @@ theorem exists_fixedLine_of_pairwise_commute_of_isUnipotent [FiniteDimensional K
   obtain ⟨a, rfl⟩ := hx
   simp [hfixed]
 
-variable {G : Type w} [CommGroup G]
+variable {G : Type w} [CommMonoid G]
 
-/-- A unipotent representation of a commutative group on a nonzero finite-dimensional vector space
+/-- A unipotent representation of a commutative monoid on a nonzero finite-dimensional vector space
 has a common nonzero fixed vector. -/
 theorem exists_common_fixedVector_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
     (ρ : G →* GeneralLinearGroup K V)
@@ -95,7 +95,7 @@ theorem exists_common_fixedVector_of_isUnipotent [FiniteDimensional K V] [Nontri
   intro g h _
   exact (ρ.map_mul g h).symm.trans ((congrArg ρ (mul_comm g h)).trans (ρ.map_mul h g))
 
-/-- A unipotent representation of a commutative group on a nonzero finite-dimensional vector space
+/-- A unipotent representation of a commutative monoid on a nonzero finite-dimensional vector space
 fixes a one-dimensional submodule pointwise. -/
 theorem exists_fixedLine_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
     (ρ : G →* GeneralLinearGroup K V)

@@ -60,9 +60,9 @@ theorem IsUnipotent.maxGenEigenspace_one_eq_top {g : GeneralLinearGroup K V}
 
 end CommRing
 
-section Field
+section IsDomain
 
-variable [Field K] [AddCommGroup V] [Module K V]
+variable [CommRing K] [IsDomain K] [AddCommGroup V] [Module K V] [Module.IsTorsionFree K V]
 
 /-- Every eigenvalue of a unipotent automorphism is one. -/
 theorem IsUnipotent.eigenvalue_eq_one {g : GeneralLinearGroup K V}
@@ -81,7 +81,7 @@ theorem IsUnipotent.eigenvalue_eq_one {g : GeneralLinearGroup K V}
         (ρ := (1 : K)) (μ := μ - 1)).mpr hshift
   exact sub_eq_zero.mp (hsub.isNilpotent_of_isNilpotent hg).eq_zero
 
-end Field
+end IsDomain
 
 end GeneralLinearGroup
 
