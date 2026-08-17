@@ -27,7 +27,7 @@ by a pair of such maps. That identification is not proved here.
 ## Main results
 
 * `MeasureTheory.Measure.exists_measurePreserving_from_unitInterval` — a measure-preserving
-  `f : I → Ω` onto any standard Borel probability space.
+  `f : I → Ω` realizing any standard-Borel probability law.
 
 ## Implementation
 
