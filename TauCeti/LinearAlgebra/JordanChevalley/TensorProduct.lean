@@ -38,7 +38,6 @@ Tannakian reconstruction.
 
 public section
 
-open LinearMap
 open scoped TensorProduct
 
 namespace LinearMap.GeneralLinearGroup

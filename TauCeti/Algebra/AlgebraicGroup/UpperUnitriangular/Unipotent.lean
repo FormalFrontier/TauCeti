@@ -42,7 +42,7 @@ direction of the roadmap's upper-unitriangular embedding characterization.
 
 public section
 
-open LinearMap Module WithConv
+open Module WithConv
 open scoped TensorProduct
 
 namespace TauCeti.UpperUnitriangular
@@ -211,10 +211,10 @@ theorem congrLinearEquiv_pointsAction_eq_toLin
 /-- The standard representation sends every point of `U_n` to a unipotent automorphism. -/
 theorem isUnipotent_pointsAction
     (g : WithConv (coordinateHopfAlgebra R (Fin n) →ₐ[R] A)) :
-    GeneralLinearGroup.IsUnipotent
+    LinearMap.GeneralLinearGroup.IsUnipotent
       (LinearMap.GeneralLinearGroup.ofLinearEquiv
         (Comodule.pointsAction (Fin n → R) g)) := by
-  apply (GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff
+  apply (LinearMap.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff
     (standardScalarExtensionEquiv R n)
     (LinearMap.GeneralLinearGroup.ofLinearEquiv
       (Comodule.pointsAction (Fin n → R) g))).mp

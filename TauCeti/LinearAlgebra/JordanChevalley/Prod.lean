@@ -31,7 +31,7 @@ ReductiveGroups roadmap.
 
 public section
 
-open LinearMap Polynomial
+open Polynomial
 
 namespace LinearMap.GeneralLinearGroup
 

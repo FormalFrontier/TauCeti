@@ -22,8 +22,6 @@ compatibility with the group operations.
 
 public section
 
-open LinearMap
-
 namespace LinearMap.GeneralLinearGroup
 
 universe u v w

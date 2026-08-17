@@ -23,8 +23,6 @@ different modules, so the relation is not a statement inside one monoid and Math
 
 public section
 
-open LinearMap
-
 namespace LinearMap.GeneralLinearGroup
 
 universe u v w

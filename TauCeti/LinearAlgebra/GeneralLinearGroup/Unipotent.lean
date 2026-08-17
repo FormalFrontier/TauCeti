@@ -56,8 +56,6 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 public section
 
-open LinearMap
-
 namespace LinearMap.GeneralLinearGroup
 
 open _root_.Module

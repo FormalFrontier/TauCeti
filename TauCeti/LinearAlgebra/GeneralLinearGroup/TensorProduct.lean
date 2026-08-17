@@ -22,7 +22,6 @@ its compatibility with multiplication, inverses, and pure tensors.
 
 public section
 
-open LinearMap
 open scoped TensorProduct
 
 namespace LinearMap.GeneralLinearGroup

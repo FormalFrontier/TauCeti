@@ -47,8 +47,6 @@ through faithful representations of affine algebraic groups.
 
 public section
 
-open LinearMap
-
 namespace LinearMap.GeneralLinearGroup
 
 open Module

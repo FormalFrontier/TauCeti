@@ -46,7 +46,7 @@ representation of an affine algebraic group.
 
 public section
 
-open LinearMap Polynomial
+open Polynomial
 
 namespace LinearMap.GeneralLinearGroup
 
