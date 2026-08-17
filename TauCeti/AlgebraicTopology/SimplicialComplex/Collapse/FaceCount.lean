@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,8 +30,6 @@ Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 3.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace PreAbstractSimplicialComplex
 
@@ -111,4 +110,3 @@ end CollapsesTo
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

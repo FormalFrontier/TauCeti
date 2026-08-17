@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.Positive
 
 public section
 
@@ -42,13 +44,17 @@ also make the reflection-stability axioms of `RootPairing` decidable finite calc
 * `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2` pins that numbering
   entrywise: on the two base indices the Cartan integers are the Bourbaki matrix `!![2, -1; -3, 2]`.
 * `TauCeti.DynkinType.hasCartanType_g2SimplyConnectedRootDatum` identifies its Cartan type as `G2`.
+* `TauCeti.DynkinType.ncard_posRoots_g2SimplyConnectedRootDatum` counts its positive roots: there
+  are six of them, for any base.
 
 ## References
 
 The coordinates and numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*,
 Plate IX. This is the `G2` branch of Layer 6 in
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, following the target signatures in
-`TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`. The positive-root count is the
+corresponding clause of the `G₂` worked example in the "Worked examples (acceptance criteria)"
+section of that README; it agrees with the count in Bourbaki, Plate IX.
 -/
 
 namespace TauCeti
@@ -70,6 +76,18 @@ def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
   inj' := by decide
+
+/-- The simple roots of `G2` sit at the first two indices, where they are the rows of its
+Bourbaki-numbered Cartan matrix. -/
+@[simp] lemma g2Root_castAdd (i : Fin 2) :
+    g2Root (Fin.castAdd 10 i) = CartanMatrix.G₂ᵀ i := by
+  fin_cases i <;> decide
+
+/-- The simple coroots of `G2` sit at the first two indices, where they are the standard basis of
+the cocharacter lattice. -/
+@[simp] lemma g2Coroot_castAdd (i : Fin 2) :
+    g2Coroot (Fin.castAdd 10 i) = Pi.single i 1 := by
+  fin_cases i <;> decide
 
 /-- The permutation table for reflection in each of the twelve `G2` roots. -/
 private def g2ReflectionIndex : Fin 12 → Fin 12 → Fin 12 := ![
@@ -281,6 +299,14 @@ theorem hasCartanType_g2SimplyConnectedRootDatum :
     simp only [RootPairing.Base.algebraMap_cartanMatrixIn_apply,
       g2SimplyConnectedRootDatum_pairing, cartanMatrix_G2]
     decide
+
+/-- **The pinned root datum of type `G₂` has six positive roots.** Exactly half of its twelve roots
+are positive, for any base. -/
+@[simp]
+theorem ncard_posRoots_g2SimplyConnectedRootDatum (b : g2SimplyConnectedRootDatum.Base) :
+    (posRoots g2SimplyConnectedRootDatum b).ncard = 6 := by
+  rw [ncard_posRoots_eq_natCard_div_two]
+  norm_num
 
 end DynkinType
 

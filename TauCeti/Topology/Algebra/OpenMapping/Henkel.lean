@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -32,7 +33,7 @@ neighbourhood, and feed the result to the group-theoretic criterion for openness
 
 * `TauCeti.HasZeroSequenceOfUnits.isOpenMap`: Henkel's open mapping theorem.
 * `TauCeti.HasZeroSequenceOfUnits.isQuotientMap`: the same map induces the quotient topology on
-  its target — the form the strict-morphism material consumes, where what matters is not that
+  its target — the form the strict-morphism material will consume, where what matters is not that
   images are open but that the target's topology is determined by the source's.
 
 Mathlib's `MonoidHom.isOpenMap_of_sigmaCompact` proves openness for a continuous surjection from
@@ -45,7 +46,7 @@ asks it to be σ-compact, and neither of those conditions implies the other.
 
 * L. Henkel, *An Open Mapping Theorem for rings which have a zero sequence of units*,
   [arXiv:1407.5647](https://arxiv.org/abs/1407.5647).
-* T. Wedhorn, *Adic Spaces*, Proposition 6.16.
+* T. Wedhorn, *Adic Spaces*, Theorem 6.16.
 -/
 
 public section
@@ -94,7 +95,7 @@ its composite with `f` is.
 The quotient conclusion needs `f` continuous everywhere, but that is not an extra hypothesis: an
 additive homomorphism out of a topological group is continuous as soon as it is continuous at `0`
 (`continuous_of_continuousAt_zero`), so `hfc` is the same assumption the open-mapping theorem
-makes. This is the shape Wedhorn's strict morphisms use. -/
+makes. This is the shape Wedhorn's strict morphisms will use. -/
 theorem HasZeroSequenceOfUnits.isQuotientMap {F : Type*} [FunLike F M N]
     [MulActionHomClass F A M N] [AddMonoidHomClass F M N] (f : F) (hf : Function.Surjective f)
     (hfc : ContinuousAt (f : M → N) 0) (hc : ∀ x : M, ContinuousAt (fun a : A ↦ a • x) 0) :

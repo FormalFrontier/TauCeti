@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -40,7 +41,10 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
   met by the pinned data written in a coordinate potential.
 
 Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
-by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`.
+by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`. The symmetry
+and reflection preservation of the quadratic form carried by the Cartan matrix are supplied by
+`TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self` in
+`TauCeti/LinearAlgebra/Matrix/Gram.lean`.
 -/
 
 namespace TauCeti
@@ -78,6 +82,23 @@ theorem linearIndepOn_simpleSupport {R M : Type*} [Semiring R] [AddCommMonoid M]
   exact (linearIndepOn_range_iff he f).mpr h
 
 end SimpleSupport
+
+section SimpleSupportFin
+
+variable {n N : ℕ} {e : Fin n → Fin N}
+
+/-- **A pinned support numbered in order is an initial segment.** When the simple index map sends
+`i` to the root index `i`, membership in the support is the bound `k < n` on the index. -/
+theorem mem_simpleSupport_iff_lt (he : Injective e) (h : ∀ i, ((e i : Fin N) : ℕ) = i)
+    {k : Fin N} : k ∈ simpleSupport he ↔ (k : ℕ) < n := by
+  rw [mem_simpleSupport]
+  refine ⟨?_, fun hk => ⟨⟨k, hk⟩, Fin.ext (h ⟨k, hk⟩)⟩⟩
+  rintro ⟨i, rfl⟩
+  rw [h i]
+  exact i.isLt
+
+end SimpleSupportFin
+
 
 /-! ## Combinations with coefficients of one sign -/
 

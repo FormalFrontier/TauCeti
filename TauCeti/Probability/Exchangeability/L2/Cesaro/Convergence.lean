@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -104,20 +105,7 @@ private theorem dist_blockAverage_toLp_le_of_disjoint {μ : Measure Ω}
               (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n :=
         add_le_add le_rfl hfrac
       _ = 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n := by ring
-  have hnonneg : 0 ≤ 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / (n : ℝ) := by positivity
-  have hdist_nonneg :
-      0 ≤ dist
-        ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
-        (hB_L2.toLp B) :=
-    dist_nonneg
-  have hdist_le_sqrt :
-      dist
-          ((memLp_blockAverage k fun i => hY_L2 (k i)).toLp (blockAverage Y k))
-          (hB_L2.toLp B) ≤
-        Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n) := by
-    nlinarith [hdist_nonneg, Real.sqrt_nonneg
-      (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / n), Real.sq_sqrt hnonneg]
-  simpa only [B] using hdist_le_sqrt
+  simpa only [B] using Real.le_sqrt_of_sq_le hsq
 
 /-- Compare two block averages in `L²` through a longer block disjoint from both. -/
 private theorem dist_blockAverages_toLp_le_via_disjoint {μ : Measure Ω}

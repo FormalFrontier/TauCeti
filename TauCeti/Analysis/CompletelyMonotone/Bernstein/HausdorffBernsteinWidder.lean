@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,7 +30,7 @@ uniqueness both live in `Laplace/Representation.lean`.
 
 ## Main declarations
 
-* `TauCeti.exists_representsLaplace_of_isCompletelyMonotoneOnIci`
+* `TauCeti.exists_representsLaplace_of_isContinuousCompletelyMonotoneOnIoi`
 * `TauCeti.hausdorff_bernstein_widder`, `TauCeti.hausdorff_bernstein_widder_existsUnique`
 
 ## References
@@ -288,7 +289,7 @@ private lemma isTightMeasureSet_range_of_representsLaplace_shift
 /-- The representing measure of the positive shift `t ↦ f (t + δ)` has total mass
 `f δ ≤ f 0`. -/
 private lemma measure_univ_le_of_representsLaplace_shift
-    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) {δ : ℝ} (hδ : 0 ≤ δ)
+    {f : ℝ → ℝ} (hf : IsContinuousCompletelyMonotoneOnIoi f) {δ : ℝ} (hδ : 0 ≤ δ)
     {μ : Measure ℝ≥0} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ))) :
     μ univ ≤ ENNReal.ofReal (f 0) := by
   have := hμ.isFiniteMeasure
@@ -302,8 +303,8 @@ private lemma measure_univ_le_of_representsLaplace_shift
 /-- **Existence half of the Hausdorff--Bernstein--Widder theorem**: a function continuous on
 `[0, ∞)` and completely monotone on `(0, ∞)` is the Laplace transform of a finite positive
 measure on `ℝ≥0`. -/
-theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
-    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) :
+theorem exists_representsLaplace_of_isContinuousCompletelyMonotoneOnIoi
+    {f : ℝ → ℝ} (hf : IsContinuousCompletelyMonotoneOnIoi f) :
     ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   classical
   -- Stage 1: the positive null sequence of shifts `aₙ = 1/(n+1)`.
@@ -353,15 +354,15 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
 A function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)` if and only if it is
 the Laplace transform of a finite positive measure on `ℝ≥0`. -/
 theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
-    IsCompletelyMonotoneOnIci f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
+    IsContinuousCompletelyMonotoneOnIoi f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   constructor
-  · exact exists_representsLaplace_of_isCompletelyMonotoneOnIci
+  · exact exists_representsLaplace_of_isContinuousCompletelyMonotoneOnIoi
   · rintro ⟨μ, hμ⟩
-    exact hμ.isCompletelyMonotoneOnIci
+    exact hμ.isContinuousCompletelyMonotoneOnIoi
 
 /-- Unique-existence form of the Hausdorff--Bernstein--Widder theorem. -/
 theorem hausdorff_bernstein_widder_existsUnique (f : ℝ → ℝ) :
-    IsCompletelyMonotoneOnIci f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace μ f := by
+    IsContinuousCompletelyMonotoneOnIoi f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   rw [hausdorff_bernstein_widder]
   exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => hν.unique hμ⟩,
     fun ⟨μ, hμ, _⟩ => ⟨μ, hμ⟩⟩

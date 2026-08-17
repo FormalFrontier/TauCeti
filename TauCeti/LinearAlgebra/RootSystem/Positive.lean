@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,6 +35,8 @@ positive root is a nonnegative integer combination of the simple coroots.
 ## Main results
 
 * `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
+* `TauCeti.ncard_posRoots_eq_natCard_div_two` says that, for a finite root index type, exactly
+  half of the roots are positive.
 * `TauCeti.add_mem_posRoots` and `TauCeti.add_mem_negRoots` say each of the two sets is closed
   under those sums of its members that are again roots, and
   `TauCeti.reflectionPerm_self_notMem_posRoots`, `TauCeti.reflectionPerm_self_notMem_negRoots` say
@@ -84,6 +87,12 @@ universe u v w x
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N)
+
+/-- Root negation is an involution of the root index type: it is the `InvolutiveNeg` supplied by
+`RootPairing.indexNeg`, written through the self-reflection permutation. -/
+lemma reflectionPerm_self_involutive : Function.Involutive fun i : ι ↦ P.reflectionPerm i i := by
+  let := P.indexNeg
+  simpa only [← RootPairing.indexNeg_neg] using neg_involutive
 
 /-- The positive roots relative to a base. -/
 def posRoots [CharZero R] (b : P.Base) : Set ι := {i | b.IsPos i}
@@ -329,10 +338,7 @@ theorem image_reflectionPerm_self_posRoots :
 /-- Root negation exchanges negative and positive roots. -/
 theorem image_reflectionPerm_self_negRoots :
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b = posRoots P b := by
-  let := P.indexNeg
-  have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
-    intro i
-    simp only [← RootPairing.indexNeg_neg, neg_neg]
+  have hinv := reflectionPerm_self_involutive P
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
         (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_eq_compl]
@@ -343,6 +349,37 @@ theorem image_reflectionPerm_self_negRoots :
       ext i
       simp only [Set.mem_compl_iff, mem_negRoots, mem_posRoots]
       tauto
+
+/-! ### The number of positive roots -/
+
+/-- A root pairing has equally many positive and negative roots. Root negation gives the bijection
+between the two sets. -/
+@[simp]
+theorem ncard_negRoots_eq_ncard_posRoots :
+    (negRoots P b).ncard = (posRoots P b).ncard := by
+  rw [← image_reflectionPerm_self_posRoots P b]
+  exact Set.ncard_image_of_injective _ (reflectionPerm_self_involutive P).injective
+
+/-- The numbers of positive and negative roots add up to the total number of roots. -/
+theorem ncard_posRoots_add_ncard_negRoots [Finite ι] :
+    (posRoots P b).ncard + (negRoots P b).ncard = Nat.card ι := by
+  rw [negRoots_eq_compl]
+  exact Set.ncard_add_ncard_compl _
+
+/-- Twice the number of positive roots is the total number of roots. -/
+theorem two_mul_ncard_posRoots [Finite ι] :
+    2 * (posRoots P b).ncard = Nat.card ι := by
+  calc
+    2 * (posRoots P b).ncard =
+        (posRoots P b).ncard + (posRoots P b).ncard := two_mul _
+    _ = (posRoots P b).ncard + (negRoots P b).ncard := by
+      rw [ncard_negRoots_eq_ncard_posRoots P b]
+    _ = Nat.card ι := ncard_posRoots_add_ncard_negRoots P b
+
+/-- Exactly half of a finite root index type consists of positive roots. -/
+theorem ncard_posRoots_eq_natCard_div_two [Finite ι] :
+    (posRoots P b).ncard = Nat.card ι / 2 :=
+  Nat.eq_div_of_mul_eq_right (by norm_num) (two_mul_ncard_posRoots P b)
 
 /-- Reflecting a positive root in a simple root never produces that simple root: the only root
 sent to a simple root `αᵢ` by `sᵢ` is `-αᵢ`, which is negative. -/

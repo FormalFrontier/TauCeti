@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -17,7 +18,9 @@ and morphism-level constructions into a functor on `TauCeti.CoveringSpace X`.
 
 The resulting functor is faithful: a map over `X` is determined by all of its restrictions to the
 fibres. Over a locally path-connected base, its fullness is proved in
-`TauCeti.Topology.Covering.Monodromy.Full`; reconstruction and the characterization of the
+`TauCeti.Topology.Covering.Monodromy.Full`, and its restriction from connected covers to
+fibrewise pretransitive actions is packaged in
+`TauCeti.Topology.Covering.Monodromy.Connected`. Reconstruction and the characterization of the
 essential image are the remaining topological content of the classification of covering spaces by
 fundamental-groupoid actions.
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,6 +34,9 @@ orderings of an unordered tuple differ by a permutation.
 
 ## Main results
 
+* `SymmetricPower.map_basis_symmetricPower_of_apply_basis`: an endomorphism diagonal in a basis is
+  diagonal in the induced basis of the symmetric power, with eigenvalue the product of the
+  eigenvalues listed by the index.
 * `SymmetricPower.finrank_eq`: the rank of `Sym[R]^n M` is `Nat.multichoose (finrank R M) n`.
 * `SymmetricPower.trace_map_of_apply_basis`: the trace on `Sym[R]^n M` of an endomorphism that is
   diagonal in a basis is the sum, over the unordered `n`-tuples of basis indices, of the product
@@ -171,6 +175,23 @@ theorem _root_.Module.Basis.symmetricPower_apply (s : Sym κ n) :
     b.symmetricPower n s = tprodOfSym R b s :=
   linearEquivFinsupp_symm_single b s
 
+/-- **An endomorphism diagonal in a basis is diagonal in the induced basis of the symmetric
+power**: the basis vector indexed by `s` is an eigenvector, with eigenvalue the product of the
+eigenvalues listed by `s`.  Summing these eigenvalues gives the trace,
+`SymmetricPower.trace_map_of_apply_basis`. -/
+theorem map_basis_symmetricPower_of_apply_basis (f : M →ₗ[R] M) (a : κ → R)
+    (hf : ∀ i, f (b i) = a i • b i) (s : Sym κ n) :
+    map (ι := Fin n) f (b.symmetricPower n s) =
+      ((s : Multiset κ).map a).prod • b.symmetricPower n s := by
+  have hfb : (fun i => f (b (orderOfSym s i))) =
+      fun i => a (orderOfSym s i) • b (orderOfSym s i) := funext fun i => hf _
+  conv_lhs => rw [Basis.symmetricPower_apply, tprodOfSym, map_tprod]
+  rw [hfb, (tprod R).map_smul_univ, Basis.symmetricPower_apply, tprodOfSym]
+  congr 1
+  conv_rhs => rw [← ofFn_orderOfSym s]
+  rw [TauCeti.Sym.coe_ofFn, Multiset.map_coe, List.map_ofFn, Multiset.prod_coe,
+    List.prod_ofFn, Function.comp_def]
+
 /-! ### Freeness and rank -/
 
 /-- A symmetric power of a free module is free, on the unordered tuples of basis indices. -/
@@ -201,21 +222,11 @@ theorem trace_map_of_apply_basis [Fintype κ] [DecidableEq κ] (b : Basis κ R M
     LinearMap.trace R (Sym[R]^n M) (map (ι := Fin n) f) =
       ∑ s : Sym κ n, ((s : Multiset κ).map a).prod := by
   classical
-  have hdiag : ∀ s : Sym κ n, map (ι := Fin n) f (b.symmetricPower n s) =
-      ((s : Multiset κ).map a).prod • b.symmetricPower n s := by
-    intro s
-    have hfb : (fun i => f (b (orderOfSym s i))) =
-        fun i => a (orderOfSym s i) • b (orderOfSym s i) := funext fun i => hf _
-    conv_lhs => rw [Basis.symmetricPower_apply, tprodOfSym, map_tprod]
-    rw [hfb, (tprod R).map_smul_univ, Basis.symmetricPower_apply, tprodOfSym]
-    congr 1
-    conv_rhs => rw [← ofFn_orderOfSym s]
-    rw [TauCeti.Sym.coe_ofFn, Multiset.map_coe, List.map_ofFn, Multiset.prod_coe,
-      List.prod_ofFn, Function.comp_def]
   rw [LinearMap.trace_eq_matrix_trace R (b.symmetricPower n), Matrix.trace]
   refine Finset.sum_congr rfl fun s _ => ?_
-  rw [Matrix.diag_apply, LinearMap.toMatrix_apply, hdiag s, map_smul, Finsupp.smul_apply,
-    Basis.repr_self, Finsupp.single_eq_same, smul_eq_mul, mul_one]
+  rw [Matrix.diag_apply, LinearMap.toMatrix_apply,
+    map_basis_symmetricPower_of_apply_basis b f a hf s,
+    map_smul, Finsupp.smul_apply, Basis.repr_self, Finsupp.single_eq_same, smul_eq_mul, mul_one]
 
 end CommRing
 

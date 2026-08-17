@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -43,7 +44,7 @@ Huber namespace, alongside `TauCeti/RingTheory/Localization/DenIdeal.lean`.
 inside the Huber development. They are generalised here to an arbitrary `IsLocalization.Away`
 over a commutative semiring, linked to Mathlib's `IsLocalization.Away.invSelf`, and moved out of
 the Huber namespace because nothing about them is topological. The topological part of that port
-is `TauCeti/RingTheory/Huber/LocalizationTopology.lean`, which records the same provenance.
+is `TauCeti/RingTheory/Huber/LocalizationTopology/Basic.lean`, which records the same provenance.
 
 ## References
 

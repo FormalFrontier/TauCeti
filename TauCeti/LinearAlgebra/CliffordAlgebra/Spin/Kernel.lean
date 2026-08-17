@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,10 +19,16 @@ contraction and the exterior-algebra basis. Unitarity then restricts the scalar 
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.mem_ker_spinToSpecialOrthogonal_iff`: a Spin element is in the kernel
+* `CliffordAlgebra.mem_ker_spinToSpecialOrthogonal_iff`: a Spin element is in the kernel
 exactly when it is `1` or the canonical scalar `-1`.
-* `TauCeti.CliffordAlgebra.card_ker_spinToSpecialOrthogonal`: the kernel of the Spin action on
+* `CliffordAlgebra.card_ker_spinToSpecialOrthogonal`: the kernel of the Spin action on
 the special orthogonal group has cardinality two.
+* `CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal`: the kernel is canonically
+  equivalent to `Multiplicative (ZMod 2)`.
+* `CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal_apply_ofAdd_one`: the chosen
+  generator maps to the scalar `-1`.
+* `CliffordAlgebra.zmodTwoMulEquivKerSpinToSpecialOrthogonal_symm_apply_negOne`: the inverse
+  sends the scalar `-1` to the chosen generator.
 
 ## References
 
@@ -32,9 +39,9 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra
+namespace CliffordAlgebra
 
-namespace TauCeti.CliffordAlgebra
+open TauCeti
 
 universe u v
 
@@ -206,9 +213,9 @@ end spinGroup
 
 end NegOne
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 section Kernel
 
@@ -269,6 +276,47 @@ theorem card_ker_spinToSpecialOrthogonal (hM : 0 < Module.finrank K M)
       exact h
     · simpa [z] using h
 
+/-- The kernel of the Spin action on a positive-dimensional nondegenerate quadratic space over a
+field in which `2` is invertible is canonically the cyclic group of order two, with its generator
+sent to the scalar `-1`. -/
+noncomputable def zmodTwoMulEquivKerSpinToSpecialOrthogonal [Nontrivial M]
+    (Q : QuadraticForm K M) [Invertible (2 : K)]
+    (hQ : Q.Nondegenerate) :
+    Multiplicative (ZMod 2) ≃* MonoidHom.ker (spinToSpecialOrthogonal Q) :=
+  let z : MonoidHom.ker (spinToSpecialOrthogonal Q) :=
+    ⟨spinGroup.negOne Q hQ.ne_zero,
+      spinGroup.negOne_mem_ker_spinToSpecialOrthogonal Q hQ.ne_zero⟩
+  zmodMulEquivOfGenerator (g := z)
+    (fun _ ↦ mem_zpowers_of_prime_card (p := 2)
+      (card_ker_spinToSpecialOrthogonal Module.finrank_pos Q hQ)
+      (fun h ↦ spinGroup.negOne_ne_one Q hQ.ne_zero (congrArg Subtype.val h)))
+    (card_ker_spinToSpecialOrthogonal Module.finrank_pos Q hQ)
+
+/-- The chosen generator of `Multiplicative (ZMod 2)` maps to the scalar `-1` in the Spin
+kernel. -/
+@[simp]
+theorem zmodTwoMulEquivKerSpinToSpecialOrthogonal_apply_ofAdd_one [Nontrivial M]
+    (Q : QuadraticForm K M) [Invertible (2 : K)]
+    (hQ : Q.Nondegenerate) :
+    zmodTwoMulEquivKerSpinToSpecialOrthogonal Q hQ (Multiplicative.ofAdd 1) =
+      ⟨spinGroup.negOne Q hQ.ne_zero,
+        spinGroup.negOne_mem_ker_spinToSpecialOrthogonal Q hQ.ne_zero⟩ := by
+  simp only [zmodTwoMulEquivKerSpinToSpecialOrthogonal,
+    zmodMulEquivOfGenerator_apply_ofAdd_one]
+
+/-- The inverse kernel equivalence sends the scalar `-1` to the chosen generator of
+`Multiplicative (ZMod 2)`. -/
+@[simp]
+theorem zmodTwoMulEquivKerSpinToSpecialOrthogonal_symm_apply_negOne [Nontrivial M]
+    (Q : QuadraticForm K M) [Invertible (2 : K)]
+    (hQ : Q.Nondegenerate) :
+    (zmodTwoMulEquivKerSpinToSpecialOrthogonal Q hQ).symm
+        ⟨spinGroup.negOne Q hQ.ne_zero,
+          spinGroup.negOne_mem_ker_spinToSpecialOrthogonal Q hQ.ne_zero⟩ =
+      Multiplicative.ofAdd 1 := by
+  simp only [zmodTwoMulEquivKerSpinToSpecialOrthogonal,
+    zmodMulEquivOfGenerator_symm_apply_generator]
+
 end Kernel
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

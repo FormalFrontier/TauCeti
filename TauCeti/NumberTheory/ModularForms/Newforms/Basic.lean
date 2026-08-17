@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,10 +25,11 @@ restriction of a lower-level form (`ofLe_mem_cuspFormsOld`).
 The old subspace is stable under the diamond operators, because `V_d` intertwines them:
 `⟨u⟩` at level `N` acts on `V_d f` as `⟨u mod M⟩` acts on `f`
 (`TauCeti.CuspForm.diamondOpCusp_levelRaise`). This is the lemma behind the fixed-nebentypus
-refinement `S_k(N, χ)ⁿᵉʷ = S_k(Γ₁(N))ⁿᵉʷ ⊓ S_k(N, χ)` of Layer 3 of the ModularForms roadmap;
-that refinement additionally needs the diamond operators to be Petersson-unitary, which is not
-proved here, and neither is the stability of the new subspace under the Hecke operators, whose
-action on forms is Layer 2 and does not yet exist.
+refinement `S_k(N, χ)ⁿᵉʷ = S_k(Γ₁(N))ⁿᵉʷ ⊓ S_k(N, χ)` of Layer 3 of the ModularForms roadmap,
+which additionally needs the diamond operators to be Petersson-unitary and is carried out in
+`TauCeti/NumberTheory/ModularForms/Newforms/Nebentypus.lean`. The stability of the new subspace
+under the Hecke operators is still missing: the Hecke action on forms is Layer 2 of that
+roadmap, and does not yet exist.
 
 ## Main definitions
 
@@ -198,6 +200,11 @@ subspace inside `S_k(Γ₁(N))`. -/
 def cuspFormsNew (N : ℕ) [NeZero N] (k : ℤ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   CuspForm.peterssonOrthogonal (cuspFormsOld N k)
+
+/-- Defining equation for the sealed `cuspFormsNew`: it is the Petersson-orthogonal complement
+of the old subspace. -/
+lemma cuspFormsNew_def (N : ℕ) [NeZero N] (k : ℤ) :
+    cuspFormsNew N k = CuspForm.peterssonOrthogonal (cuspFormsOld N k) := (rfl)
 
 /-- **Newness is tested on the level-raises.** A cusp form of level `N` is new exactly when it
 is Petersson-orthogonal to `V_d g` for every cusp form `g` of proper divisor level. -/

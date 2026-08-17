@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -27,9 +28,9 @@ finite module (ReductiveGroups roadmap, Layer 2).
 * `TauCeti.Bialgebra.CotangentSpace`: the augmentation ideal modulo its square.
 * `TauCeti.Bialgebra.cotangentMap`: the universal first-order displacement from
   the identity.
-* `TauCeti.Derivation.cotangentLinearEquiv`: the duality between the cotangent
+* `Derivation.cotangentLinearEquiv`: the duality between the cotangent
   space and counit-valued derivations.
-* `TauCeti.Derivation.tangentScalarExtensionEquiv`: scalar extension of the
+* `Derivation.tangentScalarExtensionEquiv`: scalar extension of the
   cotangent dual when the cotangent space is finite projective.
 
 ## References
@@ -128,7 +129,11 @@ lemma cotangentMap_mul (a b : A) :
 
 end Bialgebra
 
+end TauCeti
+
 namespace Derivation
+
+open TauCeti _root_.Coalgebra TensorProduct
 
 variable {R A B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
   [CommRing B] [Algebra R B]
@@ -154,7 +159,7 @@ private noncomputable def ofCotangentLinearMap
       (f.comp (Bialgebra.cotangentMap R A)))
     fun a b => by
       simp only [LinearMap.comp_apply]
-      rw [Bialgebra.cotangentMap_mul, map_add, map_smul, map_smul]
+      rw [Bialgebra.cotangentMap_mul, map_add, _root_.map_smul, _root_.map_smul]
       apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
       simp only [AlgEquiv.toLinearMap_apply]
       rw [AlgEquiv.apply_symm_apply, map_add, algEquivSelf_smul,
@@ -235,7 +240,7 @@ private noncomputable def cotangentLinearEquivBase :
     ext a
     apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
     simp only [algEquivSelf_ofCotangentLinearMap_apply, LinearMap.smul_apply,
-      RingHom.id_apply, Derivation.smul_apply, map_smul]
+      RingHom.id_apply, Derivation.smul_apply, _root_.map_smul]
 
 private lemma cotangentLinearEquivBase_apply
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
@@ -393,5 +398,3 @@ lemma tangentScalarExtensionEquiv_tmul_apply
     tangentScalarExtensionEquivBase_tmul_apply]
 
 end Derivation
-
-end TauCeti

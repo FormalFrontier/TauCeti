@@ -1,12 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.GroupTheory.OrderOfElement
-public import TauCeti.Combinatorics.Brauer.Boundary
+public import TauCeti.Combinatorics.Brauer.Relabel
 
 /-!
 # Composing Brauer diagrams
@@ -25,6 +25,19 @@ boundary -- and stopping the first time an outer point is reached. That the resu
 perfect matching rests on two identities: the gluing conjugates that permutation into its
 inverse, so walking from the far end of a strand retraces it, and the permutation is a gluing
 followed by a fixed-point-free involution, so a strand cannot return to its own starting point.
+
+Stacking a permutation diagram onto a diagram creates no new strand, because a permutation diagram
+has neither a cap nor a cup: it only renames the boundary points that the strands of the other
+diagram end at, that is, it relabels that boundary in the sense of
+`TauCeti.BrauerDiagram.relabel`. The consequence that Layer 9 of the Schur--Weyl roadmap is after
+is the multiplicativity `TauCeti.composeDiagram_permToBrauer`: stacking two permutation diagrams
+gives the permutation diagram of the product, so `σ ↦ permToBrauer σ` turns the group law of `Sₖ`
+into the multiplication of the Brauer algebra on the diagram basis. That is the sense in which the
+symmetric group sits inside the Brauer algebra: once the loop-weighted multiplication of the
+Brauer algebra is available, this is what will make it restrict to the group algebra `ℂ[Sₖ]` along
+`permToBrauer`, since no loop can close up in the middle when one of the two diagrams has only
+through strands. The middle-loop count itself is built in
+`TauCeti/Combinatorics/Brauer/LoopCount.lean`.
 
 ## Main definitions
 
@@ -49,7 +62,12 @@ followed by a fixed-point-free involution, so a strand cannot return to its own 
 * `TauCeti.BrauerDiagram.composeDiagram_val_inl_eq_inl_capMatching`,
   `TauCeti.BrauerDiagram.composeDiagram_val_inr_eq_inr_cupMatching`: the caps of `D₂` are caps of
   the composite, and the cups of `D₁` are cups of the composite.
-* `TauCeti.composeDiagram_permToBrauer_one_left`,
+* `TauCeti.composeDiagram_permToBrauer_left` and
+  `TauCeti.composeDiagram_permToBrauer_right`: stacking a permutation diagram above or below a
+  diagram relabels that diagram's top or bottom boundary.
+* `TauCeti.composeDiagram_permToBrauer`: stacking permutation diagrams multiplies the
+  permutations.
+* `TauCeti.composeDiagram_permToBrauer_one_left` and
   `TauCeti.composeDiagram_permToBrauer_one_right`: the identity diagram is a two-sided identity
   for stacking.
 
@@ -611,38 +629,75 @@ theorem topThrough_composeDiagram_subset :
 
 end BrauerDiagram
 
-/-- **The identity diagram is a left identity for stacking.** -/
+/-! ### Stacking with a permutation diagram -/
+
+variable (D : BrauerDiagram k) (σ τ : Equiv.Perm (Fin k))
+
+open BrauerDiagram in
+/-- **Stacking a permutation diagram on top relabels the top boundary.** No strand of `D` is
+extended past the middle boundary, because the permutation diagram has no cap: a through strand of
+`D` ending at the middle point `a` is continued by the single strand of `permToBrauer σ` above it,
+which leaves at the top point `σ a`. -/
 @[simp]
-theorem composeDiagram_permToBrauer_one_left (D : BrauerDiagram k) :
-    composeDiagram (permToBrauer 1) D = D := by
+theorem composeDiagram_permToBrauer_left : composeDiagram (permToBrauer σ) D = D.relabel 1 σ := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
   rcases x with i | j
   · rcases h : D.val (Sum.inl i) with i' | a
-    · exact composeDiagram_val_inl_eq_inl_of_cap_lower _ D h
-    · exact composeDiagram_val_inl_eq_inr_of_through (D₁ := permToBrauer 1) (D₂ := D) (j := a) h
-        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl)
-  · rcases h : D.val (Sum.inr j) with i | j'
-    · exact composeDiagram_val_inr_eq_inl_of_through (D₁ := permToBrauer 1) (D₂ := D) (a := j)
-        (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl) h
-    · exact composeDiagram_val_inr_eq_inr_of_cup_lower (D₁ := permToBrauer 1) (D₂ := D) (a := j)
-        (j' := j') (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl) h
-        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl)
+    · rw [composeDiagram_val_inl_eq_inl_of_cap_lower _ D h]
+      simp [h, Equiv.Perm.one_def]
+    · rw [composeDiagram_val_inl_eq_inr_of_through (D₁ := permToBrauer σ) (D₂ := D) (j := σ a) h
+        (permToBrauer_val_inl σ a)]
+      simp [h, Equiv.Perm.one_def]
+  · rcases h : D.val (Sum.inr (σ.symm j)) with i | a
+    · rw [composeDiagram_val_inr_eq_inl_of_through (D₁ := permToBrauer σ) (D₂ := D)
+        (a := σ.symm j) (permToBrauer_val_inr σ j) h]
+      simp [h, Equiv.Perm.one_def]
+    · rw [composeDiagram_val_inr_eq_inr_of_cup_lower (D₁ := permToBrauer σ) (D₂ := D)
+        (a := σ.symm j) (j' := σ a) (permToBrauer_val_inr σ j) h (permToBrauer_val_inl σ a)]
+      simp [h, Equiv.Perm.one_def]
+
+open BrauerDiagram in
+/-- **Stacking a permutation diagram underneath relabels the bottom boundary.** No strand of `D`
+is extended past the middle boundary, because the permutation diagram has no cup: the strand of
+`permToBrauer τ` starting at the bottom point `i` reaches the middle point `τ i`, where the arc of
+`D` takes over. -/
+@[simp]
+theorem composeDiagram_permToBrauer_right :
+    composeDiagram D (permToBrauer τ) = D.relabel τ⁻¹ 1 := by
+  refine Subtype.ext (Equiv.ext fun x => ?_)
+  rcases x with i | j
+  · rcases h : D.val (Sum.inl (τ i)) with a' | j'
+    · rw [composeDiagram_val_inl_eq_inl_of_cap_upper (D₁ := D) (D₂ := permToBrauer τ) (a := τ i)
+        (i' := τ.symm a') (permToBrauer_val_inl τ i) h (permToBrauer_val_inr τ a')]
+      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
+    · rw [composeDiagram_val_inl_eq_inr_of_through (D₁ := D) (D₂ := permToBrauer τ) (a := τ i)
+        (permToBrauer_val_inl τ i) h]
+      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
+  · rcases h : D.val (Sum.inr j) with a | j'
+    · rw [composeDiagram_val_inr_eq_inl_of_through (D₁ := D) (D₂ := permToBrauer τ) (a := a)
+        h (permToBrauer_val_inr τ a)]
+      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
+    · rw [composeDiagram_val_inr_eq_inr_of_cup_upper (D₁ := D) (D₂ := permToBrauer τ) h]
+      simp [h, Equiv.Perm.inv_def, Equiv.Perm.one_def]
+
+/-- **Stacking permutation diagrams multiplies the permutations.** So the inclusion of the
+symmetric group into the Brauer diagrams turns the group law into vertical stacking; no loop
+closes up in the middle, since a permutation diagram has neither a cap nor a cup.
+
+This and the two identity laws below are not `simp` lemmas: they are the special cases of
+`TauCeti.composeDiagram_permToBrauer_left` and `TauCeti.composeDiagram_permToBrauer_right` in
+which the relabelling is one that `simp` already carries out, so `simp` proves them and tagging
+them would leave them out of simp-normal form. -/
+theorem composeDiagram_permToBrauer :
+    composeDiagram (permToBrauer σ) (permToBrauer τ) = permToBrauer (σ * τ) := by
+  rw [composeDiagram_permToBrauer_left, BrauerDiagram.relabel_permToBrauer, inv_one, mul_one]
+
+/-- **The identity diagram is a left identity for stacking.** -/
+theorem composeDiagram_permToBrauer_one_left : composeDiagram (permToBrauer 1) D = D := by
+  rw [composeDiagram_permToBrauer_left, BrauerDiagram.relabel_one_one]
 
 /-- **The identity diagram is a right identity for stacking.** -/
-@[simp]
-theorem composeDiagram_permToBrauer_one_right (D : BrauerDiagram k) :
-    composeDiagram D (permToBrauer 1) = D := by
-  refine Subtype.ext (Equiv.ext fun x => ?_)
-  rcases x with i | j
-  · rcases h : D.val (Sum.inl i) with i' | a
-    · exact composeDiagram_val_inl_eq_inl_of_cap_upper (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        (i' := i') (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl) h
-        (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl)
-    · exact composeDiagram_val_inl_eq_inr_of_through (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl) h
-  · rcases h : D.val (Sum.inr j) with i | j'
-    · exact composeDiagram_val_inr_eq_inl_of_through (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        h (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl)
-    · exact composeDiagram_val_inr_eq_inr_of_cup_upper (D₁ := D) (D₂ := permToBrauer 1) h
+theorem composeDiagram_permToBrauer_one_right : composeDiagram D (permToBrauer 1) = D := by
+  rw [composeDiagram_permToBrauer_right, inv_one, BrauerDiagram.relabel_one_one]
 
 end TauCeti

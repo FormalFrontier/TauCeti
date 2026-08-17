@@ -60,6 +60,22 @@ open Matrix Matrix.SpecialLinearGroup UpperHalfPlane
 
 open scoped MatrixGroups ModularForm
 
+/-- **Every element of `𝒮ℒ` has positive determinant**: it is the image of a matrix of
+determinant `1`.
+
+This is the hypothesis the positive-determinant slash lemmas take — `σ_eq_refl_of_det_pos` just
+below, and `orderOfVanishingAt_slash` / `orderOfVanishingAt_smul` in
+`TauCeti.NumberTheory.ModularForms.Order.OfVanishing` — and every modular call site discharges
+it the same way. Keying it on membership in `𝒮ℒ` rather than on
+`Matrix.SpecialLinearGroup.mapGL` covers both shapes the call sites come in: a direct image
+`mapGL ℝ γ` (via `MonoidHom.mem_range.mpr ⟨γ, rfl⟩`) and an element of the image of a subgroup
+`Γ ≤ SL(2, ℤ)` (via `Subgroup.map_le_range`). -/
+theorem det_pos_of_mem_slGL {g : GL (Fin 2) ℝ} (hg : g ∈ 𝒮ℒ) :
+    0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det := by
+  obtain ⟨γ, rfl⟩ := hg
+  rw [← Matrix.GeneralLinearGroup.val_det_apply, Matrix.SpecialLinearGroup.det_mapGL]
+  exact one_pos
+
 /-- The slash-action conjugation `σ` is the identity for matrices coming from
 `SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `ContinuousAlgEquiv.refl ℝ ℂ`.
 
@@ -70,7 +86,7 @@ determinant of a mapped `SL(2, ℤ)` matrix reduces through `GeneralLinearGroup.
 @[simp]
 lemma σ_mapGL_real_eq_refl (s : SL(2, ℤ)) :
     UpperHalfPlane.σ (mapGL ℝ s) = ContinuousAlgEquiv.refl ℝ ℂ :=
-  σ_eq_refl_of_det_pos (by rw [← Matrix.GeneralLinearGroup.val_det_apply]; simp)
+  σ_eq_refl_of_det_pos (det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨s, rfl⟩))
 
 /-- `CuspForm.mcast` does not change the pointwise values of a cusp form: the `CuspForm`
 analogue of Mathlib's `ModularForm.mcast_apply`, which Mathlib does not yet provide. -/

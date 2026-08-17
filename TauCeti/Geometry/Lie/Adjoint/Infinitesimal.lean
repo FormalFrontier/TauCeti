@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Geometry.Lie.Adjoint.Smooth
-public import TauCeti.Geometry.Lie.Adjoint.Exponential
+public import TauCeti.Geometry.Lie.Adjoint.Exponential.Basic
 import TauCeti.Analysis.Calculus.ParametricFDeriv
 import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 import TauCeti.Geometry.Lie.InvariantVectorField.Commutation
@@ -74,7 +75,7 @@ private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
       mulInvariantExp (I := I) (G := G) (p.2 • (-X)))
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X (-X)).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   have hdiag : HasDerivAt (fun t : ℝ => F (t, t))
       (fderiv ℝ F (0, 0) (1, 1)) 0 := by
     have hemb : HasDerivAt (fun t : ℝ => (t, t)) (1, 1) 0 :=
@@ -237,7 +238,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
       mulInvariantExp (I := I) (G := G) (p.1 • (-X)))
   have hF : ContDiff ℝ 2 F :=
     (ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp f X Y).of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
   -- Varying the second parameter conjugates the `Y`-line by `γX t`, so this spatial partial
   -- evaluates the tangent adjoint orbit against the chosen test function.
   have hspace (t : ℝ) : spatialFDeriv F 0 t 1 = q (A t) := by
@@ -347,10 +348,8 @@ theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
   let T : G → E := fun g => show E from tangentAd (I := I) g Y
-  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T := by
-    have hpair : ContMDiff I (I.prod 𝓘(ℝ, E)) ∞
-        (fun g : G => (g, @id E Y)) := contMDiff_id.prodMk contMDiff_const
-    exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair
+  have hT : ContMDiff I 𝓘(ℝ, E) ∞ T :=
+    contMDiff_tangentAd_apply_const (I := I) (G := G) (show E from Y)
   have hTmf := hT.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
   have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hTmf X
   have hchain : HasDerivAt

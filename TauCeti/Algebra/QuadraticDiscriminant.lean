@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -81,6 +82,31 @@ theorem nonneg_of_discrim_le_zero {R : Type*} [CommRing R] [LinearOrder R]
   have hb : 0 ≤ 4 * a * c - b ^ 2 := by rw [discrim] at hd; linarith
   nlinarith [sq_nonneg (2 * a * x + b * y), mul_nonneg hb (sq_nonneg y)]
 
+/-- Some member of the progression `x₀ + m * ℤ` puts `2 a x + z` within `a * m` of zero, for any
+constant `z`.
+
+This is the point-selection step of `discrim_le_zero_of_pos_of_nonneg_on_progression`, and the
+source of the factor `m` in that theorem's height hypothesis. There `z` is the form's `b * y`,
+which enters only as a constant. -/
+private theorem exists_abs_two_mul_add_le {a m x₀ z : ℤ} (ha : 0 < a) (hm : 0 < m) :
+    ∃ k : ℤ, |2 * a * (x₀ + m * k) + z| ≤ a * m := by
+  -- take the member nearest the value that would make `2 a x + z` vanish: the rounding error is
+  -- at most a half, and the progression's gap scales it by `2 a m`
+  have ham : (0 : ℚ) < 2 * (a : ℚ) * (m : ℚ) := by
+    have h1 : (0 : ℚ) < (a : ℚ) := by exact_mod_cast ha
+    have h2 : (0 : ℚ) < (m : ℚ) := by exact_mod_cast hm
+    positivity
+  set t : ℚ := (-(z : ℚ) - 2 * (a : ℚ) * (x₀ : ℚ)) / (2 * (a : ℚ) * (m : ℚ)) with htdef
+  refine ⟨round t, ?_⟩
+  have hcast : ((2 * a * (x₀ + m * round t) + z : ℤ) : ℚ)
+      = 2 * (a : ℚ) * (m : ℚ) * ((round t : ℚ) - t) := by
+    rw [htdef]; field_simp; push_cast; ring
+  have hq : |((2 * a * (x₀ + m * round t) + z : ℤ) : ℚ)| ≤ ((a * m : ℤ) : ℚ) := by
+    rw [hcast, abs_mul, abs_of_pos ham]
+    push_cast
+    nlinarith [abs_sub_round t, abs_nonneg ((round t : ℚ) - t), abs_sub_comm (round t : ℚ) t]
+  exact_mod_cast hq
+
 /-- **An arithmetic progression of large enough height pins the discriminant.** If a binary
 quadratic form over `ℤ` with positive leading coefficient `a` is non-negative at `(x, y)` for a
 fixed `y` and every `x` in the progression `x₀ + m * ℤ`, and `a * m < |y|`, then
@@ -97,26 +123,8 @@ private theorem discrim_le_zero_of_pos_of_nonneg_on_progression {a b c m x₀ y 
   -- exactly a factor `m` in the height.
   by_contra! hcon
   rw [discrim] at hcon
-  have ham : (0 : ℚ) < 2 * (a : ℚ) * (m : ℚ) := by
-    have h1 : (0 : ℚ) < (a : ℚ) := by exact_mod_cast ha
-    have h2 : (0 : ℚ) < (m : ℚ) := by exact_mod_cast hm
-    positivity
-  -- `k` is the integer nearest the value putting `x₀ + m * k` at the minimum of the restricted
-  -- form, so the progression member `x₀ + m * k` has `|2 a x + b y| ≤ a * m`.
-  set t : ℚ := (-((b * y : ℤ) : ℚ) - 2 * (a : ℚ) * (x₀ : ℚ)) / (2 * (a : ℚ) * (m : ℚ)) with htdef
-  set k : ℤ := round t with hkdef
+  obtain ⟨k, hxa⟩ := exists_abs_two_mul_add_le (x₀ := x₀) (z := b * y) ha hm
   set x : ℤ := x₀ + m * k with hxdef
-  have hxa : |2 * a * x + b * y| ≤ a * m := by
-    have hcast : ((2 * a * x + b * y : ℤ) : ℚ) = 2 * (a : ℚ) * (m : ℚ) * ((k : ℚ) - t) := by
-      rw [hxdef, htdef]
-      field_simp
-      push_cast
-      ring
-    have hq : |((2 * a * x + b * y : ℤ) : ℚ)| ≤ ((a * m : ℤ) : ℚ) := by
-      rw [hcast, abs_mul, abs_of_pos ham]
-      push_cast
-      nlinarith [abs_sub_round t, abs_nonneg ((k : ℚ) - t), abs_sub_comm (k : ℚ) t]
-    exact_mod_cast hq
   have hsq : (2 * a * x + b * y) ^ 2 ≤ (a * m) ^ 2 := by
     have habs := abs_le.mp hxa
     nlinarith [habs.1, habs.2]

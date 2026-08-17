@@ -1,9 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
 public import Mathlib.RingTheory.Bialgebra.Convolution
@@ -20,7 +22,8 @@ are exactly the two monoid-action laws: the counit law sends the convolution uni
 the identity, and coassociativity sends convolution products to composites. (The
 upgrade to automorphisms over a Hopf algebra is in
 `TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction`, with the group of
-points.)
+points.) On the comodule attached to a group-like element `x`, this action is scalar
+multiplication by `g x`.
 
 This is the comodule-to-representation direction of the "representations = comodules"
 dictionary (ReductiveGroups roadmap, Layer 1): it realizes a comodule as an action of
@@ -29,7 +32,10 @@ the functor of points on scalar extensions of `V`.
 ## Main declarations
 
 * `TauCeti.Comodule.endOfPoint`: the endomorphism of `A ⊗[R] V` attached to a point.
+* `TauCeti.Comodule.endOfPoint_corestrict`: compatibility with corestriction in the coalgebra.
 * `TauCeti.Comodule.endOfPoint_tensor`: point actions preserve the diagonal tensor product.
+* `TauCeti.Comodule.endOfPoint_groupLike`: on a group-like comodule a point acts by the scalar
+  given by its value on the group-like element.
 * `TauCeti.Comodule.endOfPoint_trivial`: every point acts identically on a trivial comodule.
 * `TauCeti.Comodule.pointsRepresentation`: the action, as a `Representation` of the
   convolution monoid of points on the scalar extension.
@@ -72,7 +78,6 @@ lemma endOfPoint_tmul (g : H →ₐ[R] A) (a : A) (v : V) :
     endOfPoint V g (a ⊗ₜ[R] v) =
       a • TensorProduct.comm R V A (LinearMap.lTensor V g.toLinearMap (coact v)) := by
   simp [endOfPoint]
-
 
 section BaseChange
 
@@ -136,6 +141,51 @@ lemma baseChange_comp_endOfPoint (f : Hom R H V W) (g : H →ₐ[R] A) :
 end Functorial
 
 end Coalgebra
+
+section Corestrict
+
+variable {R H₁ H₂ V A : Type*} [CommSemiring R]
+variable [Semiring H₁] [Semiring H₂] [Bialgebra R H₁] [Bialgebra R H₂]
+variable [AddCommMonoid V] [Module R V] [Comodule R H₁ V]
+variable [CommSemiring A] [Algebra R A]
+
+/-- Acting on a comodule corestricted along a bialgebra morphism agrees with acting by the
+point precomposed with the underlying algebra morphism. -/
+@[simp]
+theorem endOfPoint_corestrict (φ : H₁ →ₐc[R] H₂) (g : H₂ →ₐ[R] A) :
+    (letI : Comodule R H₂ V := Corestrict φ.toCoalgHom
+     endOfPoint V g) = endOfPoint V (g.comp (φ : H₁ →ₐ[R] H₂)) := by
+  apply TensorProduct.AlgebraTensorModule.ext
+  intro a v
+  rw [endOfPoint_tmul, endOfPoint_tmul]
+  simp only [corestrict_coact_apply, AlgHom.comp_toLinearMap]
+  rw [LinearMap.lTensor_comp, LinearMap.comp_apply]
+  have hφ : φ.toCoalgHom.toLinearMap = (φ : H₁ →ₐ[R] H₂).toLinearMap :=
+    (_root_.BialgHom.toAlgHom_toLinearMap φ).symm
+  simp only [LinearMap.lTensor_def, hφ]
+
+end Corestrict
+
+section GroupLike
+
+variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Algebra R H] [Coalgebra R H]
+  [AddCommMonoid V] [Module R V] [CommSemiring A] [Algebra R A]
+
+/-- On a group-like comodule, a point acts by scalar multiplication by its value on the
+group-like element. -/
+@[simp]
+theorem endOfPoint_groupLike (x : GroupLike R H) (g : H →ₐ[R] A) :
+    letI : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
+    endOfPoint V g = g x • LinearMap.id := by
+  let _ : Comodule R H V := groupLike (R := R) (C := H) (M := V) x
+  apply LinearMap.restrictScalars_injective R
+  refine TensorProduct.ext' fun a v ↦ ?_
+  simp only [LinearMap.restrictScalars_apply, endOfPoint_tmul, groupLike_coact_apply,
+    LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply, TensorProduct.comm_tmul,
+    LinearMap.smul_apply, LinearMap.id_coe, id_eq, TensorProduct.smul_tmul', smul_eq_mul]
+  rw [mul_comm]
+
+end GroupLike
 
 section Bialgebra
 
@@ -354,18 +404,8 @@ variable {R H V A : Type*} [CommSemiring R] [Semiring H] [Bialgebra R H]
 attribute [local instance] trivial
 
 /-- Every point acts as the identity on a trivial comodule. -/
-@[simp]
 theorem endOfPoint_trivial (g : H →ₐ[R] A) : endOfPoint V g = LinearMap.id := by
-  apply LinearMap.ext
-  intro x
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a v =>
-      simp only [endOfPoint_tmul, trivial_coact_apply, LinearMap.lTensor_tmul,
-        AlgHom.toLinearMap_apply, map_one, TensorProduct.comm_tmul]
-      rw [TensorProduct.smul_tmul']
-      simp
+  simp only [endOfPoint_groupLike, GroupLike.val_one, map_one, one_smul]
 
 end Trivial
 

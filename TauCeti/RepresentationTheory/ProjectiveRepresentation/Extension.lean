@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.RepresentationTheory.Basic
-public import TauCeti.GroupTheory.GroupExtension.OfFactorSet
+public import TauCeti.GroupTheory.GroupExtension.Of.FactorSet
 public import TauCeti.RepresentationTheory.ProjectiveRepresentation.Basic
 
 /-!
@@ -15,7 +16,7 @@ public import TauCeti.RepresentationTheory.ProjectiveRepresentation.Basic
 A projective representation `ρ : G → (V ≃ₗ[k] V)` with factor set `α` is multiplicative only up to
 the scalars `α`, so it is not a homomorphism. Enlarging `G` by those scalars repairs this: the
 central extension `1 → kˣ → E_α → G → 1` built from `α` in
-`TauCeti/GroupTheory/GroupExtension/OfFactorSet.lean` carries a genuine homomorphism
+`TauCeti/GroupTheory/GroupExtension/Of/FactorSet.lean` carries a genuine homomorphism
 
 `E_α → (V ≃ₗ[k] V)`, `⟨a, g⟩ ↦ a • ρ g`,
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,21 +25,21 @@ Its graded-algebra packaging adapts the pattern in Mathlib's
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.filtrationAssociatedGraded Q`: the direct sum
+* `CliffordAlgebra.filtrationAssociatedGraded Q`: the direct sum
   `⨁ k, FiltrationGradedPiece Q k` of the homogeneous pieces.
-* `TauCeti.CliffordAlgebra.filtrationGradedMul`: the product of two homogeneous pieces, induced by
+* `CliffordAlgebra.filtrationGradedMul`: the product of two homogeneous pieces, induced by
   Clifford multiplication through `filtration_mul`.
-* `TauCeti.CliffordAlgebra.filtrationGradedOne` and
-  `TauCeti.CliffordAlgebra.filtrationGradedAlgebraMap₀`: the degree-zero unit and the degree-zero
+* `CliffordAlgebra.filtrationGradedOne` and
+  `CliffordAlgebra.filtrationGradedAlgebraMap₀`: the degree-zero unit and the degree-zero
   image of a scalar.
 
 ## Main results
 
 * The graded structure instances assembling those pieces:
-  `TauCeti.CliffordAlgebra.filtrationGradedGOne`, `filtrationGradedGMul`,
+  `CliffordAlgebra.filtrationGradedGOne`, `filtrationGradedGMul`,
   `filtrationGradedGMonoid`, `filtrationGradedGRing`, `filtrationGradedGSemiring` and
   `filtrationGradedGAlgebra`, culminating in
-  `TauCeti.CliffordAlgebra.filtrationAssociatedGradedRing`, the ring structure on the direct sum.
+  `CliffordAlgebra.filtrationAssociatedGradedRing`, the ring structure on the direct sum.
 
 ## Implementation notes
 
@@ -53,12 +54,9 @@ synthesizable.
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -67,34 +65,6 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 /-- The direct sum of the homogeneous pieces of the Clifford degree filtration. -/
 abbrev filtrationAssociatedGraded (Q : QuadraticForm R M) : Type max u v :=
   ⨁ k : ℕ, FiltrationGradedPiece Q k
-
-private theorem mul_mem_filtrationPrevious_left (Q : QuadraticForm R M) (i j : ℕ)
-    {x y : CliffordAlgebra Q} (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
-    x * y ∈ filtrationPrevious Q (i + j) := by
-  cases i with
-  | zero =>
-      rw [filtrationPrevious_zero] at hx
-      rw [Submodule.mem_bot] at hx
-      subst x
-      simp
-  | succ i =>
-      rw [filtrationPrevious_succ] at hx
-      rw [Nat.succ_add, filtrationPrevious_succ]
-      exact mul_mem_filtration Q hx hy
-
-private theorem mul_mem_filtrationPrevious_right (Q : QuadraticForm R M) (i j : ℕ)
-    {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
-    x * y ∈ filtrationPrevious Q (i + j) := by
-  cases j with
-  | zero =>
-      rw [filtrationPrevious_zero] at hy
-      rw [Submodule.mem_bot] at hy
-      subst y
-      simp
-  | succ j =>
-      rw [filtrationPrevious_succ] at hy
-      rw [Nat.add_succ, filtrationPrevious_succ]
-      exact mul_mem_filtration Q hx hy
 
 private noncomputable def filtrationMul (Q : QuadraticForm R M) (i j : ℕ) :
     filtration Q i →ₗ[R] filtration Q j →ₗ[R] filtration Q (i + j) :=
@@ -126,7 +96,7 @@ private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j
   rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
-  exact mul_mem_filtrationPrevious_left Q i j hprevious y.property
+  exact mul_mem_filtrationPrevious_left Q hprevious y.property
 
 private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i j : ℕ) :
     filtrationPreviousRestricted Q j ≤
@@ -140,7 +110,7 @@ private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i 
   rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
-  exact mul_mem_filtrationPrevious_right Q i j x.property hprevious
+  exact mul_mem_filtrationPrevious_right Q x.property hprevious
 
 /-- Multiplication of two homogeneous pieces of the Clifford associated graded algebra. -/
 noncomputable def filtrationGradedMul (Q : QuadraticForm R M) (i j : ℕ) :
@@ -503,5 +473,3 @@ noncomputable instance filtrationAssociatedGradedRing {Q : QuadraticForm R M} :
   infer_instance
 
 end CliffordAlgebra
-
-end TauCeti

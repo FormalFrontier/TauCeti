@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
 public import Mathlib.LinearAlgebra.Dimension.Localization
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 public import Mathlib.FieldTheory.RatFunc.Basic
+import TauCeti.FieldTheory.IntermediateField.FieldRange
 
 /-!
 # The function field of a Weierstrass curve has degree two over `R(x)`
@@ -45,8 +47,8 @@ rational function field that sits *inside* `R(W)` as an intermediate field.
 * `WeierstrassCurve.Affine.finrank_ratFuncRange`: `[F(W) : F(x)] = 2` for that copy. This is the
   degree above a subfield of `F(W)` rather than above an abstract `L`, which is what any argument
   comparing two subfields of `F(W)` — a tower, or a relative degree — needs; the two are related
-  by transporting along `AlgHom.equivFieldRange`, since the copy and `RatFunc F` are isomorphic as
-  fields acting on `F(W)`.
+  by `TauCeti.AlgHom.finrank_fieldRange`, since the copy and `RatFunc F` are isomorphic as fields
+  acting on `F(W)`.
 
 Exporting the algebra instance is safe here for the reason Mathlib withholds it in general: the
 collision is with the identity structure on `FractionRing R[X]`, and `R(W)` is a *quadratic*
@@ -180,22 +182,13 @@ theorem mem_ratFuncRange {z : W.FunctionField} :
   AlgHom.mem_fieldRange
 
 /-- **`[F(W) : F(x)] = 2`**, for the copy of the rational function field inside `F(W)`: the
-`L = RatFunc F` case of `finrank_functionField`, transported along the embedding. -/
+`L = RatFunc F` case of `finrank_functionField`, transported along the embedding by
+`TauCeti.AlgHom.finrank_fieldRange`. -/
 @[simp]
-theorem finrank_ratFuncRange : Module.finrank (ratFuncRange W) W.FunctionField = 2 := by
-  have hsquare : (algebraMap (ratFuncRange W) W.FunctionField).comp
-      (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField).equivFieldRange.toRingEquiv.toRingHom =
-      (RingEquiv.refl W.FunctionField).toRingHom.comp
-        (algebraMap (RatFunc F) W.FunctionField) := by
-    -- both sides send `r` to its image in `F(W)`; `equivFieldRange` is the range restriction
-    ext x
-    exact AlgHom.equivFieldRange_apply_coe
-      (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField) x
-  have h := Algebra.finrank_eq_of_equiv_equiv
-    (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField).equivFieldRange.toRingEquiv
-    (RingEquiv.refl W.FunctionField) hsquare
-  rw [finrank_functionField W (RatFunc F)] at h
-  exact h.symm
+theorem finrank_ratFuncRange : Module.finrank (ratFuncRange W) W.FunctionField = 2 :=
+  (TauCeti.AlgHom.finrank_fieldRange (IsScalarTower.toAlgHom F (RatFunc F) W.FunctionField)
+    fun z ↦ (IsScalarTower.toAlgHom_apply F (RatFunc F) W.FunctionField z).symm).trans
+      (finrank_functionField W (RatFunc F))
 
 end Field
 

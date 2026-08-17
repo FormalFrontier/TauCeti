@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -13,7 +14,8 @@ public import TauCeti.Topology.Homotopy.Monodromy.Full
 When the base is locally path-connected, the monodromy functor from covering spaces to
 fundamental-groupoid actions is full. The unbundled construction of the map between total spaces
 is proved in `TauCeti.Topology.Homotopy.Monodromy.Full`; this file packages it for bundled covering
-spaces.
+spaces. Its fully faithful restriction from connected covers to fibrewise pretransitive actions is
+packaged in `TauCeti.Topology.Covering.Monodromy.Connected`.
 
 ## Main declaration
 

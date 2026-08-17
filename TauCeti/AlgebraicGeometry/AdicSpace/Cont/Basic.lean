@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
 public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
@@ -25,7 +26,7 @@ continuous ring homomorphism (Remark 7.9).
 A point of `Spv A` is a valuative relation, so a predicate on valuations descends to it only if
 equivalent valuations agree on the predicate. For continuity as Wedhorn states it — the
 quantifier running over the value group `Γ_v` — that holds, and
-`TauCeti.Valuation.IsEquiv.isContinuous_iff` says so. Had continuity instead been asked of every
+`Valuation.IsEquiv.isContinuous_iff` says so. Had continuity instead been asked of every
 `γ` in the ambient codomain, it would **not** descend, and `Cont A` would not be well defined;
 the module docstring of `TauCeti.RingTheory.Valuation.Continuous.Basic` carries the
 counterexample.
@@ -50,7 +51,11 @@ So `IsContinuous` is defined here by testing the *canonical* valuation of the po
   homomorphism pulls continuous points back to continuous points. Combined with `mem_cont_iff`
   this is exactly the statement that `comap φ` restricts to a map `Cont B → Cont A`; no separate
   set-level lemma is kept for it, since that would be this one after unfolding.
+* `TauCeti.ValuationSpectrum.IsContinuous.quotientLift` : continuity descends to the canonical
+  lift through a quotient.
 * `TauCeti.ValuationSpectrum.cont_eq_univ` : **Remark 7.8(2)**, `Cont A = Spv A` for discrete `A`.
+* `TauCeti.ValuationSpectrum.cont_eq_empty_of_one_mem_closure_zero` : if `1` belongs to the
+  closure of zero, then `Cont A` is empty.
 
 ## References
 
@@ -70,12 +75,12 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open TauCeti TauCeti.Valuation
+open TauCeti Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
 /-- **Continuity of a point of `Spv A`.** A point is *continuous* when its canonical valuation
-is, in the attained-value sense of `TauCeti.Valuation.IsContinuous`. Any representative would do
+is, in the attained-value sense of `Valuation.IsContinuous`. Any representative would do
 — that is `isContinuous_ofValuation_iff` — but the canonical one makes the definition depend on
 nothing chosen.
 
@@ -92,7 +97,7 @@ theorem isContinuous_def (v : Spv A) : v.IsContinuous ↔ v.valuation.IsContinuo
 it a subspace; here it is the underlying set, and the subspace topology is the one the *coercion*
 `↥(cont A)` carries as a subtype of `Spv A`.
 
-Membership is the attained-value test of `TauCeti.Valuation.IsContinuous`, which is Wedhorn's
+Membership is the attained-value test of `Valuation.IsContinuous`, which is Wedhorn's
 Definition 7.7 once right multiplication is continuous —
 `isContinuous_iff_forall_isOpen_lt_div` is that step, and it is where
 `[ContinuousConstSMul Aᵐᵒᵖ A]` is asked for. It is *not* asked for
@@ -106,7 +111,7 @@ theorem mem_cont_iff (v : Spv A) : v ∈ cont A ↔ v.IsContinuous := Iff.rfl
 
 /-- **Continuity may be tested on any representative.** This is what makes `cont` well defined:
 the point `ofValuation w` is continuous exactly when `w` is, for every `w` in the class, not
-merely for the canonical one. It rests on `TauCeti.Valuation.IsEquiv.isContinuous_iff`, and
+merely for the canonical one. It rests on `Valuation.IsEquiv.isContinuous_iff`, and
 would fail for a continuity predicate quantified over the ambient codomain.
 
 Not `@[simp]`: `isContinuous_def` already rewrites the left-hand side, so this would not be in
@@ -121,11 +126,58 @@ theorem cont_eq_univ [DiscreteTopology A] : cont A = Set.univ :=
   Set.eq_univ_of_forall fun v ↦
     (mem_cont_iff v).mpr ((isContinuous_def v).mpr (isContinuous_of_discreteTopology v.valuation))
 
+section SeparatelyContinuousAdd
+
+variable [SeparatelyContinuousAdd A]
+
+/-- **The `1 ∈ closure {0} → Cont A = ∅` half of Wedhorn Proposition 7.49(1).** If `1 ∈ closure {0}`
+in a commutative ring `A` with separately continuous addition, then `Cont A = ∅`. -/
+theorem cont_eq_empty_of_one_mem_closure_zero (h : (1 : A) ∈ closure ({0} : Set A)) :
+    cont A = ∅ := by
+  ext v
+  simp only [Set.mem_empty_iff_false, iff_false, mem_cont_iff]
+  intro hv
+  have hcont : v.valuation.IsContinuous := (isContinuous_def v).mp hv
+  have h_nhds : {y : A | v.valuation (y - 1) < 1} ∈ nhds (1 : A) := by
+    have h1_ne : v.valuation 1 ≠ 0 := by simp [v.valuation.map_one]
+    have := hcont.sub_lt_mem_nhds 1 h1_ne
+    simpa [v.valuation.map_one] using this
+  obtain ⟨x, hx, rfl⟩ := mem_closure_iff_nhds.mp h _ h_nhds
+  simp [v.valuation.map_one] at hx
+
+end SeparatelyContinuousAdd
+
 /-- **Wedhorn Remark 7.9.** A continuous ring homomorphism pulls continuous points back to
 continuous points, so it restricts to a map `Cont B → Cont A`. -/
 theorem IsContinuous.comap {B : Type*} [CommRing B] [TopologicalSpace B] {φ : A →+* B}
     (hφ : Continuous φ) {v : Spv B} (hv : v.IsContinuous) : (comap φ v).IsContinuous := by
   rw [← ofValuation_valuation v, comap_ofValuation, isContinuous_ofValuation_iff]
   exact (isContinuous_def v |>.mp hv).comap hφ
+
+/-- Continuity of the lifted valuation on the quotient ring `A ⧸ J`. -/
+theorem IsContinuous.quotientLift (J : Ideal A) ⦃v : Spv A⦄ (hJ : J ≤ v.supp)
+    (hv : v.IsContinuous) : (TauCeti.ValuationSpectrum.quotientLift J hJ).IsContinuous := by
+  have hv_cont : Valuation.IsContinuous v.valuation := (isContinuous_def v).mp hv
+  have hv_open : ∀ a : A, IsOpen {y : A | v.valuation y < v.valuation a} :=
+    Valuation.isContinuous_def.mp hv_cont
+  rw [isContinuous_def, Valuation.isContinuous_def]
+  intro b
+  obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective b
+  have h_eq : Ideal.Quotient.mk J ⁻¹'
+        {x : A ⧸ J | (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation x <
+          (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation (Ideal.Quotient.mk J a)} =
+      {y : A | v.valuation y < v.valuation a} := by
+    ext y
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, valuation_lt_iff]
+    rw [← comap_vlt, comap_quotientLift, ← valuation_lt_iff]
+  have h_open : IsOpen (Ideal.Quotient.mk J ⁻¹'
+        {x : A ⧸ J | (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation x <
+          (TauCeti.ValuationSpectrum.quotientLift J hJ).valuation (Ideal.Quotient.mk J a)}) := by
+    rw [h_eq]
+    exact hv_open a
+  -- The quotient topology here is definitionally the coinduced topology. The named
+  -- `QuotientRing.isOpenQuotientMap_mk` requires `IsTopologicalRing A`, which this general
+  -- continuity statement deliberately does not assume.
+  exact isOpen_coinduced.mp h_open
 
 end TauCeti.ValuationSpectrum

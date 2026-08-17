@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -35,17 +36,23 @@ explicit.
 * `TauCeti.Huber.Pair.Hom.id`, `TauCeti.Huber.Pair.Hom.comp`: morphisms of Huber pairs compose,
   associatively and unitally (`TauCeti.Huber.Pair.Hom.comp_assoc`,
   `TauCeti.Huber.Pair.Hom.id_comp`, `TauCeti.Huber.Pair.Hom.comp_id`).
+* `TauCeti.Huber.Pair.quotient`: the quotient Huber pair, whose plus ring is the integral closure
+  of the image of the original plus ring.
+* `TauCeti.Huber.Pair.Hom.quotientLift`: the universal factorisation of a morphism annihilating
+  the quotient ideal.
 
 ## Provenance
 
 The shape of these declarations follows the roadmap's own prototype in
 `TauCetiRoadmap/AdicSpaces/Suggested.lean`, which fixes the design choice that the plus ring is
 explicit data rather than a typeclass, and the selection of results follows AINTLIB's
-`AffinoidRings.lean`; neither's proofs were used.
+`AffinoidRings.lean`; neither's proofs were used. That AINTLIB file was also consulted for the
+quotient-pair construction and its universal property. Its quotient uses the same integral closure
+of the image plus ring; this file bundles the construction with the current Tau Ceti Huber-pair API.
 
 ## References
 
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], Definition 7.14 and Remark 7.15.
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], Definition 7.14, Remark 7.15, and Definition 7.22.
 * [AINTLIB](https://github.com/CBirkbeck/AINTLIB), branch `dev/adic-spaces`,
   `projects/AdicSpaces/Adic spaces/AffinoidRings.lean`.
 -/
@@ -193,6 +200,109 @@ def powerBounded : Pair A where
 /-- The ring of integral elements of the largest Huber pair is `A°`. -/
 @[simp]
 theorem powerBounded_plus : (powerBounded A).plus = powerBoundedSubring A := (rfl)
+
+section Quotient
+
+/-- The quotient of a Huber pair by `J` (Wedhorn Definition 7.22). Its plus ring is the
+integral closure of the image of the original plus ring in the quotient. -/
+noncomputable def quotient (S : Pair A) (J : Ideal A) : Pair (A ⧸ J) where
+  plus := (integralClosure (S.plus.map (Ideal.Quotient.mk J)) (A ⧸ J)).toSubring
+  isRingOfIntegralElements := by
+    let q : A →+* A ⧸ J := Ideal.Quotient.mk J
+    let R : Subring (A ⧸ J) := S.plus.map q
+    have hR_open : IsOpen (R : Set (A ⧸ J)) := by
+      rw [Subring.coe_map]
+      exact QuotientRing.isOpenMap_coe J _ S.isRingOfIntegralElements.isOpen
+    have hR_power : R ≤ powerBoundedSubring (A ⧸ J) := by
+      rintro x hx
+      obtain ⟨a, ha, rfl⟩ := Subring.mem_map.mp hx
+      have ha_power :=
+        mem_powerBoundedSubring.mp (S.isRingOfIntegralElements.le_powerBoundedSubring ha)
+      exact mem_powerBoundedSubring.mpr <|
+        ha_power.map_of_isOpenMap continuous_quotient_mk'.continuousAt
+          (QuotientRing.isOpenMap_coe J)
+    refine
+      { isOpen := AddSubgroup.isOpen_mono
+          (H₁ := R.toAddSubgroup)
+          (H₂ := (integralClosure R (A ⧸ J)).toSubring.toAddSubgroup)
+          (fun x hx ↦ algebraMap_mem (integralClosure R (A ⧸ J)) ⟨x, hx⟩) hR_open
+        isIntegrallyClosedIn := inferInstance
+        le_powerBoundedSubring := ?_ }
+    exact Subring.integralClosure_subring_le_iff.mpr hR_power
+
+/-- The plus ring of the quotient pair is the integral closure of the image plus ring. -/
+@[simp]
+theorem quotient_plus (S : Pair A) (J : Ideal A) :
+    (S.quotient J).plus =
+      (integralClosure (S.plus.map (Ideal.Quotient.mk J)) (A ⧸ J)).toSubring := (rfl)
+
+/-- The canonical morphism from a Huber pair to its quotient by `J`. -/
+noncomputable def quotientHom (S : Pair A) (J : Ideal A) : Hom S (S.quotient J) where
+  toRingHom := Ideal.Quotient.mk J
+  continuous_toRingHom := continuous_quotient_mk'
+  map_mem_plus a ha :=
+    algebraMap_mem (integralClosure (S.plus.map (Ideal.Quotient.mk J)) (A ⧸ J))
+      ⟨Ideal.Quotient.mk J a, Subring.mem_map.mpr ⟨a, ha, rfl⟩⟩
+
+/-- The underlying map of the canonical quotient-pair morphism is the quotient map. -/
+@[simp]
+theorem Hom.toRingHom_quotientHom (S : Pair A) (J : Ideal A) :
+    (quotientHom S J).toRingHom = Ideal.Quotient.mk J := (rfl)
+
+/-- A morphism of Huber pairs annihilating `J` factors through the quotient pair. -/
+noncomputable def Hom.quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
+    (hJ : J ≤ RingHom.ker f.toRingHom) : Hom (S.quotient J) T where
+  toRingHom := Ideal.Quotient.lift J f.toRingHom fun a ha ↦ RingHom.mem_ker.mp (hJ ha)
+  continuous_toRingHom := continuous_coinduced_dom.mpr f.continuous_toRingHom
+  map_mem_plus := by
+    let ψ : A ⧸ J →+* B := Ideal.Quotient.lift J f.toRingHom fun a ha ↦
+      RingHom.mem_ker.mp (hJ ha)
+    let R : Subring (A ⧸ J) := S.plus.map (Ideal.Quotient.mk J)
+    let φ : R →+* T.plus :=
+      (ψ.comp R.subtype).codRestrict T.plus fun x ↦ by
+        obtain ⟨a, ha, hax⟩ := Subring.mem_map.mp x.2
+        have hψx : ψ x = f.toRingHom a := by
+          rw [← hax]
+          exact Ideal.Quotient.lift_mk J f.toRingHom _
+        have hψx' : ψ (R.subtype x) = f.toRingHom a := by
+          simpa only [Subring.coe_subtype] using hψx
+        rw [RingHom.comp_apply, hψx']
+        exact f.map_mem_plus a ha
+    intro x hx
+    apply Subring.isIntegrallyClosedIn_iff.mp T.isRingOfIntegralElements.isIntegrallyClosedIn
+    rw [quotient_plus, Subalgebra.mem_toSubring, mem_integralClosure_iff] at hx
+    exact hx.map_of_comp_eq φ ψ (by ext y; rfl)
+
+/-- The underlying ring homomorphism of the quotient factorisation is `Ideal.Quotient.lift`. -/
+@[simp]
+theorem Hom.toRingHom_quotientLift {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
+    (hJ : J ≤ RingHom.ker f.toRingHom) :
+    (f.quotientLift J hJ).toRingHom =
+      Ideal.Quotient.lift J f.toRingHom (fun _a ha ↦ RingHom.mem_ker.mp (hJ ha)) := (rfl)
+
+/-- The factorisation through the quotient pair recovers the original morphism. -/
+@[simp]
+theorem Hom.quotientLift_comp_quotientHom {S : Pair A} {T : Pair B} (J : Ideal A)
+    (f : Hom S T) (hJ : J ≤ RingHom.ker f.toRingHom) :
+    (f.quotientLift J hJ).comp (quotientHom S J) = f := by
+  apply Hom.ext
+  rw [Hom.toRingHom_comp, Hom.toRingHom_quotientLift, Hom.toRingHom_quotientHom]
+  exact Ideal.Quotient.lift_comp_mk J f.toRingHom _
+
+/-- The factorisation through a quotient Huber pair is unique. -/
+theorem Hom.quotientLift_unique {S : Pair A} {T : Pair B} (J : Ideal A) (f : Hom S T)
+    (hJ : J ≤ RingHom.ker f.toRingHom) (g : Hom (S.quotient J) T)
+    (hg : g.comp (quotientHom S J) = f) : g = f.quotientLift J hJ := by
+  apply Hom.ext
+  apply Ideal.Quotient.ringHom_ext
+  calc
+    g.toRingHom.comp (Ideal.Quotient.mk J) = f.toRingHom := congr_arg Hom.toRingHom hg
+    _ = (f.quotientLift J hJ).toRingHom.comp (Ideal.Quotient.mk J) :=
+      (by
+        rw [Hom.toRingHom_quotientLift]
+        exact (Ideal.Quotient.lift_comp_mk J f.toRingHom _).symm)
+
+end Quotient
 
 end Pair
 

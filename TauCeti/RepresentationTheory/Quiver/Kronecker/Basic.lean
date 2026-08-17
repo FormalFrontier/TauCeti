@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -16,7 +17,8 @@ source to the target for each element of an arrow type `A`. Taking `A = Fin 2` g
 *Kronecker quiver* `• ⇉ •`, the smallest connected acyclic quiver that is not of Dynkin type and
 hence the boundary case of Gabriel's theorem; `A = Fin 1` gives the `A₂` quiver `• → •`. (Dropping
 acyclicity there would be wrong: the one-loop quiver of
-`TauCeti.RepresentationTheory.Quiver.PathAlgebra` is connected, smaller, and not of Dynkin type.)
+`TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop` is connected, smaller, and not of Dynkin
+type.)
 
 This file constructs the quiver and classifies its paths: it is acyclic, and its only nontrivial
 paths are the arrows themselves. The dimension of its path algebra is computed in
@@ -42,9 +44,9 @@ paths are the arrows themselves. The dimension of its path algebra is computed i
 
 This file supplies the “Kronecker quiver” worked example of
 `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`, alongside the one-loop
-quiver of `TauCeti.RepresentationTheory.Quiver.PathAlgebra`. See Derksen--Weyman, *An Introduction
-to Quiver Representations*, and Assem--Simson--Skowroński, *Elements of the Representation Theory
-of Associative Algebras I*, Ch. II.
+quiver of `TauCeti.RepresentationTheory.Quiver.PathAlgebra.OneLoop`. See Derksen--Weyman, *An
+Introduction to Quiver Representations*, and Assem--Simson--Skowroński, *Elements of the
+Representation Theory of Associative Algebras I*, Ch. II.
 -/
 
 public section

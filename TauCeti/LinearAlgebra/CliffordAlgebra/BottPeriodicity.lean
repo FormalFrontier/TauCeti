@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti Project. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Tau Ceti Project
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,11 +18,11 @@ import Mathlib.LinearAlgebra.Matrix.Unique
 This file proves the `(1, 1)` periodicity step for Clifford algebras: adding one positive and one
 negative generator is equivalent to tensoring with two-by-two real matrices. It also derives the
 signature-switch recurrence `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)` from
-`TauCeti.CliffordAlgebra.signSwitchEquiv`.
+`CliffordAlgebra.signSwitchEquiv`.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
+* `CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
   real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
 * `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms;
 * `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
@@ -44,7 +44,7 @@ public section
 open Module QuadraticMap
 open scoped Matrix TensorProduct
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {M : Type*} [AddCommGroup M] [Module ℝ M]
 variable (Q : QuadraticForm ℝ M)
@@ -422,7 +422,7 @@ theorem hyperbolicEquivTensor_symm_apply_ι_hyperbolic
   rw [AlgEquiv.apply_symm_apply, hyperbolicEquivTensor_ι]
   simp
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra
 
 namespace TauCeti
 

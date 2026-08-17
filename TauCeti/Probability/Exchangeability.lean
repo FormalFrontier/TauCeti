@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -48,6 +49,7 @@ worked example ("an i.i.d. sequence is mixed i.i.d., exchangeable, and contracta
 exported here because it doubles as constructor API — the results that build the representation
 predicates from independence together with a common law — not because examples are curated in
 general.
+
 ## References
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API), which specifies
