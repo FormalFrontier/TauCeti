@@ -27,7 +27,8 @@ when `H` is free as an `R`-module, this map from points to tensor automorphisms 
 Automorphisms of scalar extension are also assembled here from bare linear data: a family of
 linear automorphisms of the scalar extensions, natural in the comodule, is an automorphism of the
 functor, and adding the tensor-unit and tensor comparisons makes it a tensor automorphism. Only
-the coalgebra structure enters the first step.
+the coalgebra structure enters the first step, and there the value algebra need not be
+commutative.
 
 This is the faithful direction of the tensor-automorphism formulation of Tannakian
 reconstruction. The converse, recovering a point from every tensor automorphism, remains a
@@ -79,7 +80,7 @@ section Assembly
 
 variable (R : Type u) [CommSemiring R]
 variable (C : Type v) [AddCommMonoid C] [Module R C] [Coalgebra R C]
-variable (A : Type u) [CommSemiring A] [Algebra R A]
+variable (A : Type u) [Semiring A] [Algebra R A]
 
 /-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules,
 natural in the comodule, as an automorphism of the scalar-extension functor. -/
