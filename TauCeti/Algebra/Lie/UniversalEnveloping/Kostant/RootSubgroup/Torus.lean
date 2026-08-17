@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Eleme
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
 /-!
 # The split maximal torus of a Kostant elementary group
@@ -55,6 +56,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_of_isCartanWeightVector`: a torus
   point acts on a weight vector by the value of its character.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusPoints`: naturality in the value ring.
+* `TauCeti.UniversalEnvelopingAlgebra.mapScalarExtensionAutomorphisms_kostantTorusPoints`:
+  scalar extension of a torus point is the torus point with mapped parameter.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootSubgroupParam`: the
   pinning equation `t(s) xᵢ(u) t(s)⁻¹ = xᵢ(α(s) u)`.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantElementarySubgroup_conj_kostantTorusPoints`: the
@@ -99,6 +102,12 @@ def IsCartanWeightVector (h : κ → L)
     (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (μ : κ → ℤ) (m : V) : Prop :=
   ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) m = (μ j : ℚ) • m
 
+/-- The pointwise characterization of a Cartan weight vector. -/
+theorem isCartanWeightVector_iff {μ : κ → ℤ} {m : V} :
+    IsCartanWeightVector h ρ μ m ↔
+      ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) m = (μ j : ℚ) • m :=
+  Iff.rfl
+
 /-- Being a weight vector is joint membership in the eigenspaces of the Cartan operators. -/
 theorem isCartanWeightVector_iff_mem_eigenspace {μ : κ → ℤ} {m : V} :
     IsCartanWeightVector h ρ μ m ↔
@@ -141,17 +150,10 @@ theorem pow_rootVector {i : ι} {α μ : κ → ℤ} {m : V}
     IsCartanWeightVector h ρ (μ + n • α)
       ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m) := by
   -- The image of `eᵢ` is an eigenvector of weight `α` for the adjoint action of the Cartan family.
-  have hbr : ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) *
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) -
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) =
-      (α j : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := by
-    intro j
-    have := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) (h j) (e i)
-    rw [hα j, LieRing.of_associative_ring_bracket, map_smul] at this
-    have h2 := congrArg ρ this
-    rw [map_sub, map_mul, map_mul, map_smul] at h2
-    exact h2.symm
+  have hbr : ∀ j, ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)),
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))⁆ =
+      (α j : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := fun j =>
+    lie_map_ι_eq_smul ρ (hα j)
   induction n with
   | zero => simpa using hm
   | succ n ih =>
@@ -160,8 +162,10 @@ theorem pow_rootVector {i : ι} {α μ : κ → ℤ} {m : V}
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))
             ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m) := by
         rw [pow_succ', Module.End.mul_apply]
+      have hbrj := hbr j
+      rw [LieRing.of_associative_ring_bracket] at hbrj
       have happ := congrArg (fun f : Module.End ℚ V =>
-        f ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m)) (hbr j)
+        f ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m)) hbrj
       simp only [LinearMap.sub_apply, Module.End.mul_apply, LinearMap.smul_apply] at happ
       rw [ih j, map_smul, sub_eq_iff_eq_add, ← add_smul] at happ
       have hstep : (μ + (n + 1) • α) j = α j + (μ + n • α) j := by
@@ -334,6 +338,27 @@ theorem map_kostantTorusPoints (φ : A →+* B) (s : κ → Aˣ) (z : A ⊗[ℤ]
         map_kostantTorusPoints_tmul_basis]
 
 end Naturality
+
+section CommAlgCatNaturality
+
+variable {A B : CommAlgCat.{w} ℤ}
+
+omit [Module ℚ V] in
+/-- **Scalar extension of a torus point.** Extending the scalars of the torus point `s` along a
+morphism of value rings gives the torus point whose parameter is mapped into the target ring. -/
+theorem mapScalarExtensionAutomorphisms_kostantTorusPoints (φ : A ⟶ B) (s : κ → Aˣ) :
+    GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ (kostantTorusPoints M b wt A s) =
+      kostantTorusPoints M b wt B fun j => Units.map φ.hom.toRingHom.toMonoidHom (s j) := by
+  refine Units.ext (Module.Basis.ext (b.baseChange B) fun x => ?_)
+  have hchar := congrArg Units.val (map_torusCharacter φ.hom.toRingHom s (wt x))
+  simp only [Units.coe_map, MonoidHom.coe_coe] at hchar
+  rw [Module.Basis.baseChange_apply, GeneralLinear.mapScalarExtensionAutomorphisms_tmul,
+    kostantTorusPoints_tmul_basis, kostantTorusPoints_tmul_basis, one_smul,
+    GeneralLinear.scalarExtensionMap_tmul, map_mul]
+  simp only [map_one, mul_one]
+  exact congrArg (· ⊗ₜ[ℤ] (b x : M)) hchar
+
+end CommAlgCatNaturality
 
 end Torus
 
