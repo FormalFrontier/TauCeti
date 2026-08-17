@@ -100,7 +100,7 @@ private theorem geckHeightSign_mul_self (i : b.support ⊕ ι) :
   cases i with
   | inl i => simp [geckHeightSign]
   | inr i =>
-      change ((b.height i).negOnePow : R) * (b.height i).negOnePow = 1
+      dsimp only [geckHeightSign]
       obtain hi | hi := Int.even_or_odd (b.height i)
       · rw [Int.negOnePow_even _ hi]
         simp
@@ -117,7 +117,7 @@ private theorem geckHeightSign_neg_simple (i : b.support) :
     let _ := P.indexNeg
     geckHeightSign b (.inr (-i : ι)) = -1 := by
   let _ := P.indexNeg
-  change ((b.height (-i : ι)).negOnePow : R) = -1
+  dsimp only [geckHeightSign]
   rw [b.height_reflectionPerm_self, b.height_one_of_mem_support i.property]
   norm_num
 
@@ -180,16 +180,19 @@ omit [IsDomain R] [P.IsCrystallographic] in
 private theorem geckHeightConj_apply (A : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R)
     (i j : b.support ⊕ ι) :
     geckHeightConj b A i j = geckHeightSign b i * A i j * geckHeightSign b j := by
-  change (geckHeightMatrix b * A * geckHeightMatrix b) i j = _
-  simp [geckHeightMatrix]
+  calc
+    geckHeightConj b A i j =
+        (geckHeightMatrix b * A * geckHeightMatrix b) i j := rfl
+    _ = geckHeightSign b i * A i j * geckHeightSign b j := by
+      simp [geckHeightMatrix]
 
 omit [IsDomain R] in
 private theorem geckHeightConj_h (i : b.support) :
     geckHeightConj b (h i) = h i := by
-  rw [h_eq_diagonal]
   let d : b.support ⊕ ι → R :=
     Sum.elim (fun _ => 0) (fun j => (P.pairingIn ℤ j i : R))
-  change geckHeightConj b (diagonal d) = diagonal d
+  have hd : h i = diagonal d := h_eq_diagonal i
+  rw [hd]
   ext j k
   rw [geckHeightConj_apply]
   by_cases hjk : j = k
@@ -333,29 +336,37 @@ private theorem geckOppositionInvolution_h (i : b.support) :
     geckOppositionInvolution b ⟨h i, h_mem_lieAlgebra i⟩ =
       -⟨h i, h_mem_lieAlgebra i⟩ := by
   apply Subtype.ext
-  change ωConj b (h i) = -h i
-  change ω b * h i * ω b = -h i
-  rw [ω_mul_h]
-  rw [mul_assoc, ω_mul_ω]
-  simp
+  calc
+    ↑(geckOppositionInvolution b ⟨h i, h_mem_lieAlgebra i⟩) = ωConj b (h i) := by
+      rw [geckOppositionInvolution, LieEquiv.ofSubalgebras_apply]
+    _ = ω b * h i * ω b := rfl
+    _ = -h i := by
+      rw [ω_mul_h, mul_assoc, ω_mul_ω]
+      simp
 
 private theorem geckOppositionInvolution_e (i : b.support) :
     geckOppositionInvolution b ⟨e i, e_mem_lieAlgebra i⟩ =
       ⟨f i, f_mem_lieAlgebra i⟩ := by
   apply Subtype.ext
-  change ωConj b (e i) = f i
-  change ω b * e i * ω b = f i
-  rw [ω_mul_e, mul_assoc, ω_mul_ω]
-  simp
+  calc
+    ↑(geckOppositionInvolution b ⟨e i, e_mem_lieAlgebra i⟩) = ωConj b (e i) := by
+      rw [geckOppositionInvolution, LieEquiv.ofSubalgebras_apply]
+    _ = ω b * e i * ω b := rfl
+    _ = f i := by
+      rw [ω_mul_e, mul_assoc, ω_mul_ω]
+      simp
 
 private theorem geckOppositionInvolution_f (i : b.support) :
     geckOppositionInvolution b ⟨f i, f_mem_lieAlgebra i⟩ =
       ⟨e i, e_mem_lieAlgebra i⟩ := by
   apply Subtype.ext
-  change ωConj b (f i) = e i
-  change ω b * f i * ω b = e i
-  rw [ω_mul_f, mul_assoc, ω_mul_ω]
-  simp
+  calc
+    ↑(geckOppositionInvolution b ⟨f i, f_mem_lieAlgebra i⟩) = ωConj b (f i) := by
+      rw [geckOppositionInvolution, LieEquiv.ofSubalgebras_apply]
+    _ = ω b * f i * ω b := rfl
+    _ = e i := by
+      rw [ω_mul_f, mul_assoc, ω_mul_ω]
+      simp
 
 /-- The Chevalley involution of Geck's matrix Lie algebra. It is the composition of the opposition
 involution with the height-parity involution, and therefore sends the simple generators by
@@ -398,19 +409,18 @@ private theorem geckLieHom_ext {g k : lieAlgebra b →ₗ⁅R⁆ lieAlgebra b}
   have hx : x ∈ LieSubalgebra.lieSpan R (lieAlgebra b)
       (((↑) : lieAlgebra b → Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ⁻¹'
         (range h ∪ range e ∪ range f)) := by
-    change x ∈ LieSubalgebra.lieSpan R
-      (LieSubalgebra.lieSpan R (Matrix (b.support ⊕ ι) (b.support ⊕ ι) R)
-        (range h ∪ range e ∪ range f))
-      (Subtype.val ⁻¹' (range h ∪ range e ∪ range f))
-    rw [LieSubalgebra.lieSpan_lieSpan_coe_preimage]
+    rw [show LieSubalgebra.lieSpan R (lieAlgebra b)
+      (((↑) : lieAlgebra b → Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ⁻¹'
+        (range h ∪ range e ∪ range f)) = ⊤ from
+      LieSubalgebra.lieSpan_lieSpan_coe_preimage]
     trivial
   induction hx using LieSubalgebra.lieSpan_induction with
   | mem x hx =>
-      change (x : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ∈
-        range h ∪ range e ∪ range f at hx
+      have hx' : (x : Matrix (b.support ⊕ ι) (b.support ⊕ ι) R) ∈
+          range h ∪ range e ∪ range f := hx
       obtain (⟨i, hi⟩ | ⟨i, hi⟩ | ⟨i, hi⟩) :
           (∃ i, h i = x) ∨ (∃ i, e i = x) ∨ (∃ i, f i = x) := by
-        simpa only [mem_union, mem_range, or_assoc] using hx
+        simpa only [mem_union, mem_range, or_assoc] using hx'
       · have : x = ⟨h i, h_mem_lieAlgebra i⟩ := Subtype.ext hi.symm
         subst x
         exact hh i
@@ -447,13 +457,12 @@ theorem eq_geckChevalleyInvolution {g : lieAlgebra b →ₗ⁅R⁆ lieAlgebra b}
 @[simp]
 theorem geckChevalleyInvolution_geckChevalleyInvolution (x : lieAlgebra b) :
     geckChevalleyInvolution b (geckChevalleyInvolution b x) = x := by
-  have hcomp : (geckChevalleyInvolution b).trans (geckChevalleyInvolution b) =
-      (LieEquiv.refl : lieAlgebra b ≃ₗ⁅R⁆ lieAlgebra b) := by
-    apply LieEquiv.ext
-    intro y
-    exact DFunLike.congr_fun (geckLieHom_ext b (fun i => by simp) (fun i => by simp)
-      fun i => by simp) y
-  exact DFunLike.congr_fun hcomp x
+  exact DFunLike.congr_fun
+    (geckLieHom_ext b
+      (g := (geckChevalleyInvolution b : lieAlgebra b →ₗ⁅R⁆ lieAlgebra b).comp
+        (geckChevalleyInvolution b : lieAlgebra b →ₗ⁅R⁆ lieAlgebra b))
+      (k := (LieHom.id : lieAlgebra b →ₗ⁅R⁆ lieAlgebra b))
+      (fun i => by simp) (fun i => by simp) (fun i => by simp)) x
 
 /-- Geck's Chevalley involution is an involution. -/
 theorem geckChevalleyInvolution_involutive :
