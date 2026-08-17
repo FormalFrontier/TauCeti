@@ -67,12 +67,13 @@ theorem le_commonKernelHopfIdeal_iff (f : ∀ i, H ⟶ K i) (I : HopfIdeal R H) 
     exact le_sSup h
 
 /-- The morphism from the common-kernel quotient induced by the `i`th member of the family. -/
-noncomputable abbrev commonKernelLift (f : ∀ i, H ⟶ K i) (i : ι) :
+noncomputable def commonKernelLift (f : ∀ i, H ⟶ K i) (i : ι) :
     quotient H (commonKernelHopfIdeal f) ⟶ K i :=
   liftQuotient (commonKernelHopfIdeal f) (f i)
     (commonKernelHopfIdeal_toIdeal_le_ker f i)
 
 /-- The quotient morphism followed by a common-kernel lift is the original morphism. -/
+@[simp]
 theorem mkQuotient_comp_commonKernelLift (f : ∀ i, H ⟶ K i) (i : ι) :
     mkQuotient H (commonKernelHopfIdeal f) ≫ commonKernelLift f i = f i :=
   mkQuotient_comp_liftQuotient (commonKernelHopfIdeal f) (f i)
