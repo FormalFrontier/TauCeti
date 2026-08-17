@@ -103,7 +103,8 @@ example {Ω : Type*} [MeasurableSpace Ω] [Nonempty α] {μ : Measure Ω} [IsPro
   congrArg ProbabilityMeasure.toMeasure
     (eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi (π := ⟨Measure.dirac P, inferInstance⟩)
       hX_meas
-      (by rw [hpath, ← deFinettiBarycenter_dirac P, deFinettiBarycenter_def]; rfl)).symm
+      (by rw [hpath, ← deFinettiBarycenter_dirac P, deFinettiBarycenter_def,
+        ProbabilityMeasure.coe_mk])).symm
 
 end CanonicalMixture
 
