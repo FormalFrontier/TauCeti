@@ -12,19 +12,18 @@ public import TauCeti.Geometry.Hodge.Structure
 
 A morphism between pure Hodge structures of the same weight is a complex-linear map which
 preserves the Hodge filtration and commutes with the specified conjugations.  The conjugation
-condition records that the complex-linear map comes from the underlying real or rational
-structure; without it, preservation of the Hodge filtration alone is not the usual notion of a
-Hodge morphism.
+condition ensures that the map descends to the real fixed loci; without it, preservation of the
+Hodge filtration alone is not the usual notion of a Hodge morphism.
 
 This file develops the elementary morphism calculus.  Morphisms are closed under identities,
 composition, zero, addition, and negation.  Preservation of the filtration and compatibility with
 conjugation imply preservation of the conjugate filtration and hence of every Hodge component
 `H^{p,n-p}`.
 
-The definitions are stated for `HodgeStructureOn`, so they apply equally to integral, rational,
-and real structures through their chosen complexifications. Constructing a morphism from a map
-of lattices or rational spaces is separate base-change infrastructure: the present interface is the
-target such constructions must satisfy.
+The definitions are stated for `HodgeStructureOn`, so they provide the complex/real morphism
+interface induced by conjugation. For rational or integral Hodge structures, a morphism must
+additionally preserve the chosen rational subspace or integral lattice; that arithmetic data belongs
+to separate base-change infrastructure.
 
 ## Main declarations
 
@@ -55,7 +54,8 @@ variable {n : ℤ}
 /-- A morphism between pure Hodge structures of the same weight.
 
 It is a complex-linear map preserving every step of the decreasing Hodge filtration and commuting
-with the conjugations which encode the underlying real or rational forms. -/
+with the conjugations, and hence descends to a map between their real fixed loci. Preservation of a
+rational subspace or integral lattice is additional data not recorded here. -/
 structure Hom (source : HodgeStructureOn W₁ ω₁ n) (target : HodgeStructureOn W₂ ω₂ n) where
   /-- The complex-linear map underlying a Hodge morphism. -/
   toLinearMap : W₁ →ₗ[ℂ] W₂
@@ -117,7 +117,7 @@ theorem map_mem_piece (f : Hom source target) (p : ℤ) {x : W₁}
   f.map_piece_le p ⟨x, hx, rfl⟩
 
 /-- The identity morphism of a pure Hodge structure. -/
-@[expose] def id (source : HodgeStructureOn W₁ ω₁ n) : Hom source source where
+def id (source : HodgeStructureOn W₁ ω₁ n) : Hom source source where
   toLinearMap := LinearMap.id
   map_mem_F := fun _ _ hx ↦ hx
   commutes_conj := fun _ ↦ rfl
@@ -125,10 +125,10 @@ theorem map_mem_piece (f : Hom source target) (p : ℤ) {x : W₁}
 /-- The identity Hodge morphism acts as the identity. -/
 @[simp]
 theorem id_apply (x : W₁) : id source x = x :=
-  rfl
+  (rfl)
 
 /-- Composition of morphisms of pure Hodge structures. -/
-@[expose] def comp (g : Hom target third) (f : Hom source target) : Hom source third where
+def comp (g : Hom target third) (f : Hom source target) : Hom source third where
   toLinearMap := g.toLinearMap.comp f.toLinearMap
   map_mem_F := fun p x hx ↦ g.map_mem_F p _ (f.map_mem_F p x hx)
   commutes_conj := fun x ↦ by
@@ -138,7 +138,7 @@ theorem id_apply (x : W₁) : id source x = x :=
 @[simp]
 theorem comp_apply (g : Hom target third) (f : Hom source target) (x : W₁) :
     g.comp f x = g (f x) :=
-  rfl
+  (rfl)
 
 /-- Left identity law for Hodge morphisms. -/
 @[simp]
