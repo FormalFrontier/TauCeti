@@ -92,27 +92,6 @@ theorem actionFieldRestriction_ker_le (M : GaloisLatticeCat k) :
   rw [← (actionField M).restrictNormalHom_ker]
   exact hσ
 
-/-- The quotient of the absolute Galois group by the fixing subgroup of the action field is its
-automorphism group. -/
-noncomputable def absoluteQuotientEquivGalActionField (M : GaloisLatticeCat k) :
-    Field.absoluteGaloisGroup k ⧸ (actionFieldRestriction M).ker ≃*
-      Gal(actionField M / k) :=
-  QuotientGroup.liftEquiv (actionFieldRestriction M).ker
-    (actionFieldRestriction_surjective M) rfl
-
-/-- The quotient equivalence sends an absolute automorphism to its restriction to the action
-field. -/
-@[simp]
-theorem absoluteQuotientEquivGalActionField_mk_apply (M : GaloisLatticeCat k)
-    (σ : Field.absoluteGaloisGroup k) :
-    absoluteQuotientEquivGalActionField M
-        (σ : Field.absoluteGaloisGroup k ⧸ (actionFieldRestriction M).ker) =
-      actionFieldRestriction M σ :=
-  by
-    rw [absoluteQuotientEquivGalActionField]
-    exact QuotientGroup.liftEquiv_mk (N := (actionFieldRestriction M).ker)
-      (actionFieldRestriction_surjective M) rfl σ
-
 /-- The automorphism group of the action field maps to the faithful finite quotient acting on the
 lattice. -/
 noncomputable def actionFieldToActionQuotient (M : GaloisLatticeCat k) :
@@ -122,7 +101,8 @@ noncomputable def actionFieldToActionQuotient (M : GaloisLatticeCat k) :
         intro σ hσ
         rw [QuotientGroup.ker_mk']
         exact actionFieldRestriction_ker_le M hσ)).comp
-    (absoluteQuotientEquivGalActionField M).symm.toMonoidHom
+    (QuotientGroup.quotientKerEquivOfSurjective (actionFieldRestriction M)
+      (actionFieldRestriction_surjective M)).symm.toMonoidHom
 
 /-- Restriction to the action field followed by the quotient map is the original class in the
 action quotient. -/
@@ -133,12 +113,13 @@ theorem actionFieldToActionQuotient_restrict (M : GaloisLatticeCat k)
       (σ : actionQuotient M) := by
   rw [actionFieldToActionQuotient, MonoidHom.comp_apply]
   have hσ :
-      (absoluteQuotientEquivGalActionField M).symm
-          (actionFieldRestriction M σ) =
+      (QuotientGroup.quotientKerEquivOfSurjective (actionFieldRestriction M)
+          (actionFieldRestriction_surjective M)).symm (actionFieldRestriction M σ) =
         (σ : Field.absoluteGaloisGroup k ⧸ (actionFieldRestriction M).ker) := by
-    apply (absoluteQuotientEquivGalActionField M).injective
-    rw [(absoluteQuotientEquivGalActionField M).apply_symm_apply]
-    rfl
+    apply (QuotientGroup.quotientKerEquivOfSurjective (actionFieldRestriction M)
+      (actionFieldRestriction_surjective M)).injective
+    rw [MulEquiv.apply_symm_apply]
+    exact QuotientGroup.kerLift_mk (actionFieldRestriction M) σ
   simp only [MulEquiv.coe_toMonoidHom, hσ, QuotientGroup.lift_mk]
   rfl
 
