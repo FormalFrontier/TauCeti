@@ -66,20 +66,18 @@ there it is the forward isomorphism that the counits compute, and the inverse th
 
 ## Implementation notes
 
-`Representation.IndV.mk φ ρ h` is a reducible abbreviation that `simp` unfolds, so the
-induction-side generator formulas below are stated with it for readability but are **not** `simp`
-lemmas: their left-hand sides are not in `simp`-normal form and they would never fire. This matches
-Mathlib's own `Rep.coinvariantsTensorIndHom_mk_tmul_indVMk` and the sibling
-`TauCeti.indProjection_hom_hom_apply`. They are applied by explicit `rw` instead.
-
-The coinduction formulas are not `simp` lemmas either, for a different reason: their left-hand
-sides carry the source and target of `(coindFunctorCompIso φ ψ).hom.app A` as implicit arguments,
-and `simp` rewrites those with `CategoryTheory.Functor.comp_obj` and `Rep.coindFunctor_obj`, so the
-left-hand sides are again not in `simp`-normal form (the `simpNF` linter rejects the tag).
-Restating any of the four in the linter's normal form is not a way out: that form pairs rewritten
-implicit type arguments with an unrewritten `Representation.IntertwiningMap.instFunLike` instance
-argument, which no surface syntax elaborates to, and the writable approximations to it pass
-`simpNF` but never fire on a goal. All four are therefore consumed by `rw` or `exact`.
+The four representative formulas are tagged with the pre-order `@[simp↓]` rather than `@[simp]`,
+like `TauCeti.Rep.resFunctorCompIso_hom_app_apply` above them. Their left-hand sides are readable
+but not in post-order `simp`-normal form: on the induction side `Representation.IndV.mk φ ρ h` is a
+reducible abbreviation that `simp` unfolds to `Representation.Coinvariants.mk _ (single h 1 ⊗ₜ a)`,
+and on the coinduction side `simp` rewrites the source and target of
+`(coindFunctorCompIso φ ψ).hom.app A`, which appear as implicit arguments, with
+`CategoryTheory.Functor.comp_obj` and `Rep.coindFunctor_obj`. A plain `@[simp]` tag is therefore
+rejected by the `simpNF` linter and would never fire, and restating the formulas in the linter's
+normal form is not a way out: that form pairs rewritten implicit type arguments with an unrewritten
+`Representation.IntertwiningMap.instFunLike` instance argument, which no surface syntax elaborates
+to. `@[simp↓]` fires the lemma before those subterms are normalised, so `simp` closes goals stated
+in the readable form, and `rw` and `exact` still apply the lemmas as usual.
 
 ## References
 
@@ -230,8 +228,9 @@ lemma indV_ind_hom_ext {V W : Type*} [AddCommGroup V] [Module k V] [AddCommGroup
     Representation.IndV.hom_ext φ _ fun h => LinearMap.ext fun a => key κ h a
 
 /-- **Induction in stages on representatives, backwards**: the inverse of the induction-in-stages
-isomorphism sends `⟦κ ⊗ₜ a⟧` to `⟦κ ⊗ₜ ⟦1 ⊗ₜ a⟧⟧`. Not a `simp` lemma: `simp` unfolds the reducible
-`Representation.IndV.mk`, so the left-hand side is not in `simp`-normal form. -/
+isomorphism sends `⟦κ ⊗ₜ a⟧` to `⟦κ ⊗ₜ ⟦1 ⊗ₜ a⟧⟧`. Tagged `@[simp↓]` rather than `@[simp]` because
+`simp` unfolds the reducible `Representation.IndV.mk` in the left-hand side. -/
+@[simp↓]
 lemma indFunctorCompIso_inv_app_hom_apply_mk (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (κ : K) (a : A) :
     ((indFunctorCompIso φ ψ).inv.app A).hom (Representation.IndV.mk (ψ.comp φ) A.ρ κ a) =
@@ -247,8 +246,9 @@ lemma indFunctorCompIso_inv_app_hom_apply_mk (φ : G →* H) (ψ : H →* K)
 
 /-- **Induction in stages on representatives**: the induction-in-stages isomorphism sends
 `⟦κ ⊗ₜ ⟦h ⊗ₜ a⟧⟧` to `⟦ψ(h) κ ⊗ₜ a⟧`. This is the explicit formula the character and Mackey
-computations consume, in place of the abstract adjoint comparison. Not a `simp` lemma, for the same
+computations consume, in place of the abstract adjoint comparison. Tagged `@[simp↓]` for the same
 reason as `TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`. -/
+@[simp↓]
 lemma indFunctorCompIso_hom_app_hom_apply_mk_mk (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (h : H) (κ : K) (a : A) :
     ((indFunctorCompIso φ ψ).hom.app A).hom
@@ -356,7 +356,9 @@ private lemma coindFunctorCompIso_hom_app_hom_apply_apply_one (φ : G →* H) (�
 `H`-equivariant function `F : K → coind φ A`, whose values are themselves the `G`-equivariant
 functions `H → A`, to `κ ↦ F κ 1`. This is the dual of
 `TauCeti.Rep.indFunctorCompIso_hom_app_hom_apply_mk_mk`, and is obtained from its value at `1` by
-`K`-equivariance. -/
+`K`-equivariance. Tagged `@[simp↓]` rather than `@[simp]` because `simp` rewrites the source and
+target of the isomorphism component in the left-hand side. -/
+@[simp↓]
 lemma coindFunctorCompIso_hom_app_hom_apply_apply (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (F : _root_.Rep.coind ψ (_root_.Rep.coind φ A)) (κ : K) :
     (((coindFunctorCompIso φ ψ).hom.app A).hom F).1 κ = (F.1 κ).1 1 := by
@@ -371,7 +373,9 @@ lemma coindFunctorCompIso_hom_app_hom_apply_apply (φ : G →* H) (ψ : H →* K
 
 /-- **Coinduction in stages on functions, backwards**: the inverse of the coinduction-in-stages
 isomorphism turns a `G`-equivariant function `f : K → A` into `κ ↦ (h ↦ f (ψ(h) κ))`, the dual of
-`TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`. -/
+`TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`. Tagged `@[simp↓]` for the same reason as
+`TauCeti.Rep.coindFunctorCompIso_hom_app_hom_apply_apply`. -/
+@[simp↓]
 lemma coindFunctorCompIso_inv_app_hom_apply_apply_apply (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (f : _root_.Rep.coind (ψ.comp φ) A) (κ : K) (h : H) :
     ((((coindFunctorCompIso φ ψ).inv.app A).hom f).1 κ).1 h = f.1 (ψ h * κ) := by
