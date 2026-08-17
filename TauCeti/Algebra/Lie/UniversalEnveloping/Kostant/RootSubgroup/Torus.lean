@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Eleme
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
 /-!
 # The split maximal torus of a Kostant elementary group
@@ -147,17 +148,10 @@ theorem pow_rootVector {i : ι} {α μ : κ → ℤ} {m : V}
     IsCartanWeightVector h ρ (μ + n • α)
       ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m) := by
   -- The image of `eᵢ` is an eigenvector of weight `α` for the adjoint action of the Cartan family.
-  have hbr : ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) *
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) -
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) =
-      (α j : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := by
-    intro j
-    have := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) (h j) (e i)
-    rw [hα j, LieRing.of_associative_ring_bracket, map_smul] at this
-    have h2 := congrArg ρ this
-    rw [map_sub, map_mul, map_mul, map_smul] at h2
-    exact h2.symm
+  have hbr : ∀ j, ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)),
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))⁆ =
+      (α j : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := fun j =>
+    lie_map_ι_eq_smul ρ (hα j)
   induction n with
   | zero => simpa using hm
   | succ n ih =>
@@ -166,8 +160,10 @@ theorem pow_rootVector {i : ι} {α μ : κ → ℤ} {m : V}
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))
             ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m) := by
         rw [pow_succ', Module.End.mul_apply]
+      have hbrj := hbr j
+      rw [LieRing.of_associative_ring_bracket] at hbrj
       have happ := congrArg (fun f : Module.End ℚ V =>
-        f ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m)) (hbr j)
+        f ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m)) hbrj
       simp only [LinearMap.sub_apply, Module.End.mul_apply, LinearMap.smul_apply] at happ
       rw [ih j, map_smul, sub_eq_iff_eq_add, ← add_smul] at happ
       have hstep : (μ + (n + 1) • α) j = α j + (μ + n • α) j := by

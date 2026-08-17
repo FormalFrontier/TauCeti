@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 public import TauCeti.RingTheory.Nilpotent.ChevalleyCommutator
 public import TauCeti.RingTheory.Nilpotent.RootString.Basic
-import TauCeti.Algebra.Lie.UniversalEnveloping.Commutation
+import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 import Mathlib.RingTheory.Nilpotent.Basic
 
 /-!
@@ -121,8 +121,9 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 private theorem commute_of_lie_eq_zero {a b : L} (hab : ⁅a, b⁆ = 0) :
     Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a))
       (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b)) := by
-  have h := map_ι_lie ρ a b
+  have h := lie_map_ι ρ a b
   rw [hab, map_zero, map_zero] at h
+  rw [LieRing.of_associative_ring_bracket] at h
   exact sub_eq_zero.mp h
 
 private theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
@@ -132,8 +133,9 @@ private theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) +
         c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b') := by
-  have h := map_ι_lie ρ a b
+  have h := lie_map_ι ρ a b
   rw [hab, map_zsmul, map_zsmul] at h
+  rw [LieRing.of_associative_ring_bracket] at h
   exact sub_eq_iff_eq_add'.mp h
 
 private theorem dividedPower_zsmul_apply_mem (e : ι → L) (h : κ → L)
@@ -346,8 +348,9 @@ theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
       c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) +
         2 • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
-    have hb := map_ι_lie ρ (e i) ⁅e i, e j⁆
+    have hb := lie_map_ι ρ (e i) ⁅e i, e j⁆
     rw [hiij, hij, map_zsmul, map_zsmul, map_zsmul, map_zsmul] at hb
+    rw [LieRing.of_associative_ring_bracket] at hb
     -- The straightening rule takes the second commutator as `2 • w`, with `w = d • e l` the
     -- integral element `(ad eᵢ)² eⱼ / 2`, whereas the Lie hypothesis supplies it as `(2 * d) • e l`
     -- with the two coefficients already multiplied. Doubling in `ℕ` and multiplying by `2` in `ℤ`

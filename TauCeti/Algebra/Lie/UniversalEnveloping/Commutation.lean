@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.UniversalEnveloping
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Commutation
 
@@ -35,8 +35,6 @@ Kostant integral form; the root/root part requires the separate root-string form
 
 * `TauCeti.UniversalEnvelopingAlgebra.ι_mul_ι_eq_ι_mul_ι_add_zsmul_one`: the associative-ring
   form of an integral weight relation.
-* `TauCeti.UniversalEnvelopingAlgebra.map_ι_lie`: an algebra representation maps a Lie bracket to
-  the commutator of the images.
 * `TauCeti.UniversalEnvelopingAlgebra.ringChoose_ι_mul_dividedPower_ι`: move a Cartan binomial
   coefficient to the right of a root-vector divided power.
 * `TauCeti.UniversalEnvelopingAlgebra.dividedPower_ι_mul_ringChoose_ι`: the reverse reordering.
@@ -70,32 +68,11 @@ theorem ι_mul_ι_eq_ι_mul_ι_add_zsmul_one {R : Type*} [CommRing R] [LieAlgebr
   rw [mul_add, zsmul_one, ← zsmul_eq_mul', add_comm]
   exact eq_add_of_sub_eq hmap.symm
 
-variable [LieAlgebra ℚ L]
-
 local notation "U" => _root_.UniversalEnvelopingAlgebra ℚ L
 
 attribute [local instance] TauCeti.moduleNNRat
 
-/-! ## Brackets in representations -/
-
-/-- An algebra representation of the universal enveloping algebra maps the Lie bracket to the
-commutator in its target algebra. -/
-theorem map_ι_lie {A : Type v} [Ring A] [Algebra ℚ A]
-    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] A) (x y : L) :
-    ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ x), ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ y)⁆ =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ ⁅x, y⁆) := by
-  have hlie := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) x y
-  rw [LieRing.of_associative_ring_bracket] at hlie
-  rw [LieRing.of_associative_ring_bracket, hlie, map_sub, map_mul, map_mul]
-
-/-- A Lie-bracket eigenvector remains one under an algebra representation of the universal
-enveloping algebra. -/
-theorem map_ι_lie_eq_smul {A : Type v} [Ring A] [Algebra ℚ A]
-    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] A) {x y : L} {a : ℚ}
-    (hxy : ⁅x, y⁆ = a • y) :
-    ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ x), ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ y)⁆ =
-      a • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ y) := by
-  rw [map_ι_lie ρ, hxy, map_smul, map_smul]
+variable [LieAlgebra ℚ L]
 
 /-- A Cartan binomial coefficient moves to the right of a root-vector divided power by adding
 `n` copies of the integral weight to its argument. -/
