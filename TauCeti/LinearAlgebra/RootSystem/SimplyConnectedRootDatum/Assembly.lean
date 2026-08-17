@@ -45,6 +45,9 @@ make this explicit data available without requiring downstream users to unfold t
   lattice.
 * `TauCeti.DynkinType.root_simpleIndex`, `coroot_simpleIndex`, and
   `mem_support_simplyConnectedBase`: the entrywise pinning of the simple roots and base.
+* `TauCeti.DynkinType.card_support_simplyConnectedBase`: the pinned base has `t.rank` elements.
+* `TauCeti.DynkinType.toLinearMap_simplyConnectedRootDatum`: the pinned pairing is the dot
+  product, uniformly in the type.
 
 ## References
 
@@ -385,6 +388,63 @@ private theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
     rw [g2SimplyConnectedBase_support]
     simp only [Finset.mem_insert, Finset.mem_singleton]
     omega
+
+/-- The pinned base has one simple root per Bourbaki node. -/
+theorem card_support_simplyConnectedBase (t : DynkinType) (ht : t.Valid) :
+    (t.simplyConnectedBase ht).support.card = t.rank := by
+  classical
+  refine (Finset.card_bij (fun (i : Fin t.rank) _ => t.simpleIndex ht i) (fun i _ => ?_)
+    (fun i _ j _ hij => ?_) fun k hk => ?_).symm.trans (Finset.card_fin t.rank)
+  · rw [mem_support_simplyConnectedBase, simpleIndex_val]
+    exact i.isLt
+  · exact Fin.ext (by simpa using congrArg Fin.val hij)
+  · rw [mem_support_simplyConnectedBase] at hk
+    exact ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext (simpleIndex_val t ht ⟨k, hk⟩).symm⟩
+
+/-- **The pinned pairing is the dot product** of the fundamental-weight and simple-coroot
+coordinates, uniformly in the Dynkin type. -/
+theorem toLinearMap_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid)
+    (x y : Fin t.rank → ℤ) :
+    (t.simplyConnectedRootDatum ht).toLinearMap x y = x ⬝ᵥ y := by
+  -- As with the entrywise pinning above, each branch only rewrites the dispatcher into its family
+  -- datum and applies that family's own pairing equation.
+  cases t with
+  | A n =>
+    change Fin n → ℤ at x y
+    rw [simplyConnectedRootDatum_A]
+    exact toLinearMap_typeASimplyConnectedRootDatum x y
+  | B n =>
+    change Fin n → ℤ at x y
+    rw [simplyConnectedRootDatum_B]
+    exact toLinearMap_typeBSimplyConnectedRootDatum x y
+  | C n =>
+    change Fin n → ℤ at x y
+    rw [simplyConnectedRootDatum_C]
+    exact toLinearMap_typeCSimplyConnectedRootDatum x y
+  | D n =>
+    change Fin n → ℤ at x y
+    rw [simplyConnectedRootDatum_D]
+    exact toLinearMap_typeDSimplyConnectedRootDatum (valid_D.mp ht) x y
+  | E6 =>
+    change Fin 6 → ℤ at x y
+    rw [simplyConnectedRootDatum_E6]
+    exact e6SimplyConnectedRootDatum_toLinearMap x y
+  | E7 =>
+    change Fin 7 → ℤ at x y
+    rw [simplyConnectedRootDatum_E7]
+    exact e7SimplyConnectedRootDatum_toLinearMap_apply x y
+  | E8 =>
+    change Fin 8 → ℤ at x y
+    rw [simplyConnectedRootDatum_E8]
+    exact e8SimplyConnectedRootDatum_toLinearMap_apply x y
+  | F4 =>
+    change Fin 4 → ℤ at x y
+    rw [simplyConnectedRootDatum_F4]
+    exact f4SimplyConnectedRootDatum_toLinearMap_apply_apply x y
+  | G2 =>
+    change Fin 2 → ℤ at x y
+    rw [simplyConnectedRootDatum_G2]
+    exact g2SimplyConnectedRootDatum_toLinearMap x y
 
 /-! ## Uniform acceptance theorems -/
 

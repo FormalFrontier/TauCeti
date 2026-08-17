@@ -357,6 +357,10 @@ def typeCSimplyConnectedRootDatum (n : ℕ) :
     simpa using
       typeCCoroot_typeCReflectionIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
 
+/-- The pinned pairing of type `Cₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeCSimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeCSimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 private lemma root_typeCSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).root k = typeCRoot ((typeCIndexEquiv n).symm k) :=
   rfl
