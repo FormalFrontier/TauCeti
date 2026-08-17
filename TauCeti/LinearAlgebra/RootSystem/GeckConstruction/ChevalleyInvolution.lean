@@ -81,7 +81,9 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type*}
   {P : RootPairing ι R M N} [P.IsCrystallographic] (b : P.Base)
 
 attribute [local instance 100] LieRing.ofAssociativeRing
-local instance : DecidableEq ι := Classical.decEq ι
+/-- Classical decidable equality on the index type, used only inside this file to form the
+diagonal height-parity matrix. -/
+local instance geckIndexDecidableEq : DecidableEq ι := Classical.decEq ι
 
 /-! ## The height-parity involution -/
 
