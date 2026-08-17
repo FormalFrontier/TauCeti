@@ -24,9 +24,9 @@ measurable version of an a.e. measurable coordinate. The conditional analogues a
 ## Main results
 
 * `MixedIIDWith.congr_process`, `MixedIID.congr_process` — coordinatewise a.e. equal processes.
-* `MixedIIDWith.congr_mixingRepresentative` — an a.e. equal, measurable mixing representative.
-* `MixedIIDWith.congr_mixingRepresentative_mk` — an a.e. equal, merely a.e. measurable one, at its
-  canonical measurable modification.
+* `MixedIIDWith.congr_mixingRepresentative` — an a.e. equal, measurable mixing representative. A
+  merely a.e. measurable replacement `ν'` is handled by applying it at `hν'.mk ν'`, with
+  `hν'.measurable_mk` and `hνν'.trans hν'.ae_eq_mk`.
 -/
 
 public section
@@ -66,15 +66,6 @@ theorem MixedIIDWith.congr_mixingRepresentative {μ : Measure Ω} {X : ι → Ω
   MixedIIDWith.intro hν' fun m k hk => by
     rw [h.blockLaw_eq_mixture k hk]
     exact Measure.bind_congr_right (by filter_upwards [hνν'] with ω hω using by rw [hω])
-
-/-- **An a.e. measurable replacement.** Measurability is not an a.e. notion, so an a.e. measurable
-`ν'` a.e. equal to a mixing representative need not be one itself. Its canonical measurable
-modification `hν'.mk ν'` is, and is a.e. equal to `ν'` by `AEMeasurable.ae_eq_mk` — which is the
-usable form of "the mixture identity only sees `ν` a.e.". -/
-theorem MixedIIDWith.congr_mixingRepresentative_mk {μ : Measure Ω} {X : ι → Ω → α}
-    {ν ν' : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) (hν' : AEMeasurable ν' μ)
-    (hνν' : ν =ᵐ[μ] ν') : MixedIIDWith μ X (hν'.mk ν') :=
-  h.congr_mixingRepresentative hν'.measurable_mk (hνν'.trans hν'.ae_eq_mk)
 
 end Probability
 

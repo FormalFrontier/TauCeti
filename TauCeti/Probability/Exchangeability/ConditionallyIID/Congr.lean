@@ -28,9 +28,9 @@ The mixture-side analogues are in `MixedIID/Congr.lean` and the symmetry predica
 
 * `ConditionallyIIDWith.congr_process`, `ConditionallyIID.congr_process` — coordinatewise a.e. equal
   processes.
-* `ConditionallyIIDWith.congr_directing` — an a.e. equal, measurable directing measure.
-* `ConditionallyIIDWith.congr_directing_mk` — an a.e. equal, merely a.e. measurable one, at its
-  canonical measurable modification.
+* `ConditionallyIIDWith.congr_directing` — an a.e. equal, measurable directing measure. A merely
+  a.e. measurable replacement `ν'` is handled by applying it at `hν'.mk ν'`, with
+  `hν'.measurable_mk` and `hνν'.trans hν'.ae_eq_mk`.
 -/
 
 public section
@@ -79,18 +79,6 @@ theorem ConditionallyIIDWith.congr_directing {μ : Measure Ω} {X : ι → Ω �
       _ = μ.bind fun ω =>
             (Measure.dirac (ν' ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν' ω).toMeasure :=
           Measure.bind_congr_right (by filter_upwards [hνν'] with ω hω using by rw [hω])
-
-/-- **An a.e. measurable replacement.** Measurability is not an a.e. notion, so an a.e. measurable
-`ν'` a.e. equal to a directing measure need not be one itself. Its canonical measurable
-modification `hν'.mk ν'` is, and is a.e. equal to `ν'` by `AEMeasurable.ae_eq_mk`.
-
-This is the form the a.e. uniqueness statement `conditionallyIID_ae_unique` calls for: it pins the
-directing measure down only up to a null set, so any construction of one is free to be modified
-there, and what it produces is a witness at the measurable modification. -/
-theorem ConditionallyIIDWith.congr_directing_mk {μ : Measure Ω} {X : ι → Ω → α}
-    {ν ν' : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (hν' : AEMeasurable ν' μ)
-    (hνν' : ν =ᵐ[μ] ν') : ConditionallyIIDWith μ X (hν'.mk ν') :=
-  h.congr_directing hν'.measurable_mk (hνν'.trans hν'.ae_eq_mk)
 
 end Probability
 

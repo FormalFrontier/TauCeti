@@ -9,10 +9,11 @@ public import TauCeti.Probability.Exchangeability.Basic
 /-!
 # Symmetry notions under a coordinatewise almost-everywhere change of process
 
-Every symmetry predicate of Layer 0 is a statement about the finite-dimensional laws of `X`, so it
-only sees the coordinates modulo `μ`-a.e. equality. This file records that: replacing each `X i` by
-a coordinatewise a.e. equal `Y i` changes neither `blockLaw`, `prefixLaw` and `pathLaw` nor any of
-`ExchangeableAt`, `Exchangeable`, `FullyExchangeable` and `Contractable`.
+Every symmetry predicate of Layer 0 is a statement about the finite-dimensional laws of `X`, or —
+for `FullyExchangeable` — about its path law, so each sees the coordinates only modulo `μ`-a.e.
+equality. This file records that: replacing each `X i` by a coordinatewise a.e. equal `Y i` changes
+neither `blockLaw`, `prefixLaw` and `pathLaw` nor any of `ExchangeableAt`, `Exchangeable`,
+`FullyExchangeable` and `Contractable`.
 
 Changing a random variable on a null set is routine — most often to replace an a.e. measurable
 coordinate by a measurable version — and without these lemmas a valid process becomes unusable at
