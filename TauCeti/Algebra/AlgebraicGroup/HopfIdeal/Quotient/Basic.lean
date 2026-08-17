@@ -264,33 +264,27 @@ lemma quotientIsoOfIso_inv_mk (e : H ≅ K) (I : HopfIdeal R K) (y : K) :
         (e.inv.hom y) := by
       rw [_root_.CommHopfAlgCat.comp_apply, mkQuotient_apply]
 
-/-- The zero Hopf ideal is contained in the kernel of the identity morphism. -/
-lemma bot_le_ker_id (H : _root_.CommHopfAlgCat.{v} R) :
-    (⊥ : HopfIdeal R H).toIdeal ≤
-      RingHom.ker (𝟙 H : H ⟶ H).hom.toAlgHom.toRingHom := by
-  simp
-
 /-- Quotienting a commutative Hopf algebra by the zero Hopf ideal gives an isomorphic object
 of `CommHopfAlgCat`. -/
 noncomputable def quotientBotIso (H : _root_.CommHopfAlgCat.{v} R) :
     quotient H (⊥ : HopfIdeal R H) ≅ H where
-  hom := liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) (bot_le_ker_id H)
+  hom := liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) bot_le
   inv := mkQuotient H (⊥ : HopfIdeal R H)
   hom_inv_id := by
     ext q
     obtain ⟨h, rfl⟩ :=
       Ideal.Quotient.mkₐ_surjective R (⊥ : HopfIdeal R H).toIdeal q
     rw [_root_.CommHopfAlgCat.comp_apply,
-      liftQuotient_mk (hf := bot_le_ker_id H), mkQuotient_apply]
+      liftQuotient_mk (hf := bot_le), mkQuotient_apply]
     rfl
   inv_hom_id := mkQuotient_comp_liftQuotient
-    (⊥ : HopfIdeal R H) (𝟙 H) (bot_le_ker_id H)
+    (⊥ : HopfIdeal R H) (𝟙 H) bot_le
 
 /-- The forward map of the quotient-by-zero isomorphism is the lift of the identity. -/
 @[simp]
 lemma quotientBotIso_hom (H : _root_.CommHopfAlgCat.{v} R) :
     (quotientBotIso H).hom =
-      liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) (bot_le_ker_id H) :=
+      liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) bot_le :=
   by rw [quotientBotIso]
 
 /-- The inverse map of the quotient-by-zero isomorphism is the quotient morphism. -/
@@ -451,7 +445,7 @@ noncomputable abbrev liftQuotient (I : HopfIdeal R H) (f : H ⟶ K)
 @[simp]
 lemma quotientBotIso_hom (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
     (quotientBotIso H).hom =
-      liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) (CommHopfAlgCat.bot_le_ker_id H.obj) :=
+      liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) bot_le :=
   by
     rw [quotientBotIso]
     apply ObjectProperty.hom_ext
