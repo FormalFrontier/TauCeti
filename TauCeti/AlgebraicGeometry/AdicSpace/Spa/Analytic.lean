@@ -199,14 +199,18 @@ theorem isTateRing_completion_locTopology_of_mem_generators (P : PairOfDefinitio
     (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition)
     {g : P.ringOfDefinition} (hg : g ∈ G)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away (g : A) S] :
-    let hden := hasDenominatorPower_of_idealOfDefinition_le_span P G hG.ge g S
+    let hden := hasDenominatorPower_of_idealOfDefinition_le_span P
+      (G.image ((↑) : P.ringOfDefinition → A))
+      (fun _ hx ↦ Finset.mem_image_of_mem _ (Finset.mem_coe.mp hx)) hG.ge g S
     letI := locUniformSpace P (G.image ((↑) : P.ringOfDefinition → A)) (g : A) S hden
     letI := isUniformAddGroup_locUniformSpace P
       (G.image ((↑) : P.ringOfDefinition → A)) (g : A) S hden
     letI := isTopologicalRing_locUniformSpace P
       (G.image ((↑) : P.ringOfDefinition → A)) (g : A) S hden
     IsTateRing (UniformSpace.Completion S) := by
-  let hden := hasDenominatorPower_of_idealOfDefinition_le_span P G hG.ge g S
+  let hden := hasDenominatorPower_of_idealOfDefinition_le_span P
+    (G.image ((↑) : P.ringOfDefinition → A))
+    (fun _ hx ↦ Finset.mem_image_of_mem _ (Finset.mem_coe.mp hx)) hG.ge g S
   exact isTateRing_completion_locTopology_of_isTopologicallyNilpotent P _ (g : A) S hden
     (P.isTopologicallyNilpotent_of_mem_idealOfDefinition
       (hG ▸ Ideal.subset_span (Finset.mem_coe.mpr hg)))
