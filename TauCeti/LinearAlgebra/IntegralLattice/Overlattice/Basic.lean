@@ -5,6 +5,7 @@ Authors: Codex
 -/
 module
 
+public import TauCeti.Algebra.Module.Submodule.Quotient
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Group
 
 /-!
