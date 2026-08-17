@@ -58,6 +58,22 @@ namespace HopfIdeal
 
 variable {R : Type u} {H : Type v} {K : Type w}
 variable [CommRing R] [Ring H] [Ring K]
+
+/-- The tensor-kernel exactness theorem in the tensor-ideal notation used by `HopfIdeal`. -/
+theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
+    (f : H →ₐ[R] A)
+    (hf : Function.Surjective f) :
+    RingHom.ker (Algebra.TensorProduct.map f f) =
+      leftTensorIdeal (R := R) (H := H) (RingHom.ker f) ⊔
+        rightTensorIdeal (R := R) (H := H) (RingHom.ker f) := by
+  rw [Algebra.TensorProduct.map_ker (f := f) (g := f) hf hf,
+    leftTensorIdeal_def, rightTensorIdeal_def]
+  simp only [AlgHom.toRingHom_eq_coe]
+  -- `map_ker` states the two maps via algebra-hom coercions, while `leftTensorIdeal_def`
+  -- and `rightTensorIdeal_def` use their `toRingHom`; after the named coercion rewrite
+  -- these are the same ideal maps definitionally.
+  apply congr_arg₂ (· ⊔ ·) <;> rfl
+
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
 /-- The tensor-square map sends the comultiplication of an element in the kernel of a
@@ -74,21 +90,6 @@ private theorem comul_mem_tensor_map_ker (f : H →ₐc[R] K) {x : H}
     _ = 0 := by
       have hfx : f x = 0 := RingHom.mem_ker.mp hx
       simpa using congrArg (Coalgebra.comul (R := R) (A := K)) hfx
-
-/-- The tensor-kernel exactness theorem in the tensor-ideal notation used by `HopfIdeal`. -/
-theorem tensor_map_ker_eq_left_sup_right {A : Type*} [Ring A] [Algebra R A]
-    (f : H →ₐ[R] A)
-    (hf : Function.Surjective f) :
-    RingHom.ker (Algebra.TensorProduct.map f f) =
-      leftTensorIdeal (R := R) (H := H) (RingHom.ker f) ⊔
-        rightTensorIdeal (R := R) (H := H) (RingHom.ker f) := by
-  rw [Algebra.TensorProduct.map_ker (f := f) (g := f) hf hf,
-    leftTensorIdeal_def, rightTensorIdeal_def]
-  simp only [AlgHom.toRingHom_eq_coe]
-  -- `map_ker` states the two maps via algebra-hom coercions, while `leftTensorIdeal_def`
-  -- and `rightTensorIdeal_def` use their `toRingHom`; after the named coercion rewrite
-  -- these are the same ideal maps definitionally.
-  apply congr_arg₂ (· ⊔ ·) <;> rfl
 
 /-- The counit vanishes on the ordinary kernel of a bialgebra morphism. -/
 private theorem counit_eq_zero_of_mem_ker (f : H →ₐc[R] K) {x : H}
@@ -182,6 +183,7 @@ private theorem tensor_kerLiftAlg_injective (f : H →ₐ[k] K) :
       (Algebra.TensorProduct.map (Ideal.kerLiftAlg f) (Ideal.kerLiftAlg f)) := by
   let f' : (H ⧸ RingHom.ker f) →ₐ[k] K := Ideal.kerLiftAlg f
   have hf' : Function.Injective f' := Ideal.kerLiftAlg_injective f
+  -- Expose the underlying linear map so the named tensor-product map lemmas can rewrite it.
   change Function.Injective (Algebra.TensorProduct.map f' f').toLinearMap
   rw [Algebra.TensorProduct.toLinearMap_map, TensorProduct.AlgebraTensorModule.map_eq]
   exact TensorProduct.map_injective_of_flat_flat f'.toLinearMap f'.toLinearMap hf' hf'
