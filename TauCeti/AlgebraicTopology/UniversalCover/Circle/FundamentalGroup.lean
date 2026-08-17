@@ -35,15 +35,15 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
 
 ## Main declarations
 
-* `AddCircle.fundamentalGroupMulEquivZMultiples`: for a covering projection from a
-  simply connected additive group, the fundamental group of `AddCircle p` is the period subgroup.
-* `AddCircle.fundamentalGroupMulEquivInt`: for a covering projection from a
-  simply connected additive group with non-torsion period, the fundamental group of
-  `AddCircle p` is `Multiplicative ℤ`.
-* `AddCircle.fundamentalGroupMulEquiv`: for a nonzero real period, the fundamental
-  group of `AddCircle p` (based at any point with a chosen lift) is `Multiplicative ℤ`.
-* `AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using
-  the lift `0 : ℝ`.
+* `AddCircle.fundamentalGroupMulEquivZMultiples`: for a covering projection from a simply
+  connected additive group, the fundamental group of `AddCircle p` is the period subgroup.
+* `AddCircle.fundamentalGroupMulEquivInt`: for a covering projection from a simply connected
+  additive group with non-torsion period, the fundamental group of `AddCircle p` is
+  `Multiplicative ℤ`.
+* `AddCircle.fundamentalGroupMulEquiv`: for a nonzero real period, the fundamental group of
+  `AddCircle p` (based at any point with a chosen lift) is `Multiplicative ℤ`.
+* `AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using the lift
+  `0 : ℝ`.
 * `UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
 
 ## References

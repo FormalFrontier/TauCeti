@@ -21,8 +21,8 @@ This realizes `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13,
 ## Main declarations
 
 * `AddCircle.isAspherical_pi`: an indexed product of real circles is aspherical.
-* `AddCircle.isEilenbergMacLaneSpaceOne_pi`: an indexed product of nondegenerate
-  real circles is a `K(Π i, ℤ, 1)`.
+* `AddCircle.isEilenbergMacLaneSpaceOne_pi`: an indexed product of nondegenerate real circles is a
+  `K(Π i, ℤ, 1)`.
 -/
 
 public section

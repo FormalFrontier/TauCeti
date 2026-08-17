@@ -24,8 +24,7 @@ This realizes `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13,
 ## Main declarations
 
 * `AddCircle.isAspherical`: every real additive circle is aspherical.
-* `AddCircle.isEilenbergMacLaneSpaceOne`: a nondegenerate real circle is a
-  `K(ℤ, 1)`.
+* `AddCircle.isEilenbergMacLaneSpaceOne`: a nondegenerate real circle is a `K(ℤ, 1)`.
 -/
 
 public section
