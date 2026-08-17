@@ -10,10 +10,11 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Flag.Extension
 /-!
 # Building upper-unitriangular bases from fixed vectors
 
-Suppose every nonzero finite-dimensional comodule over a bialgebra has a nonzero fixed vector,
-that is, a vector `v` with coaction `v ↦ v ⊗ 1`. Repeatedly choose such a vector and pass to
-the quotient by its span. Induction on dimension, together with the extension basis from
-`Comodule.Flag.Extension`, gives a basis whose coefficient matrix is upper unitriangular.
+Suppose every nonzero finite-dimensional comodule over a coalgebra with a distinguished element
+`1` has a nonzero fixed vector, that is, a vector `v` with coaction `v ↦ v ⊗ 1`. Repeatedly choose
+such a vector and pass to the quotient by its span. Induction on dimension, together with the
+extension basis from `Comodule.Flag.Extension`, gives a basis whose coefficient matrix is upper
+unitriangular.
 
 This is the formal induction step common to the Kolchin arguments in Layer 5 of the
 ReductiveGroups roadmap. Lie–Kolchin supplies eigenlines for solvable groups; for a unipotent
@@ -48,7 +49,7 @@ universe u v w
 noncomputable section
 
 variable {k : Type u} {H : Type v} {M : Type w}
-variable [Field k] [Ring H] [Bialgebra k H]
+variable [Field k] [AddCommGroup H] [Module k H] [Coalgebra k H] [One H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
 attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
@@ -58,7 +59,7 @@ attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
 For the comodule corresponding to a group representation, this says that the represented group
 fixes `v`. -/
 def HasNonzeroFixedVector (k : Type u) (H : Type v) (M : Type w)
-    [Field k] [Ring H] [Bialgebra k H]
+    [Field k] [AddCommGroup H] [Module k H] [Coalgebra k H] [One H]
     [AddCommGroup M] [Module k M] [Comodule k H M] : Prop :=
   ∃ v : M, v ≠ 0 ∧ coact (R := k) (C := H) (M := M) v = v ⊗ₜ[k] (1 : H)
 
