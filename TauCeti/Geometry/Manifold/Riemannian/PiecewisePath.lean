@@ -78,19 +78,6 @@ def IsPiecewiseContMDiffOn (I : ModelWithCorners ℝ E H) (n : ℕ∞ω)
       ∀ i : Fin (k + 1),
         ContMDiffOn (modelWithCornersSelf ℝ ℝ) I n γ (Icc (τ i.castSucc) (τ i.succ))
 
-/-- `IsPiecewiseContMDiffOn` unfolded to a finite strict partition and the regularity of every
-piece. -/
-theorem isPiecewiseContMDiffOn_iff :
-    IsPiecewiseContMDiffOn I n γ a b ↔
-      ∃ (k : ℕ) (τ : Fin (k + 2) → ℝ),
-        τ 0 = a ∧
-          τ (Fin.last (k + 1)) = b ∧
-          (∀ i : Fin (k + 1), τ i.castSucc < τ i.succ) ∧
-          ∀ i : Fin (k + 1),
-            ContMDiffOn (modelWithCornersSelf ℝ ℝ) I n γ
-              (Icc (τ i.castSucc) (τ i.succ)) :=
-  Iff.rfl
-
 /-- The endpoints of a piecewise smooth path are strictly ordered. -/
 theorem IsPiecewiseContMDiffOn.lt (h : IsPiecewiseContMDiffOn I n γ a b) : a < b := by
   obtain ⟨k, τ, rfl, rfl, hτ, -⟩ := h
