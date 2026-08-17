@@ -27,8 +27,8 @@ as `μ.map X = ProbabilityTheory.cond μ s`. Defining the measure by the same `c
 enters the library and nothing has to be reconciled later.
 
 **Boundary.** For `b ≤ a` the interval is empty and `uniformMeasure a b` is the zero measure
-(`uniformMeasure_of_le`), not a probability measure. Every quantitative statement below therefore
-takes `a < b` as a hypothesis rather than assuming it silently.
+(`uniformMeasure_eq_zero_of_le`), not a probability measure. Every quantitative statement below
+therefore takes `a < b` as a hypothesis rather than assuming it silently.
 
 ## Main definitions
 
@@ -42,9 +42,10 @@ takes `a < b` as a hypothesis rather than assuming it silently.
 * `uniformMeasure_eq_smul`, `uniformMeasure_apply` — its description as a rescaled restriction, and
   evaluation on a measurable set;
 * `isUniform_of_hasLaw_uniformMeasure` — a variable with this law is uniform in Mathlib's sense;
-* `uniformMeasure_eq_withDensity`, `hasPDF_of_hasLaw_uniformMeasure`, `rnDeriv_uniformMeasure` —
-  Mathlib's `pdf.uniformPDF` identified three ways for this measure: as a `withDensity`, as a
-  `HasPDF` witness, and as the Radon–Nikodym derivative;
+* `uniformMeasure_eq_withDensity` and `rnDeriv_uniformMeasure` — Mathlib's `pdf.uniformPDF` is the
+  density of this measure, as a `withDensity` and as the Radon–Nikodym derivative;
+* `hasPDF_of_hasLaw_uniformMeasure` — a variable with this law satisfies `HasPDF`, i.e. its law is
+  absolutely continuous; the density itself is identified by the two results above;
 * `uniformPDF_eq_ofReal_uniformPDFReal` — the bridge between that density and the real-valued one;
 * `cdf_uniformMeasure` — the cdf is `0` below `a`, `1` above `b`, and `(x - a) / (b - a)` between;
 * `integral_id_uniformMeasure` — the mean is `(a + b) / 2`;
@@ -90,7 +91,8 @@ def uniformMeasure (a b : ℝ) : Measure ℝ :=
   ProbabilityTheory.cond volume (Set.Ioc a b)
 
 /-- On a degenerate interval the uniform measure is the zero measure, not a probability measure. -/
-theorem uniformMeasure_of_le {a b : ℝ} (hba : b ≤ a) : uniformMeasure a b = 0 := by
+@[simp]
+theorem uniformMeasure_eq_zero_of_le {a b : ℝ} (hba : b ≤ a) : uniformMeasure a b = 0 := by
   rw [uniformMeasure, Set.Ioc_eq_empty (by simpa using hba)]
   simp [ProbabilityTheory.cond]
 
@@ -133,16 +135,33 @@ Mathlib's `MeasureTheory.pdf.uniformPDF` is `ℝ≥0∞`-valued; this is the rea
 `uniformPDF_eq_ofReal_uniformPDFReal` relates the two. -/
 def uniformPDFReal (a b x : ℝ) : ℝ := if x ∈ Set.Ioc a b then (b - a)⁻¹ else 0
 
-/-- On a nondegenerate interval, Mathlib's uniform density is the real one pushed into `ℝ≥0∞`. -/
-theorem uniformPDF_eq_ofReal_uniformPDFReal {a b : ℝ} (hab : a < b) (x : ℝ) :
-    pdf.uniformPDF (Set.Ioc a b) x volume = ENNReal.ofReal (uniformPDFReal a b x) := by
-  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
-  rw [pdf.uniformPDF_ite, uniformPDFReal, Real.volume_Ioc]
-  split_ifs with h
-  · rw [ENNReal.ofReal_inv_of_pos hba]
-  · simp
+@[simp]
+theorem uniformPDFReal_of_mem {a b x : ℝ} (hx : x ∈ Set.Ioc a b) :
+    uniformPDFReal a b x = (b - a)⁻¹ := by simp [uniformPDFReal, hx]
 
-theorem measurable_uniformPDF {a b : ℝ} :
+@[simp]
+theorem uniformPDFReal_of_notMem {a b x : ℝ} (hx : x ∉ Set.Ioc a b) :
+    uniformPDFReal a b x = 0 := by simp [uniformPDFReal, hx]
+
+theorem measurable_uniformPDFReal {a b : ℝ} : Measurable (uniformPDFReal a b) := by
+  unfold uniformPDFReal
+  exact measurable_const.ite measurableSet_Ioc measurable_const
+
+/-- Mathlib's uniform density is the real one pushed into `ℝ≥0∞`.
+
+No nondegeneracy hypothesis: inside the interval membership already forces `a < b`, and outside
+both sides vanish. -/
+theorem uniformPDF_eq_ofReal_uniformPDFReal {a b : ℝ} (x : ℝ) :
+    pdf.uniformPDF (Set.Ioc a b) x volume = ENNReal.ofReal (uniformPDFReal a b x) := by
+  rw [pdf.uniformPDF_ite, Real.volume_Ioc]
+  by_cases hx : x ∈ Set.Ioc a b
+  · have hab : a < b := lt_of_lt_of_le hx.1 hx.2
+    rw [uniformPDFReal_of_mem hx, ENNReal.ofReal_inv_of_pos (sub_pos.mpr hab)]
+    simp [hx]
+  · rw [uniformPDFReal_of_notMem hx, ENNReal.ofReal_zero]
+    simp [hx]
+
+theorem measurable_uniformPDF_Ioc_volume {a b : ℝ} :
     Measurable fun x => pdf.uniformPDF (Set.Ioc a b) x volume := by
   unfold pdf.uniformPDF
   exact (measurable_const.smul measurable_const).indicator measurableSet_Ioc
@@ -157,11 +176,15 @@ theorem uniformMeasure_eq_withDensity {a b : ℝ} :
   simp only [Pi.smul_def, smul_eq_mul, Pi.one_apply, mul_one]
   rw [withDensity_const, uniformMeasure_eq_smul, Real.volume_Ioc]
 
-/-- A random variable with the uniform law has a probability density function. -/
+/-- A random variable with the uniform law admits a density: its law is absolutely continuous with
+respect to Lebesgue measure.
+
+This gives `HasPDF` only. *Which* density it is, is `uniformMeasure_eq_withDensity`; on a degenerate
+interval the law is the zero measure, so no probability-measure claim is made here. -/
 theorem hasPDF_of_hasLaw_uniformMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {a b : ℝ} (hX : HasLaw X (uniformMeasure a b) P) :
     HasPDF X P :=
-  hasPDF_of_map_eq_withDensity hX.aemeasurable _ measurable_uniformPDF.aemeasurable
+  hasPDF_of_map_eq_withDensity hX.aemeasurable _ measurable_uniformPDF_Ioc_volume.aemeasurable
     (by rw [hX.map_eq, uniformMeasure_eq_withDensity])
 
 /-- The Radon-Nikodym derivative of the uniform measure against Lebesgue measure is its density. -/
@@ -169,7 +192,7 @@ theorem rnDeriv_uniformMeasure {a b : ℝ} :
     (uniformMeasure a b).rnDeriv volume
       =ᵐ[volume] fun x => pdf.uniformPDF (Set.Ioc a b) x volume := by
   rw [uniformMeasure_eq_withDensity]
-  exact Measure.rnDeriv_withDensity volume measurable_uniformPDF
+  exact Measure.rnDeriv_withDensity volume measurable_uniformPDF_Ioc_volume
 
 /-! ### The cumulative distribution function, mean and variance -/
 
@@ -186,12 +209,17 @@ theorem cdf_uniformMeasure {a b : ℝ} (hab : a < b) (x : ℝ) :
     ext y; simp [Set.mem_Iic, Set.mem_Ioc, and_comm]; tauto
   rw [cdf_eq_real, Measure.real, uniformMeasure_apply measurableSet_Iic, hset, Real.volume_Ioc]
   split_ifs with h1 h2
-  · rw [min_eq_right (show x ≤ b by linarith),
-      show ENNReal.ofReal (x - a) = 0 from ENNReal.ofReal_eq_zero.mpr (by linarith),
-      mul_zero, ENNReal.toReal_zero]
-  · rw [min_eq_left h2, ENNReal.inv_mul_cancel hne htop, ENNReal.toReal_one]
-  · have hax : a < x := lt_of_not_ge h1
-    rw [min_eq_right (show x ≤ b by linarith), ← ENNReal.ofReal_inv_of_pos hba,
+  · -- below the interval: the truncated interval is empty
+    have hxb : x ≤ b := le_trans h1 hab.le
+    have hxa : x - a ≤ 0 := by linarith
+    have hzero : ENNReal.ofReal (x - a) = 0 := ENNReal.ofReal_eq_zero.mpr hxa
+    rw [min_eq_right hxb, hzero, mul_zero, ENNReal.toReal_zero]
+  · -- above the interval: the normalization cancels
+    rw [min_eq_left h2, ENNReal.inv_mul_cancel hne htop, ENNReal.toReal_one]
+  · -- inside: the linear rise
+    have hax : a < x := lt_of_not_ge h1
+    have hxb : x ≤ b := (not_le.mp h2).le
+    rw [min_eq_right hxb, ← ENNReal.ofReal_inv_of_pos hba,
       ← ENNReal.ofReal_mul (by positivity), ENNReal.toReal_ofReal (by positivity)]
     field_simp
 
