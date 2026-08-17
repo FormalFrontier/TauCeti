@@ -51,11 +51,12 @@ representation are not proved here.
 ## Implementation notes
 
 `TauCeti.GL2Borel.linearChar` and `TauCeti.GL2Borel.linearRep` are stated over an arbitrary
-commutative ring `R` for the group and an arbitrary commutative ring `k` for the coefficients:
-nothing in the inflation uses finiteness or the complex numbers, and the Borel subgroup itself is
-defined over any commutative ring. The complex, finite-field hypotheses enter only with
-`TauCeti.GL2PrincipalSeries`, where they supply the finite index that makes induction
-finite-dimensional.
+commutative ring `R` for the group — the Borel subgroup itself is defined over any commutative
+ring — and over the weakest coefficients each needs: the character only multiplies values in `kˣ`,
+so it lives over a `CommMonoid k`, while the representation needs a module structure on the line
+and so lives over a `CommSemiring k`. Nothing in the inflation uses finiteness or the complex
+numbers; the complex, finite-field hypotheses enter only with `TauCeti.GL2PrincipalSeries`, where
+they supply the finite index that makes induction finite-dimensional.
 
 `TauCetiRoadmap/RepresentationTheory/CharacterTheory/Suggested.lean` pins `GL2PrincipalSeries`
 with a `[DecidableEq F]` hypothesis. It is not needed: `GL (Fin 2) F` needs decidable equality only
@@ -79,9 +80,9 @@ namespace TauCeti
 
 namespace GL2Borel
 
-section CommRing
+section CommMonoid
 
-variable {R : Type*} [CommRing R] {k : Type*} [CommRing k]
+variable {R : Type*} [CommRing R] {k : Type*} [CommMonoid k]
 
 /-! ### The linear characters of the Borel subgroup -/
 
@@ -116,15 +117,15 @@ theorem linearChar_unipotentHom (α β : Rˣ →* kˣ) (b : R) :
 /-- **The pair of characters is recovered from the character it inflates to.** Restricting along
 the two coordinate embeddings of the split torus returns `α` and `β`, so distinct pairs inflate to
 distinct characters of `B`, hence to non-isomorphic one-dimensional representations. -/
-theorem linearChar_inj {α β α' β' : Rˣ →* kˣ} (h : linearChar α β = linearChar (R := R) α' β') :
-    α = α' ∧ β = β' := by
-  constructor
-  · refine MonoidHom.ext fun a => ?_
-    have := congrArg (fun χ => χ (torusHom (a, 1))) h
+theorem linearChar_inj {α β α' β' : Rˣ →* kˣ} :
+    linearChar (R := R) α β = linearChar α' β' ↔ α = α' ∧ β = β' := by
+  refine ⟨fun h => ⟨MonoidHom.ext fun a => ?_, MonoidHom.ext fun d => ?_⟩, ?_⟩
+  · have := congrArg (fun χ => χ (torusHom (a, 1))) h
     simpa [linearChar_torusHom] using this
-  · refine MonoidHom.ext fun d => ?_
-    have := congrArg (fun χ => χ (torusHom (1, d))) h
+  · have := congrArg (fun χ => χ (torusHom (1, d))) h
     simpa [linearChar_torusHom] using this
+  · rintro ⟨rfl, rfl⟩
+    rfl
 
 /-- **The equal-character case is a determinant twist.** When the two characters agree, the Borel
 character is the restriction of `α ∘ det`, the linear character of `GL₂` whose principal series is
@@ -132,6 +133,12 @@ the reducible one. -/
 theorem linearChar_self (α : Rˣ →* kˣ) (g : GL2Borel R) :
     linearChar α α g = α (Matrix.GeneralLinearGroup.det (g : GL (Fin 2) R)) := by
   rw [det_diag, map_mul, linearChar_apply]
+
+end CommMonoid
+
+section CommSemiring
+
+variable {R : Type*} [CommRing R] {k : Type*} [CommSemiring k]
 
 /-! ### The one-dimensional representation carrying a linear character -/
 
@@ -153,7 +160,7 @@ theorem linearRep_apply (α β : Rˣ →* kˣ) (g : GL2Borel R) (x : k) :
     linearRep α β g x = (linearChar α β g : k) * x :=
   (rfl)
 
-end CommRing
+end CommSemiring
 
 section Field
 
