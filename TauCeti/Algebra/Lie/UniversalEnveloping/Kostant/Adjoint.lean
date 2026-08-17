@@ -70,13 +70,21 @@ noncomputable def adjointRepresentation (R : Type*) [CommRing R] (L : Type*) [Li
     [LieAlgebra R L] : _root_.UniversalEnvelopingAlgebra R L →ₐ[R] Module.End R L :=
   _root_.UniversalEnvelopingAlgebra.lift R (LieAlgebra.ad R L)
 
--- Not a `simp` lemma: `simp` unfolds `ι` through `ι_apply`, so this left-hand side is not in
--- simp-normal form.
+-- Neither this lemma nor its pointwise form below is a `simp` lemma: `simp` unfolds `ι` through
+-- Mathlib's `UniversalEnvelopingAlgebra.ι_apply`, so a left-hand side mentioning `ι` is not in
+-- simp-normal form. This is why Mathlib's own `lift_ι_apply` is not a `simp` lemma either.
 /-- The adjoint representation acts on a Lie generator by the adjoint action. -/
 theorem adjointRepresentation_ι (R : Type*) [CommRing R] (L : Type*) [LieRing L] [LieAlgebra R L]
     (y : L) :
     adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) = LieAlgebra.ad R L y :=
   _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ y
+
+/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation_ι`: a Lie
+generator acts by the Lie bracket. -/
+theorem adjointRepresentation_ι_apply (R : Type*) [CommRing R] (L : Type*) [LieRing L]
+    [LieAlgebra R L] (y z : L) :
+    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) z = ⁅y, z⁆ := by
+  rw [adjointRepresentation_ι, LieAlgebra.ad_apply]
 
 end UniversalEnvelopingAlgebra
 
@@ -94,6 +102,33 @@ coroots. -/
 noncomputable def chevalleyKostantForm (x : Weight ℚ H L → L) :
     Subring (_root_.UniversalEnvelopingAlgebra ℚ L) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantForm x fun α : Weight ℚ H L => (coroot α : L)
+
+omit [LieModule.IsTriangularizable ℚ H L] in
+/-- `TauCeti.chevalleyKostantForm` is the generic Kostant form of the family of root vectors,
+together with the coroots as the distinguished Cartan vectors. -/
+theorem chevalleyKostantForm_def (x : Weight ℚ H L → L) :
+    chevalleyKostantForm x =
+      TauCeti.UniversalEnvelopingAlgebra.kostantForm x fun α : Weight ℚ H L => (coroot α : L) :=
+  (rfl)
+
+omit [LieModule.IsTriangularizable ℚ H L] in
+/-- Every divided power of a root vector belongs to the Kostant form of a system of root
+vectors. -/
+theorem dividedPower_mem_chevalleyKostantForm (x : Weight ℚ H L → L) (α : Weight ℚ H L) (n : ℕ) :
+    Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ (x α)) ∈
+      chevalleyKostantForm x := by
+  rw [chevalleyKostantForm_def]
+  exact UniversalEnvelopingAlgebra.dividedPower_mem_kostantForm _ _ α n
+
+omit [LieModule.IsTriangularizable ℚ H L] in
+/-- Every binomial coefficient of a coroot belongs to the Kostant form of a system of root
+vectors. -/
+theorem ringChoose_coroot_mem_chevalleyKostantForm (x : Weight ℚ H L → L) (α : Weight ℚ H L)
+    (n : ℕ) :
+    Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (coroot α : L)) n ∈
+      chevalleyKostantForm x := by
+  rw [chevalleyKostantForm_def]
+  exact UniversalEnvelopingAlgebra.ringChoose_mem_kostantForm _ _ α n
 
 namespace IsChevalleySystem
 

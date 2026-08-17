@@ -55,8 +55,8 @@ vectors, this is exactly the invariance needed to make `L` a module over the Kos
 
 * `TauCeti.coe_add_natCast_smul_ne_zero`: an ascending root string through a root other than `-α`
   never meets the zero weight.
-* `TauCeti.IsChevalleySystem.exists_ad_pow_rootVector`: the root-string form of the iterated
-  adjoint action, with its rising-factorial coefficient.
+* `TauCeti.IsChevalleySystem.ad_pow_rootVector_eq_zero_or_exists`: the root-string form of the
+  iterated adjoint action, with its rising-factorial coefficient.
 * `TauCeti.IsChevalleySystem.inv_factorial_smul_ad_pow_mem_chevalleyLieLattice`: the Chevalley
   lattice is stable under every divided power of `ad (x α)`.
 
@@ -117,7 +117,8 @@ vector at `β + n α`, and the integer is the rising factorial
 
 Each step multiplies the coefficient by a Chevalley structure constant, which is `± (p + n + 1)`
 by the normalization of a Chevalley system. -/
-theorem exists_ad_pow_rootVector {α β : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero)
+theorem ad_pow_rootVector_eq_zero_or_exists {α β : Weight K H L} (hα : α.IsNonZero)
+    (hβ : β.IsNonZero)
     (hαβ : (α : H → K) + β ≠ 0) (n : ℕ) :
     ((ad K L (x α)) ^ n) (x β) = 0 ∨
       ∃ γ : Weight K H L, (γ : H → K) = (β : H → K) + (n : K) • (α : H → K) ∧
@@ -187,10 +188,7 @@ theorem inv_factorial_smul_ad_pow_rootVector_mem (α β : Weight K H L) (n : ℕ
   rcases eq_or_ne (x α) 0 with hxa | hxa
   · match n with
     | 0 => simp
-    | (m + 1) =>
-      rw [show (ad K L (x α)) = 0 by rw [hxa, map_zero], zero_pow (Nat.succ_ne_zero m),
-        LinearMap.zero_apply, smul_zero]
-      exact zero_mem _
+    | (m + 1) => simp [hxa, zero_pow]
   have hα : α.IsNonZero := fun hz => hxa (hx.toIsSl2System.eq_zero_of_isZero α hz)
   have hβ : β.IsNonZero := fun hz => hxb (hx.toIsSl2System.eq_zero_of_isZero β hz)
   by_cases hαβ : (α : H → K) + β = 0
@@ -218,15 +216,17 @@ theorem inv_factorial_smul_ad_pow_rootVector_mem (α β : Weight K H L) (n : ℕ
       rw [pow_one, h1]
       simp
     | 2 =>
-      rw [h2', show ((Nat.factorial 2 : K))⁻¹ • ((-2 : K) • x α) = -(x α) by
+      -- the only nontrivial denominator: `2 !` cancels the `-2` coming from `ad (x α) α∨`
+      have hcancel : ((Nat.factorial 2 : K))⁻¹ • ((-2 : K) • x α) = -(x α) := by
         rw [smul_smul]
-        norm_num]
+        norm_num
+      rw [h2', hcancel]
       exact neg_mem (hx.rootVector_mem_chevalleyLieLattice α)
     | (m + 3) =>
       rw [pow_add, Module.End.mul_apply, h3', map_zero, smul_zero]
       exact zero_mem _
   -- the generic string, where the rising factorial is divisible by `n !`
-  rcases hx.exists_ad_pow_rootVector hα hβ hαβ n with h0 | ⟨γ, -, -, z, hznat, hz⟩
+  rcases hx.ad_pow_rootVector_eq_zero_or_exists hα hβ hαβ n with h0 | ⟨γ, -, -, z, hznat, hz⟩
   · rw [h0, smul_zero]
     exact zero_mem _
   obtain ⟨w, hw⟩ : ((n.factorial : ℤ)) ∣ z := by
@@ -265,11 +265,15 @@ theorem inv_factorial_smul_ad_pow_coroot_mem (α β : Weight K H L) (n : ℕ) :
     rw [pow_add, Module.End.mul_apply, h2', map_zero, smul_zero]
     exact zero_mem _
 
-/-- **The Chevalley lattice is a Kostant-stable lattice for the adjoint representation.** Every
-divided power of `ad (x α)` maps the lattice into itself.
+/-- **The Chevalley lattice is stable under the divided powers of the adjoint action of a root
+vector.** Every divided power `(ad (x α)) ^ n / n !` maps the lattice into itself.
 
 Since the lattice is spanned over `ℤ` by the root vectors and the coroots, and each divided power
-is an additive map, it suffices to check the two families of generators. -/
+is an additive map, it suffices to check the two families of generators.
+
+This is stability under the root-vector generators of the Kostant form only; the binomial
+coefficients of the Cartan generators are treated separately, and stability under the whole
+Kostant form is `TauCeti.IsChevalleySystem.chevalleyKostantForm_le_stabilizer`. -/
 theorem inv_factorial_smul_ad_pow_mem_chevalleyLieLattice (α : Weight K H L) (n : ℕ) {y : L}
     (hy : y ∈ hx.chevalleyLieLattice) :
     (n.factorial : K)⁻¹ • ((ad K L (x α)) ^ n) y ∈ hx.chevalleyLieLattice := by
