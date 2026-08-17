@@ -49,9 +49,9 @@ private def iciSubmoduleOrderIsoIcc {p q : Submodule R M} (r : Submodule R q)
       (Submodule.comap_mono (hr.le.trans N.2.1))⟩
   left_inv N := Subtype.ext (q.mapIic.symm_apply_apply N.1)
   right_inv N := by
-    refine Subtype.ext ?_
-    change (↑(q.mapIic (q.mapIic.symm ⟨N.1, N.2.2⟩)) : Submodule R M) = ↑N
-    rw [OrderIso.apply_symm_apply]
+    apply Subtype.ext
+    exact congrArg (fun P : Set.Iic q => (P : Submodule R M))
+      (q.mapIic.apply_symm_apply ⟨N.1, N.2.2⟩)
   map_rel_iff' := by
     intro N₁ N₂
     exact Subtype.coe_le_coe.trans q.mapIic.le_iff_le
