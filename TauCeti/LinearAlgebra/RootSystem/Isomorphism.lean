@@ -74,26 +74,6 @@ a simple root, so consumers do not have to unfold that construction. -/
   change b.toWeightBasis.equiv b₂.toWeightBasis e (P.root i) = P₂.root (e i)
   rw [← b.toWeightBasis_apply i, Module.Basis.equiv_apply, b₂.toWeightBasis_apply]
 
-/-- The inverse root-index equivalence constructed from equal Cartan matrices restricts to the
-inverse of the supplied simple-root relabelling. -/
-@[simp] theorem equivOfCartanMatrixEq_indexEquiv_symm_apply (b : P.Base) (b₂ : P₂.Base)
-    (e : b.support ≃ b₂.support)
-    (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
-    (i : b.support) :
-    (b.equivOfCartanMatrixEq b₂ e he).indexEquiv.symm (e i) = i := by
-  rw [← equivOfCartanMatrixEq_indexEquiv_apply b b₂ e he i]
-  exact (b.equivOfCartanMatrixEq b₂ e he).indexEquiv.symm_apply_apply i
-
-/-- The weight map constructed from equal Cartan matrices sends a chosen simple root to the
-simple root selected by the supplied relabelling. -/
-@[simp] theorem equivOfCartanMatrixEq_weightMap_root (b : P.Base) (b₂ : P₂.Base)
-    (e : b.support ≃ b₂.support)
-    (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
-    (i : b.support) :
-    (b.equivOfCartanMatrixEq b₂ e he).toHom.weightMap (P.root i) = P₂.root (e i) := by
-  rw [(b.equivOfCartanMatrixEq b₂ e he).root_weightMap_apply,
-    equivOfCartanMatrixEq_indexEquiv_apply]
-
 /-- The covariant inverse coweight equivalence constructed from equal Cartan matrices sends a
 chosen simple coroot to the simple coroot selected by the supplied relabelling. -/
 @[simp] theorem equivOfCartanMatrixEq_coweightEquiv_symm_coroot
@@ -103,9 +83,12 @@ chosen simple coroot to the simple coroot selected by the supplied relabelling. 
     (_root_.RootPairing.Equiv.coweightEquiv P P₂
       (b.equivOfCartanMatrixEq b₂ e he)).symm (P.coroot i) = P₂.coroot (e i) := by
   let E := b.equivOfCartanMatrixEq b₂ e he
+  have hindex : E.indexEquiv.symm (e i) = i := by
+    rw [← equivOfCartanMatrixEq_indexEquiv_apply b b₂ e he i]
+    exact E.indexEquiv.symm_apply_apply i
   apply (_root_.RootPairing.Equiv.coweightEquiv P P₂ E).injective
   rw [LinearEquiv.apply_symm_apply, _root_.RootPairing.Equiv.coweightEquiv_apply]
-  simpa [E] using
+  simpa only [hindex] using
     (_root_.RootPairing.Hom.coroot_coweightMap_apply P P₂ (e i) E.toHom).symm
 
 omit [CharZero R] [IsDomain R] [Finite ι] [P.IsRootSystem] [P.IsCrystallographic]
