@@ -84,10 +84,6 @@ theorem ext {f g : Hom source target} (h : ∀ x, f x = g x) : f = g := by
       subst g
       rfl
 
-/-- Coercion of a Hodge morphism is coercion of its underlying linear map. -/
-@[simp]
-theorem coe_toLinearMap (f : Hom source target) : ⇑f.toLinearMap = f :=
-  rfl
 
 /-- Preservation of a filtration step in submodule-map form. -/
 theorem map_F_le (f : Hom source target) (p : ℤ) :
