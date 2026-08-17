@@ -173,8 +173,11 @@ theorem completionLocObjHom_hom [IsTopologicalRing A]
   intro g hg
   rfl
 
-/-- Packaging the identity ring homomorphism gives the identity morphism. -/
-@[simp]
+/-- Packaging the identity ring homomorphism gives the identity morphism.
+
+This is the special case of `completionLocObjHom_eq_id` where the compatibility hypothesis holds
+definitionally, so it is deliberately not a `simp` lemma: `simp` already closes it using the
+general statement. -/
 theorem completionLocObjHom_id [IsTopologicalRing A]
     (P : PairOfDefinition A) (T : Finset A) (s : A)
     (S : Type u) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
