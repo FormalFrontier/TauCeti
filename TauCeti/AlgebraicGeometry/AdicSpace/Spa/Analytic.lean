@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.RingTheory.Valuation.CofinalIdeal.Greatest
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basis
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Completion
@@ -146,23 +147,20 @@ theorem spaAnalytic_eq_biUnion_rationalSubset_of_span_eq_extendedIdealOfDefiniti
     obtain ⟨a, haI, haSupp⟩ :=
       (isAnalyticPoint_iff_exists_mem_extendedIdealOfDefinition_notMem_supp P v).mp
         ((mem_spaAnalytic_iff Aplus v).mp hv).2
-    have hT : T.Nonempty := by
-      by_contra hempty
-      have hbot : P.extendedIdealOfDefinition = ⊥ := by
-        rw [← hspan, Finset.not_nonempty_iff_eq_empty.mp hempty, Finset.coe_empty,
-          Ideal.span_empty]
-      have : a ∈ (⊥ : Ideal A) := hbot ▸ haI
-      exact haSupp ((Ideal.mem_bot.mp this) ▸ v.supp.zero_mem)
-    obtain ⟨t, htT, hmax⟩ := Finset.exists_max_image T v.valuation hT
+    have ha0 : (MonoidWithZeroHom.ofClass v.valuation) a ≠ 0 := by
+      intro ha0
+      apply haSupp
+      rw [v.supp_eq_valuation_supp, v.valuation.mem_supp_iff]
+      exact ha0
+    obtain ⟨t, htT, ht0, hmax⟩ :=
+      Valuation.exists_mem_max_restrict_ne_zero (v := v.valuation)
+        (I := P.extendedIdealOfDefinition) hspan rfl haI ha0
     refine Set.mem_iUnion₂_of_mem htT
       ((mem_rationalSubset_iff Aplus T t v).mpr ⟨hvSpa, ?_, ?_⟩)
     · intro u huT
-      exact (valuation_le_iff v u t).mp (hmax u huT)
+      exact (valuation_le_iff v u t).mp (v.valuation.restrict_le_iff.mp (hmax u huT))
     · intro hzero
-      have hall : (T : Set A) ⊆ (v.supp : Set A) := fun u hu ↦ (mem_supp_iff v u).mpr
-        (v.toValuativeRel.vle_trans
-          ((valuation_le_iff v u t).mp (hmax u hu)) hzero)
-      exact haSupp ((hspan ▸ Ideal.span_le.mpr hall) haI)
+      exact ht0 (by simpa using (valuation_le_iff v t 0).mpr hzero)
   · refine Set.iUnion₂_subset fun t ht ↦ ?_
     apply rationalSubset_subset_spaAnalytic_of_mem_extendedIdealOfDefinition P Aplus
     rw [← hspan]

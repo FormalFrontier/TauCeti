@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+import TauCeti.RingTheory.Valuation.CofinalIdeal.Greatest
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
 
 /-!
@@ -202,23 +203,13 @@ subset `R(T/s)` for some `s ∈ T`. -/
 theorem mem_rationalSubset_of_span_eq_top_of_mem_spa (Aplus : Subring A) {T : Finset A}
     (hT : Ideal.span (T : Set A) = ⊤) {v : Spv A} (hv : v ∈ spa Aplus) :
     ∃ s ∈ T, v ∈ rationalSubset Aplus T s := by
-  have hT_ne : T.Nonempty := by
-    by_contra h_empty
-    rw [Finset.not_nonempty_iff_eq_empty.mp h_empty, Finset.coe_empty, Ideal.span_empty] at hT
-    have h1 : (1 : A) ∈ (⊥ : Ideal A) := hT ▸ Submodule.mem_top
-    rw [Ideal.mem_bot] at h1
-    exact v.toValuativeRel.not_vle_one_zero (h1 ▸ v.toValuativeRel.vle_refl 0)
-  obtain ⟨s, hs, hmax'⟩ := Finset.exists_max_image T v.valuation hT_ne
+  obtain ⟨s, hs, hs0, hmax'⟩ :=
+    Valuation.exists_mem_max_restrict_ne_zero (v := v.valuation) (I := (⊤ : Ideal A))
+      hT rfl (a₀ := 1) Submodule.mem_top (by simp)
   have hmax : ∀ t ∈ T, v.toValuativeRel.vle t s := fun t ht ↦
-    (valuation_le_iff v t s).mp (hmax' t ht)
-  refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun h_zero ↦ ?_⟩⟩
-  have h_supp : (T : Set A) ⊆ (v.supp : Set A) := fun t ht ↦
-    (mem_supp_iff v t).mpr (v.toValuativeRel.vle_trans (hmax t ht) h_zero)
-  have h_top_supp : Ideal.span (T : Set A) ≤ v.supp := Ideal.span_le.mpr h_supp
-  rw [hT] at h_top_supp
-  have h1 : (1 : A) ∈ v.supp := h_top_supp Submodule.mem_top
-  have h1_vle : v.toValuativeRel.vle 1 0 := (mem_supp_iff v 1).mp h1
-  exact v.toValuativeRel.not_vle_one_zero h1_vle
+    (valuation_le_iff v t s).mp (v.valuation.restrict_le_iff.mp (hmax' t ht))
+  refine ⟨s, hs, (mem_rationalSubset_iff Aplus T s v).mpr ⟨hv, hmax, fun hzero ↦ ?_⟩⟩
+  exact hs0 (by simpa using (valuation_le_iff v s 0).mpr hzero)
 
 /-- Generalization of the forward implication of Wedhorn Corollary 7.53 (which assumes a complete
 Hausdorff affinoid ring): for an arbitrary commutative ring `A` and subring `A⁺`, if a finite set
