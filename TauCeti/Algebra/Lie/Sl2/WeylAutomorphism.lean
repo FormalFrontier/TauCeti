@@ -400,6 +400,7 @@ theorem weylUnit_conj_h (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNil
 
 /-- The Weyl element carries the raising element of the triple to the negated lowering element.
 This is the group-level statement that `n_α` interchanges the root subgroups of `α` and `-α`. -/
+@[simp]
 theorem weylUnit_conj_e (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNilpotent F) :
     IsNilpotent.exp E * IsNilpotent.exp (-F) * IsNilpotent.exp E * E *
       (IsNilpotent.exp (-E) * IsNilpotent.exp F * IsNilpotent.exp (-E)) = -F := by
@@ -408,6 +409,7 @@ theorem weylUnit_conj_e (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNil
   exact weylAut_apply_e _ _ t
 
 /-- The Weyl element carries the lowering element of the triple to the negated raising element. -/
+@[simp]
 theorem weylUnit_conj_f (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNilpotent F) :
     IsNilpotent.exp E * IsNilpotent.exp (-F) * IsNilpotent.exp E * F *
       (IsNilpotent.exp (-E) * IsNilpotent.exp F * IsNilpotent.exp (-E)) = -E := by
