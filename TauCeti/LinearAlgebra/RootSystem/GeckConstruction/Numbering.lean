@@ -25,7 +25,7 @@ input root datum, without choosing a second relabelling.
 
 * `TauCeti.geckEquivRootSystem_indexEquiv`: the root-index equivalence preserves the chosen
   simple-root index.
-* `TauCeti.geckEquivRootSystem_weightEquiv_root`: the weight equivalence sends a chosen simple
+* `TauCeti.geckEquivRootSystem_weightMap_root`: the weight map sends a chosen simple
   root to the corresponding simple weight.
 * `TauCeti.geckEquivRootSystem_coweightEquiv_symm_coroot`: the covariant inverse coweight
   equivalence sends the corresponding simple coroot to the input simple coroot.
@@ -74,13 +74,12 @@ index back to the input simple-root index. -/
   rw [← geckEquivRootSystem_indexEquiv b i]
   exact (equivRootSystem b).indexEquiv.symm_apply_apply i
 
-/-- The weight equivalence underlying Mathlib's Geck root-system equivalence sends each chosen
+/-- The weight map underlying Mathlib's Geck root-system equivalence sends each chosen
 simple root to the corresponding simple weight of the distinguished Lie-algebra basis. -/
-@[simp] theorem geckEquivRootSystem_weightEquiv_root (i : b.support) :
-    _root_.RootPairing.Equiv.weightEquiv P (rootSystem (cartanSubalgebra' b))
-        (equivRootSystem b) (P.root i) =
+@[simp] theorem geckEquivRootSystem_weightMap_root (i : b.support) :
+    (equivRootSystem b).toHom.weightMap (P.root i) =
       (rootSystem (cartanSubalgebra' b)).root ((basis b).baseSupportEquiv i) := by
-  exact equivOfCartanMatrixEq_weightEquiv_root b (basis b).base
+  exact equivOfCartanMatrixEq_weightMap_root b (basis b).base
     (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
 
 /-- The covariant inverse of the coweight equivalence sends the input simple coroot to the

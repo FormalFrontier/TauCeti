@@ -84,16 +84,14 @@ inverse of the supplied simple-root relabelling. -/
   rw [← equivOfCartanMatrixEq_indexEquiv_apply b b₂ e he i]
   exact (b.equivOfCartanMatrixEq b₂ e he).indexEquiv.symm_apply_apply i
 
-/-- The weight equivalence constructed from equal Cartan matrices sends a chosen simple root to
-the simple root selected by the supplied relabelling. -/
-@[simp] theorem equivOfCartanMatrixEq_weightEquiv_root (b : P.Base) (b₂ : P₂.Base)
+/-- The weight map constructed from equal Cartan matrices sends a chosen simple root to the
+simple root selected by the supplied relabelling. -/
+@[simp] theorem equivOfCartanMatrixEq_weightMap_root (b : P.Base) (b₂ : P₂.Base)
     (e : b.support ≃ b₂.support)
     (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
     (i : b.support) :
-    _root_.RootPairing.Equiv.weightEquiv P P₂ (b.equivOfCartanMatrixEq b₂ e he)
-        (P.root i) = P₂.root (e i) := by
-  rw [_root_.RootPairing.Equiv.weightEquiv_apply,
-    (b.equivOfCartanMatrixEq b₂ e he).root_weightMap_apply,
+    (b.equivOfCartanMatrixEq b₂ e he).toHom.weightMap (P.root i) = P₂.root (e i) := by
+  rw [(b.equivOfCartanMatrixEq b₂ e he).root_weightMap_apply,
     equivOfCartanMatrixEq_indexEquiv_apply]
 
 /-- The covariant inverse coweight equivalence constructed from equal Cartan matrices sends a
