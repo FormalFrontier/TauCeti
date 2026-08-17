@@ -9,7 +9,7 @@ public import TauCeti.Algebra.Lie.Sl2.WeylAutomorphism
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 
 /-!
-# The Weyl element of a Kostant root subgroup pair
+# Basic properties of the Weyl element of a Kostant root subgroup pair
 
 Let `U_ℤ = kostantForm e h` act on a rational vector space `V` through `ρ`, let `M ≤ V` be a
 `U_ℤ`-stable additive subgroup, and let `eᵢ`, `eⱼ` be distinguished root vectors whose images span,
