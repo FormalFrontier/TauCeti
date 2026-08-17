@@ -19,7 +19,7 @@ is `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`.
 The same weight function defines the group-scheme morphism
 
 ```text
-TauCeti.GeneralLinear.weightTorus wt : 𝔾ₘ^κ → GL_n.
+TauCeti.UniversalEnvelopingAlgebra.kostantTorusGroupSchemeMap wt : 𝔾ₘ^κ → GL_n.
 ```
 
 This file identifies that represented morphism on scheme-valued points with the Kostant action.
@@ -31,11 +31,15 @@ of the pinning interface in Layer 9 of the ReductiveGroups roadmap.
 No faithfulness or maximality is claimed for an arbitrary weight function. Those properties
 require the particular weights furnished by the Chevalley root datum.
 
-## Main result
+## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix`:
-  composing a scheme-valued torus point with the represented weight torus gives the matrix of the
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusGroupSchemeMap`: the group-scheme morphism
+  `𝔾ₘ^κ → GL_n` over `ℤ` attached to a finite weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.schemePointsMulEquiv_kostantTorusGroupSchemeMap`:
+  composing a scheme-valued torus point with the represented Kostant torus gives the matrix of the
   existing Kostant torus action.
+* `TauCeti.UniversalEnvelopingAlgebra.schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix`:
+  the same point comparison stated directly for `TauCeti.GeneralLinear.weightTorus`.
 
 ## References
 
@@ -57,6 +61,12 @@ variable {V : Type v} [AddCommGroup V]
 variable (M : AddSubgroup V)
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
 
+/-- The split torus of a Kostant weight basis as a group-scheme morphism `𝔾ₘ^κ → GLₙ` over
+`ℤ`. -/
+noncomputable abbrev kostantTorusGroupSchemeMap (wt : Fin n → κ → ℤ) :
+    SplitTorus.groupScheme ℤ κ ⟶ GeneralLinear.groupScheme ℤ n :=
+  GeneralLinear.weightTorus wt
+
 variable (A : Type) [CommRing A] [Algebra ℤ A]
 
 /-- Scheme-valued points of the represented weight torus are exactly the matrices of the
@@ -69,5 +79,16 @@ theorem schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix
       kostantTorusMatrix M b wt
         (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) p) := by
   rw [GeneralLinear.schemePointsMulEquiv_weightTorus, kostantTorusMatrix_apply]
+
+/-- On scheme-valued points, the represented Kostant torus is the original diagonal action in
+the weight basis `b`. -/
+theorem schemePointsMulEquiv_kostantTorusGroupSchemeMap
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ κ).X) :
+    GeneralLinear.schemePointsMulEquiv n A
+        (p ≫ (kostantTorusGroupSchemeMap wt).hom.hom) =
+      kostantTorusMatrix M b wt
+        (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) p) :=
+  schemePointsMulEquiv_weightTorus_eq_kostantTorusMatrix M b wt A p
 
 end TauCeti.UniversalEnvelopingAlgebra
