@@ -79,6 +79,7 @@ structure Graphon (Ω : Type*) [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabi
 
 namespace Graphon
 
+/-- A graphon acts as its underlying function `Ω → Ω → ℝ`. -/
 instance instFunLike : FunLike (Graphon Ω μ) Ω (Ω → ℝ) where
   coe W := W.toSymmKernel
   coe_injective W W' h := by
@@ -87,9 +88,12 @@ instance instFunLike : FunLike (Graphon Ω μ) Ω (Ω → ℝ) where
     congr 1
     exact DFunLike.coe_injective h
 
+/-- Projecting a graphon to its kernel does not change the underlying function. -/
 @[simp]
 theorem coe_toSymmKernel (W : Graphon Ω μ) : ⇑W.toSymmKernel = ⇑W := rfl
 
+/-- Two graphons agreeing pointwise are equal: the range constraint is a proposition, so the
+underlying function determines the graphon. -/
 @[ext]
 theorem ext {W W' : Graphon Ω μ} (h : ∀ x y, W x y = W' x y) : W = W' :=
   DFunLike.ext _ _ fun x => funext fun y => h x y
@@ -123,6 +127,7 @@ def const (μ : Measure Ω) [IsProbabilityMeasure μ] (p : I) : Graphon Ω μ wh
     exact p.2.2⟩
   mem01' _ _ := p.2
 
+/-- The constant graphon evaluates to its parameter at every pair of points. -/
 @[simp]
 theorem const_apply (μ : Measure Ω) [IsProbabilityMeasure μ] (p : I) (x y : Ω) :
     const μ p x y = (p : ℝ) := (rfl)
