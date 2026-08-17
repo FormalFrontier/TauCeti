@@ -95,7 +95,7 @@ private theorem adj_fork_D {n : ℕ} (hn : 4 ≤ n) (i : Fin n)
   omega
 
 /-- The diagram of the standard Cartan matrix of a valid Dynkin type is connected. Validity
-excludes precisely the disconnected or empty low-rank classical matrices. -/
+confines each family to its canonical rank range, which is nonempty and is what the proof uses. -/
 theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
     (diagramGraph t.cartanMatrix).Connected := by
   cases t with
