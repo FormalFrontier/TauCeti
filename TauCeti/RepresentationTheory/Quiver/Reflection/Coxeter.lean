@@ -217,8 +217,8 @@ theorem vertexPreReflectionList_reverse_mul {l : List Q}
     vertexPreReflectionList Q l.reverse * vertexPreReflectionList Q l = 1 := by
   apply LinearMap.ext
   intro d
-  change vertexPreReflectionList Q l.reverse (vertexPreReflectionList Q l d) = d
-  rw [← coe_vertexReflectionList_symm Q hl, ← coe_vertexReflectionList Q hl]
+  rw [Module.End.mul_apply, Module.End.one_apply, ← coe_vertexReflectionList_symm Q hl,
+    ← coe_vertexReflectionList Q hl]
   exact (vertexReflectionList Q hl).symm_apply_apply d
 
 /-- The reflection product along a word in loopless vertices permutes every level set of the
