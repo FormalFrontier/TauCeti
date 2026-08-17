@@ -25,8 +25,8 @@ Mathlib's Geck construction to the rational scalar extensions of the pinned data
 
 ## Main results
 
-* `DynkinType.isReduced_typeBSimplyConnectedRootDatum` and
-  `DynkinType.isReduced_typeCSimplyConnectedRootDatum`: reducedness in every rank.
+* `DynkinType.instIsReducedTypeBSimplyConnectedRootDatum` and
+  `DynkinType.instIsReducedTypeCSimplyConnectedRootDatum`: reducedness in every rank.
 * `DynkinType.instIsReducedF4SimplyConnectedRootDatum` and
   `DynkinType.instIsReducedG2SimplyConnectedRootDatum`: reducedness of the exceptional data.
 * `DynkinType.isReduced_simplyConnectedRootDatum_of_not_isSimplyLaced`: the uniform theorem for
@@ -74,13 +74,13 @@ end RootPairing
 namespace TauCeti.DynkinType
 
 /-- The pinned simply connected root datum of type `B` is reduced. -/
-instance isReduced_typeBSimplyConnectedRootDatum (n : ℕ) :
+instance instIsReducedTypeBSimplyConnectedRootDatum (n : ℕ) :
     (typeBSimplyConnectedRootDatum n).IsReduced :=
   RootPairing.isReduced_of_abs_pairing_le_two _
     abs_pairing_typeBSimplyConnectedRootDatum_le_two
 
 /-- The pinned simply connected root datum of type `C` is reduced. -/
-instance isReduced_typeCSimplyConnectedRootDatum (n : ℕ) :
+instance instIsReducedTypeCSimplyConnectedRootDatum (n : ℕ) :
     (typeCSimplyConnectedRootDatum n).IsReduced :=
   RootPairing.isReduced_of_abs_pairing_le_two _
     abs_pairing_typeCSimplyConnectedRootDatum_le_two
@@ -97,10 +97,10 @@ theorem isReduced_simplyConnectedRootDatum_of_not_isSimplyLaced (t : DynkinType)
   | A n => simp at hs
   | B n =>
       rw [simplyConnectedRootDatum_B]
-      exact isReduced_typeBSimplyConnectedRootDatum n
+      exact instIsReducedTypeBSimplyConnectedRootDatum n
   | C n =>
       rw [simplyConnectedRootDatum_C]
-      exact isReduced_typeCSimplyConnectedRootDatum n
+      exact instIsReducedTypeCSimplyConnectedRootDatum n
   | D n => simp at hs
   | E6 => simp at hs
   | E7 => simp at hs
