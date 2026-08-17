@@ -173,33 +173,6 @@ theorem completionLocObjHom_hom [IsTopologicalRing A]
   intro g hg
   rfl
 
-/-- Packaging the identity ring homomorphism gives the identity morphism.
-
-This is the special case of `completionLocObjHom_eq_id` where the compatibility hypothesis holds
-definitionally, so it is deliberately not a `simp` lemma: `simp` already closes it using the
-general statement. -/
-theorem completionLocObjHom_id [IsTopologicalRing A]
-    (P : PairOfDefinition A) (T : Finset A) (s : A)
-    (S : Type u) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
-    (hden : HasDenominatorPower P T s S) :
-    letI := locUniformSpace P T s S hden
-    letI := isUniformAddGroup_locUniformSpace P T s S hden
-    letI := isTopologicalRing_locUniformSpace P T s S hden
-    completionLocObjHom P T s S hden T s S hden (RingHom.id _) continuous_id =
-      𝟙 (completionLocObj P T s S hden) := by
-  let _ := locUniformSpace P T s S hden
-  let _ := isUniformAddGroup_locUniformSpace P T s S hden
-  let _ := isTopologicalRing_locUniformSpace P T s S hden
-  apply InducedCategory.hom_ext
-  rw [completionLocObjHom_hom]
-  have hG : (⟨RingHom.id (UniformSpace.Completion S), continuous_id⟩ :
-      TopCommRingCat.of (UniformSpace.Completion S) ⟶
-        TopCommRingCat.of (UniformSpace.Completion S)) =
-      𝟙 (TopCommRingCat.of (UniformSpace.Completion S)) := by
-    rfl
-  rw [hG]
-  simp
-
 /-- Packaging a composite of continuous ring homomorphisms gives the categorical composite of
 their packaged morphisms. -/
 @[simp]
@@ -245,6 +218,8 @@ theorem completionLocObjHom_comp [IsTopologicalRing A]
       TopCommRingCat.of (UniformSpace.Completion S') := ⟨g, hg⟩
   let H : TopCommRingCat.of (UniformSpace.Completion S') ⟶
       TopCommRingCat.of (UniformSpace.Completion S'') := ⟨h, hh⟩
+  -- The public object equation is the only way to expose the transports surrounding `G` and `H`;
+  -- `completionLocObj` itself is deliberately not exposed.
   change eqToHom _ ≫ (G ≫ H) ≫ eqToHom _ =
     (eqToHom _ ≫ G ≫ eqToHom _) ≫ eqToHom _ ≫ H ≫ eqToHom _
   simp [Category.assoc]
@@ -278,6 +253,25 @@ theorem completionLocObjHom_eq_id [IsTopologicalRing A]
     exact hg_id
   rw [hG]
   simp
+
+/-- Packaging the identity ring homomorphism gives the identity morphism.
+
+This is the special case of `completionLocObjHom_eq_id` where the compatibility hypothesis holds
+definitionally, so it is deliberately not a `simp` lemma: `simp` already closes it using the
+general statement. -/
+theorem completionLocObjHom_id [IsTopologicalRing A]
+    (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type u) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    completionLocObjHom P T s S hden T s S hden (RingHom.id _) continuous_id =
+      𝟙 (completionLocObj P T s S hden) := by
+  let _ := locUniformSpace P T s S hden
+  let _ := isUniformAddGroup_locUniformSpace P T s S hden
+  let _ := isTopologicalRing_locUniformSpace P T s S hden
+  exact completionLocObjHom_eq_id P T s S hden (RingHom.id _) continuous_id rfl
 
 /-- Comparison morphisms compatible with the structure maps from `A` compose categorically.
 This is the cocycle law for presentationwise objects in `CompleteSeparatedTopCommRingCat`. -/
