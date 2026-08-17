@@ -23,8 +23,9 @@ Both follow from one extra hypothesis on `ρ`, `M` and `b`, a *root step*: a pai
 ρ(eᵢ) (b s) = c • b r    and    ρ(eᵢ) (ρ(eᵢ) (b s)) = 0,
 ```
 
-with `c` a unit. Every declaration below carries these three assumptions as hypotheses; none of
-them is derived here from the Kostant form, from the representation, or from the lattice.
+with `c` a unit. The coordinate expansion below is unconditional; the faithfulness and
+closed-immersion results carry these three assumptions as hypotheses. These assumptions are not
+derived here from the Kostant form, from the representation, or from the lattice.
 
 The second equation truncates the divided-power exponential in that matrix column, so the
 `(r, s)` entry of `xᵢ(t)` is exactly `c t` rather than a polynomial of higher degree. Consequently
