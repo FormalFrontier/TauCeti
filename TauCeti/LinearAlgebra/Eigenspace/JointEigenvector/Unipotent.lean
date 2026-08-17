@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Exists
-public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
+public import TauCeti.LinearAlgebra.Eigenspace.Unipotent
 
 /-!
 # Common fixed vectors for commuting unipotent automorphisms
@@ -21,8 +21,6 @@ the fixed-line induction for the Lie--Kolchin theorem.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsUnipotent.eigenvalue_eq_one`: every eigenvalue of a unipotent
-  automorphism is one.
 * `TauCeti.exists_common_fixedVector_of_pairwise_commute_of_isUnipotent`: a commuting family of
   unipotent automorphisms of a nonzero finite-dimensional space has a common nonzero fixed vector.
 * `TauCeti.exists_fixedLine_of_pairwise_commute_of_isUnipotent`: such a family fixes a
@@ -46,55 +44,6 @@ universe u v w
 
 noncomputable section
 
-namespace GeneralLinearGroup
-
-variable {K : Type u} {V : Type v}
-variable [Field K] [AddCommGroup V] [Module K V]
-
-/-- The maximal generalized eigenspace for the eigenvalue one of a unipotent automorphism is the
-whole space. -/
-theorem IsUnipotent.maxGenEigenspace_one_eq_top {g : GeneralLinearGroup K V}
-    (hg : IsUnipotent g) :
-    Module.End.maxGenEigenspace (g : Module.End K V) 1 = ⊤ := by
-  rw [eq_top_iff]
-  intro x _
-  rw [Module.End.mem_maxGenEigenspace]
-  rw [isUnipotent_def] at hg
-  obtain ⟨n, hn⟩ := hg
-  refine ⟨n, ?_⟩
-  simpa using LinearMap.congr_fun hn x
-
-/-- The generalized eigenspaces of a unipotent automorphism span the whole space.  This is the
-triangularizability hypothesis needed by the joint-eigenvector existence theorem. -/
-theorem IsUnipotent.iSup_maxGenEigenspace_eq_top {g : GeneralLinearGroup K V}
-    (hg : IsUnipotent g) :
-    ⨆ μ, Module.End.maxGenEigenspace (g : Module.End K V) μ = ⊤ := by
-  apply top_unique
-  rw [← hg.maxGenEigenspace_one_eq_top]
-  exact le_iSup (fun μ ↦ Module.End.maxGenEigenspace (g : Module.End K V) μ) 1
-
-/-- Every eigenvalue of a unipotent automorphism is one. -/
-theorem IsUnipotent.eigenvalue_eq_one {g : GeneralLinearGroup K V} (hg : IsUnipotent g)
-    {v : V} (hv : v ≠ 0) {μ : K} (heigen : (g : Module.End K V) v = μ • v) :
-    μ = 1 := by
-  have hpow_apply (m : ℕ) : (((g : Module.End K V) - 1) ^ m) v = (μ - 1) ^ m • v := by
-    induction m with
-    | zero => simp
-    | succ m ih =>
-        have hsub : μ • v - v = (μ - 1) • v := by rw [sub_smul, one_smul]
-        rw [pow_succ', Module.End.mul_apply, ih, map_smul, LinearMap.sub_apply,
-          Module.End.one_apply, heigen, hsub, smul_smul, pow_succ]
-  rw [isUnipotent_def] at hg
-  obtain ⟨n, hn⟩ := hg
-  have hzero : (μ - 1) ^ n • v = 0 := by
-    rw [← hpow_apply n, hn]
-    rfl
-  have hpow : (μ - 1) ^ n = 0 :=
-    (smul_eq_zero.mp hzero).resolve_right hv
-  exact sub_eq_zero.mp (eq_zero_of_pow_eq_zero hpow)
-
-end GeneralLinearGroup
-
 variable {K : Type u} {V : Type v} {ι : Type w}
 variable [Field K] [AddCommGroup V] [Module K V]
 
@@ -108,8 +57,10 @@ theorem exists_common_fixedVector_of_pairwise_commute_of_isUnipotent
   let fEnd : ι → Module.End K V := fun i ↦ f i
   have hcommEnd : Pairwise fun i j ↦ Commute (fEnd i) (fEnd j) := fun i j hij ↦
     (hcomm hij).units_val
-  have htri (i : ι) : ⨆ μ, (fEnd i).maxGenEigenspace μ = ⊤ :=
-    (hunipotent i).iSup_maxGenEigenspace_eq_top
+  have htri (i : ι) : ⨆ μ, (fEnd i).maxGenEigenspace μ = ⊤ := by
+    apply top_unique
+    rw [← (hunipotent i).maxGenEigenspace_one_eq_top]
+    exact le_iSup (fun μ ↦ (fEnd i).maxGenEigenspace μ) 1
   obtain ⟨χ, v, hv, heigen⟩ :=
     exists_jointEigenvector_of_pairwise_commute fEnd hcommEnd htri
   refine ⟨v, hv, fun i ↦ ?_⟩
@@ -141,8 +92,7 @@ theorem exists_common_fixedVector_of_isUnipotent [FiniteDimensional K V] [Nontri
     ∃ v : V, v ≠ 0 ∧ ∀ g, (ρ g : Module.End K V) v = v := by
   apply exists_common_fixedVector_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
   intro g h _
-  change ρ g * ρ h = ρ h * ρ g
-  rw [← map_mul, mul_comm g h, map_mul]
+  exact (ρ.map_mul g h).symm.trans ((congrArg ρ (mul_comm g h)).trans (ρ.map_mul h g))
 
 /-- A unipotent representation of a commutative group on a nonzero finite-dimensional vector space
 fixes a one-dimensional submodule pointwise. -/
@@ -153,8 +103,7 @@ theorem exists_fixedLine_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
       ∀ g, ∀ x ∈ p, (ρ g : Module.End K V) x = x := by
   apply exists_fixedLine_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
   intro g h _
-  change ρ g * ρ h = ρ h * ρ g
-  rw [← map_mul, mul_comm g h, map_mul]
+  exact (ρ.map_mul g h).symm.trans ((congrArg ρ (mul_comm g h)).trans (ρ.map_mul h g))
 
 end
 
