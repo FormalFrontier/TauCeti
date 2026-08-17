@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -67,6 +68,9 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
   neighbourhoods of zero for a ring topology, with its contract
   (`hasBasis_nhds_zero_weightedTopology`, `isTopologicalRing_weightedTopology`,
   `nonarchimedeanRing_weightedTopology`, `continuous_weightedC`).
+  `TauCeti.Huber.weightedC_mem_weightedNhd` records that a constant series meets the `U` bound as
+  soon as its value does, and `TauCeti.Huber.isOpen_weightedNhd` that `U⟨X⟩` is open whenever `U`
+  is.
 * `TauCeti.Huber.weightedRestrictedSubring_one_weight`: for the trivial weight this is the ordinary
   ring of restricted power series (Wedhorn Example 5.54).
 * `TauCeti.Huber.weightedPolynomials`, the polynomials as a subring of `A⟨X⟩_T`, with
@@ -776,6 +780,19 @@ theorem mul_mem_weightedNhd [NonarchimedeanRing A] {T : Fin k → Set A}
   have := coeff_mul_mem_weightMul (T := T) (V := W) (W := W) hf hg ν
   exact weightMul_mono T ν ((AddSubgroup.closure_le _).mpr hWU) this
 
+/-- A constant series lies in `U⟨X⟩` as soon as its value lies in `U`: the constant coefficient is
+unweighted, since `T⁰ · U` is `U`, and every other coefficient vanishes. -/
+theorem weightedC_mem_weightedNhd [NonarchimedeanRing A] {T : Fin k → Set A}
+    (hT : IsWeightFamily T) {U : AddSubgroup A} {a : A} (ha : a ∈ U) :
+    weightedC T hT a ∈ weightedNhd T hT U := by
+  classical
+  intro ν
+  rw [coe_weightedC, MvPowerSeries.coeff_C]
+  split_ifs with h
+  · rw [h, weightMul_zero]
+    exact ha
+  · exact (weightMul T ν U).zero_mem
+
 /-- **The left-multiplication half of the neighbourhood basis**: for a fixed `x ∈ A⟨X⟩_T` and an
 open subgroup `U`, some `V⟨X⟩` is carried into `U⟨X⟩` by multiplication by `x`. This is the
 condition `RingSubgroupsBasis` calls `leftMul`.
@@ -865,6 +882,13 @@ ring built from a `RingSubgroupsBasis` does. -/
 instance nonarchimedeanRing_weightedTopology [NonarchimedeanRing A] {T : Fin k → Set A}
     {hT : IsWeightFamily T} : NonarchimedeanRing (weightedRestrictedSubring T hT) :=
   (weightedNhd_subgroups_basis hT).nonarchimedean
+
+/-- `U⟨X⟩` is open in `A⟨X⟩_T` when `U` is open in `A`: it is one of the basic neighbourhoods of
+zero, and an additive subgroup that is a neighbourhood of zero is open. -/
+theorem isOpen_weightedNhd [NonarchimedeanRing A] {T : Fin k → Set A} (hT : IsWeightFamily T)
+    {U : AddSubgroup A} (hU : IsOpen (U : Set A)) :
+    IsOpen (weightedNhd T hT U : Set (weightedRestrictedSubring T hT)) :=
+  ((weightedNhd_subgroups_basis hT).openAddSubgroup ⟨U, hU⟩).isOpen'
 
 /-- The constant-series embedding `A → A⟨X⟩_T` is continuous.
 

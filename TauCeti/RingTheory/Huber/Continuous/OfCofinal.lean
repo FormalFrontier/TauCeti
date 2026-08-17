@@ -67,7 +67,7 @@ public section
 
 namespace TauCeti.Huber.PairOfDefinition
 
-open TauCeti TauCeti.Valuation
+open TauCeti Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
   {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]

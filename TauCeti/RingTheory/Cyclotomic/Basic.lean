@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -42,7 +43,7 @@ namespace TauCeti
 
 /-- Exact `e`-th cyclotomic integers, represented by the `e.totient` coefficients of the
 canonical polynomial representative in descending order. -/
-@[expose] def Cyclotomic (e : ℕ) := {l : List ℤ // l.length = e.totient}
+@[expose] def Cyclotomic (e : ℕ) : Type _ := {l : List ℤ // l.length = e.totient}
   deriving DecidableEq
 
 namespace Cyclotomic

@@ -1,11 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RingTheory.DividedPowers.RootString
+public import TauCeti.RingTheory.DividedPowers.RootString.Basic
 public import TauCeti.RingTheory.Nilpotent.BaseChangeAction
 
 /-!
@@ -29,8 +29,9 @@ E_x(t) E_y(u) = E_y(u) E_z(t * u) E_w(t ^ 2 * u) E_x(t).
 
 This is the case of the Chevalley commutator formula in which the roots of the form `i α + j β`
 with `i, j > 0` are exactly `α + β` and `2 α + β`, covering the additional chains in types
-`B`, `C`, and `F₄`. Type `G₂` also needs the longer chain containing `3α + β`, which is not
-treated here. This extends the class-two case of
+`B`, `C`, and `F₄`. Type `G₂` also needs the longer chain containing `3α + β` and `3α + 2β`,
+which is `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq_three_nsmul` in
+`TauCeti.RingTheory.Nilpotent.RootString.G2`. This extends the class-two case of
 `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq`. The parameter of the extra factor is
 `t ^ 2 * u`, matching the exponents `(i, j) = (2, 1)` of the root `2 α + β`.
 

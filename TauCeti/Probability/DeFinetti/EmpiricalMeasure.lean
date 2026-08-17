@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -70,7 +71,8 @@ theorem deFinetti_tendsto_empiricalMeasure_apply [StandardBorelSpace α] [Nonemp
       ∀ B : Set α, MeasurableSet B → ∀ᵐ ω ∂μ, Tendsto
         (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) B).toReal) atTop
         (𝓝 (((ν ω : Measure α) B).toReal)) := by
-  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
+  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX fun n => (hX_meas n).aemeasurable)
+    |>.exists_directing
   exact ⟨ν, hν, fun B hB =>
     hν.tendsto_empiricalMeasure_apply_ae (fun i => (hX_meas i).aemeasurable) hB⟩
 

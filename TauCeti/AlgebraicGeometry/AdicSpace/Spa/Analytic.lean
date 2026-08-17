@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Antigravity
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -41,7 +41,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open TauCeti TauCeti.Huber TauCeti.Valuation
+open TauCeti TauCeti.Huber Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
 

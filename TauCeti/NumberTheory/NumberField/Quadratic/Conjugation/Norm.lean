@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -13,9 +14,9 @@ import TauCeti.RingTheory.Norm.Quadratic
 # Norm-principality for quadratic conjugation
 
 For a quadratic number field `K = ℚ(√d)` with quadratic conjugation
-`σ = TauCeti.NumberField.ringOfIntegersQuadraticConj`, this file proves the genus-theoretic
+`σ = NumberField.ringOfIntegersQuadraticConj`, this file proves the genus-theoretic
 key fact that `I · σI` is principal for every ideal `I` of `𝓞 K`.  This is the hypothesis
-consumed by `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
+consumed by `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
 The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
 `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
@@ -29,7 +30,7 @@ public section
 
 open Polynomial NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
@@ -139,4 +140,4 @@ theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
   have : (Ideal.relNorm ℤ I).IsPrincipal := IsPrincipalIdealRing.principal _
   infer_instance
 
-end TauCeti.NumberField
+end NumberField

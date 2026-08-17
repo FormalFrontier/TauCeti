@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -62,7 +63,7 @@ variable {X : Scheme.{u}}
 
 /-- The full category of invertible sheaves on `X`. Its morphisms are morphisms of
 `𝒪_X`-modules. -/
-abbrev InvertibleSheaf (X : Scheme.{u}) :=
+abbrev InvertibleSheaf (X : Scheme.{u}) : Type _ :=
   ObjectProperty.FullSubcategory (SheafOfModules.isInvertible X)
 
 namespace InvertibleSheaf

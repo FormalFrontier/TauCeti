@@ -63,19 +63,23 @@ It is defined as the kernel of the composite `H → K → K/I`; its underlying i
 ordinary ideal comap of `I.toIdeal`. -/
 noncomputable def comap (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (hf : Function.Surjective f) : HopfIdeal R H :=
-  ker ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
-    ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
+  kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
+    (by
+      rw [BialgHom.coe_comp]
+      exact (Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
 
 /-- The underlying ideal of `I.comap f hf` is the ordinary ideal-theoretic inverse image. -/
 @[simp]
 theorem comap_toIdeal (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (hf : Function.Surjective f) :
     (I.comap f hf).toIdeal = Ideal.comap (f : H →+* K) I.toIdeal := by
+  -- Unfold `comap` once, then use the characteristic API of the hidden kernel construction.
+  change (kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f) _).toIdeal = _
+  rw [kerOfSurjective_toIdeal]
   ext h
-  -- membership in `comap` is by definition vanishing of the composite in the quotient; `change`
-  -- spells that composite out, since `comap` has no equation lemma to rewrite with.
-  change Ideal.Quotient.mk I.toIdeal (f h) = 0 ↔ f h ∈ I.toIdeal
-  exact Ideal.Quotient.eq_zero_iff_mem
+  simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_toAlgHom, AlgHom.comp_apply,
+    BialgHom.coe_toAlgHom, Bialgebra.Quotient.mkBialgHom_apply,
+    Ideal.Quotient.eq_zero_iff_mem, RingHom.coe_coe]
 
 /-- Membership in the inverse-image Hopf ideal is membership after applying the morphism. -/
 @[simp]
@@ -83,6 +87,18 @@ theorem mem_comap {I : HopfIdeal R K} {f : H →ₐc[R] K} {hf : Function.Surjec
     {h : H} : h ∈ I.comap f hf ↔ f h ∈ I := by
   rw [← mem_toIdeal, comap_toIdeal, Ideal.mem_comap]
   exact mem_toIdeal
+
+/-- The inverse image is the kernel of the composite with the quotient morphism. -/
+theorem comap_eq_kerOfSurjective (I : HopfIdeal R K) (f : H →ₐc[R] K)
+    (hf : Function.Surjective f) :
+    I.comap f hf =
+      kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
+        (by
+          rw [BialgHom.coe_comp]
+          exact (Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) := by
+  ext h
+  rw [mem_comap, mem_kerOfSurjective, BialgHom.comp_apply,
+    Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem, mem_toIdeal]
 
 /-- Inverse image of Hopf ideals is monotone. -/
 theorem comap_mono (f : H →ₐc[R] K) (hf : Function.Surjective f)
@@ -121,9 +137,9 @@ theorem comap_eq_comap_iff_of_surjective (f : H →ₐc[R] K)
 /-- The inverse image of the zero Hopf ideal is the kernel Hopf ideal. -/
 @[simp]
 theorem comap_bot (f : H →ₐc[R] K) (hf : Function.Surjective f) :
-    (⊥ : HopfIdeal R K).comap f hf = ker f hf := by
+    (⊥ : HopfIdeal R K).comap f hf = kerOfSurjective f hf := by
   ext h
-  rw [mem_comap, mem_ker, mem_bot]
+  rw [mem_comap, mem_kerOfSurjective, mem_bot]
 
 /-- A finitely supported family over `K` lifts along a surjective bialgebra morphism to a
 finitely supported family over `H` that agrees with it pointwise and has the same total sum. -/

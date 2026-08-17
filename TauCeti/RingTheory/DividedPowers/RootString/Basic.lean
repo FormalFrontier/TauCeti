@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,7 +33,9 @@ so it holds in a Kostant integral form and, after base change, over a ring of an
 The class-two rule `TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq` is the
 degenerate case `w = 0`, and covers every pair of non-proportional roots in a simply-laced root
 system; the rule proved here covers the additional chains in types `B`, `C`, and `F₄`. Type `G₂`
-also needs the longer chain containing `3α + β`, which is not treated here.
+also needs the longer chain containing `3α + β` and `3α + 2β`, which is
+`TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq_three_nsmul` in
+`TauCeti.RingTheory.DividedPowers.RootString.G2`.
 
 The proof feeds `TauCeti.Associative.dividedPower_mul_of_ad_dividedPower_series` the sequence
 
@@ -67,16 +69,6 @@ open Finset
 variable {A : Type*} [Semiring A] [Algebra ℚ A] {x y z w : A}
 
 /-! ## Moving one element across a single normal-ordered monomial -/
-
--- The one-sided normal-ordering rule of `NormalOrdering`, stated without a successor pattern so
--- that it can be applied to an exponent that is only known at run time.
-private theorem mul_dividedPower_of_commutator_eq' (hxy : x * y = y * x + z) (hyz : Commute y z)
-    (n : ℕ) :
-    x * dividedPower n y =
-      dividedPower n y * x + if 0 < n then dividedPower (n - 1) y * z else 0 := by
-  cases n with
-  | zero => simp
-  | succ n => simpa using mul_dividedPower_of_commutator_eq hxy hyz n
 
 -- Moving `x` across a normal-ordered monomial `y⁽ᵃ⁾ z⁽ᵇ⁾ w⁽ᶜ⁾` releases at most two terms: one
 -- that trades a `y` for a `z`, and one that trades a `z` for a `w`. The coefficient `2` of the
