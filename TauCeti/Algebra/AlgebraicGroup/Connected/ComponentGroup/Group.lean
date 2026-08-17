@@ -123,7 +123,7 @@ theorem rationalComponentMap_apply (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (g : HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k)) :
     rationalComponentMap H g =
       (rationalKernelPoint H g : ConnectedComponents (PrimeSpectrum H)) := by
-  change componentGroupPointsMulEquivConnectedComponents H (componentGroupPointsMk H g) = _
+  dsimp [rationalComponentMap]
   rw [componentGroupPointsMulEquivConnectedComponents_apply,
     componentGroupPointsToConnectedComponents_mk]
 
@@ -167,7 +167,7 @@ theorem rationalComponentMap_eq_one_iff (H : FiniteTypeCommHopfAlgCat.{u, u} k)
       g ∈ CommHopfAlgCat.quotientPointsSubgroup H.obj
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
         (CommAlgCat.of k k) := by
-  change componentGroupPointsMulEquivConnectedComponents H (componentGroupPointsMk H g) = 1 ↔ _
+  dsimp [rationalComponentMap]
   rw [(componentGroupPointsMulEquivConnectedComponents H).map_eq_one_iff,
     componentGroupPointsMk_eq_one_iff]
 
@@ -179,7 +179,7 @@ theorem rationalComponentMap_ker (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
         (CommAlgCat.of k k) := by
   ext g
-  change rationalComponentMap H g = 1 ↔ _
+  rw [MonoidHom.mem_ker]
   exact rationalComponentMap_eq_one_iff H g
 
 end TauCeti.FiniteTypeCommHopfAlgCat
