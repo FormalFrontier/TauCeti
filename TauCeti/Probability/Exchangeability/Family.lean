@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+-- Public: `blockLaw_congr`, which is index-generic, gives the family predicate its congruence.
+public import TauCeti.Probability.Exchangeability.Congr
 import TauCeti.Probability.Exchangeability.Contractability
 
 /-!
@@ -27,6 +29,8 @@ this file relates them to exchangeable families.
   again from the joint disintegration.
 * `ExchangeableFamily.comp_injective` reindexes a family along an injection; the corresponding
   conditional i.i.d. lemmas are in `ConditionallyIID.Basic`.
+* `ExchangeableFamily.congr` transports the predicate across a coordinatewise a.e. change of
+  family, matching the sequence-level congruences in `Exchangeability/Congr.lean`.
 
 This is the family exchangeability API needed for the Layer 8 target “de Finetti for other
 countable index types” in `TauCetiRoadmap/Exchangeability/README.md`. The countable-index theorem
@@ -73,6 +77,13 @@ theorem ExchangeableFamily.blockLaw_eq {μ : Measure Ω} {X : ι → Ω → α}
     (hk : Function.Injective k) (hl : Function.Injective l) :
     blockLaw μ X k = blockLaw μ X l :=
   h m k l hk hl
+
+/-- Exchangeability of a family transports along a coordinatewise a.e. change of family: the
+predicate constrains only block laws, and those are unchanged (`blockLaw_congr`). -/
+theorem ExchangeableFamily.congr {μ : Measure Ω} {X Y : ι → Ω → α} (hX : ExchangeableFamily μ X)
+    (h : ∀ i, X i =ᵐ[μ] Y i) : ExchangeableFamily μ Y := fun m k l hk hl => by
+  rw [← blockLaw_congr h, ← blockLaw_congr h]
+  exact hX m k l hk hl
 
 /-- **A mixed i.i.d. family is exchangeable.** Along any two injective selections the block law is
 the same `ν`-mixture of product measures, so the two block laws agree. -/

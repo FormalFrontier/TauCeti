@@ -31,7 +31,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
 
 * `conditionallyIID_of_contractable` — the summit: contractable implies conditionally i.i.d.;
 * `conditionallyIID_of_exchangeable` and `deFinetti` — de Finetti's theorem in conditional form;
-* `deFinetti_equivalence`, `deFinetti_RyllNardzewski_equivalence` — the equivalence forms;
+* `deFinetti_equivalence`, `contractable_iff_conditionallyIID`,
+  `deFinetti_RyllNardzewski_equivalence` — the equivalence forms. These and the summits above ask
+  only for a.e. measurable coordinates, matching the uniqueness endpoints below;
 * `deFinetti_viaL2`, `conditionallyIID_of_contractable_viaL2` and
   `deFinetti_RyllNardzewski_equivalence_viaL2` — the same summits proved by the `L²` averaging
   route rather than the martingale one. The unsuffixed names above are the martingale route;

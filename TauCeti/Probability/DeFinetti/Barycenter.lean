@@ -166,19 +166,18 @@ exchangeable probability measure on `ℕ → α` is the de Finetti barycenter of
 law.
 
 This is the path-law form of `deFinetti_mixture`, obtained by taking the coordinate process of
-`ρ` itself: existence is de Finetti's theorem and uniqueness is injectivity of the mixture. The
-state space needs no nonemptiness hypothesis, since a probability measure on `ℕ → α` already
-exhibits a point of `α`. -/
+`ρ` itself: existence is de Finetti's theorem and uniqueness is injectivity of the mixture. Like
+`deFinetti_mixture`, it needs no nonemptiness hypothesis on the state space. -/
 theorem ExchangeableLaw.existsUnique_mixingLaw [StandardBorelSpace α] {ρ : Measure (ℕ → α)}
     [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ) :
     ∃! π : ProbabilityMeasure (ProbabilityMeasure α), ρ = deFinettiBarycenter π := by
-  have : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
   have hcoord : ∀ n, Measurable fun x : ℕ → α => x n := fun n => measurable_pi_apply n
   have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
   have hexch : Exchangeable ρ (fun n (x : ℕ → α) => x n) :=
     (exchangeable_iff_exchangeableLaw_pathLaw fun n => (hcoord n).aemeasurable).2
       (by simpa [pathLaw_def] using hρ)
-  simpa [hpath, deFinettiBarycenter_def] using deFinetti_mixture hexch hcoord
+  simpa [hpath, deFinettiBarycenter_def] using
+    deFinetti_mixture hexch fun n => (hcoord n).aemeasurable
 
 end Probability
 
