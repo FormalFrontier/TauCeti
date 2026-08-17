@@ -9,8 +9,7 @@ public import TauCeti.Probability.DeFinetti.Barycenter
 -- Public: the correspondence's point masses are characterized by extremality.
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 -- Public: the bundled convex combinations in which the affinity of the correspondence is stated,
--- on mixing laws and on exchangeable path laws respectively.
-public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Convex
+-- on exchangeable path laws and, through this module's own public import, on mixing laws.
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Convex
 -- Non-public: used only inside proofs — injectivity of the mixture is what makes the
 -- correspondence injective.
@@ -35,8 +34,8 @@ Injectivity is `Measure.ext_of_bind_infinitePi_eq`, surjectivity is
 exchangeable law.
 
 The correspondence is affine, `deFinettiBarycenter_add` and `deFinettiBarycenter_smul` giving
-the mixture identity on the barycenter side and `deFinettiEquiv_convexCombo` /
-`deFinettiEquiv_symm_convexCombo` stating it for the bundled objects on both sides of the
+the mixture identity on the barycenter side and `deFinettiEquiv_convexComb` /
+`deFinettiEquiv_symm_convexComb` stating it for the bundled objects on both sides of the
 equivalence; and it takes the point masses of
 `ProbabilityMeasure α` exactly to the extreme exchangeable laws
 (`deFinettiBarycenter_mem_extremePoints_iff`, `deFinettiEquiv_dirac`). Reading
@@ -61,9 +60,9 @@ shift-invariant events; see `PathSpace/Exchangeable/Ergodic.lean`.
 * `deFinettiEquiv` — mixing laws correspond bijectively to exchangeable path laws.
 * `deFinettiEquiv_dirac`, `deFinettiEquiv_symm_eq_dirac` — a point mass corresponds to an
   i.i.d. law, in both directions.
-* `deFinettiEquiv_convexCombo`, `deFinettiEquiv_symm_convexCombo` — the correspondence and its
-  inverse are affine, stated at the bundled level with `ProbabilityMeasure.convexCombo` and
-  `exchangeableLawConvexCombo`.
+* `deFinettiEquiv_convexComb`, `deFinettiEquiv_symm_convexComb` — the correspondence and its
+  inverse are affine, stated at the bundled level with `ProbabilityMeasure.convexComb` and
+  `exchangeableLawConvexComb`.
 * `deFinettiBarycenter_mem_extremePoints_iff` — a barycenter is an extreme exchangeable law
   exactly when its mixing law is a point mass.
 
@@ -169,8 +168,8 @@ The correspondence is affine, and this section says so at the bundled level, wit
 
 There is no `AffineMap` or `AffineEquiv` to be had: `ProbabilityMeasure` is not a module over
 anything, carrying neither addition nor a scalar action, only the convex structure inherited from
-the ambient `Measure` cone. `ProbabilityMeasure.convexCombo` names that convex structure, and
-`exchangeableLawConvexCombo` carries it to the subtype of exchangeable laws; both are generic, so
+the ambient `Measure` cone. `ProbabilityMeasure.convexComb` names that convex structure, and
+`exchangeableLawConvexComb` carries it to the subtype of exchangeable laws; both are generic, so
 they live outside this module. Affinity is then two equations between bundled objects.
 
 Weights are arbitrary elements of `ℝ≥0∞` summing to `1`. Normalization is not decorative: without
@@ -180,13 +179,13 @@ The unbundled statements without it are `deFinettiBarycenter_add` and `deFinetti
 /-- **The correspondence is affine.** It carries the convex combination of two mixing laws to the
 convex combination, with the same weights, of their exchangeable path laws. -/
 @[simp]
-theorem deFinettiEquiv_convexCombo [StandardBorelSpace α] {a b : ℝ≥0∞} (hab : a + b = 1)
+theorem deFinettiEquiv_convexComb [StandardBorelSpace α] {a b : ℝ≥0∞} (hab : a + b = 1)
     (π₁ π₂ : ProbabilityMeasure (ProbabilityMeasure α)) :
-    deFinettiEquiv (ProbabilityMeasure.convexCombo hab π₁ π₂)
-      = exchangeableLawConvexCombo hab (deFinettiEquiv π₁) (deFinettiEquiv π₂) :=
+    deFinettiEquiv (ProbabilityMeasure.convexComb hab π₁ π₂)
+      = exchangeableLawConvexComb hab (deFinettiEquiv π₁) (deFinettiEquiv π₂) :=
   Subtype.ext (ProbabilityMeasure.toMeasure_injective (by
-    simp only [deFinettiEquiv_apply_coe, toMeasure_exchangeableLawConvexCombo,
-      ProbabilityMeasure.toMeasure_convexCombo, deFinettiBarycenter_add,
+    simp only [deFinettiEquiv_apply_coe, toMeasure_exchangeableLawConvexComb,
+      ProbabilityMeasure.toMeasure_convexComb, deFinettiBarycenter_add,
       deFinettiBarycenter_smul]))
 
 /-- **The inverse correspondence is affine**: decomposing an exchangeable law as a convex
@@ -196,12 +195,12 @@ Formally this is the previous theorem read through the bijection, but the biject
 de Finetti's theorem sits: surjectivity of `deFinettiEquiv` is the representation theorem, and
 injectivity is uniqueness of the mixing law. -/
 @[simp]
-theorem deFinettiEquiv_symm_convexCombo [StandardBorelSpace α] {a b : ℝ≥0∞} (hab : a + b = 1)
+theorem deFinettiEquiv_symm_convexComb [StandardBorelSpace α] {a b : ℝ≥0∞} (hab : a + b = 1)
     (ρ₁ ρ₂ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}) :
-    deFinettiEquiv.symm (exchangeableLawConvexCombo hab ρ₁ ρ₂)
-      = ProbabilityMeasure.convexCombo hab
+    deFinettiEquiv.symm (exchangeableLawConvexComb hab ρ₁ ρ₂)
+      = ProbabilityMeasure.convexComb hab
           (deFinettiEquiv.symm ρ₁) (deFinettiEquiv.symm ρ₂) := by
-  rw [Equiv.symm_apply_eq, deFinettiEquiv_convexCombo, Equiv.apply_symm_apply,
+  rw [Equiv.symm_apply_eq, deFinettiEquiv_convexComb, Equiv.apply_symm_apply,
     Equiv.apply_symm_apply]
 
 /-- **The extreme fibres of the correspondence are exactly the point masses.** The de Finetti
