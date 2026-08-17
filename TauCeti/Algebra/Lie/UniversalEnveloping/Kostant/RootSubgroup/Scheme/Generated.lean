@@ -32,6 +32,8 @@ a later theorem and is not asserted here.
   scheme of `GLₙ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated`: the factorization of every
   root subgroup through the generated group scheme.
+* `kostantRootSubgroupGeneratedCoordinateMap_surjective_of_surjective`: a surjective
+  root-subgroup coordinate map stays surjective after factorization.
 * `TauCeti.UniversalEnvelopingAlgebra.le_kostantGeneratedDefiningIdeal_iff`: the minimality
   universal property in coordinate form.
 
@@ -73,8 +75,8 @@ noncomputable def kostantGeneratedDefiningIdeal :
   CommHopfAlgCat.commonKernelHopfIdeal
     (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
 
-/-- The defining ideal of the generated group scheme is the common-kernel Hopf ideal of the family
-of Kostant root-subgroup coordinate maps. -/
+/-- The defining ideal of the generated group scheme is the common-kernel Hopf ideal of its root
+subgroup coordinate maps. -/
 theorem kostantGeneratedDefiningIdeal_def :
     kostantGeneratedDefiningIdeal e h ρ M hM hnil b =
       CommHopfAlgCat.commonKernelHopfIdeal
@@ -156,6 +158,16 @@ theorem mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap (i : I) :
       kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b :=
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
     (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) i
+
+/-- If a root-subgroup coordinate map is surjective before factorization through the generated
+coordinate ring, then the factored coordinate map is also surjective. -/
+theorem kostantRootSubgroupGeneratedCoordinateMap_surjective_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom) :
+    Function.Surjective
+      (kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).hom :=
+  CommHopfAlgCat.commonKernelLift_surjective_of_surjective
+    (fun j ↦ kostantRootSubgroupCoordinateMap e h ρ M hM j (hnil j) b) i hi
 
 /-- The `i`th Kostant root subgroup, factored through the generated group scheme. -/
 noncomputable def kostantRootSubgroupToGenerated (i : I) :

@@ -23,36 +23,36 @@ space preserves the form, nor that it is a group homomorphism. This file supplie
 Form-preservation is proved along the generation of `lipschitzGroup Q` by vectors: a vector of
 invertible norm acts by `TauCeti.QuadraticMap.reflection`, which is orthogonal, and the orthogonal
 group is a subgroup, so every Lipschitz element acts orthogonally. That identification of the
-generators is `TauCeti.CliffordAlgebra.lipschitzVectorAction_unitι`, and it is the statement an
+generators is `CliffordAlgebra.lipschitzVectorAction_unitι`, and it is the statement an
 eventual Cartan-Dieudonné theorem turns into surjectivity of the double cover.
 
-`TauCeti.CliffordAlgebra.spinToOrthogonal` already describes the spin group acting by *plain*
+`CliffordAlgebra.spinToOrthogonal` already describes the spin group acting by *plain*
 conjugation. That is not a second action: an element of the spin group is even, so `involute` fixes
-it, and `TauCeti.CliffordAlgebra.pinToOrthogonal_spinToPin` records that the two agree there.
+it, and `CliffordAlgebra.pinToOrthogonal_spinToPin` records that the two agree there.
 Twisted conjugation is the one that extends to the odd part.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.unitι Q v`: a vector of invertible norm, as a unit of the Clifford
+* `CliffordAlgebra.unitι Q v`: a vector of invertible norm, as a unit of the Clifford
   algebra and hence a generator of the Lipschitz group.
-* `TauCeti.CliffordAlgebra.lipschitzVectorAction Q x`: the automorphism of the quadratic space
+* `CliffordAlgebra.lipschitzVectorAction Q x`: the automorphism of the quadratic space
   induced by twisted conjugation by a Lipschitz element.
-* `TauCeti.CliffordAlgebra.lipschitzToOrthogonal Q` and
-  `TauCeti.CliffordAlgebra.pinToOrthogonal Q`: the resulting homomorphisms to `O(Q)`, along the
-  inclusions `TauCeti.CliffordAlgebra.pinToLipschitz` and `TauCeti.CliffordAlgebra.spinToPin`.
+* `CliffordAlgebra.lipschitzToOrthogonal Q` and
+  `CliffordAlgebra.pinToOrthogonal Q`: the resulting homomorphisms to `O(Q)`, along the
+  inclusions `CliffordAlgebra.pinToLipschitz` and `CliffordAlgebra.spinToPin`.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.lipschitzVectorAction_unitι`: **a vector acts by the reflection in its
+* `CliffordAlgebra.lipschitzVectorAction_unitι`: **a vector acts by the reflection in its
   orthogonal hyperplane.** This is the identification of the generators referred to above.
-* `TauCeti.CliffordAlgebra.lipschitzVectorAction_map_app`: twisted conjugation by a Lipschitz
+* `CliffordAlgebra.lipschitzVectorAction_map_app`: twisted conjugation by a Lipschitz
   element preserves the quadratic form.
-* `TauCeti.CliffordAlgebra.ι_mem_pinGroup`: a vector `v` with `Q v = -1` lies in the Pin group, and
-  `TauCeti.CliffordAlgebra.pinToOrthogonal_ι_apply` computes the reflection it induces. The sign is
+* `CliffordAlgebra.ι_mem_pinGroup`: a vector `v` with `Q v = -1` lies in the Pin group, and
+  `CliffordAlgebra.pinToOrthogonal_ι_apply` computes the reflection it induces. The sign is
   forced by Mathlib's conventions: `star` is the reversal composed with the grade involution, so
   `star (ι Q v) = -ι Q v` and the unitarity condition defining `pinGroup Q` reads `-Q v = 1` on a
   vector.
-* `TauCeti.CliffordAlgebra.pinToOrthogonal_spinToPin`: on the spin group, twisted conjugation is
+* `CliffordAlgebra.pinToOrthogonal_spinToPin`: on the spin group, twisted conjugation is
   plain conjugation.
 
 Surjectivity of `pinToOrthogonal Q` (Cartan-Dieudonné) and the computation of its kernel as `{±1}`
@@ -70,13 +70,13 @@ Spinors* (1954), Chapter II.
 
 public section
 
-open CliffordAlgebra QuadraticMap
-
-namespace TauCeti
+open QuadraticMap
 
 universe u v
 
 namespace CliffordAlgebra
+
+open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M)
@@ -143,7 +143,7 @@ theorem ι_mem_pinGroup {v : M} (hv : Q v = -1) : ι Q v ∈ pinGroup Q := by
 /-! ### The induced map on the quadratic space
 
 Twisted conjugation by a Lipschitz element carries vectors to vectors, so it descends to the
-quadratic space through the vector part `TauCeti.CliffordAlgebra.ιInv`. The unbundled form
+quadratic space through the vector part `CliffordAlgebra.ιInv`. The unbundled form
 `vectorMap` below is a plain linear endomorphism, defined for every unit but meaningful only for
 Lipschitz ones; the bundled automorphism is `lipschitzVectorAction`. -/
 
@@ -374,8 +374,8 @@ theorem coe_spinToPin_apply (x : spinGroup Q) :
   rfl
 
 /-- **On the spin group, twisted conjugation is plain conjugation.** A spin element is even, so the
-grade involution fixes it, and `TauCeti.CliffordAlgebra.spinToOrthogonal` is the restriction of
-`TauCeti.CliffordAlgebra.pinToOrthogonal` along the inclusion of the spin group. -/
+grade involution fixes it, and `CliffordAlgebra.spinToOrthogonal` is the restriction of
+`CliffordAlgebra.pinToOrthogonal` along the inclusion of the spin group. -/
 @[simp]
 theorem pinToOrthogonal_spinToPin (x : spinGroup Q) :
     pinToOrthogonal Q (spinToPin Q x) = spinToOrthogonal Q x := by
@@ -384,5 +384,3 @@ theorem pinToOrthogonal_spinToPin (x : spinGroup Q) :
     coe_spinToOrthogonal_apply, ι_spinVectorAction_apply]
 
 end CliffordAlgebra
-
-end TauCeti

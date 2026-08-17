@@ -18,9 +18,9 @@ convolution conjugation, so it preserves the Lie bracket.
 
 ## Main declarations
 
-* `TauCeti.Derivation.adjointLieEquiv`: every algebra-valued point acts by Lie algebra
+* `Derivation.adjointLieEquiv`: every algebra-valued point acts by Lie algebra
   automorphisms on the scalar-extended tangent space.
-* `TauCeti.Derivation.adjointAction_bracket`: the established adjoint action preserves brackets.
+* `Derivation.adjointAction_bracket`: the established adjoint action preserves brackets.
 
 ## References
 
@@ -31,7 +31,9 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti.Derivation
+namespace Derivation
+
+open TauCeti
 
 universe u v
 
@@ -113,4 +115,4 @@ theorem adjointLieEquiv_symm
   simpa only [mul_inv_cancel, adjointLieEquiv_one, LieEquiv.one_apply,
     LieEquiv.trans_apply] using h
 
-end TauCeti.Derivation
+end Derivation

@@ -33,11 +33,11 @@ in Layer 2 of the ReductiveGroups roadmap.
 
 ## Main declarations
 
-* `TauCeti.Derivation.finrank_eq_finrank_cotangentSpace`: tangent and cotangent `finrank` values
+* `Derivation.finrank_eq_finrank_cotangentSpace`: tangent and cotangent `finrank` values
   agree.
-* `TauCeti.Derivation.instFiniteDimensionalDerivationCounitAlgebra`: tangent spaces with
+* `Derivation.instFiniteDimensionalDerivationCounitAlgebra`: tangent spaces with
   coefficient-field values are finite-dimensional when the augmentation cotangent space is.
-* `TauCeti.Derivation.finrank_tangent_baseChange`: tangent dimension is invariant under extension
+* `Derivation.finrank_tangent_baseChange`: tangent dimension is invariant under extension
   of the coefficient field.
 
 ## References
@@ -47,13 +47,13 @@ in Layer 2 of the ReductiveGroups roadmap.
 
 public section
 
-namespace TauCeti
-
 universe u v w
 
 open scoped TensorProduct
 
 namespace Derivation
+
+open TauCeti
 
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Bialgebra k H]
@@ -109,5 +109,3 @@ theorem finrank_tangent_baseChange
       (cotangentLinearEquiv (R := k) (A := H) (B := k)).finrank_eq
 
 end Derivation
-
-end TauCeti
