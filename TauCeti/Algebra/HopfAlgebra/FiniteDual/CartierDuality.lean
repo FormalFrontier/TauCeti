@@ -17,7 +17,8 @@ dual preserves this bicommutative condition, reverses morphisms, and is involuti
 
 This file packages those facts as a contravariant equivalence on finite locally free
 bicommutative Hopf algebras. It is the algebraic core of Cartier duality over a general affine
-base; transporting the equivalence through `Spec` is a separate step.
+base; its transport through `Spec` is provided by
+`AlgebraicGeometry.AffineGroupScheme.CartierDuality.FiniteLocallyFree`.
 
 ## Main declarations
 
