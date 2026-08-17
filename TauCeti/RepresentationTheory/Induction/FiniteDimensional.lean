@@ -261,58 +261,59 @@ end Dimension
 end Rep
 
 /-- Forgetting finite-dimensionality keeps the finite-dimensional instance on the carrier. -/
-instance finiteDimensional_forgetFDRep {k : Type u} {G : Type v} [Field k] [Group G]
+instance finiteDimensional_forgetFDRep {k : Type u} {G : Type v} [Field k] [Monoid G]
     (A : FDRep k G) : FiniteDimensional k ((forget₂ (FDRep k G) (Rep k G)).obj A) :=
   inferInstanceAs (FiniteDimensional k A)
 
-/-- The small model used to realize Mathlib's possibly universe-large induced representation as
-an object of `FDRep`. -/
-private noncomputable def indShrunkFDRep {k : Type u} {G : Type v} [Field k] [Group G]
-    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) : FDRep k G := by
-  let V := Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)
-  letI : FiniteDimensional k V :=
-    @Rep.finiteDimensional_ind.{u, v, 0} k G inferInstance S inferInstance inferInstance _
-      inferInstance
+/-- Forgetting finite-dimensionality does not change the dimension of the carrier. -/
+@[simp]
+theorem finrank_forgetFDRep {k : Type u} {G : Type v} [Field k] [Monoid G]
+    (A : FDRep k G) :
+    Module.finrank k ((forget₂ (FDRep k G) (Rep k G)).obj A) = Module.finrank k A :=
+  rfl
+
+/-- Conjugation by `Shrink.linearEquiv` gives an equivariant equivalence from the shrunk model
+back to the original representation. -/
+private noncomputable def shrinkRepEquiv {k : Type u} {G : Type v} {V : Type w}
+    [Field k] [Group G] [AddCommGroup V] [Module k V] [Small.{u} V]
+    (ρ : Representation k G V) :
+    Representation.Equiv
+      ((Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp ρ) ρ := by
+  apply Representation.Equiv.mk (Shrink.linearEquiv k V)
+  intro g
+  ext x
+  simp
+
+/-- The small induced object together with its comparison to Mathlib's induced representation. -/
+private structure IndSmallModel {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) where
+  object : FDRep k G
+  equiv : ((forget₂ (FDRep k G) (Rep k G)).obj object).ρ.Equiv
+    (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ
+
+/-- Construct the small induced object and comparison equivalence with one choice of shrinking
+data. -/
+private noncomputable def indSmallModel {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) : IndSmallModel A := by
+  let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
+  let V := Rep.ind S.subtype A'
+  letI : FiniteDimensional k V := Rep.finiteDimensional_ind.{u, v, 0} A'
   letI : Small.{u} V := Module.Finite.small k V
-  exact FDRep.of ((Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp V.ρ)
+  let ρ := (Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp V.ρ
+  exact { object := FDRep.of ρ, equiv := shrinkRepEquiv V.ρ }
 
 /-- The finite-dimensional representation induced from a finite-index subgroup. -/
 noncomputable def indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) : FDRep k G :=
-  indShrunkFDRep A
-
-/-- The action of `indFDRep` is the action of its shrunk model. -/
-private theorem indFDRep_ρ {k : Type u} {G : Type v} [Field k] [Group G]
-    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
-    (indFDRep A).ρ = (indShrunkFDRep A).ρ :=
-  rfl
+  (indSmallModel A).object
 
 /-- The small carrier chosen by `indFDRep` is equivariantly linearly equivalent to Mathlib's
 possibly universe-large induced representation. -/
 noncomputable def indFDRepForgetEquiv {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
     ((forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)).ρ.Equiv
-      (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ := by
-  let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
-  let V := Rep.ind S.subtype A'
-  letI : FiniteDimensional k V :=
-    @Rep.finiteDimensional_ind.{u, v, 0} k G inferInstance S inferInstance inferInstance _
-      inferInstance
-  letI : Small.{u} V := Module.Finite.small k V
-  apply Representation.Equiv.mk (Shrink.linearEquiv k V)
-  intro g
-  ext x
-  change (Shrink.linearEquiv k V)
-      ((Shrink.linearEquiv k V).symm.conj (V.ρ g) x) =
-    V.ρ g (Shrink.linearEquiv k V x)
-  simp
-
-/-- The carrier of `indFDRep A` is linearly equivalent to the carrier of Mathlib's induced
-representation. -/
-noncomputable def indFDRepForgetLinearEquiv {k : Type u} {G : Type v} [Field k] [Group G]
-    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
-    indFDRep A ≃ₗ[k] Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
-  (indFDRepForgetEquiv A).toLinearEquiv
+      (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ :=
+  (indSmallModel A).equiv
 
 /-- Same-universe categorical wrapper around `indFDRepForgetEquiv`: forgetting
 finite-dimensionality from `indFDRep` recovers Mathlib's induced representation. -/
@@ -321,6 +322,14 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
     (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A) ≅
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
   Rep.mkIso (indFDRepForgetEquiv A)
+
+/-- The linear map underlying the categorical comparison is the linear map of the equivariant
+comparison. -/
+private theorem indFDRepForgetIso_hom_toLinearMap {k G : Type u} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
+    (indFDRepForgetIso A).hom.hom.toLinearMap = (indFDRepForgetEquiv A).toLinearMap := by
+  rw [indFDRepForgetIso]
+  rfl
 
 /-- Induction of an intertwiner of finite-dimensional representations, obtained by conjugating
 Mathlib's induced intertwiner by the small-carrier comparison equivalences. -/
@@ -331,56 +340,56 @@ noncomputable def indFDRepMap {k : Type u} {G : Type v} [Field k] [Group G] {S :
       ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom.comp
         (indFDRepForgetEquiv A).toIntertwiningMap)))
 
-/-- The underlying intertwiner of `indFDRepMap` is Mathlib's induced intertwiner conjugated by the
-small-carrier comparison equivalences. -/
+/-- `indFDRepMap` applies Mathlib's induced intertwiner between the two small-carrier comparison
+equivalences. -/
 @[simp]
-theorem forget₂_map_indFDRepMap_hom {k : Type u} {G : Type v} [Field k] [Group G]
-    {S : Subgroup G}
-    [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) :
-    ((forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f)).hom =
-      (indFDRepForgetEquiv B).symm.toIntertwiningMap.comp
-        ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom.comp
-          (indFDRepForgetEquiv A).toIntertwiningMap) := by
+theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B)
+    (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
+    ((forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f)).hom.toLinearMap x =
+      (indFDRepForgetEquiv B).symm
+      ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
+        (indFDRepForgetEquiv A x)) := by
   rw [indFDRepMap]
   rfl
 
 /-- Induction of intertwiners preserves identities. -/
 theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) : indFDRepMap (𝟙 A) = 𝟙 (indFDRep A) := by
+  let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
+  have hForget : (forget₂ (FDRep k S) (Rep k S)).map (𝟙 A) = 𝟙 A' :=
+    (forget₂ (FDRep k S) (Rep k S)).map_id A
+  have hForgetInd : (forget₂ (FDRep k G) (Rep k G)).map (𝟙 (indFDRep A)) =
+      𝟙 ((forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :=
+    (forget₂ (FDRep k G) (Rep k G)).map_id (indFDRep A)
+  have hInd : Rep.indMap S.subtype (𝟙 A') = 𝟙 (Rep.ind S.subtype A') := by
+    ext
+    rfl
   apply (forget₂ (FDRep k G) (Rep k G)).map_injective
   apply Rep.hom_ext
-  rw [forget₂_map_indFDRepMap_hom]
-  let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
-  have hInd := (Rep.indFunctor k S.subtype).map_id A'
-  change Rep.indMap S.subtype (𝟙 A') = 𝟙 (Rep.ind S.subtype A') at hInd
-  change (indFDRepForgetEquiv A).symm.toIntertwiningMap.comp
-      ((Rep.indMap S.subtype (𝟙 A')).hom.comp
-        (indFDRepForgetEquiv A).toIntertwiningMap) =
-    Representation.IntertwiningMap.id
-      ((forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)).ρ
-  rw [hInd]
   ext x
+  rw [indFDRepMap_apply, hForget, hInd, hForgetInd]
+  -- Unpack the identity intertwiner before cancelling the comparison equivalence.
+  change (indFDRepForgetEquiv A).symm (indFDRepForgetEquiv A x) = x
   simp
 
 /-- Induction of intertwiners preserves composition. -/
 theorem indFDRepMap_comp {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] {A B C : FDRep k S} (f : A ⟶ B) (g : B ⟶ C) :
     indFDRepMap (f ≫ g) = indFDRepMap f ≫ indFDRepMap g := by
+  let f' := (forget₂ (FDRep k S) (Rep k S)).map f
+  let g' := (forget₂ (FDRep k S) (Rep k S)).map g
+  have hInd : Rep.indMap S.subtype (f' ≫ g') =
+      Rep.indMap S.subtype f' ≫ Rep.indMap S.subtype g' := by
+    ext
+    rfl
   apply (forget₂ (FDRep k G) (Rep k G)).map_injective
   apply Rep.hom_ext
-  rw [forget₂_map_indFDRepMap_hom]
-  simp only [Functor.map_comp, Rep.hom_comp, forget₂_map_indFDRepMap_hom]
-  have hInd := (Rep.indFunctor k S.subtype).map_comp
-    ((forget₂ (FDRep k S) (Rep k S)).map f)
-    ((forget₂ (FDRep k S) (Rep k S)).map g)
-  change Rep.indMap S.subtype
-      (((forget₂ (FDRep k S) (Rep k S)).map f) ≫
-        (forget₂ (FDRep k S) (Rep k S)).map g) =
-    Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f) ≫
-      Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map g) at hInd
-  rw [hInd, Rep.hom_comp]
   ext x
-  simp
+  rw [Functor.map_comp, Rep.hom_comp, Representation.IntertwiningMap.comp_toLinearMap,
+    LinearMap.comp_apply, indFDRepMap_apply, Functor.map_comp, hInd, Rep.hom_comp,
+    Representation.IntertwiningMap.comp_apply, indFDRepMap_apply, indFDRepMap_apply]
+  simp [f', g']
 
 /-- Induction from a finite-index subgroup, as a functor on finite-dimensional representations.
 It acts on objects as `indFDRep` and on intertwiners as `indFDRepMap`.
@@ -389,7 +398,7 @@ It acts on objects as `indFDRep` and on intertwiners as `indFDRepMap`.
 `indFDRepFunctor_map`. Both are proved by `rfl`, and the type of the second needs
 `indFDRepFunctor.obj A` to reduce to `indFDRep A`, so this definition is `@[expose]`. Exposing it
 publishes exactly those two projections: the construction of the morphism map lives in
-`indFDRepMap`, which stays opaque behind `forget₂_map_indFDRepMap_hom`. -/
+`indFDRepMap`, which stays opaque behind `indFDRepMap_apply`. -/
 @[expose, simps obj map]
 noncomputable def indFDRepFunctor {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G}
@@ -410,15 +419,13 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
     change (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) ≫ (indFDRepForgetIso B).hom =
       (indFDRepForgetIso A).hom ≫
         (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f)
-    rw [indFDRepForgetIso, indFDRepForgetIso]
-    apply Rep.hom_ext
-    rw [Rep.hom_comp, Rep.hom_comp, forget₂_map_indFDRepMap_hom]
     ext x
-    change (indFDRepForgetEquiv B) ((indFDRepForgetEquiv B).symm
-        ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
-          ((indFDRepForgetEquiv A) x))) =
-      (Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
-        ((indFDRepForgetEquiv A) x)
+    rw [Rep.hom_comp, Rep.hom_comp, Representation.IntertwiningMap.comp_toLinearMap,
+      Representation.IntertwiningMap.comp_toLinearMap, LinearMap.comp_apply,
+      LinearMap.comp_apply, indFDRepMap_apply, indFDRepForgetIso_hom_toLinearMap,
+      indFDRepForgetIso_hom_toLinearMap]
+    -- The remaining equation is exactly cancellation of the comparison equivalence and its inverse.
+    change (indFDRepForgetEquiv B) ((indFDRepForgetEquiv B).symm _) = _
     simp
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
@@ -428,9 +435,8 @@ theorem finrank_indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subg
     [S.FiniteIndex] (A : FDRep k S) :
     Module.finrank k (indFDRep A) = S.index * Module.finrank k A := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
-  rw [LinearEquiv.finrank_eq (indFDRepForgetLinearEquiv A)]
-  convert Rep.finrank_ind A' using 1
-  change S.index * Module.finrank k A = S.index * Module.finrank k A
-  rfl
+  rw [← finrank_forgetFDRep (indFDRep A),
+    LinearEquiv.finrank_eq (indFDRepForgetEquiv A).toLinearEquiv,
+    Rep.finrank_ind, finrank_forgetFDRep]
 
 end TauCeti
