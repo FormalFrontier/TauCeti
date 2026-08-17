@@ -46,6 +46,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   integral operator on a Kostant-stable subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
   points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusSubgroup`: the image of that torus in the general
+  linear group of the base-changed lattice.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`: the same action in matrix coordinates.
 
 ## Main results
@@ -246,6 +248,13 @@ noncomputable def kostantTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     (κ → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp
     (basisWeightTorus (b.baseChange A) wt)
+
+-- `@[expose]` so that a module downstream of this one can unfold the range and use Mathlib's
+-- `MonoidHom.mem_range` on it, instead of restating that characterization here.
+/-- The image of the split weight torus in the general linear group of the base-changed lattice. -/
+@[expose] noncomputable def kostantTorusSubgroup (A : Type*) [CommRing A] [Algebra ℤ A] :
+    Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) :=
+  (kostantTorusPoints M b wt A).range
 
 section Pointwise
 
