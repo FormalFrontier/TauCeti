@@ -79,13 +79,29 @@ sent to the group of tensor automorphisms of scalar extension to `A` on the fini
     exact tensorAutMapValue_comp R H A B C φ.hom ψ.hom η
 
 /-- The tensor-automorphism functor sends an algebra to its group of tensor automorphisms. -/
+@[simp]
 theorem tensorAutFunctor_obj (A : CommAlgCat.{u} R) :
     (tensorAutFunctor R H).obj A =
       GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :=
   rfl
 
-/-- The tensor-automorphism functor acts on morphisms by base change of components. -/
+/-- The tensor-automorphism functor acts on morphisms by base change of components. This is the
+morphism-level form, stated with the object transports so that it stays in `simp` normal form
+once `tensorAutFunctor_obj` fires; it matches
+`TauCeti.GeneralLinear.scalarExtensionAutomorphismsFunctor_map`. -/
 @[simp]
+theorem tensorAutFunctor_map {A B : CommAlgCat.{u} R} (φ : A ⟶ B) :
+    (tensorAutFunctor R H).map φ =
+      eqToHom (tensorAutFunctor_obj R H A) ≫
+        GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom) ≫
+          eqToHom (tensorAutFunctor_obj R H B).symm := by
+  apply (conj_eqToHom_iff_heq _ _ (tensorAutFunctor_obj R H A)
+    (tensorAutFunctor_obj R H B)).2
+  rfl
+
+/-- The tensor-automorphism functor acts on morphisms by base change of components, in applied
+form. Not a `simp` lemma: `tensorAutFunctor_obj` rewrites the object in the argument's type, so
+this left-hand side is not in normal form; `tensorAutFunctor_map` carries the automation. -/
 theorem tensorAutFunctor_map_apply {A B : CommAlgCat.{u} R} (φ : A ⟶ B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :
     (tensorAutFunctor R H).map φ η = tensorAutMapValue R H A B φ.hom η := by
