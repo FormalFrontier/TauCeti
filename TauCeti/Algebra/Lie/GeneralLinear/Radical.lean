@@ -45,8 +45,9 @@ difference of diagonal units, and finally, by the first bracket again, all the r
 * `TauCeti.slIdeal_le_of_notMem_center`: **a Lie ideal of `gl n K` containing a non-central matrix
   contains `sl n K`**; equivalently `TauCeti.slIdeal_le_or_le_center`, every Lie ideal of `gl n K`
   either contains `sl n K` or consists of scalar matrices.
-* `TauCeti.lie_slIdeal_slIdeal`: **`sl n K` is perfect**, `⁅sl n K, sl n K⁆ = sl n K`, whence
-  `TauCeti.not_isSolvable_slIdeal`: it is not solvable when there are at least two indices.
+* `TauCeti.lie_slIdeal_slIdeal`: **`sl n R` is perfect**, `⁅sl n R, sl n R⁆ = sl n R`, whenever `2`
+  is invertible in `R`, whence `TauCeti.not_isSolvable_slIdeal`: it is not solvable when `R` is
+  nontrivial and there are at least two indices.
 * `TauCeti.radical_matrix_eq_center` and `TauCeti.hasCentralRadical_matrix`: **`gl n K` is
   reductive**, its radical being its centre.
 
@@ -59,8 +60,11 @@ larger than the centre. No invertibility of the size of the matrices is needed, 
 statement is proved uniformly in the index type, the case of at most one index being the abelian
 one, where the radical and the centre are both everything.
 
-The results about ideals are stated over a field because the generation argument divides by a matrix
-entry; the two bracket identities need only a commutative ring.
+Only the results about ideals are stated over a field, because the generation argument divides by an
+arbitrary nonzero matrix entry. The two bracket identities need only a commutative ring, and
+perfectness of `sl n R` — which divides by `2` alone — is stated over a commutative ring in which
+`2` is a unit, non-solvability adding only `Nontrivial R`; the radical computation specialises these
+to a field.
 
 The diagonal of a difference of diagonal matrix units is written as a difference of two `if`s rather
 than through `Pi.single`, so that its values are available by `simp` at each of the indices the
@@ -110,7 +114,7 @@ theorem lie_diagonal_single (d : n → R) (p q : n) (c : R) :
 omit [Fintype n] in
 /-- A difference of diagonal matrix units is the diagonal matrix of the difference of the
 corresponding indicator functions. -/
-theorem single_self_sub_single_self_eq_diagonal (a b : n) (c : R) :
+private theorem single_self_sub_single_self_eq_diagonal (a b : n) (c : R) :
     single a a c - single b b c
       = diagonal fun k => (if k = a then c else 0) - (if k = b then c else 0) := by
   ext k l
@@ -255,7 +259,7 @@ theorem slIdeal_le_of_single_mem (htwo : (2 : K) ≠ 0) {a b : n} (hab : a ≠ b
     (mem_slIdeal_iff.mp hA)
 
 /-- With at most one index every matrix is a scalar, so a non-central matrix forces two indices. -/
-theorem nontrivial_of_notMem_center {x : Matrix n n K}
+private theorem nontrivial_of_notMem_center {x : Matrix n n K}
     (hx : x ∉ LieAlgebra.center K (Matrix n n K)) : Nontrivial n := by
   rcases subsingleton_or_nontrivial n with hsub | hnt
   · refine absurd (mem_center_matrix_iff.mpr ?_) hx
@@ -322,53 +326,55 @@ end Ideals
 
 section Perfect
 
-variable {K : Type*} [Field K]
+variable [CommRing R]
 
-/-- **`sl n K` is perfect**: `⁅sl n K, sl n K⁆ = sl n K`.
+/-- **`sl n R` is perfect** whenever `2` is invertible in `R`: `⁅sl n R, sl n R⁆ = sl n R`.
 
-Each off-diagonal matrix unit is `Eₚq c = ⁅Eₚₚ - E_qq, Eₚq (c / 2)⁆` and each difference of diagonal
-units is `Eₚₚ c - E_qq c = ⁅Eₚq c, E_qₚ⁆`; all four factors have trace zero. -/
-theorem lie_slIdeal_slIdeal (htwo : (2 : K) ≠ 0) :
-    ⁅slIdeal K n, slIdeal K n⁆ = slIdeal K n := by
+Each off-diagonal matrix unit is `Eₚq c = ⁅Eₚₚ - E_qq, Eₚq (t c)⁆` for an inverse `t` of `2`, and
+each difference of diagonal units is `Eₚₚ c - E_qq c = ⁅Eₚq c, E_qₚ⁆`; all four factors have trace
+zero. -/
+theorem lie_slIdeal_slIdeal (htwo : IsUnit (2 : R)) :
+    ⁅slIdeal R n, slIdeal R n⁆ = slIdeal R n := by
+  obtain ⟨t, ht⟩ := htwo.exists_left_inv
   refine le_antisymm (LieSubmodule.lie_le_right _ _) fun A hA => ?_
   rw [← LieSubmodule.mem_toSubmodule]
   refine mem_of_trace_eq_zero_of_single_mem ?_ ?_ (mem_slIdeal_iff.mp hA)
   · intro p q hpq c
-    have hx : single p p (1 : K) - single q q (1 : K) ∈ slIdeal K n := by simp [mem_slIdeal_iff]
-    have hy : single p q ((2 : K)⁻¹ * c) ∈ slIdeal K n := by simp [mem_slIdeal_iff, hpq]
+    have hx : single p p (1 : R) - single q q (1 : R) ∈ slIdeal R n := by simp [mem_slIdeal_iff]
+    have hy : single p q (t * c) ∈ slIdeal R n := by simp [mem_slIdeal_iff, hpq]
     have h := LieSubmodule.lie_mem_lie hx hy
-    rw [lie_single_self_sub_single_self_single hpq, ← mul_assoc,
-      mul_inv_cancel₀ htwo, one_mul] at h
+    rw [lie_single_self_sub_single_self_single hpq, ← mul_assoc, mul_comm (2 : R) t, ht,
+      one_mul] at h
     exact h
   · intro p q c
     rcases eq_or_ne p q with rfl | hpq
     · simp
-    have hx : single p q c ∈ slIdeal K n := by simp [mem_slIdeal_iff, hpq]
-    have hy : single q p (1 : K) ∈ slIdeal K n := by simp [mem_slIdeal_iff, hpq.symm]
+    have hx : single p q c ∈ slIdeal R n := by simp [mem_slIdeal_iff, hpq]
+    have hy : single q p (1 : R) ∈ slIdeal R n := by simp [mem_slIdeal_iff, hpq.symm]
     have h := LieSubmodule.lie_mem_lie hx hy
     rw [lie_single_single_eq_sub p q c] at h
     exact h
 
-/-- `sl n K` is nonzero as soon as there are two indices. -/
-theorem slIdeal_ne_bot [Nontrivial n] : slIdeal K n ≠ ⊥ := by
+/-- `sl n R` is nonzero over a nontrivial ring as soon as there are two indices. -/
+theorem slIdeal_ne_bot [Nontrivial n] [Nontrivial R] : slIdeal R n ≠ ⊥ := by
   obtain ⟨p, q, hpq⟩ := exists_pair_ne n
   intro hbot
-  have hmem : single p q (1 : K) ∈ slIdeal K n := by simp [mem_slIdeal_iff, hpq]
+  have hmem : single p q (1 : R) ∈ slIdeal R n := by simp [mem_slIdeal_iff, hpq]
   rw [hbot, LieSubmodule.mem_bot] at hmem
-  have happ : single p q (1 : K) p q = (0 : Matrix n n K) p q := by rw [hmem]
+  have happ : single p q (1 : R) p q = (0 : Matrix n n R) p q := by rw [hmem]
   simp at happ
 
-/-- **`sl n K` is not solvable** when there are at least two indices: it is perfect and nonzero, so
-its derived series is constant. -/
-theorem not_isSolvable_slIdeal [Nontrivial n] (htwo : (2 : K) ≠ 0) :
-    ¬ LieAlgebra.IsSolvable (slIdeal K n) := by
+/-- **`sl n R` is not solvable** when `2` is invertible in a nontrivial `R` and there are at least
+two indices: it is perfect and nonzero, so its derived series is constant. -/
+theorem not_isSolvable_slIdeal [Nontrivial n] [Nontrivial R] (htwo : IsUnit (2 : R)) :
+    ¬ LieAlgebra.IsSolvable (slIdeal R n) := by
   intro hsolv
-  have hconst : ∀ m : ℕ, derivedSeriesOfIdeal K (Matrix n n K) m (slIdeal K n) = slIdeal K n := by
+  have hconst : ∀ m : ℕ, derivedSeriesOfIdeal R (Matrix n n R) m (slIdeal R n) = slIdeal R n := by
     intro m
     induction m with
     | zero => rw [derivedSeriesOfIdeal_zero]
     | succ m ih => rw [derivedSeriesOfIdeal_succ, ih, lie_slIdeal_slIdeal htwo]
-  obtain ⟨k, hk⟩ := LieAlgebra.IsSolvable.solvable K (slIdeal K n)
+  obtain ⟨k, hk⟩ := LieAlgebra.IsSolvable.solvable R (slIdeal R n)
   rw [LieIdeal.derivedSeries_eq_bot_iff, hconst k] at hk
   exact slIdeal_ne_bot hk
 
@@ -394,7 +400,7 @@ theorem radical_matrix_eq_center (htwo : (2 : K) ≠ 0) :
   by_contra hIc
   obtain ⟨x, hxI, hx⟩ := SetLike.not_le_iff_exists.mp hIc
   have hnt : Nontrivial n := nontrivial_of_notMem_center hx
-  exact not_isSolvable_slIdeal htwo
+  exact not_isSolvable_slIdeal (isUnit_iff_ne_zero.mpr htwo)
     (LieAlgebra.le_solvable_ideal_solvable (slIdeal_le_of_notMem_center I htwo hxI hx) hI)
 
 /-- **`gl n K` is reductive**, for any field in which `2 ≠ 0`. -/

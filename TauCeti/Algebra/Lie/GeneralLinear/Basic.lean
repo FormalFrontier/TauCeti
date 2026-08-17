@@ -222,7 +222,7 @@ theorem slIdeal_toLieSubalgebra_eq_sl :
 /-! ### The derived ideal of `gl n R` -/
 
 /-- Every commutator lies in the derived ideal of `gl n R`. -/
-theorem lie_mem_derivedSeries_one (X Y : Matrix n n R) :
+private theorem lie_mem_derivedSeries_one (X Y : Matrix n n R) :
     ⁅X, Y⁆ ∈ derivedSeries R (Matrix n n R) 1 := by
   have hmem : ⁅X, Y⁆ ∈ Submodule.span R {⁅x, y⁆ | (x : Matrix n n R) (y : Matrix n n R)} :=
     Submodule.subset_span ⟨X, Y, rfl⟩
