@@ -32,7 +32,7 @@ Layer 4 of the ReductiveGroups roadmap.
 
 public section
 
-open CategoryTheory WithConv
+open CategoryTheory LinearMap WithConv
 open scoped TensorProduct
 
 namespace TauCeti
