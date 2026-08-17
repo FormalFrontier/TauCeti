@@ -75,7 +75,7 @@ lemma closedSubgroupMorphismProperty_iff (X : Scheme.{u})
 
 /-- A closed subgroup scheme of `G` is a categorical subobject represented by a closed immersion
 on underlying schemes. The use of `Subobject` identifies presentations isomorphic over `G`. -/
-abbrev ClosedSubgroupScheme {X : Scheme.{u}} (G : Grp (Over X)) :=
+abbrev ClosedSubgroupScheme {X : Scheme.{u}} (G : Grp (Over X)) : Type _ :=
   {P : Subobject G // closedSubgroupMorphismProperty X P.arrow}
 
 namespace ClosedSubgroupScheme
