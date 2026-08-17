@@ -1,0 +1,45 @@
+[
+  {
+    "note": "Riemann-mapping and dependent conformal API tracked against mathlib4#33505",
+    "sources": [
+      "TauCeti/Analysis/Complex/BranchLogRoot.lean",
+      "TauCeti/Analysis/Complex/Conformal/ArcConstancy.lean",
+      "TauCeti/Analysis/Complex/Conformal/ArgumentPrinciple.lean",
+      "TauCeti/Analysis/Complex/Conformal/Biholomorph.lean",
+      "TauCeti/Analysis/Complex/Conformal/ClusterSet.lean",
+      "TauCeti/Analysis/Complex/Conformal/Crosscut/Arc.lean",
+      "TauCeti/Analysis/Complex/Conformal/Crosscut/Basic.lean",
+      "TauCeti/Analysis/Complex/Conformal/Crosscut/BoundaryEnds.lean",
+      "TauCeti/Analysis/Complex/Conformal/Crosscut/BoundarySplit.lean",
+      "TauCeti/Analysis/Complex/Conformal/Crosscut/EndpointLimit.lean",
+      "TauCeti/Analysis/Complex/Conformal/Crosscut/Image.lean",
+      "TauCeti/Analysis/Complex/Conformal/CutDiameter.lean",
+      "TauCeti/Analysis/Complex/Conformal/DiscInjection.lean",
+      "TauCeti/Analysis/Complex/Conformal/ExtremalFamily.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hurwitz.lean",
+      "TauCeti/Analysis/Complex/Conformal/ImageSimplyConnected.lean",
+      "TauCeti/Analysis/Complex/Conformal/JordanDomain.lean",
+      "TauCeti/Analysis/Complex/Conformal/Koebe.lean",
+      "TauCeti/Analysis/Complex/Conformal/LengthArea.lean",
+      "TauCeti/Analysis/Complex/Conformal/LocalDegree.lean",
+      "TauCeti/Analysis/Complex/Conformal/LocallyConnectedBoundary.lean",
+      "TauCeti/Analysis/Complex/Conformal/Montel/Basic.lean",
+      "TauCeti/Analysis/Complex/Conformal/Montel/Precompact.lean",
+      "TauCeti/Analysis/Complex/Conformal/NormalFamilies.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/Isometry/Classification.lean",
+      "TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Conformal.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Equivalence.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Existence.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Normalization.lean",
+      "TauCeti/Analysis/Complex/Conformal/Rouche.lean",
+      "TauCeti/Analysis/Complex/Conformal/Schwarz.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/FixedPoint.lean",
+      "TauCeti/Analysis/Complex/Conformal/ShortCrosscut.lean",
+      "TauCeti/Analysis/Complex/Conformal/Vitali.lean"
+    ],
+    "declarations": [
+      "exists_bijOn_unitBall_map_eq_zero"
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+name: Check expired Mathlib shims
+
+# Report-only maintenance prompt. The registry names temporary Tau Ceti surfaces and a concrete
+# declaration or module expected from Mathlib. Once a target exists in the pinned dependency, the
+# workflow emits annotations for migration PRs; it does not fail merely because a shim has expired.
+
+on:
+  schedule:
+    - cron: "35 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Lean
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-mathlib-cache: true
+          use-github-cache: false
+
+      - name: Check the pinned Mathlib for tracked replacements
+        run: python3 scripts/check-expired-mathlib-shims.py
