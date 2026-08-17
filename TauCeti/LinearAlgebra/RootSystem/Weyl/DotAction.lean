@@ -69,7 +69,7 @@ hypotheses appear only in the dominant-chamber section.
 ## References
 
 This file supplies the root-pairing-level prerequisite of the `dotAction` target of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, whose Layer 9 states "the **dot
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, whose Layer 7 states "the **dot
 action** `w · λ = w(λ+ρ) - ρ` is the linear Weyl action recentred at `-ρ`" and whose
 `Suggested.lean` pins `dotAction (base) (w) (lam)` on `Module.Dual K H`; as with
 `TauCeti.weylVector`, the combinatorics lives at the level of an abstract root pairing, so the
@@ -155,6 +155,10 @@ noncomputable def dotActionPerm : P.weylGroup →* Equiv.Perm M where
 @[simp]
 lemma dotActionPerm_apply (w : P.weylGroup) (x : M) :
     dotActionPerm P b w x = dotAction P b w x := (rfl)
+
+@[simp]
+lemma dotActionPerm_symm_apply (w : P.weylGroup) (x : M) :
+    (dotActionPerm P b w).symm x = dotAction P b w⁻¹ x := (rfl)
 
 /-- The dot action of a Weyl-group element is injective on weights. -/
 theorem dotAction_injective (w : P.weylGroup) : Function.Injective (dotAction P b w) :=
