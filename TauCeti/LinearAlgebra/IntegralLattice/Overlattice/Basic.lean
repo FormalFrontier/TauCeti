@@ -105,7 +105,7 @@ theorem intermediateCarrierOrderIsoDiscriminantSubgroup_apply (M : L.Intermediat
 
 /-- The intermediate-carrier correspondence is the generic interval/quotient correspondence for
 the embedded carrier, read as an additive subgroup. -/
-theorem intermediateCarrierOrderIsoDiscriminantSubgroup_eq_toAddSubgroup
+private theorem intermediateCarrierOrderIsoDiscriminantSubgroup_eq_toAddSubgroup
     (M : L.IntermediateCarrier) :
     L.intermediateCarrierOrderIsoDiscriminantSubgroup M =
       (TauCeti.iccOrderIsoQuotientOfMapEq L.carrierInDual
