@@ -110,9 +110,13 @@ noncomputable def injHomDensity (F : SimpleGraph V) (G : SimpleGraph W) : ℝ :=
 
 variable (F : SimpleGraph V) (G : SimpleGraph W)
 
+/-- The defining equation of `homDensityFin`. The definition's body is not exposed, so this is the
+lemma downstream modules should rewrite with. -/
 theorem homDensityFin_def :
     homDensityFin F G = (Nat.card (F →g G) : ℝ) / (Fintype.card W ^ Fintype.card V : ℝ) := (rfl)
 
+/-- The defining equation of `injHomDensity`. The definition's body is not exposed, so this is the
+lemma downstream modules should rewrite with. -/
 theorem injHomDensity_def :
     injHomDensity F G = (Nat.card {φ : F →g G // Function.Injective φ} : ℝ) /
       ((Fintype.card W).descFactorial (Fintype.card V) : ℝ) := (rfl)
@@ -170,16 +174,27 @@ private theorem card_injective_hom_le :
     _ = (Fintype.card W).descFactorial (Fintype.card V) := by
         rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
 
+/-- The homomorphism density is nonnegative. -/
 theorem homDensityFin_nonneg : 0 ≤ homDensityFin F G :=
   div_nonneg (Nat.cast_nonneg _) (pow_nonneg (Nat.cast_nonneg _) _)
 
+/-- The homomorphism density is at most `1`, since every homomorphism is in particular a function
+`V(F) → V(G)`.
+
+No hypothesis is needed. When the host is empty and the pattern is not, numerator and denominator
+both vanish and `x / 0 = 0` gives `0`. -/
 theorem homDensityFin_le_one : homDensityFin F G ≤ 1 := by
   refine div_le_one_of_le₀ ?_ (pow_nonneg (Nat.cast_nonneg _) _)
   exact_mod_cast card_hom_le F G
 
+/-- The injective homomorphism density is nonnegative. -/
 theorem injHomDensity_nonneg : 0 ≤ injHomDensity F G :=
   div_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _)
 
+/-- The injective homomorphism density is at most `1`, since every injective homomorphism is in
+particular an embedding `V(F) ↪ V(G)`, and those are counted by the falling factorial.
+
+No hypothesis is needed; the degenerate cases behave as for `homDensityFin_le_one`. -/
 theorem injHomDensity_le_one : injHomDensity F G ≤ 1 := by
   refine div_le_one_of_le₀ ?_ (Nat.cast_nonneg _)
   exact_mod_cast card_injective_hom_le F G
