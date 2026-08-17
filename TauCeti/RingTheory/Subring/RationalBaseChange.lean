@@ -25,28 +25,28 @@ Injectivity holds with no hypothesis on `R` and is the reason the file exists: e
 `ℚ ⊗[ℤ] M`, for any additive group `M`, has a common denominator, so it is a single elementary
 tensor `(n : ℚ)⁻¹ ⊗ₜ m` rather than a sum of them. That normal form,
 `TauCeti.exists_tmul_inv_natCast`, is proved first and is purely module-theoretic. It also turns
-the spanning hypothesis into the concrete statement `TauCeti.Subring.exists_natCast_smul_mem`,
-that every element of `A` is carried into `R` by some nonzero natural number.
+the spanning hypothesis into the concrete statement `Subring.exists_natCast_smul_mem`, that every
+element of `A` is carried into `R` by some nonzero natural number.
 
 ## Main definitions
 
-* `TauCeti.Subring.ratBaseChange`: the canonical `ℚ`-algebra map `ℚ ⊗[ℤ] R → A`.
-* `TauCeti.Subring.ratBaseChangeEquiv`: that map as an isomorphism, given a spanning subring.
+* `Subring.ratBaseChange`: the canonical `ℚ`-algebra map `ℚ ⊗[ℤ] R → A`.
+* `Subring.ratBaseChangeEquiv`: that map as an isomorphism, given a spanning subring.
 
 ## Main results
 
 * `TauCeti.exists_tmul_inv_natCast`: an element of `ℚ ⊗[ℤ] M` has a common denominator.
-* `TauCeti.Subring.ratBaseChange_injective`: the comparison map is injective.
-* `TauCeti.Subring.range_ratBaseChange`: its range is the `ℚ`-span of `R`.
-* `TauCeti.Subring.span_eq_top_iff_exists_natCast_smul_mem`: a subring spans exactly when
-  denominators can be cleared.
+* `Subring.ratBaseChange_injective`: the comparison map is injective.
+* `Subring.range_ratBaseChange`: its range is the `ℚ`-span of `R`.
+* `Subring.span_eq_top_iff_exists_natCast_smul_mem`: a subring spans exactly when denominators can
+  be cleared.
 -/
 
 public section
 
-namespace TauCeti
-
 open scoped TensorProduct
+
+namespace TauCeti
 
 /-! ## A common denominator in `ℚ ⊗[ℤ] M` -/
 
@@ -80,18 +80,20 @@ theorem exists_tmul_inv_natCast (z : ℚ ⊗[ℤ] M) :
 
 end Denominator
 
+end TauCeti
+
 namespace Subring
 
 /-! ## The comparison map -/
 
 section BaseChange
 
-variable {A : Type*} [Ring A] [Algebra ℚ A] (R : _root_.Subring A)
+variable {A : Type*} [Ring A] [Algebra ℚ A] (R : Subring A)
 
 /-- The canonical `ℚ`-algebra map `ℚ ⊗[ℤ] R → A` extending the inclusion of a subring of a
 `ℚ`-algebra. It sends `q ⊗ₜ r` to `q • r`. -/
 noncomputable def ratBaseChange : ℚ ⊗[ℤ] R →ₐ[ℚ] A :=
-  AlgHom.liftEquiv ℤ ℚ R A (_root_.Subring.subtype R).toIntAlgHom
+  AlgHom.liftEquiv ℤ ℚ R A R.subtype.toIntAlgHom
 
 @[simp]
 theorem ratBaseChange_tmul (q : ℚ) (r : R) : ratBaseChange R (q ⊗ₜ[ℤ] r) = q • (r : A) := by
@@ -102,14 +104,14 @@ nonzero rational scalar acts injectively on the `ℚ`-algebra `A`. -/
 theorem ratBaseChange_injective : Function.Injective (ratBaseChange R) := by
   rw [injective_iff_map_eq_zero]
   intro z hz
-  obtain ⟨n, r, hn, rfl⟩ := exists_tmul_inv_natCast z
+  obtain ⟨n, r, hn, rfl⟩ := TauCeti.exists_tmul_inv_natCast z
   have hn' : (n : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
   rw [ratBaseChange_tmul] at hz
   have hr : (r : A) = 0 := by
     have := congrArg (fun a : A => (n : ℚ) • a) hz
     simpa [smul_smul, mul_inv_cancel₀ hn'] using this
   have hr0 : r = 0 := Subtype.ext hr
-  rw [hr0, _root_.TensorProduct.tmul_zero]
+  rw [hr0, TensorProduct.tmul_zero]
 
 /-- The range of the comparison map is the `ℚ`-span of the subring: the map is the base change of
 the inclusion of `R`, whose range is `R` itself. -/
@@ -117,7 +119,7 @@ theorem range_ratBaseChange :
     LinearMap.range (ratBaseChange R).toLinearMap = Submodule.span ℚ (R : Set A) := by
   -- Both sides of `hlift` are base-change lifts, so they agree once they agree on `1 ⊗ₜ r`.
   have hlift : (ratBaseChange R).toLinearMap =
-      LinearMap.liftBaseChange ℚ (_root_.Subring.subtype R).toIntAlgHom.toLinearMap := by
+      LinearMap.liftBaseChange ℚ R.subtype.toIntAlgHom.toLinearMap := by
     apply (LinearMap.liftBaseChangeEquiv ℚ).symm.injective
     ext r
     simp [ratBaseChange]
@@ -154,7 +156,7 @@ carried into it by some nonzero natural number. -/
 theorem exists_natCast_smul_mem (h : Submodule.span ℚ (R : Set A) = ⊤) (a : A) :
     ∃ n : ℕ, n ≠ 0 ∧ (n : ℚ) • a ∈ R := by
   obtain ⟨z, rfl⟩ := (ratBaseChange_surjective_iff R).2 h a
-  obtain ⟨n, r, hn, rfl⟩ := exists_tmul_inv_natCast z
+  obtain ⟨n, r, hn, rfl⟩ := TauCeti.exists_tmul_inv_natCast z
   have hn' : (n : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
   refine ⟨n, hn, ?_⟩
   rw [ratBaseChange_tmul, smul_smul, mul_inv_cancel₀ hn', one_smul]
@@ -176,5 +178,3 @@ theorem span_eq_top_iff_exists_natCast_smul_mem :
 end BaseChange
 
 end Subring
-
-end TauCeti
