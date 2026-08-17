@@ -49,6 +49,7 @@ namespace SemidirectProduct
 
 /-- Multiplication from the semidirect product of a subgroup with a subgroup normalizing it is onto
 the join of the two subgroups. -/
+@[simp]
 theorem range_monoidHomSubgroup (hLE : K ≤ Subgroup.normalizer (H : Set G)) :
     (SemidirectProduct.monoidHomSubgroup hLE).range = H ⊔ K := by
   refine le_antisymm ?_ (sup_le (fun x hx => ⟨SemidirectProduct.inl ⟨x, hx⟩, by simp⟩)

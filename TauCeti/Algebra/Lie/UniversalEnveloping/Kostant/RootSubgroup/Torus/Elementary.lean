@@ -94,7 +94,7 @@ include hwt hα in
 `S`. This is the subgroup form of the pointwise statement
 `kostantTorusPoints_mem_normalizer_kostantSubsystemSubgroup`. -/
 theorem range_kostantTorusPoints_le_normalizer :
-    (kostantTorusPoints M b wt A).range ≤
+    kostantTorusSubgroup M b wt A ≤
       Subgroup.normalizer (kostantSubsystemSubgroup e h ρ M hM hnil S A : Set _) := by
   rintro _ ⟨s, rfl⟩
   exact kostantTorusPoints_mem_normalizer_kostantSubsystemSubgroup e h ρ M hM hnil b wt hwt α S hα
@@ -104,7 +104,7 @@ theorem range_kostantTorusPoints_le_normalizer :
 
 /-- The action of the represented torus subgroup on the root-generated subgroup by conjugation. -/
 noncomputable abbrev kostantTorusSubsystemAction :
-    (kostantTorusPoints M b wt A).range →*
+    kostantTorusSubgroup M b wt A →*
       MulAut (kostantSubsystemSubgroup e h ρ M hM hnil S A) :=
   (kostantSubsystemSubgroup e h ρ M hM hnil S A).normalizerMonoidHom.comp
     (Subgroup.inclusion (range_kostantTorusPoints_le_normalizer e h ρ M hM hnil b wt hwt α S hα A))
@@ -114,7 +114,7 @@ the root-generated subgroup. Its multiplication map need not be injective. -/
 abbrev KostantTorusSubsystemSemidirectProduct :=
   kostantSubsystemSubgroup e h ρ M hM hnil S A ⋊[
     kostantTorusSubsystemAction e h ρ M hM hnil b wt hwt α S hα A]
-      (kostantTorusPoints M b wt A).range
+      kostantTorusSubgroup M b wt A
 
 /-- Multiplication from the torus action's external semidirect product to the ambient general
 linear group.
@@ -145,7 +145,7 @@ theorem mem_kostantTorusSubsystemSubgroup_iff
     (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) :
     g ∈ kostantTorusSubsystemSubgroup e h ρ M hM hnil b wt S A ↔
       ∃ x ∈ kostantSubsystemSubgroup e h ρ M hM hnil S A,
-        ∃ t ∈ (kostantTorusPoints M b wt A).range, g = x * t := by
+        ∃ t ∈ kostantTorusSubgroup M b wt A, g = x * t := by
   rw [kostantTorusSubsystemSubgroup_eq_sup]
   exact Subgroup.mem_sup_of_right_le_normalizer_left
     (range_kostantTorusPoints_le_normalizer e h ρ M hM hnil b wt hwt α S hα A)
