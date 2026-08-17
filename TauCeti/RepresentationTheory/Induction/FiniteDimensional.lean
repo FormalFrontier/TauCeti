@@ -353,7 +353,7 @@ theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Sub
   simp
 
 /-- Induction of intertwiners preserves identities. -/
-theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+private theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) : indFDRepMap (𝟙 A) = 𝟙 (indFDRep A) := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
   have hInd : Rep.indMap S.subtype (𝟙 A') = 𝟙 (Rep.ind S.subtype A') := by
@@ -365,7 +365,7 @@ theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgro
   simp [A', hInd]
 
 /-- Induction of intertwiners preserves composition. -/
-theorem indFDRepMap_comp {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+private theorem indFDRepMap_comp {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] {A B C : FDRep k S} (f : A ⟶ B) (g : B ⟶ C) :
     indFDRepMap (f ≫ g) = indFDRepMap f ≫ indFDRepMap g := by
   let f' := (forget₂ (FDRep k S) (Rep k S)).map f
