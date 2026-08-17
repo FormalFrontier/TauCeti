@@ -21,7 +21,7 @@ open CategoryTheory
 
 universe u v
 
-/-- Forgetting finite generation keeps the finite-generation instance on the carrier. -/
+/-- Forgetting finite-dimensionality keeps the finite-generation instance on the carrier. -/
 instance moduleFinite_forgetFDRep {R : Type u} {G : Type v} [CommRing R] [Monoid G]
     (A : FDRep R G) : Module.Finite R ((forget₂ (FDRep R G) (Rep R G)).obj A) :=
   inferInstanceAs (Module.Finite R A)

@@ -338,6 +338,25 @@ private noncomputable def indFDRepMapUnderlying {k : Type u} {G : Type v} [Field
       ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom.comp
         (indFDRepForgetEquiv A).toIntertwiningMap))
 
+/-- `indFDRepMapUnderlying` acts pointwise as Mathlib's induced intertwiner conjugated by the
+small-carrier comparison equivalences. -/
+private theorem indFDRepMapUnderlying_hom_apply {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B)
+    (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
+    (indFDRepMapUnderlying f).hom x =
+      (indFDRepForgetEquiv B).symm
+        ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
+          (indFDRepForgetEquiv A x)) :=
+  -- This unfolds the single `Rep.ofHom` wrapper of `indFDRepMapUnderlying`. Rewriting with
+  -- `Rep.hom_ofHom`, `Representation.IntertwiningMap.comp_apply` and
+  -- `Representation.Equiv.coe_toIntertwiningMap` states the same steps but does not elaborate:
+  -- `forget₂ (FDRep k G) (Rep k G)` presents the carrier through
+  -- `(forget₂ (FGModuleCat k) (ModuleCat k)).mapAction G`, whose `Semiring k` argument comes from
+  -- `CommRing` while the statement's comes from `Field`, so each rewrite reports an application
+  -- type mismatch on the intertwining maps. Isolating the unfolding here keeps that mismatch out
+  -- of the proofs below, which rewrite with this lemma instead.
+  rfl
+
 /-- Induction of an intertwiner of finite-dimensional representations, obtained by conjugating
 Mathlib's induced intertwiner by the small-carrier comparison equivalences. -/
 noncomputable def indFDRepMap {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
@@ -354,12 +373,7 @@ theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Sub
       (indFDRepForgetEquiv B).symm
       ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
         (indFDRepForgetEquiv A x)) := by
-  rw [indFDRepMap, Functor.map_preimage]
-  -- Normalize the `Rep.ofHom` of a composite intertwiner to its pointwise action.
-  change (indFDRepForgetEquiv B).symm
-      ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
-        (indFDRepForgetEquiv A x)) = _
-  rfl
+  rw [indFDRepMap, Functor.map_preimage, indFDRepMapUnderlying_hom_apply]
 
 /-- After forgetting finite-dimensionality, `indFDRepMap` is Mathlib's induced intertwiner
 transported across the small-carrier comparison isomorphisms. -/
