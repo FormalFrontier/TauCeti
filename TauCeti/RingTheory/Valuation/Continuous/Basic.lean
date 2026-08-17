@@ -57,28 +57,28 @@ sets are *literally equal* for equivalent valuations, which is
 
 ## Main definitions
 
-* `TauCeti.Valuation.IsContinuous` : continuity of a valuation, in attained-value form. It
+* `Valuation.IsContinuous` : continuity of a valuation, in attained-value form. It
   recovers **Definition 7.7** under `[ContinuousConstSMul Aᵐᵒᵖ A]`, via `isOpen_lt_div`.
 
 ## Main results
 
 * `Valuation.IsEquiv.isContinuous_iff` : continuity depends only on the equivalence class, so it
   descends to the valuation spectrum.
-* `TauCeti.Valuation.IsContinuous.isOpen_lt_div` and
-  `TauCeti.Valuation.isContinuous_iff_forall_isOpen_lt_div` : the defining sets for an arbitrary
+* `Valuation.IsContinuous.isOpen_lt_div` and
+  `Valuation.isContinuous_iff_forall_isOpen_lt_div` : the defining sets for an arbitrary
   element `v b / v c` of the value group — Wedhorn's quantifier in full, as an elimination rule
   and as an equivalence.
-* `TauCeti.Valuation.isContinuous_of_continuous` : the easy half of Remark 7.8(1), needing no
+* `Valuation.isContinuous_of_continuous` : the easy half of Remark 7.8(1), needing no
   hypothesis on `A` beyond its topology.
-* `TauCeti.Valuation.isContinuous_iff_continuous` : **Remark 7.8(1)**, that once the attained
+* `Valuation.isContinuous_iff_continuous` : **Remark 7.8(1)**, that once the attained
   ratios are coinitial in `Γ₀` — in particular on a codomain no larger than `Γ_v ∪ {0}` —
   continuity is ordinary continuity into `WithZeroTopology`.
-* `TauCeti.Valuation.IsContinuous.isOpen_le_div` : **Remark 7.8(3)**, the non-strict sets are
+* `Valuation.IsContinuous.isOpen_le_div` : **Remark 7.8(3)**, the non-strict sets are
   open too, again over the whole value group; `IsContinuous.isOpen_le` is its attained-value
   case.
-* `TauCeti.Valuation.isContinuous_of_discreteTopology` : **Remark 7.8(2)**, every valuation on
+* `Valuation.isContinuous_of_discreteTopology` : **Remark 7.8(2)**, every valuation on
   a discrete ring is continuous.
-* `TauCeti.Valuation.IsContinuous.comap` : **Remark 7.9**, continuity is inherited along a
+* `Valuation.IsContinuous.comap` : **Remark 7.9**, continuity is inherited along a
   continuous ring homomorphism.
 
 ## References
@@ -101,9 +101,9 @@ attained values instead makes `Valuation.IsEquiv.isContinuous_iff` immediate.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
-open Set Topology TauCeti
+open Set Topology
 
 variable {A : Type*} [Ring A] [TopologicalSpace A]
   {Γ₀ : Type*} [LinearOrderedCommMonoidWithZero Γ₀]
@@ -145,7 +145,7 @@ theorem isContinuous_of_forall_isOpen_lt {v : Valuation A Γ₀}
 same pairs of elements, so the sets `{a ; v a < v b}` cutting out continuity are not merely
 matched up but literally the same sets. This is what lets continuity be imposed on a point of
 the valuation spectrum. -/
-theorem _root_.Valuation.IsEquiv.isContinuous_iff {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
+theorem IsEquiv.isContinuous_iff {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
     (h : v.IsEquiv w) : v.IsContinuous ↔ w.IsContinuous :=
   forall_congr' fun _ ↦ iff_of_eq (congrArg IsOpen (Set.ext fun _ ↦ h.lt_iff_lt))
 
@@ -263,4 +263,4 @@ theorem isContinuous_iff_continuous [SeparatelyContinuousAdd A] [ContinuousConst
 
 end ValueGroup
 
-end TauCeti.Valuation
+end Valuation

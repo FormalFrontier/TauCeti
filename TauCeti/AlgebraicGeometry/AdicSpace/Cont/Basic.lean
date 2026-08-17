@@ -26,7 +26,7 @@ continuous ring homomorphism (Remark 7.9).
 A point of `Spv A` is a valuative relation, so a predicate on valuations descends to it only if
 equivalent valuations agree on the predicate. For continuity as Wedhorn states it — the
 quantifier running over the value group `Γ_v` — that holds, and
-`TauCeti.Valuation.IsEquiv.isContinuous_iff` says so. Had continuity instead been asked of every
+`Valuation.IsEquiv.isContinuous_iff` says so. Had continuity instead been asked of every
 `γ` in the ambient codomain, it would **not** descend, and `Cont A` would not be well defined;
 the module docstring of `TauCeti.RingTheory.Valuation.Continuous.Basic` carries the
 counterexample.
@@ -75,12 +75,12 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open TauCeti TauCeti.Valuation
+open TauCeti Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
 /-- **Continuity of a point of `Spv A`.** A point is *continuous* when its canonical valuation
-is, in the attained-value sense of `TauCeti.Valuation.IsContinuous`. Any representative would do
+is, in the attained-value sense of `Valuation.IsContinuous`. Any representative would do
 — that is `isContinuous_ofValuation_iff` — but the canonical one makes the definition depend on
 nothing chosen.
 
@@ -97,7 +97,7 @@ theorem isContinuous_def (v : Spv A) : v.IsContinuous ↔ v.valuation.IsContinuo
 it a subspace; here it is the underlying set, and the subspace topology is the one the *coercion*
 `↥(cont A)` carries as a subtype of `Spv A`.
 
-Membership is the attained-value test of `TauCeti.Valuation.IsContinuous`, which is Wedhorn's
+Membership is the attained-value test of `Valuation.IsContinuous`, which is Wedhorn's
 Definition 7.7 once right multiplication is continuous —
 `isContinuous_iff_forall_isOpen_lt_div` is that step, and it is where
 `[ContinuousConstSMul Aᵐᵒᵖ A]` is asked for. It is *not* asked for
@@ -111,7 +111,7 @@ theorem mem_cont_iff (v : Spv A) : v ∈ cont A ↔ v.IsContinuous := Iff.rfl
 
 /-- **Continuity may be tested on any representative.** This is what makes `cont` well defined:
 the point `ofValuation w` is continuous exactly when `w` is, for every `w` in the class, not
-merely for the canonical one. It rests on `TauCeti.Valuation.IsEquiv.isContinuous_iff`, and
+merely for the canonical one. It rests on `Valuation.IsEquiv.isContinuous_iff`, and
 would fail for a continuity predicate quantified over the ambient codomain.
 
 Not `@[simp]`: `isContinuous_def` already rewrites the left-hand side, so this would not be in
