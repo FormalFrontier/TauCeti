@@ -90,6 +90,10 @@ Here `c = d = 2⁻¹`, so the low part is bounded by `t / 2`, its maximal functi
   everywhere.
 * `TauCeti.lintegral_rpow_maximalFunction_le`, `TauCeti.eLpNorm_maximalFunction_le`: the
   **strong type `(p, p)` maximal inequality** for `1 < p < ∞`, with an explicit constant.
+* `TauCeti.eLpNorm_maximalFunction_lt_top`,
+  `TauCeti.ae_maximalFunction_lt_top_of_eLpNorm_ne_top`: a function with finite `Lᵖ` seminorm
+  has a maximal function with finite `Lᵖ` seminorm for `1 < p ≤ ∞`, and the maximal function
+  is finite almost everywhere for every `1 ≤ p ≤ ∞`.
 
 The maximal function defined here is the *centred* one, whose averages are over the balls centred
 at the point. The uncentred variant, over all balls containing the point, is comparable to it with
@@ -473,7 +477,9 @@ in terms of representative-level `Lᵖ` seminorms.
 
 Together with `TauCeti.maximalFunction_le_eLpNormEssSup` (the case `p = ∞`) and
 `TauCeti.mul_measure_lt_maximalFunction_le` (the weak-type substitute at `p = 1`), this gives the
-representative-level strong estimate for the maximal function. -/
+representative-level strong estimate for the maximal function. The resulting finiteness statement
+is recorded by
+`TauCeti.eLpNorm_maximalFunction_lt_top` below. -/
 theorem eLpNorm_maximalFunction_le (μ : Measure E) [μ.IsAddHaarMeasure] {f : E → F}
     (hf : AEMeasurable (fun x => ‖f x‖ₑ) μ) {p : ℝ≥0∞} (hp : 1 < p) (hp_top : p ≠ ∞) :
     eLpNorm (maximalFunction μ f) p μ ≤
@@ -488,6 +494,68 @@ theorem eLpNorm_maximalFunction_le (μ : Measure E) [μ.IsAddHaarMeasure] {f : E
   exact ENNReal.rpow_le_rpow (lintegral_rpow_maximalFunction_le μ hf hpr) (by positivity)
 
 end StrongType
+
+section Finiteness
+
+variable {p : ℝ≥0∞} {f : E → F}
+
+/-- The maximal function of an `Lᵖ` function has finite `Lᵖ` seminorm when `1 < p ≤ ∞`. -/
+theorem eLpNorm_maximalFunction_lt_top (μ : Measure E) [μ.IsAddHaarMeasure]
+    (hf : AEMeasurable (fun x => ‖f x‖ₑ) μ) (hf_top : eLpNorm f p μ ≠ ∞)
+    (hp : 1 < p) : eLpNorm (maximalFunction μ f) p μ < ∞ := by
+  rcases eq_or_ne p ∞ with rfl | hp_top
+  · rw [eLpNorm_exponent_top]
+    refine (eLpNormEssSup_le_of_ae_enorm_bound (.of_forall fun x => ?_)).trans_lt (by
+        simpa only [eLpNorm_exponent_top] using hf_top.lt_top)
+    rw [enorm_eq_self]
+    exact maximalFunction_le_eLpNormEssSup μ f x
+  · exact (eLpNorm_maximalFunction_le μ hf hp hp_top).trans_lt
+      (ENNReal.mul_lt_top (by finiteness) hf_top.lt_top)
+
+/-- The maximal function of a function with finite `Lᵖ` seminorm is finite almost everywhere
+when `1 ≤ p`, including both endpoints. -/
+theorem ae_maximalFunction_lt_top_of_eLpNorm_ne_top (μ : Measure E) [μ.IsAddHaarMeasure]
+    (f : E → F) (hf_top : eLpNorm f p μ ≠ ∞)
+    (hp : 1 ≤ p) : ∀ᵐ x ∂μ, maximalFunction μ f x < ∞ := by
+  rcases eq_or_ne p ∞ with rfl | hp_top
+  · exact .of_forall fun x => (maximalFunction_le_eLpNormEssSup μ f x).trans_lt
+      (by simpa only [eLpNorm_exponent_top] using hf_top.lt_top)
+  rcases hp.eq_or_lt with rfl | hp
+  · exact ae_maximalFunction_lt_top μ f (by
+      simpa only [eLpNorm_one_eq_lintegral_enorm] using hf_top)
+  · have hp₀ : p ≠ 0 := (zero_lt_one.trans hp).ne'
+    have hpr : 1 < p.toReal := by
+      simpa using (ENNReal.toReal_lt_toReal ENNReal.one_ne_top hp_top).2 hp
+    let g : E → ℝ≥0∞ := fun x => if 1 < ‖f x‖ₑ then ‖f x‖ₑ else 0
+    have hg_le (x : E) : g x ≤ ‖f x‖ₑ ^ p.toReal := by
+      simp only [g]
+      split_ifs with hx
+      · exact ENNReal.le_rpow_self_of_one_le hx.le hpr.le
+      · exact bot_le
+    have hfp : ∫⁻ x, ‖f x‖ₑ ^ p.toReal ∂μ < ∞ :=
+      (eLpNorm_lt_top_iff_lintegral_rpow_enorm_lt_top hp₀ hp_top).mp hf_top.lt_top
+    have hg_int : ∫⁻ x, ‖g x‖ₑ ∂μ ≠ ∞ := by
+      simpa only [enorm_eq_self] using (lt_of_le_of_lt (lintegral_mono hg_le) hfp).ne
+    have hfg (x : E) : ‖f x‖ₑ ≤ 1 + g x := by
+      simp only [g]
+      split_ifs with hx
+      · exact le_add_left le_rfl
+      · simpa only [add_zero] using le_of_not_gt hx
+    have hM (x : E) : maximalFunction μ f x ≤ 1 + maximalFunction μ g x := by
+      calc
+        maximalFunction μ f x ≤
+            maximalFunction μ ((fun _ : E => (1 : ℝ≥0∞)) + g) x :=
+          maximalFunction_mono_ae (.of_forall fun y => by
+            simpa only [Pi.add_apply, enorm_eq_self] using hfg y)
+        _ ≤ maximalFunction μ (fun _ : E => (1 : ℝ≥0∞)) x + maximalFunction μ g x :=
+          maximalFunction_add_le aemeasurable_const x
+        _ = 1 + maximalFunction μ g x := by
+          rw [maximalFunction_const]
+          simp only [enorm_eq_self]
+    exact (ae_maximalFunction_lt_top μ g hg_int).mono fun x hx =>
+      (hM x).trans_lt (ENNReal.add_lt_top.2 ⟨by finiteness, hx⟩)
+
+end Finiteness
 
 end Haar
 
