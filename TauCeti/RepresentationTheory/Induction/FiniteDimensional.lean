@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Dimension.Constructions
-public import Mathlib.RepresentationTheory.FDRep
 public import Mathlib.RepresentationTheory.FiniteIndex
 public import Mathlib.RingTheory.Finiteness.Small
+public import TauCeti.RepresentationTheory.FDRep
 
 /-!
 # Finite-dimensional induced representations
@@ -260,18 +260,6 @@ end Dimension
 
 end Rep
 
-/-- Forgetting finite generation keeps the finite-generation instance on the carrier. -/
-instance moduleFinite_forgetFDRep {R : Type u} {G : Type v} [CommRing R] [Monoid G]
-    (A : FDRep R G) : Module.Finite R ((forget₂ (FDRep R G) (Rep R G)).obj A) :=
-  inferInstanceAs (Module.Finite R A)
-
-/-- Forgetting finite-dimensionality does not change the dimension of the carrier. -/
-@[simp]
-theorem finrank_forgetFDRep {R : Type u} {G : Type v} [CommRing R] [Monoid G]
-    (A : FDRep R G) :
-    Module.finrank R ((forget₂ (FDRep R G) (Rep R G)).obj A) = Module.finrank R A :=
-  rfl
-
 /-- Conjugation by `Shrink.linearEquiv` gives an equivariant equivalence from the shrunk model
 back to the original representation. -/
 private noncomputable def shrinkRepEquiv {k : Type u} {G : Type v} {V : Type w}
@@ -392,14 +380,7 @@ theorem indFDRepMap_comp {k : Type u} {G : Type v} [Field k] [Group G] {S : Subg
   simp [hInd, f', g']
 
 /-- Induction from a finite-index subgroup, as a functor on finite-dimensional representations.
-It acts on objects as `indFDRep` and on intertwiners as `indFDRepMap`.
-
-`@[simps obj map]` supplies the projection lemmas `indFDRepFunctor_obj` and
-`indFDRepFunctor_map`. Both are proved by `rfl`, and the type of the second needs
-`indFDRepFunctor.obj A` to reduce to `indFDRep A`, so this definition is `@[expose]`. Exposing it
-publishes exactly those two projections: the construction of the morphism map lives in
-`indFDRepMap`, which stays opaque behind `indFDRepMap_apply`. -/
-@[expose, simps obj map]
+It acts on objects as `indFDRep` and on intertwiners as `indFDRepMap`. -/
 noncomputable def indFDRepFunctor {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G}
     [S.FiniteIndex] : FDRep k S ⥤ FDRep k G where
@@ -407,6 +388,22 @@ noncomputable def indFDRepFunctor {k : Type u} {G : Type v} [Field k] [Group G]
   map f := indFDRepMap f
   map_id A := indFDRepMap_id A
   map_comp f g := indFDRepMap_comp f g
+
+/-- `indFDRepFunctor` acts on objects by `indFDRep`. -/
+@[simp]
+theorem indFDRepFunctor_obj {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
+    (indFDRepFunctor (k := k) (S := S)).obj A = indFDRep A :=
+  (rfl)
+
+/-- `indFDRepFunctor` acts on morphisms by `indFDRepMap`. -/
+@[simp]
+theorem indFDRepFunctor_map {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) :
+    (indFDRepFunctor (k := k) (S := S)).map f =
+      eqToHom (indFDRepFunctor_obj A) ≫ indFDRepMap f ≫
+        eqToHom (indFDRepFunctor_obj B).symm :=
+  (rfl)
 
 /-- Under the forgetful functor to `Rep k G`, `indFDRepFunctor` is naturally isomorphic to
 Mathlib's induction functor, componentwise by `indFDRepForgetIso`. -/
