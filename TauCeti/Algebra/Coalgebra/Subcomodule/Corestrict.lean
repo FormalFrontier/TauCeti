@@ -43,7 +43,7 @@ variable [AddCommMonoid D] [Module R D] [Coalgebra R D]
 variable {M : Type x} [AddCommMonoid M] [Module R M] [Comodule R C M]
 
 /-- Corestriction along a coalgebra morphism preserves a subcomodule and its carrier. -/
-@[expose] def corestrict (f : C →ₗc[R] D) (W : Subcomodule R C M) :
+def corestrict (f : C →ₗc[R] D) (W : Subcomodule R C M) :
     letI : Comodule R D M := Comodule.Corestrict f
     Subcomodule R D M :=
   letI : Comodule R D M := Comodule.Corestrict f
@@ -62,11 +62,11 @@ variable {M : Type x} [AddCommMonoid M] [Module R M] [Comodule R C M]
 theorem corestrict_toSubmodule (f : C →ₗc[R] D) (W : Subcomodule R C M) :
     letI : Comodule R D M := Comodule.Corestrict f
     (W.corestrict f).toSubmodule = W.toSubmodule :=
-  rfl
+  (rfl)
 
 /-- A coalgebra equivalence identifies the subcomodules of a comodule with those of its
 corestriction, without changing their underlying submodules. -/
-@[expose] def corestrictOrderIso (e : C ≃ₗc[R] D) :
+def corestrictOrderIso (e : C ≃ₗc[R] D) :
     letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
     Subcomodule R C M ≃o Subcomodule R D M :=
   letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
@@ -108,7 +108,7 @@ theorem corestrictOrderIso_apply_toSubmodule (e : C ≃ₗc[R] D)
     (W : Subcomodule R C M) :
     letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
     (corestrictOrderIso e W).toSubmodule = W.toSubmodule :=
-  rfl
+  (rfl)
 
 /-- The inverse subcomodule correspondence preserves the underlying submodule. -/
 @[simp]
@@ -117,7 +117,7 @@ theorem corestrictOrderIso_symm_apply_toSubmodule (e : C ≃ₗc[R] D)
       Subcomodule R D M) :
     letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
     ((corestrictOrderIso e).symm W).toSubmodule = W.toSubmodule :=
-  rfl
+  (rfl)
 
 end Subcomodule
 
