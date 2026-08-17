@@ -13,8 +13,8 @@ public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
 /-!
 # Galois descent data on group algebras
 
-Let `L/k` be a field extension and let the Galois group `Gal(L/k)` act linearly on an
-abelian group `M`. The split torus with character lattice `M` has coordinate algebra
+Let `L/k` be a finite Galois field extension and let the Galois group `Gal(L/k)` act linearly
+on an abelian group `M`. The split torus with character lattice `M` has coordinate algebra
 `L[Multiplicative M]`. Its descent datum acts simultaneously on coefficients and exponents:
 
 ```text
@@ -133,7 +133,7 @@ private theorem groupAlgebraActionAlgEquiv_coeff
 /-- The Galois descent datum on a split-torus coordinate algebra, bundled as a homomorphism to
 its group of `k`-algebra automorphisms. -/
 noncomputable def groupAlgebraAction
-    (rho : Representation ℤ Gal(L/k) M) :
+    [FiniteDimensional k L] [IsGalois k L] (rho : Representation ℤ Gal(L/k) M) :
     Gal(L/k) →* (MonoidAlgebra L (Multiplicative M) ≃ₐ[k]
       MonoidAlgebra L (Multiplicative M)) where
   toFun := groupAlgebraActionAlgEquiv rho
@@ -143,6 +143,8 @@ noncomputable def groupAlgebraAction
   map_mul' sigma tau := by
     ext x m
     simp [mul_inv_rev]
+
+variable [FiniteDimensional k L] [IsGalois k L]
 
 /-- The bundled Galois action sends a monomial by acting on its coefficient and exponent. -/
 @[simp]
