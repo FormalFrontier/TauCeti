@@ -130,10 +130,10 @@ private theorem artinUpperSum_eq_one {G : Type*} [Group G] [Finite G]
   simp_rw [artinUpperSum, artinCoeff]
   calc
     ∑ C ∈ Finset.Ici H, ∑ D ∈ Finset.Ici C, IncidenceAlgebra.mu ℤ C D =
-        ∑ D ∈ Finset.Ici H, ∑ C ∈ Finset.Icc H D, IncidenceAlgebra.mu ℤ C D := by
-      exact Finset.sum_comm' (fun C D ↦ by
+        ∑ D ∈ Finset.Ici H, ∑ C ∈ Finset.Icc H D, IncidenceAlgebra.mu ℤ C D :=
+      Finset.sum_comm' fun C D ↦ by
         simp only [Finset.mem_Ici, Finset.mem_Icc]
-        aesop (add unsafe le_trans))
+        aesop (add unsafe le_trans)
     _ = 1 := by
       simp only [IncidenceAlgebra.sum_Icc_mu_left, Finset.sum_ite_eq, Finset.mem_Ici,
         le_refl, ite_true]
@@ -478,8 +478,15 @@ private theorem exists_artin_induction_data [IsAlgClosed k] [CharZero k] :
 
 variable (k G)
 
-/-- The determinant construction fixes cyclic subgroups and irreducible representations that work
-for every virtual character; only the integer coefficients depend on the character. -/
+/-- **Artin's induction theorem in explicit finite-combination form.** Over an algebraically closed
+field of characteristic zero there is a nonzero integer `d`, independent of the character, such that
+`d • f` is an integer combination of characters induced from irreducible characters of cyclic
+subgroups, for every virtual character `f`.
+
+The sharp theorem above gives the multiplier `|G|` directly in the canonical
+induced-virtual-character target; what the present determinant construction adds is that the cyclic
+subgroups and irreducible representations are chosen once and work for every virtual character,
+only the integer coefficients depending on the character. -/
 theorem exists_sum_zsmul_ind_ofCharacter_eq_zsmul_cyclic [IsAlgClosed k] [CharZero k] :
     ∃ (d : ℤ), d ≠ 0 ∧ ∃ (m : ℕ) (C : Fin m → Subgroup G) (_ : ∀ i, IsCyclic (C i))
       (n : Fin m → ℕ) (ρ : ∀ i, Representation k (C i) (Fin (n i) → k))
