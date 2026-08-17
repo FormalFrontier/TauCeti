@@ -8,12 +8,8 @@ module
 public import TauCeti.Probability.Density
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Probability.Distributions.Uniform
-public import Mathlib.Probability.HasLaw
-public import Mathlib.Probability.Density
 public import Mathlib.Probability.CDF
-public import Mathlib.Probability.Moments.Variance
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 /-!

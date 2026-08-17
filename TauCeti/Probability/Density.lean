@@ -13,8 +13,9 @@ public import Mathlib.Probability.HasLaw
 
 Two bridges from a law given as `μ.withDensity f` to Mathlib's `MeasureTheory.HasPDF` and `pdf`.
 
-Mathlib's scalar distribution families are all *defined* as `withDensity` measures, and so are the
-laws Tau Ceti builds on top of them, but neither is connected to `HasPDF`. These two theorems make
+Several of Mathlib's continuous scalar families can be *presented* as `withDensity` measures — some
+by definition, others only away from a degenerate parameter — and so can laws Tau Ceti builds on top
+of them, but none of them is connected to `HasPDF`. These two theorems make
 that connection once, so no individual family has to repeat the
 `hasPDF_of_map_eq_withDensity hX.aemeasurable … hX.map_eq` plumbing.
 
