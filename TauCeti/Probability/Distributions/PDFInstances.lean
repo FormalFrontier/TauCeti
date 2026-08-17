@@ -76,14 +76,17 @@ Mathlib exposes `measurable_gammaPDFReal`, `measurable_betaPDFReal` and `measura
 but not their `ℝ≥0∞` companions. Each density is `ENNReal.ofReal` of the real one; the `unfold`
 names that reduction rather than leaving it to elaboration. -/
 
+/-- The `ℝ≥0∞`-valued Gamma density is measurable. -/
 theorem measurable_gammaPDF (a r : ℝ) : Measurable (gammaPDF a r) := by
   unfold gammaPDF
   exact (measurable_gammaPDFReal a r).ennreal_ofReal
 
+/-- The `ℝ≥0∞`-valued Beta density is measurable. -/
 theorem measurable_betaPDF (α β : ℝ) : Measurable (betaPDF α β) := by
   unfold betaPDF
   exact (measurable_betaPDFReal α β).ennreal_ofReal
 
+/-- The `ℝ≥0∞`-valued Pareto density is measurable. -/
 theorem measurable_paretoPDF (t r : ℝ) : Measurable (paretoPDF t r) := by
   unfold paretoPDF
   exact (measurable_paretoPDFReal t r).ennreal_ofReal
