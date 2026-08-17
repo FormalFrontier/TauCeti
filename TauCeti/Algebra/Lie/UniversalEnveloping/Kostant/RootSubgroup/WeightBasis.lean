@@ -35,8 +35,8 @@ a basis index of that weight sublattice.
 
 The weight of a basis vector is therefore literally the first component of its index, so the weight
 function needs no separate construction: `Sigma.fst` is it. Only finitely many weights contribute,
-by generic finiteness of independent submodules in a finitely generated module; this is
-`TauCeti.UniversalEnvelopingAlgebra.finite_setOf_weightSublattice_ne_bot`.
+by generic finiteness of independent submodules in a finitely generated module
+(`Submodule.finite_ne_bot_of_iSupIndep`).
 
 A `ℤ`-basis of a lattice is never canonical, and neither is this one: bases of the individual weight
 sublattices are chosen. What *is* canonical is the decomposition into weight sublattices, so the
@@ -60,8 +60,6 @@ choice is confined to one weight space at a time.
   pairwise distinct integral weights are independent.
 * `TauCeti.UniversalEnvelopingAlgebra.isInternal_weightSublattice`: a Kostant-stable subgroup lying
   in the span of the integral joint weight spaces is their internal direct sum.
-* `TauCeti.UniversalEnvelopingAlgebra.finite_setOf_weightSublattice_ne_bot`: only finitely
-  many weights occur.
 
 ## References
 
@@ -252,13 +250,6 @@ theorem nat_card_kostantWeightBasis_index_eq_finrank :
       Module.finrank ℤ M := by
   classical
   exact (Module.finrank_eq_nat_card_basis (kostantWeightBasis e h ρ M hM hV)).symm
-
-/-- **A finitely generated subgroup has only finitely many weights.** Its weight sublattices are the
-summands of an independent family in a finitely generated module, so all but finitely many of them
-vanish. -/
-theorem finite_setOf_weightSublattice_ne_bot :
-    {μ : κ → ℤ | weightSublattice h ρ M μ ≠ ⊥}.Finite :=
-  Submodule.finite_ne_bot_of_iSupIndep (iSupIndep_weightSublattice h ρ M)
 
 include e hM hV in
 /-- The numbering of the weight-basis index by `Fin n` along which the weight basis is reindexed;
