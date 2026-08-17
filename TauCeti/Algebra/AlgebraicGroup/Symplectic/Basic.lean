@@ -341,12 +341,19 @@ noncomputable def coordinateMap :
   CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
 
+/-- The symplectic coordinate morphism sends an ambient coordinate to its quotient class. -/
+theorem coordinateMap_apply (h : GeneralLinear.coordinateHopfAlgebra R (m + m)) :
+    (coordinateMap R m).hom h =
+      Ideal.Quotient.mkₐ R (definingHopfIdeal R m).toIdeal h := by
+  unfold coordinateMap
+  exact CommHopfAlgCat.mkQuotient_apply
+    (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m) h
+
 /-- Every defining relation vanishes in the symplectic coordinate Hopf algebra. -/
 @[simp]
 theorem coordinateMap_relationMatrix (i j : Fin (m + m)) :
     (coordinateMap R m).hom (relationMatrix R m i j) = 0 := by
-  unfold coordinateMap
-  rw [CommHopfAlgCat.mkQuotient_apply, Ideal.Quotient.mkₐ_eq_mk]
+  rw [coordinateMap_apply, Ideal.Quotient.mkₐ_eq_mk]
   exact Ideal.Quotient.eq_zero_iff_mem.mpr
     (definingHopfIdeal_toIdeal R m ▸
       Ideal.subset_span (relationMatrix_mem_relationSet R m i j))
@@ -527,6 +534,45 @@ noncomputable def pointsMulEquiv :
       (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)).app
       (CommAlgCat.of R A)).groupIsoToMulEquiv.trans
     (definingPointsSubgroupMulEquiv R m)
+
+/-- Internally, the symplectic point equivalence first forms the cut-out ambient subgroup point
+and then reads it as a symplectic matrix. -/
+private theorem pointsMulEquiv_apply_eq
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m) (CommAlgCat.of R A)) :
+    pointsMulEquiv R m (A := A) f =
+      pointsSubgroupToGLSymplecticFin R m
+        (((CommHopfAlgCat.quotientPointsSubgroupNatIso
+          (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)).app
+          (CommAlgCat.of R A)).hom f) :=
+  rfl
+
+/-- Under the symplectic and general-linear point equivalences, the quotient-point inclusion is
+the ordinary inclusion of symplectic matrices into `GL (m + m)`. -/
+theorem pointsMulEquiv_coe
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m) (CommAlgCat.of R A)) :
+    GeneralLinear.pointsMulEquiv (m + m)
+        (CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+          (CommAlgCat.of R A) f) =
+      (pointsMulEquiv R m (A := A) f : GL (Fin (m + m)) A) := by
+  have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
+    (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+    (CommAlgCat.of R A) f
+  rw [pointsMulEquiv_apply_eq]
+  exact congrArg
+    (fun g => (pointsSubgroupToGLSymplecticFin R m g : GLSymplecticFin m A).1)
+    hcomponent.symm
+
+/-- The ambient point attached to a symplectic matrix is the general-linear point attached to
+its ordinary inclusion. -/
+@[simp]
+theorem quotientPointsHom_pointsMulEquiv_symm (g : GLSymplecticFin m A) :
+    CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+        (CommAlgCat.of R A) ((pointsMulEquiv R m (A := A)).symm g) =
+      (GeneralLinear.pointsMulEquiv (R := R) (A := A) (m + m)).symm g.1 := by
+  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) (m + m)).injective
+  rw [pointsMulEquiv_coe, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
 /-- The points identification, read in `Fin m ⊕ Fin m` coordinates: the points of the symplectic
 coordinate Hopf algebra are `TauCeti.GLSymplectic (Fin m) A`. -/

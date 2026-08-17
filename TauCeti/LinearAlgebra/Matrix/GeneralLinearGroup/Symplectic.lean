@@ -286,6 +286,22 @@ theorem mem_iff {M : GL (Fin (m + m)) R} :
   · intro h
     rw [h]
 
+/-- Membership in the `Fin`-indexed symplectic subgroup, in the transposed form `Mᵀ J M = J`. -/
+theorem mem_iff' {M : GL (Fin (m + m)) R} :
+    M ∈ GLSymplecticFin m R ↔
+      (M : Matrix (Fin (m + m)) (Fin (m + m)) R)ᵀ * JFin m R *
+          (M : Matrix (Fin (m + m)) (Fin (m + m)) R) =
+        JFin m R := by
+  rw [GLSymplecticFin, Subgroup.mem_comap, MulEquiv.coe_toMonoidHom, GLSymplectic.mem_iff',
+    coe_reindexGL, ← JFin_submatrix m (R := R), Matrix.transpose_submatrix,
+    Matrix.submatrix_mul_equiv, Matrix.submatrix_mul_equiv]
+  constructor
+  · intro h
+    have := congrArg (fun N => N.submatrix finSumFinEquiv.symm finSumFinEquiv.symm) h
+    simpa [Matrix.submatrix_submatrix, JFin] using this
+  · intro h
+    rw [h]
+
 variable (m R)
 
 /-- The two presentations of the symplectic subgroup agree: reindexing along `finSumFinEquiv`
