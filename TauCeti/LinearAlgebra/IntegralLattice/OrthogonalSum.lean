@@ -347,6 +347,12 @@ theorem nondegenerate_orthogonalSum_iff (L : IntegralLattice V) (M : IntegralLat
       L.form.Nondegenerate ∧ M.form.Nondegenerate := by
   rw [orthogonalSum_form, nondegenerate_orthogonalSumForm_iff]
 
+/-- The orthogonal sum of two nondegenerate integral lattices is nondegenerate. -/
+instance instIsNondegenerateOrthogonalSum (L : IntegralLattice V) (M : IntegralLattice W)
+    [L.IsNondegenerate] [M.IsNondegenerate] : (L.orthogonalSum M).IsNondegenerate :=
+  ⟨(L.nondegenerate_orthogonalSum_iff M).mpr
+    ⟨L.form_nondegenerate, M.form_nondegenerate⟩⟩
+
 /-! ## Radical and signature -/
 
 /-- The radical of an orthogonal sum is the product of the component radicals. -/

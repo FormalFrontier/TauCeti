@@ -40,6 +40,8 @@ definition is made here.
   antidiagonal sum.
 * `TauCeti.Associative.dividedPower_sub`: the corresponding signed expansion for a difference.
 * `TauCeti.Associative.map_dividedPower`: divided powers are natural under algebra homomorphisms.
+* `TauCeti.Associative.dividedPower_units_conj`: divided powers are equivariant for conjugation by
+  a unit.
 
 ## References
 
@@ -108,6 +110,15 @@ theorem dividedPower_smul (q : ℚ) (n : ℕ) (x : A) :
     dividedPower n (q • x) = q ^ n • dividedPower n x := by
   simpa only [Algebra.smul_def, map_pow] using
     dividedPower_mul_left (Algebra.commutes q x) n
+
+/-- Divided powers are equivariant for conjugation by a unit.
+
+Conjugation is an algebra automorphism, so it commutes with the rational scalar as well as with
+the power. This is what lets a Chevalley group element move past a root subgroup. -/
+@[simp]
+theorem dividedPower_units_conj (u : Aˣ) (n : ℕ) (x : A) :
+    dividedPower n ((u : A) * x * ↑u⁻¹) = (u : A) * dividedPower n x * ↑u⁻¹ := by
+  rw [dividedPower_def, dividedPower_def, Units.conj_pow, mul_smul_comm, smul_mul_assoc]
 
 /-- Divided powers preserve commutation of their underlying elements. -/
 theorem commute_dividedPower_dividedPower {x y : A} (hxy : Commute x y) (m n : ℕ) :

@@ -49,7 +49,7 @@ representation-theoretic bridge in Layer 4 of the ReductiveGroups roadmap.
 
 public section
 
-open CategoryTheory
+open CategoryTheory LinearMap
 open scoped TensorProduct
 
 namespace TauCeti.Tannaka
