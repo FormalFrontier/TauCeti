@@ -289,6 +289,8 @@ private noncomputable def indSmallModel {k : Type u} {G : Type v} [Field k] [Gro
   letI : FiniteDimensional k V := Rep.finiteDimensional_ind.{u, v, 0} A'
   letI : Small.{u} V := Module.Finite.small k V
   let ρ := (Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp V.ρ
+  -- `FDRep.of ρ` forgets back to `ρ` definitionally; Mathlib records the same identification as
+  -- `FDRep.forget₂_ρ` for rewriting outside this construction.
   exact { object := FDRep.of ρ, equiv := shrinkRepEquiv V.ρ }
 
 /-- The finite-dimensional representation induced from a finite-index subgroup. -/
@@ -389,14 +391,20 @@ noncomputable def indFDRepFunctor {k : Type u} {G : Type v} [Field k] [Group G]
   map_id A := indFDRepMap_id A
   map_comp f g := indFDRepMap_comp f g
 
-/-- `indFDRepFunctor` acts on objects by `indFDRep`. -/
+/-- `indFDRepFunctor` acts on objects by `indFDRep`. This projection theorem exposes the defining
+object field while the functor construction remains opaque, so its proof is definitionally
+`rfl`. -/
 @[simp]
 theorem indFDRepFunctor_obj {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
     (indFDRepFunctor (k := k) (S := S)).obj A = indFDRep A :=
   (rfl)
 
-/-- `indFDRepFunctor` acts on morphisms by `indFDRepMap`. -/
+/-- `indFDRepFunctor` acts on morphisms by `indFDRepMap`.
+
+The `eqToHom` transports are needed because `indFDRepFunctor` is opaque and its object projection
+is exposed propositionally by `indFDRepFunctor_obj`. Both projection proofs are definitionally
+`rfl`, so the transports and identity compositions reduce when this defining map field is proved. -/
 @[simp]
 theorem indFDRepFunctor_map {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) :
