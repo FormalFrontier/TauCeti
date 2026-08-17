@@ -98,7 +98,7 @@ namespace Comodule
 
 section Transport
 
-variable (k : Type u) [Field k]
+variable (k : Type u) [CommSemiring k]
 variable {C : Type v} [AddCommMonoid C] [Module k C] [Coalgebra k C]
 variable {V : Type w} {W : Type*}
 variable [AddCommMonoid V] [Module k V] [Comodule k C V]

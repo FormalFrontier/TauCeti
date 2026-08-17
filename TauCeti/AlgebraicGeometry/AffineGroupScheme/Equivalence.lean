@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.CategoryTheory.ObjectProperty.Opposite
+public import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
@@ -30,25 +30,7 @@ namespace TauCeti
 
 open CategoryTheory AlgebraicGeometry Opposite
 
-universe u u₁ v₁ u₂ v₂
-
-/-- Pulling an isomorphism-invariant object property forward and then backward along an
-equivalence recovers the original property. -/
-theorem objectProperty_inverseImage_equivalence_inverse
-    {C : Type u₁} {D : Type u₂} [Category.{v₁} C] [Category.{v₂} D]
-    (P : ObjectProperty C) [P.IsClosedUnderIsomorphisms] (e : C ≌ D) :
-    (P.inverseImage e.inverse).inverseImage e.functor = P := by
-  ext X
-  exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
-
-/-- Pulling an isomorphism-invariant object property backward along both functors of an
-equivalence recovers the original property. -/
-theorem ObjectProperty.inverseImage_equivalence_inverseImage
-    {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
-    (P : ObjectProperty C) [P.IsClosedUnderIsomorphisms] (e : C ≌ D) :
-    (P.inverseImage e.inverse).inverseImage e.functor = P := by
-  ext X
-  exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
+universe u
 
 /-- `Spec` as an anti-equivalence from commutative `S`-Hopf algebras onto affine group
 schemes over `Spec S`. The underlying functor is Mathlib's `AlgebraicGeometry.hopfSpec`,
