@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.Length
 public import Mathlib.RingTheory.SimpleModule.Basic
+public import TauCeti.RingTheory.CompositionSeries.Basic
 
 /-!
 # Jordan-Hölder multiplicities of a simple module
@@ -41,9 +42,6 @@ definitional identity.
   a copy of a given module.
 * `TauCeti.jordanHolderMultiplicity`: the multiplicity `[M : S]`, the same count for a composition
   series of `M` running from `⊥` to `⊤`.
-* `TauCeti.mapCompositionSeries`: the image of a composition series under a linear equivalence of
-  the ambient module, with `TauCeti.factorEquivMapCompositionSeries` identifying the factors of
-  the two.
 
 ## Main results
 
@@ -57,7 +55,9 @@ definitional identity.
   (`TauCeti.jordanHolderMultiplicity_eq_zero_of_not_isSimpleModule`).
 * `TauCeti.jordanHolderMultiplicity_eq_of_linearEquiv`: **the multiplicity is an invariant of the
   isomorphism class of the ambient module**, which is what makes `[Pᵢ : Sⱼ]` well posed for a
-  projective cover, an object defined only up to isomorphism.
+  projective cover, an object defined only up to isomorphism.  The transport of a composition
+  series along a linear equivalence that this rests on is
+  `TauCeti.RingTheory.CompositionSeries.Basic`.
 * `TauCeti.jordanHolderMultiplicity_eq_one_of_isSimpleModule` and
   `TauCeti.jordanHolderMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule`: a simple
   module contains itself once and nothing else, the anti-vacuity check on the count.
@@ -235,82 +235,9 @@ section Transport
 
 variable {N : Type v'} [AddCommGroup N] [Module R N]
 
-/-- The image of a composition series of `M` under a linear equivalence `M ≃ₗ[R] N`: the image of
-the series under the order isomorphism `Submodule.orderIsoMapComap e`, which preserves coverings.
-
-The body is `@[expose]`d on purpose: `TauCeti.factorEquivMapCompositionSeries` below is *stated* for
-the subquotients of `mapCompositionSeries e s` but *built* from `LinearEquiv.submoduleMap`, which is
-phrased in `Submodule.map`, and it typechecks only because `mapCompositionSeries e s i` is
-definitionally `Submodule.map ↑e (s i)` — the content of
-`TauCeti.mapCompositionSeries_apply` below. -/
-@[expose] def mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    CompositionSeries (Submodule R N) :=
-  s.map ⟨fun A => Submodule.map (e : M →ₗ[R] N) A,
-    fun h => (apply_covBy_apply_iff (Submodule.orderIsoMapComap e)).mpr h⟩
-
-@[simp]
-theorem mapCompositionSeries_apply (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M))
-    (i : Fin (s.length + 1)) :
-    mapCompositionSeries e s i = Submodule.map (e : M →ₗ[R] N) (s i) :=
-  rfl
-
-@[simp]
-theorem mapCompositionSeries_length (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    (mapCompositionSeries e s).length = s.length :=
-  rfl
-
-@[simp]
-theorem head_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    (mapCompositionSeries e s).head = Submodule.map (e : M →ₗ[R] N) s.head :=
-  rfl
-
-@[simp]
-theorem last_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    (mapCompositionSeries e s).last = Submodule.map (e : M →ₗ[R] N) s.last :=
-  rfl
-
-/-- Restricting a linear equivalence to a submodule carries the trace of another submodule to the
-trace of its image.  This is the compatibility that lets a linear equivalence be pushed through the
-subquotients of a composition series. -/
-theorem map_submoduleMap_comap_subtype (e : M ≃ₗ[R] N) (A B : Submodule R M) :
-    Submodule.map (e.submoduleMap B).toLinearMap (Submodule.comap B.subtype A)
-      = Submodule.comap (Submodule.map (e : M →ₗ[R] N) B).subtype
-          (Submodule.map (e : M →ₗ[R] N) A) := by
-  ext y
-  simp only [Submodule.mem_map, Submodule.mem_comap, Submodule.coe_subtype]
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact ⟨(x : M), hx, rfl⟩
-  · rintro ⟨a, ha, hay⟩
-    obtain ⟨b, hb, hby⟩ := y.2
-    have hab : a = b := e.injective (hay.trans hby.symm)
-    exact ⟨⟨a, by rw [hab]; exact hb⟩, ha, Subtype.ext hay⟩
-
-/-- A linear equivalence identifies the factors of a composition series with those of its image:
-`LinearEquiv.submoduleMap` carries the trace of `s i.castSucc` in `s i.succ` onto the trace of its
-image, by `TauCeti.map_submoduleMap_comap_subtype`, so it descends to the subquotients.  Its target
-is spelled with `TauCeti.mapCompositionSeries`, which is definitionally `Submodule.map ↑e` applied
-termwise. -/
-noncomputable def factorEquivMapCompositionSeries (e : M ≃ₗ[R] N)
-    (s : CompositionSeries (Submodule R M)) (i : Fin s.length) :
-    (↥(s i.succ) ⧸ Submodule.comap (s i.succ).subtype (s i.castSucc)) ≃ₗ[R]
-      (↥(mapCompositionSeries e s i.succ) ⧸
-        Submodule.comap (mapCompositionSeries e s i.succ).subtype
-          (mapCompositionSeries e s i.castSucc)) :=
-  Submodule.Quotient.equiv _ _ (e.submoduleMap (s i.succ))
-    (map_submoduleMap_comap_subtype e (s i.castSucc) (s i.succ))
-
--- Not `@[simp]`: the implicit type arguments of the left-hand side mention
--- `mapCompositionSeries e s i.succ`, which `mapCompositionSeries_apply` rewrites, so the statement
--- is not in simp-normal form and `simpNF` rejects the tag.
-theorem factorEquivMapCompositionSeries_apply (e : M ≃ₗ[R] N)
-    (s : CompositionSeries (Submodule R M)) (i : Fin s.length) (x : ↥(s i.succ)) :
-    factorEquivMapCompositionSeries e s i (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk (e.submoduleMap (s i.succ) x) :=
-  (rfl)
-
 /-- Transporting a composition series along a linear equivalence does not change which module sits
 at an index. -/
+@[simp]
 theorem isCompositionFactorAt_mapCompositionSeries_iff (e : M ≃ₗ[R] N)
     (s : CompositionSeries (Submodule R M)) (i : Fin s.length)
     (S : Type w) [AddCommGroup S] [Module R S] :
@@ -354,8 +281,8 @@ theorem compositionMultiplicity_eq_zero_of_subsingleton [Subsingleton M]
     (compositionSeries_length_eq_zero_of_subsingleton s))
 
 /-- Every multiplicity `[M : S]` in a subsingleton module `M` vanishes. -/
-theorem jordanHolderMultiplicity_eq_zero_of_subsingleton [Subsingleton M] [IsNoetherian R M]
-    [IsArtinian R M] (S : Type w) [AddCommGroup S] [Module R S] :
+theorem jordanHolderMultiplicity_eq_zero_of_subsingleton [Subsingleton M]
+    (S : Type w) [AddCommGroup S] [Module R S] :
     jordanHolderMultiplicity R M S = 0 :=
   compositionMultiplicity_eq_zero_of_subsingleton _ S
 
@@ -417,8 +344,8 @@ theorem compositionMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule
 
 /-- **A simple module contains exactly one copy of itself**: the multiplicity `[M : S]` of a simple
 module `M` in itself is `1`. -/
-theorem jordanHolderMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M] [IsNoetherian R M]
-    [IsArtinian R M] (S : Type w) [AddCommGroup S] [Module R S] (e : M ≃ₗ[R] S) :
+theorem jordanHolderMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M]
+    (S : Type w) [AddCommGroup S] [Module R S] (e : M ≃ₗ[R] S) :
     jordanHolderMultiplicity R M S = 1 :=
   have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
   compositionMultiplicity_eq_one_of_isSimpleModule h.1 h.2 S e
@@ -426,8 +353,7 @@ theorem jordanHolderMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M] [
 /-- **A simple module contains no copy of a module it is not isomorphic to**: the multiplicity
 `[M : S]` vanishes for a simple `M` admitting no linear equivalence with `S`. -/
 theorem jordanHolderMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule
-    [IsSimpleModule R M] [IsNoetherian R M] [IsArtinian R M]
-    (S : Type w) [AddCommGroup S] [Module R S] (he : IsEmpty (M ≃ₗ[R] S)) :
+    [IsSimpleModule R M] (S : Type w) [AddCommGroup S] [Module R S] (he : IsEmpty (M ≃ₗ[R] S)) :
     jordanHolderMultiplicity R M S = 0 :=
   have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
   compositionMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule h.1 h.2 S he
