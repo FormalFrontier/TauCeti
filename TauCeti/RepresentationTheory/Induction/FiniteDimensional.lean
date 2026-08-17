@@ -324,6 +324,14 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
   Rep.mkIso (indFDRepForgetEquiv A)
 
+/-- The hom of the categorical comparison applies its underlying equivariant equivalence. -/
+@[simp]
+private theorem indFDRepForgetIso_hom_hom_apply {k G : Type u} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S)
+    (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
+    (indFDRepForgetIso A).hom.hom x = indFDRepForgetEquiv A x :=
+  rfl
+
 /-- `FDRep.forget₂HomLinearEquiv` is inverse to the forgetful functor on morphisms. -/
 private theorem forget₂_map_forget₂HomLinearEquiv {R : Type u} {G : Type v}
     [CommRing R] [Monoid G] (X Y : FDRep R G)
@@ -354,7 +362,7 @@ theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Sub
         (indFDRepForgetEquiv A x)) := by
   simp only [indFDRepMap]
   rw [forget₂_map_forget₂HomLinearEquiv]
-  rfl
+  simp
 
 /-- Induction of intertwiners preserves identities. -/
 theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
@@ -407,19 +415,16 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
     indFDRepFunctor (k := k) (S := S) ⋙ forget₂ (FDRep k G) (Rep k G) ≅
       forget₂ (FDRep k S) (Rep k S) ⋙ Rep.indFunctor k S.subtype :=
   NatIso.ofComponents (fun A ↦ indFDRepForgetIso A) fun {A B} f ↦ by
-    -- Naturality is the cancellation of the conjugating isomorphisms in `indFDRepMap`.
     change (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) ≫ (indFDRepForgetIso B).hom =
       (indFDRepForgetIso A).hom ≫
         (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f)
     ext x
-    simp only [FGModuleCat.obj_carrier, Rep.hom_comp, Rep.indFunctor_obj, Rep.indFunctor_map]
-    -- `Rep.mkIso_hom_hom_apply` does not rewrite across the `CommRing`-derived representation
-    -- structure of `Rep` and the definitionally distinct `Field`-derived comparison structure.
-    change (indFDRepForgetEquiv B) ((indFDRepForgetEquiv B).symm
-        ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
-          (indFDRepForgetEquiv A x))) =
-      (Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
-        (indFDRepForgetEquiv A x)
+    rw [Rep.hom_comp, Rep.hom_comp, Representation.IntertwiningMap.comp_toLinearMap,
+      Representation.IntertwiningMap.comp_toLinearMap, LinearMap.comp_apply,
+      LinearMap.comp_apply]
+    simp only [Representation.IntertwiningMap.toLinearMap_apply]
+    rw [indFDRepMap_apply,
+      indFDRepForgetIso_hom_hom_apply, indFDRepForgetIso_hom_hom_apply]
     simp
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
