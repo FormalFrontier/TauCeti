@@ -139,7 +139,7 @@ theorem eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi {μ : Measure Ω} [IsP
     exact exchangeableLaw_deFinettiBarycenter
   have hX : Exchangeable μ X :=
     (exchangeable_iff_exchangeableLaw_pathLaw fun n => (hX_meas n).aemeasurable).2 hlaw
-  obtain ⟨π₀, -, huniq⟩ := deFinetti_mixture hX hX_meas
+  obtain ⟨π₀, -, huniq⟩ := deFinetti_mixture hX fun n => (hX_meas n).aemeasurable
   rw [huniq π hπ,
     huniq _ (pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_exchangeable hX hX_meas)]
 
