@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.HopfAlgebra.FiniteDual.CartierDualityBaseChange
+public import TauCeti.Algebra.HopfAlgebra.FiniteDual.CartierDuality.BaseChange
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Coordinate
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.CartierDuality.FiniteLocallyFree
 

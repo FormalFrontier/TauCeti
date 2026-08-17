@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.BaseChange
-public import TauCeti.Algebra.HopfAlgebra.FiniteDual.CartierDuality
+public import TauCeti.Algebra.HopfAlgebra.FiniteDual.CartierDuality.Basic
 
 /-!
 # Base change of finite locally free Cartier duality
