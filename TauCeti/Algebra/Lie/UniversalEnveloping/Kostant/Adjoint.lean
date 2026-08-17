@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
 public import TauCeti.Algebra.Lie.Weights.Root.KostantStability
 public import TauCeti.LinearAlgebra.Eigenspace.Binomial
@@ -44,7 +45,6 @@ milestone L0 of `CFSGStatement`.
 
 ## Main definitions and results
 
-* `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation`: the adjoint action of `U(L)` on `L`.
 * `TauCeti.chevalleyKostantForm`: the Kostant form of a system of root vectors.
 * `TauCeti.IsChevalleySystem.chevalleyKostantForm_le_stabilizer`: it stabilizes the Chevalley
   lattice.
@@ -61,32 +61,6 @@ public section
 namespace TauCeti
 
 open LieAlgebra LieAlgebra.IsKilling LieModule
-
-namespace UniversalEnvelopingAlgebra
-
-/-- The adjoint representation of a universal enveloping algebra: the algebra map extending the
-adjoint action `ad` of the Lie algebra on itself. -/
-noncomputable def adjointRepresentation (R : Type*) [CommRing R] (L : Type*) [LieRing L]
-    [LieAlgebra R L] : _root_.UniversalEnvelopingAlgebra R L →ₐ[R] Module.End R L :=
-  _root_.UniversalEnvelopingAlgebra.lift R (LieAlgebra.ad R L)
-
--- Neither this lemma nor its pointwise form below is a `simp` lemma: `simp` unfolds `ι` through
--- Mathlib's `UniversalEnvelopingAlgebra.ι_apply`, so a left-hand side mentioning `ι` is not in
--- simp-normal form. This is why Mathlib's own `lift_ι_apply` is not a `simp` lemma either.
-/-- The adjoint representation acts on a Lie generator by the adjoint action. -/
-theorem adjointRepresentation_ι (R : Type*) [CommRing R] (L : Type*) [LieRing L] [LieAlgebra R L]
-    (y : L) :
-    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) = LieAlgebra.ad R L y :=
-  _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ y
-
-/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation_ι`: a Lie
-generator acts by the Lie bracket. -/
-theorem adjointRepresentation_ι_apply (R : Type*) [CommRing R] (L : Type*) [LieRing L]
-    [LieAlgebra R L] (y z : L) :
-    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) z = ⁅y, z⁆ := by
-  rw [adjointRepresentation_ι, LieAlgebra.ad_apply]
-
-end UniversalEnvelopingAlgebra
 
 attribute [local instance] TauCeti.moduleNNRat
 
