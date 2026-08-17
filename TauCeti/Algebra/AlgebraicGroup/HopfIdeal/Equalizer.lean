@@ -6,8 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.CommonKernel
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Comap
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Comap
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Equalizer
 
 /-!
