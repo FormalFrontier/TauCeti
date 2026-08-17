@@ -11,6 +11,7 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Map
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Implications
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Const
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.Congr
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 
 /-!
@@ -31,6 +32,8 @@ This module declares nothing of its own; it is a curated re-export.
 * the implications between them, including the symmetry consequences of each and the projection
   from the conditional predicate to the mixture one;
 * reindexing along injections, and closure under measurable coordinate maps;
+* the congruences under a coordinatewise a.e. change of process, and — for the representation
+  predicates — under an a.e. change of witness;
 * the constant-witness (i.i.d.) degenerate case.
 
 ## What is deliberately not here
