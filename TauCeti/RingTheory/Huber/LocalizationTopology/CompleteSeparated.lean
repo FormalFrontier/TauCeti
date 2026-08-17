@@ -10,11 +10,12 @@ public import TauCeti.Topology.Category.TopCommRingCat.CompleteSeparated.Basic
 /-!
 # `A⟨T/s⟩` is a complete separated topological ring
 
-The adic structure presheaf (roadmap Layer 3.3) assigns `A⟨T/s⟩` to the rational subset
-`R(T/s)`, and its values are required to be *complete separated* topological rings (*Adic Spaces*,
-arXiv:1910.05934v1, §8.1–§8.2). This module supplies the categorical packaging that assignment
-needs: it exhibits `A⟨T/s⟩` as an object of `CompleteSeparatedTopCommRingCat`, lifts continuous
-comparison maps to morphisms, and packages mutually compatible comparisons as isomorphisms.
+The adic structure presheaf (roadmap Layer 3.3) is intended to assign `A⟨T/s⟩` to the rational
+subset `R(T/s)`, and its values are required to be *complete separated* topological rings
+(*Adic Spaces*, arXiv:1910.05934v1, §8.1–§8.2). This module supplies the categorical packaging
+that assignment needs: it exhibits `A⟨T/s⟩` as an object of `CompleteSeparatedTopCommRingCat`,
+lifts continuous comparison maps to morphisms, and packages mutually compatible comparisons as
+isomorphisms.
 
 No presheaf exists yet, and the objects here remain *presentationwise*: they depend on the data
 `(T, s, S, hden)` presenting the localisation, not only on the subset `R(T/s)`. The isomorphism
@@ -45,6 +46,9 @@ every use. The definition below carries it once.
 * `TauCeti.Huber.PairOfDefinition.completionLocObjHom_eq_id` and
   `TauCeti.Huber.PairOfDefinition.completionLocObjHom_eq_comp` : identity and composition for
   comparison morphisms compatible with the structure maps from `A`.
+* `TauCeti.Huber.PairOfDefinition.completionLocObjHom_id` and
+  `TauCeti.Huber.PairOfDefinition.completionLocObjHom_comp` : packaging preserves identity and
+  composition.
 
 ## Provenance
 
@@ -168,6 +172,79 @@ theorem completionLocObjHom_hom [IsTopologicalRing A]
           eqToHom (completionLocObj_obj P T' s' S' hden').symm := by
   intro g hg
   rfl
+
+/-- Packaging the identity ring homomorphism gives the identity morphism. -/
+@[simp]
+theorem completionLocObjHom_id [IsTopologicalRing A]
+    (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type u) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    completionLocObjHom P T s S hden T s S hden (RingHom.id _) continuous_id =
+      𝟙 (completionLocObj P T s S hden) := by
+  let _ := locUniformSpace P T s S hden
+  let _ := isUniformAddGroup_locUniformSpace P T s S hden
+  let _ := isTopologicalRing_locUniformSpace P T s S hden
+  apply InducedCategory.hom_ext
+  rw [completionLocObjHom_hom]
+  have hG : (⟨RingHom.id (UniformSpace.Completion S), continuous_id⟩ :
+      TopCommRingCat.of (UniformSpace.Completion S) ⟶
+        TopCommRingCat.of (UniformSpace.Completion S)) =
+      𝟙 (TopCommRingCat.of (UniformSpace.Completion S)) := by
+    rfl
+  rw [hG]
+  simp
+
+/-- Packaging a composite of continuous ring homomorphisms gives the categorical composite of
+their packaged morphisms. -/
+@[simp]
+theorem completionLocObjHom_comp [IsTopologicalRing A]
+    (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type u) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S)
+    (T' : Finset A) (s' : A)
+    (S' : Type u) [CommRing S'] [Algebra A S'] [IsLocalization.Away s' S']
+    (hden' : HasDenominatorPower P T' s' S')
+    (T'' : Finset A) (s'' : A)
+    (S'' : Type u) [CommRing S''] [Algebra A S''] [IsLocalization.Away s'' S'']
+    (hden'' : HasDenominatorPower P T'' s'' S'') :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s' S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s' S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s' S' hden'
+    letI := locUniformSpace P T'' s'' S'' hden''
+    letI := isUniformAddGroup_locUniformSpace P T'' s'' S'' hden''
+    letI := isTopologicalRing_locUniformSpace P T'' s'' S'' hden''
+    ∀ (g : UniformSpace.Completion S →+* UniformSpace.Completion S')
+      (h : UniformSpace.Completion S' →+* UniformSpace.Completion S'')
+      (hg : Continuous g) (hh : Continuous h),
+      completionLocObjHom P T s S hden T'' s'' S'' hden'' (h.comp g) (hh.comp hg) =
+        completionLocObjHom P T s S hden T' s' S' hden' g hg ≫
+          completionLocObjHom P T' s' S' hden' T'' s'' S'' hden'' h hh := by
+  let _ := locUniformSpace P T s S hden
+  let _ := isUniformAddGroup_locUniformSpace P T s S hden
+  let _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := locUniformSpace P T' s' S' hden'
+  let _ := isUniformAddGroup_locUniformSpace P T' s' S' hden'
+  let _ := isTopologicalRing_locUniformSpace P T' s' S' hden'
+  let _ := locUniformSpace P T'' s'' S'' hden''
+  let _ := isUniformAddGroup_locUniformSpace P T'' s'' S'' hden''
+  let _ := isTopologicalRing_locUniformSpace P T'' s'' S'' hden''
+  intro g h hg hh
+  apply InducedCategory.hom_ext
+  rw [completionLocObjHom_hom, ObjectProperty.FullSubcategory.comp_hom,
+    completionLocObjHom_hom, completionLocObjHom_hom]
+  let G : TopCommRingCat.of (UniformSpace.Completion S) ⟶
+      TopCommRingCat.of (UniformSpace.Completion S') := ⟨g, hg⟩
+  let H : TopCommRingCat.of (UniformSpace.Completion S') ⟶
+      TopCommRingCat.of (UniformSpace.Completion S'') := ⟨h, hh⟩
+  change eqToHom _ ≫ (G ≫ H) ≫ eqToHom _ =
+    (eqToHom _ ≫ G ≫ eqToHom _) ≫ eqToHom _ ≫ H ≫ eqToHom _
+  simp [Category.assoc]
 
 /-- A comparison endomorphism compatible with the structure map from `A` is the identity
 morphism of the presentationwise complete separated object. -/
