@@ -6,7 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Coordinate
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 
 /-!
@@ -45,6 +47,7 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   integral operator on a Kostant-stable subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
   points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`: the same action in matrix coordinates.
 
 ## Main results
 
@@ -334,6 +337,49 @@ theorem map_kostantTorusPoints (φ : A →+* B) (s : κ → Aˣ) (z : A ⊗[ℤ]
 end Naturality
 
 end Torus
+
+/-! ## Matrix coordinates -/
+
+section Matrix
+
+variable [Fintype κ] {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
+variable {A : Type*} [CommRing A] [Algebra ℤ A]
+
+omit [Module ℚ V] in
+/-- The torus attached to a weight basis, in the matrix coordinates of that basis. -/
+noncomputable def kostantTorusMatrix :
+    (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A :=
+  (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
+    (kostantTorusPoints M b wt A)
+
+omit [Module ℚ V] in
+/-- The matrix-valued weight torus is obtained by applying the basis-coordinate equivalence to
+the linear action of `kostantTorusPoints`. -/
+theorem kostantTorusMatrix_def :
+    kostantTorusMatrix M b wt =
+      (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
+        (kostantTorusPoints M b wt A) :=
+  (rfl)
+
+omit [Module ℚ V] in
+/-- In a weight basis, a torus point is the diagonal matrix of its weight characters. -/
+@[simp]
+theorem kostantTorusMatrix_apply (s : κ → Aˣ) :
+    kostantTorusMatrix M b wt s =
+      diagGL fun i => torusCharacter s (wt i) := by
+  apply Units.ext
+  rw [kostantTorusMatrix_def, MonoidHom.comp_apply, Units.coe_map]
+  change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+      (kostantTorusPoints M b wt A s).val = _
+  have hlinear := congrArg LinearEquiv.toLinearMap
+    (kostantTorusPoints_toLinearEquiv M b wt s)
+  -- The general-linear unit and its bundled linear equivalence carry the same linear map;
+  -- display the latter so the public comparison theorem can rewrite it.
+  change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+      (kostantTorusPoints M b wt A s).toLinearEquiv.toLinearMap = _
+  rw [hlinear, basisWeightTorus_apply, toMatrix_basisDiagonal, diagGL_coe]
+
+end Matrix
 
 /-! ## The pinning equation -/
 
