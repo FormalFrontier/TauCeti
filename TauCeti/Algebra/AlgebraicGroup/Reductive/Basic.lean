@@ -5,11 +5,8 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Connected.BaseChange
-public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.Radical.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # Reductive affine groups
@@ -69,20 +66,8 @@ the identity subgroup. A Hopf ideal `I` cuts out that subgroup contravariantly, 
 `I` is the augmentation ideal, not the zero ideal. -/
 def reductiveCommHopfAlgProperty (k : Type u) [Field k] :
     ObjectProperty (FiniteTypeCommHopfAlgCat.{u, u} k) :=
-  fun H ↦
-    Algebra.Smooth k H ∧
-      geometricallyConnectedCommHopfAlgProperty k H.obj ∧
-        ∀ I : HopfIdeal (AlgebraicClosure k)
-            (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H),
-          I.IsNormal →
-            geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.quotient
-                (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I).obj →
-            smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.quotient
-                (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I) →
-            I = HopfIdeal.augmentation (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
+  geometricRadicalFreeCommHopfAlgProperty k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))
 
 /-- Reductivity means smoothness, geometric connectedness, and absence of nontrivial connected
 normal smooth unipotent closed subgroups after extension to an algebraic closure. -/
@@ -101,54 +86,16 @@ theorem reductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
               smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)
                 (FiniteTypeCommHopfAlgCat.quotient
                   (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I) →
-              I = HopfIdeal.augmentation (AlgebraicClosure k)
-                (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
-  Iff.rfl
+            I = HopfIdeal.augmentation (AlgebraicClosure k)
+              (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
+  geometricRadicalFreeCommHopfAlgProperty_iff k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)) H
 
 /-- Reductivity is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
-    (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms where
-  of_iso {H K} e hH := by
-    rw [reductiveCommHopfAlgProperty_iff] at hH ⊢
-    let e₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-      (CommHopfAlgCat.{u} k)).mapIso e
-    let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
-    let Kbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) K
-    let ebar := (FiniteTypeCommHopfAlgCat.baseChangeFunctor
-      (K := AlgebraicClosure k)).mapIso e
-    let ebar₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
-      (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso ebar
-    let f : Hbar →ₐc[AlgebraicClosure k] Kbar := ebar₀.hom.hom
-    have hfinjective : Function.Injective f :=
-      (ConcreteCategory.bijective_of_isIso ebar₀.hom).1
-    have hfsurjective : Function.Surjective f :=
-      (ConcreteCategory.bijective_of_isIso ebar₀.hom).2
-    refine ⟨(smoothCommHopfAlgProperty_iff K.obj).mp <|
-        (smoothCommHopfAlgProperty k).prop_of_iso e₀
-          ((smoothCommHopfAlgProperty_iff H.obj).mpr hH.1),
-      (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e₀ hH.2.1, ?_⟩
-    intro I hnormal hconnected hunipotent
-    let J := I.comap f hfsurjective
-    have hnormalJ : J.IsNormal :=
-      hnormal.comap_of_bijective f hfinjective hfsurjective
-    let qIso : FiniteTypeCommHopfAlgCat.quotient Hbar J ≅
-        FiniteTypeCommHopfAlgCat.quotient Kbar I :=
-      FiniteTypeCommHopfAlgCat.quotientIsoOfIso ebar I
-    let qIso₀ := (forget₂
-      (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
-      (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso qIso
-    have hconnectedJ : geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)
-        (FiniteTypeCommHopfAlgCat.quotient Hbar J).obj :=
-      (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
-        qIso₀.symm hconnected
-    have hunipotentJ : smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)
-        (FiniteTypeCommHopfAlgCat.quotient Hbar J) :=
-      (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
-        qIso.symm hunipotent
-    have hJ := hH.2.2 J hnormalJ hconnectedJ hunipotentJ
-    rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hfsurjective,
-      HopfIdeal.comap_augmentation]
-    exact hJ
+    (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=
+  inferInstanceAs ((geometricRadicalFreeCommHopfAlgProperty k
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))).IsClosedUnderIsomorphisms)
 
 namespace reductiveCommHopfAlgProperty
 
@@ -156,12 +103,12 @@ variable {k : Type u} [Field k] {H : FiniteTypeCommHopfAlgCat.{u, u} k}
 
 /-- A reductive finite-type commutative Hopf algebra is smooth over its ground field. -/
 theorem smooth (hH : reductiveCommHopfAlgProperty k H) : Algebra.Smooth k H :=
-  hH.1
+  geometricRadicalFreeCommHopfAlgProperty.smooth hH
 
 /-- A reductive finite-type commutative Hopf algebra is geometrically connected. -/
 theorem geometricallyConnected (hH : reductiveCommHopfAlgProperty k H) :
     geometricallyConnectedCommHopfAlgProperty k H.obj :=
-  hH.2.1
+  geometricRadicalFreeCommHopfAlgProperty.geometricallyConnected hH
 
 /-- Every connected normal smooth unipotent closed subgroup of the geometric fibre of a
 reductive group is the identity subgroup. -/
@@ -177,7 +124,7 @@ theorem eq_augmentation (hH : reductiveCommHopfAlgProperty k H)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I)) :
     I = HopfIdeal.augmentation (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
-  hH.2.2 I hI hconnected hunipotent
+  geometricRadicalFreeCommHopfAlgProperty.eq_augmentation hH I hI hconnected hunipotent
 
 /-- If the geometric fibre of a reductive group has only unipotent geometric points, its zero
 Hopf ideal is the augmentation ideal. Equivalently, the whole geometric fibre is the identity
@@ -189,21 +136,11 @@ theorem bot_eq_augmentation (hH : reductiveCommHopfAlgProperty k H)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)) =
         HopfIdeal.augmentation (AlgebraicClosure k)
           (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) := by
-  let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
-  apply hH.eq_augmentation (I := (⊥ : HopfIdeal (AlgebraicClosure k) Hbar))
-  · exact HopfIdeal.isNormal_bot
-  · exact (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
-      ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
-        (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso
-          (FiniteTypeCommHopfAlgCat.quotientBotIso Hbar)).symm
-      (geometricallyConnectedCommHopfAlgProperty.baseChange k (AlgebraicClosure k) H.obj
-        hH.geometricallyConnected)
-  · apply (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
-      (FiniteTypeCommHopfAlgCat.quotientBotIso Hbar).symm
-    rw [smoothUnipotentCommHopfAlgProperty_iff]
-    refine ⟨@Algebra.Smooth.baseChange k _ H (AlgebraicClosure k) _ _ _ _ hH.smooth, ?_⟩
-    exact (geometricallyUnipotentPointsCommHopfAlgProperty_iff
-      (AlgebraicClosure k) Hbar.obj).mp hunipotent
+  apply geometricRadicalFreeCommHopfAlgProperty.bot_eq_augmentation hH
+  rw [smoothUnipotentCommHopfAlgProperty_iff]
+  refine ⟨@Algebra.Smooth.baseChange k _ H (AlgebraicClosure k) _ _ _ _ hH.smooth, ?_⟩
+  exact (geometricallyUnipotentPointsCommHopfAlgProperty_iff (AlgebraicClosure k)
+    (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj).mp hunipotent
 
 /-- A reductive group whose geometric fibre has only unipotent geometric points has trivial
 geometric fibre: its coordinate Hopf algebra is bialgebra-equivalent to the algebraic closure of
@@ -214,8 +151,11 @@ noncomputable def geometricFiberCounitBialgEquiv
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj) :
     FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H ≃ₐc[AlgebraicClosure k]
       AlgebraicClosure k :=
-  HopfIdeal.counitBialgEquivOfAugmentationEqBot
-    (hH.bot_eq_augmentation hunipotent).symm
+  geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv hH <| by
+    rw [smoothUnipotentCommHopfAlgProperty_iff]
+    refine ⟨@Algebra.Smooth.baseChange k _ H (AlgebraicClosure k) _ _ _ _ hH.smooth, ?_⟩
+    exact (geometricallyUnipotentPointsCommHopfAlgProperty_iff (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj).mp hunipotent
 
 /-- The equivalence from the geometric fibre to the algebraic closure is its counit. -/
 @[simp]
@@ -228,7 +168,7 @@ theorem geometricFiberCounitBialgEquiv_apply
       Bialgebra.counitBialgHom (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) x := by
   rw [geometricFiberCounitBialgEquiv]
-  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_apply _ _
+  exact geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv_apply _ _ _
 
 /-- The inverse equivalence from the algebraic closure is the geometric fibre's structure map. -/
 @[simp]
@@ -241,7 +181,7 @@ theorem geometricFiberCounitBialgEquiv_symm_apply
       algebraMap (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) r := by
   rw [geometricFiberCounitBialgEquiv]
-  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_symm_apply _ _
+  exact geometricRadicalFreeCommHopfAlgProperty.geometricFiberCounitBialgEquiv_symm_apply _ _ _
 
 end reductiveCommHopfAlgProperty
 
