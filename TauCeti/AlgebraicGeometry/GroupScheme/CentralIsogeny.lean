@@ -38,6 +38,9 @@ central kernel and that every isogeny out of a commutative group scheme is centr
 
 * J. S. Milne, *Algebraic Groups* (2017), §18.a.
 
+The property-level isogeny API is adapted from
+`TauCeti.AlgebraicGeometry.AbelianVariety.Isogeny`.
+
 This supplies the central-isogeny interface required by Layer 6 of the ReductiveGroups roadmap.
 -/
 
@@ -74,19 +77,12 @@ kernel being contained in the centre. -/
 def HasCentralKernel (f : G ⟶ H) : Prop :=
   ∀ (T : Over X) (g : T ⟶ G.X), g ≫ f.hom.hom = 1 → ∀ h : T ⟶ G.X, Commute g h
 
-/-- Unfolding centrality of the kernel gives the all-test-schemes commutation condition. -/
-theorem hasCentralKernel_iff (f : G ⟶ H) :
-    HasCentralKernel f ↔
-      ∀ (T : Over X) (g : T ⟶ G.X), g ≫ f.hom.hom = 1 →
-        ∀ h : T ⟶ G.X, Commute g h :=
-  Iff.rfl
-
 /-- A group-scheme morphism has central kernel exactly when the kernel of its map on points over
 every test scheme is contained in the ordinary group centre. -/
 theorem hasCentralKernel_iff_pointMap_ker_le_center (f : G ⟶ H) :
     HasCentralKernel f ↔
       ∀ T : Over X, (pointMap f T).ker ≤ Subgroup.center (T ⟶ G.X) := by
-  rw [hasCentralKernel_iff]
+  rw [HasCentralKernel]
   constructor
   · intro hf T g hg
     rw [Subgroup.mem_center_iff]
