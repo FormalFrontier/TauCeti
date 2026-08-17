@@ -55,8 +55,6 @@ public section
 
 open CategoryTheory
 
-namespace TauCeti
-
 open scoped MonoidAlgebra
 
 universe u v w
@@ -66,17 +64,17 @@ irreducible.** Both sides say that the `k[G]`-module the object carries is simpl
 side across `Rep.equivalenceModuleMonoidAlgebra`, the right-hand side across
 `Representation.irreducible_iff_isSimpleModule_asModule`. -/
 theorem Rep.simple_iff_isIrreducible {k : Type u} {G : Type v} [Field k] [Monoid G]
-    (A : Rep.{w} k G) : Simple A ↔ _root_.Representation.IsIrreducible A.ρ := by
-  rw [_root_.Representation.irreducible_iff_isSimpleModule_asModule,
+    (A : Rep.{w} k G) : Simple A ↔ Representation.IsIrreducible A.ρ := by
+  rw [Representation.irreducible_iff_isSimpleModule_asModule,
     ← simple_iff_isSimpleModule (R := k[G]) (M := A.ρ.asModule)]
   exact (simple_obj_iff (Rep.toModuleMonoidAlgebra (k := k) (G := G)) A).symm
 
 instance Rep.simple_of_isIrreducible {k : Type u} {G : Type v} [Field k] [Monoid G]
-    (A : Rep.{w} k G) [_root_.Representation.IsIrreducible A.ρ] : Simple A :=
+    (A : Rep.{w} k G) [Representation.IsIrreducible A.ρ] : Simple A :=
   (Rep.simple_iff_isIrreducible A).mpr ‹_›
 
 instance Rep.isIrreducible_of_simple {k : Type u} {G : Type v} [Field k] [Monoid G]
-    (A : Rep.{w} k G) [Simple A] : _root_.Representation.IsIrreducible A.ρ :=
+    (A : Rep.{w} k G) [Simple A] : Representation.IsIrreducible A.ρ :=
   (Rep.simple_iff_isIrreducible A).mp ‹_›
 
 section FDRep
@@ -179,7 +177,7 @@ private theorem isIso_subInclusion_iff (X : FDRep k G) (W : Subrepresentation X.
 /-- **An object of `FDRep k G` is simple exactly when the representation it carries is
 irreducible.** -/
 theorem FDRep.simple_iff_isIrreducible (X : FDRep k G) :
-    Simple X ↔ _root_.Representation.IsIrreducible X.ρ := by
+    Simple X ↔ Representation.IsIrreducible X.ρ := by
   constructor
   · intro _
     -- A subrepresentation is everything exactly when it is nonzero: this is simplicity of `X`,
@@ -196,13 +194,11 @@ theorem FDRep.simple_iff_isIrreducible (X : FDRep k G) :
     exact Functor.simple_of_simple_obj (forget₂ (FDRep k G) (Rep k G)) X
 
 instance FDRep.simple_of_isIrreducible (X : FDRep k G)
-    [_root_.Representation.IsIrreducible X.ρ] : Simple X :=
+    [Representation.IsIrreducible X.ρ] : Simple X :=
   (FDRep.simple_iff_isIrreducible X).mpr ‹_›
 
 instance FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
-    _root_.Representation.IsIrreducible X.ρ :=
+    Representation.IsIrreducible X.ρ :=
   (FDRep.simple_iff_isIrreducible X).mp ‹_›
 
 end FDRep
-
-end TauCeti
