@@ -151,9 +151,9 @@ def totalArrowEquivDart : TotalArrow G ≃ G.Dart where
     rfl
 
 @[simp]
-theorem totalArrowEquivDart_apply (e : TotalArrow G) :
-    totalArrowEquivDart G e =
-      ⟨((vertexEquiv G).symm e.1, (vertexEquiv G).symm e.2.1), e.2.2.down⟩ := (rfl)
+theorem totalArrowEquivDart_apply (i j : DoubledQuiver G) (e : i ⟶ j) :
+    totalArrowEquivDart G ⟨i, j, e⟩ =
+      ⟨((vertexEquiv G).symm i, (vertexEquiv G).symm j), e.down⟩ := (rfl)
 
 @[simp]
 theorem totalArrowEquivDart_symm_apply (d : G.Dart) :
