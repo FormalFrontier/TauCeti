@@ -19,10 +19,16 @@ group `ι → Rˣ` — the `R`-points of the split torus `𝔾ₘ^ι` — inside
 Weights cut this down to a torus of smaller rank. A weight function `wt : ι → κ → ℤ` assigns to
 each basis vector a character of `𝔾ₘ^κ`, and evaluating those characters at a point
 `s : κ → Rˣ` gives the family of units the diagonal automorphism is built from. The resulting
-homomorphism `TauCeti.basisWeightTorus` is the split maximal torus of a Chevalley group written
-in a weight basis of an admissible lattice, and `TauCeti.basisDiagonal_apply_of_repr_eq_zero` is
-the statement that it acts on a weight vector by the corresponding character — which is what makes
-the conjugation formula against a root subgroup come out.
+homomorphism `TauCeti.basisWeightTorus` is the action of `𝔾ₘ^κ` that `wt` prescribes, and
+`TauCeti.basisDiagonal_apply_of_repr_eq_zero` is the statement that it acts on a weight vector by
+the corresponding character — which is what makes the conjugation formula against a root subgroup
+come out.
+
+Nothing is assumed about `wt`, so nothing here asserts that this action is faithful or that its
+image is a maximal torus of anything: for `wt = 0` every point acts as the identity. Those are
+properties of a particular weight function — for the weights of an admissible lattice of a
+Chevalley group the action is the one its split maximal torus performs — and any statement of them
+belongs with the data that supplies `wt`, not here.
 
 ## Main definitions
 
@@ -192,11 +198,12 @@ section WeightTorus
 
 variable [Fintype κ]
 
-/-- The split torus of rank `κ` acting on `M` through a weight function on a basis: the point
-`s` acts on the `i`-th basis vector by the value at `s` of the character `wt i`.
+/-- The action on `M` of the split torus `𝔾ₘ^κ` prescribed by a weight function on a basis: the
+point `s` acts on the `i`-th basis vector by the value at `s` of the character `wt i`.
 
 This is how the split maximal torus of a Chevalley group acts on an admissible lattice written in
-a weight basis. -/
+a weight basis. For an arbitrary `wt` the homomorphism need not be injective — it is trivial for
+`wt = 0` — so faithfulness and maximality are not claimed here. -/
 noncomputable def basisWeightTorus (b : Basis ι R M) (wt : ι → κ → ℤ) :
     (κ → Rˣ) →* (M ≃ₗ[R] M) :=
   (basisDiagonalHom b).comp (torusCharacterHom (R := R) wt)

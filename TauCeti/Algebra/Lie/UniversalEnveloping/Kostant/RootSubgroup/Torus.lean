@@ -10,7 +10,7 @@ public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 
 /-!
-# The split maximal torus of a Kostant elementary group
+# The split torus of a Kostant elementary group
 
 Let `U_ℤ = kostantForm e h` act on a rational representation `V` through `ρ` and preserve an
 additive subgroup `M ≤ V`. A **weight basis** of `M` is an integral basis `b : Basis η ℤ M` each of
@@ -19,9 +19,8 @@ eigenvalues recorded by `wt : η → κ → ℤ`. Over any commutative ring `A` 
 `𝔾ₘ^κ` then acts diagonally on `A ⊗[ℤ] M`: a point `s : κ → Aˣ` scales the basis vector `b x` by
 the value `∏ⱼ sⱼ ^ wt x j` of the character `wt x`.
 
-This is the split maximal torus of the pinning. What makes it a *pinned* torus rather than an
-arbitrary diagonal group is its interaction with the root subgroups. If the designated root vector
-`eᵢ` has weight `α`, meaning `⁅hⱼ, eᵢ⁆ = αⱼ eᵢ` for every `j`, then
+What ties this diagonal group to the pinning is its interaction with the root subgroups. If the
+designated root vector `eᵢ` has weight `α`, meaning `⁅hⱼ, eᵢ⁆ = αⱼ eᵢ` for every `j`, then
 
 ```text
 t(s) xᵢ(u) t(s)⁻¹ = xᵢ(α(s) u),
@@ -31,6 +30,14 @@ with `α(s) = ∏ⱼ sⱼ ^ αⱼ` the value at `s` of the same character. So th
 subgroup, acting on its parameter by the root, and consequently normalizes the whole elementary
 group `E(A) = ⟨xᵢ(u)⟩`. Nothing here divides by a factorial, so the equations hold over a value
 ring of any characteristic.
+
+The weight basis is taken as data here, and no hypothesis relates `wt` to a root datum, so nothing
+below asserts that this action of `𝔾ₘ^κ` is faithful or that its image is a *maximal* torus of the
+elementary group: for `wt = 0` every point acts as the identity. Faithfulness and maximality are
+properties of the particular lattice and weight function that a Chevalley basis supplies — the
+setting in which this is the split maximal torus of the pinning — and are to be stated where that
+data is constructed, against a root datum. What is proved here is the diagonal action, its
+naturality, and the pinning equation relating it to the root subgroups.
 
 The analogous statement for the worked `GLₙ` example is
 `TauCeti.GeneralLinear.diagonalTorusPoints_mul_rootSubgroupPoints_mul_inv`; here the diagonal group
@@ -43,8 +50,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   Cartan operators with prescribed integer eigenvalues.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantCartanOperator`: a designated Cartan vector as an
   integral operator on a Kostant-stable subgroup.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
-  points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the action of the split torus `𝔾ₘ^κ` on
+  the points of a Kostant-stable lattice presented in a weight basis.
 
 ## Main results
 
@@ -237,9 +244,13 @@ section Torus
 
 variable [Fintype κ]
 
-/-- The split maximal torus of rank `κ` on the `A`-points of a Kostant-stable lattice presented in
+/-- The action of the split torus `𝔾ₘ^κ` on the `A`-points of a Kostant-stable lattice presented in
 a weight basis: the point `s` scales the base-changed basis vector `b x` by the value at `s` of the
-character `wt x`. -/
+character `wt x`.
+
+For the weight function of a Chevalley basis this is how the split maximal torus of the pinning
+acts, but nothing here constrains `wt`, so the homomorphism is not claimed to be faithful — for
+`wt = 0` it is trivial — nor its image to be a maximal torus. -/
 noncomputable def kostantTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     (κ → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp
