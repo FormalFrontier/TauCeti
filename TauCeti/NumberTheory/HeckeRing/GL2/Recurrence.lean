@@ -112,26 +112,13 @@ private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
   simp only [show k + 2 ≠ 1 by omega, ite_false, show k + 2 - 1 = k + 1 by omega] at h5
   rw [heckeTDiag_one_prime_pow_eq p hp (k + 2) (by omega)] at h5
   -- distribute `T(p)` over the telescoped difference
-  have hdist₁ : heckeT ⟨p, hp.pos⟩ *
-      (heckeT ⟨p ^ (k + 2), pow_pos hp.pos (k + 2)⟩ -
-        heckeTScalar p * heckeT ⟨p ^ (k + 2 - 2), pow_pos hp.pos (k + 2 - 2)⟩) =
-      heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ (k + 2), pow_pos hp.pos (k + 2)⟩ -
-        heckeT ⟨p, hp.pos⟩ *
-          (heckeTScalar p * heckeT ⟨p ^ (k + 2 - 2), pow_pos hp.pos (k + 2 - 2)⟩) :=
-    mul_sub _ _ _
-  rw [hdist₁] at h5
+  rw [mul_sub] at h5
   have h2k1 := heckeTDiag_one_prime_pow_eq p hp (k + 1) (by omega)
   conv at h2k1 => rhs; rw [show (k + 1) - 2 = k - 1 by omega]
   rw [h2k1] at h5
   conv at h5 => lhs; rw [show k + 2 - 2 = k by omega]
   -- and `T(p,p)` over the difference on the right
-  have hdist₂ : heckeTScalar p *
-      (heckeT ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ -
-        heckeTScalar p * heckeT ⟨p ^ (k - 1), pow_pos hp.pos (k - 1)⟩) =
-      heckeTScalar p * heckeT ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ -
-        heckeTScalar p * (heckeTScalar p * heckeT ⟨p ^ (k - 1), pow_pos hp.pos (k - 1)⟩) :=
-    mul_sub _ _ _
-  conv at h5 => rhs; rw [hdist₂]
+  conv at h5 => rhs; rw [mul_sub]
   -- the scalar operator is central, and the induction hypothesis rewrites `T(p) · T(pᵏ)`
   have hcomm : heckeT ⟨p, hp.pos⟩ * heckeTScalar p =
       heckeTScalar p * heckeT ⟨p, hp.pos⟩ := by
@@ -179,22 +166,12 @@ theorem heckeT_prime_pow_recurrence : ∀ k : ℕ, 0 < k →
     rw [heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
     rw [heckeT_prime p hp]
     -- split the `k = 1` coefficient `p + 1` into `p` and the unit
-    have hsplit : ((p : ℤ) + 1) • heckeTScalar p =
-        (p : ℤ) • heckeTScalar p + heckeTScalar p := by
-      rw [add_smul, one_smul]
-    rw [hsplit] at h5
+    rw [add_smul, one_smul] at h5
     linear_combination (norm := module) -h5
   rcases k with _ | k
   · simp only [show (2 : ℕ) ≠ 1 by omega, ite_false, show (2 : ℕ) - 1 = 1 by omega] at h5 ⊢
     rw [heckeTDiag_one_prime_pow_eq p hp 2 (by omega)] at h5
-    have hdist : heckeT ⟨p, hp.pos⟩ *
-        (heckeT ⟨p ^ 2, pow_pos hp.pos 2⟩ -
-          heckeTScalar p * heckeT ⟨p ^ (2 - 2), pow_pos hp.pos (2 - 2)⟩) =
-        heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ 2, pow_pos hp.pos 2⟩ -
-          heckeT ⟨p, hp.pos⟩ *
-            (heckeTScalar p * heckeT ⟨p ^ (2 - 2), pow_pos hp.pos (2 - 2)⟩) :=
-      mul_sub _ _ _
-    rw [hdist] at h5
+    rw [mul_sub] at h5
     simp only [show 2 - 2 = 0 from rfl] at h5 ⊢
     rw [heckeT_prime_pow_zero p hp, mul_one, heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
     rw [heckeT_prime_pow_one p hp] at h5 ⊢
@@ -331,14 +308,6 @@ private lemma heckeT_prime_pow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
   set Tpp := heckeTScalar p
   have h_lhs1 := heckeT_prime_mul_sum_distrib p hp r s
   have h_lhs2 := heckeT_scalar_mul_sum_shift p hp r s
-  have h_peel1 : ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (Tpp ^ i *
-        (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
-      (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩))) +
-        (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
-          (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * (r + 1)),
-            pow_pos hp.pos (r + 1 + s - 2 * (r + 1))⟩)) :=
-    Finset.sum_range_succ _ _
   have h_sum_split : ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
         (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
       (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
@@ -349,7 +318,7 @@ private lemma heckeT_prime_pow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
     refine Finset.sum_congr rfl fun i hi ↦ ?_
     rw [Finset.mem_range] at hi
     exact heckeT_prime_pow_mul_summand_split p hp r s i (by omega) (by omega)
-  rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
+  rw [h_lhs1, Finset.sum_range_succ, h_sum_split, h_lhs2]
   set A := ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
     heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩)
   set B := ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *

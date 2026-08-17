@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -107,7 +108,7 @@ end DiagonalizableGroup
 
 Objects are not required to be split over the base field; they become diagonalizable after base
 change to an algebraic closure. -/
-abbrev MultiplicativeTypeCommHopfAlgCat (k : Type u) [Field k] :=
+abbrev MultiplicativeTypeCommHopfAlgCat (k : Type u) [Field k] : Type _ :=
   (multiplicativeTypeCommHopfAlgProperty k).FullSubcategory
 
 end TauCeti

@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Algebra.Lie.Killing
 public import Mathlib.Algebra.Lie.SkewAdjoint
-public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 
 /-!
 # The adjoint action of a Lie algebra carrying an invariant bilinear form
@@ -37,7 +38,7 @@ symmetric, so `ad` maps `L` into the skew-adjoint endomorphisms of the polar for
 is Killing-semisimple and `2` is invertible
 the form is moreover nondegenerate, which is the hypothesis under which the skew-adjoint
 endomorphisms are the quadratic elements of the Clifford algebra `Cliff(L, κ)`
-(`TauCeti.CliffordAlgebra.soEquivQuadratic`). Composing the two is the adjoint quadratic lift
+(`CliffordAlgebra.soEquivQuadratic`). Composing the two is the adjoint quadratic lift
 `L → Cliff(L, κ)` whose left-regular action is the subject of Kostant's isotypy theorem; that
 composite is not built here.
 
@@ -71,6 +72,12 @@ a rearrangement of the invariance equation valid over any commutative ring. Symm
 where it genuinely bites, in `polarBilin_killingQuadraticForm`, which is stated for the Killing form
 rather than hypothesised. Carrying an unused hypothesis on a `def` would in any case be rejected by
 the `unusedArguments` linter.
+
+The polar form and nondegeneracy of the Killing quadratic form are the general facts
+`LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip` and
+`LinearMap.BilinForm.Nondegenerate.toQuadraticMap` of
+`TauCeti/LinearAlgebra/QuadraticForm/Radical.lean` applied to the Killing form, which is symmetric;
+nothing in either argument is about the Killing form.
 
 The stability of invariance under flipping and addition is a statement about a form on any Lie
 module `M` over `L`, the generality in which Mathlib defines `lieInvariant`, and is stated that way
@@ -219,20 +226,17 @@ does the work, collapsing `κ + κ.flip`. -/
 @[simp]
 theorem polarBilin_killingQuadraticForm :
     QuadraticMap.polarBilin (killingQuadraticForm R L) = (2 : R) • killingForm R L := by
-  rw [killingQuadraticForm, LinearMap.BilinMap.polarBilin_toQuadraticMap,
-    LieModule.traceForm_flip, two_smul]
+  rw [killingQuadraticForm]
+  exact LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip (LieModule.traceForm_flip R L L)
 
 /-- The Killing quadratic form is nondegenerate for a Killing-semisimple Lie algebra over a ring in
 which `2` is invertible. Both hypotheses are needed: `IsKilling` is nondegeneracy of `κ` itself, and
 without an invertible `2` the polar form of a quadratic form is a weaker invariant than the form. -/
 theorem killingQuadraticForm_nondegenerate [Invertible (2 : R)] [_root_.LieAlgebra.IsKilling R L] :
     (killingQuadraticForm R L).Nondegenerate := by
-  have h2 : IsUnit (2 : R) := isUnit_of_invertible 2
-  obtain ⟨hl, hr⟩ := _root_.LieAlgebra.IsKilling.killingForm_nondegenerate R L
-  rw [← QuadraticMap.nondegenerate_polar_iff, polarBilin_killingQuadraticForm]
-  refine ⟨fun x hx => hl x fun y => ?_, fun y hy => hr y fun x => ?_⟩
-  · simpa only [LinearMap.smul_apply, smul_eq_mul, h2.mul_right_eq_zero] using hx y
-  · simpa only [LinearMap.smul_apply, smul_eq_mul, h2.mul_right_eq_zero] using hy x
+  rw [killingQuadraticForm]
+  exact LinearMap.BilinForm.Nondegenerate.toQuadraticMap
+    (_root_.LieAlgebra.IsKilling.killingForm_nondegenerate R L) (LieModule.traceForm_flip R L L)
 
 /-- The adjoint homomorphism of a Lie algebra into the skew-adjoint endomorphisms of the polar form
 `2 • κ` of its Killing quadratic form (`polarBilin_killingQuadraticForm`). This is the homomorphism

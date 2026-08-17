@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,6 +34,9 @@ of `p`. The subgraph spanned by `p` is therefore all of `G`, and Mathlib's
 
 * `TauCeti.IsTree.nonempty_iso_pathGraph_of_degree_le_two`: a finite tree of maximum degree two is
   isomorphic to the path graph on its vertices.
+* `TauCeti.adj_iff_of_iso_pathGraph`: adjacency read through such a numbering is consecutiveness of
+  the numbers.
+* `TauCeti.pathGraphRevIso`: the reversal automorphism of a path graph, which reverses a numbering.
 
 ## References
 
@@ -45,6 +49,28 @@ namespace TauCeti
 open SimpleGraph
 
 variable {V : Type*} {G : SimpleGraph V}
+
+/-! ## Numbering a graph as a path -/
+
+/-- **Adjacency read through a numbering of a graph as a path**: two vertices are adjacent exactly
+when their numbers are consecutive. -/
+theorem adj_iff_of_iso_pathGraph {n : ℕ} (f : G ≃g pathGraph n) (i j : V) :
+    G.Adj i j ↔ (f i : ℕ) + 1 = (f j : ℕ) ∨ (f j : ℕ) + 1 = (f i : ℕ) := by
+  simpa only [pathGraph_adj] using f.map_adj_iff.symm
+
+/-- **Reversal is an automorphism of a path graph.** Composing with it reverses a numbering of a
+graph as a path. The body is exported unexposed, so `pathGraphRevIso_apply` is the interface an
+importing module computes with. -/
+def pathGraphRevIso (n : ℕ) : pathGraph n ≃g pathGraph n where
+  toEquiv := Fin.revPerm
+  map_rel_iff' := by
+    intro i j
+    simp only [pathGraph_adj, Fin.revPerm_apply, Fin.rev]
+    omega
+
+@[simp] theorem pathGraphRevIso_apply {n : ℕ} (i : Fin n) : pathGraphRevIso n i = i.rev := (rfl)
+
+/-! ## A finite tree of maximum degree two -/
 
 /-- **A neighbour of the first vertex of a longest path lies on that path**: otherwise it could be
 prepended, and the path was not longest. -/

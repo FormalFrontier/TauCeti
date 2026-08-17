@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -37,10 +38,17 @@ the mixture identity on the barycenter side; and it takes the point masses of
 decomposition of an exchangeable law over the extreme — equivalently the
 i.i.d. — exchangeable laws: the mixing law is unique, and the path laws it averages are extreme.
 
-This settles the first two sentences of the Layer 8 bullet "the affine and ergodic decomposition
-of exchangeable laws" in `TauCetiRoadmap/Exchangeability/README.md`. Identifying the components
-with the ergodic components of the finitely supported permutation action, which that bullet
-sequences after the `ErgodicSMul` interface of Layer 6, is not done here.
+This settles the Layer 8 bullet "the affine and ergodic decomposition of exchangeable laws" in
+`TauCetiRoadmap/Exchangeability/README.md`. Together with `exchangeableSigma_trivial_iff_iid`,
+`exchangeableSigma_trivial_iff_ergodicSMul` and `exchangeable_extreme_iff_iid`, this correspondence
+identifies the product — equivalently extreme — components with the ergodic components for the
+finitely supported permutation action, which that bullet sequences after the `ErgodicSMul` interface
+of Layer 6. Those equivalences compose directly; no additional correspondence declaration is
+required.
+
+⚠ The action is the finitely supported permutations of the *time index*. Ergodicity for it is a
+different statement from ergodicity of the one-sided shift, which concerns the smaller σ-algebra of
+shift-invariant events; see `PathSpace/Exchangeable/Ergodic.lean`.
 
 ## Main results
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -229,7 +230,7 @@ theorem mem_lieSubalgebra_iff_of_toIdeal_eq_span (I : HopfIdeal R H) {S : Set H}
     rw [hI]
     exact Ideal.subset_span hx
   · intro hd x hx
-    apply TauCeti.Derivation.apply_eq_zero_of_mem_span d (hd := hd) (hx := hI ▸ hx)
+    apply Derivation.apply_eq_zero_of_mem_span d (hd := hd) (hx := hI ▸ hx)
     intro y hy
     apply I.counit_eq_zero
     apply HopfIdeal.mem_toIdeal.mp

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,7 +22,7 @@ This completes the associated-graded-algebra part of Layer 0 in the
 
 ## Main definition
 
-* `TauCeti.CliffordAlgebra.filtrationAssociatedGradedEquivExterior`: the algebra equivalence from
+* `CliffordAlgebra.filtrationAssociatedGradedEquivExterior`: the algebra equivalence from
   the associated graded of the Clifford filtration to the exterior algebra.
 
 ## References
@@ -32,12 +33,11 @@ This completes the associated-graded-algebra part of Layer 0 in the
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]
@@ -349,4 +349,4 @@ theorem filtrationAssociatedGradedEquivExterior_symm_apply_coe_succ (n : ℕ)
         ((filtrationGradedEquiv Q n).symm x) := by
   exact filtrationAssociatedGradedEquivExterior_symm_apply_coe Q (n + 1) x
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -172,15 +173,9 @@ and only if its coordinate Hopf-algebra morphism is surjective. -/
 theorem isClosedImmersion_coordinateGroupSchemeHom_iff (b : Basis (Fin n) k M) :
     IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left ↔
       Function.Surjective (coordinateBialgHom (H := H) b) := by
-  let _ : IsIso
-      (eqToHom (GeneralLinear.groupScheme_def k n).symm).hom.hom.left :=
-    ((Over.forget (Spec (CommRingCat.of k))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso
-        (eqToIso (GeneralLinear.groupScheme_def k n).symm))).isIso_hom
   rw [coordinateGroupSchemeHom_def]
-  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
-  exact CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _
+  exact CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
+    (GeneralLinear.groupScheme_def k n) _
 
 end GroupScheme
 

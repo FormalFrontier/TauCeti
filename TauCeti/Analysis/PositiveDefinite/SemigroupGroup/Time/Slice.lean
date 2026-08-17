@@ -1,10 +1,10 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 public import Mathlib.Topology.Constructions.SumProd
 
@@ -26,7 +26,7 @@ positive-definite function on `[0,∞) × V` to spatial positive-definite functi
 
 ## Main declarations
 
-* `TauCeti.IsSemigroupGroupPD.timeSlice_isPositiveDefiniteKernel`: the fixed-time spatial
+* `TauCeti.IsSemigroupGroupPD.posSemidef_timeSlice`: the fixed-time spatial
   kernel is positive definite.
 * `TauCeti.IsSemigroupGroupPD.timeSlice_conj_symm` and diagonal lemmas: basic symmetry and
   real-nonnegative diagonal facts for fixed-time slices.
@@ -40,7 +40,7 @@ positive-definite function on `[0,∞) × V` to spatial positive-definite functi
   fixed-time diagonal value kills the whole fixed-time spatial slice.
 * `TauCeti.IsSemigroupGroupPD.timeSlice_isPositiveDefinite`: the predicate form when the
   spatial involution is negation.
-* `TauCeti.IsSemigroupGroupPD.timeSlice_isPositiveDefiniteKernel_and_continuous`: packages
+* `TauCeti.IsSemigroupGroupPD.posSemidef_timeSlice_and_continuous`: packages
   the fixed-time positive-definite kernel with continuity of the fixed-time slice.
 
 ## References
@@ -63,23 +63,30 @@ namespace IsSemigroupGroupPD
 
 /-- At every fixed time `t`, a semigroup-group positive-definite function gives the spatial
 positive-definite kernel `(v, w) ↦ F (t, v - w)`. -/
-theorem timeSlice_isPositiveDefiniteKernel (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
-    IsPositiveDefiniteKernel fun v w : V => F (t, v - w) := by
-  have hK := isPositiveDefiniteKernel_comp hF.isPositiveDefiniteKernel
+theorem posSemidef_timeSlice (hF : IsSemigroupGroupPD F) (t : ℝ≥0) :
+    Matrix.PosSemidef fun v w : V => F (t, v - w) := by
+  have h := hF.posSemidef.submatrix
     (fun v : V => (t / 2, v))
-  simpa [add_halves] using hK
+  have heq : Matrix.submatrix
+      (Matrix.of fun p q : ℝ≥0 × V => F (p.1 + q.1, p.2 - q.2))
+      (fun v : V => (t / 2, v)) (fun v => (t / 2, v)) =
+      fun v w : V => F (t, v - w) := by
+    ext v w
+    rw [Matrix.submatrix_apply, Matrix.of_apply]
+    rw [add_halves]
+  exact heq ▸ h
 
 /-- Fixed-time slices are conjugate-symmetric in the spatial variable:
 `conj (F (t, v - w)) = F (t, w - v)`. -/
 @[simp]
 theorem timeSlice_conj_symm (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :
-    conj (F (t, v - w)) = F (t, w - v) :=
-  isPositiveDefiniteKernel_conj_symm (hF.timeSlice_isPositiveDefiniteKernel t) v w
+    conj (F (t, v - w)) = F (t, w - v) := by
+  simpa only [starRingEnd_apply] using
+    (hF.posSemidef_timeSlice t).isHermitian.apply w v
 
 /-- The diagonal value `F (t, 0)` of a fixed-time slice is real and nonnegative. -/
 theorem timeSlice_diagonal_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) : 0 ≤ F (t, 0) := by
-  simpa using isPositiveDefiniteKernel_apply_self_nonneg (hF.timeSlice_isPositiveDefiniteKernel t)
-    (0 : V)
+  simpa using (hF.posSemidef_timeSlice t).diag_nonneg (i := (0 : V))
 
 /-- The diagonal value `F (t, 0)` of a fixed-time slice has zero imaginary part. -/
 @[simp]
@@ -103,12 +110,14 @@ theorem timeSlice_diagonal_eq_ofReal_re (hF : IsSemigroupGroupPD F) (t : ℝ≥0
 theorem timeSlice_sum_nonneg (hF : IsSemigroupGroupPD F) (t : ℝ≥0) {ι : Type*} [Fintype ι]
     (v : ι → V) (x : ι → ℂ) :
     0 ≤ ∑ i, ∑ j, conj (x i) * x j * F (t, v i - v j) :=
-  (isPositiveDefiniteKernel_iff.mp (hF.timeSlice_isPositiveDefiniteKernel t)).2 v x
+  by
+    simpa only [RCLike.star_def, mul_comm, mul_left_comm, mul_assoc] using
+      (posSemidef_iff_finite_sum.mp (hF.posSemidef_timeSlice t)).2 v x
 
 /-- The fixed-time spatial Cauchy--Schwarz bound for the kernel entry `F (t, v - w)`. -/
 theorem timeSlice_normSq_le (hF : IsSemigroupGroupPD F) (t : ℝ≥0) (v w : V) :
     RCLike.normSq (F (t, v - w)) ≤ RCLike.re (F (t, 0)) * RCLike.re (F (t, 0)) := by
-  simpa using isPositiveDefiniteKernel_normSq_le (hF.timeSlice_isPositiveDefiniteKernel t) v w
+  simpa using (hF.posSemidef_timeSlice t).normSq_le v w
 
 /-- At a fixed time, a semigroup-group positive-definite function is bounded by the real part of
 its zero-spatial value. -/
@@ -121,8 +130,8 @@ theorem norm_apply_le_timeSlice_diagonal_re (hF : IsSemigroupGroupPD F) (t : ℝ
 /-- If the fixed-time diagonal value is zero, then the whole fixed-time spatial slice is zero. -/
 theorem timeSlice_eq_zero_of_timeSlice_diagonal_eq_zero (hF : IsSemigroupGroupPD F)
     {t : ℝ≥0} (ht : F (t, 0) = 0) (v : V) : F (t, v) = 0 := by
-  simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_left
-    (hF.timeSlice_isPositiveDefiniteKernel t) (a := v) (b := 0) (by simpa using ht)
+  simpa using (hF.posSemidef_timeSlice t).eq_zero_of_apply_self_eq_zero_left
+    (a := v) (b := 0) (by simpa using ht)
 
 /-- Normalized fixed-time slices are bounded by `1`. -/
 theorem norm_apply_le_one_of_timeSlice_diagonal_eq_one (hF : IsSemigroupGroupPD F)
@@ -135,8 +144,8 @@ positive-definite function in the generic `IsPositiveDefinite` sense. -/
 theorem timeSlice_isPositiveDefinite [StarAddMonoid V]
     (hF : IsSemigroupGroupPD F) (hstar : ∀ v : V, star v = -v) (t : ℝ≥0) :
     IsPositiveDefinite fun v : V => F (t, v) :=
-  (isPositiveDefinite_iff_isPositiveDefiniteKernel_sub hstar).mpr
-    (hF.timeSlice_isPositiveDefiniteKernel t)
+  (isPositiveDefinite_iff_posSemidef_sub hstar).mpr
+    (hF.posSemidef_timeSlice t)
 
 end IsSemigroupGroupPD
 
@@ -146,10 +155,10 @@ variable [TopologicalSpace V] {F : ℝ≥0 × V → ℂ}
 
 /-- Package the positive-definite kernel on a fixed-time slice with continuity of the
 one-variable fixed-time slice. -/
-theorem IsSemigroupGroupPD.timeSlice_isPositiveDefiniteKernel_and_continuous
+theorem IsSemigroupGroupPD.posSemidef_timeSlice_and_continuous
     (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F) (t : ℝ≥0) :
-    IsPositiveDefiniteKernel (fun v w : V => F (t, v - w)) ∧ Continuous (fun v : V => F (t, v)) :=
-  ⟨hFpd.timeSlice_isPositiveDefiniteKernel t, hFcont.comp (.prodMk_right t)⟩
+    Matrix.PosSemidef (fun v w : V => F (t, v - w)) ∧ Continuous (fun v : V => F (t, v)) :=
+  ⟨hFpd.posSemidef_timeSlice t, hFcont.comp (.prodMk_right t)⟩
 
 end Topology
 

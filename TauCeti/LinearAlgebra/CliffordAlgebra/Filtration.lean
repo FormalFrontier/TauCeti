@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,7 +21,7 @@ the number of generators, so parity descends to the quotient. It does *not* pres
 generators, so there is no `ℕ`-grading; what survives is an increasing **filtration** by the number
 of generators needed to write an element.
 
-This file builds that filtration. `TauCeti.CliffordAlgebra.filtration Q k` is the `R`-submodule
+This file builds that filtration. `CliffordAlgebra.filtration Q k` is the `R`-submodule
 spanned by the products `ι Q v₁ * ⋯ * ι Q vₙ` with `n ≤ k`, the empty product `1` included, so that
 `filtration Q 0` is the module of scalars and `filtration Q 1` adjoins the generators. It is
 increasing, multiplicative (`filtration Q i * filtration Q j = filtration Q (i + j)`), exhausts the
@@ -35,55 +36,55 @@ carries the same construction as its PBW filtration.
 
 Following the roadmap, the filtration is *not* the submodule power `LinearMap.range (ι Q) ^ k`:
 powers of a submodule of a noncommutative algebra collect the products of *exactly* `k` generators.
-The relation between the two is `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`, which writes
+The relation between the two is `CliffordAlgebra.filtration_eq_iSup_pow`, which writes
 `filtration Q k` as the supremum of those powers over `i ≤ k`; this is the sense in which the
 filtration is the "at most `k`" companion of Mathlib's `evenOdd`, whose definition is the analogous
 supremum over the `i` of a fixed parity.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.filtration Q k`: the span of the products of at most `k` generators.
-* `TauCeti.CliffordAlgebra.FiltrationGradedPiece Q k`: the degree-`k` successive quotient.
+* `CliffordAlgebra.filtration Q k`: the span of the products of at most `k` generators.
+* `CliffordAlgebra.FiltrationGradedPiece Q k`: the degree-`k` successive quotient.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.prod_map_ι_mem_filtration` and
-  `TauCeti.CliffordAlgebra.filtration_le_iff`: the products of at most `k` generators lie in the
+* `CliffordAlgebra.prod_map_ι_mem_filtration` and
+  `CliffordAlgebra.filtration_le_iff`: the products of at most `k` generators lie in the
   `k`-th step and generate it, which is how memberships and bounds are proved.
-* `TauCeti.CliffordAlgebra.filtration_eq_pow`: the defining equation, as the `k`-th power of the
+* `CliffordAlgebra.filtration_eq_pow`: the defining equation, as the `k`-th power of the
   scalars together with `LinearMap.range (ι Q)`.
-* `TauCeti.CliffordAlgebra.filtration_zero` and
-  `TauCeti.CliffordAlgebra.filtration_one` compute the first two steps, as the scalars and the
+* `CliffordAlgebra.filtration_zero` and
+  `CliffordAlgebra.filtration_one` compute the first two steps, as the scalars and the
   scalars together with `LinearMap.range (ι Q)`.
-* `TauCeti.CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
+* `CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
   so: `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes
   the associated graded object an algebra, and it is the prerequisite the roadmap asks for before
-  anything downstream; `TauCeti.CliffordAlgebra.filtration_pow` is its iterate and
-  `TauCeti.CliffordAlgebra.mul_mem_filtration` its elementwise form.
-* `TauCeti.CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
-* `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
+  anything downstream; `CliffordAlgebra.filtration_pow` is its iterate and
+  `CliffordAlgebra.mul_mem_filtration` its elementwise form.
+* `CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
+* `CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
   `LinearMap.range (ι Q)`.
-* `TauCeti.CliffordAlgebra.filtrationLeadingTerm` and
-  `TauCeti.CliffordAlgebra.filtrationLeadingTerm_surjective`: the exterior-power leading-term map
+* `CliffordAlgebra.filtrationLeadingTerm` and
+  `CliffordAlgebra.filtrationLeadingTerm_surjective`: the exterior-power leading-term map
   onto each successive filtration quotient. It is surjective over any `CommRing`; when `2` is
-  invertible `TauCeti.CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm` identifies
+  invertible `CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm` identifies
   it with the inverse of the graded equivalence.
-* `TauCeti.CliffordAlgebra.iSup_filtration_eq_top`: the filtration is exhaustive.
-* `TauCeti.CliffordAlgebra.involute_mem_filtration`,
-  `TauCeti.CliffordAlgebra.reverse_mem_filtration` and
-  `TauCeti.CliffordAlgebra.map_mem_filtration`: the filtration is preserved by the grade
+* `CliffordAlgebra.iSup_filtration_eq_top`: the filtration is exhaustive.
+* `CliffordAlgebra.involute_mem_filtration`,
+  `CliffordAlgebra.reverse_mem_filtration` and
+  `CliffordAlgebra.map_mem_filtration`: the filtration is preserved by the grade
   involution, by reversal, and by an isometry of quadratic forms.
-* `TauCeti.CliffordAlgebra.contractLeft_mem_filtration_succ` and
-  `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
-  `TauCeti.CliffordAlgebra.changeForm_mem_filtration`, and
-  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration` and
-  `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
+* `CliffordAlgebra.contractLeft_mem_filtration_succ` and
+  `CliffordAlgebra.contractLeft_mem_filtration`,
+  `CliffordAlgebra.changeForm_mem_filtration`, and
+  `CliffordAlgebra.changeFormEquiv_map_filtration` and
+  `CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
-* `TauCeti.CliffordAlgebra.changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration`: change of form
+* `CliffordAlgebra.changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration`: change of form
   has identity symbol, that is, it moves a word of generators only by terms two filtration degrees
   lower.
-* `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
+* `CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
 
 ## References
 
@@ -95,11 +96,8 @@ supremum over the `i` of a fixed parity.
 
 public section
 
-open CliffordAlgebra
 
 universe u v w
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -238,6 +236,18 @@ element of the `j`-th step lies in the `i + j`-th step. -/
 theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i)
     (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) :=
   TauCeti.Algebra.mul_mem_wordFiltration (ι Q) hx hy
+
+/-- Multiplication preserves a strict degree drop in the left factor of the Clifford filtration. -/
+theorem mul_mem_filtrationPrevious_left {i j : ℕ} {x y : CliffordAlgebra Q}
+    (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
+    x * y ∈ filtrationPrevious Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left (ι Q) hx hy
+
+/-- Multiplication preserves a strict degree drop in the right factor of the Clifford filtration. -/
+theorem mul_mem_filtrationPrevious_right {i j : ℕ} {x y : CliffordAlgebra Q}
+    (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
+    x * y ∈ filtrationPrevious Q (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right (ι Q) hx hy
 
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
@@ -505,12 +515,10 @@ variable {N : Type w} [AddCommGroup N] [Module R N] {Q' : QuadraticForm R N}
 to a product of the same length. -/
 theorem map_mem_filtration (f : Q →qᵢ Q') {k : ℕ} {x : CliffordAlgebra Q}
     (hx : x ∈ filtration Q k) : CliffordAlgebra.map f x ∈ filtration Q' k := by
-  have h : filtration Q k ≤ (filtration Q' k).comap (CliffordAlgebra.map f).toLinearMap :=
-    (filtration_le_iff Q).2 fun l hl => by
-      rw [Submodule.mem_comap, AlgHom.toLinearMap_apply, map_list_prod, List.map_map]
-      simpa [Function.comp_def] using
-        prod_map_ι_mem_filtration Q' (l := l.map f) (by simpa using hl)
-  exact h hx
+  apply TauCeti.Algebra.map_mem_wordFiltration (ι Q) (CliffordAlgebra.map f) (ι Q') _ hx
+  intro m
+  rw [CliffordAlgebra.map_apply_ι]
+  exact TauCeti.Algebra.apply_mem_wordFiltration_one (ι Q') (f m)
 
 end Map
 
@@ -637,5 +645,3 @@ theorem fg_filtration [Module.Finite R M] (k : ℕ) : (filtration Q k).FG := by
     exact ih.sup (hι.pow _)
 
 end CliffordAlgebra
-
-end TauCeti

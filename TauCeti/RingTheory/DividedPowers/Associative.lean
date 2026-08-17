@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RingTheory.DividedPowers.RatAlgebra
+public import TauCeti.Algebra.Ring.Commutator
 import Mathlib.Data.Nat.Choose.Cast
 import Mathlib.Tactic.FieldSimp
 
@@ -31,12 +32,16 @@ definition is made here.
 ## Main definitions and results
 
 * `TauCeti.Associative.dividedPower`: the normalized power `x ^ n / n!`.
+* `TauCeti.Associative.mul_dividedPower_eq_dividedPower_mul_add_zsmul`: moving an element past a
+  divided power of an integer-eigenvector for its commutator.
 * `TauCeti.Associative.mul_dividedPower`: products of divided powers of one element have a
   binomial coefficient as structure constant.
 * `TauCeti.Associative.dividedPower_add`: divided powers turn a sum of commuting elements into an
   antidiagonal sum.
 * `TauCeti.Associative.dividedPower_sub`: the corresponding signed expansion for a difference.
 * `TauCeti.Associative.map_dividedPower`: divided powers are natural under algebra homomorphisms.
+* `TauCeti.Associative.dividedPower_units_conj`: divided powers are equivariant for conjugation by
+  a unit.
 
 ## References
 
@@ -106,6 +111,15 @@ theorem dividedPower_smul (q : ℚ) (n : ℕ) (x : A) :
   simpa only [Algebra.smul_def, map_pow] using
     dividedPower_mul_left (Algebra.commutes q x) n
 
+/-- Divided powers are equivariant for conjugation by a unit.
+
+Conjugation is an algebra automorphism, so it commutes with the rational scalar as well as with
+the power. This is what lets a Chevalley group element move past a root subgroup. -/
+@[simp]
+theorem dividedPower_units_conj (u : Aˣ) (n : ℕ) (x : A) :
+    dividedPower n ((u : A) * x * ↑u⁻¹) = (u : A) * dividedPower n x * ↑u⁻¹ := by
+  rw [dividedPower_def, dividedPower_def, Units.conj_pow, mul_smul_comm, smul_mul_assoc]
+
 /-- Divided powers preserve commutation of their underlying elements. -/
 theorem commute_dividedPower_dividedPower {x y : A} (hxy : Commute x y) (m n : ℕ) :
     Commute (dividedPower m x) (dividedPower n y) := by
@@ -137,6 +151,17 @@ theorem dividedPower_mul_self (n : ℕ) (x : A) :
 theorem self_mul_dividedPower (n : ℕ) (x : A) :
     x * dividedPower n x = (n + 1) • dividedPower (n + 1) x := by
   simpa [add_comm 1 n] using mul_dividedPower 1 n x
+
+/-- **Raising the left divided power, scaled.** Multiplying by `x` on the left turns `x^[m] · z`
+into `m + 1` copies of `x^[m+1] · z`, for any `z`. -/
+theorem succ_nsmul_dividedPower_succ_mul (m : ℕ) (x z : A) :
+    (m + 1) • (dividedPower (m + 1) x * z) = x * (dividedPower m x * z) := by
+  calc
+    (m + 1) • (dividedPower (m + 1) x * z) = ((m + 1) • dividedPower (m + 1) x) * z := by
+      simp only [nsmul_eq_mul]
+      rw [mul_assoc]
+    _ = (x * dividedPower m x) * z := by rw [self_mul_dividedPower]
+    _ = x * (dividedPower m x * z) := mul_assoc _ _ _
 
 /-- The first-order recurrence solved for the successor divided power. -/
 theorem dividedPower_succ (n : ℕ) (x : A) :
@@ -187,7 +212,37 @@ end Semiring
 
 section Ring
 
-variable {A : Type*} [Ring A] [Algebra ℚ A]
+variable {A : Type*} [Ring A] [Algebra ℚ A] {x y : A} {c : ℤ}
+
+/-- Moving an element past a divided power of an integer-eigenvector for its commutator adds the
+same integral multiple of that divided power. -/
+theorem mul_dividedPower_eq_dividedPower_mul_add_zsmul
+    (hxy : x * y - y * x = c • y) (n : ℕ) :
+    x * dividedPower n y =
+      dividedPower n y * x + ((n : ℤ) * c) • dividedPower n y := by
+  simp only [dividedPower_def, mul_smul_comm, smul_mul_assoc,
+    mul_pow_eq_pow_mul_add_zsmul hxy, smul_add]
+  rw [smul_comm]
+
+/-- The shifted-factor form of `mul_dividedPower_eq_dividedPower_mul_add_zsmul`. -/
+theorem mul_dividedPower_eq_dividedPower_mul_add_intCast
+    (hxy : x * y - y * x = c • y) (n : ℕ) :
+    x * dividedPower n y =
+      dividedPower n y * (x + (c : A) * (n : A)) := by
+  rw [mul_dividedPower_eq_dividedPower_mul_add_zsmul hxy, zsmul_eq_mul', mul_add,
+    Int.cast_mul, Int.cast_natCast, (Nat.cast_commute n (c : A)).eq]
+
+/-- Scaling an element by an integer scales its `n`-th divided power by the `n`-th power of that
+integer. This is the integral companion of `dividedPower_smul`, and is what lets a Chevalley
+structure constant be moved from a root vector to the parameter of its exponential.
+
+This is deliberately not a `simp` lemma: `zsmul_eq_mul` rewrites the argument `d • x` of the
+left-hand side to `↑d * x`, so the statement is not in simp-normal form. -/
+theorem dividedPower_zsmul (d : ℤ) (n : ℕ) (x : A) :
+    dividedPower n (d • x) = d ^ n • dividedPower n x := by
+  rw [← Int.cast_smul_eq_zsmul ℚ d x, dividedPower_smul,
+    ← Int.cast_smul_eq_zsmul ℚ (d ^ n) (dividedPower n x)]
+  norm_cast
 
 /-- Divided powers of a negated element acquire the expected sign. -/
 @[simp]

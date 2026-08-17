@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -28,7 +29,7 @@ transforms and the predicate that a finite measure represents a function by its 
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
   Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
-* `TauCeti.isCompletelyMonotoneOnIci_laplaceTransform`,
+* `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`,
   `TauCeti.isCompletelyMonotone_laplaceTransform_of_moments`: the easy direction of the
   representation theorem, in the closed-half-line and all-moments forms.
 * `TauCeti.Measure.ext_of_forall_laplaceTransform_natCast_eq`: finite measures are determined
@@ -414,10 +415,10 @@ theorem isCompletelyMonotoneOnIoi_laplaceTransform
 
 /-- The Laplace transform of a finite measure is completely monotone in the closed-half-line
 roadmap sense. -/
-theorem isCompletelyMonotoneOnIci_laplaceTransform
+theorem isContinuousCompletelyMonotoneOnIoi_laplaceTransform
     (μ : Measure ℝ≥0) [hμ : IsFiniteMeasure μ] :
-    IsCompletelyMonotoneOnIci (laplaceTransform μ) :=
-  isCompletelyMonotoneOnIci_iff.mpr
+    IsContinuousCompletelyMonotoneOnIoi (laplaceTransform μ) :=
+  isContinuousCompletelyMonotoneOnIoi_iff.mpr
     ⟨continuousOn_Ici_laplaceTransform μ,
       isCompletelyMonotoneOnIoi_laplaceTransform μ fun _ ht => integrable_exp_neg_mul μ ht.le⟩
 
@@ -468,9 +469,10 @@ lemma apply_zero (h : RepresentsLaplace μ f) : f 0 = μ.real univ := by
 
 /-- A represented function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`:
 the easy direction of the Hausdorff--Bernstein--Widder theorem, through the representation. -/
-lemma isCompletelyMonotoneOnIci (h : RepresentsLaplace μ f) : IsCompletelyMonotoneOnIci f := by
+lemma isContinuousCompletelyMonotoneOnIoi (h : RepresentsLaplace μ f) :
+    IsContinuousCompletelyMonotoneOnIoi f := by
   have := h.isFiniteMeasure
-  exact (isCompletelyMonotoneOnIci_laplaceTransform μ).congr fun t ht =>
+  exact (isContinuousCompletelyMonotoneOnIoi_laplaceTransform μ).congr fun t ht =>
     h.eq_laplaceTransform ht
 
 /-- A representation transports along agreement on the nonnegative half-line: the predicate

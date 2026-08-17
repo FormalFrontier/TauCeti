@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,8 +20,8 @@ canonical bivector action rather than from a basis-dependent inverse.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.soEquivQuadratic`: the quadratic realization Lie equivalence.
-* `TauCeti.CliffordAlgebra.soEquivQuadratic_lie_ι`: its defining generator-action equation.
+* `CliffordAlgebra.soEquivQuadratic`: the quadratic realization Lie equivalence.
+* `CliffordAlgebra.soEquivQuadratic_lie_ι`: its defining generator-action equation.
 
 ## References
 
@@ -30,11 +31,12 @@ canonical bivector action rather than from a basis-dependent inverse.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
@@ -171,4 +173,4 @@ theorem soEquivQuadratic_lie_ι (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
       CliffordAlgebra Q), ι Q x⁆ = _
   exact soToQuadraticLinearEquiv_lie_ι Q hQ f x
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

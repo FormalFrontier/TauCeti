@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -65,6 +66,28 @@ variable {E X Y : Type*} [TopologicalSpace E] [TopologicalSpace X] [TopologicalS
 
 namespace IsQuotientCoveringMap
 
+omit [TopologicalSpace E] [TopologicalSpace Y] in
+/-- **When the `G`-translates of `U` are pairwise disjoint, two translates whose images in `Y` meet
+have the same image.** So the sets `qH '' (g • U)` are pairwise equal or disjoint. This is a
+statement about the fibres of `qH` alone: no topology enters. -/
+private theorem image_smul_eq_image_smul_of_inter_nonempty
+    (horbit : ∀ {e₁ e₂ : E}, qH e₁ = qH e₂ ↔ e₁ ∈ MulAction.orbit H e₂) {U : Set E}
+    (hdisj : ∀ g : G, (g • U ∩ U).Nonempty → g = 1) {g g' : G}
+    (hmeet : (qH '' (g • U) ∩ qH '' (g' • U)).Nonempty) :
+    qH '' (g • U) = qH '' (g' • U) := by
+  -- A point common to the two images is `qH (g • u) = qH (g' • u')` for some `u, u' ∈ U`.
+  obtain ⟨_, ⟨_, ⟨u, hu, rfl⟩, rfl⟩, _, ⟨u', hu', rfl⟩, hww'⟩ := hmeet
+  obtain ⟨⟨h, hh⟩, hhu'⟩ := horbit.mp hww'.symm
+  -- `H` acts through the coercion to `G` — `MulAction.subgroup_smul_def` — so the orbit witness is
+  -- an element of `G` fixing `qH`, and `hhu'` retypes to the ambient action.
+  have hhu : h • (g' • u') = g • u := by simpa only [MulAction.subgroup_smul_def] using hhu'
+  have hmap : ∀ e : E, qH (h • e) = qH e := fun e =>
+    horbit.mpr ⟨⟨h, hh⟩, MulAction.subgroup_smul_def ⟨h, hh⟩ e⟩
+  have hgg' : g = h * g' := eq_of_inv_mul_eq_one <| by
+    refine hdisj _ ⟨u, Set.mem_smul_set.mpr ⟨u', hu', ?_⟩, hu⟩
+    rw [mul_smul, mul_smul, hhu, inv_smul_smul]
+  simp [hgg', mul_smul, ← Set.image_smul, Set.image_image, hmap]
+
 /-- The evenly covered neighbourhood of `q e` cut out by a set `U` around `e` whose `G`-translates
 are pairwise disjoint. Its sheets are the images in `Y` of the translates `g • U`. -/
 private theorem isEvenlyCovered_of_smul_disjoint (hq : IsQuotientCoveringMap q G)
@@ -79,27 +102,6 @@ private theorem isEvenlyCovered_of_smul_disjoint (hq : IsQuotientCoveringMap q G
   have hsheet_open : ∀ g : G, IsOpen (qH '' (g • U)) := fun g =>
     hqH.isOpenQuotientMap.isOpenMap _ (hUo.smul g)
   have hVo : IsOpen (q '' U) := hq.isOpenQuotientMap.isOpenMap _ hUo
-  -- Two translates of `U` whose images in `Y` meet differ by an element of `H`, so their images
-  -- coincide.
-  have hsheet_eq : ∀ g g' : G, (qH '' (g • U) ∩ qH '' (g' • U)).Nonempty →
-      qH '' (g • U) = qH '' (g' • U) := by
-    rintro g g' ⟨z, ⟨w, hw, rfl⟩, w', hw', hww'⟩
-    obtain ⟨u, hu, rfl⟩ := Set.mem_smul_set.mp hw
-    obtain ⟨u', hu', rfl⟩ := Set.mem_smul_set.mp hw'
-    obtain ⟨⟨h, hh⟩, hhu'⟩ := hqH.apply_eq_iff_mem_orbit.mp hww'.symm
-    -- `H` acts on `E` through `G`, so the orbit witness is an element of `G` fixing `qH`.
-    have hhu : h • (g' • u') = g • u := hhu'
-    have hmap : ∀ e : E, qH (h • e) = qH e := fun _ => hqH.map_smul ⟨h, hh⟩
-    have hone : g⁻¹ * h * g' = 1 := by
-      refine hdisj _ ⟨u, Set.mem_smul_set.mpr ⟨u', hu', ?_⟩, hu⟩
-      rw [mul_smul, mul_smul, hhu, inv_smul_smul]
-    have hgg' : g = h * g' := by
-      have h2 : g * (g⁻¹ * h * g') = h * g' := by
-        rw [← mul_assoc, mul_inv_cancel_left]
-      rw [hone, mul_one] at h2
-      exact h2
-    rw [hgg', mul_smul]
-    simp only [← Set.image_smul, Set.image_image, hmap]
   let : TopologicalSpace {S : Set Y // ∃ g : G, S = qH '' (g • U)} := ⊥
   have : DiscreteTopology {S : Set Y // ∃ g : G, S = qH '' (g • U)} := ⟨rfl⟩
   have : Nonempty {S : Set Y // ∃ g : G, S = qH '' (g • U)} :=
@@ -152,9 +154,10 @@ private theorem isEvenlyCovered_of_smul_disjoint (hq : IsQuotientCoveringMap q G
     exact ⟨qH (g • u), ⟨g • u, Set.smul_mem_smul_set hu, rfl⟩, by rw [hrqH, hq.map_smul]⟩
   · -- Distinct sheets are disjoint.
     rintro ⟨S, g, rfl⟩ ⟨S', g', rfl⟩ hne
-    simp only [Function.onFun, Set.disjoint_iff_inter_eq_empty]
     by_contra hcon
-    exact hne (Subtype.ext (hsheet_eq g g' (Set.nonempty_iff_ne_empty.mpr hcon)))
+    exact hne (Subtype.ext (image_smul_eq_image_smul_of_inter_nonempty
+      hqH.apply_eq_iff_mem_orbit hdisj
+      (Set.not_disjoint_iff_nonempty_inter.mp hcon)))
   · -- The sheets exhaust the preimage of the base set.
     intro z hz
     obtain ⟨w, rfl⟩ := hqH.surjective z

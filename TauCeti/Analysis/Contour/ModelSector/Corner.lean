@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Tau Ceti contributors
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -74,6 +74,20 @@ theorem twoRayCorner_of_neg {z₀ u v : ℂ} {t : ℝ} (ht : t < 0) :
 @[simp]
 theorem twoRayCorner_of_nonneg {z₀ u v : ℂ} {t : ℝ} (ht : 0 ≤ t) :
     twoRayCorner z₀ u v t = z₀ + (t : ℂ) * v := ite_eq_right (not_lt.mpr ht)
+
+/-- The two-ray corner is continuous: its two affine branches agree at the corner. -/
+theorem continuous_twoRayCorner (z₀ u v : ℂ) : Continuous (twoRayCorner z₀ u v) := by
+  have hrewrite : twoRayCorner z₀ u v = fun t : ℝ =>
+      if 0 ≤ t then z₀ + (t : ℂ) * v else z₀ - (t : ℂ) * u := by
+    funext t
+    simp only [twoRayCorner]
+    by_cases ht : t < 0
+    · rw [ite_eq_left ht, ite_eq_right (not_le.mpr ht)]
+    · rw [ite_eq_right ht, ite_eq_left (le_of_not_gt ht)]
+  rw [hrewrite]
+  exact Continuous.if_le (by fun_prop) (by fun_prop) continuous_const continuous_id fun t ht => by
+    subst t
+    simp
 
 /-- On the negative ray the corner curve is the affine map `t ↦ z₀ - t u`. -/
 private theorem twoRayCorner_eventuallyEq_neg {z₀ u v : ℂ} {t : ℝ} (ht : t < 0) :

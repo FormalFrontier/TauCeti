@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,7 +21,7 @@ ReductiveGroups roadmap.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.jordanDecomposition_prodMap`: Jordan decomposition is componentwise
+* `LinearMap.GeneralLinearGroup.jordanDecomposition_prodMap`: Jordan decomposition is componentwise
   on product modules.
 
 ## References
@@ -30,11 +31,9 @@ ReductiveGroups roadmap.
 
 public section
 
-namespace TauCeti
+open Polynomial
 
-open LinearMap Polynomial
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 universe u v w
 
@@ -48,7 +47,7 @@ theorem IsSemisimple.prodMap {g : GeneralLinearGroup K V} {h : GeneralLinearGrou
     (hg : IsSemisimple g) (hh : IsSemisimple h) : IsSemisimple (prodMap g h) := by
   rw [isSemisimple_def] at hg hh ⊢
   rw [coe_prodMap]
-  exact Module.End.IsSemisimple.prodMap hg hh
+  exact TauCeti.Module.End.IsSemisimple.prodMap hg hh
 
 /-- The product map of two unipotent automorphisms is unipotent. -/
 theorem IsUnipotent.prodMap {g : GeneralLinearGroup K V} {h : GeneralLinearGroup K W}
@@ -94,6 +93,4 @@ theorem unipotentPart_prodMap (g : GeneralLinearGroup K V) (h : GeneralLinearGro
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

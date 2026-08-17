@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -154,7 +155,7 @@ below to be isomorphisms. -/
 @[simp]
 theorem finrank_cliffordAlgebra_realCliffordForm (p q : ℕ) :
     finrank ℝ (CliffordAlgebra (realCliffordForm p q)) = 2 ^ (p + q) := by
-  rw [TauCeti.CliffordAlgebra.finrank_eq_two_pow, Module.finrank_pi, Fintype.card_fin]
+  rw [CliffordAlgebra.finrank_eq_two_pow, Module.finrank_pi, Fintype.card_fin]
 
 private def realCliffordNegIndexEquiv (p q : ℕ) : Fin (p + q) ≃ Fin (q + p) :=
   finSumFinEquiv.symm |>.trans

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -35,11 +36,11 @@ representative*, whereas `ν` here is a genuine **directing measure**.
 * `ConditionallyIIDWith`, `ConditionallyIID` — the index-generic predicate and its existential
   wrapper, with their constructor, accessor, simp-normal-form, and injective-reindexing API.
 * `mixedIIDWith_of_conditionallyIIDWith`, `mixedIID_of_conditionallyIID` — the easy projection down
-  to the sequence-level mixture identity.
+  to the mixture identity. Both predicates are index-generic, so the projection is too.
 
 This is a **Layer 0** contribution to `TauCetiRoadmap/Exchangeability/README.md` — the conditional
 predicate for which the roadmap reserves the `ConditionallyIID` name, together with the easy
-projection it pins alongside — which consumes the already-landed Layer 1 joint-kernel lemma
+projection it pins alongside — which rests on the Layer 1 joint-kernel lemma
 `measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure`.
 
 The Layer 1 joint-rectangle common ending `conditionallyIID_of_jointRectangles` lives in

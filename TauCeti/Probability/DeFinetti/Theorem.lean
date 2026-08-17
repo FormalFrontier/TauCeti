@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -38,7 +39,7 @@ Their integrated-out mixture forms read
   from the two-way form)
 
 — Kallenberg, *Probabilistic Symmetries and Invariance Principles*, Theorem 1.1 (pp. 26–28). The
-hard direction is the merged reverse-martingale de Finetti chain
+hard direction is the reverse-martingale de Finetti chain
 (`mixedIID_of_contractable`); the converse directions are the Layer-0 bridges
 (`MixedIID.exchangeable`, `MixedIID.contractable`).
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -46,8 +47,7 @@ private lemma segment1_chord_ne_zero (hH : H ≠ Real.sqrt 3 / 2) :
     (ρ : ℂ) + 1 - (1 / 2 + H * Complex.I) ≠ 0 := by
   intro h0
   apply hH
-  have him : ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)).im = Real.sqrt 3 / 2 - H := by
-    simp [ρ]
+  have him := segment1_chord_im (H := H)
   rw [h0, Complex.zero_im] at him
   linarith
 

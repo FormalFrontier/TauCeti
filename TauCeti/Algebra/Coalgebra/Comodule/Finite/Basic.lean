@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -81,7 +82,7 @@ end ComoduleCat
 /-- The category of finitely generated right comodules over a fixed coalgebra.
 
 For a field base, this is the category of finite-dimensional right comodules. -/
-abbrev FGComoduleCat :=
+abbrev FGComoduleCat : Type _ :=
   (ComoduleCat.isFG.{u, v, w} R C).FullSubcategory
 
 namespace FGComoduleCat

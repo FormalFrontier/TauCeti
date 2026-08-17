@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,7 +25,8 @@ says nothing about how much of it is determined by the ring: `TauCeti.card_block
 *number* of blocks is an invariant and `TauCeti.blocks_equiv_simpleModules` matches the blocks with
 the simple modules, but both are silent about the two remaining pieces of data, the size `ι` of a
 block and its division ring `D`.  This file determines both, for a *single* block: it does not treat
-a product of blocks, so it does not settle the semisimple case (see the implementation note below).
+a product of blocks; `TauCeti.wedderburn_blocks_unique` applies the result here after matching the
+factors of two product presentations.
 
 The content is a description of those two data of `A = Matᵢ(D)` in terms that transport along a
 ring isomorphism.  The **column module** `ι → D`, on which `A` acts by `Matrix.mulVec`, is a simple
@@ -70,17 +72,17 @@ Note that `DecidableEq ι` is needed to make `Matᵢ(D)` a ring, but not to stat
 results, whose types mention only the multiplication and addition of `Matᵢ(D)`; those are therefore
 stated without it and use `classical` internally.
 
-What is *not* proved here is the matching of the blocks of two Wedderburn presentations of a
-*semisimple* ring: that needs the decomposition of the ring along its central idempotents to attach
-a block to each simple module, on top of the invariants of one block established here.
+The matching of the blocks of two product presentations is proved downstream in
+`TauCeti/RingTheory/Semisimple/Wedderburn/Uniqueness.lean`: the coordinate central idempotents
+recover the factor permutation, and the theorem in this file then identifies the data in each
+factor.
 
 ## References
 
 This is the single-block case of the Layer 2 target "uniqueness / invariance" -- the degrees `nᵢ`
 and the division rings `Dᵢ` of a Wedderburn presentation are determined by the ring -- of the
 [semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md);
-the target as a whole is about a *product* of blocks and remains open, as the implementation note
-above records.
+the product-level result is `TauCeti.wedderburn_blocks_unique`.
 
 See T. Y. Lam, *A First Course in Noncommutative Rings*, GTM 131, §3, or C. W. Curtis and
 I. Reiner, *Representation Theory of Finite Groups and Associative Algebras*, §26.

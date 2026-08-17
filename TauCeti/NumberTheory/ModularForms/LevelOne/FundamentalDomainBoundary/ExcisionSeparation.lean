@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -75,10 +76,10 @@ private theorem fdBoundary_arc_ne_of_notMem_arcSingularSet {H : ℝ} {S : Finset
     (hre : s.re = 1 / 2 ∨ s.re = -(1 / 2)) (hs : s ∉ arcSingularSet S) {t : ℝ}
     (ht : t ∈ Icc (1 : ℝ) 3) : fdBoundary H t ≠ s := by
   intro heq
-  rcases eq_or_lt_of_le ht.1 with h1 | h1
+  rcases ht.1.eq_or_lt with h1 | h1
   · rw [← h1, fdBoundary_apply_one] at heq
     exact hs (heq ▸ rho_add_one_mem_arcSingularSet S)
-  · rcases eq_or_lt_of_le ht.2 with h3 | h3
+  · rcases ht.2.eq_or_lt with h3 | h3
     · rw [h3, fdBoundary_apply_three] at heq
       exact hs (heq ▸ rho_mem_arcSingularSet S)
     · have hb := re_fdBoundary_arc_strictly_between H ⟨h1, h3⟩
@@ -110,7 +111,7 @@ theorem exists_pos_forall_le_norm_fdBoundary_sub_of_mem_verticalSingularSet (H :
         exact fun t ht => fdBoundary_arc_ne_of_notMem_arcSingularSet
           (re_eq_of_mem_verticalSingularSet hsv) hsna ht)
   choose! ρ hρpos hρbound using hbound
-  exact ⟨V.inf' hVne ρ, (Finset.lt_inf'_iff hVne).mpr fun s hsV => hρpos s hsV,
+  exact ⟨V.inf' hVne ρ, (Finset.lt_inf'_iff hVne).mpr hρpos,
     fun s hsv hsna t ht => (Finset.inf'_le ρ (Finset.mem_filter.mpr ⟨hsv, hsna⟩)).trans
       (hρbound s (Finset.mem_filter.mpr ⟨hsv, hsna⟩) t (huIcc ▸ ht))⟩
 

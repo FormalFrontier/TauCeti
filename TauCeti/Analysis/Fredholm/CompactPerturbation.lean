@@ -1,12 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Analysis.Fredholm.ClosedRange
 public import TauCeti.Analysis.Fredholm.ContinuousFamily
-public import TauCeti.Analysis.Fredholm.FiniteRank
 public import TauCeti.Analysis.Normed.Operator.Compact.RieszTheory
 
 /-!
@@ -89,40 +89,26 @@ theorem _root_.ContinuousLinearMap.IsFredholm.add_of_isCompactOperator
     ContinuousLinearMap.IsFredholm (T + C) := by
   obtain ⟨S, hS⟩ := hT.exists_isQuasiInverse
   -- `S ∘ T` and `T ∘ S` differ from the identity by an operator of finite rank.
-  have hleft : FiniteDimensional 𝕜
-      (LinearMap.range ((S.comp T - 1 : E →L[𝕜] E) : E →ₗ[𝕜] E)) := by
-    have h := LinearMap.FiniteRangeSetoid.equiv_iff_hasFiniteRange.mp hS.1
-    rw [← Submodule.fg_iff_finiteDimensional]
-    exact h
-  have hright : FiniteDimensional 𝕜
-      (LinearMap.range ((T.comp S - 1 : F →L[𝕜] F) : F →ₗ[𝕜] F)) := by
-    have h := LinearMap.FiniteRangeSetoid.equiv_iff_hasFiniteRange.mp hS.2
-    rw [← Submodule.fg_iff_finiteDimensional]
-    exact h
+  have hleft : LinearMap.HasFiniteRange ((S.comp T - 1 : E →L[𝕜] E) : E →ₗ[𝕜] E) := by
+    simpa only [ContinuousLinearMap.toLinearMap_sub, ContinuousLinearMap.toLinearMap_comp,
+      ContinuousLinearMap.toLinearMap_one, Module.End.one_eq_id] using
+      LinearMap.FiniteRangeSetoid.equiv_iff_hasFiniteRange.mp hS.1
+  have hright : LinearMap.HasFiniteRange ((T.comp S - 1 : F →L[𝕜] F) : F →ₗ[𝕜] F) := by
+    simpa only [ContinuousLinearMap.toLinearMap_sub, ContinuousLinearMap.toLinearMap_comp,
+      ContinuousLinearMap.toLinearMap_one, Module.End.one_eq_id] using
+      LinearMap.FiniteRangeSetoid.equiv_iff_hasFiniteRange.mp hS.2
   have hcomp₁ : ContinuousLinearMap.IsFredholm (S.comp (T + C)) := by
-    have hcompact : IsCompactOperator (S.comp C) := by
-      have hcomp : (⇑(S.comp C) : E → E) = ⇑S ∘ ⇑C := by
-        ext x
-        rw [Function.comp_apply, ContinuousLinearMap.comp_apply]
-      rw [hcomp]
-      exact hC.clm_comp S
     have hrw : S.comp (T + C) = (1 + S.comp C) + (S.comp T - 1) := by
       rw [ContinuousLinearMap.comp_add]
       abel
     rw [hrw]
-    exact (isFredholm_one_add hcompact).add_of_finiteDimensional_range hleft
+    exact (isFredholm_one_add (hC.clm_comp S :)).add_hasFiniteRange hleft
   have hcomp₂ : ContinuousLinearMap.IsFredholm ((T + C).comp S) := by
-    have hcompact : IsCompactOperator (C.comp S) := by
-      have hcomp : (⇑(C.comp S) : F → F) = ⇑C ∘ ⇑S := by
-        ext x
-        rw [Function.comp_apply, ContinuousLinearMap.comp_apply]
-      rw [hcomp]
-      exact hC.comp_clm S
     have hrw : (T + C).comp S = (1 + C.comp S) + (T.comp S - 1) := by
       rw [ContinuousLinearMap.add_comp]
       abel
     rw [hrw]
-    exact (isFredholm_one_add hcompact).add_of_finiteDimensional_range hright
+    exact (isFredholm_one_add (hC.comp_clm S :)).add_hasFiniteRange hright
   refine ContinuousLinearMap.IsFredholm.of_finite_ker_coker _ ?_ ?_
   · -- The kernel of `T + C` sits inside that of `S ∘ (T + C)`.
     have hker : LinearMap.ker ((T + C : E →L[𝕜] F) : E →ₗ[𝕜] F)
@@ -168,14 +154,14 @@ theorem index_one_sub_eq_zero {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
   have hrw : (1 - K : E →L[𝕜] E) = ContinuousLinearMap.id 𝕜 E + (-K) := by
     ext x
     simp [sub_eq_add_neg]
-  rw [hrw, index_add_of_isCompactOperator isFredholm_id hneg, index_id]
+  rw [hrw, index_add_of_isCompactOperator .id hneg, index_id]
 
 /-- A compact perturbation of the identity has index `0`, in additive form. -/
 @[simp]
 theorem index_one_add_eq_zero {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
     index (1 + K : E →L[𝕜] E) = 0 := by
   have hrw : (1 + K : E →L[𝕜] E) = ContinuousLinearMap.id 𝕜 E + K := rfl
-  rw [hrw, index_add_of_isCompactOperator isFredholm_id hK, index_id]
+  rw [hrw, index_add_of_isCompactOperator .id hK, index_id]
 
 end ContinuousLinearMap
 
