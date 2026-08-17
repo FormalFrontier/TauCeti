@@ -23,9 +23,9 @@ the fixed-line induction for the Lie--Kolchin theorem.
 
 * `TauCeti.exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent`: a commuting family of
   unipotent automorphisms of a nonzero finite-dimensional space has a common nonzero fixed vector.
-* `TauCeti.exists_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent`: such a family fixes
-  a one-dimensional submodule pointwise.
-* `TauCeti.exists_submodule_finrank_eq_one_of_isUnipotent`: a unipotent representation of a
+* `TauCeti.exists_fixed_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent`: such a family
+  fixes a one-dimensional submodule pointwise.
+* `TauCeti.exists_fixed_submodule_finrank_eq_one_of_isUnipotent`: a unipotent representation of a
   commutative monoid has a pointwise-fixed line.
 
 ## References
@@ -71,7 +71,7 @@ theorem exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent
 
 /-- A pairwise-commuting family of unipotent automorphisms of a nonzero finite-dimensional vector
 space fixes a one-dimensional submodule pointwise. -/
-theorem exists_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent
+theorem exists_fixed_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent
     [FiniteDimensional K V] [Nontrivial V]
     (f : ι → GeneralLinearGroup K V) (hcomm : Pairwise fun i j ↦ Commute (f i) (f j))
     (hunipotent : ∀ i, GeneralLinearGroup.IsUnipotent (f i)) :
@@ -98,12 +98,13 @@ theorem exists_common_fixed_vector_of_isUnipotent [FiniteDimensional K V] [Nontr
 
 /-- A unipotent representation of a commutative monoid on a nonzero finite-dimensional vector space
 fixes a one-dimensional submodule pointwise. -/
-theorem exists_submodule_finrank_eq_one_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+theorem exists_fixed_submodule_finrank_eq_one_of_isUnipotent
+    [FiniteDimensional K V] [Nontrivial V]
     (ρ : G →* GeneralLinearGroup K V)
     (hunipotent : ∀ g, GeneralLinearGroup.IsUnipotent (ρ g)) :
     ∃ p : Submodule K V, Module.finrank K p = 1 ∧
       ∀ g, ∀ x ∈ p, (ρ g : Module.End K V) x = x := by
-  apply exists_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
+  apply exists_fixed_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
   intro g h _
   exact (ρ.map_mul g h).symm.trans ((congrArg ρ (mul_comm g h)).trans (ρ.map_mul h g))
 
