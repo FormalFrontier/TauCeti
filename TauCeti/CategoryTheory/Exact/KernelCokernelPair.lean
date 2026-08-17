@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.Algebra.Homology.ShortComplex.Biproduct
 public import Mathlib.Algebra.Homology.ShortComplex.ShortExact
 public import Mathlib.CategoryTheory.Limits.Shapes.Opposites.Kernels
 
@@ -31,7 +32,6 @@ category with homology the notion coincides with Mathlib's
   its two morphisms form a kernel–cokernel pair. Its noncomputable accessors
   `TauCeti.IsKernelCokernelPair.fIsKernel` and `TauCeti.IsKernelCokernelPair.gIsCokernel`
   produce the two universal properties.
-* `TauCeti.shortComplexBiprod`: the componentwise binary direct sum of two short complexes.
 * `TauCeti.IsKernelCokernelPair.lift` and `TauCeti.IsKernelCokernelPair.desc`: the two
   factorizations, with their defining equations and their uniqueness.
 
@@ -96,63 +96,6 @@ variable {C : Type u} [Category.{v} C]
 section HasZeroMorphisms
 
 variable [HasZeroMorphisms C] {S S₁ S₂ : ShortComplex C}
-
-/-- The two maps in the componentwise biproduct of short complexes have zero composite. -/
-theorem shortComplexBiprod_zero (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    biprod.map S₁.f S₂.f ≫ biprod.map S₁.g S₂.g = 0 := by
-  ext <;> simp [reassoc_of% S₁.zero, reassoc_of% S₂.zero]
-
-/-- The componentwise binary direct sum of two short complexes. -/
-noncomputable def shortComplexBiprod (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] : ShortComplex C :=
-  ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
-    (shortComplexBiprod_zero S₁ S₂)
-
-/-- The componentwise biproduct as an explicitly constructed short complex. -/
-theorem shortComplexBiprod_eq_mk (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    shortComplexBiprod S₁ S₂ =
-      ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
-        (shortComplexBiprod_zero S₁ S₂) := (rfl)
-
-/-- The left object of the componentwise biproduct of two short complexes. -/
-@[simp]
-theorem shortComplexBiprod_X₁ (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    (shortComplexBiprod S₁ S₂).X₁ = (S₁.X₁ ⊞ S₂.X₁) := (rfl)
-
-/-- The middle object of the componentwise biproduct of two short complexes. -/
-@[simp]
-theorem shortComplexBiprod_X₂ (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    (shortComplexBiprod S₁ S₂).X₂ = (S₁.X₂ ⊞ S₂.X₂) := (rfl)
-
-/-- The right object of the componentwise biproduct of two short complexes. -/
-@[simp]
-theorem shortComplexBiprod_X₃ (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    (shortComplexBiprod S₁ S₂).X₃ = (S₁.X₃ ⊞ S₂.X₃) := (rfl)
-
-/-- The first map of the componentwise biproduct of two short complexes. -/
-@[simp]
-theorem shortComplexBiprod_f (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    HEq (shortComplexBiprod S₁ S₂).f (biprod.map S₁.f S₂.f) := (HEq.rfl)
-
-/-- The second map of the componentwise biproduct of two short complexes. -/
-@[simp]
-theorem shortComplexBiprod_g (S₁ S₂ : ShortComplex C)
-    [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
-    [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    HEq (shortComplexBiprod S₁ S₂).g (biprod.map S₁.g S₂.g) := (HEq.rfl)
 
 /-- A short complex `S : X₁ ⟶ X₂ ⟶ X₃` is a **kernel–cokernel pair** when `S.f` is a kernel of
 `S.g` and `S.g` is a cokernel of `S.f`. This is Bühler's notion of a kernel–cokernel pair; the

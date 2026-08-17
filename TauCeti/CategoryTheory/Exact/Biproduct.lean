@@ -22,11 +22,10 @@ X₁ ⊞ X₂  --(i₁ ⊞ 1)-->  Y₁ ⊞ X₂  --(1 ⊞ i₂)-->  Y₁ ⊞ Y�
 
 The dual argument applies to deflations.  Finally, the direct sum of the two underlying
 kernel--cokernel pairs identifies the cokernel supplied by E1 with the componentwise direct sum,
-so the componentwise short complex itself is a conflation.
+so the componentwise short complex `TauCeti.shortComplexBiprod` itself is a conflation.
 
 ## Main declarations
 
-* `TauCeti.shortComplexBiprod`: the componentwise binary direct sum of two short complexes.
 * `TauCeti.ExactStructure.isInflation_biprod`: binary direct sums preserve inflations.
 * `TauCeti.ExactStructure.isDeflation_biprod`: binary direct sums preserve deflations.
 * `TauCeti.ExactStructure.conflation_biprod`: binary direct sums preserve conflations.
