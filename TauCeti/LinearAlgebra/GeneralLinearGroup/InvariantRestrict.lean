@@ -62,9 +62,9 @@ theorem coe_invariantRestrict_symm_apply (θ : V ≃+ V) (M : S)
   by rfl
 
 /-- Restriction commutes with taking the inverse automorphism. -/
-theorem invariantRestrict_symm (θ : V ≃+ V) (M : S) (hθ : ∀ v, θ v ∈ M ↔ v ∈ M)
-    (hθ' : ∀ v, θ.symm v ∈ M ↔ v ∈ M) :
-    (invariantRestrict θ M hθ).symm = invariantRestrict θ.symm M hθ' := by
+theorem invariantRestrict_symm (θ : V ≃+ V) (M : S) (hθ : ∀ v, θ v ∈ M ↔ v ∈ M) :
+    (invariantRestrict θ M hθ).symm = invariantRestrict θ.symm M
+      (fun v => by simpa only [θ.apply_symm_apply] using (hθ (θ.symm v)).symm) := by
   ext v
   rfl
 
@@ -127,11 +127,15 @@ theorem baseChangeInvariantRestrictUnit_pow_eq_one (θ : V ≃+ V) (M : S)
     LinearEquiv.ext fun v => Subtype.ext ((coe_invariantRestrict_pow_apply θ M hθ n v).trans
       (hn (v : V)))
   rw [baseChangeInvariantRestrictUnit]
-  change ((LinearMap.GeneralLinearGroup.generalLinearEquiv R (R ⊗[ℤ] M)).symm
-    ((invariantRestrict θ M hθ).baseChange ℤ R M M)) ^ n = 1
-  rw [← map_pow (LinearMap.GeneralLinearGroup.generalLinearEquiv R (R ⊗[ℤ] M)).symm,
-    ← LinearEquiv.baseChange_pow, h1, LinearEquiv.baseChange_one]
-  rfl
+  calc
+    LinearMap.GeneralLinearGroup.ofLinearEquiv
+          ((invariantRestrict θ M hθ).baseChange ℤ R M M) ^ n =
+        LinearMap.GeneralLinearGroup.ofLinearEquiv
+          ((invariantRestrict θ M hθ).baseChange ℤ R M M ^ n) :=
+      (map_pow (LinearMap.GeneralLinearGroup.generalLinearEquiv R (R ⊗[ℤ] M)).symm _ n).symm
+    _ = 1 := by
+      rw [← LinearEquiv.baseChange_pow, h1, LinearEquiv.baseChange_one]
+      rfl
 
 /-- Further scalar extension leaves the base-changed restriction unchanged. -/
 theorem mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit

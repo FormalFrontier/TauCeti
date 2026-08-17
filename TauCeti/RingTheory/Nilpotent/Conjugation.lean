@@ -93,6 +93,23 @@ attribute [local instance high] Algebra.toModule
 
 variable {R : Type v} [CommRing R] [Algebra ℤ R]
 
+omit [AddSubgroupClass S V] in
+/-- An invariant equivalence carries preservation of a set by the divided powers of
+one element to preservation by the divided powers of an intertwined element. -/
+theorem dividedPower_smul_mem_of_intertwines (M : S)
+    (hθ : ∀ v, θ v ∈ M ↔ v ∈ M) (hxy : ∀ v, θ (x • v) = y • θ v)
+    (hx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) :
+    ∀ n, ∀ v ∈ M, Associative.dividedPower n y • v ∈ M := by
+  intro n v hv
+  have hv' : θ.symm (v : V) ∈ M :=
+    (hθ (θ.symm v)).1 (by simpa only [θ.apply_symm_apply] using hv)
+  have hdp : θ (Associative.dividedPower n x • θ.symm v) =
+      Associative.dividedPower n y • v := by
+    simpa only [LinearEquiv.coe_toLinearMap, θ.apply_symm_apply] using
+      apply_dividedPower_smul_of_intertwines θ.toLinearMap hxy n (θ.symm v)
+  rw [← hdp]
+  exact (hθ _).2 (hx n (θ.symm v) hv')
+
 /-- Conjugating the base-changed divided-power exponential of `x` by an intertwiner produces the
 base-changed divided-power exponential of `y`, with the same parameter.
 
@@ -101,27 +118,24 @@ bound follows structurally by conjugating the first nilpotent endomorphism. -/
 theorem baseChange_invariantRestrict_baseChangeExp (M : S) (hθ : ∀ v, θ v ∈ M ↔ v ∈ M)
     (hxy : ∀ v, θ (x • v) = y • θ v)
     (hx : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    (hy : ∀ n, ∀ v ∈ M, Associative.dividedPower n y • v ∈ M)
     {k : ℕ} (hkx : x ^ k = 0) (hky : y ^ k = 0) (t : R) (z : R ⊗[ℤ] M) :
     (GeneralLinearGroup.invariantRestrict θ.toAddEquiv M hθ).baseChange ℤ R M M
         (baseChangeExp x M hx t z) =
-      baseChangeExp y M hy t
+      baseChangeExp y M (dividedPower_smul_mem_of_intertwines θ M hθ hxy hx) t
         ((GeneralLinearGroup.invariantRestrict θ.toAddEquiv M hθ).baseChange ℤ R M M z) := by
   induction z using TensorProduct.induction_on with
   | zero => simp
   | tmul r v =>
       rw [baseChangeExp_tmul_of_pow_eq_zero x M hx hkx, map_sum,
-        LinearEquiv.baseChange_tmul, baseChangeExp_tmul_of_pow_eq_zero y M hy hky]
+        LinearEquiv.baseChange_tmul, baseChangeExp_tmul_of_pow_eq_zero y M
+          (dividedPower_smul_mem_of_intertwines θ M hθ hxy hx) hky]
       refine Finset.sum_congr rfl fun n _ => ?_
       rw [LinearEquiv.baseChange_tmul]
       congr 1
       refine Subtype.ext ?_
       rw [GeneralLinearGroup.coe_invariantRestrict_apply, coe_integralDividedPower_apply,
         coe_integralDividedPower_apply, GeneralLinearGroup.coe_invariantRestrict_apply]
-      change θ (Associative.dividedPower n x • (v : V)) =
-        Associative.dividedPower n y • θ (v : V)
-      simpa only [LinearEquiv.coe_toLinearMap] using
-        apply_dividedPower_smul_of_intertwines θ.toLinearMap hxy n (v : V)
+      convert apply_dividedPower_smul_of_intertwines θ.toLinearMap hxy n (v : V) using 1 <;> rfl
   | add z w hz hw => rw [map_add, map_add, map_add, map_add, hz, hw]
 
 end TauCeti

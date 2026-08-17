@@ -116,7 +116,7 @@ theorem baseChangeInvariantRestrictUnit_mul_kostantRootSubgroupParam (A : CommAl
   rw [Units.val_mul, Units.val_mul, Module.End.mul_apply, Module.End.mul_apply,
     kostantRootSubgroupParam_val_apply, kostantRootSubgroupParam_val_apply,
     val_baseChangeInvariantRestrictUnit_apply, val_baseChangeInvariantRestrictUnit_apply]
-  exact baseChange_invariantRestrict_baseChangeExp θ M hθM hint _ _ hk hky _ z
+  exact baseChange_invariantRestrict_baseChangeExp θ M hθM hint _ hk hky _ z
 
 include hθe in
 /-- The pinning equation for a numbered symmetry: conjugation by the scalar extension of `θ`
