@@ -8,7 +8,7 @@ module
 public import Mathlib.Topology.Spectral.Hom
 public import TauCeti.AlgebraicGeometry.AdicSpace.RestrictToIdeal
 public import TauCeti.AlgebraicGeometry.AdicSpace.PatchPresentation
-import TauCeti.Topology.Spectral.SpectralMap
+public import TauCeti.Topology.Spectral.SpectralMap
 import TauCeti.Topology.Spectral.PatchCriterion
 
 /-!
@@ -80,6 +80,10 @@ below is the public neighbourhood interface that merges them.)
 * `TauCeti.ValuationSpectrum.isSpectralMap_restrictToIdealCodRestrict` : **Lemma 7.5(2)**, the
   spectral-map half, closing out Lemma 7.5: spectrality is tested on the basis `R`, whose
   preimages step (iii) computes and `isCompact_basicOpenFinset` bounds.
+* `TauCeti.ValuationSpectrum.isProConstructible_val_preimage_setOfPred_forall_vle_one` : the
+  sub-unit locus of a set of ring elements is pro-constructible in `Spv (A, I)` — the form
+  Wedhorn's Theorem 7.35 consumes, proved from the rational family since the inclusion into
+  `Spv A` is not spectral.
 
 ## References
 
@@ -336,7 +340,7 @@ theorem univ_mem_rationalFamily (I : Ideal A)
     Set.univ ∈ rationalFamily I hfg :=
   ⟨{1}, 1, isAdmissible_of_one_mem (Finset.mem_singleton_self 1), by
     rw [basicOpenFinset_eq_biInter]
-    simp [basicOpen_one]⟩
+    simp⟩
 
 /-- **Wedhorn's step (i) in the proof of Lemma 7.5, on `Spv (A, I)`**: the family `R` is stable
 under intersection. The traces intersect along the trace of the intersection, which
@@ -440,8 +444,7 @@ theorem restrictToIdealCodRestrict_preimage (I : Ideal A)
     refine ⟨fun t ht ↦ ?_, hu0⟩
     rcases hT t ht with h | ⟨-, h⟩
     · by_contra hlt
-      exact restrictToIdeal_ne_zero_of_le _ I hfg hu
-        (le_of_not_ge fun hc ↦ hlt ((valuation_le_iff w t u).mp hc)) h
+      exact restrictToIdeal_ne_zero_of_le _ I hfg hu ((valuation_lt_iff w u t).mpr hlt).le h
     · exact h
   · rintro ⟨hT, hu0⟩
     have hu : w.valuation.restrictToIdeal I hfg u ≠ 0 :=
@@ -521,5 +524,32 @@ theorem isSpectralMap_restrictToIdealCodRestrict (I : Ideal A)
   rintro _ ⟨T, u, hadm, rfl⟩
   rw [restrictToIdealCodRestrict_preimage I hfg hadm]
   exact isCompact_basicOpenFinset T u
+
+/-! ### The sub-unit locus is pro-constructible in `Spv (A, I)` -/
+
+/-- **The locus `v ≤ 1` on a set of ring elements is pro-constructible in `Spv (A, I)`.** Its
+trace is the intersection over `a ∈ S` of the rational subsets `Spv(A,I)({a,1}/1)`, each a
+quasi-compact open of the subspace by `isCompact_of_mem_rationalFamily` — carrying `1` among
+the numerators makes the pair admissible for any `I` (`isAdmissible_of_one_mem`).
+
+This is the form Wedhorn's Theorem 7.35 consumes at `S = A⁺`. It does not follow from the
+corresponding `Spv A` statement by restriction — the inclusion `Spv (A, I) → Spv A` is not
+spectral — which is why it is proved here from the rational family instead. -/
+theorem isProConstructible_val_preimage_setOfPred_forall_vle_one (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (S : Set A) :
+    IsProConstructible (Subtype.val ⁻¹' {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 1} :
+      Set (spvOfIdeal I hfg)) := by
+  classical
+  have hsingle : ∀ a : A, basicOpenFinset ({a, 1} : Finset A) 1 = basicOpen a 1 := fun a ↦ by
+    rw [basicOpenFinset_eq_biInter]
+    simp
+  have h : (Subtype.val ⁻¹' {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 1} :
+      Set (spvOfIdeal I hfg)) = ⋂ a ∈ S, Subtype.val ⁻¹' basicOpenFinset {a, 1} 1 := by
+    ext w
+    simp [hsingle]
+  rw [h]
+  exact IsProConstructible.biInter fun a _ ↦ IsCompact.isProConstructible
+    (isCompact_of_mem_rationalFamily I hfg ⟨{a, 1}, 1, isAdmissible_of_one_mem (by simp), rfl⟩)
+    ((isOpen_basicOpenFinset _ _).preimage continuous_subtype_val)
 
 end TauCeti.ValuationSpectrum

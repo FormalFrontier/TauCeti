@@ -39,9 +39,7 @@ public section
 
 noncomputable section
 
-namespace TauCeti
-
-open Metric Set
+open Metric Set TauCeti.SetLike
 
 namespace AbstractSimplicialComplex
 
@@ -249,4 +247,3 @@ theorem realizationOneSimplexBoundaryHomeomorphSphereZero_symm_apply_neg_one :
 
 end AbstractSimplicialComplex
 
-end TauCeti

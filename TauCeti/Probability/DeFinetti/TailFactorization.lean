@@ -62,7 +62,6 @@ lemma condExp_blockIndicatorProd_tailProcess_ae_eq_prod
       =ᵐ[μ]
     (fun ω => ∏ i : Fin r,
       μ[Set.indicator (C i) (fun _ => (1 : ℝ)) ∘ X 0 | tailProcess X] ω) := by
-  classical
   -- Reverse-martingale convergence: `μ[f | tailFamily X (m+1)] → μ[f | tailProcess X]` a.e.
   have hconv : ∀ f : Ω → ℝ, ∀ᵐ ω ∂μ,
       Tendsto (fun m => μ[f | tailFamily X (m + 1)] ω) atTop

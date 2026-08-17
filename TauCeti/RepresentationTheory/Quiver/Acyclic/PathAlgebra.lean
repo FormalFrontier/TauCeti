@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
+public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
 /-!
 # The path algebra of an acyclic quiver
@@ -15,8 +16,8 @@ is acyclic, and the paths are a basis of its path algebra; so the path algebra o
 finite-dimensional over a division ring.
 
 This is the only place the generic path algebra of
-`TauCeti.RepresentationTheory.Quiver.PathAlgebra` meets acyclicity, which is why it is a module of
-its own: the path algebra itself needs nothing from the theory of acyclic quivers.
+`TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic` meets acyclicity, which is why it is a
+module of its own: the path algebra itself needs nothing from the theory of acyclic quivers.
 
 ## Main results
 

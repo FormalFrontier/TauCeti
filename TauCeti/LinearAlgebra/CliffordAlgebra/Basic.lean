@@ -1,13 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
-import Mathlib.LinearAlgebra.ExteriorAlgebra.Basis
+import TauCeti.LinearAlgebra.ExteriorAlgebra.Contraction
 import Mathlib.LinearAlgebra.BilinearForm.Properties
 import Mathlib.Tactic.NoncommRing
 
@@ -78,36 +79,6 @@ private theorem contractLeft_associated_eq_zero_of_commute_of_mem_even
 
 section Exterior
 
-private theorem contractLeft_ιMulti_eq_zero {n : ℕ}
-    (d : Module.Dual R M) (v : Fin n → M) (h : ∀ i, d (v i) = 0) :
-    contractLeft (Q := (0 : QuadraticForm R M)) d (ExteriorAlgebra.ιMulti R n v) = 0 := by
-  induction n with
-  | zero =>
-      rw [ExteriorAlgebra.ιMulti_zero_apply]
-      exact contractLeft_one (Q := (0 : QuadraticForm R M)) d
-  | succ n ih =>
-      rw [ExteriorAlgebra.ιMulti_succ_apply, contractLeft_ι_mul, h 0, zero_smul,
-        ih (Matrix.vecTail v) (fun i => h i.succ), mul_zero, sub_zero]
-
-private theorem contractLeft_basis_eq_zero_of_not_mem {n : ℕ}
-    (b : Module.Basis (Fin n) R M) (i : Fin n) (s : Finset (Fin n)) (hi : i ∉ s) :
-    contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i) (b.ExteriorAlgebra s) = 0 := by
-  rw [ExteriorAlgebra.basis_apply]
-  apply contractLeft_ιMulti_eq_zero
-  intro j
-  simp only [Function.comp_apply, Module.Basis.coord_apply,
-    Module.Basis.repr_self, Finsupp.single_apply]
-  split_ifs with h
-  · exfalso
-    apply hi
-    rw [← h]
-    have hj := (Set.powersetCard.mem_range_ofFinEmbEquiv_symm_iff_mem
-      (Set.powersetCard.prodEquiv.symm s).2
-      (Set.powersetCard.ofFinEmbEquiv.symm (Set.powersetCard.prodEquiv.symm s).2 j)).mp
-      ⟨j, rfl⟩
-    exact hj
-  · rfl
-
 private noncomputable def exteriorCoordProj {n : ℕ}
     (b : Module.Basis (Fin n) R M) (i : Fin n) :
     ExteriorAlgebra R M →ₗ[R] ExteriorAlgebra R M :=
@@ -118,52 +89,15 @@ private theorem exteriorCoordProj_basis_of_not_mem {n : ℕ}
     (b : Module.Basis (Fin n) R M) (i : Fin n) (s : Finset (Fin n)) (hi : i ∉ s) :
     exteriorCoordProj b i (b.ExteriorAlgebra s) = 0 := by
   rw [exteriorCoordProj, LinearMap.comp_apply, LinearMap.mulLeft_apply,
-    contractLeft_basis_eq_zero_of_not_mem b i s hi, mul_zero]
-
-private theorem basis_exteriorAlgebra_singleton_eq_ι {n : ℕ}
-    (b : Module.Basis (Fin n) R M) (i : Fin n) :
-    b.ExteriorAlgebra {i} = ExteriorAlgebra.ι R (b i) := by
-  let a : Set.powersetCard (Fin n) 1 :=
-    Set.powersetCard.ofCard (s := {i}) (Finset.card_singleton i)
-  rw [ExteriorAlgebra.basis_apply_ofCard b (Finset.card_singleton i)]
-  rw [ExteriorAlgebra.ιMulti_family]
-  rw [ExteriorAlgebra.ιMulti_succ_apply, ExteriorAlgebra.ιMulti_zero_apply, mul_one]
-  have hj := (Set.powersetCard.mem_range_ofFinEmbEquiv_symm_iff_mem
-    a (Set.powersetCard.ofFinEmbEquiv.symm a 0)).mp ⟨0, rfl⟩
-  have hj' : Set.powersetCard.ofFinEmbEquiv.symm a 0 ∈ ({i} : Finset (Fin n)) := hj
-  have heq : Set.powersetCard.ofFinEmbEquiv.symm a 0 = i := Finset.eq_of_mem_singleton hj'
-  exact congrArg (fun j ↦ ExteriorAlgebra.ι R (b j)) heq
+    TauCeti.ExteriorAlgebra.ι_mul_contractLeft_coord_basis]
+  simp only [hi, ↓reduceIte]
 
 private theorem exteriorCoordProj_basis_of_mem {n : ℕ}
     (b : Module.Basis (Fin n) R M) (i : Fin n) (s : Finset (Fin n)) (hi : i ∈ s) :
     exteriorCoordProj b i (b.ExteriorAlgebra s) = b.ExteriorAlgebra s := by
-  let a : Set.powersetCard (Fin n) 1 := ⟨{i}, Finset.card_singleton i⟩
-  let t : Set.powersetCard (Fin n) (s.erase i).card := ⟨s.erase i, rfl⟩
-  have hdisj : Disjoint a.val t.val := by simp [a, t]
-  have hunion : Set.powersetCard.disjUnion hdisj =
-      (Set.powersetCard.ofCard (s := s) (by
-        rw [Finset.card_erase_of_mem hi]
-        have : 0 < s.card := Finset.card_pos.mpr ⟨i, hi⟩
-        omega) : Set.powersetCard (Fin n) (1 + (s.erase i).card)) := by
-    apply Subtype.ext
-    simp [Set.powersetCard.disjUnion, a, t, hi]
-  have hprod := ExteriorAlgebra.basis_mul_of_disjoint b a t hdisj
-  rw [hunion] at hprod
-  simp only [a, t, Set.powersetCard.val_ofCard] at hprod
-  have hfixed : exteriorCoordProj b i
-      (b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i)) =
-      b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i) := by
-    rw [exteriorCoordProj, LinearMap.comp_apply, LinearMap.mulLeft_apply,
-      basis_exteriorAlgebra_singleton_eq_ι]
-    rw [contractLeft_ι_mul]
-    simp only [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_apply]
-    rw [contractLeft_basis_eq_zero_of_not_mem b i (s.erase i) (by simp),
-      mul_zero, sub_zero]
-    simp
-  rw [hprod] at hfixed
-  rcases Int.units_eq_one_or (Equiv.Perm.sign
-    (Set.powersetCard.permOfDisjoint hdisj)) with hsign | hsign <;>
-    rw [hsign] at hfixed <;> simpa using hfixed
+  rw [exteriorCoordProj, LinearMap.comp_apply, LinearMap.mulLeft_apply,
+    TauCeti.ExteriorAlgebra.ι_mul_contractLeft_coord_basis]
+  simp only [hi, ↓reduceIte]
 
 private theorem exteriorCoordProj_repr_of_mem {n : ℕ}
     (b : Module.Basis (Fin n) R M) (i : Fin n) (s : Finset (Fin n)) (hi : i ∈ s)
@@ -229,10 +163,12 @@ theorem exists_eq_algebraMap_of_contractLeft_eq_zero (Q : QuadraticForm K M)
   simpa only [y, r, equivExterior_algebraMap] using
     eq_algebraMap_of_all_contractLeft_eq_zero b y hycontract
 
-/-- An even Clifford element that commutes with every generating vector is a scalar. -/
-theorem exists_eq_algebraMap_of_mem_even_of_commute
+/-- A Clifford element that graded-commutes with every generating vector is a scalar. Here
+`involute x * ι v = ι v * x` is the uniform equation combining commutation of the even part
+with anticommutation of the odd part. -/
+theorem exists_eq_algebraMap_of_involute_mul_ι_eq_ι_mul
     (Q : QuadraticForm K M) (hQ : Q.Nondegenerate) (x : CliffordAlgebra Q)
-    (hx_even : x ∈ even Q) (hx_comm : ∀ v : M, Commute x (ι Q v)) :
+    (hx : ∀ v : M, involute x * ι Q v = ι Q v * x) :
     ∃ r : K, x = algebraMap K (CliffordAlgebra Q) r := by
   let B : LinearMap.BilinForm K M := QuadraticMap.associated Q
   have hB : B.Nondegenerate := by
@@ -243,6 +179,16 @@ theorem exists_eq_algebraMap_of_mem_even_of_commute
   have htoDual : B.toDual hB v = Q.associated v :=
     LinearMap.ext fun w ↦ (LinearMap.BilinForm.toDual_def hB).trans (by rfl)
   rw [htoDual]
-  exact contractLeft_associated_eq_zero_of_commute_of_mem_even Q hx_even hx_comm v
+  apply (isUnit_of_invertible (2 : K)).smul_eq_zero.mp
+  rw [two_smul_contractLeft_associated Q, hx v, sub_self]
+
+/-- An even Clifford element that commutes with every generating vector is a scalar. -/
+theorem exists_eq_algebraMap_of_mem_even_of_commute
+    (Q : QuadraticForm K M) (hQ : Q.Nondegenerate) (x : CliffordAlgebra Q)
+    (hx_even : x ∈ even Q) (hx_comm : ∀ v : M, Commute x (ι Q v)) :
+    ∃ r : K, x = algebraMap K (CliffordAlgebra Q) r := by
+  apply exists_eq_algebraMap_of_involute_mul_ι_eq_ι_mul Q hQ x
+  intro v
+  rw [involute_eq_of_mem_even hx_even, (hx_comm v).eq]
 
 end TauCeti.CliffordAlgebra

@@ -46,8 +46,7 @@ private lemma segment1_chord_ne_zero (hH : H ≠ Real.sqrt 3 / 2) :
     (ρ : ℂ) + 1 - (1 / 2 + H * Complex.I) ≠ 0 := by
   intro h0
   apply hH
-  have him : ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)).im = Real.sqrt 3 / 2 - H := by
-    simp [ρ]
+  have him := segment1_chord_im (H := H)
   rw [h0, Complex.zero_im] at him
   linarith
 

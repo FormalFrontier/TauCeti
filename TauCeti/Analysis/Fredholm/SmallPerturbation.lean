@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -100,8 +101,7 @@ private theorem isFredholm_and_index_eq_of_blocks {K X Y C : Type*}
   let : CompleteSpace C := FiniteDimensional.complete 𝕜 C
   obtain ⟨f, P, Q, hfac⟩ := exists_factorization_of_blocks A a c d e hA
   have hf : ContinuousLinearMap.IsFredholm f := isFredholm_of_finiteDimensional f
-  have he : ContinuousLinearMap.IsFredholm (e : X →L[𝕜] Y) :=
-    ContinuousLinearMap.IsFredholm.of_continuousLinearEquiv e
+  have he : ContinuousLinearMap.IsFredholm (e : X →L[𝕜] Y) := e.isFredholm
   have hprod : ContinuousLinearMap.IsFredholm (f.prodMap (e : X →L[𝕜] Y)) := hf.prodMap he
   refine ⟨by rw [hfac]; exact (hprod.comp_equiv P).equiv_comp Q, ?_⟩
   calc

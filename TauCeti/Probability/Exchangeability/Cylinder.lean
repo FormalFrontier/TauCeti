@@ -21,10 +21,11 @@ For a process `X : ℕ → Ω → α` and a finite coordinate selection `k : Fin
 * `blockIndicatorProd X k C ω = ∏ i, 𝟙_{C i}(X (k i) ω)` — its (`ℝ`-valued) indicator product.
 
 These are the finite-dimensional events and integrands the de Finetti block-product factorisation
-manipulates. `blockCylinder_eq_preimage_univ_pi` and `blockLaw_blockCylinder` bridge the cylinder to
-the existing rectangle/`blockLaw` interface; `blockIndicatorProd_eq_indicator` identifies the
-product with the cylinder indicator; and `integrable_blockIndicatorProd` records integrability under
-a finite measure.
+manipulates. `blockCylinder_eq_preimage_univ_pi` and `blockLaw_blockCylinder` bridge the cylinder
+to the existing rectangle/`blockLaw` interface, while `blockCylinder_eq_iInter` gives the
+intersection form, which is what a proof meeting the cylinder with another event wants.
+`blockIndicatorProd_eq_indicator` identifies the product with the cylinder indicator, and
+`integrable_blockIndicatorProd` records integrability under a finite measure.
 
 Adapted from `cameronfreer/exchangeability` (`PathSpace/CylinderHelpers.lean`,
 `DeFinetti/ViaMartingale/IndicatorAlgebra.lean`, pin
@@ -66,6 +67,15 @@ theorem blockCylinder_eq_preimage_univ_pi (X : ℕ → Ω → α) {m : ℕ} (k :
   ext ω
   simp only [mem_blockCylinder, Set.mem_preimage, Set.mem_univ_pi]
 
+omit [MeasurableSpace Ω] [MeasurableSpace α] in
+/-- The block cylinder is the intersection of the selected coordinates' preimages. This is the
+`⋂` counterpart of `blockCylinder_eq_preimage_univ_pi`: the rectangle form suits pushforwards and
+block laws, this one suits intersections with another event. -/
+theorem blockCylinder_eq_iInter (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ) (C : Fin m → Set α) :
+    blockCylinder X k C = ⋂ i, X (k i) ⁻¹' C i := by
+  ext ω
+  simp only [mem_blockCylinder, Set.mem_iInter, Set.mem_preimage]
+
 /-- The block cylinder of a process with measurable selected coordinates on measurable sets is
 measurable. -/
 theorem measurableSet_blockCylinder {X : ℕ → Ω → α} {m : ℕ} {k : Fin m → ℕ} {C : Fin m → Set α}
@@ -76,7 +86,7 @@ theorem measurableSet_blockCylinder {X : ℕ → Ω → α} {m : ℕ} {k : Fin m
 
 /-- The block law evaluated on a measurable rectangle is the measure of the block cylinder:
 `blockLaw μ X k (Set.univ.pi C) = μ (blockCylinder X k C)`. A `blockCylinder`-named restatement of
-the merged `blockLaw_apply_rectangle`. -/
+`blockLaw_apply_rectangle`. -/
 @[grind =>]
 theorem blockLaw_blockCylinder {μ : Measure Ω} (X : ℕ → Ω → α) {m : ℕ} {k : Fin m → ℕ}
     {C : Fin m → Set α} (hX : ∀ i, AEMeasurable (X (k i)) μ) (hC : ∀ i, MeasurableSet (C i)) :

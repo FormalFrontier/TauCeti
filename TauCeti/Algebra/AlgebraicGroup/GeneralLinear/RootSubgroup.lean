@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -214,69 +215,18 @@ section SchemePoints
 
 variable (A : Type u) [CommRing A] [Algebra R A]
 
--- The private lemmas below cross from the definition of `rootSubgroup` to the underlying map of
--- schemes, which is where the two scheme-point equivalences are characterised. `groupScheme` and
--- the point equivalences of both sides are unexposed definitions, so the crossing has to be made
--- through their public `left` computations rather than by unfolding.
-
-private lemma eqToHom_hom_hom_left {G G' : Grp (Over (Spec (CommRingCat.of R)))} (h : G = G') :
-    (eqToHom h).hom.hom.left =
-      eqToHom (congrArg (fun K : Grp (Over (Spec (CommRingCat.of R))) ↦ K.X.left) h) := by
-  subst h
-  rfl
-
-private lemma hopfSpec_map_left {H K : _root_.CommHopfAlgCat.{u} R} (φ : H ⟶ K) :
-    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map φ.op).hom.hom.left =
-      Spec.map (CommRingCat.ofHom φ.hom.toAlgHom.toRingHom) :=
-  rfl
-
-private lemma rootSubgroup_hom_hom_left (hij : i ≠ j) :
-    (rootSubgroup (R := R) (N := N) hij).hom.hom.left =
-      eqToHom (AdditiveGroup.groupScheme_X_left R) ≫
-        Spec.map (CommRingCat.ofHom
-          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) ≫
-        eqToHom (groupScheme_X_left R N).symm := by
-  rw [rootSubgroup_def]
-  -- Taking the underlying morphism of schemes distributes over composition definitionally, but
-  -- `Grp (Over _)` has no rewrite lemma stating it, so the distribution is made explicit here.
-  rw [show ((eqToHom (AdditiveGroup.groupScheme_def R) ≫
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op ≫
-      eqToHom (groupScheme_def R N).symm)).hom.hom.left =
-    (eqToHom (AdditiveGroup.groupScheme_def R)).hom.hom.left ≫
-      ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (rootSubgroupCoordinateMap (R := R) (N := N) hij).op).hom.hom.left ≫
-      (eqToHom (groupScheme_def R N).symm).hom.hom.left from rfl]
-  rw [eqToHom_hom_hom_left, eqToHom_hom_hom_left, hopfSpec_map_left]
-  rfl
-
 private lemma groupSchemePointMulEquiv_comp_rootSubgroup (hij : i ≠ j)
     (q : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     AdditiveGroup.groupSchemePointMulEquiv A q ≫ (rootSubgroup hij).hom.hom =
       groupSchemePointMulEquiv N A (rootSubgroupPoints hij q) := by
-  have hcomp : (rootSubgroupPoints hij q).ofConv =
-      q.ofConv.comp (rootSubgroupCoordinateMap hij).hom.toAlgHom := by
-    rw [← mapPointsFunctor_rootSubgroupCoordinateMap_app hij (CommAlgCat.of R A) q,
-      CommHopfAlgCat.mapPointsFunctor_app_apply, WithConv.ofConv_toConv]
-  apply Over.OverMorphism.ext
-  rw [groupSchemePointMulEquiv_apply_left]
-  rw [Over.comp_left, AdditiveGroup.groupSchemePointMulEquiv_apply_left,
-    rootSubgroup_hom_hom_left]
-  -- Rewriting the two points under the composition leaves the source of the composite stated as
-  -- `Spec A` rather than as its structure morphism over `Spec R`; restate the goal so that the
-  -- remaining spectrum computation typechecks at reducible transparency.
-  change (Spec.map (CommRingCat.ofHom q.ofConv.toRingHom) ≫
-      eqToHom (AdditiveGroup.groupScheme_X_left R).symm) ≫
-      eqToHom (AdditiveGroup.groupScheme_X_left R) ≫
-        Spec.map (CommRingCat.ofHom
-          (rootSubgroupCoordinateMap hij).hom.toAlgHom.toRingHom) ≫
-        eqToHom (groupScheme_X_left R N).symm =
-    Spec.map (CommRingCat.ofHom (rootSubgroupPoints hij q).ofConv.toRingHom) ≫
-      eqToHom (groupScheme_X_left R N).symm
-  rw [hcomp]
-  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-  rw [← Category.assoc, ← Spec.map_comp, ← CommRingCat.ofHom_comp]
-  rfl
+  rw [rootSubgroup_def,
+    ← mapPointsFunctor_rootSubgroupCoordinateMap_app hij (CommAlgCat.of R A) q]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
+    (R := R) A (groupScheme_def R N) (AdditiveGroup.groupScheme_def R)
+      (groupSchemePointMulEquiv N A) (AdditiveGroup.groupSchemePointMulEquiv A)
+      (groupSchemePointMulEquiv_apply_left N A)
+      (AdditiveGroup.groupSchemePointMulEquiv_apply_left A)
+      (rootSubgroupCoordinateMap hij) q
 
 /-- **The root subgroup on scheme-valued points**: composing an `A`-point of `𝔾ₐ` with the root
 subgroup morphism gives the elementary matrix `xᵢⱼ(c)` of its parameter `c`, as an `A`-point of
@@ -288,22 +238,11 @@ theorem schemePointsMulEquiv_rootSubgroup (hij : i ≠ j)
     schemePointsMulEquiv N A (p ≫ (rootSubgroup hij).hom.hom) =
       transvectionUnit hij
         (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p)) := by
-  obtain ⟨q, rfl⟩ :=
-    (AdditiveGroup.groupSchemePointMulEquiv (R := R) (A := A)).surjective p
-  have hGL : schemePointsMulEquiv N A
-      (groupSchemePointMulEquiv N A (rootSubgroupPoints hij q)) =
-      pointsMulEquiv N (rootSubgroupPoints hij q) := by
-    apply (schemePointsMulEquiv (R := R) N A).symm.injective
-    rw [MulEquiv.symm_apply_apply, schemePointsMulEquiv_symm_apply,
-      MulEquiv.symm_apply_apply]
-  have hGa : AdditiveGroup.schemePointsMulEquiv A
-      (AdditiveGroup.groupSchemePointMulEquiv A q) =
-      AdditiveGroup.gaPointsMulEquiv q := by
-    apply (AdditiveGroup.schemePointsMulEquiv (R := R) A).symm.injective
-    rw [MulEquiv.symm_apply_apply, AdditiveGroup.schemePointsMulEquiv_symm_apply,
-      MulEquiv.symm_apply_apply]
-  rw [groupSchemePointMulEquiv_comp_rootSubgroup, hGL, hGa,
-    pointsMulEquiv_rootSubgroupPoints]
+  obtain ⟨q, rfl⟩ := (AdditiveGroup.groupSchemePointMulEquiv A).surjective p
+  rw [groupSchemePointMulEquiv_comp_rootSubgroup,
+    schemePointsMulEquiv_groupSchemePointMulEquiv,
+    pointsMulEquiv_rootSubgroupPoints,
+    AdditiveGroup.schemePointsMulEquiv_groupSchemePointMulEquiv]
 
 end SchemePoints
 

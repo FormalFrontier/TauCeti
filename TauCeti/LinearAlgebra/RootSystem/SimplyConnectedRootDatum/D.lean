@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -364,12 +365,8 @@ private abbrev typeDSimpleSupport (n : ℕ) (hn : 4 ≤ n) : Finset (Fin (2 * n 
   simpleSupport (typeDSimpleIndex_injective hn)
 
 private lemma mem_typeDSimpleSupport (hn : 4 ≤ n) {k : Fin (2 * n * (n - 1))} :
-    k ∈ typeDSimpleSupport n hn ↔ (k : ℕ) < n := by
-  rw [typeDSimpleSupport, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    simpa only [typeDSimpleIndex_val] using i.isLt
-  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext (by simp)⟩
+    k ∈ typeDSimpleSupport n hn ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeDSimpleIndex_injective hn) (typeDSimpleIndex_val hn)
 
 /-- In the character lattice a root is the combination of the simple roots recorded by its
 classical coefficients; the coroot counterpart below uses the same coefficients. -/

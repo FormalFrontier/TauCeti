@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
+import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
 import Mathlib.Data.Rat.Star
 
 public section
@@ -27,9 +29,11 @@ Node numbering is Bourbaki's throughout: column `i` belongs to node `i` of `TauC
 
 Only `E₈` needs a coordinate model among the simply-laced types: the `E₆` and `E₇` Cartan matrices
 are the principal submatrices of the `E₈` one on the first six and seven indices, so
-`TauCeti.IsFiniteType.submatrix` delivers them.  The nonsimply-laced types use the integral
-symmetrizers `(1, 1, 2, 2)` for `F₄` and `(3, 1)` for `G₂`, the inverse root lengths recorded in
-`TauCeti.DynkinType.rootLength_F4` and `TauCeti.DynkinType.rootLength_G2`.
+`TauCeti.IsFiniteType.submatrix` delivers them.  That one model is not tabulated here but taken
+from `TauCeti.LinearAlgebra.RootSystem.E8Coordinates`, whose integral table has twice the simple
+roots as its rows; halving and transposing it gives the `B` above.  The nonsimply-laced types use
+the integral symmetrizers `(1, 1, 2, 2)` for `F₄` and `(3, 1)` for `G₂`, the inverse root lengths
+recorded in `TauCeti.DynkinType.rootLength_F4` and `TauCeti.DynkinType.rootLength_G2`.
 
 ## Main results
 
@@ -57,25 +61,34 @@ namespace TauCeti.DynkinType
 
 /-- The coordinate model of type `E₈`: column `i` is the simple root `αᵢ₊₁` of Bourbaki's plate
 VII, in the orthonormal coordinates `ε₁, ..., ε₈` used there.  `E₈` being simply laced, these are
-also the simple coroots, and the Gram matrix of the columns is the `E₈` Cartan matrix itself. -/
+also the simple coroots, and the Gram matrix of the columns is the `E₈` Cartan matrix itself.
+The coordinates are read off the shared integral table `TauCeti.DynkinType.e8DoubledSimpleRoot`,
+whose rows are twice them. -/
 private def rootsE8 : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
-  !![ 1 / 2,  1, -1,  0,  0,  0,  0,  0;
-     -1 / 2,  1,  1, -1,  0,  0,  0,  0;
-     -1 / 2,  0,  0,  1, -1,  0,  0,  0;
-     -1 / 2,  0,  0,  0,  1, -1,  0,  0;
-     -1 / 2,  0,  0,  0,  0,  1, -1,  0;
-     -1 / 2,  0,  0,  0,  0,  0,  1, -1;
-     -1 / 2,  0,  0,  0,  0,  0,  0,  1;
-      1 / 2,  0,  0,  0,  0,  0,  0,  0]
+  (2 : ℚ)⁻¹ • (e8DoubledSimpleRoot.map ((↑) : ℤ → ℚ))ᵀ
 
 /-- The standard Cartan matrix of type `E₈` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
   have hgram : _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ))
       = rootsE8ᴴ * rootsE8 := by
     ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE8, CartanMatrix.E₈, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
-        _root_.Matrix.cons_val_succ]
+    -- The `(i, j)` entry of the Gram matrix of the doubled rows is four times the Cartan entry.
+    have hrow : ∑ k, e8DoubledSimpleRoot i k * e8DoubledSimpleRoot j k
+        = 4 * CartanMatrix.E₈ i j := by
+      have h := congrFun (congrFun e8DoubledSimpleRoot_mul_transpose i) j
+      simpa [_root_.Matrix.mul_apply, _root_.Matrix.transpose_apply] using h
+    have hrowQ : ∑ k, (e8DoubledSimpleRoot i k : ℚ) * (e8DoubledSimpleRoot j k : ℚ)
+        = 4 * (CartanMatrix.E₈ i j : ℚ) := by exact_mod_cast hrow
+    -- Halving both factors divides each term of that sum by four.
+    have hpoint : ∀ k : Fin 8, (2 : ℚ)⁻¹ * (e8DoubledSimpleRoot i k : ℚ) *
+        ((2 : ℚ)⁻¹ * (e8DoubledSimpleRoot j k : ℚ))
+        = 4⁻¹ * ((e8DoubledSimpleRoot i k : ℚ) * (e8DoubledSimpleRoot j k : ℚ)) :=
+      fun k ↦ by ring
+    simp only [rootsE8, _root_.Matrix.of_apply, _root_.Matrix.mul_apply,
+      _root_.Matrix.conjTranspose_apply, _root_.Matrix.smul_apply, _root_.Matrix.transpose_apply,
+      _root_.Matrix.map_apply, star_trivial, smul_eq_mul]
+    rw [Finset.sum_congr rfl fun k _ ↦ hpoint k, ← Finset.mul_sum, hrowQ]
+    ring
   have hdet : CartanMatrix.E₈.det ≠ 0 := by rw [CartanMatrix.E₈_det]; norm_num
   rw [cartanMatrix_E8]
   exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero CartanMatrix.E₈_diag

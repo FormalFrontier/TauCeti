@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -365,6 +366,15 @@ lemma schemePointsMulEquiv_apply
           (coordinateRingMap R n (MvPolynomial.X (i, j)))) := by
   rw [schemePointsMulEquiv, MulEquiv.trans_apply, pointsMulEquiv_apply,
     pointToGeneralLinear_apply]
+
+/-- Evaluating the scheme-points equivalence on a point presented by `groupSchemePointMulEquiv`
+recovers the canonical algebra point. -/
+@[simp]
+theorem schemePointsMulEquiv_groupSchemePointMulEquiv
+    (q : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
+    schemePointsMulEquiv n A (groupSchemePointMulEquiv n A q) =
+      pointsMulEquiv (R := R) n q := by
+  simp [schemePointsMulEquiv]
 
 /-- The inverse scheme-points equivalence sends an invertible matrix to the spectrum map induced
 by its canonical coordinate-algebra point. -/

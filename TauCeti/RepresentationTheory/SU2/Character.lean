@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -10,7 +11,7 @@ public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 /-!
 # Characters of `SU(2)` are even on the maximal torus
 
-The Weyl group of `SU(2)` computed in `TauCeti/RepresentationTheory/SU2/Weyl.lean` inverts the
+The Weyl group of `SU(2)` computed in `TauCeti/RepresentationTheory/SU2/Weyl/Basic.lean` inverts the
 maximal torus: the quarter turn `w = !![0, -1; 1, 0]` conjugates `diag (z, z⁻¹)` to
 `diag (z⁻¹, z)`. Characters are conjugation invariant, so the character of a continuous
 finite-dimensional representation of `SU(2)` takes the same value at a torus element and at its

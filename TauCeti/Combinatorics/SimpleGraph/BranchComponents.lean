@@ -36,59 +36,72 @@ open SimpleGraph
 
 variable {V : Type*} {G : SimpleGraph V}
 
+/-- Distinct neighbours of `c` lie in distinct components of `G ∖ {c}`, whenever `G` is acyclic.
+
+Only acyclicity is used; connectedness plays no part. -/
+private theorem connectedComponentMk_neighborSet_injective (hG : G.IsAcyclic) (c : V) :
+    Function.Injective fun x : ↥(G.neighborSet c) =>
+      (G.induce ({c}ᶜ : Set V)).connectedComponentMk
+        ⟨(x : V), Set.mem_compl_singleton_iff.mpr (G.ne_of_adj x.property).symm⟩ := by
+  classical
+  -- A path outside `c` between two different neighbours, together with the two edges through
+  -- `c`, would give two paths between the same endpoints.
+  intro x y hxy
+  let H : SimpleGraph ↥({c}ᶜ : Set V) := G.induce ({c}ᶜ : Set V)
+  let toCompl : ↥(G.neighborSet c) -> ↥({c}ᶜ : Set V) := fun x =>
+    ⟨x, Set.mem_compl_singleton_iff.mpr (G.ne_of_adj x.property).symm⟩
+  have hreach : H.Reachable (toCompl x) (toCompl y) := ConnectedComponent.exact hxy
+  let q : H.Path (toCompl x) (toCompl y) := hreach.some.toPath
+  let qG : G.Path x y := q.map (Embedding.induce (G := G) ({c}ᶜ : Set V)).toHom
+    (Embedding.induce (G := G) ({c}ᶜ : Set V)).injective
+  have hcq : c ∉ qG.val.support := by
+    intro hc
+    -- Unfold the mapped path while retaining its coerced endpoints, so the walk-level
+    -- `support_map` lemma applies.
+    change c ∈ (q.val.map (Embedding.induce (G := G) ({c}ᶜ : Set V)).toHom).support at hc
+    rw [Walk.support_map] at hc
+    obtain ⟨z, -, hz⟩ := List.mem_map.mp hc
+    exact z.property (by simpa using hz)
+  have hxadj : G.Adj c x := x.property
+  have hyadj : G.Adj c y := y.property
+  have hxc : (x : V) ≠ c := (G.ne_of_adj hxadj).symm
+  by_contra hne
+  have hxyv : (x : V) ≠ y := fun h => hne (Subtype.ext h)
+  have hyc : c ≠ (y : V) := G.ne_of_adj hyadj
+  let r : G.Walk x y := .cons hxadj.symm (.cons hyadj .nil)
+  have hr : r.IsPath := by
+    apply Walk.IsPath.mk'
+    simp [r, hxc, hxyv, hyc]
+  have heq := hG.subsingleton_path x y |>.elim qG ⟨r, hr⟩
+  have hsupp := congrArg (fun p : G.Path x y => p.val.support) heq
+  exact hcq (by rw [hsupp]; simp [r])
+
+/-- Every component of `G ∖ {c}` contains a neighbour of `c`, whenever `G` is preconnected.
+
+Only preconnectedness is used; acyclicity plays no part. -/
+private theorem connectedComponentMk_neighborSet_surjective (hG : G.Preconnected) (c : V) :
+    Function.Surjective fun x : ↥(G.neighborSet c) =>
+      (G.induce ({c}ᶜ : Set V)).connectedComponentMk
+        ⟨(x : V), Set.mem_compl_singleton_iff.mpr (G.ne_of_adj x.property).symm⟩ := by
+  classical
+  intro C
+  obtain ⟨⟨a, z⟩, haC, hzc, haz⟩ :=
+    ComponentCompl.exists_adj_boundary_pair (G := G) (K := {c})
+      hG (Set.singleton_nonempty c) C
+  have hzc' : z = c := Set.mem_singleton_iff.mp hzc
+  subst z
+  refine ⟨⟨a, haz.symm⟩, ?_⟩
+  rw [← haC.choose_spec]
+
 /-- **The components of a tree with one vertex deleted are indexed by its neighbours.**
 
 The forward map sends a neighbour of `c` to the component of the graph induced on `{c}ᶜ` that
 contains it; the inverse sends a component to the unique neighbour of `c` that it contains. -/
 noncomputable def IsTree.neighborSetEquivConnectedComponentCompl (hG : G.IsTree) (c : V) :
-    ↥(G.neighborSet c) ≃ (G.induce ({c}ᶜ : Set V)).ConnectedComponent := by
-  classical
-  let H : SimpleGraph ↥({c}ᶜ : Set V) := G.induce ({c}ᶜ : Set V)
-  let toCompl : ↥(G.neighborSet c) -> ↥({c}ᶜ : Set V) := fun x =>
-    ⟨x, Set.mem_compl_singleton_iff.mpr (G.ne_of_adj x.property).symm⟩
-  let f : ↥(G.neighborSet c) -> H.ConnectedComponent := fun x =>
-    H.connectedComponentMk (toCompl x)
-  apply Equiv.ofBijective f
-  constructor
-  -- Injectivity is acyclicity: a path outside `c` between two different neighbours, together with
-  -- the two edges through `c`, would give two paths between the same endpoints.
-  · intro x y hxy
-    have hreach : H.Reachable (toCompl x) (toCompl y) := ConnectedComponent.exact hxy
-    let q : H.Path (toCompl x) (toCompl y) := hreach.some.toPath
-    let qG : G.Path x y := q.map (Embedding.induce (G := G) ({c}ᶜ : Set V)).toHom
-      (Embedding.induce (G := G) ({c}ᶜ : Set V)).injective
-    have hcq : c ∉ qG.val.support := by
-      intro hc
-      -- Unfold the mapped path while retaining its coerced endpoints, so the walk-level
-      -- `support_map` lemma applies.
-      change c ∈ (q.val.map (Embedding.induce (G := G) ({c}ᶜ : Set V)).toHom).support at hc
-      rw [Walk.support_map] at hc
-      obtain ⟨z, -, hz⟩ := List.mem_map.mp hc
-      exact z.property (by simpa using hz)
-    have hxadj : G.Adj c x := x.property
-    have hyadj : G.Adj c y := y.property
-    have hxc : (x : V) ≠ c := (G.ne_of_adj hxadj).symm
-    by_contra hne
-    have hxyv : (x : V) ≠ y := fun h => hne (Subtype.ext h)
-    have hyc : c ≠ (y : V) := G.ne_of_adj hyadj
-    let r : G.Walk x y := .cons hxadj.symm (.cons hyadj .nil)
-    have hr : r.IsPath := by
-      apply Walk.IsPath.mk'
-      simp [r, hxc, hxyv, hyc]
-    have heq := hG.isAcyclic.subsingleton_path x y |>.elim qG ⟨r, hr⟩
-    have hsupp := congrArg (fun p : G.Path x y => p.val.support) heq
-    exact hcq (by rw [hsupp]; simp [r])
-  -- Surjectivity follows from the boundary pair supplied by connectedness.
-  · intro C
-    obtain ⟨⟨a, z⟩, haC, hzc, haz⟩ :=
-      ComponentCompl.exists_adj_boundary_pair (G := G) (K := {c})
-        hG.connected.preconnected (Set.singleton_nonempty c) C
-    have hzc' : z = c := Set.mem_singleton_iff.mp hzc
-    subst z
-    let aN : ↥(G.neighborSet c) := ⟨a, haz.symm⟩
-    refine ⟨aN, ?_⟩
-    dsimp only [f]
-    rw [← haC.choose_spec]
+    ↥(G.neighborSet c) ≃ (G.induce ({c}ᶜ : Set V)).ConnectedComponent :=
+  Equiv.ofBijective _
+    ⟨connectedComponentMk_neighborSet_injective hG.isAcyclic c,
+      connectedComponentMk_neighborSet_surjective hG.connected.preconnected c⟩
 
 /-- The equivalence sends a neighbour to the connected component containing that neighbour. -/
 @[simp] theorem IsTree.neighborSetEquivConnectedComponentCompl_apply (hG : G.IsTree) (c : V)

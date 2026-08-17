@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -192,11 +192,7 @@ section Rational
 
 variable (L : Type v) [LieRing L] [LieAlgebra ℚ L]
 
-/-- The nonnegative-rational scalar action used to interpret `Ring.choose` in the enveloping
-algebra. -/
-noncomputable local instance moduleNNRat :
-    Module ℚ≥0 (_root_.UniversalEnvelopingAlgebra ℚ L) :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
+attribute [local instance] TauCeti.moduleNNRat
 
 /-- The comultiplication of a divided power of a canonical Lie generator is the antidiagonal
 sum of the corresponding divided powers in the two tensor factors. -/

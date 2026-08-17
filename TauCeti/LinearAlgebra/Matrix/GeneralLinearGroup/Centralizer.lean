@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -9,13 +10,16 @@ module
 public import TauCeti.Algebra.Group.Subgroup.Centralizer
 -- `TauCeti.commute_fin_two_iff` is the engine of the centralizer computations below.
 public import TauCeti.LinearAlgebra.Matrix.Commute
--- `ConjClasses.carrier` occurs in the statements below, and `TauCeti.ConjClasses.ncard_carrier_mk`
--- is what turns a centralizer order into a class size.
+-- `ConjClasses.carrier` occurs in the statements below, `TauCeti.ConjClasses.ncard_carrier_mk`
+-- is what turns a centralizer order into a class size, and
+-- `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center` is what does it for a central element.
 public import TauCeti.Algebra.Group.Conj
 -- `TauCeti.diagGL` and `TauCeti.diagonalTorus` occur in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 -- `TauCeti.GL2NonSplitTorus` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.NonSplitTorus
+-- `TauCeti.jordanGL` and `TauCeti.GL2ScalarUnipotent` occur in the statements below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ScalarUnipotent
 -- Non-public: the order of `GL (Fin 2) F` over a finite field is used only inside the counting
 -- proofs, so downstream importers do not pay for it.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
@@ -44,7 +48,8 @@ element generates a maximal commutative subalgebra of `Matrix (Fin 2) (Fin 2) F`
   conjugacy class has `q (q - 1)` elements.
 
 The split computation needs no commutant: a matrix commuting with a diagonal matrix of distinct
-entries is diagonal (`TauCeti.isDiag_of_commute_diagonal`), and the torus is commutative. It is the
+entries is diagonal (`TauCeti.isDiag_of_commute_diagonal`), and the torus is commutative. The same
+is true of the non-semisimple case below, where two entry equations do the work. It is the
 non-split case, and the abelianness of a general non-central centralizer, that consume
 `TauCeti.commute_fin_two_iff`.
 
@@ -62,9 +67,27 @@ torus in the basis `TauCeti.nonSplitTorusBasis` — rather than for an arbitrary
 element. Every regular semisimple element of `GL₂(𝔽_q)` is conjugate to one of the two, but that
 classification, and the transport of a centralizer along a conjugation, are not proved here.
 
-The remaining conjugacy classes of `GL₂(𝔽_q)` are the central ones, whose centralizer is
-everything, and the non-semisimple ones `!![a, 1; 0, a]`, whose centralizer is again `F[M]ˣ` but
-for a matrix with a repeated eigenvalue; neither is proved here.
+The third regular family is also here. A **non-semisimple** element is a Jordan block
+`TauCeti.jordanGL a b = !![a, b; 0, a]` with `b ≠ 0`; it is again regular
+(`TauCeti.notMem_range_scalar_jordanGL`), and its centralizer is
+the scalar-unipotent subgroup `TauCeti.GL2ScalarUnipotent F` of all `!![x, y; 0, x]`
+(`TauCeti.centralizer_jordanGL`), of order `q (q - 1)`, so its conjugacy class has `q² - 1`
+elements. That subgroup is the product `Z U` of the centre with the unipotent radical of the Borel
+subgroup, so it is `Gₘ × Gₐ` and not a torus — which is precisely what distinguishes this family
+from the two semisimple ones.
+
+The fourth family, the **central** one, is the non-regular case this file's title excludes: a
+scalar matrix is central in `GL n R` for any index type and any commutative semiring, so its
+centralizer is everything and its class is a single point. The centralizer half is proved at that
+generality in `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal`
+(`TauCeti.centralizer_scalar`); the class size, `TauCeti.ncard_carrier_mk_scalar`, is here with the
+other three.
+
+Together the four families give the class sizes `1`, `q (q + 1)`, `q (q - 1)` and `q² - 1`. These
+are the sizes of the individual classes, not the numbers of classes in each family: the
+non-semisimple family, for instance, has one class for each of the `q - 1` possible eigenvalues.
+That every element of `GL₂(𝔽_q)` is conjugate to one of the four normal forms, and with it any
+enumeration of the classes themselves, is not proved here.
 
 The class sizes are read off the centralizer orders by orbit-stabilizer
 (`TauCeti.ConjClasses.ncard_carrier_mk`), together with `TauCeti.natCard_GL_fin_two`, which gives
@@ -83,6 +106,11 @@ The class sizes are read off the centralizer orders by orbit-stabilizer
   `TauCeti.GL2NonSplitTorus.ncard_carrier_mk_gl2NonSplitTorusHom`: the centralizer of an element of
   the non-split torus not coming from `F` — an elliptic element, over a finite field — is that
   whole torus, of order `q² - 1`, and its conjugacy class has `q (q - 1)` elements.
+* `TauCeti.centralizer_jordanGL`, `TauCeti.natCard_centralizer_jordanGL`,
+  `TauCeti.ncard_carrier_mk_jordanGL`: the centralizer of a Jordan block `!![a, b; 0, a]` with
+  `b ≠ 0` — a non-semisimple element — is the scalar-unipotent subgroup, of order `q (q - 1)`, and
+  its conjugacy class has `q² - 1` elements.
+* `TauCeti.ncard_carrier_mk_scalar`: the conjugacy class of a scalar matrix is a single point.
 
 ## References
 
@@ -195,6 +223,11 @@ with `q > 1` elements. -/
 private theorem card_sq_sub_one_pos : 0 < Fintype.card F ^ 2 - 1 :=
   Nat.sub_pos_of_lt (Nat.one_lt_pow two_ne_zero Fintype.one_lt_card)
 
+/-- The factor the non-semisimple class-size computation cancels by is positive: `(q - 1) q > 0`
+for a field with `q > 1` elements. -/
+private theorem card_sub_one_mul_card_pos : 0 < (Fintype.card F - 1) * Fintype.card F :=
+  Nat.mul_pos (Nat.sub_pos_of_lt Fintype.one_lt_card) Fintype.card_pos
+
 /-- **The size of a split regular semisimple conjugacy class of `GL₂(𝔽_q)`**: it is
 `q (q + 1) = [GL₂(𝔽_q) : T]` for the split torus `T`. -/
 theorem ncard_carrier_mk_diagGL {t : Fin 2 → Fˣ} (ht : t 0 ≠ t 1) :
@@ -286,5 +319,120 @@ theorem ncard_carrier_mk_gl2NonSplitTorusHom [Fintype F]
   rw [natCard_centralizer_gl2NonSplitTorusHom hE hx, Nat.card_eq_fintype_card]
 
 end GL2NonSplitTorus
+
+section NonSemisimple
+
+section CommRing
+
+variable {R : Type*} [CommRing R] {a : Rˣ} {b : R}
+
+/-- **The centralizer of a Jordan block with regular off-diagonal entry.** Over any commutative
+ring, the centralizer of `TauCeti.jordanGL a b = !![a, b; 0, a]` with `b` left-regular — over a
+field, any `b ≠ 0` — is the scalar-unipotent subgroup `TauCeti.GL2ScalarUnipotent R` of the matrices
+`!![x, y; 0, x]`.
+
+Like the split case this needs no commutant, and for the same reason: only the two entry equations
+`b · g₁₀ = b · 0` and `b · g₁₁ = b · g₀₀` of `M g = g M` are used, and cancelling `b` from them is
+what solves them — no division and no hypothesis on the other elements of `R`, so left-regularity of
+`b` alone is enough, and a field is asked for only by the counting below. That the diagonal entry so
+obtained is a unit is read off the determinant `g₀₀²`. The reverse inclusion is the commutativity of
+`TauCeti.GL2ScalarUnipotent R`.
+
+Over a field this is the centralizer of a **non-semisimple** element, and unlike the split and
+elliptic cases it is **not** a torus: it is the product `Z U` of the centre with the unipotent
+radical of the Borel subgroup, `Gₘ × Gₐ` rather than `Gₘ × Gₘ`, which is exactly the failure of `M`
+to be semisimple. As with the two semisimple normal forms, that every non-semisimple element of
+`GL₂(𝔽_q)` is conjugate to a Jordan block, and that a centralizer transports along such a
+conjugation, are not proved here. -/
+theorem centralizer_jordanGL (hb : IsLeftRegular b) :
+    Subgroup.centralizer {jordanGL a b} = GL2ScalarUnipotent R := by
+  ext h
+  rw [mem_centralizer_singleton_iff_commute_val, mem_gl2ScalarUnipotent_iff]
+  constructor
+  · intro hcomm
+    have hmul := hcomm.eq
+    rw [coe_jordanGL] at hmul
+    -- The `(0, 0)` entry of `M g = g M` reads `b · g₁₀ = b · 0`, and the `(0, 1)` entry
+    -- `b · g₁₁ = b · g₀₀`; cancelling `b` leaves `g` upper triangular with equal diagonal entries.
+    have h10 : (h : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 := by
+      have e00 : (a : R) * (h : Matrix (Fin 2) (Fin 2) R) 0 0
+          + b * (h : Matrix (Fin 2) (Fin 2) R) 1 0
+          = (h : Matrix (Fin 2) (Fin 2) R) 0 0 * (a : R) := by
+        simpa [Matrix.mul_apply, Fin.sum_univ_two] using congrFun₂ hmul 0 0
+      have hcancel : b * (h : Matrix (Fin 2) (Fin 2) R) 1 0 = b * 0 := by linear_combination e00
+      exact hb hcancel
+    have h11 : (h : Matrix (Fin 2) (Fin 2) R) 1 1 = (h : Matrix (Fin 2) (Fin 2) R) 0 0 := by
+      have e01 : (a : R) * (h : Matrix (Fin 2) (Fin 2) R) 0 1
+          + b * (h : Matrix (Fin 2) (Fin 2) R) 1 1
+          = (h : Matrix (Fin 2) (Fin 2) R) 0 0 * b
+            + (h : Matrix (Fin 2) (Fin 2) R) 0 1 * (a : R) := by
+        simpa [Matrix.mul_apply, Fin.sum_univ_two] using congrFun₂ hmul 0 1
+      have hcancel : b * (h : Matrix (Fin 2) (Fin 2) R) 1 1
+          = b * (h : Matrix (Fin 2) (Fin 2) R) 0 0 := by linear_combination e01
+      exact hb hcancel
+    -- The determinant is then `g₀₀²`, so the repeated diagonal entry is a unit.
+    have hu : IsUnit ((h : Matrix (Fin 2) (Fin 2) R) 0 0) := by
+      refine isUnit_of_mul_isUnit_left (y := (h : Matrix (Fin 2) (Fin 2) R) 0 0) ?_
+      have hdet : (h : Matrix (Fin 2) (Fin 2) R).det
+          = (h : Matrix (Fin 2) (Fin 2) R) 0 0 * (h : Matrix (Fin 2) (Fin 2) R) 0 0 := by
+        rw [Matrix.det_fin_two, h10, h11]
+        ring
+      rw [← hdet, ← Matrix.GeneralLinearGroup.val_det_apply]
+      exact (Matrix.GeneralLinearGroup.det h).isUnit
+    refine ⟨hu.unit, (h : Matrix (Fin 2) (Fin 2) R) 0 1, Units.ext ?_⟩
+    rw [coe_jordanGL, IsUnit.unit_spec]
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [h10, h11]
+  · rintro ⟨x, y, rfl⟩
+    -- Conversely both blocks lie in `Z U`, which is abelian, so they commute already there.
+    exact Commute.units_val (setLike_mul_comm
+      (jordanGL_mem_gl2ScalarUnipotent a b) (jordanGL_mem_gl2ScalarUnipotent x y))
+
+end CommRing
+
+variable {F : Type*} [Field F] {a : Fˣ} {b : F}
+
+/-- **The order of the centralizer of a regular non-semisimple element of `GL₂`**: the centralizer
+is `TauCeti.GL2ScalarUnipotent F`, a copy of `Fˣ × (F, +)`, so over a field with `q` elements it has
+`(q - 1) q` elements. As in the two semisimple cases no finiteness is assumed: over an infinite
+field both sides are `0`. -/
+theorem natCard_centralizer_jordanGL (hb : b ≠ 0) :
+    Nat.card (Subgroup.centralizer {jordanGL a b}) = (Nat.card F - 1) * Nat.card F := by
+  rw [centralizer_jordanGL (IsRegular.of_ne_zero hb).left, natCard_gl2ScalarUnipotent]
+
+/-- **The size of a non-semisimple conjugacy class of `GL₂(𝔽_q)`**: it is
+`q² - 1 = [GL₂(𝔽_q) : Z U]`.
+
+This is the last of the four class sizes: a central class has `1` element, a split semisimple class
+`q (q + 1)`, an elliptic class `q (q - 1)`, and a non-semisimple class `q² - 1`. -/
+theorem ncard_carrier_mk_jordanGL [Fintype F] (hb : b ≠ 0) :
+    (ConjClasses.mk (jordanGL a b)).carrier.ncard = Fintype.card F ^ 2 - 1 := by
+  rw [ConjClasses.ncard_carrier_mk]
+  refine index_eq_of_natCard_eq_mul (card_sub_one_mul_card_pos (F := F)) ?_ ?_
+  · rw [natCard_centralizer_jordanGL hb, Nat.card_eq_fintype_card]
+  · rw [natCard_GL_fin_two_eq_sq_sub_one_mul]
+    ring
+
+end NonSemisimple
+
+section Central
+
+variable {k : Type*} [CommSemiring k] {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- **The size of a central conjugacy class**: the conjugacy class of a scalar matrix is a single
+point. For `GL₂(𝔽_q)` these are the `q - 1` central classes, the first of the four families of
+conjugacy classes gathered in this file; nothing here is special to `Fin 2` or to a field, so the
+statement is made for an arbitrary finite index type over a commutative semiring.
+
+The centralizer half of the statement, `TauCeti.centralizer_scalar`, is in
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal` with the rest of the general-index
+material; only the class size is here, so that the foundational diagonal module does not have to
+import conjugacy theory for it. -/
+@[simp]
+theorem ncard_carrier_mk_scalar (u : kˣ) :
+    (ConjClasses.mk (Matrix.GeneralLinearGroup.scalar ι u)).carrier.ncard = 1 :=
+  ConjClasses.ncard_carrier_mk_of_mem_center (scalar_mem_center u)
+
+end Central
 
 end TauCeti

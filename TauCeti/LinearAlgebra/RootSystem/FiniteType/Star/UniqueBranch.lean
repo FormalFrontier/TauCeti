@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -315,33 +316,12 @@ theorem exists_doubleFork_submatrix (h : IsFiniteType A) {u v : B}
   have hright_not_mem (i : Fin 2) : rightVertex i ∉ q.support := fun hi ↦
     hright_ne_penultimate i
       (h.isAcyclic_diagramGraph.eq_penultimate_of_adj_end hq (hright_adj i) hi)
-  have hleft_right_ne (i j : Fin 2) : leftVertex i ≠ rightVertex j := by
-    intro hij
-    have hp' : (q.cons (hleft_adj i).symm).IsPath := hq.cons (hleft_not_mem i)
-    have heq := h.isAcyclic_diagramGraph.subsingleton_path (leftVertex i) v |>.elim
-      (⟨q.cons (hleft_adj i).symm, hp'⟩ : G.Path (leftVertex i) v)
-      (SimpleGraph.Path.singleton (hij ▸ hright_adj j).symm)
-    have hlen := congrArg (fun r : G.Path (leftVertex i) v ↦ r.val.length) heq
-    simp only [SimpleGraph.Walk.length_cons, SimpleGraph.Path.singleton_coe,
-      (hij ▸ hright_adj j).symm.length_toWalk, hn] at hlen
-    omega
-  have hleft_right_not_adj (i j : Fin 2) : ¬G.Adj (leftVertex i) (rightVertex j) := by
-    have hp' : (q.cons (hleft_adj i).symm).IsPath := hq.cons (hleft_not_mem i)
-    have hright_not_mem' : rightVertex j ∉ (q.cons (hleft_adj i).symm).support := by
-      simp only [SimpleGraph.Walk.support_cons, List.mem_cons, not_or]
-      exact ⟨(hleft_right_ne i j).symm, hright_not_mem j⟩
-    have hp'' := hp'.concat hright_not_mem' (hright_adj j)
-    intro hadj
-    have heq := h.isAcyclic_diagramGraph.subsingleton_path
-      (leftVertex i) (rightVertex j) |>.elim
-        (⟨(q.cons (hleft_adj i).symm).concat (hright_adj j), hp''⟩ :
-          G.Path (leftVertex i) (rightVertex j))
-        (SimpleGraph.Path.singleton hadj)
-    have hlen := congrArg
-      (fun r : G.Path (leftVertex i) (rightVertex j) ↦ r.val.length) heq
-    simp only [SimpleGraph.Walk.length_concat, SimpleGraph.Walk.length_cons,
-      SimpleGraph.Path.singleton_coe, hadj.length_toWalk, hn] at hlen
-    omega
+  have hleft_right_ne (i j : Fin 2) : leftVertex i ≠ rightVertex j :=
+    h.isAcyclic_diagramGraph.ne_of_adj_start_of_adj_end huv_ne hq
+      (hleft_adj i) (hleft_not_mem i) (hright_adj j)
+  have hleft_right_not_adj (i j : Fin 2) : ¬G.Adj (leftVertex i) (rightVertex j) :=
+    h.isAcyclic_diagramGraph.not_adj_of_adj_start_of_adj_end hq
+      (hleft_adj i) (hleft_not_mem i) (hright_adj j) (hright_not_mem j)
   have he' := doubleForkEmbedding_injective hq hn leftVertex rightVertex hleft_inj hright_inj
     hleft_not_mem hright_not_mem hleft_right_ne
   -- Every vertex of the double fork lies in the component of `u`, so `hsl` applies to it.

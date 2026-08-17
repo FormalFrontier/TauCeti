@@ -31,6 +31,7 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
 * `TauCeti.RealProjectiveSpace.instNonemptySphere` and
   `TauCeti.RealProjectiveSpace.connectedSpace_sphere`: the covering sphere `Sⁿ` is nonempty, and
   connected once `1 ≤ n`.
+* `TauCeti.RealProjectiveSpace.instCompactSpace`: real projective space is compact.
 * `TauCeti.RealProjectiveSpace.inductionOn`, `TauCeti.RealProjectiveSpace.lift`, and
   `TauCeti.RealProjectiveSpace.lift_unique`: elimination principles for the antipodal quotient.
 * `TauCeti.RealProjectiveSpace.mk_eq_mk_iff`: two unit vectors define the same projective point
@@ -38,6 +39,8 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
 * `TauCeti.RealProjectiveSpace.isQuotientCoveringMap_mk`: the unit-sphere quotient is a quotient
   covering map with group `ℤˣ`.
 * `TauCeti.RealProjectiveSpace.isCoveringMap_mk`: the underlying covering-map statement.
+* `TauCeti.RealProjectiveSpace.subsingleton_zero`: `RP⁰` is a subsingleton.
+* `TauCeti.RealProjectiveSpace.instPathConnectedSpace`: `RPⁿ` is path-connected for every `n`.
 -/
 
 public section
@@ -77,6 +80,11 @@ theorem connectedSpace_sphere (hn : 1 ≤ n) :
 /-- The quotient topology on real projective space. -/
 instance instTopologicalSpace : TopologicalSpace (RealProjectiveSpace n) :=
   inferInstanceAs (TopologicalSpace (Quotient (MulAction.orbitRel ℤˣ
+    (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))))
+
+/-- Real projective space is compact as the quotient of the compact unit sphere. -/
+instance instCompactSpace : CompactSpace (RealProjectiveSpace n) :=
+  inferInstanceAs (CompactSpace (Quotient (MulAction.orbitRel ℤˣ
     (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))))
 
 /-- The quotient map from the unit sphere to real projective space. -/
@@ -168,6 +176,77 @@ theorem isQuotientMap_mk : IsQuotientMap (mk n) :=
 /-- The unit-sphere projection onto real projective space is continuous. -/
 theorem continuous_mk : Continuous (mk n) :=
   (isQuotientMap_mk n).continuous
+
+/-- Real projective space is nonempty. -/
+instance instNonempty : Nonempty (RealProjectiveSpace n) :=
+  ⟨mk n (instNonemptySphere n).some⟩
+
+/-- Real projective space of dimension 0, `RP⁰`, is a subsingleton consisting of a single point. -/
+lemma subsingleton_zero : Subsingleton (RealProjectiveSpace 0) := by
+  constructor
+  intro a b
+  induction a using RealProjectiveSpace.inductionOn
+  induction b using RealProjectiveSpace.inductionOn
+  rename_i u v
+  rw [RealProjectiveSpace.mk_eq_mk_iff]
+  have hu_norm : ‖(u : EuclideanSpace ℝ (Fin 1))‖ = 1 := by
+    have := u.2
+    rw [Metric.mem_sphere, dist_zero_right] at this
+    exact this
+  have hv_norm : ‖(v : EuclideanSpace ℝ (Fin 1))‖ = 1 := by
+    have := v.2
+    rw [Metric.mem_sphere, dist_zero_right] at this
+    exact this
+  have h_eval (w : EuclideanSpace ℝ (Fin 1)) : ‖w‖ = |w 0| := by
+    have hsq : ‖w‖^2 = (w 0)^2 := by
+      rw [EuclideanSpace.norm_sq_eq, Fin.sum_univ_one, Real.norm_eq_abs, sq_abs]
+    have h2 : |w 0|^2 = (w 0)^2 := sq_abs (w 0)
+    have h3 : ‖w‖^2 = |w 0|^2 := by rw [hsq, h2]
+    have hpos1 : 0 ≤ ‖w‖ := norm_nonneg w
+    have hpos2 : 0 ≤ |w 0| := abs_nonneg (w 0)
+    nlinarith
+  rw [h_eval] at hu_norm hv_norm
+  have hu0 : u.1 0 = 1 ∨ u.1 0 = -1 := sq_eq_one_iff.mp (by
+    have := sq_abs (u.1 0)
+    rw [hu_norm] at this
+    linarith)
+  have hv0 : v.1 0 = 1 ∨ v.1 0 = -1 := sq_eq_one_iff.mp (by
+    have := sq_abs (v.1 0)
+    rw [hv_norm] at this
+    linarith)
+  have h_ext (x y : sphere (0 : EuclideanSpace ℝ (Fin 1)) 1)
+      (h : x.1 0 = y.1 0) : x = y := by
+    ext i
+    fin_cases i
+    exact h
+  have h_ext_neg (x y : sphere (0 : EuclideanSpace ℝ (Fin 1)) 1)
+      (h : x.1 0 = - y.1 0) : x = -y := by
+    ext i
+    fin_cases i
+    exact h
+  rcases hu0 with hu | hu <;> rcases hv0 with hv | hv
+  · left; exact h_ext u v (by rw [hu, hv])
+  · right; exact h_ext_neg u v (by rw [hu, hv, neg_neg])
+  · right; exact h_ext_neg u v (by rw [hu, hv])
+  · left; exact h_ext u v (by rw [hu, hv])
+
+/-- Real projective space is path-connected for every `n`, as a nonempty subsingleton for `n = 0`
+and as the continuous image of the path-connected unit sphere `Sⁿ` for `1 ≤ n`. -/
+instance instPathConnectedSpace :
+    PathConnectedSpace (RealProjectiveSpace n) := by
+  rcases n with _ | n
+  · have := subsingleton_zero
+    exact ⟨inferInstance, fun x y => by
+      have : x = y := Subsingleton.elim x y
+      subst this
+      exact Joined.refl x⟩
+  · have hrank : 1 < Module.rank ℝ (EuclideanSpace ℝ (Fin (n + 1 + 1))) := by
+      rw [← Module.finrank_eq_rank, finrank_euclideanSpace_fin, Nat.one_lt_cast]
+      omega
+    have hpc := isPathConnected_iff_pathConnectedSpace.mp
+      (isPathConnected_sphere hrank (0 : EuclideanSpace ℝ (Fin (n + 1 + 1))) zero_le_one)
+    have : PathConnectedSpace (sphere (0 : EuclideanSpace ℝ (Fin (n + 1 + 1))) 1) := hpc
+    exact Quotient.instPathConnectedSpace
 
 /-- The unit-sphere projection onto real projective space is a covering map. -/
 theorem isCoveringMap_mk : IsCoveringMap (mk n) :=

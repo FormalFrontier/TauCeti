@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -199,7 +200,7 @@ theorem YoungTableau.toTensorPower_weylRepEquivSymPowerRep (t : YoungTableau μ)
 noncomputable def weylRepOfShapeEquivSymPowerRep (μ : YoungDiagram) (h : μ.colLen 0 ≤ 1) :
     (weylRepOfShape k n μ).Equiv (symPowerRep k n μ.card) :=
   (YoungTableau.weylRepEquivOfShape k n
-      (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm.trans
+      (StandardYoungTableau.rowSuperstandard μ).toTableau).symm.trans
     (YoungTableau.weylRepEquivSymPowerRep k n _ h)
 
 /-- The shape-indexed isomorphism is the tableau-indexed one at the row-superstandard tableau,
@@ -209,9 +210,9 @@ theorem weylRepOfShapeEquivSymPowerRep_apply (μ : YoungDiagram) (h : μ.colLen 
     (x : (weylModuleOfShape k n μ).toSubmodule) :
     weylRepOfShapeEquivSymPowerRep k n μ h x =
       YoungTableau.weylRepEquivSymPowerRep k n
-        (StandardYoungTableau.rowSuperstandard μ).toEquiv h
+        (StandardYoungTableau.rowSuperstandard μ).toTableau h
         ((YoungTableau.weylRepEquivOfShape k n
-          (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm x) :=
+          (StandardYoungTableau.rowSuperstandard μ).toTableau).symm x) :=
   Representation.Equiv.trans_apply _ _ x
 
 end OneRow
@@ -282,7 +283,7 @@ theorem YoungTableau.toTensorPower_weylRepEquivExtPowerRep (t : YoungTableau μ)
 noncomputable def weylRepOfShapeEquivExtPowerRep (μ : YoungDiagram) (h : μ.rowLen 0 ≤ 1) :
     (weylRepOfShape k n μ).Equiv (extPowerRep k n μ.card) :=
   (YoungTableau.weylRepEquivOfShape k n
-      (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm.trans
+      (StandardYoungTableau.rowSuperstandard μ).toTableau).symm.trans
     (YoungTableau.weylRepEquivExtPowerRep k n _ h)
 
 /-- The shape-indexed isomorphism is the tableau-indexed one at the row-superstandard tableau,
@@ -292,9 +293,9 @@ theorem weylRepOfShapeEquivExtPowerRep_apply (μ : YoungDiagram) (h : μ.rowLen 
     (x : (weylModuleOfShape k n μ).toSubmodule) :
     weylRepOfShapeEquivExtPowerRep k n μ h x =
       YoungTableau.weylRepEquivExtPowerRep k n
-        (StandardYoungTableau.rowSuperstandard μ).toEquiv h
+        (StandardYoungTableau.rowSuperstandard μ).toTableau h
         ((YoungTableau.weylRepEquivOfShape k n
-          (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm x) :=
+          (StandardYoungTableau.rowSuperstandard μ).toTableau).symm x) :=
   Representation.Equiv.trans_apply _ _ x
 
 end OneColumn

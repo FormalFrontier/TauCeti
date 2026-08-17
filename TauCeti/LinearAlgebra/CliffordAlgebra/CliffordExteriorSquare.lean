@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 import Mathlib.Algebra.Lie.TransferInstance
-public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.LieSubalgebra
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Lie.Subalgebra
 
 /-!
 # The exterior-square model of quadratic Clifford elements

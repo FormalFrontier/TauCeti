@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Topology.Connected.Clopen
 public import Mathlib.Topology.Irreducible
+import Mathlib.Topology.Homeomorph.Lemmas
 
 /-!
 # Connected components
@@ -15,6 +16,8 @@ components.
 
 ## Main declarations
 
+* `TauCeti.Homeomorph.image_connectedComponent`: a homeomorphism maps a connected component onto
+  the connected component of the image point.
 * `TauCeti.instT1SpaceConnectedComponents`: the connected-components quotient of any topological
   space is a T1 space.
 * `TauCeti.finite_connectedComponents_of_finite_irreducibleComponents`: finiteness of the
@@ -30,6 +33,13 @@ universe u
 variable {X : Type u} [TopologicalSpace X]
 
 namespace TauCeti
+
+/-- A homeomorphism maps a connected component onto the connected component of the image point. -/
+theorem Homeomorph.image_connectedComponent {Y : Type*} [TopologicalSpace Y]
+    (e : X ≃ₜ Y) (x : X) :
+    e '' connectedComponent x = connectedComponent (e x) := by
+  simpa only [connectedComponentIn_univ, Set.image_univ_of_surjective e.surjective] using
+    e.image_connectedComponentIn (s := Set.univ) (x := x) (Set.mem_univ x)
 
 /-- The quotient of a topological space by its connected components is a T1 space. -/
 instance instT1SpaceConnectedComponents : T1Space (ConnectedComponents X) :=

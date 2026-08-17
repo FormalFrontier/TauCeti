@@ -7,12 +7,17 @@ module
 
 public import Mathlib.Topology.Spectral.Hom
 public import Mathlib.Topology.Bases
+public import Mathlib.Topology.Homeomorph.Lemmas
+public import Mathlib.Topology.Spectral.Basic
 
 /-!
-# A basis criterion for spectral maps
+# A basis criterion for spectral maps, and transport of spectrality along an embedding
 
-A continuous map is spectral as soon as the preimage of every member of some topological **basis**
-of the target is compact. Spectrality asks for compact preimages of all compact open sets; the
+Two utilities for spectral spaces and maps. A continuous map is spectral as soon as the preimage
+of every member of some topological **basis** of the target is compact; and spectrality transports
+from the preimage of a set to the set itself along an embedding whose range contains it.
+
+The basis criterion first. Spectrality asks for compact preimages of all compact open sets; the
 reduction to a basis is the observation that a compact open set is a *finite* union of basis
 elements — cover it by the basis members it contains and extract a finite subcover — and a finite
 union of compact preimages is compact.
@@ -29,10 +34,13 @@ but no criterion that tests spectrality on a basis; this supplies the missing en
 
 * `TauCeti.isSpectralMap_of_isTopologicalBasis` : a continuous map whose preimages of basis
   members are compact is a spectral map.
+* `TauCeti.spectralSpace_of_isEmbedding` : a subset of the range of an embedding is spectral as
+  soon as its preimage is — the transport step of any "prove it on a subspace" argument.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1 — Lemma 7.5(2) is the intended consumer.
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1 — Lemma 7.5(2) is the intended consumer of the
+  basis criterion, and Corollary 7.12 and Theorem 7.35 of the transport lemma.
 -/
 
 public section
@@ -63,6 +71,22 @@ theorem isSpectralMap_of_isTopologicalBasis {f : X → Y} {B : Set (Set Y)}
     exact Set.subset_sUnion_of_mem b.2
   rw [heq, Set.preimage_iUnion₂]
   exact t.isCompact_biUnion fun b _ ↦ hpre b (hSB b.2)
+
+/-- **Spectrality transports from a trace along an embedding.** A subset of the target contained
+in the range of an embedding is spectral as soon as its preimage is: the embedding restricts to a
+homeomorphism between the two.
+
+This is the shape every "prove it on a subspace and carry it back" spectrality argument takes.
+It is worth stating separately because the *reason* one works on the subspace is usually that the
+inclusion is not a spectral map, which makes the general preservation theorems unavailable along
+it; this lemma supplies the homeomorphism route instead. -/
+theorem spectralSpace_of_isEmbedding {f : X → Y} (hf : Topology.IsEmbedding f) {S : Set Y}
+    (hS : S ⊆ Set.range f) (h : SpectralSpace (f ⁻¹' S)) : SpectralSpace S := by
+  -- The embedding restricts to a homeomorphism `f ⁻¹' S ≃ₜ S`.
+  let e := hf.homeomorphOfSubsetRange hS
+  -- Transfer compactness along it, then spectrality; a homeomorphism is an open embedding.
+  have : CompactSpace S := e.compactSpace
+  exact e.symm.isOpenEmbedding.spectralSpace
 
 end TauCeti
 

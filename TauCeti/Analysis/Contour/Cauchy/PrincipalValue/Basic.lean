@@ -48,6 +48,8 @@ versus `MeromorphicOn` (on a set).
 * `hasCauchyPVAt_iff` — restates the predicate as its two defining clauses, so consumers can
   characterize `HasCauchyPVAt` without unfolding its hidden body; the value `cauchyPVAt` is read off
   a witness through `HasCauchyPVAt.cauchyPVAt_eq`.
+* `HasCauchyPVAt.of_tendsto` — the shared `ε → 0` closing step: from a closed form `F` that the
+  excised integral eventually equals, and its limit `L`, concludes `HasCauchyPVAt` at `L`.
 * `intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le` — where the curve
   stays within `ε` of the centre, the truncated integrand is integrable and integrates to `0`.
 * `HasCauchyPVAt.intro` — build the predicate from its two clauses; `HasCauchyPVAt.tendsto`,
@@ -125,6 +127,21 @@ theorem hasCauchyPVAt_iff {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {z₀
         Tendsto (fun ε ↦ ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)
           (𝓝[>] 0) (𝓝 L) :=
   Iff.rfl
+
+/-- **The `ε → 0` passage, once.** A principal value is computed by exhibiting the excised
+integral in closed form on a punctured right-neighbourhood of `0` and taking the limit; this
+packages that step, so a caller supplies only the closed form `F` and its limit.
+
+The excised integral is asked to equal `F ε` rather than a specific shape such as `L - c ε`,
+because the closed forms met in practice differ: constant in `ε` along a straight edge, and
+`L` minus an `arcsin` correction at a corner or along an arc. -/
+theorem HasCauchyPVAt.of_tendsto {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {z₀ L : ℂ} {F : ℝ → ℂ}
+    (hF : Tendsto F (𝓝[>] (0 : ℝ)) (𝓝 L))
+    (h : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
+        (fun t ↦ if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) MeasureTheory.volume a b ∧
+      ∫ t in a..b, (if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) = F ε) :
+    HasCauchyPVAt γ a b f z₀ L :=
+  hasCauchyPVAt_iff.mpr ⟨h.mono fun _ hε ↦ hε.1, hF.congr' (h.mono fun _ hε ↦ hε.2.symm)⟩
 
 /-- The **Cauchy principal value at `z₀`** of `∮_γ f`, excluding the symmetric `ε`-ball about `z₀`.
 `limUnder`-based; returns junk when the limit does not exist, so use `HasCauchyPVAt` for the

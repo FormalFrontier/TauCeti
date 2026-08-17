@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Weight
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Representation
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Adjoint.Cotangent
 
 /-!
 # Weight spaces of the adjoint representation
@@ -22,7 +23,7 @@ submodules, indexed by `M`. This file names them: `adjointWeightSpace π α` is 
 submodule `𝔤_α`, `nontrivialAdjointWeights π` is the set of nontrivial characters whose weight
 submodule is nonzero, and the Lie algebra is spanned by `𝔤_1` together with the `𝔤_α` for
 `α ∈ nontrivialAdjointWeights π`. A point of `D(M)` acts on `𝔤_α` by the value of `α` at that
-point.
+point, and the Lie bracket sends `𝔤_α × 𝔤_β` into `𝔤_{αβ}`.
 
 Nothing here asserts that `π` is a closed immersion, that `D(M)` is a torus, let alone a maximal
 one, or that `G` is reductive. When `π` does exhibit a split maximal torus `T` in a reductive `G`,
@@ -45,6 +46,8 @@ one, or that `G` is reductive. When `π` does exhibit a split maximal torus `T` 
   finite.**
 * `TauCeti.Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of `D(M)` acts on the
   `α`-weight submodule by the value of `α` at that point.
+* `TauCeti.Derivation.lie_mem_adjointWeightSpace_mul`: the adjoint weight decomposition is a Lie
+  grading: `[𝔤_α, 𝔤_β] ⊆ 𝔤_{αβ}`.
 
 ## Roadmap
 
@@ -76,10 +79,12 @@ namespace Derivation
 attribute [local instance] Classical.decEq
 attribute [local instance] adjointComodule
 
-variable {R : Type*} {H : Type*} [CommRing R] [CommRing H] [HopfAlgebra R H]
+universe u v w
+
+variable {R : Type u} {H : Type v} [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
-variable {M : Type*} [CommGroup M]
+variable {M : Type w} [CommGroup M]
 
 /-- The `α`-weight submodule `𝔤_α` of the Lie algebra of `G = Spec H` under a homomorphism
 `D(M) → G` with coordinate morphism `π`: the part of the Lie algebra on which `D(M)` acts through
@@ -173,6 +178,102 @@ theorem endOfPoint_tmul_of_mem_adjointWeightSpace {A : Type*} [CommSemiring A] [
     adjointComodule (R := R) (H := H)
   DiagonalizableGroup.endOfPoint_tmul_of_mem_weightSpace
     (Module.Dual R (Bialgebra.CotangentSpace R H)) π f a hx
+
+private theorem map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace
+    {π : H →ₐc[R] MonoidAlgebra R M} {α : M}
+    {x : Module.Dual R (Bialgebra.CotangentSpace R H)}
+    (hx : x ∈ adjointWeightSpace π α) :
+    TensorProduct.map
+        ((π : H →ₗc[R] MonoidAlgebra R M).toLinearMap ∘ₗ
+          (ULift.algEquiv (R := R) : ULift.{max u v} H ≃ₐ[R] H).toLinearMap)
+        LinearMap.id
+        ((adjointAction (CommAlgCat.of R (ULift.{max u v} H))
+          (WithConv.toConv (ULift.algEquiv (R := R)).symm.toAlgHom)).val
+            (1 ⊗ₜ[R] x)) =
+      MonoidAlgebra.single α 1 ⊗ₜ[R] x := by
+  let : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
+    adjointComodule (R := R) (H := H)
+  have h := endOfPoint_tmul_of_mem_adjointWeightSpace π
+    (AlgHom.id R (MonoidAlgebra R M)) 1 hx
+  rw [Comodule.endOfPoint_tmul] at h
+  simp only [one_smul] at h
+  rw [adjointComodule_coact_apply, adjointPointRepresentation_action] at h
+  rw [LinearMap.lTensor_def, ← TensorProduct.map_comm] at h
+  simp only [AlgHom.id_comp, AlgHom.id_apply, one_mul, TensorProduct.comm_comm,
+    TensorProduct.map_map, LinearMap.comp_id] at h
+  have hπ : (π : H →ₐ[R] MonoidAlgebra R M).toLinearMap =
+      (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap := by
+    rw [CoalgHom.toLinearMap_eq_coe]
+    exact BialgHom.toAlgHom_toLinearMap π
+  rw [hπ] at h
+  exact h
+
+/-- **The bracket of an `α`-weight vector and a `β`-weight vector has weight `α * β`.**
+
+For a split pair this is the root-space grading relation
+`[𝔤_α, 𝔤_β] ⊆ 𝔤_{αβ}` (with characters written multiplicatively). -/
+theorem lie_mem_adjointWeightSpace_mul {π : H →ₐc[R] MonoidAlgebra R M} {α β : M}
+    {x y : Module.Dual R (Bialgebra.CotangentSpace R H)}
+    (hx : x ∈ adjointWeightSpace π α) (hy : y ∈ adjointWeightSpace π β) :
+    ⁅x, y⁆ ∈ adjointWeightSpace π (α * β) := by
+  rw [mem_adjointWeightSpace]
+  let U := ULift.{max u v} H
+  let A := CommAlgCat.of R U
+  let g : HopfAlgebra.points (H := H) A :=
+    WithConv.toConv (ULift.algEquiv (R := R)).symm.toAlgHom
+  let q : U →ₐ[R] MonoidAlgebra R M :=
+    (π : H →ₐ[R] MonoidAlgebra R M).comp
+      (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toAlgHom
+  have hπ : (π : H →ₐ[R] MonoidAlgebra R M).toLinearMap =
+      (π : H →ₗc[R] MonoidAlgebra R M).toLinearMap := by
+    rw [CoalgHom.toLinearMap_eq_coe]
+    exact BialgHom.toAlgHom_toLinearMap π
+  have hq : q.toLinearMap =
+      ((π : H →ₗc[R] MonoidAlgebra R M).toLinearMap ∘ₗ
+        (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap) := by
+    -- Unfold `q`: `AlgHom.comp` has no theorem exposing its underlying linear map.
+    change
+      ((π : H →ₐ[R] MonoidAlgebra R M).toLinearMap ∘ₗ
+          (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap) = _
+    rw [hπ]
+  have hx' :
+      TensorProduct.map q.toLinearMap LinearMap.id
+          ((adjointAction A g).val (1 ⊗ₜ[R] x)) =
+        MonoidAlgebra.single α 1 ⊗ₜ[R] x := by
+    rw [hq]
+    exact map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace hx
+  have hy' :
+      TensorProduct.map q.toLinearMap LinearMap.id
+          ((adjointAction A g).val (1 ⊗ₜ[R] y)) =
+        MonoidAlgebra.single β 1 ⊗ₜ[R] y := by
+    rw [hq]
+    exact map_universalAdjointAction_eq_single_of_mem_adjointWeightSpace hy
+  have hbracket := adjointAction_bracket A g (1 ⊗ₜ[R] x) (1 ⊗ₜ[R] y)
+  have hmapped := congrArg
+    (LieAlgebra.ExtendScalars.map q
+      (LieHom.id : Module.Dual R (Bialgebra.CotangentSpace R H) →ₗ⁅R⁆
+        Module.Dual R (Bialgebra.CotangentSpace R H))) hbracket
+  rw [LieHom.map_lie] at hmapped
+  simp only [LieAlgebra.ExtendScalars.bracket_tmul, one_mul] at hmapped
+  -- `ExtendScalars.map` exposes this tensor map only through its `LieHom` coercion.
+  change
+    TensorProduct.map q.toLinearMap LinearMap.id
+        ((adjointAction A g).val (1 ⊗ₜ[R] ⁅x, y⁆)) =
+      ⁅TensorProduct.map q.toLinearMap LinearMap.id
+          ((adjointAction A g).val (1 ⊗ₜ[R] x)),
+        TensorProduct.map q.toLinearMap LinearMap.id
+          ((adjointAction A g).val (1 ⊗ₜ[R] y))⁆ at hmapped
+  rw [hx', hy'] at hmapped
+  simp only [LieAlgebra.ExtendScalars.bracket_tmul,
+    MonoidAlgebra.single_mul_single, one_mul] at hmapped
+  rw [adjointComodule_coact_apply, adjointPointRepresentation_action]
+  apply (TensorProduct.comm R (Module.Dual R (Bialgebra.CotangentSpace R H))
+    (MonoidAlgebra R M)).injective
+  rw [← TensorProduct.map_comm]
+  simp only [TensorProduct.comm_comm, TensorProduct.map_map,
+    LinearMap.comp_id, TensorProduct.comm_tmul]
+  rw [hq] at hmapped
+  exact hmapped
 
 end Derivation
 

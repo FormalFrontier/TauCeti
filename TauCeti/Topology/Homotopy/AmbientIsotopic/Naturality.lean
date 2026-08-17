@@ -45,8 +45,8 @@ variable {f g : C(X, Y)}
 of `Y` carries `f` to `g`, the same ambient isotopy carries `f ∘ e` to `g ∘ e`. -/
 theorem precomp (hfg : AmbientIsotopic f g) (e : C(W, X)) :
     AmbientIsotopic (f.comp e) (g.comp e) := by
-  obtain ⟨Φ, hΦ⟩ := hfg
-  refine ⟨Φ, ?_⟩
+  obtain ⟨Φ, hΦ⟩ := ambientIsotopic_def.mp hfg
+  refine ambientIsotopic_def.mpr ⟨Φ, ?_⟩
   ext w
   exact congr_fun (congrArg DFunLike.coe hΦ) (e w)
 
@@ -54,8 +54,8 @@ theorem precomp (hfg : AmbientIsotopic f g) (e : C(W, X)) :
 ambient isotopy is obtained by transporting the original one across the homeomorphism. -/
 theorem postcomp_homeomorph (hfg : AmbientIsotopic f g) (h : Y ≃ₜ Z) :
     AmbientIsotopic ((h : C(Y, Z)).comp f) ((h : C(Y, Z)).comp g) := by
-  obtain ⟨Φ, hΦ⟩ := hfg
-  refine ⟨Φ.transport h, ?_⟩
+  obtain ⟨Φ, hΦ⟩ := ambientIsotopic_def.mp hfg
+  refine ambientIsotopic_def.mpr ⟨Φ.transport h, ?_⟩
   ext x
   have hx : Φ.final (f x) = g x := congr_fun (congrArg DFunLike.coe hΦ) x
   simpa [AmbientIsotopy.final_transport] using congrArg h hx

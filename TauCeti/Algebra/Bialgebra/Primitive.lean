@@ -1,13 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Data.Nat.Choose.Sum
 public import Mathlib.RingTheory.Binomial
 public import Mathlib.RingTheory.Bialgebra.Basic
+public import TauCeti.Algebra.Module.Rat
 public import TauCeti.RingTheory.DividedPowers.Associative
 
 /-!
@@ -36,6 +37,8 @@ namespace TauCeti.Bialgebra
 
 universe u w
 
+attribute [local instance] TauCeti.moduleNNRat
+
 /-- The comultiplication of a power of a primitive element is its binomial expansion. -/
 theorem comul_pow_of_primitive
     {R : Type u} {A : Type w} [CommSemiring R] [Semiring A] [Bialgebra R A]
@@ -53,11 +56,6 @@ theorem comul_pow_of_primitive
 section DividedPower
 
 variable {A : Type w} [Semiring A] [Bialgebra ℚ A]
-
-/-- The nonnegative-rational scalar action used to interpret divided powers in the tensor square
-of a rational algebra. -/
-noncomputable local instance tensorProductModuleNNRat : Module ℚ≥0 (A ⊗[ℚ] A) :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
 /-- The comultiplication of a divided power of a primitive element has integral structure
 constants:
@@ -99,16 +97,6 @@ end DividedPower
 section Choose
 
 variable {A : Type w} [Ring A] [Bialgebra ℚ A]
-
-/-- The nonnegative-rational scalar action on a rational algebra used to interpret binomial
-coefficients. -/
-noncomputable local instance moduleNNRat : Module ℚ≥0 A :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
-
-/-- The nonnegative-rational scalar action used to interpret binomial coefficients in the tensor
-square of a rational algebra. -/
-noncomputable local instance tensorProductModuleNNRatChoose : Module ℚ≥0 (A ⊗[ℚ] A) :=
-  Module.compHom _ (algebraMap ℚ≥0 ℚ)
 
 /-- The comultiplication of a binomial coefficient in a primitive element has integral
 structure constants:

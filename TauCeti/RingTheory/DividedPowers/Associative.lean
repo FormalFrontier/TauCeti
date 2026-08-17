@@ -141,6 +141,17 @@ theorem self_mul_dividedPower (n : ℕ) (x : A) :
     x * dividedPower n x = (n + 1) • dividedPower (n + 1) x := by
   simpa [add_comm 1 n] using mul_dividedPower 1 n x
 
+/-- **Raising the left divided power, scaled.** Multiplying by `x` on the left turns `x^[m] · z`
+into `m + 1` copies of `x^[m+1] · z`, for any `z`. -/
+theorem succ_nsmul_dividedPower_succ_mul (m : ℕ) (x z : A) :
+    (m + 1) • (dividedPower (m + 1) x * z) = x * (dividedPower m x * z) := by
+  calc
+    (m + 1) • (dividedPower (m + 1) x * z) = ((m + 1) • dividedPower (m + 1) x) * z := by
+      simp only [nsmul_eq_mul]
+      rw [mul_assoc]
+    _ = (x * dividedPower m x) * z := by rw [self_mul_dividedPower]
+    _ = x * (dividedPower m x * z) := mul_assoc _ _ _
+
 /-- The first-order recurrence solved for the successor divided power. -/
 theorem dividedPower_succ (n : ℕ) (x : A) :
     dividedPower (n + 1) x = ((n + 1 : ℕ) : ℚ)⁻¹ • (dividedPower n x * x) := by
@@ -209,6 +220,18 @@ theorem mul_dividedPower_eq_dividedPower_mul_add_intCast
       dividedPower n y * (x + (c : A) * (n : A)) := by
   rw [mul_dividedPower_eq_dividedPower_mul_add_zsmul hxy, zsmul_eq_mul', mul_add,
     Int.cast_mul, Int.cast_natCast, (Nat.cast_commute n (c : A)).eq]
+
+/-- Scaling an element by an integer scales its `n`-th divided power by the `n`-th power of that
+integer. This is the integral companion of `dividedPower_smul`, and is what lets a Chevalley
+structure constant be moved from a root vector to the parameter of its exponential.
+
+This is deliberately not a `simp` lemma: `zsmul_eq_mul` rewrites the argument `d • x` of the
+left-hand side to `↑d * x`, so the statement is not in simp-normal form. -/
+theorem dividedPower_zsmul (d : ℤ) (n : ℕ) (x : A) :
+    dividedPower n (d • x) = d ^ n • dividedPower n x := by
+  rw [← Int.cast_smul_eq_zsmul ℚ d x, dividedPower_smul,
+    ← Int.cast_smul_eq_zsmul ℚ (d ^ n) (dividedPower n x)]
+  norm_cast
 
 /-- Divided powers of a negated element acquire the expected sign. -/
 @[simp]
