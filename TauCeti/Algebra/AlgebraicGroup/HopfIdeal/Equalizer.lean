@@ -211,9 +211,8 @@ theorem hom_ext_of_le_iff_forall_toIdeal_le_ker {I : HopfIdeal R H} {p : ∀ i, 
   have hcomp : (c i).hom ((mkQuotient H I).hom x) = (p i).hom x :=
     congrArg (fun m : H ⟶ K i => m.hom x) (hc i)
   rw [RingHom.mem_ker]
-  change (p i).hom x = 0
-  rw [← hcomp]
-  exact hzero
+  simpa only [BialgHom.coe_toAlgHom, AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using
+    hcomp.symm.trans hzero
 
 /-- The common-kernel quotient carries no further common kernel: the lifted family separates it.
 
@@ -233,9 +232,8 @@ theorem commonKernelHopfIdeal_commonKernelLift (p : ∀ i, H ⟶ K i) :
       ((mkQuotient H (commonKernelHopfIdeal p)).hom x) = (p i).hom x :=
     congrArg (fun m : H ⟶ K i => m.hom x) (mkQuotient_comp_commonKernelLift p i)
   rw [RingHom.mem_ker]
-  change (p i).hom x = 0
-  rw [← hcomp]
-  exact hzero
+  simpa only [BialgHom.coe_toAlgHom, AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using
+    hcomp.symm.trans hzero
 
 /-- A morphism out of a common-kernel quotient is determined by its composites with the lifted
 family. This is the rigidity statement in the form a generated closed subgroup scheme uses. -/
@@ -263,16 +261,12 @@ noncomputable abbrev equalizerSpecι (f g : H ⟶ K) :
     equalizerSpec f g ⟶ (hopfSpec (CommRingCat.of R)).obj (Opposite.op K) :=
   quotientSpecι K (equalizerHopfIdeal f g)
 
-/-- The closed immersion of the equalizer group scheme is the quotient-spectrum inclusion. -/
-theorem equalizerSpecι_def (f g : H ⟶ K) :
-    equalizerSpecι f g = quotientSpecι K (equalizerHopfIdeal f g) :=
-  (rfl)
-
 /-- The equalizer group scheme equalizes the two homomorphisms of affine group schemes. -/
 theorem equalizerSpecι_comp_hopfSpec_map (f g : H ⟶ K) :
     equalizerSpecι f g ≫ (hopfSpec (CommRingCat.of R)).map f.op =
       equalizerSpecι f g ≫ (hopfSpec (CommRingCat.of R)).map g.op := by
-  rw [equalizerSpecι_def, quotientSpecι_def, ← Functor.map_comp, ← Functor.map_comp, ← op_comp,
+  unfold equalizerSpecι
+  rw [quotientSpecι_def, ← Functor.map_comp, ← Functor.map_comp, ← op_comp,
     ← op_comp, comp_mkQuotient_equalizerHopfIdeal]
 
 end Scheme
