@@ -24,10 +24,10 @@ This formulation is equivalent to triviality of the geometric unipotent radical 
 has been constructed, but it does not make the definition wait for that construction. It also
 avoids asserting descent of the geometric unipotent radical over an imperfect field.
 
-The first structural consequence verifies that the predicate has its intended force: if the
-geometric fibre of a reductive group is itself unipotent, its coordinate Hopf algebra is the base
-field. The resulting bialgebra equivalence is the precise affine-group statement that the
-geometric fibre is the trivial group.
+Instantiating the definition at the zero Hopf ideal—the whole geometric fibre as a subgroup of
+itself—shows that if the geometric fibre of a reductive group is itself unipotent, its coordinate
+Hopf algebra is the algebraic closure of the ground field. The resulting bialgebra equivalence is
+the precise affine-group statement that the geometric fibre is the trivial group.
 
 ## Main declarations
 
@@ -35,12 +35,14 @@ geometric fibre is the trivial group.
   over a field.
 * `TauCeti.reductiveCommHopfAlgProperty.eq_augmentation`: every connected normal smooth
   unipotent closed subgroup of a reductive group's geometric fibre is trivial.
-* `TauCeti.reductiveCommHopfAlgProperty.geometricFiberBialgEquivBase`: a reductive group with
+* `TauCeti.reductiveCommHopfAlgProperty.bot_eq_augmentation`: the zero Hopf ideal of a reductive
+  group with unipotent geometric fibre is its augmentation ideal.
+* `TauCeti.reductiveCommHopfAlgProperty.geometricFiberCounitBialgEquiv`: a reductive group with
   geometrically unipotent geometric fibre has trivial geometric fibre.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Definition 17.1.
+* J. S. Milne, *Algebraic Groups* (2017), §6.46 and §19.b.
 * T. A. Springer, *Linear Algebraic Groups*, Chapter 8.
 * B. Conrad, *Reductive Group Schemes*, Section 3.
 
@@ -121,23 +123,20 @@ instance (k : Type u) [Field k] :
       (ConcreteCategory.bijective_of_isIso ebar₀.hom).1
     have hfsurjective : Function.Surjective f :=
       (ConcreteCategory.bijective_of_isIso ebar₀.hom).2
-    have hsmooth : Algebra.Smooth k
-        ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k)).obj K) := by
-      let _ : Algebra.Smooth k
-          ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k)).obj H) := hH.1
-      exact Algebra.Smooth.of_equiv (CommHopfAlgCat.ofIso e₀).toAlgEquiv
-    refine ⟨hsmooth,
+    refine ⟨(smoothCommHopfAlgProperty_iff K.obj).mp <|
+        (smoothCommHopfAlgProperty k).prop_of_iso e₀
+          ((smoothCommHopfAlgProperty_iff H.obj).mpr hH.1),
       (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e₀ hH.2.1, ?_⟩
     intro I hnormal hconnected hunipotent
     let J := I.comap f hfsurjective
-    have hnormalJ : J.IsNormal := HopfIdeal.IsNormal.comap_bijective
-      I f hfinjective hfsurjective hnormal
-    let qIso₀ : CommHopfAlgCat.quotient Hbar.obj J ≅
-        CommHopfAlgCat.quotient Kbar.obj I :=
-      CommHopfAlgCat.quotientIsoOfIso ebar₀ I
+    have hnormalJ : J.IsNormal :=
+      hnormal.comap_of_bijective f hfinjective hfsurjective
     let qIso : FiniteTypeCommHopfAlgCat.quotient Hbar J ≅
         FiniteTypeCommHopfAlgCat.quotient Kbar I :=
-      ObjectProperty.isoMk _ qIso₀
+      FiniteTypeCommHopfAlgCat.quotientIsoOfIso ebar I
+    let qIso₀ := (forget₂
+      (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+      (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso qIso
     have hconnectedJ : geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.quotient Hbar J).obj :=
       (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
@@ -147,21 +146,9 @@ instance (k : Type u) [Field k] :
       (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
         qIso.symm hunipotent
     have hJ := hH.2.2 J hnormalJ hconnectedJ hunipotentJ
-    change J = HopfIdeal.augmentation (AlgebraicClosure k) Hbar at hJ
-    have haugmentation :
-        (HopfIdeal.augmentation (AlgebraicClosure k) Kbar).comap f hfsurjective =
-          HopfIdeal.augmentation (AlgebraicClosure k) Hbar := by
-      ext x
-      rw [HopfIdeal.mem_comap, HopfIdeal.mem_augmentation, HopfIdeal.mem_augmentation,
-        CoalgHomClass.counit_comp_apply]
-    change I = HopfIdeal.augmentation (AlgebraicClosure k) Kbar
-    apply le_antisymm
-    · apply HopfIdeal.le_of_comap_le_comap_of_surjective f hfsurjective
-      change J ≤ (HopfIdeal.augmentation (AlgebraicClosure k) Kbar).comap f hfsurjective
-      rw [hJ, haugmentation]
-    · apply HopfIdeal.le_of_comap_le_comap_of_surjective f hfsurjective
-      change (HopfIdeal.augmentation (AlgebraicClosure k) Kbar).comap f hfsurjective ≤ J
-      rw [haugmentation, hJ]
+    rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hfsurjective,
+      HopfIdeal.comap_augmentation]
+    exact hJ
 
 namespace reductiveCommHopfAlgProperty
 
@@ -221,36 +208,27 @@ theorem bot_eq_augmentation (hH : reductiveCommHopfAlgProperty k H)
 /-- A reductive group whose geometric fibre has only unipotent geometric points has trivial
 geometric fibre: its coordinate Hopf algebra is bialgebra-equivalent to the algebraic closure of
 the ground field via the counit. -/
-noncomputable def geometricFiberBialgEquivBase
+noncomputable def geometricFiberCounitBialgEquiv
     (hH : reductiveCommHopfAlgProperty k H)
     (hunipotent : geometricallyUnipotentPointsCommHopfAlgProperty (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj) :
     FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H ≃ₐc[AlgebraicClosure k]
-      AlgebraicClosure k := by
-  let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
-  have hbijective : Function.Bijective
-      (Bialgebra.counitBialgHom (AlgebraicClosure k) Hbar) := by
-    constructor
-    · apply (HopfIdeal.ker_eq_bot_iff
-        (Bialgebra.counitBialgHom (AlgebraicClosure k) Hbar)
-        Bialgebra.counit_surjective).mp
-      rw [← HopfIdeal.augmentation_def]
-      exact (hH.bot_eq_augmentation hunipotent).symm
-    · exact Bialgebra.counit_surjective
-  exact BialgEquiv.ofBijective
-    (Bialgebra.counitBialgHom (AlgebraicClosure k) Hbar) hbijective
+      AlgebraicClosure k :=
+  HopfIdeal.counitBialgEquivOfAugmentationEqBot
+    (hH.bot_eq_augmentation hunipotent).symm
 
-/-- The equivalence from the geometric fibre to the base field is its counit. -/
+/-- The equivalence from the geometric fibre to the algebraic closure is its counit. -/
 @[simp]
-theorem geometricFiberBialgEquivBase_apply
+theorem geometricFiberCounitBialgEquiv_apply
     (hH : reductiveCommHopfAlgProperty k H)
     (hunipotent : geometricallyUnipotentPointsCommHopfAlgProperty (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj)
     (x : FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :
-    hH.geometricFiberBialgEquivBase hunipotent x =
+    hH.geometricFiberCounitBialgEquiv hunipotent x =
       Bialgebra.counitBialgHom (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) x := by
-  rfl
+  rw [geometricFiberCounitBialgEquiv]
+  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_apply _ _
 
 end reductiveCommHopfAlgProperty
 

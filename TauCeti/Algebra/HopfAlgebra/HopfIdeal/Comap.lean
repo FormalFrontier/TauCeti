@@ -61,7 +61,7 @@ variable [HopfAlgebra R H] [HopfAlgebra R K] [HopfAlgebra R L]
 
 It is defined as the kernel of the composite `H → K → K/I`; its underlying ideal is the
 ordinary ideal comap of `I.toIdeal`. -/
-noncomputable def comap (I : HopfIdeal R K) (f : H →ₐc[R] K)
+@[expose] noncomputable def comap (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (hf : Function.Surjective f) : HopfIdeal R H :=
   kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
     (by

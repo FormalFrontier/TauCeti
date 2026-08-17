@@ -29,8 +29,9 @@ Normal Hopf ideals are closed under arbitrary suprema.
 ## Main declarations
 
 * `TauCeti.HopfIdeal.IsNormal`: stability under the coordinate conjugation action.
+* `TauCeti.HopfIdeal.isNormal_bot`: the zero Hopf ideal is normal.
 * `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
-* `TauCeti.HopfIdeal.IsNormal.comap_bijective`: normality is preserved by pullback along a
+* `TauCeti.HopfIdeal.IsNormal.comap_of_bijective`: normality is preserved by pullback along a
   bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
   subgroup on points over every commutative value algebra.
@@ -183,8 +184,8 @@ variable {H K : Type v} [CommRing H] [CommRing K]
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
 /-- Pulling a normal Hopf ideal back along a bijective bialgebra morphism preserves normality. -/
-theorem IsNormal.comap_bijective (I : HopfIdeal R K) (f : H →ₐc[R] K)
-    (hinj : Function.Injective f) (hsurj : Function.Surjective f) (hI : I.IsNormal) :
+theorem IsNormal.comap_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal) (f : H →ₐc[R] K)
+    (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
     (I.comap f hsurj).IsNormal := by
   apply (CommHopfAlgCat.isNormal_iff_quotientPointsSubgroup_normal
     (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
