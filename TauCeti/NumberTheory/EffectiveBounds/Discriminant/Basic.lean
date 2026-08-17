@@ -24,7 +24,7 @@ matching Minkowski lower bound).
 
 ## Main results
 
-* `TauCeti.NumberField.abs_discr_le_of_basis_isIntegral`: `|d_K| ≤ |disc b|` for a
+* `NumberField.abs_discr_le_of_basis_isIntegral`: `|d_K| ≤ |disc b|` for a
   `ℚ`-basis `b` consisting of algebraic integers.
 
 The remaining declarations are its consumer forms, converting the rational basis-discriminant
@@ -53,8 +53,6 @@ bound with the trace-form calculation for a square-root basis.
 public section
 
 open Module
-
-namespace TauCeti
 
 namespace NumberField
 
@@ -168,7 +166,7 @@ theorem abs_discr_le_of_sq_intCast {K : Type*} [Field K] [NumberField K]
   obtain ⟨b, hbcoe, hb_int⟩ :=
     Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral hfin hx hxint
   -- Combine the effective bound with the trace-form evaluation `disc ℚ {1, x} = 4·a`.
-  have hmain := TauCeti.NumberField.abs_discr_le_of_basis_isIntegral b hb_int
+  have hmain := NumberField.abs_discr_le_of_basis_isIntegral b hb_int
   rw [hbcoe, TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap hfin hx2' hx] at hmain
   simpa [abs_mul] using hmain
 
@@ -180,4 +178,4 @@ theorem abs_discr_le_int_of_sq_intCast {K : Type*} [Field K] [NumberField K]
     |NumberField.discr K| ≤ 4 * |a| := by
   exact_mod_cast abs_discr_le_of_sq_intCast hfin hx2 hx
 
-end TauCeti.NumberField
+end NumberField

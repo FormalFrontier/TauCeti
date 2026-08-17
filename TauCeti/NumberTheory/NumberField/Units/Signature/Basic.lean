@@ -26,9 +26,9 @@ genus-theory formula computes for a real quadratic field.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.fieldUnitSignature`: the signature homomorphism on `Kˣ`, with
+* `NumberField.fieldUnitSignature`: the signature homomorphism on `Kˣ`, with
   `fieldUnitSignature_ker` computing its kernel as `totallyPositiveUnits`.
-* `TauCeti.NumberField.unitSignature`: the signature homomorphism on `(𝓞 K)ˣ`, the restriction of
+* `NumberField.unitSignature`: the signature homomorphism on `(𝓞 K)ˣ`, the restriction of
   `fieldUnitSignature`, with `unitSignature_ker` its kernel `totallyPositiveIntegerUnits` (defined
   in `TotallyPositive.lean`).
 -/
@@ -37,7 +37,7 @@ public section
 
 open NumberField InfinitePlace
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K]
 
@@ -100,4 +100,4 @@ theorem unitSignature_ker :
   ext u
   rw [MonoidHom.mem_ker, unitSignature_eq_one_iff, mem_totallyPositiveIntegerUnits]
 
-end TauCeti.NumberField
+end NumberField

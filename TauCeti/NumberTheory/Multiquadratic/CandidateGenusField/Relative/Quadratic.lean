@@ -22,7 +22,7 @@ conjugation — is phrased for a number field `K` presented by an algebraic inte
 This file supplies that presentation for the embedded base, so those results become available for
 it. The generator is `candidateGenusFieldBaseGen`, the chosen root packaged as an algebraic
 integer; its minimal polynomial is `X ^ 2 - d` as soon as `d` is not a rational square
-(`TauCeti.NumberField.minpoly_integralSqrt`), and it generates the base over `ℚ` because the base
+(`NumberField.minpoly_integralSqrt`), and it generates the base over `ℚ` because the base
 is by definition the simple extension it generates.
 
 ## Main definitions
@@ -75,13 +75,13 @@ noncomputable def candidateGenusFieldBaseSqrt (hd : Squarefree d) :
 the quadratic-field presentation `minpoly ℤ θ = X ^ 2 - d`, `Algebra.adjoin ℚ {θ} = ⊤`. -/
 noncomputable def candidateGenusFieldBaseGen (hd : Squarefree d) :
     𝓞 (candidateGenusFieldBase hd) :=
-  TauCeti.NumberField.integralSqrt (candidateGenusFieldBaseSqrt_sq hd)
+  NumberField.integralSqrt (candidateGenusFieldBaseSqrt_sq hd)
 
 @[simp] theorem coe_candidateGenusFieldBaseGen (hd : Squarefree d) :
     ((candidateGenusFieldBaseGen hd : 𝓞 (candidateGenusFieldBase hd)) :
       candidateGenusFieldBase hd) = candidateGenusFieldBaseSqrt hd := by
   rw [NumberField.RingOfIntegers.coe_eq_algebraMap]
-  exact TauCeti.NumberField.algebraMap_integralSqrt _
+  exact NumberField.algebraMap_integralSqrt _
 
 /-- **The minimal polynomial of the base generator is `X ^ 2 - d`**, for `d` not a rational square.
 Together with `adjoin_candidateGenusFieldBaseGen_eq_top` this presents `candidateGenusFieldBase hd`
@@ -89,7 +89,7 @@ as the quadratic field `ℚ(√d)` in the form the quadratic-field API expects. 
 theorem minpoly_candidateGenusFieldBaseGen (hd : Squarefree d)
     (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) :
     minpoly ℤ (candidateGenusFieldBaseGen hd) = X ^ 2 - C d :=
-  TauCeti.NumberField.minpoly_integralSqrt _ hnsq
+  NumberField.minpoly_integralSqrt _ hnsq
 
 /-- The chosen square root of `d` generates the embedded base as an intermediate field: the base is
 by definition the simple extension it generates, read one level down. -/

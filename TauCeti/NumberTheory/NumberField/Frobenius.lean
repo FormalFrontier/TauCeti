@@ -36,11 +36,11 @@ a multiquadratic field on all its generators at once (Layer 1 of the multiquadra
 
 ## Main results
 
-* `TauCeti.NumberField.exists_isArithFrobAt`: a Frobenius exists at every nonzero prime of
+* `NumberField.exists_isArithFrobAt`: a Frobenius exists at every nonzero prime of
   `𝓞 K`.
-* `TauCeti.NumberField.isArithFrobAt_apply_sqrt`: a Frobenius at `Q ∣ p` sends a square root
+* `NumberField.isArithFrobAt_apply_sqrt`: a Frobenius at `Q ∣ p` sends a square root
   of `d` to `legendreSym p d` times it.
-* `TauCeti.NumberField.isArithFrobAt_apply_sqrt_eq_self_iff`: it fixes `√d` iff `d` is a
+* `NumberField.isArithFrobAt_apply_sqrt_eq_self_iff`: it fixes `√d` iff `d` is a
   quadratic residue mod `p`.
 -/
 
@@ -50,7 +50,7 @@ open Ideal
 
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {p : ℕ} [Fact p.Prime]
 
@@ -98,7 +98,7 @@ theorem isArithFrobAt_apply_sqrt (hodd : p ≠ 2) {d : ℤ} (hd : ¬ (p : ℤ) �
   rwa [algebraMap_integralSqrt] at hcoe
 
 /-- **A Frobenius fixes `√d` iff `d` is a quadratic residue mod `p`.** Under the hypotheses of
-`TauCeti.NumberField.isArithFrobAt_apply_sqrt`, `σ x = x` exactly when `legendreSym p d = 1`
+`NumberField.isArithFrobAt_apply_sqrt`, `σ x = x` exactly when `legendreSym p d = 1`
 (the other case being `σ x = -x`, `legendreSym p d = -1`). This reads the characteristic
 biconditional off the `•` form, using that `x ≠ 0` (as `d ≠ 0`). -/
 theorem isArithFrobAt_apply_sqrt_eq_self_iff (hodd : p ≠ 2) {d : ℤ} (hd : ¬ (p : ℤ) ∣ d)
@@ -124,4 +124,4 @@ theorem isArithFrobAt_apply_sqrt_eq_self_iff (hodd : p ≠ 2) {d : ℤ} (hd : ¬
   · intro h1
     rw [happ, h1, one_smul]
 
-end TauCeti.NumberField
+end NumberField

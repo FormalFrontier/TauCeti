@@ -35,7 +35,7 @@ ramification in the genus field, and `e(𝔭 ∣ p) = 2` is what makes the genus
 
 ## Main results
 
-In the namespace `TauCeti.NumberField`, all for `Module.finrank ℚ K = 2`:
+In the namespace `NumberField`, all for `Module.finrank ℚ K = 2`:
 
 * `primesOver_eq_singleton_of_mem_ramifiedPrimes` and
   `ncard_primesOver_eq_one_of_mem_ramifiedPrimes`: a ramified prime has a unique prime above it.
@@ -52,7 +52,7 @@ public section
 open Ideal Module
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {p : ℕ}
 
@@ -193,4 +193,4 @@ theorem mem_ramifiedPrimes_iff_ramificationIdx_eq_two :
   have := Algebra.IsUnramifiedIn.ramificationIdx_eq_one (R := ℤ) hunr (𝔓 := 𝔭) ‹_›
   omega
 
-end TauCeti.NumberField
+end NumberField
