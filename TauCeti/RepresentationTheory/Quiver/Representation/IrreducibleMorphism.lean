@@ -20,15 +20,18 @@ import Mathlib.CategoryTheory.Limits.FunctorCategory.EpiMono
 
 `TauCeti/CategoryTheory/IrreducibleMorphism.lean` defines an irreducible morphism in an arbitrary
 category — one that is neither a split mono nor a split epi and factors only trivially. This file
-reads that notion off vertex by vertex for representations of a quiver, where a morphism is a
-natural transformation between functors into `ModuleCat k` and every categorical condition is
-pointwise.
+draws the vertexwise consequences of that notion for representations of a quiver, where a
+morphism is a natural transformation between functors into `ModuleCat k` and the conditions of
+being a monomorphism, an epimorphism or an isomorphism are all detected vertex by vertex.
+Irreducibility itself is not such a condition, and neither is splitness: a pointwise split
+morphism need not admit a natural splitting.
 
 The category `TauCeti.QuiverRep k Q` of representations is abelian, being a functor category into
 the abelian category of `k`-modules, so the general dichotomy applies: an irreducible morphism of
 quiver representations is a monomorphism or an epimorphism, hence **injective at every vertex or
-surjective at every vertex**. That is the concrete form in which the arrows of the
-Auslander-Reiten quiver of a quiver algebra are recognized.
+surjective at every vertex**. This is a necessary condition, not a characterization: it is the
+concrete form the arrows of the Auslander-Reiten quiver of a quiver algebra take, but it does not
+by itself certify irreducibility.
 
 ## Main results
 
@@ -36,13 +39,17 @@ Auslander-Reiten quiver of a quiver algebra are recognized.
   quiver representations is injective at every vertex, or surjective at every vertex.
 * `TauCeti.QuiverRep.not_forall_bijective_of_isIrreducibleMorphism`: it is never bijective at
   every vertex, a pointwise isomorphism of quiver representations being an isomorphism.
+* `TauCeti.QuiverRep.not_forall_surjective_of_isIrreducibleMorphism_of_forall_injective` and
+  `TauCeti.QuiverRep.not_forall_injective_of_isIrreducibleMorphism_of_forall_surjective`: the two
+  alternatives of the first result exclude one another.
 
 ## Implementation notes
 
 The two clauses of the first result are not exclusive as stated — being injective everywhere and
 surjective everywhere would make the morphism an isomorphism, which
 `not_forall_bijective_of_isIrreducibleMorphism` rules out, so together they say that exactly one
-of the two alternatives holds.
+of the two alternatives holds. Both directions of that exclusion are stated, since a consumer
+knows one alternative and wants to rule the other out.
 
 Both proofs pass through Mathlib's pointwise criteria for monomorphisms and epimorphisms in a
 functor category (`CategoryTheory.NatTrans.mono_iff_mono_app`,
@@ -100,10 +107,18 @@ theorem not_forall_bijective_of_isIrreducibleMorphism (hf : IsIrreducibleMorphis
 /-- The two alternatives of
 `TauCeti.QuiverRep.injective_or_surjective_of_isIrreducibleMorphism` cannot both hold: an
 irreducible morphism that is injective at every vertex fails to be surjective at some vertex. -/
-theorem not_surjective_of_isIrreducibleMorphism_of_injective (hf : IsIrreducibleMorphism f)
-    (hinj : ∀ a : Paths Q, Function.Injective (f.app a)) :
+theorem not_forall_surjective_of_isIrreducibleMorphism_of_forall_injective
+    (hf : IsIrreducibleMorphism f) (hinj : ∀ a : Paths Q, Function.Injective (f.app a)) :
     ¬ ∀ a : Paths Q, Function.Surjective (f.app a) :=
   fun hsurj => not_forall_bijective_of_isIrreducibleMorphism hf
+    fun a => ⟨hinj a, hsurj a⟩
+
+/-- The other direction of the same exclusion: an irreducible morphism that is surjective at
+every vertex fails to be injective at some vertex. -/
+theorem not_forall_injective_of_isIrreducibleMorphism_of_forall_surjective
+    (hf : IsIrreducibleMorphism f) (hsurj : ∀ a : Paths Q, Function.Surjective (f.app a)) :
+    ¬ ∀ a : Paths Q, Function.Injective (f.app a) :=
+  fun hinj => not_forall_bijective_of_isIrreducibleMorphism hf
     fun a => ⟨hinj a, hsurj a⟩
 
 end QuiverRep

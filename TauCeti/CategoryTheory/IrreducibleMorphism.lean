@@ -12,8 +12,9 @@ public import Mathlib.CategoryTheory.Balanced
 
 A morphism `f : X ⟶ Y` is **irreducible** when it is neither a split monomorphism nor a split
 epimorphism, and every factorization `f = g ≫ h` has `g` a split mono or `h` a split epi. So `f`
-admits no "genuine" intermediate object: any object it factors through is either a retract of `X`
-sitting over `f`, or a retract of `Y` sitting under it.
+admits no "genuine" intermediate object: any object `Z` it factors through either has `X` as a
+retract, split off by the first factor `g`, or has `Y` as a retract, split off by the second
+factor `h`.
 
 Irreducible morphisms are the arrows of the Auslander-Reiten quiver of a finite-dimensional
 algebra, and the middle term of an almost-split sequence is glued to its ends by them. Nothing in
@@ -22,7 +23,8 @@ and specializes only where the statement forces it.
 
 ## Main results
 
-* `TauCeti.IsIrreducibleMorphism`: the definition.
+* `TauCeti.IsIrreducibleMorphism`: the definition, with `TauCeti.isIrreducibleMorphism_iff`
+  spelling out its three clauses as the introduction and elimination rule.
 * `TauCeti.IsIrreducibleMorphism.not_isIso`: an irreducible morphism is not an isomorphism.
 * `TauCeti.IsIrreducibleMorphism.comp_iso` and `TauCeti.IsIrreducibleMorphism.iso_comp`,
   with the `iff` forms `TauCeti.isIrreducibleMorphism_comp_iso_iff` and
@@ -45,7 +47,9 @@ cancellation directions.
 The definition is a conjunction rather than a structure, matching the signature pinned by the
 roadmap; the three components are available as `TauCeti.IsIrreducibleMorphism.not_isSplitMono`,
 `TauCeti.IsIrreducibleMorphism.not_isSplitEpi` and `TauCeti.IsIrreducibleMorphism.factors`, so
-that no proof has to project through `And` by hand.
+that no proof has to project through `And` by hand. The body of the definition is not exposed
+outside this module, so `⟨_, _, _⟩` is not available to establish it downstream;
+`TauCeti.isIrreducibleMorphism_iff` is the introduction rule.
 
 The quantifier in the third component ranges over *all* objects of the ambient category. For the
 Auslander-Reiten theory of a finite-dimensional algebra that is the intended reading: the ambient
@@ -127,6 +131,16 @@ def IsIrreducibleMorphism {X Y : C} (f : X ⟶ Y) : Prop :=
     ∀ (Z : C) (g : X ⟶ Z) (h : Z ⟶ Y), g ≫ h = f → IsSplitMono g ∨ IsSplitEpi h
 
 variable {X Y : C} {f : X ⟶ Y}
+
+/-- **The three clauses of irreducibility**, spelled out. This is both the introduction rule —
+the body of `TauCeti.IsIrreducibleMorphism` is not exposed outside this module, so `⟨_, _, _⟩`
+does not establish it there — and the elimination rule in a single statement; the individual
+components are also available as `TauCeti.IsIrreducibleMorphism.not_isSplitMono`,
+`TauCeti.IsIrreducibleMorphism.not_isSplitEpi` and `TauCeti.IsIrreducibleMorphism.factors`. -/
+theorem isIrreducibleMorphism_iff :
+    IsIrreducibleMorphism f ↔ ¬ IsSplitMono f ∧ ¬ IsSplitEpi f ∧
+      ∀ (Z : C) (g : X ⟶ Z) (h : Z ⟶ Y), g ≫ h = f → IsSplitMono g ∨ IsSplitEpi h :=
+  Iff.rfl
 
 /-- An irreducible morphism is not a split monomorphism. -/
 theorem IsIrreducibleMorphism.not_isSplitMono (hf : IsIrreducibleMorphism f) :
