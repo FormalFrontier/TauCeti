@@ -81,6 +81,18 @@ theorem mk_mem_iccOrderIsoQuotientOfMapEq_iff {p q : Submodule R M} (r : Submodu
   rw [hN', coe_iciSubmoduleOrderIsoIcc_symm_apply]
   simp only [Submodule.mem_comap, Submodule.subtype_apply]
 
+/-- An ambient representative belongs to the interval submodule corresponding to `Q` exactly
+when its quotient class belongs to `Q`. -/
+@[simp]
+theorem mem_iccOrderIsoQuotientOfMapEq_symm_apply_iff {p q : Submodule R M}
+    (r : Submodule R q)
+    (hr : r.map q.subtype = p) (Q : Submodule R (q ⧸ r)) (x : q) :
+    (x : M) ∈ ((Submodule.iccOrderIsoQuotientOfMapEq r hr).symm Q).1 ↔
+      Submodule.Quotient.mk x ∈ Q := by
+  simpa only [OrderIso.apply_symm_apply] using
+    (Submodule.mk_mem_iccOrderIsoQuotientOfMapEq_iff r hr
+      ((Submodule.iccOrderIsoQuotientOfMapEq r hr).symm Q) x).symm
+
 /-- The correspondence theorem restricted to an interval: submodules between `p` and `q` are
 order-isomorphic to submodules of the quotient of `q` by the copy of `p` in `q`. -/
 def iccOrderIsoQuotient {p q : Submodule R M} (h : p ≤ q) :
@@ -101,6 +113,17 @@ theorem mk_mem_iccOrderIsoQuotient_iff {p q : Submodule R M} (h : p ≤ q)
       Submodule.iccOrderIsoQuotientOfMapEq (p.submoduleOf q) hmap := rfl
   rw [hiso]
   exact Submodule.mk_mem_iccOrderIsoQuotientOfMapEq_iff (p.submoduleOf q) hmap N x
+
+/-- An ambient representative belongs to the interval submodule corresponding to `Q` exactly
+when its quotient class belongs to `Q`. -/
+@[simp]
+theorem mem_iccOrderIsoQuotient_symm_apply_iff {p q : Submodule R M} (h : p ≤ q)
+    (Q : Submodule R (q ⧸ p.submoduleOf q)) (x : q) :
+    (x : M) ∈ ((Submodule.iccOrderIsoQuotient h).symm Q).1 ↔
+      Submodule.Quotient.mk x ∈ Q := by
+  simpa only [OrderIso.apply_symm_apply] using
+    (Submodule.mk_mem_iccOrderIsoQuotient_iff h
+      ((Submodule.iccOrderIsoQuotient h).symm Q) x).symm
 
 end QuotientInterval
 
