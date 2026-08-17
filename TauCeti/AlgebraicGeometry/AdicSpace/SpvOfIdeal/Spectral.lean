@@ -20,7 +20,7 @@ Wedhorn gives `Spv (A, I)` the subspace topology of `Spv A` (§7.1, after (7.1.1
 spectral with the sets
 
 ```text
-Spv (A, I)(T/s) = { v ∈ Spv (A, I) ; v(t) ≤ v(s) ≠ 0 for all t ∈ T },   I ⊆ √(T · A)
+Spv (A, I)(T/s) = { v ∈ Spv (A, I) | v(t) ≤ v(s) ≠ 0 for all t ∈ T },   I ⊆ √(T · A)
 ```
 
 as a generating family. (Wedhorn states them as a basis of quasi-compact opens, and that is what
