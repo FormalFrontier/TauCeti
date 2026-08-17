@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
+public import TauCeti.Algebra.Lie.Sl2.IntegralLattice
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
 
 /-!
@@ -36,7 +37,9 @@ A root step is not a normalization that could be arranged by rescaling the basis
 column of `eᵢ` at `b s` is a single basis vector with unit coefficient. For the adjoint
 representation on a Chevalley lattice of a simply laced type the intended witness is `s` the index
 of a root vector `e_β` with `β + αᵢ` a root and `β + 2αᵢ` not a root; supplying such a witness is
-left to the caller and is not established here.
+left to the caller in the general construction. The final section supplies a nondegenerate
+rank-one witness: both roots in the standard two-dimensional `sl₂` representation satisfy the
+root-step hypotheses on its integral coordinate lattice, and hence give actual closed immersions.
 
 ## Main declarations
 
@@ -57,6 +60,8 @@ left to the caller and is not established here.
   subgroup scheme of `GLₙ`.
 * `TauCeti.UniversalEnvelopingAlgebra.coe_kostantRootSubgroupClosedSubgroup`: that closed subgroup
   is the subobject represented by the root-subgroup morphism.
+* `TauCeti.Sl2Std.isClosedImmersion_kostantRootSubgroup_one`: both root subgroups in the standard
+  two-dimensional integral `sl₂` representation are closed immersions.
 
 ## References
 
@@ -363,3 +368,103 @@ theorem coe_kostantRootSubgroupClosedSubgroup :
 end Scheme
 
 end TauCeti.UniversalEnvelopingAlgebra
+
+namespace TauCeti.Sl2Std
+
+open TauCeti.UniversalEnvelopingAlgebra
+
+local notation "e" => ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1]
+local notation "h" => ![slFinTwoBasis ℚ 2]
+local notation "ρ" => repEnveloping ℚ 1
+
+/-- The coordinate basis of the standard integral `sl₂` lattice, viewed through its underlying
+additive subgroup as required by the Kostant root-subgroup construction. -/
+noncomputable def integralLatticeAddSubgroupBasis (n : ℕ) :
+    Module.Basis (Fin (n + 1)) ℤ (integralLattice n).toAddSubgroup :=
+  (Pi.basisFun ℤ (Fin (n + 1))).map (integerCoordinatesLinearEquiv n)
+
+/-- The integral-lattice coordinate basis has the expected underlying rational basis vectors. -/
+@[simp]
+theorem coe_integralLatticeAddSubgroupBasis_apply (n : ℕ) (i : Fin (n + 1)) :
+    ((integralLatticeAddSubgroupBasis n i : (integralLattice n).toAddSubgroup) :
+      Sl2Std ℚ n) = basis ℚ n i := by
+  change ((integerCoordinatesLinearEquiv n (Pi.basisFun ℤ (Fin (n + 1)) i) :
+    integralLattice n) : Sl2Std ℚ n) = basis ℚ n i
+  funext j
+  rw [coe_integerCoordinatesLinearEquiv_apply]
+  classical
+  by_cases hji : j = i
+  · subst j
+    simp [Pi.basisFun_apply, basis_apply]
+  · simp [Pi.basisFun_apply, basis_apply, hji]
+
+local notation "b" => integralLatticeAddSubgroupBasis 1
+
+/-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent. -/
+theorem repEnveloping_root_isNilpotent (i : Fin 2) :
+    IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) := by
+  fin_cases i
+  · change IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 0)))
+    rw [repEnveloping_ι_slFinTwoBasis]
+    exact ⟨2, raise_pow_eq_zero⟩
+  · change IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 1)))
+    rw [repEnveloping_ι_slFinTwoBasis]
+    exact ⟨2, lower_pow_eq_zero⟩
+
+/-- Every root operator in the standard two-dimensional `sl₂` representation has a unit root
+step on the integral coordinate basis. For the raising operator the step is `v₁ ↦ v₀`; for
+the lowering operator it is `v₀ ↦ v₁`. -/
+theorem exists_unit_rootStep_repEnveloping_one (i : Fin 2) :
+    ∃ r s : Fin 2, ∃ c : ℤ, IsUnit c ∧
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : Sl2Std ℚ 1) =
+        c • (b r : Sl2Std ℚ 1) ∧
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))
+        (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : Sl2Std ℚ 1)) = 0 := by
+  fin_cases i
+  · refine ⟨0, 1, 1, isUnit_one, ?_, ?_⟩
+    · change ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 0))
+          (b 1 : Sl2Std ℚ 1) = 1 • (b 0 : Sl2Std ℚ 1)
+      rw [repEnveloping_ι_slFinTwoBasis]
+      change raise ℚ 1 (b 1 : Sl2Std ℚ 1) = 1 • (b 0 : Sl2Std ℚ 1)
+      rw [coe_integralLatticeAddSubgroupBasis_apply,
+        coe_integralLatticeAddSubgroupBasis_apply, raise_basis]
+      norm_num
+    · change ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 0))
+          (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 0))
+            (b 1 : Sl2Std ℚ 1)) = 0
+      rw [repEnveloping_ι_slFinTwoBasis]
+      change raise ℚ 1 (raise ℚ 1 (b 1 : Sl2Std ℚ 1)) = 0
+      rw [coe_integralLatticeAddSubgroupBasis_apply]
+      have hz := DFunLike.congr_fun (raise_pow_eq_zero (K := ℚ) (n := 1)) (basis ℚ 1 1)
+      simpa [pow_two, Module.End.mul_apply] using hz
+  · refine ⟨1, 0, 1, isUnit_one, ?_, ?_⟩
+    · change ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 1))
+          (b 0 : Sl2Std ℚ 1) = 1 • (b 1 : Sl2Std ℚ 1)
+      rw [repEnveloping_ι_slFinTwoBasis]
+      change lower ℚ 1 (b 0 : Sl2Std ℚ 1) = 1 • (b 1 : Sl2Std ℚ 1)
+      rw [coe_integralLatticeAddSubgroupBasis_apply,
+        coe_integralLatticeAddSubgroupBasis_apply,
+        lower_basis _ (by norm_num)]
+      norm_num
+    · change ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 1))
+          (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 1))
+            (b 0 : Sl2Std ℚ 1)) = 0
+      rw [repEnveloping_ι_slFinTwoBasis]
+      change lower ℚ 1 (lower ℚ 1 (b 0 : Sl2Std ℚ 1)) = 0
+      rw [coe_integralLatticeAddSubgroupBasis_apply]
+      have hz := DFunLike.congr_fun (lower_pow_eq_zero (K := ℚ) (n := 1)) (basis ℚ 1 0)
+      simpa [pow_two, Module.End.mul_apply] using hz
+
+/-- Both Kostant root subgroups in the standard two-dimensional integral `sl₂` representation
+are closed immersions. This is a nondegenerate instance of the general root-step criterion above. -/
+theorem isClosedImmersion_kostantRootSubgroup_one (i : Fin 2) :
+    IsClosedImmersion
+      (kostantRootSubgroup e h ρ (integralLattice 1).toAddSubgroup
+        (kostantForm_apply_mem_integralLattice 1) i
+        (repEnveloping_root_isNilpotent i) b).hom.hom.left := by
+  obtain ⟨r, s, c, hc, hstep, hsq⟩ := exists_unit_rootStep_repEnveloping_one i
+  exact isClosedImmersion_kostantRootSubgroup e h ρ (integralLattice 1).toAddSubgroup
+    (kostantForm_apply_mem_integralLattice 1) i (repEnveloping_root_isNilpotent i) b
+    hc hstep hsq
+
+end TauCeti.Sl2Std
