@@ -107,6 +107,8 @@ noncomputable def primaryDecomposition :
         Fintype (AddCommGroup.primaryComponent A p.1) := fun _ ↦ Fintype.ofFinite _
     apply (Fintype.bijective_iff_injective_and_card _).mpr
     constructor
+    -- Unfold the private homomorphism so the existing injectivity theorem applies to its
+    -- `noncommPiCoprod` implementation.
     · change Function.Injective
         (AddSubgroup.noncommPiCoprod (primaryComponents_pairwise_addCommute A))
       apply AddSubgroup.injective_noncommPiCoprod_of_iSupIndep

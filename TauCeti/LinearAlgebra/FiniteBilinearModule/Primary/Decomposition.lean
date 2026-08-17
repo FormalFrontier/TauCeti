@@ -61,16 +61,19 @@ variable (A : FiniteBilinearModule)
               Finset.sum_add_distrib] }
       map_zero' := by
         ext y
+        -- Expose the pointwise formula while constructing the bundled pairing itself.
         change ∑ p, A.pairing 0 (y p) = 0
         apply Finset.sum_eq_zero
         intro p _
         exact A.pairing_zero_left (y p)
       map_add' := fun x y ↦ by
         ext z
+        -- Expose the pointwise formula while constructing the bundled pairing itself.
         change ∑ p, A.pairing (x p + y p) (z p) =
           (∑ p, A.pairing (x p) (z p)) + ∑ p, A.pairing (y p) (z p)
         simp only [pairing_add_left, Finset.sum_add_distrib] }
   pairing_comm x y := by
+    -- Expose the pointwise formula while proving the final structure field.
     change (∑ p, A.pairing (x p) (y p)) = ∑ p, A.pairing (y p) (x p)
     apply Finset.sum_congr rfl
     intro p _
@@ -86,6 +89,8 @@ theorem primaryComponents_pairing (x y : A.primaryComponents) :
 noncomputable def primaryDecomposition : Isometry A.primaryComponents A where
   toAddEquiv := AddCommGroup.primaryDecomposition A
   map_pairing' x y := by
+    -- Unfolding the carrier variables and goal together aligns the bundled carrier's synthesized
+    -- additive instance with the dependent-product instance used by the group decomposition.
     unfold primaryComponents at x y ⊢
     rw [AddCommGroup.primaryDecomposition_apply, AddCommGroup.primaryDecomposition_apply]
     change A.pairing (∑ p, (x p : A)) (∑ p, (y p : A)) =
@@ -131,6 +136,8 @@ variable (A : FiniteQuadraticModule)
 @[simp]
 theorem primaryComponents_quadratic (x : A.primaryComponents) :
     A.primaryComponents.quadratic x = ∑ p, A.quadratic (x p) := by
+  -- Unfold the carrier together with the structure so the dependent-product module instances
+  -- used by `QuadraticMap.sum_apply` agree definitionally.
   unfold FiniteQuadraticModule.primaryComponents at x ⊢
   unfold FiniteBilinearModule.primaryComponents at x ⊢
   rw [sum_apply]
@@ -142,6 +149,8 @@ theorem primaryComponents_quadratic (x : A.primaryComponents) :
 noncomputable def primaryDecomposition : Isometry A.primaryComponents A where
   toLinearEquiv := (AddCommGroup.primaryDecomposition A).toIntLinearEquiv
   map_app' x := by
+    -- Unfolding the carrier variable and goal together aligns the bundled carrier's synthesized
+    -- module instance with the dependent-product instance used by the group decomposition.
     unfold FiniteQuadraticModule.primaryComponents at x ⊢
     unfold FiniteBilinearModule.primaryComponents at x ⊢
     rw [sum_apply]
