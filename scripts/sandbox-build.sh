@@ -54,3 +54,8 @@ lake exe module-system
 # is fail-closed (see the SECURITY MODEL in the script). Fails on new violations or
 # unaccounted nolints; fixed baseline entries print a ratchet reminder only.
 bash scripts/lint-env.sh
+
+# Source style lint. The trusted wrapper uses the shared validated TauCeti/ module list, applies
+# Mathlib's copyright/Authors checks (excluding the deliberately empty root), and generates the
+# text-linter import root under .lake/ without relying on TauCeti.lean's imports.
+bash scripts/lint-style.sh

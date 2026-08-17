@@ -18,7 +18,7 @@ For a finite numerator set `T` and a denominator `s`, the rational subset is the
 `spa A⁺` of the basic open `Spv(A)(T/s)`:
 
 ```text
-R(T/s) = {v ∈ spa A⁺ ; v(t) ≤ v(s) ≠ 0 for every t ∈ T} = spa A⁺ ∩ Spv(A)(T/s).
+R(T/s) = {v ∈ spa A⁺ | v(t) ≤ v(s) ≠ 0 for every t ∈ T} = spa A⁺ ∩ Spv(A)(T/s).
 ```
 
 As with `spa` itself, the definition is stated for arbitrary data: no hypothesis relates the
