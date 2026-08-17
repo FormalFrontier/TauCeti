@@ -126,8 +126,12 @@ subtypes. Mathlib takes the host graph first: `G.labelledCopyCount F` counts cop
 `G`.
 
 This settles the numerator against the existing Mathlib primitive, so `injHomDensity` does not
-introduce a parallel counting convention. -/
-@[simp]
+introduce a parallel counting convention.
+
+Deliberately not `@[simp]`: the left-hand side is not in simp normal form, since `Nat.card` of a
+`Fintype` rewrites to `Fintype.card`, and the repo's `simpNF` linter rejects the annotation. Stating
+it with a `Fintype.card` left-hand side instead would abandon the `Nat.card` counting convention the
+roadmap pins for these densities. -/
 theorem card_injective_hom_eq_labelledCopyCount :
     Nat.card {φ : F →g G // Function.Injective φ} = G.labelledCopyCount F := by
   -- `labelledCopyCount` is defined by `classical exact Fintype.card (Copy H G)`, so unfolding it
