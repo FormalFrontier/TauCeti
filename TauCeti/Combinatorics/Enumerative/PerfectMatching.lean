@@ -70,7 +70,7 @@ instance instDecidableIsPerfectMatching [DecidableEq α] [Fintype α] (f : Equiv
 /-- The type of perfect matchings of `α`, a subtype of `Equiv.Perm α` so that the finiteness
 and decidability instances of permutations carry over unchanged. -/
 @[expose]
-def PerfectMatching (α : Type u) := {f : Equiv.Perm α // IsPerfectMatching f}
+def PerfectMatching (α : Type u) : Type _ := {f : Equiv.Perm α // IsPerfectMatching f}
 
 namespace PerfectMatching
 

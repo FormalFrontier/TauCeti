@@ -8,9 +8,8 @@ public import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
 public import Mathlib.MeasureTheory.Integral.Average
 public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 public import Mathlib.Topology.Semicontinuity.Defs
--- `TauCeti.MeasureTheory.Integral.Marcinkiewicz` is imported privately: it supplies
--- `TauCeti.lintegral_rpow_le_of_mul_meas_ofReal_lt_le`, used only inside the proof of
--- `TauCeti.lintegral_rpow_maximalFunction_le`.
+-- `TauCeti.MeasureTheory.Integral.Marcinkiewicz` is imported privately: its operator-level
+-- interpolation API is used only to prove the strong maximal inequality below.
 import TauCeti.MeasureTheory.Integral.Marcinkiewicz
 -- `Mathlib.MeasureTheory.Constructions.BorelSpace.Order` is imported privately: it is used only
 -- for `LowerSemicontinuous.measurable`, inside the proof of `TauCeti.measurable_maximalFunction`.
@@ -61,10 +60,10 @@ where finiteness of `∫⁻ ‖f‖ₑ` enters: a ball whose average exceeds `t`
 ball is the whole space — and that degenerate case is proved separately.
 
 The strong type `(p, p)` bound then comes from
-`TauCeti.lintegral_rpow_le_of_mul_meas_ofReal_lt_le`, the diagonal case of Marcinkiewicz
-interpolation. Its hypothesis is supplied by splitting `‖f‖ₑ` at the height `t / 2`: the low part
-is bounded by `t / 2`, so its maximal function never reaches `t`, and the weak-type bound applied
-to the high part gives
+`TauCeti.lintegral_rpow_le_of_mul_meas_lt_le_of_le_eLpNormEssSup`, the operator-level diagonal
+case of Marcinkiewicz interpolation. That theorem performs the reusable split at height `c * t`.
+Here `c = d = 2⁻¹`, so the low part is bounded by `t / 2`, its maximal function never reaches
+`t`, and the weak-type bound applied to the high part gives
 `t * μ {M f > t} ≤ 2 * 4 ^ n * ∫⁻ x in {‖f‖ₑ > t / 2}, ‖f x‖ₑ ∂μ`.
 
 ## Main declarations
@@ -76,10 +75,11 @@ to the high part gives
   normalisation is the intended one.
 * `TauCeti.maximalFunction_mono_ae`, `TauCeti.maximalFunction_congr_ae`: `M` is monotone in `‖f‖ₑ`
   almost everywhere, so `M f` depends on `f` only through `‖f‖ₑ` and only up to a null set.
+* `TauCeti.maximalFunction_enorm`: replacing a function by its extended norm leaves its maximal
+  function unchanged.
 * `TauCeti.maximalFunction_zero`, `TauCeti.maximalFunction_add_le`,
-  `TauCeti.maximalFunction_const_smul`: `M` is sublinear. Subadditivity is what
-  `TauCeti.mul_measure_lt_maximalFunction_le_setLIntegral` uses to build the hypothesis of
-  `TauCeti.lintegral_rpow_le_of_mul_meas_ofReal_lt_le`.
+  `TauCeti.maximalFunction_const_smul`: `M` is sublinear. Subadditivity and the endpoint bounds
+  feed directly into `TauCeti.lintegral_rpow_le_of_mul_meas_lt_le_of_le_eLpNormEssSup`.
 * `TauCeti.maximalFunction_le_eLpNormEssSup`: the `L^∞` endpoint.
 * `TauCeti.lowerSemicontinuous_maximalFunction`, `TauCeti.measurable_maximalFunction`: the
   superlevel sets `{x | t < M f x}` are open, so `M f` is Borel measurable.
@@ -88,8 +88,6 @@ to the high part gives
   **maximal inequality**, in product and in quotient form.
 * `TauCeti.ae_maximalFunction_lt_top`: the maximal function of an `L¹` function is finite almost
   everywhere.
-* `TauCeti.mul_measure_lt_maximalFunction_le_setLIntegral`: the weak-type bound against the
-  truncation of `f` at half the height, the form Marcinkiewicz interpolation consumes.
 * `TauCeti.lintegral_rpow_maximalFunction_le`, `TauCeti.eLpNorm_maximalFunction_le`: the
   **strong type `(p, p)` maximal inequality** for `1 < p < ∞`, with an explicit constant.
 
@@ -156,6 +154,12 @@ theorem maximalFunction_congr_ae (h : ∀ᵐ y ∂μ, ‖f y‖ₑ = ‖g y‖�
     maximalFunction μ f x = maximalFunction μ g x :=
   le_antisymm (maximalFunction_mono_ae (h.mono fun _ hy => hy.le))
     (maximalFunction_mono_ae (h.mono fun _ hy => hy.ge))
+
+/-- Replacing a function by its extended norm leaves its maximal function unchanged. -/
+@[simp]
+theorem maximalFunction_enorm (μ : Measure X) (f : X → F) :
+    maximalFunction μ (fun x => ‖f x‖ₑ) = maximalFunction μ f :=
+  funext fun _ => maximalFunction_congr_ae (.of_forall fun _ => by simp)
 
 /-- The `L^∞` endpoint of the maximal inequality: the maximal function of `f` is bounded by the
 essential supremum of `‖f‖`, with constant `1`. -/
@@ -428,89 +432,6 @@ theorem ae_maximalFunction_lt_top (μ : Measure E) [μ.IsAddHaarMeasure] (f : E 
 
 section StrongType
 
-/-- The weak-type `(1,1)` bound in **truncated** form: only the part of `f` above the height
-`t / 2` can push `M f` above `t`, so
-
-`t * μ {M f > t} ≤ 2 * 4 ^ n * ∫⁻ x in {‖f‖ₑ > t / 2}, ‖f x‖ₑ ∂μ`.
-
-Splitting `‖f‖ₑ` at the height `t / 2` and discarding the low part, whose maximal function is at
-most `t / 2` by the `L^∞` endpoint, is what turns
-`TauCeti.mul_measure_lt_maximalFunction_le` into the hypothesis of Marcinkiewicz
-interpolation. The split is carried out in `ℝ≥0∞`, since `M f` depends on `f` only through
-`‖f‖ₑ`. -/
-theorem mul_measure_lt_maximalFunction_le_setLIntegral (μ : Measure E) [μ.IsAddHaarMeasure]
-    {f : E → F} (hf : AEMeasurable (fun x => ‖f x‖ₑ) μ) {t : ℝ} (ht : 0 < t) :
-    ENNReal.ofReal t * μ {x | ENNReal.ofReal t < maximalFunction μ f x} ≤
-      2 * 4 ^ finrank ℝ E * ∫⁻ x in {x | ENNReal.ofReal (2⁻¹ * t) < ‖f x‖ₑ}, ‖f x‖ₑ ∂μ := by
-  have hhalf : (0 : ℝ) ≤ 2⁻¹ * t := by positivity
-  have htwo : ENNReal.ofReal t = 2 * ENNReal.ofReal (2⁻¹ * t) := by
-    rw [← ENNReal.ofReal_ofNat 2, ← ENNReal.ofReal_mul (by norm_num : (0 : ℝ) ≤ 2)]
-    ring_nf
-  -- Split `‖f‖ₑ` at the height `t / 2`, cutting along a measurable representative `g`.
-  set g : E → ℝ≥0∞ := hf.mk (fun x => ‖f x‖ₑ) with hgdef
-  have hfg : (fun x => ‖f x‖ₑ) =ᵐ[μ] g := hf.ae_eq_mk
-  have hgmeas : Measurable g := hf.measurable_mk
-  set S : Set E := {x | ENNReal.ofReal (2⁻¹ * t) < g x} with hSdef
-  have hSmeas : MeasurableSet S := measurableSet_lt measurable_const hgmeas
-  set g₁ : E → ℝ≥0∞ := S.indicator g with hg₁def
-  set g₂ : E → ℝ≥0∞ := Sᶜ.indicator g with hg₂def
-  have hsplit : ∀ x, g₁ x + g₂ x = g x := by
-    rw [hg₁def, hg₂def]
-    exact Set.indicator_self_add_compl_apply S g
-  -- `M f = M (g₁ + g₂)`, because `M` sees `f` only through `‖f‖ₑ`, which is `g` almost everywhere.
-  have hMf : ∀ x, maximalFunction μ f x = maximalFunction μ (g₁ + g₂) x := fun x =>
-    maximalFunction_congr_ae (by
-      filter_upwards [hfg] with y hy
-      rw [hy, enorm_eq_self, Pi.add_apply, hsplit y])
-  -- The low part is bounded by `t / 2`, hence so is its maximal function.
-  have hM₂ : ∀ x, maximalFunction μ g₂ x ≤ ENNReal.ofReal (2⁻¹ * t) := by
-    have hbound : ∀ x, ‖g₂ x‖ₑ ≤ ENNReal.ofReal (2⁻¹ * t) := by
-      intro x
-      rw [enorm_eq_self, hg₂def]
-      by_cases hxS : x ∈ S
-      · rw [Set.indicator_of_notMem (by simp [hxS])]
-        exact zero_le
-      · rw [Set.indicator_of_mem (by simp [hxS])]
-        exact not_lt.1 (by simpa [hSdef] using hxS)
-    exact fun x => (maximalFunction_le_eLpNormEssSup μ g₂ x).trans
-      (essSup_le_of_ae_le _ (.of_forall hbound))
-  -- Hence `M f > t` forces `M g₁ > t / 2`.
-  have hincl : {x | ENNReal.ofReal t < maximalFunction μ f x} ⊆
-      {x | ENNReal.ofReal (2⁻¹ * t) < maximalFunction μ g₁ x} := by
-    intro x hx
-    have h1 : maximalFunction μ f x ≤ maximalFunction μ g₁ x + maximalFunction μ g₂ x := by
-      rw [hMf x]
-      exact maximalFunction_add_le (hgmeas.indicator hSmeas).aemeasurable x
-    have h2 : ENNReal.ofReal (2⁻¹ * t) + ENNReal.ofReal (2⁻¹ * t) <
-        maximalFunction μ g₁ x + ENNReal.ofReal (2⁻¹ * t) := by
-      have hsum : 2⁻¹ * t + 2⁻¹ * t = t := by ring
-      rw [← ENNReal.ofReal_add hhalf hhalf, hsum]
-      exact lt_of_lt_of_le hx (h1.trans (add_le_add le_rfl (hM₂ x)))
-    exact (ENNReal.add_lt_add_iff_right ENNReal.ofReal_ne_top).1 h2
-  -- The `L¹` norm of the high part is the truncated integral.
-  have hint : ∫⁻ x, ‖g₁ x‖ₑ ∂μ =
-      ∫⁻ x in {x | ENNReal.ofReal (2⁻¹ * t) < ‖f x‖ₑ}, ‖f x‖ₑ ∂μ := by
-    have hsets : {x | ENNReal.ofReal (2⁻¹ * t) < ‖f x‖ₑ} =ᵐ[μ] S := by
-      filter_upwards [hfg] with x hx
-      exact congrArg (fun z : ℝ≥0∞ => ENNReal.ofReal (2⁻¹ * t) < z) hx
-    calc ∫⁻ x, ‖g₁ x‖ₑ ∂μ
-        = ∫⁻ x in S, g x ∂μ := by
-          simp only [enorm_eq_self, hg₁def]
-          exact lintegral_indicator hSmeas g
-      _ = ∫⁻ x in S, ‖f x‖ₑ ∂μ := (lintegral_congr_ae (ae_restrict_of_ae hfg)).symm
-      _ = ∫⁻ x in {x | ENNReal.ofReal (2⁻¹ * t) < ‖f x‖ₑ}, ‖f x‖ₑ ∂μ := by
-          rw [Measure.restrict_congr_set hsets]
-  calc ENNReal.ofReal t * μ {x | ENNReal.ofReal t < maximalFunction μ f x}
-      = 2 * (ENNReal.ofReal (2⁻¹ * t) * μ {x | ENNReal.ofReal t < maximalFunction μ f x}) := by
-        rw [htwo, mul_assoc]
-    _ ≤ 2 * (ENNReal.ofReal (2⁻¹ * t) *
-          μ {x | ENNReal.ofReal (2⁻¹ * t) < maximalFunction μ g₁ x}) :=
-        mul_le_mul_right (mul_le_mul_right (measure_mono hincl) _) 2
-    _ ≤ 2 * (4 ^ finrank ℝ E * ∫⁻ x, ‖g₁ x‖ₑ ∂μ) :=
-        mul_le_mul_right (mul_measure_lt_maximalFunction_le μ g₁ _) 2
-    _ = 2 * 4 ^ finrank ℝ E * ∫⁻ x in {x | ENNReal.ofReal (2⁻¹ * t) < ‖f x‖ₑ}, ‖f x‖ₑ ∂μ := by
-        rw [hint, mul_assoc]
-
 /-- **The Hardy–Littlewood maximal inequality**, the strong-type `(p, p)` bound for `1 < p < ∞`,
 as an inequality between the integrals `∫⁻ ‖·‖ₑ ^ p`:
 
@@ -532,16 +453,27 @@ theorem lintegral_rpow_maximalFunction_le (μ : Measure E) [μ.IsAddHaarMeasure]
     rw [hinv, hsplit, ENNReal.ofReal_mul (by norm_num : (0 : ℝ) ≤ 2), ENNReal.ofReal_ofNat]
     ring
   rw [← hconst]
-  refine lintegral_rpow_le_of_mul_meas_ofReal_lt_le hf
-    (measurable_maximalFunction μ f).aemeasurable hp (by norm_num) fun t ht => ?_
-  simpa using mul_measure_lt_maximalFunction_le_setLIntegral μ hf ht
+  rw [← maximalFunction_enorm μ f]
+  simpa only [inv_inv, ENNReal.ofReal_ofNat, enorm_eq_self] using
+    lintegral_rpow_le_of_mul_meas_lt_le_of_le_eLpNormEssSup
+      (T := fun g => maximalFunction μ g) (A := 4 ^ finrank ℝ E) (b := 1)
+      (c := 2⁻¹) (d := 2⁻¹) hf
+      (measurable_maximalFunction μ fun x => ‖f x‖ₑ).aemeasurable hp
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      (fun g h hg _hh => .of_forall fun y => maximalFunction_add_le
+        (by simpa only [enorm_eq_self] using hg) y)
+      (fun g _hg s => by
+        simpa only [enorm_eq_self] using mul_measure_lt_maximalFunction_le μ g s)
+      (fun (g : E → ℝ≥0∞) (_hg : AEMeasurable g μ) =>
+        .of_forall fun y : E => by simpa only [ENNReal.ofReal_one, one_mul] using
+          maximalFunction_le_eLpNormEssSup μ g y)
 
 /-- **The Hardy–Littlewood maximal inequality**, the strong-type `(p, p)` bound for `1 < p < ∞`,
-in terms of the `Lᵖ` seminorms: `M` is a bounded (nonlinear) operator on `Lᵖ`.
+in terms of representative-level `Lᵖ` seminorms.
 
 Together with `TauCeti.maximalFunction_le_eLpNormEssSup` (the case `p = ∞`) and
-`TauCeti.mul_measure_lt_maximalFunction_le` (the weak-type substitute at `p = 1`), this completes
-the `Lᵖ` theory of the maximal function. -/
+`TauCeti.mul_measure_lt_maximalFunction_le` (the weak-type substitute at `p = 1`), this gives the
+representative-level strong estimate for the maximal function. -/
 theorem eLpNorm_maximalFunction_le (μ : Measure E) [μ.IsAddHaarMeasure] {f : E → F}
     (hf : AEMeasurable (fun x => ‖f x‖ₑ) μ) {p : ℝ≥0∞} (hp : 1 < p) (hp_top : p ≠ ∞) :
     eLpNorm (maximalFunction μ f) p μ ≤

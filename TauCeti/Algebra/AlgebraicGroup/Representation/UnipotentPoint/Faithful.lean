@@ -43,7 +43,7 @@ characterization is still to come.
 
 public section
 
-open WithConv
+open LinearMap WithConv
 
 namespace TauCeti.HopfAlgebra
 
