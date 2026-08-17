@@ -120,6 +120,12 @@ lemma baseChangeFunctor_map {H L : _root_.CommHopfAlgCat.{v} k} (φ : H ⟶ L) :
     (baseChangeFunctor (K := K)).map φ = baseChangeMap (K := K) φ :=
   (rfl)
 
+/-- Scalar extension of coordinate morphisms respects composition. -/
+lemma baseChangeMap_comp {H L M : _root_.CommHopfAlgCat.{v} k} (φ : H ⟶ L) (ψ : L ⟶ M) :
+    baseChangeMap (K := K) (φ ≫ ψ) =
+      baseChangeMap (K := K) φ ≫ baseChangeMap (K := K) ψ :=
+  (baseChangeFunctor (K := K)).map_comp φ ψ
+
 variable (A : CommAlgCat.{x} K)
 
 /-- The points of the base-changed Hopf algebra are the original points evaluated

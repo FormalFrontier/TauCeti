@@ -26,7 +26,8 @@ a later theorem and is not asserted here.
 
 ## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedDefiningIdeal`: the common-kernel Hopf ideal.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedDefiningIdeal`: the common-kernel Hopf ideal,
+  with `kostantGeneratedDefiningIdeal_def` unfolding it.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedGroupScheme`: the resulting closed subgroup
   scheme of `GLₙ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated`: the factorization of every
@@ -71,6 +72,15 @@ noncomputable def kostantGeneratedDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ n) :=
   CommHopfAlgCat.commonKernelHopfIdeal
     (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
+
+/-- The defining ideal of the generated group scheme is the common-kernel Hopf ideal of the family
+of Kostant root-subgroup coordinate maps. -/
+theorem kostantGeneratedDefiningIdeal_def :
+    kostantGeneratedDefiningIdeal e h ρ M hM hnil b =
+      CommHopfAlgCat.commonKernelHopfIdeal
+        (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
+  unfold kostantGeneratedDefiningIdeal
+  rfl
 
 /-- A Hopf ideal is contained in the defining ideal of the generated group scheme exactly when
 every Kostant root-subgroup coordinate map kills it. This is the coordinate form of minimality. -/
