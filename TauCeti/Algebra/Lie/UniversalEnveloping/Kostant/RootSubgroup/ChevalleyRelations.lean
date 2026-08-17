@@ -28,7 +28,7 @@ then the canonical commutator relation is
 ```
 
 This file provides the relations in any finite integral basis. Their scheme-valued counterparts
-are in `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Relations`.
+are in `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Relations.Basic`.
 
 ## Main declarations
 
