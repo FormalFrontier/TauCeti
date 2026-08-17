@@ -296,6 +296,14 @@ jobs:
             echo "::error::symlinks are not allowed under TauCeti/"; exit 1
           fi
           test -d pr/TauCeti && test ! -L pr/TauCeti
+          # Preserve the base branch's obligations before overlaying the AI-owned registry. The
+          # trusted checker ratchets these against the PR copy below: a source may add obligations,
+          # but may not drop a base probe while the tracked source still exists at that path.
+          base_shims="$RUNNER_TEMP/base-mathlib-shims.json"
+          if [ -f base/TauCeti/mathlib-shims.json ]; then
+            cp base/TauCeti/mathlib-shims.json "$base_shims"
+            echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+          fi
           rm -rf base/TauCeti
           cp -a pr/TauCeti base/TauCeti
           # Overlay the root TauCeti.lean too (a regular file, never a symlink). Only if
@@ -334,12 +342,16 @@ jobs:
       # to record a concrete expiry target in TauCeti's AI-owned registry. Keeping the registry under
       # TauCeti/ lets a worker add or remove entries in the same autonomous source PR as the shim.
       - name: Temporary Mathlib shims have machine-checkable expiry targets
+        id: shim_coverage
         if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
         run: |
-          if ! (cd base && python3 scripts/check-expired-mathlib-shims.py --coverage-only); then
-            echo "SHIM_REGISTRY_BAD=1" >> "$GITHUB_ENV"
-            echo "::warning::temporary Mathlib shim prose lacks trusted expiry metadata"
-          fi
+          set +e
+          args=(--coverage-only)
+          [ -z "${BASE_SHIM_REGISTRY:-}" ] || args+=(--base-manifest "$BASE_SHIM_REGISTRY")
+          (cd base && python3 scripts/check-expired-mathlib-shims.py "${args[@]}")
+          rc=$?
+          echo "SHIM_COVERAGE_RC=$rc" >> "$GITHUB_ENV"
+          exit "$rc"
 
       - name: Install elan (trusted)
         if: ${{ env.INFRA != '1' }}
@@ -439,15 +451,21 @@ jobs:
           fi
           echo "Mathlib cache is complete at the bump target."
 
-      # A replacement can only become newly actionable when the pinned Mathlib moves. Make that
-      # forward-bump PR the durable work item: a red build is picked up by Tau Ceti's existing bump
-      # worker, which migrates the affected TauCeti/ source and its AI-owned registry entry on the
-      # same branch. This deliberately does not page a human or fail ordinary source-only PRs.
-      - name: Migrate shims whose replacements landed in this Mathlib bump
+      # A replacement normally becomes newly actionable when the pinned Mathlib moves; that bump PR
+      # is picked up by Tau Ceti's bump worker. Running the same trusted probe on source PRs also
+      # prevents a newly-added shim from targeting API that already exists at the current pin. Only
+      # concrete replacements block; speculative and landing-sentinel probes remain audit warnings.
+      - name: Migrate shims whose exact replacements exist in pinned Mathlib
         id: shim_expiry
-        if: ${{ env.INFRA != '1' && env.BUMP == '1' && env.BUMP_BAD != '1' }}
-        continue-on-error: true
-        run: (cd base && python3 scripts/check-expired-mathlib-shims.py --fail-on-available)
+        if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
+        run: |
+          set +e
+          args=(--fail-on-available)
+          [ -z "${BASE_SHIM_REGISTRY:-}" ] || args+=(--base-manifest "$BASE_SHIM_REGISTRY")
+          (cd base && python3 scripts/check-expired-mathlib-shims.py "${args[@]}")
+          rc=$?
+          echo "SHIM_EXPIRY_RC=$rc" >> "$GITHUB_ENV"
+          exit "$rc"
 
       # Text-only trusted lint: inspect the overlaid PR sources after Mathlib's source tree is
       # available. It does not elaborate or execute the untrusted TauCeti code.
@@ -588,7 +606,11 @@ jobs:
           if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
-          elif [ "${{ steps.shim_expiry.outcome }}" = "failure" ]; then
+          elif [ "${{ env.SHIM_COVERAGE_RC }}" = "2" ]; then
+            state=failure; desc="shim expiry metadata invalid — see failed checker step"
+          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "2" ]; then
+            state=failure; desc="shim expiry probe failed — see failed checker step"
+          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "1" ]; then
             state=failure; desc="Mathlib replacements landed — autonomous shim migration required"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
             state=success; desc="sandboxed build, audits, and simp-NF lint passed (trusted config)"
@@ -617,8 +639,10 @@ jobs:
             sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
-          elif [ "${{ env.SHIM_REGISTRY_BAD }}" = "1" ]; then
+          elif [ "${{ env.SHIM_COVERAGE_RC }}" = "2" ]; then
             sc_state=failure; sc_desc="temporary Mathlib shim prose lacks trusted expiry metadata"
+          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "2" ]; then
+            sc_state=failure; sc_desc="could not inspect pinned Mathlib for shim expiry"
           else
             sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
           fi

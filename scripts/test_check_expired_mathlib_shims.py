@@ -114,6 +114,31 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "invalid declaration"):
                 check.load_registry(manifest, root)
 
+    def test_registry_rejects_parent_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps([{
+                "sources": ["TauCeti/../Outside.lean"],
+                "declarations": ["Future.name"],
+            }]), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "TauCeti/.*path"):
+                check.load_registry(manifest, root)
+
+    def test_base_registry_obligation_is_ratcheted_until_source_moves(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source = pathlib.Path("TauCeti/Old.lean")
+            (root / source).parent.mkdir()
+            (root / source).touch()
+            base = check.ShimGroup((source,), ("Upstream.done",), (), "base")
+            with self.assertRaisesRegex(ValueError, "base shim obligations"):
+                check.validate_registry_ratchet((), (base,), root)
+            kept = check.ShimGroup((source,), ("Upstream.done", "Future.more"), (), "kept")
+            check.validate_registry_ratchet((kept,), (base,), root)
+            (root / source).unlink()
+            check.validate_registry_ratchet((), (base,), root)
+
     def test_probe_round_trip(self):
         source = check.render_declaration_probe(["Foo.bar", "Alpha", "Foo.bar"])
         self.assertEqual(source.count("env.contains `Foo.bar"), 1)
@@ -140,7 +165,7 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             summary = check.markdown_summary((group,), available)
             self.assertIn("report does not fail the build", summary)
             blocking = check.markdown_summary((group,), available, blocking=True)
-            self.assertIn("bump is blocked until its worker migrates", blocking)
+            self.assertIn("PR is blocked until its worker migrates", blocking)
             self.assertIn("TauCeti/One.lean", summary)
             self.assertIn("test group", summary)
 
@@ -168,6 +193,11 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         self.assertIn("migrate only declarations with canonical counterparts", summary)
         self.assertIn("preserve or re-home source-only API", warning)
         self.assertNotIn("delete this file", summary + warning)
+        self.assertFalse(check.blocks_bump(available[0]))
+        exact = check.AvailableReplacement(
+            pathlib.Path("TauCeti/Exact.lean"), ("declaration Upstream.exact",), "exact"
+        )
+        self.assertTrue(check.blocks_bump(exact))
 
     def test_missing_mathlib_tree_rejects_module_checks(self):
         group = check.ShimGroup(

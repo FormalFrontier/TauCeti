@@ -4,8 +4,8 @@
 The registry in ``TauCeti/mathlib-shims.json`` is AI-owned metadata kept out of module docstrings.
 Each entry names one or more Tau Ceti source files and a concrete Mathlib declaration or module.
 Exact replacements and broader landing sentinels carry different guidance. The default invocation
-is report-only; ``--fail-on-available`` turns a finding into the autonomous Mathlib-bump gate that
-hands the bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean environment is
+is report-only; ``--fail-on-available`` turns an exact finding into an autonomous PR gate that
+hands the source or bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean environment is
 always an infrastructure error.
 """
 
@@ -71,7 +71,9 @@ def _string_list(value: object, field: str, entry: int) -> tuple[str, ...]:
     return tuple(value)
 
 
-def load_registry(path: pathlib.Path, repo_root: pathlib.Path) -> tuple[ShimGroup, ...]:
+def load_registry(
+    path: pathlib.Path, repo_root: pathlib.Path, *, require_sources: bool = True
+) -> tuple[ShimGroup, ...]:
     """Read and validate the shim registry, including every tracked source path."""
 
     try:
@@ -112,12 +114,12 @@ def load_registry(path: pathlib.Path, repo_root: pathlib.Path) -> tuple[ShimGrou
         sources: list[pathlib.Path] = []
         for source_raw in sources_raw:
             source = pathlib.Path(source_raw)
-            if source.is_absolute() or source.suffix != ".lean" or not source.parts \
-                    or source.parts[0] != "TauCeti":
+            if source.is_absolute() or ".." in source.parts or source.suffix != ".lean" \
+                    or not source.parts or source.parts[0] != "TauCeti":
                 raise ValueError(f"entry {index}: source must be a TauCeti/*.lean path: {source}")
             if source in seen_sources:
                 raise ValueError(f"entry {index}: duplicate source {source}")
-            if not (repo_root / source).is_file():
+            if require_sources and not (repo_root / source).is_file():
                 raise ValueError(f"entry {index}: tracked source does not exist: {source}")
             seen_sources.add(source)
             sources.append(source)
@@ -161,6 +163,40 @@ def validate_registry_coverage(groups: Sequence[ShimGroup], source_root: pathlib
         rendered = "\n".join(f"  {source}" for source in untracked)
         raise ValueError(
             "self-declared Mathlib shims are missing from TauCeti/mathlib-shims.json:\n"
+            f"{rendered}"
+        )
+
+
+def validate_registry_ratchet(
+    groups: Sequence[ShimGroup], base_groups: Sequence[ShimGroup], repo_root: pathlib.Path
+) -> None:
+    """Keep each base obligation until its tracked source is removed.
+
+    The registry is AI-owned so a migration worker can update it, but an unrelated source PR must
+    not make a shim disappear merely by deleting its prose and registry row. While a base-tracked
+    source remains at the same path, its declaration/module probes must remain too. A migration may
+    delete or re-home that source and remove the old row in the same PR.
+    """
+
+    def by_source(entries: Sequence[ShimGroup]) -> dict[pathlib.Path, tuple[set[str], set[str]]]:
+        return {
+            source: (set(group.declarations), set(group.modules))
+            for group in entries for source in group.sources
+        }
+
+    current = by_source(groups)
+    weakened: list[pathlib.Path] = []
+    for source, (base_declarations, base_modules) in by_source(base_groups).items():
+        if not (repo_root / source).is_file():
+            continue
+        probes = current.get(source)
+        if probes is None or not base_declarations <= probes[0] or not base_modules <= probes[1]:
+            weakened.append(source)
+    if weakened:
+        rendered = "\n".join(f"  {source}" for source in sorted(weakened))
+        raise ValueError(
+            "base shim obligations were removed while their tracked sources still exist; "
+            "migrate and delete or re-home each source before removing its probes:\n"
             f"{rendered}"
         )
 
@@ -257,7 +293,7 @@ def markdown_summary(
         lines.append("No configured replacement target exists in the pinned dependency.")
         return "\n".join(lines) + "\n"
     disposition = (
-        "This Mathlib bump is blocked until its worker migrates each affected source."
+        "This PR is blocked until its worker migrates each affected source."
         if blocking else "Audit each affected source; this report does not fail the build."
     )
     lines.extend([
@@ -293,11 +329,19 @@ def warning_message(replacement: AvailableReplacement) -> str:
     return f"Pinned Mathlib now provides {targets}; {advice} ({replacement.note}){speculative}"
 
 
+def blocks_bump(replacement: AvailableReplacement) -> bool:
+    """Whether this trigger is a concrete migration rather than an audit-only sentinel."""
+
+    return not replacement.speculative and not replacement.landing_sentinel
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=pathlib.Path,
                         default=pathlib.Path(__file__).resolve().parent.parent)
     parser.add_argument("--manifest", type=pathlib.Path)
+    parser.add_argument("--base-manifest", type=pathlib.Path,
+                        help="trusted base registry whose live obligations may not be weakened")
     parser.add_argument("--mathlib-root", type=pathlib.Path)
     parser.add_argument("--lake-root", type=pathlib.Path)
     parser.add_argument("--coverage-only", action="store_true",
@@ -316,6 +360,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         groups = load_registry(manifest, repo_root)
         validate_registry_coverage(groups, repo_root / "TauCeti")
+        if args.base_manifest is not None and args.base_manifest.is_file():
+            base_groups = load_registry(args.base_manifest.resolve(), repo_root, require_sources=False)
+            validate_registry_ratchet(groups, base_groups, repo_root)
         if args.coverage_only:
             print("check-expired-mathlib-shims: registry covers all self-declared shims")
             return 0
@@ -327,19 +374,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     tracked = sum(len(group.sources) for group in groups)
+    blocking = tuple(replacement for replacement in available if blocks_bump(replacement))
     print(f"check-expired-mathlib-shims: {tracked} tracked files, "
-          f"{len(available)} with available replacements")
-    annotation = "error" if args.fail_on_available else "warning"
+          f"{len(available)} with available replacements ({len(blocking)} blocking)")
     for replacement in available:
+        annotation = "error" if args.fail_on_available and blocks_bump(replacement) else "warning"
         print(f"::{annotation} file={replacement.source}::{warning_message(replacement)}")
 
-    summary = markdown_summary(groups, available, blocking=args.fail_on_available)
+    summary = markdown_summary(groups, available, blocking=bool(blocking) and args.fail_on_available)
     if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):
         with pathlib.Path(summary_path).open("a", encoding="utf-8") as stream:
             stream.write(summary)
     elif available:
         print(summary)
-    return 1 if args.fail_on_available and available else 0
+    return 1 if args.fail_on_available and blocking else 0
 
 
 if __name__ == "__main__":
