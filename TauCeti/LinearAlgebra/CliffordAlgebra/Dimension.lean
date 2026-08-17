@@ -92,7 +92,7 @@ separate milestone.
 
 public section
 
-open Module CliffordAlgebra
+open Module
 
 universe u v w
 

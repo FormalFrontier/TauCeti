@@ -26,7 +26,6 @@ here once and shared.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 

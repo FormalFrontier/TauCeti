@@ -58,13 +58,10 @@ Layer 9 CAR worked instance.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 section CommRing
 

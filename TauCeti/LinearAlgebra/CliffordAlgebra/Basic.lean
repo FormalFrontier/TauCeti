@@ -21,13 +21,10 @@ linear equivalence with the exterior algebra.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 

@@ -70,13 +70,10 @@ scope.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 

@@ -46,8 +46,6 @@ open scoped Matrix TensorProduct
 
 namespace CliffordAlgebra
 
-open TauCeti
-
 variable {M : Type*} [AddCommGroup M] [Module ℝ M]
 variable (Q : QuadraticForm ℝ M)
 

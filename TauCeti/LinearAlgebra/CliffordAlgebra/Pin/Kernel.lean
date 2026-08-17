@@ -35,8 +35,6 @@ public section
 
 namespace CliffordAlgebra
 
-open TauCeti
-
 universe u v
 
 variable {K : Type u} {M : Type v} [Field K] [AddCommGroup M] [Module K M]

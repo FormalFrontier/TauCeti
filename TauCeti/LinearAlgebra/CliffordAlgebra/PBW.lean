@@ -33,14 +33,11 @@ This completes the associated-graded-algebra part of Layer 0 in the
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]

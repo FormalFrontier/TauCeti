@@ -35,14 +35,11 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 

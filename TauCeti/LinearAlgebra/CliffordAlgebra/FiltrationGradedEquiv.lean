@@ -55,13 +55,10 @@ construct the total associated-graded algebra or prove multiplication compatibil
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) [Invertible (2 : R)]

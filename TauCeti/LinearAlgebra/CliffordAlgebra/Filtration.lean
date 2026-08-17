@@ -96,13 +96,10 @@ supremum over the `i` of a fixed parity.
 
 public section
 
-open CliffordAlgebra
 
 universe u v w
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 

@@ -43,14 +43,10 @@ public section
 open scoped Matrix
 
 open TauCeti
-open CliffordAlgebra
-
 
 universe u
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 

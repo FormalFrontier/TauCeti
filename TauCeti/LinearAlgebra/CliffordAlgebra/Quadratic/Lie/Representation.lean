@@ -36,13 +36,10 @@ Clifford action makes the target Clifford module a module for the original Lie a
 
 public section
 
-open CliffordAlgebra
 
 universe u v w x
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 

@@ -73,13 +73,10 @@ the scalars and the vectors, the disjointness of the two pins that step down to 
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 section CommRing
 

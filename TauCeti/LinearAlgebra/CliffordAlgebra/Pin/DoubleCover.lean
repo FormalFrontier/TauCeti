@@ -39,7 +39,6 @@ from `TauCeti.LinearAlgebra.CliffordAlgebra.Spin.DoubleCover`.
 
 public section
 
-open CliffordAlgebra
 
 namespace CliffordAlgebra
 

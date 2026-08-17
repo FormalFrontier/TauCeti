@@ -40,7 +40,7 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
+open QuadraticMap
 
 universe u v
 

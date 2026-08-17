@@ -39,8 +39,6 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra
-
 namespace CliffordAlgebra
 
 open TauCeti
@@ -218,8 +216,6 @@ end NegOne
 end CliffordAlgebra
 
 namespace CliffordAlgebra
-
-open TauCeti
 
 section Kernel
 

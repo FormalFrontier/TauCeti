@@ -48,7 +48,6 @@ grading and live with it.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 

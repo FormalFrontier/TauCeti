@@ -70,7 +70,7 @@ Spinors* (1954), Chapter II.
 
 public section
 
-open CliffordAlgebra QuadraticMap
+open QuadraticMap
 
 universe u v
 

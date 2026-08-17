@@ -31,7 +31,6 @@ canonical bivector action rather than from a basis-dependent inverse.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
