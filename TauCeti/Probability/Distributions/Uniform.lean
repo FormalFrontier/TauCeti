@@ -318,16 +318,18 @@ Every uniform law is an affine image of the standard one on `Set.Ioc 0 1`. This 
 statement proved for `uniformMeasure 0 1` be transported to a general interval instead of reproved,
 and it is the scalar case of the change-of-variables pattern the later families reuse. -/
 
-/-- The pushforward of Lebesgue measure under `x ↦ a + (b - a) * x`. -/
-theorem map_volume_affine {a b : ℝ} (hab : a < b) :
-    Measure.map (fun x => a + (b - a) * x) volume = ENNReal.ofReal (b - a)⁻¹ • volume := by
-  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
-  have h : (fun x : ℝ => a + (b - a) * x) = (fun y => a + y) ∘ (fun x => (b - a) * x) := rfl
+/-- The pushforward of Lebesgue measure under an affine map `x ↦ a + c * x`.
+
+Only `c ≠ 0` is needed; the translation is measure-preserving and the scaling contributes
+`|c|⁻¹`. -/
+theorem map_volume_affine {a c : ℝ} (hc : c ≠ 0) :
+    Measure.map (fun x => a + c * x) volume = ENNReal.ofReal |c|⁻¹ • volume := by
+  have h : (fun x : ℝ => a + c * x) = (fun y => a + y) ∘ (fun x => c * x) := rfl
   rw [h, ← Measure.map_map (by fun_prop) (by fun_prop),
-    Real.map_volume_mul_left (ne_of_gt hba), Measure.map_smul,
+    Real.map_volume_mul_left hc, Measure.map_smul,
     Measure.IsAddLeftInvariant.map_add_left_eq_self]
   congr 1
-  rw [abs_of_pos (by positivity)]
+  rw [abs_inv]
 
 /-- The affine map carries `Set.Ioc 0 1` onto `Set.Ioc a b`, stated as a preimage. -/
 theorem preimage_affine_Ioc {a b : ℝ} (hab : a < b) :
@@ -349,8 +351,8 @@ theorem map_uniformMeasure_affine {a b : ℝ} (hab : a < b) :
   have h01 : uniformMeasure 0 1 = volume.restrict (Set.Ioc (0 : ℝ) 1) := by
     rw [uniformMeasure_eq_smul]; norm_num
   rw [h01, ← preimage_affine_Ioc hab, ← Measure.restrict_map hmeas measurableSet_Ioc,
-    map_volume_affine hab, Measure.restrict_smul, uniformMeasure_eq_smul,
-    ENNReal.ofReal_inv_of_pos hba]
+    map_volume_affine (ne_of_gt hba), abs_of_pos hba, Measure.restrict_smul,
+    uniformMeasure_eq_smul, ENNReal.ofReal_inv_of_pos hba]
 
 end Probability
 
