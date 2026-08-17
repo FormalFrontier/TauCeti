@@ -41,7 +41,7 @@ contractibility of a real topological vector space
   `AddCircle.isEmpty_homeomorph_realTopologicalVectorSpace`,
   `AddCircle.isEmpty_homeomorph_real`: `AddCircle p` is not homeomorphic to a simply
   connected space, to a real topological vector space, or to `ℝ`.
-* `TauCeti.UnitAddCircle.*`: the specialisations to the unit circle `S¹ = ℝ ⧸ ℤ`.
+* `UnitAddCircle.*`: the specialisations to the unit circle `S¹ = ℝ ⧸ ℤ`.
 -/
 
 public section
@@ -111,7 +111,7 @@ theorem isEmpty_homeomorph_real (hp : p ≠ 0) : IsEmpty (AddCircle p ≃ₜ ℝ
 
 end AddCircle
 
-namespace TauCeti.UnitAddCircle
+namespace UnitAddCircle
 
 /-- The fundamental group of the unit circle `S¹ = ℝ ⧸ ℤ`, based at `0`, is nontrivial. -/
 theorem nontrivial_fundamentalGroup_zero : Nontrivial (FundamentalGroup UnitAddCircle 0) :=
@@ -133,4 +133,4 @@ theorem not_contractibleSpace : ¬ ContractibleSpace UnitAddCircle :=
 theorem isEmpty_homeomorph_real : IsEmpty (UnitAddCircle ≃ₜ ℝ) :=
   AddCircle.isEmpty_homeomorph_real 1 one_ne_zero
 
-end TauCeti.UnitAddCircle
+end UnitAddCircle

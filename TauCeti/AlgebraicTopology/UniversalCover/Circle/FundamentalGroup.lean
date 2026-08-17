@@ -44,7 +44,7 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
   group of `AddCircle p` (based at any point with a chosen lift) is `Multiplicative ℤ`.
 * `AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using
   the lift `0 : ℝ`.
-* `TauCeti.UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
+* `UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
 
 ## References
 
@@ -271,7 +271,7 @@ lemma fundamentalGroupMulEquivZero_eq_one_iff (hp : p ≠ 0) (γ : FundamentalGr
 
 end AddCircle
 
-namespace TauCeti.UnitAddCircle
+namespace UnitAddCircle
 
 /-- The fundamental group of the unit circle `S¹ = ℝ ⧸ ℤ` is `ℤ`:
 `FundamentalGroup UnitAddCircle 0 ≃* Multiplicative ℤ`. This is the classical `π₁(S¹) ≅ ℤ`. -/
@@ -301,4 +301,4 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (γ : FundamentalGroup UnitAddCircle 0
   simpa [fundamentalGroupMulEquiv] using
     AddCircle.fundamentalGroupMulEquivZero_eq_one_iff 1 one_ne_zero γ
 
-end TauCeti.UnitAddCircle
+end UnitAddCircle
