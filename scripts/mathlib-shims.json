@@ -30,6 +30,7 @@
   },
   {
     "note": "Disc-automorphism group and parametrisation; upstream target is not named yet",
+    "speculative": true,
     "sources": [
       "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Group.lean",
       "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Parametrization.lean"
@@ -40,6 +41,18 @@
     ],
     "modules": [
       "Mathlib.Analysis.Complex.UnitDisc.Automorphism"
+    ]
+  },
+  {
+    "note": "Exact API from the open mathlib4#40791 S-unit theorem PR",
+    "sources": [
+      "TauCeti/RingTheory/DedekindDomain/SInteger/Unit.lean"
+    ],
+    "declarations": [
+      "Set.unit_fg"
+    ],
+    "modules": [
+      "Mathlib.RingTheory.DedekindDomain.SUnit"
     ]
   }
 ]

@@ -335,7 +335,11 @@ jobs:
       # review and is validated by post-merge CI, so skip this base-registry comparison for it.
       - name: Temporary Mathlib shims have machine-checkable expiry targets
         if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
-        run: (cd base && python3 scripts/check-expired-mathlib-shims.py --coverage-only)
+        run: |
+          if ! (cd base && python3 scripts/check-expired-mathlib-shims.py --coverage-only); then
+            echo "SHIM_REGISTRY_BAD=1" >> "$GITHUB_ENV"
+            echo "::warning::temporary Mathlib shim prose lacks trusted expiry metadata"
+          fi
 
       - name: Install elan (trusted)
         if: ${{ env.INFRA != '1' }}
@@ -601,6 +605,8 @@ jobs:
             sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
+          elif [ "${{ env.SHIM_REGISTRY_BAD }}" = "1" ]; then
+            sc_state=failure; sc_desc="temporary Mathlib shim prose lacks trusted expiry metadata"
           else
             sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
           fi

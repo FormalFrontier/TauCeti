@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: expired-mathlib-shims
+  cancel-in-progress: false
+
 jobs:
   check:
     if: github.repository == 'TauCetiProject/TauCeti'
@@ -37,10 +41,13 @@ jobs:
           fi
 
       - name: Check the pinned Mathlib for tracked replacements
+        run: python3 scripts/check-expired-mathlib-shims.py --report-file "$RUNNER_TEMP/mathlib-shims-report.json"
+
+      - name: Notify the maintenance topic
         env:
           ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
           ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
           ZULIP_SITE: https://leanprover.zulipchat.com
           ZULIP_CHANNEL: Tau Ceti
           ZULIP_TOPIC: Mathlib shims
-        run: python3 scripts/check-expired-mathlib-shims.py --notify-zulip
+        run: python3 scripts/check-expired-mathlib-shims.py --notify-report "$RUNNER_TEMP/mathlib-shims-report.json"

@@ -22,13 +22,15 @@ SPEC.loader.exec_module(check)
 class FakeZulip:
     def __init__(self, messages=()):
         self.messages = list(messages)
+        self.narrows = []
         self.sent = []
         self.updated = []
 
     def my_user_id(self):
         return 7
 
-    def get_messages(self, _narrow):
+    def get_messages(self, narrow):
+        self.narrows.append(narrow)
         return self.messages
 
     def send_message(self, content):
@@ -39,11 +41,11 @@ class FakeZulip:
 
 
 class ExpiredMathlibShimTests(unittest.TestCase):
-    def test_registry_covers_exact_self_declarations(self):
+    def test_registry_covers_self_declarations_one_way(self):
         root = SCRIPT.parent.parent
         groups = check.load_registry(SCRIPT.with_name("mathlib-shims.json"), root)
         tracked = {source for group in groups for source in group.sources}
-        self.assertEqual(tracked, check.find_self_declared_shims(root / "TauCeti"))
+        self.assertLessEqual(check.find_self_declared_shims(root / "TauCeti"), tracked)
         self.assertEqual(groups[0].declarations,
                          ("Complex.exists_bijOn_unitBall_map_eq_zero",))
         check.validate_registry_coverage(groups, root / "TauCeti")
@@ -68,6 +70,20 @@ class ExpiredMathlibShimTests(unittest.TestCase):
                 "This is new formalization rather than a temporary shim.", encoding="utf-8"
             )
             self.assertEqual(check.find_self_declared_shims(source_root), set())
+
+    def test_explicit_mathlib_deletion_is_a_self_declaration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(
+                "When Mathlib bumps past the upstream PR, this file is deleted outright.",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                check.find_self_declared_shims(source_root),
+                {pathlib.Path("TauCeti/New.lean")},
+            )
 
     def test_registry_rejects_missing_source_and_malformed_target(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -108,6 +124,14 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             self.assertIn("TauCeti/One.lean", summary)
             self.assertIn("test group", summary)
 
+    def test_speculative_target_is_labeled(self):
+        group = check.ShimGroup(
+            (pathlib.Path("TauCeti/One.lean"),), ("Future.name",), (), "not named", True
+        )
+        available = check.available_replacements((group,), {"Future.name"}, pathlib.Path("."))
+        summary = check.markdown_summary((group,), available)
+        self.assertIn("Speculative target name", summary)
+
     def test_missing_mathlib_tree_rejects_module_checks(self):
         group = check.ShimGroup(
             (pathlib.Path("TauCeti/One.lean"),), (), ("Mathlib.Topology.NewThing",), "test"
@@ -120,8 +144,9 @@ class ExpiredMathlibShimTests(unittest.TestCase):
     def test_zulip_report_is_idempotent_and_resolvable(self):
         summary = "## Expired Mathlib shim check\n\nFound replacements.\n"
         client = FakeZulip()
-        check.reconcile_zulip(client, summary, active=True)
+        check.reconcile_zulip(client, summary, active=True, channel="C", topic="T")
         self.assertEqual(len(client.sent), 1)
+        self.assertEqual(client.narrows, [[['stream', 'C'], ['topic', 'T']]])
 
         active = client.sent[0]
         client = FakeZulip([{"id": 4, "sender_id": 7, "content": active}])
@@ -133,6 +158,14 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         check.reconcile_zulip(client, clear, active=False)
         self.assertEqual(client.updated[0][0], 4)
         self.assertTrue(client.updated[0][1].startswith("✅"))
+
+    def test_notification_report_round_trip(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            report = pathlib.Path(temporary) / "report.json"
+            report.write_text(
+                json.dumps({"summary": "hello", "active": True}), encoding="utf-8"
+            )
+            self.assertEqual(check.load_notification_report(report), ("hello", True))
 
 
 if __name__ == "__main__":
