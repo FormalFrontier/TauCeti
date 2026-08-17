@@ -581,6 +581,16 @@ noncomputable def pointsMulEquivGLSymplectic :
       GLSymplectic (Fin m) A :=
   (pointsMulEquiv R m).trans (GLSymplecticFin.mulEquivGLSymplectic m A)
 
+/-- On underlying general-linear elements, the `Fin m ⊕ Fin m` reading of a point is the
+reindexing of its `Fin (m + m)` reading. -/
+@[simp]
+theorem coe_pointsMulEquivGLSymplectic
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m) (CommAlgCat.of R A)) :
+    ((pointsMulEquivGLSymplectic R m (A := A) f : GLSymplectic (Fin m) A) :
+        GL (Fin m ⊕ Fin m) A) =
+      reindexGL m A (pointsMulEquiv R m (A := A) f : GL (Fin (m + m)) A) :=
+  GLSymplecticFin.coe_mulEquivGLSymplectic m A (pointsMulEquiv R m (A := A) f)
+
 end Points
 
 end TauCeti.Symplectic
