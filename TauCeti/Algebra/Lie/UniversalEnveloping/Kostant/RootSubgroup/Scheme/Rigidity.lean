@@ -22,10 +22,13 @@ root subgroup have an equalizer, which is a closed subgroup scheme containing al
 minimality forces it to be everything. In coordinate terms the equalizer Hopf ideal is squeezed
 below the defining ideal, so it vanishes.
 
-This is the uniqueness half of Layer 9's isomorphism theorem for pinned groups. The `L1`
-workstream of the CFSGStatement roadmap pins its graph automorphism `γ` by the equations
+This is the uniqueness half of Layer 9's isomorphism theorem for pinned groups, stated for the
+generating family the carrier is built from: the theorems below quantify over the *whole* family
+`e : I → L` of represented root subgroups, not over a distinguished subfamily. The `L1` workstream
+of the CFSGStatement roadmap pins its graph automorphism `γ` by the equations
 `γ (x_α(t)) = x_{γ α}(t)` on simple root subgroups alone, and cites that uniqueness rather than
-reproving it; the statements below are that citation made available.
+reproving it; deducing that form from the statements below additionally needs the fact that the
+simple root subgroups already generate this carrier, which is not proved here.
 
 ## Main declarations
 
