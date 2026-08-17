@@ -132,9 +132,10 @@ theorem indVirtualCharactersComponent_coe (S : {S : Subgroup G // P S})
     (ψ : virtualCharacters k (S : Subgroup G)) :
     (indVirtualCharactersComponent (k := k) (G := G) S ψ : G → k) =
       indClassFun (S : Subgroup G) ψ := by
-  change indClassFunAddHom (S : Subgroup G) (ψ : ↑(S : Subgroup G) → k) =
-    indClassFun (S : Subgroup G) (ψ : ↑(S : Subgroup G) → k)
-  exact indClassFunAddHom_apply _ _
+  simpa only [indVirtualCharactersComponent, AddMonoidHom.codRestrict_apply,
+    AddMonoidHom.comp_apply, AddSubgroup.subtype_apply] using
+      indClassFunAddHom_apply (S : Subgroup G)
+      (ψ : ↑(S : Subgroup G) → k)
 
 /-- **The direct-sum induction homomorphism for a family of subgroups.** Its `S`-component is
 `Ind_S^G : R(S) → R(G)`. -/
@@ -175,9 +176,9 @@ theorem range_subtype_comp_indVirtualCharactersAddHom :
     let ψ' : virtualCharacters k S := ⟨ψ, hψ⟩
     refine AddMonoidHom.mem_range.mpr ⟨DirectSum.of
       (fun S : {S : Subgroup G // P S} ↦ ↑(virtualCharacters k (S : Subgroup G))) S' ψ', ?_⟩
-    rw [AddMonoidHom.comp_apply, indVirtualCharactersAddHom_of]
-    change (indVirtualCharactersComponent (k := k) (G := G) S' ψ' : G → k) = _
-    exact indVirtualCharactersComponent_coe S' ψ'
+    simpa only [AddMonoidHom.comp_apply, indVirtualCharactersAddHom_of,
+      AddSubgroup.subtype_apply] using
+      indVirtualCharactersComponent_coe S' ψ'
 
 /-- **The induced virtual characters form an ideal of the virtual-character ring.**  For a virtual
 character `f` of `G` and a virtual character `ψ` of a subgroup `S` of the family, the projection

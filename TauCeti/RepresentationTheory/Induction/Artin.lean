@@ -330,9 +330,7 @@ theorem natCard_nsmul_one_mem_indVirtualCharacters_isCyclic :
         rw [dite_eq_right]
         intro hmem
         apply hC
-        exact Finset.mem_Ici.mpr (show H ≤ C from fun y hy ↦ by
-          obtain ⟨n, rfl⟩ := hy
-          exact (C : Subgroup G).zpow_mem hmem n)
+        exact Finset.mem_Ici.mpr (Subgroup.zpowers_le_of_mem hmem)
       _ = ∑ C ∈ Finset.Ici H, (artinCoeff C : k) := by
         apply Finset.sum_congr rfl
         intro C hHC
@@ -362,6 +360,18 @@ noncomputable def cyclicInductionRatLinearMap :
   (indVirtualCharactersAddHom (k := k) (G := G)
     (fun C ↦ IsCyclic C)).toIntLinearMap.baseChange ℚ
 
+/-- Evaluating rationalized cyclic induction on a pure tensor applies induction to its
+virtual-character component. -/
+@[simp]
+theorem cyclicInductionRatLinearMap_tmul (q : ℚ)
+    (x : DirectSum {C : Subgroup G // IsCyclic C}
+      (fun C ↦ ↑(virtualCharacters k (C : Subgroup G)))) :
+    cyclicInductionRatLinearMap (k := k) (G := G) (q ⊗ₜ[ℤ] x) =
+      q ⊗ₜ[ℤ] indVirtualCharactersAddHom (k := k) (G := G)
+        (fun C ↦ IsCyclic C) x := by
+  rw [cyclicInductionRatLinearMap, LinearMap.baseChange_tmul,
+    AddMonoidHom.coe_toIntLinearMap]
+
 /-- **Rational surjectivity in map form.** After tensoring the virtual-character lattices with
 `ℚ`, the direct sum of induction maps from cyclic subgroups surjects onto `ℚ ⊗ R(G)`.
 
@@ -387,8 +397,7 @@ theorem cyclicInductionRatLinearMap_surjective :
           (fun C ↦ IsCyclic C) x = Nat.card G • f := by
         exact Subtype.ext hx
       refine ⟨((q / (Nat.card G : ℚ)) ⊗ₜ[ℤ] x), ?_⟩
-      rw [cyclicInductionRatLinearMap, LinearMap.baseChange_tmul,
-        AddMonoidHom.coe_toIntLinearMap, hx']
+      rw [cyclicInductionRatLinearMap_tmul, hx']
       rw [← Nat.cast_smul_eq_nsmul ℤ, TensorProduct.tmul_smul]
       rw [← Int.cast_smul_eq_zsmul ℚ]
       have hn : (Nat.card G : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr Nat.card_pos.ne'
