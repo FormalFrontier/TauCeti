@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Group.PrimaryDecomposition
-public import TauCeti.LinearAlgebra.FiniteBilinearModule.PrimaryComponent
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Primary.Component
 
 /-!
 # Primary decomposition of finite bilinear and quadratic modules
@@ -19,7 +19,7 @@ quadratic maps.
 
 The canonical additive equivalence is an isometry in both settings. This follows from the
 orthogonality and finite-sum identities proved in
-`TauCeti.LinearAlgebra.FiniteBilinearModule.PrimaryComponent`.
+`TauCeti.LinearAlgebra.FiniteBilinearModule.Primary.Component`.
 
 ## Main results
 
