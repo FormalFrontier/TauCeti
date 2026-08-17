@@ -321,7 +321,7 @@ theorem scalarExtensionComponent_mul
 
 /-- The transported component of a tensor automorphism, as an element of the general linear
 group of the scalar extension. Its inverse is the component of the inverse automorphism. -/
-@[expose] noncomputable def scalarExtensionComponentGL
+noncomputable def scalarExtensionComponentGL
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H) :
     LinearMap.GeneralLinearGroup A (A ⊗[R] M) where
@@ -341,8 +341,8 @@ theorem scalarExtensionComponentGL_coe
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H) :
     (scalarExtensionComponentGL R H A η M : Module.End A (A ⊗[R] M)) =
-      scalarExtensionComponent R H A η M :=
-  rfl
+      scalarExtensionComponent R H A η M := by
+  simp [scalarExtensionComponentGL]
 
 /-- The transported component of a tensor automorphism at the tensor unit is the identity:
 this is the unit half of the monoidal condition. -/

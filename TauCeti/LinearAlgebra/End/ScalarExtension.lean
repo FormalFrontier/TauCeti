@@ -89,7 +89,7 @@ namespace Module.End
 /-- Base change of an endomorphism of a scalar extension along a morphism `f : A →ₐ[R] B` of
 value algebras: the unique `B`-linear endomorphism of `B ⊗[R] M` compatible with `φ` along the
 comparison map. -/
-@[expose] noncomputable def mapValue (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
+noncomputable def mapValue (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
     _root_.Module.End B (B ⊗[R] M) :=
   LinearMap.liftBaseChange B
     (LinearMap.rTensor M f.toLinearMap ∘ₗ φ.restrictScalars R ∘ₗ TensorProduct.mk R A M 1)
@@ -97,8 +97,8 @@ comparison map. -/
 /-- Evaluation of a base-changed endomorphism on a pure tensor. -/
 @[simp]
 theorem mapValue_tmul (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) (b : B) (m : M) :
-    mapValue f φ (b ⊗ₜ[R] m) = b • LinearMap.rTensor M f.toLinearMap (φ (1 ⊗ₜ[R] m)) :=
-  rfl
+    mapValue f φ (b ⊗ₜ[R] m) = b • LinearMap.rTensor M f.toLinearMap (φ (1 ⊗ₜ[R] m)) := by
+  simp [mapValue]
 
 /-- The transport square defining base change of an endomorphism: transporting and then
 comparing scalar extensions agrees with comparing and then applying the original
@@ -164,7 +164,7 @@ theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] 
     LinearMap.add_apply, mapValue_rTensor_apply, map_add]
 
 /-- Base change of endomorphisms of a scalar extension, as a ring homomorphism. -/
-@[expose] noncomputable def mapValueRingHom (f : A →ₐ[R] B) :
+noncomputable def mapValueRingHom (f : A →ₐ[R] B) :
     _root_.Module.End A (A ⊗[R] M) →+* _root_.Module.End B (B ⊗[R] M) where
   toFun := mapValue f
   map_one' := mapValue_one f
@@ -175,11 +175,11 @@ theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] 
 /-- The bundled base-change homomorphism acts by `mapValue`. -/
 @[simp]
 theorem mapValueRingHom_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
-    mapValueRingHom f φ = mapValue f φ :=
-  rfl
+    mapValueRingHom f φ = mapValue f φ := by
+  simp [mapValueRingHom]
 
 /-- Base change of automorphisms of a scalar extension, as a group homomorphism. -/
-@[expose] noncomputable def mapValueGL (f : A →ₐ[R] B) :
+noncomputable def mapValueGL (f : A →ₐ[R] B) :
     LinearMap.GeneralLinearGroup A (A ⊗[R] M) →*
       LinearMap.GeneralLinearGroup B (B ⊗[R] M) :=
   Units.map (mapValueRingHom f).toMonoidHom
@@ -189,8 +189,8 @@ endomorphism. -/
 @[simp]
 theorem mapValueGL_coe (f : A →ₐ[R] B) (φ : LinearMap.GeneralLinearGroup A (A ⊗[R] M)) :
     (mapValueGL f φ : _root_.Module.End B (B ⊗[R] M)) =
-      mapValue f (φ : _root_.Module.End A (A ⊗[R] M)) :=
-  rfl
+      mapValue f (φ : _root_.Module.End A (A ⊗[R] M)) := by
+  simp [mapValueGL]
 
 /-- Base change along the identity morphism of value algebras is the identity. -/
 @[simp]

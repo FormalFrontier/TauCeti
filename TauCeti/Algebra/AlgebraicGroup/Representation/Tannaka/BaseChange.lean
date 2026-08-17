@@ -11,11 +11,12 @@ public import TauCeti.LinearAlgebra.End.ScalarExtension
 /-!
 # Base change of tensor automorphisms of scalar extension
 
-Let `H` be a Hopf algebra over a commutative semiring `R`, and let `f : A →ₐ[R] B` be a morphism
+Let `H` be a bialgebra over a commutative semiring `R`, and let `f : A →ₐ[R] B` be a morphism
 of commutative `R`-algebras. A tensor automorphism of scalar extension on the finite
 `H`-comodules has, at each comodule `M`, an `A`-linear automorphism of `A ⊗[R] M`. Base changing
 those components along `f` produces a tensor automorphism over `B`, and this is functorial in the
-value algebra.
+value algebra. No antipode is needed for any of this: the assembly and the base change use only
+the monoidal structure on finite comodules.
 
 The construction first assembles an automorphism of the scalar-extension functor from an
 arbitrary natural family of linear automorphisms, then adds the two monoidal conditions. The
@@ -63,7 +64,7 @@ variable (A : Type u) [CommSemiring A] [Algebra R A]
 
 /-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules,
 natural in the comodule, as an automorphism of the scalar-extension functor. -/
-@[expose] noncomputable def autOfComponents
+noncomputable def autOfComponents
     (F : ∀ M : FGComoduleCat.{u, v, u} R H, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
     (hnat : ∀ {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N),
       g.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
@@ -107,13 +108,13 @@ theorem autOfComponents_hom_app
     (autOfComponents R H A F hnat).hom.app M =
       eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (F M).toLinearEquiv.toModuleIsoₛ.hom ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
-  rfl
+          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm := by
+  simp [autOfComponents]
 
 /-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules that is
 natural in the comodule, preserves the tensor unit, and is compatible with the tensor comparison,
 as a tensor automorphism of scalar extension. -/
-@[expose] noncomputable def monoidalAutOfComponents
+noncomputable def monoidalAutOfComponents
     (F : ∀ M : FGComoduleCat.{u, v, u} R H, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
     (hnat : ∀ {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N),
       g.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
@@ -164,7 +165,7 @@ variable (C : Type u) [CommSemiring C] [Algebra R C]
 
 /-- The base-changed component family of a tensor automorphism is natural in the finite
 comodule. -/
-theorem baseChangeComponent_natural (f : A →ₐ[R] B)
+private theorem baseChangeComponent_natural (f : A →ₐ[R] B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N) :
     g.hom.toLinearMap.baseChange B ∘ₗ
@@ -180,7 +181,7 @@ theorem baseChangeComponent_natural (f : A →ₐ[R] B)
 
 /-- The base-changed component family of a tensor automorphism is the identity at the tensor
 unit. -/
-theorem baseChangeComponent_tensorUnit (f : A →ₐ[R] B)
+private theorem baseChangeComponent_tensorUnit (f : A →ₐ[R] B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :
     Module.End.mapValueGL f
         (scalarExtensionComponentGL R H A η (𝟙_ (FGComoduleCat R H))) = 1 := by
@@ -193,7 +194,7 @@ theorem baseChangeComponent_tensorUnit (f : A →ₐ[R] B)
 
 /-- The base-changed component family of a tensor automorphism is compatible with the tensor
 comparison of scalar extensions. -/
-theorem baseChangeComponent_tensor (f : A →ₐ[R] B)
+private theorem baseChangeComponent_tensor (f : A →ₐ[R] B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M N : FGComoduleCat.{u, v, u} R H) :
     (TensorProduct.AlgebraTensorModule.distribBaseChange R B M N).symm.toLinearMap.comp
@@ -216,7 +217,7 @@ theorem baseChangeComponent_tensor (f : A →ₐ[R] B)
 
 /-- Base change of a tensor automorphism of finite-comodule scalar extension along a morphism of
 value algebras: base change each transported component. -/
-@[expose] noncomputable def tensorAutMapValue (f : A →ₐ[R] B)
+noncomputable def tensorAutMapValue (f : A →ₐ[R] B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :
     Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H B) :=
   monoidalAutOfComponents R H B
@@ -238,7 +239,7 @@ theorem scalarExtensionComponent_tensorAutMapValue (f : A →ₐ[R] B)
 
 /-- Base change of tensor automorphisms along a morphism of value algebras, as a group
 homomorphism. -/
-@[expose] noncomputable def tensorAutMapValueHom (f : A →ₐ[R] B) :
+noncomputable def tensorAutMapValueHom (f : A →ₐ[R] B) :
     Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A) →*
       Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H B) where
   toFun := tensorAutMapValue R H A B f
@@ -260,8 +261,8 @@ homomorphism. -/
 @[simp]
 theorem tensorAutMapValueHom_apply (f : A →ₐ[R] B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :
-    tensorAutMapValueHom R H A B f η = tensorAutMapValue R H A B f η :=
-  rfl
+    tensorAutMapValueHom R H A B f η = tensorAutMapValue R H A B f η := by
+  simp [tensorAutMapValueHom]
 
 /-- The transport square characterizing the components of a base-changed tensor automorphism:
 they are compatible with the original components along the comparison of scalar extensions. -/
