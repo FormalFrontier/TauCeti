@@ -52,6 +52,7 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
 * `cdf_uniformMeasure` — the cdf is `0` below `a`, `1` above `b`, and `(x - a) / (b - a)` between;
 * `integral_id_uniformMeasure` — the mean is `(a + b) / 2`;
 * `variance_id_uniformMeasure` — the variance is `(b - a) ^ 2 / 12`.
+* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
 
 ## Implementation
 
@@ -316,6 +317,46 @@ theorem mgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
   simp only [id_eq]
   rw [hint, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le, smul_eq_mul]
   field_simp
+
+/-! ### Affine transport
+
+Every uniform law is an affine image of the standard one on `Set.Ioc 0 1`. This is what lets a
+statement proved for `uniformMeasure 0 1` be transported to a general interval instead of reproved,
+and it is the scalar case of the change-of-variables pattern the later families reuse. -/
+
+/-- The pushforward of Lebesgue measure under `x ↦ a + (b - a) * x`. -/
+theorem map_volume_affine {a b : ℝ} (hab : a < b) :
+    Measure.map (fun x => a + (b - a) * x) volume = ENNReal.ofReal (b - a)⁻¹ • volume := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have h : (fun x : ℝ => a + (b - a) * x) = (fun y => a + y) ∘ (fun x => (b - a) * x) := rfl
+  rw [h, ← Measure.map_map (by fun_prop) (by fun_prop),
+    Real.map_volume_mul_left (ne_of_gt hba), Measure.map_smul,
+    Measure.IsAddLeftInvariant.map_add_left_eq_self]
+  congr 1
+  rw [abs_of_pos (by positivity)]
+
+/-- The affine map carries `Set.Ioc 0 1` onto `Set.Ioc a b`, stated as a preimage. -/
+theorem preimage_affine_Ioc {a b : ℝ} (hab : a < b) :
+    (fun x : ℝ => a + (b - a) * x) ⁻¹' Set.Ioc a b = Set.Ioc 0 1 := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  ext x
+  simp only [Set.mem_preimage, Set.mem_Ioc]
+  constructor
+  · rintro ⟨h1, h2⟩
+    exact ⟨by nlinarith, by nlinarith⟩
+  · rintro ⟨h1, h2⟩
+    exact ⟨by nlinarith, by nlinarith⟩
+
+/-- **Every uniform law is an affine image of the standard one.** -/
+theorem map_uniformMeasure_affine {a b : ℝ} (hab : a < b) :
+    (uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hmeas : Measurable (fun x : ℝ => a + (b - a) * x) := by fun_prop
+  have h01 : uniformMeasure 0 1 = volume.restrict (Set.Ioc (0 : ℝ) 1) := by
+    rw [uniformMeasure_eq_smul]; norm_num
+  rw [h01, ← preimage_affine_Ioc hab, ← Measure.restrict_map hmeas measurableSet_Ioc,
+    map_volume_affine hab, Measure.restrict_smul, uniformMeasure_eq_smul,
+    ENNReal.ofReal_inv_of_pos hba]
 
 end Probability
 
