@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.Probability.Density
 public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Distributions.Pareto
@@ -18,11 +19,13 @@ Mathlib defines its continuous scalar laws as `withDensity` measures but does no
 `MeasureTheory.HasPDF`. This file supplies that bridge for the six families that have one, and
 identifies the resulting density.
 
-**One helper, six families, two conclusions each.** `hasPDF_of_hasLaw_withDensity` gives `HasPDF`
-and `pdf_eq_of_hasLaw_withDensity` identifies the density; both are stated for an arbitrary codomain
-and codomain measure, since neither proof uses anything about `ℝ` or `volume`. Nothing here
-recomputes a density — Mathlib already proved each defining `withDensity` equality, and this file
-packages those facts.
+**One helper, six families, two conclusions each.** The bridges themselves live in
+`TauCeti/Probability/Density.lean`, which mentions no particular distribution:
+`hasPDF_of_hasLaw_withDensity` gives `HasPDF` and `pdf_eq_of_hasLaw_withDensity` identifies the
+density. Keeping them there lets `Distributions/Uniform.lean` reuse the same bridges without
+importing Gamma, Beta, Pareto, Gaussian and Cauchy along with them. Nothing here recomputes a
+density — Mathlib already proved each defining `withDensity` equality, and this file packages those
+facts.
 
 **Where the spread may vanish.** `gaussianReal m v` and `cauchyMeasure x₀ γ` are defined by a case
 split: at `v = 0` and `γ = 0` they are Dirac measures, which are singular with respect to `volume`
@@ -37,10 +40,9 @@ continuity is all these bridges need.
 
 ## Main results
 
-* `hasPDF_of_hasLaw_withDensity` — the shared bridge, for an arbitrary codomain measure;
-* `pdf_eq_of_hasLaw_withDensity` — the accompanying identification of the density;
 * `hasPDF_of_hasLaw_gammaMeasure` and its five siblings, each paired with a `pdf_..._eq`
-  a.e.-identification.
+  a.e.-identification. The two shared bridges they are built from are in
+  `TauCeti.Probability.Density`.
 
 Three `ℝ≥0∞`-valued measurability lemmas (`measurable_gammaPDF`, `measurable_betaPDF`,
 `measurable_paretoPDF`) are supplied because Mathlib exposes only the real-valued forms for those
@@ -65,28 +67,6 @@ namespace TauCeti
 
 namespace Probability
 
-section Shared
-
-variable {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E] {P : Measure Ω} {μ : Measure E}
-  {X : Ω → E} {f : E → ℝ≥0∞}
-
-/-- **The shared bridge.** A law presented as `μ.withDensity f`, with `f` a.e. measurable, gives
-`HasPDF`.
-
-Stated for an arbitrary codomain and codomain measure: the proof uses nothing about `ℝ` or
-`volume`. -/
-theorem hasPDF_of_hasLaw_withDensity (hf : AEMeasurable f μ)
-    (hX : HasLaw X (μ.withDensity f) P) : HasPDF X P μ :=
-  hasPDF_of_map_eq_withDensity hX.aemeasurable f hf hX.map_eq
-
-/-- The density supplied by `hasPDF_of_hasLaw_withDensity` is the one the law was presented
-with. -/
-theorem pdf_eq_of_hasLaw_withDensity [IsFiniteMeasure P] (hf : AEMeasurable f μ)
-    (hX : HasLaw X (μ.withDensity f) P) : pdf X P μ =ᵐ[μ] f := by
-  have : HasPDF X P μ := hasPDF_of_hasLaw_withDensity hf hX
-  exact (pdf.eq_of_map_eq_withDensity f hf).mp hX.map_eq
-
-end Shared
 
 /-! ### `ℝ≥0∞`-valued measurability for the families that lack it
 
@@ -121,7 +101,7 @@ theorem hasPDF_of_hasLaw_gammaMeasure {a r : ℝ} (hX : HasLaw X (gammaMeasure a
     (by simpa only [gammaMeasure] using hX)
 
 /-- The density of a Gamma law is `gammaPDF`. -/
-theorem pdf_gammaMeasure_eq [IsFiniteMeasure P] {a r : ℝ} (hX : HasLaw X (gammaMeasure a r) P) :
+theorem pdf_gammaMeasure_eq {a r : ℝ} (hX : HasLaw X (gammaMeasure a r) P) :
     pdf X P =ᵐ[volume] gammaPDF a r :=
   pdf_eq_of_hasLaw_withDensity (measurable_gammaPDF a r).aemeasurable
     (by simpa only [gammaMeasure] using hX)
@@ -133,7 +113,7 @@ theorem hasPDF_of_hasLaw_betaMeasure {α β : ℝ} (hX : HasLaw X (betaMeasure �
     (by simpa only [betaMeasure] using hX)
 
 /-- The density of a Beta law is `betaPDF`. -/
-theorem pdf_betaMeasure_eq [IsFiniteMeasure P] {α β : ℝ} (hX : HasLaw X (betaMeasure α β) P) :
+theorem pdf_betaMeasure_eq {α β : ℝ} (hX : HasLaw X (betaMeasure α β) P) :
     pdf X P =ᵐ[volume] betaPDF α β :=
   pdf_eq_of_hasLaw_withDensity (measurable_betaPDF α β).aemeasurable
     (by simpa only [betaMeasure] using hX)
@@ -148,7 +128,7 @@ theorem hasPDF_of_hasLaw_expMeasure {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
 
 `exponentialPDFReal` is *defined* as `gammaPDFReal 1`, so the two densities agree definitionally;
 the `unfold` names that rather than leaving it to elaboration. -/
-theorem pdf_expMeasure_eq [IsFiniteMeasure P] {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
+theorem pdf_expMeasure_eq {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
     pdf X P =ᵐ[volume] exponentialPDF r := by
   have h : pdf X P =ᵐ[volume] gammaPDF 1 r :=
     pdf_eq_of_hasLaw_withDensity (measurable_gammaPDF 1 r).aemeasurable
@@ -163,7 +143,7 @@ theorem hasPDF_of_hasLaw_paretoMeasure {t r : ℝ} (hX : HasLaw X (paretoMeasure
     (by simpa only [paretoMeasure] using hX)
 
 /-- The density of a Pareto law is `paretoPDF`. -/
-theorem pdf_paretoMeasure_eq [IsFiniteMeasure P] {t r : ℝ}
+theorem pdf_paretoMeasure_eq {t r : ℝ}
     (hX : HasLaw X (paretoMeasure t r) P) : pdf X P =ᵐ[volume] paretoPDF t r :=
   pdf_eq_of_hasLaw_withDensity (measurable_paretoPDF t r).aemeasurable
     (by simpa only [paretoMeasure] using hX)
@@ -178,7 +158,7 @@ theorem hasPDF_of_hasLaw_gaussianReal {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
     (by rwa [gaussianReal_of_var_ne_zero _ hv] at hX)
 
 /-- The density of a nondegenerate Gaussian law is `gaussianPDF`. -/
-theorem pdf_gaussianReal_eq [IsFiniteMeasure P] {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
+theorem pdf_gaussianReal_eq {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
     (hX : HasLaw X (gaussianReal m v) P) : pdf X P =ᵐ[volume] gaussianPDF m v :=
   pdf_eq_of_hasLaw_withDensity (measurable_gaussianPDF m v).aemeasurable
     (by rwa [gaussianReal_of_var_ne_zero _ hv] at hX)
@@ -193,7 +173,7 @@ theorem hasPDF_of_hasLaw_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠
     (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)
 
 /-- The density of a nondegenerate Cauchy law is `cauchyPDF`. -/
-theorem pdf_cauchyMeasure_eq [IsFiniteMeasure P] {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0)
+theorem pdf_cauchyMeasure_eq {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0)
     (hX : HasLaw X (cauchyMeasure x₀ γ) P) : pdf X P =ᵐ[volume] cauchyPDF x₀ γ :=
   pdf_eq_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ).aemeasurable
     (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)

@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.Probability.Density
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Probability.Distributions.Uniform
 public import Mathlib.Probability.HasLaw
@@ -184,8 +185,8 @@ interval the law is the zero measure, so no probability-measure claim is made he
 theorem hasPDF_of_hasLaw_uniformMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {a b : ℝ} (hX : HasLaw X (uniformMeasure a b) P) :
     HasPDF X P :=
-  hasPDF_of_map_eq_withDensity hX.aemeasurable _ measurable_uniformPDF_Ioc_volume.aemeasurable
-    (by rw [hX.map_eq, uniformMeasure_eq_withDensity])
+  hasPDF_of_hasLaw_withDensity measurable_uniformPDF_Ioc_volume.aemeasurable
+    (by rwa [uniformMeasure_eq_withDensity] at hX)
 
 /-- The Radon-Nikodym derivative of the uniform measure against Lebesgue measure is its density. -/
 theorem rnDeriv_uniformMeasure {a b : ℝ} :
