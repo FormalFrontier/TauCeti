@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.FiniteType
+public import Mathlib.CategoryTheory.ConcreteCategory.EpiMono
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Bialgebra.Quotient
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Comap
 
 /-!
 # Hopf-ideal quotients of finite-type commutative Hopf algebras
@@ -35,6 +37,8 @@ the finite-type coordinate-Hopf-algebra category.
   `I ≤ J`.
 * `TauCeti.CommHopfAlgCat.quotientBotIso`: quotienting by the zero Hopf ideal does not
   change a commutative Hopf algebra.
+* `TauCeti.CommHopfAlgCat.quotientIsoOfIso`: an ambient isomorphism induces an isomorphism
+  between the corresponding Hopf-ideal quotients.
 
 ## References
 
@@ -135,6 +139,40 @@ lemma liftQuotient_unique (I : HopfIdeal R H) (f : H ⟶ K)
     _ = f.hom h := by rw [hg]
     _ = (liftQuotient I f hf).hom (Ideal.Quotient.mkₐ R I.toIdeal h) :=
       (liftQuotient_mk I f hf h).symm
+
+/-- An isomorphism of commutative Hopf algebras induces an isomorphism from the quotient by
+the inverse-image Hopf ideal to the corresponding quotient of the target. -/
+noncomputable def quotientIsoOfIso (e : H ≅ K) (I : HopfIdeal R K) :
+    quotient H (I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2) ≅
+      quotient K I := by
+  let J := I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2
+  let φ : quotient H J ⟶ quotient K I :=
+    liftQuotient J (e.hom ≫ mkQuotient K I) (by
+      intro x hx
+      rw [RingHom.mem_ker]
+      change (mkQuotient K I).hom (e.hom.hom x) = 0
+      rw [mkQuotient_eq_zero_iff]
+      exact HopfIdeal.mem_toIdeal.mpr (HopfIdeal.mem_comap.mp (HopfIdeal.mem_toIdeal.mp hx)))
+  let ψ : quotient K I ⟶ quotient H J :=
+    liftQuotient I (e.inv ≫ mkQuotient H J) (by
+      intro y hy
+      rw [RingHom.mem_ker]
+      change (mkQuotient H J).hom (e.inv.hom y) = 0
+      rw [mkQuotient_eq_zero_iff]
+      apply HopfIdeal.mem_toIdeal.mpr
+      apply HopfIdeal.mem_comap.mpr
+      simpa using HopfIdeal.mem_toIdeal.mp hy)
+  exact
+    { hom := φ
+      inv := ψ
+      hom_inv_id := by
+        ext q
+        obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective R J.toIdeal q
+        simp [φ, ψ]
+      inv_hom_id := by
+        ext q
+        obtain ⟨y, rfl⟩ := Ideal.Quotient.mkₐ_surjective R I.toIdeal q
+        simp [φ, ψ] }
 
 private lemma bot_le_ker_id (H : _root_.CommHopfAlgCat.{v} R) :
     (⊥ : HopfIdeal R H).toIdeal ≤

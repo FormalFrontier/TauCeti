@@ -103,6 +103,66 @@ theorem reductiveCommHopfAlgProperty_iff (k : Type u) [Field k]
                 (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
   Iff.rfl
 
+/-- Reductivity is invariant under isomorphisms of finite-type commutative Hopf algebras. -/
+instance (k : Type u) [Field k] :
+    (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms where
+  of_iso {H K} e hH := by
+    rw [reductiveCommHopfAlgProperty_iff] at hH ⊢
+    let e₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
+      (CommHopfAlgCat.{u} k)).mapIso e
+    let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
+    let Kbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) K
+    let ebar := (FiniteTypeCommHopfAlgCat.baseChangeFunctor
+      (K := AlgebraicClosure k)).mapIso e
+    let ebar₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+      (CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso ebar
+    let f : Hbar →ₐc[AlgebraicClosure k] Kbar := ebar₀.hom.hom
+    have hfinjective : Function.Injective f :=
+      (ConcreteCategory.bijective_of_isIso ebar₀.hom).1
+    have hfsurjective : Function.Surjective f :=
+      (ConcreteCategory.bijective_of_isIso ebar₀.hom).2
+    have hsmooth : Algebra.Smooth k
+        ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k)).obj K) := by
+      let _ : Algebra.Smooth k
+          ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k) (CommHopfAlgCat.{u} k)).obj H) := hH.1
+      exact Algebra.Smooth.of_equiv (CommHopfAlgCat.ofIso e₀).toAlgEquiv
+    refine ⟨hsmooth,
+      (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e₀ hH.2.1, ?_⟩
+    intro I hnormal hconnected hunipotent
+    let J := I.comap f hfsurjective
+    have hnormalJ : J.IsNormal := HopfIdeal.IsNormal.comap_bijective
+      I f hfinjective hfsurjective hnormal
+    let qIso₀ : CommHopfAlgCat.quotient Hbar.obj J ≅
+        CommHopfAlgCat.quotient Kbar.obj I :=
+      CommHopfAlgCat.quotientIsoOfIso ebar₀ I
+    let qIso : FiniteTypeCommHopfAlgCat.quotient Hbar J ≅
+        FiniteTypeCommHopfAlgCat.quotient Kbar I :=
+      ObjectProperty.isoMk _ qIso₀
+    have hconnectedJ : geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.quotient Hbar J).obj :=
+      (geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
+        qIso₀.symm hconnected
+    have hunipotentJ : smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.quotient Hbar J) :=
+      (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso
+        qIso.symm hunipotent
+    have hJ := hH.2.2 J hnormalJ hconnectedJ hunipotentJ
+    change J = HopfIdeal.augmentation (AlgebraicClosure k) Hbar at hJ
+    have haugmentation :
+        (HopfIdeal.augmentation (AlgebraicClosure k) Kbar).comap f hfsurjective =
+          HopfIdeal.augmentation (AlgebraicClosure k) Hbar := by
+      ext x
+      rw [HopfIdeal.mem_comap, HopfIdeal.mem_augmentation, HopfIdeal.mem_augmentation,
+        CoalgHomClass.counit_comp_apply]
+    change I = HopfIdeal.augmentation (AlgebraicClosure k) Kbar
+    apply le_antisymm
+    · apply HopfIdeal.le_of_comap_le_comap_of_surjective f hfsurjective
+      change J ≤ (HopfIdeal.augmentation (AlgebraicClosure k) Kbar).comap f hfsurjective
+      rw [hJ, haugmentation]
+    · apply HopfIdeal.le_of_comap_le_comap_of_surjective f hfsurjective
+      change (HopfIdeal.augmentation (AlgebraicClosure k) Kbar).comap f hfsurjective ≤ J
+      rw [haugmentation, hJ]
+
 namespace reductiveCommHopfAlgProperty
 
 variable {k : Type u} [Field k] {H : FiniteTypeCommHopfAlgCat.{u, u} k}
