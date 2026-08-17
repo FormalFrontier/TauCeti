@@ -62,7 +62,7 @@ variable {X : Scheme.{u}}
 
 /-- The full category of invertible sheaves on `X`. Its morphisms are morphisms of
 `𝒪_X`-modules. -/
-abbrev InvertibleSheaf (X : Scheme.{u}) :=
+abbrev InvertibleSheaf (X : Scheme.{u}) : Type _ :=
   ObjectProperty.FullSubcategory (SheafOfModules.isInvertible X)
 
 namespace InvertibleSheaf

@@ -48,8 +48,8 @@ class-two formula is the case `d k = y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾`, truncated to 
 
 * `TauCeti.Associative.mul_dividedPower_of_commutator_eq`: move one element across a divided power
   when its commutator with the base commutes with that base.
-* `TauCeti.Associative.mul_dividedPower_of_commutator_eq'`: the same rule for an exponent that is
-  not syntactically a successor.
+* `TauCeti.Associative.mul_dividedPower_of_commutator_eq'`: the same identity for an exponent that
+  is not syntactically a successor.
 * `TauCeti.Associative.dividedPower_mul_of_ad_dividedPower_series`: coefficient-one normal ordering
   against an arbitrary divided-power series for the inner derivation.
 * `TauCeti.Associative.dividedPower_mul_dividedPower_of_commutator_eq`: the coefficient-one
@@ -115,9 +115,9 @@ theorem mul_dividedPower_of_commutator_eq {x y z : A} (hxy : x * y = y * x + z)
   rw [Nat.factorial_succ, Nat.cast_mul, Nat.cast_add, Nat.cast_one]
   field_simp
 
-/-- The one-sided normal-ordering rule stated without a successor pattern, so that it applies to
-an exponent that is not syntactically of the form `n + 1`: the commutator term is present exactly
-when the exponent is positive. -/
+/-- The form of `mul_dividedPower_of_commutator_eq` for an exponent that is not syntactically a
+successor: the commutator term is present exactly when the exponent is positive. This is the shape
+needed when the exponent is a summation variable. -/
 theorem mul_dividedPower_of_commutator_eq' {x y z : A} (hxy : x * y = y * x + z)
     (hyz : Commute y z) (n : ℕ) :
     x * dividedPower n y =
