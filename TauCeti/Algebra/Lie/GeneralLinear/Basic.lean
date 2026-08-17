@@ -221,13 +221,6 @@ theorem slIdeal_toLieSubalgebra_eq_sl :
 
 /-! ### The derived ideal of `gl n R` -/
 
-/-- Every commutator lies in the derived ideal of `gl n R`. -/
-private theorem lie_mem_derivedSeries_one (X Y : Matrix n n R) :
-    ⁅X, Y⁆ ∈ derivedSeries R (Matrix n n R) 1 := by
-  have hmem : ⁅X, Y⁆ ∈ Submodule.span R {⁅x, y⁆ | (x : Matrix n n R) (y : Matrix n n R)} :=
-    Submodule.subset_span ⟨X, Y, rfl⟩
-  rwa [← coe_derivedSeries_one_eq] at hmem
-
 variable (R n) in
 /-- The derived ideal of `gl n R` is the special linear ideal: `⁅gl n R, gl n R⁆ = sl n R`.
 
@@ -246,14 +239,16 @@ theorem derivedSeries_one_eq_slIdeal :
       exact mem_slIdeal_iff.mpr (matrix_trace_commutator_zero n R X Y)
     rw [← coe_derivedSeries_one_eq] at hspan
     exact hspan
+  have hlie (X Y : Matrix n n R) : ⁅X, Y⁆ ∈ derivedSeries R (Matrix n n R) 1 :=
+    LieSubmodule.lie_mem_lie (LieSubmodule.mem_top X) (LieSubmodule.mem_top Y)
   rw [← LieSubmodule.mem_toSubmodule]
   refine mem_of_trace_eq_zero_of_single_mem ?_ ?_ (mem_slIdeal_iff.mp hA)
   · intro p q hpq c
     rw [LieSubmodule.mem_toSubmodule, ← lie_single_self_single_of_ne hpq c]
-    exact lie_mem_derivedSeries_one _ _
+    exact hlie _ _
   · intro p q c
     rw [LieSubmodule.mem_toSubmodule, ← lie_single_single_eq_sub p q c]
-    exact lie_mem_derivedSeries_one _ _
+    exact hlie _ _
 
 variable (R n) in
 /-- The derived ideal of `gl n R` is Mathlib's special linear Lie algebra `sl n R`. -/
