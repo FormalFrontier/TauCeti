@@ -41,6 +41,12 @@ fppf quotient remains downstream.
 
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
 * J. S. Milne, *Algebraic Groups* (2017), Section 2.a.
+
+The `groupScheme` and `groupSchemeMap` constructions follow the scheme-level pattern in
+`TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic`. The scheme-points
+presentation follows `TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Points` and
+`TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme`, using the generic
+`TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints` interface.
 -/
 
 public section
