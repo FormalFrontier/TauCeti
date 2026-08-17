@@ -79,8 +79,7 @@ theorem comap_toIdeal (I : HopfIdeal R K) (f : H →ₐc[R] K)
   ext h
   simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_toAlgHom, AlgHom.comp_apply,
     BialgHom.coe_toAlgHom, Bialgebra.Quotient.mkBialgHom_apply,
-    Ideal.Quotient.eq_zero_iff_mem]
-  rfl
+    Ideal.Quotient.eq_zero_iff_mem, RingHom.coe_coe]
 
 /-- Membership in the inverse-image Hopf ideal is membership after applying the morphism. -/
 @[simp]
