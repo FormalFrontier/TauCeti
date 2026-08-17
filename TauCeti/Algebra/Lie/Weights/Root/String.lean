@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 public import TauCeti.LinearAlgebra.RootSystem.InvariantForm.RootString
 
@@ -58,6 +59,9 @@ universally quantified form of Mathlib's lemma.
 
 The scalar is stated as an `ℕ`-scalar action rather than as a cast into `K` to expose the
 combinatorial root-string coefficient directly.
+
+The root-length ratio at the end reads the chain coefficients off the root system through the
+invariant form on weights, which is `TauCeti.rootInvariantForm`.
 
 ## References
 
@@ -226,49 +230,6 @@ theorem mul_eq_of_lie_eq_smul {α β : Weight K H L} (hα : α.IsNonZero) (hβ :
 
 /-! ### The root-length ratio -/
 
-private noncomputable def dualKillingForm : LinearMap.BilinForm K (Module.Dual K H) :=
-  (LinearMap.id : Module.Dual K H →ₗ[K] Module.Dual K H).compl₂
-    (cartanEquivDual H).symm.toLinearMap
-
-omit [CharZero K] [IsTriangularizable K H L] in
-@[simp]
-private lemma dualKillingForm_apply (a b : Module.Dual K H) :
-    dualKillingForm (H := H) a b = a ((cartanEquivDual H).symm b) :=
-  rfl
-
-omit [CharZero K] [IsTriangularizable K H L] in
-private lemma dualKillingForm_symm :
-    (dualKillingForm (H := H)).IsSymm := by
-  constructor
-  intro a b
-  have h := (LieModule.traceForm_isSymm K H L).eq
-    ((cartanEquivDual H).symm a) ((cartanEquivDual H).symm b)
-  simpa only [dualKillingForm_apply, cartanEquivDual,
-    LinearMap.BilinForm.apply_toDual_symm_apply, RingHom.id_apply] using h
-
-private noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
-  form := dualKillingForm
-  symm := LinearMap.BilinForm.isSymm_iff.mp dualKillingForm_symm
-  ne_zero i := by
-    simpa only [dualKillingForm_apply, rootSystem_root_apply, Weight.toLinear_apply] using
-      root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
-  isOrthogonal_reflection i := by
-    intro a b
-    have hd : i.1 ((cartanEquivDual H).symm i.1) ≠ 0 :=
-      root_apply_cartanEquivDual_symm_ne_zero (H.isNonZero_coe_root i)
-    have hai := (dualKillingForm_symm (H := H)).eq a i.1
-    have hbi := (dualKillingForm_symm (H := H)).eq b i.1
-    -- Definitional equality: `(rootSystem H).reflection i` expands to reflection along `i.1`.
-    change dualKillingForm (a - a (coroot i.1) • (i.1 : Module.Dual K H))
-      (b - b (coroot i.1) • (i.1 : Module.Dual K H)) = dualKillingForm a b
-    simp only [map_sub, LinearMap.sub_apply, map_smul, map_nsmul, LinearMap.smul_apply,
-      dualKillingForm_apply, smul_eq_mul, nsmul_eq_mul, Nat.cast_ofNat, coroot]
-    simp only [dualKillingForm_apply] at hai hbi
-    rw [hai, hbi]
-    simp only [Weight.toLinear_apply]
-    field_simp
-    ring
-
 private lemma rootSystem_chainCoeffs_eq {a b : Weight K H L}
     (ha : a.IsNonZero) (hb : b.IsNonZero)
     (hab : LinearIndependent K ![(a : Module.Dual K H), (b : Module.Dual K H)]) :
@@ -369,7 +330,7 @@ theorem chainTopCoeff_mul_killingForm_root_neg_eq
       (P := P) (rootInvariantForm (H := H)) hk
   have hβkill := hx.killingForm_root_neg_eq β hβ
   have hγkill := hx.killingForm_root_neg_eq γ hγ
-  simp only [rootInvariantForm, dualKillingForm_apply] at hlength
+  simp only [rootInvariantForm_form, invForm_apply] at hlength
   rw [hcoeff.1, hcoeff.2] at hlength
   -- Definitional equality: `P.root k` reduces to `γ` and `P.root j` to `β`.
   change (chainTopCoeff α β : K) *
