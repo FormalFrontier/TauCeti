@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.CharP.Frobenius
-public import Mathlib.Algebra.Field.Subfield.Defs
+public import Mathlib.Algebra.Field.Subfield.Basic
 public import Mathlib.Algebra.Ring.Subring.Basic
 
 /-!
@@ -18,11 +18,12 @@ and the identity, hence a subring: this file names it `TauCeti.frobeniusFixedSub
 its elementary properties. When `A` is a field the same set is closed under inversion, and
 `TauCeti.frobeniusFixedSubfield` upgrades it to a subfield.
 
-For `A` an algebraic closure of `ZMod p` this subring is the field of `q` elements sitting inside
-`A`, which is why the construction is the ring-theoretic half of "the fixed points of the
-`q`-power Frobenius are the `𝔽_q`-points". Nothing about finiteness or about the field of `q`
-elements is proved here: the statements below are about an arbitrary commutative ring of
-exponential characteristic `p`, and Mathlib's `iterateFrobenius` supplies every proof.
+For `p` prime, `0 < n` and `A` an algebraic closure of `ZMod p` this subring is the field of `q`
+elements sitting inside `A`, which is why the construction is the ring-theoretic half of "the fixed
+points of the `q`-power Frobenius are the `𝔽_q`-points"; at `n = 0` it is instead the whole of `A`,
+since `q = 1`. Nothing about finiteness or about the field of `q` elements is proved here: the
+statements below are about an arbitrary commutative ring of exponential characteristic `p`, and
+Mathlib's `iterateFrobenius` supplies every proof.
 
 ## Main definitions
 
@@ -54,9 +55,10 @@ variable (A : Type*) [CommRing A] (p n : ℕ) [ExpChar A p]
 /-- The subring of elements of `A` fixed by the `p ^ n`-power Frobenius, that is, the solutions of
 `a ^ p ^ n = a`. It is the equalizer of `iterateFrobenius A p n` with the identity.
 
-When `A` is an algebraic closure of `ZMod p` this is the subring of `p ^ n` elements, but nothing
-of the sort is asserted here: `A` is an arbitrary commutative ring of exponential characteristic
-`p`, and for `p = 1` — that is, in characteristic zero — the whole of `A` is fixed. -/
+When `p` is prime, `0 < n` and `A` is an algebraic closure of `ZMod p` this is the subring of
+`p ^ n` elements, but nothing of the sort is asserted here: `A` is an arbitrary commutative ring of
+exponential characteristic `p`, and for `p = 1` — that is, in characteristic zero — or for `n = 0`
+the whole of `A` is fixed. -/
 def frobeniusFixedSubring : Subring A :=
   (iterateFrobenius A p n).eqLocus (RingHom.id A)
 
@@ -120,17 +122,11 @@ section Field
 
 variable (K : Type*) [Field K] (p n : ℕ) [ExpChar K p]
 
-variable {K p n} in
-/-- The elements fixed by an iterated Frobenius in a field are closed under inversion. -/
-theorem inv_mem_frobeniusFixedSubring {a : K} (ha : a ∈ frobeniusFixedSubring K p n) :
-    a⁻¹ ∈ frobeniusFixedSubring K p n := by
-  rw [mem_frobeniusFixedSubring, inv_pow, mem_frobeniusFixedSubring.mp ha]
-
-/-- The subfield of elements of a field `K` fixed by the `p ^ n`-power Frobenius. Its underlying
-subring is `TauCeti.frobeniusFixedSubring`. -/
-def frobeniusFixedSubfield : Subfield K where
-  __ := frobeniusFixedSubring K p n
-  inv_mem' _ := inv_mem_frobeniusFixedSubring
+/-- The subfield of elements of a field `K` fixed by the `p ^ n`-power Frobenius. It is the
+equalizer of `iterateFrobenius K p n` with the identity as a subfield, so its underlying subring is
+`TauCeti.frobeniusFixedSubring`. -/
+def frobeniusFixedSubfield : Subfield K :=
+  (iterateFrobenius K p n).eqLocusField (RingHom.id K)
 
 /-- Membership in the Frobenius-fixed subfield is the equation `a ^ p ^ n = a`. -/
 @[simp]

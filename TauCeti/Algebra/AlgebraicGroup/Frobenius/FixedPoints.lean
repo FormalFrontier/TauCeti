@@ -24,10 +24,11 @@ fixedSubgroup (iterateFrobeniusPoints p n) ≃* WithConv (H →ₐ[ℤ] frobeniu
 ```
 
 This is what makes the fixed-point construction of the finite groups of Lie type a construction of
-`𝔽_q`-rational points: for `A` an algebraic closure of `ZMod p` and `q = p ^ n` the fixed subring
-is the field of `q` elements inside `A`, so the fixed subgroup is the group of `𝔽_q`-points of the
-affine group scheme `Spec H`. Nothing here needs `A` to be a field, algebraically closed, or of
-finite type, and no finiteness is asserted.
+`𝔽_q`-rational points: for `p` prime, `0 < n`, `A` an algebraic closure of `ZMod p` and `q = p ^ n`
+the fixed subring is the field of `q` elements inside `A`, so the fixed subgroup is the group of
+`𝔽_q`-points of the affine group scheme `Spec H`. At `n = 0` the Frobenius iterate is the identity
+and the fixed subgroup is all of the `A`-valued points. Nothing here needs `A` to be a field,
+algebraically closed, or of finite type, and no finiteness is asserted.
 
 ## Main definitions
 
@@ -94,13 +95,9 @@ Frobenius-fixed subring. Private: the public interface is `frobeniusFixedInclusi
 point. -/
 private def corestrictFrobeniusFixed (f : H →ₐ[ℤ] A)
     (hf : ∀ h : H, f h ∈ frobeniusFixedSubring A p n) :
-    H →ₐ[ℤ] ↥(frobeniusFixedSubring A p n) where
-  toFun h := ⟨f h, hf h⟩
-  map_one' := Subtype.ext (by simp)
-  map_mul' _ _ := Subtype.ext (by simp)
-  map_zero' := Subtype.ext (by simp)
-  map_add' _ _ := Subtype.ext (by simp)
-  commutes' r := Subtype.ext (by simp)
+    H →ₐ[ℤ] ↥(frobeniusFixedSubring A p n) :=
+  { f.toRingHom.codRestrict (frobeniusFixedSubring A p n) hf with
+    commutes' := fun r => Subtype.ext (f.commutes r) }
 
 end Bialgebra
 
@@ -157,9 +154,9 @@ theorem range_frobeniusFixedInclusion :
 /-- The fixed points of the `p ^ n`-power Frobenius on the points of `Spec H` valued in `A` are
 the points of `Spec H` valued in the Frobenius-fixed subring of `A`.
 
-For `A` an algebraic closure of `ZMod p` and `q = p ^ n` the right-hand side is the group of
-`𝔽_q`-points, which is why the finite groups of Lie type are defined as fixed points of a
-Steinberg endomorphism. -/
+For `p` prime, `0 < n`, `A` an algebraic closure of `ZMod p` and `q = p ^ n` the right-hand side is
+the group of `𝔽_q`-points, which is why the finite groups of Lie type are defined as fixed points
+of a Steinberg endomorphism. -/
 noncomputable def frobeniusFixedPointsMulEquiv :
     WithConv (H →ₐ[ℤ] ↥(frobeniusFixedSubring A p n)) ≃*
       ↥(fixedSubgroup (iterateFrobeniusPoints p n (H := H) (A := A))) :=
