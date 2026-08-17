@@ -179,7 +179,7 @@ classes by applying the morphism before taking the target quotient. -/
 lemma quotientIsoOfSurjective_hom_mk (f : H ⟶ K) (hf : Function.Surjective f.hom)
     (I : HopfIdeal R K) (x : H) :
     (quotientIsoOfSurjective f hf I).hom.hom
-        (Ideal.Quotient.mkₐ R (I.comap f.hom hf).toIdeal x) =
+        (Ideal.Quotient.mk (I.comap f.hom hf).toIdeal x) =
       Ideal.Quotient.mkₐ R I.toIdeal (f.hom x) := by
   rw [quotientIsoOfSurjective]
   exact HopfIdeal.kerLiftBialgEquiv_apply
@@ -220,7 +220,7 @@ classes by applying the ambient isomorphism before taking the target quotient. -
 @[simp]
 lemma quotientIsoOfIso_hom_mk (e : H ≅ K) (I : HopfIdeal R K) (x : H) :
     (quotientIsoOfIso e I).hom.hom
-        (Ideal.Quotient.mkₐ R
+        (Ideal.Quotient.mk
           (I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2).toIdeal x) =
       Ideal.Quotient.mkₐ R I.toIdeal (e.hom.hom x) :=
   quotientIsoOfSurjective_hom_mk e.hom
@@ -230,7 +230,7 @@ lemma quotientIsoOfIso_hom_mk (e : H ≅ K) (I : HopfIdeal R K) (x : H) :
 classes by applying the inverse ambient isomorphism before taking the source quotient. -/
 @[simp]
 lemma quotientIsoOfIso_inv_mk (e : H ≅ K) (I : HopfIdeal R K) (y : K) :
-    (quotientIsoOfIso e I).inv.hom (Ideal.Quotient.mkₐ R I.toIdeal y) =
+    (quotientIsoOfIso e I).inv.hom (Ideal.Quotient.mk I.toIdeal y) =
       Ideal.Quotient.mkₐ R
         (I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2).toIdeal
         (e.inv.hom y) := by
