@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.FiniteLength
+public import Mathlib.RingTheory.Length
 public import Mathlib.RingTheory.SimpleModule.Basic
 
 /-!
@@ -22,7 +22,9 @@ theorem `CompositionSeries.jordan_holder` in the abstract lattice form, the reco
 `isFiniteLength_iff_exists_compositionSeries` of the modules that admit a composition series from
 `⊥` to `⊤`, the identification `JordanHolderLattice.Iso.linearEquiv` of the abstract interval
 isomorphism with a linear equivalence of subquotients, and `Module.length`, which records only the
-*number* of factors.  The multiplicity of an individual simple module is not there.
+*number* of factors — and, with it, `Module.length_compositionSeries`, which is what pins down the
+length of a composition series of a subsingleton or a simple module below.  The multiplicity of an
+individual simple module is not there.
 
 The count is taken with `Nat.card`, over the subtype of indices whose factor is a copy of `S`, so
 no decidability of "is a copy of `S`" is needed.  The factor at an index `i` is spelled out as the
@@ -53,10 +55,10 @@ definitional identity.
 * `TauCeti.IsCompositionFactorAt.isSimpleModule`: the factors are simple, so the multiplicity of a
   module that is not simple vanishes
   (`TauCeti.jordanHolderMultiplicity_eq_zero_of_not_isSimpleModule`).
-* `TauCeti.jordanHolderMultiplicity_of_linearEquiv`: **the multiplicity is an invariant of the
+* `TauCeti.jordanHolderMultiplicity_eq_of_linearEquiv`: **the multiplicity is an invariant of the
   isomorphism class of the ambient module**, which is what makes `[Pᵢ : Sⱼ]` well posed for a
   projective cover, an object defined only up to isomorphism.
-* `TauCeti.jordanHolderMultiplicity_of_isSimpleModule` and
+* `TauCeti.jordanHolderMultiplicity_eq_one_of_isSimpleModule` and
   `TauCeti.jordanHolderMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule`: a simple
   module contains itself once and nothing else, the anti-vacuity check on the count.
 * `TauCeti.jordanHolderMultiplicity_congr`: the multiplicity depends on `S` only through its
@@ -96,6 +98,14 @@ def IsCompositionFactorAt (s : CompositionSeries (Submodule R M)) (i : Fin s.len
 variable {s : CompositionSeries (Submodule R M)} {i : Fin s.length}
 variable {S : Type w} [AddCommGroup S] [Module R S] {T : Type w'} [AddCommGroup T] [Module R T]
 
+/-- The defining property of `TauCeti.IsCompositionFactorAt`: it is the existence of a linear
+equivalence between the subquotient at the index and the given module.  This is what introduces and
+eliminates the predicate. -/
+theorem isCompositionFactorAt_iff :
+    IsCompositionFactorAt s i S ↔
+      Nonempty ((↥(s i.succ) ⧸ Submodule.comap (s i.succ).subtype (s i.castSucc)) ≃ₗ[R] S) :=
+  (Iff.rfl)
+
 /-- Being a factor at a given index only depends on the isomorphism class of the module. -/
 theorem IsCompositionFactorAt.congr (h : IsCompositionFactorAt s i S) (e : S ≃ₗ[R] T) :
     IsCompositionFactorAt s i T :=
@@ -114,6 +124,7 @@ theorem isSimpleModule_subquotient (s : CompositionSeries (Submodule R M)) (i : 
   (covBy_iff_quot_is_simple cov.le).mp cov
 
 /-- A module that occurs as a factor of a composition series is simple. -/
+@[grind →]
 theorem IsCompositionFactorAt.isSimpleModule (h : IsCompositionFactorAt s i S) :
     IsSimpleModule R S :=
   have := isSimpleModule_subquotient s i
@@ -126,6 +137,21 @@ noncomputable def compositionMultiplicity (s : CompositionSeries (Submodule R M)
     (S : Type w) [AddCommGroup S] [Module R S] : ℕ :=
   Nat.card {i : Fin s.length // IsCompositionFactorAt s i S}
 
+/-- The defining formula for `TauCeti.compositionMultiplicity`, so that it can be evaluated on a
+concrete composition series. -/
+theorem compositionMultiplicity_def (s : CompositionSeries (Submodule R M))
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    compositionMultiplicity s S = Nat.card {i : Fin s.length // IsCompositionFactorAt s i S} :=
+  (rfl)
+
+/-- `S` occurs in `s` — the multiplicity is nonzero — exactly when some index carries a copy of
+`S`. -/
+theorem compositionMultiplicity_ne_zero_iff (s : CompositionSeries (Submodule R M))
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    compositionMultiplicity s S ≠ 0 ↔ ∃ i, IsCompositionFactorAt s i S := by
+  rw [compositionMultiplicity_def, Nat.card_ne_zero]
+  exact ⟨fun h => h.1.elim fun i => ⟨i.1, i.2⟩, fun ⟨i, hi⟩ => ⟨⟨⟨i, hi⟩⟩, inferInstance⟩⟩
+
 theorem compositionMultiplicity_le_length (s : CompositionSeries (Submodule R M))
     (S : Type w) [AddCommGroup S] [Module R S] : compositionMultiplicity s S ≤ s.length :=
   (Finite.card_subtype_le _).trans_eq (Nat.card_eq_fintype_card.trans (Fintype.card_fin _))
@@ -137,8 +163,10 @@ theorem compositionMultiplicity_eq_zero_of_not_isSimpleModule
     compositionMultiplicity s S = 0 := by
   have : IsEmpty {i : Fin s.length // IsCompositionFactorAt s i S} :=
     ⟨fun i => hS i.2.isSimpleModule⟩
-  simp [compositionMultiplicity]
+  simp [compositionMultiplicity_def]
 
+/-- The multiplicity along a fixed composition series depends on `S` only through its isomorphism
+class. -/
 theorem compositionMultiplicity_congr (s : CompositionSeries (Submodule R M)) (e : S ≃ₗ[R] T) :
     compositionMultiplicity s S = compositionMultiplicity s T :=
   Nat.card_congr (Equiv.subtypeEquivRight fun _ => isCompositionFactorAt_congr e)
@@ -181,6 +209,16 @@ theorem compositionMultiplicity_eq_jordanHolderMultiplicity [IsNoetherian R M] [
   have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
   compositionMultiplicity_eq_of_head_eq_of_last_eq (hbot.trans h.1.symm) (htop.trans h.2.symm) S
 
+/-- `S` is a composition factor of `M` — the multiplicity `[M : S]` is nonzero — exactly when some
+index of a composition series from `⊥` to `⊤` carries a copy of `S`. -/
+theorem jordanHolderMultiplicity_ne_zero_iff [IsNoetherian R M] [IsArtinian R M]
+    (s : CompositionSeries (Submodule R M)) (hbot : s.head = ⊥) (htop : s.last = ⊤)
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    jordanHolderMultiplicity R M S ≠ 0 ↔ ∃ i, IsCompositionFactorAt s i S := by
+  rw [← compositionMultiplicity_eq_jordanHolderMultiplicity s hbot htop,
+    compositionMultiplicity_ne_zero_iff]
+
+/-- The multiplicity `[M : S]` depends on `S` only through its isomorphism class. -/
 theorem jordanHolderMultiplicity_congr [IsNoetherian R M] [IsArtinian R M] (e : S ≃ₗ[R] T) :
     jordanHolderMultiplicity R M S = jordanHolderMultiplicity R M T :=
   compositionMultiplicity_congr _ e
@@ -197,12 +235,18 @@ section Transport
 
 variable {N : Type v'} [AddCommGroup N] [Module R N]
 
-/-- The image of a composition series of `M` under a linear equivalence `M ≃ₗ[R] N`. -/
+/-- The image of a composition series of `M` under a linear equivalence `M ≃ₗ[R] N`: the image of
+the series under the order isomorphism `Submodule.orderIsoMapComap e`, which preserves coverings.
+
+The body is `@[expose]`d on purpose: `TauCeti.factorEquivMapCompositionSeries` below is *stated* for
+the subquotients of `mapCompositionSeries e s` but *built* from `LinearEquiv.submoduleMap`, which is
+phrased in `Submodule.map`, and it typechecks only because `mapCompositionSeries e s i` is
+definitionally `Submodule.map ↑e (s i)` — the content of
+`TauCeti.mapCompositionSeries_apply` below. -/
 @[expose] def mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    CompositionSeries (Submodule R N) where
-  length := s.length
-  toFun i := Submodule.orderIsoMapComap e (s i)
-  step i := (apply_covBy_apply_iff (Submodule.orderIsoMapComap e)).mpr (s.step i)
+    CompositionSeries (Submodule R N) :=
+  s.map ⟨fun A => Submodule.map (e : M →ₗ[R] N) A,
+    fun h => (apply_covBy_apply_iff (Submodule.orderIsoMapComap e)).mpr h⟩
 
 @[simp]
 theorem mapCompositionSeries_apply (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M))
@@ -211,21 +255,19 @@ theorem mapCompositionSeries_apply (e : M ≃ₗ[R] N) (s : CompositionSeries (S
   rfl
 
 @[simp]
-theorem length_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
+theorem mapCompositionSeries_length (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
     (mapCompositionSeries e s).length = s.length :=
   rfl
 
-theorem head_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M))
-    (hbot : s.head = ⊥) : (mapCompositionSeries e s).head = ⊥ := by
-  have : s 0 = ⊥ := hbot
-  change Submodule.map (e : M →ₗ[R] N) (s 0) = ⊥
-  rw [this, Submodule.map_bot]
+@[simp]
+theorem head_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
+    (mapCompositionSeries e s).head = Submodule.map (e : M →ₗ[R] N) s.head :=
+  rfl
 
-theorem last_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M))
-    (htop : s.last = ⊤) : (mapCompositionSeries e s).last = ⊤ := by
-  have : s (Fin.last s.length) = ⊤ := htop
-  change Submodule.map (e : M →ₗ[R] N) (s (Fin.last s.length)) = ⊤
-  rw [this, Submodule.map_top, e.range]
+@[simp]
+theorem last_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
+    (mapCompositionSeries e s).last = Submodule.map (e : M →ₗ[R] N) s.last :=
+  rfl
 
 /-- Restricting a linear equivalence to a submodule carries the trace of another submodule to the
 trace of its image.  This is the compatibility that lets a linear equivalence be pushed through the
@@ -235,15 +277,20 @@ theorem map_submoduleMap_comap_subtype (e : M ≃ₗ[R] N) (A B : Submodule R M)
       = Submodule.comap (Submodule.map (e : M →ₗ[R] N) B).subtype
           (Submodule.map (e : M →ₗ[R] N) A) := by
   ext y
+  simp only [Submodule.mem_map, Submodule.mem_comap, Submodule.coe_subtype]
   constructor
   · rintro ⟨x, hx, rfl⟩
     exact ⟨(x : M), hx, rfl⟩
   · rintro ⟨a, ha, hay⟩
     obtain ⟨b, hb, hby⟩ := y.2
     have hab : a = b := e.injective (hay.trans hby.symm)
-    exact ⟨⟨a, hab ▸ hb⟩, ha, Subtype.ext hay⟩
+    exact ⟨⟨a, by rw [hab]; exact hb⟩, ha, Subtype.ext hay⟩
 
-/-- A linear equivalence identifies the factors of a composition series with those of its image. -/
+/-- A linear equivalence identifies the factors of a composition series with those of its image:
+`LinearEquiv.submoduleMap` carries the trace of `s i.castSucc` in `s i.succ` onto the trace of its
+image, by `TauCeti.map_submoduleMap_comap_subtype`, so it descends to the subquotients.  Its target
+is spelled with `TauCeti.mapCompositionSeries`, which is definitionally `Submodule.map ↑e` applied
+termwise. -/
 noncomputable def factorEquivMapCompositionSeries (e : M ≃ₗ[R] N)
     (s : CompositionSeries (Submodule R M)) (i : Fin s.length) :
     (↥(s i.succ) ⧸ Submodule.comap (s i.succ).subtype (s i.castSucc)) ≃ₗ[R]
@@ -253,44 +300,64 @@ noncomputable def factorEquivMapCompositionSeries (e : M ≃ₗ[R] N)
   Submodule.Quotient.equiv _ _ (e.submoduleMap (s i.succ))
     (map_submoduleMap_comap_subtype e (s i.castSucc) (s i.succ))
 
+-- Not `@[simp]`: the implicit type arguments of the left-hand side mention
+-- `mapCompositionSeries e s i.succ`, which `mapCompositionSeries_apply` rewrites, so the statement
+-- is not in simp-normal form and `simpNF` rejects the tag.
+theorem factorEquivMapCompositionSeries_apply (e : M ≃ₗ[R] N)
+    (s : CompositionSeries (Submodule R M)) (i : Fin s.length) (x : ↥(s i.succ)) :
+    factorEquivMapCompositionSeries e s i (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (e.submoduleMap (s i.succ) x) :=
+  (rfl)
+
+/-- Transporting a composition series along a linear equivalence does not change which module sits
+at an index. -/
+theorem isCompositionFactorAt_mapCompositionSeries_iff (e : M ≃ₗ[R] N)
+    (s : CompositionSeries (Submodule R M)) (i : Fin s.length)
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    IsCompositionFactorAt (mapCompositionSeries e s) i S ↔ IsCompositionFactorAt s i S :=
+  ⟨fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).trans f⟩,
+    fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).symm.trans f⟩⟩
+
+@[simp]
 theorem compositionMultiplicity_mapCompositionSeries (e : M ≃ₗ[R] N)
     (s : CompositionSeries (Submodule R M)) (S : Type w) [AddCommGroup S] [Module R S] :
     compositionMultiplicity (mapCompositionSeries e s) S = compositionMultiplicity s S :=
   Nat.card_congr (Equiv.subtypeEquivRight fun i =>
-    ⟨fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).trans f⟩,
-      fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).symm.trans f⟩⟩)
+    isCompositionFactorAt_mapCompositionSeries_iff e s i S)
 
 /-- **The multiplicity only depends on the isomorphism class of the ambient module.** -/
-theorem jordanHolderMultiplicity_of_linearEquiv [IsNoetherian R M] [IsArtinian R M]
+theorem jordanHolderMultiplicity_eq_of_linearEquiv [IsNoetherian R M] [IsArtinian R M]
     [IsNoetherian R N] [IsArtinian R N] (e : M ≃ₗ[R] N)
     (S : Type w) [AddCommGroup S] [Module R S] :
     jordanHolderMultiplicity R M S = jordanHolderMultiplicity R N S := by
-  have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
-  rw [← compositionMultiplicity_eq_jordanHolderMultiplicity (mapCompositionSeries e _)
-      (head_mapCompositionSeries e _ h.1) (last_mapCompositionSeries e _ h.2) S,
+  obtain ⟨s, hbot, htop⟩ := exists_compositionSeries_of_isNoetherian_isArtinian R M
+  rw [← compositionMultiplicity_eq_jordanHolderMultiplicity s hbot htop S,
+    ← compositionMultiplicity_eq_jordanHolderMultiplicity (mapCompositionSeries e s)
+      (by rw [head_mapCompositionSeries, hbot, Submodule.map_bot])
+      (by rw [last_mapCompositionSeries, htop, Submodule.map_top, e.range]) S,
     compositionMultiplicity_mapCompositionSeries]
-  rfl
 
 end Transport
 
-/-! ### The two degenerate modules -/
+/-! ### Modules of length zero and one -/
 
 /-- A composition series of a subsingleton module is a single point. -/
-theorem length_eq_zero_of_subsingleton [Subsingleton M] (s : CompositionSeries (Submodule R M)) :
-    s.length = 0 := by
-  have : s 0 = s (Fin.last s.length) := Subsingleton.elim _ _
-  simpa [Fin.ext_iff, eq_comm] using s.injective this
+theorem compositionSeries_length_eq_zero_of_subsingleton [Subsingleton M]
+    (s : CompositionSeries (Submodule R M)) : s.length = 0 := by
+  simpa using Module.length_compositionSeries s (Subsingleton.elim _ _) (Subsingleton.elim _ _)
 
-theorem compositionMultiplicity_of_subsingleton [Subsingleton M]
+/-- A subsingleton module has no composition factors at all. -/
+theorem compositionMultiplicity_eq_zero_of_subsingleton [Subsingleton M]
     (s : CompositionSeries (Submodule R M)) (S : Type w) [AddCommGroup S] [Module R S] :
     compositionMultiplicity s S = 0 :=
   Nat.le_zero.mp ((compositionMultiplicity_le_length s S).trans_eq
-    (length_eq_zero_of_subsingleton s))
+    (compositionSeries_length_eq_zero_of_subsingleton s))
 
-theorem jordanHolderMultiplicity_of_subsingleton [Subsingleton M] [IsNoetherian R M]
+/-- Every multiplicity `[M : S]` in a subsingleton module `M` vanishes. -/
+theorem jordanHolderMultiplicity_eq_zero_of_subsingleton [Subsingleton M] [IsNoetherian R M]
     [IsArtinian R M] (S : Type w) [AddCommGroup S] [Module R S] :
     jordanHolderMultiplicity R M S = 0 :=
-  compositionMultiplicity_of_subsingleton _ S
+  compositionMultiplicity_eq_zero_of_subsingleton _ S
 
 /-- The bottom-to-top subquotient of a module is the module itself. -/
 theorem nonempty_linearEquiv_subquotient_of_eq_bot_of_eq_top {A B : Submodule R M} (hA : A = ⊥)
@@ -300,27 +367,10 @@ theorem nonempty_linearEquiv_subquotient_of_eq_bot_of_eq_top {A B : Submodule R 
   rw [Submodule.comap_bot, Submodule.ker_subtype]
 
 /-- A composition series of a simple module from `⊥` to `⊤` has a single step. -/
-theorem length_eq_one_of_isSimpleModule [IsSimpleModule R M]
+theorem compositionSeries_length_eq_one_of_isSimpleModule [IsSimpleModule R M]
     {s : CompositionSeries (Submodule R M)} (hbot : s.head = ⊥) (htop : s.last = ⊤) :
     s.length = 1 := by
-  have hbot' : s 0 = ⊥ := hbot
-  have htop' : s (Fin.last s.length) = ⊤ := htop
-  -- The series is not constant, since `⊥ ≠ ⊤` in a simple module.
-  have hlt : s 0 < s (Fin.last s.length) := by rw [hbot', htop']; exact bot_lt_top
-  have hpos : 0 < s.length := by
-    by_contra h
-    exact absurd (congrArg s (Fin.ext (by omega : (0 : Fin (s.length + 1)).val =
-      (Fin.last s.length).val))) hlt.ne
-  by_contra h
-  -- With at least two steps the term at index `1` is a submodule strictly between `⊥` and `⊤`.
-  have h2 : 2 ≤ s.length := by omega
-  set j : Fin (s.length + 1) := ⟨1, by omega⟩ with hj
-  have h0j : (⊥ : Submodule R M) < s j := hbot' ▸ s.strictMono (by simp [hj, Fin.lt_def])
-  have hjl : s j < (⊤ : Submodule R M) :=
-    htop' ▸ s.strictMono (by simp [hj, Fin.lt_def]; omega)
-  rcases IsSimpleOrder.eq_bot_or_eq_top (s j) with hb | ht
-  · exact absurd hb h0j.ne'
-  · exact absurd ht hjl.ne
+  simpa using Module.length_compositionSeries s hbot htop
 
 /-- **The single factor of a simple module is that module.** Every index of a composition series
 of a simple module running from `⊥` to `⊤` carries the module itself. -/
@@ -328,9 +378,9 @@ theorem isCompositionFactorAt_iff_of_isSimpleModule [IsSimpleModule R M]
     {s : CompositionSeries (Submodule R M)} (hbot : s.head = ⊥) (htop : s.last = ⊤)
     (i : Fin s.length) (S : Type w) [AddCommGroup S] [Module R S] :
     IsCompositionFactorAt s i S ↔ Nonempty (M ≃ₗ[R] S) := by
-  have hbot' : s 0 = ⊥ := hbot
-  have htop' : s (Fin.last s.length) = ⊤ := htop
-  have hlen := length_eq_one_of_isSimpleModule hbot htop
+  have hbot' : s 0 = ⊥ := s.apply_zero.trans hbot
+  have htop' : s (Fin.last s.length) = ⊤ := s.apply_last.trans htop
+  have hlen := compositionSeries_length_eq_one_of_isSimpleModule hbot htop
   have hi : (i : ℕ) = 0 := by have := i.isLt; omega
   have h0 : s i.castSucc = ⊥ := by
     rw [← hbot']
@@ -341,39 +391,45 @@ theorem isCompositionFactorAt_iff_of_isSimpleModule [IsSimpleModule R M]
   obtain ⟨g⟩ := nonempty_linearEquiv_subquotient_of_eq_bot_of_eq_top h0 h1
   exact ⟨fun ⟨f⟩ => ⟨g.symm.trans f⟩, fun ⟨f⟩ => ⟨g.trans f⟩⟩
 
-/-- **A simple module contains exactly one copy of itself.** -/
-theorem compositionMultiplicity_of_isSimpleModule [IsSimpleModule R M]
+/-- **A simple module contains exactly one copy of itself**, counted along a fixed composition
+series of it running from `⊥` to `⊤`. -/
+theorem compositionMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M]
     {s : CompositionSeries (Submodule R M)} (hbot : s.head = ⊥) (htop : s.last = ⊤)
     (S : Type w) [AddCommGroup S] [Module R S] (e : M ≃ₗ[R] S) :
     compositionMultiplicity s S = 1 := by
   have hall : ∀ i : Fin s.length, IsCompositionFactorAt s i S := fun i =>
     (isCompositionFactorAt_iff_of_isSimpleModule hbot htop i S).mpr ⟨e⟩
-  rw [compositionMultiplicity, Nat.card_congr (Equiv.subtypeUnivEquiv hall),
-    Nat.card_eq_fintype_card, Fintype.card_fin, length_eq_one_of_isSimpleModule hbot htop]
+  rw [compositionMultiplicity_def, Nat.card_congr (Equiv.subtypeUnivEquiv hall),
+    Nat.card_eq_fintype_card, Fintype.card_fin,
+    compositionSeries_length_eq_one_of_isSimpleModule hbot htop]
 
-/-- **A simple module contains no copy of a module it is not isomorphic to.** -/
-theorem compositionMultiplicity_eq_zero_of_isSimpleModule [IsSimpleModule R M]
+/-- **A simple module contains no copy of a module it is not isomorphic to**, counted along a fixed
+composition series of it running from `⊥` to `⊤`. -/
+theorem compositionMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule
+    [IsSimpleModule R M]
     {s : CompositionSeries (Submodule R M)} (hbot : s.head = ⊥) (htop : s.last = ⊤)
     (S : Type w) [AddCommGroup S] [Module R S] (he : IsEmpty (M ≃ₗ[R] S)) :
     compositionMultiplicity s S = 0 := by
   have : IsEmpty {i : Fin s.length // IsCompositionFactorAt s i S} :=
     ⟨fun i => he.elim'
       ((isCompositionFactorAt_iff_of_isSimpleModule hbot htop i.1 S).mp i.2).some⟩
-  simp [compositionMultiplicity]
+  simp [compositionMultiplicity_def]
 
-/-- **A simple module contains exactly one copy of itself**, for the chosen composition series. -/
-theorem jordanHolderMultiplicity_of_isSimpleModule [IsSimpleModule R M] [IsNoetherian R M]
+/-- **A simple module contains exactly one copy of itself**: the multiplicity `[M : S]` of a simple
+module `M` in itself is `1`. -/
+theorem jordanHolderMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M] [IsNoetherian R M]
     [IsArtinian R M] (S : Type w) [AddCommGroup S] [Module R S] (e : M ≃ₗ[R] S) :
     jordanHolderMultiplicity R M S = 1 :=
   have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
-  compositionMultiplicity_of_isSimpleModule h.1 h.2 S e
+  compositionMultiplicity_eq_one_of_isSimpleModule h.1 h.2 S e
 
-/-- **A simple module contains no copy of a module it is not isomorphic to.** -/
+/-- **A simple module contains no copy of a module it is not isomorphic to**: the multiplicity
+`[M : S]` vanishes for a simple `M` admitting no linear equivalence with `S`. -/
 theorem jordanHolderMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule
     [IsSimpleModule R M] [IsNoetherian R M] [IsArtinian R M]
     (S : Type w) [AddCommGroup S] [Module R S] (he : IsEmpty (M ≃ₗ[R] S)) :
     jordanHolderMultiplicity R M S = 0 :=
   have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
-  compositionMultiplicity_eq_zero_of_isSimpleModule h.1 h.2 S he
+  compositionMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule h.1 h.2 S he
 
 end TauCeti
