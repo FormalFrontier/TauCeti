@@ -296,8 +296,12 @@ theorem integrableExpSet_id_uniformMeasure {a b : ℝ} :
     _ = |t| * |x| := abs_mul t x
     _ ≤ |t| * max |a| |b| := mul_le_mul_of_nonneg_left hxb (abs_nonneg t)
 
-/-- The moment generating function of the uniform law at `0` is `1`. -/
-@[simp]
+/-- The moment generating function of the uniform law at `0` is `1`.
+
+Deliberately not `@[simp]`: `simp` already rewrites `mgf id μ 0` to `μ.real Set.univ`, so this
+left-hand side is not in normal form and the repo's simpNF linter rejects the annotation. For a
+probability measure `simp` then closes the goal on its own, which makes the annotation redundant as
+well as ill-formed. -/
 theorem mgf_id_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
     mgf id (uniformMeasure a b) 0 = 1 := by
   have := isProbabilityMeasure_uniformMeasure hab
