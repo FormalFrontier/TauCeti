@@ -132,18 +132,14 @@ theorem rationalSubset_subset_spaAnalytic_of_mem_extendedIdealOfDefinition
   exact ⟨s, hs, fun hsupp ↦ hmem.2.2 ((mem_supp_iff v s).mp hsupp)⟩
 
 open scoped Classical in
-/-- **The finite standard rational cover of the analytic locus.** If `G` generates an ideal of
-definition, then the rational subsets `R(G/g)`, for `g ∈ G`, cover exactly the analytic locus.
+/-- **A finite rational cover of the analytic locus.** If `T` generates the extended ideal of
+definition, then the rational subsets `R(T/t)`, for `t ∈ T`, cover exactly the analytic locus.
 This is the cover in Wedhorn Proposition 7.49(2). -/
-theorem spaAnalytic_eq_biUnion_rationalSubset (P : PairOfDefinition A) (Aplus : Subring A)
-    (G : Finset P.ringOfDefinition)
-    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) :
+theorem spaAnalytic_eq_biUnion_rationalSubset_of_span_eq_extendedIdealOfDefinition
+    (P : PairOfDefinition A) (Aplus : Subring A) (T : Finset A)
+    (hspan : Ideal.span (T : Set A) = P.extendedIdealOfDefinition) :
     spaAnalytic Aplus =
-      ⋃ g ∈ G, rationalSubset Aplus
-        (G.image ((↑) : P.ringOfDefinition → A)) (g : A) := by
-  let T : Finset A := G.image ((↑) : P.ringOfDefinition → A)
-  have hspan : Ideal.span (T : Set A) = P.extendedIdealOfDefinition :=
-    P.span_image_eq_extendedIdealOfDefinition G hG
+      ⋃ t ∈ T, rationalSubset Aplus T t := by
   apply Set.Subset.antisymm
   · intro v hv
     have hvSpa := spaAnalytic_subset_spa Aplus hv
@@ -158,22 +154,45 @@ theorem spaAnalytic_eq_biUnion_rationalSubset (P : PairOfDefinition A) (Aplus : 
       have : a ∈ (⊥ : Ideal A) := hbot ▸ haI
       exact haSupp ((Ideal.mem_bot.mp this) ▸ v.supp.zero_mem)
     obtain ⟨t, htT, hmax⟩ := Finset.exists_max_image T v.valuation hT
-    obtain ⟨g, hgG, rfl⟩ := Finset.mem_image.mp (show t ∈
-      G.image ((↑) : P.ringOfDefinition → A) by exact htT)
-    refine Set.mem_iUnion₂_of_mem hgG
-      ((mem_rationalSubset_iff Aplus T (g : A) v).mpr ⟨hvSpa, ?_, ?_⟩)
+    refine Set.mem_iUnion₂_of_mem htT
+      ((mem_rationalSubset_iff Aplus T t v).mpr ⟨hvSpa, ?_, ?_⟩)
     · intro u huT
-      exact (valuation_le_iff v u (g : A)).mp (hmax u huT)
+      exact (valuation_le_iff v u t).mp (hmax u huT)
     · intro hzero
       have hall : (T : Set A) ⊆ (v.supp : Set A) := fun u hu ↦ (mem_supp_iff v u).mpr
         (v.toValuativeRel.vle_trans
-          ((valuation_le_iff v u (g : A)).mp (hmax u hu)) hzero)
+          ((valuation_le_iff v u t).mp (hmax u hu)) hzero)
       exact haSupp ((hspan ▸ Ideal.span_le.mpr hall) haI)
-  · refine Set.iUnion₂_subset fun g hg ↦ ?_
+  · refine Set.iUnion₂_subset fun t ht ↦ ?_
     apply rationalSubset_subset_spaAnalytic_of_mem_extendedIdealOfDefinition P Aplus
     rw [← hspan]
-    exact Ideal.subset_span (Finset.mem_coe.mpr
-      (show (g : A) ∈ T from Finset.mem_image.mpr ⟨g, hg, rfl⟩))
+    exact Ideal.subset_span (Finset.mem_coe.mpr ht)
+
+open scoped Classical in
+/-- **The finite standard rational cover of the analytic locus.** If `G` generates an ideal of
+definition, then the rational subsets `R(G/g)`, for `g ∈ G`, cover exactly the analytic locus.
+This is the cover in Wedhorn Proposition 7.49(2). -/
+theorem spaAnalytic_eq_biUnion_rationalSubset (P : PairOfDefinition A) (Aplus : Subring A)
+    (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) :
+    spaAnalytic Aplus =
+      ⋃ g ∈ G, rationalSubset Aplus
+        (G.image ((↑) : P.ringOfDefinition → A)) (g : A) := by
+  let T : Finset A := G.image ((↑) : P.ringOfDefinition → A)
+  have hspan : Ideal.span (T : Set A) = P.extendedIdealOfDefinition :=
+    P.span_image_eq_extendedIdealOfDefinition G hG
+  rw [spaAnalytic_eq_biUnion_rationalSubset_of_span_eq_extendedIdealOfDefinition
+    P Aplus T hspan]
+  apply Set.Subset.antisymm
+  · refine Set.iUnion₂_subset fun t ht ↦ ?_
+    have ht' : t ∈ G.image ((↑) : P.ringOfDefinition → A) := by
+      simpa only [T] using ht
+    obtain ⟨g, hg, rfl⟩ := Finset.mem_image.mp ht'
+    exact Set.subset_iUnion₂_of_subset g hg Set.Subset.rfl
+  · refine Set.iUnion₂_subset fun g hg ↦ ?_
+    have hg' : (g : A) ∈ T := by
+      simpa only [T] using Finset.mem_image.mpr ⟨g, hg, rfl⟩
+    exact Set.subset_iUnion₂_of_subset (g : A) hg' Set.Subset.rfl
 
 open scoped Classical in
 /-- Every set in the standard analytic cover is a member of the rational basis: its numerator
