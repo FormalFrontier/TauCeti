@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -198,6 +198,16 @@ theorem dualCarrierBasis_apply (L : IntegralLattice V) [L.IsNondegenerate]
   apply L.dualPairingEquiv.injective
   rw [dualCarrierBasis, Basis.map_apply, LinearEquiv.apply_symm_apply,
     L.dualPairingEquiv_dualBasisElem]
+
+open Classical in
+/-- Coordinates in the dual-carrier basis are evaluations of the perfect pairing on the original
+carrier basis. -/
+@[simp]
+theorem dualCarrierBasis_repr (L : IntegralLattice V) [L.IsNondegenerate]
+    {ι : Type*} [Finite ι] (b : Basis ι ℤ L.carrier) (x : L.dualCarrier) :
+    (L.dualCarrierBasis b).repr x = b.dualBasis.repr (L.dualPairingEquiv x) := by
+  rw [dualCarrierBasis, Basis.map_repr]
+  simp only [LinearEquiv.symm_symm, LinearEquiv.trans_apply]
 
 /-- Taking the flipped dual submodule of the dual carrier recovers the original carrier. -/
 theorem dualSubmodule_flip_dualCarrier (L : IntegralLattice V) [L.IsNondegenerate] :

@@ -56,6 +56,8 @@ integrality input for commuting Cartan binomial coefficients past divided powers
   the integral span of the original coefficients.
 * `TauCeti.ringChooseSpan_add_intCast` and `TauCeti.ringChooseSpan_sub_intCast`: integer
   translation leaves that integral span unchanged.
+* `TauCeti.exists_forall_sum_mul_choose_eq`: prescribed integer values on an initial segment are
+  attained by an integral combination of binomial coefficients.
 
 ## References
 
@@ -416,5 +418,44 @@ theorem ringChooseSpan_neg [Ring R] [BinomialRing R] (r : R) :
     have h := Ring.choose_neg_mem (A := ringChooseSpan (-r)) (r := -r) (n := n)
       fun k _ => ringChoose_mem_ringChooseSpan (-r) k
     simpa using h
+
+/-!
+# Integral interpolation on an initial segment
+
+The generalized binomial coefficients are the integrally interpolating family: prescribing
+arbitrary integer values on `0, 1, …, N` is always solvable in *integer* coefficients, even
+though the interpolating polynomial itself has non-integral coefficients. This is Newton's
+forward-difference formula, and it is what lets integral combinations of the binomial
+coefficients `(h choose k)` of a Cartan vector separate the integer weights of a
+representation, one weight at a time.
+-/
+
+/-- **Integral interpolation by binomial coefficients.** Arbitrary integer values on the initial
+segment `0, 1, …, N` are attained by an integral combination of the binomial coefficients
+`(· choose k)` for `k ≤ N`.
+
+The matrix `(j choose k)` is lower unitriangular, so the coefficients are read off one at a time:
+the induction step solves for `c (N + 1)` using `(N + 1 choose N + 1) = 1`, and the added term
+does not disturb the smaller values because `(j choose N + 1) = 0` for `j ≤ N`. -/
+theorem exists_forall_sum_mul_choose_eq (N : ℕ) (g : ℕ → ℤ) :
+    ∃ c : ℕ → ℤ, ∀ j ≤ N, ∑ k ∈ range (N + 1), c k * (j.choose k : ℤ) = g j := by
+  induction N with
+  | zero => exact ⟨fun _ => g 0, fun j hj => by simp [Nat.le_zero.1 hj]⟩
+  | succ N ih =>
+    obtain ⟨c, hc⟩ := ih
+    classical
+    refine ⟨Function.update c (N + 1)
+      (g (N + 1) - ∑ i ∈ range (N + 1), c i * ((N + 1).choose i : ℤ)), fun j hj => ?_⟩
+    have hrestrict : ∀ k ∈ range (N + 1),
+        Function.update c (N + 1)
+            (g (N + 1) - ∑ i ∈ range (N + 1), c i * ((N + 1).choose i : ℤ)) k *
+          (j.choose k : ℤ) = c k * (j.choose k : ℤ) := fun k hk => by
+      rw [Function.update_of_ne (Nat.ne_of_lt (mem_range.1 hk))]
+    rw [Finset.sum_range_succ, Finset.sum_congr rfl hrestrict, Function.update_self]
+    rcases eq_or_lt_of_le hj with rfl | hjN
+    · rw [Nat.choose_self, Nat.cast_one, mul_one]
+      ring
+    · rw [Nat.choose_eq_zero_of_lt hjN, Nat.cast_zero, mul_zero, add_zero]
+      exact hc j (Nat.lt_succ_iff.1 hjN)
 
 end TauCeti

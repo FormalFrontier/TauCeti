@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Affine group schemes are anti-equivalent to commutative Hopf algebras
@@ -58,5 +60,30 @@ noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso (S 
   exact Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft (hopfSpec S).toEssImage (ObjectProperty.ιOfLECompιIso _) ≪≫
     (hopfSpec S).toEssImageCompι
+
+/-- To identify the inverse image of an isomorphism-invariant property of affine group schemes
+under the Hopf-algebra/group-scheme anti-equivalence, it suffices to identify that property on
+Hopf spectra. -/
+theorem objectProperty_inverseImage_commHopfAlgCatOpEquiv
+    (R : Type u) [CommRing R]
+    (P : ObjectProperty (AffineGroupSchemeCat (CommRingCat.of R)))
+    [P.IsClosedUnderIsomorphisms] (Q : ObjectProperty (CommHopfAlgCat.{u} R))
+    (h : ∀ H, P ⟨(hopfSpec (CommRingCat.of R)).obj (op H), by
+      rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+      infer_instance⟩ ↔ Q H) :
+    P.inverseImage
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor = Q.op := by
+  ext H
+  let G : AffineGroupSchemeCat (CommRingCat.of R) :=
+    ⟨(hopfSpec (CommRingCat.of R)).obj H, by
+      rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+      infer_instance⟩
+  let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
+      (CommRingCat.of R)).functor.obj H ≅ G :=
+    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R)).app H)
+  rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.op_iff]
+  exact (P.prop_iff_of_iso e).trans (h H.unop)
 
 end TauCeti
