@@ -11,8 +11,9 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 -- `DoubleCoset.doubleCoset`, `DoubleCoset.mk` and `DoubleCoset.Quotient` occur in the statements
 -- below.
 public import Mathlib.GroupTheory.DoubleCoset
--- Non-public: that the identity double coset of a subgroup is the subgroup itself is used only
--- inside the proofs of the double-coset results.
+-- Non-public: the general double-coset identities — when two classes agree, and that the identity
+-- double coset of a subgroup is the subgroup itself — are used only inside the proofs of the
+-- double-coset results below, which are their specializations to the Borel subgroup of `GL₂`.
 import TauCeti.GroupTheory.DoubleCoset.Identity
 -- Non-public: the order of `GL₂` over a finite field is used only inside the proof of the size of
 -- the big cell.
@@ -102,9 +103,9 @@ open Matrix
 
 universe u
 
-section Ring
+section Semiring
 
-variable (R : Type u) [Ring R]
+variable (R : Type u) [Semiring R]
 
 /-- The **Weyl element** of `GL₂`: the permutation matrix `!![0, 1; 1, 0]` swapping the two basis
 vectors. It is an involution, and together with the Borel subgroup it generates `GL₂`; its double
@@ -135,7 +136,7 @@ theorem gl2WeylElement_mul_self : GL2WeylElement R * GL2WeylElement R = 1 :=
 theorem gl2WeylElement_inv : (GL2WeylElement R)⁻¹ = GL2WeylElement R :=
   inv_eq_of_mul_eq_one_right (gl2WeylElement_mul_self R)
 
-end Ring
+end Semiring
 
 section CommRing
 
@@ -159,8 +160,9 @@ theorem coe_mk_mul_weyl_mul_mk (a₁ d₁ a₂ d₂ : Rˣ) (c₁ c₂ : R) :
     simp [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two]
 
 /-- **The lower-left entry detects the big cell, one direction**: every element of `B w B` has an
-invertible lower-left entry. -/
-theorem isUnit_apply_one_zero_of_mem_doubleCoset_weyl {g : GL (Fin 2) R}
+invertible lower-left entry.  The public interface is the two-way
+`TauCeti.GL2Borel.mem_doubleCoset_weyl_iff`. -/
+private theorem isUnit_apply_one_zero_of_mem_doubleCoset_weyl {g : GL (Fin 2) R}
     (hg : g ∈ DoubleCoset.doubleCoset (GL2WeylElement R) (GL2Borel R : Set (GL (Fin 2) R))
       (GL2Borel R : Set (GL (Fin 2) R))) :
     IsUnit ((g : Matrix (Fin 2) (Fin 2) R) 1 0) := by
@@ -174,8 +176,9 @@ theorem isUnit_apply_one_zero_of_mem_doubleCoset_weyl {g : GL (Fin 2) R}
 `c` is a unit lies in the big cell: the column operation `v = !![1, -d; 0, c]` clears the
 lower-right entry of `g`, and swapping the two columns of `g v` then makes it upper triangular, so
 that `g = (g v w) w v⁻¹` exhibits `g` as an element of `B w B`. This is the only computation in the
-file; everything else reads it off. -/
-theorem mem_doubleCoset_weyl_of_isUnit_apply_one_zero {g : GL (Fin 2) R}
+file; everything else reads it off.  The public interface is the two-way
+`TauCeti.GL2Borel.mem_doubleCoset_weyl_iff`. -/
+private theorem mem_doubleCoset_weyl_of_isUnit_apply_one_zero {g : GL (Fin 2) R}
     (hg : IsUnit ((g : Matrix (Fin 2) (Fin 2) R) 1 0)) :
     g ∈ DoubleCoset.doubleCoset (GL2WeylElement R) (GL2Borel R : Set (GL (Fin 2) R))
       (GL2Borel R : Set (GL (Fin 2) R)) := by
@@ -196,6 +199,7 @@ theorem mem_doubleCoset_weyl_of_isUnit_apply_one_zero {g : GL (Fin 2) R}
 /-- **The lower-left entry detects the big cell.** An element of `GL₂` lies in the double coset
 `B w B` exactly when its lower-left entry is invertible — the condition complementary, over a
 field, to the vanishing that defines `B`. -/
+@[simp]
 theorem mem_doubleCoset_weyl_iff {g : GL (Fin 2) R} :
     g ∈ DoubleCoset.doubleCoset (GL2WeylElement R) (GL2Borel R : Set (GL (Fin 2) R))
         (GL2Borel R : Set (GL (Fin 2) R))
@@ -203,27 +207,30 @@ theorem mem_doubleCoset_weyl_iff {g : GL (Fin 2) R} :
   ⟨isUnit_apply_one_zero_of_mem_doubleCoset_weyl, mem_doubleCoset_weyl_of_isUnit_apply_one_zero⟩
 
 /-- **The Weyl double coset, in the quotient**: an element of `GL₂` has the same double coset as
-the Weyl element exactly when it lies in the big cell. This is `DoubleCoset.eq` read through
-`DoubleCoset.mem_doubleCoset`. -/
+the Weyl element exactly when it lies in the big cell. This is
+`TauCeti.doubleCosetMk_eq_mk_iff_mem` at the Weyl element. -/
+@[simp]
 theorem doubleCosetMk_eq_weyl_iff_mem {g : GL (Fin 2) R} :
     DoubleCoset.mk (GL2Borel R) (GL2Borel R) g
         = DoubleCoset.mk (GL2Borel R) (GL2Borel R) (GL2WeylElement R)
       ↔ g ∈ DoubleCoset.doubleCoset (GL2WeylElement R) (GL2Borel R : Set (GL (Fin 2) R))
-          (GL2Borel R : Set (GL (Fin 2) R)) := by
-  rw [eq_comm, DoubleCoset.eq, DoubleCoset.mem_doubleCoset]
-  simp
+          (GL2Borel R : Set (GL (Fin 2) R)) :=
+  doubleCosetMk_eq_mk_iff_mem _ _ _ _
 
-/-- The identity double coset of the Borel subgroup is the Borel subgroup. -/
+/-- The identity double coset of the Borel subgroup is the Borel subgroup. This is
+`TauCeti.doubleCoset_one_self` for `H = B`. -/
 theorem doubleCoset_one_eq :
     DoubleCoset.doubleCoset (1 : GL (Fin 2) R) (GL2Borel R : Set (GL (Fin 2) R))
         (GL2Borel R : Set (GL (Fin 2) R))
-      = (GL2Borel R : Set (GL (Fin 2) R)) := by
-  ext g
-  simp only [DoubleCoset.mem_doubleCoset, SetLike.mem_coe]
-  refine ⟨?_, fun hg => ⟨g, hg, 1, one_mem _, by rw [mul_one, mul_one]⟩⟩
-  rintro ⟨x, hx, y, hy, rfl⟩
-  rw [mul_one]
-  exact mul_mem hx hy
+      = (GL2Borel R : Set (GL (Fin 2) R)) :=
+  doubleCoset_one_self _
+
+/-- The Weyl double coset is not the identity one: the Weyl element is not upper triangular. -/
+theorem doubleCosetMk_weyl_ne_one [Nontrivial R] :
+    DoubleCoset.mk (GL2Borel R) (GL2Borel R) (GL2WeylElement R)
+      ≠ DoubleCoset.mk (GL2Borel R) (GL2Borel R) 1 := by
+  rw [Ne, doubleCosetMk_eq_mk_one_iff_mem]
+  exact gl2WeylElement_notMem_gl2Borel
 
 end GL2Borel
 
@@ -278,13 +285,6 @@ theorem doubleCosetMk_eq_one_or_eq_weyl (g : GL (Fin 2) F) :
   by_cases hg : g ∈ GL2Borel F
   · exact Or.inl ((doubleCosetMk_eq_mk_one_iff_mem (GL2Borel F) g).mpr hg)
   · exact Or.inr (doubleCosetMk_eq_weyl_iff_mem.mpr (mem_doubleCoset_weyl_of_notMem hg))
-
-/-- The Weyl double coset is not the identity one: the Weyl element is not upper triangular. -/
-theorem doubleCosetMk_weyl_ne_one :
-    DoubleCoset.mk (GL2Borel F) (GL2Borel F) (GL2WeylElement F)
-      ≠ DoubleCoset.mk (GL2Borel F) (GL2Borel F) 1 := by
-  rw [Ne, doubleCosetMk_eq_mk_one_iff_mem]
-  exact gl2WeylElement_notMem_gl2Borel
 
 /-- **The form the Mackey criterion consumes**: a double coset of the Borel subgroup other than the
 identity one is the Weyl one. -/
