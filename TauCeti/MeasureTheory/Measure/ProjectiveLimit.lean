@@ -50,6 +50,21 @@ private def prefixSuccEquiv (n : ℕ) :
   (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _) (MeasurableEquiv.piSingleton n)).trans
     (MeasurableEquiv.IicProdIoc n.le_succ)
 
+private theorem prefixSuccEquiv_symm_apply (n : ℕ) (x : ∀ i : Iic (n + 1), X i) :
+    (prefixSuccEquiv n).symm x =
+      (frestrictLe₂ n.le_succ x, x ⟨n + 1, Finset.mem_Iic.mpr le_rfl⟩) := by
+  change (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _)
+      (MeasurableEquiv.piSingleton n)).symm
+      ((MeasurableEquiv.IicProdIoc (X := X) n.le_succ).symm x) = _
+  rw [congrFun (MeasurableEquiv.coe_IicProdIoc_symm (X := X) n.le_succ) x]
+  rfl
+
+private theorem prefixSuccEquiv_apply_pair (n : ℕ) (x : ∀ n, X n) :
+    prefixSuccEquiv n (frestrictLe n x, x (n + 1)) = frestrictLe (n + 1) x := by
+  apply (prefixSuccEquiv n).symm.injective
+  rw [(prefixSuccEquiv n).symm_apply_apply, prefixSuccEquiv_symm_apply]
+  rfl
+
 /-- The law of a prefix and its next coordinate, obtained from the next prescribed prefix law. -/
 private def successorLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) (n : ℕ) :
     Measure ((∀ i : Iic n, X i) × X (n + 1)) :=
@@ -67,8 +82,8 @@ private theorem fst_successorLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i))
     MeasureTheory.Measure.map_map measurable_fst (prefixSuccEquiv n).symm.measurable]
   have hfun : (Prod.fst : ((∀ i : Iic n, X i) × X (n + 1)) → (∀ i : Iic n, X i)) ∘
       (prefixSuccEquiv n).symm = frestrictLe₂ n.le_succ := by
-    funext x i
-    rfl
+    funext x
+    exact congrArg Prod.fst (prefixSuccEquiv_symm_apply n x)
   rw [hfun, hP n]
 
 /-- The transition kernel obtained by disintegrating the next prescribed prefix law over the
@@ -144,12 +159,7 @@ private theorem map_frestrictLe_succ_prefixLimit
   have hfun : frestrictLe (n + 1) =
       prefixSuccEquiv n ∘ fun x : (∀ n, X n) ↦ (frestrictLe n x, x (n + 1)) := by
     funext x
-    apply (prefixSuccEquiv n).symm.injective
-    simp only [Function.comp_apply]
-    rw [(prefixSuccEquiv n).symm_apply_apply]
-    apply Prod.ext
-    · rfl
-    · rfl
+    exact (prefixSuccEquiv_apply_pair n x).symm
   rw [hfun, ← MeasureTheory.Measure.map_map (prefixSuccEquiv n).measurable (by fun_prop),
     hpair, successorLaw]
   exact MeasurableEquiv.map_map_symm (prefixSuccEquiv n)
