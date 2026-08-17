@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -13,7 +14,8 @@ public import Mathlib.Algebra.Lie.Semisimple.Basic
 submodules of `N` itself, whereas `IsAtom N` is a statement about the position of `N` in the
 lattice `LieSubmodule R L M` of the Lie submodules of the ambient module. This file proves that the
 two agree, so that a lattice-theoretic decomposition into atoms may be read as a decomposition into
-irreducibles.
+irreducibles. It also records that every nonzero vector of an irreducible module generates the whole
+module as a Lie submodule.
 
 Both directions move along the inclusion `N.incl : N →ₗ⁅R,L⁆ M`, whose `map` and `comap` connect
 the two lattices: `LieSubmodule.map_incl_lt_iff_lt_top` says that a proper Lie submodule of `N`
@@ -24,6 +26,8 @@ maps to a Lie submodule strictly below `N`, while `LieSubmodule.comap_incl_eq_to
 
 * `TauCeti.isIrreducible_iff_isAtom`: a Lie submodule is irreducible as a Lie module exactly when
   it is an atom of the lattice of Lie submodules of the ambient module.
+* `TauCeti.lieSpan_singleton_eq_top_of_ne_zero`: every nonzero vector of an irreducible Lie module
+  generates the whole module.
 
 ## References
 
@@ -38,6 +42,15 @@ namespace TauCeti
 
 variable {R L M : Type*} [CommRing R] [LieRing L]
 variable [AddCommGroup M] [Module R M] [LieRingModule L M]
+
+/-- **Every nonzero vector generates an irreducible Lie module.** If `M` is irreducible and
+`m : M` is nonzero, then the Lie submodule spanned by `m` is all of `M`. -/
+theorem lieSpan_singleton_eq_top_of_ne_zero [LieModule.IsIrreducible R L M]
+    {m : M} (hm : m ≠ 0) : LieSubmodule.lieSpan R L {m} = ⊤ := by
+  have : Nontrivial (LieSubmodule.lieSpan R L ({m} : Set M)) :=
+    (LieSubmodule.nontrivial_iff_ne_bot R L M).mpr fun hbot ↦
+      hm ((LieSubmodule.lieSpan_eq_bot_iff R L M).mp hbot m (Set.mem_singleton m))
+  exact LieSubmodule.eq_top_of_isIrreducible R L M _
 
 /-- **The irreducible Lie submodules are the atoms.** A Lie submodule `N` of `M` is irreducible as
 a Lie module exactly when it is an atom of `LieSubmodule R L M`, that is, when `N ≠ ⊥` and the only

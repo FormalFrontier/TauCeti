@@ -5,6 +5,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Group.Affine
+public import Mathlib.AlgebraicGeometry.Morphisms.Finite
+public import Mathlib.AlgebraicGeometry.Morphisms.FinitePresentation
+public import Mathlib.AlgebraicGeometry.Morphisms.Flat
+public import Mathlib.RingTheory.Flat.EquationalCriterion
+public import Mathlib.RingTheory.Finiteness.ModuleFinitePresentation
+public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
 # Projections of Hopf spectra
@@ -28,11 +34,24 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
 * `TauCeti.algSpec_map_left_ofAlgHom`: the underlying spectrum map of an algebra morphism.
 * `TauCeti.hopfSpec_obj_one_left`, `TauCeti.hopfSpec_obj_mul_left`, and
   `TauCeti.hopfSpec_obj_inv_left`: its three group operations.
+* `TauCeti.isCocomm_iff_isCommMonObj_hopfSpec`: cocommutativity corresponds to a commutative
+  group object.
+* `TauCeti.moduleFinite_iff_isFinite_hopfSpec`: module-finiteness corresponds to a finite
+  structural morphism.
+* `TauCeti.moduleFlat_iff_flat_hopfSpec`: module-flatness corresponds to a flat structural
+  morphism.
+* `TauCeti.algebraFinitePresentation_iff_locallyOfFinitePresentation_hopfSpec`: finite
+  presentation of an algebra corresponds to local finite presentation of its structural morphism.
+* `TauCeti.moduleProjective_iff_flat_and_finitePresentation`: a finite algebra is projective as a
+  module exactly when it is flat and finitely presented as an algebra.
+* `TauCeti.moduleProjective_iff_flat_and_locallyOfFinitePresentation_hopfSpec`: the corresponding
+  characterization in terms of the structural morphism of a Hopf spectrum.
 -/
 
 public section
 
-open CategoryTheory
+open CategoryTheory Opposite WithConv
+open scoped CategoryTheory.MonObj
 
 namespace TauCeti
 
@@ -41,6 +60,25 @@ open AlgebraicGeometry MonObj MonoidalCategory
 universe u
 
 variable (R : Type u) [CommRing R]
+
+/-- Finite morphisms of schemes respect isomorphisms. -/
+instance isFinite_respectsIso :
+    MorphismProperty.RespectsIso (@IsFinite : MorphismProperty Scheme.{u}) :=
+  MorphismProperty.respectsIso_of_isStableUnderComposition
+    (fun _ _ f (_ : IsIso f) ↦ inferInstance)
+
+/-- Flat morphisms of schemes respect isomorphisms. -/
+instance flat_respectsIso :
+    MorphismProperty.RespectsIso (@Flat : MorphismProperty Scheme.{u}) :=
+  MorphismProperty.respectsIso_of_isStableUnderComposition
+    (fun _ _ f (_ : IsIso f) ↦ inferInstance)
+
+/-- Morphisms of schemes locally of finite presentation respect isomorphisms. -/
+instance locallyOfFinitePresentation_respectsIso :
+    MorphismProperty.RespectsIso
+      (@LocallyOfFinitePresentation : MorphismProperty Scheme.{u}) :=
+  MorphismProperty.respectsIso_of_isStableUnderComposition
+    (fun _ _ f (_ : IsIso f) ↦ inferInstance)
 
 /-- The scheme underlying the Hopf spectrum of `H` is its ordinary spectrum. -/
 @[simp↓]
@@ -64,6 +102,16 @@ lemma hopfSpec_obj_X_hom (H : CommHopfAlgCat.{u} R) :
       (hopfSpec_obj_X_left R H) rfl).2 (by
         exact heq_of_eq (AlgebraicGeometry.algSpec_obj_hom
           (R := CommRingCat.of R) (Opposite.op (CommAlgCat.of R H))))
+
+/-- A morphism property that respects isomorphisms holds for the structural morphism of a Hopf
+spectrum exactly when it holds for the spectrum map induced by the algebra structure map. -/
+theorem morphismProperty_hopfSpec_obj_X_hom_iff
+    (P : MorphismProperty Scheme.{u}) [P.RespectsIso] (H : CommHopfAlgCat.{u} R) :
+    P (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) ↔
+      P (Spec.map (CommRingCat.ofHom (algebraMap R H))) := by
+  rw [hopfSpec_obj_X_hom]
+  rw [MorphismProperty.cancel_left_of_respectsIso
+    (P := P) (eqToHom (hopfSpec_obj_X_left R H))]
 
 /-- The multiplication source of a Hopf spectrum is the standard affine fibre product of two
 copies of its underlying spectrum over the base. -/
@@ -162,5 +210,117 @@ lemma hopfSpec_obj_inv_left (H : CommHopfAlgCat.{u} R) :
   rw [hopfSpec_obj_eq_asOver]
   exact heq_of_eq (algSpec_map_left_ofAlgHom R
     (HopfAlgebra.antipodeAlgHom R H))
+
+/-- A Hopf spectrum is a commutative group object exactly when its coordinate Hopf algebra is
+cocommutative. -/
+theorem isCocomm_iff_isCommMonObj_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
+    Coalgebra.IsCocomm R H ↔
+      IsCommMonObj
+        (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X) := by
+  constructor
+  · intro h
+    let _ := h
+    rw [hopfSpec_obj_eq_asOver]
+    infer_instance
+  · intro h
+    rw [hopfSpec_obj_eq_asOver] at h
+    let _ := h
+    constructor
+    let leftPoint : WithConv (H →ₐ[R] TensorProduct R H H) :=
+      toConv (Bialgebra.TensorProduct.includeLeft
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+    let rightPoint : WithConv (H →ₐ[R] TensorProduct R H H) :=
+      toConv (Bialgebra.TensorProduct.includeRight
+        (R := R) (H₁ := H) (H₂ := H)).toAlgHom
+    have hcomm : leftPoint * rightPoint = rightPoint * leftPoint := by
+      apply (AlgebraicGeometry.Spec.mapMulEquiv
+        (R := R) (S := H) (T := TensorProduct R H H)).injective
+      simpa only [map_mul] using mul_comm
+        ((AlgebraicGeometry.Spec.mapMulEquiv
+          (R := R) (S := H) (T := TensorProduct R H H)) leftPoint)
+        ((AlgebraicGeometry.Spec.mapMulEquiv
+          (R := R) (S := H) (T := TensorProduct R H H)) rightPoint)
+    have hswap :
+        toConv ((Algebra.TensorProduct.comm R H H).toAlgHom.comp
+          (Bialgebra.comulAlgHom R H)) = rightPoint * leftPoint := by
+      rw [Bialgebra.toConv_comp_comulAlgHom]
+      simp only [leftPoint, rightPoint,
+        Bialgebra.TensorProduct.includeLeft_toAlgHom,
+        Bialgebra.TensorProduct.includeRight_toAlgHom,
+        Algebra.TensorProduct.comm_comp_includeLeft,
+        Algebra.TensorProduct.comm_comp_includeRight]
+    have hcomul :
+        toConv ((Algebra.TensorProduct.comm R H H).toAlgHom.comp
+          (Bialgebra.comulAlgHom R H)) =
+            toConv (Bialgebra.comulAlgHom R H) := by
+      rw [hswap, ← hcomm]
+      exact Bialgebra.comulPoint_eq_include_mul.symm
+    have hlinear := congrArg
+      (fun f : WithConv (H →ₐ[R] TensorProduct R H H) => f.ofConv.toLinearMap) hcomul
+    simp only [AlgHom.comp_toLinearMap, Bialgebra.toLinearMap_comulAlgHom] at hlinear
+    apply LinearMap.ext
+    intro x
+    exact LinearMap.congr_fun hlinear x
+
+/-- A Hopf spectrum is finite over its base exactly when its coordinate algebra is
+module-finite. -/
+theorem moduleFinite_iff_isFinite_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
+    Module.Finite R H ↔
+      IsFinite (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+  rw [morphismProperty_hopfSpec_obj_X_hom_iff (P := @IsFinite) R H]
+  rw [IsFinite.SpecMap_iff]
+  -- `SpecMap_iff` leaves the algebra map behind the `CommRingCat.ofHom` projection.
+  change Module.Finite R H ↔ (algebraMap R H).Finite
+  exact RingHom.finite_algebraMap.symm
+
+/-- A Hopf spectrum is flat over its base exactly when its coordinate algebra is flat as a
+module. -/
+theorem moduleFlat_iff_flat_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
+    Module.Flat R H ↔
+      Flat (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+  rw [morphismProperty_hopfSpec_obj_X_hom_iff (P := @Flat) R H]
+  rw [Flat.SpecMap_iff]
+  exact RingHom.flat_algebraMap_iff.symm
+
+/-- A Hopf spectrum is locally of finite presentation over its base exactly when its coordinate
+algebra is finitely presented. -/
+theorem algebraFinitePresentation_iff_locallyOfFinitePresentation_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
+    Algebra.FinitePresentation R H ↔
+      LocallyOfFinitePresentation
+        (((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+  rw [morphismProperty_hopfSpec_obj_X_hom_iff
+    (P := @LocallyOfFinitePresentation) R H]
+  rw [LocallyOfFinitePresentation.SpecMap_iff]
+  exact RingHom.finitePresentation_algebraMap.symm
+
+/-- A finite commutative algebra is projective as a module exactly when it is flat as a module
+and finitely presented as an algebra. -/
+theorem moduleProjective_iff_flat_and_finitePresentation
+    (R A : Type u) [CommRing R] [CommRing A] [Algebra R A] [Module.Finite R A] :
+    Module.Projective R A ↔ Module.Flat R A ∧ Algebra.FinitePresentation R A := by
+  rw [← Module.FinitePresentation.iff_finitePresentation_of_finite]
+  exact ⟨fun h ↦ by
+    let _ : Module.Projective R A := h
+    exact ⟨inferInstance, Module.finitePresentation_of_projective R A⟩,
+    fun h ↦ by
+      let _ : Module.Flat R A := h.1
+      let _ : Module.FinitePresentation R A := h.2
+      exact Module.Flat.projective_of_finitePresentation⟩
+
+/-- For a finite Hopf algebra over a commutative ring, projectivity of the coordinate algebra is
+equivalent to flatness and local finite presentation of its Hopf spectrum over the base. -/
+theorem moduleProjective_iff_flat_and_locallyOfFinitePresentation_hopfSpec
+    (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) [Module.Finite R H] :
+    Module.Projective R H ↔
+      Flat (((hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) ∧
+        LocallyOfFinitePresentation
+          (((hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+  rw [← moduleFlat_iff_flat_hopfSpec, ←
+    algebraFinitePresentation_iff_locallyOfFinitePresentation_hopfSpec]
+  exact moduleProjective_iff_flat_and_finitePresentation R H
 
 end TauCeti

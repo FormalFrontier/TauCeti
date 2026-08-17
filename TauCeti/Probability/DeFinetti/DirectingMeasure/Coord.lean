@@ -11,11 +11,12 @@ public import TauCeti.Probability.Exchangeability.Basic
 /-!
 # The directing measure is the conditional law of every coordinate
 
-`directingMeasure_ae_eq_condExp` (in `DirectingMeasure.lean`) identifies the directing measure with
-the conditional law of the initial coordinate `X 0` given the tail σ-algebra. For a **contractable**
-process the same holds for every coordinate. `Contractable.directingMeasure_ae_eq_condExp_coord`
-promotes that identity from `X 0` to every `X m`, using the "extreme members agree on the tail"
-collapse `Contractable.condExp_indicator_tailProcess_eq`.
+`directingMeasure_ae_eq_condExp` (in `DirectingMeasure/Basic.lean`) identifies the directing
+measure with the conditional law of the initial coordinate `X 0` given the tail σ-algebra. For
+a **contractable** process the same holds for every coordinate.
+`Contractable.directingMeasure_ae_eq_condExp_coord` promotes that identity from `X 0` to every
+`X m`, using the "extreme members agree on the tail" collapse
+`Contractable.condExp_indicator_tailProcess_eq`.
 
 This is the per-coordinate input to the de Finetti block-product factorisation: it is what lets the
 single directing measure serve as the common conditional law of all coordinates.

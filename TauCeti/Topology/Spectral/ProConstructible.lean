@@ -140,14 +140,14 @@ theorem IsProConstructible.iUnion {ι : Type*} [Finite ι] {f : ι → Set X}
   exact isClosed_iUnion_of_finite hf
 
 /-- A union of pro-constructible subsets over a finite set is pro-constructible. -/
-theorem Set.Finite.isProConstructible_biUnion {ι : Type*} {I : Set ι} {f : ι → Set X}
+theorem _root_.Set.Finite.isProConstructible_biUnion {ι : Type*} {I : Set ι} {f : ι → Set X}
     (hI : I.Finite) (hf : ∀ i ∈ I, IsProConstructible (f i)) :
     IsProConstructible (⋃ i ∈ I, f i) := by
   simp only [IsProConstructible, Set.preimage_iUnion]
   exact hI.isClosed_biUnion hf
 
 /-- A union of pro-constructible subsets over a finset is pro-constructible. -/
-theorem Finset.isProConstructible_biUnion {ι : Type*} (I : Finset ι) {f : ι → Set X}
+theorem _root_.Finset.isProConstructible_biUnion {ι : Type*} (I : Finset ι) {f : ι → Set X}
     (hf : ∀ i ∈ I, IsProConstructible (f i)) : IsProConstructible (⋃ i ∈ I, f i) :=
   Set.Finite.isProConstructible_biUnion I.finite_toSet hf
 

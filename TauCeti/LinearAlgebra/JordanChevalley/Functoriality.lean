@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -12,8 +13,8 @@ public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 The multiplicative Jordan--Chevalley decomposition of a linear automorphism does not depend on
 the coordinates used to describe it.  A linear equivalence `e : V ≃ₗ[K] W` transports an
-automorphism by conjugation.  This file proves that semisimplicity and unipotence are invariant
-under this transport and that both canonical Jordan factors commute with it.  More generally,
+automorphism by conjugation.  This file proves that semisimplicity is invariant under this
+transport and that both canonical Jordan factors commute with it.  More generally,
 every linear map between finite-dimensional modules over a perfect field that intertwines two
 automorphisms also intertwines their canonical semisimple and unipotent factors; no injectivity or
 surjectivity assumption is needed.
@@ -29,8 +30,6 @@ representation of an affine algebraic group.
   under linear conjugation.
 * `TauCeti.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
   conjugation within the general linear group.
-* `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
-  linear conjugation.
 * `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
   equivariant under linear conjugation.
 * `TauCeti.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
@@ -98,23 +97,6 @@ theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
     simp only [LinearEquiv.coe_toLinearMap]
   rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
-
-/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
-@[simp]
-theorem isUnipotent_congrLinearEquiv_iff
-    (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
-  rw [isUnipotent_def, isUnipotent_def]
-  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
-  have hmap :
-      LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
-        ((LinearMap.GeneralLinearGroup.congrLinearEquiv e g :
-          GeneralLinearGroup K W) : End K W) - 1 := by
-    ext x
-    simp
-  rw [← hmap]
-  exact IsNilpotent.map_iff (LinearEquiv.conjRingEquiv e).injective
 
 end Predicates
 

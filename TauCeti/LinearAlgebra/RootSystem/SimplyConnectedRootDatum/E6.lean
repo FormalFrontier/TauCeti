@@ -1,12 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import Mathlib.LinearAlgebra.RootSystem.Base
+-- `vecMul_dotProduct_comm` is used in the proof of `e6Root_dotProduct_e6Coroot_comm` below.
+import TauCeti.LinearAlgebra.Matrix.Gram
+-- The `DynkinType` API, `dotProductEquiv` and `RootPairing.Base` come with
+-- `SimplyConnectedRootDatum.Basic`.
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
 public section
 
@@ -161,15 +164,9 @@ pairing is the symmetric bilinear form attached to `CartanMatrix.E₆`, read on 
 simple-root coordinates of a root and its coroot. -/
 theorem e6Root_dotProduct_e6Coroot_comm (i j : Fin 72) :
     e6Root i ⬝ᵥ e6Coroot j = e6Root j ⬝ᵥ e6Coroot i := by
-  rw [e6Root_eq_mulVec, e6Root_eq_mulVec]
-  calc
-    (CartanMatrix.E₆ *ᵥ e6Coroot i) ⬝ᵥ e6Coroot j =
-        e6Coroot j ⬝ᵥ CartanMatrix.E₆ *ᵥ e6Coroot i := dotProduct_comm _ _
-    _ = e6Coroot i ⬝ᵥ CartanMatrix.E₆ᵀ *ᵥ e6Coroot j :=
-      (Matrix.dotProduct_transpose_mulVec CartanMatrix.E₆ (e6Coroot i) (e6Coroot j)).symm
-    _ = e6Coroot i ⬝ᵥ CartanMatrix.E₆ *ᵥ e6Coroot j := by
-      rw [CartanMatrix.E₆_isSymm.eq]
-    _ = (CartanMatrix.E₆ *ᵥ e6Coroot j) ⬝ᵥ e6Coroot i := dotProduct_comm _ _
+  rw [e6Root_eq_mulVec, e6Root_eq_mulVec, ← vecMul_transpose, ← vecMul_transpose,
+    CartanMatrix.E₆_isSymm.eq]
+  exact vecMul_dotProduct_comm CartanMatrix.E₆_isSymm _ _
 
 /-- The second half of the table lists the negatives of the coroots in the first half. -/
 @[simp] theorem e6Coroot_e6NegativeIndex (i : Fin 36) :
@@ -435,19 +432,14 @@ theorem corootSpan_e6SimplyConnectedRootDatum_eq_top :
 
 /-- The support of the pinned base of type `E₆`: the first six root indices. -/
 private def e6SimpleSupport : Finset (Fin 72) :=
-  Finset.univ.map ⟨e6SimpleIndex, e6SimpleIndex_injective⟩
+  simpleSupport e6SimpleIndex_injective
 
-private lemma mem_e6SimpleSupport {k : Fin 72} : k ∈ e6SimpleSupport ↔ (k : ℕ) < 6 := by
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+private lemma mem_e6SimpleSupport {k : Fin 72} : k ∈ e6SimpleSupport ↔ (k : ℕ) < 6 :=
+  mem_simpleSupport_iff_lt e6SimpleIndex_injective (fun _ ↦ e6SimpleIndex_val _)
 
 private lemma coe_e6SimpleSupport :
-    (e6SimpleSupport : Set (Fin 72)) = range e6SimpleIndex := by
-  simp [e6SimpleSupport]
+    (e6SimpleSupport : Set (Fin 72)) = range e6SimpleIndex :=
+  coe_simpleSupport _
 
 /-- The nonnegative simple-root coordinates of the `i`-th positive root of type `E₆`. Both lattices
 carry them: the coroot is `∑ k, cₖ αₖ^∨` by the choice of basis, and the root is `∑ k, cₖ αₖ`

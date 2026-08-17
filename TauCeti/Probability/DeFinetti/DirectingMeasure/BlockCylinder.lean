@@ -11,7 +11,7 @@ public import TauCeti.Probability.Process.Tail.Basic
 /-!
 # The mass of a directing-measure event met with a block cylinder
 
-One lemma, the integration step shared by every de Finetti route:
+One lemma, the integration step shared by the routes that condition on the **tail** σ-algebra:
 
 ```text
 μ ((ν ⁻¹' S) ∩ blockCylinder X k B) = ∫⁻ ω in ν ⁻¹' S, ∏ i, directingMeasure μ X ω (B i) ∂μ
@@ -20,7 +20,9 @@ One lemma, the integration step shared by every de Finetti route:
 given the conditional factorization of the block along `k`. That factorization is a **hypothesis**,
 not a conclusion: this file proves none of it, and so depends on no route that establishes it. Each
 route supplies its own — the martingale route from `TailFactorization`, the `L²` route from
-`ViaL2/BlockFactorization.lean` — and both then instantiate this lemma.
+`ViaL2/BlockFactorization.lean` — and both then instantiate this lemma. The Koopman route
+conditions on the shift-invariant σ-algebra and builds a different witness, so it does not reach
+this file at all.
 
 That is the whole point of stating it this way. The routes are required to stay independent at the
 level of imports, so the shared material has to be the part that *neither* proves: here, the
@@ -63,7 +65,6 @@ theorem measure_inter_blockCylinder_eq_setLIntegral_of_condExp [StandardBorelSpa
     μ ((directingProbabilityMeasure μ X ⁻¹' S) ∩ blockCylinder X k B)
       = ∫⁻ ω in directingProbabilityMeasure μ X ⁻¹' S,
           ∏ i, directingMeasure μ X ω (B i) ∂μ := by
-  classical
   have hTail : tailProcess X ≤ ‹MeasurableSpace Ω› :=
     tailProcess_le_ambient 0 fun j _ => hX_meas j
   have : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail

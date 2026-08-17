@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Data.Complex.BigOperators
+import TauCeti.Analysis.Contour.Argument.Lift
 import TauCeti.Analysis.Contour.LogDerivFTC
 
 /-!
@@ -37,6 +39,8 @@ increments telescope away and the imaginary parts sum to the total argument chan
   imaginary segment logarithm sum.
 * `TauCeti.Contour.integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im` — its `deriv γ`
   specialization with the winding integrand.
+* `TauCeti.Contour.re_integral_inv_sub_mul_deriv_eq_log_norm` — the real part of the plain-piece
+  index integral is the log-norm difference of its endpoints, with no slit-plane hypothesis.
 
 ## Provenance
 
@@ -161,5 +165,22 @@ theorem integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im {γ : ℝ �
   exact integral_deriv_div_sub_eq_log_norm_add_I_mul_sum_log_im (γ' := deriv γ) hP hs_zero hs_N
     hs_mono hγ_cont (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit
     (by simpa only [inv_mul_eq_div] using h_int)
+
+/-- **The real part of the plain-piece contour integral telescopes to the log-norm difference of
+its endpoints**, with no slit-plane hypothesis needed: taking real parts of
+`integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im`'s decomposition discards its
+imaginary sum term (a real number times `Complex.I`), leaving exactly the log-norm difference,
+independent of any branch choice on the partition
+`exists_continuousOn_arg_lift_with_partition` supplies. -/
+theorem re_integral_inv_sub_mul_deriv_eq_log_norm {γ : ℝ → ℂ} {s : ℂ} {l u : ℝ}
+    {P : Set ℝ} (hlu : l ≤ u) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc l u))
+    (hγ_diff : ∀ t ∈ Ioo l u \ P, DifferentiableAt ℝ γ t) (h_ne : ∀ t ∈ Icc l u, γ t ≠ s)
+    (h_int : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume l u) :
+    (∫ t in l..u, (γ t - s)⁻¹ * deriv γ t).re = Real.log ‖γ u - s‖ - Real.log ‖γ l - s‖ := by
+  obtain ⟨N, part, -, hpart_zero, hpart_N, hpart_mono, -, -, h_slit, -, -⟩ :=
+    exists_continuousOn_arg_lift_with_partition hlu hγ_cont h_ne
+  have heq := integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im hP hpart_zero hpart_N
+    hpart_mono hγ_cont hγ_diff h_slit h_int
+  simp [heq]
 
 end TauCeti.Contour

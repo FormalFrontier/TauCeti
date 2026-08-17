@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -68,34 +69,6 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 abbrev filtrationAssociatedGraded (Q : QuadraticForm R M) : Type max u v :=
   ⨁ k : ℕ, FiltrationGradedPiece Q k
 
-private theorem mul_mem_filtrationPrevious_left (Q : QuadraticForm R M) (i j : ℕ)
-    {x y : CliffordAlgebra Q} (hx : x ∈ filtrationPrevious Q i) (hy : y ∈ filtration Q j) :
-    x * y ∈ filtrationPrevious Q (i + j) := by
-  cases i with
-  | zero =>
-      rw [filtrationPrevious_zero] at hx
-      rw [Submodule.mem_bot] at hx
-      subst x
-      simp
-  | succ i =>
-      rw [filtrationPrevious_succ] at hx
-      rw [Nat.succ_add, filtrationPrevious_succ]
-      exact mul_mem_filtration Q hx hy
-
-private theorem mul_mem_filtrationPrevious_right (Q : QuadraticForm R M) (i j : ℕ)
-    {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
-    x * y ∈ filtrationPrevious Q (i + j) := by
-  cases j with
-  | zero =>
-      rw [filtrationPrevious_zero] at hy
-      rw [Submodule.mem_bot] at hy
-      subst y
-      simp
-  | succ j =>
-      rw [filtrationPrevious_succ] at hy
-      rw [Nat.add_succ, filtrationPrevious_succ]
-      exact mul_mem_filtration Q hx hy
-
 private noncomputable def filtrationMul (Q : QuadraticForm R M) (i j : ℕ) :
     filtration Q i →ₗ[R] filtration Q j →ₗ[R] filtration Q (i + j) :=
   TensorProduct.curry
@@ -126,7 +99,7 @@ private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j
   rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
-  exact mul_mem_filtrationPrevious_left Q i j hprevious y.property
+  exact mul_mem_filtrationPrevious_left Q hprevious y.property
 
 private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i j : ℕ) :
     filtrationPreviousRestricted Q j ≤
@@ -140,7 +113,7 @@ private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i 
   rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
-  exact mul_mem_filtrationPrevious_right Q i j x.property hprevious
+  exact mul_mem_filtrationPrevious_right Q x.property hprevious
 
 /-- Multiplication of two homogeneous pieces of the Clifford associated graded algebra. -/
 noncomputable def filtrationGradedMul (Q : QuadraticForm R M) (i j : ℕ) :

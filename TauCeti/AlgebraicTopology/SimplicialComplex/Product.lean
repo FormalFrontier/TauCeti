@@ -31,18 +31,16 @@ product is made here; identifying its realization with the product of realizatio
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.orderedProd`: the ordered product of two precomplexes.
-* `TauCeti.AbstractSimplicialComplex.orderedProd`: the ordered product of two complexes.
-* `TauCeti.AbstractSimplicialComplex.orderedCylinder`: product with the standard one-simplex.
-* `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.orderedProdFst` and
+* `PreAbstractSimplicialComplex.orderedProd`: the ordered product of two precomplexes.
+* `AbstractSimplicialComplex.orderedProd`: the ordered product of two complexes.
+* `AbstractSimplicialComplex.orderedCylinder`: product with the standard one-simplex.
+* `PreAbstractSimplicialComplex.SimplicialMap.orderedProdFst` and
   `orderedProdSnd`: the coordinate projections.
-* `TauCeti.PreAbstractSimplicialComplex.SimplicialMap.prodMkLeft` and `prodMkRight`:
+* `PreAbstractSimplicialComplex.SimplicialMap.prodMkLeft` and `prodMkRight`:
   fixed-coordinate inclusions into an ordered product.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace PreAbstractSimplicialComplex
 
@@ -482,4 +480,3 @@ theorem offDiagonalPair_notMem_orderedProd_finTwo :
 
 end AbstractSimplicialComplex
 
-end TauCeti

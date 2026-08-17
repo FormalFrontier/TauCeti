@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.JordanChevalley
 public import TauCeti.RingTheory.Adjoin.Unit
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # Multiplicative Jordan–Chevalley decomposition
@@ -27,8 +29,6 @@ through faithful representations of affine algebraic groups.
 
 * `TauCeti.GeneralLinearGroup.IsSemisimple`: a linear automorphism is semisimple when its
   underlying endomorphism is semisimple.
-* `TauCeti.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
-  difference from the identity is nilpotent.
 * `TauCeti.GeneralLinearGroup.IsSemisimple.inv` and `.zpow`: semisimple automorphisms are closed
   under inverses and integer powers.
 * `TauCeti.GeneralLinearGroup.IsSemisimple.mul_of_commute`: commuting semisimple automorphisms
@@ -71,28 +71,12 @@ theorem isSemisimple_def (g : GeneralLinearGroup K V) :
     IsSemisimple g ↔ Module.End.IsSemisimple (g : End K V) :=
   Iff.rfl
 
-/-- A linear automorphism is unipotent if its difference from the identity is nilpotent. -/
-def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=
-  _root_.IsNilpotent ((g : End K V) - 1)
-
-/-- Unipotence of a linear automorphism means that its underlying endomorphism minus the
-identity is nilpotent. -/
-theorem isUnipotent_def (g : GeneralLinearGroup K V) :
-    IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
-  Iff.rfl
-
 /-- The identity automorphism is semisimple. -/
 @[simp]
 theorem isSemisimple_one [IsSemisimpleModule K V] :
     IsSemisimple (1 : GeneralLinearGroup K V) := by
   unfold IsSemisimple
   exact Module.End.isSemisimple_id
-
-/-- The identity automorphism is unipotent. -/
-@[simp]
-theorem isUnipotent_one : IsUnipotent (1 : GeneralLinearGroup K V) := by
-  unfold IsUnipotent
-  simp
 
 end Definitions
 
@@ -186,7 +170,7 @@ private theorem exists_jordanDecomposition (g : GeneralLinearGroup K V) :
   · unfold IsSemisimple
     rw [hs'_val]
     exact hs
-  · unfold IsUnipotent
+  · rw [isUnipotent_def]
     rw [hu'_sub]
     exact hs'n.isNilpotent_mul_left hn
   · exact (Commute.refl s').inv_right.mul_right hs'g
@@ -202,7 +186,7 @@ omit [PerfectField K] [FiniteDimensional K V] in
 private theorem additiveNilpotentPart_isNilpotent
     {s u : GeneralLinearGroup K V} (hu : IsUnipotent u) (hsu : Commute s u) :
     _root_.IsNilpotent (additiveNilpotentPart s u) := by
-  unfold IsUnipotent at hu
+  rw [isUnipotent_def] at hu
   apply (hsu.units_val.sub_right (Commute.one_right _)).isNilpotent_mul_left
   exact hu
 

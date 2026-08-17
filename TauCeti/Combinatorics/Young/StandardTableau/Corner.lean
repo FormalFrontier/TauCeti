@@ -63,16 +63,16 @@ variable {μ : YoungDiagram} {c : ℕ × ℕ}
 /-- The cell of a standard Young tableau of a nonempty shape that carries the largest label,
 `μ.card - 1`. -/
 def maxCell (hμ : 0 < μ.card) (T : StandardYoungTableau μ) : ℕ × ℕ :=
-  (T.toEquiv.symm ⟨μ.card - 1, Nat.sub_lt hμ Nat.one_pos⟩ : ↥μ.cells)
+  (T.toTableau.symm ⟨μ.card - 1, Nat.sub_lt hμ Nat.one_pos⟩ : ↥μ.cells)
 
 theorem maxCell_mem (hμ : 0 < μ.card) (T : StandardYoungTableau μ) : maxCell hμ T ∈ μ :=
-  (T.toEquiv.symm ⟨μ.card - 1, Nat.sub_lt hμ Nat.one_pos⟩).2
+  (T.toTableau.symm ⟨μ.card - 1, Nat.sub_lt hμ Nat.one_pos⟩).2
 
 /-- The label at `TauCeti.StandardYoungTableau.maxCell` is the largest one. -/
 theorem apply_maxCell (hμ : 0 < μ.card) (T : StandardYoungTableau μ) :
     (T ⟨maxCell hμ T, maxCell_mem hμ T⟩).val + 1 = μ.card := by
   have h : T ⟨maxCell hμ T, maxCell_mem hμ T⟩ = ⟨μ.card - 1, Nat.sub_lt hμ Nat.one_pos⟩ :=
-    T.toEquiv.apply_symm_apply _
+    T.toTableau.apply_symm_apply _
   have hval : (⟨μ.card - 1, Nat.sub_lt hμ Nat.one_pos⟩ : Fin μ.card).val = μ.card - 1 := rfl
   rw [h]
   omega
@@ -143,7 +143,7 @@ so that the shape of the result does not depend on `T`. -/
 noncomputable def restrict (hc : YoungDiagram.IsCorner μ c) (T : StandardYoungTableau μ)
     (hT : (T ⟨c, hc.mem⟩).val + 1 = μ.card) :
     StandardYoungTableau (YoungDiagram.erase μ c) where
-  toEquiv := Equiv.ofBijective _ (restrictFun_bijective hc T hT)
+  toTableau := Equiv.ofBijective _ (restrictFun_bijective hc T hT)
   row_strict' h hcell := T.row_strict h (YoungDiagram.mem_of_mem_erase hcell)
   col_strict' h hcell := T.col_strict h (YoungDiagram.mem_of_mem_erase hcell)
 
@@ -244,7 +244,7 @@ private theorem extendFun_col (hc : YoungDiagram.IsCorner μ c)
 shape `μ` by giving the corner `c` the largest label. -/
 noncomputable def extend (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) : StandardYoungTableau μ where
-  toEquiv := Equiv.ofBijective _ (extendFun_bijective hc T)
+  toTableau := Equiv.ofBijective _ (extendFun_bijective hc T)
   row_strict' h hcell := extendFun_row hc T h hcell
   col_strict' h hcell := extendFun_col hc T h hcell
 

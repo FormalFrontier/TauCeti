@@ -18,14 +18,17 @@ The reversal theorem is the remaining part of the “Orders on partitions” tar
 the symmetric-group and Schur–Weyl roadmap.  It supplies the order duality used later for the
 row/column symmetry of Specht modules and permutation modules.
 
-Along the way it records the Young diagrams of the two extreme partitions, which the duality
-exchanges: the diagram of `(1ⁿ)` has at most one column
-(`TauCeti.rowLen_diagramOf_ones_le_one`) and the diagram of `(n)` has at most one row
-(`TauCeti.colLen_diagramOf_indiscrete_le_one`).  Both are empty for `n = 0`.
+The Young diagrams of the two extreme partitions, which the duality exchanges, are recorded
+with the partition–diagram correspondence in `TauCeti/Combinatorics/Young/Partitions.lean`
+(`TauCeti.rowLen_diagramOf_ones_le_one` and `TauCeti.colLen_diagramOf_indiscrete_le_one`).
 
 ## References
 
 * W. Fulton, *Young Tableaux*, London Mathematical Society Student Texts 35, §1.1.
+* [Mathlib PR #42725](https://github.com/leanprover-community/mathlib4/pull/42725)
+  (Kim Morrison) — the draft upstream adaptation of the dominance material; the dot-notation
+  `Dominates.conjugate` and the name and orientation of `conjugate_dominates_conjugate_iff`
+  follow the form prepared for that PR.
 -/
 
 public section
@@ -150,77 +153,21 @@ private theorem sum_map_min_le_of_prefix_sum_le {l₁ l₂ : List ℕ}
   have hsplit₂ := sum_min_add_sum_sub l₂ k
   omega
 
-/-- The Young diagram of a partition. -/
-noncomputable def diagramOf {n : ℕ} (μ : n.Partition) : YoungDiagram :=
-  (partitionEquivYoungDiagram n μ).1
-
-/-- The Young diagram construction is injective on partitions of a fixed size. -/
-theorem diagramOf_injective {n : ℕ} : Function.Injective (diagramOf (n := n)) := by
-  intro μ ν h
-  apply (partitionEquivYoungDiagram n).injective
-  apply Subtype.ext
-  simpa only [diagramOf] using h
-
-/-- The Young diagram of a partition has the size of the partition. -/
-@[simp]
-theorem card_diagramOf {n : ℕ} (μ : n.Partition) : (diagramOf μ).card = n :=
-  (partitionEquivYoungDiagram n μ).2
-
-/-- The row lengths of a partition's Young diagram are its decreasingly sorted parts. -/
-@[simp]
-theorem rowLens_diagramOf {n : ℕ} (μ : n.Partition) :
-    (diagramOf μ).rowLens = μ.parts.sort (· ≥ ·) :=
-  partitionEquivYoungDiagram_apply_rowLens n μ
-
-/-- The row lengths of the Young diagram of a partition are its decreasingly sorted parts, padded
-by zeros. -/
-@[simp]
-theorem rowLen_diagramOf {n : ℕ} (ν : n.Partition) (i : ℕ) :
-    (diagramOf ν).rowLen i = (ν.parts.sort (· ≥ ·)).getD i 0 := by
-  rw [← YoungDiagram.getD_rowLens, rowLens_diagramOf]
-
-/-- **The Young diagram of the partition `(1ⁿ)` is a single column**: every part is `1`, so every
-row has at most one cell. -/
-theorem rowLen_diagramOf_ones_le_one (n i : ℕ) :
-    (diagramOf (Nat.Partition.ones n)).rowLen i ≤ 1 := by
-  rw [rowLen_diagramOf, Nat.Partition.ones_parts]
-  rcases lt_or_ge i ((Multiset.replicate n 1).sort (· ≥ ·)).length with hi | hi
-  · rw [List.getD_eq_getElem _ _ hi]
-    exact le_of_eq (Multiset.eq_of_mem_replicate
-      ((Multiset.mem_sort (· ≥ ·)).mp (List.getElem_mem hi)))
-  · rw [List.getD_eq_default _ _ hi]
-    exact Nat.zero_le 1
-
-/-- **The Young diagram of the partition `(n)` has at most one row**: for `n > 0` its only part is
-`n`, so there is nothing below the first row, and for `n = 0` the diagram is empty. -/
-theorem colLen_diagramOf_indiscrete_le_one (n : ℕ) :
-    (diagramOf (Nat.Partition.indiscrete n)).colLen 0 ≤ 1 := by
-  have hlen : ((Nat.Partition.indiscrete n).parts.sort (· ≥ ·)).length ≤ 1 := by
-    rw [Multiset.length_sort]
-    rcases eq_or_ne n 0 with rfl | hn
-    · simp
-    · rw [Nat.Partition.indiscrete_parts hn]
-      simp
-  have hrow : (diagramOf (Nat.Partition.indiscrete n)).rowLen 1 = 0 := by
-    rw [rowLen_diagramOf, List.getD_eq_default _ _ hlen]
-  refine Nat.le_of_not_lt fun hlt => ?_
-  have hmem : ((1 : ℕ), (0 : ℕ)) ∈ diagramOf (Nat.Partition.indiscrete n) :=
-    YoungDiagram.mem_iff_lt_colLen.mpr hlt
-  exact absurd (YoungDiagram.mem_iff_lt_rowLen.mp hmem) (by omega)
-
 /-- The conjugate of a partition is obtained by transposing its Young diagram. -/
-noncomputable def conjugate {n : ℕ} (μ : n.Partition) : n.Partition :=
-  (partitionEquivYoungDiagram n).symm
-    ⟨(diagramOf μ).transpose, by simp⟩
+def conjugate {n : ℕ} (μ : n.Partition) : n.Partition :=
+  toPartition (diagramOf μ).transpose (by simp)
+
+/-- The parts of the conjugate partition are the row lengths of the transposed diagram. -/
+@[simp]
+theorem conjugate_parts {n : ℕ} (μ : n.Partition) :
+    (conjugate μ).parts = ((diagramOf μ).transpose.rowLens : Multiset ℕ) :=
+  toPartition_parts _ _
 
 /-- The Young diagram of the conjugate partition is the transposed Young diagram. -/
 @[simp]
 theorem diagramOf_conjugate {n : ℕ} (μ : n.Partition) :
-    diagramOf (conjugate μ) = (diagramOf μ).transpose := by
-  simpa only [diagramOf, conjugate] using
-    congrArg Subtype.val
-      (Equiv.apply_symm_apply (partitionEquivYoungDiagram n)
-        ⟨(diagramOf μ).transpose, by simp⟩)
+    diagramOf (conjugate μ) = (diagramOf μ).transpose :=
+  diagramOf_toPartition _ _
 
 /-- Conjugating a partition twice recovers the original partition. -/
 @[simp]
@@ -229,17 +176,17 @@ theorem conjugate_conjugate {n : ℕ} (μ : n.Partition) :
   apply diagramOf_injective
   simp
 
+-- Not `@[simp]`: with `conjugate_parts` in the default simp set the left-hand side is no
+-- longer in simp normal form (the parts reduce to the transposed row lengths before sorting).
 /-- The decreasing parts of the conjugate partition are the row lengths of the transposed
 diagram. -/
-@[simp]
 theorem conjugate_parts_sort {n : ℕ} (μ : n.Partition) :
     (conjugate μ).parts.sort (· ≥ ·) = (diagramOf μ).transpose.rowLens := by
-  calc
-    (conjugate μ).parts.sort (· ≥ ·) = (diagramOf (conjugate μ)).rowLens :=
-      (rowLens_diagramOf (conjugate μ)).symm
-    _ = (diagramOf μ).transpose.rowLens := congrArg YoungDiagram.rowLens (diagramOf_conjugate μ)
+  rw [← rowLens_diagramOf (conjugate μ), diagramOf_conjugate]
 
-private theorem dominates_conjugate {n : ℕ} {μ ν : n.Partition} (h : Dominates μ ν) :
+/-- **Conjugation of partitions reverses dominance.** If `μ` dominates `ν`, then the conjugate
+of `ν` dominates the conjugate of `μ`. -/
+protected theorem Dominates.conjugate {n : ℕ} {μ ν : n.Partition} (h : Dominates μ ν) :
     Dominates (conjugate ν) (conjugate μ) := by
   rw [dominates_iff]
   intro k
@@ -260,12 +207,11 @@ private theorem dominates_conjugate {n : ℕ} {μ ν : n.Partition} (h : Dominat
       _ = (ν.parts.sort (· ≥ ·)).sum := Multiset.sum_coe _
   · exact dominates_iff.mp h
 
-/-- Conjugation of partitions reverses dominance. -/
-theorem dominates_conjugate_iff {n : ℕ} (μ ν : n.Partition) :
-    Dominates μ ν ↔ Dominates (conjugate ν) (conjugate μ) := by
-  constructor
-  · exact dominates_conjugate
-  · intro h
-    simpa using dominates_conjugate h
+/-- Conjugation of partitions reverses dominance: the conjugate of `μ` dominates the conjugate
+of `ν` exactly when `ν` dominates `μ`. -/
+@[simp]
+theorem conjugate_dominates_conjugate_iff {n : ℕ} {μ ν : n.Partition} :
+    Dominates (conjugate μ) (conjugate ν) ↔ Dominates ν μ :=
+  ⟨fun h => by simpa using h.conjugate, fun h => h.conjugate⟩
 
 end TauCeti

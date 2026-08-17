@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -117,6 +118,10 @@ weaken them for no gain.
 * `TauCeti.integrable_smul_of_locallyIntegrableOn` and
   `TauCeti.integrable_lineDeriv_smul_of_locallyIntegrableOn`: the two integrability facts that
   make the defining integrals honest.
+* `TauCeti.setIntegral_smul_eq_integral_smul` and
+  `TauCeti.setIntegral_lineDeriv_smul_eq_integral_lineDeriv_smul`: a test function on `Ω` and its
+  directional derivative vanish off `Ω`, so the defining integrals may equivalently be taken over
+  `Ω`.
 * `TauCeti.HasWeakLineDerivOn.mono` and `TauCeti.HasWeakFDerivOn.mono`: a weak derivative on `Ω`
   is one on every smaller open set.
 * `TauCeti.HasWeakLineDerivOn.congr_ae` and `.congr_ae_deriv`, together with their
@@ -335,6 +340,25 @@ theorem integrable_lineDeriv_smul_of_locallyIntegrableOn {w : E → F}
     funext fun _ => TestFunction.lineDerivCLM_apply_of_le le_top
   simpa [hcoe] using
     integrable_smul_of_locallyIntegrableOn hw (TestFunction.lineDerivCLM ℝ v φ : 𝓓(Ω, ℝ))
+
+omit [OpensMeasurableSpace E] in
+/-- A test function on `Ω` vanishes off `Ω`, so integrating `φ • w` over `Ω` is the same as
+integrating it over the whole space. -/
+theorem setIntegral_smul_eq_integral_smul {w : E → F} (φ : 𝓓(Ω, ℝ)) :
+    ∫ x in (Ω : Set E), (φ : E → ℝ) x • w x ∂μ = ∫ x, (φ : E → ℝ) x • w x ∂μ := by
+  refine setIntegral_eq_integral_of_forall_compl_eq_zero fun x hx => ?_
+  rw [image_eq_zero_of_notMem_tsupport fun hmem => hx (φ.tsupport_subset hmem)]
+  simp
+
+omit [OpensMeasurableSpace E] in
+/-- The direction-`v` derivative of a test function on `Ω` vanishes off `Ω` too, so the same
+truncation holds for `(∂_v φ) • w`. -/
+theorem setIntegral_lineDeriv_smul_eq_integral_lineDeriv_smul {w : E → F} (φ : 𝓓(Ω, ℝ)) (v : E) :
+    ∫ x in (Ω : Set E), lineDeriv ℝ (φ : E → ℝ) x v • w x ∂μ =
+      ∫ x, lineDeriv ℝ (φ : E → ℝ) x v • w x ∂μ := by
+  refine setIntegral_eq_integral_of_forall_compl_eq_zero fun x hx => ?_
+  rw [lineDeriv_eq_zero_of_notMem_tsupport φ (fun hmem => hx (φ.tsupport_subset hmem)) v]
+  simp
 
 /-- Replacing `u` by a function agreeing with it almost everywhere on `Ω` preserves the weak
 derivative: only the restriction of `u` to `Ω` is seen. -/

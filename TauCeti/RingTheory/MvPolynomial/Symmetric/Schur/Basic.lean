@@ -23,7 +23,7 @@ definition alone gives, and transports it to the partition-indexed Schur polynom
 The tableaux summed over are the bounded ones, `TauCeti.BoundedSSYT`: Mathlib's
 `SemistandardYoungTableau μ` fills cells with arbitrary natural numbers, and it is the bound that
 makes the sum finite. The alphabet is `0, 1, …, N - 1` rather than the classical `1, …, N`,
-matching `TauCeti.SemistandardYoungTableau.content`.
+matching `SemistandardYoungTableau.content`.
 
 The load-bearing statement is `TauCeti.coeff_diagramSchurPoly`: the coefficient of a monomial
 `x^d` in `s_μ` is the image in the coefficient semiring of the Kostka number `K_{μ d}`, the number

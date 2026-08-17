@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Data.Fin.Basic
+public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
 public section
@@ -65,13 +67,17 @@ here.
   `A n`.
 * `TauCeti.DynkinType.corootSpan_typeASimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
+* `TauCeti.DynkinType.ncard_posRoots_typeASimplyConnectedRootDatum`: the number of positive roots
+  is `(n + 1).choose 2`, for any base.
 
 ## References
 
 The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters
 4--6*, Plate I, and Humphreys, *Introduction to Lie Algebras and Representation Theory*, section
 12.1. This is the `Aₙ` branch of the target "a named datum per valid type" in Layer 6 of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The positive-root count is the
+corresponding clause of the `Aₙ` worked example in the "Worked examples (acceptance criteria)"
+section of that README; it agrees with the count in Bourbaki, Plate I.
 -/
 
 namespace TauCeti
@@ -477,12 +483,8 @@ private abbrev typeASimpleSupport (n : ℕ) : Finset (Fin (n * (n + 1))) :=
   simpleSupport (typeASimpleIndex_injective (n := n))
 
 private lemma mem_typeASimpleSupport {k : Fin (n * (n + 1))} :
-    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n := by
-  rw [typeASimpleSupport, mem_simpleSupport]
-  constructor
-  · rintro ⟨i, rfl⟩
-    simpa only [typeASimpleIndex_val] using i.isLt
-  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext rfl⟩
+    k ∈ typeASimpleSupport n ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeASimpleIndex_injective (n := n)) (fun _ ↦ typeASimpleIndex_val _)
 
 private lemma image_root_typeASimpleSupport :
     (typeASimplyConnectedRootDatum n).root '' (typeASimpleSupport n : Set (Fin (n * (n + 1)))) =
@@ -566,6 +568,15 @@ weight lattice with index `n + 1` (Bourbaki, Plate I). -/
 theorem corootSpan_typeASimplyConnectedRootDatum_eq_top (n : ℕ) :
     (typeASimplyConnectedRootDatum n).corootSpan ℤ = ⊤ :=
   corootSpan_eq_top_of_coroot_eq_single (coroot_typeASimpleIndex (n := n))
+
+/-- **The pinned root datum of type `Aₙ` has `(n + 1).choose 2` positive roots.** Exactly half of
+its `n * (n + 1)` roots are positive, for any base. -/
+@[simp]
+theorem ncard_posRoots_typeASimplyConnectedRootDatum (n : ℕ)
+    (b : (typeASimplyConnectedRootDatum n).Base) :
+    (posRoots (typeASimplyConnectedRootDatum n) b).ncard = (n + 1).choose 2 := by
+  rw [ncard_posRoots_eq_natCard_div_two]
+  simp [Nat.choose_two_right, Nat.mul_comm]
 
 end DynkinType
 

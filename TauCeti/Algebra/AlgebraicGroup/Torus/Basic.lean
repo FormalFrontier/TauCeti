@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -45,8 +46,9 @@ distinguishes tori from general groups of multiplicative type.
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Chapter 2.
 
 This is the coordinate-algebra definition required by Layer 4, "Tori: split and non-split", of
-the ReductiveGroups roadmap. The next steps are the character lattice with its Galois action and
-the smoothness and geometric-connectedness characterizations.
+the ReductiveGroups roadmap. Smoothness and geometric connectedness are proved in
+`TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected`; the next step is the character lattice
+with its Galois action.
 -/
 
 public section

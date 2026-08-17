@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.Algebra.Category.CommAlgCat.Basic
 public import Mathlib.Algebra.Category.Grp.Basic
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Tower
+public import Mathlib.RingTheory.Flat.Basic
 
 /-!
 # Automorphisms of scalar extensions
@@ -73,6 +75,21 @@ tensor with its scalar mapped into the target algebra. -/
 lemma scalarExtensionMap_tmul {A B : CommAlgCat.{w} R} (φ : A ⟶ B) (a : A) (v : V) :
     scalarExtensionMap (V := V) φ (a ⊗ₜ[R] v) = φ.hom a ⊗ₜ[R] v := by
   simp [scalarExtensionMap]
+
+/-- The canonical map between scalar extensions is the value-algebra morphism tensored with the
+identity of the module. -/
+lemma scalarExtensionMap_eq_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    scalarExtensionMap (V := V) φ =
+      TensorProduct.map φ.hom.toLinearMap (LinearMap.id (R := R) (M := V)) := by
+  ext a v
+  simp
+
+/-- Over a flat module, the canonical map between scalar extensions inherits injectivity from the
+value-algebra morphism. -/
+lemma scalarExtensionMap_injective [Module.Flat R V] {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
+    (hφ : Function.Injective φ.hom) :
+    Function.Injective (scalarExtensionMap (V := V) φ) :=
+  Module.Flat.rTensor_preserves_injective_linearMap _ hφ
 
 /-- The canonical map associated to the identity morphism is the identity linear map. -/
 @[simp]
@@ -186,6 +203,19 @@ lemma eq_mapScalarExtensionAutomorphisms_of_apply_scalarExtensionMap_eq
     TensorProduct.tmul_eq_smul_one_tmul (M := V) b v, map_smul]
   congr 1
   simpa only [scalarExtensionMap_tmul, map_one] using h_apply (1 ⊗ₜ[R] v)
+
+/-- Extension of automorphisms is injective as soon as the canonical map between scalar extensions
+is. An automorphism of `A ⊗[R] V` is determined by its values on the pure tensors `1 ⊗ v`, and
+those values are recorded faithfully by the canonical map. -/
+lemma mapScalarExtensionAutomorphisms_injective
+    {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
+    (hφ : Function.Injective (scalarExtensionMap (V := V) φ)) :
+    Function.Injective (mapScalarExtensionAutomorphisms (V := V) φ) := by
+  intro g g' hg
+  apply Units.ext
+  refine LinearMap.ext fun x => hφ ?_
+  rw [← mapScalarExtensionAutomorphisms_apply_scalarExtensionMap φ g x,
+    ← mapScalarExtensionAutomorphisms_apply_scalarExtensionMap φ g' x, hg]
 
 /-- Extension of scalar-extension automorphisms preserves identity morphisms of value algebras. -/
 @[simp]

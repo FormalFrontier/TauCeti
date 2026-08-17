@@ -98,9 +98,7 @@ private theorem norm_algebraMap_polynomial' (d : F[X]) :
 
 /-- **The degree of the norm of `u / d`**: the polynomial norm's degree, less twice that of the
 denominator. Stated for an arbitrary numerator `u` in the coordinate ring, so it carries no
-hypothesis on the basis coefficients — they may vanish. This is the form downstream proofs should
-use; a private specialisation below reads off the weighted `max` for `u = a • 1 + b • y`, which does
-need `a` and `b` nonzero. -/
+hypothesis on the basis coefficients — they may vanish. -/
 theorem intDegree_norm_of_mul_eq {f : W.FunctionField} (hf : f ≠ 0) {u : W.CoordinateRing}
     {d : F[X]} (hd : d ≠ 0)
     (h : f * algebraMap F[X] W.FunctionField d = algebraMap W.CoordinateRing W.FunctionField u) :
@@ -116,26 +114,6 @@ theorem intDegree_norm_of_mul_eq {f : W.FunctionField} (hf : f ≠ 0) {u : W.Coo
   have := congrArg RatFunc.intDegree hnorm
   rw [RatFunc.intDegree_mul hNf (pow_ne_zero _ hdR), ← map_pow,
     RatFunc.intDegree_polynomial, RatFunc.intDegree_polynomial, natDegree_pow] at this
-  omega
-
-/-- natDegree form of Mathlib's `degree_norm_smul_basis` (recovered from `be8adaca`). -/
-private theorem natDegree_norm_smul_basis {a b : F[X]} (ha : a ≠ 0) (hb : b ≠ 0) :
-    (Algebra.norm F[X] (a • (1 : W.CoordinateRing) + b • CoordinateRing.mk W Y)).natDegree =
-      max (2 * a.natDegree) (2 * b.natDegree + 3) := by
-  refine natDegree_eq_of_degree_eq_some ?_
-  rw [CoordinateRing.degree_norm_smul_basis, degree_eq_natDegree ha, degree_eq_natDegree hb]
-  norm_cast
-
-/-- **The degree of the norm, in the `(a + b y)/p` normal form.** -/
-private theorem intDegree_norm_eq_max {f : W.FunctionField} (hf : f ≠ 0) {a b p : F[X]}
-    (ha : a ≠ 0) (hb : b ≠ 0) (hp : p ≠ 0)
-    (h : f * algebraMap F[X] W.FunctionField p =
-      algebraMap W.CoordinateRing W.FunctionField (a • 1 + b • CoordinateRing.mk W Y)) :
-    (Algebra.norm (RatFunc F) f).intDegree
-      = max (2 * (a.natDegree : ℤ) - 2 * p.natDegree)
-            (2 * (b.natDegree : ℤ) + 3 - 2 * p.natDegree) := by
-  rw [intDegree_norm_of_mul_eq W hf hp h, natDegree_norm_smul_basis W ha hb]
-  push_cast
   omega
 
 end WeierstrassCurve.Affine

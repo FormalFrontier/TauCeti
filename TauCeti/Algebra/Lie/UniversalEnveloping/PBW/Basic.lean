@@ -1,0 +1,230 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
+public import TauCeti.Algebra.WordFiltration
+
+/-!
+# The PBW filtration of a universal enveloping algebra
+
+This file constructs the first stage of the Poincaré--Birkhoff--Witt development: the increasing
+filtration of `UniversalEnvelopingAlgebra R L` by word length in the image of the canonical Lie map
+`UniversalEnvelopingAlgebra.ι R`.
+
+The defining relation
+
+```text
+ι(x) * ι(y) = ι(y) * ι(x) + ι([x,y])
+```
+
+replaces a degree-two commutator by a degree-one term. Thus word length gives a filtration, not a
+grading. The associated graded will use this degree drop to make the leading symbols commute; that
+comparison with `SymmetricAlgebra R L` is the next PBW stage and is not asserted here.
+
+Nothing in the construction is special to the enveloping algebra: `pbwFiltration` and
+`pbwFiltrationPrevious` are `TauCeti.Algebra.wordFiltration` and
+`TauCeti.Algebra.wordFiltrationPrevious` of `TauCeti/Algebra/WordFiltration.lean`, specialized to
+`UniversalEnvelopingAlgebra.ι R`, exactly as `TauCeti.CliffordAlgebra.filtration` is that same
+construction for `CliffordAlgebra.ι`. What is special to `U(L)` is the exhaustivity, which comes
+from the tensor-algebra presentation.
+
+## Main definitions and results
+
+* `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration`: words of length at most `k` in the range of
+  `UniversalEnvelopingAlgebra.ι R`.
+* `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_eq_pow`: its defining equation as the power of
+  the scalar-and-generator submodule.
+* `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_mul`: multiplication adds degrees.
+* `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_zero` and
+  `TauCeti.UniversalEnvelopingAlgebra.pbwFiltration_one`: the scalar and generator steps.
+* `TauCeti.UniversalEnvelopingAlgebra.adjoin_image_ι_eq_top`: the image of any Lie generating set
+  generates `U(L)` as an `R`-algebra.
+* `TauCeti.UniversalEnvelopingAlgebra.iSup_pbwFiltration_eq_top`: the filtration is exhaustive.
+* `TauCeti.UniversalEnvelopingAlgebra.instIsRingFiltration`: the bundled `IsRingFiltration`
+  structure on `pbwFiltration`, with `pbwFiltrationPrevious` as its preceding-step family.
+
+## References
+
+This is the pinned "the PBW filtration" target of Layer 3, "PBW, a substantial sub-project", of
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
+
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Chapter V, §17.
+* N. Bourbaki, *Lie Groups and Lie Algebras*, Chapter I, §2.7.
+-/
+
+public section
+
+universe u v
+
+namespace TauCeti.UniversalEnvelopingAlgebra
+
+variable (R : Type u) (L : Type v)
+variable [CommRing R] [LieRing L] [LieAlgebra R L]
+
+attribute [local instance 100] LieRing.ofAssociativeRing
+
+local notation "U" => _root_.UniversalEnvelopingAlgebra R L
+
+/-- The PBW filtration on `U(L)`: its `k`-th step is spanned by products of at most `k` canonical
+Lie generators.
+
+This is `TauCeti.Algebra.wordFiltration` specialized to `UniversalEnvelopingAlgebra.ι R`; the
+shared API is in `TauCeti/Algebra/WordFiltration.lean`. -/
+def pbwFiltration (k : ℕ) : Submodule R U :=
+  TauCeti.Algebra.wordFiltration (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap k
+
+/-- PBW filtration degree `k` is the `k`-th power of the scalars and canonical Lie generators. -/
+theorem pbwFiltration_eq_pow (k : ℕ) :
+    pbwFiltration R L k =
+      (1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap) ^ k :=
+  TauCeti.Algebra.wordFiltration_eq_pow _ k
+
+/-- The step preceding degree `k` in the PBW filtration, that is
+`TauCeti.Algebra.wordFiltrationPrevious` specialized to `UniversalEnvelopingAlgebra.ι R`, with
+bottom in degree zero. -/
+def pbwFiltrationPrevious : ℕ → Submodule R U :=
+  TauCeti.Algebra.wordFiltrationPrevious (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
+
+/-- The preceding PBW filtration is trivial in degree zero. -/
+@[simp]
+theorem pbwFiltrationPrevious_zero : pbwFiltrationPrevious R L 0 = ⊥ :=
+  TauCeti.Algebra.wordFiltrationPrevious_zero _
+
+/-- In successor degree, the preceding PBW filtration is the previous filtration step. -/
+@[simp]
+theorem pbwFiltrationPrevious_succ (k : ℕ) :
+    pbwFiltrationPrevious R L (k + 1) = pbwFiltration R L k :=
+  TauCeti.Algebra.wordFiltrationPrevious_succ _ k
+
+/-- A word of at most `k` canonical Lie generators lies in PBW filtration degree `k`. -/
+theorem prod_map_ι_mem_pbwFiltration {k : ℕ} {l : List L} (hl : l.length ≤ k) :
+    (l.map ⇑(_root_.UniversalEnvelopingAlgebra.ι R)).prod ∈ pbwFiltration R L k := by
+  -- The generic lemma is about the underlying linear map, so name the coercion explicitly.
+  rw [← LieHom.coe_toLinearMap]
+  exact TauCeti.Algebra.prod_map_mem_wordFiltration _ hl
+
+/-- A submodule contains the `k`-th PBW filtration step exactly when it contains every word of
+length at most `k` in the canonical Lie generators. -/
+theorem pbwFiltration_le_iff {k : ℕ} {p : Submodule R U} :
+    pbwFiltration R L k ≤ p ↔
+      ∀ l : List L, l.length ≤ k → (l.map ⇑(_root_.UniversalEnvelopingAlgebra.ι R)).prod ∈ p := by
+  rw [← LieHom.coe_toLinearMap]
+  exact TauCeti.Algebra.wordFiltration_le_iff _
+
+/-- The PBW filtration is increasing. -/
+theorem pbwFiltration_mono : Monotone (pbwFiltration R L) :=
+  TauCeti.Algebra.wordFiltration_mono _
+
+/-- PBW filtration degree zero consists of scalars. -/
+@[simp]
+theorem pbwFiltration_zero : pbwFiltration R L 0 = 1 :=
+  TauCeti.Algebra.wordFiltration_zero _
+
+/-- The empty word puts `1` in every PBW filtration step. -/
+theorem one_mem_pbwFiltration (k : ℕ) : (1 : U) ∈ pbwFiltration R L k :=
+  TauCeti.Algebra.one_mem_wordFiltration _ k
+
+/-- Scalars belong to every PBW filtration step. -/
+theorem algebraMap_mem_pbwFiltration (r : R) (k : ℕ) :
+    algebraMap R U r ∈ pbwFiltration R L k :=
+  TauCeti.Algebra.algebraMap_mem_wordFiltration _ r k
+
+/-- A canonical Lie generator has PBW filtration degree at most one. -/
+theorem ι_mem_pbwFiltration_one (x : L) :
+    _root_.UniversalEnvelopingAlgebra.ι R x ∈ pbwFiltration R L 1 := by
+  rw [← LieHom.coe_toLinearMap]
+  exact TauCeti.Algebra.apply_mem_wordFiltration_one _ x
+
+/-- The range of the canonical Lie map lies in the first PBW filtration step. -/
+theorem ι_range_le_pbwFiltration_one :
+    LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap ≤ pbwFiltration R L 1 :=
+  TauCeti.Algebra.range_le_wordFiltration_one _
+
+/-- Multiplication adds PBW filtration degrees. -/
+theorem pbwFiltration_mul (i j : ℕ) :
+    pbwFiltration R L i * pbwFiltration R L j = pbwFiltration R L (i + j) :=
+  TauCeti.Algebra.wordFiltration_mul _ i j
+
+/-- The elementwise multiplicativity of the PBW filtration. -/
+theorem mul_mem_pbwFiltration {i j : ℕ} {x y : U} (hx : x ∈ pbwFiltration R L i)
+    (hy : y ∈ pbwFiltration R L j) : x * y ∈ pbwFiltration R L (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltration _ hx hy
+
+/-- Multiplication preserves a strict degree drop in the left factor of the PBW filtration. -/
+theorem mul_mem_pbwFiltrationPrevious_left {i j : ℕ} {x y : U}
+    (hx : x ∈ pbwFiltrationPrevious R L i) (hy : y ∈ pbwFiltration R L j) :
+    x * y ∈ pbwFiltrationPrevious R L (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_left _ hx hy
+
+/-- Multiplication preserves a strict degree drop in the right factor of the PBW filtration. -/
+theorem mul_mem_pbwFiltrationPrevious_right {i j : ℕ} {x y : U}
+    (hx : x ∈ pbwFiltration R L i) (hy : y ∈ pbwFiltrationPrevious R L j) :
+    x * y ∈ pbwFiltrationPrevious R L (i + j) :=
+  TauCeti.Algebra.mul_mem_wordFiltrationPrevious_right _ hx hy
+
+/-- Iterating `pbwFiltration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
+step. -/
+theorem pbwFiltration_pow (i n : ℕ) :
+    pbwFiltration R L i ^ n = pbwFiltration R L (i * n) :=
+  TauCeti.Algebra.wordFiltration_pow _ i n
+
+/-- The `k`-th PBW filtration step is the supremum of the powers of the canonical generator range
+of degree at most `k`. -/
+theorem pbwFiltration_eq_iSup_pow (k : ℕ) :
+    pbwFiltration R L k =
+      ⨆ i : {i : ℕ // i ≤ k},
+        LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap ^ (i : ℕ) :=
+  TauCeti.Algebra.wordFiltration_eq_iSup_pow _ k
+
+/-- The successor PBW step adjoins words of exactly the new degree. -/
+theorem pbwFiltration_succ_eq_sup (k : ℕ) :
+    pbwFiltration R L (k + 1) =
+      pbwFiltration R L k ⊔
+        LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap ^ (k + 1) :=
+  TauCeti.Algebra.wordFiltration_succ_eq_sup _ k
+
+/-- PBW filtration degree one consists of the scalars and the canonical Lie generators. -/
+@[simp]
+theorem pbwFiltration_one :
+    pbwFiltration R L 1 = 1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap :=
+  TauCeti.Algebra.wordFiltration_one _
+
+/-- **A Lie generating set generates the enveloping algebra.** If `S` generates `L` as a Lie
+algebra, then the image of `S` under the canonical map generates `U(L)` as an `R`-algebra.
+
+Only the associative subalgebra generated by the image is involved, so no linear independence or
+finiteness of `S` is needed. -/
+theorem adjoin_image_ι_eq_top {S : Set L} (hS : LieSubalgebra.lieSpan R L S = ⊤) :
+    _root_.Algebra.adjoin R (⇑(_root_.UniversalEnvelopingAlgebra.ι R) '' S) =
+      (⊤ : Subalgebra R U) := by
+  have hle : LieSubalgebra.lieSpan R L S ≤
+      (lieSubalgebraOfSubalgebra R U (_root_.Algebra.adjoin R
+        (⇑(_root_.UniversalEnvelopingAlgebra.ι R) '' S))).comap
+          (_root_.UniversalEnvelopingAlgebra.ι R) :=
+    LieSubalgebra.lieSpan_le.2 fun y hy =>
+      (LieSubalgebra.mem_comap _ _).2 (_root_.Algebra.subset_adjoin ⟨y, hy, rfl⟩)
+  rw [hS] at hle
+  rw [eq_top_iff, ← adjoin_range_ι R L]
+  refine _root_.Algebra.adjoin_le ?_
+  rintro _ ⟨x, rfl⟩
+  exact (LieSubalgebra.mem_comap _ _).1 (hle (LieSubalgebra.mem_top x))
+
+/-- **The PBW filtration is exhaustive.** The canonical generators generate `U(L)` as an algebra,
+so every element is a combination of words of some finite length. -/
+theorem iSup_pbwFiltration_eq_top : ⨆ k, pbwFiltration R L k = ⊤ := by
+  have h : ⨆ k, pbwFiltration R L k =
+      (_root_.Algebra.adjoin R
+        (Set.range ⇑(_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap)).toSubmodule :=
+    TauCeti.Algebra.iSup_wordFiltration_eq_adjoin _
+  rw [h, LieHom.coe_toLinearMap, adjoin_range_ι, _root_.Algebra.top_toSubmodule]
+
+/-- The PBW filtration carries Mathlib's bundled ring-filtration structure. -/
+instance instIsRingFiltration :
+    IsRingFiltration (pbwFiltration R L) (pbwFiltrationPrevious R L) :=
+  TauCeti.Algebra.wordFiltration.instIsRingFiltration _
+
+end TauCeti.UniversalEnvelopingAlgebra

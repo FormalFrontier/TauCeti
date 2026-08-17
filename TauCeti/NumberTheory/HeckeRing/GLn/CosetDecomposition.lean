@@ -141,6 +141,16 @@ work from `diag(a) · U(B)` without unfolding `upperTriGL`. -/
 lemma upperTriGL_def {a : Fin n → ℕ} (B : UpperTriEntries n a) :
     upperTriGL B = natDiagGL n a * (mapGL ℚ (unitriSL B)) := (rfl)
 
+/-- **The matrix of the representative**: `diag(a) · U(B)` entrywise over `ℚ`. `upperTriGL` is
+built from `natDiagGL` and `mapGL`, so consumers that need the literal matrix — for instance to
+recognise the classical `T_p` representatives `!![1, b; 0, p]` at `n = 2`, `a = ![1, p]` — would
+otherwise unfold three definitions to get it. -/
+@[simp] lemma upperTriGL_coe {a : Fin n → ℕ} (ha : ∀ i, 0 < a i) (B : UpperTriEntries n a) :
+    (↑(upperTriGL B) : Matrix (Fin n) (Fin n) ℚ) =
+      Matrix.diagonal (fun i ↦ (a i : ℚ)) * (unitriMat B).map (Int.cast) := by
+  rw [upperTriGL_def, Units.val_mul, natDiagGL_coe n a ha]
+  simp [Matrix.SpecialLinearGroup.mapGL_coe_matrix]
+
 /-- Each upper-triangular representative lies in the double coset of `diag(a)`. -/
 lemma upperTriGL_mem_doubleCoset {a : Fin n → ℕ} (B : UpperTriEntries n a) :
     upperTriGL B ∈ doubleCoset (natDiagGL n a) (SLnZ n) (SLnZ n) :=

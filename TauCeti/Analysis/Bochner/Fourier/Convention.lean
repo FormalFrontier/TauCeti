@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,7 +35,7 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
   `charFun μ ((-2π) • a)`.
 * `TauCeti.fourier_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
   integral of `F` against the Fourier atom.
-* `TauCeti.fourierConventionCharFun_isPositiveDefiniteKernel`: the Fourier-convention
+* `TauCeti.posSemidef_fourierConventionCharFun_sub`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: a finite measure is determined by its
   Fourier-convention transform — the uniqueness half of Bochner's theorem.
@@ -116,16 +117,20 @@ theorem fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg [StarAddMonoi
 measure is positive definite. This is the kernel form of
 `fourierConventionCharFun_isPositiveDefinite_of_star_eq_neg`, avoiding any explicit choice of
 involution on the domain. -/
-theorem fourierConventionCharFun_isPositiveDefiniteKernel :
-    IsPositiveDefiniteKernel fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
-  have hscaled := isPositiveDefiniteKernel_comp
-    (charFun_isPositiveDefiniteKernel (μ := ν))
-    (fun a : W => (-2 * Real.pi) • a)
-  convert hscaled using 1
-  ext a b
-  rw [integral_fourierAtom_eq_charFun_neg_two_pi_smul]
-  congr 1
-  simp [smul_sub]
+theorem posSemidef_fourierConventionCharFun_sub :
+    Matrix.PosSemidef fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
+  have h := (posSemidef_charFun (μ := ν)).submatrix (fun a : W => (-2 * Real.pi) • a)
+  have heq : Matrix.submatrix
+      (Matrix.of fun x y : W => MeasureTheory.charFun ν (x - y))
+      (fun a : W => (-2 * Real.pi) • a) (fun a => (-2 * Real.pi) • a) =
+      fun a b : W => ∫ q, fourierAtom (a - b) q ∂ν := by
+    apply Matrix.ext
+    intro a b
+    rw [Matrix.submatrix_apply, Matrix.of_apply,
+      integral_fourierAtom_eq_charFun_neg_two_pi_smul]
+    congr 1
+    simp [smul_sub]
+  exact heq ▸ h
 
 section Topology
 

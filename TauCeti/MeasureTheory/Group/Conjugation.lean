@@ -176,7 +176,7 @@ theorem mem_classFunctionLp_of_ae_eq_of_conj_invariant {f : Lp E p μ} {F : G �
     (hFconj : ∀ g h : G, F (h * g * h⁻¹) = F g) : f ∈ classFunctionLp 𝕜 E p μ := by
   rw [mem_classFunctionLp_iff_ae]
   intro h
-  have hconj := (measurePreserving_conj μ h).quasiMeasurePreserving.ae_eq hF
+  have hconj := (measurePreserving_conj μ h).quasiMeasurePreserving.ae_eq_comp hF
   refine hconj.trans (Filter.EventuallyEq.trans ?_ hF.symm)
   exact Filter.Eventually.of_forall fun g ↦ hFconj g h
 
