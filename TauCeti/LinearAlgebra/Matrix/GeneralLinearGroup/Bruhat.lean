@@ -198,8 +198,10 @@ private theorem mem_doubleCoset_weyl_of_isUnit_apply_one_zero {g : GL (Fin 2) R}
 
 /-- **The lower-left entry detects the big cell.** An element of `GL₂` lies in the double coset
 `B w B` exactly when its lower-left entry is invertible — the condition complementary, over a
-field, to the vanishing that defines `B`. -/
-@[simp]
+field, to the vanishing that defines `B`.
+
+Not a `simp` lemma: `TauCeti.mem_doubleCoset_iff_mk_mem_orbit` is `simp` and rewrites any
+double-coset membership into an orbit membership, so this left-hand side is not simp-normal. -/
 theorem mem_doubleCoset_weyl_iff {g : GL (Fin 2) R} :
     g ∈ DoubleCoset.doubleCoset (GL2WeylElement R) (GL2Borel R : Set (GL (Fin 2) R))
         (GL2Borel R : Set (GL (Fin 2) R))
