@@ -317,24 +317,9 @@ theorem completionLocObjHom_eq_comp [IsTopologicalRing A]
   have hk_comp : k = h.comp g :=
     eq_comp_of_comp_toCompletionLoc_eq_three P T s S hden T' s' S' hden'
       T'' s'' S'' hden'' g h k hg hh hk hgc hhc hkc
-  apply InducedCategory.hom_ext
-  rw [completionLocObjHom_hom, ObjectProperty.FullSubcategory.comp_hom,
-    completionLocObjHom_hom, completionLocObjHom_hom]
-  let G : TopCommRingCat.of (UniformSpace.Completion S) ⟶
-      TopCommRingCat.of (UniformSpace.Completion S') := ⟨g, hg⟩
-  let H : TopCommRingCat.of (UniformSpace.Completion S') ⟶
-      TopCommRingCat.of (UniformSpace.Completion S'') := ⟨h, hh⟩
-  let K : TopCommRingCat.of (UniformSpace.Completion S) ⟶
-      TopCommRingCat.of (UniformSpace.Completion S'') := ⟨k, hk⟩
-  have hK : K = G ≫ H := by
-    apply Subtype.ext
-    exact hk_comp
-  -- The public object equation is the only way to expose the transports surrounding `G`, `H`,
-  -- and `K`; `completionLocObj` itself is deliberately not exposed.
-  change eqToHom _ ≫ K ≫ eqToHom _ =
-    (eqToHom _ ≫ G ≫ eqToHom _) ≫ eqToHom _ ≫ H ≫ eqToHom _
-  rw [hK]
-  simp [Category.assoc]
+  subst k
+  exact completionLocObjHom_comp P T s S hden T' s' S' hden'
+    T'' s'' S'' hden'' g h hg hh
 
 /-! ### Isomorphisms between presentationwise objects -/
 
