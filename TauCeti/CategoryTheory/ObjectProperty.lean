@@ -14,25 +14,25 @@ This file contains general lemmas about transporting object properties along equ
 
 ## Main declarations
 
-* `TauCeti.ObjectProperty.inverseImage_equivalence_inverseImage`: pulling an
+* `ObjectProperty.inverseImage_equivalence_inverseImage`: pulling an
   isomorphism-invariant property backward along both functors of an equivalence recovers it.
 -/
 
 public section
 
-namespace TauCeti
-
 open CategoryTheory
 
 universe u₁ v₁ u₂ v₂
 
+namespace ObjectProperty
+
 /-- Pulling an isomorphism-invariant object property backward along both functors of an
 equivalence recovers the original property. -/
-theorem ObjectProperty.inverseImage_equivalence_inverseImage
+theorem inverseImage_equivalence_inverseImage
     {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
     (P : ObjectProperty C) [P.IsClosedUnderIsomorphisms] (e : C ≌ D) :
     (P.inverseImage e.inverse).inverseImage e.functor = P := by
   ext X
   exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
 
-end TauCeti
+end ObjectProperty
