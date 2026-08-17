@@ -120,7 +120,7 @@ This is not an extra normalisation: it is forced by the triple relation `⁅h, e
 with `e ≠ 0`, which the triple also forces since `⁅e, f⁆ = h` is nonzero. -/
 theorem rootWeight_apply_coroot_eq_two
     (hαc : ⁅h c, e i⁆ = (α c : ℚ) • e i) : α c = 2 := by
-  have hαc' : (α c : ℚ) = 2 := TauCeti.IsSl2Triple.eq_two_of_lie_h_e_eq_smul hT
+  have hαc' : (α c : ℚ) = 2 := hT.eq_two_of_lie_h_e_eq_smul
     (lie_map_ι_eq_smul ρ hαc)
   exact_mod_cast hαc'
 
