@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Algebra.Lie.Derivation.Basic
 public import Mathlib.Algebra.Lie.NonUnitalNonAssocAlgebra
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.Derivation.Lie
 
 /-!
@@ -18,8 +17,8 @@ A **derivation** of an algebra `A` is a linear map `D` obeying the Leibniz rule
 commutative or unital, and the derivations of any algebra are closed under the commutator
 `⁅D, E⁆ = D ∘ E - E ∘ D`, so they always form a Lie algebra `Der A`.  Mathlib has this construction
 twice over, but only in special cases: `Derivation R A M` needs `A` commutative and associative, and
-`LieDerivation R L M` needs the multiplication to be a Lie bracket.  The exceptional Lie algebras
-are derivation algebras of algebras of neither kind -- `G₂ = Der 𝕆` for the octonions
+`LieDerivation R L M` needs the multiplication to be a Lie bracket.  Two of the exceptional Lie
+algebras are derivation algebras of algebras of neither kind -- `G₂ = Der 𝕆` for the octonions
 (`TauCeti.Octonion`) and `F₄ = Der H₃(𝕆)` for the Albert algebra -- so this file builds `Der A` for
 an arbitrary non-unital non-associative algebra, and records that both Mathlib constructions are
 instances of it.
@@ -33,16 +32,17 @@ instances of it.
 
 ## Main results
 
-* `TauCeti.derivationLieAlgebra.apply_mul` and `TauCeti.derivationLieAlgebra.lie_mul`: the Leibniz
-  rule, as an identity of linear maps and in the notation of the Lie action of `Der A` on `A`; and
-  `TauCeti.derivationLieAlgebra.apply_one`: a derivation of a unital algebra kills the unit, and
-  `TauCeti.derivationLieAlgebra.apply_mul_eq_zero`: its constants are closed under multiplication.
+* `TauCeti.derivationLieAlgebra.apply_mul_eq_add`: the Leibniz rule;
+  `TauCeti.derivationLieAlgebra.apply_one_eq_zero`: a derivation of a unital algebra kills the
+  unit; and `TauCeti.derivationLieAlgebra.apply_mul_eq_zero`: its constants are closed under
+  multiplication.
 * `TauCeti.ad_mem_derivationLieAlgebra_commutatorRing`: the adjoint action of a Lie algebra is by
   derivations -- the Jacobi identity in Leibniz form.
-* `TauCeti.derivationLieEquiv`: for a commutative associative algebra, `Der A` is Mathlib's
-  `Derivation R A A` with its Lie structure.
-* `TauCeti.commutatorRingDerivationLieEquiv`: for a Lie algebra `L`, the derivations of the
-  underlying non-associative algebra `CommutatorRing L` are Mathlib's `LieDerivation R L L`.
+* `TauCeti.derivationEquivDerivationLieAlgebra`: for a commutative associative algebra, `Der A` is
+  Mathlib's `Derivation R A A` with its Lie structure.
+* `TauCeti.derivationLieAlgebraCommutatorRingEquivLieDerivation`: for a Lie algebra `L`, the
+  derivations of the underlying non-associative algebra `CommutatorRing L` are Mathlib's
+  `LieDerivation R L L`.
 
 ## Implementation notes
 
@@ -62,8 +62,9 @@ line in order to *state* facts about `Module.End R A` as a Lie algebra, but not 
 `↥(derivationLieAlgebra R A)`, whose own Lie structure is carried by the subalgebra.
 
 The simp-normal form of the action of a derivation is the application `(D : Module.End R A) x` of
-the underlying linear map, into which `TauCeti.derivationLieAlgebra.lie_apply` rewrites the Lie
-bracket `⁅D, x⁆`.
+the underlying linear map: Mathlib's `LieSubalgebra.coe_bracket_of_module` and
+`Module.End.lie_apply` already rewrite the Lie bracket `⁅D, x⁆` into it, so no lemma of this file
+needs to say so.
 
 ## References
 
@@ -115,28 +116,15 @@ theorem mem_derivationLieAlgebra {D : Module.End R A} :
 
 namespace derivationLieAlgebra
 
-/-- The Lie action of `Der A` on `A`, inherited from `Module.End R A`, is the application of the
-underlying linear map. -/
-@[simp]
-theorem lie_apply (D : derivationLieAlgebra R A) (x : A) : ⁅D, x⁆ = (D : Module.End R A) x :=
-  rfl
-
 /-- **The Leibniz rule**: a derivation differentiates each factor of a product. -/
-theorem apply_mul (D : derivationLieAlgebra R A) (x y : A) :
+@[simp]
+theorem apply_mul_eq_add (D : derivationLieAlgebra R A) (x y : A) :
     (D : Module.End R A) (x * y)
       = (D : Module.End R A) x * y + x * (D : Module.End R A) y :=
   D.2 x y
 
-/-- **The Leibniz rule, read as a compatibility of the Lie action of `Der A` with the
-multiplication of `A`.**  This is `TauCeti.derivationLieAlgebra.apply_mul` written in the notation
-of the `Der A`-module `A`, and is the sense in which that module is one whose bracket acts by
-derivations; it is stated separately because `TauCeti.derivationLieAlgebra.lie_apply` normalises
-the bracket away, so `simp` never produces this shape on its own. -/
-theorem lie_mul (D : derivationLieAlgebra R A) (x y : A) :
-    ⁅D, x * y⁆ = ⁅D, x⁆ * y + x * ⁅D, y⁆ :=
-  D.2 x y
-
 /-- The commutator of two derivations, evaluated. -/
+@[simp]
 theorem bracket_apply (D E : derivationLieAlgebra R A) (x : A) :
     (⁅D, E⁆ : Module.End R A) x
       = (D : Module.End R A) ((E : Module.End R A) x)
@@ -149,7 +137,7 @@ subalgebra of `A`. -/
 theorem apply_mul_eq_zero {D : derivationLieAlgebra R A} {x y : A}
     (hx : (D : Module.End R A) x = 0) (hy : (D : Module.End R A) y = 0) :
     (D : Module.End R A) (x * y) = 0 := by
-  rw [apply_mul, hx, hy, zero_mul, mul_zero, add_zero]
+  rw [apply_mul_eq_add, hx, hy, zero_mul, mul_zero, add_zero]
 
 /-- A derivation is determined by its values. -/
 @[ext]
@@ -169,12 +157,9 @@ variable {R : Type u} {A : Type v} [CommRing R] [NonAssocRing A] [Module R A]
 /-- **A derivation of a unital algebra kills the unit**: `1 = 1 * 1` forces `D 1 = D 1 + D 1`.
 Only unitality is used, not associativity. -/
 @[simp]
-theorem derivationLieAlgebra.apply_one (D : derivationLieAlgebra R A) :
+theorem derivationLieAlgebra.apply_one_eq_zero (D : derivationLieAlgebra R A) :
     (D : Module.End R A) 1 = 0 := by
-  have h := derivationLieAlgebra.apply_mul D 1 1
-  rw [mul_one, mul_one, one_mul] at h
-  nth_rewrite 1 [← add_zero ((D : Module.End R A) 1)] at h
-  exact (add_left_cancel h).symm
+  simpa using derivationLieAlgebra.apply_mul_eq_add D 1 1
 
 end Unital
 
@@ -185,37 +170,48 @@ variable {R : Type u} {A : Type v} {B : Type w} [CommRing R]
   [NonUnitalNonAssocRing A] [Module R A] [SMulCommClass R A A] [IsScalarTower R A A]
   [NonUnitalNonAssocRing B] [Module R B] [SMulCommClass R B B] [IsScalarTower R B B]
 
+omit [SMulCommClass R A A] [IsScalarTower R A A] [SMulCommClass R B B] [IsScalarTower R B B] in
+/-- **The inverse of a multiplicative linear equivalence is multiplicative.**  The hypothesis is an
+unbundled multiplicativity condition on a `LinearEquiv` because Mathlib has no equivalence class for
+non-unital non-associative algebras; `he` says exactly that `e` is an algebra map, and no unitality
+is used. -/
+theorem symm_map_mul (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y) (u v : B) :
+    e.symm (u * v) = e.symm u * e.symm v :=
+  e.injective (by simp [he])
+
+/-- **Conjugation by a multiplicative linear equivalence carries derivations to derivations.** -/
+theorem lieConj_mem_derivationLieAlgebra {e : A ≃ₗ[R] B}
+    (he : ∀ x y : A, e (x * y) = e x * e y) {D : Module.End R A}
+    (hD : D ∈ derivationLieAlgebra R A) : e.lieConj D ∈ derivationLieAlgebra R B :=
+  mem_derivationLieAlgebra.mpr fun x y => by
+    simp only [LinearEquiv.lieConj_apply, LinearEquiv.conj_apply_apply, symm_map_mul e he,
+      mem_derivationLieAlgebra.mp hD, map_add, he, LinearEquiv.apply_symm_apply]
+
 /-- **Derivation algebras are transported along isomorphisms of algebras.**  A multiplicative
 `R`-linear equivalence `e : A ≃ₗ[R] B` conjugates derivations of `A` to derivations of `B`, and the
-resulting map is an isomorphism of Lie algebras.  This is the tool that identifies a concretely
-built `Der A` with an abstractly presented Lie algebra.
-
-The hypothesis is an unbundled multiplicativity condition on a `LinearEquiv` because Mathlib has no
-equivalence class for non-unital non-associative algebras; `he` says exactly that `e` is an algebra
-map, and no unitality is used. -/
+resulting map is an isomorphism of Lie algebras.  This is the tool that transports `Der` between two
+models of the same algebra -- two constructions of the split octonions, say. -/
 def derivationLieAlgebraCongr (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y) :
-    derivationLieAlgebra R A ≃ₗ⁅R⁆ derivationLieAlgebra R B where
-  toFun D := ⟨(e : A →ₗ[R] B) ∘ₗ (D : Module.End R A) ∘ₗ (e.symm : B →ₗ[R] A), fun x y => by
-    have hsymm : e.symm (x * y) = e.symm x * e.symm y :=
-      e.injective (by rw [he, e.apply_symm_apply, e.apply_symm_apply, e.apply_symm_apply])
-    simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe, hsymm,
-      D.2 (e.symm x) (e.symm y), map_add, he, e.apply_symm_apply]⟩
-  invFun D := ⟨(e.symm : B →ₗ[R] A) ∘ₗ (D : Module.End R B) ∘ₗ (e : A →ₗ[R] B), fun x y => by
-    have hsymm : ∀ u v : B, e.symm (u * v) = e.symm u * e.symm v := fun u v =>
-      e.injective (by rw [he, e.apply_symm_apply, e.apply_symm_apply, e.apply_symm_apply])
-    simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe, he,
-      D.2 (e x) (e y), map_add, hsymm, e.symm_apply_apply]⟩
-  map_add' _ _ := by ext x; simp
-  map_smul' _ _ := by ext x; simp
-  map_lie' := by intro D E; ext x; simp
-  left_inv _ := by ext x; simp
-  right_inv _ := by ext x; simp
+    derivationLieAlgebra R A ≃ₗ⁅R⁆ derivationLieAlgebra R B := by
+  apply LieEquiv.ofSubalgebras _ _ e.lieConj
+  refine SetLike.ext fun D => ⟨?_, fun hD => ?_⟩
+  · rintro ⟨E, hE, rfl⟩
+    exact lieConj_mem_derivationLieAlgebra he hE
+  · exact ⟨e.lieConj.symm D, lieConj_mem_derivationLieAlgebra (symm_map_mul e he) hD,
+      e.lieConj.apply_symm_apply D⟩
 
 @[simp]
 theorem derivationLieAlgebraCongr_apply (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y)
     (D : derivationLieAlgebra R A) (x : B) :
     (derivationLieAlgebraCongr e he D : Module.End R B) x
       = e ((D : Module.End R A) (e.symm x)) :=
+  (rfl)
+
+@[simp]
+theorem derivationLieAlgebraCongr_symm_apply (e : A ≃ₗ[R] B)
+    (he : ∀ x y : A, e (x * y) = e x * e y) (D : derivationLieAlgebra R B) (x : A) :
+    ((derivationLieAlgebraCongr e he).symm D : Module.End R A) x
+      = e.symm ((D : Module.End R B) (e x)) :=
   (rfl)
 
 end Congr
@@ -228,7 +224,7 @@ variable {R : Type u} {A : Type v} [CommRing R] [CommRing A] [Algebra R A]
 Leibniz rules `D (x * y) = D x * y + x * D y` and `D (x * y) = x • D y + y • D x` say the same
 thing, and both Lie structures are the commutator of `Module.End R A`, so the identity on
 underlying linear maps is an isomorphism of Lie algebras. -/
-def derivationLieEquiv : Derivation R A A ≃ₗ⁅R⁆ derivationLieAlgebra R A where
+def derivationEquivDerivationLieAlgebra : Derivation R A A ≃ₗ⁅R⁆ derivationLieAlgebra R A where
   toFun D := ⟨(D : A →ₗ[R] A), fun x y => by
     simp only [Derivation.coeFn_coe, Derivation.leibniz, smul_eq_mul]
     ring⟩
@@ -243,13 +239,13 @@ def derivationLieEquiv : Derivation R A A ≃ₗ⁅R⁆ derivationLieAlgebra R A
   right_inv _ := rfl
 
 @[simp]
-theorem derivationLieEquiv_apply (D : Derivation R A A) (x : A) :
-    (derivationLieEquiv D : Module.End R A) x = D x :=
+theorem derivationEquivDerivationLieAlgebra_apply (D : Derivation R A A) (x : A) :
+    (derivationEquivDerivationLieAlgebra D : Module.End R A) x = D x :=
   (rfl)
 
 @[simp]
-theorem derivationLieEquiv_symm_apply (D : derivationLieAlgebra R A) (x : A) :
-    derivationLieEquiv.symm D x = (D : Module.End R A) x :=
+theorem derivationEquivDerivationLieAlgebra_symm_apply (D : derivationLieAlgebra R A) (x : A) :
+    derivationEquivDerivationLieAlgebra.symm D x = (D : Module.End R A) x :=
   (rfl)
 
 end Commutative
@@ -258,47 +254,44 @@ section Lie
 
 variable {R : Type u} {L : Type v} [CommRing R] [LieRing L] [LieAlgebra R L]
 
-/-- **The Leibniz rule in `CommutatorRing L`**, spelled with the bracket.  Regarding a Lie algebra
-as a non-associative algebra with `x * y = ⁅x, y⁆` turns the defining condition of
-`derivationLieAlgebra` into `D ⁅x, y⁆ = ⁅D x, y⁆ + ⁅x, D y⁆`. -/
-theorem mem_derivationLieAlgebra_commutatorRing {D : Module.End R L} :
-    D ∈ derivationLieAlgebra R (CommutatorRing L) ↔
-      ∀ x y : L, D ⁅x, y⁆ = ⁅D x, y⁆ + ⁅x, D y⁆ :=
-  Iff.rfl
-
-/-- The two spellings of the Leibniz rule on a Lie algebra agree: the symmetric form
-`⁅D x, y⁆ + ⁅x, D y⁆` that `derivationLieAlgebra` inherits from the multiplication, and the form
-`⁅x, D y⁆ - ⁅y, D x⁆` that `LieDerivation` is stated with because a Lie algebra carries no right
-action.  They differ by skew symmetry alone. -/
-theorem leibniz_add_iff_leibniz_sub {D : Module.End R L} :
+/-- The two spellings of the Leibniz rule on a Lie ring agree: the symmetric form
+`⁅D x, y⁆ + ⁅x, D y⁆` that `derivationLieAlgebra` inherits from the multiplication of
+`CommutatorRing L`, and the form `⁅x, D y⁆ - ⁅y, D x⁆` that `LieDerivation` is stated with because a
+Lie algebra carries no right action.  They differ by skew symmetry alone, so neither linearity of
+`D` nor the base ring plays any part. -/
+theorem leibniz_add_iff_leibniz_sub {D : L → L} :
     (∀ x y : L, D ⁅x, y⁆ = ⁅D x, y⁆ + ⁅x, D y⁆) ↔
       ∀ x y : L, D ⁅x, y⁆ = ⁅x, D y⁆ - ⁅y, D x⁆ := by
   have key : ∀ x y : L, ⁅D x, y⁆ = -⁅y, D x⁆ := fun x y => (lie_skew (D x) y).symm
   constructor <;> intro h x y <;> rw [h x y, key x y] <;> abel
 
-/-- Membership in `Der (CommutatorRing L)` is exactly the defining condition of a
-`LieDerivation R L L`. -/
-theorem mem_derivationLieAlgebra_commutatorRing_iff {D : Module.End R L} :
+/-- **Membership in `Der (CommutatorRing L)` is exactly the defining condition of a
+`LieDerivation R L L`.**  Regarding a Lie algebra as a non-associative algebra with `x * y = ⁅x, y⁆`
+turns the defining condition of `derivationLieAlgebra` into `D ⁅x, y⁆ = ⁅D x, y⁆ + ⁅x, D y⁆`, which
+`TauCeti.leibniz_add_iff_leibniz_sub` rewrites into the skew form. -/
+theorem mem_derivationLieAlgebra_commutatorRing_iff_apply_lie_eq_sub {D : Module.End R L} :
     D ∈ derivationLieAlgebra R (CommutatorRing L) ↔
       ∀ x y : L, D ⁅x, y⁆ = ⁅x, D y⁆ - ⁅y, D x⁆ :=
-  mem_derivationLieAlgebra_commutatorRing.trans leibniz_add_iff_leibniz_sub
+  mem_derivationLieAlgebra.trans leibniz_add_iff_leibniz_sub
 
 /-- **The adjoint action is by derivations**: `ad x` lies in `Der (CommutatorRing L)`, which is
 exactly the Jacobi identity in Leibniz form.  This is the inner-derivation half of
-`TauCeti.commutatorRingDerivationLieEquiv`. -/
+`TauCeti.derivationLieAlgebraCommutatorRingEquivLieDerivation`. -/
 theorem ad_mem_derivationLieAlgebra_commutatorRing (x : L) :
     LieAlgebra.ad R L x ∈ derivationLieAlgebra R (CommutatorRing L) :=
-  mem_derivationLieAlgebra_commutatorRing.mpr fun y z => leibniz_lie x y z
+  mem_derivationLieAlgebra.mpr fun (y z : L) => leibniz_lie x y z
 
 /-- **Mathlib's `LieDerivation R L L` is `Der (CommutatorRing L)`.**  For the non-associative
 algebra underlying a Lie algebra the two Leibniz rules agree by
-`TauCeti.leibniz_add_iff_leibniz_sub`, and both Lie structures are the commutator of the
-endomorphism ring, so the identity on underlying linear maps is an isomorphism of Lie algebras. -/
-def commutatorRingDerivationLieEquiv :
+`TauCeti.mem_derivationLieAlgebra_commutatorRing_iff_apply_lie_eq_sub`, and both Lie structures are
+the commutator of the endomorphism ring, so the identity on underlying linear maps is an isomorphism
+of Lie algebras. -/
+def derivationLieAlgebraCommutatorRingEquivLieDerivation :
     derivationLieAlgebra R (CommutatorRing L) ≃ₗ⁅R⁆ LieDerivation R L L where
-  toFun D := ⟨D.1, mem_derivationLieAlgebra_commutatorRing_iff.mp D.2⟩
+  toFun D := ⟨D.1, mem_derivationLieAlgebra_commutatorRing_iff_apply_lie_eq_sub.mp D.2⟩
   invFun D := ⟨(D : L →ₗ[R] L),
-    mem_derivationLieAlgebra_commutatorRing_iff.mpr fun x y => D.apply_lie_eq_sub x y⟩
+    mem_derivationLieAlgebra_commutatorRing_iff_apply_lie_eq_sub.mpr fun x y =>
+      D.apply_lie_eq_sub x y⟩
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   map_lie' := rfl
@@ -306,9 +299,15 @@ def commutatorRingDerivationLieEquiv :
   right_inv _ := rfl
 
 @[simp]
-theorem commutatorRingDerivationLieEquiv_apply
+theorem derivationLieAlgebraCommutatorRingEquivLieDerivation_apply
     (D : derivationLieAlgebra R (CommutatorRing L)) (x : L) :
-    commutatorRingDerivationLieEquiv D x = D.1 x :=
+    derivationLieAlgebraCommutatorRingEquivLieDerivation D x = D.1 x :=
+  (rfl)
+
+@[simp]
+theorem derivationLieAlgebraCommutatorRingEquivLieDerivation_symm_apply
+    (D : LieDerivation R L L) (x : L) :
+    (derivationLieAlgebraCommutatorRingEquivLieDerivation.symm D).1 x = D x :=
   (rfl)
 
 end Lie
