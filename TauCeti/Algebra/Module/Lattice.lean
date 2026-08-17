@@ -8,6 +8,7 @@ public import Mathlib.Algebra.EuclideanDomain.Int
 public import Mathlib.Algebra.Module.Lattice
 public import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
 public import Mathlib.LinearAlgebra.Quotient.Basic
+public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
@@ -35,6 +36,10 @@ quotient.
   of a free full lattice submodule to its ambient vector space.
 * `TauCeti.Submodule.iccOrderIsoQuotient`: the correspondence between submodules in an interval
   and submodules of the corresponding quotient.
+* `TauCeti.TensorProduct.unitTmulEquiv`: a finite free module is the full lattice of unit pure
+  tensors in its scalar extension.
+* `TauCeti.TensorProduct.rationalizationEquiv_baseChange_unitTmulEquiv`: rationalizing that
+  unit-tensor lattice returns the scalar extension one started from.
 
 ## References
 
@@ -284,5 +289,89 @@ theorem IsLattice.map (S : Submodule ℤ V) [S.IsLattice ℚ] (e : V ≃ₗ[ℚ]
       _root_.Submodule.IsLattice.span_eq_top]
 
 end Submodule
+
+namespace TensorProduct
+
+variable {R : Type u} {K : Type v} {M : Type w}
+variable [CommRing R] [IsDomain R]
+variable [Field K] [Algebra R K] [IsFractionRing R K]
+variable [AddCommGroup M] [Module R M] [Module.Free R M] [Module.Finite R M]
+
+omit [IsDomain R] [IsFractionRing R K] [Module.Free R M] [Module.Finite R M] in
+/-- The unit pure tensors are the `R`-span of the base change of any basis. -/
+theorem range_mk_one_eq_span {ι : Type*} (b : Basis ι R M) :
+    LinearMap.range (TensorProduct.mk R K M 1) =
+      Submodule.span R (Set.range (b.baseChange K)) := by
+  rw [LinearMap.range_eq_map, ← b.span_eq, Submodule.map_span, ← Set.range_comp]
+  exact congrArg (Submodule.span R)
+    (congrArg Set.range (funext fun i ↦ (Basis.baseChange_apply K b i).symm))
+
+/-- The unit pure tensors form a full lattice in the scalar extension of a finite free module. -/
+instance isLattice_range_mk_one :
+    (LinearMap.range (TensorProduct.mk R K M 1)).IsLattice K where
+  fg := by
+    rw [LinearMap.range_eq_map]
+    exact Module.Finite.fg_top.map _
+  span_eq_top := by
+    rw [eq_top_iff]
+    rintro x -
+    induction x using TensorProduct.induction_on with
+    | zero => exact zero_mem _
+    | add x y hx hy => exact add_mem hx hy
+    | tmul k m =>
+      rw [tmul_eq_smul_one_tmul]
+      exact Submodule.smul_mem _ k (Submodule.subset_span ⟨m, rfl⟩)
+
+variable (R K M) in
+/-- A finite free module is canonically isomorphic to the lattice of unit pure tensors in its
+scalar extension. -/
+noncomputable def unitTmulEquiv : M ≃ₗ[R] LinearMap.range (TensorProduct.mk R K M 1) :=
+  LinearEquiv.ofInjective _ (Module.Flat.tensorProduct_mk_injective R M K)
+
+/-- The lattice of unit pure tensors is free, being a copy of the module it comes from. -/
+instance free_range_mk_one :
+    Module.Free R (LinearMap.range (TensorProduct.mk R K M 1)) :=
+  Module.Free.of_equiv (unitTmulEquiv R K M)
+
+omit [IsDomain R] [Module.Finite R M] in
+/-- The unit-tensor equivalence sends a vector to its unit pure tensor. This equation
+characterizes the equivalence. -/
+@[simp]
+theorem coe_unitTmulEquiv_apply (m : M) :
+    (unitTmulEquiv R K M m : K ⊗[R] M) = 1 ⊗ₜ[R] m := by
+  rw [unitTmulEquiv, LinearEquiv.ofInjective_apply, TensorProduct.mk_apply]
+
+omit [IsDomain R] [Module.Finite R M] in
+/-- The inverse unit-tensor equivalence recovers a vector from its unit pure tensor. -/
+@[simp]
+theorem unitTmulEquiv_symm_tmul (m : M)
+    (h : (1 : K) ⊗ₜ[R] m ∈ LinearMap.range (TensorProduct.mk R K M 1)) :
+    (unitTmulEquiv R K M).symm ⟨1 ⊗ₜ[R] m, h⟩ = m := by
+  apply (unitTmulEquiv R K M).injective
+  rw [LinearEquiv.apply_symm_apply]
+  exact Subtype.ext (coe_unitTmulEquiv_apply m).symm
+
+/-- Rationalizing the unit-tensor lattice recovers the scalar extension it sits in: base-changing
+the unit-tensor equivalence and then rationalizing is the identity. -/
+@[simp]
+theorem rationalizationEquiv_baseChange_unitTmulEquiv (x : K ⊗[R] M) :
+    Submodule.rationalizationEquiv (LinearMap.range (TensorProduct.mk R K M 1))
+        (LinearEquiv.baseChange R K M _ (unitTmulEquiv R K M) x) = x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp only [map_add, hx, hy]
+  | tmul k m =>
+    rw [LinearEquiv.baseChange_tmul, Submodule.rationalizationEquiv_tmul,
+      coe_unitTmulEquiv_apply]
+    exact (tmul_eq_smul_one_tmul k m).symm
+
+/-- The bundled form of `rationalizationEquiv_baseChange_unitTmulEquiv`. -/
+theorem unitTmulEquiv_baseChange_trans_rationalizationEquiv :
+    (LinearEquiv.baseChange R K M _ (unitTmulEquiv R K M)).trans
+        (Submodule.rationalizationEquiv (LinearMap.range (TensorProduct.mk R K M 1))) =
+      LinearEquiv.refl K (K ⊗[R] M) :=
+  LinearEquiv.ext rationalizationEquiv_baseChange_unitTmulEquiv
+
+end TensorProduct
 
 end TauCeti

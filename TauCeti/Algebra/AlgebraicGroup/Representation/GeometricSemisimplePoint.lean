@@ -7,7 +7,7 @@ module
 public import Mathlib.Algebra.Category.CommHopfAlgCat
 public import Mathlib.CategoryTheory.ObjectProperty.CompleteLattice
 public import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
-public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.Representation.SemisimplePoint
 
 /-!
@@ -21,6 +21,8 @@ that this object property is invariant under isomorphisms and closed under tenso
 
 * `TauCeti.geometricallySemisimplePointsCommHopfAlgProperty`: the object property asserting that
   every algebraic-closure-valued point is semisimple.
+* `TauCeti.geometricallySemisimplePointsCommHopfAlgProperty_of_surjective`: closed subgroups of a
+  group with semisimple geometric points again have semisimple geometric points.
 * `TauCeti.geometricallySemisimplePointsCommHopfAlgProperty.tensorProduct`: geometric semisimplicity
   is closed under direct products of affine groups.
 
@@ -73,6 +75,19 @@ instance :
     apply (HopfAlgebra.isSemisimplePoint_mapDomain_iff e' g).mp
     exact hH _
 
+/-- Geometric-point semisimplicity descends along a surjective morphism of coordinate Hopf
+algebras. Contravariantly, closed subgroups of a group with semisimple geometric points again
+have semisimple geometric points. -/
+theorem geometricallySemisimplePointsCommHopfAlgProperty_of_surjective
+    {H K : CommHopfAlgCat.{u} k}
+    (f : H ⟶ K) (hf : Function.Surjective f.hom)
+    (hH : geometricallySemisimplePointsCommHopfAlgProperty k H) :
+    geometricallySemisimplePointsCommHopfAlgProperty k K := by
+  rw [geometricallySemisimplePointsCommHopfAlgProperty_iff] at hH ⊢
+  intro g
+  apply (HopfAlgebra.isSemisimplePoint_mapDomain_iff_of_surjective f.hom hf g).mp
+  exact hH _
+
 /-- The tensor product of two coordinate Hopf algebras with semisimple geometric points again has
 only semisimple geometric points. Contravariantly, geometric-point semisimplicity is closed under
 direct products of affine groups. -/
@@ -97,23 +112,7 @@ theorem geometricallySemisimplePointsCommHopfAlgProperty_iff_forall_unipotentPar
   rw [geometricallySemisimplePointsCommHopfAlgProperty_iff]
   apply forall_congr'
   intro g
-  constructor
-  · intro hg
-    exact HopfAlgebra.Point.unipotentPart_eq_one_of_isSemisimple k H (AlgebraicClosure k)
-      (fun M ↦ (HopfAlgebra.isSemisimplePoint_def g).mp hg M)
-  · intro hu
-    rw [HopfAlgebra.isSemisimplePoint_def]
-    intro M
-    have hdecomp := HopfAlgebra.Point.jordanDecomposition_spec k H (AlgebraicClosure k) g
-    have hs := hdecomp.1 M
-    have hg_eq : g = (HopfAlgebra.Point.jordanDecomposition k H (AlgebraicClosure k) g).1 := by
-      have hmul := hdecomp.2.2.2
-      have h2 : (HopfAlgebra.Point.jordanDecomposition k H (AlgebraicClosure k) g).2 = 1 := by
-        rw [HopfAlgebra.Point.jordanDecomposition_snd, hu]
-      rw [h2, mul_one] at hmul
-      exact hmul
-    rw [hg_eq]
-    exact hs
+  exact HopfAlgebra.isSemisimplePoint_iff_unipotentPart_eq_one g
 
 /-- Every geometric point is semisimple exactly when the semisimple part of every geometric point
 is the point itself. -/
