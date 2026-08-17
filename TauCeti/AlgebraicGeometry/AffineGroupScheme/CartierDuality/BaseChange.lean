@@ -55,10 +55,10 @@ open finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineG
 variable (R S : Type u) [CommRing R] [CommRing S] [Algebra R S]
 
 open FiniteLocallyFreeCommAffineGroupSchemeCat in
-/-- Pullback along `Spec S ⟶ Spec R` preserves finite local freeness and commutativity.
-
-The proof compares the group scheme with the Hopf spectrum of its coordinate Hopf algebra, where
-base change is scalar extension. -/
+/-- Pullback along `Spec S ⟶ Spec R` preserves finite local freeness and commutativity, so it
+restricts to the category where Cartier duality lives. No hypothesis beyond commutativity of the
+two rings is needed: finiteness, flatness and local finite presentation are all stable under
+base change. -/
 theorem finiteLocallyFreeCommAffineGroupSchemeProperty_baseChange
     (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
     finiteLocallyFreeCommAffineGroupSchemeProperty (CommRingCat.of S)
