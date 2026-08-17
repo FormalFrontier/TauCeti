@@ -275,6 +275,7 @@ instance isFiniteMeasure_uniformMeasure {a b : ℝ} : IsFiniteMeasure (uniformMe
 
 The support is bounded, so `exp (t * x)` is bounded above by `exp (|t| * max |a| |b|)` almost
 everywhere, and the measure is finite. No hypothesis on the endpoints is needed. -/
+@[simp]
 theorem integrableExpSet_id_uniformMeasure {a b : ℝ} :
     integrableExpSet id (uniformMeasure a b) = Set.univ := by
   ext t
@@ -296,6 +297,7 @@ theorem integrableExpSet_id_uniformMeasure {a b : ℝ} :
     _ ≤ |t| * max |a| |b| := mul_le_mul_of_nonneg_left hxb (abs_nonneg t)
 
 /-- The moment generating function of the uniform law at `0` is `1`. -/
+@[simp]
 theorem mgf_id_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
     mgf id (uniformMeasure a b) 0 = 1 := by
   have := isProbabilityMeasure_uniformMeasure hab
