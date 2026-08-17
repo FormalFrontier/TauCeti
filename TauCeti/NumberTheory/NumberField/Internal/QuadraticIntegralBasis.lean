@@ -15,7 +15,7 @@ import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 Internal helper: in a quadratic number field `K`, an integral element `x` that is not rational
 packages the pair `{1, x}` as a `ℚ`-basis of `K` whose two vectors are algebraic integers. It is
 *not* claimed to be a `ℤ`-basis of the full ring of integers `𝓞 K`. This construction is shared by
-the effective discriminant bound `TauCeti.NumberField.abs_discr_le_of_sq_intCast` and the
+the effective discriminant bound `NumberField.abs_discr_le_of_sq_intCast` and the
 roadmap's `ℚ(i)` discriminant worked example, so it lives in the generic `NumberField.Internal`
 namespace rather than being duplicated inline or exposed from either headline API file.
 -/
@@ -24,7 +24,7 @@ public section
 
 open Module
 
-namespace TauCeti.NumberField.Internal
+namespace NumberField.Internal
 
 /-- In a quadratic number field, an integral non-rational element `x` gives the `ℚ`-basis
 `{1, x}` of algebraic integers. -/
@@ -47,4 +47,4 @@ theorem exists_basis_eq_one_self_of_notMem_range_of_isIntegral {K : Type*} [Fiel
   · simpa [hbcoe] using (isIntegral_one : IsIntegral ℤ (1 : K))
   · simpa [hbcoe] using hxint
 
-end TauCeti.NumberField.Internal
+end NumberField.Internal

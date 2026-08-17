@@ -24,11 +24,11 @@ or complex, keeps the element away from `0`.
 
 ## Main results
 
-* `TauCeti.NumberField.exists_forall_infinitePlace_sub_lt`: weak approximation at the infinite
+* `NumberField.exists_forall_infinitePlace_sub_lt`: weak approximation at the infinite
   places in `ε`-`δ` form, with targets in `K` measured by the places themselves.
-* `TauCeti.NumberField.exists_ne_zero_forall_isReal_pos`: a nonzero element of `K` whose real
+* `NumberField.exists_ne_zero_forall_isReal_pos`: a nonzero element of `K` whose real
   embeddings have prescribed signs.
-* `TauCeti.NumberField.exists_ne_zero_neg_iff_mem`: the same statement with the prescription given
+* `NumberField.exists_ne_zero_neg_iff_mem`: the same statement with the prescription given
   as the set of real places at which the element is to be negative.
 
 ## References
@@ -43,7 +43,7 @@ public section
 
 open NumberField NumberField.InfinitePlace
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -111,7 +111,7 @@ theorem exists_ne_zero_forall_isReal_pos (s : {w : InfinitePlace K // w.IsReal} 
 
 /-- **A nonzero element of `K` negative at exactly a prescribed set of real places.** Since the
 real places at which an element is negative determine its sign pattern, this is
-`TauCeti.NumberField.exists_ne_zero_forall_isReal_pos` with the pattern presented as a set. -/
+`NumberField.exists_ne_zero_forall_isReal_pos` with the pattern presented as a set. -/
 theorem exists_ne_zero_neg_iff_mem (S : Set {w : InfinitePlace K // w.IsReal}) :
     ∃ x : K, x ≠ 0 ∧
       ∀ w : {w : InfinitePlace K // w.IsReal}, embedding_of_isReal w.2 x < 0 ↔ w ∈ S := by
@@ -127,4 +127,4 @@ theorem exists_ne_zero_neg_iff_mem (S : Set {w : InfinitePlace K // w.IsReal}) :
   · simp only [hw, ite_false, one_mul] at h
     exact iff_of_false (asymm h) hw
 
-end TauCeti.NumberField
+end NumberField
