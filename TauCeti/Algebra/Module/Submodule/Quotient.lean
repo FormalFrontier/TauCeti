@@ -75,8 +75,7 @@ theorem mk_mem_iccOrderIsoQuotientOfMapEq_iff {p q : Submodule R M} (r : Submodu
   have hcomap : Q.comap r.mkQ = N'.1 := congrArg Subtype.val
     ((Submodule.comapMkQRelIso r).apply_symm_apply N')
   have hQ : Submodule.iccOrderIsoQuotientOfMapEq r hr N = Q := rfl
-  have hmk : Submodule.Quotient.mk x = r.mkQ x := rfl
-  rw [hQ, hmk, ← Submodule.mem_comap, hcomap]
+  rw [hQ, ← r.mkQ_apply, ← Submodule.mem_comap, hcomap]
   have hN' : N'.1 = ((iciSubmoduleOrderIsoIcc r hr).symm N).1 := rfl
   rw [hN', coe_iciSubmoduleOrderIsoIcc_symm_apply]
   simp only [Submodule.mem_comap, Submodule.subtype_apply]
