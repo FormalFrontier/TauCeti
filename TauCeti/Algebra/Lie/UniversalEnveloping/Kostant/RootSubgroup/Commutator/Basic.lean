@@ -48,10 +48,9 @@ factor:
 x_α(t) x_β(u) x_α(t)⁻¹ = x_β(u) x_{α+β}(c t u) x_{2α+β}(d t² u).
 ```
 
-Type `G₂` additionally needs the longer chain with factors at `3α + β` and `3α + 2β`. That
-relation is proved for the underlying integral exponentials in
-`TauCeti.RingTheory.Nilpotent.RootString.G2`; only its transport to the root subgroups here is
-still missing.
+Type `G₂` additionally needs the longer chain with factors at `3α + β` and `3α + 2β`; its
+transport to Kostant root subgroups is in
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Commutator.G2`.
 
 The general statements about integral nilpotent exponentials are
 `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq` and
@@ -117,9 +116,9 @@ attribute [local instance high] Algebra.toModule
 -- commutator of two elements of the enveloping algebra is written with it below.
 attribute [local instance 100] LieRing.ofAssociativeRing
 
--- The image of a Lie bracket under the enveloping-algebra representation is the ring commutator
--- of the images. This is the only Lie-theoretic input to the relations below.
-private theorem mul_sub_mul_eq_map_ι_lie (a b : L) :
+/-- The image of a Lie bracket under a representation of the universal enveloping algebra is the
+ring commutator of the images. -/
+theorem mul_sub_mul_eq_map_ι_lie (a b : L) :
     ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) * ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) -
         ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) =
@@ -127,14 +126,18 @@ private theorem mul_sub_mul_eq_map_ι_lie (a b : L) :
   rw [LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) a b,
     LieRing.of_associative_ring_bracket, map_sub, map_mul, map_mul]
 
-private theorem commute_of_lie_eq_zero {a b : L} (hab : ⁅a, b⁆ = 0) :
+/-- Images of Lie-commuting elements commute in every representation of the universal enveloping
+algebra. -/
+theorem commute_of_lie_eq_zero {a b : L} (hab : ⁅a, b⁆ = 0) :
     Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a))
       (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b)) := by
   have h := mul_sub_mul_eq_map_ι_lie ρ a b
   rw [hab, map_zero, map_zero] at h
   exact sub_eq_zero.mp h
 
-private theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
+/-- A bracket relation with an integral structure constant becomes the corresponding commutator
+relation in every representation of the universal enveloping algebra. -/
+theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
     (hab : ⁅a, b⁆ = c • b') :
     ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) *
         ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) =
@@ -145,7 +148,9 @@ private theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
   rw [hab, map_zsmul, map_zsmul] at h
   exact sub_eq_iff_eq_add'.mp h
 
-private theorem dividedPower_zsmul_apply_mem (e : ι → L) (h : κ → L)
+/-- A Kostant-stable lattice is stable under the divided powers of every integral multiple of a
+distinguished root vector. -/
+theorem dividedPower_zsmul_apply_mem (e : ι → L) (h : κ → L)
     (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (M : AddSubgroup V)
     (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M) (c : ℤ) (k : ι) : ∀ n, ∀ v ∈ M,
     Associative.dividedPower n (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) • v ∈ M := by
