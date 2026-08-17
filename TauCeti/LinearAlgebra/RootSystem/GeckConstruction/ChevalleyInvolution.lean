@@ -25,9 +25,7 @@ hᵢ ↦ -hᵢ,    eᵢ ↦ -fᵢ,    fᵢ ↦ -eᵢ.
 ```
 
 The resulting automorphism is characterized by these equations and is its own inverse. This is
-the Chevalley involution on the concrete split semisimple Lie algebra produced from a root datum,
-the Lie-algebra input to the Chevalley--Demazure construction in Layer 9 of the ReductiveGroups
-roadmap and hence to milestone L0 of the CFSGStatement roadmap.
+the Chevalley involution on the concrete split semisimple Lie algebra produced from a root datum.
 
 ## Main definitions and results
 
@@ -37,11 +35,32 @@ roadmap and hence to milestone L0 of the CFSGStatement roadmap.
 * `TauCeti.eq_geckChevalleyInvolution`: uniqueness from those generator values.
 * `TauCeti.geckChevalleyInvolution_symm`: the involution is its own inverse.
 
+## Roadmap
+
+Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md` asks for the split reductive group scheme
+over `ℤ` to be built "via a Chevalley basis and the Kostant `ℤ`-form of the enveloping algebra",
+and insists on constructions rather than existence theorems. The Chevalley involution is what
+normalises a Chevalley basis: it picks the root vectors `x α` and `x (-α)` compatibly, and that
+compatibility is what forces the sign symmetry `N (-α, -β) = -N (α, β)` of the structure constants
+(Humphreys §25.2, Carter §4.1). `TauCeti.serreChevalleyInvolution` of
+`TauCeti/Algebra/Lie/Presentation/Serre/Automorphism.lean` is that automorphism on the presented
+Lie algebra; this file supplies it on the concrete side. Geck's construction is the explicit
+realisation of a root datum by a matrix Lie algebra, proved semisimple with the given root system
+upstream, so it is a carrier of the kind Layer 9 demands, and
+`TauCeti.serreLift_comp_serreChevalleyInvolution` transports the presented involution to any such
+concrete algebra once the two are identified — an identification that needs the generator formulas
+`TauCeti.geckChevalleyInvolution_h`, `TauCeti.geckChevalleyInvolution_e` and
+`TauCeti.geckChevalleyInvolution_f` proved here. The Kostant `ℤ`-form of
+`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/` is the other named ingredient, and milestone L0
+of `TauCetiRoadmap/CFSGStatement/README.md` is the downstream consumer of the assembled pinned
+group scheme.
+
 ## References
 
 * M. Geck, *On the construction of semisimple Lie algebras and Chevalley groups*,
   Proc. Amer. Math. Soc. **145** (2017), 3233--3247.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §25.2.
+* R. W. Carter, *Simple Groups of Lie Type*, §4.1.
 -/
 
 public section
