@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
@@ -39,6 +39,10 @@ arbitrary commutative base ring.
 * `TauCeti.GeneralLinear.Borel.coordinateHopfAlgebra`: the quotient coordinate Hopf algebra.
 * `TauCeti.GeneralLinear.Borel.groupScheme`: the resulting closed subgroup scheme of `GL₂`.
 * `TauCeti.GeneralLinear.Borel.inclusion`: its closed immersion into the named `GL₂` group scheme.
+* `TauCeti.GeneralLinear.Borel.diagonalTorus`: the diagonal split torus as a morphism into the
+  Borel subgroup scheme.
+* `TauCeti.GeneralLinear.Borel.diagonalTorus_comp_inclusion`: composing the Borel diagonal torus
+  with the inclusion is the ambient diagonal torus of `GL₂`.
 * `TauCeti.GeneralLinear.Borel.rootSubgroup`: the positive root subgroup morphism `x₀₁ : 𝔾ₐ → B`.
 * `TauCeti.GeneralLinear.Borel.rootSubgroup_comp_inclusion`: composing the Borel root subgroup with
   the inclusion is the ambient `GL₂` root subgroup `x₀₁`.
@@ -431,6 +435,18 @@ theorem rootSubgroupPoints_mem
   rw [GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
   exact GL2Borel.mem_iff.mpr (by simp [Matrix.transvection])
 
+/-- The diagonal torus of `GL₂` lands in the Borel subgroup on every algebra-valued point. -/
+theorem diagonalTorusPoints_mem
+    (f : WithConv
+      (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)) →ₐ[R] A)) :
+    GeneralLinear.diagonalTorusPoints (R := R) (N := 2) f ∈
+      CommHopfAlgCat.quotientPointsSubgroup
+        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
+        (CommAlgCat.of R A) := by
+  apply (mem_definingPointsSubgroup_iff R _).mpr
+  rw [GeneralLinear.pointsMulEquiv_diagonalTorusPoints]
+  exact GL2Borel.mem_iff.mpr (by simp [diagGL_apply])
+
 end Points
 
 section Functor
@@ -523,6 +539,122 @@ theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
   rfl
 
 end Functor
+
+section DiagonalTorus
+
+/-- The coordinate morphism of the diagonal torus into the Borel coordinate Hopf algebra. -/
+noncomputable def diagonalTorusCoordinateMap :
+    coordinateHopfAlgebra R ⟶
+      _root_.CommHopfAlgCat.of R
+        (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) :=
+  CommHopfAlgCat.liftQuotient (definingHopfIdeal R)
+    (GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2))
+    (by
+      rw [definingHopfIdeal_toIdeal, Ideal.span_le, Set.singleton_subset_iff,
+        SetLike.mem_coe, RingHom.mem_ker]
+      let id_pt : WithConv
+          (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)) →ₐ[R]
+            MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) :=
+        WithConv.toConv (AlgHom.id R _)
+      have hmem := diagonalTorusPoints_mem (R := R) id_pt
+      rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff] at hmem
+      have hzero := hmem (lowerLeftCoordinate R)
+        (HopfIdeal.mem_toIdeal.mp
+          (definingHopfIdeal_toIdeal R ▸ Ideal.mem_span_singleton_self _))
+      have heq :
+          GeneralLinear.diagonalTorusPoints (R := R) (N := 2) id_pt =
+            (CommHopfAlgCat.mapPointsFunctor
+              (GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2))).app
+              (CommAlgCat.of R
+                (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)))) id_pt := by
+        rw [GeneralLinear.mapPointsFunctor_diagonalTorusCoordinateMap_app]
+      rw [heq, CommHopfAlgCat.mapPointsFunctor_app_apply] at hzero
+      exact hzero)
+
+/-- Precomposing the Borel diagonal-torus coordinate morphism with the quotient coordinate map
+yields the ambient general-linear diagonal-torus coordinate morphism. -/
+@[simp]
+theorem coordinateMap_comp_diagonalTorusCoordinateMap :
+    coordinateMap R ≫ diagonalTorusCoordinateMap R =
+      GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2) :=
+  CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+
+/-- **The diagonal split torus of `GL₂` inside its Borel subgroup scheme**. -/
+noncomputable def diagonalTorus :
+    SplitTorus.groupScheme R (ULift.{u} (Fin 2)) ⟶ groupScheme R :=
+  eqToHom
+      (DiagonalizableGroup.groupScheme_def R
+        (SplitTorus.characterGroup (ULift.{u} (Fin 2)))) ≫
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+      (diagonalTorusCoordinateMap R).op ≫
+    eqToHom (groupScheme_def R).symm
+
+/-- The diagonal torus into the Borel subgroup scheme is relative spectrum applied
+contravariantly to its coordinate morphism, transported across the named presentations. -/
+theorem diagonalTorus_def :
+    diagonalTorus R =
+      eqToHom
+          (DiagonalizableGroup.groupScheme_def R
+            (SplitTorus.characterGroup (ULift.{u} (Fin 2)))) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap R).op ≫
+        eqToHom (groupScheme_def R).symm := by
+  unfold diagonalTorus
+  rfl
+
+/-- Composing the diagonal torus inside the Borel subgroup scheme with the Borel inclusion into
+`GL₂` gives the standard diagonal torus of `GL₂`. -/
+@[simp]
+theorem diagonalTorus_comp_inclusion :
+    diagonalTorus R ≫ inclusion R =
+      GeneralLinear.diagonalTorus (R := R) (N := 2) := by
+  rw [diagonalTorus_def, inclusion, GeneralLinear.diagonalTorus_def]
+  unfold groupSchemeι
+  simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  rw [CommHopfAlgCat.quotientSpecι_def]
+  have hmap :
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap R).op ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
+            (definingHopfIdeal R)).op =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+        (GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2)).op := by
+    rw [← Functor.map_comp, ← op_comp, ← coordinateMap_def R,
+      coordinateMap_comp_diagonalTorusCoordinateMap]
+  congr 1
+  rw [← Category.assoc, hmap]
+  rfl
+
+variable (A : Type u) [CommRing A] [Algebra R A]
+
+/-- Under the Borel and general-linear point equivalences, the factored diagonal-torus
+coordinate morphism gives the same diagonal matrix as the ambient diagonal-torus morphism. -/
+theorem pointsMulEquiv_diagonalTorusCoordinateMap
+    (f : WithConv
+      (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)) →ₐ[R] A)) :
+    ((pointsMulEquiv (R := R) (A := A)
+        (WithConv.toConv (f.ofConv.comp (diagonalTorusCoordinateMap R).hom)) : GL2Borel A) :
+      GL (Fin 2) A) =
+      GeneralLinear.pointsMulEquiv 2
+        (GeneralLinear.diagonalTorusPoints (R := R) (N := 2) f) := by
+  have hcoe := pointsMulEquiv_coe (R := R) (A := A)
+    (WithConv.toConv (f.ofConv.comp (diagonalTorusCoordinateMap R).hom))
+  rw [← hcoe]
+  congr 1
+  rw [CommHopfAlgCat.quotientPointsHom_apply]
+  have hcomp :
+      (coordinateMap R ≫ diagonalTorusCoordinateMap R).hom.toAlgHom =
+        (diagonalTorusCoordinateMap R).hom.toAlgHom.comp
+          (coordinateMap R).hom.toAlgHom := rfl
+  rw [WithConv.ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R, ← hcomp,
+    coordinateMap_comp_diagonalTorusCoordinateMap]
+  have hmap := GeneralLinear.mapPointsFunctor_diagonalTorusCoordinateMap_app
+    (R := R) (N := 2) (CommAlgCat.of R A) f
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+  exact hmap
+
+end DiagonalTorus
 
 section RootSubgroup
 
