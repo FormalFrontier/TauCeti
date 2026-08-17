@@ -15,17 +15,15 @@ the associated quotient.
 
 ## Main declarations
 
-* `TauCeti.Submodule.mapIic_symm_apply`: the inverse of `Submodule.mapIic` takes inverse images
+* `TauCeti.mapIic_symm_apply`: the inverse of `Submodule.mapIic` takes inverse images
   along the inclusion.
-* `TauCeti.Submodule.iccOrderIsoQuotientOfMapEq`: the interval/quotient correspondence for a
+* `TauCeti.iccOrderIsoQuotientOfMapEq`: the interval/quotient correspondence for a
   specified copy of the lower endpoint inside the upper endpoint.
 -/
 
 public section
 
 namespace TauCeti
-
-namespace Submodule
 
 section QuotientInterval
 
@@ -74,9 +72,9 @@ when its underlying ambient element belongs to the corresponding interval submod
 @[simp]
 theorem mk_mem_iccOrderIsoQuotientOfMapEq_iff {p q : Submodule R M} (r : Submodule R q)
     (hr : r.map q.subtype = p) (N : Set.Icc p q) (x : q) :
-    Submodule.Quotient.mk x ∈ Submodule.iccOrderIsoQuotientOfMapEq r hr N ↔
+    Submodule.Quotient.mk x ∈ iccOrderIsoQuotientOfMapEq r hr N ↔
       (x : M) ∈ N.1 := by
-  have happly : Submodule.iccOrderIsoQuotientOfMapEq r hr N =
+  have happly : iccOrderIsoQuotientOfMapEq r hr N =
       (Submodule.comapMkQRelIso r).symm ((iciSubmoduleOrderIsoIcc r hr).symm N) :=
     OrderIso.trans_apply _ _ N
   have hcomap : ((Submodule.comapMkQRelIso r).symm
@@ -93,14 +91,12 @@ when its quotient class belongs to `Q`. -/
 theorem mem_iccOrderIsoQuotientOfMapEq_symm_apply_iff {p q : Submodule R M}
     (r : Submodule R q)
     (hr : r.map q.subtype = p) (Q : Submodule R (q ⧸ r)) (x : q) :
-    (x : M) ∈ ((Submodule.iccOrderIsoQuotientOfMapEq r hr).symm Q).1 ↔
+    (x : M) ∈ ((iccOrderIsoQuotientOfMapEq r hr).symm Q).1 ↔
       Submodule.Quotient.mk x ∈ Q := by
   simpa only [OrderIso.apply_symm_apply] using
-    (Submodule.mk_mem_iccOrderIsoQuotientOfMapEq_iff r hr
-      ((Submodule.iccOrderIsoQuotientOfMapEq r hr).symm Q) x).symm
+    (mk_mem_iccOrderIsoQuotientOfMapEq_iff r hr
+      ((iccOrderIsoQuotientOfMapEq r hr).symm Q) x).symm
 
 end QuotientInterval
-
-end Submodule
 
 end TauCeti
