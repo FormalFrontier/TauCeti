@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RepresentationTheory.FDRep
 public import Mathlib.RepresentationTheory.FiniteIndex
+public import Mathlib.RingTheory.Finiteness.Small
 
 /-!
 # Finite-dimensional induced representations
@@ -20,6 +21,11 @@ dimension formula
 Induction on finite-dimensional representations is packaged both objectwise, as `indFDRep`, and
 functorially, as `indFDRepFunctor`, the latter naturally isomorphic to `Rep.indFunctor` under the
 forgetful functor to `Rep k G`.
+
+The objectwise construction, its character formula, and its dimension theorem allow the scalar
+field and group to live in separate universes.  It uses a small model of Mathlib's induced carrier,
+compared by `indFDRepForgetEquiv`.  The categorical functor and natural isomorphism retain a common
+universe because a `Rep`-category is indexed by one carrier universe.
 
 ## References
 
@@ -90,7 +96,7 @@ theorem rightCosetFactor_out (q : Quotient (QuotientGroup.rightRel S)) :
 /-- Coinduction from a subgroup is linearly equivalent to a product of copies of the original
 representation indexed by the right cosets. The forward map evaluates an equivariant function at
 the chosen representative of each right coset. -/
-noncomputable def coindSubtypeEquivPi (A : Rep.{max u v w} k S) :
+noncomputable def coindSubtypeEquivPi (A : Rep.{max w u} k S) :
     Rep.coind S.subtype A ≃ₗ[k]
       (Quotient (QuotientGroup.rightRel S) → A) where
   toFun f q := f.1 q.out
@@ -126,7 +132,7 @@ noncomputable def coindSubtypeEquivPi (A : Rep.{max u v w} k S) :
 
 /-- The coset model evaluates a coinduced function at the chosen representative. -/
 @[simp]
-theorem coindSubtypeEquivPi_apply (A : Rep.{max u v w} k S)
+theorem coindSubtypeEquivPi_apply (A : Rep.{max w u} k S)
     (f : Rep.coind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     coindSubtypeEquivPi A f q = f.1 q.out := by
   rw [coindSubtypeEquivPi]
@@ -134,7 +140,7 @@ theorem coindSubtypeEquivPi_apply (A : Rep.{max u v w} k S)
 
 /-- The inverse coset model extends a value from each representative by `S`-equivariance. -/
 @[simp]
-theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max u v w} k S)
+theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max w u} k S)
     (x : Quotient (QuotientGroup.rightRel S) → A) (g : G) : ((coindSubtypeEquivPi A).symm x).1 g =
       A.ρ (rightCosetFactor (S := S) g) (x (Quotient.mk'' g)) := by
   rw [coindSubtypeEquivPi]
@@ -146,7 +152,7 @@ theorem coindSubtypeEquivPi_symm_apply (A : Rep.{max u v w} k S)
 Not a `simp` lemma: Mathlib's `@[simps]` on `Representation.coind` rewrites
 `(Rep.coind φ A).ρ g` to its underlying `LinearMap`, so this left-hand side is not in `simp`
 normal form. Mathlib states its own action lemma `Representation.ind_mk` the same way. -/
-theorem coindSubtypeEquivPi_ρ_apply (A : Rep.{max u v w} k S) (g : G)
+theorem coindSubtypeEquivPi_ρ_apply (A : Rep.{max w u} k S) (g : G)
     (f : Rep.coind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     coindSubtypeEquivPi A ((Rep.coind S.subtype A).ρ g f) q =
       A.ρ (rightCosetFactor (S := S) (q.out * g))
@@ -168,13 +174,13 @@ theorem coindSubtypeEquivPi_ρ_apply (A : Rep.{max u v w} k S) (g : G)
 
 /-- The underlying vector space of induction from a finite-index subgroup is a product of copies
 of the original representation indexed by the right cosets. -/
-noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{max u v w} k S) :
+noncomputable def indSubtypeEquivPi [S.FiniteIndex] (A : Rep.{max w u} k S) :
     Rep.ind S.subtype A ≃ₗ[k]
       (Quotient (QuotientGroup.rightRel S) → A) := by
   letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   exact
     ((forget₂ (Rep k G) (ModuleCat k)).mapIso
-      (Rep.indCoindIso.{max u v w, u, v} A)).toLinearEquiv.trans (coindSubtypeEquivPi A)
+      (Rep.indCoindIso.{w, u, v} A)).toLinearEquiv.trans (coindSubtypeEquivPi A)
 
 /-- The coset model of induction transports along `Rep.indCoindIso` and then evaluates at the
 chosen representative of each right coset.
@@ -182,11 +188,11 @@ chosen representative of each right coset.
 Not a `simp` lemma: its right-hand side names `Rep.indCoindIso`, so rewriting with it replaces
 the coset model by the comparison isomorphism it is built from. The intended interface is
 `indSubtypeEquivPi_ρ_apply`, which stays inside the coset model. -/
-theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
+theorem indSubtypeEquivPi_apply [S.FiniteIndex] (A : Rep.{max w u} k S)
     (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     indSubtypeEquivPi A x q =
       ((letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
-        Rep.indCoindIso.{max u v w, u, v} A).hom.hom x).1 q.out := by
+        Rep.indCoindIso.{w, u, v} A).hom.hom x).1 q.out := by
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
   rfl
@@ -196,10 +202,10 @@ along `Rep.indCoindIso`.
 
 Not a `simp` lemma, for the same reason as `indSubtypeEquivPi_apply`: it rewrites the coset
 model into the comparison isomorphism. -/
-theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max u v w} k S)
+theorem indSubtypeEquivPi_symm_apply [S.FiniteIndex] (A : Rep.{max w u} k S)
     (x : Quotient (QuotientGroup.rightRel S) → A) : (indSubtypeEquivPi A).symm x =
       (letI : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
-       Rep.indCoindIso.{max u v w, u, v} A).inv.hom
+       Rep.indCoindIso.{w, u, v} A).inv.hom
         ((coindSubtypeEquivPi A).symm x) := by
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   rw [indSubtypeEquivPi]
@@ -211,7 +217,7 @@ trace computation over the coset model consumes.
 
 Not a `simp` lemma, for the same reason as `coindSubtypeEquivPi_ρ_apply`: `@[simps]` on
 `Representation.ind` takes `(Rep.ind φ A).ρ g` out of `simp` normal form. -/
-theorem indSubtypeEquivPi_ρ_apply [S.FiniteIndex] (A : Rep.{max u v w} k S) (g : G)
+theorem indSubtypeEquivPi_ρ_apply [S.FiniteIndex] (A : Rep.{max w u} k S) (g : G)
     (x : Rep.ind S.subtype A) (q : Quotient (QuotientGroup.rightRel S)) :
     indSubtypeEquivPi A ((Rep.ind S.subtype A).ρ g x) q =
       A.ρ (rightCosetFactor (S := S) (q.out * g))
@@ -226,7 +232,7 @@ section Dimension
 variable [Field k]
 
 /-- Induction from a finite-index subgroup preserves finite-dimensionality. -/
-noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{max u v w} k S)
+noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{max w u} k S)
     [FiniteDimensional k A] : FiniteDimensional k (Rep.ind S.subtype A) := by
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   let := S.fintypeQuotientOfFiniteIndex
@@ -239,7 +245,7 @@ noncomputable instance finiteDimensional_ind [S.FiniteIndex] (A : Rep.{max u v w
 /-- The dimension of induction from a finite-index subgroup is the index times the original
 dimension. -/
 @[simp]
-theorem finrank_ind [S.FiniteIndex] (A : Rep.{max u v w} k S) [FiniteDimensional k A] :
+theorem finrank_ind [S.FiniteIndex] (A : Rep.{max w u} k S) [FiniteDimensional k A] :
     Module.finrank k (Rep.ind S.subtype A) = S.index * Module.finrank k A := by
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   let := S.fintypeQuotientOfFiniteIndex
@@ -254,23 +260,48 @@ end Dimension
 end Rep
 
 /-- The finite-dimensional representation induced from a finite-index subgroup. -/
-noncomputable def indFDRep {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+noncomputable def indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) : FDRep k G := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
   -- Register the finite-dimensional structure hidden behind the forgetful object's wrapper.
   letI : FiniteDimensional k A' := by
+    -- The forgetful functor preserves the carrier, but its object wrapper hides that fact.
     change FiniteDimensional k A
     infer_instance
-  exact FDRep.of (Rep.ind S.subtype A').ρ
+  let V := Rep.ind S.subtype A'
+  letI : Small.{u} V := Module.Finite.small k V
+  let e := Shrink.linearEquiv k V
+  exact FDRep.of (e.symm.conjRingEquiv.toMonoidHom.comp V.ρ)
 
-/-- Forgetting finite-dimensionality from `indFDRep` recovers Mathlib's induced representation.
-This is the one place where the two objects are identified; everything below about `indFDRep` is
-stated and proved through this isomorphism. -/
+/-- The small carrier chosen by `indFDRep` is equivariantly linearly equivalent to Mathlib's
+possibly universe-large induced representation. -/
+noncomputable def indFDRepForgetEquiv {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
+    ((forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)).ρ.Equiv
+      (Representation.ind S.subtype A.ρ) := by
+  let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
+  letI : FiniteDimensional k A' := by
+    -- The forgetful functor preserves the carrier, but its object wrapper hides that fact.
+    change FiniteDimensional k A
+    infer_instance
+  let V := Rep.ind S.subtype A'
+  letI : Small.{u} V := Module.Finite.small k V
+  apply Representation.Equiv.mk (Shrink.linearEquiv k V)
+  intro g
+  ext x
+  -- Unfold the action chosen by `FDRep.of`; it is conjugation along the shrink equivalence.
+  change (Shrink.linearEquiv k V)
+      ((Shrink.linearEquiv k V).symm.conj (V.ρ g) x) =
+    V.ρ g (Shrink.linearEquiv k V x)
+  simp
+
+/-- Same-universe categorical wrapper around `indFDRepForgetEquiv`: forgetting
+finite-dimensionality from `indFDRep` recovers Mathlib's induced representation. -/
 noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) :
     (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A) ≅
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
-  Iso.refl _
+  Rep.mkIso (indFDRepForgetEquiv A)
 
 /-- Induction of an intertwiner of finite-dimensional representations: Mathlib's `Rep.indFunctor`
 on the underlying intertwiner, conjugated by `indFDRepForgetIso` and transported back along the
@@ -343,14 +374,19 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
 original representation. -/
 @[simp]
-theorem finrank_indFDRep {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+theorem finrank_indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) :
     Module.finrank k (indFDRep A) = S.index * Module.finrank k A := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
   -- Register the finite-dimensional structure hidden behind the forgetful object's wrapper.
   let : FiniteDimensional k A' := by
+    -- The forgetful functor preserves the carrier, but its object wrapper hides that fact.
     change FiniteDimensional k A
     infer_instance
+  -- Reveal the forgetful carrier before transporting dimension along `indFDRepForgetEquiv`.
+  change Module.finrank k ((forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) =
+    S.index * Module.finrank k A'
+  rw [LinearEquiv.finrank_eq (indFDRepForgetEquiv A).toLinearEquiv]
   exact Rep.finrank_ind A'
 
 end TauCeti

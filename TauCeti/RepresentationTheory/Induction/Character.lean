@@ -39,11 +39,11 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u
+universe u v
 
 namespace Rep
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
 
 private abbrev RightCosets (S : Subgroup G) := Quotient (QuotientGroup.rightRel S)
 
@@ -144,7 +144,7 @@ end Rep
 
 section Forget
 
-variable {k G : Type u} [Field k] [Group G] (A : FDRep k G)
+variable {k : Type u} {G : Type v} [Field k] [Group G] (A : FDRep k G)
 
 /-- Forgetting finite-dimensionality keeps the same underlying module, so it keeps the
 `FiniteDimensional` instance. -/
@@ -165,7 +165,7 @@ end Forget
 open scoped Classical in
 /-- The induced character at `g` is the sum of the original character over those left coset
 representatives `t` for which `t⁻¹ g t` belongs to the subgroup. -/
-theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
+theorem character_indFDRep_sum_quotient {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) (g : G) :
     (indFDRep (k := k) (G := G) A).character g =
       letI := Fintype.ofFinite (G ⧸ S)
@@ -174,10 +174,10 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
           A.character ⟨(Quotient.out t)⁻¹ * g * Quotient.out t, h⟩
         else 0 := by
   have hindCharacter :
-      (indFDRep (k := k) (G := G) A).character g =
+    (indFDRep (k := k) (G := G) A).character g =
         (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g :=
     (character_forget₂ (indFDRep (k := k) (G := G) A) g).symm.trans (congrFun
-      (Representation.char_iso (Representation.equivOfIso (indFDRepForgetIso A))) g)
+      (Representation.char_iso (indFDRepForgetEquiv A)) g)
   let := Fintype.ofFinite (G ⧸ S)
   let A' : Rep.{u} k S := (forget₂ (FDRep k S) (Rep k S)).obj A
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
@@ -212,7 +212,7 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
 
 section ClassFun
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
 
 /-- The character of an induced representation is the induced class function of its character. -/
 @[simp]

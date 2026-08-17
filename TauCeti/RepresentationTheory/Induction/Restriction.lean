@@ -62,9 +62,9 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe u
+universe u v
 
-variable {k G : Type u} [Group G]
+variable {k : Type u} {G : Type v} [Group G]
 
 section Functor
 
