@@ -69,11 +69,6 @@ variable {A p n}
 theorem mem_frobeniusFixedSubring {a : A} :
     a ∈ frobeniusFixedSubring A p n ↔ a ^ p ^ n = a := Iff.rfl
 
-/-- Membership in the Frobenius-fixed subring, read as an equation between the iterated Frobenius
-and the identity rather than as a power. -/
-theorem iterateFrobenius_of_mem_frobeniusFixedSubring {a : A}
-    (ha : a ∈ frobeniusFixedSubring A p n) : iterateFrobenius A p n a = a := ha
-
 variable (A p n)
 
 /-- The zeroth Frobenius iterate is the identity, so it fixes every element. -/
@@ -81,12 +76,6 @@ variable (A p n)
 theorem frobeniusFixedSubring_zero : frobeniusFixedSubring A p 0 = ⊤ := by
   refine Subring.ext fun a => ?_
   simp
-
-/-- The first Frobenius iterate is the Frobenius itself, so its fixed subring is cut out by
-`a ^ p = a`. -/
-theorem mem_frobeniusFixedSubring_one {a : A} :
-    a ∈ frobeniusFixedSubring A p 1 ↔ a ^ p = a := by
-  rw [mem_frobeniusFixedSubring, pow_one]
 
 variable {A p n}
 
@@ -97,9 +86,11 @@ theorem frobeniusFixedSubring_le_of_dvd {m k : ℕ} (h : m ∣ k) :
     frobeniusFixedSubring A p m ≤ frobeniusFixedSubring A p k := by
   obtain ⟨c, rfl⟩ := h
   intro a ha
+  have ha' : iterateFrobenius A p m a = a := by
+    rw [iterateFrobenius_def]
+    exact mem_frobeniusFixedSubring.mp ha
   have key : iterateFrobenius A p (m * c) a = a := by
-    rw [iterateFrobenius_mul_apply,
-      Function.iterate_fixed (iterateFrobenius_of_mem_frobeniusFixedSubring ha)]
+    rw [iterateFrobenius_mul_apply, Function.iterate_fixed ha']
   rw [mem_frobeniusFixedSubring, ← iterateFrobenius_def]
   exact key
 
@@ -110,8 +101,10 @@ variable {B : Type*} [CommRing B] [ExpChar B p]
 theorem map_le_frobeniusFixedSubring (φ : A →+* B) :
     (frobeniusFixedSubring A p n).map φ ≤ frobeniusFixedSubring B p n := by
   rintro _ ⟨a, ha, rfl⟩
-  rw [mem_frobeniusFixedSubring, ← iterateFrobenius_def, ← φ.map_iterateFrobenius p a n,
-    iterateFrobenius_of_mem_frobeniusFixedSubring ha]
+  have ha' : iterateFrobenius A p n a = a := by
+    rw [iterateFrobenius_def]
+    exact mem_frobeniusFixedSubring.mp ha
+  rw [mem_frobeniusFixedSubring, ← iterateFrobenius_def, ← φ.map_iterateFrobenius p a n, ha']
 
 /-- The pointwise form of `map_le_frobeniusFixedSubring`. -/
 theorem map_mem_frobeniusFixedSubring (φ : A →+* B) {a : A}
