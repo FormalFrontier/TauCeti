@@ -17,10 +17,13 @@ retract, split off by the first factor `g : X ⟶ Z`, or contains `Y` as a retra
 the second factor `h : Z ⟶ Y`.
 
 Irreducible morphisms are what the arrows of the Auslander-Reiten quiver of a finite-dimensional
-algebra record. An arrow there is not an individual irreducible morphism: the arrows from `[X]`
-to `[Y]` represent a basis of the space of irreducible morphisms `X ⟶ Y` — the quotient
-`rad(X, Y) / rad²(X, Y)` — so it is the dimension of that space that governs how many arrows
-join two vertices. The middle term of an almost-split sequence is glued to its ends by
+algebra record. An arrow there is not an individual irreducible morphism: what governs the arrows
+from `[X]` to `[Y]` is the space of irreducible morphisms `X ⟶ Y`, the quotient
+`rad(X, Y) / rad²(X, Y)`, which is a bimodule over the division rings `End(Y) / rad End(Y)` and
+`End(X) / rad End(X)`. Over an algebraically closed field those division rings are the field
+itself, and then the arrows represent a basis, so their number is the dimension of that space;
+over a general field the quiver is a valued one, carrying the two one-sided dimensions of the
+bimodule instead. The middle term of an almost-split sequence is glued to its ends by
 irreducible morphisms. Nothing in the definition is special to modules, so this file develops the
 notion for an arbitrary category and specializes only where the statement forces it.
 
