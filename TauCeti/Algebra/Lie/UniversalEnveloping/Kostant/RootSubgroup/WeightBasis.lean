@@ -99,6 +99,7 @@ def jointWeightSpace (μ : κ → ℤ) : Submodule ℚ V :=
   ⨅ j : κ, Module.End.eigenspace (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j))) ((μ j : ℚ))
 
 /-- Membership in a joint weight space is exactly being a weight vector for that weight. -/
+@[simp]
 theorem mem_jointWeightSpace_iff {μ : κ → ℤ} {x : V} :
     x ∈ jointWeightSpace h ρ μ ↔ IsCartanWeightVector h ρ μ x := by
   rw [jointWeightSpace, Submodule.mem_iInf, isCartanWeightVector_iff_mem_eigenspace]
@@ -118,28 +119,29 @@ theorem mem_weightSublattice_iff {μ : κ → ℤ} {x : M} :
 
 /-! ## Independence of weight vectors -/
 
-include e in
 /-- **Weight vectors of pairwise distinct weights are independent.** If a finite family of joint
 eigenvectors of the designated Cartan operators, indexed by pairwise distinct integral weights, sums
 to zero, then every member of the family is zero.
 
 The zero subgroup is Kostant-stable for trivial reasons, so this is Humphreys' Lemma 27.1
 (`TauCeti.UniversalEnvelopingAlgebra.jointWeightComponent_mem_of_kostantStable`) applied to it:
-every joint weight component of `0` lies in `0`. -/
+every joint weight component of `0` lies in `0`. Only the Cartan vectors `h` enter the statement,
+so the lemma is applied with no root vectors at all. -/
 theorem eq_zero_of_sum_eq_zero_of_isCartanWeightVector {s : Finset (κ → ℤ)} {w : (κ → ℤ) → V}
     (hw : ∀ l ∈ s, IsCartanWeightVector h ρ l (w l)) (hsum : ∑ l ∈ s, w l = 0)
     {l₀ : κ → ℤ} (hl₀ : l₀ ∈ s) : w l₀ = 0 := by
-  have hbot : ∀ u ∈ kostantForm e h, ∀ x ∈ (⊥ : AddSubgroup V), ρ u x ∈ (⊥ : AddSubgroup V) := by
+  have hbot : ∀ u ∈ kostantForm (fun _ : Empty => (0 : L)) h,
+      ∀ x ∈ (⊥ : AddSubgroup V), ρ u x ∈ (⊥ : AddSubgroup V) := by
     intro u _ x hx
     rw [AddSubgroup.mem_bot] at hx ⊢
     rw [hx, map_zero]
-  refine AddSubgroup.mem_bot.1 (jointWeightComponent_mem_of_kostantStable e h ρ hbot
-    (fun l hl j => Module.End.mem_eigenspace_iff.1
-      ((isCartanWeightVector_iff_mem_eigenspace h ρ).1 (hw l hl) j)) ?_ hl₀)
+  refine AddSubgroup.mem_bot.1
+    (jointWeightComponent_mem_of_kostantStable (fun _ : Empty => (0 : L)) h ρ hbot
+      (fun l hl j => Module.End.mem_eigenspace_iff.1
+        ((isCartanWeightVector_iff_mem_eigenspace h ρ).1 (hw l hl) j)) ?_ hl₀)
   rw [hsum]
   exact AddSubgroup.zero_mem _
 
-include e in
 /-- **The weight sublattices of a subgroup are independent.** -/
 theorem iSupIndep_weightSublattice : iSupIndep (weightSublattice h ρ M) := by
   classical
@@ -180,7 +182,7 @@ theorem iSupIndep_weightSublattice : iSupIndep (weightSublattice h ρ M) := by
       exact ((mem_weightSublattice_iff h ρ M).1 hx).neg
     · rw [hwν ν hνμ]
       exact hne ν hνμ
-  have hzero := eq_zero_of_sum_eq_zero_of_isCartanWeightVector e h ρ hw hsum
+  have hzero := eq_zero_of_sum_eq_zero_of_isCartanWeightVector h ρ hw hsum
     (Finset.mem_insert_self _ _)
   rw [hwμ, neg_eq_zero] at hzero
   exact Subtype.ext (hzero.trans (ZeroMemClass.coe_zero M).symm)
@@ -215,15 +217,15 @@ theorem iSup_weightSublattice_eq_top
   exact sum_mem fun ν _ => Submodule.mem_iSup_of_mem ν
     ((mem_weightSublattice_iff h ρ M).2 (hwt ν))
 
-variable [DecidableEq (κ → ℤ)]
-
-/-- **An admissible lattice is the direct sum of its weight sublattices.** -/
-theorem isInternal_weightSublattice
+/-- **An admissible lattice is the direct sum of its weight sublattices.** The `DecidableEq`
+hypothesis is the one `DirectSum.IsInternal` itself carries; the constructions below supply it
+classically, so it does not propagate into the weight basis. -/
+theorem isInternal_weightSublattice [DecidableEq (κ → ℤ)]
     (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
     (hV : ⨆ μ : κ → ℤ, jointWeightSpace h ρ μ = ⊤) :
     DirectSum.IsInternal (weightSublattice h ρ M) :=
   DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-    (iSupIndep_weightSublattice e h ρ M) (iSup_weightSublattice_eq_top e h ρ M hM hV)
+    (iSupIndep_weightSublattice h ρ M) (iSup_weightSublattice_eq_top e h ρ M hM hV)
 
 /-! ## The weight basis -/
 
@@ -252,6 +254,7 @@ weight hypothesis. -/
 noncomputable def kostantWeightBasis :
     Module.Basis
       (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)) ℤ M :=
+  letI := Classical.decEq (κ → ℤ)
   (isInternal_weightSublattice e h ρ M hM hV).collectedBasis fun μ =>
     Module.Free.chooseBasis ℤ (weightSublattice h ρ M μ)
 
@@ -259,6 +262,7 @@ noncomputable def kostantWeightBasis :
 theorem kostantWeightBasis_mem
     (a : Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)) :
     kostantWeightBasis e h ρ M hM hV a ∈ weightSublattice h ρ M a.1 :=
+  letI := Classical.decEq (κ → ℤ)
   DirectSum.IsInternal.collectedBasis_mem _ _ a
 
 /-- **The weight basis consists of weight vectors**, of the weights recorded by the first component
@@ -270,7 +274,6 @@ theorem kostantWeightBasis_isCartanWeightVector
       ((kostantWeightBasis e h ρ M hM hV a : M) : V) :=
   (mem_weightSublattice_iff h ρ M).1 (kostantWeightBasis_mem e h ρ M hM hV a)
 
-omit [DecidableEq (κ → ℤ)] in
 include e hM hV in
 /-- The index of the weight basis is finite, since the lattice is finitely generated. -/
 theorem finite_kostantWeightBasis_index :
@@ -278,7 +281,6 @@ theorem finite_kostantWeightBasis_index :
   classical
   exact Module.Finite.finite_basis (kostantWeightBasis e h ρ M hM hV)
 
-omit [DecidableEq (κ → ℤ)] in
 include e hM hV in
 /-- The weight basis has one vector for each unit of rank: its index has cardinality the rank of the
 lattice, which is therefore the length of the `Fin`-indexed reindexing
@@ -289,7 +291,6 @@ theorem nat_card_kostantWeightBasis_index_eq_finrank :
   classical
   exact (Module.finrank_eq_nat_card_basis (kostantWeightBasis e h ρ M hM hV)).symm
 
-omit [DecidableEq (κ → ℤ)] in
 include e hM hV in
 /-- **An admissible lattice has only finitely many weights.** Its weight sublattices are the
 summands of a finite basis, so all but finitely many of them vanish. -/
@@ -305,22 +306,39 @@ theorem finite_setOf_weightSublattice_ne_bot :
   exact ⟨⟨μ, (Module.Free.chooseBasis ℤ (weightSublattice h ρ M μ)).index_nonempty.some⟩, rfl⟩
 
 include e hM hV in
+/-- The numbering of the weight-basis index by `Fin n` along which the weight basis is reindexed;
+it exists because the index is finite. -/
+noncomputable def kostantWeightBasisIndexEquivFin :
+    (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)) ≃
+      Fin (Nat.card (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ))) :=
+  have := finite_kostantWeightBasis_index e h ρ M hM hV
+  Finite.equivFin _
+
+include e hM hV in
 /-- The weight basis reindexed by `Fin n`, the shape in which the coordinate and group-scheme
 constructions read a basis of an admissible lattice. -/
 noncomputable def kostantWeightBasisFin :
     Module.Basis
       (Fin (Nat.card (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ))))
       ℤ M :=
-  have := finite_kostantWeightBasis_index e h ρ M hM hV
-  (kostantWeightBasis e h ρ M hM hV).reindex (Finite.equivFin _)
+  (kostantWeightBasis e h ρ M hM hV).reindex (kostantWeightBasisIndexEquivFin e h ρ M hM hV)
+
+/-- The `Fin`-indexed weight basis is the weight basis read through the numbering of its index. -/
+@[simp]
+theorem kostantWeightBasisFin_apply
+    (x : Fin (Nat.card
+      (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)))) :
+    kostantWeightBasisFin e h ρ M hM hV x =
+      kostantWeightBasis e h ρ M hM hV
+        ((kostantWeightBasisIndexEquivFin e h ρ M hM hV).symm x) :=
+  Module.Basis.reindex_apply _ _ _
 
 include e hM hV in
 /-- The weight of the `x`-th vector of the `Fin`-indexed weight basis. -/
 noncomputable def kostantWeightFin :
     Fin (Nat.card (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ))) →
       κ → ℤ :=
-  have := finite_kostantWeightBasis_index e h ρ M hM hV
-  fun x => ((Finite.equivFin _).symm x).1
+  fun x => ((kostantWeightBasisIndexEquivFin e h ρ M hM hV).symm x).1
 
 /-- **The `Fin`-indexed weight basis consists of weight vectors** of the recorded weights. -/
 theorem kostantWeightBasisFin_isCartanWeightVector
@@ -328,8 +346,7 @@ theorem kostantWeightBasisFin_isCartanWeightVector
       (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)))) :
     IsCartanWeightVector h ρ (kostantWeightFin e h ρ M hM hV x)
       ((kostantWeightBasisFin e h ρ M hM hV x : M) : V) := by
-  have := finite_kostantWeightBasis_index e h ρ M hM hV
-  rw [kostantWeightBasisFin, Module.Basis.reindex_apply]
+  rw [kostantWeightBasisFin_apply]
   exact kostantWeightBasis_isCartanWeightVector e h ρ M hM hV _
 
 section Torus
