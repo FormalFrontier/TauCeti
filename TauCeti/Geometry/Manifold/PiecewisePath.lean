@@ -24,6 +24,8 @@ bundled paths carrying irrelevant partition data.
 
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.exists_partition`: extract a witnessing strict
   partition and the piecewise regularity facts.
+* `TauCeti.Manifold.IsPiecewiseContMDiffOn.of_partition`: construct piecewise regularity from a
+  strict partition and regularity on each piece.
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.continuousOn`: piecewise `C^n` regularity implies
   continuity on the whole interval.
 
@@ -80,6 +82,16 @@ theorem IsPiecewiseContMDiffOn.exists_partition (h : IsPiecewiseContMDiffOn I n 
           ContMDiffOn (modelWithCornersSelf ℝ ℝ) I n γ
             (Icc (τ i.castSucc) (τ i.succ)) :=
   h
+
+/-- A strict finite partition on whose pieces a path is `C^n` witnesses piecewise `C^n`
+regularity. -/
+theorem IsPiecewiseContMDiffOn.of_partition {k : ℕ} (τ : Fin (k + 2) → ℝ)
+    (hτa : τ 0 = a) (hτb : τ (Fin.last (k + 1)) = b)
+    (hτ : ∀ i : Fin (k + 1), τ i.castSucc < τ i.succ)
+    (hγ : ∀ i : Fin (k + 1),
+      ContMDiffOn (modelWithCornersSelf ℝ ℝ) I n γ (Icc (τ i.castSucc) (τ i.succ))) :
+    IsPiecewiseContMDiffOn I n γ a b :=
+  ⟨k, τ, hτa, hτb, hτ, hγ⟩
 
 /-- The endpoints of a piecewise smooth path are strictly ordered. -/
 theorem IsPiecewiseContMDiffOn.lt (h : IsPiecewiseContMDiffOn I n γ a b) : a < b := by
