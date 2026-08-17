@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 public import TauCeti.RingTheory.Nilpotent.ChevalleyCommutator
 public import TauCeti.RingTheory.Nilpotent.RootString.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Commutation
 import Mathlib.RingTheory.Nilpotent.Basic
 
 /-!
@@ -117,20 +118,10 @@ attribute [local instance high] Algebra.toModule
 -- commutator of two elements of the enveloping algebra is written with it below.
 attribute [local instance 100] LieRing.ofAssociativeRing
 
--- The image of a Lie bracket under the enveloping-algebra representation is the ring commutator
--- of the images. This is the only Lie-theoretic input to the relations below.
-private theorem mul_sub_mul_eq_map_ι_lie (a b : L) :
-    ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) * ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) -
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ ⁅a, b⁆) := by
-  rw [LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) a b,
-    LieRing.of_associative_ring_bracket, map_sub, map_mul, map_mul]
-
 private theorem commute_of_lie_eq_zero {a b : L} (hab : ⁅a, b⁆ = 0) :
     Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a))
       (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b)) := by
-  have h := mul_sub_mul_eq_map_ι_lie ρ a b
+  have h := map_ι_lie ρ a b
   rw [hab, map_zero, map_zero] at h
   exact sub_eq_zero.mp h
 
@@ -141,7 +132,7 @@ private theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) +
         c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b') := by
-  have h := mul_sub_mul_eq_map_ι_lie ρ a b
+  have h := map_ι_lie ρ a b
   rw [hab, map_zsmul, map_zsmul] at h
   exact sub_eq_iff_eq_add'.mp h
 
@@ -355,7 +346,7 @@ theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
       c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) +
         2 • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
-    have hb := mul_sub_mul_eq_map_ι_lie ρ (e i) ⁅e i, e j⁆
+    have hb := map_ι_lie ρ (e i) ⁅e i, e j⁆
     rw [hiij, hij, map_zsmul, map_zsmul, map_zsmul, map_zsmul] at hb
     -- The straightening rule takes the second commutator as `2 • w`, with `w = d • e l` the
     -- integral element `(ad eᵢ)² eⱼ / 2`, whereas the Lie hypothesis supplies it as `(2 * d) • e l`

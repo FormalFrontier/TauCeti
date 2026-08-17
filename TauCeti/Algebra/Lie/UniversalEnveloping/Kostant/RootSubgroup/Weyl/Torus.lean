@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Weyl.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Commutation
 
 /-!
 # The Weyl element normalises the split torus
@@ -51,8 +52,8 @@ conjugation statement upgrades from an inclusion to the equality of subgroups
 
 ## Main definitions
 
-* `TauCeti.weylReflectTorusPoint`: the point of the split torus obtained by the reflection
-  `s_α`.
+* `TauCeti.weylReflectTorusPoint`: the multiplicative reflection `s_α` on points of the split
+  torus.
 
 ## Main results
 
@@ -102,28 +103,35 @@ section Reflect
 
 variable [Fintype κ] [DecidableEq κ]
 
-/-- The point of the split torus `𝔾ₘ^κ` obtained from `s` by the reflection `s_α` in the root
-`α`, where `c` is the Cartan index of the coroot `α^∨`: the `c`-th coordinate of `s` is divided by
-the value `α(s)` and the others are unchanged.
+/-- The multiplicative reflection `s_α` on points of the split torus `𝔾ₘ^κ`. Here `c` is the
+Cartan index of the coroot `α^∨`; the reflection divides the `c`-th coordinate of a point `s` by
+the value `α(s)` and leaves the others unchanged.
 
 The characterising property is `TauCeti.torusCharacter_weylReflectTorusPoint`: the reflected
 point takes at a weight `μ` the value that `s` takes at the reflected weight. -/
-def weylReflectTorusPoint (α : κ → ℤ) (c : κ) {A : Type*} [CommRing A] (s : κ → Aˣ) : κ → Aˣ :=
-  s * Pi.mulSingle c (torusCharacter s α)⁻¹
+def weylReflectTorusPoint (α : κ → ℤ) (c : κ) {A : Type*} [CommRing A] :
+    (κ → Aˣ) →* (κ → Aˣ) where
+  toFun s := s * Pi.mulSingle c (torusCharacter s α)⁻¹
+  map_one' := by simp
+  map_mul' s t := by
+    simp only [torusCharacter_mul, mul_inv_rev, Pi.mulSingle_mul]
+    ac_rfl
 
 /-- At the coroot coordinate, the reflected point is divided by the root character. -/
 @[simp]
 theorem weylReflectTorusPoint_apply_same (α : κ → ℤ) (c : κ) {A : Type*} [CommRing A]
     (s : κ → Aˣ) :
     weylReflectTorusPoint α c s c = s c * (torusCharacter s α)⁻¹ := by
-  simp [weylReflectTorusPoint]
+  change (s * Pi.mulSingle c (torusCharacter s α)⁻¹ : κ → Aˣ) c = _
+  simp
 
 /-- Away from the coroot coordinate, the reflected point is unchanged. -/
 @[simp]
 theorem weylReflectTorusPoint_apply_of_ne (α : κ → ℤ) {c j : κ} (hcj : j ≠ c)
     {A : Type*} [CommRing A] (s : κ → Aˣ) :
     weylReflectTorusPoint α c s j = s j := by
-  simp [weylReflectTorusPoint, hcj]
+  change (s * Pi.mulSingle c (torusCharacter s α)⁻¹ : κ → Aˣ) j = _
+  simp [hcj]
 
 /-- **The reflected point computes the reflected character.** The character `μ` takes at the
 reflected point the value that `μ - μ(c) α`, the reflection `s_α μ`, takes at the original one. -/
@@ -131,7 +139,8 @@ reflected point the value that `μ - μ(c) α`, the reflection `s_α μ`, takes 
 theorem torusCharacter_weylReflectTorusPoint (α : κ → ℤ) (c : κ) {A : Type*} [CommRing A]
     (s : κ → Aˣ) (μ : κ → ℤ) :
     torusCharacter (weylReflectTorusPoint α c s) μ = torusCharacter s (μ - μ c • α) := by
-  rw [weylReflectTorusPoint, torusCharacter_mul, torusCharacter_mulSingle, torusCharacter_sub,
+  change torusCharacter (s * Pi.mulSingle c (torusCharacter s α)⁻¹) μ = _
+  rw [torusCharacter_mul, torusCharacter_mulSingle, torusCharacter_sub,
     torusCharacter_zsmul, inv_zpow, div_eq_mul_inv]
 
 /-- **The reflection of points is an involution**, as soon as the root takes the value two at its
@@ -142,9 +151,12 @@ theorem weylReflectTorusPoint_weylReflectTorusPoint (α : κ → ℤ) {c : κ} (
   have hneg : α - α c • α = -α := by rw [hαc]; module
   have hchar : torusCharacter (weylReflectTorusPoint α c s) α = (torusCharacter s α)⁻¹ := by
     rw [torusCharacter_weylReflectTorusPoint, hneg, torusCharacter_neg]
-  conv_lhs => rw [weylReflectTorusPoint, hchar, inv_inv]
-  rw [weylReflectTorusPoint, mul_assoc, ← Pi.mulSingle_mul, inv_mul_cancel, Pi.mulSingle_one,
-    mul_one]
+  change weylReflectTorusPoint α c s *
+      Pi.mulSingle c (torusCharacter (weylReflectTorusPoint α c s) α)⁻¹ = s
+  rw [hchar, inv_inv]
+  change (s * Pi.mulSingle c (torusCharacter s α)⁻¹) *
+      Pi.mulSingle c (torusCharacter s α) = s
+  rw [mul_assoc, ← Pi.mulSingle_mul, inv_mul_cancel, Pi.mulSingle_one, mul_one]
 
 end Reflect
 
@@ -164,23 +176,6 @@ variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End �
 variable (M : AddSubgroup V)
 variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
 
-/-! ## Brackets in the representation -/
-
-/-- A representation of the enveloping algebra turns a bracket of `L` into the commutator of the
-two operators. -/
-theorem lie_map_ι (x y : L) :
-    ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ x), ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ y)⁆ =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ ⁅x, y⁆) := by
-  have hlie := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) x y
-  rw [LieRing.of_associative_ring_bracket] at hlie
-  rw [LieRing.of_associative_ring_bracket, hlie, map_sub, map_mul, map_mul]
-
-/-- An eigenvector of the adjoint action of `x` in `L` stays one in the representation. -/
-theorem lie_map_ι_eq_smul {x y : L} {a : ℚ} (hxy : ⁅x, y⁆ = a • y) :
-    ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ x), ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ y)⁆ =
-      a • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ y) := by
-  rw [lie_map_ι ρ, hxy, map_smul, map_smul]
-
 variable {i j : ι} {c : κ} {α : κ → ℤ}
 variable (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable (hj : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
@@ -196,14 +191,15 @@ the coroot of the weight `α` of the raising element, so the weight of `eᵢ` at
 
 This is not an extra normalisation: it is forced by the triple relation `⁅h, e⁆ = 2 e`, together
 with `e ≠ 0`, which the triple also forces since `⁅e, f⁆ = h` is nonzero. -/
-theorem eq_two_of_isSl2Triple (hαc : ⁅h c, e i⁆ = (α c : ℚ) • e i) : α c = 2 := by
+theorem rootWeight_apply_coroot_eq_two
+    (hαc : ⁅h c, e i⁆ = (α c : ℚ) • e i) : α c = 2 := by
   have hne : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ≠ 0 := by
     intro h0
     exact hT.h_ne_zero (by rw [← hT.lie_e_f, h0]; exact zero_lie _)
   have hE : ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)),
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))⁆ =
       (α c : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) :=
-    lie_map_ι_eq_smul ρ hαc
+    map_ι_lie_eq_smul ρ hαc
   have hE2 : ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)),
       ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))⁆ =
       (2 : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := by
@@ -260,10 +256,10 @@ theorem IsCartanWeightVector.apply_weylUnit {μ : κ → ℤ} {v : V}
   apply IsCartanWeightVector.apply_unit_of_conj (h := h) (ρ := ρ) hv (weylUnit hi hj)
   intro j'
   exact inv_weylUnit_conj_of_lie_eq_smul hT hi hj
-    (lie_map_ι_eq_smul ρ (hα j'))
+    (map_ι_lie_eq_smul ρ (hα j'))
     (by
       simpa only [neg_smul] using
-        (lie_map_ι_eq_smul ρ (a := -(α j' : ℚ)) (by simpa only [neg_smul] using hαneg j')))
+        (map_ι_lie_eq_smul ρ (a := -(α j' : ℚ)) (by simpa only [neg_smul] using hαneg j')))
 
 include hT hα hαneg in
 /-- **The inverse Weyl element reflects weights.** The coreflection is an involution on the
@@ -276,10 +272,10 @@ theorem IsCartanWeightVector.apply_inv_weylUnit {μ : κ → ℤ} {v : V}
   apply IsCartanWeightVector.apply_unit_of_conj (h := h) (ρ := ρ) hv (weylUnit hi hj)⁻¹
   intro j'
   simpa using weylUnit_conj_of_lie_eq_smul hT hi hj
-    (lie_map_ι_eq_smul ρ (hα j'))
+    (map_ι_lie_eq_smul ρ (hα j'))
     (by
       simpa only [neg_smul] using
-        (lie_map_ι_eq_smul ρ (a := -(α j' : ℚ)) (by simpa only [neg_smul] using hαneg j')))
+        (map_ι_lie_eq_smul ρ (a := -(α j' : ℚ)) (by simpa only [neg_smul] using hαneg j')))
 
 include hM hT hα hαneg in
 /-- The integral Weyl element of the lattice reflects the weight of a weight vector of the
@@ -370,7 +366,7 @@ theorem map_kostantTorusRange_conj_kostantWeylGL
         (kostantTorusPoints M b wt A).range =
       (kostantTorusPoints M b wt A).range := by
   classical
-  have hαc : α c = 2 := eq_two_of_isSl2Triple e h ρ hT (hα c)
+  have hαc : α c = 2 := rootWeight_apply_coroot_eq_two e h ρ hT (hα c)
   have hconj : ∀ s : κ → Aˣ, kostantWeylGL e h ρ M hM hi hj A * kostantTorusPoints M b wt A s *
       (kostantWeylGL e h ρ M hM hi hj A)⁻¹ =
         kostantTorusPoints M b wt A (weylReflectTorusPoint α c s) := fun s =>
