@@ -246,12 +246,15 @@ theorem schemePointsMulEquiv_comp_weightTorusRepresentation_apply
     (A : Type) [CommRing A]
     (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ κ).X) (i j : Fin n) :
-    (GeneralLinear.schemePointsMulEquiv n A
-        (p ≫ (weightTorusRepresentation bL wt).hom.hom)).val i j =
+    ((GeneralLinear.groupSchemePointMulEquiv n A).symm
+        (p ≫ (weightTorusRepresentation bL wt).hom.hom)).ofConv
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
+            (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (i, j)))) =
       (bL.baseChange A).repr
         ((kostantTorusPoints L bL wt A
           (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) p)).val
             (bL.baseChange A j)) i := by
+  rw [← GeneralLinear.schemePointsMulEquiv_apply]
   let q := DiagonalizableGroup.groupSchemePointsMulEquiv
     (R := ℤ) (A := A) (SplitTorus.characterGroup κ) p
   have hp := groupSchemePoint_comp_weightTorusRepresentation
