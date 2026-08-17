@@ -15,6 +15,8 @@ the associated quotient.
 
 ## Main declarations
 
+* `TauCeti.Submodule.mapIic_symm_apply`: the inverse of `Submodule.mapIic` takes inverse images
+  along the inclusion.
 * `TauCeti.Submodule.iccOrderIsoQuotientOfMapEq`: the interval/quotient correspondence for a
   specified copy of the lower endpoint inside the upper endpoint.
 -/
@@ -29,34 +31,38 @@ section QuotientInterval
 
 variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
 
+/-- The inverse of `Submodule.mapIic` takes the inverse image along the inclusion.  This is the
+`symm`-side counterpart of Mathlib's `Submodule.coe_mapIic_apply`. -/
+theorem mapIic_symm_apply (p : Submodule R M) (N : Set.Iic p) :
+    p.mapIic.symm N = (N : Submodule R M).comap p.subtype :=
+  rfl
+
 /-- Submodules of `q` containing a submodule whose ambient image is `p` are the same as ambient
 submodules in the interval from `p` to `q`. -/
 private def iciSubmoduleOrderIsoIcc {p q : Submodule R M} (r : Submodule R q)
-    (hr : r.map q.subtype = p) : Set.Ici r ≃o Set.Icc p q := by
-  let e := q.mapIic
-  have he : (e r : Submodule R M) = p := by
-    rw [Submodule.coe_mapIic_apply]
-    exact hr
-  refine (e.Ici r).trans
-    { toFun := fun N ↦ by
-        have hbase : (e r : Submodule R M) ≤ N.1.1 := N.2
-        refine ⟨N.1.1, ?_, N.1.2⟩
-        exact he.symm.le.trans hbase
-      invFun := fun N ↦ by
-        have hN : p ≤ N.1 ∧ N.1 ≤ q := N.2
-        refine ⟨⟨N.1, hN.2⟩, ?_⟩
-        exact he.le.trans hN.1
-      left_inv := fun N ↦ by rfl
-      right_inv := fun N ↦ by rfl
-      map_rel_iff' := Iff.rfl }
+    (hr : r.map q.subtype = p) : Set.Ici r ≃o Set.Icc p q where
+  toFun N := ⟨(q.mapIic N.1 : Submodule R M), by
+    refine ⟨?_, (q.mapIic N.1).2⟩
+    rw [Submodule.coe_mapIic_apply, ← hr]
+    exact Submodule.map_mono N.2⟩
+  invFun N := ⟨q.mapIic.symm ⟨N.1, N.2.2⟩, by
+    rw [mapIic_symm_apply]
+    exact (Submodule.le_comap_map q.subtype r).trans
+      (Submodule.comap_mono (hr.le.trans N.2.1))⟩
+  left_inv N := Subtype.ext (q.mapIic.symm_apply_apply N.1)
+  right_inv N := by
+    refine Subtype.ext ?_
+    change (↑(q.mapIic (q.mapIic.symm ⟨N.1, N.2.2⟩)) : Submodule R M) = ↑N
+    rw [OrderIso.apply_symm_apply]
+  map_rel_iff' := by
+    intro N₁ N₂
+    exact Subtype.coe_le_coe.trans q.mapIic.le_iff_le
 
-@[simp]
 private theorem coe_iciSubmoduleOrderIsoIcc_symm_apply {p q : Submodule R M}
     (r : Submodule R q) (hr : r.map q.subtype = p) (N : Set.Icc p q) :
     (((iciSubmoduleOrderIsoIcc r hr).symm N).1 : Submodule R q) =
-      N.1.comap q.subtype := by
-  ext x
-  rfl
+      N.1.comap q.subtype :=
+  mapIic_symm_apply q ⟨N.1, N.2.2⟩
 
 /-- The interval correspondence for a specified copy `r` of the lower endpoint inside `q`. -/
 def iccOrderIsoQuotientOfMapEq {p q : Submodule R M} (r : Submodule R q)
@@ -70,15 +76,16 @@ theorem mk_mem_iccOrderIsoQuotientOfMapEq_iff {p q : Submodule R M} (r : Submodu
     (hr : r.map q.subtype = p) (N : Set.Icc p q) (x : q) :
     Submodule.Quotient.mk x ∈ Submodule.iccOrderIsoQuotientOfMapEq r hr N ↔
       (x : M) ∈ N.1 := by
-  let N' : Set.Ici r := (iciSubmoduleOrderIsoIcc r hr).symm N
-  let Q : Submodule R (q ⧸ r) := (Submodule.comapMkQRelIso r).symm N'
-  have hcomap : Q.comap r.mkQ = N'.1 := congrArg Subtype.val
-    ((Submodule.comapMkQRelIso r).apply_symm_apply N')
-  have hQ : Submodule.iccOrderIsoQuotientOfMapEq r hr N = Q := rfl
-  rw [hQ, ← r.mkQ_apply, ← Submodule.mem_comap, hcomap]
-  have hN' : N'.1 = ((iciSubmoduleOrderIsoIcc r hr).symm N).1 := rfl
-  rw [hN', coe_iciSubmoduleOrderIsoIcc_symm_apply]
-  simp only [Submodule.mem_comap, Submodule.subtype_apply]
+  have happly : Submodule.iccOrderIsoQuotientOfMapEq r hr N =
+      (Submodule.comapMkQRelIso r).symm ((iciSubmoduleOrderIsoIcc r hr).symm N) :=
+    OrderIso.trans_apply _ _ N
+  have hcomap : ((Submodule.comapMkQRelIso r).symm
+      ((iciSubmoduleOrderIsoIcc r hr).symm N)).comap r.mkQ =
+      (((iciSubmoduleOrderIsoIcc r hr).symm N).1 : Submodule R q) :=
+    congrArg Subtype.val
+      ((Submodule.comapMkQRelIso r).apply_symm_apply ((iciSubmoduleOrderIsoIcc r hr).symm N))
+  rw [happly, ← r.mkQ_apply, ← Submodule.mem_comap, hcomap,
+    coe_iciSubmoduleOrderIsoIcc_symm_apply, Submodule.mem_comap, Submodule.subtype_apply]
 
 /-- An ambient representative belongs to the interval submodule corresponding to `Q` exactly
 when its quotient class belongs to `Q`. -/
@@ -91,38 +98,6 @@ theorem mem_iccOrderIsoQuotientOfMapEq_symm_apply_iff {p q : Submodule R M}
   simpa only [OrderIso.apply_symm_apply] using
     (Submodule.mk_mem_iccOrderIsoQuotientOfMapEq_iff r hr
       ((Submodule.iccOrderIsoQuotientOfMapEq r hr).symm Q) x).symm
-
-/-- The correspondence theorem restricted to an interval: submodules between `p` and `q` are
-order-isomorphic to submodules of the quotient of `q` by the copy of `p` in `q`. -/
-def iccOrderIsoQuotient {p q : Submodule R M} (h : p ≤ q) :
-    Set.Icc p q ≃o Submodule R (q ⧸ p.submoduleOf q) := by
-  have hmap : (p.submoduleOf q).map q.subtype = p := by
-    rw [Submodule.submoduleOf, Submodule.map_comap_subtype, inf_of_le_right h]
-  exact Submodule.iccOrderIsoQuotientOfMapEq (p.submoduleOf q) hmap
-
-/-- A representative belongs to the quotient submodule corresponding to `N` exactly when its
-underlying ambient element belongs to `N`. -/
-@[simp]
-theorem mk_mem_iccOrderIsoQuotient_iff {p q : Submodule R M} (h : p ≤ q)
-    (N : Set.Icc p q) (x : q) :
-    Submodule.Quotient.mk x ∈ Submodule.iccOrderIsoQuotient h N ↔ (x : M) ∈ N.1 := by
-  have hmap : (p.submoduleOf q).map q.subtype = p := by
-    rw [Submodule.submoduleOf, Submodule.map_comap_subtype, inf_of_le_right h]
-  have hiso : Submodule.iccOrderIsoQuotient h =
-      Submodule.iccOrderIsoQuotientOfMapEq (p.submoduleOf q) hmap := rfl
-  rw [hiso]
-  exact Submodule.mk_mem_iccOrderIsoQuotientOfMapEq_iff (p.submoduleOf q) hmap N x
-
-/-- An ambient representative belongs to the interval submodule corresponding to `Q` exactly
-when its quotient class belongs to `Q`. -/
-@[simp]
-theorem mem_iccOrderIsoQuotient_symm_apply_iff {p q : Submodule R M} (h : p ≤ q)
-    (Q : Submodule R (q ⧸ p.submoduleOf q)) (x : q) :
-    (x : M) ∈ ((Submodule.iccOrderIsoQuotient h).symm Q).1 ↔
-      Submodule.Quotient.mk x ∈ Q := by
-  simpa only [OrderIso.apply_symm_apply] using
-    (Submodule.mk_mem_iccOrderIsoQuotient_iff h
-      ((Submodule.iccOrderIsoQuotient h).symm Q) x).symm
 
 end QuotientInterval
 
