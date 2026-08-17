@@ -217,6 +217,8 @@ theorem biprod [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁
     [HasBinaryBiproduct S₁.X₃ S₂.X₃] (h₁ : IsKernelCokernelPair S₁)
     (h₂ : IsKernelCokernelPair S₂) :
     IsKernelCokernelPair (shortComplexBiprod S₁ S₂) := by
+  -- The projection lemmas cannot rewrite this dependent predicate: its kernel and cokernel
+  -- forks also depend on the composite-zero proof. Expose the short complex once here.
   change IsKernelCokernelPair
     (ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
       (shortComplexBiprod_zero S₁ S₂))

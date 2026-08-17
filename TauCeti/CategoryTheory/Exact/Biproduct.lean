@@ -120,7 +120,9 @@ theorem conflation_biprod (E : ExactStructure C) {S₁ S₂ : ShortComplex C}
   E.conflation_of_isKernelCokernelPair_of_isInflation
     ((E.isKernelCokernelPair S₁ hS₁).biprod (E.isKernelCokernelPair S₂ hS₂))
     (by
-      change E.IsInflation (Limits.biprod.map S₁.f S₂.f)
+      -- Rewriting cannot key through the unexposed `IsInflation` abbrev.
+      change E.inflations (shortComplexBiprod S₁ S₂).f
+      rw [shortComplexBiprod_f]
       exact E.isInflation_biprod (E.isInflation_f hS₁) (E.isInflation_f hS₂))
 
 end ExactStructure
