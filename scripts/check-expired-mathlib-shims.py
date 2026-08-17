@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Report tracked Tau Ceti shims whose replacement exists in pinned Mathlib.
 
-The registry in ``scripts/mathlib-shims.json`` is process metadata kept out of module docstrings.
-Each entry names one or more Tau Ceti source files and a concrete Mathlib declaration or module
-whose appearance should prompt a migration audit. Exact replacements and broader landing sentinels
-carry different guidance. Findings are warnings, never a failing status; malformed metadata or an
-unavailable Lean environment is an infrastructure error.
+The registry in ``TauCeti/mathlib-shims.json`` is AI-owned metadata kept out of module docstrings.
+Each entry names one or more Tau Ceti source files and a concrete Mathlib declaration or module.
+Exact replacements and broader landing sentinels carry different guidance. The default invocation
+is report-only; ``--fail-on-available`` turns a finding into the autonomous Mathlib-bump gate that
+hands the bump PR to a Tau Ceti worker. Malformed metadata or an unavailable Lean environment is
+always an infrastructure error.
 """
 
 from __future__ import annotations
@@ -39,7 +40,6 @@ NEGATED_SELF_DECLARATION = re.compile(
     r"(?:an?\s+)?(?:\*{1,2})?\s*$",
     re.IGNORECASE,
 )
-ZULIP_MARKER = "<!--expired-mathlib-shims:v1-->"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -160,7 +160,7 @@ def validate_registry_coverage(groups: Sequence[ShimGroup], source_root: pathlib
     if untracked:
         rendered = "\n".join(f"  {source}" for source in untracked)
         raise ValueError(
-            "self-declared Mathlib shims are missing from scripts/mathlib-shims.json:\n"
+            "self-declared Mathlib shims are missing from TauCeti/mathlib-shims.json:\n"
             f"{rendered}"
         )
 
@@ -246,9 +246,9 @@ def available_replacements(
 
 
 def markdown_summary(
-    groups: Sequence[ShimGroup], available: Sequence[AvailableReplacement]
+    groups: Sequence[ShimGroup], available: Sequence[AvailableReplacement], *, blocking: bool = False
 ) -> str:
-    """Render the scheduled job's human-facing summary."""
+    """Render the check's GitHub Actions summary."""
 
     tracked = sum(len(group.sources) for group in groups)
     lines = ["## Expired Mathlib shim check", "",
@@ -256,9 +256,12 @@ def markdown_summary(
     if not available:
         lines.append("No configured replacement target exists in the pinned dependency.")
         return "\n".join(lines) + "\n"
+    disposition = (
+        "This Mathlib bump is blocked until its worker migrates each affected source."
+        if blocking else "Audit each affected source; this report does not fail the build."
+    )
     lines.extend([
-        f"Found upstream triggers affecting **{len(available)}** source files. Audit each source; "
-        "this report does not fail the build.",
+        f"Found upstream triggers affecting **{len(available)}** source files. {disposition}",
         "",
         "| Tau Ceti source | Available upstream trigger | Migration guidance | Context |",
         "|---|---|---|---|",
@@ -290,73 +293,6 @@ def warning_message(replacement: AvailableReplacement) -> str:
     return f"Pinned Mathlib now provides {targets}; {advice} ({replacement.note}){speculative}"
 
 
-def zulip_content(summary: str, active: bool) -> str:
-    """Render the single idempotent maintenance post owned by this checker."""
-
-    status = "⚠️" if active else "✅"
-    return f"{status}\n\n{summary.rstrip()}\n\n{ZULIP_MARKER}"
-
-
-def reconcile_zulip(
-    client: object, summary: str, active: bool, channel: str = "Tau Ceti",
-    topic: str = "Mathlib shims"
-) -> None:
-    """Create, update, or resolve the checker's bot-owned Zulip post."""
-
-    bot_id = client.my_user_id()
-    narrow = [
-        {"operator": "channel", "operand": channel},
-        {"operator": "topic", "operand": topic},
-    ]
-    messages = client.get_messages(narrow)
-    owned = [message for message in messages
-             if message.get("sender_id") == bot_id
-             and ZULIP_MARKER in message.get("content", "")]
-    current = max(owned, key=lambda message: message["id"], default=None)
-    content = zulip_content(summary, active)
-    if current is None:
-        if active:
-            client.send_message(content)
-    elif active and current["content"].startswith("✅"):
-        client.send_message(content)
-    elif current["content"] != content:
-        client.update_message(current["id"], content)
-
-
-def notify_zulip(summary: str, active: bool) -> None:
-    """Notify the maintenance topic using the repository's existing Zulip client."""
-
-    pr_status = pathlib.Path(__file__).resolve().parent / "pr_status"
-    sys.path.insert(0, str(pr_status))
-    import zulip as zp  # pylint: disable=import-outside-toplevel
-
-    channel = (os.environ.get("ZULIP_CHANNEL") or "Tau Ceti").strip()
-    topic = (os.environ.get("ZULIP_TOPIC") or "Mathlib shims").strip()
-    zp.CHANNEL = channel
-    zp.TOPIC = topic
-    email = (os.environ.get("ZULIP_EMAIL") or "").strip()
-    api_key = (os.environ.get("ZULIP_API_KEY") or "").strip()
-    site = (os.environ.get("ZULIP_SITE") or "https://leanprover.zulipchat.com").strip()
-    if not (email and api_key):
-        raise RuntimeError("ZULIP_EMAIL / ZULIP_API_KEY not set")
-    client = zp.Zulip(email, api_key, site)
-    zp.check(client)
-    reconcile_zulip(client, summary, active, channel, topic)
-
-
-def load_notification_report(path: pathlib.Path) -> tuple[str, bool]:
-    """Load the probe result passed to the credential-bearing notification step."""
-
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"cannot read notification report {path}: {error}") from error
-    if not isinstance(raw, dict) or not isinstance(raw.get("summary"), str) \
-            or not isinstance(raw.get("active"), bool):
-        raise ValueError(f"malformed notification report: {path}")
-    return raw["summary"], raw["active"]
-
-
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=pathlib.Path,
@@ -366,27 +302,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--lake-root", type=pathlib.Path)
     parser.add_argument("--coverage-only", action="store_true",
                         help="validate source coverage without probing Mathlib")
-    parser.add_argument("--report-file", type=pathlib.Path,
-                        help="write the probe result for a separate notification step")
-    parser.add_argument("--notify-report", type=pathlib.Path,
-                        help="notify Zulip from a prior --report-file without running Lean")
+    parser.add_argument("--fail-on-available", action="store_true",
+                        help="exit 1 when Mathlib provides a configured replacement")
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
-    if args.notify_report is not None:
-        try:
-            summary, active = load_notification_report(args.notify_report)
-            notify_zulip(summary, active)
-        except (RuntimeError, ValueError) as error:
-            print(f"check-expired-mathlib-shims: error: could not notify Zulip: {error}",
-                  file=sys.stderr)
-            return 2
-        return 0
-
     repo_root = args.repo_root.resolve()
-    manifest = (args.manifest or repo_root / "scripts/mathlib-shims.json").resolve()
+    manifest = (args.manifest or repo_root / "TauCeti/mathlib-shims.json").resolve()
     mathlib_root = (args.mathlib_root or repo_root / ".lake/packages/mathlib").resolve()
     lake_root = (args.lake_root or repo_root).resolve()
     try:
@@ -405,20 +329,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     tracked = sum(len(group.sources) for group in groups)
     print(f"check-expired-mathlib-shims: {tracked} tracked files, "
           f"{len(available)} with available replacements")
+    annotation = "error" if args.fail_on_available else "warning"
     for replacement in available:
-        print(f"::warning file={replacement.source}::{warning_message(replacement)}")
+        print(f"::{annotation} file={replacement.source}::{warning_message(replacement)}")
 
-    summary = markdown_summary(groups, available)
+    summary = markdown_summary(groups, available, blocking=args.fail_on_available)
     if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):
         with pathlib.Path(summary_path).open("a", encoding="utf-8") as stream:
             stream.write(summary)
     elif available:
         print(summary)
-    if args.report_file is not None:
-        args.report_file.write_text(
-            json.dumps({"summary": summary, "active": bool(available)}), encoding="utf-8"
-        )
-    return 0
+    return 1 if args.fail_on_available and available else 0
 
 
 if __name__ == "__main__":

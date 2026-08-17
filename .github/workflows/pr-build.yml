@@ -330,9 +330,9 @@ jobs:
             echo "::error::TauCeti/ may not use set_option (it can weaken maxHeartbeats, linters, maxRecDepth, ...); remove it"; exit 1
           fi
 
-      # The trusted base's registry must cover any source-only PR that declares a new temporary
-      # Mathlib shim. A PR that also updates the human-owned registry is already routed to human
-      # review and is validated by post-merge CI, so skip this base-registry comparison for it.
+      # The trusted checker requires each source-only PR that declares a new temporary Mathlib shim
+      # to record a concrete expiry target in TauCeti's AI-owned registry. Keeping the registry under
+      # TauCeti/ lets a worker add or remove entries in the same autonomous source PR as the shim.
       - name: Temporary Mathlib shims have machine-checkable expiry targets
         if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
         run: |
@@ -438,6 +438,16 @@ jobs:
             exit 1
           fi
           echo "Mathlib cache is complete at the bump target."
+
+      # A replacement can only become newly actionable when the pinned Mathlib moves. Make that
+      # forward-bump PR the durable work item: a red build is picked up by Tau Ceti's existing bump
+      # worker, which migrates the affected TauCeti/ source and its AI-owned registry entry on the
+      # same branch. This deliberately does not page a human or fail ordinary source-only PRs.
+      - name: Migrate shims whose replacements landed in this Mathlib bump
+        id: shim_expiry
+        if: ${{ env.INFRA != '1' && env.BUMP == '1' && env.BUMP_BAD != '1' }}
+        continue-on-error: true
+        run: (cd base && python3 scripts/check-expired-mathlib-shims.py --fail-on-available)
 
       # Text-only trusted lint: inspect the overlaid PR sources after Mathlib's source tree is
       # available. It does not elaborate or execute the untrusted TauCeti code.
@@ -578,6 +588,8 @@ jobs:
           if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
+          elif [ "${{ steps.shim_expiry.outcome }}" = "failure" ]; then
+            state=failure; desc="Mathlib replacements landed — autonomous shim migration required"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
             state=success; desc="sandboxed build, audits, and simp-NF lint passed (trusted config)"
           else

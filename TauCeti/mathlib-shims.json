@@ -1,6 +1,6 @@
 [
   {
-    "note": "mathlib4#33505 landing sentinel; its private prerequisites may not replace every tracked declaration",
+    "note": "Mathlib PR #33505 landing sentinel; its private prerequisites may not replace every tracked declaration",
     "landing_sentinel": true,
     "sources": [
       "TauCeti/Analysis/Complex/BranchLogRoot.lean",

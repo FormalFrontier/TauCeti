@@ -9,6 +9,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 SCRIPT = pathlib.Path(__file__).with_name("check-expired-mathlib-shims.py")
@@ -19,31 +20,10 @@ sys.modules[SPEC.name] = check
 SPEC.loader.exec_module(check)
 
 
-class FakeZulip:
-    def __init__(self, messages=()):
-        self.messages = list(messages)
-        self.narrows = []
-        self.sent = []
-        self.updated = []
-
-    def my_user_id(self):
-        return 7
-
-    def get_messages(self, narrow):
-        self.narrows.append(narrow)
-        return self.messages
-
-    def send_message(self, content):
-        self.sent.append(content)
-
-    def update_message(self, message_id, content):
-        self.updated.append((message_id, content))
-
-
 class ExpiredMathlibShimTests(unittest.TestCase):
     def test_registry_covers_self_declarations_one_way(self):
         root = SCRIPT.parent.parent
-        groups = check.load_registry(SCRIPT.with_name("mathlib-shims.json"), root)
+        groups = check.load_registry(root / "TauCeti/mathlib-shims.json", root)
         tracked = {source for group in groups for source in group.sources}
         self.assertLessEqual(check.find_self_declared_shims(root / "TauCeti"), tracked)
         self.assertEqual(groups[0].declarations,
@@ -141,7 +121,7 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         output = "noise\n" + check.PROBE_PREFIX + "Foo.bar\n"
         self.assertEqual(check.parse_probe_output(output), {"Foo.bar"})
 
-    def test_declaration_and_module_replacements_are_report_only(self):
+    def test_declaration_and_module_replacements_render_report_and_gate(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
             module = root / "Mathlib/Topology/NewThing.lean"
@@ -159,6 +139,8 @@ class ExpiredMathlibShimTests(unittest.TestCase):
                 "declaration New.theorem", "module Mathlib.Topology.NewThing"))
             summary = check.markdown_summary((group,), available)
             self.assertIn("report does not fail the build", summary)
+            blocking = check.markdown_summary((group,), available, blocking=True)
+            self.assertIn("bump is blocked until its worker migrates", blocking)
             self.assertIn("TauCeti/One.lean", summary)
             self.assertIn("test group", summary)
 
@@ -196,41 +178,24 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Mathlib source tree does not exist"):
                 check.available_replacements((group,), set(), missing)
 
-    def test_zulip_report_is_idempotent_and_resolvable(self):
-        summary = "## Expired Mathlib shim check\n\nFound replacements.\n"
-        client = FakeZulip()
-        check.reconcile_zulip(client, summary, active=True, channel="C", topic="T")
-        self.assertEqual(len(client.sent), 1)
-        self.assertEqual(client.narrows, [[
-            {"operator": "channel", "operand": "C"},
-            {"operator": "topic", "operand": "T"},
-        ]])
-
-        active = client.sent[0]
-        client = FakeZulip([{"id": 4, "sender_id": 7, "content": active}])
-        check.reconcile_zulip(client, summary, active=True)
-        self.assertEqual(client.sent, [])
-        self.assertEqual(client.updated, [])
-
-        clear = "## Expired Mathlib shim check\n\nNo replacements.\n"
-        check.reconcile_zulip(client, clear, active=False)
-        self.assertEqual(client.updated[0][0], 4)
-        self.assertTrue(client.updated[0][1].startswith("✅"))
-
-        resolved = client.updated[0][1]
-        client = FakeZulip([{"id": 4, "sender_id": 7, "content": resolved}])
-        check.reconcile_zulip(client, summary, active=True)
-        self.assertEqual(len(client.sent), 1)
-        self.assertEqual(client.updated, [])
-
-    def test_notification_report_round_trip(self):
+    def test_fail_on_available_is_the_bump_worker_gate(self):
         with tempfile.TemporaryDirectory() as temporary:
-            report = pathlib.Path(temporary) / "report.json"
-            report.write_text(
-                json.dumps({"summary": "hello", "active": True}), encoding="utf-8"
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "Old.lean").write_text(
+                "This is a temporary Mathlib shim.", encoding="utf-8"
             )
-            self.assertEqual(check.load_notification_report(report), ("hello", True))
-
+            manifest = source_root / "mathlib-shims.json"
+            manifest.write_text(json.dumps([{
+                "sources": ["TauCeti/Old.lean"],
+                "declarations": ["Upstream.done"],
+                "note": "exact replacement",
+            }]), encoding="utf-8")
+            common = ["--repo-root", str(root), "--manifest", str(manifest)]
+            with mock.patch.object(check, "probe_declarations", return_value={"Upstream.done"}):
+                self.assertEqual(check.main(common), 0)
+                self.assertEqual(check.main([*common, "--fail-on-available"]), 1)
 
 if __name__ == "__main__":
     unittest.main()
