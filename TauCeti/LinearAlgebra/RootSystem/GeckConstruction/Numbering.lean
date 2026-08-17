@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Basis
-public import TauCeti.LinearAlgebra.RootSystem.Isomorphism
+import TauCeti.LinearAlgebra.RootSystem.Isomorphism
 
 /-!
 # The simple-root numbering in Geck's construction
@@ -23,12 +23,12 @@ input root datum, without choosing a second relabelling.
 
 ## Main results
 
-* `TauCeti.geckEquivRootSystem_indexEquiv`: the root-index equivalence preserves the chosen
+* `TauCeti.geckEquivRootSystem_indexEquiv_apply`: the root-index equivalence preserves the chosen
   simple-root index.
 * `TauCeti.geckEquivRootSystem_weightMap_root`: the weight map sends a chosen simple
   root to the corresponding simple weight.
 * `TauCeti.geckEquivRootSystem_coweightEquiv_symm_coroot`: the covariant inverse coweight
-  equivalence sends the corresponding simple coroot to the input simple coroot.
+  equivalence sends the input simple coroot to the corresponding Geck simple coroot.
 * `TauCeti.map_geckEquivRootSystem`: transporting the input base along the equivalence gives
   Geck's distinguished base exactly.
 
@@ -42,8 +42,6 @@ This supplies the numbered Chevalley-basis input to Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`. That layer constructs the pinned group schemes whose
 numbered simple root subgroups are consumed by milestone L0 of the `CFSGStatement` roadmap.
 -/
-
-public section
 
 namespace TauCeti
 
@@ -62,41 +60,45 @@ variable {ι : Type u} {K : Type v} {M : Type w} {N : Type*}
 
 /-- Mathlib's equivalence from the input root system to the root system of Geck's Lie algebra
 sends an input simple-root index to the simple-weight index with the same chosen-base label. -/
-@[simp] theorem geckEquivRootSystem_indexEquiv (i : b.support) :
+@[simp] public theorem geckEquivRootSystem_indexEquiv_apply (i : b.support) :
     (equivRootSystem b).indexEquiv i = (basis b).baseSupportEquiv i := by
-  exact equivOfCartanMatrixEq_indexEquiv_apply b (basis b).base
-    (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
+  simpa only [equivRootSystem] using
+    equivOfCartanMatrixEq_indexEquiv_apply b (basis b).base
+      (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
 
 /-- The inverse of Mathlib's root-index equivalence sends the corresponding Geck simple-weight
 index back to the input simple-root index. -/
-@[simp] theorem geckEquivRootSystem_indexEquiv_symm (i : b.support) :
+@[simp] public theorem geckEquivRootSystem_indexEquiv_symm_apply (i : b.support) :
     (equivRootSystem b).indexEquiv.symm ((basis b).baseSupportEquiv i) = i := by
-  rw [← geckEquivRootSystem_indexEquiv b i]
+  rw [← geckEquivRootSystem_indexEquiv_apply b i]
   exact (equivRootSystem b).indexEquiv.symm_apply_apply i
 
 /-- The weight map underlying Mathlib's Geck root-system equivalence sends each chosen
 simple root to the corresponding simple weight of the distinguished Lie-algebra basis. -/
-@[simp] theorem geckEquivRootSystem_weightMap_root (i : b.support) :
+@[simp] public theorem geckEquivRootSystem_weightMap_root (i : b.support) :
     (equivRootSystem b).toHom.weightMap (P.root i) =
       (rootSystem (cartanSubalgebra' b)).root ((basis b).baseSupportEquiv i) := by
-  exact equivOfCartanMatrixEq_weightMap_root b (basis b).base
-    (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
+  simpa only [equivRootSystem] using
+    equivOfCartanMatrixEq_weightMap_root b (basis b).base
+      (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
 
 /-- The covariant inverse of the coweight equivalence sends the input simple coroot to the
 corresponding simple coroot of Geck's Lie algebra. -/
-@[simp] theorem geckEquivRootSystem_coweightEquiv_symm_coroot (i : b.support) :
+@[simp] public theorem geckEquivRootSystem_coweightEquiv_symm_coroot (i : b.support) :
     (_root_.RootPairing.Equiv.coweightEquiv P (rootSystem (cartanSubalgebra' b))
         (equivRootSystem b)).symm (P.coroot i) =
       (rootSystem (cartanSubalgebra' b)).coroot ((basis b).baseSupportEquiv i) := by
-  exact equivOfCartanMatrixEq_coweightEquiv_symm_coroot b (basis b).base
-    (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
+  simpa only [equivRootSystem] using
+    equivOfCartanMatrixEq_coweightEquiv_symm_coroot b (basis b).base
+      (basis b).baseSupportEquiv (by simp [(basis b).cartanMatrix_base_eq]) i
 
 /-- Mathlib's Geck root-system equivalence is an equivalence of based root systems: transporting
 the chosen input base along it gives the distinguished base of Geck's Lie-algebra basis. -/
-@[simp] theorem map_geckEquivRootSystem :
+@[simp] public theorem map_geckEquivRootSystem :
     b.map (equivRootSystem b) = (basis b).base := by
-  exact map_equivOfCartanMatrixEq b (basis b).base (basis b).baseSupportEquiv
-    (by simp [(basis b).cartanMatrix_base_eq])
+  simpa only [equivRootSystem] using
+    map_equivOfCartanMatrixEq b (basis b).base (basis b).baseSupportEquiv
+      (by simp [(basis b).cartanMatrix_base_eq])
 
 end
 
