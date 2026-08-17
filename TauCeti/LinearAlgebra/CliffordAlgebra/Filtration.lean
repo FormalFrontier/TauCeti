@@ -131,11 +131,17 @@ filtration step rather than a zero quotient. -/
 abbrev filtrationPrevious (Q : QuadraticForm R M) : ℕ → Submodule R (CliffordAlgebra Q) :=
   TauCeti.Algebra.wordFiltrationPrevious (ι Q)
 
-@[simp]
+/-- The preceding filtration step is trivial in degree zero.
+
+The generic `TauCeti.Algebra.wordFiltrationPrevious_zero` is the `simp` lemma and reaches this
+statement through the reducible `filtrationPrevious`; this Clifford-facing name is for `rw`. -/
 theorem filtrationPrevious_zero (Q : QuadraticForm R M) : filtrationPrevious Q 0 = ⊥ :=
   TauCeti.Algebra.wordFiltrationPrevious_zero (ι Q)
 
-@[simp]
+/-- In successor degree the preceding filtration step is the previous step of the filtration.
+
+The generic `TauCeti.Algebra.wordFiltrationPrevious_succ` is the `simp` lemma and reaches this
+statement through the reducible `filtrationPrevious`; this Clifford-facing name is for `rw`. -/
 theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPrevious Q (k + 1) = filtration Q k :=
   TauCeti.Algebra.wordFiltrationPrevious_succ (ι Q) k
@@ -152,24 +158,33 @@ abbrev filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
   (filtrationPrevious Q k).submoduleOf (filtration Q k)
 
 /-- Membership in the restricted preceding filtration is ambient membership in the preceding
-filtration step. -/
-@[simp]
+filtration step.
+
+The generic `TauCeti.Algebra.wordFiltration.mem_previousRestricted_iff` is the `simp` lemma and
+reaches this statement through the reducible `filtrationPreviousRestricted`; this Clifford-facing
+name is for `rw`. -/
 theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
     (x : filtration Q k) :
     x ∈ filtrationPreviousRestricted Q k ↔
       (x : CliffordAlgebra Q) ∈ filtrationPrevious Q k :=
   Iff.rfl
 
-/-- The restricted preceding filtration is trivial in degree zero. -/
-@[simp]
+/-- The restricted preceding filtration is trivial in degree zero.
+
+The generic `TauCeti.Algebra.wordFiltration.previousRestricted_zero` is the `simp` lemma and
+reaches this statement through the reducible `filtrationPreviousRestricted`; this Clifford-facing
+name is for `rw`. -/
 theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
     filtrationPreviousRestricted Q 0 = ⊥ := by
   ext x
   simp [filtrationPreviousRestricted, Submodule.submoduleOf]
 
 /-- In successor degree, the restricted preceding filtration is the preceding filtration step
-viewed inside the successor step. -/
-@[simp]
+viewed inside the successor step.
+
+The generic `TauCeti.Algebra.wordFiltration.previousRestricted_succ` is the `simp` lemma and
+reaches this statement through the reducible `filtrationPreviousRestricted`; this Clifford-facing
+name is for `rw`. -/
 theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPreviousRestricted Q (k + 1) =
       Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k) := by
@@ -199,8 +214,10 @@ of them whenever `i ≤ j`. -/
 theorem filtration_mono : Monotone (filtration Q) :=
   TauCeti.Algebra.wordFiltration_mono (ι Q)
 
-/-- The zeroth step of the filtration is the module of scalars, the span of the empty product. -/
-@[simp]
+/-- The zeroth step of the filtration is the module of scalars, the span of the empty product.
+
+The generic `TauCeti.Algebra.wordFiltration_zero` is the `simp` lemma and reaches this statement
+through the reducible `filtration`; this Clifford-facing name is for `rw`. -/
 theorem filtration_zero : filtration Q 0 = 1 :=
   TauCeti.Algebra.wordFiltration_zero (ι Q)
 
@@ -281,8 +298,10 @@ theorem filtration_succ_eq_sup (k : ℕ) :
     filtration Q (k + 1) = filtration Q k ⊔ LinearMap.range (ι Q) ^ (k + 1) :=
   TauCeti.Algebra.wordFiltration_succ_eq_sup (ι Q) k
 
-/-- The first step of the filtration is the scalars together with the generators. -/
-@[simp]
+/-- The first step of the filtration is the scalars together with the generators.
+
+The generic `TauCeti.Algebra.wordFiltration_one` is the `simp` lemma and reaches this statement
+through the reducible `filtration`; this Clifford-facing name is for `rw`. -/
 theorem filtration_one : filtration Q 1 = 1 ⊔ LinearMap.range (ι Q) :=
   TauCeti.Algebra.wordFiltration_one (ι Q)
 
