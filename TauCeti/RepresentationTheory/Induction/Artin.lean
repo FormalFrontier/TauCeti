@@ -54,6 +54,9 @@ Brauer's integral induction theorem, whose denominator is `1`.
   are exactly Artin's target.
 * `TauCeti.ClassFunction.exists_zsmul_mem_indVirtualCharacters_isElementary`: Artin's rational
   theorem, read for the elementary subgroups.
+
+## Implementation notes
+
 The lattice descent is a general statement about a `ℤ`-lattice inside a finite-dimensional vector
 space and has nothing to do with characters, but it is kept `private` here rather than given a home
 of its own in the linear-algebra hierarchy, there being exactly one use of it.

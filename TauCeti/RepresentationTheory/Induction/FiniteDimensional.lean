@@ -22,11 +22,11 @@ Induction on finite-dimensional representations is packaged both objectwise, as 
 functorially, as `indFDRepFunctor`, the latter naturally isomorphic to `Rep.indFunctor` under the
 forgetful functor to `Rep k G`.
 
-The objectwise construction, its character formula, dimension theorem, and functor on `FDRep`
-allow the scalar field and group to live in separate universes. It uses a small model of Mathlib's
-induced carrier, compared by `indFDRepForgetEquiv`. The comparison isomorphism and natural
-isomorphism into Mathlib's `Rep` category retain a common universe because that category is indexed
-by one carrier universe.
+The objectwise construction, dimension theorem, and functor on `FDRep` allow the scalar field and
+group to live in separate universes. It uses a small model of Mathlib's induced carrier, compared by
+`indFDRepForgetEquiv`. The comparison isomorphism and natural isomorphism into Mathlib's `Rep`
+category retain a common universe because that category is indexed by one carrier universe. The
+corresponding character formula is in `TauCeti.RepresentationTheory.Induction.Character`.
 
 ## References
 
@@ -366,7 +366,8 @@ noncomputable def indFDRepMap {k : Type u} {G : Type v} [Field k] [Group G] {S :
 /-- `indFDRepMap` applies Mathlib's induced intertwiner between the two small-carrier comparison
 equivalences. -/
 @[simp]
-theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+theorem forget₂_map_indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G]
+    {S : Subgroup G}
     [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B)
     (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
     ((forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f)).hom x =
@@ -388,7 +389,7 @@ theorem forget₂_map_indFDRepMap {k G : Type u} [Field k] [Group G] {S : Subgro
   simp only [FGModuleCat.obj_carrier, Rep.hom_comp,
     Representation.IntertwiningMap.comp_toLinearMap, LinearMap.coe_comp,
     Representation.IntertwiningMap.coe_toLinearMap, Function.comp_apply,
-    indFDRepMap_apply, Rep.indFunctor_map]
+    forget₂_map_indFDRepMap_apply, Rep.indFunctor_map]
   rw [indFDRepForgetIso_hom_hom_apply, indFDRepForgetIso_inv_hom_apply]
 
 /-- Induction of intertwiners preserves identities. -/
@@ -468,8 +469,8 @@ original representation. -/
 theorem finrank_indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) :
     Module.finrank k (indFDRep A) = S.index * Module.finrank k A := by
-  rw [← finrank_forgetFDRep (indFDRep A),
+  rw [← FDRep.finrank_forget₂_obj (indFDRep A),
     LinearEquiv.finrank_eq (indFDRepForgetEquiv A).toLinearEquiv,
-    Rep.finrank_ind, finrank_forgetFDRep]
+    Rep.finrank_ind, FDRep.finrank_forget₂_obj]
 
 end TauCeti
