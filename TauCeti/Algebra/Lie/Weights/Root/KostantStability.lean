@@ -42,8 +42,9 @@ Chevalley normalization
 bracket coefficient as `± (p + 1)`.
 
 The remaining generators of the lattice are handled directly: `x (-α)` spans an `sl₂`-triple with
-`x α`, where the chain is short enough to compute by hand, and the coroots are killed after one
-bracket, with an integral coefficient because Cartan integers are integers.
+`x α`, where the chain is short enough to compute by hand, and a coroot `β∨` is sent by the first
+bracket to `-α β∨ • x α`, an integral multiple of `x α` because Cartan integers are integers, and
+by the second bracket to zero.
 
 Together with the binomial coefficients of the Cartan generators, which act diagonally on root
 vectors, this is exactly the invariance needed to make `L` a module over the Kostant `ℤ`-form of
