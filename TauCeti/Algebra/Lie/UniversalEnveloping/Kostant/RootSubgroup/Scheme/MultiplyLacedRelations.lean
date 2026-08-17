@@ -11,9 +11,9 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 /-!
 # Multiply-laced Chevalley relations for Kostant root-subgroup scheme morphisms
 
-This file proves the `B`, `C`, and `F₄` Chevalley commutator relation on scheme-valued points of
-the represented root-subgroup morphisms `xᵢ : 𝔾ₐ → GLₙ`. For the root string
-`β`, `α + β`, `2α + β`, the relation is
+This file transports a conditional multiply-laced Chevalley commutator relation to scheme-valued
+points of the represented root-subgroup morphisms `xᵢ : 𝔾ₐ → GLₙ`. Under the stated bracket and
+nilpotence hypotheses for the chain `β`, `α + β`, `2α + β`, the relation is
 
 ```text
 ⁅x_α(t), x_β(u)⁆ = x_{α+β}(c t u) x_{2α+β}(d t² u).

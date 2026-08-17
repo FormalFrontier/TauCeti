@@ -10,8 +10,8 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Cheva
 /-!
 # Multiply-laced Chevalley relations for represented Kostant root subgroups
 
-For roots `α` and `β` in types `B`, `C`, or `F₄`, the positive part of their rank-two root
-string can contain both `α + β` and `2α + β`. The corresponding Kostant root subgroups satisfy
+For roots `α` and `β` whose positive rank-two root string contains both `α + β` and `2α + β`,
+this file proves, under the displayed bracket and nilpotence hypotheses, the conditional relation
 
 ```text
 ⁅x_α(t), x_β(u)⁆ = x_{α+β}(c t u) x_{2α+β}(d t² u).
@@ -89,14 +89,17 @@ theorem commutatorElement_kostantRootSubgroupPoints_of_lie_lie_eq
         kostantRootSubgroupPoints e h ρ M hM j hj g⁆ =
       kostantRootSubgroupPoints e h ρ M hM k hk p *
         kostantRootSubgroupPoints e h ρ M hM l hl q := by
-  rw [commutatorElement_def,
+  have hconj :=
     kostantRootSubgroupPoints_conj_of_lie_lie_eq e h ρ M hM hij hiij hil hjk hkl
-      hi hj hk hl f g p q hp hq]
+      hi hj hk hl f g p q hp hq
+  change MulAut.conj (kostantRootSubgroupPoints e h ρ M hM i hi f)
+      (kostantRootSubgroupPoints e h ρ M hM j hj g) = _ at hconj
+  rw [conj_eq_commutatorElement_mul] at hconj
   have hcomm :=
     (commute_kostantRootSubgroupPoints e h ρ M hM hjk hj hk g p).mul_right
       (commute_kostantRootSubgroupPoints e h ρ M hM hjl hj hl g q)
-  conv_lhs => lhs; rw [mul_assoc]
-  rw [hcomm.eq, mul_assoc, mul_inv_cancel, mul_one]
+  rw [mul_assoc, hcomm.eq] at hconj
+  exact mul_right_cancel hconj
 
 /-- The multiply-laced Chevalley commutator relation with the two output points written out at
 parameters `c t u` and `d t² u`. -/
