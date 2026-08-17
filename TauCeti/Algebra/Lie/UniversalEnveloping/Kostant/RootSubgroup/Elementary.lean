@@ -45,7 +45,7 @@ is built from; it is injective as soon as the value ring is reduced.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFunctor`: the resulting group-valued functor.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius`: the `p ^ n`-power Frobenius
   endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring and
-  `exists_kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change.
+  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change.
 
 ## References
 
@@ -104,6 +104,17 @@ theorem kostantRootSubgroupParam_apply (A : CommAlgCat.{w} ℤ) (t : Multiplicat
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t) :=
   kostantRootSubgroupParam_apply_def e h ρ M hM i hnil A t
 
+/-- The parametrized root-subgroup element acts through the corresponding base-changed
+divided-power exponential. -/
+theorem kostantRootSubgroupParam_val_apply (A : CommAlgCat.{w} ℤ) (t : Multiplicative A)
+    (z : A ⊗[ℤ] M) :
+    (kostantRootSubgroupParam e h ρ M hM i hnil A t).val z =
+      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
+        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
+        (Multiplicative.toAdd t) z := by
+  rw [kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val,
+    MulEquiv.apply_symm_apply]
+
 /-- Scalar extension of automorphisms along a morphism of value rings carries the root-subgroup
 element with parameter `t` to the one with parameter `φ t`.
 
@@ -150,17 +161,53 @@ theorem kostantElementarySubgroup_eq_closure (A : CommAlgCat.{w} ℤ) :
       Subgroup.closure (⋃ i, Set.range (kostantRootSubgroupParam e h ρ M hM i (hnil i) A)) :=
   kostantElementarySubgroup_eq_closure_def e h ρ M hM hnil A
 
+/-- A homomorphism carrying every parametrized root-subgroup element to another such element
+carries the generated elementary group into the target elementary group. -/
+theorem map_kostantElementarySubgroup_le_of_map_param {A B : CommAlgCat.{w} ℤ}
+    (f : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) →*
+      LinearMap.GeneralLinearGroup B (B ⊗[ℤ] M))
+    (σ : I → I) (τ : Multiplicative A → Multiplicative B)
+    (hf : ∀ i t, f (kostantRootSubgroupParam e h ρ M hM i (hnil i) A t) =
+      kostantRootSubgroupParam e h ρ M hM (σ i) (hnil (σ i)) B (τ t)) :
+    (kostantElementarySubgroup e h ρ M hM hnil A).map f ≤
+      kostantElementarySubgroup e h ρ M hM hnil B := by
+  rw [kostantElementarySubgroup_eq_closure, MonoidHom.map_closure, Subgroup.closure_le]
+  rintro - ⟨-, ⟨-, ⟨i, rfl⟩, t, rfl⟩, rfl⟩
+  rw [hf]
+  exact kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil B (σ i) (τ t)
+
+/-- If the index and parameter maps are surjective, a homomorphism with the specified action on
+root-subgroup elements carries the elementary group onto the target elementary group. -/
+theorem map_kostantElementarySubgroup_eq_of_map_param_of_surjective
+    {A B : CommAlgCat.{w} ℤ}
+    (f : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) →*
+      LinearMap.GeneralLinearGroup B (B ⊗[ℤ] M))
+    (σ : I → I) (τ : Multiplicative A → Multiplicative B)
+    (hf : ∀ i t, f (kostantRootSubgroupParam e h ρ M hM i (hnil i) A t) =
+      kostantRootSubgroupParam e h ρ M hM (σ i) (hnil (σ i)) B (τ t))
+    (hσ : Function.Surjective σ) (hτ : Function.Surjective τ) :
+    (kostantElementarySubgroup e h ρ M hM hnil A).map f =
+      kostantElementarySubgroup e h ρ M hM hnil B := by
+  refine le_antisymm
+    (map_kostantElementarySubgroup_le_of_map_param e h ρ M hM hnil f σ τ hf) ?_
+  rw [kostantElementarySubgroup_eq_closure, Subgroup.closure_le]
+  rintro - ⟨-, ⟨i, rfl⟩, t, rfl⟩
+  obtain ⟨j, rfl⟩ := hσ i
+  obtain ⟨u, rfl⟩ := hτ t
+  exact ⟨kostantRootSubgroupParam e h ρ M hM j (hnil j) A u,
+    kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A j u, hf j u⟩
+
 /-- Scalar extension along a morphism of value rings carries the elementary group into the
 elementary group. -/
 theorem map_kostantElementarySubgroup_le {A B : CommAlgCat.{w} ℤ} (φ : A ⟶ B) :
     (kostantElementarySubgroup e h ρ M hM hnil A).map
         (GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ).hom ≤
-      kostantElementarySubgroup e h ρ M hM hnil B := by
-  rw [kostantElementarySubgroup_eq_closure, MonoidHom.map_closure, Subgroup.closure_le]
-  rintro - ⟨-, ⟨-, ⟨i, rfl⟩, t, rfl⟩, rfl⟩
-  exact (mapScalarExtensionAutomorphisms_kostantRootSubgroupParam
-      e h ρ M hM i (hnil i) φ t) ▸
-    kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil B i _
+      kostantElementarySubgroup e h ρ M hM hnil B :=
+  map_kostantElementarySubgroup_le_of_map_param e h ρ M hM hnil
+    (GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ).hom id
+    (fun t => Multiplicative.ofAdd (φ.hom (Multiplicative.toAdd t)))
+    (fun i t => mapScalarExtensionAutomorphisms_kostantRootSubgroupParam
+      e h ρ M hM i (hnil i) φ t)
 
 /-- A surjective morphism of value rings carries the elementary group *onto* the elementary group:
 every generator of the target is the image of a generator. -/
@@ -169,13 +216,14 @@ theorem map_kostantElementarySubgroup_of_surjective {A B : CommAlgCat.{w} ℤ} (
     (kostantElementarySubgroup e h ρ M hM hnil A).map
         (GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ).hom =
       kostantElementarySubgroup e h ρ M hM hnil B := by
-  refine le_antisymm (map_kostantElementarySubgroup_le e h ρ M hM hnil φ) ?_
-  rw [kostantElementarySubgroup_eq_closure, Subgroup.closure_le]
-  rintro - ⟨-, ⟨i, rfl⟩, u, rfl⟩
-  obtain ⟨t, rfl⟩ := hφ (Multiplicative.toAdd u)
-  exact ⟨kostantRootSubgroupParam e h ρ M hM i (hnil i) A (Multiplicative.ofAdd t),
-    kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A i _,
-    mapScalarExtensionAutomorphisms_kostantRootSubgroupParam e h ρ M hM i (hnil i) φ _⟩
+  apply map_kostantElementarySubgroup_eq_of_map_param_of_surjective e h ρ M hM hnil
+    (GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ).hom id
+    (fun t => Multiplicative.ofAdd (φ.hom (Multiplicative.toAdd t)))
+    (fun i t => mapScalarExtensionAutomorphisms_kostantRootSubgroupParam
+      e h ρ M hM i (hnil i) φ t) Function.surjective_id
+  intro u
+  obtain ⟨t, ht⟩ := hφ (Multiplicative.toAdd u)
+  exact ⟨Multiplicative.ofAdd t, by simpa using congrArg Multiplicative.ofAdd ht⟩
 
 /-- The group homomorphism between elementary groups induced by a morphism of value rings. -/
 noncomputable def kostantElementaryMap {A B : CommAlgCat.{w} ℤ} (φ : A ⟶ B) :
@@ -280,20 +328,15 @@ section Frobenius
 
 variable (p n : ℕ) (A : CommAlgCat.{w} ℤ) [ExpChar A p]
 
-/-- The `p ^ n`-power Frobenius as an endomorphism of the value ring.
-
-Kept private: it is the value-ring input to `kostantElementaryFrobenius`, and every statement
-below is about the induced endomorphism of the elementary group. A ring endomorphism of a
-`ℤ`-algebra commutes with the structure map because ring homomorphisms preserve integer casts, so
-no characteristic hypothesis enters the `ℤ`-algebra structure. -/
-private noncomputable def iterateFrobeniusValueHom : A ⟶ A :=
+/-- The `p ^ n`-power Frobenius as an endomorphism of the value ring. -/
+noncomputable def iterateFrobeniusValueHom : A ⟶ A :=
   CommAlgCat.ofHom
     { iterateFrobenius (A : Type w) p n with
       commutes' := fun r => by simp }
 
-/-- The underlying algebra map of the Frobenius endomorphism of the value ring is the
-`p ^ n`-th power map. Kept private alongside `iterateFrobeniusValueHom`. -/
-private theorem hom_iterateFrobeniusValueHom (x : A) :
+/-- The Frobenius endomorphism of the value ring raises elements to their `p ^ n`-th powers. -/
+@[simp]
+theorem iterateFrobeniusValueHom_apply (x : A) :
     (iterateFrobeniusValueHom p n A).hom x = x ^ p ^ n :=
   iterateFrobenius_def p n x
 
@@ -307,16 +350,12 @@ noncomputable def kostantElementaryFrobenius :
       kostantElementarySubgroup e h ρ M hM hnil A :=
   kostantElementaryMap e h ρ M hM hnil (iterateFrobeniusValueHom p n A)
 
-/-- The Frobenius endomorphism of the elementary group is induced by an endomorphism of the value
-ring.
-
-This is the interface through which statements about `kostantElementaryMap` that hold uniformly in
-the morphism of value rings specialize to Frobenius from another module. The morphism is
-`x ↦ x ^ p ^ n` and is deliberately not itself exposed. -/
-theorem exists_kostantElementaryFrobenius_eq_kostantElementaryMap :
-    ∃ φ : A ⟶ A, kostantElementaryFrobenius e h ρ M hM hnil p n A =
-      kostantElementaryMap e h ρ M hM hnil φ :=
-  ⟨iterateFrobeniusValueHom p n A, rfl⟩
+/-- The Frobenius endomorphism of the elementary group is induced by the Frobenius endomorphism of
+the value ring. -/
+theorem kostantElementaryFrobenius_eq_kostantElementaryMap :
+    kostantElementaryFrobenius e h ρ M hM hnil p n A =
+      kostantElementaryMap e h ρ M hM hnil (iterateFrobeniusValueHom p n A) :=
+  by rfl
 
 /-- The Frobenius endomorphism raises the parameter of a root-subgroup element to the
 `p ^ n`-th power. -/
@@ -328,14 +367,14 @@ theorem kostantElementaryFrobenius_kostantRootSubgroupParam (i : I) (t : Multipl
       kostantRootSubgroupParam e h ρ M hM i (hnil i) A
         (Multiplicative.ofAdd (Multiplicative.toAdd t ^ p ^ n)) := by
   rw [kostantElementaryFrobenius, kostantElementaryMap_kostantRootSubgroupParam,
-    hom_iterateFrobeniusValueHom]
+    iterateFrobeniusValueHom_apply]
 
 /-- The zeroth Frobenius iterate is the identity. -/
 @[simp] theorem kostantElementaryFrobenius_zero :
     kostantElementaryFrobenius e h ρ M hM hnil p 0 A = MonoidHom.id _ := by
   have hid : iterateFrobeniusValueHom p 0 A = 𝟙 A :=
     CommAlgCat.hom_ext <| AlgHom.ext fun x => by
-      rw [hom_iterateFrobeniusValueHom, pow_zero, pow_one]
+      rw [iterateFrobeniusValueHom_apply, pow_zero, pow_one]
       rfl
   rw [kostantElementaryFrobenius, hid, kostantElementaryMap_id]
 
@@ -347,8 +386,8 @@ theorem kostantElementaryFrobenius_add (m : ℕ) :
   have hadd : iterateFrobeniusValueHom p (n + m) A =
       iterateFrobeniusValueHom p m A ≫ iterateFrobeniusValueHom p n A :=
     CommAlgCat.hom_ext <| AlgHom.ext fun x => by
-      rw [hom_iterateFrobeniusValueHom, CommAlgCat.hom_comp, AlgHom.comp_apply,
-        hom_iterateFrobeniusValueHom, hom_iterateFrobeniusValueHom, ← pow_mul, ← pow_add,
+      rw [iterateFrobeniusValueHom_apply, CommAlgCat.hom_comp, AlgHom.comp_apply,
+        iterateFrobeniusValueHom_apply, iterateFrobeniusValueHom_apply, ← pow_mul, ← pow_add,
         Nat.add_comm n m]
   rw [kostantElementaryFrobenius, kostantElementaryFrobenius, kostantElementaryFrobenius, hadd,
     kostantElementaryMap_comp]
@@ -364,8 +403,8 @@ theorem kostantElementaryFrobenius_injective [IsReduced A] :
   have hφ : Function.Injective (iterateFrobeniusValueHom p n A).hom := by
     intro x y hxy
     refine iterateFrobenius_inj (A : Type w) p n ?_
-    rw [iterateFrobenius_def, iterateFrobenius_def, ← hom_iterateFrobeniusValueHom p n A,
-      ← hom_iterateFrobeniusValueHom p n A]
+    rw [iterateFrobenius_def, iterateFrobenius_def, ← iterateFrobeniusValueHom_apply p n A,
+      ← iterateFrobeniusValueHom_apply p n A]
     exact hxy
   intro g g' hgg'
   refine Subtype.ext (GeneralLinear.mapScalarExtensionAutomorphisms_injective _
