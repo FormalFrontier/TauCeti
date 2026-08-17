@@ -73,7 +73,7 @@ theorem torusCharacter_def (s : κ → Rˣ) (μ : κ → ℤ) :
 
 /-- Writing a finite-support exponent vector as a function identifies its character value with
 the corresponding finitely supported product. -/
-theorem torusCharacter_equivFunOnFinite (s : κ → Rˣ) (m : κ →₀ ℤ) :
+@[simp] theorem torusCharacter_equivFunOnFinite (s : κ → Rˣ) (m : κ →₀ ℤ) :
     torusCharacter s (Finsupp.equivFunOnFinite m) = m.prod fun i z ↦ s i ^ z := by
   rw [torusCharacter, Finsupp.prod_zpow]
   rfl
