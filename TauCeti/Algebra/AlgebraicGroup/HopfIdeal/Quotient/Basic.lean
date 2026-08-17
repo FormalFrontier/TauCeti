@@ -174,6 +174,24 @@ noncomputable def quotientIsoOfIso (e : H ≅ K) (I : HopfIdeal R K) :
         obtain ⟨y, rfl⟩ := Ideal.Quotient.mkₐ_surjective R I.toIdeal q
         simp [φ, ψ] }
 
+/-- The forward map of the quotient isomorphism commutes with the quotient morphisms. -/
+@[simp]
+lemma mkQuotient_comp_quotientIsoOfIso_hom (e : H ≅ K) (I : HopfIdeal R K) :
+    mkQuotient H (I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2) ≫
+        (quotientIsoOfIso e I).hom =
+      e.hom ≫ mkQuotient K I := by
+  simp only [quotientIsoOfIso]
+  apply mkQuotient_comp_liftQuotient
+
+/-- The inverse map of the quotient isomorphism commutes with the quotient morphisms. -/
+@[simp]
+lemma mkQuotient_comp_quotientIsoOfIso_inv (e : H ≅ K) (I : HopfIdeal R K) :
+    mkQuotient K I ≫ (quotientIsoOfIso e I).inv =
+      e.inv ≫ mkQuotient H
+        (I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2) := by
+  simp only [quotientIsoOfIso]
+  apply mkQuotient_comp_liftQuotient
+
 private lemma bot_le_ker_id (H : _root_.CommHopfAlgCat.{v} R) :
     (⊥ : HopfIdeal R H).toIdeal ≤
       RingHom.ker (𝟙 H : H ⟶ H).hom.toAlgHom.toRingHom := by
