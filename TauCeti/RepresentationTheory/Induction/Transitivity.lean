@@ -33,12 +33,15 @@ The route to these formulas is the mates calculus rather than an unfolding of
 `Adjunction.leftAdjointCompIso`. The identity `CategoryTheory.unit_conjugateEquiv` says that
 conjugate natural transformations agree after composing with the two units; since the unit of the
 induction--restriction adjunction is the generator map `a ↦ ⟦1 ⊗ₜ a⟧` and `resFunctorCompIso` is
-the identity on vectors, that identity *is* the value of the induction-in-stages isomorphism on
-`⟦1 ⊗ₜ a⟧`. Equivariance then spreads the single value over all group coordinates, using the
-relation `⟦κ ⊗ₜ ⟦h ⊗ₜ a⟧⟧ = ⟦ψ(h) κ ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` inside the coinvariants
+the identity on vectors, that identity computes the *inverse* isomorphism
+`(indFunctorCompIso φ ψ).inv` on the generator `⟦1 ⊗ₜ a⟧` of the singly induced representation,
+which is where both units land. Equivariance then spreads that single value over all group
+coordinates, giving the inverse on every generator, and the forward formula follows by inverting
+it. Both steps use the relation `⟦κ ⊗ₜ ⟦h ⊗ₜ a⟧⟧ = ⟦ψ(h) κ ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` inside the coinvariants
 (`TauCeti.Rep.indV_mk_ind_mk`), which also says that the elements with inner coordinate `1`
 generate, so that the formula determines the map. The coinduction side is the same argument run
-through `CategoryTheory.conjugateEquiv_counit_symm` and the counit, which is evaluation at `1`.
+through `CategoryTheory.conjugateEquiv_counit_symm` and the counit, which is evaluation at `1`;
+there it is the forward isomorphism that the counits compute, and the inverse that is derived.
 
 ## Main definitions
 
@@ -73,6 +76,10 @@ The coinduction formulas are not `simp` lemmas either, for a different reason: t
 sides carry the source and target of `(coindFunctorCompIso φ ψ).hom.app A` as implicit arguments,
 and `simp` rewrites those with `CategoryTheory.Functor.comp_obj` and `Rep.coindFunctor_obj`, so the
 left-hand sides are again not in `simp`-normal form (the `simpNF` linter rejects the tag).
+Restating any of the four in the linter's normal form is not a way out: that form pairs rewritten
+implicit type arguments with an unrewritten `Representation.IntertwiningMap.instFunLike` instance
+argument, which no surface syntax elaborates to, and the writable approximations to it pass
+`simpNF` but never fire on a goal. All four are therefore consumed by `rw` or `exact`.
 
 ## References
 
