@@ -18,8 +18,9 @@ public section
 An integral root datum carries its roots and coroots on the standard lattices `κ → ℤ`, paired by
 the dot product. The constructions which build a Lie algebra out of a root system — Serre's
 presentation, and Geck's construction — instead want a root system over a field of characteristic
-zero. This file moves such a pairing along a ring homomorphism, applying the structure map entrywise
-to every root and coroot and keeping the same reflection permutation.
+zero. This file moves such a pairing along an injective algebra map, expressed by
+`[FaithfulSMul R S]`, applying the structure map entrywise to every root and coroot and keeping the
+same reflection permutation.
 
 Only the target pairing is chosen here: it is again the dot product, which is perfect on `κ → S` for
 every commutative ring `S` by `TauCeti.dotProductBilin_isPerfPair`. So the construction asks the
@@ -34,7 +35,8 @@ base ring rather than transported.
 
 ## Main definitions
 
-* `TauCeti.rootPairingBaseChange`: the base change of a dot-product root pairing along `R → S`.
+* `TauCeti.rootPairingBaseChange`: the base change of a dot-product root pairing along an injective
+  algebra map `R → S`, expressed by `[FaithfulSMul R S]`.
 * `TauCeti.rootPairingBaseChangeBase`: the base of the base change attached to a base of the
   original pairing, supported on the same indices.
 
@@ -134,7 +136,8 @@ variable [FaithfulSMul R S]
 
 /-- **Base change of a root pairing on the standard lattices.** The roots and coroots of
 `P : RootPairing ι R (κ → R) (κ → R)`, whose pairing is the dot product, are pushed entrywise
-along `algebraMap R S` and paired again by the dot product on `κ → S`. -/
+along the injective map `algebraMap R S`, with injectivity supplied by `[FaithfulSMul R S]`, and
+paired again by the dot product on `κ → S`. -/
 def rootPairingBaseChange : RootPairing ι S (κ → S) (κ → S) where
   toLinearMap := dotProductBilin S S
   root := ⟨fun i => Pi.algebraMap κ R S (P.root i),
@@ -209,7 +212,7 @@ instance isCrystallographic_rootPairingBaseChange [P.IsCrystallographic] :
 
 /-- The integral pairing of a crystallographic root pairing is unchanged by base change into a
 ring of characteristic zero. Hence so is the Cartan matrix of any base. -/
-theorem pairingIn_rootPairingBaseChange [CharZero S] [P.IsCrystallographic] (i j : ι) :
+@[simp] theorem pairingIn_rootPairingBaseChange [CharZero S] [P.IsCrystallographic] (i j : ι) :
     (rootPairingBaseChange S P hP).pairingIn ℤ i j = P.pairingIn ℤ i j := by
   refine algebraMap_injective ℤ S ?_
   rw [RootPairing.algebraMap_pairingIn, pairing_rootPairingBaseChange,
@@ -287,7 +290,7 @@ def supportEquivRootPairingBaseChangeBase :
   (rfl)
 
 /-- Base change does not change the Cartan matrix of a base. -/
-theorem cartanMatrix_rootPairingBaseChangeBase [CharZero S] [P.IsCrystallographic]
+@[simp] theorem cartanMatrix_rootPairingBaseChangeBase [CharZero S] [P.IsCrystallographic]
     (i j : (rootPairingBaseChangeBase S P hP b).support) :
     (rootPairingBaseChangeBase S P hP b).cartanMatrix i j =
       b.cartanMatrix (supportEquivRootPairingBaseChangeBase S P hP b i)
