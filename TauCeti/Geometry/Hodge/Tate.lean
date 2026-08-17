@@ -94,10 +94,9 @@ theorem tate_F (m p : ℤ) :
     (tate m).F p = if p ≤ -m then (⊤ : Submodule ℂ ℂ) else ⊥ :=
   (rfl)
 
-/-- The Tate Hodge structure is effective exactly when `m ≤ 0`. -/
-@[simp]
+/-- The Tate Hodge structure is effective exactly when `m ≤ 0`. This is not a `simp` lemma: with
+`HodgeStructureOn.isEffective_iff` tagged, `simp` already normalizes the left-hand side. -/
 theorem tate_isEffective_iff (m : ℤ) : (tate m).IsEffective ↔ m ≤ 0 := by
-  rw [HodgeStructureOn.isEffective_iff]
   simp [tate_F]
 
 /-- The only nonzero Hodge component of `ℤ(m)` is `H^{-m,-m}`. -/
@@ -126,16 +125,7 @@ theorem tate_piece (m p : ℤ) :
 @[simp]
 theorem finrank_tate_piece (m p : ℤ) :
     Module.finrank ℂ ((tate m).piece p) = if p = -m then 1 else 0 := by
-  by_cases hp : p = -m
-  · have hpiece : (tate m).piece p = (⊤ : Submodule ℂ ℂ) := by
-      rw [tate_piece]
-      simp [hp]
-    rw [hpiece]
-    simp [hp]
-  · have hpiece : (tate m).piece p = (⊥ : Submodule ℂ ℂ) := by
-      rw [tate_piece]
-      simp [hp]
-    rw [hpiece]
-    simp [hp]
+  rw [tate_piece, apply_ite (fun S : Submodule ℂ ℂ ↦ Module.finrank ℂ S)]
+  simp
 
 end TauCeti.Hodge

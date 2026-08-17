@@ -175,6 +175,7 @@ def IsEffective (hs : HodgeStructureOn W ω n) : Prop :=
   hs.F 0 = ⊤
 
 /-- Effectivity is the condition that the Hodge filtration begins at the whole space. -/
+@[simp]
 theorem isEffective_iff (hs : HodgeStructureOn W ω n) :
     hs.IsEffective ↔ hs.F 0 = ⊤ :=
   Iff.rfl
@@ -182,7 +183,7 @@ theorem isEffective_iff (hs : HodgeStructureOn W ω n) :
 /-- An effective Hodge filtration vanishes immediately above its weight. -/
 theorem IsEffective.F_eq_bot {hs : HodgeStructureOn W ω n} (h : hs.IsEffective) :
     hs.F (n + 1) = ⊥ := by
-  change hs.F 0 = ⊤ at h
+  rw [hs.isEffective_iff] at h
   have hconj : hs.conjF (n + 1) = ⊥ := by
     apply eq_bot_of_top_isCompl
     simpa only [h, sub_zero] using hs.isCompl_F_conjF 0
@@ -198,7 +199,7 @@ theorem isEffective_iff_F_eq_bot (hs : HodgeStructureOn W ω n) :
   constructor
   · exact IsEffective.F_eq_bot
   · intro h
-    change hs.F 0 = ⊤
+    rw [hs.isEffective_iff]
     apply eq_top_of_isCompl_bot
     simpa only [conjF_def, h, Submodule.map_bot, sub_zero] using hs.isCompl_F_conjF 0
 
