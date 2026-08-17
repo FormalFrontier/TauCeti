@@ -355,9 +355,14 @@ theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
         2 • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
     have hb := mul_sub_mul_eq_map_ι_lie ρ (e i) ⁅e i, e j⁆
     rw [hiij, hij, map_zsmul, map_zsmul, map_zsmul, map_zsmul] at hb
-    rw [show (2 : ℕ) • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) =
-      (2 * d) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l)) by
-        rw [two_mul, add_smul, two_smul]]
+    -- The straightening rule takes the second commutator as `2 • w`, with `w = d • e l` the
+    -- integral element `(ad eᵢ)² eⱼ / 2`, whereas the Lie hypothesis supplies it as `(2 * d) • e l`
+    -- with the two coefficients already multiplied. Doubling in `ℕ` and multiplying by `2` in `ℤ`
+    -- agree because both unfold to the sum of two copies.
+    have hcoeff : (2 : ℕ) • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) =
+        (2 * d) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l)) := by
+      rw [two_mul, add_smul, two_smul]
+    rw [hcoeff]
     exact sub_eq_iff_eq_add'.mp hb
   -- The remaining brackets vanish.
   have hcxw := commute_of_lie_eq_zero ρ hil
