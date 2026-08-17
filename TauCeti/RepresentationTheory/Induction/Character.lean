@@ -146,11 +146,6 @@ section Forget
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] (A : FDRep k G)
 
-/-- Forgetting finite-dimensionality keeps the same underlying module, so it keeps the
-`FiniteDimensional` instance. -/
-private instance : FiniteDimensional k ((forget₂ (FDRep k G) (Rep k G)).obj A) :=
-  inferInstanceAs (FiniteDimensional k A)
-
 /-- The forgetful functor `FDRep k G ⥤ Rep k G` preserves characters. -/
 private theorem character_forget₂ (g : G) :
     ((forget₂ (FDRep k G) (Rep k G)).obj A).ρ.character g = A.character g := by
