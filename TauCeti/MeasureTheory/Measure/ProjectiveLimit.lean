@@ -10,10 +10,11 @@ public import Mathlib.Probability.Kernel.IonescuTulcea.Traj
 /-!
 # Projective limits on countable products
 
-This file proves existence in the countable standard-Borel case of Kolmogorov's extension theorem.
-Mathlib defines projective measure families and proves uniqueness of their projective limits, while
-its Ionescu--Tulcea construction produces a path law from a sequence of transition kernels. Here a
-coherent family of finite-prefix laws is disintegrated to obtain those kernels.
+This file proves a countable version of Kolmogorov's extension theorem when every positive-indexed
+coordinate is standard Borel. Mathlib defines projective measure families and proves uniqueness of
+their projective limits, while its Ionescu--Tulcea construction produces a path law from a sequence
+of transition kernels. Here a coherent family of finite-prefix laws is disintegrated to obtain
+those kernels.
 
 ## Main result
 
@@ -24,7 +25,8 @@ coherent family of finite-prefix laws is disintegrated to obtain those kernels.
 
 This is the existence bridge between Mathlib's `MeasureTheory.IsProjectiveMeasureFamily` API and
 its Ionescu--Tulcea theorem. The construction follows the standard proof of Kolmogorov extension
-for countable products by successive disintegration.
+for countable products by successive disintegration, as prescribed by the
+`TauCetiRoadmap/OptimalTransport/README.md` Layer 0, item 4 target.
 -/
 
 public section
@@ -71,13 +73,13 @@ private theorem fst_successorLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i))
 
 /-- The transition kernel obtained by disintegrating the next prescribed prefix law over the
 current prefix. -/
-private def projectiveKernel [∀ n, StandardBorelSpace (X n)] [∀ n, Nonempty (X n)]
+private def projectiveKernel [∀ n, StandardBorelSpace (X (n + 1))] [∀ n, Nonempty (X n)]
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)] (n : ℕ) :
     Kernel (∀ i : Iic n, X i) (X (n + 1)) :=
   (successorLaw P n).condKernel
 
 private instance projectiveKernel.instIsMarkovKernel
-    [∀ n, StandardBorelSpace (X n)] [∀ n, Nonempty (X n)]
+    [∀ n, StandardBorelSpace (X (n + 1))] [∀ n, Nonempty (X n)]
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)] (n : ℕ) :
     IsMarkovKernel (projectiveKernel P n) := by
   rw [projectiveKernel]
@@ -95,20 +97,20 @@ private instance initialLaw.instIsProbabilityMeasure
 
 /-- The Ionescu--Tulcea path law built by successively disintegrating prescribed prefix laws. -/
 private def prefixLimit (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i))
-    [∀ n, IsProbabilityMeasure (P n)] [∀ n, StandardBorelSpace (X n)]
+    [∀ n, IsProbabilityMeasure (P n)] [∀ n, StandardBorelSpace (X (n + 1))]
     [∀ n, Nonempty (X n)] : Measure (∀ n, X n) :=
   Kernel.trajMeasure (initialLaw P) (projectiveKernel P)
 
 private instance prefixLimit.instIsProbabilityMeasure
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)]
-    [∀ n, StandardBorelSpace (X n)] [∀ n, Nonempty (X n)] :
+    [∀ n, StandardBorelSpace (X (n + 1))] [∀ n, Nonempty (X n)] :
     IsProbabilityMeasure (prefixLimit P) := by
   rw [prefixLimit]
   infer_instance
 
 private theorem map_frestrictLe_zero_prefixLimit
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)]
-    [∀ n, StandardBorelSpace (X n)] [∀ n, Nonempty (X n)] :
+    [∀ n, StandardBorelSpace (X (n + 1))] [∀ n, Nonempty (X n)] :
     (prefixLimit P).map (frestrictLe 0) = P 0 := by
   let e : (∀ i : Iic 0, X i) ≃ᵐ X 0 := MeasurableEquiv.piUnique _
   have hprefix : (prefixLimit P).map (frestrictLe 0) = (initialLaw P).map e.symm := by
@@ -123,7 +125,7 @@ private theorem map_frestrictLe_zero_prefixLimit
 
 private theorem map_frestrictLe_succ_prefixLimit
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)]
-    [∀ n, StandardBorelSpace (X n)] [∀ n, Nonempty (X n)]
+    [∀ n, StandardBorelSpace (X (n + 1))] [∀ n, Nonempty (X n)]
     (hP : ∀ n, (P (n + 1)).map (frestrictLe₂ n.le_succ) = P n) {n : ℕ}
     (hn : (prefixLimit P).map (frestrictLe n) = P n) :
     (prefixLimit P).map (frestrictLe (n + 1)) = P (n + 1) := by
@@ -154,13 +156,14 @@ private theorem map_frestrictLe_succ_prefixLimit
 
 /-- **Countable projective-family extension for coherent prefixes.** A coherent family of
 probability laws on the prefixes `∀ i : Iic n, X i` of a dependent sequence of standard Borel
-spaces is realized by a probability law on the whole sequence.
+spaces, except that the zeroth coordinate need only be measurable, is realized by a probability
+law on the whole sequence.
 
 The result is stated directly in terms of prefix laws because this is the interface consumed by
 countable gluing constructions. Together with Mathlib's
 `MeasureTheory.isProjectiveMeasureFamily_inducedFamily` and
 `MeasureTheory.isProjectiveLimit_nat_iff`, it gives the usual `Finset ℕ` formulation. -/
-theorem exists_map_frestrictLe_eq [∀ n, StandardBorelSpace (X n)]
+theorem exists_map_frestrictLe_eq [∀ n, StandardBorelSpace (X (n + 1))]
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)]
     (hP : ∀ n, (P (n + 1)).map (frestrictLe₂ n.le_succ) = P n) :
     ∃ μ : Measure (∀ n, X n), IsProbabilityMeasure μ ∧
@@ -173,13 +176,13 @@ theorem exists_map_frestrictLe_eq [∀ n, StandardBorelSpace (X n)]
   | zero => exact map_frestrictLe_zero_prefixLimit P
   | succ n hn => exact map_frestrictLe_succ_prefixLimit P hP hn
 
-/-- **Kolmogorov extension for a sequence of standard Borel spaces.** Every projective family of
-probability laws indexed by the finite subsets of `ℕ` has a projective limit, which is again a
-probability measure.
+/-- **Kolmogorov extension for a sequence with standard Borel positive coordinates.** Every
+projective family of probability laws indexed by the finite subsets of `ℕ` has a projective limit,
+which is again a probability measure.
 
 Mathlib already proves that this projective limit is unique; this theorem supplies existence by
 reducing to coherent prefixes and applying `TauCeti.Measure.exists_map_frestrictLe_eq`. -/
-theorem exists_isProjectiveLimit_nat [∀ n, StandardBorelSpace (X n)]
+theorem exists_isProjectiveLimit_nat [∀ n, StandardBorelSpace (X (n + 1))]
     (P : ∀ I : Finset ℕ, Measure (∀ i : I, X i)) [∀ I, IsProbabilityMeasure (P I)]
     (hP : IsProjectiveMeasureFamily P) :
     ∃ μ : Measure (∀ n, X n), IsProbabilityMeasure μ ∧ IsProjectiveLimit μ P := by
