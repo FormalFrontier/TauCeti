@@ -103,6 +103,7 @@ theorem vertexPreReflectionList_append (l₁ l₂ : List Q) :
 
 /-- Off the word, the reflection product changes no coordinate: each simple reflection in the
 composite alters only the coordinate at its own vertex. -/
+@[simp]
 theorem vertexPreReflectionList_apply_of_notMem {l : List Q} {i : Q} (hi : i ∉ l) (d : Q → ℤ) :
     vertexPreReflectionList Q l d i = d i := by
   induction l generalizing d with
