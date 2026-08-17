@@ -15,6 +15,11 @@ public import TauCeti.RepresentationTheory.Quiver.ModuleDecomposition
 -- `TauCeti.RepresentationTheory.Quiver.Representation.Basic`, hence `TauCeti.QuiverRep`, which is
 -- the type this file constructs.
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+-- `Mathlib.Algebra.Category.ModuleCat.Algebra` is imported publicly for the two scoped instances
+-- `ModuleCat.moduleOfAlgebraModule` and `ModuleCat.isScalarTower_of_algebra_moduleCat`, which give
+-- an object of `ModuleCat (pathAlgebra k Q)` the `k`-structure that the declarations below ask of a
+-- `kQ`-module; they are needed to state anything about `TauCeti.quiverRepFunctor` on objects.
+public import Mathlib.Algebra.Category.ModuleCat.Algebra
 
 /-!
 # The representation of a quiver carried by a module over its path algebra
@@ -24,7 +29,8 @@ algebra `kQ` of a finite quiver with the data of a representation of `Q`: the `k
 `eᵥ M = TauCeti.vertexComponent k M v` at each vertex, the `k`-linear map `TauCeti.pathMap` along
 each path, and the restriction `TauCeti.vertexComponentMap` of a `kQ`-linear map to those
 subspaces. This file assembles that data into an object and a morphism of `TauCeti.QuiverRep k Q`,
-and proves the assignment **fully faithful**.
+bundles the assignment as a functor `ModuleCat (kQ) ⥤ TauCeti.QuiverRep k Q`, and proves that
+functor **fully faithful**.
 
 ## Main definitions
 
@@ -35,6 +41,9 @@ and proves the assignment **fully faithful**.
   representations, retyped as a map `eᵥ M →ₗ[k] eᵥ N`.
 * `TauCeti.moduleHomOfQuiverRepHom k Q φ`: the `kQ`-linear map glued from those components,
   inverse to `TauCeti.quiverRepHomOfModule`.
+* `TauCeti.quiverRepFunctor k Q`: the two previous assignments bundled as a functor
+  `ModuleCat (kQ) ⥤ TauCeti.QuiverRep k Q`, and
+  `TauCeti.quiverRepFunctorFullyFaithful`: its full faithfulness.
 
 ## Main results
 
@@ -45,9 +54,9 @@ and proves the assignment **fully faithful**.
   functorial.
 * `TauCeti.quiverRepHomOfModule_injective` and
   `TauCeti.quiverRepHomOfModule_moduleHomOfQuiverRepHom`: it is **injective** and **surjective** on
-  `Hom`-sets, packaged as `TauCeti.quiverRepHomOfModule_bijective`. The inverse laws for the
-  explicit inverse are that surjectivity statement together with
-  `TauCeti.moduleHomOfQuiverRepHom_quiverRepHomOfModule`.
+  `Hom`-sets, packaged as `TauCeti.quiverRepHomOfModule_bijective` and, on the bundled functor, as
+  `TauCeti.quiverRepFunctorFullyFaithful`. The inverse laws for the explicit inverse are that
+  surjectivity statement together with `TauCeti.moduleHomOfQuiverRepHom_quiverRepHomOfModule`.
 
 ## Implementation notes
 
@@ -68,7 +77,13 @@ base is a field only because `TauCeti.QuiverRep` is; the underlying data of
 semiring. The `k`-linear structure carried on `M` alongside the `kQ`-action is asked for as
 `[Module k M]` with `[IsScalarTower k (pathAlgebra k Q) M]`, not extracted from the algebra,
 exactly as in that file. The three modules of the morphism section share one universe, since
-`ModuleCat k` — and hence `TauCeti.QuiverRep k Q` — has objects in a single universe.
+`ModuleCat k` — and hence `TauCeti.QuiverRep k Q` — has objects in a single universe. Those two
+hypotheses are what forces the source category of `TauCeti.quiverRepFunctor` to be spelled with the
+scoped instances `ModuleCat.moduleOfAlgebraModule` and
+`ModuleCat.isScalarTower_of_algebra_moduleCat` of
+`Mathlib.Algebra.Category.ModuleCat.Algebra`, which restrict the scalars of an object of
+`ModuleCat (kQ)` along `algebraMap k (kQ)`; a file stating anything about that functor must
+`open scoped ModuleCat` for the same reason.
 
 A representation is a functor out of `CategoryTheory.Paths Q`, whose objects are the vertices of
 `Q` only after unfolding the semireducible `CategoryTheory.Paths`. Two devices from the
@@ -83,7 +98,7 @@ type `eᵥ M →ₗ[k] eᵥ N` once and for all, and everything about the gluing
 
 ## References
 
-This is the object-and-morphism half of `quiverRepEquivalence`, Layer 1 of
+This is the fully faithful half of `quiverRepEquivalence`, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`, which asks for the
 equivalence "sending a module `M` to the representation `v ↦ eᵥ M`, with an arrow acting by left
 multiplication, and inverting through the idempotent decomposition `M = ⨁ᵥ eᵥ M`". Full
@@ -395,5 +410,59 @@ theorem quiverRepHomOfModule_bijective :
   ⟨quiverRepHomOfModule_injective k Q, exists_quiverRepHomOfModule_eq k Q⟩
 
 end Morphism
+
+section Functor
+
+-- the two instances of `Mathlib.Algebra.Category.ModuleCat.Algebra` that give the underlying type
+-- of an object of `ModuleCat (pathAlgebra k Q)` its `k`-structure are scoped
+open scoped ModuleCat
+
+variable (k : Type u) (Q : Type v) [Field k] [Quiver.{w} Q] [Finite Q]
+
+/-- **The functor from `kQ`-modules to representations of `Q`**: it carries a module to
+`TauCeti.quiverRepOfModule` and a `kQ`-linear map to `TauCeti.quiverRepHomOfModule`, the
+functoriality being `TauCeti.quiverRepHomOfModule_id` and `TauCeti.quiverRepHomOfModule_comp`.
+This is the module-to-representation half of the roadmap's `quiverRepEquivalence`, and
+`TauCeti.quiverRepFunctorFullyFaithful` is its full faithfulness.
+
+`@[expose]` here is load-bearing for the same reason as on `TauCeti.quiverRepOfModule`: the
+*statement* of `TauCeti.quiverRepFunctor_map` speaks of a morphism between the objects
+`(quiverRepFunctor k Q).obj M`, which only typechecks against a morphism of
+`TauCeti.quiverRepOfModule` once this body is unfolded. -/
+@[expose]
+noncomputable def quiverRepFunctor : ModuleCat.{t} (pathAlgebra k Q) ⥤ QuiverRep k Q where
+  obj M := quiverRepOfModule k Q M
+  map f := quiverRepHomOfModule k Q f.hom
+  map_id M := by rw [ModuleCat.hom_id]; exact quiverRepHomOfModule_id k Q
+  map_comp f g := by rw [ModuleCat.hom_comp]; exact quiverRepHomOfModule_comp k Q f.hom g.hom
+
+/-- The functor carries a module to the representation it carries. -/
+@[simp]
+theorem quiverRepFunctor_obj (M : ModuleCat.{t} (pathAlgebra k Q)) :
+    (quiverRepFunctor k Q).obj M = quiverRepOfModule k Q M := (rfl)
+
+/-- The functor carries a `kQ`-linear map to the morphism of representations it carries. -/
+@[simp]
+theorem quiverRepFunctor_map {M N : ModuleCat.{t} (pathAlgebra k Q)} (f : M ⟶ N) :
+    (quiverRepFunctor k Q).map f = quiverRepHomOfModule k Q f.hom := (rfl)
+
+/-- **The functor from `kQ`-modules to representations of `Q` is fully faithful**: this is
+`TauCeti.quiverRepHomOfModule_bijective`, with `TauCeti.moduleHomOfQuiverRepHom` as the explicit
+preimage. It is one half of the roadmap's `quiverRepEquivalence`; the other half is essential
+surjectivity. -/
+noncomputable def quiverRepFunctorFullyFaithful :
+    (quiverRepFunctor.{u, v, w, t} k Q).FullyFaithful where
+  preimage {_ _} φ := ModuleCat.ofHom (moduleHomOfQuiverRepHom k Q φ)
+  map_preimage φ := quiverRepHomOfModule_moduleHomOfQuiverRepHom k Q φ
+  preimage_map f := by
+    rw [quiverRepFunctor_map, moduleHomOfQuiverRepHom_quiverRepHomOfModule, ModuleCat.ofHom_hom]
+
+instance : (quiverRepFunctor.{u, v, w, t} k Q).Full :=
+  (quiverRepFunctorFullyFaithful k Q).full
+
+instance : (quiverRepFunctor.{u, v, w, t} k Q).Faithful :=
+  (quiverRepFunctorFullyFaithful k Q).faithful
+
+end Functor
 
 end TauCeti
