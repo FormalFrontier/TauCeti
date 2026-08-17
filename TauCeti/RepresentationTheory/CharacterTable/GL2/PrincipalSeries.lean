@@ -32,7 +32,7 @@ representation are not proved here.
 * `TauCeti.GL2Borel.linearChar`: the character `b ↦ α b₁₁ · β b₂₂` of the Borel subgroup obtained
   by inflating a pair of characters through the split torus.
 * `TauCeti.GL2Borel.linearRep`: the one-dimensional representation carrying that character.
-* `TauCeti.GL2BorelChar`: the same representation as an object of `FDRep ℂ B`.
+* `TauCeti.GL2BorelRep`: the same representation as an object of `FDRep ℂ B`.
 * `TauCeti.GL2PrincipalSeries`: the principal series `Ind_B^{GL₂}(α ⊗ β)`.
 
 ## Main statements
@@ -55,8 +55,17 @@ commutative ring `R` for the group — the Borel subgroup itself is defined over
 ring — and over the weakest coefficients each needs: the character only multiplies values in `kˣ`,
 so it lives over a `CommMonoid k`, while the representation needs a module structure on the line
 and so lives over a `CommSemiring k`. Nothing in the inflation uses finiteness or the complex
-numbers; the complex, finite-field hypotheses enter only with `TauCeti.GL2PrincipalSeries`, where
-they supply the finite index that makes induction finite-dimensional.
+numbers, and neither does its bundled form `TauCeti.GL2BorelRep`, which is therefore stated over a
+`CommRing F`; the field and finiteness hypotheses enter only with `TauCeti.GL2PrincipalSeries`,
+where they supply the finite index that makes induction finite-dimensional.
+
+`F` is in `Type`, not in `Type u`. This is forced by induction, not chosen: an object of
+`FDRep ℂ G` carries a module in the universe of `ℂ`, namely `Type`, since
+`FDRep R G = Action (FGModuleCat.{u} R) G` for `R : Type u`, whereas the induced representation
+`(ℂ[G] ⊗[ℂ] A)_B` built by `TauCeti.indFDRep` lives in the universe of `G`. So induction into
+`FDRep ℂ (GL (Fin 2) F)` needs `GL (Fin 2) F` — hence `F` — in the universe of `ℂ`. Lifting the
+induced representation back down along a basis would be a genuine addition to the induction API,
+not a change of binders here.
 
 `TauCetiRoadmap/RepresentationTheory/CharacterTheory/Suggested.lean` pins `GL2PrincipalSeries`
 with a `[DecidableEq F]` hypothesis. It is not needed: `GL (Fin 2) F` needs decidable equality only
@@ -101,11 +110,6 @@ theorem linearChar_apply (α β : Rˣ →* kˣ) (g : GL2Borel R) :
 /-- On the split torus the character is literally `α ⊗ β`. -/
 theorem linearChar_torusHom (α β : Rˣ →* kˣ) (p : Rˣ × Rˣ) :
     linearChar α β (torusHom p) = α p.1 * β p.2 := by
-  simp
-
-/-- The value of the character on the explicit upper-triangular matrix `!![a, b; 0, d]`. -/
-theorem linearChar_mk (α β : Rˣ →* kˣ) (a d : Rˣ) (b : R) :
-    linearChar α β ⟨mk a d b, mk_mem a d b⟩ = α a * β d := by
   simp
 
 /-- **The character is trivial on the unipotent radical**, which is what makes it an inflation from
@@ -182,41 +186,55 @@ end Field
 
 end GL2Borel
 
-/-! ### The principal series -/
+/-! ### The one-dimensional representation of the Borel subgroup over `ℂ` -/
 
-variable (F : Type) [Field F]
+section CommRing
+
+variable (F : Type) [CommRing F]
 
 /-- **The one-dimensional representation `α ⊗ β` of the Borel subgroup**, bundled as an object of
 `FDRep ℂ B`, which is the shape parabolic induction consumes. -/
-noncomputable def GL2BorelChar (α β : Fˣ →* ℂˣ) : FDRep ℂ (GL2Borel F) :=
+noncomputable def GL2BorelRep (α β : Fˣ →* ℂˣ) : FDRep ℂ (GL2Borel F) :=
   FDRep.of (GL2Borel.linearRep (R := F) (k := ℂ) α β)
 
 /-- The representation `α ⊗ β` of the Borel subgroup is one-dimensional. -/
 @[simp]
-theorem finrank_GL2BorelChar (α β : Fˣ →* ℂˣ) :
-    Module.finrank ℂ (GL2BorelChar F α β) = 1 :=
+theorem finrank_GL2BorelRep (α β : Fˣ →* ℂˣ) :
+    Module.finrank ℂ (GL2BorelRep F α β) = 1 :=
   Module.finrank_self ℂ
 
-/-- The character of `TauCeti.GL2BorelChar` is `TauCeti.GL2Borel.linearChar`. -/
+/-- The character of `TauCeti.GL2BorelRep` is `TauCeti.GL2Borel.linearChar`. -/
 @[simp]
-theorem character_GL2BorelChar (α β : Fˣ →* ℂˣ) (g : GL2Borel F) :
-    (GL2BorelChar F α β).character g = (GL2Borel.linearChar α β g : ℂ) :=
+theorem character_GL2BorelRep (α β : Fˣ →* ℂˣ) (g : GL2Borel F) :
+    (GL2BorelRep F α β).character g = (GL2Borel.linearChar α β g : ℂ) :=
   GL2Borel.character_linearRep (R := F) (k := ℂ) α β g
 
-variable [Fintype F]
+end CommRing
+
+/-! ### The principal series -/
+
+section FiniteField
+
+variable (F : Type) [Field F] [Fintype F]
 
 /-- **The principal series** `Ind_B^{GL₂}(α ⊗ β)`: the representation of `GL₂(𝔽_q)` induced from
 the one-dimensional character `α ⊗ β` of the Borel subgroup. This is parabolic induction in rank
 one. -/
 noncomputable def GL2PrincipalSeries (α β : Fˣ →* ℂˣ) : FDRep ℂ (GL (Fin 2) F) :=
-  indFDRep (GL2BorelChar F α β)
+  indFDRep (GL2BorelRep F α β)
+
+/-- **The principal series is the induction of `TauCeti.GL2BorelRep`.** This is the
+characterization downstream results reason from, so none of them unfolds the definition. -/
+theorem GL2PrincipalSeries_def (α β : Fˣ →* ℂˣ) :
+    GL2PrincipalSeries F α β = indFDRep (GL2BorelRep F α β) :=
+  (rfl)
 
 /-- **The principal series has dimension `q + 1`**, the index of the Borel subgroup, because it is
 induced from a one-dimensional representation. -/
 @[simp]
 theorem finrank_GL2PrincipalSeries (α β : Fˣ →* ℂˣ) :
     Module.finrank ℂ (GL2PrincipalSeries F α β) = Fintype.card F + 1 := by
-  rw [GL2PrincipalSeries, finrank_indFDRep, finrank_GL2BorelChar, mul_one, GL2Borel.index_eq]
+  rw [GL2PrincipalSeries_def, finrank_indFDRep, finrank_GL2BorelRep, mul_one, GL2Borel.index_eq]
 
 /-- **The principal series has dimension `q + 1`**, read off the character at the identity. -/
 theorem character_one_GL2PrincipalSeries (α β : Fˣ →* ℂˣ) :
@@ -224,5 +242,7 @@ theorem character_one_GL2PrincipalSeries (α β : Fˣ →* ℂˣ) :
   rw [FDRep.char_one, finrank_GL2PrincipalSeries]
   push_cast
   ring
+
+end FiniteField
 
 end TauCeti
