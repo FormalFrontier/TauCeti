@@ -128,6 +128,7 @@ theorem arrow_down {i j : V} (h : G.Adj i j) :
   apply Subsingleton.elim
 
 /-- There is an arrow from `i` to `j` exactly when the vertices are adjacent. -/
+@[simp]
 theorem nonempty_hom_iff {i j : V} :
     Nonempty (vertex G i ⟶ vertex G j) ↔ G.Adj i j := by
   constructor
@@ -136,6 +137,7 @@ theorem nonempty_hom_iff {i j : V} :
   · exact fun h => ⟨arrow G h⟩
 
 /-- The arrow type from `i` to `j` is empty exactly when the vertices are not adjacent. -/
+@[simp]
 theorem isEmpty_hom_iff {i j : V} :
     IsEmpty (vertex G i ⟶ vertex G j) ↔ ¬G.Adj i j := by
   rw [← not_nonempty_iff]
