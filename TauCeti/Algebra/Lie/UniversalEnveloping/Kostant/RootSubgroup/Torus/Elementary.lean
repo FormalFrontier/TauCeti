@@ -99,26 +99,6 @@ noncomputable def kostantTorusElementarySubgroup (A : CommAlgCat.{w} ℤ) :
     Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) :=
   kostantElementarySubgroup e h ρ M hM hnil A ⊔ kostantTorusSubgroup M b wt A
 
-/-- The torus--elementary subgroup is the join of the elementary group and the represented torus
-image. -/
-theorem kostantTorusElementarySubgroup_eq_sup (A : CommAlgCat.{w} ℤ) :
-    kostantTorusElementarySubgroup e h ρ M hM b wt hnil A =
-      kostantElementarySubgroup e h ρ M hM hnil A ⊔ kostantTorusSubgroup M b wt A :=
-  (rfl)
-
-/-- The elementary group is contained in the group obtained by adjoining the torus. -/
-theorem kostantElementarySubgroup_le_kostantTorusElementarySubgroup (A : CommAlgCat.{w} ℤ) :
-    kostantElementarySubgroup e h ρ M hM hnil A ≤
-      kostantTorusElementarySubgroup e h ρ M hM b wt hnil A :=
-  le_sup_left
-
-/-- The represented torus is contained in the group obtained by adjoining it to the elementary
-group. -/
-theorem kostantTorusSubgroup_le_kostantTorusElementarySubgroup (A : CommAlgCat.{w} ℤ) :
-    kostantTorusSubgroup M b wt A ≤
-      kostantTorusElementarySubgroup e h ρ M hM b wt hnil A :=
-  le_sup_right
-
 /-! ## Normalization and the semidirect-product map -/
 
 include e hM in
