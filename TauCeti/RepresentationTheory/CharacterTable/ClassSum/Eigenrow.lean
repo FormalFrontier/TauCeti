@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Algebra.Pi
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.MultiplicationMatrix
 import Mathlib.Algebra.Algebra.Bilinear
 import Mathlib.LinearAlgebra.Basis.Bilinear
@@ -33,6 +34,10 @@ which is `TauCeti.classSumCenter_mul`.
   `v (ConjClasses.mk 1) = 1` extends from the class-sum basis to an algebra homomorphism.
 * `TauCeti.isClassEigenrow_iff_exists_algHom` and `TauCeti.algHomEquivEigenrow` package the two
   directions as an equivalence between `Z(k[G]) →ₐ[k] k` and the normalized common left eigenrows.
+* `TauCeti.card_normalized_isClassEigenrow_of_nonempty_center_algEquiv`: **once the centre is split
+  into coordinates, there are exactly as many normalized common left eigenrows as conjugacy
+  classes**, because the algebra homomorphisms out of a finite power of `k` are its coordinate
+  evaluations (`Pi.evalAlgHomEquiv`).
 
 The normalization cannot be dropped: `TauCeti.isClassEigenrow_zero` shows `0` is an eigenrow, while
 `TauCeti.classSumRow_mk_one` shows every row of an algebra homomorphism is normalized. Over a ring
@@ -256,5 +261,43 @@ theorem algHomEquivEigenrow_symm_apply_classSumCenter
     (C : ConjClasses G) :
     algHomEquivEigenrow.symm v (classSumCenter C) = (v : ConjClasses G → k) C :=
   eigenrowAlgHom_classSumCenter v.2.1 v.2.2 C
+
+section Split
+
+variable [Nontrivial k] [NoZeroDivisors k]
+
+/-- **A split centre has one normalized common left eigenrow per conjugacy class.** If the centre
+of `k[G]` is `k`-algebra isomorphic to the algebra of `k`-valued functions on the conjugacy
+classes, then the class-multiplication matrices have exactly one normalized common left eigenrow
+for each class, obtained by transporting the coordinate evaluations of that product decomposition.
+
+The hypothesis is what makes the count come out: over a field that fails to split the centre some
+of the characters of `Z(k[G])` take values in proper extensions of `k` instead, and are invisible
+to a search carried out over `k`. It holds over an algebraically closed field in which `|G|` is
+invertible, and — the case the Burnside--Dixon--Schneider algorithm runs in — over a finite field
+`K` with `char K ∤ |G|` and `g ^ |K| = g` (`TauCeti.nonempty_center_algEquiv_conjClasses`). -/
+theorem nonempty_conjClasses_equiv_normalized_isClassEigenrow
+    (h : Nonempty (Subalgebra.center k (MonoidAlgebra k G) ≃ₐ[k] (ConjClasses G → k))) :
+    Nonempty (ConjClasses G ≃
+      {v : ConjClasses G → k // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v}) := by
+  obtain ⟨e⟩ := h
+  exact ⟨((Pi.evalAlgHomEquiv k (ConjClasses G)).trans
+    (AlgEquiv.arrowCongr e.symm (AlgEquiv.refl (A₁ := k)))).trans algHomEquivEigenrow⟩
+
+/-- **A split centre has as many normalized common left eigenrows as `G` has conjugacy classes**,
+the cardinality form of `TauCeti.nonempty_conjClasses_equiv_normalized_isClassEigenrow`.
+
+This is the count the Burnside--Dixon--Schneider eigenvector search needs in order to know that it
+has found every central character. Over an algebraically closed field in which `|G|` is invertible
+the same count is `TauCeti.card_normalized_isClassEigenrow`, which is not a special case of this
+one but a by-product of a finer statement: there the eigenrows are matched with the *irreducible
+representations* of `G` (`TauCeti.finEquivEigenrow`), not merely counted. -/
+theorem card_normalized_isClassEigenrow_of_nonempty_center_algEquiv
+    (h : Nonempty (Subalgebra.center k (MonoidAlgebra k G) ≃ₐ[k] (ConjClasses G → k))) :
+    Nat.card {v : ConjClasses G → k // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} =
+      Nat.card (ConjClasses G) :=
+  (Nat.card_congr (nonempty_conjClasses_equiv_normalized_isClassEigenrow h).some).symm
+
+end Split
 
 end TauCeti
