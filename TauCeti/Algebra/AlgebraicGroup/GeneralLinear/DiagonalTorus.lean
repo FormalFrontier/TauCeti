@@ -74,6 +74,13 @@ def diagonalTorusCoordinates {A : Type w} [Monoid A] :
   map_one' := rfl
   map_mul' _ _ := rfl
 
+/-- Restricting a universe-lifted coordinate family evaluates it at the canonical lift. -/
+@[simp]
+theorem diagonalTorusCoordinates_apply {A : Type w} [Monoid A]
+    (t : ULift.{u} (Fin N) → Aˣ) (i : Fin N) :
+    diagonalTorusCoordinates t i = t (ULift.up i) :=
+  (rfl)
+
 section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
@@ -247,6 +254,19 @@ noncomputable def diagonalTorus :
     (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
       (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
     eqToHom (groupScheme_def R N).symm
+
+/-- The diagonal torus is relative spectrum applied contravariantly to its coordinate morphism,
+transported across the named presentations of the split torus and general linear group. -/
+theorem diagonalTorus_def :
+    diagonalTorus (R := R) (N := N) =
+      eqToHom
+          (DiagonalizableGroup.groupScheme_def R
+            (SplitTorus.characterGroup (ULift.{u} (Fin N)))) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
+        eqToHom (groupScheme_def R N).symm := by
+  unfold diagonalTorus
+  rfl
 
 section SchemePoints
 

@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -70,7 +70,7 @@ instance instDecidableIsPerfectMatching [DecidableEq α] [Fintype α] (f : Equiv
 /-- The type of perfect matchings of `α`, a subtype of `Equiv.Perm α` so that the finiteness
 and decidability instances of permutations carry over unchanged. -/
 @[expose]
-def PerfectMatching (α : Type u) := {f : Equiv.Perm α // IsPerfectMatching f}
+def PerfectMatching (α : Type u) : Type _ := {f : Equiv.Perm α // IsPerfectMatching f}
 
 namespace PerfectMatching
 

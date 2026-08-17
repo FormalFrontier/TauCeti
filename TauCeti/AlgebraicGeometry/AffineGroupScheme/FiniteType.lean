@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -89,7 +90,7 @@ instance (S : CommRingCat.{u}) :
 
 Finite type is kept as an object property rather than included in the definition of an affine
 group scheme. -/
-abbrev FiniteTypeAffineGroupSchemeCat (S : CommRingCat.{u}) :=
+abbrev FiniteTypeAffineGroupSchemeCat (S : CommRingCat.{u}) : Type _ :=
   (finiteTypeAffineGroupSchemeProperty S).FullSubcategory
 
 /-- An object of `FiniteTypeAffineGroupSchemeCat S` has a locally finite-type structural

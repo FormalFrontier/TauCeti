@@ -39,6 +39,7 @@ jobs:
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
+          python3 scripts/test_lint_dot_notation.py
 
       # The two-library split is build convenience, not a trust boundary.
       # This guard is what actually stops the AI-owned library from inheriting
@@ -151,6 +152,9 @@ jobs:
       # post-merge run is the health check on main, like the audits above.
       - name: Environment lint (default linters + docstring scan vs grandfathered baseline)
         run: bash scripts/lint-env.sh
+
+      - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
+        run: python3 scripts/lint-dot-notation.py
 
       # --- Lake artifact-cache publish (dormant until configured) ---------------------
       # Publish TauCeti's OWN oleans (root-package only) to the Lake cache, so pr-build can

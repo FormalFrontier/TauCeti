@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -22,8 +23,6 @@ roadmap, Stage 3 item 9, before proving that a covering map induces isomorphisms
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped unitInterval Topology Topology.Homotopy
 open Topology.Homotopy
@@ -287,5 +286,3 @@ theorem map_one [DecidableEq N] [Nonempty N] (f : C(X, Y)) (hf : f x = y) :
   (mapHom f hf).map_one
 
 end HomotopyGroup
-
-end TauCeti

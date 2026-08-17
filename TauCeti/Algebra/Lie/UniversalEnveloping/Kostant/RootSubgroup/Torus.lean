@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 
 /-!
@@ -45,6 +46,7 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   integral operator on a Kostant-stable subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
   points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`: the same action in matrix coordinates.
 
 ## Main results
 
@@ -53,6 +55,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_of_isCartanWeightVector`: a torus
   point acts on a weight vector by the value of its character.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusPoints`: naturality in the value ring.
+* `TauCeti.UniversalEnvelopingAlgebra.mapScalarExtensionAutomorphisms_kostantTorusPoints`:
+  scalar extension of a torus point is the torus point with mapped parameter.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootSubgroupParam`: the
   pinning equation `t(s) xᵢ(u) t(s)⁻¹ = xᵢ(α(s) u)`.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantElementarySubgroup_conj_kostantTorusPoints`: the
@@ -333,7 +337,63 @@ theorem map_kostantTorusPoints (φ : A →+* B) (s : κ → Aˣ) (z : A ⊗[ℤ]
 
 end Naturality
 
+section CommAlgCatNaturality
+
+variable {A B : CommAlgCat.{w} ℤ}
+
+omit [Module ℚ V] in
+/-- **Scalar extension of a torus point.** Extending the scalars of the torus point `s` along a
+morphism of value rings gives the torus point whose parameter is mapped into the target ring. -/
+theorem mapScalarExtensionAutomorphisms_kostantTorusPoints (φ : A ⟶ B) (s : κ → Aˣ) :
+    GeneralLinear.mapScalarExtensionAutomorphisms (V := M) φ (kostantTorusPoints M b wt A s) =
+      kostantTorusPoints M b wt B fun j => Units.map φ.hom.toRingHom.toMonoidHom (s j) := by
+  refine Units.ext (Module.Basis.ext (b.baseChange B) fun x => ?_)
+  have hchar := congrArg Units.val (map_torusCharacter φ.hom.toRingHom s (wt x))
+  simp only [Units.coe_map, MonoidHom.coe_coe] at hchar
+  rw [Module.Basis.baseChange_apply, GeneralLinear.mapScalarExtensionAutomorphisms_tmul,
+    kostantTorusPoints_tmul_basis, kostantTorusPoints_tmul_basis, one_smul,
+    GeneralLinear.scalarExtensionMap_tmul, map_mul]
+  simp only [map_one, mul_one]
+  exact congrArg (· ⊗ₜ[ℤ] (b x : M)) hchar
+
+end CommAlgCatNaturality
+
 end Torus
+
+/-! ## Matrix coordinates -/
+
+section Matrix
+
+variable [Fintype κ] {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
+variable {A : Type*} [CommRing A] [Algebra ℤ A]
+
+omit [Module ℚ V] in
+/-- The torus attached to a weight basis, in the matrix coordinates of that basis. -/
+noncomputable def kostantTorusMatrix :
+    (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A :=
+  (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
+    (kostantTorusPoints M b wt A)
+
+omit [Module ℚ V] in
+private theorem kostantTorusMatrix_coe (s : κ → Aˣ) :
+    (kostantTorusMatrix M b wt s : Matrix (Fin n) (Fin n) A) =
+      LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+        (kostantTorusPoints M b wt A s).toLinearEquiv.toLinearMap :=
+  rfl
+
+omit [Module ℚ V] in
+/-- In a weight basis, a torus point is the diagonal matrix of its weight characters. -/
+@[simp]
+theorem kostantTorusMatrix_apply (s : κ → Aˣ) :
+    kostantTorusMatrix M b wt s =
+      diagGL fun i => torusCharacter s (wt i) := by
+  apply Units.ext
+  rw [kostantTorusMatrix_coe]
+  have hlinear := congrArg LinearEquiv.toLinearMap
+    (kostantTorusPoints_toLinearEquiv M b wt s)
+  rw [hlinear, basisWeightTorus_apply, toMatrix_basisDiagonal, diagGL_coe]
+
+end Matrix
 
 /-! ## The pinning equation -/
 

@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.CategoryTheory.Exact.ExactStructure
+public import TauCeti.CategoryTheory.Limits.Shapes.Biproduct
 public import Mathlib.CategoryTheory.Preadditive.Biproducts
 
 /-!
@@ -260,12 +261,8 @@ theorem exists_isPushout_of_split_isInflation {A B A' : C} {i : A ⟶ B}
   obtain ⟨Z, e, he⟩ := (split_isInflation_iff i).mp hi
   have hi' : biprod.inl ≫ e.inv = i := by
     rw [← he, Category.assoc, e.hom_inv_id, Category.comp_id]
-  -- Mathlib's pushout square for `coprod.inl`, transported along `A ⨿ Z ≅ A ⊞ Z`.
   have hbase : IsPushout (biprod.inl : A ⟶ A ⊞ Z) g (biprod.map g (𝟙 Z))
-      (biprod.inl : A' ⟶ A' ⊞ Z) :=
-    (IsPushout.of_coprod_inl_with_id g Z).of_iso (Iso.refl A) (biprod.isoCoprod A Z).symm
-      (Iso.refl A') (biprod.isoCoprod A' Z).symm (by simp [coprod.inl_desc]) (by simp)
-      (by ext <;> simp) (by simp [coprod.inl_desc])
+      (biprod.inl : A' ⟶ A' ⊞ Z) := isPushout_biprod_inl_map g Z
   refine ⟨A' ⊞ Z, e.hom ≫ biprod.map g (𝟙 Z), biprod.inl, ?_, split_isInflation_biprod_inl A' Z⟩
   exact hbase.of_iso (Iso.refl A) e.symm (Iso.refl A') (Iso.refl _) (by simpa using hi')
     (by simp) (by simp) (by simp)
@@ -278,12 +275,10 @@ theorem exists_isPullback_of_split_isDeflation {Y Z A : C} {p : Y ⟶ Z}
     ∃ (T : C) (fst : T ⟶ A) (snd : T ⟶ Y),
       IsPullback fst snd f p ∧ (split C).IsDeflation fst := by
   obtain ⟨X, e, he⟩ := (split_isDeflation_iff p).mp hp
-  -- Mathlib's pullback square for `prod.fst`, transported along `A ⨯ X ≅ A ⊞ X ≅ X ⊞ A`.
   have hbase : IsPullback (biprod.snd : X ⊞ A ⟶ A) (biprod.map (𝟙 X) f) f
       (biprod.snd : X ⊞ Z ⟶ Z) :=
-    (IsPullback.of_prod_fst_with_id f X).of_iso
-      ((biprod.isoProd A X).symm ≪≫ biprod.braiding A X) (Iso.refl A)
-      ((biprod.isoProd Z X).symm ≪≫ biprod.braiding Z X) (Iso.refl Z)
+    (isPullback_biprod_map_fst f X).of_iso
+      (biprod.braiding A X) (Iso.refl A) (biprod.braiding Z X) (Iso.refl Z)
       (by simp) (by ext <;> simp) (by simp) (by simp)
   refine ⟨X ⊞ A, biprod.snd, biprod.map (𝟙 X) f ≫ e.inv, ?_, split_isDeflation_biprod_snd X A⟩
   exact hbase.of_iso (Iso.refl _) (Iso.refl A) e.symm (Iso.refl Z) (by simp) (by simp) (by simp)
@@ -370,19 +365,11 @@ theorem conflation_biprodShortComplex (E : ExactStructure C) (X Z : C) :
   have hinl : E.IsInflation (biprod.inl : X ⟶ X ⊞ Z) :=
     E.isStableUnderCobaseChange_inflations.of_isPushout sq
       (E.toConflationClass.isInflation_f hK)
-  obtain ⟨Z', q, hq, hQ⟩ := (ConflationClass.isInflation_iff E.toConflationClass _).mp hinl
-  -- Both `q` and `biprod.snd` are cokernels of `biprod.inl`, hence canonically isomorphic.
-  have hpair := E.isKernelCokernelPair _ hQ
   have hzero : (biprod.inl : X ⟶ X ⊞ Z) ≫ (biprod.snd : X ⊞ Z ⟶ Z) = 0 := by simp
   have hpair' : IsKernelCokernelPair
       (ShortComplex.mk (biprod.inl : X ⟶ X ⊞ Z) biprod.snd hzero) :=
     IsKernelCokernelPair.of_hasBinaryBiproduct X Z
-  let e : Z' ≅ Z := IsColimit.coconePointUniqueUpToIso hpair.gIsCokernel hpair'.gIsCokernel
-  have hd : q ≫ e.hom = biprod.snd :=
-    IsColimit.comp_coconePointUniqueUpToIso_hom hpair.gIsCokernel hpair'.gIsCokernel
-      WalkingParallelPair.one
-  refine E.toConflationClass.conflation_of_iso ?_ hQ
-  exact ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e (by simp) (by simpa using hd.symm)
+  exact E.conflation_of_isKernelCokernelPair_of_isInflation hpair' hinl
 
 /-- **A short complex with a splitting is a conflation of every exact structure.**
 Equivalently, the split exact structure is the smallest exact structure on `C`. -/

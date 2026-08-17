@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -143,7 +144,7 @@ and stabilizations.
 
 This is the combinatorial notion of link used by grid homology. Identifying it with an ambient
 isotopy class of embedded links is the separate Cromwell-reconciliation target. -/
-def GridLink := Quot GridDiagram.IsMove
+def GridLink : Type _ := Quot GridDiagram.IsMove
 
 namespace GridDiagram
 

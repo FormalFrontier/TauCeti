@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,7 +52,7 @@ variable {X : Type*} [TopologicalSpace X] (x₀ : X)
 namespace TauCeti.UniversalCover
 
 /-- The orbit quotient of the universal cover by a subgroup of the fundamental group. -/
-abbrev SubgroupQuotient (H : Subgroup (FundamentalGroup X x₀)) :=
+abbrev SubgroupQuotient (H : Subgroup (FundamentalGroup X x₀)) : Type _ :=
   MulAction.orbitRel.Quotient H (UniversalCover x₀)
 
 namespace SubgroupQuotient
