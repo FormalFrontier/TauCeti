@@ -72,10 +72,8 @@ theorem isUnimodular_iff_dualCarrier_le (L : IntegralLattice V) :
 /-- Unimodularity is equivalent to the embedded carrier filling the dual carrier. -/
 theorem isUnimodular_iff_carrierInDual_eq_top (L : IntegralLattice V) :
     L.IsUnimodular ↔ L.carrierInDual = ⊤ := by
-  have hcarrier : L.carrierInDual = L.carrier.submoduleOf L.dualCarrier := by
-    ext x
-    exact L.mem_carrierInDual_iff x
-  rw [L.isUnimodular_iff_dualCarrier_le, hcarrier, Submodule.submoduleOf_eq_top]
+  rw [L.isUnimodular_iff_dualCarrier_le, L.carrierInDual_eq_submoduleOf,
+    Submodule.submoduleOf_eq_top]
 
 /-- Unimodularity is equivalent to triviality of the discriminant group. -/
 theorem isUnimodular_iff_subsingleton_discriminantGroup (L : IntegralLattice V) :
