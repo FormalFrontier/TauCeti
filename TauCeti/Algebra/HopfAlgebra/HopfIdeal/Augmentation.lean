@@ -93,7 +93,8 @@ via the counit. -/
 noncomputable def counitBialgEquivOfAugmentationEqBot
     (h : augmentation S K = ⊥) : K ≃ₐc[S] S :=
   BialgEquiv.ofBijective (Bialgebra.counitBialgHom S K)
-    ⟨(ker_eq_bot_iff (Bialgebra.counitBialgHom S K) Bialgebra.counit_surjective).mp
+    ⟨(kerOfSurjective_eq_bot_iff
+        (Bialgebra.counitBialgHom S K) Bialgebra.counit_surjective).mp
         ((augmentation_def S K).symm.trans h),
       Bialgebra.counit_surjective⟩
 
@@ -105,6 +106,18 @@ theorem counitBialgEquivOfAugmentationEqBot_apply
     counitBialgEquivOfAugmentationEqBot h x = Bialgebra.counitBialgHom S K x := by
   rw [counitBialgEquivOfAugmentationEqBot]
   exact congrFun (BialgEquiv.coe_ofBijective (Bialgebra.counitBialgHom S K) _) x
+
+/-- The inverse equivalence from the base ring is the structure map. -/
+@[simp]
+theorem counitBialgEquivOfAugmentationEqBot_symm_apply
+    (h : augmentation S K = ⊥) (r : S) :
+    (counitBialgEquivOfAugmentationEqBot h).symm r = algebraMap S K r := by
+  let e := counitBialgEquivOfAugmentationEqBot h
+  refine e.toMulEquiv.symm_apply_eq.mpr ?_
+  calc
+    r = Bialgebra.counitBialgHom S K (algebraMap S K r) := by simp
+    _ = e (algebraMap S K r) :=
+      (counitBialgEquivOfAugmentationEqBot_apply h (algebraMap S K r)).symm
 
 end HopfIdeal
 

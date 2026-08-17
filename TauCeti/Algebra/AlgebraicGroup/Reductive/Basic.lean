@@ -230,6 +230,19 @@ theorem geometricFiberCounitBialgEquiv_apply
   rw [geometricFiberCounitBialgEquiv]
   exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_apply _ _
 
+/-- The inverse equivalence from the algebraic closure is the geometric fibre's structure map. -/
+@[simp]
+theorem geometricFiberCounitBialgEquiv_symm_apply
+    (hH : reductiveCommHopfAlgProperty k H)
+    (hunipotent : geometricallyUnipotentPointsCommHopfAlgProperty (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj)
+    (r : AlgebraicClosure k) :
+    (hH.geometricFiberCounitBialgEquiv hunipotent).symm r =
+      algebraMap (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) r := by
+  rw [geometricFiberCounitBialgEquiv]
+  exact HopfIdeal.counitBialgEquivOfAugmentationEqBot_symm_apply _ _
+
 end reductiveCommHopfAlgProperty
 
 end

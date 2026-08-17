@@ -147,14 +147,40 @@ lemma liftQuotient_unique (I : HopfIdeal R H) (f : H ⟶ K)
     _ = (liftQuotient I f hf).hom (Ideal.Quotient.mkₐ R I.toIdeal h) :=
       (liftQuotient_mk I f hf h).symm
 
+private noncomputable def quotientIsoOfSurjectiveAux (f : H ⟶ K)
+    (hf : Function.Surjective f.hom) (I : HopfIdeal R K) (J : HopfIdeal R H)
+    (hJ : J = HopfIdeal.kerOfSurjective
+      ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
+      ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)) :
+    quotient H J ≅ quotient K I :=
+  _root_.CommHopfAlgCat.isoMk <| hJ.symm ▸
+    HopfIdeal.kerLiftBialgEquiv
+      ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
+      ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
+
+private lemma quotientIsoOfSurjectiveAux_hom_mk (f : H ⟶ K)
+    (hf : Function.Surjective f.hom) (I : HopfIdeal R K) (J : HopfIdeal R H)
+    (hJ : J = HopfIdeal.kerOfSurjective
+      ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
+      ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)) (x : H) :
+    (quotientIsoOfSurjectiveAux f hf I J hJ).hom.hom
+        (Ideal.Quotient.mk J.toIdeal x) =
+      Ideal.Quotient.mkₐ R I.toIdeal (f.hom x) := by
+  subst J
+  rw [quotientIsoOfSurjectiveAux]
+  exact HopfIdeal.kerLiftBialgEquiv_apply
+    ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
+    ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) _ |>.trans <|
+      HopfIdeal.kerLiftBialgHom_mk
+        ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
+        ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) x
+
 /-- A surjective morphism of commutative Hopf algebras identifies the quotient by the
 inverse-image Hopf ideal with the corresponding quotient of the target. -/
 noncomputable def quotientIsoOfSurjective (f : H ⟶ K) (hf : Function.Surjective f.hom)
     (I : HopfIdeal R K) : quotient H (I.comap f.hom hf) ≅ quotient K I :=
-  _root_.CommHopfAlgCat.isoMk <|
-    HopfIdeal.kerLiftBialgEquiv
-      ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
-      ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
+  quotientIsoOfSurjectiveAux f hf I (I.comap f.hom hf)
+    (HopfIdeal.comap_eq_kerOfSurjective I f.hom hf)
 
 /-- The forward quotient isomorphism induced by a surjective morphism commutes with the
 quotient morphisms. -/
@@ -166,12 +192,7 @@ lemma mkQuotient_comp_quotientIsoOfSurjective_hom (f : H ⟶ K)
   ext x
   rw [_root_.CommHopfAlgCat.comp_apply, _root_.CommHopfAlgCat.comp_apply,
     mkQuotient_apply, mkQuotient_apply, quotientIsoOfSurjective]
-  exact HopfIdeal.kerLiftBialgEquiv_apply
-    ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
-    ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) _ |>.trans <|
-      HopfIdeal.kerLiftBialgHom_mk
-        ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
-        ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) x
+  exact quotientIsoOfSurjectiveAux_hom_mk f hf I _ _ x
 
 /-- The forward quotient isomorphism induced by a surjective morphism evaluates on quotient
 classes by applying the morphism before taking the target quotient. -/
@@ -182,12 +203,7 @@ lemma quotientIsoOfSurjective_hom_mk (f : H ⟶ K) (hf : Function.Surjective f.h
         (Ideal.Quotient.mk (I.comap f.hom hf).toIdeal x) =
       Ideal.Quotient.mkₐ R I.toIdeal (f.hom x) := by
   rw [quotientIsoOfSurjective]
-  exact HopfIdeal.kerLiftBialgEquiv_apply
-    ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
-    ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) _ |>.trans <|
-      HopfIdeal.kerLiftBialgHom_mk
-        ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f.hom)
-        ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf) x
+  exact quotientIsoOfSurjectiveAux_hom_mk f hf I _ _ x
 
 /-- An isomorphism of commutative Hopf algebras induces an isomorphism from the quotient by
 the inverse-image Hopf ideal to the corresponding quotient of the target. -/
