@@ -32,7 +32,7 @@ instances of it.
 
 ## Main results
 
-* `TauCeti.derivationLieAlgebra.apply_mul_eq_add`: the Leibniz rule;
+* `TauCeti.derivationLieAlgebra.leibniz`: the Leibniz rule;
   `TauCeti.derivationLieAlgebra.apply_one_eq_zero`: a derivation of a unital algebra kills the
   unit; and `TauCeti.derivationLieAlgebra.apply_mul_eq_zero`: its constants are closed under
   multiplication.
@@ -53,6 +53,10 @@ action of `Der A` on `A` as a Lie module, and the lattice API then all come from
 derivation.  This is also why the base is a `CommRing` and `A` a `NonUnitalNonAssocRing`: a Lie ring
 is an additive *group*, so the semiring-level hypotheses under which the Leibniz rule still makes
 sense do not suffice to make `Der A` one.
+
+The Leibniz rule is preserved by sums and by scalar multiples because the multiplication of `A` is
+`R`-bilinear, and by the commutator because the "second derivative" terms `D (E x) * y` and
+`x * D (E y)` that the composite `D ∘ E` contributes cancel against those of `E ∘ D`.
 
 The Lie bracket of `Module.End R A` is the ring commutator, which Mathlib deliberately keeps out of
 the global instance set (`LieRing.ofAssociativeRing`) because it clashes with the module action; it
@@ -103,11 +107,7 @@ variable (R : Type u) (A : Type v) [CommRing R] [NonUnitalNonAssocRing A] [Modul
 
 /-- **The derivation Lie algebra** `Der A` of a non-unital non-associative `R`-algebra `A`: the
 `R`-linear maps `D : A → A` satisfying the Leibniz rule `D (x * y) = D x * y + x * D y`, a Lie
-subalgebra of `Module.End R A` under the commutator bracket.
-
-The Leibniz rule is preserved by sums and by scalar multiples because the multiplication of `A` is
-`R`-bilinear, and by the commutator because the "second derivative" terms `D (E x) * y` and
-`x * D (E y)` that the composite `D ∘ E` contributes cancel against those of `E ∘ D`. -/
+subalgebra of `Module.End R A` under the commutator bracket. -/
 def derivationLieAlgebra : LieSubalgebra R (Module.End R A) where
   carrier := {D | ∀ x y : A, D (x * y) = D x * y + x * D y}
   add_mem' hD hE x y := by
@@ -132,7 +132,7 @@ namespace derivationLieAlgebra
 
 /-- **The Leibniz rule**: a derivation differentiates each factor of a product. -/
 @[simp]
-theorem apply_mul_eq_add (D : derivationLieAlgebra R A) (x y : A) :
+theorem leibniz (D : derivationLieAlgebra R A) (x y : A) :
     (D : Module.End R A) (x * y)
       = (D : Module.End R A) x * y + x * (D : Module.End R A) y :=
   D.2 x y
@@ -144,7 +144,7 @@ associative enough for `Subalgebra` to be available. -/
 theorem apply_mul_eq_zero {D : derivationLieAlgebra R A} {x y : A}
     (hx : (D : Module.End R A) x = 0) (hy : (D : Module.End R A) y = 0) :
     (D : Module.End R A) (x * y) = 0 := by
-  rw [apply_mul_eq_add, hx, hy, zero_mul, mul_zero, add_zero]
+  rw [leibniz, hx, hy, zero_mul, mul_zero, add_zero]
 
 /-- A derivation is determined by its values. -/
 @[ext]
@@ -166,7 +166,7 @@ Only unitality is used, not associativity. -/
 @[simp]
 theorem derivationLieAlgebra.apply_one_eq_zero (D : derivationLieAlgebra R A) :
     (D : Module.End R A) 1 = 0 := by
-  simpa using derivationLieAlgebra.apply_mul_eq_add D 1 1
+  simpa using derivationLieAlgebra.leibniz D 1 1
 
 end Unital
 
@@ -181,8 +181,8 @@ omit [SMulCommClass R A A] [IsScalarTower R A A] [SMulCommClass R B B] [IsScalar
 /-- **The inverse of a multiplicative linear equivalence is multiplicative.**  The hypothesis is an
 unbundled multiplicativity condition on a `LinearEquiv` because Mathlib has no equivalence class for
 non-unital non-associative algebras; `he` says exactly that `e` is an algebra map, and no unitality
-is used. -/
-theorem symm_map_mul (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y) (u v : B) :
+is used.  This is an implementation detail of `derivationLieAlgebraCongr`, and so is private. -/
+private theorem symm_map_mul (e : A ≃ₗ[R] B) (he : ∀ x y : A, e (x * y) = e x * e y) (u v : B) :
     e.symm (u * v) = e.symm u * e.symm v :=
   e.injective (by simp [he])
 
