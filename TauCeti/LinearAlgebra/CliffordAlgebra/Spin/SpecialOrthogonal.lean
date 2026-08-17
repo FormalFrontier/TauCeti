@@ -18,11 +18,11 @@ remains canonical.
 
 ## Main definitions and results
 
-* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal` is the Spin action with codomain restricted to
+* `CliffordAlgebra.spinToSpecialOrthogonal` is the Spin action with codomain restricted to
   the special orthogonal group.
-* `TauCeti.CliffordAlgebra.ker_spinToSpecialOrthogonal` identifies its kernel with that of the
+* `CliffordAlgebra.ker_spinToSpecialOrthogonal` identifies its kernel with that of the
   orthogonal Spin action.
-* `TauCeti.CliffordAlgebra.coe_spinToSpecialOrthogonal_apply` identifies its underlying action
+* `CliffordAlgebra.coe_spinToSpecialOrthogonal_apply` identifies its underlying action
   with the Spin action on the quadratic module.
 
 ## References
@@ -34,9 +34,11 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
+open QuadraticMap
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -253,4 +255,4 @@ theorem coe_spinToSpecialOrthogonal_apply (Q : QuadraticForm R M) (x : spinGroup
   change (((spinToOrthogonal Q x : QuadraticMap.orthogonalGroup Q) : M ≃ₗ[R] M) m) = _
   rw [coe_spinToOrthogonal_apply]
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

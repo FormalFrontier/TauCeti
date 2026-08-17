@@ -21,15 +21,13 @@ Together with the fundamental-group computation in
 
 ## Main declarations
 
-* `TauCeti.AddCircle.subsingleton_homotopyGroup_pi`: every homotopy group in dimension at
+* `AddCircle.subsingleton_homotopyGroup_pi`: every homotopy group in dimension at
   least two of an indexed product of real circles is trivial.
-* `TauCeti.AddCircle.homotopyGroup_pi_eq_one`,
-  `TauCeti.AddCircle.homotopyGroupPi_pi_eq_one`: the corresponding equality statements.
+* `AddCircle.homotopyGroup_pi_eq_one`,
+  `AddCircle.homotopyGroupPi_pi_eq_one`: the corresponding equality statements.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Topology Topology.Homotopy
 
@@ -53,5 +51,3 @@ theorem homotopyGroupPi_pi_eq_one (n : ℕ) (a : π_ (n + 2) (∀ i, AddCircle (
   homotopyGroup_pi_eq_one p x a
 
 end AddCircle
-
-end TauCeti

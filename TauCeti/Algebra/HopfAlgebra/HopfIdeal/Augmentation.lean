@@ -47,21 +47,22 @@ surjective since the unit splits it (`Bialgebra.counit_surjective`).
 The ring hypotheses come from the kernel Hopf ideal construction, whose coideal condition
 uses tensor-kernel exactness. -/
 noncomputable def augmentation : HopfIdeal R H :=
-  ker (Bialgebra.counitBialgHom R H) Bialgebra.counit_surjective
+  kerOfSurjective (Bialgebra.counitBialgHom R H) Bialgebra.counit_surjective
 
 /-- `augmentation` is the kernel Hopf ideal of the counit. -/
 theorem augmentation_def :
-    augmentation R H = ker (Bialgebra.counitBialgHom R H) Bialgebra.counit_surjective := by
+    augmentation R H =
+      kerOfSurjective (Bialgebra.counitBialgHom R H) Bialgebra.counit_surjective := by
   -- `augmentation` has no equation lemma to rewrite with; `change` spells out its
   -- definitional unfolding once, explicitly.
-  change ker (Bialgebra.counitBialgHom R H) Bialgebra.counit_surjective = _
+  change kerOfSurjective (Bialgebra.counitBialgHom R H) Bialgebra.counit_surjective = _
   rfl
 
 /-- Membership in the augmentation ideal is vanishing of the counit. -/
 @[simp]
 theorem mem_augmentation {x : H} :
     x ∈ augmentation R H ↔ Coalgebra.counit (R := R) x = 0 :=
-  mem_ker _ _
+  mem_kerOfSurjective _ _
 
 /-- The underlying ideal of the augmentation Hopf ideal is the kernel of the counit
 algebra homomorphism. -/

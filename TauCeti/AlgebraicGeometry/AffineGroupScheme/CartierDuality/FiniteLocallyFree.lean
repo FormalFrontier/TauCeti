@@ -118,7 +118,7 @@ theorem finiteLocallyFreeCommAffineGroupSchemeProperty_inverseImage
       (isCocomm_iff_isCommMonObj_hopfSpec R H).mp h.2.2⟩
 
 /-- The category of finite locally free commutative affine group schemes over an affine base. -/
-abbrev FiniteLocallyFreeCommAffineGroupSchemeCat (S : CommRingCat.{u}) :=
+abbrev FiniteLocallyFreeCommAffineGroupSchemeCat (S : CommRingCat.{u}) : Type _ :=
   (finiteLocallyFreeCommAffineGroupSchemeProperty S).FullSubcategory
 
 instance {S : CommRingCat.{u}} (G : FiniteLocallyFreeCommAffineGroupSchemeCat S) :

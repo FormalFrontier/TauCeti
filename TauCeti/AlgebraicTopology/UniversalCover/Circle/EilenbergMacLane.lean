@@ -15,22 +15,19 @@ A real additive circle of nonzero period is a `K(ℤ, 1)`: it is path-connected,
 fundamental group is infinite cyclic, and all its higher homotopy groups vanish.
 
 These results package the existing circle calculations into the Eilenberg--Mac Lane API. The
-fundamental-group witness is `TauCeti.AddCircle.fundamentalGroupMulEquiv`, and higher homotopy
-vanishing is supplied by `TauCeti.AddCircle.subsingleton_homotopyGroup`.
+fundamental-group witness is `AddCircle.fundamentalGroupMulEquiv`, and higher homotopy
+vanishing is supplied by `AddCircle.subsingleton_homotopyGroup`.
 
 This realizes `TauCetiRoadmap/UniversalCovers/README.md`, Stage 4, item 13,
 "`K(G, 1)` spaces", for circles.
 
 ## Main declarations
 
-* `TauCeti.AddCircle.isAspherical`: every real additive circle is aspherical.
-* `TauCeti.AddCircle.isEilenbergMacLaneSpaceOne`: a nondegenerate real circle is a
-  `K(ℤ, 1)`.
+* `AddCircle.isAspherical`: every real additive circle is aspherical.
+* `AddCircle.isEilenbergMacLaneSpaceOne`: a nondegenerate real circle is a `K(ℤ, 1)`.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Topology Topology.Homotopy
 
@@ -55,5 +52,3 @@ theorem isEilenbergMacLaneSpaceOne (p : ℝ) (hp : p ≠ 0) (x : AddCircle p) :
 end AddCircle
 
 end
-
-end TauCeti

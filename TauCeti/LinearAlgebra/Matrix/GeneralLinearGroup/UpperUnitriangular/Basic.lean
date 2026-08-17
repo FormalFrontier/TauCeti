@@ -238,9 +238,9 @@ theorem map_comp {S T : Type*} [CommRing S] [CommRing T]
 
 /-- The natural linear action of every upper-unitriangular matrix is unipotent. -/
 theorem isUnipotent_toLin (g : upperUnitriangularGroup m R) :
-    GeneralLinearGroup.IsUnipotent
+    LinearMap.GeneralLinearGroup.IsUnipotent
       (Matrix.GeneralLinearGroup.toLin (g : GL m R)) :=
-  (TauCeti.GeneralLinearGroup.isUnipotent_toLin_iff m R (g : GL m R)).2
+  (LinearMap.GeneralLinearGroup.isUnipotent_toLin_iff m R (g : GL m R)).2
     (isUpperUnitriangular g).isNilpotent_sub_one
 
 end CommRing

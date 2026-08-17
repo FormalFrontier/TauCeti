@@ -82,7 +82,7 @@ end ComoduleCat
 /-- The category of finitely generated right comodules over a fixed coalgebra.
 
 For a field base, this is the category of finite-dimensional right comodules. -/
-abbrev FGComoduleCat :=
+abbrev FGComoduleCat : Type _ :=
   (ComoduleCat.isFG.{u, v, w} R C).FullSubcategory
 
 namespace FGComoduleCat
