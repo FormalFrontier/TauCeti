@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,18 +30,18 @@ genus-field milestone of `TauCetiRoadmap/Multiquadratic/README.md`.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.NarrowClassGroup.ElementaryTwoQuotient`: the quotient
+* `NumberField.NarrowClassGroup.ElementaryTwoQuotient`: the quotient
   `Cl⁺(K) / Cl⁺(K)²`.
-* `TauCeti.NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotient`: the surjective linear
+* `NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotient`: the surjective linear
   map to `Cl(K) / Cl(K)²` induced by forgetting positivity.
-* `TauCeti.NumberField.NarrowClassGroup.twoRank` and
-  `TauCeti.NumberField.NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the
+* `NumberField.NarrowClassGroup.twoRank` and
+  `NumberField.NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the
   `ZMod 2`-dimension of the quotient, with cardinality `2 ^ twoRank K`.
-* `TauCeti.NumberField.NarrowClassGroup.classGroupTwoRank_le_twoRank`: the ordinary class-group
+* `NumberField.NarrowClassGroup.classGroupTwoRank_le_twoRank`: the ordinary class-group
   2-rank is at most the narrow class-group 2-rank.
-* `TauCeti.NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotientEquiv`: for a totally
+* `NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotientEquiv`: for a totally
   complex field, the linear equivalence with the ordinary class-group quotient.
-* `TauCeti.NumberField.NarrowClassGroup.twoRank_eq_classGroupTwoRank`: for a totally complex
+* `NumberField.NarrowClassGroup.twoRank_eq_classGroupTwoRank`: for a totally complex
   field, the narrow and ordinary class-group 2-ranks agree.
 
 ## References
@@ -53,7 +54,7 @@ public section
 
 open NumberField
 
-namespace TauCeti.NumberField.NarrowClassGroup
+namespace NumberField.NarrowClassGroup
 
 variable (K : Type*) [Field K] [NumberField K]
 
@@ -126,4 +127,4 @@ theorem twoRank_eq_classGroupTwoRank [IsTotallyComplex K] :
   rw [TauCeti.ClassGroup.twoRank_def, ← TauCeti.twoRank_def]
   exact TauCeti.twoRank_eq_of_mulEquiv (toClassGroupEquiv (K := K))
 
-end TauCeti.NumberField.NarrowClassGroup
+end NumberField.NarrowClassGroup

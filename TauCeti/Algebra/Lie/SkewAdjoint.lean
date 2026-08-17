@@ -38,7 +38,7 @@ symmetric, so `ad` maps `L` into the skew-adjoint endomorphisms of the polar for
 is Killing-semisimple and `2` is invertible
 the form is moreover nondegenerate, which is the hypothesis under which the skew-adjoint
 endomorphisms are the quadratic elements of the Clifford algebra `Cliff(L, κ)`
-(`TauCeti.CliffordAlgebra.soEquivQuadratic`). Composing the two is the adjoint quadratic lift
+(`CliffordAlgebra.soEquivQuadratic`). Composing the two is the adjoint quadratic lift
 `L → Cliff(L, κ)` whose left-regular action is the subject of Kostant's isotypy theorem; that
 composite is not built here.
 

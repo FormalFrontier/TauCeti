@@ -68,6 +68,19 @@ carrier. -/
 theorem mem_carrierInDual_iff (L : IntegralLattice V) (x : L.dualCarrier) :
     x ∈ L.carrierInDual ↔ (x : V) ∈ L.carrier := Iff.rfl
 
+/-- The embedded carrier is the copy of the ambient carrier inside the dual carrier. -/
+theorem carrierInDual_eq_submoduleOf (L : IntegralLattice V) :
+    L.carrierInDual = L.carrier.submoduleOf L.dualCarrier := by
+  ext x
+  exact L.mem_carrierInDual_iff x
+
+/-- Mapping the embedded carrier back into the ambient space recovers the original carrier. -/
+@[simp]
+theorem map_carrierInDual_subtype (L : IntegralLattice V) :
+    L.carrierInDual.map L.dualCarrier.subtype = L.carrier := by
+  rw [L.carrierInDual_eq_submoduleOf, Submodule.submoduleOf, Submodule.map_comap_subtype,
+    inf_of_le_right L.le_dualCarrier]
+
 /-- The copy of the carrier inside the dual carrier has the same rank as the carrier. -/
 theorem finrank_carrierInDual (L : IntegralLattice V) :
     Module.finrank ℤ L.carrierInDual = Module.finrank ℤ L :=
