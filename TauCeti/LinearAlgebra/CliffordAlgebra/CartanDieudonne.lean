@@ -23,11 +23,11 @@ element lies in the range of `pinToOrthogonal`.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.lipschitzToOrthogonal_surjective`: the Lipschitz action is onto for a
+* `CliffordAlgebra.lipschitzToOrthogonal_surjective`: the Lipschitz action is onto for a
   finite-dimensional nondegenerate quadratic space.
-* `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
+* `CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
   Pin-range correction extends a fixed subspace by one orthogonal anisotropic vector.
-* `TauCeti.CliffordAlgebra.pinToOrthogonal_surjective`: over a separably closed field of
+* `CliffordAlgebra.pinToOrthogonal_surjective`: over a separably closed field of
   characteristic other than two, the Pin action is surjective on a finite-dimensional
   nondegenerate quadratic space.
 
@@ -40,13 +40,13 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
-
-namespace TauCeti
+open QuadraticMap
 
 universe u v
 
 namespace CliffordAlgebra
+
+open TauCeti
 
 variable {K : Type u} {V : Type v} [Field K]
   [AddCommGroup V] [Module K V] (Q : QuadraticForm K V)
@@ -115,4 +115,3 @@ theorem pinToOrthogonal_surjective
 
 end IsSepClosed
 end CliffordAlgebra
-end TauCeti

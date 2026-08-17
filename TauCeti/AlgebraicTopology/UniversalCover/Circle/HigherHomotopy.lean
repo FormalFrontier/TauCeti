@@ -27,18 +27,16 @@ This proves Stage 4, item 11 of the Tau Ceti universal-covers roadmap
 
 ## Main declarations
 
-* `TauCeti.AddCircle.subsingleton_homotopyGroup`: `π_N(AddCircle p)` is trivial when `N` has
-  at least two elements; instance resolution specializes it to `π_(n + 2)`.
-* `TauCeti.AddCircle.homotopyGroup_eq_one`, `TauCeti.AddCircle.homotopyGroupPi_eq_one`: the
-  corresponding equalities.
+* `AddCircle.subsingleton_homotopyGroup`: `π_N(AddCircle p)` is trivial when `N` has at least two
+  elements; instance resolution specializes it to `π_(n + 2)`.
+* `AddCircle.homotopyGroup_eq_one`, `AddCircle.homotopyGroupPi_eq_one`: the corresponding
+  equalities.
 
 The covering map is Junyan Xu's `AddCircle.isCoveringMap_coe` in
 `Mathlib.Topology.Covering.AddCircle`.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped unitInterval Topology Topology.Homotopy
 open Topology.Homotopy
@@ -53,7 +51,7 @@ instance subsingleton_homotopyGroup : Subsingleton (HomotopyGroup N (AddCircle p
   classical
   obtain ⟨x, rfl⟩ := QuotientAddGroup.mk_surjective x
   exact (TauCeti.IsCoveringMap.homotopyGroupMulEquiv (N := N)
-    (_root_.AddCircle.isCoveringMap_coe p) x).toEquiv.subsingleton_congr.mp inferInstance
+    (AddCircle.isCoveringMap_coe p) x).toEquiv.subsingleton_congr.mp inferInstance
 
 /-- Every higher homotopy class of a real circle is the identity. -/
 theorem homotopyGroup_eq_one [DecidableEq N] (a : HomotopyGroup N (AddCircle p) x) : a = 1 :=
@@ -64,5 +62,3 @@ theorem homotopyGroupPi_eq_one (n : ℕ) (a : π_ (n + 2) (AddCircle p) x) : a =
   homotopyGroup_eq_one p x a
 
 end AddCircle
-
-end TauCeti

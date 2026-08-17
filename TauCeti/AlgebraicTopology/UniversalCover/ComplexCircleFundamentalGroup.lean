@@ -13,7 +13,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup
 # The fundamental group of the complex unit circle is `ℤ`
 
 The additive-circle computation `π₁(AddCircle p) ≃* Multiplicative ℤ`
-(`TauCeti.AddCircle.fundamentalGroupMulEquiv`) lives on the quotient `ℝ ⧸ (p • ℤ)`. Mathlib's
+(`AddCircle.fundamentalGroupMulEquiv`) lives on the quotient `ℝ ⧸ (p • ℤ)`. Mathlib's
 canonical circle is instead `Circle`, the unit sphere `{z : ℂ | ‖z‖ = 1}` with its complex
 multiplicative group structure, and the two are identified by the homeomorphism
 `AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle` (which sends `0` to `1`).
@@ -26,7 +26,7 @@ group at the canonical basepoint `1 : Circle`. Mathlib's basepoint-change isomor
   `π₁(Circle, x) ≃* Multiplicative ℤ`.
 
 The canonical-basepoint computation uses the concrete lift `0 : ℝ` through
-`TauCeti.AddCircle.fundamentalGroupMulEquivZero`.
+`AddCircle.fundamentalGroupMulEquivZero`.
 
 This is the `Circle ⊆ ℂ` instance of the universal-covers roadmap Stage 4 target `π₁(S¹) ≅ ℤ`
 (`TauCetiRoadmap/UniversalCovers/README.md`, item 12), realised on the standard Mathlib circle
