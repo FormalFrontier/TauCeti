@@ -425,6 +425,12 @@ jobs:
           fi
           echo "Mathlib cache is complete at the bump target."
 
+      # Text-only trusted lint: inspect the overlaid PR sources after Mathlib's source tree is
+      # available. It does not elaborate or execute the untrusted TauCeti code.
+      - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
+        if: ${{ env.INFRA != '1' }}
+        run: (cd base && python3 scripts/lint-dot-notation.py)
+
       # Enable Lake's built-in artifact cache for the build below ONLY when the public read
       # endpoints are configured (repo variables). Until then this is a no-op: LAKE_*
       # stay empty and the landrun build recompiles TauCeti/ from scratch exactly as before.

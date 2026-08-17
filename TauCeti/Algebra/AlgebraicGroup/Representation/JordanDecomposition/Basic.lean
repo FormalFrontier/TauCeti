@@ -52,7 +52,7 @@ inside each ambient general linear group.
 
 public section
 
-open WithConv
+open LinearMap WithConv
 open scoped TensorProduct
 
 namespace TauCeti.HopfAlgebra

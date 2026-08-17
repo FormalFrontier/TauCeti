@@ -86,7 +86,7 @@ end FundamentalGroupoidAction
 
 /-- Fundamental-groupoid actions that are pretransitive on every fibre. Morphisms are arbitrary
 natural transformations between the underlying functors. -/
-abbrev PretransitiveFundamentalGroupoidAction (X : TopCat.{u}) :=
+abbrev PretransitiveFundamentalGroupoidAction (X : TopCat.{u}) : Type _ :=
   (FundamentalGroupoidAction.isFiberwisePretransitive X).FullSubcategory
 
 namespace PretransitiveFundamentalGroupoidAction

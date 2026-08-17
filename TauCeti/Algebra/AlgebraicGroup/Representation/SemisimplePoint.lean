@@ -54,7 +54,7 @@ built in Layer 1.
 
 public section
 
-open WithConv
+open LinearMap WithConv
 open scoped TensorProduct
 
 namespace TauCeti

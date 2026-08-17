@@ -55,7 +55,7 @@ noncomputable section
 
 /-- Real projective `n`-space, modelled as the orbit quotient of the unit sphere `Sⁿ` under the
 antipodal action of the two-element group `ℤˣ = {1, -1}`. -/
-def RealProjectiveSpace (n : ℕ) :=
+def RealProjectiveSpace (n : ℕ) : Type _ :=
   Quotient (MulAction.orbitRel ℤˣ
     (sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1))
 
