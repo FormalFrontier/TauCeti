@@ -303,6 +303,164 @@ private theorem g2Series_zero (n : ℕ) : g2Series y z w v s n 0 = dividedPower 
   rw [g2Series, hindex]
   simp [g2Monomial, g2Total]
 
+/-! ### Reindexing the four exponent shifts
+
+Each of the four ways to advance the series moves the index `p` of weighted degree `k` to an
+index of weighted degree `k + 1` by a fixed shift of the exponents.  The bijection obligations
+are all discharged by unfolding membership with `mem_filter_g2SeriesIndex` and calling `omega`;
+the value obligation rewrites the `y`-exponent along the change in total degree. -/
+
+/-- Membership in a slice of `g2SeriesIndex` cut out by a further predicate, unfolded to the
+two degree conditions defining the index set. -/
+private theorem mem_filter_g2SeriesIndex {n k : ℕ} {P : G2Exponents → Prop} [DecidablePred P]
+    {p : G2Exponents} :
+    p ∈ {p ∈ g2SeriesIndex n k | P p} ↔ (g2Total p ≤ n ∧ g2Weight p = k) ∧ P p := by
+  rw [Finset.mem_filter, mem_g2SeriesIndex]
+
+-- The `y → z` advance: one `y` factor is traded for a `z` factor.
+private theorem sum_g2Monomial_shift_z (n k : ℕ) :
+    ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < n - g2Total p},
+        (p.1 + 1) • (dividedPower (n - g2Total p - 1) y * dividedPower (p.1 + 1) z *
+          dividedPower p.2.1 w * dividedPower p.2.2.1 v * dividedPower p.2.2.2 s) =
+      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.1}, q.1 • g2Monomial y z w v s n q := by
+  refine Finset.sum_nbij'
+    (fun p => (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2))
+    (fun q => (q.1 - 1, q.2.1, q.2.2.1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨b, c, d, e⟩ hp
+    simp only [mem_filter_g2SeriesIndex] at hp ⊢
+    simp only [g2Total, g2Weight] at hp ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hq
+    simp only [mem_filter_g2SeriesIndex] at hq ⊢
+    simp only [g2Total, g2Weight] at hq ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ _
+    simp
+  · rintro ⟨b, c, d, e⟩ hq
+    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+  · rintro ⟨b, c, d, e⟩ _
+    simp only [g2Monomial, g2Total]
+    have ht : b + c + d + 2 * e + 1 = b + 1 + c + d + 2 * e := by omega
+    rw [Nat.sub_sub, ht]
+
+-- The `z → w` advance.
+private theorem sum_g2Monomial_shift_w (n k : ℕ) :
+    ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < p.1},
+        (2 * (p.2.1 + 1)) • (dividedPower (n - g2Total p) y *
+          dividedPower (p.1 - 1) z * dividedPower (p.2.1 + 1) w *
+            dividedPower p.2.2.1 v * dividedPower p.2.2.2 s) =
+      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.1},
+        (2 * q.2.1) • g2Monomial y z w v s n q := by
+  refine Finset.sum_nbij'
+    (fun p => (p.1 - 1, p.2.1 + 1, p.2.2.1, p.2.2.2))
+    (fun q => (q.1 + 1, q.2.1 - 1, q.2.2.1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨b, c, d, e⟩ hp
+    simp only [mem_filter_g2SeriesIndex] at hp ⊢
+    simp only [g2Total, g2Weight] at hp ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hq
+    simp only [mem_filter_g2SeriesIndex] at hq ⊢
+    simp only [g2Total, g2Weight] at hq ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hp
+    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hp).2]
+  · rintro ⟨b, c, d, e⟩ hq
+    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+  · rintro ⟨b, c, d, e⟩ hp
+    have hb : 0 < b := (mem_filter_g2SeriesIndex.mp hp).2
+    simp only [g2Monomial, g2Total]
+    have ht : b - 1 + (c + 1) + d + 2 * e = b + c + d + 2 * e := by omega
+    rw [ht]
+
+-- The `w → v` advance.
+private theorem sum_g2Monomial_shift_v (n k : ℕ) :
+    ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < p.2.1},
+        (3 * (p.2.2.1 + 1)) • (dividedPower (n - g2Total p) y * dividedPower p.1 z *
+          dividedPower (p.2.1 - 1) w * dividedPower (p.2.2.1 + 1) v *
+            dividedPower p.2.2.2 s) =
+      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.1},
+        (3 * q.2.2.1) • g2Monomial y z w v s n q := by
+  refine Finset.sum_nbij'
+    (fun p => (p.1, p.2.1 - 1, p.2.2.1 + 1, p.2.2.2))
+    (fun q => (q.1, q.2.1 + 1, q.2.2.1 - 1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨b, c, d, e⟩ hp
+    simp only [mem_filter_g2SeriesIndex] at hp ⊢
+    simp only [g2Total, g2Weight] at hp ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hq
+    simp only [mem_filter_g2SeriesIndex] at hq ⊢
+    simp only [g2Total, g2Weight] at hq ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hp
+    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hp).2]
+  · rintro ⟨b, c, d, e⟩ hq
+    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+  · rintro ⟨b, c, d, e⟩ hp
+    have hc : 0 < c := (mem_filter_g2SeriesIndex.mp hp).2
+    simp only [g2Monomial, g2Total]
+    have ht : b + (c - 1) + (d + 1) + 2 * e = b + c + d + 2 * e := by omega
+    rw [ht]
+
+-- The `z + z → s` advance, the step absent from shorter root strings.
+private theorem sum_g2Monomial_shift_s (n k : ℕ) :
+    ∑ p ∈ {p ∈ g2SeriesIndex n k | 1 < p.1},
+        (3 * (p.2.2.2 + 1)) • (dividedPower (n - g2Total p) y *
+          dividedPower (p.1 - 2) z * dividedPower p.2.1 w * dividedPower p.2.2.1 v *
+            dividedPower (p.2.2.2 + 1) s) =
+      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.2},
+        (3 * q.2.2.2) • g2Monomial y z w v s n q := by
+  refine Finset.sum_nbij'
+    (fun p => (p.1 - 2, p.2.1, p.2.2.1, p.2.2.2 + 1))
+    (fun q => (q.1 + 2, q.2.1, q.2.2.1, q.2.2.2 - 1)) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨b, c, d, e⟩ hp
+    simp only [mem_filter_g2SeriesIndex] at hp ⊢
+    simp only [g2Total, g2Weight] at hp ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hq
+    simp only [mem_filter_g2SeriesIndex] at hq ⊢
+    simp only [g2Total, g2Weight] at hq ⊢
+    omega
+  · rintro ⟨b, c, d, e⟩ hp
+    have hb : 1 < b := (mem_filter_g2SeriesIndex.mp hp).2
+    simp [Nat.sub_add_cancel (show 2 ≤ b by omega)]
+  · rintro ⟨b, c, d, e⟩ hq
+    simp [Nat.sub_add_cancel (mem_filter_g2SeriesIndex.mp hq).2]
+  · rintro ⟨b, c, d, e⟩ hp
+    have hb : 1 < b := (mem_filter_g2SeriesIndex.mp hp).2
+    simp only [g2Monomial, g2Total]
+    have ht : b - 2 + c + d + 2 * (e + 1) = b + c + d + 2 * e := by omega
+    rw [ht]
+
+-- The four advances weight an index `q` by its four exponents, and those weights sum to the
+-- weighted degree `k + 1`.
+private theorem nsmul_g2Series_succ (n k : ℕ) :
+    (k + 1) • g2Series y z w v s n (k + 1) =
+      (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.1},
+          q.1 • g2Monomial y z w v s n q) +
+        (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.1},
+          (2 * q.2.1) • g2Monomial y z w v s n q) +
+        (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.1},
+          (3 * q.2.2.1) • g2Monomial y z w v s n q) +
+        (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.2},
+          (3 * q.2.2.2) • g2Monomial y z w v s n q) := by
+  symm
+  rw [Finset.sum_filter_of_ne
+      (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
+    Finset.sum_filter_of_ne
+      (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
+    Finset.sum_filter_of_ne
+      (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
+    Finset.sum_filter_of_ne
+      (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
+    g2Series, Finset.smul_sum, ← Finset.sum_add_distrib,
+    ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun q hq => ?_
+  rw [← add_smul, ← add_smul, ← add_smul]
+  congr 1
+  have hwgt := (mem_g2SeriesIndex.mp hq).2
+  simp only [g2Weight] at hwgt
+  omega
+
 -- Multiplication by `x` advances the series in weighted degree.  The four possible advances are
 -- respectively `y → z`, `z → w`, `w → v`, and `z + z → s`.
 private theorem mul_g2Series
@@ -339,168 +497,12 @@ private theorem mul_g2Series
     intro p hp
     rw [g2Monomial,
       mul_dividedPower_g2Monomial hxy hxz hxw hwz hxv hxs hyz hwv hzs hws hvs]
-  have hshiftz : ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < n - g2Total p},
-        (p.1 + 1) • (dividedPower (n - g2Total p - 1) y * dividedPower (p.1 + 1) z *
-          dividedPower p.2.1 w * dividedPower p.2.2.1 v * dividedPower p.2.2.2 s) =
-      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.1},
-        q.1 • g2Monomial y z w v s n q := by
-    refine Finset.sum_nbij'
-      (fun p => (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2))
-      (fun q => (q.1 - 1, q.2.1, q.2.2.1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      rcases Finset.mem_filter.mp hp with ⟨hp, hpos⟩
-      rcases mem_g2SeriesIndex.mp hp with ⟨htotal, hweight⟩
-      refine Finset.mem_filter.mpr ⟨mem_g2SeriesIndex.mpr ?_, by simp⟩
-      simp only [g2Total] at htotal hpos ⊢
-      simp only [g2Weight] at hweight ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      rcases Finset.mem_filter.mp hq with ⟨hq, hb⟩
-      rcases mem_g2SeriesIndex.mp hq with ⟨htotal, hweight⟩
-      refine Finset.mem_filter.mpr ⟨mem_g2SeriesIndex.mpr ?_, ?_⟩
-      · simp only [g2Total] at htotal ⊢
-        simp only [g2Weight] at hweight ⊢
-        omega
-      · simp only [g2Total] at htotal ⊢
-        omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ _
-      simp
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      have hb : 0 < b := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hq
-        exact hq.2
-      simp [Nat.sub_add_cancel hb]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ _
-      simp only [g2Monomial, g2Total]
-      have ht : b + c + d + 2 * e + 1 = b + 1 + c + d + 2 * e := by omega
-      rw [Nat.sub_sub, ht]
-  have hshiftw : ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < p.1},
-        (2 * (p.2.1 + 1)) • (dividedPower (n - g2Total p) y *
-          dividedPower (p.1 - 1) z * dividedPower (p.2.1 + 1) w *
-            dividedPower p.2.2.1 v * dividedPower p.2.2.2 s) =
-      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.1},
-        (2 * q.2.1) • g2Monomial y z w v s n q := by
-    refine Finset.sum_nbij'
-      (fun p => (p.1 - 1, p.2.1 + 1, p.2.2.1, p.2.2.2))
-      (fun q => (q.1 + 1, q.2.1 - 1, q.2.2.1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      simp only [Finset.mem_filter, mem_g2SeriesIndex, g2Total, g2Weight] at hp ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      simp only [Finset.mem_filter, mem_g2SeriesIndex, g2Total, g2Weight] at hq ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      have hb : 0 < b := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hp
-        exact hp.2
-      simp [Nat.sub_add_cancel hb]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      have hc : 0 < c := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hq
-        exact hq.2
-      simp [Nat.sub_add_cancel hc]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      have hb : 0 < b := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hp
-        exact hp.2
-      simp only [g2Monomial, g2Total]
-      have ht : b - 1 + (c + 1) + d + 2 * e = b + c + d + 2 * e := by omega
-      rw [ht]
-  have hshiftv : ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < p.2.1},
-        (3 * (p.2.2.1 + 1)) • (dividedPower (n - g2Total p) y * dividedPower p.1 z *
-          dividedPower (p.2.1 - 1) w * dividedPower (p.2.2.1 + 1) v *
-            dividedPower p.2.2.2 s) =
-      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.1},
-        (3 * q.2.2.1) • g2Monomial y z w v s n q := by
-    refine Finset.sum_nbij'
-      (fun p => (p.1, p.2.1 - 1, p.2.2.1 + 1, p.2.2.2))
-      (fun q => (q.1, q.2.1 + 1, q.2.2.1 - 1, q.2.2.2)) ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      simp only [Finset.mem_filter, mem_g2SeriesIndex, g2Total, g2Weight] at hp ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      simp only [Finset.mem_filter, mem_g2SeriesIndex, g2Total, g2Weight] at hq ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      have hc : 0 < c := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hp
-        exact hp.2
-      simp [Nat.sub_add_cancel hc]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      have hd : 0 < d := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hq
-        exact hq.2
-      simp [Nat.sub_add_cancel hd]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      have hc : 0 < c := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hp
-        exact hp.2
-      simp only [g2Monomial, g2Total]
-      have ht : b + (c - 1) + (d + 1) + 2 * e = b + c + d + 2 * e := by omega
-      rw [ht]
-  have hshifts : ∑ p ∈ {p ∈ g2SeriesIndex n k | 1 < p.1},
-        (3 * (p.2.2.2 + 1)) • (dividedPower (n - g2Total p) y *
-          dividedPower (p.1 - 2) z * dividedPower p.2.1 w * dividedPower p.2.2.1 v *
-            dividedPower (p.2.2.2 + 1) s) =
-      ∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.2},
-        (3 * q.2.2.2) • g2Monomial y z w v s n q := by
-    refine Finset.sum_nbij'
-      (fun p => (p.1 - 2, p.2.1, p.2.2.1, p.2.2.2 + 1))
-      (fun q => (q.1 + 2, q.2.1, q.2.2.1, q.2.2.2 - 1)) ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      simp only [Finset.mem_filter, mem_g2SeriesIndex, g2Total, g2Weight] at hp ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      simp only [Finset.mem_filter, mem_g2SeriesIndex, g2Total, g2Weight] at hq ⊢
-      omega
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      have hb : 1 < b := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hp
-        exact hp.2
-      simp [Nat.sub_add_cancel (show 2 ≤ b by omega)]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hq
-      have he : 0 < e := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hq
-        exact hq.2
-      simp [Nat.sub_add_cancel he]
-    · rintro ⟨b, ⟨c, ⟨d, e⟩⟩⟩ hp
-      have hb : 1 < b := by
-        simp only [Finset.mem_filter, mem_g2SeriesIndex] at hp
-        exact hp.2
-      simp only [g2Monomial, g2Total]
-      have ht : b - 2 + c + d + 2 * (e + 1) = b + c + d + 2 * e := by omega
-      rw [ht]
-  have hcombine :
-      (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.1},
-          q.1 • g2Monomial y z w v s n q) +
-        (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.1},
-          (2 * q.2.1) • g2Monomial y z w v s n q) +
-        (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.1},
-          (3 * q.2.2.1) • g2Monomial y z w v s n q) +
-        (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.2},
-          (3 * q.2.2.2) • g2Monomial y z w v s n q) =
-      (k + 1) • g2Series y z w v s n (k + 1) := by
-    rw [Finset.sum_filter_of_ne
-        (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
-      Finset.sum_filter_of_ne
-        (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
-      Finset.sum_filter_of_ne
-        (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
-      Finset.sum_filter_of_ne
-        (fun q _ hq => Nat.pos_of_ne_zero fun h => hq (by simp [h])),
-      g2Series, Finset.smul_sum, ← Finset.sum_add_distrib,
-      ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun q hq => ?_
-    rw [← add_smul, ← add_smul, ← add_smul]
-    congr 1
-    have hwgt := (mem_g2SeriesIndex.mp hq).2
-    simp only [g2Weight] at hwgt
-    omega
   rw [g2Series, Finset.mul_sum, Finset.sum_mul, Finset.sum_congr rfl hterm,
     Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_add_distrib,
     Finset.sum_add_distrib, ← Finset.sum_filter, ← Finset.sum_filter,
-    ← Finset.sum_filter, ← Finset.sum_filter, hshiftz, hshiftw, hshiftv, hshifts]
-  rw [← hcombine]
+    ← Finset.sum_filter, ← Finset.sum_filter, sum_g2Monomial_shift_z,
+    sum_g2Monomial_shift_w, sum_g2Monomial_shift_v, sum_g2Monomial_shift_s,
+    nsmul_g2Series_succ]
   abel
 
 /-! ## The straightening rule -/
