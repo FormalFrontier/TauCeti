@@ -1,6 +1,7 @@
 [
   {
-    "note": "Riemann-mapping and dependent conformal API tracked against mathlib4#33505",
+    "note": "mathlib4#33505 landing sentinel; its private prerequisites may not replace every tracked declaration",
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/Analysis/Complex/BranchLogRoot.lean",
       "TauCeti/Analysis/Complex/Conformal/ArgumentPrinciple.lean",
@@ -31,6 +32,7 @@
   {
     "note": "Disc-automorphism group and parametrisation; upstream target is not named yet",
     "speculative": true,
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Group.lean",
       "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Parametrization.lean"
@@ -44,7 +46,8 @@
     ]
   },
   {
-    "note": "Exact API from the open mathlib4#40791 S-unit theorem PR",
+    "note": "mathlib4#40791 landing sentinel; preserve or re-home mem_unit_iff, unit_mono, unit_fg_of_units, and algebraMap_unitEmptyEquivUnits_apply",
+    "landing_sentinel": true,
     "sources": [
       "TauCeti/RingTheory/DedekindDomain/SInteger/Unit.lean"
     ],
@@ -137,14 +140,21 @@
     ]
   },
   {
-    "note": "Ported from open mathlib4#38009",
+    "note": "Exact theorem from open mathlib4#38009",
     "sources": [
-      "TauCeti/RingTheory/Valuation/ValuativeRel/Basic.lean",
+      "TauCeti/RingTheory/Valuation/ValuativeRel/Basic.lean"
+    ],
+    "declarations": [
+      "ValuativeRel.not_vle_zero_of_isUnit"
+    ]
+  },
+  {
+    "note": "Exact comap API from open mathlib4#38009",
+    "sources": [
       "TauCeti/RingTheory/Valuation/ValuativeRel/Comap.lean"
     ],
     "declarations": [
-      "ValuativeRel.comap",
-      "ValuativeRel.not_vle_zero_of_isUnit"
+      "ValuativeRel.comap"
     ],
     "modules": [
       "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"

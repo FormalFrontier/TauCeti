@@ -3,8 +3,9 @@
 
 The registry in ``scripts/mathlib-shims.json`` is process metadata kept out of module docstrings.
 Each entry names one or more Tau Ceti source files and a concrete Mathlib declaration or module
-whose appearance should prompt a migration PR. Available replacements are warnings, never a
-failing status; malformed metadata or an unavailable Lean environment is an infrastructure error.
+whose appearance should prompt a migration audit. Exact replacements and broader landing sentinels
+carry different guidance. Findings are warnings, never a failing status; malformed metadata or an
+unavailable Lean environment is an infrastructure error.
 """
 
 from __future__ import annotations
@@ -50,6 +51,7 @@ class ShimGroup:
     modules: tuple[str, ...]
     note: str
     speculative: bool = False
+    landing_sentinel: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -60,6 +62,7 @@ class AvailableReplacement:
     targets: tuple[str, ...]
     note: str
     speculative: bool = False
+    landing_sentinel: bool = False
 
 
 def _string_list(value: object, field: str, entry: int) -> tuple[str, ...]:
@@ -88,10 +91,13 @@ def load_registry(path: pathlib.Path, repo_root: pathlib.Path) -> tuple[ShimGrou
         modules = _string_list(item.get("modules", []), "modules", index)
         note = item.get("note", "")
         speculative = item.get("speculative", False)
+        landing_sentinel = item.get("landing_sentinel", False)
         if not isinstance(note, str):
             raise ValueError(f"entry {index}: note must be a string")
         if not isinstance(speculative, bool):
             raise ValueError(f"entry {index}: speculative must be a boolean")
+        if not isinstance(landing_sentinel, bool):
+            raise ValueError(f"entry {index}: landing_sentinel must be a boolean")
         if not sources_raw:
             raise ValueError(f"entry {index}: sources must not be empty")
         if not declarations and not modules:
@@ -115,7 +121,9 @@ def load_registry(path: pathlib.Path, repo_root: pathlib.Path) -> tuple[ShimGrou
                 raise ValueError(f"entry {index}: tracked source does not exist: {source}")
             seen_sources.add(source)
             sources.append(source)
-        groups.append(ShimGroup(tuple(sources), declarations, modules, note, speculative))
+        groups.append(ShimGroup(
+            tuple(sources), declarations, modules, note, speculative, landing_sentinel
+        ))
     return tuple(groups)
 
 
@@ -228,8 +236,12 @@ def available_replacements(
                if module_path(mathlib_root, name).is_file()]
         )
         if targets:
-            available.extend(AvailableReplacement(source, targets, group.note, group.speculative)
-                             for source in group.sources)
+            available.extend(
+                AvailableReplacement(
+                    source, targets, group.note, group.speculative, group.landing_sentinel
+                )
+                for source in group.sources
+            )
     return tuple(available)
 
 
@@ -245,19 +257,37 @@ def markdown_summary(
         lines.append("No configured replacement target exists in the pinned dependency.")
         return "\n".join(lines) + "\n"
     lines.extend([
-        f"Found replacements for **{len(available)}** source files. Open migration PRs; this "
-        "report does not fail the build.",
+        f"Found upstream triggers affecting **{len(available)}** source files. Audit each source; "
+        "this report does not fail the build.",
         "",
-        "| Tau Ceti source | Available Mathlib target | Context |",
-        "|---|---|---|",
+        "| Tau Ceti source | Available upstream trigger | Migration guidance | Context |",
+        "|---|---|---|---|",
     ])
     for replacement in available:
         targets = ", ".join(f"`{target}`" for target in replacement.targets)
         note = replacement.note.replace("|", "\\|").replace("\n", " ")
         if replacement.speculative:
             note = f"Speculative target name; {note}"
-        lines.append(f"| `{replacement.source}` | {targets} | {note} |")
+        if replacement.landing_sentinel:
+            guidance = ("Audit against the landed stack; migrate only declarations with canonical "
+                        "counterparts and preserve or re-home source-only API.")
+        else:
+            guidance = "Migrate to the canonical target and delete only the superseded surface."
+        lines.append(f"| `{replacement.source}` | {targets} | {guidance} | {note} |")
     return "\n".join(lines) + "\n"
+
+
+def warning_message(replacement: AvailableReplacement) -> str:
+    """Render precise annotation advice without declaring a whole source obsolete."""
+
+    targets = ", ".join(replacement.targets)
+    speculative = " [speculative target name]" if replacement.speculative else ""
+    if replacement.landing_sentinel:
+        advice = ("audit this source against the landed stack; migrate only declarations with "
+                  "canonical counterparts and preserve or re-home source-only API")
+    else:
+        advice = "migrate to the canonical target and delete only the superseded surface"
+    return f"Pinned Mathlib now provides {targets}; {advice} ({replacement.note}){speculative}"
 
 
 def zulip_content(summary: str, active: bool) -> str:
@@ -376,11 +406,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"check-expired-mathlib-shims: {tracked} tracked files, "
           f"{len(available)} with available replacements")
     for replacement in available:
-        targets = ", ".join(replacement.targets)
-        speculative = " [speculative target name]" if replacement.speculative else ""
-        print(f"::warning file={replacement.source}::Pinned Mathlib now provides {targets}; "
-              f"open a migration PR and delete the obsolete surface ({replacement.note})"
-              f"{speculative}")
+        print(f"::warning file={replacement.source}::{warning_message(replacement)}")
 
     summary = markdown_summary(groups, available)
     if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):

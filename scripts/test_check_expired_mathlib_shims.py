@@ -170,6 +170,23 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         summary = check.markdown_summary((group,), available)
         self.assertIn("Speculative target name", summary)
 
+    def test_landing_sentinel_requires_audit_not_source_deletion(self):
+        group = check.ShimGroup(
+            (pathlib.Path("TauCeti/Mixed.lean"),),
+            ("Upstream.sentinel",),
+            (),
+            "mixed source",
+            landing_sentinel=True,
+        )
+        available = check.available_replacements(
+            (group,), {"Upstream.sentinel"}, pathlib.Path(".")
+        )
+        summary = check.markdown_summary((group,), available)
+        warning = check.warning_message(available[0])
+        self.assertIn("migrate only declarations with canonical counterparts", summary)
+        self.assertIn("preserve or re-home source-only API", warning)
+        self.assertNotIn("delete this file", summary + warning)
+
     def test_missing_mathlib_tree_rejects_module_checks(self):
         group = check.ShimGroup(
             (pathlib.Path("TauCeti/One.lean"),), (), ("Mathlib.Topology.NewThing",), "test"
