@@ -31,7 +31,7 @@ all lie in `Iⁿ⁺¹` must be written as a combination of finitely many generat
 are themselves *restricted* series, so the cofactors have to tend to zero. They are obtained by
 decomposing each coefficient not at the uniform level `n + 1` but at the level `n + 1 + m ν` that
 the coefficient actually attains, cut off at the degree of `ν` so that the level is attained;
-`TauCeti.Huber.PairOfDefinition.exists_level` packages that choice.
+a private level-selection lemma packages that choice.
 
 A pseudouniformiser of `A` stays one in `A⟨X⟩_T` as a constant series, so the Tate property is
 inherited too. Since completion preserves both properties
@@ -103,58 +103,7 @@ private def combSubgroup {ι : Type*} (G : Finset ι) (g : ι → A) (M : AddSub
 
 namespace PairOfDefinition
 
-/-! ### The image of the ideal of definition
-
-Three facts about the additive subgroups `Iⁿ ⊆ A`, all of them algebra: they are nested, they
-absorb multiplication by `A₀`, and they multiply. -/
-
-/-- The images of the powers of the ideal of definition are nested. -/
-theorem idealImage_anti (P : PairOfDefinition A) {m n : ℕ} (h : m ≤ n) :
-    P.idealImage n ≤ P.idealImage m := by
-  intro x hx
-  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
-  exact (P.mem_idealImage m).mpr ⟨y, Ideal.pow_le_pow_right h hy, rfl⟩
-
-/-- `Iⁿ ⊆ A` lies in the ring of definition. -/
-theorem idealImage_le_ringOfDefinition (P : PairOfDefinition A) (n : ℕ) :
-    P.idealImage n ≤ P.ringOfDefinition.toAddSubgroup := by
-  intro x hx
-  obtain ⟨y, -, rfl⟩ := (P.mem_idealImage n).mp hx
-  exact y.2
-
-/-- `Iⁿ ⊆ A` absorbs multiplication by an element of the ring of definition. -/
-theorem mul_mem_idealImage (P : PairOfDefinition A) {n : ℕ} {a x : A}
-    (ha : a ∈ P.ringOfDefinition) (hx : x ∈ P.idealImage n) : a * x ∈ P.idealImage n := by
-  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp hx
-  exact (P.mem_idealImage n).mpr ⟨⟨a, ha⟩ * y, Ideal.mul_mem_left _ _ hy, by push_cast; ring⟩
-
-/-- The images of the powers of the ideal of definition multiply: `Iᵃ · Iᵇ ⊆ Iᵃ⁺ᵇ`. -/
-theorem mul_mem_idealImage_add (P : PairOfDefinition A) {a b : ℕ} {x y : A}
-    (hx : x ∈ P.idealImage a) (hy : y ∈ P.idealImage b) : x * y ∈ P.idealImage (a + b) := by
-  obtain ⟨u, hu, rfl⟩ := (P.mem_idealImage a).mp hx
-  obtain ⟨v, hv, rfl⟩ := (P.mem_idealImage b).mp hy
-  exact (P.mem_idealImage (a + b)).mpr
-    ⟨u * v, (pow_add P.idealOfDefinition a b).symm ▸ Ideal.mul_mem_mul hu hv, by push_cast; ring⟩
-
 /-! ### The coefficient decomposition -/
-
-/-- **One coefficient, decomposed.** An element of `Iⁿ⁺¹ ⊆ A` is a combination of a finite
-generating set `G` of `I` with cofactors in `Iⁿ`. -/
-theorem exists_sum_eq_of_mem_idealImage_succ (P : PairOfDefinition A)
-    {G : Finset P.ringOfDefinition}
-    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) (n : ℕ) {x : A}
-    (hx : x ∈ P.idealImage (n + 1)) :
-    ∃ c : P.ringOfDefinition → A,
-      (∀ z, c z ∈ P.idealImage n) ∧ ∑ z ∈ G, (z : A) * c z = x := by
-  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage (n + 1)).mp hx
-  have hy' : y ∈ Ideal.span (G : Set P.ringOfDefinition) * P.idealOfDefinition ^ n := by
-    rw [hG, ← pow_succ']
-    exact hy
-  obtain ⟨c, hc, hsum⟩ := exists_sum_eq_of_mem_span_mul G (P.idealOfDefinition ^ n) hy'
-  refine ⟨fun z ↦ (c z : A), fun z ↦ (P.mem_idealImage n).mpr ⟨c z, hc z, rfl⟩, ?_⟩
-  rw [← hsum]
-  push_cast
-  rfl
 
 /-- **One weighted coefficient, decomposed.** The same decomposition through the weight: an
 element of `Tν · Iⁿ⁺¹` is a combination of the generators with cofactors in `Tν · Iⁿ`.
@@ -191,7 +140,7 @@ its own level rather than at the uniform level `n` is what makes the cofactors t
 restricted. The level is the largest admissible one bounded by the degree of `ν`, so it is
 attained; the degree cut-off is what keeps the sublevel sets finite even for coefficients lying in
 every power of `I`. -/
-theorem exists_level (P : PairOfDefinition A) {hT : IsWeightFamily T} (n : ℕ)
+private theorem exists_level (P : PairOfDefinition A) {hT : IsWeightFamily T} (n : ℕ)
     {f : weightedRestrictedSubring T hT} (hf : f ∈ weightedNhd T hT (P.idealImage n)) :
     ∃ m : (Fin k →₀ ℕ) → ℕ,
       (∀ ν, MvPowerSeries.coeff ν (f : MvPowerSeries (Fin k) A)
@@ -316,8 +265,7 @@ a combination, with cofactors in `Iⁿ⟨X⟩_T`, of the constant series attache
 set `G` of `I`.
 
 This is the mathematical content of the file. The cofactors are restricted series because each
-coefficient is decomposed at the level it attains
-(`TauCeti.Huber.PairOfDefinition.exists_level`); decomposing every coefficient at the uniform
+coefficient is decomposed at the level it attains; decomposing every coefficient at the uniform
 level `n + 1` would leave the cofactors with no reason to tend to zero. -/
 theorem exists_sum_weightedRingOfDefinitionC_mul (P : PairOfDefinition A) (hT : IsWeightFamily T)
     {G : Finset P.ringOfDefinition}
