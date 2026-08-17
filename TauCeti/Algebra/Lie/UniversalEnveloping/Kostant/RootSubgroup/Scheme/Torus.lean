@@ -60,8 +60,7 @@ namespace TauCeti.UniversalEnvelopingAlgebra
 -- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
 attribute [local instance high] Algebra.toModule
 
-variable {κ : Type} [Finite κ]
-noncomputable local instance : Fintype κ := Fintype.ofFinite κ
+variable {κ : Type} [Fintype κ]
 variable {V : Type} [AddCommGroup V]
 variable (M : AddSubgroup V)
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
@@ -305,7 +304,8 @@ private theorem groupSchemePointsMulEquiv_comp_kostantTorusGroupSchemeMap
         (DiagonalizableGroup.groupScheme_X_left ℤ (SplitTorus.characterGroup κ)))
       (kostantTorusCoordinateMap M b wt) f
 
-private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentation
+omit [Fintype κ] in
+private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentation [Finite κ]
     (f : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) :
     DiagonalizableGroup.groupSchemePointsMulEquiv
         (R := ℤ) (A := A) (SplitTorus.characterGroup κ)
@@ -333,7 +333,8 @@ private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentatio
     Spec.map (CommRingCat.ofHom f.ofConv.toRingHom)
   rw [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id]
 
-private theorem splitTorus_schemePointsMulEquiv_mapMulEquivOfPresentation
+omit [Fintype κ] in
+private theorem splitTorus_schemePointsMulEquiv_mapMulEquivOfPresentation [Finite κ]
     (f : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) :
     SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A)
         (CommHopfAlgCat.mapMulEquivOfPresentation
