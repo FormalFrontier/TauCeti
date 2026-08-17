@@ -140,6 +140,21 @@ private def uncorestrictSubcomodule (e : C ≃ₗc[k] D)
           | tmul x c => simp
           | add x y hx hy => simpa using congrArg₂ (· + ·) hx hy
 
+private theorem corestrictSubcomodule_toSubmodule (e : C ≃ₗc[k] D)
+    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V]
+    (W : Subcomodule k C V) :
+    letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
+    (corestrictSubcomodule k e W).toSubmodule = W.toSubmodule :=
+  rfl
+
+private theorem uncorestrictSubcomodule_toSubmodule (e : C ≃ₗc[k] D)
+    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V]
+    (W : letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
+      Subcomodule k D V) :
+    letI : Comodule k D V := Comodule.Corestrict e.toCoalgHom
+    (uncorestrictSubcomodule k e W).toSubmodule = W.toSubmodule :=
+  rfl
+
 /-- Complete reducibility is unchanged by corestricting a comodule along a coalgebra
 equivalence. -/
 theorem isCompletelyReducible_corestrict_iff (e : C ≃ₗc[k] D)
@@ -151,10 +166,14 @@ theorem isCompletelyReducible_corestrict_iff (e : C ≃ₗc[k] D)
   constructor
   · intro h W
     obtain ⟨Q, hQ⟩ := h (corestrictSubcomodule k e.symm W)
-    exact ⟨uncorestrictSubcomodule k e.symm Q, hQ⟩
+    refine ⟨uncorestrictSubcomodule k e.symm Q, ?_⟩
+    simpa only [corestrictSubcomodule_toSubmodule,
+      uncorestrictSubcomodule_toSubmodule] using hQ
   · intro h W
     obtain ⟨Q, hQ⟩ := h (uncorestrictSubcomodule k e.symm W)
-    exact ⟨corestrictSubcomodule k e.symm Q, hQ⟩
+    refine ⟨corestrictSubcomodule k e.symm Q, ?_⟩
+    simpa only [corestrictSubcomodule_toSubmodule,
+      uncorestrictSubcomodule_toSubmodule] using hQ
 
 end Equiv
 

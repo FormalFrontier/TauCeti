@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
+public import Mathlib.Algebra.Category.CommHopfAlgCat
 public import TauCeti.Algebra.Coalgebra.Comodule.LinearlyReductive
 
 /-!
@@ -12,8 +12,7 @@ public import TauCeti.Algebra.Coalgebra.Comodule.LinearlyReductive
 
 An affine group over a field is linearly reductive when every finite-dimensional rational
 representation is completely reducible. This file packages the existing comodule formulation as
-an isomorphism-invariant object property on commutative Hopf algebras. It also records that the
-coordinate Hopf algebra of every finite-type diagonalizable group has the property.
+an isomorphism-invariant object property on commutative Hopf algebras.
 
 The property is deliberately separate from smoothness, connectedness, and finite type. In
 positive characteristic a torus is linearly reductive, while a general reductive group need not
@@ -24,8 +23,6 @@ belongs later in the theory.
 
 * `TauCeti.linearlyReductiveCommHopfAlgProperty`: linear reductivity as an object property.
 * `TauCeti.LinearlyReductiveCommHopfAlgCat`: the corresponding full subcategory.
-* `TauCeti.DiagonalizableGroup.linearlyReductiveCommHopfAlgProperty_coordinateRing`: every
-  diagonalizable coordinate Hopf algebra is linearly reductive.
 
 ## References
 
@@ -70,17 +67,5 @@ instance (k : Type u) [Field k] :
 /-- The category of linearly reductive commutative Hopf algebras over a field. -/
 abbrev LinearlyReductiveCommHopfAlgCat (k : Type u) [Field k] :=
   (linearlyReductiveCommHopfAlgProperty.{u, v, w} k).FullSubcategory
-
-namespace DiagonalizableGroup
-
-/-- The coordinate Hopf algebra of a finite-type diagonalizable group is linearly reductive.
-Equivalently, every finite-dimensional representation of `D(G)` splits as a direct sum of
-weight spaces. -/
-theorem linearlyReductiveCommHopfAlgProperty_coordinateRing
-    (k : Type u) [Field k] (G : FGCommGrpCat.{v}) :
-    linearlyReductiveCommHopfAlgProperty.{u, max u v, w} k (coordinateRing k G).obj :=
-  Coalgebra.isLinearlyReductive_monoidAlgebra k G
-
-end DiagonalizableGroup
 
 end TauCeti

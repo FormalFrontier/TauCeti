@@ -154,7 +154,8 @@ theorem linearlyReductiveAffineGroupSchemeProperty_groupScheme
   have hE : linearlyReductiveAffineGroupSchemeProperty k (E.functor.obj (op H)) := by
     have h : ((linearlyReductiveAffineGroupSchemeProperty k).inverseImage E.functor) (op H) := by
       rw [linearlyReductiveAffineGroupSchemeProperty_inverseImage, ObjectProperty.op_iff]
-      exact linearlyReductiveCommHopfAlgProperty_coordinateRing k G
+      exact (linearlyReductiveCommHopfAlgProperty_iff k H).2
+        (Coalgebra.isLinearlyReductive_monoidAlgebra k G)
     exact h
   let e : E.functor.obj (op H) ≅
       (⟨groupScheme k G, (affineGroupSchemeProperty_iff _).2 inferInstance⟩ :
