@@ -386,15 +386,28 @@ theorem distribBaseChange_comp_scalarExtensionComponent
   simpa only [LinearMap.coe_comp, Function.comp_apply, TensorProduct.map_tmul,
     LinearEquiv.coe_coe] using (scalarExtensionComponent_tensor R H A η M N x y).symm
 
-end Component
-
-section Generic
-
-variable (R : Type u) [CommSemiring R]
-variable (H : Type v) [Semiring H] [HopfAlgebra R H]
-variable (A : Type u) [CommSemiring A] [Algebra R A]
-
-open Functor.LaxMonoidal
+/-- Evaluate a transported scalar-extension component from the corresponding natural
+transformation component. -/
+theorem scalarExtensionComponent_eq_of_hom_app
+    (M : FGComoduleCat.{u, v, u} R H)
+    (F : LinearMap.GeneralLinearGroup A (A ⊗[R] M))
+    (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (happ : eta.hom.hom.app M =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        F.toLinearEquiv.toModuleIsoₛ.hom ≫
+          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm) :
+    scalarExtensionComponent R H A eta M = (F : Module.End A (A ⊗[R] M)) := by
+  apply LinearMap.ext
+  intro x
+  rw [scalarExtensionComponent_apply, happ]
+  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
+  -- The functor object is definitionally the explicit scalar extension, but this equality is
+  -- hidden by the categorical and linear-map wrappers. Displaying the four transports lets the
+  -- standard `eqToHom` simp lemmas cancel them without unfolding either public construction.
+  change (eqToHom hM.symm ≫
+      (eqToHom hM ≫ F.toLinearEquiv.toModuleIsoₛ.hom ≫ eqToHom hM.symm) ≫
+        eqToHom hM) x = _
+  simp
 
 /-- A natural automorphism of scalar extension is monoidal when its transported linear
 components preserve the tensor unit and tensor products. -/
@@ -460,6 +473,16 @@ theorem isMonoidal_of_linear_components
       eqToHom_refl, Category.id_comp, Category.comp_id, LinearEquiv.toModuleIsoₛ_hom]
     erw [← Category.assoc, htensor', Category.assoc]
 
+end Component
+
+section Generic
+
+variable (R : Type u) [CommSemiring R]
+variable (H : Type v) [Semiring H] [HopfAlgebra R H]
+variable (A : Type u) [CommSemiring A] [Algebra R A]
+
+open Functor.LaxMonoidal
+
 /-- The point action on the tensor unit is the identity automorphism. -/
 @[simp]
 theorem ofLinearEquiv_pointsAction_tensorUnit_eq_one
@@ -517,29 +540,6 @@ automorphism. -/
 theorem fgPointTensorIso_hom_hom (g : WithConv (H →ₐ[R] A)) :
     (fgPointTensorIso R H A g).hom.hom = (fgPointNatIsoHom R H A g).hom :=
   (rfl)
-
-/-- Evaluate a transported scalar-extension component from the corresponding natural
-transformation component. -/
-theorem scalarExtensionComponent_eq_of_hom_app
-    (M : FGComoduleCat.{u, v, u} R H)
-    (F : LinearMap.GeneralLinearGroup A (A ⊗[R] M))
-    (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
-    (happ : eta.hom.hom.app M =
-      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
-        F.toLinearEquiv.toModuleIsoₛ.hom ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm) :
-    scalarExtensionComponent R H A eta M = (F : Module.End A (A ⊗[R] M)) := by
-  apply LinearMap.ext
-  intro x
-  rw [scalarExtensionComponent_apply, happ]
-  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
-  -- The functor object is definitionally the explicit scalar extension, but this equality is
-  -- hidden by the categorical and linear-map wrappers. Displaying the four transports lets the
-  -- standard `eqToHom` simp lemmas cancel them without unfolding either public construction.
-  change (eqToHom hM.symm ≫
-      (eqToHom hM ≫ F.toLinearEquiv.toModuleIsoₛ.hom ≫ eqToHom hM.symm) ≫
-        eqToHom hM) x = _
-  simp
 
 /-- The transported component of the tensor automorphism induced by a point is the usual point
 action on every finite comodule. -/

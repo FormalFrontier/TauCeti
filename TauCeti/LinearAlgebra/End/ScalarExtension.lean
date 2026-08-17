@@ -21,9 +21,9 @@ LinearMap.rTensor M f.toLinearMap : A ⊗[R] M → B ⊗[R] M.
 
 An `A`-linear endomorphism of `A ⊗[R] M` transports along this comparison to a unique
 `B`-linear endomorphism of `B ⊗[R] M`. This file constructs that transport, `mapValue`, proves
-that the transport square characterizes it, and records that it is multiplicative in the
-endomorphism and functorial in the value algebra. It also transports the two compatibilities
-needed for monoidal arguments: naturality in `M` and the tensor comparison
+that the transport square characterizes it, and records that it is additive and multiplicative
+in the endomorphism, and functorial in the value algebra. It also transports the two
+compatibilities needed for monoidal arguments: naturality in `M` and the tensor comparison
 `(A ⊗ M) ⊗[A] (A ⊗ N) ≃ A ⊗ (M ⊗ N)`.
 
 The name follows `TauCeti.AlgHom.mapValue`, which transports an algebra-valued point along a
@@ -36,7 +36,7 @@ morphism of value algebras; the two are compatible in
 * `TauCeti.Module.End.mapValue`: the transported endomorphism.
 * `TauCeti.Module.End.mapValue_comp_rTensor`: the defining transport square.
 * `TauCeti.Module.End.eq_mapValue`: the transport square characterizes the transport.
-* `TauCeti.Module.End.mapValueHom`: the transport as a monoid homomorphism.
+* `TauCeti.Module.End.mapValueRingHom`: the transport as a ring homomorphism.
 * `TauCeti.Module.End.mapValueGL`: the transport on general linear groups.
 * `TauCeti.Module.End.baseChange_comp_mapValue`: transport preserves naturality in the module.
 * `TauCeti.Module.End.distribBaseChange_comp_mapValue`: transport preserves the tensor
@@ -148,24 +148,41 @@ theorem mapValue_mul (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] 
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.restrictScalars_apply,
     _root_.Module.End.mul_apply, mapValue_rTensor_apply]
 
-/-- Base change of endomorphisms of a scalar extension, as a monoid homomorphism. -/
-@[expose] noncomputable def mapValueHom (f : A →ₐ[R] B) :
-    _root_.Module.End A (A ⊗[R] M) →* _root_.Module.End B (B ⊗[R] M) where
+/-- Base change preserves the zero endomorphism. -/
+@[simp]
+theorem mapValue_zero (f : A →ₐ[R] B) :
+    mapValue f (0 : _root_.Module.End A (A ⊗[R] M)) = 0 := by
+  refine (eq_mapValue f 0 0 ?_).symm
+  simp
+
+/-- Base change is additive. -/
+theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] M)) :
+    mapValue f (φ + ψ) = mapValue f φ + mapValue f ψ := by
+  refine (eq_mapValue f (φ + ψ) (mapValue f φ + mapValue f ψ) ?_).symm
+  refine LinearMap.ext fun z ↦ ?_
+  simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.restrictScalars_apply,
+    LinearMap.add_apply, mapValue_rTensor_apply, map_add]
+
+/-- Base change of endomorphisms of a scalar extension, as a ring homomorphism. -/
+@[expose] noncomputable def mapValueRingHom (f : A →ₐ[R] B) :
+    _root_.Module.End A (A ⊗[R] M) →+* _root_.Module.End B (B ⊗[R] M) where
   toFun := mapValue f
   map_one' := mapValue_one f
   map_mul' := mapValue_mul f
+  map_zero' := mapValue_zero f
+  map_add' := mapValue_add f
 
 /-- The bundled base-change homomorphism acts by `mapValue`. -/
 @[simp]
-theorem mapValueHom_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
-    mapValueHom f φ = mapValue f φ :=
+theorem mapValueRingHom_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
+    mapValueRingHom f φ = mapValue f φ :=
   rfl
 
 /-- Base change of automorphisms of a scalar extension, as a group homomorphism. -/
 @[expose] noncomputable def mapValueGL (f : A →ₐ[R] B) :
     LinearMap.GeneralLinearGroup A (A ⊗[R] M) →*
       LinearMap.GeneralLinearGroup B (B ⊗[R] M) :=
-  Units.map (mapValueHom f)
+  Units.map (mapValueRingHom f).toMonoidHom
 
 /-- The underlying endomorphism of a base-changed automorphism is the base-changed
 endomorphism. -/

@@ -36,8 +36,8 @@ see `TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.GroupFunctor`.
   tensor automorphism.
 * `TauCeti.Tannaka.tensorAutMapValue`: base change of tensor automorphisms along a morphism of
   value algebras.
-* `TauCeti.Tannaka.rTensor_comp_scalarExtensionComponent`: the transport square characterizing
-  the base-changed components.
+* `TauCeti.Tannaka.scalarExtensionComponent_tensorAutMapValue_comp_rTensor`: the transport
+  square characterizing the base-changed components.
 * `TauCeti.Tannaka.tensorAutMapValue_fgPointTensorIso`: base change is compatible with the point
   action.
 
@@ -58,7 +58,7 @@ universe u v
 section Assembly
 
 variable (R : Type u) [CommSemiring R]
-variable (H : Type v) [Semiring H] [HopfAlgebra R H]
+variable (H : Type v) [Semiring H] [Bialgebra R H]
 variable (A : Type u) [CommSemiring A] [Algebra R A]
 
 /-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules,
@@ -157,7 +157,7 @@ end Assembly
 section BaseChange
 
 variable (R : Type u) [CommSemiring R]
-variable (H : Type v) [Semiring H] [HopfAlgebra R H]
+variable (H : Type v) [Semiring H] [Bialgebra R H]
 variable (A : Type u) [CommSemiring A] [Algebra R A]
 variable (B : Type u) [CommSemiring B] [Algebra R B]
 variable (C : Type u) [CommSemiring C] [Algebra R C]
@@ -265,7 +265,7 @@ theorem tensorAutMapValueHom_apply (f : A →ₐ[R] B)
 
 /-- The transport square characterizing the components of a base-changed tensor automorphism:
 they are compatible with the original components along the comparison of scalar extensions. -/
-theorem rTensor_comp_scalarExtensionComponent (f : A →ₐ[R] B)
+theorem scalarExtensionComponent_tensorAutMapValue_comp_rTensor (f : A →ₐ[R] B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H) :
     (scalarExtensionComponent R H B (tensorAutMapValue R H A B f η) M).restrictScalars R ∘ₗ
@@ -295,6 +295,15 @@ theorem tensorAutMapValue_comp (f : A →ₐ[R] B) (g : B →ₐ[R] C)
   rw [scalarExtensionComponent_tensorAutMapValue, scalarExtensionComponent_tensorAutMapValue,
     scalarExtensionComponent_tensorAutMapValue, Module.End.mapValue_comp]
 
+end BaseChange
+
+section Points
+
+variable (R : Type u) [CommSemiring R]
+variable (H : Type v) [Semiring H] [HopfAlgebra R H]
+variable (A : Type u) [CommSemiring A] [Algebra R A]
+variable (B : Type u) [CommSemiring B] [Algebra R B]
+
 /-- Base change of tensor automorphisms is compatible with the point action: pushing an
 algebra-valued point forward along `f` and acting agrees with acting and then base changing. -/
 @[simp]
@@ -312,6 +321,6 @@ theorem tensorAutMapValue_fgPointTensorIso (f : A →ₐ[R] B) (g : WithConv (H 
   simpa only [AlgHom.mapValue_apply, WithConv.ofConv_toConv] using
     (Comodule.rTensor_comp_endOfPoint (M : Type u) f g.ofConv).symm
 
-end BaseChange
+end Points
 
 end TauCeti.Tannaka

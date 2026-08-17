@@ -54,7 +54,7 @@ universe u v
 section Functor
 
 variable (R : Type u) [CommRing R]
-variable (H : Type v) [Semiring H] [HopfAlgebra R H]
+variable (H : Type v) [Semiring H] [Bialgebra R H]
 
 /-- The tensor-automorphism group functor of a Hopf algebra: a commutative `R`-algebra `A` is
 sent to the group of tensor automorphisms of scalar extension to `A` on the finite
