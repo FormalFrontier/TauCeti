@@ -11,7 +11,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup
 # The circle is not simply connected
 
 The circle computation `π₁(AddCircle p) ≃* Multiplicative ℤ`
-(`TauCeti.AddCircle.fundamentalGroupMulEquiv`) has an immediate qualitative payoff: since
+(`AddCircle.fundamentalGroupMulEquiv`) has an immediate qualitative payoff: since
 `Multiplicative ℤ` is nontrivial and infinite, so is the fundamental group of the circle, and
 therefore the circle is **not simply connected**. Being non-simply-connected, it is not
 contractible, and it is not homeomorphic to any simply connected space; in particular the
@@ -32,21 +32,21 @@ contractibility of a real topological vector space
 
 ## Main declarations
 
-* `TauCeti.AddCircle.nontrivial_fundamentalGroup`,
-  `TauCeti.AddCircle.infinite_fundamentalGroup`: the fundamental group of `AddCircle p`
+* `AddCircle.nontrivial_fundamentalGroup`,
+  `AddCircle.infinite_fundamentalGroup`: the fundamental group of `AddCircle p`
   (`p ≠ 0`), at any basepoint, is nontrivial and infinite.
-* `TauCeti.AddCircle.not_simplyConnectedSpace`: `AddCircle p` is not simply connected.
-* `TauCeti.AddCircle.not_contractibleSpace`: `AddCircle p` is not contractible.
-* `TauCeti.AddCircle.isEmpty_homeomorph_of_simplyConnectedSpace`,
-  `TauCeti.AddCircle.isEmpty_homeomorph_realTopologicalVectorSpace`,
-  `TauCeti.AddCircle.isEmpty_homeomorph_real`: `AddCircle p` is not homeomorphic to a simply
+* `AddCircle.not_simplyConnectedSpace`: `AddCircle p` is not simply connected.
+* `AddCircle.not_contractibleSpace`: `AddCircle p` is not contractible.
+* `AddCircle.isEmpty_homeomorph_of_simplyConnectedSpace`,
+  `AddCircle.isEmpty_homeomorph_realTopologicalVectorSpace`,
+  `AddCircle.isEmpty_homeomorph_real`: `AddCircle p` is not homeomorphic to a simply
   connected space, to a real topological vector space, or to `ℝ`.
 * `TauCeti.UnitAddCircle.*`: the specialisations to the unit circle `S¹ = ℝ ⧸ ℤ`.
 -/
 
 public section
 
-namespace TauCeti
+open TauCeti
 
 namespace AddCircle
 
@@ -111,7 +111,7 @@ theorem isEmpty_homeomorph_real (hp : p ≠ 0) : IsEmpty (AddCircle p ≃ₜ ℝ
 
 end AddCircle
 
-namespace UnitAddCircle
+namespace TauCeti.UnitAddCircle
 
 /-- The fundamental group of the unit circle `S¹ = ℝ ⧸ ℤ`, based at `0`, is nontrivial. -/
 theorem nontrivial_fundamentalGroup_zero : Nontrivial (FundamentalGroup UnitAddCircle 0) :=
@@ -133,6 +133,4 @@ theorem not_contractibleSpace : ¬ ContractibleSpace UnitAddCircle :=
 theorem isEmpty_homeomorph_real : IsEmpty (UnitAddCircle ≃ₜ ℝ) :=
   AddCircle.isEmpty_homeomorph_real 1 one_ne_zero
 
-end UnitAddCircle
-
-end TauCeti
+end TauCeti.UnitAddCircle

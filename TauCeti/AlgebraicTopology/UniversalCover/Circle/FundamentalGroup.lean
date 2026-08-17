@@ -35,14 +35,14 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
 
 ## Main declarations
 
-* `TauCeti.AddCircle.fundamentalGroupMulEquivZMultiples`: for a covering projection from a
+* `AddCircle.fundamentalGroupMulEquivZMultiples`: for a covering projection from a
   simply connected additive group, the fundamental group of `AddCircle p` is the period subgroup.
-* `TauCeti.AddCircle.fundamentalGroupMulEquivInt`: for a covering projection from a
+* `AddCircle.fundamentalGroupMulEquivInt`: for a covering projection from a
   simply connected additive group with non-torsion period, the fundamental group of
   `AddCircle p` is `Multiplicative ℤ`.
-* `TauCeti.AddCircle.fundamentalGroupMulEquiv`: for a nonzero real period, the fundamental
+* `AddCircle.fundamentalGroupMulEquiv`: for a nonzero real period, the fundamental
   group of `AddCircle p` (based at any point with a chosen lift) is `Multiplicative ℤ`.
-* `TauCeti.AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using
+* `AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using
   the lift `0 : ℝ`.
 * `TauCeti.UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
 
@@ -57,9 +57,7 @@ vector space, together with the Tau Ceti deck-transformation theory of Stages 0.
 
 public section
 
-namespace TauCeti
-
-open AddSubgroup
+open TauCeti AddSubgroup
 
 namespace AddCircle
 
@@ -273,7 +271,7 @@ lemma fundamentalGroupMulEquivZero_eq_one_iff (hp : p ≠ 0) (γ : FundamentalGr
 
 end AddCircle
 
-namespace UnitAddCircle
+namespace TauCeti.UnitAddCircle
 
 /-- The fundamental group of the unit circle `S¹ = ℝ ⧸ ℤ` is `ℤ`:
 `FundamentalGroup UnitAddCircle 0 ≃* Multiplicative ℤ`. This is the classical `π₁(S¹) ≅ ℤ`. -/
@@ -303,6 +301,4 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (γ : FundamentalGroup UnitAddCircle 0
   simpa [fundamentalGroupMulEquiv] using
     AddCircle.fundamentalGroupMulEquivZero_eq_one_iff 1 one_ne_zero γ
 
-end UnitAddCircle
-
-end TauCeti
+end TauCeti.UnitAddCircle
