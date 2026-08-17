@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Filtration
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import TauCeti.RingTheory.Subring.Basic
 public import TauCeti.RingTheory.Subring.RationalBaseChange
 
 /-!
