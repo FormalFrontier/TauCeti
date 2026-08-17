@@ -23,6 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Restore Mathlib's compressed download cache
+        uses: ./.github/actions/restore-mathlib-ltars
+        with:
+          project-dir: .
+
       - name: Set up Lean
         uses: leanprover/lean-action@v1
         with:

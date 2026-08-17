@@ -85,6 +85,44 @@ class ExpiredMathlibShimTests(unittest.TestCase):
                 {pathlib.Path("TauCeti/New.lean")},
             )
 
+    def test_vendored_migrate_and_delete_is_a_self_declaration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(
+                "Vendored from mathlib4#1; migrate to Mathlib and delete this file when it merges.",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                check.find_self_declared_shims(source_root),
+                {pathlib.Path("TauCeti/New.lean")},
+            )
+
+    def test_ported_copy_deleted_for_mathlib_is_a_self_declaration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(
+                "This copy is deleted in favour of the Mathlib declarations once the PR lands.",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                check.find_self_declared_shims(source_root),
+                {pathlib.Path("TauCeti/New.lean")},
+            )
+
+    def test_bold_negation_is_not_a_self_declaration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(
+                "This is **not** a temporary shim.", encoding="utf-8"
+            )
+            self.assertEqual(check.find_self_declared_shims(source_root), set())
+
     def test_registry_rejects_missing_source_and_malformed_target(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
@@ -146,7 +184,10 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         client = FakeZulip()
         check.reconcile_zulip(client, summary, active=True, channel="C", topic="T")
         self.assertEqual(len(client.sent), 1)
-        self.assertEqual(client.narrows, [[['stream', 'C'], ['topic', 'T']]])
+        self.assertEqual(client.narrows, [[
+            {"operator": "channel", "operand": "C"},
+            {"operator": "topic", "operand": "T"},
+        ]])
 
         active = client.sent[0]
         client = FakeZulip([{"id": 4, "sender_id": 7, "content": active}])
@@ -158,6 +199,12 @@ class ExpiredMathlibShimTests(unittest.TestCase):
         check.reconcile_zulip(client, clear, active=False)
         self.assertEqual(client.updated[0][0], 4)
         self.assertTrue(client.updated[0][1].startswith("✅"))
+
+        resolved = client.updated[0][1]
+        client = FakeZulip([{"id": 4, "sender_id": 7, "content": resolved}])
+        check.reconcile_zulip(client, summary, active=True)
+        self.assertEqual(len(client.sent), 1)
+        self.assertEqual(client.updated, [])
 
     def test_notification_report_round_trip(self):
         with tempfile.TemporaryDirectory() as temporary:

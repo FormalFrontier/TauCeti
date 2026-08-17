@@ -54,5 +54,100 @@
     "modules": [
       "Mathlib.RingTheory.DedekindDomain.SUnit"
     ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41253",
+    "sources": [
+      "TauCeti/GroupTheory/DoubleCoset/Basic.lean"
+    ],
+    "declarations": [
+      "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41253",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Basic.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Basic"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41254",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplicity/Basic.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Multiplicity"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41255",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplicity/Unit.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.MultiplicityUnit"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41256",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplicity/Support.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.MultiplicitySupport"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41277",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplication.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Multiplication"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41279",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/One.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.One"
+    ]
+  },
+  {
+    "note": "Vendored from open mathlib4#41328",
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Associativity.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Associativity"
+    ]
+  },
+  {
+    "note": "Ported from open mathlib4#38009",
+    "sources": [
+      "TauCeti/AlgebraicGeometry/AdicSpace/ValuationSpectrum.lean"
+    ],
+    "modules": [
+      "Mathlib.RingTheory.Valuation.ValuationSpectrum"
+    ]
+  },
+  {
+    "note": "Ported from open mathlib4#38009",
+    "sources": [
+      "TauCeti/RingTheory/Valuation/ValuativeRel/Basic.lean",
+      "TauCeti/RingTheory/Valuation/ValuativeRel/Comap.lean"
+    ],
+    "declarations": [
+      "ValuativeRel.comap",
+      "ValuativeRel.not_vle_zero_of_isUnit"
+    ],
+    "modules": [
+      "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"
+    ]
   }
 ]

@@ -27,8 +27,16 @@ SELF_DECLARED = re.compile(r"\btemporary\b.{0,40}\bshim\b", re.IGNORECASE | re.D
 SELF_DECLARED_OBSOLESCENCE = re.compile(
     r"\bwhen\s+Mathlib\b.{0,160}\b(?:deleted?|removed?)\b", re.IGNORECASE | re.DOTALL
 )
+SELF_DECLARED_VENDORING = re.compile(
+    r"\bmigrate\s+to\s+Mathlib\s+and\s+delete\b", re.IGNORECASE
+)
+SELF_DECLARED_PORT = re.compile(
+    r"\b(?:this\s+)?copy\b.{0,80}\bdeleted\b.{0,80}\bMathlib\b", re.IGNORECASE | re.DOTALL
+)
 NEGATED_SELF_DECLARATION = re.compile(
-    r"(?:\brather\s+than|\bnot)\s+(?:an?\s+)?(?:\*{1,2})?\s*$", re.IGNORECASE
+    r"(?:\*{1,2})?(?:\brather\s+than|\bnot)(?:\*{1,2})?\s+"
+    r"(?:an?\s+)?(?:\*{1,2})?\s*$",
+    re.IGNORECASE,
 )
 ZULIP_MARKER = "<!--expired-mathlib-shims:v1-->"
 
@@ -129,7 +137,9 @@ def find_self_declared_shims(source_root: pathlib.Path) -> set[pathlib.Path]:
                 found.add(source.relative_to(repo_root))
                 break
         else:
-            if SELF_DECLARED_OBSOLESCENCE.search(text) is not None:
+            if SELF_DECLARED_OBSOLESCENCE.search(text) is not None \
+                    or SELF_DECLARED_VENDORING.search(text) is not None \
+                    or SELF_DECLARED_PORT.search(text) is not None:
                 found.add(source.relative_to(repo_root))
     return found
 
@@ -264,7 +274,10 @@ def reconcile_zulip(
     """Create, update, or resolve the checker's bot-owned Zulip post."""
 
     bot_id = client.my_user_id()
-    narrow = [["stream", channel], ["topic", topic]]
+    narrow = [
+        {"operator": "channel", "operand": channel},
+        {"operator": "topic", "operand": topic},
+    ]
     messages = client.get_messages(narrow)
     owned = [message for message in messages
              if message.get("sender_id") == bot_id
@@ -274,6 +287,8 @@ def reconcile_zulip(
     if current is None:
         if active:
             client.send_message(content)
+    elif active and current["content"].startswith("✅"):
+        client.send_message(content)
     elif current["content"] != content:
         client.update_message(current["id"], content)
 
@@ -362,8 +377,10 @@ def main(argv: Sequence[str] | None = None) -> int:
           f"{len(available)} with available replacements")
     for replacement in available:
         targets = ", ".join(replacement.targets)
+        speculative = " [speculative target name]" if replacement.speculative else ""
         print(f"::warning file={replacement.source}::Pinned Mathlib now provides {targets}; "
-              f"open a migration PR and delete the obsolete surface ({replacement.note})")
+              f"open a migration PR and delete the obsolete surface ({replacement.note})"
+              f"{speculative}")
 
     summary = markdown_summary(groups, available)
     if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):
