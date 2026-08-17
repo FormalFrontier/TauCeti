@@ -44,7 +44,7 @@ universe u
 noncomputable section
 
 /-- The full category of finitely presented sheaves of modules on a scheme. -/
-abbrev FinitelyPresentedSheaf (X : Scheme.{u}) :=
+abbrev FinitelyPresentedSheaf (X : Scheme.{u}) : Type _ :=
   ObjectProperty.FullSubcategory
     (_root_.SheafOfModules.isFinitePresentation X.ringCatSheaf)
 
