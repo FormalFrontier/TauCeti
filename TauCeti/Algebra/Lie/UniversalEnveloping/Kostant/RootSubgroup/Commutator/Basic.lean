@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 public import TauCeti.RingTheory.Nilpotent.ChevalleyCommutator
 public import TauCeti.RingTheory.Nilpotent.RootString.Basic
@@ -111,42 +112,6 @@ variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
 
 -- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
 attribute [local instance high] Algebra.toModule
-
--- Mathlib does not register the Lie ring of an associative ring as a global instance; the
--- commutator of two elements of the enveloping algebra is written with it below.
-attribute [local instance 100] LieRing.ofAssociativeRing
-
-/-- The image of a Lie bracket under a representation of the universal enveloping algebra is the
-ring commutator of the images. -/
-theorem mul_sub_mul_eq_map_ι_lie (a b : L) :
-    ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) * ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) -
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ ⁅a, b⁆) := by
-  rw [LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) a b,
-    LieRing.of_associative_ring_bracket, map_sub, map_mul, map_mul]
-
-/-- Images of Lie-commuting elements commute in every representation of the universal enveloping
-algebra. -/
-theorem commute_of_lie_eq_zero {a b : L} (hab : ⁅a, b⁆ = 0) :
-    Commute (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a))
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b)) := by
-  have h := mul_sub_mul_eq_map_ι_lie ρ a b
-  rw [hab, map_zero, map_zero] at h
-  exact sub_eq_zero.mp h
-
-/-- A bracket relation with an integral structure constant becomes the corresponding commutator
-relation in every representation of the universal enveloping algebra. -/
-theorem mul_eq_mul_add_zsmul_of_lie_eq {a b b' : L} {c : ℤ}
-    (hab : ⁅a, b⁆ = c • b') :
-    ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) *
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ a) +
-        c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ b') := by
-  have h := mul_sub_mul_eq_map_ι_lie ρ a b
-  rw [hab, map_zsmul, map_zsmul] at h
-  exact sub_eq_iff_eq_add'.mp h
 
 /-- A Kostant-stable lattice is stable under the divided powers of every integral multiple of a
 distinguished root vector. -/
@@ -355,22 +320,16 @@ theorem kostantRootSubgroupPoints_mul_of_lie_lie_eq {i j k l : ι} {c d : ℤ}
   -- The commutator of the first two root vectors is `c` times the third.
   have hxy := mul_eq_mul_add_zsmul_of_lie_eq ρ hij
   -- The second bracket is twice the fourth root vector, scaled by `d`.
+  have hik := hiij
+  rw [hij, lie_zsmul] at hik
   have hxz : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
         (c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k))) =
       c • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e k)) *
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) +
         2 • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) := by
-    have hb := mul_sub_mul_eq_map_ι_lie ρ (e i) ⁅e i, e j⁆
-    rw [hiij, hij, map_zsmul, map_zsmul, map_zsmul, map_zsmul] at hb
-    -- The straightening rule takes the second commutator as `2 • w`, with `w = d • e l` the
-    -- integral element `(ad eᵢ)² eⱼ / 2`, whereas the Lie hypothesis supplies it as `(2 * d) • e l`
-    -- with the two coefficients already multiplied. Doubling in `ℕ` and multiplying by `2` in `ℤ`
-    -- agree because both unfold to the sum of two copies.
-    have hcoeff : (2 : ℕ) • (d • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l))) =
-        (2 * d) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e l)) := by
-      rw [two_mul, add_smul, two_smul]
-    rw [hcoeff]
-    exact sub_eq_iff_eq_add'.mp hb
+    simpa only [one_zsmul, one_mul] using
+      (zsmul_mul_zsmul_eq_add_nsmul_of_zsmul_lie_eq ρ
+        (p := 1) (q := c) (r := d) (n := 2) (by simpa using hik))
   -- The remaining brackets vanish.
   have hcxw := commute_of_lie_eq_zero ρ hil
   have hcyz := commute_of_lie_eq_zero ρ hjk
