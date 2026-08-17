@@ -51,7 +51,7 @@ variable {X : Type*} [TopologicalSpace X] (x₀ : X)
 namespace TauCeti.UniversalCover
 
 /-- The orbit quotient of the universal cover by a subgroup of the fundamental group. -/
-abbrev SubgroupQuotient (H : Subgroup (FundamentalGroup X x₀)) :=
+abbrev SubgroupQuotient (H : Subgroup (FundamentalGroup X x₀)) : Type _ :=
   MulAction.orbitRel.Quotient H (UniversalCover x₀)
 
 namespace SubgroupQuotient

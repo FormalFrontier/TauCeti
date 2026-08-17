@@ -106,7 +106,7 @@ end Measure
 index type carries no finiteness assumption: it is `MultiCoupling.pi` and
 `MultiCoupling.instNonempty`, not the bundle itself, that need `ι` to be finite. -/
 abbrev MultiCoupling {ι : Type u} {X : ι → Type v}
-    [∀ i, MeasurableSpace (X i)] (μ : ∀ i, ProbabilityMeasure (X i)) :=
+    [∀ i, MeasurableSpace (X i)] (μ : ∀ i, ProbabilityMeasure (X i)) : Type _ :=
   {π : ProbabilityMeasure (∀ i, X i) //
     Measure.IsMultiCoupling π.toMeasure (fun i ↦ (μ i).toMeasure)}
 

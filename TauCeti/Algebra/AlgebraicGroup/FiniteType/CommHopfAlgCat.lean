@@ -67,7 +67,7 @@ lemma finiteTypeCommHopfAlgProperty_iff {R : Type u} [CommRing R]
 This is the full subcategory of `CommHopfAlgCat R` on objects whose underlying commutative
 `R`-algebra is finitely generated. The finite-type hypothesis is deliberately a separate
 object property, not part of the Hopf algebra typeclass. -/
-abbrev FiniteTypeCommHopfAlgCat (R : Type u) [CommRing R] :=
+abbrev FiniteTypeCommHopfAlgCat (R : Type u) [CommRing R] : Type _ :=
   (finiteTypeCommHopfAlgProperty (R := R)).FullSubcategory
 
 namespace FiniteTypeCommHopfAlgCat
