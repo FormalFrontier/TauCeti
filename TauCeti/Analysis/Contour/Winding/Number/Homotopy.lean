@@ -10,16 +10,22 @@ public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import Mathlib.MeasureTheory.Integral.CurveIntegral.Basic
 public import Mathlib.Topology.Homotopy.Path
 import TauCeti.Analysis.Contour.NullHomologous
+import TauCeti.Analysis.Contour.Winding.Proximity
 import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.SpecialFunctions.Bernstein
 import Mathlib.MeasureTheory.Integral.CurveIntegral.Poincare
 
 /-!
 # Homotopy invariance of the winding number
 
-The winding number of a path about `w` is invariant under a twice continuously differentiable
-fixed-endpoint homotopy through `ℂ \ {w}`. The proof represents the Cauchy kernel as the closed
-complex-linear `1`-form `z ↦ (z - w)⁻¹ dz`, then applies Mathlib's Poincaré theorem for curve
-integrals on the compact image of the homotopy.
+The winding number of a piecewise-`C¹` path about `w` is invariant under an arbitrary continuous
+fixed-endpoint homotopy through `ℂ \ {w}`. The proof regularizes finitely many horizontal slices
+by Mathlib's endpoint-preserving Bernstein approximations, then chains the resulting smooth paths
+with proximity invariance of the winding number.
+
+The earlier smooth route remains available at the level where it has distinct content: a `C²`
+homotopy preserves the actual curve integral of the Cauchy-kernel `1`-form by Mathlib's Poincaré
+theorem.
 
 ## Main results
 
@@ -27,16 +33,20 @@ integrals on the compact image of the homotopy.
   number of a piecewise-`C¹` path with Mathlib's curve integral of the Cauchy-kernel `1`-form.
 * `isPiecewiseC1On_eval_of_smoothPathHomotopy` supplies piecewise-`C¹` regularity for every path
   in a smooth homotopy.
-* `curveIntegral_inv_sub_smul_id_eq_of_pathHomotopy` is the Stokes step: a homotopy through
-  `ℂ \ {w}` preserves the curve integral of the Cauchy-kernel `1`-form.
-* `windingNumber_eq_of_pathHomotopy` proves the Layer 0 homotopy invariance result.
+* `curveIntegral_inv_sub_smul_id_eq_of_pathHomotopy` is the smooth Stokes step: a `C²` homotopy
+  through `ℂ \ {w}` preserves the curve integral of the Cauchy-kernel `1`-form.
+* `exists_isPiecewiseC1On_dist_lt_of_continuousMap` gives endpoint-preserving smooth
+  approximations of continuous complex paths.
+* `windingNumber_eq_of_pathHomotopy` proves the Layer 0 homotopy invariance result without any
+  regularity hypothesis on the homotopy.
 * `isNullHomologous_iff_of_pathHomotopy` transfers null-homology across a homotopy in the ambient
   set.
 
 ## Provenance
 
-The homotopy step reuses Mathlib's
-`ContinuousMap.Homotopy.curveIntegral_add_curveIntegral_eq_of_hasFDerivWithinAt`; no formal source
+The continuous homotopy step reuses Mathlib's `bernsteinApproximation_uniform`; the independent
+smooth curve-integral statement reuses
+`ContinuousMap.Homotopy.curveIntegral_add_curveIntegral_eq_of_hasFDerivWithinAt`. No formal source
 is vendored. Homotopy invariance of the classical winding number is standard complex analysis; see
 the references in the Contour Integration roadmap.
 -/
@@ -49,6 +59,45 @@ open scoped unitInterval
 open MeasureTheory Set
 
 namespace TauCeti.Contour
+
+/-- The polynomial on `ℝ` underlying Mathlib's `n`-th Bernstein approximation of `f` on the
+unit interval. Keeping the polynomial formula on all of `ℝ` makes its contour regularity
+immediate, while `bernsteinCurve_apply` connects it to Mathlib's uniform approximation theorem. -/
+private def bernsteinCurve (n : ℕ) (f : C(I, ℂ)) (t : ℝ) : ℂ :=
+  ∑ k : Fin (n + 1),
+    ((n.choose k : ℝ) * t ^ (k : ℕ) * (1 - t) ^ (n - (k : ℕ))) • f (bernstein.z k)
+
+private theorem bernsteinCurve_apply (n : ℕ) (f : C(I, ℂ)) (t : I) :
+    bernsteinCurve n f t = bernsteinApproximation n f t := by
+  simp only [bernsteinCurve, bernsteinApproximation.apply, bernstein_apply]
+
+private theorem contDiff_bernsteinCurve (n : ℕ) (f : C(I, ℂ)) :
+    ContDiff ℝ ⊤ (bernsteinCurve n f) := by
+  unfold bernsteinCurve
+  fun_prop
+
+/-- **Endpoint-preserving smooth approximation of a continuous complex path.** Every continuous
+map from the unit interval to `ℂ` is uniformly approximated, to any positive tolerance, by a
+globally smooth curve with the same values at `0` and `1`.
+
+The approximants are Mathlib's Bernstein approximations, interpreted as polynomials on `ℝ`.
+This is the regularization step used to compare the merely continuous intermediate paths of a
+path homotopy with Tau Ceti's piecewise-`C¹` winding number. -/
+theorem exists_isPiecewiseC1On_dist_lt_of_continuousMap (f : C(I, ℂ)) {ε : ℝ} (hε : 0 < ε) :
+    ∃ γ : ℝ → ℂ, IsPiecewiseC1On γ 0 1 ∧ γ 0 = f 0 ∧ γ 1 = f 1 ∧
+      ∀ t : I, dist (γ t) (f t) < ε := by
+  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.mp (bernsteinApproximation_uniform f) ε hε
+  let n := max N 1
+  have hnN : N ≤ n := Nat.le_max_left _ _
+  have hn : n ≠ 0 := Nat.ne_of_gt (lt_of_lt_of_le Nat.zero_lt_one (Nat.le_max_right _ _))
+  refine ⟨bernsteinCurve n f,
+    IsPiecewiseC1On.of_contDiffOn ((contDiff_bernsteinCurve n f).contDiffOn.of_le (by norm_num)),
+    ?_, ?_, ?_⟩
+  · exact (bernsteinCurve_apply n f 0).trans (bernsteinApproximation.apply_zero n f)
+  · exact (bernsteinCurve_apply n f 1).trans (bernsteinApproximation.apply_one hn f)
+  · intro t
+    rw [bernsteinCurve_apply]
+    exact (ContinuousMap.dist_apply_le_dist t).trans_lt (hN n hnN)
 
 private def indexForm (w : ℂ) : ℂ → ℂ →L[ℂ] ℂ :=
   fun z => (z - w)⁻¹ • ContinuousLinearMap.id ℂ ℂ
@@ -148,45 +197,156 @@ theorem curveIntegral_inv_sub_smul_id_eq_of_pathHomotopy {x y w : ℂ} {p q : Pa
   rw [heval_zero, heval_one] at hboundary
   simpa only [curveIntegral_cast, curveIntegral_refl, add_zero] using hboundary
 
-/-- **Homotopy invariance of the winding number off the curve.** Two paths with the same endpoints,
-joined through `ℂ \ {w}` by a path homotopy whose extension to the unit square is `C²`, have the
-same winding number about `w`. -/
-theorem windingNumber_eq_of_pathHomotopy {x y w : ℂ} {p q : Path x y} (φ : p.Homotopy q)
-    (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
-    (havoid : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ≠ w) :
-    windingNumber p.extend 0 1 w = windingNumber q.extend 0 1 w := by
-  have haway : ∀ z ∈ Set.range φ, z ≠ w := by
-    rintro _ ⟨st, rfl⟩
-    exact havoid st
-  have hcurve' := curveIntegral_inv_sub_smul_id_eq_of_pathHomotopy φ hφsmooth haway
-  have hp : IsPiecewiseC1On p.extend 0 1 := by
-    simpa using isPiecewiseC1On_eval_of_smoothPathHomotopy φ hφsmooth (0 : I)
-  have hq : IsPiecewiseC1On q.extend 0 1 := by
-    simpa using isPiecewiseC1On_eval_of_smoothPathHomotopy φ hφsmooth (1 : I)
-  rw [windingNumber_eq_two_pi_I_inv_mul_curveIntegral
-      hp
-      (fun t ↦ haway _ ⟨(0, t), by simp⟩),
-    windingNumber_eq_two_pi_I_inv_mul_curveIntegral
-      hq
-      (fun t ↦ haway _ ⟨(1, t), by simp⟩),
-    hcurve']
+/-- A continuous path homotopy avoiding `w` stays a uniformly positive distance from `w`, since
+its domain is the compact unit square. -/
+private theorem exists_pathHomotopy_dist_lower_bound {x y w : ℂ} {p q : Path x y}
+    (φ : p.Homotopy q) (havoid : ∀ st : I × I, φ st ≠ w) :
+    ∃ ρ > 0, ∀ st : I × I, ρ ≤ dist (φ st) w := by
+  have hcompact : IsCompact (Set.range φ) := isCompact_range φ.toHomotopy.continuous
+  have hnonempty : (Set.range φ).Nonempty := Set.range_nonempty φ
+  have hw : w ∉ Set.range φ := by
+    rintro ⟨st, hst⟩
+    exact havoid st hst
+  refine ⟨Metric.infDist w (Set.range φ),
+    (hcompact.isClosed.notMem_iff_infDist_pos hnonempty).mp hw, fun st => ?_⟩
+  simpa [dist_comm] using Metric.infDist_le_dist_of_mem (x := w) (Set.mem_range_self st)
 
-/-- Null-homology in `Ω` is invariant under a `C²` path homotopy whose image lies in `Ω`. -/
+/-- Uniform continuity lets a path homotopy be divided into finitely many nearby horizontal
+slices. The stages use `bernstein.z`, the same uniform mesh used by the smooth approximants. -/
+private theorem exists_nat_dist_pathHomotopy_stage_lt {x y : ℂ} {p q : Path x y}
+    (φ : p.Homotopy q) {ε : ℝ} (hε : 0 < ε) :
+    ∃ N : ℕ, N ≠ 0 ∧ ∀ k : Fin N, ∀ t : I,
+      dist (φ (bernstein.z k.succ, t)) (φ (bernstein.z k.castSucc, t)) < ε := by
+  obtain ⟨δ, hδ, hclose⟩ := Metric.uniformContinuous_iff.mp
+    (CompactSpace.uniformContinuous_of_continuous φ.toHomotopy.continuous) ε hε
+  obtain ⟨N, hN⟩ := exists_nat_gt (1 / δ)
+  have hNpos : (0 : ℝ) < N := lt_of_le_of_lt (by positivity) hN
+  have hmesh : 1 / (N : ℝ) < δ := by
+    rw [div_lt_iff₀ hNpos]
+    simpa [mul_comm] using (div_lt_iff₀ hδ).mp hN
+  refine ⟨N, Nat.ne_of_gt (by exact_mod_cast hNpos), fun k t => hclose ?_⟩
+  simp only [Prod.dist_eq, dist_self]
+  have hsub : (((k : ℕ) + 1 : ℕ) : ℝ) / N - ((k : ℕ) : ℝ) / N = 1 / N := by
+    push_cast
+    ring
+  simp only [bernstein.z, Subtype.dist_eq, Real.dist_eq, Fin.succ, Fin.castSucc, Fin.val_castAdd]
+  rw [hsub, abs_of_pos (by positivity), max_eq_left (by positivity)]
+  exact hmesh
+
+/-- **Homotopy invariance of the winding number off the curve.** Two piecewise-`C¹` paths with the
+same endpoints, joined through `ℂ \ {w}` by an arbitrary continuous path homotopy, have the same
+winding number about `w`. No differentiability of the homotopy is required. -/
+theorem windingNumber_eq_of_pathHomotopy {x y w : ℂ} {p q : Path x y} (φ : p.Homotopy q)
+    (hp : IsPiecewiseC1On p.extend 0 1) (hq : IsPiecewiseC1On q.extend 0 1)
+    (havoid : ∀ st : I × I, φ st ≠ w) :
+    windingNumber p.extend 0 1 w = windingNumber q.extend 0 1 w := by
+  obtain ⟨ρ, hρ, hρle⟩ := exists_pathHomotopy_dist_lower_bound φ havoid
+  obtain ⟨N, hN, hstage⟩ := exists_nat_dist_pathHomotopy_stage_lt φ (div_pos hρ (by norm_num :
+    (0 : ℝ) < 5))
+  let slice : Fin (N + 1) → C(I, ℂ) := fun k => (φ.eval (bernstein.z k)).toContinuousMap
+  choose γ hγ using fun k : Fin (N + 1) =>
+    exists_isPiecewiseC1On_dist_lt_of_continuousMap (slice k) (ε := ρ / 5)
+      (div_pos hρ (by norm_num))
+  have hγpw (k : Fin (N + 1)) : IsPiecewiseC1On (γ k) 0 1 := (hγ k).1
+  have hγclose (k : Fin (N + 1)) (t : I) : dist (γ k t) (φ (bernstein.z k, t)) < ρ / 5 := by
+    change dist (γ k t) ((φ.eval (bernstein.z k)) t) < ρ / 5
+    simpa only [slice, Path.coe_toContinuousMap] using (hγ k).2.2.2 t
+  have hγzero (k : Fin (N + 1)) : γ k 0 = x := by
+    calc
+      γ k 0 = slice k 0 := (hγ k).2.1
+      _ = x := by simp [slice]
+  have hγone (k : Fin (N + 1)) : γ k 1 = y := by
+    calc
+      γ k 1 = slice k 1 := (hγ k).2.2.1
+      _ = y := by simp [slice]
+  have hγdist (k : Fin (N + 1)) (t : I) : 4 * ρ / 5 < dist (γ k t) w := by
+    have htriangle := dist_triangle (φ (bernstein.z k, t)) (γ k t) w
+    have hlower := hρle (bernstein.z k, t)
+    have hclose := hγclose k t
+    rw [dist_comm (φ (bernstein.z k, t)) (γ k t)] at htriangle
+    linarith
+  -- Consecutive smooth approximants are close enough for the dog-on-a-leash lemma.
+  have hadjacent (k : Fin N) : windingNumber (γ k.succ) 0 1 w =
+      windingNumber (γ k.castSucc) 0 1 w := by
+    apply (hγpw k.castSucc).windingNumber_eq_of_dist_lt_dist_of_eq_endpoints (hγpw k.succ)
+      ((hγzero k.castSucc).trans (hγzero k.succ).symm)
+      ((hγone k.castSucc).trans (hγone k.succ).symm)
+    intro t ht
+    let tI : I := ⟨t, by simpa [Set.uIcc_of_le zero_le_one] using ht⟩
+    have h₁ := hγclose k.succ tI
+    have h₂ := hstage k tI
+    have h₃ := hγclose k.castSucc tI
+    have hupper : dist (γ k.succ t) (γ k.castSucc t) < 3 * ρ / 5 := by
+      calc
+        dist (γ k.succ t) (γ k.castSucc t) ≤
+            dist (γ k.succ t) (φ (bernstein.z k.succ, tI)) +
+              dist (φ (bernstein.z k.succ, tI)) (γ k.castSucc t) := dist_triangle _ _ _
+        _ ≤ dist (γ k.succ t) (φ (bernstein.z k.succ, tI)) +
+              (dist (φ (bernstein.z k.succ, tI)) (φ (bernstein.z k.castSucc, tI)) +
+                dist (φ (bernstein.z k.castSucc, tI)) (γ k.castSucc t)) := by
+                  gcongr
+                  exact dist_triangle _ _ _
+        _ < 3 * ρ / 5 := by rw [dist_comm (φ _ ) (γ k.castSucc t)]; linarith
+    exact hupper.trans (by linarith [hγdist k.castSucc tI])
+  -- Chain the finitely many approximants from homotopy time `0` to time `1`.
+  have hchain : ∀ k : ℕ, ∀ hk : k ≤ N,
+      windingNumber (γ ⟨k, Nat.lt_succ_iff.mpr hk⟩) 0 1 w = windingNumber (γ 0) 0 1 w := by
+    intro k
+    induction k with
+    | zero => intro _; rfl
+    | succ k ih =>
+      intro hk
+      have hkN : k < N := Nat.lt_of_succ_le hk
+      exact (hadjacent ⟨k, hkN⟩).trans (ih hkN.le)
+  have hchain_final : windingNumber (γ (Fin.last N)) 0 1 w = windingNumber (γ 0) 0 1 w := by
+    simpa only [Fin.last] using hchain N le_rfl
+  -- The first and last approximants are close to the original endpoint paths.
+  have hstart : windingNumber (γ 0) 0 1 w = windingNumber p.extend 0 1 w := by
+    apply hp.windingNumber_eq_of_dist_lt_dist_of_eq_endpoints (hγpw 0)
+      (by rw [Path.extend_zero, hγzero]) (by rw [Path.extend_one, hγone])
+    intro t ht
+    let tI : I := ⟨t, by simpa [Set.uIcc_of_le zero_le_one] using ht⟩
+    have hp_apply : p.extend t = φ (0, tI) := by
+      calc
+        p.extend t = p tI := Path.extend_apply p tI.property
+        _ = φ (0, tI) := by simp
+    have hclose : dist (γ 0 t) (p.extend t) < ρ / 5 := by
+      rw [hp_apply]
+      simpa using hγclose 0 tI
+    exact hclose.trans (by rw [hp_apply]; linarith [hρle (0, tI)])
+  have hend : windingNumber q.extend 0 1 w = windingNumber (γ (Fin.last N)) 0 1 w := by
+    apply (hγpw (Fin.last N)).windingNumber_eq_of_dist_lt_dist_of_eq_endpoints hq
+      (by rw [Path.extend_zero, hγzero]) (by rw [Path.extend_one, hγone])
+    intro t ht
+    let tI : I := ⟨t, by simpa [Set.uIcc_of_le zero_le_one] using ht⟩
+    have hq_apply : q.extend t = φ (1, tI) := by
+      calc
+        q.extend t = q tI := Path.extend_apply q tI.property
+        _ = φ (1, tI) := by simp
+    have hz : bernstein.z (Fin.last N) = 1 := bernstein.z_last hN
+    have hφz : φ (bernstein.z (Fin.last N), tI) = φ (1, tI) := by rw [hz]
+    have hclose : dist (q.extend t) (γ (Fin.last N) t) < ρ / 5 := by
+      rw [hq_apply, ← hφz, dist_comm]
+      exact hγclose (Fin.last N) tI
+    exact hclose.trans (by linarith [hγdist (Fin.last N) tI])
+  exact hstart.symm.trans (hchain_final.symm.trans hend.symm)
+
+/-- Null-homology in `Ω` is invariant under an arbitrary continuous path homotopy whose image lies
+in `Ω`. The endpoint paths themselves are piecewise `C¹`; no regularity is assumed of the
+intermediate paths. -/
 theorem isNullHomologous_iff_of_pathHomotopy {x y : ℂ} {p q : Path x y} {Ω : Set ℂ}
     (φ : p.Homotopy q)
-    (hφsmooth : ContDiffOn ℝ 2
-      (fun st : ℝ × ℝ ↦ Set.IccExtend zero_le_one (φ.toHomotopy.extend st.1) st.2) (Set.Icc 0 1))
-    (hφΩ : ∀ st : Set.Icc (0 : ℝ) 1 × Set.Icc (0 : ℝ) 1, φ st ∈ Ω) :
+    (hp : IsPiecewiseC1On p.extend 0 1) (hq : IsPiecewiseC1On q.extend 0 1)
+    (hφΩ : ∀ st : I × I, φ st ∈ Ω) :
     IsNullHomologous p.extend 0 1 Ω ↔ IsNullHomologous q.extend 0 1 Ω := by
   constructor
   · intro h
     exact h.congr_windingNumber fun z hz ↦
-      (windingNumber_eq_of_pathHomotopy φ hφsmooth
+      (windingNumber_eq_of_pathHomotopy φ hp hq
         (fun st (hst : φ st = z) ↦ hz (hst ▸ hφΩ st))).symm
   · intro h
     exact h.congr_windingNumber fun z hz ↦
-      windingNumber_eq_of_pathHomotopy φ hφsmooth
+      windingNumber_eq_of_pathHomotopy φ hp hq
         (fun st (hst : φ st = z) ↦ hz (hst ▸ hφΩ st))
 
 end TauCeti.Contour
