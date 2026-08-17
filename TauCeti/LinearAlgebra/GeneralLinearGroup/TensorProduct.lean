@@ -16,18 +16,16 @@ its compatibility with multiplication, inverses, and pure tensors.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.tensorProduct`: the tensor product of two linear automorphisms.
-* `TauCeti.GeneralLinearGroup.tensorProduct_tmul`: its action on a pure tensor.
+* `LinearMap.GeneralLinearGroup.tensorProduct`: the tensor product of two linear automorphisms.
+* `LinearMap.GeneralLinearGroup.tensorProduct_tmul`: its action on a pure tensor.
 -/
 
 public section
 
-namespace TauCeti
-
 open LinearMap
 open scoped TensorProduct
 
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 universe u v w
 
@@ -82,6 +80,4 @@ theorem tensorProduct_inv (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K
   exact eq_inv_of_mul_eq_one_left <| by
     rw [← tensorProduct_mul, inv_mul_cancel, inv_mul_cancel, tensorProduct_one]
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

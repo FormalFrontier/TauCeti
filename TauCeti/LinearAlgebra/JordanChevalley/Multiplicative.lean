@@ -27,15 +27,15 @@ through faithful representations of affine algebraic groups.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsSemisimple`: a linear automorphism is semisimple when its
+* `LinearMap.GeneralLinearGroup.IsSemisimple`: a linear automorphism is semisimple when its
   underlying endomorphism is semisimple.
-* `TauCeti.GeneralLinearGroup.IsSemisimple.inv` and `.zpow`: semisimple automorphisms are closed
+* `LinearMap.GeneralLinearGroup.IsSemisimple.inv` and `.zpow`: semisimple automorphisms are closed
   under inverses and integer powers.
-* `TauCeti.GeneralLinearGroup.IsSemisimple.mul_of_commute`: commuting semisimple automorphisms
+* `LinearMap.GeneralLinearGroup.IsSemisimple.mul_of_commute`: commuting semisimple automorphisms
   have semisimple product.
-* `TauCeti.GeneralLinearGroup.jordanDecomposition`: the canonical commuting semisimple and
+* `LinearMap.GeneralLinearGroup.jordanDecomposition`: the canonical commuting semisimple and
   unipotent factors.
-* `TauCeti.GeneralLinearGroup.eq_jordanDecomposition_iff`: the existence and uniqueness
+* `LinearMap.GeneralLinearGroup.eq_jordanDecomposition_iff`: the existence and uniqueness
   characterization of those factors.
 
 ## References
@@ -47,11 +47,9 @@ through faithful representations of affine algebraic groups.
 
 public section
 
-namespace TauCeti
-
 open LinearMap
 
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open Module
 
@@ -90,7 +88,7 @@ theorem IsSemisimple.inv {g : GeneralLinearGroup K V} (hg : IsSemisimple g) :
     IsSemisimple g⁻¹ := by
   rw [isSemisimple_def] at hg ⊢
   exact hg.of_mem_adjoin_singleton
-    (Units.coe_inv_mem_adjoin g (IsIntegral.of_finite K (g : End K V)))
+    (TauCeti.Units.coe_inv_mem_adjoin g (IsIntegral.of_finite K (g : End K V)))
 
 /-- A linear automorphism is semisimple if and only if its inverse is semisimple. -/
 @[simp]
@@ -395,6 +393,4 @@ theorem unipotentPart_eq_self {g : GeneralLinearGroup K V} (hg : IsUnipotent g) 
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

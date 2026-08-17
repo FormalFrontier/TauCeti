@@ -28,25 +28,25 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
+* `LinearMap.GeneralLinearGroup.IsUnipotent`: a linear automorphism is unipotent when its
   difference from the identity is nilpotent.
-* `TauCeti.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
-* `TauCeti.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
+* `LinearMap.GeneralLinearGroup.isUnipotent_def`: the defining nilpotence criterion.
+* `LinearMap.GeneralLinearGroup.isUnipotent_one`: the identity automorphism is unipotent.
+* `LinearMap.GeneralLinearGroup.IsUnipotent.inv`: the inverse of a unipotent automorphism is
   unipotent.
-* `TauCeti.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
+* `LinearMap.GeneralLinearGroup.isUnipotent_ofLinearEquiv_iff`: unipotence after converting a
   linear equivalence to a general-linear-group element.
-* `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
+* `LinearMap.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
   transport by a linear equivalence.
-* `TauCeti.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
+* `LinearMap.GeneralLinearGroup.isUnipotent_inv_iff`: an automorphism is unipotent exactly when
   its inverse is.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.mul_of_commute`: commuting unipotent automorphisms have
+* `LinearMap.GeneralLinearGroup.IsUnipotent.mul_of_commute`: commuting unipotent automorphisms have
   unipotent product.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.pow` and `.zpow`: every natural or integer power of a
+* `LinearMap.GeneralLinearGroup.IsUnipotent.pow` and `.zpow`: every natural or integer power of a
   unipotent automorphism is unipotent.
-* `TauCeti.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
+* `LinearMap.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
   conjugation.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.eq_one_of_finrank_eq_one`: a unipotent automorphism
+* `LinearMap.GeneralLinearGroup.IsUnipotent.eq_one_of_finrank_eq_one`: a unipotent automorphism
   of a free rank-one module over a reduced commutative ring is the identity.
 
 ## References
@@ -56,11 +56,9 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
 
 public section
 
-namespace TauCeti
-
 open LinearMap
 
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open _root_.Module
 
@@ -233,6 +231,4 @@ theorem IsUnipotent.eq_one_of_finrank_eq_one
   ext w
   simp
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

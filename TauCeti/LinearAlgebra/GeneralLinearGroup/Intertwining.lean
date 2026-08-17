@@ -17,17 +17,15 @@ different modules, so the relation is not a statement inside one monoid and Math
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.comp_inv_eq_of_comp_eq`: an intertwiner of two automorphisms also
+* `LinearMap.GeneralLinearGroup.comp_inv_eq_of_comp_eq`: an intertwiner of two automorphisms also
   intertwines their inverses.
 -/
 
 public section
 
-namespace TauCeti
-
 open LinearMap
 
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 universe u v w
 
@@ -52,6 +50,4 @@ theorem comp_inv_eq_of_comp_eq (f : V →ₗ[K] W) (a : GeneralLinearGroup K V)
     _ = (↑b⁻¹ : Module.End K W).comp f := by
         rw [LinearMap.comp_assoc, ha, LinearMap.comp_id]
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

@@ -42,7 +42,7 @@ direction of the roadmap's upper-unitriangular embedding characterization.
 
 public section
 
-open Module WithConv
+open LinearMap Module WithConv
 open scoped TensorProduct
 
 namespace TauCeti.UpperUnitriangular
