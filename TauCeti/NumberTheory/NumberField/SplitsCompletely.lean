@@ -86,7 +86,7 @@ prime `Q` of `𝓞 L` above the rational prime `p`, the prime `p` splits complet
 `[L : ℚ]` primes above it) iff the decomposition group of `Q` — its stabilizer under `Gal(L/ℚ)` —
 is trivial. -/
 theorem ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot (L : Type*) [Field L]
-    [NumberField L] [IsGalois ℚ L] {p : ℕ} [Fact p.Prime] (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [NumberField L] [IsGalois ℚ L] {p : ℕ} (Q : Ideal (𝓞 L)) [Q.IsPrime]
     [Q.LiesOver (span {(p : ℤ)})] : (primesOver (span {(p : ℤ)}) (𝓞 L)).ncard = finrank ℚ L ↔
       stabilizer (L ≃ₐ[ℚ] L) Q = ⊥ := by
   -- The orbit of `Q` under `Gal(L/ℚ)` is all of the primes above `p`, so orbit–stabilizer gives
