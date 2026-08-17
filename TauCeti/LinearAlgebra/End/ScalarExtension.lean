@@ -114,6 +114,7 @@ theorem mapValue_comp_rTensor (f : A →ₐ[R] B) (φ : _root_.Module.End A (A �
     rTensor_algHom_smul]
 
 /-- Evaluation form of the transport square. -/
+@[simp]
 theorem mapValue_rTensor_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M))
     (z : A ⊗[R] M) :
     mapValue f φ (LinearMap.rTensor M f.toLinearMap z) =

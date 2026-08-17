@@ -18,11 +18,10 @@ those components along `f` produces a tensor automorphism over `B`, and this is 
 value algebra. No antipode is needed for any of this: the assembly and the base change use only
 the monoidal structure on finite comodules.
 
-The construction first assembles an automorphism of the scalar-extension functor from an
-arbitrary natural family of linear automorphisms, then adds the two monoidal conditions. The
-base-changed family satisfies all three because base change of endomorphisms preserves
-naturality, the identity, and the tensor comparison
-(`TauCeti.Module.End.mapValue`).
+The base-changed family is natural in the comodule, is the identity at the tensor unit, and is
+compatible with the tensor comparison, because base change of endomorphisms
+(`TauCeti.Module.End.mapValue`) preserves each of those. Feeding it to
+`TauCeti.Tannaka.monoidalAutOfComponents` produces the base-changed tensor automorphism.
 
 Compatibility with the point action is `tensorAutMapValue_fgPointTensorIso`: pushing a point
 forward along `f` and acting agrees with acting and then base changing the tensor automorphism.
@@ -31,10 +30,6 @@ see `TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.GroupFunctor`.
 
 ## Main declarations
 
-* `TauCeti.Tannaka.autOfComponents`: a natural family of linear automorphisms as an automorphism
-  of the scalar-extension functor.
-* `TauCeti.Tannaka.monoidalAutOfComponents`: the same, with the unit and tensor conditions, as a
-  tensor automorphism.
 * `TauCeti.Tannaka.tensorAutMapValue`: base change of tensor automorphisms along a morphism of
   value algebras.
 * `TauCeti.Tannaka.scalarExtensionComponent_tensorAutMapValue_comp_rTensor`: the transport
@@ -55,105 +50,6 @@ open scoped TensorProduct
 namespace TauCeti.Tannaka
 
 universe u v
-
-section Assembly
-
-variable (R : Type u) [CommSemiring R]
-variable (H : Type v) [Semiring H] [Bialgebra R H]
-variable (A : Type u) [CommSemiring A] [Algebra R A]
-
-/-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules,
-natural in the comodule, as an automorphism of the scalar-extension functor. -/
-noncomputable def autOfComponents
-    (F : ∀ M : FGComoduleCat.{u, v, u} R H, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
-    (hnat : ∀ {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N),
-      g.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
-        (F N : Module.End A (A ⊗[R] N)) ∘ₗ g.hom.toLinearMap.baseChange A) :
-    Aut (FGComoduleCat.scalarExtensionFunctor R H A) :=
-  NatIso.ofComponents
-    (fun M ↦ (eqToIso (FGComoduleCat.scalarExtensionFunctor_obj R H A M)).trans
-      ((F M).toLinearEquiv.toModuleIsoₛ.trans
-        (eqToIso (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm)))
-    (fun {M N} g ↦ by
-      -- Reduce the bundled component isomorphism to its three transports, then cancel the
-      -- outer ones against the transports in the functor's action on morphisms.
-      change
-        (FGComoduleCat.scalarExtensionFunctor R H A).map g ≫
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N) ≫
-              (F N).toLinearEquiv.toModuleIsoₛ.hom ≫
-                eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N).symm =
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
-              (F M).toLinearEquiv.toModuleIsoₛ.hom ≫
-                eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm ≫
-                  (FGComoduleCat.scalarExtensionFunctor R H A).map g
-      rw [FGComoduleCat.scalarExtensionFunctor_map]
-      simp only [Category.assoc]
-      rw [cancel_epi]
-      simp only [← Category.assoc]
-      rw [cancel_mono]
-      simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id,
-        LinearEquiv.toModuleIsoₛ_hom]
-      apply SemimoduleCat.hom_ext
-      exact (hnat g).symm)
-
-/-- The component of the automorphism assembled from a natural family of linear automorphisms is
-that family, transported to the object chosen by the scalar-extension functor. -/
-@[simp]
-theorem autOfComponents_hom_app
-    (F : ∀ M : FGComoduleCat.{u, v, u} R H, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
-    (hnat : ∀ {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N),
-      g.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
-        (F N : Module.End A (A ⊗[R] N)) ∘ₗ g.hom.toLinearMap.baseChange A)
-    (M : FGComoduleCat.{u, v, u} R H) :
-    (autOfComponents R H A F hnat).hom.app M =
-      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
-        (F M).toLinearEquiv.toModuleIsoₛ.hom ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm := by
-  simp [autOfComponents]
-
-/-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules that is
-natural in the comodule, preserves the tensor unit, and is compatible with the tensor comparison,
-as a tensor automorphism of scalar extension. -/
-noncomputable def monoidalAutOfComponents
-    (F : ∀ M : FGComoduleCat.{u, v, u} R H, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
-    (hnat : ∀ {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N),
-      g.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
-        (F N : Module.End A (A ⊗[R] N)) ∘ₗ g.hom.toLinearMap.baseChange A)
-    (hunit : F (𝟙_ (FGComoduleCat R H)) = 1)
-    (htensor : ∀ M N : FGComoduleCat.{u, v, u} R H,
-      (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap.comp
-          (TensorProduct.map (F M : Module.End A (A ⊗[R] M))
-            (F N : Module.End A (A ⊗[R] N))) =
-        (F (M ⊗ N : FGComoduleCat R H) :
-          Module.End A (A ⊗[R] ((M ⊗ N : FGComoduleCat R H) : Type u))).comp
-            (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap) :
-    Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A) :=
-  @LaxMonoidalFunctor.isoMk _ _ _ _ _ _ _ _ (autOfComponents R H A F hnat)
-    (isMonoidal_of_linear_components R H A F (autOfComponents R H A F hnat)
-      (autOfComponents_hom_app R H A F hnat) hunit htensor)
-
-/-- The transported component of the tensor automorphism assembled from a natural monoidal family
-of linear automorphisms is that family. -/
-@[simp]
-theorem scalarExtensionComponent_monoidalAutOfComponents
-    (F : ∀ M : FGComoduleCat.{u, v, u} R H, LinearMap.GeneralLinearGroup A (A ⊗[R] M))
-    (hnat : ∀ {M N : FGComoduleCat.{u, v, u} R H} (g : M ⟶ N),
-      g.hom.toLinearMap.baseChange A ∘ₗ (F M : Module.End A (A ⊗[R] M)) =
-        (F N : Module.End A (A ⊗[R] N)) ∘ₗ g.hom.toLinearMap.baseChange A)
-    (hunit : F (𝟙_ (FGComoduleCat R H)) = 1)
-    (htensor : ∀ M N : FGComoduleCat.{u, v, u} R H,
-      (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap.comp
-          (TensorProduct.map (F M : Module.End A (A ⊗[R] M))
-            (F N : Module.End A (A ⊗[R] N))) =
-        (F (M ⊗ N : FGComoduleCat R H) :
-          Module.End A (A ⊗[R] ((M ⊗ N : FGComoduleCat R H) : Type u))).comp
-            (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap)
-    (M : FGComoduleCat.{u, v, u} R H) :
-    scalarExtensionComponent R H A (monoidalAutOfComponents R H A F hnat hunit htensor) M =
-      (F M : Module.End A (A ⊗[R] M)) :=
-  scalarExtensionComponent_eq_of_hom_app R H A M (F M) _ (autOfComponents_hom_app R H A F hnat M)
-
-end Assembly
 
 section BaseChange
 
