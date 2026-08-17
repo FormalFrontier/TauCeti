@@ -190,7 +190,7 @@ The generator of a vector group is primitive, so its counit vanishes; the Leibni
 leaves the factor `ι(x) ^ (k - 1)`, which acts on the counit coefficient algebra through that
 vanishing counit. Only the linear term of a coordinate function survives differentiation at
 the identity, which is what makes a differential read off a linear coefficient. -/
-theorem tangent_pow_ι_eq_zero
+theorem tangent_ι_pow_eq_zero
     (d : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)) (x : M) {k : ℕ} (hk : k ≠ 1) :
     d (SymmetricAlgebra.ι R M x ^ k) = 0 := by

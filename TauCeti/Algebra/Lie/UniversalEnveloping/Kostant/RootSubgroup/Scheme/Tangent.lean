@@ -18,8 +18,10 @@ A pinning of a split reductive group scheme is the data `(G, T, B, {X_α})` of a
 torus, a Borel containing it, and a root vector `X_α` in the Lie algebra for each simple root.
 What ties that data to the root subgroup maps `x_α : 𝔾ₐ → G` is a pair of equations: the
 differential of `x_α` at the identity is `X_α`, and the torus acts on `X_α` through the root `α`.
-This file proves both for the Kostant construction, so that its root vectors are read off the
-morphisms already built rather than posited alongside them.
+This file proves the first, so that the Kostant root vectors are read off the morphisms already
+built rather than posited alongside them; the second is
+`kostantTorusPoints_conj_kostantRootOperator`, an algebraic statement about points that needs no
+scheme theory and lives beside the torus it is about.
 
 The integral operator `X_α` is `kostantRootOperator`, the restriction to the lattice `M` of the
 designated root vector `ρ(eᵢ)`. It is the first restricted divided power, so it is exactly the
@@ -33,20 +35,10 @@ The coordinate morphism of `x_α` therefore sends a generic matrix entry to a po
 coordinate `t` of `𝔾ₐ` whose linear coefficient is the corresponding entry of `X_α`. A tangent
 vector at the identity is a counit-valued derivation, and the coordinate `t` is primitive, so
 such a derivation annihilates every power of `t` other than the first
-(`AdditiveGroup.tangent_pow_ι_eq_zero`). Differentiating the coordinate morphism therefore reads
+(`AdditiveGroup.tangent_ι_pow_eq_zero`). Differentiating the coordinate morphism therefore reads
 off precisely that linear coefficient, which is
-`tangentMatrix_derivationComp_kostantRootSubgroupCoordinateMap`.
-
-The second equation is the infinitesimal form of the pinning relation
-`t(s) xᵢ(u) t(s)⁻¹ = xᵢ(α(s) u)` of `kostantTorusPoints_conj_kostantRootSubgroupParam`: the
-root operator raises weights by `α`, so conjugating it by a torus point multiplies it by the
-value `α(s)` of the root. Both directions of the pinning are then available in the form a
-consumer states its conventions in.
-
-## Main declarations
-
-* `TauCeti.UniversalEnvelopingAlgebra.kostantRootOperator`: the designated root vector as an
-  integral operator on a Kostant-stable lattice — the pinning's `X_α`.
+`tangentMatrix_derivationComp_kostantRootSubgroupCoordinateMap`. Together with the torus equation
+both directions of the pinning are available in the form a consumer states its conventions in.
 
 ## Main results
 
@@ -55,12 +47,6 @@ consumer states its conventions in.
   vector.** The matrix of the tangent vector obtained by differentiating `x_α : 𝔾ₐ → GLₙ` along a
   tangent vector of `𝔾ₐ` is that tangent vector's value times the matrix of `X_α`. The entrywise
   form is `..._apply`.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_mul_baseChange_kostantRootOperator`: the
-  torus intertwines the root operator up to the value of the root.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootOperator`: the
-  conjugated form, `t(s) X_α t(s)⁻¹ = α(s) X_α`.
-* `TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_coe_kostantRootOperator`: the root
-  operator raises weights by `α`, which is what makes the previous two true.
 
 ## References
 
@@ -71,7 +57,7 @@ consumer states its conventions in.
 
 public section
 
-open TensorProduct WithConv
+open TensorProduct
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
@@ -79,115 +65,6 @@ universe u v w
 
 -- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
 attribute [local instance high] Algebra.toModule
-
--- Mathlib does not register the Lie ring of an associative ring as a global instance; the
--- commutator of two elements of the enveloping algebra is written with it below.
-attribute [local instance 100] LieRing.ofAssociativeRing
-
-section RootOperator
-
-variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
-variable {I : Type w} {κ : Type*}
-variable {V : Type v} [AddCommGroup V] [Module ℚ V]
-
-variable (e : I → L) (h : κ → L)
-variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
-variable (M : AddSubgroup V)
-variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
-variable (i : I)
-
-/-- The designated root vector `eᵢ` acting on a Kostant-stable additive subgroup, as an integral
-operator.
-
-It is the first restricted divided power of `ρ(eᵢ)`, so it is the linear coefficient of the
-divided-power exponential defining the root subgroup, and it is the root vector `X_α` of the
-pinning. -/
-noncomputable def kostantRootOperator : Module.End ℤ M :=
-  integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 1
-    (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i 1 hv)
-
-/-- The integral root operator acts by the ambient representation of the root vector. -/
-@[simp] theorem coe_kostantRootOperator_apply (v : M) :
-    ((kostantRootOperator e h ρ M hM i v : M) : V) =
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (v : V) := by
-  rw [kostantRootOperator, coe_integralDividedPower_apply, Associative.dividedPower_one,
-    Module.End.smul_def]
-
-/-- A root vector acting nilpotently with nilpotency class at most one acts as zero, so the
-degenerate branch of the divided-power expansion carries no linear term. -/
-private theorem kostantRootOperator_eq_zero_of_pow_eq_zero
-    (hz : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ 1 = 0) :
-    kostantRootOperator e h ρ M hM i = 0 :=
-  integralDividedPower_eq_zero_of_le _ M 1 _ hz le_rfl
-
-end RootOperator
-
-section Torus
-
-variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
-variable {I : Type w} {κ : Type*} [Fintype κ]
-variable {V : Type v} [AddCommGroup V] [Module ℚ V]
-
-variable (e : I → L) (h : κ → L)
-variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
-variable (M : AddSubgroup V)
-variable (hM : ∀ u ∈ kostantForm e h, ∀ m ∈ M, ρ u m ∈ M)
-variable (i : I)
-variable {η : Type*} (b : Module.Basis η ℤ M) (wt : η → κ → ℤ)
-variable {A : Type*} [CommRing A] [Algebra ℤ A]
-
-omit [Fintype κ] in
-include e hM in
-/-- The integral root operator raises weights by the root: it is the first divided power of a
-root vector of weight `α`. -/
-theorem isCartanWeightVector_coe_kostantRootOperator {α μ : κ → ℤ} {v : M}
-    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
-    (hv : IsCartanWeightVector h ρ μ ((v : M) : V)) :
-    IsCartanWeightVector h ρ (μ + α)
-      ((kostantRootOperator e h ρ M hM i v : M) : V) := by
-  have hstep := IsCartanWeightVector.integralDividedPower e hα hv 1
-  rw [Associative.dividedPower_one, Module.End.smul_def] at hstep
-  rw [coe_kostantRootOperator_apply]
-  simpa only [one_smul] using hstep
-
-include e hM in
-/-- **The torus acts on the root operator through the root.** A torus point intertwines the
-base-changed root operator with itself, up to the value `α(s)` of the root.
-
-This is the infinitesimal form of the pinning equation
-`kostantTorusPoints_conj_kostantRootSubgroupParam`. -/
-theorem kostantTorusPoints_mul_baseChange_kostantRootOperator
-    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V)) {α : κ → ℤ}
-    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i) (s : κ → Aˣ) :
-    (kostantTorusPoints M b wt A s).val *
-        (kostantRootOperator e h ρ M hM i).baseChange A =
-      (torusCharacter s α : A) •
-        ((kostantRootOperator e h ρ M hM i).baseChange A *
-          (kostantTorusPoints M b wt A s).val) := by
-  refine (b.baseChange A).ext fun x => ?_
-  rw [Module.Basis.baseChange_apply, Module.End.mul_apply, LinearMap.smul_apply,
-    Module.End.mul_apply, LinearMap.baseChange_tmul, kostantTorusPoints_tmul_basis,
-    kostantTorusPoints_tmul_of_isCartanWeightVector e h ρ M hM b wt hwt
-      (isCartanWeightVector_coe_kostantRootOperator e h ρ M hM i hα (hwt x)) s 1,
-    LinearMap.baseChange_tmul, smul_tmul', smul_eq_mul, torusCharacter_add,
-    Units.val_mul]
-  simp only [one_mul, mul_comm]
-
-include e hM in
-/-- **The pinning relation for the root vector**, in conjugated form: `t(s) X_α t(s)⁻¹` is
-`α(s) X_α`. It says that the tangent vector of the root subgroup lies in the `α`-weight space of
-the adjoint action of the split maximal torus. -/
-theorem kostantTorusPoints_conj_kostantRootOperator
-    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V)) {α : κ → ℤ}
-    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i) (s : κ → Aˣ) :
-    (kostantTorusPoints M b wt A s).val *
-        (kostantRootOperator e h ρ M hM i).baseChange A *
-        ((kostantTorusPoints M b wt A s)⁻¹).val =
-      (torusCharacter s α : A) • (kostantRootOperator e h ρ M hM i).baseChange A := by
-  rw [kostantTorusPoints_mul_baseChange_kostantRootOperator e h ρ M hM i b wt hwt hα s,
-    smul_mul_assoc, mul_assoc, Units.mul_inv, mul_one]
-
-end Torus
 
 section Differential
 
@@ -203,6 +80,25 @@ variable (i : I)
 variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable {B : Type*} [CommRing B] [Algebra ℤ B]
+
+/-- The linear term of the divided-power expansion is the root operator. -/
+private theorem integralDividedPower_one_eq_kostantRootOperator
+    (hv : ∀ v ∈ M, Associative.dividedPower 1
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) • v ∈ M) (v : M) :
+    integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 1 hv v =
+      kostantRootOperator e h ρ M hM i v :=
+  Subtype.ext <| by
+    rw [coe_integralDividedPower_apply, coe_kostantRootOperator_apply,
+      Associative.dividedPower_one, Module.End.smul_def]
+
+/-- A root vector acting nilpotently with nilpotency class at most one acts as zero, so the
+degenerate branch of the divided-power expansion carries no linear term. -/
+private theorem kostantRootOperator_eq_zero_of_pow_eq_zero
+    (hz : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ 1 = 0) :
+    kostantRootOperator e h ρ M hM i = 0 :=
+  LinearMap.ext fun v => Subtype.ext <| by
+    rw [coe_kostantRootOperator_apply, ← pow_one (ρ _), hz]
+    simp
 
 /-- The coordinate polynomial of the root subgroup: the `(r, s)` entry of the coefficient matrix
 of the divided-power comodule is `∑ₖ ⟨b_r, e⁽ᵏ⁾ b_s⟩ tᵏ`. -/
@@ -240,10 +136,10 @@ private theorem derivation_coefficientMatrix
   by_cases hlt : 1 < nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
   · refine Finset.sum_eq_single_of_mem 1 (Finset.mem_range.2 hlt) ?_ |>.trans ?_
     · intro k _ hk
-      rw [map_zsmul, AdditiveGroup.tangent_pow_ι_eq_zero d 1 hk]
+      rw [map_zsmul, AdditiveGroup.tangent_ι_pow_eq_zero d 1 hk]
       simp
-    · rw [map_zsmul, pow_one]
-      rfl
+    · rw [map_zsmul, pow_one,
+        integralDividedPower_one_eq_kostantRootOperator e h ρ M hM i _ (b s)]
   · -- Below nilpotency class two the root vector already acts as zero, and no linear term
     -- occurs in the expansion.
     have hz : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ 1 = 0 :=
@@ -252,7 +148,7 @@ private theorem derivation_coefficientMatrix
     rw [Finset.sum_eq_zero, LinearMap.zero_apply, map_zero, Finsupp.coe_zero,
       Pi.zero_apply, zero_smul]
     intro k hk
-    rw [map_zsmul, AdditiveGroup.tangent_pow_ι_eq_zero d 1 (by
+    rw [map_zsmul, AdditiveGroup.tangent_ι_pow_eq_zero d 1 (by
       have := Finset.mem_range.1 hk
       omega)]
     simp
