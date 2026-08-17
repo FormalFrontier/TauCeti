@@ -8,7 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Quotient.Bilinear
 public import Mathlib.LinearAlgebra.TensorProduct.Submodule
 public import Mathlib.Algebra.DirectSum.Algebra
-public import TauCeti.Algebra.WordFiltration
+public import TauCeti.Algebra.WordFiltration.Basic
 
 /-!
 # Associated-graded algebra of a word filtration
@@ -111,34 +111,6 @@ abbrev GradedPiece (f : M →ₗ[R] A) (k : ℕ) : Type w :=
 abbrev associatedGraded (f : M →ₗ[R] A) : Type w :=
   ⨁ k : ℕ, GradedPiece f k
 
-private theorem mul_mem_previous_left (f : M →ₗ[R] A) (i j : ℕ)
-    {x y : A} (hx : x ∈ wordFiltrationPrevious f i) (hy : y ∈ wordFiltration f j) :
-    x * y ∈ wordFiltrationPrevious f (i + j) := by
-  cases i with
-  | zero =>
-      rw [wordFiltrationPrevious_zero] at hx
-      rw [Submodule.mem_bot] at hx
-      subst x
-      simp
-  | succ i =>
-      rw [wordFiltrationPrevious_succ] at hx
-      rw [Nat.succ_add, wordFiltrationPrevious_succ]
-      exact mul_mem_wordFiltration f hx hy
-
-private theorem mul_mem_previous_right (f : M →ₗ[R] A) (i j : ℕ)
-    {x y : A} (hx : x ∈ wordFiltration f i) (hy : y ∈ wordFiltrationPrevious f j) :
-    x * y ∈ wordFiltrationPrevious f (i + j) := by
-  cases j with
-  | zero =>
-      rw [wordFiltrationPrevious_zero] at hy
-      rw [Submodule.mem_bot] at hy
-      subst y
-      simp
-  | succ j =>
-      rw [wordFiltrationPrevious_succ] at hy
-      rw [Nat.add_succ, wordFiltrationPrevious_succ]
-      exact mul_mem_wordFiltration f hx hy
-
 private noncomputable def filteredMul (f : M →ₗ[R] A) (i j : ℕ) :
     wordFiltration f i →ₗ[R] wordFiltration f j →ₗ[R] wordFiltration f (i + j) :=
   TensorProduct.curry
@@ -169,7 +141,7 @@ private theorem gradedPreMul_mem_ker_left (f : M →ₗ[R] A) (i j : ℕ) :
   rw [mem_previousRestricted_iff]
   -- The filtration product lemma is stated for ambient filtered-algebra elements.
   change (x : A) * (y : A) ∈ wordFiltrationPrevious f (i + j)
-  exact mul_mem_previous_left f i j hprevious y.property
+  exact mul_mem_wordFiltrationPrevious_left f hprevious y.property
 
 private theorem gradedPreMul_mem_ker_right (f : M →ₗ[R] A) (i j : ℕ) :
     previousRestricted f j ≤
@@ -183,7 +155,7 @@ private theorem gradedPreMul_mem_ker_right (f : M →ₗ[R] A) (i j : ℕ) :
   rw [mem_previousRestricted_iff]
   -- The filtration product lemma is stated for ambient filtered-algebra elements.
   change (x : A) * (y : A) ∈ wordFiltrationPrevious f (i + j)
-  exact mul_mem_previous_right f i j x.property hprevious
+  exact mul_mem_wordFiltrationPrevious_right f x.property hprevious
 
 /-- Multiplication of two homogeneous pieces of the filtered associated graded algebra. -/
 noncomputable def gradedMul (f : M →ₗ[R] A) (i j : ℕ) :

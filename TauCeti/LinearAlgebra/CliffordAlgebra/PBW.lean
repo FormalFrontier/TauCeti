@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
-public import TauCeti.Algebra.AssociatedGraded
+public import TauCeti.Algebra.WordFiltration.AssociatedGraded
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.FiltrationGradedEquiv

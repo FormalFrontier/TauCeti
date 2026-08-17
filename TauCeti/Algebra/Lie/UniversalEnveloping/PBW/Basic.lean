@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
-public import TauCeti.Algebra.WordFiltration
+public import TauCeti.Algebra.WordFiltration.Basic
 
 /-!
 # The PBW filtration of a universal enveloping algebra
@@ -27,10 +27,10 @@ comparison with `SymmetricAlgebra R L` is the next PBW stage and is not asserted
 
 Nothing in the construction is special to the enveloping algebra: `pbwFiltration` and
 `pbwFiltrationPrevious` are `TauCeti.Algebra.wordFiltration` and
-`TauCeti.Algebra.wordFiltrationPrevious` of `TauCeti/Algebra/WordFiltration.lean`, specialized to
-`UniversalEnvelopingAlgebra.ι R`, exactly as `CliffordAlgebra.filtration` is that same
-construction for `CliffordAlgebra.ι`. What is special to `U(L)` is the exhaustivity, which comes
-from the tensor-algebra presentation.
+`TauCeti.Algebra.wordFiltrationPrevious` of `TauCeti/Algebra/WordFiltration/Basic.lean`,
+specialized to `UniversalEnvelopingAlgebra.ι R`, exactly as `CliffordAlgebra.filtration` is that
+same construction for `CliffordAlgebra.ι`. What is special to `U(L)` is the exhaustivity, which
+comes from the tensor-algebra presentation.
 
 ## Main definitions and results
 
@@ -73,8 +73,8 @@ local notation "U" => _root_.UniversalEnvelopingAlgebra R L
 Lie generators.
 
 This is `TauCeti.Algebra.wordFiltration` specialized to `UniversalEnvelopingAlgebra.ι R`; the
-shared API is in `TauCeti/Algebra/WordFiltration.lean`. -/
-abbrev pbwFiltration (k : ℕ) : Submodule R U :=
+shared API is in `TauCeti/Algebra/WordFiltration/Basic.lean`. -/
+def pbwFiltration (k : ℕ) : Submodule R U :=
   TauCeti.Algebra.wordFiltration (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap k
 
 /-- PBW filtration degree `k` is the `k`-th power of the scalars and canonical Lie generators. -/
@@ -86,14 +86,16 @@ theorem pbwFiltration_eq_pow (k : ℕ) :
 /-- The step preceding degree `k` in the PBW filtration, that is
 `TauCeti.Algebra.wordFiltrationPrevious` specialized to `UniversalEnvelopingAlgebra.ι R`, with
 bottom in degree zero. -/
-abbrev pbwFiltrationPrevious : ℕ → Submodule R U :=
+def pbwFiltrationPrevious : ℕ → Submodule R U :=
   TauCeti.Algebra.wordFiltrationPrevious (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
 
 /-- The preceding PBW filtration is trivial in degree zero. -/
+@[simp]
 theorem pbwFiltrationPrevious_zero : pbwFiltrationPrevious R L 0 = ⊥ :=
   TauCeti.Algebra.wordFiltrationPrevious_zero _
 
 /-- In successor degree, the preceding PBW filtration is the previous filtration step. -/
+@[simp]
 theorem pbwFiltrationPrevious_succ (k : ℕ) :
     pbwFiltrationPrevious R L (k + 1) = pbwFiltration R L k :=
   TauCeti.Algebra.wordFiltrationPrevious_succ _ k
@@ -118,6 +120,7 @@ theorem pbwFiltration_mono : Monotone (pbwFiltration R L) :=
   TauCeti.Algebra.wordFiltration_mono _
 
 /-- PBW filtration degree zero consists of scalars. -/
+@[simp]
 theorem pbwFiltration_zero : pbwFiltration R L 0 = 1 :=
   TauCeti.Algebra.wordFiltration_zero _
 
@@ -185,6 +188,7 @@ theorem pbwFiltration_succ_eq_sup (k : ℕ) :
   TauCeti.Algebra.wordFiltration_succ_eq_sup _ k
 
 /-- PBW filtration degree one consists of the scalars and the canonical Lie generators. -/
+@[simp]
 theorem pbwFiltration_one :
     pbwFiltration R L 1 = 1 ⊔ LinearMap.range (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap :=
   TauCeti.Algebra.wordFiltration_one _
