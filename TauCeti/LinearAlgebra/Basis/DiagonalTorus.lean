@@ -141,10 +141,9 @@ def weylReflectTorusPoint (α : κ → ℤ) (c : κ) : (κ → Rˣ) →* (κ →
     ac_rfl
 
 /-- The reflected torus point as a coordinatewise product. -/
-@[simp]
 theorem weylReflectTorusPoint_apply (α : κ → ℤ) (c : κ) (s : κ → Rˣ) :
     weylReflectTorusPoint α c s = s * Pi.mulSingle c (torusCharacter s α)⁻¹ :=
-  by simp only [weylReflectTorusPoint, MonoidHom.coe_mk, OneHom.coe_mk]
+  (rfl)
 
 /-- At the coroot coordinate, the reflected point is divided by the root character. -/
 @[simp]
