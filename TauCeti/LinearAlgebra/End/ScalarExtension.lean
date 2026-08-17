@@ -33,13 +33,13 @@ morphism of value algebras; the two are compatible in
 ## Main declarations
 
 * `TauCeti.rTensor_algHom_smul`: the comparison map is semilinear over `f`.
-* `TauCeti.Module.End.mapValue`: the transported endomorphism.
-* `TauCeti.Module.End.mapValue_comp_rTensor`: the defining transport square.
-* `TauCeti.Module.End.eq_mapValue`: the transport square characterizes the transport.
-* `TauCeti.Module.End.mapValueRingHom`: the transport as a ring homomorphism.
-* `TauCeti.Module.End.mapValueGL`: the transport on general linear groups.
-* `TauCeti.Module.End.baseChange_comp_mapValue`: transport preserves naturality in the module.
-* `TauCeti.Module.End.distribBaseChange_comp_mapValue`: transport preserves the tensor
+* `Module.End.mapValue`: the transported endomorphism.
+* `Module.End.mapValue_comp_rTensor`: the defining transport square.
+* `Module.End.eq_mapValue`: the transport square characterizes the transport.
+* `Module.End.mapValueRingHom`: the transport as a ring homomorphism.
+* `Module.End.mapValueGL`: the transport on general linear groups.
+* `Module.End.baseChange_comp_mapValue`: transport preserves naturality in the module.
+* `Module.End.distribBaseChange_comp_mapValue`: transport preserves the tensor
   comparison.
 -/
 
@@ -84,26 +84,35 @@ theorem distribBaseChange_symm_rTensor_tmul (f : A →ₐ[R] B) (u : A ⊗[R] M)
           simp only [LinearMap.rTensor_tmul, AlgHom.toLinearMap_apply,
             TensorProduct.AlgebraTensorModule.distribBaseChange_symm_tmul, map_mul]
 
+end TauCeti
+
 namespace Module.End
+
+open TauCeti
+
+variable {R A B C M N : Type*} [CommSemiring R]
+variable [CommSemiring A] [Algebra R A] [CommSemiring B] [Algebra R B]
+variable [CommSemiring C] [Algebra R C]
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
 
 /-- Base change of an endomorphism of a scalar extension along a morphism `f : A →ₐ[R] B` of
 value algebras: the unique `B`-linear endomorphism of `B ⊗[R] M` compatible with `φ` along the
 comparison map. -/
-noncomputable def mapValue (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
-    _root_.Module.End B (B ⊗[R] M) :=
+noncomputable def mapValue (f : A →ₐ[R] B) (φ : Module.End A (A ⊗[R] M)) :
+    Module.End B (B ⊗[R] M) :=
   LinearMap.liftBaseChange B
     (LinearMap.rTensor M f.toLinearMap ∘ₗ φ.restrictScalars R ∘ₗ TensorProduct.mk R A M 1)
 
 /-- Evaluation of a base-changed endomorphism on a pure tensor. -/
 @[simp]
-theorem mapValue_tmul (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) (b : B) (m : M) :
+theorem mapValue_tmul (f : A →ₐ[R] B) (φ : Module.End A (A ⊗[R] M)) (b : B) (m : M) :
     mapValue f φ (b ⊗ₜ[R] m) = b • LinearMap.rTensor M f.toLinearMap (φ (1 ⊗ₜ[R] m)) := by
   simp [mapValue]
 
 /-- The transport square defining base change of an endomorphism: transporting and then
 comparing scalar extensions agrees with comparing and then applying the original
 endomorphism. -/
-theorem mapValue_comp_rTensor (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
+theorem mapValue_comp_rTensor (f : A →ₐ[R] B) (φ : Module.End A (A ⊗[R] M)) :
     (mapValue f φ).restrictScalars R ∘ₗ LinearMap.rTensor M f.toLinearMap =
       LinearMap.rTensor M f.toLinearMap ∘ₗ φ.restrictScalars R := by
   refine TensorProduct.ext' fun a m ↦ ?_
@@ -115,7 +124,7 @@ theorem mapValue_comp_rTensor (f : A →ₐ[R] B) (φ : _root_.Module.End A (A �
 
 /-- Evaluation form of the transport square. -/
 @[simp]
-theorem mapValue_rTensor_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M))
+theorem mapValue_rTensor_apply (f : A →ₐ[R] B) (φ : Module.End A (A ⊗[R] M))
     (z : A ⊗[R] M) :
     mapValue f φ (LinearMap.rTensor M f.toLinearMap z) =
       LinearMap.rTensor M f.toLinearMap (φ z) :=
@@ -123,8 +132,8 @@ theorem mapValue_rTensor_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A 
 
 /-- The transport square characterizes base change of an endomorphism: the comparison map
 generates `B ⊗[R] M` over `B`. -/
-theorem eq_mapValue (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M))
-    (ψ : _root_.Module.End B (B ⊗[R] M))
+theorem eq_mapValue (f : A →ₐ[R] B) (φ : Module.End A (A ⊗[R] M))
+    (ψ : Module.End B (B ⊗[R] M))
     (h : ψ.restrictScalars R ∘ₗ LinearMap.rTensor M f.toLinearMap =
       LinearMap.rTensor M f.toLinearMap ∘ₗ φ.restrictScalars R) :
     ψ = mapValue f φ := by
@@ -138,28 +147,28 @@ theorem eq_mapValue (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M))
 /-- Base change preserves the identity endomorphism. -/
 @[simp]
 theorem mapValue_one (f : A →ₐ[R] B) :
-    mapValue f (1 : _root_.Module.End A (A ⊗[R] M)) = 1 :=
+    mapValue f (1 : Module.End A (A ⊗[R] M)) = 1 :=
   (eq_mapValue f 1 1 rfl).symm
 
 /-- Base change is multiplicative: it turns composition into composition. -/
 @[simp]
-theorem mapValue_mul (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] M)) :
+theorem mapValue_mul (f : A →ₐ[R] B) (φ ψ : Module.End A (A ⊗[R] M)) :
     mapValue f (φ * ψ) = mapValue f φ * mapValue f ψ := by
   refine (eq_mapValue f (φ * ψ) (mapValue f φ * mapValue f ψ) ?_).symm
   refine LinearMap.ext fun z ↦ ?_
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.restrictScalars_apply,
-    _root_.Module.End.mul_apply, mapValue_rTensor_apply]
+    Module.End.mul_apply, mapValue_rTensor_apply]
 
 /-- Base change preserves the zero endomorphism. -/
 @[simp]
 theorem mapValue_zero (f : A →ₐ[R] B) :
-    mapValue f (0 : _root_.Module.End A (A ⊗[R] M)) = 0 := by
+    mapValue f (0 : Module.End A (A ⊗[R] M)) = 0 := by
   refine (eq_mapValue f 0 0 ?_).symm
   simp
 
 /-- Base change is additive. -/
 @[simp]
-theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] M)) :
+theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : Module.End A (A ⊗[R] M)) :
     mapValue f (φ + ψ) = mapValue f φ + mapValue f ψ := by
   refine (eq_mapValue f (φ + ψ) (mapValue f φ + mapValue f ψ) ?_).symm
   refine LinearMap.ext fun z ↦ ?_
@@ -168,7 +177,7 @@ theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] 
 
 /-- Base change of endomorphisms of a scalar extension, as a ring homomorphism. -/
 noncomputable def mapValueRingHom (f : A →ₐ[R] B) :
-    _root_.Module.End A (A ⊗[R] M) →+* _root_.Module.End B (B ⊗[R] M) where
+    Module.End A (A ⊗[R] M) →+* Module.End B (B ⊗[R] M) where
   toFun := mapValue f
   map_one' := mapValue_one f
   map_mul' := mapValue_mul f
@@ -177,7 +186,7 @@ noncomputable def mapValueRingHom (f : A →ₐ[R] B) :
 
 /-- The bundled base-change homomorphism acts by `mapValue`. -/
 @[simp]
-theorem mapValueRingHom_apply (f : A →ₐ[R] B) (φ : _root_.Module.End A (A ⊗[R] M)) :
+theorem mapValueRingHom_apply (f : A →ₐ[R] B) (φ : Module.End A (A ⊗[R] M)) :
     mapValueRingHom f φ = mapValue f φ := by
   simp [mapValueRingHom]
 
@@ -191,13 +200,13 @@ noncomputable def mapValueGL (f : A →ₐ[R] B) :
 endomorphism. -/
 @[simp]
 theorem mapValueGL_coe (f : A →ₐ[R] B) (φ : LinearMap.GeneralLinearGroup A (A ⊗[R] M)) :
-    (mapValueGL f φ : _root_.Module.End B (B ⊗[R] M)) =
-      mapValue f (φ : _root_.Module.End A (A ⊗[R] M)) := by
+    (mapValueGL f φ : Module.End B (B ⊗[R] M)) =
+      mapValue f (φ : Module.End A (A ⊗[R] M)) := by
   simp [mapValueGL]
 
 /-- Base change along the identity morphism of value algebras is the identity. -/
 @[simp]
-theorem mapValue_id (φ : _root_.Module.End A (A ⊗[R] M)) :
+theorem mapValue_id (φ : Module.End A (A ⊗[R] M)) :
     mapValue (AlgHom.id R A) φ = φ := by
   refine (eq_mapValue (AlgHom.id R A) φ φ ?_).symm
   simp [LinearMap.rTensor_id]
@@ -205,7 +214,7 @@ theorem mapValue_id (φ : _root_.Module.End A (A ⊗[R] M)) :
 /-- Base change along a composite of morphisms of value algebras is the composite of base
 changes. -/
 @[simp]
-theorem mapValue_comp (f : A →ₐ[R] B) (g : B →ₐ[R] C) (φ : _root_.Module.End A (A ⊗[R] M)) :
+theorem mapValue_comp (f : A →ₐ[R] B) (g : B →ₐ[R] C) (φ : Module.End A (A ⊗[R] M)) :
     mapValue (g.comp f) φ = mapValue g (mapValue f φ) := by
   refine (eq_mapValue (g.comp f) φ (mapValue g (mapValue f φ)) ?_).symm
   refine LinearMap.ext fun z ↦ ?_
@@ -218,7 +227,7 @@ theorem mapValue_comp (f : A →ₐ[R] B) (g : B →ₐ[R] C) (φ : _root_.Modul
 /-- Base change preserves naturality in the module: a square over `A` transports to the
 corresponding square over `B`. -/
 theorem baseChange_comp_mapValue (f : A →ₐ[R] B) (u : M →ₗ[R] N)
-    (φ : _root_.Module.End A (A ⊗[R] M)) (ψ : _root_.Module.End A (A ⊗[R] N))
+    (φ : Module.End A (A ⊗[R] M)) (ψ : Module.End A (A ⊗[R] N))
     (h : u.baseChange A ∘ₗ φ = ψ ∘ₗ u.baseChange A) :
     u.baseChange B ∘ₗ mapValue f φ = mapValue f ψ ∘ₗ u.baseChange B := by
   apply (LinearMap.liftBaseChangeEquiv B).symm.injective
@@ -239,8 +248,8 @@ theorem baseChange_comp_mapValue (f : A →ₐ[R] B) (u : M →ₗ[R] N)
 /-- Base change preserves the tensor comparison: a tensor-compatibility square over `A`
 transports to the corresponding square over `B`. -/
 theorem distribBaseChange_comp_mapValue (f : A →ₐ[R] B)
-    (φ : _root_.Module.End A (A ⊗[R] M)) (ψ : _root_.Module.End A (A ⊗[R] N))
-    (χ : _root_.Module.End A (A ⊗[R] (M ⊗[R] N)))
+    (φ : Module.End A (A ⊗[R] M)) (ψ : Module.End A (A ⊗[R] N))
+    (χ : Module.End A (A ⊗[R] (M ⊗[R] N)))
     (h : (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap ∘ₗ
         TensorProduct.map φ ψ =
       χ ∘ₗ (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap) :
@@ -272,5 +281,3 @@ theorem distribBaseChange_comp_mapValue (f : A →ₐ[R] B)
             distribBaseChange_symm_rTensor_tmul, hmn]
 
 end Module.End
-
-end TauCeti
