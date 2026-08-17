@@ -132,8 +132,10 @@ noncomputable def baseChangeHopfSpecNatIso :
         (functorCompFullSubcategoryιIso S)).symm
 
 /-- The `rightOp` form of `baseChangeHopfSpecNatIso`, comparing the two ways of passing from a
-coordinate Hopf algebra over `R` to a group scheme over `S`. -/
-noncomputable def rightOpBaseChangeHopfSpecNatIso :
+coordinate Hopf algebra over `R` to a group scheme over `S`. It exists only to transport
+`baseChangeHopfSpecNatIso` across the Hopf-spectrum equivalence in the shape
+`coordHopfAlgebraBaseChangeNatIso` needs. -/
+private noncomputable def rightOpBaseChangeHopfSpecNatIso :
     (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
         R).rightOp.functor ⋙ (baseChangeFunctor R S).op ≅
       FiniteLocallyFreeBicommutativeHopfAlgCat.baseChangeFunctor R S ⋙
