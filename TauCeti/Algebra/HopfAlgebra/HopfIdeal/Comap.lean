@@ -64,18 +64,23 @@ ordinary ideal comap of `I.toIdeal`. -/
 noncomputable def comap (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (hf : Function.Surjective f) : HopfIdeal R H :=
   kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
-    ((Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
+    (by
+      rw [BialgHom.coe_comp]
+      exact (Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
 
 /-- The underlying ideal of `I.comap f hf` is the ordinary ideal-theoretic inverse image. -/
 @[simp]
 theorem comap_toIdeal (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (hf : Function.Surjective f) :
     (I.comap f hf).toIdeal = Ideal.comap (f : H →+* K) I.toIdeal := by
+  -- Unfold `comap` once, then use the characteristic API of the hidden kernel construction.
+  change (kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f) _).toIdeal = _
+  rw [kerOfSurjective_toIdeal]
   ext h
-  -- membership in `comap` is by definition vanishing of the composite in the quotient; `change`
-  -- spells that composite out, since `comap` has no equation lemma to rewrite with.
-  change Ideal.Quotient.mk I.toIdeal (f h) = 0 ↔ f h ∈ I.toIdeal
-  exact Ideal.Quotient.eq_zero_iff_mem
+  simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_toAlgHom, AlgHom.comp_apply,
+    BialgHom.coe_toAlgHom, Bialgebra.Quotient.mkBialgHom_apply,
+    Ideal.Quotient.eq_zero_iff_mem]
+  rfl
 
 /-- Membership in the inverse-image Hopf ideal is membership after applying the morphism. -/
 @[simp]

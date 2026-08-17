@@ -68,6 +68,8 @@ private theorem ker_tensorProduct_map_quotient (I : Ideal H) :
       leftTensorIdeal (R := k) (H := H) I ⊔ rightTensorIdeal (R := k) (H := H) I := by
   have hker : RingHom.ker (Ideal.Quotient.mkₐ k I) = I :=
     Ideal.Quotient.mkₐ_ker (R₁ := k) I
+  -- `map_ker` states the tensor-product map via its algebra-hom coercion, while the goal
+  -- uses its `toRingHom`; these are the same ring homomorphism definitionally.
   change RingHom.ker
       (Algebra.TensorProduct.map (Ideal.Quotient.mkₐ k I) (Ideal.Quotient.mkₐ k I)) = _
   rw [Algebra.TensorProduct.map_ker
@@ -134,7 +136,7 @@ private theorem comul_mem_ker_tensor_ideal (f : H →ₐc[k] K) {x : H}
 
 /-- The ordinary kernel of a morphism of commutative Hopf algebras over a field, as a Hopf
 ideal. No surjectivity hypothesis is needed over a field. -/
-@[expose] def ker (f : H →ₐc[k] K) : HopfIdeal k H :=
+def ker (f : H →ₐc[k] K) : HopfIdeal k H :=
   ofIdeal (RingHom.ker (f : H →ₐ[k] K))
     (by intro x hx; exact comul_mem_ker_tensor_ideal f hx)
     (fun x hx ↦ by
@@ -150,13 +152,24 @@ ideal. No surjectivity hypothesis is needed over a field. -/
 @[simp]
 theorem ker_toIdeal (f : H →ₐc[k] K) :
     (ker f).toIdeal = RingHom.ker (f : H →ₐ[k] K) :=
-  rfl
+  by
+    -- Unfold the hidden construction once to establish its public characteristic lemma.
+    change (ofIdeal (RingHom.ker (f : H →ₐ[k] K)) _ _ _).toIdeal = _
+    rfl
 
 /-- Membership in the kernel Hopf ideal is vanishing under the morphism. -/
 @[simp]
 theorem mem_ker (f : H →ₐc[k] K) {x : H} : x ∈ ker f ↔ f x = 0 := by
-  change (f : H →ₐ[k] K) x = 0 ↔ f x = 0
+  rw [← mem_toIdeal, ker_toIdeal, RingHom.mem_ker]
   rfl
+
+/-- Over a field, the kernel constructed for a surjective morphism agrees with the canonical
+kernel, which does not require the surjectivity hypothesis. -/
+@[simp]
+theorem kerOfSurjective_eq_ker (f : H →ₐc[k] K) (hf : Function.Surjective f) :
+    kerOfSurjective f hf = ker f := by
+  ext x
+  rw [mem_kerOfSurjective, mem_ker]
 
 /-- The kernel Hopf ideal is bottom exactly when the morphism is injective. -/
 @[simp]
@@ -208,20 +221,24 @@ theorem imageQuotient_comp_imageι (f : H ⟶ K) : imageQuotient f ≫ imageι f
 theorem imageQuotient_surjective (f : H ⟶ K) : Function.Surjective (imageQuotient f).hom :=
   Ideal.Quotient.mk_surjective
 
+/-- The injective image morphism agrees pointwise with the algebra map induced from the
+quotient by the kernel. -/
+theorem imageι_apply (f : H ⟶ K) (x : image f) :
+    (imageι f).hom x =
+      Ideal.kerLiftAlg f.hom.toAlgHom
+        (Ideal.quotientEquivAlgOfEq k (HopfIdeal.ker_toIdeal f.hom) x) := by
+  obtain ⟨a, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (HopfIdeal.ker f.hom).toIdeal x
+  rw [liftQuotient_mk, Ideal.Quotient.mkₐ_eq_mk, Ideal.quotientEquivAlgOfEq_mk,
+    Ideal.kerLiftAlg_mk]
+  simp only [BialgHom.coe_toAlgHom]
+
 /-- The coordinate map from the scheme-theoretic image into the source coordinate algebra is
 injective. -/
 theorem imageι_injective (f : H ⟶ K) : Function.Injective (imageι f).hom := by
   intro x y hxy
-  obtain ⟨a, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (HopfIdeal.ker f.hom).toIdeal x
-  obtain ⟨b, rfl⟩ := Ideal.Quotient.mkₐ_surjective k (HopfIdeal.ker f.hom).toIdeal y
-  rw [liftQuotient_mk, liftQuotient_mk] at hxy
-  exact Ideal.Quotient.eq.mpr (by
-    rw [HopfIdeal.ker_toIdeal, RingHom.mem_ker]
-    rw [map_sub, sub_eq_zero]
-    calc
-      f.hom.toAlgHom.toRingHom a = f.hom a := rfl
-      _ = f.hom b := hxy
-      _ = f.hom.toAlgHom.toRingHom b := rfl)
+  apply (Ideal.quotientEquivAlgOfEq k (HopfIdeal.ker_toIdeal f.hom)).injective
+  apply Ideal.kerLiftAlg_injective f.hom.toAlgHom
+  simpa only [← imageι_apply] using hxy
 
 end CommHopfAlgCat
 

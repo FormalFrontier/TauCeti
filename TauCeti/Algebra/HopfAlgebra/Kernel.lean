@@ -84,7 +84,7 @@ private theorem tensor_map_ker_eq_left_sup_right (f : H →ₐc[R] K)
   apply congr_arg₂ (· ⊔ ·) <;> rfl
 
 /-- The kernel of a surjective bialgebra morphism, as a Hopf ideal. -/
-@[expose] def kerOfSurjective (f : H →ₐc[R] K) (hf : Function.Surjective f) : HopfIdeal R H :=
+def kerOfSurjective (f : H →ₐc[R] K) (hf : Function.Surjective f) : HopfIdeal R H :=
   ofIdeal (RingHom.ker (f : H →ₐ[R] K))
     (by
       intro x hx
@@ -108,7 +108,10 @@ private theorem tensor_map_ker_eq_left_sup_right (f : H →ₐc[R] K)
 @[simp]
 theorem kerOfSurjective_toIdeal (f : H →ₐc[R] K) (hf : Function.Surjective f) :
     (kerOfSurjective f hf).toIdeal = RingHom.ker (f : H →ₐ[R] K) :=
-  rfl
+  by
+    -- Unfold the hidden construction once to establish its public characteristic lemma.
+    change (ofIdeal (RingHom.ker (f : H →ₐ[R] K)) _ _ _).toIdeal = _
+    rfl
 
 /-- Membership in the kernel Hopf ideal is vanishing under the bialgebra morphism. -/
 @[simp]
