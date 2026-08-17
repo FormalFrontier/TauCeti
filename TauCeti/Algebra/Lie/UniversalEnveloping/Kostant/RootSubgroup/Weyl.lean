@@ -55,6 +55,8 @@ root subgroups interact, and the relations here describe how the reflection perm
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantWeylPoints`: the Weyl element on points valued in an
   arbitrary commutative ring.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantWeylGL`: the same element of the general linear group
+  of those points.
 
 ## Main results
 
@@ -197,6 +199,25 @@ theorem kostantWeylPoints_symm_apply_tmul (r : A) (v : M) :
       r ⊗ₜ[ℤ] (kostantWeylRestrict e h ρ M hM hi hj).symm v := by
   rw [← LinearEquiv.coe_coe, kostantWeylPoints_symm_toLinearMap, LinearMap.baseChange_tmul,
     LinearEquiv.coe_coe]
+
+/-- The Weyl element of a Kostant root pair as an element of the general linear group of the
+points of the lattice.
+
+This is the automorphism `TauCeti.UniversalEnvelopingAlgebra.kostantWeylPoints`, packaged so that
+it multiplies with the root subgroups and the split torus, which are group-valued. -/
+noncomputable def kostantWeylGL (A : Type*) [CommRing A] [Algebra ℤ A] :
+    LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
+  LinearMap.GeneralLinearGroup.ofLinearEquiv (kostantWeylPoints e h ρ M hM hi hj A)
+
+@[simp]
+theorem kostantWeylGL_val :
+    (kostantWeylGL e h ρ M hM hi hj A).val =
+      (kostantWeylPoints e h ρ M hM hi hj A).toLinearMap := (rfl)
+
+@[simp]
+theorem kostantWeylGL_inv_val :
+    ((kostantWeylGL e h ρ M hM hi hj A)⁻¹).val =
+      (kostantWeylPoints e h ρ M hM hi hj A).symm.toLinearMap := (rfl)
 
 /-- **The Weyl element is the Chevalley product `x_i(1) x_j(-1) x_i(1)`.**
 

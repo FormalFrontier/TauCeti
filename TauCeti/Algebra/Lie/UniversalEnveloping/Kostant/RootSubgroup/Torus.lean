@@ -92,8 +92,12 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 /-! ## Weight vectors -/
 
 /-- A vector of `V` is a **weight vector of weight `μ`** when it is a joint eigenvector of the
-designated Cartan operators `ρ(hⱼ)` with the integer eigenvalues `μ j`. -/
-def IsCartanWeightVector (h : κ → L)
+designated Cartan operators `ρ(hⱼ)` with the integer eigenvalues `μ j`.
+
+It is exposed so that a consumer can introduce and eliminate the universally quantified Cartan
+index directly, rather than through
+`TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff_mem_eigenspace`. -/
+@[expose] def IsCartanWeightVector (h : κ → L)
     (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (μ : κ → ℤ) (m : V) : Prop :=
   ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) m = (μ j : ℚ) • m
 

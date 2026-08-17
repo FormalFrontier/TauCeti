@@ -107,6 +107,13 @@ theorem torusCharacter_mul (s t : κ → Rˣ) (μ : κ → ℤ) :
     torusCharacter (s * t) μ = torusCharacter s μ * torusCharacter t μ := by
   simp [torusCharacter, mul_zpow, prod_mul_distrib]
 
+/-- At a point supported on the single coordinate `c`, a character is the `μ c`-th power of the
+value there: the other coordinates contribute the factor `1`. -/
+@[simp] theorem torusCharacter_mulSingle [DecidableEq κ] (c : κ) (z : Rˣ) (μ : κ → ℤ) :
+    torusCharacter (Pi.mulSingle c z) μ = z ^ μ c := by
+  rw [torusCharacter, prod_eq_single c (fun j _ hj => by rw [Pi.mulSingle_eq_of_ne hj, one_zpow])
+    fun hc => absurd (mem_univ c) hc, Pi.mulSingle_eq_same]
+
 /-- The family of characters attached to a weight function, as a homomorphism from the points of
 the split torus `𝔾ₘ^κ` to families of units indexed by the basis. -/
 def torusCharacterHom (wt : ι → κ → ℤ) : (κ → Rˣ) →* (ι → Rˣ) where
