@@ -85,10 +85,11 @@ corestriction, without changing their underlying submodules. -/
                 (Comodule.coact (R := R) (C := C) (M := M) m)) :=
             congrArg (TensorProduct.map LinearMap.id e.symm.toLinearMap) ht
           _ = _ := by
-            rw [TensorProduct.map_map]
-            rw [show e.symm.toLinearMap.comp e.toLinearMap = LinearMap.id by
+            have hinv : e.symm.toLinearMap.comp e.toLinearMap = LinearMap.id := by
               ext c
-              simp]
+              simp
+            rw [TensorProduct.map_map]
+            rw [hinv]
             simp
     left_inv := by
       intro W

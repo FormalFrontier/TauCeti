@@ -59,8 +59,8 @@ theorem linearlyReductiveAffineGroupSchemeProperty_groupScheme
   let e : S ≅ D :=
     (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
       (eqToIso (groupScheme_def k G).symm)
-  change linearlyReductiveAffineGroupSchemeProperty k D
-  exact (linearlyReductiveAffineGroupSchemeProperty k).prop_of_iso e hS
+  simpa only [D] using
+    (linearlyReductiveAffineGroupSchemeProperty k).prop_of_iso e hS
 
 /-- Every affine group scheme satisfying the finite-type diagonalizable-group property is
 linearly reductive. -/

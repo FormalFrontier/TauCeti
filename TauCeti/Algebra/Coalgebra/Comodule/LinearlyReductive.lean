@@ -7,6 +7,7 @@ module
 
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.Transport
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
 import TauCeti.Algebra.Coalgebra.Subcomodule.Comap
 
@@ -32,8 +33,12 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.Comodule.IsCompletelyReducible`: every subcomodule has a subcomodule complement.
+* `TauCeti.Comodule.isCompletelyReducible_transport_iff`: complete reducibility is invariant
+  under transport along a linear equivalence.
 * `TauCeti.Coalgebra.IsLinearlyReductive`: every finite-dimensional comodule is completely
   reducible.
+* `TauCeti.Coalgebra.isCompletelyReducible_of_isLinearlyReductive`: testing finite-dimensional
+  comodules in the base-field universe suffices for comodules in every universe.
 * `TauCeti.Comodule.isCompletelyReducible_corestrict_iff_of_coalgEquiv`: complete reducibility
   is invariant under a coalgebra equivalence.
 * `TauCeti.Coalgebra.isLinearlyReductive_iff_of_coalgEquiv`: linear reductivity is invariant
@@ -91,6 +96,49 @@ end Coalgebra
 
 namespace Comodule
 
+section Transport
+
+variable (k : Type u) [Field k]
+variable {C : Type v} [AddCommMonoid C] [Module k C] [Coalgebra k C]
+variable {V : Type w} {W : Type*}
+variable [AddCommMonoid V] [Module k V] [Comodule k C V]
+variable [AddCommMonoid W] [Module k W]
+
+/-- Complete reducibility is invariant under transporting a comodule structure along a linear
+equivalence. -/
+theorem isCompletelyReducible_transport_iff (e : V ≃ₗ[k] W) :
+    (letI : Comodule k C W := Transport e;
+      IsCompletelyReducible k C W) ↔ IsCompletelyReducible k C V := by
+  let _ : Comodule k C W := Transport e
+  let f : Hom k C W V := transportInvHom e
+  let g : Hom k C V W := transportToHom e
+  let E : Submodule k V ≃o Submodule k W := Submodule.orderIsoMapComap e
+  have hmap_f (A : Subcomodule k C W) :
+      (A.map f).toSubmodule = E.symm A.toSubmodule := by
+    simp only [Subcomodule.map_toSubmodule, f, transportInvHom_toLinearMap]
+    exact (Submodule.orderIsoMapComap_symm_apply' e A.toSubmodule).symm
+  have hmap_g (A : Subcomodule k C V) :
+      (A.map g).toSubmodule = E A.toSubmodule := by
+    simp only [Subcomodule.map_toSubmodule, g, transportToHom_toLinearMap,
+      E, Submodule.orderIsoMapComap_apply]
+  constructor
+  · intro h A
+    obtain ⟨Q, hQ⟩ := h (A.map g)
+    refine ⟨Q.map f, ?_⟩
+    have hQ' := E.symm.isCompl_iff.mp hQ
+    rw [hmap_g, E.symm_apply_apply] at hQ'
+    rw [hmap_f]
+    exact hQ'
+  · intro h A
+    obtain ⟨Q, hQ⟩ := h (A.map f)
+    refine ⟨Q.map g, ?_⟩
+    have hQ' := E.isCompl_iff.mp hQ
+    rw [hmap_f, E.apply_symm_apply] at hQ'
+    rw [hmap_g]
+    exact hQ'
+
+end Transport
+
 section Equiv
 
 variable (k : Type u) [CommSemiring k]
@@ -130,6 +178,19 @@ variable (k : Type u) [Field k]
 variable {C : Type v} {D : Type*}
 variable [AddCommMonoid C] [Module k C] [Coalgebra k C]
 variable [AddCommMonoid D] [Module k D] [Coalgebra k D]
+
+/-- If every finite-dimensional comodule whose carrier is in the base-field universe is
+completely reducible, then every finite-dimensional comodule is completely reducible, regardless
+of its carrier universe. -/
+theorem isCompletelyReducible_of_isLinearlyReductive
+    (h : IsLinearlyReductive.{u, v, u} k C)
+    {V : Type w} [AddCommMonoid V] [Module k V] [Comodule k C V] [Module.Finite k V] :
+    Comodule.IsCompletelyReducible k C V := by
+  let : AddCommGroup V := Module.addCommMonoidToAddCommGroup k
+  let : Module.Free k V := Module.Free.of_divisionRing k V
+  let e : V ≃ₗ[k] (Fin (Module.finrank k V) → k) := (Module.finBasis k V).equivFun
+  let _ : Comodule k C (Fin (Module.finrank k V) → k) := Comodule.Transport e
+  exact (Comodule.isCompletelyReducible_transport_iff k e).mp (h _)
 
 /-- Linear reductivity is invariant under equivalence of coalgebras. -/
 theorem isLinearlyReductive_iff_of_coalgEquiv (e : C ≃ₗc[k] D) :

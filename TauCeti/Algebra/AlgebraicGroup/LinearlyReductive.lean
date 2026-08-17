@@ -14,8 +14,9 @@ public import TauCeti.Algebra.Coalgebra.Comodule.LinearlyReductive
 An affine group over a field is linearly reductive when its finite-dimensional rational
 representations are completely reducible. This file packages the existing comodule formulation
 as an isomorphism-invariant object property on commutative Hopf algebras. For a Hopf algebra in
-`Type v`, the property tests comodule carriers in `Type v`; no universe-transfer result is
-asserted here.
+`Type v`, the property tests comodule carriers in `Type v`. At the scheme-level specialization
+`v = u`, transport to a finite standard basis shows that this test covers carriers in every
+universe.
 
 The property is deliberately separate from smoothness, connectedness, and finite type. In
 positive characteristic a torus is linearly reductive, while a general reductive group need not
