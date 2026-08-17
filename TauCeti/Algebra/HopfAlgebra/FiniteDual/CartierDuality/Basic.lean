@@ -277,7 +277,7 @@ it.
 `IsInvolutiveDual` spells the triangle identity with `dualFunctor` and `evalNatIso`; those are
 the functor and natural isomorphism assembled from `dualMap` and `evalIso`, so the two forms of
 the identity are the same statement and `dualMap_evalIso_inv_comp` applies directly. -/
-theorem dualFunctor_isInvolutiveDual :
+theorem isInvolutiveDual_dualFunctor :
     (dualFunctor (k := k)).IsInvolutiveDual evalNatIso :=
   fun H => dualMap_evalIso_inv_comp H
 
@@ -291,7 +291,7 @@ counterparts for the transported group-scheme duality, hold definitionally. -/
 noncomputable def cartierDuality :
     (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ ≌
       FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k :=
-  (dualFunctor (k := k)).dualityEquivalence evalNatIso dualFunctor_isInvolutiveDual
+  (dualFunctor (k := k)).dualityEquivalence evalNatIso isInvolutiveDual_dualFunctor
 
 /-- The forward functor of `cartierDuality` is finite dualization. -/
 @[simp]
