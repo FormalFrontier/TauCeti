@@ -321,13 +321,11 @@ theorem kostantTorusMatrix_apply (A : Type*) [CommRing A] (s : κ → Aˣ) (r i 
   · simp [h]
 
 /-- The `i`-th diagonal entry is the character attached to the `i`-th weight. -/
-@[simp]
 theorem kostantTorusMatrix_apply_self (A : Type*) [CommRing A] (s : κ → Aˣ) (i : Fin n) :
     kostantTorusMatrix M b wt A s i i = (torusCharacter s (wt i) : A) := by
   simp
 
 /-- Every off-diagonal entry of the weighted-basis torus matrix vanishes. -/
-@[simp]
 theorem kostantTorusMatrix_apply_of_ne (A : Type*) [CommRing A] (s : κ → Aˣ)
     {r i : Fin n} (h : r ≠ i) :
     kostantTorusMatrix M b wt A s r i = 0 := by
