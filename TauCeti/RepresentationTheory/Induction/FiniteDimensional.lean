@@ -329,7 +329,7 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
 private theorem indFDRepForgetIso_hom_hom_apply {k G : Type u} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S)
     (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
-    (indFDRepForgetIso A).hom.hom x = indFDRepForgetEquiv A x :=
+    (Rep.Hom.hom (indFDRepForgetIso A).hom) x = indFDRepForgetEquiv A x :=
   rfl
 
 /-- `FDRep.forget₂HomLinearEquiv` is inverse to the forgetful functor on morphisms. -/
@@ -415,16 +415,20 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
     indFDRepFunctor (k := k) (S := S) ⋙ forget₂ (FDRep k G) (Rep k G) ≅
       forget₂ (FDRep k S) (Rep k S) ⋙ Rep.indFunctor k S.subtype :=
   NatIso.ofComponents (fun A ↦ indFDRepForgetIso A) fun {A B} f ↦ by
-    change (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) ≫ (indFDRepForgetIso B).hom =
+    -- The projection lemmas cannot rewrite the dependent source and target object casts in this
+    -- naturality goal, so expose those definitionally equal objects before simplifying morphisms.
+    change (forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f) ≫
+        (indFDRepForgetIso B).hom =
       (indFDRepForgetIso A).hom ≫
         (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f)
     ext x
-    rw [Rep.hom_comp, Rep.hom_comp, Representation.IntertwiningMap.comp_toLinearMap,
-      Representation.IntertwiningMap.comp_toLinearMap, LinearMap.comp_apply,
-      LinearMap.comp_apply]
-    simp only [Representation.IntertwiningMap.toLinearMap_apply]
-    rw [indFDRepMap_apply,
-      indFDRepForgetIso_hom_hom_apply, indFDRepForgetIso_hom_hom_apply]
+    simp only [FGModuleCat.obj_carrier, Rep.hom_comp,
+      Representation.IntertwiningMap.comp_toLinearMap, LinearMap.coe_comp,
+      Representation.IntertwiningMap.coe_toLinearMap, Function.comp_apply,
+      indFDRepMap_apply, Rep.indFunctor_obj, Rep.indFunctor_map]
+    -- These two rewrites bridge definitionally distinct representation structures induced by the
+    -- `Field` and `CommRing` instances; `simp` cannot match them before this normalization.
+    rw [indFDRepForgetIso_hom_hom_apply, indFDRepForgetIso_hom_hom_apply]
     simp
 
 /-- The dimension of an induced representation is the subgroup index times the dimension of the
