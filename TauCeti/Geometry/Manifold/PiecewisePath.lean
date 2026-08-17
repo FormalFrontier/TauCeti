@@ -22,6 +22,8 @@ bundled paths carrying irrelevant partition data.
 
 ## Main results
 
+* `TauCeti.Manifold.IsPiecewiseContMDiffOn.exists_partition`: extract a witnessing strict
+  partition and the piecewise regularity facts.
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.continuousOn`: piecewise `C^n` regularity implies
   continuity on the whole interval.
 
@@ -58,7 +60,7 @@ zero-piece witness.
 
 The partition is existential data because it witnesses a property of `γ`; it is not part of the
 identity of a path. In particular, refining a partition does not create a different object. -/
-@[expose] def IsPiecewiseContMDiffOn (I : ModelWithCorners ℝ E H) (n : ℕ∞ω)
+def IsPiecewiseContMDiffOn (I : ModelWithCorners ℝ E H) (n : ℕ∞ω)
     (γ : ℝ → M) (a b : ℝ) : Prop :=
   ∃ (k : ℕ) (τ : Fin (k + 2) → ℝ),
     τ 0 = a ∧
@@ -66,6 +68,18 @@ identity of a path. In particular, refining a partition does not create a differ
       (∀ i : Fin (k + 1), τ i.castSucc < τ i.succ) ∧
       ∀ i : Fin (k + 1),
         ContMDiffOn (modelWithCornersSelf ℝ ℝ) I n γ (Icc (τ i.castSucc) (τ i.succ))
+
+/-- Extract a strict partition witnessing piecewise `C^n` regularity, together with the
+`C^n` restriction on each closed piece. -/
+theorem IsPiecewiseContMDiffOn.exists_partition (h : IsPiecewiseContMDiffOn I n γ a b) :
+    ∃ (k : ℕ) (τ : Fin (k + 2) → ℝ),
+      τ 0 = a ∧
+        τ (Fin.last (k + 1)) = b ∧
+        (∀ i : Fin (k + 1), τ i.castSucc < τ i.succ) ∧
+        ∀ i : Fin (k + 1),
+          ContMDiffOn (modelWithCornersSelf ℝ ℝ) I n γ
+            (Icc (τ i.castSucc) (τ i.succ)) :=
+  h
 
 /-- The endpoints of a piecewise smooth path are strictly ordered. -/
 theorem IsPiecewiseContMDiffOn.lt (h : IsPiecewiseContMDiffOn I n γ a b) : a < b := by

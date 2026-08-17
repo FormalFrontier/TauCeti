@@ -105,7 +105,7 @@ theorem IsPiecewiseContMDiffOn.exists_partition_sum_pathELength_eq
             (Icc (τ i.castSucc) (τ i.succ))) ∧
         ∑ i : Fin (k + 1), Manifold.pathELength I γ (τ i.castSucc) (τ i.succ) =
           Manifold.pathELength I γ a b := by
-  obtain ⟨k, τ, hτa, hτb, hτ, hγ⟩ := h
+  obtain ⟨k, τ, hτa, hτb, hτ, hγ⟩ := h.exists_partition
   refine ⟨k, τ, hτa, hτb, hτ, hγ, ?_⟩
   rw [sum_pathELength_eq τ (fun i ↦ (hτ i).le), hτa, hτb]
 
