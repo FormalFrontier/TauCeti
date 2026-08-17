@@ -8,9 +8,10 @@ module
 public import TauCeti.Probability.DeFinetti.Barycenter
 -- Public: the correspondence's point masses are characterized by extremality.
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
--- Public: the bundled convex combination of probability measures, in which the affinity of the
--- correspondence is stated.
+-- Public: the bundled convex combinations in which the affinity of the correspondence is stated,
+-- on mixing laws and on exchangeable path laws respectively.
 public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Convex
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.Convex
 -- Non-public: used only inside proofs — injectivity of the mixture is what makes the
 -- correspondence injective.
 import TauCeti.MeasureTheory.Measure.MixtureInjective
@@ -169,31 +170,12 @@ The correspondence is affine, and this section says so at the bundled level, wit
 There is no `AffineMap` or `AffineEquiv` to be had: `ProbabilityMeasure` is not a module over
 anything, carrying neither addition nor a scalar action, only the convex structure inherited from
 the ambient `Measure` cone. `ProbabilityMeasure.convexCombo` names that convex structure, and
-`exchangeableLawConvexCombo` carries it to the subtype of exchangeable laws — closure being
-`ExchangeableLaw.smul_add_smul`. Affinity is then two equations between bundled objects.
+`exchangeableLawConvexCombo` carries it to the subtype of exchangeable laws; both are generic, so
+they live outside this module. Affinity is then two equations between bundled objects.
 
 Weights are arbitrary elements of `ℝ≥0∞` summing to `1`. Normalization is not decorative: without
 it the combination is not a probability measure, so neither side of either equation would typecheck.
 The unbundled statements without it are `deFinettiBarycenter_add` and `deFinettiBarycenter_smul`. -/
-
-/-- The **convex combination of two exchangeable path laws**, in the subtype the correspondence
-lands in. Exchangeability is preserved because the defining permutation invariance is linear
-(`ExchangeableLaw.smul_add_smul`). -/
-def exchangeableLawConvexCombo {a b : ℝ≥0∞} (hab : a + b = 1)
-    (ρ₁ ρ₂ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}) :
-    {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))} :=
-  ⟨ProbabilityMeasure.convexCombo hab ρ₁ ρ₂, by
-    rw [ProbabilityMeasure.toMeasure_convexCombo]
-    exact ρ₁.2.smul_add_smul ρ₂.2 a b⟩
-
-/-- The underlying measure of a convex combination of exchangeable laws. -/
-@[simp]
-theorem exchangeableLawConvexCombo_toMeasure {a b : ℝ≥0∞} (hab : a + b = 1)
-    (ρ₁ ρ₂ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}) :
-    ((exchangeableLawConvexCombo hab ρ₁ ρ₂ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
-      = a • ((ρ₁ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
-        + b • ((ρ₂ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α)) :=
-  ProbabilityMeasure.toMeasure_convexCombo hab _ _
 
 /-- **The correspondence is affine.** It carries the convex combination of two mixing laws to the
 convex combination, with the same weights, of their exchangeable path laws. -/
@@ -203,7 +185,7 @@ theorem deFinettiEquiv_convexCombo [StandardBorelSpace α] {a b : ℝ≥0∞} (h
     deFinettiEquiv (ProbabilityMeasure.convexCombo hab π₁ π₂)
       = exchangeableLawConvexCombo hab (deFinettiEquiv π₁) (deFinettiEquiv π₂) :=
   Subtype.ext (ProbabilityMeasure.toMeasure_injective (by
-    simp only [deFinettiEquiv_apply_coe, exchangeableLawConvexCombo_toMeasure,
+    simp only [deFinettiEquiv_apply_coe, toMeasure_exchangeableLawConvexCombo,
       ProbabilityMeasure.toMeasure_convexCombo, deFinettiBarycenter_add,
       deFinettiBarycenter_smul]))
 

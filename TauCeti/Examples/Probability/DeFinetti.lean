@@ -107,7 +107,7 @@ example (P Q : ProbabilityMeasure α) {a b : ℝ≥0∞} (hab : a + b = 1) :
   (congrArg (fun r : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))} =>
       ((r : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α)))
     (deFinettiEquiv_convexCombo hab _ _)).trans (by
-      rw [exchangeableLawConvexCombo_toMeasure, deFinettiEquiv_dirac, deFinettiEquiv_dirac])
+      rw [toMeasure_exchangeableLawConvexCombo, deFinettiEquiv_dirac, deFinettiEquiv_dirac])
 
 /-- Conversely, an exchangeable law that mixes two i.i.d. laws has the corresponding two-point
 mixing law. This is the direction that uses de Finetti's theorem. -/
