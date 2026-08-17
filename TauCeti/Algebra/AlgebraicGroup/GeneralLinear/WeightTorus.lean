@@ -86,14 +86,12 @@ noncomputable def weightTorus (wt : Fin N → κ → ℤ) :
       (FGCommGrpCat.ofHom (weightCharacterMap wt)) ≫
     diagonalTorus
 
-/-- The weight-torus morphism is the diagonal-torus embedding after the contravariant morphism
-induced by its map on character lattices. -/
-theorem weightTorus_def (wt : Fin N → κ → ℤ) :
-    weightTorus (R := R) wt =
-      DiagonalizableGroup.groupSchemeMap R
-          (FGCommGrpCat.ofHom (weightCharacterMap wt)) ≫
-        diagonalTorus :=
-  (rfl)
+private theorem weightTorus_hom (wt : Fin N → κ → ℤ) :
+    (weightTorus (R := R) wt).hom.hom =
+      (DiagonalizableGroup.groupSchemeMap R
+          (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom ≫
+        diagonalTorus.hom.hom :=
+  rfl
 
 end Construction
 
@@ -109,12 +107,7 @@ theorem schemePointsMulEquiv_weightTorus (wt : Fin N → κ → ℤ)
     schemePointsMulEquiv N A (p ≫ (weightTorus (R := R) wt).hom.hom) =
       diagGL (fun i => torusCharacter
         (SplitTorus.schemePointsMulEquiv (R := R) (A := A) p) (wt i)) := by
-  rw [weightTorus_def]
-  -- The group-object composition wrapper hides the two underlying scheme morphisms from the
-  -- point-comparison rewrite, so display that definitional composite explicitly.
-  change schemePointsMulEquiv N A
-      ((p ≫ (DiagonalizableGroup.groupSchemeMap R
-        (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom.hom) ≫ diagonalTorus.hom.hom) = _
+  rw [weightTorus_hom, ← Category.assoc]
   rw [schemePointsMulEquiv_diagonalTorus]
   congr 1
   funext i

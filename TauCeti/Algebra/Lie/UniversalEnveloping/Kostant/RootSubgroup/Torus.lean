@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Coordinate
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
@@ -353,13 +352,11 @@ noncomputable def kostantTorusMatrix :
     (kostantTorusPoints M b wt A)
 
 omit [Module ℚ V] in
-/-- The matrix-valued weight torus is obtained by applying the basis-coordinate equivalence to
-the linear action of `kostantTorusPoints`. -/
-theorem kostantTorusMatrix_def :
-    kostantTorusMatrix M b wt =
-      (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
-        (kostantTorusPoints M b wt A) :=
-  (rfl)
+private theorem kostantTorusMatrix_coe (s : κ → Aˣ) :
+    (kostantTorusMatrix M b wt s : Matrix (Fin n) (Fin n) A) =
+      LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+        (kostantTorusPoints M b wt A s).toLinearEquiv.toLinearMap :=
+  rfl
 
 omit [Module ℚ V] in
 /-- In a weight basis, a torus point is the diagonal matrix of its weight characters. -/
@@ -368,15 +365,9 @@ theorem kostantTorusMatrix_apply (s : κ → Aˣ) :
     kostantTorusMatrix M b wt s =
       diagGL fun i => torusCharacter s (wt i) := by
   apply Units.ext
-  rw [kostantTorusMatrix_def, MonoidHom.comp_apply, Units.coe_map]
-  change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
-      (kostantTorusPoints M b wt A s).val = _
+  rw [kostantTorusMatrix_coe]
   have hlinear := congrArg LinearEquiv.toLinearMap
     (kostantTorusPoints_toLinearEquiv M b wt s)
-  -- The general-linear unit and its bundled linear equivalence carry the same linear map;
-  -- display the latter so the public comparison theorem can rewrite it.
-  change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
-      (kostantTorusPoints M b wt A s).toLinearEquiv.toLinearMap = _
   rw [hlinear, basisWeightTorus_apply, toMatrix_basisDiagonal, diagGL_coe]
 
 end Matrix

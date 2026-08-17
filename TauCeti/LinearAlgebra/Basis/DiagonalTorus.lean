@@ -186,10 +186,10 @@ theorem toMatrix_basisDiagonal [Fintype ι] [DecidableEq ι]
     _ = b.toMatrix (b.unitsSMul w) := by
       ext i j
       rw [LinearMap.toMatrix_apply, Basis.toMatrix_apply]
-      -- The linear-map coercion and basis family hide the two defining applications.
-      change b.repr (basisDiagonal b w (b j)) i =
-        b.repr ((b.unitsSMul w) j) i
-      rw [basisDiagonal_basis, Basis.unitsSMul_apply, Units.smul_def]
+      have hbasis : (basisDiagonal b w).toLinearMap (b j) = (b.unitsSMul w) j := by
+        rw [LinearEquiv.coe_toLinearMap, basisDiagonal_basis, Basis.unitsSMul_apply,
+          Units.smul_def]
+      rw [hbasis]
     _ = _ := b.toMatrix_unitsSMul w
 
 /-- A diagonal automorphism scales by a single unit any vector whose coordinates vanish outside
