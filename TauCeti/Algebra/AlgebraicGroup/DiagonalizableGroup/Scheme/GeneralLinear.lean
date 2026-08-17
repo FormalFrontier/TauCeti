@@ -22,10 +22,9 @@ diagonal in that basis. This file records the resulting morphism of affine group
 D(G) ⟶ GLₙ
 ```
 
-and the criterion for it to be a closed immersion: the weights must generate the character group
-`G`. In one direction this is immediate, since the coordinate morphism `O(GLₙ) ⟶ R[G]` hits
-exactly the group algebra of the subgroup the weights generate; a diagonal representation whose
-weights generate is therefore a faithful one.
+and a sufficient condition for it to be a closed immersion: the weights generate the character
+group `G`. Indeed, their group-algebra generators then lie in the range of the coordinate morphism
+`O(GLₙ) ⟶ R[G]`, making that morphism surjective and the representation faithful.
 
 For `G = ℤ^κ` this is the split torus `𝔾ₘ^κ` presented as a closed subgroup of `GLₙ` by the
 weights of a representation, which is how the split maximal torus of a Chevalley group is written
@@ -126,6 +125,8 @@ theorem pointToGeneralLinear_comp_diagonalCoordinateMap (b : Module.Basis (Fin n
   classical
   ext i j
   rw [GeneralLinear.pointToGeneralLinear_apply, ofConv_toConv, AlgHom.comp_apply]
+  -- Normalize point evaluation to expose the generic coordinate on which
+  -- `diagonalCoordinateMap_X` rewrites.
   change q.ofConv (diagonalCoordinateMap b wt _) = _
   rw [diagonalCoordinateMap_X]
   rcases eq_or_ne i j with rfl | hij
@@ -174,7 +175,8 @@ theorem single_mem_range_diagonalCoordinateMap (b : Module.Basis (Fin n) R M) (w
   · exact mem_singleSubmonoid.2 (hgen i)
   · obtain ⟨i, hi⟩ := Set.mem_inv.1 hx
     refine mem_singleSubmonoid.2 ?_
-    rw [show x = (wt i)⁻¹ from by rw [hi, inv_inv]]
+    have hxi : x = (wt i)⁻¹ := by rw [hi, inv_inv]
+    subst x
     exact hinv i
 
 /-- **A diagonal representation whose weights generate the character group is faithful**: its

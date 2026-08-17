@@ -49,8 +49,8 @@ requires the base, coordinate Hopf algebra, and comodule to inhabit the same uni
 
 ## Main results
 
-* `TauCeti.UniversalEnvelopingAlgebra.pointToGeneralLinear_kostantTorusCoordinateMap`: on points,
-  the represented torus is the original diagonal action `kostantTorusPoints`.
+* `pointToGeneralLinear_diagonalCoordinateMap_eq_kostantTorusPoints_apply`: on points, the
+  represented torus is the original diagonal action `kostantTorusPoints`.
 * `TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantTorusScheme`: spanning weights make
   it a closed immersion.
 
@@ -67,8 +67,7 @@ open AlgebraicGeometry CategoryTheory TensorProduct WithConv
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-variable {κ : Type} {V : Type} [AddCommGroup V] [Module ℚ V]
-variable (M : AddSubgroup V)
+variable {κ : Type} {M : Type} [AddCommMonoid M] [Module ℤ M]
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M) (wt : Fin n → κ → ℤ)
 variable [Fintype κ]
 
@@ -85,35 +84,11 @@ noncomputable def kostantTorusScheme :
   DiagonalizableGroup.diagonalGroupSchemeHom (SplitTorus.characterGroup κ) b fun x =>
     SplitTorus.weightCharacter (wt x)
 
-omit [Module ℚ V] in
-/-- **On points, the represented split torus is the original diagonal action.** The matrix of the
-point `q` of `𝔾ₘ^κ` in the basis `b` is the matrix of `kostantTorusPoints` at the coordinate
-family of `q`. -/
-theorem pointToGeneralLinear_kostantTorusCoordinateMap (A : Type) [CommRing A]
-    (q : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) (i j : Fin n) :
-    (GeneralLinear.pointToGeneralLinear n
-        (toConv (q.ofConv.comp
-          (DiagonalizableGroup.diagonalCoordinateMap b
-            (fun x => SplitTorus.weightCharacter (wt x))).toAlgHom)) :
-          Matrix (Fin n) (Fin n) A) i j =
-      (b.baseChange A).repr
-        ((kostantTorusPoints M b wt A (SplitTorus.pointsMulEquiv q)).val
-          (b.baseChange A j)) i := by
-  classical
-  have hmat := DiagonalizableGroup.pointToGeneralLinear_comp_diagonalCoordinateMap b
-    (fun x => SplitTorus.weightCharacter (wt x)) q
-  rw [congrFun (congrFun hmat i) j, Module.Basis.baseChange_apply,
-    kostantTorusPoints_tmul_basis M b wt _ 1 j, Module.Basis.baseChange_repr_tmul, b.repr_self]
-  rcases eq_or_ne i j with rfl | hij
-  · simp [SplitTorus.charOfPoint_weightCharacter]
-  · simp [Matrix.diagonal_apply_ne _ hij, Finsupp.single_eq_of_ne hij]
-
-omit [Module ℚ V] in
 /-- **A weight basis whose weights span the lattice of exponent vectors presents the split torus
 as a closed subgroup of `GLₙ`.** -/
 theorem isClosedImmersion_kostantTorusScheme
     (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
-    IsClosedImmersion (kostantTorusScheme M b wt).hom.hom.left :=
+    IsClosedImmersion (kostantTorusScheme b wt).hom.hom.left :=
   DiagonalizableGroup.isClosedImmersion_diagonalGroupSchemeHom (SplitTorus.characterGroup κ) b _
     (SplitTorus.closure_range_weightCharacter_eq_top wt hwt)
 
@@ -121,7 +96,38 @@ theorem isClosedImmersion_kostantTorusScheme
 of `GLₙ`. -/
 noncomputable def kostantTorusClosedSubgroup (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
     ClosedSubgroupScheme (GeneralLinear.groupScheme ℤ n) :=
-  haveI := isClosedImmersion_kostantTorusScheme M b wt hwt
-  ClosedSubgroupScheme.mk (kostantTorusScheme M b wt)
+  haveI := isClosedImmersion_kostantTorusScheme b wt hwt
+  ClosedSubgroupScheme.mk (kostantTorusScheme b wt)
+
+section Points
+
+variable {V : Type} [AddCommGroup V] [Module ℚ V] (L : AddSubgroup V)
+variable (bL : Module.Basis (Fin n) ℤ L)
+
+omit [Module ℚ V] in
+/-- **On points, the represented split torus is the original diagonal action.** The matrix of the
+point `q` of `𝔾ₘ^κ` in the basis `bL` is the matrix of `kostantTorusPoints` at the coordinate
+family of `q`. -/
+theorem pointToGeneralLinear_diagonalCoordinateMap_eq_kostantTorusPoints_apply
+    (A : Type) [CommRing A]
+    (q : WithConv (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)) →ₐ[ℤ] A)) (i j : Fin n) :
+    (GeneralLinear.pointToGeneralLinear n
+        (toConv (q.ofConv.comp
+          (DiagonalizableGroup.diagonalCoordinateMap bL
+            (fun x => SplitTorus.weightCharacter (wt x))).toAlgHom)) :
+          Matrix (Fin n) (Fin n) A) i j =
+      (bL.baseChange A).repr
+        ((kostantTorusPoints L bL wt A (SplitTorus.pointsMulEquiv q)).val
+          (bL.baseChange A j)) i := by
+  classical
+  have hmat := DiagonalizableGroup.pointToGeneralLinear_comp_diagonalCoordinateMap bL
+    (fun x => SplitTorus.weightCharacter (wt x)) q
+  rw [congrFun (congrFun hmat i) j, Module.Basis.baseChange_apply,
+    kostantTorusPoints_tmul_basis L bL wt _ 1 j, Module.Basis.baseChange_repr_tmul, bL.repr_self]
+  rcases eq_or_ne i j with rfl | hij
+  · simp [SplitTorus.charOfPoint_weightCharacter]
+  · simp [Matrix.diagonal_apply_ne _ hij, Finsupp.single_eq_of_ne hij]
+
+end Points
 
 end TauCeti.UniversalEnvelopingAlgebra

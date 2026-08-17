@@ -26,10 +26,9 @@ basis `b` is the diagonal matrix of the `c x`.
 When `C = R[G]` is the coordinate Hopf algebra of a diagonalizable group `D(G)` and
 `c x = single (wt x) 1` for a weight function `wt`, this is the representation of `D(G)` acting on
 the `x`-th basis vector through the character `wt x`; the basis vectors then lie in the weight
-submodules of `TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic`. Every comodule over a
-group algebra is of this form, so this is the converse of the weight decomposition proved there:
-that file splits a comodule into weight spaces, and this one builds a comodule out of a
-prescribed weight function on a basis.
+submodules of `TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic`. This construction is
+complementary to the weight decomposition proved there: that file splits a comodule into weight
+spaces, while this one builds a comodule from a basis equipped with a prescribed weight function.
 
 ## Main declarations
 

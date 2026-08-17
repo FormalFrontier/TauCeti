@@ -19,7 +19,7 @@ file records the translation:
 * `TauCeti.SplitTorus.weightCharacter` turns an exponent vector into a character;
 * `TauCeti.SplitTorus.charOfPoint_weightCharacter` says that evaluating that character at a point
   of the torus gives the monomial `∏ j, s j ^ μ j` in the coordinates `s` of the point;
-* `TauCeti.SplitTorus.closure_range_weightCharacter_eq_top` says that a family of weights
+* `TauCeti.SplitTorus.closure_range_weightCharacter_eq_top_iff` says that a family of weights
   generates the character group exactly when it spans the lattice of exponent vectors.
 
 The last statement is the hypothesis under which a diagonal representation with these weights is
@@ -33,8 +33,8 @@ faithful, so it is what turns a spanning set of weights into a closed immersion 
 ## Main results
 
 * `TauCeti.SplitTorus.charOfPoint_weightCharacter`: the value of a weight character at a point.
-* `TauCeti.SplitTorus.closure_range_weightCharacter_eq_top`: spanning weights generate the
-  character group.
+* `TauCeti.SplitTorus.closure_range_weightCharacter_eq_top_iff`: weights generate the character
+  group exactly when they span the lattice of exponent vectors.
 
 ## References
 
@@ -56,7 +56,7 @@ variable [CommRing R] [CommRing A] [Algebra R A] [Fintype σ]
 
 /-- The character of the rank-`σ` split torus with exponent vector `μ`, that is, the Laurent
 monomial `∏ j, x_j ^ μ j`. -/
-@[expose] noncomputable def weightCharacter (μ : σ → ℤ) : Multiplicative (σ →₀ ℤ) :=
+noncomputable def weightCharacter (μ : σ → ℤ) : Multiplicative (σ →₀ ℤ) :=
   Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm μ)
 
 @[simp]
@@ -85,20 +85,13 @@ theorem charOfPoint_weightCharacter
 
 /-- **A family of weights generates the character group of the split torus exactly when it spans
 the lattice of exponent vectors.** -/
-theorem closure_range_weightCharacter_eq_top {η : Type*} (wt : η → σ → ℤ)
-    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
-    Subgroup.closure (Set.range fun x => weightCharacter (wt x)) = ⊤ := by
+theorem closure_range_weightCharacter_eq_top_iff {η : Type*} (wt : η → σ → ℤ) :
+    Subgroup.closure (Set.range fun x => weightCharacter (wt x)) = ⊤ ↔
+      Submodule.span ℤ (Set.range wt) = ⊤ := by
   set f : η → (σ →₀ ℤ) := fun x => Finsupp.equivFunOnFinite.symm (wt x) with hf
-  have hspan : Submodule.span ℤ (Set.range f) = ⊤ := by
-    have hmap : Submodule.map (Finsupp.linearEquivFunOnFinite ℤ ℤ σ).symm.toLinearMap
-        (Submodule.span ℤ (Set.range wt)) = Submodule.span ℤ (Set.range f) := by
-      rw [Submodule.map_span, ← Set.range_comp]
-      rfl
-    rw [← hmap, hwt, Submodule.map_top, LinearMap.range_eq_top.2
-      (Finsupp.linearEquivFunOnFinite ℤ ℤ σ).symm.surjective]
-  have hadd : AddSubgroup.closure (Set.range f) = ⊤ := by
-    refine AddSubgroup.toIntSubmodule.injective ?_
-    rw [AddSubgroup.toIntSubmodule_closure, hspan]
+  have hmap : Submodule.map (Finsupp.linearEquivFunOnFinite ℤ ℤ σ).symm.toLinearMap
+      (Submodule.span ℤ (Set.range wt)) = Submodule.span ℤ (Set.range f) := by
+    rw [Submodule.map_span, ← Set.range_comp]
     rfl
   have hpre : Multiplicative.toAdd ⁻¹' Set.range f =
       Set.range fun x => weightCharacter (wt x) := by
@@ -109,8 +102,33 @@ theorem closure_range_weightCharacter_eq_top {η : Type*} (wt : η → σ → �
       exact ⟨x, congrArg Multiplicative.ofAdd hx⟩
     · rintro ⟨x, rfl⟩
       exact ⟨x, rfl⟩
-  rw [← hpre, ← AddSubgroup.toSubgroup_closure, hadd]
-  rfl
+  have hgroup : Subgroup.closure (Set.range fun x => weightCharacter (wt x)) = ⊤ ↔
+      AddSubgroup.closure (Set.range f) = ⊤ := by
+    constructor
+    · intro h
+      apply AddSubgroup.toSubgroup.injective
+      rw [AddSubgroup.toSubgroup_closure, hpre, h]
+      rfl
+    · intro h
+      rw [← hpre, ← AddSubgroup.toSubgroup_closure, h]
+      rfl
+  have hadd : AddSubgroup.closure (Set.range f) = ⊤ ↔
+      Submodule.span ℤ (Set.range f) = ⊤ := by
+    constructor
+    · intro h
+      rw [← AddSubgroup.toIntSubmodule_closure, h]
+      rfl
+    · intro h
+      apply AddSubgroup.toIntSubmodule.injective
+      rw [AddSubgroup.toIntSubmodule_closure, h]
+      rfl
+  rw [hgroup, hadd, ← hmap, Submodule.map_eq_top_iff]
+
+/-- Spanning weights generate the character group of the split torus. -/
+theorem closure_range_weightCharacter_eq_top {η : Type*} (wt : η → σ → ℤ)
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    Subgroup.closure (Set.range fun x => weightCharacter (wt x)) = ⊤ :=
+  (closure_range_weightCharacter_eq_top_iff wt).2 hwt
 
 end SplitTorus
 
