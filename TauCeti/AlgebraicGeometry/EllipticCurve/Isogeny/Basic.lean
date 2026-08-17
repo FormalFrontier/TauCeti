@@ -41,7 +41,7 @@ open WeierstrassCurve.Affine
 variable {F : Type*} [Field F]
 
 /-- A contravariant pullback from the target coordinate ring to the source function field. -/
-abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) :=
+abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) : Type _ :=
   W₂.CoordinateRing →ₐ[F] W₁.FunctionField
 
 namespace CoordinatePullback

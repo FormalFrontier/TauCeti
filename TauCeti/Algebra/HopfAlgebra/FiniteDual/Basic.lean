@@ -52,7 +52,8 @@ universe u v
 available.
 
 The `WithConv` wrapper selects Mathlib's convolution multiplication on linear maps. -/
-abbrev ConvolutionDual (k : Type u) (H : Type v) [CommSemiring k] [AddCommMonoid H] [Module k H] :=
+abbrev ConvolutionDual (k : Type u) (H : Type v) [CommSemiring k] [AddCommMonoid H]
+    [Module k H] : Type _ :=
   WithConv (Module.Dual k H)
 
 namespace ConvolutionDual

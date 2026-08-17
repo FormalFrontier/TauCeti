@@ -143,7 +143,7 @@ and stabilizations.
 
 This is the combinatorial notion of link used by grid homology. Identifying it with an ambient
 isotopy class of embedded links is the separate Cromwell-reconciliation target. -/
-def GridLink := Quot GridDiagram.IsMove
+def GridLink : Type _ := Quot GridDiagram.IsMove
 
 namespace GridDiagram
 

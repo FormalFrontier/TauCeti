@@ -108,7 +108,7 @@ end DiagonalizableGroup
 
 Objects are not required to be split over the base field; they become diagonalizable after base
 change to an algebraic closure. -/
-abbrev MultiplicativeTypeCommHopfAlgCat (k : Type u) [Field k] :=
+abbrev MultiplicativeTypeCommHopfAlgCat (k : Type u) [Field k] : Type _ :=
   (multiplicativeTypeCommHopfAlgProperty k).FullSubcategory
 
 end TauCeti

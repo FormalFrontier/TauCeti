@@ -94,7 +94,7 @@ theorem adjointEquiv_apply (hA : A.IsNondegenerate) (x : A) :
 
 /-- An isometry of finite quadratic modules is Mathlib's isometric equivalence of their quadratic
 maps. -/
-abbrev Isometry (A : FiniteQuadraticModule.{u}) (B : FiniteQuadraticModule.{v}) :=
+abbrev Isometry (A : FiniteQuadraticModule.{u}) (B : FiniteQuadraticModule.{v}) : Type (max u v) :=
   A.quadratic.IsometryEquiv B.quadratic
 
 namespace Isometry

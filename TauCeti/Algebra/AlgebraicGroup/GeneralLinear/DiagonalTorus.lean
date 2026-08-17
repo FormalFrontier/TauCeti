@@ -74,6 +74,13 @@ def diagonalTorusCoordinates {A : Type w} [Monoid A] :
   map_one' := rfl
   map_mul' _ _ := rfl
 
+/-- Restricting a universe-lifted coordinate family evaluates it at the canonical lift. -/
+@[simp]
+theorem diagonalTorusCoordinates_apply {A : Type w} [Monoid A]
+    (t : ULift.{u} (Fin N) → Aˣ) (i : Fin N) :
+    diagonalTorusCoordinates t i = t (ULift.up i) :=
+  (rfl)
+
 section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
