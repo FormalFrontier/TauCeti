@@ -12,14 +12,17 @@ public import Mathlib.CategoryTheory.Balanced
 
 A morphism `f : X ⟶ Y` is **irreducible** when it is neither a split monomorphism nor a split
 epimorphism, and every factorization `f = g ≫ h` has `g` a split mono or `h` a split epi. So `f`
-admits no "genuine" intermediate object: any object `Z` it factors through either has `X` as a
-retract, split off by the first factor `g`, or has `Y` as a retract, split off by the second
-factor `h`.
+admits no "genuine" intermediate object: any object `Z` it factors through contains `X` as a
+retract, split off by the first factor `g : X ⟶ Z`, or contains `Y` as a retract, split off by
+the second factor `h : Z ⟶ Y`.
 
-Irreducible morphisms are the arrows of the Auslander-Reiten quiver of a finite-dimensional
-algebra, and the middle term of an almost-split sequence is glued to its ends by them. Nothing in
-the definition is special to modules, so this file develops the notion for an arbitrary category
-and specializes only where the statement forces it.
+Irreducible morphisms are what the arrows of the Auslander-Reiten quiver of a finite-dimensional
+algebra record. An arrow there is not an individual irreducible morphism: the arrows from `[X]`
+to `[Y]` represent a basis of the space of irreducible morphisms `X ⟶ Y` — the quotient
+`rad(X, Y) / rad²(X, Y)` — so it is the dimension of that space that governs how many arrows
+join two vertices. The middle term of an almost-split sequence is glued to its ends by
+irreducible morphisms. Nothing in the definition is special to modules, so this file develops the
+notion for an arbitrary category and specializes only where the statement forces it.
 
 ## Main results
 
@@ -172,6 +175,7 @@ theorem IsIrreducibleMorphism.not_isIso (hf : IsIrreducibleMorphism f) : ¬ IsIs
   fun _ => hf.not_isSplitMono inferInstance
 
 /-- An identity is not irreducible. -/
+@[simp]
 theorem not_isIrreducibleMorphism_id (X : C) : ¬ IsIrreducibleMorphism (𝟙 X) :=
   fun hf => hf.not_isIso inferInstance
 
@@ -182,12 +186,11 @@ theorem IsIrreducibleMorphism.comp_iso (hf : IsIrreducibleMorphism f) {Y' : C} (
     IsIrreducibleMorphism (f ≫ e.hom) := by
   refine ⟨fun _ => hf.not_isSplitMono (isSplitMono_of_isSplitMono_comp f e.hom),
     fun _ => hf.not_isSplitEpi (isSplitEpi_of_isSplitEpi_comp_iso f e), fun Z g h hgh => ?_⟩
-  have hgh' : g ≫ h ≫ e.inv = f := by rw [← Category.assoc, hgh, Category.assoc, e.hom_inv_id,
-    Category.comp_id]
+  have hgh' : g ≫ h ≫ e.inv = f := by simp [reassoc_of% hgh]
   rcases hf.factors g (h ≫ e.inv) hgh' with hsplit | hsplit
   · exact Or.inl hsplit
   · refine Or.inr ?_
-    have hh : h = (h ≫ e.inv) ≫ e.hom := by rw [Category.assoc, e.inv_hom_id, Category.comp_id]
+    have hh : h = (h ≫ e.inv) ≫ e.hom := by simp
     rw [hh]
     infer_instance
 
@@ -196,29 +199,28 @@ theorem IsIrreducibleMorphism.iso_comp (hf : IsIrreducibleMorphism f) {X' : C} (
     IsIrreducibleMorphism (e.hom ≫ f) := by
   refine ⟨fun _ => hf.not_isSplitMono (isSplitMono_of_isSplitMono_iso_comp e f),
     fun _ => hf.not_isSplitEpi (isSplitEpi_of_isSplitEpi_comp e.hom f), fun Z g h hgh => ?_⟩
-  have hgh' : (e.inv ≫ g) ≫ h = f := by rw [Category.assoc, hgh, ← Category.assoc, e.inv_hom_id,
-    Category.id_comp]
+  have hgh' : (e.inv ≫ g) ≫ h = f := by simp [hgh]
   rcases hf.factors (e.inv ≫ g) h hgh' with hsplit | hsplit
   · refine Or.inl ?_
-    have hg : g = e.hom ≫ e.inv ≫ g := by rw [← Category.assoc, e.hom_inv_id, Category.id_comp]
+    have hg : g = e.hom ≫ e.inv ≫ g := by simp
     rw [hg]
     infer_instance
   · exact Or.inr hsplit
 
 /-- Irreducibility is invariant under an isomorphism of the target. -/
+@[simp]
 theorem isIrreducibleMorphism_comp_iso_iff {Y' : C} (e : Y ≅ Y') :
     IsIrreducibleMorphism (f ≫ e.hom) ↔ IsIrreducibleMorphism f := by
   refine ⟨fun hf => ?_, fun hf => hf.comp_iso e⟩
-  have h : (f ≫ e.hom) ≫ e.symm.hom = f := by
-    rw [Iso.symm_hom, Category.assoc, e.hom_inv_id, Category.comp_id]
+  have h : (f ≫ e.hom) ≫ e.symm.hom = f := by simp
   exact h ▸ hf.comp_iso e.symm
 
 /-- Irreducibility is invariant under an isomorphism of the source. -/
+@[simp]
 theorem isIrreducibleMorphism_iso_comp_iff {X' : C} (e : X' ≅ X) :
     IsIrreducibleMorphism (e.hom ≫ f) ↔ IsIrreducibleMorphism f := by
   refine ⟨fun hf => ?_, fun hf => hf.iso_comp e⟩
-  have h : e.symm.hom ≫ e.hom ≫ f = f := by
-    rw [Iso.symm_hom, ← Category.assoc, e.inv_hom_id, Category.id_comp]
+  have h : e.symm.hom ≫ e.hom ≫ f = f := by simp
   exact h ▸ hf.iso_comp e.symm
 
 /-! ### Zero morphisms -/
@@ -231,6 +233,7 @@ variable [HasZeroMorphisms C]
 factor can split: if the first splits then `𝟙 X = 0`, which makes the zero morphism `X ⟶ Y` a
 split mono; and the second factor *is* the morphism itself. Note that no zero object is needed —
 the intermediate object is `X`. -/
+@[simp]
 theorem not_isIrreducibleMorphism_zero (X Y : C) : ¬ IsIrreducibleMorphism (0 : X ⟶ Y) := by
   intro hf
   rcases hf.factors (0 : X ⟶ X) (0 : X ⟶ Y) zero_comp with h | h

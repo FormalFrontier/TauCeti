@@ -30,8 +30,8 @@ The category `TauCeti.QuiverRep k Q` of representations is abelian, being a func
 the abelian category of `k`-modules, so the general dichotomy applies: an irreducible morphism of
 quiver representations is a monomorphism or an epimorphism, hence **injective at every vertex or
 surjective at every vertex**. This is a necessary condition, not a characterization: it is the
-concrete form the arrows of the Auslander-Reiten quiver of a quiver algebra take, but it does not
-by itself certify irreducibility.
+concrete form taken by the morphisms an arrow of the Auslander-Reiten quiver of a quiver algebra
+represents, but it does not by itself certify irreducibility.
 
 ## Main results
 
