@@ -85,7 +85,7 @@ theorem mem_dualCarrier_orthogonalSum (L : IntegralLattice V) (M : IntegralLatti
     exact Submodule.add_mem _ (hx z.1 hz.1) (hy z.2 hz.2)
 
 /-- The dual carrier of an orthogonal sum is canonically the product of the dual carriers. -/
-@[expose] def orthogonalSumDualCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
+def orthogonalSumDualCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).dualCarrier ≃ₗ[ℤ] L.dualCarrier × M.dualCarrier where
   toFun x :=
     (⟨x.1.1, (L.mem_dualCarrier_orthogonalSum M x.1).mp x.2 |>.1⟩,
@@ -107,6 +107,14 @@ theorem orthogonalSumDualCarrierEquiv_apply (L : IntegralLattice V) (M : Integra
   by
     apply Prod.ext <;> apply Subtype.ext <;> rfl
 
+/-- The inverse dual-carrier product equivalence acts by assembling the two ambient coordinates. -/
+@[simp]
+theorem coe_orthogonalSumDualCarrierEquiv_symm_apply
+    (L : IntegralLattice V) (M : IntegralLattice W) (x : L.dualCarrier × M.dualCarrier) :
+    ((L.orthogonalSumDualCarrierEquiv M).symm x : V × W) = (x.1.1, x.2.1) :=
+  by
+    apply Prod.ext <;> rfl
+
 /-- Under the dual-carrier product equivalence, the embedded carrier of an orthogonal sum is the
 product of the two embedded carriers. -/
 theorem map_carrierInDual_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
@@ -126,7 +134,6 @@ private def quotientProdLinearEquiv (L : IntegralLattice V) (M : IntegralLattice
   { QuotientAddGroup.prodAddEquiv L.carrierInDual.toAddSubgroup
       M.carrierInDual.toAddSubgroup with
     map_smul' := fun n x ↦ by
-      change _ = n • _
       exact map_zsmul
         (QuotientAddGroup.prodAddEquiv L.carrierInDual.toAddSubgroup
           M.carrierInDual.toAddSubgroup) n x }
@@ -172,11 +179,14 @@ noncomputable def discriminantBilinearIsometryOrthogonalSum
     | _ x =>
       induction y using Submodule.Quotient.induction_on with
       | _ y =>
+        -- The isometry's carrier is definitionally the discriminant group, but this conversion
+        -- is intentionally not part of the public reduction API.
         change (L.discriminantBilinearModule.prod M.discriminantBilinearModule).pairing
             (L.discriminantGroupOrthogonalSumEquiv M (Submodule.Quotient.mk x))
             (L.discriminantGroupOrthogonalSumEquiv M (Submodule.Quotient.mk y)) = _
         rw [discriminantGroupOrthogonalSumEquiv_mk,
           discriminantGroupOrthogonalSumEquiv_mk]
+        -- Use the characteristic pairing lemmas after crossing the bundled-carrier boundary.
         change L.discriminantPairing
             (Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).1)
             (Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M y).1) +
@@ -198,6 +208,18 @@ theorem discriminantBilinearIsometryOrthogonalSum_toAddEquiv
     (L.discriminantBilinearIsometryOrthogonalSum M).toAddEquiv =
       (L.discriminantGroupOrthogonalSumEquiv M).toAddEquiv :=
   by rw [discriminantBilinearIsometryOrthogonalSum]
+
+/-- The orthogonal-sum discriminant-bilinear isometry acts through the canonical discriminant-group
+equivalence. -/
+@[simp]
+theorem discriminantBilinearIsometryOrthogonalSum_apply
+    (L : IntegralLattice V) (M : IntegralLattice W) [L.IsNondegenerate] [M.IsNondegenerate]
+    (x : (L.orthogonalSum M).DiscriminantGroup) :
+    L.discriminantBilinearIsometryOrthogonalSum M x =
+      L.discriminantGroupOrthogonalSumEquiv M x :=
+  by
+    exact congrArg (fun e ↦ e x)
+      (L.discriminantBilinearIsometryOrthogonalSum_toAddEquiv M)
 
 /-- The orthogonal-sum discriminant-bilinear isometry maps a representative to the pair of its
 component classes. -/
@@ -225,10 +247,13 @@ noncomputable def discriminantQuadraticIsometryOrthogonalSum
     intro x
     induction x using Submodule.Quotient.induction_on with
     | _ x =>
+      -- The isometry's carrier is definitionally the discriminant group, but this conversion
+      -- is intentionally not part of the public reduction API.
       change ((L.discriminantQuadraticModule hL).prod
           (M.discriminantQuadraticModule hM)).quadratic
           (L.discriminantGroupOrthogonalSumEquiv M (Submodule.Quotient.mk x)) = _
       rw [discriminantGroupOrthogonalSumEquiv_mk]
+      -- Use the characteristic quadratic-map lemmas after crossing the bundled-carrier boundary.
       change L.discriminantQuadraticMap hL
           (Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).1) +
         M.discriminantQuadraticMap hM
@@ -252,6 +277,30 @@ theorem discriminantQuadraticIsometryOrthogonalSum_toAddEquiv
   by
     rw [discriminantQuadraticIsometryOrthogonalSum]
     rfl
+
+/-- The orthogonal-sum discriminant-quadratic isometry acts through the canonical
+discriminant-group equivalence. -/
+@[simp]
+theorem discriminantQuadraticIsometryOrthogonalSum_apply
+    (L : IntegralLattice V) (M : IntegralLattice W) [L.IsNondegenerate] [M.IsNondegenerate]
+    (hL : L.IsEven) (hM : M.IsEven) (x : (L.orthogonalSum M).DiscriminantGroup) :
+    L.discriminantQuadraticIsometryOrthogonalSum M hL hM x =
+      L.discriminantGroupOrthogonalSumEquiv M x :=
+  by
+    exact congrArg (fun e ↦ e x)
+      (L.discriminantQuadraticIsometryOrthogonalSum_toAddEquiv M hL hM)
+
+/-- The orthogonal-sum discriminant-quadratic isometry maps a representative to the pair of its
+component classes. -/
+@[simp]
+theorem discriminantQuadraticIsometryOrthogonalSum_mk
+    (L : IntegralLattice V) (M : IntegralLattice W) [L.IsNondegenerate] [M.IsNondegenerate]
+    (hL : L.IsEven) (hM : M.IsEven) (x : (L.orthogonalSum M).dualCarrier) :
+    L.discriminantQuadraticIsometryOrthogonalSum M hL hM (Submodule.Quotient.mk x) =
+      (Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).1,
+        Submodule.Quotient.mk (L.orthogonalSumDualCarrierEquiv M x).2) := by
+  rw [discriminantQuadraticIsometryOrthogonalSum_apply,
+    discriminantGroupOrthogonalSumEquiv_mk]
 
 /-- Forgetting the quadratic maps from the orthogonal-sum discriminant isometry recovers the
 orthogonal-sum discriminant-bilinear isometry. -/
@@ -340,6 +389,8 @@ noncomputable def discriminantBilinearIsometryNeg (L : IntegralLattice V)
     | _ x =>
       induction y using Submodule.Quotient.induction_on with
       | _ y =>
+        -- The source and target carriers are definitionally discriminant groups, while their
+        -- bundled pairings are intentionally accessed through characteristic lemmas.
         change -L.discriminantPairing
             (L.discriminantGroupNegEquiv (Submodule.Quotient.mk x))
             (L.discriminantGroupNegEquiv (Submodule.Quotient.mk y)) =
@@ -348,9 +399,11 @@ noncomputable def discriminantBilinearIsometryNeg (L : IntegralLattice V)
         rw [discriminantGroupNegEquiv_mk,
           discriminantGroupNegEquiv_mk, discriminantPairing_mk, discriminantPairing_mk,
           neg_form]
+        -- Coercion into `AddCircle` preserves negation, but its two sides are not syntactically
+        -- identical until the ambient bilinear-form application is exposed.
         change -((L.form (x : V) (y : V) : ℚ) : AddCircle (1 : ℚ)) =
           ((-(L.form (x : V) (y : V)) : ℚ) : AddCircle (1 : ℚ))
-        rfl
+        rw [← AddCircle.coe_neg]
 
 /-- The underlying additive equivalence of the discriminant-bilinear isometry for form negation
 is the canonical equivalence of discriminant groups. -/
@@ -359,6 +412,15 @@ theorem discriminantBilinearIsometryNeg_toAddEquiv (L : IntegralLattice V)
     [L.IsNondegenerate] :
     L.discriminantBilinearIsometryNeg.toAddEquiv = L.discriminantGroupNegEquiv.toAddEquiv :=
   (rfl)
+
+/-- The discriminant-bilinear isometry for form negation acts through the canonical
+discriminant-group equivalence. -/
+@[simp]
+theorem discriminantBilinearIsometryNeg_apply (L : IntegralLattice V) [L.IsNondegenerate]
+    (x : (-L).DiscriminantGroup) :
+    L.discriminantBilinearIsometryNeg x = L.discriminantGroupNegEquiv x :=
+  by
+    exact congrArg (fun e ↦ e x) L.discriminantBilinearIsometryNeg_toAddEquiv
 
 /-- The discriminant-bilinear isometry for form negation maps every representative to the same
 ambient representative. -/
@@ -382,12 +444,16 @@ noncomputable def discriminantQuadraticIsometryNeg (L : IntegralLattice V)
     intro x
     induction x using Submodule.Quotient.induction_on with
     | _ x =>
+      -- The source and target carriers are definitionally discriminant groups, while their
+      -- bundled quadratic maps are intentionally accessed through characteristic lemmas.
       change -L.discriminantQuadraticMap hL
           (L.discriminantGroupNegEquiv (Submodule.Quotient.mk x)) =
         (-L).discriminantQuadraticMap (L.isEven_neg_iff.mpr hL)
           (Submodule.Quotient.mk x)
       rw [discriminantGroupNegEquiv_mk, discriminantQuadraticMap_mk,
         discriminantQuadraticMap_mk, neg_form]
+      -- Coercion into `AddCircle` preserves negation; the remaining rational identity is the
+      -- distribution of negation across division by two.
       change -(((L.form (x : V) (x : V) / 2 : ℚ)) : AddCircle (1 : ℚ)) =
         (((-(L.form (x : V) (x : V)) / 2 : ℚ)) : AddCircle (1 : ℚ))
       rw [← AddCircle.coe_neg]
@@ -402,6 +468,24 @@ theorem discriminantQuadraticIsometryNeg_toAddEquiv (L : IntegralLattice V)
     (L.discriminantQuadraticIsometryNeg hL).toAddEquiv =
       L.discriminantGroupNegEquiv.toAddEquiv :=
   (rfl)
+
+/-- The discriminant-quadratic isometry for form negation acts through the canonical
+discriminant-group equivalence. -/
+@[simp]
+theorem discriminantQuadraticIsometryNeg_apply (L : IntegralLattice V)
+    [L.IsNondegenerate] (hL : L.IsEven) (x : (-L).DiscriminantGroup) :
+    L.discriminantQuadraticIsometryNeg hL x = L.discriminantGroupNegEquiv x :=
+  by
+    exact congrArg (fun e ↦ e x) (L.discriminantQuadraticIsometryNeg_toAddEquiv hL)
+
+/-- The discriminant-quadratic isometry for form negation maps every representative to the same
+ambient representative. -/
+@[simp]
+theorem discriminantQuadraticIsometryNeg_mk (L : IntegralLattice V)
+    [L.IsNondegenerate] (hL : L.IsEven) (x : (-L).dualCarrier) :
+    L.discriminantQuadraticIsometryNeg hL (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (L.negDualCarrierEquiv x) := by
+  rw [discriminantQuadraticIsometryNeg_apply, discriminantGroupNegEquiv_mk]
 
 /-- Forgetting the quadratic maps from the discriminant isometry for form negation recovers the
 corresponding discriminant-bilinear isometry. -/

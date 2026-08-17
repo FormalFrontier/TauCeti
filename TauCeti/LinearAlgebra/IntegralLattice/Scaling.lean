@@ -309,7 +309,7 @@ theorem isEven_neg_iff (L : IntegralLattice V) : (-L).IsEven ↔ L.IsEven := by
     refine ⟨-z, ?_⟩
     rw [norm_apply] at hz ⊢
     rw [neg_form] at hz
-    change -(L.form (x : V) (x : V)) = 2 * (z : ℚ) at hz
+    simp only [LinearMap.neg_apply] at hz
     push_cast
     linarith
   · intro h x
@@ -317,7 +317,7 @@ theorem isEven_neg_iff (L : IntegralLattice V) : (-L).IsEven ↔ L.IsEven := by
     refine ⟨-z, ?_⟩
     rw [norm_apply] at hz ⊢
     rw [neg_form]
-    change -(L.form (x : V) (x : V)) = 2 * ((-z : ℤ) : ℚ)
+    simp only [LinearMap.neg_apply]
     push_cast
     rw [hz]
     ring
