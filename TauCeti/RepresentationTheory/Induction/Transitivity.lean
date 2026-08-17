@@ -48,26 +48,31 @@ through `CategoryTheory.conjugateEquiv_counit_symm` and the counit, which is eva
 
 ## Main statements
 
-* `TauCeti.Rep.indFunctorCompIso_hom_app_hom_apply_mk` and
+* `TauCeti.Rep.indFunctorCompIso_hom_app_hom_apply_mk_mk` and
   `TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`: **induction in stages on representatives**,
   the two directions of the isomorphism computed on the generators of the induced representation.
 * `TauCeti.Rep.eq_indFunctorCompIso_hom_app`: those formulas pin the isomorphism down. A morphism
   of representations sending `⟦1 ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` to `⟦1 ⊗ₜ a⟧` *is* the induction-in-stages
   isomorphism, which is how a comparison map built by hand is identified with the adjoint one.
 * `TauCeti.Rep.coindFunctorCompIso_hom_app_hom_apply_apply` and
-  `TauCeti.Rep.coindFunctorCompIso_inv_app_hom_apply_apply`: **coinduction in stages on functions**,
-  the dual formulas.
+  `TauCeti.Rep.coindFunctorCompIso_inv_app_hom_apply_apply_apply`: **coinduction in stages on
+  functions**, the dual formulas.
 * `TauCeti.Rep.indV_mk_ind_mk` and `TauCeti.Rep.indV_ind_hom_ext`: the coinvariants relation moving
   the inner group coordinate of a twice-induced representation out to the outer one, and the
   resulting extensionality principle.
 
 ## Implementation notes
 
-`Representation.IndV.mk φ ρ h` is a reducible abbreviation that `simp` unfolds, so the generator
-formulas below are stated with it for readability but are **not** `simp` lemmas: their left-hand
-sides are not in `simp`-normal form and they would never fire. This matches Mathlib's own
-`Rep.coinvariantsTensorIndHom_mk_tmul_indVMk` and the sibling
+`Representation.IndV.mk φ ρ h` is a reducible abbreviation that `simp` unfolds, so the
+induction-side generator formulas below are stated with it for readability but are **not** `simp`
+lemmas: their left-hand sides are not in `simp`-normal form and they would never fire. This matches
+Mathlib's own `Rep.coinvariantsTensorIndHom_mk_tmul_indVMk` and the sibling
 `TauCeti.indProjection_hom_hom_apply`. They are applied by explicit `rw` instead.
+
+The coinduction formulas are not `simp` lemmas either, for a different reason: their left-hand
+sides carry the source and target of `(coindFunctorCompIso φ ψ).hom.app A` as implicit arguments,
+and `simp` rewrites those with `CategoryTheory.Functor.comp_obj` and `Rep.coindFunctor_obj`, so the
+left-hand sides are again not in `simp`-normal form (the `simpNF` linter rejects the tag).
 
 ## References
 
@@ -84,7 +89,7 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u v w x
+universe t u v w x
 
 variable {k : Type u} {G : Type v} {H : Type w} {K : Type x}
 
@@ -149,9 +154,11 @@ lemma conjugateEquiv_indFunctorCompIso_inv (φ : G →* H) (ψ : H →* K) :
   Adjunction.conjugateEquiv_leftAdjointCompIso_inv _ _ _ _
 
 /-- The unit of Mathlib's induction--restriction adjunction is the generator map
-`a ↦ ⟦1 ⊗ₜ a⟧` of the induced representation. -/
-lemma indResAdjunction_unit_app_hom_apply (φ : G →* H) (A : _root_.Rep.{max u v w x} k G) (a : A) :
-    ((_root_.Rep.indResAdjunction.{max u v w x} k φ).unit.app A).hom a =
+`a ↦ ⟦1 ⊗ₜ a⟧` of the induced representation. Used to turn the abstract adjunction identity
+`unit_conjugateEquiv` into a statement about elements. -/
+private lemma indResAdjunction_unit_app_hom_apply (φ : G →* H) (A : _root_.Rep.{max u w t} k G)
+    (a : A) :
+    ((_root_.Rep.indResAdjunction.{t} k φ).unit.app A).hom a =
       Representation.IndV.mk φ A.ρ 1 a :=
   rfl
 
@@ -159,24 +166,32 @@ lemma indResAdjunction_unit_app_hom_apply (φ : G →* H) (A : _root_.Rep.{max u
 adjunction identity `unit_conjugateEquiv` read on elements: both units are generator maps and
 `resFunctorCompIso` is the identity on vectors, so the abstract characterisation
 `conjugateEquiv_indFunctorCompIso_inv` becomes this single value. -/
-lemma indFunctorCompIso_inv_app_hom_apply_mk_one (φ : G →* H) (ψ : H →* K)
+private lemma indFunctorCompIso_inv_app_hom_apply_mk_one (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (a : A) :
     ((indFunctorCompIso φ ψ).inv.app A).hom (Representation.IndV.mk (ψ.comp φ) A.ρ 1 a) =
       Representation.IndV.mk ψ (_root_.Rep.ind φ A).ρ 1
         (Representation.IndV.mk φ A.ρ 1 a) := by
-  have := unit_conjugateEquiv
+  have key := unit_conjugateEquiv
     ((_root_.Rep.indResAdjunction.{max u v w x} k φ).comp
       (_root_.Rep.indResAdjunction.{max u v w x} k ψ))
     (_root_.Rep.indResAdjunction.{max u v w x} k (ψ.comp φ))
     (indFunctorCompIso φ ψ).inv A
-  rw [conjugateEquiv_indFunctorCompIso_inv] at this
-  exact (congrArg (fun f => Rep.Hom.hom f a) this).symm
+  rw [conjugateEquiv_indFunctorCompIso_inv] at key
+  -- Read the resulting identity of morphisms on `a`, then rewrite the composite unit into the two
+  -- generator maps and delete the restriction functors, which act as the identity on vectors.
+  have key := congrArg (fun f => Rep.Hom.hom f a) key
+  simp only [Adjunction.comp_unit_app, _root_.Rep.hom_comp,
+    Representation.IntertwiningMap.comp_apply] at key
+  rw [_root_.Rep.resMap_hom_apply, _root_.Rep.resMap_hom_apply,
+    indResAdjunction_unit_app_hom_apply, indResAdjunction_unit_app_hom_apply,
+    indResAdjunction_unit_app_hom_apply, resFunctorCompIso_hom_app_apply] at key
+  exact key.symm
 
 /-- Moving the inner group coordinate of a twice-induced representation out to the outer one:
 `⟦κ ⊗ₜ ⟦h ⊗ₜ a⟧⟧ = ⟦ψ(h) κ ⊗ₜ ⟦1 ⊗ₜ a⟧⟧`. Every element of `Ind_ψ (Ind_φ A)` is therefore a sum of
 elements whose inner coordinate is `1`, which is what makes the two formulas below determine the
 induction-in-stages isomorphism. -/
-lemma indV_mk_ind_mk {V : Type max u v w x} [AddCommGroup V] [Module k V] (φ : G →* H) (ψ : H →* K)
+lemma indV_mk_ind_mk {V : Type*} [AddCommGroup V] [Module k V] (φ : G →* H) (ψ : H →* K)
     (ρ : Representation k G V) (h : H) (κ : K) (a : V) :
     Representation.IndV.mk ψ (Representation.ind φ ρ) κ (Representation.IndV.mk φ ρ h a) =
       Representation.IndV.mk ψ (Representation.ind φ ρ) (ψ h * κ)
@@ -188,7 +203,7 @@ lemma indV_mk_ind_mk {V : Type max u v w x} [AddCommGroup V] [Module k V] (φ : 
 
 /-- Two linear maps out of a twice-induced representation agree as soon as they agree on the
 elements `⟦κ ⊗ₜ ⟦1 ⊗ₜ a⟧⟧` whose inner group coordinate is `1`. -/
-lemma indV_ind_hom_ext {V W : Type max u v w x} [AddCommGroup V] [Module k V] [AddCommGroup W]
+lemma indV_ind_hom_ext {V W : Type*} [AddCommGroup V] [Module k V] [AddCommGroup W]
     [Module k W] (φ : G →* H) (ψ : H →* K) (ρ : Representation k G V)
     {f g : Representation.IndV ψ (Representation.ind φ ρ) →ₗ[k] W}
     (hfg : ∀ (κ : K) (a : V),
@@ -227,7 +242,7 @@ lemma indFunctorCompIso_inv_app_hom_apply_mk (φ : G →* H) (ψ : H →* K)
 `⟦κ ⊗ₜ ⟦h ⊗ₜ a⟧⟧` to `⟦ψ(h) κ ⊗ₜ a⟧`. This is the explicit formula the character and Mackey
 computations consume, in place of the abstract adjoint comparison. Not a `simp` lemma, for the same
 reason as `TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`. -/
-lemma indFunctorCompIso_hom_app_hom_apply_mk (φ : G →* H) (ψ : H →* K)
+lemma indFunctorCompIso_hom_app_hom_apply_mk_mk (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (h : H) (κ : K) (a : A) :
     ((indFunctorCompIso φ ψ).hom.app A).hom
         (Representation.IndV.mk ψ (_root_.Rep.ind φ A).ρ κ (Representation.IndV.mk φ A.ρ h a)) =
@@ -261,7 +276,7 @@ lemma eq_indFunctorCompIso_hom_app (φ : G →* H) (ψ : H →* K) (A : _root_.R
     (Representation.IndV.mk ψ (_root_.Rep.ind φ A).ρ 1 (Representation.IndV.mk φ A.ρ 1 a))
   rw [Representation.IntertwiningMap.toLinearMap_apply,
     Representation.IntertwiningMap.toLinearMap_apply,
-    indFunctorCompIso_hom_app_hom_apply_mk φ ψ A 1 κ a, map_one, one_mul, hsrc, hcomm, hf]
+    indFunctorCompIso_hom_app_hom_apply_mk_mk φ ψ A 1 κ a, map_one, one_mul, hsrc, hcomm, hf]
   simp
 
 end Induction
@@ -293,32 +308,47 @@ lemma conjugateEquiv_symm_coindFunctorCompIso_hom (φ : G →* H) (ψ : H →* K
   unfold coindFunctorCompIso
   exact Equiv.symm_apply_apply _ _
 
-/-- The counit of Mathlib's restriction--coinduction adjunction is evaluation at `1`. -/
-lemma resCoindAdjunction_counit_app_hom_apply (φ : G →* H) (A : _root_.Rep.{max u v w x} k G)
+/-- The coinduced action translates the argument of a function: `(h • f) h₁ = f (h₁ * h)`. Used to
+retype the values of a coinduced representation along the group action. -/
+private lemma coind_ρ_apply_coe {V : Type*} [AddCommGroup V] [Module k V] (φ : G →* H)
+    (ρ : Representation k G V) (f : Representation.coindV φ ρ) (h h₁ : H) :
+    ((Representation.coind φ ρ h) f).1 h₁ = f.1 (h₁ * h) :=
+  rfl
+
+/-- The counit of Mathlib's restriction--coinduction adjunction is evaluation at `1`. Used to turn
+the abstract adjunction identity `conjugateEquiv_counit_symm` into a statement about elements. -/
+private lemma resCoindAdjunction_counit_app_hom_apply (φ : G →* H) (A : _root_.Rep.{max w t} k G)
     (f : _root_.Rep.coind φ A) :
-    ((_root_.Rep.resCoindAdjunction.{max u v w x} k φ).counit.app A).hom f = f.1 1 :=
+    ((_root_.Rep.resCoindAdjunction.{t} k φ).counit.app A).hom f = f.1 1 :=
   rfl
 
 /-- The coinduction-in-stages isomorphism evaluated at `1`: it reads off the value of a doubly
 coinduced function at the pair `(1, 1)`. This is the adjunction identity
 `conjugateEquiv_counit_symm` read on elements, the dual of
 `TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk_one`. -/
-lemma coindFunctorCompIso_hom_app_hom_apply_apply_one (φ : G →* H) (ψ : H →* K)
+private lemma coindFunctorCompIso_hom_app_hom_apply_apply_one (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (F : _root_.Rep.coind ψ (_root_.Rep.coind φ A)) :
     (((coindFunctorCompIso φ ψ).hom.app A).hom F).1 1 = (F.1 1).1 1 := by
-  have := conjugateEquiv_counit_symm
+  have key := conjugateEquiv_counit_symm
     ((_root_.Rep.resCoindAdjunction.{max u v w x} k ψ).comp
       (_root_.Rep.resCoindAdjunction.{max u v w x} k φ))
     (_root_.Rep.resCoindAdjunction.{max u v w x} k (ψ.comp φ))
     (coindFunctorCompIso φ ψ).hom A
-  rw [conjugateEquiv_symm_coindFunctorCompIso_hom] at this
-  exact congrArg (fun f : (_root_.Rep.resFunctor.{max u v w x} (k := k) (ψ.comp φ)).obj
-    ((_root_.Rep.coindFunctor.{max u v w x} k φ ⋙
-      _root_.Rep.coindFunctor.{max u v w x} k ψ).obj A) ⟶ A => Rep.Hom.hom f F) this
+  rw [conjugateEquiv_symm_coindFunctorCompIso_hom] at key
+  -- Read the resulting identity of morphisms on `F`, then rewrite the composite counit into the
+  -- two evaluations at `1` and delete the restriction functors, which act as the identity.
+  have key := congrArg (fun f : _ ⟶ A => Rep.Hom.hom f F) key
+  simp only [Adjunction.comp_counit_app, _root_.Rep.hom_comp,
+    Representation.IntertwiningMap.comp_apply] at key
+  rw [_root_.Rep.resMap_hom_apply, _root_.Rep.resMap_hom_apply,
+    resCoindAdjunction_counit_app_hom_apply, resCoindAdjunction_counit_app_hom_apply,
+    resCoindAdjunction_counit_app_hom_apply, resFunctorCompIso_inv_app_apply] at key
+  exact key
 
-/-- **Coinduction in stages on functions**: the coinduction-in-stages isomorphism sends a
-`G`-equivariant function `F : K → (H → A)` to `κ ↦ F κ 1`. This is the dual of
-`TauCeti.Rep.indFunctorCompIso_hom_app_hom_apply_mk`, and is obtained from its value at `1` by
+/-- **Coinduction in stages on functions**: the coinduction-in-stages isomorphism sends an
+`H`-equivariant function `F : K → coind φ A`, whose values are themselves the `G`-equivariant
+functions `H → A`, to `κ ↦ F κ 1`. This is the dual of
+`TauCeti.Rep.indFunctorCompIso_hom_app_hom_apply_mk_mk`, and is obtained from its value at `1` by
 `K`-equivariance. -/
 lemma coindFunctorCompIso_hom_app_hom_apply_apply (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (F : _root_.Rep.coind ψ (_root_.Rep.coind φ A)) (κ : K) :
@@ -328,13 +358,14 @@ lemma coindFunctorCompIso_hom_app_hom_apply_apply (φ : G →* H) (ψ : H →* K
     (((_root_.Rep.coindFunctor.{max u v w x} k φ ⋙
       _root_.Rep.coindFunctor.{max u v w x} k ψ).obj A).ρ κ F)
   rw [hcomm] at h1
-  have h2 : (((coindFunctorCompIso φ ψ).hom.app A).hom F).1 (1 * κ) = (F.1 (1 * κ)).1 1 := h1
-  simpa using h2
+  simp only [Functor.comp_obj, _root_.Rep.coindFunctor_obj, _root_.Rep.of_ρ] at h1
+  rw [coind_ρ_apply_coe, coind_ρ_apply_coe] at h1
+  simpa using h1
 
 /-- **Coinduction in stages on functions, backwards**: the inverse of the coinduction-in-stages
 isomorphism turns a `G`-equivariant function `f : K → A` into `κ ↦ (h ↦ f (ψ(h) κ))`, the dual of
 `TauCeti.Rep.indFunctorCompIso_inv_app_hom_apply_mk`. -/
-lemma coindFunctorCompIso_inv_app_hom_apply_apply (φ : G →* H) (ψ : H →* K)
+lemma coindFunctorCompIso_inv_app_hom_apply_apply_apply (φ : G →* H) (ψ : H →* K)
     (A : _root_.Rep.{max u v w x} k G) (f : _root_.Rep.coind (ψ.comp φ) A) (κ : K) (h : H) :
     ((((coindFunctorCompIso φ ψ).inv.app A).hom f).1 κ).1 h = f.1 (ψ h * κ) := by
   have hfF : ((coindFunctorCompIso φ ψ).hom.app A).hom
@@ -344,9 +375,9 @@ lemma coindFunctorCompIso_inv_app_hom_apply_apply (φ : G →* H) (ψ : H →* K
     fun κ' => (coindFunctorCompIso_hom_app_hom_apply_apply φ ψ A _ κ').symm.trans
       (congrArg (fun y : _root_.Rep.coind (ψ.comp φ) A => y.1 κ') hfF)
   have hmem := (((coindFunctorCompIso φ ψ).inv.app A).hom f).2 h κ
+  simp only [_root_.Rep.coindFunctor_obj, _root_.Rep.of_ρ] at hmem
   have hx : f.1 (ψ h * κ) = ((((coindFunctorCompIso φ ψ).inv.app A).hom f).1 κ).1 (1 * h) := by
-    rw [← hhom (ψ h * κ)]
-    exact congrArg (fun y => y.1 1) hmem
+    rw [← hhom (ψ h * κ), hmem, coind_ρ_apply_coe]
   rw [hx, one_mul]
 
 end Coinduction
