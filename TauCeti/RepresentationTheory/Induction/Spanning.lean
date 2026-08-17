@@ -35,7 +35,7 @@ the irreducible characters of `S` span the class functions of `S`, so
 `TauCeti.ClassFunction.indCharacterSpan_cyclic_eq_top` says that the characters induced from the
 irreducible characters of the cyclic subgroups already span.
 
-## What this is not: Artin's induction theorem
+## Relation to Artin's induction theorem
 
 Artin's induction theorem is the sharper *arithmetic* statement, about the virtual-character
 lattice `TauCeti.virtualCharacters` rather than about the class functions: over a
@@ -48,12 +48,11 @@ anything about the arithmetic of the coefficients**: every result here produces 
 are arbitrary elements of `k`.
 
 What this file supplies is the duality half of that development, run on the class functions instead
-of on `ℚ ⊗ R(G)`.  `TauCeti.RepresentationTheory.Induction.Artin` is the arithmetic half: it
-descends `TauCeti.ClassFunction.indCharacterSpan_cyclic_eq_top` to the virtual-character lattice
-and obtains the rational form of Artin's theorem.  The sharp form, with the denominator identified
-as `|G|`, remains open, as do Brauer's induction theorem and Brauer's characterization of
-characters.  The covering-family formulation is stated here for its own sake: the elementary
-subgroups Brauer's theorem uses satisfy the same hypothesis.
+of on `ℚ ⊗ R(G)`.  `TauCeti.RepresentationTheory.Induction.Artin` supplies the arithmetic half:
+it proves the sharp `|G|` statement through the canonical induced-virtual-character API and bundles
+the rationally surjective map after tensoring with `ℚ`.  Brauer's induction theorem and Brauer's
+characterization of characters remain open.  The covering-family formulation is stated here for
+its own sake: the elementary subgroups Brauer's theorem uses satisfy the same hypothesis.
 
 ## Main definitions
 
@@ -206,9 +205,8 @@ characters.
 
 This is *not* Artin's induction theorem: the coefficients here are arbitrary elements of `k`, while
 Artin's theorem is a statement about `TauCeti.virtualCharacters`, asserting that they may be taken
-rational and that `|G| • χ` is an integral combination of induced characters.  The rational form is
-deduced from the induced-character refinement below in
-`TauCeti.RepresentationTheory.Induction.Artin`; the integral form remains open. -/
+rational and that `|G| • χ` is an integral combination of induced virtual characters.  Both forms
+are proved in `TauCeti.RepresentationTheory.Induction.Artin`. -/
 theorem indSpan_cyclic_eq_top [Invertible (Nat.card G : k)] :
     indSpan k G {S | IsCyclic S} = ⊤ :=
   indSpan_eq_top fun x =>
