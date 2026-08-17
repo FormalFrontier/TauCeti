@@ -4,15 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.TransferInstance
-public import Mathlib.GroupTheory.FreeGroup.Basic
+public import Mathlib.Data.Finite.Defs
 public import Mathlib.GroupTheory.Subgroup.Simple
-public import Mathlib.Logic.Small.Basic
+import Mathlib.Algebra.Group.TransferInstance
+import Mathlib.GroupTheory.FreeGroup.Basic
+import Mathlib.Logic.Small.Basic
 
 /-!
 # Universe transport for a classification of the finite simple groups
 
-Fix a family `Model : ι → Type v` of groups. A statement of the form
+Fix a family `Model : ι → Type v` of types carrying a multiplication. A statement of the form
 
 ```text
 ∀ (G : Type u) [Group G] [Finite G] [IsSimpleGroup G], ∃ i, Nonempty (G ≃* Model i)
@@ -44,9 +45,8 @@ statement, not its content.
 * `TauCeti.exists_nonempty_mulEquiv_of_forall`: **the universe transport**, between arbitrary
   universes, and `TauCeti.exists_nonempty_mulEquiv_of_forall_type_zero`, its specialisation from
   `Type 0` to `Type u`.
-* `TauCeti.forall_exists_nonempty_mulEquiv_congr` and
-  `TauCeti.forall_exists_nonempty_mulEquiv_iff`: the classification statement is the same in every
-  universe.
+* `TauCeti.forall_exists_nonempty_mulEquiv_congr`: the classification statement is the same in
+  every universe; at `u' := 0` it compares an arbitrary universe with `Type 0`.
 * `TauCeti.exists_group_not_mulEquiv_type_zero`: arbitrary groups cannot always be moved to
   `Type 0`.
 
@@ -72,8 +72,9 @@ universe u u' v w
 
 section Family
 
--- Only the multiplications of the models are ever used: a `MulEquiv` out of a group already forces
--- its target to be a group, so asking for `Group (Model i)` would be a redundant hypothesis.
+-- Only the multiplications of the models are ever used: the statement mentions `Model i` solely
+-- through `G ≃* Model i`, so a `Group (Model i)` hypothesis would be an unused one. A consumer
+-- holding such an isomorphism can transport the group structure of `G` along it.
 variable {ι : Sort w} {Model : ι → Type v} [∀ i, Mul (Model i)]
 
 /-- Being isomorphic to a member of a fixed family depends only on the isomorphism class of the
@@ -82,8 +83,8 @@ theorem exists_nonempty_mulEquiv_of_mulEquiv {G : Type u} {H : Type u'} [Mul G] 
     (h : ∃ i, Nonempty (H ≃* Model i)) : ∃ i, Nonempty (G ≃* Model i) :=
   h.imp fun _ hi => hi.map e.trans
 
-/-- **The universe transport.** A family of groups that classifies the finite simple groups in
-`Type u'` classifies the finite simple groups in `Type u`, for any two universes.
+/-- **The universe transport.** A family that classifies the finite simple groups in `Type u'`
+classifies the finite simple groups in `Type u`, for any two universes.
 
 Mathlib's finite-group transport supplies a finite model `H : Type u'` and an isomorphism `G ≃* H`.
 Simplicity is transported across this isomorphism, which is then composed with the one the
@@ -96,27 +97,23 @@ theorem exists_nonempty_mulEquiv_of_forall
   let _ : IsSimpleGroup H := e.symm.isSimpleGroup
   exact exists_nonempty_mulEquiv_of_mulEquiv e (h H)
 
-/-- A family of groups that classifies the finite simple groups in `Type 0` classifies the finite
-simple groups in every universe. This is the direction a consumer of a classification needs. -/
+/-- A family that classifies the finite simple groups in `Type 0` classifies the finite simple
+groups in every universe. This is the direction a consumer of a classification needs. -/
 theorem exists_nonempty_mulEquiv_of_forall_type_zero
     (h : ∀ (H : Type) [Group H] [Finite H] [IsSimpleGroup H], ∃ i, Nonempty (H ≃* Model i))
     (G : Type u) [Group G] [Finite G] [IsSimpleGroup G] : ∃ i, Nonempty (G ≃* Model i) :=
   exists_nonempty_mulEquiv_of_forall h G
 
-/-- **A classification of the finite simple groups says the same thing in every universe.** -/
+/-- **A classification of the finite simple groups says the same thing in every universe.**
+
+At `u' := 0` this is the comparison with `Type 0`: a development that assumes the classification in
+the universe it needs loses nothing by proving it in `Type 0`, and a development that has it in
+`Type 0` may apply it anywhere. -/
 theorem forall_exists_nonempty_mulEquiv_congr :
     (∀ (G : Type u) [Group G] [Finite G] [IsSimpleGroup G], ∃ i, Nonempty (G ≃* Model i)) ↔
       ∀ (G : Type u') [Group G] [Finite G] [IsSimpleGroup G], ∃ i, Nonempty (G ≃* Model i) :=
   ⟨fun h G _ _ _ => exists_nonempty_mulEquiv_of_forall h G,
     fun h G _ _ _ => exists_nonempty_mulEquiv_of_forall h G⟩
-
-/-- The comparison with `Type 0`: a development that assumes the classification in the universe it
-needs loses nothing by proving it in `Type 0`, and a development that has it in `Type 0` may apply
-it anywhere. -/
-theorem forall_exists_nonempty_mulEquiv_iff :
-    (∀ (G : Type u) [Group G] [Finite G] [IsSimpleGroup G], ∃ i, Nonempty (G ≃* Model i)) ↔
-      ∀ (H : Type) [Group H] [Finite H] [IsSimpleGroup H], ∃ i, Nonempty (H ≃* Model i) :=
-  forall_exists_nonempty_mulEquiv_congr
 
 end Family
 
