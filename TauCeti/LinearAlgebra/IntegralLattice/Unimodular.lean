@@ -74,8 +74,10 @@ theorem isUnimodular_iff_dualCarrier_le (L : IntegralLattice V) :
 /-- Unimodularity is equivalent to the embedded carrier filling the dual carrier. -/
 theorem isUnimodular_iff_carrierInDual_eq_top (L : IntegralLattice V) :
     L.IsUnimodular ↔ L.carrierInDual = ⊤ := by
-  rw [L.isUnimodular_iff_dualCarrier_le, L.carrierInDual_eq_comap_subtype,
-    Submodule.comap_subtype_eq_top]
+  have hcarrier : L.carrierInDual = L.carrier.submoduleOf L.dualCarrier := by
+    ext x
+    exact L.mem_carrierInDual_iff x
+  rw [L.isUnimodular_iff_dualCarrier_le, hcarrier, Submodule.submoduleOf_eq_top]
 
 /-- Unimodularity is equivalent to triviality of the discriminant group. -/
 theorem isUnimodular_iff_subsingleton_discriminantGroup (L : IntegralLattice V) :
@@ -112,7 +114,10 @@ private theorem isUnimodular_iff_surjective_inclusion :
     L.IsUnimodular ↔
       Function.Surjective (Submodule.inclusion L.le_dualCarrier) := by
   rw [← LinearMap.range_eq_top, Submodule.range_inclusion]
-  rw [← L.carrierInDual_eq_comap_subtype]
+  have hrange : Submodule.comap L.dualCarrier.subtype L.carrier = L.carrierInDual := by
+    ext x
+    exact (L.mem_carrierInDual_iff x).symm
+  rw [hrange]
   exact L.isUnimodular_iff_carrierInDual_eq_top
 
 /-- The restricted integral form factors as carrier inclusion followed by the perfect dual
