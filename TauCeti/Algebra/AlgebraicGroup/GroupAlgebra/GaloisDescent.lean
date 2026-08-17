@@ -72,21 +72,20 @@ private noncomputable def exponentAction
       (rho.asGroupHom sigma)).toAddEquiv.toMultiplicative
   map_one' := by
     ext m
-    change Multiplicative.ofAdd (rho 1 m.toAdd) = m
-    simp
+    exact congrArg
+      (fun f : M →ₗ[ℤ] M => Multiplicative.ofAdd (f m.toAdd)) (map_one rho)
   map_mul' sigma tau := by
     ext m
-    change Multiplicative.ofAdd (rho (sigma * tau) m.toAdd) =
-      Multiplicative.ofAdd (rho sigma (rho tau m.toAdd))
-    simp
+    exact congrArg
+      (fun f : M →ₗ[ℤ] M => Multiplicative.ofAdd (f m.toAdd)) (map_mul rho sigma tau)
 
 @[simp]
 private theorem exponentAction_apply
     (rho : Representation ℤ (L ≃ₐ[k] L) M) (sigma : L ≃ₐ[k] L)
     (m : Multiplicative M) :
     exponentAction rho sigma m = Multiplicative.ofAdd (rho sigma m.toAdd) := by
-  change Multiplicative.ofAdd ((rho.asGroupHom sigma : M →ₗ[ℤ] M) m.toAdd) = _
-  rw [Representation.asGroupHom_apply]
+  exact congrArg (fun f : M →ₗ[ℤ] M => Multiplicative.ofAdd (f m.toAdd))
+    (Representation.asGroupHom_apply rho sigma)
 
 @[simp]
 private theorem exponentAction_symm_apply
@@ -94,8 +93,9 @@ private theorem exponentAction_symm_apply
     (m : Multiplicative M) :
     (exponentAction rho sigma).symm m =
       Multiplicative.ofAdd (rho sigma⁻¹ m.toAdd) := by
-  change Multiplicative.ofAdd (((rho.asGroupHom sigma)⁻¹).val m.toAdd) = _
-  rw [← map_inv, Representation.asGroupHom_apply]
+  have hinv : (↑((rho.asGroupHom sigma)⁻¹) : M →ₗ[ℤ] M) = rho sigma⁻¹ := by
+    rw [← map_inv, Representation.asGroupHom_apply]
+  exact congrArg (fun f : M →ₗ[ℤ] M => Multiplicative.ofAdd (f m.toAdd)) hinv
 
 /-- Coefficient and exponent changes commute on a monoid algebra. -/
 private theorem coefficientAction_commute_exponentAction
@@ -158,11 +158,7 @@ noncomputable def groupAlgebraActionSemilinearEquiv
     MonoidAlgebra L (Multiplicative M) ≃ₛₗ[(sigma.toRingEquiv : L →+* L)]
       MonoidAlgebra L (Multiplicative M) :=
   { (groupAlgebraAction rho sigma).toAddEquiv with
-    map_smul' := by
-      intro a x
-      change groupAlgebraAction rho sigma (a • x) =
-        sigma a • groupAlgebraAction rho sigma x
-      exact groupAlgebraAction_smul rho sigma a x }
+    map_smul' := groupAlgebraAction_smul rho sigma }
 
 /-- The underlying map of the semilinear equivalence is the bundled automorphism action. -/
 @[simp]
@@ -171,7 +167,7 @@ theorem groupAlgebraActionSemilinearEquiv_apply
     (x : MonoidAlgebra L (Multiplicative M)) :
     groupAlgebraActionSemilinearEquiv rho sigma x = groupAlgebraAction rho sigma x :=
   by
-    change (groupAlgebraAction rho sigma).toAddEquiv x = _
+    rw [groupAlgebraActionSemilinearEquiv]
     rfl
 
 /-- On the tensor square of the coordinate algebra, the automorphism acts on both tensor
