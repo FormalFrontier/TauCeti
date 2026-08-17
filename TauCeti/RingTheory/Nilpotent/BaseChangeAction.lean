@@ -43,6 +43,8 @@ characteristic.
 * `TauCeti.baseChangeExpHom`: the additive one-parameter subgroup over `R`.
 * `TauCeti.integralUnitRestrict`: a unit of `A` preserving `M` restricted to an integral
   automorphism of `M`.
+* `TauCeti.dividedPower_conj_smul_mem`: conjugating by such a unit preserves the stability of `M`
+  under divided powers.
 * `TauCeti.baseChangeExp_intCast`: at an integer parameter the exponential is the base change of a
   single integral automorphism.
 * `TauCeti.baseChange_integralUnitRestrict_conj_baseChangeExp`: conjugating a one-parameter
@@ -155,6 +157,20 @@ theorem coe_integralUnitRestrict_symm_apply (u : Aˣ) (M : S)
     (((integralUnitRestrict u M hu hu').symm v : M) : V) = ((u⁻¹ : Aˣ) : A) • (v : V) :=
   (rfl)
 
+omit [AddSubgroupClass S V] in
+/-- A unit preserving `M` together with its inverse also transports the stability of `M` under
+the divided powers of `x` to stability under the divided powers of the conjugate `u x u⁻¹`.
+
+Conjugation passes through a divided power, so the conjugated operator acts by `u⁻¹`, then a
+divided power of `x`, then `u`, and each of the three maps `M` into `M`. -/
+theorem dividedPower_conj_smul_mem (x : A) (M : S) (u : Aˣ)
+    (hu : ∀ v ∈ M, (u : A) • v ∈ M) (hu' : ∀ v ∈ M, ((u⁻¹ : Aˣ) : A) • v ∈ M)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) :
+    ∀ n, ∀ v ∈ M, Associative.dividedPower n ((u : A) * x * ↑u⁻¹) • v ∈ M := by
+  intro n v hv
+  rw [Associative.dividedPower_units_conj, mul_smul, mul_smul]
+  exact hu _ (hM n _ (hu' v hv))
+
 /-- The restriction to `M` of the exponential `exp (t • x)` of an integral multiple of a nilpotent
 element whose divided powers preserve `M`.
 
@@ -172,6 +188,14 @@ theorem coe_integralExpZSMul_apply (x : A) (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : ℤ)
     (v : M) :
     ((integralExpZSMul x M hM hx t v : M) : V) = IsNilpotent.exp (t • x) • (v : V) := by
+  simp [integralExpZSMul]
+
+/-- The inverse of the integral exponential is the exponential of the negated element. -/
+@[simp]
+theorem coe_integralExpZSMul_symm_apply (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) (hx : IsNilpotent x) (t : ℤ)
+    (v : M) :
+    (((integralExpZSMul x M hM hx t).symm v : M) : V) = IsNilpotent.exp (-(t • x)) • (v : V) := by
   simp [integralExpZSMul]
 
 /-- Negating the element leaves the even restricted divided powers unchanged. -/
@@ -569,11 +593,11 @@ alone: conjugation is an algebra automorphism, so it passes through the divided 
 theorem baseChange_integralUnitRestrict_conj_baseChangeExp (x : A) (M : S) (u : Aˣ)
     (hu : ∀ v ∈ M, (u : A) • v ∈ M) (hu' : ∀ v ∈ M, ((u⁻¹ : Aˣ) : A) • v ∈ M)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M)
-    (hM' : ∀ n, ∀ v ∈ M, Associative.dividedPower n ((u : A) * x * ↑u⁻¹) • v ∈ M)
     (hx : IsNilpotent x) (t : R) :
     ((integralUnitRestrict u M hu hu' : M →ₗ[ℤ] M).baseChange R) * baseChangeExp x M hM t *
         (((integralUnitRestrict u M hu hu').symm : M →ₗ[ℤ] M).baseChange R) =
-      baseChangeExp ((u : A) * x * ↑u⁻¹) M hM' t := by
+      baseChangeExp ((u : A) * x * ↑u⁻¹) M (dividedPower_conj_smul_mem x M u hu hu' hM) t := by
+  have hM' := dividedPower_conj_smul_mem x M u hu hu' hM
   obtain ⟨k, hk⟩ := id hx
   have hk' : ((u : A) * x * ↑u⁻¹) ^ k = 0 := by rw [Units.conj_pow, hk, mul_zero, zero_mul]
   refine LinearMap.ext fun z => ?_
