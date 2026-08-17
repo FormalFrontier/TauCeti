@@ -7,11 +7,11 @@ module
 
 public import Mathlib.RepresentationTheory.Subrepresentation
 public import TauCeti.RepresentationTheory.Spin.Representation
--- Private: `TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd` is used only inside a proof, and
+-- Private: `CliffordAlgebra.contractLeft_mem_evenOdd` is used only inside a proof, and
 -- `CliffordAction` imports this module privately too, so it is not available transitively.
 import TauCeti.LinearAlgebra.CliffordAlgebra.Contraction
--- Private: `TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
--- `TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one` are used only inside a proof.
+-- Private: `CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero` and
+-- `CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one` are used only inside a proof.
 import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 -- Private: `Subrepresentation.mem_toSubmodule`, `Subrepresentation.toSubmodule_bot` and
 -- `Subrepresentation.toSubmodule_top` are used only inside a proof.
@@ -47,7 +47,7 @@ The grading statement `TauCeti.spinAction_mem_evenOdd` is proved once, for an ar
 the acting Clifford element, and the half-spin invariance and the parity shift by odd elements are
 both read off it. Its two inputs are that exterior multiplication raises the exterior degree
 (Mathlib's `CliffordAlgebra.evenOdd_mul_le`) and that contraction lowers it
-(`TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd`); the induction that propagates them from a
+(`CliffordAlgebra.contractLeft_mem_evenOdd`); the induction that propagates them from a
 single vector to a general Clifford element is Mathlib's `CliffordAlgebra.evenOdd_induction`.
 
 Nothing here needs a field, a nondegeneracy hypothesis, or a finite dimension: like
@@ -161,7 +161,7 @@ private theorem cliffordOperator_mem_evenOdd (hline : P.line = ⊥) (v : V) {j :
   · rw [P.wedge_apply, ← add_comm (1 : ZMod 2) j]
     exact SetLike.mul_mem_graded (ι_mem_evenOdd_one (0 : QuadraticForm K P.W) (x : P.W)) hs
   · rw [P.contract_apply]
-    exact TauCeti.CliffordAlgebra.contractLeft_mem_evenOdd _ hs
+    exact CliffordAlgebra.contractLeft_mem_evenOdd _ hs
 
 /-- **The Clifford action on the spinor module is graded** when the polarization has no line
 summand: a Clifford element of parity `i` shifts the exterior parity of a spinor by `i`. -/
@@ -175,9 +175,9 @@ theorem spinAction_mem_evenOdd (hline : P.line = ⊥) {i j : ZMod 2} {x : Cliffo
   | range_ι_pow v hv =>
     -- `i.val` is `0` or `1`, so `v` is a scalar or a vector.
     rcases (by decide : ∀ c : ZMod 2, c = 0 ∨ c = 1) i with rfl | rfl
-    · obtain ⟨r, rfl⟩ := TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero hv
+    · obtain ⟨r, rfl⟩ := CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero hv
       simpa using Submodule.smul_mem _ r hs
-    · obtain ⟨a, rfl⟩ := TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one hv
+    · obtain ⟨a, rfl⟩ := CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one hv
       rw [spinAction_ι, add_comm]
       exact cliffordOperator_mem_evenOdd P hline a hs
   | add x y hx hy ihx ihy => simpa only [map_add, LinearMap.add_apply] using add_mem ihx ihy
