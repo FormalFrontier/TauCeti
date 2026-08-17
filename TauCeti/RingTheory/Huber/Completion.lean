@@ -74,8 +74,10 @@ variable {R : Type*} [CommRing R]
 
 This is where finite generation of the ideal of definition enters the proof of Wedhorn Remark
 6.8: it bounds, uniformly in `k`, the number of terms needed to write an element of
-`Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`. -/
-private theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
+`Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`. The same bound is what makes the neighbourhood
+subgroups of `A⟨X⟩_T` the powers of a single finitely generated ideal, in
+`TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition`. -/
+theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
     (hb : b ∈ Ideal.span (G : Set R) * K) :
     ∃ c : R → R, (∀ z, c z ∈ K) ∧ ∑ z ∈ G, z * c z = b := by
   classical
