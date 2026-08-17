@@ -330,6 +330,13 @@ jobs:
             echo "::error::TauCeti/ may not use set_option (it can weaken maxHeartbeats, linters, maxRecDepth, ...); remove it"; exit 1
           fi
 
+      # The trusted base's registry must cover any source-only PR that declares a new temporary
+      # Mathlib shim. A PR that also updates the human-owned registry is already routed to human
+      # review and is validated by post-merge CI, so skip this base-registry comparison for it.
+      - name: Temporary Mathlib shims have machine-checkable expiry targets
+        if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' }}
+        run: (cd base && python3 scripts/check-expired-mathlib-shims.py --coverage-only)
+
       - name: Install elan (trusted)
         if: ${{ env.INFRA != '1' }}
         run: |

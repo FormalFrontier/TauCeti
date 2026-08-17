@@ -23,11 +23,11 @@ from collections.abc import Iterable, Sequence
 DECLARATION = re.compile(r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*")
 MODULE = re.compile(r"Mathlib(?:\.[A-Za-z_][A-Za-z0-9_']*)+")
 PROBE_PREFIX = "TAUCETI_MATHLIB_DECL\t"
-SELF_DECLARED = re.compile(
-    r"(?:\btemporary\b|\bpending\b).{0,160}\bMathlib\b|"
-    r"\bMathlib\b.{0,160}(?:\btemporary\b|\bpending\b)",
-    re.IGNORECASE | re.DOTALL,
+SELF_DECLARED = re.compile(r"\btemporary\b.{0,40}\bshim\b", re.IGNORECASE | re.DOTALL)
+NEGATED_SELF_DECLARATION = re.compile(
+    r"(?:\brather\s+than|\bnot)\s+(?:an?\s+)?(?:\*{1,2})?\s*$", re.IGNORECASE
 )
+ZULIP_MARKER = "<!--expired-mathlib-shims:v1-->"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -59,7 +59,7 @@ def load_registry(path: pathlib.Path, repo_root: pathlib.Path) -> tuple[ShimGrou
     """Read and validate the shim registry, including every tracked source path."""
 
     try:
-        raw = json.loads(path.read_text())
+        raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"cannot read {path}: {error}") from error
     if not isinstance(raw, list):
@@ -112,11 +112,15 @@ def find_self_declared_shims(source_root: pathlib.Path) -> set[pathlib.Path]:
     """
 
     repo_root = source_root.parent
-    return {
-        source.relative_to(repo_root)
-        for source in source_root.rglob("*.lean")
-        if SELF_DECLARED.search(source.read_text()) is not None
-    }
+    found: set[pathlib.Path] = set()
+    for source in source_root.rglob("*.lean"):
+        text = source.read_text(encoding="utf-8")
+        for match in SELF_DECLARED.finditer(text):
+            prefix = text[max(0, match.start() - 80):match.start()]
+            if NEGATED_SELF_DECLARATION.search(prefix) is None:
+                found.add(source.relative_to(repo_root))
+                break
+    return found
 
 
 def validate_registry_coverage(groups: Sequence[ShimGroup], source_root: pathlib.Path) -> None:
@@ -192,6 +196,9 @@ def available_replacements(
 ) -> tuple[AvailableReplacement, ...]:
     """Pair each source with targets already available in pinned Mathlib."""
 
+    if any(group.modules for group in groups) and not mathlib_root.is_dir():
+        raise RuntimeError(f"Mathlib source tree does not exist: {mathlib_root}")
+
     available: list[AvailableReplacement] = []
     for group in groups:
         targets = tuple(
@@ -220,13 +227,56 @@ def markdown_summary(
         f"Found replacements for **{len(available)}** source files. Open migration PRs; this "
         "report does not fail the build.",
         "",
-        "| Tau Ceti source | Available Mathlib target |",
-        "|---|---|",
+        "| Tau Ceti source | Available Mathlib target | Context |",
+        "|---|---|---|",
     ])
     for replacement in available:
         targets = "<br>".join(f"`{target}`" for target in replacement.targets)
-        lines.append(f"| `{replacement.source}` | {targets} |")
+        note = replacement.note.replace("|", "\\|").replace("\n", " ")
+        lines.append(f"| `{replacement.source}` | {targets} | {note} |")
     return "\n".join(lines) + "\n"
+
+
+def zulip_content(summary: str, active: bool) -> str:
+    """Render the single idempotent maintenance post owned by this checker."""
+
+    status = "⚠️" if active else "✅"
+    return f"{status} {summary.rstrip()}\n\n{ZULIP_MARKER}"
+
+
+def reconcile_zulip(client: object, summary: str, active: bool) -> None:
+    """Create, update, or resolve the checker's bot-owned Zulip post."""
+
+    bot_id = client.my_user_id()
+    narrow = [["stream", "Tau Ceti"], ["topic", "Mathlib shims"]]
+    messages = client.get_messages(narrow)
+    owned = [message for message in messages
+             if message.get("sender_id") == bot_id
+             and ZULIP_MARKER in message.get("content", "")]
+    current = max(owned, key=lambda message: message["id"], default=None)
+    content = zulip_content(summary, active)
+    if current is None:
+        if active:
+            client.send_message(content)
+    elif current["content"] != content:
+        client.update_message(current["id"], content)
+
+
+def notify_zulip(summary: str, active: bool) -> None:
+    """Notify the maintenance topic using the repository's existing Zulip client."""
+
+    pr_status = pathlib.Path(__file__).resolve().parent / "pr_status"
+    sys.path.insert(0, str(pr_status))
+    import zulip as zp  # pylint: disable=import-outside-toplevel
+
+    email = (os.environ.get("ZULIP_EMAIL") or "").strip()
+    api_key = (os.environ.get("ZULIP_API_KEY") or "").strip()
+    site = (os.environ.get("ZULIP_SITE") or "https://leanprover.zulipchat.com").strip()
+    if not (email and api_key):
+        raise RuntimeError("ZULIP_EMAIL / ZULIP_API_KEY not set")
+    client = zp.Zulip(email, api_key, site)
+    zp.check(client)
+    reconcile_zulip(client, summary, active)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -236,6 +286,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--manifest", type=pathlib.Path)
     parser.add_argument("--mathlib-root", type=pathlib.Path)
     parser.add_argument("--lake-root", type=pathlib.Path)
+    parser.add_argument("--coverage-only", action="store_true",
+                        help="validate source coverage without probing Mathlib")
+    parser.add_argument("--notify-zulip", action="store_true",
+                        help="reconcile the Tau Ceti > Mathlib shims maintenance post")
     return parser.parse_args(argv)
 
 
@@ -248,6 +302,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         groups = load_registry(manifest, repo_root)
         validate_registry_coverage(groups, repo_root / "TauCeti")
+        if args.coverage_only:
+            print("check-expired-mathlib-shims: registry covers all self-declared shims")
+            return 0
         declarations = (name for group in groups for name in group.declarations)
         found = probe_declarations(declarations, lake_root)
         available = available_replacements(groups, found, mathlib_root)
@@ -261,7 +318,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     for replacement in available:
         targets = ", ".join(replacement.targets)
         print(f"::warning file={replacement.source}::Pinned Mathlib now provides {targets}; "
-              "open a migration PR and delete the obsolete surface")
+              f"open a migration PR and delete the obsolete surface ({replacement.note})")
 
     summary = markdown_summary(groups, available)
     if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -269,6 +326,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             stream.write(summary)
     elif available:
         print(summary)
+    if args.notify_zulip:
+        try:
+            notify_zulip(summary, bool(available))
+        except (RuntimeError, ValueError) as error:
+            print(f"check-expired-mathlib-shims: error: could not notify Zulip: {error}",
+                  file=sys.stderr)
+            return 2
     return 0
 
 

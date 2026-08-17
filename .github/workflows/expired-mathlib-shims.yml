@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   check:
+    if: github.repository == 'TauCetiProject/TauCeti'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,8 +26,21 @@ jobs:
           build: false
           test: false
           lint: false
-          use-mathlib-cache: true
+          use-mathlib-cache: false
           use-github-cache: false
 
+      - name: Fetch Mathlib oleans, retrying with a forced full refetch
+        run: |
+          if ! lake exe cache get; then
+            echo "::warning::lake exe cache get failed; forcing a full refetch"
+            lake exe cache get!
+          fi
+
       - name: Check the pinned Mathlib for tracked replacements
-        run: python3 scripts/check-expired-mathlib-shims.py
+        env:
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          ZULIP_CHANNEL: Tau Ceti
+          ZULIP_TOPIC: Mathlib shims
+        run: python3 scripts/check-expired-mathlib-shims.py --notify-zulip

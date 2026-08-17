@@ -19,12 +19,33 @@ sys.modules[SPEC.name] = check
 SPEC.loader.exec_module(check)
 
 
+class FakeZulip:
+    def __init__(self, messages=()):
+        self.messages = list(messages)
+        self.sent = []
+        self.updated = []
+
+    def my_user_id(self):
+        return 7
+
+    def get_messages(self, _narrow):
+        return self.messages
+
+    def send_message(self, content):
+        self.sent.append(content)
+
+    def update_message(self, message_id, content):
+        self.updated.append((message_id, content))
+
+
 class ExpiredMathlibShimTests(unittest.TestCase):
-    def test_registry_tracks_the_issue_baseline(self):
+    def test_registry_covers_exact_self_declarations(self):
         root = SCRIPT.parent.parent
         groups = check.load_registry(SCRIPT.with_name("mathlib-shims.json"), root)
-        self.assertEqual(sum(len(group.sources) for group in groups), 35)
-        self.assertEqual(groups[0].declarations, ("exists_bijOn_unitBall_map_eq_zero",))
+        tracked = {source for group in groups for source in group.sources}
+        self.assertEqual(tracked, check.find_self_declared_shims(root / "TauCeti"))
+        self.assertEqual(groups[0].declarations,
+                         ("Complex.exists_bijOn_unitBall_map_eq_zero",))
         check.validate_registry_coverage(groups, root / "TauCeti")
 
     def test_new_self_declaration_requires_registry_entry(self):
@@ -33,10 +54,20 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             source_root = root / "TauCeti"
             source_root.mkdir()
             (source_root / "New.lean").write_text(
-                "This is temporary while the matching result is pending in Mathlib."
+                "These declarations are a temporary shim pending Mathlib.", encoding="utf-8"
             )
             with self.assertRaisesRegex(ValueError, "TauCeti/New.lean"):
                 check.validate_registry_coverage((), source_root)
+
+    def test_negated_temporary_shim_is_not_a_self_declaration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            source_root = root / "TauCeti"
+            source_root.mkdir()
+            (source_root / "New.lean").write_text(
+                "This is new formalization rather than a temporary shim.", encoding="utf-8"
+            )
+            self.assertEqual(check.find_self_declared_shims(source_root), set())
 
     def test_registry_rejects_missing_source_and_malformed_target(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -45,7 +76,7 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             manifest.write_text(json.dumps([{
                 "sources": ["TauCeti/Missing.lean"],
                 "declarations": ["not a Lean name"],
-            }]))
+            }]), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "invalid declaration"):
                 check.load_registry(manifest, root)
 
@@ -75,6 +106,33 @@ class ExpiredMathlibShimTests(unittest.TestCase):
             summary = check.markdown_summary((group,), available)
             self.assertIn("report does not fail the build", summary)
             self.assertIn("TauCeti/One.lean", summary)
+            self.assertIn("test group", summary)
+
+    def test_missing_mathlib_tree_rejects_module_checks(self):
+        group = check.ShimGroup(
+            (pathlib.Path("TauCeti/One.lean"),), (), ("Mathlib.Topology.NewThing",), "test"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            missing = pathlib.Path(temporary) / "missing"
+            with self.assertRaisesRegex(RuntimeError, "Mathlib source tree does not exist"):
+                check.available_replacements((group,), set(), missing)
+
+    def test_zulip_report_is_idempotent_and_resolvable(self):
+        summary = "## Expired Mathlib shim check\n\nFound replacements.\n"
+        client = FakeZulip()
+        check.reconcile_zulip(client, summary, active=True)
+        self.assertEqual(len(client.sent), 1)
+
+        active = client.sent[0]
+        client = FakeZulip([{"id": 4, "sender_id": 7, "content": active}])
+        check.reconcile_zulip(client, summary, active=True)
+        self.assertEqual(client.sent, [])
+        self.assertEqual(client.updated, [])
+
+        clear = "## Expired Mathlib shim check\n\nNo replacements.\n"
+        check.reconcile_zulip(client, clear, active=False)
+        self.assertEqual(client.updated[0][0], 4)
+        self.assertTrue(client.updated[0][1].startswith("✅"))
 
 
 if __name__ == "__main__":
