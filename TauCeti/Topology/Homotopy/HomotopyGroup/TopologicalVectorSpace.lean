@@ -18,15 +18,13 @@ is a subsingleton.
 
 ## Main declarations
 
-* `TauCeti.GenLoop.homotopic_of_topologicalVectorSpace`: generalized loops in a real
+* `GenLoop.homotopic_of_topologicalVectorSpace`: generalized loops in a real
   topological vector space with the same basepoint are homotopic.
-* `TauCeti.HomotopyGroup.subsingleton_of_topologicalVectorSpace`: all homotopy groups of a
+* `HomotopyGroup.subsingleton_of_topologicalVectorSpace`: all homotopy groups of a
   real topological vector space are subsingletons.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped unitInterval Topology Topology.Homotopy
 
@@ -56,5 +54,3 @@ instance subsingleton_of_topologicalVectorSpace : Subsingleton (HomotopyGroup N 
   exact Quotient.sound (GenLoop.homotopic_of_topologicalVectorSpace f g)
 
 end HomotopyGroup
-
-end TauCeti

@@ -27,41 +27,41 @@ the two uses Wedhorn makes of it, and both appear here.
 
 ## Main definitions
 
-* `TauCeti.Valuation.IdealCofinalFor v H I` : every element of `I` has value cofinal for `H`.
-* `TauCeti.Valuation.IdealMeetsCharacteristicSubgroup v I` : `v(I)` meets `cΓ_v`, the
+* `Valuation.IdealCofinalFor v H I` : every element of `I` has value cofinal for `H`.
+* `Valuation.IdealMeetsCharacteristicSubgroup v I` : `v(I)` meets `cΓ_v`, the
   branch condition of Definition 7.3.
-* `TauCeti.Valuation.valueSet v I` : the nonzero values of `v` on `I`.
-* `TauCeti.Valuation.characteristicSubgroupOfIdeal` : **Definition 7.3**, `cΓ_v(I)`.
+* `Valuation.valueSet v I` : the nonzero values of `v` on `I`.
+* `Valuation.characteristicSubgroupOfIdeal` : **Definition 7.3**, `cΓ_v(I)`.
 
 ## Main results
-* `TauCeti.Valuation.idealMeetsCharacteristicSubgroup_iff` and
-  `TauCeti.Valuation.idealMeetsCharacteristicSubgroup_of_one_le` : the branch condition of
+* `Valuation.idealMeetsCharacteristicSubgroup_iff` and
+  `Valuation.idealMeetsCharacteristicSubgroup_of_one_le` : the branch condition of
   Definition 7.3 restated on `valueSet`, and the introduction rule discharging it from a
   value `≥ 1`.
 
-* `TauCeti.Valuation.idealCofinalFor_iff_forall_isCofinalElement` : the ideal condition is
+* `Valuation.idealCofinalFor_iff_forall_isCofinalElement` : the ideal condition is
   cofinality of each nonzero value as an element of the value group; vanishing values are
   excluded rather than constrained, since `0` is cofinal for every subgroup.
-* `TauCeti.Valuation.idealCofinalFor_of_span`,
-  `TauCeti.Valuation.le_closure_singleton_of_idealCofinalFor` and
-  `TauCeti.Valuation.le_of_idealCofinalFor_of_mem_valueSet` : the membership, maximality and
-  minimality halves of **Lemma 7.2**, with `TauCeti.Valuation.isLeast_of_idealCofinalFor` the
+* `Valuation.idealCofinalFor_of_span`,
+  `Valuation.le_closure_singleton_of_idealCofinalFor` and
+  `Valuation.le_of_idealCofinalFor_of_mem_valueSet` : the membership, maximality and
+  minimality halves of **Lemma 7.2**, with `Valuation.isLeast_of_idealCofinalFor` the
   least-element form of the last.
-* `TauCeti.Valuation.idealCofinalFor_radical_iff` : cofinality depends only on the radical.
-* `TauCeti.Valuation.isGreatestIdealCofinal_closure_singleton_of_span` : **Lemma 7.2's
+* `Valuation.idealCofinalFor_radical_iff` : cofinality depends only on the radical.
+* `Valuation.isGreatestIdealCofinal_closure_singleton_of_span` : **Lemma 7.2's
   greatest-cofinal conclusion** from a generating set, with
   `exists_isGreatestIdealCofinal_of_not_meets` its existence form, which is what Definition 7.3
   presupposes.
-* `TauCeti.Valuation.exists_mem_valueSet_mem_characteristicSubgroupOfIdeal` and
-  `TauCeti.Valuation.isLeast_characteristicSubgroupOfIdeal` : **Lemma 7.2's attainment and
+* `Valuation.exists_mem_valueSet_mem_characteristicSubgroupOfIdeal` and
+  `Valuation.isLeast_characteristicSubgroupOfIdeal` : **Lemma 7.2's attainment and
   minimality conclusions** for `cΓ_v(I)` — off the first branch and with `v` not identically zero
   on `I`, it contains a value of `I` and is the least convex subgroup that does.
-* `TauCeti.Valuation.characteristicSubgroup_le_characteristicSubgroupOfIdeal` : `cΓ_v(I)` always
+* `Valuation.characteristicSubgroup_le_characteristicSubgroupOfIdeal` : `cΓ_v(I)` always
   contains `cΓ_v`.
-* `TauCeti.Valuation.characteristicSubgroupOfIdeal_eq_top_iff` and
-  `TauCeti.Valuation.characteristicSubgroupOfIdeal_eq_top_iff_forall_span` : **Lemma 7.4**, in
+* `Valuation.characteristicSubgroupOfIdeal_eq_top_iff` and
+  `Valuation.characteristicSubgroupOfIdeal_eq_top_iff_forall_span` : **Lemma 7.4**, in
   the all-of-`I` and generating-set forms.
-* `TauCeti.Valuation.characteristicSubgroupOfIdeal_eq_top_congr_of_isEquiv` : that criterion is
+* `Valuation.characteristicSubgroupOfIdeal_eq_top_congr_of_isEquiv` : that criterion is
   an invariant of the valuation class, which is what lets `Spv (A, I)` be carved out of the
   valuation spectrum.
 
@@ -90,7 +90,7 @@ its `Valuation.CofinalValue` in `SpvAI.lean`.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
 open MonoidWithZeroHom
 
@@ -628,4 +628,4 @@ theorem characteristicSubgroupOfIdeal_eq_top_congr_of_isEquiv {Γ₀' : Type*}
 
 end CommRing
 
-end TauCeti.Valuation
+end Valuation

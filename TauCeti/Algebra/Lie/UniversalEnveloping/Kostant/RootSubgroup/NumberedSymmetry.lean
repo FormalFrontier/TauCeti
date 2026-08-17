@@ -62,7 +62,7 @@ open CategoryTheory TensorProduct WithConv
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-open TauCeti.GeneralLinearGroup
+open AddEquiv
 
 universe u v w
 
@@ -243,7 +243,7 @@ theorem kostantElementaryMap_kostantElementaryNumberedSymmetryAut
   rw [val_kostantElementaryMap, val_kostantElementaryNumberedSymmetryAut,
     val_kostantElementaryNumberedSymmetryAut,
     val_kostantElementaryMap, map_mul, map_mul, map_inv,
-    TauCeti.GeneralLinearGroup.mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit
+    AddEquiv.mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit
       θ.toAddEquiv M hθM φ]
 
 /-- The numbered symmetry commutes with the `p ^ n`-power Frobenius endomorphism.

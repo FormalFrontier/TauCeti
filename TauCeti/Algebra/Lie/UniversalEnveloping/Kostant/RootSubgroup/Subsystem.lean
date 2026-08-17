@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.GroupTheory.Nilpotent
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Commutator
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Commutator.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
 public import TauCeti.GroupTheory.Commutator
 
@@ -31,7 +31,7 @@ The Chevalley commutator relations make `U_S` behave like the subgroup attached 
 roots. Two statements are proved. First, `U_S` is normalized by `U_T` whenever the bracket of a
 root vector indexed in `T` with one indexed in `S` stays in `S`; this is
 `IsChevalleyStableUnder`, which packages the class-two Chevalley hypothesis of
-`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Commutator` over a pair of index
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Commutator.Basic` over a pair of index
 sets. Second, if the indices of `S` carry a bounded height that every nonzero bracket strictly
 raises, and each bracket root is central for both inputs, then `U_S(A)` is nilpotent: the
 subgroups attached to the level sets `{i ∈ S | n ≤ ht i}` form a descending central series that
