@@ -93,14 +93,8 @@ private theorem kostantTorusPointAction_naturality
   apply GeneralLinear.eq_mapScalarExtensionAutomorphisms_of_apply_scalarExtensionMap_eq
     (V := M) φ
   intro z
-  have hmap (x : A ⊗[ℤ] M) :
-      GeneralLinear.scalarExtensionMap (V := M) φ x =
-        TensorProduct.map φ.hom.toLinearMap LinearMap.id x := by
-    induction x using TensorProduct.induction_on with
-    | zero => simp
-    | tmul a m => simp
-    | add x y hx hy => simp [hx, hy]
-  rw [hmap z, hmap, kostantTorusPointAction_val, kostantTorusPointAction_val]
+  rw [GeneralLinear.scalarExtensionMap_eq_map,
+    kostantTorusPointAction_val, kostantTorusPointAction_val]
   have hs :
       SplitTorus.pointsMulEquiv
           (HopfAlgebra.mapPoints
@@ -123,6 +117,7 @@ noncomputable def kostantTorusPointRepresentation :
   app A := kostantTorusPointAction M b wt A ≫
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A).symm
   naturality A B φ := by
+    -- Expose the functor components and their equality transports in the naturality square.
     change
       HopfAlgebra.mapPoints
           (H := MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) φ ≫
@@ -153,7 +148,9 @@ theorem kostantTorusPointRepresentation_action (A : CommAlgCat ℤ) :
     (kostantTorusPointRepresentation M b wt).action A =
       GrpCat.ofHom ((kostantTorusPoints M b wt A).comp
         (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).toMonoidHom) := by
-  rw [HopfAlgebra.PointRepresentation.action_def, kostantTorusPointRepresentation]
+  rw [HopfAlgebra.PointRepresentation.action_def]
+  dsimp only [kostantTorusPointRepresentation]
+  -- The source point functor is definitionally, but not reducibly, equal to `HopfAlgebra.points`.
   change
     (kostantTorusPointAction M b wt A ≫
         eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj (V := M) A).symm) ≫
@@ -168,6 +165,19 @@ theorem kostantTorusPointRepresentation_action (A : CommAlgCat ℤ) :
 noncomputable def kostantTorusComodule :
     Comodule ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M :=
   HopfAlgebra.PointRepresentation.toComodule (kostantTorusPointRepresentation M b wt)
+
+/-- The Kostant torus coaction is the flipped action of the universal point. -/
+@[simp]
+theorem kostantTorusComodule_coact_apply (x : M) :
+    (kostantTorusComodule M b wt).coact x =
+      TensorProduct.comm ℤ (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ))) M
+        (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+          (((kostantTorusPointRepresentation M b wt).action
+            (CommAlgCat.of ℤ
+              (ULift.{max 0 0} (MonoidAlgebra ℤ (Multiplicative (κ →₀ ℤ)))))
+            (toConv ULift.algEquiv.symm.toAlgHom)).val (1 ⊗ₜ[ℤ] x))) := by
+  unfold kostantTorusComodule
+  exact HopfAlgebra.PointRepresentation.toComodule_coact_apply _ x
 
 /-- The matrix-valued split-torus action in the base-changed weight basis. -/
 noncomputable def kostantTorusMatrix (A : Type*) [CommRing A] :
@@ -253,12 +263,14 @@ theorem pointsMulEquiv_kostantTorusCoordinateMap
   have haction := HopfAlgebra.PointRepresentation.ofComodule_action_val_eq_endOfPoint
     (kostantTorusComodule M b wt) (CommAlgCat.of ℤ A) f
   rw [hrecover, kostantTorusPointRepresentation_action] at haction
+  -- Forget the bundled automorphisms to use the equality as one of linear maps.
   change
     (kostantTorusPoints M b wt A (SplitTorus.pointsMulEquiv f)).val =
       Comodule.endOfPoint M f.ofConv at haction
   apply Matrix.GeneralLinearGroup.ext
   intro r i
   rw [GeneralLinear.pointToGeneralLinear_apply, ofConv_toConv, AlgHom.comp_apply]
+  -- Expose the coordinate-map application hidden by bundled algebra-map coercions.
   change f.ofConv
       ((kostantTorusCoordinateMap M b wt).hom
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
@@ -325,6 +337,7 @@ private theorem diagonalizableGroupSchemePointsMulEquiv_mapMulEquivOfPresentatio
   apply AlgebraicGeometry.Spec.mapMulEquiv.injective
   apply Over.OverMorphism.ext
   rw [← hp]
+  -- Expose the underlying scheme maps hidden by the `Over` morphism coercions.
   change (Spec.map (CommRingCat.ofHom f.ofConv.toRingHom) ≫
       eqToHom (DiagonalizableGroup.groupScheme_X_left ℤ
         (SplitTorus.characterGroup κ)).symm) ≫
