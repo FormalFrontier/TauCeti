@@ -108,12 +108,14 @@ lemma dotAction_def (w : P.weylGroup) (x : M) :
 
 /-- **The `ρ`-shift is equivariant** from the dot action to the linear action: `w ⬝ x + ρ` is
 `w (x + ρ)`. Every statement below is read off from a linear statement through this identity. -/
+@[simp]
 theorem dotAction_add_weylVector (w : P.weylGroup) (x : M) :
     dotAction P b w x + weylVector P b = w • (x + weylVector P b) := by
   rw [dotAction_def, sub_add_cancel]
 
 /-- The dot action of a Weyl-group element on `x`, compared with a candidate value `y`, is the
 linear action compared on the `ρ`-shifts. -/
+@[simp]
 theorem dotAction_eq_iff {w : P.weylGroup} {x y : M} :
     dotAction P b w x = y ↔ w • (x + weylVector P b) = y + weylVector P b := by
   rw [← dotAction_add_weylVector P b w x, add_left_inj]
@@ -124,6 +126,7 @@ theorem dotAction_one (x : M) : dotAction P b 1 x = x := by
   rw [dotAction_def, one_smul, add_sub_cancel_right]
 
 /-- The dot action is an action: it turns multiplication in the Weyl group into composition. -/
+@[simp]
 theorem dotAction_mul (v w : P.weylGroup) (x : M) :
     dotAction P b (v * w) x = dotAction P b v (dotAction P b w x) := by
   rw [dotAction_def, dotAction_def P b v, dotAction_add_weylVector, mul_smul]
