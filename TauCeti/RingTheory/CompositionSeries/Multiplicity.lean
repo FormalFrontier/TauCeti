@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Length
-public import Mathlib.RingTheory.SimpleModule.Basic
 public import TauCeti.RingTheory.CompositionSeries.Basic
 
 /-!
@@ -58,7 +57,7 @@ definitional identity.
   projective cover, an object defined only up to isomorphism.  The transport of a composition
   series along a linear equivalence that this rests on is
   `TauCeti.RingTheory.CompositionSeries.Basic`.
-* `TauCeti.jordanHolderMultiplicity_eq_one_of_isSimpleModule` and
+* `TauCeti.jordanHolderMultiplicity_eq_one_of_isSimpleModule_of_linearEquiv` and
   `TauCeti.jordanHolderMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule`: a simple
   module contains itself once and nothing else, the anti-vacuity check on the count.
 * `TauCeti.jordanHolderMultiplicity_congr`: the multiplicity depends on `S` only through its
@@ -245,6 +244,9 @@ theorem isCompositionFactorAt_mapCompositionSeries_iff (e : M ≃ₗ[R] N)
   ⟨fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).trans f⟩,
     fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).symm.trans f⟩⟩
 
+/-- **Transport preserves multiplicities.** The image of a composition series under a linear
+equivalence of the ambient module counts every module the same number of times as the series
+itself. -/
 @[simp]
 theorem compositionMultiplicity_mapCompositionSeries (e : M ≃ₗ[R] N)
     (s : CompositionSeries (Submodule R M)) (S : Type w) [AddCommGroup S] [Module R S] :
@@ -320,7 +322,7 @@ theorem isCompositionFactorAt_iff_of_isSimpleModule [IsSimpleModule R M]
 
 /-- **A simple module contains exactly one copy of itself**, counted along a fixed composition
 series of it running from `⊥` to `⊤`. -/
-theorem compositionMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M]
+theorem compositionMultiplicity_eq_one_of_isSimpleModule_of_linearEquiv [IsSimpleModule R M]
     {s : CompositionSeries (Submodule R M)} (hbot : s.head = ⊥) (htop : s.last = ⊤)
     (S : Type w) [AddCommGroup S] [Module R S] (e : M ≃ₗ[R] S) :
     compositionMultiplicity s S = 1 := by
@@ -344,11 +346,11 @@ theorem compositionMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule
 
 /-- **A simple module contains exactly one copy of itself**: the multiplicity `[M : S]` of a simple
 module `M` in itself is `1`. -/
-theorem jordanHolderMultiplicity_eq_one_of_isSimpleModule [IsSimpleModule R M]
+theorem jordanHolderMultiplicity_eq_one_of_isSimpleModule_of_linearEquiv [IsSimpleModule R M]
     (S : Type w) [AddCommGroup S] [Module R S] (e : M ≃ₗ[R] S) :
     jordanHolderMultiplicity R M S = 1 :=
   have h := (exists_compositionSeries_of_isNoetherian_isArtinian R M).choose_spec
-  compositionMultiplicity_eq_one_of_isSimpleModule h.1 h.2 S e
+  compositionMultiplicity_eq_one_of_isSimpleModule_of_linearEquiv h.1 h.2 S e
 
 /-- **A simple module contains no copy of a module it is not isomorphic to**: the multiplicity
 `[M : S]` vanishes for a simple `M` admitting no linear equivalence with `S`. -/
