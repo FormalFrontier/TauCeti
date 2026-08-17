@@ -60,7 +60,7 @@ variable {R : Type u} {H : Type v} {K : Type w}
 variable [CommRing R] [Ring H] [Ring K]
 
 /-- The tensor-kernel exactness theorem in the tensor-ideal notation used by `HopfIdeal`. -/
-theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
+private theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
     (f : H →ₐ[R] A)
     (hf : Function.Surjective f) :
     RingHom.ker (Algebra.TensorProduct.map f f) =
