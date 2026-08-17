@@ -329,6 +329,13 @@ theorem cartierDualDualNatIso_hom_app (R : Type u) [CommRing R]
     (cartierDualDualNatIso R).hom.app G = (cartierDuality R).counitIso.inv.app G :=
   (rfl)
 
+/-- The inverse double-dual isomorphism is the counit of `cartierDuality`. -/
+@[simp]
+theorem cartierDualDualNatIso_inv_app (R : Type u) [CommRing R]
+    (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
+    (cartierDualDualNatIso R).inv.app G = (cartierDuality R).counitIso.hom.app G :=
+  (rfl)
+
 /-- The double-dual isomorphism is natural in the group scheme. -/
 @[reassoc]
 theorem cartierDualDualIso_hom_naturality (R : Type u) [CommRing R]
