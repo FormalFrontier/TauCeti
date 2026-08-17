@@ -331,6 +331,26 @@ theorem map_kostantTorusPoints (φ : A →+* B) (s : κ → Aˣ) (z : A ⊗[ℤ]
       rw [TensorProduct.tmul_smul, map_zsmul, map_zsmul, map_zsmul, map_zsmul,
         map_kostantTorusPoints_tmul_basis]
 
+section AlgebraHom
+
+variable [Algebra ℤ A] [Algebra ℤ B]
+
+omit [Module ℚ V] in
+/-- The torus on points is natural along a morphism of explicitly specified `ℤ`-algebras. -/
+theorem map_kostantTorusPoints_algHom (φ : A →ₐ[ℤ] B) (s : κ → Aˣ)
+    (z : A ⊗[ℤ] M) :
+    TensorProduct.map φ.toLinearMap LinearMap.id
+        ((kostantTorusPoints M b wt A s).val z) =
+      (kostantTorusPoints M b wt B fun j => Units.map φ.toMonoidHom (s j)).val
+        (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
+  let hA : (inferInstance : Algebra ℤ A) = Ring.toIntAlgebra A := Subsingleton.elim _ _
+  let hB : (inferInstance : Algebra ℤ B) = Ring.toIntAlgebra B := Subsingleton.elim _ _
+  cases hA
+  cases hB
+  exact map_kostantTorusPoints M b wt φ.toRingHom s z
+
+end AlgebraHom
+
 end Naturality
 
 end Torus
