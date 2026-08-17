@@ -66,6 +66,7 @@ theorem toAdd_weightCharacter (μ : σ → ℤ) (j : σ) :
 
 /-- **The value of a weight character at a point of the split torus** is the corresponding
 monomial in the coordinates of the point. -/
+@[simp]
 theorem charOfPoint_weightCharacter
     (q : WithConv (MonoidAlgebra R (Multiplicative (σ →₀ ℤ)) →ₐ[R] A)) (μ : σ → ℤ) :
     DiagonalizableGroup.charOfPoint q.ofConv (weightCharacter μ) =
