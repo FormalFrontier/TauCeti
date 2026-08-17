@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.CommonKernel
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated
@@ -129,12 +130,10 @@ theorem kostantRootSubgroupMatrix_mem_generatedPoints
   refine ⟨toConv (q.ofConv.comp
       (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom),
     ?_, ?_⟩
-  · rw [← CommHopfAlgCat.mapPointsFunctor_app_apply,
-      ← mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap,
-      CommHopfAlgCat.mapPointsFunctor_comp]
-    exact CommHopfAlgCat.quotientPointsHom_mem_quotientPointsSubgroup
-      (GeneralLinear.coordinateHopfAlgebra ℤ n)
-      (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) (CommAlgCat.of ℤ A) _
+  · rw [kostantGeneratedDefiningIdeal_def]
+    exact CommHopfAlgCat.mapPoints_commonKernel_mem_quotientPointsSubgroup
+      (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) i
+        (CommAlgCat.of ℤ A) q
   · simpa only [MulEquiv.coe_toMonoidHom, GeneralLinear.pointsMulEquiv_apply] using
       pointsMulEquiv_kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b A q
 

@@ -72,6 +72,15 @@ noncomputable def kostantGeneratedDefiningIdeal :
   CommHopfAlgCat.commonKernelHopfIdeal
     (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
 
+/-- The defining ideal of the generated group scheme is the common-kernel Hopf ideal of its root
+subgroup coordinate maps. -/
+theorem kostantGeneratedDefiningIdeal_def :
+    kostantGeneratedDefiningIdeal e h ρ M hM hnil b =
+      CommHopfAlgCat.commonKernelHopfIdeal
+        (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
+  unfold kostantGeneratedDefiningIdeal
+  rfl
+
 /-- A Hopf ideal is contained in the defining ideal of the generated group scheme exactly when
 every Kostant root-subgroup coordinate map kills it. This is the coordinate form of minimality. -/
 theorem le_kostantGeneratedDefiningIdeal_iff
