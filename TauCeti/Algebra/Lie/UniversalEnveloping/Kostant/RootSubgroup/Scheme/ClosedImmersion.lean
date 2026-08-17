@@ -16,22 +16,26 @@ with finite basis `b`. A nilpotent root vector `eᵢ` then gives the scheme morp
 more than this morphism: the root subgroup has to be a *closed* subgroup scheme, and it has to be
 a faithful copy of `𝔾ₐ`, so that `xᵢ(t)` determines `t`.
 
-Both follow from a single piece of data, available in every Chevalley basis: a *root step*, that
-is a pair of basis indices `r`, `s` together with a unit `c : ℤ` such that
+Both follow from one extra hypothesis on `ρ`, `M` and `b`, a *root step*: a pair of basis indices
+`r`, `s` together with a scalar `c : ℤ` such that
 
 ```text
-ρ(eᵢ) (b s) = c • b r    and    ρ(eᵢ) (ρ(eᵢ) (b s)) = 0.
+ρ(eᵢ) (b s) = c • b r    and    ρ(eᵢ) (ρ(eᵢ) (b s)) = 0,
 ```
 
-The second condition truncates the divided-power exponential in that matrix column, so the
+with `c` a unit. Every declaration below carries these three assumptions as hypotheses; none of
+them is derived here from the Kostant form, from the representation, or from the lattice.
+
+The second equation truncates the divided-power exponential in that matrix column, so the
 `(r, s)` entry of `xᵢ(t)` is exactly `c t` rather than a polynomial of higher degree. Consequently
 the coordinate Hopf-algebra morphism `O(GLₙ) → O(𝔾ₐ)` hits the polynomial generator, hence is
 surjective, and `xᵢ` is a closed immersion.
 
 A root step is not a normalization that could be arranged by rescaling the basis: it says that the
-column of `eᵢ` at `b s` is a single basis vector with unit coefficient, which is what integrality
-of the Chevalley structure constants supplies. In a simply laced type it holds for `s` the index of
-a root vector `e_β` with `β + αᵢ` a root and `β + 2αᵢ` not a root.
+column of `eᵢ` at `b s` is a single basis vector with unit coefficient. For the adjoint
+representation on a Chevalley lattice of a simply laced type the intended witness is `s` the index
+of a root vector `e_β` with `β + αᵢ` a root and `β + 2αᵢ` not a root; supplying such a witness is
+left to the caller and is not established here.
 
 ## Main declarations
 
@@ -50,6 +54,8 @@ a root vector `e_β` with `β + αᵢ` a root and `β + 2αᵢ` not a root.
 * `TauCeti.UniversalEnvelopingAlgebra.mono_kostantRootSubgroup`: it is a monomorphism.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupClosedSubgroup`: the resulting closed
   subgroup scheme of `GLₙ`.
+* `TauCeti.UniversalEnvelopingAlgebra.coe_kostantRootSubgroupClosedSubgroup`: that closed subgroup
+  is the subobject represented by the root-subgroup morphism.
 
 ## References
 
@@ -109,7 +115,7 @@ private theorem integralDividedPower_apply_eq_zero_of_two_le {k : ℕ}
     ZeroMemClass.coe_zero, smul_assoc]
   have hpow : (x ^ (m + 2)) (v : V) = 0 := by
     rw [pow_add, Module.End.mul_apply, pow_two, Module.End.mul_apply, hsq, map_zero]
-  rw [show (x ^ (m + 2)) • (v : V) = (x ^ (m + 2)) (v : V) from rfl, hpow, smul_zero]
+  rw [Module.End.smul_def, hpow, smul_zero]
 
 /-- A root step forces the operator to have nilpotency class at least two, so the linear term of
 its divided-power exponential is present. -/
@@ -175,7 +181,8 @@ variable (hsq : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))
 include hnil hc hstep hsq in
 /-- **The pinning coordinate of a root subgroup.** At a root step, the `r`-th coordinate of
 `xᵢ(t) (1 ⊗ b s)` is the parameter itself, scaled by the unit `c`. Every higher divided power
-lands in other coordinates, so no higher power of the parameter appears. -/
+vanishes on this basis vector, so no higher power of the parameter appears, and the zeroth one
+contributes `b s`, which has no `r`-th coordinate because `r ≠ s`. -/
 theorem repr_kostantRootSubgroupPoints_of_isRootStep {A : Type*} [CommRing A]
     (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     (b.baseChange A).repr
@@ -279,11 +286,7 @@ theorem kostantRootSubgroupCoordinateMap_surjective :
     refine (AlgHom.mem_range _).2
       ⟨((u⁻¹ : ℤˣ) : ℤ) • GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
         (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, s))), ?_⟩
-    change (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b).hom
-        (((u⁻¹ : ℤˣ) : ℤ) • GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ n
-          (GeneralLinear.coordinateRingMap ℤ n (MvPolynomial.X (r, s)))) =
-        SymmetricAlgebra.ι ℤ ℤ 1
-    rw [map_zsmul,
+    rw [BialgHom.coe_toAlgHom, map_zsmul,
       kostantRootSubgroupCoordinateMap_X_of_isRootStep e h ρ M hM i hnil b hc hstep hsq,
       smul_smul, ← hu, ← Units.val_mul, inv_mul_cancel, Units.val_one, one_smul]
   intro y
@@ -307,10 +310,24 @@ include hc hstep hsq in
 `xᵢ : 𝔾ₐ → GLₙ` identifies `𝔾ₐ` with a closed subscheme of `GLₙ` over `ℤ`. -/
 theorem isClosedImmersion_kostantRootSubgroup :
     IsClosedImmersion (kostantRootSubgroup e h ρ M hM i hnil b).hom.hom.left := by
-  rw [kostantRootSubgroup_def,
-    CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_comp_eqToHom_iff
-      (AdditiveGroup.groupScheme_def ℤ) (GeneralLinear.groupScheme_def ℤ n)]
-  exact kostantRootSubgroupCoordinateMap_surjective e h ρ M hM i hnil b hc hstep hsq
+  let e₁ := (eqToHom (AdditiveGroup.groupScheme_def ℤ)).hom.hom.left
+  let c₁ := ((AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+    (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b).op ≫
+      eqToHom (GeneralLinear.groupScheme_def ℤ n).symm).hom.hom.left
+  have he₁ : IsIso e₁ :=
+    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of ℤ))).mapIso
+      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of ℤ)))).mapIso
+        (eqToIso (AdditiveGroup.groupScheme_def ℤ)))).isIso_hom
+  have hc₁ : IsClosedImmersion c₁ :=
+    (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
+      (GeneralLinear.groupScheme_def ℤ n) _).2
+      (kostantRootSubgroupCoordinateMap_surjective e h ρ M hM i hnil b hc hstep hsq)
+  have he₁c : IsClosedImmersion (e₁ ≫ c₁) :=
+    (@MorphismProperty.cancel_left_of_respectsIso
+      _ _ @IsClosedImmersion inferInstance _ _ _ e₁ c₁ he₁).2 hc₁
+  rw [kostantRootSubgroup_def]
+  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
+  exact he₁c
 
 include hc hstep hsq in
 /-- A root subgroup is a monomorphism of group schemes over `ℤ`. -/
@@ -328,6 +345,19 @@ noncomputable def kostantRootSubgroupClosedSubgroup
     ClosedSubgroupScheme (GeneralLinear.groupScheme ℤ n) :=
   haveI := isClosedImmersion_kostantRootSubgroup e h ρ M hM i hnil b hc hstep hsq
   ClosedSubgroupScheme.mk (kostantRootSubgroup e h ρ M hM i hnil b)
+
+include hc hstep hsq in
+/-- **The root subgroup presents its own closed subgroup.** The subobject underlying
+`kostantRootSubgroupClosedSubgroup` is the one represented by `kostantRootSubgroup` itself, so a
+consumer never has to unfold the bundled definition; the inclusion arrow agrees with
+`kostantRootSubgroup` up to `CategoryTheory.Subobject.underlyingIso`. -/
+@[simp]
+theorem coe_kostantRootSubgroupClosedSubgroup :
+    (kostantRootSubgroupClosedSubgroup e h ρ M hM i hnil b hc hstep hsq).1 =
+      letI := mono_kostantRootSubgroup e h ρ M hM i hnil b hc hstep hsq
+      Subobject.mk (kostantRootSubgroup e h ρ M hM i hnil b) :=
+  haveI := isClosedImmersion_kostantRootSubgroup e h ρ M hM i hnil b hc hstep hsq
+  ClosedSubgroupScheme.coe_mk _
 
 end Scheme
 
