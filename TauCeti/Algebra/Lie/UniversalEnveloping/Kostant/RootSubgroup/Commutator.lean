@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Basic
 public import TauCeti.RingTheory.Nilpotent.ChevalleyCommutator
-public import TauCeti.RingTheory.Nilpotent.RootString
+public import TauCeti.RingTheory.Nilpotent.RootString.Basic
 import Mathlib.RingTheory.Nilpotent.Basic
 
 /-!
@@ -48,8 +48,10 @@ factor:
 x_α(t) x_β(u) x_α(t)⁻¹ = x_β(u) x_{α+β}(c t u) x_{2α+β}(d t² u).
 ```
 
-Type `G₂` additionally needs the longer chain with factors at `3α + β` and `3α + 2β`, which
-is not treated here.
+Type `G₂` additionally needs the longer chain with factors at `3α + β` and `3α + 2β`. That
+relation is proved for the underlying integral exponentials in
+`TauCeti.RingTheory.Nilpotent.RootString.G2`; only its transport to the root subgroups here is
+still missing.
 
 The general statements about integral nilpotent exponentials are
 `TauCeti.baseChangeExp_mul_baseChangeExp_of_commutator_eq` and

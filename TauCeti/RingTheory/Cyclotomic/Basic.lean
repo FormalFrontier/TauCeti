@@ -42,7 +42,7 @@ namespace TauCeti
 
 /-- Exact `e`-th cyclotomic integers, represented by the `e.totient` coefficients of the
 canonical polynomial representative in descending order. -/
-@[expose] def Cyclotomic (e : ℕ) := {l : List ℤ // l.length = e.totient}
+@[expose] def Cyclotomic (e : ℕ) : Type _ := {l : List ℤ // l.length = e.totient}
   deriving DecidableEq
 
 namespace Cyclotomic
