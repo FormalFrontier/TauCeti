@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.LinearAlgebra.BilinearForm.Basic
+public import TauCeti.LinearAlgebra.IntegralLattice.Even
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
 public import TauCeti.LinearAlgebra.IntegralLattice.Signature
 
@@ -29,6 +30,7 @@ the canonical operation internal to integral lattices is the integer action defi
 * `TauCeti.IntegralLattice.instMulActionInt`: the integer multiplicative action on integral
   lattices.
 * `TauCeti.IntegralLattice.instInvolutiveNeg`: form negation, defined as scaling by `-1`.
+* `TauCeti.IntegralLattice.isEven_neg_iff`: form negation preserves evenness.
 * `TauCeti.IntegralLattice.gramMatrix_smul`: scaling multiplies every Gram-matrix entry.
 * `TauCeti.IntegralLattice.determinant_smul`: the determinant is multiplied by the scalar to the
   lattice rank.
@@ -297,6 +299,29 @@ theorem integralForm_neg (L : IntegralLattice V) :
   change ((-1 : ℤ) • L).integralForm = -L.integralForm
   rw [integralForm_smul, neg_one_smul ℤ]
 
+/-- An integral lattice is even if and only if its form negation is even. -/
+@[simp]
+theorem isEven_neg_iff (L : IntegralLattice V) : (-L).IsEven ↔ L.IsEven := by
+  rw [(-L).isEven_iff_forall_norm, L.isEven_iff_forall_norm]
+  constructor
+  · intro h x
+    obtain ⟨z, hz⟩ := h x
+    refine ⟨-z, ?_⟩
+    rw [norm_apply] at hz ⊢
+    rw [neg_form] at hz
+    change -(L.form (x : V) (x : V)) = 2 * (z : ℚ) at hz
+    push_cast
+    linarith
+  · intro h x
+    obtain ⟨z, hz⟩ := h x
+    refine ⟨-z, ?_⟩
+    rw [norm_apply] at hz ⊢
+    rw [neg_form]
+    change -(L.form (x : V) (x : V)) = 2 * ((-z : ℤ) : ℚ)
+    push_cast
+    rw [hz]
+    ring
+
 /-- Negation multiplies every Gram-matrix entry by `-1`. -/
 @[simp]
 theorem gramMatrix_neg (L : IntegralLattice V) {ι : Type v} (e : Basis ι ℤ L) :
@@ -328,6 +353,11 @@ theorem nondegenerate_neg_iff (L : IntegralLattice V) :
     (-L).form.Nondegenerate ↔ L.form.Nondegenerate := by
   rw [neg_def]
   exact nondegenerate_smul_iff (by norm_num) L
+
+/-- Negating the form of a nondegenerate integral lattice preserves nondegeneracy. -/
+instance instIsNondegenerateNeg (L : IntegralLattice V) [L.IsNondegenerate] :
+    (-L).IsNondegenerate :=
+  ⟨L.nondegenerate_neg_iff.mpr L.form_nondegenerate⟩
 
 /-- Form negation preserves the radical. -/
 @[simp]
