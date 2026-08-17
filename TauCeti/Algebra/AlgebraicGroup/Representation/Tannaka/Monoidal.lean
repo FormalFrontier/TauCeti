@@ -303,6 +303,7 @@ theorem scalarExtensionComponent_one (M : FGComoduleCat.{u, v, u} R H) :
 
 /-- Multiplying tensor automorphisms composes their transported components: multiplication in
 `Aut` is reverse composition, and the object transports between the two components cancel. -/
+@[simp]
 theorem scalarExtensionComponent_mul
     (η θ : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H) :

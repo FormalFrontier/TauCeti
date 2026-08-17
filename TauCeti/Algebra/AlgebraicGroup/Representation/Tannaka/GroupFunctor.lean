@@ -60,7 +60,7 @@ variable (H : Type v) [Semiring H] [Bialgebra R H]
 -- `@[expose]` is required, not incidental: without the body, the coercion
 -- `↑((tensorAutFunctor R H).obj A)` does not reduce to `Aut (...)`, so
 -- `tensorAutFunctor_map_apply` below cannot even be stated, let alone proved.
-/-- The tensor-automorphism group functor of a Hopf algebra: a commutative `R`-algebra `A` is
+/-- The tensor-automorphism group functor of a bialgebra: a commutative `R`-algebra `A` is
 sent to the group of tensor automorphisms of scalar extension to `A` on the finite
 `H`-comodules, and a morphism of value algebras acts by base change of components. -/
 @[expose] noncomputable def tensorAutFunctor :

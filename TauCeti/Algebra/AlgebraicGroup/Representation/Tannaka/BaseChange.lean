@@ -287,6 +287,7 @@ theorem tensorAutMapValue_id
 
 /-- Base change along a composite of morphisms of value algebras is the composite of base
 changes. -/
+@[simp]
 theorem tensorAutMapValue_comp (f : A →ₐ[R] B) (g : B →ₐ[R] C)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :
     tensorAutMapValue R H A C (g.comp f) η =

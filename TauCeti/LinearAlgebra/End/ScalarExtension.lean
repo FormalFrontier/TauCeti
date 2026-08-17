@@ -141,6 +141,7 @@ theorem mapValue_one (f : A →ₐ[R] B) :
   (eq_mapValue f 1 1 rfl).symm
 
 /-- Base change is multiplicative: it turns composition into composition. -/
+@[simp]
 theorem mapValue_mul (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] M)) :
     mapValue f (φ * ψ) = mapValue f φ * mapValue f ψ := by
   refine (eq_mapValue f (φ * ψ) (mapValue f φ * mapValue f ψ) ?_).symm
@@ -156,6 +157,7 @@ theorem mapValue_zero (f : A →ₐ[R] B) :
   simp
 
 /-- Base change is additive. -/
+@[simp]
 theorem mapValue_add (f : A →ₐ[R] B) (φ ψ : _root_.Module.End A (A ⊗[R] M)) :
     mapValue f (φ + ψ) = mapValue f φ + mapValue f ψ := by
   refine (eq_mapValue f (φ + ψ) (mapValue f φ + mapValue f ψ) ?_).symm
@@ -201,6 +203,7 @@ theorem mapValue_id (φ : _root_.Module.End A (A ⊗[R] M)) :
 
 /-- Base change along a composite of morphisms of value algebras is the composite of base
 changes. -/
+@[simp]
 theorem mapValue_comp (f : A →ₐ[R] B) (g : B →ₐ[R] C) (φ : _root_.Module.End A (A ⊗[R] M)) :
     mapValue (g.comp f) φ = mapValue g (mapValue f φ) := by
   refine (eq_mapValue (g.comp f) φ (mapValue g (mapValue f φ)) ?_).symm
