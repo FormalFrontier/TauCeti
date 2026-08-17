@@ -16,10 +16,10 @@ Let `U_ℤ = kostantForm e h` act on a rational representation `V` preserving an
 elementary group `E(A) ≤ Aut_A(A ⊗[ℤ] M)` of
 `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary`.
 
-A *symmetry of the numbered data* is a permutation `σ` of the index set together with a `ℚ`-linear
-automorphism `θ` of `V` that preserves `M` and carries the action of `eᵢ` to the action of
-`e_{σ i}`. Conjugating by the scalar extension of `θ` is then an automorphism of `E(A)` which
-permutes the root subgroups by `σ` without touching their parameters:
+A *symmetry of the numbered data* is a surjective self-map `σ` of the index set together with a
+`ℚ`-linear automorphism `θ` of `V` that preserves `M` and carries the action of `eᵢ` to the action
+of `e_{σ i}`. Conjugating by the scalar extension of `θ` is then an automorphism of `E(A)` which
+sends each root subgroup to the one indexed by `σ` without touching its parameters:
 
 ```text
 γ (xᵢ(t)) = x_{σ i}(t).
@@ -73,15 +73,26 @@ variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End �
 variable (M : AddSubgroup V)
 variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
 variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
-variable (σ : Equiv.Perm I) (θ : V ≃ₗ[ℚ] V) (hθM : ∀ v, θ v ∈ M ↔ v ∈ M)
+variable (σ : I → I) (θ : V ≃ₗ[ℚ] V) (hθM : ∀ v, θ v ∈ M ↔ v ∈ M)
 variable (hθe : ∀ i, ∀ v : V,
   θ (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) v) =
     ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e (σ i))) (θ v))
+variable (hσ : Function.Surjective σ)
 
 -- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
 attribute [local instance high] Algebra.toModule
 
 /-! ## The pinning equation -/
+
+private theorem kostantRootSubgroupParam_val_apply (A : CommAlgCat.{w} ℤ) (i : I)
+    (hi : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+    (t : Multiplicative A) (z : A ⊗[ℤ] M) :
+    (kostantRootSubgroupParam e h ρ M hM i hi A t).val z =
+      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
+        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
+        (Multiplicative.toAdd t) z := by
+  rw [kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val,
+    MulEquiv.apply_symm_apply]
 
 include hθe in
 /-- Conjugation by the scalar extension of `θ` carries the root subgroup at `i` to the root
@@ -106,8 +117,7 @@ theorem invariantRestrictUnit_mul_kostantRootSubgroupParam (A : CommAlgCat.{w} �
     pow_eq_zero_of_intertwines θ hint hk
   refine Units.ext (LinearMap.ext fun z => ?_)
   rw [Units.val_mul, Units.val_mul, Module.End.mul_apply, Module.End.mul_apply,
-    kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val, MulEquiv.apply_symm_apply,
-    kostantRootSubgroupParam_apply, kostantRootSubgroupPoints_val, MulEquiv.apply_symm_apply,
+    kostantRootSubgroupParam_val_apply, kostantRootSubgroupParam_val_apply,
     val_invariantRestrictUnit_apply, val_invariantRestrictUnit_apply]
   exact baseChange_invariantRestrict_baseChangeExp θ M hθM hint _ _ hk hky _ z
 
@@ -125,11 +135,11 @@ theorem invariantRestrictUnit_conj_kostantRootSubgroupParam (A : CommAlgCat.{w} 
 
 /-! ## The automorphism of the elementary group -/
 
-include hθe in
+include hθe hσ in
 /-- Conjugation by the scalar extension of `θ` preserves the elementary group.
 
 Both inclusions come from the pinning equation: the generators at `i` go to the generators at
-`σ i`, and every generator is hit because `σ` is a permutation. -/
+`σ i`, and every generator is hit because `σ` is surjective. -/
 theorem map_kostantElementarySubgroup_conj (A : CommAlgCat.{w} ℤ) :
     (kostantElementarySubgroup e h ρ M hM hnil A).map
         (MulAut.conj (invariantRestrictUnit (R := A) θ M hθM) : _ →* _) =
@@ -146,9 +156,9 @@ theorem map_kostantElementarySubgroup_conj (A : CommAlgCat.{w} ℤ) :
     exact Subgroup.subset_closure (Set.mem_iUnion.2 ⟨σ i, Set.mem_range_self t⟩)
   · rw [kostantElementarySubgroup_eq_closure, Subgroup.closure_le]
     rintro - ⟨-, ⟨i, rfl⟩, t, rfl⟩
-    refine ⟨kostantRootSubgroupParam e h ρ M hM (σ.symm i) (hnil (σ.symm i)) A t,
-      Subgroup.subset_closure (Set.mem_iUnion.2 ⟨σ.symm i, Set.mem_range_self t⟩), ?_⟩
-    rw [hconj (σ.symm i) t, Equiv.apply_symm_apply]
+    obtain ⟨j, rfl⟩ := hσ i
+    exact ⟨kostantRootSubgroupParam e h ρ M hM j (hnil j) A t,
+      Subgroup.subset_closure (Set.mem_iUnion.2 ⟨j, Set.mem_range_self t⟩), hconj j t⟩
 
 /-- The automorphism of the elementary group attached to a symmetry `(σ, θ)` of the numbered
 Kostant data: conjugation by the scalar extension of `θ`. -/
@@ -157,13 +167,13 @@ noncomputable def kostantElementaryNumberedSymmetry (A : CommAlgCat.{w} ℤ) :
   (MulEquiv.subgroupMap (MulAut.conj (invariantRestrictUnit (R := A) θ M hθM))
       (kostantElementarySubgroup e h ρ M hM hnil A)).trans
     (MulEquiv.subgroupCongr
-      (map_kostantElementarySubgroup_conj e h ρ M hM hnil σ θ hθM hθe A))
+      (map_kostantElementarySubgroup_conj e h ρ M hM hnil σ θ hθM hθe hσ A))
 
 /-- The numbered symmetry acts by conjugation inside the ambient automorphism group. -/
 @[simp]
 theorem val_kostantElementaryNumberedSymmetry (A : CommAlgCat.{w} ℤ)
     (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A g :
+    (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A g :
         LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
       invariantRestrictUnit (R := A) θ M hθM * (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
         (invariantRestrictUnit (R := A) θ M hθM)⁻¹ := by
@@ -172,12 +182,13 @@ theorem val_kostantElementaryNumberedSymmetry (A : CommAlgCat.{w} ℤ)
   rw [kostantElementaryNumberedSymmetry, MulEquiv.trans_apply,
     MulEquiv.subgroupCongr_apply, MulEquiv.coe_subgroupMap_apply, MulAut.conj_apply]
 
-/-- The numbered symmetry permutes the root subgroups by `σ`, leaving parameters untouched. -/
+/-- The numbered symmetry sends the root subgroup at `i` to the one at `σ i`, leaving parameters
+untouched. -/
 @[simp]
 theorem kostantElementaryNumberedSymmetry_kostantRootSubgroupParam
     (A : CommAlgCat.{w} ℤ) (i : I)
     (t : Multiplicative A) :
-    kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A
+    kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A
         ⟨kostantRootSubgroupParam e h ρ M hM i (hnil i) A t,
           kostantRootSubgroupParam_mem_kostantElementarySubgroup e h ρ M hM hnil A i t⟩ =
       ⟨kostantRootSubgroupParam e h ρ M hM (σ i) (hnil (σ i)) A t,
@@ -192,10 +203,10 @@ This is what makes the order relations `γ ^ 2 = 1` and `γ ^ 3 = 1` available f
 families, where `θ` realizes an involution or a triality of the numbered data. -/
 theorem kostantElementaryNumberedSymmetry_pow_eq_one (A : CommAlgCat.{w} ℤ) {n : ℕ}
     (hn : ∀ v, (θ ^ n) v = v) :
-    kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A ^ n = 1 := by
+    kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A ^ n = 1 := by
   refine MulEquiv.ext fun g => Subtype.ext ?_
   have hpow : ∀ m : ℕ, ∀ g : kostantElementarySubgroup e h ρ M hM hnil A,
-      ((kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A ^ m) g :
+      ((kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A ^ m) g :
           LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) =
         invariantRestrictUnit (R := A) θ M hθM ^ m *
           (g : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) *
@@ -234,8 +245,8 @@ theorem kostantElementaryMap_kostantElementaryNumberedSymmetry
     {A B : CommAlgCat.{w} ℤ} (φ : A ⟶ B)
     (g : kostantElementarySubgroup e h ρ M hM hnil A) :
     kostantElementaryMap e h ρ M hM hnil φ
-        (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A g) =
-      kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe B
+        (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A g) =
+      kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ B
         (kostantElementaryMap e h ρ M hM hnil φ g) := by
   refine Subtype.ext ?_
   rw [val_kostantElementaryMap, val_kostantElementaryNumberedSymmetry,
@@ -251,13 +262,13 @@ theorem kostantElementaryFrobenius_kostantElementaryNumberedSymmetry
     (p n : ℕ) (A : CommAlgCat.{w} ℤ)
     [ExpChar A p] (g : kostantElementarySubgroup e h ρ M hM hnil A) :
     kostantElementaryFrobenius e h ρ M hM hnil p n A
-        (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A g) =
-      kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe A
+        (kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A g) =
+      kostantElementaryNumberedSymmetry e h ρ M hM hnil σ θ hθM hθe hσ A
         (kostantElementaryFrobenius e h ρ M hM hnil p n A g) := by
   obtain ⟨φ, hφ⟩ :=
     exists_kostantElementaryFrobenius_eq_kostantElementaryMap e h ρ M hM hnil p n A
   rw [hφ]
   exact kostantElementaryMap_kostantElementaryNumberedSymmetry
-    e h ρ M hM hnil σ θ hθM hθe φ g
+    e h ρ M hM hnil σ θ hθM hθe hσ φ g
 
 end TauCeti.UniversalEnvelopingAlgebra
