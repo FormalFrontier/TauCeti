@@ -21,12 +21,12 @@ the fixed-line induction for the Lie--Kolchin theorem.
 
 ## Main declarations
 
-* `TauCeti.exists_common_fixedVector_of_pairwise_commute_of_isUnipotent`: a commuting family of
+* `TauCeti.exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent`: a commuting family of
   unipotent automorphisms of a nonzero finite-dimensional space has a common nonzero fixed vector.
-* `TauCeti.exists_fixedLine_of_pairwise_commute_of_isUnipotent`: such a family fixes a
-  one-dimensional submodule pointwise.
-* `TauCeti.exists_fixedLine_of_isUnipotent`: a unipotent representation of a commutative monoid has
-  a pointwise-fixed line.
+* `TauCeti.exists_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent`: such a family fixes
+  a one-dimensional submodule pointwise.
+* `TauCeti.exists_submodule_finrank_eq_one_of_isUnipotent`: a unipotent representation of a
+  commutative monoid has a pointwise-fixed line.
 
 ## References
 
@@ -49,7 +49,7 @@ variable [Field K] [AddCommGroup V] [Module K V]
 
 /-- A pairwise-commuting family of unipotent automorphisms of a nonzero finite-dimensional vector
 space has a common nonzero fixed vector. -/
-theorem exists_common_fixedVector_of_pairwise_commute_of_isUnipotent
+theorem exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent
     [FiniteDimensional K V] [Nontrivial V] (f : ι → GeneralLinearGroup K V)
     (hcomm : Pairwise fun i j ↦ Commute (f i) (f j))
     (hunipotent : ∀ i, GeneralLinearGroup.IsUnipotent (f i)) :
@@ -71,13 +71,14 @@ theorem exists_common_fixedVector_of_pairwise_commute_of_isUnipotent
 
 /-- A pairwise-commuting family of unipotent automorphisms of a nonzero finite-dimensional vector
 space fixes a one-dimensional submodule pointwise. -/
-theorem exists_fixedLine_of_pairwise_commute_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+theorem exists_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent
+    [FiniteDimensional K V] [Nontrivial V]
     (f : ι → GeneralLinearGroup K V) (hcomm : Pairwise fun i j ↦ Commute (f i) (f j))
     (hunipotent : ∀ i, GeneralLinearGroup.IsUnipotent (f i)) :
     ∃ p : Submodule K V, Module.finrank K p = 1 ∧
       ∀ i, ∀ x ∈ p, (f i : Module.End K V) x = x := by
   obtain ⟨v, hv, hfixed⟩ :=
-    exists_common_fixedVector_of_pairwise_commute_of_isUnipotent f hcomm hunipotent
+    exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent f hcomm hunipotent
   refine ⟨K ∙ v, finrank_span_singleton hv, fun i x hx ↦ ?_⟩
   rw [Submodule.mem_span_singleton] at hx
   obtain ⟨a, rfl⟩ := hx
@@ -87,22 +88,22 @@ variable {G : Type w} [CommMonoid G]
 
 /-- A unipotent representation of a commutative monoid on a nonzero finite-dimensional vector space
 has a common nonzero fixed vector. -/
-theorem exists_common_fixedVector_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+theorem exists_common_fixed_vector_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
     (ρ : G →* GeneralLinearGroup K V)
     (hunipotent : ∀ g, GeneralLinearGroup.IsUnipotent (ρ g)) :
     ∃ v : V, v ≠ 0 ∧ ∀ g, (ρ g : Module.End K V) v = v := by
-  apply exists_common_fixedVector_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
+  apply exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
   intro g h _
   exact (ρ.map_mul g h).symm.trans ((congrArg ρ (mul_comm g h)).trans (ρ.map_mul h g))
 
 /-- A unipotent representation of a commutative monoid on a nonzero finite-dimensional vector space
 fixes a one-dimensional submodule pointwise. -/
-theorem exists_fixedLine_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+theorem exists_submodule_finrank_eq_one_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
     (ρ : G →* GeneralLinearGroup K V)
     (hunipotent : ∀ g, GeneralLinearGroup.IsUnipotent (ρ g)) :
     ∃ p : Submodule K V, Module.finrank K p = 1 ∧
       ∀ g, ∀ x ∈ p, (ρ g : Module.End K V) x = x := by
-  apply exists_fixedLine_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
+  apply exists_submodule_finrank_eq_one_of_pairwise_commute_of_isUnipotent ρ _ hunipotent
   intro g h _
   exact (ρ.map_mul g h).symm.trans ((congrArg ρ (mul_comm g h)).trans (ρ.map_mul h g))
 
