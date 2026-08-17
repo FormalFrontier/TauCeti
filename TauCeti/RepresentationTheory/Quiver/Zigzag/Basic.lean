@@ -33,14 +33,15 @@ prefunctors.
 
 * `TauCeti.DoubledQuiver.card_hom_eq_adjMatrix`: arrow counts are adjacency-matrix entries.
 * `TauCeti.DoubledQuiver.card_totalArrow_eq_twice_card_edges`: every edge gives two arrows.
-* `TauCeti.DoubledQuiver.map_iso_comp_symm` and
-  `TauCeti.DoubledQuiver.map_symm_comp_iso`: graph isomorphisms induce inverse prefunctors.
+* `TauCeti.DoubledQuiver.map_toHom_comp_symm_toHom` and
+  `TauCeti.DoubledQuiver.map_symm_toHom_comp_toHom`: graph isomorphisms induce inverse prefunctors.
 
 ## References
 
 This is the doubled-graph construction in Layer 0 of
-`TauCetiRoadmap/ZigzagPreprojective/README.md`. See Huerfano--Khovanov, *A category for the adjoint
-representation*, Section 3.
+`TauCetiRoadmap/ZigzagPreprojective/README.md`; its interface follows the target-signature
+prototype in `TauCetiRoadmap/ZigzagPreprojective/Suggested.lean`. See Huerfano--Khovanov,
+*A category for the adjoint representation*, Section 3.
 -/
 
 public section
@@ -86,6 +87,7 @@ instance : _root_.Quiver (DoubledQuiver G) where
   Hom i j := PLift (G.Adj ((vertexEquiv G).symm i) ((vertexEquiv G).symm j))
 
 instance : Quiver.IsThin (DoubledQuiver G) := fun i j => by
+  -- The quiver instance defines its hom type as the lifted adjacency proposition.
   change Subsingleton (PLift (G.Adj ((vertexEquiv G).symm i) ((vertexEquiv G).symm j)))
   infer_instance
 
@@ -96,10 +98,12 @@ instance [Fintype V] : Fintype (DoubledQuiver G) :=
   Fintype.ofEquiv V (vertexEquiv G)
 
 instance (i j : DoubledQuiver G) : Finite (i ⟶ j) := by
+  -- Unfold the quiver hom type so `PLift`'s finite instance applies.
   change Finite (PLift (G.Adj ((vertexEquiv G).symm i) ((vertexEquiv G).symm j)))
   infer_instance
 
 instance [DecidableRel G.Adj] (i j : DoubledQuiver G) : Fintype (i ⟶ j) := by
+  -- Unfold the quiver hom type so decidable adjacency supplies its `Fintype` instance.
   change Fintype (PLift (G.Adj ((vertexEquiv G).symm i) ((vertexEquiv G).symm j)))
   infer_instance
 
@@ -118,6 +122,7 @@ theorem arrow_down {i j : V} (h : G.Adj i j) :
     (arrow G h).down = (by simpa only [vertexEquiv_symm_vertex] using h) :=
   Subsingleton.elim _ _
 
+/-- Reversing the arrow induced by an adjacency gives the arrow induced by symmetric adjacency. -/
 @[simp] theorem reverse_arrow {i j : V} (h : G.Adj i j) :
     Quiver.reverse (arrow G h) = arrow G h.symm := by
   apply Subsingleton.elim
@@ -203,29 +208,24 @@ theorem starEquivNeighborSet_symm_apply (v : V) (w : G.neighborSet v) :
 
 /-- The arrows entering a vertex are also its neighbors in the graph. -/
 def costarEquivNeighborSet (v : V) :
-    Quiver.Costar (vertex G v) ≃ G.neighborSet v where
-  toFun e := ⟨(vertexEquiv G).symm e.1,
-    G.mem_neighborSet _ _ |>.mpr (by
-      simpa only [vertexEquiv_symm_vertex] using e.2.down.symm)⟩
-  invFun w := ⟨vertex G w, arrow G w.property.symm⟩
-  left_inv e := by
-    obtain ⟨w, e⟩ := e
-    rfl
-  right_inv w := by
-    ext
-    rfl
+    Quiver.Costar (vertex G v) ≃ G.neighborSet v :=
+  (Quiver.starEquivCostar (vertex G v)).symm.trans (starEquivNeighborSet G v)
 
 @[simp]
 theorem costarEquivNeighborSet_apply (v : V) (e : Quiver.Costar (vertex G v)) :
     costarEquivNeighborSet G v e =
       ⟨(vertexEquiv G).symm e.1,
         G.mem_neighborSet _ _ |>.mpr (by
-          simpa only [vertexEquiv_symm_vertex] using e.2.down.symm)⟩ := (rfl)
+          simpa only [vertexEquiv_symm_vertex] using e.2.down.symm)⟩ := by
+  obtain ⟨w, e⟩ := e
+  rfl
 
 @[simp]
 theorem costarEquivNeighborSet_symm_apply (v : V) (w : G.neighborSet v) :
     (costarEquivNeighborSet G v).symm w =
-      ⟨vertex G w, arrow G w.property.symm⟩ := (rfl)
+      ⟨vertex G w, arrow G w.property.symm⟩ := by
+  apply Sigma.ext rfl
+  rfl
 
 /-- The number of doubled-quiver arrows from `i` to `j` is the corresponding adjacency-matrix
 entry. -/
@@ -240,16 +240,16 @@ theorem card_hom_eq_adjMatrix [DecidableRel G.Adj] (i j : V) :
     exact Fintype.card_eq_zero_iff.mpr (isEmpty_hom_iff G |>.mpr h)
 
 /-- The number of doubled-quiver arrows leaving a vertex is its degree in the graph. -/
-theorem card_star_eq_degree [Fintype V] [DecidableRel G.Adj] (v : V) :
-    Fintype.card (Quiver.Star (vertex G v)) = G.degree v := by
-  rw [Fintype.card_congr (starEquivNeighborSet G v)]
-  exact G.card_neighborSet_eq_degree v
+theorem card_star_eq_degree (v : V) [Fintype (G.neighborSet v)] :
+    Nat.card (Quiver.Star (vertex G v)) = G.degree v := by
+  rw [Nat.card_congr (starEquivNeighborSet G v)]
+  simpa using G.card_neighborSet_eq_degree v
 
 /-- The number of doubled-quiver arrows entering a vertex is its degree in the graph. -/
-theorem card_costar_eq_degree [Fintype V] [DecidableRel G.Adj] (v : V) :
-    Fintype.card (Quiver.Costar (vertex G v)) = G.degree v := by
-  rw [Fintype.card_congr (costarEquivNeighborSet G v)]
-  exact G.card_neighborSet_eq_degree v
+theorem card_costar_eq_degree (v : V) [Fintype (G.neighborSet v)] :
+    Nat.card (Quiver.Costar (vertex G v)) = G.degree v := by
+  rw [Nat.card_congr (costarEquivNeighborSet G v)]
+  simpa using G.card_neighborSet_eq_degree v
 
 /-- The total number of doubled-quiver arrows is twice the number of graph edges. -/
 theorem card_totalArrow_eq_twice_card_edges [Fintype V] [DecidableRel G.Adj] :
@@ -276,16 +276,19 @@ theorem map_arrow {W : Type v} {H : SimpleGraph W} (f : G →g H)
       (map_obj f i).symm (map_obj f j).symm := by
   apply Subsingleton.elim
 
+/-- The doubled-quiver prefunctor induced by a graph homomorphism commutes with arrow reversal. -/
 instance mapMapReverse {W : Type v} {H : SimpleGraph W} (f : G →g H) :
     Prefunctor.MapReverse (map f) where
   map_reverse' _ := Subsingleton.elim _ _
 
+/-- Mapping the identity graph homomorphism gives the identity doubled-quiver prefunctor. -/
 @[simp]
 theorem map_id : map (.id : G →g G) = Prefunctor.id (DoubledQuiver G) := by
   refine Prefunctor.ext (fun _ => rfl) ?_
   intro i j e
   apply Subsingleton.elim
 
+/-- The doubled-quiver map preserves composition of graph homomorphisms. -/
 theorem map_comp {W : Type v} {X : Type*} {H : SimpleGraph W} {K : SimpleGraph X}
     (f : G →g H) (g : H →g K) :
     map (g.comp f) = map f ⋙q map g := by
@@ -295,13 +298,13 @@ theorem map_comp {W : Type v} {X : Type*} {H : SimpleGraph W} {K : SimpleGraph X
 
 /-- Relabelling a graph and then undoing the relabelling is the identity doubled-quiver map. -/
 @[simp]
-theorem map_iso_comp_symm {W : Type v} {H : SimpleGraph W} (f : G ≃g H) :
+theorem map_toHom_comp_symm_toHom {W : Type v} {H : SimpleGraph W} (f : G ≃g H) :
     map f.toHom ⋙q map f.symm.toHom = Prefunctor.id (DoubledQuiver G) := by
   rw [← map_comp, SimpleGraph.Iso.symm_toHom_comp_toHom, map_id]
 
 /-- Undoing a graph relabelling and then applying it is the identity doubled-quiver map. -/
 @[simp]
-theorem map_symm_comp_iso {W : Type v} {H : SimpleGraph W} (f : G ≃g H) :
+theorem map_symm_toHom_comp_toHom {W : Type v} {H : SimpleGraph W} (f : G ≃g H) :
     map f.symm.toHom ⋙q map f.toHom = Prefunctor.id (DoubledQuiver H) := by
   rw [← map_comp, SimpleGraph.Iso.toHom_comp_symm_toHom, map_id]
 
