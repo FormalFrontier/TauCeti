@@ -92,8 +92,7 @@ theorem commutatorElement_kostantRootSubgroupPoints_of_lie_lie_eq
   have hconj :=
     kostantRootSubgroupPoints_conj_of_lie_lie_eq e h ρ M hM hij hiij hil hjk hkl
       hi hj hk hl f g p q hp hq
-  change MulAut.conj (kostantRootSubgroupPoints e h ρ M hM i hi f)
-      (kostantRootSubgroupPoints e h ρ M hM j hj g) = _ at hconj
+  rw [← MulAut.conj_apply] at hconj
   rw [conj_eq_commutatorElement_mul] at hconj
   have hcomm :=
     (commute_kostantRootSubgroupPoints e h ρ M hM hjk hj hk g p).mul_right
