@@ -31,8 +31,6 @@ and proves the assignment **fully faithful**.
 * `TauCeti.quiverRepOfModule k Q M`: the representation `v ↦ eᵥ M` of `Q` carried by a `kQ`-module.
 * `TauCeti.quiverRepHomOfModule k Q f`: the morphism of representations carried by a `kQ`-linear
   map.
-* `TauCeti.vertexProjection k M v`: the projection `x ↦ eᵥ • x` of a `kQ`-module onto its vertex
-  component, the decomposition `M = ⨁ᵥ eᵥ M` read one vertex at a time.
 * `TauCeti.quiverRepHomComponent k Q φ v`: the component at `v` of a morphism between two such
   representations, retyped as a map `eᵥ M →ₗ[k] eᵥ N`.
 * `TauCeti.moduleHomOfQuiverRepHom k Q φ`: the `kQ`-linear map glued from those components,
@@ -47,24 +45,28 @@ and proves the assignment **fully faithful**.
   functorial.
 * `TauCeti.quiverRepHomOfModule_injective` and
   `TauCeti.quiverRepHomOfModule_moduleHomOfQuiverRepHom`: it is **injective** and **surjective** on
-  `Hom`-sets, packaged as `TauCeti.quiverRepHomOfModule_bijective`.
+  `Hom`-sets, packaged as `TauCeti.quiverRepHomOfModule_bijective`. The inverse laws for the
+  explicit inverse are that surjectivity statement together with
+  `TauCeti.moduleHomOfQuiverRepHom_quiverRepHomOfModule`.
 
 ## Implementation notes
 
 Both the module and the resulting representation are described through the *subspaces* `eᵥ M` of
 `M`, not through an abstract direct-sum carrier; that is what makes `TauCeti.vertexProjection` and
-the identity `∑ᵥ eᵥ • x = x` (`TauCeti.sum_coe_vertexProjection`) available, and those two carry the
-whole content of full faithfulness: injectivity is the fact that a `kQ`-linear map is determined by
-its restrictions to the components, and surjectivity glues the components of a morphism back
-together, the naturality in the paths being exactly what makes the glued map `kQ`-linear.
+the identity `∑ᵥ eᵥ • x = x` (`TauCeti.sum_coe_vertexProjection`), both from
+`TauCeti.RepresentationTheory.Quiver.ModuleDecomposition`, available, and those two carry the whole
+content of full faithfulness: injectivity is the fact that a `kQ`-linear map is determined by its
+restrictions to the components, and surjectivity glues the components of a morphism back together,
+the naturality in the paths being exactly what makes the glued map `kQ`-linear.
 
 The vertex set is finite throughout, as it must be: the unit `1 = ∑ᵥ eᵥ` of `kQ` is a finite sum of
-vertex idempotents, and without it a module is not the sum of its vertex components at all. The
+vertex idempotents, and without it a module is not the sum of its vertex components at all. It is
+carried as `[Finite Q]`, refined to `[Fintype Q]` only where a sum over the vertices is genuinely
+in a statement; elsewhere `Fintype.ofFinite` supplies the enumeration a proof or a body needs. The
 base is a field only because `TauCeti.QuiverRep` is; the underlying data of
 `TauCeti.RepresentationTheory.Quiver.ModuleDecomposition` needs no more than a commutative
-semiring, and `TauCeti.vertexProjection` and its lemmas are stated at that generality. The
-`k`-linear structure carried on `M` alongside the `kQ`-action is asked for as `[Module k M]` with
-`[IsScalarTower k (pathAlgebra k Q) M]`, rather than being extracted from the algebra structure,
+semiring. The `k`-linear structure carried on `M` alongside the `kQ`-action is asked for as
+`[Module k M]` with `[IsScalarTower k (pathAlgebra k Q) M]`, not extracted from the algebra,
 exactly as in that file. The three modules of the morphism section share one universe, since
 `ModuleCat k` — and hence `TauCeti.QuiverRep k Q` — has objects in a single universe.
 
@@ -100,54 +102,6 @@ open CategoryTheory PathAlgebra
 
 universe u v w t
 
-section Projection
-
-variable (k : Type u) {Q : Type v} [CommSemiring k] [Quiver.{w} Q] [Finite Q]
-variable (M : Type t) [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q) M]
-  [IsScalarTower k (pathAlgebra k Q) M]
-
-variable {k M} in
-/-- A vertex idempotent carries a module into its own vertex component: the trivial-path case of
-`TauCeti.ofPath_smul_mem_vertexComponent`. -/
-theorem vertexIdempotent_smul_mem_vertexComponent (v : Q) (x : M) :
-    (vertexIdempotent k v : pathAlgebra k Q) • x ∈ vertexComponent k M v := by
-  rw [mem_vertexComponent_iff_smul_eq_self, smul_smul, vertexIdempotent_mul_self]
-
-/-- **The projection of a module onto a vertex component**, `x ↦ eᵥ • x`. It reads the
-decomposition `M = ⨁ᵥ eᵥ M` one vertex at a time; the facts about it that matter are that its
-values sum to the identity (`TauCeti.sum_coe_vertexProjection`) and that it is the identity on the
-component at `v` and zero on the component at any other vertex. -/
-noncomputable def vertexProjection (v : Q) : M →ₗ[k] vertexComponent k M v where
-  toFun x := ⟨(vertexIdempotent k v : pathAlgebra k Q) • x,
-    vertexIdempotent_smul_mem_vertexComponent v x⟩
-  map_add' x y := Subtype.ext (smul_add _ x y)
-  map_smul' r x := Subtype.ext (smul_comm (vertexIdempotent k v : pathAlgebra k Q) r x)
-
-@[simp]
-theorem coe_vertexProjection_apply (v : Q) (x : M) :
-    (vertexProjection k M v x : M) = (vertexIdempotent k v : pathAlgebra k Q) • x :=
-  (rfl)
-
-variable {k M}
-
-/-- **The vertex projections sum to the identity**, because the vertex idempotents sum to `1`. -/
-theorem sum_coe_vertexProjection [Fintype Q] (x : M) :
-    ∑ v : Q, (vertexProjection k M v x : M) = x := by
-  simp only [coe_vertexProjection_apply, ← Finset.sum_smul, ← one_def, one_smul]
-
-/-- The projection at `v` fixes the component at `v`. -/
-theorem coe_vertexProjection_apply_of_mem {v : Q} {x : M} (hx : x ∈ vertexComponent k M v) :
-    (vertexProjection k M v x : M) = x := by
-  rw [coe_vertexProjection_apply, vertexIdempotent_smul_eq_self_of_mem_vertexComponent hx]
-
-/-- The projection at `u` kills the component at any other vertex. -/
-theorem coe_vertexProjection_apply_eq_zero_of_ne {u v : Q} (h : u ≠ v) {x : M}
-    (hx : x ∈ vertexComponent k M v) : (vertexProjection k M u x : M) = 0 := by
-  rw [coe_vertexProjection_apply, ← vertexIdempotent_smul_eq_self_of_mem_vertexComponent hx,
-    smul_smul, vertexIdempotent_mul_vertexIdempotent_of_ne h, zero_smul]
-
-end Projection
-
 section Object
 
 variable (k : Type u) (Q : Type v) [Field k] [Quiver.{w} Q] [Finite Q]
@@ -156,7 +110,11 @@ variable (M : Type t) [AddCommGroup M] [Module k M] [Module (pathAlgebra k Q) M]
 
 /-- **The representation of `Q` carried by a module over its path algebra**: the vector space at a
 vertex `v` is the component `eᵥ M`, and a path acts by left multiplication, carrying the component
-at its source to the component at its target. -/
+at its source to the component at its target.
+
+`@[expose]` is load-bearing rather than a leak: the *statements* of `TauCeti.quiverRepOfModule_map`
+and of `TauCeti.quiverRepHomOfModule` speak of maps between the objects `(quiverRepOfModule k Q
+M).obj v`, which only typecheck against `ModuleCat.of k (eᵥ M)` once this body is unfolded. -/
 @[expose]
 noncomputable def quiverRepOfModule : QuiverRep k Q where
   obj v := ModuleCat.of k (vertexComponent (Q := Q) k M v)
@@ -310,13 +268,16 @@ the projections at the other vertices killing `eᵥ M`. -/
 private theorem moduleHomAux_apply_of_mem [Fintype Q]
     (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) {v : Q} (x : vertexComponent k M v) :
     moduleHomAux k Q φ (x : M) = ((quiverRepHomComponent k Q φ v) x : N) := by
+  -- the projection lemmas are stated on the ambient values in `M`, so `Subtype.ext` lifts them to
+  -- the equalities in `eᵥ M` that the summands are built from
+  have hfix : vertexProjection k M v (x : M) = x :=
+    Subtype.ext (coe_vertexProjection_apply_of_mem x.2)
+  have hkill : ∀ u : Q, u ≠ v → vertexProjection k M u (x : M) = 0 := fun u hu ↦
+    Subtype.ext (coe_vertexProjection_apply_eq_zero_of_ne hu x.2)
   rw [moduleHomAux_apply, Finset.sum_eq_single v]
-  · rw [show vertexProjection k M v (x : M) = x from
-      Subtype.ext (coe_vertexProjection_apply_of_mem x.2)]
+  · rw [hfix]
   · intro u _ hu
-    rw [show vertexProjection k M u (x : M) = 0 from
-      Subtype.ext (coe_vertexProjection_apply_eq_zero_of_ne hu x.2), map_zero,
-      ZeroMemClass.coe_zero]
+    rw [hkill u hu, map_zero, ZeroMemClass.coe_zero]
   · intro hv
     exact absurd (Finset.mem_univ v) hv
 
@@ -357,38 +318,51 @@ theorem quiverRepHomComponent_quiverRepHomOfModule (f : M →ₗ[pathAlgebra k Q
 
 /-- **The `kQ`-linear map recovered from a morphism of the associated representations.** It glues
 the components of `φ` along the decomposition `M = ⨁ᵥ eᵥ M`; the naturality of `φ` in the paths is
-exactly what makes the glued map commute with the action of the path algebra. -/
-noncomputable def moduleHomOfQuiverRepHom [Fintype Q]
-    (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) : M →ₗ[pathAlgebra k Q] N where
-  toFun := moduleHomAux k Q φ
-  map_add' := map_add _
-  map_smul' a x := by
-    induction a using PathAlgebra.induction_linear with
-    | zero => simp
-    | add f g hf hg => simp only [add_smul, map_add, hf, hg]
-    | single y c =>
-      obtain ⟨b, c', p⟩ := y
-      rw [show (single (⟨b, c', p⟩ : Quiver.TotalPath Q) c : pathAlgebra k Q)
-          = c • ofPath ⟨b, c', p⟩ by rw [ofPath_eq_single, smul_single, mul_one],
-        smul_assoc, map_smul, moduleHomAux_ofPath_smul, RingHom.id_apply, smul_assoc]
+exactly what makes the glued map commute with the action of the path algebra.
+
+Only `[Finite Q]` is asked for: the gluing needs an enumeration of the vertices, but no sum over
+them occurs in the type, so `Fintype.ofFinite` supplies one in the body. -/
+noncomputable def moduleHomOfQuiverRepHom
+    (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) : M →ₗ[pathAlgebra k Q] N :=
+  let _ := Fintype.ofFinite Q
+  { toFun := moduleHomAux k Q φ
+    map_add' := map_add _
+    map_smul' a x := by
+      induction a using PathAlgebra.induction_linear with
+      | zero => simp
+      | add f g hf hg => simp only [add_smul, map_add, hf, hg]
+      | single y c =>
+        obtain ⟨b, c', p⟩ := y
+        -- the induction hands the basis element in the `single` form, while
+        -- `TauCeti.moduleHomAux_ofPath_smul` is stated on `TauCeti.ofPath`; the two differ by the
+        -- scalar `c`, which `single p c = c • ofPath p` extracts
+        have hsingle : (single (⟨b, c', p⟩ : Quiver.TotalPath Q) c : pathAlgebra k Q)
+            = c • ofPath ⟨b, c', p⟩ := by rw [ofPath_eq_single, smul_single, mul_one]
+        rw [hsingle, smul_assoc, map_smul, moduleHomAux_ofPath_smul, RingHom.id_apply,
+          smul_assoc] }
 
 /-- The recovered map, spelled out: glue the components of `φ` along the vertex projections. -/
 theorem moduleHomOfQuiverRepHom_apply [Fintype Q]
     (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) (x : M) :
     moduleHomOfQuiverRepHom k Q φ x
-      = ∑ v : Q, ((quiverRepHomComponent k Q φ v) (vertexProjection k M v x) : N) :=
-  (rfl)
+      = ∑ v : Q, ((quiverRepHomComponent k Q φ v) (vertexProjection k M v x) : N) := by
+  -- the enumeration `Fintype.ofFinite Q` chosen in the body and the ambient one index the same
+  -- sum, `Fintype Q` being a subsingleton
+  obtain rfl : ‹Fintype Q› = Fintype.ofFinite Q := Subsingleton.elim _ _
+  rfl
 
 /-- **On a vertex component the recovered map is the component of `φ` there.** -/
-theorem moduleHomOfQuiverRepHom_apply_of_mem [Fintype Q]
+theorem moduleHomOfQuiverRepHom_apply_of_mem
     (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) {v : Q}
     (x : vertexComponent k M v) :
-    moduleHomOfQuiverRepHom k Q φ (x : M) = ((quiverRepHomComponent k Q φ v) x : N) :=
-  moduleHomAux_apply_of_mem k Q φ x
+    moduleHomOfQuiverRepHom k Q φ (x : M) = ((quiverRepHomComponent k Q φ v) x : N) := by
+  let := Fintype.ofFinite Q
+  exact moduleHomAux_apply_of_mem k Q φ x
 
 /-- **Fullness**: every morphism of the associated representations is carried by a `kQ`-linear map,
 namely `TauCeti.moduleHomOfQuiverRepHom`. -/
-theorem quiverRepHomOfModule_moduleHomOfQuiverRepHom [Fintype Q]
+@[simp]
+theorem quiverRepHomOfModule_moduleHomOfQuiverRepHom
     (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) :
     quiverRepHomOfModule k Q (moduleHomOfQuiverRepHom k Q φ) = φ := by
   refine NatTrans.ext (funext fun v ↦ ?_)
@@ -396,14 +370,21 @@ theorem quiverRepHomOfModule_moduleHomOfQuiverRepHom [Fintype Q]
   rw [quiverRepHomOfModule_app]
   refine ModuleCat.hom_ext (LinearMap.ext fun x ↦ Subtype.ext ?_)
   simp only [ModuleCat.hom_ofHom, coe_vertexComponentMap_apply]
-  exact moduleHomAux_apply_of_mem k Q φ x
+  exact moduleHomOfQuiverRepHom_apply_of_mem k Q φ x
+
+/-- **Faithfulness**, in inverse form: gluing the components of the morphism carried by a
+`kQ`-linear map returns that map. -/
+@[simp]
+theorem moduleHomOfQuiverRepHom_quiverRepHomOfModule (f : M →ₗ[pathAlgebra k Q] N) :
+    moduleHomOfQuiverRepHom k Q (quiverRepHomOfModule k Q f) = f :=
+  quiverRepHomOfModule_injective k Q
+    (quiverRepHomOfModule_moduleHomOfQuiverRepHom k Q (quiverRepHomOfModule k Q f))
 
 /-- **Fullness**, in existential form. -/
 theorem exists_quiverRepHomOfModule_eq
     (φ : quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N) :
-    ∃ f : M →ₗ[pathAlgebra k Q] N, quiverRepHomOfModule k Q f = φ := by
-  let := Fintype.ofFinite Q
-  exact ⟨moduleHomOfQuiverRepHom k Q φ, quiverRepHomOfModule_moduleHomOfQuiverRepHom k Q φ⟩
+    ∃ f : M →ₗ[pathAlgebra k Q] N, quiverRepHomOfModule k Q f = φ :=
+  ⟨moduleHomOfQuiverRepHom k Q φ, quiverRepHomOfModule_moduleHomOfQuiverRepHom k Q φ⟩
 
 /-- **Full faithfulness on a `Hom`-set**: the `kQ`-linear maps `M → N` are exactly the morphisms
 `quiverRepOfModule k Q M ⟶ quiverRepOfModule k Q N`. With `TauCeti.quiverRepHomOfModule_id` and
