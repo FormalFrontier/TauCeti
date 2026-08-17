@@ -275,7 +275,7 @@ theorem finrank_forgetFDRep {R : Type u} {G : Type v} [CommRing R] [Monoid G]
 /-- Conjugation by `Shrink.linearEquiv` gives an equivariant equivalence from the shrunk model
 back to the original representation. -/
 private noncomputable def shrinkRepEquiv {k : Type u} {G : Type v} {V : Type w}
-    [Field k] [Group G] [AddCommGroup V] [Module k V] [Small.{u} V]
+    [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V] [Small.{u} V]
     (ρ : Representation k G V) :
     Representation.Equiv
       ((Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp ρ) ρ := by
@@ -297,6 +297,7 @@ private noncomputable def indSmallModel {k : Type u} {G : Type v} [Field k] [Gro
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) : IndSmallModel A := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
   let V := Rep.ind S.subtype A'
+  -- The forgotten carrier lies in `u`, so `w := 0` specializes `max w u` to `u`.
   letI : FiniteDimensional k V := Rep.finiteDimensional_ind.{u, v, 0} A'
   letI : Small.{u} V := Module.Finite.small k V
   let ρ := (Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp V.ρ
@@ -347,7 +348,7 @@ equivalences. -/
 theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B)
     (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
-    ((forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f)).hom.toLinearMap x =
+    ((forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f)).hom x =
       (indFDRepForgetEquiv B).symm
       ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
         (indFDRepForgetEquiv A x)) := by
@@ -359,20 +360,13 @@ theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Sub
 theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
     [S.FiniteIndex] (A : FDRep k S) : indFDRepMap (𝟙 A) = 𝟙 (indFDRep A) := by
   let A' := (forget₂ (FDRep k S) (Rep k S)).obj A
-  have hForget : (forget₂ (FDRep k S) (Rep k S)).map (𝟙 A) = 𝟙 A' :=
-    (forget₂ (FDRep k S) (Rep k S)).map_id A
-  have hForgetInd : (forget₂ (FDRep k G) (Rep k G)).map (𝟙 (indFDRep A)) =
-      𝟙 ((forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :=
-    (forget₂ (FDRep k G) (Rep k G)).map_id (indFDRep A)
   have hInd : Rep.indMap S.subtype (𝟙 A') = 𝟙 (Rep.ind S.subtype A') := by
     simpa using (Rep.indFunctor k S.subtype).map_id A'
   apply (forget₂ (FDRep k G) (Rep k G)).map_injective
   apply Rep.hom_ext
   ext x
-  rw [indFDRepMap_apply, hForget, hInd, hForgetInd]
-  -- Unpack the identity intertwiner before cancelling the comparison equivalence.
-  change (indFDRepForgetEquiv A).symm (indFDRepForgetEquiv A x) = x
-  simp
+  simp only [Representation.IntertwiningMap.toLinearMap_apply]
+  simp [A', hInd]
 
 /-- Induction of intertwiners preserves composition. -/
 theorem indFDRepMap_comp {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
@@ -386,10 +380,8 @@ theorem indFDRepMap_comp {k : Type u} {G : Type v} [Field k] [Group G] {S : Subg
   apply (forget₂ (FDRep k G) (Rep k G)).map_injective
   apply Rep.hom_ext
   ext x
-  rw [Functor.map_comp, Rep.hom_comp, Representation.IntertwiningMap.comp_toLinearMap,
-    LinearMap.comp_apply, indFDRepMap_apply, Functor.map_comp, hInd, Rep.hom_comp,
-    Representation.IntertwiningMap.comp_apply, indFDRepMap_apply, indFDRepMap_apply]
-  simp [f', g']
+  simp only [Representation.IntertwiningMap.toLinearMap_apply]
+  simp [hInd, f', g']
 
 /-- Induction from a finite-index subgroup, as a functor on finite-dimensional representations.
 It acts on objects as `indFDRep` and on intertwiners as `indFDRepMap`.
@@ -420,11 +412,9 @@ noncomputable def indFDRepForgetNatIso {k G : Type u} [Field k] [Group G] {S : S
       (indFDRepForgetIso A).hom ≫
         (Rep.indFunctor k S.subtype).map ((forget₂ (FDRep k S) (Rep k S)).map f)
     ext x
-    rw [Rep.hom_comp, Rep.hom_comp, Representation.IntertwiningMap.comp_toLinearMap,
-      Representation.IntertwiningMap.comp_toLinearMap, LinearMap.comp_apply,
-      LinearMap.comp_apply, indFDRepMap_apply]
-    simp only [indFDRepForgetIso]
-    -- Unpack the `Rep.mkIso` applications; no public lemma states this mixed wrapper equation.
+    simp only [FGModuleCat.obj_carrier, Rep.hom_comp, Rep.indFunctor_obj, Rep.indFunctor_map]
+    -- `Rep.mkIso_hom_hom_apply` does not rewrite across the `CommRing`-derived representation
+    -- structure of `Rep` and the definitionally distinct `Field`-derived comparison structure.
     change (indFDRepForgetEquiv B) ((indFDRepForgetEquiv B).symm
         ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
           (indFDRepForgetEquiv A x))) =
