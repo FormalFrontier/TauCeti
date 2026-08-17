@@ -180,6 +180,18 @@ noncomputable def geometricFiberBialgEquivBase
   exact BialgEquiv.ofBijective
     (Bialgebra.counitBialgHom (AlgebraicClosure k) Hbar) hbijective
 
+/-- The equivalence from the geometric fibre to the base field is its counit. -/
+@[simp]
+theorem geometricFiberBialgEquivBase_apply
+    (hH : reductiveCommHopfAlgProperty k H)
+    (hunipotent : geometricallyUnipotentPointsCommHopfAlgProperty (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj)
+    (x : FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :
+    hH.geometricFiberBialgEquivBase hunipotent x =
+      Bialgebra.counitBialgHom (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) x := by
+  rfl
+
 end reductiveCommHopfAlgProperty
 
 end

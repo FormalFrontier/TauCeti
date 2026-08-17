@@ -157,6 +157,19 @@ noncomputable def quotientBotIso (H : _root_.CommHopfAlgCat.{v} R) :
   inv_hom_id := mkQuotient_comp_liftQuotient
     (⊥ : HopfIdeal R H) (𝟙 H) (bot_le_ker_id H)
 
+/-- The forward map of the quotient-by-zero isomorphism is the lift of the identity. -/
+@[simp]
+lemma quotientBotIso_hom (H : _root_.CommHopfAlgCat.{v} R) :
+    (quotientBotIso H).hom =
+      liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) (by simp) :=
+  by rw [quotientBotIso]
+
+/-- The inverse map of the quotient-by-zero isomorphism is the quotient morphism. -/
+@[simp]
+lemma quotientBotIso_inv (H : _root_.CommHopfAlgCat.{v} R) :
+    (quotientBotIso H).inv = mkQuotient H (⊥ : HopfIdeal R H) :=
+  by rw [quotientBotIso]
+
 /-- If `I ≤ J`, then the quotient map by `J` kills every element of `I`. -/
 lemma toIdeal_le_ker_mkQuotient_of_le
     (H : _root_.CommHopfAlgCat.{v} R) {I J : HopfIdeal R H} (hIJ : I ≤ J) :
@@ -234,6 +247,15 @@ noncomputable abbrev mkQuotient (H : FiniteTypeCommHopfAlgCat.{u, v} R)
     (I : HopfIdeal R H) : H ⟶ quotient H I :=
   ObjectProperty.homMk (CommHopfAlgCat.mkQuotient H.obj I)
 
+/-- The inverse map of the finite-type quotient-by-zero isomorphism is the quotient morphism. -/
+@[simp]
+lemma quotientBotIso_inv (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
+    (quotientBotIso H).inv = mkQuotient H (⊥ : HopfIdeal R H) :=
+  by
+    rw [quotientBotIso]
+    apply ObjectProperty.hom_ext
+    exact CommHopfAlgCat.quotientBotIso_inv H.obj
+
 /-- The finite-type quotient morphism forgets to the `CommHopfAlgCat` quotient morphism. -/
 lemma forget₂_commHopfAlgCat_map_mkQuotient (H : FiniteTypeCommHopfAlgCat.{u, v} R)
     (I : HopfIdeal R H) :
@@ -259,6 +281,16 @@ factors through the quotient object. -/
 noncomputable abbrev liftQuotient (I : HopfIdeal R H) (f : H ⟶ K)
     (hf : I.toIdeal ≤ RingHom.ker (toBialgHom f).toAlgHom.toRingHom) : quotient H I ⟶ K :=
   ObjectProperty.homMk (CommHopfAlgCat.liftQuotient I f.hom hf)
+
+/-- The forward map of the finite-type quotient-by-zero isomorphism is the lift of the identity. -/
+@[simp]
+lemma quotientBotIso_hom (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
+    (quotientBotIso H).hom =
+      liftQuotient (⊥ : HopfIdeal R H) (𝟙 H) (by simp) :=
+  by
+    rw [quotientBotIso]
+    apply ObjectProperty.hom_ext
+    exact CommHopfAlgCat.quotientBotIso_hom H.obj
 
 /-- The finite-type quotient lift forgets to the `CommHopfAlgCat` quotient lift. -/
 lemma forget₂_commHopfAlgCat_map_liftQuotient (I : HopfIdeal R H) (f : H ⟶ K)
