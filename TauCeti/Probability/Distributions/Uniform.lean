@@ -51,7 +51,11 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
 * `uniformPDF_eq_ofReal_uniformPDFReal` — the bridge between that density and the real-valued one;
 * `cdf_uniformMeasure` — the cdf is `0` below `a`, `1` above `b`, and `(x - a) / (b - a)` between;
 * `integral_id_uniformMeasure` — the mean is `(a + b) / 2`;
-* `variance_id_uniformMeasure` — the variance is `(b - a) ^ 2 / 12`.
+* `variance_id_uniformMeasure` — the variance is `(b - a) ^ 2 / 12`;
+* `integrableExpSet_id_uniformMeasure` — every exponential moment exists, for every pair of
+  endpoints;
+* `mgf_id_uniformMeasure_zero` and `mgf_id_uniformMeasure` — the moment generating function, split
+  at the removable singularity `t = 0`.
 
 ## Implementation
 
@@ -64,10 +68,9 @@ side condition.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — `integrableExpSet`, the moment generating and cumulant generating
-  functions, the characteristic function, the affine transport
-  `(uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b`, and parameter
-  measurability — are not built here.
+  targets of that item — the cumulant generating function, the characteristic function, the affine
+  transport `(uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b`, and
+  parameter measurability — are not built here.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -258,9 +261,8 @@ function is finite on all of `ℝ`. The formulas split at `t = 0`: the quotient
 push a proof through it the value `1` is given directly. -/
 
 /-- The uniform law is carried by its interval. -/
-theorem ae_mem_Ioc_uniformMeasure {a b : ℝ} : ∀ᵐ x ∂uniformMeasure a b, x ∈ Set.Ioc a b := by
-  rw [uniformMeasure_eq_smul]
-  exact Measure.ae_smul_measure (ae_restrict_mem measurableSet_Ioc) _
+theorem ae_mem_Ioc_uniformMeasure {a b : ℝ} : ∀ᵐ x ∂uniformMeasure a b, x ∈ Set.Ioc a b :=
+  ae_cond_mem measurableSet_Ioc
 
 /-- The uniform law is finite for every pair of endpoints: a probability measure when `a < b`, and
 the zero measure otherwise. -/
@@ -280,21 +282,8 @@ theorem integrableExpSet_id_uniformMeasure {a b : ℝ} :
     integrableExpSet id (uniformMeasure a b) = Set.univ := by
   ext t
   simp only [Set.mem_univ, iff_true, integrableExpSet, Set.mem_ofPred_eq, id_eq]
-  refine Integrable.mono' (integrable_const (Real.exp (|t| * max |a| |b|)))
-    (Continuous.aestronglyMeasurable (by continuity)) ?_
-  filter_upwards [ae_mem_Ioc_uniformMeasure (a := a) (b := b)] with x hx
-  rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-  refine Real.exp_le_exp.mpr ?_
-  have hxb : |x| ≤ max |a| |b| := by
-    rcases abs_cases x with ⟨h1, _⟩ | ⟨h1, _⟩
-    · rw [h1]
-      exact le_trans hx.2 (le_trans (le_abs_self b) (le_max_right _ _))
-    · rw [h1]
-      have h2 : -x ≤ -a := by linarith [hx.1]
-      exact le_trans h2 (le_trans (neg_le_abs a) (le_max_left _ _))
-  calc t * x ≤ |t * x| := le_abs_self _
-    _ = |t| * |x| := abs_mul t x
-    _ ≤ |t| * max |a| |b| := mul_le_mul_of_nonneg_left hxb (abs_nonneg t)
+  exact integrable_exp_mul_of_mem_Icc measurable_id.aemeasurable
+    (ae_mem_Ioc_uniformMeasure.mono fun _ h => Set.Ioc_subset_Icc_self h)
 
 /-- The moment generating function of the uniform law at `0` is `1`.
 
@@ -305,7 +294,7 @@ well as ill-formed. -/
 theorem mgf_id_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
     mgf id (uniformMeasure a b) 0 = 1 := by
   have := isProbabilityMeasure_uniformMeasure hab
-  simp [mgf]
+  exact mgf_zero
 
 /-- **The moment generating function of the uniform law**, away from the removable singularity. -/
 theorem mgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
