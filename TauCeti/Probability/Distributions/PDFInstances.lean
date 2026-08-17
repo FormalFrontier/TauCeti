@@ -5,51 +5,52 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Probability.Distributions.Gamma
+public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Distributions.Pareto
-public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.Probability.Distributions.Cauchy
-public import Mathlib.Probability.Density
-public import Mathlib.Probability.HasLaw
 
 /-!
 # `HasPDF` instances for Mathlib's continuous families
 
 Mathlib defines its continuous scalar laws as `withDensity` measures but does not connect them to
-`MeasureTheory.HasPDF`. This file supplies that bridge for the six families that have one, so a
-random variable known to *have* one of these laws is known to have a density.
+`MeasureTheory.HasPDF`. This file supplies that bridge for the six families that have one, and
+identifies the resulting density.
 
-**One helper, six applications.** `hasPDF_of_hasLaw_withDensity` does all the work: a law presented
-as `volume.withDensity f` with `f` measurable yields `HasPDF` directly. Nothing here recomputes a
-density — Mathlib already proved each defining `withDensity` equality, and this file packages those
-facts rather than repeating them.
+**One helper, six families, two conclusions each.** `hasPDF_of_hasLaw_withDensity` gives `HasPDF`
+and `pdf_eq_of_hasLaw_withDensity` identifies the density; both are stated for an arbitrary codomain
+and codomain measure, since neither proof uses anything about `ℝ` or `volume`. Nothing here
+recomputes a density — Mathlib already proved each defining `withDensity` equality, and this file
+packages those facts.
 
 **Where the spread may vanish.** `gaussianReal m v` and `cauchyMeasure x₀ γ` are defined by a case
 split: at `v = 0` and `γ = 0` they are Dirac measures, which are singular with respect to `volume`
 and have no density at all. Those two bridges therefore carry `v ≠ 0` and `γ ≠ 0` — not as
 convenience hypotheses but because the statement is false without them.
 
-The other four families need no such hypothesis: `gammaMeasure`, `betaMeasure`, `expMeasure` and
-`paretoMeasure` are `withDensity` measures for every parameter, and degenerate parameters make the
-density zero rather than the measure singular.
+`gammaMeasure`, `betaMeasure`, `expMeasure` and `paretoMeasure` need no such hypothesis: each is
+`volume.withDensity` of its density **for every parameter**, so each is absolutely continuous
+throughout. That is a separate question from whether the result is a *probability* measure, which
+does constrain the parameters (`isProbabilityMeasure_gammaMeasure` and its analogues); absolute
+continuity is all these bridges need.
 
 ## Main results
 
-* `hasPDF_of_hasLaw_withDensity` — the shared bridge;
-* `hasPDF_of_hasLaw_gammaMeasure`, `_betaMeasure`, `_expMeasure`, `_paretoMeasure`,
-  `_gaussianReal`, `_cauchyMeasure` — its six instantiations.
+* `hasPDF_of_hasLaw_withDensity` — the shared bridge, for an arbitrary codomain measure;
+* `pdf_eq_of_hasLaw_withDensity` — the accompanying identification of the density;
+* `hasPDF_of_hasLaw_gammaMeasure` and its five siblings, each paired with a `pdf_..._eq`
+  a.e.-identification.
 
 Three `ℝ≥0∞`-valued measurability lemmas (`measurable_gammaPDF`, `measurable_betaPDF`,
-`measurable_paretoPDF`) are supplied here because Mathlib exposes only the real-valued forms for
-those families; the Gaussian and Cauchy `ℝ≥0∞` versions already exist and are reused.
+`measurable_paretoPDF`) are supplied because Mathlib exposes only the real-valued forms for those
+families; the Gaussian and Cauchy `ℝ≥0∞` versions already exist and are reused.
 
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 1 — connecting Mathlib's
-  continuous families to `HasPDF`. Item 2 (identifying the Radon–Nikodym derivatives) and item 4
-  (parameter measurability) are separate targets and are not built here.
+  continuous families to `HasPDF` and identifying `pdf X P`. Item 2 (the Radon–Nikodym derivatives)
+  and item 4 (parameter measurability) are separate targets and are not built here.
 -/
 
 public section
@@ -64,54 +65,108 @@ namespace TauCeti
 
 namespace Probability
 
-variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
+section Shared
 
-/-- **The shared bridge.** A law presented as `volume.withDensity f`, with `f` measurable, gives
+variable {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E] {P : Measure Ω} {μ : Measure E}
+  {X : Ω → E} {f : E → ℝ≥0∞}
+
+/-- **The shared bridge.** A law presented as `μ.withDensity f`, with `f` a.e. measurable, gives
 `HasPDF`.
 
-Every family below is an instance of this; nothing recomputes a density. -/
-theorem hasPDF_of_hasLaw_withDensity {f : ℝ → ℝ≥0∞} (hf : Measurable f)
-    (hX : HasLaw X (volume.withDensity f) P) : HasPDF X P :=
-  hasPDF_of_map_eq_withDensity hX.aemeasurable f hf.aemeasurable hX.map_eq
+Stated for an arbitrary codomain and codomain measure: the proof uses nothing about `ℝ` or
+`volume`. -/
+theorem hasPDF_of_hasLaw_withDensity (hf : AEMeasurable f μ)
+    (hX : HasLaw X (μ.withDensity f) P) : HasPDF X P μ :=
+  hasPDF_of_map_eq_withDensity hX.aemeasurable f hf hX.map_eq
+
+/-- The density supplied by `hasPDF_of_hasLaw_withDensity` is the one the law was presented
+with. -/
+theorem pdf_eq_of_hasLaw_withDensity [IsFiniteMeasure P] (hf : AEMeasurable f μ)
+    (hX : HasLaw X (μ.withDensity f) P) : pdf X P μ =ᵐ[μ] f := by
+  have : HasPDF X P μ := hasPDF_of_hasLaw_withDensity hf hX
+  exact (pdf.eq_of_map_eq_withDensity f hf).mp hX.map_eq
+
+end Shared
 
 /-! ### `ℝ≥0∞`-valued measurability for the families that lack it
 
 Mathlib exposes `measurable_gammaPDFReal`, `measurable_betaPDFReal` and `measurable_paretoPDFReal`
-but not their `ℝ≥0∞` companions. Each density is `ENNReal.ofReal` of the real one, so the missing
-lemma is one composition. -/
+but not their `ℝ≥0∞` companions. Each density is `ENNReal.ofReal` of the real one; the `unfold`
+names that reduction rather than leaving it to elaboration. -/
 
-theorem measurable_gammaPDF (a r : ℝ) : Measurable (gammaPDF a r) :=
-  (measurable_gammaPDFReal a r).ennreal_ofReal
+theorem measurable_gammaPDF (a r : ℝ) : Measurable (gammaPDF a r) := by
+  unfold gammaPDF
+  exact (measurable_gammaPDFReal a r).ennreal_ofReal
 
-theorem measurable_betaPDF (α β : ℝ) : Measurable (betaPDF α β) :=
-  (measurable_betaPDFReal α β).ennreal_ofReal
+theorem measurable_betaPDF (α β : ℝ) : Measurable (betaPDF α β) := by
+  unfold betaPDF
+  exact (measurable_betaPDFReal α β).ennreal_ofReal
 
-theorem measurable_paretoPDF (t r : ℝ) : Measurable (paretoPDF t r) :=
-  (measurable_paretoPDFReal t r).ennreal_ofReal
+theorem measurable_paretoPDF (t r : ℝ) : Measurable (paretoPDF t r) := by
+  unfold paretoPDF
+  exact (measurable_paretoPDFReal t r).ennreal_ofReal
 
-/-! ### The six bridges -/
+/-! ### The six families
+
+Each family gets both conclusions: that a variable with the law has a density, and what that
+density is. The `simpa only [...]` steps name the measure definitions being reduced instead of
+letting elaboration unfold them silently. -/
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
 
 /-- A variable with a Gamma law has a density. -/
 theorem hasPDF_of_hasLaw_gammaMeasure {a r : ℝ} (hX : HasLaw X (gammaMeasure a r) P) :
     HasPDF X P :=
-  hasPDF_of_hasLaw_withDensity (measurable_gammaPDF a r) hX
+  hasPDF_of_hasLaw_withDensity (measurable_gammaPDF a r).aemeasurable
+    (by simpa only [gammaMeasure] using hX)
+
+/-- The density of a Gamma law is `gammaPDF`. -/
+theorem pdf_gammaMeasure_eq [IsFiniteMeasure P] {a r : ℝ} (hX : HasLaw X (gammaMeasure a r) P) :
+    pdf X P =ᵐ[volume] gammaPDF a r :=
+  pdf_eq_of_hasLaw_withDensity (measurable_gammaPDF a r).aemeasurable
+    (by simpa only [gammaMeasure] using hX)
 
 /-- A variable with a Beta law has a density. -/
 theorem hasPDF_of_hasLaw_betaMeasure {α β : ℝ} (hX : HasLaw X (betaMeasure α β) P) :
     HasPDF X P :=
-  hasPDF_of_hasLaw_withDensity (measurable_betaPDF α β) hX
+  hasPDF_of_hasLaw_withDensity (measurable_betaPDF α β).aemeasurable
+    (by simpa only [betaMeasure] using hX)
 
-/-- A variable with an exponential law has a density.
+/-- The density of a Beta law is `betaPDF`. -/
+theorem pdf_betaMeasure_eq [IsFiniteMeasure P] {α β : ℝ} (hX : HasLaw X (betaMeasure α β) P) :
+    pdf X P =ᵐ[volume] betaPDF α β :=
+  pdf_eq_of_hasLaw_withDensity (measurable_betaPDF α β).aemeasurable
+    (by simpa only [betaMeasure] using hX)
 
-`expMeasure r` is `gammaMeasure 1 r`, so its density is `gammaPDF 1 r`. -/
+/-- A variable with an exponential law has a density. -/
 theorem hasPDF_of_hasLaw_expMeasure {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
     HasPDF X P :=
-  hasPDF_of_hasLaw_withDensity (measurable_gammaPDF 1 r) hX
+  hasPDF_of_hasLaw_withDensity (measurable_gammaPDF 1 r).aemeasurable
+    (by simpa only [expMeasure, gammaMeasure] using hX)
+
+/-- The density of an exponential law is `exponentialPDF`.
+
+`exponentialPDFReal` is *defined* as `gammaPDFReal 1`, so the two densities agree definitionally;
+the `unfold` names that rather than leaving it to elaboration. -/
+theorem pdf_expMeasure_eq [IsFiniteMeasure P] {r : ℝ} (hX : HasLaw X (expMeasure r) P) :
+    pdf X P =ᵐ[volume] exponentialPDF r := by
+  have h : pdf X P =ᵐ[volume] gammaPDF 1 r :=
+    pdf_eq_of_hasLaw_withDensity (measurable_gammaPDF 1 r).aemeasurable
+      (by simpa only [expMeasure, gammaMeasure] using hX)
+  unfold exponentialPDF exponentialPDFReal
+  exact h
 
 /-- A variable with a Pareto law has a density. -/
 theorem hasPDF_of_hasLaw_paretoMeasure {t r : ℝ} (hX : HasLaw X (paretoMeasure t r) P) :
     HasPDF X P :=
-  hasPDF_of_hasLaw_withDensity (measurable_paretoPDF t r) hX
+  hasPDF_of_hasLaw_withDensity (measurable_paretoPDF t r).aemeasurable
+    (by simpa only [paretoMeasure] using hX)
+
+/-- The density of a Pareto law is `paretoPDF`. -/
+theorem pdf_paretoMeasure_eq [IsFiniteMeasure P] {t r : ℝ}
+    (hX : HasLaw X (paretoMeasure t r) P) : pdf X P =ᵐ[volume] paretoPDF t r :=
+  pdf_eq_of_hasLaw_withDensity (measurable_paretoPDF t r).aemeasurable
+    (by simpa only [paretoMeasure] using hX)
 
 /-- A variable with a nondegenerate Gaussian law has a density.
 
@@ -119,7 +174,13 @@ theorem hasPDF_of_hasLaw_paretoMeasure {t r : ℝ} (hX : HasLaw X (paretoMeasure
 singular with respect to `volume`. -/
 theorem hasPDF_of_hasLaw_gaussianReal {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
     (hX : HasLaw X (gaussianReal m v) P) : HasPDF X P :=
-  hasPDF_of_hasLaw_withDensity (measurable_gaussianPDF m v)
+  hasPDF_of_hasLaw_withDensity (measurable_gaussianPDF m v).aemeasurable
+    (by rwa [gaussianReal_of_var_ne_zero _ hv] at hX)
+
+/-- The density of a nondegenerate Gaussian law is `gaussianPDF`. -/
+theorem pdf_gaussianReal_eq [IsFiniteMeasure P] {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
+    (hX : HasLaw X (gaussianReal m v) P) : pdf X P =ᵐ[volume] gaussianPDF m v :=
+  pdf_eq_of_hasLaw_withDensity (measurable_gaussianPDF m v).aemeasurable
     (by rwa [gaussianReal_of_var_ne_zero _ hv] at hX)
 
 /-- A variable with a nondegenerate Cauchy law has a density.
@@ -128,7 +189,13 @@ theorem hasPDF_of_hasLaw_gaussianReal {m : ℝ} {v : ℝ≥0} (hv : v ≠ 0)
 singular with respect to `volume`. -/
 theorem hasPDF_of_hasLaw_cauchyMeasure {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0)
     (hX : HasLaw X (cauchyMeasure x₀ γ) P) : HasPDF X P :=
-  hasPDF_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ)
+  hasPDF_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ).aemeasurable
+    (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)
+
+/-- The density of a nondegenerate Cauchy law is `cauchyPDF`. -/
+theorem pdf_cauchyMeasure_eq [IsFiniteMeasure P] {x₀ : ℝ} {γ : ℝ≥0} (hγ : γ ≠ 0)
+    (hX : HasLaw X (cauchyMeasure x₀ γ) P) : pdf X P =ᵐ[volume] cauchyPDF x₀ γ :=
+  pdf_eq_of_hasLaw_withDensity (measurable_cauchyPDF x₀ γ).aemeasurable
     (by rwa [cauchyMeasure_of_scale_ne_zero _ hγ] at hX)
 
 end Probability
