@@ -314,23 +314,35 @@ noncomputable def indFDRepForgetIso {k G : Type u} [Field k] [Group G]
       Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A) :=
   Rep.mkIso (indFDRepForgetEquiv A)
 
-/-- `FDRep.forget₂HomLinearEquiv` is inverse to the forgetful functor on morphisms. -/
-private theorem forget₂_map_forget₂HomLinearEquiv {R : Type u} {G : Type v}
-    [CommRing R] [Monoid G] (X Y : FDRep R G)
-    (f : (forget₂ (FDRep R G) (Rep R G)).obj X ⟶
-      (forget₂ (FDRep R G) (Rep R G)).obj Y) :
-    (forget₂ (FDRep R G) (Rep R G)).map (FDRep.forget₂HomLinearEquiv X Y f) = f :=
+/-- The hom of the categorical comparison applies its underlying equivariant equivalence. -/
+private theorem indFDRepForgetIso_hom_hom_apply {k G : Type u} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S)
+    (x : (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A)) :
+    (Rep.Hom.hom (indFDRepForgetIso A).hom) x = indFDRepForgetEquiv A x :=
   rfl
+
+/-- The inverse of the categorical comparison applies the inverse equivariant equivalence. -/
+private theorem indFDRepForgetIso_inv_hom_apply {k G : Type u} [Field k] [Group G]
+    {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S)
+    (x : Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)) :
+    (Rep.Hom.hom (indFDRepForgetIso A).inv) x = (indFDRepForgetEquiv A).symm x :=
+  rfl
+
+/-- The conjugated induced intertwiner between the forgotten small-carrier models. -/
+private noncomputable def indFDRepMapUnderlying {k : Type u} {G : Type v} [Field k]
+    [Group G] {S : Subgroup G} [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) :
+    (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep A) ⟶
+      (forget₂ (FDRep k G) (Rep k G)).obj (indFDRep B) :=
+  Rep.ofHom
+    ((indFDRepForgetEquiv B).symm.toIntertwiningMap.comp
+      ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom.comp
+        (indFDRepForgetEquiv A).toIntertwiningMap))
 
 /-- Induction of an intertwiner of finite-dimensional representations, obtained by conjugating
 Mathlib's induced intertwiner by the small-carrier comparison equivalences. -/
 noncomputable def indFDRepMap {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
-    [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) : indFDRep A ⟶ indFDRep B := by
-  let f' := Rep.ofHom
-    ((indFDRepForgetEquiv B).symm.toIntertwiningMap.comp
-      ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom.comp
-        (indFDRepForgetEquiv A).toIntertwiningMap))
-  exact FDRep.forget₂HomLinearEquiv _ _ f'
+    [S.FiniteIndex] {A B : FDRep k S} (f : A ⟶ B) : indFDRep A ⟶ indFDRep B :=
+  (forget₂ (FDRep k G) (Rep k G)).preimage (indFDRepMapUnderlying f)
 
 /-- `indFDRepMap` applies Mathlib's induced intertwiner between the two small-carrier comparison
 equivalences. -/
@@ -342,9 +354,12 @@ theorem indFDRepMap_apply {k : Type u} {G : Type v} [Field k] [Group G] {S : Sub
       (indFDRepForgetEquiv B).symm
       ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
         (indFDRepForgetEquiv A x)) := by
-  simp only [indFDRepMap]
-  rw [forget₂_map_forget₂HomLinearEquiv]
-  simp
+  rw [indFDRepMap, Functor.map_preimage]
+  -- Normalize the `Rep.ofHom` of a composite intertwiner to its pointwise action.
+  change (indFDRepForgetEquiv B).symm
+      ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
+        (indFDRepForgetEquiv A x)) = _
+  rfl
 
 /-- After forgetting finite-dimensionality, `indFDRepMap` is Mathlib's induced intertwiner
 transported across the small-carrier comparison isomorphisms. -/
@@ -356,14 +371,11 @@ theorem forget₂_map_indFDRepMap {k G : Type u} [Field k] [Group G] {S : Subgro
           (indFDRepForgetIso B).inv := by
   apply Rep.hom_ext
   ext x
-  -- Mathlib's `Rep.mkIso` projection lemmas do not match across the definitionally equal
-  -- `Field`- and `CommRing`-derived representation structures here, so normalize the categorical
-  -- composites to the characteristic pointwise statement in one step.
-  change ((forget₂ (FDRep k G) (Rep k G)).map (indFDRepMap f)).hom x =
-    (indFDRepForgetEquiv B).symm
-      ((Rep.indMap S.subtype ((forget₂ (FDRep k S) (Rep k S)).map f)).hom
-        (indFDRepForgetEquiv A x))
-  exact indFDRepMap_apply f x
+  simp only [FGModuleCat.obj_carrier, Rep.hom_comp,
+    Representation.IntertwiningMap.comp_toLinearMap, LinearMap.coe_comp,
+    Representation.IntertwiningMap.coe_toLinearMap, Function.comp_apply,
+    indFDRepMap_apply, Rep.indFunctor_map]
+  rw [indFDRepForgetIso_hom_hom_apply, indFDRepForgetIso_inv_hom_apply]
 
 /-- Induction of intertwiners preserves identities. -/
 private theorem indFDRepMap_id {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
