@@ -19,7 +19,8 @@ transports that presentation along `ℤ → A` for an arbitrary commutative ring
 The base change `G_A` is cut out inside the base change of the ambient general-linear coordinate
 algebra by the base-changed Hopf ideal `J_A`, and the base change of each root subgroup still
 factors through it, with the same factorization the construction over `ℤ` provides. That is the
-compatibility of the pinning data with base change: nothing has to be rechosen over `A`.
+compatibility of the root-subgroup coordinate maps with base change: their factorizations do not
+have to be rechosen over `A`.
 
 Generation, on the other hand, only transports in one direction: the carrier generated over `A` by
 the base-changed root subgroups is a closed subgroup scheme of `G_A`
@@ -81,6 +82,15 @@ noncomputable def kostantGeneratedBaseChangeIdeal :
       (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n)) :=
   CommHopfAlgCat.baseChangeHopfIdeal (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
 
+/-- The specialized base-changed defining ideal is the generic base change of the ideal defining
+the Chevalley carrier over `ℤ`. -/
+theorem kostantGeneratedBaseChangeIdeal_def :
+    kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A =
+      CommHopfAlgCat.baseChangeHopfIdeal
+        (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) := by
+  unfold kostantGeneratedBaseChangeIdeal
+  rfl
+
 /-- The base change of the Chevalley carrier is the quotient of the base-changed general-linear
 coordinate algebra by the base-changed defining ideal: base change of the group scheme and of its
 presentation as a closed subgroup scheme agree. -/
@@ -92,6 +102,31 @@ noncomputable def kostantGeneratedBaseChangeIso :
         (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
           (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) :=
   CommHopfAlgCat.quotientBaseChangeIso (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
+
+private theorem mkQuotient_comp_kostantGeneratedBaseChangeIso_hom_def :
+    CommHopfAlgCat.mkQuotient
+          (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
+          (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A) ≫
+        (kostantGeneratedBaseChangeIso e h ρ M hM hnil b A).hom =
+      CommHopfAlgCat.baseChangeMap
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) := by
+  unfold kostantGeneratedBaseChangeIdeal kostantGeneratedBaseChangeIso
+  exact CommHopfAlgCat.mkQuotient_comp_quotientBaseChangeIso_hom (K := A)
+    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
+
+/-- The specialized identification of the base-changed carrier is compatible with the quotient
+morphism presenting the carrier over `ℤ`. -/
+@[simp]
+theorem mkQuotient_comp_kostantGeneratedBaseChangeIso_hom :
+    CommHopfAlgCat.mkQuotient
+          (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
+          (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A) ≫
+        (kostantGeneratedBaseChangeIso e h ρ M hM hnil b A).hom =
+      CommHopfAlgCat.baseChangeMap
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) :=
+  mkQuotient_comp_kostantGeneratedBaseChangeIso_hom_def e h ρ M hM hnil b A
 
 /-- The `i`th base-changed root-subgroup coordinate map, factored through the base change of the
 Chevalley carrier: the base change of the factorization over `ℤ`, read through the presentation of
@@ -116,23 +151,10 @@ theorem mkQuotient_comp_kostantRootSubgroupBaseChangeCoordinateMap (i : I) :
         kostantRootSubgroupBaseChangeCoordinateMap e h ρ M hM hnil b A i =
       CommHopfAlgCat.baseChangeMap
         (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
-  -- Both sides are stated through the named base-changed data; the equation itself is the
-  -- generic quotient compatibility, composed with functoriality of base change.
-  have hcomp :
-      CommHopfAlgCat.mkQuotient
-            (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-            (CommHopfAlgCat.baseChangeHopfIdeal
-              (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)) ≫
-          (CommHopfAlgCat.quotientBaseChangeIso (K := A)
-              (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)).hom ≫
-            CommHopfAlgCat.baseChangeMap
-              (kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i) =
-        CommHopfAlgCat.baseChangeMap
-          (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
-    rw [← Category.assoc, CommHopfAlgCat.mkQuotient_comp_quotientBaseChangeIso_hom,
-      ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
-      mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap]
-  exact hcomp
+  rw [kostantRootSubgroupBaseChangeCoordinateMap, ← Category.assoc,
+    mkQuotient_comp_kostantGeneratedBaseChangeIso_hom,
+    ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
+    mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap]
 
 /-- Every base-changed root-subgroup coordinate map kills the base-changed defining ideal, so the
 base-changed root subgroups all land in the base change of the Chevalley carrier. -/
