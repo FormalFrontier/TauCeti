@@ -160,11 +160,8 @@ theorem ext {f g : Hom source target} (h : ∀ x, f.toIntLinearMap x = g.toIntLi
 /-- The complex action of a Hodge morphism commutes with lattice-induced conjugation. -/
 @[simp]
 theorem commutes_conj (f : Hom source target) (x : W₁) :
-    f ((latticeConjugation h₁).toEquiv x) =
-      (latticeConjugation h₂).toEquiv (f x) :=
-  by
-    simpa only [toLinearMap, latticeConjugation_toEquiv_apply] using
-      integralMapToComplex_commutes_conj h₁ h₂ f.toIntLinearMap x
+    f (latticeConj h₁ x) = latticeConj h₂ (f x) :=
+  integralMapToComplex_commutes_conj h₁ h₂ f.toIntLinearMap x
 
 /-- Preservation of a filtration step in submodule-map form. -/
 theorem map_F_le (f : Hom source target) (p : ℤ) :
@@ -176,8 +173,11 @@ theorem map_F_le (f : Hom source target) (p : ℤ) :
 theorem map_conjF_le (f : Hom source target) (p : ℤ) :
     (source.conjF p).map f.toLinearMap ≤ target.conjF p := by
   rintro _ ⟨x, hx, rfl⟩
-  rw [target.mem_conjF_iff, ← f.commutes_conj]
-  exact f.map_mem_F p _ ((source.mem_conjF_iff p x).mp hx)
+  rw [target.mem_conjF_iff, latticeConjugation_toEquiv_apply, ← f.commutes_conj]
+  have hx' : (latticeConjugation h₁).toEquiv x ∈ source.F p :=
+    (source.mem_conjF_iff p x).mp hx
+  rw [latticeConjugation_toEquiv_apply] at hx'
+  exact f.map_mem_F p _ hx'
 
 /-- Elementwise form of preservation of the conjugate Hodge filtration. -/
 theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : W₁}
