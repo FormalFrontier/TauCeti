@@ -7,6 +7,7 @@ module
 public import Mathlib.MeasureTheory.Measure.GiryMonad
 public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
+public import Mathlib.Probability.UniformOn
 
 /-!
 # Empirical measures of sequences
@@ -15,6 +16,9 @@ This file defines the empirical probability measure of the first `n + 1` terms o
 gives its basic evaluation, integration, and measurability API.  The successor indexing makes the
 object a probability measure without a nonemptiness side condition and matches the form used in
 limit theorems.
+
+It also provides `empiricalPopulation` for a population indexed by an arbitrary nonempty finite
+type. This is the finite-population form used by quantitative sampling arguments.
 
 The construction is a uniform finite sum of Dirac measures.  It is the process-level prerequisite
 for the empirical-measure form of de Finetti's theorem in the `Exchangeability` roadmap.
@@ -106,6 +110,83 @@ theorem measurable_empiricalMeasure {X : ℕ → Ω → α}
         simp only [Measure.smul_apply, smul_eq_mul, Measure.dirac_apply' _ hs]
         exact measurable_const.mul (measurable_one.indicator (hX i hi hs))
   exact hmeasure.subtype_mk
+
+section FinitePopulation
+
+variable {κ : Type*} [Fintype κ] [Nonempty κ]
+
+/-- The empirical probability measure of a nonempty finite population `x : κ → α`.
+
+Unlike `empiricalMeasure`, its population can have an arbitrary nonempty finite index type rather
+than a natural-number prefix. -/
+def empiricalPopulation (x : κ → α) : ProbabilityMeasure α :=
+  ⟨∑ i, ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i), by
+    refine ⟨?_⟩
+    have hκ0 : ((Fintype.card κ : ℕ) : ℝ≥0∞) ≠ 0 := by simp
+    have hκtop : ((Fintype.card κ : ℕ) : ℝ≥0∞) ≠ ∞ := by simp
+    simpa using ENNReal.mul_inv_cancel hκ0 hκtop⟩
+
+/-- The measure underlying a finite empirical population is the normalized sum of its Dirac
+masses. -/
+@[simp]
+theorem empiricalPopulation_toMeasure (x : κ → α) :
+    (empiricalPopulation x : Measure α) =
+      ∑ i, ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i) :=
+  (rfl)
+
+/-- Evaluation of a finite empirical population on a measurable set is its empirical
+frequency. -/
+theorem empiricalPopulation_apply {x : κ → α} {s : Set α} (hs : MeasurableSet s) :
+    (empiricalPopulation x : Measure α) s = ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ *
+      ∑ i, s.indicator (1 : α → ℝ≥0∞) (x i) := by
+  rw [empiricalPopulation_toMeasure]
+  simp only [Measure.coe_finsetSum, Measure.coe_smul, Finset.sum_apply, Pi.smul_apply,
+    smul_eq_mul, Measure.dirac_apply' _ hs, Finset.mul_sum]
+
+/-- On a discrete finite index type, a finite empirical population is the pushforward of the
+uniform law on its indices. -/
+theorem empiricalPopulation_eq_map_uniformOn [MeasurableSpace κ] [MeasurableSingletonClass κ]
+    (x : κ → α) :
+    (empiricalPopulation x : Measure α) =
+      (ProbabilityTheory.uniformOn (Set.univ : Set κ)).map x := by
+  ext s hs
+  rw [empiricalPopulation_apply hs, Measure.map_apply (measurable_of_countable x) hs,
+    ProbabilityTheory.uniformOn_univ]
+  classical
+  have hpreimage :
+      x ⁻¹' s = (Finset.univ.filter fun i => x i ∈ s : Finset κ) := by
+    ext i
+    simp
+  rw [hpreimage, Measure.count_apply_finset]
+  simp only [Set.indicator_apply, Pi.one_apply]
+  rw [← ENNReal.div_eq_inv_mul]
+  congr 1
+  norm_cast
+  simp
+
+/-- Integrating against a finite empirical population is averaging over its values. -/
+theorem integral_empiricalPopulation [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    {x : κ → α} {f : α → E} (hf : StronglyMeasurable f) :
+    ∫ y, f y ∂(empiricalPopulation x : Measure α) =
+      ((Fintype.card κ : ℕ) : ℝ)⁻¹ • ∑ i, f (x i) := by
+  rw [empiricalPopulation_toMeasure, integral_finsetSum_measure]
+  · simp_rw [integral_smul_measure, integral_dirac' f _ hf]
+    rw [← Finset.smul_sum]
+    congr 1
+    rw [ENNReal.toReal_inv]
+    norm_cast
+  · intro i hi
+    exact (integrable_dirac' hf (by simp)).smul_measure (by simp)
+
+/-- Finite empirical distributions depend measurably on the population. -/
+theorem measurable_empiricalPopulation :
+    Measurable (empiricalPopulation : (κ → α) → ProbabilityMeasure α) := by
+  apply Measurable.subtype_mk
+  refine Measure.measurable_of_measurable_coe _ fun s hs => ?_
+  simp_rw [← empiricalPopulation_toMeasure, empiricalPopulation_apply hs]
+  fun_prop
+
+end FinitePopulation
 
 end Probability
 
