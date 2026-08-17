@@ -20,13 +20,17 @@ every step.
 
 ## Main results
 
-* `isProbabilityMeasure_smul_add_smul` — the unbundled fact about total mass.
-* `ProbabilityMeasure.convexCombo` — the bundled combination, with `toMeasure_convexCombo`
-  exposing its underlying measure.
+* `TauCeti.MeasureTheory.isProbabilityMeasure_smul_add_smul` — the unbundled fact about total mass,
+  the prerequisite for the bundling.
+* `MeasureTheory.ProbabilityMeasure.convexCombo` — the bundled combination, characterized by
+  `MeasureTheory.ProbabilityMeasure.toMeasure_convexCombo`.
 
-`convexCombo` and its two lemmas are declared in the root `MeasureTheory.ProbabilityMeasure`
-namespace rather than under `TauCeti`, since the type is Mathlib's; that is what lets
-`P.convexCombo` be written as dot notation.
+`convexCombo` and `toMeasure_convexCombo` are declared in the root
+`MeasureTheory.ProbabilityMeasure` namespace rather than under `TauCeti`, since the type is
+Mathlib's; that is what lets `P.convexCombo hab Q` be written as dot notation, generalized field
+notation inserting `P` at the first explicit `ProbabilityMeasure` argument whatever the weight
+hypothesis's position. The prerequisite `isProbabilityMeasure_smul_add_smul` is about `Measure`,
+not `ProbabilityMeasure`, and stays under `TauCeti.MeasureTheory`.
 -/
 
 public section
@@ -56,9 +60,9 @@ end TauCeti
 
 /-! ### The bundled combination
 
-`ProbabilityMeasure` is Mathlib's type, so its namespace is Mathlib's: these three declarations sit
-in the root `MeasureTheory.ProbabilityMeasure`, not under `TauCeti`, which is what makes
-`P.convexCombo hab Q` elaborate as dot notation. -/
+`ProbabilityMeasure` is Mathlib's type, so its namespace is Mathlib's: the definition and its
+characteristic lemma sit in the root `MeasureTheory.ProbabilityMeasure`, not under `TauCeti`, which
+is what makes `P.convexCombo hab Q` elaborate as dot notation. -/
 
 namespace MeasureTheory
 
@@ -67,11 +71,7 @@ namespace ProbabilityMeasure
 variable {α : Type*} [MeasurableSpace α]
 
 /-- The **convex combination** `a • P + b • Q` of two probability measures, for weights summing
-to `1`, bundled as a `ProbabilityMeasure`.
-
-Exposed: this is a bundling, with no content beyond `toMeasure_convexCombo`, and callers
-constructing subtypes of `ProbabilityMeasure` need the underlying measure definitionally. -/
-@[expose]
+to `1`, bundled as a `ProbabilityMeasure`. Its underlying measure is `toMeasure_convexCombo`. -/
 def convexCombo {a b : ℝ≥0∞} (hab : a + b = 1) (P Q : ProbabilityMeasure α) :
     ProbabilityMeasure α :=
   ⟨a • (P : Measure α) + b • (Q : Measure α),

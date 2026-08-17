@@ -121,7 +121,8 @@ example (P Q : ProbabilityMeasure α) {a b : ℝ≥0∞} (hab : a + b = 1)
         ProbabilityMeasure (ProbabilityMeasure α)) : Measure (ProbabilityMeasure α))
       = a • Measure.dirac P + b • Measure.dirac Q := by
   rw [deFinettiEquiv_symm_convexCombo, ProbabilityMeasure.toMeasure_convexCombo,
-    deFinettiEquiv_symm_eq_dirac P hρ₁, deFinettiEquiv_symm_eq_dirac Q hρ₂]
+    deFinettiEquiv_symm_eq_dirac P hρ₁, deFinettiEquiv_symm_eq_dirac Q hρ₂,
+    ProbabilityMeasure.coe_mk, ProbabilityMeasure.coe_mk]
 
 end Correspondence
 

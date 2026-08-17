@@ -157,11 +157,9 @@ theorem deFinettiEquiv_symm_eq_dirac [StandardBorelSpace α] (P : ProbabilityMea
     {ρ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}}
     (hρ : ((ρ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
       = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
-    ((deFinettiEquiv.symm ρ : ProbabilityMeasure (ProbabilityMeasure α)) :
-      Measure (ProbabilityMeasure α)) = Measure.dirac P :=
-  congrArg ProbabilityMeasure.toMeasure
-    (deFinettiEquiv_symm_eq (π := ⟨Measure.dirac P, inferInstance⟩)
-      (by rw [hρ]; exact (deFinettiBarycenter_dirac P).symm))
+    deFinettiEquiv.symm ρ = ⟨Measure.dirac P, inferInstance⟩ :=
+  deFinettiEquiv_symm_eq (π := ⟨Measure.dirac P, inferInstance⟩)
+    (by rw [hρ]; exact (deFinettiBarycenter_dirac P).symm)
 
 /-! ### Affinity
 
@@ -181,11 +179,12 @@ The unbundled statements without it are `deFinettiBarycenter_add` and `deFinetti
 /-- The **convex combination of two exchangeable path laws**, in the subtype the correspondence
 lands in. Exchangeability is preserved because the defining permutation invariance is linear
 (`ExchangeableLaw.smul_add_smul`). -/
-@[expose]
 def exchangeableLawConvexCombo {a b : ℝ≥0∞} (hab : a + b = 1)
     (ρ₁ ρ₂ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}) :
     {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))} :=
-  ⟨ProbabilityMeasure.convexCombo hab ρ₁ ρ₂, ρ₁.2.smul_add_smul ρ₂.2 a b⟩
+  ⟨ProbabilityMeasure.convexCombo hab ρ₁ ρ₂, by
+    rw [ProbabilityMeasure.toMeasure_convexCombo]
+    exact ρ₁.2.smul_add_smul ρ₂.2 a b⟩
 
 /-- The underlying measure of a convex combination of exchangeable laws. -/
 @[simp]
@@ -194,7 +193,7 @@ theorem exchangeableLawConvexCombo_toMeasure {a b : ℝ≥0∞} (hab : a + b = 1
     ((exchangeableLawConvexCombo hab ρ₁ ρ₂ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
       = a • ((ρ₁ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
         + b • ((ρ₂ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α)) :=
-  (rfl)
+  ProbabilityMeasure.toMeasure_convexCombo hab _ _
 
 /-- **The correspondence is affine.** It carries the convex combination of two mixing laws to the
 convex combination, with the same weights, of their exchangeable path laws. -/
@@ -204,10 +203,9 @@ theorem deFinettiEquiv_convexCombo [StandardBorelSpace α] {a b : ℝ≥0∞} (h
     deFinettiEquiv (ProbabilityMeasure.convexCombo hab π₁ π₂)
       = exchangeableLawConvexCombo hab (deFinettiEquiv π₁) (deFinettiEquiv π₂) :=
   Subtype.ext (ProbabilityMeasure.toMeasure_injective (by
-    rw [deFinettiEquiv_apply_coe, exchangeableLawConvexCombo_toMeasure,
+    simp only [deFinettiEquiv_apply_coe, exchangeableLawConvexCombo_toMeasure,
       ProbabilityMeasure.toMeasure_convexCombo, deFinettiBarycenter_add,
-      deFinettiBarycenter_smul, deFinettiBarycenter_smul, deFinettiEquiv_apply_coe,
-      deFinettiEquiv_apply_coe]))
+      deFinettiBarycenter_smul]))
 
 /-- **The inverse correspondence is affine**: decomposing an exchangeable law as a convex
 combination decomposes its mixing law the same way.
