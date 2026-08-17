@@ -51,7 +51,10 @@ variable (triangle : IsInvolutiveDual F ev)
 
 The double-dual isomorphism `ev` plays the role of the counit and the opposite of its inverse
 plays the role of the unit, so unlike `CategoryTheory.Functor.asEquivalence` the inverse of the
-resulting equivalence is `F.rightOp`: dualizing back is the same operation as dualizing. -/
+resulting equivalence is `F.rightOp`: dualizing back is the same operation as dualizing.
+
+The body is exposed because the unit and counit computations below are not merely proved by
+`rfl`: their statements only typecheck once `unitIso` and `counitIso` reduce. -/
 @[expose, simps! functor inverse]
 def dualityEquivalence : Cᵒᵖ ≌ C where
   functor := F
@@ -65,25 +68,25 @@ def dualityEquivalence : Cᵒᵖ ≌ C where
 @[simp]
 theorem dualityEquivalence_unitIso_hom_app (X : Cᵒᵖ) :
     (dualityEquivalence F ev triangle).unitIso.hom.app X = (ev.inv.app X.unop).op :=
-  rfl
+  (rfl)
 
 /-- The counit of `dualityEquivalence` is the inverse double-dual isomorphism. -/
 @[simp]
 theorem dualityEquivalence_counitIso_hom_app (X : C) :
     (dualityEquivalence F ev triangle).counitIso.hom.app X = ev.inv.app X :=
-  rfl
+  (rfl)
 
 /-- The inverse unit of `dualityEquivalence` is the opposite of the double-dual isomorphism. -/
 @[simp]
 theorem dualityEquivalence_unitIso_inv_app (X : Cᵒᵖ) :
     (dualityEquivalence F ev triangle).unitIso.inv.app X = (ev.hom.app X.unop).op :=
-  rfl
+  (rfl)
 
 /-- The inverse counit of `dualityEquivalence` is the double-dual isomorphism. -/
 @[simp]
 theorem dualityEquivalence_counitIso_inv_app (X : C) :
     (dualityEquivalence F ev triangle).counitIso.inv.app X = ev.hom.app X :=
-  rfl
+  (rfl)
 
 end Functor
 

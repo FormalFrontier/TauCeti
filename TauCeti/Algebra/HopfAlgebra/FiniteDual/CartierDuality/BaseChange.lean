@@ -60,7 +60,11 @@ theorem finiteLocallyFreeBicommutativeHopfAlgProperty_baseChange
 
 namespace FiniteLocallyFreeBicommutativeHopfAlgCat
 
-/-- Scalar extension of finite locally free bicommutative Hopf algebras. -/
+/-- Scalar extension of finite locally free bicommutative Hopf algebras.
+
+The body is exposed so that the carrier of a scalar extension reduces to a tensor product, which
+the statements of `toBialgHom_baseChangeFunctor_map` and
+`baseChangeDualIso_hom_apply_tmul_apply_tmul` need. -/
 @[expose]
 noncomputable def baseChangeFunctor :
     FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R ⥤
@@ -92,7 +96,7 @@ theorem toBialgHom_baseChangeFunctor_map
     {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
     toBialgHom ((baseChangeFunctor R S).map f) =
       Bialgebra.TensorProduct.map (BialgHom.id S S) (toBialgHom f) :=
-  rfl
+  (rfl)
 
 /-- **Finite dualization commutes with extension of scalars.** -/
 noncomputable def baseChangeDualIso (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
@@ -133,7 +137,6 @@ variable (R S)
 
 /-- Finite dualization commutes with scalar extension, as a natural isomorphism of functors
 `FiniteLocallyFreeBicommutativeHopfAlgCat R ⥤ (FiniteLocallyFreeBicommutativeHopfAlgCat S)ᵒᵖ`. -/
-@[expose]
 noncomputable def dualBaseChangeNatIso :
     (dualFunctor (k := R)).rightOp ⋙ (baseChangeFunctor R S).op ≅
       baseChangeFunctor R S ⋙ (dualFunctor (k := S)).rightOp :=
@@ -145,14 +148,14 @@ They appear inverted because the natural isomorphism lands in an opposite catego
 @[simp]
 theorem dualBaseChangeNatIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
     (dualBaseChangeNatIso R S).hom.app H = (baseChangeDualIso (S := S) H).inv.op :=
-  rfl
+  (rfl)
 
 /-- The inverse components of `dualBaseChangeNatIso` are the objectwise comparisons
 `baseChangeDualIso`. -/
 @[simp]
 theorem dualBaseChangeNatIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
     (dualBaseChangeNatIso R S).inv.app H = (baseChangeDualIso (S := S) H).hom.op :=
-  rfl
+  (rfl)
 
 end FiniteLocallyFreeBicommutativeHopfAlgCat
 

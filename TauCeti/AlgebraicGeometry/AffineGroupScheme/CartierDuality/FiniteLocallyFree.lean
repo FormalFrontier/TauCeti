@@ -224,7 +224,10 @@ commutative base ring.**
 
 Transporting `FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality` rather than the bare
 dualization functor keeps the inverse computable: it is again Cartier dualization, and the counit
-is the double-dual evaluation isomorphism `cartierDualDualIso`. -/
+is the double-dual evaluation isomorphism `cartierDualDualIso`.
+
+The body is exposed so that `cartierDuality_inverse` holds definitionally, without which
+`cartierDualDualNatIso` does not typecheck. -/
 @[expose]
 noncomputable def cartierDuality
     (R : Type u) [CommRing R] :
@@ -275,6 +278,7 @@ noncomputable abbrev cartierDual (R : Type u) [CommRing R]
   (cartierDualFunctor R).obj (op G)
 
 /-- The Cartier dual is represented by the finite dual of the coordinate Hopf algebra. -/
+@[simp]
 theorem cartierDual_eq (R : Type u) [CommRing R]
     (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
     cartierDual R G =
