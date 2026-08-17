@@ -18,6 +18,13 @@ projection lemmas identifying its objects and maps.
 ## Main definitions
 
 * `TauCeti.shortComplexBiprod`: the componentwise binary direct sum of two short complexes.
+
+## Implementation notes
+
+`shortComplexBiprod` is `@[expose]`d so that its objects are definitionally the corresponding
+biproducts outside this file. Without that, the type of `(shortComplexBiprod S₁ S₂).f` could not
+be seen to be `S₁.X₁ ⊞ S₂.X₁ ⟶ S₁.X₂ ⊞ S₂.X₂`, and the projection lemmas for the two maps would
+have to be stated with a heterogeneous equality.
 -/
 
 public section
@@ -38,7 +45,7 @@ theorem shortComplexBiprod_zero (S₁ S₂ : ShortComplex C)
   ext <;> simp [reassoc_of% S₁.zero, reassoc_of% S₂.zero]
 
 /-- The componentwise binary direct sum of two short complexes. -/
-noncomputable def shortComplexBiprod (S₁ S₂ : ShortComplex C)
+@[expose] noncomputable def shortComplexBiprod (S₁ S₂ : ShortComplex C)
     [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
     [HasBinaryBiproduct S₁.X₃ S₂.X₃] : ShortComplex C :=
   ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
@@ -78,13 +85,13 @@ theorem shortComplexBiprod_X₃ (S₁ S₂ : ShortComplex C)
 theorem shortComplexBiprod_f (S₁ S₂ : ShortComplex C)
     [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
     [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    HEq (shortComplexBiprod S₁ S₂).f (biprod.map S₁.f S₂.f) := (HEq.rfl)
+    (shortComplexBiprod S₁ S₂).f = biprod.map S₁.f S₂.f := (rfl)
 
 /-- The second map of the componentwise biproduct of two short complexes. -/
 @[simp]
 theorem shortComplexBiprod_g (S₁ S₂ : ShortComplex C)
     [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
     [HasBinaryBiproduct S₁.X₃ S₂.X₃] :
-    HEq (shortComplexBiprod S₁ S₂).g (biprod.map S₁.g S₂.g) := (HEq.rfl)
+    (shortComplexBiprod S₁ S₂).g = biprod.map S₁.g S₂.g := (rfl)
 
 end TauCeti
