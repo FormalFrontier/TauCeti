@@ -37,6 +37,8 @@ complete Hausdorff targets.
 * `continuous_toCompletionLoc`: the structure map `A → A⟨T/s⟩` is continuous.
 * `isHuberRing_completion_locTopology`: `A⟨T/s⟩` is a Huber ring — the completed pair above is a
   pair of definition for it.
+* `isTateRing_completion_locTopology_of_isTopologicallyNilpotent`: a topologically nilpotent
+  denominator becomes a pseudouniformiser, so the completed localization is Tate.
 * `existsUnique_continuous_ringHom_completion_locTopology`: the universal property, for complete
   Hausdorff targets.
 * `completion_locTopology_ringHom_ext_of_continuous`: two continuous ring homomorphisms out of
@@ -324,6 +326,41 @@ theorem isHuberRing_completion_locTopology [IsTopologicalRing A] (P : PairOfDefi
   letI := isUniformAddGroup_locUniformSpace P T s S hden
   letI := isTopologicalRing_locUniformSpace P T s S hden
   ⟨⟨completionLocalization P T s S hden⟩⟩
+
+/-- A topologically nilpotent denominator becomes a pseudouniformiser in the completed
+localization: it is inverted by localization and remains topologically nilpotent under the
+continuous structure map. -/
+theorem isPseudoUniformizer_toCompletionLoc [IsTopologicalRing A] (P : PairOfDefinition A)
+    (T : Finset A) (s : A) (S : Type*) [CommRing S] [Algebra A S]
+    [IsLocalization.Away s S] (hden : HasDenominatorPower P T s S)
+    (hs : IsTopologicallyNilpotent s) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    IsPseudoUniformizer (toCompletionLoc P T s S hden s) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  rw [isPseudoUniformizer_iff]
+  refine ⟨?_, hs.map (continuous_toCompletionLoc P T s S hden)⟩
+  rw [toCompletionLoc_apply]
+  exact (IsLocalization.Away.algebraMap_isUnit s).map UniformSpace.Completion.coeRingHom
+
+/-- The completed localization at a topologically nilpotent denominator is a Tate ring. -/
+theorem isTateRing_completion_locTopology_of_isTopologicallyNilpotent [IsTopologicalRing A]
+    (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) (hs : IsTopologicallyNilpotent s) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    IsTateRing (UniformSpace.Completion S) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := isHuberRing_completion_locTopology P T s S hden
+  exact ⟨⟨toCompletionLoc P T s S hden s,
+    isPseudoUniformizer_toCompletionLoc P T s S hden hs⟩⟩
 
 /-- **Maps out of `A⟨T/s⟩` are determined on `A`.** Two continuous ring homomorphisms into a
 semiring carrying a Hausdorff topology that agree after composing with the structure map

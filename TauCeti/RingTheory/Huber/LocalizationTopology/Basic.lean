@@ -37,6 +37,8 @@ universal property in `LocalizationTopology.UniversalProperty`, the completion `
 * `hasBasis_nhds_zero_locTopology`, `isTopologicalRing_locTopology` and
   `nonarchimedeanRing_locTopology`: the contract of `locTopology`, to be used in place of
   unfolding the construction.
+* `hasDenominatorPower_of_span_eq_idealOfDefinition`: generators of `I` among the numerators
+  supply the standing denominator-power hypothesis for every denominator.
 * `isHuberRing_locTopology`: `Aₛ` under `locTopology` is a Huber ring.
 * `isBounded_image_algebraMap_of_isBounded` and `isPowerBounded_algebraMap_of_isPowerBounded`:
   bounded sets have bounded image, so power-orbits transfer and each power-bounded *element*
@@ -230,6 +232,31 @@ theorem hasDenominatorPower_of_pow_le_span (P : PairOfDefinition A) (T : Finset 
   have hb' : (b : A) = s * (c : A) := by rw [← hc]; push_cast; ring
   rw [hb', divBy_mul_cancel_left]
   exact algebraMap_mem_locSubring P T s S c.property
+
+open scoped Classical in
+/-- A generating set of the ideal of definition supplies the standing denominator-power
+hypothesis for localization at any element. Every element of `I` is a linear combination of the
+generators, and division by the fixed denominator is linear in the numerator. -/
+theorem hasDenominatorPower_of_span_eq_idealOfDefinition (P : PairOfDefinition A)
+    (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
+    HasDenominatorPower P (G.image ((↑) : P.ringOfDefinition → A)) s S := by
+  rw [hasDenominatorPower_iff]
+  refine ⟨1, fun b hb ↦ ?_⟩
+  rw [pow_one, ← hG] at hb
+  induction hb using Submodule.span_induction with
+  | mem x hx =>
+    exact divBy_mem_locSubring P _ s S (Finset.mem_image.mpr ⟨x, hx, rfl⟩)
+  | zero => simp
+  | add x y _ _ hx hy =>
+    simpa using (locSubring P _ s S).add_mem hx hy
+  | smul r x _ hx =>
+    have hmul := (locSubring P _ s S).mul_mem
+      (algebraMap_mem_locSubring P _ s S r.property) hx
+    rw [← divBy_mul] at hmul
+    rw [smul_eq_mul, MulMemClass.coe_mul]
+    exact hmul
 
 /-! ### The candidate ideal of definition `J` -/
 

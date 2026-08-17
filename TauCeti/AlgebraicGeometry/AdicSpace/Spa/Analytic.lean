@@ -6,6 +6,8 @@ Authors: Antigravity
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
+public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basis
+public import TauCeti.RingTheory.Huber.LocalizationTopology.Completion
 public import TauCeti.RingTheory.Huber.OpenIdeal
 
 /-!
@@ -30,6 +32,11 @@ This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)`.
   `Spv A` (and hence `Spa(A, A⁺)`) is analytic.
 * `TauCeti.ValuationSpectrum.spaAnalytic_eq_spa_of_isTateRing` : **Wedhorn Remark 7.40(3)**,
   for a Tate ring `A`, the analytic locus is the entire adic spectrum.
+* `TauCeti.ValuationSpectrum.isOpen_val_preimage_spaAnalytic` : the analytic locus is open.
+* `TauCeti.ValuationSpectrum.spaAnalytic_eq_biUnion_rationalSubset` : generators of an ideal of
+  definition give a finite rational cover of the analytic locus.
+* `TauCeti.ValuationSpectrum.isTateRing_completion_locTopology_of_mem_generators` : the completed
+  coordinate ring of each chart in that cover is Tate.
 
 ## References
 
@@ -41,7 +48,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open TauCeti TauCeti.Huber TauCeti.Valuation
+open TauCeti TauCeti.Huber TauCeti.Huber.PairOfDefinition TauCeti.Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
@@ -81,6 +88,130 @@ theorem spaAnalytic_subset_spa (Aplus : Subring A) :
 /-- Enlarging the plus ring shrinks the analytic locus. -/
 theorem spaAnalytic_antitone : Antitone (spaAnalytic (A := A)) := fun _ _ hle ↦
   Set.inter_subset_inter_left _ (spa_antitone hle)
+
+section TopologicalRing
+
+variable [IsTopologicalRing A]
+
+/-- A point is analytic exactly when some element of the extended ideal of definition is outside
+its support. This is Wedhorn Proposition 7.49(2)(i), expressed using Lemma 6.6. -/
+theorem isAnalyticPoint_iff_exists_mem_extendedIdealOfDefinition_notMem_supp
+    (P : PairOfDefinition A) (v : Spv A) :
+    IsAnalyticPoint v ↔ ∃ a ∈ P.extendedIdealOfDefinition, a ∉ v.supp := by
+  rw [isAnalyticPoint_def, P.isOpen_iff_le_radical]
+  have hsupp : v.supp.radical = v.supp :=
+    (inferInstance : v.supp.IsPrime).isRadical.radical
+  rw [hsupp]
+  exact Set.not_subset
+
+/-- The analytic locus is open in the adic spectrum. It is the union, over the extended ideal of
+definition, of the loci on which an element does not vanish. -/
+theorem isOpen_val_preimage_spaAnalytic (P : PairOfDefinition A) (Aplus : Subring A) :
+    IsOpen (Subtype.val ⁻¹' spaAnalytic Aplus : Set (spa Aplus)) := by
+  have hset : (Subtype.val ⁻¹' spaAnalytic Aplus : Set (spa Aplus)) =
+      ⋃ a ∈ P.extendedIdealOfDefinition,
+        Subtype.val ⁻¹' basicOpen a a := by
+    ext v
+    simp only [Set.mem_preimage, mem_spaAnalytic_iff, v.property, true_and, Set.mem_iUnion,
+      mem_basicOpen_iff, exists_prop, ValuativeRel.vle_refl]
+    rw [isAnalyticPoint_iff_exists_mem_extendedIdealOfDefinition_notMem_supp P]
+    simp only [mem_supp_iff]
+  rw [hset]
+  exact isOpen_biUnion fun a _ ↦ (isOpen_basicOpen a a).preimage continuous_subtype_val
+
+/-- A rational subset whose denominator belongs to the extended ideal of definition consists of
+analytic points. -/
+theorem rationalSubset_subset_spaAnalytic_of_mem_extendedIdealOfDefinition
+    (P : PairOfDefinition A) (Aplus : Subring A) (T : Finset A) {s : A}
+    (hs : s ∈ P.extendedIdealOfDefinition) :
+    rationalSubset Aplus T s ⊆ spaAnalytic Aplus := by
+  intro v hv
+  have hmem := (mem_rationalSubset_iff Aplus T s v).mp hv
+  refine (mem_spaAnalytic_iff Aplus v).mpr ⟨hmem.1, ?_⟩
+  rw [isAnalyticPoint_iff_exists_mem_extendedIdealOfDefinition_notMem_supp P]
+  exact ⟨s, hs, fun hsupp ↦ hmem.2.2 ((mem_supp_iff v s).mp hsupp)⟩
+
+open scoped Classical in
+/-- **The finite standard rational cover of the analytic locus.** If `G` generates an ideal of
+definition, then the rational subsets `R(G/g)`, for `g ∈ G`, cover exactly the analytic locus.
+This is the cover in Wedhorn Proposition 7.49(2). -/
+theorem spaAnalytic_eq_biUnion_rationalSubset (P : PairOfDefinition A) (Aplus : Subring A)
+    (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) :
+    spaAnalytic Aplus =
+      ⋃ g ∈ G, rationalSubset Aplus
+        (G.image ((↑) : P.ringOfDefinition → A)) (g : A) := by
+  let T : Finset A := G.image ((↑) : P.ringOfDefinition → A)
+  have hspan : Ideal.span (T : Set A) = P.extendedIdealOfDefinition :=
+    P.span_image_eq_extendedIdealOfDefinition G hG
+  apply Set.Subset.antisymm
+  · intro v hv
+    have hvSpa := spaAnalytic_subset_spa Aplus hv
+    obtain ⟨a, haI, haSupp⟩ :=
+      (isAnalyticPoint_iff_exists_mem_extendedIdealOfDefinition_notMem_supp P v).mp
+        ((mem_spaAnalytic_iff Aplus v).mp hv).2
+    have hT : T.Nonempty := by
+      by_contra hempty
+      have hbot : P.extendedIdealOfDefinition = ⊥ := by
+        rw [← hspan, Finset.not_nonempty_iff_eq_empty.mp hempty, Finset.coe_empty,
+          Ideal.span_empty]
+      have : a ∈ (⊥ : Ideal A) := hbot ▸ haI
+      exact haSupp ((Ideal.mem_bot.mp this) ▸ v.supp.zero_mem)
+    obtain ⟨t, htT, hmax⟩ := Finset.exists_max_image T v.valuation hT
+    obtain ⟨g, hgG, rfl⟩ := Finset.mem_image.mp (show t ∈
+      G.image ((↑) : P.ringOfDefinition → A) by exact htT)
+    refine Set.mem_iUnion₂_of_mem hgG
+      ((mem_rationalSubset_iff Aplus T (g : A) v).mpr ⟨hvSpa, ?_, ?_⟩)
+    · intro u huT
+      exact (valuation_le_iff v u (g : A)).mp (hmax u huT)
+    · intro hzero
+      have hall : (T : Set A) ⊆ (v.supp : Set A) := fun u hu ↦ (mem_supp_iff v u).mpr
+        (v.toValuativeRel.vle_trans
+          ((valuation_le_iff v u (g : A)).mp (hmax u hu)) hzero)
+      exact haSupp ((hspan ▸ Ideal.span_le.mpr hall) haI)
+  · refine Set.iUnion₂_subset fun g hg ↦ ?_
+    apply rationalSubset_subset_spaAnalytic_of_mem_extendedIdealOfDefinition P Aplus
+    rw [← hspan]
+    exact Ideal.subset_span (Finset.mem_coe.mpr
+      (show (g : A) ∈ T from Finset.mem_image.mpr ⟨g, hg, rfl⟩))
+
+open scoped Classical in
+/-- Every set in the standard analytic cover is a member of the rational basis: its numerator
+ideal is the extended ideal of definition, hence open. -/
+theorem val_preimage_rationalSubset_mem_spaRationalFamily_of_span_eq_idealOfDefinition
+    (P : PairOfDefinition A) (Aplus : Subring A) (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition)
+    (g : P.ringOfDefinition) :
+    (Subtype.val ⁻¹' rationalSubset Aplus
+      (G.image ((↑) : P.ringOfDefinition → A)) (g : A) : Set (spa Aplus)) ∈
+        spaRationalFamily Aplus := by
+  refine mem_spaRationalFamily_iff.mpr ⟨_, (g : A), ?_, rfl⟩
+  rw [P.span_image_eq_extendedIdealOfDefinition G hG]
+  exact (P.isOpen_iff_le_radical P.extendedIdealOfDefinition).mpr Ideal.le_radical
+
+open scoped Classical in
+/-- The completed coordinate ring of a chart in the standard analytic cover is a Tate ring.
+The denominator belongs to the ideal of definition, hence is topologically nilpotent, and
+localization makes it a unit. The localization's standing hypothesis is constructed from the
+same generating set. -/
+theorem isTateRing_completion_locTopology_of_mem_generators (P : PairOfDefinition A)
+    (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition)
+    {g : P.ringOfDefinition} (hg : g ∈ G)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away (g : A) S] :
+    let hden := hasDenominatorPower_of_span_eq_idealOfDefinition P G hG g S
+    letI := locUniformSpace P (G.image ((↑) : P.ringOfDefinition → A)) (g : A) S hden
+    letI := isUniformAddGroup_locUniformSpace P
+      (G.image ((↑) : P.ringOfDefinition → A)) (g : A) S hden
+    letI := isTopologicalRing_locUniformSpace P
+      (G.image ((↑) : P.ringOfDefinition → A)) (g : A) S hden
+    IsTateRing (UniformSpace.Completion S) := by
+  let hden := hasDenominatorPower_of_span_eq_idealOfDefinition P G hG g S
+  exact isTateRing_completion_locTopology_of_isTopologicallyNilpotent P _ (g : A) S hden
+    (P.isTopologicallyNilpotent_of_mem_idealOfDefinition
+      (hG ▸ Ideal.subset_span (Finset.mem_coe.mpr hg)))
+
+end TopologicalRing
 
 section TateRing
 
