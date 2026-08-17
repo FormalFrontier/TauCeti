@@ -223,7 +223,6 @@ theorem discriminantBilinearIsometryOrthogonalSum_apply
 
 /-- The orthogonal-sum discriminant-bilinear isometry maps a representative to the pair of its
 component classes. -/
-@[simp]
 theorem discriminantBilinearIsometryOrthogonalSum_mk
     (L : IntegralLattice V) (M : IntegralLattice W) [L.IsNondegenerate] [M.IsNondegenerate]
     (x : (L.orthogonalSum M).dualCarrier) :
@@ -292,7 +291,6 @@ theorem discriminantQuadraticIsometryOrthogonalSum_apply
 
 /-- The orthogonal-sum discriminant-quadratic isometry maps a representative to the pair of its
 component classes. -/
-@[simp]
 theorem discriminantQuadraticIsometryOrthogonalSum_mk
     (L : IntegralLattice V) (M : IntegralLattice W) [L.IsNondegenerate] [M.IsNondegenerate]
     (hL : L.IsEven) (hM : M.IsEven) (x : (L.orthogonalSum M).dualCarrier) :
@@ -424,7 +422,6 @@ theorem discriminantBilinearIsometryNeg_apply (L : IntegralLattice V) [L.IsNonde
 
 /-- The discriminant-bilinear isometry for form negation maps every representative to the same
 ambient representative. -/
-@[simp]
 theorem discriminantBilinearIsometryNeg_mk (L : IntegralLattice V) [L.IsNondegenerate]
     (x : (-L).dualCarrier) :
     L.discriminantBilinearIsometryNeg (Submodule.Quotient.mk x) =
@@ -480,7 +477,6 @@ theorem discriminantQuadraticIsometryNeg_apply (L : IntegralLattice V)
 
 /-- The discriminant-quadratic isometry for form negation maps every representative to the same
 ambient representative. -/
-@[simp]
 theorem discriminantQuadraticIsometryNeg_mk (L : IntegralLattice V)
     [L.IsNondegenerate] (hL : L.IsEven) (x : (-L).dualCarrier) :
     L.discriminantQuadraticIsometryNeg hL (Submodule.Quotient.mk x) =
