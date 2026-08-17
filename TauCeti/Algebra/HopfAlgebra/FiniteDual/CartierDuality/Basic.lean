@@ -34,9 +34,10 @@ Cartier duality over a general affine base; its transport through `Spec` is prov
 * `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.dualMap_evalIso_inv`: the triangle identity
   exhibiting finite dualization as involutive.
 * `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality`: the resulting
-  anti-equivalence, with `cartierDuality_functor`, `cartierDuality_inverse`,
-  `cartierDuality_unitIso_hom_app` and `cartierDuality_counitIso_hom_app` computing all of its
-  data.
+  anti-equivalence, with `cartierDuality_functor` and `cartierDuality_inverse` computing its two
+  directions. Its unit and counit are computed by the generic
+  `CategoryTheory.Functor.dualityEquivalence_unitIso_hom_app` and its three companions; the
+  specializations to `evalIso` hold by `rfl`.
 
 ## References
 
@@ -288,30 +289,6 @@ theorem cartierDuality_functor : (cartierDuality (k := k)).functor = dualFunctor
 @[simp]
 theorem cartierDuality_inverse :
     (cartierDuality (k := k)).inverse = (dualFunctor (k := k)).rightOp :=
-  (rfl)
-
-/-- The unit of `cartierDuality` is the opposite of inverse double-dual evaluation. -/
-@[simp]
-theorem cartierDuality_unitIso_hom_app (H : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
-    (cartierDuality (k := k)).unitIso.hom.app H = (evalIso H.unop).inv.op :=
-  (rfl)
-
-/-- The counit of `cartierDuality` is inverse double-dual evaluation. -/
-@[simp]
-theorem cartierDuality_counitIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
-    (cartierDuality (k := k)).counitIso.hom.app H = (evalIso H).inv :=
-  (rfl)
-
-/-- The inverse unit of `cartierDuality` is the opposite of double-dual evaluation. -/
-@[simp]
-theorem cartierDuality_unitIso_inv_app (H : (FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)ᵒᵖ) :
-    (cartierDuality (k := k)).unitIso.inv.app H = (evalIso H.unop).hom.op :=
-  (rfl)
-
-/-- The inverse counit of `cartierDuality` is double-dual evaluation. -/
-@[simp]
-theorem cartierDuality_counitIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
-    (cartierDuality (k := k)).counitIso.inv.app H = (evalIso H).hom :=
   (rfl)
 
 instance dualFunctorIsEquivalence : (dualFunctor (k := k)).IsEquivalence :=
