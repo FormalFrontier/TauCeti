@@ -345,6 +345,25 @@ private lemma pairing_typeASimplyConnectedRootDatum (k l : Fin (n * (n + 1))) :
       (typeASimplyConnectedRootDatum n).root k ⬝ᵥ (typeASimplyConnectedRootDatum n).coroot l :=
   rfl
 
+/-- The root--coroot pairing of the pinned type `A` datum is symmetric. -/
+theorem pairing_typeASimplyConnectedRootDatum_comm (k l : Fin (n * (n + 1))) :
+    (typeASimplyConnectedRootDatum n).pairing k l =
+      (typeASimplyConnectedRootDatum n).pairing l k := by
+  rw [pairing_typeASimplyConnectedRootDatum, pairing_typeASimplyConnectedRootDatum,
+    root_typeASimplyConnectedRootDatum, root_typeASimplyConnectedRootDatum,
+    coroot_typeASimplyConnectedRootDatum, coroot_typeASimplyConnectedRootDatum,
+    typeAPairing, typeAPairing]
+  have hite (a b : Fin (n + 1)) :
+      (if a = b then (1 : ℤ) else 0) = if b = a then 1 else 0 := by
+    rcases eq_or_ne a b with rfl | hab
+    · rfl
+    · rw [ite_eq_right hab, ite_eq_right hab.symm]
+  rw [hite ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.1,
+    hite ((typeAIndexEquiv n).symm l).val.1 ((typeAIndexEquiv n).symm k).val.2,
+    hite ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.1,
+    hite ((typeAIndexEquiv n).symm l).val.2 ((typeAIndexEquiv n).symm k).val.2]
+  ring
+
 /-- The `i`-th simple root of type `Aₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeASimpleIndex (n : ℕ) (i : Fin n) : Fin (n * (n + 1)) :=
   ⟨i, lt_of_lt_of_le i.isLt (Nat.le_mul_of_pos_right n n.succ_pos)⟩
