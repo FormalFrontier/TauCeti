@@ -17,13 +17,13 @@ of the matrix obtained by subtracting the identity.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.isUnipotent_toLin_iff` — a matrix acts unipotently exactly when
+* `LinearMap.GeneralLinearGroup.isUnipotent_toLin_iff` — a matrix acts unipotently exactly when
   subtracting the identity from the matrix gives a nilpotent matrix.
 -/
 
 public section
 
-namespace TauCeti.GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 universe u
 
@@ -37,4 +37,4 @@ theorem isUnipotent_toLin_iff
   simp only [Matrix.GeneralLinearGroup.coe_toLin, Matrix.toLin'_apply',
     Module.End.one_eq_id]
 
-end TauCeti.GeneralLinearGroup
+end LinearMap.GeneralLinearGroup

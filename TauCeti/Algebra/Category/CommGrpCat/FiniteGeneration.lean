@@ -51,7 +51,7 @@ theorem isFG_iff (G : CommGrpCat.{v}) :
 end CommGrpCat
 
 /-- The category of finitely generated commutative groups. -/
-abbrev FGCommGrpCat :=
+abbrev FGCommGrpCat : Type _ :=
   CommGrpCat.isFG.FullSubcategory
 
 namespace FGCommGrpCat

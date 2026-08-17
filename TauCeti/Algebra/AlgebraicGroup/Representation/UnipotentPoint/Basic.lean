@@ -57,7 +57,7 @@ ReductiveGroups roadmap. It uses the representation--comodule dictionary built i
 
 public section
 
-open WithConv
+open LinearMap WithConv
 
 namespace TauCeti
 

@@ -108,7 +108,7 @@ detail: build a class with `TauCeti.SimpleSubmoduleClasses.mk`, compare classes 
 `TauCeti.SimpleSubmoduleClasses.lift_mk` and `TauCeti.coe_simpleSubmoduleClassesEquiv_mk` are
 stated as ordinary theorems, so nothing downstream depends on the quotient by definitional
 unfolding. -/
-def SimpleSubmoduleClasses :=
+def SimpleSubmoduleClasses : Type _ :=
   Quot fun N N' : {N : Submodule R M // IsSimpleModule R N} ↦ Nonempty (N.1 ≃ₗ[R] N'.1)
 
 namespace SimpleSubmoduleClasses
