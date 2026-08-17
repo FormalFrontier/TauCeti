@@ -47,9 +47,10 @@ image again lies in `M`. That is the reflection `s_α` acting on the weight latt
 element of the Chevalley group rather than only by an automorphism of the Lie algebra.
 
 This is the normaliser-of-the-torus half of the pinning data of Layer 9 of the ReductiveGroups
-roadmap: the Chevalley commutator relations of
-`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Commutator.lean` describe how two
-root subgroups interact, and the relations here describe how the reflection permutes them.
+roadmap: the Chevalley commutator relations in
+`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Commutator/Basic.lean` and
+`TauCeti/Algebra/Lie/UniversalEnveloping/Kostant/RootSubgroup/Commutator/G2.lean` describe how
+two root subgroups interact, and the relations here describe how the reflection permutes them.
 
 ## Main definitions
 
