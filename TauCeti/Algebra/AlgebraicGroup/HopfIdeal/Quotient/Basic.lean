@@ -147,6 +147,8 @@ lemma liftQuotient_unique (I : HopfIdeal R H) (f : H ⟶ K)
     _ = (liftQuotient I f hf).hom (Ideal.Quotient.mkₐ R I.toIdeal h) :=
       (liftQuotient_mk I f hf h).symm
 
+/-- Auxiliary quotient isomorphism when the source ideal is the kernel of the composite
+with the target quotient morphism. -/
 private noncomputable def quotientIsoOfSurjectiveAux (f : H ⟶ K)
     (hf : Function.Surjective f.hom) (I : HopfIdeal R K) (J : HopfIdeal R H)
     (hJ : J = HopfIdeal.kerOfSurjective
