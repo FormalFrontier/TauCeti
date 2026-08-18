@@ -30,8 +30,9 @@ the curve (`exists_int_windingNumber_of_closed`, now a three-line corollary).
 
 The identity is the mod-`1` bookkeeping that Hungerbühler–Wasem Proposition 2.2 telescopes. There
 a closed piecewise-`C¹` immersion `Λ` is cut at the finitely many parameters where it meets `z₀`
-(`IsPwC1ImmersionOn.finite_crossings`), and the winding number of each *avoiding* piece is pinned
-modulo `1` by the directions of `Λ - z₀` at the two ends of that piece — directions which
+(`IsPwC1ImmersionOn.finite_crossings`), and the real part of the winding number of each *avoiding*
+piece is pinned modulo `1` by the directions of `Λ - z₀` at the two ends of that piece —
+directions that
 `tendsto_normalize_sub_nhdsGT` and `tendsto_normalize_sub_nhdsLT` identify with the outgoing and
 reversed incoming tangents, that is with the summands of `crossingAngle`. Summing the pieces
 around the closed curve is what turns the endpoint arguments into
@@ -42,8 +43,8 @@ around the closed curve is what turns the endpoint arguments into
 * `TauCeti.Contour.exp_two_pi_I_mul_windingNumber_of_avoidance` — the endpoint-ratio identity.
 * `TauCeti.Contour.IsPiecewiseC1On.exp_two_pi_I_mul_windingNumber` — the same for a
   piecewise-`C¹` curve, whose regularity supplies the raw hypotheses on its own.
-* `TauCeti.Contour.im_windingNumber_of_avoidance` — the imaginary part of the winding number of an
-  arc is the log-modulus decrement of its endpoints, over `2π`.
+* `TauCeti.Contour.im_windingNumber_of_avoidance` and its piecewise-`C¹` form — the imaginary part
+  of the winding number of an arc is the log-modulus decrement of its endpoints, over `2π`.
 * `TauCeti.Contour.coe_two_pi_mul_re_windingNumber_eq_arg_sub_arg_of_avoidance` and its
   piecewise-`C¹` form — the real part of the winding number, read modulo `1` as a `Real.Angle`,
   is the argument change between the endpoint directions.
@@ -225,15 +226,25 @@ theorem im_windingNumber_of_avoidance
   rw [eq_div_iff (by positivity : (2 : ℝ) * Real.pi ≠ 0)]
   linarith
 
+/-- **Piecewise-`C¹` form of the imaginary-part formula.** -/
+theorem IsPiecewiseC1On.im_windingNumber (hγ : IsPiecewiseC1On γ a b)
+    (h_avoid : ∀ t ∈ uIcc a b, γ t ≠ w) :
+    (windingNumber γ a b w).im
+      = (Real.log ‖γ a - w‖ - Real.log ‖γ b - w‖) / (2 * Real.pi) := by
+  obtain ⟨Q, hQ, hγ_diff⟩ := hγ.exists_countable_differentiableAt
+  exact im_windingNumber_of_avoidance hQ hγ.continuousOn hγ_diff h_avoid
+    (intervalIntegrable_inv_sub_mul_deriv hγ.continuousOn h_avoid hγ.intervalIntegrable_deriv)
+
 /-- **The real part of the winding number of an arc, modulo `1`.** Under the hypotheses of
 `exp_two_pi_I_mul_windingNumber_of_avoidance`, the argument of the endpoint ratio gives
 
 `2π · Re (windingNumber γ a b w) = arg (γ b - w) - arg (γ a - w)` in `Real.Angle`,
 
-so the winding number of an arc is determined modulo `1` by the directions of `γ - w` at its two
-endpoints. This is the bookkeeping that telescopes around a closed curve cut at its crossings
-(Hungerbühler–Wasem Proposition 2.2); the statement is an equality of `Real.Angle`s because `arg`
-is additive only modulo `2π`. -/
+so the real part of the winding number of an arc is determined modulo `1` by the directions of
+`γ - w` at its two endpoints, while the endpoint norms determine its imaginary part. This is the
+bookkeeping that telescopes around a closed curve cut at its crossings (Hungerbühler–Wasem
+Proposition 2.2); the statement is an equality of `Real.Angle`s because `arg` is additive only
+modulo `2π`. -/
 theorem coe_two_pi_mul_re_windingNumber_eq_arg_sub_arg_of_avoidance
     (hP : P.Countable) (hγ_cont : ContinuousOn γ (uIcc a b))
     (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
