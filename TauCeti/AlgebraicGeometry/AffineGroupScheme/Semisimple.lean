@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Semisimple.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
 
 /-!
@@ -20,8 +19,11 @@ its geometric fibre is trivial. The resulting full subcategory is anti-equivalen
 finite-type commutative Hopf algebras.
 
 The formulation uses the universal property of a trivial geometric radical. It does not assume
-that a maximal solvable normal subgroup has already been constructed, and it does not silently
-exclude nonsmooth subgroup schemes from the ambient affine-group-scheme category.
+that a maximal solvable normal subgroup has already been constructed. Its triviality requirement
+ranges over connected normal smooth solvable subgroup schemes; nonsmooth subgroup schemes are not
+constrained, while the ambient finite-type affine-group-scheme category still includes nonsmooth
+objects. Bundled semisimple objects carry smooth and geometrically connected structural-morphism
+instances.
 
 ## Main declarations
 
@@ -29,8 +31,13 @@ exclude nonsmooth subgroup schemes from the ambient affine-group-scheme category
   schemes over a field.
 * `TauCeti.semisimpleAffineGroupSchemeProperty_iff`: its coordinate-ring characterization.
 * `TauCeti.SemisimpleAffineGroupSchemeCat`: the corresponding full subcategory.
+* `TauCeti.smooth_of_semisimpleAffineGroupSchemeProperty` and
+  `TauCeti.geometricallyConnected_of_semisimpleAffineGroupSchemeProperty`: the scheme-side
+  smoothness and geometric-connectedness eliminators.
 * `TauCeti.semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat`: the restricted affine
   Hopf/group-scheme anti-equivalence.
+* `TauCeti.semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.functorCompιIso`: its
+  computation isomorphism after forgetting to affine group schemes.
 
 ## References
 
@@ -61,45 +68,16 @@ def semisimpleAffineGroupSchemeProperty (k : Type u) [Field k] :
   (semisimpleCommHopfAlgProperty k).op.inverseImage
     (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse
 
-/-- A finite-type affine group scheme is semisimple exactly when its coordinate Hopf algebra is
-smooth and geometrically connected and every connected normal smooth solvable closed subgroup of
-its geometric fibre is trivial. -/
+/-- A finite-type affine group scheme is semisimple exactly when its coordinate Hopf algebra
+satisfies `semisimpleCommHopfAlgProperty`. -/
 @[simp]
 theorem semisimpleAffineGroupSchemeProperty_iff
     (k : Type u) [Field k]
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k)) :
     semisimpleAffineGroupSchemeProperty k G ↔
-      Algebra.Smooth k
-          ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop ∧
-        geometricallyConnectedCommHopfAlgProperty k
-          ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-            G).unop.obj ∧
-        ∀ I : HopfIdeal (AlgebraicClosure k)
-            (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k)
-              ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-                G).unop),
-          I.IsNormal →
-            geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.quotient
-                (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k)
-                  ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-                    G).unop) I).obj →
-            Algebra.Smooth (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.quotient
-                (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k)
-                  ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-                    G).unop) I) →
-            geometricallySolvablePointsCommHopfAlgProperty (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.quotient
-                (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k)
-                  ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-                    G).unop) I).obj →
-            I = HopfIdeal.augmentation (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k)
-                ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj
-                  G).unop) :=
-  semisimpleCommHopfAlgProperty_iff k
-    ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop
+      semisimpleCommHopfAlgProperty k
+        ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).inverse.obj G).unop :=
+  Iff.rfl
 
 /-- Semisimplicity of finite-type affine group schemes is invariant under isomorphism. -/
 instance (k : Type u) [Field k] :
@@ -118,29 +96,8 @@ theorem smooth_of_semisimpleAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : semisimpleAffineGroupSchemeProperty k G) :
     Smooth G.obj.obj.X.hom := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  have hH : (smoothCommHopfAlgProperty k).op H₀ :=
-    (smoothCommHopfAlgProperty_iff H₀.unop).mpr
-      ((semisimpleAffineGroupSchemeProperty_iff k G).mp hG |>.1)
-  rw [← smoothAffineGroupSchemeProperty_inverseImage k] at hH
-  let eSpec :
-      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H) ≅
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat
-          (CommRingCat.of k)).functor.obj H₀ :=
-    (affineGroupSchemeProperty (CommRingCat.of k)).ι.preimageIso
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H ≪≫
-        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-          (CommRingCat.of k)).app H₀).symm)
-  have hEF : smoothAffineGroupSchemeProperty (CommRingCat.of k)
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.obj (E.functor.obj H)) :=
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso eSpec.symm hH
-  exact (smoothAffineGroupSchemeProperty_iff (CommRingCat.of k) G.obj).mp <|
-    (smoothAffineGroupSchemeProperty (CommRingCat.of k)).prop_of_iso
-      ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso
-        (E.counitIso.app G)) hEF
+  exact (smooth_iff_algebraSmooth_coordinate k G).mpr
+    ((semisimpleAffineGroupSchemeProperty_iff k G).mp hG).smooth
 
 /-- Objects of `SemisimpleAffineGroupSchemeCat k` have smooth structural morphism. -/
 instance (k : Type u) [Field k] (G : SemisimpleAffineGroupSchemeCat k) :
@@ -154,31 +111,8 @@ theorem geometricallyConnected_of_semisimpleAffineGroupSchemeProperty
     (G : FiniteTypeAffineGroupSchemeCat (CommRingCat.of k))
     (hG : semisimpleAffineGroupSchemeProperty k G) :
     GeometricallyConnected G.obj.obj.X.hom := by
-  let E := finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k
-  let H := E.inverse.obj G
-  let H₀ := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-    (CommHopfAlgCat.{u} k)).op.obj H
-  let P : ObjectProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
-    fun X ↦ GeometricallyConnected X.X.hom
-  let _ : MorphismProperty.RespectsIso @GeometricallyConnected :=
-    MorphismProperty.IsStableUnderBaseChange.respectsIso
-  let _ : P.IsClosedUnderIsomorphisms :=
-    { of_iso := fun {X Y} e hX ↦
-        (MorphismProperty.over_iso_iff (@GeometricallyConnected)
-          ((Grp.forget _).mapIso e)).mp hX }
-  let X : Grp (Over (Spec (CommRingCat.of k))) :=
-    ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
-      (affineGroupSchemeProperty (CommRingCat.of k)).ι).obj (E.functor.obj H)
-  let eSpec : X ≅ (hopfSpec (CommRingCat.of k)).obj H₀ :=
-    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso k).app H
-  let eG : X ≅ G.obj.obj :=
-    ((finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
-      (affineGroupSchemeProperty (CommRingCat.of k)).ι).mapIso (E.counitIso.app G)
-  have hH : geometricallyConnectedCommHopfAlgProperty k H₀.unop :=
-    (semisimpleAffineGroupSchemeProperty_iff k G).mp hG |>.2.1
-  have hSpec : P ((hopfSpec (CommRingCat.of k)).obj H₀) :=
-    (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec k H₀.unop).mp hH
-  exact P.prop_of_iso eG (P.prop_of_iso eSpec.symm hSpec)
+  exact (geometricallyConnected_iff_geometricallyConnected_coordinate k G).mpr
+    ((semisimpleAffineGroupSchemeProperty_iff k G).mp hG).geometricallyConnected
 
 /-- Objects of `SemisimpleAffineGroupSchemeCat k` have geometrically connected structural
 morphism. -/
@@ -193,9 +127,9 @@ theorem semisimpleAffineGroupSchemeProperty_inverseImage
     (semisimpleAffineGroupSchemeProperty k).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       (semisimpleCommHopfAlgProperty k).op := by
-  ext H
-  exact ((semisimpleCommHopfAlgProperty k).op.prop_iff_of_iso
-    ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).unitIso.app H)).symm
+  exact objectProperty_inverseImage_equivalence_inverse
+    (semisimpleCommHopfAlgProperty k).op
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k)
 
 /-- `Spec` restricts to an anti-equivalence from semisimple finite-type commutative Hopf algebras
 to semisimple affine group schemes. -/
@@ -216,14 +150,7 @@ private noncomputable def
       (forget₂ (SemisimpleCommHopfAlgCat.{u} k)
           (FiniteTypeCommHopfAlgCat.{u, u} k)).op ⋙
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor :=
-  Functor.associator _ _ _ ≪≫
-    Functor.isoWhiskerLeft
-      (ObjectProperty.opEquivalence (semisimpleCommHopfAlgProperty k)).symm.functor
-      ((semisimpleAffineGroupSchemeProperty k).liftCompιIso _ _) ≪≫
-    (Functor.associator _ _ _).symm ≪≫
-    Functor.isoWhiskerRight
-      ((semisimpleCommHopfAlgProperty k).op.liftCompιIso _ _)
-      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor
+  Iso.refl _
 
 /-- The forward semisimple anti-equivalence, followed by the inclusions into finite-type affine
 group schemes and affine group schemes, is Mathlib's `hopfSpec` after forgetting semisimplicity

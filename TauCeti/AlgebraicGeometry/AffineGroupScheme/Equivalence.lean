@@ -30,7 +30,16 @@ namespace TauCeti
 
 open CategoryTheory AlgebraicGeometry Opposite
 
-universe u
+universe u v
+
+/-- Pulling an isomorphism-invariant object property forward and then backward along an
+equivalence recovers the original property. -/
+theorem objectProperty_inverseImage_equivalence_inverse
+    {C : Type u} {D : Type v} [Category C] [Category D]
+    (P : ObjectProperty C) [P.IsClosedUnderIsomorphisms] (e : C ≌ D) :
+    (P.inverseImage e.inverse).inverseImage e.functor = P := by
+  ext X
+  exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
 
 /-- `Spec` as an anti-equivalence from commutative `S`-Hopf algebras onto affine group
 schemes over `Spec S`. The underlying functor is Mathlib's `AlgebraicGeometry.hopfSpec`,
