@@ -62,9 +62,6 @@ universe v u
 
 variable {C : Type u} [Category.{v} C] [Preadditive C]
 
-/-- The inclusion of a full subcategory of a preadditive category is an additive functor. -/
-instance (P : ObjectProperty C) : P.ι.Additive where
-
 variable [HasZeroObject C] [HasBinaryBiproducts C]
 
 /-- A full subcategory of an additive category closed under binary products has binary
