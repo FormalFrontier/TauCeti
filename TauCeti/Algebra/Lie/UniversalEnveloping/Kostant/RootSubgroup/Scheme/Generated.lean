@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,11 +27,14 @@ a later theorem and is not asserted here.
 
 ## Main declarations
 
-* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedDefiningIdeal`: the common-kernel Hopf ideal.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedDefiningIdeal`: the common-kernel Hopf ideal,
+  with `kostantGeneratedDefiningIdeal_def` exposing its defining equation to downstream modules.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedGroupScheme`: the resulting closed subgroup
   scheme of `GLₙ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated`: the factorization of every
   root subgroup through the generated group scheme.
+* `kostantRootSubgroupGeneratedCoordinateMap_surjective_of_surjective`: a surjective
+  root-subgroup coordinate map stays surjective after factorization.
 * `TauCeti.UniversalEnvelopingAlgebra.le_kostantGeneratedDefiningIdeal_iff`: the minimality
   universal property in coordinate form.
 
@@ -71,6 +75,15 @@ noncomputable def kostantGeneratedDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ n) :=
   CommHopfAlgCat.commonKernelHopfIdeal
     (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
+
+/-- The defining ideal of the generated group scheme is the common-kernel Hopf ideal of its root
+subgroup coordinate maps. -/
+theorem kostantGeneratedDefiningIdeal_def :
+    kostantGeneratedDefiningIdeal e h ρ M hM hnil b =
+      CommHopfAlgCat.commonKernelHopfIdeal
+        (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) := by
+  unfold kostantGeneratedDefiningIdeal
+  rfl
 
 /-- A Hopf ideal is contained in the defining ideal of the generated group scheme exactly when
 every Kostant root-subgroup coordinate map kills it. This is the coordinate form of minimality. -/
@@ -146,6 +159,16 @@ theorem mkQuotient_comp_kostantRootSubgroupGeneratedCoordinateMap (i : I) :
       kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b :=
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
     (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) i
+
+/-- If a root-subgroup coordinate map is surjective before factorization through the generated
+coordinate ring, then the factored coordinate map is also surjective. -/
+theorem kostantRootSubgroupGeneratedCoordinateMap_surjective_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom) :
+    Function.Surjective
+      (kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).hom :=
+  CommHopfAlgCat.commonKernelLift_surjective_of_surjective
+    (fun j ↦ kostantRootSubgroupCoordinateMap e h ρ M hM j (hnil j) b) i hi
 
 /-- The `i`th Kostant root subgroup, factored through the generated group scheme. -/
 noncomputable def kostantRootSubgroupToGenerated (i : I) :

@@ -27,7 +27,7 @@ classical genus theory this result underlies.
 
 ## Main results
 
-* `TauCeti.NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
+* `NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
   is 2-torsion.
 -/
 
@@ -36,7 +36,7 @@ public section
 open NumberField Ideal Module
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -64,4 +64,4 @@ theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
     ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
   exact ⟨_, rfl⟩
 
-end TauCeti.NumberField
+end NumberField

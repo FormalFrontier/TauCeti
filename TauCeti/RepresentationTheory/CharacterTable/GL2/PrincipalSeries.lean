@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -59,15 +60,10 @@ numbers, and neither does its bundled form `TauCeti.GL2BorelRep`, which is there
 `CommRing F`; the field and finiteness hypotheses enter only with `TauCeti.GL2PrincipalSeries`,
 where they supply the finite index that makes induction finite-dimensional.
 
-Only the principal series restricts `F` to `Type`; everything up to and including
-`TauCeti.GL2BorelRep` is universe-polymorphic in `F`, since `FDRep ℂ G` accepts a group in any
-universe. The restriction on the principal series is forced by induction, not chosen: an object of
-`FDRep ℂ G` carries a module in the universe of `ℂ`, namely `Type`, since
-`FDRep R G = Action (FGModuleCat.{u} R) G` for `R : Type u`, whereas the induced representation
-`(ℂ[G] ⊗[ℂ] A)_B` built by `TauCeti.indFDRep` lives in the universe of `G`. So induction into
-`FDRep ℂ (GL (Fin 2) F)` needs `GL (Fin 2) F` — hence `F` — in the universe of `ℂ`. Lifting the
-induced representation back down along a basis would be a genuine addition to the induction API,
-not a change of binders here.
+The construction is universe-polymorphic in `F`. Although Mathlib's raw induced representation
+has a carrier in the universe of the group, `TauCeti.indFDRep` transports it to an equivalent small
+model whose carrier lies in the universe of the coefficient ring. It therefore produces an object
+of `FDRep ℂ (GL (Fin 2) F)` without restricting the universe of `F`.
 
 `TauCetiRoadmap/RepresentationTheory/CharacterTheory/Suggested.lean` pins `GL2PrincipalSeries`
 with a `[DecidableEq F]` hypothesis. It is not needed: `GL (Fin 2) F` needs decidable equality only
@@ -217,7 +213,7 @@ end CommRing
 
 section FiniteField
 
-variable (F : Type) [Field F] [Fintype F]
+variable (F : Type*) [Field F] [Fintype F]
 
 /-- **The principal series** `Ind_B^{GL₂}(α ⊗ β)`: the representation of `GL₂(𝔽_q)` induced from
 the one-dimensional character `α ⊗ β` of the Borel subgroup. This is parabolic induction in rank

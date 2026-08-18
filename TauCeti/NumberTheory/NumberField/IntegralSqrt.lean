@@ -13,7 +13,7 @@ import Mathlib.FieldTheory.KummerPolynomial
 
 An element `x` of a field `K` with `x² = d` for an integer `d` is integral over `ℤ` (its square
 is an integer, which is integral); this file packages such an `x` as an element
-`TauCeti.NumberField.integralSqrt hx` of the ring of integers `𝓞 K`, together with its two
+`NumberField.integralSqrt hx` of the ring of integers `𝓞 K`, together with its two
 defining identities: its image in `K` is `x`, and it squares to `d` in `𝓞 K`.
 
 This is the shared square-root packaging used by the multiquadratic Layer 1 files: the
@@ -30,9 +30,9 @@ files built on it, so it is recorded here once.
 
 ## Main definitions and results
 
-* `TauCeti.NumberField.integralSqrt`: the packaging in `𝓞 K`, with
-  `TauCeti.NumberField.algebraMap_integralSqrt` and `TauCeti.NumberField.integralSqrt_sq`.
-* `TauCeti.NumberField.minpoly_integralSqrt`: its minimal polynomial over `ℤ` is `X² - d`,
+* `NumberField.integralSqrt`: the packaging in `𝓞 K`, with
+  `NumberField.algebraMap_integralSqrt` and `NumberField.integralSqrt_sq`.
+* `NumberField.minpoly_integralSqrt`: its minimal polynomial over `ℤ` is `X² - d`,
   provided `d` is not a rational square.
 -/
 
@@ -42,7 +42,7 @@ open Polynomial
 
 open scoped NumberField
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] {x : K} {d : ℤ}
 
@@ -51,12 +51,12 @@ variable {K : Type*} [Field K] {x : K} {d : ℤ}
 noncomputable def integralSqrt (hx : x ^ 2 = algebraMap ℤ K d) : 𝓞 K :=
   ⟨x, IsIntegral.of_pow two_pos (hx ▸ isIntegral_algebraMap)⟩
 
-/-- Under `𝓞 K ↪ K`, `TauCeti.NumberField.integralSqrt hx` maps back to `x`. -/
+/-- Under `𝓞 K ↪ K`, `NumberField.integralSqrt hx` maps back to `x`. -/
 @[simp] theorem algebraMap_integralSqrt (hx : x ^ 2 = algebraMap ℤ K d) :
     algebraMap (𝓞 K) K (integralSqrt hx) = x :=
   NumberField.RingOfIntegers.map_mk x _
 
-/-- `TauCeti.NumberField.integralSqrt hx` squares to the radicand `d` in `𝓞 K`. -/
+/-- `NumberField.integralSqrt hx` squares to the radicand `d` in `𝓞 K`. -/
 @[simp] theorem integralSqrt_sq (hx : x ^ 2 = algebraMap ℤ K d) :
     integralSqrt hx ^ 2 = algebraMap ℤ (𝓞 K) d := by
   apply FaithfulSMul.algebraMap_injective (𝓞 K) K
@@ -65,7 +65,7 @@ noncomputable def integralSqrt (hx : x ^ 2 = algebraMap ℤ K d) : 𝓞 K :=
 
 /-- **The minimal polynomial of a square root of a nonsquare integer.** If `x ^ 2 = d` for an
 integer `d` that is not a square in `ℚ`, then `X ^ 2 - d` is the minimal polynomial over `ℤ` of
-`TauCeti.NumberField.integralSqrt hx`. Over `ℚ` this is Kummer irreducibility
+`NumberField.integralSqrt hx`. Over `ℚ` this is Kummer irreducibility
 (`X_pow_sub_C_irreducible_of_prime`); the descent to `ℤ` is
 `minpoly.isIntegrallyClosed_eq_field_fractions`. -/
 theorem minpoly_integralSqrt [NumberField K] (hx : x ^ 2 = algebraMap ℤ K d)
@@ -89,4 +89,4 @@ theorem minpoly_integralSqrt [NumberField K] (hx : x ^ 2 = algebraMap ℤ K d)
     map_intCast]
   norm_num
 
-end TauCeti.NumberField
+end NumberField

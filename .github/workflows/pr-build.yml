@@ -241,6 +241,9 @@ jobs:
           cp -a gate/scripts/perf base/scripts/perf
           cp gate/scripts/sandbox-build.sh base/scripts/sandbox-build.sh
           cp gate/scripts/lint-env.sh base/scripts/lint-env.sh
+          cp gate/scripts/lint-style.sh base/scripts/lint-style.sh
+          cp gate/scripts/source-modules.sh base/scripts/source-modules.sh
+          cp gate/scripts/HeaderStyle.lean base/scripts/HeaderStyle.lean
 
       - name: Checkout merge-base config (trusted ancestor — only to scope the PR's pin delta)
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}

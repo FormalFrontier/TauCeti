@@ -13,10 +13,15 @@ public import Mathlib.Algebra.Lie.UniversalEnveloping
 This file records general results about universal enveloping algebras that do not depend on
 additional structures such as filtrations, bialgebras, or antipodes.
 
-## Main results
+## Main definitions and results
 
 * `TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι`: a universal enveloping algebra is
   generated, as an algebra, by its canonical Lie generators.
+* `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation`: the adjoint action of `U(L)` on `L`.
+* `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι`: an algebra representation maps the bracket of
+  canonical Lie generators to the bracket of their images.
+* `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι_eq_smul`: a Lie-bracket eigenvector remains one
+  under an algebra representation.
 * `TauCeti.UniversalEnvelopingAlgebra.mul_sub_mul_eq_map_ι_lie`: the image of a Lie bracket
   under an algebra homomorphism is the ring commutator of the images.
 * `TauCeti.UniversalEnvelopingAlgebra.commute_of_lie_eq_zero`: images of Lie-commuting elements
@@ -56,8 +61,44 @@ theorem adjoin_range_ι :
   -- `mkAlgHom R L` is by definition the quotient map `RingCon.mkₐ R (ringCon R L)`.
   exact (AlgHom.range_eq_top _).2 (RingCon.mkₐ_surjective _)
 
+/-- The adjoint representation of a universal enveloping algebra: the algebra map extending the
+adjoint action `ad` of the Lie algebra on itself. -/
+noncomputable def adjointRepresentation : U →ₐ[R] Module.End R L :=
+  _root_.UniversalEnvelopingAlgebra.lift R (LieAlgebra.ad R L)
+
+-- Neither this lemma nor its pointwise form below is a `simp` lemma: `simp` unfolds `ι` through
+-- Mathlib's `UniversalEnvelopingAlgebra.ι_apply`, so a left-hand side mentioning `ι` is not in
+-- simp-normal form. This is why Mathlib's own `lift_ι_apply` is not a `simp` lemma either.
+/-- The adjoint representation acts on a Lie generator by the adjoint action. -/
+theorem adjointRepresentation_ι (y : L) :
+    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) = LieAlgebra.ad R L y :=
+  _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ y
+
+/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.adjointRepresentation_ι`: a Lie
+generator acts by the Lie bracket. -/
+theorem adjointRepresentation_ι_apply (y z : L) :
+    adjointRepresentation R L (_root_.UniversalEnvelopingAlgebra.ι R y) z = ⁅y, z⁆ := by
+  rw [adjointRepresentation_ι, LieAlgebra.ad_apply]
+
 variable {R L}
 variable {B : Type w} [Ring B] [Algebra R B]
+
+/-- An algebra representation of the universal enveloping algebra maps the Lie bracket to the
+commutator in its target algebra. -/
+theorem lie_map_ι (ρ : _root_.UniversalEnvelopingAlgebra R L →ₐ[R] B) (x y : L) :
+    ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι R x), ρ (_root_.UniversalEnvelopingAlgebra.ι R y)⁆ =
+      ρ (_root_.UniversalEnvelopingAlgebra.ι R ⁅x, y⁆) := by
+  have hlie := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι R) x y
+  rw [LieRing.of_associative_ring_bracket] at hlie
+  rw [LieRing.of_associative_ring_bracket, hlie, map_sub, map_mul, map_mul]
+
+/-- A Lie-bracket eigenvector remains one under an algebra representation of the universal
+enveloping algebra. -/
+theorem lie_map_ι_eq_smul (ρ : _root_.UniversalEnvelopingAlgebra R L →ₐ[R] B) {x y : L} {a : R}
+    (hxy : ⁅x, y⁆ = a • y) :
+    ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι R x), ρ (_root_.UniversalEnvelopingAlgebra.ι R y)⁆ =
+      a • ρ (_root_.UniversalEnvelopingAlgebra.ι R y) := by
+  rw [lie_map_ι ρ, hxy, map_smul, map_smul]
 
 /-- The image of a Lie bracket under an algebra homomorphism from a universal enveloping algebra
 is the ring commutator of the images. -/
