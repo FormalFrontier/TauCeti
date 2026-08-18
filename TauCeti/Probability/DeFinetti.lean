@@ -15,6 +15,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegr
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 public import TauCeti.Probability.DeFinetti.Correspondence
+public import TauCeti.Probability.DeFinetti.CanonicalMixture
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.WeakConvergence
 public import TauCeti.Probability.DeFinetti.EmpiricalMeasure
 
@@ -55,6 +56,11 @@ This module declares nothing of its own; it is a curated re-export, and it build
   point masses with the extreme laws and
   `deFinettiEquiv_convexComb` / `deFinettiEquiv_symm_convexComb` giving the affinity in both
   directions, at the bundled level;
+* `deFinettiMeasure` and its identifications —
+  `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_exchangeable`,
+  `eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi` and
+  `deFinettiEquiv_symm_eq_deFinettiMeasure` — tying the canonical directing measure's law to the
+  `deFinetti_mixture` witness and to the inverse of the correspondence;
 * `deFinetti_tendsto_empiricalMeasure_apply` — on each fixed measurable set, the mass given by the
   directing measure of an exchangeable process is the almost-sure limit of the empirical
   frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it;
