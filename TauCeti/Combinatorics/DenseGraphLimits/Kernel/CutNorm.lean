@@ -146,22 +146,24 @@ theorem abs_rectIntegral_le_integral_abs [IsFiniteMeasure μ]
 
 end SymmKernel
 
-/-- The set form of the cut norm on a finite measure space: the supremum of the absolute kernel
-integrals over measurable rectangles. -/
-noncomputable def cutNormSet [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :=
+/-- The set form of the cut norm: the supremum of the absolute kernel integrals over measurable
+rectangles. -/
+noncomputable def cutNormSet (K : SymmKernel Ω μ) : ℝ :=
   ⨆ (S : Set Ω) (_ : MeasurableSet S) (T : Set Ω) (_ : MeasurableSet T),
     |K.rectIntegral μ S T|
 
-/-- The cut norm of a symmetric kernel on a finite measure space: the supremum over measurable
-sets `S` and `T` of the absolute value of the integral of the kernel over `S × T`. -/
-noncomputable def cutNorm [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
+/-- The cut norm of a symmetric kernel: the supremum over measurable sets `S` and `T` of the
+absolute value of the integral of the kernel over `S × T`. -/
+noncomputable def cutNorm (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
 
 variable [IsFiniteMeasure μ]
 
+omit [IsFiniteMeasure μ] in
 /-- The cut norm is definitionally its measurable-set form.  This is not a `simp` lemma: `cutNorm`
 is the normal form that the rest of the API, and hence the `simp` set, is stated in. -/
 theorem cutNorm_eq_cutNormSet (K : SymmKernel Ω μ) : cutNorm μ K = cutNormSet μ K := (rfl)
 
+omit [IsFiniteMeasure μ] in
 /-- The set-form cut norm is the iterated supremum over measurable rectangles. -/
 theorem cutNormSet_def (K : SymmKernel Ω μ) :
     cutNormSet μ K =
@@ -173,6 +175,7 @@ private theorem integral_abs_nonneg (K : SymmKernel Ω μ) :
     0 ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
   integral_nonneg fun _ => abs_nonneg _
 
+omit [IsFiniteMeasure μ] in
 /-- To prove an upper bound on the cut norm, it suffices to prove it for every measurable
 rectangle. -/
 theorem cutNorm_le {K : SymmKernel Ω μ} {C : ℝ}
@@ -272,6 +275,7 @@ theorem cutNorm_zero : cutNorm μ (0 : SymmKernel Ω μ) = 0 := by
     simp
   · exact cutNorm_nonneg μ 0
 
+omit [IsFiniteMeasure μ] in
 /-- Negating a kernel does not change its cut norm. -/
 @[simp]
 theorem cutNorm_neg (K : SymmKernel Ω μ) : cutNorm μ (-K) = cutNorm μ K := by
@@ -292,6 +296,7 @@ theorem cutNorm_sub_le (K L : SymmKernel Ω μ) :
     cutNorm μ (K - L) ≤ cutNorm μ K + cutNorm μ L := by
   simpa [sub_eq_add_neg] using cutNorm_add_le μ K (-L)
 
+omit [IsFiniteMeasure μ] in
 /-- The cut norm is absolutely homogeneous. -/
 theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
     cutNorm μ (c • K) = |c| * cutNorm μ K := by
