@@ -243,6 +243,10 @@ instance [RegularSpace M] [PreconnectedSpace M] :
     letI : PseudoMetricSpace M := PseudoMetricSpace.ofRiemannianMetric I M
     IsRiemannianManifold I M := by
   let : PseudoMetricSpace M := PseudoMetricSpace.ofRiemannianMetric I M
+  -- `PseudoEMetricSpace.toPseudoMetricSpace` is set up so that the extended distance is preserved
+  -- definitionally (its `edist` field is literally `edist`), and the extended distance of
+  -- `PseudoEMetricSpace.ofRiemannianMetric` is `riemannianEDist I` by construction. So the
+  -- predicate holds by `rfl`, exactly as for the extended structure it refines.
   exact ⟨fun _ _ ↦ rfl⟩
 
 variable (I M) in
@@ -264,6 +268,8 @@ instance [T3Space M] [PreconnectedSpace M] :
     letI : MetricSpace M := MetricSpace.ofRiemannianMetric I M
     IsRiemannianManifold I M := by
   let : MetricSpace M := MetricSpace.ofRiemannianMetric I M
+  -- As above: `EMetricSpace.toMetricSpace` preserves the extended distance definitionally, and the
+  -- extended distance of `EMetricSpace.ofRiemannianMetric` is `riemannianEDist I` by construction.
   exact ⟨fun _ _ ↦ rfl⟩
 
 end OfRiemannianMetric
