@@ -5,10 +5,35 @@ from __future__ import annotations
 
 import unittest
 
-from lean_source import qualified_declarations
+from lean_source import (
+    declaration_returns_sort,
+    declarations,
+    include_commands,
+    qualified_declarations,
+    variable_bindings,
+)
 
 
 class LeanSourceTests(unittest.TestCase):
+    def test_variable_bindings_retain_every_binder_kind(self):
+        source = "variable (x : Nat) {y : Nat} ⦃z : Nat⦄ [i : Inhabited Nat]\n"
+        [(position, bindings)] = variable_bindings(source)
+        self.assertEqual(position, 0)
+        self.assertEqual(
+            [(binding.name, binding.kind) for binding in bindings],
+            [("x", "explicit"), ("y", "implicit"), ("z", "strict-implicit"),
+             ("i", "instance")],
+        )
+
+    def test_include_commands_and_sort_results_are_syntactic(self):
+        self.assertEqual(
+            [(action, names, one_shot) for _, action, names, one_shot in
+             include_commands("include x y in\nomit z\n")],
+            [("include", {"x", "y"}, True), ("omit", {"z"}, False)],
+        )
+        [declaration] = declarations("def Family (α : Type) : Nat → Type := fun _ => α\n")
+        self.assertTrue(declaration_returns_sort(declaration))
+
     def test_qualified_declarations_applies_scopes_rooting_and_filter(self):
         source = """\
 namespace Outer

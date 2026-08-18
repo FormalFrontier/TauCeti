@@ -2,7 +2,7 @@
 """Syntactic parsing helpers for command-level Lean source.
 
 ``declarations`` parses declaration headers, ``scopes`` and ``update_scope`` approximate the
-namespace stack, ``variable_bindings`` parses explicit section variables, and
+namespace stack, ``variable_bindings`` parses section variables, and
 ``qualified_declarations`` combines declaration and scope events into qualified names. This is
 not a Lean parser: comments and strings are blanked while source offsets are preserved, and terms
 are inspected only as text. The dot-notation lint is currently the sole production consumer; the
@@ -33,7 +33,7 @@ CLOSERS = set(PAIRS.values())
 
 @dataclasses.dataclass(frozen=True)
 class Declaration:
-    """A declaration's offset, keyword, name, binders, and header through its body introducer."""
+    """A declaration's offset, keyword, name, binders, and header before its body introducer."""
 
     keyword: str
     name: str | None
@@ -57,10 +57,11 @@ class Scope:
 
 @dataclasses.dataclass(frozen=True)
 class VariableBinding:
-    """A section-variable name paired with its complete textual binder for receiver matching."""
+    """A section-variable name, complete textual binder, and syntactic binder kind."""
 
     name: str
     binder: str
+    kind: str
 
 
 def strip_comments_and_strings(text: str) -> str:
@@ -182,7 +183,7 @@ def top_level_colon(group: str) -> int | None:
 
 
 def _declaration_tail(text: str, position: int) -> tuple[tuple[str, ...], str]:
-    """Collect declaration binders and the header through its body introducer."""
+    """Collect binders and the header before ``:=``, ``where``, or the first equation bar."""
     binders: list[str] = []
     start = position
     while position < len(text):
@@ -270,10 +271,10 @@ def scopes(text: str) -> list[tuple[int, str, str | None]]:
 
 
 def variable_bindings(text: str) -> list[tuple[int, list[VariableBinding]]]:
-    """Return explicit parenthesized section-variable bindings grouped by command position.
+    """Return section-variable bindings grouped by command position.
 
-    Implicit and instance-implicit variables are intentionally omitted because they cannot be
-    dot-notation receivers.
+    Each binding is tagged as ``explicit``, ``implicit``, ``strict-implicit``, or ``instance``
+    according to its delimiters. Groups without a top-level colon are omitted.
     """
     code = strip_comments_and_strings(text)
     pattern = re.compile(r"(?m)^variable\b[^\n]*(?:\n[ \t]+[^\n]*)*")
@@ -288,15 +289,104 @@ def variable_bindings(text: str) -> list[tuple[int, list[VariableBinding]]]:
                 end = skip_balanced(body, position)
                 group = body[position + 1:end - 1]
                 colon = top_level_colon(group)
-                if opener == "(" and colon is not None:
+                if colon is not None:
                     names = re.findall(r"(?<![\w'])[\w']+(?![\w'])", group[:colon])
-                    bindings.extend(VariableBinding(name, group) for name in names if name != "_")
+                    kind = {"(": "explicit", "{": "implicit", "⦃": "strict-implicit",
+                            "[": "instance"}[opener]
+                    bindings.extend(
+                        VariableBinding(name, group, kind) for name in names if name != "_"
+                    )
                 position = end
             else:
                 position += 1
         if bindings:
             events.append((match.start(), bindings))
     return events
+
+
+def include_commands(text: str) -> list[tuple[int, str, set[str], bool]]:
+    """Return include/omit commands as position, action, bare names, and one-shot flag."""
+
+    code = strip_comments_and_strings(text)
+    pattern = re.compile(r"(?m)^[ \t]*(?P<action>include|omit)\s+(?P<body>[^\n]+)$")
+    commands: list[tuple[int, str, set[str], bool]] = []
+    for match in pattern.finditer(code):
+        body = match.group("body").rstrip()
+        one_shot = re.search(r"(?:^|\s)in$", body) is not None
+        if one_shot:
+            body = re.sub(r"(?:^|\s)in$", "", body).rstrip()
+        names: set[str] = set()
+        position = 0
+        while position < len(body):
+            if body[position] in OPENERS:
+                position = skip_balanced(body, position)
+                continue
+            name = re.match(r"[\w']+", body[position:])
+            if name is not None:
+                names.add(name.group())
+                position += len(name.group())
+            else:
+                position += 1
+        commands.append((match.start(), match.group("action"), names, one_shot))
+    return commands
+
+
+def top_level_arrow_parts(text: str) -> list[str]:
+    """Split ``text`` at top-level ASCII or Unicode function arrows."""
+
+    depth = 0
+    part_start = 0
+    parts: list[str] = []
+    position = 0
+    while position < len(text):
+        char = text[position]
+        if char in OPENERS:
+            depth += 1
+        elif char in CLOSERS:
+            depth -= 1
+        elif depth == 0 and (char == "→" or text.startswith("->", position)):
+            parts.append(text[part_start:position])
+            position += 1 if char == "→" else 2
+            part_start = position
+            continue
+        position += 1
+    parts.append(text[part_start:])
+    return parts
+
+
+def expression_returns_sort(text: str) -> bool:
+    """Whether a result expression syntactically ends in ``Prop``, ``Sort``, or ``Type``."""
+
+    expression = text.strip()
+    while expression.startswith("(") and skip_balanced(expression, 0) == len(expression):
+        expression = expression[1:-1].strip()
+
+    if expression.startswith(("∀", "Π")):
+        depth = 0
+        for position, char in enumerate(expression):
+            if char in OPENERS:
+                depth += 1
+            elif char in CLOSERS:
+                depth -= 1
+            elif char == "," and depth == 0:
+                return expression_returns_sort(expression[position + 1:])
+        return False
+
+    parts = top_level_arrow_parts(expression)
+    if len(parts) > 1:
+        return expression_returns_sort(parts[-1])
+    return re.match(r"(?:Prop|Sort|Type)\b", expression) is not None
+
+
+def declaration_returns_sort(declaration: Declaration) -> bool:
+    """Whether a declaration is syntactically certain to create a type or proposition."""
+
+    if declaration.keyword in {"class", "inductive", "structure"}:
+        return True
+    if declaration.keyword not in {"abbrev", "def", "opaque"}:
+        return False
+    colon = top_level_colon(declaration.header)
+    return colon is not None and expression_returns_sort(declaration.header[colon + 1:])
 
 
 def update_scope(stack: list[Scope], kind: str, name: str | None) -> None:

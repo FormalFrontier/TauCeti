@@ -26,12 +26,16 @@ from lean_source import (
     Declaration,
     OPENERS,
     Scope,
+    VariableBinding,
+    declaration_returns_sort,
     declarations,
+    include_commands,
     qualified_declarations,
     scopes,
     skip_balanced,
     strip_comments_and_strings,
     top_level_colon,
+    top_level_arrow_parts,
     update_scope,
     variable_bindings,
 )
@@ -132,32 +136,6 @@ class Finding:
         return f"{self.path}:{self.line}: {self.declaration}"
 
 
-def _include_commands(text: str) -> list[tuple[int, str, set[str], bool]]:
-    """Return scoped include/omit operations as position, action, bare names, and one-shot flag."""
-    code = strip_comments_and_strings(text)
-    pattern = re.compile(r"(?m)^[ \t]*(?P<action>include|omit)\s+(?P<body>[^\n]+)$")
-    commands: list[tuple[int, str, set[str], bool]] = []
-    for match in pattern.finditer(code):
-        body = match.group("body").rstrip()
-        one_shot = re.search(r"(?:^|\s)in$", body) is not None
-        if one_shot:
-            body = re.sub(r"(?:^|\s)in$", "", body).rstrip()
-        names: set[str] = set()
-        position = 0
-        while position < len(body):
-            if body[position] in OPENERS:
-                position = skip_balanced(body, position)
-                continue
-            name = re.match(r"[\w']+", body[position:])
-            if name is not None:
-                names.add(name.group())
-                position += len(name.group())
-            else:
-                position += 1
-        commands.append((match.start(), match.group("action"), names, one_shot))
-    return commands
-
-
 def mathlib_namespaces(root: pathlib.Path) -> set[str]:
     """Collect individual namespace components occurring in Mathlib ``*.lean`` sources.
 
@@ -176,18 +154,6 @@ def mathlib_namespaces(root: pathlib.Path) -> set[str]:
     return names
 
 
-def _declaration_returns_sort(declaration: Declaration) -> bool:
-    """Whether a declaration is syntactically certain to create a type or proposition."""
-    if declaration.keyword in {"class", "inductive", "structure"}:
-        return True
-    if declaration.keyword not in {"abbrev", "def", "opaque"}:
-        return False
-    colon = top_level_colon(declaration.header)
-    if colon is None:
-        return False
-    return _expression_returns_sort(declaration.header[colon + 1:])
-
-
 def own_declaration_paths(sources: dict[pathlib.Path, str]) -> set[tuple[str, ...]]:
     """Return fully qualified paths of explicitly sort-valued Tau Ceti declarations.
 
@@ -200,7 +166,7 @@ def own_declaration_paths(sources: dict[pathlib.Path, str]) -> set[tuple[str, ..
             text,
             keep=lambda declaration: (
                 declaration.keyword in OWN_DECLARATION_KEYWORDS
-                and _declaration_returns_sort(declaration)
+                and declaration_returns_sort(declaration)
             ),
         )
         for name in names:
@@ -263,57 +229,12 @@ def _binder_has_type(binder: str, namespace: str) -> bool:
     return True
 
 
-def _top_level_arrow_parts(text: str) -> list[str]:
-    """Split ``text`` at top-level ASCII or Unicode function arrows."""
-    depth = 0
-    part_start = 0
-    parts: list[str] = []
-    position = 0
-    while position < len(text):
-        char = text[position]
-        if char in OPENERS:
-            depth += 1
-        elif char in CLOSERS:
-            depth -= 1
-        elif depth == 0 and (char == "→" or text.startswith("->", position)):
-            parts.append(text[part_start:position])
-            position += 1 if char == "→" else 2
-            part_start = position
-            continue
-        position += 1
-    parts.append(text[part_start:])
-    return parts
-
-
-def _expression_returns_sort(text: str) -> bool:
-    """Whether a result expression ends in ``Prop``, ``Sort``, or ``Type`` syntactically."""
-    expression = text.strip()
-    while expression.startswith("(") and skip_balanced(expression, 0) == len(expression):
-        expression = expression[1:-1].strip()
-
-    if expression.startswith(("∀", "Π")):
-        depth = 0
-        for position, char in enumerate(expression):
-            if char in OPENERS:
-                depth += 1
-            elif char in CLOSERS:
-                depth -= 1
-            elif char == "," and depth == 0:
-                return _expression_returns_sort(expression[position + 1:])
-        return False
-
-    parts = _top_level_arrow_parts(expression)
-    if len(parts) > 1:
-        return _expression_returns_sort(parts[-1])
-    return re.match(r"(?:Prop|Sort|Type)\b", expression) is not None
-
-
 def _result_has_argument_type(header: str, namespace: str) -> bool:
     """Whether a top-level arrow in the result type has a domain named ``namespace``."""
     colon = top_level_colon(header)
     if colon is None:
         return False
-    domains = _top_level_arrow_parts(header[colon + 1:])[:-1]
+    domains = top_level_arrow_parts(header[colon + 1:])[:-1]
     return any(_binder_has_type(f"_ : {domain}", namespace) for domain in domains)
 
 
@@ -337,7 +258,7 @@ def find_violations(
         events.extend((position, "variables", bindings)
                       for position, bindings in variable_bindings(text))
         events.extend((position, "include", (action, names, one_shot))
-                      for position, action, names, one_shot in _include_commands(text))
+                      for position, action, names, one_shot in include_commands(text))
         events.sort(key=lambda event: event[0])
 
         stack: list[Scope] = []
@@ -360,7 +281,9 @@ def find_violations(
 
             if event_kind == "variables":
                 assert isinstance(payload, list)
-                active_variables.extend((len(stack), binding) for binding in payload)
+                active_variables.extend(
+                    (len(stack), binding) for binding in payload if binding.kind == "explicit"
+                )
                 continue
 
             if event_kind == "include":
