@@ -20,12 +20,19 @@ Together they are the two maps `R(S) → R(G)` and `R(G) → R(S)` on virtual-ch
 interplay -- the projection formula `TauCeti.indClassFun_comp_subtype_mul` -- makes induction a map
 of `R(G)`-modules.
 
+## Main definitions
+
+* `TauCeti.ClassFunction.indVirtualCharacterAddHom`: induction bundled as an additive
+  homomorphism between the virtual-character lattices of a subgroup and the ambient group.
+
 ## Main statements
 
 * `TauCeti.ClassFunction.ind_ofFDRep_mem_virtualCharacters`: induction takes the character of a
   finite-dimensional subgroup representation to a virtual character of the ambient group.
 * `TauCeti.indClassFun_mem_virtualCharacters`: the same for an arbitrary virtual character of the
   subgroup, obtained from the previous statement by additivity.
+* `TauCeti.ClassFunction.indVirtualCharacterAddHom_apply_coe`: forgetting the target
+  subtype in the bundled map recovers induction of class functions.
 * `TauCeti.comp_subtype_mem_virtualCharacters`: restricting a virtual character of `G` to a
   subgroup gives a virtual character of the subgroup.
 
@@ -42,9 +49,9 @@ namespace TauCeti
 
 namespace ClassFunction
 
-universe u
+universe u v
 
-variable {k G : Type u} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 
 /-- **A character induced from a subgroup is a virtual character.**  Inducing the class function of
 a finite-dimensional representation gives the class function of the induced representation
@@ -63,7 +70,7 @@ theorem ind_ofFDRep_mem_virtualCharacters (S : Subgroup G) [S.FiniteIndex] (A : 
 
 end ClassFunction
 
-variable {k G : Type u} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 
 /-- Restriction of functions along the inclusion of a subgroup, as an additive map.  It is the
 vehicle for propagating a property through the additive generation of the virtual-character
@@ -109,5 +116,27 @@ theorem indClassFun_mem_virtualCharacters (S : Subgroup G) [S.FiniteIndex] {ψ :
     exact ClassFunction.ind_ofFDRep_mem_virtualCharacters S V
   have hmem := hle hψ
   rwa [AddSubgroup.mem_comap, indClassFunAddHom_apply] at hmem
+
+namespace ClassFunction
+
+variable (k G) in
+/-- Induction from a subgroup, restricted and corestricted to the virtual-character lattices. -/
+noncomputable def indVirtualCharacterAddHom (S : Subgroup G) [S.FiniteIndex] :
+    virtualCharacters k S →+ virtualCharacters k G :=
+  ((indClassFunAddHom S).comp (virtualCharacters k S).subtype).codRestrict
+    (virtualCharacters k G) fun ψ ↦ by
+      rw [AddMonoidHom.comp_apply, indClassFunAddHom_apply]
+      exact indClassFun_mem_virtualCharacters S ψ.2
+
+/-- Forgetting the target subtype after induction on virtual characters gives `indClassFun`. -/
+@[simp]
+theorem indVirtualCharacterAddHom_apply_coe (S : Subgroup G) [S.FiniteIndex]
+    (ψ : virtualCharacters k S) :
+    (indVirtualCharacterAddHom k G S ψ : G → k) = indClassFun S ψ := by
+  simpa only [indVirtualCharacterAddHom, AddMonoidHom.codRestrict_apply,
+    AddMonoidHom.comp_apply, AddSubgroup.subtype_apply] using
+      indClassFunAddHom_apply S (ψ : S → k)
+
+end ClassFunction
 
 end TauCeti

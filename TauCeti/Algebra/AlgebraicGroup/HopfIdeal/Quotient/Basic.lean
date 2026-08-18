@@ -30,6 +30,7 @@ the finite-type coordinate-Hopf-algebra category.
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.quotient`: the quotient object in `CommHopfAlgCat`.
+* `TauCeti.CommHopfAlgCat.mkQuotient_surjective`: the quotient morphism is surjective.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotient`: the quotient object in
   `FiniteTypeCommHopfAlgCat`.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient`: the quotient morphism.
@@ -101,6 +102,13 @@ lemma mkQuotient_eq_zero_iff (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R 
     (mkQuotient H I).hom h = 0 ↔ h ∈ I.toIdeal := by
   rw [mkQuotient_apply]
   exact Ideal.Quotient.eq_zero_iff_mem
+
+/-- The quotient morphism is surjective. -/
+lemma mkQuotient_surjective (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
+    Function.Surjective ⇑(mkQuotient H I).hom := by
+  intro q
+  obtain ⟨h, rfl⟩ := Ideal.Quotient.mkₐ_surjective R I.toIdeal q
+  exact ⟨h, mkQuotient_apply H I h⟩
 
 variable {H K : _root_.CommHopfAlgCat.{v} R}
 
