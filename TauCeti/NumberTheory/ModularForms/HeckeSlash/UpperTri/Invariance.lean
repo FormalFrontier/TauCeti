@@ -83,11 +83,10 @@ def upperTriShift (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) : Fin p :=
   ⟨((γ 1 1 * γ 0 1 + (j : ℕ) * (γ 1 1 * γ 1 1) : ℤ) : ZMod p).val, ZMod.val_lt _⟩
 
 /-- The defining congruence of `upperTriShift`, in `ZMod p`. -/
-@[simp] lemma upperTriShift_intCast (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) :
-    (((upperTriShift p γ j : ℕ) : ℤ) : ZMod p)
-      = ((γ 1 1 * γ 0 1 + (j : ℕ) * (γ 1 1 * γ 1 1) : ℤ) : ZMod p) := by
-  rw [Int.cast_natCast]
-  exact ZMod.natCast_rightInverse _
+@[simp] lemma upperTriShift_natCast (p : ℕ) [NeZero p] (γ : SL(2, ℤ)) (j : Fin p) :
+    ((upperTriShift p γ j : ℕ) : ZMod p)
+      = ((γ 1 1 * γ 0 1 + (j : ℕ) * (γ 1 1 * γ 1 1) : ℤ) : ZMod p) :=
+  ZMod.natCast_rightInverse _
 
 /-- **The offset map is a bijection.** Under the stated hypotheses, `d` is the inverse of `a`
 modulo `p`, so the map gives the unique solution in `[0, p)` of `a j' ≡ b + j d (mod p)`.
@@ -96,8 +95,8 @@ lemma upperTriShift_bijective [NeZero p] (hpN : p ∣ N) {γ : SL(2, ℤ)} (hγ 
     Function.Bijective (upperTriShift p γ) := by
   refine Finite.injective_iff_bijective.mp fun j j' hjj ↦ ?_
   have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hpN hγ
-  have h := congrArg (fun m : Fin p ↦ (((m : ℕ) : ℤ) : ZMod p)) hjj
-  simp only [upperTriShift_intCast] at h
+  have h := congrArg (fun m : Fin p ↦ ((m : ℕ) : ZMod p)) hjj
+  simp only [upperTriShift_natCast] at h
   push_cast at h
   have hud : IsUnit ((γ 1 1 : ℤ) : ZMod p) :=
     IsUnit.of_mul_eq_one _ (by simpa [mul_comm] using had)
@@ -149,8 +148,7 @@ theorem exists_mem_Gamma0_upperTriRep_mul [NeZero p] (hpN : p ∣ N) {γ : SL(2,
       - (γ 0 0 + (j : ℕ) * γ 1 0) * ((upperTriShift p γ j : ℕ) : ℤ) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
-    rw [← Int.cast_natCast ((upperTriShift p γ j : ℕ)), upperTriShift_intCast,
-      intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hpN hγ]
+    rw [upperTriShift_natCast, intCast_apply_one_zero_eq_zero_of_mem_Gamma0 hpN hγ]
     push_cast
     linear_combination (-((γ 0 1 : ℤ) : ZMod p)
       - ((j : ℕ) : ZMod p) * ((γ 1 1 : ℤ) : ZMod p)) * had
