@@ -22,7 +22,7 @@ of `R(G)`-modules.
 
 ## Main definitions
 
-* `TauCeti.ClassFunction.indVirtualCharactersOfSubgroupAddHom`: induction bundled as an additive
+* `TauCeti.ClassFunction.indVirtualCharacterAddHom`: induction bundled as an additive
   homomorphism between the virtual-character lattices of a subgroup and the ambient group.
 
 ## Main statements
@@ -31,7 +31,7 @@ of `R(G)`-modules.
   finite-dimensional subgroup representation to a virtual character of the ambient group.
 * `TauCeti.indClassFun_mem_virtualCharacters`: the same for an arbitrary virtual character of the
   subgroup, obtained from the previous statement by additivity.
-* `TauCeti.ClassFunction.indVirtualCharactersOfSubgroupAddHom_apply_coe`: forgetting the target
+* `TauCeti.ClassFunction.indVirtualCharacterAddHom_apply_coe`: forgetting the target
   subtype in the bundled map recovers induction of class functions.
 * `TauCeti.comp_subtype_mem_virtualCharacters`: restricting a virtual character of `G` to a
   subgroup gives a virtual character of the subgroup.
@@ -121,7 +121,7 @@ namespace ClassFunction
 
 variable (k G) in
 /-- Induction from a subgroup, restricted and corestricted to the virtual-character lattices. -/
-noncomputable def indVirtualCharactersOfSubgroupAddHom (S : Subgroup G) [S.FiniteIndex] :
+noncomputable def indVirtualCharacterAddHom (S : Subgroup G) [S.FiniteIndex] :
     virtualCharacters k S →+ virtualCharacters k G :=
   ((indClassFunAddHom S).comp (virtualCharacters k S).subtype).codRestrict
     (virtualCharacters k G) fun ψ ↦ by
@@ -130,10 +130,10 @@ noncomputable def indVirtualCharactersOfSubgroupAddHom (S : Subgroup G) [S.Finit
 
 /-- Forgetting the target subtype after induction on virtual characters gives `indClassFun`. -/
 @[simp]
-theorem indVirtualCharactersOfSubgroupAddHom_apply_coe (S : Subgroup G) [S.FiniteIndex]
+theorem indVirtualCharacterAddHom_apply_coe (S : Subgroup G) [S.FiniteIndex]
     (ψ : virtualCharacters k S) :
-    (indVirtualCharactersOfSubgroupAddHom k G S ψ : G → k) = indClassFun S ψ := by
-  simpa only [indVirtualCharactersOfSubgroupAddHom, AddMonoidHom.codRestrict_apply,
+    (indVirtualCharacterAddHom k G S ψ : G → k) = indClassFun S ψ := by
+  simpa only [indVirtualCharacterAddHom, AddMonoidHom.codRestrict_apply,
     AddMonoidHom.comp_apply, AddSubgroup.subtype_apply] using
       indClassFunAddHom_apply S (ψ : S → k)
 
