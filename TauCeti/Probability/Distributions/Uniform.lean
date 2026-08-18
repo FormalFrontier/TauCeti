@@ -72,8 +72,8 @@ side condition.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  target of that item — parameter measurability — is not built here.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3 — the uniform family:
+  its measure, density, cdf, moments, and transforms.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
