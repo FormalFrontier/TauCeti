@@ -11,6 +11,7 @@ public import Mathlib.Probability.Distributions.Uniform
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
@@ -57,6 +58,8 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
   logarithm meaningful;
 * `cgf_id_uniformMeasure_zero` and `cgf_id_uniformMeasure` — the cumulant generating function, split
   the same way;
+* `charFun_uniformMeasure_zero` and `charFun_uniformMeasure` — the characteristic function,
+  likewise;
 * `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
 
 ## Implementation
@@ -70,8 +73,7 @@ side condition.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — the characteristic function and parameter measurability — are not built
-  here.
+  target of that item — parameter measurability — is not built here.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -353,6 +355,45 @@ theorem cgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
     cgf id (uniformMeasure a b) t =
       Real.log ((Real.exp (t * b) - Real.exp (t * a)) / ((b - a) * t)) := by
   rw [cgf, mgf_id_uniformMeasure hab ht]
+
+/-! ### The characteristic function
+
+Kept clear of the real mgf development above: this is a complex-valued calculation, and the only
+thing it borrows is `uniformMeasure_eq_smul`. It splits at `t = 0` for the same reason the mgf
+does — the quotient has a removable singularity there. -/
+
+/-- The characteristic function of the uniform law at `0` is `1`. -/
+theorem charFun_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
+    charFun (uniformMeasure a b) 0 = 1 := by
+  have := isProbabilityMeasure_uniformMeasure hab
+  simp [charFun_zero]
+
+/-- **The characteristic function of the uniform law**, away from the removable singularity. -/
+theorem charFun_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
+    charFun (uniformMeasure a b) t
+      = (Complex.exp (Complex.I * b * t) - Complex.exp (Complex.I * a * t))
+          / (Complex.I * ((b - a : ℝ)) * t) := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hc : (Complex.I * t) ≠ 0 := by
+    simp [Complex.I_ne_zero, Complex.ofReal_ne_zero.mpr ht]
+  rw [charFun, uniformMeasure_eq_smul, integral_smul_measure]
+  simp only [Real.inner_apply]
+  rw [← intervalIntegral.integral_of_le hab.le]
+  have hx : ∀ x : ℝ, Complex.exp (↑(x * t) * Complex.I) = Complex.exp (Complex.I * t * x) := by
+    intro x
+    congr 1
+    push_cast
+    ring
+  simp only [hx]
+  rw [integral_exp_mul_complex hc, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le,
+    Complex.real_smul]
+  have he : ∀ y : ℝ, Complex.exp (Complex.I * y * t) = Complex.exp (Complex.I * t * y) := by
+    intro y
+    congr 1
+    ring
+  rw [he b, he a]
+  push_cast
+  field_simp
 
 /-! ### Affine transport
 
