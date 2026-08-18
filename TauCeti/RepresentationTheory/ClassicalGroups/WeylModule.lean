@@ -143,7 +143,6 @@ noncomputable abbrev weylRep (t : YoungTableau μ) :
   (weylModule k n t).toRepresentation
 
 /-- The action on the Weyl module is the restriction of the action on the tensor power. -/
-@[simp]
 theorem weylRep_apply_coe (t : YoungTableau μ) (g : GL (Fin n) k)
     (x : (weylModule k n t).toSubmodule) :
     ((weylRep k n t g x : (weylModule k n t).toSubmodule) : ⨂[k]^μ.card (Fin n → k)) =
@@ -442,7 +441,6 @@ theorem weylModuleOfShape_toSubmodule (μ : YoungDiagram) :
 
 /-- The action on the Weyl module of a shape is the restriction of the action on the tensor
 power. -/
-@[simp]
 theorem weylRepOfShape_apply_coe (μ : YoungDiagram) (g : GL (Fin n) k)
     (x : (weylModuleOfShape k n μ).toSubmodule) :
     ((weylRepOfShape k n μ g x : (weylModuleOfShape k n μ).toSubmodule) :

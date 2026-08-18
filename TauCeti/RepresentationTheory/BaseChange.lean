@@ -61,7 +61,7 @@ variable [AddCommGroup V] [Module K V]
 
 /-- A nonzero common fixed vector after a field extension descends to a nonzero common fixed
 vector over the base field. -/
-theorem _root_.Representation.exists_common_fixed_vector_of_baseChange [FiniteDimensional K V]
+theorem _root_.Representation.exists_common_fixed_vector_of_baseChange
     (ρ : _root_.Representation K G V) {w : L ⊗[K] V} (hw : w ≠ 0)
     (hfixed : ∀ g, _root_.Representation.baseChange L ρ g w = w) :
     ∃ v : V, v ≠ 0 ∧ ∀ g, ρ g v = v := by
