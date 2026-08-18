@@ -49,12 +49,12 @@ def prodEquiv (p : Submodule R M) (q : Submodule R N) : ↥(p.prod q) ≃ₗ[R] 
   map_smul' _ _ := rfl
 
 @[simp]
-theorem prodSubtypeEquiv_apply (p : Submodule R M) (q : Submodule R N) (x : ↥(p.prod q)) :
+theorem prodEquiv_apply (p : Submodule R M) (q : Submodule R N) (x : ↥(p.prod q)) :
     prodEquiv p q x = (⟨x.1.1, x.2.1⟩, ⟨x.1.2, x.2.2⟩) :=
   (rfl)
 
 @[simp]
-theorem prodSubtypeEquiv_symm_apply (p : Submodule R M) (q : Submodule R N) (x : p × q) :
+theorem prodEquiv_symm_apply (p : Submodule R M) (q : Submodule R N) (x : p × q) :
     (prodEquiv p q).symm x = ⟨(x.1.1, x.2.1), x.1.2, x.2.2⟩ :=
   (rfl)
 
@@ -79,13 +79,17 @@ def quotientProdEquiv (p : Submodule R M) (q : Submodule R N) :
 theorem quotientProdEquiv_mk (p : Submodule R M) (q : Submodule R N) (x : M × N) :
     quotientProdEquiv p q (Submodule.Quotient.mk x) =
       (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2) :=
-  (rfl)
+  by
+    convert QuotientAddGroup.prodAddEquiv_apply p.toAddSubgroup q.toAddSubgroup
+      (Quotient.mk'' x) using 1 <;> rfl
 
 @[simp]
 theorem quotientProdEquiv_symm_mk (p : Submodule R M) (q : Submodule R N) (x : M) (y : N) :
     (quotientProdEquiv p q).symm (Submodule.Quotient.mk x, Submodule.Quotient.mk y) =
       Submodule.Quotient.mk (x, y) :=
-  (rfl)
+  by
+    convert QuotientAddGroup.prodAddEquiv_symm_apply p.toAddSubgroup q.toAddSubgroup
+      (Quotient.mk'' x, Quotient.mk'' y) using 1 <;> rfl
 
 /-- The quotient by a product of submodules has rank the sum of the two quotients' ranks. -/
 theorem finrank_quotient_prod {R M N : Type*} [DivisionRing R] [AddCommGroup M] [AddCommGroup N]
