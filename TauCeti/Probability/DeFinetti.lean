@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -32,7 +33,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
 
 * `conditionallyIID_of_contractable` — the summit: contractable implies conditionally i.i.d.;
 * `conditionallyIID_of_exchangeable` and `deFinetti` — de Finetti's theorem in conditional form;
-* `deFinetti_equivalence`, `deFinetti_RyllNardzewski_equivalence` — the equivalence forms;
+* `deFinetti_equivalence`, `contractable_iff_conditionallyIID`,
+  `deFinetti_RyllNardzewski_equivalence` — the equivalence forms. These and the summits above ask
+  only for a.e. measurable coordinates, matching the uniqueness endpoints below;
 * `deFinetti_viaL2`, `conditionallyIID_of_contractable_viaL2` and
   `deFinetti_RyllNardzewski_equivalence_viaL2` — the same summits proved by the `L²` averaging
   route rather than the martingale one. The unsuffixed names above are the martingale route;
@@ -50,7 +53,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
   exchangeable σ-algebra is trivial;
 * `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
   its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
-  point masses with the extreme laws;
+  point masses with the extreme laws and
+  `deFinettiEquiv_convexComb` / `deFinettiEquiv_symm_convexComb` giving the affinity in both
+  directions, at the bundled level;
 * `deFinetti_tendsto_empiricalMeasure_apply` — on each fixed measurable set, the mass given by the
   directing measure of an exchangeable process is the almost-sure limit of the empirical
   frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it;
