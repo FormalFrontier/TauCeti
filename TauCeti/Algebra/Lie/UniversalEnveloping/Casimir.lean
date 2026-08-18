@@ -19,9 +19,12 @@ the **Casimir element** is
 
 `Ω = ∑ᵢ xᵢ yᵢ ∈ U(L)`,
 
-a distinguished element of the universal enveloping algebra.  It is the source of Weyl's complete
-reducibility theorem: it is central, so it acts on any module by a module endomorphism, and on a
-highest weight module by a scalar that separates the trivial module from the others.
+a distinguished element of the universal enveloping algebra.  In the classical setting of a split
+semisimple Lie algebra in characteristic zero it is the source of Weyl's complete reducibility
+theorem: it is central, so it acts on any module by a module endomorphism, and on a highest weight
+module by a scalar that separates the trivial module from the others.  Those extra hypotheses are
+needed only for that application; centrality, the statement proved here, needs nothing beyond a
+nondegenerate Killing form.
 
 Two facts make `Ω` an invariant of `L` rather than of the chosen basis, and both are proved here.
 
@@ -38,9 +41,10 @@ Two facts make `Ω` an invariant of `L` rather than of the chosen basis, and bot
   generators generate `U(L)` (`TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι`), so `Ω`
   commutes with everything.
 
-Only nondegeneracy, symmetry and invariance of the Killing form are used, so the same construction
-works verbatim for any invariant nondegenerate symmetric form; the Killing form is the canonical
-choice this development needs, and is the one the roadmap pins.
+Only nondegeneracy, symmetry and invariance of the Killing form are used, so the argument below
+would go through for any invariant nondegenerate symmetric form once the definitions and lemmas
+are parameterised by such a form; as written they are stated for the Killing form, which is the
+canonical choice this development needs and the one the roadmap pins.
 
 ## Main definitions
 
@@ -94,11 +98,13 @@ noncomputable def killingDualBasis (b : Module.Basis ι K L) : Module.Basis ι K
   (killingForm K L).dualBasis (LieAlgebra.IsKilling.killingForm_nondegenerate K L) b
 
 /-- The defining biorthogonality of the Killing-dual basis. -/
+@[simp]
 theorem killingForm_killingDualBasis (b : Module.Basis ι K L) (i j : ι) :
     killingForm K L (b i) (killingDualBasis b j) = if i = j then 1 else 0 :=
   LinearMap.BilinForm.apply_dualBasis_right _ killingForm_isSymm b i j
 
 /-- Coordinates in the Killing-dual basis are Killing pairings against `b`. -/
+@[simp]
 theorem killingDualBasis_repr (b : Module.Basis ι K L) (v : L) (i : ι) :
     (killingDualBasis b).repr v i = killingForm K L (b i) v :=
   (LinearMap.BilinForm.dualBasis_repr_apply _ b v i).trans
@@ -106,6 +112,7 @@ theorem killingDualBasis_repr (b : Module.Basis ι K L) (v : L) (i : ι) :
 
 /-- Conjugating twice returns the original basis: the Killing-dual basis of the Killing-dual
 basis of `b` is `b`. -/
+@[simp]
 theorem killingDualBasis_killingDualBasis (b : Module.Basis ι K L) :
     killingDualBasis (killingDualBasis b) = b :=
   LinearMap.BilinForm.dualBasis_dualBasis _ killingForm_isSymm b
