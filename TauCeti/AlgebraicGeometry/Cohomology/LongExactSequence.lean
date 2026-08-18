@@ -63,7 +63,6 @@ namespace Scheme.Modules
 variable {X : Scheme.{u}}
 
 /-- A morphism of sheaves of modules on a scheme, as a map on degree-`n` cohomology. -/
-@[expose]
 def cohomologyMap {M N : X.Modules} (f : M ⟶ N) (n : ℕ) :
     Cohomology M n →+ Cohomology N n :=
   CategoryTheory.Sheaf.H.map ((toSheaf X).map f) n
@@ -71,7 +70,9 @@ def cohomologyMap {M N : X.Modules} (f : M ⟶ N) (n : ℕ) :
 @[simp]
 lemma cohomologyFunctor_map {M N : X.Modules} (f : M ⟶ N) (n : ℕ) :
     (cohomologyFunctor X n).map f = AddCommGrpCat.ofHom (cohomologyMap f n) :=
-  rfl
+  by
+    rw [cohomologyMap.eq_def]
+    rfl
 
 /-- Under the identification of degree-zero cohomology with global sections, the map induced on
 cohomology by a morphism of sheaves of modules is the map induced on global sections. -/
@@ -98,7 +99,6 @@ include hS
 
 /-- The connecting map `Hⁿ⁰(X, M₃) →+ Hⁿ¹(X, M₁)` of the long exact cohomology sequence of a
 short exact sequence `0 ⟶ M₁ ⟶ M₂ ⟶ M₃ ⟶ 0` of sheaves of modules. -/
-@[expose]
 def cohomologyδ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
     Cohomology S.X₃ n₀ →+ Cohomology S.X₁ n₁ :=
   TauCeti.CategoryTheory.Sheaf.H.δ (shortExact_map_toSheaf hS) n₀ n₁ h
