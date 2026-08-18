@@ -14,10 +14,10 @@ public import Mathlib.FieldTheory.Relrank
 /-!
 # The relative Frobenius isogeny
 
-Over a field `F` of positive exponential characteristic `p`, raising to the `p`-th power is a ring
-endomorphism of `F` but not an `F`-algebra map, so it does not turn a Weierstrass curve into an
-endomorphism of itself unless `F` is a prime field. In characteristic zero, `p = 1` and this map is
-the identity. In either case it gives a map to the **Frobenius twist** `W⁽ᵖ⁾`, the curve whose
+When `p > 1` (equivalently, when `F` has positive characteristic), raising to the `p`-th power is a
+ring endomorphism of `F` but not an `F`-algebra map, so it does not turn a Weierstrass curve into an
+endomorphism of itself unless `F` is a prime field. When `p = 1`, the characteristic-zero case, this
+map is the identity. In either case it gives a map to the **Frobenius twist** `W⁽ᵖ⁾`, whose
 `a`-invariants are the `p`-th powers of those of `W`: Mathlib's
 `W.map (frobenius F p)`, with `WeierstrassCurve.map_a₁` and its siblings for the coefficient
 description and `WeierstrassCurve.map_map` for iteration. The **relative Frobenius**
