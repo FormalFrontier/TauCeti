@@ -266,35 +266,23 @@ noncomputable def groupAlgebraTensorInvariants
         MonoidAlgebra L (Multiplicative M)) := by
   let T := MonoidAlgebra L (Multiplicative M) ⊗[L]
     MonoidAlgebra L (Multiplicative M)
-  letI : SMul (L ≃ₐ[k] L) T :=
-    ⟨fun sigma t ↦ groupAlgebraTensorActionSemilinearEquiv rho sigma t⟩
-  letI : DistribMulAction (L ≃ₐ[k] L) T :=
+  letI : MulSemiringAction (L ≃ₐ[k] L) T :=
     { smul := fun sigma t ↦ groupAlgebraTensorActionSemilinearEquiv rho sigma t
       one_smul := groupAlgebraTensorActionSemilinearEquiv_one rho
       mul_smul := groupAlgebraTensorActionSemilinearEquiv_mul rho
       smul_zero := fun sigma ↦ map_zero (groupAlgebraTensorActionSemilinearEquiv rho sigma)
-      smul_add := fun sigma ↦ map_add (groupAlgebraTensorActionSemilinearEquiv rho sigma) }
+      smul_add := fun sigma ↦ map_add (groupAlgebraTensorActionSemilinearEquiv rho sigma)
+      smul_one := groupAlgebraTensorActionSemilinearEquiv_map_one rho
+      smul_mul := groupAlgebraTensorActionSemilinearEquiv_map_mul rho }
   have action_apply (sigma : L ≃ₐ[k] L) (t : T) :
       sigma • t = groupAlgebraTensorActionSemilinearEquiv rho sigma t := rfl
-  let fixedSubmodule : Submodule k T :=
-    { FixedPoints.addSubgroup (L ≃ₐ[k] L) T with
-      smul_mem' := fun r x hx sigma ↦ by
-        have hsigma : groupAlgebraTensorActionSemilinearEquiv rho sigma x = x := hx sigma
-        rw [action_apply, ← IsScalarTower.algebraMap_smul L r x,
-          groupAlgebraTensorActionSemilinearEquiv_smul, sigma.commutes, hsigma,
-          IsScalarTower.algebraMap_smul L r x] }
-  exact fixedSubmodule.toSubalgebra
-    (fun sigma ↦ by
-      rw [action_apply]
-      exact groupAlgebraTensorActionSemilinearEquiv_map_one rho sigma)
-    (fun x y hx hy sigma ↦ by
-      have hx' : groupAlgebraTensorActionSemilinearEquiv rho sigma x = x := by
-        rw [← action_apply]
-        exact hx sigma
-      have hy' : groupAlgebraTensorActionSemilinearEquiv rho sigma y = y := by
-        rw [← action_apply]
-        exact hy sigma
-      rw [action_apply, groupAlgebraTensorActionSemilinearEquiv_map_mul, hx', hy'])
+  letI : SMulCommClass (L ≃ₐ[k] L) k T :=
+    ⟨fun sigma r t ↦ by
+      rw [action_apply, ← IsScalarTower.algebraMap_smul L r t,
+        groupAlgebraTensorActionSemilinearEquiv_smul, sigma.commutes,
+        IsScalarTower.algebraMap_smul L r
+          (groupAlgebraTensorActionSemilinearEquiv rho sigma t), action_apply]⟩
+  exact FixedPoints.subalgebra k T (L ≃ₐ[k] L)
 
 /-- Membership among invariant tensors means being fixed by the diagonal action. -/
 @[simp]
