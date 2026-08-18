@@ -275,6 +275,10 @@ jobs:
         id: stage
         if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
         env:
+          # Restated at step level, and the same values the restore step sets job-wide when the
+          # public endpoints are configured, so staging works either way: with the restore on,
+          # the health-check build already packed these artifacts; with it off, the pack below
+          # is what puts them in the cache directory for `lake cache stage` to find.
           LAKE_ARTIFACT_CACHE: "true"
           LAKE_RESTORE_ARTIFACTS: "true"
           # Don't download during the packing build — we only want to PUT, not GET. (The
