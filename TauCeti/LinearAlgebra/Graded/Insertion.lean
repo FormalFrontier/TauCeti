@@ -182,7 +182,6 @@ theorem koszulSign_eq_negOnePow {α : Type uα} [Fintype α] (q : ℤ) (d : α �
     koszulSign (R := R) q d = (((q * ∑ i, d i).negOnePow : ℤ) : R) := by
   simp [koszulSign]
 
-@[simp]
 theorem koszulSign_add_degree {α : Type uα} [Fintype α] (q q' : ℤ) (d : α → ℤ) :
     koszulSign (R := R) (q + q') d =
       koszulSign (R := R) q d * koszulSign (R := R) q' d := by
