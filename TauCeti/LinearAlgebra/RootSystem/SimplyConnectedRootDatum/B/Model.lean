@@ -505,6 +505,50 @@ lemma rootOfPair_dotProduct_corootOfPair {u v : Fin (2 * n)} (h : IsPair u v) :
     rw [rootOfPair_of_ne huv, add_dotProduct]
     omega
 
+/-- Cartan integers between roots in the classical type `B` model have absolute value at most
+two. -/
+lemma abs_rootOfPair_dotProduct_corootOfPair_le_two {u v p q : Fin (2 * n)}
+    (huv : IsPair u v) (hpq : IsPair p q) :
+    |rootOfPair u v ⬝ᵥ corootOfPair p q| ≤ 2 := by
+  have atom_le_two (z : Fin (2 * n)) : |signedWeight z ⬝ᵥ corootOfPair p q| ≤ 2 := by
+    have hval := two_mul_dotProduct_corootOfPair z p q
+    rw [signedWeight_dotProduct_signedCoweight,
+      signedWeight_dotProduct_signedCoweight] at hval
+    rw [abs_le]
+    constructor <;> split_ifs at hval <;> omega
+  rcases eq_or_ne u v with rfl | huv_ne
+  · simpa only [rootOfPair_self] using atom_le_two u
+  rcases eq_or_ne p q with rfl | hpq_ne
+  · have haxis : axis u ≠ axis v := huv.resolve_left huv_ne
+    have huv_opp : u ≠ opp v := ne_of_axis_ne (by simpa using haxis)
+    have hvu : v ≠ u := ne_of_axis_ne haxis.symm
+    have hvu_opp : v ≠ opp u := ne_of_axis_ne (by simpa using haxis.symm)
+    rw [rootOfPair_of_ne huv_ne, corootOfPair_self, add_dotProduct,
+      signedWeight_dotProduct_signedCoweight,
+      signedWeight_dotProduct_signedCoweight, abs_le]
+    constructor <;> split_ifs <;> simp_all
+  · have atom_le_one (z : Fin (2 * n)) : |signedWeight z ⬝ᵥ corootOfPair p q| ≤ 1 := by
+      have haxis : axis p ≠ axis q := hpq.resolve_left hpq_ne
+      have hpq_opp : p ≠ opp q := ne_of_axis_ne (by simpa using haxis)
+      have hqp : q ≠ p := ne_of_axis_ne haxis.symm
+      have hqp_opp : q ≠ opp p := ne_of_axis_ne (by simpa using haxis.symm)
+      have hoppp_oppq : opp p ≠ opp q := by
+        intro h
+        exact hpq_ne (by simpa using congrArg opp h)
+      have hval := two_mul_dotProduct_corootOfPair z p q
+      rw [signedWeight_dotProduct_signedCoweight,
+        signedWeight_dotProduct_signedCoweight] at hval
+      rw [abs_le]
+      constructor <;> split_ifs at hval <;> subst_vars <;> simp_all
+    rw [rootOfPair_of_ne huv_ne, add_dotProduct]
+    have hu := atom_le_one u
+    have hv := atom_le_one v
+    calc
+      |signedWeight u ⬝ᵥ corootOfPair p q + signedWeight v ⬝ᵥ corootOfPair p q| ≤
+          |signedWeight u ⬝ᵥ corootOfPair p q| +
+            |signedWeight v ⬝ᵥ corootOfPair p q| := abs_add_le _ _
+      _ ≤ 2 := by omega
+
 /-! ## The reflection in a root -/
 
 /-- The signed permutation of the basis vectors realising the reflection in the root named by the
