@@ -85,7 +85,7 @@ structure Place where
   satisfies `valuation t = WithZero.exp (-1)`. -/
   valuation : Valuation F ℤᵐ⁰
   /-- The valuation is surjective, i.e. normalized: its value group is all of `ℤᵐ⁰`. -/
-  surjective_valuation : Function.Surjective valuation
+  valuation_surjective : Function.Surjective valuation
   /-- The valuation is trivial on the constants. -/
   isTrivialOn : valuation.IsTrivialOn k
 
@@ -157,7 +157,7 @@ theorem ord_div {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) : P.ord (f / g) = P.ord 
 theorem ord_neg (f : F) : P.ord (-f) = P.ord f := by simp [ord_def, Valuation.map_neg]
 
 theorem ord_surjective : Function.Surjective P.ord := fun n => by
-  obtain ⟨f, hf⟩ := P.surjective_valuation (WithZero.exp (-n))
+  obtain ⟨f, hf⟩ := P.valuation_surjective (WithZero.exp (-n))
   have hf0 : f ≠ 0 := P.valuation.ne_zero_iff.mp (by simp [hf])
   exact ⟨f, (P.ord_eq_iff_valuation_eq_exp hf0).mpr hf⟩
 
@@ -247,7 +247,7 @@ section Discrete
 
 /-- Normalization says exactly that the value group of a place is all of `ℤᵐ⁰`. -/
 theorem valueGroup_eq_top : valueGroup (.ofClass P.valuation) = ⊤ :=
-  (Subgroup.eq_top_iff' _).mpr fun γ => mem_valueGroup _ (P.surjective_valuation γ)
+  (Subgroup.eq_top_iff' _).mpr fun γ => mem_valueGroup _ (P.valuation_surjective γ)
 
 instance : Nontrivial (valueGroup (.ofClass P.valuation)) := by
   rw [P.valueGroup_eq_top]
@@ -268,7 +268,7 @@ instance instIsDiscreteValuationRing : IsDiscreteValuationRing P.integers :=
 `WithZero.exp (-1)`, because the valuation of a place is normalized. -/
 theorem generator_eq_exp_neg_one : IsRankOneDiscrete.generator P.valuation =
     Units.mk0 (WithZero.exp (-1 : ℤ) : ℤᵐ⁰) (by simp) :=
-  IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective P.surjective_valuation
+  IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective P.valuation_surjective
 
 /-- Mathlib's uniformizers of `v_P` are exactly the elements of order one: Stichtenoth's prime
 elements for `P`. -/
