@@ -42,10 +42,10 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- A prime ideal lying over a rational prime is a non-zero-divisor in the ideal monoid, so it
-can be passed to `ClassGroup.mk0`. -/
+/-- An ideal lying over a rational prime is a non-zero-divisor in the ideal monoid, so it can be
+passed to `ClassGroup.mk0`. -/
 theorem ideal_mem_nonZeroDivisors_of_isPrime_liesOver {p : ℕ} (hp : p.Prime)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [𝔭.LiesOver (span {(p : ℤ)})] :
+    (𝔭 : Ideal (𝓞 K)) [𝔭.LiesOver (span {(p : ℤ)})] :
     𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
   refine mem_nonZeroDivisors_of_ne_zero ?_
   rw [Ideal.zero_eq_bot]
