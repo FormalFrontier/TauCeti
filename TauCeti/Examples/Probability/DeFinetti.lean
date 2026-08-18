@@ -24,10 +24,6 @@ who imports only the facade.
 Layer 7 spells one endpoint `exchangeable_of_mixedIID`; the repository proves it canonically as
 `MixedIID.exchangeable`, which is checked below under that name. No alias is introduced.
 
-`deFinetti_empiricalMeasure` is not currently exported. Unlike the topology-free fixed-set endpoint
-below, its weak-convergence statement requires an explicitly chosen compatible Polish topology,
-which `[StandardBorelSpace α]` alone does not select.
-
 Every other advertised name is checked below.
 
 ## The mathematical worked examples live elsewhere
@@ -84,11 +80,13 @@ example := @mixedIID_mixingLaw_unique
 example := @conditionallyIID_ae_unique
 example := @exchangeable_extreme_iff_iid
 
--- Empirical-frequency convergence. These two are promised by separate facade imports:
--- `ConditionallyIID.StrongLaw` for the conditional statement, `DeFinetti.EmpiricalMeasure` for the
--- de Finetti endpoint. Neither is re-exported by the other.
+-- Empirical convergence, setwise and weak. The conditional statements are promised by the facade
+-- imports `ConditionallyIID.StrongLaw` and `ConditionallyIID.WeakConvergence`, the de Finetti
+-- endpoints by `DeFinetti.EmpiricalMeasure`, which re-exports neither conditional statement.
 example := @ConditionallyIIDWith.tendsto_average_ae
+example := @ConditionallyIIDWith.tendsto_empiricalMeasure_ae
 example := @deFinetti_tendsto_empiricalMeasure_apply
+example := @deFinetti_empiricalMeasure
 
 /-! ### Using the canonical mixing law -/
 
