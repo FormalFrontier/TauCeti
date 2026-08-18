@@ -366,6 +366,7 @@ point.
 
 This is the input `MeasureTheory.measurable_withDensity` needs; `measurable_uniformPDF_Ioc_volume`
 fixes the endpoints and is too weak for it. -/
+@[fun_prop]
 theorem measurable_uniformPDF_uncurry :
     Measurable fun q : (ℝ × ℝ) × ℝ => pdf.uniformPDF (Set.Ioc q.1.1 q.1.2) q.2 volume := by
   have hset : MeasurableSet {q : (ℝ × ℝ) × ℝ | q.2 ∈ Set.Ioc q.1.1 q.1.2} := by

@@ -19,9 +19,9 @@ public import Mathlib.Probability.Distributions.Poisson.Basic
 # Measurability of the standard families in their parameters
 
 A distribution is a family of measures indexed by its parameters, and `MeasureTheory.Measure α`
-carries the Giry measurable structure. This file proves that each of Mathlib's named scalar laws is
-a *measurable* function of its parameters, which is exactly what a consumer needs in order to
-package it as a `ProbabilityTheory.Kernel` over a parameter space.
+carries the Giry measurable structure. This file proves parameter measurability for Mathlib's
+Gamma, exponential, Beta, Pareto, Gaussian, Cauchy, Poisson, geometric, and Bernoulli scalar laws,
+which is exactly what a consumer needs in order to package them as `ProbabilityTheory.Kernel`s.
 
 ## Two mechanisms
 
@@ -35,7 +35,7 @@ per-parameter measurability Mathlib already provides -- `Real.Gamma` and
 The discrete families are weighted sums of Dirac measures, and are handled by the shared
 `measurable_sum_smul_dirac`, which evaluates such a measure on a set as a `tsum` of the weights.
 
-Two families are defined by a case split at a degenerate parameter — `gaussianReal μ 0` and
+Three families are defined by a case split at a degenerate parameter — `gaussianReal μ 0` and
 `cauchyMeasure x₀ 0` are Dirac measures, `geometricMeasure 0` is `Measure.dirac 0` — and their
 proofs go through `Measurable.ite`: the degenerate parameter set is closed, and `Measure.dirac` is
 itself measurable.

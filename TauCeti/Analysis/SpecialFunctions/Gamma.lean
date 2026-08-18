@@ -30,13 +30,7 @@ public section
 
 namespace TauCeti
 
-/-- **The real Gamma function is measurable.**
-
-`Real.Gamma` is discontinuous exactly at the nonpositive integers, where it has poles; away from
-them it is differentiable by `Real.differentiableAt_Gamma`. That leaves a countable set of
-discontinuities, and a function continuous off a countable set is measurable
-(`measurable_of_countable_not_continuousAt`). No boundedness is needed: the pole values are the
-junk values of `Complex.Gamma` at those points, and a single point carries no Borel information. -/
+/-- The real Gamma function is Borel measurable on all of `ℝ`, including at its poles. -/
 @[fun_prop]
 theorem _root_.Real.measurable_Gamma : Measurable Real.Gamma := by
   refine measurable_of_countable_not_continuousAt (Set.Countable.mono ?_
