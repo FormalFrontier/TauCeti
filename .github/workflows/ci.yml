@@ -466,8 +466,10 @@ jobs:
           # What this does not do is fix the bytes of the Lean release elan then downloads.
           # `lean-toolchain` pins that release's name, not its contents, and elan offers no hook
           # to verify the archive, so leanprover's release channel stays in this job's trust
-          # base exactly as it is in every other job here. See issue #3725 for why that is worth
-          # raising upstream rather than working around locally.
+          # base exactly as it is in every other job here. Closing that would mean fetching and
+          # unpacking the release ourselves, or a verification hook from upstream; see
+          # https://github.com/TauCetiProject/TauCeti/issues/3725 for why the latter is the
+          # better bargain.
           # scripts/test_elan_pin.py keeps the copies of the pin honest.
           curl -sSL -H "Accept: application/octet-stream" \
             "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
