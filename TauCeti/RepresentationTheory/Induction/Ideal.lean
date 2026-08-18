@@ -140,10 +140,7 @@ theorem indVirtualCharactersAddHom_of [DecidableEq {S : Subgroup G // P S}]
         (DirectSum.of (fun S : {S : Subgroup G // P S} ↦
           ↑(virtualCharacters k (S : Subgroup G))) S ψ) =
       indVirtualCharactersOfSubgroupAddHom k G S ψ := by
-  change (DirectSum.toAddMonoid fun S : {S : Subgroup G // P S} ↦
-      indVirtualCharactersOfSubgroupAddHom k G S.1)
-      (DirectSum.of (fun S : {S : Subgroup G // P S} ↦
-        ↑(virtualCharacters k (S : Subgroup G))) S ψ) = _
+  rw [indVirtualCharactersAddHom]
   exact DirectSum.toAddMonoid_of _ _ _
 
 /-- The range of the bundled induction map, after forgetting the target subtype, is exactly the
