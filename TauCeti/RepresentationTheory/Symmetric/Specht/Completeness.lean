@@ -264,7 +264,8 @@ theorem coe_simpleFDRepClassesEquivSimpleModuleClasses :
     -- Name the partition of `X`, so that both sides are evaluated at a Specht module.
     obtain ⟨μ, hμ, -⟩ := existsUnique_nonempty_iso_spechtModule X
     rw [(SimpleFDRepClasses.mk_eq_mk_iff X (spechtModule μ)).mpr hμ]
-    simp [simpleFDRepClassesEquivSimpleModuleClasses]
+    rw [SimpleFDRepClasses.toSimpleSubmoduleClasses_mk]
+    simp [-SimpleFDRepClasses.mk_eq_toSkeleton, simpleFDRepClassesEquivSimpleModuleClasses]
 
 end Categorical
 

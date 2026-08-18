@@ -68,6 +68,12 @@ def mk (X : FDRep k G) [Simple X] : SimpleFDRepClasses k G :=
   toSkeleton (⟨X, inferInstance⟩ :
     ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))
 
+/-- The constructor for simple-object classes is the underlying skeleton constructor. -/
+@[simp]
+theorem mk_eq_toSkeleton (X : FDRep k G) [Simple X] :
+    mk X = toSkeleton (⟨X, inferInstance⟩ :
+      ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G))) := (rfl)
+
 /-- Two simple objects have the same class exactly when they are isomorphic. -/
 @[simp]
 theorem mk_eq_mk_iff (X Y : FDRep k G) [Simple X] [Simple Y] :
@@ -82,25 +88,21 @@ theorem ind {motive : SimpleFDRepClasses k G → Prop}
     (h : ∀ (X : FDRep k G) (hX : Simple X), motive (@mk k G _ _ X hX))
     (c : SimpleFDRepClasses k G) :
     motive c :=
-  Skeleton.ind (fun X ↦ h X.obj X.property) c
+  Quotient.ind (fun X ↦ h X.obj X.property) c
 
 /-- Define a function on simple-object classes from an isomorphism-invariant function on simple
 objects. -/
-noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
-    (h : ∀ (X Y : FDRep k G) (hX : Simple X) (hY : Simple Y),
-      Nonempty (X ≅ Y) → f X hX = f Y hY) :
+noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G) [Simple X], α)
+    (h : ∀ (X Y : FDRep k G) [Simple X] [Simple Y], Nonempty (X ≅ Y) → f X = f Y) :
     SimpleFDRepClasses k G → α :=
-  Skeleton.lift
-    (fun X ↦ f X.obj X.property)
-    fun X Y e ↦ h X.obj Y.obj X.property Y.property
+  Quotient.lift
+    (fun X ↦ @f X.obj X.property)
+    fun X Y e ↦ @h X.obj Y.obj X.property Y.property
       ⟨(ObjectProperty.ι (Simple : ObjectProperty (FDRep k G))).mapIso e.some⟩
 
 @[simp]
-theorem lift_mk {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
-    (h : ∀ (X Y : FDRep k G) (hX : Simple X) (hY : Simple Y),
-      Nonempty (X ≅ Y) → f X hX = f Y hY)
-    (X : FDRep k G) [Simple X] : lift f h (mk X) = f X inferInstance := by
-  simp [lift, mk]
+theorem lift_mk {α : Sort*} {f : ∀ (X : FDRep k G) [Simple X], α} {h}
+    (X : FDRep k G) [Simple X] : lift f h (mk X) = f X := (rfl)
 
 end SimpleFDRepClasses
 
@@ -118,20 +120,15 @@ semisimple group algebra this compares the categorical classification with the m
 noncomputable def toSimpleSubmoduleClasses [IsSemisimpleRing k[G]] :
     SimpleFDRepClasses k G → SimpleSubmoduleClasses k[G] k[G] :=
   lift
-    (fun X hX ↦
-      let _ := hX
-      simpleModuleClass k[G] (_root_.Representation.asModule X.ρ))
-    fun X Y hX hY h ↦ by
-      let _ := hX
-      let _ := hY
-      exact simpleModuleClass_eq_iff.mpr
-        (Representation.nonempty_equiv_iff.mp (nonempty_fdRepIso_iff.mp h))
+    (fun X ↦ simpleModuleClass k[G] (_root_.Representation.asModule X.ρ))
+    fun _X _Y _ _ h ↦ simpleModuleClass_eq_iff.mpr
+      (Representation.nonempty_equiv_iff.mp (nonempty_fdRepIso_iff.mp h))
 
 @[simp]
 theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Simple X] :
     toSimpleSubmoduleClasses (mk X) =
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
-  lift_mk _ _ X
+  by rw [toSimpleSubmoduleClasses, lift_mk]
 
 end Field
 

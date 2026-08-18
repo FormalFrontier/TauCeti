@@ -8,11 +8,10 @@ module
 public import Mathlib.CategoryTheory.Skeletal
 
 /-!
-# Eliminating and lifting from a category skeleton
+# Comparing objects in a category skeleton
 
-This file supplies the constructor-facing API for `CategoryTheory.Skeleton`: an eliminator, a lift
-of isomorphism-invariant functions, and comparison of classes in a full subcategory through
-isomorphisms of the ambient category.
+This file compares classes in the skeleton of a full subcategory through isomorphisms of the
+ambient category.
 -/
 
 public section
@@ -21,7 +20,7 @@ namespace CategoryTheory
 
 attribute [local instance] isIsomorphicSetoid
 
-universe u v w
+universe u v
 
 namespace ObjectProperty
 
@@ -34,28 +33,5 @@ theorem toSkeleton_eq_toSkeleton_iff_nonempty_iso {C : Type u} [Category.{v} C]
   exact ⟨fun ⟨e⟩ ↦ ⟨P.ι.mapIso e⟩, fun ⟨e⟩ ↦ ⟨ObjectProperty.isoMk _ e⟩⟩
 
 end ObjectProperty
-
-namespace Skeleton
-
-/-- To prove a property of every object-isomorphism class, it suffices to prove it on the class of
-each object. -/
-@[elab_as_elim]
-theorem ind {C : Type u} [Category.{v} C] {motive : Skeleton C → Prop}
-    (h : ∀ X : C, motive (toSkeleton X)) (c : Skeleton C) : motive c := by
-  exact Quotient.ind h c
-
-/-- Define a function on object-isomorphism classes from an isomorphism-invariant function on
-objects. -/
-noncomputable def lift {C : Type u} [Category.{v} C] {α : Sort w} (f : C → α)
-    (h : ∀ X Y : C, Nonempty (X ≅ Y) → f X = f Y) : Skeleton C → α :=
-  Quotient.lift f fun X Y e ↦ h X Y e
-
-@[simp]
-theorem lift_toSkeleton {C : Type u} [Category.{v} C] {α : Sort w} (f : C → α)
-    (h : ∀ X Y : C, Nonempty (X ≅ Y) → f X = f Y) (X : C) :
-    lift f h (toSkeleton X) = f X := by
-  simp [lift]
-
-end Skeleton
 
 end CategoryTheory

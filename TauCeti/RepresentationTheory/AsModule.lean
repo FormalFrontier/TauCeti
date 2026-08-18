@@ -111,7 +111,8 @@ noncomputable def fdRepIsoOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ
     (Rep.mkIso (Representation.equivOfAsModuleLinearEquiv f))
 
 /-- Rebundling the representation carried by an object of `FDRep k G` returns that object. -/
-theorem _root_.FDRep.of_ρ_eq_self (X : FDRep k G) : FDRep.of X.ρ = X := rfl
+@[simp]
+theorem _root_.FDRep.of_ρ_eq_self (X : FDRep k G) : FDRep.of X.ρ = X := (rfl)
 
 /-- **The two notions of isomorphism agree on `FDRep k G`.** Two objects are isomorphic exactly when
 the representations they carry are equivalent, so a classification of representations up to
