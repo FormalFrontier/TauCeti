@@ -110,4 +110,28 @@ theorem indClassFun_mem_virtualCharacters (S : Subgroup G) [S.FiniteIndex] {ψ :
   have hmem := hle hψ
   rwa [AddSubgroup.mem_comap, indClassFunAddHom_apply] at hmem
 
+namespace ClassFunction
+
+variable [Finite G]
+
+variable (k G) in
+/-- Induction from a subgroup, restricted and corestricted to the virtual-character lattices. -/
+noncomputable def indVirtualCharactersOfSubgroupAddHom (S : Subgroup G) :
+    virtualCharacters k S →+ virtualCharacters k G :=
+  ((indClassFunAddHom S).comp (virtualCharacters k S).subtype).codRestrict
+    (virtualCharacters k G) fun ψ ↦ by
+      rw [AddMonoidHom.comp_apply, indClassFunAddHom_apply]
+      exact indClassFun_mem_virtualCharacters S ψ.2
+
+/-- Forgetting the target subtype after induction on virtual characters gives `indClassFun`. -/
+@[simp]
+theorem indVirtualCharactersOfSubgroupAddHom_apply_coe (S : Subgroup G)
+    (ψ : virtualCharacters k S) :
+    (indVirtualCharactersOfSubgroupAddHom k G S ψ : G → k) = indClassFun S ψ := by
+  simpa only [indVirtualCharactersOfSubgroupAddHom, AddMonoidHom.codRestrict_apply,
+    AddMonoidHom.comp_apply, AddSubgroup.subtype_apply] using
+      indClassFunAddHom_apply S (ψ : S → k)
+
+end ClassFunction
+
 end TauCeti

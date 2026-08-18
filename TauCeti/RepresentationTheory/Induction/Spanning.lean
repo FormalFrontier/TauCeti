@@ -330,9 +330,8 @@ all class functions of `G`.
 In particular every character of `G` is a `k`-linear combination of characters induced from cyclic
 subgroups; `TauCeti.ClassFunction.exists_sum_smul_ind_ofCharacter_cyclic` writes that combination
 out. The coefficients are arbitrary elements of `k`. Artin's induction theorem asserts that they
-may be taken rational, and
-`TauCeti.ClassFunction.exists_sum_zsmul_ind_ofCharacter_eq_zsmul_cyclic` deduces that from this
-statement by a lattice descent. -/
+may be taken rational; `TauCeti.ClassFunction.natCard_nsmul_mem_indVirtualCharacters_isCyclic`
+gives its sharp integral form through the canonical virtual-character API. -/
 theorem indCharacterSpan_cyclic_eq_top [IsAlgClosed k] [Invertible (Nat.card G : k)] :
     indCharacterSpan k G {S | IsCyclic S} = ⊤ :=
   indCharacterSpan_eq_top fun x =>

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.DirectSum.Basic
+public import Mathlib.LinearAlgebra.TensorProduct.Tower
 public import TauCeti.RepresentationTheory.Induction.VirtualCharacter
 
 /-!
@@ -33,6 +34,7 @@ the constant function `1` lies in `V_G`.  Brauer's induction theorem is exactly 
   characters induced from a family of subgroups.
 * `TauCeti.ClassFunction.indVirtualCharactersAddHom`: the bundled direct-sum induction map from
   the virtual-character lattices of that family.
+* `TauCeti.ClassFunction.indVirtualCharactersBaseChangeRat`: its scalar extension to `ℚ`.
 
 ## Main statements
 
@@ -63,6 +65,8 @@ namespace TauCeti
 namespace ClassFunction
 
 universe u v
+
+open scoped TensorProduct
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G]
 
@@ -116,52 +120,35 @@ theorem indVirtualCharacters_le_virtualCharacters :
 
 /-! ### The direct-sum induction map -/
 
-/-- Induction from a subgroup in the family `P`, restricted to its virtual-character lattice and
-bundled as an additive homomorphism into the virtual-character lattice of `G`. -/
-noncomputable def indVirtualCharactersComponent (S : {S : Subgroup G // P S}) :
-    virtualCharacters k (S : Subgroup G) →+ virtualCharacters k G :=
-  (((indClassFunAddHom (S : Subgroup G)).comp
-      (virtualCharacters k (S : Subgroup G)).subtype).codRestrict (virtualCharacters k G) fun ψ ↦
-    by
-      rw [AddMonoidHom.comp_apply, indClassFunAddHom_apply]
-      exact indClassFun_mem_virtualCharacters (S : Subgroup G) ψ.2)
-
-/-- Applying an induction component and forgetting its target subtype gives `indClassFun`. -/
-@[simp]
-theorem indVirtualCharactersComponent_coe (S : {S : Subgroup G // P S})
-    (ψ : virtualCharacters k (S : Subgroup G)) :
-    (indVirtualCharactersComponent (k := k) (G := G) S ψ : G → k) =
-      indClassFun (S : Subgroup G) ψ := by
-  simpa only [indVirtualCharactersComponent, AddMonoidHom.codRestrict_apply,
-    AddMonoidHom.comp_apply, AddSubgroup.subtype_apply] using
-      indClassFunAddHom_apply (S : Subgroup G)
-      (ψ : ↑(S : Subgroup G) → k)
-
+variable (k G) in
 /-- **The direct-sum induction homomorphism for a family of subgroups.** Its `S`-component is
 `Ind_S^G : R(S) → R(G)`. -/
 noncomputable def indVirtualCharactersAddHom (P : Subgroup G → Prop) :
     DirectSum {S : Subgroup G // P S} (fun S ↦ ↑(virtualCharacters k (S : Subgroup G))) →+
       virtualCharacters k G := by
   classical
-  exact DirectSum.toAddMonoid (indVirtualCharactersComponent (k := k) (G := G) (P := P))
+  exact DirectSum.toAddMonoid fun S ↦ indVirtualCharactersOfSubgroupAddHom k G S
 
-open Classical in
 /-- The direct-sum induction map sends a vector supported at `S` to induction from `S`. -/
 @[simp]
-theorem indVirtualCharactersAddHom_of (S : {S : Subgroup G // P S})
+theorem indVirtualCharactersAddHom_of [DecidableEq {S : Subgroup G // P S}]
+    (S : {S : Subgroup G // P S})
     (ψ : virtualCharacters k (S : Subgroup G)) :
-    indVirtualCharactersAddHom (k := k) (G := G) P
+    indVirtualCharactersAddHom k G P
         (DirectSum.of (fun S : {S : Subgroup G // P S} ↦
           ↑(virtualCharacters k (S : Subgroup G))) S ψ) =
-      indVirtualCharactersComponent (k := k) (G := G) S ψ := by
-  classical
-  simp [indVirtualCharactersAddHom]
+      indVirtualCharactersOfSubgroupAddHom k G S ψ := by
+  change (DirectSum.toAddMonoid fun S : {S : Subgroup G // P S} ↦
+      indVirtualCharactersOfSubgroupAddHom k G S.1)
+      (DirectSum.of (fun S : {S : Subgroup G // P S} ↦
+        ↑(virtualCharacters k (S : Subgroup G))) S ψ) = _
+  exact DirectSum.toAddMonoid_of _ _ _
 
 /-- The range of the bundled induction map, after forgetting the target subtype, is exactly the
 canonical subgroup `indVirtualCharacters k G P`. -/
 theorem range_subtype_comp_indVirtualCharactersAddHom :
     ((virtualCharacters k G).subtype.comp
-      (indVirtualCharactersAddHom (k := k) (G := G) P)).range =
+      (indVirtualCharactersAddHom k G P)).range =
         indVirtualCharacters k G P := by
   classical
   apply le_antisymm
@@ -178,7 +165,56 @@ theorem range_subtype_comp_indVirtualCharactersAddHom :
       (fun S : {S : Subgroup G // P S} ↦ ↑(virtualCharacters k (S : Subgroup G))) S' ψ', ?_⟩
     simpa only [AddMonoidHom.comp_apply, indVirtualCharactersAddHom_of,
       AddSubgroup.subtype_apply] using
-      indVirtualCharactersComponent_coe S' ψ'
+      indVirtualCharactersOfSubgroupAddHom_apply_coe (k := k) (G := G) S' ψ'
+
+/-! ### Rational scalar extension -/
+
+variable (k G) in
+/-- The direct-sum induction map after extension of scalars from `ℤ` to `ℚ`. -/
+noncomputable def indVirtualCharactersBaseChangeRat (P : Subgroup G → Prop) :
+    (ℚ ⊗[ℤ] DirectSum {S : Subgroup G // P S}
+      (fun S ↦ ↑(virtualCharacters k (S : Subgroup G)))) →ₗ[ℚ]
+      (ℚ ⊗[ℤ] ↑(virtualCharacters k G)) :=
+  (indVirtualCharactersAddHom k G P).toIntLinearMap.baseChange ℚ
+
+/-- Rationalized induction sends a pure tensor to the tensor of its induced component. -/
+@[simp]
+theorem indVirtualCharactersBaseChangeRat_tmul (P : Subgroup G → Prop) (q : ℚ)
+    (x : DirectSum {S : Subgroup G // P S}
+      (fun S ↦ ↑(virtualCharacters k (S : Subgroup G)))) :
+    indVirtualCharactersBaseChangeRat k G P (q ⊗ₜ[ℤ] x) =
+      q ⊗ₜ[ℤ] indVirtualCharactersAddHom k G P x := by
+  rw [indVirtualCharactersBaseChangeRat, LinearMap.baseChange_tmul,
+    AddMonoidHom.coe_toIntLinearMap]
+
+/-- A nonzero uniform integral multiplier in the induced subgroup makes rationalized induction
+surjective. -/
+theorem indVirtualCharactersBaseChangeRat_surjective (P : Subgroup G → Prop) (n : ℕ)
+    (hn : n ≠ 0) (h : ∀ f ∈ virtualCharacters k G, n • f ∈ indVirtualCharacters k G P) :
+    Function.Surjective (indVirtualCharactersBaseChangeRat k G P) := by
+  classical
+  intro z
+  induction z using TensorProduct.induction_on with
+  | zero => exact ⟨0, map_zero _⟩
+  | add x y hx hy =>
+      obtain ⟨x', rfl⟩ := hx
+      obtain ⟨y', rfl⟩ := hy
+      exact ⟨x' + y', map_add _ _ _⟩
+  | tmul q f =>
+      have hf := h (f : G → k) f.2
+      rw [← range_subtype_comp_indVirtualCharactersAddHom] at hf
+      obtain ⟨x, hx⟩ := AddMonoidHom.mem_range.mp hf
+      have hx' : indVirtualCharactersAddHom k G P x = n • f := Subtype.ext hx
+      refine ⟨((q / (n : ℚ)) ⊗ₜ[ℤ] x), ?_⟩
+      rw [indVirtualCharactersBaseChangeRat_tmul, hx']
+      rw [← Nat.cast_smul_eq_nsmul ℤ, TensorProduct.tmul_smul]
+      rw [← Int.cast_smul_eq_zsmul ℚ]
+      have hnq : (n : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hn
+      have hscalar : (((n : ℤ) : ℚ)) • (q / (n : ℚ)) = q := by
+        rw [smul_eq_mul]
+        field_simp
+        ac_rfl
+      exact congrArg (fun a : ℚ ↦ a ⊗ₜ[ℤ] f) hscalar
 
 /-- **The induced virtual characters form an ideal of the virtual-character ring.**  For a virtual
 character `f` of `G` and a virtual character `ψ` of a subgroup `S` of the family, the projection
