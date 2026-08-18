@@ -34,10 +34,7 @@ with its Borel σ-algebra qualifies, which is the form in which the roadmap stat
 ## Main results
 
 * `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` — almost surely, the empirical measures
-  converge weakly to the directing measure;
-* `ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae_forall_boundedContinuous` — the same
-  statement read against bounded continuous observables, with the single null set serving all of
-  them at once.
+  converge weakly to the directing measure.
 
 The de Finetti endpoint, where the directing measure of an *exchangeable* process has to be
 produced first, is `deFinetti_empiricalMeasure` in `DeFinetti/EmpiricalMeasure.lean`.
@@ -56,7 +53,7 @@ noncomputable section
 
 open Filter MeasureTheory TopologicalSpace
 
-open scoped Topology ENNReal BoundedContinuousFunction
+open scoped Topology ENNReal
 
 namespace TauCeti
 
@@ -86,21 +83,6 @@ theorem ConditionallyIIDWith.tendsto_empiricalMeasure_ae [IsFiniteMeasure μ]
     hX hUmeas] with ω hω
   refine tendsto_of_forall_tendsto_measure_biUnion_basis hB fun s => ?_
   exact (ENNReal.tendsto_toReal_iff (fun _ => measure_ne_top _ _) (measure_ne_top _ _)).1 (hω s)
-
-/-- **A single null set serves every bounded continuous observable.** Almost surely, the integral
-of *every* bounded continuous function against the empirical measures of a conditionally i.i.d.
-process converges to its integral against the directing measure.
-
-`ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae` covers a bounded *measurable*
-observable, at the price of a null set depending on it; continuity is what buys the interchange
-of the two quantifiers. -/
-theorem ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae_forall_boundedContinuous
-    [IsFiniteMeasure μ] (h : ConditionallyIIDWith μ X ν) (hX : ∀ n, AEMeasurable (X n) μ) :
-    ∀ᵐ ω ∂μ, ∀ f : α →ᵇ ℝ, Tendsto
-      (fun n : ℕ => ∫ y, f y ∂(empiricalMeasure (fun i => X i ω) n : Measure α)) atTop
-      (𝓝 (∫ y, f y ∂(ν ω : Measure α))) := by
-  filter_upwards [h.tendsto_empiricalMeasure_ae hX] with ω hω
-  exact ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 hω
 
 end Probability
 

@@ -7,9 +7,8 @@ module
 
 public import TauCeti.Probability.Process.EmpiricalMeasure
 public import TauCeti.Probability.DeFinetti.Theorem
--- Non-public: the conditional strong law and its weak-convergence form are used only to prove the
--- endpoints below; this module does not re-export the `ConditionallyIIDWith.*` strong-law API.
-import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
+-- Non-public: conditional weak convergence is used only to prove the endpoint below; this module
+-- does not re-export the `ConditionallyIIDWith.*` convergence API.
 import TauCeti.Probability.Exchangeability.ConditionallyIID.WeakConvergence
 
 /-!
@@ -97,12 +96,11 @@ merely one measurable set at a time as in `deFinetti_tendsto_empiricalMeasure_ap
 topology is assumed rather than produced: `[StandardBorelSpace α]` alone fixes no topology on `α`,
 and different compatible topologies give different weak topologies on `ProbabilityMeasure α`. -/
 theorem deFinetti_empiricalMeasure [TopologicalSpace α] [PolishSpace α] [BorelSpace α] [Nonempty α]
-    [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
+    [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, AEMeasurable (X n) μ) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν ∧
       ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => empiricalMeasure (fun i => X i ω) n) atTop (𝓝 (ν ω)) := by
-  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX fun n => (hX_meas n).aemeasurable)
-    |>.exists_directing
-  exact ⟨ν, hν, hν.tendsto_empiricalMeasure_ae fun i => (hX_meas i).aemeasurable⟩
+  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
+  exact ⟨ν, hν, hν.tendsto_empiricalMeasure_ae hX_meas⟩
 
 end Probability
 

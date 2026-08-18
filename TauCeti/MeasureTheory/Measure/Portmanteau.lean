@@ -18,9 +18,9 @@ carry the information: if their masses converge, the measures converge weakly.
 
 The point of the reduction is the order of quantifiers.  A limit theorem that produces
 convergence one measurable set at a time — an almost-sure limit theorem, say, whose exceptional
-null set depends on the set tested — can be upgraded to convergence in the weak topology only
-after the exceptional sets are collected into one, and that is possible exactly when the test
-class is countable.
+null set depends on the set tested — can be upgraded to convergence in the weak topology when a
+countable determining test class is available, since its exceptional sets can then be collected
+into one.
 
 ## Main results
 
