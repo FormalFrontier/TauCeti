@@ -55,6 +55,8 @@ the constant function `1` lies in `V_G`.  Brauer's induction theorem is exactly 
 * `TauCeti.ClassFunction.indVirtualCharacterDirectSumBaseChangeRat_surjective_of_nsmul_one_mem`: a
   general criterion for rational surjectivity of the scalar-extended induction map.
 * `TauCeti.ClassFunction.mul_mem_indVirtualCharacters`: the ideal property.
+* `TauCeti.ClassFunction.nsmul_mem_indVirtualCharacters_of_nsmul_one_mem`: propagation of a
+  multiple of `1` to the same multiple of every virtual character.
 * `TauCeti.ClassFunction.indVirtualCharacters_eq_virtualCharacters_iff`: the induction theorem for
   a family of subgroups holds exactly when `1` is induced from that family.
 
@@ -220,6 +222,13 @@ theorem mul_mem_indVirtualCharacters {f u : G → k} (hf : f ∈ virtualCharacte
     exact indClassFun_mem_indVirtualCharacters hS hres
   exact hle hu
 
+/-- If a natural-number multiple of the trivial character is induced from a family, then the same
+multiple of every virtual character is induced from that family. -/
+theorem nsmul_mem_indVirtualCharacters_of_nsmul_one_mem {n : ℕ}
+    (h : n • (1 : G → k) ∈ indVirtualCharacters k G P) {f : G → k}
+    (hf : f ∈ virtualCharacters k G) : n • f ∈ indVirtualCharacters k G P := by
+  simpa [nsmul_eq_mul, mul_comm] using mul_mem_indVirtualCharacters hf h
+
 /-! ### Rational scalar extension -/
 
 variable (k G) in
@@ -255,8 +264,8 @@ theorem indVirtualCharacterDirectSumBaseChangeRat_surjective_of_nsmul_one_mem
       obtain ⟨y', rfl⟩ := hy
       exact ⟨x' + y', map_add _ _ _⟩
   | tmul q f =>
-      have hf : n • (f : G → k) ∈ indVirtualCharacters k G P := by
-        simpa [nsmul_eq_mul, mul_comm] using mul_mem_indVirtualCharacters f.2 h
+      have hf : n • (f : G → k) ∈ indVirtualCharacters k G P :=
+        nsmul_mem_indVirtualCharacters_of_nsmul_one_mem h f.2
       rw [← range_subtype_comp_indVirtualCharacterDirectSumAddHom] at hf
       obtain ⟨x, hx⟩ := AddMonoidHom.mem_range.mp hf
       have hx' : indVirtualCharacterDirectSumAddHom k G P x = n • f := Subtype.ext hx
