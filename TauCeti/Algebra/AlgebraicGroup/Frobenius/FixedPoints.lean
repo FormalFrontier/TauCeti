@@ -44,7 +44,7 @@ finiteness is asserted.
   all of its values are.
 * `TauCeti.Bialgebra.range_frobeniusFixedInclusion`: the inclusion has the fixed subgroup as its
   range.
-* `TauCeti.Bialgebra.frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm` and
+* `TauCeti.Bialgebra.frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm_apply` and
   `TauCeti.Bialgebra.coe_frobeniusFixedPointsMulEquiv_symm_apply_apply`: the inverse of that
   isomorphism reads a fixed point as a point over the fixed subring, with the same values.
 * `TauCeti.Bialgebra.fixedSubgroup_iterateFrobeniusPoints_le_of_dvd`: the fixed subgroups grow
@@ -191,7 +191,7 @@ theorem coe_frobeniusFixedPointsMulEquiv
 Frobenius-fixed subring: including it back into the `A`-valued points returns the point one
 started from. -/
 @[simp]
-theorem frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm
+theorem frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm_apply
     (g : ↥(fixedSubgroup (iterateFrobeniusPoints p n (H := H) (A := A)))) :
     frobeniusFixedInclusion p n ((frobeniusFixedPointsMulEquiv p n).symm g) =
       (g : WithConv (H →ₐ[ℤ] A)) := by
@@ -205,7 +205,7 @@ theorem coe_frobeniusFixedPointsMulEquiv_symm_apply_apply
     ((((frobeniusFixedPointsMulEquiv p n).symm g).ofConv h : ↥(frobeniusFixedSubring A p n)) : A) =
       (g : WithConv (H →ₐ[ℤ] A)).ofConv h := by
   rw [← frobeniusFixedInclusion_apply_apply,
-    frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm]
+    frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm_apply]
 
 /-! ### Elementary properties of the fixed subgroup -/
 
