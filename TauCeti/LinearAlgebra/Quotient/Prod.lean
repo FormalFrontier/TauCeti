@@ -34,13 +34,13 @@ section Quotient
 variable {R M N : Type*} [Ring R] [AddCommGroup M] [AddCommGroup N]
 variable [Module R M] [Module R N]
 
-private theorem ker_prod_mkQ (p : Submodule R M) (q : Submodule R N) :
+private theorem ker_prodMap_mkQ (p : Submodule R M) (q : Submodule R N) :
     LinearMap.ker (p.mkQ.prodMap q.mkQ) = p.prod q := by
   simp
 
 private noncomputable def quotientProdMap (p : Submodule R M) (q : Submodule R N) :
     ((M × N) ⧸ p.prod q) →ₗ[R] (M ⧸ p) × (N ⧸ q) :=
-  (p.prod q).liftQ (p.mkQ.prodMap q.mkQ) (ker_prod_mkQ p q).ge
+  (p.prod q).liftQ (p.mkQ.prodMap q.mkQ) (ker_prodMap_mkQ p q).ge
 
 @[simp]
 private theorem quotientProdMap_apply_mk
@@ -54,7 +54,7 @@ private theorem quotientProdMap_bijective (p : Submodule R M) (q : Submodule R N
   constructor
   · exact LinearMap.ker_eq_bot.mp
       (Submodule.ker_liftQ_eq_bot (p.prod q) (p.mkQ.prodMap q.mkQ)
-        (ker_prod_mkQ p q).ge (ker_prod_mkQ p q).le)
+        (ker_prodMap_mkQ p q).ge (ker_prodMap_mkQ p q).le)
   · rintro ⟨⟨x⟩, ⟨y⟩⟩
     refine ⟨(p.prod q).mkQ (x, y), ?_⟩
     exact quotientProdMap_apply_mk p q (x, y)
