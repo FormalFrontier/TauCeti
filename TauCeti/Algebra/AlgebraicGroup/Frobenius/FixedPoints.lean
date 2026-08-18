@@ -44,6 +44,9 @@ algebraically closed, or of finite type, and no finiteness is asserted.
   when all of its values are.
 * `TauCeti.Bialgebra.range_frobeniusFixedInclusion`: the inclusion has the fixed subgroup as its
   range.
+* `TauCeti.Bialgebra.frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm` and
+  `TauCeti.Bialgebra.frobeniusFixedPointsMulEquiv_symm_apply_apply`: the inverse of that
+  isomorphism reads a fixed point as a point over the fixed subring, with the same values.
 * `TauCeti.Bialgebra.fixedSubgroup_iterateFrobeniusPoints_le_of_dvd`: the fixed subgroups grow
   along divisibility of the exponent, the inclusion `G(𝔽_q) ⊆ G(𝔽_{q ^ k})` in the motivating
   case.
@@ -98,23 +101,16 @@ private def corestrictFrobeniusFixed (f : H →ₐ[ℤ] A)
     H →ₐ[ℤ] ↥(frobeniusFixedSubring A p n) :=
   f.codRestrict (subalgebraOfSubring (frobeniusFixedSubring A p n)) hf
 
-end Bialgebra
+/-- The corestriction of a point to the Frobenius-fixed subring has the same values as the point
+itself. Private, like the corestriction it describes. -/
+private theorem corestrictFrobeniusFixed_apply (f : H →ₐ[ℤ] A)
+    (hf : ∀ h : H, f h ∈ frobeniusFixedSubring A p n) (h : H) :
+    (corestrictFrobeniusFixed p n f hf h : A) = f h := rfl
 
-section HopfAlgebra
-
-variable {H : Type u} [Semiring H] [_root_.HopfAlgebra ℤ H]
-variable {A : Type v} [CommRing A] [ExpChar A p]
-
-/-- A point is in the fixed subgroup of the `p ^ n`-power Frobenius exactly when every one of its
-values lies in the Frobenius-fixed subring of the value algebra. -/
-theorem mem_fixedSubgroup_iterateFrobeniusPoints {f : WithConv (H →ₐ[ℤ] A)} :
-    f ∈ fixedSubgroup (iterateFrobeniusPoints p n) ↔
-      ∀ h : H, f.ofConv h ∈ frobeniusFixedSubring A p n :=
-  iterateFrobeniusPoints_eq_self_iff p n
-
-/-- The homomorphism of convolution groups that reads a point valued in the Frobenius-fixed
-subring of `A` as a point valued in `A`. It is post-composition with the inclusion of the
-subring. -/
+/-- The homomorphism of convolution monoids that reads a point valued in the Frobenius-fixed
+subring of `A` as a point valued in `A`. It is post-composition with the inclusion of the subring,
+so it needs only the bialgebra structure; for a Hopf algebra it is a homomorphism of the
+convolution groups. -/
 noncomputable def frobeniusFixedInclusion :
     WithConv (H →ₐ[ℤ] ↥(frobeniusFixedSubring A p n)) →* WithConv (H →ₐ[ℤ] A) :=
   AlgHom.mapValue (frobeniusFixedSubring A p n).subtype.toIntAlgHom
@@ -137,6 +133,20 @@ theorem frobeniusFixedInclusion_injective :
   have := congrArg (fun x : WithConv (H →ₐ[ℤ] A) => x.ofConv h) hfg
   simpa using this
 
+end Bialgebra
+
+section HopfAlgebra
+
+variable {H : Type u} [Semiring H] [_root_.HopfAlgebra ℤ H]
+variable {A : Type v} [CommRing A] [ExpChar A p]
+
+/-- A point is in the fixed subgroup of the `p ^ n`-power Frobenius exactly when every one of its
+values lies in the Frobenius-fixed subring of the value algebra. -/
+theorem mem_fixedSubgroup_iterateFrobeniusPoints {f : WithConv (H →ₐ[ℤ] A)} :
+    f ∈ fixedSubgroup (iterateFrobeniusPoints p n) ↔
+      ∀ h : H, f.ofConv h ∈ frobeniusFixedSubring A p n :=
+  iterateFrobeniusPoints_eq_self_iff p n
+
 /-- The points valued in the Frobenius-fixed subring are exactly the Frobenius-fixed points. -/
 theorem range_frobeniusFixedInclusion :
     (frobeniusFixedInclusion p n (H := H) (A := A)).range =
@@ -148,7 +158,8 @@ theorem range_frobeniusFixedInclusion :
     exact (g.ofConv h).2
   · intro hf
     refine ⟨toConv (corestrictFrobeniusFixed p n f.ofConv hf), ?_⟩
-    exact WithConv.ofConv_injective (AlgHom.ext fun h => rfl)
+    refine WithConv.ofConv_injective (AlgHom.ext fun h => ?_)
+    rw [frobeniusFixedInclusion_apply_apply, ofConv_toConv, corestrictFrobeniusFixed_apply]
 
 /-- The fixed points of the `p ^ n`-power Frobenius on the points of `Spec H` valued in `A` are
 the points of `Spec H` valued in the Frobenius-fixed subring of `A`.
@@ -171,6 +182,26 @@ theorem coe_frobeniusFixedPointsMulEquiv
       frobeniusFixedInclusion p n f := by
   rw [frobeniusFixedPointsMulEquiv, MulEquiv.coe_trans, Function.comp_apply,
     MulEquiv.subgroupCongr_apply, MonoidHom.ofInjective_apply]
+
+/-- The inverse of the isomorphism reads a Frobenius-fixed point as a point valued in the
+Frobenius-fixed subring: including it back into the `A`-valued points returns the point one
+started from. -/
+@[simp]
+theorem frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm
+    (g : ↥(fixedSubgroup (iterateFrobeniusPoints p n (H := H) (A := A)))) :
+    frobeniusFixedInclusion p n ((frobeniusFixedPointsMulEquiv p n).symm g) =
+      (g : WithConv (H →ₐ[ℤ] A)) := by
+  rw [← coe_frobeniusFixedPointsMulEquiv, MulEquiv.apply_symm_apply]
+
+/-- Pointwise form: the values of the point over the Frobenius-fixed subring produced by the
+inverse of the isomorphism are the values of the Frobenius-fixed point it came from. -/
+@[simp]
+theorem frobeniusFixedPointsMulEquiv_symm_apply_apply
+    (g : ↥(fixedSubgroup (iterateFrobeniusPoints p n (H := H) (A := A)))) (h : H) :
+    ((((frobeniusFixedPointsMulEquiv p n).symm g).ofConv h : ↥(frobeniusFixedSubring A p n)) : A) =
+      (g : WithConv (H →ₐ[ℤ] A)).ofConv h := by
+  rw [← frobeniusFixedInclusion_apply_apply,
+    frobeniusFixedInclusion_frobeniusFixedPointsMulEquiv_symm]
 
 /-! ### Elementary properties of the fixed subgroup -/
 
