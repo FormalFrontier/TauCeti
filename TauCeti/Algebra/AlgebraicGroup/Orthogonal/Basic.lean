@@ -106,6 +106,7 @@ noncomputable def genericMatrix :
 
 /-- An entry of the bundled generic matrix is the bundled image of the corresponding polynomial
 generator. -/
+@[simp]
 theorem genericMatrix_apply (i j : Fin n) :
     genericMatrix R n i j =
       GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
@@ -447,6 +448,7 @@ private theorem ofConv_relationMatrix
 /-- An ambient point belongs to the subgroup cut out by the orthogonal Hopf ideal exactly when
 its matrix is orthogonal. This is the ambient membership criterion that further cuts consume;
 the determinant-one cut combines it with the special-linear one. -/
+@[simp]
 theorem mem_definingPointsSubgroup_iff
     (g : HopfAlgebra.points (R := R)
       (H := GeneralLinear.coordinateHopfAlgebra R n) (CommAlgCat.of R A)) :
