@@ -12,8 +12,10 @@ public import Mathlib.CategoryTheory.Opposites
 # Involutive contravariant endofunctors
 
 A contravariant endofunctor `F : Cᵒᵖ ⥤ C` is *involutive* when double dualization is naturally
-isomorphic to the identity. The linear dual on finite-dimensional vector spaces and finite
-dualization of finite locally free Hopf algebras are the motivating examples.
+isomorphic to the identity by an isomorphism satisfying the triangle identity
+`CategoryTheory.Functor.IsInvolutiveDual`, which is strictly stronger than the bare existence of
+such an isomorphism. The linear dual on finite-dimensional vector spaces and finite dualization
+of finite locally free Hopf algebras are the motivating examples.
 
 Turning such an `F` into an equivalence `Cᵒᵖ ≌ C` by `CategoryTheory.Functor.asEquivalence`
 loses the involutivity: the inverse produced there is an abstract quasi-inverse, so no theorem
@@ -23,6 +25,8 @@ both directions and both structural isomorphisms compute.
 
 ## Main declarations
 
+* `CategoryTheory.Functor.IsInvolutiveDual`: the triangle identity a double-dual isomorphism
+  must satisfy.
 * `CategoryTheory.Functor.dualityEquivalence`: the anti-equivalence attached to an involutive
   contravariant endofunctor, together with the computations of its functor, inverse, unit and
   counit in both directions.
@@ -41,7 +45,7 @@ variable {C : Type u} [Category.{v} C] (F : Cᵒᵖ ⥤ C) (ev : 𝟭 C ≅ F.ri
 namespace Functor
 
 /-- The triangle identity for a double-dual isomorphism `ev : 𝟭 C ≅ F.rightOp ⋙ F`: dualizing
-`ev` at `X` and evaluating at the dual of `X` are inverse to one another. -/
+`ev.inv` at `X` and then applying `ev.inv` at the dual of `X` is the identity. -/
 abbrev IsInvolutiveDual : Prop :=
   ∀ X : C, F.map (ev.inv.app X).op ≫ ev.inv.app (F.obj (op X)) = 𝟙 (F.obj (op X))
 
@@ -49,9 +53,10 @@ variable (triangle : IsInvolutiveDual F ev)
 
 /-- An involutive contravariant endofunctor is an anti-equivalence.
 
-The double-dual isomorphism `ev` plays the role of the counit and the opposite of its inverse
-plays the role of the unit, so unlike `CategoryTheory.Functor.asEquivalence` the inverse of the
-resulting equivalence is `F.rightOp`: dualizing back is the same operation as dualizing.
+The inverse of the double-dual isomorphism `ev` plays the role of the counit, and the opposite
+of that inverse plays the role of the unit, so unlike `CategoryTheory.Functor.asEquivalence` the
+inverse of the resulting equivalence is `F.rightOp`: dualizing back is the same operation as
+dualizing.
 
 The body is exposed because the unit and counit computations below are not merely proved by
 `rfl`: their statements only typecheck once `unitIso` and `counitIso` reduce. -/

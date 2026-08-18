@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.Algebra.HopfAlgebra.FiniteDual.Functoriality
-public import TauCeti.CategoryTheory.SelfDuality
+public import TauCeti.CategoryTheory.InvolutiveDual
 
 /-!
 # Cartier duality for finite locally free Hopf algebras
@@ -19,8 +19,9 @@ dual preserves this bicommutative condition, reverses morphisms, and is involuti
 This file packages those facts as a contravariant equivalence on finite locally free
 bicommutative Hopf algebras. The equivalence is built from double-dual evaluation by
 `CategoryTheory.Functor.dualityEquivalence`, so its inverse is again finite dualization and its
-unit and counit are evaluation; nothing about it is abstract. It is the algebraic core of
-Cartier duality over a general affine base; its transport through `Spec` is provided by
+unit and counit are inverse double-dual evaluation; nothing about it is abstract. It is the
+algebraic core of Cartier duality over a general affine base; its transport through `Spec` is
+provided by
 `AlgebraicGeometry.AffineGroupScheme.CartierDuality.FiniteLocallyFree`.
 
 ## Main declarations
@@ -261,9 +262,12 @@ theorem dualMap_evalIso_inv (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k)
 finite dual of `H`. -/
 @[simp]
 theorem dualMap_evalIso_hom (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} k) :
-    dualMap (evalIso H).hom = (evalIso (dual H)).inv :=
-  (Iso.inv_eq_inv ((dualFunctor (k := k)).mapIso (evalIso H).op)
-    (evalIso (dual H)).symm).mp (dualMap_evalIso_inv H)
+    dualMap (evalIso H).hom = (evalIso (dual H)).inv := by
+  refine Iso.inv_ext' ?_
+  rw [← dualMap_evalIso_inv]
+  apply hom_ext
+  simp only [toBialgHom_comp, toBialgHom_dualMap, toBialgHom_id, ← ConvolutionDual.map_comp]
+  rw [← toBialgHom_comp, Iso.hom_inv_id, toBialgHom_id, ConvolutionDual.map_id]
 
 /-- Double-dual evaluation at the finite dual of `H` undoes the dualized double-dual evaluation
 of `H`. This is `isInvolutiveDual_dualFunctor` written with `dualMap` and `evalIso` in place of
@@ -285,7 +289,7 @@ theorem isInvolutiveDual_dualFunctor :
 
 /-- **Finite locally free Cartier duality.** Finite dualization is an anti-equivalence of the
 category of finite locally free bicommutative Hopf algebras over a commutative ring. Its inverse
-is finite dualization again, and its unit and counit are double-dual evaluation.
+is finite dualization again, and its unit and counit are inverse double-dual evaluation.
 
 The body is exposed so that `cartierDuality_functor` and `cartierDuality_inverse`, and their
 counterparts for the transported group-scheme duality, hold definitionally. -/

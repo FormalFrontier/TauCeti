@@ -26,7 +26,7 @@ with finite dualization. This file records both facts in the category
   finite locally free bicommutative Hopf algebras, on objects and functorially.
 * `TauCeti.FiniteLocallyFreeBicommutativeHopfAlgCat.baseChangeDualIso`: the scalar extension of
   a finite dual is the finite dual of the scalar extension, naturally by
-  `baseChangeDualIso_hom_naturality` and bundled as `dualBaseChangeNatIso`.
+  `baseChangeDualIso_hom_naturality` and bundled as `baseChangeDualNatIso`.
 
 ## References
 
@@ -65,28 +65,30 @@ variable {R} in
 /-- Scalar extension of a single finite locally free bicommutative Hopf algebra. -/
 noncomputable abbrev baseChange (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
     FiniteLocallyFreeBicommutativeHopfAlgCat.{u} S :=
-  of S (S ⊗[R] H)
+  ⟨CommHopfAlgCat.baseChange (K := S)
+      ((finiteLocallyFreeBicommutativeHopfAlgProperty R).ι.obj H),
+    finiteLocallyFreeBicommutativeHopfAlgProperty_baseChange R S H⟩
 
-variable {R S} in
+variable {R} in
 /-- Scalar extension of a morphism of finite locally free bicommutative Hopf algebras. -/
 noncomputable abbrev baseChangeMap {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R}
     (f : H ⟶ K) : baseChange S H ⟶ baseChange S K :=
-  ofHom (Bialgebra.TensorProduct.map (BialgHom.id S S) (toBialgHom f))
+  ObjectProperty.homMk (CommHopfAlgCat.baseChangeMap (K := S) f.hom)
 
-variable {R S} in
+variable {R} in
 /-- The bialgebra morphism underlying `baseChangeMap` tensors the morphism with the identity on
 the new base. -/
 @[simp]
 theorem toBialgHom_baseChangeMap {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R}
     (f : H ⟶ K) :
-    toBialgHom (baseChangeMap (S := S) f) =
+    toBialgHom (baseChangeMap S f) =
       Bialgebra.TensorProduct.map (BialgHom.id S S) (toBialgHom f) :=
-  rfl
+  CommHopfAlgCat.hom_baseChangeMap (K := S) f.hom
 
 /-- Scalar extension of finite locally free bicommutative Hopf algebras.
 
 The body is exposed so that `baseChangeFunctor R S ⋙ dualFunctor.rightOp` reduces to the finite
-dual of a scalar extension, without which the components of `dualBaseChangeNatIso` do not
+dual of a scalar extension, without which the components of `baseChangeDualNatIso` do not
 typecheck. No other declaration here depends on that reduction. -/
 @[expose]
 noncomputable def baseChangeFunctor :
@@ -109,7 +111,7 @@ variable {R S} in
 theorem baseChangeFunctor_map {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R}
     (f : H ⟶ K) :
     (baseChangeFunctor R S).map f =
-      eqToHom (baseChangeFunctor_obj R S H) ≫ baseChangeMap f ≫
+      eqToHom (baseChangeFunctor_obj R S H) ≫ baseChangeMap S f ≫
         eqToHom (baseChangeFunctor_obj R S K).symm :=
   (rfl)
 
@@ -121,7 +123,7 @@ noncomputable def baseChangeFunctorCompιIso :
         CommHopfAlgCat.baseChangeFunctor (K := S) :=
   (finiteLocallyFreeBicommutativeHopfAlgProperty S).liftCompιIso _ _
 
-variable {R S}
+variable {R}
 
 /-- **Finite dualization commutes with extension of scalars.** -/
 noncomputable def baseChangeDualIso (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
@@ -130,12 +132,13 @@ noncomputable def baseChangeDualIso (H : FiniteLocallyFreeBicommutativeHopfAlgCa
     (_root_.CommHopfAlgCat.isoMk (ConvolutionDual.baseChangeBialgEquiv R S H))
 
 /-- The forward map of `baseChangeDualIso` sends a scalar-extended functional to the
-scalar-extended evaluation it defines. -/
-@[simp]
+scalar-extended evaluation it defines. This is not a `simp` lemma: the scalar-extended carrier
+`(baseChange S H).obj` and the tensor product `S ⊗[R] H` are the same type but not the same
+normal form, so the left-hand side is not in `simp`-normal form. -/
 theorem baseChangeDualIso_hom_apply_tmul_apply_tmul
     (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R)
     (a b : S) (phi : ConvolutionDual R H) (x : H) :
-    (((baseChangeDualIso (S := S) H).hom (a ⊗ₜ[R] phi)) :
+    (((baseChangeDualIso S H).hom (a ⊗ₜ[R] phi)) :
         ConvolutionDual S (S ⊗[R] H)).ofConv (b ⊗ₜ[R] x) =
       a * b * algebraMap R S (phi.ofConv x) :=
   ConvolutionDual.baseChangeBialgEquiv_tmul_apply_tmul a b phi x
@@ -144,8 +147,8 @@ theorem baseChangeDualIso_hom_apply_tmul_apply_tmul
 @[simp, reassoc]
 theorem baseChangeDualIso_hom_naturality
     {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
-    baseChangeMap (S := S) (dualMap f) ≫ (baseChangeDualIso H).hom =
-      (baseChangeDualIso K).hom ≫ dualMap (baseChangeMap f) := by
+    baseChangeMap S (dualMap f) ≫ (baseChangeDualIso S H).hom =
+      (baseChangeDualIso S K).hom ≫ dualMap (baseChangeMap S f) := by
   apply hom_ext
   exact (ConvolutionDual.baseChangeBialgEquiv_naturality (K := S) (toBialgHom f)).symm
 
@@ -153,33 +156,33 @@ theorem baseChangeDualIso_hom_naturality
 @[simp, reassoc]
 theorem baseChangeDualIso_inv_naturality
     {H K : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R} (f : H ⟶ K) :
-    (baseChangeDualIso (S := S) K).inv ≫ baseChangeMap (dualMap f) =
-      dualMap (baseChangeMap f) ≫ (baseChangeDualIso H).inv := by
+    (baseChangeDualIso S K).inv ≫ baseChangeMap S (dualMap f) =
+      dualMap (baseChangeMap S f) ≫ (baseChangeDualIso S H).inv := by
   rw [Iso.inv_comp_eq, ← Category.assoc, Iso.eq_comp_inv]
-  exact baseChangeDualIso_hom_naturality f
+  exact baseChangeDualIso_hom_naturality S f
 
-variable (R S)
+variable (R)
 
 /-- Finite dualization commutes with scalar extension, as a natural isomorphism of functors
 `FiniteLocallyFreeBicommutativeHopfAlgCat R ⥤ (FiniteLocallyFreeBicommutativeHopfAlgCat S)ᵒᵖ`. -/
-noncomputable def dualBaseChangeNatIso :
+noncomputable def baseChangeDualNatIso :
     (dualFunctor (k := R)).rightOp ⋙ (baseChangeFunctor R S).op ≅
       baseChangeFunctor R S ⋙ (dualFunctor (k := S)).rightOp :=
-  NatIso.ofComponents (fun H => (baseChangeDualIso H).symm.op) fun f =>
-    Quiver.Hom.unop_inj (baseChangeDualIso_inv_naturality f)
+  NatIso.ofComponents (fun H => (baseChangeDualIso S H).symm.op) fun f =>
+    Quiver.Hom.unop_inj (baseChangeDualIso_inv_naturality S f)
 
-/-- The components of `dualBaseChangeNatIso` are the objectwise comparisons `baseChangeDualIso`.
+/-- The components of `baseChangeDualNatIso` are the objectwise comparisons `baseChangeDualIso`.
 They appear inverted because the natural isomorphism lands in an opposite category. -/
 @[simp]
-theorem dualBaseChangeNatIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
-    (dualBaseChangeNatIso R S).hom.app H = (baseChangeDualIso (S := S) H).inv.op :=
+theorem baseChangeDualNatIso_hom_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
+    (baseChangeDualNatIso R S).hom.app H = (baseChangeDualIso S H).inv.op :=
   (rfl)
 
-/-- The inverse components of `dualBaseChangeNatIso` are the objectwise comparisons
+/-- The inverse components of `baseChangeDualNatIso` are the objectwise comparisons
 `baseChangeDualIso`. -/
 @[simp]
-theorem dualBaseChangeNatIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
-    (dualBaseChangeNatIso R S).inv.app H = (baseChangeDualIso (S := S) H).hom.op :=
+theorem baseChangeDualNatIso_inv_app (H : FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R) :
+    (baseChangeDualNatIso R S).inv.app H = (baseChangeDualIso S H).hom.op :=
   (rfl)
 
 end FiniteLocallyFreeBicommutativeHopfAlgCat

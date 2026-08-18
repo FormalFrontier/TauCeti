@@ -24,7 +24,7 @@ The resulting anti-equivalence is Cartier duality over an arbitrary affine base.
 explicitly include flatness and finite presentation; these hypotheses cannot be omitted over a
 general ring. Because the Hopf-algebra equivalence being transported already knows its own
 inverse, so does this one: the inverse is Cartier dualization again, and the counit is the
-double-dual isomorphism `cartierDualDualIso`.
+inverse of the double-dual isomorphism `cartierDualDualIso`.
 
 ## Main declarations
 
@@ -42,9 +42,9 @@ double-dual isomorphism `cartierDualDualIso`.
   arbitrary affine base, with `cartierDuality_functor` and `cartierDuality_inverse` computing
   both of its directions as transported finite dualization.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDual` and
-  `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.coordHopfAlgebra`: the Cartier dual of a
+  `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.coordinateHopfAlgebra`: the Cartier dual of a
   group scheme and its coordinate Hopf algebra, related by `cartierDual_eq` and
-  `coordHopfAlgebraCartierDualIso`.
+  `coordinateHopfAlgebraCartierDualIso`.
 * `TauCeti.FiniteLocallyFreeCommAffineGroupSchemeCat.cartierDualDualIso`: the double-dual
   isomorphism `G ≅ D(D(G))`, natural by `cartierDualDualIso_hom_naturality`.
 
@@ -224,7 +224,7 @@ commutative base ring.**
 
 Transporting `FiniteLocallyFreeBicommutativeHopfAlgCat.cartierDuality` rather than the bare
 dualization functor keeps the inverse computable: it is again Cartier dualization, and the counit
-is the double-dual evaluation isomorphism `cartierDualDualIso`.
+is the inverse of the double-dual evaluation isomorphism `cartierDualDualIso`.
 
 The body is exposed so that `cartierDuality_inverse` holds definitionally, without which
 `cartierDualDualNatIso` does not typecheck. -/
@@ -265,7 +265,7 @@ theorem cartierDuality_inverse (R : Type u) [CommRing R] :
   (rfl)
 
 /-- The coordinate Hopf algebra of a finite locally free commutative affine group scheme. -/
-noncomputable abbrev coordHopfAlgebra (R : Type u) [CommRing R]
+noncomputable abbrev coordinateHopfAlgebra (R : Type u) [CommRing R]
     (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
     FiniteLocallyFreeBicommutativeHopfAlgCat.{u} R :=
   (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
@@ -284,12 +284,12 @@ theorem cartierDual_eq (R : Type u) [CommRing R]
     cartierDual R G =
       (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
         R).functor.obj
-          (op (FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordHopfAlgebra R G))) :=
+          (op (FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordinateHopfAlgebra R G))) :=
   (rfl)
 
 /-- **The coordinate Hopf algebra of a Cartier dual is the finite dual of the coordinate Hopf
 algebra**, naturally in the group scheme. -/
-noncomputable def coordHopfAlgebraCartierDualNatIso (R : Type u) [CommRing R] :
+noncomputable def coordinateHopfAlgebraCartierDualNatIso (R : Type u) [CommRing R] :
     (cartierDualFunctor R).rightOp ⋙
         (finiteLocallyFreeBicommutativeHopfAlgCatOpEquivFiniteLocallyFreeCommAffineGroupSchemeCat
           R).rightOp.inverse ≅
@@ -302,11 +302,11 @@ noncomputable def coordHopfAlgebraCartierDualNatIso (R : Type u) [CommRing R] :
       R).rightOp.unitIso.symm
 
 /-- The coordinate Hopf algebra of the Cartier dual of a single group scheme. -/
-noncomputable abbrev coordHopfAlgebraCartierDualIso (R : Type u) [CommRing R]
+noncomputable abbrev coordinateHopfAlgebraCartierDualIso (R : Type u) [CommRing R]
     (G : FiniteLocallyFreeCommAffineGroupSchemeCat (CommRingCat.of R)) :
-    coordHopfAlgebra R (cartierDual R G) ≅
-      FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordHopfAlgebra R G) :=
-  (coordHopfAlgebraCartierDualNatIso R).app G
+    coordinateHopfAlgebra R (cartierDual R G) ≅
+      FiniteLocallyFreeBicommutativeHopfAlgCat.dual (coordinateHopfAlgebra R G) :=
+  (coordinateHopfAlgebraCartierDualNatIso R).app G
 
 /-- **Cartier duality is involutive.** Every finite locally free commutative affine group scheme
 is naturally isomorphic to its Cartier double dual. -/
