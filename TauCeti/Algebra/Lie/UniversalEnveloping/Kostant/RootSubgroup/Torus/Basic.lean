@@ -305,12 +305,24 @@ noncomputable def kostantTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
   (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp
     (basisWeightTorus (b.baseChange A) wt)
 
--- `@[expose]` so that a module downstream of this one can unfold the range and use Mathlib's
--- `MonoidHom.mem_range` on it, instead of restating that characterization here.
 /-- The image of the split weight torus in the general linear group of the base-changed lattice. -/
-@[expose] noncomputable def kostantTorusSubgroup (A : Type*) [CommRing A] [Algebra ℤ A] :
+noncomputable def kostantTorusSubgroup (A : Type*) [CommRing A] [Algebra ℤ A] :
     Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) :=
   (kostantTorusPoints M b wt A).range
+
+-- The public defining equation below cannot itself be `rfl`: the module does not expose the body
+-- of `kostantTorusSubgroup`, so the proof is delegated to this private helper.
+omit [Module ℚ V] in
+private theorem kostantTorusSubgroup_eq_range_def (A : Type*) [CommRing A] [Algebra ℤ A] :
+    kostantTorusSubgroup M b wt A = (kostantTorusPoints M b wt A).range :=
+  rfl
+
+omit [Module ℚ V] in
+/-- The defining equation of `kostantTorusSubgroup`: it is the range of the torus points
+homomorphism, so Mathlib's `MonoidHom.mem_range` characterizes its elements. -/
+theorem kostantTorusSubgroup_eq_range (A : Type*) [CommRing A] [Algebra ℤ A] :
+    kostantTorusSubgroup M b wt A = (kostantTorusPoints M b wt A).range :=
+  kostantTorusSubgroup_eq_range_def M b wt A
 
 section Pointwise
 

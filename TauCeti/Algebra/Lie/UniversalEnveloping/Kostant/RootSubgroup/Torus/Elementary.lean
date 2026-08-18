@@ -96,6 +96,7 @@ include hwt hα in
 theorem range_kostantTorusPoints_le_normalizer :
     kostantTorusSubgroup M b wt A ≤
       Subgroup.normalizer (kostantSubsystemSubgroup e h ρ M hM hnil S A : Set _) := by
+  rw [kostantTorusSubgroup_eq_range]
   rintro _ ⟨s, rfl⟩
   exact kostantTorusPoints_mem_normalizer_kostantSubsystemSubgroup e h ρ M hM hnil b wt hwt α S hα
     A s
@@ -134,7 +135,7 @@ the root subgroups indexed by `S` together with the represented torus. -/
 theorem range_kostantTorusSubsystemMonoidHom :
     (kostantTorusSubsystemMonoidHom e h ρ M hM hnil b wt hwt α S hα A).range =
       kostantTorusSubsystemSubgroup e h ρ M hM hnil b wt S A := by
-  rw [kostantTorusSubsystemSubgroup_eq_sup]
+  rw [kostantTorusSubsystemSubgroup_eq_sup, ← kostantTorusSubgroup_eq_range]
   exact SemidirectProduct.range_monoidHomSubgroup _
 
 include hwt hα in
@@ -145,7 +146,7 @@ theorem mem_kostantTorusSubsystemSubgroup_iff
     g ∈ kostantTorusSubsystemSubgroup e h ρ M hM hnil b wt S A ↔
       ∃ x ∈ kostantSubsystemSubgroup e h ρ M hM hnil S A,
         ∃ t ∈ kostantTorusSubgroup M b wt A, g = x * t := by
-  rw [kostantTorusSubsystemSubgroup_eq_sup]
+  rw [kostantTorusSubsystemSubgroup_eq_sup, ← kostantTorusSubgroup_eq_range]
   exact Subgroup.mem_sup_of_right_le_normalizer_left
     (range_kostantTorusPoints_le_normalizer e h ρ M hM hnil b wt hwt α S hα A)
 
