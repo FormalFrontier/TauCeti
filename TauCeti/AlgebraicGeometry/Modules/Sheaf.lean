@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Exactness
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
-public import Mathlib.Topology.Sheaves.Abelian
 
 /-!
 # The underlying abelian sheaf of a sheaf of modules on a scheme

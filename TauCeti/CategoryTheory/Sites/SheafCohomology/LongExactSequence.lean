@@ -27,9 +27,9 @@ each of the three consecutive pairs.
 * `TauCeti.CategoryTheory.Sheaf.H.δ`, the connecting map `Hⁿ⁰(F₃) →+ Hⁿ¹(F₁)`;
 * `TauCeti.CategoryTheory.Sheaf.H.exact_map_map`, `H.exact_map_δ` and `H.exact_δ_map`, the
   exactness of the sequence at `Hⁿ(F₂)`, at `Hⁿ⁰(F₃)` and at `Hⁿ¹(F₁)`;
-* `TauCeti.CategoryTheory.Sheaf.H.injective_map_f`, the injectivity of `H⁰(F₁) →+ H⁰(F₂)`, which
+* `TauCeti.CategoryTheory.Sheaf.H.map_injective`, the injectivity of `H⁰(F₁) →+ H⁰(F₂)`, which
   is where the sequence starts;
-* `TauCeti.CategoryTheory.Sheaf.H.surjective_map_g`, `H.subsingleton_X₂`, `H.subsingleton_X₃`
+* `TauCeti.CategoryTheory.Sheaf.H.map_g_surjective`, `H.subsingleton_X₂`, `H.subsingleton_X₃`
   and `H.subsingleton_X₁`, the vanishing consequences that the sequence is normally used for.
 
 The six-term form of the sequence as a `ComposableArrows` is already available: it is Mathlib's
@@ -93,17 +93,17 @@ theorem exact_δ_map (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
   have := Ext.covariant_sequence_exact₁' (constZ (J := J)) hS n₀ n₁ h
   rwa [ShortComplex.ab_exact_iff_function_exact] at this
 
-/-- The long exact cohomology sequence starts with an injection: a monomorphism of abelian
-sheaves is injective on global cohomology in degree zero. -/
-theorem injective_map_f : Function.Injective (_root_.CategoryTheory.Sheaf.H.map S.f 0) := by
-  have := hS.mono_f
+omit hS in
+/-- A monomorphism of abelian sheaves is injective on cohomology in degree zero. -/
+theorem map_injective {F G : Sheaf J AddCommGrpCat.{v}} (f : F ⟶ G) [Mono f] :
+    Function.Injective (_root_.CategoryTheory.Sheaf.H.map f 0) := by
   intro x y hxy
   apply (Ext.addEquiv₀ (C := Sheaf J AddCommGrpCat.{v})).injective
-  rw [← cancel_mono S.f, ← _root_.CategoryTheory.Sheaf.H.addEquiv₀_map,
+  rw [← cancel_mono f, ← _root_.CategoryTheory.Sheaf.H.addEquiv₀_map,
     ← _root_.CategoryTheory.Sheaf.H.addEquiv₀_map, hxy]
 
 /-- If `Hⁿ¹(F₁)` vanishes, then `Hⁿ⁰(F₂) →+ Hⁿ⁰(F₃)` is surjective. -/
-theorem surjective_map_g (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
+theorem map_g_surjective (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     (h₁ : Subsingleton (_root_.CategoryTheory.Sheaf.H S.X₁ n₁)) :
     Function.Surjective (_root_.CategoryTheory.Sheaf.H.map S.g n₀) := fun x ↦
   (exact_map_δ hS n₀ n₁ h x).1 (Subsingleton.elim _ _)
@@ -122,7 +122,7 @@ theorem subsingleton_X₃ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     (h₂ : Subsingleton (_root_.CategoryTheory.Sheaf.H S.X₂ n₀))
     (h₁ : Subsingleton (_root_.CategoryTheory.Sheaf.H S.X₁ n₁)) :
     Subsingleton (_root_.CategoryTheory.Sheaf.H S.X₃ n₀) :=
-  (surjective_map_g hS n₀ n₁ h h₁).subsingleton
+  (map_g_surjective hS n₀ n₁ h h₁).subsingleton
 
 /-- If `Hⁿ⁰(F₃)` and `Hⁿ¹(F₂)` vanish, then so does `Hⁿ¹(F₁)`. -/
 theorem subsingleton_X₁ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)

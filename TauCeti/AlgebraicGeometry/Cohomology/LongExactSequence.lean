@@ -29,13 +29,13 @@ varies the coefficients.
   three exactness statements `Scheme.Modules.exact_cohomologyMap_cohomologyMap`,
   `Scheme.Modules.exact_cohomologyMap_cohomologyδ` and
   `Scheme.Modules.exact_cohomologyδ_cohomologyMap`;
-* `Scheme.Modules.injective_cohomologyMap`, the injectivity in degree zero at which the sequence
-  starts, and `Scheme.Modules.surjective_cohomologyMap`, the surjectivity it gives when the next
+* `Scheme.Modules.cohomologyMap_injective`, the injectivity in degree zero at which the sequence
+  starts, and `Scheme.Modules.cohomologyMap_surjective`, the surjectivity it gives when the next
   cohomology group of `M₁` vanishes;
 * `Scheme.Modules.subsingleton_cohomology_X₂`, `Scheme.Modules.subsingleton_cohomology_X₃` and
   `Scheme.Modules.subsingleton_cohomology_X₁`, the vanishing consequences;
-* `Scheme.Modules.exact_sections` and `Scheme.Modules.injective_sections`: global sections are
-  left exact, and `Scheme.Modules.surjective_sections`: they are exact on the right as soon as
+* `Scheme.Modules.exact_sections` and `Scheme.Modules.sections_injective`: global sections are
+  left exact, and `Scheme.Modules.sections_surjective`: they are exact on the right as soon as
   `H¹(X, M₁)` vanishes. This last statement is the form in which the sequence is normally used.
 
 Additivity of the Euler characteristic, and with it Riemann-Roch, rest on this sequence, so it
@@ -75,9 +75,16 @@ lemma cohomologyFunctor_map {M N : X.Modules} (f : M ⟶ N) (n : ℕ) :
 
 /-- Under the identification of degree-zero cohomology with global sections, the map induced on
 cohomology by a morphism of sheaves of modules is the map induced on global sections. -/
+@[simp]
 lemma cohomologyZeroEquiv_cohomologyMap {M N : X.Modules} (f : M ⟶ N) (x : Cohomology M 0) :
     cohomologyZeroEquiv N (cohomologyMap f 0 x) = f.app ⊤ (cohomologyZeroEquiv M x) :=
-  (CategoryTheory.Sheaf.H.equiv₀_naturality isTerminalTop ((toSheaf X).map f) x).symm
+  by
+    have hx : (cohomologyFunctor X 0).map f x = cohomologyMap f 0 x := by
+      exact congrArg
+        (fun g : (cohomologyFunctor X 0).obj M ⟶ (cohomologyFunctor X 0).obj N ↦ g x)
+        (cohomologyFunctor_map f 0)
+    rw [← hx]
+    exact cohomologyZeroEquiv_naturality f x
 
 private lemma sections_ladder {M N : X.Modules} (f : M ⟶ N) :
     (f.app ⊤).hom.comp (cohomologyZeroEquiv M) =
@@ -111,16 +118,17 @@ theorem exact_cohomologyδ_cohomologyMap (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     Function.Exact (cohomologyδ hS n₀ n₁ h) (cohomologyMap S.f n₁) :=
   TauCeti.CategoryTheory.Sheaf.H.exact_δ_map (shortExact_map_toSheaf hS) n₀ n₁ h
 
-/-- The long exact cohomology sequence starts with an injection. -/
-theorem injective_cohomologyMap : Function.Injective (cohomologyMap S.f 0) := by
-  intro x y hxy
-  exact TauCeti.CategoryTheory.Sheaf.H.injective_map_f (shortExact_map_toSheaf hS) hxy
+omit hS in
+/-- A monomorphism of sheaves of modules is injective on cohomology in degree zero. -/
+theorem cohomologyMap_injective {M N : X.Modules} (f : M ⟶ N) [Mono f] :
+    Function.Injective (cohomologyMap f 0) :=
+  TauCeti.CategoryTheory.Sheaf.H.map_injective ((toSheaf X).map f)
 
 /-- If `Hⁿ¹(X, M₁)` vanishes, then `Hⁿ⁰(X, M₂) →+ Hⁿ⁰(X, M₃)` is surjective. -/
-theorem surjective_cohomologyMap (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
+theorem cohomologyMap_surjective (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     (h₁ : Subsingleton (Cohomology S.X₁ n₁)) :
     Function.Surjective (cohomologyMap S.g n₀) :=
-  TauCeti.CategoryTheory.Sheaf.H.surjective_map_g (shortExact_map_toSheaf hS) n₀ n₁ h h₁
+  TauCeti.CategoryTheory.Sheaf.H.map_g_surjective (shortExact_map_toSheaf hS) n₀ n₁ h h₁
 
 /-- If `Hⁿ(X, M₁)` and `Hⁿ(X, M₃)` vanish, then so does `Hⁿ(X, M₂)`. -/
 theorem subsingleton_cohomology_X₂ (n : ℕ) (h₁ : Subsingleton (Cohomology S.X₁ n))
@@ -146,22 +154,25 @@ theorem exact_sections : Function.Exact ⇑(S.f.app ⊤) ⇑(S.g.app ⊤) :=
     (cohomologyZeroEquiv S.X₂) (cohomologyZeroEquiv S.X₃) (sections_ladder S.f)
     (sections_ladder S.g) (exact_cohomologyMap_cohomologyMap hS 0)
 
+omit hS in
 /-- Global sections are left exact: a monomorphism of sheaves of modules is injective on global
 sections. -/
-theorem injective_sections : Function.Injective ⇑(S.f.app ⊤) := by
+theorem sections_injective {M N : X.Modules} (f : M ⟶ N) [Mono f] :
+    Function.Injective ⇑(f.app ⊤) := by
   intro a b hab
-  apply (cohomologyZeroEquiv S.X₁).symm.injective
-  apply injective_cohomologyMap hS
-  apply (cohomologyZeroEquiv S.X₂).injective
+  apply (cohomologyZeroEquiv M).symm.injective
+  apply cohomologyMap_injective f
+  apply (cohomologyZeroEquiv N).injective
   rw [cohomologyZeroEquiv_cohomologyMap, cohomologyZeroEquiv_cohomologyMap,
     AddEquiv.apply_symm_apply, AddEquiv.apply_symm_apply, hab]
 
 /-- If `H¹(X, M₁)` vanishes, then every global section of `M₃` lifts to a global section of `M₂`.
 This is the form in which the long exact sequence is normally used. -/
-theorem surjective_sections (h₁ : Subsingleton (Cohomology S.X₁ 1)) :
+theorem sections_surjective (h₁ : Subsingleton (Cohomology S.X₁ 1)) :
     Function.Surjective ⇑(S.g.app ⊤) := by
   intro y
-  obtain ⟨x, hx⟩ := surjective_cohomologyMap hS 0 1 rfl h₁ ((cohomologyZeroEquiv S.X₃).symm y)
+  obtain ⟨x, hx⟩ := cohomologyMap_surjective hS 0 1 rfl h₁
+    ((cohomologyZeroEquiv S.X₃).symm y)
   refine ⟨cohomologyZeroEquiv S.X₂ x, ?_⟩
   rw [← cohomologyZeroEquiv_cohomologyMap, hx, AddEquiv.apply_symm_apply]
 

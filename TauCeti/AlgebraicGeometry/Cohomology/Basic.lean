@@ -77,11 +77,18 @@ instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
 Naturality in the coefficient sheaf follows from `CategoryTheory.Sheaf.H.equiv₀_naturality`
 and `CategoryTheory.Sheaf.H.equiv₀_symm_naturality`, applied to `isTerminalTop` and the
 underlying sheaf morphism. -/
-@[expose]
 def cohomologyZeroEquiv (M : X.Modules) :
     Cohomology M 0 ≃+ Γ(M, ⊤) :=
   CategoryTheory.Sheaf.H.equiv₀
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) isTerminalTop
+
+/-- The degree-zero cohomology equivalence is natural in the coefficient sheaf. -/
+@[simp]
+lemma cohomologyZeroEquiv_naturality {M N : X.Modules} (f : M ⟶ N) (x : Cohomology M 0) :
+    cohomologyZeroEquiv N ((cohomologyFunctor X 0).map f x) =
+      f.app ⊤ (cohomologyZeroEquiv M x) :=
+  (CategoryTheory.Sheaf.H.equiv₀_naturality isTerminalTop
+    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x).symm
 
 section Opens
 
