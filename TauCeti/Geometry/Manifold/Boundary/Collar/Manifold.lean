@@ -48,6 +48,42 @@ open scoped Manifold ContDiff
 
 namespace TauCeti
 
+/-- On the product model space, extending its self-chart by the model map reduces to the model map
+itself, in both the forward and inverse directions. -/
+private lemma collarModel_coordinateChange_eq_extChartAt {n : ℕ}
+    (f : ModelProd (EuclideanSpace ℝ (Fin n)) (EuclideanHalfSpace 1) →
+      ModelProd (EuclideanSpace ℝ (Fin n)) (EuclideanHalfSpace 1))
+    (x y : ModelProd (EuclideanSpace ℝ (Fin n)) (EuclideanHalfSpace 1)) :
+    (((𝓡 n).prod (𝓡∂ 1)) ∘ f ∘ ((𝓡 n).prod (𝓡∂ 1)).symm) =
+      (extChartAt ((𝓡 n).prod (𝓡∂ 1)) y ∘ f ∘
+        (extChartAt ((𝓡 n).prod (𝓡∂ 1)) x).symm) := rfl
+
+private lemma modelProd_exists_fiber {E : Type*}
+    (p : E × EuclideanSpace ℝ (Fin 1)) :
+    (∃ y : ModelProd E (EuclideanHalfSpace 1), y.1 = p.1 ∧ y.2.1 = p.2) ↔
+      ∃ y : EuclideanHalfSpace 1, y.1 = p.2 := by
+  constructor
+  · rintro ⟨y, -, hy⟩
+    exact ⟨y.2, hy⟩
+  · rintro ⟨y, hy⟩
+    exact ⟨(p.1, y), rfl, hy⟩
+
+private lemma collarTransition_coordinateDomain_iff {n : ℕ} {M : Type*} [TopologicalSpace M]
+    (e e' : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1)))
+    (p : EuclideanSpace ℝ (Fin n) × EuclideanSpace ℝ (Fin 1)) :
+    ((EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
+              (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) ∈ e.target ∧
+            (collarChart e).symm
+              (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) ∈ e'.source) ∧
+          ∃ y : ModelProd (EuclideanSpace ℝ (Fin n)) (EuclideanHalfSpace 1),
+            y.1 = p.1 ∧ y.2.1 = p.2) ↔
+        (∃ y : EuclideanHalfSpace 1, y.1 = p.2) ∧
+          EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
+            (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) ∈ e.target ∧
+          e.symm (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
+            (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2)) ∈ e'.source := by
+  simp only [collarChart_symm_apply, modelProd_exists_fiber, and_comm]
+
 variable {n : ℕ} {k : WithTop ℕ∞} {M : Type*} [TopologicalSpace M]
   [ChartedSpace (EuclideanHalfSpace (n + 1)) M]
 
@@ -87,7 +123,7 @@ theorem isManifold_collarChartedSpace [IsManifold (𝓡∂ (n + 1)) k M] :
             (I := modelWithCornersEuclideanHalfSpace (n + 1)) (n := k) he))
   rw [contMDiffOn_iff] at hφ
   convert hφ.2 (0, 0) (0, 0) using 1
-  · rfl
+  · exact collarModel_coordinateChange_eq_extChartAt φ (0, 0) (0, 0)
   · ext p
     have hprod : Prod.map id (modelWithCornersEuclideanHalfSpace 1).symm p =
         (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) := rfl
@@ -97,27 +133,7 @@ theorem isManifold_collarChartedSpace [IsManifold (𝓡∂ (n + 1)) k M] :
           e.symm (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
               (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2)) ∈ e'.source := by
       rw [collarChart_symm_apply]
-    have hnormalized :
-        ((EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
-                (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) ∈ e.target ∧
-              (collarChart e).symm
-                (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) ∈ e'.source) ∧
-            ∃ y : ModelProd (EuclideanSpace ℝ (Fin n)) (EuclideanHalfSpace 1),
-              y.1 = p.1 ∧ y.2.1 = p.2) ↔
-          (∃ y : EuclideanHalfSpace 1, y.1 = p.2) ∧
-            EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
-              (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2) ∈ e.target ∧
-            e.symm (EuclideanHalfSpace.collarDiffeomorph (k := ⊤) n
-              (p.1, (modelWithCornersEuclideanHalfSpace 1).symm p.2)) ∈ e'.source := by
-      constructor
-      · rintro ⟨⟨htarget, hsource⟩, ⟨y, -, hy⟩⟩
-        refine ⟨⟨y.2, hy⟩, htarget, ?_⟩
-        rw [collarChart_symm_apply] at hsource
-        exact hsource
-      · rintro ⟨⟨y, hy⟩, htarget, hsource⟩
-        refine ⟨⟨htarget, ?_⟩, ⟨(p.1, y), rfl, hy⟩⟩
-        rw [collarChart_symm_apply]
-        exact hsource
-    simpa [φ, chartAt_self_eq, Prod.ext_iff, hprod, hsource] using hnormalized
+    simpa [φ, chartAt_self_eq, Prod.ext_iff, hprod, hsource] using
+      collarTransition_coordinateDomain_iff e e' p
 
 end TauCeti
