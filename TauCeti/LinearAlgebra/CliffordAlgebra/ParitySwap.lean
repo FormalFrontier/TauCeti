@@ -88,7 +88,8 @@ a vector and contraction against a linear functional.
 
 Both summands are odd, so the sum is odd: it carries `evenOdd Q i` into `evenOdd Q (i + 1)`
 (`CliffordAlgebra.map_evenOdd_paritySwap_le`). It squares to the scalar `Q e + d e`
-(`CliffordAlgebra.paritySwap_paritySwap`), hence is invertible exactly when that scalar is. -/
+(`CliffordAlgebra.paritySwap_paritySwap`), hence is invertible whenever that scalar is a unit
+(`CliffordAlgebra.paritySwapEquiv`). -/
 noncomputable def paritySwap : CliffordAlgebra Q →ₗ[R] CliffordAlgebra Q :=
   LinearMap.mulLeft R (ι Q e) + contractLeft d
 
@@ -137,8 +138,9 @@ theorem paritySwapEquiv_apply (h : IsUnit (Q e + d e)) (x : CliffordAlgebra Q) :
 
 /-- The inverse of `CliffordAlgebra.paritySwapEquiv` is the same operator rescaled by the inverse
 of the unit it squares to. -/
+@[simp]
 theorem paritySwapEquiv_symm_apply (h : IsUnit (Q e + d e)) (x : CliffordAlgebra Q) :
-    (paritySwapEquiv h).symm x = (↑h.unit⁻¹ : R) • paritySwap Q e d x :=
+    (paritySwapEquiv h).symm x = (↑h.unit⁻¹ : R) • (ι Q e * x + contractLeft d x) :=
   -- `(rfl)`, not `rfl`: the body of `paritySwapEquiv` is not `@[expose]`d.
   (rfl)
 
@@ -153,7 +155,7 @@ theorem map_evenOdd_paritySwapEquiv (h : IsUnit (Q e + d e)) (i : ZMod 2) :
   rw [paritySwapEquiv_symm_apply]
   refine Submodule.smul_mem _ _ ?_
   have := map_evenOdd_paritySwap_le Q e d (i + 1) (Submodule.mem_map_of_mem hy)
-  rwa [hi] at this
+  rwa [hi, paritySwap_apply] at this
 
 /-- **The two halves of the `ℤ/2`-grading are isomorphic**, for a vector and a functional whose
 scalar `Q e + d e` is a unit: the parity-swapping automorphism restricts to an isomorphism between
@@ -171,6 +173,22 @@ theorem coe_evenOddEquivAddOne_apply (h : IsUnit (Q e + d e)) (i : ZMod 2) (x : 
       = ι Q e * (x : CliffordAlgebra Q) + contractLeft d (x : CliffordAlgebra Q) :=
   -- `(rfl)`, not `rfl`: the body of `evenOddEquivAddOne` is not `@[expose]`d.
   (rfl)
+
+/-- The inverse of the isomorphism between the two halves of the grading is the parity-swapping
+operator rescaled by the inverse of the unit it squares to, read inside the Clifford algebra. It
+is not `rfl`: `Submodule.equivMapOfInjective` inverts through the chosen inverse of an injection,
+so the inverse is instead identified by applying the operator to
+`CliffordAlgebra.coe_evenOddEquivAddOne_apply`. -/
+@[simp]
+theorem coe_evenOddEquivAddOne_symm_apply (h : IsUnit (Q e + d e)) (i : ZMod 2)
+    (y : evenOdd Q (i + 1)) :
+    ((evenOddEquivAddOne h i).symm y : CliffordAlgebra Q) = (↑h.unit⁻¹ : R) •
+      (ι Q e * (y : CliffordAlgebra Q) + contractLeft d (y : CliffordAlgebra Q)) := by
+  have hy : paritySwap Q e d ((evenOddEquivAddOne h i).symm y : CliffordAlgebra Q)
+      = (y : CliffordAlgebra Q) := by
+    rw [paritySwap_apply, ← coe_evenOddEquivAddOne_apply h i,
+      (evenOddEquivAddOne h i).apply_symm_apply]
+  rw [← paritySwap_apply, ← hy, paritySwap_paritySwap, smul_smul, h.val_inv_mul, one_smul]
 
 end CommRing
 
