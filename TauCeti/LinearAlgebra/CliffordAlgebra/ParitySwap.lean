@@ -20,9 +20,10 @@ general only submodules, with nothing relating their sizes. They become isomorph
 *odd* operator on `CliffordAlgebra Q` is invertible, because an odd operator carries each half into
 the other.
 
-This file builds such an operator out of the two elementary odd operators there are: exterior
-multiplication by a vector, `x ↦ ι Q e * x`, and contraction against a linear functional,
-`x ↦ d⌋x`. Their sum
+This file builds such an operator out of the two elementary odd operators there are: left Clifford
+multiplication by a vector, `x ↦ ι Q e * x` — which is exterior multiplication only in the special
+case `Q = 0`, since in general it squares to `Q e` rather than to `0` — and contraction against a
+linear functional, `x ↦ d⌋x`. Their sum
 
 `paritySwap Q e d : x ↦ ι Q e * x + d⌋x`
 
@@ -83,8 +84,9 @@ section CommRing
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   (Q : QuadraticForm R M) (e : M) (d : Module.Dual R M)
 
-/-- **The parity-swapping operator** `x ↦ ι Q e * x + d⌋x`, the sum of exterior multiplication by
-a vector and contraction against a linear functional.
+/-- **The parity-swapping operator** `x ↦ ι Q e * x + d⌋x`, the sum of left Clifford
+multiplication by a vector — exterior multiplication in the case `Q = 0` — and contraction against
+a linear functional.
 
 Both summands are odd, so the sum is odd: it carries `evenOdd Q i` into `evenOdd Q (i + 1)`
 (`CliffordAlgebra.map_evenOdd_paritySwap_le`). It squares to the scalar `Q e + d e`
@@ -101,8 +103,8 @@ theorem paritySwap_apply (x : CliffordAlgebra Q) :
   (rfl)
 
 /-- **The parity-swapping operator squares to a scalar.** The two cross terms
-`ι Q e * (d⌋x)` cancel by `CliffordAlgebra.contractLeft_ι_mul`, exterior multiplication squares to
-`Q e` by the Clifford relation, and contraction squares to `0`. -/
+`ι Q e * (d⌋x)` cancel by `CliffordAlgebra.contractLeft_ι_mul`, left Clifford multiplication
+squares to `Q e` by the Clifford relation, and contraction squares to `0`. -/
 theorem paritySwap_paritySwap (x : CliffordAlgebra Q) :
     paritySwap Q e d (paritySwap Q e d x) = (Q e + d e) • x := by
   rw [paritySwap_apply, paritySwap_apply, mul_add, map_add, contractLeft_ι_mul,

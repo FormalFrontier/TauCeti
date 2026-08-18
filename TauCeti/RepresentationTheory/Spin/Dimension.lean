@@ -19,11 +19,12 @@ exterior algebra `S = ⋀·W` of the isotropic summand `W` of the polarization, 
 `TauCeti.spinPlus` and `TauCeti.spinMinus` cut it into its even and odd halves. This file counts
 them.
 
-The count of `S` itself is `TauCeti.ExteriorAlgebra.finrank_eq_two_pow`: `dim S = 2 ^ dim W`. The
-count of the two halves is not a formality, because `⋀·W` is the Clifford algebra of the *zero*
-form, where the classical argument — multiply by an anisotropic vector, which is odd and
-invertible — has nothing to multiply by. The odd invertible operator is instead exterior
-multiplication corrected by a contraction, and it is built in
+The count of `S` itself is `TauCeti.finrank_spinRep`: `dim S = 2 ^ dim W`, the exterior-algebra
+count `TauCeti.ExteriorAlgebra.finrank_eq_two_pow` read on the module `⋀·W` that carries the spin
+representation. The count of the two halves is not a formality, because `⋀·W` is the Clifford
+algebra of the *zero* form, where the classical argument — multiply by an anisotropic vector,
+which is odd and invertible — has nothing to multiply by. The odd invertible operator is instead
+exterior multiplication corrected by a contraction, and it is built in
 `TauCeti/LinearAlgebra/CliffordAlgebra/ParitySwap.lean`; here it is only consumed, through
 `CliffordAlgebra.two_mul_finrank_evenOdd`. So each half is exactly half of `S`, of dimension
 `2 ^ (dim W - 1)` — the dimension of a half-spin representation.
@@ -40,6 +41,7 @@ the spin module of dimension `2 ^ l` is the one that matters.
 
 ## Main results
 
+* `TauCeti.finrank_spinRep`: **the spinor module has dimension `2 ^ dim W`.**
 * `TauCeti.finrank_spinPlus` and `TauCeti.finrank_spinMinus`: **each half-spin summand has
   dimension `2 ^ (dim W - 1)`.**
 
@@ -60,7 +62,19 @@ namespace TauCeti
 universe u v
 
 variable {K : Type u} [Field K] {V : Type v} [AddCommGroup V] [Module K V]
-  {Q : QuadraticForm K V} (P : SpinPolarizationData Q) [FiniteDimensional K V]
+  {Q : QuadraticForm K V} (P : SpinPolarizationData Q) [FiniteDimensional K P.W]
+
+/-- **The spinor module has dimension `2 ^ dim W`.**
+
+The module carrying `TauCeti.spinRep` is the exterior algebra `⋀·W` of the isotropic summand, so
+this is `TauCeti.ExteriorAlgebra.finrank_eq_two_pow` for `W`; it is stated here in terms of the
+dimension `l` of `W`, which a polarization ties to `dim V` by
+`TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul` in dimension `2l` and by
+`TauCeti.SpinPolarizationData.finrank_W_of_finrank_eq_two_mul_add_one` in dimension `2l + 1`. So
+the spinor module of a `2l`- or `(2l + 1)`-dimensional space has dimension `2 ^ l`. -/
+theorem finrank_spinRep (l : ℕ) (hW : finrank K P.W = l) :
+    finrank K (ExteriorAlgebra K P.W) = 2 ^ l := by
+  rw [ExteriorAlgebra.finrank_eq_two_pow, hW]
 
 /-- The shared content of `TauCeti.finrank_spinPlus` and `TauCeti.finrank_spinMinus`: each parity
 half of the spinor module `⋀·W` is half of it, of dimension `2 ^ (dim W - 1)`.
