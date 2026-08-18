@@ -31,7 +31,7 @@ the subgroup normal and makes the pointwise quotient commutative.
 * `TauCeti.CommHopfAlgCat.derivedGroupScheme`: the derived affine group scheme.
 * `TauCeti.CommHopfAlgCat.commutator_mem_derivedPointsSubgroup`: every pointwise commutator lies
   in the derived subgroup.
-* `TauCeti.CommHopfAlgCat.derivedDefiningIdeal_isNormal`: the derived subgroup is normal.
+* `TauCeti.CommHopfAlgCat.isNormal_derivedDefiningIdeal`: the derived subgroup is normal.
 * `TauCeti.CommHopfAlgCat.isMulCommutative_derivedPointQuotient`: the quotient by derived points is
   commutative.
 
@@ -76,7 +76,7 @@ theorem derivedDefiningIdeal_toIdeal_le_ker :
 /-- A Hopf ideal is contained in the derived defining ideal exactly when the commutator
 coordinate morphism kills it. This is the coordinate universal property of the derived
 subgroup. -/
-theorem le_derivedDefiningIdeal_iff (I : HopfIdeal R H) :
+@[simp] theorem le_derivedDefiningIdeal_iff (I : HopfIdeal R H) :
     I ≤ derivedDefiningIdeal (R := R) H ↔
       I.toIdeal ≤
         RingHom.ker (HopfAlgebra.commutatorAlgHom (R := R) (H := H)).toRingHom := by
@@ -129,7 +129,7 @@ theorem derivedPointsSubgroup_normal (H : _root_.CommHopfAlgCat.{v} R)
       (commutator_mem_derivedPointsSubgroup H A g n) hn
 
 /-- The Hopf ideal defining the derived subgroup is normal. -/
-theorem derivedDefiningIdeal_isNormal (H : _root_.CommHopfAlgCat.{v} R) :
+theorem isNormal_derivedDefiningIdeal (H : _root_.CommHopfAlgCat.{v} R) :
     (derivedDefiningIdeal (R := R) H).IsNormal := by
   rw [isNormal_iff_quotientPointsSubgroup_normal]
   exact derivedPointsSubgroup_normal H
