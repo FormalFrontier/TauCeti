@@ -100,7 +100,8 @@ theorem deFinetti_empiricalMeasure [TopologicalSpace α] [PolishSpace α] [Borel
     [IsFiniteMeasure μ] (hX : Exchangeable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν ∧
       ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => empiricalMeasure (fun i => X i ω) n) atTop (𝓝 (ν ω)) := by
-  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
+  obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX fun n => (hX_meas n).aemeasurable)
+    |>.exists_directing
   exact ⟨ν, hν, hν.tendsto_empiricalMeasure_ae fun i => (hX_meas i).aemeasurable⟩
 
 end Probability
