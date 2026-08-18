@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.FreeModule.PID
-public import TauCeti.Algebra.Lie.Weights.ChevalleySystem
+public import TauCeti.Algebra.Lie.Weights.Chevalley.System
 public import TauCeti.Algebra.Lie.Weights.Root.CorootSpan
 
 /-!

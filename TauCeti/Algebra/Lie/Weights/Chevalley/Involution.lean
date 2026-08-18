@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Weights.ChevalleySystem
+public import TauCeti.Algebra.Lie.Weights.Chevalley.System
 public import TauCeti.Algebra.Lie.Weights.StructureConstant.Opposite
 
 /-!
@@ -75,19 +75,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
   [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
 
-omit [CharZero K] in
-/-- The roots of a Lie algebra with non-degenerate Killing form are closed under negation, so a
-functional on the Cartan subalgebra is a root exactly when its negative is. -/
-theorem rootSpace_neg_eq_bot_iff (χ : H → K) :
-    rootSpace H (-χ) = ⊥ ↔ rootSpace H χ = ⊥ := by
-  have key : ∀ ψ : H → K, rootSpace H ψ ≠ ⊥ → rootSpace H (-ψ) ≠ ⊥ := fun ψ hψ ↦
-    (-(⟨ψ, hψ⟩ : Weight K H L)).genWeightSpace_ne_bot
-  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
-  · by_contra hne
-    exact key χ hne h
-  · by_contra hne
-    exact key (-χ) hne (by rwa [neg_neg])
-
 namespace IsSl2System
 
 variable {x : Weight K H L → L} (hx : IsSl2System x)
@@ -106,16 +93,18 @@ def IsChevalleyNormalized : Prop :=
       hx.structureConstant α β γ hγ hαβ = -((chainBotCoeff α β + 1 : ℕ) : K)
 
 /-- The bracket relation that a Chevalley involution has to satisfy on root vectors. If a linear
-map negates the Cartan subalgebra and exchanges each root vector with the negative of its
-opposite, then integral normalisation makes it respect the bracket of any two root vectors.
+map negates the coroot of `α` and sends the root vector of a root-sum `γ = α + β` to the negative
+of its opposite, then integral normalisation makes it respect the bracket `⁅x α, x β⁆`.
 
-This is the only place the sign symmetry of the structure constants is used, and it is the reason
-integrality is the right hypothesis: on a root-sum `γ = α + β` the two sides differ by
-`N(-α, -β) + N(α, β)`. -/
+The two hypotheses are exactly what the two non-trivial cases need: opposite roots bracket to the
+coroot, and a root-sum needs the value of the map at the sum alone. This is the only place the
+sign symmetry of the structure constants is used, and it is the reason integrality is the right
+hypothesis: on a root-sum `γ = α + β` the two sides differ by `N(-α, -β) + N(α, β)`. -/
 theorem map_lie_root_of_isChevalleyNormalized (hn : hx.IsChevalleyNormalized)
     {α β : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero) (ω : L →ₗ[K] L)
-    (hωroot : ∀ χ : Weight K H L, χ.IsNonZero → ω (x χ) = -x (-χ))
-    (hωcartan : ∀ h : H, ω (h : L) = -(h : L)) :
+    (hωsum : ∀ γ : Weight K H L, γ.IsNonZero → (γ : H → K) = (α : H → K) + β →
+      ω (x γ) = -x (-γ))
+    (hωcoroot : ω (coroot α : L) = -(coroot α : L)) :
     ω ⁅x α, x β⁆ = ⁅x (-α), x (-β)⁆ := by
   by_cases hzero : (α : H → K) + β = 0
   · -- The two roots are opposite: the bracket is the coroot, which `ω` negates.
@@ -126,7 +115,7 @@ theorem map_lie_root_of_isChevalleyNormalized (hn : hx.IsChevalleyNormalized)
       ext z
       exact congrFun hcoe z
     subst hβα
-    rw [neg_neg, hx.lie_neg α hα, hωcartan (coroot α), ← lie_skew (x (-α)) (x α),
+    rw [neg_neg, hx.lie_neg α hα, hωcoroot, ← lie_skew (x (-α)) (x α),
       hx.lie_neg α hα]
   · by_cases hbot : rootSpace H ((α : H → K) + β) = ⊥
     · -- The sum is not a root, so both brackets vanish.
@@ -152,7 +141,7 @@ theorem map_lie_root_of_isChevalleyNormalized (hn : hx.IsChevalleyNormalized)
           (hn α β γ hα hβ hγ hαβ)
       rw [hx.lie_eq_structureConstant_smul α β γ hγ hαβ,
         hx.lie_eq_structureConstant_smul (-α) (-β) (-γ) hγ.neg hnegαβ, hsign,
-        map_smul, hωroot γ hγ]
+        map_smul, hωsum γ hγ hαβ]
       module
 
 /-- **A Chevalley involution exists for an integrally normalised family.** If every genuine
@@ -170,8 +159,10 @@ theorem exists_isChevalleySystem (hn : hx.IsChevalleyNormalized) :
   set A : Weight K H L → Submodule K L := fun χ ↦ (rootSpace H χ).toSubmodule with hA
   have hAzero : ∀ χ : Weight K H L, χ.IsZero → A χ = H.toSubmodule := by
     intro χ hχ
+    -- `Weight.IsZero` is the vanishing of the coercion, but only up to unfolding the definition.
+    have hχcoe : (χ : H → K) = 0 := hχ
     rw [hA]
-    simp only [show (χ : H → K) = 0 from hχ, rootSpace_zero_eq K L H]
+    simp only [hχcoe, rootSpace_zero_eq K L H]
     simp
   have hbij : Function.Bijective (DirectSum.coeLinearMap A) :=
     (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top A).2
@@ -269,7 +260,8 @@ theorem exists_isChevalleySystem (hn : hx.IsChevalleyNormalized) :
           rw [← hx.toSubmodule_rootSpace_eq_span χ₂ hχ₂]
           exact hw
         rw [smul_lie, lie_smul, map_smul, map_smul, map_smul, map_smul, smul_lie, lie_smul,
-          hx.map_lie_root_of_isChevalleyNormalized hn hχ₁ hχ₂ ω hωroot hcartan,
+          hx.map_lie_root_of_isChevalleyNormalized hn hχ₁ hχ₂ ω
+            (fun γ hγ _ ↦ hωroot γ hγ) (hcartan (coroot χ₁)),
           hωroot χ₁ hχ₁, hωroot χ₂ hχ₂]
         simp
       · exact hswap _ _ (hmix χ₂ χ₁ (not_not.mp hχ₂) hχ₁ w hw v hv)

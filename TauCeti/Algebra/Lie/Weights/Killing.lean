@@ -17,6 +17,8 @@ splitting Cartan subalgebra.
 
 * `TauCeti.killingForm_ne_zero_of_mem_rootSpace`: nonzero vectors in opposite root spaces have
   nonzero Killing pairing.
+* `TauCeti.rootSpace_neg_eq_bot_iff`: the roots are closed under negation, so a functional on the
+  Cartan subalgebra is a root exactly when its negative is.
 -/
 
 public section
@@ -45,5 +47,19 @@ theorem killingForm_ne_zero_of_mem_rootSpace {α : Weight K H L} (hα : α.IsNon
     simp [hef]
   rw [ker_killingForm_eq_bot] at heker
   exact he₀ heker
+
+omit [CharZero K] in
+/-- The roots of a Lie algebra with non-degenerate Killing form are closed under negation, so a
+functional on the Cartan subalgebra is a root exactly when its negative is. -/
+@[simp]
+theorem rootSpace_neg_eq_bot_iff (χ : H → K) :
+    rootSpace H (-χ) = ⊥ ↔ rootSpace H χ = ⊥ := by
+  have key : ∀ ψ : H → K, rootSpace H ψ ≠ ⊥ → rootSpace H (-ψ) ≠ ⊥ := fun ψ hψ ↦
+    (-(⟨ψ, hψ⟩ : Weight K H L)).genWeightSpace_ne_bot
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · by_contra hne
+    exact key χ hne h
+  · by_contra hne
+    exact key (-χ) hne (by rwa [neg_neg])
 
 end TauCeti
