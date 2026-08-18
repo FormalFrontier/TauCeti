@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Eleme
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
 /-!
 # The split maximal torus of a Kostant elementary group
@@ -33,6 +34,12 @@ subgroup, acting on its parameter by the root, and consequently normalizes the w
 group `E(A) = ⟨xᵢ(u)⟩`. Nothing here divides by a factorial, so the equations hold over a value
 ring of any characteristic.
 
+The same equation has an infinitesimal form. The designated root vector `eᵢ` restricts to the
+integral operator `kostantRootOperator` on `M`, the pinning's `X_α`; it raises weights by `α`,
+so a torus point conjugates it to `α(s) X_α`. This is
+`kostantTorusPoints_conj_kostantRootOperator`, the other half of what pins the root subgroups
+against the torus.
+
 The analogous statement for the worked `GLₙ` example is
 `TauCeti.GeneralLinear.diagonalTorusPoints_mul_rootSubgroupPoints_mul_inv`; here the diagonal group
 is cut down to rank `κ` by the weight function, and the character by which it acts on a root
@@ -44,8 +51,12 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   Cartan operators with prescribed integer eigenvalues.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantCartanOperator`: a designated Cartan vector as an
   integral operator on a Kostant-stable subgroup.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootOperator`: a designated root vector as an
+  integral operator on a Kostant-stable subgroup — the pinning's `X_α`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints`: the split torus of rank `κ` on the
   points of a Kostant-stable lattice presented in a weight basis.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusSubgroup`: the image of that torus in the general
+  linear group of the base-changed lattice.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix`: the same action in matrix coordinates.
 
 ## Main results
@@ -59,6 +70,12 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   scalar extension of a torus point is the torus point with mapped parameter.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootSubgroupParam`: the
   pinning equation `t(s) xᵢ(u) t(s)⁻¹ = xᵢ(α(s) u)`.
+* `TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_coe_kostantRootOperator`: the root
+  operator raises weights by the root `α`.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_mul_baseChange_kostantRootOperator`: the
+  torus intertwines the root operator up to the value of the root, and
+  `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootOperator` is its
+  conjugated form `t(s) X_α t(s)⁻¹ = α(s) X_α`.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantElementarySubgroup_conj_kostantTorusPoints`: the
   torus normalizes the elementary group.
 
@@ -100,6 +117,12 @@ designated Cartan operators `ρ(hⱼ)` with the integer eigenvalues `μ j`. -/
 def IsCartanWeightVector (h : κ → L)
     (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (μ : κ → ℤ) (m : V) : Prop :=
   ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) m = (μ j : ℚ) • m
+
+/-- The pointwise characterization of a Cartan weight vector. -/
+theorem isCartanWeightVector_iff {μ : κ → ℤ} {m : V} :
+    IsCartanWeightVector h ρ μ m ↔
+      ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) m = (μ j : ℚ) • m :=
+  Iff.rfl
 
 /-- Being a weight vector is joint membership in the eigenspaces of the Cartan operators. -/
 theorem isCartanWeightVector_iff_mem_eigenspace {μ : κ → ℤ} {m : V} :
@@ -143,17 +166,10 @@ theorem pow_rootVector {i : ι} {α μ : κ → ℤ} {m : V}
     IsCartanWeightVector h ρ (μ + n • α)
       ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m) := by
   -- The image of `eᵢ` is an eigenvector of weight `α` for the adjoint action of the Cartan family.
-  have hbr : ∀ j, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) *
-      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) -
-        ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) *
-          ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)) =
-      (α j : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := by
-    intro j
-    have := LieHom.map_lie (_root_.UniversalEnvelopingAlgebra.ι ℚ) (h j) (e i)
-    rw [hα j, LieRing.of_associative_ring_bracket, map_smul] at this
-    have h2 := congrArg ρ this
-    rw [map_sub, map_mul, map_mul, map_smul] at h2
-    exact h2.symm
+  have hbr : ∀ j, ⁅ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h j)),
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))⁆ =
+      (α j : ℚ) • ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) := fun j =>
+    lie_map_ι_eq_smul ρ (hα j)
   induction n with
   | zero => simpa using hm
   | succ n ih =>
@@ -162,8 +178,10 @@ theorem pow_rootVector {i : ι} {α μ : κ → ℤ} {m : V}
           ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))
             ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m) := by
         rw [pow_succ', Module.End.mul_apply]
+      have hbrj := hbr j
+      rw [LieRing.of_associative_ring_bracket] at hbrj
       have happ := congrArg (fun f : Module.End ℚ V =>
-        f ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m)) (hbr j)
+        f ((ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) ^ n) m)) hbrj
       simp only [LinearMap.sub_apply, Module.End.mul_apply, LinearMap.smul_apply] at happ
       rw [ih j, map_smul, sub_eq_iff_eq_add, ← add_smul] at happ
       have hstep : (μ + (n + 1) • α) j = α j + (μ + n • α) j := by
@@ -235,6 +253,44 @@ theorem repr_eq_zero_of_isCartanWeightVector
   rw [← sub_mul] at this
   exact (mul_eq_zero.1 this).resolve_left (sub_ne_zero.2 hj)
 
+/-! ## Root operators on a stable subgroup -/
+
+section RootOperator
+
+variable (i : ι)
+
+/-- The designated root vector `eᵢ` acting on a Kostant-stable additive subgroup, as an integral
+operator.
+
+It is the first restricted divided power of `ρ(eᵢ)`, so it is the linear coefficient of the
+divided-power exponential defining the root subgroup, and it is the root vector `X_α` of the
+pinning. -/
+noncomputable def kostantRootOperator : Module.End ℤ M :=
+  integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 1
+    (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i 1 hv)
+
+/-- The integral root operator acts by the ambient representation of the root vector. -/
+@[simp] theorem coe_kostantRootOperator_apply (v : M) :
+    ((kostantRootOperator e h ρ M hM i v : M) : V) =
+      ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (v : V) := by
+  rw [kostantRootOperator, coe_integralDividedPower_apply, Associative.dividedPower_one,
+    Module.End.smul_def]
+
+include e hM in
+/-- The integral root operator raises weights by the root: it is the first divided power of a
+root vector of weight `α`. -/
+theorem isCartanWeightVector_coe_kostantRootOperator {α μ : κ → ℤ} {v : M}
+    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
+    (hv : IsCartanWeightVector h ρ μ ((v : M) : V)) :
+    IsCartanWeightVector h ρ (μ + α)
+      ((kostantRootOperator e h ρ M hM i v : M) : V) := by
+  have hstep := IsCartanWeightVector.integralDividedPower e hα hv 1
+  rw [Associative.dividedPower_one, Module.End.smul_def] at hstep
+  rw [coe_kostantRootOperator_apply]
+  simpa only [one_smul] using hstep
+
+end RootOperator
+
 /-! ## The split torus on points -/
 
 section Torus
@@ -248,6 +304,25 @@ noncomputable def kostantTorusPoints (A : Type*) [CommRing A] [Algebra ℤ A] :
     (κ → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).symm.toMonoidHom.comp
     (basisWeightTorus (b.baseChange A) wt)
+
+/-- The image of the split weight torus in the general linear group of the base-changed lattice. -/
+noncomputable def kostantTorusSubgroup (A : Type*) [CommRing A] [Algebra ℤ A] :
+    Subgroup (LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)) :=
+  (kostantTorusPoints M b wt A).range
+
+-- The public defining equation below cannot itself be `rfl`: the module does not expose the body
+-- of `kostantTorusSubgroup`, so the proof is delegated to this private helper.
+omit [Module ℚ V] in
+private theorem kostantTorusSubgroup_eq_range_def (A : Type*) [CommRing A] [Algebra ℤ A] :
+    kostantTorusSubgroup M b wt A = (kostantTorusPoints M b wt A).range :=
+  rfl
+
+omit [Module ℚ V] in
+/-- The defining equation of `kostantTorusSubgroup`: it is the range of the torus points
+homomorphism, so Mathlib's `MonoidHom.mem_range` characterizes its elements. -/
+theorem kostantTorusSubgroup_eq_range (A : Type*) [CommRing A] [Algebra ℤ A] :
+    kostantTorusSubgroup M b wt A = (kostantTorusPoints M b wt A).range :=
+  kostantTorusSubgroup_eq_range_def M b wt A
 
 section Pointwise
 
@@ -432,6 +507,61 @@ theorem kostantTorusPoints_mul_kostantRootSubgroupPoints
     ring
   rw [hchar]
   ring_nf
+
+/-! ### The pinning equation for the root vector -/
+
+variable (i : ι) {α : κ → ℤ}
+
+include e hM in
+/-- The base-changed root operator carries a basis tensor to a tensor of weight `wt x + α`, on
+which a torus point acts by the product of the two characters. This is the single basis-vector
+calculation behind the two intertwining statements below. -/
+private theorem kostantTorusPoints_baseChange_kostantRootOperator_tmul_basis
+    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
+    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i) (s : κ → Aˣ) (a : A) (x : η) :
+    (kostantTorusPoints M b wt A s).val
+        ((kostantRootOperator e h ρ M hM i).baseChange A (a ⊗ₜ[ℤ] (b x : M))) =
+      ((torusCharacter s α : A) * ((torusCharacter s (wt x) : A) * a)) ⊗ₜ[ℤ]
+        kostantRootOperator e h ρ M hM i (b x) := by
+  rw [LinearMap.baseChange_tmul,
+    kostantTorusPoints_tmul_of_isCartanWeightVector e h ρ M hM b wt hwt
+      (isCartanWeightVector_coe_kostantRootOperator e h ρ M hM i hα (hwt x)) s a,
+    torusCharacter_add, Units.val_mul, mul_assoc,
+    mul_left_comm (torusCharacter s (wt x) : A)]
+
+include e hM in
+/-- **The torus acts on the root operator through the root.** A torus point intertwines the
+base-changed root operator with itself, up to the value `α(s)` of the root.
+
+This is the infinitesimal form of the pinning equation
+`kostantTorusPoints_conj_kostantRootSubgroupParam`. -/
+theorem kostantTorusPoints_mul_baseChange_kostantRootOperator
+    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
+    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i) (s : κ → Aˣ) :
+    (kostantTorusPoints M b wt A s).val *
+        (kostantRootOperator e h ρ M hM i).baseChange A =
+      (torusCharacter s α : A) •
+        ((kostantRootOperator e h ρ M hM i).baseChange A *
+          (kostantTorusPoints M b wt A s).val) := by
+  refine (b.baseChange A).ext fun x => ?_
+  rw [Module.End.mul_apply, Module.Basis.baseChange_apply,
+    kostantTorusPoints_baseChange_kostantRootOperator_tmul_basis e h ρ M hM b wt i hwt hα]
+  simp only [LinearMap.smul_apply, Module.End.mul_apply, kostantTorusPoints_tmul_basis,
+    LinearMap.baseChange_tmul, smul_tmul', smul_eq_mul]
+
+include e hM in
+/-- **The pinning relation for the root vector**, in conjugated form: `t(s) X_α t(s)⁻¹` is
+`α(s) X_α`. It says that the tangent vector of the root subgroup lies in the `α`-weight space of
+the adjoint action of the split maximal torus. -/
+theorem kostantTorusPoints_conj_kostantRootOperator
+    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
+    (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i) (s : κ → Aˣ) :
+    (kostantTorusPoints M b wt A s).val *
+        (kostantRootOperator e h ρ M hM i).baseChange A *
+        ((kostantTorusPoints M b wt A s)⁻¹).val =
+      (torusCharacter s α : A) • (kostantRootOperator e h ρ M hM i).baseChange A := by
+  rw [kostantTorusPoints_mul_baseChange_kostantRootOperator e h ρ M hM b wt i hwt hα s,
+    smul_mul_assoc, mul_assoc, Units.mul_inv, mul_one]
 
 end Pinning
 

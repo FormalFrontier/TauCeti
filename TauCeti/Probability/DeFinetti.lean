@@ -53,7 +53,9 @@ This module declares nothing of its own; it is a curated re-export, and it build
   exchangeable σ-algebra is trivial;
 * `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
   its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
-  point masses with the extreme laws;
+  point masses with the extreme laws and
+  `deFinettiEquiv_convexComb` / `deFinettiEquiv_symm_convexComb` giving the affinity in both
+  directions, at the bundled level;
 * `deFinettiMeasure` and its identifications —
   `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_exchangeable`,
   `eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi` and

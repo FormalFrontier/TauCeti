@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralL
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 
 /-!
