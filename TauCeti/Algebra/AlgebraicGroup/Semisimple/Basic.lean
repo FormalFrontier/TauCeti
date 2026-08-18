@@ -118,6 +118,10 @@ instance (k : Type u) [Field k] :
         (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
           (CommHopfAlgCat.{u} (AlgebraicClosure k))))).IsClosedUnderIsomorphisms)
 
+/-- The category of semisimple finite-type commutative Hopf algebras over a field. -/
+abbrev SemisimpleCommHopfAlgCat (k : Type u) [Field k] :=
+  (semisimpleCommHopfAlgProperty k).FullSubcategory
+
 namespace semisimpleCommHopfAlgProperty
 
 variable {k : Type u} [Field k] {H : FiniteTypeCommHopfAlgCat.{u, u} k}
