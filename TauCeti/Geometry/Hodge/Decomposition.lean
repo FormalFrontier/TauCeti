@@ -28,6 +28,8 @@ Hodge II*, §1.2.1, and Voisin, *Hodge Theory and Complex Algebraic Geometry I*,
 
 * `TauCeti.Hodge.HodgeStructureOn.F_eq_iSup_piece`: a filtration step is the supremum of the
   Hodge components it contains.
+* `TauCeti.Hodge.HodgeStructureOn.conjF_eq_iSup_piece`: a conjugate filtration step is the
+  supremum of the Hodge components it contains.
 * `TauCeti.Hodge.HodgeStructureOn.piece_iSupIndep`: the Hodge components are independent.
 * `TauCeti.Hodge.HodgeStructureOn.isInternal_piece`: the Hodge components form an internal direct
   sum of the ambient complex vector space.
@@ -43,12 +45,6 @@ namespace HodgeStructureOn
 
 variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ω : Conjugation W} {n : ℤ}
-
-/-- The conjugate of the Hodge filtration is decreasing. -/
-theorem conjF_antitone (hs : HodgeStructureOn W ω n) : Antitone hs.conjF :=
-  fun p q hpq ↦ by
-    rw [hs.conjF_def, hs.conjF_def]
-    exact Submodule.map_mono (hs.F_antitone hpq)
 
 /-- A filtration step is the sum of its Hodge component and the next filtration step. -/
 theorem F_eq_piece_sup_succ (hs : HodgeStructureOn W ω n) (p : ℤ) :
@@ -122,6 +118,15 @@ theorem F_eq_iSup_piece (hs : HodgeStructureOn W ω n) (p : ℤ) :
       p hpc
   · refine iSup_le fun q ↦ iSup_le fun hpq ↦ ?_
     exact (hs.piece_le_F q).trans (hs.F_antitone hpq)
+
+/-- Every conjugate Hodge filtration step is the supremum of the Hodge components in at most the
+complementary degree: `conjF p = ⨆ q ≤ n - p, H^{q,n-q}`. -/
+theorem conjF_eq_iSup_piece (hs : HodgeStructureOn W ω n) (p : ℤ) :
+    hs.conjF p = ⨆ q, ⨆ (_ : q ≤ n - p), hs.piece q := by
+  rw [hs.conjF_def, hs.F_eq_iSup_piece p]
+  simp only [Submodule.map_iSup, hs.conj_piece]
+  refine le_antisymm (iSup₂_le fun q _ ↦ le_iSup₂_of_le (n - q) (by omega) le_rfl)
+    (iSup₂_le fun q _ ↦ le_iSup₂_of_le (n - q) (by omega) (le_of_eq (by rw [sub_sub_cancel])))
 
 /-- The supremum of all Hodge components is the whole ambient complex vector space. -/
 theorem iSup_piece_eq_top (hs : HodgeStructureOn W ω n) : ⨆ p, hs.piece p = ⊤ := by
