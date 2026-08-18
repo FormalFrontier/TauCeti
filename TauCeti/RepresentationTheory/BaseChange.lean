@@ -17,8 +17,8 @@ extension yields a nonzero common fixed vector over the base field.
 
 ## Main declarations
 
-* `TauCeti.Representation.baseChange`: scalar extension of a representation.
-* `TauCeti.Representation.exists_common_fixed_vector_of_baseChange`: descent of a nonzero common
+* `Representation.baseChange`: scalar extension of a representation.
+* `Representation.exists_common_fixed_vector_of_baseChange`: descent of a nonzero common
   fixed vector.
 -/
 
@@ -40,7 +40,7 @@ variable {R : Type u} {A : Type v} [CommSemiring R] [CommSemiring A] [Algebra R 
 variable [AddCommMonoid V] [Module R V]
 
 /-- Extend the scalars of a representation by base-changing each linear endomorphism. -/
-@[expose] def baseChange (A : Type v) [CommSemiring A] [Algebra R A]
+@[expose] def _root_.Representation.baseChange (A : Type v) [CommSemiring A] [Algebra R A]
     (ρ : _root_.Representation R G V) : _root_.Representation A G (A ⊗[R] V) where
   toFun g := (ρ g).baseChange A
   map_one' := by simp only [map_one, LinearMap.baseChange_one]
@@ -50,8 +50,8 @@ variable [AddCommMonoid V] [Module R V]
 
 /-- The action of a base-changed representation is the base change of the original action. -/
 @[simp]
-theorem baseChange_apply (ρ : _root_.Representation R G V) (g : G) :
-    baseChange A ρ g = (ρ g).baseChange A :=
+theorem _root_.Representation.baseChange_apply (ρ : _root_.Representation R G V) (g : G) :
+    _root_.Representation.baseChange A ρ g = (ρ g).baseChange A :=
   rfl
 
 end BaseChange
@@ -61,9 +61,9 @@ variable [AddCommGroup V] [Module K V]
 
 /-- A nonzero common fixed vector after a field extension descends to a nonzero common fixed
 vector over the base field. -/
-theorem exists_common_fixed_vector_of_baseChange [FiniteDimensional K V]
+theorem _root_.Representation.exists_common_fixed_vector_of_baseChange [FiniteDimensional K V]
     (ρ : _root_.Representation K G V) {w : L ⊗[K] V} (hw : w ≠ 0)
-    (hfixed : ∀ g, baseChange L ρ g w = w) :
+    (hfixed : ∀ g, _root_.Representation.baseChange L ρ g w = w) :
     ∃ v : V, v ≠ 0 ∧ ∀ g, ρ g v = v := by
   let b := Module.Free.chooseBasis K V
   have hwrepr : (b.baseChange L).repr w ≠ 0 := fun h ↦

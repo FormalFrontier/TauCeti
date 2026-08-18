@@ -50,7 +50,7 @@ irreducible by.
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
   algebra map exhausts the endomorphisms is irreducible.
-* `TauCeti.Representation.asAlgebraHom_surjective_of_isIrreducible`: over an algebraically closed
+* `Representation.asAlgebraHom_surjective_of_isIrreducible`: over an algebraically closed
   field, every finite-dimensional irreducible representation exhausts the endomorphisms.
 * `TauCeti.Representation.exists_isAtom_le`: every nonzero finite-dimensional subrepresentation
   contains an atom, so the atom criterion always has something to apply to.
@@ -197,7 +197,7 @@ representation over an algebraically closed field exhausts the full endomorphism
 Jacobson density gives all endomorphisms linear over the representation's commuting endomorphism
 ring. Schur's lemma identifies that ring with the base field, so these are exactly the
 `k`-linear endomorphisms. -/
-theorem asAlgebraHom_surjective_of_isIrreducible
+theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
     [IsAlgClosed k] [FiniteDimensional k V]
     (ρ : Representation k G V) (hρ : ρ.IsIrreducible) :
     Function.Surjective ρ.asAlgebraHom := by

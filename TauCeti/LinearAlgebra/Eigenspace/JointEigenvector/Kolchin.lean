@@ -27,9 +27,9 @@ fixed tensor by applying a base-field linear functional to its scalar coefficien
 
 ## Main results
 
-* `TauCeti.Representation.exists_common_fixed_vector_of_isUnipotent`: Kolchin's common fixed vector
+* `Representation.exists_common_fixed_vector_of_isUnipotent`: Kolchin's common fixed vector
   theorem.
-* `TauCeti.Representation.exists_fixed_submodule_finrank_eq_one_of_isUnipotent`: the equivalent
+* `Representation.exists_fixed_submodule_finrank_eq_one_of_isUnipotent`: the equivalent
   fixed-line form.
 
 ## References
@@ -51,7 +51,7 @@ noncomputable section
 variable {K : Type u} {G : Type w} {V : Type v}
 variable [Field K] [Monoid G] [AddCommGroup V] [Module K V]
 
-private theorem exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed
+private theorem _root_.Representation.exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed
     [IsAlgClosed K] [FiniteDimensional K V] [Nontrivial V]
     (ρ : _root_.Representation K G V)
     (hunipotent : ∀ g, IsNilpotent (ρ g - 1)) :
@@ -61,7 +61,8 @@ private theorem exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed
     hS (Subrepresentation.toSubmodule_injective
       (h.trans Subrepresentation.toSubmodule_bot.symm))
   have : Nontrivial S.toSubmodule := Submodule.nontrivial_iff_ne_bot.mpr hSne
-  have hsurjective := asAlgebraHom_surjective_of_isIrreducible S.toRepresentation hSirr
+  have hsurjective :=
+    _root_.Representation.asAlgebraHom_surjective_of_isIrreducible S.toRepresentation hSirr
   have hSUnipotent (g : G) : IsNilpotent (S.toRepresentation g - 1) := by
     have hρ : Set.MapsTo (ρ g) S.toSubmodule S.toSubmodule :=
       S.apply_mem_toSubmodule g
@@ -104,7 +105,8 @@ private theorem exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed
 
 /-- **Kolchin's common fixed vector theorem.** If every element of a monoid acts unipotently on a
 nonzero finite-dimensional vector space over a field, then the monoid fixes a nonzero vector. -/
-theorem exists_common_fixed_vector_of_isUnipotent [FiniteDimensional K V] [Nontrivial V]
+theorem _root_.Representation.exists_common_fixed_vector_of_isUnipotent
+    [FiniteDimensional K V] [Nontrivial V]
     (ρ : _root_.Representation K G V)
     (hunipotent : ∀ g, IsNilpotent (ρ g - 1)) :
     ∃ v : V, v ≠ 0 ∧ ∀ g, ρ g v = v := by
@@ -113,23 +115,24 @@ theorem exists_common_fixed_vector_of_isUnipotent [FiniteDimensional K V] [Nontr
   have : Nontrivial W := Module.nontrivial_of_finrank_pos (by
     rw [Module.finrank_baseChange]
     exact Module.finrank_pos)
-  let ρA := baseChange A ρ
+  let ρA := _root_.Representation.baseChange A ρ
   have hunipotentA (g : G) : IsNilpotent (ρA g - 1) := by
-    simp only [ρA, baseChange_apply]
+    simp only [ρA, _root_.Representation.baseChange_apply]
     rw [← LinearMap.baseChange_one (A := A) K V, ← LinearMap.baseChange_sub]
     exact (hunipotent g).map (Module.End.baseChangeHom K A V)
   obtain ⟨w, hw, hfixed⟩ :=
-    exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed ρA hunipotentA
-  apply exists_common_fixed_vector_of_baseChange ρ hw
+    _root_.Representation.exists_common_fixed_vector_of_isUnipotent_of_isAlgClosed
+      ρA hunipotentA
+  apply _root_.Representation.exists_common_fixed_vector_of_baseChange ρ hw
   simpa only [ρA] using hfixed
 
 /-- Under Kolchin's hypotheses, the common fixed vectors contain a one-dimensional subspace. -/
-theorem exists_fixed_submodule_finrank_eq_one_of_isUnipotent
+theorem _root_.Representation.exists_fixed_submodule_finrank_eq_one_of_isUnipotent
     [FiniteDimensional K V] [Nontrivial V] (ρ : _root_.Representation K G V)
     (hunipotent : ∀ g, IsNilpotent (ρ g - 1)) :
     ∃ p : Submodule K V, Module.finrank K p = 1 ∧ ∀ g, ∀ x ∈ p, ρ g x = x := by
   apply TauCeti.exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector ρ
-  exact exists_common_fixed_vector_of_isUnipotent ρ hunipotent
+  exact _root_.Representation.exists_common_fixed_vector_of_isUnipotent ρ hunipotent
 
 end
 
