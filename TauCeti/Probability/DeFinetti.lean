@@ -16,7 +16,7 @@ public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 public import TauCeti.Probability.DeFinetti.Correspondence
 public import TauCeti.Probability.DeFinetti.CanonicalMixture
-public import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.WeakConvergence
 public import TauCeti.Probability.DeFinetti.EmpiricalMeasure
 
 /-!
@@ -63,7 +63,10 @@ This module declares nothing of its own; it is a curated re-export, and it build
   `deFinetti_mixture` witness and to the inverse of the correspondence;
 * `deFinetti_tendsto_empiricalMeasure_apply` — on each fixed measurable set, the mass given by the
   directing measure of an exchangeable process is the almost-sure limit of the empirical
-  frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it.
+  frequencies, with `ConditionallyIIDWith.tendsto_average_ae` the conditional strong law behind it;
+* `deFinetti_empiricalMeasure` — on a Polish state space, the directing measure is the almost-sure
+  weak limit of the empirical measures themselves, with
+  `ConditionallyIIDWith.tendsto_empiricalMeasure_ae` its conditional form.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a
