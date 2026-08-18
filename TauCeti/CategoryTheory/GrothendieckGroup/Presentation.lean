@@ -218,13 +218,12 @@ lemma mk_eq_zero {r : FreeAbelianGroup (ObjectCode C)} (hr : r ∈ rels) :
   (mk_eq_zero_iff r).2 (AddSubgroup.subset_closure hr)
 
 /-- The class of an object of `C` in the presented Grothendieck group. -/
-@[expose]
 noncomputable def of (X : C) : PresentedK0 rels :=
   mk (freeClass X)
 
 @[simp]
 lemma mk_freeClass (X : C) : (mk (freeClass X) : PresentedK0 rels) = of X :=
-  rfl
+  (rfl)
 
 @[simp]
 lemma mk_apply_of (c : ObjectCode C) :
@@ -468,9 +467,9 @@ lemma coe_mapEquiv (e : C ≌ D)
     (h' : ∀ r ∈ relsD, freeMap e.inverse r ∈ AddSubgroup.closure relsC) :
     ((mapEquiv e h h' : PresentedK0 relsC ≃+ PresentedK0 relsD) :
         PresentedK0 relsC →+ PresentedK0 relsD) = map e.functor h :=
-  hom_ext fun X => by
-    change mapEquiv e h h' (of X) = map e.functor h (of X)
-    rw [mapEquiv_apply, map_of]
+  by
+    rw [← AddEquiv.toAddMonoidHom_eq_coe]
+    rfl
 
 /-- Equivalence invariance for the identity equivalence is the identity. -/
 @[simp]
