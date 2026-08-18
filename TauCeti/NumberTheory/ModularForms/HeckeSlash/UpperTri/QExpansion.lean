@@ -54,10 +54,8 @@ indices in `p ℕ` survive.
 * `HeckeRing.GL2.qExpansion_coeff_heckeSlashUpperTri` and `qExpansion_heckeSlashUpperTri`: the
   coefficient formula `aₘ = a_{p m}` and its power-series form, and
   `qExpansion_coeff_heckeSlashUpperTri'`, the same for a bundled modular form.
-* `HeckeRing.GL2.periodic_heckeSlashUpperTri`,
-  `HeckeRing.GL2.analyticAt_cuspFunction_heckeSlashUpperTri`: the two intermediate facts the
-  uniqueness argument needs, stated separately because they are about the sum itself rather than
-  about its coefficients.
+* `HeckeRing.GL2.periodic_heckeSlashUpperTri`: the periodicity fact used by the coefficient
+  uniqueness argument.
 
 ## Provenance
 
@@ -120,7 +118,8 @@ lemma slash_upperTriRep_apply (f : ℍ → ℂ) (b : Fin p) (τ : ℍ) :
     simp [UpperHalfPlane.denom]
   rw [hdet, hden, abs_of_nonneg (Nat.cast_nonneg p), Complex.ofReal_natCast, mul_assoc,
     ← zpow_add₀ hp0]
-  rw [show k - 1 + -k = -1 by ring, zpow_neg_one, mul_comm]
+  have hk : k - 1 + -k = (-1 : ℤ) := by omega
+  rw [hk, zpow_neg_one, mul_comm]
 
 /-- The `q`-expansion of `f` transported through one representative: slashing by
 `!![1, b; 0, p]` scales the sum by `p⁻¹` and twists the `m`-th term by the root of unity
@@ -160,7 +159,7 @@ theorem hasSum_qExpansion_heckeSlashUpperTri (hp : 0 < p) {f : ℍ → ℂ}
               𝕢 (p : ℝ) (b : ℂ) ^ m := fun b ↦ by ring
     rw [Finset.sum_congr rfl fun b _ ↦ hfac b, ← Finset.mul_sum,
       Fin.sum_univ_eq_sum_range (fun b ↦ 𝕢 (p : ℝ) (b : ℂ) ^ m),
-      TauCeti.Periodic.sum_qParam_natCast_pow hp.ne' m]
+      TauCeti.Periodic.sum_qParam_natCast_pow m]
     split_ifs
     · field_simp
     · ring
@@ -188,7 +187,7 @@ theorem periodic_heckeSlashUpperTri {f : ℍ → ℂ} (hfper : Periodic (f ∘ o
 
 /-- The cusp function of the upper-triangular sum is analytic at `q = 0`: the sum inherits
 periodicity, holomorphy and boundedness at `i∞` from `f`. -/
-theorem analyticAt_cuspFunction_heckeSlashUpperTri {f : ℍ → ℂ}
+private theorem analyticAt_cuspFunction_heckeSlashUpperTri {f : ℍ → ℂ}
     (hfper : Periodic (f ∘ ofComplex) 1) (hfhol : MDiff f) (hfbdd : IsBoundedAtImInfty f) :
     AnalyticAt ℂ (cuspFunction 1 (heckeSlashUpperTri k p f)) 0 :=
   UpperHalfPlane.analyticAt_cuspFunction_zero one_pos (periodic_heckeSlashUpperTri k p hfper)
@@ -202,6 +201,7 @@ Diamond–Shurman recurrence `aₘ(Tₚ f) = a_{m p}(f) + χ(p) p^{k−1} a_{m/p
 comes from the remaining representative `!![p, 0; 0, 1]`, which is not part of this sum. Note
 that the weight has disappeared: the automorphy factor of each representative is `p⁻¹`
 whatever `k` is, and the `p` cancels against the number of offsets. -/
+@[simp]
 theorem qExpansion_coeff_heckeSlashUpperTri (hp : 0 < p) {f : ℍ → ℂ}
     (hfper : Periodic (f ∘ ofComplex) 1) (hfhol : MDiff f) (hfbdd : IsBoundedAtImInfty f)
     (m : ℕ) :
@@ -223,6 +223,7 @@ theorem qExpansion_heckeSlashUpperTri (hp : 0 < p) {f : ℍ → ℂ}
 `f` a modular form of weight `k` on a group with `1` among its strict periods — every
 congruence subgroup between `Γ₁(N)` and `Γ₀(N)` has this, since it contains `T` — the
 upper-triangular sum reads off the coefficients of `f` along `p ℕ`. -/
+@[simp]
 theorem qExpansion_coeff_heckeSlashUpperTri' {F : Type*} [FunLike F ℍ ℂ]
     {Γ : Subgroup (GL (Fin 2) ℝ)} [ModularFormClass F Γ k] (hΓ : (1 : ℝ) ∈ Γ.strictPeriods)
     (hp : 0 < p) (f : F) (m : ℕ) :

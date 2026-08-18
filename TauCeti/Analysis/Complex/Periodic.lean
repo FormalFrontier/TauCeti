@@ -68,8 +68,10 @@ unity, so summing their `m`-th powers gives `p` when `p ∣ m` and `0` otherwise
 
 This is the identity that makes a sum over the offsets `b < p` of a translated
 `q`-expansion pick out the coefficients in the arithmetic progression `p ℕ`. -/
-theorem sum_qParam_natCast_pow {p : ℕ} (hp : p ≠ 0) (m : ℕ) :
+theorem sum_qParam_natCast_pow {p : ℕ} (m : ℕ) :
     ∑ b ∈ Finset.range p, 𝕢 (p : ℝ) (b : ℂ) ^ m = if p ∣ m then (p : ℂ) else 0 := by
+  rcases eq_or_ne p 0 with rfl | hp
+  · simp
   -- Every value `𝕢 p b` is a power of the primitive root `ζ = 𝕢 p 1`, so the sum is geometric
   -- in `ζ ^ m`.
   have hζ : IsPrimitiveRoot (𝕢 (p : ℝ) 1) p := by
