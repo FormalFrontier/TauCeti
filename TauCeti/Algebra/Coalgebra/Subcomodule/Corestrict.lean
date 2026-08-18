@@ -182,41 +182,6 @@ theorem corestrictOrderIso_symm_apply (e : C ≃ₗc[R] D)
     ext m
     rfl
 
-/-- Membership is unchanged by the forward subcomodule correspondence. -/
-theorem mem_corestrictOrderIso (e : C ≃ₗc[R] D) (W : Subcomodule R C M) (m : M) :
-    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-    m ∈ corestrictOrderIso e W ↔ m ∈ W :=
-  by
-    let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-    rw [corestrictOrderIso_apply, mem_corestrict]
-
-/-- Membership is unchanged by the inverse subcomodule correspondence. -/
-theorem mem_corestrictOrderIso_symm (e : C ≃ₗc[R] D)
-    (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-      Subcomodule R D M) (m : M) :
-    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-    m ∈ (corestrictOrderIso e).symm W ↔ m ∈ W :=
-  by
-    let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-    -- Expose subcomodule membership as submodule membership so the carrier lemma can rewrite it.
-    change m ∈ (corestrictSymm e W).toSubmodule ↔ m ∈ W.toSubmodule
-    rw [corestrictSymm_toSubmodule]
-
-/-- The forward subcomodule correspondence preserves the underlying submodule. -/
-theorem corestrictOrderIso_apply_toSubmodule (e : C ≃ₗc[R] D)
-    (W : Subcomodule R C M) :
-    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-    (corestrictOrderIso e W).toSubmodule = W.toSubmodule :=
-  (rfl)
-
-/-- The inverse subcomodule correspondence preserves the underlying submodule. -/
-theorem corestrictOrderIso_symm_apply_toSubmodule (e : C ≃ₗc[R] D)
-    (W : letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-      Subcomodule R D M) :
-    letI : Comodule R D M := Comodule.Corestrict e.toCoalgHom
-    ((corestrictOrderIso e).symm W).toSubmodule = W.toSubmodule :=
-  (rfl)
-
 end Subcomodule
 
 end TauCeti

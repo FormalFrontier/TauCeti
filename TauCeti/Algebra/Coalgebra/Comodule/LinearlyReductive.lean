@@ -167,9 +167,11 @@ theorem isCompletelyReducible_corestrict_iff_of_coalgEquiv (e : C ≃ₗc[k] D)
     Subcomodule.corestrictOrderIso e.symm
   constructor
   · exact isCompletelyReducible_of_orderIso k subcomoduleEquiv.symm (OrderIso.refl _)
-      (fun A ↦ Subcomodule.corestrictOrderIso_symm_apply_toSubmodule e.symm A)
+      (fun A ↦ by simp [subcomoduleEquiv])
   · exact isCompletelyReducible_of_orderIso k subcomoduleEquiv (OrderIso.refl _)
-      (fun A ↦ Subcomodule.corestrictOrderIso_apply_toSubmodule e.symm A)
+      (fun A ↦ by
+        simpa [subcomoduleEquiv] using
+          Subcomodule.corestrict_toSubmodule e.symm.toCoalgHom A)
 
 end Equiv
 
