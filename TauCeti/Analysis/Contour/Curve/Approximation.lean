@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Analysis.Calculus.ContDiff.Basic
 public import Mathlib.Analysis.Complex.Basic
-public import Mathlib.Analysis.SpecialFunctions.Bernstein
+import Mathlib.Analysis.SpecialFunctions.Bernstein
 import Mathlib.Analysis.Calculus.ContDiff.Polynomial
 import Mathlib.Topology.ContinuousMap.Compact
 
