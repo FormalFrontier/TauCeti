@@ -52,7 +52,8 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
 * `integrableExpSet_id_uniformMeasure` — every exponential moment exists, for every pair of
   endpoints;
 * `mgf_id_uniformMeasure_zero` and `mgf_id_uniformMeasure` — the moment generating function, split
-  at the removable singularity `t = 0`.
+  at the removable singularity `t = 0`;
+* `map_uniformMeasure_affine` — every uniform law is an affine image of the standard one.
 
 ## Implementation
 
@@ -65,8 +66,7 @@ side condition.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — the cumulant generating function, the characteristic function, the affine
-  transport `(uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b`, and
+  targets of that item — the cumulant generating function, the characteristic function, and
   parameter measurability — are not built here.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
@@ -308,6 +308,53 @@ theorem mgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
   simp only [id_eq]
   rw [hint, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le, smul_eq_mul]
   field_simp
+
+/-! ### Affine transport
+
+Every uniform law is an affine image of the standard one on `Set.Ioc 0 1`. This is what lets a
+statement proved for `uniformMeasure 0 1` be transported to a general interval instead of reproved,
+and it is the scalar case of the change-of-variables pattern the later families reuse.
+
+The two supporting lemmas are `private`: both are generic facts about Lebesgue measure and affine
+maps with no uniform-distribution content, and exposing them from a distribution-specific module
+would put them in the wrong place. If a later target needs either publicly, relocating it to a
+general measure module is its own focused change. -/
+
+/-- The pushforward of Lebesgue measure under an affine map `x ↦ a + c * x`.
+
+Only `c ≠ 0` is needed; the translation is measure-preserving and the scaling contributes
+`|c|⁻¹`. -/
+private theorem map_volume_affine {a c : ℝ} (hc : c ≠ 0) :
+    Measure.map (fun x => a + c * x) volume = ENNReal.ofReal |c|⁻¹ • volume := by
+  have h : (fun x : ℝ => a + c * x) = (fun y => a + y) ∘ (fun x => c * x) := rfl
+  rw [h, ← Measure.map_map (by fun_prop) (by fun_prop),
+    Real.map_volume_mul_left hc, Measure.map_smul,
+    Measure.IsAddLeftInvariant.map_add_left_eq_self]
+  congr 1
+  rw [abs_inv]
+
+/-- The affine map carries `Set.Ioc 0 1` onto `Set.Ioc a b`, stated as a preimage. -/
+private theorem preimage_affine_Ioc {a b : ℝ} (hab : a < b) :
+    (fun x : ℝ => a + (b - a) * x) ⁻¹' Set.Ioc a b = Set.Ioc 0 1 := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  ext x
+  simp only [Set.mem_preimage, Set.mem_Ioc]
+  constructor
+  · rintro ⟨h1, h2⟩
+    exact ⟨by nlinarith, by nlinarith⟩
+  · rintro ⟨h1, h2⟩
+    exact ⟨by nlinarith, by nlinarith⟩
+
+/-- **Every uniform law is an affine image of the standard one.** -/
+theorem map_uniformMeasure_affine {a b : ℝ} (hab : a < b) :
+    (uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hmeas : Measurable (fun x : ℝ => a + (b - a) * x) := by fun_prop
+  have h01 : uniformMeasure 0 1 = volume.restrict (Set.Ioc (0 : ℝ) 1) := by
+    rw [uniformMeasure_eq_smul]; norm_num
+  rw [h01, ← preimage_affine_Ioc hab, ← Measure.restrict_map hmeas measurableSet_Ioc,
+    map_volume_affine (ne_of_gt hba), abs_of_pos hba, Measure.restrict_smul,
+    uniformMeasure_eq_smul, ENNReal.ofReal_inv_of_pos hba]
 
 end Probability
 

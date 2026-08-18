@@ -363,6 +363,21 @@ namespace GridRectangleBetween
 
 variable {n : ℕ} {x y : GridState n}
 
+/-- The unordered finite set of side columns of an oriented grid rectangle. -/
+def sideColumns (R : GridRectangleBetween x y) : Finset (Fin n) :=
+  {R.left, R.right}
+
+/-- Membership in the side-column set of an oriented grid rectangle. -/
+@[simp]
+theorem mem_sideColumns (R : GridRectangleBetween x y) (c : Fin n) :
+    c ∈ R.sideColumns ↔ c = R.left ∨ c = R.right := by
+  simp [sideColumns]
+
+/-- An oriented grid rectangle has exactly two side columns. -/
+@[simp]
+theorem card_sideColumns (R : GridRectangleBetween x y) : R.sideColumns.card = 2 := by
+  simp [sideColumns, R.left_ne_right]
+
 /-- A rectangle between two grid states is determined by its two side columns. -/
 theorem sidePair_injective :
     Function.Injective fun R : GridRectangleBetween x y => (R.left, R.right) := by

@@ -38,6 +38,8 @@ universal property in `LocalizationTopology.UniversalProperty`, the completion `
 * `hasBasis_nhds_zero_locTopology`, `isTopologicalRing_locTopology` and
   `nonarchimedeanRing_locTopology`: the contract of `locTopology`, to be used in place of
   unfolding the construction.
+* `hasDenominatorPower_of_idealOfDefinition_le_span`: numerators containing a subset of `A₀`
+  whose span contains `I` supply the standing denominator-power hypothesis for every denominator.
 * `isHuberRing_locTopology`: `Aₛ` under `locTopology` is a Huber ring.
 * `isBounded_image_algebraMap_of_isBounded` and `isPowerBounded_algebraMap_of_isPowerBounded`:
   bounded sets have bounded image, so power-orbits transfer and each power-bounded *element*
@@ -236,6 +238,31 @@ theorem hasDenominatorPower_of_pow_le_span (P : PairOfDefinition A) (T : Finset 
   rw [hb', divBy_mul_cancel_left]
   exact algebraMap_mem_locSubring P T s S c.property
 
+/-- **Introduction from a generating set of `I`**: if the numerators `T` contain a set `G ⊆ A₀`
+whose span is all of `I`, the standing hypothesis holds for every denominator, with `N = 1`.
+Every element of `I` is an `A₀`-linear combination of the elements of `G`, and division by the
+fixed denominator is linear in the numerator, so `b/s` is an `A₀`-combination of the fractions
+`g/s`, all of which lie in `D`. -/
+theorem hasDenominatorPower_of_idealOfDefinition_le_span (P : PairOfDefinition A)
+    (T : Finset A) {G : Set P.ringOfDefinition} (hGT : ∀ g ∈ G, (g : A) ∈ T)
+    (hG : P.idealOfDefinition ≤ Ideal.span G)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S] :
+    HasDenominatorPower P T s S := by
+  rw [hasDenominatorPower_iff]
+  refine ⟨1, fun b hb ↦ ?_⟩
+  replace hb : b ∈ Ideal.span G := hG (by simpa using hb)
+  induction hb using Submodule.span_induction with
+  | mem x hx =>
+    exact divBy_mem_locSubring P T s S (hGT x hx)
+  | zero => simp
+  | add x y _ _ hx hy =>
+    simpa using (locSubring P T s S).add_mem hx hy
+  | smul r x _ hx =>
+    have hmul := (locSubring P T s S).mul_mem
+      (algebraMap_mem_locSubring P T s S r.property) hx
+    rw [← divBy_mul] at hmul
+    rw [smul_eq_mul, MulMemClass.coe_mul]
+    exact hmul
 /-! ### Passing to a denominator that is a multiple
 
 A localisation away from `u` maps to one away from a multiple `w = u * r`, and under that map `D`
