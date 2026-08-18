@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -12,7 +13,8 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Norm
 
 An integral lattice is **even** when the integral norm of every lattice vector is an even integer.
 This file characterizes evenness on generating sets, integral bases, and Gram matrices, and
-establishes non-existence results for odd or non-even norm vectors in even lattices.
+establishes non-existence results for odd or non-even norm vectors in even lattices. It also proves
+that evenness is invariant under integral-lattice isometry.
 
 The basis characterization is the practical entry point: a lattice given by a Gram matrix is even
 exactly when every diagonal entry is even. In particular, off-diagonal entries impose no parity
@@ -29,6 +31,7 @@ condition, because they occur twice in the norm of an integral linear combinatio
   even.
 * `TauCeti.IntegralLattice.isEven_ofGramMatrix_iff`: a Gram lattice is even exactly when its
   diagonal entries are even.
+* `TauCeti.IntegralLattice.Isometry.isEven_iff`: evenness is invariant under lattice isometry.
 * `TauCeti.IntegralLattice.IsEven.exists_eq_two_mul_of_mem_vectorsOfNorm`: a norm represented by an
   even lattice is twice an integer.
 * `TauCeti.IntegralLattice.IsEven.vectorsOfNorm_eq_empty_of_not_even`: an even lattice has no
@@ -138,6 +141,21 @@ theorem isEven_ofGramMatrix_iff {ι : Type*} [Fintype ι] (b : Basis ι ℚ V)
   apply forall_congr'
   intro i
   rw [integralNorm_apply, integralForm_ofGramMatrix_apply]
+
+/-- Evenness is invariant under integral-lattice isometry. -/
+theorem Isometry.isEven_iff {W : Type*} [AddCommGroup W] [Module ℚ W]
+    {L : IntegralLattice V} {M : IntegralLattice W} (e : Isometry L M) :
+    L.IsEven ↔ M.IsEven := by
+  constructor
+  · intro hL y
+    have h := hL (e.carrierEquiv.symm y)
+    have hnorm := e.integralNorm_carrierEquiv (e.carrierEquiv.symm y)
+    rw [LinearEquiv.apply_symm_apply] at hnorm
+    rw [hnorm]
+    exact h
+  · intro hM x
+    have h := hM (e.carrierEquiv x)
+    rwa [e.integralNorm_carrierEquiv] at h
 
 /-! ## Prescribed norm properties for even lattices -/
 

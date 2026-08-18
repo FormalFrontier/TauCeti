@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -56,7 +57,7 @@ ReductiveGroups roadmap. It uses the representation--comodule dictionary built i
 
 public section
 
-open WithConv
+open LinearMap WithConv
 
 namespace TauCeti
 

@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -25,16 +25,12 @@ representative but not another directing measure.
 
 ## Main results
 
-* `ConditionallyIIDWith.lintegral_mul_indicator_iInter` — the weighted block identity: testing the
-  joint-law disintegration against `g (ν ω)` times the indicator of a block rectangle turns the
-  block into the `m`-th power `(ν ω) B ^ m`. Its one- and two-coordinate specializations are
-  `ConditionallyIIDWith.lintegral_mul_indicator_single` and
-  `ConditionallyIIDWith.lintegral_mul_indicator_pair`.
-* `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` — the `L²` rate: for the empirical
-  frequency of a measurable set `B` along the first `n` coordinates, the integral of its squared
-  deviation from `(ν ·) B` is exactly `(∫ (ν ·) B - ∫ ((ν ·) B) ^ 2) / n`. Under the probability
-  measure this file works with, that is the mean square error.
 * `conditionallyIID_ae_unique` — two directing measures of the same process are a.e. equal.
+* `ConditionallyIIDWith.ae_measure_apply_eq` — the setwise form it is promoted from: on each fixed
+  measurable set the two directing masses agree a.e.
+
+The `L²` estimates driving both come from `ConditionallyIID/Moments.lean`; this file consumes them
+and does no moment computation of its own.
 
 ## Implementation
 
@@ -55,10 +51,10 @@ approximated by the *same* averages, so the triangle inequality forces `∫ (q -
 measurable `B`, and a countable generating set algebra promotes that to a.e. equality of the random
 measures themselves.
 
-The hypothesis `[MeasurableSpace.CountablyGenerated α]` is what the final promotion needs;
-`TauCetiRoadmap/Exchangeability/README.md`, Layer 6, states `conditionallyIID_ae_unique` with
-`[StandardBorelSpace α] [Nonempty α]`, which is stronger — `countablyGenerated_of_standardBorel`
-supplies the instance, and nonemptiness is never used, since no measure is constructed here.
+The hypothesis `[MeasurableSpace.CountablyGenerated α]` is what the final promotion needs, and is
+all it needs: no measure on `α` is constructed here, so no standard-Borel or non-empty structure
+is required.
+
 The coordinates are only assumed a.e. measurable (`∀ i, AEMeasurable (X i) μ`), as elsewhere in the
 measure-theoretic exchangeability API: every statement here sees `X` through integrals, hence only
 modulo `μ`-a.e. equality.
@@ -253,10 +249,9 @@ is false at the level of witnesses: for a nondegenerate mixing law an independen
 directing measure is another mixing representative, and only the mixing law `μ.map ν` is determined
 (`mixedIID_mixingLaw_unique`).
 
-`TauCetiRoadmap/Exchangeability/README.md` (Layer 6) states this with `[StandardBorelSpace α]`,
-which supplies `[MeasurableSpace.CountablyGenerated α]` through
-`countablyGenerated_of_standardBorel`; the extra `[Nonempty α]` is not needed, since no measure on
-`α` is constructed here. -/
+`[MeasurableSpace.CountablyGenerated α]` is the whole requirement on `α`: the proof compares two
+directing measures on a countable generating algebra and never constructs a measure, so neither
+standard-Borel structure nor non-emptiness is needed. -/
 theorem conditionallyIID_ae_unique [IsProbabilityMeasure μ] [CountablyGenerated α]
     (hX : ∀ i, AEMeasurable (X i) μ) (h : ConditionallyIIDWith μ X ν)
     (h' : ConditionallyIIDWith μ X ν') : ν =ᵐ[μ] ν' :=

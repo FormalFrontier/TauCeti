@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -330,6 +331,10 @@ def typeASimplyConnectedRootDatum (n : ℕ) :
   reflectionPerm := typeAReflectionPerm n
   reflectionPerm_root := typeAReflectionPerm_root
   reflectionPerm_coroot := typeAReflectionPerm_coroot
+
+/-- The pinned pairing of type `Aₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeASimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeASimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
 
 private lemma root_typeASimplyConnectedRootDatum (k : Fin (n * (n + 1))) :
     (typeASimplyConnectedRootDatum n).root k = typeAPairRoot ((typeAIndexEquiv n).symm k) :=

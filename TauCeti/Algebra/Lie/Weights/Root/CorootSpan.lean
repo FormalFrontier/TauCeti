@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -81,12 +81,14 @@ def rootCorootSpan (x : Weight K H L → L) : Submodule ℤ L :=
 
 omit [CharZero K] [LieModule.IsTriangularizable K H L] in
 /-- A root vector belongs to its root--coroot span. -/
+@[simp]
 theorem rootVector_mem_rootCorootSpan (x : Weight K H L → L) (α : Weight K H L) :
     x α ∈ rootCorootSpan x :=
   Submodule.subset_span (Or.inl (Set.mem_range_self α))
 
 omit [CharZero K] [LieModule.IsTriangularizable K H L] in
 /-- A coroot belongs to every root--coroot span. -/
+@[simp]
 theorem coroot_mem_rootCorootSpan (x : Weight K H L → L) (α : Weight K H L) :
     (coroot α : L) ∈ rootCorootSpan x :=
   Submodule.subset_span (Or.inr (Set.mem_range_self α))

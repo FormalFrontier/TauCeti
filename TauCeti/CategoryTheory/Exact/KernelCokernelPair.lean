@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Homology.ShortComplex.Biproduct
 public import Mathlib.Algebra.Homology.ShortComplex.ShortExact
 public import Mathlib.CategoryTheory.Limits.Shapes.Opposites.Kernels
 
@@ -215,26 +216,35 @@ theorem of_hasBinaryBiproduct (X₁ X₂ : C) [HasBinaryBiproduct X₁ X₂] :
 theorem biprod [HasBinaryBiproduct S₁.X₁ S₂.X₁] [HasBinaryBiproduct S₁.X₂ S₂.X₂]
     [HasBinaryBiproduct S₁.X₃ S₂.X₃] (h₁ : IsKernelCokernelPair S₁)
     (h₂ : IsKernelCokernelPair S₂) :
-    IsKernelCokernelPair (ShortComplex.mk (biprod.map S₁.f S₂.f)
-      (biprod.map S₁.g S₂.g) (by ext <;> simp [reassoc_of% S₁.zero, reassoc_of% S₂.zero])) :=
+    IsKernelCokernelPair (shortComplexBiprod S₁ S₂) := by
+  -- The projection lemmas cannot rewrite this dependent predicate: its kernel and cokernel
+  -- forks also depend on the composite-zero proof. Expose the short complex once here.
+  change IsKernelCokernelPair
+    (ShortComplex.mk (biprod.map S₁.f S₂.f) (biprod.map S₁.g S₂.g)
+      (shortComplexBiprod_zero S₁ S₂))
   have := h₁.mono_f
   have := h₂.mono_f
   have := h₁.epi_g
   have := h₂.epi_g
-  { nonempty_fIsKernel := ⟨KernelFork.IsLimit.ofι' _ _ fun k hk =>
-      ⟨biprod.lift
-        (h₁.lift (k ≫ biprod.fst) (by
-          rw [Category.assoc, ← biprod.map_fst S₁.g S₂.g, ← Category.assoc, hk, zero_comp]))
-        (h₂.lift (k ≫ biprod.snd) (by
-          rw [Category.assoc, ← biprod.map_snd S₁.g S₂.g, ← Category.assoc, hk, zero_comp])),
-        by apply biprod.hom_ext <;> simp⟩⟩
-    nonempty_gIsCokernel := ⟨CokernelCofork.IsColimit.ofπ' _ _ fun k hk =>
-      ⟨biprod.desc
-        (h₁.desc (biprod.inl ≫ k) (by
-          rw [← Category.assoc, ← biprod.inl_map S₁.f S₂.f, Category.assoc, hk, comp_zero]))
-        (h₂.desc (biprod.inr ≫ k) (by
-          rw [← Category.assoc, ← biprod.inr_map S₁.f S₂.f, Category.assoc, hk, comp_zero])),
-        by apply biprod.hom_ext' <;> simp⟩⟩ }
+  exact
+    { nonempty_fIsKernel := ⟨KernelFork.IsLimit.ofι' _ _ fun k hk =>
+        ⟨biprod.lift
+          (h₁.lift (k ≫ biprod.fst) (by
+            rw [Category.assoc, ← biprod.map_fst S₁.g S₂.g, ← Category.assoc, hk,
+              zero_comp]))
+          (h₂.lift (k ≫ biprod.snd) (by
+            rw [Category.assoc, ← biprod.map_snd S₁.g S₂.g, ← Category.assoc, hk,
+              zero_comp])),
+          by apply biprod.hom_ext <;> simp⟩⟩
+      nonempty_gIsCokernel := ⟨CokernelCofork.IsColimit.ofπ' _ _ fun k hk =>
+        ⟨biprod.desc
+          (h₁.desc (biprod.inl ≫ k) (by
+            rw [← Category.assoc, ← biprod.inl_map S₁.f S₂.f, Category.assoc, hk,
+              comp_zero]))
+          (h₂.desc (biprod.inr ≫ k) (by
+            rw [← Category.assoc, ← biprod.inr_map S₁.f S₂.f, Category.assoc, hk,
+              comp_zero])),
+          by apply biprod.hom_ext' <;> simp⟩⟩ }
 
 end IsKernelCokernelPair
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,15 +19,15 @@ separably closed field.
 
 ## Main definitions and results
 
-* `TauCeti.CliffordAlgebra.pinDoubleCoverOfSurjective` packages any surjective Pin action as a
+* `CliffordAlgebra.pinDoubleCoverOfSurjective` packages any surjective Pin action as a
   group extension.
-* `TauCeti.CliffordAlgebra.pinDoubleCover` packages
+* `CliffordAlgebra.pinDoubleCover` packages
   `1 → ZMod 2 → Pin(Q) → O(Q) → 1` as a group extension.
-* `TauCeti.CliffordAlgebra.pinDoubleCoverOfSurjective_inl_ofAdd_one` and
-  `TauCeti.CliffordAlgebra.pinDoubleCoverOfSurjective_rightHom` characterize the generic
+* `CliffordAlgebra.pinDoubleCoverOfSurjective_inl_ofAdd_one` and
+  `CliffordAlgebra.pinDoubleCoverOfSurjective_rightHom` characterize the generic
   extension.
-* `TauCeti.CliffordAlgebra.pinDoubleCover_inl_ofAdd_one` and
-  `TauCeti.CliffordAlgebra.pinDoubleCover_rightHom` characterize the separably closed case.
+* `CliffordAlgebra.pinDoubleCover_inl_ofAdd_one` and
+  `CliffordAlgebra.pinDoubleCover_rightHom` characterize the separably closed case.
 
 ## References
 
@@ -38,9 +39,10 @@ from `TauCeti.LinearAlgebra.CliffordAlgebra.Spin.DoubleCover`.
 
 public section
 
-open CliffordAlgebra
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -109,4 +111,4 @@ theorem pinDoubleCover_rightHom [IsSepClosed K]
     (pinDoubleCover Q hQ).rightHom = pinToOrthogonal Q := by
   rw [pinDoubleCover_def, pinDoubleCoverOfSurjective_rightHom]
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,8 +24,9 @@ The underlying limit is `TauCeti.Semigroups.yosidaLimit`, shared with the Lumer-
 construction. The semigroup packaging is obtained from the shared constructor
 `TauCeti.Semigroups.yosidaLimitSemigroupOfTendsto` in `LimitSemigroup.lean`.
 
-This is the limit stage of the Hille--Yosida generation theorem. Identifying the generator with
-`A`, and then undoing the scalar shift, remain separate steps.
+This is the limit stage of the Hille--Yosida generation theorem. The generator identification and
+the scalar unshift are carried out in
+`TauCeti/Analysis/Semigroups/Generation/HilleYosida/Generation.lean`.
 
 ## Main results
 

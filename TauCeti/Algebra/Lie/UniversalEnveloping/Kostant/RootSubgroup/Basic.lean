@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -61,9 +61,12 @@ variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
 variable (i : ι)
 variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
 
+-- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
+attribute [local instance high] Algebra.toModule
+
 section Points
 
-variable {A : Type*} [CommRing A]
+variable {A : Type*} [CommRing A] [Algebra ℤ A]
 
 /-- The root subgroup attached to a nilpotent root-vector action, on points valued in a
 commutative ring `A`.
@@ -87,6 +90,17 @@ divided-power exponential with the corresponding `𝔾ₐ` parameter. -/
   rw [kostantRootSubgroupPoints]
   exact (LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M)).apply_symm_apply _
 
+/-- The invertible linear map underlying a Kostant root-subgroup point is the base-changed
+divided-power exponential at the corresponding parameter. -/
+theorem kostantRootSubgroupPoints_val (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    (kostantRootSubgroupPoints e h ρ M hM i hnil f).val =
+      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
+        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
+        (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A) f)) := by
+  refine LinearMap.ext fun z => ?_
+  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv, kostantRootSubgroupPoints_toLinearEquiv,
+    coe_baseChangeKostantExpHom]
+
 /-- On an elementary tensor, a Kostant root-subgroup point acts by the expected finite
 divided-power formula. -/
 @[simp] theorem kostantRootSubgroupPoints_tmul
@@ -99,9 +113,7 @@ divided-power formula. -/
             (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M n
             (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem
               e h ρ hM i n hv) m := by
-  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv]
-  rw [coe_baseChangeKostantExpHom]
+  rw [kostantRootSubgroupPoints_val]
   exact baseChangeExp_tmul
     (R := A) (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
       (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem
@@ -111,6 +123,28 @@ divided-power formula. -/
 end Points
 
 section Naturality
+
+variable {A B : Type*} [CommRing A] [CommRing B] [Algebra ℤ A] [Algebra ℤ B]
+
+/-- Kostant root-subgroup points are natural between value rings carrying explicit `ℤ`-algebra
+structures. -/
+theorem map_kostantRootSubgroupPoints_algHom
+    (φ : A →ₐ[ℤ] B)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    ∀ z : A ⊗[ℤ] M,
+      TensorProduct.map φ.toLinearMap LinearMap.id
+          ((kostantRootSubgroupPoints e h ρ M hM i hnil f).val z) =
+        (kostantRootSubgroupPoints e h ρ M hM i hnil
+            (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ f)).val
+          (TensorProduct.map φ.toLinearMap LinearMap.id z) := by
+  intro z
+  rw [kostantRootSubgroupPoints_val, kostantRootSubgroupPoints_val,
+    AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
+  exact map_baseChangeExp_algHom φ _ _ _ _ z
+
+end Naturality
+
+section CanonicalNaturality
 
 variable {A B : Type*} [CommRing A] [CommRing B]
 
@@ -126,14 +160,8 @@ theorem map_kostantRootSubgroupPoints
         (kostantRootSubgroupPoints e h ρ M hM i hnil
             (AlgHom.mapValue (H := SymmetricAlgebra ℤ ℤ) φ.toIntAlgHom f)).val
           (TensorProduct.map φ.toIntAlgHom.toLinearMap LinearMap.id z) := by
-  intro z
-  rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
-    ← LinearMap.GeneralLinearGroup.coe_toLinearEquiv,
-    kostantRootSubgroupPoints_toLinearEquiv, coe_baseChangeKostantExpHom,
-    AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue]
-  exact map_baseChangeExp φ _ _ _ _ z
+  exact map_kostantRootSubgroupPoints_algHom e h ρ M hM i hnil φ.toIntAlgHom f
 
-end Naturality
+end CanonicalNaturality
 
 end TauCeti.UniversalEnvelopingAlgebra

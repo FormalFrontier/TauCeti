@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -68,6 +68,14 @@ noncomputable def kostantRootSubgroupMatrix :
       Matrix.GeneralLinearGroup η A :=
   (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
     (kostantRootSubgroupPoints e h ρ M hM i hnil)
+
+/-- The public unfolding equation for the matrix-valued root subgroup, exposing across the module
+boundary the divided-power action followed by the change to the coordinates of `b.baseChange A`. -/
+theorem kostantRootSubgroupMatrix_def :
+    kostantRootSubgroupMatrix e h ρ M hM i hnil b =
+      (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom).comp
+        (kostantRootSubgroupPoints e h ρ M hM i hnil) := by
+  rw [kostantRootSubgroupMatrix]
 
 /-- An entry of the root-subgroup matrix is the corresponding coordinate of the exponential
 action on a base-changed basis vector. -/

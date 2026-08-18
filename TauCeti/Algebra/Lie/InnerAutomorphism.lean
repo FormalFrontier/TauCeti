@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.Algebra.Lie.AdjointAction.Basic
 public import Mathlib.Algebra.Lie.AdjointAction.Derivation
 import Mathlib.Algebra.Ring.Action.ConjAct
+import TauCeti.Algebra.Ring.Commutator
 
 public section
 
@@ -235,68 +237,6 @@ private theorem exp_mul_exp_mul_exp_neg {x y : A} (hx : IsNilpotent x)
         (expAd (K := ℚ) x (LieAlgebra.ad_nilpotent_of_nilpotent (R := ℚ) hx) y) := by
       rw [expAd_apply_eq_exp_mul_exp_neg hx, he]
 
-omit [Algebra ℚ A] in
-private lemma lie_mul (y a b : A) : ⁅y, a * b⁆ = ⁅y, a⁆ * b + a * ⁅y, b⁆ := by
-  simp only [Ring.lie_def, mul_sub, sub_mul, mul_assoc]
-  abel
-
-omit [Algebra ℚ A] in
-private lemma lie_mul_z_pow {y z : A} (hyz : ⁅y, z⁆ = 0) (a : A) :
-    ∀ k : ℕ, ⁅y, a * z ^ k⁆ = ⁅y, a⁆ * z ^ k
-  | 0 => by simp
-  | k + 1 => by
-    rw [pow_succ z k, ← mul_assoc a (z ^ k) z, lie_mul y (a * z ^ k) z, hyz, mul_zero, add_zero,
-      lie_mul_z_pow hyz a k, mul_assoc, ← pow_succ z k]
-
-private lemma lie_pow_succ {x y z : A} (hyx : ⁅y, x⁆ = -z) (hxz : Commute x z) :
-    ∀ m : ℕ, ⁅y, x ^ (m + 1)⁆ = - ((m + 1 : ℚ) • (x ^ m * z))
-  | 0 => by
-    simp [hyx]
-  | m + 1 => by
-    rw [pow_succ x (m + 1), lie_mul y (x ^ (m + 1)) x, lie_pow_succ hyx hxz m, hyx]
-    have hcomm : x ^ m * z * x = x ^ (m + 1) * z := by
-      rw [mul_assoc, hxz.symm.eq, ← mul_assoc, ← pow_succ x m]
-    rw [neg_mul, smul_mul_assoc, hcomm, mul_neg, ← neg_add]
-    congr 1
-    nth_rw 2 [← one_smul ℚ (x ^ (m + 1) * z)]
-    rw [← add_smul]
-    congr 1
-    push_cast
-    ring
-
-private lemma isNilpotent_of_lie_eq_of_commute {x y z : A}
-    (hxy : ⁅x, y⁆ = z) (hxz : Commute x z) (hyz : Commute y z)
-    (hx : IsNilpotent x) : IsNilpotent z := by
-  obtain ⟨n, hn⟩ := hx
-  have hyz' : ⁅y, z⁆ = 0 := hyz.lie_eq
-  have hyx : ⁅y, x⁆ = -z := by rw [← neg_inj, lie_skew, hxy, neg_neg]
-  have hstep (m k : ℕ) (h : x ^ (m + 1) * z ^ k = 0) : x ^ m * z ^ (k + 1) = 0 := by
-    have hlie : ⁅y, x ^ (m + 1) * z ^ k⁆ = 0 := by rw [h, lie_zero]
-    rw [lie_mul_z_pow hyz', lie_pow_succ hyx hxz, neg_mul, smul_mul_assoc,
-      mul_assoc (x ^ m) z (z ^ k), ← pow_succ' z k, neg_eq_zero] at hlie
-    have hc : (m + 1 : ℚ) ≠ 0 := by positivity
-    have := congr_arg ((m + 1 : ℚ)⁻¹ • ·) hlie
-    rwa [inv_smul_smul₀ hc, smul_zero] at this
-  have hpow : ∀ k ≤ n, x ^ (n - k) * z ^ k = 0 := by
-    intro k
-    induction k with
-    | zero =>
-      intro _
-      simpa using hn
-    | succ k ih =>
-      intro hk
-      have hlt : k < n := Nat.lt_of_succ_le hk
-      have hle : k ≤ n := Nat.le_of_lt hlt
-      have heq : n - k = (n - k - 1) + 1 := by omega
-      have hprev := ih hle
-      rw [heq] at hprev
-      have hnext := hstep (n - k - 1) k hprev
-      have heq2 : n - (k + 1) = n - k - 1 := by omega
-      rwa [heq2]
-  refine ⟨n, ?_⟩
-  have htop := hpow n (le_refl n)
-  simpa using htop
-
 /-- **The central-commutator exponential relation.** If `[x, y] = z`, the element `z` commutes
 with `x` and `y`, and `x` and `y` are nilpotent, then
 `exp(x) exp(y) = exp(y) exp(z) exp(x)`.
@@ -309,7 +249,8 @@ theorem exp_mul_exp_eq_exp_mul_exp_mul_of_lie_eq_of_commute {x y z : A}
     (hx : IsNilpotent x) (hy : IsNilpotent y) :
     IsNilpotent.exp x * IsNilpotent.exp y =
       IsNilpotent.exp y * IsNilpotent.exp z * IsNilpotent.exp x := by
-  have hz : IsNilpotent z := isNilpotent_of_lie_eq_of_commute hxy hxz hyz hx
+  have hz : IsNilpotent z :=
+    Associative.isNilpotent_of_commutator_eq (by rw [← hxy, Ring.lie_def]; abel) hxz hyz hx
   have hconj : IsNilpotent.exp x * IsNilpotent.exp y * IsNilpotent.exp (-x) =
       IsNilpotent.exp y * IsNilpotent.exp z := by
     rw [exp_mul_exp_mul_exp_neg hx hy,

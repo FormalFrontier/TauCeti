@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -32,9 +33,9 @@ alone.
 Completeness then turns this Cauchy property into a candidate pointwise limit family.
 `TauCeti.Semigroups.hilleYosidaLimitSemigroup` in
 `TauCeti/Analysis/Semigroups/Generation/HilleYosida/Limit.lean` packages this family into a
-strongly continuous semigroup and establishes its growth bound `(0, M)`. Identifying its
-generator as `A`, and reducing the general growth exponent to zero
-(`TauCeti.LinearPMap.hilleYosida_zero_of`), remain separate steps of the generation theorem.
+strongly continuous semigroup and establishes its growth bound `(0, M)`. Its generator is
+identified as `A`, and the reduction from a general growth exponent is reversed, in
+`TauCeti/Analysis/Semigroups/Generation/HilleYosida/Generation.lean`.
 
 ## Main results
 

@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -73,6 +73,13 @@ def diagonalTorusCoordinates {A : Type w} [Monoid A] :
   toFun t i := t (ULift.up i)
   map_one' := rfl
   map_mul' _ _ := rfl
+
+/-- Restricting a universe-lifted coordinate family evaluates it at the canonical lift. -/
+@[simp]
+theorem diagonalTorusCoordinates_apply {A : Type w} [Monoid A]
+    (t : ULift.{u} (Fin N) → Aˣ) (i : Fin N) :
+    diagonalTorusCoordinates t i = t (ULift.up i) :=
+  (rfl)
 
 section Points
 
@@ -247,6 +254,19 @@ noncomputable def diagonalTorus :
     (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
       (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
     eqToHom (groupScheme_def R N).symm
+
+/-- The diagonal torus is relative spectrum applied contravariantly to its coordinate morphism,
+transported across the named presentations of the split torus and general linear group. -/
+theorem diagonalTorus_def :
+    diagonalTorus (R := R) (N := N) =
+      eqToHom
+          (DiagonalizableGroup.groupScheme_def R
+            (SplitTorus.characterGroup (ULift.{u} (Fin N)))) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
+        eqToHom (groupScheme_def R N).symm := by
+  unfold diagonalTorus
+  rfl
 
 section SchemePoints
 

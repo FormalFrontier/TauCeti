@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -16,11 +17,11 @@ classification.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.zmodTwoMulEquivKerPinToOrthogonal`: the kernel is canonically
+* `CliffordAlgebra.zmodTwoMulEquivKerPinToOrthogonal`: the kernel is canonically
   equivalent to `Multiplicative (ZMod 2)`.
-* `TauCeti.CliffordAlgebra.zmodTwoMulEquivKerPinToOrthogonal_apply_ofAdd_one`: the chosen
+* `CliffordAlgebra.zmodTwoMulEquivKerPinToOrthogonal_apply_ofAdd_one`: the chosen
   generator maps to the scalar `-1` inside the Pin group.
-* `TauCeti.CliffordAlgebra.zmodTwoMulEquivKerPinToOrthogonal_symm_apply_negOne`: the inverse
+* `CliffordAlgebra.zmodTwoMulEquivKerPinToOrthogonal_symm_apply_negOne`: the inverse
   sends the scalar `-1` to the chosen generator.
 
 ## References
@@ -32,7 +33,7 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 universe u v
 
@@ -124,4 +125,4 @@ theorem zmodTwoMulEquivKerPinToOrthogonal_symm_apply_negOne [Nontrivial M]
   rw [MulEquiv.symm_apply_eq]
   exact (zmodTwoMulEquivKerPinToOrthogonal_apply_ofAdd_one Q hQ).symm
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

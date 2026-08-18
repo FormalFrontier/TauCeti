@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,179 +34,171 @@ open _root_.Matrix
 
 namespace DynkinType
 
-private def e8PositiveCorootChunk0 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 0, 0, 0, 0, 0, 0, 0],
-  ![0, 1, 0, 0, 0, 0, 0, 0],
-  ![0, 0, 1, 0, 0, 0, 0, 0],
-  ![0, 0, 0, 1, 0, 0, 0, 0],
-  ![0, 0, 0, 0, 1, 0, 0, 0],
-  ![0, 0, 0, 0, 0, 1, 0, 0],
-  ![0, 0, 0, 0, 0, 0, 1, 0],
-  ![0, 0, 0, 0, 0, 0, 0, 1],
-  ![0, 0, 0, 0, 0, 0, 1, 1],
-  ![0, 0, 0, 0, 0, 1, 1, 0]
-]
-
-private def e8PositiveCorootChunk1 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![0, 0, 0, 0, 1, 1, 0, 0],
-  ![0, 0, 0, 1, 1, 0, 0, 0],
-  ![0, 0, 1, 1, 0, 0, 0, 0],
-  ![0, 1, 0, 1, 0, 0, 0, 0],
-  ![1, 0, 1, 0, 0, 0, 0, 0],
-  ![0, 0, 0, 0, 0, 1, 1, 1],
-  ![0, 0, 0, 0, 1, 1, 1, 0],
-  ![0, 0, 0, 1, 1, 1, 0, 0],
-  ![0, 0, 1, 1, 1, 0, 0, 0],
-  ![0, 1, 0, 1, 1, 0, 0, 0]
-]
-
-private def e8PositiveCorootChunk2 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![0, 1, 1, 1, 0, 0, 0, 0],
-  ![1, 0, 1, 1, 0, 0, 0, 0],
-  ![0, 0, 0, 0, 1, 1, 1, 1],
-  ![0, 0, 0, 1, 1, 1, 1, 0],
-  ![0, 0, 1, 1, 1, 1, 0, 0],
-  ![0, 1, 0, 1, 1, 1, 0, 0],
-  ![0, 1, 1, 1, 1, 0, 0, 0],
-  ![1, 0, 1, 1, 1, 0, 0, 0],
-  ![1, 1, 1, 1, 0, 0, 0, 0],
-  ![0, 0, 0, 1, 1, 1, 1, 1]
-]
-
-private def e8PositiveCorootChunk3 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![0, 0, 1, 1, 1, 1, 1, 0],
-  ![0, 1, 0, 1, 1, 1, 1, 0],
-  ![0, 1, 1, 1, 1, 1, 0, 0],
-  ![0, 1, 1, 2, 1, 0, 0, 0],
-  ![1, 0, 1, 1, 1, 1, 0, 0],
-  ![1, 1, 1, 1, 1, 0, 0, 0],
-  ![0, 0, 1, 1, 1, 1, 1, 1],
-  ![0, 1, 0, 1, 1, 1, 1, 1],
-  ![0, 1, 1, 1, 1, 1, 1, 0],
-  ![0, 1, 1, 2, 1, 1, 0, 0]
-]
-
-private def e8PositiveCorootChunk4 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 0, 1, 1, 1, 1, 1, 0],
-  ![1, 1, 1, 1, 1, 1, 0, 0],
-  ![1, 1, 1, 2, 1, 0, 0, 0],
-  ![0, 1, 1, 1, 1, 1, 1, 1],
-  ![0, 1, 1, 2, 1, 1, 1, 0],
-  ![0, 1, 1, 2, 2, 1, 0, 0],
-  ![1, 0, 1, 1, 1, 1, 1, 1],
-  ![1, 1, 1, 1, 1, 1, 1, 0],
-  ![1, 1, 1, 2, 1, 1, 0, 0],
-  ![1, 1, 2, 2, 1, 0, 0, 0]
-]
-
-private def e8PositiveCorootChunk5 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![0, 1, 1, 2, 1, 1, 1, 1],
-  ![0, 1, 1, 2, 2, 1, 1, 0],
-  ![1, 1, 1, 1, 1, 1, 1, 1],
-  ![1, 1, 1, 2, 1, 1, 1, 0],
-  ![1, 1, 1, 2, 2, 1, 0, 0],
-  ![1, 1, 2, 2, 1, 1, 0, 0],
-  ![0, 1, 1, 2, 2, 1, 1, 1],
-  ![0, 1, 1, 2, 2, 2, 1, 0],
-  ![1, 1, 1, 2, 1, 1, 1, 1],
-  ![1, 1, 1, 2, 2, 1, 1, 0]
-]
-
-private def e8PositiveCorootChunk6 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 1, 2, 2, 1, 1, 1, 0],
-  ![1, 1, 2, 2, 2, 1, 0, 0],
-  ![0, 1, 1, 2, 2, 2, 1, 1],
-  ![1, 1, 1, 2, 2, 1, 1, 1],
-  ![1, 1, 1, 2, 2, 2, 1, 0],
-  ![1, 1, 2, 2, 1, 1, 1, 1],
-  ![1, 1, 2, 2, 2, 1, 1, 0],
-  ![1, 1, 2, 3, 2, 1, 0, 0],
-  ![0, 1, 1, 2, 2, 2, 2, 1],
-  ![1, 1, 1, 2, 2, 2, 1, 1]
-]
-
-private def e8PositiveCorootChunk7 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 1, 2, 2, 2, 1, 1, 1],
-  ![1, 1, 2, 2, 2, 2, 1, 0],
-  ![1, 1, 2, 3, 2, 1, 1, 0],
-  ![1, 2, 2, 3, 2, 1, 0, 0],
-  ![1, 1, 1, 2, 2, 2, 2, 1],
-  ![1, 1, 2, 2, 2, 2, 1, 1],
-  ![1, 1, 2, 3, 2, 1, 1, 1],
-  ![1, 1, 2, 3, 2, 2, 1, 0],
-  ![1, 2, 2, 3, 2, 1, 1, 0],
-  ![1, 1, 2, 2, 2, 2, 2, 1]
-]
-
-private def e8PositiveCorootChunk8 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 1, 2, 3, 2, 2, 1, 1],
-  ![1, 1, 2, 3, 3, 2, 1, 0],
-  ![1, 2, 2, 3, 2, 1, 1, 1],
-  ![1, 2, 2, 3, 2, 2, 1, 0],
-  ![1, 1, 2, 3, 2, 2, 2, 1],
-  ![1, 1, 2, 3, 3, 2, 1, 1],
-  ![1, 2, 2, 3, 2, 2, 1, 1],
-  ![1, 2, 2, 3, 3, 2, 1, 0],
-  ![1, 1, 2, 3, 3, 2, 2, 1],
-  ![1, 2, 2, 3, 2, 2, 2, 1]
-]
-
-private def e8PositiveCorootChunk9 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 2, 2, 3, 3, 2, 1, 1],
-  ![1, 2, 2, 4, 3, 2, 1, 0],
-  ![1, 1, 2, 3, 3, 3, 2, 1],
-  ![1, 2, 2, 3, 3, 2, 2, 1],
-  ![1, 2, 2, 4, 3, 2, 1, 1],
-  ![1, 2, 3, 4, 3, 2, 1, 0],
-  ![1, 2, 2, 3, 3, 3, 2, 1],
-  ![1, 2, 2, 4, 3, 2, 2, 1],
-  ![1, 2, 3, 4, 3, 2, 1, 1],
-  ![2, 2, 3, 4, 3, 2, 1, 0]
-]
-
-private def e8PositiveCorootChunk10 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 2, 2, 4, 3, 3, 2, 1],
-  ![1, 2, 3, 4, 3, 2, 2, 1],
-  ![2, 2, 3, 4, 3, 2, 1, 1],
-  ![1, 2, 2, 4, 4, 3, 2, 1],
-  ![1, 2, 3, 4, 3, 3, 2, 1],
-  ![2, 2, 3, 4, 3, 2, 2, 1],
-  ![1, 2, 3, 4, 4, 3, 2, 1],
-  ![2, 2, 3, 4, 3, 3, 2, 1],
-  ![1, 2, 3, 5, 4, 3, 2, 1],
-  ![2, 2, 3, 4, 4, 3, 2, 1]
-]
-
-private def e8PositiveCorootChunk11 : Fin 10 → (Fin 8 → ℤ) := ![
-  ![1, 3, 3, 5, 4, 3, 2, 1],
-  ![2, 2, 3, 5, 4, 3, 2, 1],
-  ![2, 2, 4, 5, 4, 3, 2, 1],
-  ![2, 3, 3, 5, 4, 3, 2, 1],
-  ![2, 3, 4, 5, 4, 3, 2, 1],
-  ![2, 3, 4, 6, 4, 3, 2, 1],
-  ![2, 3, 4, 6, 5, 3, 2, 1],
-  ![2, 3, 4, 6, 5, 4, 2, 1],
-  ![2, 3, 4, 6, 5, 4, 3, 1],
-  ![2, 3, 4, 6, 5, 4, 3, 2]
-]
-
-private def e8CorootCode (x : Fin 8 → ℤ) : ℤ :=
-  x 0 + 7 * x 1 + 49 * x 2 + 343 * x 3 + 2401 * x 4 + 16807 * x 5 +
-    117649 * x 6 + 823543 * x 7
-
 /-- The 120 positive `E8` coroots in the simple-coroot basis. The first eight entries are the
 Bourbaki simple coroots and the rest are ordered by height. -/
-def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) where
-  toFun := Fin.append e8PositiveCorootChunk0 (Fin.append e8PositiveCorootChunk1
-    (Fin.append e8PositiveCorootChunk2 (Fin.append e8PositiveCorootChunk3
-    (Fin.append e8PositiveCorootChunk4 (Fin.append e8PositiveCorootChunk5
-    (Fin.append e8PositiveCorootChunk6 (Fin.append e8PositiveCorootChunk7
-    (Fin.append e8PositiveCorootChunk8 (Fin.append e8PositiveCorootChunk9
-    (Fin.append e8PositiveCorootChunk10 e8PositiveCorootChunk11))))))))))
-  inj' := by
-    apply Function.Injective.of_comp (f := e8CorootCode)
-    -- The 120 × 120 case check runs in the kernel, whose evaluation has no recursion limit.
-    decide +kernel
+def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) :=
+  let e8PositiveCorootTable : Fin 12 → Fin 10 → (Fin 8 → ℤ) := ![
+  ![
+    ![1, 0, 0, 0, 0, 0, 0, 0],
+    ![0, 1, 0, 0, 0, 0, 0, 0],
+    ![0, 0, 1, 0, 0, 0, 0, 0],
+    ![0, 0, 0, 1, 0, 0, 0, 0],
+    ![0, 0, 0, 0, 1, 0, 0, 0],
+    ![0, 0, 0, 0, 0, 1, 0, 0],
+    ![0, 0, 0, 0, 0, 0, 1, 0],
+    ![0, 0, 0, 0, 0, 0, 0, 1],
+    ![0, 0, 0, 0, 0, 0, 1, 1],
+    ![0, 0, 0, 0, 0, 1, 1, 0]
+  ],
+  ![
+    ![0, 0, 0, 0, 1, 1, 0, 0],
+    ![0, 0, 0, 1, 1, 0, 0, 0],
+    ![0, 0, 1, 1, 0, 0, 0, 0],
+    ![0, 1, 0, 1, 0, 0, 0, 0],
+    ![1, 0, 1, 0, 0, 0, 0, 0],
+    ![0, 0, 0, 0, 0, 1, 1, 1],
+    ![0, 0, 0, 0, 1, 1, 1, 0],
+    ![0, 0, 0, 1, 1, 1, 0, 0],
+    ![0, 0, 1, 1, 1, 0, 0, 0],
+    ![0, 1, 0, 1, 1, 0, 0, 0]
+  ],
+  ![
+    ![0, 1, 1, 1, 0, 0, 0, 0],
+    ![1, 0, 1, 1, 0, 0, 0, 0],
+    ![0, 0, 0, 0, 1, 1, 1, 1],
+    ![0, 0, 0, 1, 1, 1, 1, 0],
+    ![0, 0, 1, 1, 1, 1, 0, 0],
+    ![0, 1, 0, 1, 1, 1, 0, 0],
+    ![0, 1, 1, 1, 1, 0, 0, 0],
+    ![1, 0, 1, 1, 1, 0, 0, 0],
+    ![1, 1, 1, 1, 0, 0, 0, 0],
+    ![0, 0, 0, 1, 1, 1, 1, 1]
+  ],
+  ![
+    ![0, 0, 1, 1, 1, 1, 1, 0],
+    ![0, 1, 0, 1, 1, 1, 1, 0],
+    ![0, 1, 1, 1, 1, 1, 0, 0],
+    ![0, 1, 1, 2, 1, 0, 0, 0],
+    ![1, 0, 1, 1, 1, 1, 0, 0],
+    ![1, 1, 1, 1, 1, 0, 0, 0],
+    ![0, 0, 1, 1, 1, 1, 1, 1],
+    ![0, 1, 0, 1, 1, 1, 1, 1],
+    ![0, 1, 1, 1, 1, 1, 1, 0],
+    ![0, 1, 1, 2, 1, 1, 0, 0]
+  ],
+  ![
+    ![1, 0, 1, 1, 1, 1, 1, 0],
+    ![1, 1, 1, 1, 1, 1, 0, 0],
+    ![1, 1, 1, 2, 1, 0, 0, 0],
+    ![0, 1, 1, 1, 1, 1, 1, 1],
+    ![0, 1, 1, 2, 1, 1, 1, 0],
+    ![0, 1, 1, 2, 2, 1, 0, 0],
+    ![1, 0, 1, 1, 1, 1, 1, 1],
+    ![1, 1, 1, 1, 1, 1, 1, 0],
+    ![1, 1, 1, 2, 1, 1, 0, 0],
+    ![1, 1, 2, 2, 1, 0, 0, 0]
+  ],
+  ![
+    ![0, 1, 1, 2, 1, 1, 1, 1],
+    ![0, 1, 1, 2, 2, 1, 1, 0],
+    ![1, 1, 1, 1, 1, 1, 1, 1],
+    ![1, 1, 1, 2, 1, 1, 1, 0],
+    ![1, 1, 1, 2, 2, 1, 0, 0],
+    ![1, 1, 2, 2, 1, 1, 0, 0],
+    ![0, 1, 1, 2, 2, 1, 1, 1],
+    ![0, 1, 1, 2, 2, 2, 1, 0],
+    ![1, 1, 1, 2, 1, 1, 1, 1],
+    ![1, 1, 1, 2, 2, 1, 1, 0]
+  ],
+  ![
+    ![1, 1, 2, 2, 1, 1, 1, 0],
+    ![1, 1, 2, 2, 2, 1, 0, 0],
+    ![0, 1, 1, 2, 2, 2, 1, 1],
+    ![1, 1, 1, 2, 2, 1, 1, 1],
+    ![1, 1, 1, 2, 2, 2, 1, 0],
+    ![1, 1, 2, 2, 1, 1, 1, 1],
+    ![1, 1, 2, 2, 2, 1, 1, 0],
+    ![1, 1, 2, 3, 2, 1, 0, 0],
+    ![0, 1, 1, 2, 2, 2, 2, 1],
+    ![1, 1, 1, 2, 2, 2, 1, 1]
+  ],
+  ![
+    ![1, 1, 2, 2, 2, 1, 1, 1],
+    ![1, 1, 2, 2, 2, 2, 1, 0],
+    ![1, 1, 2, 3, 2, 1, 1, 0],
+    ![1, 2, 2, 3, 2, 1, 0, 0],
+    ![1, 1, 1, 2, 2, 2, 2, 1],
+    ![1, 1, 2, 2, 2, 2, 1, 1],
+    ![1, 1, 2, 3, 2, 1, 1, 1],
+    ![1, 1, 2, 3, 2, 2, 1, 0],
+    ![1, 2, 2, 3, 2, 1, 1, 0],
+    ![1, 1, 2, 2, 2, 2, 2, 1]
+  ],
+  ![
+    ![1, 1, 2, 3, 2, 2, 1, 1],
+    ![1, 1, 2, 3, 3, 2, 1, 0],
+    ![1, 2, 2, 3, 2, 1, 1, 1],
+    ![1, 2, 2, 3, 2, 2, 1, 0],
+    ![1, 1, 2, 3, 2, 2, 2, 1],
+    ![1, 1, 2, 3, 3, 2, 1, 1],
+    ![1, 2, 2, 3, 2, 2, 1, 1],
+    ![1, 2, 2, 3, 3, 2, 1, 0],
+    ![1, 1, 2, 3, 3, 2, 2, 1],
+    ![1, 2, 2, 3, 2, 2, 2, 1]
+  ],
+  ![
+    ![1, 2, 2, 3, 3, 2, 1, 1],
+    ![1, 2, 2, 4, 3, 2, 1, 0],
+    ![1, 1, 2, 3, 3, 3, 2, 1],
+    ![1, 2, 2, 3, 3, 2, 2, 1],
+    ![1, 2, 2, 4, 3, 2, 1, 1],
+    ![1, 2, 3, 4, 3, 2, 1, 0],
+    ![1, 2, 2, 3, 3, 3, 2, 1],
+    ![1, 2, 2, 4, 3, 2, 2, 1],
+    ![1, 2, 3, 4, 3, 2, 1, 1],
+    ![2, 2, 3, 4, 3, 2, 1, 0]
+  ],
+  ![
+    ![1, 2, 2, 4, 3, 3, 2, 1],
+    ![1, 2, 3, 4, 3, 2, 2, 1],
+    ![2, 2, 3, 4, 3, 2, 1, 1],
+    ![1, 2, 2, 4, 4, 3, 2, 1],
+    ![1, 2, 3, 4, 3, 3, 2, 1],
+    ![2, 2, 3, 4, 3, 2, 2, 1],
+    ![1, 2, 3, 4, 4, 3, 2, 1],
+    ![2, 2, 3, 4, 3, 3, 2, 1],
+    ![1, 2, 3, 5, 4, 3, 2, 1],
+    ![2, 2, 3, 4, 4, 3, 2, 1]
+  ],
+  ![
+    ![1, 3, 3, 5, 4, 3, 2, 1],
+    ![2, 2, 3, 5, 4, 3, 2, 1],
+    ![2, 2, 4, 5, 4, 3, 2, 1],
+    ![2, 3, 3, 5, 4, 3, 2, 1],
+    ![2, 3, 4, 5, 4, 3, 2, 1],
+    ![2, 3, 4, 6, 4, 3, 2, 1],
+    ![2, 3, 4, 6, 5, 3, 2, 1],
+    ![2, 3, 4, 6, 5, 4, 2, 1],
+    ![2, 3, 4, 6, 5, 4, 3, 1],
+    ![2, 3, 4, 6, 5, 4, 3, 2]
+  ]
+  ]
+  let e8CorootCode (x : Fin 8 → ℤ) : ℤ :=
+    x 0 + 7 * x 1 + 49 * x 2 + 343 * x 3 + 2401 * x 4 + 16807 * x 5 +
+      117649 * x 6 + 823543 * x 7
+  {
+    toFun i := e8PositiveCorootTable ⟨(i : ℕ) / 10, by omega⟩ ⟨(i : ℕ) % 10, by omega⟩
+    inj' := by
+      apply Function.Injective.of_comp (f := e8CorootCode)
+      -- The 120 × 120 case check runs in the kernel, whose evaluation has no recursion limit.
+      decide +kernel
+  }
+
+/-- There are 63 positive `E₈` coroots in the principal `E₇` subsystem, characterized by
+having zero final simple-coroot coordinate. -/
+theorem card_filter_e8PositiveCoroot_last_eq_zero :
+    (Finset.univ.filter fun i => e8PositiveCoroot i 7 = 0).card = 63 := by
+  decide +kernel
 
 /-- Every positive `E8` coroot has nonnegative simple-coroot coordinates. -/
 theorem e8PositiveCoroot_nonneg (i : Fin 120) (j : Fin 8) :
@@ -280,9 +273,29 @@ private theorem e8Coroot_coe :
     e8Root (Fin.addNat i 120) = -e8Root (Fin.castAdd 120 i) := by
   rw [e8Root_apply, e8Root_apply, e8Coroot_addNat, e8Coroot_castAdd, Matrix.neg_vecMul]
 
+private theorem e8PositiveCoroot_norm_chunk (c : Fin 12) (i : Fin 10) :
+    (e8PositiveCoroot ⟨10 * c + i, by omega⟩ ᵥ* CartanMatrix.E₈) ⬝ᵥ
+      e8PositiveCoroot ⟨10 * c + i, by omega⟩ = 2 := by
+  fin_cases c <;> decide +kernel +revert
+
+private theorem e8PositiveCoroot_norm (i : Fin 120) :
+    (e8PositiveCoroot i ᵥ* CartanMatrix.E₈) ⬝ᵥ e8PositiveCoroot i = 2 := by
+  let c : Fin 12 := ⟨(i : ℕ) / 10, by omega⟩
+  let r : Fin 10 := ⟨(i : ℕ) % 10, by omega⟩
+  have hi : i = ⟨10 * c + r, by omega⟩ := Fin.ext (by dsimp [c, r]; omega)
+  rw [hi]
+  exact e8PositiveCoroot_norm_chunk c r
+
 /-- Every listed `E8` root pairs to two with its corresponding coroot. -/
 @[simp] theorem e8Root_dotProduct_coroot (i : Fin 240) : e8Root i ⬝ᵥ e8Coroot i = 2 := by
-  fin_cases i <;> decide
+  induction i using Fin.addCases (m := 120) (n := 120) with
+  | left i =>
+      rw [e8Root_apply, e8Coroot_castAdd]
+      exact e8PositiveCoroot_norm i
+  | right i =>
+      rw [e8Root_apply, Fin.natAdd_eq_addNat, e8Coroot_addNat, neg_vecMul,
+        neg_dotProduct_neg]
+      exact e8PositiveCoroot_norm i
 
 /-- The index of the `i`-th Bourbaki simple root in the pinned `E₈` enumeration. -/
 def e8SimpleIndex (i : Fin 8) : Fin 240 := Fin.castAdd 232 i

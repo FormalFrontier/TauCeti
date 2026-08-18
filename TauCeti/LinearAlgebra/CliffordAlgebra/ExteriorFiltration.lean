@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,9 +22,9 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.exteriorPower_succ_disjoint_zero_form_filtration`: degree `k + 1` is
+* `CliffordAlgebra.exteriorPower_succ_disjoint_zero_form_filtration`: degree `k + 1` is
   disjoint from the lower zero-form filtration.
-* `TauCeti.CliffordAlgebra.zeroFormFiltrationQuotientEquivExteriorPower`: the successive
+* `CliffordAlgebra.zeroFormFiltrationQuotientEquivExteriorPower`: the successive
   zero-form filtration quotient is the degree `k + 1` exterior power.
 
 ## References
@@ -34,12 +35,9 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 public section
 
-open CliffordAlgebra
 open scoped DirectSum
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -125,5 +123,3 @@ theorem zeroFormFiltrationQuotientEquivExteriorPower_apply (k : ℕ)
     LinearEquiv.apply_symm_apply]
 
 end CliffordAlgebra
-
-end TauCeti

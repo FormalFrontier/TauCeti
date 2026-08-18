@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -66,9 +67,8 @@ def orderOfVanishingOnOrbit [SlashInvariantFormClass F 𝒮ℒ k]
     have hg' : g • b = _ := hg
     rw [← hg', MulAction.compHom_smul_def,
       orderOfVanishingAt_smul f (γ := Matrix.SpecialLinearGroup.mapGL ℝ g)
-        (MonoidHom.mem_range.mpr ⟨g, rfl⟩) (by
-          rw [← Matrix.GeneralLinearGroup.val_det_apply, Matrix.SpecialLinearGroup.det_mapGL]
-          exact one_pos) b]
+        (MonoidHom.mem_range.mpr ⟨g, rfl⟩)
+        (det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨g, rfl⟩)) b]
 
 /-- Evaluating the descended order on the orbit of `p` recovers the vanishing order at
 `p`. -/

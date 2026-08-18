@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,6 +52,10 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
 * `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`: the rank-two bound. For `i ≠ j` the Cartan
   product `A i j * A j i` lies in `{0, 1, 2, 3}`, so every edge of the diagram is single, double or
   triple.
+* `TauCeti.IsFiniteType.isSimplyLaced_iff`: **a finite-type matrix is simply laced exactly when
+  none of its edges is multiple**, that is, when no Cartan product of two distinct indices exceeds
+  `1`. Together with the rank-two bound this is how the classification enters its simply-laced
+  branch, having excluded the Cartan products `2` and `3`.
 * `TauCeti.IsFiniteType.exists_apply_succ_eq_zero`: **a finite-type diagram carries no cycle**. A
   cyclic list of at least three distinct indices has a missing edge. This is the second estimate:
   the test vector is supported on the indices of the putative cycle, its coordinate at each of them
@@ -352,6 +357,31 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
     mul_nonneg_of_nonpos_of_nonpos (h.apply_le_zero_of_ne hij) (h.apply_le_zero_of_ne hij.symm)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
+
+/-- **A finite-type matrix is simply laced exactly when none of its edges is multiple.** The Cartan
+product `A i j * A j i` is the multiplicity of the edge joining `i` and `j`, so the condition on the
+right says that every edge is single: no double edge, and no triple edge.
+
+Only the off-diagonal entries are constrained, one entry of a transposed pair at a time, and that
+is enough because the entries of such a pair vanish together and a product of two nonpositive
+integers is `1` only when both are `-1`. -/
+theorem isSimplyLaced_iff (h : IsFiniteType A) :
+    A.IsSimplyLaced ↔ ∀ i j, i ≠ j → A i j * A j i ≤ 1 := by
+  constructor
+  · intro hsl i j hij
+    rcases hsl hij with hij' | hij' <;> rcases hsl hij.symm with hji | hji <;> simp [hij', hji]
+  · intro hle i j hij
+    have hbound := hle i j hij
+    have hnonneg : 0 ≤ A i j * A j i :=
+      mul_nonneg_of_nonpos_of_nonpos (h.apply_le_zero_of_ne hij) (h.apply_le_zero_of_ne hij.symm)
+    rcases (by omega : A i j * A j i = 0 ∨ A i j * A j i = 1) with hzero | hone
+    · rcases mul_eq_zero.mp hzero with hij' | hji
+      · exact Or.inl hij'
+      · exact Or.inl (h.apply_eq_zero_symm hji)
+    · rcases Int.eq_one_or_neg_one_of_mul_eq_one' hone with ⟨hij', -⟩ | ⟨hij', -⟩
+      · have := h.apply_le_zero_of_ne hij
+        omega
+      · exact Or.inr hij'
 
 /-- **On a cycle of length at least three an index and its two cyclic neighbours are pairwise
 distinct.** Successor and predecessor are the cyclic ones, taken in the additive group `Fin m`.

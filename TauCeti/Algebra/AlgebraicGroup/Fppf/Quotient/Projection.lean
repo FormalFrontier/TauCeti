@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -77,16 +77,6 @@ private instance instEpiPointwiseQuotientPresheafProjection
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     Epi (pointwiseQuotientPresheafProjection H I hI) :=
   NatTrans.epi_of_epi_app _
-
-private theorem pointwiseQuotientPresheafProjection_ulift_app_apply
-    (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal)
-    (A : ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ)
-    (x : ULift (HopfAlgebra.points (R := R) (H := H) A.unop.unop)) :
-    ((Functor.whiskerRight
-      (Functor.whiskerRight (pointwiseQuotientPresheafProjection H I hI)
-        GrpCat.uliftFunctor.{u + 1, u}) (forget GrpCat.{u + 1})).app A) x =
-      ULift.up (((pointwiseQuotientPresheafProjection H I hI).app A) x.down) :=
-  rfl
 
 private instance instEpiPointwiseQuotientPresheafGrpProjectionHom
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :

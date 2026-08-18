@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -179,7 +180,7 @@ theorem intervalIntegrable_deriv (γ : PiecewiseC1ClosedCurve) :
 end PiecewiseC1ClosedCurve
 
 /-- A contour cycle is a finite formal `ℤ`-linear combination of closed piecewise-`C¹` curves. -/
-abbrev Cycle := FreeAbelianGroup PiecewiseC1ClosedCurve
+abbrev Cycle : Type := FreeAbelianGroup PiecewiseC1ClosedCurve
 
 namespace Cycle
 

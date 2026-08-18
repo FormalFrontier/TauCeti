@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -17,7 +18,8 @@ dual preserves this bicommutative condition, reverses morphisms, and is involuti
 
 This file packages those facts as a contravariant equivalence on finite locally free
 bicommutative Hopf algebras. It is the algebraic core of Cartier duality over a general affine
-base; transporting the equivalence through `Spec` is a separate step.
+base; its transport through `Spec` is provided by
+`AlgebraicGeometry.AffineGroupScheme.CartierDuality.FiniteLocallyFree`.
 
 ## Main declarations
 
@@ -63,7 +65,7 @@ theorem finiteLocallyFreeBicommutativeHopfAlgProperty_iff (k : Type u) [CommRing
   Iff.rfl
 
 /-- The category of finite locally free bicommutative Hopf algebras over a commutative ring. -/
-abbrev FiniteLocallyFreeBicommutativeHopfAlgCat (k : Type u) [CommRing k] :=
+abbrev FiniteLocallyFreeBicommutativeHopfAlgCat (k : Type u) [CommRing k] : Type _ :=
   (finiteLocallyFreeBicommutativeHopfAlgProperty (k := k)).FullSubcategory
 
 namespace FiniteLocallyFreeBicommutativeHopfAlgCat

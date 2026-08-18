@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -75,6 +76,18 @@ def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
   inj' := by decide
+
+/-- The simple roots of `G2` sit at the first two indices, where they are the rows of its
+Bourbaki-numbered Cartan matrix. -/
+@[simp] lemma g2Root_castAdd (i : Fin 2) :
+    g2Root (Fin.castAdd 10 i) = CartanMatrix.G₂ᵀ i := by
+  fin_cases i <;> decide
+
+/-- The simple coroots of `G2` sit at the first two indices, where they are the standard basis of
+the cocharacter lattice. -/
+@[simp] lemma g2Coroot_castAdd (i : Fin 2) :
+    g2Coroot (Fin.castAdd 10 i) = Pi.single i 1 := by
+  fin_cases i <;> decide
 
 /-- The permutation table for reflection in each of the twelve `G2` roots. -/
 private def g2ReflectionIndex : Fin 12 → Fin 12 → Fin 12 := ![

@@ -8,7 +8,20 @@ module
 public import Mathlib.Topology.Algebra.UniformRing
 
 /-!
-# The completion of a complete separated ring is itself
+# Ring homomorphisms out of a completion
+
+Two results about `UniformSpace.Completion` as a *ring*, both in the root
+`UniformSpace.Completion` namespace they extend.
+
+`UniformSpace.Completion.ringHom_ext_of_continuous` is `UniformSpace.Completion.ext` for ring
+homomorphisms: two continuous ring homomorphisms out of `Completion R` that agree after composing
+with the coercion from `R` are equal. `R` is a topological ring carrying a compatible uniform
+additive-group structure, and nothing more: neither `CompleteSpace` nor `T0Space` is required, and
+`R` need not be commutative. It lives here because it is a statement about the completion functor
+rather than about any ring being completed, and it is what lets
+consumers state uniqueness on the base ring instead of on the completion.
+
+## The completion of a complete separated ring is itself
 
 `UniformSpace.Completion.completeRingEquivSelf`: for a complete Hausdorff topological ring
 `S`, the extension of the identity is a ring isomorphism `UniformSpace.Completion S ≃+* S`.
@@ -17,7 +30,8 @@ that of the uniform bijection `UniformCompletion.completeEquivSelf` — the equa
 recorded as `coe_extensionHom_id` — which supplies bijectivity. The name follows
 `UniformCompletion.completeEquivSelf`.
 
-Everything else here is read off that identification. The isomorphism is uniformly continuous
+The rest of the self-equivalence material is read off that identification. The isomorphism
+is uniformly continuous
 because `UniformCompletion.completeEquivSelf` is a uniform equivalence, and its inverse is
 uniformly continuous because it *is* the canonical map into the completion. Over a base ring
 `R` acting by *uniformly continuous* scalar multiplication the same map is `R`-linear, giving
@@ -38,6 +52,8 @@ this repository's convention for lemmas about external types.
 
 ## Main results
 
+* `UniformSpace.Completion.ringHom_ext_of_continuous`: two continuous ring homomorphisms out of
+  a completion that agree on the image of the coercion are equal.
 * `UniformSpace.Completion.coe_completeRingEquivSelf` and
   `UniformSpace.Completion.coe_completeRingEquivSelf_symm`: the isomorphism is
   `UniformCompletion.completeEquivSelf` and its inverse is the coercion into the completion.
@@ -49,6 +65,25 @@ this repository's convention for lemmas about external types.
 public section
 
 namespace UniformSpace.Completion
+
+section Ext
+
+variable {R : Type*} [Ring R] [UniformSpace R] [IsTopologicalRing R] [IsUniformAddGroup R]
+  {B : Type*} [Semiring B] [TopologicalSpace B] [T2Space B]
+
+/-- **Maps out of a completion are determined on the image of the coercion.** Two continuous
+ring homomorphisms `R̂ → B` into a semiring carrying a Hausdorff topology that agree after composing
+with `coeRingHom` are equal.
+
+This is `UniformSpace.Completion.ext` packaged for ring homomorphisms: composing with
+`coeRingHom` is restriction along the coercion, and density of the image does the rest. Nothing
+is asked of `B` beyond a semiring structure and a Hausdorff topology — no compatibility between
+the two is used — and `R` need not be commutative. -/
+theorem ringHom_ext_of_continuous {g h : Completion R →+* B} (hg : Continuous g)
+    (hh : Continuous h) (hcomp : g.comp coeRingHom = h.comp coeRingHom) : g = h :=
+  DFunLike.ext' (ext hg hh fun x ↦ congrArg (fun k : R →+* B ↦ k x) hcomp)
+
+end Ext
 
 variable (S : Type*) [Ring S] [UniformSpace S] [IsTopologicalRing S] [IsUniformAddGroup S]
   [CompleteSpace S] [T0Space S]

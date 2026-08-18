@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -16,15 +17,15 @@ Clifford action makes the target Clifford module a module for the original Lie a
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.cliffordInducedRep`: the induced Lie representation on a Clifford
+* `CliffordAlgebra.cliffordInducedRep`: the induced Lie representation on a Clifford
   module.
-* `TauCeti.CliffordAlgebra.cliffordInducedRep_apply`: its defining equation.
-* `TauCeti.CliffordAlgebra.cliffordDerivationRep`: the induced representation on the Clifford
+* `CliffordAlgebra.cliffordInducedRep_apply`: its defining equation.
+* `CliffordAlgebra.cliffordDerivationRep`: the induced representation on the Clifford
   algebra by inner derivations.
-* `TauCeti.CliffordAlgebra.cliffordDerivationRep_apply`: its defining commutator equation.
-* `TauCeti.CliffordAlgebra.adjointCliffordHom`: the quadratic lift of the adjoint representation
+* `CliffordAlgebra.cliffordDerivationRep_apply`: its defining commutator equation.
+* `CliffordAlgebra.adjointCliffordHom`: the quadratic lift of the adjoint representation
   for a Killing-semisimple Lie algebra.
-* `TauCeti.CliffordAlgebra.adjointCliffordHom_lie_ι`: the lift acts on Clifford generators by the
+* `CliffordAlgebra.adjointCliffordHom_lie_ι`: the lift acts on Clifford generators by the
   original adjoint action.
 
 ## References
@@ -35,11 +36,10 @@ Clifford action makes the target Clifford module a module for the original Lie a
 
 public section
 
-open CliffordAlgebra
 
 universe u v w x
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
@@ -117,4 +117,4 @@ theorem adjointCliffordHom_lie_ι (K : Type u) (L : Type v) [Field K]
     LieSubalgebra.coe_incl, LieEquiv.coe_toLieHom, soEquivQuadratic_lie_ι,
     _root_.TauCeti.LieAlgebra.coe_killingAdjointSO, _root_.LieAlgebra.ad_apply]
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

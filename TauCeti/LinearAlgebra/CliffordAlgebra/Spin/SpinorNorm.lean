@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,9 +22,9 @@ Spin group.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.orthogonalSpinorNorm`: the square-class-valued spinor norm on `O(Q)`.
-* `TauCeti.CliffordAlgebra.spinorNorm`: its restriction to `SO(Q)`.
-* `TauCeti.CliffordAlgebra.range_spinToSpecialOrthogonal_eq_ker_spinorNorm`: the Spin image is
+* `CliffordAlgebra.orthogonalSpinorNorm`: the square-class-valued spinor norm on `O(Q)`.
+* `CliffordAlgebra.spinorNorm`: its restriction to `SO(Q)`.
+* `CliffordAlgebra.range_spinToSpecialOrthogonal_eq_ker_spinorNorm`: the Spin image is
   the kernel of the spinor norm.
 
 ## References
@@ -33,9 +34,11 @@ See H. B. Lawson and M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
+open QuadraticMap
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -314,4 +317,4 @@ theorem range_spinToSpecialOrthogonal_eq_ker_spinorNorm
     rw [coe_spinToOrthogonal_apply] at hv
     exact hv
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

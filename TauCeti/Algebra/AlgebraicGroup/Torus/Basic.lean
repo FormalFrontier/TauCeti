@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -123,7 +124,7 @@ instance (k : Type u) [Field k] :
 
 Objects need not be split over the base field; they become split after extension to an algebraic
 closure. -/
-abbrev TorusCommHopfAlgCat (k : Type u) [Field k] :=
+abbrev TorusCommHopfAlgCat (k : Type u) [Field k] : Type _ :=
   (torusCommHopfAlgProperty k).FullSubcategory
 
 /-- Every split torus is a torus. -/

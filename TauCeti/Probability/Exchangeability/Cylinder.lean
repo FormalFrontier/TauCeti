@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -86,7 +87,7 @@ theorem measurableSet_blockCylinder {X : ℕ → Ω → α} {m : ℕ} {k : Fin m
 
 /-- The block law evaluated on a measurable rectangle is the measure of the block cylinder:
 `blockLaw μ X k (Set.univ.pi C) = μ (blockCylinder X k C)`. A `blockCylinder`-named restatement of
-the merged `blockLaw_apply_rectangle`. -/
+`blockLaw_apply_rectangle`. -/
 @[grind =>]
 theorem blockLaw_blockCylinder {μ : Measure Ω} (X : ℕ → Ω → α) {m : ℕ} {k : Fin m → ℕ}
     {C : Fin m → Set α} (hX : ∀ i, AEMeasurable (X (k i)) μ) (hC : ∀ i, MeasurableSet (C i)) :

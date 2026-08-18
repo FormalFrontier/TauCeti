@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,18 +19,17 @@ here once and shared.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero`: in the even base case the
+* `CliffordAlgebra.exists_algebraMap_of_mem_range_ι_pow_zero`: in the even base case the
   element is a scalar.
-* `TauCeti.CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`: in the odd base case it is a vector.
+* `CliffordAlgebra.exists_ι_of_mem_range_ι_pow_one`: in the odd base case it is a vector.
 -/
 
 public section
 
-open CliffordAlgebra
 
 universe u v
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   {Q : QuadraticForm R M}
@@ -47,4 +47,4 @@ theorem exists_ι_of_mem_range_ι_pow_one {v : CliffordAlgebra Q}
     (hv : v ∈ LinearMap.range (ι Q) ^ (1 : ZMod 2).val) : ∃ a, ι Q a = v := by
   simpa [ZMod.val_one] using hv
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

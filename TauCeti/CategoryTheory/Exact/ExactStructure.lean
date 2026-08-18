@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -149,6 +149,42 @@ theorem conflation_of_iso (E : ConflationClass C) {S T : ShortComplex C} (e : S 
 theorem conflation_iff_of_iso (E : ConflationClass C) {S T : ShortComplex C} (e : S ≅ T) :
     E.Conflation S ↔ E.Conflation T :=
   E.Conflation.prop_iff_of_iso e
+
+/-- A kernel–cokernel pair whose first map is an inflation is a conflation: the conflation
+witnessing the inflation has the same cokernel, so the two short complexes are isomorphic. -/
+theorem conflation_of_isKernelCokernelPair_of_isInflation (E : ConflationClass C)
+    {S : ShortComplex C}
+    (hS : IsKernelCokernelPair S) (hf : E.IsInflation S.f) : E.Conflation S := by
+  obtain ⟨Z, q, hq, hT⟩ := (E.isInflation_iff _).mp hf
+  let T := ShortComplex.mk S.f q hq
+  have hT' : E.Conflation T := by simpa [T] using hT
+  have hpairT : IsKernelCokernelPair T := E.isKernelCokernelPair T hT'
+  let e : Z ≅ S.X₃ :=
+    IsColimit.coconePointUniqueUpToIso hpairT.gIsCokernel hS.gIsCokernel
+  have he : q ≫ e.hom = S.g :=
+    IsColimit.comp_coconePointUniqueUpToIso_hom hpairT.gIsCokernel hS.gIsCokernel
+      WalkingParallelPair.one
+  exact E.conflation_of_iso (S := T) (T := S)
+    (ShortComplex.isoMk (Iso.refl _) (Iso.refl _) e
+      (by simp [T]) (by simpa [T] using he.symm)) hT'
+
+/-- A kernel–cokernel pair whose second map is a deflation is a conflation: the conflation
+witnessing the deflation has the same kernel, so the two short complexes are isomorphic. -/
+theorem conflation_of_isKernelCokernelPair_of_isDeflation (E : ConflationClass C)
+    {S : ShortComplex C}
+    (hS : IsKernelCokernelPair S) (hg : E.IsDeflation S.g) : E.Conflation S := by
+  obtain ⟨X, i, hi, hT⟩ := (E.isDeflation_iff _).mp hg
+  let T := ShortComplex.mk i S.g hi
+  have hT' : E.Conflation T := by simpa [T] using hT
+  have hpairT : IsKernelCokernelPair T := E.isKernelCokernelPair T hT'
+  let e : X ≅ S.X₁ :=
+    IsLimit.conePointUniqueUpToIso hpairT.fIsKernel hS.fIsKernel
+  have he : e.hom ≫ S.f = i :=
+    IsLimit.conePointUniqueUpToIso_hom_comp hpairT.fIsKernel hS.fIsKernel
+      WalkingParallelPair.zero
+  exact E.conflation_of_iso (S := T) (T := S)
+    (ShortComplex.isoMk e (Iso.refl _) (Iso.refl _)
+      (by simpa [T] using he) (by simp [T])) hT'
 
 /-- Being an inflation is invariant under composing with isomorphisms on either side: the
 witnessing conflation transports along the isomorphism. -/

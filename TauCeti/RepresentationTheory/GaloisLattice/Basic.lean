@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -131,7 +132,7 @@ instance (k : Type u) [Field k] :
 
 /-- The category of finite free integral representations of the absolute Galois group whose
 vectors have open stabilizers. -/
-abbrev GaloisLatticeCat (k : Type u) [Field k] :=
+abbrev GaloisLatticeCat (k : Type u) [Field k] : Type _ :=
   (galoisLatticeProperty k).FullSubcategory
 
 namespace GaloisLatticeCat

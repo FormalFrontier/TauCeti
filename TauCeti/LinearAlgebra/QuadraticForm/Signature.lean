@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -18,8 +19,10 @@ opposite index of inertia. It also characterizes positive-definiteness by the ne
 index and the radical. These are convenient consequences of Sylvester's law of inertia which
 complement Mathlib's definitions of `QuadraticMap.PosDef`, `sigPos`, and `sigNeg`.
 
-It also proves that restriction to a subspace cannot increase either index of inertia, and that
-quotienting a quadratic form by its radical preserves both indices.
+It also proves that restriction to a subspace cannot increase either index of inertia, that
+quotienting a quadratic form by its radical preserves both indices, and that multiplication by a
+positive scalar preserves both indices while multiplication by a negative scalar exchanges them.
+Finally, both indices are additive under orthogonal products.
 
 ## Main results
 
@@ -31,10 +34,16 @@ quotienting a quadratic form by its radical preserves both indices.
   positive index of inertia.
 * `TauCeti.QuadraticForm.sigNeg_restrict_le`: restriction to a subspace cannot increase the
   negative index of inertia.
+* `TauCeti.QuadraticForm.sigPos_smul_of_pos` and
+  `TauCeti.QuadraticForm.sigNeg_smul_of_pos`: positive scaling preserves both indices.
+* `TauCeti.QuadraticForm.sigPos_smul_of_neg` and
+  `TauCeti.QuadraticForm.sigNeg_smul_of_neg`: negative scaling exchanges the two indices.
 * `TauCeti.QuadraticForm.sigPos_lift_radical`: quotienting by the radical preserves the positive
   index of inertia.
 * `TauCeti.QuadraticForm.sigNeg_lift_radical`: quotienting by the radical preserves the negative
   index of inertia.
+* `TauCeti.QuadraticForm.sigPos_prod` and `TauCeti.QuadraticForm.sigNeg_prod`: the indices of
+  inertia are additive under orthogonal products.
 * `TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot`: positive-definiteness
   is characterized by vanishing negative index and trivial radical.
 
@@ -55,6 +64,61 @@ open _root_.QuadraticForm
 
 variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
   [AddCommGroup M] [Module K M] [FiniteDimensional K M]
+
+omit [FiniteDimensional K M] in
+/-- Multiplication by a positive scalar preserves positive-definiteness. Thus a quadratic form is
+positive-definite if and only if its positive scalar multiple is. -/
+@[simp]
+theorem posDef_smul_iff_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
+    (a • Q).PosDef ↔ Q.PosDef := by
+  constructor
+  · intro hQ x hx
+    have h := hQ x hx
+    simp only [smul_apply, smul_eq_mul] at h
+    exact pos_of_mul_pos_right h ha.le
+  · exact fun hQ ↦ hQ.smul ha
+
+/-- Multiplication by a positive scalar preserves the positive index of inertia. -/
+@[simp]
+theorem sigPos_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
+    sigPos (a • Q) = sigPos Q := by
+  apply le_antisymm
+  · obtain ⟨U, hUrank, hU⟩ := exists_finrank_eq_sigPos_and_posDef (a • Q)
+    rw [← hUrank]
+    apply le_sigPos_of_posDef
+    exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mp hU
+  · obtain ⟨U, hUrank, hU⟩ := exists_finrank_eq_sigPos_and_posDef Q
+    rw [← hUrank]
+    apply le_sigPos_of_posDef
+    exact (posDef_smul_iff_of_pos (Q.restrict U) ha).mpr hU
+
+/-- Multiplication by a positive scalar preserves the negative index of inertia. -/
+@[simp]
+theorem sigNeg_smul_of_pos (Q : _root_.QuadraticForm K M) {a : K} (ha : 0 < a) :
+    sigNeg (a • Q) = sigNeg Q := by
+  calc
+    sigNeg (a • Q) = sigPos (-(a • Q)) := (sigPos_neg (Q := a • Q)).symm
+    _ = sigPos (a • (-Q)) := by rw [smul_neg]
+    _ = sigPos (-Q) := sigPos_smul_of_pos (-Q) ha
+    _ = sigNeg Q := sigPos_neg
+
+/-- Multiplication by a negative scalar exchanges the positive and negative indices of inertia. -/
+@[simp]
+theorem sigPos_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
+    sigPos (a • Q) = sigNeg Q := by
+  have hpos : 0 < -a := neg_pos.mpr ha
+  have hform : a • Q = (-a) • (-Q) := by simp
+  rw [hform, sigPos_smul_of_pos (-Q) hpos, sigPos_neg]
+
+/-- Multiplication by a negative scalar exchanges the negative and positive indices of inertia. -/
+@[simp]
+theorem sigNeg_smul_of_neg (Q : _root_.QuadraticForm K M) {a : K} (ha : a < 0) :
+    sigNeg (a • Q) = sigPos Q := by
+  have hpos : 0 < -a := neg_pos.mpr ha
+  calc
+    sigNeg (a • Q) = sigPos (-(a • Q)) := (sigPos_neg (Q := a • Q)).symm
+    _ = sigPos ((-a) • Q) := congrArg sigPos (neg_smul a Q).symm
+    _ = sigPos Q := sigPos_smul_of_pos Q hpos
 
 /-- A quadratic form is nonnegative exactly when its negative index of inertia vanishes. -/
 theorem forall_nonneg_iff_sigNeg_eq_zero (Q : _root_.QuadraticForm K M) :
@@ -112,6 +176,91 @@ theorem sigNeg_restrict_le (Q : _root_.QuadraticForm K M) (W : Subspace K M) :
     ext x
     simp only [QuadraticMap.restrict_apply, neg_apply]
   simpa only [hneg, sigPos_neg] using sigPos_restrict_le (-Q) W
+
+section Prod
+
+variable {M' : Type*} [AddCommGroup M'] [Module K M'] [FiniteDimensional K M']
+
+/-- The product of two subspaces, as a subspace of the product ambient space, is linearly
+equivalent to the product of their underlying types. -/
+private def subspaceProdEquiv (U : Subspace K M) (W : Subspace K M') :
+    (U × W) ≃ₗ[K] U.prod W where
+  toFun p := ⟨(p.1, p.2), p.1.2, p.2.2⟩
+  invFun p := (⟨p.1.1, p.2.1⟩, ⟨p.1.2, p.2.2⟩)
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- The sum of the positive indices of two quadratic forms is a lower bound for the positive
+index of their orthogonal product. -/
+private theorem add_sigPos_le_sigPos_prod (Q : _root_.QuadraticForm K M)
+    (Q' : _root_.QuadraticForm K M') :
+    sigPos Q + sigPos Q' ≤ sigPos (Q.prod Q') := by
+  obtain ⟨U, hUrank, hUpos⟩ := exists_finrank_eq_sigPos_and_posDef Q
+  obtain ⟨W, hWrank, hWpos⟩ := exists_finrank_eq_sigPos_and_posDef Q'
+  have hprod : ((Q.prod Q').restrict (U.prod W)).PosDef := by
+    intro p hp
+    let u : U := ⟨p.1.1, p.2.1⟩
+    let w : W := ⟨p.1.2, p.2.2⟩
+    have hp' : u ≠ 0 ∨ w ≠ 0 := by
+      contrapose! hp
+      apply Subtype.ext
+      exact Prod.ext (congrArg Subtype.val hp.1) (congrArg Subtype.val hp.2)
+    rcases hp' with hp' | hp'
+    · have hpos := hUpos u hp'
+      have hnonneg := hWpos.nonneg w
+      simpa only [QuadraticMap.restrict_apply, QuadraticMap.prod_apply] using
+        add_pos_of_pos_of_nonneg hpos hnonneg
+    · have hnonneg := hUpos.nonneg u
+      have hpos := hWpos w hp'
+      simpa only [QuadraticMap.restrict_apply, QuadraticMap.prod_apply] using
+        add_pos_of_nonneg_of_pos hnonneg hpos
+  calc
+    sigPos Q + sigPos Q' = Module.finrank K U + Module.finrank K W := by
+      rw [hUrank, hWrank]
+    _ = Module.finrank K (U × W) := Module.finrank_prod.symm
+    _ = Module.finrank K (U.prod W) := LinearEquiv.finrank_eq (subspaceProdEquiv U W)
+    _ ≤ sigPos (Q.prod Q') := le_sigPos_of_posDef (Q := Q.prod Q') hprod
+
+/-- The sum of the negative indices of two quadratic forms is a lower bound for the negative
+index of their orthogonal product. -/
+private theorem add_sigNeg_le_sigNeg_prod (Q : _root_.QuadraticForm K M)
+    (Q' : _root_.QuadraticForm K M') :
+    sigNeg Q + sigNeg Q' ≤ sigNeg (Q.prod Q') := by
+  have hneg : (-Q).prod (-Q') = -(Q.prod Q') := by
+    ext p
+    simp only [QuadraticMap.prod_apply, neg_apply, neg_add]
+  simpa only [← sigPos_neg, hneg] using add_sigPos_le_sigPos_prod (-Q) (-Q')
+
+/-- The positive index of inertia is additive under orthogonal products. -/
+@[simp]
+theorem sigPos_prod (Q : _root_.QuadraticForm K M) (Q' : _root_.QuadraticForm K M') :
+    sigPos (Q.prod Q') = sigPos Q + sigPos Q' := by
+  have hpos := add_sigPos_le_sigPos_prod Q Q'
+  have hneg := add_sigNeg_le_sigNeg_prod Q Q'
+  have hsum := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical (Q := Q.prod Q')
+  have hsumQ := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical (Q := Q)
+  have hsumQ' := _root_.QuadraticForm.sigPos_add_sigNeg_add_radical (Q := Q')
+  have hrad : Module.finrank K (Q.prod Q').radical =
+      Module.finrank K Q.radical + Module.finrank K Q'.radical := by
+    let _ : Invertible (2 : K) := invertibleOfNonzero (by norm_num)
+    rw [QuadraticMap.radical_prod, ← LinearEquiv.finrank_eq
+      (subspaceProdEquiv Q.radical Q'.radical),
+      Module.finrank_prod]
+  rw [hrad, Module.finrank_prod] at hsum
+  omega
+
+/-- The negative index of inertia is additive under orthogonal products. -/
+@[simp]
+theorem sigNeg_prod (Q : _root_.QuadraticForm K M) (Q' : _root_.QuadraticForm K M') :
+    sigNeg (Q.prod Q') = sigNeg Q + sigNeg Q' := by
+  have hneg : (-Q).prod (-Q') = -(Q.prod Q') := by
+    ext p
+    simp only [QuadraticMap.prod_apply, neg_apply, neg_add]
+  rw [← sigPos_neg, ← hneg, sigPos_prod, sigPos_neg, sigPos_neg]
+
+end Prod
 
 end QuadraticForm
 

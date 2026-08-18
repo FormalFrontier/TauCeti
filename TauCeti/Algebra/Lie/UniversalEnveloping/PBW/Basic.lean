@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -28,7 +28,7 @@ comparison with `SymmetricAlgebra R L` is the next PBW stage and is not asserted
 Nothing in the construction is special to the enveloping algebra: `pbwFiltration` and
 `pbwFiltrationPrevious` are `TauCeti.Algebra.wordFiltration` and
 `TauCeti.Algebra.wordFiltrationPrevious` of `TauCeti/Algebra/WordFiltration.lean`, specialized to
-`UniversalEnvelopingAlgebra.ι R`, exactly as `TauCeti.CliffordAlgebra.filtration` is that same
+`UniversalEnvelopingAlgebra.ι R`, exactly as `CliffordAlgebra.filtration` is that same
 construction for `CliffordAlgebra.ι`. What is special to `U(L)` is the exhaustivity, which comes
 from the tensor-algebra presentation.
 
