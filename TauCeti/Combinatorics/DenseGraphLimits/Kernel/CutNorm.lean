@@ -12,15 +12,13 @@ import Mathlib.MeasureTheory.Integral.Prod
 /-!
 # The cut norm of a symmetric kernel
 
-This file defines the cut norm of a bounded symmetric kernel for an arbitrary measure by
+This file defines the cut norm of a bounded symmetric kernel on a finite measure space by
 
 `‖K‖□ = sup |∫_(S × T) K|`,
 
-where the supremum ranges over measurable sets `S` and `T`.  Under a finite-measure hypothesis,
-boundedness of the rectangle integrals makes this the actual supremum; without boundedness,
-Mathlib's conditionally complete real supremum evaluates to `0`.  The file develops the interface
-needed by the cut-distance and counting-lemma layers: rectangle integrals, the bound of every
-rectangle by the cut norm, the seminorm laws, and the comparison with the `L¹` norm.
+where the supremum ranges over measurable sets `S` and `T`.  The file develops the interface needed
+by the cut-distance and counting-lemma layers: rectangle integrals, the bound of every rectangle by
+the cut norm, the seminorm laws, and the comparison with the `L¹` norm.
 
 The definition uses strict representatives, consistently with `SymmKernel`.  Consequently all
 pointwise algebra happens before integration; a later layer proves invariance under a.e. equality.
@@ -149,27 +147,23 @@ theorem abs_rectIntegral_le_integral_abs [IsFiniteMeasure μ]
 
 end SymmKernel
 
-/-- The set form of the cut norm: the conditionally complete real supremum of the absolute kernel
-integrals over measurable rectangles.  It is the actual supremum when these integrals are bounded
-above (in particular, when `μ` is finite), and evaluates to `0` when they are unbounded. -/
-noncomputable def cutNormSet (K : SymmKernel Ω μ) : ℝ :=
+/-- The set form of the cut norm: the supremum of the absolute kernel integrals over measurable
+rectangles. -/
+noncomputable def cutNormSet [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ :=
   ⨆ (S : Set Ω) (_ : MeasurableSet S) (T : Set Ω) (_ : MeasurableSet T),
     |K.rectIntegral μ S T|
 
-/-- The cut norm of a symmetric kernel: its measurable-set form.  For finite `μ`, this is the
-supremum over measurable sets `S` and `T` of the absolute integral over `S × T`; if the rectangle
-integrals are unbounded, Mathlib's conditionally complete real supremum evaluates to `0`. -/
-noncomputable def cutNorm (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
+/-- The cut norm of a symmetric kernel: the supremum over measurable sets `S` and `T` of the
+absolute integral over `S × T`. -/
+noncomputable def cutNorm [IsFiniteMeasure μ] (K : SymmKernel Ω μ) : ℝ := cutNormSet μ K
 
 variable [IsFiniteMeasure μ]
 
-omit [IsFiniteMeasure μ] in
 /-- The cut norm is definitionally its separately roadmap-pinned measurable-set form.  This is not
 a `simp` lemma: `cutNorm` is the normal form that the rest of the API, and hence the `simp` set, is
 stated in. -/
 theorem cutNorm_eq_cutNormSet (K : SymmKernel Ω μ) : cutNorm μ K = cutNormSet μ K := (rfl)
 
-omit [IsFiniteMeasure μ] in
 /-- The set-form cut norm is the iterated supremum over measurable rectangles. -/
 theorem cutNormSet_def (K : SymmKernel Ω μ) :
     cutNormSet μ K =
@@ -181,7 +175,6 @@ private theorem integral_abs_nonneg (K : SymmKernel Ω μ) :
     0 ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
   integral_nonneg fun _ => abs_nonneg _
 
-omit [IsFiniteMeasure μ] in
 /-- To prove an upper bound on the cut norm, it suffices to prove it for every measurable
 rectangle. -/
 theorem cutNorm_le {K : SymmKernel Ω μ} {C : ℝ}
@@ -243,9 +236,8 @@ theorem cutNorm_le_iff {K : SymmKernel Ω μ} {C : ℝ} :
     exact (abs_rectIntegral_le_cutNorm μ K hS hT).trans h
   · exact cutNorm_le μ
 
-omit [IsFiniteMeasure μ] in
 /-- Any strict lower bound on the cut norm is exceeded by some measurable rectangle integral. -/
-theorem exists_rectIntegral_lt (K : SymmKernel Ω μ) {c : ℝ} (h : c < cutNorm μ K) :
+theorem exists_lt_abs_rectIntegral (K : SymmKernel Ω μ) {c : ℝ} (h : c < cutNorm μ K) :
     ∃ S T, MeasurableSet S ∧ MeasurableSet T ∧ c < |K.rectIntegral μ S T| := by
   by_contra h'
   apply (not_le_of_gt h)
@@ -253,7 +245,6 @@ theorem exists_rectIntegral_lt (K : SymmKernel Ω μ) {c : ℝ} (h : c < cutNorm
   intro S hS T hT
   exact le_of_not_gt fun hST => h' ⟨S, T, hS, hT, hST⟩
 
-omit [IsFiniteMeasure μ] in
 /-- The cut norm is nonnegative. -/
 theorem cutNorm_nonneg (K : SymmKernel Ω μ) : 0 ≤ cutNorm μ K := by
   rw [cutNorm_eq_cutNormSet, cutNormSet_def]
@@ -265,7 +256,6 @@ theorem cutNorm_le_integral_abs (K : SymmKernel Ω μ) :
     cutNorm μ K ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
   cutNorm_le μ fun S _ T _ => K.abs_rectIntegral_le_integral_abs μ S T
 
-omit [IsFiniteMeasure μ] in
 /-- The zero kernel has cut norm zero. -/
 @[simp]
 theorem cutNorm_zero : cutNorm μ (0 : SymmKernel Ω μ) = 0 := by
@@ -274,7 +264,6 @@ theorem cutNorm_zero : cutNorm μ (0 : SymmKernel Ω μ) = 0 := by
     simp
   · exact cutNorm_nonneg μ 0
 
-omit [IsFiniteMeasure μ] in
 /-- Negating a kernel does not change its cut norm. -/
 @[simp]
 theorem cutNorm_neg (K : SymmKernel Ω μ) : cutNorm μ (-K) = cutNorm μ K := by
@@ -295,8 +284,8 @@ theorem cutNorm_sub_le (K L : SymmKernel Ω μ) :
     cutNorm μ (K - L) ≤ cutNorm μ K + cutNorm μ L := by
   simpa [sub_eq_add_neg] using cutNorm_add_le μ K (-L)
 
-omit [IsFiniteMeasure μ] in
 /-- The cut norm is absolutely homogeneous. -/
+@[simp]
 theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
     cutNorm μ (c • K) = |c| * cutNorm μ K := by
   rw [cutNorm_eq_cutNormSet, cutNormSet_def, cutNorm_eq_cutNormSet, cutNormSet_def]
