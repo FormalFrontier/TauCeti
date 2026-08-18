@@ -86,7 +86,7 @@ theorem walkToPath_append {i j k : V} (p : G.Walk i j) (q : G.Walk j k) :
   | nil => simp
   | cons h p ih => simp [ih, Quiver.Path.comp_assoc]
 
-@[simp]
+/-- Converting the one-edge walk gives the corresponding doubled-quiver arrow. -/
 theorem walkToPath_toWalk {i j : V} (h : G.Adj i j) :
     walkToPath G h.toWalk = (arrow G h).toPath := by
   simp [SimpleGraph.Adj.toWalk]
@@ -123,7 +123,6 @@ theorem reachable_iff {i j : V} :
     exact ⟨pathToWalk G p⟩
 
 /-- Graph reachability is zigzag reachability in the doubled quiver. -/
-@[simp]
 theorem reachable_iff_nonempty_symmetrify_path {i j : V} :
     G.Reachable i j ↔
       Nonempty (@Quiver.Path (Quiver.Symmetrify (DoubledQuiver G)) _
