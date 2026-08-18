@@ -54,11 +54,8 @@ Brauer's integral induction theorem, whose denominator is `1`.
   are exactly Artin's target.
 * `TauCeti.ClassFunction.exists_zsmul_mem_indVirtualCharacters_isElementary`: Artin's rational
   theorem, read for the elementary subgroups.
-## Implementation notes
 
-`k` and `G` lie in the same universe here, unlike in
-`TauCeti.RepresentationTheory.Induction.Spanning`, because the FDRep-level induction API used here
-(`TauCeti.indFDRep` and `TauCeti.ClassFunction.ind_ofFDRep`) is currently stated in one universe.
+## Implementation notes
 
 The lattice descent is a general statement about a `ℤ`-lattice inside a finite-dimensional vector
 space and has nothing to do with characters, but it is kept `private` here rather than given a home
@@ -160,7 +157,7 @@ private theorem exists_zsmul_mem_span_int {k V ι : Type*} [Field k] [CharZero k
     rw [smul_comm]
     exact Submodule.smul_mem _ _ hx
 
-variable {k G : Type u} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 variable [Finite G]
 
 variable (k G)

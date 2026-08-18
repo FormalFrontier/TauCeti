@@ -1,13 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
 public import TauCeti.Probability.DeFinetti.BlockFactorization
 public import TauCeti.Probability.Exchangeability.MixedIID.Mixture
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
 
 /-!
