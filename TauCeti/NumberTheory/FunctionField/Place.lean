@@ -106,18 +106,17 @@ theorem valuation_injective : Function.Injective (valuation : Place k F → Valu
 
 /-- The valuation ring `𝒪_P = {f : F | v_P f ≤ 1}` of a place (Stichtenoth,
 Definition 1.1.5). -/
-@[expose]
 def integers : ValuationSubring F := P.valuation.valuationSubring
 
-theorem mem_integers_iff {f : F} : f ∈ P.integers ↔ P.valuation f ≤ 1 := Iff.rfl
+@[simp]
+theorem mem_integers_iff {f : F} : f ∈ P.integers ↔ P.valuation f ≤ 1 := (Iff.rfl)
 
 /-- The additive order function `ord_P : F → ℤ` of a place, normalized so that a prime element
 has order `1`. ⚠ It carries the junk value `ord_P 0 = 0`, inherited from
 `WithZero.log 0 = 0`. -/
-@[expose]
 noncomputable def ord (f : F) : ℤ := -WithZero.log (P.valuation f)
 
-theorem ord_def (f : F) : P.ord f = -WithZero.log (P.valuation f) := rfl
+theorem ord_def (f : F) : P.ord f = -WithZero.log (P.valuation f) := (rfl)
 
 /-- The translation between the multiplicative and the additive view of a place. -/
 theorem valuation_eq_exp_neg_ord {f : F} (hf : f ≠ 0) :
@@ -273,6 +272,7 @@ theorem generator_eq_exp_neg_one : IsRankOneDiscrete.generator P.valuation =
 
 /-- Mathlib's uniformizers of `v_P` are exactly the elements of order one: Stichtenoth's prime
 elements for `P`. -/
+@[simp]
 theorem isUniformizer_iff_ord_eq_one {t : F} : P.valuation.IsUniformizer t ↔ P.ord t = 1 := by
   rcases eq_or_ne t 0 with rfl | ht
   · refine iff_of_false ?_ (by simp)
@@ -408,6 +408,7 @@ noncomputable instance : Algebra k P.ResidueField :=
 instance : IsScalarTower k P.integers P.ResidueField :=
   .of_algebraMap_eq fun _ => rfl
 
+@[simp]
 theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
     IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by
   rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_valuation_lt_one]
@@ -415,13 +416,14 @@ theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
 /-- The **degree** `deg P = [F_P : k]` of a place (Stichtenoth, Definition 1.1.14). Its
 finiteness, which guards the junk value of `Module.finrank`, holds whenever `F/k` is a function
 field (Stichtenoth, Proposition 1.1.15). -/
-@[expose]
 noncomputable def degree : ℕ := Module.finrank k P.ResidueField
 
-theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := rfl
+@[simp]
+theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := (rfl)
 
-theorem one_le_degree [Module.Finite k P.ResidueField] : 1 ≤ P.degree :=
-  Module.finrank_pos
+theorem one_le_degree [Module.Finite k P.ResidueField] : 1 ≤ P.degree := by
+  rw [degree_eq_finrank]
+  exact Module.finrank_pos
 
 end ResidueField
 
