@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.Dimension.Finite
-public import Mathlib.LinearAlgebra.Trace
 public import Mathlib.RingTheory.Nilpotent.Basic
 import Mathlib.Algebra.Group.End
 import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
@@ -47,8 +46,6 @@ Products require commutativity. Indeed, writing `g = 1 + x` and `h = 1 + y`, the
   unipotent automorphism is unipotent.
 * `LinearMap.GeneralLinearGroup.isUnipotent_conj_iff`: unipotence is invariant under
   conjugation.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.trace_eq_finrank`: a unipotent automorphism over a reduced
-  commutative ring has trace equal to the rank.
 * `LinearMap.GeneralLinearGroup.IsUnipotent.eq_one_of_finrank_eq_one`: a unipotent automorphism
   of a free rank-one module over a reduced commutative ring is the identity.
 
@@ -233,19 +230,3 @@ theorem IsUnipotent.eq_one_of_finrank_eq_one
   simp
 
 end LinearMap.GeneralLinearGroup
-
-namespace TauCeti.GeneralLinearGroup
-
-/-- A unipotent automorphism has trace equal to the dimension of its space. -/
-theorem IsUnipotent.trace_eq_finrank
-    {F : Type u} {W : Type v} [CommRing F] [IsReduced F]
-    [AddCommGroup W] [Module F W] [Module.Free F W] [Module.Finite F W]
-    {g : _root_.LinearMap.GeneralLinearGroup F W}
-    (hg : _root_.LinearMap.GeneralLinearGroup.IsUnipotent g) :
-    _root_.LinearMap.trace F W (g : Module.End F W) = (Module.finrank F W : F) := by
-  have hnil := _root_.LinearMap.isNilpotent_trace_of_isNilpotent
-    ((_root_.LinearMap.GeneralLinearGroup.isUnipotent_def g).mp hg)
-  rw [map_sub, _root_.LinearMap.trace_one] at hnil
-  exact sub_eq_zero.mp hnil.eq_zero
-
-end TauCeti.GeneralLinearGroup

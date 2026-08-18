@@ -50,8 +50,8 @@ irreducible by.
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
   algebra map exhausts the endomorphisms is irreducible.
-* `Representation.asAlgebraHom_surjective_of_isIrreducible`: over an algebraically closed field,
-  every finite-dimensional irreducible representation exhausts the endomorphisms.
+* `TauCeti.Representation.asAlgebraHom_surjective_of_isIrreducible`: over an algebraically closed
+  field, every finite-dimensional irreducible representation exhausts the endomorphisms.
 * `TauCeti.Representation.exists_isAtom_le`: every nonzero finite-dimensional subrepresentation
   contains an atom, so the atom criterion always has something to apply to.
 * `TauCeti.Representation.exists_isAtom`: in particular a nonzero finite-dimensional
@@ -197,7 +197,7 @@ representation over an algebraically closed field exhausts the full endomorphism
 Jacobson density gives all endomorphisms linear over the representation's commuting endomorphism
 ring. Schur's lemma identifies that ring with the base field, so these are exactly the
 `k`-linear endomorphisms. -/
-theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
+theorem asAlgebraHom_surjective_of_isIrreducible
     [IsAlgClosed k] [FiniteDimensional k V]
     (ρ : Representation k G V) (hρ : ρ.IsIrreducible) :
     Function.Surjective ρ.asAlgebraHom := by
@@ -212,8 +212,9 @@ theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
     { toFun := T
       map_add' := T.map_add
       map_smul' := fun f x ↦ by
-        -- The commuting-endomorphism action is function application by definition; expose that
-        -- equality so the scalar description supplied by Schur's lemma can be rewritten.
+        -- `T` acts on `V`, while `f` acts on the definitionally equal type synonym
+        -- `ρ.asModule`; exposing function application is required before Schur's scalar
+        -- description is type-correct.
         change T (f x) = f (T x)
         rw [← endAlgEquivSelfOfIsSimpleModule_smul (k := k) (A := k[G]) f x,
           ← endAlgEquivSelfOfIsSimpleModule_smul (k := k) (A := k[G]) f (T x)]
@@ -221,10 +222,14 @@ theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
   obtain ⟨a, ha⟩ :=
     Module.Finite.toModuleEnd_moduleEnd_surjective (R := k[G]) (M := ρ.asModule) T'
   refine ⟨a, LinearMap.ext fun x ↦ ?_⟩
+  have hT' (y : ρ.asModule) : T' y = T y := rfl
   have hx := LinearMap.congr_fun ha (ρ.asModuleEquiv.symm x)
-  -- `asModule` is a type synonym, and its comparison with `V` is the identity equivalence.
-  dsimp [Representation.asModuleEquiv, T'] at hx
-  exact hx
+  rw [hT'] at hx
+  have hx' := congrArg ρ.asModuleEquiv hx
+  have hT_equiv : ρ.asModuleEquiv (T (ρ.asModuleEquiv.symm x)) = T x := rfl
+  rw [hT_equiv] at hx'
+  simpa only [Module.toModuleEnd_apply, DistribSMul.toLinearMap_apply,
+    _root_.Representation.asModuleEquiv_map_smul, LinearEquiv.apply_symm_apply] using hx'
 
 /-! ### Atoms exist in finite dimensions -/
 

@@ -7,7 +7,6 @@ module
 
 public import Mathlib.RepresentationTheory.Subrepresentation
 public import Mathlib.RingTheory.SimpleModule.Basic
-public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # The underlying module of a subrepresentation
@@ -17,8 +16,9 @@ operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubm
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves, nor how it interacts with membership.
 This file adds the five missing counterparts, in the same shape. It also records that the
-group-algebra action on a subrepresentation coerces to the original action, and that a
-subrepresentation is minimal exactly when the `A[G]`-submodule it carries is simple.
+representation action on a subrepresentation is the restriction of the original action, that the
+group-algebra action coerces to the original action, and that a subrepresentation is minimal
+exactly when the `A[G]`-submodule it carries is simple.
 
 They are stated at the typeclasses `Subrepresentation` itself asks for, so they apply wherever
 the abstraction does. The `⊥` and `⊤` lemmas let proofs about extreme subrepresentations avoid
@@ -41,9 +41,10 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
+* `Subrepresentation.coe_toRepresentation_apply`
+* `Subrepresentation.toRepresentation_apply`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
-* `TauCeti.GeneralLinearGroup.IsUnipotent.subrepresentation`
 -/
 
 public section
@@ -78,6 +79,17 @@ is. -/
 lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
     ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
   simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
+
+/-- The action on a subrepresentation, coerced to the ambient module, is the original action. -/
+@[simp]
+theorem coe_toRepresentation_apply (S : Subrepresentation ρ) (g : G) (x : S.toSubmodule) :
+    ((S.toRepresentation g x : S.toSubmodule) : W) = ρ g (x : W) :=
+  rfl
+
+/-- The action on a subrepresentation is the restriction of the original action. -/
+theorem toRepresentation_apply (S : Subrepresentation ρ) (g : G) :
+    S.toRepresentation g = (ρ g).restrict (S.apply_mem_toSubmodule g) :=
+  rfl
 
 /-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
 original group-algebra action. -/
@@ -114,27 +126,3 @@ theorem isSimpleModule_asSubmodule_iff {σ : Subrepresentation ρ} :
 end AsSubmodule
 
 end Subrepresentation
-
-namespace TauCeti.GeneralLinearGroup
-
-variable {K G V : Type*} [CommRing K] [Group G] [AddCommGroup V] [Module K V]
-
-/-- Unipotence is inherited by the restriction of a group representation to an invariant
-subspace. -/
-theorem IsUnipotent.subrepresentation {ρ : Representation K G V} (S : Subrepresentation ρ)
-    (g : G) (hg : _root_.LinearMap.GeneralLinearGroup.IsUnipotent (ρ.asGroupHom g)) :
-    _root_.LinearMap.GeneralLinearGroup.IsUnipotent (S.toRepresentation.asGroupHom g) := by
-  rw [_root_.LinearMap.GeneralLinearGroup.isUnipotent_def] at hg ⊢
-  rw [Representation.asGroupHom_apply] at hg
-  let hmap : Set.MapsTo ((ρ g : Module.End K V) - (1 : Module.End K V))
-      S.toSubmodule S.toSubmodule := by
-    intro x hx
-    exact S.toSubmodule.sub_mem (S.apply_mem_toSubmodule g hx) hx
-  have hrestrict := Module.End.isNilpotent.restrict hmap hg
-  convert hrestrict using 1
-  ext x
-  -- Restricting the representation and restricting its endomorphism are definitionally the same
-  -- action on the subtype, but the two constructions have no comparison lemma in the API.
-  rfl
-
-end TauCeti.GeneralLinearGroup

@@ -29,6 +29,8 @@ induction in the Lie--Kolchin theorem.
   a joint eigenvector.
 * `TauCeti.exists_iInf_eigenspace_ne_bot_of_pairwise_commute`: the same result in the joint
   eigenspace API.
+* `TauCeti.exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector`: a common nonzero
+  fixed vector spans a pointwise-fixed line.
 * `TauCeti.exists_unitHom_jointEigenvector_of_pairwise_commute`: a group representation with
   commuting, triangularizable image has a joint eigenvector whose eigenvalues form a unit-valued
   character.
@@ -53,6 +55,17 @@ noncomputable section
 
 variable {K : Type u} {V : Type v} {ι : Type w}
 variable [Field K] [AddCommGroup V] [Module K V]
+
+/-- A nonzero vector fixed by a family of endomorphisms spans a one-dimensional submodule fixed
+pointwise by that family. -/
+theorem exists_fixed_submodule_finrank_eq_one_of_exists_common_fixed_vector
+    (f : ι → Module.End K V) (h : ∃ v : V, v ≠ 0 ∧ ∀ i, f i v = v) :
+    ∃ p : Submodule K V, Module.finrank K p = 1 ∧ ∀ i, ∀ x ∈ p, f i x = x := by
+  obtain ⟨v, hv, hfixed⟩ := h
+  refine ⟨K ∙ v, finrank_span_singleton hv, fun i x hx ↦ ?_⟩
+  rw [Submodule.mem_span_singleton] at hx
+  obtain ⟨a, rfl⟩ := hx
+  simp [hfixed]
 
 /-- A pairwise-commuting family of triangularizable endomorphisms of a nonzero finite-dimensional
 vector space has a joint eigenvector. -/

@@ -110,12 +110,6 @@ private theorem transportedColumnAntisymmetrizer_single_eq_zero
     exact add_neg_cancel _
   exact (smul_eq_zero.mp htwo).resolve_left two_ne_zero
 
-private theorem coe_toRepresentation_apply {G V : Type*} [Group G]
-    [AddCommGroup V] [Module ℚ V] {ρ : Representation ℚ G V}
-    (S : Subrepresentation ρ) (g : G) (x : S.toSubmodule) :
-    ((S.toRepresentation g x : S.toSubmodule) : V) = ρ g (x : V) :=
-  rfl
-
 private theorem sum_take_rowLens_le_of_transportedColumnAntisymmetrizer_ne_zero
     (e : Fin lam.card ≃ Fin m.card) (t : YoungTableau lam)
     {v : (permutationModule (shapePartition m)).V}
@@ -188,6 +182,8 @@ private theorem sum_take_rowLens_le_of_intertwiningMap_ne_zero
     exact haw'
   exact hawne (hinj (h.trans (map_zero f).symm))
 
+/-- The intertwiner between Specht subrepresentations induced by an isomorphism of the
+corresponding Specht modules, after transporting the permutation action between their diagrams. -/
 private noncomputable def spechtIntertwiningMapOfIso {n : ℕ} {μ ν : n.Partition}
     (i : spechtModule μ ≅ spechtModule ν) :
     Representation.IntertwiningMap (spechtSubrepresentation (diagramOf μ)).toRepresentation
@@ -216,6 +212,8 @@ private theorem spechtIntertwiningMapOfIso_injective {n : ℕ} {μ ν : n.Partit
       ((forget₂ (FDRep ℚ (Equiv.Perm (Fin n))) (Rep ℚ (Equiv.Perm (Fin n)))).mapIso i)
   exact fun _ _ h => f.injective h
 
+/-- The intertwiner induced by a Specht-module isomorphism, followed by the inclusion of the target
+Specht subrepresentation into its ambient permutation representation. -/
 private noncomputable def spechtToPermutationIntertwiningMapOfIso {n : ℕ}
     {μ ν : n.Partition} (i : spechtModule μ ≅ spechtModule ν) :
     Representation.IntertwiningMap (spechtSubrepresentation (diagramOf μ)).toRepresentation
@@ -228,7 +226,7 @@ private noncomputable def spechtToPermutationIntertwiningMapOfIso {n : ℕ}
       let f := spechtIntertwiningMapOfIso i
       have h := congrArg Subtype.val (DFunLike.congr_fun (f.isIntertwining' g) v)
       simp only [LinearMap.comp_apply, MonoidHom.comp_apply] at h
-      rw [coe_toRepresentation_apply] at h
+      rw [Subrepresentation.coe_toRepresentation_apply] at h
       simpa only [f, LinearMap.comp_apply, Submodule.coe_subtype, MonoidHom.comp_apply] using h }
 
 private theorem spechtToPermutationIntertwiningMapOfIso_apply {n : ℕ}
