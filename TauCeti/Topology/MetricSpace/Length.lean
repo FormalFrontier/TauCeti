@@ -86,13 +86,17 @@ sums `∑ i, edist (γ (u (i + 1))) (γ (u i))` over finite increasing families 
 This is the total variation `eVariationOn γ (Set.Icc a b)`, packaged with the argument shape of
 `Manifold.pathELength I γ a b` so that the two lengths can be compared. It vanishes when
 `b ≤ a`. -/
-@[expose]
 noncomputable def curveELength (γ : ℝ → X) (a b : ℝ) : ℝ≥0∞ :=
   eVariationOn γ (Icc a b)
 
 theorem curveELength_eq_eVariationOn (γ : ℝ → X) (a b : ℝ) :
     curveELength γ a b = eVariationOn γ (Icc a b) :=
-  rfl
+  (rfl)
+
+-- The equation above is the elimination API of `curveELength`: the body is not `@[expose]`d, so
+-- no other module unfolds it. The parentheses in `(rfl)` are the module system's -- a bare `rfl`,
+-- whose proof term is exported, fails with "not a definitional equality", while the parenthesised
+-- form elaborates inside this module, where the body is visible.
 
 theorem curveELength_eq_zero_of_le (γ : ℝ → X) {a b : ℝ} (hba : b ≤ a) :
     curveELength γ a b = 0 :=
@@ -307,9 +311,7 @@ theorem IsGeodesicSegment.reverse (h : IsGeodesicSegment γ x y) :
   dist_eq s hs t ht := by
     have hs' : 1 - s ∈ Icc (0 : ℝ) 1 := ⟨by linarith [hs.2], by linarith [hs.1]⟩
     have ht' : 1 - t ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht.2], by linarith [ht.1]⟩
-    rw [h.dist_eq _ hs' _ ht', dist_comm y x]
-    congr 1
-    rw [show 1 - s - (1 - t) = -(s - t) by ring, abs_neg]
+    rw [h.dist_eq _ hs' _ ht', dist_comm y x, sub_sub_sub_cancel_left, abs_sub_comm]
 
 /-- No piece of a geodesic segment is longer than the affine bound its parametrisation predicts.
 The reverse inequality is `TauCeti.edist_le_curveELength`, so the two together identify the
