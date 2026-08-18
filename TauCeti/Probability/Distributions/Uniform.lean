@@ -5,14 +5,13 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.Probability.Density
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Probability.Distributions.Uniform
-public import Mathlib.Probability.HasLaw
-public import Mathlib.Probability.Density
 public import Mathlib.Probability.CDF
-public import Mathlib.Probability.Moments.Variance
+public import Mathlib.Probability.Moments.Basic
+public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 /-!
@@ -49,7 +48,11 @@ therefore takes `a < b` as a hypothesis rather than assuming it silently.
 * `uniformPDF_eq_ofReal_uniformPDFReal` — the bridge between that density and the real-valued one;
 * `cdf_uniformMeasure` — the cdf is `0` below `a`, `1` above `b`, and `(x - a) / (b - a)` between;
 * `integral_id_uniformMeasure` — the mean is `(a + b) / 2`;
-* `variance_id_uniformMeasure` — the variance is `(b - a) ^ 2 / 12`.
+* `variance_id_uniformMeasure` — the variance is `(b - a) ^ 2 / 12`;
+* `integrableExpSet_id_uniformMeasure` — every exponential moment exists, for every pair of
+  endpoints;
+* `mgf_id_uniformMeasure_zero` and `mgf_id_uniformMeasure` — the moment generating function, split
+  at the removable singularity `t = 0`.
 
 ## Implementation
 
@@ -62,10 +65,9 @@ side condition.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 0, item 3. The remaining
-  targets of that item — `integrableExpSet`, the moment generating and cumulant generating
-  functions, the characteristic function, the affine transport
-  `(uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b`, and parameter
-  measurability — are not built here.
+  targets of that item — the cumulant generating function, the characteristic function, the affine
+  transport `(uniformMeasure 0 1).map (fun x => a + (b - a) * x) = uniformMeasure a b`, and
+  parameter measurability — are not built here.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 26.
 -/
@@ -184,8 +186,8 @@ interval the law is the zero measure, so no probability-measure claim is made he
 theorem hasPDF_of_hasLaw_uniformMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {a b : ℝ} (hX : HasLaw X (uniformMeasure a b) P) :
     HasPDF X P :=
-  hasPDF_of_map_eq_withDensity hX.aemeasurable _ measurable_uniformPDF_Ioc_volume.aemeasurable
-    (by rw [hX.map_eq, uniformMeasure_eq_withDensity])
+  hasPDF_of_hasLaw_withDensity measurable_uniformPDF_Ioc_volume.aemeasurable
+    (by rwa [uniformMeasure_eq_withDensity] at hX)
 
 /-- The Radon-Nikodym derivative of the uniform measure against Lebesgue measure is its density. -/
 theorem rnDeriv_uniformMeasure {a b : ℝ} :
@@ -247,6 +249,65 @@ theorem variance_id_uniformMeasure {a b : ℝ} (hab : a < b) :
   rw [ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le, smul_eq_mul]
   field_simp
   ring
+
+/-! ### Exponential transforms
+
+The uniform law has bounded support, so *every* exponential moment exists and the moment generating
+function is finite on all of `ℝ`. The formulas split at `t = 0`: the quotient
+`(exp (t * b) - exp (t * a)) / ((b - a) * t)` has a removable singularity there, and rather than
+push a proof through it the value `1` is given directly. -/
+
+/-- The uniform law is carried by its interval. -/
+theorem ae_mem_Ioc_uniformMeasure {a b : ℝ} : ∀ᵐ x ∂uniformMeasure a b, x ∈ Set.Ioc a b :=
+  ae_cond_mem measurableSet_Ioc
+
+/-- The uniform law is finite for every pair of endpoints: a probability measure when `a < b`, and
+the zero measure otherwise. -/
+instance isFiniteMeasure_uniformMeasure {a b : ℝ} : IsFiniteMeasure (uniformMeasure a b) := by
+  rcases lt_or_ge a b with hab | hba
+  · have : IsProbabilityMeasure (uniformMeasure a b) := isProbabilityMeasure_uniformMeasure hab
+    infer_instance
+  · rw [uniformMeasure_eq_zero_of_le hba]
+    infer_instance
+
+/-- **Every exponential moment of the uniform law exists.**
+
+The support is bounded, so `exp (t * x)` is bounded above by `exp (|t| * max |a| |b|)` almost
+everywhere, and the measure is finite. No hypothesis on the endpoints is needed. -/
+@[simp]
+theorem integrableExpSet_id_uniformMeasure {a b : ℝ} :
+    integrableExpSet id (uniformMeasure a b) = Set.univ := by
+  ext t
+  simp only [Set.mem_univ, iff_true, integrableExpSet, Set.mem_ofPred_eq, id_eq]
+  exact integrable_exp_mul_of_mem_Icc measurable_id.aemeasurable
+    (ae_mem_Ioc_uniformMeasure.mono fun _ h => Set.Ioc_subset_Icc_self h)
+
+/-- The moment generating function of the uniform law at `0` is `1`.
+
+Deliberately not `@[simp]`: `simp` already rewrites `mgf id μ 0` to `μ.real Set.univ`, so this
+left-hand side is not in normal form and the repo's simpNF linter rejects the annotation. For a
+probability measure `simp` then closes the goal on its own, which makes the annotation redundant as
+well as ill-formed. -/
+theorem mgf_id_uniformMeasure_zero {a b : ℝ} (hab : a < b) :
+    mgf id (uniformMeasure a b) 0 = 1 := by
+  have := isProbabilityMeasure_uniformMeasure hab
+  exact mgf_zero
+
+/-- **The moment generating function of the uniform law**, away from the removable singularity. -/
+theorem mgf_id_uniformMeasure {a b t : ℝ} (hab : a < b) (ht : t ≠ 0) :
+    mgf id (uniformMeasure a b) t =
+      (Real.exp (t * b) - Real.exp (t * a)) / ((b - a) * t) := by
+  have hba : (0 : ℝ) < b - a := sub_pos.mpr hab
+  have hint : ∫ x in Set.Ioc a b, Real.exp (t * x)
+      = (Real.exp (t * b) - Real.exp (t * a)) / t := by
+    rw [← intervalIntegral.integral_of_le hab.le,
+      intervalIntegral.integral_comp_mul_left (fun x => Real.exp x) ht]
+    simp [integral_exp]
+    field_simp
+  rw [mgf, uniformMeasure_eq_smul, integral_smul_measure]
+  simp only [id_eq]
+  rw [hint, ENNReal.toReal_inv, ENNReal.toReal_ofReal hba.le, smul_eq_mul]
+  field_simp
 
 end Probability
 

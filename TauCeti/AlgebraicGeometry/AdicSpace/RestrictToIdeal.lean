@@ -42,7 +42,7 @@ compute; the retraction property is the content of the two theorems, not of the 
   point, in terms of the original one.
 * `TauCeti.ValuationSpectrum.restrictToIdeal_mem_spvOfIdeal` : the restriction lands in
   `Spv (A, I)`. The mathematics is valuation-level and proved there, as
-  `TauCeti.Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`; this only adds that
+  `Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`; this only adds that
   membership may be tested on the canonical valuation of the point.
 * `TauCeti.ValuationSpectrum.coe_restrictToIdealCodRestrict` : the corestriction read back in
   `Spv A`.
@@ -60,7 +60,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open MonoidWithZeroHom TauCeti TauCeti.Valuation
+open MonoidWithZeroHom TauCeti Valuation
 
 variable {A : Type*} [CommRing A]
 
@@ -83,14 +83,14 @@ theorem restrictToIdeal_def (v : Spv A) (I : Ideal A)
 content of a point of `Spv A`, so this is the interface to `restrictToIdeal` at the level of
 points: `a ≤ b` after restriction exactly when `a`'s value is discarded, or `b`'s is kept and
 `a ≤ b` held already. The side conditions are discharged by
-`TauCeti.Valuation.restrictToIdeal_eq_zero_iff`. -/
+`Valuation.restrictToIdeal_eq_zero_iff`. -/
 @[simp]
 theorem vle_restrictToIdeal (v : Spv A) (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (a b : A) :
     (restrictToIdeal v I hfg).toValuativeRel.vle a b ↔
       v.valuation.restrictToIdeal I hfg a = 0 ∨
         v.valuation.restrictToIdeal I hfg b ≠ 0 ∧ v.toValuativeRel.vle a b := by
-  rw [restrictToIdeal_def, vle_ofValuation, TauCeti.Valuation.restrictToIdeal_le_iff]
+  rw [restrictToIdeal_def, vle_ofValuation, Valuation.restrictToIdeal_le_iff]
   exact or_congr_right (and_congr_right fun _ ↦ valuation_le_iff v a b)
 
 /-- **Wedhorn §7.1.2: the restriction lands in `Spv (A, I)`.** This is the substantive half of
@@ -98,14 +98,14 @@ the roadmap's `r_I : Spv A → Spv (A, I)`: the point `restrictToIdeal v I` real
 condition cutting out the subspace.
 
 The mathematics is valuation-level and lives there, as
-`TauCeti.Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`; all this adds is that
+`Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`; all this adds is that
 membership of a point may be tested on its canonical valuation. -/
 @[simp]
 theorem restrictToIdeal_mem_spvOfIdeal (v : Spv A) (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
     restrictToIdeal v I hfg ∈ spvOfIdeal I hfg := by
   rw [restrictToIdeal_def, mem_spvOfIdeal_ofValuation]
-  exact TauCeti.Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top _ I hfg
+  exact Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top _ I hfg
 
 /-- **The roadmap's `r_I : Spv A → Spv (A, I)`**, with the codomain the roadmap asks for. This is
 `restrictToIdeal` corestricted along the landing theorem, so a consumer receives a point of the
@@ -133,7 +133,7 @@ theorem restrictToIdeal_eq_self_of_mem_spvOfIdeal (v : Spv A) (I : Ideal A)
   -- with `cΓ_v(I)` everything, the restriction vanishes exactly where `v` does
   have hzero : ∀ a : A, v.valuation.restrictToIdeal I hfg a = 0 ↔ v.valuation a = 0 := by
     intro a
-    rw [TauCeti.Valuation.restrictToIdeal_eq_zero_iff]
+    rw [Valuation.restrictToIdeal_eq_zero_iff]
     refine ⟨?_, fun h ↦ Or.inl h⟩
     rintro (h | ⟨h0, hmem⟩)
     · exact h

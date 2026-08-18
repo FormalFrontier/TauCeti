@@ -183,6 +183,34 @@ theorem gaTangentLinearEquiv_apply
   simp only [gaTangentLinearEquiv, LinearEquiv.trans_apply,
     LinearMap.ringLmapEquivSelf_apply, tangentLinearEquiv_apply]
 
+/-- A tangent derivation annihilates every power other than the first of a coordinate
+generator.
+
+The generator of a vector group is primitive, so its counit vanishes; the Leibniz rule then
+leaves the factor `ι(x) ^ (k - 1)`, which acts on the counit coefficient algebra through that
+vanishing counit. Only the linear term of a coordinate function survives differentiation at
+the identity, which is what makes a differential read off a linear coefficient. -/
+theorem tangent_ι_pow_eq_zero
+    (d : Derivation R (SymmetricAlgebra R M)
+      (CounitAlgebra R (SymmetricAlgebra R M) B)) (x : M) {k : ℕ} (hk : k ≠ 1) :
+    d (SymmetricAlgebra.ι R M x ^ k) = 0 := by
+  rcases Nat.eq_zero_or_pos k with rfl | hpos
+  · rw [pow_zero, d.map_one_eq_zero]
+  · have hc : Coalgebra.counit (R := R) (SymmetricAlgebra.ι R M x ^ (k - 1)) = 0 := by
+      rw [← Bialgebra.counitAlgHom_apply, map_pow, Bialgebra.counitAlgHom_apply,
+        SymmetricAlgebra.counit_ι, zero_pow (by omega)]
+    have hz : algebraMap (SymmetricAlgebra R M)
+        (CounitAlgebra R (SymmetricAlgebra R M) B)
+        (SymmetricAlgebra.ι R M x ^ (k - 1)) = 0 := by
+      rw [CounitAlgebra.algebraMap_apply, hc]
+      -- The rewritten value sits in `B` rather than in the counit synonym, which carries `B`
+      -- itself; the two zeroes are identified definitionally.
+      exact map_zero (algebraMap R B)
+    have hsmul :
+        (SymmetricAlgebra.ι R M x ^ (k - 1)) • d (SymmetricAlgebra.ι R M x) = 0 := by
+      rw [Algebra.smul_def, hz, zero_mul]
+    rw [d.leibniz_pow, hsmul, smul_zero]
+
 /-- The derivation corresponding to `b : B` under the `𝔾ₐ` tangent equivalence takes the
 coordinate `ι(1)` to `b`. -/
 @[simp]
@@ -216,7 +244,7 @@ theorem tangent_bracket_eq_zero
       (CounitAlgebra R (SymmetricAlgebra R M) B)) : ⁅d, e⁆ = 0 := by
   apply derivation_ext
   intro x
-  rw [TauCeti.Derivation.bracket_apply, SymmetricAlgebra.comul_ι]
+  rw [Derivation.bracket_apply, SymmetricAlgebra.comul_ι]
   simp
 
 end Lie

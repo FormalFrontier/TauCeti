@@ -255,6 +255,19 @@ noncomputable def diagonalTorus :
       (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
     eqToHom (groupScheme_def R N).symm
 
+/-- The diagonal torus is relative spectrum applied contravariantly to its coordinate morphism,
+transported across the named presentations of the split torus and general linear group. -/
+theorem diagonalTorus_def :
+    diagonalTorus (R := R) (N := N) =
+      eqToHom
+          (DiagonalizableGroup.groupScheme_def R
+            (SplitTorus.characterGroup (ULift.{u} (Fin N)))) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap (R := R) (N := N)).op ≫
+        eqToHom (groupScheme_def R N).symm := by
+  unfold diagonalTorus
+  rfl
+
 section SchemePoints
 
 variable (A : Type u) [CommRing A] [Algebra R A]
