@@ -49,12 +49,10 @@ the readings agree.
 * `TauCeti.spechtModuleClass`: the isomorphism class of the simple `ℚ[Sₙ]`-module `S^μ`.
 * `TauCeti.partitionEquivSimpleModuleClasses`: **the classification**, `μ ↦ S^μ` as a bijection from
   `Nat.Partition n` to the isomorphism classes of simple `ℚ[Sₙ]`-modules.
-* `TauCeti.exists_nonempty_linearEquiv_spechtModule`: every simple `ℚ[Sₙ]`-module is isomorphic to
-  a Specht module, and `TauCeti.existsUnique_nonempty_linearEquiv_spechtModule` for exactly one
-  partition.
-* `TauCeti.exists_nonempty_equiv_spechtModule`: every irreducible rational representation of `Sₙ` is
-  equivalent to a Specht module, and `TauCeti.existsUnique_nonempty_equiv_spechtModule` for exactly
-  one partition.
+* `TauCeti.existsUnique_nonempty_linearEquiv_spechtModule`: every simple `ℚ[Sₙ]`-module is
+  isomorphic to a Specht module for exactly one partition.
+* `TauCeti.existsUnique_nonempty_equiv_spechtModule`: every irreducible rational representation of
+  `Sₙ` is equivalent to a Specht module for exactly one partition.
 * `TauCeti.partitionEquivSimpleFDRepClasses`: **the classification in `FDRep ℚ Sₙ`**, `μ ↦ S^μ` as a
   bijection from `Nat.Partition n` to the isomorphism classes of simple objects, with
   `TauCeti.existsUnique_nonempty_iso_spechtModule` its `∃!` form.
@@ -146,8 +144,7 @@ theorem partitionEquivSimpleModuleClasses_apply (μ : n.Partition) :
     partitionEquivSimpleModuleClasses n μ = spechtModuleClass μ :=
   (rfl)
 
-/-- **Every simple `ℚ[Sₙ]`-module is a Specht module.** -/
-theorem exists_nonempty_linearEquiv_spechtModule (M : Type*) [AddCommGroup M]
+private theorem exists_nonempty_linearEquiv_spechtModule (M : Type*) [AddCommGroup M]
     [Module ℚ[Equiv.Perm (Fin n)] M] [IsSimpleModule ℚ[Equiv.Perm (Fin n)] M] :
     ∃ μ : n.Partition, Nonempty (M ≃ₗ[ℚ[Equiv.Perm (Fin n)]]
       _root_.Representation.asModule (spechtModule μ).ρ) := by
@@ -156,16 +153,13 @@ theorem exists_nonempty_linearEquiv_spechtModule (M : Type*) [AddCommGroup M]
   rw [spechtModuleClass_def] at hμ
   exact ⟨μ, simpleModuleClass_eq_iff.mp hμ.symm⟩
 
-/-- **Every irreducible rational representation of `Sₙ` is a Specht module.** -/
-theorem exists_nonempty_equiv_spechtModule {V : Type*} [AddCommGroup V] [Module ℚ V]
+private theorem exists_nonempty_equiv_spechtModule {V : Type*} [AddCommGroup V] [Module ℚ V]
     (ρ : Representation ℚ (Equiv.Perm (Fin n)) V) [ρ.IsIrreducible] :
     ∃ μ : n.Partition, Nonempty (ρ.Equiv (spechtModule μ).ρ) := by
   obtain ⟨μ, hμ⟩ := exists_nonempty_linearEquiv_spechtModule (n := n) ρ.asModule
   exact ⟨μ, Representation.nonempty_equiv_iff.mpr hμ⟩
 
-/-- **Every simple `ℚ[Sₙ]`-module is a Specht module for exactly one partition.** The uniqueness
-half is `TauCeti.nonempty_linearEquiv_spechtModule_asModule_iff`; stating it here spares consumers
-the composition of the two isomorphisms. -/
+/-- **Every simple `ℚ[Sₙ]`-module is a Specht module for exactly one partition.** -/
 theorem existsUnique_nonempty_linearEquiv_spechtModule (M : Type*) [AddCommGroup M]
     [Module ℚ[Equiv.Perm (Fin n)] M] [IsSimpleModule ℚ[Equiv.Perm (Fin n)] M] :
     ∃! μ : n.Partition, Nonempty (M ≃ₗ[ℚ[Equiv.Perm (Fin n)]]
@@ -175,8 +169,7 @@ theorem existsUnique_nonempty_linearEquiv_spechtModule (M : Type*) [AddCommGroup
     (nonempty_linearEquiv_spechtModule_asModule_iff ν μ).mp ⟨f.symm.trans hμ.some⟩⟩
 
 /-- **Every irreducible rational representation of `Sₙ` is a Specht module for exactly one
-partition.** This is the classification in the shape it is usually quoted in: an irreducible
-rational representation of the symmetric group *has* a partition, and only one. -/
+partition.** -/
 theorem existsUnique_nonempty_equiv_spechtModule {V : Type*} [AddCommGroup V] [Module ℚ V]
     (ρ : Representation ℚ (Equiv.Perm (Fin n)) V) [ρ.IsIrreducible] :
     ∃! μ : n.Partition, Nonempty (ρ.Equiv (spechtModule μ).ρ) := by
@@ -189,39 +182,34 @@ section Categorical
 
 open CategoryTheory
 
-attribute [local instance] isIsomorphicSetoid
-
 /-- **The isomorphism class of the Specht module `S^μ` as a simple object of `FDRep ℚ Sₙ`.** The
 categorical counterpart of `TauCeti.spechtModuleClass`. -/
 noncomputable def spechtModuleFDRepClass (μ : n.Partition) :
     SimpleFDRepClasses ℚ (Equiv.Perm (Fin n)) :=
-  toSkeleton ⟨spechtModule μ, inferInstance⟩
+  SimpleFDRepClasses.mk (spechtModule μ)
 
 @[simp]
 theorem spechtModuleFDRepClass_def (μ : n.Partition) :
-    spechtModuleFDRepClass μ = toSkeleton ⟨spechtModule μ, inferInstance⟩ :=
+    spechtModuleFDRepClass μ = SimpleFDRepClasses.mk (spechtModule μ) :=
   (rfl)
 
 /-- **The classification, read in `FDRep ℚ Sₙ`.** Sending a partition of `n` to the isomorphism
 class of the Specht module `S^μ` is a bijection onto the isomorphism classes of simple objects of
-`FDRep ℚ Sₙ`. Injectivity is `TauCeti.spechtModule_iso_iff`, and surjectivity is
-`TauCeti.exists_nonempty_equiv_spechtModule` read through
-`TauCeti.FDRep.simple_iff_isIrreducible` and `TauCeti.nonempty_fdRepIso_iff`. -/
+`FDRep ℚ Sₙ`. -/
 theorem spechtModuleFDRepClass_bijective :
     Function.Bijective (spechtModuleFDRepClass (n := n)) := by
   constructor
   · intro μ ν h
     rw [spechtModuleFDRepClass_def, spechtModuleFDRepClass_def,
-      toSkeleton_eq_toSkeleton_iff_nonempty_iso] at h
+      SimpleFDRepClasses.mk_eq_mk_iff] at h
     exact (spechtModule_iso_iff μ ν).mp h
-  · refine Quotient.ind fun X ↦ ?_
-    have hX := X.property
-    have : _root_.Representation.IsIrreducible X.obj.ρ :=
-      (FDRep.simple_iff_isIrreducible X.obj).mp hX
-    obtain ⟨μ, hμ⟩ := exists_nonempty_equiv_spechtModule X.obj.ρ
+  · refine SimpleFDRepClasses.ind (fun X hX ↦ ?_)
+    let _ := hX
+    have : _root_.Representation.IsIrreducible X.ρ :=
+      (FDRep.simple_iff_isIrreducible X).mp hX
+    obtain ⟨μ, hμ⟩ := exists_nonempty_equiv_spechtModule X.ρ
     refine ⟨μ, ?_⟩
-    change spechtModuleFDRepClass μ = toSkeleton X
-    rw [spechtModuleFDRepClass_def, toSkeleton_eq_toSkeleton_iff_nonempty_iso]
+    rw [spechtModuleFDRepClass_def, SimpleFDRepClasses.mk_eq_mk_iff]
     exact ⟨(nonempty_fdRepIso_iff.mpr hμ).some.symm⟩
 
 /-- **The categorical classification of the irreducible rational representations of the symmetric
@@ -247,8 +235,9 @@ theorem existsUnique_nonempty_iso_spechtModule (X : FDRep ℚ (Equiv.Perm (Fin n
 /-- The partition a Specht module's class names is the partition it was built from: the `symm`
 companion of `TauCeti.partitionEquivSimpleFDRepClasses_apply`. -/
 @[simp]
-theorem partitionEquivSimpleFDRepClasses_symm_toSkeleton (μ : n.Partition) :
-    (partitionEquivSimpleFDRepClasses n).symm (toSkeleton ⟨spechtModule μ, inferInstance⟩) = μ := by
+theorem partitionEquivSimpleFDRepClasses_symm_mk (μ : n.Partition) :
+    (partitionEquivSimpleFDRepClasses n).symm
+      (SimpleFDRepClasses.mk (spechtModule μ)) = μ := by
   rw [← spechtModuleFDRepClass_def, ← partitionEquivSimpleFDRepClasses_apply,
     Equiv.symm_apply_apply]
 
@@ -268,15 +257,12 @@ theorem coe_simpleFDRepClassesEquivSimpleModuleClasses :
     ⇑(simpleFDRepClassesEquivSimpleModuleClasses n) =
       SimpleFDRepClasses.toSimpleSubmoduleClasses := by
   funext c
-  induction c using Quotient.ind with
-  | _ X =>
-    have hX := X.property
-    have : Simple X.obj := hX
+  induction c using SimpleFDRepClasses.ind with
+  | _ X hX =>
+    let _ := hX
     -- Name the partition of `X`, so that both sides are evaluated at a Specht module.
-    obtain ⟨μ, hμ, -⟩ := existsUnique_nonempty_iso_spechtModule X.obj
-    change simpleFDRepClassesEquivSimpleModuleClasses n (toSkeleton X) =
-      SimpleFDRepClasses.toSimpleSubmoduleClasses (toSkeleton X)
-    rw [(toSkeleton_eq_toSkeleton_iff_nonempty_iso hX inferInstance).mpr hμ]
+    obtain ⟨μ, hμ, -⟩ := existsUnique_nonempty_iso_spechtModule X
+    rw [(SimpleFDRepClasses.mk_eq_mk_iff X (spechtModule μ)).mpr hμ]
     simp [simpleFDRepClassesEquivSimpleModuleClasses]
 
 end Categorical

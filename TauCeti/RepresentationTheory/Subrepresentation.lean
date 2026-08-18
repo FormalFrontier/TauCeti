@@ -42,6 +42,9 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
 * `Subrepresentation.subtype`
+* `Subrepresentation.subtype_injective`
+* `Subrepresentation.subtype_eq_zero_iff`
+* `Subrepresentation.surjective_subtype_iff`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
 -/
@@ -92,6 +95,37 @@ lemma coe_subtype (ρ' : Subrepresentation ρ) : ⇑ρ'.subtype = Subtype.val :=
 @[simp]
 lemma toLinearMap_subtype (ρ' : Subrepresentation ρ) :
     ρ'.subtype.toLinearMap = ρ'.toSubmodule.subtype := by rfl
+
+/-- The inclusion of a subrepresentation is injective. -/
+theorem subtype_injective (ρ' : Subrepresentation ρ) : Function.Injective ρ'.subtype :=
+  fun _ _ h ↦ Subtype.ext (by simpa using h)
+
+/-- The inclusion of a subrepresentation is zero exactly when the subrepresentation is zero. -/
+@[simp]
+theorem subtype_eq_zero_iff (ρ' : Subrepresentation ρ) : ρ'.subtype = 0 ↔ ρ' = ⊥ := by
+  constructor
+  · intro h
+    refine toSubmodule_injective ?_
+    rw [toSubmodule_bot, Submodule.eq_bot_iff]
+    intro x hx
+    simpa using DFunLike.congr_fun h (⟨x, hx⟩ : ρ'.toSubmodule)
+  · rintro rfl
+    ext x
+    exact (Submodule.mem_bot A).mp x.2
+
+/-- The inclusion of a subrepresentation is surjective exactly when the subrepresentation is the
+whole representation. -/
+theorem surjective_subtype_iff (ρ' : Subrepresentation ρ) :
+    Function.Surjective ρ'.subtype ↔ ρ' = ⊤ := by
+  constructor
+  · intro h
+    apply top_unique
+    intro y _
+    obtain ⟨x, rfl⟩ := h y
+    exact x.property
+  · rintro rfl
+    intro y
+    exact ⟨⟨y, Submodule.mem_top⟩, rfl⟩
 
 /-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
 original group-algebra action. -/

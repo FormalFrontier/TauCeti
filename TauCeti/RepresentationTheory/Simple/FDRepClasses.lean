@@ -18,10 +18,9 @@ of them. For abstract simple modules there is none, since they range over every 
 simple *submodules* of a fixed module, which over a semisimple ring realizes every isomorphism
 class of simple modules. The objects of `FDRep k G` need no such device, because they already form
 a type, and Mathlib already quotients the objects of a category by isomorphism:
-`CategoryTheory.Skeleton`, whose underlying type is `Quotient (isIsomorphicSetoid _)` and whose
-`CategoryTheory.toSkeleton` and `CategoryTheory.toSkeleton_eq_toSkeleton_iff` are the constructor
-and the comparison. `TauCeti.SimpleFDRepClasses` is that skeleton, taken of the full subcategory of
-simple objects, so all of Mathlib's skeleton API applies to it unchanged.
+`CategoryTheory.Skeleton`. `TauCeti.SimpleFDRepClasses` is that skeleton, taken of the full
+subcategory of simple objects, and its namespace supplies the constructor, comparison, eliminator,
+and lift that consumers need.
 
 `TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses` compares it with the module-level quotient
 over a semisimple group algebra, sending a simple object to the isomorphism class of the
@@ -32,8 +31,8 @@ bijections; see `TauCeti.coe_simpleFDRepClassesEquivSimpleModuleClasses` for the
 ## Main results
 
 * `TauCeti.SimpleFDRepClasses`: the isomorphism classes of simple objects of `FDRep k G`.
-* `TauCeti.toSkeleton_eq_toSkeleton_iff_nonempty_iso`: two simple objects have the same class
-  exactly when they are isomorphic in `FDRep k G`, rather than merely in the full subcategory.
+* `TauCeti.SimpleFDRepClasses.mk_eq_mk_iff`: two simple objects have the same class exactly when
+  they are isomorphic in `FDRep k G`.
 * `TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses`: over a semisimple group algebra, the
   isomorphism class of the `k[G]`-module a simple object carries.
 -/
@@ -52,51 +51,96 @@ universe u v
 
 variable (k : Type u) (G : Type v) [Field k] [Monoid G]
 
+namespace ObjectProperty
+
+/-- Two objects of a full subcategory define the same point of its skeleton exactly when the
+underlying objects are isomorphic. -/
+theorem toSkeleton_eq_toSkeleton_iff_nonempty_iso {C : Type*} [Category C]
+    (P : CategoryTheory.ObjectProperty C) {X Y : C} (hX : P X) (hY : P Y) :
+    toSkeleton (⟨X, hX⟩ : P.FullSubcategory) = toSkeleton ⟨Y, hY⟩ ↔ Nonempty (X ≅ Y) := by
+  rw [CategoryTheory.toSkeleton_eq_toSkeleton_iff]
+  exact ⟨fun ⟨e⟩ ↦ ⟨P.ι.mapIso e⟩, fun ⟨e⟩ ↦ ⟨CategoryTheory.ObjectProperty.isoMk _ e⟩⟩
+
+end ObjectProperty
+
+namespace FDRep
+
 /-- Being simple, as a property of the objects of `FDRep k G`. -/
 abbrev simpleObjects : ObjectProperty (FDRep k G) := fun X => Simple X
 
+instance : (simpleObjects k G).IsClosedUnderIsomorphisms where
+  of_iso e h := by
+    let _ := h
+    exact Simple.of_iso e.symm
+
+end FDRep
+
 /-- **The isomorphism classes of simple objects of `FDRep k G`**: the skeleton of the full
-subcategory they span. Build a class with `CategoryTheory.toSkeleton`, compare two with
-`TauCeti.toSkeleton_eq_toSkeleton_iff_nonempty_iso`, and eliminate with `Quotient.ind` or
-`Quotient.lift`, the skeleton being the quotient of the objects by isomorphism. -/
-abbrev SimpleFDRepClasses : Type _ := Skeleton (simpleObjects k G).FullSubcategory
+subcategory they span. -/
+abbrev SimpleFDRepClasses : Type _ := Skeleton (FDRep.simpleObjects k G).FullSubcategory
 
 variable {k G}
 
-/-- **Two simple objects have the same class exactly when they are isomorphic.** This is
-`CategoryTheory.toSkeleton_eq_toSkeleton_iff` with the isomorphisms of the full subcategory of
-simple objects traded for isomorphisms of `FDRep k G`, which is what a consumer holds. -/
-theorem toSkeleton_eq_toSkeleton_iff_nonempty_iso {X Y : FDRep k G} (hX : Simple X)
-    (hY : Simple Y) :
-    toSkeleton (⟨X, hX⟩ : (simpleObjects k G).FullSubcategory) = toSkeleton ⟨Y, hY⟩ ↔
-      Nonempty (X ≅ Y) := by
-  rw [toSkeleton_eq_toSkeleton_iff]
-  exact ⟨fun ⟨e⟩ => ⟨(simpleObjects k G).ι.mapIso e⟩, fun ⟨e⟩ => ⟨ObjectProperty.isoMk _ e⟩⟩
-
 namespace SimpleFDRepClasses
+
+/-- The isomorphism class of a simple object of `FDRep k G`. -/
+def mk (X : FDRep k G) [Simple X] : SimpleFDRepClasses k G :=
+  toSkeleton (⟨X, inferInstance⟩ : (FDRep.simpleObjects k G).FullSubcategory)
+
+/-- Two simple objects have the same class exactly when they are isomorphic. -/
+@[simp]
+theorem mk_eq_mk_iff (X Y : FDRep k G) [Simple X] [Simple Y] :
+    mk X = mk Y ↔ Nonempty (X ≅ Y) :=
+  ObjectProperty.toSkeleton_eq_toSkeleton_iff_nonempty_iso (FDRep.simpleObjects k G) _ _
+
+/-- To prove a property of every simple-object class, it suffices to prove it on the class of each
+simple object. -/
+@[elab_as_elim]
+theorem ind {motive : SimpleFDRepClasses k G → Prop}
+    (h : ∀ (X : FDRep k G) (hX : Simple X), motive (@mk k G _ _ X hX))
+    (c : SimpleFDRepClasses k G) :
+    motive c := by
+  refine Quotient.ind (fun X ↦ ?_) c
+  exact h X.obj X.property
+
+/-- Define a function on simple-object classes from an isomorphism-invariant function on simple
+objects. -/
+noncomputable def lift {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
+    (h : ∀ (X Y : FDRep k G) (hX : Simple X) (hY : Simple Y),
+      Nonempty (X ≅ Y) → f X hX = f Y hY) :
+    SimpleFDRepClasses k G → α :=
+  Quotient.lift
+    (fun X ↦ f X.obj X.property)
+    fun X Y e ↦ h X.obj Y.obj X.property Y.property
+      ⟨(FDRep.simpleObjects k G).ι.mapIso e.some⟩
+
+@[simp]
+theorem lift_mk {α : Sort*} (f : ∀ (X : FDRep k G), Simple X → α)
+    (h : ∀ (X Y : FDRep k G) (hX : Simple X) (hY : Simple Y),
+      Nonempty (X ≅ Y) → f X hX = f Y hY)
+    (X : FDRep k G) [Simple X] : lift f h (mk X) = f X inferInstance := by
+  simp [lift, mk]
 
 /-- **The isomorphism class of the `k[G]`-module a simple object of `FDRep k G` carries.** Over a
 semisimple group algebra this compares the categorical classification with the module-level one of
 `TauCeti.SimpleSubmoduleClasses`. -/
 noncomputable def toSimpleSubmoduleClasses [IsSemisimpleRing k[G]] :
     SimpleFDRepClasses k G → SimpleSubmoduleClasses k[G] k[G] :=
-  Quotient.lift
-    (fun X =>
-      letI := X.property
-      simpleModuleClass k[G] (_root_.Representation.asModule X.obj.ρ))
-    fun X Y h => by
-      have := X.property
-      have := Y.property
-      exact simpleModuleClass_eq_iff.mpr (Representation.nonempty_equiv_iff.mp
-        (nonempty_fdRepIso_iff.mp ⟨(simpleObjects k G).ι.mapIso h.some⟩))
+  lift
+    (fun X hX ↦
+      let _ := hX
+      simpleModuleClass k[G] (_root_.Representation.asModule X.ρ))
+    fun X Y hX hY h ↦ by
+      let _ := hX
+      let _ := hY
+      exact simpleModuleClass_eq_iff.mpr
+        (Representation.nonempty_equiv_iff.mp (nonempty_fdRepIso_iff.mp h))
 
 @[simp]
-theorem toSimpleSubmoduleClasses_toSkeleton [IsSemisimpleRing k[G]] (X : FDRep k G)
-    (hX : Simple X) :
-    toSimpleSubmoduleClasses (toSkeleton (⟨X, hX⟩ : (simpleObjects k G).FullSubcategory)) =
-      letI := hX
+theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Simple X] :
+    toSimpleSubmoduleClasses (mk X) =
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
-  (rfl)
+  lift_mk _ _ X
 
 end SimpleFDRepClasses
 

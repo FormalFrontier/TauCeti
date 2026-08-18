@@ -110,12 +110,7 @@ noncomputable def fdRepIsoOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ
 
 /-- **The two notions of isomorphism agree on `FDRep k G`.** Two objects are isomorphic exactly when
 the representations they carry are equivalent, so a classification of representations up to
-equivalence is a classification of the objects of `FDRep k G` up to isomorphism.
-
-Neither direction is new work: forwards it is `Representation.equivOfIso` applied to the image of
-the isomorphism in `Rep k G`, where the objects carry the very same representations, and backwards
-it is `TauCeti.fdRepIsoOfAsModuleLinearEquiv`. What is new is that the equivalence of `Nonempty`s
-is available at all, which is the form a classification statement is transported along. -/
+equivalence is a classification of the objects of `FDRep k G` up to isomorphism. -/
 theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
     Nonempty (X ≅ Y) ↔ Nonempty (_root_.Representation.Equiv X.ρ Y.ρ) :=
   ⟨fun ⟨i⟩ => ⟨_root_.Representation.equivOfIso

@@ -17,8 +17,8 @@ public import TauCeti.RepresentationTheory.Subrepresentation
 Two notions of "irreducible representation" coexist. `Representation.IsIrreducible ρ` says that the
 lattice of subrepresentations of `ρ` has exactly two elements, and it is the notion in which the
 representation-theoretic arguments of this repository are phrased.
-`CategoryTheory.Simple X` says that every monomorphism into the object `X` is either zero or an
-isomorphism, and it is the notion in which the categorical machinery is phrased -- Schur's lemma
+`CategoryTheory.Simple X` says that `X` is nonzero and every monomorphism `f` into `X` satisfies
+`IsIso f ↔ f ≠ 0`; it is the notion in which the categorical machinery is phrased -- Schur's lemma
 `FDRep.finrank_hom_simple_simple`, the characters of simple objects, semisimple categories. Neither
 Mathlib nor this repository related the two, and several files here say so and stop at the
 `Representation` level. This file supplies the dictionary.
@@ -59,6 +59,8 @@ open scoped MonoidAlgebra
 
 universe u v w
 
+namespace TauCeti
+
 /-- **An object of `Rep k G` is simple exactly when the representation it carries is
 irreducible.** Both sides say that the `k[G]`-module the object carries is simple: the left-hand
 side across `Rep.equivalenceModuleMonoidAlgebra`, the right-hand side across
@@ -88,43 +90,23 @@ variable {V : Type u} [AddCommGroup V] [Module k V] {ρ : Representation k G V}
 
 /-- The inclusion of a subrepresentation is a monomorphism of `Rep k G`, being injective. -/
 private theorem mono_repOfHom_subtype : Mono (Rep.ofHom W.subtype) :=
-  (Rep.mono_iff_injective _).mpr fun _ _ hab => Subtype.ext (by simpa using hab)
+  (Rep.mono_iff_injective _).mpr W.subtype_injective
 
 /-- The inclusion of a subrepresentation is the zero morphism of `Rep k G` exactly when the
 subrepresentation is zero. -/
 private theorem repOfHom_subtype_eq_zero_iff : Rep.ofHom W.subtype = 0 ↔ W = ⊥ := by
   constructor
   · intro h
-    have hzero : W.subtype = 0 := by simpa using congrArg Rep.Hom.hom h
-    refine Subrepresentation.toSubmodule_injective ?_
-    rw [Subrepresentation.toSubmodule_bot, Submodule.eq_bot_iff]
-    intro x hx
-    simpa using DFunLike.congr_fun hzero (⟨x, hx⟩ : W.toSubmodule)
-  · rintro rfl
-    have hzero : (⊥ : Subrepresentation ρ).subtype = 0 := by
-      ext x
-      simp only [Subrepresentation.toLinearMap_subtype, Submodule.subtype_apply,
-        Representation.IntertwiningMap.zero_toLinearMap, LinearMap.zero_apply]
-      exact (Submodule.mem_bot k).mp x.2
-    rw [hzero, Rep.ofHom_zero]
+    apply W.subtype_eq_zero_iff.mp
+    simpa using congrArg Rep.Hom.hom h
+  · intro h
+    rw [(W.subtype_eq_zero_iff.mpr h), Rep.ofHom_zero]
 
 /-- The inclusion of a subrepresentation is an epimorphism of `Rep k G` exactly when the
 subrepresentation is everything. -/
 private theorem epi_repOfHom_subtype_iff : Epi (Rep.ofHom W.subtype) ↔ W = ⊤ := by
   rw [Rep.epi_iff_surjective]
-  constructor
-  · intro hsurj
-    have hrange : W.subtype.toLinearMap.range = ⊤ :=
-      LinearMap.range_eq_top.mpr (by simpa using hsurj)
-    rw [Subrepresentation.toLinearMap_subtype, Submodule.range_subtype] at hrange
-    exact Subrepresentation.toSubmodule_injective
-      (hrange.trans Subrepresentation.toSubmodule_top.symm)
-  · rintro rfl
-    intro y
-    have hy : y ∈ (⊤ : Subrepresentation ρ).toSubmodule := by
-      rw [Subrepresentation.toSubmodule_top]; exact Submodule.mem_top
-    refine ⟨⟨y, hy⟩, ?_⟩
-    rw [Rep.hom_ofHom, Subrepresentation.coe_subtype]
+  exact W.surjective_subtype_iff
 
 end Inclusion
 
@@ -162,8 +144,7 @@ private theorem isIso_subInclusion_iff (X : FDRep k G) (W : Subrepresentation X.
   · intro h
     have hepi : Epi ((forget₂ (FDRep k G) (Rep k G)).map (subInclusion X W)) := inferInstance
     rw [map_subInclusion] at hepi
-    have hepi' : Epi (Rep.ofHom W.subtype) := hepi
-    exact (epi_repOfHom_subtype_iff W).mp hepi'
+    exact (epi_repOfHom_subtype_iff W).mp hepi
   · rintro rfl
     have hmono := mono_map_subInclusion X (⊤ : Subrepresentation X.ρ)
     have hepi : Epi ((forget₂ (FDRep k G) (Rep k G)).map
@@ -202,3 +183,5 @@ instance FDRep.isIrreducible_of_simple (X : FDRep k G) [Simple X] :
   (FDRep.simple_iff_isIrreducible X).mp ‹_›
 
 end FDRep
+
+end TauCeti
