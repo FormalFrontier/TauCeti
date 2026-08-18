@@ -330,14 +330,9 @@ theorem chainTopCoeff_mul_killingForm_root_neg_eq
       (P := P) (rootInvariantForm (H := H)) hk
   have hβkill := hx.killingForm_root_neg_eq β hβ
   have hγkill := hx.killingForm_root_neg_eq γ hγ
-  simp only [rootInvariantForm_form, invForm_apply] at hlength
   rw [hcoeff.1, hcoeff.2] at hlength
-  -- Definitional equality: `P.root k` reduces to `γ` and `P.root j` to `β`.
-  change (chainTopCoeff α β : K) *
-      (γ : Module.Dual K H) ((cartanEquivDual H).symm (γ : Module.Dual K H)) =
-    (chainBotCoeff α β + 1 : ℕ) *
-      (β : Module.Dual K H) ((cartanEquivDual H).symm (β : Module.Dual K H)) at hlength
-  simp only [Weight.toLinear_apply] at hlength
+  simp only [rootInvariantForm_form, invForm_apply_apply, P, j, k, rootSystem_root_apply,
+    Weight.toLinear_apply] at hlength
   rw [hβkill, hγkill]
   have hβne := root_apply_cartanEquivDual_symm_ne_zero hβ
   have hγne := root_apply_cartanEquivDual_symm_ne_zero hγ

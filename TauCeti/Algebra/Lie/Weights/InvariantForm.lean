@@ -15,7 +15,7 @@ Let `L` be a finite-dimensional Lie algebra with non-degenerate Killing form ove
 characteristic zero and let `H` be a splitting Cartan subalgebra. The Killing form restricts to a
 non-degenerate form on `H`, which Mathlib packages as the linear equivalence
 `LieAlgebra.IsKilling.cartanEquivDual : H ≃ₗ[K] Module.Dual K H`. Transporting the form along that
-equivalence puts a symmetric non-degenerate bilinear form `⟨·,·⟩` on the weight space
+equivalence puts a symmetric non-degenerate bilinear form `⟨·,·⟩` on the space of weights
 `Module.Dual K H`. This file builds that form as `TauCeti.invForm` and proves the two facts that
 make it the right object: it is invariant under the reflections of the root system
 (`TauCeti.rootInvariantForm`), and it is normalised against the coroots by
@@ -45,12 +45,12 @@ that can be stated.
 
 * `TauCeti.invForm_isSymm` and `TauCeti.invForm_nondegenerate`: the form is symmetric and
   non-degenerate.
-* `TauCeti.invForm_eq_traceForm`, `TauCeti.invForm_cartanEquivDual_left` and
-  `TauCeti.invForm_cartanEquivDual`: the form is the transport of the Killing form, in the three
-  shapes in which that is used.
+* `TauCeti.invForm_apply_apply_eq_traceForm`: the form is the transport of the Killing form.
+* `TauCeti.invForm_cartanEquivDual_right` and `TauCeti.invForm_cartanEquivDual_left`: pairing a
+  weight against one of the shape `cartanEquivDual H x` evaluates the other weight at `x`.
 * `TauCeti.cartanEquivDual_coroot`: the coroot `α^∨` is the weight `2α / ⟨α, α⟩`, read through
   `cartanEquivDual`.
-* `TauCeti.invForm_coroot` and `TauCeti.invForm_coroot_of_isNonZero`: the normalisation
+* `TauCeti.invForm_coroot` and `TauCeti.invForm_coroot_weight`: the normalisation
   `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩`.
 * `TauCeti.invForm_cartanEquivDual_coroot_self`: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a
   short coroot.
@@ -68,11 +68,18 @@ restated here: `TauCeti.rootInvariantForm` makes them
 the form at a pair of weights while the bilinearity is available as data; the latter is what
 `RootPairing.InvariantForm` asks for.
 
-The definition, and the unfolding lemma `TauCeti.invForm_apply`, are stated through
-`cartanEquivDual` rather than through the restricted Killing form directly, because Mathlib's
-`LieAlgebra.IsKilling.coroot` is itself defined that way: keeping the two on the same side of the
-equivalence is what makes `TauCeti.cartanEquivDual_coroot`, and with it the normalisation, a
-computation rather than a transport argument. `TauCeti.invForm_eq_traceForm` is the bridge back.
+The definition is Mathlib's transport combinator `LinearMap.BilinForm.congr` applied to
+`cartanEquivDual`, and `TauCeti.invForm_apply_apply_eq_traceForm` is the resulting bridge back to
+the restricted Killing form. The unfolding lemma `TauCeti.invForm_apply_apply` reads the form as a
+dual pairing instead, because Mathlib's `LieAlgebra.IsKilling.coroot` is defined that way: keeping
+the two on the same side of the equivalence is what makes `TauCeti.cartanEquivDual_coroot`, and
+with it the normalisation, a computation rather than a transport argument.
+
+The simp-normal form keeps `invForm` folded: `TauCeti.invForm_apply_apply` is not a `simp` lemma,
+and it is the eliminators `TauCeti.invForm_cartanEquivDual_left` and
+`TauCeti.invForm_cartanEquivDual_right` that carry `@[simp]`. That way `simp` normalises towards
+the form rather than away from it, and the `RootPairing.InvariantForm` lemmas that
+`TauCeti.rootInvariantForm` buys can still fire.
 
 Only `TauCeti.invForm_self_ne_zero` and what follows it need `α` to be a root, so the general
 theory of the form is stated first, with neither `CharZero K` nor `IsTriangularizable K H L` in
@@ -101,45 +108,38 @@ variable {K L : Type*} [Field K] [LieRing L] [LieAlgebra K L]
 
 /-! ## The form -/
 
-/-- The symmetric bilinear form `⟨·,·⟩` on the weight space `Module.Dual K H` induced by the
+/-- The symmetric bilinear form `⟨·,·⟩` on the space of weights `Module.Dual K H` induced by the
 Killing form of `L` through `LieAlgebra.IsKilling.cartanEquivDual`.
 
 This is the form in which the Casimir scalar and the Weyl character and dimension formulas are
 written; `TauCeti.invForm_coroot` is its normalisation against the coroots. -/
 noncomputable def invForm : LinearMap.BilinForm K (Module.Dual K H) :=
-  (LinearMap.id : Module.Dual K H →ₗ[K] Module.Dual K H).compl₂
-    (cartanEquivDual H).symm.toLinearMap
-
-@[simp]
-theorem invForm_apply (a b : Module.Dual K H) :
-    invForm a b = a ((cartanEquivDual H).symm b) :=
-  (rfl)
-
-/-- `LieAlgebra.IsKilling.cartanEquivDual` is the restricted Killing form, in the shape in which
-`TauCeti.invForm_eq_traceForm` consumes it. Mathlib's `cartanEquivDual_apply_apply` states the same
-identity with the trace form already unfolded to a trace. -/
-theorem cartanEquivDual_apply_apply_eq_traceForm (x y : H) :
-    (cartanEquivDual H x) y = traceForm K H L x y := by
-  rw [cartanEquivDual_apply_apply, traceForm_apply_apply]
-  rfl
+  LinearMap.BilinForm.congr (cartanEquivDual H) (traceForm K H L)
 
 /-- The form is the transport of the restricted Killing form along `cartanEquivDual`. -/
-theorem invForm_eq_traceForm (a b : Module.Dual K H) :
+theorem invForm_apply_apply_eq_traceForm (a b : Module.Dual K H) :
     invForm a b =
-      traceForm K H L ((cartanEquivDual H).symm a) ((cartanEquivDual H).symm b) := by
-  rw [invForm_apply, ← cartanEquivDual_apply_apply_eq_traceForm, LinearEquiv.apply_symm_apply]
+      traceForm K H L ((cartanEquivDual H).symm a) ((cartanEquivDual H).symm b) :=
+  LinearMap.BilinForm.congr_apply _ _ a b
+
+/-- The form read as a dual pairing: `cartanEquivDual` is the Killing form, so the transport of
+that form pairs `a` with the vector representing `b`. -/
+theorem invForm_apply_apply (a b : Module.Dual K H) :
+    invForm a b = a ((cartanEquivDual H).symm b) :=
+  LinearMap.BilinForm.apply_toDual_symm_apply (hB := traceForm_cartan_nondegenerate K L H) a _
 
 /-- Pairing a weight against one of the shape `cartanEquivDual H x` is evaluation at `x`. This is
 the shape of the transport used most often, because it mentions no inverse equivalence. -/
+@[simp]
 theorem invForm_cartanEquivDual_right (a : Module.Dual K H) (x : H) :
     invForm a (cartanEquivDual H x) = a x := by
-  rw [invForm_apply, LinearEquiv.symm_apply_apply]
+  rw [invForm_apply_apply, LinearEquiv.symm_apply_apply]
 
 /-- The form is symmetric, inheriting the symmetry of the Killing form. -/
 theorem invForm_isSymm : (invForm (H := H)).IsSymm := by
   constructor
   intro a b
-  rw [invForm_eq_traceForm, invForm_eq_traceForm]
+  rw [invForm_apply_apply_eq_traceForm, invForm_apply_apply_eq_traceForm]
   exact ((traceForm_isSymm K H L).eq _ _).symm
 
 theorem invForm_comm (a b : Module.Dual K H) : invForm a b = invForm b a :=
@@ -147,26 +147,14 @@ theorem invForm_comm (a b : Module.Dual K H) : invForm a b = invForm b a :=
 
 /-- Pairing a weight of the shape `cartanEquivDual H x` on the left evaluates the other weight at
 `x`; the left-hand companion of `TauCeti.invForm_cartanEquivDual_right`. -/
+@[simp]
 theorem invForm_cartanEquivDual_left (x : H) (a : Module.Dual K H) :
     invForm (cartanEquivDual H x) a = a x := by
   rw [invForm_comm, invForm_cartanEquivDual_right]
 
-/-- On the image of `cartanEquivDual` the form is the restricted Killing form. -/
-theorem invForm_cartanEquivDual (x y : H) :
-    invForm (cartanEquivDual H x) (cartanEquivDual H y) = traceForm K H L x y := by
-  rw [invForm_cartanEquivDual_right, cartanEquivDual_apply_apply_eq_traceForm]
-
-/-- A weight orthogonal to every weight vanishes, because `cartanEquivDual` is onto the weight
-space. -/
-theorem invForm_separatingLeft : (invForm (H := H)).SeparatingLeft := by
-  intro a ha
-  ext x
-  simpa using ha (cartanEquivDual H x)
-
 /-- The form is non-degenerate, inheriting the non-degeneracy of the Killing form on `H`. -/
 theorem invForm_nondegenerate : (invForm (H := H)).Nondegenerate :=
-  ⟨invForm_separatingLeft, fun b hb ↦
-    invForm_separatingLeft b fun a ↦ (invForm_comm b a).trans (hb a)⟩
+  (traceForm_cartan_nondegenerate K L H).congr (cartanEquivDual H)
 
 /-- **The coroot as a weight**: `α^∨ = 2α / ⟨α, α⟩`, read through `cartanEquivDual`. This says that
 `LieAlgebra.IsKilling.coroot` is the coroot *of the invariant form*, and every compatibility below
@@ -177,7 +165,7 @@ theorem cartanEquivDual_coroot (α : Weight K H L) :
     cartanEquivDual H (coroot α) =
       (2 * (invForm (α : Module.Dual K H) α)⁻¹) • (α : Module.Dual K H) := by
   rw [coroot, map_nsmul, map_smul, LinearEquiv.apply_symm_apply, ← Nat.cast_smul_eq_nsmul K,
-    smul_smul, invForm_apply, Weight.toLinear_apply]
+    smul_smul, invForm_apply_apply, Weight.toLinear_apply]
   norm_num
 
 /-! ## Roots and coroots -/
@@ -187,19 +175,28 @@ variable [CharZero K] [LieModule.IsTriangularizable K H L]
 /-- A root has non-zero length for the form. -/
 theorem invForm_self_ne_zero {α : Weight K H L} (hα : α.IsNonZero) :
     invForm (α : Module.Dual K H) α ≠ 0 := by
-  simpa using root_apply_cartanEquivDual_symm_ne_zero hα
+  simpa only [invForm_apply_apply, Weight.toLinear_apply] using
+    root_apply_cartanEquivDual_symm_ne_zero hα
 
 /-- **The normalisation of the invariant form against the coroots**: `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩`,
-that is, `α^∨` is the weight `2α / ⟨α, α⟩`. -/
-theorem invForm_coroot_of_isNonZero (lam : Module.Dual K H) {α : Weight K H L}
-    (hα : α.IsNonZero) :
+that is, `α^∨` is the weight `2α / ⟨α, α⟩`.
+
+Like `TauCeti.cartanEquivDual_coroot`, this needs no hypothesis on `α`: at a zero weight both
+sides vanish. -/
+theorem invForm_coroot_weight (lam : Module.Dual K H) (α : Weight K H L) :
     lam (coroot α) * invForm (α : Module.Dual K H) α = 2 * invForm lam α := by
-  have hc := invForm_self_ne_zero hα
-  have h : invForm lam (cartanEquivDual H (coroot α)) = lam (coroot α) :=
-    invForm_cartanEquivDual_right _ _
-  rw [cartanEquivDual_coroot, map_smul, smul_eq_mul] at h
-  rw [← h]
-  field_simp
+  by_cases hα : α.IsZero
+  · have hα' : (α : Module.Dual K H) = 0 := by ext x; simp [hα.eq]
+    have hcoroot : coroot α = 0 := (cartanEquivDual H).injective <| by
+      rw [cartanEquivDual_coroot, hα', map_zero, smul_zero, map_zero]
+    rw [hcoroot, hα']
+    simp
+  · have hc := invForm_self_ne_zero hα
+    have h : invForm lam (cartanEquivDual H (coroot α)) = lam (coroot α) :=
+      invForm_cartanEquivDual_right _ _
+    rw [cartanEquivDual_coroot, map_smul, smul_eq_mul] at h
+    rw [← h]
+    field_simp
 
 /-- **The normalisation of the invariant form against the coroots**, indexed by the roots of
 `LieAlgebra.IsKilling.rootSystem`: `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩`. -/
@@ -207,7 +204,7 @@ theorem invForm_coroot (lam : Module.Dual K H) (i : H.root) :
     lam ((rootSystem H).coroot i) *
         invForm ((rootSystem H).root i) ((rootSystem H).root i) =
       2 * invForm lam ((rootSystem H).root i) :=
-  invForm_coroot_of_isNonZero lam (H.isNonZero_coe_root i)
+  invForm_coroot_weight lam i.1
 
 /-! ## The invariant form of the root system -/
 
@@ -219,9 +216,8 @@ noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
     simpa only [rootSystem_root_apply] using invForm_self_ne_zero (H.isNonZero_coe_root i)
   isOrthogonal_reflection i := by
     intro a b
-    have hα := H.isNonZero_coe_root i
-    have ha := invForm_coroot_of_isNonZero a hα
-    have hb := invForm_coroot_of_isNonZero b hα
+    have ha := invForm_coroot_weight a i.1
+    have hb := invForm_coroot_weight b i.1
     rw [RootPairing.reflection_apply, RootPairing.reflection_apply]
     simp only [LinearMap.flip_apply, rootSystem_toLinearMap_apply,
       rootSystem_coroot_apply, rootSystem_root_apply, map_sub, LinearMap.sub_apply, map_smul,
@@ -233,10 +229,10 @@ noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
 theorem rootInvariantForm_form : (rootInvariantForm (H := H)).form = invForm := (rfl)
 
 /-- **The length of a coroot**: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a short coroot. -/
-theorem invForm_cartanEquivDual_coroot_self (i : H.root) :
-    invForm (cartanEquivDual H (coroot i.1)) (cartanEquivDual H (coroot i.1)) *
-        invForm (i.1 : Module.Dual K H) i.1 = 4 := by
-  have hi := invForm_self_ne_zero (H.isNonZero_coe_root i)
+theorem invForm_cartanEquivDual_coroot_self {α : Weight K H L} (hα : α.IsNonZero) :
+    invForm (cartanEquivDual H (coroot α)) (cartanEquivDual H (coroot α)) *
+        invForm (α : Module.Dual K H) α = 4 := by
+  have hi := invForm_self_ne_zero hα
   rw [cartanEquivDual_coroot]
   simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
   field_simp
