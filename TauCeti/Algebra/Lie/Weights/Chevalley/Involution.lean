@@ -92,15 +92,15 @@ def IsChevalleyNormalized : Prop :=
     hx.structureConstant α β γ hγ hαβ = ((chainBotCoeff α β + 1 : ℕ) : K) ∨
       hx.structureConstant α β γ hγ hαβ = -((chainBotCoeff α β + 1 : ℕ) : K)
 
-/-- The bracket relation that a Chevalley involution has to satisfy on root vectors. If a linear
-map negates the coroot of `α` and sends the root vector of a root-sum `γ = α + β` to the negative
-of its opposite, then integral normalisation makes it respect the bracket `⁅x α, x β⁆`.
+/-- Compute the image of a bracket of root vectors under a linear map. If the map negates the
+coroot of `α` and sends the root vector of a root-sum `γ = α + β` to the negative of its opposite,
+then integral normalisation determines its value on `⁅x α, x β⁆`.
 
 The two hypotheses are exactly what the two non-trivial cases need: opposite roots bracket to the
 coroot, and a root-sum needs the value of the map at the sum alone. This is the only place the
 sign symmetry of the structure constants is used, and it is the reason integrality is the right
 hypothesis: on a root-sum `γ = α + β` the two sides differ by `N(-α, -β) + N(α, β)`. -/
-theorem map_lie_root_of_isChevalleyNormalized (hn : hx.IsChevalleyNormalized)
+private theorem map_lie_root_of_isChevalleyNormalized (hn : hx.IsChevalleyNormalized)
     {α β : Weight K H L} (hα : α.IsNonZero) (hβ : β.IsNonZero) (ω : L →ₗ[K] L)
     (hωsum : ∀ γ : Weight K H L, γ.IsNonZero → (γ : H → K) = (α : H → K) + β →
       ω (x γ) = -x (-γ))
