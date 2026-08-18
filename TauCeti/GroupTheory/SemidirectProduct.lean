@@ -38,6 +38,7 @@ namespace Subgroup
 
 /-- An element of `H ⊔ K` is a product of an element of `H` followed by an element of `K`, as soon
 as `K` normalizes `H`. -/
+@[simp]
 theorem mem_sup_of_right_le_normalizer_left (hLE : K ≤ Subgroup.normalizer (H : Set G)) {g : G} :
     g ∈ H ⊔ K ↔ ∃ x ∈ H, ∃ t ∈ K, g = x * t := by
   rw [← SetLike.mem_coe, Subgroup.coe_mul_of_right_le_normalizer_left H K hLE, Set.mem_mul]
