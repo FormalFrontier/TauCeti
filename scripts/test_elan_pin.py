@@ -16,8 +16,16 @@ and runs from the base definition under pull_request_target, so a shared action 
 pull request could not be exercised by that pull request's own build. This test is what stops
 the copies drifting.
 
-Every file in .github/workflows is checked, rather than a list of the ones that install elan
-today, so a workflow added later cannot quietly reintroduce the unpinned install.
+The checks below match the install as a single ordered block of adjacent lines, over a view of
+the file with comment lines removed, and then require that nothing else in the file names the
+archive or the installer. Counting the pieces separately would have let a commented-out or
+otherwise dead copy of the approved block pay for a live step that installed elan some other
+way. Both .yml and .yaml are scanned, since GitHub reads either, and every file in the directory
+is scanned rather than a fixed list, so a workflow added later cannot quietly reintroduce the
+unpinned install.
+
+What this cannot do is recognise an arbitrary new way to obtain an elan; no textual check can.
+It fixes the approved shape and closes the routes that were actually in use.
 
 To bump the pin, change ELAN_VER and ELAN_SHA256 together in every workflow that declares them;
 the checksum is that of the release's elan-x86_64-unknown-linux-gnu.tar.gz asset.
@@ -32,13 +40,23 @@ WORKFLOW_DIR = ROOT / ".github/workflows"
 
 SHA = re.compile(r"^\s*ELAN_SHA256:\s*([0-9a-f]{64})\s*$", re.MULTILINE)
 VER = re.compile(r"^\s*ELAN_VER:\s*(v[0-9][0-9A-Za-z.\-]*)\s*$", re.MULTILINE)
-# The download must name the pinned version, or the pin would describe a release the workflow
-# does not actually fetch.
-DOWNLOAD = re.compile(
-    r'"https://github\.com/leanprover/elan/releases/download/\$\{ELAN_VER\}/'
-    r'elan-x86_64-unknown-linux-gnu\.tar\.gz" -o elan\.tar\.gz'
+# The approved install, as adjacent lines: fetch the pinned release, refuse it unless it hashes
+# to the pin, and only then unpack and run the installer it contains. The download must name
+# ${ELAN_VER} and the check ${ELAN_SHA256}, or the declared pin would describe a release the
+# workflow does not actually fetch, or a checksum it does not actually compare against.
+INSTALL = re.compile(
+    r'^[ \t]*curl -sSL -H "Accept: application/octet-stream" \\\n'
+    r'[ \t]*"https://github\.com/leanprover/elan/releases/download/\$\{ELAN_VER\}/'
+    r'elan-x86_64-unknown-linux-gnu\.tar\.gz" -o elan\.tar\.gz\n'
+    r'[ \t]*echo "\$\{ELAN_SHA256\}  elan\.tar\.gz" \| sha256sum -c -\n'
+    r'[ \t]*tar -xzf elan\.tar\.gz elan-init\n'
+    r'[ \t]*\./elan-init -y --default-toolchain none\n'
+    r'[ \t]*rm -f elan\.tar\.gz elan-init\n',
+    re.MULTILINE,
 )
-VERIFY = 'echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -'
+# The names the approved block introduces. Once its matches are removed, no mention of either
+# may remain: a second step touching them is installing elan some way this test has not vetted.
+NAMES = re.compile(r"elan-init|elan\.tar\.gz")
 # Every way of getting an elan that this repository does not choose by checksum. lean-action
 # resolves from a floating tag and pipes the second of these to `sh`; naming it in prose is
 # fine, so only a `uses:` of it counts.
@@ -52,7 +70,13 @@ UNPINNED = (
 
 
 def workflows():
-    return sorted(WORKFLOW_DIR.glob("*.yml"))
+    return sorted(set(WORKFLOW_DIR.glob("*.yml")) | set(WORKFLOW_DIR.glob("*.yaml")))
+
+
+def code(workflow):
+    """The workflow with whole-line comments dropped, so only lines that run are matched."""
+    return "".join(line for line in workflow.read_text().splitlines(keepends=True)
+                   if not line.lstrip().startswith("#"))
 
 
 def describe(values):
@@ -68,7 +92,7 @@ class ElanPin(unittest.TestCase):
     def test_every_installing_workflow_pins_the_same_elan(self):
         vers, shas = {}, {}
         for workflow in workflows():
-            text = workflow.read_text()
+            text = code(workflow)
             for ver in VER.findall(text):
                 vers.setdefault(ver, set()).add(workflow.name)
             for sha in SHA.findall(text):
@@ -77,11 +101,11 @@ class ElanPin(unittest.TestCase):
         self.assertEqual(len(vers), 1, "workflows disagree on the elan version: " + describe(vers))
         self.assertEqual(len(shas), 1, "workflows disagree on the elan checksum: " + describe(shas))
 
-    def test_every_pin_is_downloaded_and_verified(self):
+    def test_every_pin_belongs_to_a_verified_install(self):
         # A pin that is declared but never checked is not a pin, and one checksum cannot cover
         # two downloads in the same file, so the three counts must agree step for step.
         for workflow in workflows():
-            text = workflow.read_text()
+            text = code(workflow)
             pins = len(VER.findall(text))
             if not pins:
                 continue
@@ -89,16 +113,23 @@ class ElanPin(unittest.TestCase):
                 self.assertEqual(len(SHA.findall(text)), pins,
                                  f"{workflow.name} declares {pins} elan pin(s) but does not "
                                  "give each of them a checksum")
-                self.assertEqual(len(DOWNLOAD.findall(text)), pins,
+                self.assertEqual(len(INSTALL.findall(text)), pins,
                                  f"{workflow.name} declares {pins} elan pin(s) but does not "
-                                 "download each of them from the pinned URL")
-                self.assertEqual(text.count(VERIFY), pins,
-                                 f"{workflow.name} declares {pins} elan pin(s) but does not "
-                                 "verify each download's checksum")
+                                 "download, verify and run each of them as one block")
+
+    def test_nothing_else_touches_the_installer(self):
+        for workflow in workflows():
+            leftover = NAMES.search(INSTALL.sub("", code(workflow)))
+            with self.subTest(workflow=workflow.name):
+                self.assertIsNone(
+                    leftover,
+                    f"{workflow.name} names {leftover.group(0) if leftover else ''} outside the "
+                    "verified install block; elan may only come from the pinned, checksummed "
+                    "release")
 
     def test_no_workflow_installs_an_unverified_elan(self):
         for workflow in workflows():
-            text = workflow.read_text()
+            text = code(workflow)
             for description, pattern in UNPINNED:
                 with self.subTest(workflow=workflow.name, source=description):
                     self.assertIsNone(
