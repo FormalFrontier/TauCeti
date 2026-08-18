@@ -149,7 +149,6 @@ theorem relativeFrobeniusCoordinateHom_of (g : F[X]) :
   AdjoinRoot.lift_of (eval₂_relativeFrobenius_eq_zero p W)
 
 /-- The relative Frobenius sends the affine coordinate of the twist to `x ^ p`. -/
-@[simp]
 theorem relativeFrobeniusCoordinateHom_X :
     relativeFrobeniusCoordinateHom p W
         (algebraMap F[X] (W.map (frobenius F p)).CoordinateRing X) =
@@ -332,13 +331,11 @@ end Degree
 
 /-- **The relative Frobenius isogeny has separable degree one**, as pure inseparability
 requires. -/
-@[simp]
 theorem separableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).separableDegree = 1 :=
   separableDegree_eq_one_of_isPurelyInseparable (relativeFrobeniusIsogeny p W)
 
 /-- **The relative Frobenius isogeny carries its whole degree `p` in the inseparable part.** -/
-@[simp]
 theorem inseparableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).inseparableDegree = p := by
   rw [inseparableDegree_eq_degree_of_isPurelyInseparable, degree_relativeFrobeniusIsogeny]
