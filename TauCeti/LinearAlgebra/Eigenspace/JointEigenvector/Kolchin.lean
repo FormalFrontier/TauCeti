@@ -26,7 +26,7 @@ subspace, so every nonzero vector in it is fixed.
 
 ## Main results
 
-* `TauCeti.Representation.asAlgebraHom_surjective_of_isIrreducible`: Burnside density for a
+* `Representation.asAlgebraHom_surjective_of_isIrreducible`: Burnside density for a
   finite-dimensional irreducible representation over an algebraically closed field.
 * `TauCeti.exists_common_fixed_vector_of_forall_isUnipotent`: Kolchin's common fixed vector
   theorem.
@@ -99,7 +99,7 @@ representation over an algebraically closed field exhausts the full endomorphism
 Jacobson density gives all endomorphisms linear over the representation's commuting endomorphism
 ring. Schur's lemma identifies that ring with the base field, so these are exactly the
 `K`-linear endomorphisms. -/
-theorem asAlgebraHom_surjective_of_isIrreducible [FiniteDimensional K V]
+theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible [FiniteDimensional K V]
     (ρ : Representation K G V) (hρ : ρ.IsIrreducible) :
     Function.Surjective ρ.asAlgebraHom := by
   have : ρ.IsIrreducible := hρ
@@ -167,7 +167,7 @@ theorem exists_common_fixed_vector_of_forall_isUnipotent [FiniteDimensional K V]
       (h.trans Subrepresentation.toSubmodule_bot.symm))
   have : Nontrivial S.toSubmodule := Submodule.nontrivial_iff_ne_bot.mpr hSne
   have hsurjective :=
-    Representation.asAlgebraHom_surjective_of_isIrreducible S.toRepresentation hSirr
+    _root_.Representation.asAlgebraHom_surjective_of_isIrreducible S.toRepresentation hSirr
   have hSUnipotent (g : G) :
       LinearMap.GeneralLinearGroup.IsUnipotent (S.toRepresentation.asGroupHom g) :=
     TauCeti.GeneralLinearGroup.IsUnipotent.subrepresentation S g (hunipotent g)
