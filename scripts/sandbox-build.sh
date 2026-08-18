@@ -59,3 +59,24 @@ bash scripts/lint-env.sh
 # Mathlib's copyright/Authors checks (excluding the deliberately empty root), and generates the
 # text-linter import root under .lake/ without relying on TauCeti.lean's imports.
 bash scripts/lint-style.sh
+
+# Emit the root-package input-to-output mappings for the Lake artifact cache, so the trusted
+# publish step outside this sandbox can upload the merge group's build without ever compiling
+# anything itself. `--no-build` cannot elaborate: it reports an out-of-date target rather than
+# building it, which is what keeps the untrusted TauCeti/ sources confined to this sandbox.
+# Only meaningful when the artifact cache is on, since that is what packed the outputs into
+# $LAKE_CACHE_DIR for the upload to read.
+#
+# Best-effort, and deliberately the last thing here: publishing is an optimisation, and a
+# missing mapping must never redden a build whose sources compiled, audited, and linted
+# cleanly. `set -e` is off for the duration so a failure leaves no mappings rather than no
+# build result.
+if [ "${LAKE_ARTIFACT_CACHE:-}" = "true" ]; then
+  set +e
+  lake build --no-build -o .lake/outputs.jsonl
+  if [ $? -ne 0 ]; then
+    echo "could not emit the Lake cache mappings; this build will not be published"
+    rm -f .lake/outputs.jsonl
+  fi
+  set -e
+fi

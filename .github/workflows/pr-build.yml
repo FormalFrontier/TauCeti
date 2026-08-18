@@ -507,6 +507,99 @@ jobs:
             --env WATCHDOG_TOOLCHAIN \
             -- bash -euxo pipefail -c 'cd base && exec bash scripts/sandbox-build.sh'
 
+      # --- Lake artifact-cache publish (merge queue only; dormant until configured) ---
+      # Publish the oleans of the commit that is about to land. GitHub's merge queue reuses the
+      # merge-group commit verbatim as main's new tip (each group's head_sha is the next group's
+      # base_sha, and an ancestor of main), so a mapping stored under that revision is exactly
+      # what a later `lake cache get` finds, directly or by ancestor backtracking. Publishing
+      # here keeps the cache in step with main rather than an hour behind it; a stale cache is
+      # what puts merge-group builds on the full-rebuild path, which slows the queue, which
+      # keeps the cache stale.
+      #
+      # The trust boundary of #313 is preserved. The step is gated on merge_group, so
+      # `secrets.LAKE_CACHE_KEY` is never evaluated in a pull_request_target run and a fork PR
+      # cannot reach the write key. Nothing here compiles: the mappings were emitted by
+      # `lake build --no-build` INSIDE landrun, and this step only reads that JSONL and PUTs
+      # the content-addressed artifacts the sandboxed build already packed. Uploading an
+      # artifact is safe independently of the revision it is attributed to, because artifacts
+      # are keyed by Lake input hash: a module is served only to a build whose sources hash to
+      # the same inputs.
+      - name: Publish the merge group's oleans to the Lake cache
+        if: ${{ github.event_name == 'merge_group' && env.INFRA != '1'
+                && env.TAUCETI_CACHE_ENABLED == '1' && steps.build.outcome == 'success' }}
+        # Never fail the queue over a publish. A missed upload costs some later build its cache;
+        # a red step here would hold up a batch that built, audited, and linted cleanly.
+        continue-on-error: true
+        env:
+          LAKE_ARTIFACT_CACHE: "true"
+          LAKE_RESTORE_ARTIFACTS: "true"
+          # Only PUT, never GET. (The S3 host needs SigV4 even for reads, so an anonymous GET
+          # here would 403 anyway.)
+          LAKE_NO_CACHE: "true"
+          # Passed under non-LAKE_ names so Lake never sees the deprecated endpoint
+          # environment variables; we hand it the endpoints through a `--service` config.
+          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
+          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+          LAKE_CACHE_KEY_RAW: ${{ secrets.LAKE_CACHE_KEY }}
+          HEAD_SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          if [ ! -s base/.lake/outputs.jsonl ]; then
+            echo "::notice::the sandboxed build emitted no cache mappings; nothing to publish"
+            exit 0
+          fi
+          if [ -z "$LAKE_CACHE_KEY_RAW" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
+            echo "::notice::Lake cache upload not configured — skipping (set the LAKE_CACHE_KEY secret and the LAKE_CACHE_ARTIFACT_ENDPOINT / LAKE_CACHE_REVISION_ENDPOINT repo variables to enable)"
+            exit 0
+          fi
+          # `lake cache put` names the mapping after the package's CURRENT Git revision, and
+          # base/ is checked out at the group's BASE commit with the group's TauCeti/ overlaid.
+          # Point HEAD at the merge-group commit the mapping actually describes. `git reset
+          # --mixed` moves HEAD and the index only; it never rewrites a working-tree file, so
+          # the build outputs and the Lake traces beside them are untouched. Fetch by ref
+          # rather than by bare SHA: the gh-readonly-queue ref exists for as long as the group
+          # is in flight, and a ref fetch needs no server-side reachability opt-in.
+          git -C base fetch --no-tags --depth=1 origin "+$GITHUB_REF:refs/tauceti/merge-group"
+          got=$(git -C base rev-parse refs/tauceti/merge-group)
+          if [ "$got" != "$HEAD_SHA" ]; then
+            echo "::warning::$GITHUB_REF resolves to $got, not the built $HEAD_SHA; not publishing"
+            exit 0
+          fi
+          git -C base reset --mixed "$HEAD_SHA" >/dev/null
+          # Fail closed on any Lake-visible difference between what we built and the commit we
+          # are about to attribute it to. The overlay should reproduce the merge-group tree
+          # exactly (the scope guard has already established the group changes nothing outside
+          # these paths); if it did not, the mapping would misdescribe that revision and every
+          # later build would inherit the error. scripts/ is excluded on purpose: the trusted
+          # tooling staged from github.workflow_sha legitimately differs from the base commit's
+          # copy, and no TauCeti module's input hash depends on it.
+          dirty=$(git -C base status --porcelain -- \
+            TauCeti TauCeti.lean lakefile.toml lake-manifest.json lean-toolchain)
+          if [ -n "$dirty" ]; then
+            echo "::warning::base/ does not match $HEAD_SHA on Lake-visible paths; not publishing"
+            echo "$dirty"
+            exit 0
+          fi
+          # curl --user wants "<ACCESS_KEY_ID>:<SECRET>"; trim trailing whitespace and mask it
+          # so it never lands in the log.
+          KEY="$(printf %s "$LAKE_CACHE_KEY_RAW" | sed -e 's/[[:space:]]*$//')"
+          echo "::add-mask::$KEY"; export LAKE_CACHE_KEY="$KEY"
+          CFG="$RUNNER_TEMP/lake-cache-put.toml"
+          cat > "$CFG" <<TOML
+          cache.defaultUploadService = "tauceti-r2"
+          [[cache.service]]
+          name = "tauceti-r2"
+          kind = "s3"
+          artifactEndpoint = "$S3_ARTIFACT_ENDPOINT"
+          revisionEndpoint = "$S3_REVISION_ENDPOINT"
+          TOML
+          export LAKE_CONFIG="$CFG"
+          echo "root-package mapping entries: $(wc -l < base/.lake/outputs.jsonl)"
+          ( cd base && lake cache put .lake/outputs.jsonl \
+              --service tauceti-r2 --repo TauCetiProject/TauCeti )
+          echo "published the oleans for $HEAD_SHA"
+
       - name: Report build and bump-guard statuses to the PR head commit
         if: always()
         env: { GH_TOKEN: "${{ github.token }}" }
