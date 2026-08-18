@@ -369,6 +369,19 @@ private lemma pairing_typeBSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
       (typeBSimplyConnectedRootDatum n).root k ⬝ᵥ (typeBSimplyConnectedRootDatum n).coroot l :=
   (rfl)
 
+/-- Every Cartan integer between roots of the pinned type `B` datum has absolute value at most
+two. -/
+theorem abs_pairing_typeBSimplyConnectedRootDatum_le_two (k l : Fin (2 * n ^ 2)) :
+    |(typeBSimplyConnectedRootDatum n).pairing k l| ≤ 2 := by
+  rw [pairing_typeBSimplyConnectedRootDatum, root_typeBSimplyConnectedRootDatum,
+    coroot_typeBSimplyConnectedRootDatum, rootIdx_def, corootIdx_def]
+  exact abs_rootOfPair_dotProduct_corootOfPair_le_two
+    (u := ((typeBEnum n).symm k).1)
+    (v := shift ((typeBEnum n).symm k).1 ((typeBEnum n).symm k).2)
+    (p := ((typeBEnum n).symm l).1)
+    (q := shift ((typeBEnum n).symm l).1 ((typeBEnum n).symm l).2)
+    (isPair_shift _ _) (isPair_shift _ _)
+
 /-- The roots of the pinned type `Bₙ` datum are exactly the roots constructed from admissible
 unordered pairs of signed basis vectors. -/
 theorem mem_range_root_typeBSimplyConnectedRootDatum_iff {x : Fin n → ℤ} :

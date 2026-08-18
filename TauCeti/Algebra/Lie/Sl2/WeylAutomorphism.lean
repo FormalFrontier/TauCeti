@@ -77,8 +77,9 @@ statement above then reads as a relation in the group of units rather than in th
   spaces onto reflected root spaces.
 * `TauCeti.weylAut_apply_eq_weylUnit_conj`: in an associative algebra the Weyl automorphism is
   conjugation by the Weyl element.
-* `TauCeti.weylUnit_conj_h`, `TauCeti.weylUnit_conj_e`, `TauCeti.weylUnit_conj_f` and
-  `TauCeti.lie_weylUnit_conj`: the conjugation form of the four statements above.
+* `TauCeti.weylUnit_conj_h`, `TauCeti.weylUnit_conj_e`, `TauCeti.weylUnit_conj_f`,
+  `TauCeti.weylUnit_conj_of_lie_eq_smul`, `TauCeti.inv_weylUnit_conj_of_lie_eq_smul` and
+  `TauCeti.lie_weylUnit_conj`: the conjugation form of the statements above.
 
 ## References
 
@@ -415,6 +416,28 @@ theorem weylUnit_conj_f (t : IsSl2Triple H E F) (hE : IsNilpotent E) (hF : IsNil
   rw [← coe_weylUnit hE hF, ← coe_inv_weylUnit hE hF]
   rw [← weylAut_apply_eq_weylUnit_conj t hE hF]
   exact weylAut_apply_f _ _ t
+
+/-- **The reflection formula, at the group level.** An element `y` acting on the raising and
+lowering elements by the opposite scalars `c` and `-c` — for a Cartan element and the triple of a
+root `α`, an element with `α y = c` — is carried by conjugation with the Weyl element to
+`y - c • H`, the coreflection `y ↦ y - α y • α^∨`. -/
+theorem weylUnit_conj_of_lie_eq_smul (t : IsSl2Triple H E F) (hE : IsNilpotent E)
+    (hF : IsNilpotent F) {y : A} {c : ℚ} (hye : ⁅y, E⁆ = c • E) (hyf : ⁅y, F⁆ = -(c • F)) :
+    ((weylUnit hE hF : Aˣ) : A) * y * (((weylUnit hE hF)⁻¹ : Aˣ) : A) = y - c • H := by
+  rw [← weylAut_apply_eq_weylUnit_conj t hE hF]
+  exact weylAut_apply_of_lie_eq_smul _ _ t hye hyf
+
+/-- **The reflection formula for the inverse Weyl element.** The coreflection is an involution on
+the elements the reflection formula applies to, so conjugating by `n⁻¹` has the same effect as
+conjugating by `n`. -/
+theorem inv_weylUnit_conj_of_lie_eq_smul (t : IsSl2Triple H E F) (hE : IsNilpotent E)
+    (hF : IsNilpotent F) {y : A} {c : ℚ} (hye : ⁅y, E⁆ = c • E) (hyf : ⁅y, F⁆ = -(c • F)) :
+    (((weylUnit hE hF)⁻¹ : Aˣ) : A) * y * ((weylUnit hE hF : Aˣ) : A) = y - c • H := by
+  have key : ((weylUnit hE hF : Aˣ) : A) * (y - c • H) * (((weylUnit hE hF)⁻¹ : Aˣ) : A) = y := by
+    rw [← weylAut_apply_eq_weylUnit_conj t hE hF]
+    exact weylAut_apply_sub_smul _ _ t hye hyf
+  rw [Units.mul_inv_eq_iff_eq_mul] at key
+  rw [mul_assoc, Units.inv_mul_eq_iff_eq_mul, key]
 
 /-- **The reflected weight, at the group level.** If `y` acts on the triple by the scalars `c` and
 `-c` and `z` is a simultaneous eigenvector of `y` and `H` with eigenvalues `d` and `m`, then the

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,7 +20,7 @@ homotopy groups of a circle in dimensions at least two are trivial.
 The only calculation needed in the total space is elementary: any two generalized loops in a
 real topological vector space are homotopic relative to the cube boundary, so all homotopy
 groups of such a space are subsingletons
-(`TauCeti.HomotopyGroup.subsingleton_of_topologicalVectorSpace`). Applying the covering-map
+(`HomotopyGroup.subsingleton_of_topologicalVectorSpace`). Applying the covering-map
 isomorphism for `ℝ → AddCircle p` gives the circle calculation.
 
 This proves Stage 4, item 11 of the Tau Ceti universal-covers roadmap
