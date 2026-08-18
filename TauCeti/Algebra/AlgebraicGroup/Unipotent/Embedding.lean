@@ -34,16 +34,15 @@ roadmap's smooth formulation.
 
 ## Main declarations
 
-* `TauCeti.Comodule.hasNonzeroFixedVector_of_forall_isUnipotentPoint`: Kolchin's theorem promoted
-  from point actions to a comodule fixed vector.
+* `TauCeti.Comodule.hasNonzeroFixedVector_of_forall_isNilpotent_endOfPoint_sub_one`: Kolchin's
+  theorem promoted from point actions to a comodule fixed vector.
 * `TauCeti.Comodule.exists_basis_coefficientMatrix_isUpperUnitriangular_of_forall_isUnipotentPoint`:
   every finite-dimensional comodule has an upper-unitriangular basis.
-* `TauCeti.Comodule.exists_isClosedImmersion_upperUnitriangular_of_forall_isUnipotentPoint`:
-  the represented affine group embeds as a closed subgroup of some `U_n`.
-* `TauCeti.Comodule.exists_isClosedImmersion_upperUnitriangular_of_geometricallyUnipotentPoints`:
-  the same conclusion from the roadmap's geometric-point predicate.
-* `TauCeti.Comodule.geometricallyUnipotentPoints_iff_exists_isClosedImmersion_upperUnitriangular`:
-  the upper-unitriangular embedding characterization.
+* `iff_exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom` in the
+  `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty` namespace: the upper-unitriangular
+  embedding characterization.
+* `exists_isClosedImmersion_upperUnitriangularGroupScheme` in that namespace: the represented
+  affine group embeds as a closed subgroup of some `U_n`.
 
 ## References
 
@@ -58,7 +57,7 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti.Comodule
+namespace TauCeti
 
 open AlgebraicGeometry WithConv
 
@@ -67,38 +66,53 @@ universe u
 noncomputable section
 
 variable {k H M : Type u}
-variable [Field k] [IsAlgClosed k] [CommRing H] [HopfAlgebra k H]
-variable [Algebra.FiniteType k H] [IsReduced H]
+variable [Field k] [CommRing H] [HopfAlgebra k H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
-/-- If every point of a reduced finite-type commutative Hopf algebra over an algebraically closed
-field is unipotent, then every nonzero finite-dimensional comodule has a nonzero fixed vector. -/
-theorem hasNonzeroFixedVector_of_forall_isUnipotentPoint
+namespace Comodule
+
+/-- If every point acts nilpotently minus the identity on a given comodule over a reduced
+finite-type commutative Hopf algebra over an algebraically closed field, then that comodule has a
+nonzero fixed vector. -/
+theorem hasNonzeroFixedVector_of_forall_isNilpotent_endOfPoint_sub_one
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
     [FiniteDimensional k M] [Nontrivial M]
-    (hH : ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g) :
+    (hM : ∀ g : WithConv (H →ₐ[k] k), IsNilpotent (endOfPoint M g.ofConv - 1)) :
     HasNonzeroFixedVector k H M := by
   obtain ⟨w, hw, hfixed⟩ :=
     _root_.Representation.exists_common_fixed_vector_of_isUnipotent
       (pointsRepresentation (A := k) M) fun g ↦ by
         rw [pointsRepresentation_apply]
-        exact (HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp
-          (hH g) (FGComoduleCat.of (R := k) (C := H) M)
+        exact hM g
   let e := TensorProduct.lid k M
   let v := e w
   rw [hasNonzeroFixedVector_iff]
-  refine ⟨v, fun hv ↦ hw (e.injective hv), ?_⟩
+  refine ⟨v, e.map_ne_zero_iff.mpr hw, ?_⟩
   rw [coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (K := k)]
   intro g
   have haction := hfixed g
   rw [pointsRepresentation_apply] at haction
   rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap]
   have hv : (1 : k) ⊗ₜ[k] v = w := by
-    exact e.symm_apply_apply w
+    exact (TensorProduct.lid_symm_apply (R := k) v).symm.trans (e.symm_apply_apply w)
   simpa only [hv] using haction
+
+/-- If every point of a reduced finite-type commutative Hopf algebra over an algebraically closed
+field is unipotent, then every nonzero finite-dimensional comodule has a nonzero fixed vector. -/
+theorem hasNonzeroFixedVector_of_forall_isUnipotentPoint
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    [FiniteDimensional k M] [Nontrivial M]
+    (hH : ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g) :
+    HasNonzeroFixedVector k H M := by
+  apply hasNonzeroFixedVector_of_forall_isNilpotent_endOfPoint_sub_one
+  intro g
+  exact (HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp
+    (hH g) (FGComoduleCat.of (R := k) (C := H) M)
 
 /-- If all points are unipotent, every finite-dimensional comodule has a basis with upper
 unitriangular coefficient matrix. -/
 theorem exists_basis_coefficientMatrix_isUpperUnitriangular_of_forall_isUnipotentPoint
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
     [FiniteDimensional k M]
     (hH : ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g) :
     ∃ (n : ℕ) (b : _root_.Module.Basis (Fin n) k M),
@@ -106,10 +120,13 @@ theorem exists_basis_coefficientMatrix_isUpperUnitriangular_of_forall_isUnipoten
   exists_basis_coefficientMatrix_isUpperUnitriangular_of_fixed_vectors fun V _ _ _ _ _ ↦
     hasNonzeroFixedVector_of_forall_isUnipotentPoint (M := V) hH
 
+namespace upperUnitriangularCoordinateGroupSchemeHom
+
 /-- A reduced finite-type affine group over an algebraically closed field whose points are all
 unipotent embeds as a closed subgroup of an upper-unitriangular group. The witness includes the
 faithful comodule and its upper-unitriangular basis. -/
-theorem exists_isClosedImmersion_upperUnitriangular_of_forall_isUnipotentPoint
+theorem exists_isClosedImmersion_of_forall_isUnipotentPoint
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
     (hH : ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g) :
     ∃ (M : Subcomodule k H H) (n : ℕ) (b : _root_.Module.Basis (Fin n) k M)
       (hb : (coefficientMatrix (C := H) b).IsUpperUnitriangular),
@@ -127,15 +144,18 @@ theorem exists_isClosedImmersion_upperUnitriangular_of_forall_isUnipotentPoint
     (isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom_iff_isFaithful b' hb').mpr
       hfaithful⟩
 
-/-- Geometric unipotence implies that the represented reduced affine group embeds as a closed
-subgroup of an upper-unitriangular group. -/
-theorem exists_isClosedImmersion_upperUnitriangular_of_geometricallyUnipotentPoints
+end upperUnitriangularCoordinateGroupSchemeHom
+
+end Comodule
+
+namespace geometricallyUnipotentPointsCommHopfAlgProperty
+
+open Comodule Comodule.upperUnitriangularCoordinateGroupSchemeHom
+
+/-- Geometric unipotence implies that every point valued in the ground field is unipotent. -/
+theorem forall_isUnipotentPoint
     (hH : geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H)) :
-    ∃ (M : Subcomodule k H H) (n : ℕ) (b : _root_.Module.Basis (Fin n) k M)
-      (hb : (coefficientMatrix (C := H) b).IsUpperUnitriangular),
-      IsClosedImmersion
-        (upperUnitriangularCoordinateGroupSchemeHom (H := H) b hb).hom.hom.left := by
-  apply exists_isClosedImmersion_upperUnitriangular_of_forall_isUnipotentPoint
+    ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g := by
   intro g
   let φ : k →ₐ[k] AlgebraicClosure k := _root_.Algebra.ofId k (AlgebraicClosure k)
   have hgeom := (geometricallyUnipotentPointsCommHopfAlgProperty_iff k
@@ -143,24 +163,63 @@ theorem exists_isClosedImmersion_upperUnitriangular_of_geometricallyUnipotentPoi
   exact (HopfAlgebra.isUnipotentPoint_mapValue_iff_of_injective g φ φ.injective).mp
     (hgeom (AlgHom.mapValue (H := H) φ g))
 
+/-- A closed immersion given by an upper-unitriangular comodule makes the represented affine group
+geometrically unipotent. -/
+theorem of_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom
+    {n : ℕ} (b : _root_.Module.Basis (Fin n) k M)
+    (hb : (coefficientMatrix (C := H) b).IsUpperUnitriangular)
+    (hclosed : IsClosedImmersion
+      (upperUnitriangularCoordinateGroupSchemeHom (H := H) b hb).hom.hom.left) :
+    geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H) := by
+  apply geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective k
+    (CommHopfAlgCat.ofHom (upperUnitriangularCoordinateBialgHom (H := H) b hb))
+  · exact (isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom_iff b hb).mp hclosed
+  · exact UpperUnitriangular.geometricallyUnipotentPointsCommHopfAlgProperty_coordinateHopfAlgebra
+      n k
+
+/-- Geometric unipotence implies that the represented reduced affine group has a faithful
+upper-unitriangular coordinate morphism. -/
+theorem exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    (hH : geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H)) :
+    ∃ (M : Subcomodule k H H) (n : ℕ) (b : _root_.Module.Basis (Fin n) k M)
+      (hb : (coefficientMatrix (C := H) b).IsUpperUnitriangular),
+      IsClosedImmersion
+        (upperUnitriangularCoordinateGroupSchemeHom (H := H) b hb).hom.hom.left := by
+  exact exists_isClosedImmersion_of_forall_isUnipotentPoint
+    (forall_isUnipotentPoint hH)
+
+/-- A geometrically unipotent reduced finite-type affine group over an algebraically closed field
+embeds as a closed subgroup of some upper-unitriangular group `U_n`. -/
+theorem exists_isClosedImmersion_upperUnitriangularGroupScheme
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    (hH : geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H)) :
+    ∃ (n : ℕ)
+      (f : (hopfSpec (CommRingCat.of k)).obj (Opposite.op (CommHopfAlgCat.of k H)) ⟶
+        UpperUnitriangular.groupScheme k (Fin n)), IsClosedImmersion f.hom.hom.left := by
+  obtain ⟨M, n, b, hb, hclosed⟩ :=
+    exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom hH
+  exact ⟨n, upperUnitriangularCoordinateGroupSchemeHom (H := H) b hb, hclosed⟩
+
 /-- A reduced finite-type affine group over an algebraically closed field has only unipotent
-points if and only if it admits a faithful upper-unitriangular representation, equivalently a
-closed immersion into some `U_n`. -/
-theorem geometricallyUnipotentPoints_iff_exists_isClosedImmersion_upperUnitriangular :
+points if and only if a finite-dimensional subcomodule of its regular comodule has an
+upper-unitriangular basis whose coordinate morphism is a closed immersion into `U_n`. -/
+theorem iff_exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H] :
     geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H) ↔
       ∃ (M : Subcomodule k H H) (n : ℕ) (b : _root_.Module.Basis (Fin n) k M)
         (hb : (coefficientMatrix (C := H) b).IsUpperUnitriangular),
         IsClosedImmersion
           (upperUnitriangularCoordinateGroupSchemeHom (H := H) b hb).hom.hom.left := by
   constructor
-  · exact exists_isClosedImmersion_upperUnitriangular_of_geometricallyUnipotentPoints
+  · exact exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom
   · rintro ⟨M, n, b, hb, hclosed⟩
-    apply geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective k
-      (CommHopfAlgCat.ofHom (upperUnitriangularCoordinateBialgHom (H := H) b hb))
-    · exact (isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom_iff b hb).mp hclosed
-    · exact UpperUnitriangular.geometricallyUnipotentPointsCommHopfAlgProperty_coordinateHopfAlgebra
-        n k
+    let _ : AddCommGroup M := _root_.Module.addCommMonoidToAddCommGroup k
+    exact of_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom
+      (M := M) (H := H) b hb hclosed
+
+end geometricallyUnipotentPointsCommHopfAlgProperty
 
 end
 
-end TauCeti.Comodule
+end TauCeti
