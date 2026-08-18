@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.FieldTheory.Galois.Infinite
-public import TauCeti.Algebra.AlgebraicGroup.GroupAlgebra.GaloisDescent
+public import TauCeti.Algebra.AlgebraicGroup.GroupAlgebra.Galois.Descent
 public import TauCeti.Algebra.HopfAlgebra.Antipode
 
 /-!
@@ -18,7 +18,7 @@ representation of `Gal(L/k)`. The simultaneous action on coefficients and expone
 that the Hopf operations preserve the corresponding descent data.
 
 The counit of an invariant element is fixed by every automorphism of `L/k`, hence belongs to `k`.
-The antipode preserves the invariant subalgebra. Comultiplication lands in the fixed submodule of
+The antipode preserves the invariant subalgebra. Comultiplication lands in the fixed subalgebra of
 the tensor square for the diagonal semilinear action. The latter is deliberately not identified
 here with the tensor square of the invariant subalgebra: that identification is the faithfully
 flat scalar-extension theorem needed in the next descent step.
@@ -35,7 +35,7 @@ flat scalar-extension theorem needed in the next descent step.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Theorem 12.23 and Corollary 12.24.
+* J. S. Milne, *Algebraic Groups* (2017), Theorem 12.23 and Appendix A.64.
 
 This is the invariant-algebra step in Layer 4, "Tori: split and non-split", of the
 ReductiveGroups roadmap. It follows the semilinear group-algebra action and precedes the theorem
@@ -119,19 +119,29 @@ private noncomputable def groupAlgebraInvariantsCounitToBot
     ((Bialgebra.counitAlgHom L
       (MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
         (groupAlgebraInvariants rho).val
-  exact
-  { toFun := fun x ↦ ⟨f x, by
+  have hmem : ∀ x, f x ∈ (⊥ : IntermediateField k L) := fun x ↦ by
       rw [InfiniteGalois.mem_bot_iff_fixed]
       intro sigma
       simp only [f, AlgHom.comp_apply, AlgHom.restrictScalars_apply,
         Subalgebra.val_apply, Bialgebra.counitAlgHom_apply]
       rw [← counit_groupAlgebraAction rho sigma,
-        (mem_groupAlgebraInvariants_iff rho x).mp x.property sigma]⟩
+        (mem_groupAlgebraInvariants_iff rho x).mp x.property sigma]
+  exact
+  { toFun := fun x ↦ ⟨f x, hmem x⟩
     map_one' := Subtype.ext f.map_one
     map_mul' x y := Subtype.ext (f.map_mul x y)
     map_zero' := Subtype.ext f.map_zero
     map_add' x y := Subtype.ext (f.map_add x y)
     commutes' r := Subtype.ext (f.commutes r) }
+
+/-- The restricted-codomain counit agrees with the ordinary group-algebra counit in `L`. -/
+@[simp]
+private theorem coe_groupAlgebraInvariantsCounitToBot_apply
+    (rho : Representation ℤ (L ≃ₐ[k] L) M)
+    (x : groupAlgebraInvariants rho) :
+    (groupAlgebraInvariantsCounitToBot rho x : L) =
+      Coalgebra.counit (R := L) (x : MonoidAlgebra L (Multiplicative M)) :=
+  rfl
 
 /-- The counit of the descended invariant algebra. Invariance forces the original `L`-valued
 counit to lie in the image of `k`, and Galois fixed-field descent identifies that image with `k`.
@@ -159,7 +169,8 @@ theorem algebraMap_groupAlgebraInvariantsCounit
           ((IntermediateField.botEquiv k L) y) : (⊥ : IntermediateField k L)) : L) :=
       (IntermediateField.coe_algebraMap_apply (S := (⊥ : IntermediateField k L)) _).symm
     _ = (y : L) := h
-    _ = Coalgebra.counit (R := L) (x : MonoidAlgebra L (Multiplicative M)) := rfl
+    _ = Coalgebra.counit (R := L) (x : MonoidAlgebra L (Multiplicative M)) :=
+      coe_groupAlgebraInvariantsCounitToBot_apply rho x
 
 end Galois
 
@@ -247,10 +258,10 @@ theorem groupAlgebraInvariantsAntipode_symm
   apply (groupAlgebraInvariantsAntipode rho).injective
   rw [AlgEquiv.apply_symm_apply, groupAlgebraInvariantsAntipode_apply_apply]
 
-/-- The fixed `k`-submodule of the tensor square for the diagonal semilinear Galois action. -/
+/-- The fixed `k`-subalgebra of the tensor square for the diagonal semilinear Galois action. -/
 noncomputable def groupAlgebraTensorInvariants
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
-    Submodule k
+    Subalgebra k
       (MonoidAlgebra L (Multiplicative M) ⊗[L]
         MonoidAlgebra L (Multiplicative M)) := by
   let T := MonoidAlgebra L (Multiplicative M) ⊗[L]
@@ -263,18 +274,27 @@ noncomputable def groupAlgebraTensorInvariants
       mul_smul := groupAlgebraTensorActionSemilinearEquiv_mul rho
       smul_zero := fun sigma ↦ map_zero (groupAlgebraTensorActionSemilinearEquiv rho sigma)
       smul_add := fun sigma ↦ map_add (groupAlgebraTensorActionSemilinearEquiv rho sigma) }
-  exact
-  { FixedPoints.addSubgroup (L ≃ₐ[k] L) T with
-    smul_mem' := fun r x hx sigma ↦ by
-      have hsigma := hx sigma
-      change groupAlgebraTensorActionSemilinearEquiv rho sigma x = x at hsigma
-      change groupAlgebraTensorActionSemilinearEquiv rho sigma (r • x) = r • x
-      rw [← IsScalarTower.algebraMap_smul L r x,
-        (groupAlgebraTensorActionSemilinearEquiv rho sigma).map_smulₛₗ]
-      change sigma (algebraMap k L r) •
-          groupAlgebraTensorActionSemilinearEquiv rho sigma x =
-        algebraMap k L r • x
-      rw [sigma.commutes, hsigma, IsScalarTower.algebraMap_smul L r x] }
+  have action_apply (sigma : L ≃ₐ[k] L) (t : T) :
+      sigma • t = groupAlgebraTensorActionSemilinearEquiv rho sigma t := rfl
+  let fixedSubmodule : Submodule k T :=
+    { FixedPoints.addSubgroup (L ≃ₐ[k] L) T with
+      smul_mem' := fun r x hx sigma ↦ by
+        have hsigma : groupAlgebraTensorActionSemilinearEquiv rho sigma x = x := hx sigma
+        rw [action_apply, ← IsScalarTower.algebraMap_smul L r x,
+          groupAlgebraTensorActionSemilinearEquiv_smul, sigma.commutes, hsigma,
+          IsScalarTower.algebraMap_smul L r x] }
+  exact fixedSubmodule.toSubalgebra
+    (fun sigma ↦ by
+      rw [action_apply]
+      exact groupAlgebraTensorActionSemilinearEquiv_map_one rho sigma)
+    (fun x y hx hy sigma ↦ by
+      have hx' : groupAlgebraTensorActionSemilinearEquiv rho sigma x = x := by
+        rw [← action_apply]
+        exact hx sigma
+      have hy' : groupAlgebraTensorActionSemilinearEquiv rho sigma y = y := by
+        rw [← action_apply]
+        exact hy sigma
+      rw [action_apply, groupAlgebraTensorActionSemilinearEquiv_map_mul, hx', hy'])
 
 /-- Membership among invariant tensors means being fixed by the diagonal action. -/
 @[simp]
@@ -297,42 +317,18 @@ private theorem comul_mem_groupAlgebraTensorInvariants
   rw [← comul_groupAlgebraAction rho sigma,
     (mem_groupAlgebraInvariants_iff rho x).mp x.property sigma]
 
-/-- The linear map underlying comultiplication into invariant tensors. -/
-private noncomputable def groupAlgebraInvariantsComulLinearMap
-    (rho : Representation ℤ (L ≃ₐ[k] L) M) :
-    groupAlgebraInvariants rho →ₗ[k] groupAlgebraTensorInvariants rho :=
-  ((((Coalgebra.comul (R := L)
-      (A := MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
-        (groupAlgebraInvariants rho).val.toLinearMap).codRestrict
-          (groupAlgebraTensorInvariants rho) fun x ↦
-            comul_mem_groupAlgebraTensorInvariants rho x)
-
-private theorem coe_groupAlgebraInvariantsComulLinearMap_apply
-    (rho : Representation ℤ (L ≃ₐ[k] L) M)
-    (x : groupAlgebraInvariants rho) :
-    (groupAlgebraInvariantsComulLinearMap rho x :
-        MonoidAlgebra L (Multiplicative M) ⊗[L]
-          MonoidAlgebra L (Multiplicative M)) =
-      Coalgebra.comul (R := L) (x : MonoidAlgebra L (Multiplicative M)) := by
-  have h := LinearMap.congr_fun
-    (LinearMap.subtype_comp_codRestrict
-      (f := ((Coalgebra.comul (R := L)
-        (A := MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
-          (groupAlgebraInvariants rho).val.toLinearMap)
-      (groupAlgebraTensorInvariants rho) fun x ↦
-        comul_mem_groupAlgebraTensorInvariants rho x) x
-  simpa only [groupAlgebraInvariantsComulLinearMap, LinearMap.comp_apply,
-    LinearMap.restrictScalars_apply, Submodule.subtype_apply, AlgHom.toLinearMap_apply,
-    Subalgebra.val_apply] using h
-
 /-- Comultiplication from invariant elements to tensors invariant under the diagonal action.
 
 Identifying the codomain with the tensor square of `groupAlgebraInvariants rho` is the subsequent
 faithfully flat descent step. -/
 noncomputable def groupAlgebraInvariantsComul
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
-    groupAlgebraInvariants rho →ₗ[k] groupAlgebraTensorInvariants rho :=
-  groupAlgebraInvariantsComulLinearMap rho
+    groupAlgebraInvariants rho →ₐ[k] groupAlgebraTensorInvariants rho :=
+  ((((Bialgebra.comulAlgHom L
+      (MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
+        (groupAlgebraInvariants rho).val).codRestrict
+          (groupAlgebraTensorInvariants rho) fun x ↦
+            comul_mem_groupAlgebraTensorInvariants rho x)
 
 /-- The restricted comultiplication acts by the ordinary group-algebra comultiplication. -/
 @[simp]
@@ -344,6 +340,15 @@ theorem groupAlgebraInvariantsComul_apply
           MonoidAlgebra L (Multiplicative M)) =
       Coalgebra.comul (R := L) (x : MonoidAlgebra L (Multiplicative M)) :=
   by
-    exact coe_groupAlgebraInvariantsComulLinearMap_apply rho x
+    have h := AlgHom.congr_fun
+      (AlgHom.val_comp_codRestrict
+        (((Bialgebra.comulAlgHom L
+          (MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
+            (groupAlgebraInvariants rho).val)
+        (groupAlgebraTensorInvariants rho) fun x ↦
+          comul_mem_groupAlgebraTensorInvariants rho x) x
+    simpa only [groupAlgebraInvariantsComul, AlgHom.comp_apply,
+      AlgHom.restrictScalars_apply, Subalgebra.val_apply,
+      Bialgebra.comulAlgHom_apply] using h
 
 end TauCeti.GaloisDescent
