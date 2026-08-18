@@ -68,13 +68,14 @@ theorem hopfSpec_map_left_comp_eqToHom (f : H ⟶ K) :
     ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ≫
         eqToHom (hopfSpec_obj_X_left k H) =
       eqToHom (hopfSpec_obj_X_left k K) ≫
-        Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) :=
+        Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)) :=
   rfl
 
 /-- The ideal defining the scheme-theoretic image of the spectrum map of a Hopf-algebra morphism
 is the ordinary ring kernel of that morphism. -/
 theorem specTargetImageIdeal_specMap (f : H ⟶ K) :
-    specTargetImageIdeal (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) =
+    specTargetImageIdeal
+        (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) =
       (HopfIdeal.ker f.hom).toIdeal := by
   rw [HopfIdeal.ker_toIdeal]
   rw [specTargetImageIdeal]
@@ -82,7 +83,7 @@ theorem specTargetImageIdeal_specMap (f : H ⟶ K) :
   -- The image ideal is phrased through the `Γ ⊣ Spec` adjunction. Normalize its recovered
   -- coordinate map to the explicit global-sections map before using naturality of `ΓSpecIso`.
   change RingHom.ker (((Scheme.ΓSpecIso (CommRingCat.of H)).inv ≫
-    (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)).appTop).hom) = _
+    (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))).appTop).hom) = _
   rw [← Scheme.ΓSpecIso_inv_naturality]
   ext x
   rw [RingHom.mem_ker, RingHom.mem_ker]
@@ -103,14 +104,16 @@ Hopf ideal's underlying ideal. -/
 theorem specTargetImageIdeal_hopfSpec_map (f : H ⟶ K) :
     specTargetImageIdeal ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left =
       (HopfIdeal.ker f.hom).toIdeal := by
-  change specTargetImageIdeal (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) = _
+  change specTargetImageIdeal
+    (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) = _
   exact specTargetImageIdeal_specMap f
 
 /-- The coordinate ring of the scheme-theoretic image is canonically isomorphic to the Hopf
 image, the quotient by the kernel Hopf ideal. -/
 noncomputable def specTargetImageIsoImage (f : H ⟶ K) :
-    specTargetImage (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ≅
-      CommRingCat.of (image f) :=
+    specTargetImage (Spec.map
+      (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) ≅
+      CommRingCat.of (H ⧸ (HopfIdeal.ker f.hom).toIdeal) :=
   (Ideal.quotientEquivAlgOfEq ℤ (specTargetImageIdeal_specMap f)).toRingEquiv
     |>.toCommRingCatIso
 
@@ -120,7 +123,7 @@ image quotient. -/
 theorem specTargetImageIsoImage_hom_mk (f : H ⟶ K) (x : H) :
     (specTargetImageIsoImage f).hom
         (Ideal.Quotient.mk (specTargetImageIdeal
-          (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) x) =
+          (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) x) =
       Ideal.Quotient.mk (HopfIdeal.ker f.hom).toIdeal x := by
   exact Ideal.quotientEquivAlgOfEq_mk ℤ (specTargetImageIdeal_specMap f) x
 
@@ -131,7 +134,7 @@ theorem specTargetImageIsoImage_inv_mk (f : H ⟶ K) (x : H) :
     (specTargetImageIsoImage f).inv
         (Ideal.Quotient.mk (HopfIdeal.ker f.hom).toIdeal x) =
       Ideal.Quotient.mk (specTargetImageIdeal
-        (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) x := by
+        (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) x := by
   rw [specTargetImageIsoImage]
   change (Ideal.quotientEquivAlgOfEq ℤ
       (specTargetImageIdeal_specMap f)).symm
@@ -144,7 +147,7 @@ of the represented affine-group morphism. -/
 noncomputable def hopfSpecImageSchemeIso (f : H ⟶ K) :
     ((hopfSpec (CommRingCat.of k)).obj (op (image f))).X.left ≅
       Spec (specTargetImage
-        (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) :=
+        (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) :=
   eqToIso (hopfSpec_obj_X_left k (image f)) ≪≫
     Scheme.Spec.mapIso (specTargetImageIsoImage f).op
 
@@ -153,7 +156,7 @@ closed immersion of the scheme-theoretic image into the target. -/
 theorem hopfSpecImageSchemeIso_hom_comp_specTargetImageRingHom (f : H ⟶ K) :
     (hopfSpecImageSchemeIso f).hom ≫
         Spec.map (specTargetImageRingHom
-          (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) =
+          (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) =
       ((hopfSpec (CommRingCat.of k)).map (mkImage f).op).hom.hom.left ≫
         eqToHom (hopfSpec_obj_X_left k H) := by
   rw [hopfSpecImageSchemeIso]
@@ -162,11 +165,11 @@ theorem hopfSpecImageSchemeIso_hom_comp_specTargetImageRingHom (f : H ⟶ K) :
   change (eqToHom (hopfSpec_obj_X_left k (image f)) ≫
       (Scheme.Spec.mapIso (specTargetImageIsoImage f).op).hom) ≫
         Spec.map (specTargetImageRingHom
-          (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) =
+          (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) =
       eqToHom (hopfSpec_obj_X_left k (image f)) ≫
         Spec.map (CommRingCat.ofHom (mkImage f).hom.toAlgHom.toRingHom)
   have hcoord : specTargetImageRingHom
-        (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ≫
+        (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) ≫
       (specTargetImageIsoImage f).hom =
         CommRingCat.ofHom (mkImage f).hom.toAlgHom.toRingHom := by
     ext x
@@ -174,17 +177,17 @@ theorem hopfSpecImageSchemeIso_hom_comp_specTargetImageRingHom (f : H ⟶ K) :
     exact (specTargetImageIsoImage_hom_mk f x).trans (mkImage_apply f x).symm
   have h : (Scheme.Spec.mapIso (specTargetImageIsoImage f).op).hom ≫
         Spec.map (specTargetImageRingHom
-          (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) =
+          (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) =
       Spec.map (CommRingCat.ofHom (mkImage f).hom.toAlgHom.toRingHom) := by
     calc
       (Scheme.Spec.mapIso (specTargetImageIsoImage f).op).hom ≫
           Spec.map (specTargetImageRingHom
-            (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) =
+            (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) =
         Spec.map ((specTargetImageIsoImage f).hom) ≫
           Spec.map (specTargetImageRingHom
-            (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) := rfl
+            (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) := rfl
       _ = Spec.map (specTargetImageRingHom
-            (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ≫
+            (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) ≫
           (specTargetImageIsoImage f).hom) := (Spec.map_comp _ _).symm
       _ = Spec.map (CommRingCat.ofHom (mkImage f).hom.toAlgHom.toRingHom) :=
         congrArg Spec.map hcoord
@@ -198,12 +201,12 @@ theorem hopfSpec_imageι_comp_hopfSpecImageSchemeIso_hom (f : H ⟶ K) :
         (hopfSpecImageSchemeIso f).hom =
       eqToHom (hopfSpec_obj_X_left k K) ≫
         specTargetImageFactorization
-          (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) := by
+          (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) := by
   let j := Spec.map (specTargetImageRingHom
-    (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)))
+    (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))))
   let _ : IsClosedImmersion j := IsClosedImmersion.spec_of_surjective _
     (specTargetImageRingHom_surjective
-      (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)))
+      (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))))
   have hgroup :
       (hopfSpec (CommRingCat.of k)).map (imageι f).op ≫
           (hopfSpec (CommRingCat.of k)).map (mkImage f).op =
@@ -230,15 +233,15 @@ theorem hopfSpec_imageι_comp_hopfSpecImageSchemeIso_hom (f : H ⟶ K) :
           eqToHom (hopfSpec_obj_X_left k H) := congrArg (· ≫
             eqToHom (hopfSpec_obj_X_left k H)) hscheme'
     _ = eqToHom (hopfSpec_obj_X_left k K) ≫
-          Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) :=
+          Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)) :=
       hopfSpec_map_left_comp_eqToHom f
     _ = eqToHom (hopfSpec_obj_X_left k K) ≫
           (specTargetImageFactorization
-            (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ≫ j) := by
+            (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) ≫ j) := by
       rw [specTargetImageFactorization_comp]
     _ = (eqToHom (hopfSpec_obj_X_left k K) ≫
           specTargetImageFactorization
-            (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) ≫ j :=
+            (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) ≫ j :=
       Category.assoc _ _ _ |>.symm
 
 end CommHopfAlgCat
