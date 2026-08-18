@@ -12,13 +12,13 @@ public import TauCeti.Geometry.Hodge.Structure
 
 A morphism between integral pure Hodge structures of the same weight is an integral linear map
 whose complexification preserves the Hodge filtration.  The complex action is derived canonically
-from the integral map through the `IsBaseChange` witnesses; in particular, it commutes with the
-lattice-induced conjugations.
+from the integral map through the universal property of the source base change; in particular, it
+commutes with the lattice-induced conjugations.
 
-This file develops the elementary morphism calculus.  Morphisms are closed under identities,
-composition, zero, addition, and negation.  Preservation of the filtration and compatibility with
-conjugation imply preservation of the conjugate filtration and hence of every Hodge component
-`H^{p,n-p}`.
+This file develops the elementary morphism calculus.  Morphisms are closed under identities and
+composition, and form an additive commutative group.  Preservation of the filtration and
+compatibility with conjugation imply preservation of the conjugate filtration and hence of every
+Hodge component `H^{p,n-p}`.
 
 ## Main declarations
 
@@ -50,64 +50,75 @@ variable [AddCommGroup W₃] [Module ℂ W₃]
 variable {ι₁ : V₁ →ₗ[ℤ] W₁} {ι₂ : V₂ →ₗ[ℤ] W₂} {ι₃ : V₃ →ₗ[ℤ] W₃}
 
 /-- The complexification of an integral linear map between abstract complexification models. -/
-noncomputable def integralMapToComplex (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) : W₁ →ₗ[ℂ] W₂ :=
-  h₂.equiv.toLinearMap ∘ₗ f.baseChange ℂ ∘ₗ h₁.equiv.symm.toLinearMap
-
-/-- Complexification of an integral map agrees with that map on integral vectors. -/
-@[simp]
-theorem integralMapToComplex_ι (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) (x : V₁) :
-    integralMapToComplex h₁ h₂ f (ι₁ x) = ι₂ (f x) := by
-  simp [integralMapToComplex]
+noncomputable def integralMapToComplex (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) : W₁ →ₗ[ℂ] W₂ :=
+  h₁.lift (ι₂ ∘ₗ f)
 
 /-- Complexification sends the identity integral map to the identity complex map. -/
 @[simp]
 theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
-    integralMapToComplex h₁ h₁ (LinearMap.id : V₁ →ₗ[ℤ] V₁) = LinearMap.id := by
-  ext x
-  simp [integralMapToComplex]
+    integralMapToComplex h₁ ι₁ (LinearMap.id : V₁ →ₗ[ℤ] V₁) = LinearMap.id :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
 
 /-- Complexification sends the zero integral map to the zero complex map. -/
 @[simp]
-theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) :
-    integralMapToComplex h₁ h₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 := by
-  simp [integralMapToComplex]
+theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) :
+    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
 
 /-- Complexification preserves addition of integral linear maps. -/
 @[simp]
-theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) (f g : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ h₂ (f + g) =
-      integralMapToComplex h₁ h₂ f + integralMapToComplex h₁ h₂ g := by
-  simp [integralMapToComplex, LinearMap.comp_add, LinearMap.add_comp]
+theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f g : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (f + g) =
+      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
 
 /-- Complexification preserves negation of integral linear maps. -/
 @[simp]
-theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ h₂ (-f) = -integralMapToComplex h₁ h₂ f := by
-  simp [integralMapToComplex, LinearMap.comp_neg, LinearMap.neg_comp]
+theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
+
+/-- Complexification preserves subtraction of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_sub (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f g : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (f - g) =
+      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
+
+/-- Complexification preserves natural-number multiples of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_nsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℕ)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
+
+/-- Complexification preserves integer multiples of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_zsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℤ)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq]
 
 /-- Complexification preserves composition of integral linear maps. -/
-theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁)
-    (h₂ : IsBaseChange ℂ ι₂) (h₃ : IsBaseChange ℂ ι₃)
-    (f : V₁ →ₗ[ℤ] V₂) (g : V₂ →ₗ[ℤ] V₃) :
-    integralMapToComplex h₁ h₃ (g ∘ₗ f) =
-      integralMapToComplex h₂ h₃ g ∘ₗ integralMapToComplex h₁ h₂ f := by
-  ext x
-  simp [integralMapToComplex, LinearMap.baseChange_comp]
+theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁) (h₂ : IsBaseChange ℂ ι₂)
+    (ι₃ : V₃ →ₗ[ℤ] W₃) (f : V₁ →ₗ[ℤ] V₂) (g : V₂ →ₗ[ℤ] V₃) :
+    integralMapToComplex h₁ ι₃ (g ∘ₗ f) =
+      integralMapToComplex h₂ ι₃ g ∘ₗ integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp [integralMapToComplex, h₁.lift_eq, h₂.lift_eq]
 
 /-- The complexification of an integral map commutes with lattice-induced conjugation. -/
 @[simp]
 theorem integralMapToComplex_commutes_conj (h₁ : IsBaseChange ℂ ι₁)
     (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) (x : W₁) :
-    integralMapToComplex h₁ h₂ f (latticeConj h₁ x) =
-      latticeConj h₂ (integralMapToComplex h₁ h₂ f x) := by
+    integralMapToComplex h₁ ι₂ f (latticeConj h₁ x) =
+      latticeConj h₂ (integralMapToComplex h₁ ι₂ f x) := by
   induction x using h₁.inductionOn with
   | zero => simp
-  | tmul x => simp
+  | tmul x => simp [integralMapToComplex, h₁.lift_eq]
   | smul z x hx => simp [hx]
   | add x y hx hy => simp [hx, hy]
 
@@ -118,14 +129,15 @@ variable {h₃ : IsBaseChange ℂ ι₃} {n : ℤ}
 
 /-- A morphism between integral pure Hodge structures of the same weight.
 
-Its primary datum is an integral linear map. Its complexification is derived through the two
-`IsBaseChange` witnesses and is required to preserve every step of the Hodge filtration. -/
+Its primary datum is an integral linear map. Its complexification is derived from the source
+`IsBaseChange` witness together with the target integral inclusion, and is required to preserve
+every step of the Hodge filtration. -/
 structure Hom (source : HodgeStructure h₁ n) (target : HodgeStructure h₂ n) where
   /-- The integral linear map underlying a Hodge morphism. -/
   toIntLinearMap : V₁ →ₗ[ℤ] V₂
   /-- The complexification of the underlying map preserves every Hodge filtration step. -/
   map_mem_F : ∀ p x, x ∈ source.F p →
-    integralMapToComplex h₁ h₂ toIntLinearMap x ∈ target.F p
+    integralMapToComplex h₁ ι₂ toIntLinearMap x ∈ target.F p
 
 namespace Hom
 
@@ -134,7 +146,7 @@ variable {third : HodgeStructure h₃ n}
 
 /-- The complex-linear map induced by an integral Hodge morphism. -/
 noncomputable def toLinearMap (f : Hom source target) : W₁ →ₗ[ℂ] W₂ :=
-  integralMapToComplex h₁ h₂ f.toIntLinearMap
+  integralMapToComplex h₁ ι₂ f.toIntLinearMap
 
 /-- A Hodge morphism acts on complex vectors through the complexification of its integral map. -/
 noncomputable instance : CoeFun (Hom source target) fun _ ↦ W₁ → W₂ :=
@@ -143,7 +155,7 @@ noncomputable instance : CoeFun (Hom source target) fun _ ↦ W₁ → W₂ :=
 /-- A Hodge morphism acts on integral vectors by its underlying integral map. -/
 @[simp]
 theorem apply_ι (f : Hom source target) (x : V₁) : f (ι₁ x) = ι₂ (f.toIntLinearMap x) :=
-  integralMapToComplex_ι h₁ h₂ f.toIntLinearMap x
+  h₁.lift_eq (ι₂ ∘ₗ f.toIntLinearMap) x
 
 /-- Two Hodge morphisms are equal when their integral maps agree on every vector. -/
 @[ext]
@@ -219,7 +231,7 @@ noncomputable def comp (g : Hom target third) (f : Hom source target) : Hom sour
   toIntLinearMap := g.toIntLinearMap ∘ₗ f.toIntLinearMap
   map_mem_F := by
     intro p x hx
-    rw [integralMapToComplex_comp h₁ h₂ h₃]
+    rw [integralMapToComplex_comp h₁ h₂ ι₃]
     exact g.map_mem_F p _ (f.map_mem_F p x hx)
 
 /-- The integral map underlying a composite is the composite of the integral maps. -/
@@ -232,11 +244,11 @@ theorem comp_toIntLinearMap (g : Hom target third) (f : Hom source target) :
 @[simp]
 theorem comp_apply (g : Hom target third) (f : Hom source target) (x : W₁) :
     g.comp f x = g (f x) := by
-  change integralMapToComplex h₁ h₃ (g.comp f).toIntLinearMap x =
-    integralMapToComplex h₂ h₃ g.toIntLinearMap
-      (integralMapToComplex h₁ h₂ f.toIntLinearMap x)
+  change integralMapToComplex h₁ ι₃ (g.comp f).toIntLinearMap x =
+    integralMapToComplex h₂ ι₃ g.toIntLinearMap
+      (integralMapToComplex h₁ ι₂ f.toIntLinearMap x)
   rw [comp_toIntLinearMap,
-    integralMapToComplex_comp h₁ h₂ h₃ f.toIntLinearMap g.toIntLinearMap]
+    integralMapToComplex_comp h₁ h₂ ι₃ f.toIntLinearMap g.toIntLinearMap]
   rfl
 
 /-- Left identity law for Hodge morphisms. -/
@@ -284,53 +296,85 @@ noncomputable instance instNeg : Neg (Hom source target) where
         rw [integralMapToComplex_neg, LinearMap.neg_apply]
         exact (target.F p).neg_mem (f.map_mem_F p x hx) }
 
+/-- Subtraction of Hodge morphisms, defined on their integral maps. -/
+noncomputable instance instSub : Sub (Hom source target) where
+  sub f g :=
+    { toIntLinearMap := f.toIntLinearMap - g.toIntLinearMap
+      map_mem_F := by
+        intro p x hx
+        rw [integralMapToComplex_sub, LinearMap.sub_apply]
+        exact (target.F p).sub_mem (f.map_mem_F p x hx) (g.map_mem_F p x hx) }
+
+/-- Natural-number multiples of a Hodge morphism, defined on its integral map. -/
+noncomputable instance instSMulNat : SMul ℕ (Hom source target) where
+  smul k f :=
+    { toIntLinearMap := k • f.toIntLinearMap
+      map_mem_F := by
+        intro p x hx
+        rw [integralMapToComplex_nsmul, LinearMap.smul_apply]
+        exact nsmul_mem (f.map_mem_F p x hx) k }
+
+/-- Integer multiples of a Hodge morphism, defined on its integral map. -/
+noncomputable instance instSMulInt : SMul ℤ (Hom source target) where
+  smul k f :=
+    { toIntLinearMap := k • f.toIntLinearMap
+      map_mem_F := by
+        intro p x hx
+        rw [integralMapToComplex_zsmul, LinearMap.smul_apply]
+        exact zsmul_mem (f.map_mem_F p x hx) k }
+
+/-- Integral Hodge morphisms form an additive commutative group, transported along the injection
+sending a morphism to its underlying integral linear map. -/
+noncomputable instance : AddCommGroup (Hom source target) :=
+  Function.Injective.addCommGroup (fun f : Hom source target ↦ f.toIntLinearMap)
+    (fun _ _ h ↦ ext (LinearMap.congr_fun h)) rfl (fun _ _ ↦ rfl) (fun _ ↦ rfl) (fun _ _ ↦ rfl)
+    (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)
+
 /-- The zero Hodge morphism acts as zero on complex vectors. -/
 @[simp]
 theorem zero_apply (x : W₁) : (0 : Hom source target) x = 0 := by
-  change integralMapToComplex h₁ h₂ (0 : V₁ →ₗ[ℤ] V₂) x = 0
+  change integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) x = 0
   rw [integralMapToComplex_zero]
   rfl
 
 /-- Addition of Hodge morphisms is pointwise addition on complex vectors. -/
 @[simp]
 theorem add_apply (f g : Hom source target) (x : W₁) : (f + g) x = f x + g x := by
-  change integralMapToComplex h₁ h₂ (f.toIntLinearMap + g.toIntLinearMap) x =
-    integralMapToComplex h₁ h₂ f.toIntLinearMap x +
-      integralMapToComplex h₁ h₂ g.toIntLinearMap x
+  change integralMapToComplex h₁ ι₂ (f.toIntLinearMap + g.toIntLinearMap) x =
+    integralMapToComplex h₁ ι₂ f.toIntLinearMap x +
+      integralMapToComplex h₁ ι₂ g.toIntLinearMap x
   rw [integralMapToComplex_add, LinearMap.add_apply]
 
 /-- Negation of Hodge morphisms is pointwise negation on complex vectors. -/
 @[simp]
 theorem neg_apply (f : Hom source target) (x : W₁) : (-f) x = -f x := by
-  change integralMapToComplex h₁ h₂ (-f.toIntLinearMap) x =
-    -integralMapToComplex h₁ h₂ f.toIntLinearMap x
+  change integralMapToComplex h₁ ι₂ (-f.toIntLinearMap) x =
+    -integralMapToComplex h₁ ι₂ f.toIntLinearMap x
   rw [integralMapToComplex_neg, LinearMap.neg_apply]
 
-/-- Integral Hodge morphisms form an additive commutative group. -/
-noncomputable instance : AddCommGroup (Hom source target) where
-  add_assoc f g h := by ext x; exact add_assoc (f.toIntLinearMap x) _ _
-  zero_add f := by ext x; exact zero_add (f.toIntLinearMap x)
-  add_zero f := by ext x; exact add_zero (f.toIntLinearMap x)
-  nsmul := nsmulRec
-  neg_add_cancel f := by ext x; exact neg_add_cancel (f.toIntLinearMap x)
-  zsmul := zsmulRec
-  add_comm f g := by ext x; exact add_comm (f.toIntLinearMap x) _
+/-- Subtraction of Hodge morphisms is pointwise subtraction on complex vectors. -/
+@[simp]
+theorem sub_apply (f g : Hom source target) (x : W₁) : (f - g) x = f x - g x := by
+  change integralMapToComplex h₁ ι₂ (f.toIntLinearMap - g.toIntLinearMap) x =
+    integralMapToComplex h₁ ι₂ f.toIntLinearMap x -
+      integralMapToComplex h₁ ι₂ g.toIntLinearMap x
+  rw [integralMapToComplex_sub, LinearMap.sub_apply]
 
 /-- Natural-number multiples of Hodge morphisms are evaluated pointwise on complex vectors. -/
 @[simp]
 theorem nsmul_apply (k : ℕ) (f : Hom source target) (x : W₁) :
     (k • f) x = k • f x := by
-  induction k with
-  | zero => rw [zero_nsmul, zero_nsmul, zero_apply]
-  | succ k ih => simp only [succ_nsmul, add_apply, ih]
+  change integralMapToComplex h₁ ι₂ (k • f.toIntLinearMap) x =
+    k • integralMapToComplex h₁ ι₂ f.toIntLinearMap x
+  rw [integralMapToComplex_nsmul, LinearMap.smul_apply]
 
 /-- Integer multiples of Hodge morphisms are evaluated pointwise on complex vectors. -/
 @[simp]
 theorem zsmul_apply (k : ℤ) (f : Hom source target) (x : W₁) :
     (k • f) x = k • f x := by
-  cases k with
-  | ofNat k => simp
-  | negSucc k => simp
+  change integralMapToComplex h₁ ι₂ (k • f.toIntLinearMap) x =
+    k • integralMapToComplex h₁ ι₂ f.toIntLinearMap x
+  rw [integralMapToComplex_zsmul, LinearMap.smul_apply]
 
 /-- Composition is additive in the morphism applied second. -/
 @[simp]
