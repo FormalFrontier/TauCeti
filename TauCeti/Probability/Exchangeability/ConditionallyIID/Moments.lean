@@ -1,14 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 -- Non-public: the `measurable_probabilityMeasure_toMeasure_apply` lemmas evaluate a random measure
 -- at a fixed measurable set, in the `ℝ≥0∞` and `.toReal` forms.
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 import TauCeti.Probability.Process.BlockAverage
 
 /-!

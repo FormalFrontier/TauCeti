@@ -42,9 +42,9 @@ namespace TauCeti
 
 namespace ClassFunction
 
-universe u
+universe u v
 
-variable {k G : Type u} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 
 /-- **A character induced from a subgroup is a virtual character.**  Inducing the class function of
 a finite-dimensional representation gives the class function of the induced representation
@@ -63,7 +63,7 @@ theorem ind_ofFDRep_mem_virtualCharacters (S : Subgroup G) [S.FiniteIndex] (A : 
 
 end ClassFunction
 
-variable {k G : Type u} [Field k] [Group G]
+variable {k : Type u} {G : Type v} [Field k] [Group G]
 
 /-- Restriction of functions along the inclusion of a subgroup, as an additive map.  It is the
 vehicle for propagating a property through the additive generation of the virtual-character
