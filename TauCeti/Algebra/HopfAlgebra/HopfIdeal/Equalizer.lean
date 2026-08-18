@@ -47,7 +47,7 @@ below is `TauCeti.Algebra.HopfAlgebra.HopfIdeal.Map`, which discharges the same 
 for a generated ideal by pulling each one back along the relevant structure morphism; the proofs
 here follow its `Ideal.comap` pattern. It is a Layer 3 prerequisite for
 `TauCetiRoadmap/ReductiveGroups/README.md`, "Hopf ideals ↔ closed subgroup schemes", consumed by
-the Layer 9 rigidity statement for pinned Chevalley--Demazure groups.
+the Layer 9 generated-carrier API for the explicit Chevalley--Demazure construction.
 -/
 
 public section
