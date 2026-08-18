@@ -272,35 +272,23 @@ noncomputable def latticeWeightSublevelHomologyFunctor (P : PlumbingGraph V)
   P.latticeWeightSublevelFunctor k ⋙
     HomologicalComplex.homologyFunctor (ModuleCat PlumbingCoefficient) (ComplexShape.down ℕ) q
 
-private theorem latticeWeightSublevelHomologyFunctor_obj_private (P : PlumbingGraph V)
+/-- The object at level `N` of the weight-sublevel homology diagram is the homology of the object
+at level `N` of the weight-sublevel chain-complex diagram. -/
+theorem latticeWeightSublevelHomologyFunctor_obj_eq_homology (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
     (P.latticeWeightSublevelHomologyFunctor k q).obj N =
       ((P.latticeWeightSublevelFunctor k).obj N).homology q := by
   unfold latticeWeightSublevelHomologyFunctor
   rfl
 
-private theorem latticeWeightSublevelHomologyFunctor_map_private (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) {N M : ℤ} (f : N ⟶ M) :
-    (P.latticeWeightSublevelHomologyFunctor k q).map f ≍
-      HomologicalComplex.homologyMap ((P.latticeWeightSublevelFunctor k).map f) q := by
-  unfold latticeWeightSublevelHomologyFunctor
-  rfl
-
-/-- The object at level `N` of the weight-sublevel homology diagram is the homology of the object
-at level `N` of the weight-sublevel chain-complex diagram. -/
-theorem latticeWeightSublevelHomologyFunctor_obj_eq_homology (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
-    (P.latticeWeightSublevelHomologyFunctor k q).obj N =
-      ((P.latticeWeightSublevelFunctor k).obj N).homology q :=
-  P.latticeWeightSublevelHomologyFunctor_obj_private k q N
-
 /-- The object at level `N` of the weight-sublevel homology diagram is the homology of the
 level-`N` subcomplex. -/
+@[simp]
 theorem latticeWeightSublevelHomologyFunctor_obj (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
     (P.latticeWeightSublevelHomologyFunctor k q).obj N =
       P.latticeWeightSublevelHomology k N q := by
-  exact (P.latticeWeightSublevelHomologyFunctor_obj_private k q N).trans
+  exact (P.latticeWeightSublevelHomologyFunctor_obj_eq_homology k q N).trans
     ((congrArg (fun C : ChainComplex (ModuleCat PlumbingCoefficient) ℕ ↦ C.homology q)
       (P.latticeWeightSublevelFunctor_obj k N)).trans
         (P.latticeWeightSublevelHomology_def k N q).symm)
@@ -318,7 +306,9 @@ theorem latticeWeightSublevelHomologyFunctor_map (P : PlumbingGraph V)
     (HomologicalComplex.homologyMap ((P.latticeWeightSublevelFunctor k).map f) q)
     (P.latticeWeightSublevelHomologyFunctor_obj_eq_homology k q N)
     (P.latticeWeightSublevelHomologyFunctor_obj_eq_homology k q M)).2
-      (P.latticeWeightSublevelHomologyFunctor_map_private k q f)
+      (by
+        unfold latticeWeightSublevelHomologyFunctor
+        rfl)
 
 /-- The canonical cocone from weight-sublevel homology modules to the homology of the full lattice
 chain complex. Its legs are the maps on homology induced by inclusion of sublevel complexes. -/
@@ -328,27 +318,14 @@ noncomputable def latticeWeightSublevelHomologyCocone (P : PlumbingGraph V)
   (HomologicalComplex.homologyFunctor (ModuleCat PlumbingCoefficient)
     (ComplexShape.down ℕ) q).mapCocone (P.latticeWeightSublevelCocone k)
 
-private theorem latticeWeightSublevelHomologyCocone_pt_private (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) :
-    (P.latticeWeightSublevelHomologyCocone k q).pt =
-      (P.latticeWeightSublevelCocone k).pt.homology q := by
-  unfold latticeWeightSublevelHomologyCocone
-  rfl
-
-private theorem latticeWeightSublevelHomologyCocone_ι_app_private (P : PlumbingGraph V)
-    (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
-    (P.latticeWeightSublevelHomologyCocone k q).ι.app N ≍
-      HomologicalComplex.homologyMap ((P.latticeWeightSublevelCocone k).ι.app N) q := by
-  unfold latticeWeightSublevelHomologyCocone
-  rfl
-
 /-- The point of the weight-sublevel homology cocone is the homology of the point of the
 weight-sublevel chain-complex cocone. -/
 theorem latticeWeightSublevelHomologyCocone_pt_eq_homology (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) :
     (P.latticeWeightSublevelHomologyCocone k q).pt =
-      (P.latticeWeightSublevelCocone k).pt.homology q :=
-  P.latticeWeightSublevelHomologyCocone_pt_private k q
+      (P.latticeWeightSublevelCocone k).pt.homology q := by
+  unfold latticeWeightSublevelHomologyCocone
+  rfl
 
 /-- The point of the weight-sublevel homology cocone is the cubical-degree homology of the full
 lattice chain complex. -/
@@ -356,7 +333,7 @@ lattice chain complex. -/
 theorem latticeWeightSublevelHomologyCocone_pt (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) :
     (P.latticeWeightSublevelHomologyCocone k q).pt = P.latticeChainHomology k q :=
-  (P.latticeWeightSublevelHomologyCocone_pt_private k q).trans
+  (P.latticeWeightSublevelHomologyCocone_pt_eq_homology k q).trans
     ((congrArg (fun C : ChainComplex (ModuleCat PlumbingCoefficient) ℕ ↦ C.homology q)
       (P.latticeWeightSublevelCocone_pt k)).trans
         (P.latticeChainHomology_def k q).symm)
@@ -374,7 +351,9 @@ theorem latticeWeightSublevelHomologyCocone_ι_app (P : PlumbingGraph V)
     (HomologicalComplex.homologyMap ((P.latticeWeightSublevelCocone k).ι.app N) q)
     (P.latticeWeightSublevelHomologyFunctor_obj_eq_homology k q N)
     (P.latticeWeightSublevelHomologyCocone_pt_eq_homology k q)).2
-      (P.latticeWeightSublevelHomologyCocone_ι_app_private k q N)
+      (by
+        unfold latticeWeightSublevelHomologyCocone
+        rfl)
 
 /-- Cubical-degree lattice homology is the filtered colimit of the homology modules of the
 characteristic-weight sublevel complexes. -/
