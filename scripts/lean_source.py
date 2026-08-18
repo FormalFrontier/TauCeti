@@ -59,6 +59,8 @@ class Scope:
     components: tuple[str, ...]
 
     def matches(self, end_name: str) -> bool:
+        """Whether a named ``end`` matches this scope's full name or final namespace component."""
+
         return self.name == end_name or (self.kind == "namespace" and bool(self.components)
                                          and self.components[-1] == end_name)
 

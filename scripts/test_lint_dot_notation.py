@@ -85,6 +85,7 @@ end TauCeti
 namespace TauCeti
 namespace Foo
 def _root_.Foo.correct (x : Foo) := x
+def _root_.TauCeti.Foo.alsoCorrect (x : Foo) := x
 def misplaced (x : Foo) := x
 end Foo
 end TauCeti

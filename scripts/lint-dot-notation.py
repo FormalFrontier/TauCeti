@@ -305,6 +305,8 @@ def find_violations(
             namespaces = namespace_components(stack)
             if not namespaces or namespaces[0] != "TauCeti":
                 continue
+            if declaration.name is not None and declaration.name.startswith("_root_."):
+                continue
             if declaration.name is not None:
                 declaration_path = qualify(declaration.name, stack).split(".")
                 if declaration_path[:len(namespaces)] != namespaces:
