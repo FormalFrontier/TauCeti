@@ -109,6 +109,17 @@ theorem coordinateRingBaseChangeAlgEquiv_one_tmul_X (i j : Fin n) :
       coordinateRingMap K n (MvPolynomial.X (i, j)) := by
   simp
 
+/-- The inverse coordinate-ring base-change equivalence sends a polynomial coordinate with
+extended coefficients back to the corresponding pure tensor. -/
+@[simp]
+theorem coordinateRingBaseChangeAlgEquiv_symm_coordinateRingMap
+    (p : MatrixMonoid.CoordinateRing R n) :
+    (coordinateRingBaseChangeAlgEquiv R K n).symm
+        (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p)) =
+      1 ⊗ₜ[R] coordinateRingMap R n p := by
+  apply (coordinateRingBaseChangeAlgEquiv R K n).symm_apply_eq.mpr
+  simp
+
 private noncomputable def bundledCoordinateBaseChangeAlgEquiv :
     K ⊗[R] coordinateHopfAlgebra R n ≃ₐ[K] coordinateHopfAlgebra K n :=
   (Algebra.TensorProduct.congr (AlgEquiv.refl (R := K) (A₁ := K))
@@ -125,6 +136,22 @@ private theorem bundledCoordinateBaseChangeAlgEquiv_tmul
           (s ⊗ₜ[R] (coordinateHopfAlgebraAlgEquiv R n).symm x)) :=
   by simp [bundledCoordinateBaseChangeAlgEquiv]
 
+/-- Two `K`-algebra maps out of the base-changed coordinate Hopf algebra of `GLₙ` are equal if
+they agree on the pure tensors of localized generic entries. -/
+theorem coordinateHopfAlgebra_baseChange_algHom_ext
+    {C : Type*} [CommRing C] [Algebra R C] [Algebra K C] [IsScalarTower R K C]
+    {f g : K ⊗[R] coordinateHopfAlgebra R n →ₐ[K] C}
+    (h : ∀ i j, f (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j)))) =
+      g (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))))) :
+    f = g := by
+  apply (Algebra.TensorProduct.liftEquivRight R K _ _).symm.injective
+  apply coordinateHopfAlgebra_algHom_ext R n
+  intro i j
+  simpa only [Algebra.TensorProduct.liftEquivRight_symm_apply, AlgHom.comp_apply,
+    AlgHom.coe_restrictScalars', Algebra.TensorProduct.includeRight_apply] using h i j
+
 -- `CommHopfAlgCat.baseChange H` abbreviates `CommHopfAlgCat.of K (K ⊗[R] H)`, so its
 -- stored counit and comultiplication are definitionally Mathlib's tensor-product bialgebra
 -- structure used in the following two preservation proofs and by `BialgEquiv.ofAlgEquiv`.
@@ -133,29 +160,9 @@ private theorem bundledCoordinateBaseChangeAlgEquiv_counit_comp :
         (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom =
       Bialgebra.counitAlgHom K
         (CommHopfAlgCat.baseChange (K := K) (coordinateHopfAlgebra R n)) := by
-  have hrestrict :
-      (((Bialgebra.counitAlgHom K (coordinateHopfAlgebra K n)).comp
-          (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom).restrictScalars R).comp
-            (Algebra.TensorProduct.includeRight : coordinateHopfAlgebra R n →ₐ[R]
-              K ⊗[R] coordinateHopfAlgebra R n) =
-        (Algebra.ofId R K).comp
-          (Bialgebra.counitAlgHom R (coordinateHopfAlgebra R n)) := by
-    apply coordinateHopfAlgebra_algHom_ext R n
-    intro i j
-    simp
-  have hinclude :
-      (((Bialgebra.counitAlgHom K (coordinateHopfAlgebra K n)).comp
-          (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom).restrictScalars R).comp
-            (Algebra.TensorProduct.includeRight : coordinateHopfAlgebra R n →ₐ[R]
-              K ⊗[R] coordinateHopfAlgebra R n) =
-        ((Bialgebra.counitAlgHom K
-          (CommHopfAlgCat.baseChange (K := K)
-            (coordinateHopfAlgebra R n))).restrictScalars R).comp
-              (Algebra.TensorProduct.includeRight : coordinateHopfAlgebra R n →ₐ[R]
-                K ⊗[R] coordinateHopfAlgebra R n) :=
-    hrestrict.trans (Bialgebra.counitAlgHom_comp_includeRight
-      (R := R) (A := K) (B := coordinateHopfAlgebra R n)).symm
-  exact (Algebra.TensorProduct.liftEquivRight R K _ _).symm.injective hinclude
+  apply coordinateHopfAlgebra_baseChange_algHom_ext R K n
+  intro i j
+  simp
 
 private theorem bundledCoordinateBaseChangeAlgEquiv_map_comp_comul :
     (Algebra.TensorProduct.map
@@ -165,36 +172,23 @@ private theorem bundledCoordinateBaseChangeAlgEquiv_map_comp_comul :
             (CommHopfAlgCat.baseChange (K := K) (coordinateHopfAlgebra R n))) =
       (Bialgebra.comulAlgHom K (coordinateHopfAlgebra K n)).comp
         (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom := by
+  -- The tensor target has no global `R`-algebra instance. `Algebra.compHom` supplies the one
+  -- needed by the extensionality lemma, and the scalar-tower law is definitionally `rfl`.
   let _ : Algebra R
       (coordinateHopfAlgebra K n ⊗[K] coordinateHopfAlgebra K n) :=
     Algebra.compHom _ (algebraMap R K)
   let _ : IsScalarTower R K
       (coordinateHopfAlgebra K n ⊗[K] coordinateHopfAlgebra K n) :=
     IsScalarTower.of_algebraMap_eq' rfl
-  have hrestrict :
-      ((((Algebra.TensorProduct.map
-          (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom
-          (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom).comp
-          (Bialgebra.comulAlgHom K
-            (CommHopfAlgCat.baseChange (K := K)
-              (coordinateHopfAlgebra R n)))).restrictScalars R).comp
-                (Algebra.TensorProduct.includeRight : coordinateHopfAlgebra R n →ₐ[R]
-                  K ⊗[R] coordinateHopfAlgebra R n)) =
-        (((Bialgebra.comulAlgHom K (coordinateHopfAlgebra K n)).comp
-          (bundledCoordinateBaseChangeAlgEquiv R K n).toAlgHom).restrictScalars R).comp
-            (Algebra.TensorProduct.includeRight : coordinateHopfAlgebra R n →ₐ[R]
-              K ⊗[R] coordinateHopfAlgebra R n) := by
-    apply coordinateHopfAlgebra_algHom_ext R n
-    intro i j
-    simp only [AlgHom.coe_comp, AlgHom.coe_restrictScalars', Function.comp_apply,
-      Algebra.TensorProduct.includeRight_apply, Bialgebra.comulAlgHom_apply,
-      TensorProduct.comul_tmul, CommSemiring.comul_apply, coordinateHopfAlgebra_comul_X,
-      AlgEquiv.coe_toAlgHom, bundledCoordinateBaseChangeAlgEquiv_tmul,
-      AlgEquiv.symm_apply_apply, coordinateRingBaseChangeAlgEquiv_tmul_coordinateRingMap,
-      MvPolynomial.map_X, one_smul]
-    rw [TensorProduct.tmul_sum, map_sum]
-    simp
-  exact (Algebra.TensorProduct.liftEquivRight R K _ _).symm.injective hrestrict
+  apply coordinateHopfAlgebra_baseChange_algHom_ext R K n
+  intro i j
+  simp only [AlgHom.coe_comp, Function.comp_apply, Bialgebra.comulAlgHom_apply,
+    TensorProduct.comul_tmul, CommSemiring.comul_apply, coordinateHopfAlgebra_comul_X,
+    AlgEquiv.coe_toAlgHom, bundledCoordinateBaseChangeAlgEquiv_tmul,
+    AlgEquiv.symm_apply_apply, coordinateRingBaseChangeAlgEquiv_tmul_coordinateRingMap,
+    MvPolynomial.map_X, one_smul]
+  rw [TensorProduct.tmul_sum, map_sum]
+  simp
 
 /-- **The coordinate Hopf algebra of `GLₙ` commutes with base change.** -/
 noncomputable def coordinateHopfAlgebraBaseChangeBialgEquiv :
@@ -203,6 +197,16 @@ noncomputable def coordinateHopfAlgebraBaseChangeBialgEquiv :
   BialgEquiv.ofAlgEquiv (bundledCoordinateBaseChangeAlgEquiv R K n)
     (bundledCoordinateBaseChangeAlgEquiv_counit_comp R K n)
     (bundledCoordinateBaseChangeAlgEquiv_map_comp_comul R K n)
+
+/-- The Hopf-algebra base-change equivalence on an arbitrary pure tensor, expressed through the
+coordinate-ring equivalence. -/
+theorem coordinateHopfAlgebraBaseChangeBialgEquiv_tmul
+    (s : K) (x : coordinateHopfAlgebra R n) :
+    coordinateHopfAlgebraBaseChangeBialgEquiv R K n (s ⊗ₜ[R] x) =
+      coordinateHopfAlgebraAlgEquiv K n
+        (coordinateRingBaseChangeAlgEquiv R K n
+          (s ⊗ₜ[R] (coordinateHopfAlgebraAlgEquiv R n).symm x)) := by
+  exact bundledCoordinateBaseChangeAlgEquiv_tmul R K n s x
 
 /-- On polynomial coordinates, the Hopf-algebra base-change equivalence extends coefficients and
 multiplies by the scalar in the new base. -/
@@ -216,9 +220,26 @@ theorem coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap
   simp [coordinateHopfAlgebraBaseChangeBialgEquiv,
     bundledCoordinateBaseChangeAlgEquiv]
 
+/-- The inverse Hopf-algebra base-change equivalence sends a polynomial coordinate with extended
+coefficients back to the corresponding pure tensor. -/
+@[simp]
+theorem coordinateHopfAlgebraBaseChangeBialgEquiv_symm_coordinateRingMap
+    (p : MatrixMonoid.CoordinateRing R n) :
+    (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm
+        (coordinateHopfAlgebraAlgEquiv K n
+          (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) =
+      1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p) := by
+  apply (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm_apply_eq.mpr
+  change coordinateHopfAlgebraAlgEquiv K n
+      (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p)) =
+    coordinateHopfAlgebraBaseChangeBialgEquiv R K n
+      (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p))
+  simpa only [one_smul] using
+    (coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n
+      (1 : K) p).symm
+
 /-- Base change carries each bundled generic matrix entry to the corresponding entry over the
 new base. -/
-@[simp]
 theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_X (i j : Fin n) :
     coordinateHopfAlgebraBaseChangeBialgEquiv R K n
         (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
@@ -228,11 +249,40 @@ theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_X (i j : Fin n) :
   simpa using coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n
     (1 : K) (MvPolynomial.X (i, j))
 
+/-- Base change carries each inverse localized generic matrix entry to the corresponding inverse
+entry over the new base. -/
+theorem coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_nonsing_inv (i j : Fin n) :
+    coordinateHopfAlgebraBaseChangeBialgEquiv R K n
+        (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
+          ((localizedGenericMatrix R n)⁻¹ i j)) =
+      coordinateHopfAlgebraAlgEquiv K n ((localizedGenericMatrix K n)⁻¹ i j) := by
+  rw [← coordinateHopfAlgebra_antipode_X R n i j,
+    ← coordinateHopfAlgebra_antipode_X K n i j]
+  calc
+    coordinateHopfAlgebraBaseChangeBialgEquiv R K n
+          (1 ⊗ₜ[R] HopfAlgebra.antipode R
+            (coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X (i, j))))) =
+        coordinateHopfAlgebraBaseChangeBialgEquiv R K n
+          (HopfAlgebra.antipode K
+            (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X (i, j))))) := by
+      rfl
+    _ = HopfAlgebra.antipode K
+          (coordinateHopfAlgebraBaseChangeBialgEquiv R K n
+            (1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
+              (coordinateRingMap R n (MvPolynomial.X (i, j))))) :=
+      BialgHomClass.map_antipode _ _
+    _ = HopfAlgebra.antipode K
+          (coordinateHopfAlgebraAlgEquiv K n
+            (coordinateRingMap K n (MvPolynomial.X (i, j)))) := by
+      rw [coordinateHopfAlgebraBaseChangeBialgEquiv_one_tmul_X]
+
 /-- Base change of the bundled general-linear coordinate Hopf algebra is canonically the
 general-linear coordinate Hopf algebra over the new base. The extension ring's carrier universe
 must contain the base ring's carrier universe; in particular, this covers `ℤ → K` for `K` in any
 universe. The unbundled algebra and bialgebra equivalences have no such restriction. -/
-noncomputable abbrev coordinateHopfAlgebraBaseChangeIso
+noncomputable def coordinateHopfAlgebraBaseChangeIso
     (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : ℕ) :
     CommHopfAlgCat.baseChange (K := K) (coordinateHopfAlgebra R n) ≅
       coordinateHopfAlgebra K n :=
@@ -240,5 +290,35 @@ noncomputable abbrev coordinateHopfAlgebraBaseChangeIso
       (CommHopfAlgCat.baseChange (K := K) (coordinateHopfAlgebra R n))).symm ≪≫
     CommHopfAlgCat.isoMk (coordinateHopfAlgebraBaseChangeBialgEquiv R K n) ≪≫
       CommHopfAlgCat.ofIsoSelf (coordinateHopfAlgebra K n)
+
+/-- The categorical base-change isomorphism has the same action on polynomial coordinates as the
+underlying bialgebra equivalence. -/
+@[simp]
+theorem coordinateHopfAlgebraBaseChangeIso_hom_apply
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
+    (n : ℕ) (s : K) (p : MatrixMonoid.CoordinateRing R n) :
+    (coordinateHopfAlgebraBaseChangeIso R K n).hom
+        (s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p)) =
+      coordinateHopfAlgebraAlgEquiv K n
+        (s • coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p)) := by
+  change coordinateHopfAlgebraBaseChangeBialgEquiv R K n
+      (s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p)) = _
+  exact coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p
+
+/-- The inverse categorical base-change isomorphism sends an extended polynomial coordinate back
+to its scalar pure tensor. -/
+@[simp]
+theorem coordinateHopfAlgebraBaseChangeIso_inv_apply
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
+    (n : ℕ) (s : K) (p : MatrixMonoid.CoordinateRing R n) :
+    (coordinateHopfAlgebraBaseChangeIso R K n).inv
+        (coordinateHopfAlgebraAlgEquiv K n
+          (s • coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) =
+      s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p) := by
+  change (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm
+      (coordinateHopfAlgebraAlgEquiv K n
+        (s • coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) = _
+  apply (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm_apply_eq.mpr
+  exact (coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p).symm
 
 end TauCeti.GeneralLinear
