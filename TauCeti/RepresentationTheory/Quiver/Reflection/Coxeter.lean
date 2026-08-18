@@ -39,7 +39,7 @@ argument supplies the descent to a vertex simple.
   vertices, as a `ℤ`-linear endomorphism of the dimension-vector lattice. As with
   `TauCeti.vertexPreReflection`, no hypothesis on the vertices is imposed.
 * `TauCeti.vertexReflectionList`: the same map as a linear automorphism, over a word in loopless
-  vertices, with `TauCeti.coe_vertexReflectionList_symm` identifying its inverse as the composite
+  vertices, with `TauCeti.vertexReflectionList_symm` identifying its inverse as the automorphism
   along the reversed word.
 * `TauCeti.titsForm_vertexPreReflectionList` and
   `TauCeti.bijOn_vertexPreReflectionList`: the composite preserves the Tits form, and hence
@@ -190,7 +190,6 @@ theorem vertexPreReflectionList_bijective {l : List Q} (hl : ∀ i ∈ l, IsEmpt
   exact (vertexReflectionList Q hl).bijective
 
 /-- The inverse automorphism is the reflection product along the reversed word. -/
-@[simp]
 theorem coe_vertexReflectionList_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
     ⇑(vertexReflectionList Q hl).symm = ⇑(vertexPreReflectionList Q l.reverse) := by
   have hinv : (vertexReflectionList Q hl).symm =
@@ -213,6 +212,16 @@ theorem coe_vertexReflectionList_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i
   rw [← LinearEquiv.coe_coe]
   exact congrArg (fun f : Module.End ℤ (Q → ℤ) ↦ (f : (Q → ℤ) → (Q → ℤ))) h
 
+/-- The inverse reflection automorphism along a word is the reflection automorphism along the
+reversed word. -/
+@[simp]
+theorem vertexReflectionList_symm {l : List Q} (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    (vertexReflectionList Q hl).symm =
+      vertexReflectionList Q (fun i (hi : i ∈ l.reverse) ↦ hl i (by simpa using hi)) := by
+  apply LinearEquiv.ext
+  intro d
+  rw [coe_vertexReflectionList_symm Q hl, coe_vertexReflectionList]
+
 /-- Composing the pre-reflection lists for a word and its reverse gives the identity. -/
 theorem vertexPreReflectionList_reverse_mul {l : List Q}
     (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
@@ -222,6 +231,14 @@ theorem vertexPreReflectionList_reverse_mul {l : List Q}
   rw [Module.End.mul_apply, Module.End.one_apply, ← coe_vertexReflectionList_symm Q hl,
     ← coe_vertexReflectionList Q hl]
   exact (vertexReflectionList Q hl).symm_apply_apply d
+
+/-- Composing the pre-reflection lists for a word and its reverse in the other order also gives the
+identity. -/
+theorem vertexPreReflectionList_mul_reverse {l : List Q}
+    (hl : ∀ i ∈ l, IsEmpty (i ⟶ i)) :
+    vertexPreReflectionList Q l * vertexPreReflectionList Q l.reverse = 1 := by
+  simpa using vertexPreReflectionList_reverse_mul Q
+    (l := l.reverse) (fun i hi ↦ hl i (by simpa using hi))
 
 /-- The reflection product along a word in loopless vertices permutes every level set of the
 Tits form; at the level `1` this says that it permutes the roots of `Q`. -/
