@@ -62,7 +62,8 @@ same two pieces the geometric picture uses.
   missing the new vertex and one for faces containing it.
 * `PreAbstractSimplicialComplex.singleton_mem_stellarSubdivision_iff`: the new vertex is a vertex
   of the subdivision exactly when `σ` was a face, and
-  `PreAbstractSimplicialComplex.self_notMem_stellarSubdivision`: the starred face is destroyed.
+  `PreAbstractSimplicialComplex.self_notMem_stellarSubdivision`: the starred face is destroyed,
+  as long as the new vertex does not already lie in it.
 * `PreAbstractSimplicialComplex.deletion_stellarSubdivision_singleton` and
   `link_stellarSubdivision_singleton`: away from the new vertex the subdivision is `deletion K σ`,
   and the link of the new vertex is the boundary `closedStar K σ ⊓ deletion K σ` of the closed
@@ -122,6 +123,7 @@ theorem mem_stellarSubdivision_iff :
 
 /-- A set missing the new vertex is a face of the stellar subdivision exactly when it is a face of
 `K` not containing the starred face: these are precisely the faces of `deletion K σ`. -/
+@[simp]
 theorem mem_stellarSubdivision_iff_of_notMem (hvτ : v ∉ τ) :
     τ ∈ stellarSubdivision K σ v ↔ τ ∈ K ∧ ¬ σ ⊆ τ := by
   constructor
@@ -133,6 +135,7 @@ theorem mem_stellarSubdivision_iff_of_notMem (hvτ : v ∉ τ) :
 /-- A set containing the new vertex is a face of the stellar subdivision exactly when the rest of
 it is a face of the boundary of the closed star of `σ`: it must not contain `σ`, while its union
 with `σ` must remain a face. -/
+@[simp]
 theorem insert_mem_stellarSubdivision_iff (hvρ : v ∉ ρ) :
     insert v ρ ∈ stellarSubdivision K σ v ↔ ¬ σ ⊆ ρ ∧ ρ ∪ σ ∈ K := by
   have herase : (insert v ρ).erase v = ρ := Finset.erase_insert hvρ
@@ -159,9 +162,10 @@ theorem singleton_mem_stellarSubdivision_iff :
     rw [herase]
     exact fun hsub => ((K.isRelLowerSet_faces h).1).ne_empty (Finset.subset_empty.mp hsub)
 
-/-- Starring destroys the starred face: `σ` is never a face of the subdivision, since every face
-either avoids `σ` or contains the new vertex, and in the latter case avoids `σ` after erasing
-it. -/
+/-- Starring destroys the starred face, as long as the new vertex does not already lie in `σ`:
+every face of the subdivision either avoids `σ` or contains the new vertex, and in the latter case
+avoids `σ` after erasing it. The hypothesis `v ∉ σ` is needed, since for `v ∈ σ` one has
+`σ.erase v ∪ σ = σ`, so `σ` survives the starring whenever it was a face. -/
 theorem self_notMem_stellarSubdivision (hvσ : v ∉ σ) : σ ∉ stellarSubdivision K σ v := by
   rw [mem_stellarSubdivision_iff_of_notMem hvσ]
   exact fun h => h.2 Finset.Subset.rfl
@@ -181,8 +185,10 @@ theorem stellarSubdivision_empty (K : PreAbstractSimplicialComplex ι) (v : ι) 
   · exact absurd (Finset.empty_subset τ) h
   · exact absurd (Finset.empty_subset _) h
 
-/-- Starring at a nonempty set that is *not* a face changes nothing: no face of `K` can contain
-it, and no face of the subdivision can contain the new vertex. -/
+/-- Starring at a nonempty set that is *not* a face changes nothing, provided the new vertex is
+fresh: no face of `K` can contain the starred set, and freshness makes the new vertex occur in no
+face of `K` and in no face of the subdivision. Freshness is needed: without it, starring can
+destroy the faces of `K` that contain `v`. -/
 theorem stellarSubdivision_eq_self_of_notMem (hv : ({v} : Finset ι) ∉ K) (hσne : σ.Nonempty)
     (hσ : σ ∉ K) : stellarSubdivision K σ v = K := by
   refine SetLike.ext fun τ => ?_
