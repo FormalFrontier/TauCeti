@@ -43,6 +43,10 @@ stationary but non-exchangeable 3-cycle in `Exchangeability/ThreeCycle.lean`.
   suggested home for this file is `TauCeti/Examples/Probability/DeFinetti.lean`.
 -/
 
+open MeasureTheory
+
+open scoped ENNReal
+
 namespace TauCeti
 
 namespace Probability
@@ -85,6 +89,63 @@ example := @exchangeable_extreme_iff_iid
 -- de Finetti endpoint. Neither is re-exported by the other.
 example := @ConditionallyIIDWith.tendsto_average_ae
 example := @deFinetti_tendsto_empiricalMeasure_apply
+
+/-! ### Using the canonical mixing law -/
+
+section CanonicalMixture
+
+variable {α : Type*} [MeasurableSpace α] [StandardBorelSpace α]
+
+/-- An exchangeable process whose path law happens to be the i.i.d. law `P^{⊗ℕ}` has the point mass
+at `P` as its de Finetti measure. -/
+example {Ω : Type*} [MeasurableSpace Ω] [Nonempty α] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) (P : ProbabilityMeasure α)
+    (hpath : pathLaw μ X = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
+    (deFinettiMeasure μ X (tailProcess_le_ambient 0 fun j _ => hX_meas j) :
+        Measure (ProbabilityMeasure α)) = Measure.dirac P :=
+  congrArg ProbabilityMeasure.toMeasure
+    (eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi (π := ⟨Measure.dirac P, inferInstance⟩)
+      hX_meas
+      (by rw [hpath, ← deFinettiBarycenter_dirac P, deFinettiBarycenter_def,
+        ProbabilityMeasure.coe_mk])).symm
+
+end CanonicalMixture
+
+/-! ### Using the affine correspondence -/
+
+section Correspondence
+
+variable {α : Type*} [MeasurableSpace α] [StandardBorelSpace α]
+
+/-- The correspondence carries a two-point mixing law to the corresponding two-point mixture of
+i.i.d. laws. The mixing law is built with `ProbabilityMeasure.convexComb`, not assumed. -/
+example (P Q : ProbabilityMeasure α) {a b : ℝ≥0∞} (hab : a + b = 1) :
+    ((deFinettiEquiv (ProbabilityMeasure.convexComb hab
+          ⟨Measure.dirac P, inferInstance⟩ ⟨Measure.dirac Q, inferInstance⟩) :
+        ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
+      = a • (Measure.infinitePi fun _ : ℕ => (P : Measure α))
+        + b • (Measure.infinitePi fun _ : ℕ => (Q : Measure α)) :=
+  (congrArg (fun r : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))} =>
+      ((r : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α)))
+    (deFinettiEquiv_convexComb hab _ _)).trans (by
+      rw [toMeasure_exchangeableLawConvexComb, deFinettiEquiv_dirac, deFinettiEquiv_dirac])
+
+/-- Conversely, an exchangeable law that mixes two i.i.d. laws has the corresponding two-point
+mixing law. This is the direction that uses de Finetti's theorem. -/
+example (P Q : ProbabilityMeasure α) {a b : ℝ≥0∞} (hab : a + b = 1)
+    {ρ₁ ρ₂ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}}
+    (hρ₁ : ((ρ₁ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
+      = Measure.infinitePi fun _ : ℕ => (P : Measure α))
+    (hρ₂ : ((ρ₂ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α))
+      = Measure.infinitePi fun _ : ℕ => (Q : Measure α)) :
+    ((deFinettiEquiv.symm (exchangeableLawConvexComb hab ρ₁ ρ₂) :
+        ProbabilityMeasure (ProbabilityMeasure α)) : Measure (ProbabilityMeasure α))
+      = a • Measure.dirac P + b • Measure.dirac Q := by
+  rw [deFinettiEquiv_symm_convexComb, ProbabilityMeasure.toMeasure_convexComb,
+    deFinettiEquiv_symm_eq_dirac P hρ₁, deFinettiEquiv_symm_eq_dirac Q hρ₂,
+    ProbabilityMeasure.coe_mk, ProbabilityMeasure.coe_mk]
+
+end Correspondence
 
 end Probability
 
