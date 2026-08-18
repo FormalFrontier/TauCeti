@@ -151,6 +151,7 @@ theorem homDensity_le_one : homDensity F W ≤ 1 := by
 
 /-- **The Erdős–Rényi value.** The constant graphon with parameter `p` has
 `t(F, W_p) = p ^ e(F)`. -/
+@[simp]
 theorem homDensity_const (p : I) :
     homDensity F (Graphon.const μ p) = (p : ℝ) ^ F.edgeFinset.card := by
   have hfac : ∀ (x : V → Ω) (e : Sym2 V), edgeFactor (Graphon.const μ p) x e = (p : ℝ) := by
