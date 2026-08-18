@@ -42,6 +42,8 @@ the constant function `1` lies in `V_G`.  Brauer's induction theorem is exactly 
   is a virtual character.
 * `TauCeti.ClassFunction.range_subtype_comp_indVirtualCharactersAddHom`: the range of the bundled
   map is exactly `indVirtualCharacters`.
+* `TauCeti.ClassFunction.indVirtualCharactersBaseChangeRat_surjective`: a general criterion for
+  rational surjectivity of the scalar-extended induction map.
 * `TauCeti.ClassFunction.mul_mem_indVirtualCharacters`: the ideal property.
 * `TauCeti.ClassFunction.indVirtualCharacters_eq_virtualCharacters_iff`: the induction theorem for
   a family of subgroups holds exactly when `1` is induced from that family.
