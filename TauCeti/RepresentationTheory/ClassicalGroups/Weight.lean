@@ -54,8 +54,9 @@ The definitions themselves need only a commutative ring, and are stated there.
   weight `Pi.single i 1` and every other weight space vanishing.
 * `TauCeti.isInternal_weightSpace_stdRep`: **the standard representation is the internal direct sum
   of its weight spaces.**
-* `TauCeti.weightSpace_detPowerRep`: `det ^ m` is a single weight space, of weight the constant
-  sequence `m`.
+* `TauCeti.weightSpace_detPowerRep`: all of `det ^ m` has the constant weight `m`, that is, its
+  weight space at the constant sequence `m` is `⊤`. Over a general commutative ring this says
+  nothing about the other weight spaces — over `𝔽₂` all of them are `⊤` as well.
 
 ## Implementation notes
 
@@ -202,8 +203,10 @@ theorem iSup_weightSpace_stdRep :
   exact le_iSup (fun l : Fin n → ℤ ↦ weightSpace (stdRep k n) l) (Pi.single i 1)
     (basisFun_mem_weightSpace_stdRep i)
 
-/-- **`det ^ m` is a single weight space**, of weight the constant sequence `m`: a diagonal matrix
-acts on it by the `m`-th power of the product of its entries. -/
+/-- **All of `det ^ m` has weight the constant sequence `m`**: a diagonal matrix acts on it by the
+`m`-th power of the product of its entries. Over a commutative ring this leaves the other weight
+spaces of `det ^ m` unconstrained — over `𝔽₂` the torus is trivial, so every one of them is `⊤`
+too. -/
 theorem weightSpace_detPowerRep (m : ℤ) :
     weightSpace (detPowerRep k n m) (fun _ ↦ m) = ⊤ := by
   refine top_le_iff.mp fun x _ ↦ ?_
