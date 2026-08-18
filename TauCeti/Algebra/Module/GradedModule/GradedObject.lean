@@ -130,6 +130,29 @@ noncomputable def ofGradedObjectToGradedObjectIso :
   intro p
   exact (gradedObjectPieceEquiv R X p).symm.toModuleIso
 
+/-- The forward component of the comparison is the inverse of the canonical equivalence onto the
+corresponding copy in the external direct sum. -/
+@[simp]
+theorem ofGradedObjectToGradedObjectIso_hom_app (p : ℤ) :
+    (ofGradedObjectToGradedObjectIso R X).hom p =
+      eqToHom (by
+        change ModuleCat.of R ((ofGradedObject R X).piece p) = _
+        rw [ofGradedObject_piece]) ≫
+        (gradedObjectPieceEquiv R X p).symm.toModuleIso.hom := by
+  rfl
+
+/-- The inverse component of the comparison is the canonical equivalence onto the corresponding
+copy in the external direct sum. -/
+@[simp]
+theorem ofGradedObjectToGradedObjectIso_inv_app (p : ℤ) :
+    (ofGradedObjectToGradedObjectIso R X).inv p =
+      (gradedObjectPieceEquiv R X p).symm.toModuleIso.inv ≫
+        eqToHom (by
+          change ModuleCat.of R (gradedObjectPiece R X p) =
+            ModuleCat.of R ((ofGradedObject R X).piece p)
+          rw [ofGradedObject_piece]) := by
+  rfl
+
 end OfGradedObject
 
 end InternalGrading
