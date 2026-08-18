@@ -527,9 +527,7 @@ noncomputable instance associatedGradedRing {f : M →ₗ[R] A} :
 /-- The degree-zero homogeneous unit generates the unit of the associated graded. -/
 @[simp] theorem associatedGraded_of_gradedOne {f : M →ₗ[R] A} :
     DirectSum.of (GradedPiece f) 0 (gradedOne f) = (1 : AssociatedGraded f) := by
-  change DirectSum.of (GradedPiece f) 0 (gradedOne f) =
-    DirectSum.of (GradedPiece f) 0 (GradedMonoid.GOne.one : GradedPiece f 0)
-  rw [gradedGOne_one]
+  rw [DirectSum.one_def, gradedGOne_one]
 
 /-- The degree-zero homogeneous scalar class generates its scalar in the associated graded. -/
 @[simp] theorem associatedGraded_of_gradedAlgebraMap₀ {f : M →ₗ[R] A} (r : R) :
