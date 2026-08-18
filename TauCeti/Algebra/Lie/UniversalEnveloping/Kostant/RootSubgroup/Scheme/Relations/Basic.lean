@@ -15,6 +15,7 @@ The divided-power construction represents a root action by an affine group-schem
 `𝔾ₐ → GLₙ`. This file proves the commuting and class-two Chevalley relations on the
 scheme-valued points of those actual morphisms. It transports the universe-polymorphic matrix
 relations from `ChevalleyRelations.lean` through the point comparison proved in `Scheme/Basic.lean`.
+The longer exceptional relation is developed separately in `Scheme/Relations/G2.lean`.
 
 ## Main declarations
 

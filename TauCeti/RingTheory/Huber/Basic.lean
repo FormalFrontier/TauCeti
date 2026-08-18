@@ -35,6 +35,8 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
 
 * `TauCeti.Huber.PairOfDefinition.mem_idealImage` and
   `TauCeti.Huber.PairOfDefinition.coe_idealImage`: membership in the image of `Iⁿ`.
+* `TauCeti.Huber.PairOfDefinition.span_image_eq_extendedIdealOfDefinition`: generators of `I`
+  continue to generate its extension to `A`.
 * `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`: the images of `Iⁿ` are a neighbourhood
   basis of zero.
 * `TauCeti.Huber.IsAdic.comap`: an adic topology transports along a ring equivalence that is an
@@ -299,6 +301,19 @@ theorem mem_extendedIdealOfDefinition_iff (P : PairOfDefinition A) {x : A} :
 theorem fg_extendedIdealOfDefinition (P : PairOfDefinition A) :
     P.extendedIdealOfDefinition.FG :=
   P.fg_idealOfDefinition.map _
+
+open scoped Classical in
+/-- A finite generating set of the ideal of definition, mapped into `A`, generates the extended
+ideal of definition. -/
+theorem span_image_eq_extendedIdealOfDefinition (P : PairOfDefinition A)
+    (G : Finset P.ringOfDefinition)
+    (hG : Ideal.span (G : Set P.ringOfDefinition) = P.idealOfDefinition) :
+    Ideal.span ((G.image ((↑) : P.ringOfDefinition → A) : Finset A) : Set A) =
+      P.extendedIdealOfDefinition := by
+  rw [P.extendedIdealOfDefinition_def, ← hG, Ideal.map_span]
+  congr 1
+  ext a
+  simp
 
 /-- Each `Iⁿ` is open in `A`. -/
 theorem isOpen_idealImage [IsTopologicalRing A] (P : PairOfDefinition A) (n : ℕ) :

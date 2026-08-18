@@ -42,7 +42,7 @@ finite-rank free lattice, `D(M)` is a split torus.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Theorem 12.23 and Corollary 12.24.
+* J. S. Milne, *Algebraic Groups* (2017), Theorem 12.23 and Appendix A.64.
 
 This is the automorphism-action step used for semilinear descent in Layer 4, "Tori: split and
 non-split", of the ReductiveGroups roadmap. Taking invariants and identifying their scalar
@@ -190,6 +190,46 @@ theorem groupAlgebraTensorActionSemilinearEquiv_tmul
       groupAlgebraAction rho sigma x ⊗ₜ[L] groupAlgebraAction rho sigma y := by
   rw [groupAlgebraTensorActionSemilinearEquiv, TensorProduct.congr_tmul]
   simp only [groupAlgebraActionSemilinearEquiv_apply]
+
+/-- The tensor-square action is semilinear over the coefficient field. -/
+@[simp]
+theorem groupAlgebraTensorActionSemilinearEquiv_smul
+    (rho : Representation ℤ (L ≃ₐ[k] L) M) (sigma : L ≃ₐ[k] L)
+    (a : L)
+    (t : MonoidAlgebra L (Multiplicative M) ⊗[L]
+      MonoidAlgebra L (Multiplicative M)) :
+    groupAlgebraTensorActionSemilinearEquiv rho sigma (a • t) =
+      sigma a • groupAlgebraTensorActionSemilinearEquiv rho sigma t :=
+  (groupAlgebraTensorActionSemilinearEquiv rho sigma).map_smulₛₗ a t
+
+/-- The tensor-square action preserves the multiplicative identity. -/
+@[simp]
+theorem groupAlgebraTensorActionSemilinearEquiv_map_one
+    (rho : Representation ℤ (L ≃ₐ[k] L) M) (sigma : L ≃ₐ[k] L) :
+    groupAlgebraTensorActionSemilinearEquiv rho sigma 1 = 1 := by
+  rw [Algebra.TensorProduct.one_def,
+    groupAlgebraTensorActionSemilinearEquiv_tmul]
+  simp
+
+/-- The tensor-square action preserves multiplication. -/
+@[simp]
+theorem groupAlgebraTensorActionSemilinearEquiv_map_mul
+    (rho : Representation ℤ (L ≃ₐ[k] L) M) (sigma : L ≃ₐ[k] L)
+    (x y : MonoidAlgebra L (Multiplicative M) ⊗[L]
+      MonoidAlgebra L (Multiplicative M)) :
+    groupAlgebraTensorActionSemilinearEquiv rho sigma (x * y) =
+      groupAlgebraTensorActionSemilinearEquiv rho sigma x *
+        groupAlgebraTensorActionSemilinearEquiv rho sigma y := by
+  induction x using TensorProduct.induction_on with
+  | zero => rw [zero_mul, map_zero, zero_mul]
+  | tmul x₁ x₂ =>
+      induction y using TensorProduct.induction_on with
+      | zero => rw [mul_zero, map_zero, mul_zero]
+      | tmul y₁ y₂ =>
+          simp only [Algebra.TensorProduct.tmul_mul_tmul,
+            groupAlgebraTensorActionSemilinearEquiv_tmul, map_mul]
+      | add y₁ y₂ hy₁ hy₂ => simp only [mul_add, map_add, hy₁, hy₂]
+  | add x₁ x₂ hx₁ hx₂ => simp only [add_mul, map_add, hx₁, hx₂]
 
 /-- The tensor-square action of the identity automorphism is the identity. -/
 @[simp]

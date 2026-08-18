@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.TensorProduct
 public import TauCeti.Algebra.Coalgebra.Comodule.Trivial
+import TauCeti.LinearAlgebra.End.ScalarExtension
 public import Mathlib.RingTheory.Bialgebra.Convolution
 public import Mathlib.RepresentationTheory.Basic
 
@@ -91,14 +92,6 @@ lemma rTensor_comp_endOfPoint (φ : A →ₐ[R] A') (g : H →ₐ[R] A) :
     LinearMap.rTensor V φ.toLinearMap ∘ₗ (endOfPoint V g).restrictScalars R =
       (endOfPoint V (φ.comp g)).restrictScalars R ∘ₗ
         LinearMap.rTensor V φ.toLinearMap := by
-  have hsmul : ∀ (a : A) (z : A ⊗[R] V),
-      LinearMap.rTensor V φ.toLinearMap (a • z) =
-        φ a • LinearMap.rTensor V φ.toLinearMap z := by
-    intro a z
-    induction z using TensorProduct.induction_on with
-    | zero => simp
-    | tmul x v => simp [TensorProduct.smul_tmul', smul_eq_mul, map_mul]
-    | add x y hx hy => simp [smul_add, hx, hy]
   have hcol : LinearMap.rTensor V φ.toLinearMap ∘ₗ
       (TensorProduct.comm R V A).toLinearMap ∘ₗ LinearMap.lTensor V g.toLinearMap =
       (TensorProduct.comm R V A').toLinearMap ∘ₗ
@@ -110,7 +103,7 @@ lemma rTensor_comp_endOfPoint (φ : A →ₐ[R] A') (g : H →ₐ[R] A) :
   simp only [LinearMap.coe_comp, Function.comp_apply,
     LinearEquiv.coe_toLinearMap] at hc
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.restrictScalars_apply,
-    LinearMap.rTensor_tmul, endOfPoint_tmul, hsmul, hc, AlgHom.toLinearMap_apply]
+    LinearMap.rTensor_tmul, endOfPoint_tmul, rTensor_algHom_smul, hc, AlgHom.toLinearMap_apply]
 
 end BaseChange
 
