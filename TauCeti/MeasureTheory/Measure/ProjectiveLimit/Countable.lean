@@ -51,6 +51,12 @@ private theorem finitePiCongrLeft_apply (e : κ ≃ ι) (J : Finset κ)
   exact MeasurableEquiv.piCongrLeft_apply_apply
     (β := fun i : J.map e.toEmbedding ↦ X i) (J.equivMap e.toEmbedding) x j
 
+private theorem finitePiCongrLeft_symm_apply (e : κ ≃ ι) (J : Finset κ)
+    (x : ∀ i : J.map e.toEmbedding, X i) (j : J) :
+    (finitePiCongrLeft e J).symm x j = x (J.equivMap e.toEmbedding j) := by
+  exact Equiv.piCongrLeft_symm_apply
+    (fun i : J.map e.toEmbedding ↦ X i) (J.equivMap e.toEmbedding) x j
+
 /-- Reindex the finite-dimensional laws of a projective family along an equivalence. -/
 private def reindexProjectiveFamily (e : κ ≃ ι)
     (P : ∀ I : Finset ι, Measure (∀ i : I, X i)) (J : Finset κ) :
@@ -79,7 +85,8 @@ private theorem isProjectiveMeasureFamily_reindex (e : κ ≃ ι)
       Finset.restrict₂ (π := fun i ↦ X (e i)) hJI ∘
         (finitePiCongrLeft e I).symm := by
     funext x j
-    rfl
+    simp only [Function.comp_apply, Finset.restrict₂_def, finitePiCongrLeft_symm_apply]
+    congr 1
   rw [hfun]
   exact (MeasureTheory.Measure.map_map (Finset.measurable_restrict₂ hJI)
     (finitePiCongrLeft e I).symm.measurable).symm
@@ -101,11 +108,13 @@ private theorem exists_isProjectiveLimit_of_finite [Finite ι]
   refine ⟨(P Finset.univ).map E,
     MeasureTheory.Measure.isProbabilityMeasure_map E.measurable.aemeasurable, fun I ↦ ?_⟩
   rw [MeasureTheory.Measure.map_map (Finset.measurable_restrict I) E.measurable]
-  calc
-    (P Finset.univ).map (I.restrict ∘ E) =
-        (P Finset.univ).map (Finset.restrict₂ (Finset.subset_univ I)) := by
-      rfl
-    _ = P I := (hP Finset.univ I (Finset.subset_univ I)).symm
+  have hrestrict : I.restrict ∘ E =
+      Finset.restrict₂ (Finset.subset_univ I) := by
+    funext x i
+    change E x i = x ⟨i, Finset.mem_univ (i : ι)⟩
+    exact MeasurableEquiv.piCongrLeft_apply_apply
+      (β := X) e x ⟨i, Finset.mem_univ (i : ι)⟩
+  rw [hrestrict, hP Finset.univ I (Finset.subset_univ I)]
 
 /-- An infinite countable projective family is realized by enumerating its coordinates and
 applying the sequence-indexed extension theorem. -/
