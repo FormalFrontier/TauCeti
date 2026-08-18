@@ -18,7 +18,6 @@ shows that both functors of the equivalence preserve and reflect conflations.
 
 ## Main definitions and results
 
-* `TauCeti.ExactStructure.transportConflationClass`: the transported conflation class.
 * `TauCeti.ExactStructure.transport`: the exact structure transported along an additive
   equivalence.
 * `TauCeti.ExactStructure.transport_conflation_iff`,
@@ -51,7 +50,7 @@ variable [Category.{v₂} D] [Preadditive D] [HasZeroObject D] [HasBinaryBiprodu
 
 /-- The conflation class transported along an additive equivalence. A target short complex is
 distinguished when applying the inverse equivalence produces a source conflation. -/
-noncomputable def transportConflationClass (E : ExactStructure C) (e : C ≌ D)
+private noncomputable def transportConflationClass (E : ExactStructure C) (e : C ≌ D)
     [e.functor.Additive] : ConflationClass D where
   Conflation S := E.Conflation (S.map e.inverse)
   isKernelCokernelPair S hS := by
@@ -65,7 +64,7 @@ noncomputable def transportConflationClass (E : ExactStructure C) (e : C ≌ D)
 omit [HasZeroObject D] [HasBinaryBiproducts D] in
 /-- A morphism is an inflation in the transported conflation class exactly when its image under
 the inverse equivalence is an inflation. -/
-theorem transportConflationClass_inflations (E : ExactStructure C) (e : C ≌ D)
+private theorem transportConflationClass_inflations (E : ExactStructure C) (e : C ≌ D)
     [e.functor.Additive] :
     (transportConflationClass E e).inflations = E.inflations.inverseImage e.inverse := by
   ext X Y i
@@ -95,7 +94,7 @@ theorem transportConflationClass_inflations (E : ExactStructure C) (e : C ≌ D)
 omit [HasZeroObject D] [HasBinaryBiproducts D] in
 /-- A morphism is a deflation in the transported conflation class exactly when its image under
 the inverse equivalence is a deflation. -/
-theorem transportConflationClass_deflations (E : ExactStructure C) (e : C ≌ D)
+private theorem transportConflationClass_deflations (E : ExactStructure C) (e : C ≌ D)
     [e.functor.Additive] :
     (transportConflationClass E e).deflations = E.deflations.inverseImage e.inverse := by
   ext Y Z p
@@ -124,14 +123,8 @@ theorem transportConflationClass_deflations (E : ExactStructure C) (e : C ≌ D)
 
 omit [HasZeroObject D] [HasBinaryBiproducts D] in
 /-- A morphism is an inflation in the transported conflation class exactly when its image under
-the inverse equivalence is an inflation.
-
-`ConflationClass.IsInflation` is a reducible abbreviation for membership in
-`ConflationClass.inflations`, and `MorphismProperty.inverseImage` is unfolded by application;
-neither is visible to `rw` or `simp`, so the auxiliary statement below is phrased in the
-rewritable form and transferred to the goal by definitional unfolding. Later proofs then rewrite
-with this `iff` rather than converting again. -/
-theorem transportConflationClass_isInflation_iff (E : ExactStructure C) (e : C ≌ D)
+the inverse equivalence is an inflation. -/
+private theorem transportConflationClass_isInflation_iff (E : ExactStructure C) (e : C ≌ D)
     [e.functor.Additive] {X Y : D} (i : X ⟶ Y) :
     (transportConflationClass E e).IsInflation i ↔ E.IsInflation (e.inverse.map i) := by
   have h : (transportConflationClass E e).inflations i ↔
@@ -141,12 +134,8 @@ theorem transportConflationClass_isInflation_iff (E : ExactStructure C) (e : C �
 
 omit [HasZeroObject D] [HasBinaryBiproducts D] in
 /-- A morphism is a deflation in the transported conflation class exactly when its image under
-the inverse equivalence is a deflation.
-
-As for inflations, the auxiliary statement below spells out the reducible abbreviation
-`ConflationClass.IsDeflation` as membership in `ConflationClass.deflations`, the form `rw` acts
-on, and is transferred to the goal by definitional unfolding. -/
-theorem transportConflationClass_isDeflation_iff (E : ExactStructure C) (e : C ≌ D)
+the inverse equivalence is a deflation. -/
+private theorem transportConflationClass_isDeflation_iff (E : ExactStructure C) (e : C ≌ D)
     [e.functor.Additive] {Y Z : D} (p : Y ⟶ Z) :
     (transportConflationClass E e).IsDeflation p ↔ E.IsDeflation (e.inverse.map p) := by
   have h : (transportConflationClass E e).deflations p ↔
