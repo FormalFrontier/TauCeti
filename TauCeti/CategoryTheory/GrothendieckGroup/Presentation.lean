@@ -43,7 +43,7 @@ through the class map `TauCeti.PresentedK0.of`.
 
 ## Main results
 
-* `TauCeti.PresentedK0.induction` and `TauCeti.PresentedK0.hom_ext`: the induction principle and
+* `TauCeti.PresentedK0.induction_on` and `TauCeti.PresentedK0.hom_ext`: the induction principle and
   the extensionality principle, both phrased in terms of objects of `C`.
 * `TauCeti.PresentedK0.liftEquiv`: the universal property. Additive invariants for `rels`
   correspond bijectively to additive homomorphisms out of `PresentedK0 rels`.
@@ -85,7 +85,7 @@ variable (C : Type u) [Category.{v} C] [EssentiallySmall.{w} C]
 
 /-- `ObjectCode C` is a small type of codes for the isomorphism classes of objects of an
 essentially small category `C`. -/
-abbrev ObjectCode : Type w := Shrink.{w} (Skeleton C)
+def ObjectCode : Type w := Shrink.{w} (Skeleton C)
 
 variable {C}
 
@@ -100,10 +100,11 @@ noncomputable def objectCodeOut (c : ObjectCode C) : C :=
 
 @[simp]
 lemma objectCode_objectCodeOut (c : ObjectCode C) : objectCode (objectCodeOut c) = c := by
-  rw [objectCode, objectCodeOut, toSkeleton_fromSkeleton_obj, Equiv.apply_symm_apply]
+  simpa only [ObjectCode, objectCode, objectCodeOut, toSkeleton_fromSkeleton_obj] using
+    Equiv.apply_symm_apply (equivShrink (Skeleton C)) c
 
 lemma objectCode_eq_iff {X Y : C} : objectCode X = objectCode Y ↔ Nonempty (X ≅ Y) := by
-  rw [objectCode, objectCode, Equiv.apply_eq_iff_eq, toSkeleton_eq_toSkeleton_iff]
+  simp only [ObjectCode, objectCode, Equiv.apply_eq_iff_eq, toSkeleton_eq_toSkeleton_iff]
 
 lemma objectCode_congr {X Y : C} (e : X ≅ Y) : objectCode X = objectCode Y :=
   objectCode_eq_iff.2 ⟨e⟩
@@ -218,13 +219,12 @@ lemma mk_eq_zero {r : FreeAbelianGroup (ObjectCode C)} (hr : r ∈ rels) :
   (mk_eq_zero_iff r).2 (AddSubgroup.subset_closure hr)
 
 /-- The class of an object of `C` in the presented Grothendieck group. -/
-@[expose]
 noncomputable def of (X : C) : PresentedK0 rels :=
   mk (freeClass X)
 
 @[simp]
 lemma mk_freeClass (X : C) : (mk (freeClass X) : PresentedK0 rels) = of X :=
-  rfl
+  (rfl)
 
 @[simp]
 lemma mk_apply_of (c : ObjectCode C) :
@@ -251,7 +251,7 @@ theorem closure_range_of :
 
 /-- Induction on the classes of objects of `C`: no skeleton representative is ever mentioned. -/
 @[elab_as_elim]
-theorem induction {motive : PresentedK0 rels → Prop} (x : PresentedK0 rels)
+theorem induction_on {motive : PresentedK0 rels → Prop} (x : PresentedK0 rels)
     (zero : motive 0) (of : ∀ X : C, motive (PresentedK0.of X))
     (add : ∀ a b, motive a → motive b → motive (a + b))
     (neg : ∀ a, motive a → motive (-a)) : motive x := by
@@ -275,7 +275,7 @@ variable {G : Type*} [AddCommGroup G]
 @[ext]
 theorem hom_ext {f g : PresentedK0 rels →+ G} (h : ∀ X : C, f (of X) = g (of X)) : f = g := by
   refine AddMonoidHom.ext fun x => ?_
-  induction x using PresentedK0.induction with
+  induction x using PresentedK0.induction_on with
   | zero => rw [map_zero, map_zero]
   | of X => exact h X
   | add a b ha hb => rw [map_add, map_add, ha, hb]
@@ -468,9 +468,9 @@ lemma coe_mapEquiv (e : C ≌ D)
     (h' : ∀ r ∈ relsD, freeMap e.inverse r ∈ AddSubgroup.closure relsC) :
     ((mapEquiv e h h' : PresentedK0 relsC ≃+ PresentedK0 relsD) :
         PresentedK0 relsC →+ PresentedK0 relsD) = map e.functor h :=
-  hom_ext fun X => by
-    change mapEquiv e h h' (of X) = map e.functor h (of X)
-    rw [mapEquiv_apply, map_of]
+  hom_ext fun X =>
+    (congrFun (AddEquiv.coe_toAddMonoidHom (mapEquiv e h h')) (of X)).trans
+      ((mapEquiv_apply e h h' X).trans (map_of e.functor h X).symm)
 
 /-- Equivalence invariance for the identity equivalence is the identity. -/
 @[simp]
