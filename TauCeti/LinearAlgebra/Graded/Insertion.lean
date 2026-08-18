@@ -21,9 +21,10 @@ contributes the Koszul coefficient
 
 `(-1) ^ (q * ∑ i, d i)`.
 
-The signed operation is packaged for a fixed homogeneous component: on such a component its sign
-is a scalar, so it is again a multilinear map.  The homogeneity theorem proves that insertion adds
-the degrees of the outer and inner operations.
+The signed operation takes the intended degrees of the homogeneous prefix inputs as an explicit
+parameter.  The API does not enforce that these degrees correspond to the inputs; on the intended
+component the sign is a scalar, so the result is again a multilinear map.  The homogeneity theorem
+proves that insertion adds the degrees of the outer and inner operations.
 
 ## Main definitions
 
@@ -95,6 +96,8 @@ def oneSlot {α : Type uα} {β : Type uβ} {γ : Type uγ}
     MultilinearMap R (fun _ : α ⊕ (β ⊕ γ) ↦ M) N :=
   (f.compMultilinearMap (oneSlotMaps g)).domDomCongr (oneSlotIndexEquiv α β γ)
 
+/-- Evaluating `oneSlot f g` substitutes the value of `g` on the middle block between the
+unchanged prefix and suffix inputs of `f`. -/
 @[simp]
 theorem oneSlot_apply {α : Type uα} {β : Type uβ} {γ : Type uγ}
     (f : MultilinearMap R (fun _ : α ⊕ (Unit ⊕ γ) ↦ M) N)
@@ -162,7 +165,11 @@ namespace MultilinearMap
 
 section Signed
 
-variable {R : Type uR} [CommRing R]
+variable {R : Type uR}
+
+section KoszulSign
+
+variable [Ring R]
 
 /-- The Koszul coefficient acquired when a degree-`q` operation crosses homogeneous inputs with
 degrees `d i`. -/
@@ -175,40 +182,45 @@ theorem koszulSign_eq_negOnePow {α : Type uα} [Fintype α] (q : ℤ) (d : α �
     koszulSign (R := R) q d = (((q * ∑ i, d i).negOnePow : ℤ) : R) := by
   simp [koszulSign]
 
-theorem koszulSign_zero_degree {α : Type uα} [Fintype α] (d : α → ℤ) :
-    koszulSign (R := R) 0 d = 1 := by
-  simp [koszulSign]
-
-theorem koszulSign_empty (q : ℤ) (d : Fin 0 → ℤ) :
-    koszulSign (R := R) q d = 1 := by
-  simp [koszulSign]
-
+@[simp]
 theorem koszulSign_add_degree {α : Type uα} [Fintype α] (q q' : ℤ) (d : α → ℤ) :
     koszulSign (R := R) (q + q') d =
       koszulSign (R := R) q d * koszulSign (R := R) q' d := by
   simp only [koszulSign, add_mul, ComplexShape.ε_add, Units.val_mul]
   norm_cast
 
-/-- Signed one-slot substitution on the homogeneous component whose prefix degrees are `d`.
+end KoszulSign
 
-The sign is constant on this component, so scalar multiplication preserves multilinearity. -/
-def signedOneSlot {M : Type uM} {N : Type uN} [AddCommGroup M] [Module R M]
-    [AddCommGroup N] [Module R N] {α : Type uα} [Fintype α] {β : Type uβ} {γ : Type uγ}
+section SignedOneSlot
+
+variable [CommRing R]
+
+/-- Signed one-slot substitution using `d` as the supplied degrees of the homogeneous prefix
+inputs.
+
+The API does not enforce that `d` corresponds to the input components.  On the intended component
+the sign is constant, so scalar multiplication preserves multilinearity. -/
+def signedOneSlot {M : Type uM} {N : Type uN} [AddCommMonoid M] [Module R M]
+    [AddCommMonoid N] [Module R N] {α : Type uα} [Fintype α] {β : Type uβ} {γ : Type uγ}
     (q : ℤ) (d : α → ℤ)
     (f : MultilinearMap R (fun _ : α ⊕ (Unit ⊕ γ) ↦ M) N)
     (g : MultilinearMap R (fun _ : β ↦ M) M) :
     MultilinearMap R (fun _ : α ⊕ (β ⊕ γ) ↦ M) N :=
   koszulSign (R := R) q d • f.oneSlot g
 
+/-- Evaluating `signedOneSlot q d f g` gives the one-slot substitution formula multiplied by the
+Koszul sign determined by `q` and the supplied prefix degrees `d`. -/
 @[simp]
-theorem signedOneSlot_apply {M : Type uM} {N : Type uN} [AddCommGroup M] [Module R M]
-    [AddCommGroup N] [Module R N] {α : Type uα} [Fintype α] {β : Type uβ} {γ : Type uγ}
+theorem signedOneSlot_apply {M : Type uM} {N : Type uN} [AddCommMonoid M] [Module R M]
+    [AddCommMonoid N] [Module R N] {α : Type uα} [Fintype α] {β : Type uβ} {γ : Type uγ}
     (q : ℤ) (d : α → ℤ)
     (f : MultilinearMap R (fun _ : α ⊕ (Unit ⊕ γ) ↦ M) N)
     (g : MultilinearMap R (fun _ : β ↦ M) M) (x : α ⊕ (β ⊕ γ) → M) :
     signedOneSlot q d f g x = koszulSign (R := R) q d • f (Sum.elim (fun i ↦ x (.inl i)) <|
       Sum.elim (fun _ ↦ g fun j ↦ x (.inr (.inl j))) (fun i ↦ x (.inr (.inr i)))) :=
   by rw [signedOneSlot, smul_apply, oneSlot_apply]
+
+end SignedOneSlot
 
 end Signed
 
@@ -219,7 +231,7 @@ namespace TauCeti.MultilinearMap
 section SignedHomogeneous
 
 variable {R : Type uR} {M : Type uM} {N : Type uN}
-  [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+  [CommRing R] [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
   {σM : Type*} {σN : Type*} [SetLike σM M] [SetLike σN N] [SMulMemClass σN R N]
 
 /-- Signed one-slot substitution has the sum of the degrees of its two operations. -/
