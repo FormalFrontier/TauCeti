@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.StrongLaw
--- Non-public: the basis reduction of weak convergence is used only inside proofs.
-import TauCeti.MeasureTheory.Measure.Portmanteau
+-- Non-public: the π-system criterion for weak convergence is used only inside proofs.
+import Mathlib.MeasureTheory.Measure.Portmanteau
 
 /-!
 # The empirical measures of a conditionally i.i.d. process converge weakly
@@ -22,10 +22,10 @@ Weak convergence tests against all bounded continuous functions at once, so the 
 chosen before the test function is seen, and the fixed-set statement cannot simply be quantified
 afterwards — outside a countable family of sets that interchange is false (see
 `ConditionallyIID/StrongLaw.lean`). What makes the upgrade go through is that a second-countable
-topology has a countable test class: the finite unions of a countable basis, on which
+topology has a countable test class: the finite intersections of a countable basis, on which
 `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall` provides a single null set, and
-from which `MeasureTheory.tendsto_of_forall_tendsto_measure_biUnion_basis` recovers weak
-convergence.
+from which `IsPiSystem.tendsto_probabilityMeasure_of_tendsto_of_mem` recovers weak convergence —
+they form a π-system containing arbitrarily small neighbourhoods of every point.
 
 The hypotheses on the state space are topological, not standard Borel: a second-countable
 topology whose open sets are measurable is all the argument uses. In particular a Polish space
@@ -53,7 +53,7 @@ noncomputable section
 
 open Filter MeasureTheory TopologicalSpace
 
-open scoped Topology ENNReal
+open scoped Topology
 
 namespace TauCeti
 
@@ -75,14 +75,26 @@ theorem ConditionallyIIDWith.tendsto_empiricalMeasure_ae [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (hX : ∀ n, AEMeasurable (X n) μ) :
     ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => empiricalMeasure (fun i => X i ω) n) atTop (𝓝 (ν ω)) := by
   obtain ⟨B, hB⟩ := exists_seq_basis α
-  have hBmeas : ∀ i, MeasurableSet (B i) := fun i =>
-    (hB.isOpen (Set.mem_range_self i)).measurableSet
-  have hUmeas : ∀ s : Finset ℕ, MeasurableSet (⋃ i ∈ s, B i) := fun s =>
-    s.measurableSet_biUnion fun i _ => hBmeas i
-  filter_upwards [h.tendsto_empiricalMeasure_apply_ae_forall (B := fun s : Finset ℕ => ⋃ i ∈ s, B i)
-    hX hUmeas] with ω hω
-  refine tendsto_of_forall_tendsto_measure_biUnion_basis hB fun s => ?_
-  exact (ENNReal.tendsto_toReal_iff (fun _ => measure_ne_top _ _) (measure_ne_top _ _)).1 (hω s)
+  set T : Finset ℕ → Set α := fun s => ⋂ i ∈ s, B i with hT
+  have hBopen : ∀ i, IsOpen (B i) := fun i => hB.isOpen (Set.mem_range_self i)
+  have hTmeas : ∀ s, MeasurableSet (T s) := fun s =>
+    s.measurableSet_biInter fun i _ => (hBopen i).measurableSet
+  -- The finite intersections of the basis sets are a countable π-system of measurable sets
+  -- containing arbitrarily small neighbourhoods of every point.
+  have hpi : IsPiSystem (Set.range T) := by
+    rintro _ ⟨s, rfl⟩ _ ⟨t, rfl⟩ -
+    exact ⟨s ∪ t, by
+      simp only [hT, ← Finset.set_biInter_coe, Finset.coe_union, Set.biInter_union]⟩
+  filter_upwards [h.tendsto_empiricalMeasure_apply_ae_forall (B := T) hX hTmeas] with ω hω
+  refine hpi.tendsto_probabilityMeasure_of_tendsto_of_mem ?_ (fun u hu x hxu => ?_) ?_
+  · rintro _ ⟨s, rfl⟩
+    exact hTmeas s
+  · obtain ⟨-, ⟨i, rfl⟩, hxi, hiu⟩ := hB.exists_subset_of_mem_open hxu hu
+    exact ⟨T {i}, Set.mem_range_self _, by simpa [hT] using (hBopen i).mem_nhds hxi,
+      by simpa [hT] using hiu⟩
+  · rintro _ ⟨s, rfl⟩
+    exact NNReal.tendsto_coe.1 <| by
+      simpa only [← ProbabilityMeasure.measureReal_eq_coe_coeFn, measureReal_def] using hω s
 
 end Probability
 
