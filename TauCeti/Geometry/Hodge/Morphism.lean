@@ -330,6 +330,41 @@ noncomputable instance : AddCommGroup (Hom source target) :=
     (fun _ _ h ↦ ext (LinearMap.congr_fun h)) rfl (fun _ _ ↦ rfl) (fun _ ↦ rfl) (fun _ _ ↦ rfl)
     (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)
 
+/-- The zero Hodge morphism has the zero integral linear map underneath. -/
+@[simp]
+theorem zero_toIntLinearMap : (0 : Hom source target).toIntLinearMap = 0 :=
+  rfl
+
+/-- Addition of Hodge morphisms is addition of their underlying integral linear maps. -/
+@[simp]
+theorem add_toIntLinearMap (f g : Hom source target) :
+    (f + g).toIntLinearMap = f.toIntLinearMap + g.toIntLinearMap :=
+  rfl
+
+/-- Negation of a Hodge morphism is negation of its underlying integral linear map. -/
+@[simp]
+theorem neg_toIntLinearMap (f : Hom source target) :
+    (-f).toIntLinearMap = -f.toIntLinearMap :=
+  rfl
+
+/-- Subtraction of Hodge morphisms is subtraction of their underlying integral linear maps. -/
+@[simp]
+theorem sub_toIntLinearMap (f g : Hom source target) :
+    (f - g).toIntLinearMap = f.toIntLinearMap - g.toIntLinearMap :=
+  rfl
+
+/-- Natural-number multiples of Hodge morphisms pass to their underlying integral linear maps. -/
+@[simp]
+theorem nsmul_toIntLinearMap (k : ℕ) (f : Hom source target) :
+    (k • f).toIntLinearMap = k • f.toIntLinearMap :=
+  rfl
+
+/-- Integer multiples of Hodge morphisms pass to their underlying integral linear maps. -/
+@[simp]
+theorem zsmul_toIntLinearMap (k : ℤ) (f : Hom source target) :
+    (k • f).toIntLinearMap = k • f.toIntLinearMap :=
+  rfl
+
 /-- The zero Hodge morphism acts as zero on complex vectors. -/
 @[simp]
 theorem zero_apply (x : W₁) : (0 : Hom source target) x = 0 := by
