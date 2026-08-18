@@ -23,10 +23,10 @@ The source path itself is assumed piecewise `C¹`, matching the raw-curve interf
 
 ## Main results
 
-* `windingNumber_eq_zero_of_pathHomotopy_refl` — a loop continuously homotopic to its constant path
-  through a point-avoiding homotopy has winding number zero about that point.
-* `isNullHomologous_of_pathHomotopy_refl` — a loop continuously contracted inside `Ω` is
-  null-homologous in `Ω`.
+* `windingNumber_eq_zero_of_pathHomotopy_refl` — a piecewise-`C¹` loop continuously homotopic to
+  its constant path through a point-avoiding homotopy has winding number zero about that point.
+* `isNullHomologous_of_pathHomotopy_refl` — a piecewise-`C¹` loop continuously contracted inside
+  `Ω` is null-homologous in `Ω`.
 * `cauchyTheorem_of_pathHomotopy_refl` — Cauchy's theorem for such a contractible contour.
 
 ## Provenance
