@@ -137,8 +137,7 @@ theorem ker_subtype (ρ' : Subrepresentation ρ) : ρ'.subtype.ker = ⊥ := by
 
 /-- The inclusion of a subrepresentation is injective. -/
 theorem subtype_injective (ρ' : Subrepresentation ρ) : Function.Injective ρ'.subtype := by
-  intro x y h
-  exact Subtype.ext h
+  simpa only [coe_subtype] using Subtype.val_injective
 
 /-- The inclusion of a subrepresentation is zero exactly when the subrepresentation is zero. -/
 @[simp]
