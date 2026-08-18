@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.CategoryTheory.Exact.Functor
+public import Mathlib.CategoryTheory.Adjunction.Limits
 public import Mathlib.CategoryTheory.Limits.Preserves.Shapes.Square
 
 /-!
@@ -145,27 +146,15 @@ private theorem transportConflationClass_isDeflation_iff (E : ExactStructure C) 
 
 omit [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
   [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
-private theorem hasPushout_of_equivalence (e : C ≌ D) {X Y S : D}
-    (f : S ⟶ X) (g : S ⟶ Y) [hpo : HasPushout (e.inverse.map f) (e.inverse.map g)] :
-    HasPushout f g := by
-  have h := (IsPushout.of_hasPushout (e.inverse.map f) (e.inverse.map g)).map e.functor
-  let inl' := e.counitIso.inv.app X ≫ e.functor.map
-    (pushout.inl (e.inverse.map f) (e.inverse.map g))
-  let inr' := e.counitIso.inv.app Y ≫ e.functor.map
-    (pushout.inr (e.inverse.map f) (e.inverse.map g))
-  have h' : IsPushout f g inl' inr' := h.of_iso
-    (e.counitIso.app S) (e.counitIso.app X) (e.counitIso.app Y) (Iso.refl _)
-    (by simp) (by simp) (by simp [inl']) (by simp [inr'])
-  exact h'.hasPushout
-
-omit [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
-  [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
 private theorem inverseImageHasPushouts (P : MorphismProperty C) [P.HasPushouts]
     (e : C ≌ D) : (P.inverseImage e.inverse).HasPushouts := by
   constructor
   intro X Y S f g hf
-  exact hasPushout_of_equivalence e f g
-    (hpo := MorphismProperty.HasPushouts.hasPushout (e.inverse.map g) hf)
+  let _ : HasPushout (e.inverse.map f) (e.inverse.map g) :=
+    MorphismProperty.HasPushouts.hasPushout (e.inverse.map g) hf
+  let _ : HasColimit (span f g ⋙ e.inverse) :=
+    hasColimit_of_iso (spanCompIso e.inverse f g)
+  exact CategoryTheory.Adjunction.hasColimit_of_comp_equivalence (span f g) e.inverse
 
 omit [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
   [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
@@ -179,27 +168,15 @@ private theorem inverseImageIsStableUnderCobaseChange (P : MorphismProperty C)
 
 omit [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
   [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
-private theorem hasPullback_of_equivalence (e : C ≌ D) {X Y S : D}
-    (f : X ⟶ S) (g : Y ⟶ S) [hpb : HasPullback (e.inverse.map f) (e.inverse.map g)] :
-    HasPullback f g := by
-  have h := (IsPullback.of_hasPullback (e.inverse.map f) (e.inverse.map g)).map e.functor
-  let fst' := e.functor.map (pullback.fst (e.inverse.map f) (e.inverse.map g)) ≫
-    e.counitIso.hom.app X
-  let snd' := e.functor.map (pullback.snd (e.inverse.map f) (e.inverse.map g)) ≫
-    e.counitIso.hom.app Y
-  have h' : IsPullback fst' snd' f g := h.of_iso
-    (Iso.refl _) (e.counitIso.app X) (e.counitIso.app Y) (e.counitIso.app S)
-    (by simp [fst']) (by simp [snd']) (by simp) (by simp)
-  exact h'.hasPullback
-
-omit [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
-  [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
 private theorem inverseImageHasPullbacks (P : MorphismProperty C) [P.HasPullbacks]
     (e : C ≌ D) : (P.inverseImage e.inverse).HasPullbacks := by
   constructor
   intro X Y S f g hf
-  exact hasPullback_of_equivalence e f g
-    (hpb := MorphismProperty.HasPullbacks.hasPullback (e.inverse.map g) hf)
+  let _ : HasPullback (e.inverse.map f) (e.inverse.map g) :=
+    MorphismProperty.HasPullbacks.hasPullback (e.inverse.map g) hf
+  let _ : HasLimit (cospan f g ⋙ e.inverse) :=
+    hasLimit_of_iso (cospanCompIso e.inverse f g).symm
+  exact CategoryTheory.Adjunction.hasLimit_of_comp_equivalence (cospan f g) e.inverse
 
 omit [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
   [Preadditive D] [HasZeroObject D] [HasBinaryBiproducts D] in
