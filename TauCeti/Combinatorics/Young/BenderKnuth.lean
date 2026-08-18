@@ -528,27 +528,27 @@ theorem content_recut_add (hcut : IsCut T v cut) :
 /-- The start of the block of the row above, the first row being treated as if the row above it
 had an empty block: it is the constraint `SemistandardYoungTableau.IsCut.cut_succ_le` places on a
 splitting point from above. -/
-def prevBlockStart (T : SemistandardYoungTableau μ) (v : ℕ) : ℕ → ℕ
+private def prevBlockStart (T : SemistandardYoungTableau μ) (v : ℕ) : ℕ → ℕ
   | 0 => rowCountLt T 0 (v + 2)
   | i + 1 => rowCountLt T i v
 
 /-- The lower end of the interval of splitting points admissible in row `i`. -/
-def cutLower (T : SemistandardYoungTableau μ) (v i : ℕ) : ℕ :=
+private def cutLower (T : SemistandardYoungTableau μ) (v i : ℕ) : ℕ :=
   max (rowCountLt T i v) (rowCountLt T (i + 1) (v + 2))
 
 /-- The upper end of the interval of splitting points admissible in row `i`. -/
-def cutUpper (T : SemistandardYoungTableau μ) (v i : ℕ) : ℕ :=
+private def cutUpper (T : SemistandardYoungTableau μ) (v i : ℕ) : ℕ :=
   min (rowCountLt T i (v + 2)) (prevBlockStart T v i)
 
 /-- The splitting point of `T` itself is at least the lower end of the admissible interval: `T` is
 its own recut. -/
-theorem cutLower_le (T : SemistandardYoungTableau μ) (v i : ℕ) :
+private theorem cutLower_le (T : SemistandardYoungTableau μ) (v i : ℕ) :
     cutLower T v i ≤ rowCountLt T i (v + 1) :=
   max_le (T.rowCountLt_mono i (Nat.le_succ v)) (T.rowCountLt_succ_le i (v + 1))
 
 /-- The splitting point of `T` itself is at most the upper end of the admissible interval: `T` is
 its own recut. -/
-theorem le_cutUpper (T : SemistandardYoungTableau μ) (v i : ℕ) :
+private theorem le_cutUpper (T : SemistandardYoungTableau μ) (v i : ℕ) :
     rowCountLt T i (v + 1) ≤ cutUpper T v i := by
   refine le_min (T.rowCountLt_mono i (Nat.le_succ (v + 1))) ?_
   cases i with
