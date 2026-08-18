@@ -5,10 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+-- `WorkedExamples` is a public import: it supplies the `Fact (Irreducible (X ^ 2 - C (-5 : ℚ)))`
+-- instance needed to elaborate the signature of the concrete worked example below.
 public import TauCeti.NumberTheory.EffectiveBounds.WorkedExamples
-public import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
-public import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
-public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
+import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
+import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
+import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import TauCeti.RingTheory.Norm.Quadratic
 
@@ -36,7 +38,7 @@ x² + ny²*, Chapter 5.
 
 * `TauCeti.NumberField.classNumber_eq_two_of_minpoly_eq_X_sq_add_five`: every presentation of
   `ℚ(√-5)` by an integral generator has class number two.
-* `TauCeti.NumberField.classNumber_adjoinRoot_sqrt_neg_five_eq`: the result for the concrete
+* `TauCeti.NumberField.classNumber_adjoinRoot_sqrt_neg_five_eq_two`: the result for the concrete
   `AdjoinRoot (X² + 5)` model.
 -/
 
@@ -296,7 +298,8 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`,
 has class number `2`. -/
-theorem classNumber_adjoinRoot_sqrt_neg_five_eq :
+@[simp]
+theorem classNumber_adjoinRoot_sqrt_neg_five_eq_two :
     NumberField.classNumber (AdjoinRoot (X ^ 2 - C (-5 : ℚ))) = 2 := by
   let K := AdjoinRoot (X ^ 2 - C (-5 : ℚ))
   let x : K := AdjoinRoot.root (X ^ 2 - C (-5 : ℚ))
