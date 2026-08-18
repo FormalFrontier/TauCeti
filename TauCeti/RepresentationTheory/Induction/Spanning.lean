@@ -44,16 +44,18 @@ characteristic-zero splitting field, `|G| • χ` is a `ℤ`-linear combination 
 from cyclic subgroups.  The rational form says that every character is a `ℚ`-linear combination
 of them — equivalently, that some nonzero integer multiple is an integral combination — or that
 `⨁_{C cyclic} R(C) → R(G)` is surjective after tensoring with `ℚ`.  The `|G|` statement is strictly
-sharper.  **Nothing below says
-anything about the arithmetic of the coefficients**: every result here produces coefficients that
-are arbitrary elements of `k`.
+sharper.
 
-What this file supplies is the duality half of that development, run on the class functions instead
-of on `ℚ ⊗ R(G)`.  `TauCeti.RepresentationTheory.Induction.Artin` supplies the arithmetic half:
-it proves the sharp `|G|` statement through the canonical induced-virtual-character API and bundles
-the rationally surjective map after tensoring with `ℚ`.  Brauer's induction theorem and Brauer's
-characterization of characters remain open.  The covering-family formulation is stated here for
-its own sake: the elementary subgroups Brauer's theorem uses satisfy the same hypothesis.
+This file supplies the duality half of that development, run on the class functions instead of on
+`ℚ ⊗ R(G)`, and the family-general comparison between the integral induced-character span and
+the canonical subgroup of induced virtual characters.  Over an algebraically closed field in which
+the selected subgroup orders are invertible,
+`TauCeti.ClassFunction.indVirtualCharacters_eq_indCharacterSpanInt` identifies those two integral
+targets.  `TauCeti.RepresentationTheory.Induction.Artin` supplies the arithmetic half: it proves the
+sharp `|G|` statement and bundles the rationally surjective map after tensoring with `ℚ`.  Brauer's
+induction theorem and Brauer's characterization of characters remain open.  The covering-family
+formulation is stated here for its own sake: the elementary subgroups Brauer's theorem uses satisfy
+the same hypothesis.
 
 ## Main definitions
 
@@ -93,9 +95,10 @@ covering corollaries supply it from `TauCeti.isUnit_natCard_subgroup`.
 The covering hypothesis is written out as `∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S` rather than
 bundled into a predicate: it is used once, and the cyclic instance discharges it with `y = 1`.
 
-The coefficients produced here are elements of `k`, and the statements are about the `k`-vector
-space of class functions, not about `TauCeti.virtualCharacters`; see the discussion above of what
-separates this from Artin's induction theorem.
+The class-function spanning theorems produce coefficients in `k`.  In contrast,
+`TauCeti.ClassFunction.indCharacterSpanInt` and its comparison with induced virtual characters are
+statements about additive subgroups and therefore integral coefficients; see the discussion above
+of what still separates these structural results from Artin's induction theorem.
 
 ## References
 
