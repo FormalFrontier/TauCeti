@@ -240,7 +240,9 @@ companion of `TauCeti.partitionEquivSimpleFDRepClasses_apply`. -/
 @[simp]
 theorem partitionEquivSimpleFDRepClasses_symm_mk_spechtModule (μ : n.Partition) :
     (partitionEquivSimpleFDRepClasses n).symm
-      (SimpleFDRepClasses.mk (spechtModule μ)) = μ := by
+      (toSkeleton (⟨spechtModule μ, inferInstance⟩ : ObjectProperty.FullSubcategory
+        (Simple : ObjectProperty (FDRep ℚ (Equiv.Perm (Fin n)))))) = μ := by
+  rw [← SimpleFDRepClasses.mk_eq_toSkeleton]
   rw [← spechtModuleFDRepClass_def, ← partitionEquivSimpleFDRepClasses_apply,
     Equiv.symm_apply_apply]
 
@@ -267,7 +269,6 @@ theorem coe_simpleFDRepClassesEquivSimpleModuleClasses :
     obtain ⟨μ, hμ, -⟩ := existsUnique_nonempty_iso_spechtModule X
     rw [SimpleFDRepClasses.mk_eq_toSkeleton]
     rw [(SimpleFDRepClasses.mk_eq_mk_iff X (spechtModule μ)).mpr hμ]
-    rw [← SimpleFDRepClasses.mk_eq_toSkeleton (spechtModule μ)]
     rw [SimpleFDRepClasses.toSimpleSubmoduleClasses_mk]
     simp [-SimpleFDRepClasses.mk_eq_toSkeleton, simpleFDRepClassesEquivSimpleModuleClasses]
 

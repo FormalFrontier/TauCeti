@@ -132,9 +132,10 @@ noncomputable def toSimpleSubmoduleClasses [IsSemisimpleRing k[G]] :
 
 @[simp]
 theorem toSimpleSubmoduleClasses_mk [IsSemisimpleRing k[G]] (X : FDRep k G) [Simple X] :
-    toSimpleSubmoduleClasses (mk X) =
+    toSimpleSubmoduleClasses (toSkeleton (⟨X, inferInstance⟩ :
+      ObjectProperty.FullSubcategory (Simple : ObjectProperty (FDRep k G)))) =
       simpleModuleClass k[G] (_root_.Representation.asModule X.ρ) :=
-  by rw [mk_eq_toSkeleton, toSimpleSubmoduleClasses, lift_mk]
+  by rw [toSimpleSubmoduleClasses, lift_mk]
 
 end Field
 
