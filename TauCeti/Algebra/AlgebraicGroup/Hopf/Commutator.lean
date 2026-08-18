@@ -32,8 +32,6 @@ closed subgroup scheme containing the image, constructed in
 
 * `TauCeti.HopfAlgebra.commutatorAlgHom`: the coordinate algebra morphism of the commutator.
 * `TauCeti.HopfAlgebra.productMap_comp_commutatorAlgHom`: evaluation at two algebra-valued points.
-* `TauCeti.HopfAlgebra.comp_commutatorAlgHom`: evaluation against an arbitrary map from the tensor
-  square.
 
 ## References
 
@@ -98,28 +96,7 @@ theorem productMap_comp_commutatorAlgHom
       Bialgebra.TensorProduct.includeRight_toAlgHom,
       Algebra.TensorProduct.productMap_left, Algebra.TensorProduct.productMap_right,
       commutatorElement_def]
-  exact congrArg WithConv.ofConv hmap
-
-/-- Evaluation against an arbitrary algebra map out of the tensor square takes the commutator of
-its restrictions to the two tensor factors. -/
-theorem comp_commutatorAlgHom {A : Type w} [CommSemiring A] [Algebra R A]
-    (phi : H ⊗[R] H →ₐ[R] A) :
-    phi.comp (commutatorAlgHom (R := R) (H := H)) =
-      (⁅toConv (phi.comp Algebra.TensorProduct.includeLeft),
-        toConv (phi.comp Algebra.TensorProduct.includeRight)⁆).ofConv := by
-  calc
-    phi.comp (commutatorAlgHom (R := R) (H := H)) =
-        (Algebra.TensorProduct.productMap
-          (phi.comp Algebra.TensorProduct.includeLeft)
-          (phi.comp Algebra.TensorProduct.includeRight)).comp
-            (commutatorAlgHom (R := R) (H := H)) :=
-      congrArg (fun psi : H ⊗[R] H →ₐ[R] A ↦
-        psi.comp (commutatorAlgHom (R := R) (H := H)))
-        (AffineGroup.Product.productMap_restrict phi).symm
-    _ = _ := by
-      simpa only [ofConv_toConv] using
-        productMap_comp_commutatorAlgHom (R := R) (H := H)
-          (toConv (phi.comp Algebra.TensorProduct.includeLeft))
-          (toConv (phi.comp Algebra.TensorProduct.includeRight))
+  rw [AlgHom.mapValue_apply] at hmap
+  simpa only [ofConv_toConv] using congrArg WithConv.ofConv hmap
 
 end TauCeti.HopfAlgebra
