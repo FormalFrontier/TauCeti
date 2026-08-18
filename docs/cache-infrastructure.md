@@ -61,11 +61,52 @@ to sign them, so the read host must be public; only uploads use a key.
 | `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://cache.taucetiproject.org/revisions` | `pr-build.yml` read |
 | `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/artifacts` | `ci.yml` upload |
 | `LAKE_CACHE_REVISION_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/revisions` | `ci.yml` upload |
-| `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml` upload only |
+| `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml`, `publish-lake-cache` job only |
 
 Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object keys are
 `artifacts/TauCetiProject/TauCeti/<hash>.art`, so the endpoint variables hold only the prefix and
 Lake appends the scope.
+
+## Why the upload is its own job
+
+`ci.yml` publishes in two jobs. `build` compiles main and *stages* the artifacts; the separate
+`publish-lake-cache` job holds `LAKE_CACHE_KEY` and uploads them. The split is a trust boundary,
+not a convenience.
+
+`build` runs `lake build` unsandboxed, as the runner user, on whatever landed on main, and Lean
+executes code at elaboration time. `run_cmd`, `initialize` and macro-time IO are all unrestricted:
+the scope, import-boundary and `set_option` guards are textual scans, and a file that writes
+during elaboration exits 0 with no diagnostic. Such code runs with the runner user's privileges,
+so it can rewrite `$HOME/.elan/bin/lake`, prepend a directory to every later step's `PATH` through
+`$GITHUB_PATH`, or set `LD_PRELOAD` or `BASH_ENV` for every later step through `$GITHUB_ENV`.
+Hardening the individual commands that touch the key does not help: any secret placed in a later
+step of that job is a secret placed in reach of code that landed on main. (This is not reachable
+from an unmerged PR, which compiles only under landrun in `pr-build.yml`, with writes confined to
+`base/.lake` and no secret in the sandbox's `--env` allowlist.)
+
+So `build` runs `lake cache stage`, which needs no credential and touches no network, and hands
+the staging directory to `publish-lake-cache` as a workflow artifact: about 60 MB, one flat
+directory of `.ltar` files plus the mappings. That job has no checkout, no Lake workspace and no
+dependencies, so no code from this repository or from Mathlib runs anywhere in it, and it takes no
+`GITHUB_TOKEN` scopes. `lake cache put-staged` is the command for exactly this: it does not
+configure the workspace and so does not execute arbitrary user code.
+
+Because it does not configure the workspace, `put-staged` cannot derive the toolchain and platform
+halves of the upload scope, so the job passes `--rev` and `--toolchain` explicitly and relies on
+the default of no platform. That reproduces the scope `lake cache put` derived, verified by
+comparing the revision URLs the two commands emit, which are identical:
+`revisions/TauCetiProject/TauCeti/tc/leanprover--lean4---<version>/<rev>.jsonl`. The platform is
+absent because `lakefile.toml` sets `platformIndependent = true`; the staging step fails loudly if
+that ever stops being true, since a silent mismatch would publish under a scope `pr-build` never
+reads.
+
+The staged tree arrives from a job that ran code that landed on main, so `publish-lake-cache`
+checks it before pointing Lake at it: the tree must be a flat directory of regular files, and
+every string in the mappings must be a plain `<hash>.<ext>` artifact name. Lake parses an artifact
+name as everything after the first dot and joins it to the staging directory without checking that
+the result stays inside, so an unchecked name like `0.art/../../../proc/self/environ` would
+otherwise have Lake read the publishing job's environment and `PUT` it into a publicly readable
+bucket.
 
 ## Why a custom domain
 
