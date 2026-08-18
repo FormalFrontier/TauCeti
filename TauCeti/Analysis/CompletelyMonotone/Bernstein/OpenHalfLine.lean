@@ -37,10 +37,6 @@ is already known to determine the measure.
 
 ## Main declarations
 
-* `TauCeti.RepresentsLaplaceOnIoi`: a possibly infinite measure represents a function by its
-  Laplace transform on `(0, ∞)`.
-* `TauCeti.RepresentsLaplace.representsLaplaceOnIoi`: the finite-measure predicate is stronger.
-* `TauCeti.RepresentsLaplaceOnIoi.isCompletelyMonotoneOnIoi`: the easy direction.
 * `TauCeti.RepresentsLaplaceOnIoi.unique`: at most one measure represents a given function.
 * `TauCeti.exists_representsLaplaceOnIoi_of_isCompletelyMonotoneOnIoi`: the existence half.
 * `TauCeti.hausdorff_bernstein_widder_onIoi`,
@@ -160,58 +156,6 @@ private lemma isFiniteMeasure_expTilt_of_nonpos (μ : Measure ℝ≥0) [IsFinite
   · exact absurd h one_ne_zero
   · exact h
 
-/-! ## The open-half-line representation predicate -/
-
-/-- A positive measure on `ℝ≥0` **represents `f` by its Laplace transform on `(0, ∞)`** if the
-exponential kernel `p ↦ e^{-tp}` is integrable against it for every `t > 0` and the resulting
-transform agrees with `f` there.
-
-The measure is *not* required to be finite: that is the whole point of the open-half-line
-statement, and the integrability clause is what takes over the role finiteness plays in
-`TauCeti.RepresentsLaplace`. -/
-def RepresentsLaplaceOnIoi (μ : Measure ℝ≥0) (f : ℝ → ℝ) : Prop :=
-  (∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) ∧
-    ∀ t : ℝ, 0 < t → f t = laplaceTransform μ t
-
-/-- `RepresentsLaplaceOnIoi μ f` unfolds to integrability of the exponential kernel at every
-positive parameter together with equality with the Laplace transform there. -/
-lemma representsLaplaceOnIoi_iff :
-    RepresentsLaplaceOnIoi μ f ↔
-      (∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) ∧
-        ∀ t : ℝ, 0 < t → f t = laplaceTransform μ t :=
-  Iff.rfl
-
-namespace RepresentsLaplaceOnIoi
-
-/-- The exponential kernel is integrable against a representing measure at positive
-parameters. -/
-lemma integrable (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
-    Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ := h.1 t ht
-
-/-- A representing measure has the advertised Laplace-transform values on `(0, ∞)`. -/
-lemma eq_laplaceTransform (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
-    f t = laplaceTransform μ t := h.2 t ht
-
-/-- A representation transports along agreement on the positive half-line: the predicate
-constrains `f` only there. -/
-protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplaceOnIoi μ f) (h : EqOn g f (Ioi 0)) :
-    RepresentsLaplaceOnIoi μ g :=
-  ⟨hf.1, fun _ ht => (h (mem_Ioi.mpr ht)).trans (hf.eq_laplaceTransform ht)⟩
-
-/-- **Easy direction**: a represented function is completely monotone on `(0, ∞)`. -/
-lemma isCompletelyMonotoneOnIoi (h : RepresentsLaplaceOnIoi μ f) :
-    IsCompletelyMonotoneOnIoi f :=
-  (isCompletelyMonotoneOnIoi_laplaceTransform μ h.1).congr fun _ ht => h.eq_laplaceTransform ht
-
-end RepresentsLaplaceOnIoi
-
-/-- A finite representing measure represents on the open half-line as well: the finiteness
-clause supplies the integrability clause, and `(0, ∞) ⊆ [0, ∞)`. -/
-lemma RepresentsLaplace.representsLaplaceOnIoi (h : RepresentsLaplace μ f) :
-    RepresentsLaplaceOnIoi μ f := by
-  have := h.isFiniteMeasure
-  exact ⟨fun _ ht => integrable_exp_neg_mul μ ht.le, fun _ ht => h.eq_laplaceTransform ht.le⟩
-
 /-! ## Uniqueness -/
 
 /-- Tilting a representing measure by `e^{-p}` produces a finite measure. -/
@@ -287,7 +231,7 @@ theorem exists_representsLaplaceOnIoi_of_isCompletelyMonotoneOnIoi
     rcases le_total a 1 with h | h
     · exact expTilt_eq_of_representsLaplace_shift h (hσ a ha) (hσ 1 one_pos)
     · exact (expTilt_eq_of_representsLaplace_shift h (hσ 1 one_pos) (hσ a ha)).symm
-  refine ⟨expTilt 1 (σ 1), fun t ht => ?_, fun t ht => ?_⟩
+  refine ⟨expTilt 1 (σ 1), representsLaplaceOnIoi_iff.mpr ⟨fun t ht => ?_, fun t ht => ?_⟩⟩
   · have hhalf : (0 : ℝ) < t / 2 := by linarith
     have _ := (hσ (t / 2) hhalf).isFiniteMeasure
     rw [← key (t / 2) hhalf, integrable_exp_neg_mul_expTilt_iff]
@@ -347,7 +291,7 @@ theorem representsLaplaceOnIoi_one_div :
     intro t ht
     refine IntegrableOn.congr_fun ?_ (fun x hx => (hcomp t hx).symm) measurableSet_Ioi
     simpa [neg_mul] using exp_neg_integrableOn_Ioi (0 : ℝ) ht
-  refine ⟨fun t ht => ?_, fun t ht => ?_⟩
+  refine representsLaplaceOnIoi_iff.mpr ⟨fun t ht => ?_, fun t ht => ?_⟩
   · rw [integrable_map_measure ((continuous_exp_neg_mul t).aestronglyMeasurable) hmeas]
     exact hint t ht
   · rw [laplaceTransform_apply,
