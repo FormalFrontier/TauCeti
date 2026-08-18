@@ -314,6 +314,13 @@ noncomputable def liftEquiv : AdditiveInvariant rels G ≃ (PresentedK0 rels →
   left_inv a := by ext X; exact lift_of a X
   right_inv f := (lift_unique _ f fun _ => rfl).symm
 
+@[simp]
+lemma liftEquiv_apply (a : AdditiveInvariant rels G) : liftEquiv a = lift a := (rfl)
+
+@[simp]
+lemma liftEquiv_symm_apply_obj (f : PresentedK0 rels →+ G) (X : C) :
+    ((liftEquiv (rels := rels) (G := G)).symm f).obj X = f (of X) := (rfl)
+
 /-- The comparison map to a presentation with more relations: enlarging the family of relations
 factors the class map. Taking `rels` to be the split relations and `rels'` the conflations of an
 exact structure, this is the canonical comparison from split to exact `K₀`. -/
