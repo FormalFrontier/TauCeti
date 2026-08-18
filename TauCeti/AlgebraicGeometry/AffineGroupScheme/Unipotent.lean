@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Smooth
 
@@ -110,8 +109,9 @@ theorem smoothUnipotentAffineGroupSchemeProperty_inverseImage
     (smoothUnipotentAffineGroupSchemeProperty k).inverseImage
         (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).functor =
       (smoothUnipotentCommHopfAlgProperty k).op := by
-  unfold smoothUnipotentAffineGroupSchemeProperty
-  exact ObjectProperty.inverseImage_functor_inverseImage_inverse _ _
+  ext H
+  exact ((smoothUnipotentCommHopfAlgProperty k).op.prop_iff_of_iso
+    ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat k).unitIso.app H)).symm
 
 /-- `Spec` restricts to an anti-equivalence from smooth unipotent finite-type commutative Hopf
 algebras to smooth unipotent affine group schemes. -/
