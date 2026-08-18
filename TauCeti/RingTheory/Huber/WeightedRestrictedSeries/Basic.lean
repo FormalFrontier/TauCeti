@@ -20,10 +20,10 @@ For a commutative nonarchimedean ring `A` and a family `T` of subsets of `A` ind
 variables, Wedhorn defines the *weighted* restricted power series ring
 
 ```text
-A⟨X⟩_T := { ∑ aν Xν ∈ A[[X]] ; aν ∈ Tν · U for every open subgroup U of A and almost all ν },
+A⟨X⟩_T := { ∑ aν Xν ∈ A[[X]] | aν ∈ Tν · U for every open subgroup U of A and almost all ν },
 ```
 
-with the subgroups `U⟨X⟩ := { ∑ aν Xν ∈ A⟨X⟩_T ; aν ∈ Tν · U for all ν }` as a fundamental
+with the subgroups `U⟨X⟩ := { ∑ aν Xν ∈ A⟨X⟩_T | aν ∈ Tν · U for all ν }` as a fundamental
 system of neighbourhoods of zero. Here `Tν := T₁^ν₁ ⋯ Tₖ^νₖ`. Taking every `Tᵢ = {1}` recovers
 the ordinary restricted series `A⟨X⟩`.
 
@@ -128,7 +128,7 @@ Mathlib weights by a polyradius `c : σ → ℝ` over a *normed* ring, asking th
 nonarchimedean but in general carries no norm, so no polyradius is available to state that
 condition, and the weight family here is a family of *subsets* `Tᵢ ⊆ A` acting on neighbourhood
 subgroups rather than a family of reals scaling coefficient norms. The two do agree at the
-trivial weight when the norm is *ultrametric*: the balls `{a ; ‖a‖ < r}` are then additive
+trivial weight when the norm is *ultrametric*: the balls `{a | ‖a‖ < r}` are then additive
 subgroups, and every open subgroup contains one, so quantifying over all open subgroups is the
 same as quantifying over the balls and the condition becomes `‖coeff ν f‖ → 0` along the
 cofinite filter. Over a general normed ring they do not agree: over `ℝ`, as above, the condition
