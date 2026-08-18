@@ -29,6 +29,8 @@ orbits of the permutation action, by `TauCeti.Sym.ofFn_eq_ofFn_iff`. Nothing her
 
 * `TauCeti.Sym.ofFn`: the ordered tuple `f : Fin n → α` read as a point of `Sym α n`, and
   `TauCeti.Sym.ofFn_surjective`, that every unordered tuple arises this way.
+* `TauCeti.Sym.map_ofFn` and `TauCeti.Sym.ofFn_fin_append`: `ofFn` intertwines postcomposition
+  with `Sym.map`, and concatenation of ordered tuples with `Sym.append`.
 * `TauCeti.Sym.ofFn_eq_ofFn_iff`: two ordered tuples have the same underlying unordered tuple
   exactly when one is a reindexing of the other by a permutation.
 * `TauCeti.symFinTwoEquiv`: an unordered `d`-tuple over `Fin 2` is determined by how many of its
@@ -54,7 +56,7 @@ namespace TauCeti
 
 namespace Sym
 
-variable {α : Type*} {n : ℕ}
+variable {α β : Type*} {m n : ℕ}
 
 /-! ### Ordered tuples as unordered ones -/
 
@@ -90,6 +92,18 @@ theorem ofFn_surjective : Function.Surjective (ofFn : (Fin n → α) → Sym α 
 @[simp]
 theorem ofFn_cons (a : α) (f : Fin n → α) : ofFn (Fin.cons a f) = a ::ₛ ofFn f :=
   Subtype.ext <| by simp [Sym.coe_cons, List.ofFn_succ]
+
+/-- Applying a function to every entry of an ordered tuple applies it to every point of the
+unordered one. -/
+@[simp]
+theorem map_ofFn (f : α → β) (g : Fin n → α) : Sym.map f (ofFn g) = ofFn (f ∘ g) :=
+  Sym.coe_injective <| by simp [Sym.coe_map]
+
+/-- Concatenating two ordered tuples adjoins the two unordered ones. -/
+@[simp]
+theorem ofFn_fin_append (f : Fin m → α) (g : Fin n → α) :
+    ofFn (Fin.append f g) = (ofFn f).append (ofFn g) :=
+  Sym.coe_injective <| by simp [Sym.coe_append, List.ofFn_fin_append]
 
 /-! ### The fibres of the quotient map -/
 

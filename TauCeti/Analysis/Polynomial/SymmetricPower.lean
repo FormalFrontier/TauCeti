@@ -10,6 +10,7 @@ public import Mathlib.Analysis.Polynomial.CauchyBound
 public import Mathlib.Topology.Algebra.Polynomial
 public import TauCeti.RingTheory.Polynomial.SymmetricPower
 public import TauCeti.Topology.Sym
+public import TauCeti.Topology.Sym.Disjoint
 
 /-!
 # The elementary symmetric chart is a homeomorphism
@@ -38,6 +39,10 @@ Both halves are elementary, but neither is formal:
 * `TauCeti.Sym.isProperMap_coeffEquiv_comp_ofFn`: consequently the coefficient map
   `(Fin n → K) → (Fin n → K)` is proper.
 * `TauCeti.Sym.coeffHomeomorph`: the **elementary symmetric chart** `Sym K n ≃ₜ (Fin n → K)`.
+* `TauCeti.Sym.isOpenEmbedding_coeffEquiv_map_val`: the chart on a coordinate patch, that the
+  symmetric power of an open set is an open subspace of affine space.
+* `TauCeti.Sym.isOpenEmbedding_coeffEquiv_ofFn_val`: the chart on a product of pairwise disjoint
+  open sets, one point in each.
 
 Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
 structure (elementary symmetric functions)", after Ozsváth--Szabó
@@ -51,7 +56,7 @@ public section
 
 namespace TauCeti
 
-open Filter Polynomial
+open Filter Polynomial Topology
 
 namespace Sym
 
@@ -173,6 +178,33 @@ theorem coeffHomeomorph_apply (s : Sym K n) : coeffHomeomorph K n s = coeffEquiv
 theorem coeffHomeomorph_symm_apply (f : Fin n → K) :
     ((coeffHomeomorph K n).symm f : Sym K n) = (coeffEquiv K n).symm f := by
   simp [coeffHomeomorph]
+
+variable {K n}
+
+/-- **The elementary symmetric chart on a coordinate patch.** The `n`-th symmetric power of an open
+set `U` is an open subspace of affine `n`-space, charted by the elementary symmetric functions of
+its points.
+
+This is the local model of the symmetric power of a Riemann surface at a tuple all of whose points
+lie in one coordinate patch; a general tuple is split into such groups by
+`TauCeti.Sym.isOpenEmbedding_appendSubtype`. -/
+theorem isOpenEmbedding_coeffEquiv_map_val {U : Set K} (hU : IsOpen U) :
+    IsOpenEmbedding fun s : Sym U n => coeffEquiv K n (Sym.map Subtype.val s) := by
+  have hemb := (coeffHomeomorph K n).isOpenEmbedding.comp
+    (isOpenEmbedding_map (n := n) hU.isOpenEmbedding_subtypeVal)
+  simpa [Function.comp_def] using hemb
+
+/-- **The elementary symmetric chart away from the diagonal.** On a family of pairwise disjoint
+open sets, one point in each, the elementary symmetric functions chart the tuple of points: the
+product `U 1 × ⋯ × U n` is an open subspace of affine `n`-space.
+
+For `Sym^g` of a Riemann surface this is the chart in which the totally real torus of a Heegaard
+diagram, a product of `g` curves lying in disjoint pieces, is read. -/
+theorem isOpenEmbedding_coeffEquiv_ofFn_val {U : Fin n → Set K} (hU : ∀ i, IsOpen (U i))
+    (h : Pairwise (Function.onFun Disjoint U)) :
+    IsOpenEmbedding fun f : (i : Fin n) → U i => coeffEquiv K n (ofFn fun i => (f i : K)) := by
+  have hemb := (coeffHomeomorph K n).isOpenEmbedding.comp (isOpenEmbedding_ofFn_val hU h)
+  simpa [Function.comp_def] using hemb
 
 end Chart
 
