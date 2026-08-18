@@ -47,16 +47,20 @@ open Set
 
 namespace TauCeti.Contour
 
+/-- The extension of a constant path is the constant function on `ℝ`, hence piecewise `C¹`. -/
+private theorem isPiecewiseC1On_refl_extend (x : ℂ) :
+    IsPiecewiseC1On (Path.refl x).extend 0 1 := by
+  simpa only [Path.refl_extend, ContinuousMap.coe_const] using
+    IsPiecewiseC1On.of_contDiffOn (γ := Function.const ℝ x) contDiff_const.contDiffOn
+
 /-- A piecewise-`C¹` loop continuously homotopic to its constant path through points avoiding `w`
 has winding number zero about `w`. -/
 theorem windingNumber_eq_zero_of_pathHomotopy_refl {x w : ℂ} {p : Path x x}
     (hp : IsPiecewiseC1On p.extend 0 1) (φ : p.Homotopy (Path.refl x))
     (havoid : ∀ st : I × I, φ st ≠ w) :
     windingNumber p.extend 0 1 w = 0 := by
-  have hrefl : IsPiecewiseC1On (Path.refl x).extend 0 1 := by
-    rw [Path.refl_extend]
-    change IsPiecewiseC1On (fun _ : ℝ => x) 0 1
-    exact IsPiecewiseC1On.of_contDiffOn (contDiff_const.contDiffOn)
+  have hrefl : IsPiecewiseC1On (Path.refl x).extend 0 1 :=
+    isPiecewiseC1On_refl_extend x
   rw [windingNumber_eq_of_pathHomotopy φ hp hrefl havoid]
   rw [Path.refl_extend]
   exact windingNumber_const x 0 1 w
@@ -69,10 +73,8 @@ This is one direction only: a null-homologous loop need not be null-homotopic. -
 theorem isNullHomologous_of_pathHomotopy_refl {x : ℂ} {p : Path x x} {Ω : Set ℂ}
     (hp : IsPiecewiseC1On p.extend 0 1) (φ : p.Homotopy (Path.refl x))
     (hφΩ : ∀ st : I × I, φ st ∈ Ω) : IsNullHomologous p.extend 0 1 Ω := by
-  have hrefl : IsPiecewiseC1On (Path.refl x).extend 0 1 := by
-    rw [Path.refl_extend]
-    change IsPiecewiseC1On (fun _ : ℝ => x) 0 1
-    exact IsPiecewiseC1On.of_contDiffOn (contDiff_const.contDiffOn)
+  have hrefl : IsPiecewiseC1On (Path.refl x).extend 0 1 :=
+    isPiecewiseC1On_refl_extend x
   exact (isNullHomologous_iff_of_pathHomotopy φ hp hrefl hφΩ).2
     (by
       rw [Path.refl_extend]

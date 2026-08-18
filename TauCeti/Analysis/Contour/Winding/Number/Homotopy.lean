@@ -35,7 +35,7 @@ theorem.
   in a smooth homotopy.
 * `curveIntegral_inv_sub_smul_id_eq_of_pathHomotopy` is the smooth Stokes step: a `C²` homotopy
   through `ℂ \ {w}` preserves the curve integral of the Cauchy-kernel `1`-form.
-* `exists_isPiecewiseC1On_dist_lt_of_continuousMap` gives endpoint-preserving smooth
+* `exists_isPiecewiseC1On_dist_lt_of_continuousMap` gives endpoint-preserving piecewise-`C¹`
   approximations of continuous complex paths.
 * `windingNumber_eq_of_pathHomotopy` proves the Layer 0 homotopy invariance result without any
   regularity hypothesis on the homotopy.
@@ -76,13 +76,15 @@ private theorem contDiff_bernsteinCurve (n : ℕ) (f : C(I, ℂ)) :
   unfold bernsteinCurve
   fun_prop
 
-/-- **Endpoint-preserving smooth approximation of a continuous complex path.** Every continuous
-map from the unit interval to `ℂ` is uniformly approximated, to any positive tolerance, by a
-globally smooth curve with the same values at `0` and `1`.
+/-- **Endpoint-preserving piecewise-`C¹` approximation of a continuous complex path.** Every
+continuous map from the unit interval to `ℂ` is uniformly approximated, to any positive
+tolerance, by a piecewise-`C¹` curve with the same values at `0` and `1`.
 
-The approximants are Mathlib's Bernstein approximations, interpreted as polynomials on `ℝ`.
-This is the regularization step used to compare the merely continuous intermediate paths of a
-path homotopy with Tau Ceti's piecewise-`C¹` winding number. -/
+The approximants are Mathlib's Bernstein approximations, interpreted as polynomials on `ℝ`, so
+they are in fact globally smooth; the conclusion records only the piecewise-`C¹` regularity that
+the winding number consumes. This is the regularization step used to compare the merely
+continuous intermediate paths of a path homotopy with Tau Ceti's piecewise-`C¹` winding
+number. -/
 theorem exists_isPiecewiseC1On_dist_lt_of_continuousMap (f : C(I, ℂ)) {ε : ℝ} (hε : 0 < ε) :
     ∃ γ : ℝ → ℂ, IsPiecewiseC1On γ 0 1 ∧ γ 0 = f 0 ∧ γ 1 = f 1 ∧
       ∀ t : I, dist (γ t) (f t) < ε := by
@@ -249,8 +251,9 @@ theorem windingNumber_eq_of_pathHomotopy {x y w : ℂ} {p q : Path x y} (φ : p.
       (div_pos hρ (by norm_num))
   have hγpw (k : Fin (N + 1)) : IsPiecewiseC1On (γ k) 0 1 := (hγ k).1
   have hγclose (k : Fin (N + 1)) (t : I) : dist (γ k t) (φ (bernstein.z k, t)) < ρ / 5 := by
-    change dist (γ k t) ((φ.eval (bernstein.z k)) t) < ρ / 5
-    simpa only [slice, Path.coe_toContinuousMap] using (hγ k).2.2.2 t
+    simpa only [slice, Path.coe_toContinuousMap, Path.Homotopy.eval_apply,
+      ContinuousMap.Homotopy.curry_apply, ContinuousMap.HomotopyWith.coe_toHomotopy] using
+      (hγ k).2.2.2 t
   have hγzero (k : Fin (N + 1)) : γ k 0 = x := by
     calc
       γ k 0 = slice k 0 := (hγ k).2.1
