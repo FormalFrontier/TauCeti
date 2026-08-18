@@ -53,10 +53,10 @@ the selected subgroup orders are invertible,
 `TauCeti.ClassFunction.indVirtualCharacters_eq_indCharacterSpanInt` identifies those two integral
 targets.  `TauCeti.RepresentationTheory.Induction.Artin` supplies the arithmetic half: it proves the
 sharp `|G|` statement, specializes this comparison to its conventional induced-character-span
-endpoint, and bundles the rationally surjective map after tensoring with `ℚ`.  Brauer's induction
-theorem and Brauer's characterization of characters remain open.  The covering-family formulation
-is stated here for its own sake: the elementary subgroups Brauer's theorem uses satisfy the same
-hypothesis.
+endpoint, and proves the rational surjectivity of the direct-sum induction map bundled in
+`TauCeti.RepresentationTheory.Induction.Ideal`.  Brauer's induction theorem and Brauer's
+characterization of characters remain open.  The covering-family formulation is stated here for
+its own sake: the elementary subgroups Brauer's theorem uses satisfy the same hypothesis.
 
 ## Main definitions
 
