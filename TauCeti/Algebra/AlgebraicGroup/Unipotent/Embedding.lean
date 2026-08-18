@@ -41,8 +41,9 @@ roadmap's smooth formulation.
 * `iff_exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom` in the
   `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty` namespace: the upper-unitriangular
   embedding characterization.
-* `exists_isClosedImmersion_upperUnitriangularGroupScheme` in that namespace: the represented
-  affine group embeds as a closed subgroup of some `U_n`.
+* `iff_exists_isClosedImmersion_upperUnitriangularGroupScheme` in that namespace: the represented
+  affine group is geometrically unipotent exactly when it embeds as a closed subgroup of some
+  `U_n`.
 
 ## References
 
@@ -59,7 +60,7 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-open AlgebraicGeometry WithConv
+open AlgebraicGeometry CategoryTheory WithConv
 
 universe u
 
@@ -200,6 +201,47 @@ theorem exists_isClosedImmersion_upperUnitriangularGroupScheme
   obtain ⟨M, n, b, hb, hclosed⟩ :=
     exists_isClosedImmersion_upperUnitriangularCoordinateGroupSchemeHom hH
   exact ⟨n, upperUnitriangularCoordinateGroupSchemeHom (H := H) b hb, hclosed⟩
+
+/-- A closed immersion of the represented affine group into an upper-unitriangular group makes it
+geometrically unipotent. -/
+theorem of_isClosedImmersion_upperUnitriangularGroupScheme
+    {n : ℕ}
+    (f : (hopfSpec (CommRingCat.of k)).obj (Opposite.op (CommHopfAlgCat.of k H)) ⟶
+      UpperUnitriangular.groupScheme k (Fin n))
+    (hclosed : IsClosedImmersion f.hom.hom.left) :
+    geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H) := by
+  let F := hopfSpec (CommRingCat.of k)
+  let hF := hopfSpec.fullyFaithful (R := CommRingCat.of k)
+  let e := eqToHom (UpperUnitriangular.groupScheme_def k (Fin n))
+  let _ : IsIso e.hom.hom.left :=
+    ((Over.forget (Spec (CommRingCat.of k))).mapIso
+      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso
+        (eqToIso (UpperUnitriangular.groupScheme_def k (Fin n))))).isIso_hom
+  let φ : (CommHopfAlgCat.of k (UpperUnitriangular.coordinateHopfAlgebra k (Fin n))) ⟶
+      (CommHopfAlgCat.of k H) := (hF.preimage (f ≫ e)).unop
+  apply geometricallyUnipotentPointsCommHopfAlgProperty_of_surjective k φ
+  · apply (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff
+      (S := CommRingCat.of k) φ).mp
+    rw [show F.map φ.op = f ≫ e by
+      simpa only [φ, Quiver.Hom.op_unop] using hF.map_preimage (f ≫ e)]
+    simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
+    rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
+    exact hclosed
+  · exact UpperUnitriangular.geometricallyUnipotentPointsCommHopfAlgProperty_coordinateHopfAlgebra
+      n k
+
+/-- A reduced finite-type affine group over an algebraically closed field is geometrically
+unipotent if and only if it embeds as a closed subgroup of some upper-unitriangular group `U_n`. -/
+theorem iff_exists_isClosedImmersion_upperUnitriangularGroupScheme
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H] :
+    geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H) ↔
+      ∃ (n : ℕ)
+        (f : (hopfSpec (CommRingCat.of k)).obj (Opposite.op (CommHopfAlgCat.of k H)) ⟶
+          UpperUnitriangular.groupScheme k (Fin n)), IsClosedImmersion f.hom.hom.left := by
+  constructor
+  · exact exists_isClosedImmersion_upperUnitriangularGroupScheme
+  · rintro ⟨n, f, hclosed⟩
+    exact of_isClosedImmersion_upperUnitriangularGroupScheme f hclosed
 
 /-- A reduced finite-type affine group over an algebraically closed field has only unipotent
 points if and only if a finite-dimensional subcomodule of its regular comodule has an
