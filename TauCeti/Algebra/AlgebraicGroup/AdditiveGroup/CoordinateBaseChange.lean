@@ -11,8 +11,8 @@ public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Scheme
 /-!
 # Base change of the additive-group coordinate algebra
 
-For a commutative ring extension `k → K`, scalar extension of the coordinate Hopf algebra of the
-additive group is canonically the coordinate Hopf algebra of the additive group over `K`:
+For a commutative semiring extension `k → K`, scalar extension of the coordinate bialgebra of the
+additive monoid is canonically the coordinate bialgebra of the additive monoid over `K`:
 
 ```text
 K ⊗[k] k[X] ≃ₐc[K] K[X].
@@ -25,8 +25,7 @@ equivalence preserves the counit and comultiplication.
 
 ## Main declarations
 
-* `TauCeti.AdditiveGroup.scalarTensorAlgEquiv`: the algebra equivalence after scalar extension.
-* `TauCeti.AdditiveGroup.scalarTensorBialgEquiv`: the corresponding bialgebra equivalence.
+* `TauCeti.AdditiveGroup.scalarTensorBialgEquiv`: the bialgebra equivalence after scalar extension.
 * `TauCeti.AdditiveGroup.scalarTensorBialgEquiv_tmul_ι`: its formula on scalar multiples of the
   additive coordinate.
 
@@ -47,7 +46,7 @@ namespace TauCeti.AdditiveGroup
 
 universe u v
 
-variable (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
+variable (k : Type u) (K : Type v) [CommSemiring k] [CommSemiring K] [Algebra k K]
 
 /-- The forward algebra map from the scalar extension of the additive coordinate algebra. -/
 private noncomputable def toScalarTensor :
@@ -79,6 +78,26 @@ private theorem fromScalarTensor_ι (s : K) :
       s • (1 ⊗ₜ[k] SymmetricAlgebra.ι k k 1) := by
   simp [fromScalarTensor, LinearMap.toSpanSingleton_apply]
 
+/-- Moving a scalar from `k` across the tensor product agrees with applying it to the additive
+coordinate. -/
+private theorem algebraMap_smul_tmul_one_ι (r : k) :
+    algebraMap k K r • ((1 : K) ⊗ₜ[k] SymmetricAlgebra.ι k k 1) =
+      (1 : K) ⊗ₜ[k] SymmetricAlgebra.ι k k r := by
+  rw [IsScalarTower.algebraMap_smul, TensorProduct.smul_tmul', TensorProduct.smul_tmul,
+    ← map_smul, smul_eq_mul, mul_one]
+
+private theorem fromScalarTensor_toScalarTensor_tmul_ι (r : k) :
+    fromScalarTensor k K (toScalarTensor k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) =
+      1 ⊗ₜ[k] SymmetricAlgebra.ι k k r := by
+  rw [toScalarTensor_tmul_ι, map_smul, fromScalarTensor_ι]
+  simpa only [one_smul] using algebraMap_smul_tmul_one_ι k K r
+
+private theorem toScalarTensor_fromScalarTensor_ι (s : K) :
+    toScalarTensor k K (fromScalarTensor k K (SymmetricAlgebra.ι K K s)) =
+      SymmetricAlgebra.ι K K s := by
+  rw [fromScalarTensor_ι, map_smul, toScalarTensor_tmul_ι]
+  simpa [Algebra.smul_def] using (map_smul (SymmetricAlgebra.ι K K) s (1 : K)).symm
+
 private theorem fromScalarTensor_comp_toScalarTensor :
     (fromScalarTensor k K).comp (toScalarTensor k K) = AlgHom.id K _ := by
   apply Algebra.TensorProduct.ext
@@ -88,27 +107,20 @@ private theorem fromScalarTensor_comp_toScalarTensor :
   · apply SymmetricAlgebra.algHom_ext
     apply LinearMap.ext
     intro r
-    change fromScalarTensor k K (toScalarTensor k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) =
-      1 ⊗ₜ[k] SymmetricAlgebra.ι k k r
-    rw [toScalarTensor_tmul_ι, map_smul, fromScalarTensor_ι]
-    rw [one_smul, IsScalarTower.algebraMap_smul, TensorProduct.smul_tmul',
-      TensorProduct.smul_tmul, ← map_smul, smul_eq_mul, mul_one]
+    exact fromScalarTensor_toScalarTensor_tmul_ι k K r
 
 private theorem toScalarTensor_comp_fromScalarTensor :
     (toScalarTensor k K).comp (fromScalarTensor k K) = AlgHom.id K _ := by
   apply SymmetricAlgebra.algHom_ext
   apply LinearMap.ext
   intro s
-  change toScalarTensor k K (fromScalarTensor k K (SymmetricAlgebra.ι K K s)) =
-    SymmetricAlgebra.ι K K s
-  rw [fromScalarTensor_ι, map_smul, toScalarTensor_tmul_ι]
-  simpa [Algebra.smul_def] using (map_smul (SymmetricAlgebra.ι K K) s (1 : K)).symm
+  exact toScalarTensor_fromScalarTensor_ι k K s
 
 /-- **The additive coordinate algebra commutes with scalar extension.**
 
 The equivalence sends `s ⊗ ι(r)` to `s • ι(algebraMap k K r)` and sends the target generator
 `ι(t)` back to `t • (1 ⊗ ι(1))`. -/
-noncomputable def scalarTensorAlgEquiv :
+private noncomputable def scalarTensorAlgEquiv :
     K ⊗[k] SymmetricAlgebra k k ≃ₐ[K] SymmetricAlgebra K K :=
   AlgEquiv.ofAlgHom (toScalarTensor k K) (fromScalarTensor k K)
     (toScalarTensor_comp_fromScalarTensor k K)
@@ -117,7 +129,7 @@ noncomputable def scalarTensorAlgEquiv :
 /-- On scalar multiples of the base-changed additive coordinate, the algebra equivalence applies
 the scalar and extends the coefficient from `k` to `K`. -/
 @[simp]
-theorem scalarTensorAlgEquiv_tmul_ι (s : K) (r : k) :
+private theorem scalarTensorAlgEquiv_tmul_ι (s : K) (r : k) :
     scalarTensorAlgEquiv k K (s ⊗ₜ[k] SymmetricAlgebra.ι k k r) =
       s • SymmetricAlgebra.ι K K (algebraMap k K r) := by
   rw [scalarTensorAlgEquiv, AlgEquiv.ofAlgHom_apply]
@@ -126,7 +138,7 @@ theorem scalarTensorAlgEquiv_tmul_ι (s : K) (r : k) :
 /-- The algebra equivalence identifies the scalar copy of `K` in the tensor product with the
 scalar copy of `K` in the target. -/
 @[simp]
-theorem scalarTensorAlgEquiv_tmul_one (s : K) :
+private theorem scalarTensorAlgEquiv_tmul_one (s : K) :
     scalarTensorAlgEquiv k K (s ⊗ₜ[k] 1) = algebraMap K (SymmetricAlgebra K K) s := by
   rw [scalarTensorAlgEquiv, AlgEquiv.ofAlgHom_apply]
   exact toScalarTensor_tmul_one k K s
@@ -134,11 +146,20 @@ theorem scalarTensorAlgEquiv_tmul_one (s : K) :
 /-- The inverse algebra equivalence sends the additive coordinate over `K` to the corresponding
 base-changed coordinate. -/
 @[simp]
-theorem scalarTensorAlgEquiv_symm_ι (s : K) :
+private theorem scalarTensorAlgEquiv_symm_ι (s : K) :
     (scalarTensorAlgEquiv k K).symm (SymmetricAlgebra.ι K K s) =
       s • (1 ⊗ₜ[k] SymmetricAlgebra.ι k k 1) := by
   rw [scalarTensorAlgEquiv, AlgEquiv.ofAlgHom_symm_apply]
   exact fromScalarTensor_ι k K s
+
+private theorem scalarTensorAlgEquiv_counit_tmul_ι (r : k) :
+    (Bialgebra.counitAlgHom K (SymmetricAlgebra K K))
+        (scalarTensorAlgEquiv k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) =
+      (Bialgebra.counitAlgHom K (K ⊗[k] SymmetricAlgebra k k))
+        (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r) := by
+  rw [scalarTensorAlgEquiv_tmul_ι]
+  simpa using SymmetricAlgebra.algebraMapInv_ι
+    (R := K) (M := K) (algebraMap k K r)
 
 private theorem scalarTensorAlgEquiv_counit_comp :
     (Bialgebra.counitAlgHom K (SymmetricAlgebra K K)).comp
@@ -151,13 +172,28 @@ private theorem scalarTensorAlgEquiv_counit_comp :
   · apply SymmetricAlgebra.algHom_ext
     apply LinearMap.ext
     intro r
-    change (Bialgebra.counitAlgHom K (SymmetricAlgebra K K))
-        (scalarTensorAlgEquiv k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) =
-      (Bialgebra.counitAlgHom K (K ⊗[k] SymmetricAlgebra k k))
-        (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)
-    rw [scalarTensorAlgEquiv_tmul_ι]
-    simpa using SymmetricAlgebra.algebraMapInv_ι
-      (R := K) (M := K) (algebraMap k K r)
+    exact scalarTensorAlgEquiv_counit_tmul_ι k K r
+
+private theorem scalarTensorAlgEquiv_comul_tmul_ι (r : k) :
+    (Algebra.TensorProduct.map (scalarTensorAlgEquiv k K).toAlgHom
+        (scalarTensorAlgEquiv k K).toAlgHom)
+        (Coalgebra.comul (R := K) (A := K ⊗[k] SymmetricAlgebra k k)
+          (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) =
+      Coalgebra.comul (R := K) (A := SymmetricAlgebra K K)
+        (scalarTensorAlgEquiv k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) := by
+  rw [scalarTensorAlgEquiv_tmul_ι]
+  rw [TensorProduct.comul_tmul, Bialgebra.comul_one, SymmetricAlgebra.comul_ι]
+  simp only [TensorProduct.tmul_add, map_add, Algebra.TensorProduct.one_def,
+    TensorProduct.AlgebraTensorModule.tensorTensorTensorComm_tmul,
+    Algebra.TensorProduct.map_tmul]
+  have hι : (scalarTensorAlgEquiv k K).toAlgHom
+      (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r) =
+      SymmetricAlgebra.ι K K (algebraMap k K r) := by
+    simpa only [AlgEquiv.coe_toAlgHom, one_smul] using
+      scalarTensorAlgEquiv_tmul_ι k K 1 r
+  have h_one : (scalarTensorAlgEquiv k K).toAlgHom (1 ⊗ₜ[k] 1) = 1 := by
+    exact scalarTensorAlgEquiv_tmul_one k K 1
+  rw [hι, h_one, one_smul, SymmetricAlgebra.comul_ι]
 
 private theorem scalarTensorAlgEquiv_map_comp_comul :
     (Algebra.TensorProduct.map (scalarTensorAlgEquiv k K).toAlgHom
@@ -179,29 +215,10 @@ private theorem scalarTensorAlgEquiv_map_comp_comul :
   · apply SymmetricAlgebra.algHom_ext
     apply LinearMap.ext
     intro r
-    change (Algebra.TensorProduct.map (scalarTensorAlgEquiv k K).toAlgHom
-        (scalarTensorAlgEquiv k K).toAlgHom)
-        (Coalgebra.comul (R := K) (A := K ⊗[k] SymmetricAlgebra k k)
-          (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r)) =
-      Coalgebra.comul (R := K) (A := SymmetricAlgebra K K)
-        (scalarTensorAlgEquiv k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r))
-    rw [scalarTensorAlgEquiv_tmul_ι]
-    rw [TensorProduct.comul_tmul, Bialgebra.comul_one, SymmetricAlgebra.comul_ι]
-    simp only [TensorProduct.tmul_add, map_add, Algebra.TensorProduct.one_def,
-      TensorProduct.AlgebraTensorModule.tensorTensorTensorComm_tmul,
-      Algebra.TensorProduct.map_tmul]
-    have hι : (scalarTensorAlgEquiv k K).toAlgHom
-        (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r) =
-        SymmetricAlgebra.ι K K (algebraMap k K r) := by
-      change scalarTensorAlgEquiv k K (1 ⊗ₜ[k] SymmetricAlgebra.ι k k r) = _
-      simpa only [one_smul] using scalarTensorAlgEquiv_tmul_ι k K 1 r
-    have h_one : (scalarTensorAlgEquiv k K).toAlgHom (1 ⊗ₜ[k] 1) = 1 := by
-      change scalarTensorAlgEquiv k K (1 ⊗ₜ[k] 1) = _
-      exact scalarTensorAlgEquiv_tmul_one k K 1
-    rw [hι, h_one, one_smul, SymmetricAlgebra.comul_ι]
+    exact scalarTensorAlgEquiv_comul_tmul_ι k K r
 
-/-- **Base change of the additive-group coordinate Hopf algebra is the additive-group coordinate
-Hopf algebra over the new base.** -/
+/-- **Base change of the additive coordinate bialgebra is the additive coordinate bialgebra over
+the new base.** -/
 noncomputable def scalarTensorBialgEquiv :
     K ⊗[k] SymmetricAlgebra k k ≃ₐc[K] SymmetricAlgebra K K :=
   BialgEquiv.ofAlgEquiv (scalarTensorAlgEquiv k K)
@@ -217,13 +234,22 @@ theorem scalarTensorBialgEquiv_tmul_ι (s : K) (r : k) :
   rw [scalarTensorBialgEquiv, BialgEquiv.ofAlgEquiv_apply]
   exact scalarTensorAlgEquiv_tmul_ι k K s r
 
+/-- The bialgebra equivalence identifies the scalar copy of `K` in the tensor product with the
+scalar copy of `K` in the target. -/
+@[simp]
+theorem scalarTensorBialgEquiv_tmul_one (s : K) :
+    scalarTensorBialgEquiv k K (s ⊗ₜ[k] 1) = algebraMap K (SymmetricAlgebra K K) s := by
+  rw [scalarTensorBialgEquiv, BialgEquiv.ofAlgEquiv_apply]
+  exact scalarTensorAlgEquiv_tmul_one k K s
+
 /-- The inverse bialgebra equivalence sends the additive coordinate over `K` to the base-changed
 additive coordinate. -/
 @[simp]
 theorem scalarTensorBialgEquiv_symm_ι (s : K) :
     (scalarTensorBialgEquiv k K).symm (SymmetricAlgebra.ι K K s) =
       s • (1 ⊗ₜ[k] SymmetricAlgebra.ι k k 1) := by
-  change (scalarTensorAlgEquiv k K).symm (SymmetricAlgebra.ι K K s) = _
-  exact scalarTensorAlgEquiv_symm_ι k K s
+  apply_fun scalarTensorBialgEquiv k K
+  simp [Algebra.smul_def]
+  simpa [Algebra.smul_def] using map_smul (SymmetricAlgebra.ι K K) s (1 : K)
 
 end TauCeti.AdditiveGroup
