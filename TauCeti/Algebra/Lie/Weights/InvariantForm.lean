@@ -52,8 +52,8 @@ that can be stated.
   `cartanEquivDual`.
 * `TauCeti.invForm_coroot` and `TauCeti.invForm_coroot_weight`: the normalisation
   `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩`.
-* `TauCeti.invForm_cartanEquivDual_coroot_self`: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a
-  short coroot.
+* `TauCeti.traceForm_coroot_self_mul_invForm_self_eq_four`: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long
+  root has a short coroot.
 
 The compatibility with `LieAlgebra.IsKilling.rootSystem_pairing_apply` — that a Cartan integer is
 `2 ⟨α, β⟩ / ⟨β, β⟩` — and the orthogonality criterion and reflection invariance of the form are not
@@ -81,9 +81,10 @@ and it is the eliminators `TauCeti.invForm_cartanEquivDual_left` and
 the form rather than away from it, and the `RootPairing.InvariantForm` lemmas that
 `TauCeti.rootInvariantForm` buys can still fire.
 
-Only `TauCeti.invForm_self_ne_zero` and what follows it need `α` to be a root, so the general
-theory of the form is stated first, with neither `CharZero K` nor `IsTriangularizable K H L` in
-scope.
+Only from `TauCeti.invForm_self_ne_zero` on do the results need the root-theory instances
+`CharZero K` and `IsTriangularizable K H L`, so the general theory of the form is stated first
+without them. The split is by typeclass, not by root-ness: `TauCeti.invForm_coroot_weight` still
+takes an arbitrary weight.
 
 ## References
 
@@ -161,9 +162,9 @@ No hypothesis on `α` is needed: at a zero weight both sides vanish. -/
 theorem cartanEquivDual_coroot (α : Weight K H L) :
     cartanEquivDual H (coroot α) =
       (2 * (invForm (α : Module.Dual K H) α)⁻¹) • (α : Module.Dual K H) := by
-  rw [coroot, map_nsmul, map_smul, LinearEquiv.apply_symm_apply, ← Nat.cast_smul_eq_nsmul K,
-    smul_smul, invForm_apply_apply, Weight.toLinear_apply]
-  norm_num
+  ext x
+  simpa [invForm_apply_apply, Weight.toLinear_apply, mul_assoc, traceForm_apply_apply,
+    Module.End.mul_eq_comp] using traceForm_coroot α x
 
 /-! ## Roots and coroots -/
 
@@ -183,10 +184,7 @@ sides vanish. -/
 theorem invForm_coroot_weight (lam : Module.Dual K H) (α : Weight K H L) :
     lam (coroot α) * invForm (α : Module.Dual K H) α = 2 * invForm lam α := by
   by_cases hα : α.IsZero
-  · have hα' : (α : Module.Dual K H) = 0 := by ext x; simp [hα.eq]
-    have hcoroot : coroot α = 0 := (cartanEquivDual H).injective <| by
-      rw [cartanEquivDual_coroot, hα', map_zero, smul_zero, map_zero]
-    rw [hcoroot, hα']
+  · rw [coroot_eq_zero_iff.mpr hα, Weight.coe_toLinear_eq_zero_iff.mpr hα]
     simp
   · have hc := invForm_self_ne_zero hα
     have h : invForm lam (cartanEquivDual H (coroot α)) = lam (coroot α) :=
@@ -225,12 +223,20 @@ noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
 @[simp]
 theorem rootInvariantForm_form : (rootInvariantForm (H := H)).form = invForm := (rfl)
 
-/-- **The length of a coroot**: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a short coroot. -/
-theorem invForm_cartanEquivDual_coroot_self {α : Weight K H L} (hα : α.IsNonZero) :
-    invForm (cartanEquivDual H (coroot α)) (cartanEquivDual H (coroot α)) *
-        invForm (α : Module.Dual K H) α = 4 := by
+/-- **The length of a coroot**: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a short coroot.
+
+The length `⟨α^∨, α^∨⟩` of the coroot is spelled as the Killing form of `α^∨` with itself rather
+than as `invForm (cartanEquivDual H (coroot α)) (cartanEquivDual H (coroot α))`: the eliminator
+`TauCeti.invForm_cartanEquivDual_right` is a `simp` lemma, so the latter shape does not survive a
+`simp` call. -/
+theorem traceForm_coroot_self_mul_invForm_self_eq_four {α : Weight K H L} (hα : α.IsNonZero) :
+    traceForm K H L (coroot α) (coroot α) * invForm (α : Module.Dual K H) α = 4 := by
   have hi := invForm_self_ne_zero hα
-  rw [cartanEquivDual_coroot]
+  have h : traceForm K H L (coroot α) (coroot α) =
+      invForm (cartanEquivDual H (coroot α)) (cartanEquivDual H (coroot α)) := by
+    rw [invForm_cartanEquivDual_right, cartanEquivDual_apply_apply, traceForm_apply_apply,
+      Module.End.mul_eq_comp]
+  rw [h, cartanEquivDual_coroot]
   simp only [map_smul, LinearMap.smul_apply, smul_eq_mul]
   field_simp
   ring
