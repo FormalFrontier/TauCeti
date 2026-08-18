@@ -25,6 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Enough history for `lake cache get` to backtrack to a recently-published
+          # ancestor commit (its `--max-revs`) when the tip itself has no mapping yet.
+          # Harmless (just a slightly deeper fetch) when the cache is off.
+          fetch-depth: 100
 
       - name: Infrastructure policy unit tests
         run: |
@@ -98,10 +103,56 @@ jobs:
             lake exe cache get!
           fi
 
+      # --- Lake artifact-cache restore (dormant until configured) --------------------
+      # Restore TauCeti's OWN oleans before building, exactly as pr-build.yml does. Without
+      # this, the post-merge run recompiled the whole library from scratch on every push,
+      # spending about 49 minutes to reproduce oleans the merge-queue build had produced
+      # minutes earlier. Because the publisher is serialized, that capped publication at
+      # roughly one snapshot an hour while several commits an hour were landing, and the
+      # permanently stale snapshot is what pushed merge-queue builds onto the roughly
+      # 55 minute cold-cache path.
+      # No-op until the LAKE_CACHE_*_PUBLIC repo variables are set, as on the consuming side.
+      - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: |
+          if [ -n "$PUBLIC_ARTIFACT_ENDPOINT" ] && [ -n "$PUBLIC_REVISION_ENDPOINT" ]; then
+            {
+              echo "LAKE_CACHE_DIR=$GITHUB_WORKSPACE/.lake/cache"
+              echo "LAKE_ARTIFACT_CACHE=true"
+              echo "LAKE_RESTORE_ARTIFACTS=true"
+              echo "TAUCETI_CACHE_ENABLED=1"
+            } >> "$GITHUB_ENV"
+            echo "::notice::Lake artifact cache enabled — restoring TauCeti's oleans and building incrementally"
+          else
+            echo "::notice::Lake artifact cache not configured — building TauCeti/ from scratch (set the LAKE_CACHE_*_PUBLIC repo variables to enable)"
+          fi
+
+      # Anonymous GETs from the PUBLIC read host, the same trusted, publisher-built data
+      # pr-build restores. The shared script discards a partial fetch rather than keeping it;
+      # see its header. Reading main's own previous publication is not circular: artifacts are
+      # content-addressed by Lake input hash, so a restored module is byte-identical to what a
+      # fresh compile would produce, and every module this push actually changed misses the
+      # cache and is rebuilt here.
+      - name: Fetch TauCeti's own oleans from the Lake cache
+        if: ${{ env.TAUCETI_CACHE_ENABLED == '1' }}
+        env:
+          # Passed under non-LAKE_ names so Lake never sees the deprecated endpoint
+          # environment variables; the script hands it the endpoints through a `--service` config.
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: bash scripts/lake-cache-get.sh .
+
       # No aggregator check: the root TauCeti.lean is intentionally empty and imports nothing.
       # The build globs every TauCeti/ module directly, so nothing depends on a root that
       # re-exports the library.
       - name: Build
+        env:
+          # Restore only from the locally-populated $LAKE_CACHE_DIR the step above filled;
+          # never let the build itself reach a remote cache service. Same rule as the
+          # sandboxed build in pr-build.yml and as the publish step below.
+          LAKE_NO_CACHE: "true"
         run: lake build
 
       # Main is the sole publisher. PR and merge-group builds restore these trusted snapshots
@@ -130,6 +181,8 @@ jobs:
       # Quot.sound}, catching sorry/admit (sorryAx), native_decide (Lean.ofReduceBool),
       # and home-rolled axioms, including ones reaching in through imports.
       - name: Axiom audit (TauCeti/ uses only allowlisted axioms)
+        env:
+          LAKE_NO_CACHE: "true"
         run: lake exe axioms
 
       # Module-system audit. Inspects the built TauCeti `.olean`s and rejects any module that
@@ -137,6 +190,8 @@ jobs:
       # `ModuleData.isModule` flag from the compiled artifact, so it cannot be fooled by a
       # `module` appearing in a comment or string the way a textual grep could.
       - name: Module-system audit (every TauCeti/ file opts into `module`)
+        env:
+          LAKE_NO_CACHE: "true"
         run: lake exe module-system
 
       # Environment lint. Elaborates a generated driver importing every TauCeti/
@@ -151,6 +206,8 @@ jobs:
       # landrun sandbox in pr-build.yml (this lint executes the linted code); this
       # post-merge run is the health check on main, like the audits above.
       - name: Environment lint (default linters + docstring scan vs grandfathered baseline)
+        env:
+          LAKE_NO_CACHE: "true"
         run: bash scripts/lint-env.sh
 
       - name: Dot-notation namespace lint (Mathlib type namespaces stay at root)
