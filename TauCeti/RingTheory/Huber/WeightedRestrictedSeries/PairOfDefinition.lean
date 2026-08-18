@@ -16,7 +16,7 @@ For a Huber ring `A` with pair of definition `(A₀, I)`, the ring `A⟨X₁,…
 restricted power series is again a Huber ring, with pair of definition
 
 ```text
-(A₀⟨X⟩_T, I⟨X⟩_T),    Iⁿ⟨X⟩_T = {f | coeff ν f ∈ Tν · Iⁿ for every ν}.
+(A₀⟨X⟩_T, I⟨X⟩_T),    Iⁿ⟨X⟩_T = {f; coeff ν f ∈ Tν · Iⁿ for every ν}.
 ```
 
 The content is the identification of the neighbourhood subgroups with the powers of one finitely
@@ -133,7 +133,7 @@ variable [NonarchimedeanRing A] {T : Fin k → Set A}
 
 /-- **The level of each coefficient.** For a series all of whose coefficients meet the `Iⁿ` bound
 there is a function `m` such that the coefficient at `ν` meets the sharper bound at level
-`n + m ν`, and such that every sublevel set `{ν | m ν < M}` is finite.
+`n + m ν`, and such that every sublevel set `{ν; m ν < M}` is finite.
 
 This is the choice the reverse inclusion of
 `TauCeti.Huber.PairOfDefinition.weightedIdeal_one_pow` runs on: decomposing each coefficient at
