@@ -58,13 +58,15 @@ variable [AddCommGroup M]
 coefficients and exponents. -/
 noncomputable def groupAlgebraInvariants
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
-    Subalgebra k (MonoidAlgebra L (Multiplicative M)) where
-  carrier := {x | ∀ sigma, groupAlgebraAction rho sigma x = x}
-  zero_mem' sigma := map_zero _
-  one_mem' sigma := map_one _
-  add_mem' {x y} hx hy sigma := by rw [map_add, hx sigma, hy sigma]
-  mul_mem' {x y} hx hy sigma := by rw [map_mul, hx sigma, hy sigma]
-  algebraMap_mem' r sigma := (groupAlgebraAction rho sigma).commutes r
+    Subalgebra k (MonoidAlgebra L (Multiplicative M)) := by
+  letI : SMul (L ≃ₐ[k] L) (MonoidAlgebra L (Multiplicative M)) :=
+    ⟨fun sigma x ↦ groupAlgebraAction rho sigma x⟩
+  letI : MulSemiringAction (L ≃ₐ[k] L) (MonoidAlgebra L (Multiplicative M)) :=
+    MulSemiringAction.compHom _ (groupAlgebraAction rho)
+  letI : SMulCommClass (L ≃ₐ[k] L) k (MonoidAlgebra L (Multiplicative M)) :=
+    ⟨fun sigma r x ↦ by
+      exact map_smul (groupAlgebraAction rho sigma) r x⟩
+  exact FixedPoints.subalgebra k (MonoidAlgebra L (Multiplicative M)) (L ≃ₐ[k] L)
 
 /-- Membership in the invariant subalgebra means being fixed by every automorphism of `L/k`. -/
 @[simp]
@@ -123,7 +125,8 @@ private noncomputable def groupAlgebraInvariantsCounitToBot
       intro sigma
       simp only [f, AlgHom.comp_apply, AlgHom.restrictScalars_apply,
         Subalgebra.val_apply, Bialgebra.counitAlgHom_apply]
-      rw [← counit_groupAlgebraAction rho sigma, x.property sigma]⟩
+      rw [← counit_groupAlgebraAction rho sigma,
+        (mem_groupAlgebraInvariants_iff rho x).mp x.property sigma]⟩
     map_one' := Subtype.ext f.map_one
     map_mul' x y := Subtype.ext (f.map_mul x y)
     map_zero' := Subtype.ext f.map_zero
@@ -168,7 +171,8 @@ private theorem antipode_mem_groupAlgebraInvariants
       groupAlgebraInvariants rho := by
   rw [mem_groupAlgebraInvariants_iff]
   intro sigma
-  rw [← antipode_groupAlgebraAction rho sigma, x.property sigma]
+  rw [← antipode_groupAlgebraAction rho sigma,
+    (mem_groupAlgebraInvariants_iff rho x).mp x.property sigma]
 
 /-- The algebra homomorphism underlying the restricted antipode. -/
 private noncomputable def groupAlgebraInvariantsAntipodeHom
@@ -248,17 +252,29 @@ noncomputable def groupAlgebraTensorInvariants
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     Submodule k
       (MonoidAlgebra L (Multiplicative M) ⊗[L]
-        MonoidAlgebra L (Multiplicative M)) where
-  carrier := {t | ∀ sigma, groupAlgebraTensorActionSemilinearEquiv rho sigma t = t}
-  zero_mem' sigma := map_zero _
-  add_mem' {x y} hx hy sigma := by rw [map_add, hx sigma, hy sigma]
-  smul_mem' r x hx sigma := by
-    rw [← IsScalarTower.algebraMap_smul L r x,
-      (groupAlgebraTensorActionSemilinearEquiv rho sigma).map_smulₛₗ]
-    change sigma (algebraMap k L r) •
-        groupAlgebraTensorActionSemilinearEquiv rho sigma x =
-      algebraMap k L r • x
-    rw [sigma.commutes, hx sigma, IsScalarTower.algebraMap_smul L r x]
+        MonoidAlgebra L (Multiplicative M)) := by
+  let T := MonoidAlgebra L (Multiplicative M) ⊗[L]
+    MonoidAlgebra L (Multiplicative M)
+  letI : SMul (L ≃ₐ[k] L) T :=
+    ⟨fun sigma t ↦ groupAlgebraTensorActionSemilinearEquiv rho sigma t⟩
+  letI : DistribMulAction (L ≃ₐ[k] L) T :=
+    { smul := fun sigma t ↦ groupAlgebraTensorActionSemilinearEquiv rho sigma t
+      one_smul := groupAlgebraTensorActionSemilinearEquiv_one rho
+      mul_smul := groupAlgebraTensorActionSemilinearEquiv_mul rho
+      smul_zero := fun sigma ↦ map_zero (groupAlgebraTensorActionSemilinearEquiv rho sigma)
+      smul_add := fun sigma ↦ map_add (groupAlgebraTensorActionSemilinearEquiv rho sigma) }
+  exact
+  { FixedPoints.addSubgroup (L ≃ₐ[k] L) T with
+    smul_mem' := fun r x hx sigma ↦ by
+      have hsigma := hx sigma
+      change groupAlgebraTensorActionSemilinearEquiv rho sigma x = x at hsigma
+      change groupAlgebraTensorActionSemilinearEquiv rho sigma (r • x) = r • x
+      rw [← IsScalarTower.algebraMap_smul L r x,
+        (groupAlgebraTensorActionSemilinearEquiv rho sigma).map_smulₛₗ]
+      change sigma (algebraMap k L r) •
+          groupAlgebraTensorActionSemilinearEquiv rho sigma x =
+        algebraMap k L r • x
+      rw [sigma.commutes, hsigma, IsScalarTower.algebraMap_smul L r x] }
 
 /-- Membership among invariant tensors means being fixed by the diagonal action. -/
 @[simp]
@@ -278,7 +294,8 @@ private theorem comul_mem_groupAlgebraTensorInvariants
       groupAlgebraTensorInvariants rho := by
   rw [mem_groupAlgebraTensorInvariants_iff]
   intro sigma
-  rw [← comul_groupAlgebraAction rho sigma, x.property sigma]
+  rw [← comul_groupAlgebraAction rho sigma,
+    (mem_groupAlgebraInvariants_iff rho x).mp x.property sigma]
 
 /-- The linear map underlying comultiplication into invariant tensors. -/
 private noncomputable def groupAlgebraInvariantsComulLinearMap
