@@ -27,13 +27,13 @@ group `Matrix.orthogonalGroup (Fin n) A` of matrices with `M * Mᵀ = 1`.
 
 This is the orthogonal group of the **standard symmetric bilinear form**, the scheme of the
 functor `A ↦ {M | M Mᵀ = 1}` over every commutative ring. It is the classical worked example in
-every characteristic except two, where the quadratic-form orthogonal group (which is the smooth
-object) differs from it; no smoothness is claimed here, so the construction is stated over an
-arbitrary commutative ring without restriction. This is the ambient stage of the `SOₙ` worked
-example of the ReductiveGroups roadmap, built at the same boundary as the symplectic example
-(`TauCeti.Symplectic`): construction and points identification, with no smoothness or
-reductivity claim. The determinant-one cut `SOₙ` itself is the immediate follow-up on top of
-this file.
+every characteristic except two, where the bilinear-form and quadratic-form orthogonal groups
+differ and smoothness becomes sensitive to the rank and regularity of the form; no smoothness
+is claimed here, so the construction is stated over an arbitrary commutative ring without
+restriction. This is the ambient stage of the `SOₙ` worked example of the ReductiveGroups
+roadmap, built at the same boundary as the symplectic example (`TauCeti.Symplectic`):
+construction and points identification, with no smoothness or reductivity claim. The
+determinant-one cut `SOₙ` itself is the immediate follow-up on top of this file.
 
 The three Hopf-ideal closure conditions are proved by matrix algebra rather than coordinate by
 coordinate, specializing the computations of the symplectic example to the constant form `1`.
