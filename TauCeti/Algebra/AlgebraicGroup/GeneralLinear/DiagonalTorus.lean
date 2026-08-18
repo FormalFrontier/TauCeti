@@ -62,7 +62,7 @@ open scoped CategoryTheory.MonObj
 
 namespace TauCeti.GeneralLinear
 
-universe u w
+universe u w w'
 
 variable {R : Type u} [CommRing R] {N : ℕ}
 
@@ -120,7 +120,7 @@ theorem diagonalTorusPoints_injective :
   simpa only [diagonalTorusCoordinates, MonoidHom.coe_mk, OneHom.coe_mk, ULift.up_down] using
     congrFun hcoordinates i.down
 
-variable {B : Type w} [CommRing B] [Algebra R B]
+variable {B : Type w'} [CommRing B] [Algebra R B]
 
 /-- The diagonal embedding is natural in the value algebra. -/
 -- Not `@[simp]`: `AlgHom.mapValue_apply` already simplifies the left-hand side, so `simpNF`
@@ -231,19 +231,35 @@ theorem mapPointsFunctor_diagonalTorusCoordinateMap :
     (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
       (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
 
-/-- On every same-universe value algebra, the map induced by the diagonal-torus coordinate
-morphism is `diagonalTorusPoints`. -/
+/-- On every value algebra, the map induced by the diagonal-torus coordinate morphism is
+`diagonalTorusPoints`. -/
 @[simp]
 theorem mapPointsFunctor_diagonalTorusCoordinateMap_app
-    (A : CommAlgCat.{u} R)
+    (A : CommAlgCat.{w} R)
     (f : HopfAlgebra.points
       (R := R)
       (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))) A) :
     (CommHopfAlgCat.mapPointsFunctor
       (diagonalTorusCoordinateMap (R := R) (N := N))).app A f =
       diagonalTorusPoints f := by
-  rw [mapPointsFunctor_diagonalTorusCoordinateMap, diagonalTorusPointsMap_app]
-  rfl
+  let K := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))
+  let p : WithConv (K →ₐ[R] K) := toConv (AlgHom.id R K)
+  have hp :
+      (CommHopfAlgCat.mapPointsFunctor
+        (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R K) p =
+        diagonalTorusPoints p := by
+    rw [mapPointsFunctor_diagonalTorusCoordinateMap, diagonalTorusPointsMap_app]
+    rfl
+  have hmap := congrArg (AlgHom.mapValue (H := coordinateHopfAlgebra R N) f.ofConv) hp
+  rw [mapValue_diagonalTorusPoints] at hmap
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+  have hp_id : p.ofConv = AlgHom.id R K := rfl
+  rw [AlgHom.mapValue_apply] at hmap
+  rw [WithConv.ofConv_toConv, hp_id, AlgHom.id_comp] at hmap
+  change _ = diagonalTorusPoints (toConv (f.ofConv.comp p.ofConv)) at hmap
+  rw [hp_id, AlgHom.comp_id, WithConv.toConv_ofConv] at hmap
+  exact hmap
 
 /-- The diagonal torus of `GLₙ`, as a morphism from the rank-`N` split torus group scheme. -/
 noncomputable def diagonalTorus :

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus
 
 /-!
@@ -51,7 +52,7 @@ open scoped CategoryTheory.MonObj
 
 namespace TauCeti.GeneralLinear
 
-universe u
+universe u v
 
 variable {R κ : Type u} [CommRing R] {N : ℕ}
 
@@ -122,7 +123,9 @@ private theorem weightTorus_hom (wt : Fin N → κ → ℤ) :
 
 end Construction
 
-variable {A : Type u} [CommRing A] [Algebra R A]
+section PointsFunctor
+
+variable {A : Type v} [CommRing A] [Algebra R A]
 
 /-- Precomposition by the weight-torus coordinate morphism first restricts a character along the
 weight map and then embeds the resulting diagonal-torus point into `GL_N`. -/
@@ -133,10 +136,53 @@ theorem mapPointsFunctor_weightTorusCoordinateMap_app [Finite κ] (wt : Fin N �
     (CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap wt)).app (CommAlgCat.of R A) p =
       diagonalTorusPoints
         (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
-  rw [← mapPointsFunctor_diagonalTorusCoordinateMap_app]
-  apply WithConv.ofConv_injective
-  ext x
-  rfl
+  rw [weightTorusCoordinateMap, CommHopfAlgCat.mapPointsFunctor_comp]
+  change (CommHopfAlgCat.mapPointsFunctor diagonalTorusCoordinateMap).app
+      (CommAlgCat.of R A)
+        ((CommHopfAlgCat.mapPointsFunctor
+          (DiagonalizableGroup.coordinateMap R
+            (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom).app (CommAlgCat.of R A) p) = _
+  calc
+    _ = diagonalTorusPoints
+        ((CommHopfAlgCat.mapPointsFunctor
+          (DiagonalizableGroup.coordinateMap R
+            (FGCommGrpCat.ofHom (weightCharacterMap wt))).hom).app
+              (CommAlgCat.of R A) p) :=
+      mapPointsFunctor_diagonalTorusCoordinateMap_app _ _
+    _ = diagonalTorusPoints
+        (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p) := by
+      congr 1
+
+/-- The diagonal coordinates obtained by restricting a split-torus point along a weight family
+are the corresponding torus characters. -/
+theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
+    (wt : Fin N → κ → ℤ)
+    (p : HopfAlgebra.points
+      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) (CommAlgCat.of R A))
+    (i : Fin N) :
+    diagonalTorusCoordinates
+        (SplitTorus.pointsMulEquiv
+          (DiagonalizableGroup.pointsMap (weightCharacterMap wt) p)) i =
+      torusCharacter (SplitTorus.pointsMulEquiv p) (wt i) := by
+  rw [diagonalTorusCoordinates_apply]
+  apply Units.ext
+  rw [SplitTorus.pointsMulEquiv_apply_coe, DiagonalizableGroup.pointsMap_apply,
+    AlgHom.comp_apply, MonoidAlgebra.mapDomainBialgHom]
+  change p.ofConv ((MonoidAlgebra.mapDomainAlgHom R R
+    (weightCharacterMap wt))
+      (MonoidAlgebra.single (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1)) 1)) = _
+  rw [MonoidAlgebra.mapDomainAlgHom_apply, MonoidAlgebra.mapDomain_single,
+    weightCharacterMap_ofAdd_single, ← DiagonalizableGroup.charOfPoint_apply_coe]
+  rw [show Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)) =
+    SplitTorus.weightCharacter (wt i) by
+      rw [Multiplicative.ext_iff]
+      ext j
+      simp]
+  rw [SplitTorus.charOfPoint_weightCharacter]
+
+end PointsFunctor
+
+variable {A : Type u} [CommRing A] [Algebra R A]
 
 variable [Fintype κ]
 

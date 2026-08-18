@@ -57,7 +57,7 @@ open CategoryTheory TensorProduct WithConv
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u w
+universe u v v' v'' w
 
 -- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
 attribute [local instance high] Algebra.toModule
@@ -76,7 +76,7 @@ variable (wt : Fin n → κ → ℤ)
 
 /-- The algebra-valued points of the toral Kostant closure, embedded in `GLₙ` through its
 Hopf-ideal quotient presentation. -/
-noncomputable def kostantToralPointsSubgroup (A : Type) [CommRing A] :
+noncomputable def kostantToralPointsSubgroup (A : Type v) [CommRing A] :
     Subgroup (Matrix.GeneralLinearGroup (Fin n) A) :=
   (CommHopfAlgCat.quotientPointsSubgroup
       (GeneralLinear.coordinateHopfAlgebra ℤ n)
@@ -85,7 +85,7 @@ noncomputable def kostantToralPointsSubgroup (A : Type) [CommRing A] :
 
 /-- Membership in the points of the toral closure is vanishing on its defining Hopf ideal. -/
 @[simp]
-theorem mem_kostantToralPointsSubgroup_iff (A : Type) [CommRing A]
+theorem mem_kostantToralPointsSubgroup_iff (A : Type v) [CommRing A]
     (g : Matrix.GeneralLinearGroup (Fin n) A) :
     g ∈ kostantToralPointsSubgroup e h ρ M hM hnil b wt A ↔
       ∀ x ∈ kostantToralDefiningIdeal e h ρ M hM hnil b wt,
@@ -94,22 +94,22 @@ theorem mem_kostantToralPointsSubgroup_iff (A : Type) [CommRing A]
   rw [Subgroup.mem_map_equiv, CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
 
 /-- Applying a ring homomorphism entrywise preserves the points of the toral closure. -/
-theorem map_mem_kostantToralPointsSubgroup {A B : Type} [CommRing A] [CommRing B]
+theorem map_mem_kostantToralPointsSubgroup {A : Type v} {B : Type v'}
+    [CommRing A] [CommRing B]
     (φ : A →+* B) {g : Matrix.GeneralLinearGroup (Fin n) A}
     (hg : g ∈ kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
     Matrix.GeneralLinearGroup.map φ g ∈
       kostantToralPointsSubgroup e h ρ M hM hnil b wt B := by
-  unfold kostantToralPointsSubgroup at hg ⊢
-  rw [Subgroup.mem_map_equiv] at hg ⊢
+  rw [mem_kostantToralPointsSubgroup_iff] at hg ⊢
+  intro x hx
   have hφ : φ.toIntAlgHom.toRingHom = φ := by ext; rfl
   rw [← hφ, ← GeneralLinear.mapValue_pointsMulEquiv_symm_apply]
-  exact CommHopfAlgCat.mapPoints_mem_quotientPointsSubgroup
-    (GeneralLinear.coordinateHopfAlgebra ℤ n)
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
-    (CommAlgCat.ofHom φ.toIntAlgHom) hg
+  change φ.toIntAlgHom (((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g).ofConv x) = 0
+  rw [hg x hx, map_zero]
 
 /-- The map on toral-closure points induced by a ring homomorphism of value rings. -/
-noncomputable def mapKostantToralPointsSubgroup {A B : Type} [CommRing A] [CommRing B]
+noncomputable def mapKostantToralPointsSubgroup {A : Type v} {B : Type v'}
+    [CommRing A] [CommRing B]
     (φ : A →+* B) :
     kostantToralPointsSubgroup e h ρ M hM hnil b wt A →*
       kostantToralPointsSubgroup e h ρ M hM hnil b wt B :=
@@ -120,15 +120,38 @@ noncomputable def mapKostantToralPointsSubgroup {A B : Type} [CommRing A] [CommR
 
 /-- The induced map on toral-closure points applies the ring homomorphism entrywise. -/
 @[simp]
-theorem coe_mapKostantToralPointsSubgroup {A B : Type} [CommRing A] [CommRing B]
+theorem coe_mapKostantToralPointsSubgroup {A : Type v} {B : Type v'}
+    [CommRing A] [CommRing B]
     (φ : A →+* B) (g : kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
     (mapKostantToralPointsSubgroup e h ρ M hM hnil b wt φ g :
       Matrix.GeneralLinearGroup (Fin n) B) = Matrix.GeneralLinearGroup.map φ g := by
   rfl
 
+/-- The identity ring homomorphism induces the identity on toral-closure points. -/
+@[simp]
+theorem mapKostantToralPointsSubgroup_id (A : Type v) [CommRing A] :
+    mapKostantToralPointsSubgroup e h ρ M hM hnil b wt (RingHom.id A) =
+      MonoidHom.id (kostantToralPointsSubgroup e h ρ M hM hnil b wt A) := by
+  apply MonoidHom.ext
+  intro g
+  apply Subtype.ext
+  simp
+
+/-- Maps on toral-closure points preserve composition of value-ring homomorphisms. -/
+@[simp]
+theorem mapKostantToralPointsSubgroup_comp {A : Type v} {B : Type v'} {C : Type v''}
+    [CommRing A] [CommRing B] [CommRing C] (φ : A →+* B) (ψ : B →+* C) :
+    mapKostantToralPointsSubgroup e h ρ M hM hnil b wt (ψ.comp φ) =
+      (mapKostantToralPointsSubgroup e h ρ M hM hnil b wt ψ).comp
+        (mapKostantToralPointsSubgroup e h ρ M hM hnil b wt φ) := by
+  apply MonoidHom.ext
+  intro g
+  apply Subtype.ext
+  simp
+
 /-- Adjoining the weight torus enlarges the algebra-valued point subgroup cut out by the
 root-generated defining ideal. -/
-theorem kostantGeneratedPointsSubgroup_le_toralPoints (A : Type) [CommRing A] :
+theorem kostantGeneratedPointsSubgroup_le_toralPoints (A : Type v) [CommRing A] :
     kostantGeneratedPointsSubgroup e h ρ M hM hnil b A ≤
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
   intro g hg
@@ -140,7 +163,7 @@ theorem kostantGeneratedPointsSubgroup_le_toralPoints (A : Type) [CommRing A] :
 
 /-- Every represented weight-torus matrix is a point of the toral closure. -/
 theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
-    (A : Type) [CommRing A] (s : κ → Aˣ) :
+    (A : Type v) [CommRing A] (s : κ → Aˣ) :
     kostantTorusMatrix M b wt s ∈
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
   let p := (SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).symm s
@@ -155,38 +178,26 @@ theorem kostantTorusMatrix_mem_toralPoints [Fintype κ]
       e h ρ M hM hnil b wt hx
     change p.ofConv ((GeneralLinear.weightTorusCoordinateMap wt).hom x) = 0
     rw [show (GeneralLinear.weightTorusCoordinateMap wt).hom x = 0 from hx', map_zero]
+  have hq_eq : q =
+      (CommHopfAlgCat.mapPointsFunctor
+        (GeneralLinear.weightTorusCoordinateMap wt)).app (CommAlgCat.of ℤ A) p := by
+    dsimp only [q]
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
   refine ⟨q, hq, ?_⟩
+  rw [hq_eq, GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app]
   change GeneralLinear.pointsMulEquiv n
-      ((CommHopfAlgCat.mapPointsFunctor
-        (GeneralLinear.weightTorusCoordinateMap wt)).app (CommAlgCat.of ℤ A) p) = _
-  rw [GeneralLinear.mapPointsFunctor_weightTorusCoordinateMap_app,
-    GeneralLinear.pointsMulEquiv_diagonalTorusPoints,
-    kostantTorusMatrix_apply]
+      (GeneralLinear.diagonalTorusPoints
+        (DiagonalizableGroup.pointsMap (GeneralLinear.weightCharacterMap wt) p)) = _
+  rw [GeneralLinear.pointsMulEquiv_diagonalTorusPoints, kostantTorusMatrix_apply]
   congr 1
   funext i
-  rw [GeneralLinear.diagonalTorusCoordinates_apply]
-  apply Units.ext
-  rw [SplitTorus.pointsMulEquiv_apply_coe, DiagonalizableGroup.pointsMap_apply,
-    AlgHom.comp_apply, MonoidAlgebra.mapDomainBialgHom]
-  change p.ofConv ((MonoidAlgebra.mapDomainAlgHom ℤ ℤ
-    (GeneralLinear.weightCharacterMap wt))
-      (MonoidAlgebra.single (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1)) 1)) = _
-  rw [MonoidAlgebra.mapDomainAlgHom_apply, MonoidAlgebra.mapDomain_single,
-    GeneralLinear.weightCharacterMap_ofAdd_single]
-  rw [← DiagonalizableGroup.charOfPoint_apply_coe]
-  rw [show Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)) =
-    SplitTorus.weightCharacter (wt i) by
-      rw [Multiplicative.ext_iff]
-      ext j
-      simp]
-  rw [SplitTorus.charOfPoint_weightCharacter]
-  exact congrArg (fun t : κ → Aˣ => (torusCharacter t (wt i) : A))
-    ((SplitTorus.pointsMulEquiv (R := ℤ) (A := A) (σ := κ)).apply_symm_apply s)
+  rw [GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap]
+  simp only [p, MulEquiv.apply_symm_apply]
 
 /-- In basis coordinates, the pointwise elementary subgroup lies in the toral closure's
 algebra-valued points. -/
 theorem map_kostantElementarySubgroup_le_toralPoints
-    (A : Type) [CommRing A] :
+    (A : Type v) [CommRing A] :
     (kostantElementarySubgroup e h ρ M hM hnil (CommAlgCat.of ℤ A)).map
         (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv) ≤
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A :=
@@ -196,7 +207,7 @@ theorem map_kostantElementarySubgroup_le_toralPoints
 /-- After writing automorphisms in the basis `b`, every subgroup generated by a set of represented
 root subgroups together with the weight torus lies in the points of the toral closure. -/
 theorem map_kostantTorusSubsystemSubgroup_le_toralPoints [Fintype κ]
-    (S : Set I) (A : Type) [CommRing A] :
+    (S : Set I) (A : Type v) [CommRing A] :
     (kostantTorusSubsystemSubgroup e h ρ M hM hnil b wt S (CommAlgCat.of ℤ A)).map
         (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv) ≤
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
@@ -217,7 +228,7 @@ theorem map_kostantTorusSubsystemSubgroup_le_toralPoints [Fintype κ]
 /-- The full pointwise group generated by all root subgroups and the weight torus lies in the
 algebra-valued points of the assembled toral group scheme. -/
 theorem map_kostantTorusElementarySubgroup_le_toralPoints [Fintype κ]
-    (A : Type) [CommRing A] :
+    (A : Type v) [CommRing A] :
     (kostantElementarySubgroup e h ρ M hM hnil (CommAlgCat.of ℤ A) ⊔
         (kostantTorusPoints M b wt (CommAlgCat.of ℤ A)).range).map
         (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv) ≤
