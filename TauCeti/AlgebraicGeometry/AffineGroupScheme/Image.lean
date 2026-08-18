@@ -57,6 +57,33 @@ open AlgebraicGeometry
 
 universe u
 
+variable {R S : CommRingCat.{u}}
+
+/-- The ideal defining the scheme-theoretic image of a spectrum map is the kernel of the
+corresponding ring homomorphism. -/
+@[simp]
+theorem specTargetImageIdeal_specMap (f : R ⟶ S) :
+    specTargetImageIdeal (Spec.map f) = RingHom.ker f.hom := by
+  rw [specTargetImageIdeal]
+  rw [Adjunction.homEquiv_symm_apply]
+  -- The image ideal is phrased through the `Γ ⊣ Spec` adjunction. Normalize its recovered
+  -- coordinate map to the explicit global-sections map before using naturality of `ΓSpecIso`.
+  change RingHom.ker (((Scheme.ΓSpecIso R).inv ≫ (Spec.map f).appTop).hom) = _
+  rw [← Scheme.ΓSpecIso_inv_naturality]
+  ext x
+  rw [RingHom.mem_ker, RingHom.mem_ker]
+  change (Scheme.ΓSpecIso S).inv.hom (f.hom x) = 0 ↔ f.hom x = 0
+  constructor
+  · intro hx
+    calc
+      f.hom x = (Scheme.ΓSpecIso S).hom.hom
+          ((Scheme.ΓSpecIso S).inv.hom (f.hom x)) :=
+        (Iso.inv_hom_id_apply (Scheme.ΓSpecIso S) (f.hom x)).symm
+      _ = (Scheme.ΓSpecIso S).hom.hom 0 := congrArg _ hx
+      _ = 0 := map_zero _
+  · intro hx
+    rw [hx, map_zero]
+
 namespace CommHopfAlgCat
 
 variable {k : Type u} [Field k]
@@ -71,42 +98,25 @@ theorem hopfSpec_map_left_comp_eqToHom (f : H ⟶ K) :
         Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)) :=
   rfl
 
-/-- The ideal defining the scheme-theoretic image of the spectrum map of a Hopf-algebra morphism
-is the ordinary ring kernel of that morphism. -/
-theorem specTargetImageIdeal_specMap (f : H ⟶ K) :
+private theorem specTargetImageIdeal_specMap_hopf (f : H ⟶ K) :
     specTargetImageIdeal
         (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) =
       (HopfIdeal.ker f.hom).toIdeal := by
-  rw [HopfIdeal.ker_toIdeal]
-  rw [specTargetImageIdeal]
-  rw [Adjunction.homEquiv_symm_apply]
-  -- The image ideal is phrased through the `Γ ⊣ Spec` adjunction. Normalize its recovered
-  -- coordinate map to the explicit global-sections map before using naturality of `ΓSpecIso`.
-  change RingHom.ker (((Scheme.ΓSpecIso (CommRingCat.of H)).inv ≫
-    (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))).appTop).hom) = _
-  rw [← Scheme.ΓSpecIso_inv_naturality]
+  rw [specTargetImageIdeal_specMap, HopfIdeal.ker_toIdeal]
   ext x
-  rw [RingHom.mem_ker, RingHom.mem_ker]
-  change (Scheme.ΓSpecIso (CommRingCat.of K)).inv.hom (f.hom x) = 0 ↔ f.hom x = 0
-  constructor
-  · intro hx
-    calc
-      f.hom x = (Scheme.ΓSpecIso (CommRingCat.of K)).hom.hom
-          ((Scheme.ΓSpecIso (CommRingCat.of K)).inv.hom (f.hom x)) :=
-        (Iso.inv_hom_id_apply (Scheme.ΓSpecIso (CommRingCat.of K)) (f.hom x)).symm
-      _ = (Scheme.ΓSpecIso (CommRingCat.of K)).hom.hom 0 := congrArg _ hx
-      _ = 0 := map_zero _
-  · intro hx
-    rw [hx, map_zero]
+  rfl
 
 /-- The ideal defining the scheme-theoretic image of a morphism of Hopf spectra is the kernel
 Hopf ideal's underlying ideal. -/
 theorem specTargetImageIdeal_hopfSpec_map (f : H ⟶ K) :
     specTargetImageIdeal ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left =
       (HopfIdeal.ker f.hom).toIdeal := by
+  -- `hopfSpec_map_left_comp_eqToHom` is the propositional comparison available to clients.
+  -- It cannot rewrite here: the codomain of the map is an index of `specTargetImageIdeal`, so
+  -- the comparison is heterogeneous until the definitional `hopfSpec` wrapper is exposed.
   change specTargetImageIdeal
     (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) = _
-  exact specTargetImageIdeal_specMap f
+  exact specTargetImageIdeal_specMap_hopf f
 
 /-- The coordinate ring of the scheme-theoretic image is canonically isomorphic to the Hopf
 image, the quotient by the kernel Hopf ideal. -/
@@ -114,7 +124,8 @@ noncomputable def specTargetImageIsoImage (f : H ⟶ K) :
     specTargetImage (Spec.map
       (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K))) ≅
       CommRingCat.of (H ⧸ (HopfIdeal.ker f.hom).toIdeal) :=
-  (Ideal.quotientEquivAlgOfEq ℤ (specTargetImageIdeal_specMap f)).toRingEquiv
+  (Ideal.quotientEquivAlgOfEq ℤ
+    (specTargetImageIdeal_specMap_hopf f)).toRingEquiv
     |>.toCommRingCatIso
 
 /-- The coordinate-ring isomorphism sends the class of an element to the same class in the Hopf
@@ -125,7 +136,8 @@ theorem specTargetImageIsoImage_hom_mk (f : H ⟶ K) (x : H) :
         (Ideal.Quotient.mk (specTargetImageIdeal
           (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) x) =
       Ideal.Quotient.mk (HopfIdeal.ker f.hom).toIdeal x := by
-  exact Ideal.quotientEquivAlgOfEq_mk ℤ (specTargetImageIdeal_specMap f) x
+  exact Ideal.quotientEquivAlgOfEq_mk ℤ
+    (specTargetImageIdeal_specMap_hopf f) x
 
 /-- The inverse coordinate-ring isomorphism also sends the class of an element to the same
 class, now regarded in the scheme-theoretic image quotient. -/
@@ -135,12 +147,8 @@ theorem specTargetImageIsoImage_inv_mk (f : H ⟶ K) (x : H) :
         (Ideal.Quotient.mk (HopfIdeal.ker f.hom).toIdeal x) =
       Ideal.Quotient.mk (specTargetImageIdeal
         (Spec.map (CommRingCat.ofHom ((f.hom : H →ₐ[k] K) : H →+* K)))) x := by
-  rw [specTargetImageIsoImage]
-  change (Ideal.quotientEquivAlgOfEq ℤ
-      (specTargetImageIdeal_specMap f)).symm
-        (Ideal.Quotient.mk (HopfIdeal.ker f.hom).toIdeal x) = _
-  rw [Ideal.quotientEquivAlgOfEq_symm,
-    Ideal.quotientEquivAlgOfEq_mk]
+  rw [← specTargetImageIsoImage_hom_mk f x]
+  exact Iso.hom_inv_id_apply (specTargetImageIsoImage f) _
 
 /-- The Hopf spectrum of the quotient-by-kernel image is canonically the scheme-theoretic image
 of the represented affine-group morphism. -/
