@@ -249,6 +249,14 @@ theorem IsPowerBounded.neg {a : A} (ha : IsPowerBounded a) : IsPowerBounded (-a)
 theorem isPowerBounded_neg {a : A} : IsPowerBounded (-a) ↔ IsPowerBounded a :=
   ⟨fun h ↦ by simpa using h.neg, IsPowerBounded.neg⟩
 
+omit [ContinuousMul A] in
+/-- Topological nilpotence descends to a subring, which carries the subspace topology. -/
+theorem isTopologicallyNilpotent_mk {B : Subring A} {x : A} (hx : x ∈ B)
+    (h : IsTopologicallyNilpotent x) : IsTopologicallyNilpotent (⟨x, hx⟩ : B) := by
+  have h' : Filter.Tendsto (fun k : ℕ ↦ x ^ k) Filter.atTop (nhds 0) := h
+  rw [IsTopologicallyNilpotent, nhds_induced, Filter.tendsto_comap_iff]
+  simpa [Function.comp_def] using h'
+
 end Ring
 
 section SubmonoidClosure

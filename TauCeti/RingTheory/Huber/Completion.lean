@@ -67,33 +67,6 @@ open Filter Topology UniformSpace
 
 namespace TauCeti.Huber
 
-section SpanMul
-
-variable {R : Type*} [CommRing R]
-
-/-- An element of `(G) * K` is a `K`-linear combination of the finite family `G`.
-
-This is where finite generation of the ideal of definition enters the proof of Wedhorn Remark
-6.8: it bounds, uniformly in `k`, the number of terms needed to write an element of
-`Iⁿ⁺ᵏ = Iⁿ * Iᵏ` over generators of `Iⁿ`. -/
-private theorem exists_sum_eq_of_mem_span_mul (G : Finset R) (K : Ideal R) {b : R}
-    (hb : b ∈ Ideal.span (G : Set R) * K) :
-    ∃ c : R → R, (∀ z, c z ∈ K) ∧ ∑ z ∈ G, z * c z = b := by
-  classical
-  -- Present `(G) * K` as `K • span (id '' G)`, so that the coefficients are handed to us.
-  rw [mul_comm, ← Ideal.smul_eq_mul, ← Set.image_id (G : Set R)] at hb
-  obtain ⟨a, ha, rfl⟩ := (Submodule.mem_ideal_smul_span_iff_exists_sum' _ _ _ _).mp hb
-  -- Extend the coefficients from `G` to all of `R` by zero.
-  refine ⟨fun z ↦ if h : z ∈ G then a ⟨z, h⟩ else 0, fun z ↦ ?_, ?_⟩
-  · dsimp only
-    split_ifs
-    exacts [ha _, K.zero_mem]
-  · rw [Finsupp.sum_fintype _ _ (by simp),
-      ← Finset.sum_finset_coe (fun z ↦ z * if h : z ∈ G then a ⟨z, h⟩ else 0) G]
-    exact Finset.sum_congr rfl fun i _ ↦ by simp [Finset.mem_coe.mp i.2, mul_comm]
-
-end SpanMul
-
 variable {A : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A] [IsTopologicalRing A]
 
 namespace PairOfDefinition

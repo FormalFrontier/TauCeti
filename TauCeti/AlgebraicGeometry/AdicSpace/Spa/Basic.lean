@@ -18,7 +18,7 @@ For a subring `A⁺` of a commutative ring `A` with a topology, `spa A⁺` is th
 points of `Spv A` that are sub-unit on `A⁺`:
 
 ```text
-spa A⁺ = {v ∈ cont A ; v(a) ≤ 1 for every a ∈ A⁺}.
+spa A⁺ = {v ∈ cont A | v(a) ≤ 1 for every a ∈ A⁺}.
 ```
 
 This is stated for arbitrary data — the file assumes `[TopologicalSpace A]` and nothing
