@@ -311,14 +311,15 @@ to its scalar pure tensor. -/
 theorem coordinateHopfAlgebraBaseChangeIso_inv_apply
     (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
     (n : ℕ) (s : K) (p : MatrixMonoid.CoordinateRing R n) :
-    (coordinateHopfAlgebraBaseChangeIso R K n).inv
+    s • (coordinateHopfAlgebraBaseChangeIso R K n).inv
         (coordinateHopfAlgebraAlgEquiv K n
-          (s • coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) =
+          (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) =
       s ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p) := by
-  change (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm
+  change s • (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm
       (coordinateHopfAlgebraAlgEquiv K n
-        (s • coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) = _
-  apply (coordinateHopfAlgebraBaseChangeBialgEquiv R K n).symm_apply_eq.mpr
-  exact (coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p).symm
+        (coordinateRingMap K n (MvPolynomial.map (algebraMap R K) p))) = _
+  rw [coordinateHopfAlgebraBaseChangeBialgEquiv_symm_coordinateRingMap]
+  exact (TensorProduct.tmul_eq_smul_one_tmul (R := R) s
+    (coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p))).symm
 
 end TauCeti.GeneralLinear
