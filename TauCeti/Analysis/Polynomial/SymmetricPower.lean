@@ -9,7 +9,6 @@ public import Mathlib.Analysis.Normed.Group.Bounded
 public import Mathlib.Analysis.Polynomial.CauchyBound
 public import Mathlib.Topology.Algebra.Polynomial
 public import TauCeti.RingTheory.Polynomial.SymmetricPower
-public import TauCeti.Topology.Sym.Basic
 public import TauCeti.Topology.Sym.Disjoint
 
 /-!
