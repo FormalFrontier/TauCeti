@@ -18,9 +18,7 @@ plumbing is negative definite, the sublevel chain groups are finitely generated,
 the bridge from finite sublevel calculations to the untruncated invariant.
 
 The proof uses Mathlib's AB5 theorem for module categories. Exactness of filtered colimits makes
-homology commute with the integer-indexed colimit. The definitions work for vertex types in any
-universe; the final colimit theorem requires a universe-zero vertex type because Mathlib's AB5
-instance for `ModuleCat.{u} R` requires the ring `R` to lie in the same universe `u`.
+homology commute with the integer-indexed colimit.
 
 ## Main definitions
 
@@ -82,6 +80,24 @@ theorem latticeWeightSublevelHomologyFunctor_obj (P : PlumbingGraph V)
     HomologicalComplex.homologyFunctor_obj, P.latticeWeightSublevelFunctor_obj,
     latticeWeightSublevelHomology_def]
 
+/-- The transition map of the weight-sublevel homology diagram is the map on homology induced by
+the inclusion of one weight sublevel into a larger one. -/
+@[simp]
+theorem latticeWeightSublevelHomologyFunctor_map (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) {N M : ℤ} (f : N ⟶ M) :
+    eqToHom ((P.latticeWeightSublevelHomologyFunctor_obj k q N).trans
+          (P.latticeWeightSublevelHomology_def k N q)).symm ≫
+        (P.latticeWeightSublevelHomologyFunctor k q).map f ≫
+      eqToHom ((P.latticeWeightSublevelHomologyFunctor_obj k q M).trans
+          (P.latticeWeightSublevelHomology_def k M q)) =
+        HomologicalComplex.homologyMap (P.latticeWeightSublevelInclusion k (leOfHom f)) q := by
+  rw [← P.latticeWeightSublevelFunctor_map k f, ← HomologicalComplex.homologyFunctor_map,
+    Functor.map_comp, Functor.map_comp, eqToHom_map, eqToHom_map]
+  simp only [latticeWeightSublevelHomologyFunctor, Functor.comp_map,
+    HomologicalComplex.homologyFunctor_map]
+  -- Both sides now differ only in the equality proofs carried by `eqToHom`.
+  rfl
+
 /-- The canonical cocone from weight-sublevel homology modules to the homology of the full lattice
 chain complex. Its legs are the maps on homology induced by inclusion of sublevel complexes. -/
 noncomputable def latticeWeightSublevelHomologyCocone (P : PlumbingGraph V)
@@ -100,11 +116,29 @@ theorem latticeWeightSublevelHomologyCocone_pt (P : PlumbingGraph V)
     HomologicalComplex.homologyFunctor_obj, P.latticeWeightSublevelCocone_pt,
     latticeChainHomology_def]
 
-variable {V : Type} [DecidableEq V] [Fintype V]
+/-- The leg at level `N` of the weight-sublevel homology cocone is the map on homology induced by
+the inclusion of the level-`N` sublevel complex into the full lattice chain complex. -/
+@[simp]
+theorem latticeWeightSublevelHomologyCocone_ι_app (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (q : ℕ) (N : ℤ) :
+    (P.latticeWeightSublevelHomologyCocone k q).ι.app N =
+      eqToHom ((P.latticeWeightSublevelHomologyFunctor_obj k q N).trans
+          (P.latticeWeightSublevelHomology_def k N q)) ≫
+        HomologicalComplex.homologyMap (P.latticeWeightSublevelToChainComplex k N) q ≫
+          eqToHom ((P.latticeWeightSublevelHomologyCocone_pt k q).trans
+            (P.latticeChainHomology_def k q)).symm := by
+  -- Rewriting with the definition directly would change the type of `ι.app N`, so expose the
+  -- underlying cocone leg through an equation instead.
+  have h : (P.latticeWeightSublevelHomologyCocone k q).ι.app N =
+      (HomologicalComplex.homologyFunctor (ModuleCat PlumbingCoefficient)
+        (ComplexShape.down ℕ) q).map ((P.latticeWeightSublevelCocone k).ι.app N) := rfl
+  rw [h, P.latticeWeightSublevelCocone_ι_app k N, Functor.map_comp, Functor.map_comp,
+    eqToHom_map, eqToHom_map, HomologicalComplex.homologyFunctor_map]
+  -- Both sides now differ only in the equality proofs carried by `eqToHom`.
+  rfl
 
 /-- Cubical-degree lattice homology is the filtered colimit of the homology modules of the
-characteristic-weight sublevel complexes. The universe-zero restriction on `V` comes from the
-available AB5 instance for the coefficient module category. -/
+characteristic-weight sublevel complexes. -/
 noncomputable def latticeWeightSublevelHomologyCoconeIsColimit (P : PlumbingGraph V)
     (k : P.characteristicVectors) (q : ℕ) :
     IsColimit (P.latticeWeightSublevelHomologyCocone k q) := by
