@@ -293,13 +293,19 @@ jobs:
           lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
           # `lake cache put-staged` does not configure the workspace, which is precisely what
           # keeps project code out of the publish job, so it cannot derive the toolchain and
-          # platform halves of the upload scope. Hand it the toolchain explicitly, and check
-          # the platform assumption here, where the workspace does exist: `platformIndependent`
-          # is what makes Lake leave the platform out of the scope, which is what put-staged
-          # assumes by default. A silent mismatch would publish under a scope pr-build's
-          # `lake cache get --service ... --repo` never reads, i.e. a cache that is never hit.
+          # platform halves of the upload scope. The publish job supplies them from the pin
+          # instead, which is right only while the package config keeps the two assumptions
+          # below. Check them here, where the workspace does exist: `platformIndependent` is
+          # what makes Lake leave the platform out of the scope (put-staged's default), while
+          # `fixedToolchain` or `bootstrap` would make Lake leave the toolchain out of it (which
+          # put-staged is told to include). Either silent mismatch would publish under a scope
+          # pr-build's `lake cache get --service ... --repo` never reads, i.e. a cache never hit.
           if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
             echo "::error::lakefile.toml no longer sets platformIndependent = true; publish-lake-cache must now pass --platform to lake cache put-staged"
+            exit 1
+          fi
+          if grep -Eq '^[[:space:]]*(fixedToolchain|bootstrap)[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+            echo "::error::lakefile.toml now sets fixedToolchain or bootstrap; Lake drops the toolchain from the scope for such a package, so publish-lake-cache must stop passing --toolchain"
             exit 1
           fi
           # `lake env` reports the workspace's own view of the toolchain, which is exactly the
@@ -436,6 +442,11 @@ jobs:
             echo "::error::the build job built with '$REPORTED' but lean-toolchain pins '$TOOLCHAIN'"
             exit 1
           fi
+          # elan's installer is fetched unpinned, exactly as pr-build.yml and lean-action fetch
+          # it, so elan's distribution and the named Lean release are in this job's trust base
+          # the same way they are in every other job here. That is a project-wide assumption
+          # about leanprover's release channel, not one this split introduces: the build job
+          # installs elan the same way and runs the same toolchain over the whole library.
           curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
           chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
