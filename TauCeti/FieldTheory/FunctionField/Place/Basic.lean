@@ -236,7 +236,7 @@ instance instIsDiscreteValuationRing : IsDiscreteValuationRing P.integers :=
 `WithZero.exp (-1)`, because the valuation of a place is normalized. -/
 theorem generator_eq_exp_neg_one : IsRankOneDiscrete.generator P.valuation =
     Units.mk0 (WithZero.exp (-1 : ℤ) : ℤᵐ⁰) (by simp) :=
-  Valuation.generator_eq_exp_neg_one_of_surjective P.valuation P.valuation_surjective
+  Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective P.valuation_surjective
 
 /-- Mathlib's uniformizers of `v_P` are exactly the elements of order one: Stichtenoth's prime
 elements for `P`. -/

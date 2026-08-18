@@ -151,23 +151,18 @@ theorem valuationSubring_isDiscreteValuationRing_of_surjective
   let _ := nontrivial_valueGroup_of_surjective v hv
   exact _root_.Valuation.valuationSubring_isDiscreteValuationRing v
 
-/-- For a surjective valuation, Mathlib's generator is `exp (-1)`. -/
-theorem generator_eq_exp_neg_one_of_surjective (v : _root_.Valuation F ℤᵐ⁰)
-    [Nontrivial (valueGroup (.ofClass v))] (hv : Function.Surjective v) :
-    _root_.Valuation.IsRankOneDiscrete.generator v =
-      Units.mk0 (WithZero.exp (-1 : ℤ) : ℤᵐ⁰) (by simp) :=
-  _root_.Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective hv
-
 /-- Uniformizers of a surjective `ℤᵐ⁰`-valuation are exactly the elements of order one. -/
 theorem isUniformizer_iff_ord_eq_one_of_surjective (v : _root_.Valuation F ℤᵐ⁰)
     [Nontrivial (valueGroup (.ofClass v))] (hv : Function.Surjective v) {t : F} :
     v.IsUniformizer t ↔ ord v t = 1 := by
   rcases eq_or_ne t 0 with rfl | ht
   · refine iff_of_false ?_ (by simp)
-    simp only [_root_.Valuation.IsUniformizer, generator_eq_exp_neg_one_of_surjective v hv,
+    simp only [_root_.Valuation.IsUniformizer,
+      _root_.Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective hv,
       map_zero, Units.val_mk0]
     exact fun h => WithZero.exp_ne_zero h.symm
-  · rw [_root_.Valuation.IsUniformizer, generator_eq_exp_neg_one_of_surjective v hv,
+  · rw [_root_.Valuation.IsUniformizer,
+      _root_.Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective hv,
       Units.val_mk0, ord_eq_iff_valuation_eq_exp_neg v ht]
 
 theorem exists_isUniformizer_of_surjective (v : _root_.Valuation F ℤᵐ⁰)
