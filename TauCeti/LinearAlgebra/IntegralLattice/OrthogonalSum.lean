@@ -111,7 +111,8 @@ theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLa
 
 This is written directly so its computation rules are definitional for the `ℤ`-module instances
 inferred on integral-lattice carrier types. Reusing `Submodule.prodEquiv` introduces different
-instance terms and loses the definitional computation rules below. -/
+instance terms and breaks, for example, the `rfl` proofs of `orthogonalSumCarrierEquiv_inl` and
+`orthogonalSumCarrierEquiv_inr` below. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
     L.orthogonalSum M ≃ₗ[ℤ] L × M where
   toFun p :=

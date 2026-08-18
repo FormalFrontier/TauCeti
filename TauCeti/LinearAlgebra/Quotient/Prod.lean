@@ -49,70 +49,34 @@ private theorem quotientProdMap_apply_mk
       (Submodule.Quotient.mk x.1, Submodule.Quotient.mk x.2) := by
   simp [quotientProdMap]
 
-private def quotientProdInlMap (p : Submodule R M) (q : Submodule R N) :
-    (M ⧸ p) →ₗ[R] ((M × N) ⧸ p.prod q) :=
-  p.liftQ ((p.prod q).mkQ.comp (LinearMap.inl R M N)) (by
-    intro x hx
-    simp [LinearMap.mem_ker, hx])
-
-private def quotientProdInrMap (p : Submodule R M) (q : Submodule R N) :
-    (N ⧸ q) →ₗ[R] ((M × N) ⧸ p.prod q) :=
-  q.liftQ ((p.prod q).mkQ.comp (LinearMap.inr R M N)) (by
-    intro y hy
-    simp [LinearMap.mem_ker, hy])
-
 private def quotientProdInvMap (p : Submodule R M) (q : Submodule R N) :
     (M ⧸ p) × (N ⧸ q) →ₗ[R] ((M × N) ⧸ p.prod q) :=
-  LinearMap.coprod (quotientProdInlMap p q) (quotientProdInrMap p q)
+  LinearMap.coprod
+    (p.liftQ ((p.prod q).mkQ.comp (LinearMap.inl R M N)) (by
+      intro x hx
+      simp [LinearMap.mem_ker, hx]))
+    (q.liftQ ((p.prod q).mkQ.comp (LinearMap.inr R M N)) (by
+      intro y hy
+      simp [LinearMap.mem_ker, hy]))
 
-@[simp]
 private theorem quotientProdInvMap_apply_mk
     (p : Submodule R M) (q : Submodule R N) (x : M) (y : N) :
     quotientProdInvMap p q (Submodule.Quotient.mk x, Submodule.Quotient.mk y) =
       Submodule.Quotient.mk (x, y) := by
-  simp only [quotientProdInvMap, quotientProdInlMap, quotientProdInrMap, LinearMap.coprod_apply,
-    liftQ_apply, LinearMap.coe_comp, LinearMap.coe_inl, Function.comp_apply, mkQ_apply,
-    LinearMap.coe_inr]
+  simp only [quotientProdInvMap, LinearMap.coprod_apply, liftQ_apply, LinearMap.coe_comp,
+    LinearMap.coe_inl, Function.comp_apply, mkQ_apply, LinearMap.coe_inr]
   rw [← Submodule.Quotient.mk_add]
-  congr 1; simp
-
-@[simp]
-private theorem quotientProdInvMap_apply_inl
-    (p : Submodule R M) (q : Submodule R N) (x : M) :
-    quotientProdInvMap p q (Submodule.Quotient.mk x, 0) =
-      Submodule.Quotient.mk (x, 0) := by
-  rw [← Submodule.Quotient.mk_zero]
-  exact quotientProdInvMap_apply_mk p q x 0
-
-@[simp]
-private theorem quotientProdInvMap_apply_inr
-    (p : Submodule R M) (q : Submodule R N) (y : N) :
-    quotientProdInvMap p q (0, Submodule.Quotient.mk y) =
-      Submodule.Quotient.mk (0, y) := by
-  rw [← Submodule.Quotient.mk_zero]
-  exact quotientProdInvMap_apply_mk p q 0 y
+  simp
 
 private theorem quotientProdInvMap_comp_quotientProdMap
     (p : Submodule R M) (q : Submodule R N) :
     (quotientProdInvMap p q).comp (quotientProdMap p q) = LinearMap.id := by
-  ext x
-  case hl x =>
-    simp [LinearMap.comp_apply]
-  case hr x =>
-    simp [LinearMap.comp_apply]
+  ext x <;> simp [LinearMap.comp_apply, quotientProdInvMap]
 
 private theorem quotientProdMap_comp_quotientProdInvMap
     (p : Submodule R M) (q : Submodule R N) :
     (quotientProdMap p q).comp (quotientProdInvMap p q) = LinearMap.id := by
-  ext x
-  case hl.fst x =>
-    simp [LinearMap.comp_apply]
-  case hl.snd x =>
-    simp [LinearMap.comp_apply]
-  case hr.fst x =>
-    simp [LinearMap.comp_apply]
-  case hr.snd x =>
-    simp [LinearMap.comp_apply]
+  ext x <;> simp [LinearMap.comp_apply, quotientProdInvMap]
 
 /-- The quotient by a product of submodules is the product of the quotients.
 
@@ -138,8 +102,8 @@ theorem quotientProdEquiv_symm_apply_mk
     (p : Submodule R M) (q : Submodule R N) (x : M) (y : N) :
     (quotientProdEquiv p q).symm (Submodule.Quotient.mk x, Submodule.Quotient.mk y) =
       Submodule.Quotient.mk (x, y) := by
-  rw [LinearEquiv.symm_apply_eq]
-  exact (quotientProdEquiv_apply_mk p q (x, y)).symm
+  rw [quotientProdEquiv, LinearEquiv.symm_ofLinearMap, LinearEquiv.coe_ofLinearMap,
+    quotientProdInvMap_apply_mk]
 
 /-- The quotient by a product of submodules has rank the sum of the two quotients' ranks. -/
 @[simp]
