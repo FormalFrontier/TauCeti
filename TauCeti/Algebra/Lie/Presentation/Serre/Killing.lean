@@ -92,7 +92,7 @@ theorem chainBotCoeff_eq_zero_of_rootSpace_sub_eq_bot {α β : Weight K H L} (h�
     chainBotCoeff (⇑α) β = 0 := by
   by_contra hne
   refine (rootSpace_zsmul_add_ne_bot_iff α β hα (-1)).2 ⟨by omega, by omega⟩ ?_
-  rw [show ((-1 : ℤ) • ⇑α + ⇑β) = ⇑β - ⇑α by rw [neg_one_zsmul, neg_add_eq_sub]]
+  rw [neg_one_zsmul, neg_add_eq_sub]
   exact hsub
 
 /-- **The higher Serre relation.** If `x` and `y` are root vectors for roots `α` and `β` whose
@@ -111,7 +111,9 @@ theorem ad_pow_lie_eq_zero_of_rootSpace_sub_eq_bot {α β : Weight K H L} (hα :
   rw [genWeightSpace_chainTopCoeff_add_one_nsmul_add (⇑α) β hα] at hmem
   have hzero : ((toEnd K L L x) ^ (chainTopCoeff (⇑α) β + 1)) y = 0 := by
     simpa using hmem
-  have hadt : ((ad K L) x : Module.End K L) = toEnd K L L x := rfl
+  have hadt : ((ad K L) x : Module.End K L) = toEnd K L L x := by
+    ext z
+    simp
   rw [hexp, Nat.add_sub_cancel, hadt]
   rw [pow_succ] at hzero
   simpa [Module.End.mul_apply] using hzero
