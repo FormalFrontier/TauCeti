@@ -185,6 +185,19 @@ private theorem componentPointLiftAlgHom_comp_componentCoordinateMap
     _ = qFun (∑ D, (f D) • Pi.single D 1) := by rw [map_sum]
     _ = qFun f := congrArg qFun (pi_eq_sum_univ' f).symm
 
+private theorem componentPointLiftAlgHom_componentCoordinateHom_apply
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k)
+    (q : HopfAlgebra.points
+      (R := k)
+      (H := ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))) A)
+    (x : ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))) :
+    (toConv (componentPointLiftAlgHom H A q)).ofConv
+        ((componentCoordinateHom H).hom.toAlgHom x) = q.ofConv x := by
+  simp only [BialgHom.coe_toAlgHom]
+  rw [componentCoordinateHom_apply]
+  simpa only [AlgHom.comp_apply] using
+    AlgHom.congr_fun (componentPointLiftAlgHom_comp_componentCoordinateMap H A q) x
+
 /-- The component-coordinate morphism on points over a commutative test algebra. -/
 noncomputable def componentPointsHom
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k) :
@@ -212,12 +225,8 @@ theorem componentPointsHom_surjective
   refine ⟨toConv (componentPointLiftAlgHom H A q), ?_⟩
   apply ofConv_injective
   ext x
-  rw [componentPointsHom_apply, ofConv_toConv, AlgHom.comp_apply]
-  -- The point and Hopf-morphism wrappers both have `AlgHom` as their stable application API;
-  -- expose those definitionally equal maps before using `componentCoordinateHom_apply`.
-  change componentPointLiftAlgHom H A q ((componentCoordinateHom H).hom x) = q.ofConv x
-  rw [componentCoordinateHom_apply]
-  exact AlgHom.congr_fun (componentPointLiftAlgHom_comp_componentCoordinateMap H A q) x
+  rw [componentPointsHom_apply, ofConv_toConv, AlgHom.comp_apply,
+    componentPointLiftAlgHom_componentCoordinateHom_apply]
 
 private theorem quotientPointsSubgroup_identityComponent_eq_componentPointsHom_ker
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) (A : CommAlgCat.{u} k) :
@@ -225,13 +234,8 @@ private theorem quotientPointsSubgroup_identityComponent_eq_componentPointsHom_k
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A =
       (componentPointsHom H A).ker := by
   ext g
-  -- Membership in the bundled kernel unfolds to equality with the convolution identity, while
-  -- `componentPointsHom_apply` exposes its underlying algebra map. Restate that wrapper boundary
-  -- once so the two public kernel lemmas below apply.
-  change g ∈ CommHopfAlgCat.quotientPointsSubgroup H.obj
-      (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H)) A ↔
-    toConv (g.ofConv.comp (componentCoordinateHom H).hom.toAlgHom) = 1
-  rw [CommHopfAlgCat.mapPointsFunctor_app_eq_one_iff]
+  rw [MonoidHom.mem_ker, componentPointsHom_apply,
+    CommHopfAlgCat.mapPointsFunctor_app_eq_one_iff]
   rw [kernelHopfIdeal_componentCoordinateHom]
 
 /-- The group structure on the pointwise quotient, exposed locally for the first isomorphism
@@ -288,11 +292,7 @@ theorem componentPointwiseQuotientMulEquiv_mk
       (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
       (isNormal_identityComponentHopfIdeal H) A
   rw [CommHopfAlgCat.pointwiseQuotientMk_apply]
-  -- `pointwiseQuotientMk_apply` exposes the raw `QuotientGroup.mk`; display that definitional
-  -- quotient carrier so the two first-isomorphism-theorem application lemmas can rewrite.
-  change componentPointwiseQuotientMulEquiv H A
-      (QuotientGroup.mk g) = componentPointsHom H A g
-  rw [componentPointwiseQuotientMulEquiv, MulEquiv.trans_apply,
+  rw [QuotientGroup.mk'_apply, componentPointwiseQuotientMulEquiv, MulEquiv.trans_apply,
     QuotientGroup.quotientMulEquivOfEq_mk,
     TauCeti.QuotientGroup.quotientKerEquivOfSurjective_apply_mk]
 
@@ -340,22 +340,8 @@ noncomputable def componentPointwiseQuotientNatIso
       obtain ⟨g, rfl⟩ := CommHopfAlgCat.pointwiseQuotientMk_surjective H.obj
         (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
         (isNormal_identityComponentHopfIdeal H) A q
-      -- The categorical composites evaluate through their `.hom` fields, definitionally giving
-      -- the displayed quotient and points maps. Expose that application boundary before using
-      -- the public naturality lemmas for those maps.
-      change componentPointwiseQuotientMulEquiv H B
-          (CommHopfAlgCat.mapPointwiseQuotient H.obj
-            (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-            (isNormal_identityComponentHopfIdeal H) f
-            (CommHopfAlgCat.pointwiseQuotientMk H.obj
-              (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-              (isNormal_identityComponentHopfIdeal H) A g)) =
-        HopfAlgebra.mapPoints
-          (H := ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))) f
-          (componentPointwiseQuotientMulEquiv H A
-            (CommHopfAlgCat.pointwiseQuotientMk H.obj
-              (HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H))
-              (isNormal_identityComponentHopfIdeal H) A g))
+      simp only [GrpCat.hom_comp, MonoidHom.comp_apply, MulEquiv.toGrpIso_hom,
+        MulEquiv.toMonoidHom_eq_coe, ConcreteCategory.hom_ofHom, MonoidHom.coe_coe]
       rw [CommHopfAlgCat.mapPointwiseQuotient_mk,
         componentPointwiseQuotientMulEquiv_mk,
         componentPointwiseQuotientMulEquiv_mk,
@@ -370,9 +356,7 @@ noncomputable def componentPointwiseQuotientNatIso
               (H := ConstantGroup.coordinateRing k
                 (ConnectedComponents (PrimeSpectrum H))) f ≫
             eqToHom (HopfAlgebra.pointsFunctor_obj B).symm := by
-      -- Both `eqToHom`s transport along the defining object equalities of `pointsFunctor`; after
-      -- those stable transports are displayed, naturality is definitionally the same map.
-      rfl
+      exact HopfAlgebra.pointsFunctor_map_eqToHom f
     simpa only [Iso.trans_hom, eqToIso.hom,
       CommHopfAlgCat.pointwiseQuotientFunctor_map,
       Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp,
