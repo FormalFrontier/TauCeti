@@ -235,7 +235,8 @@ LINTERS="checkType defsWithUnderscore deprecatedNoSince impossibleInstance nonCl
 LINTERS_LEAN=$(printf '"%s", ' $LINTERS | sed 's/, $//')
 
 MODULE_IMPORT_LIST="$TMP/modules.txt"
-find TauCeti -name '*.lean' | LC_ALL=C sort | sed 's/\.lean$//; s|/|.|g' > "$MODULE_IMPORT_LIST"
+. scripts/source-modules.sh
+tauceti_source_modules "$TMP/source-files" "$MODULE_IMPORT_LIST"
 mods=$(wc -l < "$MODULE_IMPORT_LIST")
 [ "${mods:-0}" -gt 0 ] || fail "found no TauCeti/*.lean modules — the lint is miswired"
 
