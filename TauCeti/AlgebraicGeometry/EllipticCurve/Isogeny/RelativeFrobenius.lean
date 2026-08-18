@@ -148,6 +148,15 @@ theorem relativeFrobeniusCoordinateHom_of (g : F[X]) :
       AdjoinRoot.of W.polynomial (expand F p g) :=
   AdjoinRoot.lift_of (eval₂_relativeFrobenius_eq_zero p W)
 
+/-- The relative Frobenius sends the affine coordinate of the twist to `x ^ p`. -/
+@[simp]
+theorem relativeFrobeniusCoordinateHom_X :
+    relativeFrobeniusCoordinateHom p W
+        (algebraMap F[X] (W.map (frobenius F p)).CoordinateRing X) =
+      algebraMap F[X] W.CoordinateRing X ^ p := by
+  rw [AdjoinRoot.algebraMap_eq, relativeFrobeniusCoordinateHom_of, Polynomial.expand_X,
+    map_pow, ← AdjoinRoot.algebraMap_eq]
+
 /-- The relative Frobenius sends the second coordinate of the twist to `y ^ p`. -/
 @[simp]
 theorem relativeFrobeniusCoordinateHom_root :
@@ -272,10 +281,8 @@ theorem fieldPullback_relativeFrobeniusIsogeny_X :
       algebraMap F[X] W.FunctionField X ^ p := by
   rw [IsScalarTower.algebraMap_apply F[X] (W.map (frobenius F p)).CoordinateRing
       (W.map (frobenius F p)).FunctionField,
-    Isogeny.fieldPullback_algebraMap, relativeFrobeniusIsogeny_pullback,
-    relativeFrobeniusPullback_apply, AdjoinRoot.algebraMap_eq,
-    relativeFrobeniusCoordinateHom_of, Polynomial.expand_X, map_pow, map_pow,
-    ← AdjoinRoot.algebraMap_eq, ← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing]
+    Isogeny.fieldPullback_algebraMap]
+  simp [IsScalarTower.algebraMap_apply F[X] W.CoordinateRing]
 
 /-- The copy of `F(xᵖ)` inside `F(W)` is the image of the rational function field of the twist:
 the two descriptions of the field the tower argument below is anchored at. -/
@@ -325,11 +332,13 @@ end Degree
 
 /-- **The relative Frobenius isogeny has separable degree one**, as pure inseparability
 requires. -/
+@[simp]
 theorem separableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).separableDegree = 1 :=
   separableDegree_eq_one_of_isPurelyInseparable (relativeFrobeniusIsogeny p W)
 
 /-- **The relative Frobenius isogeny carries its whole degree `p` in the inseparable part.** -/
+@[simp]
 theorem inseparableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).inseparableDegree = p := by
   rw [inseparableDegree_eq_degree_of_isPurelyInseparable, degree_relativeFrobeniusIsogeny]
