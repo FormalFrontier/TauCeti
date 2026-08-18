@@ -30,7 +30,8 @@ proves that insertion adds the degrees of the outer and inner operations.
 
 * `MultilinearMap.oneSlot`: substitute one multilinear map into a specified block of another.
 * `MultilinearMap.koszulSign`: the sign acquired by crossing the prefix inputs.
-* `MultilinearMap.signedOneSlot`: one-slot substitution on a fixed homogeneous component.
+* `MultilinearMap.signedOneSlot`: one-slot substitution scaled by the Koszul sign for supplied
+  prefix degrees, correct when the prefix inputs have those degrees.
 
 ## References
 
@@ -219,6 +220,20 @@ theorem signedOneSlot_apply {M : Type uM} {N : Type uN} [AddCommMonoid M] [Modul
       Sum.elim (fun _ ↦ g fun j ↦ x (.inr (.inl j))) (fun i ↦ x (.inr (.inr i)))) :=
   by rw [signedOneSlot, smul_apply, oneSlot_apply]
 
+/-- On inputs whose prefix has the supplied degrees `d`, signed one-slot substitution has the
+coefficient `(-1) ^ (q * ∑ i, d i)`. -/
+theorem signedOneSlot_apply_of_mem {M : Type uM} {N : Type uN}
+    [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
+    {σM : Type*} [SetLike σM M] {α : Type uα} [Fintype α] {β : Type uβ} {γ : Type uγ}
+    (A : α → ℤ → σM) (q : ℤ) (d : α → ℤ)
+    (f : MultilinearMap R (fun _ : α ⊕ (Unit ⊕ γ) ↦ M) N)
+    (g : MultilinearMap R (fun _ : β ↦ M) M) (x : α ⊕ (β ⊕ γ) → M)
+    (_hx : ∀ i, x (.inl i) ∈ A i (d i)) :
+    signedOneSlot q d f g x = (((q * ∑ i, d i).negOnePow : ℤ) : R) •
+      f (Sum.elim (fun i ↦ x (.inl i)) <|
+        Sum.elim (fun _ ↦ g fun j ↦ x (.inr (.inl j))) (fun i ↦ x (.inr (.inr i)))) := by
+  rw [signedOneSlot_apply, koszulSign_eq_negOnePow]
+
 end SignedOneSlot
 
 end Signed
@@ -245,6 +260,10 @@ theorem IsHomogeneous.signedOneSlot {α : Type uα} {β : Type uβ} {γ : Type u
     IsHomogeneous (f.signedOneSlot q d g) (Sum.elim A (Sum.elim B C)) E (q + p) := by
   rw [MultilinearMap.signedOneSlot]
   exact (hf.oneSlot hg).smul (koszulSign q d)
+
+grind_pattern IsHomogeneous.signedOneSlot =>
+  IsHomogeneous (MultilinearMap.signedOneSlot q d f g) (Sum.elim A (Sum.elim B C)) E (q + p),
+  IsHomogeneous g B D q
 
 end SignedHomogeneous
 
