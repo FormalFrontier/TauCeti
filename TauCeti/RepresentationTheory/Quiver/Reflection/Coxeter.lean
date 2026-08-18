@@ -44,8 +44,9 @@ argument supplies the descent to a vertex simple.
   vertices, with `TauCeti.vertexReflectionList_symm` identifying its inverse as the automorphism
   along the reversed word.
 * `TauCeti.titsForm_vertexPreReflectionList` and
-  `TauCeti.bijOn_vertexPreReflectionList`: the composite preserves the Tits form, and hence
-  permutes each of its level sets, in particular the roots `q(d) = 1`.
+  `TauCeti.bijOn_vertexPreReflectionList`: along a word in loopless vertices, the composite
+  preserves the Tits form, and hence permutes each of its level sets, in particular the roots
+  `q(d) = 1`.
 * `TauCeti.titsPolarForm_eq_zero_of_vertexPreReflectionList_eq_self`: a vector fixed by the
   composite along a repetition-free word in all the vertices lies in the radical of the polarized
   Tits form.
