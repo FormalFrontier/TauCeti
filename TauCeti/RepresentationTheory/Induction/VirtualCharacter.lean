@@ -20,12 +20,19 @@ Together they are the two maps `R(S) → R(G)` and `R(G) → R(S)` on virtual-ch
 interplay -- the projection formula `TauCeti.indClassFun_comp_subtype_mul` -- makes induction a map
 of `R(G)`-modules.
 
+## Main definitions
+
+* `TauCeti.ClassFunction.indVirtualCharactersOfSubgroupAddHom`: induction bundled as an additive
+  homomorphism between the virtual-character lattices of a subgroup and the ambient group.
+
 ## Main statements
 
 * `TauCeti.ClassFunction.ind_ofFDRep_mem_virtualCharacters`: induction takes the character of a
   finite-dimensional subgroup representation to a virtual character of the ambient group.
 * `TauCeti.indClassFun_mem_virtualCharacters`: the same for an arbitrary virtual character of the
   subgroup, obtained from the previous statement by additivity.
+* `TauCeti.ClassFunction.indVirtualCharactersOfSubgroupAddHom_apply_coe`: forgetting the target
+  subtype in the bundled map recovers induction of class functions.
 * `TauCeti.comp_subtype_mem_virtualCharacters`: restricting a virtual character of `G` to a
   subgroup gives a virtual character of the subgroup.
 
