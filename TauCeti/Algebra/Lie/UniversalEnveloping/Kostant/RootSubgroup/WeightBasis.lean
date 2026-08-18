@@ -49,14 +49,14 @@ choice is confined to one weight space at a time.
 * `TauCeti.UniversalEnvelopingAlgebra.weightSublattice`: the weight sublattice cut out of a
   subgroup `M ≤ V` by a weight.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantWeightBasis`: the weight basis itself, with
-  `TauCeti.UniversalEnvelopingAlgebra.kostantWeightBasis_isCartanWeightVector` recording that its
+  `TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_kostantWeightBasis` recording that its
   vectors have the advertised weights.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantWeightBasisFin`: the same basis indexed by `Fin n`,
   which is the shape the coordinate and group-scheme constructions consume.
 
 ## Main results
 
-* `TauCeti.UniversalEnvelopingAlgebra.eq_zero_of_sum_eq_zero_of_isCartanWeightVector`: vectors of
+* `TauCeti.UniversalEnvelopingAlgebra.eq_zero_of_isCartanWeightVector_of_sum_eq_zero`: vectors of
   pairwise distinct integral weights are independent.
 * `TauCeti.UniversalEnvelopingAlgebra.isInternal_weightSublattice`: a Kostant-stable subgroup lying
   in the span of the integral joint weight spaces is their internal direct sum.
@@ -117,7 +117,7 @@ theorem mem_weightSublattice_iff {μ : κ → ℤ} {x : M} :
 /-- **Weight vectors of pairwise distinct weights are independent.** If a finite family of joint
 eigenvectors of the designated Cartan operators, indexed by pairwise distinct integral weights, sums
 to zero, then every member of the family is zero. -/
-theorem eq_zero_of_sum_eq_zero_of_isCartanWeightVector {s : Finset (κ → ℤ)} {w : (κ → ℤ) → V}
+theorem eq_zero_of_isCartanWeightVector_of_sum_eq_zero {s : Finset (κ → ℤ)} {w : (κ → ℤ) → V}
     (hw : ∀ l ∈ s, IsCartanWeightVector h ρ l (w l)) (hsum : ∑ l ∈ s, w l = 0)
     {l₀ : κ → ℤ} (hl₀ : l₀ ∈ s) : w l₀ = 0 := by
   -- Restrict generic joint-eigenspace independence along the injective cast of integral weights.
@@ -142,7 +142,7 @@ theorem iSupIndep_weightSublattice : iSupIndep (weightSublattice h ρ M) := by
   rw [iSupIndep_iff_finsetSum_eq_zero_imp_eq_zero]
   intro s w hw hsum μ hμ
   apply Subtype.ext
-  exact eq_zero_of_sum_eq_zero_of_isCartanWeightVector h ρ
+  exact eq_zero_of_isCartanWeightVector_of_sum_eq_zero h ρ
     (fun ν hν => (mem_weightSublattice_iff h ρ M).1 (hw ν hν))
     (by simpa only [AddSubmonoidClass.coe_finsetSum, ZeroMemClass.coe_zero] using
       congr_arg (fun x : M => (x : V)) hsum) hμ
@@ -209,7 +209,7 @@ weight sublattice along the direct-sum decomposition.
 
 The weight of the basis vector indexed by `a` is the first component `a.1` of its index, so
 `Sigma.fst` is the weight function such a basis is paired with;
-`TauCeti.UniversalEnvelopingAlgebra.kostantWeightBasis_isCartanWeightVector` is the corresponding
+`TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_kostantWeightBasis` is the corresponding
 weight hypothesis. -/
 noncomputable def kostantWeightBasis :
     Module.Basis
@@ -228,7 +228,7 @@ theorem kostantWeightBasis_mem
 /-- **The weight basis consists of weight vectors**, of the weights recorded by the first component
 of the index. This is the weight hypothesis that the split maximal torus, the matrix coordinates and
 the generated group scheme take as given. -/
-theorem kostantWeightBasis_isCartanWeightVector
+theorem isCartanWeightVector_kostantWeightBasis
     (a : Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)) :
     IsCartanWeightVector h ρ (Sigma.fst a)
       ((kostantWeightBasis e h ρ M hM hV a : M) : V) :=
@@ -287,13 +287,13 @@ noncomputable def kostantWeightFin :
   fun x => ((kostantWeightBasisIndexEquivFin e h ρ M hM hV).symm x).1
 
 /-- **The `Fin`-indexed weight basis consists of weight vectors** of the recorded weights. -/
-theorem kostantWeightBasisFin_isCartanWeightVector
+theorem isCartanWeightVector_kostantWeightBasisFin
     (x : Fin (Nat.card
       (Σ μ : κ → ℤ, Module.Free.ChooseBasisIndex ℤ (weightSublattice h ρ M μ)))) :
     IsCartanWeightVector h ρ (kostantWeightFin e h ρ M hM hV x)
       ((kostantWeightBasisFin e h ρ M hM hV x : M) : V) := by
   rw [kostantWeightBasisFin_apply]
-  exact kostantWeightBasis_isCartanWeightVector e h ρ M hM hV _
+  exact isCartanWeightVector_kostantWeightBasis e h ρ M hM hV _
 
 end WeightBasis
 
