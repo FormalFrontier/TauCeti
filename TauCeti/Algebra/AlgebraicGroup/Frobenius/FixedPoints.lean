@@ -20,7 +20,7 @@ when each of its values is fixed in `A`. Since those values form the subring
 of `H` valued in that subring:
 
 ```text
-fixedSubgroup (iterateFrobeniusPoints p n) ≃* WithConv (H →ₐ[ℤ] frobeniusFixedSubring A p n).
+WithConv (H →ₐ[ℤ] frobeniusFixedSubring A p n) ≃* fixedSubgroup (iterateFrobeniusPoints p n).
 ```
 
 This is what makes the fixed-point construction of the finite groups of Lie type a construction of
