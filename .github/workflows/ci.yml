@@ -43,6 +43,7 @@ jobs:
           python3 scripts/pr_status/test_zulip.py
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
+          python3 scripts/test_landrun_pin.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
 
@@ -131,10 +132,18 @@ jobs:
 
       # Anonymous GETs from the PUBLIC read host, the same trusted, publisher-built data
       # pr-build restores. The shared script discards a partial fetch rather than keeping it;
-      # see its header. Reading main's own previous publication is not circular: artifacts are
-      # content-addressed by Lake input hash, so a restored module is byte-identical to what a
-      # fresh compile would produce, and every module this push actually changed misses the
-      # cache and is rebuilt here.
+      # see its header.
+      #
+      # What this does NOT establish: that a restored module matches what a compile of the
+      # checked-out source would produce. Lake keys artifacts by an input hash that is a single
+      # UInt64 and explicitly not cryptographic (Lake/Build/Trace.lean carries a TODO to replace
+      # it), so content addressing is a deduplication scheme here, not an integrity guarantee.
+      # Restoring on main also gives up main's former role as the one build that took nothing on
+      # faith. nightly-verify.yml reinstates it on a daily cadence: it rebuilds from source with the
+      # cache off and compares the resulting oleans byte for byte against a cache-restored build of
+      # the same commit. That is a detector, not an equivalent guarantee, and its own header spells
+      # out the exposure window it leaves. The two are a pair; do not enable this restore without
+      # that nightly running.
       - name: Fetch TauCeti's own oleans from the Lake cache
         if: ${{ env.TAUCETI_CACHE_ENABLED == '1' }}
         env:

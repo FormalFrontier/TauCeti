@@ -1,0 +1,396 @@
+name: Nightly verification
+
+# Rebuild main from source with the Lake artifact cache switched off, and check that a clean
+# compile agrees byte for byte with what the cache serves.
+#
+# ci.yml used to be this check by accident: it recompiled the whole library on every push, so main
+# was an independent root of trust that never took a compiled artifact on faith. Restoring the cache
+# there (#3715) took the post-merge run from about 58 minutes to about 15 and lifted publication from
+# roughly one snapshot an hour to three or four, but it also retired that property. This workflow
+# reinstates it on a nightly cadence.
+#
+# What that cadence does and does not buy. It detects persistent corruption and gives every day a
+# commit with independently established provenance. It does NOT give every published revision its
+# own trusted provenance: a bad artifact landing just after a run can be consumed and republished
+# for a day, and if the affected module changes before the next run, no clean build ever judges the
+# revision that carried it. Closing that needs a promoted-snapshot scheme, where consumers read only
+# what a clean build has verified. That is a larger change; this is the cheap 90%.
+#
+# Two signals, deliberately not collapsed into one:
+#
+#   * The from-source build, audits and lints. The hard signal. It elaborates every module and means
+#     something whatever the cache did.
+#   * The byte comparison against a cache-restored build of the same commit. Advisory, because it
+#     assumes Lean output is reproducible for a fixed toolchain, source and platform. If the first
+#     runs show it is not, delete the comparison rather than let it cry wolf; the hard signal stands
+#     alone.
+#
+# Fail closed, not open. The comparison reports `inconclusive` and alerts whenever it could not
+# actually compare a cache-restored build against a clean one. The case that matters most, a cache
+# so broken that the restore falls back to building from source, would otherwise compare two clean
+# builds and report agreement: an unusable cache must never look like a verified one.
+#
+# The cache-restored build runs under landrun, because it imports the very artifacts it is meant to
+# be judging and importing Lean code executes its initializers. Only `reference` is mounted, with
+# `reference/.lake` writable; the clean build, its manifest and the comparator are outside the mount
+# set entirely. Both manifests are taken outside the sandbox, and the clean one is taken before the
+# reference workspace runs anything at all.
+
+on:
+  schedule:
+  - cron: "25 15 * * *"   # daily, offset from stuck-alerts (:50), merge-sweep (:40), housekeeping (:20)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-verify
+  # Never cancel mid-run: a partial verification tells us nothing, and killing a run after the
+  # from-source build but before the report wastes the expensive part.
+  cancel-in-progress: false
+
+jobs:
+  # No secrets reach this job. It builds and executes repository code, including a build restored
+  # from the public cache, so anything it can read is code-reachable. Reporting lives in a separate
+  # job for exactly that reason.
+  verify:
+    if: github.repository == 'TauCetiProject/TauCeti'
+    runs-on: ubuntu-latest
+    # The from-scratch build alone ran about 49 minutes as ci.yml's Build step before #3715, and the
+    # cache-restored build adds roughly 15. Generous headroom, but bounded; a run that hits this
+    # still reports, because the report job keys off the job result.
+    timeout-minutes: 240
+    outputs:
+      sha: ${{ steps.rev.outputs.sha }}
+      build: ${{ steps.fresh_build.outcome }}
+      audit: ${{ steps.fresh_audit.outcome }}
+      compare: ${{ steps.compare.outputs.status }}
+      detail: ${{ steps.compare.outputs.detail }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: fresh
+          # This job executes repository code and a cache-restored build; leaving the token in
+          # the workspace git config would put it within their reach.
+          persist-credentials: false
+          # Enough history for `lake cache get` to backtrack to a published ancestor in the
+          # reference workspace below.
+          fetch-depth: 100
+
+      - name: Resolve the commit under test
+        id: rev
+        run: |
+          set -euo pipefail
+          sha=$(git -C fresh rev-parse HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "verifying $sha"
+
+      # Pin the reference workspace to the SAME commit, by SHA rather than by branch: main advances
+      # several times an hour, and comparing two different trees would report everything as divergent.
+      - name: Check out the same commit for the reference build
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.rev.outputs.sha }}
+          path: reference
+          persist-credentials: false
+          fetch-depth: 100
+
+      # The cache-restored build below runs under landrun. See its step for why.
+      #
+      # The version and checksum are duplicated from pr-build.yml on purpose: that workflow is on
+      # the merge queue's critical path and runs from the BASE definition under
+      # pull_request_target, so a shared composite action introduced here would not be exercised
+      # by this PR's own build and a mistake in it would redden every PR. Drift is prevented by
+      # scripts/test_landrun_pin.py instead, which runs with the infrastructure policy tests.
+      - name: Install landrun (pinned + checksum) and self-test (fail closed)
+        env:
+          LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
+          LANDRUN_VER: v0.1.14
+        run: |
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/Zouuup/landrun/releases/download/${LANDRUN_VER}/landrun-linux-amd64" -o landrun
+          echo "${LANDRUN_SHA256}  landrun" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"; install -m 0755 landrun "$HOME/.local/bin/landrun"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          landrun --version || true
+          # Prove the sandbox enforces before trusting it with a cache-restored build: run works,
+          # out-of-tree write denied, /dev/shm write denied, network denied without the flag.
+          set +e
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo ok' >/dev/null 2>&1; ok=$?
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /etc/landrun-probe' >/dev/null 2>&1; wr=$?
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /dev/shm/landrun-probe' >/dev/null 2>&1; shm=$?
+          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          set -e
+          echo "self-test: run=$ok write=$wr shm=$shm net=$net (nonzero = denied for w/shm/net)"
+          if [ $ok -ne 0 ] || [ $wr -eq 0 ] || [ $shm -eq 0 ] || [ $net -eq 0 ]; then
+            echo "::error::landrun not enforcing (run=$ok write=$wr shm=$shm net=$net); refusing to run code under it"; exit 1
+          fi
+
+      - name: Install elan
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
+          chmod +x elan-init.sh && ./elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      # One restore serves both workspaces: same commit, so same manifest and toolchain, and the
+      # action exports MATHLIB_CACHE_DIR for every later step. This holds Mathlib's artifacts only;
+      # TauCeti's own oleans are never in it, so it cannot pre-populate the from-source build.
+      - name: Restore Mathlib's compressed download cache
+        uses: ./fresh/.github/actions/restore-mathlib-ltars
+        with:
+          project-dir: fresh
+
+      - name: Fetch Mathlib oleans for both workspaces
+        run: |
+          set -euo pipefail
+          for dir in fresh reference; do
+            ( cd "$dir" && { lake exe cache get || lake exe cache get!; } )
+          done
+
+      # --- The hard signal: everything elaborated from source -------------------------------
+      # LAKE_RESTORE_ARTIFACTS=false and a workspace-local LAKE_CACHE_DIR that is never fetched into
+      # are what make this from scratch. LAKE_ARTIFACT_CACHE stays true only so the build packs its
+      # own outputs locally for the audits that follow; nothing is ever read from the network.
+      - name: Build main from source, with no cached artifacts
+        id: fresh_build
+        env:
+          LAKE_ARTIFACT_CACHE: "true"
+          LAKE_RESTORE_ARTIFACTS: "false"
+          LAKE_NO_CACHE: "true"
+          LAKE_CACHE_DIR: ${{ github.workspace }}/fresh/.lake/cache
+        run: ( cd fresh && lake build )
+
+      # Immediately after the clean build and before anything else runs here: the audits below
+      # build `scripts/Axioms.olean` and friends in this workspace only, which would read as
+      # divergence, and the cache-restored build later on shares this runner.
+      - name: Record what the clean build produced
+        run: python3 fresh/scripts/compare-build-outputs.py manifest fresh/.lake/build "$RUNNER_TEMP/clean-manifest.txt"
+
+      - name: Audit and lint the from-source build
+        id: fresh_audit
+        env:
+          LAKE_ARTIFACT_CACHE: "true"
+          LAKE_RESTORE_ARTIFACTS: "false"
+          LAKE_NO_CACHE: "true"
+          LAKE_CACHE_DIR: ${{ github.workspace }}/fresh/.lake/cache
+        run: |
+          set -euo pipefail
+          cd fresh
+          lake exe axioms
+          lake exe module-system
+          bash scripts/lint-env.sh
+          bash scripts/lint-style.sh
+
+      # --- The advisory signal: does the cache agree with a clean compile? -------------------
+      - name: Configure the Lake artifact cache for the reference build
+        id: refcfg
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: |
+          if [ -n "$PUBLIC_ARTIFACT_ENDPOINT" ] && [ -n "$PUBLIC_REVISION_ENDPOINT" ]; then
+            {
+              echo "LAKE_CACHE_DIR=$GITHUB_WORKSPACE/reference/.lake/cache"
+              echo "LAKE_ARTIFACT_CACHE=true"
+              echo "LAKE_RESTORE_ARTIFACTS=true"
+            } >> "$GITHUB_ENV"
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lake cache endpoints not configured — the comparison will report inconclusive"
+          fi
+
+      - name: Restore what the cache serves for this commit
+        id: restore
+        if: ${{ steps.refcfg.outputs.enabled == 'true' }}
+        continue-on-error: true
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: bash reference/scripts/lake-cache-get.sh reference
+
+      # The step above falls back to LAKE_ARTIFACT_CACHE=false when it cannot get a whole cache,
+      # which would leave the reference workspace building from source. Comparing that against the
+      # from-source build proves nothing while looking like agreement, so establish here whether a
+      # real restore happened and refuse to compare if it did not. GITHUB_ENV writes land in the
+      # next step, which is why this is a step of its own.
+      - name: Confirm the reference workspace really restored from the cache
+        id: restored
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.refcfg.outputs.enabled }}" != "true" ]; then
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "why=the Lake cache endpoints are not configured" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.restore.outcome }}" != "success" ]; then
+            # `outcome` is the pre-continue-on-error result. Without this, a fetch that died
+            # after leaving a partial cache but before writing its fallback flags would look
+            # like a successful restore, and Lake rebuilding the gaps would look like agreement.
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "why=the cache fetch did not complete successfully" >> "$GITHUB_OUTPUT"
+          elif [ "${LAKE_ARTIFACT_CACHE:-}" != "true" ] || [ "${LAKE_RESTORE_ARTIFACTS:-}" != "true" ]; then
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "why=the cache fetch gave up and disabled artifact restoration" >> "$GITHUB_OUTPUT"
+          elif [ -z "$(find reference/.lake/cache -type f -print -quit 2>/dev/null)" ]; then
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "why=the restored cache is empty" >> "$GITHUB_OUTPUT"
+          else
+            echo "restored=true" >> "$GITHUB_OUTPUT"
+            echo "why=" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Under landrun, because this build IMPORTS the artifacts it is meant to be judging, and
+      # importing Lean code executes its initializers (see scripts/lint-env.sh). Unsandboxed it
+      # could reach the clean build's outputs, the manifest recording them, or the comparator, and
+      # a poisoned artifact could arrange to be found identical to a clean one. The sandbox mounts
+      # only `reference` read-only with `reference/.lake` writable: `fresh` and $RUNNER_TEMP are
+      # not in the mount set at all, so the evidence is out of reach. Offline too, like pr-build's
+      # sandbox, so nothing here can fetch more than the restore step already placed on disk.
+      - name: Build the reference workspace from the cache, under landrun
+        id: reference_build
+        if: ${{ steps.restored.outputs.restored == 'true' }}
+        # A failure here is a finding, not an error: a poisoned or incomplete artifact looks exactly
+        # like this. It is turned into `inconclusive` below rather than swallowed.
+        continue-on-error: true
+        env:
+          LAKE_NO_CACHE: "true"
+        run: |
+          set -euo pipefail
+          mkdir -p reference/.lake/tmp
+          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          landrun --rox /usr --rox /etc \
+            --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
+            --rox "$HOME/.elan" \
+            --rox "$PWD/reference" --rw "$PWD/reference/.lake" \
+            --env PATH --env HOME --env CI \
+            --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
+            -- bash -euo pipefail -c 'cd reference && export TMPDIR="$PWD/.lake/tmp" && exec lake build'
+
+      # Outside the sandbox: the digests must be taken by code the build could not touch.
+      - name: Record what the cache-restored build produced
+        if: ${{ steps.reference_build.outcome == 'success' }}
+        run: python3 fresh/scripts/compare-build-outputs.py manifest reference/.lake/build "$RUNNER_TEMP/cached-manifest.txt"
+
+      # Always runs, and every path that could not actually compare a cache-restored build against a
+      # clean one reports `inconclusive`, which the report job treats as alert-worthy.
+      - name: Compare the two builds
+        id: compare
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.restored.outputs.restored }}" != "true" ]; then
+            {
+              echo "status=inconclusive"
+              echo "detail=nothing was compared: ${{ steps.restored.outputs.why }}"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ steps.reference_build.outcome }}" != "success" ]; then
+            {
+              echo "status=inconclusive"
+              echo "detail=the cache-restored build failed, which is itself what a poisoned or incomplete artifact looks like"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 fresh/scripts/compare-build-outputs.py compare \
+            "$RUNNER_TEMP/clean-manifest.txt" "$RUNNER_TEMP/cached-manifest.txt"
+
+  # Reporting is a separate job on a fresh runner with no checkout, so the Zulip credential never
+  # shares a machine with repository code, a cache-restored olean, or anything either could have
+  # written. It receives only the structured outputs above, and the Zulip client here is a dozen
+  # lines of standard library rather than an import from the tree being verified.
+  report:
+    needs: verify
+    # `always()` so a timed-out or cancelled verify still reports; without it the very failure this
+    # workflow exists to catch could pass in silence. Parenthesised because `&&` binds tighter
+    # than `||`.
+    # The repository guard matters here too: on a fork `verify` is skipped, and without it this
+    # job would fire on every schedule and fail for want of a Zulip secret it should not have.
+    if: ${{ always() && github.repository == 'TauCetiProject/TauCeti'
+            && (needs.verify.result != 'success' || needs.verify.outputs.compare != 'agree') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Post the divergence to Zulip
+        env:
+          ZULIP_API_KEY: ${{ secrets.ZULIP_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_EMAIL }}
+          ZULIP_SITE: https://leanprover.zulipchat.com
+          ZULIP_CHANNEL: Tau Ceti
+          # A topic of its own, not "Stuck PRs": stuck_alerts.py reconciles that topic by marker and
+          # edits messages it recognises, so an unrelated post would sit inside its bookkeeping.
+          ZULIP_TOPIC: Nightly verification
+          RESULT: ${{ needs.verify.result }}
+          SHA: ${{ needs.verify.outputs.sha }}
+          BUILD: ${{ needs.verify.outputs.build }}
+          AUDIT: ${{ needs.verify.outputs.audit }}
+          COMPARE: ${{ needs.verify.outputs.compare }}
+          DETAIL: ${{ needs.verify.outputs.detail }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          import sys
+          import urllib.parse
+          import urllib.request
+
+          sha = os.environ.get("SHA") or ""
+          where = (f"[`{sha[:8]}`](https://github.com/TauCetiProject/TauCeti/commit/{sha})"
+                   if sha else "an unresolved commit")
+          lines = [f"**Nightly verification did not come back clean** on {where}."]
+
+          # Deliberately does not claim the cached per-push CI passed for this SHA: main's CI
+          # coalesces intermediate commits, so this workflow's commit may never have had its own run.
+          if os.environ.get("RESULT") != "success":
+              if os.environ.get("BUILD") not in ("success", "", None):
+                  lines.append("The from-source build FAILED with the artifact cache disabled. "
+                               "Treat the published Lake cache as suspect until this is explained.")
+              elif os.environ.get("AUDIT") not in ("success", "", None):
+                  lines.append("main built from source, but an audit or lint FAILED there. "
+                               "Treat the published Lake cache as suspect until this is explained.")
+              else:
+                  lines.append(f"The verification job did not complete "
+                               f"(result: `{os.environ.get('RESULT')}`).")
+
+          compare = os.environ.get("COMPARE") or ""
+          detail = os.environ.get("DETAIL") or ""
+          if compare == "disagree":
+              lines.append(f"A clean compile and the cache-restored build of the same commit "
+                           f"produced DIFFERENT oleans: {detail}")
+          elif compare == "inconclusive":
+              lines.append(f"The comparison could not be made, which is not a pass: {detail}")
+          elif compare not in ("agree", ""):
+              lines.append(f"Unrecognised comparison status `{compare}`: {detail}")
+
+          lines.append(f"[Run log]({os.environ['RUN_URL']})")
+          content = "\n\n".join(lines)
+
+          email = (os.environ.get("ZULIP_EMAIL") or "").strip()
+          key = (os.environ.get("ZULIP_API_KEY") or "").strip()
+          site = (os.environ.get("ZULIP_SITE") or "").strip().rstrip("/")
+          if not (email and key and site):
+              print("::error::ZULIP_EMAIL / ZULIP_API_KEY not set; cannot report divergence")
+              sys.exit(1)
+
+          data = urllib.parse.urlencode({
+              "type": "stream",
+              "to": os.environ["ZULIP_CHANNEL"],
+              "topic": os.environ["ZULIP_TOPIC"],
+              "content": content,
+          }).encode()
+          req = urllib.request.Request(site + "/api/v1/messages", data=data, method="POST")
+          req.add_header("Authorization",
+                         "Basic " + base64.b64encode(f"{email}:{key}".encode()).decode())
+          req.add_header("Content-Type", "application/x-www-form-urlencoded")
+          # No retry: Zulip's send is not idempotent, and a duplicate emergency post is worse than
+          # a missed one when the run is red anyway.
+          with urllib.request.urlopen(req) as resp:
+              result = json.loads(resp.read().decode()).get("result")
+          print(f"posted to Zulip: {result}")
+          PY
