@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.DerivationMap
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 
 /-!
 # The tangent vector of a Kostant root subgroup
