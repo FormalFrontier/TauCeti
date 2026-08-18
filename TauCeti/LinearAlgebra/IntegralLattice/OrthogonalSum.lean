@@ -9,6 +9,7 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Even
 public import TauCeti.LinearAlgebra.IntegralLattice.Gram
 public import TauCeti.LinearAlgebra.IntegralLattice.Isometry
 public import TauCeti.LinearAlgebra.IntegralLattice.Signature
+public import TauCeti.LinearAlgebra.Submodule.Prod
 import Mathlib.LinearAlgebra.Basis.Prod
 
 /-!
@@ -64,23 +65,12 @@ theorem orthogonalSumForm_apply (L : IntegralLattice V) (M : IntegralLattice W)
     orthogonalSumForm L M p q = L.form p.1 q.1 + M.form p.2 q.2 :=
   (rfl)
 
-private def prodCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
-    (L.carrier.prod M.carrier : Submodule ℤ (V × W)) ≃ₗ[ℤ] L × M where
-  toFun p :=
-    (⟨p.1.1, (Submodule.mem_prod.mp p.2).1⟩,
-      ⟨p.1.2, (Submodule.mem_prod.mp p.2).2⟩)
-  invFun p := ⟨(p.1, p.2), Submodule.mem_prod.mpr ⟨p.1.2, p.2.2⟩⟩
-  map_add' _ _ := rfl
-  map_smul' := by intro c p; apply Prod.ext <;> rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
-
 /-- The product of two full integral carriers is a full integral carrier. -/
 private theorem isLattice_prod (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.carrier.prod M.carrier).IsLattice ℚ := by
   constructor
   · rw [← Module.Finite.iff_fg]
-    exact Module.Finite.equiv (prodCarrierEquiv L M).symm
+    exact Module.Finite.equiv (Submodule.prodEquiv L.carrier M.carrier).symm
   · rw [Submodule.prod_coe,
       Submodule.span_prod_eq (R := ℚ) L.carrier.zero_mem M.carrier.zero_mem,
       Submodule.IsLattice.span_eq_top, Submodule.IsLattice.span_eq_top,
@@ -117,10 +107,20 @@ theorem orthogonalSumForm_toQuadraticMap (L : IntegralLattice V) (M : IntegralLa
   ext p
   rfl
 
-/-- The carrier of an orthogonal sum is canonically the product of the carrier types. -/
+/-- The carrier of an orthogonal sum is canonically the product of the carrier types.
+
+Unlike `Submodule.prodEquiv`, this targets the canonical integer-module structures on the lattice
+carrier types rather than the module structures inherited from their ambient submodules. -/
 def orthogonalSumCarrierEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
-    L.orthogonalSum M ≃ₗ[ℤ] L × M :=
-  prodCarrierEquiv L M
+    L.orthogonalSum M ≃ₗ[ℤ] L × M where
+  toFun p :=
+    (⟨p.1.1, (Submodule.mem_prod.mp p.2).1⟩,
+      ⟨p.1.2, (Submodule.mem_prod.mp p.2).2⟩)
+  invFun p := ⟨(p.1, p.2), Submodule.mem_prod.mpr ⟨p.1.2, p.2.2⟩⟩
+  map_add' _ _ := rfl
+  map_smul' := by intro c p; apply Prod.ext <;> rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 /-- The canonical inclusion of the first carrier into an orthogonal sum. -/
 def orthogonalSumInl (L : IntegralLattice V) (M : IntegralLattice W) :

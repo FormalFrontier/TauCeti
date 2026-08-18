@@ -10,7 +10,7 @@ public import Mathlib.LinearAlgebra.Span.Basic
 /-!
 # Products of submodules
 
-A product submodule `p.prod q ≤ M × N` is, as a module, the product `p × q`.
+A product submodule `p.prod q : Submodule R (M × N)` is, as a module, the product `p × q`.
 
 ## Main declaration
 

@@ -130,7 +130,8 @@ theorem map_carrierInDual_orthogonalSum (L : IntegralLattice V) (M : IntegralLat
 
 /-- The discriminant group of an orthogonal sum is canonically the product of the discriminant
 groups of its summands. -/
-def discriminantGroupOrthogonalSumEquiv (L : IntegralLattice V) (M : IntegralLattice W) :
+noncomputable def discriminantGroupOrthogonalSumEquiv
+    (L : IntegralLattice V) (M : IntegralLattice W) :
     (L.orthogonalSum M).DiscriminantGroup ≃ₗ[ℤ]
       L.DiscriminantGroup × M.DiscriminantGroup :=
   (Submodule.Quotient.equiv (L.orthogonalSum M).carrierInDual
