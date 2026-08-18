@@ -115,68 +115,68 @@ theorem mem_integers_iff {f : F} : f ∈ P.integers ↔ P.valuation f ≤ 1 := (
 
 /-- The additive order function `ord_P : F → ℤ` of a place, normalized so that a prime element
 has order `1`. It has the junk value `ord_P 0 = 0`. -/
-noncomputable def ord (f : F) : ℤ := TauCeti.Valuation.ord P.valuation f
+noncomputable def ord (f : F) : ℤ := Valuation.ord P.valuation f
 
 theorem ord_def (f : F) : P.ord f = -WithZero.log (P.valuation f) :=
-  TauCeti.Valuation.ord_def P.valuation f
+  Valuation.ord_def P.valuation f
 
 /-- The translation between the multiplicative and additive views of a place. -/
 theorem valuation_eq_exp_neg_ord {f : F} (hf : f ≠ 0) :
     P.valuation f = WithZero.exp (-P.ord f) :=
-  TauCeti.Valuation.valuation_eq_exp_neg_ord P.valuation hf
+  Valuation.valuation_eq_exp_neg_ord P.valuation hf
 
 theorem ord_eq_iff_valuation_eq_exp_neg {f : F} (hf : f ≠ 0) {n : ℤ} :
     P.ord f = n ↔ P.valuation f = WithZero.exp (-n) :=
-  TauCeti.Valuation.ord_eq_iff_valuation_eq_exp_neg P.valuation hf
+  Valuation.ord_eq_iff_valuation_eq_exp_neg P.valuation hf
 
 @[simp]
-theorem ord_zero : P.ord 0 = 0 := TauCeti.Valuation.ord_zero P.valuation
+theorem ord_zero : P.ord 0 = 0 := Valuation.ord_zero P.valuation
 
 @[simp]
-theorem ord_one : P.ord 1 = 0 := TauCeti.Valuation.ord_one P.valuation
+theorem ord_one : P.ord 1 = 0 := Valuation.ord_one P.valuation
 
 theorem ord_mul {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) : P.ord (f * g) = P.ord f + P.ord g :=
-  TauCeti.Valuation.ord_mul P.valuation hf hg
+  Valuation.ord_mul P.valuation hf hg
 
 @[simp]
-theorem ord_inv (f : F) : P.ord f⁻¹ = -P.ord f := TauCeti.Valuation.ord_inv P.valuation f
+theorem ord_inv (f : F) : P.ord f⁻¹ = -P.ord f := Valuation.ord_inv P.valuation f
 
 @[simp]
 theorem ord_zpow (f : F) (n : ℤ) : P.ord (f ^ n) = n * P.ord f :=
-  TauCeti.Valuation.ord_zpow P.valuation f n
+  Valuation.ord_zpow P.valuation f n
 
 @[simp]
 theorem ord_pow (f : F) (n : ℕ) : P.ord (f ^ n) = n * P.ord f :=
-  TauCeti.Valuation.ord_pow P.valuation f n
+  Valuation.ord_pow P.valuation f n
 
 theorem ord_div {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) :
-    P.ord (f / g) = P.ord f - P.ord g := TauCeti.Valuation.ord_div P.valuation hf hg
+    P.ord (f / g) = P.ord f - P.ord g := Valuation.ord_div P.valuation hf hg
 
 @[simp]
-theorem ord_neg (f : F) : P.ord (-f) = P.ord f := TauCeti.Valuation.ord_neg P.valuation f
+theorem ord_neg (f : F) : P.ord (-f) = P.ord f := Valuation.ord_neg P.valuation f
 
 /-- The order of a quotient by an integral power. -/
 theorem ord_div_zpow {f t : F} (hf : f ≠ 0) (ht : t ≠ 0) (n : ℤ) :
     P.ord (f / t ^ n) = P.ord f - n * P.ord t :=
-  TauCeti.Valuation.ord_div_zpow P.valuation hf ht n
+  Valuation.ord_div_zpow P.valuation hf ht n
 
 theorem ord_surjective : Function.Surjective P.ord :=
-  TauCeti.Valuation.ord_surjective P.valuation P.valuation_surjective
+  Valuation.ord_surjective P.valuation P.valuation_surjective
 
 theorem mem_integers_iff_ord_nonneg {f : F} : f ∈ P.integers ↔ 0 ≤ P.ord f :=
-  TauCeti.Valuation.mem_valuationSubring_iff_ord_nonneg P.valuation
+  Valuation.mem_valuationSubring_iff_ord_nonneg P.valuation
 
 /-- The ultrametric inequality, in additive form. The hypothesis `f + g ≠ 0` guards the junk
 value `ord_P 0 = 0`. -/
 theorem min_ord_le_ord_add {f g : F} (h : f + g ≠ 0) :
     min (P.ord f) (P.ord g) ≤ P.ord (f + g) :=
-  TauCeti.Valuation.min_ord_le_ord_add P.valuation h
+  Valuation.min_ord_le_ord_add P.valuation h
 
 /-- The **strict triangle inequality** (Stichtenoth, Lemma 1.1.11): if two nonzero elements
 have distinct orders, the order of their sum is the smaller of the two. -/
 theorem ord_add_eq_min_of_ord_ne {f g : F} (hf : f ≠ 0) (hg : g ≠ 0)
     (h : P.ord f ≠ P.ord g) : P.ord (f + g) = min (P.ord f) (P.ord g) :=
-  TauCeti.Valuation.ord_add_eq_min_of_ord_ne P.valuation hf hg h
+  Valuation.ord_add_eq_min_of_ord_ne P.valuation hf hg h
 
 section Constants
 
@@ -221,45 +221,45 @@ section Discrete
 
 /-- Normalization says exactly that the value group of a place is all of `ℤᵐ⁰`. -/
 theorem valueGroup_eq_top : valueGroup (.ofClass P.valuation) = ⊤ :=
-  TauCeti.Valuation.valueGroup_eq_top_of_surjective P.valuation P.valuation_surjective
+  Valuation.valueGroup_eq_top_of_surjective P.valuation P.valuation_surjective
 
 instance : Nontrivial (valueGroup (.ofClass P.valuation)) :=
-  TauCeti.Valuation.nontrivial_valueGroup_of_surjective P.valuation P.valuation_surjective
+  Valuation.nontrivial_valueGroup_of_surjective P.valuation P.valuation_surjective
 
 /-- **The valuation ring of a place is a discrete valuation ring** (Stichtenoth,
 Theorem 1.1.6). -/
 instance instIsDiscreteValuationRing : IsDiscreteValuationRing P.integers :=
-  TauCeti.Valuation.valuationSubring_isDiscreteValuationRing_of_surjective
+  Valuation.valuationSubring_isDiscreteValuationRing_of_surjective
     P.valuation P.valuation_surjective
 
 /-- The generator of the value group singled out by Mathlib's discreteness API is
 `WithZero.exp (-1)`, because the valuation of a place is normalized. -/
 theorem generator_eq_exp_neg_one : IsRankOneDiscrete.generator P.valuation =
     Units.mk0 (WithZero.exp (-1 : ℤ) : ℤᵐ⁰) (by simp) :=
-  TauCeti.Valuation.generator_eq_exp_neg_one_of_surjective P.valuation P.valuation_surjective
+  Valuation.generator_eq_exp_neg_one_of_surjective P.valuation P.valuation_surjective
 
 /-- Mathlib's uniformizers of `v_P` are exactly the elements of order one: Stichtenoth's prime
 elements for `P`. -/
 @[simp]
 theorem isUniformizer_iff_ord_eq_one {t : F} : P.valuation.IsUniformizer t ↔ P.ord t = 1 :=
-  TauCeti.Valuation.isUniformizer_iff_ord_eq_one_of_surjective
+  Valuation.isUniformizer_iff_ord_eq_one_of_surjective
     P.valuation P.valuation_surjective
 
 theorem exists_isUniformizer : ∃ t : F, P.valuation.IsUniformizer t :=
-  TauCeti.Valuation.exists_isUniformizer_of_surjective P.valuation P.valuation_surjective
+  Valuation.exists_isUniformizer_of_surjective P.valuation P.valuation_surjective
 
 theorem isUnit_iff_valuation_eq_one {x : P.integers} : IsUnit x ↔ P.valuation (x : F) = 1 :=
   Valuation.Integers.isUnit_iff_valuation_eq_one (Valuation.valuationSubring.integers P.valuation)
 
 theorem isUnit_iff_ord_eq_zero {x : P.integers} (hx : (x : F) ≠ 0) :
     IsUnit x ↔ P.ord (x : F) = 0 :=
-  TauCeti.Valuation.isUnit_iff_ord_eq_zero P.valuation hx
+  Valuation.isUnit_iff_ord_eq_zero P.valuation hx
 
 /-- **Existence half of Stichtenoth, Theorem 1.1.6(b)**: relative to a prime element `t` for
 `P`, every nonzero `f : F` is `t ^ (ord_P f)` times a unit of `𝒪_P`. -/
 theorem exists_eq_zpow_mul_unit {t : F} (ht : P.valuation.IsUniformizer t) {f : F} (hf : f ≠ 0) :
     ∃ u : P.integersˣ, f = t ^ P.ord f * (u : F) :=
-  TauCeti.Valuation.exists_eq_zpow_mul_unit_of_surjective
+  Valuation.exists_eq_zpow_mul_unit_of_surjective
     P.valuation P.valuation_surjective ht hf
 
 end Discrete
@@ -272,18 +272,18 @@ theorem mem_maximalIdeal_iff_valuation_lt_one {f : P.integers} :
 
 theorem mem_maximalIdeal_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ 0 < P.ord (f : F) :=
-  TauCeti.Valuation.mem_maximalIdeal_iff_ord_pos P.valuation hf
+  Valuation.mem_maximalIdeal_iff_ord_pos P.valuation hf
 
 /-- The valuation ring of a place is a proper subring of `F` (Stichtenoth,
 Definition 1.1.4). -/
 theorem integers_ne_top : P.integers ≠ ⊤ :=
-  TauCeti.Valuation.valuationSubring_ne_top_of_surjective P.valuation P.valuation_surjective
+  Valuation.valuationSubring_ne_top_of_surjective P.valuation P.valuation_surjective
 
 /-- A place is determined by its valuation: two places whose valuations are equivalent are
 equal. This is the payoff of normalizing the value group, and half of Stichtenoth's
 Theorem 1.1.13. -/
 theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : P = Q :=
-  ext (TauCeti.Valuation.eq_of_isEquiv_of_surjective
+  ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
 
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/

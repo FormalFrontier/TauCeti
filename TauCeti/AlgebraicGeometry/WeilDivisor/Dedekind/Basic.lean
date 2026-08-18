@@ -50,7 +50,7 @@ only for proper curves over a field (and number fields with the archimedean plac
 and is later geometric input.
 
 This reuses Mathlib's `IsDedekindDomain.HeightOneSpectrum.valuation`, the shared additive order
-`TauCeti.Valuation.ordAddMonoidHom`, and
+`Valuation.ordAddMonoidHom`, and
 `IsDedekindDomain.HeightOneSpectrum.Support.finite` (finiteness of the support of a rational
 function); no external mathematics is vendored.
 -/
@@ -75,7 +75,7 @@ additive, sign-flipped form of Mathlib's multiplicative valuation
 `IsDedekindDomain.HeightOneSpectrum.valuation K v : Valuation K ℤᵐ⁰`; the sign is chosen so
 that a uniformizer at `v` has order `+1` (a simple zero) and a pole has negative order. -/
 noncomputable def adicOrd (v : HeightOneSpectrum R) : Additive Kˣ →+ ℤ :=
-  TauCeti.Valuation.ordAddMonoidHom (v.valuation K)
+  Valuation.ordAddMonoidHom (v.valuation K)
 
 variable {R K}
 
@@ -98,7 +98,7 @@ function is `(Additive.toMul u : Kˣ) : K`. The minus sign makes a uniformizer h
 @[simp]
 lemma adicOrd_apply (v : HeightOneSpectrum R) (u : Additive Kˣ) :
     adicOrd R K v u = -WithZero.log (v.valuation K ((Additive.toMul u : Kˣ) : K)) := by
-  rw [adicOrd, TauCeti.Valuation.ordAddMonoidHom_apply, TauCeti.Valuation.ord_def]
+  rw [adicOrd, Valuation.ordAddMonoidHom_apply, Valuation.ord_def]
 
 /-- The computational form of `adicOrd` applied to `Additive.ofMul u` for a multiplicative unit
 `u : Kˣ`: it is the sign-flipped logarithm `-log v(u)` of the `v`-adic valuation of `u : K`. -/

@@ -22,8 +22,6 @@ open scoped WithZero
 
 open MonoidWithZeroHom
 
-namespace TauCeti
-
 namespace Valuation
 
 variable {F : Type*} [Field F]
@@ -278,5 +276,3 @@ theorem eq_of_isEquiv_of_surjective {v w : _root_.Valuation F ℤᵐ⁰}
   rw [valuation_eq_exp_neg_ord v hf, valuation_eq_exp_neg_ord w hf, key]
 
 end Valuation
-
-end TauCeti
