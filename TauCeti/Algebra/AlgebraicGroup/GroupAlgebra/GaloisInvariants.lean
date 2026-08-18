@@ -48,9 +48,10 @@ open scoped TensorProduct TauCeti.GaloisDescent
 
 namespace TauCeti.GaloisDescent
 
-universe u
+universe u_k u_L u_M
 
-variable {k L M : Type u} [Field k] [Field L] [Algebra k L]
+variable {k : Type u_k} {L : Type u_L} {M : Type u_M}
+variable [Field k] [Field L] [Algebra k L]
 variable [AddCommGroup M]
 
 /-- The fixed `k`-subalgebra of `L[Multiplicative M]` for the simultaneous action on
@@ -120,9 +121,8 @@ private noncomputable def groupAlgebraInvariantsCounitToBot
   { toFun := fun x ↦ ⟨f x, by
       rw [InfiniteGalois.mem_bot_iff_fixed]
       intro sigma
-      change sigma (Coalgebra.counit (R := L)
-        (x : MonoidAlgebra L (Multiplicative M))) =
-          Coalgebra.counit (R := L) (x : MonoidAlgebra L (Multiplicative M))
+      simp only [f, AlgHom.comp_apply, AlgHom.restrictScalars_apply,
+        Subalgebra.val_apply, Bialgebra.counitAlgHom_apply]
       rw [← counit_groupAlgebraAction rho sigma, x.property sigma]⟩
     map_one' := Subtype.ext f.map_one
     map_mul' x y := Subtype.ext (f.map_mul x y)
@@ -149,9 +149,14 @@ theorem algebraMap_groupAlgebraInvariantsCounit
       Coalgebra.counit (R := L) (x : MonoidAlgebra L (Multiplicative M)) := by
   let y := groupAlgebraInvariantsCounitToBot rho x
   have h := congrArg Subtype.val ((IntermediateField.botEquiv k L).symm_apply_apply y)
-  change algebraMap k L ((IntermediateField.botEquiv k L) y) = _
-  rw [← IntermediateField.coe_algebraMap_apply (S := (⊥ : IntermediateField k L))]
-  exact h
+  rw [groupAlgebraInvariantsCounit, AlgHom.comp_apply]
+  calc
+    algebraMap k L ((IntermediateField.botEquiv k L) y) =
+        ((algebraMap k (⊥ : IntermediateField k L)
+          ((IntermediateField.botEquiv k L) y) : (⊥ : IntermediateField k L)) : L) :=
+      (IntermediateField.coe_algebraMap_apply (S := (⊥ : IntermediateField k L)) _).symm
+    _ = (y : L) := h
+    _ = Coalgebra.counit (R := L) (x : MonoidAlgebra L (Multiplicative M)) := rfl
 
 end Galois
 
@@ -165,20 +170,48 @@ private theorem antipode_mem_groupAlgebraInvariants
   intro sigma
   rw [← antipode_groupAlgebraAction rho sigma, x.property sigma]
 
+/-- The algebra homomorphism underlying the restricted antipode. -/
+private noncomputable def groupAlgebraInvariantsAntipodeHom
+    (rho : Representation ℤ (L ≃ₐ[k] L) M) :
+    groupAlgebraInvariants rho →ₐ[k] groupAlgebraInvariants rho :=
+  ((((HopfAlgebra.antipodeAlgHom L
+      (MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
+        (groupAlgebraInvariants rho).val).codRestrict
+          (groupAlgebraInvariants rho) fun x ↦ antipode_mem_groupAlgebraInvariants rho x)
+
+private theorem coe_groupAlgebraInvariantsAntipodeHom_apply
+    (rho : Representation ℤ (L ≃ₐ[k] L) M)
+    (x : groupAlgebraInvariants rho) :
+    (groupAlgebraInvariantsAntipodeHom rho x : MonoidAlgebra L (Multiplicative M)) =
+      HopfAlgebra.antipode L (x : MonoidAlgebra L (Multiplicative M)) := by
+  have h := AlgHom.congr_fun
+    (AlgHom.val_comp_codRestrict
+      (((HopfAlgebra.antipodeAlgHom L
+        (MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
+          (groupAlgebraInvariants rho).val)
+      (groupAlgebraInvariants rho) fun x ↦ antipode_mem_groupAlgebraInvariants rho x) x
+  simpa only [groupAlgebraInvariantsAntipodeHom, AlgHom.comp_apply,
+    AlgHom.restrictScalars_apply, Subalgebra.val_apply,
+    HopfAlgebra.antipodeAlgHom_apply] using h
+
 /-- The group-algebra antipode restricted to the Galois-invariant subalgebra. -/
 noncomputable def groupAlgebraInvariantsAntipode
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     groupAlgebraInvariants rho ≃ₐ[k] groupAlgebraInvariants rho := by
-  let f : groupAlgebraInvariants rho →ₐ[k] groupAlgebraInvariants rho :=
-    ((((HopfAlgebra.antipodeAlgHom L
-        (MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
-          (groupAlgebraInvariants rho).val).codRestrict
-            (groupAlgebraInvariants rho) fun x ↦ antipode_mem_groupAlgebraInvariants rho x)
-  exact AlgEquiv.ofAlgHom f f
-    (AlgHom.ext fun x ↦ Subtype.ext <| HopfAlgebra.antipode_antipode
-      (R := L) (A := MonoidAlgebra L (Multiplicative M)) x)
-    (AlgHom.ext fun x ↦ Subtype.ext <| HopfAlgebra.antipode_antipode
-      (R := L) (A := MonoidAlgebra L (Multiplicative M)) x)
+  exact AlgEquiv.ofAlgHom (groupAlgebraInvariantsAntipodeHom rho)
+    (groupAlgebraInvariantsAntipodeHom rho)
+    (AlgHom.ext fun x ↦ by
+      rw [AlgHom.comp_apply, AlgHom.id_apply]
+      apply Subtype.ext
+      rw [coe_groupAlgebraInvariantsAntipodeHom_apply,
+        coe_groupAlgebraInvariantsAntipodeHom_apply,
+        HopfAlgebra.antipode_antipode])
+    (AlgHom.ext fun x ↦ by
+      rw [AlgHom.comp_apply, AlgHom.id_apply]
+      apply Subtype.ext
+      rw [coe_groupAlgebraInvariantsAntipodeHom_apply,
+        coe_groupAlgebraInvariantsAntipodeHom_apply,
+        HopfAlgebra.antipode_antipode])
 
 /-- The restricted antipode acts by the ordinary group-algebra antipode. -/
 @[simp]
@@ -188,8 +221,8 @@ theorem groupAlgebraInvariantsAntipode_apply
     (groupAlgebraInvariantsAntipode rho x : MonoidAlgebra L (Multiplicative M)) =
       HopfAlgebra.antipode L (x : MonoidAlgebra L (Multiplicative M)) :=
   by
-    rw [groupAlgebraInvariantsAntipode]
-    rfl
+    simpa only [groupAlgebraInvariantsAntipode, AlgEquiv.ofAlgHom_apply] using
+      coe_groupAlgebraInvariantsAntipodeHom_apply rho x
 
 /-- The antipode on the invariant algebra is involutive. -/
 @[simp]
@@ -247,6 +280,34 @@ private theorem comul_mem_groupAlgebraTensorInvariants
   intro sigma
   rw [← comul_groupAlgebraAction rho sigma, x.property sigma]
 
+/-- The linear map underlying comultiplication into invariant tensors. -/
+private noncomputable def groupAlgebraInvariantsComulLinearMap
+    (rho : Representation ℤ (L ≃ₐ[k] L) M) :
+    groupAlgebraInvariants rho →ₗ[k] groupAlgebraTensorInvariants rho :=
+  ((((Coalgebra.comul (R := L)
+      (A := MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
+        (groupAlgebraInvariants rho).val.toLinearMap).codRestrict
+          (groupAlgebraTensorInvariants rho) fun x ↦
+            comul_mem_groupAlgebraTensorInvariants rho x)
+
+private theorem coe_groupAlgebraInvariantsComulLinearMap_apply
+    (rho : Representation ℤ (L ≃ₐ[k] L) M)
+    (x : groupAlgebraInvariants rho) :
+    (groupAlgebraInvariantsComulLinearMap rho x :
+        MonoidAlgebra L (Multiplicative M) ⊗[L]
+          MonoidAlgebra L (Multiplicative M)) =
+      Coalgebra.comul (R := L) (x : MonoidAlgebra L (Multiplicative M)) := by
+  have h := LinearMap.congr_fun
+    (LinearMap.subtype_comp_codRestrict
+      (f := ((Coalgebra.comul (R := L)
+        (A := MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
+          (groupAlgebraInvariants rho).val.toLinearMap)
+      (groupAlgebraTensorInvariants rho) fun x ↦
+        comul_mem_groupAlgebraTensorInvariants rho x) x
+  simpa only [groupAlgebraInvariantsComulLinearMap, LinearMap.comp_apply,
+    LinearMap.restrictScalars_apply, Submodule.subtype_apply, AlgHom.toLinearMap_apply,
+    Subalgebra.val_apply] using h
+
 /-- Comultiplication from invariant elements to tensors invariant under the diagonal action.
 
 Identifying the codomain with the tensor square of `groupAlgebraInvariants rho` is the subsequent
@@ -254,10 +315,7 @@ faithfully flat descent step. -/
 noncomputable def groupAlgebraInvariantsComul
     (rho : Representation ℤ (L ≃ₐ[k] L) M) :
     groupAlgebraInvariants rho →ₗ[k] groupAlgebraTensorInvariants rho :=
-  ((((Coalgebra.comul (R := L) (A := MonoidAlgebra L (Multiplicative M))).restrictScalars k).comp
-      (groupAlgebraInvariants rho).val.toLinearMap).codRestrict
-        (groupAlgebraTensorInvariants rho) fun x ↦
-          comul_mem_groupAlgebraTensorInvariants rho x)
+  groupAlgebraInvariantsComulLinearMap rho
 
 /-- The restricted comultiplication acts by the ordinary group-algebra comultiplication. -/
 @[simp]
@@ -269,7 +327,6 @@ theorem groupAlgebraInvariantsComul_apply
           MonoidAlgebra L (Multiplicative M)) =
       Coalgebra.comul (R := L) (x : MonoidAlgebra L (Multiplicative M)) :=
   by
-    rw [groupAlgebraInvariantsComul]
-    rfl
+    exact coe_groupAlgebraInvariantsComulLinearMap_apply rho x
 
 end TauCeti.GaloisDescent
