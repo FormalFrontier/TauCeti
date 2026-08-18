@@ -15,12 +15,13 @@ Let `H` be a bialgebra over a commutative semiring `R`, and let `f : A →ₐ[R]
 of commutative `R`-algebras. A tensor automorphism of scalar extension on the finite
 `H`-comodules has, at each comodule `M`, an `A`-linear automorphism of `A ⊗[R] M`. Base changing
 those components along `f` produces a tensor automorphism over `B`, and this is functorial in the
-value algebra. No antipode is needed for any of this: the assembly and the base change use only
-the monoidal structure on finite comodules.
+value algebra. No antipode is needed for the assembly or base change: these use only the monoidal
+structure on finite comodules. Compatibility with the point action additionally assumes a Hopf
+algebra, whose antipode makes each point action invertible.
 
 The base-changed family is natural in the comodule, is the identity at the tensor unit, and is
 compatible with the tensor comparison, because base change of endomorphisms
-(`TauCeti.Module.End.mapValue`) preserves each of those. Feeding it to
+(`Module.End.mapValue`) preserves each of those. Feeding it to
 `TauCeti.Tannaka.monoidalAutOfComponents` produces the base-changed tensor automorphism.
 
 Compatibility with the point action is `tensorAutMapValue_fgPointTensorIso`: pushing a point

@@ -107,77 +107,6 @@ private theorem fgPointUnipotentPart_natural [PerfectField K]
     (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction N g))
     (baseChange_comp_pointsAction k H K f g)
 
-/-- The transported component isomorphism associated to a family of finite-comodule
-automorphisms. -/
-private noncomputable def fgPointFactorIso
-    (φ : ∀ M : FGComoduleCat.{u, v, w} k H,
-      LinearMap.GeneralLinearGroup K (K ⊗[k] M))
-    (M : FGComoduleCat.{u, v, w} k H) :
-    (FGComoduleCat.scalarExtensionFunctor k H K).obj M ≅
-      (FGComoduleCat.scalarExtensionFunctor k H K).obj M :=
-  (eqToIso (FGComoduleCat.scalarExtensionFunctor_obj k H K M)).trans
-    ((φ M).toLinearEquiv.toModuleIsoₛ.trans
-      (eqToIso (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm))
-
-/-- A natural automorphism of finite-comodule scalar extension assembled from a pointwise family
-of automorphisms and its intertwining property. -/
-private noncomputable def fgPointFactorNatIso
-    (φ : ∀ M : FGComoduleCat.{u, v, w} k H,
-      LinearMap.GeneralLinearGroup K (K ⊗[k] M))
-    (hφ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
-      (f.hom.toLinearMap.baseChange K).comp (φ M : Module.End K (K ⊗[k] M)) =
-        (φ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K)) :
-    Aut (FGComoduleCat.scalarExtensionFunctor k H K) :=
-  NatIso.ofComponents (fgPointFactorIso k H K φ) (fun {M N} f ↦ by
-    -- `NatIso.ofComponents` hides the private component constructor; reduce it once so its
-    -- naturality can be proved through the public scalar-extension and linear-equivalence APIs.
-    change
-      (FGComoduleCat.scalarExtensionFunctor k H K).map f ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K N) ≫
-            (φ N).toLinearEquiv.toModuleIsoₛ.hom ≫
-              eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K N).symm =
-        eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M) ≫
-            (φ M).toLinearEquiv.toModuleIsoₛ.hom ≫
-              eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm ≫
-                (FGComoduleCat.scalarExtensionFunctor k H K).map f
-    rw [FGComoduleCat.scalarExtensionFunctor_map]
-    simp only [Category.assoc]
-    rw [cancel_epi]
-    simp only [← Category.assoc]
-    rw [cancel_mono]
-    simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id,
-      LinearEquiv.toModuleIsoₛ_hom]
-    apply SemimoduleCat.hom_ext
-    exact (hφ f).symm)
-
-@[simp]
-private theorem fgPointFactorNatIso_hom_app
-    (φ : ∀ M : FGComoduleCat.{u, v, w} k H,
-      LinearMap.GeneralLinearGroup K (K ⊗[k] M))
-    (hφ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
-      (f.hom.toLinearMap.baseChange K).comp (φ M : Module.End K (K ⊗[k] M)) =
-        (φ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K))
-    (M : FGComoduleCat.{u, v, w} k H) :
-    (fgPointFactorNatIso k H K φ hφ).hom.app M =
-      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M) ≫
-        (φ M).toLinearEquiv.toModuleIsoₛ.hom ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm :=
-  rfl
-
-@[simp]
-private theorem fgPointFactorNatIso_inv_app
-    (φ : ∀ M : FGComoduleCat.{u, v, w} k H,
-      LinearMap.GeneralLinearGroup K (K ⊗[k] M))
-    (hφ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
-      (f.hom.toLinearMap.baseChange K).comp (φ M : Module.End K (K ⊗[k] M)) =
-        (φ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K))
-    (M : FGComoduleCat.{u, v, w} k H) :
-    (fgPointFactorNatIso k H K φ hφ).inv.app M =
-      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M) ≫
-        (φ M).toLinearEquiv.toModuleIsoₛ.inv ≫
-          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm :=
-  rfl
-
 private theorem fgPointFactor_mul_natural
     (φ ψ : ∀ M : FGComoduleCat.{u, v, w} k H,
       LinearMap.GeneralLinearGroup K (K ⊗[k] M))
@@ -208,8 +137,9 @@ private theorem fgPointFactorNatIso_mul
     (hψ : ∀ {M N : FGComoduleCat.{u, v, w} k H} (f : M ⟶ N),
       (f.hom.toLinearMap.baseChange K).comp (ψ M : Module.End K (K ⊗[k] M)) =
         (ψ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K)) :
-    fgPointFactorNatIso k H K φ hφ * fgPointFactorNatIso k H K ψ hψ =
-      fgPointFactorNatIso k H K (fun M ↦ φ M * ψ M)
+    FGComoduleCat.autOfComponents k H K φ hφ *
+        FGComoduleCat.autOfComponents k H K ψ hψ =
+      FGComoduleCat.autOfComponents k H K (fun M ↦ φ M * ψ M)
         (fgPointFactor_mul_natural k H K φ ψ hφ hψ) := by
   apply Aut.ext
   apply NatTrans.ext
@@ -217,9 +147,9 @@ private theorem fgPointFactorNatIso_mul
   -- `Aut.ext` exposes the hom natural transformation but leaves group multiplication bundled;
   -- reduce its component to the reverse composition specified by `Aut.Aut_mul_def`.
   change
-    (fgPointFactorNatIso k H K ψ hψ).hom.app M ≫
-        (fgPointFactorNatIso k H K φ hφ).hom.app M = _
-  simp only [fgPointFactorNatIso_hom_app, Category.assoc]
+    (FGComoduleCat.autOfComponents k H K ψ hψ).hom.app M ≫
+        (FGComoduleCat.autOfComponents k H K φ hφ).hom.app M = _
+  simp only [FGComoduleCat.autOfComponents_hom_app, Category.assoc]
   rw [cancel_epi]
   simp only [← Category.assoc]
   rw [cancel_mono]
@@ -240,11 +170,12 @@ private theorem fgPointFactorNatIso_congr
       (f.hom.toLinearMap.baseChange K).comp (ψ M : Module.End K (K ⊗[k] M)) =
         (ψ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K))
     (h : ∀ M, φ M = ψ M) :
-    fgPointFactorNatIso k H K φ hφ = fgPointFactorNatIso k H K ψ hψ := by
+    FGComoduleCat.autOfComponents k H K φ hφ =
+      FGComoduleCat.autOfComponents k H K ψ hψ := by
   apply Aut.ext
   apply NatTrans.ext
   funext M
-  simp only [fgPointFactorNatIso_hom_app, h M]
+  simp only [FGComoduleCat.autOfComponents_hom_app, h M]
 
 section PerfectField
 
@@ -254,7 +185,7 @@ variable [PerfectField K]
 extension. -/
 noncomputable def fgPointSemisimplePartNatIso (g : WithConv (H →ₐ[k] K)) :
     Aut (FGComoduleCat.scalarExtensionFunctor k H K) :=
-  fgPointFactorNatIso k H K
+  FGComoduleCat.autOfComponents k H K
     (fun M ↦ GeneralLinearGroup.semisimplePart
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)))
     (fgPointSemisimplePart_natural k H K g)
@@ -263,7 +194,7 @@ noncomputable def fgPointSemisimplePartNatIso (g : WithConv (H →ₐ[k] K)) :
 extension. -/
 noncomputable def fgPointUnipotentPartNatIso (g : WithConv (H →ₐ[k] K)) :
     Aut (FGComoduleCat.scalarExtensionFunctor k H K) :=
-  fgPointFactorNatIso k H K
+  FGComoduleCat.autOfComponents k H K
     (fun M ↦ GeneralLinearGroup.unipotentPart
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)))
     (fgPointUnipotentPart_natural k H K g)
@@ -279,7 +210,7 @@ theorem fgPointSemisimplePartNatIso_hom_app (g : WithConv (H →ₐ[k] K))
           (LinearMap.GeneralLinearGroup.ofLinearEquiv
             (Comodule.pointsAction M g))).toLinearEquiv.toModuleIsoₛ.hom ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm :=
-  fgPointFactorNatIso_hom_app k H K _ (fgPointSemisimplePart_natural k H K g) M
+  FGComoduleCat.autOfComponents_hom_app k H K _ (fgPointSemisimplePart_natural k H K g) M
 
 /-- The inverse component of the semisimple-part automorphism is the inverse semisimple part of
 the point action, transported across the scalar-extension functor's object equality. -/
@@ -292,7 +223,7 @@ theorem fgPointSemisimplePartNatIso_inv_app (g : WithConv (H →ₐ[k] K))
           (LinearMap.GeneralLinearGroup.ofLinearEquiv
             (Comodule.pointsAction M g))).toLinearEquiv.toModuleIsoₛ.inv ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm :=
-  fgPointFactorNatIso_inv_app k H K _ (fgPointSemisimplePart_natural k H K g) M
+  FGComoduleCat.autOfComponents_inv_app k H K _ (fgPointSemisimplePart_natural k H K g) M
 
 /-- The hom component of the unipotent-part automorphism is the unipotent part of the point action,
 transported across the scalar-extension functor's object equality. -/
@@ -305,7 +236,7 @@ theorem fgPointUnipotentPartNatIso_hom_app (g : WithConv (H →ₐ[k] K))
           (LinearMap.GeneralLinearGroup.ofLinearEquiv
             (Comodule.pointsAction M g))).toLinearEquiv.toModuleIsoₛ.hom ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm :=
-  fgPointFactorNatIso_hom_app k H K _ (fgPointUnipotentPart_natural k H K g) M
+  FGComoduleCat.autOfComponents_hom_app k H K _ (fgPointUnipotentPart_natural k H K g) M
 
 /-- The inverse component of the unipotent-part automorphism is the inverse unipotent part of the
 point action, transported across the scalar-extension functor's object equality. -/
@@ -318,7 +249,7 @@ theorem fgPointUnipotentPartNatIso_inv_app (g : WithConv (H →ₐ[k] K))
           (LinearMap.GeneralLinearGroup.ofLinearEquiv
             (Comodule.pointsAction M g))).toLinearEquiv.toModuleIsoₛ.inv ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm :=
-  fgPointFactorNatIso_inv_app k H K _ (fgPointUnipotentPart_natural k H K g) M
+  FGComoduleCat.autOfComponents_inv_app k H K _ (fgPointUnipotentPart_natural k H K g) M
 
 /-- The semisimple- and unipotent-part automorphisms of a point action commute. -/
 theorem commute_fgPointSemisimplePartNatIso_fgPointUnipotentPartNatIso
@@ -345,7 +276,7 @@ theorem fgPointSemisimplePartNatIso_mul_fgPointUnipotentPartNatIso
   apply Aut.ext
   apply NatTrans.ext
   funext M
-  simp only [fgPointFactorNatIso_hom_app, fgPointNatIsoHom_hom_app]
+  simp only [FGComoduleCat.autOfComponents_hom_app, fgPointNatIsoHom_hom_app]
   rw [GeneralLinearGroup.semisimplePart_mul_unipotentPart]
   have haction :
       (LinearMap.GeneralLinearGroup.ofLinearEquiv

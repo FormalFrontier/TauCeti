@@ -190,7 +190,7 @@ lemma mapScalarExtensionAutomorphisms_id (A : CommAlgCat.{w} R) :
       𝟙 (scalarExtensionAutomorphisms (V := V) A) := by
   refine GrpCat.ext fun g ↦ Units.ext ?_
   rw [val_mapScalarExtensionAutomorphisms, CommAlgCat.hom_id, Module.End.mapValue_id]
-  rfl
+  simp only [GrpCat.hom_id, MonoidHom.id_apply]
 
 /-- Extension of scalar-extension automorphisms preserves composition of value-algebra
 morphisms. -/
@@ -203,7 +203,7 @@ lemma mapScalarExtensionAutomorphisms_comp
   refine GrpCat.ext fun g ↦ Units.ext ?_
   rw [val_mapScalarExtensionAutomorphisms, CommAlgCat.hom_comp, Module.End.mapValue_comp,
     ← val_mapScalarExtensionAutomorphisms, ← val_mapScalarExtensionAutomorphisms]
-  rfl
+  simp only [GrpCat.hom_comp, MonoidHom.coe_comp, Function.comp_apply]
 
 /-- The group-valued functor of linear automorphisms of scalar extensions of `V`. -/
 -- `@[expose]` matches `HopfAlgebra.pointsFunctor`: natural transformations out of

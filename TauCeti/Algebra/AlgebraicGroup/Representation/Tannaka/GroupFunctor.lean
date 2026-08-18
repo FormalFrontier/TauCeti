@@ -57,33 +57,50 @@ section Functor
 variable (R : Type u) [CommRing R]
 variable (H : Type v) [Semiring H] [Bialgebra R H]
 
--- `@[expose]` is required, not incidental: without the body, the coercion
--- `↑((tensorAutFunctor R H).obj A)` does not reduce to `Aut (...)`, so
--- `tensorAutFunctor_map_apply` below cannot even be stated, let alone proved.
+/-- The construction data for the tensor-automorphism group functor, together with opaque
+object and map witnesses. -/
+structure TensorAutFunctorData where
+  /-- The tensor-automorphism group functor. -/
+  functor : CommAlgCat.{u} R ⥤ GrpCat.{max (u + 1) v}
+  /-- Identification of a functor value with the corresponding tensor-automorphism group. -/
+  obj_eq : ∀ A : CommAlgCat.{u} R,
+    functor.obj A = GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+  /-- The functor map is the base-change homomorphism, heterogeneously across `obj_eq`. -/
+  map_heq : ∀ {A B : CommAlgCat.{u} R} (φ : A ⟶ B),
+    HEq (functor.map φ) (GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom))
+
+/-- The tensor-automorphism functor and its object and map witnesses. -/
+noncomputable def tensorAutFunctorData : TensorAutFunctorData R H where
+  functor :=
+    { obj A := GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+      map {A B} φ := GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom)
+      map_id A := by
+        refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
+        simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_id,
+          GrpCat.hom_id, MonoidHom.id_apply]
+        exact tensorAutMapValue_id R H A η
+      map_comp {A B C} φ ψ := by
+        refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
+        simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_comp,
+          GrpCat.hom_comp, MonoidHom.coe_comp, Function.comp_apply]
+        exact tensorAutMapValue_comp R H A B C φ.hom ψ.hom η }
+  obj_eq _ := rfl
+  map_heq {A B} φ := by
+    change HEq (GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom)) _
+    rfl
+
 /-- The tensor-automorphism group functor of a bialgebra: a commutative `R`-algebra `A` is
 sent to the group of tensor automorphisms of scalar extension to `A` on the finite
 `H`-comodules, and a morphism of value algebras acts by base change of components. -/
-@[expose] noncomputable def tensorAutFunctor :
-    CommAlgCat.{u} R ⥤ GrpCat.{max (u + 1) v} where
-  obj A := GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
-  map {A B} φ := GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom)
-  map_id A := by
-    refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
-    simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_id, GrpCat.hom_id,
-      MonoidHom.id_apply]
-    exact tensorAutMapValue_id R H A η
-  map_comp {A B C} φ ψ := by
-    refine GrpCat.hom_ext (MonoidHom.ext fun η ↦ ?_)
-    simp only [GrpCat.hom_ofHom, tensorAutMapValueHom_apply, CommAlgCat.hom_comp,
-      GrpCat.hom_comp, MonoidHom.coe_comp, Function.comp_apply]
-    exact tensorAutMapValue_comp R H A B C φ.hom ψ.hom η
+noncomputable abbrev tensorAutFunctor : CommAlgCat.{u} R ⥤ GrpCat.{max (u + 1) v} :=
+  (tensorAutFunctorData R H).functor
 
 /-- The tensor-automorphism functor sends an algebra to its group of tensor automorphisms. -/
 @[simp]
 theorem tensorAutFunctor_obj (A : CommAlgCat.{u} R) :
     (tensorAutFunctor R H).obj A =
       GrpCat.of (Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :=
-  rfl
+  (tensorAutFunctorData R H).obj_eq A
 
 /-- The tensor-automorphism functor acts on morphisms by base change of components. This is the
 morphism-level form, stated with the object transports so that it stays in `simp` normal form
@@ -97,18 +114,25 @@ theorem tensorAutFunctor_map {A B : CommAlgCat.{u} R} (φ : A ⟶ B) :
           eqToHom (tensorAutFunctor_obj R H B).symm := by
   apply (conj_eqToHom_iff_heq _ _ (tensorAutFunctor_obj R H A)
     (tensorAutFunctor_obj R H B)).2
-  rfl
+  exact (tensorAutFunctorData R H).map_heq φ
 
-/-- The tensor-automorphism functor acts on morphisms by base change of components, in applied
-form. Not a `simp` lemma: `tensorAutFunctor_obj` rewrites the object in the argument's type, so
-this left-hand side is not in normal form; `tensorAutFunctor_map` carries the automation. -/
-theorem tensorAutFunctor_map_apply {A B : CommAlgCat.{u} R} (φ : A ⟶ B)
+/-- Applying the tensor-automorphism functor map to an explicitly transported tensor
+automorphism is base change of that automorphism. -/
+theorem tensorAutFunctor_map_transport_apply {A B : CommAlgCat.{u} R} (φ : A ⟶ B)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A)) :
-    (tensorAutFunctor R H).map φ η = tensorAutMapValue R H A B φ.hom η := by
-  -- The functor's action is the bundled base-change homomorphism; reducing the categorical
-  -- and concrete-category wrappers exposes it, and its application lemma finishes.
-  change tensorAutMapValueHom R H A B φ.hom η = _
-  rw [tensorAutMapValueHom_apply]
+    eqToHom (tensorAutFunctor_obj R H B)
+        ((tensorAutFunctor R H).map φ (eqToHom (tensorAutFunctor_obj R H A).symm η)) =
+      tensorAutMapValue R H A B φ.hom η := by
+  rw [tensorAutFunctor_map]
+  change
+    (eqToHom (tensorAutFunctor_obj R H A).symm ≫
+      eqToHom (tensorAutFunctor_obj R H A) ≫
+      GrpCat.ofHom (tensorAutMapValueHom R H A B φ.hom) ≫
+      eqToHom (tensorAutFunctor_obj R H B).symm ≫
+      eqToHom (tensorAutFunctor_obj R H B)) η = _
+  simp only [eqToHom_trans, eqToHom_refl, Category.comp_id]
+  rw [← Category.assoc, eqToHom_trans, eqToHom_refl, Category.id_comp]
+  exact tensorAutMapValueHom_apply R H A B φ.hom η
 
 end Functor
 
@@ -131,10 +155,12 @@ The points functor is composed with the universe lift because tensor automorphis
 scalar extension live one universe above the value algebra. -/
 noncomputable def pointsFunctorIsoTensorAutFunctor :
     HopfAlgebra.pointsFunctor (R := k) (H := H) ⋙ GrpCat.uliftFunctor.{u + 1, u} ≅
-      tensorAutFunctor k H :=
+  tensorAutFunctor k H :=
   NatIso.ofComponents
-    (fun A ↦ (MulEquiv.ulift.trans (fgPointTensorIsoEquiv k H A)).toGrpIso)
+    (fun A ↦ (MulEquiv.ulift.trans (fgPointTensorIsoEquiv k H A)).toGrpIso.trans
+      (eqToIso (tensorAutFunctor_obj k H A).symm))
     (fun {A B} φ ↦ by
+      apply (cancel_mono (eqToHom (tensorAutFunctor_obj k H B))).mp
       refine GrpCat.hom_ext (MonoidHom.ext fun x ↦ ?_)
       -- Both sides of the naturality square are, once evaluated, plain group-element
       -- equations. Reaching them by rewriting is not possible: the two composites are
@@ -143,8 +169,11 @@ noncomputable def pointsFunctorIsoTensorAutFunctor :
       -- rewriting lemma for an application. All three reduce definitionally, so `change`
       -- states the evaluated square once, explicitly, and the two named lemmas finish.
       change fgPointTensorIsoEquiv k H B (AlgHom.mapValue φ.hom x.down) =
-        (tensorAutFunctor k H).map φ (fgPointTensorIsoEquiv k H A x.down)
-      rw [tensorAutFunctor_map_apply]
+        eqToHom (tensorAutFunctor_obj k H B)
+          ((tensorAutFunctor k H).map φ
+            (eqToHom (tensorAutFunctor_obj k H A).symm
+              (fgPointTensorIsoEquiv k H A x.down)))
+      rw [tensorAutFunctor_map_transport_apply]
       exact fgPointTensorIsoEquiv_mapValue k H φ x.down)
 
 /-- The natural Tannakian isomorphism sends a point to its tensor action. Not a `simp` lemma:
@@ -152,7 +181,9 @@ the argument's type is the composite functor's value, which `simp` rewrites, so 
 side is not in normal form. -/
 theorem pointsFunctorIsoTensorAutFunctor_hom_app_apply (A : CommAlgCat.{u} k)
     (x : ULift.{u + 1} (WithConv (H →ₐ[k] A))) :
-    (pointsFunctorIsoTensorAutFunctor k H).hom.app A x = fgPointTensorIso k H A x.down := by
+    eqToHom (tensorAutFunctor_obj k H A)
+        ((pointsFunctorIsoTensorAutFunctor k H).hom.app A x) =
+      fgPointTensorIso k H A x.down := by
   -- As in the naturality proof above, the component is hidden behind `NatIso.ofComponents`
   -- and `MulEquiv.toGrpIso`; both reduce definitionally to the underlying multiplicative
   -- equivalence, which `change` names so its application lemmas apply. The closing `rfl`
@@ -165,7 +196,8 @@ theorem pointsFunctorIsoTensorAutFunctor_hom_app_apply (A : CommAlgCat.{u} k)
 automorphism. Not a `simp` lemma, for the same reason as the previous one. -/
 theorem pointsFunctorIsoTensorAutFunctor_inv_app_apply (A : CommAlgCat.{u} k)
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
-    ((pointsFunctorIsoTensorAutFunctor k H).inv.app A η).down =
+    ((pointsFunctorIsoTensorAutFunctor k H).inv.app A
+        (eqToHom (tensorAutFunctor_obj k H A).symm η)).down =
       reconstructedPoint k H A η := by
   -- The inverse component is `(fgPointTensorIsoEquiv k H A).symm` conjugated by the universe
   -- lift; taking `.down` cancels the lift definitionally, so the statement is exactly the
